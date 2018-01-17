@@ -468,6 +468,8 @@ void US_Extinction::reading(QStringList sl)
    } 
    le_lambdaLimitLeft->setText(str1.sprintf(" %2.1f", lambda_min));
    le_lambdaLimitRight->setText(str1.sprintf(" %2.1f", lambda_max));
+   ct_coefficient->setValue(280);
+   ct_coefficient->setRange(lambda_min,lambda_max);
 
    update_data();
    //plot();
@@ -534,7 +536,7 @@ bool US_Extinction::loadScan(const QString &fileName)
 	   qDebug() << temp_x << ", " << temp_y;
             Reading r = {temp_x, temp_y};
             wls.v_readings.push_back(r);
-            lambda_max = max(temp_x, lambda_max);
+            lambda_max = max(temp_x, lambda_max);  
             lambda_min = min (temp_x, lambda_min);
          }
       }
@@ -676,6 +678,7 @@ void US_Extinction::plot()
 void US_Extinction::reset_scanlist(void)
 {
    v_wavelength.clear();
+   v_wavelength_original.clear();
    lw_file_names->clear();
    filenames.clear();
    changedCurve = NULL;
@@ -684,6 +687,14 @@ void US_Extinction::reset_scanlist(void)
    dataPlotClear( data_plot );
    data_plot->replot();
 
+   lambda_min = 1000;
+   lambda_max = -1000;
+   
+   le_lambdaLimitLeft->setText("200.0");
+   le_lambdaLimitRight->setText("1500.0");
+   
+   ct_coefficient->setRange(200, 1500);
+   ct_coefficient->setValue(280);
    current_path = "";
    
 }
@@ -738,6 +749,31 @@ void US_Extinction::update_data(void)
    lambda_min = minimum;
    lambda_max = maximum;
 
+   // Handling wavelength scaling OD //
+   if ( ct_coefficient->value() < lambda_min || ct_coefficient->value() > lambda_max )
+     {
+       int wvlnewref = int (lambda_min + (lambda_max - lambda_min)/2 );
+       QMessageBox msg;
+       msg.setWindowTitle("Reference Wavelength");
+       QString text = QString("A value of the default reference wavelength, %1 nm, is outside of the selected wavelength range! It will be adjusted to the middle of the wavelength domain, %2 nm.").arg(ct_coefficient->value()).arg(wvlnewref);
+       msg.setText(text);
+       msg.setInformativeText("Reference wavelength can also be ajdusted manually.");
+       
+       //msgBox.setText("Buffer does not have spectrum data!\n You can Upload and fit buffer spectrum, or Enter points manually");
+       QPushButton* pContinue = msg.addButton(tr("OK"), QMessageBox::YesRole);
+       //QPushButton* pNewval = msg.addButton(tr("Enter New Value"), QMessageBox::YesRole);
+       
+       msg.setDefaultButton(pContinue);
+       msg.exec();
+       
+       if (msg.clickedButton()==pContinue) {
+	 ct_coefficient->setValue(wvlnewref);
+	 ct_coefficient->setRange(lambda_min, lambda_max);
+	 //ct_coefficient->setStyleSheet("border: 2px solid red");
+       }
+     }
+   // END of handling wvl scaling OD
+   
    qDebug() << "Orig., Updated: " << v_wavelength_original.at(0).v_readings.size() << ", " << v_wavelength.at(0).v_readings.size();
    plot();
 }
@@ -972,6 +1008,8 @@ void US_Extinction::perform_global(void)
       message.exec();
       return;
    }
+
+  //ct_coefficient->setStyleSheet("border: 0px solid red");
 
   // if (v_wavelength.size() < 2)
   //  {
