@@ -4899,9 +4899,11 @@ DbgLv(1) << "wTSdb: connect" << db.lastErrno() << db.lastError();
    }
 //DbgLv(1) << "wTSdb: connect" << db.lastErrno() << db.lastError();
 
+   QDir     writeDir( US_Settings::resultDir() ); // Writes timestate to results directory
+   QString  dirname     = writeDir.absolutePath() + "/" + runID + "/";
+
+   QString tmst_fdir    = dirname;
    QString tmst_fbase   = runID + ".time_state.tmst";
-   QString tmst_fdir    = ( QString( currentDir ).right( 1 ) == "/" )
-                        ? currentDir : currentDir + "/";
    QString tmst_fname   = tmst_fdir + tmst_fbase;
    QString tmst_cksm    = US_Util::md5sum_file( tmst_fname );
 DbgLv(1) << "wTSdb: fname " << tmst_fname << "cksm" << tmst_cksm<< "fbase" << tmst_fbase;
