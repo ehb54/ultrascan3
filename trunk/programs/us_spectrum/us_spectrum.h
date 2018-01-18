@@ -64,7 +64,14 @@ class US_Spectrum : public US_Widgets
 		QLineEdit	*le_wavelength;
 		QLineEdit	*le_extinction;
 		QLineEdit	*le_rmsd;
-	
+
+		QLabel          *lbl_wvlinfo; 
+		QLabel          *lbl_correlation; 
+		QLabel          *lbl_fit; 
+		QLabel          *lbl_rmsd;
+		QLabel          *lbl_angle;
+		QLabel          *lbl_load_save;
+
 		QComboBox	*cb_angle_one;
 		QComboBox	*cb_angle_two;
 		QComboBox	*cb_spectrum_type;
@@ -79,6 +86,7 @@ class US_Spectrum : public US_Widgets
 		//void 	find_amplitude(struct WavelengthProfile&);
 		void	fit();
 		void	deleteCurrent();
+		bool	deleteBasisCurve( void );
 		void	resetBasis();
 		void	findAngles();
 		void 	save();

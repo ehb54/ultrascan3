@@ -30,26 +30,35 @@ US_Spectrum::US_Spectrum() : US_Widgets()
    //Push Buttons for US_Spectrum GUI
    pb_load_target = us_pushbutton(tr("Load Target Spectrum"));
    connect(pb_load_target, SIGNAL(clicked()), SLOT(load_target()));
-   pb_load_basis = us_pushbutton(tr("Load Basis Spectrum"));
+   pb_load_basis = us_pushbutton(tr("Add Basis Spectrum"));
    pb_load_basis->setEnabled(false);
    connect(pb_load_basis, SIGNAL(clicked()), SLOT(load_basis()));
-   pb_find_extinction = us_pushbutton(tr("Find Corresponding Extin. Coeff."));
-   connect(pb_find_extinction, SIGNAL(clicked()), SLOT(findExtinction()));
+
+   
    pb_delete = us_pushbutton(tr("Delete Current Basis Scan"));
    connect(pb_delete, SIGNAL(clicked()), SLOT(deleteCurrent()));
+   pb_delete->hide();  // Spurious 
+   
    pb_load_fit = us_pushbutton(tr("Load Fit"));
    connect(pb_load_fit, SIGNAL(clicked()), SLOT(load()));
+
    pb_overlap = us_pushbutton(tr("Find Extinction Profile Overlap"));
    connect(pb_overlap, SIGNAL(clicked()), SLOT(overlap()));
    pb_overlap->setEnabled(false);
+
    pb_fit = us_pushbutton(tr("Fit Data"));
    connect(pb_fit, SIGNAL(clicked()), SLOT(fit()));
    pb_fit->setEnabled(false);
-   pb_find_angles = us_pushbutton(tr("Fit Angles"));
+   
+   pb_find_angles = us_pushbutton(tr("Find Angle between Basis Vectors"));
    connect(pb_find_angles, SIGNAL(clicked()), SLOT(findAngles()));
+   pb_find_angles->setEnabled(false);
+
    pb_help = us_pushbutton(tr("Help"));
    pb_reset_basis = us_pushbutton(tr("Reset Basis Spectra"));
    connect(pb_reset_basis, SIGNAL(clicked()), SLOT(resetBasis()));
+   pb_reset_basis->setEnabled(false);
+
    pb_save= us_pushbutton(tr("Save Fit"));
    connect(pb_save, SIGNAL(clicked()), SLOT(save()));
    pb_close = us_pushbutton(tr("Close"));
@@ -58,35 +67,52 @@ US_Spectrum::US_Spectrum() : US_Widgets()
    //List Widgets
    lw_target = us_listwidget();
    lw_basis = us_listwidget();
+   connect(lw_basis, SIGNAL(itemDoubleClicked(QListWidgetItem*)), SLOT(deleteBasisCurve()));
 
-   //Label Widgets
-   lbl_wavelength = us_label(tr("Wavelength:"));
-   lbl_extinction = us_label(tr("Extinction Coeff.:"));
 
-   //Line Edit Widgets
-   le_angle = us_lineedit("", 1, true);
-   le_wavelength = us_lineedit("", 1, false);
-   le_extinction = us_lineedit("", 1, true);
-   le_rmsd = us_lineedit("RMSD:", 1, false);
+   lbl_wvlinfo = us_banner(tr("Target/Basis Spectra Information"));
+   lbl_correlation = us_banner(tr("Basis Vectors Correlation"));
+   lbl_fit = us_banner(tr("Perform Fit"));
+   lbl_load_save = us_banner(tr("Load/Save Fit"));
+   lbl_rmsd = us_label(tr("RMSD: "));
+   lbl_angle = us_label(tr("Angle: "));
+   le_rmsd = us_lineedit("", 1, true);
 
+   //Do we need this ? (finding extinc. coeff.)
    cb_spectrum_type = new QComboBox();
    QStringList spectrum_types;
    spectrum_types << "target" << "basis" << "fitted";
    cb_spectrum_type->addItems(spectrum_types);
+   lbl_wavelength = us_label(tr("Wavelength:"));
+   lbl_extinction = us_label(tr("Extinction Coeff.:"));
+   le_wavelength = us_lineedit("", 1, false);
+   le_extinction = us_lineedit("", 1, true);
+   pb_find_extinction = us_pushbutton(tr("Find Corresponding Extin. Coeff."));
+   connect(pb_find_extinction, SIGNAL(clicked()), SLOT(findExtinction()));
+   
+   pb_find_extinction->hide();
+   cb_spectrum_type->hide();
+   lbl_wavelength->hide();
+   lbl_extinction->hide();
+   le_wavelength->hide();
+   le_extinction->hide();
+   /////////////////////
+
    cb_angle_one = new QComboBox();
    cb_angle_two = new QComboBox();
+   le_angle = us_lineedit("", 1, true); 
 
    data_plot = new QwtPlot();
    plotLayout1 = new US_Plot(data_plot, tr(""), tr("Wavelength(nm)"), tr("Extinction"));
    data_plot->setCanvasBackground(Qt::black);
    data_plot->setTitle("Wavelength Spectrum Fit");
-   data_plot->setMinimumSize(700,200);
+   data_plot->setMinimumSize(600,200);
    
    residuals_plot = new QwtPlot();
    plotLayout2 = new US_Plot(residuals_plot, tr(""), tr("Wavelength(nm)"), tr("Extinction"));
    residuals_plot->setCanvasBackground(Qt::black);
    residuals_plot->setTitle("Fitting Residuals");
-   residuals_plot->setMinimumSize(700, 200);
+   residuals_plot->setMinimumSize(600, 200);
 
    pick = new US_PlotPicker( data_plot );
    pick->setRubberBand( QwtPicker::VLineRubberBand );
@@ -106,8 +132,13 @@ US_Spectrum::US_Spectrum() : US_Widgets()
    angles_layout = new QGridLayout();
    angles_layout->addWidget(cb_angle_one, 0, 0);
    angles_layout->addWidget(cb_angle_two, 0, 1);
-   angles_layout->addWidget(le_angle, 1, 0);
-   angles_layout->addWidget(pb_find_angles, 1, 1);
+   // angles_layout->addWidget(le_angle, 1, 0);
+   // angles_layout->addWidget(pb_find_angles, 2, 0);
+
+   QGridLayout* angles_layout_res;
+   angles_layout_res = new QGridLayout();
+   angles_layout_res->addWidget(lbl_angle, 0, 0);
+   angles_layout_res->addWidget(le_angle, 0, 1);
 
    QGridLayout* subgl1;
    subgl1 = new QGridLayout();
@@ -115,6 +146,11 @@ US_Spectrum::US_Spectrum() : US_Widgets()
    subgl1->addWidget(le_wavelength, 0,1);
    subgl1->addWidget(lbl_extinction, 1, 0);
    subgl1->addWidget(le_extinction, 1, 1);
+
+   QGridLayout* subgl_rmsd;
+   subgl_rmsd = new QGridLayout();
+   subgl_rmsd->addWidget(lbl_rmsd, 0, 0);
+   subgl_rmsd->addWidget(le_rmsd, 0, 1);
 
    QGridLayout* subgl2;
    subgl2 = new QGridLayout();
@@ -125,20 +161,35 @@ US_Spectrum::US_Spectrum() : US_Widgets()
 
    QGridLayout* gl1;
    gl1 = new QGridLayout();
-   gl1->addWidget(pb_load_target, 0, 0);
-   gl1->addWidget(lw_target, 1, 0);
-   gl1->addWidget(pb_load_basis, 2, 0);
-   gl1->addWidget(lw_basis, 3, 0);
-   gl1->addWidget(cb_spectrum_type, 4, 0);
-   gl1->addLayout(subgl1, 5, 0);
-   gl1->addWidget(pb_find_extinction, 6, 0);
-   gl1->addWidget(pb_delete, 7, 0);
-   gl1->addWidget(pb_reset_basis, 8, 0);
-   gl1->addWidget(pb_overlap, 9, 0);
-   gl1->addWidget(pb_fit, 11, 0);
-   gl1->addWidget(le_rmsd, 12, 0);
-   gl1->addLayout(angles_layout, 13, 0);
-   gl1->addLayout(subgl2, 14, 0);
+   int row = 0;
+   gl1->addWidget(lbl_wvlinfo, row++, 0);
+   gl1->addWidget(pb_load_target, row++, 0);
+   gl1->addWidget(lw_target, row++, 0);
+   gl1->addWidget(pb_load_basis, row++, 0);
+   gl1->addWidget(lw_basis, row++, 0);
+   gl1->addWidget(pb_reset_basis, row++, 0);
+   
+   /* Do we need this ??? */
+   //gl1->addWidget(cb_spectrum_type, row++, 0);
+   //gl1->addLayout(subgl1, row++, 0);
+   //gl1->addWidget(pb_find_extinction, row++, 0);
+   
+   //gl1->addWidget(pb_delete, row++, 0);
+   
+   gl1->addWidget(lbl_fit, row++, 0);
+   gl1->addWidget(pb_overlap, row++, 0);
+   gl1->addWidget(pb_fit, row++, 0);
+   gl1->addLayout(subgl_rmsd, row++, 0);
+ 
+   //gl1->addLayout(subgl1, row++, 0);
+
+   gl1->addWidget(lbl_correlation, row++, 0);
+   gl1->addLayout(angles_layout, row++, 0);
+   gl1->addWidget(pb_find_angles, row++, 0);
+   gl1->addLayout(angles_layout_res, row++, 0);
+   
+   gl1->addWidget(lbl_load_save, row++, 0);
+   gl1->addLayout(subgl2, row++, 0);
    
    QGridLayout *mainLayout;
    mainLayout = new QGridLayout(this);
@@ -161,7 +212,7 @@ void US_Spectrum::load_basis()
    dialog.setFileMode(QFileDialog::ExistingFiles);
    dialog.setViewMode(QFileDialog::Detail);
    
-   QString work_dir_data  = US_Settings::resultDir();
+   QString work_dir_data  = US_Settings::dataDir();
    
    current_path = current_path.isEmpty() ? work_dir_data : current_path;
    dialog.setDirectory(current_path);  
@@ -184,8 +235,11 @@ void US_Spectrum::load_basis()
        }
    }
    plot_basis();
+   
+   pb_reset_basis->setEnabled(true);
    pb_overlap->setEnabled(true);
    pb_fit->setEnabled(true);
+   pb_find_angles->setEnabled(true);
    
    // overlap();
 }
@@ -240,7 +294,7 @@ void US_Spectrum::load_target()
    dialog.setFileMode(QFileDialog::ExistingFiles);
    dialog.setViewMode(QFileDialog::Detail);
    
-   QString work_dir_data  = US_Settings::resultDir();
+   QString work_dir_data  = US_Settings::dataDir();
    dialog.setDirectory(work_dir_data);
    
    us_grid(data_plot);
@@ -554,7 +608,7 @@ void US_Spectrum::fit()
       fval += pow(residuals[i], (float) 2.0);
    }
    fval /= points;
-   le_rmsd->setText(str.sprintf("RMSD: %3.2e", pow(fval, (float) 0.5)));
+   le_rmsd->setText(str.sprintf(" %3.2e", pow(fval, (float) 0.5)));
    resid_curve->setSamples(x, y, points);
    pen.setColor(Qt::yellow);
    pen.setWidth(2);
@@ -589,6 +643,49 @@ void US_Spectrum::deleteCurrent()
    v_basis.remove(deleteIndex);
    delete lw_basis->currentItem();
 }
+
+// Delete upon double click
+bool US_Spectrum::deleteBasisCurve(void)
+{
+  QMessageBox mBox;
+  mBox.setText(tr("Are you sure you want to delete the curve you double-clicked?"));
+  mBox.addButton(tr("Yes"), QMessageBox::AcceptRole);
+  QPushButton *cancelButton = mBox.addButton(tr("Cancel"), QMessageBox::RejectRole);
+  
+  mBox.exec();
+  
+  if (mBox.clickedButton() == cancelButton)
+    {
+      return(false);
+    }
+  
+  if(v_basis.size() <= 1)
+     {
+       resetBasis();
+       return(true);
+     }
+ 
+  QString selectedName = lw_basis->currentItem()->text();
+  for(int k = 0; k < v_basis.size(); k++)
+    {
+      if(selectedName.contains(v_basis.at(k).filenameBasis))
+	{
+	  v_basis[k].matchingCurve->detach();
+	  v_basis.remove(k);
+	  delete lw_basis->currentItem();
+	}
+    }
+  data_plot->replot();
+  
+  // v_basis[deleteIndex].matchingCurve->detach();
+  // data_plot->replot();
+  // v_basis.remove(deleteIndex);
+  // delete lw_basis->currentItem();
+  
+  return(true);
+}
+//////////////////////////////////////////////////
+
 void US_Spectrum::resetBasis()
 {
    basisIndex = 0;
@@ -612,7 +709,12 @@ void US_Spectrum::resetBasis()
    data_plot->replot();
    lw_basis->clear();
    le_rmsd->clear();
-   le_rmsd->setText(QString("RMSD"));
+   //le_rmsd->setText(QString("RMSD"));
+
+   pb_overlap->setEnabled(false);
+   pb_fit->setEnabled(false);
+   pb_find_angles->setEnabled(false);
+   pb_reset_basis->setEnabled(false);   
 }
 
 void US_Spectrum::overlap()
