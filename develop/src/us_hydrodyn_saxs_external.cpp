@@ -165,7 +165,7 @@ void US_Hydrodyn_Saxs::call_ift()
 #if defined(Q_OS_WIN)
       + "_win64.exe"
 #else
-# if defined(Q_WS_OSX)
+# if defined(Q_OS_MAC)
       + "_osx10.8"
 # else
       + "_linux64"
@@ -181,10 +181,10 @@ void US_Hydrodyn_Saxs::call_ift()
             "bin"
             + SLASH
             + "iftci" 
-#if defined(Q_WS_WIN)
+#if defined(Q_OS_WIN)
             + "_win64.exe"
 #else
-# if defined(Q_WS_OSX)
+# if defined(Q_OS_MAC)
             + "_osx10.8"
 # else
             + "_linux64"
