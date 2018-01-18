@@ -39,8 +39,7 @@ US_Spectrum::US_Spectrum() : US_Widgets()
    connect(pb_delete, SIGNAL(clicked()), SLOT(deleteCurrent()));
    pb_delete->hide();  // Spurious 
    
-   pb_load_fit = us_pushbutton(tr("Load Fit"));
-   connect(pb_load_fit, SIGNAL(clicked()), SLOT(load()));
+  
 
    pb_overlap = us_pushbutton(tr("Find Extinction Profile Overlap"));
    connect(pb_overlap, SIGNAL(clicked()), SLOT(overlap()));
@@ -55,12 +54,17 @@ US_Spectrum::US_Spectrum() : US_Widgets()
    pb_find_angles->setEnabled(false);
 
    pb_help = us_pushbutton(tr("Help"));
-   pb_reset_basis = us_pushbutton(tr("Reset Basis Spectra"));
+   pb_reset_basis = us_pushbutton(tr("Reset Basis Spectra / Reset Fit Results"));
    connect(pb_reset_basis, SIGNAL(clicked()), SLOT(resetBasis()));
    pb_reset_basis->setEnabled(false);
 
+   pb_load_fit = us_pushbutton(tr("Load Fit"));
+   connect(pb_load_fit, SIGNAL(clicked()), SLOT(load()));
    pb_save= us_pushbutton(tr("Save Fit"));
    connect(pb_save, SIGNAL(clicked()), SLOT(save()));
+   pb_load_fit->setEnabled(false);
+   pb_save->setEnabled(false);
+   
    pb_close = us_pushbutton(tr("Close"));
    connect(pb_close, SIGNAL(clicked()), SLOT(close()));
 
@@ -75,7 +79,7 @@ US_Spectrum::US_Spectrum() : US_Widgets()
    lbl_fit = us_banner(tr("Perform Fit"));
    lbl_load_save = us_banner(tr("Load/Save Fit"));
    lbl_rmsd = us_label(tr("RMSD: "));
-   lbl_angle = us_label(tr("Angle: "));
+   lbl_angle = us_label(tr("Angle (Deg.): "));
    le_rmsd = us_lineedit("", 1, true);
 
    //Do we need this ? (finding extinc. coeff.)
@@ -231,9 +235,14 @@ void US_Spectrum::load_basis()
 	 struct WavelengthProfile temp_wp;
 	 load_spectra(temp_wp, *it);
 	 temp_wp.filenameBasis = fi.baseName();
+	 //basis_names.append(fi.baseName());
 	 v_basis.push_back(temp_wp);
+
+	 cb_angle_one->addItem(fi.baseName());
+	 cb_angle_two->addItem(fi.baseName());
        }
    }
+ 
    plot_basis();
    
    pb_reset_basis->setEnabled(true);
@@ -247,11 +256,11 @@ void US_Spectrum::load_basis()
 //Takes the information in the basis vector to plot all of the curves for the basis spectrums 
 void US_Spectrum::plot_basis()
 {
-   QStringList names;
+  //QStringList names;
 
    for(int m = basisIndex; m < v_basis.size(); m++)
    {
-      names.append(v_basis.at(m).filenameBasis);   
+     //names.append(v_basis.at(m).filenameBasis);   
       lw_basis->insertItem(0, v_basis.at(m).filenameBasis);
 
       double* xx = (double*)v_basis.at(m).wvl.data();
@@ -279,8 +288,8 @@ void US_Spectrum::plot_basis()
       v_basis[basisIndex].matchingCurve = c;
       basisIndex++;
    }
-   cb_angle_one->addItems(names);
-   cb_angle_two->addItems(names);
+   // cb_angle_one->addItems(names);
+   // cb_angle_two->addItems(names);
    data_plot->replot();
 }
 
@@ -291,7 +300,7 @@ void US_Spectrum::load_target()
    QString fileName = "";
 
    dialog.setNameFilter(tr("Text files (*.[Tt][Xx][Tt] *.[Cc][Ss][Vv] *.[Dd][Aa][Tt] *.[Ww][Aa]* *.[Dd][Ss][Pp]);;All files (*)"));
-   dialog.setFileMode(QFileDialog::ExistingFiles);
+   dialog.setFileMode(QFileDialog::ExistingFile);
    dialog.setViewMode(QFileDialog::Detail);
    
    QString work_dir_data  = US_Settings::dataDir();
@@ -486,9 +495,8 @@ void US_Spectrum::fit()
    QString str = "Please note:\n\n" 
       "The target and basic spectra have different limits.\n" 
       "These vectors need to be congruent before you can fit\n" 
-      "the data. You can correct the problem by first running\n" 
-      "\"Find Extinction Profile Overlap\" (preferred), or by\n" 
-      "running \"Extrapolate Extinction Profile\" (possibly imprecise).";
+      "the data. You can correct the problem by running\n" 
+      "\"Find Extinction Profile Overlap\".";
    
    for (i=0; i< (unsigned int) v_basis.size(); i++)
    {
@@ -672,10 +680,14 @@ bool US_Spectrum::deleteBasisCurve(void)
 	{
 	  v_basis[k].matchingCurve->detach();
 	  v_basis.remove(k);
+	  cb_angle_one->removeItem(k);
+	  cb_angle_two->removeItem(k);
 	  delete lw_basis->currentItem();
 	}
     }
   data_plot->replot();
+
+  
   
   // v_basis[deleteIndex].matchingCurve->detach();
   // data_plot->replot();
@@ -894,7 +906,22 @@ void US_Spectrum::findAngles()
       if(secondProf.compare(v_basis[k].filenameBasis) == 0)
          indexTwo = k;
    }
+   
+    QString str = "Please note:\n\n" 
+      "Selected basic spectra have different limits.\n" 
+      "These vectors need to be congruent before \n" 
+      "computing correlation among them. \n\n" 
+      "Please run \"Find Extinction Profile Overlap\"\n"
+      "first to resolve the issue.";
 
+   // If Basis vectros are of different dimensions
+   if ( v_basis[indexOne].extinction.size() != v_basis[indexTwo].extinction.size() ) 
+     {
+       QMessageBox::warning(this, tr("UltraScan Warning"), str,
+			    QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+       return;
+     }
+	  
    //Calculate the angle measure between the two 
    for(int i = 0; i < v_basis[indexOne].extinction.size(); i++)
    {

@@ -56,6 +56,8 @@ class US_Spectrum : public US_Widgets
 		QPushButton	*pb_find_angle;
 		QPushButton *pb_find_extinction;
 		
+		//QStringList basis_names;
+		
 		QListWidget *lw_target;
 		QListWidget *lw_basis;
 		QLabel		*lbl_wavelength;
