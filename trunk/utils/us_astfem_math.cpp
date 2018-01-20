@@ -718,7 +718,7 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
 
    // Iterate through all experimental data scans and find the first time point
    // in simdata that is higher or equal to each time point in expdata:
-//   int debug_level      = US_Settings::us_debug();
+   int dbg_level  = US_Settings::us_debug();
    int    fscan   = -1;
    int    lscan   = -1;
    int    escans  = expdata.scan.size();
@@ -738,13 +738,13 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
             fscan      = expscan;
          if ( e_time > l_time  )
          {  // Save scan upper limit (use scan count if close)
-//DbgLv(1) << "MATHi: l_time e_time" << l_time << e_time << "expscan" << expscan;
+DbgLv(2) << "MATHi: l_time e_time" << l_time << e_time << "expscan" << expscan;
             lscan      = ( expscan > ( escans - 5 ) ) ? escans : expscan;
             break;
          }
       }
 //DbgLv(1) << "MATHi: s_time e_time" << s_time << e_time
-//         << "fscan lscan" << fscan << lscan <<"expscansize=" <<  escans << "simscansize="<< sscans;
+// << "fscan lscan" << fscan << lscan <<"expscansize=" <<  escans << "simscansize="<< sscans;
       fscan         = ( fscan < 0 ) ?      0 : fscan;
       lscan         = ( lscan < 0 ) ? escans : lscan;
 //DbgLv(1) << "MATHi: s_time e_time" << s_time << e_time
@@ -839,6 +839,13 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
    {
       int       eftime = (int)expdata.scan[          0 ].time;
       int       sltime = (int)simdata.scan[ nsscan - 1 ].time;
+//int ner=expdata.radius.size();
+//int nsr=simdata.radius.size();
+//int nec=expdata.scan[0].conc.size();
+//int nsc=simdata.scan[0].conc.size();
+//DbgLv(1) << "MATHi2: eftime sltime" << eftime << sltime << "fscan lscan" << fscan << lscan;
+//DbgLv(1) << "MATHi2:  erad0 eradn" << expdata.radius[0] << expdata.radius[ner-1] << ner << nec;
+//DbgLv(1) << "MATHi2:  srad0 sradn" << simdata.radius[0] << simdata.radius[nsr-1] << nsr << nsc;
 
       for ( int expscan = fscan; expscan < lscan; expscan++ )
       {  // Interpolate where needed to a range of experiment scans
@@ -890,27 +897,29 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
          }
          else // interpolation is needed
          {
+//DbgLv(1) << "MATHi2:  sscm" << sscm << "s_time1 s_time2" << s_time1 << s_time2
+// << "e_time" << e_time;
             double a;
             double b;
             tmp_scan.conc.fill( 0.0, nsconc );
             double* tsco  = tmp_scan.conc.data();
             double* s1co  = sscan1->conc.data();
             double* s2co  = sscan2->conc.data();
+            double tdelt  = s_time2 - s_time1;
 
             // interpolate the concentration points:
             for ( int ii = 0; ii < nsconc; ii++ )
             {
-               a = ( s2co[ ii ] - s1co[ ii ] ) /
-                  ( s_time2 - s_time1 );
+               a          = ( s2co[ ii ] - s1co[ ii ] ) / tdelt;
 
-               b = s2co[ ii ] - a * s_time2;
+               b          = s2co[ ii ] - a * s_time2;
 
                tsco[ ii ] = ( a * e_time + b );
             }
 
             // interpolate the omega_square_t integral data:
 
-            a = ( s_omega2 - s_omega1 ) / ( s_time2 - s_time1 );
+            a = ( s_omega2 - s_omega1 ) / tdelt;
 
             b = s_omega2 - a * s_time2;
 

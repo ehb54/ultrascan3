@@ -476,6 +476,8 @@ DbgLv(1) << "LD: exec dialog";
 
    edata     = &dataList[ 0 ];
    runID     = edata->runID;
+   QString tmst_fpath = US_Settings::resultDir() + "/" + runID + "/"
+                           + runID + ".time_state.tmst";
 
    // Get speed steps from disk or DB experiment (and maybe timestate)
 
@@ -499,14 +501,12 @@ DbgLv(1) << "LD: exec dialog";
          idExp              = dbP->value( 1 ).toInt();
          US_SimulationParameters::speedstepsFromDB( dbP, idExp, speed_steps );
       }
-DbgLv(1)<<"Fematch:Hi I am from database";
+DbgLv(1)<<"LD: from database";
 
       // Check out whether we need to read TimeState from the DB
-      QString tmst_fpath = US_Settings::resultDir() + "/" + runID + "/"
-                           + runID + ".time_state.tmst";
 
       bool newfile       = US_TimeState::dbSyncToLF( dbP, tmst_fpath, idExp );
-DbgLv(0) << "FEM:LD: newfile" << newfile << "idExp" << idExp
+DbgLv(0) << "LD: newfile" << newfile << "idExp" << idExp
  << "tmst_fpath" << tmst_fpath;
    }
 
@@ -538,9 +538,57 @@ DbgLv(0) << "FEM:LD: newfile" << newfile << "idExp" << idExp
       }
    }
 
+   QFileInfo check_file( tmst_fpath );
+   if ( check_file.exists()  &&  check_file.isFile() )
+   {  // Get speed_steps from an existing timestate file
+      simparams.simSpeedsFromTimeState( tmst_fpath );
+      simparams.speedstepsFromSSprof();
+//*DEBUG*
+int essknt=speed_steps.count();
+int tssknt=simparams.speed_step.count();
+DbgLv(1) << "LD: (e)ss knt" << essknt << "(t)ss knt" << tssknt;
+for ( int jj = 0; jj < qMin( essknt, tssknt ); jj++ )
+{
+ DbgLv(1) << "LD:  jj" << jj << "(e) tf tl wf wl scns"
+  << speed_steps[jj].time_first
+  << speed_steps[jj].time_last
+  << speed_steps[jj].w2t_first
+  << speed_steps[jj].w2t_last
+  << speed_steps[jj].scans;
+ DbgLv(1) << "LD:    (t) tf tl wf wl scns"
+  << simparams.speed_step[jj].time_first
+  << simparams.speed_step[jj].time_last
+  << simparams.speed_step[jj].w2t_first
+  << simparams.speed_step[jj].w2t_last
+  << simparams.speed_step[jj].scans;
+}
+//*DEBUG*
+      int kstep      = speed_steps.count();
+      int kscan      = speed_steps[ 0 ].scans;
+      for ( int jj = 0; jj < simparams.speed_step.count(); jj++ )
+      {
+         if ( jj < kstep )
+         {
+            kscan          = speed_steps[ jj ].scans;
+            speed_steps[ jj ] = simparams.speed_step[ jj ];
+         }
+         else
+            speed_steps << simparams.speed_step[ jj ];
+         
+         speed_steps[ jj ].scans = kscan;
+         simparams.speed_step[ jj ].scans = kscan;
+DbgLv(1) << "LD:    (s) tf tl wf wl scns"
+ << speed_steps[jj].time_first
+ << speed_steps[jj].time_last
+ << speed_steps[jj].w2t_first
+ << speed_steps[jj].w2t_last
+ << speed_steps[jj].scans;
+      }
+   }
+
    int nssp       = speed_steps.count();
    int ntriples   = triples.size();
-DbgLv(1) << "Hi:Load:no of speed step" << nssp;
+DbgLv(1) << "LD: Load: no of speed steps" << nssp;
 
    if ( nssp > 0 )
    {
@@ -554,6 +602,8 @@ DbgLv(1) << "Hi:Load:no of speed step" << nssp;
             int lesc   = edata->scanCount() - 1;
             int etm1   = edata->scanData[    0 ].seconds;
             int etm2   = edata->scanData[ lesc ].seconds;
+DbgLv(1) << "LD:  ds" << ds << "step" << ii << "stimes" << stm1 << stm2
+ << "etimes" << etm1 << etm2 << "lesc" << lesc;
 
             if ( etm1 < stm1  ||  etm2 > stm2 )
             {  // Data times beyond speed step ranges, so flag use of data ranges
@@ -566,13 +616,10 @@ DbgLv(1) << "Hi:Load:no of speed step" << nssp;
       }
    }
 
-   //----------------------------------------------
-DbgLv(0) << "nssp after if block" << nssp;
-
    exp_steps  = ( nssp > 0 );
    dat_steps  = !exp_steps;
+DbgLv(1) << "LD: after if block, nssp=" << nssp << "   exp_steps" << exp_steps;
 
-   //----------------------
    qApp->processEvents();
 
    QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
@@ -618,9 +665,8 @@ DbgLv(0) << "nssp after if block" << nssp;
    bmd_pos    = this->pos() + QPoint( 100, 100 );
    epd_pos    = this->pos() + QPoint( 200, 200 );
    rpd_pos    = this->pos() + QPoint( 300, 300 );
-DbgLv(0) << "---------------------------------------";
-DbgLv(0) << "Loading of experimental data is over";
-DbgLv(0) << "---------------------------------------";
+DbgLv(1) << "LD: Loading of experimental data is over";
+DbgLv(1) << scan_info();
 }
 
 // Details
@@ -914,14 +960,14 @@ void US_FeMatch::data_plot( void )
       le_variance->setText( QString::number( rmsd ) );
       rmsd        = sqrt( rmsd );
       le_rmsd    ->setText( QString::number( rmsd ) );
-      //*DEBUG
-      double vsum=0.0;
-      for ( int ii=0; ii<scanCount; ii++ )
-      {
-          if ( excludedScans.contains( ii ) ) continue;
-             for( int jj=0; jj<points; jj++ )
-                vsum += sq(sdata->value(ii,jj));
-      }
+//*DEBUG
+double vsum=0.0;
+for ( int ii=0; ii<scanCount; ii++ )
+{
+ if ( excludedScans.contains( ii ) ) continue;
+ for( int jj=0; jj<points; jj++ )
+  vsum += sq(sdata->value(ii,jj));
+}
 DbgLv(1) << "VSUM=" << vsum;
 int hh=sdata->pointCount()/2;
 int ss=sdata->scanCount();
@@ -929,6 +975,7 @@ DbgLv(1) << "SDAT 0-3"<< sdata->value(0,hh) << sdata->value(1,hh)
  << sdata->value(2,hh) << sdata->value(3,hh);
 DbgLv(1) << "SDAT *-n" << sdata->value(ss-4,hh) << sdata->value(ss-3,hh)
  << sdata->value(ss-2,hh) << sdata->value(ss-1,hh);
+//*DEBUG
 
 //DbgLv(1) << "STEP0 durmin dlymin w2tf w2tl timf timl"
    }
@@ -1822,8 +1869,12 @@ DbgLv(1) << "Fem:Adj:  avgT" << avgTemp << "vb20 vb" << sd.vbar20 << sd.vbar;
          dcorrec     = sd.D20w_correction;
       }
 
+double s20w=sc->s;
+double d20w=sc->D;
       sc->s      /= scorrec;
       sc->D      /= dcorrec;
+DbgLv(1) << "Fem:Adj:  s20w D20w" << s20w << d20w
+ << "s D" << sc->s << sc->D;
 
       if ( sc->extinction > 0.0 )
          sc->molar_concentration = sc->signal_concentration / sc->extinction;
@@ -1985,21 +2036,15 @@ void US_FeMatch::simulate_model( )
    US_Passwd pw;
    US_DB2* dbP = dkdb_cntrls->db() ? new US_DB2( pw.getPasswd() ) : NULL;
 
-  //------------------------------------------------------
-  // Calls from us_simparams.cpp
    simparams.initFromData( dbP, *edata, dat_steps );
-  //------------------------------------------------------
-   simparams.simpoints = adv_vals[ "simpoints" ].toInt();
+   simparams.simpoints         = adv_vals[ "simpoints" ].toInt();
    simparams.meshType          = US_SimulationParameters::ASTFEM;
    simparams.gridType          = US_SimulationParameters::MOVING;
    simparams.radial_resolution = (double)( radhi - radlo ) / ( nconc - 1 );
-   //--------------------------------------------------
    simparams.bottom            = simparams.bottom_position;
+DbgLv(1) << "SimMdl: simpoints" << simparams.simpoints
+ << "rreso" << simparams.radial_resolution;
    //simparams.meniscus          = 5.8;
-
-   //int total_scans = 0;
-   //for ( int i = 0; i < simparams.speed_step.size(); i++ )
-   //   total_scans += simparams.speed_step[ i ].scans;
 
    //sdata.scanData.resize( total_scans );
    //int terpsize    = ( points + 7 ) / 8;
@@ -2007,7 +2052,7 @@ void US_FeMatch::simulate_model( )
    if ( exp_steps )
       simparams.speed_step        = speed_steps;
 
-   qDebug()<<"speed_steps=	"<< simparams.speed_step.size();
+DbgLv(1) << "SimMdl: speed_steps:" << simparams.speed_step.size();
 
    QString mtyp = adv_vals[ "meshtype"  ];
    QString gtyp = adv_vals[ "gridtype"  ];
@@ -2029,15 +2074,15 @@ void US_FeMatch::simulate_model( )
    if ( gtyp.contains( "Constant" ) )
       simparams.gridType = US_SimulationParameters::FIXED;
 
-    if ( model.components[ 0 ].sigma == 0.0  &&
-           model.components[ 0 ].delta == 0.0)
-        simparams.meshType = US_SimulationParameters::ASTFEM;
-    else
-        simparams.meshType = US_SimulationParameters::ASTFVM;
+   if ( model.components[ 0 ].sigma == 0.0  &&
+        model.components[ 0 ].delta == 0.0)
+      simparams.meshType = US_SimulationParameters::ASTFEM;
+   else
+      simparams.meshType = US_SimulationParameters::ASTFVM;
 
    simparams.firstScanIsConcentration = false;
 
-   double concval1                    = 0.0;
+   double concval1      = 0.0;
 
    if ( simparams.band_forming )
    {
@@ -2061,7 +2106,7 @@ void US_FeMatch::simulate_model( )
       if ( US_AstfemMath::timestate_onesec( tmst_fpath, *sdata ) )
       {  // Load timestate that is already at 1-second-intervals
          simparams.simSpeedsFromTimeState( tmst_fpath );
-DbgLv(1) << "FEM1: timestate file exists" << tmst_fpath << " timestateobject,count = "
+DbgLv(1) << "SimMdl: timestate file exists" << tmst_fpath << " timestateobject,count = "
  << simparams.tsobj << simparams.sim_speed_prof.count();
       }
 
@@ -2079,37 +2124,21 @@ DbgLv(1) << "FEM1: timestate file exists" << tmst_fpath << " timestateobject,cou
             QFile::rename( tmst_fdefs, tmst_fdsav );
             // Create a new 1-second-interval file set
             US_AstfemMath::writetimestate( tmst_fpath, simparams, *sdata );
-DbgLv(1) << "FEM1: 1-sec-intv file created";
+DbgLv(1) << "SimMdl: 1-sec-intv file created";
          }
 
          simparams.simSpeedsFromTimeState( tmst_fpath );
       }
    }
    else
-DbgLv(1) << "timestate file does not exist";
-#if 0
-   // Determine dataset is from which step in case of multi-speed cases
-   int step = 0;
-   int lssx = sdata->scanCount() - 1;
-   int mm   = lssx / 2;
-
-   for ( int ii = 0; ii < simparams.speed_step.size(); ii++ )
-   {
-      if ( ( sdata->scanData[ mm ].rpm == simparams.speed_step[ ii ].rotorspeed )  &&
-           ( sdata->scanData[ lssx ].seconds > simparams.speed_step[ ii ].time_first ) )
-      {
-         step = ii;
-         break;
-      }
-   }
-#endif
+DbgLv(1) << "SimMdl: timestate file does not exist";
 
    sdata->cell        = rdata->cell;
    sdata->channel     = rdata->channel;
    sdata->description = rdata->description;
 
-   //if ( dbg_level > 1 )
-   simparams.save_simparms( US_Settings::etcDir() + "/sp_fematch.xml" );
+   if ( dbg_level > 1 )
+      simparams.save_simparms( US_Settings::etcDir() + "/sp_fematch.xml" );
 
    start_time = QDateTime::currentDateTime();
    int ncomp  = model.components.size();
@@ -2121,7 +2150,8 @@ DbgLv(1) << "timestate file does not exist";
    int ntc    = ( ncomp + nthread - 1 ) / nthread;
    nthread    = ( ntc > MIN_NTC ) ? nthread : 1;
 
-   qDebug()<<"nthread and meshtype = "<< nthread <<simparams.meshType;
+DbgLv(1) << "SimMdl: nthread" << nthread << "ncomp" << ncomp
+ << "ntc" << ntc << "meshtype" << simparams.meshType;
 
    // Do simulation by several possible ways: 1-/Multi-thread, ASTFEM/ASTFVM
    if ( nthread < 2 )
@@ -2131,25 +2161,59 @@ DbgLv(1) << "timestate file does not exist";
            model.coSedSolute           <  0.0  &&
            compress                    == 0.0 )
       {
-DbgLv(1) << "(fematch:)Finite Element Solver is called";
-           US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparams );
-           connect( astfem_rsa, SIGNAL( current_component( int ) ),
-                  this,       SLOT(   update_progress(   int ) ) );
-           astfem_rsa->set_debug_flag( dbg_level );
-           solution_rec.buffer.compressibility = compress;
-           solution_rec.buffer.manual          = manual;
-           astfem_rsa->set_buffer( solution_rec.buffer );
-           astfem_rsa->calculate( *sdata);
+DbgLv(1) << "SimMdl: (fematch:)Finite Element Solver is called";
+//*DEBUG*
+for(int ii=0; ii<model.components.size(); ii++ )
+{
+DbgLv(1) << "SimMdl:   comp" << ii << "s D v"
+ << model.components[ii].s
+ << model.components[ii].D
+ << model.components[ii].vbar20 << "  c"
+ << model.components[ii].signal_concentration;
+}
+simparams.debug();
+//*DEBUG*
+         US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparams );
+
+         connect( astfem_rsa, SIGNAL( current_component( int ) ),
+                  this,       SLOT  ( update_progress  ( int ) ) );
+         astfem_rsa->set_debug_flag( dbg_level );
+         solution_rec.buffer.compressibility = compress;
+         solution_rec.buffer.manual          = manual;
+         //astfem_rsa->set_buffer( solution_rec.buffer );
+
+         astfem_rsa->calculate( *sdata );
+//*DEBUG*
+int kpts=0;
+double trmsd=0.0;
+double tnoi=0.0;
+double rnoi=0.0;
+bool ftin=ti_noise.count > 0;
+bool frin=ri_noise.count > 0;
+for(int ss=0; ss<sdata->scanCount(); ss++)
+{
+ rnoi = frin ? ri_noise.values[ss] : 0.0;
+ for (int rr=0; rr<sdata->pointCount(); rr++)
+ {
+  tnoi = ftin ? ti_noise.values[rr] : 0.0;
+  double rval=edata->value(ss,rr) - sdata->value(ss,rr) - rnoi - tnoi;
+  trmsd += sq( rval );
+  kpts++;
+ }
+}
+trmsd = sqrt( trmsd / (float)kpts );
+DbgLv(1) << "SimMdl: (1)trmsd" << trmsd;
+//*DEBUG*
       }
       else
       {
-DbgLv(1) << "(fematch:)Finite Volume Solver is called";
-           US_LammAstfvm *astfvm     = new US_LammAstfvm( model, simparams );
-           //connect( astfvm,  SIGNAL( comp_progress( int ) ), this,  SLOT(   update_progress(   int ) ) );
-           //solution_rec.buffer.compressibility = compress;
-           //solution_rec.buffer.manual          = manual;
-           //astfvm->set_buffer( solution_rec.buffer );
-           astfvm->calculate(     *sdata );
+DbgLv(1) << "SimMdl: (fematch:)Finite Volume Solver is called";
+         US_LammAstfvm *astfvm     = new US_LammAstfvm( model, simparams );
+         //connect( astfvm,  SIGNAL( comp_progress( int ) ), this,  SLOT(   update_progress(   int ) ) );
+         //solution_rec.buffer.compressibility = compress;
+         //solution_rec.buffer.manual          = manual;
+         //astfvm->set_buffer( solution_rec.buffer );
+         astfvm->calculate(     *sdata );
       }
       //-----------------------
       //Simulation part is over
@@ -2196,6 +2260,7 @@ DbgLv(1) << "(fematch:)Finite Volume Solver is called";
          QThreadEx*    wthread = new QThreadEx();
 
          tworker->moveToThread( wthread );
+
          tworkers << tworker;
          wthreads << wthread;
 
@@ -2219,11 +2284,13 @@ void US_FeMatch::show_results( )
 {
    progress->setValue( progress->maximum() );
 
+#if 0
    double rmsd = 0.0;
    rmsd        = US_AstfemMath::variance( *sdata, *edata, excludedScans );
    le_variance->setText( QString::number( rmsd ) );
    rmsd        = sqrt( rmsd );
    le_rmsd    ->setText( QString::number( rmsd ) );
+#endif
 
    haveSim     = true;
    pb_distrib->setEnabled( true );
@@ -2500,8 +2567,6 @@ void US_FeMatch::calc_residuals()
    double* sy     = vecsy.data();
    double  yval;
    double  sval;
-   //double  rl     = edata->radius( 0 );
-   //double  vh     = edata->value( scanCount - 1, dsize - 1 );
    double  rmsd   = 0.0;
    double  tnoi   = 0.0;
    double  rnoi   = 0.0;
@@ -2509,10 +2574,12 @@ void US_FeMatch::calc_residuals()
    bool    frin   = ri_noise.count > 0;
    bool    matchd = ( dsize == ssize );
    int     kpts   = 0;
+DbgLv(1) << "CALC_RESID: matchd" << matchd << "dsize ssize" << dsize << ssize;
+int kexcls=0;
 
    QVector< double > resscan;
 
-   resids.clear();
+   resids .clear();
    resscan.resize( dsize );
 
    for ( int jj = 0; jj < dsize; jj++ )
@@ -2529,6 +2596,7 @@ void US_FeMatch::calc_residuals()
    for ( int ii = 0; ii < scanCount; ii++ )
    {
       bool usescan = !excludedScans.contains( ii );
+if(!usescan) kexcls++;
 
       rnoi     = frin ? ri_noise.values[ ii ] : 0.0;
 
@@ -2547,8 +2615,6 @@ void US_FeMatch::calc_residuals()
             sval          = interp_sval( xx[ jj ], sx, sy, ssize );
 
          yval          = edata->value( ii, jj ) - sval - rnoi - tnoi;
-         //if ( xx[ jj ] < rl )
-         //   yval          = 0.0;
 
          if ( usescan )
          {
@@ -2559,13 +2625,14 @@ void US_FeMatch::calc_residuals()
          resscan[ jj ] = yval;
       }
 
-      resids.append( resscan );
+      resids << resscan;
    }
 
    rmsd  /= (double)( kpts );
    le_variance->setText( QString::number( rmsd ) );
    rmsd   = sqrt( rmsd );
    le_rmsd    ->setText( QString::number( rmsd ) );
+DbgLv(1) << "CALC_RESID: matchd" << matchd << "kexcls" << kexcls << "rmsd" << rmsd;
 }
 
 // Slot to make sure all windows and dialogs get closed
@@ -3662,7 +3729,8 @@ DbgLv(1) << "THR COMPL thr" << thr << "thrdone" << thrdone;
       {
          for ( int jj = 0; jj < sdata->xvalues.size(); jj++ )
          {
-            double conc = 0.0;
+            //double conc = 0.0;
+            double conc = sdata->value( ii, jj );
 
             for ( int kk = 0; kk < nthread; kk++ )
                conc += tsimdats[ kk ].value( ii, jj );

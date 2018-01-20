@@ -1037,10 +1037,12 @@ DbgLv(1)<<"2dsa : timestate newly created.  timestateobject = "
  << "sspknt" << dset.simparams.sim_speed_prof.count();
      }
 
-     if ( dset.simparams.sim_speed_prof.count() > 1 )
-     {  // If from multi-speed, compute speed steps from sim speed profile
-        dset.simparams.speedstepsFromSSprof();
-     }
+//     if ( dset.simparams.sim_speed_prof.count() > 1 )
+//     {  // If from multi-speed, compute speed steps from sim speed profile
+//        dset.simparams.speedstepsFromSSprof();
+//     }
+     // Compute speed steps from sim speed profile
+     dset.simparams.speedstepsFromSSprof();
 
      dset.run_data           = dataList[ drow ];
      dset.viscosity          = viscosity;
