@@ -679,7 +679,10 @@ DbgLv(0) << "rank" << my_rank << ": ee" << ee << "(EX)tmst_file" << ds->tmst_fil
       if ( QFile( ds->tmst_file ).exists() )
       {
 DbgLv(0) << "rank" << my_rank << ": ee" << ee << "   tmst UPLOADED";
+         // Build simulation speed profile from time state
          ds->simparams.simSpeedsFromTimeState( ds->tmst_file );
+         // Build speed steps from simulation speed profile
+         ds->simparams.speedstepsFromSSProf();
       }
 DbgLv(0) << "rank" << my_rank << ": ee" << ee << "tmst_file" << ds->tmst_file
  << "ssp count" << ds->simparams.sim_speed_prof.count();

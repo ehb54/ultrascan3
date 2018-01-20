@@ -1401,11 +1401,11 @@ if(i2<4 || (i2+5)>ssps[i1].duration)
 int US_SimulationParameters::speedstepsFromSSprof()
 {
    int dbg_level     = US_Settings::us_debug();
-   int nstep         = 0;
+   int nstep         = speed_step.count();
    int nspstep       = sim_speed_prof.count();
 
    if ( nspstep < 1 )
-      return nspstep;
+      return nstep;
 
    int kscan         = ( nstep > 0 ) ? speed_step[ 0 ].scans : 50;
    nstep             = nspstep;

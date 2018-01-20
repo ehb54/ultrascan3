@@ -990,10 +990,10 @@ DbgLv(1) << "simulation_rsa:  dt" << af_params.dt << "rat omgf simp"
  << lg_bm_rat << s_omg_fac << simparams.simpoints
  << "b m omgs smax" << af_params.current_bottom << af_params.current_meniscus
  << af_params.omega_s << s_max;
+double dtsv=af_params.dt;
 
          if ( af_params.dt > duration )
          {
-            double dtsv=af_params.dt;
             af_params.dt        = duration;
             af_params.simpoints = 1 +
                (int)( lg_bm_rat / ( s_omg_fac * af_params.dt ) );
@@ -1782,7 +1782,9 @@ DbgLv(1) << "C_ni:  Nx" << Nx << "rA0 rAn" << rA[0] << rA[Nx-1];
 
 //   bool is_zero    = false;
 //   const double z_tolerance = 1.0e-5;
-   const double z_tolerance = 1.0e-3;
+   const double z_toler_factor = 1.0e-10;
+   double z_tolerance          = tot_conc * z_toler_factor;
+
    if ( ! is_zero )
    {  // If not already into virtual-zero scans, test this one
       double rad_last = af_params.current_bottom - 0.04;
@@ -1795,7 +1797,7 @@ DbgLv(1) << "C_ni:  Nx" << Nx << "rA0 rAn" << rA[0] << rA[Nx-1];
             {
                is_zero         = true;
             }
-DbgLv(1) << "jr" << jr << "C_init.conc" << C_init.concentration[jr]
+DbgLv(1) << "jr" << jr << "C_init.conc[jr]" << C_init.concentration[jr] << "z_toler" << z_tolerance
  << "rpm" << rpm_current << "radius" << C_init.radius[jr] << "is_zero" << is_zero;
             break;
          }
@@ -1808,6 +1810,7 @@ DbgLv(1) << "jr" << jr << "C_init.conc" << C_init.concentration[jr]
    if ( is_zero )
    {  // All sim scans will be zero: skip time loop and set last scan time
       ntsteps             = 0;
+      //ntsteps             = 1;
       //ntsteps             = accel ? ntsteps : qMin( ntsteps, 3 );
       simscan.time        = last_time;
 double ss0=qRound(af_params.s[0]*1.e+15)*0.01;

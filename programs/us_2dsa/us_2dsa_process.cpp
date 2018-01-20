@@ -502,7 +502,8 @@ void US_2dsaProcess::process_final( WorkerThread2D* wthrd )
          rinvec         [ ss ] = wresult.ri_noise[ ss ];
       }
    }
-DbgLv(1) << "norm_size_get_results" << wresult.isolutes.size() << wresult.Anorm.size();
+DbgLv(1) << "FIN_FIN: get_results: wr.isol.sz" << wresult.isolutes.size()
+ << "wr.csol.sz" << wresult.csolutes.size() << nsolutes;
 
 DbgLv(1) << "FIN_FIN:    ti,ri counts" << ti_noise.count << ri_noise.count;
 
@@ -520,7 +521,9 @@ DbgLv(1) << "FIN_FIN: s20w,D20w_corr" << dset->s20w_correction
 
    if ( dset->solute_type == 0 )
    {  // Normal case of varying f/f0
-DbgLv(1) << "solute_process_value" << dset->solute_type<< nsolutes;
+DbgLv(1) << "FIN_FIN: solute_type" << dset->solute_type << "nsols" << nsolutes
+ << "maxdepth" << maxdepth << "csol size" << c_solutes.size()
+ << "csol[m]size" << c_solutes[maxdepth].size();
       for ( int cc = 0; cc < nsolutes; cc++ )
       {
          // Get standard-space solute values (20,W)
@@ -536,13 +539,14 @@ DbgLv(1) << "solute_process_value" << dset->solute_type<< nsolutes;
 
          // Complete other coefficients in standard-space
          model.calc_coefficients( mcomp );
-DbgLv(1) << " Bcc comp D" << mcomp.D << "comp ff0" << mcomp.f_f0;
+DbgLv(1) << "FIN_FIN:  Bcc comp D" << mcomp.D << "comp ff0" << mcomp.f_f0
+ << "comp vb20" << mcomp.vbar20;
 //DbgLv(1) << "norms_process_value"<< wthrd->norms [cc];
 
          // Convert to experiment-space for simulation below
          mcomp.s     *= sfactor;
          mcomp.D     *= dfactor;
-DbgLv(1) << "  Bcc 20w comp D" << mcomp.D;
+DbgLv(1) << "FIN_FIN:   Bcc 20w comp D" << mcomp.D;
 
          model.components[ cc ]  = mcomp;
       }
@@ -610,7 +614,7 @@ DbgLv(1) << "  Bcc 20w comp D" << mcomp.D;
 
          // Complete other coefficients in standard-space
          model.calc_coefficients( mcomp );
-DbgLv(1) << " Bcc comp D" << mcomp.D;
+DbgLv(1) << " Bcc 20w comp D" << mcomp.D;
 
          // Convert to experiment-space for simulation below
          sd.vbar20    = mcomp.vbar20;
@@ -619,7 +623,7 @@ DbgLv(1) << " Bcc comp D" << mcomp.D;
 
          mcomp.s     /= sd.s20w_correction;
          mcomp.D     /= sd.D20w_correction;
-DbgLv(1) << "  Bcc 20w comp D" << mcomp.D;
+DbgLv(1) << "  Bcc  comp D" << mcomp.D;
 
          model.components[ cc ]  = mcomp;
       }
@@ -630,9 +634,8 @@ DbgLv(1) << "FIN_FIN:    c0 cn" << c_solutes[maxdepth][0].c
 
    nscans           = edata->scanCount();
    npoints          = edata->pointCount();
-   double vari      = wresult.sim_vals.variances[ 0 ];
+   double vari      = 0.0;
 
-DbgLv(1) << "FIN_FIN: vari" << vari;
    US_AstfemMath::initSimData( sdata, *edata, 0.0 );
    US_AstfemMath::initSimData( rdata, *edata, 0.0 );
    US_DataIO::RawData* simdat = &wresult.sim_vals.sim_data;
@@ -643,18 +646,75 @@ DbgLv(1) << "FIN_FIN: vari" << vari;
    {
       for ( int rr = 0; rr < npoints; rr++ )
       {
+         double rval      = resids->value( ss, rr );
+         vari            += sq( rval );
+         nscans           = edata->scanCount();
          sdata.setValue( ss, rr, simdat->value( ss, rr ) );
-         rdata.setValue( ss, rr, resids->value( ss, rr ) );
+         rdata.setValue( ss, rr, rval );
       }
    }
 
-   int mms=nscans/2;
-   int mmr=npoints/2;
-
-DbgLv(1) << "FIN_FIN: edatm sdatm rdatm" << edata->value(mms,mmr)
-            << sdata.value(mms,mmr) << rdata.value(mms,mmr);
+//*DEBUG*
+US_DataIO::RawData swdat;
+US_DataIO::RawData rwdat;
+double vari2=0.0;
+if(dbg_level>0) {
+US_AstfemMath::initSimData( swdat, *edata, 0.0 );
+US_AstfemMath::initSimData( rwdat, *edata, 0.0 );
+US_Model s_model=model;
+bool stdspc=false;
+#if 0
+for (int cc=0; cc<nsolutes; cc++)
+{
+ double ssv=s_model.components[cc].s;
+ double dsv=s_model.components[cc].D;
+ s_model.components[cc].s *= dset->s20w_correction;
+ s_model.components[cc].D *= dset->D20w_correction;
+DbgLv(1) << "FIN_FIN: s D" << ssv << dsv << "s20w D20w"
+ << s_model.components[cc].s << s_model.components[cc].D;
+}
+stdspc=true;
+#endif
+DbgLv(1) << "FIN_FIN: std space:" << stdspc;
+int lc=nsolutes-1;
+DbgLv(1) << "FIN_FIN:  0) s D c"
+ << s_model.components[0].s << s_model.components[0].D
+ << s_model.components[0].signal_concentration;
+DbgLv(1) << "FIN_FIN:  n) s D c"
+ << s_model.components[lc].s << s_model.components[lc].D
+ << s_model.components[lc].signal_concentration;
+dset->simparams.debug();
+US_Astfem_RSA astfem_rsa2( s_model, dset->simparams );
+astfem_rsa2.calculate( swdat );
+bool have_ri=((noisflag&1)!=0);
+bool have_ti=((noisflag&2)!=0);
+for (int ss=0; ss<nscans; ss++)
+{
+ double rnoi=have_ri?ri_noise.values[ss]:0.0;
+ for (int rr=0; rr<npoints; rr++)
+ {
+  double tnoi=have_ti?ti_noise.values[rr]:0.0;
+  double edvl=edata->value(ss,rr);
+  double sval=swdat.value(ss,rr);
+  double rval=edvl-sval-tnoi-rnoi;
+  rwdat.setValue(ss,rr,rval);
+  vari2 += sq( rval );
+ }
+}
+vari2 /= (double)( nscans * npoints );
+}
+//*DEBUG*
+int mms=nscans/2;
+int mmr=npoints/2;
+DbgLv(1) << "FIN_FIN: edatm" << edata->value(mms,mmr)
+ << "sdatm" << sdata.value(mms,mmr) << swdat.value(mms,mmr)
+ << "rdatm" << rdata.value(mms,mmr) << rwdat.value(mms,mmr);
 
    // set variance and communicate to control through residual's scan 0
+   vari            /= (double)( nscans * npoints );
+double rmsd2=sqrt(vari2);
+DbgLv(1) << "FIN_FIN: vari" << vari << "vari2" << vari2 << "rmsd2" << rmsd2
+ << "s20w,D20w_corr" << dset->s20w_correction << dset->D20w_correction;
    itvaris   << vari;
    ical_sols << c_solutes[ maxdepth ];
    US_DataIO::Scan* rscan0 = &rdata.scanData[ 0 ];
@@ -667,11 +727,11 @@ DbgLv(1) << "FIN_FIN: vari riter miter menisc" << rscan0->delta_r
             << rscan0->rpm << rscan0->seconds << rscan0->plateau;
 
    // determine elapsed time
-   int ktimes = ( timer.elapsed() + 500 ) / 1000;
-   int ktimeh = ktimes / 3600;
-   int ktimem = ( ktimes - ktimeh * 3600 ) / 60;
+   int ktimes  = ( timer.elapsed() + 500 ) / 1000;
+   int ktimeh  = ktimes / 3600;
+   int ktimem  = ( ktimes - ktimeh * 3600 ) / 60;
    double bvol = dsets[0]->simparams.band_volume;
-   bvol=dsets[0]->simparams.band_forming?bvol:0.0;
+   bvol        = dsets[0]->simparams.band_forming ? bvol : 0.0;
 
 DbgLv(1) << "done: vari bvol" << vari << bvol
             << "slun klun ngr" << slolim << suplim << nssteps << klolim << kuplim
@@ -1036,6 +1096,7 @@ DbgLv(1) << pmsg;
       }
    }
 
+   thrx         = wkstates.indexOf( READY );
    if ( kstsksv == kstask )
    {  // No new tasks got started:  what's going on?
 DbgLv(1) << "THR_FIN: *NONEW* jqempty" << job_queue.isEmpty()
@@ -1043,6 +1104,10 @@ DbgLv(1) << "THR_FIN: *NONEW* jqempty" << job_queue.isEmpty()
       if ( depth < maxdepth )
       {  // If done at depth less than max, see need to queue new task
          int dd       = depth + 1;
+         if( ( dd + 1 ) > c_solutes.size() ) c_solutes << QVector< US_Solute >();
+DbgLv(1) << "THR_FIN:  dd" << dd << "jad(dd)" << jobs_at_depth(dd)
+ << "csize" << c_solutes[dd].size();
+
          if ( jobs_at_depth( dd ) == 0  &&  c_solutes[ dd ].size() > 0 )
          {  // queue a task to handle remaining solutes at next depth
             depth        = dd;
@@ -1062,9 +1127,32 @@ DbgLv(1) << "THR_FIN:    QT: /NONEW/taskx depth solsz" << taskx << depth
 DbgLv(1) << "THR_FIN:    QT: /NONEW/ thrx" << thrx;
             kstask++;                 // bump count of started worker threads
          }
-      }
-   }
+         dd++;
+         if( ( dd + 1 ) > c_solutes.size() ) c_solutes << QVector< US_Solute >();
+DbgLv(1) << "THR_FIN:  dd2" << dd << "jad(dd)" << jobs_at_depth(dd)
+ << "csize" << c_solutes[dd].size();
 
+         if ( jobs_at_depth( dd ) == 0  &&  c_solutes[ dd ].size() > 0 )
+         {  // queue a task to handle remaining solutes at next depth plus one
+            depth        = dd;
+            WorkPacket2D wtask = wresult;
+            int taskx    = tkdepths.size();
+DbgLv(1) << "THR_FIN:    QT: /NONEW++/taskx depth solsz" << taskx << depth
+ << c_solutes[dd].size();
+            queue_task( wtask, slolim, klolim, taskx, depth, jnois,
+                        c_solutes[ depth ] );
+
+            c_solutes[ depth ].clear();
+
+            wtask        = next_job();
+            thrx         = wkstates.indexOf( READY );
+
+            submit_job( wtask, thrx );
+DbgLv(1) << "THR_FIN:    QT: /NONEW++/ thrx" << thrx;
+            kstask++;                 // bump count of started worker threads
+         }
+      }  // END: ( depth < maxdepth )
+   } // END: ( kstsksv == kstask )
 }
 
 // Build a task and add it to the queue
