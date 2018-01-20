@@ -682,7 +682,7 @@ DbgLv(0) << "rank" << my_rank << ": ee" << ee << "   tmst UPLOADED";
          // Build simulation speed profile from time state
          ds->simparams.simSpeedsFromTimeState( ds->tmst_file );
          // Build speed steps from simulation speed profile
-         ds->simparams.speedstepsFromSSProf();
+         ds->simparams.speedstepsFromSSprof();
       }
 DbgLv(0) << "rank" << my_rank << ": ee" << ee << "tmst_file" << ds->tmst_file
  << "ssp count" << ds->simparams.sim_speed_prof.count();
