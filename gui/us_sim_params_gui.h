@@ -28,6 +28,7 @@ class US_GUI_EXTERN US_SimParamsGui : public US_WidgetsDialog
       US_Help       showhelp;
                    
       int           current_speed_step;
+      int           dbg_level;
                    
       QComboBox*    cmb_speeds;
       QComboBox*    cmb_moving;

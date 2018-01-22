@@ -99,7 +99,6 @@ class US_Astfem_Sim : public US_Widgets
 
       US_SimulationParameters          simparams;
       US_AstfemMath::AstFemParameters  af_params;
-      US_SimulationParameters          working_simparams;
       QVector<US_DataIO::RawData>      sim_datas;
       US_DataIO::RawData               sim_data_all;
 
