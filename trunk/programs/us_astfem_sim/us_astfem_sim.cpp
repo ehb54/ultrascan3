@@ -223,6 +223,8 @@ void US_Astfem_Sim::init_simparams( void )
    sp.delay_hours       = 0;    // Initialized time for accelerating from current rotor speed to next rotor speed in hours
    sp.delay_minutes     = 20.0; // Initialized time for accelerating from current rotor speed to next rotor speed in minutes
    sp.rotorspeed        = (int)rpm;  // Initialized rotor speed
+   sp.avg_speed         = rpm;       // Initialized average speed
+   sp.set_speed         = (int)rpm;  // Initialized set speed
    sp.scans             = 30;        // Initialized number of scans
    sp.acceleration      = 400;       // Acceleration speed of the rotor
    sp.acceleration_flag = true;      // Flag used for acceleration zone
@@ -377,14 +379,12 @@ DbgLv(1) << "simparams_assign" << simparams.rotorcoeffs[0] << simparams.rotorcoe
 
 void US_Astfem_Sim::sim_parameters( void )
 {
-   working_simparams          = simparams;
-   working_simparams.meniscus = meniscus_ar;
-   working_simparams.bottom   = simparams.bottom_position;
-DbgLv(1) << "SimPar:MAIN:simp: nspeed" << working_simparams.speed_step.count()
- << "speed0" << working_simparams.speed_step[0].rotorspeed;
+   simparams.meniscus = meniscus_ar;
+   simparams.bottom   = simparams.bottom_position;
+DbgLv(1) << "SimPar:MAIN:simp: nspeed" << simparams.speed_step.count()
+ << "speed0" << simparams.speed_step[0].rotorspeed;
 
-   US_SimParamsGui* dialog =
-      new US_SimParamsGui( working_simparams );
+   US_SimParamsGui* dialog = new US_SimParamsGui( simparams );
 
    connect( dialog, SIGNAL( complete() ), SLOT( set_parameters() ) );
 
@@ -393,12 +393,13 @@ DbgLv(1) << "SimPar:MAIN:simp: nspeed" << working_simparams.speed_step.count()
 
 void US_Astfem_Sim::set_parameters( void )
 {
-   simparams     = working_simparams;  // Newly set simulation parameters
    meniscus_ar   = simparams.meniscus; // Meniscus at rest
 
    pb_start  ->setEnabled( true );
 DbgLv(1) << "SimPar:MAIN:SetP:  nspeed" << simparams.speed_step.count()
  << "speed0" << simparams.speed_step[0].rotorspeed << "meniscus_ar" << meniscus_ar;
+simparams.debug();
+DbgLv(1) << "==SimPar:MAIN:SetP";
 
    // Initialize all-speed raw data
    sim_data_all.xvalues .clear();

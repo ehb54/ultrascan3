@@ -6,6 +6,8 @@
 #define setMinimum(a)      setMinValue(a)
 #define setMaximum(a)      setMaxValue(a)
 #endif
+//!< level-conditioned debug print
+#define DbgLv(a) if(dbg_level>=a)qDebug()
 
 US_SimParamsGui::US_SimParamsGui(
       US_SimulationParameters& params )
@@ -21,7 +23,8 @@ US_SimParamsGui::US_SimParamsGui(
    main->setContentsMargins ( 2, 2, 2, 2 );
    main->setSpacing( 2 );
 
-   int row = 0;
+   dbg_level   = US_Settings::us_debug();
+   int row     = 0;
 
    QLabel* lb_info = us_banner( tr( "Simulation Run Parameters Setup" ) );
    main->addWidget( lb_info, row++, 0, 1, 8 );
@@ -404,6 +407,16 @@ US_SimParamsGui::US_SimParamsGui(
 
 void US_SimParamsGui::accepted( void )
 {
+DbgLv(1) << "SPG: accepted==";
+   for ( int jj = 0; jj < simparams.speed_step.count(); jj++ )
+   {
+      US_SimulationParameters::SpeedProfile* ss   = &simparams.speed_step[ jj ];
+      ss->avg_speed  = (double)ss->rotorspeed;
+      ss->set_speed  = ss->rotorspeed;
+   }
+if(dbg_level>0)
+ simparams.debug();
+DbgLv(1) << "SPG: ==accepted";
    emit complete();
    accept();
 }
@@ -425,6 +438,9 @@ void US_SimParamsGui::backup_parms( void )
       ssbu->delay_hours       = ss->delay_hours;
       ssbu->delay_minutes     = ss->delay_minutes;
       ssbu->rotorspeed        = ss->rotorspeed;
+      ssbu->avg_speed         = ss->avg_speed;
+      ssbu->set_speed         = ss->set_speed;
+      ssbu->speed_stddev      = ss->speed_stddev;
       ssbu->scans             = ss->scans;
       ssbu->acceleration      = ss->acceleration;
       ssbu->acceleration_flag = ss->acceleration_flag;
@@ -456,6 +472,9 @@ void US_SimParamsGui::revert( void )
       ss->delay_hours       = ssbu->delay_hours;
       ss->delay_minutes     = ssbu->delay_minutes;
       ss->rotorspeed        = ssbu->rotorspeed;
+      ss->avg_speed         = ssbu->avg_speed;
+      ss->set_speed         = ssbu->set_speed;
+      ss->speed_stddev      = ssbu->speed_stddev;
       ss->scans             = ssbu->scans;
       ss->acceleration      = ssbu->acceleration;
       ss->acceleration_flag = ssbu->acceleration_flag;
@@ -470,6 +489,10 @@ void US_SimParamsGui::revert( void )
    simparams.tinoise           = simparams_backup.tinoise;
    simparams.rinoise           = simparams_backup.rinoise;
    simparams.bottom_position   = simparams_backup.bottom_position;
+DbgLv(1) << "SPG: revert==";
+if(dbg_level>0)
+ simparams.debug();
+DbgLv(1) << "SPG: ==revert";
 
    reject();
 }
@@ -499,6 +522,9 @@ void US_SimParamsGui::update_speeds( double value )
       ss->delay_hours       = ss_old->delay_hours;
       ss->delay_minutes     = ss_old->delay_minutes;
       ss->rotorspeed        = ss_old->rotorspeed;
+      ss->avg_speed         = ss_old->avg_speed;
+      ss->set_speed         = ss_old->set_speed;
+      ss->speed_stddev      = ss_old->speed_stddev;
       ss->scans             = ss_old->scans;
       ss->acceleration      = ss_old->acceleration;
       ss->acceleration_flag = ss_old->acceleration_flag;
@@ -668,7 +694,10 @@ void US_SimParamsGui::update_delay_mins( double minutes )
 void US_SimParamsGui::update_rotorspeed( double speed )
 {
    US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
-   sp->rotorspeed = (long) speed;
+   sp->rotorspeed   = (int) speed;
+   sp->avg_speed    = speed;
+   sp->set_speed    = sp->rotorspeed;
+   sp->speed_stddev = 0.0;
    update_combobox();
  
    // If there is acceleration we need to set the scan delay

@@ -386,10 +386,7 @@ void US_MwlSpeciesSim::change_buffer( US_Buffer b )
 void US_MwlSpeciesSim::sim_params( void )
 {
 DbgLv(1) << "SLOT: sim_params";
-   working_simparams = simparams;
-
-   US_SimParamsGui* dialog = 
-      new US_SimParamsGui( working_simparams );
+   US_SimParamsGui* dialog = new US_SimParamsGui( simparams );
    
    connect( dialog, SIGNAL( complete() ), SLOT( set_parameters() ) );
 
@@ -400,7 +397,6 @@ DbgLv(1) << "SLOT: sim_params";
 void US_MwlSpeciesSim::set_parameters( void )
 {
    double rad_precis          = simparams.radial_resolution * 0.1;
-   simparams                  = working_simparams;
    simparams.meniscus         = qRound( simparams.meniscus
                                 / rad_precis ) * rad_precis;
    simparams.bottom_position  = qRound( simparams.bottom_position
@@ -667,6 +663,8 @@ void US_MwlSpeciesSim::init_simparams( void )
    sp.delay_hours       = 0;        // Initialized accel time in hours
    sp.delay_minutes     = 20.0;     // Initialized accel time in minutes
    sp.rotorspeed        = (int)rpm; // Initialized rotor speed
+   sp.avg_speed         = rpm;      // Initialized average speed
+   sp.set_speed         = (int)rpm; // Initialized set speed
    sp.scans             = 100;      // Initialized number of scans
    sp.acceleration      = 400;      // Acceleration speed of the rotor
    sp.acceleration_flag = true;     // Flag used for acceleration zone
@@ -688,7 +686,6 @@ void US_MwlSpeciesSim::init_simparams( void )
    simparams.band_volume       = 0.015;
    simparams.rotorCalID        = rotor_calibr;
    simparams.band_forming      = false;
-   working_simparams           = simparams;
 
    set_parameters();
 }

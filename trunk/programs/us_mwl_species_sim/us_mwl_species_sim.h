@@ -59,7 +59,6 @@ class US_MwlSpeciesSim : public US_Widgets
 
       US_DataIO::RawData            rdata0;
       US_SimulationParameters       simparams;
-      US_SimulationParameters       working_simparams;
       US_Rotor::Rotor               rotor;
       US_Rotor::RotorCalibration    rotor_calib;
       US_Buffer                     buffer;
