@@ -3325,6 +3325,7 @@ savePointFiles(ResultsInterior & resultsInterior,
 ///
 void
 printTime(std::string const & label) {
+#if !defined( Q_OS_WIN )
   const int bufferSize = 256;
 
   time_t rawtime;
@@ -3337,6 +3338,7 @@ printTime(std::string const & label) {
   strftime(buffer, bufferSize, "%F %T", timeinfo);
   
   zeno_cxx_fout->ofs << label << buffer << std::endl;
+#endif
 }
 
 /// Prints the current RAM used by the process prefixed by the given label.
