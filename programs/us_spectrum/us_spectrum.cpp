@@ -33,8 +33,7 @@ US_Spectrum::US_Spectrum() : US_Widgets()
    pb_load_basis = us_pushbutton(tr("Add Basis Spectrum"));
    pb_load_basis->setEnabled(false);
    connect(pb_load_basis, SIGNAL(clicked()), SLOT(load_basis()));
-
-   
+     
    pb_delete = us_pushbutton(tr("Delete Current Basis Scan"));
    connect(pb_delete, SIGNAL(clicked()), SLOT(deleteCurrent()));
    pb_delete->hide();  // Spurious 
@@ -60,6 +59,8 @@ US_Spectrum::US_Spectrum() : US_Widgets()
 
    pb_load_fit = us_pushbutton(tr("Load Fit"));
    connect(pb_load_fit, SIGNAL(clicked()), SLOT(load()));
+   pb_load_fit->hide();
+   
    pb_save= us_pushbutton(tr("Save Fit"));
    connect(pb_save, SIGNAL(clicked()), SLOT(save()));
    pb_load_fit->setEnabled(false);
@@ -77,7 +78,7 @@ US_Spectrum::US_Spectrum() : US_Widgets()
    lbl_wvlinfo = us_banner(tr("Target/Basis Spectra Information"));
    lbl_correlation = us_banner(tr("Basis Vectors Correlation"));
    lbl_fit = us_banner(tr("Perform Fit"));
-   lbl_load_save = us_banner(tr("Load/Save Fit"));
+   lbl_load_save = us_banner(tr("Save Fitting Results"));
    lbl_rmsd = us_label(tr("RMSD: "));
    lbl_angle = us_label(tr("Angle (Deg.): "));
    le_rmsd = us_lineedit("", 1, true);
@@ -158,10 +159,13 @@ US_Spectrum::US_Spectrum() : US_Widgets()
 
    QGridLayout* subgl2;
    subgl2 = new QGridLayout();
-   subgl2->addWidget(pb_load_fit, 0, 0);
-   subgl2->addWidget(pb_save, 0, 1);
+   // subgl2->addWidget(pb_load_fit, 0, 0);
+   // subgl2->addWidget(pb_save, 0, 1);
+   // subgl2->addWidget(pb_help, 1, 0);
+   // subgl2->addWidget(pb_close, 1, 1);
+   subgl2->addWidget(pb_save, 0, 0);
    subgl2->addWidget(pb_help, 1, 0);
-   subgl2->addWidget(pb_close, 1, 1);
+   subgl2->addWidget(pb_close, 2, 0); 
 
    QGridLayout* gl1;
    gl1 = new QGridLayout();
@@ -314,18 +318,25 @@ void US_Spectrum::load_target()
       lw_target->clear();
       w_target.extinction.clear();
       w_target.wvl.clear();
+      w_target.filenameBasis.clear();
       w_target.matchingCurve->detach();
+      pb_load_basis->setEnabled(false);
+      resetBasis();
    }
    if(dialog.exec())
    {
       fileName = dialog.selectedFiles().first();
+      qDebug() << "filename: " << fileName;
       load_spectra(w_target, fileName);
       QFileInfo fi;
       fi.setFile(fileName);
       w_target.filenameBasis = fi.baseName();
+      //lw_target->insertItem(0, w_target.filenameBasis);
    }
    
    plot_target();
+   if ( lw_target->count() > 0 )
+     pb_load_basis->setEnabled(true);
 }
 
 void US_Spectrum:: plot_target()
@@ -357,8 +368,9 @@ void US_Spectrum:: plot_target()
    c->setSamples( xx, yy, nn );
    w_target.matchingCurve = c;
    data_plot->replot();
-   lw_target->insertItem(0, w_target.filenameBasis);
-   pb_load_basis->setEnabled(true);
+   if( !w_target.filenameBasis.isEmpty() )
+     lw_target->insertItem(0, w_target.filenameBasis);
+   //pb_load_basis->setEnabled(true);
 }
 
 //read spectrum
@@ -605,7 +617,8 @@ void US_Spectrum::fit()
 
    for(unsigned int j = 0; j < points; j++)
    {
-      w_solution.extinction.push_back(y[j]);
+     w_solution.wvl.push_back(x[j]);
+     w_solution.extinction.push_back(y[j]);
    }
    w_solution.lambda_min = w_target.lambda_min;
    w_solution.lambda_max = w_target.lambda_max;
@@ -726,7 +739,8 @@ void US_Spectrum::resetBasis()
    pb_overlap->setEnabled(false);
    pb_fit->setEnabled(false);
    pb_find_angles->setEnabled(false);
-   pb_reset_basis->setEnabled(false);   
+   pb_reset_basis->setEnabled(false);
+   pb_save->setEnabled(false);
 }
 
 void US_Spectrum::overlap()
@@ -937,7 +951,7 @@ void US_Spectrum::findAngles()
 void US_Spectrum::save()
 {
   //QString filename = QFileDialog::getSaveFileName(this, "Save File", "/home/minji/ultrascan/results", "*.spectrum_fit");
-  QString filename = QFileDialog::getSaveFileName(this, "Save File", US_Settings::resultDir(), "*.spectrum_fit");
+  QString filename = QFileDialog::getSaveFileName(this, "Save File", US_Settings::resultDir(), "*.spectrum_fit.dat");
   if(filename.isEmpty())
       return;
 
@@ -947,8 +961,21 @@ void US_Spectrum::save()
       filename = filename.left(1 + filename.lastIndexOf(".", -1));
    }
    
-   filename = filename + ".spectrum_fit";
+   filename = filename + ".spectrum_fit.dat";
    QFile f (filename);
+   if(f.open(QIODevice::WriteOnly | QIODevice::Text))
+   {
+      QTextStream ts(&f);
+      ts << tr("\"Wavelength\"\t\"Extinction\"\n");
+      for(int i = 0; i < w_solution.wvl.size(); i++)
+      {
+         ts << w_solution.wvl[i] << "\t";
+         ts << w_solution.extinction[i] << "\n";
+      }
+      f.close();
+   }
+
+   /*
    if(f.open(QIODevice::WriteOnly))
    {
       QDataStream ds(&f);
@@ -988,6 +1015,7 @@ void US_Spectrum::save()
       }
       f.close();
    }
+   */
 }
    
 void US_Spectrum::load()
