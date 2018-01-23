@@ -37,13 +37,13 @@ small angle solution scattering data, which might be in other units like
 nanometers. The field sets the exponential relating the units to meters (default:
 <b>-10</b>).
 <p>The <i>Solvent type and conditions:</i> box allows the definition of the solvent conditions
-to which the hydrodynamic computations are referred. The default conditions (<b>Water @ 20 °C</b>)
+to which the hydrodynamic computations are referred. The default conditions (<b>Water @ 20 &deg;C</b>)
 can be automatically set by selecting the <i>Set defaults</i> checkbox. Otherwise, enter a text
 description of the solvent in the <b><i>Solvent</i></b> field (default: <b>Water</b>) and its acronym (max 3
-characters; default: <b>w</b>) in the <b><i>Solvent acronym</i></b> field. The temperature (°C) can be set in the
-<b><i>Temperature (°C):</i></b> field, which will also affect the value of the partial specific volume <i>vbar</i>,
-according to the equation:<p> <i>vbar(T °C)</i> = <i>vbar(ent)</i> + [4.25 x 10<sup>-4</sup> (<i>T</i> - <i>T(ent)</i>)]<p>
-where <i>vbar(ent)</i> is either the <i>vbar</i> value calculated by the program at <i>T(ent)</i>=20 °C, or the manually
+characters; default: <b>w</b>) in the <b><i>Solvent acronym</i></b> field. The temperature (&deg;C) can be set in the
+<b><i>Temperature (&deg;C):</i></b> field, which will also affect the value of the partial specific volume <i>vbar</i>,
+according to the equation:<p> <i>vbar(T &deg;C)</i> = <i>vbar(ent)</i> + [4.25 x 10<sup>-4</sup> (<i>T</i> - <i>T(ent)</i>)]<p>
+where <i>vbar(ent)</i> is either the <i>vbar</i> value calculated by the program at <i>T(ent)</i>=20 &deg;C, or the manually
 entered <i>vbar</i> with its associated <i>T(ent)</i>. See <a href=somo_misc.html> here</a> for how to control the <i>vbar</i>
 parameter. <br> The solvent viscosity (in centipoises, cP) and solvent density (in g/ml) values should be then entered in the <b><i>Solvent viscosity (cP)</i></b> (default: <b>1.001940 cP</b>) and <b><i>Solvent density (g/ml)</i></b> (default: <b>0.998234 g/ml</b>) fields, respectively.<p>
 <span style="color:#CC0000">Note that these settings will be also passed to the <b><i>ZENO</i></b> computational method</span>.<p>

@@ -49,4 +49,3 @@ US-SOMO~(main window)
   Reset to default configuration
   Advanced configuration
   System configuration~(set default program paths, fonts, button and background colors)
-  Administrator~(set an administrator password)

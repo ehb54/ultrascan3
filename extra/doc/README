@@ -1,2 +1,8 @@
+fix_high_ascii_in_manual.pl searches and fixes high ascii characters and replaces with &htmlencoding;
+puts the results in new/
+run from the doc directory somo/doc/manual/somo/
+
 These files require perl >= 5.17 &  CPAN module GraphViz2 installed
 The provide a way to produce a graphic layout of window interaction
+
+e.g.: for i in *.txt; { perl tree.pl $i png; }

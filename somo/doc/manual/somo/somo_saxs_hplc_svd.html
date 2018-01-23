@@ -26,12 +26,12 @@ SOMO HPLC-SAXS Module SVD Utility:</h2></center>
 
 
 This utlity was developed to perform single-value decomposition (SVD; e.g., Williamson et al.,  Biophys J. 94, 4906-4923, 2008) on a set of <i>I(q)</i> vs. <i>q</i> data, which can come from a HPLC-SAXS experiment, or from any other SAS type of data, like a concentration series. <p>
-A single SAS experimental dataset is typically represented as <i>I(q)</i>, where <i>q</i> is a grid of  points. A sequence  of <i>n I(q)<sub>t(j)</sub></i> on the same <i>q</i>-grid can be assembled into a <i>m</i> &times; <i>n</i> matrix <i><b>I</b></i> = [<i><b>I</b><sub>ij</sub></i>] = [<i>I(q)<sub>t(1)</sub></i>, <i>I(q)<sub>t(2)</sub></i>, ..., <i>I(q)<sub>t(n)</sub></i>]. Each column of <i><b>I</b></i> contains an <i>I(q)</i> curve for a specific <i>t</i> and each row contains an <i>I(t)</i> curve for a specific <i>q</i>. If standard deviations of the experimental data are available, these can be analogously placed in a matrix <i><b>S</b></i>. If a synchronized concentration dataset <i>C(t)</i> is available, it can be added to <i><b>I</b></i> as an additional row.<p>
+A single SAS experimental dataset is typically represented as <i>I(q)</i>, where <i>q</i> is a grid of  points. A sequence  of <i>n I(q)<sub>t(j)</sub></i> on the same <i>q</i>-grid can be assembled into a <i>m</i>&nbsp;&times;&nbsp;<i>n</i> matrix <i><b>I</b></i>&nbsp;=&nbsp;[<i><b>I</b><sub>ij</sub></i>]&nbsp;= [<i>I(q)<sub>t(1)</sub></i>, <i>I(q)<sub>t(2)</sub></i>, ..., <i>I(q)<sub>t(n)</sub></i>]. Each column of <i><b>I</b></i> contains an <i>I(q)</i> curve for a specific <i>t</i> and each row contains an <i>I(t)</i> curve for a specific <i>q</i>. If standard deviations of the experimental data are available, these can be analogously placed in a matrix <i><b>S</b></i>. If a synchronized concentration dataset <i>C(t)</i> is available, it can be added to <i><b>I</b></i> as an additional row.<p>
 In a SVD analysis, if <i><b>I</b></i> is the matrix containing the original data, then:<p>
 
 <i><b>I</i></b> = <b><i>USV<sup>T</sup></i></b> <p>
 
-where <i><b>U</b></i> is an orthogonal <i>m</i> &times; <i>m</i> matrix, <i><b>S</i></b> is a diagonal <i>m</i> &times; <i>n</i> matrix, and <i><b>V<sup>T</sup></i></b> is an orthogonal <i>n</i> &times; <i>n</i> matrix. The elements of the diagonal of <i><b>S</i></b> are the singular values. Reconstructing an approximation of the matrix <i><b>I</i></b> proceeds by setting some diagonal elements of <i><b>S</i></b> to zero, forming <i><b>S'</i></b> and performing the multiplication<p>
+where <i><b>U</b></i> is an orthogonal <i>m</i>&nbsp;&times;&nbsp;<i>m</i> matrix, <i><b>S</i></b> is a diagonal <i>m</i>&nbsp;&times;&nbsp;<i>n</i> matrix, and <i><b>V<sup>T</sup></i></b> is an orthogonal <i>n</i>&nbsp;&times;&nbsp;<i>n</i> matrix. The elements of the diagonal of <i><b>S</i></b> are the singular values. Reconstructing an approximation of the matrix <i><b>I</i></b> proceeds by setting some diagonal elements of <i><b>S</i></b> to zero, forming <i><b>S'</i></b> and performing the multiplication<p>
 
 <i><b>I'</i></b> = <b><i>US'V<sup>T</sup></i></b> <p>
 
@@ -62,7 +62,7 @@ When a single data set or sub-selection of individual <i>I(q)</i> curves from a 
 <p>
 
 
-Pressing <b><i>Compute SVD</i></b> will compute the singular value decomposition (Lawson &amp; Hanson,  Solving least squares problems. SIAM, Philadelphia, 1995). The singular values (SVs) will be sorted in descending order and placed on the screen in the <i>Singular value list</i> window.<p>
+Pressing <b><i>Compute SVD</i></b> will compute the singular value decomposition (Lawson &amp; Hanson, &nbsp;Solving least squares problems. SIAM, Philadelphia, 1995). The singular values (SVs) will be sorted in descending order and placed on the screen in the <i>Singular value list</i> window.<p>
 
 <b><i>Plot SVs</i></b> will plot the SVs in the plot area, by default in a linear vs. log scale (see above).<p>
 
