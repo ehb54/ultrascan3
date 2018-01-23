@@ -1,0 +1,88 @@
+<*project
+      version = 4 civer = "Free v4.14.5" winver = "2.8/6.1.7600" > 
+   <output> c:\setups</>
+   <exename> ultrascan-9.9-1953alpha-win32-setup.exe</>
+   <digitsign> </>
+   <appname> Ultrascan</>
+   <password> </>
+   <addlang> </>
+   <icon> Default</>
+   <selfextr> 1</>
+   <voltype> nolimit</>
+   <volsize> </>
+   <volpattern> disk%i.pak</>
+   <load> </>
+   <loadtime> 1000</>
+   <checktype> admin</>
+   <chkname> </>
+   <chkmsg> </>
+   <dlgfont> Verdana,8</>
+   <lang> English</>
+   <theme> Color</>
+   <iface> leftlogo</>
+   <leftlogo> </>
+   <logo> </>
+   <vb> </>
+   <dao> </>
+   <background> 0</>
+   <dlgwelcome> 0</>
+   <dlgreadme> </>
+   <dlglic> C:\dist\LICENSE</>
+   <dlgcustpath> </>
+   <dlgenfpath> 0</>
+   <dlgsavepath> 0</>
+   <dlgautoprog> 1</>
+   <dlgfinish> 1</>
+   <comptype> defnorm</>
+   <solid> 1</>
+   <srcfolder> C:\dist</>
+   <ifexist> over</>
+   <runafter> </>
+   <runconfirm> 1</>
+   <uninclude> 1</>
+   <unicon> Uninstall</>
+   <unshortcut> 0</>
+   <unrun> </>
+   <silent> 0</>
+   <unfeed> </>
+   <unautoclose> 1</>
+   <unfinish> 1</>
+   <bl> My Demo</>
+   <blurl> </>
+   <bghead> </>
+   <bgfoot> </> 
+   <bgback> </>
+   <files listview >
+      
+   </files>
+   <runx listview >
+      
+   </runx>
+   <registry listview >
+      
+   </registry>
+   <shcut listview >
+      <_><shpath>comdesk</><shname>Ultrascan</><tarpath>inst</><tarname>bin/us.exe</><cmdline></><workpath>custom</><workcust>#setuppath#\bin</><icon></></>
+<_><shpath>comdesk</><shname>US-Solution Modeler</><tarpath>inst</><tarname>bin/us_hydrodyn.exe</><cmdline></><workpath>custom</><workcust>#setuppath#\bin</><icon>#setuppath#\doc\manual\somo_icon_128.ico</></>
+
+   </shcut>
+   <ini listview >
+      
+   </ini>
+   <copy listview >
+      
+   </copy>
+   <activex listview >
+      
+   </activex>
+   <font listview >
+      
+   </font>
+   <ext listview >
+      
+   </ext>
+   <mreg listview >
+      
+   </mreg>
+   <macros> Pathadd=</>
+</project>
