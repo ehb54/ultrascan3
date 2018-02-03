@@ -378,6 +378,15 @@ US_SimParamsGui::US_SimParamsGui(
    
    main->addWidget( cmb_moving, row++, 4, 1, 4 );
 
+   // Status box
+   le_status       = us_lineedit();
+   us_setReadOnly( le_status, true );
+   QPalette stpal  = le_status->palette();
+   stpal     .setColor( QPalette::Text, Qt::blue );
+   le_status->setPalette( stpal );
+   main->addWidget( le_status,  row++, 0, 1, 8 );
+   le_status->setText( tr( "Settings are the default ones." ) );
+
    // Button bar
    QBoxLayout* buttons = new QHBoxLayout();
 
@@ -554,6 +563,7 @@ void US_SimParamsGui::update_combobox( void )
                         SLOT  ( select_speed_profile( int ) ) );
    
    cmb_speeds->setCurrentIndex( current_speed_step );
+   report_mods();
 }
 
 void US_SimParamsGui::update_speed_profile( double profile )
@@ -668,6 +678,7 @@ void US_SimParamsGui::update_duration_hours( double hours )
    sp->duration_hours   = (int)hours;
    check_delay();
    update_combobox();
+   report_mods();
 }
 
 void US_SimParamsGui::update_duration_mins( double minutes )
@@ -676,12 +687,14 @@ void US_SimParamsGui::update_duration_mins( double minutes )
    sp->duration_minutes = minutes;
    check_delay();
    update_combobox();
+   report_mods();
 }
 
 void US_SimParamsGui::update_delay_hours( double hours )
 {
    US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
    sp->delay_hours   = (int) hours;
+   report_mods();
 }
 
 void US_SimParamsGui::update_delay_mins( double minutes )
@@ -689,6 +702,7 @@ void US_SimParamsGui::update_delay_mins( double minutes )
    US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
    sp->delay_minutes = minutes;
    check_delay();
+   report_mods();
 }
 
 void US_SimParamsGui::update_rotorspeed( double speed )
@@ -699,6 +713,7 @@ void US_SimParamsGui::update_rotorspeed( double speed )
    sp->set_speed    = sp->rotorspeed;
    sp->speed_stddev = 0.0;
    update_combobox();
+   report_mods();
  
    // If there is acceleration we need to set the scan delay
    // minimum to the time it takes to accelerate:
@@ -717,6 +732,7 @@ void US_SimParamsGui::acceleration_flag( void )
    // If there is acceleration we need to set the scan delay
    // minimum to the time it takes to accelerate:
    if ( state ) check_delay();
+   report_mods();
 }
 
 void US_SimParamsGui::update_acceleration( double accel )
@@ -727,12 +743,14 @@ void US_SimParamsGui::update_acceleration( double accel )
    // If there is acceleration we need to set the scan delay
    // minimum to the time it takes to accelerate:
    if ( cb_acceleration_flag->isChecked() ) check_delay();
+   report_mods();
 }
 
 void US_SimParamsGui::update_scans( double scans )
 {
    US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
    sp->scans = (int)scans;
+   report_mods();
 }
 
 void US_SimParamsGui::save( void )
@@ -797,6 +815,7 @@ void US_SimParamsGui::save( void )
             tr( "Please note:\n\n"
                 "The Simulation Profile was successfully saved to:\n\n" ) + 
                 fn );
+      le_status->setText( tr( "Settings have been saved." ) );
    }
    else
    {
@@ -818,7 +837,12 @@ void US_SimParamsGui::load( void )
              "All files (*)" ) );
 
    if ( fn.isEmpty() ) return;
-  
+
+   // Save rotor parameters as they are upon entry
+   QString sv_rcal   = simparams.rotorCalID;
+   double sv_rcoef1  = simparams.rotorcoeffs[ 0 ];
+   double sv_rcoef2  = simparams.rotorcoeffs[ 1 ];
+
    if ( simparams.load_simparms( fn ) == 0 )
    {
       current_speed_step = 0;
@@ -879,11 +903,13 @@ void US_SimParamsGui::load( void )
 
       reconnect_all();
 
-      QMessageBox::information( this, 
-            tr( "UltraScan Information" ),
-            tr( "Please note:\n\n"
-                "The Simulation Profile was successfully loaded from:\n\n" ) + 
-                fn );
+      // Override loaded rotor parameters with the settings at entry
+      simparams.rotorCalID       = sv_rcal;
+      simparams.rotorcoeffs[ 0 ] = sv_rcoef1;
+      simparams.rotorcoeffs[ 1 ] = sv_rcoef2;
+
+      le_status->setText( tr( "Settings were loaded from:  " )
+                          + fn );
    }
 
    else
@@ -982,6 +1008,85 @@ void US_SimParamsGui::update_mesh( int mesh )
                    "could not be opened." ) );
       }
    }
+   report_mods();
+}
+
+void US_SimParamsGui::update_lamella       ( double lamella )
+{
+   simparams.band_volume = lamella / 1000.0;
+   report_mods();
+}
+
+void US_SimParamsGui::update_meniscus      ( double meniscus )
+{
+   double rad_precis   = simparams.radial_resolution * 0.1;
+   simparams.meniscus  = qRound( meniscus / rad_precis )
+                                 * rad_precis;
+   report_mods();
+}
+
+void US_SimParamsGui::update_bottom        ( double bottom )
+{
+   double rad_precis   = simparams.radial_resolution * 0.1;
+   simparams.bottom    = qRound( bottom / rad_precis )
+                                 * rad_precis;
+   simparams.bottom_position = bottom;
+   report_mods();
+}
+
+void US_SimParamsGui::update_simpoints     ( double simpoints )
+{
+   simparams.simpoints = (int) simpoints;
+   report_mods();
+}
+ 
+void US_SimParamsGui::update_radial_res    ( double radial_res )
+{
+   simparams.radial_resolution = radial_res;
+   report_mods();
+}
+
+void US_SimParamsGui::update_rnoise        ( double rnoise )
+{
+   simparams.rnoise    = rnoise;
+   report_mods();
+}
+
+void US_SimParamsGui::update_lrnoise        ( double lrnoise )
+{
+   simparams.lrnoise   = lrnoise;
+   report_mods();
+}
+
+void US_SimParamsGui::update_tinoise       ( double tinoise )
+{
+   simparams.tinoise   = tinoise;
+   report_mods();
+}
+
+void US_SimParamsGui::update_rinoise       ( double rinoise )
+{
+   simparams.rinoise   = rinoise;
+   report_mods();
+}
+      
+void US_SimParamsGui::update_moving        ( int grid )
+{
+   simparams.gridType  = (US_SimulationParameters::GridType) grid;
+   report_mods();
+}
+
+void US_SimParamsGui::select_centerpiece   ( bool )
+{
+   simparams.band_forming = rb_band->isChecked();
+   cnt_lamella->setEnabled( simparams.band_forming );
+   report_mods();
+}
+
+void US_SimParamsGui::update_temp          ( double temp )
+{
+   simparams.temperature  = temp;
+   report_mods();
 }
 
 void US_SimParamsGui::disconnect_all( )
@@ -1056,5 +1161,11 @@ void US_SimParamsGui::reconnect_all( )
                                   SLOT  ( update_mesh(           int ) ) );
    connect( cmb_moving,           SIGNAL( activated    (         int ) ), 
                                   SLOT  ( update_moving(         int ) ) );
+}
+
+// Report modifications
+void US_SimParamsGui::report_mods( )
+{
+   le_status->setText( tr( "Settings have been modified." ) );
 }
 

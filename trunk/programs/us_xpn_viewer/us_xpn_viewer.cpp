@@ -1977,6 +1977,9 @@ DbgLv(1) << "c_r:  ri0 ro0" << r_radii[0] << allData[jd].xvalues[0]
 void US_XpnDataViewer::currentRectf( QRectF rectf )
 {
    QVector< double >  ascdat;
+   QVector< int > srpms;
+   QVector< int > ssfscs;
+   QVector< int > sslscs;
    double radv1     = qRound( rectf.left()  * 10000.0 ) * 0.0001;
    double radv2     = qRound( rectf.right() * 10000.0 ) * 0.0001;
    if ( radv2 > 7.0 )
@@ -2032,6 +2035,18 @@ DbgLv(1) << "cRect" << msg;
       for ( int js = 0; js < nscan; js++ )
       {
          US_DataIO::Scan* dscan = &rdata->scanData[ js ];
+         int ssrpm         = (int)qRound( dscan->rpm * 0.01 ) * 100;
+         int ssx           = srpms.indexOf( ssrpm );
+         if ( ssx >= 0 )
+         {
+            sslscs[ ssx ]     = js;
+         }
+         else
+         {
+            srpms  << ssrpm;
+            ssfscs << js;
+            sslscs << js;
+         }
 
          for ( int jr = 0; jr < kpoint; jr++ )
          {
@@ -2059,6 +2074,72 @@ DbgLv(1) << "  wavelen/radpos:  " << wavelen << " / " << radiusw;
                         + QString::number( radiusw ) + "\n";
       datxto << outline;
    }
+
+   int nspeed        = srpms.count();
+
+   if ( nspeed > 1 )
+   {  // If multi-speed, add search/output as "wavelen/speed/radpos"
+      for ( int jd = 0; jd < allData.count(); jd++ )
+      {
+         US_DataIO::RawData *rdata = &allData[ jd ];
+
+         QString dchann    = QString::number( rdata->cell )
+                             + QString( rdata->channel );
+         if ( dchann != cech )
+            continue;
+
+         if ( irx2 == 0 )
+         {
+            irx1             = US_DataIO::index( rdata, radv1 );
+            irx2             = US_DataIO::index( rdata, radv2 );
+            kpoint           = irx2 - irx1 + 1;
+         }
+
+         double wavelen    = rdata->scanData[ 0 ].wavelength; // Wavelength
+
+         for ( int jq = 0; jq < nspeed; jq++ )
+         {
+            // Create an average scan value vector for the search range
+            int irpm          = srpms [ jq ];
+            int jsf           = ssfscs[ jq ];
+            int jsl           = sslscs[ jq ] + 1;
+            int nscan         = jsl - jsf;
+            double afact      = 1.0 / (double)nscan;
+            ascdat.fill( 0.0, kpoint );
+            for ( int js = jsf; js < jsl; js++ )
+            {
+               US_DataIO::Scan* dscan = &rdata->scanData[ js ];
+
+               for ( int jr = 0; jr < kpoint; jr++ )
+               {
+                  ascdat[ jr ] += dscan->rvalues[ jr + irx1 ] * afact;
+               }
+            }
+
+            // Find the position of the minimum value in the range
+            double rvmin      = 1.0e+99;
+            int irpos         = -1;
+            for ( int jr = 0; jr < kpoint; jr++ )
+            {
+               double rval       = ascdat[ jr ];
+               if ( rval < rvmin )
+               {
+                  rvmin             = rval;
+                  irpos             = jr;
+               }
+            }
+
+            double radiusw    = rdata->xvalues[ irpos + irx1 ];
+DbgLv(1) << "  wavelen/speed/radpos:  " << wavelen
+   << " / " << irpm << " / " << radiusw;
+
+            QString outline   = QString::number( wavelen ) + ","
+                              + QString::number( irpm    ) + ","
+                              + QString::number( radiusw ) + "\n";
+            datxto << outline;
+         }  // END: speed loop
+      }  // END: dataset loop
+   }  // END: multi-speed
 
    dafile.close();
 
