@@ -59,6 +59,8 @@ class US_GUI_EXTERN US_SimParamsGui : public US_WidgetsDialog
       QRadioButton* rb_band;
       QRadioButton* rb_standard;
 
+      QLineEdit*    le_status;
+
       void update_combobox( void );
       void backup_parms   ( void );
       void check_delay    ( void );
@@ -82,48 +84,20 @@ class US_GUI_EXTERN US_SimParamsGui : public US_WidgetsDialog
       void revert               ( void   );
       void disconnect_all       ( void   );
       void reconnect_all        ( void   );
+      void report_mods          ( void   );
 
-      void update_lamella       ( double lamella )
-         { simparams.band_volume = lamella / 1000.0; };
-
-      void update_meniscus      ( double meniscus )
-         { double rad_precis  = simparams.radial_resolution * 0.1;
-           simparams.meniscus = qRound( meniscus / rad_precis )
-                                * rad_precis; };
-
-      void update_bottom        ( double bottom )
-         { double rad_precis  = simparams.radial_resolution * 0.1;
-           simparams.bottom   = qRound( bottom / rad_precis )
-                                * rad_precis;
-           simparams.bottom_position = bottom; };
-
-      void update_simpoints     ( double simpoints )
-         { simparams.simpoints   = (int) simpoints; };
- 
-      void update_radial_res    ( double radial_res )
-         { simparams.radial_resolution = radial_res; };
-
-      void update_rnoise        ( double rnoise )
-         { simparams.rnoise      = rnoise; };
-
-      void update_lrnoise        ( double lrnoise )
-         { simparams.lrnoise      = lrnoise; };
-
-      void update_tinoise       ( double tinoise )
-         { simparams.tinoise     = tinoise; };
-
-      void update_rinoise       ( double rinoise )
-         { simparams.rinoise     = rinoise; };
-      
-      void update_moving        ( int grid )
-         { simparams.gridType    = (US_SimulationParameters::GridType) grid; };
-
-      void select_centerpiece   ( bool )
-         { simparams.band_forming = rb_band->isChecked();
-           cnt_lamella->setEnabled( simparams.band_forming ); };
-
-      void update_temp          ( double temp )
-         { simparams.temperature   = temp;   };
+      void update_lamella       ( double lamella );
+      void update_meniscus      ( double meniscus );
+      void update_bottom        ( double bottom );
+      void update_simpoints     ( double simpoints );
+      void update_radial_res    ( double radial_res );
+      void update_rnoise        ( double rnoise );
+      void update_lrnoise       ( double lrnoise );
+      void update_tinoise       ( double tinoise );
+      void update_rinoise       ( double rinoise );
+      void update_moving        ( int grid );
+      void select_centerpiece   ( bool );
+      void update_temp          ( double temp );
 
       void help                 ( void )
          { showhelp.show_help( "manual/simparams.html" ); };
