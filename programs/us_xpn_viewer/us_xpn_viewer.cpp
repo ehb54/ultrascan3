@@ -2008,6 +2008,7 @@ void US_XpnDataViewer::currentRectf( QRectF rectf )
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor) );
    qApp->processEvents();
 DbgLv(1) << "cRect" << msg;
+   datxto << "Wavelength,Meniscus\n";
 
    // Determine meniscus position for each wavelength of this channel
    for ( int jd = 0; jd < allData.count(); jd++ )
@@ -2020,7 +2021,7 @@ DbgLv(1) << "cRect" << msg;
          continue;
 
       if ( irx2 == 0 )
-      {
+      {  // Get radial range indexes
          irx1             = US_DataIO::index( rdata, radv1 );
          irx2             = US_DataIO::index( rdata, radv2 );
          kpoint           = irx2 - irx1 + 1;
@@ -2032,9 +2033,12 @@ DbgLv(1) << "cRect" << msg;
       int nscan         = rdata->scanCount();
       double afact      = 1.0 / (double)nscan;
       ascdat.fill( 0.0, kpoint );
+
       for ( int js = 0; js < nscan; js++ )
       {
          US_DataIO::Scan* dscan = &rdata->scanData[ js ];
+
+         // Save unique speeds and each one's scan start,end indecies
          int ssrpm         = (int)qRound( dscan->rpm * 0.01 ) * 100;
          int ssx           = srpms.indexOf( ssrpm );
          if ( ssx >= 0 )
@@ -2048,13 +2052,14 @@ DbgLv(1) << "cRect" << msg;
             sslscs << js;
          }
 
+         // Accumulate average scan for the current channel
          for ( int jr = 0; jr < kpoint; jr++ )
          {
             ascdat[ jr ] += dscan->rvalues[ jr + irx1 ] * afact;
          }
       }
 
-      // Find the position of the minimum value in the range
+      // Find the position of the minimum average-scan value in the range
       double rvmin      = 1.0e+99;
       int irpos         = -1;
       for ( int jr = 0; jr < kpoint; jr++ )
@@ -2067,20 +2072,35 @@ DbgLv(1) << "cRect" << msg;
          }
       }
 
+      // Meniscus radius value for the wavelength
       double radiusw    = rdata->xvalues[ irpos + irx1 ];
 DbgLv(1) << "  wavelen/radpos:  " << wavelen << " / " << radiusw;
 
+      // Output a wavelength,radial-position line
       QString outline   = QString::number( wavelen ) + ","
                         + QString::number( radiusw ) + "\n";
       datxto << outline;
-   }
+      dafile.close();
+   }  // END: datasets loop
 
    int nspeed        = srpms.count();
 
    if ( nspeed > 1 )
    {  // If multi-speed, add search/output as "wavelen/speed/radpos"
+      QString dapath    = impath + "/" + cech + ".wavelen.speeds-meniscus.dat";
+      QFile dafile( dapath );
+      dafile.open( QIODevice::WriteOnly | QIODevice::Text );
+      QTextStream datxto( &dafile );
+      QString outline   = tr( "Wavelength" );
+      for ( int jq = 0; jq < nspeed; jq++ )
+      {  // Add speeds to header line
+         int irpm          = srpms[ jq ];
+         outline          += "," + QString::number( irpm );
+      }
+      outline          += "\n";
+      datxto << outline;
       for ( int jd = 0; jd < allData.count(); jd++ )
-      {
+      {  // Get information for each dataset
          US_DataIO::RawData *rdata = &allData[ jd ];
 
          QString dchann    = QString::number( rdata->cell )
@@ -2089,13 +2109,15 @@ DbgLv(1) << "  wavelen/radpos:  " << wavelen << " / " << radiusw;
             continue;
 
          if ( irx2 == 0 )
-         {
+         {  // Get radial range indexes
             irx1             = US_DataIO::index( rdata, radv1 );
             irx2             = US_DataIO::index( rdata, radv2 );
             kpoint           = irx2 - irx1 + 1;
          }
 
          double wavelen    = rdata->scanData[ 0 ].wavelength; // Wavelength
+         // Start data line with wavelength value
+         outline           = QString::number( wavelen );
 
          for ( int jq = 0; jq < nspeed; jq++ )
          {
@@ -2107,7 +2129,7 @@ DbgLv(1) << "  wavelen/radpos:  " << wavelen << " / " << radiusw;
             double afact      = 1.0 / (double)nscan;
             ascdat.fill( 0.0, kpoint );
             for ( int js = jsf; js < jsl; js++ )
-            {
+            {  // Average scans in the current speed step
                US_DataIO::Scan* dscan = &rdata->scanData[ js ];
 
                for ( int jr = 0; jr < kpoint; jr++ )
@@ -2133,11 +2155,10 @@ DbgLv(1) << "  wavelen/radpos:  " << wavelen << " / " << radiusw;
 DbgLv(1) << "  wavelen/speed/radpos:  " << wavelen
    << " / " << irpm << " / " << radiusw;
 
-            QString outline   = QString::number( wavelen ) + ","
-                              + QString::number( irpm    ) + ","
-                              + QString::number( radiusw ) + "\n";
-            datxto << outline;
+            outline          += "," + QString::number( radiusw );
          }  // END: speed loop
+         outline          += "\n";
+         datxto << outline;
       }  // END: dataset loop
    }  // END: multi-speed
 
