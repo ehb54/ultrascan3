@@ -2080,8 +2080,8 @@ DbgLv(1) << "  wavelen/radpos:  " << wavelen << " / " << radiusw;
       QString outline   = QString::number( wavelen ) + ","
                         + QString::number( radiusw ) + "\n";
       datxto << outline;
-      dafile.close();
    }  // END: datasets loop
+   dafile.close();
 
    int nspeed        = srpms.count();
 
@@ -2160,9 +2160,9 @@ DbgLv(1) << "  wavelen/speed/radpos:  " << wavelen
          outline          += "\n";
          datxto << outline;
       }  // END: dataset loop
-   }  // END: multi-speed
 
-   dafile.close();
+      dafile.close();
+   }  // END: multi-speed
 
    le_status->setText( tr( "%1  Radial adjustment scan complete." )
                       .arg( cech ) );
