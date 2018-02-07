@@ -66,7 +66,7 @@ void US_XpnRunRaw::load_runs( void )
    QString delim       = ( nruns > 0 ) ?
                          QString( rdLists[ 0 ] ).left( 1 ) :
                          "";
-qDebug() << "XRR:l_r: delim" << delim;
+qDebug() << "XRR:l_r: delim" << delim << "nruns" << nruns;
 
    // Populate the list of RunInfo objects
    for ( int ii = 0; ii < nruns; ii++ )
@@ -122,12 +122,14 @@ void US_XpnRunRaw::select( void )
 
    runID          = tw ->item( ndx, 2 )->text().simplified();
    QString delim  = QString( rdLists[ 0 ] ).left( 1 );
+qDebug() << "XRR:  select : ndx" << ndx << "runID" << runID << "delim" << delim;
 
    // Search description list and choose the item with matching runID
    for ( int ii = 0; ii < rdLists.count(); ii++ )
    {
       QString rDesc       = rdLists[ ii ];
       QString lRunID      = QString( rDesc ).mid( 1 ).section( delim, 0, 0 );
+qDebug() << "XRR:  select :  ii" << ii << "rDesc" << rDesc << "lRunID" << lRunID;
 
       if ( lRunID == runID )
       {
@@ -241,9 +243,25 @@ qDebug() << "LimData: sfilt" << sfilt << "have_search" << have_search;
                   US_GuiSettings::fontSize() );
    QFontMetrics* fm = new QFontMetrics( tw_font );
    int rowht        = fm->height() + 2;
+qDebug() << "LimData:   runInfo size" << runInfo.size();
+   int krow         = 0;
+   if ( have_search )
+   {
+      for ( int ii = 0; ii < runInfo.size(); ii++ )
+      {
+         RunInfo rr     = runInfo[ ii ];
+         if ( rr.runID.contains( sfilt, Qt::CaseInsensitive ) )
+            krow++;
+      }
+   }
+   else
+      krow             = runInfo.size();
+
+qDebug() << "LimData:    krow" << krow;
+   tw->setRowCount( krow );
    tw->clearContents();
    tw->setSortingEnabled( false );
-qDebug() << "LimData:   runInfo size" << runInfo.size();
+   int kk           = 0;
 
    for ( int ii = 0; ii < runInfo.size(); ii++ )
    {
@@ -259,50 +277,56 @@ qDebug() << "LimData:    ii" << ii << "runID" << rr.runID;
           ! rr.runID.contains( sfilt, Qt::CaseInsensitive ) )
          continue;
 
+qDebug() << "LimData:     add: runID sRunId" << rr.runID << sRunId;
       item           = new QTableWidgetItem( rr.runID );
       item->setFlags( item->flags() ^ Qt::ItemIsEditable );
-      tw  ->setItem(  ii, 0, item );
-
-      item           = new QTableWidgetItem( sRunId );
-      item->setFlags( item->flags() ^ Qt::ItemIsEditable );
-      tw  ->setItem(  ii, 1, item );
-
-      item           = new QTableWidgetItem( sExpId );
-      item->setFlags( item->flags() ^ Qt::ItemIsEditable );
-      tw  ->setItem(  ii, 2, item );
-
-      item           = new QTableWidgetItem( sDknt );
-      item->setFlags( item->flags() ^ Qt::ItemIsEditable );
-      tw  ->setItem(  ii, 3, item );
+      tw  ->setItem(  kk, 0, item );
 
       item           = new QTableWidgetItem( rr.date );
       item->setFlags( item->flags() ^ Qt::ItemIsEditable );
-      tw  ->setItem(  ii, 4, item );
+      tw  ->setItem(  kk, 1, item );
+
+      item           = new QTableWidgetItem( sRunId );
+      item->setFlags( item->flags() ^ Qt::ItemIsEditable );
+      tw  ->setItem(  kk, 2, item );
+
+      item           = new QTableWidgetItem( sExpId );
+      item->setFlags( item->flags() ^ Qt::ItemIsEditable );
+      tw  ->setItem(  kk, 3, item );
+
+      item           = new QTableWidgetItem( sDknt );
+      item->setFlags( item->flags() ^ Qt::ItemIsEditable );
+      tw  ->setItem(  kk, 4, item );
+
+      item           = new QTableWidgetItem( rr.date );
+      item->setFlags( item->flags() ^ Qt::ItemIsEditable );
+      tw  ->setItem(  kk, 5, item );
 
       item           = new QTableWidgetItem( rr.expname );
       item->setFlags( item->flags() ^ Qt::ItemIsEditable );
-      tw  ->setItem(  ii, 5, item );
+      tw  ->setItem(  kk, 6, item );
 
       item           = new QTableWidgetItem( rr.resname );
       item->setFlags( item->flags() ^ Qt::ItemIsEditable );
-      tw  ->setItem(  ii, 6, item );
+      tw  ->setItem(  kk, 7, item );
 
       item           = new QTableWidgetItem( rr.abscnf ? "  1" : "  0" );
       item->setFlags( item->flags() ^ Qt::ItemIsEditable );
-      tw  ->setItem(  ii, 7, item );
+      tw  ->setItem(  kk, 9, item );
 
       item           = new QTableWidgetItem( rr.flscnf ? "  1" : "  0" );
       item->setFlags( item->flags() ^ Qt::ItemIsEditable );
-      tw  ->setItem(  ii, 8, item );
+      tw  ->setItem(  kk, 9, item );
 
       item           = new QTableWidgetItem( rr.inscnf ? "  1" : "  0" );
       item->setFlags( item->flags() ^ Qt::ItemIsEditable );
-      tw  ->setItem(  ii, 9, item );
+      tw  ->setItem(  kk, 10, item );
 
       item           = new QTableWidgetItem( rr.wascnf ? "  1" : "  0" );
       item->setFlags( item->flags() ^ Qt::ItemIsEditable );
-      tw  ->setItem(  ii, 10, item );
-      tw  ->setRowHeight( ii, rowht );
+      tw  ->setItem(  kk, 11, item );
+      tw  ->setRowHeight( kk, rowht );
+      kk++;
    }
 
    tw->setSortingEnabled( true );
