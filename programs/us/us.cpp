@@ -208,6 +208,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu(  P_GLOMODL ,  tr( "Create Global &Model"              ), utilities );
   addMenu(  P_VIEWCFA ,  tr( "View Raw C&FA Data"                ), utilities );
   addMenu(  P_VIEWXPN ,  tr( "View Raw &Optima Data"             ), utilities );
+  addMenu(  P_VIEWTMST,  tr( "View &TimeState"                   ), utilities );
 
   addMenu(  P_VIEWMWL ,  tr( "&View Multiwavelength Data"        ), multiwave );
   addMenu(  P_VIEWMSS ,  tr( "View MWL &S-Spectra"               ), multiwave );
