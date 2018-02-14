@@ -353,6 +353,13 @@ DbgLv(1) << "2dsa: Data is beyond range" << "limits from speed_profs " << stm1 <
    exp_steps     = ( nssp > 0 );      // Flag use of experiment speed steps
    edata         = &dataList[ 0 ];    // Point to first loaded data
 DbgLv(1) << " 2dsa: exp_steps" << exp_steps << "nssp" << nssp ;
+//*DEBUG*
+for ( int js=0; js<edata->scanCount(); js++ )
+{
+DbgLv(1) << " 2dsa: js" << js << "secs" << edata->scanData[js].seconds
+ << "speed" << edata->scanData[js].rpm;
+}
+//*DEBUG*
 }
 
 // plot the data
@@ -1002,6 +1009,7 @@ DbgLv(0) << "2DSA d_corr v vW vT d dW dT" << sd.viscosity << sd.viscosity_wt
 
      // Build a TimeState object now if possible
 DbgLv(1) << "2dsa : checking timestate object need";
+     dset.simparams.sim = ( dataList[ drow ].channel == "S" );
      bool need_tsfile   = true;
      QString tmst_fpath = US_Settings::resultDir() + "/" + runID + "/"
                           + runID + ".time_state.tmst";
@@ -1028,7 +1036,6 @@ DbgLv(1) << "2dsa : timestate file exists" << tmst_fpath
      if ( need_tsfile )
      {
         QString tmst_fpath = US_Settings::tmpDir() + "/" + temp_Id_name() + ".time_state.tmst";
-        dset.simparams.sim = true;
         US_AstfemMath::writetimestate( tmst_fpath, dset.simparams, sdata );
 
         dset.simparams.simSpeedsFromTimeState( tmst_fpath );
