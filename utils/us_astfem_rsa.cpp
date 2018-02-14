@@ -167,6 +167,7 @@ DbgLv(1)<< "RSA:calc:    cdset_speed" << af_params.cdset_speed;
    af_data.bottom   = af_params.current_bottom;
    double omeg0     = 0.0;
    double omeg2     = 0.0;
+   simparams.sim    = ( exp_data.channel == 'S' );
 
    // Read in any timestate that exists and set up the internal
    //  simulation speed profile
@@ -174,7 +175,6 @@ DbgLv(1)<< "RSA:calc:    cdset_speed" << af_params.cdset_speed;
         simparams.sim_speed_prof.count() < 1 )
    {  // Timestate is not properly loaded
 DbgLv(1)<<"RSA:calc: timestate does not exist";
-      simparams.sim      = ( exp_data.channel == 'S' );
 #ifdef NO_DB
       QString tmst_fpath = "../" + temp_Id_name() + ".time_state.tmst";
 
@@ -810,12 +810,12 @@ QDateTime clcSt5 = QDateTime::currentDateTime();
       double step_speed;
       US_SimulationParameters::SpeedProfile* sp;
       US_AstfemMath::MfemData* ed = &af_data;
+      simparams.sim    = ( exp_data.channel == 'S' );
 
       if ( simparams.tsobj == NULL  ||
            simparams.sim_speed_prof.count() < 1 )
       {  // Timestate is not properly loaded
 DbgLv(1) << "timestate file does not exist";
-         simparams.sim      = ( exp_data.channel == 'S' );
 #ifdef NO_DB
          QString tmst_fpath = "../" + temp_Id_name() + ".time_state.tmst";
 

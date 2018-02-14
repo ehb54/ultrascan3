@@ -216,21 +216,39 @@ US_RunDetails2::~US_RunDetails2()
 void US_RunDetails2::setup( void )
 {
    // Set length of run
-   double              last = 0.0;
+   double last   = 0.0;
+   double first  = dataList[ 0 ].scanData[ 0 ].seconds;
    US_DataIO::RawData data;
 
    foreach( data, dataList )
-      last = max( last, data.scanData.last().seconds );
+   {
+      last          = qMax( last,  data.scanData.last().seconds );
+      first         = qMin( first, data.scanData.first().seconds );
+   }
    
-   last       = qRound( last );
-   int  hours = (int)floor( last / 3600.0 );
-   int  mins  = (int) qRound( ( last - hours * 3600.0 ) / 60.0 );
+   last          = qRound( last );
+   first         = qFloor( first );
+   int  hours    = (int)qFloor( last / 3600.0 );
+   int  mins     = (int)qRound( ( last - hours * 3600.0 ) / 60.0 );
 
-   QString s; 
-   QString h = ( hours == 1 ) ? tr( "hour" ) : tr( "hours" );
+   QString hh    = ( hours == 1 ) ? tr( "hour" ) : tr( "hours" );
+   QString wks   = QString().sprintf( "%d %s %02d min",
+      hours, hh.toLatin1().data(), mins );
+   int fmins     = (int)qFloor( first / 60.0 );
+   int fsecs     = first - fmins * 60.0;
+   QString mm    = ( fmins == 1 ) ? tr( "minute" ) : tr( "minutes" );
+
+   wks          += QString().sprintf( "   (scan 1 time: %d m %02d s)",
+      fmins, fsecs );
+//*DEBUG*
+data=dataList[0];
+double s1tim=data.scanData[0].seconds;
+double s1omg=data.scanData[0].omega2t;
+double s1rpm=data.scanData[0].rpm;
+qDebug() << "dtails: ds 1, scan 1: secs,omg2t,rpm" << s1tim << s1omg << s1rpm;
+//*DEBUG*
  
-   le_runLen->setText( 
-         s.sprintf( "%d %s %02d min", hours, h.toLatin1().data(), mins ) );
+   le_runLen->setText( wks );
 
    // Set Time Correction
    double correction = 0.0;
@@ -252,7 +270,7 @@ void US_RunDetails2::setup( void )
    int minutes = (int) correction / 60;
    int seconds = (int) correction % 60;
 
-   le_timeCorr->setText( s.sprintf( "%d min %02d sec", minutes, seconds ) );
+   le_timeCorr->setText( wks.sprintf( "%d min %02d sec", minutes, seconds ) );
 
    // Set rpm list widget
    int i = 0;
@@ -283,10 +301,10 @@ void US_RunDetails2::setup( void )
    for ( int i = 0; i < triples.size(); i++ )
    {
       int scans = dataList[ i ].scanData.size();
-      lw_triples->addItem( triples[ i ] + s.sprintf( " -- %d scans", scans ) );    
+      lw_triples->addItem( triples[ i ] + wks.sprintf( " -- %d scans", scans ) );    
    }
 
-   lw_triples->addItem( s.sprintf( "All scans -- %d scans", scanCount ) );    
+   lw_triples->addItem( wks.sprintf( "All scans -- %d scans", scanCount ) );    
 
    // Set triple to indicate All Data
    lw_triples->setCurrentRow( triples.size() );

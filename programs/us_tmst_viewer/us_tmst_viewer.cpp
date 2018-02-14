@@ -108,24 +108,14 @@ US_TmstViewer::US_TmstViewer() : US_Widgets()
    settings->addWidget( pb_close,      row++, 4, 1, 4 );
 
    // Now let's assemble the page
-   
-//   QVBoxLayout* left     = new QVBoxLayout;
-
-//   left->addLayout( settings );
-   
    QVBoxLayout* main = new QVBoxLayout( this );
    main->setSpacing         ( 2 );
    main->setContentsMargins ( 2, 2, 2, 2 );
 
-//   main->addLayout( left );
    main->addLayout( settings );
-
-//   main->setStretch( 0, 2 );
- DbgLv(1) << "Main XX";
 
    adjustSize();
    enableControls();
- DbgLv(1) << "Main ZZ";
 }
 
 // Enable the common dialog controls based on the presence of data
@@ -149,15 +139,15 @@ void US_TmstViewer::loadTimeState( )
       tmst_items( "tmp" );
    }
    if ( ck_src_imp->isChecked() )
-   {  // Files from */ultrascan/tmp
+   {  // Files from */ultrascan/imports/*
       tmst_items( "imports" );
    }
    if ( ck_src_res->isChecked() )
-   {  // Files from */ultrascan/tmp
+   {  // Files from */ultrascan/results/*
       tmst_items( "results" );
    }
    if ( ck_src_db ->isChecked() )
-   {  // Entries from the database
+   {  // Entries from the database (copied to */ultrascan/tmp)
       tmst_items( "database" );
    }
 
@@ -165,12 +155,13 @@ void US_TmstViewer::loadTimeState( )
    qApp->processEvents();
    QApplication::restoreOverrideCursor();
 
-   // Select Time State
+   // Build title and headers for selection dialog
    QString dtitl         = tr( "Select Time State Record" );
    QStringList hdrs;
    hdrs << "Run/Label" << "Source" << "Date" << "Cksum/Size";
    selx                  = -1;
 
+   // Open a dialog to select a timestate
    US_SelectItem* lddiag = new US_SelectItem( tmstdata, hdrs, dtitl,
                                               &selx, -3 );
    if ( lddiag->exec() == QDialog::Rejected )
@@ -194,6 +185,7 @@ DbgLv(1) << "RDr:   run/label" << tmstdata[selx][0];
    QString tspath = tmstdata[ selx ][ 4 ];
    QString tsdir  = QString( tspath ).section( "/", 0, -2 );
    haveTmst       = QFile( tspath ).exists();
+
    if ( tssrc == "results"  ||  tssrc == "imports" )
    {
       tsdir          = QString( tspath ).section( "/", 0, -3 );
@@ -203,6 +195,7 @@ DbgLv(1) << "RDr:   run/label" << tmstdata[selx][0];
       tsdir          = US_Settings::tmpDir();
       haveTmst       = true;
    }
+
    le_status->setText( tr( "TimeState selected." ) );
    le_dir   ->setText( tsdir );
    le_runID ->setText( tsdesc );
@@ -218,7 +211,7 @@ void US_TmstViewer::showTimeState( )
    QString tssrc  = tmstdata[ selx ][ 1 ];
 
    if ( tssrc == "database" )
-   {  // For database, download record to local disk first
+   {  // For database, first download record to local disk
       QString tmstID = tspath;
       int idTmst     = tmstID.toInt();
       bool needTmst  = false;
@@ -300,13 +293,12 @@ void US_TmstViewer::tmst_items( const QString source )
       qry << "get_experiment_desc" << invID;
       db.query( qry );
       int numrows      = db.numRows();
-DbgLv(1) << "items:  DB query" << qry;
-DbgLv(1) << "items:  DB numrows" << numrows;
-DbgLv(1) << "items:  DB err" << db.lastErrno() << db.lastError();
+DbgLv(1) << "items:  DB query" << qry << "DB numrows" << numrows
+ << "DB err" << db.lastErrno() << db.lastError();
       QStringList expIds;
 
       while( db.next() )
-      {  // Accumulate a list of experiment IDs
+      {  // Accumulate a list of experiment IDs of user's timestates
          expIds << db.value( 0 ).toString();
       }
 
@@ -348,13 +340,13 @@ DbgLv(1) << "items:  DB tmste" << tmste;
          fdirs << "";
       }
       else if ( source == "imports" )
-      {  // From all */ultrasca/imports/* directories
+      {  // From all */ultrascan/imports/* directories
          bdir             = US_Settings::importDir();
          fdirs            = QDir( bdir ).entryList(
                QDir::AllDirs | QDir::NoDotAndDotDot, QDir::Name );
       }
       else if ( source == "results" )
-      {  // From all */ultrasca/results/* directories
+      {  // From all */ultrascan/results/* directories
          bdir             = US_Settings::resultDir();
          fdirs            = QDir( bdir ).entryList(
                QDir::AllDirs | QDir::NoDotAndDotDot, QDir::Name );
@@ -365,7 +357,7 @@ DbgLv(1) << "items:  source" << source << "bdir" << bdir;
          bdir             = bdir.left( bdir.length() - 1 );
 
       for ( int ii = 0; ii < fdirs.size(); ii++ )
-      {  // Get the list of directory files
+      {  // Get the list of .tmst files in the directory
          QString sdir     = bdir + "/" + fdirs.at( ii );
          QDir dirdir( sdir );
          QStringList tfiles = QDir( sdir ).entryList(
