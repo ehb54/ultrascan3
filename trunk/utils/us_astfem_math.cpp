@@ -34,6 +34,7 @@ DbgLv(1) << "AMATH: wrts: Unable to open" << tmst_fpath;
 
 DbgLv(1)<< "AMATH:wrts: number of speeds=" << nspeed
  << "Time state file path=" << tmst_fpath;
+simparams.debug();
    timestate.set_key( "Time",        "I4" );
    timestate.set_key( "RawSpeed",    "F4" );
    timestate.set_key( "SetSpeed",    "I4" );
@@ -46,53 +47,86 @@ DbgLv(1)<< "AMATH:wrts: number of speeds=" << nspeed
    double duration_prev = 0.0;
    double rpm           = 0.0;
    double omega2t       = 0.0;
-   double prvs_speed    = 0.0 ;
+   double prvs_speed    = 0.0;
    int    scan_nbr      = 0;
    int    step_nbr      = 0;
    double temperature   = sim_data.scanData[ 0 ].temperature;
-   int nscans           = sim_data.scanData.size() ;// Used for number of scans
+   int nscans           = sim_data.scanData.size(); // Used for number of scans
    int t_acc;    // Used for time when accelerated up to the specified rotor speed
    double rate, speed;
    US_SimulationParameters::SpeedProfile* sp;
    US_SimulationParameters::SpeedProfile* sp_prev;
-DbgLv(1) << " writetimestate : no of scans" << nscans;
+DbgLv(1) << "AMATH:wrts: writetimestate : no of scans" << nscans;
    QList< int > scantimes;
 
    for ( int ii = 0; ii < nscans; ii++ )
    {  // Accumulate the times at scans
       scantimes << sim_data.scanData[ ii ].seconds;
-DbgLv(1) << "scantimes" << scantimes[ii] << sim_data.scanData[ii].omega2t
+DbgLv(1) << "AMATH:wrts:scantimes" << scantimes[ii] << sim_data.scanData[ii].omega2t
  << ii << sim_data.scanData[ii].rpm;
    }
-//DbgLv(1) << " writetimestate : no of scans" << nscans ;
+//DbgLv(1) << " writetimestate : no of scans" << nscans;
 
    if ( simparams.sim == false )
-   {
-      double d   = -2.0/3.0;
-
-      double t2  = simparams.speed_step[0].time_first;
-      double w2t = simparams.speed_step[0].w2t_first;
-      double c   = pow((simparams.speed_step[0].rotorspeed*M_PI/30.0),2.0);
-      double t1  = ( w2t - ( t2 * c ) ) / ( d * c );
-//      t_acc      = qCeil( t1 );
-      t_acc      = (int)qRound( t1 );
-      rate       = (double)( simparams.speed_step[ 0 ].rotorspeed ) / (double)t_acc;
+   {  // Handle 1st acceleration zone for real data (compute acceleration rate)
+      const double tfac = ( 4.0 / 3.0 );
+      double t2   = simparams.speed_step[ 0 ].time_first;
+      double w2t  = simparams.speed_step[ 0 ].w2t_first;
+      double om1t = simparams.speed_step[ 0 ].rotorspeed * M_PI / 30.0;
+      double w2   = sq( om1t ); 
+      // For the first speed step, we compute "t1", the end of the initial
+      // acceleration zone, using
+      //   "t2"   , the time in seconds for the first scan;
+      //   "w2t"  , the omega^2_t integral for the first scan time;
+      //   "w2"   , the omega^2 value for the constant zone speed;
+      //   "tfac" , a factor (==(4/3)==1.333333) derived from the following.
+      // The acceleration zone begins at t0=0.0.
+      // It ends at time "t1".
+      // The time between t1 and t2 is at constant speed.
+      // The time between 0 and t1 is at changing speeds averaging (rpm/2).
+      // For I1 and I2, the omega^2t integrals at t1 and t2,
+      //        ( I2 - I1 ) = ( t2 - t1 ) * w2       (equ.1)
+      //        I1 = ( (rpm/2) * PI / 30 )^2 * t1    (equ.2)
+      //        I1 = (rpm/2)^2 * ( PI / 30 )^2 * t1
+      //        I1 = ( ( rpm * PI / 30 )^2 / 4 ) * t1
+      //        w2 = ( rpm * PI / 30 )^2
+      //        I1 = ( w2 / 4 ) * t1
+      //        I2 = w2t
+      // Substituting into equ.1, we get:
+      //        ( w2t - ( ( w2 / 4 ) * t1 ) = ( t2 - t1 ) * w2
+      //        t1 * ( w2 - ( w2 / 4 )      = t2 * w2 - w2t
+      //        t1 * ( 1 - 1/4 ) * w2       = t2 * w2 - w2t
+      //        t1 * ( 3 / 4 ) * w2         = t2 * w2 - w2t
+      //        t1  = ( 4 / 3 ) * ( t2 - ( w2t / w2 ) )
+      double t1   = tfac * ( t2 - ( w2t / w2 ) );
+double t1w=(w2t/w2);
+DbgLv(1) << "AMATH:wrts: om1t w2 w2t" << om1t << w2 << w2t
+ << "t1w" << t1w << "tfac" << tfac;
+      if ( t1 >= t2 )
+      {  // Something wrong!  set t1 to a few seconds before t2
+         t1          = t2 - 5.0;
+      }
+//      t_acc       = qCeil( t1 );
+      t_acc       = (int)qRound( t1 );
+      rate        = (double)( simparams.speed_step[ 0 ].rotorspeed )
+                    / (double)t_acc;
+DbgLv(1) << "AMATH:wrts:t1 t2" << t1 << t2 << "t_acc rate" << t_acc << rate;
 //DbgLv(1)<<  "from speed profile"
 // << "t_acc=" << t_acc << "rate=" << rate << "first_time:" << simparams.speed_step[0].time_first
 // << "first_w2t" << simparams.speed_step[0].w2t_first
-// << "rpm=" << simparams.speed_step[0].rotorspeed ;
+// << "rpm=" << simparams.speed_step[0].rotorspeed;
 //DbgLv(1) << " from sim_data"
 // << "t_acc=" << t_acc1 << "rate= " << rate1 << "first_time: " << sim_data.scanData[0].seconds
-// << "first_w2t" << sim_data.scanData[0].omega2t << "rpm=" << sim_data.scanData[0].rpm ;
+// << "first_w2t" << sim_data.scanData[0].omega2t << "rpm=" << sim_data.scanData[0].rpm;
    }
    else
-   {
+   {  // Handle 1st acceleration zone for simulation (astfem_sim) data
       sp         = &simparams.speed_step[ 0 ];
-      rate       = (double) sp->acceleration ;
-//rate = 400.0 ;
-      t_acc      = (int)qRound( sp->rotorspeed / rate );
+      // Use specified acceleration rate
+      t_acc      = (int)qRound( (double)sp->rotorspeed
+                              / (double)sp->acceleration );
       rate       = (double)sp->rotorspeed / (double)t_acc;
-//DbgLv(1)<< " rate is given by user : t_acc from timestate" << t_acc << rate;
+DbgLv(1)<< "AMATH:wrts: rate is given by user : t_acc from timestate" << t_acc << rate;
    }
 
    int d1     = 0;
@@ -100,21 +134,22 @@ DbgLv(1) << "scantimes" << scantimes[ii] << sim_data.scanData[ii].omega2t
 
    for ( int step = 0; step < nspeed; step++ )
    {
+      step_nbr   = step + 1;
       sp         = &simparams.speed_step[ step ];
-      speed      = (double) (sp->rotorspeed) ;
+      speed      = (double)sp->rotorspeed;
 
       if ( step > 0 )
       {
-         sp_prev      = &simparams.speed_step[ step-1 ];
-         prvs_speed   = (double) (sp_prev->rotorspeed) ;
+         sp_prev      = &simparams.speed_step[ step - 1 ];
+         prvs_speed   = (double)sp_prev->rotorspeed;
       }
       else
-         prvs_speed   = 0.0 ;
+         prvs_speed   = 0.0;
 
       if ( step == 0 )
       {
-         d1           = 0 ;
-         rpm         -= rate ;
+         d1           = 0;
+         rpm         -= rate;
       }
       else
       {
@@ -122,41 +157,46 @@ DbgLv(1) << "scantimes" << scantimes[ii] << sim_data.scanData[ii].omega2t
 //                        + ( simparams.speed_step[ step-1 ].duration_minutes * 60.0 );
          duration_prev = duration;
 
-         d1          = (int)duration_prev + 1;
+         d1            = (int)duration_prev + 1;
 
          if ( simparams.sim == false )
             // Use calculated rate when user doesn't know it
-            t_acc = ( int)qRound( double( qAbs( speed - prvs_speed ) ) / rate );
+            t_acc       = ( int)qRound( double( qAbs( speed - prvs_speed ) )
+                                        / rate );
          else
             // When user knows acceleration rate
-            t_acc = ( int)qRound( double( qAbs( speed - prvs_speed  ) ) / sp->acceleration );
+            t_acc       = ( int)qRound( double( qAbs( speed - prvs_speed  ) )
+                                       / sp->acceleration );
 
          rate        = (double)( speed - prvs_speed ) / (double)t_acc;
       }
 
-      duration    += ( sp->duration_hours * 3600.0 )
-                   + ( sp->duration_minutes * 60.0 );
-//DbgLv(1) << "duration from timestate = "<<  duration ;
+      duration   += ( sp->duration_hours * 3600.0 )
+                  + ( sp->duration_minutes * 60.0 );
+//DbgLv(1) << "duration from timestate = "<<  duration;
+      int tacc    = d1 + t_acc;
+      int d2      = (int)duration + 1;
 
-      for ( int ii = d1; ii <= int(duration); ii++ )
+      for ( int ii = d1; ii < d2; ii++ )
       {
-         int tacc = d1 + t_acc  ;
 
          if ( ii < tacc )
-            rpm     += rate ;
+            rpm        += rate;
          else
-            rpm     =  speed ;
+            rpm         = speed;
 
-         int    set_speed  = qRound( rpm / 100.0 ) * 100;
+         int set_speed  = qRound( rpm / 100.0 ) * 100;
 
-         omega2t  += pow((rpm*M_PI/30.0),2.0);
+         double om1t = rpm * M_PI / 30.0;
+         omega2t    += sq( om1t );
 
          itime       = ii;
          int scanx   = scantimes.indexOf( itime );
          scan_nbr    = ( scanx < 0 ) ? 0 : ( scanx + 1 );
-         step_nbr    = step + 1;
-if(scan_nbr>0)
- DbgLv(1) << "wrTS: ii scanx scan_nbr time" << ii << scanx << scan_nbr;
+//if(scan_nbr>0)
+if((scan_nbr>0)||(ii<(d1+2))||((ii>(tacc-2))&&(ii<(tacc+2)))||((ii+3)>d2))
+ DbgLv(1) << "AMATH:wrts: ii(time)" << ii << "scanx scan_nbr" << scanx << scan_nbr
+  << "rpm" << rpm << "omega2t" << omega2t;
 
          timestate.set_value( "Time",        itime       );
          timestate.set_value( "RawSpeed",    rpm         );
@@ -185,7 +225,7 @@ if(scan_nbr>0)
    for ( int ii = d1; ii <= int(duration); ii++ )
    {
       omega2t       += omg2ti;
-      itime          = ii ;
+      itime          = ii;
 
       timestate.set_value( "Time",        itime       );
       timestate.set_value( "RawSpeed",    rpm         );
@@ -494,7 +534,7 @@ double US_AstfemMath::cube_root( double a0, double a1, double a2 )
    if ( D < 0 )
    {
       double theta = acos( S / sqrt( pow( -Q, 3.0 ) ) );
-      x = 2.0 * sqrt( -Q ) * cos( theta / 3.0) ;
+      x = 2.0 * sqrt( -Q ) * cos( theta / 3.0);
    }
    else
    {
@@ -535,7 +575,7 @@ double US_AstfemMath::cube_root( double a0, double a1, double a2 )
    if ( D < 0 )
    {
       double theta = acos( S / sqrt( pow( -Q, 3.0 ) ) );
-      x = 2.0 * sqrt( -Q ) * cos( theta / 3.0) ;
+      x = 2.0 * sqrt( -Q ) * cos( theta / 3.0);
    }
    else
    {
@@ -581,7 +621,7 @@ double US_AstfemMath::find_C1_mono_Nmer( int n, double K, double CT )
 #if 0
    int       i;
 
-   if ( CT <= 0.0     ) return 0.0 ;
+   if ( CT <= 0.0     ) return 0.0;
    if ( CT <= 1.0e-12 ) return CT;
 
    for ( i = 1; i < MaxNumIt; i++ )
@@ -1662,7 +1702,7 @@ void US_AstfemMath::IntQTn2( double* vx, double D, double sw2,
    for ( i = 0; i < 2; i++ )
    {
       Stif[ 0 ][ i ] = StifL[ 0 ][ i ];
-      Stif[ 1 ][ i ] = StifL[ 1 ][ i ] + StifR[ 0 ][ i ] ;
+      Stif[ 1 ][ i ] = StifL[ 1 ][ i ] + StifR[ 0 ][ i ];
       Stif[ 2 ][ i ] =                   StifR[ 1 ][ i ];
       Stif[ 3 ][ i ] = StifL[ 3 ][ i ];
       Stif[ 4 ][ i ] = StifL[ 2 ][ i ] + StifR[ 2 ][ i ];
@@ -2196,19 +2236,19 @@ void US_AstfemMath::DefineGaussian( int nGauss, double** Gs2 )
       }
       case 5:
       {
-         Gs1[ 0 ] = 0.906179845938664 ;  w[ 0 ] = 0.236926885056189;
-         Gs1[ 1 ] = 0.538469310105683 ;  w[ 1 ] = 0.478628670499366;
-         Gs1[ 2 ] = 0.000000000000000 ;  w[ 2 ] = 0.568888888888889;
+         Gs1[ 0 ] = 0.906179845938664;   w[ 0 ] = 0.236926885056189;
+         Gs1[ 1 ] = 0.538469310105683;   w[ 1 ] = 0.478628670499366;
+         Gs1[ 2 ] = 0.000000000000000;   w[ 2 ] = 0.568888888888889;
          Gs1[ 3 ] = -Gs1[ 1 ];           w[ 3 ] = w[ 1 ];
          Gs1[ 4 ] = -Gs1[ 0 ];           w[ 4 ] = w[ 0 ];
          break;
       }
       case 7:
       {
-         Gs1[ 0 ] = 0.949107912342759 ;  w[ 0 ] = 0.129484966168870;
-         Gs1[ 1 ] = 0.741531185599394 ;  w[ 1 ] = 0.279705391489277;
-         Gs1[ 2 ] = 0.405845151377397 ;  w[ 2 ] = 0.381830050505119;
-         Gs1[ 3 ] = 0.000000000000000 ;  w[ 3 ] = 0.417959183673469;
+         Gs1[ 0 ] = 0.949107912342759;   w[ 0 ] = 0.129484966168870;
+         Gs1[ 1 ] = 0.741531185599394;   w[ 1 ] = 0.279705391489277;
+         Gs1[ 2 ] = 0.405845151377397;   w[ 2 ] = 0.381830050505119;
+         Gs1[ 3 ] = 0.000000000000000;   w[ 3 ] = 0.417959183673469;
          Gs1[ 4 ] = -Gs1[ 2 ];           w[ 4 ] = w[ 2 ];
          Gs1[ 5 ] = -Gs1[ 1 ];           w[ 5 ] = w[ 1 ];
          Gs1[ 6 ] = -Gs1[ 0 ];           w[ 6 ] = w[ 0 ];
@@ -2216,11 +2256,11 @@ void US_AstfemMath::DefineGaussian( int nGauss, double** Gs2 )
       }
       case 10:
       {
-         Gs1[ 0 ] = 0.973906528517172 ;  w[ 0 ] = 0.066671344308688;
-         Gs1[ 1 ] = 0.865063366688985 ;  w[ 1 ] = 0.149451349150581;
-         Gs1[ 2 ] = 0.679409568299024 ;  w[ 2 ] = 0.219086362515982;
-         Gs1[ 3 ] = 0.433395394129247 ;  w[ 3 ] = 0.269266719309996;
-         Gs1[ 4 ] = 0.148874338981631 ;  w[ 4 ] = 0.295524224714753;
+         Gs1[ 0 ] = 0.973906528517172;   w[ 0 ] = 0.066671344308688;
+         Gs1[ 1 ] = 0.865063366688985;   w[ 1 ] = 0.149451349150581;
+         Gs1[ 2 ] = 0.679409568299024;   w[ 2 ] = 0.219086362515982;
+         Gs1[ 3 ] = 0.433395394129247;   w[ 3 ] = 0.269266719309996;
+         Gs1[ 4 ] = 0.148874338981631;   w[ 4 ] = 0.295524224714753;
          Gs1[ 5 ] = -Gs1[ 4 ];           w[ 5 ] = w[ 4 ];
          Gs1[ 6 ] = -Gs1[ 3 ];           w[ 6 ] = w[ 3 ];
          Gs1[ 7 ] = -Gs1[ 2 ];           w[ 7 ] = w[ 2 ];
