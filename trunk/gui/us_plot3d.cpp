@@ -377,8 +377,10 @@ DbgLv(2) << "P3D:sT: type xyz" << typex << typey << typez;
    ymax     += yval;
 
    // determine a normalizing power-of-ten for x and y
-   double xavg   = ( xmin + xmax ) * 0.5;
-   double yavg   = ( ymin + ymax ) * 0.5;
+//   double xavg   = ( xmin + xmax ) * 0.5;
+//   double yavg   = ( ymin + ymax ) * 0.5;
+   double xavg   = ( qAbs( xmin ) + qAbs( xmax ) ) * 0.5;
+   double yavg   = ( qAbs( ymin ) + qAbs( ymax ) ) * 0.5;
    x_norm    = MAX_ANNO / xavg;
    y_norm    = MAX_ANNO / yavg;
    z_norm    = MAX_ANNO / zmax;
@@ -432,9 +434,11 @@ DbgLv(2) << "P3D:sR: xmin xmax ymin ymax" << xmin << xmax << ymin << ymax;
    xmin      = (double)( (int)( xmin * xround )     ) / xround;
    xmax      = (double)( (int)( xmax * xround ) + 1 ) / xround;
    xmin      = ( xmin < 0.0 ) ? ( xmin - VNEGOF ) : xmin;
+   //xmin      = ( xmin < 0.0 ) ? ( xmin - xround - VNEGOF ) : xmin;
    ymin      = (double)( (int)( ymin * yround )     ) / yround;
    ymax      = (double)( (int)( ymax * yround ) + 1 ) / yround;
    ymin      = ( ymin < 0.0 ) ? ( ymin - VNEGOF ) : ymin;
+   //ymin      = ( ymin < 0.0 ) ? ( ymin - yround - VNEGOF ) : ymin;
    zmax      = (double)( (int)( zmax * VROUND ) + 1 ) / VROUND;
    zmin      = 0.0;
 DbgLv(2) << "P3D:sR:  xmin xmax" << xmin << xmax

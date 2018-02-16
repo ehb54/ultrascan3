@@ -607,7 +607,7 @@ DbgLv(1) << "LD:  ds" << ds << "step" << ii << "stimes" << stm1 << stm2
 
             if ( etm1 < stm1  ||  etm2 > stm2 )
             {  // Data times beyond speed step ranges, so flag use of data ranges
-               //nssp       = 0;
+               nssp       = 0;
                qDebug() << "Data is beyond range ex:" << etm1 << etm2 << "ss:" << stm1 << stm2;
                //speed_steps.clear();
                break;
@@ -666,7 +666,6 @@ DbgLv(1) << "LD: after if block, nssp=" << nssp << "   exp_steps" << exp_steps;
    epd_pos    = this->pos() + QPoint( 200, 200 );
    rpd_pos    = this->pos() + QPoint( 300, 300 );
 DbgLv(1) << "LD: Loading of experimental data is over";
-DbgLv(1) << scan_info();
 }
 
 // Details
@@ -920,8 +919,6 @@ void US_FeMatch::data_plot( void )
       bool   have_ri = ri_noise.count > 0;
       bool   have_ti = ti_noise.count > 0;
 
-//      int nscan   = scanCount;
-//      int nconc   = sdata->pointCount();
       double rmsd = 0.0;
       int    kpts = 0;
 
@@ -975,6 +972,10 @@ DbgLv(1) << "SDAT 0-3"<< sdata->value(0,hh) << sdata->value(1,hh)
  << sdata->value(2,hh) << sdata->value(3,hh);
 DbgLv(1) << "SDAT *-n" << sdata->value(ss-4,hh) << sdata->value(ss-3,hh)
  << sdata->value(ss-2,hh) << sdata->value(ss-1,hh);
+if(sdata->value(ss-1,hh)==0.0) {
+ for (int js=0;js<scanCount;js++)
+  DbgLv(1) << "SDAT     js" << js << "sd" << sdata->value(js,hh) << "ed" << edata->value(js,hh);
+}
 //*DEBUG
 
 //DbgLv(1) << "STEP0 durmin dlymin w2tf w2tl timf timl"
@@ -2030,7 +2031,20 @@ void US_FeMatch::simulate_model( )
    double radhi   = edata->radius( nconc - 1 );
 
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+int lc=model.components.size()-1;
+DbgLv(1) << "SimMdl: 0) s D c"
+ << model_used.components[ 0].s << model_used.components[ 0].D
+ << model_used.components[ 0].signal_concentration;
+DbgLv(1) << "SimMdl: n) s D c"
+ << model_used.components[lc].s << model_used.components[lc].D
+ << model_used.components[lc].signal_concentration;
    adjust_model();
+DbgLv(1) << "SimMdl: 0) s D c"
+ << model.components[ 0].s << model.components[ 0].D
+ << model.components[ 0].signal_concentration;
+DbgLv(1) << "SimMdl: n) s D c"
+ << model.components[lc].s << model.components[lc].D
+ << model.components[lc].signal_concentration;
 
    // Initialize simulation parameters using edited data information
    US_Passwd pw;
@@ -2137,7 +2151,7 @@ DbgLv(1) << "SimMdl: timestate file does not exist";
    sdata->channel     = rdata->channel;
    sdata->description = rdata->description;
 
-   if ( dbg_level > 1 )
+   if ( dbg_level > 0 )
       simparams.save_simparms( US_Settings::etcDir() + "/sp_fematch.xml" );
 
    start_time = QDateTime::currentDateTime();
@@ -2171,6 +2185,7 @@ DbgLv(1) << "SimMdl:   comp" << ii << "s D v"
  << model.components[ii].vbar20 << "  c"
  << model.components[ii].signal_concentration;
 }
+DbgLv(1) << "SimMdl: (fematch:)Sim Pars--";
 simparams.debug();
 //*DEBUG*
          US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparams );

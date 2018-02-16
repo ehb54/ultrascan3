@@ -1607,7 +1607,10 @@ void US_Edit::mouse( const QwtDoublePoint& p )
          pb_meniscus->setIcon( check );
          
          if ( dataType == "IP" )
+         {
             pb_airGap->setEnabled( true );
+            set_airGap();
+         }
          else
 //            pb_dataRange->setEnabled( true );
         
@@ -1658,7 +1661,7 @@ DbgLv(1) << "AGap:  plot_range()";
             qApp->processEvents();
             
             pb_airGap   ->setIcon( check );
-//            pb_dataRange->setEnabled( true );
+            pb_dataRange->setEnabled( true );
 
             next_step();
          }
@@ -1979,9 +1982,10 @@ void US_Edit::next_step( void )
    {
       step = AIRGAP;
       pb   = pb_airGap;
+      set_airGap();
    }
 
-   else if ( range_right == 9.0 ) 
+   else if ( range_right == 9.0 )
    {
       step = RANGE;
 //      pb   = pb_dataRange;
@@ -5542,6 +5546,14 @@ double US_Edit::radius_indexed( const double radi )
 // Create general data set information report file
 void US_Edit::create_report( QString& ss )
 {
+//*DEBUG*
+US_DataIO::RawData* dd  = outData[ index_data() ];
+for (int js=0; js<dd->scanData.size(); js++)
+{
+DbgLv(1) << "CR: js" << js << "secs" << dd->scanData[js].seconds
+ << "speed" << dd->scanData[js].rpm;
+}
+//*DEBUG*
    QString title = "US_Edit";
    QString head1 = tr( "General Data Set Information" );
 
