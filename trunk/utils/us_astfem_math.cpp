@@ -87,16 +87,14 @@ DbgLv(1) << "AMATH:wrts:scantimes" << scantimes[ii] << sim_data.scanData[ii].ome
       // For I1 and I2, the omega^2t integrals at t1 and t2,
       //        ( I2 - I1 ) = ( t2 - t1 ) * w2       (equ.1)
       //        I1 = ( (rpm/2) * PI / 30 )^2 * t1    (equ.2)
-      //        I1 = (rpm/2)^2 * ( PI / 30 )^2 * t1
       //        I1 = ( ( rpm * PI / 30 )^2 / 4 ) * t1
       //        w2 = ( rpm * PI / 30 )^2
       //        I1 = ( w2 / 4 ) * t1
       //        I2 = w2t
       // Substituting into equ.1, we get:
-      //        ( w2t - ( ( w2 / 4 ) * t1 ) = ( t2 - t1 ) * w2
-      //        t1 * ( w2 - ( w2 / 4 )      = t2 * w2 - w2t
-      //        t1 * ( 1 - 1/4 ) * w2       = t2 * w2 - w2t
-      //        t1 * ( 3 / 4 ) * w2         = t2 * w2 - w2t
+      //        ( w2t - ( ( w2 / 4 ) * t1 ) ) = ( t2 - t1 ) * w2
+      //        t1 * ( w2 - ( w2 / 4 ) )      = t2 * w2 - w2t
+      //        t1 * ( 3 / 4 ) * w2           = t2 * w2 - w2t
       //        t1  = ( 4 / 3 ) * ( t2 - ( w2t / w2 ) )
       double t1   = tfac * ( t2 - ( w2t / w2 ) );
 double t1w=(w2t/w2);

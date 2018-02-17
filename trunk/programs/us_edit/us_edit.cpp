@@ -1654,8 +1654,11 @@ DbgLv(1) << "AGap: L R" << airGap_left << airGap_right << " AdjIntf";
             le_airGap->setText( wkstr.sprintf( "%.3f - %.3f", 
                      airGap_left, airGap_right ) );
 
-            step = RANGE;
+            step          = RANGE;
+            range_left    = meniscus + _RNGLEFT_OFFSET_;
+            le_dataStart->setText( QString::number( range_left, 'f', 8 ) );
 DbgLv(1) << "AGap:  plot_range()";
+
             plot_range();
 
             qApp->processEvents();
