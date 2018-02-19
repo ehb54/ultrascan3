@@ -745,9 +745,6 @@ bool US_Win::notice_check()
    QString   user  ( "us3_notice" );
    QString   passwd( "us3_notice" );
    QString   errmsg;
-   QStringList defaultDB = US_Settings::defaultDB();
-   if ( defaultDB.size() > 3 )
-      host           = defaultDB.at( 3 );
 
    if ( ! db.connect( host, dbname, user, passwd, errmsg  ) )
    {
