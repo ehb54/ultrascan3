@@ -1418,8 +1418,10 @@ DbgLv(1) << "rBldRawD   timi1" << timi1 << "timi2" << timi2
 int US_XpnData::export_auc( QVector< US_DataIO::RawData >& allData )
 {
    int nfiles        = 0;
+#if 0
    if ( ! is_raw )
       return nfiles;
+#endif
 
    int ntrips        = allData.count();
    QString ftype     = QString( allData[ 0 ].type[ 0 ] ) +
@@ -1444,6 +1446,17 @@ DbgLv(1) << "expA: ntrips ftype fbase" << ntrips << ftype << fbase
    // Output AUC files and find first dataset with maximum scans
    int mxscans       = 0;
    int iiuse         = 0;
+DbgLv(1) << "expA: ktrips" << triples.count() << "ktnodes" << trnodes.count();
+   if ( trnodes.count() == 0  &&  ntrips > 0 )
+   {
+      for ( int ii = 0; ii < ntrips; ii++ )
+      {
+         QString tripl = triples[ ii ];
+         QString tnode = tripl.replace( " / ", "." );
+         trnodes << tnode;
+      }
+DbgLv(1) << "expA: ntrips" << ntrips << "ktnodes" << trnodes.count();
+   }
 
    for ( int ii = 0; ii < ntrips; ii++ )
    {  // Create a file for each triple
@@ -1455,8 +1468,9 @@ DbgLv(1) << "expA: ntrips ftype fbase" << ntrips << ftype << fbase
                                 qRound( rdata->scanData[ 0 ].wavelength ) );
 #endif
       QString trnode    = trnodes[ ii ];
-DbgLv(1) << "expA: ii" << ii << "triples[ii]" << triples[ii]
- << "trnodes[ii]" << trnodes[ii] << "trnode" << trnode;
+//DbgLv(1) << "expA: ii" << ii << "triples[ii]" << triples[ii]
+// << "trnodes[ii]" << trnodes[ii] << "trnode" << trnode;
+DbgLv(1) << "expA: ii" << ii << "trnodes[ii]" << trnodes[ii] << "trnode" << trnode;
       QString fname     = fbase + trnode + ".auc";
       QString fpath     = cur_dir + fname;
 
