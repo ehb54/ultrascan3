@@ -929,160 +929,196 @@ int*                        US_2dsa::mw_base_rss()     { return &baserss;  }
 // Open residuals plot window
 void US_2dsa::open_resplot()
 {
-     if ( resplotd != 0 )
-     {
-        rbd_pos  = resplotd->pos();
-        resplotd->close();
-     }
-     else
-        rbd_pos  = this->pos() + QPoint(  100, 100 );
+   if ( resplotd != 0 )
+   {
+      rbd_pos  = resplotd->pos();
+      resplotd->close();
+   }
+   else
+      rbd_pos  = this->pos() + QPoint(  100, 100 );
 
-     resplotd = new US_ResidPlot2D( this );
-     resplotd->move( rbd_pos );
-     resplotd->setVisible( true );
-     connect( resplotd, SIGNAL( destroyed() ), this, SLOT( resplot_done() ) );
+   resplotd = new US_ResidPlot2D( this );
+   resplotd->move( rbd_pos );
+   resplotd->setVisible( true );
+   connect( resplotd, SIGNAL( destroyed() ), this, SLOT( resplot_done() ) );
 }
 
 // Open 3-D plot control window
 void US_2dsa::open_3dplot()
 {
-     if ( eplotcd )
-     {
-        epd_pos  = eplotcd->pos();
-        eplotcd->close();
-     }
-     else
-        epd_pos  = this->pos() + QPoint(  400, 200 );
+   if ( eplotcd )
+   {
+      epd_pos  = eplotcd->pos();
+      eplotcd->close();
+   }
+   else
+      epd_pos  = this->pos() + QPoint(  400, 200 );
 
-     eplotcd = new US_PlotControl2D( this, &model );
-     eplotcd->move( epd_pos );
-     eplotcd->show();
+   eplotcd = new US_PlotControl2D( this, &model );
+   eplotcd->move( epd_pos );
+   eplotcd->show();
 }
 
 // Open fit analysis control window
 void US_2dsa::open_fitcntl()
 {
-     int    drow     = lw_triples->currentRow();
-     if ( drow < 0 )   return;
-     edata           = &dataList[ drow ];
-     double avTemp   = edata->average_temperature();
-     double vbar20   = US_Math2::calcCommonVbar( solution_rec, 20.0   );
-     double vbartb   = US_Math2::calcCommonVbar( solution_rec, avTemp );
-     double buoy     = 1.0 - vbar20 * DENS_20W;
+   int    drow     = lw_triples->currentRow();
+   if ( drow < 0 )   return;
+   edata           = &dataList[ drow ];
+   double avTemp   = edata->average_temperature();
+   double vbar20   = US_Math2::calcCommonVbar( solution_rec, 20.0   );
+   double vbartb   = US_Math2::calcCommonVbar( solution_rec, avTemp );
+   double buoy     = 1.0 - vbar20 * DENS_20W;
 
-     if ( buoy <= 0.0 )
-     {
-        QMessageBox::critical( this, tr( "Negative Buoyancy Implied" ),
-         tr( "The current vbar20 value (%1) implies a buoyancy\n"
-             "value (%2) that is non-positive.\n\n"
-             "2DSA cannot proceed with this value. Click on the\n"
-             "<Solution> button and change the vbar20 value.\n"
-             "Note that the Solution may be accepted without being saved.\n"
-             "Include negative values in the sedimentation coefficient\n"
-             "range to represent floating data." ).arg( vbar20 ).arg( buoy ) );
-        return;
-     }
-     US_Math2::SolutionData sd;
-     sd.density      = density;
-     sd.viscosity    = viscosity;
-     sd.vbar20       = vbar20;
-     sd.vbar         = vbartb;
-     sd.manual       = manual;
-     US_Math2::data_correction( avTemp, sd );
+   if ( buoy <= 0.0 )
+   {
+      QMessageBox::critical( this, tr( "Negative Buoyancy Implied" ),
+      tr( "The current vbar20 value (%1) implies a buoyancy\n"
+          "value (%2) that is non-positive.\n\n"
+          "2DSA cannot proceed with this value. Click on the\n"
+          "<Solution> button and change the vbar20 value.\n"
+          "Note that the Solution may be accepted without being saved.\n"
+          "Include negative values in the sedimentation coefficient\n"
+          "range to represent floating data." ).arg( vbar20 ).arg( buoy ) );
+      return;
+   }
+   US_Math2::SolutionData sd;
+   sd.density      = density;
+   sd.viscosity    = viscosity;
+   sd.vbar20       = vbar20;
+   sd.vbar         = vbartb;
+   sd.manual       = manual;
+   US_Math2::data_correction( avTemp, sd );
 DbgLv(0) << "2DSA s_corr D_corr" << sd.s20w_correction << sd.D20w_correction
  << "manual" << sd.manual << "vbar20" << vbar20;
 DbgLv(0) << "2DSA d_corr v vW vT d dW dT" << sd.viscosity << sd.viscosity_wt
  << sd.viscosity_tb << sd.density << sd.density_wt << sd.density_tb;
-     US_Passwd pw;
-     loadDB                  = disk_controls->db();
-     US_DB2* dbP             = loadDB ? new US_DB2( pw.getPasswd() ) : NULL;
+   US_Passwd pw;
+   loadDB                  = disk_controls->db();
+   US_DB2* dbP             = loadDB ? new US_DB2( pw.getPasswd() ) : NULL;
 
-     // Initialize simulation parameters from data.
-     // Skip adding speed steps if this is multi-speed, initially,
-     // but set speed steps to the experiment vector.
-     dset.simparams.initFromData( dbP, dataList[ drow ], !exp_steps );
+   // Initialize simulation parameters from data.
+   // Skip adding speed steps if this is multi-speed, initially,
+   // but set speed steps to the experiment vector.
+   dset.simparams.initFromData( dbP, dataList[ drow ], !exp_steps );
 
-     if ( exp_steps )
-     {
-        dset.simparams.speed_step  = speed_steps;
-     }
+   if ( exp_steps )
+   {
+      dset.simparams.speed_step  = speed_steps;
+   }
 
-     // Build a TimeState object now if possible
+   // Build a TimeState object now if possible
 DbgLv(1) << "2dsa : checking timestate object need";
-     dset.simparams.sim = ( dataList[ drow ].channel == "S" );
-     bool need_tsfile   = true;
-     QString tmst_fpath = US_Settings::resultDir() + "/" + runID + "/"
-                          + runID + ".time_state.tmst";
-     QFileInfo check_file( tmst_fpath );
+   dset.simparams.sim = ( dataList[ drow ].channel == "S" );
+   bool need_tsfile   = true;
+   QString tmst_fpath = US_Settings::resultDir() + "/" + runID + "/"
+                        + runID + ".time_state.tmst";
+   QFileInfo check_file( tmst_fpath );
 
-     US_AstfemMath::initSimData( sdata, dataList[ drow ], 0.0 );
+//x0  1  2
+   US_AstfemMath::initSimData( sdata, dataList[ drow ], 0.0 );
 
-     if ( check_file.exists()  &&  check_file.isFile() )
-     {
-        bool intv_1sec  = US_AstfemMath::timestate_onesec( tmst_fpath, sdata );
+   if ( check_file.exists()  &&  check_file.isFile() )
+   {
+      bool intv_1sec  = US_AstfemMath::timestate_onesec( tmst_fpath, sdata );
 DbgLv(1) << "2dsa :  intv_1sec" << intv_1sec;
 
-        if ( intv_1sec )
-        {
-           dset.simparams.simSpeedsFromTimeState( tmst_fpath );
+      if ( intv_1sec )
+      {
+         dset.simparams.simSpeedsFromTimeState( tmst_fpath );
 DbgLv(1) << "2dsa :   tsobj,ssp created";
-           need_tsfile             = false;
-        }
+         need_tsfile             = false;
+      }
 DbgLv(1) << "2dsa : timestate file exists" << tmst_fpath 
  << " timestateobject = " << dset.simparams.tsobj
  << "stepscount=" << dset.simparams.speed_step.size();
-     }
+   }
 
-     if ( need_tsfile )
-     {
-        QString tmst_fpath = US_Settings::tmpDir() + "/" + temp_Id_name() + ".time_state.tmst";
-        US_AstfemMath::writetimestate( tmst_fpath, dset.simparams, sdata );
+   if ( need_tsfile )
+   {
+      QString tmst_fpath = US_Settings::tmpDir() + "/" + temp_Id_name() + ".time_state.tmst";
+      US_AstfemMath::writetimestate( tmst_fpath, dset.simparams, sdata );
 
-        dset.simparams.simSpeedsFromTimeState( tmst_fpath );
+      dset.simparams.simSpeedsFromTimeState( tmst_fpath );
 DbgLv(1)<<"2dsa : timestate newly created.  timestateobject = "
  << dset.simparams.tsobj << "exp_steps=" << exp_steps
  << "sspknt" << dset.simparams.sim_speed_prof.count();
-     }
+   }
 
-//     if ( dset.simparams.sim_speed_prof.count() > 1 )
-//     {  // If from multi-speed, compute speed steps from sim speed profile
-//        dset.simparams.speedstepsFromSSprof();
-//     }
-     // Compute speed steps from sim speed profile
-     dset.simparams.speedstepsFromSSprof();
+//   if ( dset.simparams.sim_speed_prof.count() > 1 )
+//   {  // If from multi-speed, compute speed steps from sim speed profile
+//      dset.simparams.speedstepsFromSSprof();
+//   }
+   // Compute speed steps from sim speed profile
+   dset.simparams.speedstepsFromSSprof();
 
-     dset.run_data           = dataList[ drow ];
-     dset.viscosity          = viscosity;
-     dset.density            = density;
-     dset.temperature        = avTemp;
-     dset.vbar20             = vbar20;
-     dset.vbartb             = vbartb;
-     dset.s20w_correction    = sd.s20w_correction;
-     dset.D20w_correction    = sd.D20w_correction;
-     dset.manual             = manual;
+   // Do a quick test of the speed step implied by TimeState
+   int tf_scan   = dset.simparams.speed_step[ 0 ].time_first;
+   int accel1    = dset.simparams.speed_step[ 0 ].acceleration;
+   int rspeed    = dset.simparams.speed_step[ 0 ].rotorspeed;
+   int tf_aend   = ( rspeed + accel1 - 1 ) / accel1;
+   int accel2    = dset.simparams.sim_speed_prof[ 0 ].acceleration;
+DbgLv(1)<<"2dsa : ssck: rspeed accel1 tf_aend tf_scan"
+ << rspeed << accel1 << tf_aend << tf_scan
+ << "accel2" << accel2;
+//x0  1  2  3  4  5
+   if ( accel1 < 250  ||  tf_aend > ( tf_scan - 6 ) )
+   {
+      QString wmsg = tr( "The TimeState used is likely bad:<br/>"
+                         "The acceleration implied is %1 rpm/sec.<br/>"
+                         "The acceleration zone ends at %2 seconds,<br/>"
+                         "with a first scan time of %3 seconds.<br/><br/>"
+                         "<b>You should rerun the experiment without<br/>"
+                         "any interim constant speed, and then<br/>"
+                         "you should reimport the data.</b>" )
+                     .arg( accel1 ).arg( tf_aend ).arg( tf_scan );
+
+      QMessageBox msgBox( this );
+      msgBox.setWindowTitle( tr( "Bad TimeState Implied!" ) );
+      msgBox.setTextFormat( Qt::RichText );
+      msgBox.setText( wmsg );
+      msgBox.addButton( tr( "Continue" ), QMessageBox::RejectRole );
+      QPushButton* bAbort = msgBox.addButton( tr( "Abort" ),
+                                          QMessageBox::YesRole );
+      msgBox.setDefaultButton( bAbort );
+      msgBox.exec();
+
+      if ( msgBox.clickedButton() == bAbort )
+         return;
+   }
+
+   dset.run_data           = dataList[ drow ];
+   dset.viscosity          = viscosity;
+   dset.density            = density;
+   dset.temperature        = avTemp;
+   dset.vbar20             = vbar20;
+   dset.vbartb             = vbartb;
+   dset.s20w_correction    = sd.s20w_correction;
+   dset.D20w_correction    = sd.D20w_correction;
+   dset.manual             = manual;
 DbgLv(1) << "Bottom" << dset.simparams.bottom << "rotorcoeffs"
  << dset.simparams.rotorcoeffs[0] << dset.simparams.rotorcoeffs[1];
 DbgLv(1) << "SimulationParameter --";
 if(dbg_level>0) dset.simparams.debug();
 
-     if ( dbP != NULL )
-     {
-        delete dbP;
-        dbP    = NULL;
-     }
+   if ( dbP != NULL )
+   {
+      delete dbP;
+      dbP    = NULL;
+   }
 
-     if ( analcd != 0 )
-     {
-        acd_pos  = analcd->pos();
-        analcd->close();
-     }
-     else
-        acd_pos  = this->pos() + QPoint(  500,  50 );
+   if ( analcd != 0 )
+   {
+      acd_pos  = analcd->pos();
+      analcd->close();
+   }
+   else
+      acd_pos  = this->pos() + QPoint(  500,  50 );
 
-     analcd  = new US_AnalysisControl2D( dsets, loadDB, this );
-     analcd->move( acd_pos );
-     analcd->show();
-     qApp->processEvents();
+   analcd  = new US_AnalysisControl2D( dsets, loadDB, this );
+   analcd->move( acd_pos );
+   analcd->show();
+   qApp->processEvents();
 }
 
 // Distribution information HTML string

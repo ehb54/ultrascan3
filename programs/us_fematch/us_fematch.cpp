@@ -2031,10 +2031,10 @@ void US_FeMatch::simulate_model( )
    double radhi   = edata->radius( nconc - 1 );
 
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-int lc=model.components.size()-1;
+int lc=model_used.components.size()-1;
 DbgLv(1) << "SimMdl: 0) s D c"
  << model_used.components[ 0].s << model_used.components[ 0].D
- << model_used.components[ 0].signal_concentration;
+ << model_used.components[ 0].signal_concentration << "  n" << lc;
 DbgLv(1) << "SimMdl: n) s D c"
  << model_used.components[lc].s << model_used.components[lc].D
  << model_used.components[lc].signal_concentration;
@@ -2147,6 +2147,41 @@ DbgLv(1) << "SimMdl: 1-sec-intv file created";
    else
 DbgLv(1) << "SimMdl: timestate file does not exist";
 
+   // Do a quick test of the speed step implied by TimeState
+   int tf_scan   = simparams.speed_step[ 0 ].time_first;
+   int accel1    = simparams.speed_step[ 0 ].acceleration;
+   int rspeed    = simparams.speed_step[ 0 ].rotorspeed;
+   int tf_aend   = ( rspeed + accel1 - 1 ) / accel1;
+DbgLv(1)<<"SimMdl: ssck: rspeed accel1 tf_aend tf_scan"
+ << rspeed << accel1 << tf_aend << tf_scan;
+//x0  1  2  3  4  5
+   if ( accel1 < 250  ||  tf_aend > ( tf_scan - 6 ) )
+   {
+      QString wmsg = tr( "The TimeState used is likely bad:<br/>"
+                         "The acceleration implied is %1 rpm/sec.<br/>"
+                         "The acceleration zone ends at %2 seconds,<br/>"
+                         "with a first scan time of %3 seconds.<br/><br/>"
+                         "<b>You should rerun the experiment without<br/>"
+                         "any interim constant speed, and then<br/>"
+                         "you should reimport the data.</b>" )
+                     .arg( accel1 ).arg( tf_aend ).arg( tf_scan );
+
+      QMessageBox msgBox( this );
+      msgBox.setWindowTitle( tr( "Bad TimeState Implied!" ) );
+      msgBox.setTextFormat( Qt::RichText );
+      msgBox.setText( wmsg );
+      msgBox.addButton( tr( "Continue" ), QMessageBox::RejectRole );
+      QPushButton* bAbort = msgBox.addButton( tr( "Abort" ),
+            QMessageBox::YesRole    );
+      msgBox.setDefaultButton( bAbort );
+      msgBox.exec();
+      if ( msgBox.clickedButton() == bAbort )
+      {
+         QApplication::restoreOverrideCursor();
+         qApp->processEvents();
+         return;
+      }
+   }
    sdata->cell        = rdata->cell;
    sdata->channel     = rdata->channel;
    sdata->description = rdata->description;
