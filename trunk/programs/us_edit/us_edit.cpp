@@ -1262,6 +1262,8 @@ DbgLv(1) << "IS-MWL:  expi_wvlns size" << expi_wvlns.size() << nwaveln;
       edata         = &allData[ 0 ];
       nrpoint       = edata->pointCount();
       int nscan     = edata->scanCount();
+      for ( int trx = 0; trx < allData.size(); trx++ )
+         nscan         = qMax( nscan, allData[ trx ].scanCount() );
       int ndset     = ncelchn * nrpoint;
       int ndpoint   = nscan * maxwavl;
 DbgLv(1) << "IS-MWL:   nrpoint nscan ndset ndpoint" << nrpoint << nscan
@@ -1301,9 +1303,8 @@ DbgLv(1) << "IS-MWL:  rdata size" << rdata.size() << ndset;
             edata         = &allData[ trx ];               // Triple data
             int iwavl     = rawi_wvlns[ jwx ];             // Wavelength value
             int wvx       = toti_wvlns.indexOf( iwavl );   // Wavelength index
-DbgLv(1) << "IS-MWL:   trx ccx wvx" << trx << ccx << wvx;
 
-            for ( int scx = 0; scx < nscan; scx++ )
+            for ( int scx = 0; scx < edata->scanCount(); scx++ )
             {  // Each scan of a triple
                US_DataIO::Scan* scan  = &edata->scanData[ scx ];
                int odx       = ccx * nrpoint;         // Output dataset index
