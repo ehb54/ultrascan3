@@ -2114,6 +2114,7 @@ DbgLv(1) << "SimMdl: speed_steps:" << simparams.speed_step.size();
    QString tmst_fpath = US_Settings::resultDir() + "/" + runID + "/"
                         + runID + ".time_state.tmst";
    QFileInfo check_file( tmst_fpath );
+   simparams.sim      = ( edata->channel == "S" );
 
    if ( ( check_file.exists() ) && ( check_file.isFile() ) )
    {
@@ -2145,7 +2146,22 @@ DbgLv(1) << "SimMdl: 1-sec-intv file created";
       }
    }
    else
+   {
 DbgLv(1) << "SimMdl: timestate file does not exist";
+      if ( ! simparams.sim )
+      {  // Compute acceleration rate for non-astfem_sim data
+         const double tfac = ( 4.0 / 3.0 );
+         double t2   = simparams.speed_step[ 0 ].time_first;
+         double w2t  = simparams.speed_step[ 0 ].w2t_first;
+         double om1t = simparams.speed_step[ 0 ].rotorspeed * M_PI / 30.0;
+         double w2   = sq( om1t );
+         double t1   = tfac * ( t2 - ( w2t / w2 ) );
+         int t_acc   = (int)qRound( t1 );
+         double rate = (double)( simparams.speed_step[ 0 ].rotorspeed )
+                       / (double)t_acc;
+         simparams.speed_step[ 0 ].acceleration = (int)qRound( rate );
+      }
+   }
 
    // Do a quick test of the speed step implied by TimeState
    int tf_scan   = simparams.speed_step[ 0 ].time_first;
@@ -2157,7 +2173,7 @@ DbgLv(1)<<"SimMdl: ssck: rspeed accel1 tf_aend tf_scan"
 //x0  1  2  3  4  5
    if ( accel1 < 250  ||  tf_aend > ( tf_scan - 6 ) )
    {
-      QString wmsg = tr( "The TimeState used is likely bad:<br/>"
+      QString wmsg = tr( "The TimeState computed/used is likely bad:<br/>"
                          "The acceleration implied is %1 rpm/sec.<br/>"
                          "The acceleration zone ends at %2 seconds,<br/>"
                          "with a first scan time of %3 seconds.<br/><br/>"
