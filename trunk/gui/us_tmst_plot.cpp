@@ -427,7 +427,7 @@ DbgLv(1) << "TP: det: lostep histep nstep" << lostep << histep << nstep
       if ( scan_v > 0 )
       {
          double time_v  = dvals[ tmdx ][ jt ];
-         int step_v     = dvals[ stpx ][ jt ];
+         int step_v     = ( histep > 0 ) ? dvals[ stpx ][ jt ] : 0;
          int step_x     = step_v - lostep;
          if ( ststimes[ step_x ] == 0.0 )
          {

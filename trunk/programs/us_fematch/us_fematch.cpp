@@ -2159,6 +2159,8 @@ DbgLv(1) << "SimMdl: timestate file does not exist";
          int t_acc   = (int)qRound( t1 );
          double rate = (double)( simparams.speed_step[ 0 ].rotorspeed )
                        / (double)t_acc;
+DbgLv(1) << "SimMdl:  accel-calc:  t1 t2 w2t t_acc speed rate"
+ << t1 << t2 << w2t << t_acc << simparams.speed_step[0].rotorspeed << rate;
          simparams.speed_step[ 0 ].acceleration = (int)qRound( rate );
       }
    }
