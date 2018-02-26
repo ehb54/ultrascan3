@@ -1015,7 +1015,6 @@ DbgLv(1) << "2dsa : checking timestate object need";
                         + runID + ".time_state.tmst";
    QFileInfo check_file( tmst_fpath );
 
-//x0  1  2
    US_AstfemMath::initSimData( sdata, dataList[ drow ], 0.0 );
 
    if ( check_file.exists()  &&  check_file.isFile() )

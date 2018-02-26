@@ -1303,6 +1303,7 @@ DbgLv(1) << "IS-MWL:  rdata size" << rdata.size() << ndset;
             edata         = &allData[ trx ];               // Triple data
             int iwavl     = rawi_wvlns[ jwx ];             // Wavelength value
             int wvx       = toti_wvlns.indexOf( iwavl );   // Wavelength index
+DbgLv(1) << "IS-MWL:   trx ccx wvx" << trx << ccx << wvx;
 
             for ( int scx = 0; scx < edata->scanCount(); scx++ )
             {  // Each scan of a triple
