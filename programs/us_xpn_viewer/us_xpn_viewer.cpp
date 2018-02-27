@@ -579,7 +579,7 @@ DbgLv(1) << "RDr: call connect_data  dbname h p u w"
 if ( dbg_level > 0 ) xpn_data->dump_tables();
       xpn_data->scan_runs( runInfo );
       xpn_data->filter_runs( runInfo );
-DbgLv(1) << "RDr:  rtn fr import_data";
+DbgLv(1) << "RDr:  rtn fr scan_runs,filter_runs";
    }
    else
    {
@@ -590,7 +590,10 @@ DbgLv(1) << "RDr:  connection failed";
    QString drDesc    = "";
    US_XpnRunRaw* lddiag = new US_XpnRunRaw( drDesc, runInfo );
    if ( lddiag->exec() == QDialog::Rejected )
+   {
+DbgLv(1) << "RDr:  rtn fr XpnRunRaw dialog: CANCEL";
       return;
+   }
 
    // Restore area beneath dialog
    qApp->processEvents();
@@ -777,6 +780,7 @@ DbgLv(1) << "RDr: allData size" << allData.size();
    QApplication::restoreOverrideCursor();
    QString tspath = currentDir + "/" + runID + ".time_state.tmst";
    haveTmst       = QFile( tspath ).exists();
+   in_reload      = false;
 
    // Ok to enable some buttons now
    enableControls();
@@ -1668,6 +1672,7 @@ void US_XpnDataViewer::status_report( QString stat_text )
 // Slot to reload data
 void US_XpnDataViewer::reloadData()
 {
+DbgLv(1) << "RLd:  in_reload" << in_reload;
    if ( in_reload )             // If already doing a reload,
       return;                   //  skip starting a new one
 
@@ -1693,6 +1698,7 @@ QDateTime sttime=QDateTime::currentDateTime();
    if ( ! upd_ok )
    {  // No change in data scans:  report inability to update
       nscan       = allData[ trpxs ].scanCount();
+DbgLv(1) << "RLd:      upd_ok" << upd_ok << "rlt_id" << rlt_id << "nscan" << nscan;
       if ( rlt_id == 0 )    // Output message only if not auto-reload
       {
          QMessageBox::warning( this,
@@ -1707,6 +1713,8 @@ QDateTime sttime=QDateTime::currentDateTime();
          le_status->setText( smsg );
          qApp->processEvents();
       }
+DbgLv(1) << "RLd:       NO CHANGE";
+      in_reload   = false;         // Flag no longer in the midst of reload
       return;     // Return with no change in AUC data
    }
 double tm1=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
@@ -1716,6 +1724,7 @@ double tm1=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
    qApp->processEvents();
 
    // Now, update the AUC data with new scans
+DbgLv(1) << "RLd:      build-raw started: tm1" << tm1;
    xpn_data->rebuild_rawData( allData );
 
 double tm2=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
@@ -1741,7 +1750,8 @@ void US_XpnDataViewer::timerEvent( QTimerEvent *event )
 {
    int tim_id  = event->timerId();
 DbgLv(1) << "            timerEvent:   tim_id" << tim_id << "    "
- << QDateTime::currentDateTime().toString( "hh:mm:ss" );
+ << QDateTime::currentDateTime().toString( "hh:mm:ss" )
+ << "  rlt_id" << rlt_id;
 
    if ( tim_id != rlt_id )
    {  // if other than auto-reload event, pass on to normal handler
@@ -1775,6 +1785,7 @@ DbgLv(1) << "chgRld:  rlt_id" << rlt_id;
 DbgLv(1) << "chgRld:    STOPPED";
       }
       rlt_id      = 0;
+      in_reload   = false;
    }
 }
 
