@@ -2,6 +2,9 @@
 #define US_EXPERIMENT_H
 
 #include <QApplication>
+#include <unistd.h>
+#include <fstream>
+#include <QtSql>
 
 #include "us_run_protocol.h"
 #include "us_protocol_util.h"
@@ -79,6 +82,8 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
       QStringList           pr_names;   // List of protocol names
 
       QList< US_AbstractCenterpiece >  acp_list; // Full Centerpiece information
+
+
       
    private slots:
       void sel_project     ( void );        // Slot for project button clicked
@@ -674,6 +679,11 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       bool         connected;   // We are Connected to the Optima
       QString      json_upl;    // JSON to upload
 
+      QJsonObject absorbanceObject;
+
+      QSqlDatabase dbxpn;
+      
+
    private slots:
       void    detailExperiment( void );  // Dialog to detail experiment
       void    testConnection  ( void );  // Test Optima connection
@@ -709,6 +719,7 @@ class US_ExperimentMain : public US_Widgets
 
       QPushButton* pb_next;
       QPushButton* pb_prev;
+
    private:
 
       QTabWidget*           tabWidget;      // Tab Widget holding the panels

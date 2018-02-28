@@ -1905,7 +1905,7 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
    ck_sub_done->setChecked( submitted  );
    ck_rp_diff ->setChecked( rps_differ );
 
-   pb_submit  ->setEnabled( subm_enab  );
+   pb_submit  ->setEnabled( subm_enab  );                                  // <-- Temporary enabled for testing
    pb_saverp  ->setEnabled( have_cells && have_solus && have_range );
 }
 
