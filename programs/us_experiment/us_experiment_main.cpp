@@ -3036,7 +3036,10 @@ void US_ExperGuiUpload::submitExperiment()
        */
        
        int nstages = sibIValue( "speeds",  "nspeeds" );
-       int nstages_size = nstages + 1;
+
+       int tem_delay_sec = int((mainw->currProto.temeq_delay)*60);         // delay in sec (longevity) of the dummy equlibration stage
+       int nstages_size;
+       nstages_size = tem_delay_sec ? nstages + 1 : nstages;               // Total # stages
        int ncells  = sibIValue( "rotor",   "nholes" );
        
        qDebug() << "#Stages: " << nstages;
@@ -3056,8 +3059,8 @@ void US_ExperGuiUpload::submitExperiment()
        
        for (int i=0; i<nstages_size; i++)
 	 { 
-	   if (i==0)
-	     continue;                     // skip dummy stage
+	   if (i==0 && tem_delay_sec)
+	     continue;                     // skip dummy stage for AbsScanParams
 	   for (int j=0; j<ncells; j++)
 	     {
 	       QString channel;
@@ -3071,7 +3074,7 @@ void US_ExperGuiUpload::submitExperiment()
 		 {
 		   channel  = rpRange->chrngs[ ii ].channel;
 		   
-		   if ( channel.contains("sample") && channel.startsWith(QString::number(j+1)) )   // <-- Judge only by sample (channel A) for now
+		   if ( channel.contains("sample") && channel.startsWith(QString::number(j+1)) )  // <-- Judge only by sample (channel A) for now
 		     {
 		       nwavl    = rpRange->chrngs[ ii ].wvlens.count();
 		       wvl_list = rpRange->chrngs[ ii ].wvlens;
@@ -3218,7 +3221,7 @@ void US_ExperGuiUpload::submitExperiment()
 	       solname += "\'";
 	       ////////////////////////////////
 
-	       if (i==0)                         // <-- dummy stage 
+	       if (i==0  && tem_delay_sec)                         // <-- dummy stage 
 		 {
 		   if(! query_cell.prepare(QString("INSERT INTO %1 (\"CellPosition\",\"CellSectors\",\"SampleName\") VALUES (%2, %3, %4) RETURNING \"CellParamId\"").arg(qrytab_cell).arg(cell_pos).arg(cell_sector).arg(solname) ) )
 		     qDebug() << query_cell.lastError().text();
@@ -3322,15 +3325,14 @@ void US_ExperGuiUpload::submitExperiment()
 	   stagedur    += QString::number(0);                          // <-- stageduration   
 	   stageaccl   += QString::number(0);                          // <-- stageaccelrate   
 	   
-	   if (i == 0)
+	   if (i==0 && tem_delay_sec)
 	     {
-	       stagestart  += QString::number(3600);                   // <-- stagestart dummy stages (1h)
+	       stagestart  += QString::number(tem_delay_sec);          // <-- stagestart dummy stages 
 	       stagerpm    += QString::number(0);                      // <-- RPM (0) dummy stage
 	     }
 	   else
 	     {
 	       stagestart  += QString::number(0);                       // <-- stagestart Active stages
-
 	       stagerpm    += QString::number( (speeds[ss].split(QRegExp("\\s+"), QString::SkipEmptyParts))[0].toInt() );       // <-- RPM Active stages
 	       ss += 4;
 	     }
