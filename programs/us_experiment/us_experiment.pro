@@ -5,7 +5,7 @@ QT           += xml
 QT           += sql
 
 HEADERS       = us_experiment_main.h   \
-                us_run_protocol.h
+                us_run_protocol.h      
 
 SOURCES       = us_experiment_main.cpp   \
                 us_exp_utils.cpp         \
