@@ -3134,7 +3134,19 @@ void US_ExperGuiUpload::submitExperiment()
 		   
 		   qDebug() << "Wvl_Array: " << wvl_array;
 		   QSqlQuery query_abs_scan(dbxpn);
-		   if(! query_abs_scan.prepare(QString("INSERT INTO %1 (\"ContinuousMode\",\"ReplicateCounts\",\"ScanInnerLimits\",\"ScanOuterLimits\",\"ScanStarts\",\"ScanSteps\",\"ScanTypeFlag\",\"WavelengthCount\",\"Wavelengths\",\"ScanCounts\",\"ScanIntervals\") VALUES (%2, %3, %4, %5, %6, %7, %8, %9, %10, %11, %12) RETURNING \"ScanId\"").arg(qrytab_abs).arg(continuous_mode_array).arg(replicate_counts_array).arg(scan_inner_array).arg(scan_outer_array).arg(scan_starts_array).arg(scan_steps_array).arg("\'I\'").arg(wvl_count).arg(wvl_array).arg(scan_counts).arg(scan_intervals) ) )
+		   if(! query_abs_scan.prepare(QString("INSERT INTO %1 (\"ContinuousMode\",\"ReplicateCounts\",\"ScanInnerLimits\",\"ScanOuterLimits\",\"ScanStarts\",\"ScanSteps\",\"ScanTypeFlag\",\"WavelengthCount\",\"Wavelengths\",\"ScanCounts\",\"ScanIntervals\") VALUES (%2, %3, %4, %5, %6, %7, %8, %9, %10, %11, %12) RETURNING \"ScanId\"")
+					       .arg(qrytab_abs)
+					       .arg(continuous_mode_array)
+					       .arg(replicate_counts_array)
+					       .arg(scan_inner_array)
+					       .arg(scan_outer_array)
+					       .arg(scan_starts_array)
+					       .arg(scan_steps_array)
+					       .arg("\'I\'")
+					       .arg(wvl_count)
+					       .arg(wvl_array)
+					       .arg(scan_counts)
+					       .arg(scan_intervals) ) )
 		     qDebug() << query_abs_scan.lastError().text();
 		   
 		   if (query_abs_scan.exec()) 
@@ -3150,6 +3162,100 @@ void US_ExperGuiUpload::submitExperiment()
 		 }
 	     }
 	 }
+
+       // Interference INSERT ////////////////////////////////////////////////////////////////////////
+       QString tabname_inter( "InterferenceScanParameters" );
+       QString qrytab_inter  = "\"" + schname + "\".\"" + tabname_inter + "\"";
+
+       /* WHAT TO INSERT: fields
+	  
+	  "ModulePosition": " ",      >> default '2'
+	  "ReplicateCount": " ",      >> should be '1' & this is default
+	  "ScanStageDelay": " ",      >> not currently used
+	  "ScanStart": " ",           >> defaults to '0' to allow control by by scan interval
+	  "ScanTypeFlag": " ",        >> default 'P'
+	  "ScanTypeName": " ",        >> default 'Interference'
+	  "Wavelength": " ",          >> default 660 nm  - laser wvl
+
+	  "ScanCount": " ",           >> computation  Same as AbsScan ?   
+	  "ScanInterval": " ",        >> computation  Sama as AbsScan ?
+       */
+
+       /* Define 2D array "InterScanIDs[number_of_stages + 1][number_of_cells]"
+       
+       stage#  cell# (e.g. 8-hole rotor) 	  
+       0       [0,1,2,3,4,5,6,7]        <-- Extra dummy zeroth stage
+       --------------------------
+       1       [0,1,2,3,4,5,6,7]        <-- Active stages
+       2       [0,1,2,3,4,5,6,7]
+	 
+       */
+
+       QString uvvis       = tr( "Rayleigh Interference" );
+       QStringList oprof   = sibLValue( "optical", "profiles" );
+       
+
+       QVector < QVector < int >> InterScanIds(nstages_size);
+       for (int i=0; i<nstages_size; ++i)
+	 InterScanIds[i].resize(ncells);
+
+       for (int i=0; i<nstages_size; ++i)
+	 { 
+	   for (int j=0; j<ncells; ++j)
+	     {
+	       InterScanIds[i][j] = 0;
+	     }
+	 }
+       
+        for (int i=0; i<nstages_size; i++)
+	 { 
+	   if (i==0 && tem_delay_sec)
+	     continue;                     // skip dummy stage for AbsScanParams
+	   for (int j=0; j<ncells; j++)
+	     {
+	       QString channel;
+	       bool has_interference = false;
+	       for ( int ii = 0; ii < oprof.count(); ii++ )
+		 {
+		   if ( oprof[ ii ].contains( uvvis ) )
+		     {
+		       channel =  oprof[ ii ].section( ":", 0, 0 );
+		       if (channel.startsWith(QString::number(j+1)))
+			 {
+			   has_interference = true;
+			   break;
+			 }
+		     }
+		 }
+	       if ( has_interference )
+		 {
+		   QString scan_count        = QString::number( 3 );               // <-- TEMPORARY
+		   QString scan_interval     = QString::number( 20 );              // <-- TEMPORARY
+
+		   // Query
+		   QSqlQuery query_inter_scan(dbxpn);
+		   QString query_str = QString("INSERT INTO %1 (\"ScanCount\",\"ScanInterval\") VALUES (%2, %3) RETURNING \"ScanId\"")
+		                       .arg(qrytab_inter)
+		                       .arg(scan_count)
+		                       .arg(scan_interval);
+		   		   
+		   if(! query_inter_scan.prepare(query_str) )
+		     qDebug() << query_inter_scan.lastError().text();
+		   
+		   if (query_inter_scan.exec()) 
+		     {
+		       qDebug() << "InterferenceScanParameters record created";
+		       
+		       query_inter_scan.next();
+		       InterScanIds[i][j] = query_inter_scan.value(0).toInt();         // <-- Save InterScanID inserted [for given stage#/cell#]
+		       qDebug() << "ScanId: " << query_inter_scan.value(0).toInt();
+		     } 
+		   else 
+		     qDebug() << "Create record error: " + query_inter_scan.lastError().text();
+		 }
+	     }
+	 }
+
 
        // Cell INSERT ////////////////////////////////////////////////////////////////////////
        QString tabname_cell( "CellParameters" );
@@ -3220,59 +3326,86 @@ void US_ExperGuiUpload::submitExperiment()
 		 }
 	       solname += "\'";
 	       ////////////////////////////////
-
-	       if (i==0  && tem_delay_sec)                         // <-- dummy stage 
+	       QString cell_query_str;
+	       QString abs_scanid    = QString::number( AbsScanIds[i][j] );
+	       QString inter_scanid  = QString::number( InterScanIds[i][j] );
+	       QString comment;
+	       
+	       // <-- dummy stage 
+	       if (i==0  && tem_delay_sec)                         
 		 {
-		   if(! query_cell.prepare(QString("INSERT INTO %1 (\"CellPosition\",\"CellSectors\",\"SampleName\") VALUES (%2, %3, %4) RETURNING \"CellParamId\"").arg(qrytab_cell).arg(cell_pos).arg(cell_sector).arg(solname) ) )
-		     qDebug() << query_cell.lastError().text();
+		   cell_query_str = QString("INSERT INTO %1 (\"CellPosition\",\"CellSectors\",\"SampleName\") VALUES (%2, %3, %4) RETURNING \"CellParamId\"")
+		                    .arg(qrytab_cell).arg(cell_pos)
+		                    .arg(cell_sector).arg(solname);
+		   comment = "Dummy stage";
+		 }
+	       // <-- Active stages
+	       else                                                       
+		 {
+		   // <-- Active Stage: ONLY AbsScan exists
+		   if ( AbsScanIds[i][j] && !InterScanIds[i][j] )          
+		     {
+		       cell_query_str = QString("INSERT INTO %1 (\"CellPosition\",\"CellSectors\",\"AbsorbanceScan\",\"AbsorbanceScanId\",\"SampleName\") VALUES (%2, %3, %4, %5, %6) RETURNING \"CellParamId\"")
+			               .arg(qrytab_cell)
+			               .arg(cell_pos)
+			               .arg(cell_sector)
+			               .arg("\'TRUE\'")
+			               .arg(abs_scanid)
+			               .arg(solname);
+		       comment = "Active Stage --> AbsScan ONLY EXISTS";
+		     }
+		   // <-- Active Stage: ONLY InterferenceScan exists
+		   else if ( !AbsScanIds[i][j] && InterScanIds[i][j] )          
+		     {
+		       cell_query_str = QString("INSERT INTO %1 (\"CellPosition\",\"CellSectors\",\"InterferenceScan\",\"InterferenceScanId\",\"SampleName\") VALUES (%2, %3, %4, %5, %6) RETURNING \"CellParamId\"")
+			                .arg(qrytab_cell)
+			                .arg(cell_pos)
+			                .arg(cell_sector)
+			                .arg("\'TRUE\'")
+			                .arg(inter_scanid)
+			                .arg(solname);
+		       comment = "Active Stage --> InterferenceScan ONLY EXISTS";
+		     }
+		   // <-- Active Stage: BOTH AbsScan && InterferenceScan exist - RARE CASE
+		   else if ( AbsScanIds[i][j] && InterScanIds[i][j] )          
+		     {
+		       cell_query_str = QString("INSERT INTO %1 (\"CellPosition\",\"CellSectors\",\"AbsorbanceScan\",\"AbsorbanceScanId\",\"InterferenceScan\",\"InterferenceScanId\",\"SampleName\") VALUES (%2, %3, %4, %5, %6, %7, %8) RETURNING \"CellParamId\"")
+			               .arg(qrytab_cell)
+			               .arg(cell_pos)
+			               .arg(cell_sector)
+			               .arg("\'TRUE\'")
+			               .arg(abs_scanid)
+			               .arg("\'TRUE\'")
+			               .arg(inter_scanid)
+			               .arg(solname);
+		       comment = "Active Stage --> AbsScan and InterferenceScan BOTH EXIST";
+		     }
+		   // <-- Active Stage: No Scans exist
+		   else                                                        
+		     {
+		       cell_query_str = QString("INSERT INTO %1 (\"CellPosition\",\"CellSectors\",\"SampleName\") VALUES (%2, %3, %4) RETURNING \"CellParamId\"")
+			                .arg(qrytab_cell)
+			                .arg(cell_pos)
+			                .arg(cell_sector)
+			                .arg(solname);
+		       comment = "Active stage --> NO SCANS";
+		     }
+		 }
+	       
+	       // Query
+	       if(! query_cell.prepare(cell_query_str ) )
+		 qDebug() << query_cell.lastError().text();
+	       
+	       if (query_cell.exec()) 
+		 {
+		   qDebug() << "CellParameters record created: " + comment;
 		   
-		   if (query_cell.exec()) 
-		     {
-		       qDebug() << "CellParameters record created: Dummy stage";
-		       
-		       query_cell.next();
-		       CellIds[i][j] = query_cell.value(0).toInt();         // <-- Save CellID inserted [for given stage#/cell#]
-		       qDebug() << "CellId: " << query_cell.value(0).toInt();
-		     } 
-		   else 
-		     qDebug() << "Create record error: " + query_cell.lastError().text();
-		 }
-	       else                                                        // <-- Active satges
-		 {
-		   if ( AbsScanIds[i][j] )                                 // <-- AbsScan exists
-		     {
-		       QString abs_scanid = QString::number( AbsScanIds[i][j] );
-		       if(! query_cell.prepare(QString("INSERT INTO %1 (\"CellPosition\",\"CellSectors\",\"AbsorbanceScan\",\"AbsorbanceScanId\",\"SampleName\") VALUES (%2, %3, %4, %5, %6) RETURNING \"CellParamId\"").arg(qrytab_cell).arg(cell_pos).arg(cell_sector).arg("\'TRUE\'").arg(abs_scanid).arg(solname) ) )
-			 qDebug() << query_cell.lastError().text();
-		       
-		       if (query_cell.exec()) 
-			 {
-			   qDebug() << "CellParameters record created: Active Stage --> AbsScan EXISTS";
-			   
-			   query_cell.next();
-			   CellIds[i][j] = query_cell.value(0).toInt();         // <-- Save CellID inserted [for given stage#/cell#]
-			   qDebug() << "CellId: " << query_cell.value(0).toInt();
-			 } 
-		       else 
-			 qDebug() << "Create record error: " + query_cell.lastError().text();
-		     }
-		   else                                                        // <-- No Scans 
-		     {
-		       if(! query_cell.prepare(QString("INSERT INTO %1 (\"CellPosition\",\"CellSectors\",\"SampleName\") VALUES (%2, %3, %4) RETURNING \"CellParamId\"").arg(qrytab_cell).arg(cell_pos).arg(cell_sector).arg(solname) ) )
-			 qDebug() << query_cell.lastError().text();
-		       
-		       if (query_cell.exec()) 
-			 {
-			   qDebug() << "CellParameters record created: Active stage --> NO SCANS";
-			   
-			   query_cell.next();
-			   CellIds[i][j] = query_cell.value(0).toInt();         // <-- Save CellID inserted [for given stage#/cell#]
-			   qDebug() << "CellId: " << query_cell.value(0).toInt();
-			 } 
-		       else 
-			 qDebug() << "Create record error: " + query_cell.lastError().text();
-		     }
-		 }
+		   query_cell.next();
+		   CellIds[i][j] = query_cell.value(0).toInt();         // <-- Save CellID inserted [for given stage#/cell#]
+		   qDebug() << "CellId: " << query_cell.value(0).toInt();
+		 } 
+	       else 
+		 qDebug() << "Create record error for Cells: " + query_cell.lastError().text();
 	     }
 	 }
 
@@ -3352,19 +3485,30 @@ void US_ExperGuiUpload::submitExperiment()
        stagerpm    += "}\'";
        stageaccl   += "}\'";
        
-       if(! query_fuge.prepare(QString("INSERT INTO %1 (\"StageCellParameterIds\",\"StageDuration\",\"StageStart\",\"StageRPM\",\"Stages\",\"SystemStatusInterval\",\"Temperature\",\"StageAccelRate\",\"HoldSpeedAfterFinal\") VALUES (%2, %3, %4, %5, %6, %7, %8, %9, %10) RETURNING \"FugeRunProfileId\"").arg(qrytab_fuge).arg(cellids).arg(stagedur).arg(stagestart).arg(stagerpm).arg(stagenum).arg(sysstatint).arg(temperature).arg(stageaccl).arg("\'TRUE\'") ) )
-	 qDebug() << query_fuge.lastError().text();
+       // // Query
+       if(! query_fuge.prepare(QString("INSERT INTO %1 (\"StageCellParameterIds\",\"StageDuration\",\"StageStart\",\"StageRPM\",\"Stages\",\"SystemStatusInterval\",\"Temperature\",\"StageAccelRate\",\"HoldSpeedAfterFinal\") VALUES (%2, %3, %4, %5, %6, %7, %8, %9, %10) RETURNING \"FugeRunProfileId\"")
+			       .arg(qrytab_fuge)
+			       .arg(cellids)
+			       .arg(stagedur)
+			       .arg(stagestart)
+			       .arg(stagerpm)
+			       .arg(stagenum)
+			       .arg(sysstatint)
+			       .arg(temperature)
+			       .arg(stageaccl)
+			       .arg("\'TRUE\'") ) )
+       	 qDebug() << query_fuge.lastError().text();
        
        if (query_fuge.exec()) 
-	 {
-	   qDebug() << "FugeProfile record created";
+       	 {
+       	   qDebug() << "FugeProfile record created";
 	   
-	   query_fuge.next();
-	   FugeProfileId = query_fuge.value(0).toInt();                                // <-- Save FugeRunProfileID 
-	   qDebug() << "FugeId: " << query_fuge.value(0).toInt();
-	 } 
+       	   query_fuge.next();
+       	   FugeProfileId = query_fuge.value(0).toInt();                                // <-- Save FugeRunProfileID 
+       	   qDebug() << "FugeId: " << query_fuge.value(0).toInt();
+       	 } 
        else
-	 qDebug() << "Create record error: " + query_fuge.lastError().text();
+       	 qDebug() << "Create record error: " + query_fuge.lastError().text();
        
        
        // ExperimentDefinition INSERT ////////////////////////////////////////////////////////////////////////
@@ -3387,15 +3531,18 @@ void US_ExperGuiUpload::submitExperiment()
        QString researcher           = "\'" + researcher_split[1].trimmed() + "\'";
        //QString name                 = "\'" + mainw->currProto.protname + "\'";
        QString name                 = "\'" + mainw->currProto.runname + "\'";
-
-       if(! query_expdef.prepare(QString("INSERT INTO %1 (\"CellCount\",\"FugeRunProfileId\",\"Name\",\"Researcher\") VALUES (%2, %3, %4, %5)").arg(qrytab_expdef).arg(cellcount).arg(fugeprofile).arg(name).arg(researcher) ) )
+       
+       // Query
+       if(! query_expdef.prepare(QString("INSERT INTO %1 (\"CellCount\",\"FugeRunProfileId\",\"Name\",\"Researcher\") VALUES (%2, %3, %4, %5)")
+				 .arg(qrytab_expdef)
+				 .arg(cellcount)
+				 .arg(fugeprofile)
+				 .arg(name)
+				 .arg(researcher) ) )
 	 qDebug() << query_expdef.lastError().text();
        
        if (query_expdef.exec()) 
-	 {
-	   qDebug() << "ExperimentDefinition record created";
-	   query_expdef.next();
-	 } 
+	 qDebug() << "ExperimentDefinition record created";
        else
 	 qDebug() << "Create record error: " + query_expdef.lastError().text();
      }
