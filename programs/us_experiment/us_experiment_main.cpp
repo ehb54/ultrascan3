@@ -3023,6 +3023,7 @@ void US_ExperGuiUpload::submitExperiment()
        "ScanTypeFlag":                    <-- "I" always for Absorbance scan
        "WavelengthCount": 
        "Wavelengths": []
+       "RadialPath":  ""                  <-- "A", "B", or ""               
       */
 
        /* Define 2D array "AbsScanIDs[number_of_stages + 1][number_of_cells]"
@@ -3107,8 +3108,8 @@ void US_ExperGuiUpload::submitExperiment()
 		       scan_starts_array += QString::number(0);                     // <-- '0' to allow control by scan interval
 		       replicate_counts_array += QString::number(1);                // <-- shoud be '1'
 		       continuous_mode_array += "t";                                // <-- always 't'
-		       scan_counts += QString::number(3);                       // <-- TEMPORARY 
-		       scan_intervals += QString::number(20);                   // <-- TEMPORARY 
+		       scan_counts += QString::number(3);                           // <-- TEMPORARY 
+		       scan_intervals += QString::number(20);                       // <-- TEMPORARY 
 		       if (r != nwavl - 1)
 			 {
 			   wvl_array        += ",";
@@ -3134,7 +3135,7 @@ void US_ExperGuiUpload::submitExperiment()
 		   
 		   qDebug() << "Wvl_Array: " << wvl_array;
 		   QSqlQuery query_abs_scan(dbxpn);
-		   if(! query_abs_scan.prepare(QString("INSERT INTO %1 (\"ContinuousMode\",\"ReplicateCounts\",\"ScanInnerLimits\",\"ScanOuterLimits\",\"ScanStarts\",\"ScanSteps\",\"ScanTypeFlag\",\"WavelengthCount\",\"Wavelengths\",\"ScanCounts\",\"ScanIntervals\") VALUES (%2, %3, %4, %5, %6, %7, %8, %9, %10, %11, %12) RETURNING \"ScanId\"")
+		   if(! query_abs_scan.prepare(QString("INSERT INTO %1 (\"ContinuousMode\",\"ReplicateCounts\",\"ScanInnerLimits\",\"ScanOuterLimits\",\"ScanStarts\",\"ScanSteps\",\"ScanTypeFlag\",\"WavelengthCount\",\"Wavelengths\",\"ScanCounts\",\"ScanIntervals\",\"RadialPath\") VALUES (%2, %3, %4, %5, %6, %7, %8, %9, %10, %11, %12, %13) RETURNING \"ScanId\"")
 					       .arg(qrytab_abs)
 					       .arg(continuous_mode_array)
 					       .arg(replicate_counts_array)
@@ -3146,7 +3147,9 @@ void US_ExperGuiUpload::submitExperiment()
 					       .arg(wvl_count)
 					       .arg(wvl_array)
 					       .arg(scan_counts)
-					       .arg(scan_intervals) ) )
+					       .arg(scan_intervals)
+					       .arg("\'A\'")
+					       ) )
 		     qDebug() << query_abs_scan.lastError().text();
 		   
 		   if (query_abs_scan.exec()) 
@@ -3158,7 +3161,14 @@ void US_ExperGuiUpload::submitExperiment()
 		       qDebug() << "ScanId: " << query_abs_scan.value(0).toInt();
 		     } 
 		   else 
-		     qDebug() << "Create record error: " + query_abs_scan.lastError().text();
+		     {
+		       QString errmsg   = "Create record error: " + query_abs_scan.lastError().text();;
+		       QMessageBox::critical( this,
+					      tr( "*ERROR* in Submitting Protocol" ),
+					      tr( "An error occurred in the attempt to submit"
+						  " protocol to AUC DB\n  %1 table\n  %2 ." ).arg( qrytab_abs ).arg( errmsg ) );
+		       return;
+		     }
 		 }
 	     }
 	 }
@@ -3210,7 +3220,7 @@ void US_ExperGuiUpload::submitExperiment()
         for (int i=0; i<nstages_size; i++)
 	 { 
 	   if (i==0 && tem_delay_sec)
-	     continue;                     // skip dummy stage for AbsScanParams
+	     continue;                     // skip dummy stage for InterferenceScanParams
 	   for (int j=0; j<ncells; j++)
 	     {
 	       QString channel;
@@ -3251,7 +3261,14 @@ void US_ExperGuiUpload::submitExperiment()
 		       qDebug() << "ScanId: " << query_inter_scan.value(0).toInt();
 		     } 
 		   else 
-		     qDebug() << "Create record error: " + query_inter_scan.lastError().text();
+		     {
+		       QString errmsg   = "Create record error: " + query_inter_scan.lastError().text();;
+		       QMessageBox::critical( this,
+					      tr( "*ERROR* in Submitting Protocol" ),
+					      tr( "An error occurred in the attempt to submit"
+						  " protocol to AUC DB\n  %1 table\n  %2 ." ).arg( qrytab_inter ).arg( errmsg ) );
+		       return;
+		     }
 		 }
 	     }
 	 }
@@ -3405,7 +3422,14 @@ void US_ExperGuiUpload::submitExperiment()
 		   qDebug() << "CellId: " << query_cell.value(0).toInt();
 		 } 
 	       else 
-		 qDebug() << "Create record error for Cells: " + query_cell.lastError().text();
+		 {
+		   QString errmsg   = "Create record error: " + query_cell.lastError().text();;
+		   QMessageBox::critical( this,
+					  tr( "*ERROR* in Submitting Protocol" ),
+					  tr( "An error occurred in the attempt to submit"
+					      " protocol to AUC DB\n  %1 table\n  %2 ." ).arg( qrytab_cell ).arg( errmsg ) );
+		   return;
+		 }
 	     }
 	 }
 
@@ -3508,8 +3532,14 @@ void US_ExperGuiUpload::submitExperiment()
        	   qDebug() << "FugeId: " << query_fuge.value(0).toInt();
        	 } 
        else
-       	 qDebug() << "Create record error: " + query_fuge.lastError().text();
-       
+	 {
+	   QString errmsg   = "Create record error: " + query_fuge.lastError().text();;
+	   QMessageBox::critical( this,
+				  tr( "*ERROR* in Submitting Protocol" ),
+				  tr( "An error occurred in the attempt to submit"
+				      " protocol to AUC DB\n  %1 table\n  %2 ." ).arg( qrytab_fuge ).arg( errmsg ) );
+	   return;
+	 }
        
        // ExperimentDefinition INSERT ////////////////////////////////////////////////////////////////////////
        QString tabname_expdef( "ExperimentDefinition" );
@@ -3544,7 +3574,14 @@ void US_ExperGuiUpload::submitExperiment()
        if (query_expdef.exec()) 
 	 qDebug() << "ExperimentDefinition record created";
        else
-	 qDebug() << "Create record error: " + query_expdef.lastError().text();
+	 {
+	   QString errmsg   = "Create record error: " + query_expdef.lastError().text();;
+	   QMessageBox::critical( this,
+				  tr( "*ERROR* in Submitting Protocol" ),
+				  tr( "An error occurred in the attempt to submit"
+				      " protocol to AUC DB\n  %1 table\n  %2 ." ).arg( qrytab_expdef ).arg( errmsg ) );
+	   return;
+	 }
      }
    else 
      { // Inform user of failure and give instructions
@@ -3556,6 +3593,11 @@ void US_ExperGuiUpload::submitExperiment()
        QMessageBox::critical( this, mtitle, message );
      }
    //submitted    = true;
+
+   ck_sub_done->setChecked( true );
+   QString mtitle_done    = tr( "Success" );
+   QString message_done   = tr( "Protocol has been successfully subitted to AUC DB." );
+   QMessageBox::information( this, mtitle_done, message_done );
 }
 
 // Function to build a Json object and document holding experiment controls
