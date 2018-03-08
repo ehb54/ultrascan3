@@ -20,12 +20,12 @@
 #include <qfont.h>
 //Added by qt3to4:
 #include <QBoxLayout>
-#include <QLabel>
-#include <QGridLayout>
-#include <QTextStream>
-#include <QHBoxLayout>
 #include <QFrame>
+#include <QLabel>
  //#include <Q3PopupMenu>
+#include <QHBoxLayout>
+#include <QTextStream>
+#include <QGridLayout>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -73,6 +73,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    this->batch_file = batch_file;
    numThreads = USglobal->config_list.numThreads;
    extra_saxs_coefficients.clear( );
+   hullrad_running = false;
 
    last_pdb_filename = "";
    last_pdb_title.clear( );
@@ -1040,6 +1041,15 @@ void US_Hydrodyn::setupGUI()
    pb_calc_zeno->setPalette( PALET_PUSHB );
    connect(pb_calc_zeno, SIGNAL(clicked()), SLOT(calc_zeno_hydro()));
 
+   pb_calc_hullrad = new QPushButton(us_tr("Hullrad"), this);
+   Q_CHECK_PTR(pb_calc_hullrad);
+   pb_calc_hullrad->setEnabled(true);
+   pb_calc_hullrad->setMinimumHeight(minHeight1);
+   pb_calc_hullrad->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_calc_hullrad->setPalette( PALET_PUSHB );
+   connect(pb_calc_hullrad, SIGNAL(clicked()), SLOT(calc_hullrad_hydro()));
+   pb_calc_hullrad->hide();
+
    pb_show_hydro_results = new QPushButton(us_tr("Show Hydrodynamic Calculations"), this);
    Q_CHECK_PTR(pb_show_hydro_results);
    pb_show_hydro_results->setMinimumHeight(minHeight1);
@@ -1366,9 +1376,13 @@ void US_Hydrodyn::setupGUI()
    j++;
 
    background->addWidget(pb_calc_hydro, j, 0);
-   background->addWidget(pb_calc_zeno, j, 1);
+   {
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
+      hbl->addWidget( pb_calc_zeno);
+      hbl->addWidget( pb_calc_hullrad );
+      background->addLayout(hbl, j, 1);
+   }
    j++;
-
 
    background->addWidget(pb_show_hydro_results, j, 0);
    background->addWidget(pb_open_hydro_results, j, 1);
@@ -6248,4 +6262,755 @@ bool US_Hydrodyn::load_vdwf_json( QString filename ) {
       }
    }
    return false;
+}
+
+bool US_Hydrodyn::calc_hullrad_hydro( QString filename ) {
+   hullrad_filename = filename.isEmpty() ? last_pdb_filename : filename;
+   
+   editor_msg( "black", QString( "Hullrad %1" ).arg( hullrad_filename ) );
+   // us_qdebug( QString( "calc_hullrad_hydro %1" ).arg( hullrad_filename ) );
+
+   hullrad_prog = 
+      USglobal->config_list.system_dir + SLASH +
+#if defined(BIN64)
+      "bin64"
+#else
+      "bin"
+#endif
+      + SLASH
+      + "HullRadV2.py" 
+         ;
+
+   QFileInfo qfi( hullrad_prog );
+   if ( !qfi.exists() ) {
+         editor_msg( (QString) "red", QString("Hullrad program '%1' does not exist\n").arg(hullrad_prog));
+         return false;
+   }
+
+   // make tmp pdb, run hullrad
+
+   QFile f( hullrad_filename );
+
+   if ( !f.exists() ) {
+      editor_msg( "red", QString( "PDB file %1 not found" ).arg( hullrad_filename ) );
+      return false;
+   }
+   
+   if ( !f.open( QIODevice::ReadOnly ) ) {
+      QMessageBox::warning( this,
+                            us_tr("Could not open file"),
+                            QString("An error occured when trying to open file\n"
+                                    "%1\n"
+                                    "Please check the permissions and try again\n")
+                            .arg( f.fileName() )
+                            );
+      return false;
+   }
+
+   // make unique tmp dir
+   QString hullrad_tmp_path = somo_dir + "/tmp/" + QDateTime::currentDateTime().toString( "yyMMddhhmmsszzz" );
+   while ( QDir( hullrad_tmp_path ).exists() ) {
+      US_Saxs_Util::us_usleep( 1000 );
+      hullrad_tmp_path = somo_dir + "/tmp/" + QDateTime::currentDateTime().toString( "yyMMddhhmmsszzz" );
+   }
+
+   {
+      QDir qd;
+      if ( !qd.mkdir( hullrad_tmp_path ) ) {
+         editor_msg( "red", QString( us_tr("Could not create directory %1, check permissions" ) ).arg( hullrad_tmp_path ) );
+         return false;
+      }
+   }
+
+   QDir::setCurrent( hullrad_tmp_path );
+
+   // open pdb, split, save filenames
+
+   QRegExp rx_model("^MODEL");
+   QRegExp rx_end("^END");
+   QRegExp rx_save_header("^("
+                          "HEADER|"
+                          "TITLE|"
+                          "COMPND|"
+                          "SOURCE|"
+                          "KEYWDS|"
+                          "AUTHOR|"
+                          "REVDAT|"
+                          "JRNL|"
+                          "REMARK|"
+                          "SEQRES|"
+                          "SHEET|"
+                          "HELIX|"
+                          "SSBOND|"
+                          "DBREF|"
+                          "ORIGX|"
+                          "SCALE"
+                          ")\\.*" );
+   
+   unsigned int model_count = 0;
+
+   editor_msg( "dark blue", QString( us_tr( "Checking file %1" ).arg( f.fileName() ) ) );
+
+   map    < QString, bool > model_names;
+   vector < QString >       model_name_vector;
+   unsigned int             max_model_name_len      = 0;
+   QString                  model_header;
+   bool                     dup_model_name_msg_done = false;
+   unsigned int             end_count               = 0;
+   bool                     found_model             = false;
+   
+   {
+      QTextStream ts( &f );
+      unsigned int line_count = 0;
+   
+      while ( !ts.atEnd() ) {
+         QString qs = ts.readLine();
+         line_count++;
+         if ( line_count && !(line_count % 100000 ) )
+         {
+            editor_msg( "dark blue", QString( us_tr( "Lines read %1" ).arg( line_count ) ) );
+            qApp->processEvents();
+         }
+         if ( !found_model && qs.contains( rx_save_header ) )
+         {
+            model_header += qs + "\n";
+         }
+         
+         if ( qs.contains( rx_end ) )
+         {
+            end_count++;
+         }
+
+         if ( qs.contains( rx_model ) )
+         {
+            found_model = true;
+            model_count++;
+            // QStringList qsl = (qs.left(20).split( QRegExp("\\s+") , QString::SkipEmptyParts ) );
+            QStringList qsl;
+            {
+               QString qs2 = qs.left( 20 );
+               qsl = (qs2 ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+            }
+            QString model_name;
+            if ( qsl.size() == 1 )
+            {
+               model_name = QString("%1").arg( model_count );
+            } else {
+               model_name = qsl[1];
+            }
+            if ( model_names.count( model_name ) )
+            {
+               unsigned int mext = 1;
+               QString use_model_name;
+               do {
+                  use_model_name = model_name + QString("-%1").arg( mext );
+               } while ( model_names.count( use_model_name ) );
+               model_name = use_model_name;
+               if ( !dup_model_name_msg_done )
+               {
+                  dup_model_name_msg_done = true;
+                  editor_msg( "red", us_tr( "Duplicate or missing model names found, -# extensions added" ) );
+               }
+            }
+            model_names[ model_name ] = true;
+            model_name_vector.push_back ( model_name );
+            if ( (unsigned int) model_name.length() > max_model_name_len )
+            {
+               max_model_name_len = model_name.length();
+            }
+         }
+      }
+   }
+
+   f.close();
+
+   bool no_model_directives = false;
+
+   if ( model_count == 0 )
+   {
+      if ( end_count > 1 )
+      {
+         no_model_directives = true;
+         model_count = end_count;
+         for ( unsigned int i = 0; i < end_count; i++ )
+         {
+            QString model_name = QString("%1").arg( i + 1 );
+            model_names[ model_name ] = true;
+            model_name_vector.push_back ( model_name );
+            if ( (unsigned int) model_name.length() > max_model_name_len )
+            {
+               max_model_name_len = model_name.length();
+            }
+         }
+      } else {
+         model_count = 1;
+      }
+   }
+
+   hullrad_to_process.clear( );
+   hullrad_processed.clear( );
+   hullrad_captures.clear( );
+
+   if ( model_count == 1 ) {
+      hullrad_to_process << hullrad_filename;
+      hullrad_running = true;
+      hullrad_process_next();
+      return true;
+   }
+
+   // push stack of pdbs 
+
+   int res = 1; // every model
+   
+   QString ext = "X";
+   while ( (unsigned int) ext.length() < max_model_name_len )
+   {
+      ext = "X" + ext;
+   }
+   ext = "-" + ext + ".pdb";
+
+   QString fn = hullrad_tmp_path + "/" + QFileInfo( f ).fileName().replace(QRegExp("\\.(pdb|PDB)$"),"") + ext;
+
+   fn.replace(QRegExp(QString("%1$").arg(ext)), "" );
+
+   if ( !f.open( QIODevice::ReadOnly ) ) {
+      QMessageBox::warning( this,
+                            us_tr("Could not open file"),
+                            QString("An error occured when trying to open file\n"
+                                    "%1\n"
+                                    "Please check the permissions and try again\n")
+                            .arg( f.fileName() )
+                            );
+      return false;
+   }
+
+   QTextStream ts( &f );
+
+   QString       model_lines;
+   bool          in_model = no_model_directives;
+   unsigned int  pos = 0;
+
+   if ( !ts.atEnd() ) {
+      do {
+         QString qs = ts.readLine();
+         if ( qs.contains( rx_model ) || qs.contains( rx_end ) || ts.atEnd() ) {
+            if ( model_lines.length() ) {
+               if ( !( pos % res ) ) {
+                  QString use_ext = model_name_vector[ pos ];
+                  while ( (unsigned int) use_ext.length() < max_model_name_len ) {
+                     use_ext = "0" + use_ext;
+                  }
+                  
+                  QString use_fn = fn + "-" + use_ext + ".pdb";
+                  
+                  QFile fn_out( use_fn );
+                  
+                  if ( !fn_out.open( QIODevice::WriteOnly ) ) {
+                     QMessageBox::warning( this, "US-SOMO: PDB Editor : Split",
+                                           QString(us_tr("Could not open %1 for writing!")).arg( use_fn ) );
+                     return false;
+                  }
+                  
+                  QTextStream tso( &fn_out );
+               
+                  tso << QString("HEADER    split from %1: Model %2 of %3\n").arg( f.fileName() ).arg( pos + 1 ).arg( model_count );
+                  tso << model_header;
+                  tso << QString("").sprintf("MODEL  %7s\n", model_name_vector[ pos ].toLatin1().data() );
+                  tso << model_lines;
+                  tso << "ENDMDL\nEND\n";
+                  
+                  fn_out.close();
+                  hullrad_to_process << fn_out.fileName();
+                  editor_msg( "dark blue", QString( us_tr( "File %1 written" ) ).arg( fn_out.fileName() ) );
+                  qApp->processEvents();
+               } else {
+                  // editor_msg( "dark red", QString("model %1 skipped").arg( model_name_vector[ pos ] ) );
+               }
+               in_model = false;
+               model_lines = "";
+               pos++;
+            }
+            if ( qs.contains( rx_model ) ||
+                 ( no_model_directives && qs.contains( rx_end ) ) )
+            {
+               in_model = true;
+               model_lines = "";
+            }
+         } else {
+            if ( in_model )
+            {
+               model_lines += qs + "\n";
+            }
+         }
+      } while ( !ts.atEnd() );
+   }
+   f.close();
+
+   hullrad_running = true;
+   hullrad_process_next();
+
+   // summarize results into csv, hydrodyn results
+   
+}
+
+void US_Hydrodyn::hullrad_process_next() {
+   
+   // us_qdebug( QString( "hullrad_process_next %1" ).arg( hullrad_filename ) );
+
+   if ( !hullrad_to_process.size() ) {
+      hullrad_finalize();
+      return;
+   }
+
+   hullrad_last_processed = hullrad_to_process[ 0 ];
+   hullrad_to_process.pop_front();
+   hullrad_processed.push_back( hullrad_last_processed ); 
+
+   hullrad_stdout = "";
+
+   hullrad = new QProcess( this );
+   //   hullrad->setWorkingDirectory( dir );
+   // us_qdebug( "prog is " + hullrad_prog );
+#if QT_VERSION < 0x040000
+   hullrad->addArgument( hullrad_prog );
+   hullrad->addArgument( hullrad_last_processed );
+
+   connect( hullrad, SIGNAL(readyReadStandardOutput()), this, SLOT(hullrad_readFromStdout()) );
+   connect( hullrad, SIGNAL(readyReadStandardError()), this, SLOT(hullrad_readFromStderr()) );
+   connect( hullrad, SIGNAL(finished( int, QProcess::ExitStatus )), this, SLOT(hullrad_finished( int, QProcess::ExitStatus )) );
+   connect( hullrad, SIGNAL(started()), this, SLOT(hullrad_started()) );
+
+   editor_msg( "black", "\nStarting Hullrad\n");
+   hullrad->start();
+#else
+   {
+      QStringList args;
+      args << hullrad_last_processed;
+
+      connect( hullrad, SIGNAL(readyReadStandardOutput()), this, SLOT(hullrad_readFromStdout()) );
+      connect( hullrad, SIGNAL(readyReadStandardError()), this, SLOT(hullrad_readFromStderr()) );
+      connect( hullrad, SIGNAL(finished( int, QProcess::ExitStatus )), this, SLOT(hullrad_finished( int, QProcess::ExitStatus )) );
+      connect( hullrad, SIGNAL(started()), this, SLOT(hullrad_started()) );
+
+      editor_msg( "black", "\nStarting Hullrad\n");
+      hullrad->start( hullrad_prog, args, QIODevice::ReadOnly );
+   }
+#endif
+   
+   return;
+}
+
+void US_Hydrodyn::hullrad_readFromStdout()
+{
+   // us_qdebug( QString( "hullrad_readFromStdout %1" ).arg( hullrad_filename ) );
+#if QT_VERSION < 0x040000
+   while ( hullrad->canReadLineStdout() )
+   {
+      QString qs = hullrad->readLineStdout() + "\n";
+      hullrad_stdout += qs;
+      editor_msg("brown", qs );
+   }
+#else
+   QString qs = QString( hullrad->readAllStandardOutput() );
+   hullrad_stdout += qs;
+   editor_msg( "brown", qs );
+#endif   
+   //  qApp->processEvents();
+}
+   
+void US_Hydrodyn::hullrad_readFromStderr()
+{
+   // us_qdebug( QString( "hullrad_readFromStderr %1" ).arg( hullrad_filename ) );
+
+#if QT_VERSION < 0x040000
+   while ( hullrad->canReadLineStderr() )
+   {
+      editor_msg("red", hullrad->readLineStderr() + "\n");
+   }
+#else
+   editor_msg( "red", QString( hullrad->readAllStandardError() ) );
+#endif   
+   //  qApp->processEvents();
+}
+   
+void US_Hydrodyn::hullrad_finished( int, QProcess::ExitStatus )
+{
+   // us_qdebug( QString( "hullrad_processExited %1" ).arg( hullrad_filename ) );
+   //   for ( int i = 0; i < 10000; i++ )
+   //   {
+   hullrad_readFromStderr();
+   hullrad_readFromStdout();
+      //   }
+   disconnect( hullrad, SIGNAL(readyReadStandardOutput()), 0, 0);
+   disconnect( hullrad, SIGNAL(readyReadStandardError()), 0, 0);
+   disconnect( hullrad, SIGNAL(finished( int, QProcess::ExitStatus )), 0, 0);
+   editor->append("HULLRAD finished.\n");
+
+   // post process the files
+
+   QStringList caps;
+   caps
+      // M               :        14315     g/mol
+      // v_bar           :        0.718     mL/g
+      // R(Anhydrous)    :        15.98     Angstroms
+      // Axial Ratio     :         1.49
+      // f/fo            :         1.16
+      // Dt              :       1.16e-06   cm^2/s
+      // R(Translation)  :        18.48     Angstroms
+      // s               :       1.93e-13   sec
+      // [eta]           :         2.78     cm^3/g
+      // Dr              :       1.99e+07   s^-1
+      // R(Rotation)     :        20.06     Angstroms
+
+      << "M"
+      << "v_bar"
+      << "R\\(Anhydrous\\)"
+      << "Axial Ratio"
+      << "f/fo"
+      << "Dt"
+      << "R\\(Translation\\)"
+      << "s"
+      << "\\[eta\\]"
+      << "Dr"
+      << "R\\(Rotation\\)"
+      ;
+
+   map < QString, double > captures;
+
+   for ( int i = 0; i < (int) caps.size(); ++i ) {
+      QRegExp rx( caps[ i ] + "\\s+:\\s*(\\S+)" );
+
+      if ( rx.indexIn( hullrad_stdout ) == -1 ) {
+         editor_msg( "red", QString( us_tr( "Could not find %1 file in HULLRAD output" ) ).arg( caps[ i ].replace( "\\", "" ) ) );
+         hullrad_captures[ caps[ i ] ].push_back( -9e99 );
+      } else {
+         hullrad_captures[ caps[ i ] ].push_back( rx.cap( 1 ).toDouble() );
+         us_qdebug( QString( "%1 : '%2'\n" ).arg( caps[ i ] ).arg( hullrad_captures[ caps[ i ] ].back() ) );
+      }
+   }
+
+   // accumulate data as in zeno (e.g. push values to data structures
+
+   
+   hullrad_process_next();
+}
+   
+void US_Hydrodyn::hullrad_started()
+{
+   // us_qdebug( QString( "hullrad_started %1" ).arg( hullrad_filename ) );
+   editor_msg("brown", "HULLRAD launch exited\n");
+   disconnect( hullrad, SIGNAL(started()), 0, 0);
+}
+
+void US_Hydrodyn::hullrad_finalize() {
+   // us_qdebug( QString( "hullrad_finalize %1" ).arg( hullrad_filename ) );
+   editor_msg( "dark red", "Finalizing results" );
+   for ( map < QString, vector < double > >::iterator it = hullrad_captures.begin();
+         it != hullrad_captures.end();
+         ++it ) {
+      editor_msg( "dark red",  US_Vector::qs_vector( it->first, it->second ) );
+   }
+
+   hydro_results hullrad_results;
+   hydro_results hullrad_results2;
+
+   hullrad_results.method                = "Hullrad";
+   hullrad_results.mass                  = 0e0;
+   hullrad_results.s20w                  = 0e0;
+   hullrad_results.s20w_sd               = 0e0;
+   hullrad_results.D20w                  = 0e0;
+   hullrad_results.D20w_sd               = 0e0;
+   hullrad_results.viscosity             = 0e0;
+   hullrad_results.viscosity_sd          = 0e0;
+   hullrad_results.rs                    = 0e0;
+   hullrad_results.rs_sd                 = 0e0;
+   hullrad_results.rg                    = 0e0;
+   hullrad_results.rg_sd                 = 0e0;
+   hullrad_results.tau                   = 0e0;
+   hullrad_results.tau_sd                = 0e0;
+   hullrad_results.vbar                  = 0e0;
+   hullrad_results.asa_rg_pos            = 0e0;
+   hullrad_results.asa_rg_neg            = 0e0;
+   hullrad_results.ff0                   = 0e0;
+   hullrad_results.ff0_sd                = 0e0;
+
+   hullrad_results.solvent_name          = hydro.solvent_name;
+   hullrad_results.solvent_acronym       = hydro.solvent_acronym;
+   hullrad_results.solvent_viscosity     = hydro.solvent_viscosity;
+   hullrad_results.solvent_density       = hydro.solvent_density;
+   hullrad_results.temperature           = hydro.temperature;
+   hullrad_results.name                  = project;
+   hullrad_results.used_beads            = 0;
+   hullrad_results.used_beads_sd         = 0e0;
+   hullrad_results.total_beads           = 0;
+   hullrad_results.total_beads_sd        = 0e0;
+   hullrad_results.vbar                  = 0;
+
+   hullrad_results.num_models            = hullrad_processed.size();
+
+   hullrad_results2 = hullrad_results;
+
+   map < int, map < QString, double > > data_to_save;
+   
+   for ( map < QString, vector < double > >::iterator it = hullrad_captures.begin();
+         it != hullrad_captures.end();
+         ++it ) {
+
+      for ( int i = 0; i < (int) it->second.size(); ++i ) {
+         data_to_save[ i ][ it->first ] = it->second[ i ];
+
+         if ( it->first  == "M" ) {
+            {
+               hullrad_results.mass += it->second[ i ];
+               // hullrad_results2.mass += it->second[ i ] * it->second[ i ];
+            }
+            break;
+         }               
+         if ( it->first == "v_bar" ) {
+            hullrad_results.vbar += it->second[ i ];
+            // hullrad_results2.vbar += it->second[ i ] * it->second[ i ];
+         }
+
+         if ( it->first == "R\\(Anhydrous\\)" ) {
+            hullrad_results.rs += it->second[ i ];
+            hullrad_results2.rs += it->second[ i ] * it->second[ i ];
+         }
+
+         if ( it->first == "Axial Ratio" ) {
+            //    hullrad_results.mass += it->second[ i ];
+            //    hullrad_results2.mass += it->second[ i ] * it->second[ i ];
+         }
+
+         if ( it->first == "f/fo" ) {
+            hullrad_results.ff0 += it->second[ i ];
+            hullrad_results2.ff0 += it->second[ i ] * it->second[ i ];
+         }
+
+         if ( it->first == "Dt" ) {
+            hullrad_results.D20w += it->second[ i ];
+            hullrad_results2.D20w += it->second[ i ] * it->second[ i ];
+         }
+
+         if ( it->first == "R\\(Translation\\)" ) {
+            //    hullrad_results.mass += it->second[ i ];
+            //    hullrad_results2.mass += it->second[ i ] * it->second[ i ];
+         }
+
+         if ( it->first == "s" ) {
+            hullrad_results.s20w += it->second[ i ] * 1e13;
+            hullrad_results2.s20w += it->second[ i ] * it->second[ i ] * 1e26;
+         }
+
+         if ( it->first == "\\[eta\\]" ) {
+            hullrad_results.viscosity += it->second[ i ];
+            hullrad_results2.viscosity += it->second[ i ] * it->second[ i ];
+         }
+
+         if ( it->first == "Dr" ) {
+            //    hullrad_results.mass += it->second[ i ];
+            //    hullrad_results2.mass += it->second[ i ] * it->second[ i ];
+         }
+         if ( it->first == "R\\(Rotation\\)" ) {
+            //    hullrad_results.mass += it->second[ i ];
+            //    hullrad_results2.mass += it->second[ i ] * it->second[ i ];
+         }
+      }
+   }
+   
+   for ( map < int, map < QString, double > >::iterator it = data_to_save.begin();
+         it != data_to_save.end();
+         ++it ) {
+      save_data this_data;
+
+      this_data.tot_surf_area                 = 0e0;
+      this_data.tot_volume_of                 = 0e0;
+      this_data.num_of_unused                 = 0e0;
+      this_data.use_beads_vol                 = 0e0;
+      this_data.use_beads_surf                = 0e0;
+      this_data.use_bead_mass                 = 0e0;
+      this_data.con_factor                    = 0e0;
+      this_data.tra_fric_coef                 = 0e0;
+      this_data.rot_fric_coef                 = 0e0;
+      this_data.rot_diff_coef                 = 0e0;
+      this_data.rot_fric_coef_x               = 0e0;
+      this_data.rot_fric_coef_y               = 0e0;
+      this_data.rot_fric_coef_z               = 0e0;
+      this_data.rot_diff_coef_x               = 0e0;
+      this_data.rot_diff_coef_y               = 0e0;
+      this_data.rot_diff_coef_z               = 0e0;
+      this_data.rot_stokes_rad_x              = 0e0;
+      this_data.rot_stokes_rad_y              = 0e0;
+      this_data.rot_stokes_rad_z              = 0e0;
+      this_data.cen_of_res_x                  = 0e0;
+      this_data.cen_of_res_y                  = 0e0;
+      this_data.cen_of_res_z                  = 0e0;
+      this_data.cen_of_mass_x                 = 0e0;
+      this_data.cen_of_mass_y                 = 0e0;
+      this_data.cen_of_mass_z                 = 0e0;
+      this_data.cen_of_diff_x                 = 0e0;
+      this_data.cen_of_diff_y                 = 0e0;
+      this_data.cen_of_diff_z                 = 0e0;
+      this_data.cen_of_visc_x                 = 0e0;
+      this_data.cen_of_visc_y                 = 0e0;
+      this_data.cen_of_visc_z                 = 0e0;
+      this_data.unc_int_visc                  = 0e0;
+      this_data.unc_einst_rad                 = 0e0;
+      this_data.cor_int_visc                  = 0e0;
+      this_data.cor_einst_rad                 = 0e0;
+      this_data.rel_times_tau_1               = 0e0;
+      this_data.rel_times_tau_2               = 0e0;
+      this_data.rel_times_tau_3               = 0e0;
+      this_data.rel_times_tau_4               = 0e0;
+      this_data.rel_times_tau_5               = 0e0;
+      this_data.rel_times_tau_m               = 0e0;
+      this_data.rel_times_tau_h               = 0e0;
+      this_data.max_ext_x                     = 0e0;
+      this_data.max_ext_y                     = 0e0;
+      this_data.max_ext_z                     = 0e0;
+      this_data.axi_ratios_xz                 = 0e0;
+      this_data.axi_ratios_xy                 = 0e0;
+      this_data.axi_ratios_yz                 = 0e0;
+      this_data.results.method                = "Hullrad";
+      this_data.results.mass                  = 0e0;
+      this_data.results.s20w                  = 0e0;
+      this_data.results.s20w_sd               = 0e0;
+      this_data.results.D20w                  = 0e0;
+      this_data.results.D20w_sd               = 0e0;
+      this_data.results.viscosity             = 0e0;
+      this_data.results.viscosity_sd          = 0e0;
+      this_data.results.rs                    = 0e0;
+      this_data.results.rs_sd                 = 0e0;
+      this_data.results.rg                    = 0e0;
+      this_data.results.rg_sd                 = 0e0;
+      this_data.results.tau                   = 0e0;
+      this_data.results.tau_sd                = 0e0;
+      this_data.results.vbar                  = 0e0;
+      this_data.results.asa_rg_pos            = 0e0;
+      this_data.results.asa_rg_neg            = 0e0;
+      this_data.results.ff0                   = 0e0;
+      this_data.results.ff0_sd                = 0e0;
+      this_data.results.solvent_name          = "";
+      this_data.results.solvent_acronym       = "";
+      this_data.results.solvent_viscosity     = 0e0;
+      this_data.results.solvent_density       = 0e0;
+
+      this_data.hydro                         = hydro;
+      this_data.results.num_models            = 1;
+      this_data.results.name                  = QString( "%1-%1" ).arg( QFileInfo( hullrad_filename ).completeBaseName() ).arg( it->first + 1 );
+      this_data.results.used_beads            = 0;
+      this_data.results.used_beads_sd         = 0e0;
+      this_data.results.total_beads           = 0;
+      this_data.results.total_beads_sd        = 0e0;
+      this_data.results.vbar                  = 0;
+
+      if ( it->second.count( "M" ) ) {
+         this_data.results.mass = it->second[ "M" ];
+      }
+
+      if ( it->second.count( "v_bar" ) ) {
+         this_data.results.vbar = it->second[ "v_bar" ];
+      }
+
+      if ( it->second.count( "R\\(Anhydrous\\)" ) ) {
+         this_data.results.rs = it->second[ "R\\(Anhydrous\\)" ];
+      }
+
+      if ( it->second.count( "Axial Ratio" ) ) {
+         // this_data.results.mass = it->second[ "Axial Ratio" ];
+      }
+
+      if ( it->second.count( "f/fo" ) ) {
+         this_data.results.ff0 = it->second[ "f/fo" ];
+      }
+
+      if ( it->second.count( "Dt" ) ) {
+         this_data.results.D20w = it->second[ "Dt" ];
+      }
+
+      if ( it->second.count( "R\\(Translation\\)" ) ) {
+         // this_data.results.mass = it->second[ "R\\(Translation\\)" ];
+      }
+
+      if ( it->second.count( "s" ) ) {
+         this_data.results.s20w = it->second[ "s" ] * 1e13;
+      }
+
+      if ( it->second.count( "\\[eta\\]" ) ) {
+         this_data.results.viscosity = it->second[ "\\[eta\\]" ];
+      }
+
+      if ( it->second.count( "Dr" ) ) {
+         // this_data.results.mass = it->second[ "Dr" ];
+      }
+
+      if ( it->second.count( "R\\(Rotation\\)" ) ) {
+         // this_data.results.mass = it->second[ "R\\(Rotation\\)" ];
+      }
+      
+      if ( batch_widget &&
+           batch_window->save_batch_active )
+      {
+         save_params.data_vector.push_back( this_data );
+      }
+
+      bool create_hydro_res = !(batch_widget &&
+                                batch_window->save_batch_active);
+
+      if ( saveParams && create_hydro_res )
+      {
+         QString fname = somo_dir + "/" + this_data.results.name + ".hullrad.csv";
+         FILE *of = us_fopen(fname, "wb");
+         if ( of )
+         {
+            fprintf(of, "%s", save_util->header().toLatin1().data());
+
+            fprintf(of, "%s", save_util->dataString(&this_data).toLatin1().data());
+            fclose(of);
+            editor_msg( "dark blue", QString( "created %1\n" ).arg( fname ) );
+         }
+      }
+      // print out results:
+      save_util->header();
+      save_util->dataString(&this_data);
+   }
+
+   {
+      double num = (double) hullrad_results.num_models;
+      if ( num <= 1 ) {
+         results = hullrad_results;
+      } else {
+         hullrad_results.name = QFileInfo( hullrad_filename ).baseName();
+         double numinv = 1e0 / num;
+         hullrad_results.mass          *= numinv;
+         hullrad_results.s20w          *= numinv;
+         hullrad_results.D20w          *= numinv;
+         hullrad_results.viscosity     *= numinv;
+         hullrad_results.rs            *= numinv;
+         hullrad_results.rg            *= numinv;
+         hullrad_results.vbar          *= numinv;
+         hullrad_results.ff0           *= numinv;
+         hullrad_results.used_beads    *= numinv;
+         hullrad_results.total_beads   *= numinv;
+         if ( num <= 1 ) {
+            results = hullrad_results;
+         } else {
+            double numdecinv = 1e0 / ( num - 1e0 );
+         
+            hullrad_results.s20w_sd           = sqrt( fabs( ( hullrad_results2.s20w        - hullrad_results.s20w        * hullrad_results.s20w        * num ) * numdecinv ) );
+            hullrad_results.D20w_sd           = sqrt( fabs( ( hullrad_results2.D20w        - hullrad_results.D20w        * hullrad_results.D20w        * num ) * numdecinv ) );
+            hullrad_results.viscosity_sd      = sqrt( fabs( ( hullrad_results2.viscosity   - hullrad_results.viscosity   * hullrad_results.viscosity   * num ) * numdecinv ) );
+            hullrad_results.rs_sd             = sqrt( fabs( ( hullrad_results2.rs          - hullrad_results.rs          * hullrad_results.rs          * num ) * numdecinv ) );
+            hullrad_results.rg_sd             = sqrt( fabs( ( hullrad_results2.rg          - hullrad_results.rg          * hullrad_results.rg          * num ) * numdecinv ) );
+            hullrad_results.ff0_sd            = sqrt( fabs( ( hullrad_results2.ff0         - hullrad_results.ff0         * hullrad_results.ff0         * num ) * numdecinv ) );
+            hullrad_results.used_beads_sd     = sqrt( fabs( ( hullrad_results2.used_beads  - hullrad_results.used_beads  * hullrad_results.used_beads  * num ) * numdecinv ) );
+            hullrad_results.total_beads_sd    = sqrt( fabs( ( hullrad_results2.total_beads - hullrad_results.total_beads * hullrad_results.total_beads * num ) * numdecinv ) );
+            
+            results = hullrad_results;
+         }
+      }
+   }
+
+   pb_show_hydro_results->setEnabled( true );
+   hullrad_running = false;
+   // us_qdebug( QString( "hullrad_finalize %1 end" ).arg( hullrad_filename ) );
 }

@@ -681,7 +681,11 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
                }
 
                {
+#if QT_VERSION < 0x050000
                   QString curvename = QString( us_tr( "Baseline avg. I(q) ±1 SD for q less than %1\n(on right axis)" ) ).arg( dparameters[ "cormap_maxq" ] );
+#else
+                  QString curvename = QString( us_tr( "Baseline avg. I(q) \u00b11 SD for q less than %1\n(on right axis)" ) ).arg( dparameters[ "cormap_maxq" ] );
+#endif
 #if QT_VERSION < 0x040000
                   long curve;
                   curve = plot->insertCurve( curvename, QwtPlot::xBottom, QwtPlot::yRight );
@@ -711,7 +715,11 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
 #endif
                }
                {
+#if QT_VERSION < 0x050000
                   QString curvename = QString( us_tr( "Baseline avg. I(q) ±1 SD for q less than %1\n(on right axis)" ) ).arg( dparameters[ "cormap_maxq" ] );
+#else
+                  QString curvename = QString( us_tr( "Baseline avg. I(q) \u00b11 SD for q less than %1\n(on right axis)" ) ).arg( dparameters[ "cormap_maxq" ] );
+#endif
 #if QT_VERSION < 0x040000
                   long curve;
                   curve = plot->insertCurve( curvename, QwtPlot::xBottom, QwtPlot::yRight );
@@ -788,7 +796,12 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
             }
 
             {
+#if QT_VERSION < 0x050000
                QString curvename = "Average ±1 SD of total blanks intensity\n(on right axis)";
+#else
+               QString curvename = "Average \u00b11 SD of total blanks intensity\n(on right axis)";
+#endif
+
 #if QT_VERSION < 0x040000
                long curve;
                curve = plot->insertCurve( curvename, QwtPlot::xBottom, QwtPlot::yRight );
@@ -1192,7 +1205,12 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
                   }
 
                   {
+#if QT_VERSION < 0x050000
                      QString curvename = QString( us_tr( "Baseline avg. I(q) ±1 SD for q less than %1\n(on right axis)" ) ).arg( dparameters[ "cormap_maxq" ] );
+#else
+                     QString curvename = QString( us_tr( "Baseline avg. I(q) \u00b11 SD for q less than %1\n(on right axis)" ) ).arg( dparameters[ "cormap_maxq" ] );
+#endif
+
 #if QT_VERSION < 0x040000
                      long curve;
                      curve = hb_plot->insertCurve( curvename, QwtPlot::xBottom, QwtPlot::yRight );
@@ -1222,7 +1240,12 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
 #endif
                   }
                   {
+#if QT_VERSION < 0x050000
                      QString curvename = QString( us_tr( "Baseline avg. I(q) ±1 SD for q less than %1\n(on right axis)" ) ).arg( dparameters[ "cormap_maxq" ] );
+#else
+                     QString curvename = QString( us_tr( "Baseline avg. I(q) \u00b11 SD for q less than %1\n(on right axis)" ) ).arg( dparameters[ "cormap_maxq" ] );
+#endif
+
 #if QT_VERSION < 0x040000
                      long curve;
                      curve = hb_plot->insertCurve( curvename, QwtPlot::xBottom, QwtPlot::yRight );

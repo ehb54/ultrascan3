@@ -228,7 +228,11 @@ void US_Hydrodyn_Saxs_Cormap::setupGUI()
 #endif
    plot->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 //    plot->setMargin(USglobal->config_list.margin);
+#if QT_VERSION < 0x050000
    plot->setTitle( us_tr( "Red pair % histogram\n(Lines represent average, ±1 SD)" ) );
+#else
+   plot->setTitle( us_tr( "Red pair % histogram\n(Lines represent average, \u00b11 SD)" ) );
+#endif
 #if QT_VERSION < 0x040000
    plot->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
 #else
@@ -1027,7 +1031,11 @@ bool US_Hydrodyn_Saxs_Cormap_Cluster_Analysis::run(
 
       parameters[ "clusterheader" ] =
          cluster_sizes.size() ?
+#if QT_VERSION < 0x050000
          QString( us_tr( "Red cluster count %1, average size %2 ±%3 %4, average size as pct of total area %5\% ±%6\n"
+#else
+         QString( us_tr( "Red cluster count %1, average size %2 \u00b1%3 %4, average size as pct of total area %5\% \u00b1%6\n"
+#endif
                       "Red cluster maximum size %7 (%8\%)%9.\n" ) )
          .arg( cluster_sizes.size() )
          .arg( QString( "" ).sprintf( "%.2f", avg_cluster_size ) )
@@ -1893,12 +1901,20 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
             avg_pctred *= countinv;
             avg_P      *= countinv;
 
+#if QT_VERSION < 0x050000
             cobheader += QString( "Contiguous red points P value average %1 ±%2\n" )
+#else
+            cobheader += QString( "Contiguous red points P value average %1 \u00b1%2\n" )
+#endif
                .arg( QString( "" ).sprintf( "%.4f", avg_P ) )
                .arg( QString( "" ).sprintf( "%.4f", P_sd ) )
                ;
                
+#if QT_VERSION < 0x050000
             cobheader += QString( "Contiguous red points average %1\% ±%2 %3 maximum %4\%\n" )
+#else
+            cobheader += QString( "Contiguous red points average %1\% \u00b1%2 %3 maximum %4\%\n" )
+#endif
                .arg( QString( "" ).sprintf( "%4.2f", avg_pctred ) )
                .arg( QString( "" ).sprintf( "%4.2f", pct_red_sd ) )
                .arg( avg_pctred > 0 ? QString( "" ).sprintf( "(%.1f%%)", 100.0 * pct_red_sd / avg_pctred ) : QString( "" ) )
@@ -2003,7 +2019,11 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
             avg_avgP    *= countinv;
             avg_pct_red *= countinv;
 
+#if QT_VERSION < 0x050000
             msg += QString( "\nAverage one-to-all P value %1 ±%2 %3 \% red %4\% ±%5 %6\n" )
+#else
+            msg += QString( "\nAverage one-to-all P value %1 \u00b1%2 %3 \% red %4\% \u00b1%5 %6\n" )
+#endif
                .arg( QString( "" ).sprintf( "%.4g", avg_avgP ) )
                .arg( QString( "" ).sprintf( "%.4g", avgP_sd ) )
                .arg( avg_avgP > 0 ? QString( "" ).sprintf( "(%.1f%%)", 100.0 * avgP_sd / avg_avgP ) : QString( "" ) )
@@ -2016,7 +2036,11 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
                + linereport;
 
             msg_headers += 
+#if QT_VERSION < 0x050000
                QString( "\nAverage one-to-all P value %1 ±%2 %3 \% red %4\% ±%5 %6\n" )
+#else
+               QString( "\nAverage one-to-all P value %1 \u00b1%2 %3 \% red %4\% \u00b1%5 %6\n" )
+#endif
                .arg( QString( "" ).sprintf( "%.4g", avg_avgP ) )
                .arg( QString( "" ).sprintf( "%.4g", avgP_sd ) )
                .arg( avg_avgP > 0 ? QString( "" ).sprintf( "(%.1f%%)", 100.0 * avgP_sd / avg_avgP ) : QString( "" ) )

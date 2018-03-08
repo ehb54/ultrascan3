@@ -584,8 +584,7 @@ bool US_Hydrodyn::assign_atom(const QString &str1, struct PDB_chain *temp_chain,
    return(flag);
 }
 
-int US_Hydrodyn::read_pdb( const QString &filename )
-{
+int US_Hydrodyn::read_pdb( const QString &filename ) {
    lb_model->clear( );
    QString str, str1, str2, temp;
    model_vector.clear( );

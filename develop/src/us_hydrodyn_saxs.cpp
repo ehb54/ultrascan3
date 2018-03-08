@@ -151,7 +151,7 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
 
    USglobal=new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle( us_tr( "US-SOMO: " + us_tr( "SAS Plotting Functions" ) ) );
+   setWindowTitle( us_tr( "US-SOMO: " + us_tr( "SAS Functions" ) ) );
    reset_search_csv();
    reset_screen_csv();
    reset_buffer_csv();
@@ -622,7 +622,7 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    // ************ SAS ***********
 
-   lbl_iq = new mQLabel(us_tr("SAS I(q) Plotting Functions:"), this);
+   lbl_iq = new mQLabel(us_tr("SAS I(q) Functions:"), this);
    lbl_iq->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_iq->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_iq->setMinimumHeight(minHeight1);
@@ -1240,7 +1240,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    iq_widgets.push_back( cnt_guinier_cutoff );
 #endif
 
-   lbl_pr = new mQLabel(us_tr("P(r) vs. r  Plotting Functions:"), this);
+   lbl_pr = new mQLabel(us_tr("P(r) vs. r Functions:"), this);
    lbl_pr->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_pr->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_pr->setMinimumHeight(minHeight1);

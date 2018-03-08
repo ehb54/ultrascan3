@@ -622,6 +622,14 @@ void US_Hydrodyn_Batch::setupGUI()
    cb_zeno->setPalette( qp_cb ); AUTFBACK( cb_zeno );
    connect(cb_zeno, SIGNAL(clicked()), this, SLOT(set_zeno()));
 
+   cb_hullrad = new QCheckBox(this);
+   cb_hullrad->setText( " Hullrad" );
+   cb_hullrad->setChecked(batch->zeno);
+   cb_hullrad->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_hullrad->setPalette( qp_cb ); AUTFBACK( cb_hullrad );
+   connect(cb_hullrad, SIGNAL(clicked()), this, SLOT(set_hullrad()));
+   cb_hullrad->hide();
+
    cb_avg_hydro = new QCheckBox(this);
    cb_avg_hydro->setText(us_tr(" Combined Hydro Results File:"));
    cb_avg_hydro->setChecked(batch->avg_hydro);
@@ -857,6 +865,7 @@ void US_Hydrodyn_Batch::setupGUI()
    QHBoxLayout * hbl_hydro_zeno = new QHBoxLayout; hbl_hydro_zeno->setContentsMargins( 0, 0, 0, 0 ); hbl_hydro_zeno->setSpacing( 0 );
    hbl_hydro_zeno->addWidget( cb_hydro );
    hbl_hydro_zeno->addWidget( cb_zeno );
+   hbl_hydro_zeno->addWidget( cb_hullrad );
 
    QVBoxLayout * leftside = new QVBoxLayout(); leftside->setContentsMargins( 0, 0, 0, 0 ); leftside->setSpacing( 0 );
    leftside->setMargin(5);
@@ -1290,6 +1299,7 @@ void US_Hydrodyn_Batch::update_enables()
       cb_equi_grid             ->setChecked( false );
       cb_hydro                 ->setChecked( false );
       cb_zeno                  ->setChecked( false );
+      cb_hullrad               ->setChecked( false );
       cb_dmd                   ->setChecked( false );
       cb_prr                   ->setChecked( false ); 
       cb_iqq                   ->setChecked( false ); 
@@ -1310,6 +1320,7 @@ void US_Hydrodyn_Batch::update_enables()
       cb_equi_grid             ->setEnabled( false );
       cb_hydro                 ->setEnabled( false );
       cb_zeno                  ->setEnabled( false );
+      cb_hullrad               ->setEnabled( false );
       cb_dmd                   ->setEnabled( false );
       cb_prr                   ->setEnabled( false ); 
       cb_iqq                   ->setEnabled( false ); 
@@ -1332,6 +1343,7 @@ void US_Hydrodyn_Batch::update_enables()
       batch->equi_grid             = false;
       batch->hydro                 = false;
       batch->zeno                  = false;
+      batch->hullrad               = false;
       batch->dmd                   = false;
       batch->prr                   = false;
       batch->iqq                   = false;
@@ -1354,6 +1366,7 @@ void US_Hydrodyn_Batch::update_enables()
          cb_somo_o   ->setEnabled( true );
          cb_grid     ->setEnabled( true );
          cb_vdw_beads->setEnabled( true );
+         cb_hullrad  ->setEnabled( true );
 
          if ( !any_bead_model_selected ) {
             cb_dmd    ->setEnabled( true );
@@ -1499,40 +1512,49 @@ void US_Hydrodyn_Batch::update_enables()
             batch->compute_prr_std_dev   = false;
          }
       }
-      if ( any_bead_model_selected ||  batch->somo || batch->grid || batch->somo_o || batch->vdw_beads ) {
-         if ( !any_so_ovlp_selected && !batch->somo_o && !batch->vdw_beads ) {
-            cb_hydro             ->setEnabled( true );
-         } else {
-            cb_hydro             ->setEnabled( false );
-            cb_hydro             ->setChecked( false );
-            batch->hydro         = false;
-         }
-         cb_zeno              ->setEnabled( true );
-         if ( batch->hydro || batch->zeno ) {
-            cb_avg_hydro         ->setEnabled( true );
-         } else {
-            cb_avg_hydro         ->setEnabled( false );
-            cb_avg_hydro         ->setChecked( false );
-            batch->avg_hydro             = false;
-         }
+      if ( any_pdb_in_list && batch->hullrad ) {
+         cb_avg_hydro         ->setEnabled( true );
          if ( batch->avg_hydro ) {
             le_avg_hydro_name    ->setEnabled( true );
          } else {
             le_avg_hydro_name    ->setEnabled( false );
          }
       } else {
-         cb_hydro             ->setEnabled( false );
-         cb_zeno              ->setEnabled( false );
-         cb_avg_hydro         ->setEnabled( false );
-         le_avg_hydro_name    ->setEnabled( false );
+         if ( any_bead_model_selected ||  batch->somo || batch->grid || batch->somo_o || batch->vdw_beads ) {
+            if ( !any_so_ovlp_selected && !batch->somo_o && !batch->vdw_beads ) {
+               cb_hydro             ->setEnabled( true );
+            } else {
+               cb_hydro             ->setEnabled( false );
+               cb_hydro             ->setChecked( false );
+               batch->hydro         = false;
+            }
+            cb_zeno              ->setEnabled( true );
+            if ( batch->hydro || batch->zeno ) {
+               cb_avg_hydro         ->setEnabled( true );
+            } else {
+               cb_avg_hydro         ->setEnabled( false );
+               cb_avg_hydro         ->setChecked( false );
+               batch->avg_hydro             = false;
+            }
+            if ( batch->avg_hydro ) {
+               le_avg_hydro_name    ->setEnabled( true );
+            } else {
+               le_avg_hydro_name    ->setEnabled( false );
+            }
+         } else {
+            cb_hydro             ->setEnabled( false );
+            cb_zeno              ->setEnabled( false );
+            cb_avg_hydro         ->setEnabled( false );
+            le_avg_hydro_name    ->setEnabled( false );
 
-         cb_hydro             ->setChecked( false );
-         cb_zeno              ->setChecked( false );
-         cb_avg_hydro         ->setChecked( false );
+            cb_hydro             ->setChecked( false );
+            cb_zeno              ->setChecked( false );
+            cb_avg_hydro         ->setChecked( false );
 
-         batch->hydro                 = false;
-         batch->zeno                  = false;
-         batch->avg_hydro             = false;
+            batch->hydro                 = false;
+            batch->zeno                  = false;
+            batch->avg_hydro             = false;
+         }
       }
    }
 
@@ -1546,6 +1568,7 @@ void US_Hydrodyn_Batch::update_enables()
       cb_prr               ->isChecked() || 
       cb_hydro             ->isChecked() || 
       cb_zeno              ->isChecked() ||
+      cb_hullrad           ->isChecked() ||
       cb_dmd               ->isChecked() || 
       0;
       
@@ -1967,6 +1990,10 @@ void US_Hydrodyn_Batch::set_hydro()
       cb_zeno->setChecked( false );
       batch->zeno = cb_zeno->isChecked();
    }
+   if ( cb_hullrad->isChecked() ) {
+      cb_hullrad->setChecked( false );
+      batch->hullrad = cb_hullrad->isChecked();
+   }
    update_enables();
 }
 
@@ -1978,6 +2005,27 @@ void US_Hydrodyn_Batch::set_zeno()
       cb_hydro->setChecked( false );
       batch->hydro = cb_hydro->isChecked();
    }
+   if ( cb_hullrad->isChecked() ) {
+      cb_hullrad->setChecked( false );
+      batch->hullrad = cb_hullrad->isChecked();
+   }
+
+   update_enables();
+}
+
+void US_Hydrodyn_Batch::set_hullrad()
+{
+   batch->hullrad = cb_hullrad->isChecked();
+   if ( batch->hullrad )
+   {
+      cb_hydro->setChecked( false );
+      batch->hydro = cb_hydro->isChecked();
+   }
+   if ( cb_zeno->isChecked() ) {
+      cb_zeno->setChecked( false );
+      batch->zeno = cb_zeno->isChecked();
+   }
+
    update_enables();
 }
 
@@ -2025,6 +2073,7 @@ void US_Hydrodyn_Batch::disable_after_start()
    cb_prr->setEnabled(false);
    cb_hydro->setEnabled(false);
    cb_zeno->setEnabled(false);
+   cb_hullrad->setEnabled(false);
    cb_avg_hydro->setEnabled(false);
    le_avg_hydro_name->setEnabled(false);
    pb_select_save_params->setEnabled(false);
@@ -2055,6 +2104,7 @@ void US_Hydrodyn_Batch::enable_after_stop()
    cb_prr->setEnabled(true);
    cb_hydro->setEnabled(true);
    cb_zeno->setEnabled(true);
+   cb_hullrad->setEnabled(true);
    pb_select_save_params->setEnabled(true);
    cb_saveParams->setEnabled(true);
    cb_dmd->setEnabled( true );
@@ -2159,7 +2209,8 @@ void US_Hydrodyn_Batch::start( bool quiet )
       !batch->somo_o &&
       !batch->vdw_beads &&
       !batch->hydro &&
-      !batch->zeno
+      !batch->zeno &&
+      !batch->hullrad
       ;
 
    set_issue_info();
@@ -2832,10 +2883,31 @@ void US_Hydrodyn_Batch::start( bool quiet )
                if ( batch->zeno ) {
                   result = ((US_Hydrodyn *)us_hydrodyn)->calc_zeno_hydro() ? false : true;
                }
-               
                job_timer.end_timer   ( QString( "%1 hydrodynamics" ).arg( get_file_name( i ) ) );
                restore_us_hydrodyn_settings();
             }
+            if ( result && batch->hullrad ) {
+               if ( file.contains(QRegExp(".(pdb|PDB)$")) ) {
+                  save_us_hydrodyn_settings();
+                  job_timer.init_timer  ( QString( "%1 hydrodynamics" ).arg( get_file_name( i ) ) );
+                  job_timer.start_timer ( QString( "%1 hydrodynamics" ).arg( get_file_name( i ) ) );
+                  result = ((US_Hydrodyn *)us_hydrodyn)->calc_hullrad_hydro( file );
+                  // us_qdebug( QString( "hullrad call result %1 hullrad_running %2" ).arg( result ? "true" : "false" ).arg(  ((US_Hydrodyn *)us_hydrodyn)->hullrad_running ? "true" : "false" ) );
+                  if ( result ) {
+                     // us_qdebug( QString( "hullrad true, so waiting" ) );
+                     while( ((US_Hydrodyn *)us_hydrodyn)->hullrad_running ) {
+                        qApp->processEvents();
+                        mQThread::msleep( 333 );
+                     }
+                     // us_qdebug( QString( "hullrad true and now not running" ) );
+                  }
+                  job_timer.end_timer   ( QString( "%1 hydrodynamics" ).arg( get_file_name( i ) ) );
+                  restore_us_hydrodyn_settings();
+               } else {
+                  result = false;
+               }
+            }                  
+
             if ( result ) 
             {
                status[file] = 6; // processing ok
@@ -2891,33 +2963,41 @@ void US_Hydrodyn_Batch::start( bool quiet )
          stats = ((US_Hydrodyn *)us_hydrodyn)->save_util->stats(&((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector);
       }
 
-      QString fname = batch->avg_hydro_name + ".hydro_res";
+      if ( !batch->hullrad ) {
+         QString fname = batch->avg_hydro_name + ".hydro_res";
 
-      if ( QFile::exists(fname) )
-      {
-         fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname, 0, this);
-      }         
-
-      FILE *of = us_fopen(fname, "wb");
-      if ( of )
-      {
-         for ( unsigned int i = 0; i < ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.size(); i++ )
-         {
-            fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector[i].hydro_res.toLatin1().data());
-         }
-         if ( stats.size() == 2 )
-         {
-            fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_util->hydroFormatStats(stats).toLatin1().data());
-         }
-         fclose(of);
-      }
-      if ( ((US_Hydrodyn *)us_hydrodyn)->saveParams )
-      {
-         fname = batch->avg_hydro_name + ".csv";
          if ( QFile::exists(fname) )
          {
             fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname, 0, this);
          }         
+
+         us_qdebug( "save batch 1" );
+         FILE *of = us_fopen(fname, "wb");
+         if ( of )
+         {
+            us_qdebug( "save batch 2" );
+            for ( unsigned int i = 0; i < ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.size(); i++ )
+            {
+               fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector[i].hydro_res.toLatin1().data());
+            }
+            if ( stats.size() == 2 )
+            {
+               us_qdebug( "save batch 3" );
+               fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_util->hydroFormatStats(stats).toLatin1().data());
+            }
+            fclose(of);
+         }
+         us_qdebug( "save batch 4" );
+      }
+      if ( ((US_Hydrodyn *)us_hydrodyn)->saveParams )
+      {
+         us_qdebug( "save batch 5" );
+         QString fname = batch->avg_hydro_name + ".csv";
+         if ( QFile::exists(fname) )
+         {
+            fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname, 0, this);
+         }         
+         us_qdebug( "save batch 6" );
          FILE *of = us_fopen(fname, "wb");
          if ( of )
          {
@@ -2933,6 +3013,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
             }
             fclose(of);
          }
+         us_qdebug( "save batch 7" );
       }  
    }
    ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear( );

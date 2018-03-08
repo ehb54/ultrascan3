@@ -382,6 +382,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QPushButton *pb_load_bead_model;
       QPushButton *pb_calc_hydro;
       QPushButton *pb_calc_zeno;
+      QPushButton *pb_calc_hullrad;
       QPushButton *pb_show_hydro_results;
       QPushButton *pb_open_hydro_results;
       QPushButton *pb_select_save_params;
@@ -825,6 +826,24 @@ class US_EXTERN US_Hydrodyn : public QFrame
       map < QString, map < QString, vector < QString > > > data_csv;
       QStringList                                          data_csv_headers;
 
+      QProcess *hullrad;
+      void hullrad_process_next();
+      void hullrad_finalize();
+      QString hullrad_prog;
+      QStringList hullrad_to_process;
+      QStringList hullrad_processed;
+      QString hullrad_last_processed;
+      QString hullrad_stdout;
+      bool hullrad_running;
+      QString hullrad_filename;
+      map < QString, vector < double > > hullrad_captures;
+
+   private slots:
+      void hullrad_readFromStdout();
+      void hullrad_readFromStderr();
+      void hullrad_started();
+      void hullrad_finished( int, QProcess::ExitStatus );
+      
    public:
 
       void set_expert( bool );
@@ -900,6 +919,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       int pdb_hydrate_for_saxs( bool quiet = false );
       
    private slots:
+      bool calc_hullrad_hydro( QString filename = "" );
+
       void process_events();
 
       void le_pdb_file_changed( const QString & );
