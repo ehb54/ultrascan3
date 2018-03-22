@@ -1817,15 +1817,18 @@ DbgLv(1) << "CGui: gExpInf: IN";
    // OK, proceed
 
    // Calculate average temperature
-   double sum = 0.0;
+   double sum   = 0.0;
    double count = 0.0;
-   for ( int i = 0; i < allData.size(); i++ )
+   for ( int ii = 0; ii < allData.size(); ii++ )
    {
-      US_DataIO::RawData raw = allData[ i ];
-      for ( int j = 0; j < raw.scanData.size(); j++ )
-         sum += raw.scanData[ j ].temperature;
+      US_DataIO::RawData* raw = &allData[ ii ];
+      int kscan    = raw->scanData.size();
+      for ( int jj = 0; jj < kscan; jj++ )
+      {
+         sum         += raw->scanData[ jj ].temperature;
+      }
 
-      count += raw.scanData.size();
+      count       += kscan;
    }
 
    ExpData.runTemp       = QString::number( sum / count );
@@ -1837,13 +1840,13 @@ DbgLv(1) << "CGui: gExpInf: IN";
 
    // A list of unique rpms
    ExpData.rpms.clear();
-   for ( int i = 0; i < allData.size(); i++ )
+   for ( int ii = 0; ii < allData.size(); ii++ )
    {
-      US_DataIO::RawData* raw = &allData[ i ];
-      for ( int j = 0; j < raw->scanData.size(); j++ )
+      US_DataIO::RawData* raw = &allData[ ii ];
+      for ( int jj = 0; jj < raw->scanData.size(); jj++ )
       {
-         if ( ! ExpData.rpms.contains( raw->scanData[ j ].rpm ) )
-            ExpData.rpms << raw->scanData[ j ].rpm;
+         if ( ! ExpData.rpms.contains( raw->scanData[ jj ].rpm ) )
+            ExpData.rpms << raw->scanData[ jj ].rpm;
       }
    }
 
@@ -4599,9 +4602,8 @@ DbgLv(1) << "CGui:IOD:  ochx" << trx << "celchn cID" << celchn << chanID;
 DbgLv(1) << "CGui:IOD:   rSS nspeed" << nspeed;
 
    if ( nspeed == 0 )
-   {
-      US_SimulationParameters::computeSpeedSteps( &allData[ 0 ].scanData,
-                                                  speedsteps );
+   {  // Compute speed steps from all raw auc data
+      US_SimulationParameters::computeSpeedSteps( allData, speedsteps );
       nspeedc          = speedsteps.size();
       nspeed           = nspeedc;
    }

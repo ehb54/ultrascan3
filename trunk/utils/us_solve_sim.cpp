@@ -1860,7 +1860,8 @@ DebugTime("BEG:ri_smab");
    int incprg  = nsolutes / 20;         // increment between reports
    incprg      = max( incprg,  1 );
    incprg      = min( incprg, 10 );
-   int jstprg  = ( kstodo * incprg ) / nsolutes;  // steps for each report
+   int jsols   = qMax( 1, nsolutes );
+   int jstprg  = ( kstodo * incprg ) / jsols;     // steps for each report
    int kstep   = 0;                               // progress counter
 
    for ( int cc = 0; cc < nsolutes; cc++ )
@@ -1962,7 +1963,8 @@ void US_SolveSim::ti_small_a_and_b( int                      nsolutes,
 
 DbgLv(1)<< "ti_small_a_and_b: nsolutes=" << nsolutes;
 
-   int jstprg  = ( kstodo * incprg ) / nsolutes;  // steps for each report
+   int jsols   = qMax( 1, nsolutes );
+   int jstprg  = ( kstodo * incprg ) / jsols;     // steps for each report
    int kstep   = 0;                               // progress counter
 //DbgLv(1)<< "ti_small_ : np ns nn nso" << npoints << nscans << ntinois << nsolutes
 // << "szb sza" << nnls_b.size() << nnls_a.size() << "nto" << ntotal;
