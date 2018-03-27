@@ -686,8 +686,8 @@ DbgLv(1) << "FIN_FIN:  n) s D c"
 dset->simparams.debug();
 US_Astfem_RSA astfem_rsa2( s_model, dset->simparams );
 astfem_rsa2.calculate( swdat );
-bool have_ri=((noisflag&1)!=0);
-bool have_ti=((noisflag&2)!=0);
+bool have_ti=((noisflag&1)!=0);
+bool have_ri=((noisflag&2)!=0);
 for (int ss=0; ss<nscans; ss++)
 {
  double rnoi=have_ri?ri_noise.values[ss]:0.0;
