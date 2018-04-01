@@ -634,9 +634,39 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
       last_pdb_title .clear( );
       last_pdb_filename = f.fileName();
       QTextStream ts(&f);
+
+      int exp_resnum = 1;
+      int exp_prev_resnum = -1;
+
       while ( !ts.atEnd() )
       {
          str1 = ts.readLine();
+         
+         if ( advanced_config.experimental_renum ) {
+            if ( str1.left(5) == "MODEL" ||
+                 str1.left(6) == "ENDMDL" ) {
+               exp_resnum = 1;
+               exp_prev_resnum = -1;
+            }
+               
+            if ( str1.left(4) == "ATOM" ||
+                 str1.left(6) == "HETATM" ) {
+               int thisresnum = str1.mid( 22, 4 ).trimmed().toInt();
+
+               if ( exp_prev_resnum == -1 ) {
+                  exp_prev_resnum = thisresnum;
+               }
+
+               if ( thisresnum != exp_prev_resnum ) {
+                  exp_resnum++;
+                  exp_prev_resnum = thisresnum;
+               }
+               QString alt_str1 = str1.left( 22 ) + QString( "" ).sprintf( "%4d", exp_resnum ) + str1.right( str1.length() - 22 - 4 );
+               // us_qdebug( QString( "<:%1\n>:%2" ).arg( str1 ).arg( alt_str1 ) );
+               str1 = alt_str1;
+            }
+         }
+
          if ( saxs_options.multiply_iq_by_atomic_volume &&
               rx_water_multiplier.indexIn( str1 ) != -1 )
          {
@@ -6802,6 +6832,10 @@ QString US_Hydrodyn::default_differences_load_pdb()
    {
       str += QString(base + sub + "Find free SH, change residue coding: %1.\n")
          .arg(pdb_parse.find_sh ? "Selected" : "Not selected");
+   }
+   if ( advanced_config.experimental_renum ) 
+   {
+      str += us_tr( "Renumber PDB residues on load is on. (Experimental)" );
    }
 
    if ( gparams[ "save_csv_on_load_pdb" ] != default_gparams[ "save_csv_on_load_pdb" ] )

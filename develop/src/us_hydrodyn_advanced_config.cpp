@@ -106,6 +106,15 @@ void US_Hydrodyn_AdvancedConfig::setupGUI()
    AUTFBACK( cb_expert_mode );
    connect(cb_expert_mode, SIGNAL(clicked()), this, SLOT(set_expert_mode()));
 
+   cb_experimental_renum = new QCheckBox(this);
+   cb_experimental_renum->setText(us_tr(" Renumber PDB residues on load (experimental)"));
+   cb_experimental_renum->setEnabled(true);
+   cb_experimental_renum->setChecked((*advanced_config).experimental_renum);
+   cb_experimental_renum->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_experimental_renum->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_experimental_renum );
+   connect(cb_experimental_renum, SIGNAL(clicked()), this, SLOT(set_experimental_renum()));
+
 #if defined(DEBUG_CTLS)
    cb_experimental_threads = new QCheckBox(this);
    cb_experimental_threads->setText(us_tr(" Use threads (experimental)"));
@@ -197,6 +206,8 @@ void US_Hydrodyn_AdvancedConfig::setupGUI()
    background->addWidget( cb_use_sounds , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
    background->addWidget( cb_expert_mode , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
+   j++;
+   background->addWidget( cb_experimental_renum , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 #if defined(DEBUG_CTLS)   
    background->addWidget( cb_experimental_threads , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
@@ -293,6 +304,12 @@ void US_Hydrodyn_AdvancedConfig::set_expert_mode()
 void US_Hydrodyn_AdvancedConfig::set_experimental_threads()
 {
    (*advanced_config).experimental_threads = cb_experimental_threads->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_AdvancedConfig::set_experimental_renum()
+{
+   (*advanced_config).experimental_renum = cb_experimental_renum->isChecked();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

@@ -150,6 +150,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    advanced_config.use_sounds = false;
    advanced_config.expert_mode = false;
    advanced_config.experimental_threads = false;
+   advanced_config.experimental_renum = false;
    advanced_config.debug_1 = false;
    advanced_config.debug_2 = false;
    advanced_config.debug_3 = false;
