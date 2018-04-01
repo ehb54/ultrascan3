@@ -1092,7 +1092,7 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
       while ( tdrad[ jj ] < exrad[ ii ] )
       {
          double rrdif     = qAbs( tdrad[ jj ] - exrad[ ii ] );
-if(rrdif<1.0e-4)
+if(rrdif<1.0e-4 && dbg_level>0)
 {
  rrdk++;
  if ( rrdk < 11 )
