@@ -1178,7 +1178,7 @@ DbgLv(1) << " triples    size" << ntriple;
    editIDs   .fill( "",     ntriple );
    editFnames.fill( "none", ntriple );
 
-   isMwl        = ( nwaveln > 2  &&  ntriple > 8 );
+   isMwl        = ( nwaveln > 2  &&  ntriple > 16 );
    lrng_bycell  = false;         // Assume initially cell lambdas all the same
 DbgLv(1) << "LD(): isMwl" << isMwl << "nwaveln" << nwaveln << toti_wvlns.size();
 
