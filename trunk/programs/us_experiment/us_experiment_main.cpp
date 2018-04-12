@@ -3148,7 +3148,8 @@ void US_ExperGuiUpload::submitExperiment()
 					       .arg(wvl_array)
 					       .arg(scan_counts)
 					       .arg(scan_intervals)
-					       .arg("\'A\'")
+					       .arg("DEFAULT")
+					       //.arg("\'A\'")
 					       ) )
 		     qDebug() << query_abs_scan.lastError().text();
 		   
