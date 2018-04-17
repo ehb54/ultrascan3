@@ -1702,7 +1702,7 @@ DbgLv(1) << "EGSo: rbS:  ii" << ii << "chan" << chan << "scx" << scx;
          chsol.solution      = solu;
          chsol.sol_id        = sv_sids [ scx ];
          chsol.ch_comment    = sv_chcms[ scx ];
-
+	
          rpSolut->chsols << chsol;
          suchans << chan;
          susolus << solu;
@@ -2088,8 +2088,9 @@ DbgLv(1) << "EGSo:addComm:  cclabl" << cclabl;
       chcomm     += ", " + sufx;
       manual_comment[ sdescr ]     += sufx;   //QMap of manual comments per solution
    }
-DbgLv(1) << "EGSo:addComm:  sufx" << sufx;
-DbgLv(1) << "EGSo:addComm:   chcomm" << chcomm;
+ DbgLv(1) << "EGSo:addComm:  sufx" << sufx;
+ DbgLv(1) << "EGSo:addComm:   chcomm" << chcomm;
+
 }
 
 // Function to compose channel comment strings (string and list)
@@ -2791,21 +2792,21 @@ DbgLv(1) << "EGUp:dE: nsolut" << ssolut.count();
    dtext += tr( "  UPLOAD ENABLED:             " ) + v_uleok  + "\n";
    dtext += tr( "  UPLOAD COMPLETED:           " ) + v_ulcok  + "\n";
 
-   // Generate a JSON stream to be uploaded
+//    // Generate a JSON stream to be uploaded
 
-   json_upl          = buildJson();
+//    json_upl          = buildJson();
 
-   // Report on it
-   dtext += tr( "\n\nJSON stream generated and available for upload --\n\n" );
-   if ( json_upl.isEmpty() )
-   {
-      dtext += tr( "NONE  (parameterization is incomplete).\n" );
-   }
-   else
-   {
-      dtext += json_upl + "\n";
-   }
-dtext+= "\n** NOT YET FULLY IMPLEMENTED **\n";
+//    // Report on it
+//    dtext += tr( "\n\nJSON stream generated and available for upload --\n\n" );
+//    if ( json_upl.isEmpty() )
+//    {
+//       dtext += tr( "NONE  (parameterization is incomplete).\n" );
+//    }
+//    else
+//    {
+//       dtext += json_upl + "\n";
+//    }
+// dtext+= "\n** NOT YET FULLY IMPLEMENTED **\n";
 
    // Load text and show the dialog
    QApplication::restoreOverrideCursor();
@@ -3047,14 +3048,21 @@ void US_ExperGuiUpload::submitExperiment()
        qDebug() << "#Cells: " << ncells;
       
        QVector < QVector < int >> AbsScanIds(nstages_size);
+       /* Add extra array QVector < QVector < QString >> RadialPath(nstages_size); to be filled with DEFAULT/ */
+       QVector < QVector < int >> AbsRadialPath(nstages_size);
+       
        for (int i=0; i<nstages_size; ++i)
-	 AbsScanIds[i].resize(ncells);
-
+	 {
+	   AbsScanIds[i].resize(ncells);
+	   AbsRadialPath[i].resize(ncells);
+	 }
+       
        for (int i=0; i<nstages_size; ++i)
 	 { 
 	   for (int j=0; j<ncells; ++j)
 	     {
 	       AbsScanIds[i][j] = 0;
+	       AbsRadialPath[i][j] = 0;
 	     }
 	 }
        
@@ -3134,6 +3142,14 @@ void US_ExperGuiUpload::submitExperiment()
 		   scan_intervals += "}\'";
 		   
 		   qDebug() << "Wvl_Array: " << wvl_array;
+		   QString rad_path = "DEFAULT";
+		   //QString rad_path = "\'A\'";
+		   //QString rad_path = "\'B\'";
+
+		   if ( QString::compare(rad_path, "DEFAULT",Qt::CaseSensitive) )
+		     qDebug() << "RadialPath is NOT DEFAULT";
+		     
+		     
 		   QSqlQuery query_abs_scan(dbxpn);
 		   if(! query_abs_scan.prepare(QString("INSERT INTO %1 (\"ContinuousMode\",\"ReplicateCounts\",\"ScanInnerLimits\",\"ScanOuterLimits\",\"ScanStarts\",\"ScanSteps\",\"ScanTypeFlag\",\"WavelengthCount\",\"Wavelengths\",\"ScanCounts\",\"ScanIntervals\",\"RadialPath\") VALUES (%2, %3, %4, %5, %6, %7, %8, %9, %10, %11, %12, %13) RETURNING \"ScanId\"")
 					       .arg(qrytab_abs)
@@ -3148,10 +3164,14 @@ void US_ExperGuiUpload::submitExperiment()
 					       .arg(wvl_array)
 					       .arg(scan_counts)
 					       .arg(scan_intervals)
-					       .arg("DEFAULT")
+					       .arg(rad_path)
+					       //.arg("DEFAULT")
 					       //.arg("\'A\'")
 					       ) )
 		     qDebug() << query_abs_scan.lastError().text();
+
+		   // qDebug() << "Stop here";
+		   // return;
 		   
 		   if (query_abs_scan.exec()) 
 		     {
@@ -3159,7 +3179,16 @@ void US_ExperGuiUpload::submitExperiment()
 		       
 		       query_abs_scan.next();
 		       AbsScanIds[i][j] = query_abs_scan.value(0).toInt();         // <-- Save AbsScanID inserted [for given stage#/cell#]
-		       qDebug() << "ScanId: " << query_abs_scan.value(0).toInt();
+
+		       
+		       if ( QString::compare(rad_path, "DEFAULT",Qt::CaseSensitive) )
+			 {
+			   AbsRadialPath[i][j] = 1;
+			   qDebug() << "RadialPath is NOT DEFAULT: 1-channel.";
+			 }
+		       
+		       qDebug() << "ScanId: "     << query_abs_scan.value(0).toInt();
+		       qDebug() << "RadialPath: " << AbsRadialPath[i][j];
 		     } 
 		   else 
 		     {
@@ -3321,10 +3350,16 @@ void US_ExperGuiUpload::submitExperiment()
 	       QString cell_pos = QString::number( j+1 );
 	       int cellsect;
 	       if ( j != ncells - 1)
-		 cellsect = 2;
+		 {
+		   /* Check here if RadialPath[i][j] is DEFAULT (both channels) OR A/B: if DEFAULT, CellSector=2, if A/B CellSector=1  */
+		   if (AbsRadialPath[i][j])
+		     cellsect = 1;
+		   else
+		     cellsect = 2;
+		 }
 	       else
 		 cellsect = 99;
-	       
+		 
 	       QString cell_sector = QString::number( cellsect );
 	       	       
 	       // Solution/Channel description
@@ -3336,10 +3371,12 @@ void US_ExperGuiUpload::submitExperiment()
 		    QStringList sol_split = (rpSolut->chsols[ ii ].ch_comment).split(',');
 		    if ( channel_cell.startsWith(QString::number(j+1)) )
 		      {
-			if ( channel_cell.contains("sample") )                            // <-- Channel A
-			  solname += ": Channel A: " + sol_split[0] + ", ";
-			if ( channel_cell.contains("reference") )                         // <-- Channel B
-			  solname += "Channel B: " + sol_split[0] + " ";
+			if ( channel_cell.contains("sample") )                                                     // <-- Channel A
+			  solname += ": Channel A: " + sol_split[0] + ", "        // <-- solution name
+			             + sol_split[sol_split.size()-1] + "; ";             // <-- solution manual comment  
+			if ( channel_cell.contains("reference") )                                                  // <-- Channel B
+			  solname += "Channel B: " + sol_split[0] + " "           // <-- solution name
+			             + sol_split[sol_split.size()-1];             // <-- solution manual comment  
 		      }
 		 }
 	       solname += "\'";
