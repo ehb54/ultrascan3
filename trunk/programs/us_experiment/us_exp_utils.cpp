@@ -1222,6 +1222,9 @@ DbgLv(1) << "EGSo: svP:    nchanf" << nchanf << "sol_id" << sol_id;
    if ( pro_comms.keys().contains( solution ) )
       {
          ch_comment          = pro_comms[ solution ];
+	 
+	 //ALEXEY - to remember changes to Soluton comments if manual commnets was added while returninf to "Solutons" tab
+	 commentStrings( solution, ch_comment, cs );   
       }
       else
       {
