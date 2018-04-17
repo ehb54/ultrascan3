@@ -464,7 +464,10 @@ QHBoxLayout* US_WidgetsDialog::us_ddhhmmsslay(
       layout->addWidget( lb_d );
       
       layout->addWidget( *dd );
-      
+
+      //ALEXEY do not show days
+      lb_d->hide();       
+      (*dd)->hide();
    }
    
    if ( hh != NULL )
@@ -504,6 +507,10 @@ QHBoxLayout* US_WidgetsDialog::us_ddhhmmsslay(
       layout->addWidget( lb_s );
 
       layout->addWidget( *ss );
+
+      //ALEXEY do not show seconds
+      lb_s->hide();
+      (*ss)->hide();
    }   
 
    return layout;

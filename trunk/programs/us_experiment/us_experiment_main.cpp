@@ -113,7 +113,7 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    connect( epanGeneral, SIGNAL( set_tabs_buttons_inactive( void )), this, SLOT( unable_tabs_buttons( void ) ));
    connect( epanGeneral, SIGNAL( set_tabs_buttons_active( void )),   this, SLOT( enable_tabs_buttons( void ) ));
 
-   setMinimumSize( QSize( 800, 400 ) );
+   setMinimumSize( QSize( 950, 400 ) );
    adjustSize();
 
    
@@ -755,13 +755,20 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    QLabel*  lb_count   = us_label( tr( "Number of Speed Profiles:" ) );
    QLabel*  lb_speed   = us_label( tr( "Rotor Speed (rpm):" ) );
    QLabel*  lb_accel   = us_label( tr( "Acceleration (rpm/sec):" ) );
-   QLabel*  lb_durat   = us_label( tr( "Duration of Experiment (days[D] hh[H] mm[M] ss[S]):" ) );
-   QLabel*  lb_delay   = us_label( tr( "Delay to First Scan (days[D] hh[H] mm[M] ss[S]):" ) );
+
+   // QLabel*  lb_durat   = us_label( tr( "Duration of Experiment (days[D] hh[H] mm[M] ss[S]):" ) );
+   // QLabel*  lb_delay   = us_label( tr( "Delay to First Scan (days[D] hh[H] mm[M] ss[S]):" ) );
+   QLabel*  lb_durat   = us_label( tr( "Duration of Experiment (hh[H] mm[M]):" ) );
+   QLabel*  lb_delay   = us_label( tr( "Delay to First Scan (hh[H] mm[M]):" ) );
+
    QLayout* lo_endoff  = us_checkbox( tr( "Spin down centrifuge at job end" ),
                                       ck_endoff, true );
    QLayout* lo_radcal  = us_checkbox( tr( "Perform radial calibration" ),
                                       ck_radcal, false );
-   QLabel*  lb_scnint  = us_label( tr( "Scan Interval (days[D] hh[H] mm[M] ss[S];"
+
+   // QLabel*  lb_scnint  = us_label( tr( "Scan Interval (days[D] hh[H] mm[M] ss[S];"
+   //                                     " 0 => fast-as-possible)" ) );
+   QLabel*  lb_scnint  = us_label( tr( "Scan Interval (hh[H] mm[M];"
                                        " 0 => fast-as-possible)" ) );
 
    // ComboBox, counters, time-edits, spinbox
@@ -860,30 +867,30 @@ DbgLv(1) << "EGSp: DONE init sb/de components";
 DbgLv(1) << "EGSp: addWidg/Layo row" << row;
    genL->addWidget( cb_prof,    row++,  0, 1,  8 );
 DbgLv(1) << "EGSp: addWidg/Layo row" << row;
-   genL->addWidget( lb_speed,   row,    0, 1,  6 );
-   genL->addWidget( ct_speed,   row++,  6, 1,  2 );
+   genL->addWidget( lb_speed,   row,    0, 1,  5 );
+   genL->addWidget( ct_speed,   row++,  5, 1,  3 );
 DbgLv(1) << "EGSp: addWidg/Layo row" << row;
-   genL->addWidget( lb_accel,   row,    0, 1,  6 );
-   genL->addWidget( ct_accel,   row++,  6, 1,  2 );
+   genL->addWidget( lb_accel,   row,    0, 1,  5 );
+   genL->addWidget( ct_accel,   row++,  5, 1,  3 );
 DbgLv(1) << "EGSp: addWidg/Layo row" << row;
 DbgLv(1) << "EGSp: addWidg/Layo AA";
 
-  genL->addWidget( lb_durat,   row,    0, 1,  6 );
+  genL->addWidget( lb_durat,   row,    0, 1,  5);
 DbgLv(1) << "EGSp: addWidg/Layo BB";
 //genL->addLayout( lo_durat,   row++,  6, 1,  2);
-  genL->addLayout( lo_duratlay,   row++,  6, 1,  2);
+  genL->addLayout( lo_duratlay,   row++,  5, 1,  3);
 
 DbgLv(1) << "EGSp: addWidg/Layo CC";
-  genL->addWidget( lb_delay,   row,    0, 1,  6 );
+  genL->addWidget( lb_delay,   row,    0, 1,  5 );
 DbgLv(1) << "EGSp: addWidg/Layo DD";
 // genL->addLayout( lo_delay,   row++,  6, 1,  2 );
-  genL->addLayout( lo_delaylay,   row++,  6, 1,  2 );
+  genL->addLayout( lo_delaylay,   row++,  5, 1,  3 );
 
 DbgLv(1) << "EGSp: addWidg/Layo EE";
-  genL->addWidget( lb_scnint,  row,    0, 1,  6 );
+  genL->addWidget( lb_scnint,  row,    0, 1,  5 );
 DbgLv(1) << "EGSp: addWidg/Layo FF";
 // genL->addLayout( lo_scnint,  row++,  6, 1,  2 );
-  genL->addLayout( lo_scnintlay,  row++,  6, 1,  2 );
+  genL->addLayout( lo_scnintlay,  row++,  5, 1,  3 );
 
 DbgLv(1) << "EGSp: addWidg/Layo GG";
    genL->addWidget( le_maxrpm,  row++,  0, 1,  4 );
@@ -3585,8 +3592,8 @@ void US_ExperGuiUpload::submitExperiment()
        QSqlQuery query_expdef(dbxpn);
 
        /* WHAT TO INSERT: fields
-	  "CellCount": " ",
-	  "Comments": " ",
+	  "CellCount": " ",  
+	  "Comments": " ",            >> Some defualt comment should be inserted
 	  "FugeRunProfileId": " ",    >> reference to the profile used; must be in the database when this object is added
 	  "Name": " ",
 	  "Project": " ",
@@ -3599,11 +3606,13 @@ void US_ExperGuiUpload::submitExperiment()
        QString researcher           = "\'" + researcher_split[1].trimmed() + "\'";
        //QString name                 = "\'" + mainw->currProto.protname + "\'";
        QString name                 = "\'" + mainw->currProto.runname + "\'";
+       QString exp_comments         = "\'Run by " + researcher_split[1].trimmed() + ": " + mainw->currProto.runname + " based on project " + mainw->currProto.project + "\'";         
        
        // Query
-       if(! query_expdef.prepare(QString("INSERT INTO %1 (\"CellCount\",\"FugeRunProfileId\",\"Name\",\"Researcher\") VALUES (%2, %3, %4, %5)")
+       if(! query_expdef.prepare(QString("INSERT INTO %1 (\"CellCount\",\"Comments\",\"FugeRunProfileId\",\"Name\",\"Researcher\") VALUES (%2, %3, %4, %5, %6)")
 				 .arg(qrytab_expdef)
 				 .arg(cellcount)
+				 .arg(exp_comments)
 				 .arg(fugeprofile)
 				 .arg(name)
 				 .arg(researcher) ) )
