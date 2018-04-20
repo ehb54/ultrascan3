@@ -7,7 +7,7 @@
 #include "us_crypto.h"
 #include "us_db2.h"
 
-US_Database::US_Database( QWidget* w, Qt::WindowFlags flags ) 
+US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
   : US_Widgets( true, w, flags )
 {
   uuid.clear();
@@ -35,7 +35,7 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
   QLabel* banner = us_banner( tr( "Database List" ) );
   topbox->addWidget( banner );
 
-  QLabel* banner2 = us_banner( 
+  QLabel* banner2 = us_banner(
         tr( "(Doubleclick for details and set the default)" ), -1 );
   topbox->addWidget( banner2 );
 
@@ -48,11 +48,13 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
 
   // Populate db_list
   QStringList DB = US_Settings::defaultDB();
+//qDebug() << "USCFG: defDBl" << DB;
   QString     defaultDB;
   if ( DB.size() > 0 ) defaultDB = US_Settings::defaultDB().at( 0 );
+//qDebug() << "USCFG: defDBd" << defaultDB;
   update_lw( defaultDB );
 
-  connect( lw_entries, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ), 
+  connect( lw_entries, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
                        SLOT  ( select_db        ( QListWidgetItem* ) ) );
   // Detail info
   QLabel* info = us_banner( tr( "Database Detailed  Information" ) );
@@ -60,7 +62,7 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
 
   int row = 0;
   QGridLayout* details = new QGridLayout();
-  
+
   // Row 1
   QLabel* desc = us_label( "Database Description:" );
   details->addWidget( desc, row, 0 );
@@ -102,7 +104,7 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
   details->addWidget( investigator, row, 0 );
 
   le_investigator_email = us_lineedit( "", 0 );
-  
+
   // Make the line edit entries wider
   QFontMetrics fm( le_investigator_email->font() );
   le_investigator_email->setMinimumWidth( fm.maxWidth() * 10 );
@@ -161,15 +163,38 @@ void US_Database::select_db( QListWidgetItem* entry )
 
   // Delete trailing (default) if that is present
   QString item = entry->text().remove( " (default)" );
+//qDebug() << "USCFG: seldb: item" << item;
 
   // Get the master PW
   US_Passwd pw;
   QString master_pw = pw.getPasswd();
+  QString email     = dblist.at( 0 ).at( 6 );
+  if ( email.isEmpty() )
+  {
+    for ( int jj = 0; jj < dblist.size(); jj++ )
+    {
+      if ( ! dblist.at( jj ).at( 6 ).isEmpty() )
+      {
+        email = dblist.at( jj ).at( 6 );
+//qDebug() << "USCFG: seldb: jj email" << jj << email;
+        break;
+      }
+    }
+  }
+
 
   for ( int i = 0; i < dblist.size(); i++ )
   {
     if ( item == dblist.at( i ).at( 0 ) )
     {
+      if ( dblist.at( i ).at( 6 ).isEmpty() )
+      {
+//        dblist.at( i ).replace( 6, email );
+        QStringList db = dblist.at( i );
+        db.replace( 6, email );
+        dblist.replace( i, db );
+      }
+//qDebug() << "USCFG: def upd  i" << i;
       le_description       ->setText( item );
       le_username          ->setText( dblist.at( i ).at( 1 ) );
       le_dbname            ->setText( dblist.at( i ).at( 2 ) );
@@ -180,15 +205,17 @@ void US_Database::select_db( QListWidgetItem* entry )
       QString cipher    = dblist.at( i ).at( 4 );
       QString iv        = dblist.at( i ).at( 5 );
       QString pw_string = US_Crypto::decrypt( cipher, master_pw, iv );
-      le_password->setText( pw_string );   
-      
+      le_password->setText( pw_string );
+
       // DB Internal PW
       cipher    = dblist.at( i ).at( 7 );
       iv        = dblist.at( i ).at( 8 );
       pw_string = US_Crypto::decrypt( cipher, master_pw, iv );
       le_investigator_pw->setText( pw_string );
-     
+
       uuid = dblist.at( i ).at( 9 );
+//qDebug() << "USCFG: dbl 0,6,9"
+// << dblist.at(i).at(0) << dblist.at(i).at(6) << dblist.at(i).at(9);
 
       // Set the default DB and user for that DB
       US_Settings::set_defaultDB( dblist.at( i ) );
@@ -214,6 +241,7 @@ void US_Database::update_inv( void )
 
    if ( db.lastErrno() != US_DB2::OK )
    {
+//qDebug() << "USCFG: UpdInv: ERROR connect";
       QMessageBox::information( this,
          tr( "Error" ),
          tr( "Error making the DB connection.\n" ) );
@@ -229,6 +257,8 @@ void US_Database::update_inv( void )
    QString fname = db.value( 1 ).toString();
    QString lname = db.value( 2 ).toString();
    int     level = db.value( 5 ).toInt();
+//qDebug() << "USCFG: UpdInv: ID,name,lev" << ID << fname << lname << level;
+//if(ID<1) return;
 
    US_Settings::set_us_inv_name ( lname + ", " + fname );
    US_Settings::set_us_inv_ID   ( ID );
@@ -240,16 +270,16 @@ void US_Database::check_add()
   // Check that all fields have at least something
   if ( le_description->text().isEmpty() )
   {
-    QMessageBox::information( this, 
-        tr( "Attention" ), 
+    QMessageBox::information( this,
+        tr( "Attention" ),
         tr( "Please enter a Description before saving..." ) );
     return;
   }
 
   if ( le_username->text().isEmpty() )
   {
-    QMessageBox::information( this, 
-        tr( "Attention" ), 
+    QMessageBox::information( this,
+        tr( "Attention" ),
         tr( "Please enter a User Name before saving..." ) );
     return;
   }
@@ -257,7 +287,7 @@ void US_Database::check_add()
   if ( le_password->text().isEmpty() )
   {
     QMessageBox::information( this,
-        tr( "Attention" ), 
+        tr( "Attention" ),
         tr( "Please enter a Password before saving..." ) );
     return;
   }
@@ -265,7 +295,7 @@ void US_Database::check_add()
   if ( le_dbname->text().isEmpty() )
   {
     QMessageBox::information( this,
-        tr( "Attention" ), 
+        tr( "Attention" ),
         tr( "Please enter a Database Name before saving..."));
     return;
   }
@@ -273,35 +303,35 @@ void US_Database::check_add()
   if ( le_host->text().isEmpty() )
   {
     QMessageBox::information( this,
-        tr( "Attention" ), 
+        tr( "Attention" ),
         tr( "Please enter a Host Address (possibly  'localhost') "
             "before saving..." ) );
     return;
   }
-  
+
   if ( le_investigator_email->text().isEmpty() )
   {
     QMessageBox::information( this,
-        tr( "Attention" ), 
+        tr( "Attention" ),
         tr( "Please enter an investigator email address "
             "before saving..." ) );
     return;
   }
-  
+
   if ( le_investigator_pw->text().isEmpty() )
   {
     QMessageBox::information( this,
-        tr( "Attention" ), 
+        tr( "Attention" ),
         tr( "Please enter an investigator password "
             "before saving..." ) );
     return;
   }
-  
+
   if ( uuid.isEmpty() )
   {
     if ( ! test_connect() ) return;
   }
-  
+
   // Get the master PW
   US_Passwd pw;
   QString   master_pw = pw.getPasswd();
@@ -327,7 +357,7 @@ void US_Database::check_add()
         db.replace( 3, le_host    ->text() );
         db.replace( 4, pw_list.at( 0 )     );  // Encrypted password
         db.replace( 5, pw_list.at( 1 )     );  // Initialization vector
-        db.replace( 6, le_investigator_email->text() );  
+        db.replace( 6, le_investigator_email->text() );
         db.replace( 7, inv_pw.at( 0 )      );
         db.replace( 8, inv_pw.at( 1 )      );
         db.replace( 9, uuid                );
@@ -341,16 +371,16 @@ void US_Database::check_add()
   if ( ! updated )
   {
     QStringList entry;
-    entry << le_description->text() 
-          << le_username->text() 
+    entry << le_description->text()
+          << le_username->text()
           << le_dbname->text()
-          << le_host->text()        
-          << pw_list.at( 0 )          
-          << pw_list.at( 1 ) 
-          << le_investigator_email->text()  
+          << le_host->text()
+          << pw_list.at( 0 )
+          << pw_list.at( 1 )
+          << le_investigator_email->text()
           << inv_pw.at( 0 )
           << inv_pw.at( 1 )
-          << uuid;  
+          << uuid;
 
     dblist << entry;
   }
@@ -363,7 +393,7 @@ void US_Database::check_add()
 
   pb_save  ->setEnabled( true );
   pb_delete->setEnabled( true );
-} 
+}
 
 void US_Database::update_lw( const QString& current )
 {
@@ -372,20 +402,25 @@ void US_Database::update_lw( const QString& current )
   dblist                = US_Settings::databases();
   QStringList defaultDB = US_Settings::defaultDB();
   QString     defaultDBname;
+//qDebug() << "USCFG: UpdLw: defaultDB" << defaultDB;
+//qDebug() << "USCFG: UpdLw:  current" << current;
 
   if ( defaultDB.size() > 0 ) defaultDBname = defaultDB.at( 0 );
+//qDebug() << "USCFG: UpdLw:  defaultDBname" << defaultDBname;
 
   for ( int i = 0; i < dblist.size(); i++ )
   {
     QString desc    = dblist.at( i ).at( 0 );
     QString display = desc;
+//qDebug() << "USCFG: UpdLw:   i desc email" << i << desc << dblist.at(i).at(6);
 
     if ( desc == defaultDBname ) display.append( " (default)" );
-    
+//qDebug() << "USCFG: UpdLw:      display" << display;
+
     QListWidgetItem* widget = new QListWidgetItem( display );
-    lw_entries->addItem( widget );  
-     
-    if ( desc == current ) 
+    lw_entries->addItem( widget );
+
+    if ( desc == current )
       lw_entries->setCurrentItem( widget, QItemSelectionModel::Select );
   }
 }
@@ -415,40 +450,45 @@ void US_Database::help( void )
   US_Help* showhelp = new US_Help(this);
   showhelp->show_help( "database_config.html" );
 }
-  
+
 void US_Database::save_default( void )
 {
   for ( int i = 0; i < dblist.size(); i++ )
   {
     QString desc = dblist.at( i ).at( 0 );
-     
+//qDebug() << "USCFG: svDef: desc" << desc;
+
     // Look for the current description
-    if ( desc == le_description->text() ) 
+    if ( desc == le_description->text() )
     {
+//qDebug() << "USCFG: svDef:  desc MATCH i" << i;
       if ( dblist.at( i ).at( 9 ) == "" )
       {
-         QMessageBox::information( this, 
+//qDebug() << "USCFG: svDef:  e9(uuid)==NULL" << i;
+         QMessageBox::information( this,
              tr( "Default Database Problem" ),
              tr( "The current database information has not been tested "
-                  "for connectivity.\n" 
+                  "for connectivity.\n"
                   "The default database has not been updated.") );
          return;
       }
+if(dblist.at(i).at(6).isEmpty())
+//qDebug() << "USCFG: svDef:  e6(email)==NULL" << i;
 
       QString null = "";
 
       US_Settings::set_defaultDB( dblist.at( i ) );
       update_inv();
       reset();
-      
-      QMessageBox::information( this, 
+
+      QMessageBox::information( this,
           tr( "Default Database" ),
           tr( "The default database has been updated." ) );
       return;
     }
   }
-     
-  QMessageBox::warning( this, 
+
+  QMessageBox::warning( this,
       tr( "Default Database Problem" ),
       tr( "The description does not match any in the database list.\n"
           "The default database has not been updated." ) );
@@ -462,29 +502,29 @@ void US_Database::deleteDB( void )
   for ( int i = 0; i < dblist.size(); i++ )
   {
     QString desc = dblist.at( i ).at( 0 );
-     
+
     // Look for the current description
-    if ( desc == item ) 
+    if ( desc == item )
     {
       dblist.removeAt( i );
       US_Settings::set_databases( dblist );
-      
+
       // Check if the default DB matches
       QStringList defaultDB = US_Settings::defaultDB();
 
       if ( defaultDB.at( 0 ) == item )
         US_Settings::set_defaultDB( QStringList() );
-      
+
       reset();
 
-      QMessageBox::information( this, 
+      QMessageBox::information( this,
           tr( "Database Removed" ),
           tr( "The database has been removed." ) );
       return;
     }
   }
-     
-  QMessageBox::warning( this, 
+
+  QMessageBox::warning( this,
       tr( "Database Problem" ),
       tr( "The description does not match any in the database list.\n"
           "The database has not been removed." ) );
@@ -492,11 +532,11 @@ void US_Database::deleteDB( void )
 
 bool US_Database::test_connect( void )
 {
-   if ( le_host              ->text().isEmpty() ||  
+   if ( le_host              ->text().isEmpty() ||
         le_dbname            ->text().isEmpty() ||
-        le_username          ->text().isEmpty() || 
+        le_username          ->text().isEmpty() ||
         le_password          ->text().isEmpty() ||
-        le_investigator_email->text().isEmpty() || 
+        le_investigator_email->text().isEmpty() ||
         le_investigator_pw   ->text().isEmpty() )
    {
       QMessageBox::warning( this,
@@ -508,21 +548,28 @@ bool US_Database::test_connect( void )
 
    QString error;
    US_DB2  db;
-//qDebug() << "USCFG: call test_secure...";
-   bool ok = db.test_secure_connection( 
-               le_host              ->text(), le_dbname         ->text(), 
-               le_username          ->text(), le_password       ->text(), 
-               le_investigator_email->text(), le_investigator_pw->text(), 
+//qDebug() << "USCFG: call test_secure...  db" << &db;
+   bool ok = db.test_secure_connection(
+               le_host              ->text(), le_dbname         ->text(),
+               le_username          ->text(), le_password       ->text(),
+               le_investigator_email->text(), le_investigator_pw->text(),
                error );
-   if ( ok ) 
+//qDebug() << "USCFG:  ok=" << ok;
+   if ( ok )
    {
       uuid = db.value( 0 ).toString();   // Set class variable uuid
+//qDebug() << "USCFG:  uuid=" << uuid;
+      if ( uuid.isEmpty()  ||  uuid.length() != 36 )
+      {
+         uuid = "00000000-0000-0000-0000-000000000000";
+//qDebug() << "USCFG:   2)uuid=" << uuid;
+      }
 
       // Make sure the uuid is updated in the dblist structure
       for ( int i = 0; i < dblist.size(); i++ )
       {
          QString desc = dblist.at( i ).at( 0 );
-           
+
          // Look for the current description
          if ( desc == le_description->text() )
          {
@@ -541,9 +588,18 @@ bool US_Database::test_connect( void )
       pb_save->setEnabled( true );
    }
    else
+   {
+//qDebug() << "USCFG:  FAIL error=" << error;
+//qDebug() << "USCFG:   host    :" << le_host->text();
+//qDebug() << "USCFG:   dbname  :" << le_dbname->text();
+//qDebug() << "USCFG:   username:" << le_username->text();
+//qDebug() << "USCFG:   password:" << le_password->text();
+//qDebug() << "USCFG:   email   :" << le_investigator_email->text();
+//qDebug() << "USCFG:   ipassw  :" << le_investigator_pw->text();
       QMessageBox::warning( this,
         tr( "Database Connection" ),
         tr( "The connection failed.\n" ) + error );
+   }
 
    return ok;
 }
