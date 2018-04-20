@@ -29,7 +29,7 @@
 //       savePanel();        (subclasses)
 //       status();           (subclasses)
 
-#include "us_experiment_main.h"
+#include "us_experiment_gui.h"
 #include "us_run_protocol.h"
 #include "us_rotor_gui.h"
 #include "us_solution_gui.h"

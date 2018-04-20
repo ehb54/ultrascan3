@@ -1,6 +1,6 @@
 //! \file us_proto_ranges.cpp
 
-#include "us_experiment_main.h"
+#include "us_experiment_gui.h"
 #include "us_extinction_gui.h"
 #include "us_table.h"
 #include "us_license.h"
