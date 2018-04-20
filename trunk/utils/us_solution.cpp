@@ -8,6 +8,7 @@
 #include "us_solution.h"
 #include "us_buffer.h"
 #include "us_analyte.h"
+#include "us_datafiles.h"
 #include "us_math2.h"
 #include "us_eprofile.h"
 
@@ -225,6 +226,21 @@ int US_Solution::readFromDB  ( int solutionID, US_DB2* db )
 // Function to save solution information to disk
 void US_Solution::saveToDisk( void )
 {
+   // Check that we have a solution with valid values
+   if ( solutionDesc.isEmpty()     ||
+        buffer.GUID.isEmpty()      ||
+        buffer.bufferID.isEmpty()  ||
+        buffer.bufferID.toInt() < 0 )
+   {
+      qDebug() << "Error: Solution cannot be written to disk,"
+               << " due to invalid values:";
+      qDebug() << "  commonVbar20" << commonVbar20;
+      qDebug() << "  solutionDesc" << solutionDesc;
+      qDebug() << "  bufferGUID" << buffer.GUID;
+      qDebug() << "  bufferID" << buffer.bufferID;
+      return;
+   }
+
    // First make sure we have a GUID
    QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
 
@@ -236,30 +252,14 @@ void US_Solution::saveToDisk( void )
    if ( ! diskPath( path ) ) return;
 
    bool    newFile;
-   QString filename = get_filename( 
-                         path, 
-                         newFile );
+   QString filename = US_DataFiles::get_filename( path, solutionGUID,
+                         "S", "solution", "guid", newFile );
 
    QFile file( filename );
    if ( !file.open( QIODevice::WriteOnly | QIODevice::Text) )
    {
       qDebug() << "Error: can't open file for writing"
                << filename;
-      return;
-   }
-
-   if ( commonVbar20 == 0          ||
-        solutionDesc.isEmpty()     ||
-        buffer.GUID.isEmpty()      ||
-        buffer.bufferID.isEmpty()  ||
-        buffer.bufferID.toInt() < 0 )
-   {
-      qDebug() << "Error: Solution cannot be written to disk,"
-               << " due to invalid values:";
-      qDebug() << "  commonVbar20" << commonVbar20;
-      qDebug() << "  solutionDesc" << solutionDesc;
-      qDebug() << "  bufferGUID" << buffer.GUID;
-      qDebug() << "  bufferID" << buffer.bufferID;
       return;
    }
 
@@ -661,47 +661,13 @@ bool US_Solution::diskFilename( const QString& guid, QString& filename )
       return false;
    }
 
-   QDir        dir( path );
-   QStringList filter( "S*.xml" );
-   QStringList names = dir.entryList( filter, QDir::Files, QDir::Name );
-   bool        found = false;
+   bool newFile = true;
+   filename =
+      US_DataFiles::get_filename( path, guid, "S", "solution", "guid",
+                                  newFile );
+//qDebug() << "SOL: dkFn: path" << path << "guid" << guid << "newFile" << newFile;
 
-   for ( int i = 0; i < names.size(); i++ )
-   {
-      filename = path + "/" + names[ i ];
-      QFile file( filename );
-
-      if ( ! file.open( QIODevice::ReadOnly | QIODevice::Text) ) continue;
-
-      QXmlStreamReader xml( &file );
-
-      while ( ! xml.atEnd() )
-      {
-         xml.readNext();
-
-         if ( xml.isStartElement() )
-         {
-            if ( xml.name() == "solution" )
-            {
-               QXmlStreamAttributes a = xml.attributes();
-
-               if ( a.value( "guid" ).toString() == guid ) found = true;
-               break;
-            }
-         }
-      }
-
-      file.close();
-      if ( found ) break;  // Break out of this loop too
-   }
-
-   if ( ! found )
-   {
-      filename = QString( "" );
-      return false;
-   }
-
-   return true;
+   return ( ! newFile );
 }
 
 // Get the path to the solutions.  Create it if necessary.
@@ -727,49 +693,9 @@ bool US_Solution::diskPath( QString& path )
 QString US_Solution::get_filename(
       const QString& path, bool& newFile )
 {
-   QDir        f( path );
-   QStringList filter( "S???????.xml" );
-   QStringList f_names = f.entryList( filter, QDir::Files, QDir::Name );
-   QString     filename;
-   newFile = true;
-
-   for ( int i = 0; i < f_names.size(); i++ )
-   {
-      QFile b_file( path + "/" + f_names[ i ] );
-
-      if ( ! b_file.open( QIODevice::ReadOnly | QIODevice::Text) ) continue;
-
-      QXmlStreamReader xml( &b_file );
-
-      while ( ! xml.atEnd() )
-      {
-         xml.readNext();
-
-         if ( xml.isStartElement() )
-         {
-            if ( xml.name() == "solution" )
-            {
-               QXmlStreamAttributes a = xml.attributes();
-
-               if ( a.value( "guid" ).toString() == solutionGUID )
-               {
-                  newFile  = false;
-                  filename = path + "/" + f_names[ i ];
-               }
-
-               break;
-            }
-         }
-      }
-
-      b_file.close();
-      if ( ! newFile ) return filename;
-   }
-
-   // If we get here, generate a new filename
-   int number = ( f_names.size() > 0 ) ? f_names.last().mid( 1, 7 ).toInt() : 0;
-
-   return path + "/S" + QString().sprintf( "%07i", number + 1 ) + ".xml";
+   QString filename = US_DataFiles::get_filename( path, solutionGUID,
+                         "S", "solution", "guid", newFile );
+   return filename;
 }
 
 US_Solution::AnalyteInfo::AnalyteInfo()
