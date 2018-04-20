@@ -750,6 +750,13 @@ class US_ExperimentMain : public US_Widgets
 
       void unable_tabs_buttons( void);  // Slot to unable Tabs and Buttons when user level is low
       void enable_tabs_buttons( void);  // Slot to enable Tabs and Buttons after protocol is loaded
+
+    public slots:
+      void close_program( void );
+
+    signals:
+      void us_exp_is_closed( void );
+      
 };
 #endif
 
