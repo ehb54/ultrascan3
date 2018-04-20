@@ -84,8 +84,10 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
             this,      SLOT  ( panelUp()    ) );
    connect( pb_prev,   SIGNAL( clicked()    ),
             this,      SLOT  ( panelDown()  ) );
+   //connect( pb_close,  SIGNAL( clicked()    ),
+   //         this,      SLOT  ( close      ) );
    connect( pb_close,  SIGNAL( clicked()    ),
-            this,      SLOT  ( close()      ) );
+            this,      SLOT  ( close_program()      ) );
    connect( pb_help,   SIGNAL( clicked()    ),
             this,      SLOT  ( help()       ) );
 
@@ -98,7 +100,10 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    connect( epanGeneral, SIGNAL( set_tabs_buttons_inactive( void )), this, SLOT( unable_tabs_buttons( void ) ));
    connect( epanGeneral, SIGNAL( set_tabs_buttons_active( void )),   this, SLOT( enable_tabs_buttons( void ) ));
 
-   setMinimumSize( QSize( 950, 400 ) );
+   //int min_width = tabWidget->tabBar()->width();
+
+   //setMinimumSize( QSize( min_width, 450 ) );
+   setMinimumSize( 950, 450 );
    adjustSize();
 
    
@@ -111,6 +116,13 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
 // Reset parameters to their defaults
 void US_ExperimentMain::reset( void )
 {
+}
+
+// Reset parameters to their defaults
+void US_ExperimentMain::close_program( void )
+{
+  emit us_exp_is_closed();
+  close();
 }
 
 // Panel for run and other general parameters
