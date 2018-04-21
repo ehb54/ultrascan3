@@ -41,6 +41,34 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    //QGridLayout* statL     = new QGridLayout();
    //QHBoxLayout* buttL     = new QHBoxLayout();
 
+   // QLabel* gen_banner = new QLabel;
+   // gen_banner->setStyleSheet("QLabel { background-color : red; color : blue; }");
+   // gen_banner->setText("Test text");
+
+   gen_banner = us_banner( tr( "TEST PROGRAM, v. 0.1" ) );
+   
+   //set font
+   QFont font_gen = gen_banner->font();
+   font_gen.setPointSize(20);
+   font_gen.setBold(true);
+   gen_banner->setFont(font_gen);
+   
+   main->addWidget(gen_banner);
+
+   welcome = new QTextEdit;
+   welcome->setText(" <br> Welcome to the TEST PROGRAM <br> for setting up, monitoring, editing and analyzing <br> AUC experiments and produced data... <br>");
+   welcome->setMaximumHeight(120);
+   welcome->setReadOnly(true);
+   welcome->setAlignment(Qt::AlignCenter);
+   QFont font_wel = welcome->font();
+   font_wel.setPointSize(10);
+   font_wel.setItalic(true);
+   font_wel.setBold(true);
+   welcome->setStyleSheet("color: black; background-color: gray;");
+   
+   welcome->setFont(font_wel);
+   main->addWidget(welcome);
+   
    // Create tab and panel widgets
    tabWidget           = us_tabwidget();
    tabWidget->setTabPosition( QTabWidget::West );
@@ -58,11 +86,35 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    tabWidget->setCurrentIndex( curr_panx );
 
    tabWidget->tabBar()->setFixedHeight(500);
-   tabWidget->setTabIcon(0,QIcon("images/setup.ico"));
-   
-   main->addWidget( tabWidget );
+   tabWidget->setTabIcon(0,QIcon("images/setup.png"));
+   tabWidget->setTabIcon(1,QIcon("images/live_update.gif"));
+   tabWidget->setTabIcon(2,QIcon("images/analysis.png"));
 
-   setMinimumSize( QSize( 1180, 600 ) );
+   tabWidget->tabBar()->setIconSize(QSize(50,50));
+
+   //tabWidget->setStyleSheet("QTabWidget::pane { border: 2; background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa);}");
+   tabWidget->tabBar()->setStyleSheet("QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); }");
+   tabWidget->tabBar()->setStyleSheet("QTabBar::tab:hover {background: lightgray;}");
+   //tabWidget->tabBar()->setStyleSheet("QTabBar::tab:!selected { margin-top: 2px; }");
+   //tabWidget->tabBar()->setAutoFillBackground(true);
+   main->addWidget( tabWidget );
+   
+   logWidget = us_textedit();;
+   logWidget->setMaximumHeight(60);
+   logWidget->setReadOnly(true);
+   logWidget->append("Log comes here...");
+   logWidget->verticalScrollBar()->setValue(logWidget->verticalScrollBar()->maximum());
+   main->addWidget( logWidget );
+   
+   test_footer = new QTextEdit;
+   test_footer->setText("Test footer: by AUC solutions");
+   test_footer->setTextColor(Qt::white);
+   test_footer->setMaximumHeight(30);
+   test_footer->setReadOnly(true);
+   test_footer->setStyleSheet("color: black; background-color: gray;");
+   main->addWidget( test_footer );
+   
+   setMinimumSize( QSize( 1225, 810 ) );
    adjustSize();
 
    
@@ -82,22 +134,22 @@ US_ExperGui::US_ExperGui( QWidget* topw )
    QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
    panel->setContentsMargins( 2, 2, 2, 2 );
-   lb_exp_banner    = us_banner( tr( "1: Define Experiment Run" ) );
-   panel->addWidget( lb_exp_banner );
+   //lb_exp_banner    = us_banner( tr( "1: Define Experiment Run" ) );
+   //panel->addWidget( lb_exp_banner );
 
 
    // Create layout and GUI components
    QGridLayout* genL   = new QGridLayout();
    
    pb_openexp  = us_pushbutton( tr( "Open Experiment SetUp Dialog" ) );
-
+      
    // Build main layout
    int row         = 0;
-   genL->addWidget( pb_openexp, row,   0, 1, 2 );
+   genL->addWidget( pb_openexp,  row++,   0, 1, 2 );
 
    panel->addLayout( genL );
    panel->addStretch();
-   
+
    connect( pb_openexp,      SIGNAL( clicked()          ), 
             this,            SLOT(   manageExperiment() ) );
      
@@ -108,16 +160,20 @@ US_ExperGui::US_ExperGui( QWidget* topw )
 void US_ExperGui::us_exp_is_closed_set_button()
 {
   pb_openexp->setEnabled(true);
+  mainw->logWidget->append("US_Experiment has been closed!");
 }
 
 
 // On click to open US_Experiment
 void US_ExperGui::manageExperiment()
 {
-  //Calculate cumulative height/width of all widgets in US_ExperGui
+  mainw->logWidget->append("Opening US_Experiment...");
+  qApp->processEvents();
+
+  //Calculate cumulative height/width of all widgets in Main && US_ExperGui
   int height_cum = 0;
   int offset = 20;
-  height_cum += lb_exp_banner->height();
+  
   height_cum += pb_openexp->height();
   height_cum += offset;
   
@@ -129,12 +185,14 @@ void US_ExperGui::manageExperiment()
   connect(sdiag, SIGNAL( us_exp_is_closed() ), this, SLOT( us_exp_is_closed_set_button() ) );
   
   sdiag->move(offset, height_cum);
+  //sdiag->setStyleSheet("{ border: 2;}");
+  
   sdiag->show();
-
+  
   int new_width, new_height;
 
   new_width  = tab_width  + sdiag->width()  + 2*offset;
-  new_height = height_cum + sdiag->height() + offset;
+  new_height = mainw->gen_banner->height() + mainw->welcome->height() + height_cum + sdiag->height() + mainw->logWidget->height() + mainw->test_footer->height() + offset;
 
   qDebug() << "Tab width: " << tab_width << ", US_Exp width: " << sdiag->width();
   qDebug() << "New Width: " << new_width;
@@ -144,6 +202,7 @@ void US_ExperGui::manageExperiment()
     mainw->resize(new_width, new_height);
 
   pb_openexp->setEnabled(false);
+  mainw->logWidget->append("US_Experiment opened successfully!");
 }
 
 // US_Observ
