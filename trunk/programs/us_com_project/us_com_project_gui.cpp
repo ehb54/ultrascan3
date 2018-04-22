@@ -41,11 +41,11 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    //QGridLayout* statL     = new QGridLayout();
    //QHBoxLayout* buttL     = new QHBoxLayout();
 
-   // QLabel* gen_banner = new QLabel;
-   // gen_banner->setStyleSheet("QLabel { background-color : red; color : blue; }");
-   // gen_banner->setText("Test text");
-
    gen_banner = us_banner( tr( "TEST PROGRAM, v. 0.1" ) );
+   //gen_banner = new QLabel;
+   //gen_banner->setText("TEST PROGRAM, v. 0.1");
+   //gen_banner->setAlignment(Qt::AlignCenter);
+   //gen_banner->setStyleSheet("background-color: #36454f; color : #D3D9DF;");
    
    //set font
    QFont font_gen = gen_banner->font();
@@ -64,13 +64,14 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    font_wel.setPointSize(10);
    font_wel.setItalic(true);
    font_wel.setBold(true);
-   welcome->setStyleSheet("color: black; background-color: gray;");
+   welcome->setStyleSheet("color: black; background-color: #979aaa;");
    
    welcome->setFont(font_wel);
    main->addWidget(welcome);
    
    // Create tab and panel widgets
    tabWidget           = us_tabwidget();
+   //tabWidget           = new QTabWidget;
    tabWidget->setTabPosition( QTabWidget::West );
    tabWidget->tabBar()->setStyle(new VerticalTabStyle);
    
@@ -85,18 +86,19 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    tabWidget->addTab( epanPostProd,  tr( "3: Post Production"  ) );
    tabWidget->setCurrentIndex( curr_panx );
 
+   icon_path = std::getenv("ULTRASCAN");
+   qDebug() << "Path is: " << icon_path;
+   icon_path.append("/etc/"); 
+   
    tabWidget->tabBar()->setFixedHeight(500);
-   tabWidget->setTabIcon(0,QIcon("images/setup.png"));
-   tabWidget->setTabIcon(1,QIcon("images/live_update.gif"));
-   tabWidget->setTabIcon(2,QIcon("images/analysis.png"));
+   tabWidget->setTabIcon(0,QIcon(icon_path + "setup.png"));
+   tabWidget->setTabIcon(1,QIcon(icon_path + "live_update.gif"));
+   tabWidget->setTabIcon(2,QIcon(icon_path + "analysis.png"));
 
    tabWidget->tabBar()->setIconSize(QSize(50,50));
 
    //tabWidget->setStyleSheet("QTabWidget::pane { border: 2; background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa);}");
-   tabWidget->tabBar()->setStyleSheet("QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); }");
-   tabWidget->tabBar()->setStyleSheet("QTabBar::tab:hover {background: lightgray;}");
-   //tabWidget->tabBar()->setStyleSheet("QTabBar::tab:!selected { margin-top: 2px; }");
-   //tabWidget->tabBar()->setAutoFillBackground(true);
+   tabWidget->tabBar()->setStyleSheet("QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:hover {background: lightgray;}");
    main->addWidget( tabWidget );
    
    logWidget = us_textedit();;
@@ -111,17 +113,12 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    test_footer->setTextColor(Qt::white);
    test_footer->setMaximumHeight(30);
    test_footer->setReadOnly(true);
-   test_footer->setStyleSheet("color: black; background-color: gray;");
+   test_footer->setStyleSheet("color: #D3D9DF; background-color: #36454f;");
    main->addWidget( test_footer );
    
-   setMinimumSize( QSize( 1225, 810 ) );
+   setMinimumSize( QSize( 1000, 700 ) );
    adjustSize();
 
-   
-   // //epanGeneral->initPanel();
-   // epanGeneral->loaded_proto = 0;
-   // epanGeneral->check_user_level();
-   // reset();
 }
 
 
@@ -141,11 +138,37 @@ US_ExperGui::US_ExperGui( QWidget* topw )
    // Create layout and GUI components
    QGridLayout* genL   = new QGridLayout();
    
-   pb_openexp  = us_pushbutton( tr( "Open Experiment SetUp Dialog" ) );
-      
+   //pb_openexp  = us_pushbutton( tr( "Open Experiment SetUp Dialog" ) );
+   pb_openexp  = new QPushButton(this);
+   //xpb_openexp->setGeometry(QRect(0, 0, 150, 100));
+   pb_openexp->setFixedSize( QSize(300, 80) );
+   pb_openexp->setText("  Setup New Experiment");
+   pb_openexp->setLayoutDirection(Qt::RightToLeft);
+   QString temp_path = std::getenv("ULTRASCAN");
+   temp_path += "/etc/";
+   pb_openexp->setIcon(QIcon(temp_path + "new_item.png"));
+   pb_openexp->setIconSize(QSize(20,20));
+
+   qDebug() << "Icon: " << temp_path + "new_item.png";
+   pb_openexp->setStyleSheet("QPushButton{background-color: #318CE7; border: 1px solid black; color: black; border-radius: 15px; font-size: 18px; font-weight: bold; } QPushButton:hover{background-color: #6699CC;} QPushButton:disabled{background-color:#6699CC ; color: white}");
+
+   
    // Build main layout
    int row         = 0;
-   genL->addWidget( pb_openexp,  row++,   0, 1, 2 );
+
+   QPlainTextEdit* panel_desc = new QPlainTextEdit(this);
+   //QColor bg_color = this->palette().color(QWidget::backgroundRole());
+   //qDebug() << "BG Color: " << bg_color.name();
+   //panel_desc->setStyleSheet("QPlainTextEdit {background-color: #efebe7;}");
+   panel_desc->viewport()->setAutoFillBackground(false);
+   panel_desc->setFrameStyle(QFrame::NoFrame);
+
+   panel_desc->setPlainText("Tab to Set Up New Experiment...");
+   panel_desc->setReadOnly(true);
+   
+   genL->addWidget( panel_desc,  row++,   0, 1, 2);
+   genL->addWidget( pb_openexp,  row,     0, 1, 2, Qt::AlignCenter);
+   //genL->addWidget( pb_openexp,  row++,   0, 1, 2);
 
    panel->addLayout( genL );
    panel->addStretch();
@@ -160,6 +183,7 @@ US_ExperGui::US_ExperGui( QWidget* topw )
 void US_ExperGui::us_exp_is_closed_set_button()
 {
   pb_openexp->setEnabled(true);
+  mainw->resize(QSize(1000, 700));
   mainw->logWidget->append("US_Experiment has been closed!");
 }
 
@@ -185,7 +209,8 @@ void US_ExperGui::manageExperiment()
   connect(sdiag, SIGNAL( us_exp_is_closed() ), this, SLOT( us_exp_is_closed_set_button() ) );
   
   sdiag->move(offset, height_cum);
-  //sdiag->setStyleSheet("{ border: 2;}");
+  sdiag->setFrameShape( QFrame::Box);
+  sdiag->setLineWidth(2); 
   
   sdiag->show();
   

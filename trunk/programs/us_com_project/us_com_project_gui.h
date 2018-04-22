@@ -66,6 +66,8 @@ class US_ExperGui : public US_WidgetsDialog
       QLabel*     lb_exp_banner;
       QPushButton* pb_openexp;          // Button to open exper.
       QLineEdit*   opening_msg;
+     
+      
    private slots:
       void manageExperiment ( void );        // Slot for exp.  button clicked
       void us_exp_is_closed_set_button( void );
@@ -104,7 +106,7 @@ class US_PostProdGui : public US_WidgetsDialog
     US_PostProdGui( QWidget* );
     ~US_PostProdGui() {};
   
-  
+         
   private:
     US_ComProjectMain*    mainw;      // Parent to all panels
   
@@ -127,7 +129,8 @@ class US_ComProjectMain : public US_Widgets
   QTabWidget*       tabWidget;       // Tab Widget holding the panels
   QTextEdit*        logWidget;  
   QTextEdit*        test_footer;
-
+  QString           icon_path;
+  
  private:
   US_ExperGui*      epanExp;         // US_Exp panel
   US_ObservGui*     epanObserv;      // US_Observ panel
