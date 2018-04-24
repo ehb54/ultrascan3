@@ -622,7 +622,7 @@ DbgLv(1) << "XpDa:scn:  iRunId" << iRunId << "rrndx" << rrndx;
       int dendx       = dExpIds.indexOf( iExpId );
 DbgLv(1) << "XpDa:scn:  iExpId" << iExpId << "dendx" << dendx;
       int iFugId      = ( dendx >= 0 ) ? dFugIds[ dendx ] : iExpId;
-      double sstintv  = 0.0;
+      sstintv         = 0.0;
       double sstintl  = 1000.0;
 DbgLv(1) << "XpDa:scn:    RunId" << iRunId << "ExperimentId" << iExpId
  << "FugeRunProfileId" << iFugId; 
@@ -2234,6 +2234,7 @@ QString US_XpnData::runDetails( void )
    msg += tr( "    Max. Scan/Triple Count:   %1\n" ).arg( nscan );
    msg += tr( "    Total Scans Count:        %1\n" ).arg( ntscan );
    msg += tr( "    Wavelengths Count:        %1\n" ).arg( nlambda );
+   msg += tr( "    System Status Interval:   %1\n" ).arg( sstintv );
 
    // Report on *ScanData table statistics
    QStringList rtyps;
