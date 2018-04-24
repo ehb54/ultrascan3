@@ -905,7 +905,7 @@ DbgLv(1) << "SelWl: IN k_ori k_sel" << nbr_poten << nbr_selec;
    QLabel* bn_range       = us_banner( tr( "Enter Wavelength(s)" ) );
    QLabel* lb_wrange      = us_label(  tr( "Wavelength Range" ) );
    le_wrange              = us_lineedit();
-   le_wrange->setPlaceholderText("Enter wavelength specification and press ENTER");
+   le_wrange->setPlaceholderText("Enter wavelength specification");
 
    // Button Row
    QPushButton* pb_reset  = us_pushbutton( tr( "Reset" ) );
@@ -936,11 +936,11 @@ DbgLv(1) << "SelWl: IN k_ori k_sel" << nbr_poten << nbr_selec;
 
    connect( le_wrange, SIGNAL( textChanged(QString) ),
             this,      SLOT  ( wln_changed(QString) ) );
-   connect( le_wrange, SIGNAL( editingFinished() ),
-            this,      SLOT  ( wln_entered() ) );
+   // connect( le_wrange, SIGNAL( editingFinished() ),
+   //          this,      SLOT  ( wln_entered() ) );
 
    main ->addLayout( genL );
-   resize( 550, 230 );
+   resize( 650, 300 );
 }
 
 // Reset the lists and buttons to their original state
@@ -972,11 +972,11 @@ void US_SelectWavelengths_manual::wln_changed( QString text )
   le_wrange->setPalette(*palette);
   le_wrange->setText(text);
 
-  pb_accept->setEnabled( false );
+  pb_accept->setEnabled( true );
 }
 
 // Entered wavelength(s):  check for syntax
-void US_SelectWavelengths_manual::wln_entered( void )
+bool US_SelectWavelengths_manual::wln_entered( void )
 {
   // CHECK for syntax
   QString text = le_wrange->text();
@@ -993,94 +993,177 @@ void US_SelectWavelengths_manual::wln_entered( void )
   
   if ( rx1.exactMatch(text)  ||  rx2.exactMatch(text) || rx3.exactMatch(text) 
        || rx4.exactMatch(text) || rx5.exactMatch(text) || rx6.exactMatch(text) ||  rx7.exactMatch(text) ){
-    pb_accept->setEnabled( true );
+    //pb_accept->setEnabled( true );
+
+    if ( text_to_numbers() )
+      return true;
+    else
+      {
+	QPalette *palette = new QPalette();
+	palette->setColor(QPalette::Text,Qt::red);
+	palette->setColor(QPalette::Base,Qt::white);
+	le_wrange->setPalette(*palette);
+	return false;
+      }
   }    
   else {
+    QString mtitle_error    = tr( "Error" );
+    QString message_error   = tr( "Syntax error!" );
+    QMessageBox::critical( this, mtitle_error, message_error );
     
     QPalette *palette = new QPalette();
     palette->setColor(QPalette::Text,Qt::red);
     palette->setColor(QPalette::Base,Qt::white);
     le_wrange->setPalette(*palette);
+
+    return false;
   }
+}
+
+// Transform text to numbers
+bool US_SelectWavelengths_manual::text_to_numbers( void )
+{
+  // TRANSFORM numbers to arrays
+  QString  waveln_raw  = le_wrange->text();
+  DbgLv(1) << "WAVELENGTHS: " << waveln_raw;  
+  
+  if ( waveln_raw.contains(",") ){
+    
+    QStringList wvllist = waveln_raw.split( "," );
+    for (QStringList::iterator it = wvllist.begin(); it != wvllist.end(); ++it){            
+      QString current = *it; 
+      
+      if ( current == "" )
+	continue;
+      
+      if ( current.contains(":") ){
+	QStringList wvllist_semicolon      = current.split( ":" );
+	QStringList wvllist_semicolon_dash = wvllist_semicolon[0].split( "-" );
+	
+	int wvl_iter = wvllist_semicolon[1].toInt();
+	int wvl_min  = wvllist_semicolon_dash[0].toInt();
+	int wvl_max  = wvllist_semicolon_dash[1].toInt();
+
+	if ( wvl_min > wvl_max )
+	  {
+	    selected.clear();
+	    return false;
+	  }
+	
+	for (int i = wvl_min; i <= wvl_max; i += wvl_iter){
+	  selected << QString::number(i);
+	}
+      }
+      else if ( current.contains("-") && !current.contains(":") ){
+	QStringList wvllist_dash = current.split( "-" );
+	int wvl_min_dash  = wvllist_dash[0].toInt();
+	int wvl_max_dash  = wvllist_dash[1].toInt();
+
+	if ( wvl_min_dash > wvl_max_dash )
+	  {
+	    selected.clear();
+	    return false;
+	  }
+	
+	for (int i = wvl_min_dash; i <= wvl_max_dash; i++){
+	  selected << QString::number(i);
+	}
+      }
+      else {
+	selected << current;
+      }
+    }
+  }
+  else if ( waveln_raw.contains(":") && !waveln_raw.contains(",") ){
+    
+    QStringList wvllist_semicolon_nocoma      = waveln_raw.split( ":" );
+    QStringList wvllist_semicolon_nocoma_dash = wvllist_semicolon_nocoma[0].split( "-" );
+    
+    int wvl_iter = wvllist_semicolon_nocoma[1].toInt(); 
+    int wvl_min  = wvllist_semicolon_nocoma_dash[0].toInt();
+    int wvl_max  = wvllist_semicolon_nocoma_dash[1].toInt();
+
+    if ( wvl_min > wvl_max )
+      {
+	selected.clear();
+	return false;
+      }
+    
+    for (int i = wvl_min; i <= wvl_max; i += wvl_iter){
+      selected << QString::number(i);
+    }
+  }
+  else if ( waveln_raw.contains("-") && !waveln_raw.contains(":") ){
+    QStringList wvllist_nocoma_dash = waveln_raw.split( "-" );
+    int wvl_min_nocoma_dash  = wvllist_nocoma_dash[0].toInt();
+    int wvl_max_nocoma_dash  = wvllist_nocoma_dash[1].toInt();
+
+    if ( wvl_min_nocoma_dash > wvl_max_nocoma_dash )
+      {
+	selected.clear();
+	return false;
+      }
+	
+    for (int i = wvl_min_nocoma_dash; i <= wvl_max_nocoma_dash; i++){
+      selected << QString::number(i);
+    }
+  }
+  else if ( !waveln_raw.contains("-") && !waveln_raw.contains(":") && !waveln_raw.contains(".") ){
+    selected << waveln_raw;
+  }
+  
+  selected.removeDuplicates();
+  selected.sort();
+
+  qDebug() << "First and Last element: " << selected[0].toDouble() << ", " << selected[ selected.size() -1 ].toDouble();
+  
+  if ( selected[0].toDouble() < 100.0 || selected[ selected.size() -1 ].toDouble() > 800.0  )   // Boundaries [100-800] nm
+    {
+      QPalette *palette = new QPalette();
+      palette->setColor(QPalette::Text,Qt::red);
+      palette->setColor(QPalette::Base,Qt::white);
+      le_wrange->setPalette(*palette);
+      
+      QString mtitle_error    = tr( "Error" );
+      QString message_error   = tr( "Selected wavelengths are outside of accepted range of [100-800] nm!" );
+      QMessageBox::critical( this, mtitle_error, message_error );
+      
+      selected.clear();
+      return false;
+    }
+  
+  if ( selected.size() > 100 )
+    {
+      QPalette *palette = new QPalette();
+      palette->setColor(QPalette::Text,Qt::red);
+      palette->setColor(QPalette::Base,Qt::white);
+      le_wrange->setPalette(*palette);
+      
+      QString mtitle_error    = tr( "Error" );
+      QString message_error   = tr( "Number of wavelengths is %1. <br> The number of selected wavelengths is more than 100! <br> Make wavelength count less than or equal to 100." );
+      QMessageBox::critical( this, mtitle_error, message_error.arg(selected.size()) );
+
+      selected.clear();
+      return false;
+    }
+  
+  DbgLv(1) << "WVL_ARRAY " << selected;  
+  //selected << waveln;
+  select_wavls = selected;
+
+  return true;
+  
 }
 
 
 // Accept button clicked:  returned delete-selections list is the excluded list
 void US_SelectWavelengths_manual::done( void )
 {
-  // TRANSFORM numbers to arrays
-  QString  waveln_raw  = le_wrange->text();
-DbgLv(1) << "WAVELENGTHS: " << waveln_raw;  
-  
- if ( waveln_raw.contains(",") ){
-   
-   QStringList wvllist = waveln_raw.split( "," );
-   for (QStringList::iterator it = wvllist.begin(); it != wvllist.end(); ++it){            
-     QString current = *it; 
-     
-     if ( current == "" )
-       continue;
-     
-     if ( current.contains(":") ){
-       QStringList wvllist_semicolon      = current.split( ":" );
-       QStringList wvllist_semicolon_dash = wvllist_semicolon[0].split( "-" );
-       
-       int wvl_iter = wvllist_semicolon[1].toInt();
-       int wvl_min  = wvllist_semicolon_dash[0].toInt();
-       int wvl_max  = wvllist_semicolon_dash[1].toInt();
-       
-       for (int i = wvl_min; i <= wvl_max; i += wvl_iter){
-	 selected << QString::number(i);
-       }
-     }
-     else if ( current.contains("-") && !current.contains(":") ){
-       QStringList wvllist_dash = current.split( "-" );
-       int wvl_min_dash  = wvllist_dash[0].toInt();
-       int wvl_max_dash  = wvllist_dash[1].toInt();
-       
-       for (int i = wvl_min_dash; i <= wvl_max_dash; i++){
-	 selected << QString::number(i);
-       }
-     }
-     else {
-       selected << current;
-     }
-   }
- }
- else if ( waveln_raw.contains(":") && !waveln_raw.contains(",") ){
-   
-   QStringList wvllist_semicolon_nocoma      = waveln_raw.split( ":" );
-   QStringList wvllist_semicolon_nocoma_dash = wvllist_semicolon_nocoma[0].split( "-" );
-   
-   int wvl_iter = wvllist_semicolon_nocoma[1].toInt(); 
-   int wvl_min  = wvllist_semicolon_nocoma_dash[0].toInt();
-   int wvl_max  = wvllist_semicolon_nocoma_dash[1].toInt();
-   
-   for (int i = wvl_min; i <= wvl_max; i += wvl_iter){
-     selected << QString::number(i);
-   }
- }
- else if ( waveln_raw.contains("-") && !waveln_raw.contains(":") ){
-   QStringList wvllist_nocoma_dash = waveln_raw.split( "-" );
-   int wvl_min_nocoma_dash  = wvllist_nocoma_dash[0].toInt();
-   int wvl_max_nocoma_dash  = wvllist_nocoma_dash[1].toInt();
- 
-   for (int i = wvl_min_nocoma_dash; i <= wvl_max_nocoma_dash; i++){
-     selected << QString::number(i);
-   }
- }
- else if ( !waveln_raw.contains("-") && !waveln_raw.contains(":") && !waveln_raw.contains(".") ){
-   selected << waveln_raw;
- }
-
- selected.removeDuplicates();
- selected.sort();
- DbgLv(1) << "WVL_ARRAY " << selected;  
-  //selected << waveln;
-  select_wavls = selected;
-
-   accept();
-   close();
+  if ( wln_entered() )
+    {
+      accept();
+      close();
+    }
 }
 
 
@@ -1273,11 +1356,22 @@ void US_SelectWavelengths::cancel( void )
 // Accept button clicked:  returned delete-selections list is the excluded list
 void US_SelectWavelengths::done( void )
 {
-   select_wavls = selected;
-DbgLv(1) << "SelWl: done: nbr_sel" << select_wavls.count();
+  if ( selected.size() > 100 )
+    {
+      QString mtitle_error    = tr( "Error" );
+      QString message_error   = tr( "Number of wavelengths is %1. <br> The number of selected wavelengths is more than 100! <br> Make wavelength count less than or equal to 100." );
+      QMessageBox::critical( this, mtitle_error, message_error.arg(selected.size()) );
+      
+      //selected.clear();
 
-   accept();
-   close();
+      return;
+    }
+  
+  select_wavls = selected;
+  DbgLv(1) << "SelWl: done: nbr_sel" << select_wavls.count();
+
+  accept();
+  close();
 }
 
 // Slot for change in wavelength range start

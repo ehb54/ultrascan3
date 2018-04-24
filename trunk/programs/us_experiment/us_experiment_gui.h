@@ -372,7 +372,7 @@ class US_ExperGuiSolutions : public US_WidgetsDialog
       void addComments    ( void );
       // \brief Compose comment string for a solution and list of comment parts
       void commentStrings ( const QString, QString&,
-                            QStringList& );
+                            QStringList&, const int );
       // \brief Rebuild the solution part of the current run protocol
       void rebuild_Solut     ( void );
 };
@@ -593,8 +593,9 @@ class US_SelectWavelengths_manual : public US_WidgetsDialog
       US_Help        showHelp;
 
    private slots:
-      void wln_entered    ( void );
+      bool wln_entered    ( void );
       void wln_changed    ( QString );
+      bool text_to_numbers( void );
       void done           ( void ); 
       void reset          ( void );
       void cancel         ( void );

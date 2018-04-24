@@ -2024,15 +2024,19 @@ DbgLv(1) << "EGSo:addComm: IN";
    QObject* sobj       = sender();   // Sender object
    QString sname       = sobj->objectName();
    int irow            = sname.section( ":", 0, 0 ).toInt();
+   
 DbgLv(1) << "EGSo:addComm: sname irow" << sname << irow;
    QString cclabl      = cc_labls[ irow ]->text();
 DbgLv(1) << "EGSo:addComm:  cclabl" << cclabl;
    QString sdescr      = cc_solus[ irow ]->currentText();
-   manual_comment[ sdescr ] = "";  // Initialize manual comment for solution
-
+   //manual_comment[ sdescr ] = "";  // Initialize manual comment for solution
+     
    // Get list of channel comment component strings
    //  and compose default channel comment string
-   commentStrings( sdescr, chcomm, comms );
+
+   //ALEXEY make manual_comment per channel, not per solution name
+   QString row_comment =  QString::number( irow );
+   commentStrings( sdescr, chcomm, comms, irow );
    int ncc             = comms.count();  // Number of component strings
 
    // Start the Add-to-Comments dialog text
@@ -2085,12 +2089,13 @@ DbgLv(1) << "EGSo:addComm:  cclabl" << cclabl;
 
    sufx        = QInputDialog::getText( this,
       tr( "Add to Experiment's Channel Comments" ),
-      msg, QLineEdit::Normal, sufx, &ok );
+      msg, QLineEdit::Normal, manual_comment[ row_comment ], &ok );
 
    if ( ok )
    {  // OK:  append suffix to channel comment
       chcomm     += ", " + sufx;
-      manual_comment[ sdescr ]     += sufx;   //QMap of manual comments per solution
+      //manual_comment[ sdescr ]     = sufx;   //QMap of manual comments per solution
+      manual_comment[ row_comment ]     = sufx;   //QMap of manual comments per solution
    }
  DbgLv(1) << "EGSo:addComm:  sufx" << sufx;
  DbgLv(1) << "EGSo:addComm:   chcomm" << chcomm;
@@ -2099,7 +2104,7 @@ DbgLv(1) << "EGSo:addComm:  cclabl" << cclabl;
 
 // Function to compose channel comment strings (string and list)
 void US_ExperGuiSolutions::commentStrings( const QString solname,
-      QString& comment, QStringList& comstrngs )
+					   QString& comment, QStringList& comstrngs, const int row )
 {
    US_Solution soludata;
    solutionData( solname, soludata );
@@ -2107,34 +2112,41 @@ void US_ExperGuiSolutions::commentStrings( const QString solname,
 
    // Start with solution name/description
    comstrngs << solname;               // First string (solution)
-   comment        = solname + ", ";    // Beginning of channel comment
+   comment        = solname;    // Beginning of channel comment
 
-   // Append buffer description
-   QString buf = soludata.buffer.description;
-   comstrngs << buf;                   // Second string (buffer)
-   comment       += buf + ", ";        // Append to channel comment
+   //ALEXEY - just solution name in the comment
+   // // Append buffer description
+   // QString buf = soludata.buffer.description;
+   // comstrngs << buf;                   // Second string (buffer)
+   // comment       += buf + ", ";        // Append to channel comment
 
-   // Append analytes
-   int nana    = soludata.analyteInfo.count();
-   for ( int jj = 0; jj < nana; jj++ )
-   {
-      QString ana = soludata.analyteInfo[ jj ].analyte.description;
-      comstrngs << ana;                // Subsequent string (analyte)
-      if ( ( jj + 1 ) < nana )
-         comment       += ana + ", ";  // Append not-last analyte
-      else
-         comment       += ana;         // Append last analyte
-   }
+   // // Append analytes
+   // int nana    = soludata.analyteInfo.count();
+   // for ( int jj = 0; jj < nana; jj++ )
+   // {
+   //    QString ana = soludata.analyteInfo[ jj ].analyte.description;
+   //    comstrngs << ana;                // Subsequent string (analyte)
+   //    if ( ( jj + 1 ) < nana )
+   //       comment       += ana + ", ";  // Append not-last analyte
+   //    else
+   //       comment       += ana;         // Append last analyte
+   // }
+
    //ALEXEY - add manual comment per solution here
-   if ( manual_comment.keys().contains( solname ) )
+   QString row_comment =  QString::number( row );
+   //if ( manual_comment.keys().contains( solname ) )
+   if ( manual_comment.keys().contains( row_comment ) )
      {
-       QString mancmt =  manual_comment[solname];
+       //QString mancmt =  manual_comment[solname];
+       QString mancmt =  manual_comment[ row_comment ];
        if ( !mancmt.trimmed().isEmpty() )
 	 {
 	   comment       += ", " + mancmt;
 	   //comstrngs    <<  "," + mancmt;
 	 }
      }
+
+   qDebug() << "For row: " << row << ", comments is: " << manual_comment[ row_comment ];
 }
 
 
@@ -3376,10 +3388,10 @@ void US_ExperGuiUpload::submitExperiment()
 		    if ( channel_cell.startsWith(QString::number(j+1)) )
 		      {
 			if ( channel_cell.contains("sample") )                                                     // <-- Channel A
-			  solname += ": Channel A: " + sol_split[0] + ", "        // <-- solution name
+			  solname += ": A: " + sol_split[0] + ", "        // <-- solution name
 			             + sol_split[sol_split.size()-1] + "; ";             // <-- solution manual comment  
 			if ( channel_cell.contains("reference") )                                                  // <-- Channel B
-			  solname += "Channel B: " + sol_split[0] + " "           // <-- solution name
+			  solname += "B: " + sol_split[0] + " "           // <-- solution name
 			             + sol_split[sol_split.size()-1];             // <-- solution manual comment  
 		      }
 		 }
@@ -3640,7 +3652,7 @@ void US_ExperGuiUpload::submitExperiment()
 
    ck_sub_done->setChecked( true );
    QString mtitle_done    = tr( "Success" );
-   QString message_done   = tr( "Protocol has been successfully subitted to AUC DB." );
+   QString message_done   = tr( "Protocol has been successfully submitted to AUC DB." );
    QMessageBox::information( this, mtitle_done, message_done );
 }
 
