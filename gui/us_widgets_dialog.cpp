@@ -508,9 +508,9 @@ QHBoxLayout* US_WidgetsDialog::us_ddhhmmsslay(
 
       layout->addWidget( *ss );
 
-      //ALEXEY do not show seconds
-      lb_s->hide();
-      (*ss)->hide();
+      // //ALEXEY do not show seconds
+      // lb_s->hide();
+      // (*ss)->hide();
    }   
 
    return layout;

@@ -116,7 +116,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    test_footer->setStyleSheet("color: #D3D9DF; background-color: #36454f;");
    main->addWidget( test_footer );
    
-   setMinimumSize( QSize( 1000, 700 ) );
+   setMinimumSize( QSize( 1225, 825 ) );
    adjustSize();
 
 }
@@ -137,20 +137,33 @@ US_ExperGui::US_ExperGui( QWidget* topw )
 
    // Create layout and GUI components
    QGridLayout* genL   = new QGridLayout();
-   
-   //pb_openexp  = us_pushbutton( tr( "Open Experiment SetUp Dialog" ) );
-   pb_openexp  = new QPushButton(this);
-   //xpb_openexp->setGeometry(QRect(0, 0, 150, 100));
-   pb_openexp->setFixedSize( QSize(300, 80) );
-   pb_openexp->setText("  Setup New Experiment");
-   pb_openexp->setLayoutDirection(Qt::RightToLeft);
+
    QString temp_path = std::getenv("ULTRASCAN");
    temp_path += "/etc/";
-   pb_openexp->setIcon(QIcon(temp_path + "new_item.png"));
-   pb_openexp->setIconSize(QSize(20,20));
+   
+   // //pb_openexp  = us_pushbutton( tr( "Open Experiment SetUp Dialog" ) );
+   // pb_openexp  = new QPushButton(this);
+   // //xpb_openexp->setGeometry(QRect(0, 0, 150, 100));
+   // pb_openexp->setFixedSize( QSize(285, 55) );
+   // pb_openexp->setText("  Setup New Experiment ");
+   // pb_openexp->setLayoutDirection(Qt::RightToLeft);
+   // pb_openexp->setIcon(QIcon(temp_path + "new_item.png"));
+   // pb_openexp->setIconSize(QSize(20,20));
+   
+   // qDebug() << "Icon: " << temp_path + "new_item.png";
+   // pb_openexp->setStyleSheet("QPushButton{background-color: #318CE7; border: 1px solid white; background-image: url(temp_path); color: black; border-radius: 15px; font-size: 18px; font-weight: bold; } QPushButton:hover{background-color: #6699CC;} QPushButton:disabled{background-color:#6699CC ; color: white}");
 
-   qDebug() << "Icon: " << temp_path + "new_item.png";
-   pb_openexp->setStyleSheet("QPushButton{background-color: #318CE7; border: 1px solid black; color: black; border-radius: 15px; font-size: 18px; font-weight: bold; } QPushButton:hover{background-color: #6699CC;} QPushButton:disabled{background-color:#6699CC ; color: white}");
+
+   QString iconpath = temp_path + "new_item2.png";
+   pb_openexp = new QPushButton();
+   QPixmap* pixmap = new QPixmap(iconpath);
+   QIcon icon(*pixmap);
+   QSize iconSize(pixmap->width(), pixmap->height());
+   //pb_openexp->setIconSize(iconSize);
+   pb_openexp->setIconSize(QSize(50,50));
+   pb_openexp->setIcon(icon);
+   pb_openexp->setStyleSheet("QPushButton{border: none} QPushButton:hover{border: 1px solid gray}");
+   //pb_openexp->setStyleSheet("QPushButton{background-color: #318CE7; border: 1px solid white; background-image: url(temp_path); color: black; border-radius: 15px; font-size: 18px; font-weight: bold; } QPushButton:hover{background-color: #6699CC;} QPushButton:disabled{background-color:#6699CC ; color: white}");
 
    
    // Build main layout
@@ -163,12 +176,13 @@ US_ExperGui::US_ExperGui( QWidget* topw )
    panel_desc->viewport()->setAutoFillBackground(false);
    panel_desc->setFrameStyle(QFrame::NoFrame);
 
-   panel_desc->setPlainText("Tab to Set Up New Experiment...");
+   panel_desc->setPlainText(" Tab to Set Up New Experiment... \n Click button on the right to setup new experiment.");
    panel_desc->setReadOnly(true);
    
-   genL->addWidget( panel_desc,  row++,   0, 1, 2);
-   genL->addWidget( pb_openexp,  row,     0, 1, 2, Qt::AlignCenter);
-   //genL->addWidget( pb_openexp,  row++,   0, 1, 2);
+   genL->addWidget( panel_desc,  row,   0, 1, 12);
+   genL->addWidget( pb_openexp,  row,   12, 1, 1, Qt::AlignTop);
+   // genL->addWidget( panel_desc,  row,   0, 1, 2);
+   // genL->addWidget( pb_openexp,  row,   2, 1, 2, Qt::AlignCenter);
 
    panel->addLayout( genL );
    panel->addStretch();

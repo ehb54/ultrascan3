@@ -1219,25 +1219,30 @@ DbgLv(1) << "EGSo: svP:    nchant" << nchant << "solution" << solution;
       QStringList cs;
 DbgLv(1) << "EGSo: svP:    nchanf" << nchanf << "sol_id" << sol_id;
 
-   if ( pro_comms.keys().contains( solution ) )
+
+ QString iistr = QString::number(ii);
+//if ( pro_comms.keys().contains( solution ) )
+    if ( pro_comms.keys().contains( iistr ) )
       {
-         ch_comment          = pro_comms[ solution ];
-	 
+	//ch_comment          = pro_comms[ solution ];
+	ch_comment          = pro_comms[ iistr ];
 	 //ALEXEY - to remember changes to Soluton comments if manual commnets was added while returninf to "Solutons" tab
-	 commentStrings( solution, ch_comment, cs );   
+	 
+	commentStrings( solution, ch_comment, cs, ii );   
       }
-      else
+    else
       {
-         commentStrings( solution, ch_comment, cs );
+	commentStrings( solution, ch_comment, cs, ii );
       }
-
-      US_Solution soludata;
-      solutionData( solution, soludata );
-      solu_ids [ solution ]  = sol_id;
-      solu_data[ solution ]  = soludata;
-      pro_comms[ solution ]  = ch_comment;
+    
+    US_Solution soludata;
+    solutionData( solution, soludata );
+    solu_ids [ solution ]  = sol_id;
+    solu_data[ solution ]  = soludata;
+    //pro_comms[ solution ]  = ch_comment;
+    pro_comms[ iistr ]  = ch_comment;
    }
-
+   
    rpSolut->chsols.resize( nchanf );
    QStringList solus;                      // Unique solutions list
    QStringList sids;                       // Corresponding Id list
@@ -1251,8 +1256,11 @@ DbgLv(1) << "EGSo: svP: nchanf" << nchanf << "nchant" << nchant;
       rpSolut->chsols[ ii ].channel    = channel;
       rpSolut->chsols[ ii ].solution   = solution;
       rpSolut->chsols[ ii ].sol_id     = sol_id;
-      rpSolut->chsols[ ii ].ch_comment = pro_comms[ solution ];
+      //rpSolut->chsols[ ii ].ch_comment = pro_comms[ solution ];
 
+      QString iistr = QString::number(ii);
+      rpSolut->chsols[ ii ].ch_comment = pro_comms[ iistr ];
+      
       if ( !solus.contains( solution ) )
       {
          solus << solution;
@@ -1447,7 +1455,7 @@ DbgLv(1) << "EGOp:inP:  ii" << ii << "channel" << channel
       QString ckscan2     = ckbox2->text();
       QString ckscan3     = ckbox3->text();
       ckbox1->setChecked( prscans.contains( ckscan1 ) );
-      ckbox2->setChecked( prscans.contains( ckscan2 ) );
+      //ckbox2->setChecked( prscans.contains( ckscan2 ) );   //ALEXEY do not check Interference by default
       ckbox3->setChecked( prscans.contains( ckscan3 ) );
       ckbox1->setVisible( ! ckscan1.contains( notinst ) );
       ckbox2->setVisible( ! ckscan2.contains( notinst ) );
@@ -1717,11 +1725,20 @@ DbgLv(1) << "EGwS:inP:    ii" << ii << "channel" << channel;
       cc_labls[ ii ]->setText( channel );
       cc_lrngs[ ii ]->setText( labwlr  );
       cc_labls[ ii ]->setVisible( true );
-      cc_wavls[ ii ]->setVisible( true );
       cc_lrngs[ ii ]->setVisible( true );
+      cc_lbtos[ ii ]->setVisible( true );
+
+      cc_wavls[ ii ]->setVisible( true );
       cc_lrads[ ii ]->setVisible( true );
       cc_hrads[ ii ]->setVisible( true );
-      cc_lbtos[ ii ]->setVisible( true );
+
+      if ( channel.contains("reference") )   //ALEXEY do not allow to set wavelengths/radial ranges for B channels (reference) 
+	{
+	  cc_wavls[ ii ]->setEnabled( false );
+	  cc_lrads[ ii ]->setEnabled( false );
+	  cc_hrads[ ii ]->setEnabled( false );
+	}
+
    }
 
    // Make remaining rows invisible
