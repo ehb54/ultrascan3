@@ -466,7 +466,7 @@ class US_ExperGuiRanges : public US_WidgetsDialog
       QVector< QList< double > > swvlens;  // Selected wavelengths, ea. channel
       QVector< double >          locrads;  // Low radius value, ea. channel
       QVector< double >          hicrads;  // High radius value, ea. channel
-
+      
    private slots:
       // \brief Manage extinction profiles in a dialog
 //      void manageEProfiles  ( void );
