@@ -71,8 +71,12 @@ const QString US_Images::image_name( int itype )
       { QWTPLOT,         "qwtplot"     },
       { US3_ICON,     "us3-icon-48x48" },
       { ARROW_LEFT,      "arrow_left"  },
-      { ARROW_RIGHT,     "arrow_right" }
-   };
+      { ARROW_RIGHT,     "arrow_right" },
+      { SETUP_COM,       "setup"       },
+      { ANALYSIS_COM,    "analysis"    },
+      { LIVE_UPDATE_COM, "live_update" },
+      { NEW_ITEM_COM,    "new_item2" }
+   }; 
 
    static const int nimages = sizeof( nameMaps ) / sizeof( nameMaps[ 0 ] );
    

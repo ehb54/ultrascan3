@@ -12,4 +12,6 @@ SOURCES       = us_com_project_main.cpp \
                 ../us_experiment/us_experiment_gui.cpp \
                 ../us_experiment/us_exp_utils.cpp \ 
                 ../us_experiment/us_proto_ranges.cpp \
-                ../us_experiment/us_run_protocol.cpp
+                ../us_experiment/us_run_protocol.cpp 
+                
+                
