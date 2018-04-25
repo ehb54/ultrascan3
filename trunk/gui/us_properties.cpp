@@ -3,6 +3,7 @@
 #include "us_properties.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_images.h"
 #include "us_constants.h"
 #include "us_model.h"
 
@@ -24,7 +25,7 @@ US_Properties::US_Properties( US_Model& mod, int access )
    normal = US_GuiSettings::editColor();
 
    // Initialize the check icon
-   check = QIcon( US_Settings::appBaseDir() + "/etc/check.png" );
+   check = US_Images::getIcon( US_Images::CHECK );
 
    // Grid
    QGridLayout* main      = new QGridLayout( this );
@@ -539,7 +540,7 @@ void US_Properties::load_c0( void )
    {
       int response = QMessageBox::question( this,
          tr( "Remove C0 Data?" ),
-         tr( "The C0 infomation is loaded.\n"
+         tr( "The C0 information is loaded.\n"
              "Remove it?" ),
          QMessageBox::Yes, QMessageBox::No );
 

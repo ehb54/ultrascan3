@@ -5,6 +5,7 @@
 #include "us_settings.h"
 #include "us_constants.h"
 #include "us_properties.h"
+#include "us_images.h"
 #include "us_investigator.h"
 #include "us_util.h"
 #include "us_passwd.h"
@@ -33,7 +34,7 @@ US_ConstraintsEdit::US_ConstraintsEdit( US_Model& current_model )
    normal    = US_GuiSettings::editColor();
 
    // Initialize the check icon
-   check     = QIcon( US_Settings::appBaseDir() + "/etc/check.png" );
+   check     = US_Images::getIcon( US_Images::CHECK );
 
    // Grid
    QGridLayout* main = new QGridLayout( this );
@@ -477,7 +478,7 @@ void US_ConstraintsEdit::load_c0( void )
 //   int row = lw_comps->currentRow();
 
 //   if ( row < 0 ) return;
-int row=0;
+   int row = 0;
 
    // See if the initialization vector is already loaded.
    if ( ! pb_load_c0->icon().isNull() )
