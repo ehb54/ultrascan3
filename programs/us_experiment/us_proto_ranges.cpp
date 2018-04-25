@@ -97,7 +97,7 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
       ctradfr->setObjectName( strow + ": ct_radfr" );
       lablto ->setObjectName( strow + ": lb_to"    );
       ctradto->setObjectName( strow + ": ct_radto" );
-
+            
       bool is_vis      = ( ii < 4 );
 
       genL->addWidget( cclabl,  row,    0, 1, 3 );
@@ -131,7 +131,6 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
       connect( pbsmanu, SIGNAL( clicked()             ),
                this,    SLOT  ( manualSpectrum()      ) );
 #endif
-
       cc_labls << cclabl;
       cc_wavls << pbwavln;
       cc_lrngs << lbwlrng;
@@ -719,6 +718,39 @@ void US_ExperGuiRanges::changedLowRadius( double val )
    chrow               = sname.section( ":", 0, 0 ).toInt();
 DbgLv(1) << "chgLoRad: val" << val << "row" << chrow;
    locrads[ chrow ]    = val;
+
+   //ALEXEY - simulate the same counters coupling for same cell as for the (Interference) checkboxes in Optics
+   // get a list of same-cell rows; disconnect
+   QString clabl       = cc_labls[ chrow ]->text();
+   QString scell       = clabl.left( 1 );
+   QString labnone     = tr( "none" );
+   QList< int >  ccrows;
+
+   for ( int ii = 0; ii < mxrow; ii++ )
+   {
+      // Ignore the exact same row
+      if ( ii == chrow )
+         continue;
+      // Get row label and quit loop when at end visible rows
+      QString rlabl       = cc_labls[ ii ]->text();
+      if ( rlabl == labnone )
+         break;
+      // Compare the cell value to that of the one (un)checked
+      QString rcell       = rlabl.left( 1 );
+      if ( rcell == scell )
+      {  // Save same-cell row and disconnect the checkbox
+         ccrows << ii;
+      }
+   }
+DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
+
+   // Set check-state of Interference boxes in same-cell rows and reconnect
+   for ( int ii = 0; ii < ccrows.count(); ii++ )
+   {
+      int ccrow           = ccrows[ ii ];
+      cc_lrads[ ccrow ]->setValue(val);
+      locrads[ chrow ]    = val;
+   }
 }
 
 // Slot to handle a change in the high radius value
@@ -729,6 +761,40 @@ void US_ExperGuiRanges::changedHighRadius( double val )
    chrow               = sname.section( ":", 0, 0 ).toInt();
 DbgLv(1) << "chgHiRad: val" << val << "row" << chrow;
    hicrads[ chrow ]    = val;
+   
+   //ALEXEY
+      //ALEXEY - simulate the same counters coupling for same cell as for the (Interference) checkboxes in Optics
+   // get a list of same-cell rows; disconnect
+   QString clabl       = cc_labls[ chrow ]->text();
+   QString scell       = clabl.left( 1 );
+   QString labnone     = tr( "none" );
+   QList< int >  ccrows;
+
+   for ( int ii = 0; ii < mxrow; ii++ )
+   {
+      // Ignore the exact same row
+      if ( ii == chrow )
+         continue;
+      // Get row label and quit loop when at end visible rows
+      QString rlabl       = cc_labls[ ii ]->text();
+      if ( rlabl == labnone )
+         break;
+      // Compare the cell value to that of the one (un)checked
+      QString rcell       = rlabl.left( 1 );
+      if ( rcell == scell )
+      {  // Save same-cell row and disconnect the checkbox
+         ccrows << ii;
+      }
+   }
+DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
+
+   // Set check-state of Interference boxes in same-cell rows and reconnect
+   for ( int ii = 0; ii < ccrows.count(); ii++ )
+   {
+      int ccrow           = ccrows[ ii ];
+      cc_hrads[ ccrow ]->setValue(val);
+      hicrads[ chrow ]    = val;
+   }
 }
 
 

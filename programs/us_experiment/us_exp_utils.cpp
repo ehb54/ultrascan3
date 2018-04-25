@@ -1734,9 +1734,9 @@ DbgLv(1) << "EGwS:inP:    ii" << ii << "channel" << channel;
 
       if ( channel.contains("reference") )   //ALEXEY do not allow to set wavelengths/radial ranges for B channels (reference) 
 	{
-	  cc_wavls[ ii ]->setEnabled( false );
-	  cc_lrads[ ii ]->setEnabled( false );
-	  cc_hrads[ ii ]->setEnabled( false );
+	   cc_wavls[ ii ]->setEnabled( false );
+	   cc_lrads[ ii ]->setEnabled( false );
+	   cc_hrads[ ii ]->setEnabled( false );
 	}
 
    }
