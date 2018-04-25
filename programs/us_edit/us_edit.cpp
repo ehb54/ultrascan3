@@ -57,7 +57,7 @@ int main( int argc, char* argv[] )
 // Constructor
 US_Edit::US_Edit() : US_Widgets()
 {
-   check        = QIcon( US_Settings::appBaseDir() + "/etc/check.png" );
+   check        = US_Images::getIcon( US_Images::CHECK );
    invert       = 1.0;
    all_edits    = false;
    men_1click   = US_Settings::debug_match( "men2click" ) ? false : true;
@@ -2039,7 +2039,6 @@ void US_Edit::set_meniscus( void )
 {
    le_meniscus ->setText( "" );
    le_airGap   ->setText( "" );
-//   le_dataRange->setText( "" );
    le_dataStart->setText( "" );
    le_dataEnd  ->setText( "" );
    le_plateau  ->setText( "" );
@@ -2062,10 +2061,6 @@ void US_Edit::set_meniscus( void )
    pb_report   ->setEnabled( false );
    pb_airGap   ->setEnabled( false );
    pb_airGap   ->setIcon( QIcon() );
-//   pb_dataRange->setEnabled( false );
-//   pb_dataRange->setIcon( QIcon() );
-//   pb_plateau  ->setEnabled( false );
-//   pb_plateau  ->setIcon( QIcon() );
    pb_write    ->setEnabled( all_edits );
    ck_writemwl ->setEnabled( all_edits && isMwl );
 
@@ -2110,9 +2105,6 @@ void US_Edit::set_airGap( void )
    pb_airGap   ->setIcon( QIcon() );
 
    pb_report   ->setEnabled( all_edits );
-//   pb_dataRange->setIcon( QIcon() );
-//   pb_plateau  ->setEnabled( false );
-//   pb_plateau  ->setIcon( QIcon() );
    pb_write    ->setEnabled( all_edits );
    ck_writemwl ->setEnabled( all_edits && isMwl );
    changes_made = all_edits;
@@ -2128,7 +2120,6 @@ void US_Edit::set_airGap( void )
 // Set up for a data range pick
 void US_Edit::set_dataRange( void )
 {
-//   le_dataRange->setText( "" );
    le_dataStart->setText( "" );
    le_dataEnd  ->setText( "" );
    le_plateau  ->setText( "" );
@@ -2140,12 +2131,8 @@ void US_Edit::set_dataRange( void )
    baseline      = 0.0;
    
    step        = RANGE;
-//   set_pbColors( pb_dataRange );
 
    pb_report   ->setEnabled( all_edits );
-//   pb_dataRange->setIcon( QIcon() );
-//   pb_plateau  ->setEnabled( false );
-//   pb_plateau  ->setIcon( QIcon() );
    pb_dataEnd  ->setIcon( QIcon() );
    pb_dataEnd  ->setEnabled( true );
    pb_write    ->setEnabled( all_edits );
@@ -2178,7 +2165,6 @@ void US_Edit::set_plateau( void )
    set_pbColors( pb_plateau );
 
    pb_report   ->setEnabled( false );
-//   pb_plateau  ->setIcon( QIcon() );
    pb_write    ->setEnabled( all_edits );
    ck_writemwl ->setEnabled( all_edits && isMwl );
    changes_made = all_edits;
@@ -3253,9 +3239,7 @@ DbgLv(1) << "EDT:NewTr:   sw tri dx" << swavl << triple << idax;
    pb_exclusion->setEnabled( true );
    pb_meniscus ->setEnabled( true );
    pb_airGap   ->setEnabled( true );
-//   pb_dataRange->setEnabled( true );
    pb_noise    ->setEnabled( true );
-//   pb_plateau  ->setEnabled( true );
    pb_spikes   ->setEnabled( true );
    pb_invert   ->setEnabled( true );
    pb_undo     ->setEnabled( true );
@@ -4069,8 +4053,6 @@ void US_Edit::prior_equil( void )
 
       le_dataRange->setText( wkstr.sprintf( "%.3f - %.3f",
               range_left, range_right ) );
-//      pb_dataRange->setIcon( check );
-//      pb_dataRange->setEnabled( true );
       le_dataStart->setText( QString::number( range_left,  'f', 8 ) );
       le_dataEnd  ->setText( QString::number( range_right, 'f', 8 ) );
       pb_dataEnd  ->setIcon( check );
@@ -4178,11 +4160,8 @@ void US_Edit::review_edits( void )
    cb_triple->setCurrentIndex( cb_triple->count() - 1 );
 
    le_meniscus ->setText( "" );
-//   le_dataRange->setText( "" );
    le_dataStart->setText( "" );
    le_dataEnd  ->setText( "" );
-//   pb_plateau  ->setIcon( QIcon() );
-//   pb_dataRange->setIcon( QIcon() );
    pb_meniscus ->setIcon( QIcon() );
 
    step    = FINISHED;
@@ -4210,7 +4189,6 @@ void US_Edit::next_triple( void )
    int dax = index_data();
    data    = *outData[ dax ];
 
-//   plot_range();
    new_triple( dax );
 	pb_nextChan ->setEnabled( false );
 }
@@ -5281,19 +5259,9 @@ DbgLv(1) << "LiEdFi: nledits" << ldfiles.count() << filter;
       QStringList dbfiles;
       QStringList dbEdIds;
       QStringList dbquery;
-//      QString rawGUID   = US_Util::uuid_unparse( (unsigned char*)data.rawGUID );
-
-      // Get the rawData ID for this data
-//      dbquery.clear();
-//      dbquery << "get_rawDataID_from_GUID" << rawGUID;
-//      dbP->query( dbquery );
-//      dbP->next();
-//      QString rawDataID = dbP->value( 0 ).toString();
-//DbgLv(1) << "LiEdFi:  rawDataID" << rawDataID;
 
       // Get the filenames and edit IDs for like-named files in the DB
       dbquery.clear();
-//      dbquery << "get_editedDataIDs" << rawDataID;
       dbquery << "all_editedDataIDs" << invID;
       dbP->query( dbquery );
 
@@ -5389,10 +5357,6 @@ int US_Edit::apply_edits( US_DataIO::EditValues parameters )
       pb_airGap->setEnabled( true );
    }
 
-//   le_dataRange->setText( wkstr.sprintf( "%.3f - %.3f",
-//           range_left, range_right ) );
-//   pb_dataRange->setIcon( check );
-//   pb_dataRange->setEnabled( true );
    le_dataStart->setText( QString::number( range_left,  'f', 8 ) );
    le_dataEnd  ->setText( QString::number( range_right, 'f', 8 ) );
    pb_dataEnd  ->setIcon( check );
@@ -5400,8 +5364,6 @@ int US_Edit::apply_edits( US_DataIO::EditValues parameters )
    
    plateau      = range_right - _PLATEAU_OFFSET_;
    le_plateau  ->setText( QString::number( plateau,     'f', 8 ) );
-//   pb_plateau  ->setIcon( check );
-//   pb_plateau  ->setEnabled( true );
 
    US_DataIO::Scan  scan  = data.scanData.last();
    int              pt    = data.xindex( baseline );
@@ -5784,8 +5746,6 @@ QString US_Edit::run_details( void )
    int    iwvln    = qRound( dd->scanData.last().wavelength );
    QString bln_od  = QString( le_baseline->text() ).section( "(", 1, 1 )
                      .section( ")", 0, 0 ) + " OD";
-//   QString left    = QString( le_dataRange->text() ).section( " ", 0, 0 );
-//   QString right   = QString( le_dataRange->text() ).section( " ", 2, 2 );
    QString left    = le_dataStart->text();
    QString right   = le_dataEnd  ->text();
    QString plat    = le_plateau->text();

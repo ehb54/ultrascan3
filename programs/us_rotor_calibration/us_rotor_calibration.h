@@ -37,9 +37,9 @@ struct Average_multi
 
 struct SpeedEntry
 {
-	QVector <double> diff;
-	double speed;
-	int channel;
+   QVector <double> diff;
+   double speed;
+   int channel;
 };
 
 struct Limit
@@ -55,14 +55,14 @@ struct Limit
 
 class US_RotorCalibration : public US_Widgets
 {
-	Q_OBJECT
+   Q_OBJECT
 
-	public:
-  		US_RotorCalibration();
+   public:
+     US_RotorCalibration();
 
       US_Disk_DB_Controls* disk_controls;     //!< Radiobuttons for disk/db choice
 
-	private:
+   private:
 
       double             left;
       double             right;
@@ -79,15 +79,13 @@ class US_RotorCalibration : public US_Widgets
       int                current_cell;
       bool               top_of_cell;
       bool               newlimit;
-		bool					 zoomed;
+      bool               zoomed;
 
       QString            rotor;
       QString            fileText;
       QString            current_channel;
-      
-      US_Help            showHelp;
 
-      QIcon              check;
+      US_Help            showHelp;
 
       QPushButton*       pb_reset;
       QPushButton*       pb_accept;
@@ -95,14 +93,14 @@ class US_RotorCalibration : public US_Widgets
       QPushButton*       pb_save;
       QPushButton*       pb_load;
       QPushButton*       pb_view;
-            
+
       QString            workingDir;
       QString            runID;
       QString            editID;
       QString            dataType;
       QStringList        files;
       QStringList        triples;
-                      
+
       QwtPlot*           data_plot;
       QwtPlotCurve*      fit_curve;
       QwtPlotCurve*      v_line;
@@ -111,13 +109,13 @@ class US_RotorCalibration : public US_Widgets
       QwtPlotMarker*     marker;
       QwtCounter*        ct_cell;
       QwtCounter*        ct_channel;
-      
+
 
       US_PlotPicker*     pick;
       US_Plot*           plot;
-      
+
       QLineEdit*         le_instructions;
-                        
+
       QRadioButton*      rb_channel;
       QRadioButton*      rb_top;
       QRadioButton*      rb_bottom;
@@ -125,7 +123,7 @@ class US_RotorCalibration : public US_Widgets
       QCheckBox*         cb_assigned;
       QCheckBox*         cb_6channel;
       QComboBox*         cb_wavelengths;
-      
+
       US_DataIO::RawData             data;
       QVector< US_DataIO::RawData >  allData;
       QVector< Average >             avg;
@@ -133,12 +131,12 @@ class US_RotorCalibration : public US_Widgets
       QVector< QVector < double > >  reading;
       QVector< double >              stretch_factors, std_dev;
       QVector< Limit >               limit;
-		QVector< double >              bounds; // holds x-limits for multi-channel calibration mask
-		QVector< QwtDoubleRect >       bounds_rect; // holds limits for multi-channel calibration mask
+      QVector< double >              bounds; // holds x-limits for multi-channel calibration mask
+      QVector< QwtDoubleRect >       bounds_rect; // holds limits for multi-channel calibration mask
 
-		QwtDoubleRect						 zoom_mask; // holds zoomed rectangle for multi-channel calibration mask
-		QStringList                    wavelengths;
-		int									 current_wavelength;
+      QwtDoubleRect                  zoom_mask; // holds zoomed rectangle for multi-channel calibration mask
+      QStringList                    wavelengths;
+      int      current_wavelength;
 
    private slots:
       void       reset          ( void );

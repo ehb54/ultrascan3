@@ -69,7 +69,7 @@ const QString US_Images::image_name( int itype )
       { SAVE_CONTENT,    "savecontent" },
       { ICON_PROP,       "icon"        },
       { QWTPLOT,         "qwtplot"     },
-      { US3_ICON,     "us3-icon-32x32" },
+      { US3_ICON,     "us3-icon-48x48" },
       { ARROW_LEFT,      "arrow_left"  },
       { ARROW_RIGHT,     "arrow_right" }
    };
