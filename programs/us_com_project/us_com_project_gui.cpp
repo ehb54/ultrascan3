@@ -12,6 +12,7 @@
 #include "us_util.h"
 #include "us_crypto.h"
 #include "us_select_item.h"
+#include "us_images.h"
 
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c)  setData(a,b,c)
@@ -85,16 +86,19 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    tabWidget->addTab( epanObserv,    tr( "2: Live Update" ) );
    tabWidget->addTab( epanPostProd,  tr( "3: Post Production"  ) );
    tabWidget->setCurrentIndex( curr_panx );
-
-   icon_path = std::getenv("ULTRASCAN");
-   qDebug() << "Path is: " << icon_path;
-   icon_path.append("/etc/"); 
-   
    tabWidget->tabBar()->setFixedHeight(500);
-   tabWidget->setTabIcon(0,QIcon(icon_path + "setup.png"));
-   tabWidget->setTabIcon(1,QIcon(icon_path + "live_update.gif"));
-   tabWidget->setTabIcon(2,QIcon(icon_path + "analysis.png"));
-
+   
+   //icon_path = std::getenv("ULTRASCAN");
+   //qDebug() << "Path is: " << icon_path;
+   //icon_path.append("/etc/"); 
+   //tabWidget->setTabIcon(0,QIcon(icon_path + "setup.png"));
+   //tabWidget->setTabIcon(1,QIcon(icon_path + "live_update.gif"));
+   //tabWidget->setTabIcon(2,QIcon(icon_path + "analysis.png"));
+   
+   tabWidget->setTabIcon( 0, US_Images::getIcon( US_Images::SETUP_COM  ) );
+   tabWidget->setTabIcon( 1, US_Images::getIcon( US_Images::LIVE_UPDATE_COM  ) );
+   tabWidget->setTabIcon( 2, US_Images::getIcon( US_Images::ANALYSIS_COM ) );
+   
    tabWidget->tabBar()->setIconSize(QSize(50,50));
 
    //tabWidget->setStyleSheet("QTabWidget::pane { border: 2; background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa);}");
@@ -134,12 +138,12 @@ US_ExperGui::US_ExperGui( QWidget* topw )
    //lb_exp_banner    = us_banner( tr( "1: Define Experiment Run" ) );
    //panel->addWidget( lb_exp_banner );
 
-
    // Create layout and GUI components
    QGridLayout* genL   = new QGridLayout();
-
-   QString temp_path = std::getenv("ULTRASCAN");
-   temp_path += "/etc/";
+   pb_openexp = new QPushButton();
+   
+   // QString temp_path = std::getenv("ULTRASCAN");
+   // temp_path += "/etc/";
    
    // //pb_openexp  = us_pushbutton( tr( "Open Experiment SetUp Dialog" ) );
    // pb_openexp  = new QPushButton(this);
@@ -152,16 +156,16 @@ US_ExperGui::US_ExperGui( QWidget* topw )
    
    // qDebug() << "Icon: " << temp_path + "new_item.png";
    // pb_openexp->setStyleSheet("QPushButton{background-color: #318CE7; border: 1px solid white; background-image: url(temp_path); color: black; border-radius: 15px; font-size: 18px; font-weight: bold; } QPushButton:hover{background-color: #6699CC;} QPushButton:disabled{background-color:#6699CC ; color: white}");
-
-
-   QString iconpath = temp_path + "new_item2.png";
-   pb_openexp = new QPushButton();
-   QPixmap* pixmap = new QPixmap(iconpath);
-   QIcon icon(*pixmap);
-   QSize iconSize(pixmap->width(), pixmap->height());
+   
+   //QString iconpath = temp_path + "new_item2.png";
+   //QPixmap* pixmap = new QPixmap(iconpath);
+   //QIcon icon(*pixmap);
+   //QSize iconSize(pixmap->width(), pixmap->height());
    //pb_openexp->setIconSize(iconSize);
+   //pb_openexp->setIcon(icon);
+
+   pb_openexp->setIcon(US_Images::getIcon( US_Images::NEW_ITEM_COM ) );
    pb_openexp->setIconSize(QSize(50,50));
-   pb_openexp->setIcon(icon);
    pb_openexp->setStyleSheet("QPushButton{border: none} QPushButton:hover{border: 1px solid gray}");
    //pb_openexp->setStyleSheet("QPushButton{background-color: #318CE7; border: 1px solid white; background-image: url(temp_path); color: black; border-radius: 15px; font-size: 18px; font-weight: bold; } QPushButton:hover{background-color: #6699CC;} QPushButton:disabled{background-color:#6699CC ; color: white}");
 
