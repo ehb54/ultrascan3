@@ -1,3 +1,5 @@
+//! \file us_experiment/us_experiment_gui.h
+
 #ifndef US_EXPERIMENT_H
 #define US_EXPERIMENT_H
 

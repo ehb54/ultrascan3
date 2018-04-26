@@ -1332,7 +1332,7 @@ if(scx<3 || (scx+4)>nscnn)
 DbgLv(1) << "rBldRawD        scx" << scx << "rvalues size" << scan.rvalues.size()
  << "rvalues[mid]" << scan.rvalues[scan.rvalues.size()/2];
 
-            if ( ndscan == oscknt )
+            if ( ( scx + 1 ) == oscknt )
             {  // If last of old scans, update in case readings were added
                rdata->scanData[ scx ] = scan;
             }
