@@ -430,6 +430,9 @@ class US_GUI_EXTERN US_SolutionGui : public US_WidgetsDialog
       //! /param DB True if DB is the new selection
       void use_db( bool DB );
 
+      // A signal to catch in US_Experiment when new Solution added while called from us_Exp
+      void newSolAdded( void );
+
       
  private:
       int                         investigatorID;

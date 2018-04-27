@@ -1719,6 +1719,8 @@ void US_SolutionGui::newSolAccepted( void )
 {
 DbgLv(1) << "main: newAnaAccepted";
    tabWidget->setCurrentIndex( 0 );
+
+   emit newSolAdded();
 }
 
 // Slot for New panel solution add rejected
