@@ -1510,6 +1510,21 @@ DbgLv(1) << "expA:   nf" << nfiles << "fname" << fname
    QString tspath    = cur_dir + runID + ".time_state.tmst";
    int ntimes        = udata->scanCount();
    int ntssda        = tSydata.count();
+   double e_utime    = udata->scanData[ ntimes - 1 ].seconds;
+   double e_stime    = ntssda > 0 ? tSydata[ ntssda - 1 ].exptime : 0.0;
+DbgLv(1) << "expA:   ntimes ntssda" << ntimes << ntssda
+ << "e_utime e_stime" << e_utime << e_stime;
+
+   // If last scan time beyond last sysstat time, reload System Status
+   if ( e_utime > e_stime )
+   {
+      int idRun         = tSydata[ 0 ].runId;
+      tSydata.clear();
+      scan_xpndata( idRun, 'S' );
+      ntssda            = tSydata.count();
+      e_stime           = ntssda > 0 ? tSydata[ ntssda - 1 ].exptime : 0.0;
+DbgLv(1) << "expA:    UPDATED ntssda" << ntssda << "e_stime" << e_stime << "idRun" << idRun;
+   }
 //*DEBUG*
 QVector< double > xv_scn;
 QVector< double > yv_scn;
@@ -2352,7 +2367,43 @@ QString US_XpnData::runDetails( void )
    if ( ssknt < 2 )
       return msg;
 
+   int sdknt       = 0;
+   double e_dtime  = 0.0;
+   double e_stime  = 0.0;
+   if      ( runType == "RI" )
+   {
+      sdknt          = tAsdata.count();
+      e_dtime        = tAsdata[ sdknt - 1 ].exptime;
+   }
+   else if ( runType == "FI" )
+   {
+      sdknt          = tFsdata.count();
+      e_dtime        = tFsdata[ sdknt - 1 ].exptime;
+   }
+   else if ( runType == "IP" )
+   {
+      sdknt          = tIsdata.count();
+      e_dtime        = tIsdata[ sdknt - 1 ].exptime;
+   }
+   else if ( runType == "WI" )
+   {
+      sdknt          = tWsdata.count();
+      e_dtime        = tWsdata[ sdknt - 1 ].exptime;
+   }
+
    int runID      = tSydata[ 0 ].runId;
+   e_stime        = ssknt > 0 ? tSydata[ ssknt - 1 ].exptime : 0.0;
+DbgLv(1) << "XpDa:Det: sdknt ssknt" << sdknt << ssknt
+ << "  e_dtime e_stime" << e_dtime << e_stime;
+   if ( e_stime < e_dtime )
+   {  // For System Status last time less than last data time, rescan SysStat
+      tSydata.clear();
+      scan_xpndata( runID, 'S' );
+      ssknt          = tSydata.count();
+      e_stime        = ssknt > 0 ? tSydata[ ssknt - 1 ].exptime : 0.0;
+DbgLv(1) << "XpDa:Det:  UPD ssknt e_stime" << ssknt << e_stime;
+   }
+
    int kk         = ssknt - 1;
 
    QString tabname( "SystemStatusData" );
