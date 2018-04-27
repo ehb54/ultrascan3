@@ -1731,7 +1731,34 @@ DbgLv(1) << "EGSo:rbS:  nschan nuniqs" << nschan << nuniqs
 void US_ExperGuiSolutions::manageSolutions()
 {
    US_SolutionGui* sdiag = new US_SolutionGui;
+
+   connect(sdiag, SIGNAL( newSolAdded() ), this, SLOT( regenSolList() ) ); //ALEXEY when solution added from US_Exp, update sotution list 
+   
    sdiag->show();
+}
+
+//Update Solution List
+void US_ExperGuiSolutions::regenSolList()
+{
+  allSolutions();
+  qDebug() << "NEW SOLNAMES: " << sonames;
+  
+  for ( int ii = 0; ii < cc_solus.count(); ii++ )
+    {
+      QComboBox* cbsolu  = cc_solus[ ii ];
+      if ( ! cbsolu->isVisible() )     // Break when invisible row reached
+	break;
+
+      // Before cleaning save currently selected text for each channel in case protocol is loaded
+      QString sdescr     = cbsolu->currentText(); 
+      QString usolu       = tr( "(unspecified)" );
+      
+      cbsolu->clear();
+      cbsolu->addItems( sonames );
+      
+      if ( !sdescr.contains( usolu ) )  // Skip "(unspecified)"
+	cbsolu->setCurrentText( sdescr );
+    }
 }
 
 // Slot to open a dialog for showing details about solutions
