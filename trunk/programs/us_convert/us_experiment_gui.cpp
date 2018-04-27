@@ -1,4 +1,4 @@
-//! \file us_experiment_gui.cpp
+//! \file us_convert/us_experiment_gui.cpp
 
 #include "us_experiment_gui.h"
 #include "us_passwd.h"
