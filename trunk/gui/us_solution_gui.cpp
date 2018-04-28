@@ -208,9 +208,17 @@ void US_SolutionMgrSelect::delete_solution( void )
       QMessageBox::warning( this,
          tr( "Delete aborted" ),
          tr( "Solution NOT Deleted, since it is in use\n"
-             "by one or more experiments" ) );
+             "by one or more experiments or protocols" ) );
       return;
    }
+else if ( status != US_DB2::OK )
+{
+ QMessageBox::warning( this,
+  tr( "Delete aborted (status=%1)" ).arg( status ),
+  tr( "Solution NOT Deleted, since the delete\n"
+      "attempt got a non-zero status." ) );
+ return;
+}
 
    solution->clear();
    analyteMap.clear();
