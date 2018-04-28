@@ -536,6 +536,7 @@ CREATE PROCEDURE delete_solution ( p_personGUID   CHAR(36),
 
 BEGIN
   DECLARE count_solutions INT;
+  DECLARE count_protosols INT;
 
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
@@ -548,7 +549,13 @@ BEGIN
     FROM experimentSolutionChannel
     WHERE solutionID = p_solutionID;
 
-    IF ( count_solutions = 0 ) THEN
+    -- Or if this solution is used in any protocol
+    SELECT COUNT(*) INTO count_protosols
+    FROM solution ss, protocol pp
+    WHERE ss.solutionID = p_solutionID
+    AND   ( ss.description = pp.solution1 OR ss.description = pp.solution2 );
+
+    IF ( ( count_solutions = 0 ) && ( count_protosols = 0 ) ) THEN
     
       -- Make sure records match if they have related tables or not
       -- Have to do it in a couple of stages because of the constraints
@@ -566,7 +573,7 @@ BEGIN
 
     ELSE
       SET @US3_LAST_ERRNO = @SOLUTION_IN_USE;
-      SET @US3_last_ERROR = 'The solution is in use in an experiment';
+      SET @US3_last_ERROR = 'The solution is in use in an experiment or protocol';
 
     END IF;
     
