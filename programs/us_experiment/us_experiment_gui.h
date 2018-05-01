@@ -240,6 +240,8 @@ class US_ExperGuiSpeeds : public US_WidgetsDialog
       void    ssChangeAccel ( double );
       //! \brief Slot for SS change in duration day
       void    ssChgDuratDay ( int );
+      //! \brief Slot for SS change in Scan Int
+      void    ssChangeScInt ( double, int );
       
       //! \brief Slot for SS change in duration time
       //void    ssChgDuratTime( const QTime& );

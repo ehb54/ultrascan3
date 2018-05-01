@@ -774,19 +774,30 @@ DbgLv(1) << "EGSp:getLV: type" << type;
       {  // Build list of QString forms of speed-step double
          double speed         = rpSpeed->ssteps[ ii ].speed;
          double accel         = rpSpeed->ssteps[ ii ].accel;
-         double duration      = rpSpeed->ssteps[ ii ].duration;
-         double delay         = rpSpeed->ssteps[ ii ].delay;
-         double durathrs      = qFloor( duration / 60.0 );
-         double duratmin      = duration - ( durathrs * 60.0 );
-         double delaymin      = qFloor( delay / 60.0 );
+         double duration      = rpSpeed->ssteps[ ii ].duration;   // In seconds
+         double delay         = rpSpeed->ssteps[ ii ].delay;      // In seconds
+
+	 double scint         = rpSpeed->ssteps[ ii ].scanintv;
+	 
+         // double durathrs      = qFloor( duration / 60.0 );
+         // double duratmin      = duration - ( durathrs * 60.0 );
+         // double delaymin      = qFloor( delay / 60.0 );
+         // double delaysec      = delay - ( delaymin * 60.0 );
+
+	 double durathrs      = qFloor( duration / 3600.0 );
+         double duratmin      = qFloor(duration - ( durathrs * 3600.0 )) / 60.0;
+	 
+	 double delaymin      = qFloor( delay / 60.0 );
          double delaysec      = delay - ( delaymin * 60.0 );
 
          value << tr( "%1 rpm" ).arg( speed );
          value << tr( "%1 rpm/sec" ).arg( accel );
-         value << tr( "%1 minutes  ( %2 h %3 m )" )
+         value << tr( "%2 h %3 m (%1 minutes)" )
                   .arg( duration ).arg( durathrs ).arg( duratmin );
          value << tr( "%1 seconds  ( %2 m %3 s )" )
                   .arg( delay )   .arg( delaymin ).arg( delaysec );
+	 value << tr( "%1 seconds" )                                        //ALEXEY: added scan interval
+                  .arg( scint );
       }
    }
 

@@ -783,9 +783,9 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
     //                       = us_timeedit( tm_scnint, 0, &sb_scnint );
    
    
-   QHBoxLayout* lo_duratlay  = us_ddhhmmsslay( 0, &sb_durat_dd, &sb_durat_hh, &sb_durat_mm,  &sb_durat_ss);
-   QHBoxLayout* lo_delaylay  = us_ddhhmmsslay( 0, &sb_delay_dd, &sb_delay_hh, &sb_delay_mm,  &sb_delay_ss);
-   QHBoxLayout* lo_scnintlay = us_ddhhmmsslay( 0, &sb_scnint_dd, &sb_scnint_hh, &sb_scnint_mm,  &sb_scnint_ss);
+   QHBoxLayout* lo_duratlay  = us_ddhhmmsslay( 0, 1,0,0,1, &sb_durat_dd, &sb_durat_hh, &sb_durat_mm,  &sb_durat_ss );
+   QHBoxLayout* lo_delaylay  = us_ddhhmmsslay( 0, 1,0,0,1, &sb_delay_dd, &sb_delay_hh, &sb_delay_mm,  &sb_delay_ss );
+   QHBoxLayout* lo_scnintlay = us_ddhhmmsslay( 0, 1,0,0,0, &sb_scnint_dd, &sb_scnint_hh, &sb_scnint_mm,  &sb_scnint_ss );
 
    le_maxrpm           = us_lineedit( tr( "Maximum speed for AN50 rotor:"
                                           "  50000 rpm" ), 0, true );
@@ -797,6 +797,8 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    double df_accel     = rpSpeed->ssteps[ 0 ].accel;
    double df_duratm    = rpSpeed->ssteps[ 0 ].duration;
    double df_delatm    = rpSpeed->ssteps[ 0 ].delay;
+
+   double df_scint     = rpSpeed->ssteps[ 0 ].scanintv; //ALEXEY read default scanint in secs corresponding to default RPM
 
    QList< int > dhms_dur;
    QList< int > dhms_dly;
@@ -814,6 +816,8 @@ DbgLv(1) << "EGSp:   def  d h m s " << dhms_dly;
    ssvals[ 0 ][ "duration" ] = df_duratm; // Duration in seconds default (5h 30m)
    ssvals[ 0 ][ "delay" ]    = df_delatm; // Delay in seconds default (2m 30s)
 
+   ssvals[ 0 ][ "scanintv" ]    = df_scint;  //ALEXEY
+   
    // Set up counters and profile description
    ct_speed ->setSingleStep( 100 );
    ct_accel ->setSingleStep(  50 );
@@ -875,13 +879,13 @@ DbgLv(1) << "EGSp: addWidg/Layo AA";
   genL->addWidget( lb_durat,   row,    0, 1,  5);
 DbgLv(1) << "EGSp: addWidg/Layo BB";
 //genL->addLayout( lo_durat,   row++,  6, 1,  2);
-  genL->addLayout( lo_duratlay,   row++,  5, 1,  3);
+  genL->addLayout( lo_duratlay,   row++,  5, 1,  1);
 
 DbgLv(1) << "EGSp: addWidg/Layo CC";
   genL->addWidget( lb_delay,   row,    0, 1,  5 );
 DbgLv(1) << "EGSp: addWidg/Layo DD";
 // genL->addLayout( lo_delay,   row++,  6, 1,  2 );
-  genL->addLayout( lo_delaylay,   row++,  5, 1,  3 );
+  genL->addLayout( lo_delaylay,   row++,  5, 1,  1 );
 
 DbgLv(1) << "EGSp: addWidg/Layo EE";
   genL->addWidget( lb_scnint,  row,    0, 1,  5 );
@@ -966,13 +970,20 @@ QString US_ExperGuiSpeeds::speedp_description( int ssx )
    double durmin  = (durtim / 60.0) - ( durhr * 60.0 );   // Duration residual minutes
 
    //int    escans  = qRound( durtim * 6.0 );      // Estimated step scans             //ALEXEY: 6 scans per minute ??? 
-   int    escans  = qRound( (durtim / 60.0) * 6.0 );      // Estimated step scans             //ALEXEY: 6 scans per minute ??? 
+   //int    escans  = qRound( (durtim / 60.0) * 6.0 );      // Estimated step scans             //ALEXEY: 6 scans per minute ???
+
+   double scaninterval =  ssvals[ ssx ][ "scanintv" ];  //ALEXEY: ssval[]["scanintv"] is set (in secs)  according to table: RPM vs scanint
+   int escans = qRound( durtim / scaninterval );
+   
    double durtot  = 0.0;
    for ( int ii = 0; ii < ssvals.size(); ii++ )
      durtot        += ssvals[ ii ][ "duration" ];  //ALEXEY durtot IS in seconds - NOT minutes
    //int    tscans  = qRound( durtot * 6.0 );      // Estimated total scans     
-   int    tscans  = qRound( (durtot / 60.0) * 6.0 );      // Estimated total scans            //ALEXEY: SECS (NOT MINS) times 6
-  
+   //int    tscans  = qRound( (durtot / 60.0) * 6.0 );      // Estimated total scans            //ALEXEY: SECS (NOT MINS) times 6
+   int    tscans  = qRound( durtot / scaninterval  );     //ALEXEY: ssval[]["scanintv"] is set (in secs)  according to table: RPM vs scanint
+   
+   qDebug() << "SCAN INT: " << scaninterval << ", # Scans: " << tscans; 
+     
 DbgLv(1) << "EGSp: spDesc: ssx" << ssx
  << "dur tim,hr,min" << durtim << durhr << durmin;
 
@@ -997,6 +1008,8 @@ DbgLv(1) << "EGSp: chgKnt: nsp nnsp" << nspeed << new_nsp;
       int kk           = nspeed - 1;
       double ssspeed   = ssvals[ kk ][ "speed" ];
       double ssaccel   = ssvals[ kk ][ "accel" ];
+
+      //double ssscint   = ssvals[ kk ][ "scanintv" ];     // ALEXEY
 
       double ssdurtim  = ssvals[ kk ][ "duration" ];        //ALEXEY - minutes ??? should be seconds ...
       // double ssdurhr   = qFloor( ssdurtim / 60.0 );
@@ -1029,6 +1042,9 @@ DbgLv(1) << "EGSp: chgKnt:  kk" << kk << "spd acc dur dly"
          ssvals[ kk ][ "accel"    ] = ssaccel;   // Acceleration
          ssvals[ kk ][ "duration" ] = ssdurtim;  // Duration in minutes  // No, in seconds
          ssvals[ kk ][ "delay"    ] = ssdlytim;  // Delay in seconds
+
+	 ssChangeScInt( ssspeed, kk );  //ALEXEY
+	 	 
          profdesc[ kk ]             = speedp_description( kk );
 DbgLv(1) << "EGSp: chgKnt:    kk" << kk << "pdesc" << profdesc[kk];
 
@@ -1039,6 +1055,8 @@ DbgLv(1) << "EGSp: chgKnt:    kk" << kk << "pdesc" << profdesc[kk];
       // Point to the first new speed step
       cb_prof->setCurrentIndex( nspeed );
       ssChangeProfx( nspeed );
+
+      adjustDelay();
    }
 
    else
@@ -1051,6 +1069,8 @@ DbgLv(1) << "EGSp: chgKnt:    kk" << kk << "pdesc" << profdesc[kk];
       cb_prof->setCurrentIndex( new_nsp - 1 );
       // Point to the last speed step
       ssChangeProfx( new_nsp - 1 );
+
+      adjustDelay();
    }
 
    nspeed      = new_nsp;
@@ -1100,6 +1120,8 @@ DbgLv(1) << "EGSp: chgPfx:    speedmax" << speedmax;
    sb_delay_hh ->setValue( (int)dhms_dly[ 1 ] );
    sb_delay_mm ->setValue( (int)dhms_dly[ 2 ] );
    sb_delay_ss ->setValue( (int)dhms_dly[ 3 ] );
+
+   adjustDelay();
 }
 
 // Slot for change in speed value
@@ -1107,6 +1129,9 @@ void US_ExperGuiSpeeds::ssChangeSpeed( double val )
 {
 DbgLv(1) << "EGSp: chgSpe: val" << val << "ssx" << curssx;
    ssvals  [ curssx ][ "speed" ] = val;  // Set Speed in step vals vector
+
+   ssChangeScInt(val, curssx);
+        
    profdesc[ curssx ] = speedp_description( curssx );
    cb_prof->setItemText( curssx, profdesc[ curssx ] );
 
@@ -1114,6 +1139,31 @@ DbgLv(1) << "EGSp: chgSpe: val" << val << "ssx" << curssx;
    changed          = false;             // Flag so delay set to minimum
    adjustDelay();                        // Set delay minimum and default
    changed          = true;              // Flag this as a user change
+}
+
+//Set ScanInt based on RPM speed entered
+void US_ExperGuiSpeeds::ssChangeScInt( double val, int curssx )
+{
+  // Fit of the time-interval graph with A0 + A1/X;  [X => val]
+  QVector<double> a0(4);
+  QVector<double> a1(4);
+  a0[0] =  5.3513;    a1[0] = 167308;   // rpm 3000  - 14000:
+  a0[1] =  5.66431;   a1[1] = 329920;   // rpm 15000 - 32000:
+  a0[2] =  6.16695;   a1[2] = 480761;   // rpm 33000 - 50000:
+  a0[3] =  4.44766;   a1[3] = 744728;   // rpm 51000 - 60000:
+
+  if (val <= 14999 )
+    ssvals  [ curssx ][ "scanintv" ] = a0[0] + qRound( a1[0]/val );
+  if (val >= 15000 and val <= 32999 )
+    ssvals  [ curssx ][ "scanintv" ] = a0[1] + qRound( a1[1]/val );
+  if (val >= 33000 and val <= 50999 )
+    ssvals  [ curssx ][ "scanintv" ] = a0[2] + qRound( a1[2]/val );
+  if (val >= 51000 and val <= 60000 )
+    ssvals  [ curssx ][ "scanintv" ] = a0[3] + qRound( a1[3]/val );
+
+  sb_scnint_ss ->setValue( (int) ssvals[curssx]["scanintv"] );
+
+  qDebug() << "ScanInt: " << ssvals[curssx]["scanintv"];
 }
 
 // Slot for change in acceleration value
@@ -1289,8 +1339,20 @@ void US_ExperGuiSpeeds::adjustDelay( void )
    //tm_delay->setMinimumTime( QTime( dhms[ 1 ], dhms[ 2 ], dhms[ 3 ] ) ); //ALEXEY
    //sb_delay_dd ->setValue( (int)dhms[ 0 ] );                             //ALEXEY - No days ??
    sb_delay_hh ->setValue( (int)dhms[ 1 ] );
-   sb_delay_mm ->setValue( (int)dhms[ 2 ] );
-   sb_delay_ss ->setValue( (int)dhms[ 3 ] );
+
+   if ( (int)dhms[ 3 ] > 0 )                 //ALEXEY round to nearest min.
+     {
+       if ( (int)dhms[ 2 ] == 0 )   
+	 sb_delay_mm ->setValue(1);
+       
+       if ( (int)dhms[ 2 ] > 0 )   
+	 sb_delay_mm ->setValue( (int)dhms[ 2 ] + 1);
+     }
+   else
+     sb_delay_mm ->setValue( (int)dhms[ 2 ] );
+   
+   //sb_delay_mm ->setValue( (int)dhms[ 2 ] );
+   //sb_delay_ss ->setValue( (int)dhms[ 3 ] );
 
 //DbgLv(1) << "EGSp: adjDelay:   setdlymin delaynmin" << setdlymin << delaynmin;
 //DbgLv(1) << "EGSp: adjDelay:   setdlysec delaynsec" << setdlysec << delaynsec;
@@ -2763,6 +2825,7 @@ DbgLv(1) << "EGUp:dE: nspeed" << nspeed;
       dtext += tr( "      Acceleration:  " ) + sspeed[ jj++ ] + "\n";
       dtext += tr( "      Duration:      " ) + sspeed[ jj++ ] + "\n";
       dtext += tr( "      Delay:         " ) + sspeed[ jj++ ] + "\n";
+      dtext += tr( "      Scan Interval: " ) + sspeed[ jj++ ] + "\n";
    }
 
    dtext += tr( "\nCells\n" );
@@ -3093,11 +3156,15 @@ void US_ExperGuiUpload::submitExperiment()
        QVector < QVector < int >> AbsScanIds(nstages_size);
        /* Add extra array QVector < QVector < QString >> RadialPath(nstages_size); to be filled with DEFAULT/ */
        QVector < QVector < int >> AbsRadialPath(nstages_size);
+
+       QVector < int > Total_wvl(nstages_size);
        
        for (int i=0; i<nstages_size; ++i)
 	 {
 	   AbsScanIds[i].resize(ncells);
 	   AbsRadialPath[i].resize(ncells);
+
+	   Total_wvl[i] = 0;
 	 }
        
        for (int i=0; i<nstages_size; ++i)
@@ -3106,13 +3173,38 @@ void US_ExperGuiUpload::submitExperiment()
 	     {
 	       AbsScanIds[i][j] = 0;
 	       AbsRadialPath[i][j] = 0;
+	       //Compute total # wvl per stage
+	       QString channel;
+	       for ( int ii = 0; ii < rpRange->nranges; ii++ )
+		 {
+		   channel  = rpRange->chrngs[ ii ].channel;
+		   
+		   if ( channel.contains("sample") && channel.startsWith(QString::number(j+1)) )  // <-- Judge only by sample (channel A) for now
+		     {
+		       Total_wvl[i]  += rpRange->chrngs[ ii ].wvlens.count();
+		     }
+		 }
+	       qDebug() << "#Wvl for cell: " << j << " is: " << Total_wvl[i];
 	     }
 	 }
+       
        
        for (int i=0; i<nstages_size; i++)
 	 { 
 	   if (i==0 && tem_delay_sec)
 	     continue;                     // skip dummy stage for AbsScanParams
+
+	   double duration_sec = rpSpeed->ssteps[ i ].duration;
+	   double delay_sec    = rpSpeed->ssteps[ i ].delay;  
+	   double scanint_sec  = rpSpeed->ssteps[ i ].scanintv;
+
+	   // <-- Which delay should we substract ? (not a stage delay but due to acceleration ONLY ? )
+	   //int ScanCount = int( (duration_sec - delay_sec) / (scanint_sec * Total_wvl[i]) );  
+	   int ScanCount = int( (duration_sec) / (scanint_sec * Total_wvl[i]) );
+
+	   qDebug() << "Duration_sec: " << duration_sec << ", delay_sec: " << delay_sec << ", scanint_sec: " << scanint_sec << ", Tot_wvl: " << Total_wvl[i];
+	   
+	   
 	   for (int j=0; j<ncells; j++)
 	     {
 	       QString channel;
@@ -3159,8 +3251,8 @@ void US_ExperGuiUpload::submitExperiment()
 		       scan_starts_array += QString::number(0);                     // <-- '0' to allow control by scan interval
 		       replicate_counts_array += QString::number(1);                // <-- shoud be '1'
 		       continuous_mode_array += "t";                                // <-- always 't'
-		       scan_counts += QString::number(3);                           // <-- TEMPORARY 
-		       scan_intervals += QString::number(20);                       // <-- TEMPORARY 
+		       scan_counts += QString::number(ScanCount);                   // <-- TEMPORARY 
+		       scan_intervals += QString::number(int(scanint_sec));         // <-- TEMPORARY 
 		       if (r != nwavl - 1)
 			 {
 			   wvl_array        += ",";
@@ -3212,9 +3304,9 @@ void US_ExperGuiUpload::submitExperiment()
 					       //.arg("\'A\'")
 					       ) )
 		     qDebug() << query_abs_scan.lastError().text();
-
-		   // qDebug() << "Stop here";
-		   // return;
+		   
+		   //qDebug() << "Stop here" << ", ScanInt: " << scan_intervals << ", ScanCount: " << scan_counts;
+		   //return;
 		   
 		   if (query_abs_scan.exec()) 
 		     {
@@ -3222,13 +3314,13 @@ void US_ExperGuiUpload::submitExperiment()
 		       
 		       query_abs_scan.next();
 		       AbsScanIds[i][j] = query_abs_scan.value(0).toInt();         // <-- Save AbsScanID inserted [for given stage#/cell#]
-
+		       
 		       
 		       if ( QString::compare(rad_path, "DEFAULT",Qt::CaseSensitive) )
-			 {
-			   AbsRadialPath[i][j] = 1;
-			   qDebug() << "RadialPath is NOT DEFAULT: 1-channel.";
-			 }
+		    	 {
+		    	   AbsRadialPath[i][j] = 1;
+		    	   qDebug() << "RadialPath is NOT DEFAULT: 1-channel.";
+		    	 }
 		       
 		       qDebug() << "ScanId: "     << query_abs_scan.value(0).toInt();
 		       qDebug() << "RadialPath: " << AbsRadialPath[i][j];
@@ -3237,15 +3329,17 @@ void US_ExperGuiUpload::submitExperiment()
 		     {
 		       QString errmsg   = "Create record error: " + query_abs_scan.lastError().text();;
 		       QMessageBox::critical( this,
-					      tr( "*ERROR* in Submitting Protocol" ),
-					      tr( "An error occurred in the attempt to submit"
-						  " protocol to AUC DB\n  %1 table\n  %2 ." ).arg( qrytab_abs ).arg( errmsg ) );
+		    			      tr( "*ERROR* in Submitting Protocol" ),
+		    			      tr( "An error occurred in the attempt to submit"
+		    				  " protocol to AUC DB\n  %1 table\n  %2 ." ).arg( qrytab_abs ).arg( errmsg ) );
 		       return;
 		     }
+		   
 		 }
 	     }
 	 }
 
+       
        // Interference INSERT ////////////////////////////////////////////////////////////////////////
        QString tabname_inter( "InterferenceScanParameters" );
        QString qrytab_inter  = "\"" + schname + "\".\"" + tabname_inter + "\"";
@@ -3548,7 +3642,7 @@ void US_ExperGuiUpload::submitExperiment()
        QString sysstatint    = QString::number(1);
        QStringList speeds    = sibLValue( "speeds",    "profiles" );
        
-       int ss                = 0;                                      // <-- for reading RPMs from speeds 
+       //int ss                = 0;                                      // <-- for reading RPMs from speeds 
        for (int i=0; i<nstages_size; i++)
 	 { 
 	   cellids += "{";
@@ -3570,9 +3664,12 @@ void US_ExperGuiUpload::submitExperiment()
 	     }
 	   else
 	     {
-	       stagestart  += QString::number(0);                       // <-- stagestart Active stages
-	       stagerpm    += QString::number( (speeds[ss].split(QRegExp("\\s+"), QString::SkipEmptyParts))[0].toInt() );       // <-- RPM Active stages
-	       ss += 4;
+	       // stagestart  += QString::number(0);                       // <-- stagestart Active stages
+	       // stagerpm    += QString::number( (speeds[ss].split(QRegExp("\\s+"), QString::SkipEmptyParts))[0].toInt() );       // <-- RPM Active stages
+	       // ss += 5;
+	       
+	       stagestart  += QString::number(rpSpeed->ssteps[ i ].delay);  // <-- stagestart Active stages
+	       stagerpm    += QString::number(rpSpeed->ssteps[ i ].speed);  // <-- RPM Active stages
 	     }
 	   
 	   if ( i != nstages_size-1 )

@@ -175,10 +175,15 @@ class US_GUI_EXTERN US_WidgetsDialog : public QDialog
     //! \param mm         - Optional pointer to min  QSpinBox pointer
     //! \param ss         - Optional pointer to sec  QSpinBox pointer
     QHBoxLayout* us_ddhhmmsslay( const int = 0,
+				 const int = 0,
+				 const int = 0,
+				 const int = 0,
+				 const int = 0,
                                  QSpinBox** = (QSpinBox**)NULL,
                                  QSpinBox** = (QSpinBox**)NULL,
                                  QSpinBox** = (QSpinBox**)NULL,
-                                 QSpinBox** = (QSpinBox**)NULL );
+                                 QSpinBox** = (QSpinBox**)NULL
+				);
 
     //! \param fontAdjust -  adjustment to default font size\n
     //! * Color is set to US_GuiSettings::normalEdit()
