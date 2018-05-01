@@ -443,7 +443,7 @@ QHBoxLayout* US_WidgetsDialog::us_timeedit(
 
 // day-hh-mm-ss layout
 QHBoxLayout* US_WidgetsDialog::us_ddhhmmsslay( 
-	     const int fontAdjust, QSpinBox** dd, QSpinBox** hh, QSpinBox** mm, QSpinBox** ss)
+					      const int fontAdjust,  const int dd_hide, const int hh_hide, const int mm_hide, const int ss_hide, QSpinBox** dd, QSpinBox** hh, QSpinBox** mm, QSpinBox** ss)
 {
    QPalette   pal    = US_GuiSettings::normalColor();
    QFont      font   = QFont( US_GuiSettings::fontFamily(),
@@ -466,8 +466,11 @@ QHBoxLayout* US_WidgetsDialog::us_ddhhmmsslay(
       layout->addWidget( *dd );
 
       //ALEXEY do not show days
-      lb_d->hide();       
-      (*dd)->hide();
+      if (dd_hide)
+	{
+	  lb_d->hide();       
+	  (*dd)->hide();
+	}
    }
    
    if ( hh != NULL )
@@ -481,6 +484,13 @@ QHBoxLayout* US_WidgetsDialog::us_ddhhmmsslay(
       layout->addWidget( lb_h );
       
       layout->addWidget( *hh );
+
+      //ALEXEY do not show hh
+      if (hh_hide)
+	{
+	  lb_h->hide();
+	  (*hh)->hide();
+	}  
    }   
    
    if ( mm != NULL )
@@ -494,6 +504,13 @@ QHBoxLayout* US_WidgetsDialog::us_ddhhmmsslay(
       layout->addWidget( lb_m );
       
       layout->addWidget( *mm );
+
+      //ALEXEY do not show mins
+      if (mm_hide)
+	{
+	  lb_m->hide();
+	  (*mm)->hide();
+	}   
    }
    
    if ( ss != NULL )
@@ -508,11 +525,13 @@ QHBoxLayout* US_WidgetsDialog::us_ddhhmmsslay(
 
       layout->addWidget( *ss );
 
-      // //ALEXEY do not show seconds
-      // lb_s->hide();
-      // (*ss)->hide();
-   }   
-
+      //ALEXEY do not show seconds
+      if (ss_hide)
+	{
+	  lb_s->hide();
+	  (*ss)->hide();
+	}   
+   }
    return layout;
 }
 
