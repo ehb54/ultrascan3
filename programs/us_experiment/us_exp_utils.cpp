@@ -787,17 +787,20 @@ DbgLv(1) << "EGSp:getLV: type" << type;
 	 double durathrs      = qFloor( duration / 3600.0 );
          double duratmin      = qFloor(duration - ( durathrs * 3600.0 )) / 60.0;
 	 
-	 double delaymin      = qFloor( delay / 60.0 );
-         double delaysec      = delay - ( delaymin * 60.0 );
-
+	 double delayhrs      = qFloor( delay / 3600.0 );
+	 double delaymin      = qFloor(delay - ( delayhrs * 3600.0 )) / 60.0;
+         
+	 double scintmin      = qFloor( scint / 60.0 );
+         double scintsec      = scint - ( scintmin * 60.0 );
+	 
          value << tr( "%1 rpm" ).arg( speed );
          value << tr( "%1 rpm/sec" ).arg( accel );
-         value << tr( "%2 h %3 m (%1 minutes)" )
-                  .arg( duration ).arg( durathrs ).arg( duratmin );
-         value << tr( "%1 seconds  ( %2 m %3 s )" )
-                  .arg( delay )   .arg( delaymin ).arg( delaysec );
-	 value << tr( "%1 seconds" )                                        //ALEXEY: added scan interval
-                  .arg( scint );
+         value << tr( "%1 h %2 m" )
+                  .arg( durathrs ).arg( duratmin );
+         value << tr( "%1 h %2 m " )
+                  .arg( delayhrs ).arg( delaymin );
+	 value << tr( "%1 m %2 s" )                                        //ALEXEY: added scan interval
+	   .arg( scintmin ).arg( scintsec );
       }
    }
 

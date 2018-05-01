@@ -225,7 +225,10 @@ class US_ExperGuiSpeeds : public US_WidgetsDialog
       int          nspeed;        // Number of speed steps
       int          curssx;        // Current speed step index
       bool         changed;       // Flag if any speed step changes
-
+      int          scanint_ss_min;// Min value for ScanInt seconds Counter
+      int          scanint_mm_min;// Min value for ScanInt minutes Counter
+      int          scanint_hh_min;// Min value for ScanInt minutes Counter
+      
    private slots:
       //! \brief Compose a speed step description
       QString speedp_description( const int );
@@ -257,6 +260,11 @@ class US_ExperGuiSpeeds : public US_WidgetsDialog
       void    ssChgDelayTime_hh( int );
       void    ssChgDelayTime_mm( int );
       void    ssChgDelayTime_ss( int );
+
+      //! \brief Slot for change in Scan Interval time
+      void    ssChgScIntTime_hh( int );
+      void    ssChgScIntTime_mm( int );
+      void    ssChgScIntTime_ss( int );
 
       //! \brief Function to adjust delay based on speed,accel,delay-hrs
       void    adjustDelay   ( void   );

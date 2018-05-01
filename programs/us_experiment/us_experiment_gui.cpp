@@ -765,8 +765,7 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
 
    // QLabel*  lb_scnint  = us_label( tr( "Scan Interval (days[D] hh[H] mm[M] ss[S];"
    //                                     " 0 => fast-as-possible)" ) );
-   QLabel*  lb_scnint  = us_label( tr( "Scan Interval (hh[H] mm[M];"
-                                       " 0 => fast-as-possible)" ) );
+   QLabel*  lb_scnint  = us_label( tr( "Scan Interval (hh[H] mm[M] ss[S]:" ) );
 
    // ComboBox, counters, time-edits, spinbox
    sb_count            = us_spinbox();
@@ -783,7 +782,7 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
     //                       = us_timeedit( tm_scnint, 0, &sb_scnint );
    
    
-   QHBoxLayout* lo_duratlay  = us_ddhhmmsslay( 0, 1,0,0,1, &sb_durat_dd, &sb_durat_hh, &sb_durat_mm,  &sb_durat_ss );
+   QHBoxLayout* lo_duratlay  = us_ddhhmmsslay( 0, 1,0,0,1, &sb_durat_dd, &sb_durat_hh, &sb_durat_mm,  &sb_durat_ss ); // ALEXEY 1 - visible, 0 - hidden
    QHBoxLayout* lo_delaylay  = us_ddhhmmsslay( 0, 1,0,0,1, &sb_delay_dd, &sb_delay_hh, &sb_delay_mm,  &sb_delay_ss );
    QHBoxLayout* lo_scnintlay = us_ddhhmmsslay( 0, 1,0,0,0, &sb_scnint_dd, &sb_scnint_hh, &sb_scnint_mm,  &sb_scnint_ss );
 
@@ -802,8 +801,10 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
 
    QList< int > dhms_dur;
    QList< int > dhms_dly;
+   QList< int > hms_scint;
    US_RunProtocol::timeToList( df_duratm, dhms_dur );
    US_RunProtocol::timeToList( df_delatm, dhms_dly );
+   US_RunProtocol::timeToList( df_scint,  hms_scint );
 
 DbgLv(1) << "EGSp: df_duratm" << df_duratm;
 DbgLv(1) << "EGSp:   def  d h m s " << dhms_dur;
@@ -846,10 +847,18 @@ DbgLv(1) << "EGSp: init sb/de components";
 
    // sb_scnint->setValue( 0 );                    //ALEXEY  
    // tm_scnint->setTime ( QTime( 0, 0 ) );
+   
+   sb_scnint_mm ->setMinimum( (int)hms_scint[ 2 ] );
+   sb_scnint_ss ->setMinimum( (int)hms_scint[ 3 ] );
+   
    sb_scnint_dd ->setValue( 0 );
-   sb_scnint_hh ->setValue( 0 );
-   sb_scnint_mm ->setValue( 0 );
-   sb_scnint_ss ->setValue( 0 );
+   sb_scnint_hh ->setValue( (int)hms_scint[ 1 ] );
+   sb_scnint_mm ->setValue( (int)hms_scint[ 2 ] );
+   sb_scnint_ss ->setValue( (int)hms_scint[ 3 ] );
+   
+   scanint_ss_min = (int)hms_scint[ 3 ];
+   scanint_mm_min = (int)hms_scint[ 2 ];
+   scanint_hh_min = (int)hms_scint[ 1 ];
    
 DbgLv(1) << "EGSp: DONE init sb/de components";
 
@@ -946,6 +955,14 @@ DbgLv(1) << "EGSp: addWidg/Layo II";
    connect( sb_delay_ss,  SIGNAL( valueChanged   ( int ) ),
             this,         SLOT  ( ssChgDelayTime_ss ( int ) ) ); 
 
+   connect( sb_scnint_hh, SIGNAL( valueChanged   ( int ) ),
+            this,         SLOT  ( ssChgScIntTime_hh ( int ) ) );
+   connect( sb_scnint_mm, SIGNAL( valueChanged   ( int ) ),
+            this,         SLOT  ( ssChgScIntTime_mm ( int ) ) );
+   connect( sb_scnint_ss, SIGNAL( valueChanged   ( int ) ),
+            this,         SLOT  ( ssChgScIntTime_ss ( int ) ) ); 
+
+   
 DbgLv(1) << "EGSp: addWidg/Layo II";
 
    // Complete overall layout
@@ -1152,17 +1169,30 @@ void US_ExperGuiSpeeds::ssChangeScInt( double val, int curssx )
   a0[2] =  6.16695;   a1[2] = 480761;   // rpm 33000 - 50000:
   a0[3] =  4.44766;   a1[3] = 744728;   // rpm 51000 - 60000:
 
+  double time_scint;
   if (val <= 14999 )
-    ssvals  [ curssx ][ "scanintv" ] = a0[0] + qRound( a1[0]/val );
+    time_scint = a0[0] + qRound( a1[0]/val );
   if (val >= 15000 and val <= 32999 )
-    ssvals  [ curssx ][ "scanintv" ] = a0[1] + qRound( a1[1]/val );
+    time_scint = a0[1] + qRound( a1[1]/val );
   if (val >= 33000 and val <= 50999 )
-    ssvals  [ curssx ][ "scanintv" ] = a0[2] + qRound( a1[2]/val );
+    time_scint = a0[2] + qRound( a1[2]/val );
   if (val >= 51000 and val <= 60000 )
-    ssvals  [ curssx ][ "scanintv" ] = a0[3] + qRound( a1[3]/val );
+    time_scint = a0[3] + qRound( a1[3]/val );
+  
+  ssvals[curssx]["scanintv"] = time_scint;
+  QList< int > hms_scint;
+  US_RunProtocol::timeToList( time_scint, hms_scint );
+  sb_scnint_mm ->setMinimum( (int)hms_scint[ 2 ] );
+  sb_scnint_ss ->setMinimum( (int)hms_scint[ 3 ] );
+  
+  sb_scnint_hh ->setValue( (int)hms_scint[ 1 ] );
+  sb_scnint_mm ->setValue( (int)hms_scint[ 2 ] );
+  sb_scnint_ss ->setValue( (int)hms_scint[ 3 ] );
 
-  sb_scnint_ss ->setValue( (int) ssvals[curssx]["scanintv"] );
-
+  scanint_ss_min = (int)hms_scint[ 3 ];
+  scanint_mm_min = (int)hms_scint[ 2 ];
+  scanint_hh_min = (int)hms_scint[ 1 ];
+  
   qDebug() << "ScanInt: " << ssvals[curssx]["scanintv"];
 }
 
@@ -1190,6 +1220,9 @@ DbgLv(1) << "EGSp: chgAcc: val" << val << "ssx" << curssx;
 //  << "t" << ssdurtim;
 //    ssvals[ curssx ][ "duration" ] = ssdurtim;  // Set Duration in step vals vector
 // }
+
+
+
 
 // Slot for change in duration time (hours)
 void US_ExperGuiSpeeds::ssChgDuratTime_hh( int val )
@@ -1268,6 +1301,81 @@ DbgLv(1) << "EGSp: chgDlyD: val" << val << "ssdly d h"
 // << "t" << ssdlytim;
 //    ssvals[ curssx ][ "delay" ] = ssdlytim;  // Set Delay in step vals vector
 // }
+
+// Slot for change in Scan Int time (hours)
+void US_ExperGuiSpeeds::ssChgScIntTime_hh( int val )
+{
+   double ssscinthr   = val;
+   double minimum_hh =  scanint_hh_min;
+   double minimum_mm =  scanint_mm_min;
+   double minimum_ss =  scanint_ss_min;
+   
+    if ( val - minimum_hh == 1 )
+     {
+       sb_scnint_mm->setMinimum(0);
+       sb_scnint_ss->setMinimum(0);
+     }
+    if ( val == minimum_hh )
+     {
+       sb_scnint_mm->setMinimum(minimum_mm);
+       sb_scnint_mm->setValue(minimum_mm);
+       sb_scnint_ss->setMinimum(minimum_ss);
+       sb_scnint_ss->setValue(minimum_ss);
+     }
+    
+   double ssscintmin  = (double)sb_scnint_mm->value();
+   double ssscintsec  = (double)sb_scnint_ss->value();
+   double ssscinttim  = ( ssscinthr * 3600.0 ) + ( ssscintmin * 60.0 ) + ssscintsec;
+   ssvals[ curssx ][ "scanintv" ] = ssscinttim;  // Set ScInt in step vals vector
+
+   profdesc[ curssx ] = speedp_description( curssx );
+   cb_prof->setItemText( curssx, profdesc[ curssx ] );
+}
+
+// Slot for change in Scan Int time (mins)
+void US_ExperGuiSpeeds::ssChgScIntTime_mm( int val )
+{
+   double ssscinthr   = (double)sb_scnint_hh->value();
+   double ssscintmin  = val;
+   double minimum_hh =  scanint_hh_min;
+   double minimum_mm =  scanint_mm_min;
+   double minimum_ss =  scanint_ss_min;
+
+   if ( val - minimum_mm == 1 )
+     {
+       sb_scnint_ss->setMinimum(0);
+       //sb_scnint_ss->setValue(0);
+     }
+   if ( val == minimum_mm )
+     {
+       if ( ssscinthr == minimum_hh )
+	 {
+	   sb_scnint_ss->setMinimum(minimum_ss);
+	   sb_scnint_ss->setValue(minimum_ss);
+	 }
+     }
+   
+   double ssscintsec  = (double)sb_scnint_ss->value();
+   double ssscinttim  = ( ssscinthr * 3600.0 ) + ( ssscintmin * 60.0 ) + ssscintsec;
+   ssvals[ curssx ][ "scanintv" ] = ssscinttim;  // Set Duration in step vals vector
+
+   profdesc[ curssx ] = speedp_description( curssx );
+   cb_prof->setItemText( curssx, profdesc[ curssx ] );
+}
+
+// Slot for change in Scan Int time (sec)
+void US_ExperGuiSpeeds::ssChgScIntTime_ss( int val )
+{
+   double ssscinthr   = (double)sb_scnint_hh->value();
+   double ssscintmin  = (double)sb_scnint_mm->value();
+   double ssscintsec  = val;
+   double ssscinttim  = ( ssscinthr * 3600.0 ) + ( ssscintmin * 60.0 ) + ssscintsec;
+   ssvals[ curssx ][ "scanintv" ] = ssscinttim;  // Set Duration in step vals vector
+
+   profdesc[ curssx ] = speedp_description( curssx );
+   cb_prof->setItemText( curssx, profdesc[ curssx ] );
+}
+
 
 // Slot for change in delay time (hours)
 void US_ExperGuiSpeeds::ssChgDelayTime_hh( int val )
