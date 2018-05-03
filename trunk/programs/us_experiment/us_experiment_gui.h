@@ -228,6 +228,7 @@ class US_ExperGuiSpeeds : public US_WidgetsDialog
       int          scanint_ss_min;// Min value for ScanInt seconds Counter
       int          scanint_mm_min;// Min value for ScanInt minutes Counter
       int          scanint_hh_min;// Min value for ScanInt minutes Counter
+      int          delay_mm_min;  // Min value for Delay minutes Counter
       
    private slots:
       //! \brief Compose a speed step description
