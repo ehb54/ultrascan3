@@ -848,6 +848,7 @@ DbgLv(1) << "EGSp: init sb/de components";
    // sb_scnint->setValue( 0 );                    //ALEXEY  
    // tm_scnint->setTime ( QTime( 0, 0 ) );
    
+   sb_scnint_hh ->setMinimum( (int)hms_scint[ 1 ] );
    sb_scnint_mm ->setMinimum( (int)hms_scint[ 2 ] );
    sb_scnint_ss ->setMinimum( (int)hms_scint[ 3 ] );
    
@@ -1182,6 +1183,7 @@ void US_ExperGuiSpeeds::ssChangeScInt( double val, int curssx )
   ssvals[curssx]["scanintv"] = time_scint;
   QList< int > hms_scint;
   US_RunProtocol::timeToList( time_scint, hms_scint );
+  sb_scnint_hh ->setMinimum( (int)hms_scint[ 1 ] );
   sb_scnint_mm ->setMinimum( (int)hms_scint[ 2 ] );
   sb_scnint_ss ->setMinimum( (int)hms_scint[ 3 ] );
   
@@ -1309,6 +1311,9 @@ void US_ExperGuiSpeeds::ssChgScIntTime_hh( int val )
    double minimum_hh =  scanint_hh_min;
    double minimum_mm =  scanint_mm_min;
    double minimum_ss =  scanint_ss_min;
+
+   double ssscintmin  = (double)sb_scnint_mm->value();
+   double ssscintsec  = (double)sb_scnint_ss->value();
    
     if ( val - minimum_hh == 1 )
      {
@@ -1317,14 +1322,16 @@ void US_ExperGuiSpeeds::ssChgScIntTime_hh( int val )
      }
     if ( val == minimum_hh )
      {
-       sb_scnint_mm->setMinimum(minimum_mm);
-       sb_scnint_mm->setValue(minimum_mm);
-       sb_scnint_ss->setMinimum(minimum_ss);
-       sb_scnint_ss->setValue(minimum_ss);
+       if ( ssscintmin <= minimum_mm )
+	 {
+	   sb_scnint_mm->setMinimum(minimum_mm);
+	   sb_scnint_mm->setValue(minimum_mm);
+	   sb_scnint_ss->setMinimum(minimum_ss);
+	   sb_scnint_ss->setValue(minimum_ss);
+	 }
      }
     
-   double ssscintmin  = (double)sb_scnint_mm->value();
-   double ssscintsec  = (double)sb_scnint_ss->value();
+   
    double ssscinttim  = ( ssscinthr * 3600.0 ) + ( ssscintmin * 60.0 ) + ssscintsec;
    ssvals[ curssx ][ "scanintv" ] = ssscinttim;  // Set ScInt in step vals vector
 
@@ -1381,6 +1388,14 @@ void US_ExperGuiSpeeds::ssChgScIntTime_ss( int val )
 void US_ExperGuiSpeeds::ssChgDelayTime_hh( int val )
 {
    double ssdlyhr   = val;
+   double minimum_mm =  delay_mm_min;
+
+   if ( val > 0 )
+     sb_delay_mm->setMinimum(0);
+
+   if ( val == 0 )
+     sb_delay_mm->setMinimum(minimum_mm);
+   
    double ssdlymin  = (double)sb_delay_mm->value();
    double ssdlysec  = (double)sb_delay_ss->value();
    double ssdlytim  = ( ssdlyhr * 3600.0 ) + ( ssdlymin * 60.0 ) + ssdlysec;
@@ -1450,20 +1465,27 @@ void US_ExperGuiSpeeds::adjustDelay( void )
 
    if ( (int)dhms[ 3 ] > 0 )                 //ALEXEY round to nearest min.
      {
-       if ( (int)dhms[ 2 ] == 0 )   
-	 sb_delay_mm ->setValue(1);
-       
-       if ( (int)dhms[ 2 ] > 0 )   
-	 sb_delay_mm ->setValue( (int)dhms[ 2 ] + 1);
+       if ( (int)dhms[ 2 ] == 0 )
+	 {
+	   sb_delay_mm->setMinimum(1);
+	   sb_delay_mm ->setValue(1);
+	 }
+       if ( (int)dhms[ 2 ] > 0 )
+	 {
+	   sb_delay_mm->setMinimum( (int)dhms[ 2 ] + 1 );
+	   sb_delay_mm ->setValue( (int)dhms[ 2 ] + 1 );
+	 }
      }
    else
-     sb_delay_mm ->setValue( (int)dhms[ 2 ] );
-   
+     {
+       sb_delay_mm->setMinimum( (int)dhms[ 2 ] );
+       sb_delay_mm ->setValue( (int)dhms[ 2 ] );
+     }
    //sb_delay_mm ->setValue( (int)dhms[ 2 ] );
    //sb_delay_ss ->setValue( (int)dhms[ 3 ] );
 
-//DbgLv(1) << "EGSp: adjDelay:   setdlymin delaynmin" << setdlymin << delaynmin;
-//DbgLv(1) << "EGSp: adjDelay:   setdlysec delaynsec" << setdlysec << delaynsec;
+   delay_mm_min = sb_delay_mm->value();
+
 }
 
 // Panel for Cells parameters
