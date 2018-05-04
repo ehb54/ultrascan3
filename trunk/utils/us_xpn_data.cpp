@@ -1676,13 +1676,19 @@ DbgLv(1) << "expA:   ii" << ii << "scan" << scannbr << "stage" << istagen
          {
             ftx               = ii;
             stgoff            = 1 - tSydata[ ii ].stageNum;
+            int jj            = ntssda - 1;
+            while ( tSydata[ jj ].speed < irSpeed  &&  jj > 1 )
+            {
+               jj--;
+            }
+            ntssda            = jj + 1;
             break;
          }
       }
 
       ftx               = ( ftx > 0 ) ? ( ftx - 1 ) : 0;
       etimoff           = -tSydata[ ftx ].exptime;   // Experiment time offset
-DbgLv(1) << "expA: ftx" << ftx << "etimoff" << etimoff;
+DbgLv(1) << "expA: ftx" << ftx << "etimoff" << etimoff << "ntssda" << ntssda;
       QList< int > sctimes;
 
       for ( int ii = 0; ii < ntimes; ii++ )
@@ -1694,6 +1700,7 @@ DbgLv(1) << "expA:  ii" << ii << "sctime" << time;
       }
 
       ntimes            = ntssda;
+      int ietime        = (int)qRound( e_utime ) + 60;
       int time_n        = -1;                       // Initial values
       double speed_n    = 0.0;
       double omg2t_n    = 0.0;
@@ -1706,11 +1713,19 @@ DbgLv(1) << "expA:  ii" << ii << "sctime" << time;
          double speed_p    = speed_n;
          double omg2t_p    = omg2t_n;
          double tempe_p    = tempe_n;
-         time_n            = tSydata[ ii ].exptime + etimoff;
+         int time_e        = tSydata[ ii ].exptime;
+         time_n            = time_e + etimoff;
          speed_n           = tSydata[ ii ].speed;
          omg2t_n           = tSydata[ ii ].omgSqT;
          tempe_n           = tSydata[ ii ].tempera;
          int stage         = tSydata[ ii ].stageNum + stgoff;
+         if ( time_e > ietime  ||
+              ( ( speed_n < 100 ) && ( ii > ( ftx + 10 ) ) ) )
+         {  // Time well beyond last scan or speed dropping back down to zero
+DbgLv(1) << "expA:   ii" << ii << "ftx" << ftx << "stage" << stage << "time_n" << time_n
+ << "speed_n" << speed_n << "omg2t_n" << omg2t_n << "*BREAK*";
+            break;
+         }
          int timeinc       = time_n - time_p;       // Increments
          double trange     = timeinc > 0 ? ( 1.0 / (double)timeinc ) : 1.0;
          double speed_i    = ( speed_n - speed_p ) * trange;
