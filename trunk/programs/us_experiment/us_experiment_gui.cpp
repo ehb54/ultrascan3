@@ -3349,7 +3349,7 @@ void US_ExperGuiUpload::submitExperiment()
 
        QVector < int > Total_wvl(nstages_size);
        
-       for (int i=0; i<nstages_size; ++i)
+       for (int i=0; i<nstages_size; i++)
 	 {
 	   AbsScanIds[i].resize(ncells);
 	   AbsRadialPath[i].resize(ncells);
@@ -3357,9 +3357,9 @@ void US_ExperGuiUpload::submitExperiment()
 	   Total_wvl[i] = 0;
 	 }
        
-       for (int i=0; i<nstages_size; ++i)
+       for (int i=0; i<nstages_size; i++)
 	 { 
-	   for (int j=0; j<ncells; ++j)
+	   for (int j=0; j<ncells; j++)
 	     {
 	       AbsScanIds[i][j] = 0;
 	       AbsRadialPath[i][j] = 0;
@@ -3379,14 +3379,29 @@ void US_ExperGuiUpload::submitExperiment()
 	 }
        
        
+       qDebug() << "Begin AbsInsert";
+       bool is_dummy = false;
+       int curr_stage;
        for (int i=0; i<nstages_size; i++)
 	 { 
 	   if (i==0 && tem_delay_sec)
-	     continue;                     // skip dummy stage for AbsScanParams
+	     {
+	       is_dummy = true;
+	       continue;                     // skip dummy stage for AbsScanParams
+	     }
 
-	   double duration_sec = rpSpeed->ssteps[ i ].duration;
-	   double delay_sec    = rpSpeed->ssteps[ i ].delay;  
-	   double scanint_sec  = rpSpeed->ssteps[ i ].scanintv;
+	   if (is_dummy)
+	     curr_stage = i - 1;
+	   else
+	     curr_stage = i;
+	   
+	   qDebug() << "index i: " << i << ", curr_stage: " << curr_stage;
+
+	   double duration_sec = rpSpeed->ssteps[ curr_stage ].duration;
+	   double delay_sec    = rpSpeed->ssteps[ curr_stage ].delay;  
+	   double scanint_sec  = rpSpeed->ssteps[ curr_stage ].scanintv;
+
+	   qDebug() << "Size of rpSpeed is: " << rpSpeed->ssteps.size() << ", while nstages_size is: " << nstages_size << ", size of Total_wvl is: " <<  Total_wvl.size();
 
 	   // <-- Which delay should we substract ? (not a stage delay but due to acceleration ONLY ? )
 	   //int ScanCount = int( (duration_sec - delay_sec) / (scanint_sec * Total_wvl[i]) );  
@@ -3526,8 +3541,11 @@ void US_ExperGuiUpload::submitExperiment()
 		     }
 		   
 		 }
+	       qDebug() << "Cell " << j << "is processed ";
 	     }
+	   qDebug() << "AFTER CELLS processed";
 	 }
+       qDebug() << "AFTER STAGES processed";
 
        
        // Interference INSERT ////////////////////////////////////////////////////////////////////////
@@ -3832,6 +3850,8 @@ void US_ExperGuiUpload::submitExperiment()
        QString sysstatint    = QString::number(1);
        QStringList speeds    = sibLValue( "speeds",    "profiles" );
        
+       int curr_stage_fuge;
+       bool is_dummy_fuge = false;
        //int ss                = 0;                                      // <-- for reading RPMs from speeds 
        for (int i=0; i<nstages_size; i++)
 	 { 
@@ -3851,15 +3871,20 @@ void US_ExperGuiUpload::submitExperiment()
 	     {
 	       stagestart  += QString::number(tem_delay_sec);          // <-- stagestart dummy stages 
 	       stagerpm    += QString::number(0);                      // <-- RPM (0) dummy stage
+	       is_dummy_fuge = true;
 	     }
 	   else
 	     {
 	       // stagestart  += QString::number(0);                       // <-- stagestart Active stages
 	       // stagerpm    += QString::number( (speeds[ss].split(QRegExp("\\s+"), QString::SkipEmptyParts))[0].toInt() );       // <-- RPM Active stages
 	       // ss += 5;
+	       if (is_dummy_fuge)
+		 curr_stage_fuge = i - 1;
+	       else
+		 curr_stage_fuge = i;
 	       
-	       stagestart  += QString::number(rpSpeed->ssteps[ i ].delay);  // <-- stagestart Active stages
-	       stagerpm    += QString::number(rpSpeed->ssteps[ i ].speed);  // <-- RPM Active stages
+	       stagestart  += QString::number(rpSpeed->ssteps[ curr_stage_fuge ].delay);  // <-- stagestart Active stages
+	       stagerpm    += QString::number(rpSpeed->ssteps[ curr_stage_fuge ].speed);  // <-- RPM Active stages
 	     }
 	   
 	   if ( i != nstages_size-1 )
