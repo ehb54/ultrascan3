@@ -812,6 +812,13 @@ DbgLv(1) << "EGSp: df_delatm" << df_delatm;
 DbgLv(1) << "EGSp:   def  d h m s " << dhms_dly;
    profdesc.resize( nspeed );  // Speed profile descriptions
    ssvals  .resize( nspeed );  // Speed step values
+
+   scanint_ss_min.resize( nspeed );
+   scanint_mm_min.resize( nspeed );
+   scanint_hh_min.resize( nspeed );
+   delay_mm_min  .resize( nspeed );
+
+   
    ssvals[ 0 ][ "speed" ]    = df_speed;  // Speed default
    ssvals[ 0 ][ "accel" ]    = df_accel;  // Acceleration default
    ssvals[ 0 ][ "duration" ] = df_duratm; // Duration in seconds default (5h 30m)
@@ -857,9 +864,9 @@ DbgLv(1) << "EGSp: init sb/de components";
    sb_scnint_mm ->setValue( (int)hms_scint[ 2 ] );
    sb_scnint_ss ->setValue( (int)hms_scint[ 3 ] );
    
-   scanint_ss_min = (int)hms_scint[ 3 ];
-   scanint_mm_min = (int)hms_scint[ 2 ];
-   scanint_hh_min = (int)hms_scint[ 1 ];
+   scanint_ss_min[0] = (int)hms_scint[ 3 ];
+   scanint_mm_min[0] = (int)hms_scint[ 2 ];
+   scanint_hh_min[0] = (int)hms_scint[ 1 ];
    
 DbgLv(1) << "EGSp: DONE init sb/de components";
 
@@ -975,6 +982,8 @@ DbgLv(1) << "EGSp: addWidg/Layo II";
    adjustDelay();
 
    initPanel();
+
+   //qDebug() << "SCANINT: " << ssvals[ 0 ][ "scanintv" ]  << ", SCANINT FROM rpSpeed: " <<  rpSpeed->ssteps[ 0 ].scanintv;
 }
 
 // Return speed profile description string for an indicated step
@@ -1019,10 +1028,16 @@ void US_ExperGuiSpeeds::ssChangeCount( int val )
 DbgLv(1) << "EGSp: chgKnt: nsp nnsp" << nspeed << new_nsp;
   
   double speedmax  = sibDValue( "rotor",   "maxrpm" ); 
-   if ( new_nsp > nspeed )
+  if ( new_nsp > nspeed )
    {  // Number of speed steps increases
       profdesc.resize( new_nsp );
       ssvals  .resize( new_nsp );
+      
+      scanint_ss_min.resize( new_nsp );
+      scanint_mm_min.resize( new_nsp );
+      scanint_hh_min.resize( new_nsp );
+      delay_mm_min  .resize( new_nsp );
+      
       int kk           = nspeed - 1;
       double ssspeed   = ssvals[ kk ][ "speed" ];
       double ssaccel   = ssvals[ kk ][ "accel" ];
@@ -1051,23 +1066,23 @@ DbgLv(1) << "EGSp: chgKnt: nsp nnsp" << nspeed << new_nsp;
 DbgLv(1) << "EGSp: chgKnt:  kk" << kk << "spd acc dur dly" 
  << ssspeed << ssaccel << ssdurtim << ssdlytim;
 
-      for ( kk = nspeed; kk < new_nsp; kk++ )
+      for ( int kkk = nspeed; kkk < new_nsp; kkk++ )
       {  // Fill in new speed step description and values
          ssspeed         += 5000.0;
 	 if (ssspeed > speedmax)                    //ALEXEY
 	   ssspeed = speedmax;
-         ssvals[ kk ][ "speed"    ] = ssspeed;   // Speed
-         ssvals[ kk ][ "accel"    ] = ssaccel;   // Acceleration
-         ssvals[ kk ][ "duration" ] = ssdurtim;  // Duration in minutes  // No, in seconds
-         ssvals[ kk ][ "delay"    ] = ssdlytim;  // Delay in seconds
+         ssvals[ kkk ][ "speed"    ] = ssspeed;   // Speed
+         ssvals[ kkk ][ "accel"    ] = ssaccel;   // Acceleration
+         ssvals[ kkk ][ "duration" ] = ssdurtim;  // Duration in minutes  // No, in seconds
+         ssvals[ kkk ][ "delay"    ] = ssdlytim;  // Delay in seconds
 
-	 ssChangeScInt( ssspeed, kk );  //ALEXEY
+	 ssChangeScInt( ssspeed, kkk );  //ALEXEY
 	 	 
-         profdesc[ kk ]             = speedp_description( kk );
-DbgLv(1) << "EGSp: chgKnt:    kk" << kk << "pdesc" << profdesc[kk];
+         profdesc[ kkk ]             = speedp_description( kkk );
+DbgLv(1) << "EGSp: chgKnt:    kkk" << kkk << "pdesc" << profdesc[kkk];
 
          // Add to the profile description list comboBox
-         cb_prof->addItem( profdesc[ kk ] );
+         cb_prof->addItem( profdesc[ kkk ] );
       }
 
       // Point to the first new speed step
@@ -1081,6 +1096,12 @@ DbgLv(1) << "EGSp: chgKnt:    kk" << kk << "pdesc" << profdesc[kk];
    {  // Number of speed steps decreases or remains the same
       profdesc.resize( new_nsp );
       ssvals  .resize( new_nsp );
+
+      scanint_ss_min.resize( new_nsp );
+      scanint_mm_min.resize( new_nsp );
+      scanint_hh_min.resize( new_nsp );
+      delay_mm_min  .resize( new_nsp );
+      
       cb_prof->clear();
       for ( int ii = 0; ii < new_nsp; ii++ )
          cb_prof->addItem( profdesc[ ii ] );
@@ -1111,15 +1132,20 @@ DbgLv(1) << "EGSp: chgPfx:  speed-c speed-p"
    double ssdlytim  = ssvals[ curssx ][ "delay" ];
    double speedmax  = sibDValue( "rotor",   "maxrpm" );
 
+   double scinttim  = ssvals[ curssx ][ "scanintv" ]; // ALEXEY added scaninterval
+
    QList< int > dhms_dur;
    QList< int > dhms_dly;
+   QList< int > dhms_scint;
    US_RunProtocol::timeToList( ssdurtim, dhms_dur );
    US_RunProtocol::timeToList( ssdlytim, dhms_dly );
+   US_RunProtocol::timeToList( scinttim, dhms_scint ); 
 DbgLv(1) << "EGSp: chgPfx:   durtim" << ssdurtim << "dhms_dur" << dhms_dur;
 DbgLv(1) << "EGSp: chgPfx:    speedmax" << speedmax;
    ct_speed ->setMaximum( speedmax );      // Set speed max based on rotor max
    ct_speed ->setValue( ssspeed  );        // Set counter values
    ct_accel ->setValue( ssaccel  );
+   
 
    // sb_durat ->setValue( (int)dhms_dur[ 0 ] );            //ALEXEY
    // tm_durat ->setTime ( QTime( dhms_dur[ 1 ],
@@ -1134,12 +1160,31 @@ DbgLv(1) << "EGSp: chgPfx:    speedmax" << speedmax;
    sb_durat_hh ->setValue( (int)dhms_dur[ 1 ] );
    sb_durat_mm ->setValue( (int)dhms_dur[ 2 ] );
    sb_durat_ss ->setValue( (int)dhms_dur[ 3 ] );
+
+
+   //ALEXEY: before minimums for delay/scanint counters must be set for selected row (ssp -> curssx ), so minimums_hh/ss must be set to be arrays.
+
+   //scanint_ss_min[ curssx ],  scanint_mm_min[ curssx ],  scanint_hh_min[ curssx ];
+   // sb_delay_mm ->setMinimum( delay_mm_min[ curssx ] );
+   // and so on....
+
+   sb_delay_mm ->setMinimum( delay_mm_min[ curssx ] );
+      
    sb_delay_dd ->setValue( (int)dhms_dly[ 0 ] );
    sb_delay_hh ->setValue( (int)dhms_dly[ 1 ] );
    sb_delay_mm ->setValue( (int)dhms_dly[ 2 ] );
    sb_delay_ss ->setValue( (int)dhms_dly[ 3 ] );
 
-   adjustDelay();
+   sb_scnint_hh ->setMinimum( scanint_hh_min[curssx] );
+   sb_scnint_mm ->setMinimum( scanint_mm_min[curssx] );
+   sb_scnint_ss ->setMinimum( scanint_ss_min[curssx] );
+
+   sb_scnint_hh ->setValue( (int)dhms_scint[ 1 ] ); 
+   sb_scnint_mm ->setValue( (int)dhms_scint[ 2 ] );
+   sb_scnint_ss ->setValue( (int)dhms_scint[ 3 ] );
+ 
+
+   //adjustDelay();        // Important: not needed here as it re-writes delay to default min.
 }
 
 // Slot for change in speed value
@@ -1149,6 +1194,14 @@ DbgLv(1) << "EGSp: chgSpe: val" << val << "ssx" << curssx;
    ssvals  [ curssx ][ "speed" ] = val;  // Set Speed in step vals vector
 
    ssChangeScInt(val, curssx);
+
+   sb_scnint_hh ->setMinimum( scanint_hh_min[curssx] );
+   sb_scnint_mm ->setMinimum( scanint_mm_min[curssx] );
+   sb_scnint_ss ->setMinimum( scanint_ss_min[curssx] );
+   
+   sb_scnint_hh ->setValue( scanint_hh_min[curssx] );
+   sb_scnint_mm ->setValue( scanint_mm_min[curssx] );
+   sb_scnint_ss ->setValue( scanint_ss_min[curssx] );
         
    profdesc[ curssx ] = speedp_description( curssx );
    cb_prof->setItemText( curssx, profdesc[ curssx ] );
@@ -1160,7 +1213,7 @@ DbgLv(1) << "EGSp: chgSpe: val" << val << "ssx" << curssx;
 }
 
 //Set ScanInt based on RPM speed entered
-void US_ExperGuiSpeeds::ssChangeScInt( double val, int curssx )
+void US_ExperGuiSpeeds::ssChangeScInt( double val, int row )
 {
   // Fit of the time-interval graph with A0 + A1/X;  [X => val]
   QVector<double> a0(4);
@@ -1180,22 +1233,24 @@ void US_ExperGuiSpeeds::ssChangeScInt( double val, int curssx )
   if (val >= 51000 and val <= 60000 )
     time_scint = a0[3] + qRound( a1[3]/val );
   
-  ssvals[curssx]["scanintv"] = time_scint;
+  ssvals[row]["scanintv"] = time_scint;
   QList< int > hms_scint;
   US_RunProtocol::timeToList( time_scint, hms_scint );
-  sb_scnint_hh ->setMinimum( (int)hms_scint[ 1 ] );
-  sb_scnint_mm ->setMinimum( (int)hms_scint[ 2 ] );
-  sb_scnint_ss ->setMinimum( (int)hms_scint[ 3 ] );
-  
-  sb_scnint_hh ->setValue( (int)hms_scint[ 1 ] );
-  sb_scnint_mm ->setValue( (int)hms_scint[ 2 ] );
-  sb_scnint_ss ->setValue( (int)hms_scint[ 3 ] );
 
-  scanint_ss_min = (int)hms_scint[ 3 ];
-  scanint_mm_min = (int)hms_scint[ 2 ];
-  scanint_hh_min = (int)hms_scint[ 1 ];
+  // not needed here as these will overwrite current counters when another speed profile is added. Values set in ChProfile function.
+  // sb_scnint_hh ->setMinimum( (int)hms_scint[ 1 ] );
+  // sb_scnint_mm ->setMinimum( (int)hms_scint[ 2 ] );
+  // sb_scnint_ss ->setMinimum( (int)hms_scint[ 3 ] );
   
-  qDebug() << "ScanInt: " << ssvals[curssx]["scanintv"];
+  // sb_scnint_hh ->setValue( (int)hms_scint[ 1 ] );
+  // sb_scnint_mm ->setValue( (int)hms_scint[ 2 ] );
+  // sb_scnint_ss ->setValue( (int)hms_scint[ 3 ] );
+
+  scanint_ss_min[row] = (int)hms_scint[ 3 ];
+  scanint_mm_min[row] = (int)hms_scint[ 2 ];
+  scanint_hh_min[row] = (int)hms_scint[ 1 ];
+  
+  qDebug() << "ScanInt: " << ssvals[row]["scanintv"];
 }
 
 // Slot for change in acceleration value
@@ -1308,19 +1363,22 @@ DbgLv(1) << "EGSp: chgDlyD: val" << val << "ssdly d h"
 void US_ExperGuiSpeeds::ssChgScIntTime_hh( int val )
 {
    double ssscinthr   = val;
-   double minimum_hh =  scanint_hh_min;
-   double minimum_mm =  scanint_mm_min;
-   double minimum_ss =  scanint_ss_min;
+   double minimum_hh =  scanint_hh_min[curssx];
+   double minimum_mm =  scanint_mm_min[curssx];
+   double minimum_ss =  scanint_ss_min[curssx];
 
-   double ssscintmin  = (double)sb_scnint_mm->value();
-   double ssscintsec  = (double)sb_scnint_ss->value();
+   double ssscintmin;  
+   double ssscintsec;  
+
+   ssscintmin = (double)sb_scnint_mm->value();
+   ssscintsec = (double)sb_scnint_ss->value();
    
-    if ( val - minimum_hh == 1 )
+   if ( val - minimum_hh == 1 )
      {
        sb_scnint_mm->setMinimum(0);
        sb_scnint_ss->setMinimum(0);
      }
-    if ( val == minimum_hh )
+   if ( val == minimum_hh )
      {
        if ( ssscintmin <= minimum_mm )
 	 {
@@ -1328,10 +1386,12 @@ void US_ExperGuiSpeeds::ssChgScIntTime_hh( int val )
 	   sb_scnint_mm->setValue(minimum_mm);
 	   sb_scnint_ss->setMinimum(minimum_ss);
 	   sb_scnint_ss->setValue(minimum_ss);
+
+	   ssscintmin  = (double)sb_scnint_mm->value();  // Bug fixed
+	   ssscintsec  = (double)sb_scnint_ss->value(); 
 	 }
      }
-    
-   
+      
    double ssscinttim  = ( ssscinthr * 3600.0 ) + ( ssscintmin * 60.0 ) + ssscintsec;
    ssvals[ curssx ][ "scanintv" ] = ssscinttim;  // Set ScInt in step vals vector
 
@@ -1344,9 +1404,9 @@ void US_ExperGuiSpeeds::ssChgScIntTime_mm( int val )
 {
    double ssscinthr   = (double)sb_scnint_hh->value();
    double ssscintmin  = val;
-   double minimum_hh =  scanint_hh_min;
-   double minimum_mm =  scanint_mm_min;
-   double minimum_ss =  scanint_ss_min;
+   double minimum_hh =  scanint_hh_min[curssx];
+   double minimum_mm =  scanint_mm_min[curssx];
+   double minimum_ss =  scanint_ss_min[curssx];
 
    if ( val - minimum_mm == 1 )
      {
@@ -1388,7 +1448,7 @@ void US_ExperGuiSpeeds::ssChgScIntTime_ss( int val )
 void US_ExperGuiSpeeds::ssChgDelayTime_hh( int val )
 {
    double ssdlyhr   = val;
-   double minimum_mm =  delay_mm_min;
+   double minimum_mm =  delay_mm_min[curssx];
 
    if ( val > 0 )
      sb_delay_mm->setMinimum(0);
@@ -1453,7 +1513,7 @@ void US_ExperGuiSpeeds::adjustDelay( void )
    // Set minimum delay time based on speed change and acceleration
    double cspeed    = ssvals[ curssx ][ "speed" ];   // Current step's speed
    double pspeed    = ( curssx > 0 ) ? ssvals[ curssx - 1 ][ "speed" ] : 0.0;
-   double spdelta   = cspeed - pspeed;               // Speed delta
+   double spdelta   = fabs(cspeed - pspeed);               // Speed delta          <-- In case there is deceleration..
    double accel     = ssvals[ curssx ][ "accel" ];   // Acceleration
    double delaylow  = qCeil( spdelta / accel );      // Low seconds delay
 
@@ -1484,7 +1544,7 @@ void US_ExperGuiSpeeds::adjustDelay( void )
    //sb_delay_mm ->setValue( (int)dhms[ 2 ] );
    //sb_delay_ss ->setValue( (int)dhms[ 3 ] );
 
-   delay_mm_min = sb_delay_mm->value();
+   delay_mm_min[ curssx ] = sb_delay_mm->value();
 
 }
 

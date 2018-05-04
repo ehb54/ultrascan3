@@ -452,7 +452,20 @@ void US_ExperGuiRanges::detailRanges()
       if ( nswavl > 0 )
          dtext += tr( "    Selected Wavelength range   : %1 to %2\n" )
                   .arg( swvlens[ ii ][ 0 ] ).arg( swvlens[ ii ][ nswavl - 1 ] );
+      dtext += tr( "    Selected Wavelengths        : " );
 
+      int counter = 0;
+      for (int  jj =0; jj < swvlens[ ii ].size(); jj++)
+	{
+	  ++counter;
+	  dtext += tr("%1").arg(swvlens[ii][jj]);
+	  if( jj != swvlens[ ii ].size() -1 )
+	    dtext += tr(", ");
+	  if(counter % 8 == 0)
+	    dtext += tr("\n                                  ");
+	}
+      dtext += tr("\n");
+      
       dtext += tr( "    Radius range                : %1 to %2\n" )
                .arg( locrads[ ii ] ).arg( hicrads[ ii ] );
    }
