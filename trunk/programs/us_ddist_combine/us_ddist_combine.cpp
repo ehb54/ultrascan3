@@ -1360,7 +1360,7 @@ void US_DDistr_Combine::possibleColors()
    colors  << QColor( 255,   0,   0 );
    colors  << QColor(   0, 255,   0 );
    colors  << QColor(   0,   0, 255 );
-   colors  << QColor( 255, 255,   0 );
+   colors  << QColor(   0,   0,   0 );
    colors  << QColor( 255,   0, 255 );
    colors  << QColor(   0, 255, 255 );
    colors  << QColor( 122,   0, 255 );

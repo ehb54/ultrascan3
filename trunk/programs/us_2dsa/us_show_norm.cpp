@@ -289,10 +289,10 @@ US_show_norm::US_show_norm(  US_Model* model, bool& cnst_vbar, QWidget* p )
    spec->addLayout( gl_y_vbar,     s_row,   5, 1, 1 );
    spec->addLayout( gl_y_D,        s_row,   6, 1, 1 );
    spec->addLayout( gl_y_f,        s_row++, 7, 1, 1 );
-   spec->addWidget( pb_refresh,    s_row++,   0, 1, 8 );
+   spec->addWidget( pb_refresh,    s_row++, 0, 1, 8 );
    spec->addWidget( pb_ldcolor,    s_row++, 0, 1, 8 );
-   spec->addWidget( pb_close,      s_row++, 0, 1, 8 );
    spec->addWidget( pb_reset,      s_row++, 0, 1, 8 );
+   spec->addWidget( pb_close,      s_row++, 0, 1, 8 );
 
    // Set up plot component window on right side
    xa_title    = anno_title( ATTR_S );
