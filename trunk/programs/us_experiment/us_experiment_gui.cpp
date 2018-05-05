@@ -177,8 +177,6 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
    QString invtxt  = invnbr + US_Settings::us_inv_name();
    le_investigator = us_lineedit( invtxt, 0, true );
 
-
-
    // Set defaults
    currProto       = &mainw->currProto;
    currProto->investigator = invtxt;
@@ -1002,13 +1000,10 @@ QString US_ExperGuiSpeeds::speedp_description( int ssx )
    double scaninterval =  ssvals[ ssx ][ "scanintv" ];  //ALEXEY: ssval[]["scanintv"] is set (in secs)  according to table: RPM vs scanint
    int escans = qRound( durtim / scaninterval );
    
-   double durtot  = 0.0;
+   int tscans  = 0;
    for ( int ii = 0; ii < ssvals.size(); ii++ )
-     durtot        += ssvals[ ii ][ "duration" ];  //ALEXEY durtot IS in seconds - NOT minutes
-   //int    tscans  = qRound( durtot * 6.0 );      // Estimated total scans     
-   //int    tscans  = qRound( (durtot / 60.0) * 6.0 );      // Estimated total scans            //ALEXEY: SECS (NOT MINS) times 6
-   int    tscans  = qRound( durtot / scaninterval  );     //ALEXEY: ssval[]["scanintv"] is set (in secs)  according to table: RPM vs scanint
-   
+     tscans        += qRound( ssvals[ ii ][ "duration" ] / ssvals[ ii ][ "scanintv" ] );  //ALEXEY bug fixed
+      
    qDebug() << "SCAN INT: " << scaninterval << ", # Scans: " << tscans; 
      
 DbgLv(1) << "EGSp: spDesc: ssx" << ssx
