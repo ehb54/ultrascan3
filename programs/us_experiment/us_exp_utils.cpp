@@ -677,6 +677,9 @@ DbgLv(1) << "EGSp:inP: nspeed" << nspeed;
 DbgLv(1) << "EGSp:inP:  ii" << ii << "speed accel durat delay scnint"
  << ssvals[ii]["speed"   ] << ssvals[ii]["accel"]
  << ssvals[ii]["duration"] << ssvals[ii]["delay"];
+
+      //profdesc[ curssx ] = speedp_description( curssx );
+      cb_prof->setItemText( ii, speedp_description( ii ) );
    }
 }
 
