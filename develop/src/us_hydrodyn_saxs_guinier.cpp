@@ -2680,6 +2680,17 @@ void US_Hydrodyn_Saxs::set_guinier()
    }
 
    int niqsize = (int)plotted_Iq.size();
+   for ( int i = 0; i < niqsize; ++i ) {
+      if ( plotted_guinier_plotted.count(i) ) {
+         plotted_guinier_plotted[ i ] = false;
+      }
+      if ( plotted_cs_guinier_plotted.count(i) ) {
+         plotted_cs_guinier_plotted[ i ] = false;
+      }
+      if ( plotted_Rt_guinier_plotted.count(i) ) {
+         plotted_Rt_guinier_plotted[ i ] = false;
+      }
+   }
    clear_guinier_error_bars();
    unsigned int total_points = 0;
    bool do_errorbars = 
@@ -3214,6 +3225,17 @@ void US_Hydrodyn_Saxs::set_guinier_eb()
    }
 
    int niqsize = (int)plotted_Iq.size();
+   for ( int i = 0; i < niqsize; ++i ) {
+      if ( plotted_guinier_plotted.count(i) ) {
+         plotted_guinier_plotted[ i ] = false;
+      }
+      if ( plotted_cs_guinier_plotted.count(i) ) {
+         plotted_cs_guinier_plotted[ i ] = false;
+      }
+      if ( plotted_Rt_guinier_plotted.count(i) ) {
+         plotted_Rt_guinier_plotted[ i ] = false;
+      }
+   }
    clear_guinier_error_bars();
    unsigned int total_points = 0;
    bool do_errorbars = 

@@ -28,6 +28,10 @@ class US_EXTERN US_Plot_Util
                             QString & errors,
                             QString & messages
                             );
+   static void plotinfo(
+                        QString  name,
+                        QwtPlot * plot
+                        );
 };
 
 #ifdef WIN32

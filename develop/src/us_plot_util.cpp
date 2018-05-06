@@ -370,3 +370,29 @@ bool US_Plot_Util::printtofile( QString basename,
    return any_plotted;
 }
 
+void US_Plot_Util::plotinfo(
+                            QString name,
+                            QwtPlot * plot
+                            ) {
+#if QT_VERSION >= 0x050000
+   QTextStream out( stdout );
+   QString result = "-->plotinfo info for " + name + "\n";
+
+   QwtPlotItemList ilist = plot->itemList();
+   for ( int ii = 0; ii < ilist.size(); ii++ )
+   {
+      QwtPlotItem* plitem = ilist[ ii ];
+      if ( plitem->rtti() != QwtPlotItem::Rtti_PlotCurve ) {
+         result += QString( "    item %1 not a Rtti_PlotCurve\n" ).arg( ii );
+         continue;
+      }
+
+      QwtPlotCurve* curve = (QwtPlotCurve*) plitem;
+
+      result += QString( "    item %1 title %2 size %3\n" ).arg( ii ).arg( curve->title().text() ).arg( curve->dataSize() );
+
+   }
+   out << result;
+#endif
+}
+
