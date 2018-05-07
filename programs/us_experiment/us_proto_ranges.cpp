@@ -40,6 +40,13 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
    connect( pb_details,   SIGNAL( clicked()       ),
             this,         SLOT  ( detailRanges()  ) );
 
+   // Show listbox with ScanCount per stage
+   cb_scancount      = new QComboBox;
+   rpSpeed = &(mainw->currProto.rpSpeed);
+
+   //cb_scancount->addItem( tr( "Stage %1. Number of Scans: %2 " ).arg(1).arg( 0 ) );
+   
+     
    QLabel* lb_hdr1     = us_banner( tr( "Cell / Channel" ) );
    QLabel* lb_hdr2     = us_banner( tr( "Wavelengths" ) );
    QLabel* lb_hdr3     = us_banner( tr( "Radius Ranges" ) );
@@ -48,7 +55,8 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
    // banners->setContentsMargins( 2, 2, 2, 2 );
    // banners->setHorizontalSpacing( 2 );
    int row             = 0;
-   banners->addWidget( pb_details,      row++, 8, 1, 8 );
+   banners->addWidget( pb_details,      row,   0, 1, 8 );
+   banners->addWidget( cb_scancount,    row++,   8, 1, 8 );
    banners->addWidget( lb_hdr1,         row,   0, 1, 3 );
    banners->addWidget( lb_hdr2,         row,   3, 1, 6 );
    banners->addWidget( lb_hdr3,         row++, 9, 1, 7 );
@@ -593,6 +601,24 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
       for ( int ii = 0; ii < kswavl; ii++ )
 	swvlens[ ccrow ] << wlselec[ ii ].toDouble();
    }
+
+   // Update ScanCount info per stage, per wavelength
+   int tot_wvl = 0;
+   for ( int ii = 0; ii < nrnchan; ii++ )
+     tot_wvl += swvlens[ ii ].size();
+
+   tot_wvl /= 2; // per all cells, not channels (for now)
+   
+   cb_scancount->clear();
+   int nsp = sibIValue( "speeds",  "nspeeds" );
+   for ( int i = 0; i < nsp; i++ )
+     {
+       double duration_sec = rpSpeed->ssteps[ i ].duration;
+       double scanint_sec  = rpSpeed->ssteps[ i ].scanintv;
+       int scancount = int( (duration_sec) / (scanint_sec * tot_wvl) );
+       QString scancount_stage = tr( "Stage %1. Number of Scans per Wavelength: %2 " ).arg(i+1).arg(scancount);
+       cb_scancount->addItem( scancount_stage );
+     }
    
 }
 
@@ -708,6 +734,25 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
       for ( int ii = 0; ii < kswavl; ii++ )
 	swvlens[ ccrow ] << wlselec[ ii ].toDouble();
    }
+
+   // Update ScanCount info per stage, per wavelength
+   int tot_wvl = 0;
+   for ( int ii = 0; ii < nrnchan; ii++ )
+     tot_wvl += swvlens[ ii ].size();
+
+   tot_wvl /= 2; // per all cells, not channels (for now)
+   
+   cb_scancount->clear();
+   int nsp = sibIValue( "speeds",  "nspeeds" );
+   for ( int i = 0; i < nsp; i++ )
+     {
+       double duration_sec = rpSpeed->ssteps[ i ].duration;
+       double scanint_sec  = rpSpeed->ssteps[ i ].scanintv;
+       int scancount = int( (duration_sec) / (scanint_sec * tot_wvl) );
+       QString scancount_stage = tr( "Stage %1. Number of Scans per Wavelength: %2 " ).arg(i+1).arg(scancount);
+       cb_scancount->addItem( scancount_stage );
+     }
+   
  
 }
 
