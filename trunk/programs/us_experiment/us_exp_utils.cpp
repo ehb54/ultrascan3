@@ -1760,7 +1760,7 @@ DbgLv(1) << "EGwS:inP:    ii" << ii << "channel" << channel;
 	}
 
    }
-
+   
    // Make remaining rows invisible
    for ( int ii = nrnchan; ii < mxrow; ii++ )
    {
@@ -1772,6 +1772,51 @@ DbgLv(1) << "EGwS:inP:    ii" << ii << "channel" << channel;
       cc_hrads[ ii ]->setVisible( false );
       cc_lbtos[ ii ]->setVisible( false );
    }
+
+
+   // Fill ScanCount info: # scans per stage/per wavelength
+   int nsp = sibIValue( "speeds",  "nspeeds" );
+   int ncells  = sibIValue( "rotor",   "nholes" );
+   qDebug() << "# speeds, #cells: " << nsp << ", " << ncells;
+   
+   QVector < int > Total_wvl(nsp);
+   
+   for (int i=0; i<nsp; i++)
+     Total_wvl[i] = 0;
+   
+   for (int i=0; i<nsp; i++)
+     { 
+       for (int j=0; j<ncells; j++)
+	 {
+	   //Compute total # wvl per stage
+	   QString channel;
+	   for ( int ii = 0; ii < rpRange->nranges; ii++ )
+	     {
+	       channel  = rpRange->chrngs[ ii ].channel;
+	       if ( channel.contains("sample") && channel.startsWith(QString::number(j+1)) )  // <-- Judge only by sample (channel A) for now
+		 {
+		   Total_wvl[i]  += rpRange->chrngs[ ii ].wvlens.count();
+		 }
+	     }
+	   qDebug() << "#Wvl for cell: " << j << " is: " << Total_wvl[i];
+	 }
+     }
+   
+   cb_scancount->clear();
+   for ( int i = 0; i < nsp; i++ )
+     {
+       double duration_sec = rpSpeed->ssteps[ i ].duration;
+       double scanint_sec  = rpSpeed->ssteps[ i ].scanintv;
+       int scancount;
+       if ( Total_wvl[i] == 0 )
+	 scancount = 0;
+       else
+	 scancount = int( (duration_sec) / (scanint_sec * Total_wvl[i]) );
+       QString scancount_stage = tr( "Stage %1. Number of Scans per Wavelength: %2 " ).arg(i+1).arg(scancount);
+       cb_scancount->addItem( scancount_stage );
+     }
+   // End of ScanCount listbox
+      
 }
 
 // Save panel controls when about to leave the panel

@@ -462,6 +462,7 @@ class US_ExperGuiRanges : public US_WidgetsDialog
    private:
       US_ExperimentMain*   mainw;
       US_RunProtocol::RunProtoRanges*  rpRange;
+      US_RunProtocol::RunProtoSpeed*      rpSpeed;  //!< Speed controls
       US_Help  showHelp;
       QList< QLabel* >         cc_labls;   // Pointers to channel labels
       QList< QPushButton* >    cc_wavls;   // Pointers to wavelength buttons
@@ -480,6 +481,8 @@ class US_ExperGuiRanges : public US_WidgetsDialog
       QVector< QList< double > > swvlens;  // Selected wavelengths, ea. channel
       QVector< double >          locrads;  // Low radius value, ea. channel
       QVector< double >          hicrads;  // High radius value, ea. channel
+
+      QComboBox * cb_scancount;
       
    private slots:
       // \brief Manage extinction profiles in a dialog
