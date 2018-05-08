@@ -1127,9 +1127,12 @@ DbgLv(1) << "SP:ssToDB:  w2t" << spi->w2t_first << spi->w2t_last
 //  speed profile vector implied.
 int US_SimulationParameters::simSpeedsFromTimeState( const QString tmst_fpath )
 {
-   tsobj              = new US_TimeState();      // Create TimeState
+   tsobj            = new US_TimeState();        // Create TimeState
    tsobj->open_read_data( tmst_fpath, true );    // Open with prefetch
    ssProfFromTimeState( tsobj, sim_speed_prof ); // Create SSP vector
+   int dbg_level    = US_Settings::us_debug();
+DbgLv(1) << "SP: ssFts: ispeed" << sim_speed_prof[0].rotorspeed
+ << "ssp count" << sim_speed_prof.count();
    return sim_speed_prof.count();                // Return number steps
 }
 
@@ -1274,12 +1277,12 @@ int tm_cep=tm_ci+150;
       iscan            = tsobj->time_ivalue( "Scan" );
       accel_c          = rs_c - rs_p;      // Current acceleration
       int ss_c_ts      = ss_c;
-if (tm_c<tm_cep || (tsx+5)>nrec)
+if (tm_c<tm_cep || (tsx+5)>nrec || in_accel)
  DbgLv(1) << "Sim parms:ssProf:   tm_c" << tm_c << "rs_c" << rs_c << "ss_c" << ss_c;
 
       if ( in_accel )
       {  // In acceleration, looking for its end
-         ss_c             = (int)qRound( rs_c / 10.0 ) * 10;
+         ss_c             = (int)qRound( rs_c * 0.01 ) * 100;
          if ( ss_c == ss_p  &&  cspeeds.contains( ss_c ) )
          {  // Found a constant speed:  out of acceleration
 DbgLv(1) << "Sim parms:ssProf: accel-end ss_p ss_c" << ss_p << ss_c
@@ -1314,7 +1317,7 @@ DbgLv(1) << "Sim parms:ssProf: accel-end ss_p ss_c" << ss_p << ss_c
 
       else
       {  // In constant speed, looking for its end
-         ss_c             = (int)qRound( rs_c / 10.0 ) * 10;
+         ss_c             = (int)qRound( rs_c * 0.01 ) * 100;
          if ( ss_c != ss_p  &&  !cspeeds.contains( ss_c ) )
          {  // Set speeds unequal:  back into acceleration
 DbgLv(1) << "Sim parms:ssProf: const-end ss_p ss_c" << ss_p << ss_c
