@@ -876,3 +876,87 @@ bool US_Solution::solutionInUse( QString& solutionGUID )
    return in_use;
 }
 
+// Function to count solution occurrences in protocols
+int US_Solution::countInProtocols( US_DB2* dbP )
+{
+   int kntSols      = 0;
+
+   if ( dbP != NULL )
+   {  // Get and search XML from each DB protocol record
+      QStringList qry;
+      qry << "get_protocol_desc" << QString::number( US_Settings::us_inv_ID() );
+      dbP->query( qry );
+
+      if ( dbP->lastErrno() != US_DB2::OK )
+         return 0;    // Error exit:  unable to read DB record
+
+      while ( dbP->next() )
+      {
+         QString xmlStr   = dbP->value( 3 ).toString();
+         if ( solutionInProtocol( xmlStr, false ) )
+            kntSols++;
+qDebug() << "kntInPro:  DB: kntSols" << kntSols << dbP->value(2).toString();
+      }
+   }
+
+   else
+   {  // Get and search XML from each local protocol file
+      QString datdir      = US_Settings::dataDir() + "/projects/";
+      datdir.replace( "\\", "/" );        // Possible Windows fix
+      QStringList rfilt( "R*.xml" );      // "~/ultrascan/data/projects/R*.xml"
+      QStringList pfiles  = QDir( datdir ).entryList(
+                                              rfilt, QDir::Files, QDir::Name );
+      int nfiles          = pfiles.count();
+
+      for ( int ii = 0; ii < nfiles; ii++ )
+      {  // Examine each "R000*.xml" file in the directory
+         QString pfpath      = datdir + pfiles[ ii ];
+         QFile filei( pfpath );
+         if ( ! filei.open( QIODevice::ReadOnly | QIODevice::Text) )
+         {
+            continue;
+         }
+
+         QTextStream tsi( &filei );
+         QString xmlStr  = tsi.readAll();
+         filei.close();
+         if ( solutionInProtocol( xmlStr, true ) )
+            kntSols++;
+qDebug() << "kntInPro:  Disk: kntSols" << kntSols << pfiles[ii];
+      }
+   }
+
+   return kntSols;
+}
+
+// Function to determine if a solution is found in a protocol definition (XML)
+bool US_Solution::solutionInProtocol( const QString protoXml, const bool useName )
+{
+   bool solFound    = false;
+   QString solMatch = useName ? solutionDesc :
+                      QString::number( solutionID );
+   QXmlStreamReader xmli( protoXml );
+
+   while( ! xmli.atEnd() )
+   {
+      xmli.readNext();
+
+      if ( xmli.isStartElement()  &&  xmli.name() == "solution" )
+      {
+         QXmlStreamAttributes atts = xmli.attributes();
+         QString name = atts.value( "name" ).toString();
+         QString soid = atts.value( "id"   ).toString();
+         QString test = useName ? name : soid;
+
+         if ( test == solMatch )
+         {  // Solution match found:  flag and break
+            solFound     = true;
+qDebug() << "solInPro: MATCH" << name << soid << test;
+            break;
+         }
+      }
+   }
+
+   return solFound;
+}
+
