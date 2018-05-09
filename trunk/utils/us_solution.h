@@ -117,12 +117,16 @@ class US_UTIL_EXTERN US_Solution
       */
       bool diskPath          ( QString& );
 
+      //! \brief Function to count occurrences of solution in protocols
+      //! \param    dbP  Pointer to database connection or NULL if local test
+      //! \returns       Count of this solution in protocols
+      int countInProtocols   ( US_DB2* = 0 );
+
       //! \brief An overloaded assignment operator
       US_Solution&           operator=( const US_Solution& );
 
       //! \brief Displays the contents of the class variables in qDebug() statements
       void show              ( void );
-
 
    private:
 
@@ -134,5 +138,6 @@ class US_UTIL_EXTERN US_Solution
       int analyte_type       ( QString );
       QString analyte_typetext( int );
       bool solutionInUse     ( QString& );
+      bool solutionInProtocol( const QString, const bool );
 };
 #endif
