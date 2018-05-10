@@ -1184,7 +1184,8 @@ DbgLv(1) << "Sim parms:ssProf: have_keys" << have_keys;
             (int)qRound( tsobj->time_dvalue( "SetSpeed" ) ) :
                          tsobj->time_ivalue( "SetSpeed" );  // Current set speed
 
-      if ( ss3 == ss2  &&  ss2 == ss1  &&  ss3 > 0 )
+      //if ( ss3 == ss2  &&  ss2 == ss1  &&  ss3 > 0 )
+      if ( ss3 == ss2  &&  ss2 == ss1  &&  ss3 > 5000 )
       { // This non-zero set-speed and both previous are the same
          if ( ! cspeeds.contains( ss3 ) )
             cspeeds << ss3;                // Save it if first time encountered
@@ -1432,7 +1433,7 @@ DbgLv(1) << "SP: ssFssp:  ssp:" << ipp->acceleration
       double w2t_eacc   = ipp->w2t_e_accel;
       double w2t_estep  = ipp->w2t_e_step;
       double avg_speed  = ipp->avg_speed;
-          
+
       int rspeed        = ipp->rotorspeed;
       int duration      = ipp->duration;
       int time_first    = ipp->time_f_scan;
@@ -1453,7 +1454,13 @@ DbgLv(1) << "SP: ssFssp:  ssp:" << ipp->acceleration
                           * delta_w / delta_t;
       double w2t_last   = w2t_eacc + ( time_last  - time_eacc )
                           * delta_w / delta_t;
-         
+
+      if ( ( ss + 1 ) == nspstep )
+      {  // Insure last step's end scan extends to last time
+         time_last         = time_estep;
+         w2t_last          = w2t_estep;
+      }
+
       // Set the values of the SpeedStep
       opp->duration_minutes  = dur_mins;
       opp->delay_minutes     = dly_mins;
