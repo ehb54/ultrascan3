@@ -148,7 +148,7 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    QLabel* lb_density   = us_label( tr( "Density (20" ) + DEGC + ")" );
    QLabel* lb_viscosity = us_label( tr( "Viscosity (20" ) + DEGC + ")" );
    QLabel* lb_vbar      = us_label( tr( "Vbar (20" ) + DEGC + ")" );
-   QLabel* lb_skipped   = us_label( tr( "Skipped:"       ) );
+   QLabel* lb_skipped   = us_label( tr( "Non-Cleared:" ) );
 
    density      = DENS_20W;
    viscosity    = VISC_20W;
@@ -1191,7 +1191,7 @@ QString US_AnalysisBase2::analysis( const QString& extra ) const
                    QString::number( (int)ct_boundaryPercent->value() ) + " %" );
    s += table_row( tr( "Boundary Position:" ),
                    QString::number( (int)ct_boundaryPos->value() ) + " %" );
-   s += table_row( tr( "Early Scans skipped:" ),
+   s += table_row( tr( "Early Non-Cleared Scans:" ),
                    le_skipped->text() + " scans" );
    s += extra;
    
