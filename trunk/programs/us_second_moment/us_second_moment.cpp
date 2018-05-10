@@ -60,8 +60,6 @@ void US_SecondMoment::data_plot( void )
 
    for ( int i = 0; i < scanCount; i++ )
    {
-      if ( excludedScans.contains( i ) ) continue;
-      
       double range  = d->scanData[ i ].plateau - baseline;
       double test_y = baseline + range * positionPct;
       
@@ -139,30 +137,37 @@ void US_SecondMoment::data_plot( void )
    // be included in the line fit:
     
    QwtPlotCurve* curve;
-   QwtSymbol*    sym = new QwtSymbol;
+   QwtSymbol* sym1   = new QwtSymbol;
+   QwtSymbol* sym2   = new QwtSymbol;
    
    int count = 0;
+   int xfsc  = 0;
 
    // Curve 1
    for ( int i = 0; i < exclude; i++ )
    {
       if ( excludedScans.contains( i ) ) continue;
       
-      x[ count ] = (double)( count + 1 );
+      x[ count ] = (double)( i + 1 );
       y[ count ] = smSeconds[ i ];
       count++;
    }
 
-   curve = us_curve( data_plot1, tr( "Non-cleared Sedimentation Coefficients" ) );
+   if ( count > 0 )
+   {
+      curve     = us_curve( data_plot1, tr( "Non-cleared Sedimentation Coefficients" ) );
+      xfsc      = (int)x[ 0 ];
+qDebug() << "2ndm: non-cl: count" << count << "xfsc" << xfsc;
 
-   sym->setStyle( QwtSymbol::Ellipse );
-   sym->setPen  ( QPen( Qt::white ) );
-   sym->setBrush( QBrush( Qt::red ) );
-   sym->setSize ( 8 );
+      sym1->setStyle( QwtSymbol::Ellipse );
+      sym1->setPen  ( QPen( Qt::white ) );
+      sym1->setBrush( QBrush( Qt::red ) );
+      sym1->setSize ( 6 );
    
-   curve->setStyle  ( QwtPlotCurve::NoCurve );
-   curve->setSymbol ( sym );
-   curve->setSamples( x.data(), y.data(), count );
+      curve->setStyle  ( QwtPlotCurve::NoCurve );
+      curve->setSymbol ( sym1 );
+      curve->setSamples( x.data(), y.data(), count );
+   }
 
    // Curve 2
    count          = 0;
@@ -172,31 +177,62 @@ void US_SecondMoment::data_plot( void )
    {
       if ( excludedScans.contains( i ) ) continue;
       
-      x[ count ] = (double)( count + 1 + exclude );
+      x[ count ] = (double)( i + 1 );
       y[ count ] = smSeconds[ i ];
       average   += smSeconds[ i ];
+      if ( count == 0 )
+      {
+         xfsc       = ( xfsc > 0 ) ? xfsc : ( i + 1 );
+      }
       count++;
    }
 
-   average_2nd = (count > 0 ) ? average / count : 0.0;
-
-   sym->setPen  ( QPen  ( Qt::blue  ) );
-   sym->setBrush( QBrush( Qt::white ) );
-   
-   curve  = us_curve( data_plot1, tr( "Cleared Sedimentation Coefficients" ) );
-   curve->setSymbol ( sym );
-   curve->setSamples( x.data(), y.data(), count );
-   
-   // Curve 3
-   x[ 0 ] = 0.0;
-   x[ 1 ] = (double)( scanCount - excludedScans.size() );
-   y[ 0 ] = average_2nd;
-   y[ 1 ] = average_2nd;
+   average_2nd = 0.0;
 
    if ( count > 0 )
    {
-      curve = us_curve( data_plot1, tr( "Average" ) );
+      average_2nd = average / count;
+qDebug() << "2ndm: cl: count" << count << "xfsc" << xfsc
+ << "exclude" << exclude << "exSc k" << excludedScans.count();
+
+      sym2->setStyle( QwtSymbol::Ellipse );
+      sym2->setPen  ( QPen  ( Qt::blue  ) );
+      sym2->setBrush( QBrush( Qt::white ) );
+      sym2->setSize ( 6 );
+   
+      curve  = us_curve( data_plot1, tr( "Cleared Sedimentation Coefficients" ) );
+      curve->setStyle  ( QwtPlotCurve::NoCurve );
+      curve->setSymbol ( sym2 );
+      curve->setSamples( x.data(), y.data(), count );
+   
+      // Fit a line to cleared points
+      double slope, ncept, sigma, corre;
+      double* xx   = x.data();
+      double* yy   = y.data();
+      US_Math2::linefit( &xx, &yy, &slope, &ncept, &sigma, &corre, count );
+      double xc1   = x[ 0 ];
+      double yc1   = xc1 * slope + ncept;
+      double xc2   = x[ count - 1 ];
+      double yc2   = xc2 * slope + ncept;
+
+      // Curve 3 (average line)
+      x[ 0 ] = xfsc;
+      x[ 1 ] = xc2;
+      y[ 0 ] = average_2nd;
+      y[ 1 ] = average_2nd;
+
+      curve = us_curve( data_plot1, tr( "Average Line" ) );
       curve->setPen( QPen( Qt::green ) );
+      curve->setSamples( x.data(), y.data(), 2 );
+
+      // Curve 4 (cleared points fit line)
+      x[ 0 ] = xc1;
+      x[ 1 ] = xc2;
+      y[ 0 ] = yc1;
+      y[ 1 ] = yc2;
+
+      curve = us_curve( data_plot1, tr( "Cleared Points Fit Line" ) );
+      curve->setPen( QPen( Qt::cyan ) );
       curve->setSamples( x.data(), y.data(), 2 );
    }
 
@@ -220,7 +256,7 @@ void US_SecondMoment::data_plot( void )
          if ( index < from                ) continue;
          if ( index >  to                 ) break;
 
-         x[ 0 ] = index;
+         x[ 0 ] = double( i + 1 );
          x[ 1 ] = x[ 0 ];
          y[ 0 ] = smSeconds[ i ] + 0.5;
          y[ 1 ] = smSeconds[ i ] - 0.5;;
