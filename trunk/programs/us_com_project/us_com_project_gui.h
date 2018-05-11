@@ -21,6 +21,7 @@
 #include "us_hardware.h"
 #include "us_select_runs.h"
 #include "us_license_t.h"
+#include "us_plot.h"
 #include "us_license.h"
 
 class US_ComProjectMain;
@@ -86,8 +87,33 @@ class US_ObservGui : public US_WidgetsDialog
       US_ObservGui( QWidget* );
       ~US_ObservGui() {};
 
+      US_PlotPicker* picker;
+      QwtPlot*       data_plot;
+      QwtPlotGrid*   grid;
+      US_Plot*       plot;
+      QComboBox*     cb_rstart;
+      QComboBox*     cb_rend;
+      QComboBox*     cb_optsys;
+      QComboBox*     cb_cellchn;
+      QLineEdit*     le_lrange;
+      
+      QString        prectype;
+      QString        ptype_mw;
+      QString        ptype_tr;
 
-   private:
+      QLabel*        lb_pltrec;
+      QComboBox*     cb_pltrec;
+
+      QPushButton*   pb_prev;
+      QPushButton*   pb_next;
+
+      QwtCounter*    ct_from;
+      QwtCounter*    ct_to;
+      QPushButton*   pb_exclude;
+      QPushButton*   pb_include;
+
+      QLineEdit*     le_status;
+ private:
       US_ComProjectMain*    mainw;      // Parent to all panels
       
    private slots:
