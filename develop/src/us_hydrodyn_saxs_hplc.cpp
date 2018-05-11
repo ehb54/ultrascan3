@@ -1007,6 +1007,9 @@ void US_Hydrodyn_Saxs_Hplc::add_files( bool load_conc )
 {
    disable_all();
    map < QString, bool > existing_items;
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->saxs_options.iq_scale_angstrom ) {
+      editor_msg( "blue", us_tr( "Notice: Unless specifically marked in the header, q values of I(q) files loaded will be converted from 1/nm to 1/Angstrom." ) );
+   }
    for ( int i = 0; i < lb_files->count(); i++ )
    {
       existing_items[ lb_files->item( i )->text() ] = true;
@@ -1532,26 +1535,45 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
    bool   has_time = false;
    double this_time = 0e0;
 
+   double use_units = ( ( US_Hydrodyn * ) us_hydrodyn )->saxs_options.iq_scale_angstrom ? 1.0 : 0.1;
+
    if ( ext == "dat" )
    {
       QRegExp rx_conc      ( "Conc:\\s*(\\S+)(\\s|$)" );
       QRegExp rx_psv       ( "PSV:\\s*(\\S+)(\\s|$)" );
       QRegExp rx_I0se      ( "I0se:\\s*(\\S+)(\\s|$)" );
       QRegExp rx_time      ( "Time:\\s*(\\S+)(\\s|$)" );
-      if ( rx_conc.indexIn( qv[ 0 ] ) )
+      QRegExp rx_unit      ( "Units:\\s*(\\S+)(\\s|$)" );
+      if ( rx_unit.indexIn( qv[ 0 ] ) != -1 )
       {
-         this_conc = rx_conc.cap( 1 ).toDouble();
+         QString unitstr = rx_unit.cap( 1 ).toLower();
+         bool ok = false;
+         if ( !ok && unitstr.contains( QRegExp( "^(1/nm|nm^-1)$" ) ) ) {
+            use_units = 0.1;
+            ok = true;
+         }
+         if ( !ok && unitstr.contains( QRegExp( "^(1/a|a^-1)$" ) ) ) {
+            use_units = 1.0;
+            ok = true;
+         }
+         if ( !ok ) {
+            editor_msg( "black", QString( us_tr( "%1 - unknown Units: %2 specified, must be 1/A or 1/NM, using specified default conversion of %3") ).arg( filename ).arg( rx_unit.cap( 1 ) ).arg( use_units ) );
+         }
+      }
+      if ( rx_conc.indexIn( qv[ 0 ] ) != -1 )
+      {
+        this_conc = rx_conc.cap( 1 ).toDouble();
          // cout << QString( "found conc %1\n" ).arg( this_conc );
       }
-      if ( rx_psv.indexIn( qv[ 0 ] ) )
+      if ( rx_psv.indexIn( qv[ 0 ] ) != -1 )
       {
          this_psv = rx_psv.cap( 1 ).toDouble();
       }
-      if ( rx_I0se.indexIn( qv[ 0 ] ) )
+      if ( rx_I0se.indexIn( qv[ 0 ] ) != -1 )
       {
          this_I0se = rx_I0se.cap( 1 ).toDouble();
       }
-      if ( rx_time.indexIn( qv[ 0 ] ) )
+      if ( rx_time.indexIn( qv[ 0 ] ) != -1 )
       {
          has_time = true;
          this_time = rx_time.cap( 1 ).toDouble();
@@ -2217,6 +2239,10 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
          double this_q         = tokens[ q_offset ].toDouble();
          double this_I         = tokens[ I_offset ].toDouble();
          double this_e = 0e0;
+         if ( use_units != 1 ) {
+            this_q *= use_units;
+            this_q_string = QString( "%1" ).arg( this_q );
+         }
          if ( (int)tokens.size() > e_offset)
          {
             this_e = tokens[ e_offset ].toDouble();
@@ -2892,7 +2918,7 @@ bool US_Hydrodyn_Saxs_Hplc::save_file( QString file, bool &cancel, bool &overwri
       }
    }
 
-   ts << QString( windowTitle() + us_tr( " %1data: %2%3%4%5%6%7%8\n" ) )
+   ts << QString( windowTitle() + us_tr( " %1data: %2 Units:1/a%3%4%5%6%7%8\n" ) )
       .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
       .arg( file )
       .arg( f_psv .count( file ) ? QString( " PSV:%1"  ).arg( f_psv [ file ] ) : QString( "" ) )

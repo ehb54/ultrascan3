@@ -3218,16 +3218,16 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
       QRegExp rx_conc      ( "Conc:\\s*(\\S+)(\\s|$)" );
       QRegExp rx_psv       ( "PSV:\\s*(\\S+)(\\s|$)" );
       QRegExp rx_I0se      ( "I0se:\\s*(\\S+)(\\s|$)" );
-      if ( rx_conc.indexIn( qv[ 0 ] ) )
+      if ( rx_conc.indexIn( qv[ 0 ] ) != -1 )
       {
          this_conc = rx_conc.cap( 1 ).toDouble();
          // cout << QString( "found conc %1\n" ).arg( this_conc );
       }
-      if ( rx_psv.indexIn( qv[ 0 ] ) )
+      if ( rx_psv.indexIn( qv[ 0 ] ) != -1 )
       {
          this_psv = rx_psv.cap( 1 ).toDouble();
       }
-      if ( rx_I0se.indexIn( qv[ 0 ] ) )
+      if ( rx_I0se.indexIn( qv[ 0 ] ) != -1 )
       {
          this_I0se = rx_I0se.cap( 1 ).toDouble();
       }
