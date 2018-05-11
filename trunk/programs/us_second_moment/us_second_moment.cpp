@@ -236,7 +236,7 @@ qDebug() << "2ndm: cl: count" << count << "xfsc" << xfsc
       curve->setSamples( x.data(), y.data(), 2 );
    }
 
-   data_plot1->setAxisScale   ( QwtPlot::xBottom, 0.0, x[ 1 ] + 0.25, 0.0 );
+   data_plot1->setAxisScale   ( QwtPlot::xBottom, xfsc - 0.8, x[ 1 ] + 0.25, 0.0 );
    data_plot1->setAxisMaxMinor( QwtPlot::xBottom, 0 );
 
    // Mark excluded
