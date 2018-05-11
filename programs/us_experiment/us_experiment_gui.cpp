@@ -66,7 +66,8 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    tabWidget->setCurrentIndex( curr_panx );
 
    // Add bottom buttons
-   QPushButton* pb_close  = us_pushbutton( tr( "Close" ) );
+   //QPushButton* pb_close  = us_pushbutton( tr( "Close" ) );
+   pb_close = us_pushbutton( tr( "Close" ) );;
    QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
    // QPushButton* pb_next   = us_pushbutton( tr( "Next Panel" ) );
    // QPushButton* pb_prev   = us_pushbutton( tr( "Previous Panel" ) );
