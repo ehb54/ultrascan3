@@ -438,12 +438,12 @@ void US_ExperGuiGeneral::changed_protocol( void )
 {
    QString protname     = le_protocol->text();
 
-   if ( pr_names.contains( protname ) )
+   if ( pr_names.contains( protname ) or protname.trimmed() == "" )
    {
       QString msg          =
          tr( "The protocol name given<br/>" )
          +  "  ( <b>" + protname + "</b> )<br/>"
-         + tr( "is already being used.  It will need to be<br/>"
+         + tr( "is already being used or empty.  It will need to be<br/>"
                "changed if/when this protocol is saved.<br/><br/>"
                "If you plan to make changes to this protocol,<br/>"
                "it is suggested that you change it's name<br/>"
@@ -3173,7 +3173,7 @@ DbgLv(1) << "EGUp:svRP:   prnames" << prnames;
    QString protname    = sibSValue( "general", "protocol" );
 //DbgLv(1) << "EGUp:svRP:  protname" << protname << "prdats0" << prdats[0];  //ALEXEY: important: this statement caused bug when no protocols existed in the DB
 
-   if ( prnames.contains( protname ) )
+   if ( prnames.contains( protname ) or protname.trimmed().isEmpty() )
    {  // Cannot save until a new protocol name is given
       QString mtitle  = tr( "Protocol Name not New" );
       QString message = tr( "The current Run Protocol cannot be saved until\n"
@@ -3193,7 +3193,7 @@ DbgLv(1) << "EGUp:svRP:   prnames" << prnames;
           "or on <b>Cancel</b> to abort the Run Protocol save.<br/>" );
 
    // Keep displaying the dialog text until a unique name is given
-   while( prnames.contains( newpname ) )
+   while( prnames.contains( newpname ) or newpname.trimmed().isEmpty() )
    {
       newpname            = QInputDialog::getText( this,
                                tr( "Enter New Run Protocol Name/Description" ),
