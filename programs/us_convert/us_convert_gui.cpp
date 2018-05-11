@@ -892,15 +892,23 @@ void US_ConvertGui::importAUC( void )
 
    for ( int trx = 0; trx < files.size(); trx++ )
    {
-      QString fname = files[ trx ];
-      QString fpath = importDir + fname;
+      QString fname  = files[ trx ];
+      QString fpath  = importDir + fname;
       US_DataIO::RawData     rdata;
       US_Convert::TripleInfo tripinfo;
 
+      // Get a raw data from an auc file
       US_DataIO::readRawData( fpath, rdata );
 
+      // Give it a new unique GUID, since we are making a copy
+      QString uuidst = US_Util::new_guid();
+      US_Util::uuid_parse( uuidst, (unsigned char*)&rdata.rawGUID );
+DbgLv(1) << "rIA: trx" << trx << "uuid" << uuidst << importDir;
+
+      // Save the raw data for this triple
       allData << rdata;
 
+      // Save triple information
       QString triple   = QString::number( rdata.cell ) + " / "
          + QString( rdata.channel ) + " / "
          + QString::number( qRound( rdata.scanData[ 0 ].wavelength ) );
