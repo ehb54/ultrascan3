@@ -19,6 +19,7 @@ US_XpnData::US_XpnData( ) {
    dbuser       = QString( "aucuser" );
    dbpasw       = QString( "badpasswd" );
    sctype       = 1;
+   ntscan       = 0;
    runType      = "RI";
 DbgLv(0) << "XpDa: dbg_level" << dbg_level;
 }
@@ -150,6 +151,12 @@ DbgLv(1) << "XpDa:scn: tabname" << tabname << "rows" << rows
       exprow.inscnf    = sqry.value( cxs[15] ).toBool();
       exprow.wlscnf    = sqry.value( cxs[16] ).toBool();
 
+      // Skip any runs with no associated scan table entries
+      if ( ! ( exprow.abscnf || exprow.flscnf ||
+               exprow.inscnf || exprow.wlscnf ) )
+         continue;
+
+      // Save experiment row
       tExprun << exprow;
 
       QString inforow = delim + QString::number( exprow.runId )
@@ -267,6 +274,8 @@ DbgLv(1) << "XpDa:f_r: ii" << ii << "EXCLUDED:" << runIsav[ii];
 bool US_XpnData::import_data( const int runId, const int scanMask )
 {
    bool status   = true;
+   ntscan        = 0;
+   ntsrow        = 0;
 
    if ( ! dbxpn.open() )
    {
@@ -316,6 +325,8 @@ bool US_XpnData::import_data( const int runId, const int scanMask )
    int crows     = scan_xpndata( runId, 'C' );
 DbgLv(1) << "XpDa:i_d: arows frows irows wrows srows crows"
    << arows << frows << irows << wrows << srows << crows;
+
+   ntsrow        = arows + frows + irows + wrows;
 
    return status;
 }
@@ -1934,6 +1945,7 @@ void US_XpnData::mapCounts( void )
    counts[ "slambda"   ]  = slambda;
    counts[ "elambda"   ]  = elambda;
    counts[ "scan_all"  ]  = ntscan;
+   counts[ "scan_rows" ]  = ntsrow;
 }
 
 #if 0

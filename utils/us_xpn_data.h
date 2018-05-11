@@ -413,6 +413,7 @@ class US_UTIL_EXTERN US_XpnData : public QObject
       int       mnscnn;              //!< Minimum scan number
       int       mxscnn;              //!< Maximum scan number
       int       ntscan;              //!< Total scans for all triples
+      int       ntsrow;              //!< Total (A+F+I+W) scan rows
       int       etimoff;             //!< Experimental time offset
       int       sstintv;             //!< System Status interval
 
