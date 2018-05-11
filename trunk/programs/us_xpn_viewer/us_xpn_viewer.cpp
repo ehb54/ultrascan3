@@ -578,7 +578,11 @@ DbgLv(1) << "RDr: call connect_data  dbname h p u w"
    {
 if ( dbg_level > 0 ) xpn_data->dump_tables();
       xpn_data->scan_runs( runInfo );
+#if 0
+DbgLv(1) << "RDr:  pre-filter runs" << runInfo.count();
       xpn_data->filter_runs( runInfo );
+DbgLv(1) << "RDr:  post-filter runs" << runInfo.count();
+#endif
 DbgLv(1) << "RDr:  rtn fr scan_runs,filter_runs";
    }
    else
@@ -649,6 +653,18 @@ QDateTime sttime=QDateTime::currentDateTime();
 DbgLv(1) << "RDr:     iRId" << iRunId << "sMsks scnmask" << sMasks << scanmask;
 
    xpn_data->import_data( iRunId, scanmask );
+   int ntsrows        = xpn_data->countOf( "scan_rows" );
+DbgLv(1) << "RDr:     ntsrows" << ntsrows;
+DbgLv(1) << "RDr:      knt(triple)   " << xpn_data->countOf( "triple"    );
+
+
+   if ( ntsrows < 1 )
+   {
+      le_status->setText( tr( "Run %1 has no associated data!!!" )
+                          .arg( fRunId ) );
+      return;
+   }
+
    le_status->setText( tr( "Initial Raw Optima data import complete." ) );
    qApp->processEvents();
 double tm1=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
