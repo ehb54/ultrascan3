@@ -737,6 +737,7 @@ class US_ExperimentMain : public US_Widgets
 
       QPushButton* pb_next;
       QPushButton* pb_prev;
+      QPushButton* pb_close;
 
    private:
 
