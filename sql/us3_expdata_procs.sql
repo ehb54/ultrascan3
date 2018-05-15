@@ -1359,11 +1359,12 @@ BEGIN
     LEFT JOIN   documentLink ON ( documentLink.reportDocumentID = reportDocument.reportDocumentID )
     WHERE       reportDocument.editedDataID = p_editedDataID;
 
-    DELETE      model, noise, modelPerson
+    DELETE      model, noise, modelPerson, pcsa_modelrecs
     FROM        editedData
     LEFT JOIN   model       ON ( model.editedDataID   = editedData.editedDataID )
     LEFT JOIN   noise       ON ( noise.modelID        = model.modelID )
     LEFT JOIN   modelPerson ON ( modelPerson.modelID  = model.modelID )
+    LEFT JOIN   pcsa_modelrecs ON ( pcsa_modelrecs.editedDataID = editedData.editedDataID )
     WHERE       editedData.editedDataID = p_editedDataID;
 
     DELETE      FROM editedData
