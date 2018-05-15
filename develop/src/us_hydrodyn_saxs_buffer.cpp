@@ -2550,6 +2550,9 @@ public:
 void US_Hydrodyn_Saxs_Buffer::add_files()
 {
    map < QString, bool > existing_items;
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->saxs_options.iq_scale_angstrom ) {
+      editor_msg( "blue", us_tr( "Notice: Unless specifically marked in the header, q values of I(q) files loaded will be converted from 1/nm to 1/Angstrom." ) );
+   }
    for ( int i = 0; i < lb_files->count(); i++ )
    {
       existing_items[ lb_files->item( i )->text() ] = true;
@@ -3213,11 +3216,30 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
    double this_psv  = 0e0;
    double this_I0se = 0e0;
 
+   double use_units = ( ( US_Hydrodyn * ) us_hydrodyn )->saxs_options.iq_scale_angstrom ? 1.0 : 0.1;
+
    if ( ext == "dat" )
    {
       QRegExp rx_conc      ( "Conc:\\s*(\\S+)(\\s|$)" );
       QRegExp rx_psv       ( "PSV:\\s*(\\S+)(\\s|$)" );
       QRegExp rx_I0se      ( "I0se:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_unit      ( "Units:\\s*(\\S+)(\\s|$)" );
+      if ( rx_unit.indexIn( qv[ 0 ] ) != -1 )
+      {
+         QString unitstr = rx_unit.cap( 1 ).toLower();
+         bool ok = false;
+         if ( !ok && unitstr.contains( QRegExp( "^(1/nm|nm^-1)$" ) ) ) {
+            use_units = 0.1;
+            ok = true;
+         }
+         if ( !ok && unitstr.contains( QRegExp( "^(1/a|a^-1)$" ) ) ) {
+            use_units = 1.0;
+            ok = true;
+         }
+         if ( !ok ) {
+            editor_msg( "black", QString( us_tr( "%1 - unknown Units: %2 specified, must be 1/A or 1/NM, using specified default conversion of %3") ).arg( filename ).arg( rx_unit.cap( 1 ) ).arg( use_units ) );
+         }
+      }
       if ( rx_conc.indexIn( qv[ 0 ] ) != -1 )
       {
          this_conc = rx_conc.cap( 1 ).toDouble();
@@ -3269,6 +3291,10 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
          double this_q         = tokens[ 0 + offset ].toDouble();
          double this_I         = tokens[ 1 + offset ].toDouble();
          double this_e = 0e0;
+         if ( use_units != 1 ) {
+            this_q *= use_units;
+            this_q_string = QString( "%1" ).arg( this_q );
+         }
          if ( (int)tokens.size() > 2 + offset)
          {
             this_e = tokens[ 2 + offset ].toDouble();
@@ -4118,7 +4144,7 @@ bool US_Hydrodyn_Saxs_Buffer::save_file( QString file, bool &cancel, bool &overw
       }
    }
 
-   ts << QString( title + us_tr( " output: %1%2%3%4\n" ) )
+   ts << QString( title + us_tr( " output: %1%2%3%4 Units:1/a\n" ) )
       .arg( file )
       .arg( f_psv .count( file ) ? QString( " PSV:%1"  ).arg( f_psv [ file ] ) : QString( "" ) )
       .arg( f_I0se.count( file ) ? QString( " I0se:%1" ).arg( f_I0se[ file ] ) : QString( "" ) )
