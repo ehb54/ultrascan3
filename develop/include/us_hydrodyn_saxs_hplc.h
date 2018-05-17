@@ -1005,7 +1005,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       csv  current_csv();
 
-      bool load_file( QString file );
+      bool load_file( QString file, bool load_conc = false );
 
       void plot_files();
       bool plot_file( QString file,

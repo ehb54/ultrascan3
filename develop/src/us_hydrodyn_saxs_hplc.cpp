@@ -5,6 +5,7 @@
 #include "../include/us_hydrodyn_saxs_hplc_ciq.h"
 #include "../include/us_hydrodyn_saxs_hplc_fit.h"
 #include "../include/us_hydrodyn_saxs_hplc_fit_global.h"
+#include "../include/us_hydrodyn_saxs_hplc_conc_csv_frames.h"
 #include "../include/us_lm.h"
 #if QT_VERSION >= 0x040000
 #include <qwt_scale_engine.h>
@@ -1043,10 +1044,12 @@ void US_Hydrodyn_Saxs_Hplc::add_files( bool load_conc )
 
    if ( load_conc )
    {
-      filenames = QFileDialog::getOpenFileNames( this , "Load concentration files" , use_dir , "txt files [specify q, I, sigma columns] (*.txt);;"
+      filenames = QFileDialog::getOpenFileNames( this , "Load concentration files" , use_dir , "txt [specify q, I, sigma columns] and csv concentration files (*.txt *.csv);;"
                                                 "dat files [foxs / other] (*.dat);;"
                                                 "All files (*);;"
-                                                "ssaxs files (*.ssaxs)" );
+                                                "ssaxs files (*.ssaxs);;"
+                                                "txt files [specify q, I, sigma columns] (*.txt);;"
+                                                "csv files (*.csv)" );
 
       // QString filename = 
       //    QFileDialog::getOpenFileName(
@@ -1211,7 +1214,7 @@ void US_Hydrodyn_Saxs_Hplc::add_files( bool load_conc )
       QString basename = QFileInfo( filenames[ i ] ).completeBaseName();
       if ( !existing_items.count( basename ) )
       {
-         if ( !load_file( filenames[ i ] ) )
+         if ( !load_file( filenames[ i ], load_conc ) )
          {
             errors += errormsg + "\n";
          } else {
@@ -1474,7 +1477,7 @@ void US_Hydrodyn_Saxs_Hplc::select_all_created()
    update_enables();
 }
 
-bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
+bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
 {
    errormsg = "";
    QFile f( filename );
@@ -1624,6 +1627,173 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
          errormsg = QString( us_tr( "Error: loading %1 line %2 unrecognied directive %3" ) ).arg( filename ).arg( i + 1 ).arg( qv[ i ] );
          return false;
       }
+      errormsg = "";
+      return false;
+   }
+
+   if ( ext == "csv" && load_conc ) {
+   // load csv columns as time curves with rescaling for concentration time
+      if ( !qv[0].contains( QRegExp( "^#\\s+Time" ) ) ) {
+         errormsg = QString( us_tr( "Error: loading %1 unrecognied header format for concentration csv: %2" ) ).arg( filename ).arg( qv[ 0 ] );
+         return false;
+      }
+      QRegExp rx_spaces = QRegExp( "\\s+" ); 
+      QStringList headers = (qv[ 0 ] ).split( rx_spaces , QString::SkipEmptyParts );
+      int hsize = (int) headers.size();
+      map < QString, vector < double > > uvs;
+      for ( int i = 1; i < (int) qv.size(); ++i ) {
+         QStringList line = (qv[ i ] ).split( rx_spaces , QString::SkipEmptyParts );
+         if ( (int) line.size() != hsize ) {
+            errormsg = QString( us_tr( "Error: loading %1 line %2 tokens in line %3 != tokens in header %4" ) ).arg( filename ).arg( i + 1 ).arg( line.size() ).arg( headers.size() );
+            return false;
+         }
+
+         for ( int j = 0; j < hsize; ++j ) {
+            uvs[ headers[ j ] ].push_back( line[ j ].toDouble() );
+         }
+      }
+         
+      // // printout
+
+      // for ( int i = 0; i < hsize; ++i ) {
+      //    US_Vector::printvector( headers[ i ], uvs[ headers[ i ] ] );
+      // }
+
+      // refine time values
+
+      double timestart = uvs[ "Time" ].front();
+      double timemax = uvs[ "Time" ].back();
+      double timediff = timemax - timestart;
+      double count = uvs[ "#" ].back();
+      int csize = (int) uvs[ "#" ].back();
+
+      for ( int i = 0; i < csize; ++i ) {
+         uvs[ "Tadj" ].push_back( timestart + ( ((double) i ) * timediff ) / ( count - 1 ) );
+      }
+
+      for ( int i = 0; i < csize; ++i ) {
+         uvs[ "Tdif" ].push_back( uvs[ "Time" ][ i ] - uvs[ "Tadj" ][ i ] );
+      }
+      // US_Vector::printvector3( "Time Tadj Tdif", uvs[ "Time" ], uvs[ "Tadj" ], uvs[ "Tdif" ] );
+      
+      // next: ask for frame length & start time.
+
+      map < QString, QString > conc_csv_params;
+      conc_csv_params[ "starttime" ] = QString( "%1" ).arg( timestart  );
+      conc_csv_params[ "endtime" ] = QString( "%1" ).arg( timemax );
+      conc_csv_params[ "pointcount" ] = QString( "%1" ).arg( count );
+
+      // setup any preliminary params
+
+      US_Hydrodyn_Saxs_Hplc_Conc_Csv_Frames * conc_csv_frames_instance = 
+         new US_Hydrodyn_Saxs_Hplc_Conc_Csv_Frames( us_hydrodyn, & conc_csv_params, this );
+      US_Hydrodyn::fixWinButtons( conc_csv_frames_instance );
+      conc_csv_frames_instance->exec();
+      delete conc_csv_frames_instance;
+
+      if ( !conc_csv_params.count( "button" ) ||
+           conc_csv_params[ "button" ] != "go" )
+      {
+         errormsg = "Concentration load canceled by user";
+         return false;
+      }
+
+      double frame1t    = conc_csv_params[ "frame1t" ].toDouble();
+      double time2frame = conc_csv_params[ "time2frame" ].toDouble();
+      int startframe =
+         conc_csv_params.count( "startframe" ) ?
+         conc_csv_params[ "startframenumber" ].toInt() :
+         1;
+      
+      int endframe =
+         conc_csv_params.count( "endframe" ) ?
+         conc_csv_params[ "endframenumber" ].toInt() :
+         9999999;
+         
+      for ( int i = 0; i < csize; ++i ) {
+         uvs[ "Frame" ].push_back( 1e0 + ( ( uvs[ "Tadj" ][ i ] - frame1t ) / time2frame ) );
+      }
+
+      // build frames to use
+
+      int dstartframe = std::ceil ( uvs[ "Frame" ].front() );
+      int dendframe   = std::floor( uvs[ "Frame" ].back()  );
+
+      QString notes;
+
+      if ( startframe < dstartframe ) {
+         notes += QString( us_tr( "specified starting frame %1 is less than minimum frame available %2, using minimum available.\n" ) )
+            .arg( startframe )
+            .arg( dstartframe );
+         startframe = dstartframe;
+      }
+      
+      if ( endframe > dendframe ) {
+         if ( conc_csv_params.count( "endframe" ) ) {
+            notes += QString( us_tr( "specified ending frame %1 is greater than maximum frame available %2, using maximum available.\n" ) )
+               .arg( endframe )
+               .arg( dendframe );
+         }
+         endframe = dendframe;
+      }
+         
+      if ( !notes.isEmpty() ) {
+         editor_msg( "dark blue", notes );
+      }
+
+      // US_Vector::printvector2( "Tadj Frame", uvs[ "Tadj" ], uvs[ "Frame" ] );
+
+      // next: build cubic splines for each, then ask for frame length and start time if to convert
+      vector < double >  use_frames;
+      vector < QString > use_frames_qs;
+
+      for ( int i = startframe; i <= endframe; ++i ) {
+         use_frames   .push_back( i );
+         use_frames_qs.push_back( QString( "%1" ).arg( i ) );
+      }
+
+      map < QString, vector < double > > framedata;
+      
+      for ( int j = 2; j < hsize; ++j ) {
+         double y;
+         vector < double > y2;
+         usu->natural_spline( uvs[ "Frame" ], uvs[ headers[ j ] ], y2 );
+         for ( int i = startframe; i <= endframe; ++i ) {
+            usu->apply_natural_spline( uvs[ "Frame" ], uvs[ headers[ j ] ], y2, (double) i, y );
+            framedata[ headers[ j ] ].push_back( y );
+         }
+      }
+
+      // load curves
+      QStringList created_files;
+      for ( int j = 2; j < hsize; ++j ) {
+         QString name = QFileInfo( filename ).completeBaseName() + "_" + headers[ j ];
+         created_files <<  name;
+
+         conc_files.insert( name );
+
+         created_files_not_saved[ name ] = true;
+
+         f_pos       [ name ] = f_qs.size();
+         f_qs_string [ name ] = use_frames_qs;
+         f_qs        [ name ] = use_frames;
+         f_Is        [ name ] = framedata[ headers[ j ] ];
+         f_is_time   [ name ] = true;
+         f_psv       [ name ] = 0e0;
+         f_I0se      [ name ] = 0e0;
+         f_conc      [ name ] = 0e0;
+         {
+            vector < double > tmp;
+            f_gaussians  [ name ] = tmp;
+         }
+      }
+      lb_created_files->addItems( created_files );
+      lb_files->addItems( created_files );
+      lb_created_files->scrollToItem( lb_created_files->item( lb_created_files->count() - 1 ) );
+      lb_files->scrollToItem( lb_files->item( lb_files->count() - 1 ) );
+
+      editor_msg( "black", filename );
+      editor_msg( "blue", us_tr( "Files loaded ok" ) );
       errormsg = "";
       return false;
    }

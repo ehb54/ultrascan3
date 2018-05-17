@@ -278,6 +278,7 @@ SOURCES *= \
         src/us_hydrodyn_saxs_guinier.cpp \
         src/us_hydrodyn_saxs_fits.cpp \
         src/us_hydrodyn_saxs_ift.cpp \
+        src/us_hydrodyn_saxs_hplc_conc_csv_frames.cpp \
         src/us_hydrodyn_saxs_iqq.cpp \
         src/us_hydrodyn_saxs_iqq_bead_model.cpp \
         src/us_hydrodyn_saxs_iqq_load_csv.cpp \
@@ -641,6 +642,7 @@ HEADERS *= \
         include/us_hydrodyn_saxs_mw.h \
         include/us_hydrodyn_saxs_options.h \
         include/us_hydrodyn_saxs_ift.h \
+        include/us_hydrodyn_saxs_hplc_conc_csv_frames.h \
         include/us_hydrodyn_saxs_iqq_load_csv.h \
         include/us_hydrodyn_saxs_iqq_residuals.h \
         include/us_hydrodyn_saxs_residuals.h \
