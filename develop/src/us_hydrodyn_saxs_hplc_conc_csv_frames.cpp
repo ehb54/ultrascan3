@@ -32,7 +32,7 @@ US_Hydrodyn_Saxs_Hplc_Conc_Csv_Frames::US_Hydrodyn_Saxs_Hplc_Conc_Csv_Frames(
    global_Ypos += 30;
 
    setGeometry( global_Xpos, global_Ypos, 0, 0 );
-   setMinimumWidth( 400 );
+   setMinimumWidth( 600 );
 }
 
 US_Hydrodyn_Saxs_Hplc_Conc_Csv_Frames::~US_Hydrodyn_Saxs_Hplc_Conc_Csv_Frames()
@@ -258,7 +258,7 @@ void US_Hydrodyn_Saxs_Hplc_Conc_Csv_Frames::setupGUI()
    }
 
    
-   lbl_time2frame = new QLabel( us_tr( " Length of frame [minutes] :" ), this );
+   lbl_time2frame = new QLabel( us_tr( " Length of frame [seconds] :" ), this );
    lbl_time2frame->setAlignment( Qt::AlignLeft|Qt::AlignVCenter );
    lbl_time2frame->setPalette( PALET_LABEL );
    lbl_time2frame->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );

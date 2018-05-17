@@ -1699,7 +1699,7 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
       }
 
       double frame1t    = conc_csv_params[ "frame1t" ].toDouble();
-      double time2frame = conc_csv_params[ "time2frame" ].toDouble();
+      double time2frame = conc_csv_params[ "time2frame" ].toDouble() / 60e0;
       int startframe =
          conc_csv_params.count( "startframe" ) ?
          conc_csv_params[ "startframenumber" ].toInt() :
