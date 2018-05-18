@@ -22,7 +22,7 @@
 <center>
 <h2>
 SOMO HPLC-SAXS Module:</h2></center>
-<h3><center>Last updated: January 2018 </center></h3><p>
+<h3><center>Last updated: May 2018 </center></h3><p>
 
 <center><span style="color:#CC0000">NOTICE: this module is being developed by E. Brookes, J. P&eacute;rez, P. Vachette, and M. Rocco.<br>
 Portions of this help file are taken from the Supplementary Materials of Brookes et al., "Fibrinogen species as resolved by HPLC-SAXS data processing within the UltraScan SOlution MOdeler (US-SOMO) enhanced SAS module", J. Appl. Cryst. 46:1823-1833 (2013), and from Brookes et al. "US-SOMO HPLC-SAXS Module: Dealing with Capillary Fouling, and Extraction of Pure Component Patterns from Poorly Resolved SEC-SAXS Data", J. Appl. Cryst. 49:1827-1841, 2016. Some recent improvements are discussed in Brookes and Rocco, Eur. Biophys. J., 2018, submitted </span>
@@ -38,7 +38,9 @@ The left side of the window is divided in three sections, labeled "<b><i>Data fi
 
 On the top left panel (<b><i>Data files</i></b>) there are four buttons:<p>
 
-The <b><i>Add files</i></b> button is used to load data into the module. An operating directory can be pre-selected by clicking on the path shown above it, and navigating in the file system (selecting the <i>Lock</i> checkbox will fix that directory). The file format for SAXS data recognized by the <b>US-SOMO</b> <b><i>HPLC-SAXS</i></b> module consist of .dat files with two or three TAB- or space-separated columns containing the <i>q</i>, <i>I(q)</i>, and optionally their associated standard deviation (SD) values, respectively. Each frame number (or time value) must be present somewhere in the filename with a common prefix and suffix. For example, data1saxs.dat, data2saxs.dat, data3saxs.dat will be recognized as frames 1,2,3, where "data" and "saxs" can be replaced by any common sequence of characters. Consequently, 1.dat, 2.dat, 3.dat would be acceptable, but abc1.dat, qrs2.dat, xyz3.dat would not, because the prefix characters are not common. Furthermore, the loader will also arrange the data files sequentially, in increasing frame number (or time value) order. Concentration-related data should be instead uploaded using the <b><i>Concentration load</i></b> button (see below). <i>I(q)</i> vs. <i>q</i> and concentration data frames are automatically recognized and the labels on the <i>x</i>- and <i>y</i>-axes are then properly set.<p>
+    The <b><i>Add files</i></b> button is used to load data into the module. An operating directory can be pre-selected by clicking on the path shown above it, and navigating in the file system (selecting the <i>Lock</i> checkbox will fix that directory). The file format for SAXS data recognized by the <b>US-SOMO</b> <b><i>HPLC-SAXS</i></b> module consist of .dat files with two or three TAB- or space-separated columns containing the <i>q</i>, <i>I(q)</i>, and optionally their associated standard deviation (SD) values, respectively. Each frame number (or time value) must be present somewhere in the filename with a common prefix and suffix. For example, data1saxs.dat, data2saxs.dat, data3saxs.dat will be recognized as frames 1,2,3, where "data" and "saxs" can be replaced by any common sequence of characters. Consequently, 1.dat, 2.dat, 3.dat would be acceptable, but abc1.dat, qrs2.dat, xyz3.dat would not, because the prefix characters are not common. Furthermore, the loader will also arrange the data files sequentially, in increasing frame number (or time value) order. Concentration-related data should be instead uploaded using the <b><i>Concentration load</i></b> button (see below). <i>I(q)</i> vs. <i>q</i> and concentration data frames are automatically recognized and the labels on the <i>x</i>- and <i>y</i>-axes are then properly set.<p></p>
+    Note that when loading <i>I(q)</i> data files containing <i>q</i> values, they are expected to be in units of 1/Angstrom or 1/nm units. If the 1st line of the data file contains the text <i>Units:1/A</i> or <i>Units:1/nm</i>, it will be automatically loaded in the proper format.  Otherwise, it is controlled by the setting of the <a href=somo_saxs_options.html#sasmiscellaneous>SAS Miscellanous Options</a>, in particular, the <i><b>I(q) curves in 1/angstrom</b></i> and the <i><b>I(q) curves in 1/nanometer</b></i> mutually exclusive checkboxes.  All 1/nm data will be converted into 1/Angstrom data upon loading. Files saved will be written with the <i>Units:1/A</i> header text automatically.
+    <p></p>
 
 <b><i>Similar</i></b> will select files with similar names and allow manual pattern matching entry if no new similar files are selected.<p> 
 
@@ -99,7 +101,8 @@ Each time the <b><i>Width</i></b> button is pressed, it increments the data line
 
 <b><i>Make I(q)</b></i> is the other crucial operation in the <b><i>HPLC-SAXS</i></b> module. It allows to re-generate <i>I</i>(<i>q</i>) vs. <i>q</i> files for each frame after data treatment in frame- (or time-) space.<p>
 
-<b><i>Concentration load</i></b> is used to upload any chromatographic data files containing a concentration-related elution profile, such as those produced by UV-VIS absorption or refractive index detectors (the program will then internally keep track of such datasets, distinguishing them from SAXS datasets). By default, the program will look for "*.txt" files, but the choice could be expanded to other extensions in the file upload dialogue. The currently recognized format for concentration data is similar to the SAXS data format with the addition of the string "Frame data" in any place on the first line. The two or three columns of data are the frame number, concentration-related data, and optionally an associated SD value.<p>
+<span id="conc_load"></span>
+<b><i>Concentration load</i></b> is used to upload any chromatographic data files containing a concentration-related elution profile, such as those produced by UV-VIS absorption or refractive index detectors (the program will then internally keep track of such datasets, distinguishing them from SAXS datasets). By default, the program will look for "*.txt" and "*.csv" files, but the choice could be expanded to other extensions in the file upload dialogue. The currently recognized format for non-CSV concentration data is similar to the SAXS data format with the addition of the string "Frame data" in any place on the first line. The two or three columns of data are the frame number, concentration-related data, and optionally an associated SD value. For loading CSV format concentration data files, see <a href=saxs_hplc_conc_csv_frames.html>here</a>. <p>
 
 <b><i>Repeak</i></b> is used to effectively scale data (usually a concentration-related chromatogram) on the <i>y</i>-axis to a pre-set target (usually a low-<i>q</i>, high-intensity <i>I</i>(<i>t</i>) vs. <i>t</i> chromatogram), selectable in a pop-up window among the data subjected to this operation (this affects the data, a new file is generated with "rp" and the scaling factor added at the end of the filename). See more below on this subject.<p>
 
@@ -1233,7 +1236,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on January 5, 2018.
+Last modified on May 18, 2018.
 </font>
 </body>
 </html>
