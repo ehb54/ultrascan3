@@ -338,7 +338,13 @@ bool US_ExperimentGui::load( void )
       if ( db.lastErrno() == US_DB2::OK )
          US_Rotor::readLabsDB( labList, &db );
 
-      if ( labList.size() > 0  &&  labList[ 0 ].instruments.size() == 0 )
+      int linssize       = 0;
+      for ( int ii = 0; ii < labList.size(); ii++ )
+      {
+         linssize        = qMax( linssize, labList[ ii ].instruments.size() );
+      }
+
+      if ( linssize == 0 )
       {  // If empty instrument table, warn and exit
          US_Rotor::Instrument instrument;
          US_Rotor::Operator   loperator;
@@ -381,20 +387,32 @@ qDebug() << "ExpG:reload: IN labList size" << labList.size();
       bool found = false;
       for ( int i = 0; i < labList.size(); i++ )
       {
-          if ( labList[ i ].ID == expInfo.labID )
+          if ( labList[ i ].ID == expInfo.labID  &&
+               labList[ i ].instruments.size() > 0 )
           {
              found = true;
              currentLab = i;
              break;
           }
       }
+qDebug() << "ExpG:reload:  found" << found << "cLab" << currentLab;
 
       if ( ! found )
       {
-         // replace with the first one on the list
+         // replace with the first one on the list that has instruments
          expInfo.labID = labList[ 0 ].ID;
          currentLab = 0;
+         for ( int ii = 0; ii < labList.size(); ii++ )
+         {
+            if ( labList[ ii ].instruments.size() > 0 )
+            {
+               currentLab = ii;
+               expInfo.labID = labList[ ii ].ID;
+               break;
+            }
+         }
       }
+qDebug() << "ExpG:reload:  found" << found << "cLab" << currentLab;
 
 qDebug() << "ExpG:reload:  call setInstr";
       setInstrumentList();
@@ -599,8 +617,13 @@ qDebug() << "ExpG: setInstrL:  ins ID Ser" << expInfo.instrumentID
 
 void US_ExperimentGui::setOperatorList( void )
 {
+qDebug() << "ExpG:sOL:   cLab cInstr" << currentLab << currentInstrument
+ << "llsz" << labList.size();
    QList< listInfo > options;
    QList< US_Rotor::Instrument > instruments = labList[ currentLab ].instruments;
+int insz=(currentInstrument<labList[currentLab].instruments.size())?
+ labList[currentLab].instruments.size():0;
+qDebug() << "ExpG:sOL:    insz" << insz;
    QList< US_Rotor::Operator > operators = instruments[ currentInstrument ].operators;
 
    foreach ( US_Rotor::Operator oper, operators )
@@ -611,6 +634,7 @@ void US_ExperimentGui::setOperatorList( void )
       options << option;
    }
 
+qDebug() << "ExpG:sOL:   opts size" << options.size();
    cb_operator->clear();
    if ( options.size() > 0 )
    {
@@ -634,9 +658,11 @@ void US_ExperimentGui::setOperatorList( void )
          // is the operator ID in the list?
          for ( int i = 0; i < options.size(); i++ )
          {
+qDebug() << "ExpG:sOL:    i" << i << "eoID" << expInfo.operatorID << "oID" << options[i].ID;
             if ( expInfo.operatorID == options[ i ].ID.toInt() )
             {
                currentOperator = i;
+qDebug() << "ExpG:sOL:      currOper" << currentOperator;
                break;
             }
          }
@@ -645,6 +671,7 @@ void US_ExperimentGui::setOperatorList( void )
          expInfo.operatorID   = operators[ currentOperator ].ID;
          expInfo.operatorGUID = operators[ currentOperator ].GUID;
       }
+qDebug() << "ExpG:sOL: eI ID GUID" << expInfo.operatorID << expInfo.operatorGUID;
 
    }
 }
