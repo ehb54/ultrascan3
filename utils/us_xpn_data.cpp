@@ -127,6 +127,7 @@ DbgLv(1) << "XpDa:scn: ExpRun rows" << rows;
    int row       = 0;
 DbgLv(1) << "XpDa:scn: tabname" << tabname << "rows" << rows
  << "cols" << cols << "qtxt" << qtxt;
+DbgLv(1) << "XpDa:inforow: run exp 0 estart ename rname A F I W stat";
 
    while( sqry.next() )
    {  // Loop to pick up values from rows of the table
@@ -169,10 +170,12 @@ DbgLv(1) << "XpDa:scn: tabname" << tabname << "rows" << rows
                       + delim + QString( exprow.abscnf ? "1" : "0" )
                       + delim + QString( exprow.flscnf ? "1" : "0" )
                       + delim + QString( exprow.inscnf ? "1" : "0" )
-                      + delim + QString( exprow.wlscnf ? "1" : "0" );
+                      + delim + QString( exprow.wlscnf ? "1" : "0" )
+                      + delim + QString::number( exprow.runstat );
       runInfo << inforow;
 DbgLv(1) << "XpDa: inforow" << inforow;
    }
+DbgLv(1) << "XpDa:inforow: run exp 0 estart ename rname A F I W stat";
 
    nruns         = runInfo.size();
    return nruns;
@@ -616,13 +619,16 @@ DbgLv(1) << "XpDa:scn:    tCrprof count" << tCrprof.count();
       // Get indexes to ExperimentId and FugeRunProfileId
       jexpid          = cnames.indexOf( "ExperimentId" );
       int jfruid      = cnames.indexOf( "FugeRunProfileId" );
-DbgLv(1) << "XpDa:scn:    jexpid jfruid" << jexpid << jfruid;
+      int jexpnm      = cnames.indexOf( "Name" );
+//DbgLv(1) << "XpDa:scn:    jexpid jfruid" << jexpid << jfruid;
       while ( sqry.next() )
       {  // Build a list of ExperimentDefinition expIds and fugeIds
          int dExpId      = sqry.value( jexpid ).toInt();
          int dFugId      = sqry.value( jfruid ).toInt();
          dExpIds << dExpId;
          dFugIds << dFugId;
+DbgLv(1) << "XpDa:scn:  dExpId" << dExpId << "dFugId" << dFugId
+ << "Name" << sqry.value(jexpnm).toString();
       }
 //DbgLv(1) << "XpDa:scn: dExpIds" << dExpIds;
 //DbgLv(1) << "XpDa:scn: dFugIds" << dFugIds;
