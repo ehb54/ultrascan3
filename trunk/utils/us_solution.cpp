@@ -386,7 +386,9 @@ int US_Solution::saveToDB( int expID, int channelID, US_DB2* db )
       db->statusQuery( q );
    }
 
-   else if ( status == US_DB2::NOROWS )
+   else if ( status == US_DB2::NOROWS  &&
+             !solutionDesc.isEmpty()  &&
+             !solutionDesc.startsWith( "New Sol" ) )
    {
       // Create new solution entry
       q.clear();

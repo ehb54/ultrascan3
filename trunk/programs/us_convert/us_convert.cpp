@@ -318,12 +318,13 @@ int US_Convert::saveToDisk(
            ( ! rx.exactMatch( triples[ i ].solution.solutionGUID )       ) )
       {
          qDebug() << "It is not saving";
-         triples[ i ].solution.solutionGUID = US_Util::new_guid();
-         triples[ i ].solution.solutionDesc = "New Solution";
+         triples[ i ].solution.solutionGUID = "";
+         triples[ i ].solution.solutionDesc = "";
       }
 
       // Make sure solution is saved to disk
-      triples[ i ].solution.saveToDisk();
+      if ( ! triples[ i ].solution.solutionGUID.isEmpty() )
+         triples[ i ].solution.saveToDisk();
 
       // Save the filename of this triple
       triples[ i ].tripleFilename = filename;
