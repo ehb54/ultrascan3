@@ -100,9 +100,14 @@ qDebug() << "cvio:WrRDB: trx" << trx << "soluGUID"
       {
          // Solution is not in db, so try to add it
          // figure out channelID later ??
-         int diskStatus = triple->solution.saveToDB( ExpData.expID, 
-                                                     channelID,
-                                                     db );
+         int diskStatus = US_DB2::NO_SOLUTION;
+         if ( !triple->solution.solutionGUID.isEmpty() )
+         {
+            triple->solution.solutionID = 0;
+            diskStatus = triple->solution.saveToDB( ExpData.expID, 
+                                                    channelID,
+                                                    db );
+         }
       
 //qDebug() << "cvio:WrRDB:   dkStat" << diskStatus << US_DB2::NO_SOLUTION;
          if ( diskStatus == US_DB2::NO_BUFFER )
@@ -184,42 +189,80 @@ qDebug() << "cvio:WrRDB: trx" << trx << "soluGUID"
 //qDebug() << "cvio:WrRDB:  new_raw ERR" << error;
       }
 
+      int status;
+      QStringList ecccs; 
+      QStringList esols;
+      QString s_expID      = QString::number( ExpData.expID );
+      // Get lists of cells, channels, centerpieces, solutions
+      q.clear();
+      q << "all_cell_experiments"
+        << s_expID;
+      db->query( q );
+      while ( db->next() )
+      {
+         QString eccc = db->value(2).toString() + ":"
+                      + db->value(3).toString() + ":"
+                      + db->value(4).toString();
+         if ( !ecccs.contains( eccc ) )
+            ecccs << eccc;
+      }
+
+      q.clear();
+      q << "get_solutionIDs"
+        << s_expID;
+      db->query( q );
+      while ( db->next() )
+      {
+         QString solID = db->value(0).toString();
+         if ( !esols.contains( solID ) )
+            esols << solID;
+      }
+
       // Write cell table record
-      QString cellGUID     = US_Util::new_guid();
       QStringList parts    = triple->tripleDesc.split(" / ");
       QString cell         = parts[ 0 ];
       QString letters("0ABCDEFGH");
       QString channel      = parts[ 1 ];
       int     channelNum   = letters.indexOf( channel );
+      QString eccc         = cell + ":" + QString::number( channelNum )
+                             + ":" + QString::number( triple->centerpiece );
+      if ( !ecccs.contains( eccc ) )
+      {  // Add any new cell:channel:centerpiece record for experiment
 //qDebug() << "cvio:WrRDB:   chNum" << channelNum;
-      q.clear();
-      q  << "new_cell_experiment"
-         << cellGUID
-         << cell
-         << QString::number( channelNum )
-         << QString::number( triple->centerpiece )
-         << QString::number( ExpData.expID );
-      int status = db->statusQuery( q );
-      if ( status != US_DB2::OK )
-         error += "Error returned writing cell record: " + cellGUID + "\n" +
-                  status + " " + db->lastError() + "\n";
+         QString cellGUID     = US_Util::new_guid();
+         q.clear();
+         q  << "new_cell_experiment"
+            << cellGUID
+            << cell
+            << QString::number( channelNum )
+            << QString::number( triple->centerpiece )
+            << s_expID;
+         status = db->statusQuery( q );
+         if ( status != US_DB2::OK )
+            error += "Error returned writing cell record: " + cellGUID + "\n" +
+                     status + " " + db->lastError() + "\n";
+      }
 
       // Associate solution in this triple with experiment
-      q.clear();
-      q  << "new_experiment_solution"
-         << QString::number( ExpData.expID )
-         << QString::number( triple->solution.solutionID )
-         << QString::number( channelID );
-      status = db->statusQuery( q );
+      QString esolID       = QString::number( triple->solution.solutionID );
+      if ( !esols.contains( esolID ) )
+      {  // Add any new experimentSolutionChannel record
+         q.clear();
+         q  << "new_experiment_solution"
+            << s_expID
+            << esolID
+            << QString::number( channelID );
+         status = db->statusQuery( q );
 qDebug() << "cvio:WrRDB: newExp id solID chnID" << ExpData.expID
  << triple->solution.solutionID << channelID;
-      if ( status != US_DB2::OK )
-      {
-         error += QObject::tr( "MySQL error associating experiment %1\n"
-                               " with solution %2\n"
-                               " code: %3  error: %4\n" )
-                  .arg( ExpData.expID ).arg( triple->solution.solutionGUID )
-                  .arg( status ).arg( db->lastError() );
+         if ( status != US_DB2::OK )
+         {
+            error += QObject::tr( "MySQL error associating experiment %1\n"
+                                  " with solution %2\n"
+                                  " code: %3  error: %4\n" )
+                     .arg( ExpData.expID ).arg( triple->solution.solutionGUID )
+                     .arg( status ).arg( db->lastError() );
+         }
       }
    }
 

@@ -375,11 +375,3 @@ INSERT INTO lab SET
   room          = '425D',
   dateUpdated   = NOW();
 
-INSERT INTO lab SET
-  labID         = 2,
-  labGUID       = '7532024e-afb4-ee84-d160-3b9625a10b43',
-  name          = 'UTHSCSA Lab #2',
-  building      = 'HSC-MED',
-  room          = '420D',
-  dateUpdated   = NOW();
-
