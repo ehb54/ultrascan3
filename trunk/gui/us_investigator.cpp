@@ -162,6 +162,7 @@ US_Investigator::US_Investigator( bool signal, int inv )
    buttons2->addWidget( pb_help );
    
    QPushButton* pb_close;
+   int lev = US_Settings::us_inv_level();
 
    if ( signal_wanted )
    {
@@ -170,6 +171,7 @@ US_Investigator::US_Investigator( bool signal, int inv )
       buttons2->addWidget( pb_cancel );
 
       pb_close = us_pushbutton( tr( "Accept" ) );
+      pb_close->setEnabled( lev > 2 );
    }
    else
       pb_close = us_pushbutton( tr( "Close" ) );
@@ -195,6 +197,15 @@ US_Investigator::US_Investigator( bool signal, int inv )
             break;
          }
       }
+   }
+
+   // Disable GUI elements where login user not admin
+   if ( lev < 3 )
+   {
+      pb_queryDB->setEnabled( false );
+      pb_update ->setEnabled( false );
+      pb_reset  ->setEnabled( false );
+      le_search ->setEnabled( false );
    }
 }
 
@@ -222,12 +233,19 @@ void US_Investigator::queryDB( void )
    db.query( query );
 
    US_InvestigatorData data;
+   int inv = US_Settings::us_inv_ID();
+   int lev = US_Settings::us_inv_level();
+qDebug() << "INV:qDB: inv" << inv << "lev" << lev;
 
    while ( db.next() )
    {
       data.invID     = db.value( 0 ).toInt();
       data.lastName  = db.value( 1 ).toString();
       data.firstName = db.value( 2 ).toString();
+
+      // Only add to investigator list if admin login or login-inv match
+      if ( lev < 3  &&  inv != data.invID )
+         continue;
 
       investigators << data;
 
@@ -385,7 +403,8 @@ void US_Investigator::get_inv_data( QListWidgetItem* item )
    le_org    ->setText( info.organization ); 
    le_invGuid->setText( info.invGuid      ); 
 
-   pb_update ->setEnabled( true );
+   pb_update ->setEnabled( US_Settings::us_inv_level() > 2 );
+
 }
 
 void US_Investigator::close( void )
