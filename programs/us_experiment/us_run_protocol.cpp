@@ -400,6 +400,7 @@ US_RunProtocol::RunProtoSpeed::SpeedStep::SpeedStep()
    //duration    = 330.0;
    duration    = 5*3600 + 30*60;  // 5h 30 min - total in seconds
    delay       = 120.0;
+   delay_stage = 0.0;
    scanintv    = 16.85;             //ALEXEY: set default scanint (in secs) which corresponds to 45000 RPM
 }
 
