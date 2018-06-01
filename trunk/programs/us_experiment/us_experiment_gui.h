@@ -210,6 +210,11 @@ class US_ExperGuiSpeeds : public US_WidgetsDialog
       QSpinBox*    sb_delay_mm;
       QSpinBox*    sb_delay_ss;
 
+      QSpinBox*    sb_delay_st_dd;
+      QSpinBox*    sb_delay_st_hh;
+      QSpinBox*    sb_delay_st_mm;
+      QSpinBox*    sb_delay_st_ss;     
+
       QSpinBox*    sb_scnint_dd;
       QSpinBox*    sb_scnint_hh;
       QSpinBox*    sb_scnint_mm;
@@ -262,6 +267,10 @@ class US_ExperGuiSpeeds : public US_WidgetsDialog
       void    ssChgDelayTime_mm( int );
       void    ssChgDelayTime_ss( int );
 
+      //! \brief Slot for SS change in delay_stage time
+      void    ssChgDelayStageTime_hh( int );
+      void    ssChgDelayStageTime_mm( int );
+      
       //! \brief Slot for change in Scan Interval time
       void    ssChgScIntTime_hh( int );
       void    ssChgScIntTime_mm( int );
@@ -708,6 +717,9 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       void    submitExperiment( void );  // Submit the experiment
       void    saveRunProtocol ( void );  // Save the Run Protocol
       QString buildJson       ( void );  // Build the JSON
+
+   signals:
+      void expdef_submitted( QMap < QString, QString > &protocol_details );
 };
 
 //! \brief Experiment Main Window
@@ -772,9 +784,12 @@ class US_ExperimentMain : public US_Widgets
 
     public slots:
       void close_program( void );
+      void optima_submitted( QMap < QString, QString > &protocol_details );
 
     signals:
       void us_exp_is_closed( void );
+      void to_live_update( QMap < QString, QString > &protocol_details );
+      
       
 };
 #endif

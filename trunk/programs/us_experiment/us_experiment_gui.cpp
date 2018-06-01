@@ -92,6 +92,8 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    connect( pb_help,   SIGNAL( clicked()    ),
             this,      SLOT  ( help()       ) );
 
+   connect( epanUpload, SIGNAL( expdef_submitted( QMap < QString, QString > &) ),
+	    this,       SLOT  ( optima_submitted( QMap < QString, QString > & ) ) );
    
 
    main->addWidget( tabWidget );
@@ -125,6 +127,14 @@ void US_ExperimentMain::close_program( void )
   emit us_exp_is_closed();
   close();
 }
+
+// When run submotted to Optima
+void US_ExperimentMain::optima_submitted( QMap < QString, QString > &protocol_details )
+{
+  tabWidget->setCurrentIndex( 0 );
+  emit to_live_update( protocol_details );
+}
+
 
 // Panel for run and other general parameters
 US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
@@ -757,6 +767,8 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    QLabel*  lb_durat   = us_label( tr( "Duration of Experiment (hh[H] mm[M]):" ) );
    QLabel*  lb_delay   = us_label( tr( "Delay to First Scan (hh[H] mm[M]):" ) );
 
+   QLabel*  lb_delay_stage   = us_label( tr( "Stage Delay (hh[H] mm[M]):" ) );
+   
    QLayout* lo_endoff  = us_checkbox( tr( "Spin down centrifuge at job end" ),
                                       ck_endoff, true );
    QLayout* lo_radcal  = us_checkbox( tr( "Perform radial calibration" ),
@@ -781,9 +793,12 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
     //                       = us_timeedit( tm_scnint, 0, &sb_scnint );
    
    
-   QHBoxLayout* lo_duratlay  = us_ddhhmmsslay( 0, 1,0,0,1, &sb_durat_dd, &sb_durat_hh, &sb_durat_mm,  &sb_durat_ss ); // ALEXEY 1 - visible, 0 - hidden
-   QHBoxLayout* lo_delaylay  = us_ddhhmmsslay( 0, 1,0,0,1, &sb_delay_dd, &sb_delay_hh, &sb_delay_mm,  &sb_delay_ss );
-   QHBoxLayout* lo_scnintlay = us_ddhhmmsslay( 0, 1,0,0,0, &sb_scnint_dd, &sb_scnint_hh, &sb_scnint_mm,  &sb_scnint_ss );
+   QHBoxLayout* lo_duratlay        = us_ddhhmmsslay( 0, 1,0,0,1, &sb_durat_dd, &sb_durat_hh, &sb_durat_mm,  &sb_durat_ss ); // ALEXEY 1 - visible, 0 - hidden
+   QHBoxLayout* lo_delaylay_stage  = us_ddhhmmsslay( 0, 1,0,0,1, &sb_delay_st_dd, &sb_delay_st_hh, &sb_delay_st_mm,  &sb_delay_st_ss );
+   QHBoxLayout* lo_delaylay        = us_ddhhmmsslay( 0, 1,0,0,1, &sb_delay_dd, &sb_delay_hh, &sb_delay_mm,  &sb_delay_ss );
+   sb_delay_hh->setEnabled(false);
+   sb_delay_mm->setEnabled(false);
+   QHBoxLayout* lo_scnintlay       = us_ddhhmmsslay( 0, 1,0,0,0, &sb_scnint_dd, &sb_scnint_hh, &sb_scnint_mm,  &sb_scnint_ss );
 
    le_maxrpm           = us_lineedit( tr( "Maximum speed for AN50 rotor:"
                                           "  50000 rpm" ), 0, true );
@@ -796,13 +811,17 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    double df_duratm    = rpSpeed->ssteps[ 0 ].duration;
    double df_delatm    = rpSpeed->ssteps[ 0 ].delay;
 
+   double df_delatm_stage    = rpSpeed->ssteps[ 0 ].delay_stage;
+
    double df_scint     = rpSpeed->ssteps[ 0 ].scanintv; //ALEXEY read default scanint in secs corresponding to default RPM
 
    QList< int > dhms_dur;
    QList< int > dhms_dly;
+   QList< int > dhms_dly_stage;
    QList< int > hms_scint;
    US_RunProtocol::timeToList( df_duratm, dhms_dur );
    US_RunProtocol::timeToList( df_delatm, dhms_dly );
+   US_RunProtocol::timeToList( df_delatm_stage, dhms_dly_stage );
    US_RunProtocol::timeToList( df_scint,  hms_scint );
 
 DbgLv(1) << "EGSp: df_duratm" << df_duratm;
@@ -821,7 +840,9 @@ DbgLv(1) << "EGSp:   def  d h m s " << dhms_dly;
    ssvals[ 0 ][ "speed" ]    = df_speed;  // Speed default
    ssvals[ 0 ][ "accel" ]    = df_accel;  // Acceleration default
    ssvals[ 0 ][ "duration" ] = df_duratm; // Duration in seconds default (5h 30m)
-   ssvals[ 0 ][ "delay" ]    = df_delatm; // Delay in seconds default (2m 30s)
+   ssvals[ 0 ][ "delay" ]    = df_delatm; // Delay to 1st scan in seconds default (2m 30s) DUE to acceleration
+
+   ssvals[ 0 ][ "delay_stage" ]  = df_delatm_stage; // Delay of the stage in seconds 
 
    ssvals[ 0 ][ "scanintv" ]    = df_scint;  //ALEXEY
    
@@ -851,6 +872,12 @@ DbgLv(1) << "EGSp: init sb/de components";
    sb_delay_mm ->setValue( (int)dhms_dly[ 2 ] );
    sb_delay_ss ->setValue( (int)dhms_dly[ 3 ] );
 
+   sb_delay_st_dd ->setValue( (int)dhms_dly_stage[ 0 ] );
+   sb_delay_st_hh ->setValue( (int)dhms_dly_stage[ 1 ] );
+   sb_delay_st_mm ->setValue( (int)dhms_dly_stage[ 2 ] );
+   sb_delay_st_ss ->setValue( (int)dhms_dly_stage[ 3 ] );   
+
+   
    // sb_scnint->setValue( 0 );                    //ALEXEY  
    // tm_scnint->setTime ( QTime( 0, 0 ) );
    
@@ -903,6 +930,10 @@ DbgLv(1) << "EGSp: addWidg/Layo DD";
 // genL->addLayout( lo_delay,   row++,  6, 1,  2 );
   genL->addLayout( lo_delaylay,   row++,  5, 1,  1 );
 
+  genL->addWidget( lb_delay_stage,    row,    0, 1,  5 );
+  genL->addLayout( lo_delaylay_stage, row++,  5, 1,  1 );
+
+  
 DbgLv(1) << "EGSp: addWidg/Layo EE";
   genL->addWidget( lb_scnint,  row,    0, 1,  5 );
 DbgLv(1) << "EGSp: addWidg/Layo FF";
@@ -960,7 +991,12 @@ DbgLv(1) << "EGSp: addWidg/Layo II";
    connect( sb_delay_mm,  SIGNAL( valueChanged   ( int ) ),
             this,         SLOT  ( ssChgDelayTime_mm ( int ) ) );
    connect( sb_delay_ss,  SIGNAL( valueChanged   ( int ) ),
-            this,         SLOT  ( ssChgDelayTime_ss ( int ) ) ); 
+            this,         SLOT  ( ssChgDelayTime_ss ( int ) ) );
+
+   connect( sb_delay_st_hh,  SIGNAL( valueChanged   ( int ) ),
+            this,         SLOT  ( ssChgDelayStageTime_hh ( int ) ) );
+   connect( sb_delay_st_mm,  SIGNAL( valueChanged   ( int ) ),
+            this,         SLOT  ( ssChgDelayStageTime_mm ( int ) ) );  
 
    connect( sb_scnint_hh, SIGNAL( valueChanged   ( int ) ),
             this,         SLOT  ( ssChgScIntTime_hh ( int ) ) );
@@ -1072,6 +1108,7 @@ DbgLv(1) << "EGSp: chgKnt:  kk" << kk << "spd acc dur dly"
          ssvals[ kkk ][ "duration" ] = ssdurtim;  // Duration in minutes  // No, in seconds
          ssvals[ kkk ][ "delay"    ] = ssdlytim;  // Delay in seconds
 
+	 ssvals[ kkk ][ "delay_stage"    ] = 0.0; 
 	 ssChangeScInt( ssspeed, kkk );  //ALEXEY
 	 	 
          profdesc[ kkk ]             = speedp_description( kkk );
@@ -1126,15 +1163,20 @@ DbgLv(1) << "EGSp: chgPfx:  speed-c speed-p"
    double ssaccel   = ssvals[ curssx ][ "accel" ];
    double ssdurtim  = ssvals[ curssx ][ "duration" ];
    double ssdlytim  = ssvals[ curssx ][ "delay" ];
+
+   double ssdlystagetim  = ssvals[ curssx ][ "delay_stage" ];
+   
    double speedmax  = sibDValue( "rotor",   "maxrpm" );
 
    double scinttim  = ssvals[ curssx ][ "scanintv" ]; // ALEXEY added scaninterval
 
    QList< int > dhms_dur;
    QList< int > dhms_dly;
+   QList< int > dhms_dly_stage;
    QList< int > dhms_scint;
    US_RunProtocol::timeToList( ssdurtim, dhms_dur );
    US_RunProtocol::timeToList( ssdlytim, dhms_dly );
+   US_RunProtocol::timeToList( ssdlystagetim, dhms_dly_stage );
    US_RunProtocol::timeToList( scinttim, dhms_scint ); 
 DbgLv(1) << "EGSp: chgPfx:   durtim" << ssdurtim << "dhms_dur" << dhms_dur;
 DbgLv(1) << "EGSp: chgPfx:    speedmax" << speedmax;
@@ -1170,6 +1212,11 @@ DbgLv(1) << "EGSp: chgPfx:    speedmax" << speedmax;
    sb_delay_hh ->setValue( (int)dhms_dly[ 1 ] );
    sb_delay_mm ->setValue( (int)dhms_dly[ 2 ] );
    sb_delay_ss ->setValue( (int)dhms_dly[ 3 ] );
+
+   sb_delay_st_dd ->setValue( (int)dhms_dly_stage[ 0 ] );
+   sb_delay_st_hh ->setValue( (int)dhms_dly_stage[ 1 ] );
+   sb_delay_st_mm ->setValue( (int)dhms_dly_stage[ 2 ] );
+   sb_delay_st_ss ->setValue( (int)dhms_dly_stage[ 3 ] );   
 
    sb_scnint_hh ->setMinimum( scanint_hh_min[curssx] );
    sb_scnint_mm ->setMinimum( scanint_mm_min[curssx] );
@@ -1502,6 +1549,27 @@ DbgLv(1) << "EGSp: chgDlyD: val" << val << "ssdly d h"
    ssvals[ curssx ][ "delay" ] = ssdlytim;  // Set Delay in step vals vector
 }
 
+
+// Slot for change in delay_stage time (hours)
+void US_ExperGuiSpeeds::ssChgDelayStageTime_hh( int val )
+{
+   double ssdlyhr   = val;
+     
+   double ssdlymin  = (double)sb_delay_st_mm->value();
+   double ssdlysec  = (double)sb_delay_st_ss->value();
+   double ssdlytim  = ( ssdlyhr * 3600.0 ) + ( ssdlymin * 60.0 ) + ssdlysec;
+   ssvals[ curssx ][ "delay_stage" ] = ssdlytim;  // Set Delay Stage in step vals vector
+}
+
+// Slot for change in delay time (mins)
+void US_ExperGuiSpeeds::ssChgDelayStageTime_mm( int val )
+{
+   double ssdlyhr   = (double)sb_delay_st_hh->value();
+   double ssdlymin  = val;
+   double ssdlysec  = (double)sb_delay_st_ss->value();
+   double ssdlytim  = ( ssdlyhr * 3600.0 ) + ( ssdlymin * 60.0 ) + ssdlysec;
+   ssvals[ curssx ][ "delay_stage" ] = ssdlytim;  // Set Delay in step vals vector
+}
 
 // Function to adjust delay minimum when related values are changed
 void US_ExperGuiSpeeds::adjustDelay( void )
@@ -3010,7 +3078,8 @@ DbgLv(1) << "EGUp:dE: nspeed" << nspeed;
       dtext += tr( "      Speed:         " ) + sspeed[ jj++ ] + "\n";
       dtext += tr( "      Acceleration:  " ) + sspeed[ jj++ ] + "\n";
       dtext += tr( "      Duration:      " ) + sspeed[ jj++ ] + "\n";
-      dtext += tr( "      Delay:         " ) + sspeed[ jj++ ] + "\n";
+      dtext += tr( "      Delay (accel.):" ) + sspeed[ jj++ ] + "\n";
+      dtext += tr( "      Stage Delay:   " ) + sspeed[ jj++ ] + "\n";
       dtext += tr( "      Scan Interval: " ) + sspeed[ jj++ ] + "\n";
    }
 
@@ -3294,12 +3363,15 @@ void US_ExperGuiUpload::submitExperiment()
    dbxpn.setDatabaseName( dbname  );
    dbxpn.setUserName    ( dbuser  );
    dbxpn.setPassword    ( dbpasw );
+
+
+   QMap <QString, QString > protocol_details;                          // QMap to pass later to US_com_project' Live Updates 
    
    //US_XpnData* xpn_data = new US_XpnData();
    // connected           = xpn_data->connect_data( xpnhost, xpnport, dbname, dbuser,  dbpasw );
 
    if (  dbxpn.open() )
-     {
+     { // dbxpn.open()
        qDebug() << "Connected !!!";
     
        // Absorbance INSERT ////////////////////////////////////////////////////////////////////////
@@ -3879,8 +3951,8 @@ void US_ExperGuiUpload::submitExperiment()
 	       else
 		 curr_stage_fuge = i;
 	       
-	       stagestart  += QString::number(rpSpeed->ssteps[ curr_stage_fuge ].delay);  // <-- stagestart Active stages
-	       stagerpm    += QString::number(rpSpeed->ssteps[ curr_stage_fuge ].speed);  // <-- RPM Active stages
+	       stagestart  += QString::number(rpSpeed->ssteps[ curr_stage_fuge ].delay_stage);  // <-- stagestart Active stages
+	       stagerpm    += QString::number(rpSpeed->ssteps[ curr_stage_fuge ].speed);        // <-- RPM Active stages
 	     }
 	   
 	   if ( i != nstages_size-1 )
@@ -3933,6 +4005,9 @@ void US_ExperGuiUpload::submitExperiment()
        // ExperimentDefinition INSERT ////////////////////////////////////////////////////////////////////////
        QString tabname_expdef( "ExperimentDefinition" );
        QString qrytab_expdef  = "\"" + schname + "\".\"" + tabname_expdef + "\"";
+       int ExpDefId = 0;
+       QString runname = mainw->currProto.runname;
+       
        QSqlQuery query_expdef(dbxpn);
 
        /* WHAT TO INSERT: fields
@@ -3948,12 +4023,11 @@ void US_ExperGuiUpload::submitExperiment()
        QString fugeprofile          = QString::number(FugeProfileId);
        QStringList researcher_split = (mainw->currProto.investigator).split(':'); 
        QString researcher           = "\'" + researcher_split[1].trimmed() + "\'";
-       //QString name                 = "\'" + mainw->currProto.protname + "\'";
-       QString name                 = "\'" + mainw->currProto.runname + "\'";
+       QString name                 = "\'" + runname + "\'";
        QString exp_comments         = "\'Run by " + researcher_split[1].trimmed() + ": " + mainw->currProto.runname + " based on project " + mainw->currProto.project + "\'";         
        
        // Query
-       if(! query_expdef.prepare(QString("INSERT INTO %1 (\"CellCount\",\"Comments\",\"FugeRunProfileId\",\"Name\",\"Researcher\") VALUES (%2, %3, %4, %5, %6)")
+       if(! query_expdef.prepare(QString("INSERT INTO %1 (\"CellCount\",\"Comments\",\"FugeRunProfileId\",\"Name\",\"Researcher\") VALUES (%2, %3, %4, %5, %6) RETURNING \"ExperimentId\"")
 				 .arg(qrytab_expdef)
 				 .arg(cellcount)
 				 .arg(exp_comments)
@@ -3962,8 +4036,18 @@ void US_ExperGuiUpload::submitExperiment()
 				 .arg(researcher) ) )
 	 qDebug() << query_expdef.lastError().text();
        
-       if (query_expdef.exec()) 
-	 qDebug() << "ExperimentDefinition record created";
+       if (query_expdef.exec())
+	 {
+	   query_expdef.next();
+       	   ExpDefId = query_expdef.value(0).toInt();                                // <-- Save ExpDefID 
+       	   qDebug() << "ExpDefId: " << query_expdef.value(0).toInt();
+
+	   qDebug() << "ExperimentDefinition record created";
+
+	   protocol_details[ "experimentId" ]  = QString::number(ExpDefId);
+	   protocol_details[ "experimentName" ] = runname;
+   
+	 }
        else
 	 {
 	   QString errmsg   = "Create record error: " + query_expdef.lastError().text();;
@@ -3985,10 +4069,16 @@ void US_ExperGuiUpload::submitExperiment()
      }
    //submitted    = true;
 
+   // Make DB record on what protocol was submitted and what runname it's  associated with ... 
+   // suggested table name is 'protocolExperiment';  
+   //
+   
    ck_sub_done->setChecked( true );
    QString mtitle_done    = tr( "Success" );
    QString message_done   = tr( "Protocol has been successfully submitted to AUC DB." );
    QMessageBox::information( this, mtitle_done, message_done );
+
+   emit expdef_submitted( protocol_details );
 }
 
 // Function to build a Json object and document holding experiment controls

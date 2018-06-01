@@ -615,6 +615,7 @@ void US_ExperGuiSpeeds::initPanel()
 
    QList< int > dhms1;
    QList< int > dhms2;
+   QList< int > dhms2a;
    QList< int > dhms3;
    
    // Populate GUI settings from protocol controls
@@ -622,11 +623,13 @@ void US_ExperGuiSpeeds::initPanel()
    curssx               = qMin( (nspeed-1), qMax( 0, cb_prof->currentIndex() ) );
    double duration      = rpSpeed->ssteps[ curssx ].duration;
    double delay         = rpSpeed->ssteps[ curssx ].delay;
+   double delay_stage   = rpSpeed->ssteps[ curssx ].delay_stage;
    double scanintv      = rpSpeed->ssteps[ curssx ].scanintv;
    double speedmax      = sibDValue( "rotor", "maxrpm" );
 
    US_RunProtocol::timeToList( duration, dhms1 );
    US_RunProtocol::timeToList( delay,    dhms2 );
+   US_RunProtocol::timeToList( delay_stage,    dhms2a );
    US_RunProtocol::timeToList( scanintv, dhms3 );
 
    bool was_changed     = changed;       // Save changed state
@@ -651,6 +654,10 @@ void US_ExperGuiSpeeds::initPanel()
    sb_delay_hh ->setValue( (int)dhms2[ 1 ] );
    sb_delay_mm ->setValue( (int)dhms2[ 2 ] );
    sb_delay_ss ->setValue( (int)dhms2[ 3 ] );
+   sb_delay_st_dd ->setValue( (int)dhms2a[ 0 ] );
+   sb_delay_st_hh ->setValue( (int)dhms2a[ 1 ] );
+   sb_delay_st_mm ->setValue( (int)dhms2a[ 2 ] );
+   sb_delay_st_ss ->setValue( (int)dhms2a[ 3 ] );
    sb_scnint_dd ->setValue( (int)dhms3[ 0 ] );
    sb_scnint_hh ->setValue( (int)dhms3[ 1 ] );
    sb_scnint_mm ->setValue( (int)dhms3[ 2 ] );
@@ -673,6 +680,7 @@ DbgLv(1) << "EGSp:inP: nspeed" << nspeed;
       ssvals[ ii ][ "accel"    ] = rpSpeed->ssteps[ ii ].accel;
       ssvals[ ii ][ "duration" ] = rpSpeed->ssteps[ ii ].duration;
       ssvals[ ii ][ "delay"    ] = rpSpeed->ssteps[ ii ].delay;
+      ssvals[ ii ][ "delay_stage"    ] = rpSpeed->ssteps[ ii ].delay_stage;
       ssvals[ ii ][ "scanintv" ] = rpSpeed->ssteps[ ii ].scanintv;
 DbgLv(1) << "EGSp:inP:  ii" << ii << "speed accel durat delay scnint"
  << ssvals[ii]["speed"   ] << ssvals[ii]["accel"]
@@ -700,11 +708,12 @@ DbgLv(1) << "EGSp:svP: nspeed" << nspeed;
       rpSpeed->ssteps[ ii ].accel    = ssvals[ ii ][ "accel"    ];
       rpSpeed->ssteps[ ii ].duration = ssvals[ ii ][ "duration" ];
       rpSpeed->ssteps[ ii ].delay    = ssvals[ ii ][ "delay"    ];
+      rpSpeed->ssteps[ ii ].delay_stage    = ssvals[ ii ][ "delay_stage"    ];
       rpSpeed->ssteps[ ii ].scanintv = ssvals[ ii ][ "scanintv" ];
 DbgLv(1) << "EGSp:svP:  ii" << ii << "speed accel durat delay scnint"
  << ssvals[ii]["speed"   ] << ssvals[ii]["accel"]
  << ssvals[ii]["duration"] << ssvals[ii]["delay"]
- << ssvals[ii]["scanintv"];
+ << ssvals[ii]["delay_stage"] << ssvals[ii]["scanintv"];
    }
 }
 
@@ -733,6 +742,10 @@ QString US_ExperGuiSpeeds::getSValue( const QString type )
    {
       US_RunProtocol::timeToString( ssvals[ 0 ][ "delay" ], value );
    }
+   else if ( type == "delay_stage" )
+   {
+      US_RunProtocol::timeToString( ssvals[ 0 ][ "delay_stage" ], value );
+   }   
    else if ( type == "scanintv" )
    {
       US_RunProtocol::timeToString( ssvals[ 0 ][ "scanintv" ], value );
@@ -779,7 +792,7 @@ DbgLv(1) << "EGSp:getLV: type" << type;
          double accel         = rpSpeed->ssteps[ ii ].accel;
          double duration      = rpSpeed->ssteps[ ii ].duration;   // In seconds
          double delay         = rpSpeed->ssteps[ ii ].delay;      // In seconds
-
+	 double delay_stage   = rpSpeed->ssteps[ ii ].delay_stage;// In seconds
 	 double scint         = rpSpeed->ssteps[ ii ].scanintv;
 
 	 qDebug() << "ScanInt: " << scint;
@@ -794,6 +807,9 @@ DbgLv(1) << "EGSp:getLV: type" << type;
 	 
 	 double delayhrs      = qFloor( delay / 3600.0 );
 	 double delaymin      = qFloor(delay - ( delayhrs * 3600.0 )) / 60.0;
+
+	 double delaystagehrs = qFloor( delay_stage / 3600.0 );
+	 double delaystagemin = qFloor(delay_stage - ( delaystagehrs * 3600.0 )) / 60.0;
          
 	 double scinthrs      = qFloor( scint / 3600.0 );
 	 double scintmin      = qFloor(( scint - ( scinthrs * 3600.0 )) / 60.0);
@@ -805,6 +821,8 @@ DbgLv(1) << "EGSp:getLV: type" << type;
                   .arg( durathrs ).arg( duratmin );
          value << tr( "%1 h %2 m " )
                   .arg( delayhrs ).arg( delaymin );
+	 value << tr( "%1 h %2 m " )
+                  .arg( delaystagehrs ).arg( delaystagemin );
 	 value << tr( "%1 h %2 m %3 s" )                                        //ALEXEY: added scan interval
 	          .arg( scinthrs ).arg( scintmin ).arg( scintsec );
       }
