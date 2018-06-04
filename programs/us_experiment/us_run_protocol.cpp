@@ -402,6 +402,7 @@ US_RunProtocol::RunProtoSpeed::SpeedStep::SpeedStep()
    delay       = 120.0;
    delay_stage = 0.0;
    scanintv    = 16.85;             //ALEXEY: set default scanint (in secs) which corresponds to 45000 RPM
+   scanintv_min = scanintv;
 }
 
 // RunProtoSpeed::SpeedStep subclass Equality operator

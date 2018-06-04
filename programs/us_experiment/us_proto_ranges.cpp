@@ -613,9 +613,16 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
    int nsp = sibIValue( "speeds",  "nspeeds" );
    for ( int i = 0; i < nsp; i++ )
      {
-       double duration_sec = rpSpeed->ssteps[ i ].duration;
-       double scanint_sec  = rpSpeed->ssteps[ i ].scanintv;
-       int scancount = int( (duration_sec) / (scanint_sec * tot_wvl) );
+       double duration_sec    = rpSpeed->ssteps[ i ].duration;
+       double scanint_sec     = rpSpeed->ssteps[ i ].scanintv;
+       double scanint_sec_min = rpSpeed->ssteps[ i ].scanintv_min;
+
+       int scancount = 0;
+       if ( scanint_sec > scanint_sec_min*tot_wvl )
+	 scancount = int( duration_sec / scanint_sec );
+       else
+	 scancount = int( duration_sec / (scanint_sec_min * tot_wvl) );
+       
        QString scancount_stage = tr( "Stage %1. Number of Scans per Wavelength: %2 " ).arg(i+1).arg(scancount);
        cb_scancount->addItem( scancount_stage );
      }
@@ -748,7 +755,14 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
      {
        double duration_sec = rpSpeed->ssteps[ i ].duration;
        double scanint_sec  = rpSpeed->ssteps[ i ].scanintv;
-       int scancount = int( (duration_sec) / (scanint_sec * tot_wvl) );
+       double scanint_sec_min = rpSpeed->ssteps[ i ].scanintv_min;
+
+       int scancount = 0;
+       if ( scanint_sec > scanint_sec_min*tot_wvl )
+	 scancount = int( duration_sec / scanint_sec );
+       else
+	 scancount = int( duration_sec / (scanint_sec_min * tot_wvl) );
+       
        QString scancount_stage = tr( "Stage %1. Number of Scans per Wavelength: %2 " ).arg(i+1).arg(scancount);
        cb_scancount->addItem( scancount_stage );
      }

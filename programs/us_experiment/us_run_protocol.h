@@ -58,6 +58,7 @@ class US_RunProtocol
                   double      delay;         //!< Delay in seconds
 		  double      delay_stage;   //!< Delay in seconds
                   double      scanintv;      //!< Scan interval in seconds
+		  double      scanintv_min;  //!< Fastest scan interval
 
                   SpeedStep();
 

@@ -682,6 +682,7 @@ DbgLv(1) << "EGSp:inP: nspeed" << nspeed;
       ssvals[ ii ][ "delay"    ] = rpSpeed->ssteps[ ii ].delay;
       ssvals[ ii ][ "delay_stage"    ] = rpSpeed->ssteps[ ii ].delay_stage;
       ssvals[ ii ][ "scanintv" ] = rpSpeed->ssteps[ ii ].scanintv;
+      ssvals[ ii ][ "scanintv_min" ] = rpSpeed->ssteps[ ii ].scanintv_min;
 DbgLv(1) << "EGSp:inP:  ii" << ii << "speed accel durat delay scnint"
  << ssvals[ii]["speed"   ] << ssvals[ii]["accel"]
  << ssvals[ii]["duration"] << ssvals[ii]["delay"];
@@ -710,6 +711,7 @@ DbgLv(1) << "EGSp:svP: nspeed" << nspeed;
       rpSpeed->ssteps[ ii ].delay    = ssvals[ ii ][ "delay"    ];
       rpSpeed->ssteps[ ii ].delay_stage    = ssvals[ ii ][ "delay_stage"    ];
       rpSpeed->ssteps[ ii ].scanintv = ssvals[ ii ][ "scanintv" ];
+      rpSpeed->ssteps[ ii ].scanintv_min = ssvals[ ii ][ "scanintv_min" ];
 DbgLv(1) << "EGSp:svP:  ii" << ii << "speed accel durat delay scnint"
  << ssvals[ii]["speed"   ] << ssvals[ii]["accel"]
  << ssvals[ii]["duration"] << ssvals[ii]["delay"]
@@ -1825,11 +1827,18 @@ DbgLv(1) << "EGwS:inP:    ii" << ii << "channel" << channel;
      {
        double duration_sec = rpSpeed->ssteps[ i ].duration;
        double scanint_sec  = rpSpeed->ssteps[ i ].scanintv;
+       double scanint_sec_min = rpSpeed->ssteps[ i ].scanintv_min;
+
        int scancount;
        if ( Total_wvl[i] == 0 )
 	 scancount = 0;
        else
-	 scancount = int( (duration_sec) / (scanint_sec * Total_wvl[i]) );
+	 {
+	   if ( scanint_sec > scanint_sec_min * Total_wvl[i])
+	     scancount = int( duration_sec / scanint_sec );
+	   else
+	     scancount = int( duration_sec / (scanint_sec_min * Total_wvl[i]) );
+	 }
        QString scancount_stage = tr( "Stage %1. Number of Scans per Wavelength: %2 " ).arg(i+1).arg(scancount);
        cb_scancount->addItem( scancount_stage );
      }

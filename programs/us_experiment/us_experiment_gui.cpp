@@ -814,7 +814,8 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    double df_delatm_stage    = rpSpeed->ssteps[ 0 ].delay_stage;
 
    double df_scint     = rpSpeed->ssteps[ 0 ].scanintv; //ALEXEY read default scanint in secs corresponding to default RPM
-
+   double df_scint_min = rpSpeed->ssteps[ 0 ].scanintv_min;
+   
    QList< int > dhms_dur;
    QList< int > dhms_dly;
    QList< int > dhms_dly_stage;
@@ -844,7 +845,8 @@ DbgLv(1) << "EGSp:   def  d h m s " << dhms_dly;
 
    ssvals[ 0 ][ "delay_stage" ]  = df_delatm_stage; // Delay of the stage in seconds 
 
-   ssvals[ 0 ][ "scanintv" ]    = df_scint;  //ALEXEY
+   ssvals[ 0 ][ "scanintv" ]     = df_scint;  //ALEXEY
+   ssvals[ 0 ][ "scanintv_min" ] = df_scint_min;  //ALEXEY
    
    // Set up counters and profile description
    ct_speed ->setSingleStep( 100 );
@@ -1276,7 +1278,9 @@ void US_ExperGuiSpeeds::ssChangeScInt( double val, int row )
   if (val >= 51000 and val <= 60000 )
     time_scint = a0[3] + qRound( a1[3]/val );
   
-  ssvals[row]["scanintv"] = time_scint;
+  ssvals[row]["scanintv"]     = time_scint;
+  ssvals[row]["scanintv_min"] = time_scint;
+  
   QList< int > hms_scint;
   US_RunProtocol::timeToList( time_scint, hms_scint );
 
@@ -3468,13 +3472,25 @@ void US_ExperGuiUpload::submitExperiment()
 	   double duration_sec = rpSpeed->ssteps[ curr_stage ].duration;
 	   double delay_sec    = rpSpeed->ssteps[ curr_stage ].delay;  
 	   double scanint_sec  = rpSpeed->ssteps[ curr_stage ].scanintv;
+	   double scanint_sec_min  = rpSpeed->ssteps[ curr_stage ].scanintv_min;
 
 	   qDebug() << "Size of rpSpeed is: " << rpSpeed->ssteps.size() << ", while nstages_size is: " << nstages_size << ", size of Total_wvl is: " <<  Total_wvl.size();
 
 	   // <-- Which delay should we substract ? (not a stage delay but due to acceleration ONLY ? )
-	   //int ScanCount = int( (duration_sec - delay_sec) / (scanint_sec * Total_wvl[i]) );  
-	   int ScanCount = int( (duration_sec) / (scanint_sec * Total_wvl[i]) );
+	   //int ScanCount = int( (duration_sec - delay_sec) / (scanint_sec * Total_wvl[i]) );
 
+	   int ScanCount;
+	   int ScanInt;
+	   if ( scanint_sec > scanint_sec_min * Total_wvl[i] )
+	     {
+	       ScanCount = int( duration_sec / scanint_sec );
+	       ScanInt   = scanint_sec;
+	     }
+	   else
+	     {
+	       ScanCount = int( duration_sec / (scanint_sec_min * Total_wvl[i] ) );
+	       ScanInt   = scanint_sec_min * Total_wvl[i];
+	     }
 	   qDebug() << "Duration_sec: " << duration_sec << ", delay_sec: " << delay_sec << ", scanint_sec: " << scanint_sec << ", Tot_wvl: " << Total_wvl[i];
 	   
 	   
@@ -3524,8 +3540,8 @@ void US_ExperGuiUpload::submitExperiment()
 		       scan_starts_array += QString::number(0);                     // <-- '0' to allow control by scan interval
 		       replicate_counts_array += QString::number(1);                // <-- shoud be '1'
 		       continuous_mode_array += "t";                                // <-- always 't'
-		       scan_counts += QString::number(ScanCount);                   // <-- TEMPORARY 
-		       scan_intervals += QString::number(int(scanint_sec));         // <-- TEMPORARY 
+		       scan_counts += QString::number(ScanCount);                   // <-- ScanCount
+		       scan_intervals += QString::number(int(ScanInt));         // <-- ScanInterval
 		       if (r != nwavl - 1)
 			 {
 			   wvl_array        += ",";
