@@ -3378,6 +3378,56 @@ void US_ExperGuiUpload::submitExperiment()
      { // dbxpn.open()
        qDebug() << "Connected !!!";
     
+
+       // Get # satges, cells
+       int nstages = sibIValue( "speeds",  "nspeeds" );
+
+       int tem_delay_sec = int((mainw->currProto.temeq_delay)*60);         // delay in sec (longevity) of the dummy equlibration stage
+       int nstages_size;
+       nstages_size = tem_delay_sec ? nstages + 1 : nstages;               // Total # stages
+       int ncells  = sibIValue( "rotor",   "nholes" );
+       
+       qDebug() << "#Stages: " << nstages;
+       qDebug() << "#Cells: " << ncells;
+
+       // Define AbsScanId array of arrays 
+       QVector < QVector < int >> AbsScanIds(nstages_size);
+       /* Add extra array QVector < QVector < QString >> RadialPath(nstages_size); to be filled with DEFAULT/ */
+       QVector < QVector < int >> AbsRadialPath(nstages_size);
+
+       // Define array of the total # wvl per stage
+       QVector < int > Total_wvl(nstages_size);
+       
+       for (int i=0; i<nstages_size; i++)
+	 {
+	   AbsScanIds[i].resize(ncells);
+	   AbsRadialPath[i].resize(ncells);
+
+	   Total_wvl[i] = 0;
+	 }
+       
+       for (int i=0; i<nstages_size; i++)
+	 { 
+	   for (int j=0; j<ncells; j++)
+	     {
+	       AbsScanIds[i][j] = 0;
+	       AbsRadialPath[i][j] = 0;
+	       //Compute total # wvl per stage
+	       QString channel;
+	       for ( int ii = 0; ii < rpRange->nranges; ii++ )
+		 {
+		   channel  = rpRange->chrngs[ ii ].channel;
+		   
+		   if ( channel.contains("sample") && channel.startsWith(QString::number(j+1)) )  // <-- Judge only by sample (channel A) for now
+		     {
+		       Total_wvl[i]  += rpRange->chrngs[ ii ].wvlens.count();                     // <-- count wvl
+		     }
+		 }
+	       qDebug() << "#Wvl for cell: " << j << " is: " << Total_wvl[i];
+	     }
+	 }
+
+       
        // Absorbance INSERT ////////////////////////////////////////////////////////////////////////
        QString tabname_abs( "AbsorbanceScanParameters" );
        QString schname( "AUC_schema" );
@@ -3404,52 +3454,7 @@ void US_ExperGuiUpload::submitExperiment()
        2       [0,1,2,3,4,5,6,7]
 	 
        */
-       
-       int nstages = sibIValue( "speeds",  "nspeeds" );
 
-       int tem_delay_sec = int((mainw->currProto.temeq_delay)*60);         // delay in sec (longevity) of the dummy equlibration stage
-       int nstages_size;
-       nstages_size = tem_delay_sec ? nstages + 1 : nstages;               // Total # stages
-       int ncells  = sibIValue( "rotor",   "nholes" );
-       
-       qDebug() << "#Stages: " << nstages;
-       qDebug() << "#Cells: " << ncells;
-      
-       QVector < QVector < int >> AbsScanIds(nstages_size);
-       /* Add extra array QVector < QVector < QString >> RadialPath(nstages_size); to be filled with DEFAULT/ */
-       QVector < QVector < int >> AbsRadialPath(nstages_size);
-
-       QVector < int > Total_wvl(nstages_size);
-       
-       for (int i=0; i<nstages_size; i++)
-	 {
-	   AbsScanIds[i].resize(ncells);
-	   AbsRadialPath[i].resize(ncells);
-
-	   Total_wvl[i] = 0;
-	 }
-       
-       for (int i=0; i<nstages_size; i++)
-	 { 
-	   for (int j=0; j<ncells; j++)
-	     {
-	       AbsScanIds[i][j] = 0;
-	       AbsRadialPath[i][j] = 0;
-	       //Compute total # wvl per stage
-	       QString channel;
-	       for ( int ii = 0; ii < rpRange->nranges; ii++ )
-		 {
-		   channel  = rpRange->chrngs[ ii ].channel;
-		   
-		   if ( channel.contains("sample") && channel.startsWith(QString::number(j+1)) )  // <-- Judge only by sample (channel A) for now
-		     {
-		       Total_wvl[i]  += rpRange->chrngs[ ii ].wvlens.count();
-		     }
-		 }
-	       qDebug() << "#Wvl for cell: " << j << " is: " << Total_wvl[i];
-	     }
-	 }
-       
        
        qDebug() << "Begin AbsInsert";
        bool is_dummy = false;
@@ -3675,11 +3680,45 @@ void US_ExperGuiUpload::submitExperiment()
 	       InterScanIds[i][j] = 0;
 	     }
 	 }
+
        
-        for (int i=0; i<nstages_size; i++)
-	 { 
+       bool is_dummy_int = false;
+       int curr_stage_int;
+       
+       for (int i=0; i<nstages_size; i++)
+	 {
 	   if (i==0 && tem_delay_sec)
-	     continue;                     // skip dummy stage for InterferenceScanParams
+	     {
+	       is_dummy_int = true;
+	       continue;                    // skip dummy stage for InterferenceScanParams
+	     }
+	   
+	   if (is_dummy_int)
+	     curr_stage_int = i - 1;
+	   else
+	     curr_stage_int = i;
+	   
+	   
+	   double duration_sec = rpSpeed->ssteps[ curr_stage_int ].duration;
+	   double delay_sec    = rpSpeed->ssteps[ curr_stage_int ].delay;  
+	   double scanint_sec  = rpSpeed->ssteps[ curr_stage_int ].scanintv;
+	   double scanint_sec_min  = rpSpeed->ssteps[ curr_stage_int ].scanintv_min;
+
+	   int ScanCount;
+	   int ScanInt;
+	   if ( scanint_sec > scanint_sec_min * Total_wvl[i] )
+	     {
+	       ScanCount = int( duration_sec / scanint_sec );
+	       ScanInt   = scanint_sec;
+	     }
+	   else
+	     {
+	       ScanCount = int( duration_sec / (scanint_sec_min * Total_wvl[i] ) );
+	       ScanInt   = scanint_sec_min * Total_wvl[i];
+	     }
+	   qDebug() << "Duration_sec: " << duration_sec << ", delay_sec: " << delay_sec << ", scanint_sec: " << scanint_sec << ", Tot_wvl: " << Total_wvl[i];
+
+	   
 	   for (int j=0; j<ncells; j++)
 	     {
 	       QString channel;
@@ -3698,8 +3737,8 @@ void US_ExperGuiUpload::submitExperiment()
 		 }
 	       if ( has_interference )
 		 {
-		   QString scan_count        = QString::number( 3 );               // <-- TEMPORARY
-		   QString scan_interval     = QString::number( 20 );              // <-- TEMPORARY
+		   QString scan_count        = QString::number( ScanCount );               // <-- ScanInterval
+		   QString scan_interval     = QString::number( int(ScanInt) );            // <-- ScanCount
 
 		   // Query
 		   QSqlQuery query_inter_scan(dbxpn);
@@ -3948,7 +3987,7 @@ void US_ExperGuiUpload::submitExperiment()
 	     }
 	   cellids += "}";
 	   
-	   stagedur    += QString::number(0);                          // <-- stageduration   
+	   stagedur    += QString::number(0);                          // <-- stageduration <-- ALWAYS 0
 	   stageaccl   += QString::number(0);                          // <-- stageaccelrate   
 	   
 	   if (i==0 && tem_delay_sec)
