@@ -215,6 +215,9 @@ if [ ! -z "${QTDIR}" ]; then
     ${CPYCMD} ${QTDIR}/bin/${x}* ${PKGDIR}/bin
   done
 fi
+
+${CPYCMD} -r ${QTDIR}/plugins ${PKGDIR}/lib/
+
       echo "QWTDIR=${QWTDIR}"
 if [ -z "${QWTDIR}" ]; then
   QWTDIR=`ldd bin/u* lib/*|grep -i qwt.so|sed -n 1p`

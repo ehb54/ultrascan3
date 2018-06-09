@@ -54,7 +54,7 @@ US_DataLoader::US_DataLoader(
    // Only enable the investigator button for privileged users
    pb_invest           = us_pushbutton( tr( "Select Investigator" ) );
    int invlev          = US_Settings::us_inv_level();
-   pb_invest->setEnabled( ( invlev > 0 )  && disk_controls->db() );
+   pb_invest->setEnabled( ( invlev > 2 )  && disk_controls->db() );
    connect( pb_invest, SIGNAL( clicked() ), SLOT( get_person() ) );
    top->addWidget( pb_invest, row, 0 );
 

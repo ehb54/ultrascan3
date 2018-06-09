@@ -82,6 +82,8 @@ DbgLv(1) << "GUI setup begun";
 
    pb_invtor     = us_pushbutton( tr( "Investigator" ) );
    dctlLayout->addWidget( pb_invtor, row,   0, 1, 3 );
+   if ( US_Settings::us_inv_level() < 3 )
+      pb_invtor->setEnabled( false );
 
    personID      = US_Settings::us_inv_ID();
    QString invn  = ( personID > 0 ) ? QString::number( personID ) : "";

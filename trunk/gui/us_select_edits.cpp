@@ -39,6 +39,8 @@ US_SelectEdits::US_SelectEdits( bool dbase, QStringList& edIDs )
             this,        SLOT  ( update_disk_db( bool ) ) );
 
    pb_invest           = us_pushbutton( tr( "Select Investigator" ) );
+   if ( US_Settings::us_inv_level() < 3 )
+      pb_invest->setEnabled( false );
    QString invnum      = QString::number( US_Settings::us_inv_ID() ) + ": ";
    QString invusr      = US_Settings::us_inv_name();
    le_invest           = us_lineedit( invnum + invusr, 0, true );

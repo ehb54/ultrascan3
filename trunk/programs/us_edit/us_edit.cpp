@@ -94,7 +94,7 @@ US_Edit::US_Edit() : US_Widgets()
    // Investigator
    QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
 
-   if ( US_Settings::us_inv_level() < 1 )
+   if ( US_Settings::us_inv_level() < 3 )
       pb_investigator->setEnabled( false );
 
    int     id      = US_Settings::us_inv_ID();
@@ -1338,8 +1338,10 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
       plot_mwl();
    } // END: isMwl=true
 //*DEBUG* Print times,omega^ts
-else
-{
+   else
+   {
+      new_triple( 0 );
+//*DEBUG*
  triple = allData[0];
  double timel = triple.scanData[0].rpm / 400.0;
  double rpmc  = 400.0;
@@ -1366,7 +1368,7 @@ else
   }
   timel = timec;
  }
-}
+   }
 //*DEBUG* Print times,omega^ts
 
    // Set up OD limit and any MWL controls

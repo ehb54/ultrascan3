@@ -39,6 +39,8 @@ US_GetRun::US_GetRun( QString& run, bool inDB )
    personID          = US_Settings::us_inv_ID();
    QHBoxLayout* investigator = new QHBoxLayout;
                 pb_invest    = us_pushbutton( tr( "Select Investigator" ) );
+   if ( US_Settings::us_inv_level() < 3 )
+      pb_invest->setEnabled( false );
    investigator->addWidget( pb_invest );
    QString invval    = QString::number( personID ) + ": " +
                        US_Settings::us_inv_name();
