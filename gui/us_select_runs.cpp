@@ -44,6 +44,8 @@ US_SelectRuns::US_SelectRuns( bool dbase, QStringList& runIDs )
    le_invest           = us_lineedit( invnum + invusr, 0, true );
    connect( pb_invest, SIGNAL( clicked()    ),
                        SLOT  ( get_person() ) );
+   if ( US_Settings::us_inv_level() < 3 )
+      pb_invest->setEnabled( false );
 
    // Search line
    QLabel* lb_filtdata = us_label( tr( "Search" ) );

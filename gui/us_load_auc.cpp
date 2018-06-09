@@ -42,6 +42,8 @@ US_LoadAUC::US_LoadAUC( bool local, QVector< US_DataIO::RawData >& rData,
    pb_invest = us_pushbutton( tr( "Select Investigator" ) );
    connect( pb_invest, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
    investigator->addWidget( pb_invest );
+   if ( US_Settings::us_inv_level() < 3 )
+      pb_invest->setEnabled( false );
  
    int id = US_Settings::us_inv_ID();
    QString number = ( id > 0 )

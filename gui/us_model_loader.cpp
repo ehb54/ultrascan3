@@ -99,6 +99,8 @@ qDebug() << "ML:BD: runIDs empty" << runIDs.isEmpty();
    connect( pb_investigator, SIGNAL( clicked()       ),
             this,            SLOT(   get_person()    ) );
 
+   if ( US_Settings::us_inv_level() < 3 )
+      pb_investigator->setEnabled( false );
    int inv = US_Settings::us_inv_ID();
    QString number  = ( inv > 0 ) ? QString::number( inv ) + ": " : "";
    le_investigator = us_lineedit( number + US_Settings::us_inv_name(),
@@ -305,7 +307,7 @@ void US_ModelLoader::select_diskdb()
    // Disable investigator field if from disk or normal user; Enable otherwise
    loadDB       = dkdb_cntrls->db();
    dbP          = loadDB ? dbP : NULL;
-   pb_investigator->setEnabled( loadDB && ( US_Settings::us_inv_level() > 0 ) );
+   pb_investigator->setEnabled( loadDB && ( US_Settings::us_inv_level() > 2 ) );
 
    // Signal model-loader caller that Disk/DB source has changed
    emit changed( loadDB );

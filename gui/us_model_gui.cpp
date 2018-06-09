@@ -33,7 +33,7 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
    // Start widgets
    QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
 
-   if ( US_Settings::us_inv_level() < 1 )
+   if ( US_Settings::us_inv_level() < 3 )
       pb_investigator->setEnabled( false );
    
    le_investigator   = us_lineedit( "", 0, true );
