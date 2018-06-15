@@ -780,7 +780,7 @@ int US_Model::load_multi_model( QTextStream& tsi )
          if ( nmcixs == 0 )
          {
             int idx       = qMax( mline.indexOf( "description=" ), 0 );
-            mdesc         = QString( mline ).mid( idx, 99 ).section( "\"", 1, 1 );
+            mdesc         = QString( mline ).mid( idx, 200 ).section( "\"", 1, 1 );
          }
       }
 
@@ -868,7 +868,7 @@ int US_Model::load_multi_model( QTextStream& tsi )
    QString mdsc3 = QString( mdesc ).section( ".", -1, -1 );
    QString miter = QString().sprintf( "_mcN%03i", nmcixs );
    description   = mdsc1 + "." + mdsc2 + miter + "." + mdsc3;
-//qDebug() << "MDL:LMM: miter" << miter << "desc" << description;
+qDebug() << "MDL:LMM: miter" << miter << "desc" << description << mdesc;
 
    return result;
 }

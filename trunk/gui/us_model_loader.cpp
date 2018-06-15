@@ -257,7 +257,7 @@ qDebug() << "LdM:    description" << model_descriptions[index].description;
    if ( do_single )
    {  // If selecting single from MC composite, break it out now
       US_Model model2    = model;
-      QString sdescr     = model_descriptions[ index].description;
+      QString sdescr     = model_descriptions[ index ].description;
       QStringList xmls;
       int nxmls          = model2.mc_iter_xmls( xmls );
 
@@ -493,7 +493,7 @@ qDebug() << "Timing: get_model_desc" << time1.msecsTo(time2);
 
                desc.filename.clear();
                desc.reqGUID     = desc.description.section( ".", -2, -2 )
-                                                  .section( "_",  0,  3 );
+                                                  .section( "_",  0, -2 );
                desc.iterations  = ( desc.description.contains( "-MC" )
                                  && desc.description.contains( "_mc" ) ) ? 1: 0;
                bool skip_it     = false;
@@ -876,6 +876,7 @@ qDebug() << "ACC: load... (single)";
       load_model( omodel, 0 );
 qDebug() << "ACC: ...loaded (single)";
       odescr     = description( 0 );
+qDebug() << "ACC: odescr" << odescr;
    }
 
    else
@@ -1027,7 +1028,7 @@ void US_ModelLoader::show_model_info( QPoint pos )
       iters    = !model.monteCarlo ? 0 :
                  model_descriptions[ mdx ].iterations;
       anlid    = model_descriptions[ mdx ].reqGUID;
-      runid    = mdesc.section( ".", 0, 0 );
+      runid    = mdesc.section( ".", 0, -4 );
       int jts  = runid.indexOf( "_" + tdesc );
       runid    = jts > 0 ? runid.left( jts ) : runid;
       mdlid    = frDisk ?
@@ -1069,7 +1070,7 @@ void US_ModelLoader::show_model_info( QPoint pos )
 
       load_model( model, mdx );                           // load model
 
-      runid    = mdesc.section( ".", 0, 0 );              // model info
+      runid    = mdesc.section( ".", 0, -4 );             // model info
       mtype    = model.analysis;
       nassoc   = model.associations.size();
       tdesc    = model.typeText();
@@ -1141,7 +1142,7 @@ void US_ModelLoader::show_model_info( QPoint pos )
          ncomp    = model.components.size();
          nassoc   = model.associations.size();
          tdesc    = model.typeText();
-         runid    = mdesc.section( ".", 0, 0 );
+         runid    = mdesc.section( ".", 0, -4 );
          mdlid    = frDisk ?
             model_descriptions[ mdx ].filename :              // ID is filename
             model_descriptions[ mdx ].DB_id;                  // ID is DB id
@@ -1285,7 +1286,7 @@ void US_ModelLoader::change_unasgn( bool ckunasgn )
 // Local function to create an alternate form of a model description
 QString US_ModelLoader::alt_description( QString& descr, const bool from_mdesc )
 {
-   QString odescr;
+   QString adescr;
    QStringList dsects = descr.split( "." );
    // Native model description sample:
    //   "YW_IAPP11-17_beta-sheets_111416_440V1"  +
@@ -1310,7 +1311,7 @@ QString US_ModelLoader::alt_description( QString& descr, const bool from_mdesc )
 
    if ( atimx != 11 )
    {  // Not standard analysis form, so input and output are the same
-      odescr         = descr;
+      adescr         = descr;
    }
 
    else if ( from_mdesc )
@@ -1319,13 +1320,13 @@ QString US_ModelLoader::alt_description( QString& descr, const bool from_mdesc )
       QString frun   = QString( descr ).section( ".",  0, -4 );
       QString ftrip  = QString( descr ).section( ".", -3, -3 );
       QString fanal  = QString( descr ).section( ".", -2, -2 );
-      QString fedan  = QString( fanal ).section( "_",  0,  1 );
-      QString ftype  = QString( fanal ).section( "_",  2,  2 );
-      QString fiter  = QString( fanal ).section( "_",  3, -1 );
-      odescr         = ftype + "." + ftrip + "." + fedan + "_"
+      QString fedan  = QString( fanal ).section( "_",  0, -4 );
+      QString ftype  = QString( fanal ).section( "_", -3, -3 );
+      QString fiter  = QString( fanal ).section( "_", -2, -1 );
+      adescr         = ftype + "." + ftrip + "." + fedan + "_"
                      + fiter + "." + frun;
-//qDebug() << "ALT_DESC:Native-Form: " << descr;
-//qDebug() << "ALT_DESC:List-Form: " << odescr;
+qDebug() << "ALT_DESC:Native-Form: " << descr;
+qDebug() << "ALT_DESC:List-Form: " << adescr;
    }
 
    else
@@ -1335,12 +1336,14 @@ QString US_ModelLoader::alt_description( QString& descr, const bool from_mdesc )
       QString ftrip  = QString( descr ).section( ".",  1,  1 );
       QString fanal  = QString( descr ).section( ".",  2,  2 );
       QString frun   = QString( descr ).section( ".",  3, -1 );
-      QString fedan  = QString( fanal ).section( "_",  0,  1 );
-      QString fiter  = QString( fanal ).section( "_",  2, -1 );
-      odescr         = frun  + "." + ftrip + "." + fedan + "_"
+      QString fedan  = QString( fanal ).section( "_",  0, -4 );
+      QString fiter  = QString( fanal ).section( "_", -3, -1 );
+      adescr         = frun  + "." + ftrip + "." + fedan + "_"
                      + ftype + "_" + fiter + ".model";
+qDebug() << "ALT_DESC:List-Form: " << descr;
+qDebug() << "ALT_DESC:Native-Form: " << adescr;
    }
 
-   return odescr;
+   return adescr;
 }
 
