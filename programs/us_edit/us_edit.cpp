@@ -1337,11 +1337,10 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 
       plot_mwl();
    } // END: isMwl=true
-//*DEBUG* Print times,omega^ts
    else
    {
       new_triple( 0 );
-//*DEBUG*
+//*DEBUG* Print times,omega^ts
  triple = allData[0];
  double timel = triple.scanData[0].rpm / 400.0;
  double rpmc  = 400.0;
@@ -1368,8 +1367,8 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
   }
   timel = timec;
  }
-   }
 //*DEBUG* Print times,omega^ts
+   }
 
    // Set up OD limit and any MWL controls
    ct_odlim->disconnect();
@@ -3519,9 +3518,10 @@ DbgLv(1) << "BL: CC : baseline bl" << baseline << bl;
       bool ok;
       QString msg = tr( "The base Edit Label for this edit session is <b>" )
          + now + "</b> .<br/>"
-         + tr( "You may add an optional suffix to further distinquish<br/>"
-               "the Edit Label. Use alphanumeric characters, underscores,<br/>"
-               "or hyphens (no spaces). Enter 0 to 10 suffix characters." );
+         + tr( "You may add an optional suffix to further distinquish "
+               "the Edit Label.<br/>"
+               "Use alphanumeric characters or hyphens (no spaces).<br/>"
+               "Enter 0 to 10 suffix characters." );
       sufx   = QInputDialog::getText( this, 
          tr( "Create a unique session Edit Label" ),
          msg,
@@ -3531,8 +3531,25 @@ DbgLv(1) << "BL: CC : baseline bl" << baseline << bl;
       
       if ( ! ok ) return;
 
-      sufx.remove( QRegExp( "[^\\w\\d_-]" ) );
-      editLabel = now + sufx;
+DbgLv(1) << "EDT:WrTripl: orig sufx" << sufx;
+      QString isufx = sufx;
+      sufx.replace( QRegExp( "[^\\w\\d\\-]" ), "-" );
+      sufx.replace( '_', '-' );
+DbgLv(1) << "EDT:WrTripl:  rmvd sufx" << sufx;
+      if ( sufx != isufx )
+      {
+         QMessageBox::critical( this,
+            tr( "Character content error" ),
+            tr( "You entered non-alphanumeric/non-hypen characters\n"
+                "for the Edit Label suffix.\n"
+                "Re-enter, limiting characters to alphanumeric or hyphen ('-')." )
+            .arg( sufx.length() ) );
+         editLabel.clear();
+      }
+      else
+      {
+         editLabel = now + sufx;
+      }
 
       if ( editLabel.length() > 20 )
       {

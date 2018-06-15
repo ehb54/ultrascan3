@@ -1751,14 +1751,6 @@ void US_FeMatch::load_model( )
    // load model
    bool loadDB = dkdb_cntrls->db();
 
-#if 0
-   if ( dataList[ drow ].channel == "S" )
-   {  // Set up for "manual" model list option for simulated data
-      if ( ! mfilter.contains( "=m" ) )
-         mfilter     = "=m " + mfilter.replace( "=e", "" ).simplified();
-   }
-#endif
-
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
    US_ModelLoader dialog( loadDB, mfilter, model,
@@ -1784,6 +1776,8 @@ DbgLv(1) << "post-Load loadDB" << dkdb_cntrls->db();
    is_dmga_mc   = ( model.monteCarlo  &&
                     model.description.contains( "DMGA" )  &&
                     model.description.contains( "_mcN" ) );
+DbgLv(1) << "post-Load mC" << model.monteCarlo << "is_dmga_mc" << is_dmga_mc
+ << "description" << model.description;
 
    if ( model.components.size() == 0 )
    {
