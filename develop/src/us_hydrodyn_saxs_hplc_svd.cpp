@@ -2237,7 +2237,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::svd_plot( bool axis_change )
 #endif
 
    plot_data->setAxisScale( QwtPlot::xBottom, 1, svd_x.size() );
-   plot_data->setAxisScale( QwtPlot::yLeft  , svd_y[ 0 ] * 0.9e0 , svd_y.back() * 1.1e0 );
+   plot_data->setAxisScale( QwtPlot::yLeft  , svd_y.back() * 0.9e0, svd_y[ 0 ] * 1.1e0 );
 
    plot_data_zoomer = new ScrollZoomer(plot_data->canvas());
    plot_data_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));

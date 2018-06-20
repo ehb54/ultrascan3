@@ -3768,7 +3768,10 @@ void US_Hydrodyn_Saxs::clear_guinier()
 #if QT_VERSION < 0x040000
       plot_saxs->removeCurve(plotted_Gp[g]);
 #else
-      plotted_Gp_curves[g]->detach();
+      if ( plotted_guinier_plotted.count( g ) &&
+           plotted_guinier_plotted[ g ] == true ) {
+         plotted_Gp_curves[g]->detach();
+      }
 #endif
    }
 
@@ -3783,7 +3786,10 @@ void US_Hydrodyn_Saxs::clear_guinier()
 #if QT_VERSION < 0x040000
       plot_saxs->removeCurve(plotted_Gp_full[g]);
 #else
-      plotted_Gp_curves_full[g]->detach();
+      if ( plotted_guinier_plotted.count( g ) &&
+           plotted_guinier_plotted[ g ] == true ) {
+         plotted_Gp_curves_full[g]->detach();
+      }
 #endif
    }
 
@@ -3819,7 +3825,10 @@ void US_Hydrodyn_Saxs::clear_cs_guinier()
 #if QT_VERSION < 0x040000
       plot_saxs->removeCurve(plotted_cs_Gp[g]);
 #else
-      plotted_cs_Gp_curves[g]->detach();
+      if ( plotted_cs_guinier_plotted.count( g ) &&
+           plotted_cs_guinier_plotted[ g ] == true ) {
+         plotted_cs_Gp_curves[g]->detach();
+      }
 #endif
    }
 
@@ -3834,7 +3843,10 @@ void US_Hydrodyn_Saxs::clear_cs_guinier()
 #if QT_VERSION < 0x040000
       plot_saxs->removeCurve(plotted_cs_Gp_full[g]);
 #else
-      plotted_cs_Gp_curves_full[g]->detach();
+      if ( plotted_cs_guinier_plotted.count( g ) &&
+           plotted_cs_guinier_plotted[ g ] == true ) {
+         plotted_cs_Gp_curves_full[g]->detach();
+      }
 #endif
    }
 
@@ -3870,7 +3882,10 @@ void US_Hydrodyn_Saxs::clear_Rt_guinier()
 #if QT_VERSION < 0x040000
       plot_saxs->removeCurve(plotted_Rt_Gp[g]);
 #else
-      plotted_Rt_Gp_curves[g]->detach();
+      if ( plotted_Rt_guinier_plotted.count( g ) &&
+           plotted_Rt_guinier_plotted[ g ] == true ) {
+         plotted_Rt_Gp_curves[g]->detach();
+      }
 #endif
    }
 
@@ -3885,7 +3900,10 @@ void US_Hydrodyn_Saxs::clear_Rt_guinier()
 #if QT_VERSION < 0x040000
       plot_saxs->removeCurve(plotted_Rt_Gp_full[g]);
 #else
-      plotted_Rt_Gp_curves_full[g]->detach();
+      if ( plotted_Rt_guinier_plotted.count( g ) &&
+           plotted_Rt_guinier_plotted[ g ] == true ) {
+         plotted_Rt_Gp_curves_full[g]->detach();
+      }
 #endif
    }
 

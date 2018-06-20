@@ -1570,7 +1570,7 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
          }
       }
 
-      QRegExp rx_ok_line("^(\\s+|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$");
+      QRegExp rx_ok_line("^(\\s+|-\\d+|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$");
       rx_ok_line.setMinimal( true );
       for ( unsigned int i = 1; i < (unsigned int) qv.size(); i++ )
       {
@@ -1629,22 +1629,24 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
       cout << "q_range after load: " << q[0] << " , " << q[q.size() - 1] << endl;
 
       cout << QFileInfo(filename).fileName() << endl;
-      if ( do_crop )
-      {
-         if ( Icolumn2 )
-         {
-            q2 = q;
-            crop_iq_data(q2, I2);
-         }
-         if ( I_error.size() )
-         {
-            crop_iq_data(q, I, I_error );
-         } else {
-            crop_iq_data(q, I);
-         }
-      }
+      // turn off cropping
+      //
+      // if ( do_crop )
+      // {
+      //    if ( Icolumn2 )
+      //    {
+      //       q2 = q;
+      //       crop_iq_data(q2, I2);
+      //    }
+      //    if ( I_error.size() )
+      //    {
+      //       crop_iq_data(q, I, I_error );
+      //    } else {
+      //       crop_iq_data(q, I);
+      //    }
+      // }
          
-      cout << "q_range after crop: " << q[0] << " , " << q[q.size() - 1] << endl;
+      // cout << "q_range after crop: " << q[0] << " , " << q[q.size() - 1] << endl;
 
       if ( q.size() &&
            !scaling_target.isEmpty() && 
@@ -3594,7 +3596,7 @@ void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
          }
       }
 
-      QRegExp rx_ok_line("^(\\s+|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$");
+      QRegExp rx_ok_line("^(\\s+|-\\d+|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$");
       rx_ok_line.setMinimal( true );
       for ( unsigned int i = 1; i < (unsigned int) qv.size(); i++ )
       {
@@ -3652,23 +3654,24 @@ void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
 
       cout << "q_range after load: " << q[0] << " , " << q[q.size() - 1] << endl;
 
-      cout << QFileInfo(filename).fileName() << endl;
-      if ( do_crop )
-      {
-         if ( Icolumn2 )
-         {
-            q2 = q;
-            crop_iq_data(q2, I2);
-         }
-         if ( I_error.size() )
-         {
-            crop_iq_data(q, I, I_error );
-         } else {
-            crop_iq_data(q, I);
-         }
-      }
+      // turn off cropping
+      // cout << QFileInfo(filename).fileName() << endl;
+      // if ( 0 &&  do_crop )
+      // {
+      //    if ( Icolumn2 )
+      //    {
+      //       q2 = q;
+      //       crop_iq_data(q2, I2);
+      //    }
+      //    if ( I_error.size() )
+      //    {
+      //       crop_iq_data(q, I, I_error );
+      //    } else {
+      //       crop_iq_data(q, I);
+      //    }
+      // }
          
-      cout << "q_range after crop: " << q[0] << " , " << q[q.size() - 1] << endl;
+      // cout << "q_range after crop: " << q[0] << " , " << q[q.size() - 1] << endl;
 
       if ( q.size() &&
            !scaling_target.isEmpty() && 

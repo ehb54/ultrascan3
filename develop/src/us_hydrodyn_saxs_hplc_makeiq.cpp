@@ -230,6 +230,124 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files, double t_min, d
       qs_zero_points = qsl_list_zero_points.join( "\n" );
    }
 
+   bool   normalize_by_conc = false;
+   bool   conc_ok           = false;
+
+   double conv = 0e0;
+   double psv  = 0e0;
+   double I0se = 0e0;
+   double conc_repeak = 1e0;
+   
+   vector < double > conc_spline_x;
+   vector < double > conc_spline_y;
+   vector < double > conc_spline_y2;
+
+   if ( !mode_testiq ) {
+      map < QString, QString > parameters;
+
+      bool any_detector = false;
+      if ( detector_uv ) {
+         parameters[ "uv" ] = "true";
+         any_detector = true;
+      } else {
+         if ( detector_ri ) {
+            parameters[ "ri" ] = "true";
+            any_detector = true;
+         }
+      }
+
+      bool use_conc = true;
+      if ( lbl_conc_file->text().isEmpty() ) {
+         use_conc = false;
+      } 
+
+      if ( use_conc &&
+           (
+            !f_qs.count( lbl_conc_file->text() )
+            || !f_Is.count( lbl_conc_file->text() )
+            ) ) {
+         editor_msg( "red", QString( us_tr( "Internal error: Concentration file %1 set, but associated data is incomplete.  Concentration disabled." ) ).arg( lbl_conc_file->text() ) );
+         lbl_conc_file->setText( "" );
+         use_conc = false;
+      }
+
+      if ( use_conc ) {
+         if ( !any_detector ) {
+            if ( parameters.count( "error" ) ) {
+               parameters[ "error" ] += "\nYou must also select a detector type";
+            } else {
+               parameters[ "error" ] = "\nYou must select a detector type";
+            }
+         }
+         parameters[ "ngmode" ] = "true";
+         parameters[ "gaussians" ] = "1";
+         US_Hydrodyn_Saxs_Hplc_Ciq *hplc_ciq = 
+            new US_Hydrodyn_Saxs_Hplc_Ciq(
+                                          this,
+                                          & parameters,
+                                          this );
+         US_Hydrodyn::fixWinButtons( hplc_ciq );
+         hplc_ciq->exec();
+         delete hplc_ciq;
+
+         if ( !parameters.count( "go" ) ) {
+            progress->reset();
+            update_enables();
+            return false;
+         }
+
+         conv = parameters.count( "conv 0" ) ? parameters[ "conv 0" ].toDouble() : 0e0;
+         psv  = parameters.count( "psv 0" ) ? parameters[ "psv 0" ].toDouble() : 0e0;
+         if ( conv == 0e0 ||
+              psv == 0e0 ) {
+            progress->reset();
+            update_enables();
+            return false;
+         }
+            
+         conc_ok = true;
+         if ( parameters.count( "normalize" ) && parameters[ "normalize" ] == "true" ) {
+            normalize_by_conc = true;
+         }
+
+         if ( parameters.count( "I0se" ) ) {
+            I0se = parameters[ "I0se" ].toDouble();
+         }
+
+         double detector_conv = 0e0;
+         if ( detector_uv )
+         {
+            detector_conv = detector_uv_conv * UHSH_UV_CONC_FACTOR;
+         }
+         if ( detector_ri )
+         {
+            detector_conv = detector_ri_conv;
+         }
+         
+         {
+            QRegExp rx_repeak( "-rp(.\\d*(_|\\.)\\d+(|e.\\d+))" );
+            if ( rx_repeak.indexIn( lbl_conc_file->text() ) != -1 )
+            {
+               conc_repeak = rx_repeak.cap( 1 ).replace( "_", "." ).toDouble();
+               if ( conc_repeak == 0e0 )
+               {
+                  conc_repeak = 1e0;
+                  editor_msg( "red", us_tr( "Error: concentration repeak scaling value extracted is 0, turning off back scaling" ) );
+               } else {
+                  editor_msg( "dark blue", QString( us_tr( "Notice: concentration scaling repeak value %1" ) ).arg( conc_repeak ) );
+               }
+            }
+         }
+
+         conc_spline_x = f_qs[ lbl_conc_file->text() ];
+         conc_spline_y = f_Is[ lbl_conc_file->text() ];
+         for ( int i = 0; i < (int) conc_spline_y.size(); ++i ) {
+            conc_spline_y[ i ] *= detector_conv / ( conc_repeak * conv );
+         }
+         usu->natural_spline( conc_spline_x, conc_spline_y, conc_spline_y2 );
+      }
+   }
+
    running = true;
 
    // now for each I(t) distribute the I for each frame 
@@ -282,6 +400,13 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files, double t_min, d
       // vector < double > G_recon;
 
       vector < double > this_used_pcts;
+      double conc_factor = 0e0;
+      if ( conc_ok ) {
+         if ( !usu->apply_natural_spline( conc_spline_x, conc_spline_y, conc_spline_y2, tv[ t ], conc_factor ) ) {
+            editor_msg( "red", QString( us_tr( "Error getting concentration from spline for frame %1, concentration set to zero." ) ).arg( tv[ t ] ) );
+            conc_factor = 0e0;
+         }
+      }
 
       for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
       {
@@ -351,10 +476,13 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files, double t_min, d
          f_Is        [ name ] = I;
          f_errors    [ name ] = e;
          f_is_time   [ name ] = false;
-         f_conc      [ name ] = 0e0;
-         f_psv       [ name ] = 0e0;
-         f_I0se      [ name ] = 0e0;
+         f_conc      [ name ] = conc_ok ? conc_factor : 0e0;
+         f_psv       [ name ] = conc_ok ? psv : 0e0;
+         f_I0se      [ name ] = conc_ok ? I0se : 0e0;
          f_time      [ name ] = tv[ t ];
+         if ( conc_ok && conv ) {
+            f_extc      [ name ] = conv;
+         }
       }
    } // for each q value
 

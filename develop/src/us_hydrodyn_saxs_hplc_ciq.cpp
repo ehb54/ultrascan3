@@ -50,7 +50,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    int minHeight1  = 30;
    int minHeight2  = 25;
 
-   lbl_title =  new QLabel      ( us_tr( "US-SOMO: SAXS HPLC : Make I(q)" ), this );
+   lbl_title =  new QLabel      ( parameters->count( "ngmode" ) ?  us_tr( "US-SOMO: SAXS HPLC : Make I(q) without Gaussians" ) :  us_tr( "US-SOMO: SAXS HPLC : Make I(q)" ), this );
    // lbl_title -> setFrameStyle   ( QFrame::WinPanel | QFrame::Raised );
    lbl_title -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_title -> setMinimumHeight( minHeight1 );
@@ -79,7 +79,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    cb_save_as_pct_iq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_save_as_pct_iq->setPalette( PALET_NORMAL );
    AUTFBACK( cb_save_as_pct_iq );
-   if ( !parameters->count( "expert_mode" ) )
+   if ( !parameters->count( "expert_mode" ) || parameters->count( "ngmode" ) )
    {
       cb_save_as_pct_iq->hide();
    }
@@ -91,6 +91,9 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    cb_save_sum->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_save_sum->setPalette( PALET_NORMAL );
    AUTFBACK( cb_save_sum );
+   if ( parameters->count( "ngmode" ) ) {
+      cb_save_sum->hide();
+   }
 
    QLabel * lbl_save_sum_bi = (QLabel *)0;
    if ( parameters->count( "integralbaseline" ) ) {
@@ -113,6 +116,10 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    cb_sd_source->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_sd_source->setPalette( PALET_NORMAL );
    AUTFBACK( cb_sd_source );
+   if ( parameters->count( "ngmode" ) ) {
+      cb_sd_source->hide();
+   }
+
 
    cb_makeiq_avg_peaks = new QCheckBox(this);
    cb_makeiq_avg_peaks->setText( us_tr( "Average and normalize resulting I(q) curves by Gaussian, using top % of max. intensity" ) );
@@ -123,6 +130,9 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    cb_makeiq_avg_peaks->setPalette( PALET_NORMAL );
    AUTFBACK( cb_makeiq_avg_peaks );
    connect( cb_makeiq_avg_peaks, SIGNAL( clicked() ), SLOT( update_enables() ) );
+   if ( parameters->count( "ngmode" ) ) {
+      cb_makeiq_avg_peaks->hide();
+   }
 
    le_makeiq_avg_peaks = new QLineEdit( this );    le_makeiq_avg_peaks->setObjectName( "le_makeiq_avg_peaks Line Edit" );
    le_makeiq_avg_peaks->setText( (*parameters)[ "hplc_makeiq_avg_peaks" ] );
@@ -136,6 +146,9 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    }
    connect( le_makeiq_avg_peaks, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
    le_makeiq_avg_peaks->setMinimumWidth( 60 );
+   if ( parameters->count( "ngmode" ) ) {
+      le_makeiq_avg_peaks->hide();
+   }
 
    // cb's co dependent
    connect( cb_save_as_pct_iq, SIGNAL( clicked() ), SLOT( set_save_as_pct_iq() ) );
@@ -148,6 +161,9 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    lbl_sd_zeros_found->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_sd_zeros_found );
    lbl_sd_zeros_found->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ));
+   if ( parameters->count( "ngmode" ) ) {
+      lbl_sd_zeros_found->hide();
+   }
 
    cb_sd_zero_avg_local_sd = new QCheckBox(this);
    cb_sd_zero_avg_local_sd->setText( us_tr( "Average adjacent SDs  " ) );
@@ -157,6 +173,9 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    cb_sd_zero_avg_local_sd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_sd_zero_avg_local_sd->setPalette( PALET_NORMAL );
    AUTFBACK( cb_sd_zero_avg_local_sd );
+   if ( parameters->count( "ngmode" ) ) {
+      cb_sd_zero_avg_local_sd->hide();
+   }
 
    cb_sd_zero_keep_as_zeros = new QCheckBox(this);
    cb_sd_zero_keep_as_zeros->setText( us_tr( "Leave as zero  " ) );
@@ -167,6 +186,9 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    cb_sd_zero_keep_as_zeros->setPalette( PALET_NORMAL );
    AUTFBACK( cb_sd_zero_keep_as_zeros );
    cb_sd_zero_keep_as_zeros->hide();
+   if ( parameters->count( "ngmode" ) ) {
+      cb_sd_zero_keep_as_zeros->hide();
+   }
 
    cb_sd_zero_set_to_pt1pct = new QCheckBox(this);
    cb_sd_zero_set_to_pt1pct->setText( us_tr( "Set to 0.1 % of peak's I(q)  " ) );
@@ -176,6 +198,9 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    cb_sd_zero_set_to_pt1pct->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_sd_zero_set_to_pt1pct->setPalette( PALET_NORMAL );
    AUTFBACK( cb_sd_zero_set_to_pt1pct );
+   if ( parameters->count( "ngmode" ) ) {
+      cb_sd_zero_set_to_pt1pct->hide();
+   }
 
    ws_sd_zeros.push_back( lbl_sd_zeros_found );
    ws_sd_zeros.push_back( cb_sd_zero_avg_local_sd );
@@ -188,6 +213,9 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    AUTFBACK( lbl_zeros_found );
    lbl_zeros_found->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ));
    connect( lbl_zeros_found, SIGNAL(pressed()), SLOT( zeros_found() ));
+   if ( parameters->count( "ngmode" ) ) {
+      lbl_zeros_found->hide();
+   }
 
    cb_zero_drop_points = new QCheckBox(this);
    cb_zero_drop_points->setText( us_tr( "Drop points  " ) );
@@ -197,6 +225,9 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    cb_zero_drop_points->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_zero_drop_points->setPalette( PALET_NORMAL );
    AUTFBACK( cb_zero_drop_points );
+   if ( parameters->count( "ngmode" ) ) {
+      cb_zero_drop_points->hide();
+   }
 
    cb_zero_avg_local_sd = new QCheckBox(this);
    cb_zero_avg_local_sd->setText( us_tr( "Average adjacent SDs  " ) );
@@ -206,6 +237,9 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    cb_zero_avg_local_sd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_zero_avg_local_sd->setPalette( PALET_NORMAL );
    AUTFBACK( cb_zero_avg_local_sd );
+   if ( parameters->count( "ngmode" ) ) {
+      cb_zero_avg_local_sd->hide();
+   }
 
    cb_zero_keep_as_zeros = new QCheckBox(this);
    cb_zero_keep_as_zeros->setText( us_tr( "Leave as zeros " ) );
@@ -216,6 +250,9 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    cb_zero_keep_as_zeros->setPalette( PALET_NORMAL );
    AUTFBACK( cb_zero_keep_as_zeros );
    cb_zero_keep_as_zeros->hide();
+   if ( parameters->count( "ngmode" ) ) {
+      cb_zero_keep_as_zeros->hide();
+   }
 
    ws_zeros.push_back( lbl_zeros_found );
    ws_zeros.push_back( cb_zero_drop_points );
@@ -230,6 +267,9 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    cb_normalize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_normalize->setPalette( PALET_NORMAL );
    AUTFBACK( cb_normalize );
+   if ( parameters->count( "ngmode" ) ) {
+      cb_normalize->hide();
+   }
 
    cb_I0se = new QCheckBox(this);
    cb_I0se->setText( us_tr( "I0 standard experimental value (a.u.) : " ) );
@@ -272,6 +312,9 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    cb_conc_to_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_conc_to_saxs->setPalette( PALET_NORMAL );
    AUTFBACK( cb_conc_to_saxs );
+   if ( parameters->count( "ngmode" ) ) {
+      cb_conc_to_saxs->hide();
+   }
 
    lbl_conc_to_saxs_info1 = new QLabel( us_tr(
                                            "       This implies that all the species that were defined as Gaussians contributing to the SAXS signal also contribute to the concentration signal."
@@ -297,7 +340,11 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    lbl_conc_to_saxs_info3->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_conc_to_saxs_info3 );
    lbl_conc_to_saxs_info3->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
-
+   if ( parameters->count( "ngmode" ) ) {
+      lbl_conc_to_saxs_info1->hide();
+      lbl_conc_to_saxs_info2->hide();
+      lbl_conc_to_saxs_info3->hide();
+   }
 
    lbl_conc = new QLabel( us_tr( "Concentrations will be computed and will be written along with PSVs to the output I(q) curves" ), this );
    lbl_conc->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -310,12 +357,18 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    pb_global -> setMinimumHeight( minHeight1 );
    pb_global -> setPalette      ( PALET_PUSHB );
    connect( pb_global, SIGNAL( clicked() ), SLOT( global() ) );
+   if ( parameters->count( "ngmode" ) ) {
+      pb_global->hide();
+   }
 
    lbl_gaussian = new QLabel( us_tr( "Gaussian" ), this );
    lbl_gaussian->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_gaussian->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_gaussian );
    lbl_gaussian->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   if ( parameters->count( "ngmode" ) ) {
+      lbl_gaussian->hide();
+   }
 
    lbl_conv = new QLabel( us_tr( (*parameters).count( "uv" ) ? "Extinction coefficient (ml mg^-1 cm^-1)" : "Differential RI increment [dn/dc] (ml/g)" ), this );
    lbl_conv->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -337,6 +390,9 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
       AUTFBACK( lbl_tmp );
       lbl_tmp->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
       lbl_gaussian_id.push_back( lbl_tmp );
+      if ( parameters->count( "ngmode" ) ) {
+         lbl_tmp->hide();
+      }
 
       QLineEdit * le_tmp = new QLineEdit( this );  le_tmp->setObjectName( "le_tmp Line Edit" );
       le_tmp->setText( "" );
@@ -388,6 +444,9 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    pb_create_ng -> setMinimumHeight( minHeight1 );
    pb_create_ng -> setPalette      ( PALET_PUSHB );
    connect( pb_create_ng, SIGNAL( clicked() ), SLOT( create_ng() ) );
+   if ( parameters->count( "ngmode" ) ) {
+      pb_create_ng->hide();
+   }
 
    pb_go =  new QPushButton ( us_tr( "Continue" ), this );
    pb_go -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
@@ -505,6 +564,11 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
       }
    }
    cb_normalize->hide();
+
+   if ( parameters->count( "ngmode" ) ) {
+      // any other settings we need?
+      cb_save_as_pct_iq->setChecked( false );
+   }
 
    QHBoxLayout * hbl_bottom = new QHBoxLayout(); hbl_bottom->setContentsMargins( 0, 0, 0, 0 ); hbl_bottom->setSpacing( 0 );
    hbl_bottom->addWidget ( pb_help );

@@ -1592,6 +1592,7 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
    if ( ( ext == "dat" || ext == "txt" ) && qv[ 0 ].toLower().contains( QRegExp( "frame\\s*data" ) ) )
    {
       is_time = true;
+      use_units = 1.0;
    }
 
    if ( ext == "dat" && qv[ 0 ].contains( " Detector State file" ) )
@@ -2376,6 +2377,7 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
       e_offset   = 10;
       row_offset = 4;
       is_time    = true;
+      use_units  = 1.0;
       editor_msg( "dark blue", us_tr( "SOLEIL HPLC time/uv format" ) );
    }      
 
@@ -2409,7 +2411,7 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
          double this_q         = tokens[ q_offset ].toDouble();
          double this_I         = tokens[ I_offset ].toDouble();
          double this_e = 0e0;
-         if ( use_units != 1 ) {
+         if ( use_units != 1 && !is_time) {
             this_q *= use_units;
             this_q_string = QString( "%1" ).arg( this_q );
          }
