@@ -2791,6 +2791,7 @@ void US_ConvertGui::cancel_reference( void )
    int wvoff    = 0;
    int rscans   = ExpData.RI_nscans;
 
+
    // Do the inverse operation and retrieve raw intensity data
    for ( int ii = 0; ii < outData.size(); ii++ )
    {
@@ -2829,19 +2830,28 @@ DbgLv(1) << "Triple " << out_triples[ ii ]
       int kpoint   = currentData->pointCount();
       int kscan    = currentData->scanCount();
 
-      for ( int jj = 0; jj < kscan; jj++ )
-      {
-         US_DataIO::Scan* scan  = &currentData->scanData[ jj ];
-         double           rppro = ExpData.RIProfile[ jj + wvoff ];
 
-         for ( int kk = 0; kk < kpoint; kk++ )
-         {
-            double rvalue = scan->rvalues[ kk ];
+      if ( ExpData.RIProfile.size() )  //ALEXEY
+	{
+	  for ( int jj = 0; jj < kscan; jj++ )
+	    {
+	      US_DataIO::Scan* scan  = &currentData->scanData[ jj ];
+	      qDebug() << "jj: " << jj << ", Size of ExpData.RIProfile: " << ExpData.RIProfile.size() << ", wvoff: " << wvoff << ", jj+wvoff: " << jj+wvoff ;
+	      
+	      double           rppro = ExpData.RIProfile[ jj + wvoff ];
+	      
+	      for ( int kk = 0; kk < kpoint; kk++ )
+		{
+		  double rvalue = scan->rvalues[ kk ];
+		  
+		  scan->rvalues[ kk ] = rppro / pow( 10, rvalue );
+		}
+	    }
+	}
 
-            scan->rvalues[ kk ] = rppro / pow( 10, rvalue );
-         }
-      }
+      qDebug() << "Test 2 After cycle";
    }
+   qDebug() << "Test 3";
 
    referenceDefined = false;
    isPseudo         = false;

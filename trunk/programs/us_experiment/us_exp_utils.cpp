@@ -135,18 +135,62 @@ DbgLv(1) << "newPanel panx=" << panx << "prev.panx=" << curr_panx;
    else if ( curr_panx == 6 ) epanRanges   ->savePanel();
    else if ( curr_panx == 7 ) epanRotor    ->savePanel();
 
-   curr_panx              = panx;         // Set new current panel
-
    // Initialize the new current panel after possible changes
    if      ( panx == 0 )      epanGeneral  ->initPanel();
    else if ( panx == 1 )      epanRotor    ->initPanel();
    else if ( panx == 2 )      epanSpeeds   ->initPanel();
    else if ( panx == 3 )      epanCells    ->initPanel();
-   else if ( panx == 4 )      epanSolutions->initPanel();
-   else if ( panx == 5 )      epanOptical  ->initPanel();
-   else if ( panx == 6 )      epanRanges   ->initPanel();
-   else if ( panx == 7 )      epanUpload   ->initPanel();
-
+   else if ( panx == 4 )                                    // Solutions
+     {
+       if ( panx - curr_panx > 1 )
+	 {
+	   epanCells    ->initPanel();
+	   epanCells    ->savePanel();
+	 }
+       epanSolutions->initPanel();
+     }
+   else if ( panx == 5 )                                    // Optics
+     {
+       if ( panx - curr_panx > 1 )
+	 {
+	   epanCells    ->initPanel();
+	   epanCells    ->savePanel();
+	   epanSolutions->initPanel();
+	   epanSolutions->savePanel();
+	 }
+       epanOptical  ->initPanel();
+     }
+   else if ( panx == 6 )
+     {
+       if ( panx - curr_panx > 1 )                          // Ranges
+	 {
+	   epanCells    ->initPanel();
+	   epanCells    ->savePanel();
+	   epanSolutions->initPanel();
+	   epanSolutions->savePanel();
+	   epanOptical  ->initPanel();
+	   epanOptical  ->savePanel();
+	 }
+       epanRanges   ->initPanel();
+     }
+   else if ( panx == 7 )
+     {
+       if ( panx - curr_panx > 1 )                          // Ranges
+	 {
+	   epanCells    ->initPanel();
+	   epanCells    ->savePanel();
+	   epanSolutions->initPanel();
+	   epanSolutions->savePanel();
+	   epanOptical  ->initPanel();
+	   epanOptical  ->savePanel();
+	   epanRanges   ->initPanel();
+	   epanRanges   ->savePanel();
+	 }
+       epanUpload   ->initPanel();
+     }
+   
+   curr_panx              = panx;         // Set new current panel
+   
    // Update status flag for all panels
    statUpdate();
 }
@@ -894,7 +938,8 @@ DbgLv(1) << "EGCe:inP: nholes" << nholes << "nused" << nused;
       if ( ii != icbal   &&
            cc_cenps[ ii ]->currentText().contains( tr( "counterbalance" ) ) )
       {  // Centerpiece when list is counterbalances: reset list
-         cc_cenps[ ii ]->clear();
+	 cc_cenps[ ii ]->clear();
+	 cc_cenps[ ii ]->addItem( tr( "empty" ) );                     // ALEXEY
          cc_cenps[ ii ]->addItems( cpnames );   // Choose from centerpieces
       }
 
@@ -902,7 +947,7 @@ DbgLv(1) << "EGCe:inP: nholes" << nholes << "nused" << nused;
          ! cc_cenps[ ii ]->currentText().contains( tr( "counterbalance" ) ) )
       {  // Counterbalance when list is centerpieces: reset list
          cc_cenps[ ii ]->clear();
-         cc_cenps[ ii ]->addItems( sl_bals );   // Choose from counterbalances
+	 cc_cenps[ ii ]->addItems( sl_bals );   // Choose from counterbalances
       }
 
       for ( int jj = 0; jj < nused; jj++ )
