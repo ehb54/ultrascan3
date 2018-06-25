@@ -65,6 +65,8 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    tabWidget->addTab( epanUpload,    tr( "8: Submit"    ) );
    tabWidget->setCurrentIndex( curr_panx );
 
+   //tabWidget->tabBar()->setEnabled(false);
+   
    // Add bottom buttons
    //QPushButton* pb_close  = us_pushbutton( tr( "Close" ) );
    pb_close = us_pushbutton( tr( "Close" ) );;
@@ -764,7 +766,8 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
 
    // QLabel*  lb_durat   = us_label( tr( "Duration of Experiment (days[D] hh[H] mm[M] ss[S]):" ) );
    // QLabel*  lb_delay   = us_label( tr( "Delay to First Scan (days[D] hh[H] mm[M] ss[S]):" ) );
-   QLabel*  lb_durat   = us_label( tr( "Duration of Experiment (hh[H] mm[M]):" ) );
+   //QLabel*  lb_durat   = us_label( tr( "Duration of Experiment (hh[H] mm[M]):" ) );
+   QLabel*  lb_durat   = us_label( tr( "Active Scanning Time (hh[H] mm[M]):" ) );
    QLabel*  lb_delay   = us_label( tr( "Delay to First Scan (hh[H] mm[M]):" ) );
 
    QLabel*  lb_delay_stage   = us_label( tr( "Stage Delay (hh[H] mm[M]):" ) );
@@ -1721,10 +1724,18 @@ DbgLv(1) << "EGCe:rbC: H<C: nused" << rpCells->nused;
 DbgLv(1) << "EGCe:rbC:    ii" << ii << "kused" << kused;
       }
  
-      rpCells->nused      = kused;      // Resize used-cells vector
-      rpCells->used.resize( kused );
+      //rpCells->nused      = kused;      // Resize used-cells vector
+      //rpCells->used.resize( kused );
+
+      rpCells->nused        = 0;      // ALEXEY: # used cells should be 0 when Rotor
+      rpCells->used.clear();          // ALEXEY: no used cells when rotor is changed - otherwise cells are not populated correcly 
    }
-   // If cells count increases, used stays the same; just reset total count
+   else
+     { // If cells count increases, same as above: clear used, i.e. make all fresh-empty, and counterbalance (empty-counterbalance)
+       rpCells->nused        = 0;      // ALEXEY: # used cells should be 0 when Rotor
+       rpCells->used.clear();          // ALEXEY: no used cells when rotor is changed - otherwise cells are not populated correcly 
+     }
+   
 
    rpCells->ncell      = nholes;        // Reset total cells count up/down
 DbgLv(1) << "EGCe:rbC: ncell" << nholes;
@@ -2643,6 +2654,8 @@ DbgLv(1) << "EGOp:main: call initPanel";
 // Function to rebuild the Optical protocol after Solutions change
 void US_ExperGuiOptical::rebuild_Optic( void )
 {
+  
+   
    int nchanf          = sibIValue( "solutions", "nchanf" );
    QStringList ochans  = sibLValue( "solutions", "sochannels" );
    int kochan          = ochans.count();

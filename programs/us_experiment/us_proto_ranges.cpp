@@ -347,6 +347,8 @@ DbgLv(1) << "EGRn: rbR:     spx" << spx;
       swvlens.resize( nrnchan );
 DbgLv(1) << "EGRn: rbR:  nrnchan" << nrnchan << "nrnchan_sv" << nrnchan_sv;
 
+ qDebug() << "Bug after this line: "; 
+
    // Rebuild panel parameters
    if ( nrnchan_sv > 0 )
    {  // Use previous panel parameters
@@ -375,13 +377,23 @@ DbgLv(1) << "EGRn: rbR:     sizes: rch swv lor hir"
    }
    else
    {  // Create first shot at panel parameters
-      for ( int ii = 0; ii < nrnchan; ii++ )
+     //ALEXEY these must be resized here
+     rchans .resize( nrnchan );   
+     swvlens.resize( nrnchan );
+     locrads.resize( nrnchan );
+     hicrads.resize( nrnchan );
+     
+     for ( int ii = 0; ii < nrnchan; ii++ )
       {
-	DbgLv(1) << "EGRn: rbR:    ii" << ii << "channel" << rpRange->chrngs[ii].channel;  //ALEXEY potential bug here # RANGES
+	// DbgLv(1) << "EGRn: rbR:    ii" << ii << "channel" << rpRange->chrngs[ii].channel;  //ALEXEY potential bug here: causes crash when protocol Re-loaded
+	qDebug() << "Test ";
+	qDebug() << "rchans_size: " << rchans.size() ;
+	qDebug() << "rpRange->chrngs_size: " << rpRange->chrngs.size();
          rchans [ ii ]       = rpRange->chrngs[ ii ].channel;
          swvlens[ ii ]       = rpRange->chrngs[ ii ].wvlens;
          locrads[ ii ]       = rpRange->chrngs[ ii ].lo_rad;
          hicrads[ ii ]       = rpRange->chrngs[ ii ].hi_rad;
+	 qDebug() << "Test 1";
       }
    }
 
