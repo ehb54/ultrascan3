@@ -144,6 +144,8 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       int         dbg_level;
       int         nholes;          // Number of holes for current rotor
       bool        changed;         // Has rotor protocol changed?
+      bool        first_time_init;
+      int         curr_rotor; 
 
    private slots:
       void changeLab  ( int );     // Slot for change in lab

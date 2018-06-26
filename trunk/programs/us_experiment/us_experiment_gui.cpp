@@ -559,11 +559,16 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    connect( pb_advrotor,  SIGNAL( clicked()  ),
             this,         SLOT  ( advRotor() ) );
 
-   changeLab( 0 );
+   first_time_init = true;
+   curr_rotor = 0;
+   //changeLab( 0 );
+   changeLab( curr_rotor );
    savePanel();
    changed             = false;
 
    initPanel();
+
+   first_time_init = false;
 }
 
 // Slot for change in Lab selection
@@ -597,6 +602,9 @@ DbgLv(1) << "EGR: chgLab labID desc" << labID << descr;
 
    for ( int ii = 0; ii < rotors.count(); ii++ )
    {
+     if ( rotors[ ii ].name.contains("Simulation", Qt::CaseSensitive) )   //ALEXEY do not include 'Simulation' rotor
+       continue;
+     
       sl_rotors << QString::number( rotors[ ii ].ID )
                  + ": " + rotors[ ii ].name;
    }
@@ -610,7 +618,7 @@ DbgLv(1) << "EGR: chgLab  sl_rotors count" << sl_rotors.count();
 // Slot for change in Rotor selection
 void US_ExperGuiRotor::changeRotor( int ndx )
 {
-DbgLv(1) << "EGR:chgRotor  ndx" << ndx;
+  DbgLv(1) << "EGR:chgRotor  New index: ndx " << ndx << ", prev. index: " << curr_rotor;
    changed             = true;
    cb_rotor->setCurrentIndex( ndx );
    QString crot        = cb_rotor->currentText();
@@ -644,6 +652,16 @@ DbgLv(1) << "EGR: chgRotor calibs count" << calibs.count();
    int lndx            = calibs.count() - 1;
    if ( lndx >= 0 )
       cb_calibr->setCurrentIndex( lndx );
+
+
+   if ( !first_time_init && changed && curr_rotor != ndx)
+     {
+       QMessageBox::information( this,
+			      tr( "NOTE:  Rotor Changed" ),
+			      tr( "Cells and all subsequent tabs will be reset upon initialization."));
+     }
+
+   curr_rotor = ndx;
 }
 
 // Slot for change in Calibration selection
