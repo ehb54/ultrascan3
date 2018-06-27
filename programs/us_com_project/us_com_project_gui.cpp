@@ -121,12 +121,24 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    test_footer->setReadOnly(true);
    test_footer->setStyleSheet("color: #D3D9DF; background-color: #36454f;");
    main->addWidget( test_footer );
+
+   connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
+   connect( this   , SIGNAL( pass_to_live_update( QMap < QString, QString > &) ),   epanObserv, SLOT( process_protocol_details( QMap < QString, QString > & )  ) );
+   
    
    setMinimumSize( QSize( 1225, 825 ) );
    adjustSize();
 
 }
 
+// Slot to pass submitted to Optima run info to the Live Update tab
+void US_ComProjectMain::switch_to_live_update( QMap < QString, QString > & protocol_details)
+{
+   tabWidget->setCurrentIndex( 1 );
+
+   emit pass_to_live_update( protocol_details );
+}
+     
 
 // US_ExperGUI
 US_ExperGui::US_ExperGui( QWidget* topw )
@@ -202,7 +214,9 @@ US_ExperGui::US_ExperGui( QWidget* topw )
    US_ExperimentMain* sdiag = new US_ExperimentMain;
    sdiag->setParent(this, Qt::Widget);
    
-   connect(sdiag, SIGNAL( us_exp_is_closed() ), this, SLOT( us_exp_is_closed_set_button() ) );
+   connect( sdiag, SIGNAL( us_exp_is_closed() ), this, SLOT( us_exp_is_closed_set_button() ) );
+   connect( sdiag, SIGNAL( to_live_update( QMap < QString, QString > & ) ),
+	    this,  SLOT( to_live_update( QMap < QString, QString > & ) ) );
 
    sdiag->pb_close->setEnabled(false);  // Disable Close button
    int offset = 20;
@@ -214,6 +228,11 @@ US_ExperGui::US_ExperGui( QWidget* topw )
      
 }
 
+//When run is submitted to Optima & protocol details are passed .. 
+void US_ExperGui::to_live_update( QMap < QString, QString > & protocol_details)
+{
+  emit switch_to_live_update( protocol_details );
+}
 
 //When US_Experiment is closed
 void US_ExperGui::us_exp_is_closed_set_button()
@@ -224,7 +243,7 @@ void US_ExperGui::us_exp_is_closed_set_button()
 }
 
 
-// On click to open US_Experiment
+// On click to open US_Experiment  <-- NOT USED, us_experimnet is loaded immediately
 void US_ExperGui::manageExperiment()
 {
   qDebug() << "test00";
@@ -273,7 +292,8 @@ void US_ExperGui::manageExperiment()
   mainw->logWidget->append("US_Experiment opened successfully!");
 }
 
-// US_Observe
+
+// US_Observe /////////////////////////////////////////////////////////////////////////////////
 US_ObservGui::US_ObservGui( QWidget* topw )
    : US_WidgetsDialog( topw, 0 )
 {
@@ -291,14 +311,12 @@ US_ObservGui::US_ObservGui( QWidget* topw )
    main->setSpacing        ( 2 );
    main->setContentsMargins( 2, 2, 2, 2 );
       
-   // VBox
-   QVBoxLayout* upper     = new QVBoxLayout;
    QGridLayout* genL   = new QGridLayout();
    //QPlainTextEdit* panel_desc = new QPlainTextEdit(this);
    QTextEdit* panel_desc = new QTextEdit(this);
    panel_desc->viewport()->setAutoFillBackground(false);
    panel_desc->setFrameStyle(QFrame::NoFrame);
-   panel_desc->setPlainText(" Tab to Monitor Experiment Execution...");
+   panel_desc->setPlainText(" Tab to Monitor Experiment Progress...");
    panel_desc->setReadOnly(true);
    //panel_desc->setMaximumHeight(30);
    QFontMetrics m (panel_desc -> font()) ;
@@ -307,138 +325,36 @@ US_ObservGui::US_ObservGui( QWidget* topw )
 
    int row = 0;
    genL->addWidget( panel_desc,  row++,   0, 1, 12);
-   upper->addLayout( genL );
-
-   // Hbox
-   QHBoxLayout* panel  = new QHBoxLayout;
-   panel->setContentsMargins( 20, 2, 2, 2 );
-   
-   plot             = new US_Plot( data_plot,
-                                   tr( "Intensity Data" ),
-                                   tr( "Radius (in cm)" ), 
-                                   tr( "Intensity" ) );
-
-   //data_plot->setMinimumSize( 600, 400 );
-
-   data_plot->enableAxis( QwtPlot::xBottom, true );
-   data_plot->enableAxis( QwtPlot::yLeft  , true );
-
-   data_plot->setAxisScale( QwtPlot::xBottom, 5.8,  7.2 );
-   data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 5e+4 );
-
-   picker = new US_PlotPicker( data_plot );
-   picker->setRubberBand     ( QwtPicker::VLineRubberBand );
-   picker->setMousePattern   ( QwtEventPattern::MouseSelect1,
-                               Qt::LeftButton, Qt::ControlModifier );
-
-   //connect( plot, SIGNAL( zoomedCorners( QRectF ) ),
-   //         this, SLOT  ( currentRectf ( QRectF ) ) );
-
-   
-   QGridLayout* settings = new QGridLayout;
-
-   // Plot controls
-   const QChar chlamb( 955 );
-   QLabel*      lb_prcntls  = us_banner( tr( "Plot Controls" ) );
-   QLabel*      lb_rstart   = us_label( tr( "Radius Start:"   ), -1 );
-                cb_rstart   = us_comboBox();
-   QLabel*      lb_rend     = us_label( tr( "Radius End:"     ), -1 );
-                cb_rend     = us_comboBox();
-   QLabel*      lb_optsys   = us_label( tr( "Optical System:" ), -1 );
-                cb_optsys   = us_comboBox();
-   QLabel*      lb_cellchn  = us_label( tr( "Cell/Channel:" ), -1 );
-                cb_cellchn  = us_comboBox();
-   QLabel*      lb_lrange   = us_label( tr( "%1 Range:"   ).arg( chlamb ), -1 );
-                le_lrange   = us_lineedit( "280 only", -1, true );
-
-		ptype_mw     = tr( "Plot %1:"    ).arg( chlamb );
-		ptype_tr     = tr( "Plot Triple:" );
-		prectype     = ptype_tr;
-		lb_pltrec   = us_label( prectype, -1 );
-                cb_pltrec   = us_comboBox();
-
-		pb_prev     = us_pushbutton( tr( "Previous" ) );
-                pb_next     = us_pushbutton( tr( "Next" ) );
-   pb_prev->setIcon( US_Images::getIcon( US_Images::ARROW_LEFT  ) );
-   pb_next->setIcon( US_Images::getIcon( US_Images::ARROW_RIGHT ) );
-
-   // Scan controls
-   int rhgt     = le_lrange->height();
-   QLabel*      lb_scanctl  = us_banner( tr( "Scan Control" ) );
-   QLabel*      lb_from     = us_label( tr( "From:" ) );
-   QLabel*      lb_to       = us_label( tr( "To:" ) );
-                ct_from     = us_counter( 2, 0, 500, 1 );
-                ct_to       = us_counter( 2, 0, 500, 1 );
-                pb_exclude  = us_pushbutton( tr( "Exclude Scan Range" ) );
-                pb_include  = us_pushbutton( tr( "Include All Scans"  ) );
-   ct_from  ->setFont( sfont );
-   ct_from  ->setMinimumWidth( lwid );
-   ct_from  ->resize( rhgt, swid );
-   ct_to    ->setFont( sfont );
-   ct_to    ->setMinimumWidth( lwid );
-   ct_to    ->resize( rhgt, swid );
-   ct_from  ->setValue( 0 );
-   ct_to    ->setValue( 0 );
-   ct_from  ->setSingleStep( 1 );
-   ct_to    ->setSingleStep( 1 );
-
-   // Status
-   QLabel*      lb_status   = us_banner( tr( "Status" ) );
-                le_status   = us_lineedit( tr( "(no data loaded)" ), -1, true );
-   QPalette stpal;
-   stpal.setColor( QPalette::Text, Qt::white );
-   stpal.setColor( QPalette::Base, Qt::blue  );
-   le_status->setPalette( stpal );
-		
-
-   
-   settings->addWidget( lb_prcntls,    row++, 0, 1, 8 );
-   settings->addWidget( lb_rstart,     row,   0, 1, 2 );
-   settings->addWidget( cb_rstart,     row,   2, 1, 2 );
-   settings->addWidget( lb_rend,       row,   4, 1, 2 );
-   settings->addWidget( cb_rend,       row++, 6, 1, 2 );
-   settings->addWidget( lb_optsys,     row,   0, 1, 4 );
-   settings->addWidget( cb_optsys,     row++, 4, 1, 4 );
-   settings->addWidget( lb_cellchn,    row,   0, 1, 2 );
-   settings->addWidget( cb_cellchn,    row,   2, 1, 2 );
-   settings->addWidget( lb_lrange,     row,   4, 1, 2 );
-   settings->addWidget( le_lrange,     row++, 6, 1, 2 );
-   settings->addWidget( lb_pltrec,     row,   0, 1, 2 );
-   settings->addWidget( cb_pltrec,     row,   2, 1, 2 );
-   settings->addWidget( pb_prev,       row,   4, 1, 2 );
-   settings->addWidget( pb_next,       row++, 6, 1, 2 );
-
-   settings->addWidget( lb_scanctl,    row++, 0, 1, 8 );
-   settings->addWidget( lb_from,       row,   0, 1, 1 );
-   settings->addWidget( ct_from,       row,   1, 1, 3 );
-   settings->addWidget( lb_to,         row,   4, 1, 1 );
-   settings->addWidget( ct_to,         row++, 5, 1, 3 );
-   settings->addWidget( pb_exclude,    row,   0, 1, 4 );
-   settings->addWidget( pb_include,    row++, 4, 1, 4 );
-
-   settings->addWidget( lb_status,     row++, 0, 1, 8 );
-   settings->addWidget( le_status,     row++, 0, 1, 8 );
-   QVBoxLayout* left     = new QVBoxLayout;
-
-   left->addLayout( settings );
-   
-   QVBoxLayout* right    = new QVBoxLayout;
-   
-   right->addLayout( plot );
-
-   panel->addLayout( left );
-   panel->addLayout( right );
-
-   panel->setStretch( 0, 2 );
-   panel->setStretch( 1, 4 );
-
+ 
    // assemble main
-   main->addLayout(upper);
-   main->addLayout(panel);
+   main->addLayout(genL);
+   main->addStretch();
+
+   // Open US_Xpn_Viewer ...  
+   US_XpnDataViewer* sdiag = new US_XpnDataViewer("AUTO");
+   sdiag->setParent(this, Qt::Widget);
    
-   adjustSize();
-   
+   int offset = 20;
+   sdiag->move(offset, 2*offset);
+   sdiag->setFrameShape( QFrame::Box);
+   sdiag->setLineWidth(2);
+
+   sdiag->show();
+
 }
+
+// Live Update's get and use submitted run's protocol details
+void US_ObservGui::process_protocol_details( QMap < QString, QString > & protocol_details )
+{
+  // Use protocol details to retrieve data from Optima's DB
+  // Query ExperimentRun table for runname/ExpDefId
+  // If null (i.e. run is not launched yet), Information box - "Run was submitted, but not launched yet.. Awaiting for data to emerge."
+
+  QString mtitle    = tr( "Reading Protocol" );
+  QString message   = tr( "Protocol details passed. <br> Name: %1 <br> ID: %2" ).arg(protocol_details["experimentName"]).arg(protocol_details["experimentId"]);
+  QMessageBox::information( this, mtitle, message );
+}
+
 
 // US_PostProd
 US_PostProdGui::US_PostProdGui( QWidget* topw )

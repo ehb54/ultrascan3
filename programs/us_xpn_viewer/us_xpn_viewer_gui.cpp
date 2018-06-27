@@ -1,9 +1,7 @@
 #include <QApplication>
 #include <QtSql>
 
-#include "us_xpn_viewer.h"
-#include "us_xpn_run_auc.h"
-#include "us_xpn_run_raw.h"
+#include "us_xpn_viewer_gui.h"
 #include "us_tmst_plot.h"
 #include "us_license_t.h"
 #include "us_license.h"
@@ -45,20 +43,368 @@
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
+ 
 
-int main( int argc, char* argv[] )
+// Constructor for use in automated app
+US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
 {
-   QApplication application( argc, argv );
+   const QChar chlamb( 955 );
 
-   #include "main1.inc"
+   setWindowTitle( tr( "Beckman Optima Data Viewer" ) );
+   setPalette( US_GuiSettings::frameColor() );
 
-   // License is OK.  Start up.
+   QGridLayout* settings = new QGridLayout;
+
+   navgrec      = 10;
+   dbg_level    = US_Settings::us_debug();
+   QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
+   QFontMetrics fmet( sfont );
+   int fwid     = fmet.maxWidth();
+   int lwid     = fwid * 4;
+   int swid     = lwid + fwid;
+   isMWL        = false;
+   isRaw        = true;
+   haveData     = false;
+   haveTmst     = false;
+   xpn_data     = NULL;
+   runID        = "";
+   runType      = "RI";
+   rlt_id       = 0;
+   currentDir   = "";
+   in_reload    = false;
+   QStringList xpnentr = US_Settings::defaultXpnHost();
+DbgLv(1) << "xpnentr count" << xpnentr.count();
+
+   if ( xpnentr.count() == 0 )
+   {
+      xpnentr << "test-host" << "bcf.uthscsa.edu" << "5432";
+
+      QMessageBox::warning( this,
+            tr( "No Optima Host Entry" ),
+            tr( "A default Optima Host entry is being used.\n"
+                "You should add entries via Preferences:Optima Host Preferences\n"
+                "as soon as possible" ) );
+   }
+else
+ DbgLv(1) << "xpnentr ..." << xpnentr;
+
+   QString encpw;
+   QString decpw;
+   QString encpw0;
+   QString encpw1;
+   QString masterpw;
+   US_Passwd pw;
+   xpndesc      = xpnentr.at( 0 );
+   xpnhost      = xpnentr.at( 1 );
+   xpnport      = xpnentr.at( 2 );
+   xpnname      = xpnentr.at( 3 );
+   xpnuser      = xpnentr.at( 4 );
+   encpw        = xpnentr.at( 5 );
+   encpw0       = encpw.section( "^", 0, 0 );
+   encpw1       = encpw.section( "^", 1, 1 );
+   masterpw     = pw.getPasswd();
+   xpnpasw      = US_Crypto::decrypt( encpw0, masterpw, encpw1 );
+
+   // Load controls     
+   QLabel*      lb_run      = us_banner( tr( "Load the Run" ) );
    
-   US_XpnDataViewer ww;
-   ww.show();                  //!< \memberof QWidget
-   return application.exec();  //!< \memberof QApplication
+                 pb_loadXpn  = us_pushbutton( tr( "Load Raw Optima Data" ) );
+                 pb_loadAUC  = us_pushbutton( tr( "Load US3 AUC Data" ) );
+                 pb_reset    = us_pushbutton( tr( "Reset Data" ) );
+                 pb_details  = us_pushbutton( tr( "Data Details" ), true  );
+                 pb_plot2d   = us_pushbutton( tr( "Refresh Plot" ) );
+                 pb_saveauc  = us_pushbutton( tr( "Export openAUC" )  );
+                 pb_showtmst = us_pushbutton( tr( "Show Time State" )  );
+                 pb_reload   = us_pushbutton( tr( "Update Data" )      );
+                 pb_colmap   = us_pushbutton( tr( "Color Map" )        );
+
+   QLabel*      lb_dir      = us_label( tr( "Directory" ), -1 );
+                 le_dir      = us_lineedit( "", -1, true );
+
+   QLabel*      lb_dbhost   = us_label( tr( "DB Host" ), -1 );
+                 le_dbhost   = us_lineedit( "", -1, true );
+
+   QLabel*      lb_runID    = us_label( tr( "Run ID:" ), -1 );
+                 le_runID    = us_lineedit( "", -1, false );
+
+   QLabel*      lb_cellchn  = us_label( tr( "Cell/Channel:" ), -1 );
+                cb_cellchn  = us_comboBox();
+
+                le_colmap   = us_lineedit( "cm-rainbow", -1, true );
+
+   int rhgt     = le_runID->height();
+
+   // Plot controls     
+   QLabel*      lb_prcntls  = us_banner( tr( "Plot Controls" ) );
+   QLabel*      lb_rstart   = us_label( tr( "Radius Start:"   ), -1 );
+                 cb_rstart   = us_comboBox();
+   QLabel*      lb_rend     = us_label( tr( "Radius End:"     ), -1 );
+                 cb_rend     = us_comboBox();
+   QLabel*      lb_lrange    = us_label( tr( "%1 Range:"   ).arg( chlamb ), -1 );
+                le_lrange    = us_lineedit( "280 only", -1, true );
+		ptype_mw     = tr( "Plot %1:"    ).arg( chlamb );
+		ptype_tr     = tr( "Wavelength:" );
+		prectype     = ptype_tr;
+
+                lb_pltrec   = us_label( prectype, -1 );
+                cb_pltrec   = us_comboBox();
+   QLabel*      lb_optsys   = us_label( tr( "Optical System:" ), -1 );
+                cb_optsys   = us_comboBox();
+
+                pb_prev     = us_pushbutton( tr( "Previous" ) );
+                pb_next     = us_pushbutton( tr( "Next" ) );
+   us_checkbox( tr( "Always Auto-scale Y Axis" ), ck_autoscy, true );
+   us_checkbox( tr( "Auto Update" ),              ck_autorld, false );
+   pb_prev->setIcon( US_Images::getIcon( US_Images::ARROW_LEFT  ) );
+   pb_next->setIcon( US_Images::getIcon( US_Images::ARROW_RIGHT ) );
+
+
+   QLabel*      lb_rinterv  = us_label( tr( "Update Interval Seconds:" ), -1 );
+                ct_rinterv  = us_counter( 2, 10, 3600, 1 );
+   ct_rinterv->setFont( sfont );
+   ct_rinterv->setMinimumWidth( lwid );
+   ct_rinterv->resize( rhgt, swid );
+   ct_rinterv->setMinimum   (   10 );
+   ct_rinterv->setMaximum   ( 3600 );
+   ct_rinterv->setValue     (   60 );
+   ct_rinterv->setSingleStep(    1 );
+
+   // Scan controls     
+   QLabel*      lb_scanctl  = us_banner( tr( "Scan Control" ) );
+   QLabel*      lb_from     = us_label( tr( "From:" ) );
+   QLabel*      lb_to       = us_label( tr( "To:" ) );
+                ct_from     = us_counter( 2, 0, 500, 1 );
+                ct_to       = us_counter( 2, 0, 500, 1 );
+                pb_exclude  = us_pushbutton( tr( "Exclude Scan Range" ) );
+                pb_include  = us_pushbutton( tr( "Include All Scans"  ) );
+   ct_from  ->setFont( sfont );
+   ct_from  ->setMinimumWidth( lwid );
+   ct_from  ->resize( rhgt, swid );
+   ct_to    ->setFont( sfont );
+   ct_to    ->setMinimumWidth( lwid );
+   ct_to    ->resize( rhgt, swid );
+   ct_from  ->setValue( 0 );
+   ct_to    ->setValue( 0 );
+   ct_from  ->setSingleStep( 1 );
+   ct_to    ->setSingleStep( 1 );
+
+   // Hide scan Control
+   if ( auto_mode.toStdString() == "AUTO")
+     {
+       // Hide Load controls 
+       lb_run     ->hide();
+       pb_loadXpn ->hide();
+       pb_loadAUC ->hide();
+       pb_reset   ->hide();
+       pb_details ->hide();
+       pb_plot2d  ->hide();
+       pb_saveauc ->hide();
+       pb_showtmst->hide();
+       pb_reload  ->hide();
+       pb_colmap  ->hide();
+
+       lb_dir     ->hide();
+       le_dir     ->hide();
+       lb_dbhost  ->hide();
+       le_dbhost  ->hide();
+       lb_runID   ->hide();
+       le_runID   ->hide();
+       
+       le_colmap  ->hide();
+
+       // Hide some plot controls
+       lb_rstart  ->hide();
+       cb_rstart  ->hide();
+       lb_rend    ->hide();
+       cb_rend    ->hide();
+       ck_autoscy ->hide();
+       ck_autorld ->hide();
+       
+       // Hide interval controls
+       lb_rinterv->hide();
+       ct_rinterv->hide();
+       
+       // Hide Scan controls
+       lb_scanctl->hide();
+       lb_from   ->hide();
+       lb_to     ->hide();
+       ct_from   ->hide();
+       ct_to     ->hide();
+       pb_exclude->hide();
+       pb_include->hide();
+      
+     }
+
+   // Status and standard pushbuttons
+   QLabel*      lb_status   = us_banner( tr( "Status" ) );
+                le_status   = us_lineedit( tr( "(no data loaded)" ), -1, true );
+   QPalette stpal;
+   stpal.setColor( QPalette::Text, Qt::white );
+   stpal.setColor( QPalette::Base, Qt::blue  );
+   le_status->setPalette( stpal );
+
+   QPushButton* pb_help     = us_pushbutton( tr( "Help" ) );
+   QPushButton* pb_close    = us_pushbutton( tr( "Close" ) );
+
+   pb_close  ->setEnabled(false);
+
+   // Default scan curve color list and count
+   QString cmfpath          = US_Settings::etcDir() + "/cm-rainbow.xml";
+ DbgLv(1) << "cmfpath" << cmfpath;
+   US_ColorGradIO::read_color_gradient( cmfpath, mcolors );
+   mcknt                    = mcolors.count();
+DbgLv(1) << "mcolors count" << mcknt;
+if(mcknt>0)
+ DbgLv(1) << "mcolors c0,cn" << mcolors[0] << mcolors[mcknt-1];
+
+   // Signals and Slots
+   connect( pb_loadXpn,   SIGNAL( clicked()      ),
+            this,         SLOT  ( load_xpn_raw() ) );
+   connect( pb_loadAUC,   SIGNAL( clicked()      ),
+            this,         SLOT  ( load_auc_xpn() ) );
+   connect( pb_reset,     SIGNAL( clicked()      ),
+            this,         SLOT  ( resetAll()     ) );
+   connect( pb_details,   SIGNAL( clicked()      ),
+            this,         SLOT  ( runDetails()   ) );
+   connect( pb_saveauc,   SIGNAL( clicked()      ),
+            this,         SLOT  ( export_auc()   ) );
+   connect( pb_reload,    SIGNAL( clicked()      ),
+            this,         SLOT  ( reloadData()   ) );
+   connect( ck_autorld,   SIGNAL( clicked()      ),
+            this,         SLOT  ( changeReload()             ) );
+   connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
+            this,         SLOT  ( changeCellCh( )            ) );
+   connect( cb_rstart,    SIGNAL( currentIndexChanged( int ) ),
+            this,         SLOT  ( changeRadius( )            ) );
+   connect( cb_rend,      SIGNAL( currentIndexChanged( int ) ),
+            this,         SLOT  ( changeRadius( )            ) );
+   connect( cb_pltrec,    SIGNAL( currentIndexChanged( int ) ),
+            this,         SLOT  ( changeRecord( )            ) );
+   connect( pb_prev,      SIGNAL( clicked()  ),
+            this,         SLOT  ( prevPlot() ) );
+   connect( pb_next,      SIGNAL( clicked()  ),
+            this,         SLOT  ( nextPlot() ) );
+   connect( ct_from,      SIGNAL( valueChanged( double ) ),
+            this,         SLOT  ( exclude_from( double ) ) );
+   connect( ct_to,        SIGNAL( valueChanged( double ) ),
+            this,         SLOT  ( exclude_to  ( double ) ) );
+   connect( pb_exclude,   SIGNAL( clicked()       ),
+            this,         SLOT  ( exclude_scans() ) );
+   connect( pb_include,   SIGNAL( clicked()       ),
+            this,         SLOT  ( include_scans() ) );
+   connect( pb_plot2d,    SIGNAL( clicked()       ),
+            this,         SLOT  ( changeCellCh()  ) );
+   connect( pb_showtmst,  SIGNAL( clicked()       ),
+            this,         SLOT  ( showTimeState() ) );
+   connect( pb_colmap,    SIGNAL( clicked()        ),
+            this,         SLOT  ( selectColorMap() ) );
+   connect( ct_rinterv,   SIGNAL( valueChanged( double ) ),
+            this,         SLOT  ( changeInterval()       ) );
+   connect( pb_help,      SIGNAL( clicked()  ),
+            this,         SLOT  ( help()     ) );
+   connect( pb_close,     SIGNAL( clicked()  ),
+            this,         SLOT  ( close()    ) );
+
+   // Do the left-side layout
+   int row = 0;
+   settings->addWidget( lb_run,        row++, 0, 1, 8 );
+   settings->addWidget( lb_dir,        row++, 0, 1, 8 );
+   settings->addWidget( le_dir,        row++, 0, 1, 8 );
+   settings->addWidget( lb_dbhost,     row,   0, 1, 2 );
+   settings->addWidget( le_dbhost,     row++, 2, 1, 6 );
+   settings->addWidget( lb_runID,      row,   0, 1, 2 );
+   settings->addWidget( le_runID,      row++, 2, 1, 6 );
+   settings->addWidget( pb_loadXpn,    row,   0, 1, 4 );
+   settings->addWidget( pb_loadAUC,    row++, 4, 1, 4 );
+   settings->addWidget( pb_reset,      row,   0, 1, 4 );
+   settings->addWidget( pb_details,    row++, 4, 1, 4 );
+   settings->addWidget( pb_plot2d,     row,   0, 1, 4 );
+   settings->addWidget( pb_saveauc,    row++, 4, 1, 4 );
+   settings->addWidget( pb_reload,     row,   0, 1, 4 );
+   settings->addWidget( ck_autorld,    row++, 4, 1, 4 );
+   settings->addWidget( lb_rinterv,    row,   0, 1, 4 );
+   settings->addWidget( ct_rinterv,    row++, 4, 1, 4 );
+   settings->addWidget( lb_prcntls,    row++, 0, 1, 8 );
+   settings->addWidget( lb_rstart,     row,   0, 1, 2 );
+   settings->addWidget( cb_rstart,     row,   2, 1, 2 );
+   settings->addWidget( lb_rend,       row,   4, 1, 2 );
+   settings->addWidget( cb_rend,       row++, 6, 1, 2 );
+   settings->addWidget( lb_optsys,     row,   0, 1, 4 );
+   settings->addWidget( cb_optsys,     row++, 4, 1, 4 );
+   settings->addWidget( lb_cellchn,    row,   0, 1, 4 );
+   settings->addWidget( cb_cellchn,    row++, 4, 1, 4 );
+   settings->addWidget( lb_lrange,     row,   0, 1, 4 );
+   settings->addWidget( le_lrange,     row++, 4, 1, 4 );
+   settings->addWidget( lb_pltrec,     row,   0, 1, 2 );
+   settings->addWidget( cb_pltrec,     row,   2, 1, 2 );
+   settings->addWidget( pb_prev,       row,   4, 1, 2 );
+   settings->addWidget( pb_next,       row++, 6, 1, 2 );
+   settings->addWidget( ck_autoscy,    row,   0, 1, 4 );
+   settings->addWidget( pb_showtmst,   row++, 4, 1, 4 );
+   settings->addWidget( pb_colmap,     row,   0, 1, 2 );
+   settings->addWidget( le_colmap,     row++, 2, 1, 6 );
+   settings->addWidget( lb_scanctl,    row++, 0, 1, 8 );
+   settings->addWidget( lb_from,       row,   0, 1, 1 );
+   settings->addWidget( ct_from,       row,   1, 1, 3 );
+   settings->addWidget( lb_to,         row,   4, 1, 1 );
+   settings->addWidget( ct_to,         row++, 5, 1, 3 );
+   settings->addWidget( pb_exclude,    row,   0, 1, 4 );
+   settings->addWidget( pb_include,    row++, 4, 1, 4 );
+   settings->addWidget( lb_status,     row++, 0, 1, 8 );
+   settings->addWidget( le_status,     row++, 0, 1, 8 );
+   settings->addWidget( pb_help,       row,   0, 1, 4 );
+   settings->addWidget( pb_close,      row++, 4, 1, 4 );
+
+   // Plot layout for the right side of window
+//   QBoxLayout* plot = new US_Plot( data_plot,
+   plot             = new US_Plot( data_plot,
+                                   tr( "Intensity Data" ),
+                                   tr( "Radius (in cm)" ), 
+                                   tr( "Intensity" ) );
+
+   data_plot->setMinimumSize( 400, 400 );
+
+   data_plot->enableAxis( QwtPlot::xBottom, true );
+   data_plot->enableAxis( QwtPlot::yLeft  , true );
+
+   data_plot->setAxisScale( QwtPlot::xBottom, 5.8,  7.2 );
+   data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 5e+4 );
+
+   picker = new US_PlotPicker( data_plot );
+   picker->setRubberBand     ( QwtPicker::VLineRubberBand );
+   picker->setMousePattern   ( QwtEventPattern::MouseSelect1,
+                               Qt::LeftButton, Qt::ControlModifier );
+
+   connect( plot, SIGNAL( zoomedCorners( QRectF ) ),
+            this, SLOT  ( currentRectf ( QRectF ) ) );
+
+   // Now let's assemble the page
+   
+   QVBoxLayout* left     = new QVBoxLayout;
+
+   left->addLayout( settings );
+   
+   QVBoxLayout* right    = new QVBoxLayout;
+   
+   right->addLayout( plot );
+
+   QHBoxLayout* main = new QHBoxLayout( this );
+   main->setSpacing         ( 2 );
+   main->setContentsMargins ( 2, 2, 2, 2 );
+
+   main->addLayout( left );
+   main->addLayout( right );
+
+   main->setStretch( 0, 3 );
+   main->setStretch( 1, 7 );
+
+   reset();
+   setMinimumSize( 950, 450 );
+   adjustSize();
 }
 
+
+// Regular constructor
 US_XpnDataViewer::US_XpnDataViewer() : US_Widgets()
 {
    const QChar chlamb( 955 );
@@ -1727,7 +2073,7 @@ DbgLv(1) << "RLd:      upd_ok" << upd_ok << "rlt_id" << rlt_id << "nscan" << nsc
       {  // If need be, add scan count to the status message
          smsg        = smsg + tr( "  (%1 scans)" ).arg( nscan );
          le_status->setText( smsg );
-         qApp->processEvents();
+        qApp->processEvents();
       }
 DbgLv(1) << "RLd:       NO CHANGE";
       in_reload   = false;         // Flag no longer in the midst of reload
