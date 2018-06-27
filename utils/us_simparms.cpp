@@ -1222,6 +1222,7 @@ DbgLv(1) << "Sim parms:ssProf: nrec" << nrec;
    double sum_accel = 0.0;                 // Initial accel sum
    double accel_c   = 0.0;                 // Current acceleration
    double accel_p   = 0.0;                 // Previous acceleration
+   int pscan        = 0;                   // On-scan flag/scan-number
 
    while ( ss_c == 0 )
    {  // Skipping until set speed is non-zero
@@ -1260,6 +1261,7 @@ int tm_cep=tm_ci+150;
       ss_p             = ss_c;
       rs_p             = rs_c;
       accel_p          = accel_c;
+      pscan            = iscan;
 
       tsobj->read_record();                // Read the next record
 
@@ -1288,7 +1290,7 @@ if (tm_c<tm_cep || (tsx+5)>nrec || in_accel)
          {  // Found a constant speed:  out of acceleration
 DbgLv(1) << "Sim parms:ssProf: accel-end ss_p ss_c" << ss_p << ss_c
  << "tm_c" << tm_c << "rs_p rs_c" << rs_p << rs_c << "ss_c_ts" << ss_c_ts
- << "naintvs" << naintvs;
+ << "naintvs" << naintvs << "iscan" << iscan;
             ssp.w2t_e_accel  = w2_p;       // Accel end omega2t
             ssp.time_e_accel = tm_p;       // Accel end time
             //qDebug()<<"accln times"<<ssp.time_e_accel<< ss_c<<ss_p<<rs_c<<rs_p ;
@@ -1307,6 +1309,12 @@ DbgLv(1) << "Sim parms:ssProf: accel-end ss_p ss_c" << ss_p << ss_c
             if ( iscan > 0 )
             {  // On a scan as we enter constant zone:  save 1st scan time
                ssp.time_f_scan  = tm_c;
+DbgLv(1) << "Sim parms:ssProf:  f_scan(c)" << tm_c;
+            }
+            else if ( pscan > 0 )
+            {  // On a scan as we enter constant zone:  save 1st scan time
+               ssp.time_f_scan  = tm_p;
+DbgLv(1) << "Sim parms:ssProf:  f_scan(p)" << tm_p;
             }
          }
          else

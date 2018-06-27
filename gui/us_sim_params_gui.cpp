@@ -634,14 +634,15 @@ void US_SimParamsGui::check_delay( void )
 
    //cnt_delay_mins ->setMinimum( minutes[ current_speed_step ] );
    cnt_delay_hours->setMinimum( hours  [ current_speed_step ] );
+   double mindmin  = minutes[ current_speed_step ] + ( 1.0 / 30.0 );
    
    US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
 
    if ( sp->delay_hours  == hours[   current_speed_step]  &&
-        sp->delay_minutes < minutes[ current_speed_step] )
+        sp->delay_minutes < mindmin )
    {
-      sp->delay_minutes = minutes[ current_speed_step ];
-      cnt_delay_mins->setValue( minutes[ current_speed_step ] );
+      sp->delay_minutes = mindmin;
+      cnt_delay_mins->setValue( mindmin );
    }
 
    if ( sp->delay_hours < (int)hours[ current_speed_step ] )
