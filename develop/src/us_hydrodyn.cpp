@@ -6169,8 +6169,20 @@ int US_Hydrodyn::calc_vdw_beads()
    return ( any_errors ? -1 : 0 );
 }
 
+// 2 pass, 1st to compute com
+// 2nd upon hydration, find vector from bead to com and OT by multiplier
+// add global multiplier for OT 
+
 int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
    error_string = "";
+   double vdw_ot_mult = gparams.count( "vdw_ot_mult" ) ? gparams[ "vdw_ot_mult" ].toDouble() : 0;
+   us_qdebug( QString( "vdw ot mult %1" ).arg( vdw_ot_mult ) );
+   point com;
+   com.axis[ 0 ] = 0;
+   com.axis[ 1 ] = 0;
+   com.axis[ 2 ] = 0;
+   double total_mw = 0e0;
+   double hydro_radius = 0e0;
 
    if ( !quiet ) 
    {
@@ -6179,6 +6191,42 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
    }
 
    bead_model.clear( );
+
+   if ( vdw_ot_mult ) {
+      editor_msg( "black", QString( us_tr( "Using OT multiplier %1\nStart CoM calculation.\n" ) ).arg( vdw_ot_mult ) );
+      qApp->processEvents();
+
+      hydro_radius = pow( ( 3e0 / ( 4e0 * M_PI ) ) * misc.hydrovol, 1e0 / 3e0 );
+      
+      for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++) {
+         for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); k++) {
+            PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
+            QString res_idx =
+               QString("%1|%2")
+               .arg(this_atom->name != "OXT" ? this_atom->resName : "OXT" )
+               .arg(this_atom->name);
+            if ( vdwf.count( res_idx ) ) {
+               _vdwf this_vdwf = vdwf[ res_idx ];
+               // ? does mw include hydrated weight ?
+               total_mw += this_vdwf.mw;
+               com.axis[ 0 ] += this_atom->coordinate.axis[ 0 ] * this_vdwf.mw;
+               com.axis[ 1 ] += this_atom->coordinate.axis[ 1 ] * this_vdwf.mw;
+               com.axis[ 2 ] += this_atom->coordinate.axis[ 2 ] * this_vdwf.mw;
+            } else {
+               us_qdebug( QString( "not found %1 in vdwf" ).arg( res_idx ) );
+            }
+         }
+      }
+      if ( total_mw ) {
+         com.axis[ 0 ] /= total_mw;
+         com.axis[ 1 ] /= total_mw;
+         com.axis[ 2 ] /= total_mw;
+         editor_msg( "black", QString( us_tr( "CoM computed as [%1,%2,%3]\n" ).arg( com.axis[ 0 ] ).arg( com.axis[ 1 ] ).arg( com.axis[ 2 ] ) ) );
+      } else {
+         editor_msg( "red", QString( us_tr( "Error computing CoM, OT turned off.\n" ) ) );
+         vdw_ot_mult = 0;
+      }         
+   }
 
    for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++) {
       for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); k++) {
@@ -6195,6 +6243,9 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
             if ( this_vdwf.w ) {
                double tmp_vol = M_PI * ( 4e0 / 3e0 ) * this_vdwf.r * this_vdwf.r * this_vdwf.r + ( this_vdwf.w * misc.hydrovol );
                tmp_atom.bead_computed_radius = pow( tmp_vol * 3e0 / ( 4e0 * M_PI ), 1e0 / 3e0 );
+               if ( vdw_ot_mult ) {
+                  tmp_atom.bead_coordinate = saxs_util->plus( tmp_atom.bead_coordinate, saxs_util->scale( saxs_util->normal( saxs_util->minus( this_atom->coordinate, com ) ), vdw_ot_mult * hydro_radius ) );
+               }
             } else {
                tmp_atom.bead_computed_radius = this_vdwf.r;
             }
@@ -6551,7 +6602,7 @@ bool US_Hydrodyn::calc_hullrad_hydro( QString filename ) {
    hullrad_process_next();
 
    // summarize results into csv, hydrodyn results
-   
+   return true;
 }
 
 void US_Hydrodyn::hullrad_process_next() {

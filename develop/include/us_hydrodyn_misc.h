@@ -111,6 +111,8 @@ class US_EXTERN US_Hydrodyn_Misc : public QFrame
       // QCheckBox *cb_hydro_zeno;
       QLabel    *lbl_other;
       QCheckBox *cb_export_msroll;
+      QLabel    *lbl_vdw_ot_mult;
+      QLineEdit *le_vdw_ot_mult;
 
    private slots:
 
@@ -130,6 +132,7 @@ class US_EXTERN US_Hydrodyn_Misc : public QFrame
       
       void update_target_e_density(const QString &);
       void update_target_volume(const QString &);
+      void update_vdw_ot_mult(const QString &);
       void set_set_target_on_load_pdb();
       void set_equalize_radii();
 

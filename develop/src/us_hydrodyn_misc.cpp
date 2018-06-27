@@ -353,6 +353,24 @@ void US_Hydrodyn_Misc::setupGUI()
    AUTFBACK( cb_export_msroll );
    connect(cb_export_msroll, SIGNAL(clicked()), SLOT(set_export_msroll()));
 
+   lbl_vdw_ot_mult = new QLabel(us_tr(" vdW OT multiplier: "), this);
+   lbl_vdw_ot_mult->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_vdw_ot_mult->setMinimumWidth(200);
+   lbl_vdw_ot_mult->setMinimumHeight(minHeight1);
+   lbl_vdw_ot_mult->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_vdw_ot_mult );
+   lbl_vdw_ot_mult->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_vdw_ot_mult = new QLineEdit( this );    le_vdw_ot_mult->setObjectName( "vdw_ot_mult Line Edit" );
+   le_vdw_ot_mult->setMinimumHeight(minHeight1);
+   le_vdw_ot_mult->setEnabled(true);
+   le_vdw_ot_mult->setText(QString("%1").arg( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "vdw_ot_mult" ) ?
+                                              ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "vdw_ot_mult" ] : "0" ) );
+   le_vdw_ot_mult->setPalette( PALET_NORMAL );
+   AUTFBACK( le_vdw_ot_mult );
+   le_vdw_ot_mult->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_vdw_ot_mult, SIGNAL(textChanged(const QString &)), SLOT(update_vdw_ot_mult(const QString &)));
+
    pb_cancel = new QPushButton(us_tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
@@ -424,6 +442,10 @@ void US_Hydrodyn_Misc::setupGUI()
    background->addWidget( lbl_other , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
    background->addWidget( cb_export_msroll , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
+   j++;
+
+   background->addWidget(lbl_vdw_ot_mult, j, 0);
+   background->addWidget(le_vdw_ot_mult, j, 1);
    j++;
 
    background->addWidget(pb_help, j, 0);
@@ -510,6 +532,12 @@ void US_Hydrodyn_Misc::update_target_volume(const QString &str)
    } else {
       ((US_Hydrodyn *)us_hydrodyn)->pb_bead_saxs->setEnabled(false);
    }
+}
+
+void US_Hydrodyn_Misc::update_vdw_ot_mult(const QString &str)
+{
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "vdw_ot_mult" ] = str;
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Misc::set_set_target_on_load_pdb()
