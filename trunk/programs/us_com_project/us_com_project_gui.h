@@ -7,6 +7,7 @@
 #include <QtSql>
 
 #include "../us_experiment/us_experiment_gui.h"
+#include "../us_xpn_viewer/us_xpn_viewer_gui.h"
 #include "us_protocol_util.h"
 #include "us_project_gui.h"
 #include "us_editor.h"
@@ -72,8 +73,10 @@ class US_ExperGui : public US_WidgetsDialog
    private slots:
       void manageExperiment ( void );        // Slot for exp.  button clicked
       void us_exp_is_closed_set_button( void );
+      void to_live_update( QMap < QString, QString > & protocol_details ); 
      
    signals:
+      void switch_to_live_update( QMap < QString, QString > & protocol_details ); 
       
 };
 
@@ -87,38 +90,12 @@ class US_ObservGui : public US_WidgetsDialog
       US_ObservGui( QWidget* );
       ~US_ObservGui() {};
 
-      US_PlotPicker* picker;
-      QwtPlot*       data_plot;
-      QwtPlotGrid*   grid;
-      US_Plot*       plot;
-      QComboBox*     cb_rstart;
-      QComboBox*     cb_rend;
-      QComboBox*     cb_optsys;
-      QComboBox*     cb_cellchn;
-      QLineEdit*     le_lrange;
-      
-      QString        prectype;
-      QString        ptype_mw;
-      QString        ptype_tr;
-
-      QLabel*        lb_pltrec;
-      QComboBox*     cb_pltrec;
-
-      QPushButton*   pb_prev;
-      QPushButton*   pb_next;
-
-      QwtCounter*    ct_from;
-      QwtCounter*    ct_to;
-      QPushButton*   pb_exclude;
-      QPushButton*   pb_include;
-
-      QLineEdit*     le_status;
  private:
       US_ComProjectMain*    mainw;      // Parent to all panels
       
-   private slots:
-                 
-   signals:
+ private slots:
+      void process_protocol_details( QMap < QString, QString > & protocol_details );            
+ signals:
       
 };
 
@@ -177,6 +154,11 @@ private slots:
    
   //void unable_tabs_buttons( void);  // Slot to unable Tabs and Buttons when user level is low
   //void enable_tabs_buttons( void);  // Slot to enable Tabs and Buttons after protocol is loaded
+  void switch_to_live_update( QMap < QString, QString > & protocol_details ); 
+  
+signals:
+  void pass_to_live_update( QMap < QString, QString > & protocol_details ); 
+  
 };
 
 

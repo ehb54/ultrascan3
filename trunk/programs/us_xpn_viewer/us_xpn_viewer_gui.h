@@ -10,6 +10,10 @@
 #include "us_help.h"
 #include "us_plot.h"
 #include "us_dataIO.h"
+#include "us_license_t.h"
+#include "us_license.h"
+#include "us_xpn_run_raw.h"
+#include "us_xpn_run_auc.h"
 
 class US_XpnDataViewer : public US_Widgets
 {
@@ -19,6 +23,9 @@ class US_XpnDataViewer : public US_Widgets
 
      //! \brief  Generic constructor for the US_XpnDataViewer() program.
      US_XpnDataViewer();
+
+     // New constructor for automated read/upload/update
+     US_XpnDataViewer(QString auto_mode);
 
   private:
      QVector< US_DataIO::RawData >   allData;    //!< All AUC raw data
