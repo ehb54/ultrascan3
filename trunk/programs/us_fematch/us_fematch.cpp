@@ -1753,6 +1753,7 @@ void US_FeMatch::load_model( )
 
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
+DbgLv(1) << "pre-Load eGUID" << dataList[drow].editGUID << "drow" << drow;
    US_ModelLoader dialog( loadDB, mfilter, model,
       mdesc, dataList[ drow ].editGUID );
 
