@@ -6090,8 +6090,12 @@ int US_Hydrodyn::calc_vdw_beads()
       results_widget = false;
    }
 
-   bead_model_suffix = "vdw";
-   le_bead_model_suffix->setText("vdw");
+
+   {
+      double vdw_ot_mult = gparams.count( "vdw_ot_mult" ) ? gparams[ "vdw_ot_mult" ].toDouble() : 0;
+      bead_model_suffix = vdw_ot_mult ? QString( "OT%1-vdw").arg( vdw_ot_mult ) : QString( "vdw" );
+   }
+   le_bead_model_suffix->setText( bead_model_suffix );
 
    if ( !overwrite )
    {
@@ -6224,7 +6228,7 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
          editor_msg( "black", QString( us_tr( "CoM computed as [%1,%2,%3]\n" ).arg( com.axis[ 0 ] ).arg( com.axis[ 1 ] ).arg( com.axis[ 2 ] ) ) );
       } else {
          editor_msg( "red", QString( us_tr( "Error computing CoM, OT turned off.\n" ) ) );
-         vdw_ot_mult = 0;
+         return -1;
       }         
    }
 
@@ -6264,7 +6268,8 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
             
             bead_model.push_back(tmp_atom);
          } else {
-            us_qdebug( QString( "not found %1 in vdwf" ).arg( res_idx ) );
+            editor_msg( "red", QString( "Residue atom pair %1 unknown in vdwf.json" ).arg( res_idx ) );
+            return -1;
          }
       }
    }      
