@@ -130,7 +130,7 @@ void US_ExperimentMain::close_program( void )
   close();
 }
 
-// When run submotted to Optima
+// When run submitted to Optima
 void US_ExperimentMain::optima_submitted( QMap < QString, QString > &protocol_details )
 {
   tabWidget->setCurrentIndex( 0 );
@@ -4161,7 +4161,7 @@ void US_ExperGuiUpload::submitExperiment()
    
    ck_sub_done->setChecked( true );
    QString mtitle_done    = tr( "Success" );
-   QString message_done   = tr( "Protocol has been successfully submitted to AUC DB." );
+   QString message_done   = tr( "Protocol has been successfully submitted to Optima DB." );
    QMessageBox::information( this, mtitle_done, message_done );
 
    emit expdef_submitted( protocol_details );

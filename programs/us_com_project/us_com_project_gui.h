@@ -96,6 +96,7 @@ class US_ObservGui : public US_WidgetsDialog
  private slots:
       void process_protocol_details( QMap < QString, QString > & protocol_details );            
  signals:
+      void to_xpn_viewer( QMap < QString, QString > & protocol_details ); 
       
 };
 
