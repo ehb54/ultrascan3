@@ -157,7 +157,7 @@ class US_XpnDataViewer : public US_Widgets
      void   reset          ( void );
      void   load_xpn_raw   ( void );
 
-     bool   load_xpn_raw_auto   ( QString & );
+     bool   load_xpn_raw_auto   ( );
      void   check_for_data ( QMap < QString, QString > & );
      void   retrieve_xpn_raw_auto ( QString );
 
