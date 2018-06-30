@@ -991,7 +991,7 @@ void US_XpnDataViewer::retrieve_xpn_raw_auto( QString ExpID )
    for ( int ii = 0; ii < runInfo.count(); ii++ )                   // In principle there should be just 1 record in runInfo
    {
       QString rDesc       = runInfo[ ii ];
-      delim               = QString( drDesc ).left( 1 );
+      delim               = QString( rDesc ).left( 1 );
       QString lRunID      = QString( rDesc ).mid( 1 ).section( delim, 0, 0 );
 
       if ( lRunID == ExpID )                                       // ExpII is passed from US_Experiment
