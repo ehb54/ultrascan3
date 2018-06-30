@@ -149,9 +149,18 @@ class US_XpnDataViewer : public US_Widgets
      double         rad_start;
      double         rad_end;
 
+     QTimer*        timer_data_init;
+     QMessageBox*   msg_data_avail;
+       
   private slots:
      void   reset          ( void );
      void   load_xpn_raw   ( void );
+
+     bool   load_xpn_raw_auto   ( QString );
+     void   check_for_data ( QMap < QString, QString > & );
+     void   retrieve_xpn_raw_auto ( QString );
+
+     
      void   load_auc_xpn   ( void );
      void   plot_current   ( void );
      void   plot_titles    ( void );

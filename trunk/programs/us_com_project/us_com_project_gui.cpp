@@ -134,7 +134,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
 // Slot to pass submitted to Optima run info to the Live Update tab
 void US_ComProjectMain::switch_to_live_update( QMap < QString, QString > & protocol_details)
 {
-   tabWidget->setCurrentIndex( 1 );
+  tabWidget->setCurrentIndex( 1 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ?? 
 
    emit pass_to_live_update( protocol_details );
 }
@@ -333,6 +333,8 @@ US_ObservGui::US_ObservGui( QWidget* topw )
    // Open US_Xpn_Viewer ...  
    US_XpnDataViewer* sdiag = new US_XpnDataViewer("AUTO");
    sdiag->setParent(this, Qt::Widget);
+
+   connect( this, SIGNAL( to_xpn_viewer( QMap < QString, QString > &) ), sdiag, SLOT( check_for_data ( QMap < QString, QString > & )  ) );
    
    int offset = 20;
    sdiag->move(offset, 2*offset);
@@ -350,9 +352,11 @@ void US_ObservGui::process_protocol_details( QMap < QString, QString > & protoco
   // Query ExperimentRun table for runname/ExpDefId
   // If null (i.e. run is not launched yet), Information box - "Run was submitted, but not launched yet.. Awaiting for data to emerge."
 
-  QString mtitle    = tr( "Reading Protocol" );
-  QString message   = tr( "Protocol details passed. <br> Name: %1 <br> ID: %2" ).arg(protocol_details["experimentName"]).arg(protocol_details["experimentId"]);
-  QMessageBox::information( this, mtitle, message );
+  // QString mtitle    = tr( "Reading Protocol" );
+  // QString message   = tr( "Protocol details passed. <br> Name: %1 <br> ID: %2" ).arg(protocol_details["experimentName"]).arg(protocol_details["experimentId"]);
+  // QMessageBox::information( this, mtitle, message );
+
+  emit to_xpn_viewer( protocol_details );
 }
 
 

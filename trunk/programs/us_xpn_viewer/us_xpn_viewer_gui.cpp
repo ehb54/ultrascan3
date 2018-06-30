@@ -401,6 +401,7 @@ if(mcknt>0)
    reset();
    setMinimumSize( 950, 450 );
    adjustSize();
+
 }
 
 
@@ -913,45 +914,95 @@ DbgLv(1) << "ec: call changeCellCh";
 }
 
 // Load Optima raw (.postgres) data
-void US_XpnDataViewer::load_xpn_raw( )
+bool US_XpnDataViewer::load_xpn_raw_auto( QString ExpID )
 {
-   // Ask for data directory
-   QString dbhost    = xpnhost;
-   int     dbport    = xpnport.toInt();
-DbgLv(1) << "RDr: call connect_data  dbname h p u w"
- << xpnname << dbhost << dbport << xpnuser << xpnpasw;
-   if ( xpn_data->connect_data( dbhost, dbport, xpnname, xpnuser, xpnpasw ) )
-   {
-if ( dbg_level > 0 ) xpn_data->dump_tables();
-      xpn_data->scan_runs( runInfo );
-#if 0
-DbgLv(1) << "RDr:  pre-filter runs" << runInfo.count();
-      xpn_data->filter_runs( runInfo );
-DbgLv(1) << "RDr:  post-filter runs" << runInfo.count();
-#endif
-DbgLv(1) << "RDr:  rtn fr scan_runs,filter_runs";
-   }
-   else
-   {
-DbgLv(1) << "RDr:  connection failed";
+
+  bool status_ok = false;
+  // Ask for data directory
+  QString dbhost    = xpnhost;
+  int     dbport    = xpnport.toInt();
+  if ( xpn_data->connect_data( dbhost, dbport, xpnname, xpnuser, xpnpasw ) )
+    {
+      if ( dbg_level > 0 )
+	xpn_data->dump_tables();
+      
+      xpn_data->scan_runs( runInfo );                          // ALEXEY initial query (for us_comproject needs to be based on ExpId ) 
+      xpn_data->filter_runs( runInfo );                              // ALEXEY Optima data filtering by type [Absorbance, Interference etc.]
+    }
+  else
+    {
       runInfo.clear();
-   }
+    }
+  
+  // Check if there are non-zero data 
+  if ( runInfo.size() < 1 )
+    {
+      // QMessageBox::information( this,
+      // 				tr( "Status" ),
+      // 				tr( "Run was submitted to the Optima, but not launched yet. \n"
+      // 				    "Awaiting for data to emerge... \n" ) );
+      
+      status_ok = false;
+     }
+  else
+    {
+      status_ok = true;
+      timer_data_init->stop();
+      msg_data_avail->close();
+      retrieve_xpn_raw_auto ( ExpID );
+    }
+  
+  return status_ok;
+}
 
+//Query for Optima DB periodically, see if data available
+void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_details)
+{
+  QString ExpID = protocol_details["experimentId"];
+
+  timer_data_init = new QTimer;
+  connect(timer_data_init, SIGNAL(timeout()), this, SLOT( load_xpn_raw_auto( ExpID ) ));
+  timer_data_init->start(10000);     // 10 sec
+
+  msg_data_avail = new QMessageBox;
+  msg_data_avail->setIcon(QMessageBox::Information);
+  msg_data_avail->setText(tr( "Run was submitted to the Optima, but not launched yet. \n"
+		     "Awaiting for data to emerge... \n" ) );
+  msg_data_avail->exec();
+}
+
+void US_XpnDataViewer::retrieve_xpn_raw_auto( QString ExpID )
+{
    QString drDesc    = "";
-   US_XpnRunRaw* lddiag = new US_XpnRunRaw( drDesc, runInfo );
-   if ( lddiag->exec() == QDialog::Rejected )
+   QString delim;
+   /************* For Automated *****/
+   // Search description list and choose the item with matching runID
+   for ( int ii = 0; ii < runInfo.count(); ii++ )                   // In principle there should be just 1 record in runInfo
    {
-DbgLv(1) << "RDr:  rtn fr XpnRunRaw dialog: CANCEL";
-      return;
-   }
+      QString rDesc       = runInfo[ ii ];
+      delim               = QString( drDesc ).left( 1 );
+      QString lRunID      = QString( rDesc ).mid( 1 ).section( delim, 0, 0 );
 
-   // Restore area beneath dialog
-   qApp->processEvents();
-DbgLv(1) << "RDr:  rtn fr XpnRunRaw dialog";
-DbgLv(1) << "RDr:   drDesc" << drDesc;
+      if ( lRunID == ExpID )                                       // ExpII is passed from US_Experiment
+      {
+         drDesc = rDesc;
+         break;
+      }
+   }
+ 
+//   US_XpnRunRaw* lddiag = new US_XpnRunRaw( drDesc, runInfo );
+//    if ( lddiag->exec() == QDialog::Rejected )                    //ALEXEY need drDesc but do NOT need dialog
+//    {
+// DbgLv(1) << "RDr:  rtn fr XpnRunRaw dialog: CANCEL";
+//       return;
+//    }
+
+//    // Restore area beneath dialog
+//    qApp->processEvents();
+// DbgLv(1) << "RDr:  rtn fr XpnRunRaw dialog";
+// DbgLv(1) << "RDr:   drDesc" << drDesc;
 
    // See if we need to fix the runID
-   QString delim     = QString( drDesc ).left( 1 );
    QString fRunId    = QString( drDesc ).section( delim, 1, 1 );
    QString fExpNm    = QString( drDesc ).section( delim, 5, 5 );
    QString new_runID = fExpNm + "-run" + fRunId;
@@ -998,7 +1049,7 @@ QDateTime sttime=QDateTime::currentDateTime();
    scanmask          += QString( sMasks ).mid( 6, 1 ) == "1" ? 8 : 0;
 DbgLv(1) << "RDr:     iRId" << iRunId << "sMsks scnmask" << sMasks << scanmask;
 
-   xpn_data->import_data( iRunId, scanmask );
+ xpn_data->import_data( iRunId, scanmask );                              // ALEXEY <-- actual data retreiving
    int ntsrows        = xpn_data->countOf( "scan_rows" );
 DbgLv(1) << "RDr:     ntsrows" << ntsrows;
 DbgLv(1) << "RDr:      knt(triple)   " << xpn_data->countOf( "triple"    );
@@ -1075,21 +1126,21 @@ double tm1=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
 
    cb_optsys->disconnect();
    cb_optsys->clear();
-   cb_optsys->addItems( opsys );
+   cb_optsys->addItems( opsys );                                  // ALEXEY fill out Optics listbox
    cb_optsys->setCurrentIndex( optndx );
    connect( cb_optsys,    SIGNAL( currentIndexChanged( int ) ),
             this,         SLOT  ( changeOptics( )            ) );
 
    runID         = new_runID;
 DbgLv(1) << "RDr:  runID" << runID << "runType" << runType;
-   xpn_data->set_run_values( runID, runType );
+   xpn_data->set_run_values( runID, runType );                    // ALEXEY 
 
    // Build the AUC equivalent
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor) );
    le_status->setText( tr( "Building AUC data ..." ) );
    qApp->processEvents();
 
-   xpn_data->build_rawData( allData );
+   xpn_data->build_rawData( allData );                            // ALEXEY Builds Raw Data
 double tm2=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
 DbgLv(1) << "RDr:      build-raw done: tm1 tm2" << tm1 << tm2;
 
@@ -1107,13 +1158,13 @@ DbgLv(1) << "RDr: mwr ntriple" << ntriple;
 DbgLv(1) << "RDr: ncellch" << ncellch << cellchans.count();
 DbgLv(1) << "RDr: nscan" << nscan << "npoint" << npoint;
 DbgLv(1) << "RDr:   rvS rvE" << r_radii[0] << r_radii[npoint-1];
-   cb_cellchn->disconnect();
+   cb_cellchn->disconnect();                                      
    cb_cellchn->clear();
-   cb_cellchn->addItems( cellchans );
+   cb_cellchn->addItems( cellchans );                             // ALEXEY fill out Cells/Channels listbox
    connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
             this,         SLOT  ( changeCellCh(            ) ) );
 
-   nlambda      = xpn_data->lambdas_raw( lambdas );
+   nlambda      = xpn_data->lambdas_raw( lambdas );               // ALEXEY  lambdas
    int wvlo     = lambdas[ 0 ];
    int wvhi     = lambdas[ nlambda - 1 ];
 #if 0
@@ -1132,7 +1183,7 @@ DbgLv(1) << "RDr: nwl wvlo wvhi" << nlambda << wvlo << wvhi
    }
 #endif
 #if 1
-   ntriple      = xpn_data->data_triples( triples );
+   ntriple      = xpn_data->data_triples( triples );              // ALEXEY triples
 DbgLv(1) << "RDr: nwl wvlo wvhi" << nlambda << wvlo << wvhi
    << "ncellch" << ncellch << "nlambda" << nlambda << "ntriple" << ntriple
    << triples.count();
@@ -1145,8 +1196,246 @@ DbgLv(1) << "RDr: allData size" << allData.size();
    in_reload      = false;
 
    // Ok to enable some buttons now
-   enableControls();
+   enableControls();                                    //ALEXEY ...and actual plotting data
 }
+
+
+// Load Optima raw (.postgres) data
+void US_XpnDataViewer::load_xpn_raw( )
+{
+   // Ask for data directory
+   QString dbhost    = xpnhost;
+   int     dbport    = xpnport.toInt();
+DbgLv(1) << "RDr: call connect_data  dbname h p u w"
+ << xpnname << dbhost << dbport << xpnuser << xpnpasw;
+   if ( xpn_data->connect_data( dbhost, dbport, xpnname, xpnuser, xpnpasw ) )
+   {
+if ( dbg_level > 0 ) xpn_data->dump_tables();
+       xpn_data->scan_runs( runInfo );                         
+#if 0
+DbgLv(1) << "RDr:  pre-filter runs" << runInfo.count();
+ xpn_data->filter_runs( runInfo );                             
+DbgLv(1) << "RDr:  post-filter runs" << runInfo.count();
+#endif
+DbgLv(1) << "RDr:  rtn fr scan_runs,filter_runs";
+   }
+   else
+   {
+DbgLv(1) << "RDr:  connection failed";
+      runInfo.clear();
+   }
+   
+   QString drDesc    = "";
+   US_XpnRunRaw* lddiag = new US_XpnRunRaw( drDesc, runInfo );
+   if ( lddiag->exec() == QDialog::Rejected )                  
+   {
+DbgLv(1) << "RDr:  rtn fr XpnRunRaw dialog: CANCEL";
+      return;
+   }
+
+   // Restore area beneath dialog
+   qApp->processEvents();
+DbgLv(1) << "RDr:  rtn fr XpnRunRaw dialog";
+DbgLv(1) << "RDr:   drDesc" << drDesc;
+
+   // See if we need to fix the runID
+   QString delim     = QString( drDesc ).left( 1 );
+   QString fRunId    = QString( drDesc ).section( delim, 1, 1 );
+   QString fExpNm    = QString( drDesc ).section( delim, 5, 5 );
+   QString new_runID = fExpNm + "-run" + fRunId;
+   runType           = "RI";
+   QRegExp rx( "[^A-Za-z0-9_-]" );
+
+   int pos            = 0;
+
+   bool runID_changed = false;
+   while ( ( pos = rx.indexIn( new_runID ) ) != -1 )
+   {
+      new_runID.replace( pos, 1, "_" );         // Replace 1 char at pos
+      runID_changed = true;
+   }
+
+   // Let the user know if the runID name has changed
+   if ( runID_changed )
+   {
+      QMessageBox::warning( this,
+            tr( "RunId Name Changed" ),
+            tr( "The runId name has been changed.\nIt may consist only "
+                "of alphanumeric characters,\nthe underscore, and the "
+                "hyphen.\nNew runId:\n  " ) + new_runID );
+   }
+
+   // Set the runID and directory
+   runID       = new_runID;
+   le_runID->setText( runID );
+   currentDir  = US_Settings::importDir() + "/" + runID;
+   le_dir  ->setText( currentDir );
+   qApp->processEvents();
+
+   // Read the data
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor) );
+   le_status->setText( tr( "Reading Raw Optima data ..." ) );
+   qApp->processEvents();
+QDateTime sttime=QDateTime::currentDateTime();
+
+   int iRunId         = fRunId.toInt();
+   QString sMasks     = QString( drDesc ).section( delim, 7, 10 );
+   int scanmask       = QString( sMasks ).mid( 0, 1 ) == "1" ? 1 : 0;
+   scanmask          += QString( sMasks ).mid( 2, 1 ) == "1" ? 2 : 0;
+   scanmask          += QString( sMasks ).mid( 4, 1 ) == "1" ? 4 : 0;
+   scanmask          += QString( sMasks ).mid( 6, 1 ) == "1" ? 8 : 0;
+DbgLv(1) << "RDr:     iRId" << iRunId << "sMsks scnmask" << sMasks << scanmask;
+
+ xpn_data->import_data( iRunId, scanmask );                             
+   int ntsrows        = xpn_data->countOf( "scan_rows" );
+DbgLv(1) << "RDr:     ntsrows" << ntsrows;
+DbgLv(1) << "RDr:      knt(triple)   " << xpn_data->countOf( "triple"    );
+
+
+   if ( ntsrows < 1 )
+   {
+      le_status->setText( tr( "Run %1 has no associated data!!!" )
+                          .arg( fRunId ) );
+      return;
+   }
+
+   le_status->setText( tr( "Initial Raw Optima data import complete." ) );
+   qApp->processEvents();
+double tm1=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
+   QStringList opsys;
+
+   // Infer and report on type of data to eventually export
+   runType            = "RI";
+   int optndx         = 0;
+
+   if ( scanmask == 1  ||  scanmask == 2  ||
+        scanmask == 4  ||  scanmask == 8 )
+   {
+      runType            = ( scanmask == 2 ) ? "FI" : runType;
+      runType            = ( scanmask == 4 ) ? "IP" : runType;
+      runType            = ( scanmask == 8 ) ? "WI" : runType;
+      if ( scanmask == 1 )
+         opsys << "Absorbance";
+      else if ( scanmask == 2 )
+         opsys << "Fluorescence";
+      else if ( scanmask == 4 )
+         opsys << "Interference";
+      else if ( scanmask == 8 )
+         opsys << "Wavelength";
+   }
+
+   else if ( ( scanmask & 1 ) != 0 )
+   {
+      QApplication::restoreOverrideCursor();
+      QApplication::restoreOverrideCursor();
+      QString runType2( "IP" );
+      runType2           = ( ( scanmask & 2 ) != 0 ) ? "FI" : runType2;
+      runType2           = ( ( scanmask & 8 ) != 0 ) ? "WI" : runType2;
+      QString drtype1    = "Absorbance";
+      QString drtype2    = "Interference";
+      drtype1            = ( runType  == "FI" ) ? "Fluorescence" : drtype1;
+      drtype1            = ( runType  == "IP" ) ? "Interference" : drtype1;
+      drtype1            = ( runType  == "WI" ) ? "Wavelength"   : drtype1;
+      drtype2            = ( runType2 == "RI" ) ? "Absorbance"   : drtype2;
+      drtype2            = ( runType2 == "FI" ) ? "Fluorescence" : drtype2;
+      drtype2            = ( runType2 == "WI" ) ? "Wavelength"   : drtype2;
+      opsys << drtype1 << drtype2;
+
+      QString msg        = tr( "Multiple scan data types are present:\n" )
+                           +   "'" + drtype1 + "'\n or \n"
+                           +   "'" + drtype2 + "' .\n\n"
+                           + tr( "Choose one for initial display." );
+      QMessageBox mbox;
+      mbox.setWindowTitle( tr( "Scan Data Type to Process" ) );
+      mbox.setText( msg );
+      QPushButton* pb_opt1 = mbox.addButton( drtype1, QMessageBox::AcceptRole );
+      QPushButton* pb_opt2 = mbox.addButton( drtype2, QMessageBox::RejectRole );
+      mbox.setEscapeButton ( pb_opt2 );
+      mbox.setDefaultButton( pb_opt1 );
+
+      mbox.exec();
+      if ( mbox.clickedButton() == pb_opt2 )
+      {
+         runType            = runType2;
+         optndx             = 1;
+      }
+   }
+
+   cb_optsys->disconnect();
+   cb_optsys->clear();
+   cb_optsys->addItems( opsys );                               
+   cb_optsys->setCurrentIndex( optndx );
+   connect( cb_optsys,    SIGNAL( currentIndexChanged( int ) ),
+            this,         SLOT  ( changeOptics( )            ) );
+
+   runID         = new_runID;
+DbgLv(1) << "RDr:  runID" << runID << "runType" << runType;
+   xpn_data->set_run_values( runID, runType );                  
+
+   // Build the AUC equivalent
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor) );
+   le_status->setText( tr( "Building AUC data ..." ) );
+   qApp->processEvents();
+
+   xpn_data->build_rawData( allData );                           
+double tm2=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
+DbgLv(1) << "RDr:      build-raw done: tm1 tm2" << tm1 << tm2;
+
+   QApplication::restoreOverrideCursor();
+   QApplication::restoreOverrideCursor();
+   isRaw         = true;
+   haveData      = true;
+   ncellch       = xpn_data->cellchannels( cellchans );
+   r_radii.clear();
+   r_radii << allData[ 0 ].xvalues;
+   nscan         = allData[ 0 ].scanCount();
+   npoint        = allData[ 0 ].pointCount();
+
+DbgLv(1) << "RDr: mwr ntriple" << ntriple;
+DbgLv(1) << "RDr: ncellch" << ncellch << cellchans.count();
+DbgLv(1) << "RDr: nscan" << nscan << "npoint" << npoint;
+DbgLv(1) << "RDr:   rvS rvE" << r_radii[0] << r_radii[npoint-1];
+   cb_cellchn->disconnect();                                      
+   cb_cellchn->clear();
+   cb_cellchn->addItems( cellchans );                           
+   connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
+            this,         SLOT  ( changeCellCh(            ) ) );
+
+   nlambda      = xpn_data->lambdas_raw( lambdas );             
+   int wvlo     = lambdas[ 0 ];
+   int wvhi     = lambdas[ nlambda - 1 ];
+#if 0
+   ntriple      = nlambda * ncellch;  // Number triples
+   ntpoint      = npoint  * nscan;    // Number radius points per triple
+DbgLv(1) << "RDr: nwl wvlo wvhi" << nlambda << wvlo << wvhi
+   << "ncellch" << ncellch << "nlambda" << nlambda << "ntriple" << ntriple;
+   triples.clear();
+
+   for ( int jj = 0; jj < ncellch; jj++ )
+   {
+      QString celchn  = cellchans[ jj ];
+
+      for ( int kk = 0; kk < nlambda; kk++ )
+         triples << celchn + " / " + QString::number( lambdas[ kk] );
+   }
+#endif
+#if 1
+   ntriple      = xpn_data->data_triples( triples );           
+DbgLv(1) << "RDr: nwl wvlo wvhi" << nlambda << wvlo << wvhi
+   << "ncellch" << ncellch << "nlambda" << nlambda << "ntriple" << ntriple
+   << triples.count();
+#endif
+
+DbgLv(1) << "RDr: allData size" << allData.size();
+   QApplication::restoreOverrideCursor();
+   QString tspath = currentDir + "/" + runID + ".time_state.tmst";
+   haveTmst       = QFile( tspath ).exists();
+   in_reload      = false;
+
+   // Ok to enable some buttons now
+   enableControls();                                  
+}
+
 
 // Load US3 AUC Optima-derived data
 void US_XpnDataViewer::load_auc_xpn( )

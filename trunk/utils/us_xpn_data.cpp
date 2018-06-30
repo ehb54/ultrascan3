@@ -118,7 +118,7 @@ DbgLv(1) << "XpDa:scn: ExpRun rows" << rows;
                        .arg( rows ).arg( tabname );
    emit status_text( stat_text );
 
-   QString qtxt  = QString( "SELECT * from " ) + qrytab;
+   QString qtxt  = QString( "SELECT * from " ) + qrytab;        //ALEXEY add WHERE ExperimentID=xxx for us_comproject
    const QString delim( "^" );
    runInfo.clear();
    runInfo.reserve( rows );
