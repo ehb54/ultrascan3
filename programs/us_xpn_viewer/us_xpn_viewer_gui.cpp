@@ -957,6 +957,7 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
     {
       status_ok = true;
       timer_data_init->stop();
+      disconnect(timer_data_init, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
       msg_data_avail->close();
       retrieve_xpn_raw_auto ( ExpID_to_retrieve );
     }
@@ -975,11 +976,13 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
   timer_data_init->start(5000);     // 5 sec
 
   msg_data_avail = new QMessageBox;
+  msg_data_avail->setStandardButtons(0);
+  msg_data_avail->setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint);
   msg_data_avail->setIcon(QMessageBox::Information);
   msg_data_avail->setText(tr( "Run was submitted to the Optima, but not launched yet. \n"
 		              "Awaiting for data to emerge... \n"
 			      "Experient ID to check: %1 \n ").arg(ExpID_to_retrieve) );
-  msg_data_avail->show();
+  msg_data_avail->exec();
 }
 
 void US_XpnDataViewer::retrieve_xpn_raw_auto( QString ExpID )
