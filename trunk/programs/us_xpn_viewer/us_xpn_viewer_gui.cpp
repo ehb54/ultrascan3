@@ -72,6 +72,8 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
    rlt_id       = 0;
    currentDir   = "";
    in_reload    = false;
+   in_reload_data_init = false;
+   
    QStringList xpnentr = US_Settings::defaultXpnHost();
 DbgLv(1) << "xpnentr count" << xpnentr.count();
 
@@ -916,7 +918,15 @@ DbgLv(1) << "ec: call changeCellCh";
 // Load Optima raw (.postgres) data
 bool US_XpnDataViewer::load_xpn_raw_auto( )
 {
+
   bool status_ok = false;
+
+  if ( in_reload_data_init )             // If already doing a reload,
+    return status_ok;                   //  skip starting a new one
+  
+  in_reload_data_init   = true;
+  
+
   // Ask for data directory
   QString dbhost    = xpnhost;
   int     dbport    = xpnport.toInt();
@@ -951,6 +961,7 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
       retrieve_xpn_raw_auto ( ExpID_to_retrieve );
     }
   
+  in_reload_data_init   = false;
   return status_ok;
 }
 
@@ -1003,7 +1014,13 @@ void US_XpnDataViewer::retrieve_xpn_raw_auto( QString ExpID )
 // DbgLv(1) << "RDr:   drDesc" << drDesc;
 
    // See if we need to fix the runID
-   QString fRunId    = QString( drDesc ).section( delim, 1, 1 );
+
+
+   QString fRunId    = QString( drDesc ).section( delim, 1, 1 );  // WHAT IS fRunId ????
+
+   qDebug() << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!DRDESC: " << drDesc << ", fRunId:  " << fRunId; 
+
+   
    QString fExpNm    = QString( drDesc ).section( delim, 5, 5 );
    QString new_runID = fExpNm + "-run" + fRunId;
    runType           = "RI";
