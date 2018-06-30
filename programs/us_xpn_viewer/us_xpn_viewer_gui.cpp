@@ -914,9 +914,8 @@ DbgLv(1) << "ec: call changeCellCh";
 }
 
 // Load Optima raw (.postgres) data
-bool US_XpnDataViewer::load_xpn_raw_auto( QString ExpID )
+bool US_XpnDataViewer::load_xpn_raw_auto( )
 {
-
   bool status_ok = false;
   // Ask for data directory
   QString dbhost    = xpnhost;
@@ -949,7 +948,7 @@ bool US_XpnDataViewer::load_xpn_raw_auto( QString ExpID )
       status_ok = true;
       timer_data_init->stop();
       msg_data_avail->close();
-      retrieve_xpn_raw_auto ( ExpID );
+      retrieve_xpn_raw_auto ( ExpID_to_retrieve );
     }
   
   return status_ok;
@@ -958,17 +957,18 @@ bool US_XpnDataViewer::load_xpn_raw_auto( QString ExpID )
 //Query for Optima DB periodically, see if data available
 void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_details)
 {
-  QString ExpID = protocol_details["experimentId"];
+  ExpID_to_retrieve = protocol_details["experimentId"];
 
   timer_data_init = new QTimer;
-  connect(timer_data_init, SIGNAL(timeout()), this, SLOT( load_xpn_raw_auto( ExpID ) ));
-  timer_data_init->start(10000);     // 10 sec
+  connect(timer_data_init, SIGNAL(timeout()), this, SLOT( load_xpn_raw_auto( ) ));
+  timer_data_init->start(5000);     // 5 sec
 
   msg_data_avail = new QMessageBox;
   msg_data_avail->setIcon(QMessageBox::Information);
   msg_data_avail->setText(tr( "Run was submitted to the Optima, but not launched yet. \n"
-		     "Awaiting for data to emerge... \n" ) );
-  msg_data_avail->exec();
+		              "Awaiting for data to emerge... \n"
+			      "Experient ID to check: %1 \n ").arg(ExpID_to_retrieve) );
+  msg_data_avail->show();
 }
 
 void US_XpnDataViewer::retrieve_xpn_raw_auto( QString ExpID )
