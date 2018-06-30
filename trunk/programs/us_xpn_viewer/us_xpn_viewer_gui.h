@@ -151,12 +151,13 @@ class US_XpnDataViewer : public US_Widgets
 
      QTimer*        timer_data_init;
      QMessageBox*   msg_data_avail;
-       
+     QString        ExpID_to_retrieve;
+	 
   private slots:
      void   reset          ( void );
      void   load_xpn_raw   ( void );
 
-     bool   load_xpn_raw_auto   ( QString );
+     bool   load_xpn_raw_auto   ( QString & );
      void   check_for_data ( QMap < QString, QString > & );
      void   retrieve_xpn_raw_auto ( QString );
 
