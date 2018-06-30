@@ -976,8 +976,11 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
   timer_data_init->start(5000);     // 5 sec
 
   msg_data_avail = new QMessageBox;
-  msg_data_avail->setStandardButtons(0);
+  //msg_data_avail->setStandardButtons(0);
   msg_data_avail->setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint);
+  QPushButton *okButton = msg_data_avail->addButton(tr("Ok"), QMessageBox::AcceptRole);
+  okButton->hide();
+  
   msg_data_avail->setIcon(QMessageBox::Information);
   msg_data_avail->setText(tr( "Run was submitted to the Optima, but not launched yet. \n"
 		              "Awaiting for data to emerge... \n"
