@@ -190,9 +190,25 @@ else
    ct_from  ->setSingleStep( 1 );
    ct_to    ->setSingleStep( 1 );
 
-   // Hide scan Control
+
+   // Status and standard pushbuttons
+   QLabel*      lb_status   = us_banner( tr( "Status" ) );
+                le_status   = us_lineedit( tr( "(no data loaded)" ), -1, true );
+   QPalette stpal;
+   stpal.setColor( QPalette::Text, Qt::white );
+   stpal.setColor( QPalette::Base, Qt::blue  );
+   le_status->setPalette( stpal );
+
+   QPushButton* pb_help     = us_pushbutton( tr( "Help" ) );
+   QPushButton* pb_close    = us_pushbutton( tr( "Close" ) );
+
+   pb_close  ->setEnabled(false);
+
+      // Hide scan Control
    if ( auto_mode.toStdString() == "AUTO")
      {
+       pb_close->hide();
+       
        // Hide Load controls 
        lb_run     ->hide();
        pb_loadXpn ->hide();
@@ -236,20 +252,7 @@ else
        pb_include->hide();
       
      }
-
-   // Status and standard pushbuttons
-   QLabel*      lb_status   = us_banner( tr( "Status" ) );
-                le_status   = us_lineedit( tr( "(no data loaded)" ), -1, true );
-   QPalette stpal;
-   stpal.setColor( QPalette::Text, Qt::white );
-   stpal.setColor( QPalette::Base, Qt::blue  );
-   le_status->setPalette( stpal );
-
-   QPushButton* pb_help     = us_pushbutton( tr( "Help" ) );
-   QPushButton* pb_close    = us_pushbutton( tr( "Close" ) );
-
-   pb_close  ->setEnabled(false);
-
+   
    // Default scan curve color list and count
    QString cmfpath          = US_Settings::etcDir() + "/cm-rainbow.xml";
  DbgLv(1) << "cmfpath" << cmfpath;
@@ -354,8 +357,8 @@ if(mcknt>0)
    settings->addWidget( pb_include,    row++, 4, 1, 4 );
    settings->addWidget( lb_status,     row++, 0, 1, 8 );
    settings->addWidget( le_status,     row++, 0, 1, 8 );
-   settings->addWidget( pb_help,       row,   0, 1, 4 );
-   settings->addWidget( pb_close,      row++, 4, 1, 4 );
+   settings->addWidget( pb_help,       row,   0, 1, 8 );
+   //settings->addWidget( pb_close,      row++, 4, 1, 4 );
 
    // Plot layout for the right side of window
 //   QBoxLayout* plot = new US_Plot( data_plot,
@@ -960,6 +963,12 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
       disconnect(timer_data_init, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
       msg_data_avail->close();
       retrieve_xpn_raw_auto ( ExpID_to_retrieve );
+
+      // Auto-update hereafter
+      ck_autorld->setChecked(true);
+      ct_rinterv->setValue(10000);  // 10 sec
+
+      changeReload();
     }
   
   in_reload_data_init   = false;
@@ -969,7 +978,7 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
 //Query for Optima DB periodically, see if data available
 void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_details)
 {
-  ExpID_to_retrieve = protocol_details["experimentId"];
+  ExpID_to_retrieve = protocol_details["experimentId"];   // Must be RUnId from ExperimentRun, but this passed form Us_exp for testing for now..
 
   timer_data_init = new QTimer;
   connect(timer_data_init, SIGNAL(timeout()), this, SLOT( load_xpn_raw_auto( ) ));
