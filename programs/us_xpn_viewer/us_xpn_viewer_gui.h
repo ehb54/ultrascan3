@@ -1,6 +1,6 @@
-//! \file us_xpn_viewer.h
-#ifndef US_XPN_VIEWER_H
-#define US_XPN_VIEWER_H
+//! \file us_xpn_viewer_gui.h
+#ifndef US_XPN_VIEWERG_H
+#define US_XPN_VIEWERG_H
 
 #include <QtGui>
 
