@@ -26,7 +26,7 @@
 #endif
 
 
-// Constructor:  build the main layout with tab widget panels
+//// Constructor:  build the main layout with tab widget panels
 US_ComProjectMain::US_ComProjectMain() : US_Widgets()
 {
   //   dbg_level    = US_Settings::us_debug();
