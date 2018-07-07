@@ -6093,7 +6093,16 @@ int US_Hydrodyn::calc_vdw_beads()
 
    {
       double vdw_ot_mult = gparams.count( "vdw_ot_mult" ) ? gparams[ "vdw_ot_mult" ].toDouble() : 0;
-      bead_model_suffix = vdw_ot_mult ? QString( "OT%1-vdw").arg( vdw_ot_mult ) : QString( "vdw" );
+      double vdw_ot_dpct = gparams.count( "vdw_ot_dpct" ) ? gparams[ "vdw_ot_dpct" ].toDouble() : 0;
+      if ( vdw_ot_mult ) {
+         if ( vdw_ot_dpct ) {
+            bead_model_suffix = QString( "OT%1DP%2-vdw").arg( vdw_ot_mult ).arg( vdw_ot_dpct );
+         } else {
+            bead_model_suffix = QString( "OT%1-vdw").arg( vdw_ot_mult );
+         }
+      } else {
+         bead_model_suffix = "vdw";
+      }
    }
    le_bead_model_suffix->setText( bead_model_suffix );
 
@@ -6180,7 +6189,9 @@ int US_Hydrodyn::calc_vdw_beads()
 int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
    error_string = "";
    double vdw_ot_mult = gparams.count( "vdw_ot_mult" ) ? gparams[ "vdw_ot_mult" ].toDouble() : 0;
-   us_qdebug( QString( "vdw ot mult %1" ).arg( vdw_ot_mult ) );
+   double vdw_ot_dpct = gparams.count( "vdw_ot_dpct" ) ? gparams[ "vdw_ot_dpct" ].toDouble() : 0;
+   double vdw_ot_d = vdw_ot_dpct * 0.01;
+   us_qdebug( QString( "vdw ot mult %1, additional water decrease percent %2" ).arg( vdw_ot_mult ).arg( vdw_ot_dpct ) );
    point com;
    com.axis[ 0 ] = 0;
    com.axis[ 1 ] = 0;
@@ -6247,8 +6258,16 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
             if ( this_vdwf.w ) {
                double tmp_vol = M_PI * ( 4e0 / 3e0 ) * this_vdwf.r * this_vdwf.r * this_vdwf.r + ( this_vdwf.w * misc.hydrovol );
                tmp_atom.bead_computed_radius = pow( tmp_vol * 3e0 / ( 4e0 * M_PI ), 1e0 / 3e0 );
-               if ( vdw_ot_mult ) {
-                  tmp_atom.bead_coordinate = saxs_util->plus( tmp_atom.bead_coordinate, saxs_util->scale( saxs_util->normal( saxs_util->minus( this_atom->coordinate, com ) ), vdw_ot_mult * hydro_radius ) );
+               double use_vdw_ot_mult = vdw_ot_mult;
+               if ( this_vdwf.w > 1 ) {
+                  use_vdw_ot_mult -= vdw_ot_mult * vdw_ot_d * ( this_vdwf.w - 1 );
+                  if ( use_vdw_ot_mult < 0e0 ) {
+                     use_vdw_ot_mult = 0e0;
+                  }
+               }
+               // us_qdebug( QString( "original ot mult %1, waters %2, decreased multiplier %3" ).arg( vdw_ot_mult ).arg( this_vdwf.w ).arg( use_vdw_ot_mult ) );
+               if ( use_vdw_ot_mult ) {
+                  tmp_atom.bead_coordinate = saxs_util->plus( tmp_atom.bead_coordinate, saxs_util->scale( saxs_util->normal( saxs_util->minus( this_atom->coordinate, com ) ), use_vdw_ot_mult * hydro_radius ) );
                }
             } else {
                tmp_atom.bead_computed_radius = this_vdwf.r;
@@ -6747,7 +6766,6 @@ void US_Hydrodyn::hullrad_finished( int, QProcess::ExitStatus )
    }
 
    // accumulate data as in zeno (e.g. push values to data structures
-
    
    hullrad_process_next();
 }

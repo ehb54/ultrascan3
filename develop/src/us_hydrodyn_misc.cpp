@@ -44,7 +44,7 @@ void US_Hydrodyn_Misc::setupGUI()
    lbl_hydrovol = new QLabel(us_tr(" Hydration Water Vol. (A^3): "), this);
    Q_CHECK_PTR(lbl_hydrovol);
    lbl_hydrovol->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_hydrovol->setMinimumWidth(200);
+   lbl_hydrovol->setMinimumWidth(220);
    lbl_hydrovol->setMinimumHeight(minHeight1);
    lbl_hydrovol->setPalette( PALET_LABEL );
    AUTFBACK( lbl_hydrovol );
@@ -56,7 +56,7 @@ void US_Hydrodyn_Misc::setupGUI()
    cnt_hydrovol->setRange(0, 100); cnt_hydrovol->setSingleStep( 0.001);
    cnt_hydrovol->setValue((*misc).hydrovol);
    cnt_hydrovol->setMinimumHeight(minHeight1);
-   cnt_hydrovol->setMinimumWidth(200);
+   cnt_hydrovol->setMinimumWidth(220);
    cnt_hydrovol->setEnabled(true);
    cnt_hydrovol->setNumButtons(3);
    cnt_hydrovol->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -141,7 +141,7 @@ void US_Hydrodyn_Misc::setupGUI()
    lbl_avg_radius = new QLabel(us_tr(" Average atomic radius (A): "), this);
    Q_CHECK_PTR(lbl_avg_radius);
    lbl_avg_radius->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_avg_radius->setMinimumWidth(200);
+   lbl_avg_radius->setMinimumWidth(220);
    lbl_avg_radius->setMinimumHeight(minHeight1);
    lbl_avg_radius->setPalette( PALET_LABEL );
    AUTFBACK( lbl_avg_radius );
@@ -153,7 +153,7 @@ void US_Hydrodyn_Misc::setupGUI()
    cnt_avg_radius->setRange(0.5, 5.0); cnt_avg_radius->setSingleStep( 0.001);
    cnt_avg_radius->setValue((*misc).avg_radius);
    cnt_avg_radius->setMinimumHeight(minHeight1);
-   cnt_avg_radius->setMinimumWidth(200);
+   cnt_avg_radius->setMinimumWidth(220);
    cnt_avg_radius->setEnabled(true);
    cnt_avg_radius->setNumButtons(3);
    cnt_avg_radius->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -164,7 +164,7 @@ void US_Hydrodyn_Misc::setupGUI()
    lbl_avg_mass = new QLabel(us_tr(" Average atomic mass (Da): "), this);
    Q_CHECK_PTR(lbl_avg_mass);
    lbl_avg_mass->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_avg_mass->setMinimumWidth(200);
+   lbl_avg_mass->setMinimumWidth(220);
    lbl_avg_mass->setMinimumHeight(minHeight1);
    lbl_avg_mass->setPalette( PALET_LABEL );
    AUTFBACK( lbl_avg_mass );
@@ -176,7 +176,7 @@ void US_Hydrodyn_Misc::setupGUI()
    cnt_avg_mass->setRange(0.0, 200.0); cnt_avg_mass->setSingleStep( 0.01);
    cnt_avg_mass->setValue((*misc).avg_mass);
    cnt_avg_mass->setMinimumHeight(minHeight1);
-   cnt_avg_mass->setMinimumWidth(200);
+   cnt_avg_mass->setMinimumWidth(220);
    cnt_avg_mass->setEnabled(true);
    cnt_avg_mass->setNumButtons(3);
    cnt_avg_mass->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -187,7 +187,7 @@ void US_Hydrodyn_Misc::setupGUI()
    lbl_avg_hydration = new QLabel(us_tr(" Average atomic hydration: "), this);
    Q_CHECK_PTR(lbl_avg_hydration);
    lbl_avg_hydration->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_avg_hydration->setMinimumWidth(200);
+   lbl_avg_hydration->setMinimumWidth(220);
    lbl_avg_hydration->setMinimumHeight(minHeight1);
    lbl_avg_hydration->setPalette( PALET_LABEL );
    AUTFBACK( lbl_avg_hydration );
@@ -199,7 +199,7 @@ void US_Hydrodyn_Misc::setupGUI()
    cnt_avg_hydration->setRange(0.0, 10.0); cnt_avg_hydration->setSingleStep( 0.001);
    cnt_avg_hydration->setValue((*misc).avg_hydration);
    cnt_avg_hydration->setMinimumHeight(minHeight1);
-   cnt_avg_hydration->setMinimumWidth(200);
+   cnt_avg_hydration->setMinimumWidth(220);
    cnt_avg_hydration->setEnabled(true);
    cnt_avg_hydration->setNumButtons(3);
    cnt_avg_hydration->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -210,7 +210,7 @@ void US_Hydrodyn_Misc::setupGUI()
    lbl_avg_volume = new QLabel(us_tr(" Average bead/atom volume (A^3): "), this);
    Q_CHECK_PTR(lbl_avg_volume);
    lbl_avg_volume->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_avg_volume->setMinimumWidth(200);
+   lbl_avg_volume->setMinimumWidth(220);
    lbl_avg_volume->setMinimumHeight(minHeight1);
    lbl_avg_volume->setPalette( PALET_LABEL );
    AUTFBACK( lbl_avg_volume );
@@ -222,7 +222,7 @@ void US_Hydrodyn_Misc::setupGUI()
    cnt_avg_volume->setRange(1.0, 50.0); cnt_avg_volume->setSingleStep( 0.01);
    cnt_avg_volume->setValue((*misc).avg_volume);
    cnt_avg_volume->setMinimumHeight(minHeight1);
-   cnt_avg_volume->setMinimumWidth(200);
+   cnt_avg_volume->setMinimumWidth(220);
    cnt_avg_volume->setEnabled(true);
    cnt_avg_volume->setNumButtons(3);
    cnt_avg_volume->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -233,7 +233,7 @@ void US_Hydrodyn_Misc::setupGUI()
    lbl_avg_vbar = new QLabel(us_tr(" Average Residue vbar: "), this);
    Q_CHECK_PTR(lbl_avg_vbar);
    lbl_avg_vbar->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_avg_vbar->setMinimumWidth(200);
+   lbl_avg_vbar->setMinimumWidth(220);
    lbl_avg_vbar->setMinimumHeight(minHeight1);
    lbl_avg_vbar->setPalette( PALET_LABEL );
    AUTFBACK( lbl_avg_vbar );
@@ -245,7 +245,7 @@ void US_Hydrodyn_Misc::setupGUI()
    cnt_avg_vbar->setRange(0.01, 2.0); cnt_avg_vbar->setSingleStep( 0.001);
    cnt_avg_vbar->setValue((*misc).avg_vbar);
    cnt_avg_vbar->setMinimumHeight(minHeight1);
-   cnt_avg_vbar->setMinimumWidth(200);
+   cnt_avg_vbar->setMinimumWidth(220);
    cnt_avg_vbar->setEnabled(true);
    cnt_avg_vbar->setNumButtons(3);
    cnt_avg_vbar->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -263,7 +263,7 @@ void US_Hydrodyn_Misc::setupGUI()
 
    lbl_target_e_density = new QLabel(us_tr(" Target electron density (A^-3): "), this);
    lbl_target_e_density->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_target_e_density->setMinimumWidth(200);
+   lbl_target_e_density->setMinimumWidth(220);
    lbl_target_e_density->setMinimumHeight(minHeight1);
    lbl_target_e_density->setPalette( PALET_LABEL );
    AUTFBACK( lbl_target_e_density );
@@ -280,7 +280,7 @@ void US_Hydrodyn_Misc::setupGUI()
 
    lbl_target_volume = new QLabel(us_tr(" Target volume (A^3): "), this);
    lbl_target_volume->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_target_volume->setMinimumWidth(200);
+   lbl_target_volume->setMinimumWidth(220);
    lbl_target_volume->setMinimumHeight(minHeight1);
    lbl_target_volume->setPalette( PALET_LABEL );
    AUTFBACK( lbl_target_volume );
@@ -355,7 +355,7 @@ void US_Hydrodyn_Misc::setupGUI()
 
    lbl_vdw_ot_mult = new QLabel(us_tr(" vdW OT multiplier: "), this);
    lbl_vdw_ot_mult->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_vdw_ot_mult->setMinimumWidth(200);
+   lbl_vdw_ot_mult->setMinimumWidth(220);
    lbl_vdw_ot_mult->setMinimumHeight(minHeight1);
    lbl_vdw_ot_mult->setPalette( PALET_LABEL );
    AUTFBACK( lbl_vdw_ot_mult );
@@ -370,6 +370,24 @@ void US_Hydrodyn_Misc::setupGUI()
    AUTFBACK( le_vdw_ot_mult );
    le_vdw_ot_mult->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_vdw_ot_mult, SIGNAL(textChanged(const QString &)), SLOT(update_vdw_ot_mult(const QString &)));
+
+   lbl_vdw_ot_dpct = new QLabel(us_tr(" vdW OT additonal water decrease %: "), this);
+   lbl_vdw_ot_dpct->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_vdw_ot_dpct->setMinimumWidth(220);
+   lbl_vdw_ot_dpct->setMinimumHeight(minHeight1);
+   lbl_vdw_ot_dpct->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_vdw_ot_dpct );
+   lbl_vdw_ot_dpct->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_vdw_ot_dpct = new QLineEdit( this );    le_vdw_ot_dpct->setObjectName( "vdw_ot_dpct Line Edit" );
+   le_vdw_ot_dpct->setMinimumHeight(minHeight1);
+   le_vdw_ot_dpct->setEnabled(true);
+   le_vdw_ot_dpct->setText(QString("%1").arg( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "vdw_ot_dpct" ) ?
+                                              ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "vdw_ot_dpct" ] : "0" ) );
+   le_vdw_ot_dpct->setPalette( PALET_NORMAL );
+   AUTFBACK( le_vdw_ot_dpct );
+   le_vdw_ot_dpct->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_vdw_ot_dpct, SIGNAL(textChanged(const QString &)), SLOT(update_vdw_ot_dpct(const QString &)));
 
    pb_cancel = new QPushButton(us_tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -446,6 +464,10 @@ void US_Hydrodyn_Misc::setupGUI()
 
    background->addWidget(lbl_vdw_ot_mult, j, 0);
    background->addWidget(le_vdw_ot_mult, j, 1);
+   j++;
+
+   background->addWidget(lbl_vdw_ot_dpct, j, 0);
+   background->addWidget(le_vdw_ot_dpct, j, 1);
    j++;
 
    background->addWidget(pb_help, j, 0);
@@ -537,6 +559,12 @@ void US_Hydrodyn_Misc::update_target_volume(const QString &str)
 void US_Hydrodyn_Misc::update_vdw_ot_mult(const QString &str)
 {
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "vdw_ot_mult" ] = str;
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Misc::update_vdw_ot_dpct(const QString &str)
+{
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "vdw_ot_dpct" ] = str;
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
