@@ -155,6 +155,7 @@ class US_XpnDataViewer : public US_Widgets
      QTimer*        timer_data_reload;
      QMessageBox*   msg_data_avail;
      QString        RunID_to_retrieve;
+     QString        ExpID_to_use;
 	 
   private slots:
      void   reset          ( void );

@@ -86,6 +86,40 @@ DbgLv(1) << "XpDa:cnc: qdrvrs|sqtab content error:"
    return status;
 }
 
+// Get RunID from ExpID
+int US_XpnData::get_runid( QString expid)
+{
+  //if ( !dbxpn.isOpen() )
+  //   return 0;
+
+   QVector< int > RunIDs;
+   
+   QString tabname( "ExperimentRun" );
+   QSqlQuery  sqry;
+   QString schname( "AUC_schema" );
+   QString sqtab   = schname + "." + tabname;
+   QString qrytab  = "\"" + schname + "\".\"" + tabname + "\"";
+  
+   QString qrytext = "SELECT * from " + qrytab
+                        + " WHERE \"ExperimentId\"=" + expid + ";";
+   sqry            = dbxpn.exec( qrytext );
+
+   while( sqry.next() )
+     {
+       qDebug() << "ARRAY of RunIDs: " << sqry.value( 0 ).toInt() ;
+       RunIDs.push_back( sqry.value( 0 ).toInt() );
+     }
+
+   int runid = 0;
+   for (int i=0; i<RunIDs.size(); ++i)
+     {
+       if (RunIDs[i] > runid)
+	 runid = RunIDs[i];
+     }
+   qDebug() << "RunID: " << runid ;
+   return runid;
+}
+
 // Scan an XPN database for run information
 int US_XpnData::scan_runs( QStringList& runInfo )
 {
