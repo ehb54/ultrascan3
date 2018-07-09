@@ -655,7 +655,7 @@ void US_Win::help( int index )
             "Copyright 1989 - 2018\n"
             "Borries Demeler and the University of Texas System\n\n"
             "For more information, please visit:\n"
-            "http://www.ultrascan.uthscsa.edu/\n\n"
+            "http://www.ultrascan.aucsolutions.com/\n\n"
             "The author can be reached at:\n"
             "The University of Texas Health Science Center\n"
             "Department of Biochemistry\n"
@@ -663,7 +663,7 @@ void US_Win::help( int index )
             "San Antonio, Texas 78229-3900\n"
             "voice: (210) 767-3332\n"
             "Fax:   (210) 567-6595\n"
-            "E-mail: demeler@biochem.uthscsa.edu" ).arg( US_Version ).arg( REVISION ) );
+            "E-mail: demeler@gmail.com" ).arg( US_Version ).arg( REVISION ) );
 
       statusBar()->showMessage( tr( "Ready" ) );
       break;
@@ -740,7 +740,7 @@ bool US_Win::notice_check()
    // Query notice table in the us3_notice database
    US_Passwd pw;
    US_DB2    db;
-   QString   host  ( "uslims3.uthscsa.edu" );
+   QString   host  ( "uslims3.aucsolutions.com" );
    QString   dbname( "us3_notice" );
    QString   user  ( "us3_notice" );
    QString   passwd( "us3_notice" );

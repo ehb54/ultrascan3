@@ -489,10 +489,9 @@ void US_License::update( void )
                   + "&platform="    + PLATFORM
                   + "&version="     + US_Version
                   + "&licensetype=" + licensetype;
-  //qDebug() << "requesting update";
+//qDebug() << "requesting update";
   // Send request
-//  QString      url      = "http://ultrascan.uthscsa.edu/update-license.php";
-  QString      url      = "http://129.111.140.167/update-license.php";
+  QString url     = "http://ultrascan.aucsolutions.com/update-license.php";
   US_HttpPost* transmit = new US_HttpPost( url, req );
   connect( transmit, SIGNAL( US_Http_post_response( const QString& ) ),
            this,     SLOT  ( update_response      ( const QString& ) ) );
@@ -560,7 +559,7 @@ void US_License::request( void )
 
   // Send request
   //qDebug() << "sending: " << request;
-  QString      url      = "http://ultrascan.uthscsa.edu/request-license.php";
+  QString      url      = "http://ultrascan.aucsolutions.com/request-license.php";
   US_HttpPost* transmit = new US_HttpPost( url, request );
   connect( transmit, SIGNAL( US_Http_post_response( const QString& ) ),
            this,     SLOT  ( request_response     ( const QString& ) ) );
