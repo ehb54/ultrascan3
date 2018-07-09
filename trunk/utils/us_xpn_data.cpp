@@ -100,7 +100,7 @@ int US_XpnData::checkExpStatus( QString runid )
    sqry            = dbxpn.exec( qrytext );
    sqry.next();
 
-   qDEbug() << "INSIDE CheckExpSTATUS: status: " <<  sqry.value( 0 ).toInt();
+   qDebug() << "INSIDE CheckExpSTATUS: status: " <<  sqry.value( 0 ).toInt();
    return sqry.value( 0 ).toInt();
 }
 
