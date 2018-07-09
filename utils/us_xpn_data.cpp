@@ -95,7 +95,7 @@ int US_XpnData::checkExpStatus( QString runid )
    QString sqtab   = schname + "." + tabname;
    QString qrytab  = "\"" + schname + "\".\"" + tabname + "\"";
   
-   QString qrytext = "SELECT RunStatus from " + qrytab
+   QString qrytext = "SELECT \"RunStatus\" from " + qrytab
                         + " WHERE \"RunId\"=" + runid + ";";
    sqry            = dbxpn.exec( qrytext );
    sqry.next();
