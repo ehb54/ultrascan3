@@ -234,6 +234,8 @@ class US_UTIL_EXTERN US_XpnData : public QObject
       int     scan_runs( QStringList& );
 
       int     get_runid( QString );
+
+      int     checkExpStatus( QString );
       
       //! \brief Filter Runs information to exclude zero-data ones
       //! \param runInfo Reference for input/updated run info strings
