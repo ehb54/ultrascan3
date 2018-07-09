@@ -2432,12 +2432,16 @@ DbgLv(1) << "RLd:      build-raw done: tm1 tm2" << tm1 << tm2
 }
 
 
-bool US_XpnDataViewer::CheckExpComplete_auto()
+bool US_XpnDataViewer::CheckExpComplete_auto( QString runid )
 {
   bool status = false;
 
   // Implement Optima's ExperimentRun query for RunStatus field [enum: 0 - NoRunInfo; 2- InProgress; 5- CompleteOK], look in db_defines.h of Dennis's util
   // in utils/us_xpn_data.cpp
+  int exp_status =  xpn_data->checkExpStatus( runid );
+
+  if (exp_status == 5)
+    status = true;
 
   return status;
 }
@@ -2509,17 +2513,20 @@ DbgLv(1) << "RLd:      build-raw done: tm1 tm2" << tm1 << tm2
    changeCellCh();
    in_reload   = false;         // Flag no longer in the midst of reload
 
-   /*** Check Experiement Status: if completed, kill the timer, return, signal to switch panels in US_comproject ***/
-   if ( CheckExpComplete_auto() )
+   /*** Check Experiement Status: if completed, kill the timer, export the data into AUC format, return, signal to switch panels in US_comproject ***/
+   if ( CheckExpComplete_auto( RunID_to_retrieve  ) )
      {
        timer_data_reload->stop();
        disconnect(timer_data_reload, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+
+       // Export AUC data:
+       export_auc();
        
        QString mtitle_complete  = tr( "Complete!" );
        QString message_done     = tr( "Experiement was completed. Optima produced data saved..." );
        QMessageBox::information( this, mtitle_complete, message_done );
        
-       emit experiment_complete_auto( RunID_to_retrieve);  // Updtade later: what should be passed with signal ?? 
+       emit experiment_complete_auto( RunID_to_retrieve );  // Updtade later: what should be passed with signal ?? 
      }
 }
 

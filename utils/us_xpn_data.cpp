@@ -86,6 +86,23 @@ DbgLv(1) << "XpDa:cnc: qdrvrs|sqtab content error:"
    return status;
 }
 
+// Check Experiment status
+int US_XpnData::checkExpStatus( QString runid )
+{
+   QString tabname( "ExperimentRun" );
+   QSqlQuery  sqry;
+   QString schname( "AUC_schema" );
+   QString sqtab   = schname + "." + tabname;
+   QString qrytab  = "\"" + schname + "\".\"" + tabname + "\"";
+  
+   QString qrytext = "SELECT RunStatus from " + qrytab
+                        + " WHERE \"RunId\"=" + runid + ";";
+   sqry            = dbxpn.exec( qrytext );
+   sqry.next();
+
+   return sqry.value( 0 ).toInt();
+}
+
 // Get RunID from ExpID
 int US_XpnData::get_runid( QString expid)
 {
