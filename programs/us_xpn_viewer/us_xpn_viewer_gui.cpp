@@ -937,9 +937,12 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
     {
       if ( dbg_level > 0 )
 	xpn_data->dump_tables();
-      
+
+      // Implement: query ExperiementRun and based on ExpID build array of RunIDs, find the bigger (the latest) and call it RunID_to_retrieve
+      RunID_to_retrieve = QString::number(xpn_data->get_runid( ExpID_to_use));
+            
       xpn_data->scan_runs( runInfo );                          // ALEXEY initial query (for us_comproject needs to be based on ExpId ) 
-      xpn_data->filter_runs( runInfo );                              // ALEXEY Optima data filtering by type [Absorbance, Interference etc.]
+      xpn_data->filter_runs( runInfo );                        // ALEXEY Optima data filtering by type [Absorbance, Interference etc.]
     }
   else
     {
@@ -953,7 +956,7 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
       // 				tr( "Status" ),
       // 				tr( "Run was submitted to the Optima, but not launched yet. \n"
       // 				    "Awaiting for data to emerge... \n" ) );
-      
+      // OR Message on connection to Optima: BUT it should be connected here as experiment has just been submitted...
       status_ok = false;
      }
   else
@@ -978,7 +981,7 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
 //Query for Optima DB periodically, see if data available
 void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_details)
 {
-  RunID_to_retrieve = protocol_details["experimentId"];   // Must be RUnId from ExperimentRun, but this passed from Us_exp for testing for now..
+  ExpID_to_use = protocol_details["experimentId"];   
 
   timer_data_init = new QTimer;
   connect(timer_data_init, SIGNAL(timeout()), this, SLOT( load_xpn_raw_auto( ) ));
@@ -993,11 +996,11 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
   msg_data_avail->setIcon(QMessageBox::Information);
   msg_data_avail->setText(tr( "Run was submitted to the Optima, but not launched yet. \n"
 		              "Awaiting for data to emerge... \n"
-			      "Experient ID to check: %1 \n ").arg(RunID_to_retrieve) );
+			      "Experient ID to check: %1 \n ").arg(ExpID_to_use) );
   msg_data_avail->exec();
 }
 
-void US_XpnDataViewer::retrieve_xpn_raw_auto( QString ExpID )
+void US_XpnDataViewer::retrieve_xpn_raw_auto( QString RunID )
 {
    QString drDesc    = "";
    QString delim;
@@ -1009,7 +1012,7 @@ void US_XpnDataViewer::retrieve_xpn_raw_auto( QString ExpID )
       delim               = QString( rDesc ).left( 1 );
       QString lRunID      = QString( rDesc ).mid( 1 ).section( delim, 0, 0 );
 
-      if ( lRunID == ExpID )                                       // ExpII is passed from US_Experiment
+      if ( lRunID == RunID )                                       // ExpII is passed from US_Experiment
       {
          drDesc = rDesc;
          break;
