@@ -527,7 +527,7 @@ void US_Win::closeEvent( QCloseEvent* e )
 void US_Win::splash( void )
 {
   int y =           menuBar  ()->size().rheight();
-  int h = 532 - y - statusBar()->size().rheight();
+  int h = 632 - y - statusBar()->size().rheight();
   int w = 710;
 
   bigframe = new QLabel( this );
@@ -561,7 +561,7 @@ void US_Win::logo( int width )
   painter.setPen    ( QPen( Qt::white, 3 ) );
 
   QString version = "Version " + US_Version + " ( " REVISION
-  " ) for " OS_TITLE;  // REVISON is #define "Revision: xxx"
+  " ) for " OS_TITLE;  // REVISION is #define "Revision: xxx"
 
   QFont font( "Arial" );
   font.setWeight( QFont::DemiBold );
@@ -572,25 +572,25 @@ void US_Win::logo( int width )
   int sWidth = metrics.boundingRect( version ).width();
   int x      = ( pw - sWidth ) / 2;
 
-  painter.drawLine( 0, 111, pw, 111);
-  painter.drawText( x, 139, version );
-  painter.drawLine( 0, 153, pw, 153);
+  painter.drawLine( 0, 106, pw, 106 );
+  painter.drawText( x, 132, version );
+  painter.drawLine( 0, 144, pw, 144 );
 
-  QString s = "Author: Borries Demeler";
+  QString s = "Authors:";
   sWidth    = metrics.boundingRect( s ).width();
-  painter.drawText( ( pw - sWidth ) / 2, 177, s );
-
-  s      = "The University of Texas";
+  painter.drawText( ( pw - sWidth ) / 2, 166, s );
+  s      = "Borries Demeler";
   sWidth = metrics.boundingRect( s ).width();
-  painter.drawText( ( pw - sWidth ) / 2, 207, s );
-
-  s      = "Health Science Center at San Antonio";
+  painter.drawText( ( pw - sWidth ) / 2, 190, s );
+  s      = "Gary Gorbet";
   sWidth = metrics.boundingRect( s ).width();
-  painter.drawText( ( pw - sWidth ) / 2, 227, s );
-
-  s      = "Department of Biochemistry";
+  painter.drawText( ( pw - sWidth ) / 2, 208, s );
+  s      = "Emre Brookes";
   sWidth = metrics.boundingRect( s ).width();
-  painter.drawText( ( pw - sWidth ) / 2, 247, s );
+  painter.drawText( ( pw - sWidth ) / 2, 226, s );
+  s      = "Alexey Savelyev";
+  sWidth = metrics.boundingRect( s ).width();
+  painter.drawText( ( pw - sWidth ) / 2, 244, s );
   
   smallframe = new QLabel(this);
   smallframe->setPixmap(pixmap);
@@ -657,13 +657,12 @@ void US_Win::help( int index )
             "For more information, please visit:\n"
             "http://www.ultrascan.aucsolutions.com/\n\n"
             "The author can be reached at:\n"
-            "The University of Texas Health Science Center\n"
-            "Department of Biochemistry\n"
-            "7703 Floyd Curl Drive\n"
-            "San Antonio, Texas 78229-3900\n"
-            "voice: (210) 767-3332\n"
-            "Fax:   (210) 567-6595\n"
-            "E-mail: demeler@gmail.com" ).arg( US_Version ).arg( REVISION ) );
+            "The University of Montana\n"
+            "Department of Chemistry and Biochemistry\n"
+            "32 Campus Drive\n"
+            "Missoula, Montana  59812\n"
+            "Phone:  (406) 285-1935\n"
+            "E-mail: borries.demeler@umontana.edu" ).arg( US_Version ).arg( REVISION ) );
 
       statusBar()->showMessage( tr( "Ready" ) );
       break;

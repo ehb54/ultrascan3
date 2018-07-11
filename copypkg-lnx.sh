@@ -21,7 +21,7 @@ else
   echo "Qt Version 5";
   LNCMD="sed -n 1p"
 fi
-SURL="//bcf2.uthscsa.edu/ultrascan3/trunk"
+SURL="//svn.aucsolutions.com/ultrascan3/trunk"
 REV=`svn info svn:${SURL}|grep Revision|awk '{print $2}'`
 RSYNC="rsync -av --exclude=.svn"
 REVL=`svn info ${SRCDIR}|grep Revision|awk '{print $2}'`
