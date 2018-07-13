@@ -62,7 +62,7 @@ void US_Vector::printvector2( QString qs, vector < double > x, vector < double >
 
 void US_Vector::printvector3( QString qs, vector < double > x, vector < double > y, vector < double > z, int digits )
 {
-   cout << QString( "%1: size %2 %3:\n" ).arg( qs ).arg( x.size() ).arg( y.size() );
+   cout << QString( "%1: size %2 %3 %4:\n" ).arg( qs ).arg( x.size() ).arg( y.size() ).arg( z.size() );
    unsigned int max_size = ( unsigned int )( x.size() > y.size() ? x.size() : y.size() );
    max_size = max_size > z.size() ? max_size : z.size();
    for ( unsigned int i = 0; i < max_size; i++ )

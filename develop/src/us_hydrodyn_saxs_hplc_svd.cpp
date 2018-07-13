@@ -603,14 +603,14 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    connect(pb_recon, SIGNAL(clicked()), SLOT(recon()));
    process_widgets.push_back( pb_recon );
 
-   pb_indiv_recon = new QPushButton(us_tr("Individual TVSD recon."), this);
+   pb_indiv_recon = new QPushButton(us_tr("Individual TSVD recon."), this);
    pb_indiv_recon->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_indiv_recon->setMinimumHeight(minHeight3);
    pb_indiv_recon->setPalette( PALET_PUSHB );
    connect(pb_indiv_recon, SIGNAL(clicked()), SLOT(indiv_recon()));
    process_widgets.push_back( pb_indiv_recon );
 
-   pb_inc_recon = new QPushButton(us_tr("Incremental TVSD recon."), this);
+   pb_inc_recon = new QPushButton(us_tr("Incremental TSVD recon."), this);
    pb_inc_recon->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_inc_recon->setMinimumHeight(minHeight3);
    pb_inc_recon->setPalette( PALET_PUSHB );

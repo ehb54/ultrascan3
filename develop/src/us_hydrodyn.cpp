@@ -6191,7 +6191,7 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
    double vdw_ot_mult = gparams.count( "vdw_ot_mult" ) ? gparams[ "vdw_ot_mult" ].toDouble() : 0;
    double vdw_ot_dpct = gparams.count( "vdw_ot_dpct" ) ? gparams[ "vdw_ot_dpct" ].toDouble() : 0;
    double vdw_ot_d = vdw_ot_dpct * 0.01;
-   us_qdebug( QString( "vdw ot mult %1, additional water decrease percent %2" ).arg( vdw_ot_mult ).arg( vdw_ot_dpct ) );
+   // us_qdebug( QString( "vdw ot mult %1, additional water decrease percent %2" ).arg( vdw_ot_mult ).arg( vdw_ot_dpct ) );
    point com;
    com.axis[ 0 ] = 0;
    com.axis[ 1 ] = 0;

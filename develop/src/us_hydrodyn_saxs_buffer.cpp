@@ -3268,7 +3268,7 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
    vector < double >  I;
    vector < double >  e;
 
-   QRegExp rx_ok_line("^(\\s+|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$");
+   QRegExp rx_ok_line("^(\\s+(-|)|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$");
    rx_ok_line.setMinimal( true );
    for ( int i = 1; i < (int) qv.size(); i++ )
    {
