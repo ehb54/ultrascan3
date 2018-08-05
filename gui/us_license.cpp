@@ -396,32 +396,34 @@ void US_License::update_screen( void )
   switch ( status )
   {
     case US_License_t::OK:
-      validMsg = "Valid Registration";
+      validMsg = tr( "Valid Registration" );
       break;
 
     case US_License_t::Expired:
-      validMsg = "Expired Registration";
+      validMsg = tr( "Expired Registration" );
       break;
 
     case US_License_t::Invalid:
     case US_License_t::BadPlatform:
     case US_License_t::BadOS:
-      validMsg = "Invalid Registration";
+      validMsg = tr( "Invalid Registration" );
       break;
 
     case US_License_t::Missing:
-      validMsg = "Missing Registration";
+      validMsg = tr( "Missing Registration" );
       break;
 
     case US_License_t::Pending:
-      validMsg = "Pending Registration";
+      validMsg = tr( "Pending Registration" );
       break;
 
     default:
-      validMsg = "Unknown";
+      validMsg = tr( "Unknown" );
   }
 
-  //lbl_valid->setText( validMsg );
+//lbl_valid->setText( validMsg );
+  validMsg = version + "       [ " + validMsg + " ]";
+  le_registration->setText( validMsg );
 }
 
 void US_License::update( void )
