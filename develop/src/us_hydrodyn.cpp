@@ -7048,7 +7048,6 @@ void US_Hydrodyn::hullrad_finalize() {
       save_util->header();
       save_util->dataString(&this_data);
    }
-
    {
       double num = (double) hullrad_results.num_models;
       if ( num <= 1 ) {
