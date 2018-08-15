@@ -6791,6 +6791,7 @@ void US_Hydrodyn_Saxs_Hplc::ggaussian_enables()
    cb_ggq_plot_chi2    ->setEnabled( true );
    cb_ggq_plot_P       ->setEnabled( true );
    pb_rescale          ->setEnabled( true );
+   pb_pp               ->setEnabled( true );
 }
 
 // --- timeshift ---

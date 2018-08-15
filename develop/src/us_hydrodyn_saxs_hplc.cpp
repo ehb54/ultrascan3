@@ -5935,6 +5935,7 @@ void US_Hydrodyn_Saxs_Hplc::gaussian_enables()
    pb_rescale          ->setEnabled( true );
    pb_view             ->setEnabled( true );
    pb_errors           ->setEnabled( true );
+   pb_pp               ->setEnabled( true );
 }
 
 void US_Hydrodyn_Saxs_Hplc::update_gauss_pos()

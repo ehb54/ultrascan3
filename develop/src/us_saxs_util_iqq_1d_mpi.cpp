@@ -188,7 +188,7 @@ bool US_Saxs_Util::run_1d_mpi( QString controlfile )
       QString qs_files = qslt[ 0 ];
       sizeoflist = qs_files.length();
       char char_files[ sizeoflist + 1 ];
-      strncpy( char_files, qs_files, sizeoflist + 1 );
+      strncpy( char_files, qs_files.toLatin1().data(), sizeoflist + 1 );
 
       // cout << QString("%1: signaling end of barrier\n" ).arg( myrank ) << flush;
       if ( MPI_SUCCESS != MPI_Barrier( MPI_COMM_WORLD ) )
@@ -228,7 +228,7 @@ bool US_Saxs_Util::run_1d_mpi( QString controlfile )
    }
    if ( !read_control( controlfile ) )
    {
-      cout <<  cout << QString( "%1: Error: %2\n" ).arg( myrank ).arg( errormsg ) << flush;
+      cout << QString( "%1: Error: %2\n" ).arg( myrank ).arg( errormsg ) << flush;
       MPI_Abort( MPI_COMM_WORLD, errorno );
       exit( errorno );
    }         

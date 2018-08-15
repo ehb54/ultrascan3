@@ -1,5 +1,9 @@
 include ( ../cmdline.pri )
 
+QMAKE_CC = mpicc
+QMAKE_CXX = mpicxx
+QMAKE_LINK = mpicxx
+
 DEFINES         += USE_MPI
 SOURCES		+= ../src/us_saxs_gp.cpp
 SOURCES		+= ../src/us_saxs_util.cpp
@@ -59,6 +63,16 @@ SOURCES		+= ../src/us_lm.cpp
 SOURCES		+= ../src/us_vector.cpp
 SOURCES		+= ../shd_mpi/shs_use.cpp
 
+SOURCES		+= ../src/us_saxs_util_hydro.cpp
+SOURCES		+= ../src/us_saxs_util_hydro_grid_atob_hydro.cpp
+SOURCES		+= ../src/us_saxs_util_hydro_asab1_hydro.cpp
+SOURCES		+= ../src/us_saxs_util_hydro_supc_hydro.cpp
+SOURCES		+= ../src/us_saxs_util_hydro_pat_hydro.cpp
+SOURCES		+= ../src/us_saxs_util_hydro_zeno_hydro.cpp
+
+SOURCES		+= ../src/us_zeno_cxx.cpp
+SOURCES		+= ../src/us_zeno_cxx_nf.cpp
+
 HEADERS         += ../include/us.h
 HEADERS         += ../include/us_pm.h
 HEADERS         += ../include/us_sh.h
@@ -83,9 +97,9 @@ TARGET = us_saxs_cmds_mpi
 
 unix {
  contains(UNAME,x86_64) {
-    DESTDIR = $$US3SOMOPATH/bin64/us_saxs_cmds_mpi
+    DESTDIR = $$US3SOMOPATH/bin64
  } else {
-    DESTDIR = $$US3SOMOPATH/bin/us_saxs_cmds_mpi
+    DESTDIR = $$US3SOMOPATH/bin
  }
 }
 
