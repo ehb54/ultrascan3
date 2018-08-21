@@ -527,7 +527,7 @@ void US_Win::closeEvent( QCloseEvent* e )
 void US_Win::splash( void )
 {
   int y =           menuBar  ()->size().rheight();
-  int h = 632 - y - statusBar()->size().rheight();
+  int h = 532 - y - statusBar()->size().rheight();
   int w = 710;
 
   bigframe = new QLabel( this );
@@ -582,13 +582,13 @@ void US_Win::logo( int width )
   s      = "Borries Demeler";
   sWidth = metrics.boundingRect( s ).width();
   painter.drawText( ( pw - sWidth ) / 2, 190, s );
-  s      = "Gary Gorbet";
-  sWidth = metrics.boundingRect( s ).width();
-  painter.drawText( ( pw - sWidth ) / 2, 208, s );
   s      = "Emre Brookes";
   sWidth = metrics.boundingRect( s ).width();
-  painter.drawText( ( pw - sWidth ) / 2, 226, s );
+  painter.drawText( ( pw - sWidth ) / 2, 208, s );
   s      = "Alexey Savelyev";
+  sWidth = metrics.boundingRect( s ).width();
+  painter.drawText( ( pw - sWidth ) / 2, 226, s );
+  s      = "Gary Gorbet";
   sWidth = metrics.boundingRect( s ).width();
   painter.drawText( ( pw - sWidth ) / 2, 244, s );
   
