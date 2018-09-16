@@ -423,7 +423,10 @@ DbgLv(1) << "agS-initb:  ii" << ii << "match anaID"<< analyte->analyteID;
 void US_AnalyteMgrSelect::search( QString const& text )
 {
 DbgLv(1) << "agS: search : text" << text;
-   QString sep = ";";
+ 
+   //ALEXEY: modified separator to something random which is unlikely to be encountered in analyte description:
+   // caused problem with GUI listing...
+   QString sep = ";:;:m6rr";
    QStringList sortdesc;
 
    lw_analyte_list->clear();
