@@ -459,18 +459,53 @@ void US_MPI_Analysis::pmasters_worker()
 // Test time for MC iterations left; compare to walltime
 void US_MPI_Analysis::time_mc_iterations()
 {
-   if ( mc_iteration < ( mgroup_count * 4 ) )
-      return;                      // Don't bother until MC iteration pass 4
+   // See if debug text turns on show of mc_iters test
+   bool show_mcit     = false;
+   QStringList dbgtxt = US_Settings::debug_text();
+   for ( int ii = 0; ii < dbgtxt.count(); ii++ )
+   {
+      if ( dbgtxt[ ii ].startsWith( "showMcIterTest" ) )
+      {
+         show_mcit       = true;
+         break;
+DbgLv(0) << "TMI: show_mcit TRUE";
+      }
+   }
+//*DEBUG*
+show_mcit=true;
+//*DEBUG*
+DbgLv(0) << "TMI: show_mcit" << show_mcit;
+
+   // Do preliminary iteration time tests
+//   if ( mc_iteration < ( mgroup_count * 4 ) )
+   if ( mc_iteration < ( mgroup_count * 3 ) )
+   {
+if(show_mcit)
+DbgLv(0) << "TMI: mc_iter < pmgc*3" << mc_iteration << (mgroup_count*3);
+      return;                      // Don't bother until MC iteration pass 3
+   }
 
    if ( is_composite_job )
+   {
+if(show_mcit)
+DbgLv(0) << "TMI: composite_job";
       return;                      // Don't check MC iteration if composite
+   }
 
+   // Now do bulk of test to see if nearing allowed time
    QDateTime currTime  = QDateTime::currentDateTime();
    int mins_so_far     = ( startTime.secsTo( currTime ) + 59 ) / 60;
    int mins_left_allow = max_walltime - mins_so_far;
    int mc_iters_left   = ( mins_left_allow * mc_iteration ) / mins_so_far;
    mc_iters_left       = ( mc_iters_left / mgroup_count ) * mgroup_count;
    int mc_iters_estim  = mc_iteration + mc_iters_left;
+if(show_mcit)
+{
+DbgLv(0) << "TMI: NEAR-ALLOW_TIME test: mins_so_far max_wt mins_left_allow"
+ << mins_so_far << max_walltime << mins_left_allow;
+DbgLv(0) << "TMI: NEAR-ALLOW_TIME test:  mc_iters_left mc_iters_estim mc_iters"
+ << mc_iters_left << mc_iters_estim << mc_iterations;
+}
 
    if ( mc_iters_estim < mc_iterations  &&  mc_iters_left < 4 )
    {  // In danger of exceeding allowed time:   reduce MC iterations

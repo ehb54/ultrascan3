@@ -90,6 +90,8 @@ DbgLv(1) << "xpnentr count" << xpnentr.count();
 else
  DbgLv(1) << "xpnentr ..." << xpnentr;
 
+   clean_etc_dir();  // Make sure */ultrascan/etc is populated
+
    QString encpw;
    QString decpw;
    QString encpw0;
