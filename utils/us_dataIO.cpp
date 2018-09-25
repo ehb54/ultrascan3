@@ -6,6 +6,7 @@
 #include "us_math2.h"
 #include "us_matrix.h"
 #include "us_util.h"
+#include "us_settings.h"
 
 // Return the count of readings points
 int US_DataIO::RawData::pointCount( )
@@ -197,6 +198,16 @@ bool US_DataIO::readLegacyFile( const QString&  file,
    QFile ff( file );
    if ( ! ff.open( QIODevice::ReadOnly | QIODevice::Text ) ) return false;
    QTextStream ts( &ff );
+#if 0
+   double ss_reso      = 100.0;
+   // If debug_text so directs, change set_speed_resolution
+   QStringList dbgtxt = US_Settings::debug_text();
+   for ( int ii = 0; ii < dbgtxt.count(); ii++ )
+   {  // If debug text modifies ss_reso, apply it
+      if ( dbgtxt[ ii ].startsWith( "SetSpeedReso" ) )
+         ss_reso       = QString( dbgtxt[ ii ] ).section( "=", 1, 1 ).toDouble();
+   }
+#endif
 
    // Read the description
    data.description = ts.readLine();
@@ -211,14 +222,15 @@ bool US_DataIO::readLegacyFile( const QString&  file,
    data.cell          = pp[ 1 ].toInt();
    data.temperature   = pp[ 2 ].toDouble();
    data.rpm           = pp[ 3 ].toDouble();
-//data.rpm = qRound( data.rpm / 50.0 ) * 50.0;
    data.seconds       = pp[ 4 ].toDouble();
    data.omega2t       = pp[ 5 ].toDouble();
    data.rpoint        = pp[ 6 ].toDouble();
    data.count         = pp[ 7 ].toInt();
    data.nz_stddev     = false;
+#if 0
    // Round speed to nearest multiple of 100
-   data.rpm           = qRound( data.rpm / 100.0 ) * 100.0;
+   data.rpm           = qRound( data.rpm / ss_reso ) * ss_reso;
+#endif
 
 
    // Read radius, data, and standard deviation
@@ -507,6 +519,16 @@ int US_DataIO::readRawData( const QString& file, RawData& data )
 
    int      err = OK;
    quint32  crc = 0xffffffffUL;
+#if 0
+   double ss_reso      = 100.0;
+   // If debug_text so directs, change set_speed_resolution
+   QStringList dbgtxt = US_Settings::debug_text();
+   for ( int ii = 0; ii < dbgtxt.count(); ii++ )
+   {  // If debug text modifies ss_reso, apply it
+      if ( dbgtxt[ ii ].startsWith( "SetSpeedReso" ) )
+         ss_reso       = QString( dbgtxt[ ii ] ).section( "=", 1, 1 ).toDouble();
+   }
+#endif
 
    try
    {
@@ -630,9 +652,11 @@ int US_DataIO::readRawData( const QString& file, RawData& data )
          read( ds, u1.c, 4, crc );
          u2.I = qFromLittleEndian( u1.I );
          sc.rpm = u2.f;
+#if 0
 //sc.rpm = qRound( sc.rpm / 50.0 ) * 50.0;
-         // Round speed to nearest multiple of 100
-         sc.rpm = qRound( sc.rpm / 100.0 ) * 100.0;
+         // Round speed to nearest multiple of 100 (or other resolution)
+         sc.rpm = qRound( sc.rpm / ss_reso ) * ss_reso;
+#endif
 
          // Seconds
          read( ds, u1.c, 4, crc );
