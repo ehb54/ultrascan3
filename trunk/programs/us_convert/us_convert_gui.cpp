@@ -1846,6 +1846,15 @@ DbgLv(1) << "CGui: gExpInf: IN";
    strncpy( optSysPtr, allData[ 0 ].type, 2 );
    optSysPtr[ 2 ] = '\0';
 
+   double ss_reso      = 100.0;
+   // If debug_text so directs, change set_speed_resolution
+   QStringList dbgtxt = US_Settings::debug_text();
+   for ( int ii = 0; ii < dbgtxt.count(); ii++ )
+   {  // If debug text modifies ss_reso, apply it
+      if ( dbgtxt[ ii ].startsWith( "SetSpeedReso" ) )
+         ss_reso       = QString( dbgtxt[ ii ] ).section( "=", 1, 1 ).toDouble();
+   }
+
    // A list of unique rpms
    ExpData.rpms.clear();
    for ( int ii = 0; ii < allData.size(); ii++ )
@@ -1853,8 +1862,10 @@ DbgLv(1) << "CGui: gExpInf: IN";
       US_DataIO::RawData* raw = &allData[ ii ];
       for ( int jj = 0; jj < raw->scanData.size(); jj++ )
       {
-         if ( ! ExpData.rpms.contains( raw->scanData[ jj ].rpm ) )
-            ExpData.rpms << raw->scanData[ jj ].rpm;
+         double rpm     = raw->scanData[ jj ].rpm;
+         rpm            = qRound( rpm / ss_reso ) * ss_reso;
+         if ( ! ExpData.rpms.contains( rpm ) )
+            ExpData.rpms << rpm;
       }
    }
 

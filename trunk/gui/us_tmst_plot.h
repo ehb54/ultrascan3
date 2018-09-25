@@ -53,6 +53,7 @@ class US_GUI_EXTERN US_TmstPlot : public US_WidgetsDialog
       int           ntimes;                 //!< Number of time values
       int           nscans;                 //!< Number of non-0 scan numbers
       int           nplpts;                 //!< Number of plot points
+      int           ssreso;                 //!< Set speed resolution
 
       bool          x_scans;                //!< Flag: X axis is scan numbers?
       bool          s_start;                //!< Flag: X axis starts at scan 1?

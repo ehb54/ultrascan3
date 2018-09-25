@@ -5640,15 +5640,14 @@ QString US_Edit::table_row( const QString s1, const QString s2,
             + s3 + "</td><td>" + s4 + "</td><td>" + s5 + "</td></tr>\n" );
 }
 
-// Table row HTML with 7 columns
+// Table row HTML with 6 columns
 QString US_Edit::table_row( const QString s1, const QString s2, 
                             const QString s3, const QString s4, 
-                            const QString s5, const QString s6, 
-                            const QString s7 )
+                            const QString s5, const QString s6 )
 {
    return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>"
             + s3 + "</td><td>" + s4 + "</td><td>" + s5 + "</td><td>"
-            + s6 + "</td><td>" + s7 + "</td></tr>\n" );
+            + s6 + "</td></tr>\n" );
 }
 
 // Compose HTML header string
@@ -5695,30 +5694,31 @@ QString US_Edit::run_details( void )
 {
   US_DataIO::RawData* dd = outData[ index_data() ];
 
+   int scsize = dd->scanData.size();
+   // Temperature and raw speed data
+   double sumte   =  0.0;
+   double sumrs   =  0.0;
+   double maxTemp = -1.0e99;
+   double minTemp =  1.0e99;
+
+   for ( int ii = 0; ii < scsize; ii++ )
+   {
+      double tt = dd->scanData[ ii ].temperature;
+      sumte    += tt;
+      maxTemp   = qMax( maxTemp, tt );
+      minTemp   = qMin( minTemp, tt );
+      sumrs    += dd->scanData[ ii ].rpm;
+   }
+
+   QString avgrspd = QString::number( sumrs / scsize, 'f', 1 );
+   QString avgtemp = QString::number( sumte / scsize, 'f', 1 );
    QString ss = "\n" + indent( 4 )
         + tr( "<h3>Detailed Run Information:</h3>\n" )
         + indent( 4 ) + "<table>\n"
         + table_row( tr( "Cell Description:" ), dd->description )
         + table_row( tr( "Data Directory:"   ), workingDir )
-        + table_row( tr( "Rotor Speed:"      ),  
-            QString::number( (int)dd->scanData[ 0 ].rpm ) + " rpm" );
-
-   // Temperature data
-   double sum     =  0.0;
-   double maxTemp = -1.0e99;
-   double minTemp =  1.0e99;
-
-   for ( int ii = 0; ii < dd->scanData.size(); ii++ )
-   {
-      double tt = dd->scanData[ ii ].temperature;
-      sum      += tt;
-      maxTemp   = qMax( maxTemp, tt );
-      minTemp   = qMin( minTemp, tt );
-   }
-
-   QString average = QString::number( sum / dd->scanData.size(), 'f', 1 );
-
-   ss += table_row( tr( "Average Temperature:" ), average + " " + MLDEGC );
+        + table_row( tr( "Average Rotor Speed:" ), avgrspd + " rpm" )
+        + table_row( tr( "Average Temperature:" ), avgtemp + " " + MLDEGC );
 
    if ( maxTemp - minTemp <= US_Settings::tempTolerance() )
       ss += table_row( tr( "Temperature Variation:" ),
@@ -5795,7 +5795,7 @@ QString US_Edit::scan_info( void )
          
    ss += table_row( tr( "Scan" ), tr( "Corrected Time" ), 
                    tr( "Plateau Concentration" ),
-                   tr( "Seconds" ), tr( "Omega^2T" ) );
+                   tr( "Seconds" ), tr( "Omega^2T" ), tr( "Raw Speed" ) );
 
    for ( int ii = 0; ii < dd->scanData.size(); ii++ )
    {
@@ -5804,9 +5804,11 @@ QString US_Edit::scan_info( void )
       QString s3;
       QString s4;
       QString s5;
+      QString s6;
 
       double time  = dd->scanData[ ii ].seconds;
       double omg2t = dd->scanData[ ii ].omega2t;
+      double speed = dd->scanData[ ii ].rpm;
       int    ctime = (int)( dd->scanData[ ii ].seconds - time_correction ); 
       int    platx = US_DataIO::index( dd->xvalues, plateau );
       double od    = dd->scanData[ ii ].rvalues[ platx ];
@@ -5816,8 +5818,9 @@ QString US_Edit::scan_info( void )
       s3 = s3.sprintf( "%.6f OD",         od ); 
       s4 = s4.sprintf( "%5d",             (int)time );
       s5 = s5.sprintf( "%.5e",            omg2t );
+      s6 = s6.sprintf( "%.1f",            speed );
 
-      ss += table_row( s1, s2, s3, s4, s5 );
+      ss += table_row( s1, s2, s3, s4, s5, s6 );
    }
 
    ss += indent( 4 ) + "</table>\n";

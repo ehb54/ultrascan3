@@ -439,7 +439,8 @@ DbgLv(1) << "TP: det: lostep histep nstep" << lostep << histep << nstep
          stescans[ step_x ] = scan_v;
       }
    }
-   dtext += tr( "\nStep Scans and Times in minutes:\n" );
+   dtext += tr( "\nSet speed resolution: %1 rpm\n" ).arg( ssreso );
+   dtext += tr( "Step Scans and Times in minutes:\n" );
    dtext += tr( "  Step  Speed  Scan range      Time range\n" );
    for ( int js = 0; js < nstep; js++ )
    {
@@ -483,13 +484,14 @@ DbgLv(1) << "TP:rdda: *ERROR* openread :" << tsobj.last_error_message();
       return;
    }
 
-   tsobj.origin( &defvers, &imptype );    // Def version and import type
-   tsobj.field_keys( &fkeys, &ffmts );    // Field keys and formats
-   nfkeys         = fkeys.count();        // Field keys count
-   ntimes         = tsobj.time_count();   // Time values count
-   double tscl    = 1.0 / 60.0;           // Time scale, seconds-to-minutes
+   tsobj.origin( &defvers, &imptype );     // Def version and import type
+   tsobj.field_keys( &fkeys, &ffmts );     // Field keys and formats
+   nfkeys         = fkeys.count();         // Field keys count
+   ntimes         = tsobj.time_count();    // Time values count
+   ssreso         = tsobj.ss_resolution(); // Set speed resolution
+   double tscl    = 1.0 / 60.0;            // Time scale, seconds-to-minutes
 DbgLv(1) << "TP:rdda: ntimes nfkeys" << ntimes << nfkeys;
-   ndkeys         = nfkeys + 1;           // Data keys count (interval added)
+   ndkeys         = nfkeys + 1;            // Data keys count (interval added)
    dvals.fill( QVector< double >(), ndkeys );  // Init data vector of vectors
 
    for ( int jt = 0; jt < ntimes; jt++ )
@@ -623,6 +625,7 @@ DbgLv(1) << "TP:rdda:    key" << dkey << "   min,max,avg"
    infotxt << tr( "Scan Count:  %1" ).arg( nscans );
    infotxt << tr( "Field Key Count:  %1" ).arg( nfkeys );
    infotxt << tr( "Data Key Count:  %1" ).arg( ndkeys );
+   infotxt << tr( "Set Speed Resolution:  %1" ).arg( ssreso );
 
    for ( int jk = 0; jk < ndkeys; jk++ )
    {

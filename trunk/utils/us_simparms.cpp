@@ -480,18 +480,27 @@ void US_SimulationParameters::computeSpeedSteps(
    double  step_secs   = 0.0;
    int     lscx        = 0;
    double  rpm_sum     = rpm;
+   int ss_reso         = 100;
+   // If debug_text so directs, change set_speed_resolution
+   QStringList dbgtxt = US_Settings::debug_text();
+   for ( int ii = 0; ii < dbgtxt.count(); ii++ )
+   {  // If debug text modifies ss_reso, apply it
+      if ( dbgtxt[ ii ].startsWith( "SetSpeedReso" ) )
+         ss_reso       = QString( dbgtxt[ ii ] ).section( "=", 1, 1 ).toInt();
+DbgLv(1) << "SP:cSS: ii ss_reso" << ii << ss_reso << dbgtxt[ii];
+   }
 DbgLv(1) << "SP:cSS: scan" << 1 << "rpm time omega2t"
- << rpm << qRound(time1) << (*scans)[ 0 ].omega2t;
+ << rpm << qRound(time1) << (*scans)[ 0 ].omega2t << "ss_reso" << ss_reso;
 
    for ( int ii = 1; ii < scanCount; ii++ )
    {  // Loop to build speed steps where RPM changes
       rpm              = rpmnext;
       rpmnext          = (*scans)[ ii ].rpm;
-      // Get set_speeds, the speeds rounded to nearest 100
-      int ss_next      = qRound( rpmnext * 0.01 ) * 100;
-      int ss_curr      = qRound( rpm     * 0.01 ) * 100;
-DbgLv(1) << "SP:cSS: scan" << (ii+1) << "rpm time omega2t"
- << rpmnext << qRound((*scans)[ii].seconds) << (*scans)[ii].omega2t;
+      // Get set_speeds, the speeds rounded to nearest 100 (or other resolution)
+      int ss_next      = (int)qRound( rpmnext / (double)ss_reso ) * ss_reso;
+      int ss_curr      = (int)qRound( rpm     / (double)ss_reso ) * ss_reso;
+DbgLv(1) << "SP:cSS: scan" << (ii+1) << "rpm srpm time omega2t"
+ << rpmnext << ss_next << qRound((*scans)[ii].seconds) << (*scans)[ii].omega2t;
 
       if ( ss_curr != ss_next )
       {  // RPM has changed, so need to create speed step for previous scans
@@ -1167,6 +1176,14 @@ DbgLv(1) << "Sim parms:ssProf: have_keys" << have_keys;
    if ( ! have_keys )
       return -1;                           // Do not have needed keys
 
+   int ss_reso      = 100;
+   // If debug_text so directs, change set_speed_resolution
+   QStringList dbgtxt = US_Settings::debug_text();
+   for ( int ii = 0; ii < dbgtxt.count(); ii++ )
+   {  // If debug text modifies ss_reso, apply it
+      if ( dbgtxt[ ii ].startsWith( "SetSpeedReso" ) )
+         ss_reso       = QString( dbgtxt[ ii ] ).section( "=", 1, 1 ).toInt();
+   }
    int nrec         = tsobj->time_count(); // Total time record count
    QList< int >  cspeeds;                  // Constant speeds list
 
@@ -1285,7 +1302,7 @@ if (tm_c<tm_cep || (tsx+5)>nrec || in_accel)
 
       if ( in_accel )
       {  // In acceleration, looking for its end
-         ss_c             = (int)qRound( rs_c * 0.01 ) * 100;
+         ss_c             = (int)qRound( rs_c / (double)ss_reso ) * ss_reso;
          if ( ss_c == ss_p  &&  cspeeds.contains( ss_c ) )
          {  // Found a constant speed:  out of acceleration
 DbgLv(1) << "Sim parms:ssProf: accel-end ss_p ss_c" << ss_p << ss_c
@@ -1326,7 +1343,7 @@ DbgLv(1) << "Sim parms:ssProf:  f_scan(p)" << tm_p;
 
       else
       {  // In constant speed, looking for its end
-         ss_c             = (int)qRound( rs_c * 0.01 ) * 100;
+         ss_c             = (int)qRound( rs_c / (double)ss_reso ) * ss_reso;
          if ( ss_c != ss_p  &&  !cspeeds.contains( ss_c ) )
          {  // Set speeds unequal:  back into acceleration
 DbgLv(1) << "Sim parms:ssProf: const-end ss_p ss_c" << ss_p << ss_c
@@ -1422,6 +1439,14 @@ int US_SimulationParameters::speedstepsFromSSprof()
    int kscan         = ( nstep > 0 ) ? speed_step[ 0 ].scans : 50;
    nstep             = nspstep;
    speed_step.resize( nstep );
+   int ss_reso       = 100;
+   // If debug_text so directs, change set_speed_resolution
+   QStringList dbgtxt = US_Settings::debug_text();
+   for ( int ii = 0; ii < dbgtxt.count(); ii++ )
+   {  // If debug text modifies ss_reso, apply it
+      if ( dbgtxt[ ii ].startsWith( "SetSpeedReso" ) )
+         ss_reso        = QString( dbgtxt[ ii ] ).section( "=", 1, 1 ).toInt();
+   }
 
    // Create the new full speed step vector by copy from sim_speed_prof
    for ( int ss = 0; ss < nspstep; ss++ )
@@ -1483,7 +1508,7 @@ DbgLv(1) << "SP: ssFssp:  ssp:" << ipp->acceleration
       opp->scans             = kscan;
       opp->rotorspeed        = rspeed;
       opp->acceleration      = accel;
-      opp->set_speed         = (int)qRound( (double)rspeed * 0.01 ) * 100;
+      opp->set_speed         = (int)qRound( (double)rspeed / (double)ss_reso ) * ss_reso;
       opp->acceleration_flag = true;
 DbgLv(1) << "SP: ssFssp:   tf tl wf wl" << time_first << time_last << w2t_first << w2t_last;
 DbgLv(1) << "SP: ssFssp:   ss:" << opp->duration_minutes << opp->delay_minutes

@@ -8,7 +8,7 @@
 #include "us_db2.h"
 
 #define _TMST_MAGI_ "USTS"
-#define _TMST_VERS_ "2.0"
+#define _TMST_VERS_ "2.1"
 #define _TMST_INOVAL_ ((1<<15)-1)
 #define _TMST_FNOVAL_ ((pow(2.0,19.0)-1.0)/4.0)
 
@@ -97,6 +97,10 @@ class US_UTIL_EXTERN US_TimeState : public QObject
       //! \brief Get the count of time data records.
       //! \return         Number of data records present in the data.
       int time_count( );
+
+      //! \brief Get the set_speed resolution.
+      //! \return         Number of data records present in the data.
+      int ss_resolution( );
 
       //! \brief Get the nature and parameters of the time range.
       //! \param constti  Pointer for return of constant-increment flag.
@@ -231,6 +235,7 @@ class US_UTIL_EXTERN US_TimeState : public QObject
       int          timex;           //!< Current time index.
       int          fhdr_size;       //!< File header size in bytes.
       int          rec_size;        //!< Data record size in bytes.
+      int          ss_reso;         //!< SetSpeed Resolution (default 100).
 
       double       time_inc;        //!< Time increment between records.
       double       time_first;      //!< Time at first data record.

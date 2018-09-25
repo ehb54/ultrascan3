@@ -321,8 +321,7 @@ class US_Edit : public US_Widgets
                                   const QString );
       QString      table_row    ( const QString, const QString,
                                   const QString, const QString,
-                                  const QString, const QString,
-                                  const QString );
+                                  const QString, const QString );
 
       void create_report     ( QString& );
       void view_report       ( void );

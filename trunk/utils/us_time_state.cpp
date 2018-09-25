@@ -30,6 +30,7 @@ US_TimeState::US_TimeState() : QObject()
    fhdr_size   = 0;
    rec_size    = 0;
    file_size   = (qint64)0;
+   ss_reso     = 100;
    dbg_level   = US_Settings::us_debug();
    cdata       = (char*)cwork;
 
@@ -57,6 +58,14 @@ int US_TimeState::open_write_data( QString fpath,
    time_inc    = timeinc;
    time_first  = ftime;
    const_ti    = ( timeinc > 0.0 );
+
+   // Modify SetSpeed resolution if appropo debug_text present
+   QStringList dbgtxt = US_Settings::debug_text();
+   for ( int ii = 0; ii < dbgtxt.count(); ii++ )
+   {  // If debug text modifies ss_reso, apply it
+      if ( dbgtxt[ ii ].startsWith( "SetSpeedResolution=" ) )
+         ss_reso     = QString( dbgtxt[ ii ] ).section( "=", 1, 1 ).toInt();
+   }
 
    fileo       = new QFile( filepath );
 
@@ -388,6 +397,7 @@ int US_TimeState::write_defs( double timeinc, QString imptype )
    xml.writeAttribute   ( "constant_incr",  ( const_ti ? "1" : "0" )      );
    xml.writeAttribute   ( "time_increment", QString::number( time_inc )   );
    xml.writeAttribute   ( "first_time",     QString::number( time_first ) );
+   xml.writeAttribute   ( "ss_reso",        QString::number( ss_reso )    );
 
    for ( int jj = 0; jj < nvalues; jj++ )
    {  // Key,Format for each value field in the records
@@ -471,6 +481,7 @@ int US_TimeState::open_read_data( QString fpath, const bool pfetch )
    ntimes      = 0;                     // Initialize counts and size
    nvalues     = 0;
    rec_size    = 0;
+   ss_reso     = 100;
 
    strncpy( cdata,   _TMST_MAGI_, 4 );  // "USTS"
    strncpy( cdata+4, _TMST_VERS_, 3 );  // "2.0"
@@ -527,6 +538,9 @@ int US_TimeState::open_read_data( QString fpath, const bool pfetch )
 
             attv       = attr.value( "first_time"     ).toString();
             time_first = attv.isEmpty() ? time_first : attv.toDouble();
+
+            attv       = attr.value( "ss_reso"        ).toString();
+            ss_reso    = attv.isEmpty() ? ss_reso    : attv.toInt();
          }
 
          else if ( xname == "value" )
@@ -557,6 +571,12 @@ int US_TimeState::open_read_data( QString fpath, const bool pfetch )
 int US_TimeState::time_count()
 {
    return ntimes;
+}
+
+// Get the set-speed resolution
+int US_TimeState::ss_resolution()
+{
+   return ss_reso;
 }
 
 // Get the character and parameters of the time range
