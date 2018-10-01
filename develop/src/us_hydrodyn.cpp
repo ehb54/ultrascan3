@@ -7165,7 +7165,7 @@ void US_Hydrodyn::create_fasta_vbar_mw() {
          it != residue_short_names.end();
          ++it ) {
 
-      if ( it->second != "WAT" &&
+      if ( it->first != "WAT" &&
            res_vbar.count( it->first ) &&
            res_mw.count( it->first ) 
            ) {
