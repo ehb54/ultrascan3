@@ -80,13 +80,6 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
 
       bool        started_in_expert_mode;
 
-      QPushButton   *pb_fasta_file;
-      QLabel        *lbl_fasta_value;
-      QLineEdit     *le_fasta_value;
-
-   private slots:
-      void           fasta_file();
-      
       void setupGUI();
 
       void sas_options_saxs();
