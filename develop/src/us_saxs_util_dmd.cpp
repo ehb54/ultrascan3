@@ -937,7 +937,12 @@ bool US_Saxs_Util::dmd_run( QString run_description )
                   delete fo;
                   output_dmd_pdbs << pdb_out_file;
                   output_files << pdb_out_file;
-                  pdb_out_file = base_pdb + "_" + run_description + QString( "_m-%1" ).arg( models ) + ".pdb";
+                  QString omodel = QString( "%1" ).arg( models );
+                  while ( omodel.length() < 5 )
+                  {
+                     omodel = "0" + omodel;
+                  } 
+                  pdb_out_file = base_pdb + "_" + run_description + QString( "_m-%1" ).arg( omodel ) + ".pdb";
                   fo = new QFile( pdb_out_file );
                   if ( !fo->open( QIODevice::WriteOnly ) )
                   {

@@ -37,7 +37,7 @@ US_Hydrodyn_Cluster_Submit::US_Hydrodyn_Cluster_Submit(
    system_proc_active = false;
    disable_updates = false;
 
-   ftp_file = ( QFile * ) 0;
+   http_access_manager = new QNetworkAccessManager( this );
 
    pkg_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "cluster";
    QDir::setCurrent( pkg_dir );
@@ -45,14 +45,14 @@ US_Hydrodyn_Cluster_Submit::US_Hydrodyn_Cluster_Submit(
    cluster_id      = ((US_Hydrodyn_Cluster *) cluster_window )->cluster_config[ "userid" ];
    cluster_pw      = ((US_Hydrodyn_Cluster *) cluster_window )->cluster_config[ "userpw" ];
 
-   submit_url      = ((US_Hydrodyn_Cluster *) cluster_window )->cluster_config[ "server" ];
-   submit_url_host = submit_url;
-   submit_url_port = submit_url;
+   manage_url      = ((US_Hydrodyn_Cluster *) cluster_window )->cluster_config[ "manage" ];
+   manage_url_host = manage_url;
+   manage_url_port = manage_url;
 
-   submit_url_host.replace( QRegExp( ":.*$" ), "" );
-   submit_url_port.replace( QRegExp( "^.*:" ), "" );
-   cout << submit_url_host << endl;
-   cout << submit_url_port << endl;
+   manage_url_host.replace( QRegExp( ":.*$" ), "" );
+   manage_url_port.replace( QRegExp( "^.*:" ), "" );
+   cout << manage_url_host << endl;
+   cout << manage_url_port << endl;
 
    // stage_url       = ((US_Hydrodyn_Cluster *) cluster_window )->stage_url;
    // stage_path      = stage_url;
@@ -66,7 +66,7 @@ US_Hydrodyn_Cluster_Submit::US_Hydrodyn_Cluster_Submit(
         cluster_pw.isEmpty() )
    {
       QMessageBox::information( this, 
-                                us_tr("US-SOMO: Cluster Jobs"),
+                                us_tr("US-SOMO: Cluster Submit"),
                                 us_tr("Cluster credentials must be set in Cluster Config before continuing"),
                                 0 );
       return;
@@ -75,7 +75,7 @@ US_Hydrodyn_Cluster_Submit::US_Hydrodyn_Cluster_Submit(
    if ( !update_files( false ) )
    {
       QMessageBox::information( this, 
-                                us_tr("US-SOMO: Cluster Jobs"),
+                                us_tr("US-SOMO: Cluster Submit"),
                                 us_tr("No unsubmitted jobs found"),
                                 0 );
    }
@@ -273,14 +273,7 @@ void US_Hydrodyn_Cluster_Submit::setupGUI()
    progress->setPalette( PALET_NORMAL );
    AUTFBACK( progress );
    progress->reset();
-
-#if QT_VERSION < 0x050000
-   connect( &ftp, SIGNAL( dataTransferProgress ( int, int  ) ), progress, SLOT( setValue        ( int, int  ) ) );
-   connect( &ftp, SIGNAL( stateChanged         ( int       ) ), this    , SLOT( ftp_stateChanged   ( int       ) ) );
-   connect( &ftp, SIGNAL( commandStarted       ( int       ) ), this    , SLOT( ftp_commandStarted ( int       ) ) );
-   connect( &ftp, SIGNAL( commandFinished      ( int, bool ) ), this    , SLOT( ftp_commandFinished( int, bool ) ) );
-   connect( &ftp, SIGNAL( done                 ( bool      ) ), this    , SLOT( ftp_done           ( bool      ) ) );
-#endif
+   progress->setRange( 0, 100 );
 
    editor = new QTextEdit(this);
    editor->setPalette( PALET_NORMAL );
@@ -428,31 +421,25 @@ void US_Hydrodyn_Cluster_Submit::systems()
             if ( selected_system.count( "stage" ) &&
                  selected_system.count( "type" ) &&
                  selected_system.count( "corespernode" ) &&
-                 selected_system.count( "ftp" ) &&
                  selected_system.count( "maxcores" ) &&
                  selected_system.count( "queue" ) &&
                  selected_system.count( "runtime" ) )
             {
                stage_url       = selected_system[ "stage" ];
-               stage_path      = stage_url;
-               stage_url_path  = stage_url;
+               // stage_path      = stage_url;
+               // stage_url_path  = stage_url;
                stage_url       .replace( QRegExp( ":.*$" ), "" );
-               stage_path      .replace( QRegExp( "^.*:" ), "" );
-               stage_url_path  += QString( "%1%2%3" ).arg( QDir::separator() ).arg( cluster_id ).arg( QDir::separator() );
-               ftp_url         = selected_system[ "ftp" ];
-               ftp_url_host    = ftp_url;
-               ftp_url_port    = ftp_url;
-               ftp_url_host    .replace( QRegExp( ":.*$" ), "" );
-               ftp_url_port    .replace( QRegExp( "^.*:" ), "" );
+               // stage_path      .replace( QRegExp( "^.*:" ), "" );
+               // stage_url_path  += QString( "%1%2%3" ).arg( QDir::separator() ).arg( cluster_id ).arg( QDir::separator() );
             } else {
                QMessageBox::warning( this, 
-                                     us_tr( "US-SOMO: Cluster config" ), 
+                                     us_tr( "US-SOMO: Cluster Submit" ), 
                                      QString( us_tr( "The system %1 does not seem to have sufficient configuration information defined" ) ).arg( lb_systems->item( i )->text() ) );
                lb_systems->clearSelection();
             } 
          } else {
             QMessageBox::warning( this, 
-                                  us_tr( "US-SOMO: Cluster config" ), 
+                                  us_tr( "US-SOMO: Cluster Submit" ), 
                                   QString( us_tr( "The system %1 does not seem to have any information" ) ).arg( lb_systems->item( i )->text() ) );
             lb_systems->clearSelection();
          }            
@@ -478,9 +465,7 @@ void US_Hydrodyn_Cluster_Submit::closeEvent(QCloseEvent *e)
 {
    if ( comm_active )
    {
-#if QT_VERSION < 0x050000
-      submit_http.abort();
-#endif
+      http_reply->abort();
    }
    if ( system_proc_active )
    {
@@ -578,13 +563,13 @@ void US_Hydrodyn_Cluster_Submit::select_all()
    update_enables();
 }
 
-bool US_Hydrodyn_Cluster_Submit::submit_xml( QString file, QString &xml )
+bool US_Hydrodyn_Cluster_Submit::submit_url_body( QString file, QString &url, QString &body )
 {
    errormsg = "";
-   cout << "submit_xml\n";
+   cout << "submit_url_body\n";
    if ( !QFile::exists( file ) )
    {
-      errormsg = QString( us_tr( "submit_xml: File %1 does not exist" ) ).arg( file );
+      errormsg = QString( us_tr( "submit_url_body: File %1 does not exist" ) ).arg( file );
       return false;
    }
 
@@ -596,7 +581,7 @@ bool US_Hydrodyn_Cluster_Submit::submit_xml( QString file, QString &xml )
       int result = ust.list( file, tar_list, true );
       if ( result != TAR_OK )
       {
-         errormsg = QString( us_tr( "submit_xml: Listing tar archive %1 failed %2" ) )
+         errormsg = QString( us_tr( "submit_url_body: Listing tar archive %1 failed %2" ) )
             .arg( file )
             .arg( ust.explain( result ) );
          return false;
@@ -605,21 +590,21 @@ bool US_Hydrodyn_Cluster_Submit::submit_xml( QString file, QString &xml )
 
    if ( !selected_system[ "corespernode" ].toUInt() )
    {
-      errormsg = QString( us_tr( "submit_xml: The selected system %1 does not have a positive cores per node defined" ) )
+      errormsg = QString( us_tr( "submit_url_body: The selected system %1 does not have a positive cores per node defined" ) )
          .arg( selected_system_name );
       return false;
    }
 
    if ( !selected_system[ "maxcores" ].toUInt() )
    {
-      errormsg = QString( us_tr( "submit_xml: The selected system %1 does not have a positive max cores defined" ) )
+      errormsg = QString( us_tr( "submit_url_body: The selected system %1 does not have a positive max cores defined" ) )
          .arg( selected_system_name );
       return false;
    }
 
    if ( !selected_system[ "runtime" ].toUInt() )
    {
-      errormsg = QString( us_tr( "submit_xml: The selected system %1 does not have a positive run time defined" ) )
+      errormsg = QString( us_tr( "submit_url_body: The selected system %1 does not have a positive run time defined" ) )
          .arg( selected_system_name );
       return false;
    }
@@ -652,12 +637,16 @@ bool US_Hydrodyn_Cluster_Submit::submit_xml( QString file, QString &xml )
       host_count      = processor_count / selected_system[ "corespernode" ].toUInt();
    }
 
+   if ( processor_count == 0 ) {
+      processor_count = 1;
+   }
+
    QString target_dir = QString( "%1" ).arg( next_to_process->text( 0 ) ).replace( QRegExp( "\\.(tar|tgz)$" ), "" );
 
-   xml = QString( "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                  "<Message>"
-                  "<Header>" );
-   xml += QString( "<userdn>%1</userdn>" ).arg( cluster_id );
+   // url = QString( "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+   //                "<Message>"
+   //                "<Header>" );
+   // url += QString( "<userdn>%1</userdn>" ).arg( cluster_id );
 
 
    QString job_type = "iq";
@@ -674,44 +663,77 @@ bool US_Hydrodyn_Cluster_Submit::submit_xml( QString file, QString &xml )
       job_type = "1d";
    }
 
-   xml += QString( 
-                  "<experimentid>%1</experimentid>"
-                  "<hostname>%2</hostname>"
-                  "<processorcount>%3</processorcount>"
-                  "%4"
-                  "<walltime>%5</walltime>"
-                  "<userdn>%6</userdn>"
-                  "%7"
-                  "</Header>"
-                  "<Body>"
-                  "<Method>run</Method>"
-                  "<input>"
-                  "<parameters>"
-                  "<name>param</name>"
-                  "<value>%8</value>"
-                  "</parameters>"
-                  "<parameters>"
-                  "<name>inputfile</name>"
-                  "<value>%9</value>"
-                  "</parameters>"
-                  "</input>"
-                  "</Body>"
-                  "</Message>"
-                  "\n" )
+   // url += QString( 
+   //                "<experimentid>%1</experimentid>"
+   //                "<hostname>%2</hostname>"
+   //                "<processorcount>%3</processorcount>"
+   //                "%4"
+   //                "<walltime>%5</walltime>"
+   //                "<userdn>%6</userdn>"
+   //                "%7"
+   //                "</Header>"
+   //                "<Body>"
+   //                "<Method>run</Method>"
+   //                "<input>"
+   //                "<parameters>"
+   //                "<name>param</name>"
+   //                "<value>%8</value>"
+   //                "</parameters>"
+   //                "<parameters>"
+   //                "<name>inputfile</name>"
+   //                "<value>%9</value>"
+   //                "</parameters>"
+   //                "</input>"
+   //                "</Body>"
+   //                "</Message>"
+   //                "\n" )
 
-      .arg( QString( "%1-%2" ).arg( cluster_id ).arg( file ) )
-      .arg( stage_url )
-      .arg( processor_count )
-      .arg( selected_system[ "queue" ].isEmpty() ? "" : QString( "<queuename>%1</queuename>" ).arg( selected_system[ "queue" ] ) )
-      .arg( selected_system[ "runtime" ].toUInt() )
-      .arg( cluster_id )
-      .arg( selected_system[ "executable" ].isEmpty() ? "" : QString( "<executable>%1</executable>" ).arg( selected_system[ "executable" ] ) )
-      .arg( job_type )
-      .arg( QString( "%1/%2" )
-            .arg( target_dir )
-            .arg( file ) );
+   //    .arg( QString( "%1-%2" ).arg( cluster_id ).arg( file ) )
+   //    .arg( stage_url )
+   //    .arg( processor_count )
+   //    .arg( selected_system[ "queue" ].isEmpty() ? "" : QString( "<queuename>%1</queuename>" ).arg( selected_system[ "queue" ] ) )
+   //    .arg( selected_system[ "runtime" ].toUInt() )
+   //    .arg( cluster_id )
+   //    .arg( selected_system[ "executable" ].isEmpty() ? "" : QString( "<executable>%1</executable>" ).arg( selected_system[ "executable" ] ) )
+   //    .arg( job_type )
+   //    .arg( QString( "%1/%2" )
+   //          .arg( target_dir )
+   //          .arg( file ) );
 
-   cout << xml << endl;
+   // cout << url << endl;
+
+   url =
+      QString( "/jobsubmit?" )
+      + QString( "menu=ussomo"         )
+      + QString( "&module=somoapi_mpi" )
+      + QString( "&_clobber=1"         )
+      + QString( "&user=%1"            ).arg( cluster_id )
+      + QString( "&pw=%1"              ).arg( cluster_pw )
+      + QString( "&id=%1"              ).arg( QString( "%1-%2" ).arg( cluster_id ).arg( file ) )
+      + QString( "&resource=%1"        ).arg( selected_system_name )
+      + QString( "&host=%1"            ).arg( stage_url )
+      + QString( "&np=%1"              ).arg( processor_count )
+      + QString( "&queue=%1"           ).arg( selected_system[ "queue" ].isEmpty() ? "" : QString( "%1" ).arg( selected_system[ "queue" ] ) )
+      + QString( "&wall=%1"            ).arg( selected_system[ "runtime" ].toUInt() )
+      + QString( "&param=%1"           ).arg( job_type )
+      + QString( "&dir=%1"             ).arg( target_dir )
+      + QString( "&file=%1"            ).arg( file )
+      + QString( "&_uuid=%1"           ).arg( QString( "%1-%2" ).arg( cluster_id ).arg( file ) )
+      ;
+   
+   cout << "submit url\n" << url << endl;
+
+   // build json input
+   {
+      map < QString, QString > body_map;
+      body_map[ "numproc" ] = QString( "%1" ).arg( processor_count );
+      body_map[ "param"   ] = job_type;
+      body_map[ "file"    ] = file;
+      body = US_Json::compose( body_map );
+   }
+
+   cout << "submit body\n" << body << endl;
+
    if ( !submit_active )
    {
       errormsg = us_tr( "Stopped by user request" );
@@ -730,10 +752,7 @@ void US_Hydrodyn_Cluster_Submit::stop()
    }
    if ( comm_active )
    {
-#if QT_VERSION < 0x050000
-      submit_http.abort();
-      ftp.abort();
-#endif
+      http_reply->abort();
    }
    if ( system_proc_active )
    {
@@ -751,32 +770,18 @@ void US_Hydrodyn_Cluster_Submit::submit()
    jobs.clear( );
    
    QStringList qsl_submit;
-#if QT_VERSION < 0x040000
-   QTreeWidgetItem *lvi = lv_files->firstChild();
-   if ( lvi )
-   {
-      do {
-         if ( lvi->isSelected() )
-         {
-            jobs[ lvi ] = "prepare stage";
-         }
-      } while ( ( lvi = lvi->nextSibling() ) );
-      
-      emit process_next();
-   }
-#else
    QTreeWidgetItemIterator it( lv_files, QTreeWidgetItemIterator::Selected );
    QTreeWidgetItem *lvi;
    if ( *it ) {
       while ( *it ) {
          lvi = *it;
-         jobs[ lvi ] = "prepare stage";
+         // jobs[ lvi ] = "prepare stage";
+         jobs[ lvi ] = "submit";
          ++it;
       }
       
       emit process_next();
    }
-#endif
 }
 
 void US_Hydrodyn_Cluster_Submit::process_next()
@@ -949,15 +954,16 @@ void US_Hydrodyn_Cluster_Submit::process_list()
 
 bool US_Hydrodyn_Cluster_Submit::job_submit( QString file )
 {
-   QString xml;
-   if ( !submit_xml( file, xml ) )
+   QString url;
+   QString body;
+   if ( !submit_url_body( file, url, body ) )
    { 
       return false;
    }
 
    // start comm process
    
-   return send_http_post( xml );
+   return send_http_post( file, url, body );
 }
 
 bool US_Hydrodyn_Cluster_Submit::system_cmd( QStringList cmd )
@@ -1058,58 +1064,41 @@ bool US_Hydrodyn_Cluster_Submit::prepare_stage( QString file )
       return false;
    }
 
-   // using qftp now
-   // need new method to clear dir
-   // probably login, if directory exists, change,
-   // list all and remove all
-   // will ftp.rm( "*" ) work?
-   // followed by ftp.rmdir();
-   comm_active = true;
+//    // using qftp now
+//    // need new method to clear dir
+//    // probably login, if directory exists, change,
+//    // list all and remove all
+//    // will ftp.rm( "*" ) work?
+//    // followed by ftp.rmdir();
+//    comm_active = true;
 
-   QString target_dir = QString( "%1" ).arg( next_to_process->text( 0 ) ).replace( QRegExp( "\\.(tar|tgz)$" ), "" );
+//    QString target_dir = QString( "%1" ).arg( next_to_process->text( 0 ) ).replace( QRegExp( "\\.(tar|tgz)$" ), "" );
 
-   cout 
-      << QString( "ftp host   : %1\n"
-                  "ftp port   : %2\n"
-                  "target_dir : %3\n"
-                  "file       : %4\n" 
-                  "cluser_id  : %5\n" 
-                  "cluster_pw : %6\n" 
-                  )
-      .arg( ftp_url_host )
-      .arg( ftp_url_port.toUInt() )
-      .arg( target_dir )
-      .arg( file )
-      .arg( cluster_id )
-      .arg( cluster_pw );
+//    cout 
+//       << QString( "ftp host   : %1\n"
+//                   "ftp port   : %2\n"
+//                   "target_dir : %3\n"
+//                   "file       : %4\n" 
+//                   "cluser_id  : %5\n" 
+//                   "cluster_pw : %6\n" 
+//                   )
+//       .arg( ftp_url_host )
+//       .arg( ftp_url_port.toUInt() )
+//       .arg( target_dir )
+//       .arg( file )
+//       .arg( cluster_id )
+//       .arg( cluster_pw );
    
-#if QT_VERSION < 0x050000
-   ftp.connectToHost( ftp_url_host, ftp_url_port.toUInt() );
-   ftp.login        ( cluster_id  , cluster_pw   );
-   ftp.mkdir        ( target_dir );
-   ftp.close        ();
-#endif
+// #if QT_VERSION < 0x050000
+//    ftp.connectToHost( ftp_url_host, ftp_url_port.toUInt() );
+//    ftp.login        ( cluster_id  , cluster_pw   );
+//    ftp.mkdir        ( target_dir );
+//    ftp.close        ();
+// #endif
    return true;
 }
 
 
-//   // right now we are using scp, need to come up with a better method
-
-//   // make sure dest dir is made & clean!
-
-//   QStringList cmd;
-//   cmd << "ssh";
-//   cmd << stage_url;
-//   cmd << QString( "rm -fr %1/%2/%3; mkdir -p %4/%5/%6" )
-//      .arg( stage_path )
-//      .arg( cluster_id )
-//      .arg( QString("%1").arg( file ).replace( QRegExp( "\\.(tgz|tar|TGZ|TAR)$" ), "" ) )
-//      .arg( stage_path )
-//      .arg( cluster_id )
-//      .arg( QString("%1").arg( file ).replace( QRegExp( "\\.(tgz|tar|TGZ|TAR)$" ), "" ) );
-
-//   return( system_cmd( cmd ) );
-// }
 
 bool US_Hydrodyn_Cluster_Submit::stage( QString file )
 {
@@ -1127,42 +1116,42 @@ bool US_Hydrodyn_Cluster_Submit::stage( QString file )
    }
 
 
-   ftp_file = new QFile( file );
-   if ( !ftp_file->open( QIODevice::ReadOnly ) )
-   {
-      errormsg = QString( us_tr( "stage: can not open file %1" ) ).arg( file );
-      delete ftp_file;
-      ftp_file = ( QFile * ) 0;
-      return false;
-   }
+//    ftp_file = new QFile( file );
+//    if ( !ftp_file->open( QIODevice::ReadOnly ) )
+//    {
+//       errormsg = QString( us_tr( "stage: can not open file %1" ) ).arg( file );
+//       delete ftp_file;
+//       ftp_file = ( QFile * ) 0;
+//       return false;
+//    }
 
-   // setup stuff for ftp
-   comm_active = true;
+//    // setup stuff for ftp
+//    comm_active = true;
 
-   QString target_dir = QString( "%1" ).arg( next_to_process->text( 0 ) ).replace( QRegExp( "\\.(tar|tgz)$" ), "" );
+//    QString target_dir = QString( "%1" ).arg( next_to_process->text( 0 ) ).replace( QRegExp( "\\.(tar|tgz)$" ), "" );
 
-   cout 
-      << QString( "ftp host   : %1\n"
-                  "ftp port   : %2\n"
-                  "target_dir : %3\n"
-                  "file       : %4\n" 
-                  "cluser_id  : %5\n" 
-                  "cluster_pw : %6\n" 
-                  )
-      .arg( ftp_url_host )
-      .arg( ftp_url_port.toUInt() )
-      .arg( target_dir )
-      .arg( file )
-      .arg( cluster_id )
-      .arg( cluster_pw );
+//    cout 
+//       << QString( "ftp host   : %1\n"
+//                   "ftp port   : %2\n"
+//                   "target_dir : %3\n"
+//                   "file       : %4\n" 
+//                   "cluser_id  : %5\n" 
+//                   "cluster_pw : %6\n" 
+//                   )
+//       .arg( ftp_url_host )
+//       .arg( ftp_url_port.toUInt() )
+//       .arg( target_dir )
+//       .arg( file )
+//       .arg( cluster_id )
+//       .arg( cluster_pw );
    
-#if QT_VERSION < 0x050000
-   ftp.connectToHost( ftp_url_host, ftp_url_port.toUInt() );
-   ftp.login        ( cluster_id  , cluster_pw   );
-   ftp.cd           ( target_dir );
-   ftp.put          ( ftp_file    , file         );
-   ftp.close        ();
-#endif
+// #if QT_VERSION < 0x050000
+//    ftp.connectToHost( ftp_url_host, ftp_url_port.toUInt() );
+//    ftp.login        ( cluster_id  , cluster_pw   );
+//    ftp.cd           ( target_dir );
+//    ftp.put          ( ftp_file    , file         );
+//    ftp.close        ();
+// #endif
 
    return true;
 }
@@ -1251,58 +1240,111 @@ void US_Hydrodyn_Cluster_Submit::remove()
    }
 }
 
-bool US_Hydrodyn_Cluster_Submit::send_http_post( QString xml )
+bool US_Hydrodyn_Cluster_Submit::send_http_post( QString file, QString url, QString body )
 {
-#if QT_VERSION < 0x050000
-   // need to do a post & get to submit_url slash stuff
+   // need to do a post & get to manage_url slash stuff
    // its going to require opening a socket etc
    // 
+   // 1st read file into into qba,
+   // if not, return false, etc.
+
+   errormsg = "";
+   if ( !QDir::setCurrent( pkg_dir ) )
+   {
+      errormsg = QString( us_tr( "send_http_post: can not change to directory %1" ) ).arg( pkg_dir );
+      return false;
+   }
+
+   if ( !QFile::exists( file ) )
+   {
+      errormsg = QString( us_tr( "send_http_post: can not find file %1" ) ).arg( file );
+      return false;
+   }
+
+
+   // QFile f( file );
+   // if ( !f.open( QIODevice::ReadOnly ) ) {
+   //    errormsg = QString( us_tr( "send_http_post: can not open file %1 for reading" ) ).arg( file );
+   //    return false;
+   // }
+   // QByteArray qba = f.readAll();
+   // f.close();
+   
+   http_multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
+
+   // add the body
+
+   {
+      QHttpPart textPart;
+      textPart.setHeader( QNetworkRequest::ContentTypeHeader, QVariant( "text/plain" ) );
+      textPart.setHeader( QNetworkRequest::ContentDispositionHeader, QVariant( "form-data; name=\"text\"" ) );
+      textPart.setBody( body.toUtf8() );
+      http_multiPart->append( textPart );
+   }
+      
+   // add the data (file)
+
+   {
+      QHttpPart dataPart;
+      dataPart.setHeader( QNetworkRequest::ContentTypeHeader, QVariant( "application/octet-stream" ) );
+      dataPart.setHeader( QNetworkRequest::ContentDispositionHeader, QVariant( QString( "form-data; name=\"%1\"" ).arg( file ) ) );
+      // dataPart.setHeader( QNetworkRequest::ContentDispositionHeader, QVariant( QString( "form-data; name=\"datafile\"" ) ) );
+      QFile *f = new QFile( file );
+      if ( !f->open(QIODevice::ReadOnly) ) {
+         delete http_multiPart;
+         errormsg = QString( us_tr( "send_http_post: can not open file %1 for reading" ) ).arg( file );
+         return false;
+      }
+      
+      dataPart.setBodyDevice( f );
+      f->setParent( http_multiPart ); // we cannot delete the file now, so delete it with the multiPart
+
+      // !!!!!!! ******** need to make sure no memory leaks, i.e. close file etc
+
+      http_multiPart->append( dataPart );
+   }
+
    comm_active = true;
    cout << "http_get\n";
    // editor_msg( "black", "updating status" );
 
    current_http_response = "";
 
-   connect( &submit_http, SIGNAL( stateChanged ( int ) ), this, SLOT( http_stateChanged ( int ) ) );
-   connect( &submit_http, SIGNAL( responseHeaderReceived ( const QHttpResponseHeader & ) ), this, SLOT( http_responseHeaderReceived ( const QHttpResponseHeader & ) ) );
-   connect( &submit_http, SIGNAL( readyRead ( const QHttpResponseHeader & ) ), this, SLOT( http_readyRead ( const QHttpResponseHeader & ) ) );
-   connect( &submit_http, SIGNAL( dataSendProgress ( int, int ) ), this, SLOT( http_dataSendProgress ( int, int ) ) );
-   connect( &submit_http, SIGNAL( dataReadProgress ( int, int ) ), this, SLOT( http_dataReadProgress ( int, int ) ) );
-   connect( &submit_http, SIGNAL( requestStarted ( int ) ), this, SLOT( http_requestStarted ( int ) ) );
-   connect( &submit_http, SIGNAL( requestFinished ( int, bool ) ), this, SLOT( http_requestFinished ( int, bool ) ) );
-   connect( &submit_http, SIGNAL( done ( bool ) ), this, SLOT( http_done ( bool ) ) );
+   http_request.setUrl( QUrl( QString( "http://%1%2" ).arg( manage_url ).arg( url ) ) );
+   http_reply = http_access_manager->post( http_request, http_multiPart );
 
-   QHttpRequestHeader header("POST", "/ogce-rest/job/runjob/async" );
-   header.setValue( "Host", submit_url_host );
-   header.setContentType( "application/xml" );
-   submit_http.setHost( submit_url_host, submit_url_port.toUInt() );
-   // without the qba below, QHttp:request will send a null
-   QByteArray qba = xml.toUtf8();
-   qba.resize( qba.size() - 1 );
-   submit_http.request( header, qba );
+   connect( http_reply, SIGNAL( downloadProgress ( qint64, qint64 ) ), this, SLOT( http_downloadProgress( qint64, qint64 ) ) );
+   connect( http_reply, SIGNAL( uploadProgress ( qint64, qint64 ) ), this, SLOT( http_uploadProgress( qint64, qint64 ) ) );
+   connect( http_reply, SIGNAL( finished () ), this, SLOT( http_finished() ) );
+   connect( http_reply, SIGNAL( error ( QNetworkReply::NetworkError ) ), this, SLOT( http_error ( QNetworkReply::NetworkError ) ) ); 
 
-#endif
    return true;
 }
 
-void US_Hydrodyn_Cluster_Submit::http_stateChanged ( int /* estate */ )
-{
-   // editor_msg( "blue", QString( "http state %1" ).arg( state ) );
+void US_Hydrodyn_Cluster_Submit::http_error( QNetworkReply::NetworkError /* code */ ) {
+   qDebug() << "http: error";
+   current_http_error = http_reply->errorString();
+   http_done( true );
 }
 
-#if QT_VERSION < 0x050000
-void US_Hydrodyn_Cluster_Submit::http_responseHeaderReceived ( const QHttpResponseHeader & resp )
-{
-   cout << resp.reasonPhrase() << endl;
-}
-
-void US_Hydrodyn_Cluster_Submit::http_readyRead( const QHttpResponseHeader & resp )
-{
-   cout << "http: readyRead\n";
-   cout << resp.reasonPhrase() << endl;
-   // current_http_response = QString( "%1" ).arg( submit_http.readAll() );
-   current_http_response = QString( submit_http.readAll() );
+void US_Hydrodyn_Cluster_Submit::http_finished() {
+   cout << "http: finished\n";
+   current_http_response = QString( http_reply->readAll() );
    cout << current_http_response << endl;
+   
+   {
+      map < QString, QString > readJson = US_Json::split( current_http_response );
+      if ( readJson.count( "error" ) ) {
+         current_http_error = readJson[ "error" ];
+         http_done( true );
+      }
+      if ( readJson.count( "status" ) ) {
+         next_to_process->setText( 1, readJson[ "status" ] );
+      }
+      if ( readJson.count( "message" ) ) {
+         next_to_process->setText( 2, readJson[ "message" ] );
+      }
+   }
 
    /*   if ( comm_mode == "status" )
    {
@@ -1320,83 +1362,37 @@ void US_Hydrodyn_Cluster_Submit::http_readyRead( const QHttpResponseHeader & res
       }
       next_to_process->setText( 2, message );
       } */
-}
-#endif
-
-void US_Hydrodyn_Cluster_Submit::http_dataSendProgress ( int done, int total )
-{
-   cout << "http: datasendprogress " << done << " " << total << "\n";
-
-}
-void US_Hydrodyn_Cluster_Submit::http_dataReadProgress ( int done, int total )
-{
-   cout << "http: datareadprogress " << done << " " << total << "\n";
+   // current_http_error = "not fully implemented in ussomo";
+   // http_done( true );
+   http_done( false );
 }
 
-void US_Hydrodyn_Cluster_Submit::http_requestStarted ( int id )
+void US_Hydrodyn_Cluster_Submit::http_uploadProgress ( qint64 done, qint64 total )
 {
-   cout << "http: requestStarted " << id << "\n";
+   cout << "http: uploadProgress " << done << " " << total << "\n";
+   progress->setValue( 100.0 * (double) done / (double) total );
 }
 
-void US_Hydrodyn_Cluster_Submit::http_requestFinished ( int id, bool error )
+void US_Hydrodyn_Cluster_Submit::http_downloadProgress ( qint64 done, qint64 total )
 {
-   cout << "http: requestFinished " << id << " " << error << "\n";
+   cout << "http: downloadProgress " << done << " " << total << "\n";
 }
 
 void US_Hydrodyn_Cluster_Submit::http_done ( bool error )
 {
-#if QT_VERSION < 0x050000
    cout << "http: done " << error << "\n";
-   disconnect( &submit_http, SIGNAL( stateChanged ( int ) ), 0, 0 );
-   disconnect( &submit_http, SIGNAL( responseHeaderReceived ( const QHttpResponseHeader & ) ), 0, 0 );
-   disconnect( &submit_http, SIGNAL( readyRead ( const QHttpResponseHeader & ) ), 0, 0 );
-   disconnect( &submit_http, SIGNAL( dataSendProgress ( int, int ) ), 0, 0 );
-   disconnect( &submit_http, SIGNAL( dataReadProgress ( int, int ) ), 0, 0 );
-   disconnect( &submit_http, SIGNAL( requestStarted ( int ) ), 0, 0 );
-   disconnect( &submit_http, SIGNAL( requestFinished ( int, bool ) ), 0, 0 );
-   disconnect( &submit_http, SIGNAL( done ( bool ) ), 0, 0 );
+   disconnect( http_reply, SIGNAL( downloadProgress ( qint64, qint64 ) ), 0, 0 );
+   disconnect( http_reply, SIGNAL( uploadProgress ( qint64, qint64 ) ), 0, 0 );
+   disconnect( http_reply, SIGNAL( finished () ), 0, 0 );
+   disconnect( http_reply, SIGNAL( error ( QNetworkReply::NetworkError ) ), 0, 0 );
    comm_active = false;
-   QString current_http_error;
+   http_reply->deleteLater();
+   http_multiPart->deleteLater();
    if ( error )
    {
-      switch( submit_http.error() )
-      {
-      case QHttp::NoError :
-         current_http_error = us_tr( "No error occurred." );
-         break;
-
-      case QHttp::HostNotFound:
-         current_http_error = us_tr( "The host name lookup failed." );
-         break;
-
-      case QHttp::ConnectionRefused:
-         current_http_error = us_tr( "The server refused the connection." );
-         break;
-
-      case QHttp::UnexpectedClose:
-         current_http_error = us_tr( "The server closed the connection unexpectedly." );
-         break;
-
-      case QHttp::InvalidResponseHeader:
-         current_http_error = us_tr( "The server sent an invalid response header." );
-         break;
-
-      case QHttp::WrongContentLength:
-         current_http_error = us_tr( "The client could not read the content correctly because an error with respect to the content length occurred." );
-         break;
-
-      case QHttp::Aborted:
-         current_http_error = us_tr( "The request was aborted with abort()." );
-         break;
-
-      case QHttp::UnknownError:
-      default:
-         current_http_error = us_tr( "Unknown Error." );
-         break;
-      }
       cout << current_http_error << endl;
       QMessageBox::warning( this,
-                            us_tr("US-SOMO: Cluster Config"), 
+                            us_tr("US-SOMO: Cluster Submit"), 
                             us_tr( QString( "There was a error with the management server:\n%1" )
                                 .arg( current_http_error ) ),
                             QMessageBox::Ok,
@@ -1408,72 +1404,4 @@ void US_Hydrodyn_Cluster_Submit::http_done ( bool error )
       return;
    }
    emit process_next();
-#endif
-}
-
-void US_Hydrodyn_Cluster_Submit::ftp_stateChanged ( int state )
-{
-#if QT_VERSION < 0x050000
-   cout << "ftp state changed: " << state << endl;
-   if ( state == QFtp::Unconnected )
-   {
-      cout << "- There is no connection to the host. \n";
-   }
-   if ( state == QFtp::HostLookup )
-   {
-      cout << "- A host name lookup is in progress. \n";
-   }
-   if ( state == QFtp::Connecting )
-   {
-      cout << "- An attempt to connect to the host is in progress. \n";
-   }
-   if ( state == QFtp::Connected )
-   {
-      cout << "- Connection to the host has been achieved. \n";
-   }
-   if ( state == QFtp::LoggedIn )
-   {
-      cout << "- Connection and user login have been achieved. \n";
-   }
-   if ( state == QFtp::Closing )
-   {
-      cout << "- The connection is closing down, but it is not yet closed.\n";
-   }
-#endif
-}
-
-void US_Hydrodyn_Cluster_Submit::ftp_commandStarted ( int id )
-{
-   cout << "ftp command started: " << id << endl;
-}
-
-void US_Hydrodyn_Cluster_Submit::ftp_commandFinished ( int id, bool error )
-{
-#if QT_VERSION < 0x050000
-   cout << "ftp command finished" << id 
-        << QString( " %1\n" ).arg( error ? QString( "error %1" ).arg( ftp.errorString() ) : "" );
-#endif
-}
-
-void US_Hydrodyn_Cluster_Submit::ftp_done ( bool error )
-{
-#if QT_VERSION < 0x050000
-   cout << "ftp done" 
-        << QString( " %1\n" ).arg( error ? QString( "error %1" ).arg( ftp.errorString() ) : "" );
-   if ( error &&
-        jobs[ next_to_process ] == "submit" )
-   {
-      jobs[ next_to_process ] = "failed";
-      editor_msg( "red", QString( "Error: %1" ).arg( ftp.errorString() ) );
-   }
-
-   if ( ftp_file )
-   {
-      ftp_file->close();
-      ftp_file = ( QFile * ) 0;
-   }
-
-   comm_active = false;
-   emit process_next();
-#endif
 }

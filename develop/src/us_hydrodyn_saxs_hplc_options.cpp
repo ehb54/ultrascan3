@@ -1,5 +1,7 @@
 #include "../include/us3_defines.h"
 #include "../include/us_hydrodyn_saxs_hplc_options.h"
+#include "../include/us_hydrodyn_saxs_hplc_dctr.h"
+#include "../include/us_hydrodyn_saxs_hplc.h"
 //Added by qt3to4:
 #include <QHBoxLayout>
 #include <QCloseEvent>
@@ -9,12 +11,13 @@
 
 US_Hydrodyn_Saxs_Hplc_Options::US_Hydrodyn_Saxs_Hplc_Options(
                                                              map < QString, QString > * parameters,
-                                                             QWidget *                  p,
-                                                             const char *               name
+                                                             US_Hydrodyn              * us_hydrodyn,
+                                                             QWidget *                  p
                                                              ) : QDialog( p )
 {
-   this->hplc_win   = p;
-   this->parameters = parameters;
+   this->hplc_win    = p;
+   this->parameters  = parameters;
+   this->us_hydrodyn = us_hydrodyn;
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
@@ -191,7 +194,7 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    connect( le_epsilon, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
    le_epsilon->setMinimumWidth( 60 );
 
-   lbl_cormap_maxq =  new QLabel      ( us_tr( "Global CorMap Analysis maximum q [A^-1]:" ), this );
+   lbl_cormap_maxq =  new QLabel      ( us_tr( "Global PVP Analysis maximum q [A^-1]:" ), this );
    lbl_cormap_maxq -> setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_cormap_maxq -> setPalette( PALET_LABEL );
    AUTFBACK( lbl_cormap_maxq );
@@ -210,7 +213,7 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    connect( le_cormap_maxq, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
    le_cormap_maxq->setMinimumWidth( 60 );
 
-   lbl_cormap_alpha =  new QLabel      ( us_tr( "Global CorMap Analysis alpha:" ), this );
+   lbl_cormap_alpha =  new QLabel      ( us_tr( "Global PVP Analysis alpha:" ), this );
    lbl_cormap_alpha -> setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_cormap_alpha -> setPalette( PALET_LABEL );
    AUTFBACK( lbl_cormap_alpha );
@@ -292,6 +295,34 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    lbl_other_options->setPalette  ( PALET_FRAME );
    AUTFBACK( lbl_other_options );
    lbl_other_options->setFont     ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
+
+   pb_detector = new QPushButton(us_tr("Concentration Detector Properties"), this);
+   pb_detector->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   pb_detector->setMinimumHeight(minHeight1);
+   pb_detector->setPalette( PALET_PUSHB );
+   connect(pb_detector, SIGNAL(clicked()), SLOT(set_detector()));
+
+   pb_fasta_file = new QPushButton(us_tr("Load FASTA sequence from file"), this);
+   pb_fasta_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_fasta_file->setMinimumHeight(minHeight1);
+   pb_fasta_file->setPalette( PALET_PUSHB );
+   connect(pb_fasta_file, SIGNAL(clicked()), SLOT(fasta_file()));
+
+   lbl_fasta_value = new QLabel( us_tr( " PSV [cm^3/g]:" ) );
+   lbl_fasta_value->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_fasta_value->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_fasta_value );
+   lbl_fasta_value->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   le_fasta_value = new QLineEdit( this );
+   le_fasta_value->setObjectName( "le_fasta_value Line Edit" );
+   le_fasta_value->setText( "" );
+   le_fasta_value->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   le_fasta_value->setPalette( PALET_EDIT );
+   AUTFBACK( le_fasta_value );
+   le_fasta_value->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_fasta_value->setEnabled( false );
+   le_fasta_value->setReadOnly( true );
 
    cb_csv_transposed = new QCheckBox(this);
    cb_csv_transposed->setText(us_tr( "Save CSV transposed"));
@@ -635,6 +666,19 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    background->addWidget( pb_clear_gauss );
 
    background->addWidget( lbl_other_options );
+   background->addWidget( pb_detector );
+   {
+      QBoxLayout * bl_fasta = new QHBoxLayout( 0 );
+      bl_fasta->setContentsMargins( 0, 0, 0, 0 );
+      bl_fasta->setSpacing( 0 );
+
+      bl_fasta->addWidget( pb_fasta_file );
+      bl_fasta->addWidget( lbl_fasta_value );
+      bl_fasta->addWidget( le_fasta_value );
+
+      background->addLayout( bl_fasta );
+   }
+      
    background->addWidget( cb_csv_transposed );
 
    {
@@ -844,3 +888,143 @@ void US_Hydrodyn_Saxs_Hplc_Options::clear_gauss()
    update_enables();
 }
 
+void US_Hydrodyn_Saxs_Hplc_Options::set_detector()
+{
+   {
+      map < QString, QString > parameters;
+      parameters[ "uv_conv" ] = QString( "%1" ).arg( ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->detector_uv_conv, 0, 'g', 8 );
+      parameters[ "ri_conv" ] = QString( "%1" ).arg( ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->detector_ri_conv, 0, 'g', 8 );
+      if ( ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->detector_uv )
+      {
+         parameters[ "uv" ] = "true";
+      } else {
+         if ( ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->detector_ri )
+         {
+            parameters[ "ri" ] = "true";
+         }
+      }
+
+      US_Hydrodyn_Saxs_Hplc_Dctr *hplc_dctr = 
+         new US_Hydrodyn_Saxs_Hplc_Dctr(
+                                        this,
+                                        & parameters,
+                                        this );
+      US_Hydrodyn::fixWinButtons( hplc_dctr );
+      hplc_dctr->exec();
+      delete hplc_dctr;
+
+      if ( !parameters.count( "keep" ) )
+      {
+         update_enables();
+         return;
+      }
+
+      ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->detector_uv      = ( parameters.count( "uv" ) && parameters[ "uv" ] == "true" ) ? true : false;
+      ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->detector_ri      = ( parameters.count( "ri" ) && parameters[ "ri" ] == "true" ) ? true : false;
+      ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->detector_ri_conv = parameters[ "ri_conv" ].toDouble();
+      ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->detector_uv_conv = parameters[ "uv_conv" ].toDouble();
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc_Options::fasta_file() {
+   // load file
+
+   QString use_dir = QDir::currentPath();
+   ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+   raise();
+
+   QString filename = QFileDialog::getOpenFileName(
+                                                   this,
+                                                   windowTitle() + us_tr( "Load FASTA sequence File" ),
+                                                   use_dir,
+                                                   "FASTA files ( *.fasta.txt *.fasta );;All files (*)"
+                                                   );
+   
+   if ( filename.isEmpty() ) {
+      return;
+   }
+
+   ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
+
+   QFile f( filename );
+   
+   if ( !f.open( QIODevice::ReadOnly ) ) {
+      QMessageBox::warning(
+                           this, 
+                           windowTitle()+ us_tr( ": Compute PSV from FASTA" ),
+                           QString( us_tr( "Could not open file '%1' for reading. Possibly a permissions issue." ) ).arg( filename )
+                           );
+      return;
+   }
+      
+   QStringList qsl;
+
+   QTextStream ts( &f );
+   QRegExp rx_empty( "^\\s*$" );
+   QRegExp rx_newseq( "^\\s*>" );
+
+   QString seq;
+   int chains = 0;
+   
+   QString seq_names;
+
+   // find >seq lines
+
+   while ( !ts.atEnd() ) {
+      QString qs = ts.readLine().trimmed();
+      
+      if ( rx_empty.exactMatch( qs ) ) {
+         continue;
+      }
+
+      if ( rx_newseq.indexIn( qs ) > -1 ) {
+         seq_names += qs.replace( rx_newseq, "" ) + "\n";
+         chains++;
+         continue;
+      }
+      
+      seq += qs;
+   }
+
+   f.close();
+
+   if ( seq.isEmpty() ) {
+      QMessageBox::warning(
+                           this, 
+                           windowTitle()+ us_tr( ": Compute PSV from FASTA" ),
+                           QString( us_tr( "File '%1' no sequence information found." ) ).arg( filename )
+                           );
+      return;
+   }
+      
+   QStringList seq_chars = seq.split( "" );
+
+#if defined( DEBUG_FASTA_SEQ )
+   {
+      QTextStream ts( stdout );
+      ts << QString( "%1 sequences %2:\n%3" ).arg( chains ).arg( seq_names ).arg( seq );
+      ts << seq_chars.join( "\n" );
+   }
+#endif
+   
+   double psv;
+   QString msgs;
+   if ( !((US_Hydrodyn  *)us_hydrodyn)->calc_fasta_vbar( seq_chars, psv, msgs ) ) {
+      QMessageBox::warning(
+                           this, 
+                           windowTitle()+ us_tr( ": Compute PSV from FASTA" ),
+                           msgs );
+      return;
+   }
+
+   QMessageBox::information(
+                            this, 
+                            windowTitle()+ us_tr( ": Compute PSV from FASTA" ),
+                            QString( us_tr( "FASTA computed from the following sequence names:\n" ) )
+                            + seq_names
+                            );
+
+   le_fasta_value->setText( QString( "" ).sprintf( "%.3f", psv ) );
+   le_fasta_value->setEnabled( true );
+   return;
+}

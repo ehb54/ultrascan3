@@ -80,6 +80,11 @@ void US_Hydrodyn::read_residue_file()
    msroll_radii.clear( );
    msroll_names.clear( );
 
+   vdwf.clear( );
+
+   res_vbar.clear();
+   res_mw.clear();
+
    // i=1;
    if (f.open(QIODevice::ReadOnly|QIODevice::Text))
    {
@@ -95,6 +100,8 @@ void US_Hydrodyn::read_residue_file()
          ts >> numatoms;
          ts >> numbeads;
          ts >> new_residue.vbar;
+         res_vbar[ new_residue.name ] = new_residue.vbar;
+         res_mw  [ new_residue.name ] = 0e0;
          ts.readLine(); // read rest of line
          line_count++;
          new_residue.r_atom.clear( );
@@ -103,6 +110,8 @@ void US_Hydrodyn::read_residue_file()
          new_atoms.resize(numbeads);
          vector < atom > alt_atoms;
          
+         map < int, set < QString > > bead_assignment_to_vdwf;
+
          for (j=0; j<numatoms; j++)
          {
             ts >> new_atom.name;
@@ -110,6 +119,8 @@ void US_Hydrodyn::read_residue_file()
             ts >> new_atom.hybrid.mw;
             ts >> new_atom.hybrid.radius;
             ts >> new_atom.bead_assignment;
+            res_mw  [ new_residue.name ] += new_atom.hybrid.mw;
+            
             if ( /* misc.export_msroll && */
                  new_residue.name.length() < 4 )
             {
@@ -192,6 +203,20 @@ void US_Hydrodyn::read_residue_file()
             }
             ts >> new_atom.serial_number;
             ts >> new_atom.hydration;
+
+            {
+               _vdwf this_vdwf;
+               this_vdwf.mw = new_atom.hybrid.mw;
+               this_vdwf.r  = new_atom.hybrid.radius;
+               this_vdwf.w  = new_atom.hydration;
+               QString name = QString( "%1|%2" ).arg( new_residue.name ).arg( new_atom.name );
+               if ( !vdwf.count( name ) ) {
+                  vdwf[ name ] = this_vdwf;
+                  bead_assignment_to_vdwf[ new_atom.bead_assignment ].insert( name );
+               }
+               // us_qdebug( QString( "vdwf[%1].mw %2 .r %3" ).arg( name ).arg( vdwf[ name ].mw ).arg( vdwf[ name ].r ) );
+            }
+
             str2 = ts.readLine(); // read rest of line
             line_count++;
             if (!new_atom.name.isEmpty() && new_atom.hybrid.radius > 0.0 && new_atom.hybrid.mw > 0.0)
@@ -240,6 +265,13 @@ void US_Hydrodyn::read_residue_file()
             ts >> new_bead.volume;
             str2 = ts.readLine(); // read rest of line
             line_count++;
+            if ( bead_assignment_to_vdwf.count( j ) ) {
+               for ( set < QString >::iterator it = bead_assignment_to_vdwf[ j ].begin();
+                     it != bead_assignment_to_vdwf[ j ].end();
+                     ++it ) {
+                  vdwf[ *it ].color = new_bead.color;
+               }
+            }
             if ( advanced_config.debug_1 )
             {
                printf("residue name %s loading bead %d placing method %d\n",
@@ -626,6 +658,15 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
       }
    }
 
+   set < QString > waters;
+   waters.insert( "SOL" );
+   waters.insert( "WAT" );
+
+   set < QString > skip_waters;
+   skip_waters.insert( "HOH" );
+   skip_waters.insert( "DOD" );
+   skip_waters.insert( "SOL" );
+
    QRegExp rx_water_multiplier( "^REMARK Multiply water Iq by (\\d+)", Qt::CaseInsensitive );
    if ( f.open( QIODevice::ReadOnly ) )
    {
@@ -735,18 +776,54 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
             QString sstr = "";
             int sstr_pos = 0;
             
+            map < QString, int > resname_counts_nonwat;
+            map < QString, int > resname_theo_wat;
+            map < QString, int > resname_counts_wat;
+            int resname_counts_nonwat_total = 0;
+            int resname_counts_wat_total    = 0;
+      
+            double mw_nonwat     = 0e0;
+            double mw_wat        = 0e0;
+            double tot_theo_wat  = 0e0;
+
             // the residue list is wrong if there are unknown residues
             for ( unsigned int i = 0; i < temp_model.molecule.size(); i++ )
             {
                QString lastResSeq = "";
                for ( unsigned int j = 0; j < temp_model.molecule[i].atom.size(); j++ )
                {
+                  PDB_atom *this_atom = &(temp_model.molecule[i].atom[j]);
+                  QString resname = this_atom->resName;
+
+                  QString res_idx =
+                     QString("%1|%2")
+                     .arg(this_atom->name != "OXT" ? resname : "OXT" )
+                     .arg(this_atom->name);
+
+                  if ( vdwf.count( res_idx ) ) {
+                     if ( waters.count( resname ) ) {
+                        mw_wat += vdwf[ res_idx ].mw;
+                     } else {
+                        mw_nonwat    += vdwf[ res_idx ].mw;
+                        tot_theo_wat += vdwf[ res_idx ].w;
+                        resname_theo_wat[ resname ] += vdwf[ res_idx ].w;
+                     }
+                  }
+
                   if ( temp_model.molecule[i].atom[j].resSeq != lastResSeq )
                   {
-                     str += temp_model.molecule[i].atom[j].resName + " ";
+                     if ( waters.count( resname ) ) {
+                        resname_counts_wat[ resname ]++;
+                        resname_counts_wat_total++;
+                     } else {
+                        resname_counts_nonwat[ resname ]++;
+                        resname_counts_nonwat_total++;
+                     }
+
+                     str += resname + " ";
                      sstr += 
-                        residue_short_names.count(temp_model.molecule[i].atom[j].resName) ? 
-                        QString(residue_short_names[temp_model.molecule[i].atom[j].resName]) : "?"; 
+                        residue_short_names.count( resname ) ? 
+                        QString(residue_short_names[ resname ] ) : "?"; 
                      sstr_pos++;
                      if ( !( sstr_pos % 42 ) )
                      {
@@ -767,6 +844,45 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
                editor->append(us_tr("\nSequence in one letter code:\n"));
                editor->setCurrentFont(new_font);
                editor->append(sstr + "\n\n");
+
+               editor_msg( "black", "Residue\t count\tpercent\t Theoretical waters\n" );
+
+               if ( resname_counts_nonwat_total ) {
+                  for ( map < QString, int >::iterator it = resname_counts_nonwat.begin();
+                        it != resname_counts_nonwat.end();
+                        ++it ) {
+                     editor_msg( "black", QString( "%1\t%2\t%3%\t%4\n" )
+                                 .arg( it->first )
+                                 .arg( it->second )
+                                 .arg( 100.0 * (double) it->second / (double) resname_counts_nonwat_total, 0, 'g', 2 )
+                                 .arg( resname_theo_wat.count( it->first ) ? resname_theo_wat[ it->first ] : 0 )
+                                 );
+                  }
+                  if ( resname_counts_nonwat_total && resname_counts_nonwat.size() > 1 ) {
+                     editor_msg( "black", QString( "All\t%1\t%2%\t%3\n" )
+                                 .arg( resname_counts_nonwat_total )
+                                 .arg( 100 )
+                                 .arg( tot_theo_wat )
+                                 );
+                  }
+
+                  if ( resname_counts_wat_total ) {
+                     editor_msg( "blue", "\nWater\t count\tAvg. Waters\n" );
+                     for ( map < QString, int >::iterator it = resname_counts_wat.begin();
+                           it != resname_counts_wat.end();
+                           ++it ) {
+                        editor_msg( "blue", QString( "%1\t%2\t%3\n" ).arg( it->first ).arg( it->second ).arg(  (double) it->second / (double) resname_counts_nonwat_total, 0, 'g', 2 ) );
+                     }
+                     if ( resname_counts_wat_total && resname_counts_wat.size() > 1 ) {
+                        editor_msg( "blue", QString( "All\t%1\t%2\n" ).arg( resname_counts_wat_total ).arg(  (double) resname_counts_wat_total / (double) resname_counts_nonwat_total, 0, 'g', 2 ) );
+                     }
+                  }
+                  if ( mw_nonwat ) {
+                     editor_msg( "dark blue", QString( "\ngr WAT / gr nonWAT %1" ).arg( mw_wat / mw_nonwat, 0, 'g', 3 ) );
+                  }
+               }
+               editor_msg( "black", "\n" );
+
                editor->setCurrentFont(save_font);
             }
             qApp->processEvents();
@@ -778,8 +894,12 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
          }
          if (str1.left(4) == "ATOM" || str1.left(6) == "HETATM") // need to add TER
          {
-            if(str1.mid(12,1) != "H" && str1.mid(13,1) != "H" && !str1.mid(12,5).trimmed().startsWith( "H" ) &&
-               str1.mid(17,3) != "HOH")
+            if(
+               str1.mid(12,1) != "H" &&
+               str1.mid(13,1) != "H" &&
+               !str1.mid(12,5).trimmed().startsWith( "H" ) &&
+               !skip_waters.count( str1.mid(17,3).trimmed() )
+               )
             {                  
                if (str1.mid(16,1) == " " || str1.mid(16,1) == "A")
                {
@@ -863,17 +983,55 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
       QString sstr = "";
       int sstr_pos = 0;
       // the residue list is wrong if there are unknown residues
+
+      map < QString, int > resname_counts_nonwat;
+      map < QString, int > resname_theo_wat;
+      map < QString, int > resname_counts_wat;
+      int resname_counts_nonwat_total = 0;
+      int resname_counts_wat_total    = 0;
+      
+      double mw_nonwat     = 0e0;
+      double mw_wat        = 0e0;
+      double tot_theo_wat  = 0e0;
+
+      // the residue list is wrong if there are unknown residues
       for ( unsigned int i = 0; i < temp_model.molecule.size(); i++ )
       {
          QString lastResSeq = "";
          for ( unsigned int j = 0; j < temp_model.molecule[i].atom.size(); j++ )
          {
+            PDB_atom *this_atom = &(temp_model.molecule[i].atom[j]);
+            QString resname = this_atom->resName;
+
+            QString res_idx =
+               QString("%1|%2")
+               .arg(this_atom->name != "OXT" ? resname : "OXT" )
+               .arg(this_atom->name);
+
+            if ( vdwf.count( res_idx ) ) {
+               if ( waters.count( resname ) ) {
+                  mw_wat += vdwf[ res_idx ].mw;
+               } else {
+                  mw_nonwat    += vdwf[ res_idx ].mw;
+                  tot_theo_wat += vdwf[ res_idx ].w;
+                  resname_theo_wat[ resname ] += vdwf[ res_idx ].w;
+               }
+            }
+
             if ( temp_model.molecule[i].atom[j].resSeq != lastResSeq )
             {
-               str += temp_model.molecule[i].atom[j].resName + " ";
+               if ( waters.count( resname ) ) {
+                  resname_counts_wat[ resname ]++;
+                  resname_counts_wat_total++;
+               } else {
+                  resname_counts_nonwat[ resname ]++;
+                  resname_counts_nonwat_total++;
+               }
+
+               str += resname + " ";
                sstr += 
-                  residue_short_names.count(temp_model.molecule[i].atom[j].resName) ? 
-                  QString(residue_short_names[temp_model.molecule[i].atom[j].resName]) : "?"; 
+                  residue_short_names.count( resname ) ? 
+                  QString(residue_short_names[ resname ] ) : "?"; 
                sstr_pos++;
                if ( !( sstr_pos % 42 ) )
                {
@@ -894,6 +1052,45 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
          editor->append(us_tr("\nSequence in one letter code:\n"));
          editor->setCurrentFont(new_font);
          editor->append(sstr + "\n\n");
+
+         editor_msg( "black", "Residue\t count\tpercent\t Theoretical waters\n" );
+
+         if ( resname_counts_nonwat_total ) {
+            for ( map < QString, int >::iterator it = resname_counts_nonwat.begin();
+                  it != resname_counts_nonwat.end();
+                  ++it ) {
+               editor_msg( "black", QString( "%1\t%2\t%3%%4\n" )
+                           .arg( it->first )
+                           .arg( it->second )
+                           .arg( 100.0 * (double) it->second / (double) resname_counts_nonwat_total, 0, 'g', 2 )
+                           .arg( resname_theo_wat.count( it->first ) ? resname_theo_wat[ it->first ] : 0 )
+                           );
+            }
+            if ( resname_counts_nonwat_total && resname_counts_nonwat.size() > 1 ) {
+               editor_msg( "black", QString( "All\t%1\t%2%\t%3\n" )
+                           .arg( resname_counts_nonwat_total )
+                           .arg( 100 )
+                           .arg( tot_theo_wat )
+                           );
+            }
+
+            if ( resname_counts_wat_total ) {
+               editor_msg( "blue", "\nWater\t count\tAvg. Waters\n" );
+               for ( map < QString, int >::iterator it = resname_counts_wat.begin();
+                     it != resname_counts_wat.end();
+                     ++it ) {
+                  editor_msg( "blue", QString( "%1\t%2\t%3\n" ).arg( it->first ).arg( it->second ).arg(  (double) it->second / (double) resname_counts_nonwat_total, 0, 'g', 2 ) );
+               }
+               if ( resname_counts_wat_total && resname_counts_wat.size() > 1 ) {
+                  editor_msg( "blue", QString( "All\t%1\t%2\n" ).arg( resname_counts_wat_total ).arg(  (double) resname_counts_wat_total / (double) resname_counts_nonwat_total, 0, 'g', 2 ) );
+               }
+            }
+            if ( mw_nonwat ) {
+               editor_msg( "dark blue", QString( "\ngr WAT / gr nonWAT %1" ).arg( mw_wat / mw_nonwat, 0, 'g', 3 ) );
+            }
+         }
+         editor_msg( "black", "\n" );
+
          editor->setCurrentFont(save_font);
       }
       temp_model.model_id = "1";
@@ -5730,13 +5927,14 @@ void US_Hydrodyn::write_bead_spt(QString fname,
          "magenta",      // 5 magenta
          "orange",       // 6 orange
          "white",        // 7 white
-         "redorange",    // 8 redorange
+         "[200,80,0]",   // 8 gray
          "purple",       // 9 purple
          "green",        // 10 green
          "cyan",         // 11 cyan
          "redorange",    // 12 redorange
          "violet",       // 13 violet
          "yellow",       // 14 yellow
+         "red",          // 15 red
       };
 
 #if defined(DEBUG)
@@ -5796,6 +5994,7 @@ void US_Hydrodyn::write_bead_spt(QString fname,
          break;
       }
    }
+
    for (unsigned int i = 0; i < model->size(); i++) {
       if ((*model)[i].active) {
          if ((*model)[i].bead_color >= (sizeof(colormap) / sizeof(char))) {
@@ -5818,6 +6017,7 @@ void US_Hydrodyn::write_bead_spt(QString fname,
                      );
       }
    }
+
    if ( movie_frame )
    {
       last_spt_text += QString("")
@@ -6307,27 +6507,31 @@ void US_Hydrodyn::write_bead_model( QString fname,
          QString residues;
 
          if (!bead_model_from_file) {
-            residues =
-               use_model[i]->resName +
-               (use_model[i]->org_chain ? ".SC." : 
-                ((misc.pb_rule_on && !use_model[i]->type) ? ".PB." : ".MC.")) +
-               (use_model[i]->chainID == " " ? "" : (use_model[i]->chainID + "."));
-            // a compiler error forced this kludge using tmp_serial
-            //   + QString("%1").arg((*use_model)[i].serial);
-            residues += QString("%1").arg(tmp_serial);
-
-            for (unsigned int j = 0; j < use_model[i]->all_beads.size(); j++)
-            {
-               QString tmp_serial = use_model[i]->all_beads[j]->resSeq;
-
-               residues += "," +
-                  (use_model[i]->all_beads[j]->resName +
-                   (use_model[i]->all_beads[j]->org_chain ? ".SC." : 
-                    ((misc.pb_rule_on && !use_model[i]->type) ? ".PB." : ".MC.")) +
-                   (use_model[i]->all_beads[j]->chainID == " " ? "" : (use_model[i]->all_beads[j]->chainID + ".")));
+            if ( use_model[i]->bead_model_code.isEmpty() ) {
+               residues =
+                  use_model[i]->resName +
+                  (use_model[i]->org_chain ? ".SC." : 
+                   ((misc.pb_rule_on && !use_model[i]->type) ? ".PB." : ".MC.")) +
+                  (use_model[i]->chainID == " " ? "" : (use_model[i]->chainID + "."));
                // a compiler error forced this kludge using tmp_serial
-               //  + QString("%1").arg((*use_model)[i].all_beads[j].serial);
+               //   + QString("%1").arg((*use_model)[i].serial);
                residues += QString("%1").arg(tmp_serial);
+
+               for (unsigned int j = 0; j < use_model[i]->all_beads.size(); j++)
+               {
+                  QString tmp_serial = use_model[i]->all_beads[j]->resSeq;
+
+                  residues += "," +
+                     (use_model[i]->all_beads[j]->resName +
+                      (use_model[i]->all_beads[j]->org_chain ? ".SC." : 
+                       ((misc.pb_rule_on && !use_model[i]->type) ? ".PB." : ".MC.")) +
+                      (use_model[i]->all_beads[j]->chainID == " " ? "" : (use_model[i]->all_beads[j]->chainID + ".")));
+                  // a compiler error forced this kludge using tmp_serial
+                  //  + QString("%1").arg((*use_model)[i].all_beads[j].serial);
+                  residues += QString("%1").arg(tmp_serial);
+               }
+            } else {
+               residues = use_model[i]->bead_model_code;
             }
          }
          else
@@ -7741,7 +7945,11 @@ void US_Hydrodyn::editor_msg( QString color, QString msg )
 {
    QColor save_color = editor->textColor();
    editor->setTextColor(color);
+#if QT_VERSION >= 0x050000
+   editor->append( msg.replace( QRegExp( "\\n$" ) , "" ) );
+#else
    editor->append(msg);
+#endif
    editor->setTextColor(save_color);
 }
 

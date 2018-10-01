@@ -29,6 +29,15 @@ bool US_Saxs_Util::read_control( QString controlfile )
    write_output_count    = 0;
    timings               = "";
    
+   if ( !us_log ) {
+#if !defined( USE_MPI )
+      us_log = new US_Log( "runlog.txt" );
+#else
+      us_log = new US_Log( QString( "runlog-%1.txt" ).arg( myrank ) );
+#endif
+      output_files << us_log->f.fileName();
+   }
+
    env_ultrascan = getenv( "ULTRASCAN" );
 #if !defined( USE_MPI )
    cout << "$ULTRASCAN = " << env_ultrascan << endl;
@@ -897,6 +906,10 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
          if ( !read_pdb( qsl[ 0 ] ) )
          {
+            errormsg += QString( "\nError %1 line %2 : PDB file has an error. <%3>\n" )
+               .arg( controlfile )
+               .arg( line )
+               .arg( qsl[ 0 ] );
             return false;
          }
          cout << "inputfile 2\n" << flush;

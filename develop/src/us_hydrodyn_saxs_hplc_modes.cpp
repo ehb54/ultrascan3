@@ -2475,7 +2475,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
          }
 
          // curtis mw method
-
+         // activate in regular mode
          if ( started_in_expert_mode )
          {
             if ( usu->mwc( 
@@ -6101,7 +6101,7 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_start()
 
    le_last_focus = (mQLineEdit *) 0;
    pb_gauss_fit->setText( us_tr( "Global Fit" ) );
-   pb_cormap     ->setText( us_tr( "Show CorMap" ) );
+   pb_cormap     ->setText( us_tr( "Show PVP map" ) );
    ggauss_scroll_save_group = cb_plot_errors_group->isChecked();
       
    disable_all();

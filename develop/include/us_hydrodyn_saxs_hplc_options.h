@@ -16,8 +16,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Options : public QDialog
    public:
       US_Hydrodyn_Saxs_Hplc_Options(
                                     map < QString, QString > * parameters,
-                                    QWidget                  * p = 0, 
-                                    const char               * name = 0
+                                    US_Hydrodyn              * us_hydrodyn,
+                                    QWidget                  * p = 0
                                     );
       ~US_Hydrodyn_Saxs_Hplc_Options();
 
@@ -35,6 +35,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Options : public QDialog
   #pragma warning ( default: 4251 )
 # endif
 #endif
+
+      US_Hydrodyn *                           us_hydrodyn;
 
       US_Config *                             USglobal;
 
@@ -102,6 +104,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Options : public QDialog
       QPushButton  *                          pb_clear_gauss;
 
       QLabel       *                          lbl_other_options;
+
+      QPushButton  *                          pb_detector;
+
       QCheckBox    *                          cb_csv_transposed;
 
       QLabel *                                lbl_zi_window;
@@ -134,11 +139,20 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Options : public QDialog
 
       void                                    setupGUI();
 
+      QPushButton                           * pb_fasta_file;
+      QLabel                                * lbl_fasta_value;
+      QLineEdit                             * le_fasta_value;
+
    private slots:
+
+   private slots:
+      void                                    fasta_file();
 
       void                                    quit();
       void                                    help();
       void                                    ok();
+
+      void                                    set_detector();
 
       void                                    clear_gauss();
 

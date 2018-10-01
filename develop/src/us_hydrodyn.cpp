@@ -53,6 +53,10 @@
 #define DOTSOMO      ""
 #define DOTSOMOCAP   ""
 
+// #define PINV_TEST
+#if defined( PINV_TEST )
+#include "../include/us_svd.h"
+#endif
 // #define USE_H
 
 // note: this program uses cout and/or cerr and this should be replaced
@@ -69,6 +73,23 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
                          QWidget *p, 
                          const char *name) : QFrame( p )
 {
+#if defined( PINV_TEST )
+   qDebug() << "PINV_TEST";
+
+   vector < vector < double > > A =
+      { { 1, 2, 3 },
+        { 4, 5, 6 } }
+      // { { 1, 4 },
+      //   { 2, 5 },
+      //   { 3, 6 } }
+   ;
+   vector < vector < double > > Ainv;
+
+   SVD::pinv( A, Ainv );
+   qDebug() << "PINV_TEST done";
+   exit(0);
+#endif
+
    USglobal = new US_Config();
    this->batch_file = batch_file;
    numThreads = USglobal->config_list.numThreads;
@@ -310,6 +331,8 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    residue_short_names["DC"] = 'c';
    residue_short_names["DT"] = 't';
 
+   create_fasta_vbar_mw();
+
    options_log = "";
    last_abb_msgs = "";
 
@@ -466,13 +489,14 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
       editor_msg( "red", us_tr( "Warning: vcm.json not read" ) );
    }
 
-   if ( 
-       load_vdwf_json( USglobal->config_list.system_dir + 
-                       QDir::separator() + "etc" +
-                       QDir::separator() + "vdwf.json" ) )
-   {
-      editor_msg( "red", us_tr( "Warning: vdwf.json not read" ) );
-   }
+   // now loaded with residue file
+   // if ( 
+   //     load_vdwf_json( USglobal->config_list.system_dir + 
+   //                     QDir::separator() + "etc" +
+   //                     QDir::separator() + "vdwf.json" ) )
+   // {
+   //    editor_msg( "red", us_tr( "Warning: vdwf.json not read" ) );
+   // }
 
    if ( saxs_options.wavelength == 0 )
    {
@@ -1998,6 +2022,7 @@ void US_Hydrodyn::select_residue_file()
       return;
    }
    read_residue_file();
+   create_fasta_vbar_mw();
    set_disabled();
    lbl_table->setText( QDir::toNativeSeparators( residue_filename ) );
 }
@@ -6199,6 +6224,25 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
    double total_mw = 0e0;
    double hydro_radius = 0e0;
 
+   bool any_wats = false;
+   for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++) {
+      for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); k++) {
+         PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
+         if ( this_atom->resName == "WAT" ) {
+            any_wats = true;
+            break;
+         }
+         if ( any_wats ) {
+            break;
+         }
+      }
+   }
+   if ( any_wats ) {
+      vdw_ot_mult = 0;
+      editor_msg( "black", us_tr( "Explicit WATs found, hydration disabled\n" ) );
+   }
+   bool hydrate = !any_wats;
+
    if ( !quiet ) 
    {
       editor->append("Creating VdW beads from atomic model\n");
@@ -6254,8 +6298,11 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
          if ( vdwf.count( res_idx ) ) {
             PDB_atom tmp_atom;
             _vdwf this_vdwf = vdwf[ res_idx ];
+            if ( this_atom->resName == "WAT" ) {
+               this_vdwf.mw = 0.0;
+            }
             tmp_atom.bead_coordinate = this_atom->coordinate;
-            if ( this_vdwf.w ) {
+            if ( hydrate && this_vdwf.w ) {
                double tmp_vol = M_PI * ( 4e0 / 3e0 ) * this_vdwf.r * this_vdwf.r * this_vdwf.r + ( this_vdwf.w * misc.hydrovol );
                tmp_atom.bead_computed_radius = pow( tmp_vol * 3e0 / ( 4e0 * M_PI ), 1e0 / 3e0 );
                double use_vdw_ot_mult = vdw_ot_mult;
@@ -6272,10 +6319,11 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
             } else {
                tmp_atom.bead_computed_radius = this_vdwf.r;
             }
+            // us_qdebug( QString( "bead model radius for %1 = %2" ).arg( res_idx ).arg(  tmp_atom.bead_computed_radius ) );
             tmp_atom.bead_ref_mw = this_vdwf.mw;
             tmp_atom.mw = this_vdwf.mw;
             tmp_atom.bead_mw = this_vdwf.mw;
-            tmp_atom.bead_color = 8;
+            tmp_atom.bead_color = this_vdwf.color;
             tmp_atom.exposed_code = 1;
             tmp_atom.all_beads.clear( );
             tmp_atom.active = true;
@@ -6284,6 +6332,13 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
             tmp_atom.iCode = this_atom->iCode;
             tmp_atom.chainID = this_atom->chainID;
             tmp_atom.saxs_data.saxs_name = "";
+            tmp_atom.bead_model_code = QString( "%1.%2.%3.%4.%5" )
+               .arg( this_atom->serial )
+               .arg( this_atom->name )
+               .arg( this_atom->resName )
+               .arg( this_atom->chainID )
+               .arg( this_atom->resSeq )
+               ;
             
             bead_model.push_back(tmp_atom);
          } else {
@@ -7088,4 +7143,96 @@ void US_Hydrodyn::hullrad_finalize() {
    pb_show_hydro_results->setEnabled( true );
    hullrad_running = false;
    // us_qdebug( QString( "hullrad_finalize %1 end" ).arg( hullrad_filename ) );
+}
+
+void US_Hydrodyn::create_fasta_vbar_mw() {
+
+#if defined( DEBUG_FASTA_SEQ )
+   qDebug() << "create_fasta_vbar_mw";
+   for ( map < QString, double >::iterator it = res_vbar.begin();
+         it != res_vbar.end();
+         ++it ) {
+      qDebug() << "res_vbar[" << it->first << "] = " << it->second;
+      qDebug() << "res_mw[" << it->first << "] = " << res_mw[ it->first ];
+   }
+
+#endif
+
+   fasta_vbar.clear();
+   fasta_mw.clear();
+   
+   for ( map < QString, QChar >::iterator it = residue_short_names.begin();
+         it != residue_short_names.end();
+         ++it ) {
+
+      if ( it->second != "WAT" &&
+           res_vbar.count( it->first ) &&
+           res_mw.count( it->first ) 
+           ) {
+         fasta_vbar[ it->second ] = res_vbar[ it->first ];
+         fasta_mw  [ it->second ] = res_mw  [ it->first ];
+      }
+   }
+
+#if defined( DEBUG_FASTA_SEQ )
+   qDebug() << "create_fasta_vbar_mw";
+   for ( map < QString, double >::iterator it = fasta_vbar.begin();
+         it != fasta_vbar.end();
+         ++it ) {
+      qDebug() << "fasta_vbar[" << it->first << "] = " << it->second;
+      qDebug() << "fasta_mw[" << it->first << "] = " << fasta_mw[ it->first ];
+   }
+
+#endif
+   
+}
+
+bool US_Hydrodyn::calc_fasta_vbar( QStringList & seq_chars, double & result, QString & msgs ) {
+   result = 0e0;
+   msgs = "";
+   if ( ! seq_chars.size() ) {
+      msgs = "Error: The sequence is empty!";
+      return false;
+   }
+      
+   double mw_vbar_sum = 0.0;
+   double mw_sum = 0.0;
+   double mw;
+
+   map < QString, int > replaced;
+
+   for ( int i = 0; i < (int) seq_chars.size(); ++i ) {
+      QString se = seq_chars[ i ];
+      if ( !fasta_mw.count( se ) ) {
+         replaced[ se ]++;
+         se = "A";
+      }
+      if ( !fasta_mw.count( se ) ) {
+         msgs = "Error: No A defined in sequence database";
+         return false;
+      }
+         
+      mw_sum      += fasta_mw[ se ];
+      mw_vbar_sum += fasta_mw[ se ] * fasta_vbar[ se ];
+   }
+
+   if ( replaced.size() ) {
+      msgs = "Notice:\n";
+      for ( map < QString, int >::iterator it = replaced.begin();
+            it != replaced.end();
+            ++it ) {
+         msgs += QString( us_tr( "Unrecognized code '%1' replaced by 'A' %2 time(s)\n" ) )
+            .arg( it->first )
+            .arg( it->second )
+            ;
+      }
+   }
+   if ( ! seq_chars.size() ) {
+      msgs = "Error: The sequence sum results is zero molecular weight.";
+      return false;
+   }
+
+   result = (double)floor(0.5 + ( ( mw_vbar_sum / mw_sum ) * 1000e0 ) ) / 1000e0;
+   // qDebug() << "calc_fasta_vbar result for seq of " << seq_chars.size() << " elements computed as " << result;
+   return true;
 }

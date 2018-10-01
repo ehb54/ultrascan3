@@ -36,7 +36,7 @@ US_Hydrodyn_Saxs_Cormap::US_Hydrodyn_Saxs_Cormap(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle( us_tr( "US-SOMO: CorMap Analysis" ) );
+   setWindowTitle( us_tr( "US-SOMO: PVP Analysis" ) );
 
    plot_zoomer         = ( ScrollZoomer * )0;
    plot_cluster_zoomer = ( ScrollZoomer * )0;
@@ -1099,7 +1099,7 @@ void US_Hydrodyn_Saxs_Cormap::save_csv()
 {
    // QMessageBox::warning(this, 
    //                      windowTitle() + us_tr( " : Save" ),
-   //                      us_tr( "Saving CorMap analysis results is not currently functional" ), 
+   //                      us_tr( "Saving PVP analysis results is not currently functional" ), 
    //                      QMessageBox::Ok | QMessageBox::Default,
    //                      QMessageBox::NoButton
    //                      );
@@ -1149,7 +1149,7 @@ void US_Hydrodyn_Saxs_Cormap::save_csv()
    QTextStream ts( &f );
 
    ts 
-      << "\"CorMap Analysis\""  << endl
+      << "\"PVP Analysis\""  << endl
       ;
 
    ts
@@ -1272,11 +1272,11 @@ bool US_Hydrodyn_Saxs_Cormap::load_csv(
       return false;
    }
 
-   if ( qv[ 0 ] != "\"CorMap Analysis\"" ) {
+   if ( qv[ 0 ] != "\"PVP Analysis\"" ) {
       if ( parent ) {
          QMessageBox::warning( parent,
                                parent->windowTitle() + " : Load CSV file",
-                               QString( us_tr( "The CSV file %1 is not tagged as a CorMap Analysis file" ) )
+                               QString( us_tr( "The CSV file %1 is not tagged as a PVP Analysis file" ) )
                                .arg( filename )
                                );
       }
@@ -1455,7 +1455,7 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
       QString( 
               "Alpha is %1\n\n"
               "Pairwise P value map color definitions:\n"
-              "  P is the pairwise P value as determined by a CorMap analysis\n"
+              "  P is the pairwise P value as determined by a PVP analysis\n"
               "  Green corresponds to         P >= %2\n" 
               "  Yellow corresponds to %3 > P >= %4\n" 
               "  Red corresponds to    %5 > P\n"
@@ -1698,7 +1698,7 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
             QString( 
                     "Alpha is %1\n\n"
                     "Holm-Bonferroni pairwise P value map color definitions:\n"
-                    "  P is the pairwise P value as determined by a CorMap analysis\n"
+                    "  P is the pairwise P value as determined by a PVP analysis\n"
                     "  Green corresponds to              P >= %2\n" 
                     "  Yellow corresponds to %3 > P >= %4\n" 
                     "  Red corresponds to    %5 > P\n"
@@ -1843,7 +1843,7 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
          }
                     
          // cobreport =
-         //    us_tr( "\nCorMap of Brookes plot analysis:\n" )  +
+         //    us_tr( "\PVP of Brookes plot analysis:\n" )  +
          //    QString( "%1\t    N  Start point  C   P-value\n" )
          //    .arg( "Row", -7 )
          //    ;

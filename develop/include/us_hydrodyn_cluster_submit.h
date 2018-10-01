@@ -21,10 +21,10 @@
 #include "us_hydrodyn_pdbdefs.h"
 #include "us_hydrodyn_batch.h"
 
-#if QT_VERSION < 0x050000
-# include <qhttp.h>
-# include <qftp.h>
-#endif
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply> 
+#include <QHttpMultiPart>
 
 //standard C and C++ defs:
 
@@ -54,7 +54,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
       QTreeWidget     *lv_files;
 
       QLabel        *lbl_systems;
-      QListWidget      *lb_systems;
+      QListWidget   *lb_systems;
 
       QPushButton   *pb_select_all;
       QPushButton   *pb_remove;
@@ -80,17 +80,17 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
 
       QString       cluster_id;
       QString       cluster_pw;
-      QString       submit_url;
-      QString       submit_url_host;
-      QString       submit_url_port;
+      QString       manage_url;
+      QString       manage_url_host;
+      QString       manage_url_port;
       QString       stage_url;
-      QString       stage_url_path;
-      QString       stage_path;
+      // QString       stage_url_path;
+      // QString       stage_path;
 
-      QFile         *ftp_file;
-      QString       ftp_url;
-      QString       ftp_url_host;
-      QString       ftp_url_port;
+      // QFile         *ftp_file;
+      // QString       ftp_url;
+      // QString       ftp_url_host;
+      // QString       ftp_url_port;
 
       QString       errormsg;
       bool          disable_updates;
@@ -104,23 +104,25 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
 
       QStringList   last_stdout;
       QStringList   last_stderr;
-      bool          submit_xml( QString file, QString &xml );
-      bool          send_http_post( QString xml );
+      bool          submit_url_body( QString file, QString &url, QString &body );
+      bool          send_http_post( QString file, QString url, QString body );
 
       bool          submit_active;
       bool          comm_active;
 
-#if QT_VERSION < 0x050000
-      QHttp         submit_http;
-
-      QFtp          ftp;
-#endif
+      QNetworkAccessManager * http_access_manager;
+      QNetworkRequest         http_request;
+      QNetworkReply         * http_reply;
+      QHttpMultiPart        * http_multiPart;
+      
+      void          http_done( bool error );
       
       QString       current_xml;
       QString       current_xml_response;
 
       QString       current_http;
       QString       current_http_response;
+      QString       current_http_error;
 
       // here's the submit logic:
       // submit() builds a map of jobs, sets submit active
@@ -178,25 +180,19 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
       void cancel();
       void help();
 
-      void http_stateChanged ( int state );
-#if QT_VERSION < 0x050000
-      void http_responseHeaderReceived ( const QHttpResponseHeader & resp );
-      void http_readyRead ( const QHttpResponseHeader & resp );
-#endif
-      void http_dataSendProgress ( int done, int total );
-      void http_dataReadProgress ( int done, int total );
-      void http_requestStarted ( int id );
-      void http_requestFinished ( int id, bool error );
-      void http_done ( bool error );
+      void http_finished ();
+      void http_error( QNetworkReply::NetworkError code );
+      void http_uploadProgress ( qint64 done, qint64 total );
+      void http_downloadProgress ( qint64 done, qint64 total );
 
-      void ftp_stateChanged ( int state );
-      // void ftp_listInfo ( const QUrlInfo & i );
-      // void ftp_readyRead ();
-      // void ftp_dataTransferProgress ( int done, int total );
-      // void ftp_rawCommandReply ( int replyCode, const QString & detail );
-      void ftp_commandStarted ( int id );
-      void ftp_commandFinished ( int id, bool error );
-      void ftp_done ( bool error );
+      // void ftp_stateChanged ( int state );
+      // // void ftp_listInfo ( const QUrlInfo & i );
+      // // void ftp_readyRead ();
+      // // void ftp_dataTransferProgress ( int done, int total );
+      // // void ftp_rawCommandReply ( int replyCode, const QString & detail );
+      // void ftp_commandStarted ( int id );
+      // void ftp_commandFinished ( int id, bool error );
+      // void ftp_done ( bool error );
 
       void system_proc_readFromStdout();
       void system_proc_readFromStderr();

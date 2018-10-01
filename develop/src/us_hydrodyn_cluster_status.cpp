@@ -38,7 +38,8 @@ US_Hydrodyn_Cluster_Status::US_Hydrodyn_Cluster_Status(
    processing_active = false;
    disable_updates = false;
 
-   ftp_file = ( QFile * ) 0;
+   retrieve_file = ( QFile * ) 0;
+   http_access_manager = new QNetworkAccessManager( this );
 
    pkg_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "cluster";
    submitted_dir = pkg_dir + SLASH + "submitted";
@@ -48,12 +49,21 @@ US_Hydrodyn_Cluster_Status::US_Hydrodyn_Cluster_Status(
    cluster_id      = ((US_Hydrodyn_Cluster *) cluster_window )->cluster_config[ "userid" ];
    cluster_pw      = ((US_Hydrodyn_Cluster *) cluster_window )->cluster_config[ "userpw" ];
 
-   submit_url      = ((US_Hydrodyn_Cluster *) cluster_window )->cluster_config[ "server" ];
-   submit_url_host = submit_url;
-   submit_url_port = submit_url;
+   manage_url      = ((US_Hydrodyn_Cluster *) cluster_window )->cluster_config[ "manage" ];
+   manage_url_host = manage_url;
+   manage_url_port = manage_url;
 
-   submit_url_host.replace( QRegExp( ":.*$" ), "" );
-   submit_url_port.replace( QRegExp( "^.*:" ), "" );
+   manage_url_host.replace( QRegExp( ":.*$" ), "" );
+   manage_url_port.replace( QRegExp( "^.*:" ), "" );
+   cout << manage_url_host << endl;
+   cout << manage_url_port << endl;
+
+   // submit_url      = ((US_Hydrodyn_Cluster *) cluster_window )->cluster_config[ "server" ];
+   // submit_url_host = submit_url;
+   // submit_url_port = submit_url;
+
+   // submit_url_host.replace( QRegExp( ":.*$" ), "" );
+   // submit_url_port.replace( QRegExp( "^.*:" ), "" );
 
    // staging is now job specific (ugh)
    // stage_url       = ((US_Hydrodyn_Cluster *) cluster_window )->stage_url;
@@ -139,9 +149,6 @@ unsigned int US_Hydrodyn_Cluster_Status::update_files( bool set_lv_files )
       lv_files->clear( );
       for ( unsigned int i = 0; i < (unsigned int)files.size(); i++ )
       {
-#if QT_VERSION < 0x040000
-         new QTreeWidgetItem( lv_files, files[ i ], "unknown", "", QFileInfo( files[ i ] ).created().toString() );
-#else
          lv_files->addTopLevelItem( new QTreeWidgetItem(
                                                         QStringList()
                                                         << files[ i ]
@@ -149,7 +156,6 @@ unsigned int US_Hydrodyn_Cluster_Status::update_files( bool set_lv_files )
                                                         << ""
                                                         << QFileInfo( files[ i ] ).created().toString()
                                                         ) );
-#endif
       }
    }
 
@@ -178,12 +184,6 @@ void US_Hydrodyn_Cluster_Status::setupGUI()
    lv_files->setEnabled(true);
    lv_files->setSelectionMode( QAbstractItemView::MultiSelection );
 
-#if QT_VERSION < 0x040000
-   lv_files->addColumn( us_tr( "Name" ) );
-   lv_files->addColumn( us_tr( "Status" ) );
-   lv_files->addColumn( us_tr( "Additional Info" ) );
-   lv_files->addColumn( us_tr( "Date created" ) );
-#else
    lv_files->setColumnCount( 4 );
    lv_files->setHeaderLabels( QStringList()
                               << us_tr( "Name" )
@@ -191,7 +191,7 @@ void US_Hydrodyn_Cluster_Status::setupGUI()
                               << us_tr( "Additional Info" )
                               << us_tr( "Date created" )
                               );
-#endif   
+
    connect( lv_files, SIGNAL( itemSelectionChanged() ), SLOT( update_enables() ) );
 
    pb_refresh = new QPushButton(us_tr("Refresh status"), this);
@@ -223,14 +223,6 @@ void US_Hydrodyn_Cluster_Status::setupGUI()
    progress->setPalette( PALET_NORMAL );
    AUTFBACK( progress );
    progress->reset();
-
-#if QT_VERSION < 0x050000
-   connect( &ftp, SIGNAL( dataTransferProgress ( int, int  ) ), progress, SLOT( setValue        ( int, int  ) ) );
-   connect( &ftp, SIGNAL( stateChanged         ( int       ) ), this    , SLOT( ftp_stateChanged   ( int       ) ) );
-   connect( &ftp, SIGNAL( commandStarted       ( int       ) ), this    , SLOT( ftp_commandStarted ( int       ) ) );
-   connect( &ftp, SIGNAL( commandFinished      ( int, bool ) ), this    , SLOT( ftp_commandFinished( int, bool ) ) );
-   connect( &ftp, SIGNAL( done                 ( bool      ) ), this    , SLOT( ftp_done           ( bool      ) ) );
-#endif
 
    editor = new QTextEdit(this);
    editor->setPalette( PALET_NORMAL );
@@ -363,9 +355,7 @@ void US_Hydrodyn_Cluster_Status::cancel()
 {
    if ( comm_active )
    {
-#if QT_VERSION < 0x050000
-      submit_http.abort();
-#endif
+      http_reply->abort();
    }
    if ( system_proc_active )
    {
@@ -386,9 +376,7 @@ void US_Hydrodyn_Cluster_Status::closeEvent(QCloseEvent *e)
 {
    if ( comm_active )
    {
-#if QT_VERSION < 0x050000
-      submit_http.abort();
-#endif
+      http_reply->abort();
    }
    if ( system_proc_active )
    {
@@ -399,7 +387,6 @@ void US_Hydrodyn_Cluster_Status::closeEvent(QCloseEvent *e)
    global_Ypos -= 30;
    e->accept();
 }
-
 
 void US_Hydrodyn_Cluster_Status::clear_display()
 {
@@ -456,30 +443,6 @@ void US_Hydrodyn_Cluster_Status::update_enables()
       bool any_selected = false;
       bool any_completed = false;
       bool any_selected_completed = false;
-#if QT_VERSION < 0x040000
-      QTreeWidgetItem *lvi = lv_files->firstChild();
-      if ( lvi )
-      {
-         do {
-            if ( lvi->isSelected() )
-            {
-               any_selected = true;
-            }
-            if ( lvi->text( 1 ) == "COMPLETED" )
-            {
-               any_completed = true;
-               if ( lvi->isSelected() )
-               {
-                  any_selected_completed = true;
-               }
-            }
-            if ( any_selected_completed )
-            {
-               break;
-            }
-         } while ( ( lvi = lvi->nextSibling() ) );
-      }
-#else
       QTreeWidgetItemIterator it( lv_files );
       QTreeWidgetItem *lvi;
 
@@ -489,7 +452,7 @@ void US_Hydrodyn_Cluster_Status::update_enables()
          {
             any_selected = true;
          }
-         if ( lvi->text( 1 ) == "COMPLETED" )
+         if ( lvi->text( 1 ) == "finished" )
          {
             any_completed = true;
             if ( lvi->isSelected() )
@@ -503,7 +466,7 @@ void US_Hydrodyn_Cluster_Status::update_enables()
          }
          ++it;
       }
-#endif      
+
       pb_refresh          ->setEnabled( !processing_active && !comm_active && !system_proc_active );
       pb_remove           ->setEnabled( !processing_active && !comm_active && !system_proc_active && any_selected  );
       pb_retrieve_selected->setEnabled( !processing_active && !comm_active && !system_proc_active && any_selected_completed );
@@ -522,9 +485,7 @@ void US_Hydrodyn_Cluster_Status::refresh()
 {
    if ( comm_active )
    {
-#if QT_VERSION < 0x050000
-      submit_http.abort();
-#endif
+      http_reply->abort();
    }
    if ( system_proc_active )
    {
@@ -550,34 +511,13 @@ void US_Hydrodyn_Cluster_Status::retrieve()
    
    QStringList qsl_submit;
 
-#if QT_VERSION < 0x040000
-   QTreeWidgetItem *lvi = lv_files->firstChild();
-   if ( lvi )
-   {
-      do {
-         if ( lvi->text( 1 ) == "COMPLETED" )
-         {
-            jobs[ lvi ] = "retrieve results";
-         }
-      } while ( ( lvi = lvi->nextSibling() ) );
-      processing_active = true;
-      stopFlag = false;
-      pb_stop->setEnabled( true );
-      editor_msg( "black", us_tr( "retrieving results" ) );
-      update_enables();
-      emit next_status();
-   } else {
-      stopFlag = false;
-      pb_stop->setEnabled( false );
-   }
-#else
    QTreeWidgetItemIterator it( lv_files );
    QTreeWidgetItem *lvi;
    if ( *it )
    {
       while ( *it ) {
          lvi = *it;
-         if ( lvi->text( 1 ) == "COMPLETED" )
+         if ( lvi->text( 1 ) == "finished" )
          {
             jobs[ lvi ] = "retrieve results";
          }
@@ -593,7 +533,6 @@ void US_Hydrodyn_Cluster_Status::retrieve()
       stopFlag = false;
       pb_stop->setEnabled( false );
    }
-#endif
 }
 
 void US_Hydrodyn_Cluster_Status::retrieve_selected()
@@ -603,34 +542,13 @@ void US_Hydrodyn_Cluster_Status::retrieve_selected()
    jobs.clear( );
    
    QStringList qsl_submit;
-#if QT_VERSION < 0x040000
-   QTreeWidgetItem *lvi = lv_files->firstChild();
-   if ( lvi )
-   {
-      do {
-         if ( lvi->text( 1 ) == "COMPLETED" && lvi->isSelected() )
-         {
-            jobs[ lvi ] = "retrieve results";
-         }
-      } while ( ( lvi = lvi->nextSibling() ) );
-      processing_active = true;
-      stopFlag = false;
-      pb_stop->setEnabled( true );
-      editor_msg( "black", us_tr( "retrieving results" ) );
-      update_enables();
-      emit next_status();
-   } else {
-      stopFlag = false;
-      pb_stop->setEnabled( false );
-   }
-#else
    QTreeWidgetItemIterator it( lv_files, QTreeWidgetItemIterator::Selected );
    QTreeWidgetItem *lvi;
    if ( *it )
    {
       while ( *it ) {
          lvi = *it;
-         if ( lvi->text( 1 ) == "COMPLETED" )
+         if ( lvi->text( 1 ) == "finished" )
          {
             jobs[ lvi ] = "retrieve results";
          }
@@ -646,7 +564,6 @@ void US_Hydrodyn_Cluster_Status::retrieve_selected()
       stopFlag = false;
       pb_stop->setEnabled( false );
    }
-#endif   
 }
 
 void US_Hydrodyn_Cluster_Status::cancel_selected()
@@ -656,19 +573,6 @@ void US_Hydrodyn_Cluster_Status::cancel_selected()
    jobs.clear( );
    
    QStringList qsl_submit;
-#if QT_VERSION < 0x040000
-   QTreeWidgetItem *lvi = lv_files->firstChild();
-   if ( lvi )
-   {
-      do {
-         if ( lvi->isSelected() )
-         {
-            jobs[ lvi ] = "cancel job";
-         }
-      } while ( ( lvi = lvi->nextSibling() ) );
-      emit next_status();
-   }
-#else
    QTreeWidgetItemIterator it( lv_files, QTreeWidgetItemIterator::Selected );
    QTreeWidgetItem *lvi;
    if ( *it )
@@ -680,7 +584,6 @@ void US_Hydrodyn_Cluster_Status::cancel_selected()
       };
       emit next_status();
    }
-#endif
 }
 
 void US_Hydrodyn_Cluster_Status::get_status()
@@ -690,18 +593,6 @@ void US_Hydrodyn_Cluster_Status::get_status()
    jobs.clear( );
    
    QStringList qsl_submit;
-#if QT_VERSION < 0x040000
-   QTreeWidgetItem *lvi = lv_files->firstChild();
-   if ( lvi )
-   {
-      do {
-         jobs[ lvi ] = "get status";
-         lvi->setText( 2, "" );
-      } while ( ( lvi = lvi->nextSibling() ) );
-      
-      emit next_status();
-   }
-#else
    QTreeWidgetItemIterator it( lv_files );
    QTreeWidgetItem *lvi;
    if ( *it )
@@ -714,7 +605,6 @@ void US_Hydrodyn_Cluster_Status::get_status()
       }
       emit next_status();
    }
-#endif
 }
 
 void US_Hydrodyn_Cluster_Status::next_status()
@@ -904,6 +794,8 @@ void US_Hydrodyn_Cluster_Status::complete_retrieve()
 
 void US_Hydrodyn_Cluster_Status::get_next_retrieve()
 {
+   qDebug() << "get_next_retrieve()";
+
    if ( system_proc_active )
    {
       return;
@@ -922,6 +814,7 @@ void US_Hydrodyn_Cluster_Status::get_next_retrieve()
 
 bool US_Hydrodyn_Cluster_Status::schedule_retrieve( QString file )
 {
+   qDebug() << "schedule_retrieve()";
    errormsg = "";
    if ( !QDir::setCurrent( completed_dir ) )
    {
@@ -936,6 +829,8 @@ bool US_Hydrodyn_Cluster_Status::schedule_retrieve( QString file )
            job_hostname[ next_to_process->text( 0 ) ] :
            "unknown"
            );
+
+   /* NOT needed ? at least with running local
 
    if ( !job_hostname.count( next_to_process->text( 0 ) ) )
    {
@@ -959,30 +854,31 @@ bool US_Hydrodyn_Cluster_Status::schedule_retrieve( QString file )
       .arg( job_hostname[ next_to_process->text( 0 ) ] )
       .arg( selected_system_name );
 
-   if ( ((US_Hydrodyn_Cluster *)cluster_window)->cluster_systems.count( selected_system_name ) )
-   {
+      if ( ((US_Hydrodyn_Cluster *)cluster_window)->cluster_systems.count( selected_system_name ) )
+      {
       map < QString, QString > selected_system = ((US_Hydrodyn_Cluster *)cluster_window)->cluster_systems[ selected_system_name ];
       if ( selected_system.count( "ftp" ) )
       {
-         // stage_url       = selected_system[ "stage" ];
-         // stage_path      = stage_url;
-         // stage_url_path  = stage_url;
-         // stage_url       .replace( QRegExp( ":.*$" ), "" );
-         // stage_path      .replace( QRegExp( "^.*:" ), "" );
-         // stage_url_path  += QString( "%1%2%3" ).arg( QDir::separator() ).arg( cluster_id ).arg( QDir::separator() );
-         ftp_url         = selected_system[ "ftp" ];
-         ftp_url_host    = ftp_url;
-         ftp_url_port    = ftp_url;
-         ftp_url_host    .replace( QRegExp( ":.*$" ), "" );
-         ftp_url_port    .replace( QRegExp( "^.*:" ), "" );
+      // stage_url       = selected_system[ "stage" ];
+      // stage_path      = stage_url;
+      // stage_url_path  = stage_url;
+      // stage_url       .replace( QRegExp( ":.*$" ), "" );
+      // stage_path      .replace( QRegExp( "^.*:" ), "" );
+      // stage_url_path  += QString( "%1%2%3" ).arg( QDir::separator() ).arg( cluster_id ).arg( QDir::separator() );
+      ftp_url         = selected_system[ "ftp" ];
+      ftp_url_host    = ftp_url;
+      ftp_url_port    = ftp_url;
+      ftp_url_host    .replace( QRegExp( ":.*$" ), "" );
+      ftp_url_port    .replace( QRegExp( "^.*:" ), "" );
       } else {
-         errormsg = QString( us_tr( "The system %1 does not seem to have sufficient configuration information defined" ) ).arg( selected_system_name );
-         return false;
+      errormsg = QString( us_tr( "The system %1 does not seem to have sufficient configuration information defined" ) ).arg( selected_system_name );
+      return false;
       }
-   } else {
+      } else {
       errormsg = QString( us_tr( "The system %1 does not seem to have any information" ) ).arg( selected_system_name );
       return false;
-   }            
+      }            
+   */
 
    // move any previously retrieved results
    {
@@ -1076,51 +972,89 @@ bool US_Hydrodyn_Cluster_Status::schedule_retrieve( QString file )
       }
    }
 
-   // using qftp now:
+   // TODO, we have get_file, should be ok.
+   // should be able to retrieve this with get
+   // https://stackoverflow.com/questions/26393207/qt-downloading-file-with-qnetworkaccessmanager
+   // do download in "chunks"
 
-   QString get_file = file;
-   get_file.replace( QRegExp( "\\.(tgz|tar|TGZ|TAR)$" ), "" );
-   get_file += QString( "_out.%1" ).arg( get_file.contains( QRegExp( "^(bfnb|bfnbpm|oned)_" ) ) ? "tgz" : "tar" );
+   // using http GET
 
-   cout << "get file: " << get_file << endl;
+   retrieve_file_name = file;
+   retrieve_file_name.replace( QRegExp( "\\.(tgz|tar|TGZ|TAR)$" ), "" );
+   retrieve_file_name += QString( "_out.%1" ).arg( retrieve_file_name.contains( QRegExp( "^(bfnb|bfnbpm|oned)_" ) ) ? "tgz" : "tar" );
 
-   ftp_file = new QFile( get_file );
-   if ( !ftp_file->open( QIODevice::WriteOnly ) )
-   {
+   retrieve_file = new QFile( retrieve_file_name );
+   if ( !retrieve_file->open( QIODevice::WriteOnly ) ) {
       errormsg = QString( us_tr( "stage: can not open file %1" ) ).arg( file );
-      delete ftp_file;
-      ftp_file = ( QFile * ) 0;
+      delete retrieve_file;
+      retrieve_file = ( QFile * ) 0;
       return false;
    }
-
-   QString target_dir = QString( "%1" ).arg( next_to_process->text( 0 ) ).replace( QRegExp( "\\.(tar|tgz)$" ), "" );
-
-   cout 
-      << QString( "ftp host   : %1\n"
-                  "ftp port   : %2\n"
-                  "target_dir : %3\n"
-                  "file       : %4\n" 
-                  "cluser_id  : %5\n" 
-                  "cluster_pw : %6\n" 
-                  )
-      .arg( ftp_url_host )
-      .arg( ftp_url_port.toUInt() )
-      .arg( target_dir )
-      .arg( get_file )
-      .arg( cluster_id )
-      .arg( cluster_pw );
-   
    comm_active = true;
 
-#if QT_VERSION < 0x050000
-   ftp.connectToHost( ftp_url_host, ftp_url_port.toUInt() );
-   ftp.login        ( cluster_id  , cluster_pw   );
-   ftp.cd           ( target_dir );
-   ftp.get          ( get_file    , ftp_file       );
-   ftp.close        ();
-#endif
+   QString url =
+      QString( "/jobresults?" )
+      + QString( "&user=%1"            ).arg( cluster_id )
+      + QString( "&pw=%1"              ).arg( cluster_pw )
+      + QString( "&_uuid=%1"           ).arg( QString( "%1-%2" ).arg( cluster_id ).arg( file ) )
+      + QString( "&file=%1"            ).arg( retrieve_file_name )
+      ;
    
+   http_request.setUrl( QUrl( QString( "http://%1%2" ).arg( manage_url ).arg( url ) ) );
+   http_reply = http_access_manager->get( http_request );
+      
+   connect( http_reply, SIGNAL( downloadProgress ( qint64, qint64 ) ),   this, SLOT( http_retrieve_downloadProgress( qint64, qint64 ) ) );
+   connect( http_reply, SIGNAL( uploadProgress ( qint64, qint64 ) ),     this, SLOT( http_retrieve_uploadProgress( qint64, qint64 ) ) );
+   connect( http_reply, SIGNAL( finished () ),                           this, SLOT( http_retrieve_finished() ) );
+   connect( http_reply, SIGNAL( error ( QNetworkReply::NetworkError ) ), this, SLOT( http_retrieve_error ( QNetworkReply::NetworkError ) ) ); 
+
    return true;
+      
+   // // using qftp now:
+
+   // QString get_file = file;
+   // get_file.replace( QRegExp( "\\.(tgz|tar|TGZ|TAR)$" ), "" );
+   // get_file += QString( "_out.%1" ).arg( get_file.contains( QRegExp( "^(bfnb|bfnbpm|oned)_" ) ) ? "tgz" : "tar" );
+
+   // cout << "get file: " << get_file << endl;
+
+   // ftp_file = new QFile( get_file );
+   // if ( !ftp_file->open( QIODevice::WriteOnly ) )
+   // {
+   //    errormsg = QString( us_tr( "stage: can not open file %1" ) ).arg( file );
+   //    delete ftp_file;
+   //    ftp_file = ( QFile * ) 0;
+   //    return false;
+   // }
+
+   // QString target_dir = QString( "%1" ).arg( next_to_process->text( 0 ) ).replace( QRegExp( "\\.(tar|tgz)$" ), "" );
+
+   // cout 
+   //    << QString( "ftp host   : %1\n"
+   //                "ftp port   : %2\n"
+   //                "target_dir : %3\n"
+   //                "file       : %4\n" 
+   //                "cluser_id  : %5\n" 
+   //                "cluster_pw : %6\n" 
+   //                )
+   //    .arg( ftp_url_host )
+   //    .arg( ftp_url_port.toUInt() )
+   //    .arg( target_dir )
+   //    .arg( get_file )
+   //    .arg( cluster_id )
+   //    .arg( cluster_pw );
+   
+   // comm_active = true;
+
+   // #if QT_VERSION < 0x050000
+   //    ftp.connectToHost( ftp_url_host, ftp_url_port.toUInt() );
+   //    ftp.login        ( cluster_id  , cluster_pw   );
+   //    ftp.cd           ( target_dir );
+   //    ftp.get          ( get_file    , ftp_file       );
+   //    ftp.close        ();
+   // #endif
+   
+   // return true;
 
    // QStringList cmd;
    // cmd << "scp";
@@ -1166,7 +1100,6 @@ void US_Hydrodyn_Cluster_Status::get_next_status()
 
 bool US_Hydrodyn_Cluster_Status::send_http_get( QString file )
 {
-#if QT_VERSION < 0x050000
    // need to do a post & get to submit_url slash stuff
    // its going to require opening a socket etc
    // 
@@ -1175,171 +1108,62 @@ bool US_Hydrodyn_Cluster_Status::send_http_get( QString file )
 
    current_http_response = "";
 
-   connect( &submit_http, SIGNAL( stateChanged ( int ) ), this, SLOT( http_stateChanged ( int ) ) );
-   connect( &submit_http, SIGNAL( responseHeaderReceived ( const QHttpResponseHeader & ) ), this, SLOT( http_responseHeaderReceived ( const QHttpResponseHeader & ) ) );
-   connect( &submit_http, SIGNAL( readyRead ( const QHttpResponseHeader & ) ), this, SLOT( http_readyRead ( const QHttpResponseHeader & ) ) );
-   connect( &submit_http, SIGNAL( dataSendProgress ( int, int ) ), this, SLOT( http_dataSendProgress ( int, int ) ) );
-   connect( &submit_http, SIGNAL( dataReadProgress ( int, int ) ), this, SLOT( http_dataReadProgress ( int, int ) ) );
-   connect( &submit_http, SIGNAL( requestStarted ( int ) ), this, SLOT( http_requestStarted ( int ) ) );
-   connect( &submit_http, SIGNAL( requestFinished ( int, bool ) ), this, SLOT( http_requestFinished ( int, bool ) ) );
-   connect( &submit_http, SIGNAL( done ( bool ) ), this, SLOT( http_done ( bool ) ) );
+
+   // connect( &submit_http, SIGNAL( stateChanged ( int ) ), this, SLOT( http_stateChanged ( int ) ) );
+   // connect( &submit_http, SIGNAL( responseHeaderReceived ( const QHttpResponseHeader & ) ), this, SLOT( http_responseHeaderReceived ( const QHttpResponseHeader & ) ) );
+   // connect( &submit_http, SIGNAL( readyRead ( const QHttpResponseHeader & ) ), this, SLOT( http_readyRead ( const QHttpResponseHeader & ) ) );
+   // connect( &submit_http, SIGNAL( dataSendProgress ( int, int ) ), this, SLOT( http_dataSendProgress ( int, int ) ) );
+   // connect( &submit_http, SIGNAL( dataReadProgress ( int, int ) ), this, SLOT( http_dataReadProgress ( int, int ) ) );
+   // connect( &submit_http, SIGNAL( requestStarted ( int ) ), this, SLOT( http_requestStarted ( int ) ) );
+   // connect( &submit_http, SIGNAL( requestFinished ( int, bool ) ), this, SLOT( http_requestFinished ( int, bool ) ) );
+   // connect( &submit_http, SIGNAL( done ( bool ) ), this, SLOT( http_done ( bool ) ) );
+
+   QString url;
 
    if ( comm_mode == "status" )
    {
-      submit_http.setHost( submit_url_host, submit_url_port.toUInt() );
-      submit_http.get( QString( "/ogce-rest/job/jobstatus/%1-%2" )
-                       .arg( cluster_id )
-                       .arg( file ) );
+      // submit_http.setHost( submit_url_host, submit_url_port.toUInt() );
+      // submit_http.get( QString( "/ogce-rest/job/jobstatus/%1-%2" )
+      //                  .arg( cluster_id )
+      //                  .arg( file ) );
+      url =
+         QString( "/jobstatus?" )
+         + QString( "&user=%1"            ).arg( cluster_id )
+         + QString( "&pw=%1"              ).arg( cluster_pw )
+         + QString( "&_uuid=%1"           ).arg( QString( "%1-%2" ).arg( cluster_id ).arg( file ) )
+         ;
+   
+      http_request.setUrl( QUrl( QString( "http://%1%2" ).arg( manage_url ).arg( url ) ) );
+      http_reply = http_access_manager->get( http_request );
+      
+      connect( http_reply, SIGNAL( downloadProgress ( qint64, qint64 ) ), this, SLOT( http_downloadProgress( qint64, qint64 ) ) );
+      connect( http_reply, SIGNAL( uploadProgress ( qint64, qint64 ) ), this, SLOT( http_uploadProgress( qint64, qint64 ) ) );
+      connect( http_reply, SIGNAL( finished () ), this, SLOT( http_finished() ) );
+      connect( http_reply, SIGNAL( error ( QNetworkReply::NetworkError ) ), this, SLOT( http_error ( QNetworkReply::NetworkError ) ) ); 
    }
 
    if ( comm_mode == "cancel" )
    {
-      submit_http.setHost( submit_url_host, submit_url_port.toUInt() );
-      submit_http.get( QString( "/ogce-rest/job/canceljob/%1-%2" )
-                       .arg( cluster_id )
-                       .arg( file ) );
+      // submit_http.setHost( submit_url_host, submit_url_port.toUInt() );
+      // submit_http.get( QString( "/ogce-rest/job/canceljob/%1-%2" )
+      //                  .arg( cluster_id )
+      //                  .arg( file ) );
+      url =
+         QString( "/jobcancel?" )
+         + QString( "&user=%1"            ).arg( cluster_id )
+         + QString( "&pw=%1"              ).arg( cluster_pw )
+         + QString( "&_uuid=%1"           ).arg( QString( "%1-%2" ).arg( cluster_id ).arg( file ) )
+         ;
+   
+      http_request.setUrl( QUrl( QString( "http://%1%2" ).arg( manage_url ).arg( url ) ) );
+      http_reply = http_access_manager->get( http_request );
+      connect( http_reply, SIGNAL( downloadProgress ( qint64, qint64 ) ), this, SLOT( http_downloadProgress( qint64, qint64 ) ) );
+      connect( http_reply, SIGNAL( uploadProgress ( qint64, qint64 ) ), this, SLOT( http_uploadProgress( qint64, qint64 ) ) );
+      connect( http_reply, SIGNAL( finished () ), this, SLOT( http_finished() ) );
+      connect( http_reply, SIGNAL( error ( QNetworkReply::NetworkError ) ), this, SLOT( http_error ( QNetworkReply::NetworkError ) ) ); 
    }
 
-#endif
    return true;
-}
-
-void US_Hydrodyn_Cluster_Status::http_stateChanged ( int /* state */ )
-{
-   // editor_msg( "blue", QString( "http state %1" ).arg( state ) );
-}
-
-#if QT_VERSION < 0x050000
-void US_Hydrodyn_Cluster_Status::http_responseHeaderReceived ( const QHttpResponseHeader & resp )
-{
-   cout << resp.reasonPhrase() << endl;
-}
-
-void US_Hydrodyn_Cluster_Status::http_readyRead( const QHttpResponseHeader & resp )
-{
-   cout << "http: readyRead\n" << endl << flush;
-   cout << resp.reasonPhrase() << endl;
-   // current_http_response = QString( "%1" ).arg( submit_http.readAll() );
-   current_http_response = QString( submit_http.readAll() );
-   cout << "http response:";
-   cout << current_http_response << endl;
-
-   if ( comm_mode == "status" &&
-        current_http_response.contains( "<status>" ) )
-   {
-      QString status = current_http_response;
-      status.replace( QRegExp( "^.*<status>" ), "" );
-      status.replace( QRegExp( "</status>.*$" ), "" );
-      status.replace( QRegExp( "\n|\r" ), " " );
-      status.replace( QRegExp( "\\s+" ), " " );
-      status.replace( QRegExp( "\\s+$" ), "" );
-      status.replace( "SUBMITED", "SUBMITTED" );
-      cout << "status:" << status << endl;
-      next_to_process->setText( 1, status );
-      QString message = current_http_response;
-      if ( message.contains( "<message>" ) )
-      {
-         message.replace( QRegExp( "^.*<message>" ), "" );
-         message.replace( QRegExp( "</message>.*$" ), "" );
-         message.replace( QRegExp( "\n|\r" ), " " ) ;
-         message.replace( QRegExp( "\\s+" ), " " );
-         message.replace( QRegExp( "\\s+$" ), "" );
-         message.replace( QRegExp( "RSL =.*" ), "" );
-         message.replace( QRegExp( "Finished launching job, Host = " ), "" );
-         message.replace( QRegExp( "\\s+$" ), "" );
-         cout << "message: " << message << endl;
-         job_hostname[ next_to_process->text( 0 ) ] = message;
-      } else {
-         message = "";
-      }
-      next_to_process->setText( 2, message );
-   }
-}
-#endif
-
-void US_Hydrodyn_Cluster_Status::http_dataSendProgress ( int done, int total )
-{
-   cout << "http: datasendprogress " << done << " " << total << "\n";
-}
-void US_Hydrodyn_Cluster_Status::http_dataReadProgress ( int done, int total )
-{
-   cout << "http: datareadprogress " << done << " " << total << "\n";
-}
-
-void US_Hydrodyn_Cluster_Status::http_requestStarted ( int id )
-{
-   cout << "http: requestStarted " << id << "\n";
-}
-
-void US_Hydrodyn_Cluster_Status::http_requestFinished ( int id, bool error  )
-{
-   cout << "http: requestFinished " << id << " " << error << "\n";
-}
-
-void US_Hydrodyn_Cluster_Status::http_done ( bool error )
-{
-#if QT_VERSION < 0x050000
-   disconnect( &submit_http, SIGNAL( stateChanged ( int ) ), 0, 0 );
-   disconnect( &submit_http, SIGNAL( responseHeaderReceived ( const QHttpResponseHeader & ) ), 0, 0 );
-   disconnect( &submit_http, SIGNAL( readyRead ( const QHttpResponseHeader & ) ), 0, 0 );
-   disconnect( &submit_http, SIGNAL( dataSendProgress ( int, int ) ), 0, 0 );
-   disconnect( &submit_http, SIGNAL( dataReadProgress ( int, int ) ), 0, 0 );
-   disconnect( &submit_http, SIGNAL( requestStarted ( int ) ), 0, 0 );
-   disconnect( &submit_http, SIGNAL( requestFinished ( int, bool ) ), 0, 0 );
-   disconnect( &submit_http, SIGNAL( done ( bool ) ), 0, 0 );
-   comm_active = false;
-   QString current_http_error;
-   if ( error )
-   {
-      switch( submit_http.error() )
-      {
-      case QHttp::NoError :
-         current_http_error = us_tr( "No error occurred." );
-         break;
-
-      case QHttp::HostNotFound:
-         current_http_error = us_tr( "The host name lookup failed." );
-         break;
-
-      case QHttp::ConnectionRefused:
-         current_http_error = us_tr( "The server refused the connection." );
-         break;
-
-      case QHttp::UnexpectedClose:
-         current_http_error = us_tr( "The server closed the connection unexpectedly." );
-         break;
-
-      case QHttp::InvalidResponseHeader:
-         current_http_error = us_tr( "The server sent an invalid response header." );
-         break;
-
-      case QHttp::WrongContentLength:
-         current_http_error = us_tr( "The client could not read the content correctly because an error with respect to the content length occurred." );
-         break;
-
-      case QHttp::Aborted:
-         current_http_error = us_tr( "The request was aborted with abort()." );
-         break;
-
-      case QHttp::UnknownError:
-      default:
-         current_http_error = us_tr( "Unknown Error." );
-         break;
-      }
-      QMessageBox::warning( this,
-                            us_tr("US-SOMO: Cluster Config"), 
-                            us_tr( QString( "There was a error with the management server:\n%1" )
-                                .arg( current_http_error ) ),
-                            QMessageBox::Ok,
-                            QMessageBox::NoButton
-                            );
-      processing_active = false;
-      editor_msg( "red", us_tr( "Error: " ) + current_http_error );
-      update_enables();
-      return;
-   }
-   emit next_status();
-#endif
 }
 
 bool US_Hydrodyn_Cluster_Status::system_cmd( QStringList cmd )
@@ -1355,13 +1179,9 @@ bool US_Hydrodyn_Cluster_Status::system_cmd( QStringList cmd )
 
    system_proc = new QProcess( this );
 
-#if QT_VERSION < 0x040000
-   system_proc->setArguments( cmd );
-#else
    QString prog = cmd.front();
    cmd.pop_front();
    QStringList args = cmd;
-#endif
 
    system_proc_active = true;
 
@@ -1371,36 +1191,18 @@ bool US_Hydrodyn_Cluster_Status::system_cmd( QStringList cmd )
    connect( system_proc, SIGNAL(started()),  this, SLOT(system_proc_started()) );
 
 
-#if QT_VERSION < 0x040000
-   return system_proc->start();
-#else
    system_proc->start( prog, args );
    return system_proc->waitForStarted();
-#endif
 }
 
 void US_Hydrodyn_Cluster_Status::system_proc_readFromStdout()
 {
-#if QT_VERSION < 0x040000
-   while ( system_proc->canReadLineStdout() )
-   {
-      editor_msg("brown", system_proc->readLineStdout());
-   }
-#else
-   editor_msg( "brown", QString( system_proc->readAllStandardOutput() ) );
-#endif   
+   editor_msg("brown", QString( system_proc->readAllStandardOutput() ) );
 }
    
 void US_Hydrodyn_Cluster_Status::system_proc_readFromStderr()
 {
-#if QT_VERSION < 0x040000
-   while ( system_proc->canReadLineStderr() )
-   {
-      editor_msg("red", system_proc->readLineStderr());
-   }
-#else
    editor_msg( "red", QString( system_proc->readAllStandardError() ) );
-#endif   
 }
    
 void US_Hydrodyn_Cluster_Status::system_proc_finished( int, QProcess::ExitStatus )
@@ -1448,10 +1250,7 @@ void US_Hydrodyn_Cluster_Status::stop()
    pb_stop->setEnabled( false );
    if ( comm_active )
    {
-#if QT_VERSION < 0x050000
-      submit_http.abort();
-      ftp.abort();
-#endif
+      http_reply->abort();
    }
    if ( system_proc_active )
    {
@@ -1461,70 +1260,162 @@ void US_Hydrodyn_Cluster_Status::stop()
    update_enables();
 }
 
-void US_Hydrodyn_Cluster_Status::ftp_stateChanged ( int state )
-{
-   cout << "ftp state changed: " << state << endl;
-#if QT_VERSION < 0x050000
-   if ( state == QFtp::Unconnected )
-   {
-      cout << "- There is no connection to the host. \n";
-   }
-   if ( state == QFtp::HostLookup )
-   {
-      cout << "- A host name lookup is in progress. \n";
-   }
-   if ( state == QFtp::Connecting )
-   {
-      cout << "- An attempt to connect to the host is in progress. \n";
-   }
-   if ( state == QFtp::Connected )
-   {
-      cout << "- Connection to the host has been achieved. \n";
-   }
-   if ( state == QFtp::LoggedIn )
-   {
-      cout << "- Connection and user login have been achieved. \n";
-   }
-   if ( state == QFtp::Closing )
-   {
-      cout << "- The connection is closing down, but it is not yet closed.\n";
-   }
-#endif
+void US_Hydrodyn_Cluster_Status::http_error( QNetworkReply::NetworkError /* code */ ) {
+   qDebug() << "http: error";
+   current_http_error = http_reply->errorString();
+   http_done( true );
 }
 
-void US_Hydrodyn_Cluster_Status::ftp_commandStarted ( int id )
+void US_Hydrodyn_Cluster_Status::http_uploadProgress ( qint64 done, qint64 total )
 {
-   cout << "ftp command started: " << id << endl;
+   // cout << "http: uploadProgress " << done << " " << total << "\n";
+   progress->setValue( 100.0 * (double) done / (double) total );
 }
 
-void US_Hydrodyn_Cluster_Status::ftp_commandFinished ( int id, bool error )
+void US_Hydrodyn_Cluster_Status::http_downloadProgress ( qint64 done, qint64 total )
 {
-#if QT_VERSION < 0x050000
-   cout << "ftp command finished" << id 
-        << QString( " %1\n" ).arg( error ? QString( "error %1" ).arg( ftp.errorString() ) : "" );
-#endif
+   // cout << "http: downloadProgress " << done << " " << total << "\n";
+   progress->setValue( 100.0 * (double) done / (double) total );
 }
 
-void US_Hydrodyn_Cluster_Status::ftp_done ( bool error )
+void US_Hydrodyn_Cluster_Status::http_done ( bool error )
 {
-#if QT_VERSION < 0x050000
-   cout << "ftp done" 
-        << QString( " %1\n" ).arg( error ? QString( "error %1" ).arg( ftp.errorString() ) : "" );
-   
-   if ( error &&
-        jobs[ next_to_process ] == "completed" )
-   {
-      jobs[ next_to_process ] = "failed";
-      editor_msg( "red", QString( "Error: %1" ).arg( ftp.errorString() ) );
-   }
-
-   if ( ftp_file )
-   {
-      ftp_file->close();
-      ftp_file = ( QFile * ) 0;
-   }
-
+   cout << "http: done " << error << "\n";
+   disconnect( http_reply, SIGNAL( downloadProgress ( qint64, qint64 ) ), 0, 0 );
+   disconnect( http_reply, SIGNAL( uploadProgress ( qint64, qint64 ) ), 0, 0 );
+   disconnect( http_reply, SIGNAL( finished () ), 0, 0 );
+   disconnect( http_reply, SIGNAL( error ( QNetworkReply::NetworkError ) ), 0, 0 );
    comm_active = false;
+   http_reply->deleteLater();
+   if ( error )
+   {
+      cout << current_http_error << endl;
+      QMessageBox::warning( this,
+                            us_tr("US-SOMO: Cluster Status"), 
+                            us_tr( QString( "There was a error with the management server:\n%1" )
+                                .arg( current_http_error ) ),
+                            QMessageBox::Ok,
+                            QMessageBox::NoButton
+                            );
+      comm_active = false;
+      editor_msg( "red", us_tr( "Error: " ) + current_http_error );
+      update_enables();
+      return;
+   }
    emit next_status();
-#endif
+}
+
+void US_Hydrodyn_Cluster_Status::http_finished()
+{
+   current_http_response = QString( http_reply->readAll() );
+   cout << current_http_response << endl;
+
+   {
+      map < QString, QString > readJson = US_Json::split( current_http_response );
+      if ( readJson.count( "error" ) ) {
+         current_http_error = readJson[ "error" ];
+         http_done( true );
+      }
+      if ( readJson.count( "status" ) ) {
+         next_to_process->setText( 1, readJson[ "status" ] );
+      }
+      if ( readJson.count( "message" ) ) {
+         next_to_process->setText( 2, readJson[ "message" ] );
+      } else {
+         next_to_process->setText( 2, "" );
+      }
+   }
+
+   http_done( false );
+}
+
+void US_Hydrodyn_Cluster_Status::http_retrieve_error( QNetworkReply::NetworkError /* code */ ) {
+   qDebug() << "http_retrieve_error(): error";
+   current_http_error = http_reply->errorString();
+   http_retrieve_done( true );
+}
+
+void US_Hydrodyn_Cluster_Status::http_retrieve_uploadProgress ( qint64 done, qint64 total )
+{
+   qDebug() << "http_retrieve_uploadProgress count " << done << " " << total << "\n";
+}
+
+void US_Hydrodyn_Cluster_Status::http_retrieve_downloadProgress ( qint64 done, qint64 total )
+{
+   qDebug() << "http_retrieve_downloadProgress count " << done << " " << total;
+   progress->setValue( 100.0 * (double) done / (double) total );
+   QByteArray qba = http_reply->readAll();
+   if ( retrieve_file->write( qba ) != qba.size() ) {
+      current_http_error = QString( "error writing file %1" ).arg( retrieve_file->fileName() );
+      http_reply->abort();
+      http_retrieve_done( true );
+   }
+}
+
+void US_Hydrodyn_Cluster_Status::http_retrieve_done ( bool error )
+{
+   qDebug() << "http_retrieve_done(): error " << ( error ? "true" : "false" );
+   disconnect( http_reply, SIGNAL( downloadProgress ( qint64, qint64 ) ), 0, 0 );
+   disconnect( http_reply, SIGNAL( uploadProgress ( qint64, qint64 ) ), 0, 0 );
+   disconnect( http_reply, SIGNAL( finished () ), 0, 0 );
+   disconnect( http_reply, SIGNAL( error ( QNetworkReply::NetworkError ) ), 0, 0 );
+   comm_active = false;
+   http_reply->deleteLater();
+   
+   if ( error )
+   {
+      if ( retrieve_file ) {
+         retrieve_file->close();
+         retrieve_file->remove();
+         delete retrieve_file;
+         retrieve_file = ( QFile * ) 0;
+      }
+
+      cout << current_http_error << endl;
+      QMessageBox::warning( this,
+                            us_tr("US-SOMO: Cluster Status"), 
+                            us_tr( QString( "There was a error with the management server:\n%1" )
+                                .arg( current_http_error ) ),
+                            QMessageBox::Ok,
+                            QMessageBox::NoButton
+                            );
+      comm_active = false;
+      editor_msg( "red", us_tr( "Error: " ) + current_http_error );
+      update_enables();
+      return;
+   }
+   emit next_status();
+}
+
+void US_Hydrodyn_Cluster_Status::http_retrieve_finished()
+{
+   qDebug() << "http_retrieve_finished()";
+   // this goes into our file
+   // current_http_response = QString( http_reply->readAll() );
+   current_http_response = "finished";
+   cout << current_http_response << endl;
+
+   if ( retrieve_file ) {
+      retrieve_file->close();
+      delete retrieve_file;
+      retrieve_file = ( QFile * ) 0;
+   }
+
+   {
+      map < QString, QString > readJson = US_Json::split( current_http_response );
+      if ( readJson.count( "error" ) ) {
+         current_http_error = readJson[ "error" ];
+         http_retrieve_done( true );
+      }
+      if ( readJson.count( "status" ) ) {
+         next_to_process->setText( 1, readJson[ "status" ] );
+      }
+      if ( readJson.count( "message" ) ) {
+         next_to_process->setText( 2, readJson[ "message" ] );
+      } else {
+         next_to_process->setText( 2, "" );
+      }
+   }
+
+   http_retrieve_done( false );
 }

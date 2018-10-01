@@ -22,6 +22,7 @@ TARGET  = us_somo
 
 # OSX also reports UNIX
 contains( DEFINES, "OSX" ) {
+   QT += network
 } else {
     unix {
       QMAKE_CXXFLAGS_WARN_ON += -Wno-non-virtual-dtor
@@ -420,6 +421,7 @@ SOURCES *= \
 #  us_stiffbase.cpp \
         src/us_surfracer.cpp \
         src/us_svd.cpp \
+        src/us_efa.cpp \
         src/us_tar.cpp \
         src/us_timer.cpp \
 #  us_thread.cpp \
@@ -726,6 +728,7 @@ HEADERS *= \
 #  us_stiffbase.h \
         include/us_surfracer.h \
         include/us_svd.h \
+        include/us_efa.h \
         include/us_tar.h \
         include/us_timer.h \
         include/us_thread.h \

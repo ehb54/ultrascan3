@@ -110,3 +110,6 @@ win32 {
 macx {  
   message ("MPI Not valid for mac") 
 }
+
+# needed for qt5.11, probably should be here anyway until we remove dependencies properly
+QT += widgets gui printsupport network

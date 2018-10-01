@@ -51,11 +51,11 @@ class US_EXTERN US_Log
       void          flushon    ();
       void          flushoff   ();
       QString       error_msg;
+      QFile         f;
       
    private:
       
       bool          autoflush;
-      QFile         f;
       QTextStream * ts;
 };
 

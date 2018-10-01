@@ -1037,6 +1037,7 @@ bool US_Hydrodyn_Cluster_Results::move_to_results( QString jobname, QStringList 
       }
    }      
    editor_msg( "dark blue", QString( us_tr( "Results for job %1 are now in %2" ) ).arg( jobname ).arg( output_dir ) );
+   ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( output_dir );
    return true;
 }
 
@@ -1056,7 +1057,6 @@ unsigned int US_Hydrodyn_Cluster_Results::update_files( bool set_lv_files )
    //                             ( tgz_files.size() ? "\n" : "" ) +
    //                             tar_files.join("\n") );
    
-   QStringList files;
    {
       QString qs =
          tgz_files.join("\n") + 

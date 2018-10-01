@@ -431,6 +431,14 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
 
    panel1_widgets.push_back( pb_csv_angle );
 
+   pb_csv_sol2wat = new QPushButton(us_tr("SOL->WAT"), this);
+   pb_csv_sol2wat->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   pb_csv_sol2wat->setMinimumHeight(minHeight1);
+   pb_csv_sol2wat->setPalette( PALET_PUSHB );
+   connect(pb_csv_sol2wat, SIGNAL(clicked()), SLOT(csv_sol2wat()));
+
+   panel1_widgets.push_back( pb_csv_sol2wat );
+
    pb_csv_reseq = new QPushButton(us_tr("Reseq"), this);
    pb_csv_reseq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_reseq->setMinimumHeight(minHeight1);
@@ -509,7 +517,11 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv_sel_invert->setPalette( PALET_PUSHB );
    connect(pb_csv_sel_invert, SIGNAL(clicked()), SLOT(csv_sel_invert()));
 
+#if QT_VERSION >= 0x050000
+   pb_csv_sel_invert->hide();
+#else
    panel1_widgets.push_back( pb_csv_sel_invert );
+#endif
 
    pb_csv_sel_chain = new QPushButton(us_tr("Chain"), this);
    pb_csv_sel_chain->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -700,6 +712,14 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
 
    panel2_widgets.push_back( pb_csv2_angle );
 
+   pb_csv2_sol2wat = new QPushButton(us_tr("SOL->WAT"), this);
+   pb_csv2_sol2wat->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   pb_csv2_sol2wat->setMinimumHeight(minHeight1);
+   pb_csv2_sol2wat->setPalette( PALET_PUSHB );
+   connect(pb_csv2_sol2wat, SIGNAL(clicked()), SLOT(csv2_sol2wat()));
+
+   panel2_widgets.push_back( pb_csv2_sol2wat );
+
    pb_csv2_reseq = new QPushButton(us_tr("Reseq"), this);
    pb_csv2_reseq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_reseq->setMinimumHeight(minHeight1);
@@ -778,7 +798,11 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv2_sel_invert->setPalette( PALET_PUSHB );
    connect(pb_csv2_sel_invert, SIGNAL(clicked()), SLOT(csv2_sel_invert()));
 
+#if QT_VERSION >= 0x050000
+   pb_csv2_sel_invert->hide();
+#else
    panel2_widgets.push_back( pb_csv2_sel_invert );
+#endif
 
    pb_csv2_sel_chain = new QPushButton(us_tr("Chain"), this);
    pb_csv2_sel_chain->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -903,6 +927,8 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    hbl_center_buttons_row_2->addWidget( pb_csv_merge );
    hbl_center_buttons_row_2->addSpacing( 2 );
    hbl_center_buttons_row_2->addWidget( pb_csv_angle );
+   hbl_center_buttons_row_2->addSpacing( 2 );
+   hbl_center_buttons_row_2->addWidget( pb_csv_sol2wat );
 
    QBoxLayout * hbl_center_buttons_row_3 = new QHBoxLayout; hbl_center_buttons_row_3->setContentsMargins( 0, 0, 0, 0 ); hbl_center_buttons_row_3->setSpacing( 0 );
    hbl_center_buttons_row_3->addWidget( pb_csv_reseq );
@@ -984,6 +1010,8 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    hbl_right_buttons_row_2->addWidget( pb_csv2_merge );
    hbl_right_buttons_row_2->addSpacing( 2 );
    hbl_right_buttons_row_2->addWidget( pb_csv2_angle );
+   hbl_right_buttons_row_2->addSpacing( 2 );
+   hbl_right_buttons_row_2->addWidget( pb_csv2_sol2wat );
 
    QBoxLayout * hbl_right_buttons_row_3 = new QHBoxLayout; hbl_right_buttons_row_3->setContentsMargins( 0, 0, 0, 0 ); hbl_right_buttons_row_3->setSpacing( 0 );
    hbl_right_buttons_row_3->addWidget( pb_csv2_reseq );
@@ -1117,6 +1145,7 @@ void US_Hydrodyn_Pdb_Tool::update_enables_csv()
    pb_csv_merge                ->setEnabled( any_csv_selected && merge_ok() );
    pb_csv2_merge               ->setEnabled( any_csv2_selected && merge_ok() );
    pb_csv_angle                ->setEnabled( counts.atoms == 3 );
+   pb_csv_sol2wat              ->setEnabled( counts.SOLs );
    pb_csv_reseq                ->setEnabled( csv1.data.size() );
    pb_csv_check                ->setEnabled( csv1.data.size() );
    pb_csv_sort                 ->setEnabled( counts.models > 1 );
@@ -1159,6 +1188,7 @@ void US_Hydrodyn_Pdb_Tool::update_enables_csv2()
    pb_csv_merge                 ->setEnabled( any_csv_selected && merge_ok() );
    pb_csv2_merge                ->setEnabled( any_csv2_selected && merge_ok() );
    pb_csv2_angle                ->setEnabled( counts.atoms == 3 );
+   pb_csv2_sol2wat              ->setEnabled( counts.SOLs );
    pb_csv2_reseq                ->setEnabled( csv2[ csv2_pos ].data.size() );
    pb_csv2_check                ->setEnabled( csv2[ csv2_pos ].data.size() );
    pb_csv2_sort                 ->setEnabled( counts.models > 1 );
@@ -1350,14 +1380,24 @@ void US_Hydrodyn_Pdb_Tool::csv2_save()
 
 void US_Hydrodyn_Pdb_Tool::save_csv( QTreeWidget *lv )
 {
+   csv csv_to_save;
+   if ( lv == lv_csv )
+   {
+      csv_to_save = to_csv( lv_csv, csv1 );
+   } else {
+      csv_to_save = to_csv( lv_csv2, csv2[ csv2_pos ] );
+   }
+
    QString use_dir = 
       ((US_Hydrodyn *)us_hydrodyn)->path_view_pdb.isEmpty() ?
       ((US_Hydrodyn *)us_hydrodyn)->somo_pdb_dir :
       ((US_Hydrodyn *)us_hydrodyn)->path_view_pdb;
 
+   us_qdebug( QString( "csv_to_save.name %1 csv_to_save.filename %2" ).arg( csv_to_save.name ).arg( csv_to_save.filename ) );
+   
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
 
-   QString filename = QFileDialog::getSaveFileName( this , us_tr("Choose a filename to save the pdb") , use_dir , "*.pdb *.PDB" );
+   QString filename = QFileDialog::getSaveFileName( this , us_tr("Choose a filename to save the pdb") , use_dir + "/" + csv_to_save.name , "*.pdb *.PDB" );
 
    if ( filename.isEmpty() )
    {
@@ -1385,13 +1425,6 @@ void US_Hydrodyn_Pdb_Tool::save_csv( QTreeWidget *lv )
 
    QTextStream t( &f );
 
-   csv csv_to_save;
-   if ( lv == lv_csv )
-   {
-      csv_to_save = to_csv( lv_csv, csv1 );
-   } else {
-      csv_to_save = to_csv( lv_csv2, csv2[ csv2_pos ] );
-   }
 
    t << csv_to_pdb( csv_to_save );
    
@@ -1559,6 +1592,7 @@ pdb_sel_count US_Hydrodyn_Pdb_Tool::count_selected( QTreeWidget *lv )
    counts.chain_partial       = false;
    counts.residue_partial     = false;
    counts.not_selected_atoms  = 0;
+   counts.SOLs                = 0;
 
    QTreeWidgetItemIterator it( lv );
    while ( (*it) ) 
@@ -1606,14 +1640,24 @@ pdb_sel_count US_Hydrodyn_Pdb_Tool::count_selected( QTreeWidget *lv )
                {
                   editor_msg( "red", QString( us_tr( "Internal error: missing key %1" ) ).arg( key( item ) ) );
                } else {
-                  csv_selected_element_counts [ csv1.data[ csv1.key[ key( item ) ] ][ 13 ] ]++;
+                  vector < QString > *csvdata = &csv1.data[ csv1.key[ key( item ) ] ];
+                  // csv_selected_element_counts [ csv1.data[ csv1.key[ key( item ) ] ][ 13 ] ]++;
+                  csv_selected_element_counts [ (*csvdata)[ 13 ] ]++;
+                  if ( (*csvdata)[ 2 ] == "SOL" ) {
+                     counts.SOLs++;
+                  }
                }
             } else {
                if ( !csv2[ csv2_pos].key.count( key( item ) ) )
                {
                   editor_msg( "red", QString( us_tr( "Internal error: missing key %1" ) ).arg( key( item ) ) );
                } else {
-                  csv2_selected_element_counts[ csv2[ csv2_pos ].data[ csv2[ csv2_pos ].key[ key( item ) ] ][ 13 ] ]++;
+                  vector < QString > *csvdata = &csv2[ csv2_pos ].data[ csv2[ csv2_pos ].key[ key( item ) ] ];
+                  // csv2_selected_element_counts[ csv2[ csv2_pos ].data[ csv2[ csv2_pos ].key[ key( item ) ] ][ 13 ] ]++;
+                  csv_selected_element_counts [ (*csvdata)[ 13 ] ]++;
+                  if ( (*csvdata)[ 2 ] == "SOL" ) {
+                     counts.SOLs++;
+                  }
                }
             }
          } else {
@@ -1631,6 +1675,7 @@ pdb_sel_count US_Hydrodyn_Pdb_Tool::count_selected( QTreeWidget *lv )
       selection_since_count_csv2 = false;
       last_count_csv2 = counts;
    }
+   us_qdebug( QString( "SOLs counts %1" ).arg( counts.SOLs ) );
    return counts;
 }
 
@@ -3140,13 +3185,13 @@ void US_Hydrodyn_Pdb_Tool::distances( QTreeWidget *lv )
                         lvp.lvi2 = item1;
                         if ( item1 != item2 && !item2->childCount() && is_selected( item2 ) && !distmap.count( lvp ) )
                         {
-                           double dx = item1->text( 3 ).toDouble() - item2->text( 3 ).toDouble();
+                           double dx = fabs( item1->text( 3 ).toDouble() - item2->text( 3 ).toDouble() );
                            if ( dx <= dist_thresh )
                            {
-                              double dy = item1->text( 4 ).toDouble() - item2->text( 4 ).toDouble();
+                              double dy = fabs( item1->text( 4 ).toDouble() - item2->text( 4 ).toDouble() );
                               if ( dy <= dist_thresh )
                               {
-                                 double dz = item1->text( 5 ).toDouble() - item2->text( 5 ).toDouble();
+                                 double dz = fabs( item1->text( 5 ).toDouble() - item2->text( 5 ).toDouble() );
                                  if ( dz <= dist_thresh )
                                  {
                                     double d = sqrt( dx * dx + dy * dy + dz * dz );
@@ -3485,6 +3530,355 @@ void US_Hydrodyn_Pdb_Tool::distances( QTreeWidget *lv )
    editor_msg( "blue", QString( us_tr( "Pairwise distance report for %1 atoms done") ).arg( atoms ) );
 }
 
+void US_Hydrodyn_Pdb_Tool::sol2wat( QTreeWidget *lv )
+{
+   // get threshold
+
+   bool ok;
+   double theo_hydroradius = pow( ( 3.0/( 4.0 * M_PI ) ) * ((US_Hydrodyn *)us_hydrodyn)->misc.hydrovol, 1.0 / 3.0 );
+
+
+   double hydroradius = US_Static::getDouble(
+                                                us_tr( "US-SOMO: PDB editor : SOL->WAT" ) ,
+                                                QString( us_tr( "Enter a radius in Angstrom for water.\n"
+                                                             "This will be used as a threshold to determine if the SOL is converted to WAT.\n"
+                                                             "The radius will be added to the vdW radius of the nearest non-water and\n"
+                                                             "if the distance between centers is less than or equal to the sum of the\n"
+                                                             "radii, the water will be kept.\n"
+                                                             ) )
+                                                ,
+                                                theo_hydroradius,
+                                                0.0001,
+                                                10,
+                                                4,
+                                                &ok, 
+                                                this
+                                                );
+
+   if ( !ok ) {
+      return;
+   }
+
+
+   editor_msg( "brown", QString( us_tr( "SOL->WAT using radius %1 [A]" ).arg( hydroradius, 0, 'f', 3 ) ) );
+
+
+   // editor_msg( "brown", QString( us_tr( "SOL->WAT water radius %1 [A]" ).arg( hydroradius, 0, 'f', 3 ) ) );
+   qApp->processEvents();
+
+   csv tmp_csv;
+   if ( lv == lv_csv )
+   {
+      tmp_csv = to_csv( lv_csv, csv1 );
+   } else {
+      tmp_csv = to_csv( lv_csv2, csv2[ csv2_pos ] );
+   }
+   QString report_header;
+   report_header += QString( us_tr( "SOL->WAT using radius %1 [A]\n" ) ).arg( hydroradius, 0, 'f', 3 );
+   report_header += QString( us_tr( "Name %1\n" ) ).arg( tmp_csv.name );
+   map < int, QString > report_SOLs;
+   
+   vector < int > SOLs;
+   set < int > SOL_set;
+   vector < point > SOL_points;
+   vector < int > compares;
+   vector < point > compare_points;
+   vector < double > compare_vdw;
+   set < int > sol2wat_csv_index;
+
+   point t;
+   point t2;
+
+   for ( int i = 0; i < (int) tmp_csv.data.size(); ++i ) {
+      // QString model      = tmp_csv.data[ i ][ 0 ];
+      // QString chain      = QString( tmp_csv.data[ i ][ 1 ] ).trimmed();
+      QString residue    = QString( tmp_csv.data[ i ][ 2 ] ).trimmed();
+      QString atom       = QString( tmp_csv.data[ i ][ 4 ] ).trimmed();
+
+      t.axis[ 0 ] = tmp_csv.data[ i ][ 8 ].toFloat();
+      t.axis[ 1 ] = tmp_csv.data[ i ][ 9 ].toFloat();
+      t.axis[ 2 ] = tmp_csv.data[ i ][ 10 ].toFloat();
+
+      if ( residue == "SOL" ) {
+         SOLs.push_back( i );
+         SOL_set.insert( i );
+         SOL_points.push_back( t );
+      } else {
+         if ( residue != "WAT" ) {
+            compares.push_back( i );
+            compare_points.push_back( t );
+            QString res_idx =
+               QString( "%1|%2" )
+               .arg( atom != "OXT" ? residue : "OXT" )
+               .arg( atom );
+            if ( ((US_Hydrodyn *)us_hydrodyn)->vdwf.count( res_idx ) ) {
+               compare_vdw.push_back( ((US_Hydrodyn *)us_hydrodyn)->vdwf[ res_idx ].r );
+            } else {
+               compare_vdw.push_back( 0 );
+               editor_msg( "red", QString( us_tr( "SOL->WAT: %1 missing vdW radius, using a value of zero" ).arg( res_idx ) ) );
+            }
+         }
+      }
+   }
+         
+   qApp->processEvents();
+
+   int SOL_report_adds = 0;
+   map < int, int > SOL_nonSOL_hits;
+   double minimum_computed_radius = 1e99;
+   int minimum_computed_radius_posi = 0;
+   int minimum_computed_radius_posj = 0;
+
+   for ( int j = 0; j < (int) compares.size(); ++j ) {
+      t2 = compare_points[ j ];
+      double use_thresh = hydroradius + compare_vdw[ j ];
+      double use_thresh2 = use_thresh * use_thresh;
+      us_qdebug( QString( "atom %1 hydroradius %2 vdw radius %3 use thresh %4\n" )
+              .arg( j )
+              .arg( hydroradius )
+              .arg( compare_vdw[ j ] )
+              .arg( use_thresh )
+              );
+      
+      for ( int i = 0; i < (int) SOLs.size(); ++i ) {
+         t = SOL_points[ i ];
+
+         double dx = fabs( t2.axis[ 0 ] - t.axis[ 0 ] );
+         if ( dx <= use_thresh ) {
+            double dy = fabs( t2.axis[ 1 ] - t.axis[ 1 ] );
+            if ( dy <= use_thresh ) {
+               double dz = fabs( t2.axis[ 2 ] - t.axis[ 2 ] );
+               if ( dz <= use_thresh ) {
+                  double d2 = dx * dx + dy * dy + dz * dz;
+                  if ( d2 <= use_thresh2 ) {
+                     // us_qdebug( QString( "accepted SOL between %1 [%2,%3,%4] %5 [%6,%7,%8] distance %9" )
+                     //         .arg( i )
+                     //         .arg( t.axis[ 0 ] )
+                     //         .arg( t.axis[ 1 ] )
+                     //         .arg( t.axis[ 2 ] )
+                     //         .arg( j )
+                     //         .arg( t2.axis[ 0 ] )
+                     //         .arg( t2.axis[ 1 ] )
+                     //         .arg( t2.axis[ 2 ] )
+                     //         .arg( sqrt( d2 ) )
+                     //         );
+                     int csvi = SOLs[ i ];
+                     sol2wat_csv_index.insert( csvi );
+                     SOL_nonSOL_hits[ csvi ]++;
+                     {
+                        int csvj = compares[ j ];
+                        double d = sqrt( d2 );
+                        double this_computed_radius = d - compare_vdw[ j ];
+                        if ( minimum_computed_radius > this_computed_radius ) {
+                           minimum_computed_radius = this_computed_radius;
+                           minimum_computed_radius_posi = csvi;
+                           minimum_computed_radius_posj = csvj;
+                        }
+
+                        SOL_report_adds++;
+                           
+                        report_SOLs[ csvi ] +=
+                           QString( "------------------------------------------------------------------------\n" )
+                           + QString("")
+                           .sprintf(     
+                                    "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                    tmp_csv.data[ csvi ][ 5  ].toUInt(),
+                                    tmp_csv.data[ csvi ][ 4  ].toLatin1().data(),
+                                    tmp_csv.data[ csvi ][ 2  ].toLatin1().data(),
+                                    tmp_csv.data[ csvi ][ 1  ].toLatin1().data(),
+                                    tmp_csv.data[ csvi ][ 3  ].toUInt(),
+                                    tmp_csv.data[ csvi ][ 8  ].toFloat(),
+                                    tmp_csv.data[ csvi ][ 9  ].toFloat(),
+                                    tmp_csv.data[ csvi ][ 10 ].toFloat(),
+                                    tmp_csv.data[ csvi ][ 11 ].toFloat(),
+                                    tmp_csv.data[ csvi ][ 12 ].toFloat(),
+                                    tmp_csv.data[ csvi ][ 13 ].toLatin1().data()
+                                         )
+                           + QString("")
+                           .sprintf(     
+                                    "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                    tmp_csv.data[ csvj ][ 5  ].toUInt(),
+                                    tmp_csv.data[ csvj ][ 4  ].toLatin1().data(),
+                                    tmp_csv.data[ csvj ][ 2  ].toLatin1().data(),
+                                    tmp_csv.data[ csvj ][ 1  ].toLatin1().data(),
+                                    tmp_csv.data[ csvj ][ 3  ].toUInt(),
+                                    tmp_csv.data[ csvj ][ 8  ].toFloat(),
+                                    tmp_csv.data[ csvj ][ 9  ].toFloat(),
+                                    tmp_csv.data[ csvj ][ 10 ].toFloat(),
+                                    tmp_csv.data[ csvj ][ 11 ].toFloat(),
+                                    tmp_csv.data[ csvj ][ 12 ].toFloat(),
+                                    tmp_csv.data[ csvj ][ 13 ].toLatin1().data()
+                                         )
+                           + QString( "" )
+                           .sprintf(
+                                    "Distance                              : %8.4f\n"
+                                    "vdW radius of non-SOL                 : %8.2f\n"
+                                    "computed vdW radius of SOL if tangent : %8.4f\n",
+                                    d,
+                                    compare_vdw[ j ],
+                                    d - compare_vdw[ j ]
+                                    )
+                           ;
+                     }
+                  }
+               }
+            }
+         }
+      }
+   }
+
+   editor_msg( "blue", QString( us_tr( "Found %1 of %2 SOLs to Convert" ) ).arg( sol2wat_csv_index.size() ).arg( SOLs.size() ) );
+   report_header += QString( us_tr( "Found %1 of %2 SOLs to Convert\n" ) ).arg( sol2wat_csv_index.size() ).arg( SOLs.size() );
+   report_header += QString( us_tr( "Minimum computed vdW radius of SOL if tangent: %1 occurs between:\n" ).arg( minimum_computed_radius ) );
+   report_header += "\n";
+
+   report_header +=
+      QString("")
+      .sprintf(     
+               "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+               tmp_csv.data[ minimum_computed_radius_posi ][ 5  ].toUInt(),
+               tmp_csv.data[ minimum_computed_radius_posi ][ 4  ].toLatin1().data(),
+               tmp_csv.data[ minimum_computed_radius_posi ][ 2  ].toLatin1().data(),
+               tmp_csv.data[ minimum_computed_radius_posi ][ 1  ].toLatin1().data(),
+               tmp_csv.data[ minimum_computed_radius_posi ][ 3  ].toUInt(),
+               tmp_csv.data[ minimum_computed_radius_posi ][ 8  ].toFloat(),
+               tmp_csv.data[ minimum_computed_radius_posi ][ 9  ].toFloat(),
+               tmp_csv.data[ minimum_computed_radius_posi ][ 10 ].toFloat(),
+               tmp_csv.data[ minimum_computed_radius_posi ][ 11 ].toFloat(),
+               tmp_csv.data[ minimum_computed_radius_posi ][ 12 ].toFloat(),
+               tmp_csv.data[ minimum_computed_radius_posi ][ 13 ].toLatin1().data()
+                    )
+      + QString("")
+      .sprintf(     
+               "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+               tmp_csv.data[ minimum_computed_radius_posj ][ 5  ].toUInt(),
+               tmp_csv.data[ minimum_computed_radius_posj ][ 4  ].toLatin1().data(),
+               tmp_csv.data[ minimum_computed_radius_posj ][ 2  ].toLatin1().data(),
+               tmp_csv.data[ minimum_computed_radius_posj ][ 1  ].toLatin1().data(),
+               tmp_csv.data[ minimum_computed_radius_posj ][ 3  ].toUInt(),
+               tmp_csv.data[ minimum_computed_radius_posj ][ 8  ].toFloat(),
+               tmp_csv.data[ minimum_computed_radius_posj ][ 9  ].toFloat(),
+               tmp_csv.data[ minimum_computed_radius_posj ][ 10 ].toFloat(),
+               tmp_csv.data[ minimum_computed_radius_posj ][ 11 ].toFloat(),
+               tmp_csv.data[ minimum_computed_radius_posj ][ 12 ].toFloat(),
+               tmp_csv.data[ minimum_computed_radius_posj ][ 13 ].toLatin1().data()
+                    )
+      ;
+                             
+   report_header += "\n";
+
+   if ( (int) sol2wat_csv_index.size() == SOL_report_adds ) {
+      report_header += QString( us_tr(  "Only one SOL atom per non SOL found.\n" ) );
+   } else {
+      report_header += QString( us_tr( "N.B.: Some SOL atoms were within the threshold of multiple non-SOL atoms.\n" ) );
+      for ( map < int, int >::iterator it = SOL_nonSOL_hits.begin();
+            it != SOL_nonSOL_hits.end();
+            ++it ) {
+         if ( it->second > 1 ) {
+            report_header +=
+               QString( "" )
+               .sprintf(     
+                        "ATOM  %5d%5s%4s %1s%4d is close to %d non-SOL atoms\n",
+                        tmp_csv.data[ it->first ][ 5  ].toUInt(),
+                        tmp_csv.data[ it->first ][ 4  ].toLatin1().data(),
+                        tmp_csv.data[ it->first ][ 2  ].toLatin1().data(),
+                        tmp_csv.data[ it->first ][ 1  ].toLatin1().data(),
+                        tmp_csv.data[ it->first ][ 3  ].toUInt(),
+                        it->second
+                             )
+               ;
+         }
+      }
+   }
+      
+   // loop thru csv, keep non SOLs and marked SOLs as WATs
+
+   csv new_csv;
+
+   QString new_name = tmp_csv.name.replace( QRegExp( "\\.(pdb|PDB)$" ), "" );
+   new_name += QString( "_WAT%1" ).arg( hydroradius ).replace( ".", "_" );
+
+   new_csv.name     = new_name + ".pdb";
+   new_csv.filename = new_name + ".pdb";
+
+   new_csv.header.push_back("Model");
+   new_csv.header.push_back("Chain");
+   new_csv.header.push_back("Residue");
+   new_csv.header.push_back("Residue Number");
+   new_csv.header.push_back("Atom");
+   new_csv.header.push_back("Atom Number");
+   new_csv.header.push_back("Alt");
+   new_csv.header.push_back("iC");
+   new_csv.header.push_back("X");
+   new_csv.header.push_back("Y");
+   new_csv.header.push_back("Z");
+   new_csv.header.push_back("Occ");
+   new_csv.header.push_back("TF");
+   new_csv.header.push_back("Ele");
+
+   for ( int i = 0; i < (int) tmp_csv.data.size(); ++i ) {
+      if ( !SOL_set.count( i ) ) {
+         new_csv.data.push_back( tmp_csv.data[ i ] );
+      } else {
+         if ( sol2wat_csv_index.count( i ) ) {
+            tmp_csv.data[ i ][ 2 ] = "WAT";
+            new_csv.data.push_back( tmp_csv.data[ i ] );
+         }
+      }
+   }
+
+   // add keys
+   csv_setup_keys( new_csv );
+
+   // paste as lv2/csv2
+   csv_clipboard = new_csv;
+   csv2_paste_new();
+
+   // get save file name for report
+   {
+      QString use_dir = 
+         ((US_Hydrodyn *)us_hydrodyn)->path_view_pdb.isEmpty() ?
+         ((US_Hydrodyn *)us_hydrodyn)->somo_pdb_dir :
+         ((US_Hydrodyn *)us_hydrodyn)->path_view_pdb;
+
+      ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+
+      QString fn = new_name.replace(QRegExp("\\.(pdb|PDB)$"),"") + "_sol2wat_report.txt";
+
+      QString filename = QFileDialog::getSaveFileName( this , us_tr("Choose a filename to save the SOL->WAT report") , use_dir + "/" + fn , "TXT (*.txt *.TXT)" );
+
+
+      if ( !filename.isEmpty() ) {
+         if ( QFile::exists(filename) ) {
+            filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( filename, 0, this );
+         }
+      
+         QFile f( filename );
+
+         if ( !f.open( QIODevice::WriteOnly ) )
+         {
+            QMessageBox::warning( this, windowTitle(),
+                                  QString(us_tr("Could not open %1 for writing!")).arg(filename) );
+            return;
+         }
+
+         QTextStream t( &f );
+
+         t << report_header;
+
+         for ( map < int, QString >::iterator it = report_SOLs.begin();
+               it != report_SOLs.end();
+               ++it ) {
+            t << it->second;
+         }
+         f.close();
+         editor_msg("black", QString("File %1 written\n").arg( filename ) );
+      }
+   }
+
+   update_enables();
+}
+
 void US_Hydrodyn_Pdb_Tool::compute_angle( QTreeWidget *lv )
 {
    editor_msg( "blue", us_tr( "compute angle" ) );
@@ -3749,6 +4143,11 @@ void US_Hydrodyn_Pdb_Tool::csv_angle()
    compute_angle( lv_csv );
 }
 
+void US_Hydrodyn_Pdb_Tool::csv_sol2wat()
+{
+   sol2wat( lv_csv );
+}
+
 void US_Hydrodyn_Pdb_Tool::csv_sel_msg()
 {
    pdb_sel_count counts = count_selected( lv_csv );
@@ -3803,6 +4202,11 @@ void US_Hydrodyn_Pdb_Tool::csv2_clash_report()
 void US_Hydrodyn_Pdb_Tool::csv2_angle()
 {
    compute_angle( lv_csv2 );
+}
+
+void US_Hydrodyn_Pdb_Tool::csv2_sol2wat()
+{
+   sol2wat( lv_csv2 );
 }
 
 void US_Hydrodyn_Pdb_Tool::csv2_sel_msg()

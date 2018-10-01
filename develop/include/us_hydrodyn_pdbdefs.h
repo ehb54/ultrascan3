@@ -92,6 +92,7 @@ class rotamer
 struct PDB_atom
 {
    unsigned int serial;
+   QString bead_model_code;
    QString name;
    QString orgName;
    QString altLoc;

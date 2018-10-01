@@ -1760,9 +1760,15 @@ int main (int argc, char **argv)
       US_Saxs_Util usu;
       if ( !usu.read_control( controlfile ) )
       {
+         US_Log error_log( "errors" );
+         error_log.log( usu.errormsg );
          cout << usu.errormsg << endl;
          cout << usu.noticemsg << endl;
          exit( errorbase - 1 );
+      }
+      if ( !usu.errormsg.isEmpty() ) {
+         US_Log error_log( "errors" );
+         error_log.log( usu.errormsg );
       }
       exit(0);
    }

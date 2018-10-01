@@ -529,6 +529,9 @@ void US_Config::setDefault()
    config_list.fontSize        = 10;
    config_list.margin          = 10;
    config_list.numThreads      = 1;   // Default: 1 thread
+#if QT_VERSION >= 0x050000
+   config_list.numThreads      = QThread::idealThreadCount();
+#endif
 }
 
 bool US_Config::read()
@@ -643,6 +646,11 @@ bool US_Config::read()
          if ( ! str.isNull() && ! str.isEmpty() )
          {
             config_list.numThreads = str.toUInt();
+#if QT_VERSION >= 0x050000
+            if ( config_list.numThreads <= 1 ) {
+               config_list.numThreads = QThread::idealThreadCount();
+            }
+#endif
          }
          else
          {

@@ -147,8 +147,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       US_Hydrodyn_Saxs_Hplc(
                               csv csv1,
                               void *us_hydrodyn, 
-                              QWidget *p = 0, 
-                              const char *name = 0
+                              QWidget *p = 0
                              );
       ~US_Hydrodyn_Saxs_Hplc();
 
@@ -171,6 +170,88 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 #endif
       bool             plot3d_flag;
 
+      // "main plot options ", "plot selections", "plot properties",  "cropping", "",
+
+      // new:
+      // main plot options:
+      // pb_rescale
+      // pb_axis_x
+      // pb_axis_y
+      // cb_eb
+      // pb_legend
+      // pb_pp
+
+      // plot selections:
+      // pb_select_vis
+      // pb_remove_vis
+      // pb_movie
+
+      // plot cropping
+      // pb_crop_common
+      // pb_crop_vis
+      // pb_crop_zero
+      // pb_crop_left
+      // pb_crop_undo
+      // pb_crop_right
+
+      // plot properties
+      // pb_line_width
+      // pb_color_rotate
+
+      // currently in line 1
+      // pb_select_vis
+      // pb_remove_vis
+      // pb_crop_common
+      // pb_crop_vis
+      // pb_crop_zero
+      // pb_crop_left
+      // pb_crop_undo
+      // pb_crop_right
+      // pb_legend
+
+      // currently in line 2
+      // pb_rescale
+      // pb_axis_x
+      // pb_axis_y
+      // cb_eb
+      // pb_movie
+      // pb_line_width
+      // pb_color_rotate
+      // pb_pp
+
+      enum pbmodes {
+         PBMODE_MAIN,
+         PBMODE_SEL,
+         PBMODE_CROP,
+         PBMODE_CONC,
+         PBMODE_SD,
+         PBMODE_FASTA,
+         PBMODE_NONE
+      };
+
+      QLabel                * lbl_pbmode;
+      QButtonGroup          * bg_pbmode;
+      QRadioButton          * rb_pbmode_main;
+      QRadioButton          * rb_pbmode_sel;
+      QRadioButton          * rb_pbmode_crop;
+      QRadioButton          * rb_pbmode_conc;
+      QRadioButton          * rb_pbmode_sd;
+      QRadioButton          * rb_pbmode_fasta;
+      QRadioButton          * rb_pbmode_none;
+      void                    pbmode_select( pbmodes mode );
+
+ private slots:
+
+      void set_pbmode_main( );
+      void set_pbmode_sel( );
+      void set_pbmode_crop( );
+      void set_pbmode_conc( );
+      void set_pbmode_sd( );
+      void set_pbmode_fasta( );
+      void set_pbmode_none( );
+
+ private:
+
       csv           csv1;
 
       void          *us_hydrodyn;
@@ -185,6 +266,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QCheckBox     *cb_lock_dir;
       mQLineEdit    *le_dir;
       QPushButton   *pb_add_files;
+      QPushButton   *pb_add_dir;
       QPushButton   *pb_similar_files;
       QPushButton   *pb_conc;
       QPushButton   *pb_clear_files;
@@ -234,6 +316,13 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QPushButton   *pb_test_i_of_t;
       QPushButton   *pb_create_i_of_q;
 
+      QPushButton   *pb_fasta_file;
+      QLabel        *lbl_fasta_value;
+      QLineEdit     *le_fasta_value;
+
+ private slots:
+      void           fasta_file();
+ private:
 
       QPushButton   *pb_load_conc;
       QPushButton   *pb_conc_file;
@@ -936,6 +1025,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       vector < QWidget * >                scale_widgets;
       vector < QWidget * >                timeshift_widgets;
       vector < QWidget * >                plot_widgets;
+      vector < QWidget * >                pbmode_main_widgets;
+      vector < QWidget * >                pbmode_sel_widgets;
+      vector < QWidget * >                pbmode_crop_widgets;
+      vector < QWidget * >                pbmode_conc_widgets;
+      vector < QWidget * >                pbmode_sd_widgets;
+      vector < QWidget * >                pbmode_fasta_widgets;
       vector < QWidget * >                rgc_widgets;
       vector < QWidget * >                pm_widgets;
       vector < QWidget * >                guinier_widgets;
@@ -1406,7 +1501,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void update_enables();
       void update_files();
       void update_created_files();
-      void add_files( bool load_conc = false );
+      void add_files( bool load_conc = false, bool from_dir = false );
+      void add_dir();
       void similar_files();
       void conc();
       void clear_files();

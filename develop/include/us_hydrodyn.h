@@ -112,6 +112,7 @@ struct _vdwf {
    double mw;
    double r;
    double w;
+   int color;
 };
 
 class US_EXTERN US_Hydrodyn : public QFrame
@@ -127,6 +128,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       friend class US_Hydrodyn_Saxs_Buffer;
       friend class US_Hydrodyn_Saxs_Hplc;
       friend class US_Hydrodyn_Saxs_Hplc_Svd;
+      friend class US_Hydrodyn_Saxs_Hplc_Options;
       friend class US_Hydrodyn_Saxs_1d;
       friend class US_Hydrodyn_Saxs_2d;
       friend class US_Hydrodyn_Misc;
@@ -253,6 +255,13 @@ class US_EXTERN US_Hydrodyn : public QFrame
                          QString prefix = "" );  
 
    private:
+
+      map < QString, double > res_vbar;
+      map < QString, double > res_mw;
+      map < QString, double > fasta_vbar;
+      map < QString, double > fasta_mw;
+      void create_fasta_vbar_mw();
+      bool calc_fasta_vbar( QStringList & seq_chars, double &result, QString &msgs );
 
       bool load_vdwf_json( QString filename );
       map < QString, _vdwf > vdwf;

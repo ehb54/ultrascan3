@@ -19,10 +19,9 @@
 #include "us_hydrodyn_pdbdefs.h"
 #include "us_hydrodyn_batch.h"
 
-#if QT_VERSION < 0x050000
-# include <qhttp.h>
-# include <qftp.h>
-#endif
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply> 
 
 #ifdef WIN32
 # if QT_VERSION < 0x040000
@@ -82,12 +81,17 @@ class US_EXTERN US_Hydrodyn_Cluster_Status : public QDialog
 
       QString       cluster_id;
       QString       cluster_pw;
-      QString       submit_url;
-      QString       submit_url_host;
-      QString       submit_url_port;
-      QString       stage_url;
-      QString       stage_url_path;
-      QString       stage_path;
+
+      QString       manage_url;
+      QString       manage_url_host;
+      QString       manage_url_port;
+      
+      // QString       submit_url;
+      // QString       submit_url_host;
+      // QString       submit_url_port;
+      // QString       stage_url;
+      // QString       stage_url_path;
+      // QString       stage_path;
 
       QString       errormsg;
       bool          disable_updates;
@@ -96,20 +100,23 @@ class US_EXTERN US_Hydrodyn_Cluster_Status : public QDialog
 
       bool          comm_active;
       QString       comm_mode;
-#if QT_VERSION < 0x050000
-      QHttp         submit_http;
-      QFtp          ftp;
-#endif
 
-      QFile         *ftp_file;
-      QString       ftp_url;
-      QString       ftp_url_host;
-      QString       ftp_url_port;
+      QNetworkAccessManager * http_access_manager;
+      QNetworkRequest         http_request;
+      QNetworkReply         * http_reply;
+
+      void           http_done( bool error );
+      void           http_retrieve_done( bool error );
+
+      QFile       * retrieve_file;
+      QString       retrieve_file_name;
+      QDataStream * retrieve_datastream;
 
       unsigned int  update_files( bool set_lv_files = true );
       bool          send_http_get( QString file );
       QString       current_http;
       QString       current_http_response;
+      QString       current_http_error;
 
       map < QTreeWidgetItem *, QString > jobs;
       map < QString, QString >         job_hostname;
@@ -150,26 +157,15 @@ class US_EXTERN US_Hydrodyn_Cluster_Status : public QDialog
       void get_next_status();
       void get_next_retrieve();
 
-      void http_stateChanged ( int state );
+      void http_finished ();
+      void http_error( QNetworkReply::NetworkError code );
+      void http_uploadProgress ( qint64 done, qint64 total );
+      void http_downloadProgress ( qint64 done, qint64 total );
 
-#if QT_VERSION < 0x050000
-      void http_responseHeaderReceived ( const QHttpResponseHeader & resp );
-      void http_readyRead ( const QHttpResponseHeader & resp );
-#endif
-      void http_dataSendProgress ( int done, int total );
-      void http_dataReadProgress ( int done, int total );
-      void http_requestStarted ( int id );
-      void http_requestFinished ( int id, bool error );
-      void http_done ( bool error );
-
-      void ftp_stateChanged ( int state );
-      // void ftp_listInfo ( const QUrlInfo & i );
-      // void ftp_readyRead ();
-      // void ftp_dataTransferProgress ( int done, int total );
-      // void ftp_rawCommandReply ( int replyCode, const QString & detail );
-      void ftp_commandStarted ( int id );
-      void ftp_commandFinished ( int id, bool error );
-      void ftp_done ( bool error );
+      void http_retrieve_finished ();
+      void http_retrieve_error( QNetworkReply::NetworkError code );
+      void http_retrieve_uploadProgress ( qint64 done, qint64 total );
+      void http_retrieve_downloadProgress ( qint64 done, qint64 total );
 
       void system_proc_readFromStdout();
       void system_proc_readFromStderr();

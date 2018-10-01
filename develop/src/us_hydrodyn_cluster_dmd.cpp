@@ -160,9 +160,9 @@ void US_Hydrodyn_Cluster_Dmd::setupGUI()
    recompute_interval_from_points( 3 );
    recompute_interval_from_points( 7 );
 
-   connect( t_csv, SIGNAL( valueChanged(int, int) ), SLOT( table_value( int, int ) ) );
+   connect( t_csv, SIGNAL( cellChanged(int, int) ), SLOT( table_value( int, int ) ) );
    connect( t_csv, SIGNAL( itemSelectionChanged() ), SLOT( update_enables() ) );
-   connect( t_csv->verticalHeader(), SIGNAL( released( int ) ), SLOT( row_header_released( int ) ) );
+   connect( t_csv->verticalHeader(), SIGNAL( sectionPressed( int ) ), SLOT( row_header_released( int ) ) );
 
    //   pb_select_all = new QPushButton(us_tr("Select all"), this);
    //   pb_select_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -472,6 +472,11 @@ csv US_Hydrodyn_Cluster_Dmd::current_csv()
   
 void US_Hydrodyn_Cluster_Dmd::recompute_interval_from_points( unsigned int basecol )
 {
+   if ( (unsigned int) t_csv->columnCount() <=  basecol + 1 ) {
+      qDebug() << "US_Hydrodyn_Cluster_Dmd::recompute_interval_from_points() insufficient columns";
+      return;
+   }
+
    for ( unsigned int i = 0; i < (unsigned int)t_csv->rowCount(); i++ )
    {
       QString toset =
@@ -482,12 +487,18 @@ void US_Hydrodyn_Cluster_Dmd::recompute_interval_from_points( unsigned int basec
                       .arg( t_csv->item(i, basecol )->text().toDouble() 
                              / ( t_csv->item( i, basecol + 1 )->text().toDouble() ) )
          ;
+      disconnect( t_csv, SIGNAL( cellChanged(int, int) ), 0, 0 );
       t_csv->setItem( i, basecol + 2, new QTableWidgetItem( toset ) );
+      connect( t_csv, SIGNAL( cellChanged(int, int) ), SLOT( table_value( int, int ) ) );
    }
 }
 
 void US_Hydrodyn_Cluster_Dmd::recompute_points_from_interval( unsigned int basecol )
 {
+   if ( (unsigned int) t_csv->columnCount() <= basecol + 2 ) {
+      qDebug() << "US_Hydrodyn_Cluster_Dmd::recompute_points_from_interval() insufficient columns";
+      return;
+   }
    for ( unsigned int i = 0; i < (unsigned int)t_csv->rowCount(); i++ )
    {
       QString toset =
@@ -498,7 +509,9 @@ void US_Hydrodyn_Cluster_Dmd::recompute_points_from_interval( unsigned int basec
                       .arg( (unsigned int)( t_csv->item( i, basecol )->text().toDouble()
                                             / t_csv->item( i, basecol + 2 )->text().toDouble() ) )
          ;
+      disconnect( t_csv, SIGNAL( cellChanged(int, int) ), 0, 0 );
       t_csv->setItem( i, basecol + 1, new QTableWidgetItem( toset ) );
+      connect( t_csv, SIGNAL( cellChanged(int, int) ), SLOT( table_value( int, int ) ) );
    }
 }
 
@@ -919,7 +932,9 @@ void US_Hydrodyn_Cluster_Dmd::update_enables()
 void US_Hydrodyn_Cluster_Dmd::reload_csv()
 {
    interval_starting_row = 0;
+   disconnect( t_csv, SIGNAL( cellChanged(int, int) ), 0, 0 );
    t_csv->setRowCount( csv1.data.size() );
+
    for ( unsigned int i = 0; i < (unsigned int)csv1.data.size(); i++ )
    {
       if ( csv1.data[ i ].size() < 3 || csv1.data[ i ][ 2 ].isEmpty() )
@@ -937,6 +952,9 @@ void US_Hydrodyn_Cluster_Dmd::reload_csv()
          }
       }
    }
+   connect( t_csv, SIGNAL( cellChanged(int, int) ), SLOT( table_value( int, int ) ) );
+   recompute_interval_from_points( 3 );
+   recompute_interval_from_points( 7 );
    // t_csv->clearSelection();
 }
 
@@ -1020,7 +1038,7 @@ QString US_Hydrodyn_Cluster_Dmd::csv_to_qstring( csv &from_csv )
 
 void US_Hydrodyn_Cluster_Dmd::row_header_released( int row )
 {
-   // cout << QString( "row_header_released %1\n" ).arg( row );
+   // qDebug() << QString( "row_header_released %1\n" ).arg( row );
    t_csv->clearSelection();
    QTableWidgetSelectionRange qts( row, 0, row, 12 );
    
@@ -1381,6 +1399,11 @@ void US_Hydrodyn_Cluster_Dmd::residue_summary( QString filename )
 
 bool US_Hydrodyn_Cluster_Dmd::convert_static_range( int row )
 {
+   if ( (unsigned int) t_csv->columnCount() <= 11 ) {
+      qDebug() << "US_Hydrodyn_Cluster_Dmd::convert_static_range() insufficient columns";
+      return true;
+   }
+
    QString filename     = t_csv->item( row, 0  )->text();
    QString static_range = t_csv->item( row, 10 )->text().trimmed();
    if ( static_range.isEmpty() )

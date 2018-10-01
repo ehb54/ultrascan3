@@ -38,6 +38,8 @@ US_Hydrodyn_Cluster_Config::US_Hydrodyn_Cluster_Config(
    QString pkg_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "cluster";
    QDir::setCurrent( pkg_dir );
 
+   http_access_manager = new QNetworkAccessManager( this );
+
    setupGUI();
    update_enables();
 
@@ -146,6 +148,9 @@ void US_Hydrodyn_Cluster_Config::setupGUI()
    le_submit_url->setPalette( PALET_NORMAL );
    AUTFBACK( le_submit_url );
    le_submit_url->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   lbl_submit_url->hide();
+   le_submit_url->hide();
 
    lbl_manage_url = new QLabel(us_tr("Job management URL"), this);
    lbl_manage_url->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -314,9 +319,7 @@ void US_Hydrodyn_Cluster_Config::cancel()
 {
    if ( comm_active )
    {
-#if QT_VERSION < 0x050000
-      submit_http.abort();
-#endif
+      http_reply->abort();
    }
    close();
 }
@@ -332,9 +335,7 @@ void US_Hydrodyn_Cluster_Config::closeEvent(QCloseEvent *e)
 {
    if ( comm_active )
    {
-#if QT_VERSION < 0x050000
-      submit_http.abort();
-#endif
+      http_reply->abort();
    }
    global_Xpos -= 30;
    global_Ypos -= 30;
@@ -576,23 +577,15 @@ void US_Hydrodyn_Cluster_Config::edit()
    }
 }
 
-void US_Hydrodyn_Cluster_Config::http_stateChanged ( int /* state */ )
-{
-   // editor_msg( "blue", QString( "http state %1" ).arg( state ) );
+void US_Hydrodyn_Cluster_Config::http_error( QNetworkReply::NetworkError /* code */ ) {
+   qDebug() << "http: error";
+   current_http_error = http_reply->errorString();
+   http_done( true );
 }
 
-#if QT_VERSION < 0x050000
-void US_Hydrodyn_Cluster_Config::http_responseHeaderReceived ( const QHttpResponseHeader & resp )
-{
-   cout << resp.reasonPhrase() << endl;
-}
-
-void US_Hydrodyn_Cluster_Config::http_readyRead( const QHttpResponseHeader & resp )
-{
-   cout << "http: readyRead\n" << endl << flush;
-   cout << resp.reasonPhrase() << endl;
-   // current_http_response = QString( "%1" ).arg( submit_http.readAll() );
-   current_http_response = QString( submit_http.readAll() );
+void US_Hydrodyn_Cluster_Config::http_finished() {
+   cout << "http: finished\n" << endl << flush;
+   current_http_response = QString( http_reply->readAll() );
    cout << "http response:";
    cout << current_http_response << endl;
 
@@ -604,8 +597,8 @@ void US_Hydrodyn_Cluster_Config::http_readyRead( const QHttpResponseHeader & res
          cout << QString( "json parsing error:%1\n" ).arg( readJson[ "json parsing error" ] );
       }
 
-      if ( readJson.count( "username" ) &&
-           readJson[ "username" ] == le_cluster_id->text() )
+      if ( readJson.count( "name" ) &&
+           readJson[ "name" ] == le_cluster_id->text() )
       {
          check_not_ok = false;
       } else {
@@ -617,88 +610,41 @@ void US_Hydrodyn_Cluster_Config::http_readyRead( const QHttpResponseHeader & res
       // check for error
       check_not_ok = true;
       check_tried = false;
-      // http response:<?xml version="1.0" encoding="UTF-8" standalone="yes"?><userresponse><status>Success</status></userresponse>
       
-      current_response_status = current_http_response;
-      current_response_status.replace( QRegExp( "^.*<status>" ), "" );
-      current_response_status.replace( QRegExp( "</status>.*$" ), "" );
+      map < QString, QString > readJson = US_Json::split( current_http_response );
+      if ( readJson.count( "json parsing error" ) )
+      {
+         cout << QString( "json parsing error:%1\n" ).arg( readJson[ "json parsing error" ] );
+      }
+
+      current_response_status = readJson.count( "info" ) ?
+         ( readJson[ "info" ].contains( QRegExp( "added$" ) ) ? QString( "Success" ) : readJson[ "info" ] )
+           : QString( "Error" );
    }
+   http_done( false );
 }
-#endif
 
-void US_Hydrodyn_Cluster_Config::http_dataSendProgress ( int done, int total )
+void US_Hydrodyn_Cluster_Config::http_uploadProgress ( qint64 done, qint64 total )
 {
-   cout << "http: datasendprogress " << done << " " << total << "\n";
+   cout << "http: uploadProgress " << done << " " << total << "\n";
+}
+
+void US_Hydrodyn_Cluster_Config::http_downloadProgress ( qint64 done, qint64 total )
+{
+   cout << "http: downloadProgress " << done << " " << total << "\n";
    check_tried = true;
-}
-
-void US_Hydrodyn_Cluster_Config::http_dataReadProgress ( int done, int total )
-{
-   cout << "http: datareadprogress " << done << " " << total << "\n";
-}
-
-void US_Hydrodyn_Cluster_Config::http_requestStarted ( int id )
-{
-   cout << "http: requestStarted " << id << "\n";
-}
-
-void US_Hydrodyn_Cluster_Config::http_requestFinished ( int id, bool error  )
-{
-   cout << "http: requestFinished " << id << " " << error << "\n";
 }
 
 void US_Hydrodyn_Cluster_Config::http_done ( bool error )
 {
-#if QT_VERSION < 0x050000
-   cout << "http_done error " << error << endl;
-   if ( error )
-   {
-      switch( submit_http.error() )
-      {
-      case QHttp::NoError :
-         current_http_error = us_tr( "No error occurred." );
-         break;
+   qDebug() << "http_done";
 
-      case QHttp::HostNotFound:
-         current_http_error = us_tr( "The host name lookup failed." );
-         break;
-
-      case QHttp::ConnectionRefused:
-         current_http_error = us_tr( "The server refused the connection." );
-         break;
-
-      case QHttp::UnexpectedClose:
-         current_http_error = us_tr( "The server closed the connection unexpectedly." );
-         break;
-
-      case QHttp::InvalidResponseHeader:
-         current_http_error = us_tr( "The server sent an invalid response header." );
-         break;
-
-      case QHttp::WrongContentLength:
-         current_http_error = us_tr( "The client could not read the content correctly because an error with respect to the content length occurred." );
-         break;
-
-      case QHttp::Aborted:
-         current_http_error = us_tr( "The request was aborted with abort()." );
-         break;
-
-      case QHttp::UnknownError:
-      default:
-         current_http_error = us_tr( "Unknown Error." );
-         break;
-      }
-      cout << current_http_error << endl;
-   }
-   disconnect( &submit_http, SIGNAL( stateChanged ( int ) ), 0, 0 );
-   disconnect( &submit_http, SIGNAL( responseHeaderReceived ( const QHttpResponseHeader & ) ), 0, 0 );
-   disconnect( &submit_http, SIGNAL( readyRead ( const QHttpResponseHeader & ) ), 0, 0 );
-   disconnect( &submit_http, SIGNAL( dataSendProgress ( int, int ) ), 0, 0 );
-   disconnect( &submit_http, SIGNAL( dataReadProgress ( int, int ) ), 0, 0 );
-   disconnect( &submit_http, SIGNAL( requestStarted ( int ) ), 0, 0 );
-   disconnect( &submit_http, SIGNAL( requestFinished ( int, bool ) ), 0, 0 );
-   disconnect( &submit_http, SIGNAL( done ( bool ) ), 0, 0 );
+   disconnect( http_reply, SIGNAL( downloadProgress ( qint64, qint64 ) ), 0, 0 );
+   disconnect( http_reply, SIGNAL( uploadProgress ( qint64, qint64 ) ), 0, 0 );
+   disconnect( http_reply, SIGNAL( finished () ), 0, 0 );
+   disconnect( http_reply, SIGNAL( error ( QNetworkReply::NetworkError ) ), 0, 0 );
    comm_active = false;
+   http_reply->deleteLater();
    if ( error )
    {
          QMessageBox::warning( this,
@@ -742,14 +688,15 @@ void US_Hydrodyn_Cluster_Config::http_done ( bool error )
          map < QString, QString > readJson = US_Json::split( current_http_response );
          QString errors;
          QString email = le_cluster_email->text();
-         bool password_ok = false;
-         if ( !readJson.count( "password" ) ||
-              readJson[ "password" ] != le_cluster_pw->text() )
-         {
-            errors += QString( us_tr( "Incorrect password.  Possibly another user has registered the same cluster id.\n" ) );
-         } else {
-            password_ok = true;
-         }
+         // bool password_ok = false;
+         // if ( !readJson.count( "password" ) ||
+         //      readJson[ "password" ] != le_cluster_pw->text() )
+         // {
+         //    errors += QString( us_tr( "Incorrect password.  Possibly another user has registered the same cluster id.\n" ) );
+         // } else {
+         //    password_ok = true;
+         // }
+         bool password_ok = true;
 
          if ( !readJson.count( "email" ) ||
               readJson[ "email" ] != le_cluster_email->text() )
@@ -787,7 +734,6 @@ void US_Hydrodyn_Cluster_Config::http_done ( bool error )
    }         
 
    update_enables();
-#endif
 }
 
 void US_Hydrodyn_Cluster_Config::update_enables()
@@ -887,38 +833,41 @@ void US_Hydrodyn_Cluster_Config::check_user()
       return;
    }
 
-   if ( !le_manage_url->text().contains( QRegExp( "^\\S+:\\d+/portal/app/idservice/user$" ) ) )
-   {
-      QMessageBox::warning( this,
-                            us_tr("US-SOMO: Cluster Config: Check user"), 
-                            us_tr( "The Job Management URL is improperly formatted" ),
-                            QMessageBox::Ok,
-                            QMessageBox::NoButton
-                            );
-      return;
-   }
+   // if ( !le_manage_url->text().contains( QRegExp( "^\\S+:\\d+/portal/app/idservice/user$" ) ) )
+   // {
+   //    QMessageBox::warning( this,
+   //                          us_tr("US-SOMO: Cluster Config: Check user"), 
+   //                          us_tr( "The Job Management URL is improperly formatted" ),
+   //                          QMessageBox::Ok,
+   //                          QMessageBox::NoButton
+   //                          );
+   //    return;
+   // }
 
-   if ( !le_submit_url->text().contains( QRegExp( "^\\S+:\\d+$" ) ) )
-   {
-      QMessageBox::warning( this,
-                            us_tr("US-SOMO: Cluster Config: Check user"), 
-                            us_tr( "The Job Submit URL is improperly formatted" ),
-                            QMessageBox::Ok,
-                            QMessageBox::NoButton
-                            );
-      return;
-   }
+   // if ( !le_submit_url->text().contains( QRegExp( "^\\S+:\\d+$" ) ) )
+   // {
+   //    QMessageBox::warning( this,
+   //                          us_tr("US-SOMO: Cluster Config: Check user"), 
+   //                          us_tr( "The Job Submit URL is improperly formatted" ),
+   //                          QMessageBox::Ok,
+   //                          QMessageBox::NoButton
+   //                          );
+   //    return;
+   // }
    
    current_http_response = "";
    current_http_error = "";
 
-   QString msg_request = 
-      QString( "%1/%2.json" )
-      .arg( QString( "%1" )
-            .arg( le_manage_url->text() )
-            .replace( QRegExp( "^.*:(\\d+)" ), "/" ) )
-      .arg( le_cluster_id->text() )
-      .replace ( QRegExp( "^//" ), "/" );
+   // QString msg_request = 
+   //    QString( "%1/%2.json" )
+   //    .arg( QString( "%1" )
+   //          .arg( le_manage_url->text() )
+   //          .replace( QRegExp( "^.*:(\\d+)" ), "/" ) )
+   //    .arg( le_cluster_id->text() )
+   //    .replace ( QRegExp( "^//" ), "/" );
+
+   QString msg_request =
+      QString( "/userstatus?user=%1" ).arg( le_cluster_id->text() );
 
    QString manage_url_host =
       QString( "%1" )
@@ -941,29 +890,15 @@ void US_Hydrodyn_Cluster_Config::check_user()
    current_response_status = "";
    update_enables();
 
-#if QT_VERSION < 0x050000
-   connect( &submit_http, SIGNAL( stateChanged ( int ) ), this, SLOT( http_stateChanged ( int ) ) );
-   connect( &submit_http, SIGNAL( responseHeaderReceived ( const QHttpResponseHeader & ) ), this, SLOT( http_responseHeaderReceived ( const QHttpResponseHeader & ) ) );
-   connect( &submit_http, SIGNAL( readyRead ( const QHttpResponseHeader & ) ), this, SLOT( http_readyRead ( const QHttpResponseHeader & ) ) );
-   connect( &submit_http, SIGNAL( dataSendProgress ( int, int ) ), this, SLOT( http_dataSendProgress ( int, int ) ) );
-   connect( &submit_http, SIGNAL( dataReadProgress ( int, int ) ), this, SLOT( http_dataReadProgress ( int, int ) ) );
-   connect( &submit_http, SIGNAL( requestStarted ( int ) ), this, SLOT( http_requestStarted ( int ) ) );
-   connect( &submit_http, SIGNAL( requestFinished ( int, bool ) ), this, SLOT( http_requestFinished ( int, bool ) ) );
-   connect( &submit_http, SIGNAL( done ( bool ) ), this, SLOT( http_done ( bool ) ) );
+   http_request.setUrl( QUrl( QString( "http://%1%2" ).arg( le_manage_url->text() ).arg( msg_request ) ) );
+   http_reply = http_access_manager->get( http_request );
 
-   submit_http.setHost( manage_url_host, manage_url_port.toUInt() );
-   submit_http.get( msg_request );
-#endif
+   connect( http_reply, SIGNAL( downloadProgress ( qint64, qint64 ) ), this, SLOT( http_downloadProgress( qint64, qint64 ) ) );
+   connect( http_reply, SIGNAL( uploadProgress ( qint64, qint64 ) ), this, SLOT( http_uploadProgress( qint64, qint64 ) ) );
+   connect( http_reply, SIGNAL( finished () ), this, SLOT( http_finished() ) );
+   connect( http_reply, SIGNAL( error ( QNetworkReply::NetworkError ) ), this, SLOT( http_error ( QNetworkReply::NetworkError ) ) ); 
+
    return;
-
-   // QHttpRequestHeader header("POST", "/" );
-   // header.setValue( "Host", submit_url_host );
-   // header.setContentType( "application/xml" );
-   // submit_http.setHost( submit_url_host, submit_url_port.toUInt() );
-   // without the qba below, QHttp:request will send a null
-   // QByteArray qba = xml.toUtf8();
-   // qba.resize( qba.size() - 1 );
-   // submit_http.request( header, qba );
 }
 
 void US_Hydrodyn_Cluster_Config::add_user()
@@ -973,22 +908,29 @@ void US_Hydrodyn_Cluster_Config::add_user()
    current_response_status = "";
    update_enables();
 
-   map < QString, QString > mqq;
+   // map < QString, QString > mqq;
 
-   mqq[ "username" ] = le_cluster_id   ->text();
-   mqq[ "password" ] = le_cluster_pw   ->text();
-   mqq[ "email"    ] = le_cluster_email->text();
+   // mqq[ "username" ] = le_cluster_id   ->text();
+   // mqq[ "password" ] = le_cluster_pw   ->text();
+   // mqq[ "email"    ] = le_cluster_email->text();
 
-   QString post_data = US_Json::compose( mqq );
+   // QString post_data = US_Json::compose( mqq );
 
    current_http_response = "";
 
-   QString msg_request = 
-      QString( "%1/newaccount" )
-      .arg( QString( "%1" )
-            .arg( le_manage_url->text() )
-            .replace( QRegExp( "^.*:(\\d+)" ), "/" ) )
-      .arg( le_cluster_id->text() );
+   // QString msg_request = 
+   //    QString( "%1/newaccount" )
+   //    .arg( QString( "%1" )
+   //          .arg( le_manage_url->text() )
+   //          .replace( QRegExp( "^.*:(\\d+)" ), "/" ) )
+   //    .arg( le_cluster_id->text() );
+
+   QString msg_request =
+      QString( "/useradd?user=%1&email=%2&pw=%3" )
+      .arg( le_cluster_id->text() )
+      .arg( le_cluster_email->text() )
+      .arg( le_cluster_pw->text() )
+      ;
 
    QString manage_url_host =
       QString( "%1" )
@@ -1004,27 +946,16 @@ void US_Hydrodyn_Cluster_Config::add_user()
    cout << "msg_request is " << msg_request << endl;
    cout << "manage_url_host is " << manage_url_host << endl;
    cout << "manage_url_port is " << manage_url_port << endl;
-   cout << "post data is "   << post_data << endl; 
+   //   cout << "post data is "   << post_data << endl; 
 
-#if QT_VERSION < 0x050000
-   connect( &submit_http, SIGNAL( stateChanged ( int ) ), this, SLOT( http_stateChanged ( int ) ) );
-   connect( &submit_http, SIGNAL( responseHeaderReceived ( const QHttpResponseHeader & ) ), this, SLOT( http_responseHeaderReceived ( const QHttpResponseHeader & ) ) );
-   connect( &submit_http, SIGNAL( readyRead ( const QHttpResponseHeader & ) ), this, SLOT( http_readyRead ( const QHttpResponseHeader & ) ) );
-   connect( &submit_http, SIGNAL( dataSendProgress ( int, int ) ), this, SLOT( http_dataSendProgress ( int, int ) ) );
-   connect( &submit_http, SIGNAL( dataReadProgress ( int, int ) ), this, SLOT( http_dataReadProgress ( int, int ) ) );
-   connect( &submit_http, SIGNAL( requestStarted ( int ) ), this, SLOT( http_requestStarted ( int ) ) );
-   connect( &submit_http, SIGNAL( requestFinished ( int, bool ) ), this, SLOT( http_requestFinished ( int, bool ) ) );
-   connect( &submit_http, SIGNAL( done ( bool ) ), this, SLOT( http_done ( bool ) ) );
 
-   QHttpRequestHeader header("POST", msg_request );
-   header.setValue( "Host", manage_url_host );
-   header.setContentType( "application/json" );
-   submit_http.setHost( manage_url_host, manage_url_port.toUInt() );
-   // without the qba below, QHttp:request will send a null
-   QByteArray qba = post_data.toUtf8();
-   qba.resize( qba.size() - 1 );
-   submit_http.request( header, qba );
-#endif
+   http_request.setUrl( QUrl( QString( "http://%1%2" ).arg( le_manage_url->text() ).arg( msg_request ) ) );
+   http_reply = http_access_manager->get( http_request );
+
+   connect( http_reply, SIGNAL( downloadProgress ( qint64, qint64 ) ), this, SLOT( http_downloadProgress( qint64, qint64 ) ) );
+   connect( http_reply, SIGNAL( uploadProgress ( qint64, qint64 ) ), this, SLOT( http_uploadProgress( qint64, qint64 ) ) );
+   connect( http_reply, SIGNAL( finished () ), this, SLOT( http_finished() ) );
+   connect( http_reply, SIGNAL( error ( QNetworkReply::NetworkError ) ), this, SLOT( http_error ( QNetworkReply::NetworkError ) ) ); 
 }
 
 void US_Hydrodyn_Cluster_Config::update_cluster_id( const QString & )
@@ -1057,79 +988,12 @@ void US_Hydrodyn_Cluster_Config::update_manage_url( const QString & )
    update_enables();
 }
 
-void US_Hydrodyn_Cluster_Config::check_socket( QString /* name */, QString /* port */ )
-{
-   comm_active = true;
-   socket_hostfound = false;
-   socket_is_connected = false;
-   update_enables();
-
-   connect( &test_socket, SIGNAL( socket_hostFound() ), this, SLOT( socket_socket_hostFound() ) );
-   connect( &test_socket, SIGNAL( socket_connected() ), this, SLOT( socket_socket_connected() ) );
-   connect( &test_socket, SIGNAL( socket_connectionClosed() ), this, SLOT( socket_socket_connectionClosed() ) );
-   connect( &test_socket, SIGNAL( socket_delayedCloseFinished() ), this, SLOT( socket_socket_delayedCloseFinished() ) );
-   connect( &test_socket, SIGNAL( socket_readyRead() ), this, SLOT( socket_socket_readyRead() ) );
-   connect( &test_socket, SIGNAL( socket_bytesWritten ( int nbytes ) ), this, SLOT( socket_socket_bytesWritten ( int nbytes ) ) );
-   connect( &test_socket, SIGNAL( socket_error ( int ) ), this, SLOT( socket_socket_error ( int ) ) );
-}
-
-void US_Hydrodyn_Cluster_Config::socket_hostFound ()
-{
-   socket_hostfound = true;
-   cout << "socket_hostFound\n";
-}
-
-void US_Hydrodyn_Cluster_Config::socket_connected ()
-{
-   socket_is_connected = true;
-   cout << "socket_connected\n";
-}
-
-void US_Hydrodyn_Cluster_Config::socket_connectionClosed ()
-{
-#if QT_VERSION < 0x050000
-   cout << "socket_connectionClosed\n";
-   comm_active = false;
-   disconnect( &submit_http, SIGNAL( stateChanged ( int ) ), 0, 0 );
-   disconnect( &test_socket, SIGNAL( socket_hostFound() ), 0, 0 );
-   disconnect( &test_socket, SIGNAL( socket_connected() ), 0, 0 );
-   disconnect( &test_socket, SIGNAL( socket_connectionClosed() ), 0, 0 );
-   disconnect( &test_socket, SIGNAL( socket_delayedCloseFinished() ), 0, 0 );
-   disconnect( &test_socket, SIGNAL( socket_readyRead() ), 0, 0 );
-   disconnect( &test_socket, SIGNAL( socket_bytesWritten ( int nbytes ) ), 0, 0 );
-   disconnect( &test_socket, SIGNAL( socket_error ( int ) ), 0, 0 );
-   update_enables();
-#endif
-}
-
-void US_Hydrodyn_Cluster_Config::socket_delayedCloseFinished ()
-{
-   cout << "socket_delayedCloseFinished\n";
-}
-
-void US_Hydrodyn_Cluster_Config::socket_readyRead ()
-{
-   cout << "socket_readyRead\n";
-}
-
-void US_Hydrodyn_Cluster_Config::socket_bytesWritten ( int nbytes )
-{
-   cout << "socket_bytesWritten " << nbytes << "\n";
-}
-
-void US_Hydrodyn_Cluster_Config::socket_error ( int error )
-{
-   cout << "socket_error " << error << "\n";
-   test_socket.close();
-   comm_active = false;
-   update_enables();
-}
-
 void US_Hydrodyn_Cluster_Config::reset()
 {
    if (
-       le_manage_url->text().contains( QRegExp( "^\\S+:\\d+/portal/app/idservice/user$" ) ) &&
-       le_submit_url->text().contains( QRegExp( "^\\S+:\\d+$" ) ) &&
+       le_manage_url->text().contains( QRegExp( "^\\S+:\\d+$" ) ) &&
+       // le_manage_url->text().contains( QRegExp( "^\\S+:\\d+/portal/app/idservice/user$" ) ) &&
+       // le_submit_url->text().contains( QRegExp( "^\\S+:\\d+$" ) ) &&
        QMessageBox::Yes != QMessageBox::question(
                                                   this,
                                                   lbl_title->text(),

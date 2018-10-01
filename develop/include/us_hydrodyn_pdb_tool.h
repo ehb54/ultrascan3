@@ -96,6 +96,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       QPushButton   *pb_csv_paste_new;
       QPushButton   *pb_csv_merge;
       QPushButton   *pb_csv_angle;
+      QPushButton   *pb_csv_sol2wat;
       QPushButton   *pb_csv_reseq;
       QPushButton   *pb_csv_check;
       QPushButton   *pb_csv_sort;
@@ -129,6 +130,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       QPushButton   *pb_csv2_paste_new;
       QPushButton   *pb_csv2_merge;
       QPushButton   *pb_csv2_angle;
+      QPushButton   *pb_csv2_sol2wat;
       QPushButton   *pb_csv2_reseq;
       QPushButton   *pb_csv2_check;
       QPushButton   *pb_csv2_sort;
@@ -249,6 +251,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void          select_chain           ( QTreeWidget *lv, QStringList chains ); // selected a set of chains
       void          select_chain           ( QTreeWidget *lv, QString chain ); // selected one chain
       void          compute_angle          ( QTreeWidget *lv );
+      void          sol2wat                ( QTreeWidget *lv );
 
       csv           reseq_csv              ( QTreeWidget *lv, csv &ref_csv, bool only_selected = false );
 
@@ -314,6 +317,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void csv_paste_new();
       void csv_merge();
       void csv_angle();
+      void csv_sol2wat();
       void csv_reseq();
       void csv_check();
       void csv_sort();
@@ -344,6 +348,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void csv2_paste_new();
       void csv2_merge();
       void csv2_angle();
+      void csv2_sol2wat();
       void csv2_reseq();
       void csv2_check();
       void csv2_sort();

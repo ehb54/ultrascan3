@@ -5,10 +5,14 @@
 
 #include "../include/us_hydrodyn.h"
 #include "../include/us_hydrodyn_saxs.h"
+#include "../include/us_efa.h"
+#include "us_plot_util.h"
+
 //Added by qt3to4:
 #include <QCloseEvent>
 #include <QFrame>
 #include <QLabel>
+#include <qwt_counter.h>
 
 using namespace std;
 
@@ -26,8 +30,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       US_Hydrodyn_Saxs_Hplc_Svd(
                                 US_Hydrodyn_Saxs_Hplc *hplc_win, 
                                 vector < QString > hplc_selected_files,
-                                QWidget *p = 0, 
-                                const char *name = 0
+                                QWidget *p = 0
                                 );
 
       ~US_Hydrodyn_Saxs_Hplc_Svd();
@@ -41,9 +44,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       // ------ data section 
 
       mQLabel               * lbl_data;
-      QTreeWidget             * lv_data;
+      QTreeWidget           * lv_data;
       QPushButton           * pb_clear;
       QPushButton           * pb_to_hplc;
+      QPushButton           * pb_save_plots;
       QPushButton           * pb_color_rotate;
       QPushButton           * pb_replot;
 
@@ -54,7 +58,26 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       QTextEdit             * editor;
       QMenuBar              * mb_editor;
 
+      // ------ mode controls section
+
+      QLabel                * lbl_modes;
+      QButtonGroup          * bg_modes;
+      QRadioButton          * rb_mode_iqit;
+      QRadioButton          * rb_mode_svd;
+      QRadioButton          * rb_mode_efa;
+      QRadioButton          * rb_mode_efa_decomp;
+
+   private slots:
+      void                     set_mode_iqit();
+      void                     set_mode_svd();
+      void                     set_mode_efa();
+      void                     set_mode_efa_decomp();
+
+   private:
+
       // ------ plot section
+
+      // ----------- plot data
 
       QwtPlot               * plot_data;
       US_Plot               * usp_plot_data;
@@ -63,9 +86,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
 
    private:
       ScrollZoomer          * plot_data_zoomer;
-#if QT_VERSION >= 0x040000
       QwtPlotGrid           * grid_data;
-#endif
+
+      // ----------- plot errors
 
       QwtPlot               * plot_errors;
       US_Plot               * usp_plot_errors;
@@ -74,9 +97,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
 
    private:
       ScrollZoomer          * plot_errors_zoomer;
-#if QT_VERSION >= 0x040000
       QwtPlotGrid           * grid_errors;
-#endif
 
       QCheckBox             * cb_plot_errors;
       QCheckBox             * cb_plot_errors_rev;
@@ -89,11 +110,114 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       QPushButton           * pb_axis_x;
       QPushButton           * pb_axis_y;
 
+
+      // ----------- plot svd
+      
+      QwtPlot               * plot_svd;
+      US_Plot               * usp_plot_svd;
+   private slots:
+      void usp_config_plot_svd( const QPoint & );
+
+   private:
+      ScrollZoomer          * plot_svd_zoomer;
+      QwtPlotGrid           * grid_svd;
+
+      void                    set_number_of_svs_for_efa();
+
+      // ----------- plot autocor
+
+      QwtPlot               * plot_ac;
+      US_Plot               * usp_plot_ac;
+   private slots:
+      void usp_config_plot_ac( const QPoint & );
+
+   private:
+      ScrollZoomer          * plot_ac_zoomer;
+      QwtPlotGrid           * grid_ac;
+
+      // ----------- plot efa
+      QwtPlot               * plot_lefa;
+      US_Plot               * usp_plot_lefa;
+   private slots:
+      void usp_config_plot_lefa( const QPoint & );
+
+   private:
+      ScrollZoomer          * plot_lefa_zoomer;
+      QwtPlotGrid           * grid_lefa;
+
+      QwtPlot               * plot_refa;
+      US_Plot               * usp_plot_refa;
+
+   private slots:
+      void usp_config_plot_refa( const QPoint & );
+
+   private:
+      ScrollZoomer          * plot_refa_zoomer;
+      QwtPlotGrid           * grid_refa;
+
+      // ----------- plot efa_decomp
+
+      QwtPlot               * plot_efa_decomp;
+      US_Plot               * usp_plot_efa_decomp;
+   private slots:
+      void usp_config_plot_efa_decomp( const QPoint & );
+      void                    efa_decomp_to_hplc_saxs();
+      void                    set_efa_decomp_force_positive();
+
+   private:
+      ScrollZoomer          * plot_efa_decomp_zoomer;
+      QwtPlotGrid           * grid_efa_decomp;
+
+      QPushButton           * pb_efa_decomp_to_hplc_saxs;
+      QCheckBox             * cb_efa_decomp_force_positive;
+
+      // ----------- plot end
+
+      QLabel                * lbl_efas;
+      QwtCounter            * qwtc_efas;
+
+      vector < vector < double > > efa_lsv;
+      vector < vector < double > > efa_rsv;
+
+      vector < QLabel * >          efa_range_labels;
+      vector < QwtCounter * >      efa_range_start;
+      vector < QLabel * >          efa_range_labels2;
+      vector < QwtCounter * >      efa_range_end;
+
+      vector < int >               plotted_efa_range_start;
+      vector < int >               plotted_efa_range_end;
+      void                         update_efas_ranges();
+      void                         efa_info( QString tag );
+      void                         init_efa_values();
+      void                         make_plotted_efas();
+
+   private slots:
+      void                         update_efa_range_start( double );
+      void                         update_efa_range_end( double );
+
+   private:
+      vector < double >            plotted_efa_x;
+      vector < vector < double > > plotted_efa_lsv;
+      vector < vector < double > > plotted_efa_rsv;
+      vector < QwtPlotMarker * >   qwtpm_lsv_range_marker;
+      vector < QwtPlotMarker * >   qwtpm_rsv_range_marker;
+
+   private slots:
+      void update_efas( double val );
+
+   private:
+
+      vector < double >            efa_decomp_x;
+      vector < vector < double > > efa_decomp_Ct;
+
       // ------ process section
 
       mQLabel               * lbl_process;
       // QLabel                * lbl_wheel_pos;
       // QwtWheel              * qwtw_wheel;
+
+      QCheckBox             * cb_norm_pw;
+      QCheckBox             * cb_norm_avg;
 
       QLabel                * lbl_q_range;
       mQLineEdit            * le_q_start;
@@ -107,10 +231,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       // QLineEdit             * le_random;
 
       QPushButton           * pb_svd;
+      QPushButton           * pb_efa;
+      QPushButton           * pb_efa_decomp;
       QPushButton           * pb_stop;
 
       QLabel                * lbl_ev;
-      QListWidget              * lb_ev;
+      QListWidget           * lb_ev;
 
       QPushButton           * pb_svd_plot;
       QPushButton           * pb_svd_save;
@@ -141,13 +267,23 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       map < QString, vector < double > >  f_qs;
 
       map < QString, vector < double > >  f_Is;
+      map < QString, vector < double > >  f_Is_norm_pw;
+      map < QString, vector < double > >  f_Is_norm_avg;
+      vector < double >                   org_avg_errors;
       map < QString, vector < double > >  f_errors;
       map < QString, bool >               f_is_time;
 
+      // -------- rhs widgets
+      vector < QWidget * >                iqit_widgets;
+      vector < QWidget * >                errors_widgets;
+      vector < QWidget * >                svd_widgets;
+      vector < QWidget * >                efa_widgets;
+      vector < QWidget * >                efa_decomp_widgets;
+
+      // -------- lhs widgets
       vector < QWidget * >                data_widgets;
       vector < QWidget * >                editor_widgets;
       vector < QWidget * >                process_widgets;
-      vector < QWidget * >                errors_widgets;
 
       void                                hide_widgets( vector < QWidget *> widgets, bool hide );
 
@@ -193,11 +329,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       void                         axis_x_title();
       void                         axis_y_title();
 
-#if QT_VERSION >= 0x040000
       map < QString, QwtPlotCurve * >     plotted_curves;
-#else
-      map < QString, long >               plotted_curves;
-#endif
+
       void                         add_i_of_q_or_t( QString source, QStringList files, bool do_update_enables = true );
       void                         rescale( bool do_update_enables = true );
 
@@ -212,6 +345,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       vector < double >            svd_x;
       vector < double >            svd_y;
 
+      vector < double >            svd_autocor_U;
+      vector < double >            svd_autocor_V;
+
       vector < double >            rmsd_x;
       vector < double >            rmsd_y;
       vector < double >            chi_x;
@@ -225,10 +361,15 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       QStringList                  last_svd_data;
       QString                      last_svd_name;
       map < QString, QStringList > svd_data_map;
-      QTreeWidgetItem *              lvi_last_depth( int d );
+
+      QStringList                  last_efa_data;
+      QString                      last_efa_name;
+      map < QString, QStringList > efa_data_map;
+
+      QTreeWidgetItem *            lvi_last_depth( int d );
 
       vector < QColor >            plot_colors;
-      QPalette                  cg_red;
+      QPalette                     cg_red;
 
       void                         do_recon();
       QString                      last_recon_tag;
@@ -258,6 +399,154 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
 
       bool                         mode_i_of_t;
 
+      bool                         norm_ok;
+      void                         check_norm( QStringList & files );
+      QString                      get_name();
+      double                       autocor1( vector < double > &x );
+      vector < double >            autocor( vector < vector < double > > &A );
+      vector < vector < double > > transpose( vector < vector < double > > &A );
+      vector < vector < int > >    transpose( vector < vector < int > > &A );
+      vector < vector < double > > dot( vector < vector < double > > &A,
+                                        vector < vector < double > > &B ); 
+      vector < vector < double > > vivd_pwmult( vector < vector < int > > &A,
+                                                vector < vector < double > > &B );
+      void                         vvd_cnorm( vector < vector < double > > &A );
+      void                         vvd_cnorm( vector < vector < double > > &A,
+                                              vector < vector < double > > &B );
+      
+      double                       vvd_min( vector < vector < double > > &A );
+      double                       vvd_max( vector < vector < double > > &A );
+      void                         vvd_smult( vector < vector < double > > &A, double x );
+
+      void                         matrix_info( QString qs, vector < vector < double > > &A );
+      void                         set_title( QwtPlot *plot, QString title );
+
+      map < QString, QwtPlot *>    plot_info;
+
+      enum                         modes
+      {
+         MODE_IQIT
+         ,MODE_SVD
+         ,MODE_EFA
+         ,MODE_EFA_DECOMP
+      };
+
+      modes                        current_mode;
+      void                         mode_select();
+      void                         mode_select( modes mode );
+
+      void                         clear_svd();
+      void                         clear_efa();
+      void                         clear_efa_decomp();
+      vector < double >            gradient( vector < double > & );
+      bool                         efa_range_processing;
+
+      bool                         convert_it_to_iq( QStringList files, QStringList & created_files, QString & error_msg );
+
+      // efa decomp
+      enum                         efa_decomp_method
+      {
+         METHOD_HYBRID
+         ,METHOD_ITERATIVE
+         ,METHOD_EXPLICIT
+      };
+
+      
+
+      void                     initHybridEFA(
+                                             vector < vector < int > >    & M,
+                                             int                            num_sv,
+                                             vector < vector < double > > & D,
+                                             vector < vector < double > > & C,
+                                             bool                         & converged,
+                                             vector < vector < double > > & V_bar,
+                                             int                            niter,
+                                             double                         tol,
+                                             vector < int >               & force_pos,
+                                             // returns
+                                             bool                         & failed,
+                                             vector < vector < double > > & C_ret,
+                                             vector < vector < double > > & T_ret
+                                             );
+
+
+      void                     initIterativeEFA(
+                                                vector < vector < int > >    & M,
+                                                int                            num_sv,
+                                                vector < vector < double > > & D,
+                                                vector < vector < double > > & C,
+                                                bool                         & converged,
+                                                vector < vector < double > > & V_bar,
+                                                // returns
+                                                bool                         & failed,
+                                                vector < vector < double > > & C_ret
+                                                );
+
+      void                     initExplicitEFA(
+                                               vector < vector < int > >    & M,
+                                               int                            num_sv,
+                                               vector < vector < double > > & D,
+                                               vector < vector < double > > & C,
+                                               bool                         & converged,
+                                               vector < vector < double > > & V_bar,
+                                               // returns
+                                               bool                         & failed,
+                                               vector < vector < double > > & T_ret
+                                               );
+
+      void                     runExplicitEFARotation(
+                                                      vector < vector < int > >    & M,
+                                                      vector < vector < double > > & D,
+                                                      bool                         & failed, // also a return
+                                                      vector < vector < double > > & C,
+                                                      vector < vector < double > > & V_bar,
+                                                      vector < vector < double > > & T,
+                                                      int                            niter,
+                                                      double                         tol,
+                                                      vector < int >               & force_pos,
+                                                      // returns
+                                                      vector < vector < double > > & C_ret,
+                                                      bool                         & converged
+                                                      );
+
+      void                     runIterativeEFARotation(
+                                                       vector < vector < int > >    & M,
+                                                       vector < vector < double > > & D,
+                                                       bool                         & failed, // also a return
+                                                       vector < vector < double > > & C,
+                                                       vector < vector < double > > & V_bar,
+                                                       vector < vector < double > > & T,
+                                                       int                            niter,
+                                                       double                         tol,
+                                                       vector < int >               & force_pos,
+                                                       // returns
+                                                       vector < vector < double > > & C_ret,
+                                                       bool                         & converged,
+                                                       vector < double >            & dc,
+                                                       int                          & k
+                                                       );
+
+      void                     EFAUpdateRotation(
+                                                 vector < vector < int > >    & M,
+                                                 vector < vector < double > > & C,
+                                                 vector < vector < double > > & D,
+                                                 vector < int >               & force_pos,
+                                                 // returns
+                                                 vector < vector < double > > & Cnew
+                                                 );
+
+      void                     EFAFirstRotation(
+                                                vector < vector < int > >    & M,
+                                                vector < vector < double > > & C,
+                                                vector < vector < double > > & D,
+                                                // returns
+                                                vector < vector < double > > & Cnew
+                                                );
+      
+      void                     efa_plot();
+      void                     efa_decomp_plot();
+      int                      efa_plot_count;
+
    private slots:
 
       // ------ data section 
@@ -265,8 +554,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       void data_selection_changed();
       void clear( );
       void to_hplc();
+      void save_plots();
       void color_rotate();
-      void replot();
+      void replot( bool keep_mode = false );
 
       void hide_data();
 
@@ -296,6 +586,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
 
       // ------ process section 
 
+      void set_norm_pw  ();
+      void set_norm_avg ();
+
       void q_start_text ( const QString & );
       void q_end_text   ( const QString & );
 
@@ -305,6 +598,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       void sv_selection_changed();
 
       void svd();
+      void efa();
+      void efa_decomp();
       void stop();
 
       void svd_plot( bool axis_change = true );
@@ -326,6 +621,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       void cancel();
 
       // ----- util section
+
+      void setup_norm();
 
       void setupGUI();
 

@@ -85,18 +85,24 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    le_dir->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2));
    connect( le_dir, SIGNAL(pressed()), SLOT( dir_pressed() ));
 
-
    pb_add_files = new QPushButton(us_tr("Add files"), this);
    pb_add_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_add_files->setMinimumHeight(minHeight3);
    pb_add_files->setPalette( PALET_PUSHB );
    connect(pb_add_files, SIGNAL(clicked()), SLOT(add_files()));
 
+   pb_add_dir = new QPushButton(us_tr("Add Dir."), this);
+   pb_add_dir->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_add_dir->setMinimumHeight(minHeight3);
+   pb_add_dir->setPalette( PALET_PUSHB );
+   connect(pb_add_dir, SIGNAL(clicked()), SLOT(add_dir()));
+
    pb_similar_files = new QPushButton(us_tr("Similar"), this);
    pb_similar_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_similar_files->setMinimumHeight(minHeight3);
    pb_similar_files->setPalette( PALET_PUSHB );
    connect(pb_similar_files, SIGNAL(clicked()), SLOT(similar_files()));
+   pb_similar_files->hide();
 
    pb_conc = new QPushButton(us_tr("Concentrations"), this);
    pb_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -172,14 +178,14 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_line_width = new QPushButton(us_tr("Width"), this);
    pb_line_width->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_line_width->setMinimumHeight(minHeight1);
-   pb_line_width->setMaximumWidth ( minHeight1 * 2 );
+   // pb_line_width->setMaximumWidth ( minHeight1 * 2 );
    pb_line_width->setPalette( PALET_PUSHB );
    connect(pb_line_width, SIGNAL(clicked()), SLOT(line_width()));
 
    pb_color_rotate = new QPushButton(us_tr("Color"), this);
    pb_color_rotate->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_color_rotate->setMinimumHeight(minHeight1);
-   pb_color_rotate->setMaximumWidth ( minHeight1 * 2 );
+   // pb_color_rotate->setMaximumWidth ( minHeight1 * 2 );
    pb_color_rotate->setPalette( PALET_PUSHB );
    connect(pb_color_rotate, SIGNAL(clicked()), SLOT(color_rotate()));
 
@@ -203,10 +209,10 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_to_saxs->setPalette( PALET_PUSHB );
    connect(pb_to_saxs, SIGNAL(clicked()), SLOT(to_saxs()));
 
-   pb_view = new QPushButton(us_tr("View"), this);
+   pb_view = new QPushButton(us_tr("View Selected"), this);
    pb_view->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_view->setMinimumHeight( minHeight1 );
-   pb_view->setMaximumWidth ( minHeight1 * 4 );
+   // pb_view->setMaximumWidth ( minHeight1 * 4 );
    pb_view->setPalette( PALET_PUSHB );
    connect(pb_view, SIGNAL(clicked()), SLOT( view() ));
 
@@ -218,7 +224,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
    cb_eb = new QCheckBox(this);
    cb_eb->setText(us_tr("Err "));
-   cb_eb->setMaximumWidth ( minHeight1 * 3 );
+   //width cb_eb->setMaximumWidth ( minHeight1 * 3 );
    cb_eb->setChecked( false );
    cb_eb->setMinimumHeight( minHeight1 );
    cb_eb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
@@ -346,7 +352,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_smooth->setPalette( PALET_PUSHB );
    connect(pb_smooth, SIGNAL(clicked()), SLOT(smooth()));
 
-   pb_svd = new QPushButton(us_tr("SVD"), this);
+   pb_svd = new QPushButton(us_tr("SVD / EFA"), this);
    pb_svd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_svd->setMinimumHeight(minHeight1);
    pb_svd->setPalette( PALET_PUSHB );
@@ -370,7 +376,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_create_i_of_q->setPalette( PALET_PUSHB );
    connect(pb_create_i_of_q, SIGNAL(clicked()), SLOT(create_i_of_q()));
 
-   pb_load_conc = new QPushButton(us_tr("Concentration load"), this);
+   pb_load_conc = new QPushButton(us_tr("Conc. File Load"), this);
    pb_load_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_load_conc->setMinimumHeight(minHeight1);
    pb_load_conc->setPalette( PALET_PUSHB );
@@ -400,6 +406,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_detector->setMinimumHeight(minHeight1);
    pb_detector->setPalette( PALET_PUSHB );
    connect(pb_detector, SIGNAL(clicked()), SLOT(set_detector()));
+   pb_detector->hide();
 
    //    pb_set_hplc = new QPushButton(us_tr("Set buffer"), this);
    //    pb_set_hplc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -494,7 +501,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_select_all_created->setPalette( PALET_PUSHB );
    connect(pb_select_all_created, SIGNAL(clicked()), SLOT(select_all_created()));
 
-   pb_invert_all_created = new QPushButton(us_tr("Invert"), this);
+   pb_invert_all_created = new QPushButton(us_tr("Sel. Unsel."), this);
    pb_invert_all_created->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize  - 1));
    pb_invert_all_created->setMinimumHeight(minHeight1);
    pb_invert_all_created->setPalette( PALET_PUSHB );
@@ -505,6 +512,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_adjacent_created->setMinimumHeight(minHeight1);
    pb_adjacent_created->setPalette( PALET_PUSHB );
    connect(pb_adjacent_created, SIGNAL(clicked()), SLOT(adjacent_created()));
+   pb_adjacent_created->hide();
 
    pb_remove_created = new QPushButton(us_tr("Remove"), this);
    pb_remove_created->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -600,7 +608,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    le_dummy->setPalette( PALET_NORMAL );
    AUTFBACK( le_dummy );
    le_dummy->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 3));
-   le_dummy->setMaximumHeight( 3 );
+   // le_dummy->setMaximumHeight( 3 );
    le_dummy->setEnabled( false );
 
    progress = new QProgressBar( this );
@@ -951,6 +959,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_p3d->setMinimumHeight(minHeight1);
    pb_p3d->setPalette( PALET_PUSHB );
    connect(pb_p3d, SIGNAL(clicked()), SLOT(p3d()));
+   pb_p3d->hide();
 
    lbl_blank1 = new QLabel( "", this );
    lbl_blank1->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -1038,7 +1047,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_ggqfit->setEnabled(false);
    connect(pb_ggqfit, SIGNAL(clicked()), SLOT(ggqfit()));
 
-   pb_cormap = new QPushButton(us_tr("CorMap Analysis"), this);
+   pb_cormap = new QPushButton(us_tr("PVP Analysis"), this);
    pb_cormap->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_cormap->setMinimumHeight(minHeight1);
    pb_cormap->setPalette( PALET_PUSHB );
@@ -2913,6 +2922,97 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    connect(pb_pm_run, SIGNAL(clicked()), SLOT(pm_run()));
    pb_pm_q_reset->setEnabled( false );
 
+   // fasta
+
+   pb_fasta_file = new QPushButton(us_tr("Load FASTA sequence from file"), this);
+   pb_fasta_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_fasta_file->setMinimumHeight(minHeight1);
+   pb_fasta_file->setPalette( PALET_PUSHB );
+   connect(pb_fasta_file, SIGNAL(clicked()), SLOT(fasta_file()));
+
+   lbl_fasta_value = new QLabel( us_tr( " PSV [cm^3/g]:" ) );
+   lbl_fasta_value->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_fasta_value->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_fasta_value );
+   lbl_fasta_value->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   le_fasta_value = new QLineEdit( this );
+   le_fasta_value->setObjectName( "le_fasta_value Line Edit" );
+   le_fasta_value->setText( "" );
+   le_fasta_value->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   le_fasta_value->setPalette( PALET_EDIT );
+   AUTFBACK( le_fasta_value );
+   le_fasta_value->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_fasta_value->setEnabled( false );
+   le_fasta_value->setReadOnly( true );
+
+   // pbmodes
+
+   lbl_pbmode = new QLabel( us_tr( "Plot buttons:" ) );
+   lbl_pbmode->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_pbmode->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_pbmode );
+   lbl_pbmode->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   rb_pbmode_main = new QRadioButton( "Options", this ); 
+   rb_pbmode_main->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   rb_pbmode_main->setMinimumHeight(minHeight3);
+   rb_pbmode_main->setPalette( PALET_NORMAL );
+   AUTFBACK( rb_pbmode_main );
+   connect(rb_pbmode_main, SIGNAL(clicked( )), SLOT( set_pbmode_main( )));
+
+   rb_pbmode_sel = new QRadioButton( "Selections", this ); 
+   rb_pbmode_sel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   rb_pbmode_sel->setMinimumHeight(minHeight3);
+   rb_pbmode_sel->setPalette( PALET_NORMAL );
+   AUTFBACK( rb_pbmode_sel );
+   connect(rb_pbmode_sel, SIGNAL(clicked( )), SLOT( set_pbmode_sel( )));
+
+   rb_pbmode_crop = new QRadioButton( "Cropping", this ); 
+   rb_pbmode_crop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   rb_pbmode_crop->setMinimumHeight(minHeight3);
+   rb_pbmode_crop->setPalette( PALET_NORMAL );
+   AUTFBACK( rb_pbmode_crop );
+   connect(rb_pbmode_crop, SIGNAL(clicked( )), SLOT( set_pbmode_crop( )));
+
+   rb_pbmode_conc = new QRadioButton( "Conc. Util.", this ); 
+   rb_pbmode_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   rb_pbmode_conc->setMinimumHeight(minHeight3);
+   rb_pbmode_conc->setPalette( PALET_NORMAL );
+   AUTFBACK( rb_pbmode_conc );
+   connect(rb_pbmode_conc, SIGNAL(clicked( )), SLOT( set_pbmode_conc( )));
+
+   rb_pbmode_sd = new QRadioButton( "S.D. Util..", this ); 
+   rb_pbmode_sd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   rb_pbmode_sd->setMinimumHeight(minHeight3);
+   rb_pbmode_sd->setPalette( PALET_NORMAL );
+   AUTFBACK( rb_pbmode_sd );
+   connect(rb_pbmode_sd, SIGNAL(clicked( )), SLOT( set_pbmode_sd( )));
+
+   rb_pbmode_fasta = new QRadioButton( "PSV Util.", this ); 
+   rb_pbmode_fasta->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   rb_pbmode_fasta->setMinimumHeight(minHeight3);
+   rb_pbmode_fasta->setPalette( PALET_NORMAL );
+   AUTFBACK( rb_pbmode_fasta );
+   connect(rb_pbmode_fasta, SIGNAL(clicked( )), SLOT( set_pbmode_fasta( )));
+   rb_pbmode_fasta->hide();
+
+   rb_pbmode_none = new QRadioButton( "None", this ); 
+   rb_pbmode_none->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   rb_pbmode_none->setMinimumHeight(minHeight3);
+   rb_pbmode_none->setPalette( PALET_NORMAL );
+   AUTFBACK( rb_pbmode_none );
+   connect(rb_pbmode_none, SIGNAL(clicked( )), SLOT( set_pbmode_none( )));
+
+   bg_pbmode = new QButtonGroup( this );
+   bg_pbmode->addButton( rb_pbmode_main );
+   bg_pbmode->addButton( rb_pbmode_sel );
+   bg_pbmode->addButton( rb_pbmode_crop );
+   bg_pbmode->addButton( rb_pbmode_conc );
+   bg_pbmode->addButton( rb_pbmode_sd );
+   bg_pbmode->addButton( rb_pbmode_fasta );
+   bg_pbmode->addButton( rb_pbmode_none );
+
    // bottom
 
    pb_help = new QPushButton(us_tr("Help"), this);
@@ -2934,15 +3034,25 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
    // build layout
+   QBoxLayout * hbl_file_buttons_0 = new QHBoxLayout();
+   {
+      hbl_file_buttons_0->setContentsMargins( 0, 0, 0, 0 );
+      hbl_file_buttons_0->setSpacing( 0 );
+      hbl_file_buttons_0->addWidget ( pb_load_conc );
+      hbl_file_buttons_0->addWidget ( pb_conc );
+      hbl_file_buttons_0->addWidget ( pb_view );
+   }
 
    QBoxLayout * hbl_file_buttons = new QHBoxLayout(); hbl_file_buttons->setContentsMargins( 0, 0, 0, 0 ); hbl_file_buttons->setSpacing( 0 );
    hbl_file_buttons->addWidget ( pb_add_files );
+   hbl_file_buttons->addWidget ( pb_add_dir );
    hbl_file_buttons->addWidget ( pb_similar_files );
-   hbl_file_buttons->addWidget ( pb_conc);
+   hbl_file_buttons->addWidget ( pb_to_saxs );
    hbl_file_buttons->addWidget ( pb_clear_files );
 
    files_widgets.push_back( pb_add_files );
-   files_widgets.push_back( pb_similar_files );
+   files_widgets.push_back( pb_add_dir );
+   // files_widgets.push_back( pb_similar_files );
    files_widgets.push_back( pb_conc );
    files_widgets.push_back( pb_clear_files );
 
@@ -2964,24 +3074,20 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    hbl_file_buttons_2->addWidget ( pb_select_nth );
    // hbl_file_buttons_2->addWidget ( pb_color_rotate );
    // hbl_file_buttons_2->addWidget ( pb_to_saxs );
-   hbl_file_buttons_2->addWidget ( pb_view );
-   hbl_file_buttons_2->addWidget ( pb_movie );
+   // hbl_file_buttons_2->addWidget ( pb_view );
    hbl_file_buttons_2->addWidget ( pb_ag );
-   hbl_file_buttons_2->addWidget ( pb_axis_x );
-   hbl_file_buttons_2->addWidget ( pb_axis_y );
-   hbl_file_buttons_2->addWidget ( cb_eb );
-   hbl_file_buttons_2->addWidget ( pb_rescale );
+   // hbl_file_buttons_2->addWidget ( pb_to_saxs );
 
    files_widgets.push_back ( pb_select_all );
    files_widgets.push_back ( pb_invert );
    // files_widgets.push_back ( pb_adjacent );
    files_widgets.push_back ( pb_select_nth );
    files_widgets.push_back ( pb_view );
-   files_widgets.push_back ( pb_movie );
-   files_widgets.push_back ( cb_eb );
-   files_widgets.push_back ( pb_axis_x );
-   files_widgets.push_back ( pb_axis_y );
-   files_widgets.push_back ( pb_rescale );
+   // files_widgets.push_back ( pb_movie );
+   // files_widgets.push_back ( cb_eb );
+   // files_widgets.push_back ( pb_axis_x );
+   // files_widgets.push_back ( pb_axis_y );
+   // files_widgets.push_back ( pb_rescale );
 
    QBoxLayout * hbl_file_buttons_2b = new QHBoxLayout(); hbl_file_buttons_2b->setContentsMargins( 0, 0, 0, 0 ); hbl_file_buttons_2b->setSpacing( 0 );
    hbl_file_buttons_2b->addWidget( pb_stack_push_all );
@@ -3049,30 +3155,141 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    //   pb_options->hide();
    // }
    // #endif
+   QBoxLayout * l_pbmode = new QHBoxLayout();
+   {
+      l_pbmode->addWidget( lbl_pbmode );
+      l_pbmode->addWidget( rb_pbmode_main );
+      l_pbmode->addWidget( rb_pbmode_sel );
+      l_pbmode->addWidget( rb_pbmode_crop );
+      l_pbmode->addWidget( rb_pbmode_conc );
+      l_pbmode->addWidget( rb_pbmode_sd );
+      l_pbmode->addWidget( rb_pbmode_fasta );
+      l_pbmode->addWidget( rb_pbmode_none );
+   }
 
+   QBoxLayout * l_pbmode_main = new QHBoxLayout();
+   {
+      l_pbmode_main->setContentsMargins( 0, 0, 0, 0 );
+      l_pbmode_main->setSpacing( 0 );
+
+      l_pbmode_main->addWidget( pb_rescale );
+      l_pbmode_main->addWidget( pb_axis_x );
+      l_pbmode_main->addWidget( pb_axis_y );
+      l_pbmode_main->addWidget( cb_eb );
+      l_pbmode_main->addWidget( pb_line_width );
+      l_pbmode_main->addWidget( pb_color_rotate );
+      l_pbmode_main->addWidget( pb_legend );
+
+      pbmode_main_widgets.push_back( pb_rescale );
+      pbmode_main_widgets.push_back( pb_axis_x );
+      pbmode_main_widgets.push_back( pb_axis_y );
+      pbmode_main_widgets.push_back( cb_eb );
+      pbmode_main_widgets.push_back( pb_line_width );
+      pbmode_main_widgets.push_back( pb_color_rotate );
+      pbmode_main_widgets.push_back( pb_legend );
+   }
+
+   QBoxLayout * l_pbmode_sel = new QHBoxLayout();
+   {
+      l_pbmode_sel->setContentsMargins( 0, 0, 0, 0 );
+      l_pbmode_sel->setSpacing( 0 );
+
+      l_pbmode_sel->addWidget( pb_select_vis );
+      l_pbmode_sel->addWidget( pb_remove_vis );
+      l_pbmode_sel->addWidget( pb_movie );
+      l_pbmode_sel->addWidget( pb_pp );
+
+      pbmode_sel_widgets.push_back( pb_select_vis );
+      pbmode_sel_widgets.push_back( pb_remove_vis );
+      pbmode_sel_widgets.push_back( pb_movie );
+      pbmode_sel_widgets.push_back( pb_pp );
+   }
+
+   QBoxLayout * l_pbmode_crop = new QHBoxLayout();
+   {
+      l_pbmode_crop->setContentsMargins( 0, 0, 0, 0 );
+      l_pbmode_crop->setSpacing( 0 );
+
+      l_pbmode_crop->addWidget( pb_crop_common );
+      l_pbmode_crop->addWidget( pb_crop_vis );
+      l_pbmode_crop->addWidget( pb_crop_zero );
+      l_pbmode_crop->addWidget( pb_crop_left );
+      l_pbmode_crop->addWidget( pb_crop_undo );
+      l_pbmode_crop->addWidget( pb_crop_right );
+
+      pbmode_crop_widgets.push_back( pb_crop_common );
+      pbmode_crop_widgets.push_back( pb_crop_vis );
+      pbmode_crop_widgets.push_back( pb_crop_zero );
+      pbmode_crop_widgets.push_back( pb_crop_left );
+      pbmode_crop_widgets.push_back( pb_crop_undo );
+      pbmode_crop_widgets.push_back( pb_crop_right );
+   }
+
+   QBoxLayout * l_pbmode_conc = new QHBoxLayout();
+   {
+      l_pbmode_conc->setContentsMargins( 0, 0, 0, 0 );
+      l_pbmode_conc->setSpacing( 0 );
+
+      l_pbmode_conc->addWidget( pb_repeak );
+      l_pbmode_conc->addWidget( pb_conc_file );
+      l_pbmode_conc->addWidget( lbl_conc_file );
+      l_pbmode_conc->addWidget( pb_timeshift );
+      l_pbmode_conc->addWidget( pb_timescale );
+      
+      pbmode_conc_widgets.push_back( pb_repeak );
+      pbmode_conc_widgets.push_back( pb_conc_file );
+      pbmode_conc_widgets.push_back( lbl_conc_file );
+      pbmode_conc_widgets.push_back( pb_timeshift );
+      pbmode_conc_widgets.push_back( pb_timescale );
+   }
+
+   QBoxLayout * l_pbmode_sd = new QHBoxLayout();
+   {
+      l_pbmode_sd->setContentsMargins( 0, 0, 0, 0 );
+      l_pbmode_sd->setSpacing( 0 );
+
+      l_pbmode_sd->addWidget( pb_wyatt_start );
+      l_pbmode_sd->addWidget( pb_wyatt_apply );
+
+      pbmode_sd_widgets.push_back( pb_wyatt_start );
+      pbmode_sd_widgets.push_back( pb_wyatt_apply );
+   }
+
+   QBoxLayout * l_pbmode_fasta = new QHBoxLayout();
+   {
+      l_pbmode_fasta->setContentsMargins( 0, 0, 0, 0 );
+      l_pbmode_fasta->setSpacing( 0 );
+
+      l_pbmode_fasta->addWidget( pb_fasta_file );
+      l_pbmode_fasta->addWidget( lbl_fasta_value );
+      l_pbmode_fasta->addWidget( le_fasta_value );
+
+      pbmode_fasta_widgets.push_back( pb_fasta_file );
+      pbmode_fasta_widgets.push_back( lbl_fasta_value );
+      pbmode_fasta_widgets.push_back( le_fasta_value );
+   }
+
+   
    QBoxLayout * hbl_file_buttons_3 = new QHBoxLayout(); hbl_file_buttons_3->setContentsMargins( 0, 0, 0, 0 ); hbl_file_buttons_3->setSpacing( 0 );
    hbl_file_buttons_3->addWidget ( pb_conc_avg );
    hbl_file_buttons_3->addWidget ( pb_normalize );
    hbl_file_buttons_3->addWidget ( pb_avg );
    hbl_file_buttons_3->addWidget ( pb_add );
-   hbl_file_buttons_3->addWidget ( pb_to_saxs );
-   hbl_file_buttons_3->addWidget ( pb_line_width );
-   hbl_file_buttons_3->addWidget ( pb_color_rotate );
+   hbl_file_buttons_3->addWidget ( pb_bin );
+   hbl_file_buttons_3->addWidget ( pb_smooth );
 
-   files_widgets.push_back ( pb_conc_avg );
+   // files_widgets.push_back ( pb_conc_avg );
    files_widgets.push_back ( pb_normalize );
    files_widgets.push_back ( pb_avg );
    files_expert_widgets.push_back ( pb_add );
    files_widgets.push_back ( pb_to_saxs );
-   files_widgets.push_back ( pb_line_width );
-   files_widgets.push_back ( pb_color_rotate );
+   // files_widgets.push_back ( pb_line_width );
+   // files_widgets.push_back ( pb_color_rotate );
    files_expert_widgets.push_back ( pb_ag );
 
    QBoxLayout * hbl_file_buttons_4 = new QHBoxLayout(); hbl_file_buttons_4->setContentsMargins( 0, 0, 0, 0 ); hbl_file_buttons_4->setSpacing( 0 );
-   hbl_file_buttons_4->addWidget ( pb_bin );
-   hbl_file_buttons_4->addWidget ( pb_smooth );
-   hbl_file_buttons_4->addWidget ( pb_svd );
    hbl_file_buttons_4->addWidget ( pb_create_i_of_t );
+   hbl_file_buttons_4->addWidget ( pb_svd );
    hbl_file_buttons_4->addWidget ( pb_test_i_of_t );
    hbl_file_buttons_4->addWidget ( pb_create_i_of_q );
 
@@ -3084,15 +3301,14 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    files_widgets.push_back ( pb_create_i_of_q );
 
    QBoxLayout * hbl_conc_file = new QHBoxLayout(); hbl_conc_file->setContentsMargins( 0, 0, 0, 0 ); hbl_conc_file->setSpacing( 0 );
-   hbl_conc_file->addWidget ( pb_load_conc );
-   hbl_conc_file->addWidget ( pb_repeak );
-   hbl_conc_file->addWidget ( pb_conc_file );
-   hbl_conc_file->addWidget ( pb_detector );
+   // hbl_conc_file->addWidget ( pb_repeak );
+   // hbl_conc_file->addWidget ( pb_conc_file );
+   // hbl_conc_file->addWidget ( pb_detector );
 
    files_widgets.push_back ( pb_load_conc );
-   files_widgets.push_back ( pb_repeak );
-   files_widgets.push_back ( pb_conc_file );
-   files_widgets.push_back ( pb_detector );
+   // files_widgets.push_back ( pb_repeak );
+   // files_widgets.push_back ( pb_conc_file );
+   // files_widgets.push_back ( pb_detector );
 
    //    QBoxLayout * hbl_hplc = new QHBoxLayout(); hbl_hplc->setContentsMargins( 0, 0, 0, 0 ); hbl_hplc->setSpacing( 0 );
    //    hbl_hplc->addWidget ( pb_set_hplc );
@@ -3111,12 +3327,10 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    hbl_created->addWidget ( pb_invert_all_created );
    hbl_created->addWidget ( pb_adjacent_created );
    hbl_created->addWidget ( pb_remove_created );
-   hbl_created->addWidget ( pb_save_created_csv );
-   hbl_created->addWidget ( pb_save_created );
 
    created_files_widgets.push_back( pb_select_all_created );
    created_files_widgets.push_back( pb_invert_all_created );
-   created_files_widgets.push_back( pb_adjacent_created );
+   // created_files_widgets.push_back( pb_adjacent_created );
    created_files_widgets.push_back( pb_remove_created );
    created_files_widgets.push_back( pb_save_created_csv );
    created_files_widgets.push_back( pb_save_created );
@@ -3124,6 +3338,8 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    QBoxLayout * hbl_created_2 = new QHBoxLayout(); hbl_created_2->setContentsMargins( 0, 0, 0, 0 ); hbl_created_2->setSpacing( 0 );
    hbl_created_2->addWidget ( pb_show_created );
    hbl_created_2->addWidget ( pb_show_only_created );
+   hbl_created_2->addWidget ( pb_save_created_csv );
+   hbl_created_2->addWidget ( pb_save_created );
 
    created_files_widgets.push_back ( pb_show_created );
    created_files_widgets.push_back ( pb_show_only_created );
@@ -3144,7 +3360,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
    files_widgets.push_back ( lb_files );
    files_widgets.push_back ( lbl_selected );
-   files_widgets.push_back ( lbl_conc_file );
+   // files_widgets.push_back ( lbl_conc_file );
 
    created_files_widgets.push_back ( lb_created_files );
    created_files_widgets.push_back ( le_created_dir );
@@ -3168,6 +3384,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       unsigned int j = 0;
       gl_files->addWidget( lbl_files, j, 0 ); j++;
       gl_files->addLayout( hbl_dir, j, 0 ); j++;
+      gl_files->addLayout( hbl_file_buttons_0, j, 0 ); j++;
       gl_files->addLayout( hbl_file_buttons, j, 0 ); j++;
       gl_files->addLayout( hbl_file_buttons_1 , j, 0 ); j++;
       gl_files->addWidget( lb_files , j, 0 ); j++;
@@ -3177,7 +3394,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       gl_files->addLayout( hbl_file_buttons_3 , j, 0 ); j++;
       gl_files->addLayout( hbl_file_buttons_4 , j, 0 ); j++;
       gl_files->addLayout( hbl_conc_file, j, 0 ); j++;
-      gl_files->addWidget( lbl_conc_file, j, 0 ); j++;
+      // gl_files->addWidget( lbl_conc_file, j, 0 ); j++;
       //       gl_files->addLayout( hbl_hplc, j, 0 ); j++;
       //       gl_files->addLayout( hbl_empty, j, 0 ); j++;
       //       gl_files->addLayout( hbl_signal, j, 0 ); j++;
@@ -3190,17 +3407,6 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       gl_files->addLayout( vbl_model , j, 0 ); j++;
       gl_files->addLayout( vbl_editor_group , j, 0 ); j++;
    }
-
-   QBoxLayout * hbl_plot_buttons = new QHBoxLayout(); hbl_plot_buttons->setContentsMargins( 0, 0, 0, 0 ); hbl_plot_buttons->setSpacing( 0 );
-   hbl_plot_buttons->addWidget( pb_select_vis );
-   hbl_plot_buttons->addWidget( pb_remove_vis );
-   hbl_plot_buttons->addWidget( pb_crop_common );
-   hbl_plot_buttons->addWidget( pb_crop_vis );
-   hbl_plot_buttons->addWidget( pb_crop_zero );
-   hbl_plot_buttons->addWidget( pb_crop_left );
-   hbl_plot_buttons->addWidget( pb_crop_undo );
-   hbl_plot_buttons->addWidget( pb_crop_right );
-   hbl_plot_buttons->addWidget( pb_legend );
 
    QGridLayout * gl_wheel = new QGridLayout(0); gl_wheel->setContentsMargins( 0, 0, 0, 0 ); gl_wheel->setSpacing( 0 );
    gl_wheel->addWidget         ( lbl_blank1          , 0, 0 );
@@ -3230,7 +3436,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    hbl_top->addWidget( pb_guinier_plot_mw );
    hbl_top->addWidget( pb_errors );
    hbl_top->addWidget( pb_cormap );
-   hbl_top->addWidget( pb_pp );
+   // hbl_top->addWidget( pb_pp );
    hbl_top->addWidget( pb_ggqfit );
    hbl_top->addWidget( pb_wheel_cancel );
    hbl_top->addWidget( pb_wheel_save );
@@ -3254,10 +3460,10 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    hbl_mode0->addWidget( pb_baseline_start );
    hbl_mode0->addWidget( pb_baseline_test );
    hbl_mode0->addWidget( pb_baseline_apply );
-   hbl_mode0->addWidget( pb_timeshift );
-   hbl_mode0->addWidget( pb_timescale );
-   hbl_mode0->addWidget( pb_wyatt_start );
-   hbl_mode0->addWidget( pb_wyatt_apply );
+   // hbl_mode0->addWidget( pb_timeshift );
+   // hbl_mode0->addWidget( pb_timescale );
+   // hbl_mode0->addWidget( pb_wyatt_start );
+   // hbl_mode0->addWidget( pb_wyatt_apply );
 
    QBoxLayout * hbl_mode = new QHBoxLayout(); hbl_mode->setContentsMargins( 0, 0, 0, 0 ); hbl_mode->setSpacing( 0 );
    hbl_mode->addWidget( pb_gauss_start );
@@ -3520,6 +3726,13 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    // vbl_plot_group->addWidget ( plot_dist );
    // vbl_plot_group->addWidget ( plot_ref );
    // vbl_plot_group->addLayout ( vbl_guinier_plots );
+   vbl_plot_group->addLayout ( l_pbmode );
+   vbl_plot_group->addLayout ( l_pbmode_main );
+   vbl_plot_group->addLayout ( l_pbmode_sel );
+   vbl_plot_group->addLayout ( l_pbmode_crop );
+   vbl_plot_group->addLayout ( l_pbmode_conc );
+   vbl_plot_group->addLayout ( l_pbmode_sd );
+   vbl_plot_group->addLayout ( l_pbmode_fasta );
    vbl_plot_group->addWidget ( qs );
    vbl_plot_group->addLayout ( l_plot_errors );
    vbl_plot_group->addWidget ( ggqfit_plot );
@@ -3545,18 +3758,37 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
    vbl_plot_group->addWidget ( le_dummy );
 
-   vbl_plot_group->addLayout ( hbl_plot_buttons );
 
 //    QBoxLayout * hbl_files_plot = new QHBoxLayout(); hbl_files_plot->setContentsMargins( 0, 0, 0, 0 ); hbl_files_plot->setSpacing( 0 );
 //    // hbl_files_plot->addLayout( vbl_files );
 //    hbl_files_plot->addLayout( gl_files );
 //    hbl_files_plot->addLayout( vbl_plot_group );
 
-   QGridLayout * gl_files_plot = new QGridLayout( 0 ); gl_files_plot->setContentsMargins( 0, 0, 0, 0 ); gl_files_plot->setSpacing( 0 );
+   QGridLayout * gl_files_plot = new QGridLayout( 0 );
+   // QHBoxLayout * gl_files_plot = new QHBoxLayout( 0 );
+   
+   gl_files_plot->setContentsMargins( 0, 0, 0, 0 );
+   gl_files_plot->setSpacing( 0 );
+
+   // gl_files_plot->addLayout( gl_files, 0 );
+   // gl_files_plot->addLayout( vbl_plot_group, 5 );
+   // gl_files_plot->setStretch( 0, 0 );
+   // gl_files_plot->setStretch( 1, 1 );
+   
    gl_files_plot->addLayout( gl_files      , 0, 0 );
-   gl_files_plot->addLayout( vbl_plot_group, 0, 1 );
-   gl_files_plot->setColumnStretch( 0, 0 );
-   gl_files_plot->setColumnStretch( 1, 1 );
+   gl_files_plot->addLayout( vbl_plot_group, 0, 1, -1, 5 );
+
+   // below does not seem to have any effect
+   gl_files_plot->setColumnStretch( 0, 1 );
+   gl_files_plot->setColumnStretch( 1, 10 );
+
+
+   // {
+   //    QWidget* placeholder = new QWidget;
+   //    placeholder->setLayout( gl_files );
+   //    //    setCentralWidget( placeholder );
+   //    placeholder->setMaximumWidth( 300 );
+   // }
 
    QGridLayout * gl_bottom = new QGridLayout( 0 ); gl_bottom->setContentsMargins( 0, 0, 0, 0 ); gl_bottom->setSpacing( 0 );
    gl_bottom->addWidget( pb_help     , 0, 0 );
@@ -3592,10 +3824,10 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
       tmp_widgets.push_back( pb_blanks_start );
       tmp_widgets.push_back( pb_baseline_start );
       tmp_widgets.push_back( pb_baseline_apply );
-      tmp_widgets.push_back( pb_timeshift );
-      tmp_widgets.push_back( pb_timescale );
-      tmp_widgets.push_back( pb_wyatt_start );
-      tmp_widgets.push_back( pb_wyatt_apply );
+      // tmp_widgets.push_back( pb_timeshift );
+      // tmp_widgets.push_back( pb_timescale );
+      // tmp_widgets.push_back( pb_wyatt_start );
+      // tmp_widgets.push_back( pb_wyatt_apply );
 
       pb_row_widgets.push_back( tmp_widgets );
    }
@@ -3618,18 +3850,18 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    }
 
    // plot_widgets;
-#ifndef qt4
-   plot_widgets.push_back( le_dummy );
-#endif
-   plot_widgets.push_back( pb_select_vis );
-   plot_widgets.push_back( pb_remove_vis );
-   plot_widgets.push_back( pb_crop_common );
-   plot_widgets.push_back( pb_crop_vis );
-   plot_widgets.push_back( pb_crop_zero );
-   plot_widgets.push_back( pb_crop_left );
-   plot_widgets.push_back( pb_crop_undo );
-   plot_widgets.push_back( pb_crop_right );
-   plot_widgets.push_back( pb_legend );
+// #ifndef qt4
+//    plot_widgets.push_back( le_dummy );
+// #endif
+//    plot_widgets.push_back( pb_select_vis );
+//    plot_widgets.push_back( pb_remove_vis );
+//    plot_widgets.push_back( pb_crop_common );
+//    plot_widgets.push_back( pb_crop_vis );
+//    plot_widgets.push_back( pb_crop_zero );
+//    plot_widgets.push_back( pb_crop_left );
+//    plot_widgets.push_back( pb_crop_undo );
+//    plot_widgets.push_back( pb_crop_right );
+//    plot_widgets.push_back( pb_legend );
 
    // gaussian_widgets;
 
@@ -4075,6 +4307,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    // cout << QString("saxs_window->qsl_plotted_iq_names.size() %1\n").arg(saxs_window->qsl_plotted_iq_names.size());
 
    pb_add_files          ->setEnabled( true );
+   pb_add_dir            ->setEnabled( true );
    pb_regex_load         ->setEnabled( true );
    pb_options            ->setEnabled( true );
 
@@ -4215,7 +4448,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
                                          ( files_selected_count == 2 && conc_selected_count == 1 ) )
                                        );
    pb_conc_file          ->setEnabled( conc_selected_count == 1 );
-   pb_detector           ->setEnabled( true );
+   // pb_detector           ->setEnabled( true );
 
    //                                        );
    //    pb_set_hplc           ->setEnabled( files_selected_count == 1 && 
@@ -4447,7 +4680,7 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
    pb_create_i_of_q      ->setEnabled( false );
    pb_load_conc          ->setEnabled( true );
    pb_conc_file          ->setEnabled( false );
-   pb_detector           ->setEnabled( false );
+   // pb_detector           ->setEnabled( false );
    //    pb_set_hplc           ->setEnabled( false );
    //    pb_set_signal         ->setEnabled( false );
    //    pb_set_empty          ->setEnabled( false );
@@ -4483,6 +4716,7 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
    pb_axis_y             ->setEnabled( false );
 
    pb_add_files          ->setEnabled( false );
+   pb_add_dir            ->setEnabled( false );
    pb_regex_load         ->setEnabled( false );
 
    lb_files              ->setEnabled( false );
@@ -5041,4 +5275,168 @@ void US_Hydrodyn_Saxs_Hplc::usp_config_guinier_plot_errors( const QPoint & ) {
    US_PlotChoices *uspc = new US_PlotChoices( usp_guinier_plot_errors );
    uspc->exec();
    delete uspc;
+}
+
+void US_Hydrodyn_Saxs_Hplc::set_pbmode_main() {
+   pbmode_select( PBMODE_MAIN );
+}
+
+void US_Hydrodyn_Saxs_Hplc::set_pbmode_sel() {
+   pbmode_select( PBMODE_SEL );
+}
+
+void US_Hydrodyn_Saxs_Hplc::set_pbmode_crop() {
+   pbmode_select( PBMODE_CROP );
+}
+
+void US_Hydrodyn_Saxs_Hplc::set_pbmode_conc() {
+   pbmode_select( PBMODE_CONC );
+}
+
+void US_Hydrodyn_Saxs_Hplc::set_pbmode_sd() {
+   pbmode_select( PBMODE_SD );
+}
+
+void US_Hydrodyn_Saxs_Hplc::set_pbmode_fasta() {
+   pbmode_select( PBMODE_FASTA );
+}
+
+void US_Hydrodyn_Saxs_Hplc::set_pbmode_none() {
+   pbmode_select( PBMODE_NONE );
+}
+
+void US_Hydrodyn_Saxs_Hplc::pbmode_select( pbmodes mode ) {
+
+   ShowHide::hide_widgets( pbmode_main_widgets, true );
+   ShowHide::hide_widgets( pbmode_sel_widgets, true );
+   ShowHide::hide_widgets( pbmode_crop_widgets, true );
+   ShowHide::hide_widgets( pbmode_conc_widgets, true );
+   ShowHide::hide_widgets( pbmode_sd_widgets, true );
+   ShowHide::hide_widgets( pbmode_fasta_widgets, true );
+
+   switch ( mode ) {
+   case PBMODE_MAIN :
+      ShowHide::hide_widgets( pbmode_main_widgets, false );
+      break;
+   case PBMODE_SEL :
+      ShowHide::hide_widgets( pbmode_sel_widgets, false );
+      break;
+   case PBMODE_CROP :
+      ShowHide::hide_widgets( pbmode_crop_widgets, false );
+      break;
+   case PBMODE_CONC :
+      ShowHide::hide_widgets( pbmode_conc_widgets, false );
+      break;
+   case PBMODE_SD :
+      ShowHide::hide_widgets( pbmode_sd_widgets, false );
+      break;
+   case PBMODE_FASTA :
+      ShowHide::hide_widgets( pbmode_fasta_widgets, false );
+      break;
+   case PBMODE_NONE :
+      break;
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc::fasta_file() {
+   // load file
+
+   QString use_dir = QDir::currentPath();
+   ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+   raise();
+
+   QString filename = QFileDialog::getOpenFileName(
+                                                   this,
+                                                   windowTitle() + us_tr( "Load FASTA sequence File" ),
+                                                   use_dir,
+                                                   "FASTA files ( *.fasta.txt *.fasta );;All files (*)"
+                                                   );
+   
+   if ( filename.isEmpty() ) {
+      return;
+   }
+
+   ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
+
+   QFile f( filename );
+   
+   if ( !f.open( QIODevice::ReadOnly ) ) {
+      QMessageBox::warning(
+                           this, 
+                           windowTitle()+ us_tr( ": Compute PSV from FASTA" ),
+                           QString( us_tr( "Could not open file '%1' for reading. Possibly a permissions issue." ) ).arg( filename )
+                           );
+      return;
+   }
+      
+   QStringList qsl;
+
+   QTextStream ts( &f );
+   QRegExp rx_empty( "^\\s*$" );
+   QRegExp rx_newseq( "^\\s*>" );
+
+   QString seq;
+   int chains = 0;
+   
+   QString seq_names;
+
+   // find >seq lines
+
+   while ( !ts.atEnd() ) {
+      QString qs = ts.readLine().trimmed();
+      
+      if ( rx_empty.exactMatch( qs ) ) {
+         continue;
+      }
+
+      if ( rx_newseq.indexIn( qs ) > -1 ) {
+         seq_names += qs.replace( rx_newseq, "" ) + "\n";
+         chains++;
+         continue;
+      }
+      
+      seq += qs;
+   }
+
+   f.close();
+
+   if ( seq.isEmpty() ) {
+      QMessageBox::warning(
+                           this, 
+                           windowTitle()+ us_tr( ": Compute PSV from FASTA" ),
+                           QString( us_tr( "File '%1' no sequence information found." ) ).arg( filename )
+                           );
+      return;
+   }
+      
+   QStringList seq_chars = seq.split( "" );
+
+#if defined( DEBUG_FASTA_SEQ )
+   {
+      QTextStream ts( stdout );
+      ts << QString( "%1 sequences %2:\n%3" ).arg( chains ).arg( seq_names ).arg( seq );
+      ts << seq_chars.join( "\n" );
+   }
+#endif
+   
+   double psv;
+   QString msgs;
+   if ( !((US_Hydrodyn  *)us_hydrodyn)->calc_fasta_vbar( seq_chars, psv, msgs ) ) {
+      QMessageBox::warning(
+                           this, 
+                           windowTitle()+ us_tr( ": Compute PSV from FASTA" ),
+                           msgs );
+      return;
+   }
+
+   QMessageBox::information(
+                            this, 
+                            windowTitle()+ us_tr( ": Compute PSV from FASTA" ),
+                            QString( us_tr( "FASTA computed from the following sequence names:\n" ) )
+                            + seq_names
+                            );
+
+   le_fasta_value->setText( QString( "" ).sprintf( "%.3f", psv ) );
+   le_fasta_value->setEnabled( true );
+   return;
 }

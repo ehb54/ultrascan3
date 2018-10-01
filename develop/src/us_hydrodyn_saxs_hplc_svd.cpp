@@ -2,9 +2,10 @@
 #include "../include/us_hydrodyn_saxs_hplc_svd.h"
 #include "../include/us_svd.h"
 
-#if QT_VERSION >= 0x040000
+#define UHSHS_MAX_SV_FOR_EFA 12 // max SVs for EFA
+#define SVD_THRESH 0.9
+
 #include <qwt_scale_engine.h>
-#endif
 #include <qpalette.h>
 //Added by qt3to4:
 #include <QBoxLayout>
@@ -28,8 +29,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 US_Hydrodyn_Saxs_Hplc_Svd::US_Hydrodyn_Saxs_Hplc_Svd(
                                                      US_Hydrodyn_Saxs_Hplc *hplc_win,
                                                      vector < QString > hplc_selected_files,
-                                                     QWidget *p, 
-                                                     const char *name
+                                                     QWidget *p
                                                      ) : QFrame( p )
 {
    this->hplc_win                = hplc_win;
@@ -45,6 +45,8 @@ US_Hydrodyn_Saxs_Hplc_Svd::US_Hydrodyn_Saxs_Hplc_Svd(
    cg_red = USglobal->global_colors.cg_label;
    cg_red.setBrush( QPalette::Foreground, QBrush( QColor( "red" ),  Qt::SolidPattern ) );
 
+   efa_range_processing = false;
+   
    if ( !hplc_selected_files.size() )
    {
       QMessageBox::warning( this, 
@@ -58,37 +60,60 @@ US_Hydrodyn_Saxs_Hplc_Svd::US_Hydrodyn_Saxs_Hplc_Svd(
 
    mode_i_of_t = false;
 
-   {
-      QString this_name = hplc_selected_files[ 0 ];
-      if( hplc_win->f_is_time[ this_name ] )
-      {
-         mode_i_of_t = true;
+   if( hplc_win->f_is_time[ this->hplc_selected_files[ 0 ] ] ) {
+      QStringList qsl_hplc_selected_files;
+      for ( int i = 0; i < (int) this->hplc_selected_files.size(); ++i ) {
+         qsl_hplc_selected_files << this->hplc_selected_files[ i ];;
+      }
+
+      QString error_msg;
+      if ( !convert_it_to_iq( qsl_hplc_selected_files, original_data, error_msg ) ) {
+         QMessageBox::warning( this, 
+                               windowTitle(),
+                               us_tr( "Error: converting I(t)->I(q) " + error_msg ) );
+         close();
+         return;
+      }
+      this->hplc_selected_files.clear();
+      for ( int i = 0; i < (int) original_data.size(); ++i ) {
+         this->hplc_selected_files.push_back( original_data[ i ] );
+      }
+   } else {
+      for ( int i = 0; i < (int) this->hplc_selected_files.size(); ++i ) {
+         QString this_name = this->hplc_selected_files[ i ];
+         original_data.push_back( this_name );
+      
+         f_pos      [ this_name ] = f_pos.size();
+         f_qs_string[ this_name ] = hplc_win->f_qs_string[ this_name ];
+         f_qs       [ this_name ] = hplc_win->f_qs       [ this_name ];
+         f_Is       [ this_name ] = hplc_win->f_Is       [ this_name ];
+         f_errors   [ this_name ] = hplc_win->f_errors   [ this_name ];
+         f_is_time  [ this_name ] = mode_i_of_t;  // false;  // must all be I(q)
       }
    }
 
-   for ( int i = 0; i < (int) hplc_selected_files.size(); ++i )
-   {
-      QString this_name = hplc_selected_files[ i ];
-      original_data.push_back( this_name );
-      
-      f_pos      [ this_name ] = f_pos.size();
-      f_qs_string[ this_name ] = hplc_win->f_qs_string[ this_name ];
-      f_qs       [ this_name ] = hplc_win->f_qs       [ this_name ];
-      f_Is       [ this_name ] = hplc_win->f_Is       [ this_name ];
-      f_errors   [ this_name ] = hplc_win->f_errors   [ this_name ];
-      f_is_time  [ this_name ] = mode_i_of_t;  // false;  // must all be I(q)
-   }
+   setup_norm();
 
    subset_data.insert( original_data.join( "\n" ) );
 
-   plot_data_zoomer      = (ScrollZoomer *) 0;
-   plot_errors_zoomer    = (ScrollZoomer *) 0;
+   plot_data_zoomer       = (ScrollZoomer *) 0;
+   plot_errors_zoomer     = (ScrollZoomer *) 0;
+   plot_ac_zoomer         = (ScrollZoomer *) 0;
+   plot_svd_zoomer        = (ScrollZoomer *) 0;
+   plot_lefa_zoomer       = (ScrollZoomer *) 0;
+   plot_refa_zoomer       = (ScrollZoomer *) 0;
+   plot_efa_decomp_zoomer = (ScrollZoomer *) 0;
 
    le_last_focus      = (mQLineEdit *) 0;
+   efa_plot_count         = 0;
    
    running            = false;
 
    setupGUI();
+
+   if ( !norm_ok ) {
+      editor_msg( "dark red", us_tr( "Missing or zero associated errors so normalization is disabled" ) );
+   }
 
    axis_y_log = false;
    axis_x_log = false;
@@ -104,11 +129,26 @@ US_Hydrodyn_Saxs_Hplc_Svd::US_Hydrodyn_Saxs_Hplc_Svd(
    global_Xpos += 30;
    global_Ypos += 30;
 
-   setGeometry(global_Xpos, global_Ypos, 0, 0 );
+   setGeometry(global_Xpos, global_Ypos, 1024, 768 );
 
    show();
 
    add_i_of_q_or_t( us_tr( "Original data" ), original_data );
+
+   // #define DEBUG_TRANSPOSE
+
+#if defined( DEBUG_TRANSPOSE )
+   {
+      vector < vector < double > > A(3);
+      for ( int i = 0; i < (int) A.size(); ++i ) {
+         A[ i ].resize( 5 );
+         for ( int j = 0; j < 5; ++j ) {
+            A[ i ][ j ] = i + j;
+         }
+      }
+      vector < vector < double > > result = transpose( A );
+   }
+#endif
 }
 
 US_Hydrodyn_Saxs_Hplc_Svd::~US_Hydrodyn_Saxs_Hplc_Svd()
@@ -138,32 +178,16 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    lv_data->setEnabled(true);
    // lv_data->setMinimumWidth();
 
-#if QT_VERSION < 0x040000
-   lv_data->addColumn( "Source" );
-#else
    lv_data->setColumnCount( 1 );
    lv_data->setHeaderLabels( QStringList()
                              << us_tr( "Source" )
                              );
-#endif
    
    lv_data->setSortingEnabled        ( false );
    lv_data->setRootIsDecorated( true );
    lv_data->setSelectionMode( QAbstractItemView::ExtendedSelection );
    connect(lv_data, SIGNAL(itemSelectionChanged()), SLOT( data_selection_changed() ));
 
-#if QT_VERSION < 0x040000
-   QTreeWidgetItem *element = new QTreeWidgetItem( lv_data, QString( us_tr( "Original data" ) ) );
-   QTreeWidgetItem *iq = new QTreeWidgetItem( element, mode_i_of_t ? "I(t)" : "I(q)" );
-   /* QListViewItem *it = */ new QTreeWidgetItem( element, iq, mode_i_of_t ? "I(q)" : "I(t)" );
-
-   QTreeWidgetItem *lvi = iq;
-
-   for ( int i = 0; i < (int) hplc_selected_files.size(); ++i )
-   {
-      lvi = new QTreeWidgetItem( iq, lvi, hplc_selected_files[ i ] );
-   }
-#else
    QTreeWidgetItem *element = new QTreeWidgetItem( QStringList() << us_tr( "Original data" ) );
    lv_data->addTopLevelItem( element );
    QTreeWidgetItem *iq = new QTreeWidgetItem( QStringList() << QString( mode_i_of_t ? "I(t)" : "I(q)" ) );
@@ -178,7 +202,6 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
       lvi = new QTreeWidgetItem( iq, lvi );
       lvi->setText( 0, hplc_selected_files[ i ] );
    }
-#endif
    
    // make i(t), add also
 
@@ -197,6 +220,13 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    pb_to_hplc->setPalette( PALET_PUSHB );
    connect(pb_to_hplc, SIGNAL(clicked()), SLOT(to_hplc()));
    data_widgets.push_back( pb_to_hplc );
+
+   pb_save_plots = new QPushButton(us_tr("Save Plots"), this);
+   pb_save_plots->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_save_plots->setMinimumHeight(minHeight3);
+   pb_save_plots->setPalette( PALET_PUSHB );
+   connect(pb_save_plots, SIGNAL(clicked()), SLOT(save_plots()));
+   data_widgets.push_back( pb_save_plots );
 
    pb_color_rotate = new QPushButton(us_tr("Color"), this);
    pb_color_rotate->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -228,37 +258,6 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    editor->setReadOnly(true);
    editor->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ));
 
-#if QT_VERSION < 0x040000
-# if QT_VERSION >= 0x040000 && defined(Q_OS_MAC)
-   {
- //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-
-      mb_editor = new QMenuBar( this );
-      AUTFBACK( mb_editor );
-
-      mb_editor->insertItem(us_tr("&Messages"), file );
-   }
-# else
-   QFrame *frame;
-   frame = new QFrame(this);
-   frame->setMinimumHeight(minHeight3);
-   editor_widgets.push_back( frame );
-
-   mb_editor = new QMenuBar( frame );    mb_editor->setObjectName( "menu" );
-   mb_editor->setMinimumHeight(minHeight1 - 5);
-   mb_editor->setPalette( PALET_NORMAL );
-   AUTFBACK( mb_editor );
-
- //   Q3PopupMenu * file = new Q3PopupMenu(editor);
-   mb_editor->insertItem( us_tr("&File"), file );
-   file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-   file->insertItem( us_tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-# endif
-#else
    QFrame *frame;
    frame = new QFrame(this);
    frame->setMinimumHeight(minHeight3);
@@ -283,14 +282,52 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
       qa3->setShortcut( Qt::ALT+Qt::Key_X );
       connect( qa3, SIGNAL(triggered()), this, SLOT( clear_display() ) );
    }
-#endif
 
    editor->setWordWrapMode (QTextOption::WordWrap);
    editor->setMinimumHeight( minHeight1 * 3 );
 
    editor_widgets.push_back( editor );
 
+   // ------ mode controls section
+
+   lbl_modes = new QLabel( us_tr( "Plot mode:" ) );
+   lbl_modes->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_modes->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_modes );
+   lbl_modes->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   bg_modes = new QButtonGroup( this );
+
+   rb_mode_iqit = new QRadioButton( "Data", this ); 
+   rb_mode_iqit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   rb_mode_iqit->setMinimumHeight(minHeight3);
+   rb_mode_iqit->setPalette( PALET_NORMAL );
+   AUTFBACK( rb_mode_iqit );
+   connect(rb_mode_iqit, SIGNAL(clicked( )), SLOT( set_mode_iqit( )));
+
+   rb_mode_svd = new QRadioButton( "SVD", this ); 
+   rb_mode_svd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   rb_mode_svd->setMinimumHeight(minHeight3);
+   rb_mode_svd->setPalette( PALET_NORMAL );
+   AUTFBACK( rb_mode_svd );
+   connect(rb_mode_svd, SIGNAL(clicked( )), SLOT( set_mode_svd( )));
+
+   rb_mode_efa = new QRadioButton( "EFA", this ); 
+   rb_mode_efa->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   rb_mode_efa->setMinimumHeight(minHeight3);
+   rb_mode_efa->setPalette( PALET_NORMAL );
+   AUTFBACK( rb_mode_efa );
+   connect(rb_mode_efa, SIGNAL(clicked( )), SLOT( set_mode_efa( )));
+
+   rb_mode_efa_decomp = new QRadioButton( "EFA Components", this ); 
+   rb_mode_efa_decomp->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   rb_mode_efa_decomp->setMinimumHeight(minHeight3);
+   rb_mode_efa_decomp->setPalette( PALET_NORMAL );
+   AUTFBACK( rb_mode_efa_decomp );
+   connect(rb_mode_efa_decomp, SIGNAL(clicked( )), SLOT( set_mode_efa_decomp( )));
+
    // ------ plot section
+   // ----------- plot data
 
 //   plot_data = new QwtPlot(this);
    usp_plot_data = new US_Plot( plot_data, "", "", "", this );
@@ -300,52 +337,29 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    ((QWidget *)plot_data->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
    connect( (QWidget *)plot_data->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_data( const QPoint & ) ) );
    ((QWidget *)plot_data->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
-#if QT_VERSION < 0x040000
-   // plot_data->enableOutline(true);
-   // plot_data->setOutlinePen(Qt::white);
-   // plot_data->setOutlineStyle(Qwt::VLine);
-   plot_data->enableGridXMin();
-   plot_data->enableGridYMin();
-#else
    grid_data = new QwtPlotGrid;
    grid_data->enableXMin( true );
    grid_data->enableYMin( true );
-#endif
    plot_data->setPalette( PALET_NORMAL );
    AUTFBACK( plot_data );
-#if QT_VERSION < 0x040000
-   plot_data->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
-   plot_data->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
-#else
    grid_data->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
    grid_data->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid_data->attach( plot_data );
-#endif
    plot_data->setAxisTitle(QwtPlot::xBottom, /* cb_guinier->isChecked() ? us_tr("q^2 (1/Angstrom^2)") : */  us_tr("q [1/Angstrom]" )); // or Time or Frame"));
    plot_data->setAxisTitle(QwtPlot::yLeft, us_tr("Intensity [a.u.] (log scale)"));
-#if QT_VERSION < 0x040000
-   plot_data->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
-   plot_data->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
    plot_data->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#if QT_VERSION < 0x040000
-   plot_data->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
    plot_data->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#if QT_VERSION < 0x040000
-   plot_data->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
    plot_data->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 //    plot_data->setMargin(USglobal->config_list.margin);
    plot_data->setTitle("");
-#if QT_VERSION < 0x040000
-   plot_data->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
-#else
    plot_data->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
-#endif
    plot_data->setCanvasBackground(USglobal->global_colors.plot);
+   plot_info[ "SVD Data" ] = plot_data;
 
+   iqit_widgets.push_back( plot_data );
    // connect( plot_data_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_data_zoomed( const QRectF & ) ) );
+
+   // ----------- plot errors
 
 //   plot_errors = new QwtPlot(this);
    usp_plot_errors = new US_Plot( plot_errors, "", "", "", this );
@@ -355,53 +369,27 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    ((QWidget *)plot_errors->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
    connect( (QWidget *)plot_errors->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_errors( const QPoint & ) ) );
    ((QWidget *)plot_errors->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
-#if QT_VERSION < 0x040000
-   // plot_errors->enableOutline(true);
-   // plot_errors->setOutlinePen(Qt::white);
-   // plot_errors->setOutlineStyle(Qwt::VLine);
-   plot_errors->enableGridXMin();
-   plot_errors->enableGridYMin();
-#else
    grid_errors = new QwtPlotGrid;
    grid_errors->enableXMin( true );
    grid_errors->enableYMin( true );
-#endif
    plot_errors->setPalette( PALET_NORMAL );
    AUTFBACK( plot_errors );
-#if QT_VERSION < 0x040000
-   plot_errors->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
-   plot_errors->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
-#else
    grid_errors->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
    grid_errors->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid_errors->attach( plot_errors );
-#endif
    // plot_errors->setAxisTitle(QwtPlot::xBottom, /* cb_guinier->isChecked() ? us_tr("q^2 (1/Angstrom^2)") : */  us_tr("q [1/Angstrom]" )); // or Time or Frame"));
    plot_errors->setAxisTitle(QwtPlot::yLeft, us_tr("Delta Intensity [a.u.]"));
-#if QT_VERSION < 0x040000
-   plot_errors->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
-   plot_errors->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
    plot_errors->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#if QT_VERSION < 0x040000
-   plot_errors->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
    plot_errors->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#if QT_VERSION < 0x040000
-   plot_errors->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
    plot_errors->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 //    plot_errors->setMargin(USglobal->config_list.margin);
    plot_errors->setTitle("");
-#if QT_VERSION < 0x040000
-   plot_errors->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
-#else
    plot_errors->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
-#endif
    plot_errors->setCanvasBackground(USglobal->global_colors.plot);
 
    // connect( plot_errors_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_errors_zoomed( const QRectF & ) ) );
    errors_widgets.push_back( plot_errors );
+   plot_info[ "SVD Errors" ] = plot_errors;
 
    cb_plot_errors = new QCheckBox(this);
    cb_plot_errors->setText(us_tr("Residuals "));
@@ -463,25 +451,287 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    connect( cb_plot_errors_group, SIGNAL( clicked() ), SLOT( set_plot_errors_group() ) );
    errors_widgets.push_back( cb_plot_errors_group );
 
+   // ----------- plot svd
+
+//   plot_svd = new QwtPlot(this);
+   usp_plot_svd = new US_Plot( plot_svd, "", "", "", this );
+   connect( (QWidget *)plot_svd->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_svd( const QPoint & ) ) );
+   ((QWidget *)plot_svd->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot_svd->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_svd( const QPoint & ) ) );
+   ((QWidget *)plot_svd->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot_svd->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_svd( const QPoint & ) ) );
+   ((QWidget *)plot_svd->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   grid_data = new QwtPlotGrid;
+   grid_data->enableXMin( true );
+   grid_data->enableYMin( true );
+   plot_svd->setPalette( PALET_NORMAL );
+   AUTFBACK( plot_svd );
+   grid_data->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   grid_data->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   grid_data->attach( plot_svd );
+   plot_svd->setAxisTitle(QwtPlot::xBottom, us_tr( "Number" ) );
+   plot_svd->setAxisTitle(QwtPlot::yLeft, us_tr("S.V.'s [log scale]"));
+   plot_svd->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   plot_svd->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   plot_svd->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+//    plot_svd->setMargin(USglobal->config_list.margin);
+   set_title( plot_svd, "SVD" );
+   
+   plot_svd->setAxisScaleEngine(QwtPlot::yLeft, new QwtLogScaleEngine(10));
+   plot_svd->setCanvasBackground(USglobal->global_colors.plot);
+
+   // connect( plot_svd_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_svd_zoomed( const QRectF & ) ) );
+   plot_info[ "SVD SVD" ] = plot_svd;
+
+   svd_widgets.push_back( plot_svd );
+
+   // ----------- plot autocor
+
+//   plot_ac = new QwtPlot(this);
+   usp_plot_ac = new US_Plot( plot_ac, "", "", "", this );
+   connect( (QWidget *)plot_ac->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_ac( const QPoint & ) ) );
+   ((QWidget *)plot_ac->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot_ac->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_ac( const QPoint & ) ) );
+   ((QWidget *)plot_ac->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot_ac->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_ac( const QPoint & ) ) );
+   ((QWidget *)plot_ac->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   grid_ac = new QwtPlotGrid;
+   grid_ac->enableXMin( true );
+   grid_ac->enableYMin( true );
+   plot_ac->setPalette( PALET_NORMAL );
+   AUTFBACK( plot_ac );
+   grid_ac->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   grid_ac->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   grid_ac->attach( plot_ac );
+   plot_ac->setAxisTitle(QwtPlot::xBottom, us_tr( "Number" ) );
+   plot_ac->setAxisTitle(QwtPlot::yLeft, us_tr("Absolute value"));
+   plot_ac->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   plot_ac->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   plot_ac->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+//    plot_ac->setMargin(USglobal->config_list.margin);
+   set_title( plot_ac, "Autocorrelation" );
+   
+   plot_ac->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
+   plot_ac->setCanvasBackground(USglobal->global_colors.plot);
+   {
+      QwtLegend* legend_pd = new QwtLegend;
+      legend_pd->setFrameStyle( QFrame::Box | QFrame::Sunken );
+      plot_ac->insertLegend( legend_pd, QwtPlot::BottomLegend );
+   }
+   // connect( plot_ac_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_ac_zoomed( const QRectF & ) ) );
+   plot_info[ "SVD Autocorrelation" ] = plot_ac;
+
+   svd_widgets.push_back( plot_ac );
+
+   // ----------- plot efa
+
+//   plot_lefa = new QwtPlot(this);
+   usp_plot_lefa = new US_Plot( plot_lefa, "", "", "", this );
+   connect( (QWidget *)plot_lefa->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_lefa( const QPoint & ) ) );
+   ((QWidget *)plot_lefa->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot_lefa->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_lefa( const QPoint & ) ) );
+   ((QWidget *)plot_lefa->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot_lefa->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_lefa( const QPoint & ) ) );
+   ((QWidget *)plot_lefa->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   grid_lefa = new QwtPlotGrid;
+   grid_lefa->enableXMin( true );
+   grid_lefa->enableYMin( true );
+   plot_lefa->setPalette( PALET_NORMAL );
+   AUTFBACK( plot_lefa );
+   grid_lefa->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   grid_lefa->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   grid_lefa->attach( plot_lefa );
+   plot_lefa->setAxisTitle(QwtPlot::xBottom, us_tr("Time [a.u.]") );
+   plot_lefa->setAxisTitle(QwtPlot::yLeft, us_tr("Singular Value"));
+   plot_lefa->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   plot_lefa->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   plot_lefa->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+//    plot_lefa->setMargin(USglobal->config_list.margin);
+   set_title( plot_lefa, us_tr( "Forward EFA" ) );
+   plot_lefa->setAxisScaleEngine(QwtPlot::yLeft, new QwtLogScaleEngine(10));
+   plot_lefa->setCanvasBackground(USglobal->global_colors.plot);
+
+   // connect( plot_lefa_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_lefa_zoomed( const QRectF & ) ) );
+   efa_widgets.push_back( plot_lefa );
+   plot_info[ "SVD Forward EFA" ] = plot_lefa;
+
+//   plot_refa = new QwtPlot(this);
+   usp_plot_refa = new US_Plot( plot_refa, "", "", "", this );
+   connect( (QWidget *)plot_refa->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_refa( const QPoint & ) ) );
+   ((QWidget *)plot_refa->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot_refa->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_refa( const QPoint & ) ) );
+   ((QWidget *)plot_refa->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot_refa->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_refa( const QPoint & ) ) );
+   ((QWidget *)plot_refa->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   grid_refa = new QwtPlotGrid;
+   grid_refa->enableXMin( true );
+   grid_refa->enableYMin( true );
+   plot_refa->setPalette( PALET_NORMAL );
+   AUTFBACK( plot_refa );
+   grid_refa->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   grid_refa->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   grid_refa->attach( plot_refa );
+   plot_refa->setAxisTitle(QwtPlot::xBottom, us_tr("Time [a.u.]") );
+   plot_refa->setAxisTitle(QwtPlot::yLeft, us_tr("Singular Value"));
+   plot_refa->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   plot_refa->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   plot_refa->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+//    plot_refa->setMargin(USglobal->config_list.margin);
+
+   set_title( plot_refa, us_tr( "Backward EFA" ) );
+   plot_refa->setAxisScaleEngine(QwtPlot::yLeft, new QwtLogScaleEngine(10));
+   plot_refa->setCanvasBackground(USglobal->global_colors.plot);
+
+   // connect( plot_refa_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_refa_zoomed( const QRectF & ) ) );
+   efa_widgets.push_back( plot_refa );
+   
+   lbl_efas = new QLabel( us_tr( "Number of SV's for EFA plots and decomposition:" ), this );
+   lbl_efas->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_efas->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_efas );
+   lbl_efas->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   efa_widgets.push_back( lbl_efas );
+   svd_widgets.push_back( lbl_efas );
+   plot_info[ "SVD Backward EFA" ] = plot_refa;
+
+   qwtc_efas = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( qwtc_efas );
+   qwtc_efas->setEnabled(true);
+   qwtc_efas->setNumButtons(1);
+   qwtc_efas->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   qwtc_efas->setPalette( PALET_NORMAL );
+   qwtc_efas->setSingleStep( 1 );
+   qwtc_efas->setValue( 1 );
+   
+   AUTFBACK( qwtc_efas );
+   connect( qwtc_efas, SIGNAL( valueChanged( double ) ), SLOT( update_efas( double ) ) );
+
+   efa_widgets.push_back( qwtc_efas );
+   svd_widgets.push_back( qwtc_efas );
+
+   for ( int i = 0; i < UHSHS_MAX_SV_FOR_EFA; ++i ) {
+      {
+         QLabel * tmp_lbl = new QLabel( QString( us_tr( "S.V. %1 Start:" ) ).arg( i + 1 ), this );
+         tmp_lbl->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+         tmp_lbl->setPalette( PALET_NORMAL );
+         AUTFBACK( tmp_lbl );
+         tmp_lbl->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+         tmp_lbl->hide();
+         efa_range_labels.push_back( tmp_lbl );
+      }
+      
+      {
+         QwtCounter * tmp_qwtc = new QwtCounter( this );
+         US_Hydrodyn::sizeArrows( tmp_qwtc );
+         tmp_qwtc->setEnabled(true);
+         tmp_qwtc->setNumButtons( 2 );
+         tmp_qwtc->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+         tmp_qwtc->setPalette( PALET_NORMAL );
+         tmp_qwtc->setSingleStep( 1 );
+         efa_range_start.push_back( tmp_qwtc );
+         AUTFBACK( tmp_qwtc );
+         tmp_qwtc->hide();
+         connect( tmp_qwtc, SIGNAL( valueChanged( double ) ), SLOT( update_efa_range_start( double ) ) );
+      }
+
+      {
+         QLabel * tmp_lbl = new QLabel( QString( us_tr( "    End:" ) ), this );
+         tmp_lbl->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+         tmp_lbl->setPalette( PALET_NORMAL );
+         AUTFBACK( tmp_lbl );
+         tmp_lbl->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+         tmp_lbl->hide();
+         efa_range_labels2.push_back( tmp_lbl );
+      }
+
+      {
+         QwtCounter * tmp_qwtc = new QwtCounter( this );
+         US_Hydrodyn::sizeArrows( tmp_qwtc );
+         tmp_qwtc->setEnabled(true);
+         tmp_qwtc->setNumButtons( 2 );
+         tmp_qwtc->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+         tmp_qwtc->setPalette( PALET_NORMAL );
+         tmp_qwtc->setSingleStep( 1 );
+         efa_range_end.push_back( tmp_qwtc );
+         AUTFBACK( tmp_qwtc );
+         tmp_qwtc->hide();
+         connect( tmp_qwtc, SIGNAL( valueChanged( double ) ), SLOT( update_efa_range_end( double ) ) );
+      }
+   }
+
+   // ----------- plot efa decomp
+
+//   plot_efa_decomp = new QwtPlot(this);
+   usp_plot_efa_decomp = new US_Plot( plot_efa_decomp, "", "", "", this );
+   connect( (QWidget *)plot_efa_decomp->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_efa_decomp( const QPoint & ) ) );
+   ((QWidget *)plot_efa_decomp->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot_efa_decomp->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_efa_decomp( const QPoint & ) ) );
+   ((QWidget *)plot_efa_decomp->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot_efa_decomp->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_efa_decomp( const QPoint & ) ) );
+   ((QWidget *)plot_efa_decomp->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   grid_efa_decomp = new QwtPlotGrid;
+   grid_efa_decomp->enableXMin( true );
+   grid_efa_decomp->enableYMin( true );
+   plot_efa_decomp->setPalette( PALET_NORMAL );
+   AUTFBACK( plot_efa_decomp );
+   grid_efa_decomp->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   grid_efa_decomp->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   grid_efa_decomp->attach( plot_efa_decomp );
+   plot_efa_decomp->setAxisTitle(QwtPlot::xBottom, us_tr( "Frame" ) );
+   plot_efa_decomp->setAxisTitle(QwtPlot::yLeft, us_tr("Intensity [a.u.]"));
+   plot_efa_decomp->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   plot_efa_decomp->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   plot_efa_decomp->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+//    plot_efa_decomp->setMargin(USglobal->config_list.margin);
+   set_title( plot_efa_decomp, "EFA Deconvolution" );
+   
+   plot_efa_decomp->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
+   plot_efa_decomp->setCanvasBackground(USglobal->global_colors.plot);
+
+   // connect( plot_efa_decomp_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_efa_decomp_zoomed( const QRectF & ) ) );
+   plot_info[ "SVD Autocorrelation" ] = plot_efa_decomp;
+
+   efa_decomp_widgets.push_back( plot_efa_decomp );
+
+   cb_efa_decomp_force_positive = new QCheckBox(this);
+   cb_efa_decomp_force_positive->setText(us_tr("Force positive"));
+   cb_efa_decomp_force_positive->setEnabled( true );
+   cb_efa_decomp_force_positive->setChecked( false );
+   cb_efa_decomp_force_positive->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_efa_decomp_force_positive->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_efa_decomp_force_positive );
+   connect( cb_efa_decomp_force_positive, SIGNAL( clicked() ), SLOT( set_efa_decomp_force_positive() ) );
+   efa_decomp_widgets.push_back( cb_efa_decomp_force_positive );
+
+   pb_efa_decomp_to_hplc_saxs = new QPushButton(us_tr("To HPLC window"), this);
+   pb_efa_decomp_to_hplc_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_efa_decomp_to_hplc_saxs->setMinimumHeight(minHeight1);
+   pb_efa_decomp_to_hplc_saxs->setPalette( PALET_PUSHB );
+   connect(pb_efa_decomp_to_hplc_saxs, SIGNAL(clicked()), SLOT(efa_decomp_to_hplc_saxs()));
+   efa_decomp_widgets.push_back( pb_efa_decomp_to_hplc_saxs );
+
    iq_it_state = mode_i_of_t;
    pb_iq_it = new QPushButton( us_tr( mode_i_of_t ? "Show I(q)" : "Show I(t)" ), this);
    pb_iq_it->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_iq_it->setMinimumHeight(minHeight1);
    pb_iq_it->setPalette( PALET_PUSHB );
    connect(pb_iq_it, SIGNAL(clicked()), SLOT(iq_it()));
+   iqit_widgets.push_back( pb_iq_it );
 
    pb_axis_x = new QPushButton(us_tr("X"), this);
    pb_axis_x->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_axis_x->setMinimumHeight(minHeight1);
    pb_axis_x->setPalette( PALET_PUSHB );
    connect(pb_axis_x, SIGNAL(clicked()), SLOT(axis_x()));
+   iqit_widgets.push_back( pb_axis_x );
 
    pb_axis_y = new QPushButton(us_tr("Y"), this);
    pb_axis_y->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_axis_y->setMinimumHeight(minHeight1);
    pb_axis_y->setPalette( PALET_PUSHB );
    connect(pb_axis_y, SIGNAL(clicked()), SLOT(axis_y()));
-
+   iqit_widgets.push_back( pb_axis_y );
 
    // ------ process section 
 
@@ -492,6 +742,35 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    AUTFBACK( lbl_process );
    lbl_process->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
    connect( lbl_process, SIGNAL( pressed() ), SLOT( hide_process() ) );
+
+   cb_norm_pw = new QCheckBox(this);
+   cb_norm_pw->setText(us_tr("Normalize by errors pointwise "));
+   cb_norm_pw->setEnabled( true );
+   cb_norm_pw->setChecked( false );
+   cb_norm_pw->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_norm_pw->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_norm_pw );
+   connect( cb_norm_pw, SIGNAL( clicked() ), SLOT( set_norm_pw() ) );
+   if ( norm_ok ) {
+      process_widgets.push_back( cb_norm_pw );
+   } else {
+      cb_norm_pw->hide();
+   }
+
+   cb_norm_avg = new QCheckBox(this);
+   cb_norm_avg->setText(us_tr("Normalize by average errors "));
+   cb_norm_avg->setEnabled( true );
+   cb_norm_avg->setChecked( false );
+   cb_norm_avg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_norm_avg->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_norm_avg );
+   connect( cb_norm_avg, SIGNAL( clicked() ), SLOT( set_norm_avg() ) );
+   if ( norm_ok ) {
+      cb_norm_avg->setChecked( true );
+      process_widgets.push_back( cb_norm_avg );
+   } else {
+      cb_norm_avg->hide();
+   }
 
    lbl_q_range = new QLabel( us_tr( "Active q range:" ), this );
    lbl_q_range->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -555,7 +834,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    lbl_ev->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_ev->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_ev );
-   lbl_ev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   lbl_ev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
    process_widgets.push_back( lbl_ev );
 
    lb_ev = new QListWidget( this );
@@ -575,6 +854,20 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    connect(pb_svd, SIGNAL(clicked()), SLOT(svd()));
    process_widgets.push_back( pb_svd );
 
+   pb_efa = new QPushButton(us_tr("Compute EFA"), this);
+   pb_efa->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_efa->setMinimumHeight(minHeight3);
+   pb_efa->setPalette( PALET_PUSHB );
+   connect(pb_efa, SIGNAL(clicked()), SLOT(efa()));
+   process_widgets.push_back( pb_efa );
+
+   pb_efa_decomp = new QPushButton(us_tr("Compute EFA Components"), this);
+   pb_efa_decomp->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_efa_decomp->setMinimumHeight(minHeight3);
+   pb_efa_decomp->setPalette( PALET_PUSHB );
+   connect(pb_efa_decomp, SIGNAL(clicked()), SLOT(efa_decomp()));
+   process_widgets.push_back( pb_efa_decomp );
+
    pb_stop = new QPushButton(us_tr("Stop"), this);
    pb_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_stop->setMinimumHeight(minHeight3);
@@ -582,12 +875,12 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    connect(pb_stop, SIGNAL(clicked()), SLOT(stop()));
    process_widgets.push_back( pb_stop );
 
-   pb_svd_plot = new QPushButton(us_tr("Plot SVs"), this);
-   pb_svd_plot->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
-   pb_svd_plot->setMinimumHeight(minHeight3);
-   pb_svd_plot->setPalette( PALET_PUSHB );
-   connect(pb_svd_plot, SIGNAL(clicked()), SLOT(svd_plot()));
-   process_widgets.push_back( pb_svd_plot );
+   // pb_svd_plot = new QPushButton(us_tr("Plot SVs"), this);
+   // pb_svd_plot->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   // pb_svd_plot->setMinimumHeight(minHeight3);
+   // pb_svd_plot->setPalette( PALET_PUSHB );
+   // connect(pb_svd_plot, SIGNAL(clicked()), SLOT(svd_plot()));
+   // process_widgets.push_back( pb_svd_plot );
 
    pb_svd_save = new QPushButton(us_tr("Save SVs"), this);
    pb_svd_save->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -663,8 +956,13 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    // -------- build layout
 
 
-   QVBoxLayout * background = new QVBoxLayout(this); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
-   QHBoxLayout * top = new QHBoxLayout(); top->setContentsMargins( 0, 0, 0, 0 ); top->setSpacing( 0 );
+   QVBoxLayout * background = new QVBoxLayout(this);
+   background->setContentsMargins( 0, 0, 0, 0 );
+   background->setSpacing( 0 );
+
+   QHBoxLayout * top = new QHBoxLayout( 0 );
+   top->setContentsMargins( 0, 0, 0, 0 );
+   top->setSpacing( 0 );
 
    // ----- left side
    {
@@ -681,6 +979,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
       {
          QBoxLayout * bl_buttons = new QHBoxLayout(); bl_buttons->setContentsMargins( 0, 0, 0, 0 ); bl_buttons->setSpacing( 0 );
          bl_buttons->addWidget( pb_to_hplc );
+         bl_buttons->addWidget( pb_save_plots );
          bl_buttons->addWidget( pb_color_rotate );
          bl->addLayout( bl_buttons );
       }
@@ -705,7 +1004,16 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
 
       {
          QBoxLayout * bl_buttons = new QHBoxLayout(); bl_buttons->setContentsMargins( 0, 0, 0, 0 ); bl_buttons->setSpacing( 0 );
+         bl_buttons->addWidget( cb_norm_pw );
+         bl_buttons->addWidget( cb_norm_avg );
+         bl->addLayout( bl_buttons );
+      }
+
+      {
+         QBoxLayout * bl_buttons = new QHBoxLayout(); bl_buttons->setContentsMargins( 0, 0, 0, 0 ); bl_buttons->setSpacing( 0 );
          bl_buttons->addWidget( pb_svd );
+         bl_buttons->addWidget( pb_efa );
+         bl_buttons->addWidget( pb_efa_decomp );
          bl_buttons->addWidget( pb_stop );
          bl->addLayout( bl_buttons );
       }
@@ -715,7 +1023,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
 
       {
          QBoxLayout * bl_buttons = new QHBoxLayout(); bl_buttons->setContentsMargins( 0, 0, 0, 0 ); bl_buttons->setSpacing( 0 );
-         bl_buttons->addWidget( pb_svd_plot );
+         // bl_buttons->addWidget( pb_svd_plot );
          bl_buttons->addWidget( pb_svd_save );
          bl_buttons->addWidget( pb_recon );
          bl->addLayout( bl_buttons );
@@ -742,14 +1050,67 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
 #endif
       bl->addWidget( editor );
 
-      top->addLayout ( bl );
+      top->addLayout ( bl, 0 );
    }      
 
    // ----- right side
    {
       QBoxLayout * bl = new QVBoxLayout( 0 ); bl->setContentsMargins( 0, 0, 0, 0 ); bl->setSpacing( 0 );
+      
+      {
+         QBoxLayout * bl_buttons = new QHBoxLayout();
+         bl_buttons->setContentsMargins( 0, 0, 0, 0 );
+         bl_buttons->setSpacing( 0 );
+         bl_buttons->addWidget( lbl_modes );
+         bl_buttons->addWidget( rb_mode_iqit );
+         bl_buttons->addWidget( rb_mode_svd );
+         bl_buttons->addWidget( rb_mode_efa );
+         bl_buttons->addWidget( rb_mode_efa_decomp );
+         bl->addLayout( bl_buttons );
+      }
+
       bl->addWidget( plot_data );
       bl->addWidget( plot_errors );
+
+      bl->addWidget( plot_svd );
+      bl->addWidget( plot_ac );
+
+      bl->addWidget( plot_lefa );
+      bl->addWidget( plot_refa );
+
+      {
+         for ( int i = 0; i < UHSHS_MAX_SV_FOR_EFA; ++i ) {
+            QBoxLayout * bl_buttons = new QHBoxLayout();
+            bl_buttons->setContentsMargins( 0, 0, 0, 0 );
+            bl_buttons->setSpacing( 0 );
+            bl_buttons->addWidget( efa_range_labels [ i ] );
+            bl_buttons->addWidget( efa_range_start  [ i ] );
+            bl_buttons->addWidget( efa_range_labels2[ i ] );
+            bl_buttons->addWidget( efa_range_end    [ i ] );
+            bl->addLayout( bl_buttons );
+         }
+      }
+
+      {
+         QBoxLayout * bl_buttons = new QHBoxLayout();
+         bl_buttons->setContentsMargins( 0, 0, 0, 0 );
+         bl_buttons->setSpacing( 0 );
+
+         bl_buttons->addWidget( lbl_efas );
+         bl_buttons->addWidget( qwtc_efas );
+         bl->addLayout( bl_buttons );
+      }
+
+      bl->addWidget( plot_efa_decomp );
+      {
+         QBoxLayout * bl_buttons = new QHBoxLayout();
+         bl_buttons->setContentsMargins( 0, 0, 0, 0 );
+         bl_buttons->setSpacing( 0 );
+
+         bl_buttons->addWidget( cb_efa_decomp_force_positive );
+         bl_buttons->addWidget( pb_efa_decomp_to_hplc_saxs );
+         bl->addLayout( bl_buttons );
+      }
 
       //       {
       //          QGridLayout * gl = new QGridLayout( 0 ); gl->setContentsMargins( 0, 0, 0, 0 ); gl->setSpacing( 0 );
@@ -787,7 +1148,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
          bl->addLayout( bl_buttons );
       }
 
-      top->addLayout( bl );
+      top->addLayout( bl, 2 );
    }
    
    background->addLayout( top );
@@ -808,7 +1169,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
                  !ush_win->gparams.count( "hplc_svd_editor_widgets" ) || ush_win->gparams[ "hplc_svd_editor_widgets" ] == "false" ? false : true );
    hide_widgets( process_widgets,
                  !ush_win->gparams.count( "hplc_svd_process_widgets" ) || ush_win->gparams[ "hplc_svd_process_widgets" ] == "false" ? false : true );
-   hide_widgets( errors_widgets, true );
+   mode_select( MODE_IQIT );
 }
 
 void US_Hydrodyn_Saxs_Hplc_Svd::cancel()
@@ -900,12 +1261,9 @@ void US_Hydrodyn_Saxs_Hplc_Svd::plot_files()
 
    QStringList files = selected_files();
 
-   for ( int i = 0; i < (int) files.size(); ++i )
-   {
-      if ( plot_file( files[ i ], file_minx, file_maxx, file_miny, file_maxy ) )
-      {
-         if ( first )
-         {
+   for ( int i = 0; i < (int) files.size(); ++i ) {
+      if ( plot_file( files[ i ], file_minx, file_maxx, file_miny, file_maxy ) ) {
+         if ( first ) {
             minx = file_minx;
             maxx = file_maxx;
             miny = file_miny;
@@ -936,8 +1294,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::plot_files()
 
    // enable zooming
    
-   if ( !plot_data_zoomer )
-   {
+   if ( !plot_data_zoomer ) {
       // puts( "redoing zoomer" );
       plot_data->setAxisScale( QwtPlot::xBottom, minx, maxx );
       plot_data->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );
@@ -1050,9 +1407,6 @@ void US_Hydrodyn_Saxs_Hplc_Svd::plot_files( QStringList add_files )
       plot_data->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );
       plot_data_zoomer = new ScrollZoomer(plot_data->canvas());
       plot_data_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-      plot_data_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
       // connect( plot_data_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_data_zoomed( const QRectF & ) ) );
    }
    
@@ -1078,28 +1432,14 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::plot_file( QString file,
 
    get_min_max( file, minx, maxx, miny, maxy );
 
-#if QT_VERSION < 0x040000
-   long Iq = plot_data->insertCurve( file );
-   plotted_curves[ file ] = Iq;
-   plot_data->setCurveStyle( Iq, QwtCurve::Lines );
-#else
    QwtPlotCurve *curve = new QwtPlotCurve( file );
    plotted_curves[ file ] = curve;
    curve->setStyle( QwtPlotCurve::Lines );
-#endif
 
    unsigned int q_points = f_qs[ file ].size();
 
    if ( !axis_y_log )
    {
-#if QT_VERSION < 0x040000
-      plot_data->setCurveData( Iq, 
-                               (double *)&( f_qs[ file ][ 0 ] ),
-                               (double *)&( f_Is[ file ][ 0 ] ),
-                               q_points
-                               );
-      plot_data->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, SolidLine));
-#else
       curve->setSamples(
                      (double *)&( f_qs[ file ][ 0 ] ),
                      (double *)&( f_Is[ file ][ 0 ] ),
@@ -1108,7 +1448,6 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::plot_file( QString file,
 
       curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
       curve->attach( plot_data );
-#endif
    } else {
       vector < double > q;
       vector < double > I;
@@ -1121,15 +1460,6 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::plot_file( QString file,
          }
       }
       q_points = ( unsigned int )q.size();
-#if QT_VERSION < 0x040000
-      plot_data->setCurveData( Iq, 
-                               /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
-                               (double *)&( q[ 0 ] ),
-                               (double *)&( I[ 0 ] ),
-                               q_points
-                               );
-      plot_data->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], use_line_width, SolidLine));
-#else
       curve->setSamples(
                      /* cb_guinier->isChecked() ?
                         (double *)&(plotted_q2[p][0]) : */
@@ -1140,7 +1470,6 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::plot_file( QString file,
 
       curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
       curve->attach( plot_data );
-#endif
    }
    return true;
 }
@@ -1235,6 +1564,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::disable_all()
    lv_data            ->setEnabled( false );
    pb_clear           ->setEnabled( false );
    pb_to_hplc         ->setEnabled( false );
+   pb_save_plots      ->setEnabled( false );
    pb_color_rotate    ->setEnabled( false );
    pb_replot          ->setEnabled( false );
    pb_iq_it           ->setEnabled( false );
@@ -1246,8 +1576,10 @@ void US_Hydrodyn_Saxs_Hplc_Svd::disable_all()
    // le_t_end         ->setEnabled( false );
    lb_ev              ->setEnabled( false );
    pb_svd             ->setEnabled( false );
+   pb_efa             ->setEnabled( false );
+   pb_efa_decomp      ->setEnabled( false );
    pb_stop            ->setEnabled( running );
-   pb_svd_plot        ->setEnabled( false );
+   // pb_svd_plot        ->setEnabled( false );
    pb_svd_save        ->setEnabled( false );
    pb_recon           ->setEnabled( false );
    pb_inc_rmsd_plot   ->setEnabled( false );
@@ -1255,6 +1587,11 @@ void US_Hydrodyn_Saxs_Hplc_Svd::disable_all()
    pb_inc_chi_plot    ->setEnabled( false );
    pb_inc_recon       ->setEnabled( false );
    pb_indiv_recon     ->setEnabled( false );
+
+   rb_mode_iqit       ->setEnabled( false );
+   rb_mode_svd        ->setEnabled( false );
+   rb_mode_efa        ->setEnabled( false );
+   rb_mode_efa_decomp ->setEnabled( false );
 
 
    qApp               ->processEvents();
@@ -1277,7 +1614,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::q_end_text( const QString & )
 // {
 // }
 
-void US_Hydrodyn_Saxs_Hplc_Svd::replot()
+void US_Hydrodyn_Saxs_Hplc_Svd::replot( bool keep_mode )
 {
    disable_all();
 
@@ -1303,6 +1640,14 @@ void US_Hydrodyn_Saxs_Hplc_Svd::replot()
       }
    }
 
+   if ( keep_mode ) {
+      svd_plot( false );
+      efa_plot();
+      efa_decomp_plot();
+      update_enables();
+      return;
+   }
+
    if ( sv_plot || chi_plot || rmsd_plot )
    {
       axis_x_log = last_axis_x_log;
@@ -1312,6 +1657,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::replot()
       chi_plot  = false;
       axis_x_title();
       axis_y_title();
+      // hide_widgets( svd_widgets, true );
       if ( plot_data_zoomer )
       {
          // cout << QString( "plot zoomer stack size %1\n" ).arg( plot_data_zoomer->zoomRectIndex() );
@@ -1324,7 +1670,15 @@ void US_Hydrodyn_Saxs_Hplc_Svd::replot()
       }
    }
 
+   if ( ( mode_i_of_t && !iq_it_state ) ||
+        ( !mode_i_of_t && iq_it_state ) ) {
+      set_title( plot_data, QString( "I(t) of %1" ).arg( get_name() ) );
+   } else {
+      set_title( plot_data, QString( "I(q) of %1" ).arg( get_name() ) );
+   }
+   
    plot_files();
+   mode_select( MODE_IQIT );
    update_enables();
 }
 
@@ -1332,22 +1686,19 @@ void US_Hydrodyn_Saxs_Hplc_Svd::iq_it()
 {
    disable_all();
 
-   if ( plot_data_zoomer )
-   {
+   if ( plot_data_zoomer ) {
       plot_data_zoomer->zoom ( 0 );
       delete plot_data_zoomer;
       plot_data_zoomer = (ScrollZoomer *) 0;
    }
 
-   if ( plot_errors_zoomer )
-   {
+   if ( plot_errors_zoomer ) {
       plot_errors_zoomer->zoom ( 0 );
       delete plot_errors_zoomer;
       plot_errors_zoomer = (ScrollZoomer *) 0;
    }
 
-   if ( sv_plot || chi_plot || rmsd_plot )
-   {
+   if ( sv_plot || chi_plot || rmsd_plot ) {
       axis_x_log = last_axis_x_log;
       axis_y_log = last_axis_y_log;
    }
@@ -1360,6 +1711,16 @@ void US_Hydrodyn_Saxs_Hplc_Svd::iq_it()
                       us_tr( iq_it_state ? "Show I(t)" : "Show I(q)" ) :
                       us_tr( iq_it_state ? "Show I(q)" : "Show I(t)" )
                       );
+
+   if ( ( mode_i_of_t && !iq_it_state ) ||
+        ( !mode_i_of_t && iq_it_state ) ) {
+      axis_x_log = false;
+      axis_y_log = false;
+   } else {
+      axis_x_log = false;
+      axis_y_log = true;
+   }
+
    axis_x_title();
    axis_y_title();
    
@@ -1397,6 +1758,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::axis_x()
    axis_x_title();
 
    plot_data->replot();
+   plot_svd->replot();
 }
 
 void US_Hydrodyn_Saxs_Hplc_Svd::axis_y()
@@ -1429,6 +1791,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::axis_y()
    }
 
    plot_data->replot();
+   plot_svd->replot();
 }
 
 void US_Hydrodyn_Saxs_Hplc_Svd::hide_data()
@@ -1477,6 +1840,8 @@ void US_Hydrodyn_Saxs_Hplc_Svd::update_enables()
       return;
    }
 
+   progress->reset();
+   
    int sv_items = 0;
    for ( int i = 0; i < (int) lb_ev->count(); ++i )
    {
@@ -1492,6 +1857,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::update_enables()
    lv_data            ->setEnabled( true );
    pb_clear           ->setEnabled( true );
    pb_to_hplc         ->setEnabled( files.size() && !sources.count( us_tr( "Original data" ) ) && ush_win->saxs_hplc_widget );
+   pb_save_plots      ->setEnabled( true );
    pb_color_rotate    ->setEnabled( true );
    pb_replot          ->setEnabled( !plotted_matches_selected() );
    pb_iq_it           ->setEnabled( true );
@@ -1504,8 +1870,10 @@ void US_Hydrodyn_Saxs_Hplc_Svd::update_enables()
    lb_ev              ->setEnabled( lb_ev->count() );
 
    pb_svd             ->setEnabled( files.size() && mode_i_of_t == iq_it_state && sources.size() == 1 );
+   pb_efa             ->setEnabled( lb_ev->count() && pb_svd->isEnabled() );
+   pb_efa_decomp      ->setEnabled( efa_lsv.size() && pb_efa->isEnabled() );
    pb_stop            ->setEnabled( false );
-   pb_svd_plot        ->setEnabled( lb_ev->count() );
+   // pb_svd_plot        ->setEnabled( lb_ev->count() );
    pb_svd_save        ->setEnabled( lb_ev->count() );
    pb_recon           ->setEnabled( sv_items );
 
@@ -1514,6 +1882,11 @@ void US_Hydrodyn_Saxs_Hplc_Svd::update_enables()
    pb_inc_chi_plot    ->setEnabled( chi_x.size() );
    pb_inc_recon       ->setEnabled( sv_items );
    pb_indiv_recon     ->setEnabled( sv_items );
+
+   rb_mode_iqit       ->setEnabled( true );
+   rb_mode_svd        ->setEnabled( true );
+   rb_mode_efa        ->setEnabled( true );
+   rb_mode_efa_decomp ->setEnabled( true );
 
    if ( sources.size() == 1 &&
         sources.begin()->contains( "reconstruction" ) )
@@ -1556,13 +1929,11 @@ QStringList US_Hydrodyn_Saxs_Hplc_Svd::selected_files()
    QString iq_or_it = iq_it_state ? "I(t)" : "I(q)";
 
    QTreeWidgetItemIterator it( lv_data );
-   while ( (*it) ) 
-   {
+   while ( (*it) ) {
       QTreeWidgetItem *item = (*it);
       if ( is_selected( item ) &&
            US_Static::lvi_depth( item ) == 2 &&
-           item->parent()->text( 0 ) == iq_or_it )
-      {
+           item->parent()->text( 0 ) == iq_or_it ) {
          result << item->text( 0 );
       }
       ++it;
@@ -1770,19 +2141,11 @@ void US_Hydrodyn_Saxs_Hplc_Svd::axis_x_title()
    if ( axis_x_log )
    {
       plot_data->setAxisTitle(QwtPlot::xBottom,  title + us_tr(" (log scale)") );
-#if QT_VERSION < 0x040000
-      plot_data->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::Logarithmic);
-#else
       plot_data->setAxisScaleEngine(QwtPlot::xBottom, new QwtLogScaleEngine(10));
-#endif
    } else {
       plot_data->setAxisTitle(QwtPlot::xBottom,  title );
-#if QT_VERSION < 0x040000
-      plot_data->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::None);
-#else
       // actually need to test this, not sure what the correct version is
       plot_data->setAxisScaleEngine(QwtPlot::xBottom, new QwtLinearScaleEngine );
-#endif
    }
 }
 
@@ -1807,19 +2170,11 @@ void US_Hydrodyn_Saxs_Hplc_Svd::axis_y_title()
    if ( axis_y_log )
    {
       plot_data->setAxisTitle(QwtPlot::yLeft, title + us_tr( " (log scale)") );
-#if QT_VERSION < 0x040000
-      plot_data->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::Logarithmic);
-#else
       plot_data->setAxisScaleEngine(QwtPlot::yLeft, new QwtLogScaleEngine(10));
-#endif
    } else {
       plot_data->setAxisTitle(QwtPlot::yLeft, title );
-#if QT_VERSION < 0x040000
-      plot_data->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
-#else
       // actually need to test this, not sure what the correct version is
       plot_data->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
-#endif
    }
 }
 
@@ -1835,11 +2190,7 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::plotted_matches_selected()
    }
 
    for ( 
-#if QT_VERSION >= 0x040000
         map < QString, QwtPlotCurve * >::iterator it = plotted_curves.begin();
-#else
-        map < QString, long >          ::iterator it = plotted_curves.begin();
-#endif
         it != plotted_curves.end();
         ++it )
    {
@@ -1878,29 +2229,6 @@ void US_Hydrodyn_Saxs_Hplc_Svd::add_i_of_q_or_t( QString source, QStringList fil
       
    disable_all();
 
-#if QT_VERSION < 0x040000
-   if ( source_item->childCount() )
-   {
-      QTreeWidgetItem * myChild = source_item->firstChild();
-      while ( myChild )
-      {
-         if ( myChild->text( 0 ) == "I(t)" )
-         {
-            i_t_child = myChild;
-         }
-         if ( myChild->text( 0 ) == "I(q)" )
-         {
-            i_q_child = myChild;
-         }
-         if ( i_q_child &&
-              i_t_child )
-         {
-            break;
-         }
-         myChild = myChild->nextSibling();
-      }
-   }
-#else
    {
       int children = source_item->childCount();
       if ( children ) { 
@@ -1924,32 +2252,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::add_i_of_q_or_t( QString source, QStringList fil
          }
       }
    }
-#endif
 
-#if QT_VERSION < 0x040000
-   if ( mode_i_of_t )
-   {
-      if ( !i_q_child )
-      {
-         if ( i_t_child )
-         {
-            i_q_child = new QTreeWidgetItem( source_item, i_t_child,  "I(q)" );
-         } else {
-            i_q_child = new QTreeWidgetItem( source_item, source_item,  "I(q)" );
-         }
-      }
-   } else {
-      if ( !i_t_child )
-      {
-         if ( i_q_child )
-         {
-            i_t_child = new QTreeWidgetItem( source_item, i_q_child,  "I(t)" );
-         } else {
-            i_t_child = new QTreeWidgetItem( source_item, source_item,  "I(t)" );
-         }
-      }
-   }
-#else
    if ( mode_i_of_t ) {
       if ( !i_q_child ) {
          if ( i_t_child ) {
@@ -1969,7 +2272,6 @@ void US_Hydrodyn_Saxs_Hplc_Svd::add_i_of_q_or_t( QString source, QStringList fil
          i_t_child->setText( 0, "I(t)" );
       }
    }
-#endif
 
    // find common q 
    QString head = hplc_win->qstring_common_head( files, true );
@@ -2170,89 +2472,170 @@ void US_Hydrodyn_Saxs_Hplc_Svd::rescale( bool do_update_enables )
    }
 }
 
-class svd_sortable_double {
-public:
-   double       x;
-   int          index;
-   bool operator < (const svd_sortable_double& objIn) const
-   {
-      return x < objIn.x;
-   }
-};
+// class svd_sortable_double {
+// public:
+//    double       x;
+//    int          index;
+//    bool operator < (const svd_sortable_double& objIn) const
+//    {
+//       return x < objIn.x;
+//    }
+// };
 
 void US_Hydrodyn_Saxs_Hplc_Svd::svd_plot( bool axis_change )
 {
-   plot_data->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_data->detachItems( QwtPlotItem::Rtti_PlotMarker );;
-   plotted_curves.clear( );
-   if ( plot_data_zoomer )
-   {
-      plot_data_zoomer->zoom ( 0 );
-      delete plot_data_zoomer;
-      plot_data_zoomer = (ScrollZoomer *) 0;
+   plot_svd->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_data->detachItems( QwtPlotItem::Rtti_PlotMarker );;
+   plot_ac->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_data->detachItems( QwtPlotItem::Rtti_PlotMarker );;
+
+   if ( plot_svd_zoomer ) {
+      plot_svd_zoomer->zoom ( 0 );
+      delete plot_svd_zoomer;
+      plot_svd_zoomer = (ScrollZoomer *) 0;
+   }
+
+   if ( plot_ac_zoomer ) {
+      plot_ac_zoomer->zoom ( 0 );
+      delete plot_ac_zoomer;
+      plot_ac_zoomer = (ScrollZoomer *) 0;
+   }
+
+   if ( !svd_x.size() ) {
+      return;
    }
 
    sv_plot   = true;
    rmsd_plot = false;
    chi_plot  = false;
 
-   if ( axis_change )
-   {
+   if ( axis_change ) {
       last_axis_x_log = axis_x_log;
       last_axis_y_log = axis_y_log;
 
-      axis_x_log = true;
-      axis_y_log = false;
+      axis_x_log = false;
+      axis_y_log = true;
 
       axis_x_title();
       axis_y_title();
    }
 
 
-#if QT_VERSION < 0x040000
-   long Iq = plot_data->insertCurve( "svd" );
-   plotted_curves[ "svd" ] = Iq;
-   plot_data->setCurveStyle( Iq, QwtCurve::Lines );
-#else
-   QwtPlotCurve *curve = new QwtPlotCurve( "svd" );
-   plotted_curves[ "svd" ] = curve;
-   curve->setStyle( QwtPlotCurve::Lines );
-#endif
+   {
+      QwtPlotCurve *curve = new QwtPlotCurve( "svd" );
+      plotted_curves[ "svd" ] = curve;
+      curve->setStyle( QwtPlotCurve::Lines );
 
-#if QT_VERSION < 0x040000
-   plot_data->setCurveData( Iq, 
-                            (double *)&( svd_x[ 0 ] ),
-                            (double *)&( svd_y[ 0 ] ),
-                            svd_x.size()
-                            );
-   plot_data->setCurvePen( Iq, QPen( plot_colors[ 0 ], use_line_width, SolidLine));
-#else
-   curve->setSamples(
-                  (double *)&( svd_x[ 0 ] ),
-                  (double *)&( svd_y[ 0 ] ),
-                  svd_x.size()
-                  );
+      curve->setSamples(
+                        (double *)&( svd_x[ 0 ] ),
+                        (double *)&( svd_y[ 0 ] ),
+                        svd_x.size()
+                        );
 
-   curve->setPen( QPen( plot_colors[ 0 ], use_line_width, Qt::SolidLine ) );
-   curve->attach( plot_data );
-#endif
+      curve->setSymbol( new QwtSymbol( QwtSymbol::Cross,
+                                       QBrush( QColor( plot_colors[ 0 ] ), Qt::SolidPattern ),
+                                       QPen( plot_colors[ 0 ], use_line_width + 1 ),
+                                       QSize( 4 * ( use_line_width + 2 ), 4 * ( use_line_width + 2 ) ) )
+                        );
+   
+      curve->setPen( QPen( plot_colors[ 0 ], use_line_width, Qt::SolidLine ) );
+      curve->attach( plot_svd );
 
-   plot_data->setAxisScale( QwtPlot::xBottom, 1, svd_x.size() );
-   plot_data->setAxisScale( QwtPlot::yLeft  , svd_y.back() * 0.9e0, svd_y[ 0 ] * 1.1e0 );
+      //   plot_data->setAxisScale( QwtPlot::xBottom, 1, svd_x.size() );
+      plot_svd->setAxisScale( QwtPlot::xBottom, 0.5, UHSHS_MAX_SV_FOR_EFA + 0.5 );
+      plot_svd->setAxisScale( QwtPlot::yLeft  , svd_y.back() * 0.95e0, svd_y[ 0 ] * 1.1e0 );
 
-   plot_data_zoomer = new ScrollZoomer(plot_data->canvas());
-   plot_data_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-   plot_data_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
-   // connect( plot_data_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_data_zoomed( const QRectF & ) ) );
+      plot_svd_zoomer = new ScrollZoomer(plot_svd->canvas());
+      plot_svd_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+      // connect( plot_svd_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_svd_zoomed( const QRectF & ) ) );
 
-   plot_data->replot();
+      set_title( plot_svd, QString( "SVD of %1" ).arg( last_svd_name ) );
+      plot_svd->replot();
+   }
+
+   if ( svd_autocor_U.size() < svd_x.size() ) {
+      editor_msg( "red", us_tr( "Internal error: size mismatch autocorr U. Please inform the developers" ) );
+      update_enables();
+      return;
+   }
+   {
+
+      QwtPlotCurve *curve = new QwtPlotCurve( "U (Left Singular Vectors)" );
+      curve->setStyle( QwtPlotCurve::Lines );
+
+      curve->setSamples(
+                        (double *)&( svd_x[ 0 ] ),
+                        (double *)&( svd_autocor_U[ 0 ] ),
+                        svd_x.size()
+                        );
+
+      curve->setSymbol( new QwtSymbol( QwtSymbol::Cross,
+                                       QBrush( QColor( plot_colors[ 0 ] ), Qt::SolidPattern ),
+                                       QPen( plot_colors[ 0 ], use_line_width + 1 ),
+                                       QSize( 4 * ( use_line_width + 2 ), 4 * ( use_line_width + 2 ) ) )
+                        );
+   
+      curve->setPen( QPen( plot_colors[ 0 ], use_line_width, Qt::SolidLine ) );
+      curve->setItemAttribute( QwtPlotItem::Legend, true );
+      curve->attach( plot_ac );
+   }
+   if ( svd_autocor_V.size() < svd_x.size() ) {
+      editor_msg( "red", us_tr( "Internal error: size mismatch autocorr V. Please inform the developers" ) );
+      update_enables();
+      return;
+   }
+   {
+
+      QwtPlotCurve *curve = new QwtPlotCurve( "V (Right Singular Vectors)" );
+      curve->setStyle( QwtPlotCurve::Lines );
+
+      curve->setSamples(
+                        (double *)&( svd_x[ 0 ] ),
+                        (double *)&( svd_autocor_V[ 0 ] ),
+                        svd_x.size()
+                        );
+
+      curve->setSymbol( new QwtSymbol( QwtSymbol::Cross,
+                                       QBrush( QColor( plot_colors[ 1 ] ), Qt::SolidPattern ),
+                                       QPen( plot_colors[ 1 ], use_line_width + 1 ),
+                                       QSize( 4 * ( use_line_width + 2 ), 4 * ( use_line_width + 2 ) ) )
+                        );
+   
+      curve->setPen( QPen( plot_colors[ 1 ], use_line_width, Qt::SolidLine ) );
+      curve->setItemAttribute( QwtPlotItem::Legend, true );
+      curve->attach( plot_ac );
+   }
+   plot_ac->setAxisScale( QwtPlot::xBottom, 0.5, UHSHS_MAX_SV_FOR_EFA + 0.5 );
+   plot_ac->setAxisScale( QwtPlot::yLeft  , -0.1, 1.1 );
+
+   plot_ac_zoomer = new ScrollZoomer(plot_ac->canvas());
+   plot_ac_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+
+   plot_ac->replot();
+
    update_enables();
 }
 
-void US_Hydrodyn_Saxs_Hplc_Svd::svd()
-{
+QString US_Hydrodyn_Saxs_Hplc_Svd::get_name() {
+   QTreeWidgetItemIterator it( lv_data );
+   while ( (*it) ) {
+      QTreeWidgetItem *item = (*it);
+      if ( is_selected( item ) ) {
+         while ( item->parent() ) {
+            item = item->parent();
+         }
+         // qDebug() << "get_name: is_selected text(0): " << item->text( 0 );
+         return item->text( 0 );
+      }
+      ++it;
+   }
+
+   return "unknown";
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::svd() {
    disable_all();
+
+   clear_efa();
+   clear_efa_decomp();
 
    QStringList files = selected_files();
 
@@ -2269,20 +2652,36 @@ void US_Hydrodyn_Saxs_Hplc_Svd::svd()
    int m = (int) f_qs[ files[ 0 ] ].size();
    int n = (int) files.size();
 
+   map < QString, vector < double > >  * f_Iuse = &f_Is;
+   check_norm( files );
+   QString norm_name = "not normed";
+   if ( norm_ok ) {
+      if ( cb_norm_pw->isChecked() ) {
+         f_Iuse = &f_Is_norm_pw;
+         norm_name = "normed by p.w. errors";
+      }
+      if ( cb_norm_avg->isChecked() ) {
+         f_Iuse = &f_Is_norm_avg;
+         norm_name = "normed by avg. errors";
+      }
+   }
+
+   last_svd_name += " " + norm_name;
+
+
+   // if ( 1 || m >= n ) {
+
    vector < vector < double > > F       ( m );
    vector < vector < double > > F_errors;
    vector < double * > a( m );
 
    svd_F_nonzero = true;
-
-   for ( int i = 0; i < m; ++i )
-   {
+   
+   for ( int i = 0; i < m; ++i ) {
       F[ i ].resize( n );
-      for ( int j = 0; j < n; ++j )
-      {
-         F[ i ][ j ] = f_Is[ files[ j ] ][ i ];
-         if ( !F[ i ][ j ] )
-         {
+      for ( int j = 0; j < n; ++j ) {
+         F[ i ][ j ] = (*f_Iuse)[ files[ j ] ][ i ];
+         if ( !F[ i ][ j ] ) {
             svd_F_nonzero = false;
          }
       }
@@ -2302,7 +2701,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::svd()
       v[ j ] = &(V[ j ][ 0 ]);
    }
       
-   editor_msg( "blue", us_tr( "SVD: matrix F created, computing SVD" ) );
+   editor_msg( "blue", us_tr( "SVD: computing SVD on " ) + last_svd_name );
    if ( !SVD::dsvd( &(a[ 0 ]), m, n, &(w[ 0 ]), &(v[ 0 ]) ) )
    {
       editor_msg( "red", us_tr( SVD::errormsg ) );
@@ -2317,7 +2716,9 @@ void US_Hydrodyn_Saxs_Hplc_Svd::svd()
    {
       sval.x     = w[ i ];
       sval.index = i;
-      svals.push_back( sval );
+      if ( sval.x ) {
+         svals.push_back( sval );
+      }
    }
    svals.sort();
    svals.reverse();
@@ -2340,6 +2741,102 @@ void US_Hydrodyn_Saxs_Hplc_Svd::svd()
       lb_ev->addItem( QString( "%1" ).arg( it->x ) );
    }
 
+   // } else {
+
+   //    vector < vector < double > > F       ( n );
+   //    vector < vector < double > > F_errors;
+   //    vector < double * > a( n );
+
+   //    svd_F_nonzero = true;
+   
+   //    for ( int i = 0; i < n; ++i ) {
+   //       F[ i ].resize( m );
+   //       for ( int j = 0; j < m; ++j ) {
+   //          F[ i ][ j ] = (*f_Iuse)[ files[ i ] ][ j ];
+   //          if ( !F[ i ][ j ] ) {
+   //             svd_F_nonzero = false;
+   //          }
+   //       }
+   //       a[ i ] = &(F[ i ][ 0 ]);
+   //    }
+
+   //    svd_F        = F;
+   //    svd_F_errors = F_errors;
+   //    vector < double > W( m );
+   //    double *w = &(W[ 0 ]);
+   //    vector < double * > v( m );
+
+   //    vector < vector < double > > V( m );
+   //    for ( int j = 0; j < m; ++j )
+   //    {
+   //       V[ j ].resize( m );
+   //       v[ j ] = &(V[ j ][ 0 ]);
+   //    }
+      
+   //    editor_msg( "blue", us_tr( "SVD: computing SVD" ) );
+   //    if ( !SVD::dsvd( &(a[ 0 ]), n, m, &(w[ 0 ]), &(v[ 0 ]) ) )
+   //    {
+   //       editor_msg( "red", us_tr( SVD::errormsg ) );
+   //       update_enables();
+   //       return;
+   //    }
+
+   //    list < svd_sortable_double > svals;
+
+   //    svd_sortable_double sval;
+   //    for ( int i = 0; i < m; i++ )
+   //    {
+   //       sval.x     = w[ i ];
+   //       sval.index = i;
+   //       svals.push_back( sval );
+   //    }
+   //    svals.sort();
+   //    svals.reverse();
+
+   //    svd_x.clear( );
+   //    svd_y.clear( );
+
+   //    svd_U = transpose( V );
+   //    svd_D = W;
+   //    svd_V = transpose( F );
+   //    svd_index.resize( svals.size() );
+
+   //    for ( list < svd_sortable_double >::iterator it = svals.begin();
+   //          it != svals.end();
+   //          ++it )
+   //    {
+   //       svd_index[ (int) svd_x.size() ] = it->index;
+   //       svd_x.push_back( (double) svd_x.size() + 1e0 );
+   //       svd_y.push_back( it->x );
+   //       lb_ev->addItem( QString( "%1" ).arg( it->x ) );
+   //    }
+   // }      
+
+   lbl_ev->setText( QString( us_tr( "Singular value list for %1" ) ).arg( last_svd_name ) );
+
+   svd_autocor_U = autocor( svd_U );
+   svd_autocor_V = autocor( svd_V );
+
+#define DEBUG_MN
+#if defined( DEBUG_MN )
+   qDebug() << "US_Hydrodyn_Saxs_Hplc_Svd::svd rows " << m << " cols " << n;
+   matrix_info( "svd_U", svd_U );
+   matrix_info( "svd_V", svd_V );
+   qDebug() << "svd_D size " << svd_D.size();
+   qDebug() << "svd_x size " << svd_x.size();
+   qDebug() << "svd_autocor_U size " << svd_autocor_U.size();
+   qDebug() << "svd_autocor_V size " << svd_autocor_V.size();
+#endif
+
+   // #define DEBUG_AUTOCOR
+#if defined( DEBUG_AUTOCOR )
+   US_Vector::printvector3( "SVD x autocor U, V", svd_x, svd_autocor_U, svd_autocor_V );
+#endif
+
+   svd_plot();
+   set_number_of_svs_for_efa();
+   editor_msg( "blue", us_tr( "SVD: Done computing SVD on " ) + last_svd_name );
+   mode_select( MODE_SVD );
    update_enables();
 }
 
@@ -2352,8 +2849,6 @@ void US_Hydrodyn_Saxs_Hplc_Svd::recon()
    update_enables();
    editor_msg( "blue", us_tr( "Done TSVD reconstruction" ) );
 }
-
-
 
 QTreeWidgetItem * US_Hydrodyn_Saxs_Hplc_Svd::lvi_last_depth( int d )
 {
@@ -2384,11 +2879,10 @@ void US_Hydrodyn_Saxs_Hplc_Svd::color_rotate()
    }
    new_plot_colors.push_back( plot_colors[ 0 ] );
    plot_colors = new_plot_colors;
-   replot();
+   replot( true );
 }
 
-void US_Hydrodyn_Saxs_Hplc_Svd::inc_rmsd_plot( bool axis_change )
-{
+void US_Hydrodyn_Saxs_Hplc_Svd::inc_rmsd_plot( bool axis_change ) {
    plot_data->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_data->detachItems( QwtPlotItem::Rtti_PlotMarker );;
    plotted_curves.clear( );
    if ( plot_data_zoomer )
@@ -2414,24 +2908,10 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_rmsd_plot( bool axis_change )
       axis_y_title();
    }
 
-#if QT_VERSION < 0x040000
-   long Iq = plot_data->insertCurve( "rmsd" );
-   plotted_curves[ "rmsd" ] = Iq;
-   plot_data->setCurveStyle( Iq, QwtCurve::Lines );
-#else
    QwtPlotCurve *curve = new QwtPlotCurve( "rmsd" );
    plotted_curves[ "rmsd" ] = curve;
    curve->setStyle( QwtPlotCurve::Lines );
-#endif
 
-#if QT_VERSION < 0x040000
-   plot_data->setCurveData( Iq, 
-                            (double *)&( rmsd_x[ 0 ] ),
-                            (double *)&( rmsd_y[ 0 ] ),
-                            rmsd_x.size()
-                            );
-   plot_data->setCurvePen( Iq, QPen( plot_colors[ 0 ], use_line_width, SolidLine));
-#else
    curve->setSamples(
                   (double *)&( rmsd_x[ 0 ] ),
                   (double *)&( rmsd_y[ 0 ] ),
@@ -2440,16 +2920,12 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_rmsd_plot( bool axis_change )
 
    curve->setPen( QPen( plot_colors[ 0 ], use_line_width, Qt::SolidLine ) );
    curve->attach( plot_data );
-#endif
 
    plot_data->setAxisScale( QwtPlot::xBottom, 1, rmsd_x.size() );
    plot_data->setAxisScale( QwtPlot::yLeft  , vmin( rmsd_y ) * 0.9e0 , vmax( rmsd_y ) * 1.1e0 );
 
    plot_data_zoomer = new ScrollZoomer(plot_data->canvas());
    plot_data_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-   plot_data_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
    // connect( plot_data_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_data_zoomed( const QRectF & ) ) );
 
    plot_data->replot();
@@ -2483,24 +2959,10 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_chi_plot( bool axis_change )
       axis_y_title();
    }
 
-#if QT_VERSION < 0x040000
-   long Iq = plot_data->insertCurve( "chi" );
-   plotted_curves[ "chi" ] = Iq;
-   plot_data->setCurveStyle( Iq, QwtCurve::Lines );
-#else
    QwtPlotCurve *curve = new QwtPlotCurve( "chi" );
    plotted_curves[ "chi" ] = curve;
    curve->setStyle( QwtPlotCurve::Lines );
-#endif
 
-#if QT_VERSION < 0x040000
-   plot_data->setCurveData( Iq, 
-                            (double *)&( chi_x[ 0 ] ),
-                            (double *)&( chi_y[ 0 ] ),
-                            chi_x.size()
-                            );
-   plot_data->setCurvePen( Iq, QPen( plot_colors[ 0 ], use_line_width, SolidLine));
-#else
    curve->setSamples(
                   (double *)&( chi_x[ 0 ] ),
                   (double *)&( chi_y[ 0 ] ),
@@ -2509,16 +2971,12 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_chi_plot( bool axis_change )
 
    curve->setPen( QPen( plot_colors[ 0 ], use_line_width, Qt::SolidLine ) );
    curve->attach( plot_data );
-#endif
 
    plot_data->setAxisScale( QwtPlot::xBottom, 1, chi_x.size() );
    plot_data->setAxisScale( QwtPlot::yLeft  , vmin( chi_y ) * 0.9e0 , vmax( chi_y ) * 1.1e0 );
 
    plot_data_zoomer = new ScrollZoomer(plot_data->canvas());
    plot_data_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-   plot_data_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
    // connect( plot_data_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_data_zoomed( const QRectF & ) ) );
 
    plot_data->replot();
@@ -2664,23 +3122,6 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_recon()
       }
    }
 
-#if QT_VERSION < 0x040000
-   QTreeWidgetItem * lvi = new QTreeWidgetItem( lv_data, lvi_last_depth( 0 ), name );
-   svd_data_map[ name ] = last_svd_data;
-
-   QTreeWidgetItem * lvn = new QTreeWidgetItem( lvi, lvi, "SVD of: " + last_svd_name );
-   QTreeWidgetItem * evs = new QTreeWidgetItem( lvi, lvn, "SVs used" );
-   QTreeWidgetItem * lvinext = evs;
-   for ( int i = 0; i < (int) lb_ev->count(); ++i )
-   {
-      if ( lb_ev->item( i )->isSelected() )
-      {
-         lvinext = new QTreeWidgetItem( evs, lvinext, lb_ev->item( i )->text() );
-      }
-   }
-
-   QTreeWidgetItem * iqs = new QTreeWidgetItem( lvi, US_Static::lv_lastItem( lv_data ), mode_i_of_t ? "I(t)" : "I(q)" );
-#else
    QTreeWidgetItem * lvi = new QTreeWidgetItem( lv_data, lvi_last_depth( 0 ) );
    lvi->setText( 0, name );
    svd_data_map[ name ] = last_svd_data;
@@ -2701,7 +3142,6 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_recon()
 
    QTreeWidgetItem * iqs = new QTreeWidgetItem( lvi, US_Static::lv_lastItem( lv_data ) );
    iqs->setText( 0, mode_i_of_t ? "I(t)" : "I(q)" );
-#endif
 
    // add I(q)
    // contained in columns of F, reference file names from last_svd_data
@@ -2819,6 +3259,11 @@ double US_Hydrodyn_Saxs_Hplc_Svd::vmin( vector < double > &x )
 
 double US_Hydrodyn_Saxs_Hplc_Svd::vmax( vector < double > &x )
 {
+   if ( !x.size() ) {
+      editor_msg( "red", us_tr( "Internal error: vmax called with empty vector. Please inform the developers." ) );
+      return -1e99;
+   }
+
    double max = x[ 0 ];
    for ( int i = 1; i < (int) x.size(); ++i )
    {
@@ -3816,8 +4261,2418 @@ void US_Hydrodyn_Saxs_Hplc_Svd::usp_config_plot_data( const QPoint & ) {
    delete uspc;
 }
 
+void US_Hydrodyn_Saxs_Hplc_Svd::usp_config_plot_svd( const QPoint & ) {
+   US_PlotChoices *uspc = new US_PlotChoices( usp_plot_svd );
+   uspc->exec();
+   delete uspc;
+}
+
 void US_Hydrodyn_Saxs_Hplc_Svd::usp_config_plot_errors( const QPoint & ) {
    US_PlotChoices *uspc = new US_PlotChoices( usp_plot_errors );
    uspc->exec();
    delete uspc;
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::usp_config_plot_lefa( const QPoint & ) {
+   US_PlotChoices *uspc = new US_PlotChoices( usp_plot_lefa );
+   uspc->exec();
+   delete uspc;
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::usp_config_plot_refa( const QPoint & ) {
+   US_PlotChoices *uspc = new US_PlotChoices( usp_plot_refa );
+   uspc->exec();
+   delete uspc;
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::usp_config_plot_ac( const QPoint & ) {
+   US_PlotChoices *uspc = new US_PlotChoices( usp_plot_ac );
+   uspc->exec();
+   delete uspc;
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::usp_config_plot_efa_decomp( const QPoint & ) {
+   US_PlotChoices *uspc = new US_PlotChoices( usp_plot_efa_decomp );
+   uspc->exec();
+   delete uspc;
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::set_norm_pw() {
+   if ( cb_norm_avg->isChecked() ) {
+      cb_norm_avg->setChecked( false );
+   }
+   clear_svd();
+   clear_efa();
+   clear_efa_decomp();
+   mode_select( MODE_IQIT );
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::set_norm_avg() {
+   if ( cb_norm_pw->isChecked() ) {
+      cb_norm_pw->setChecked( false );
+   }
+   clear_svd();
+   clear_efa();
+   clear_efa_decomp();
+   mode_select( MODE_IQIT );
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::clear_svd() {
+   plot_svd->detachItems( QwtPlotItem::Rtti_PlotCurve );
+   plot_svd->detachItems( QwtPlotItem::Rtti_PlotMarker );;
+   plot_svd->replot();
+
+   plot_ac->detachItems( QwtPlotItem::Rtti_PlotCurve );
+   plot_ac->detachItems( QwtPlotItem::Rtti_PlotMarker );;
+   plot_ac->replot();
+
+   svd_F.clear();
+   svd_F_errors.clear();
+   svd_U.clear();
+   svd_V.clear();
+   svd_D.clear();
+   svd_index.clear();
+
+   svd_x.clear();
+   svd_y.clear();
+
+   svd_autocor_U.clear();
+   svd_autocor_V.clear();
+
+   lbl_ev->setText( "" );
+   lb_ev->clear();
+   
+   clear_efa();
+   clear_efa_decomp();
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::clear_efa() {
+   plot_lefa->detachItems( QwtPlotItem::Rtti_PlotCurve );
+   plot_lefa->detachItems( QwtPlotItem::Rtti_PlotMarker );;
+   plot_lefa->replot();
+
+   plot_refa->detachItems( QwtPlotItem::Rtti_PlotCurve );
+   plot_refa->detachItems( QwtPlotItem::Rtti_PlotMarker );;
+   plot_refa->replot();
+
+   efa_lsv.clear();
+   efa_rsv.clear();
+
+   plotted_efa_x.clear();
+   plotted_efa_lsv.clear();
+   plotted_efa_rsv.clear();
+
+   clear_efa_decomp();
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::clear_efa_decomp() {
+   plot_efa_decomp->detachItems( QwtPlotItem::Rtti_PlotCurve );
+   plot_efa_decomp->detachItems( QwtPlotItem::Rtti_PlotMarker );;
+   plot_efa_decomp->replot();
+
+   efa_decomp_x.clear();
+   efa_decomp_Ct.clear();
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::efa() {
+   disable_all();
+
+   clear_efa_decomp();
+
+   QStringList files = selected_files();
+
+   last_efa_data = files;
+   if ( !subset_data.count( files.join( "\n" ) ) )
+   {
+      files = add_subset_data( files );
+   }
+   set < QString > sel_sources = get_selected_sources();
+   last_efa_name = *(sel_sources.begin());
+
+   int m = (int) f_qs[ files[ 0 ] ].size();
+   int n = (int) files.size();
+
+   vector < vector < double > > A( n );
+
+   map < QString, vector < double > >  * f_Iuse = &f_Is;
+   check_norm( files );
+   QString norm_name = "not normed";
+   if ( norm_ok ) {
+      if ( cb_norm_pw->isChecked() ) {
+         f_Iuse = &f_Is_norm_pw;
+         norm_name = "normed by p.w. errors";
+      }
+      if ( cb_norm_avg->isChecked() ) {
+         f_Iuse = &f_Is_norm_avg;
+         norm_name = "normed by avg. errors";
+      }
+   }
+   last_efa_name += " " + norm_name;
+   editor_msg( "blue", us_tr( "EFA: computing EFA on " ) + last_efa_name );
+
+   for ( int i = 0; i < n; ++i ) {
+      A[ i ] = (*f_Iuse)[ files[ i ] ];
+      if ( (int) A[ i ].size() != m ) {
+         editor_msg( "red", QString( us_tr( "Inconsistent data length (e.g. 1st file has %1 data points but file %2 has %3 data points" )
+                                     .arg( m )
+                                     .arg( i )
+                                     .arg( (int) A[ i ].size() )
+                                     )
+                     );
+         update_enables();
+         return;
+      }
+   }
+
+   US_Efa us_efa;
+
+   unsigned int threads = USglobal->config_list.numThreads;
+   progress->setValue( 0 );
+   progress->setMaximum( 2 );
+
+   if ( threads > 1 ) {
+      if ( !us_efa.Efa_t( threads, A, efa_lsv ) ) {
+         editor_msg( "red", us_tr( us_efa.errors ) );
+         update_enables();
+         return;
+      }
+      progress->setValue( 1 );
+      qApp->processEvents();
+      if ( !us_efa.Efa_t( threads, A, efa_rsv, true ) ) {
+         editor_msg( "red", us_tr( us_efa.errors ) );
+         update_enables();
+         return;
+      }
+   } else {
+      if ( !us_efa.Efa( A, efa_lsv ) ) {
+         editor_msg( "red", us_tr( us_efa.errors ) );
+         update_enables();
+         return;
+      }
+      progress->setValue( 1 );
+      qApp->processEvents();
+      if ( !us_efa.Efa( A, efa_rsv, true ) ) {
+         editor_msg( "red", us_tr( us_efa.errors ) );
+         update_enables();
+         return;
+      }
+   }      
+
+   if ( efa_lsv.size() != efa_rsv.size() ) {
+      editor_msg( "red", us_tr( "Unexpected error: Forward EFA and Backward EFA size mismatch" ) );
+   }
+
+   make_plotted_efas();
+
+   disconnect( qwtc_efas, SIGNAL( valueChanged( double ) ), 0, 0 );
+   int max_range = (int) ( efa_rsv.size() > UHSHS_MAX_SV_FOR_EFA ? UHSHS_MAX_SV_FOR_EFA : efa_rsv.size() );
+   qwtc_efas->setRange( 1, max_range );
+   if ( qwtc_efas->value() > max_range ) {
+      qwtc_efas->setValue( max_range );
+   }
+   connect( qwtc_efas, SIGNAL( valueChanged( double ) ), SLOT( update_efas( double ) ) );
+   update_efas( qwtc_efas->value() );
+   init_efa_values();
+   mode_select( MODE_EFA );
+   editor_msg( "blue", us_tr( "EFA: Done computing EFA on " ) + last_efa_name );
+   update_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::make_plotted_efas() {
+   int n = (int) efa_lsv.size();
+
+   plotted_efa_x.clear();
+   plotted_efa_lsv.clear();
+   plotted_efa_rsv.clear();
+
+   plotted_efa_lsv.resize( n );
+   plotted_efa_rsv.resize( n );
+
+   for ( int n_use = 0; n_use < n; ++n_use ) { 
+      plotted_efa_x.push_back( n_use );
+   }
+
+   for ( int j = 0; j < n; ++j ) {
+      plotted_efa_lsv[ j ].resize( n );
+      plotted_efa_rsv[ j ].resize( n );
+   }
+
+   for ( int n_use = 0; n_use < n; ++n_use ) {
+      vector < double > lrpt = efa_lsv[ n_use ];
+      vector < double > rrpt = efa_rsv[ n_use ];
+      lrpt.resize( n );
+      rrpt.resize( n );
+         
+      for ( int j = 0; j < n; ++j ) {
+         plotted_efa_lsv[ j ][ n_use ] = lrpt[ j ];
+         plotted_efa_rsv[ j ][ n - n_use - 1 ] = rrpt[ j ];
+      }
+   }
+
+   int min_range = (int) plotted_efa_x.front();
+   int max_range = (int) plotted_efa_x.back();
+   for ( int i = 0; i < UHSHS_MAX_SV_FOR_EFA; ++i ) {
+      efa_range_start [ i ]->setRange( min_range, max_range );
+      efa_range_end   [ i ]->setRange( min_range, max_range );
+   }
+}   
+
+void US_Hydrodyn_Saxs_Hplc_Svd::update_efas( double val ) {
+   // qDebug() << "US_Hydrodyn_Saxs_Hplc_Svd::update_efas( " << val << " )";
+   // efa_info( "update_efas" );
+   // check range
+   int ival = (int) val;
+   efa_plot_count = ival;
+
+   int n = (int) efa_lsv.size();
+   if ( !n ) {
+      update_efas_ranges();
+      return;
+   }
+
+   if ( n != (int) efa_rsv.size() ) {
+      editor_msg( "red", us_tr( "Unexpected error: Forward EFA and Backward EFA size mismatch in plot" ) );
+      return;
+   }
+
+   if ( ival > n ) {
+      efa_plot_count = n;
+      editor_msg( "red", us_tr( "Unexpected error: requested greater than available SVs for EFA plot" ) );
+      return;
+   }
+      
+   // update efa plots
+   efa_plot();
+   update_efas_ranges();
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::efa_plot() {
+   int n = (int) efa_lsv.size();
+   if ( !n ) {
+      update_efas_ranges();
+      return;
+   }
+
+   // clear plots, data
+   plot_lefa->detachItems( QwtPlotItem::Rtti_PlotCurve );
+   plot_lefa->detachItems( QwtPlotItem::Rtti_PlotMarker );;
+   plot_refa->detachItems( QwtPlotItem::Rtti_PlotCurve );
+   plot_refa->detachItems( QwtPlotItem::Rtti_PlotMarker );;
+
+   qwtpm_rsv_range_marker.clear();
+   qwtpm_lsv_range_marker.clear();
+
+   if ( plot_lefa_zoomer ) {
+      plot_lefa_zoomer->zoom ( 0 );
+      delete plot_lefa_zoomer;
+      plot_lefa_zoomer = (ScrollZoomer *) 0;
+   }
+
+   if ( plot_refa_zoomer ) {
+      plot_refa_zoomer->zoom ( 0 );
+      delete plot_refa_zoomer;
+      plot_refa_zoomer = (ScrollZoomer *) 0;
+   }
+
+   // draw curves 
+
+   // #define DEBUG_EFA_PLOT
+#if defined( DEBUG_EFA_PLOT )
+   bool leftEfa = false;
+
+   QTextStream ts( stdout );
+   ts << "Forward EFA:\n";
+
+   for ( int n_use = 0; n_use < n; ++n_use ) { 
+      vector < double > rpt = efa_lsv[ n_use ];
+      rpt.resize( efa_plot_count );
+         
+      ts << ( leftEfa ? n - n_use - 1 : n_use ) << " ";
+      for ( int j = 0; j < efa_plot_count; ++j ) {
+         ts << rpt[ j ] << " ";
+      }
+      ts << "\n";
+   }
+
+   leftEfa = true;
+   ts << "Backward EFA:\n";
+   
+   for ( int n_use = 0; n_use < n; ++n_use ) { 
+      vector < double > rpt = efa_rsv[ n_use ];
+      rpt.resize( efa_plot_count );
+         
+      ts << ( leftEfa ? n - n_use - 1 : n_use ) << " ";
+      for ( int j = 0; j < efa_plot_count; ++j ) {
+         ts << rpt[ j ] << " ";
+      }
+      ts << "\n";
+   }
+#endif
+
+   // build up plot data
+
+   // plotted_efa_x.clear();
+   // plotted_efa_lsv.clear();
+   // plotted_efa_rsv.clear();
+
+   // plotted_efa_lsv.resize( efa_plot_count );
+   // plotted_efa_rsv.resize( efa_plot_count );
+
+   // // for ( int n_use = 1; n_use <= n; ++n_use ) { 
+   // for ( int n_use = 0; n_use < n; ++n_use ) { 
+   //    plotted_efa_x.push_back( n_use );
+   // }
+
+   // for ( int j = 0; j < efa_plot_count; ++j ) {
+   //    plotted_efa_lsv[ j ].resize( n );
+   //    plotted_efa_rsv[ j ].resize( n );
+   // }
+
+   double lminy = 1e99;
+   double lmaxy = 0e0;
+   double rminy = 1e99;
+   double rmaxy = 0e0;
+
+   for ( int n_use = 0; n_use < n; ++n_use ) {
+      vector < double > lrpt = efa_lsv[ n_use ];
+      vector < double > rrpt = efa_rsv[ n_use ];
+      lrpt.resize( n );
+      rrpt.resize( n );
+         
+      for ( int j = 0; j < efa_plot_count; ++j ) {
+         // plotted_efa_lsv[ j ][ n_use ] = lrpt[ j ];
+         // plotted_efa_rsv[ j ][ n - n_use - 1 ] = rrpt[ j ];
+         if ( lrpt[ j ] ) {
+            if ( lminy > lrpt[ j ] ) {
+               lminy = lrpt[ j ];
+            }
+            if ( lmaxy < lrpt[ j ] ) {
+               lmaxy = lrpt[ j ];
+            }
+         }
+         if ( rrpt[ j ] ) {
+            if ( rminy > rrpt[ j ] ) {
+               rminy = rrpt[ j ];
+            }
+            if ( rmaxy < rrpt[ j ] ) {
+               rmaxy = rrpt[ j ];
+            }
+         }
+      }
+   }      
+
+#if defined( DEBUG_EFA_PLOT )
+   for ( int j = 0; j < efa_plot_count; ++j ) {
+      US_Vector::printvector( QString( "lefa %1" ).arg( j + 1 ), plotted_efa_lsv[ j ] );
+      US_Vector::printvector( QString( "refa %1" ).arg( j + 1 ), plotted_efa_rsv[ j ] );
+   }
+#endif
+
+   for ( int i = 0; i < efa_plot_count; ++i) { 
+      {
+         QwtPlotCurve *curve = new QwtPlotCurve( QString( "Forward EFA:%1" ).arg( i + 1 ) );
+         curve->setStyle( QwtPlotCurve::Lines );
+   
+         curve->setSamples(
+                           (double *)&( plotted_efa_x[ 0 ] ),
+                           (double *)&( plotted_efa_lsv[ i ][ 0 ] ),
+                           n
+                           );
+
+         curve->setPen( QPen( plot_colors[ i % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
+         curve->attach( plot_lefa );
+      }
+      {
+         QwtPlotCurve *curve = new QwtPlotCurve( QString( "Backward EFA:%1" ).arg( i + 1 ) );
+         curve->setStyle( QwtPlotCurve::Lines );
+
+         curve->setSamples(
+                           (double *)&( plotted_efa_x[ 0 ] ),
+                           (double *)&( plotted_efa_rsv[ i ][ 0 ] ),
+                           n
+                           );
+
+         curve->setPen( QPen( plot_colors[ i % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
+         curve->attach( plot_refa );
+      }
+
+      // and the range points
+
+      {
+         if ( (int) efa_range_start.size() <= i ) {
+            editor_msg( "red", us_tr( "Internal error: start range point value not found. please inform the developers" ) );
+         } else {
+            int pos = (int) efa_range_start[ i ]->value();
+
+            if ( (int) plotted_efa_lsv[ i ].size() <= pos ) {
+               editor_msg( "red", us_tr( "Internal error: start range point value exceeds known values. please inform the developers" ) );
+            } else {
+               QwtPlotMarker* m = new QwtPlotMarker();
+               m->setSymbol( new QwtSymbol(
+                                           QwtSymbol::Cross,
+                                           QBrush( plot_colors[ i % plot_colors.size() ] ),
+                                           QPen( plot_colors[ i % plot_colors.size() ], use_line_width + 3 ),
+                                           QSize( 4 * ( use_line_width + 2 ), 4 * ( use_line_width + 2 ) )
+                                           ) );
+
+               m->setValue( QPointF( plotted_efa_x[ pos ], plotted_efa_lsv[ i ][ pos ] ) );
+               m->attach( plot_lefa );
+
+               qwtpm_lsv_range_marker.push_back( m );
+            }
+         }
+      }         
+      {
+         if ( (int) efa_range_end.size() <= i ) {
+            editor_msg( "red", us_tr( "Internal error: end range point value not found. please inform the developers" ) );
+         } else {
+            int pos = (int) efa_range_end[ i ]->value();
+
+            if ( (int) plotted_efa_rsv[ i ].size() <= pos ) {
+               editor_msg( "red", us_tr( "Internal error: end range point value exceeds known values. please inform the developers" ) );
+            } else {
+               QwtPlotMarker* m = new QwtPlotMarker();
+               m->setSymbol( new QwtSymbol( QwtSymbol::Cross,
+                                            QBrush( plot_colors[ i % plot_colors.size() ] ),
+                                            QPen( plot_colors[ i % plot_colors.size() ], use_line_width + 3 ),
+                                            QSize( 4 * ( use_line_width + 2 ), 4 * ( use_line_width + 2 ) )
+                                            ) );
+               m->setValue( QPointF( plotted_efa_x[ pos ], plotted_efa_rsv[ i ][ pos ] ) );
+               m->attach( plot_refa );
+
+               qwtpm_rsv_range_marker.push_back( m );
+            }
+         }
+      }         
+   }
+
+#if defined( DEBUG_EFA_PLOT_LAYOUT )
+   qDebug() << QString( "lmaxy %1 rmaxy %2" ).arg( lmaxy ).arg( rmaxy );
+#endif
+
+   if ( !plot_lefa_zoomer ) {
+      plot_lefa->setAxisScale( QwtPlot::xBottom, -0.5, n + 0.5 );
+      plot_lefa->setAxisScale( QwtPlot::yLeft  , lminy * 0.7 , lmaxy * 1.3e0 );
+      plot_lefa_zoomer = new ScrollZoomer(plot_lefa->canvas());
+      plot_lefa_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+      // connect( plot_lefa_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_lefa_zoomed( const QRectF & ) ) );
+   }
+   if ( !plot_refa_zoomer ) {
+      plot_refa->setAxisScale( QwtPlot::xBottom, -0.5, n + 0.5 );
+      plot_refa->setAxisScale( QwtPlot::yLeft  , rminy * 0.7, rmaxy * 1.3e0 );
+      plot_refa_zoomer = new ScrollZoomer(plot_refa->canvas());
+      plot_refa_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+      // connect( plot_refa_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_refa_zoomed( const QRectF & ) ) );
+   }
+
+   plot_lefa->replot();
+   plot_refa->replot();
+
+   //   mode_select( MODE_EFA );
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::setup_norm() {
+   unsigned int q_points = (unsigned int) f_qs[ hplc_selected_files[ 0 ] ].size();
+
+   vector < double > avg_errors( q_points );
+
+   for ( int i = 0; i < (int) hplc_selected_files.size(); ++i ) {
+      QString this_name = hplc_selected_files[ i ];
+      
+      unsigned int this_q_points = (unsigned int) f_qs[ this_name ].size();
+
+      if ( this_q_points != q_points ) {
+         QMessageBox::warning( this, 
+                               windowTitle(),
+                               us_tr( "Internal error: HPLC SVD called but curves have varying lengths" ) );
+         close();
+         return;
+      }
+
+      if ( q_points != (unsigned int) f_errors[ this_name ].size() ) {
+         norm_ok = false;
+         return;
+      }
+
+      for ( unsigned j = 0; j < q_points; ++j ) {
+         if ( !f_errors[ this_name ][ j ] ) {
+            norm_ok = false;
+            return;
+         }
+         double recip_error = 1e0 / f_errors[ this_name ][ j ];
+         f_Is_norm_pw[ this_name ].push_back( f_Is[ this_name ][ j ] * recip_error );
+         avg_errors[ j ] += recip_error;
+      }
+   }
+
+   double recip_fc = 1e0 / ( double ) hplc_selected_files.size();
+
+   for ( unsigned j = 0; j < q_points; ++j ) {
+      avg_errors[ j ] *= recip_fc;
+   }
+      
+   for ( int i = 0; i < (int) hplc_selected_files.size(); ++i ) {
+      QString this_name = hplc_selected_files[ i ];
+      
+      for ( unsigned j = 0; j < q_points; ++j ) {
+         f_Is_norm_avg[ this_name ].push_back( f_Is[ this_name ][ j ] * avg_errors[ j ] );
+      }
+   }
+
+   // #define DEBUG_NORM
+#if defined( DEBUG_NORM )
+
+   US_Vector::printvector3(
+   "file 0 I, errors, I_norm_pw"
+      ,f_Is[ hplc_selected_files[ 0 ] ]
+      ,f_errors[ hplc_selected_files[ 0 ] ]
+      ,f_Is_norm_pw[ hplc_selected_files[ 0 ] ]
+      );
+
+   US_Vector::printvector3(
+   "file 0 I, avg_errors, I_norm_avg"
+      ,f_Is[ hplc_selected_files[ 0 ] ]
+      ,avg_errors
+      ,f_Is_norm_avg[ hplc_selected_files[ 0 ] ]
+      );
+
+#endif
+
+   org_avg_errors = avg_errors;
+   norm_ok = true;
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::check_norm( QStringList & files ) {
+   if ( !files.size() || !norm_ok ) {
+      return;
+   }
+
+   if ( f_Is_norm_pw.count( files[ 0 ] ) &&
+        f_Is_norm_avg.count( files[ 0 ] )
+        ) {
+      return;
+   }
+
+   unsigned int q_points = ( unsigned int ) org_avg_errors.size();
+
+   for ( int i = 0; i < (int) files.size(); ++i ) {
+      QString this_name = files[ i ];
+      
+      if ( f_Is_norm_pw.count( this_name ) ||
+           f_Is_norm_avg.count( this_name )
+           ) {
+         editor_msg( "red", us_tr( "Internal error: unexpected condition 1 - inconsistency, turning off normalization, please inform the developers" ) );
+         norm_ok = false;
+         return;
+      }
+
+      unsigned int this_q_points = (unsigned int) f_qs[ this_name ].size();
+
+      if ( this_q_points != q_points ) {
+         editor_msg( "red", us_tr( "Internal error: unexpected condition 2 - length mismatch, turning off normalization, please inform the developers" ) );
+         norm_ok = false;
+         return;
+      }
+
+      for ( unsigned j = 0; j < q_points; ++j ) {
+         if ( !f_errors[ this_name ][ j ] ) {
+            editor_msg( "red", us_tr( "Internal error: unexpected condition 3 - zero error, turning off normalization, please inform the developers" ) );
+
+            norm_ok = false;
+            return;
+         }
+
+         f_Is_norm_pw [ this_name ].push_back( f_Is[ this_name ][ j ] * org_avg_errors[ j ] );
+         f_Is_norm_avg[ this_name ].push_back( f_Is[ this_name ][ j ] / f_errors[ this_name ][ j ] );
+      }
+   }
+}
+
+double US_Hydrodyn_Saxs_Hplc_Svd::autocor1( vector < double > &x ) {
+   int len = (int) x.size();
+
+#if defined( DEBUG_AUTOCOR_DETAIL )
+   US_Vector::printvector( "US_Hydrodyn_Saxs_Hplc_Svd::autocor1 x", x );
+#endif
+
+
+   // in case we ever need full:
+   // for ( int k = -len + 1; k < len; ++k ) {
+
+   int k = 1;
+   double sum = 0e0;
+   for ( int n = 0; n < len; ++n ) {
+      if ( k + n >= 0 && k + n < len ) {
+         sum += x[ k + n ] * x[ n ];
+      }
+   }
+   return fabs( sum );
+}
+
+vector < double > US_Hydrodyn_Saxs_Hplc_Svd::autocor( vector < vector < double > > &A ) {
+   vector < double > result;
+   if ( !A.size() ) {
+      return result;
+   }
+
+   int rows = (int) A.size();
+   int cols = (int) A[ 0 ].size();
+   //   int stopat = rows < cols ? rows : cols;
+
+#if defined( DEBUG_AUTOCOR_DETAIL )
+   {
+      QTextStream ts( stdout );
+      ts << "US_Hydrodyn_Saxs_Hplc_Svd::autocor A" << endl;
+      for ( int i = 0; i < rows; ++i ) {
+         ts << i << ":";
+         for ( int j = 0; j < cols; ++j ) {
+            ts << "\t" << A[ i ][ j ];
+         }
+         ts << "\n";
+      }
+      ts << "\n";
+   }
+#endif
+
+   for ( int i = 0; i < cols; ++i ) {
+      vector < double > x;
+      for ( int j = 0; j < rows; ++j ) {
+         x.push_back( A[ j ][ i ] );
+      }
+      result.push_back( autocor1( x ) );
+   }
+
+   return result;
+}
+
+vector < vector < int > > US_Hydrodyn_Saxs_Hplc_Svd::transpose( vector < vector < int > > &A ) {
+
+   //   qDebug() << "US_Hydrodyn_Saxs_Hplc_Svd::transpose( vvi ) start";
+
+   vector < vector < int > > result;
+   if ( !A.size() ) {
+      return result;
+   }
+
+   int rows = (int) A.size();
+   int cols = (int) A[0].size();
+
+   //   qDebug() << "US_Hydrodyn_Saxs_Hplc_Svd::transpose( vvi ) rows " << rows << " cols " << cols;
+   
+   result.resize( cols );
+   for ( int i = 0; i < cols; ++i ) {
+      result[ i ].resize( rows );
+      for ( int j = 0; j < rows; ++j ) {
+         result[ i ][ j ] = A[ j ][ i ];
+      }
+   }
+   //   qDebug() << "US_Hydrodyn_Saxs_Hplc_Svd::transpose( vvi ) return";
+   return result;
+}
+
+vector < vector < double > > US_Hydrodyn_Saxs_Hplc_Svd::transpose( vector < vector < double > > &A ) {
+
+   //   qDebug() << "US_Hydrodyn_Saxs_Hplc_Svd::transpose( vvd ) start";
+
+   vector < vector < double > > result;
+   if ( !A.size() ) {
+      return result;
+   }
+
+   int rows = (int) A.size();
+   int cols = (int) A[0].size();
+
+   //   qDebug() << "US_Hydrodyn_Saxs_Hplc_Svd::transpose( vvd ) rows " << rows << " cols " << cols;
+   
+   result.resize( cols );
+   for ( int i = 0; i < cols; ++i ) {
+      result[ i ].resize( rows );
+      for ( int j = 0; j < rows; ++j ) {
+         result[ i ][ j ] = A[ j ][ i ];
+      }
+   }
+
+   // #define DEBUG_TRANSPOSE
+
+#if defined( DEBUG_TRANSPOSE )
+   
+   QTextStream ts( stdout );
+
+   {
+      ts << "US_Hydrodyn_Saxs_Svd::transpose A:\n";
+
+      for ( int i = 0; i < rows; ++i ) {
+         ts << i << ":";
+         for ( int j = 0; j < cols; ++j ) {
+            ts << "\t" << A[ i ][ j ];
+         }
+         ts << "\n";
+      }
+      ts << "\n";
+   }
+   {
+      ts << "US_Hydrodyn_Saxs_Svd::transpose result:\n";
+
+      for ( int i = 0; i < cols; ++i ) {
+         ts << i << ":";
+         for ( int j = 0; j < rows; ++j ) {
+            ts << "\t" << result[ i ][ j ];
+         }
+         ts << "\n";
+      }
+      ts << "\n";
+   }
+#endif
+
+   //   qDebug() << "US_Hydrodyn_Saxs_Hplc_Svd::transpose( vvd ) return";
+
+   return result;
+}
+
+double US_Hydrodyn_Saxs_Hplc_Svd::vvd_min( vector < vector < double > > &A ) {
+   double result = -1e99;
+   int rows = (int) A.size();
+   if ( !rows ) {
+      editor_msg( "red", us_tr( "Internal error: vvd_min called with an empty vvd, please inform the developers" ) );
+      return result;
+   }
+   int cols = (int) A[ 0 ].size();
+   if ( !cols ) {
+      editor_msg( "red", us_tr( "Internal error: vvd_min called with a columnless vvd, please inform the developers" ) );
+      return result;
+   }
+   
+   result = A[0][0];
+   for ( int i = 0; i < rows; ++i ) {
+      for ( int j = 0; j < cols; ++j ) {
+         if ( result > A[i][j] ) {
+            result = A[i][j];
+         }
+      }
+   }
+   return result;
+}
+
+double US_Hydrodyn_Saxs_Hplc_Svd::vvd_max( vector < vector < double > > &A ) {
+   double result = 1e99;
+   int rows = (int) A.size();
+   if ( !rows ) {
+      editor_msg( "red", us_tr( "Internal error: vvd_max called with an empty vvd, please inform the developers" ) );
+      return result;
+   }
+   int cols = (int) A[ 0 ].size();
+   if ( !cols ) {
+      editor_msg( "red", us_tr( "Internal error: vvd_max called with a columnless vvd, please inform the developers" ) );
+      return result;
+   }
+   
+   result = A[0][0];
+   for ( int i = 0; i < rows; ++i ) {
+      for ( int j = 0; j < cols; ++j ) {
+         if ( result < A[i][j] ) {
+            result = A[i][j];
+         }
+      }
+   }
+   return result;
+}
+
+
+void US_Hydrodyn_Saxs_Hplc_Svd::vvd_smult( vector < vector < double > > &A, double x ) {
+   int rows = (int) A.size();
+   if ( !rows ) {
+      editor_msg( "red", us_tr( "Internal error: vdd_smult called with an empty vvd, please inform the developers" ) );
+      return;
+   }
+   int cols = (int) A[ 0 ].size();
+   if ( !cols ) {
+      editor_msg( "red", us_tr( "Internal error: vdd_smult called with a columnless vvd, please inform the developers" ) );
+      return;
+   }
+   
+   for ( int i = 0; i < rows; ++i ) {
+      for ( int j = 0; j < cols; ++j ) {
+         A[ i ][ j ] *= x;
+      }
+   }
+}
+
+vector < vector < double > > US_Hydrodyn_Saxs_Hplc_Svd::vivd_pwmult( vector < vector < int > > &A,
+                                                                     vector < vector < double > > &B ) {
+   vector < vector < double > > result;
+   int arows = (int) A.size();
+   int brows = (int) B.size();
+   if ( !arows || !brows ) {
+      editor_msg( "red", us_tr( "Internal error: vivd_pwmult called with an empty vvd, please inform the developers" ) );
+      return result;
+   }
+   if ( arows != brows ) {
+      SVD::cout_vvi( "pwmult A", A );
+      SVD::cout_vvd( "pwmult B", B );
+      editor_msg( "red", us_tr( "Internal error: vivd_pwmult called with incompatible vi & vd, please inform the developers" ) );
+      return result;
+   }
+   int acols = (int) A[0].size();
+   int bcols = (int) B[0].size();
+   if ( acols != bcols ) {
+      editor_msg( "red", us_tr( "Internal error: vivd_pwmult called with incompatible vi & vd colwise, please inform the developers" ) );
+      return result;
+   }
+   
+   result.resize( arows );
+
+   for ( int i = 0; i < arows; ++i ) {
+      result[ i ].resize( acols );
+
+      for ( int j = 0; j < acols; ++j ) {
+         result[ i ][ j ] = ((double) A[ i ][ j ]) * B[ i ][ j ];
+      }
+   }
+   return result;
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::vvd_cnorm( vector < vector < double > > &A ) {
+   int rows = (int) A.size();
+   if ( !rows ) {
+      editor_msg( "red", us_tr( "Internal error: vvd_cnorm called with an empty vvd, please inform the developers" ) );
+      return;
+   }
+   int cols = (int) A[ 0 ].size();
+   if ( !cols ) {
+      editor_msg( "red", us_tr( "Internal error: vvd_cnorm called with a columnless vvd, please inform the developers" ) );
+      return;
+   }
+   vector < double > csum( rows );
+   
+   for ( int i = 0; i < rows; ++i ) {
+      for ( int j = 0; j < cols; ++j ) {
+         csum[ i ] += A[ i ][ j ];
+      }
+      if ( csum[ i ] ) {
+         csum[ i ] = 1e0 / csum[ 1 ];
+      } else {
+         editor_msg( "red", us_tr( "Internal error: vvd_cnorm called with a zero sum column, please inform the developers" ) );
+         return;
+      }
+   }
+   for ( int i = 0; i < rows; ++i ) {
+      for ( int j = 0; j < cols; ++j ) {
+         A[ i ][ j ] *=  csum[ i ];
+      }
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::vvd_cnorm( vector < vector < double > > &A,
+                                           vector < vector < double > > &B ) {
+   // norms A by the colsum of B
+   int arows = (int) A.size();
+   int brows = (int) B.size();
+   if ( !arows || !brows ) {
+      editor_msg( "red", us_tr( "Internal error: vvd_cnorm called with an empty vvd, please inform the developers" ) );
+      return;
+   }
+   if ( arows != brows ) {
+      editor_msg( "red", us_tr( "Internal error: vvd_cnorm called with incompatible vvds, please inform the developers" ) );
+      return;
+   }
+
+   int acols = (int) A[ 0 ].size();
+   int bcols = (int) B[ 0 ].size();
+   if ( !acols || !bcols ) {
+      editor_msg( "red", us_tr( "Internal error: vvd_cnorm called with a columnless vvd, please inform the developers" ) );
+      return;
+   }
+   if ( acols != bcols ) {
+      editor_msg( "red", us_tr( "Internal error: vvd_cnorm called with incompatible vvds, please inform the developers" ) );
+      return;
+   }
+
+   vector < double > csum( acols );
+   
+   for ( int j = 0; j < acols; ++j ) {
+      csum[ j ] = 0e0;
+      for ( int i = 0; i < arows; ++i ) {
+         csum[ j ] += B[ i ][ j ];
+      }
+      if ( csum[ j ] ) {
+         csum[ j ] = 1e0 / csum[ j ];
+      } else {
+         SVD::cout_vvd( "cnorm A", A );
+         SVD::cout_vvd( "cnorm B", B );
+         SVD::cout_vd( "csum", csum );
+         editor_msg( "red", us_tr( "Internal error: vvd_cnorm called with a zero sum column, please inform the developers" ) );
+         return;
+      }
+   }
+   for ( int i = 0; i < arows; ++i ) {
+      for ( int j = 0; j < acols; ++j ) {
+         A[ i ][ j ] *=  csum[ j ];
+      }
+   }
+}
+
+vector < vector < double > > US_Hydrodyn_Saxs_Hplc_Svd::dot( vector < vector < double > > &A,
+                                                             vector < vector < double > > &B ) {
+   vector < vector < double > > result;
+   int arows = (int) A.size();
+   int brows = (int) B.size();
+   if ( !arows || !brows ) {
+      editor_msg( "red", us_tr( "Internal error: dot called with an empty vvd's, please inform the developers" ) );
+      return result;
+   }
+
+   int acols = (int) A[0].size();
+   int bcols = (int) B[0].size();
+
+   if ( acols != brows ) {
+      editor_msg( "red", us_tr( "Internal error: dot called with incompatible vvd's, please inform the developers" ) );
+      return result;
+   }
+
+   result.resize( arows );
+
+   for ( int i = 0; i < arows; ++i ) {
+      result[ i ].resize( bcols );
+      for ( int j = 0; j < bcols; ++j ) {
+         result[ i ][ j ] = 0e0;
+         for ( int k = 0; k < acols; ++k ) {
+            result[ i ][ j ] += A[ i ][ k ] * B[ k ][ j ];
+         }
+      }
+   }
+   return result;
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::matrix_info( QString qs, vector < vector < double > > &A ) {
+   if ( !A.size() ) {
+      qDebug() << "US_Hydrodyn_Saxs_Hplc_Svd::matrix_info() " << qs << " empty!";
+      return;
+   }
+   qDebug() << "US_Hydrodyn_Saxs_Hplc_Svd::matrix_info() " << qs << " rows " << A.size() << " cols " << A[0].size();
+}   
+
+void US_Hydrodyn_Saxs_Hplc_Svd::set_title( QwtPlot *plot, QString title ) {
+   QwtText qwtt_title( title );
+   qwtt_title.setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   plot->setTitle( qwtt_title );
+}
+   
+void US_Hydrodyn_Saxs_Hplc_Svd::save_plots() {
+   QString use_dir = QDir::currentPath();
+   ush_win->select_from_directory_history( use_dir, this );
+
+   QString fn = 
+      QFileDialog::getSaveFileName( this , us_tr( "Select a prefix name to save the plot data" ) , use_dir , "*.csv" );
+
+   if ( fn.isEmpty() )
+   {
+      return;
+   }
+
+   fn = QFileInfo( fn ).path() + QDir::separator() + QFileInfo( fn ).completeBaseName();
+
+   QString errors;
+   QString messages;
+
+   map < QString, QwtPlot *>  use_plot_info = plot_info;
+
+   if ( !US_Plot_Util::printtofile( fn, plot_info, errors, messages ) )
+   {
+      editor_msg( "red", errors );
+   } else {
+      editor_msg( "blue", messages );
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::mode_select() {
+   // first hide all
+   hide_widgets( iqit_widgets       , true );
+   hide_widgets( svd_widgets        , true );
+   hide_widgets( efa_widgets        , true );
+   hide_widgets( efa_decomp_widgets , true );
+   update_efas_ranges();   
+
+   // then shoe (this allows same widget in mulitple lists)
+   switch ( current_mode )
+   {
+   case MODE_IQIT    : 
+      {
+         rb_mode_iqit->setChecked( true );
+         hide_widgets( iqit_widgets      , false ); 
+         hide_widgets( errors_widgets    , true ); 
+      }
+      break;
+
+   case MODE_SVD    : 
+      {
+         rb_mode_svd->setChecked( true );
+         hide_widgets( svd_widgets       , false ); 
+      }
+      break;
+
+   case MODE_EFA   : 
+      {
+         rb_mode_efa->setChecked( true );
+         hide_widgets( efa_widgets       , false ); 
+      }
+      break;
+
+   case MODE_EFA_DECOMP   : 
+      {
+         rb_mode_efa_decomp->setChecked( true );
+         hide_widgets( efa_decomp_widgets, false ); 
+      }
+      break;
+   }
+   // update_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::mode_select( modes mode ) {
+   current_mode = mode;
+   mode_select();
+   update_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::set_mode_iqit() {
+   mode_select( MODE_IQIT );
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::set_mode_svd() {
+   mode_select( MODE_SVD );
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::set_mode_efa() {
+   mode_select( MODE_EFA );
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::set_mode_efa_decomp() {
+   mode_select( MODE_EFA_DECOMP );
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::update_efa_range_start( double ) {
+   // qDebug() << "US_Hydrodyn_Saxs_Hplc_Svd::update_efa_range_start";
+   // {
+   //    QTextStream ts( stdout );
+   //    for ( int i = 0; i < UHSHS_MAX_SV_FOR_EFA; ++i ) {
+   //       ts << "US_Hydrodyn_Saxs_Hplc_Svd::update_efa_range_start SV " << i << " val " << efa_range_start[ i ]->value() << endl;
+   //    }
+   //    if ( efa_range_processing ) {
+   //       ts << "early return, processing\n";
+   //    }
+   // }     
+
+   if ( efa_range_processing ) {
+      return;
+   }
+
+   clear_efa_decomp();
+
+   if ( (int) qwtc_efas->value() != (int) qwtpm_lsv_range_marker.size() ) {
+      editor_msg( "red", us_tr( "Internal error: inconsistency in start range marker size & efas values. please inform the developers" ) );
+      return;
+   }
+      
+   for ( int i = 0; i < (int) qwtc_efas->value(); ++i ) {
+      if ( (int) efa_range_start.size() <= i ) {
+         editor_msg( "red", us_tr( "Internal error: start range point value not found. please inform the developers" ) );
+         return;
+      } else {
+         int pos = (int) efa_range_start[ i ]->value();
+         if ( (int) plotted_efa_lsv[ i ].size() <= pos ) {
+            editor_msg( "red", us_tr( "Internal error: start range point value exceeds known values. please inform the developers" ) );
+            return;
+         } else {
+            qwtpm_lsv_range_marker[ i ]->setValue( QPointF( plotted_efa_x[ pos ], plotted_efa_lsv[ i ][ pos ] ) );
+         }
+      }
+   }
+   plot_lefa->replot();
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::update_efa_range_end( double ) {
+   // qDebug() << "US_Hydrodyn_Saxs_Hplc_Svd::update_efa_range_end()";
+   if ( efa_range_processing ) {
+      return;
+   }
+
+   if ( (int) qwtc_efas->value() != (int) qwtpm_rsv_range_marker.size() ) {
+      editor_msg( "red", us_tr( "Internal error: inconsistency in end range marker size & efas values. please inform the developers" ) );
+      return;
+   }
+      
+   clear_efa_decomp();
+
+   for ( int i = 0; i < (int) qwtc_efas->value(); ++i ) {
+      if ( (int) efa_range_end.size() <= i ) {
+         editor_msg( "red", us_tr( "Internal error: end range point value not found. please inform the developers" ) );
+         return;
+      } else {
+         int pos = (int) efa_range_end[ i ]->value();
+         if ( (int) plotted_efa_rsv[ i ].size() <= pos ) {
+            editor_msg( "red", us_tr( "Internal error: end range point value exceeds known values. please inform the developers" ) );
+            return;
+         } else {
+            qwtpm_rsv_range_marker[ i ]->setValue( QPointF( plotted_efa_x[ pos ], plotted_efa_rsv[ i ][ pos ] ) );
+         }
+      }
+   }
+   plot_refa->replot();
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::update_efas_ranges() {
+   // qDebug() << "US_Hydrodyn_Saxs_Hplc_Svd::update_efas_ranges()";
+
+   // show/hide appropriately
+
+   if ( current_mode != MODE_EFA || !efa_lsv.size() ) {
+      for ( int i = 0; i < UHSHS_MAX_SV_FOR_EFA; ++i ) {
+         efa_range_labels [ i ]->hide();
+         efa_range_start  [ i ]->hide();
+         efa_range_labels2[ i ]->hide();
+         efa_range_end    [ i ]->hide();
+      }
+      return;
+   }
+
+   for ( int i = 0; i < (int) qwtc_efas->value(); ++i ) {
+      efa_range_labels [ i ]->show();
+      efa_range_start  [ i ]->show();
+      efa_range_labels2[ i ]->show();
+      efa_range_end    [ i ]->show();
+   }
+
+   for ( int i = (int) qwtc_efas->value(); i < UHSHS_MAX_SV_FOR_EFA; ++i ) {
+      efa_range_labels [ i ]->hide();
+      efa_range_labels2[ i ]->hide();
+      efa_range_start  [ i ]->hide();
+      efa_range_end    [ i ]->hide();
+   }
+}      
+
+void US_Hydrodyn_Saxs_Hplc_Svd::efa_info( QString tag ) {
+   QTextStream ts( stdout );
+
+   ts << " efa_info: " << tag << " : efa_lsv.size() : " << efa_lsv.size() << endl;
+
+   for ( int i = 0; i < (int) efa_lsv.size(); ++i ) {
+      ts << " efa_info: " << tag << ": efa_lsv[ " << i << " ].size() : " << efa_lsv[ i ].size() << endl;
+   }
+
+   
+   ts << " efa_info: " << tag << " : efa_rsv.size() : " << efa_rsv.size() << endl;
+
+   for ( int i = 0; i < (int) efa_rsv.size(); ++i ) {
+      ts << " efa_info: " << tag << ": efa_rsv[ " << i << " ].size() : " << efa_rsv[ i ].size() << endl;
+   }
+
+}      
+
+vector < double > US_Hydrodyn_Saxs_Hplc_Svd::gradient( vector < double > & y ) {
+   int len = (int) y.size();
+   int lenm1 = len - 1;
+   
+   // qDebug() << "gradient len" << len;
+
+   vector < double > g;
+
+   if ( len < 2 ) {
+      editor_msg( "red", us_tr( "Internal error: gradient called with emptyish vector. Please inform the developers." ) );
+      return g;
+   }
+   g.resize( len );
+
+   g[ 0 ] = y[ 1 ] - y[ 0 ];
+   for ( int i = 1; i < lenm1; ++i ) {
+      g[ i ] = ( y[ i + 1 ] - y[ i - 1 ] ) * 0.5;
+   }
+   g[ lenm1 ] = y[ lenm1 ] - y[ lenm1 - 1 ];
+   return g;
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::init_efa_values() {
+   if ( plotted_efa_lsv.size() != plotted_efa_rsv.size() ) {
+      editor_msg( "red", us_tr( "Internal error: init efa values size mismatch. Please inform the developers." ) );
+      return;
+   }
+   if ( !plotted_efa_lsv.size() ) {
+      editor_msg( "red", us_tr( "Internal error: init efa values efa empty. Please inform the developers." ) );
+      return;
+   }
+
+   int n = (int) plotted_efa_lsv.size();
+
+   if ( n < 3 ) {
+      editor_msg( "red", us_tr( "Error: Too little data for EFA." ) );
+      return;
+   }
+
+   int max_range = (int) ( n > UHSHS_MAX_SV_FOR_EFA ? UHSHS_MAX_SV_FOR_EFA : n );
+   if ( max_range > lb_ev->count() ) {
+      max_range = lb_ev->count();
+   }
+
+   int prev_value = 0;
+
+   efa_range_processing = true;
+
+   // #define DEBUG_INIT_EFA_RANGES
+
+   for ( int i = 0; i < max_range; ++i ) {
+      {
+         vector < double > use_v = plotted_efa_lsv[ i ];
+
+         vector < double > g = gradient( use_v );
+         double gmax = vmax( g );
+         double gmaxrecip = 1e0 / gmax;
+
+         vector < double > results;
+
+         for ( int j = 0; j < n; ++j ) {
+            double gnorm = g[ j ] * gmaxrecip;
+            // qDebug() << "gnorm[ " << j << " ] : " << gnorm;
+            if ( gnorm > 0.05 + 0.05 * i ) {
+               results.push_back( j );
+            }
+         }
+
+#if defined( DEBUG_INIT_EFA_RANGES )
+         {
+            QTextStream ts( stdout );
+            US_Vector::printvector( QString( "plotted_efa_lsv[%1]" ).arg( i ), use_v );
+            US_Vector::printvector( QString( "gradient of plotted_efa_lsv[%1]" ).arg( i ), g );
+            ts << "gmax : " << gmax;
+            ts << "gmaxrecip : " << gmaxrecip;
+            US_Vector::printvector( QString( "init efa forward sv %1" ).arg( i+1 ), results );
+         }
+#endif
+            
+         int use_value = prev_value;
+
+         if ( !results.size() ) {
+            use_value = prev_value + 1;
+            if ( use_value >= n ) {
+               use_value = n - 1;
+            }
+            prev_value = use_value;
+            efa_range_start[ i ]->setValue( use_value );
+            // set to this prev_value
+            continue;
+         }
+
+         use_value = results[ 0 ];
+
+         if ( results.size() > 1 ) {
+            int j = 1;
+         
+            while ( use_value < prev_value && j < (int) results.size() ) {
+               use_value = results[ j ];
+               ++j;
+            }
+
+            if ( j == (int) results.size() ) {
+               use_value = results[ 0 ];
+            }
+         }
+         
+         prev_value = use_value;
+         efa_range_start[ i ]->setValue( use_value );
+
+#if defined( DEBUG_INIT_EFA_RANGES )
+         QTextStream ts( stdout );
+         ts << QString( "init_efa forward sv %1 use pos %2" ).arg( i ).arg( use_value );
+#endif
+      }
+   }
+
+   prev_value = n - 1;
+
+   for ( int i = 0; i < max_range; ++i ) {
+      {
+         vector < double > use_v = plotted_efa_rsv[ i ];
+
+         vector < double > g = gradient( use_v );
+         double gmin = vmin( g );
+         double gminrecip = 1e0 / gmin;
+
+         vector < double > results;
+
+         for ( int j = 0; j < n; ++j ) {
+            double gnorm = g[ j ] * gminrecip;
+            // qDebug() << "gnorm[ " << j << " ] : " << gnorm;
+            if ( gnorm > 0.05 + 0.05 * i ) {
+               results.push_back( j );
+            }
+         }
+
+#if defined( DEBUG_INIT_EFA_RANGES )
+         {
+            QTextStream ts( stdout );
+            US_Vector::printvector( QString( "plotted_efa_rsv[%1]" ).arg( i ), use_v );
+            US_Vector::printvector( QString( "gradient of plotted_efa_rsv[%1]" ).arg( i ), g );
+            ts << "gmin : " << gmin;
+            ts << "gminrecip : " << gminrecip;
+            US_Vector::printvector( QString( "init efa forward sv %1" ).arg( i+1 ), results );
+         }
+#endif
+         int use_value = prev_value;
+
+         if ( !results.size() ) {
+            use_value = prev_value - 1;
+            if ( use_value < 0 ) {
+               use_value = 0;
+            }
+            prev_value = use_value;
+            efa_range_end[ i ]->setValue( use_value );
+            // set to this prev_value
+            continue;
+         }
+
+         use_value = results.back();
+
+         if ( results.size() > 1 ) {
+            int j = (int) results.size() - 1;
+         
+            while ( use_value > prev_value && j >= 0 ) {
+               use_value = results[ j ];
+               --j;
+            }
+
+            if ( j < 0 ) {
+               use_value = results.back();
+            }
+         }
+         
+         prev_value = use_value;
+         efa_range_end[ i ]->setValue( use_value );
+
+#if defined( DEBUG_INIT_EFA_RANGES )
+         QTextStream ts( stdout );
+         ts << QString( "init_efa forward sv %1 use pos %2" ).arg( i ).arg( use_value );
+#endif
+      }
+   }
+
+   efa_range_processing = false;
+
+   update_efa_range_start( 0e0 );
+   update_efa_range_end( 0e0 );
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::set_number_of_svs_for_efa() {
+   int max_range = (int) ( svd_D.size() > UHSHS_MAX_SV_FOR_EFA ? UHSHS_MAX_SV_FOR_EFA : svd_D.size() );
+   if ( max_range < 1 ) {
+      max_range = 1;
+   }
+   qwtc_efas->setRange( 1, max_range );
+
+   int use_sv_count;
+   int use_sv_U_count = 0;
+   int use_sv_V_count = 0;
+
+   for ( ; use_sv_U_count < (int) svd_autocor_U.size(); ++use_sv_U_count ) {
+      if ( svd_autocor_U[ use_sv_U_count ] < SVD_THRESH ) {
+         break;
+      }
+   }
+
+   for ( ; use_sv_V_count < (int) svd_autocor_V.size(); ++use_sv_V_count ) {
+      if ( svd_autocor_V[ use_sv_V_count ] < SVD_THRESH ) {
+         break;
+      }
+   }
+
+   use_sv_count = use_sv_U_count > use_sv_V_count ? use_sv_U_count : use_sv_V_count;
+   if ( use_sv_count < 1 ) {
+      use_sv_count = 1;
+   }
+
+   US_Vector::printvector2( "US_Hydrodyn_Saxs_Hplc_Svd::set_number_of_svs_for_efa svd_autocor_U, V", svd_autocor_U, svd_autocor_V );
+
+   disconnect( qwtc_efas, SIGNAL( valueChanged( double ) ), 0, 0 );
+   qwtc_efas->setValue( use_sv_count );
+   connect( qwtc_efas, SIGNAL( valueChanged( double ) ), SLOT( update_efas( double ) ) );
+}
+
+bool US_Hydrodyn_Saxs_Hplc_Svd::convert_it_to_iq( QStringList files, QStringList & created_files, QString & error_msg ) {
+
+   double t_min = 0e0;
+   double t_max = 1e99;
+
+   QString head = hplc_win->qstring_common_head( files, true );
+
+   head = head.replace( QRegExp( "__It_q\\d*_$" ), "" );
+   head = head.replace( QRegExp( "_q\\d*_$" ), "" );
+
+   QRegExp rx_q     ( "_q(\\d+_\\d+)" );
+   QRegExp rx_bl    ( "-bl(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
+   QRegExp rx_bi    ( "-bi(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
+
+   vector < QString > q_string;
+   vector < double  > q;
+
+   bool         any_bl = false;
+   bool         any_bi = false;
+
+   // get q 
+
+   // map: [ timestamp ][ q_value ] = intensity
+
+   map < double, map < double , double > > I_values;
+   map < double, map < double , double > > e_values;
+
+   map < double, bool > used_t;
+   list < double >      tl;
+
+   map < double, bool > used_q;
+   list < double >      ql;
+
+   bool                 use_errors = true;
+
+   map < QString, bool >    no_errors;
+   map < QString, QString > zero_points;
+   QStringList              qsl_no_errors;
+   QStringList              qsl_zero_points;
+
+   bool                     mode_testiq = true;
+
+   for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
+   {
+      if ( rx_q.indexIn( files[ i ] ) == -1 )
+      {
+         error_msg = QString( us_tr( "Error: Can not find q value in file name for %1" ) ).arg( files[ i ] );
+         return false;
+      }
+      ql.push_back( rx_q.cap( 1 ).replace( "_", "." ).toDouble() );
+      if ( used_q.count( ql.back() ) )
+      {
+         error_msg = QString( us_tr( "Error: Duplicate q value in file name for %1" ) ).arg( files[ i ] );
+         return false;
+      }
+      used_q[ ql.back() ] = true;
+         
+      if ( rx_bl.indexIn( files[ i ] ) != -1 )
+      {
+         any_bl = true;
+      }
+      if ( rx_bi.indexIn( files[ i ] ) != -1 )
+      {
+         any_bi = true;
+      }
+
+      if ( !hplc_win->f_qs.count( files[ i ] ) )
+      {
+         // error_msg = QString( us_tr( "Internal error: request to use %1, but not found in data" ) ).arg( files[ i ] );
+      } else {
+         for ( unsigned int j = 0; j < ( unsigned int ) hplc_win->f_qs[ files[ i ] ].size(); j++ )
+         {
+            if ( !mode_testiq || ( hplc_win->f_qs[ files[ i ] ][ j ] >= t_min && hplc_win->f_qs[ files[ i ] ][ j ] <= t_max ) )
+            {
+               I_values[ hplc_win->f_qs[ files[ i ] ][ j ] ][ ql.back() ] = hplc_win->f_Is[ files[ i ] ][ j ];
+               if ( use_errors && hplc_win->f_errors[ files[ i ] ].size() == hplc_win->f_qs[ files[ i ] ].size() )
+               {
+                  e_values[ hplc_win->f_qs[ files[ i ] ][ j ] ][ ql.back() ] = hplc_win->f_errors[ files[ i ] ][ j ];
+               } else {
+                  if ( use_errors )
+                  {
+                     use_errors = false;
+                     // editor_msg( "dark red", QString( us_tr( "Notice: missing errors, first noticed in %1, so no errors at all" ) )
+                     //             .arg( files[ i ] ) );
+                  }
+               }
+               if ( !used_t.count( hplc_win->f_qs[ files[ i ] ][ j ] ) )
+               {
+                  tl.push_back( hplc_win->f_qs[ files[ i ] ][ j ] );
+                  used_t[ hplc_win->f_qs[ files[ i ] ][ j ] ] = true;
+               }
+            }
+         }
+
+         if ( !hplc_win->f_errors.count( files[ i ] ) ||
+              hplc_win->f_errors[ files[ i ] ].size() != hplc_win->f_Is[ files[ i ] ].size() )
+         {
+            no_errors[ files[ i ] ] = true;
+            qsl_no_errors           << files[ i ];
+         } else {
+            if ( !hplc_win->is_nonzero_vector( hplc_win->f_errors[ files[ i ] ] ) )
+            {
+               unsigned int zero_pts = 0;
+               for ( unsigned int j = 0; j < ( unsigned int ) hplc_win->f_errors[ files[ i ] ].size(); j++ )
+               {
+                  if ( !mode_testiq || ( hplc_win->f_qs[ files[ i ] ][ j ] >= t_min && hplc_win->f_qs[ files[ i ] ][ j ] <= t_max ) )
+                  {
+                     if ( us_isnan( hplc_win->f_errors[ files[ i ] ][ j ] ) || hplc_win->f_errors[ files[ i ] ][ j ] == 0e0 )
+                     {
+                        zero_pts++;
+                     }
+                  }
+               }
+               zero_points[ files[ i ] ] = QString( "%1: %2 of %3 points" ).arg( files[ i ] ).arg( zero_pts ).arg( hplc_win->f_errors[ files[ i ] ].size() );
+               qsl_zero_points           << zero_points[ files[ i ] ];
+            }
+         }
+
+      }
+   }
+
+   tl.sort();
+
+   vector < double > tv;
+   for ( list < double >::iterator it = tl.begin();
+         it != tl.end();
+         it++ )
+   {
+      tv.push_back( *it );
+   }
+
+
+   ql.sort();
+
+   vector < double  > qv;
+   vector < QString > qv_string;
+   for ( list < double >::iterator it = ql.begin();
+         it != ql.end();
+         it++ )
+   {
+      qv.push_back( *it );
+      qv_string.push_back( QString( "%1" ).arg( *it ) );
+   }
+
+   QString qs_no_errors;
+   QString qs_zero_points;
+
+   if ( zero_points.size() || no_errors.size() )
+   {
+      unsigned int used = 0;
+
+      QStringList qsl_list_no_errors;
+
+      for ( unsigned int i = 0; i < ( unsigned int ) qsl_no_errors.size() && i < 12; i++ )
+      {
+         qsl_list_no_errors << qsl_no_errors[ i ];
+         used++;
+      }
+      if ( qsl_list_no_errors.size() < qsl_no_errors.size() )
+      {
+         qsl_list_no_errors << QString( us_tr( "... and %1 more not listed" ) ).arg( qsl_no_errors.size() - qsl_list_no_errors.size() );
+      }
+      qs_no_errors = qsl_list_no_errors.join( "\n" );
+      
+      QStringList qsl_list_zero_points;
+      for ( unsigned int i = 0; i < ( unsigned int ) qsl_zero_points.size() && i < 24 - used; i++ )
+      {
+         qsl_list_zero_points << qsl_zero_points[ i ];
+      }
+      if ( qsl_list_zero_points.size() < qsl_zero_points.size() )
+      {
+         qsl_list_zero_points << QString( us_tr( "... and %1 more not listed" ) ).arg( qsl_zero_points.size() - qsl_list_zero_points.size() );
+      }
+      qs_zero_points = qsl_list_zero_points.join( "\n" );
+   }
+
+   // bool   normalize_by_conc = false;
+   // bool   conc_ok           = false;
+
+   // double conv = 0e0;
+   // double psv  = 0e0;
+   // double I0se = 0e0;
+   // double conc_repeak = 1e0;
+   
+   vector < double > conc_spline_x;
+   vector < double > conc_spline_y;
+   vector < double > conc_spline_y2;
+
+   running = true;
+
+   // now for each I(t) distribute the I for each frame 
+
+   // build up resulting curves
+
+   // for each time, tv[ t ] 
+
+   map < QString, bool > current_files;
+
+   for ( unsigned int t = 0; t < tv.size(); t++ )
+   {
+      // progress->setValue( files.size() + t ); progress->setMaximum( files.size() + tv.size() );
+
+      // build up an I(q)
+
+      QString name = head + QString( "%1%2" )
+         .arg( (any_bl || any_bi) ? "_bs" : "" )
+         .arg( hplc_win->pad_zeros( tv[ t ], (int) tv.size() ) )
+         .replace( ".", "_" )
+         ;
+
+      {
+         int ext = 0;
+         QString use_name = name;
+         while ( current_files.count( use_name ) )
+         {
+            use_name = name + QString( "-%1" ).arg( ++ext );
+         }
+         name = use_name;
+      }
+         
+      // cout << QString( "name %1\n" ).arg( name );
+
+      // now go through all the files to pick out the I values and errors and distribute amoungst the various gaussian peaks
+      // we could also reassemble the original sum of gaussians curves as a comparative
+
+      vector < double > I;
+      vector < double > e;
+      // vector < double > G;
+
+      // vector < double > I_recon;
+      // vector < double > G_recon;
+
+      vector < double > this_used_pcts;
+      // double conc_factor = 0e0;
+      // if ( conc_ok ) {
+      //    if ( !usu->apply_natural_spline( conc_spline_x, conc_spline_y, conc_spline_y2, tv[ t ], conc_factor ) ) {
+      //       // editor_msg( "red", QString( us_tr( "Error getting concentration from spline for frame %1, concentration set to zero." ) ).arg( tv[ t ] ) );
+      //       conc_factor = 0e0;
+      //    }
+      // }
+
+      for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
+      {
+         if ( !I_values.count( tv[ t ] ) )
+         {
+            // editor_msg( "dark red", QString( us_tr( "Notice: I values missing frame/time = %1" ) ).arg( tv[ t ] ) );
+         }
+
+         if ( !I_values[ tv[ t ] ].count( qv[ i ] ) )
+         {
+            // editor_msg( "red", QString( us_tr( "Notice: I values missing q = %1" ) ).arg( qv[ i ] ) );
+            continue;
+         }
+
+         double tmp_I       = I_values[ tv[ t ] ][ qv[ i ] ];
+         double tmp_e       = 0e0;
+
+         if ( use_errors )
+         {
+            if ( !e_values.count( tv[ t ] ) )
+            {
+               // editor_msg( "red", QString( us_tr( "Internal error: error values missing t %1" ) ).arg( tv[ t ] ) );
+               // running = false;
+               // update_enables();
+               // progress->reset();
+               error_msg = QString( us_tr( "Internal error: error values missing t %1" ) ).arg( tv[ t ] );
+               return false;
+            }
+
+            if ( !e_values[ tv[ t ] ].count( qv[ i ] ) )
+            {
+               // editor_msg( "red", QString( us_tr( "Internal error: error values missing q %1" ) ).arg( qv[ i ] ) );
+               // running = false;
+               // update_enables();
+               // progress->reset();
+               error_msg = QString( us_tr( "Internal error: error values missing q %1" ) ).arg( qv[ i ] );
+               return false;
+            }
+
+            tmp_e = e_values[ tv[ t ] ][ qv[ i ] ];
+         }
+            
+         I      .push_back( tmp_I );
+         e      .push_back( tmp_e );
+      } // for each file
+         
+      /* from original
+         QString this_name = hplc_selected_files[ i ];
+         original_data.push_back( this_name );
+      
+         f_pos      [ this_name ] = f_pos.size();
+         f_qs_string[ this_name ] = hplc_win->f_qs_string[ this_name ];
+         f_qs       [ this_name ] = hplc_win->f_qs       [ this_name ];
+         f_Is       [ this_name ] = hplc_win->f_Is       [ this_name ];
+         f_errors   [ this_name ] = hplc_win->f_errors   [ this_name ];
+         f_is_time  [ this_name ] = mode_i_of_t;  // false;  // must all be I(q)
+      */
+
+      created_files.push_back( name );
+      
+      f_pos      [ name ] = f_pos.size();
+      f_qs_string[ name ].clear();
+      for ( int i = 0; i < (int) qv.size(); ++i ) {
+         f_qs_string[ name ].push_back( QString( "%1" ).arg( qv[ i ] ) );
+      }
+      
+      f_qs       [ name ] = qv;
+      f_Is       [ name ] = I;
+      f_errors   [ name ] = e;
+      f_is_time  [ name ] = false;
+
+   } // for each q value
+
+   return true;
+}
+
+
+void US_Hydrodyn_Saxs_Hplc_Svd::runExplicitEFARotation(
+                                                       vector < vector < int > >    & M,
+                                                       vector < vector < double > > & D,
+                                                       bool                         & failed, // also a return
+                                                       vector < vector < double > > & C,
+                                                       vector < vector < double > > & V_bar,
+                                                       vector < vector < double > > & T,
+                                                       int                            niter,
+                                                       double                         tol,
+                                                       vector < int >               & force_pos,
+                                                       // returns
+                                                       vector < vector < double > > & C_ret,
+                                                       bool                         & converged
+                                                       ) {
+   /*
+def runExplicitEFARotation(M, D, failed, C, V_bar, T, niter, tol, force_pos):
+    print "SASCalc:runExplicitEFARotation"
+    num_sv = M.shape[1]
+
+    for i in range(num_sv):
+        V_i_0 = V_bar[np.logical_not(M[:,i]),:]
+
+        T[i,1:num_sv] = -np.dot(V_i_0[:,0].T, np.linalg.pinv(V_i_0[:,1:num_sv].T))
+
+    C = np.dot(T, V_bar.T)
+
+    C = C.T
+
+    if -1*C.min() > C.max():
+        C = C*-1
+
+    converged = True
+
+    csum = np.sum(M*C, axis = 0)
+    if int(np.__version__.split('.')[0]) >= 1 and int(np.__version__.split('.')[1])>=10:
+        C = C/np.broadcast_to(csum, C.shape) #normalizes by the sum of each column
+    else:
+        norm = np.array([csum for i in range(C.shape[0])])
+
+        C = C/norm #normalizes by the sum of each column
+
+    return C, failed, converged, None, None
+   */
+   // ----------------------------------------------------------------------------------------------------
+
+   // qDebug() << "US_Hydrodyn_Saxs_Hplc_Svd::runExplicitEFARotation\n";
+
+   // ----------------------------------------------------------------------------------------------------
+   int rows = (int) M.size();
+   if ( !rows ) {
+      editor_msg( "red", "Internal error: no rows [301]" );
+      failed = true;
+      return;
+   }
+      
+   int num_sv = (int) M[0].size();
+   QTextStream ts( stdout );
+
+   for ( int i = 0; i < num_sv; ++i ) {
+      vector < vector < double > > V_i_0;
+      for ( int j = 0; j < rows; ++j ) {
+         if ( !M[ j ][ i ] ) { 
+            V_i_0.push_back( V_bar[ j ] );
+         }
+      }
+
+      ts << "i = " << i << endl;
+      SVD::cout_vvd( "V_i_0", V_i_0 );
+
+      int vi0rowsize = (int) V_i_0.size();
+
+      vector < vector < double > > Vitoinv( vi0rowsize );
+      for ( int k = 0; k < vi0rowsize; ++k ) {
+         for ( int l = 1; l < num_sv; ++l ) {
+            Vitoinv[ k ].push_back( V_i_0[ k ][ l ] );
+         }
+      }
+
+      Vitoinv = transpose( Vitoinv );
+
+      vector < vector < double > > Vinv;
+
+      // SVD::cout_vvd( "Vitoinv", Vitoinv );
+
+      SVD::pinv( Vitoinv, Vinv );
+
+      SVD::cout_vvd( "Vinv", Vinv );
+
+      // T[i,1:num_sv] = -np.dot(V_i_0[:,0].T, np.linalg.pinv(V_i_0[:,1:num_sv].T))
+
+      // compute multiple the 1st column of V_i_0 by the columns of Vinv
+
+      for ( int k = 1; k < num_sv; ++k ) {
+         T[ i ][ k ] = 0e0;
+         for ( int l = 0; l < vi0rowsize; ++l ) {
+            T[ i ][ k ] -= V_i_0[ l ][ 0 ] * Vinv[ l ][ k -1 ];
+         }
+      }
+
+      SVD::cout_vvd( "T", T );
+   }
+
+   vector < vector < double > > V_barT = transpose( V_bar );
+   
+   C = dot( T, V_barT );
+
+   C = transpose( C );
+
+   SVD::cout_vvd( "C", C );
+
+   if ( -1 * vvd_min( C ) > vvd_max( C ) ) {
+      vvd_smult( C, -1 );
+   }
+
+   converged = true;
+   
+   SVD::cout_vvi( "M", M );
+   SVD::cout_vvd( "C after min/max", C );
+   vector < vector < double > > MC = vivd_pwmult( M, C );
+   SVD::cout_vvd( "M*C", MC );
+
+   vvd_cnorm( C, MC );
+
+   SVD::cout_vvd( "Final C", C );
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::efa_decomp() {
+   // init efa decomp bits
+   // qDebug() << "efa_decomp()";
+   editor_msg( "blue", us_tr( "EFA Components: Computing on " ) + last_svd_name );
+
+   clear_efa_decomp();
+
+   // TODO push to user interface
+   int               niter      = 10000;
+   double            tol        = 1e-12;
+   efa_decomp_method method     = METHOD_HYBRID;
+   // efa_decomp_method method     = METHOD_ITERATIVE;
+   // efa_decomp_method method     = METHOD_EXPLICIT;
+
+   int               num_sv     = (int) qwtc_efas->value();
+   
+   QStringList files = selected_files();
+
+   last_efa_data = files;
+   if ( !subset_data.count( files.join( "\n" ) ) )
+   {
+      files = add_subset_data( files );
+   }
+   set < QString > sel_sources = get_selected_sources();
+   last_efa_name = *(sel_sources.begin());
+
+   int m = (int) f_qs[ files[ 0 ] ].size();
+   int n = (int) files.size();
+
+   // need to transpose
+
+   vector < vector < double > > D( n );
+
+   disable_all();
+   
+   map < QString, vector < double > >  * f_Iuse = &f_Is;
+   check_norm( files );
+   QString norm_name = "not normed";
+   if ( norm_ok ) {
+      if ( cb_norm_pw->isChecked() ) {
+         f_Iuse = &f_Is_norm_pw;
+         norm_name = "normed by p.w. errors";
+      }
+      if ( cb_norm_avg->isChecked() ) {
+         f_Iuse = &f_Is_norm_avg;
+         norm_name = "normed by avg. errors";
+      }
+   }
+
+   for ( int i = 0; i < n; ++i ) {
+      D[ i ] = (*f_Iuse)[ files[ i ] ];
+      if ( (int) D[ i ].size() != m ) {
+         editor_msg( "red", QString( us_tr( "Inconsistent data length (e.g. 1st file has %1 data points but file %2 has %3 data points" )
+                                     .arg( m )
+                                     .arg( i )
+                                     .arg( (int) D[ i ].size() )
+                                     )
+                     );
+         update_enables();
+         return;
+      }
+   }
+
+   D = transpose( D );
+
+   // qDebug() << "efa_decomp 1 num_sv " << num_sv;
+   // qDebug() << "efa_decomp 1 efa_range_start.size() " << efa_range_start.size();
+   // qDebug() << "efa_decomp 1 efa_range_end.size() " << efa_range_end.size();
+   
+   vector < vector < int > > M( num_sv );
+
+   for ( int i = 0; i < num_sv; ++i ) {
+      if ( efa_range_start[ i ]->value() >= (int) efa_range_end[ num_sv - i - 1 ]->value() ) {
+         editor_msg( "red", QString( us_tr( "Ranges for component %1 is empty or negative.  Please correct.  Note that the component ranges are in reverse order to the S.V's ranges (i.e. the start frame for this component is S.V. %2 and the end frame is S.V. %3.)" ) ).arg( i + 1 ).arg( i + 1 ).arg( num_sv - i ) );
+         update_enables();
+         return;
+      }
+   }
+
+   for ( int i = 0; i < num_sv; ++i ) {
+      M[ i ].resize( n );
+      for ( int j = 0; j < n; ++j ) {
+         M[ i ][ j ] = ( j >= (int) efa_range_start[ i ]->value() && j <= (int) efa_range_end[ num_sv - i - 1 ]->value() ) ? 1 : 0;
+      }
+   }
+   // qDebug() << "efa_decomp 2";
+   M = transpose( M );
+   // qDebug() << "efa_decomp 3";
+
+   // TODO : might have an extra transpose here
+   vector < vector < double > > V_bar = transpose( svd_V );
+   V_bar.resize( num_sv );
+   V_bar = transpose( V_bar );
+   
+   vector < vector < double > > C = V_bar;
+   vector < vector < double > > C_ret;
+   vector < vector < double > > T;
+
+   bool converged = false;
+   bool failed    = false;
+   
+   /*
+    print "SASCalc:initHydridEFA M:", M.shape, M.tolist()
+    print "SASCalc:initHydridEFA D:", D.shape, D
+    print "SASCalc:initHydridEFA C:", C.shape, C
+    print "SASCalc:initHydridEFA V_bar:", V_bar.shape, V_bar
+    print "SASCalc:initHydridEFA num_sv:", num_sv
+    print "SASCalc:initHydridEFA converged:", converged
+   */
+
+   SVD::cout_vvi( "efa_decomp before call M", M );
+   //   SVD::cout_vvd( "efa_decomp before call D", D );
+   SVD::cout_vvd( "efa_decomp before call C", C );
+   SVD::cout_vvd( "efa_decomp before call V_bar", V_bar );
+   {
+      QTextStream ts( stdout );
+      ts << "efa_decomp before call num_sv " << num_sv << endl;
+   }
+
+   vector < int >     force_pos( num_sv );
+   vector < double >  dc;
+   int                k;
+   
+   if ( cb_efa_decomp_force_positive->isChecked() ) {
+      vector < int >  force_pos1( num_sv, 1 );
+      force_pos = force_pos1;
+   }
+
+   switch ( method ) {
+   case METHOD_HYBRID :
+      {
+         initHybridEFA( M, num_sv, D, C, converged, V_bar, niter, tol, force_pos, failed, C_ret, T );
+         if ( !failed ) {
+            runIterativeEFARotation( M, D, failed, C, V_bar, T, niter, tol, force_pos, C_ret, converged, dc, k );
+         }
+      }
+      break;
+   case METHOD_ITERATIVE :
+      {
+         initIterativeEFA( M, num_sv, D, C, converged, V_bar, failed, C_ret );
+         if ( !failed ) {
+            runIterativeEFARotation( M, D, failed, C, V_bar, T, niter, tol, force_pos, C_ret, converged, dc, k );
+         }
+      }
+      break;
+   case METHOD_EXPLICIT :
+      {
+         initExplicitEFA( M, num_sv, D, C, converged, V_bar, failed, T );
+         if ( !failed ) {
+            runExplicitEFARotation( M, D, failed, C, V_bar, T, niter, tol, force_pos, C_ret, converged );
+         }
+       }
+      break;
+   }
+
+   // plot
+
+   efa_decomp_Ct = transpose( C );
+
+   for ( int i = 0; i < (int) C.size(); ++i ) {
+      efa_decomp_x.push_back( i );
+   }
+
+   efa_decomp_plot();
+      
+   mode_select( MODE_EFA_DECOMP );
+
+   if ( !converged ) {
+      editor_msg( "red", us_tr( "EFA Components: failed to converge" ) );
+   }
+      
+   editor_msg( "blue", us_tr( "EFA Components: Done computing on " ) + last_svd_name );
+
+   update_enables();
+}
+
+
+void US_Hydrodyn_Saxs_Hplc_Svd::efa_decomp_plot() {
+   if ( !efa_decomp_x.size() ) {
+      return;
+   }
+
+   if ( plot_efa_decomp_zoomer )
+   {
+      // cout << QString( "plot zoomer stack size %1\n" ).arg( plot_efa_decomp_zoomer->zoomRectIndex() );
+      if ( !plot_efa_decomp_zoomer->zoomRectIndex() )
+      {
+         plot_efa_decomp_zoomer->zoom ( 0 );
+         delete plot_efa_decomp_zoomer;
+         plot_efa_decomp_zoomer = (ScrollZoomer *) 0;
+      }
+   }
+   
+   for ( int i = 0; i < (int) efa_decomp_Ct.size(); ++i ) {
+      QwtPlotCurve *curve = new QwtPlotCurve( QString( "EFA Deconvolution SV %1" ).arg( i + 1 ) );
+      curve->setStyle( QwtPlotCurve::Lines );
+
+
+      curve->setSamples(
+                        (double *)&( efa_decomp_x[ 0 ] ),
+                        (double *)&( efa_decomp_Ct[ i ][ 0 ] ),
+                        svd_x.size()
+                        );
+
+      curve->setPen( QPen( plot_colors[ i % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
+      curve->attach( plot_efa_decomp );
+   }
+
+   //   plot_data->setAxisScale( QwtPlot::xBottom, 1, svd_x.size() );
+   plot_efa_decomp->setAxisScale( QwtPlot::xBottom, efa_decomp_x[0] - 0.5, efa_decomp_x.back() + 0.5 );
+   plot_efa_decomp->setAxisScale( QwtPlot::yLeft  , vvd_min( efa_decomp_Ct ) - 0.05, vvd_max( efa_decomp_Ct ) + 0.05 );
+
+   if ( !plot_efa_decomp_zoomer ) {
+      plot_efa_decomp_zoomer = new ScrollZoomer(plot_efa_decomp->canvas());
+      plot_efa_decomp_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+      // connect( plot_efa_decomp_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_efa_decomp_zoomed( const QRectF & ) ) );
+   }
+
+   set_title( plot_efa_decomp, QString( "EFA Deconvolution of %1" ).arg( last_svd_name ) );
+   plot_efa_decomp->replot();
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::initExplicitEFA(
+                                                vector < vector < int > >    & M,
+                                                int                            num_sv,
+                                                vector < vector < double > > & D,
+                                                vector < vector < double > > & C,
+                                                bool                         & converged,
+                                                vector < vector < double > > & V_bar,
+                                                // returns
+                                                bool                         & failed,
+                                                vector < vector < double > > & T_ret
+                                                 ) {
+   /*
+def initExplicitEFA(M, num_sv, D, C, converged, V_bar):
+    print "SASCalc:initExplicitEFA"
+
+    T = np.ones((num_sv, num_sv))
+
+    failed = False
+
+    return failed, None, T
+   */
+   // qDebug() << "US_Hydrodyn_Saxs_Hplc_Svd::initExplicitEFA\n";
+   T_ret.resize( num_sv );
+   for ( int i = 0; i < num_sv; ++i ) {
+      T_ret[ i ].resize( num_sv );
+      for ( int j = 0; j < num_sv; ++j ) {
+         T_ret[ i ][ j ] = 1e0;
+      }
+   }
+}
+
+
+void US_Hydrodyn_Saxs_Hplc_Svd::initIterativeEFA(
+                                                 vector < vector < int > >   & M,
+                                                 int                           num_sv,
+                                                 vector < vector < double > > & D,
+                                                 vector < vector < double > > & C,
+                                                 bool                         & converged,
+                                                 vector < vector < double > > & V_bar,
+                                                 // returns
+                                                 bool                         & failed,
+                                                 vector < vector < double > > & C_ret
+                                                 ) {
+   /*
+def initIterativeEFA(M, num_sv, D, C, converged, V_bar):
+    print "SASCalc:initIterativeEFA"
+
+    #Set a variable to test whether the rotation fails for a numerical reason
+    failed = False
+
+    #Do an initial rotation
+    try:
+        C = EFAFirstRotation(M, C, D)
+    except np.linalg.linalg.LinAlgError:
+        failed = True
+
+    return failed, C, None
+   */
+   // qDebug() << "US_Hydrodyn_Saxs_Hplc_Svd::initIterativeEFA\n";
+   EFAFirstRotation( M, C, D, C_ret );
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::EFAFirstRotation(
+                                                 vector < vector < int > >    & M,
+                                                 vector < vector < double > > & C,
+                                                 vector < vector < double > > & D,
+                                                 // returns
+                                                 vector < vector < double > > & Cnew
+                                                 ) {
+   /*
+def EFAFirstRotation(M,C,D):
+    print "SASCalc:EFAFirstRotation"
+    #Have to run an initial rotation without forcing C>=0 or things typically fail to converge (usually the SVD fails)
+    S = np.dot(D, np.linalg.pinv(np.transpose(M*C)))
+
+    Cnew = np.transpose(np.dot(np.linalg.pinv(S), D))
+
+    csum = np.sum(M*Cnew, axis = 0)
+    if int(np.__version__.split('.')[0]) >= 1 and int(np.__version__.split('.')[1])>=10:
+        Cnew = Cnew/np.broadcast_to(csum, Cnew.shape) #normalizes by the sum of each column
+    else:
+        norm = np.array([csum for i in range(Cnew.shape[0])])
+
+        Cnew = Cnew/norm #normalizes by the sum of each column
+
+    return Cnew
+   */
+   // qDebug() << "US_Hydrodyn_Saxs_Hplc_Svd::EFAFirstRotation\n";
+   // SVD::cout_vvi( "FirstRotation M", M );
+   // SVD::cout_vvd( "FirstRotation C", C );
+
+   vector < vector < double > > MCT = vivd_pwmult( M, C );
+   MCT = transpose( MCT );
+   vector < vector < double > > MCTpinv;
+   SVD::pinv( MCT, MCTpinv );
+
+   // SVD::cout_vvd( "FirstRotation MCTpinv", MCTpinv );
+   
+   vector < vector < double > > S = dot( D, MCTpinv );
+   vector < vector < double > > Spinv;
+   SVD::pinv( S, Spinv );
+
+   // SVD::cout_vvd( "FirstRotation S", S );
+
+   Cnew = dot( Spinv, D );
+   Cnew = transpose( Cnew );
+   
+   //   SVD::cout_vvd( "FirstRotation Cnew", Cnew );
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::initHybridEFA(
+                                              vector < vector < int > >    & M,
+                                              int                            num_sv,
+                                              vector < vector < double > > & D,
+                                              vector < vector < double > > & C,
+                                              bool                         & converged,
+                                              vector < vector < double > > & V_bar,
+                                              int                            niter,
+                                              double                         tol,
+                                              vector < int >               & force_pos,
+                                              // returns
+                                              bool                         & failed,
+                                              vector < vector < double > > & C_ret,
+                                              vector < vector < double > > & T_ret
+                                              ) {
+   /*
+def initHybridEFA(M, num_sv, D, C, converged, V_bar):
+    print "SASCalc:initHydridEFA"
+    failed = False
+
+    if not converged:
+        failed, temp, T = initExplicitEFA(M, num_sv, D, C, converged, V_bar)
+        C, failed, temp1, temp2, temp3 = runExplicitEFARotation(M, None, None, None, V_bar, T, None, None, None)
+
+    return failed, C, None
+   */
+   // qDebug() << "US_Hydrodyn_Saxs_Hplc_Svd::initHybridEFA\n";
+
+   vector < vector < double > > T;
+
+   initExplicitEFA(M, num_sv, D, C, converged, V_bar, failed, T );
+   runExplicitEFARotation( M, D, failed, C, V_bar, T, niter, tol, force_pos, C_ret, converged );
+}
+
+   
+void US_Hydrodyn_Saxs_Hplc_Svd::runIterativeEFARotation(
+                                                        vector < vector < int > >    & M,
+                                                        vector < vector < double > > & D,
+                                                        bool                         & failed, // also a return
+                                                        vector < vector < double > > & C,
+                                                        vector < vector < double > > & V_bar,
+                                                        vector < vector < double > > & T,
+                                                        int                            niter,
+                                                        double                         tol,
+                                                        vector < int >               & force_pos,
+                                                        // returns
+                                                        vector < vector < double > > & C_ret,
+                                                        bool                         & converged,
+                                                        vector < double >            & dc,
+                                                        int                          & k
+                                                        ) {
+   /*
+def runIterativeEFARotation(M, D, failed, C, V_bar, T, niter, tol, force_pos):
+    print "SASCalc:runIterativeEFARotation"
+    #Carry out the calculation to convergence
+    k = 0
+    converged = False
+
+    dc = []
+
+    while k < niter and not converged and not failed:
+        k = k+1
+        try:
+            Cnew = EFAUpdateRotation(M, C, D, force_pos )
+        except np.linalg.linalg.LinAlgError:
+           failed = True
+
+        dck = np.sum(np.abs(Cnew - C))
+
+        dc.append(dck)
+
+        C = Cnew
+
+        if dck < tol:
+            converged = True
+
+    return C, failed, converged, dc, k
+   */
+   // qDebug() << "US_Hydrodyn_Saxs_Hplc_Svd::runIterativeEFARotation\n";
+   k = 0;
+   converged = false;
+   failed = false;
+
+   dc.clear();
+
+   vector < vector < double > > Cnew;
+
+   int m = C.size();
+   if ( !C.size() ) {
+      editor_msg( "red", us_tr( "Internal error: empty C in efa components routine, please inform the developers" ) );
+      failed = true;
+      return;
+   }
+
+   int n = C[ 0 ].size();
+
+   while ( k < niter && !converged && !failed ) {
+      ++k;
+      EFAUpdateRotation( M, C, D, force_pos, Cnew );
+
+      double dck = 0e0;
+      for ( int i = 0; i < m; ++i ) {
+         for ( int j = 0; j < n; ++j ) {
+            dck += fabs( C[ i ][ j ] - Cnew[ i ][ j ] );
+         }
+      }
+
+      dc.push_back( dck );
+
+      C = Cnew;
+
+      if ( dck < tol ) {
+         converged = true;
+      }
+   }
+
+   // SVD::cout_vvd( "runIterativeEFARotation final EFAUpdateRotation C", C );
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::EFAUpdateRotation(
+                                                  vector < vector < int > >    & M,
+                                                  vector < vector < double > > & C,
+                                                  vector < vector < double > > & D,
+                                                  vector < int >               & force_pos,
+                                                  // returns
+                                                  vector < vector < double > > & Cnew
+                                                  ) {
+   /*
+def EFAUpdateRotation(M,C,D, force_pos):
+    print "SASCalc:EFAUpdateRotation"
+    S = np.dot(D, np.linalg.pinv(np.transpose(M*C)))
+
+    Cnew = np.transpose(np.dot(np.linalg.pinv(S), D))
+
+    for i, fp in enumerate(force_pos):
+        if fp:
+            Cnew[Cnew[:,i] < 0,i] = 0
+
+    csum = np.sum(M*Cnew, axis = 0)
+
+    if int(np.__version__.split('.')[0]) >= 1 and int(np.__version__.split('.')[1])>=10:
+        Cnew = Cnew/np.broadcast_to(csum, Cnew.shape) #normalizes by the sum of each column
+    else:
+        norm = np.array([csum for i in range(Cnew.shape[0])])
+
+        Cnew = Cnew/norm #normalizes by the sum of each column
+
+    return Cnew
+   */
+   // qDebug() << "US_Hydrodyn_Saxs_Hplc_Svd::EFAUpdateRotation\n";
+
+   // SVD::cout_vvi( "UpdateRotation M", M );
+   // SVD::cout_vvd( "UpdateRotation C", C );
+
+   vector < vector < double > > MCT = vivd_pwmult( M, C );
+   MCT = transpose( MCT );
+   vector < vector < double > > MCTpinv;
+   SVD::pinv( MCT, MCTpinv );
+
+   // SVD::cout_vvd( "UpdateRotation MCTpinv", MCTpinv );
+   
+   vector < vector < double > > S = dot( D, MCTpinv );
+   vector < vector < double > > Spinv;
+   SVD::pinv( S, Spinv );
+
+   // SVD::cout_vvd( "UpdateRotation S", S );
+
+   Cnew = dot( Spinv, D );
+   Cnew = transpose( Cnew );
+   
+   // SVD::cout_vvd( "UpdateRotation Cnew", Cnew );
+
+   {
+      int rows = (int) Cnew.size();
+      for ( int i = 0; i < (int) force_pos.size(); ++i ) {
+         if ( force_pos[ i ] ) {
+            for ( int j = 0; j < rows; ++j ) {
+               if ( Cnew[ j ][ i ] < 0e0 ) {
+                  Cnew[ j ][ i ] = 0e0;
+               }
+            }
+         }
+      }
+   }
+
+   vector < vector < double > > MCnew = vivd_pwmult( M, Cnew );
+   
+   vvd_cnorm( Cnew, MCnew );
+
+   // SVD::cout_vvd( "UpdateRotation end Cnew", Cnew );
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::efa_decomp_to_hplc_saxs() {
+   // qDebug() << "efa_decomp_to_hplc_saxs";
+   for ( int i = 0; i < (int) efa_decomp_Ct.size(); ++i ) {
+      QString this_name = QString( "EFA_of_%1_component_%2" ).arg( last_efa_name.replace( " ", "_" ) ).arg( i + 1 );
+      hplc_win->add_plot( this_name,
+                          efa_decomp_x,
+                          efa_decomp_Ct[ i ],
+                          true );
+      editor_msg( "dark blue", QString( "Added %1 to HPLC window" ).arg( this_name ) );
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::set_efa_decomp_force_positive() {
+   // qDebug() << "efa_decomp_force_positive";
+   efa_decomp();
 }

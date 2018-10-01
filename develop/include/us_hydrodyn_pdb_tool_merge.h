@@ -55,6 +55,7 @@ struct pdb_sel_count
    bool         chain_partial;
    bool         residue_partial;
    unsigned int not_selected_atoms;
+   unsigned int SOLs;
 };
 
 class US_EXTERN US_Hydrodyn_Pdb_Tool_Merge : public QFrame

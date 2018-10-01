@@ -512,7 +512,7 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel( bool from_wheel_save )
    {
    case MODE_GGAUSSIAN :
       {
-         pb_cormap->setText( us_tr( "CorMap" ) );
+         pb_cormap->setText( us_tr( "PVP Analysis" ) );
          f_gaussians = org_f_gaussians;
          gaussians = org_gaussians;
          gauss_delete_markers();

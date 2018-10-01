@@ -42,7 +42,7 @@ bool US_Timer::start_timer( QString qs )
       return false;
    }
 
-   timers[ qs ].restart();
+   timers[ qs ].start();
    return true;
 }
 

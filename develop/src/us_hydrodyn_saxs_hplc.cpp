@@ -51,8 +51,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
                                              csv csv1,
                                              void *us_hydrodyn, 
-                                             QWidget *p, 
-                                             const char *name
+                                             QWidget *p
                                              ) : QFrame( p )
 {
    this->csv1 = csv1;
@@ -278,10 +277,10 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
 
    // cout << QString("csv size %1 %2\n").arg(csv_height).arg(csv_width);
 #if defined(DOES_WORK)
-   lb_files        ->setMaximumWidth( 3 * csv_width / 7 );
-   lb_created_files->setMaximumWidth( 3 * csv_width / 7 );
-   editor          ->setMaximumWidth( 3 * csv_width / 7 );
-   plot_dist    ->setMinimumWidth( 2 * csv_width / 3 );
+   // lb_files        ->setMaximumWidth( 3 * csv_width / 7 );
+   // lb_created_files->setMaximumWidth( 3 * csv_width / 7 );
+   // editor          ->setMaximumWidth( 3 * csv_width / 7 );
+   // plot_dist    ->setMinimumWidth( 2 * csv_width / 3 );
 #endif
    // lb_files        ->setMaximumWidth( 2 * csv_width / 5 );
    // lb_created_files->setMaximumWidth( csv_width / 3 );
@@ -298,25 +297,25 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
       // pbs.push_back( pb_select_all );
       pbs.push_back( pb_regex_load );
       pbs.push_back( pb_save_state );
-      pbs.push_back( pb_movie );
-      pbs.push_back( pb_invert );
+      // pbs.push_back( pb_movie );
+      // pbs.push_back( pb_invert );
       // pbs.push_back( pb_adjacent );
-      pbs.push_back( pb_select_nth );
+      // pbs.push_back( pb_select_nth );
       // pbs.push_back( pb_color_rotate );
       // pbs.push_back( pb_to_saxs );
-      pbs.push_back( pb_view );
-      pbs.push_back( pb_rescale );
-      pbs.push_back( pb_normalize );
+      // pbs.push_back( pb_view );
+      // pbs.push_back( pb_rescale );
+      // pbs.push_back( pb_normalize );
 
       // pbs.push_back( pb_avg );
       pbs.push_back( pb_add );
       pbs.push_back( pb_conc_avg );
       // pbs.push_back( pb_select_all_created );
-      pbs.push_back( pb_invert_all_created );
-      pbs.push_back( pb_adjacent_created );
-      pbs.push_back( pb_remove_created );
-      pbs.push_back( pb_save_created_csv );
-      pbs.push_back( pb_save_created );
+      // pbs.push_back( pb_invert_all_created );
+      // pbs.push_back( pb_adjacent_created );
+      // pbs.push_back( pb_remove_created );
+      // pbs.push_back( pb_save_created_csv );
+      // pbs.push_back( pb_save_created );
       // pbs.push_back( pb_show_created );
       // pbs.push_back( pb_show_only_created );
 
@@ -339,8 +338,8 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
       pbs.push_back( pb_gauss_prev );
       pbs.push_back( pb_gauss_next );
       pbs.push_back( pb_legend );
-      pbs.push_back( pb_axis_x );
-      pbs.push_back( pb_axis_y );
+      // pbs.push_back( pb_axis_x );
+      // pbs.push_back( pb_axis_y );
       pbs.push_back( pb_ggauss_rmsd );
       pbs.push_back( pb_ggauss_start );
       pbs.push_back( pb_gauss_save );
@@ -349,10 +348,10 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
       pbs.push_back( pb_baseline_start );
       pbs.push_back( pb_baseline_apply );
         
-      for ( unsigned int i = 0; i < pbs.size(); i++ )
-      {
-         pbs[ i ]->setMaximumWidth( percharwidth * ( pbs[ i ]->text().length() + 2 ) );
-      }
+      // for ( unsigned int i = 0; i < pbs.size(); i++ )
+      // {
+      //    pbs[ i ]->setMaximumWidth( percharwidth * ( pbs[ i ]->text().length() + 2 ) );
+      // }
    }
 
    // lbl_dir        ->setMaximumWidth( lb_files->width() - cb_lock_dir->width() );
@@ -374,7 +373,8 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    //    }
    // #endif
 
-   setGeometry(global_Xpos, global_Ypos, csv_width, 100 + csv_height );
+   //   setGeometry(global_Xpos, global_Ypos, csv_width, 100 + csv_height );
+   setGeometry(global_Xpos, global_Ypos, csv_width, 0 );
 
    suppress_replot = false;
 
@@ -392,7 +392,6 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    push_back_color_if_ok( bgc, Qt::yellow );
    push_back_color_if_ok( bgc, Qt::green );
    push_back_color_if_ok( bgc, Qt::cyan );
-   push_back_color_if_ok( bgc, Qt::blue );
    push_back_color_if_ok( bgc, Qt::red );
    push_back_color_if_ok( bgc, Qt::magenta );
    push_back_color_if_ok( bgc, Qt::darkYellow );
@@ -401,6 +400,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    push_back_color_if_ok( bgc, Qt::darkBlue );
    push_back_color_if_ok( bgc, Qt::darkRed );
    push_back_color_if_ok( bgc, Qt::darkMagenta );
+   push_back_color_if_ok( bgc, Qt::blue );
    push_back_color_if_ok( bgc, Qt::white );
    push_back_color_if_ok( bgc, QColor( 240, 248, 255 ) ); /* Alice Blue */
    push_back_color_if_ok( bgc, QColor( 250, 235, 215 ) ); /* Antique White */
@@ -554,6 +554,9 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
 
    blanks_end_s = 0e0;
    blanks_end_e = 0e0;
+
+   rb_pbmode_main->setChecked( true );
+   pbmode_select( PBMODE_MAIN );
 }
 
 US_Hydrodyn_Saxs_Hplc::~US_Hydrodyn_Saxs_Hplc()
@@ -1002,10 +1005,15 @@ public:
 void US_Hydrodyn_Saxs_Hplc::load_conc()
 {
    add_files( true );
+   rb_pbmode_conc->setChecked( true );
+   pbmode_select( PBMODE_CONC );
 }
 
-void US_Hydrodyn_Saxs_Hplc::add_files( bool load_conc )
-{
+void US_Hydrodyn_Saxs_Hplc::add_dir() {
+   add_files( false, true );
+}
+
+void US_Hydrodyn_Saxs_Hplc::add_files( bool load_conc, bool from_dir ) {
    disable_all();
    map < QString, bool > existing_items;
    if ( !( ( US_Hydrodyn * ) us_hydrodyn )->saxs_options.iq_scale_angstrom ) {
@@ -1036,45 +1044,59 @@ void US_Hydrodyn_Saxs_Hplc::add_files( bool load_conc )
    {
       ((US_Hydrodyn  *)us_hydrodyn)->add_to_directory_history( le_dir->text() );
    }
-   ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+   bool not_ok = ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
    raise();
    // }
 
    QStringList filenames;
 
-   if ( load_conc )
-   {
-      filenames = QFileDialog::getOpenFileNames( this , "Load concentration files" , use_dir , "txt [specify q, I, sigma columns] and csv concentration files (*.txt *.csv);;"
-                                                "dat files [foxs / other] (*.dat);;"
-                                                "All files (*);;"
-                                                "ssaxs files (*.ssaxs);;"
-                                                "txt files [specify q, I, sigma columns] (*.txt);;"
-                                                "csv files (*.csv)" );
-
-      // QString filename = 
-      //    QFileDialog::getOpenFileName(
-      //                                  use_dir
-      //                                  , "txt files [specify q, I, sigma columns] (*.txt);;"
-      //                                  "dat files [foxs / other] (*.dat);;"
-      //                                  "ssaxs files (*.ssaxs);;"
-      //                                  "All files (*);;"
-      //                                  , this
-      //                                  , "open file dialog"
-      //                                  , "Load concfiles" // ? "Set files for grid files"
-      //                                  );
-      // if ( !filename.isEmpty() )
-      // {
-      //    filenames << filename;
-      // }
+   if ( from_dir ) {
+      QString dirname = use_dir;
+      if ( !not_ok ) {
+         QDir up_one( use_dir );
+         up_one.cdUp();
+         dirname = QFileDialog::getExistingDirectory( this
+                                                      ,"Add all .dat files in directory"
+                                                      ,up_one.canonicalPath()
+                                                      ,QFileDialog::ShowDirsOnly );
+      }
+      if ( !dirname.isEmpty() ) {
+         QDir dir( dirname );
+         QStringList filters;
+         filters << "*.dat"; 
+         filenames = dir.entryList( filters ).replaceInStrings( QRegExp( "^" ), dirname + "/" );
+      }
    } else {
-      filenames = QFileDialog::getOpenFileNames( this , "Add files" , use_dir , "dat files [foxs / other] (*.dat);;"
-                                                "All files (*);;"
-                                                "ssaxs files (*.ssaxs);;"
-                                                
-                                                
-                                                
-                                                "txt files [specify q, I, sigma columns] (*.txt)" );
+      if ( load_conc )
+      {
+         filenames = QFileDialog::getOpenFileNames( this , "Load concentration files" , use_dir , "txt [specify q, I, sigma columns] and csv concentration files (*.txt *.csv);;"
+                                                    "dat files [foxs / other] (*.dat);;"
+                                                    "All files (*);;"
+                                                    "ssaxs files (*.ssaxs);;"
+                                                    "txt files [specify q, I, sigma columns] (*.txt);;"
+                                                    "csv files (*.csv)" );
 
+         // QString filename = 
+         //    QFileDialog::getOpenFileName(
+         //                                  use_dir
+         //                                  , "txt files [specify q, I, sigma columns] (*.txt);;"
+         //                                  "dat files [foxs / other] (*.dat);;"
+         //                                  "ssaxs files (*.ssaxs);;"
+         //                                  "All files (*);;"
+         //                                  , this
+         //                                  , "open file dialog"
+         //                                  , "Load concfiles" // ? "Set files for grid files"
+         //                                  );
+         // if ( !filename.isEmpty() )
+         // {
+         //    filenames << filename;
+         // }
+      } else {
+         filenames = QFileDialog::getOpenFileNames( this , "Add files" , use_dir , "dat files [foxs / other] (*.dat);;"
+                                                    "All files (*);;"
+                                                    "ssaxs files (*.ssaxs);;"
+                                                    "txt files [specify q, I, sigma columns] (*.txt)" );
+      }
    }
    
    QStringList add_filenames;
@@ -8723,6 +8745,6 @@ void US_Hydrodyn_Saxs_Hplc::update_gauss_mode()
    }
 
    int percharwidth = 1 + ( 7 * ( USglobal->config_list.fontSize - 1 ) / 10 );
-   pb_gauss_start->setMaximumWidth( percharwidth * ( pb_gauss_start->text().length() + 3 ) );
+   // pb_gauss_start->setMaximumWidth( percharwidth * ( pb_gauss_start->text().length() + 3 ) );
 }
 

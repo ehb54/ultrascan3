@@ -2361,7 +2361,7 @@ void US_Hydrodyn_Saxs_Hplc::options()
    
    parameters[ "gaussian_type" ] = QString( "%1" ).arg( gaussian_type );
    US_Hydrodyn_Saxs_Hplc_Options *sho = 
-      new US_Hydrodyn_Saxs_Hplc_Options( & parameters, this );
+      new US_Hydrodyn_Saxs_Hplc_Options( & parameters, (US_Hydrodyn *) us_hydrodyn, this );
    US_Hydrodyn::fixWinButtons( sho );
    sho->exec();
    delete sho;
@@ -3113,7 +3113,7 @@ void US_Hydrodyn_Saxs_Hplc::pp()
 bool US_Hydrodyn_Saxs_Hplc::ask_to_decimate( map < QString, QString > & parameters ) 
 {
    switch ( QMessageBox::warning(this, 
-                                 windowTitle() + us_tr( " : Optional CorMap Analysis Correlation Correction" )
+                                 windowTitle() + us_tr( " : Optional PVP Analysis Correlation Correction" )
                                  ,us_tr( 
                                     "Warning: datasets having finely spaced q-values might exhibit cross-correlation issues.\n"
                                     "Sampling one every few q points will alleviate this problem.\n"
@@ -3144,7 +3144,7 @@ bool US_Hydrodyn_Saxs_Hplc::ask_to_decimate( map < QString, QString > & paramete
 
    bool ok;
    int result = US_Static::getInteger(
-                                         windowTitle() + us_tr( " : Optional CorMap Analysis Correlation Correction" )
+                                         windowTitle() + us_tr( " : Optional PVP Analysis Correlation Correction" )
                                          ,us_tr( "Sample one q point out of every:" )
                                          ,3
                                          ,3
@@ -3164,9 +3164,9 @@ bool US_Hydrodyn_Saxs_Hplc::ask_cormap_minq( map < QString, QString > & paramete
 {
    bool ok;
    double result = US_Static::getDouble(
-                                           windowTitle() + us_tr( " : Optional CorMap Analysis q minimum cutoff" )
+                                           windowTitle() + us_tr( " : Optional PVP Analysis q minimum cutoff" )
                                            ,us_tr( "If you have noisy low q data, you may wish to eliminate these points\n"
-                                                "from CorMap analysis by setting a non-zero minimum q value here:" )
+                                                "from PVP analysis by setting a non-zero minimum q value here:" )
                                            ,0
                                            ,0
                                            ,parameters.count( "cormap_maxq" ) ? parameters[ "cormap_maxq" ].toDouble() - 0.01 : 0.04
@@ -3217,7 +3217,7 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
       {
          if ( !scale_selected.size() ||
               !scale_selected_names.size() ) {
-            editor_msg( "red", us_tr( "CorMap in scale mode has no files" ) );
+            editor_msg( "red", us_tr( "PVP in scale mode has no files" ) );
             scale_enables();
             return;
          }
@@ -3234,7 +3234,7 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
 
          // if files are time, then grab alternates, otherwise grab alternate q points
          if ( !f_is_time.count( scale_selected_names[ 0 ] ) ) {
-            editor_msg( "red", us_tr( "Internal error: CorMap in scale mode files not in global files" ) );
+            editor_msg( "red", us_tr( "Internal error: PVP in scale mode files not in global files" ) );
             scale_enables();
             return;
          }
@@ -3258,14 +3258,14 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
             for ( int i = 0; i < (int) use_preq_scale_selected_names.size(); ++i ) {
                if ( rx_cap.indexIn( use_preq_scale_selected_names[ i ] ) == -1 ) {
                   // QMessageBox::warning( this
-                  //                       , windowTitle() + us_tr( " : CorMap Analysis" )
+                  //                       , windowTitle() + us_tr( " : PVP Analysis" )
                   //                       , QString( us_tr( "Could not extract q value from file name %1" ) )
                   //                       .arg( use_preq_scale_selected_names[ i ] )
                   //                       ,QMessageBox::Ok | QMessageBox::Default
                   //                       ,QMessageBox::NoButton
                   //                       );
                   editor_msg( "red", 
-                              QString( us_tr( "CorMap Analysis: Could not extract q value from file name %1" ) )
+                              QString( us_tr( "PVP Analysis: Could not extract q value from file name %1" ) )
                               .arg( use_preq_scale_selected_names[ i ] ) );
                   scale_enables();
                   return;
@@ -3281,7 +3281,7 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
          }
             
          if ( use_scale_selected_names.size() < 2 ) {
-            editor_msg( "red", us_tr( "Insufficient curves remaining for CorMap Analysis" ) );
+            editor_msg( "red", us_tr( "Insufficient curves remaining for PVP Analysis" ) );
             scale_enables();
             return;
          }            
@@ -3536,7 +3536,7 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
 
                if ( any_differences )
                {
-                  editor_msg( "red", us_tr( "CorMap: curves must be on the same grid, try 'Crop Common' first." ) );
+                  editor_msg( "red", us_tr( "PVP: curves must be on the same grid, try 'Crop Common' first." ) );
                   scale_enables();
                   return;
                }
@@ -3766,7 +3766,7 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
 
             if ( any_differences )
             {
-               editor_msg( "red", us_tr( "CorMap: curves must be on the same grid, try 'Crop Common' first." ) );
+               editor_msg( "red", us_tr( "PVP: curves must be on the same grid, try 'Crop Common' first." ) );
                blanks_enables();
                return;
             }
@@ -3800,7 +3800,7 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
             for ( int i = 0; i < (int) use_preq_blanks_created.size(); ++i ) {
                // if ( rx_cap.indexIn( use_preq_blanks_created[ i ] ) == -1 ) {
                //    editor_msg( "red", 
-               //                QString( us_tr( "CorMap Analysis: Could not extract q value from file name %1" ) )
+               //                QString( us_tr( "PVP Analysis: Could not extract q value from file name %1" ) )
                //                .arg( use_preq_blanks_created[ i ] ) );
                //    baseline_enables();
                //    return;
@@ -3817,7 +3817,7 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
          }
 
          if ( use_blanks_created.size() < 2 ) {
-            editor_msg( "red", us_tr( "Insufficient curves remaining for CorMap Analysis" ) );
+            editor_msg( "red", us_tr( "Insufficient curves remaining for PVP Analysis" ) );
             blanks_enables();
             return;
          }            
@@ -3846,7 +3846,7 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
          }
          
          if ( !t.size() ) {
-            editor_msg( "red", us_tr( "CorMap in blanks mode has empty start / end range" ) );
+            editor_msg( "red", us_tr( "PVP in blanks mode has empty start / end range" ) );
             blanks_enables();
             return;
          }
@@ -4084,7 +4084,7 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
          // baseline_last_brookesmap_sliding_results.clear( );
 
          if ( !baseline_multi ) {
-            editor_msg( "red", us_tr( "CorMap in baseline mode has no files" ) );
+            editor_msg( "red", us_tr( "PVP in baseline mode has no files" ) );
             baseline_enables();
             return;
          }
@@ -4111,7 +4111,7 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
 
             if ( any_differences )
             {
-               editor_msg( "red", us_tr( "CorMap: curves must be on the same grid, try 'Crop Common' first." ) );
+               editor_msg( "red", us_tr( "PVP: curves must be on the same grid, try 'Crop Common' first." ) );
                baseline_enables();
                return;
             }
@@ -4143,14 +4143,14 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
             for ( int i = 0; i < (int) use_preq_baseline_selected.size(); ++i ) {
                if ( rx_cap.indexIn( use_preq_baseline_selected[ i ] ) == -1 ) {
                   // QMessageBox::warning( this
-                  //                       , windowTitle() + us_tr( " : Baseline CorMap Analysis" )
+                  //                       , windowTitle() + us_tr( " : Baseline PVP Analysis" )
                   //                       , QString( us_tr( "Could not extract q value from file name %1" ) )
                   //                       .arg( use_preq_baseline_selected[ i ] )
                   //                       ,QMessageBox::Ok | QMessageBox::Default
                   //                       ,QMessageBox::NoButton
                   //                       );
                   editor_msg( "red", 
-                              QString( us_tr( "Baseline CorMap Analysis: Could not extract q value from file name %1" ) )
+                              QString( us_tr( "Baseline PVP Analysis: Could not extract q value from file name %1" ) )
                               .arg( use_preq_baseline_selected[ i ] ) );
                   baseline_enables();
                   return;
@@ -4164,7 +4164,7 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
             }
          }
          if ( use_baseline_selected.size() < 2 ) {
-            editor_msg( "red", us_tr( "Insufficient curves remaining for CorMap Analysis" ) );
+            editor_msg( "red", us_tr( "Insufficient curves remaining for PVP Analysis" ) );
             baseline_enables();
             return;
          }            
@@ -4194,7 +4194,7 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
          }
          
          if ( !t.size() ) {
-            editor_msg( "red", us_tr( "CorMap in baseline mode has empty start / end range" ) );
+            editor_msg( "red", us_tr( "PVP in baseline mode has empty start / end range" ) );
             baseline_enables();
             return;
          }
@@ -4385,7 +4385,7 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
    case MODE_GGAUSSIAN :
       {
          if ( !unified_ggaussian_ok ) {
-            editor_msg( "red", us_tr( "Internal error (CorMap): Global Gaussian mode, but unified Global Gaussians are not ok." ) );
+            editor_msg( "red", us_tr( "Internal error (PVP): Global Gaussian mode, but unified Global Gaussians are not ok." ) );
             ggaussian_enables();
             return;
          }
@@ -4403,7 +4403,7 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
                lbl_gauss_fit->setText( QString( "%1" ).arg( ggaussian_rmsd(), 0, 'g', 5 ) );
                pb_ggauss_rmsd->setEnabled( false );
             } else {
-               editor_msg( "red", us_tr( "Internal error (CorMap) building global Gaussians" ) );
+               editor_msg( "red", us_tr( "Internal error (PVP) building global Gaussians" ) );
                ggaussian_enables();
                return;
             }
@@ -4415,7 +4415,7 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
               (int) unified_ggaussian_files.size() != (int) ggaussian_last_pfit_S.size() ||
               (int) unified_ggaussian_files.size() != (int) ggaussian_last_chi2.size() ) {
             editor_msg( "red", 
-                        QString( us_tr( "Internal error (CorMap): Global Gaussian mode, last_pfit_* size (%1 %2 %3 %4 %5) does not match number number of Gaussians (%6)" ) )
+                        QString( us_tr( "Internal error (PVP): Global Gaussian mode, last_pfit_* size (%1 %2 %3 %4 %5) does not match number number of Gaussians (%6)" ) )
                         .arg( ggaussian_last_pfit_P.size() )
                         .arg( ggaussian_last_pfit_N.size() )
                         .arg( ggaussian_last_pfit_C.size() )
@@ -4548,14 +4548,14 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
 
             if ( any_differences )
             {
-               editor_msg( "red", us_tr( "CorMap: curves must be on the same grid, try 'Crop Common' first." ) );
+               editor_msg( "red", us_tr( "PVP: curves must be on the same grid, try 'Crop Common' first." ) );
                update_enables();
                return;
             }
          }
 
          if ( !selected_files.size() ) {
-            editor_msg( "red", us_tr( "CorMap has no files" ) );
+            editor_msg( "red", us_tr( "PVP has no files" ) );
             update_enables();
             return;
          }
@@ -4573,7 +4573,7 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
 
          // if files are time, then grab alternates, otherwise grab alternate q points
          if ( !f_is_time.count( selected_files[ 0 ] ) ) {
-            editor_msg( "red", us_tr( "Internal error: CorMap files not in global files" ) );
+            editor_msg( "red", us_tr( "Internal error: PVP files not in global files" ) );
             update_enables();
             return;
          }
@@ -4597,14 +4597,14 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
             for ( int i = 0; i < (int) use_preq_selected_files.size(); ++i ) {
                if ( rx_cap.indexIn( use_preq_selected_files[ i ] ) == -1 ) {
                   // QMessageBox::warning( this
-                  //                       , windowTitle() + us_tr( " : CorMap Analysis" )
+                  //                       , windowTitle() + us_tr( " : PVP Analysis" )
                   //                       , QString( us_tr( "Could not extract q value from file name %1" ) )
                   //                       .arg( use_preq_selected_files[ i ] )
                   //                       ,QMessageBox::Ok | QMessageBox::Default
                   //                       ,QMessageBox::NoButton
                   //                       );
                   editor_msg( "red", 
-                              QString( us_tr( "CorMap Analysis: Could not extract q value from file name %1" ) )
+                              QString( us_tr( "PVP Analysis: Could not extract q value from file name %1" ) )
                               .arg( use_preq_selected_files[ i ] ) );
                   update_enables();
                   return;
@@ -4620,7 +4620,7 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
          }
             
          if ( use_selected_files.size() < 2 ) {
-            editor_msg( "red", us_tr( "Insufficient curves remaining for CorMap Analysis" ) );
+            editor_msg( "red", us_tr( "Insufficient curves remaining for PVP Analysis" ) );
             update_enables();
             return;
          }            
@@ -4936,7 +4936,7 @@ void US_Hydrodyn_Saxs_Hplc::bb_cm_inc()
    bool increment = false;
 
    switch ( QMessageBox::question(this, 
-                                 windowTitle() + us_tr( " : CorMap analysis auto increment" )
+                                 windowTitle() + us_tr( " : PVP analysis auto increment" )
                                  ,us_tr( 
                                      "Choose your options for automatic running"
                                      )

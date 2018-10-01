@@ -12,9 +12,10 @@
 #include <qlistwidget.h>
 //Added by qt3to4:
 #include <QCloseEvent>
-#if QT_VERSION < 0x050000
-# include <qhttp.h>
-#endif
+
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply> 
 
 #include "us_hydrodyn_cluster.h"
 
@@ -78,23 +79,16 @@ class US_EXTERN US_Hydrodyn_Cluster_Config : public QDialog
 
       void          *cluster_window;
 
-#ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
       map < QString, map < QString, QString > > cluster_systems;
-#ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
-#endif
 
       bool          comm_active;
       QString       comm_mode;
-#if QT_VERSION < 0x050000
-      QHttp         submit_http;
-#endif
+
+      QNetworkAccessManager * http_access_manager;
+      QNetworkRequest         http_request;
+      QNetworkReply         * http_reply;
+      void          http_done( bool error );
+      
       QString       current_http;
       QString       current_http_response;
       QString       current_http_error;
@@ -102,11 +96,6 @@ class US_EXTERN US_Hydrodyn_Cluster_Config : public QDialog
       bool          check_tried;
       bool          check_not_ok;
       void          update_enables();
-      
-      QTcpSocket       test_socket;
-      void          check_socket( QString name, QString port );
-      bool          socket_hostfound;
-      bool          socket_is_connected;
 
    private slots:
 
@@ -132,24 +121,10 @@ class US_EXTERN US_Hydrodyn_Cluster_Config : public QDialog
       void cancel();
       void help();
 
-      void http_stateChanged ( int state );
-#if QT_VERSION < 0x050000
-      void http_responseHeaderReceived ( const QHttpResponseHeader & resp );
-      void http_readyRead ( const QHttpResponseHeader & resp );
-#endif
-      void http_dataSendProgress ( int done, int total );
-      void http_dataReadProgress ( int done, int total );
-      void http_requestStarted ( int id );
-      void http_requestFinished ( int id, bool error );
-      void http_done ( bool error );
-
-      void socket_hostFound ();
-      void socket_connected ();
-      void socket_connectionClosed ();
-      void socket_delayedCloseFinished ();
-      void socket_readyRead ();
-      void socket_bytesWritten ( int nbytes );
-      void socket_error ( int );
+      void http_finished ();
+      void http_error( QNetworkReply::NetworkError code );
+      void http_uploadProgress ( qint64 done, qint64 total );
+      void http_downloadProgress ( qint64 done, qint64 total );
 
    protected slots:
 
