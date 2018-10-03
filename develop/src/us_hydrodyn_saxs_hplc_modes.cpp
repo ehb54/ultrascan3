@@ -1316,15 +1316,19 @@ void US_Hydrodyn_Saxs_Hplc::guinier_scroll_highlight( int pos )
       }
    }
 
-   guinier_plot->setCurveStyle( guinier_fit_lines[ hidename ], QwtCurve::NoCurve );
-   guinier_plot->setCurveStyle( guinier_fit_lines[ showname ], QwtCurve::Lines );
+   if ( guinier_fit_lines.count( hidename ) ) {
+      guinier_plot->setCurveStyle( guinier_fit_lines[ hidename ], QwtCurve::NoCurve );
+   }
+   
+   if ( guinier_fit_lines.count( showname ) ) {
+      guinier_plot->setCurveStyle( guinier_fit_lines[ showname ], QwtCurve::Lines );
+   }
 
-   if ( guinier_error_curves.count( hidename ) )
-   {
+   if ( guinier_error_curves.count( hidename ) ) {
       guinier_plot_errors->setCurveStyle( guinier_error_curves[ hidename ], QwtCurve::NoCurve );
    }
-   if ( guinier_error_curves.count( showname ) )
-   {
+
+   if ( guinier_error_curves.count( showname ) ) {
       guinier_plot_errors->setCurveStyle( guinier_error_curves[ showname ], QwtCurve::Sticks );
    }
 
@@ -1401,8 +1405,13 @@ void US_Hydrodyn_Saxs_Hplc::guinier_scroll_highlight( int pos )
       }
    }
 
-   guinier_fit_lines[ hidename ]->setStyle( QwtPlotCurve::NoCurve );
-   guinier_fit_lines[ showname ]->setStyle( QwtPlotCurve::Lines );
+   if ( guinier_fit_lines.count( hidename ) ) {
+      guinier_fit_lines[ hidename ]->setStyle( QwtPlotCurve::NoCurve );
+   }
+
+   if ( guinier_fit_lines.count( showname ) ) {
+      guinier_fit_lines[ showname ]->setStyle( QwtPlotCurve::Lines );
+   }
 
    if ( guinier_error_curves.count( hidename ) )
    {
@@ -1484,8 +1493,13 @@ void US_Hydrodyn_Saxs_Hplc::guinier_scroll_highlight( int pos )
       }
    }
 
-   guinier_fit_lines[ hidename ]->setStyle( QwtPlotCurve::NoCurve );
-   guinier_fit_lines[ showname ]->setStyle( QwtPlotCurve::Lines );
+   if ( guinier_fit_lines.count( hidename ) ) {
+      guinier_fit_lines[ hidename ]->setStyle( QwtPlotCurve::NoCurve );
+   }
+
+   if ( guinier_fit_lines.count( showname ) ) {
+      guinier_fit_lines[ showname ]->setStyle( QwtPlotCurve::Lines );
+   }
 
    if ( guinier_error_curves.count( hidename ) )
    {
@@ -1585,7 +1599,9 @@ void US_Hydrodyn_Saxs_Hplc::guinier_scroll()
             }
          }
 
-         guinier_plot->setCurveStyle( guinier_fit_lines[ name ], QwtCurve::NoCurve );
+         if ( guinier_fit_lines.count( name ) ) {
+            guinier_plot->setCurveStyle( guinier_fit_lines[ name ], QwtCurve::NoCurve );
+         }
 
          guinier_plot_errors->setCurveStyle( guinier_error_curves[ name ], QwtCurve::NoCurve );
 
@@ -1610,9 +1626,13 @@ void US_Hydrodyn_Saxs_Hplc::guinier_scroll()
             }
          }
 
-         guinier_fit_lines[ name ]->setStyle( QwtPlotCurve::NoCurve );
+         if ( guinier_fit_lines.count( name ) ) {
+            guinier_fit_lines[ name ]->setStyle( QwtPlotCurve::NoCurve );
+         }
 
-         guinier_error_curves[ name ]->setStyle( QwtPlotCurve::NoCurve );
+         if ( guinier_error_curves.count( name ) ) {
+            guinier_error_curves[ name ]->setStyle( QwtPlotCurve::NoCurve );
+         }
 #endif
       }
       if ( guinier_scroll_pos < 0 )
@@ -1655,7 +1675,9 @@ void US_Hydrodyn_Saxs_Hplc::guinier_scroll()
             }
          }
 
-         guinier_plot->setCurveStyle( guinier_fit_lines[ name ], QwtCurve::Lines );
+         if ( guinier_fit_lines.count( name ) ) {
+            guinier_plot->setCurveStyle( guinier_fit_lines[ name ], QwtCurve::Lines );
+         }
          if ( guinier_error_curves.count( name ) )
          {
             guinier_plot_errors->setCurveStyle( guinier_error_curves[ name ], QwtCurve::Sticks );
@@ -1685,7 +1707,9 @@ void US_Hydrodyn_Saxs_Hplc::guinier_scroll()
             }
          }
 
-         guinier_fit_lines[ name ]->setStyle( QwtPlotCurve::Lines );
+         if ( guinier_fit_lines.count( name ) ) {
+            guinier_fit_lines[ name ]->setStyle( QwtPlotCurve::Lines );
+         }
          if ( guinier_error_curves.count( name ) )
          {
              guinier_error_curves[ name ]->setStyle( QwtPlotCurve::Sticks );
@@ -1712,7 +1736,10 @@ void US_Hydrodyn_Saxs_Hplc::guinier_scroll()
             }
          }
 
-         guinier_fit_lines[ name ]->setStyle( QwtPlotCurve::Lines );
+         if ( guinier_fit_lines.count( name ) ) {
+            guinier_fit_lines[ name ]->setStyle( QwtPlotCurve::Lines );
+         }
+
          if ( guinier_error_curves.count( name ) )
          {
             guinier_error_curves[ name ]->setStyle( QwtPlotCurve::Sticks );
