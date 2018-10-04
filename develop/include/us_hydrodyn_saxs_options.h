@@ -82,6 +82,7 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
 
       void setupGUI();
 
+   private slots:
       void sas_options_saxs();
       void sas_options_sans();
       void sas_options_curve();
