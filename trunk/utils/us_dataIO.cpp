@@ -198,7 +198,7 @@ bool US_DataIO::readLegacyFile( const QString&  file,
    QFile ff( file );
    if ( ! ff.open( QIODevice::ReadOnly | QIODevice::Text ) ) return false;
    QTextStream ts( &ff );
-#if 0
+#if 1
    double ss_reso      = 100.0;
    // If debug_text so directs, change set_speed_resolution
    QStringList dbgtxt = US_Settings::debug_text();
@@ -227,7 +227,7 @@ bool US_DataIO::readLegacyFile( const QString&  file,
    data.rpoint        = pp[ 6 ].toDouble();
    data.count         = pp[ 7 ].toInt();
    data.nz_stddev     = false;
-#if 0
+#if 1
    // Round speed to nearest multiple of 100
    data.rpm           = qRound( data.rpm / ss_reso ) * ss_reso;
 #endif
@@ -519,7 +519,7 @@ int US_DataIO::readRawData( const QString& file, RawData& data )
 
    int      err = OK;
    quint32  crc = 0xffffffffUL;
-#if 0
+#if 1
    double ss_reso      = 100.0;
    // If debug_text so directs, change set_speed_resolution
    QStringList dbgtxt = US_Settings::debug_text();
@@ -652,7 +652,7 @@ int US_DataIO::readRawData( const QString& file, RawData& data )
          read( ds, u1.c, 4, crc );
          u2.I = qFromLittleEndian( u1.I );
          sc.rpm = u2.f;
-#if 0
+#if 1
 //sc.rpm = qRound( sc.rpm / 50.0 ) * 50.0;
          // Round speed to nearest multiple of 100 (or other resolution)
          sc.rpm = qRound( sc.rpm / ss_reso ) * ss_reso;
