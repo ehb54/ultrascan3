@@ -1441,16 +1441,16 @@ void US_Astfem_RSA::initialize_conc( int kk, US_AstfemMath::MfemInitial& CT0, bo
             double plen = simparams.cp_pathlen != 0.0 ? simparams.cp_pathlen : 1.2;
             double base = sq( af_params.current_meniscus )+ simparams.band_volume * 360.0 / ( angl * plen * M_PI );
             double lamella_width = sqrt( base ) - af_params.current_meniscus;
-int mxct=0;
             // Calculate the spread of the lamella:
            for ( int j = 0; j < nval; j++ )
            {
-               base = ( CT0.radius[ j ] - af_params.current_meniscus )/ lamella_width;
+               base = ( CT0.radius[ j ] - af_params.current_meniscus ) / lamella_width;
                CT0.concentration[ j ] += sc->signal_concentration * exp( -pow( base, 4.0 ) );
 if (  j<2||j>(CT0.concentration.size()-3)||j==(CT0.concentration.size()/40))
  DbgLv(2) << "RSA:  j base conc" << j << base << CT0.concentration[j];
 if(mxct<CT0.concentration[j]) {mxct=CT0.concentration[j];}
            }
+DbgLv(1) << "RSA:BF:  mxct" << mxct << "lamella_width" << lamella_width;
         }
         else  // !simparams.band_forming
         {
@@ -1784,6 +1784,8 @@ DbgLv(1) << "C_ni:  Nx" << Nx << "rA0 rAn" << rA[0] << rA[Nx-1];
 //   const double z_tolerance = 1.0e-5;
    const double z_toler_factor = 1.0e-10;
    double z_tolerance          = tot_conc * z_toler_factor;
+   if  ( simparams.band_forming )
+      z_tolerance        = 0.0;
 
    if ( ! is_zero )
    {  // If not already into virtual-zero scans, test this one
