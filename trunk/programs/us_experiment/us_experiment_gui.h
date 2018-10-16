@@ -753,6 +753,8 @@ class US_ExperimentMain : public US_Widgets
       QPushButton* pb_prev;
       QPushButton* pb_close;
 
+      bool solutions_change;
+
    private:
 
       QTabWidget*           tabWidget;      // Tab Widget holding the panels

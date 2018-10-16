@@ -382,7 +382,7 @@ DbgLv(1) << "EGGe: inP: prn,prd counts" << protdata.count() << pr_names.count();
    ct_tedelay     ->setValue( currProto->temeq_delay );
    
    check_user_level();
-
+   
 }
 
 //IF USER cannot edit anything (low-level user)
@@ -1226,11 +1226,27 @@ DbgLv(1) << "EGCe:st: nused is_done" << rpCells->nused << is_done;
 // Initialize a Solutions panel, especially after clicking on its tab
 void US_ExperGuiSolutions::initPanel()
 {
-   rpSolut             = &(mainw->currProto.rpSolut);
+
+  rpSolut             = &(mainw->currProto.rpSolut);
 
 DbgLv(1) << "EGSo:inP: call rbS";
-   rebuild_Solut();
-DbgLv(1) << "EGSo:inP:  aft rbS nchant" << nchant << "nchanf" << nchanf;
+
+   //ALEXEY: update solutions  if investigator change
+ qDebug() << "SOLUTIONS: " << mainw->solutions_change;
+  if ( mainw->solutions_change )
+    {
+      qDebug() << "Changing SOLUTIONS: !!!";
+      regenSolList();
+      mainw->solutions_change = false;
+    }
+
+
+  qDebug() << "SOLNAMES IN SOLINIT: " << sonames;
+  rebuild_Solut();
+
+  qDebug() << "SOLUTIONS: " << mainw->solutions_change;
+  
+  DbgLv(1) << "EGSo:inP:  aft rbS nchant" << nchant << "nchanf" << nchanf;
 
    QString unspec      = tr( "(unspecified)" );
    QString lab_none( "none" );

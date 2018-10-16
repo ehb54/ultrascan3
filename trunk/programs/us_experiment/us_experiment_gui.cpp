@@ -111,7 +111,6 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    setMinimumSize( 950, 450 );
    adjustSize();
 
-   
    //epanGeneral->initPanel();
    epanGeneral->loaded_proto = 0;
    epanGeneral->check_user_level();
@@ -247,6 +246,8 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
       pr_names << protdata[ ii ][ 0 ];
 DbgLv(1) << "EGGe: main : prnames,prdata counts" << pr_names.count() << protdata.count();
 
+ 
+ mainw->solutions_change = false; 
    // Do the initialization we do at panel entry
    initPanel();
 }
@@ -355,7 +356,10 @@ void US_ExperGuiGeneral::sel_project( void )
 void US_ExperGuiGeneral::sel_investigator( void )
 {
    int investID     = US_Settings::us_inv_ID();
-
+   int old_investID  = investID;
+   
+   qDebug() << "Old invID: " << investID;
+   
    US_Investigator* dialog = new US_Investigator( true, investID );
    dialog->exec();
 
@@ -368,7 +372,34 @@ void US_ExperGuiGeneral::sel_investigator( void )
    le_investigator->setText( inv_text );
    
    DbgLv(1) << "User Level: " << US_Settings::us_inv_level();
+   qDebug() << "NEW invID: " << investID;
 
+
+   // ALEXEY: Re-read in summary information on all existing run protocols when user changed
+   if (investID != old_investID)
+     {
+       mainw->solutions_change = true;
+       
+       bool fromdisk         = US_Settings::debug_match( "protocolFromDisk" );
+       bool load_db          = fromdisk ? false : use_db;
+       US_Passwd  pw;
+       US_DB2* dbP           = load_db ? new US_DB2( pw.getPasswd() ) : NULL;
+       
+       US_ProtocolUtil::list_all( protdata, dbP );
+       
+       for ( int ii = 0; ii < protdata.count(); ii++ )
+	 pr_names << protdata[ ii ][ 0 ];
+       DbgLv(1) << "EGGe: main : prnames,prdata counts" << pr_names.count() << protdata.count();
+       
+       // Reset and Initialize
+       currProto->runname      = "";
+       currProto->protname     = "";
+       currProto->project      = "";
+       currProto->temperature  = 20.0;
+       currProto->temeq_delay  = 10.0;
+       initPanel();
+     }
+      
 }
 
 
@@ -1927,46 +1958,58 @@ void US_ExperGuiSolutions::rebuild_Solut( void )
    int nchans          = sibIValue( "cells", "nchans" );
 DbgLv(1) << "EGSo: rbS: nchans nchant" << nchans << nchant
  << "rpS.nschan" << rpSolut->nschan;
-   if ( nchans == nchant )     // No cells change means no rebuild //ALEXEY: wrong condition !!! have to also compare content of channels vs cells
-     {
+
+//  ALEXEY - The following section conflicts when investigator changed;
+//           In principle, not needed !!!
+
+ // if ( nchans == nchant )     // No cells change means no rebuild //ALEXEY: wrong condition !!! have to also compare content of channels vs cells
+ //     {
       
-       //ALEXEY: need to compare srchans QStringLists from Solutions && Cells:
-       QStringList srchans_check;
-       srchans_check.clear();
+ //       //ALEXEY: need to compare srchans QStringLists from Solutions && Cells:
+ //       QStringList srchans_check;
+ //       srchans_check.clear();
        
-       QStringList centps_check  = sibLValue( "cells", "centerpieces" );
-       int ncused_check          = centps_check.count();
+ //       QStringList centps_check  = sibLValue( "cells", "centerpieces" );
+ //       int ncused_check          = centps_check.count();
               
-       for ( int ii = 0; ii < ncused_check; ii++ )
-	 {
-	   QString centry_check      = centps_check[ ii ];
-	   int chx_check             = centry_check.indexOf( "-channel" );
-	   if ( chx_check > 0 )
-	     {
-	       QString scell_check       = centry_check.section( ":", 0, 0 )
-		 .section( " ", 1, 1 );
-	       QString schans_check( "ABCDEF" );
-	       int nchan_check           = centry_check.left( chx_check ).section( " ", -1, -1 )
-		 .simplified().toInt();
-	       for ( int jj = 0; jj < nchan_check; jj++ )
-		 {
-		   QString channel_check     = scell_check + " / " + QString( schans_check ).mid( jj, 1 );
-		   if ( (QString( schans_check ).mid( jj, 1 )).contains( "A" ) )                   //ALEXEY: channel lables
-		     srchans_check << channel_check + ", sample [right]";
-		   else if ( (QString( schans_check ).mid( jj, 1 )).contains( "B" ) )
-		     srchans_check << channel_check + ", reference [left]";
-		   else
-		     srchans_check << channel_check;
-		 }
-	     }
-	 }
+ //       for ( int ii = 0; ii < ncused_check; ii++ )
+ // 	 {
+ // 	   QString centry_check      = centps_check[ ii ];
+ // 	   int chx_check             = centry_check.indexOf( "-channel" );
+ // 	   if ( chx_check > 0 )
+ // 	     {
+ // 	       QString scell_check       = centry_check.section( ":", 0, 0 )
+ // 		 .section( " ", 1, 1 );
+ // 	       QString schans_check( "ABCDEF" );
+ // 	       int nchan_check           = centry_check.left( chx_check ).section( " ", -1, -1 )
+ // 		 .simplified().toInt();
+ // 	       for ( int jj = 0; jj < nchan_check; jj++ )
+ // 		 {
+ // 		   QString channel_check     = scell_check + " / " + QString( schans_check ).mid( jj, 1 );
+ // 		   if ( (QString( schans_check ).mid( jj, 1 )).contains( "A" ) )                   //ALEXEY: channel lables
+ // 		     srchans_check << channel_check + ", sample [right]";
+ // 		   else if ( (QString( schans_check ).mid( jj, 1 )).contains( "B" ) )
+ // 		     srchans_check << channel_check + ", reference [left]";
+ // 		   else
+ // 		     srchans_check << channel_check;
+ // 		 }
+ // 	     }
+ // 	 }
        
-       DbgLv(1) << "SRCHANS from (Solutions):         " << srchans;
-       DbgLv(1) << "SRCHANS (from actual Cells):      " << srchans_check;
+ //       DbgLv(1) << "SRCHANS from (Solutions):         " << srchans;
+ //       DbgLv(1) << "SRCHANS (from actual Cells):      " << srchans_check;
+
+ //       if (srchans_check == srchans )
+ // 	 return;                                         //ALEXEY: only now we can return
        
-       if (srchans_check == srchans)
-	 return;                                 //ALEXEY: only now we can return        
-     }
+ //       // if (srchans_check == srchans && !mainw->solutions_change )
+ //       // 	 {
+ //       // 	   qDebug()<< "Exiting Rebulding Solutions "; 
+ //       // 	   return;                                 //ALEXEY: only now we can return        
+ //       // 	 }
+ //     }
+
+
        
    if ( rpSolut->nschan == 0 )
    {  // No existing Solutions protocol, so initialize a rudimentary one
@@ -2095,7 +2138,7 @@ void US_ExperGuiSolutions::regenSolList()
   for ( int ii = 0; ii < cc_solus.count(); ii++ )
     {
       QComboBox* cbsolu  = cc_solus[ ii ];
-      if ( ! cbsolu->isVisible() )     // Break when invisible row reached
+      if ( ! cbsolu->isVisible() && ! mainw->solutions_change )     // Break when invisible row reached - IF investigator not changed!!!
 	break;
 
       // Before cleaning save currently selected text for each channel in case protocol is loaded
@@ -3370,6 +3413,11 @@ DbgLv(1) << "EGUp:svRP:   dbP" << dbP;
    ck_prot_svd->setChecked( true );
    DbgLv(1) << "BEFORE!!!"; 
    //DbgLv(1) << "EGUp:svRP:  new protname" << protname << "prdats0" << prdats[0]; //ALEXEY: this statement caused issues when no protocol existed
+
+   QString mtitle_done    = tr( "Success" );
+   QString message_done   = tr( "Protocol has been successfully saved." );
+   QMessageBox::information( this, mtitle_done, message_done );
+   
 }
 
 // Slot to submit the experiment to the Optima DB
