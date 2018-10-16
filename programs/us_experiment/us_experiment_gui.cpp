@@ -1809,17 +1809,47 @@ DbgLv(1) << "EGCe:cpChg:  sname irow" << sname << irow;
 DbgLv(1) << "EGCe:cpChg:  xrow icbal" << xrow << icbal;
 
       if ( xrow == icbal )
-      {  // Cross cell is counterbalance
-         jsel                = 1;       // Usually "Beckman counterbalance"
-         QString cpname      = cc_cenps[ irow ]->currentText();
-DbgLv(1) << "EGCe:cpChg:   cpname" << cpname << "tcb_centps" << tcb_centps;
-         if ( tcb_centps.contains( cpname ) )
-            jsel                = 2;    // In some cases "Titanium counterbalance"
-      }
+	{
+	  if ( cc_cenps[ xrow ]->currentText().contains( tr( "counterbalance" ) ) )
+	    {  // Cross cell is counterbalance
+	      jsel                = 1;       // Usually "Beckman counterbalance"
+	      QString cpname      = cc_cenps[ irow ]->currentText();
+	      DbgLv(1) << "EGCe:cpChg:   cpname" << cpname << "tcb_centps" << tcb_centps;
+	      if ( tcb_centps.contains( cpname ) )
+		jsel                = 2;    // In some cases "Titanium counterbalance"
+	    }
+	  else
+	    {
+	      jsel = sel + 3;        //ALEXEY  plus 3 since cent. list is longer in counterbalance rows
+	    }
+	}
 
 DbgLv(1) << "EGCe:cpChg:   CB:jsel" << jsel;
       cc_cenps[ xrow ]->setCurrentIndex( jsel );
    }
+   else     //ALEXEY: if index of the counterbalance - treat when NOT counterbalance
+   {
+     QString cpname_counter      = cc_cenps[ irow ]->currentText();
+     if ( ! cpname_counter.contains( tr( "counterbalance" ) ) )
+       {
+	 cc_winds[ irow ]->setVisible( true );
+	 //ALEXEY: change cross cell centerpiece (8->4, or 4->2)
+	 int halfnh_c          = nholes / 2; 
+	 int xrow_c            = irow - halfnh_c;
+	 int jsel_c            = sel - 3;        // Use same centerpiece for cross (minus 3 since cent. list is longer in counterbalance rows)
+
+	 cc_cenps[ xrow_c ]->setCurrentIndex( jsel_c );
+
+	 // Set windows
+	 if ( cc_winds[ xrow_c ]->currentText().contains( tr( "quartz" ) ) )
+	   cc_winds[ irow ]->setCurrentIndex( 0 );
+	 else if ( cc_winds[ xrow_c ]->currentText().contains( tr( "sapphire" ) ) )
+	   cc_winds[ irow ]->setCurrentIndex( 1 );
+       }
+     else
+       cc_winds[ irow ]->setVisible( false );
+   }
+
 }
 
 // Slot for change in windows selection
@@ -1834,11 +1864,32 @@ DbgLv(1) << "EGCe:wiChg:  sname irow" << sname << irow;
    int icbal           = nholes - 1;     // Counter-balance index
 
    if ( irow != icbal )
-   {  // Not counterbalance:  change cross cell
-      int halfnh          = nholes / 2;     // Half number holes
-      int xrow            = ( irow < halfnh ) ? irow + halfnh : irow - halfnh;
-      cc_winds[ xrow ]->setCurrentIndex( sel );
-   }
+     {  // Not counterbalance:  change cross cell
+       int halfnh          = nholes / 2;     // Half number holes
+       int xrow            = ( irow < halfnh ) ? irow + halfnh : irow - halfnh;
+
+       if ( xrow == icbal )
+	{
+	  // ALEXEY: Cross cell is counterbalance but used as centerpiece 
+	  if ( ! cc_cenps[ xrow ]->currentText().contains( tr( "counterbalance" ) ) )
+	    {  
+	      cc_winds[ xrow ]->setCurrentIndex( sel );
+	    }
+	}
+       else
+	 cc_winds[ xrow ]->setCurrentIndex( sel );
+     }
+   else   //ALEXEY: if index of the counterbalance - treat when NOT counterbalance
+     {
+       QString cpname_counter      = cc_cenps[ irow ]->currentText();
+       if ( ! cpname_counter.contains( tr( "counterbalance" ) ) )
+	 {
+	   //ALEXEY: change cross cell centerpiece (8->4, or 4->2)
+	   int halfnh_c          = nholes / 2; 
+	   int xrow_c            = irow - halfnh_c;
+	   cc_winds[ xrow_c ]->setCurrentIndex( sel );
+	 }
+     }
 }                  
 
 // Panel for Solutions parameters

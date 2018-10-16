@@ -948,6 +948,8 @@ DbgLv(1) << "EGCe:inP: nholes" << nholes << "nused" << nused;
       {  // Counterbalance when list is centerpieces: reset list
          cc_cenps[ ii ]->clear();
 	 cc_cenps[ ii ]->addItems( sl_bals );   // Choose from counterbalances
+
+	 cc_cenps[ ii ]->addItems( cpnames );   // ALEXEY: add to Choose from centerpieces  also
       }
 
       for ( int jj = 0; jj < nused; jj++ )
@@ -956,9 +958,23 @@ DbgLv(1) << "EGCe:inP:     ii" << ii << "jj" << jj << "cell cellj"
  << cell << rpCells->used[jj].cell;
          if ( cell == rpCells->used[ jj ].cell )
          {  // This is a used cell:  populate a table row
-            QString cenbal      =  ( ii != icbal )
-                                   ? rpCells->used[ jj ].centerpiece
-                                   : rpCells->used[ jj ].cbalance;
+	   // QString cenbal      =  ( ii != icbal )                                //ALEXEY - change needed!
+           //                         ? rpCells->used[ jj ].centerpiece
+           //                         : rpCells->used[ jj ].cbalance;
+
+	   QString cenbal;
+	   if ( ii != icbal )
+	     {
+	       cenbal = rpCells->used[ jj ].centerpiece;
+	     }
+	   else
+	     {
+	       if ( rpCells->used[ jj ].cbalance.contains( tr( "centerpiece" ) ) )
+		 cenbal = rpCells->used[ jj ].centerpiece;
+	       else
+		 cenbal = rpCells->used[ jj ].cbalance;
+	     }
+	   
             setCbCurrentText( cc_cenps[ ii ], cenbal );
             setCbCurrentText( cc_winds[ ii ], rpCells->used[ jj ].windows );
             is_used             = true;
@@ -970,9 +986,20 @@ DbgLv(1) << "EGCe:inP:       kused" << kused;
 
       // Set visibility of Windows column based on is/not counterbalance
       cc_labls[ ii ]->setVisible( true );
-      cc_cenps[ ii ]->setVisible( true );
-      cc_winds[ ii ]->setVisible( ii != icbal );
-
+      cc_cenps[ ii ]->setVisible( true );    
+      //cc_winds[ ii ]->setVisible( ii != icbal );                    //ALEXEY  - to change!!!
+      if ( ii != icbal )
+	cc_winds[ ii ]->setVisible( true );
+      else
+	{
+	  if ( ! cc_cenps[ ii ]->currentText().contains( tr( "counterbalance" ) ) )
+	    {
+	      cc_winds[ ii ]->setVisible( true );
+	    }
+	  else
+	    cc_winds[ ii ]->setVisible( false );
+	}
+      
       // Select "empty" for not-used cells
       if ( ! is_used )
       {
@@ -1036,7 +1063,7 @@ DbgLv(1) << "EGCe:svP:  ii" << ii << "celnam" << celnam << "jj" << jj;
          rpCells->used[ jj ].cell = ii + 1;
          QString centp       = cc_cenps[ ii ]->currentText();
 DbgLv(1) << "EGCe:svP:    centp" << centp;
-         if ( ii != icbal )
+         if ( ii != icbal )                               //ALEXEY - change needed
          {
             rpCells->used[ jj ].centerpiece = centp;
             rpCells->used[ jj ].cbalance    = "(centerpiece)";
@@ -1044,10 +1071,20 @@ DbgLv(1) << "EGCe:svP:    centp" << centp;
          }
          else
          {
-            rpCells->used[ jj ].cbalance    = centp;
-            rpCells->used[ jj ].centerpiece = "(counterbalance)";
-            rpCells->used[ jj ].windows     = "";
-         }
+	   // ALEXEY: check if last cell is used as centerpiece
+	   if ( ! centp.contains( tr( "counterbalance" ) ) )
+	     {
+	       rpCells->used[ jj ].centerpiece = centp;
+	       rpCells->used[ jj ].cbalance    = "(centerpiece)";
+	       rpCells->used[ jj ].windows     = cc_winds[ ii ]->currentText();
+	     }
+	   else
+	     {     
+	       rpCells->used[ jj ].cbalance    = centp;
+	       rpCells->used[ jj ].centerpiece = "(counterbalance)";
+	       rpCells->used[ jj ].windows     = "";
+	     }
+	 }
 DbgLv(1) << "EGCe:svP:     cp cb wi" << rpCells->used[jj].centerpiece
  << rpCells->used[jj].cbalance << rpCells->used[jj].windows;
       }
@@ -1167,7 +1204,11 @@ DbgLv(1) << "EGCe:getSL:     ii" << ii << " Entry" << centry;
  DbgLv(1) << "USED CELL: " << icell;	 
 
  //if ( icell >= icbal )   continue;                   // Skip counterbal.      //ALEXEY bug
-	 if ( icell > icbal )   continue;                   // Skip counterbal.
+
+         if ( icell > icbal && rpCells->used[ ii ].cbalance.contains( tr( "countebalance" ) ) )
+	   continue;                                             // Skip counterbal. ONLY if it's NOT centerpiece
+	 
+	 
          QString channel  = QString( "%1 / " ).arg( icell ); // Start channel
          QString centp    = rpCells->used[ ii ].centerpiece; // Centerpiece
          int chx          = centp.indexOf( "-channel" );     // Index chan count
@@ -1532,6 +1573,20 @@ DbgLv(1) << "EGOp:inP:  call rbO";
    QString slabl_n( "none" );
 DbgLv(1) << "EGOp:inP: nochan" << nochan;
 
+   //ALEXEY: if last cell is used as centerpiece, disable Rayleigh Interference (ckbox2)
+   int nholes                 = sibIValue( "rotor",   "nholes" );
+   bool ctrbal_is_centerpiece = false;
+   for ( int ii = 0; ii < nochan; ii++ )
+     {
+       QString channel     = rpOptic->chopts[ ii ].channel;
+       
+       int cell_number = ((channel.split(QRegExp("\\s+"), QString::SkipEmptyParts))[0]).toInt();
+       qDebug() << "CELL ####: " << cell_number;
+       if ( nholes == cell_number )
+	 ctrbal_is_centerpiece = true; 
+     }
+
+   
    for ( int ii = 0; ii < nochan; ii++ )
    {
       QString channel     = rpOptic->chopts[ ii ].channel;
@@ -1557,12 +1612,19 @@ DbgLv(1) << "EGOp:inP:  ii" << ii << "channel" << channel
       QString ckscan3     = ckbox3->text();
       ckbox1->setChecked( prscans.contains( ckscan1 ) );
       //ckbox2->setChecked( prscans.contains( ckscan2 ) );   //ALEXEY do not check Interference by default
+
+      //ALEXEY: if last cell is used as centerpiece, disable Rayleigh Interference (ckbox2)
+      ckbox2->setEnabled(true);
+      if ( ctrbal_is_centerpiece )
+	ckbox2->setEnabled(false);
+      
       ckbox3->setChecked( prscans.contains( ckscan3 ) );
       ckbox1->setVisible( ! ckscan1.contains( notinst ) );
       ckbox2->setVisible( ! ckscan2.contains( notinst ) );
       ckbox3->setVisible( ! ckscan3.contains( notinst ) );
    }
 
+   
 DbgLv(1) << "EGOp:inP: nochan" << nochan << "mxrow" << mxrow;
    // Make remaining rows invisible
    for ( int ii = nochan; ii < mxrow; ii++ )
