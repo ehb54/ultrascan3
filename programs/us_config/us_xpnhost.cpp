@@ -579,7 +579,12 @@ qDebug() << "deleteDB:  item" << item;
          QStringList defaultDB = US_Settings::defaultXpnHost();
 
          if ( defaultDB.at( 0 ) == item )
-            US_Settings::set_def_xpn_host( QStringList() );
+         {
+            if ( dblist.size() > 0 )
+               US_Settings::set_def_xpn_host( dblist.at(0) );
+            else
+               US_Settings::set_def_xpn_host( QStringList() );
+         }
 
          reset();
 
