@@ -965,11 +965,16 @@ DbgLv(1) << "EGCe:inP:     ii" << ii << "jj" << jj << "cell cellj"
 	   QString cenbal;
 	   if ( ii != icbal )
 	     {
+	       //qDebug() << "POPULATING INNER CELL - cbalance   !!!!! :  " << rpCells->used[ jj ].cbalance;
+	       //qDebug() << "POPULATING INNER CELL - centerpiece!!!!! :  " << rpCells->used[ jj ].centerpiece;
 	       cenbal = rpCells->used[ jj ].centerpiece;
 	     }
 	   else
 	     {
-	       if ( rpCells->used[ jj ].cbalance.contains( tr( "centerpiece" ) ) )
+	       //qDebug() << "POPULATING LAST CELL - cbalance   !!!!! :  " << rpCells->used[ jj ].cbalance;
+	       //qDebug() << "POPULATING LAST CELL - centerpiece!!!!! :  " << rpCells->used[ jj ].centerpiece;
+	       //if ( rpCells->used[ jj ].cbalance.contains( tr( "centerpiece" ) ) )
+	       if ( rpCells->used[ jj ].cbalance.isEmpty()  )
 		 cenbal = rpCells->used[ jj ].centerpiece;
 	       else
 		 cenbal = rpCells->used[ jj ].cbalance;
@@ -1072,6 +1077,7 @@ DbgLv(1) << "EGCe:svP:    centp" << centp;
          else
          {
 	   // ALEXEY: check if last cell is used as centerpiece
+	   qDebug() << "LAST CELL###: " << centp; 
 	   if ( ! centp.contains( tr( "counterbalance" ) ) )
 	     {
 	       rpCells->used[ jj ].centerpiece = centp;

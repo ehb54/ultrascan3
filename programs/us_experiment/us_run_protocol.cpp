@@ -503,7 +503,13 @@ bool US_RunProtocol::RunProtoCells::toXml( QXmlStreamWriter& xmlo )
        }           
       else
       {
-	xmlo.writeAttribute( "counterbalance", used[ ii ].cbalance    );   // ALEXEY: Potential BUG: WHY last cell is always counterbalance ?? 
+	if ( used[ ii ].cbalance.contains( "centerpiece"  ) )
+	  {
+	    xmlo.writeAttribute( "centerpiece",    used[ ii ].centerpiece );
+	    xmlo.writeAttribute( "windows",        used[ ii ].windows     );
+	  }
+	else
+	  xmlo.writeAttribute( "counterbalance", used[ ii ].cbalance    );   // ALEXEY: not always counterbalance
       }
       xmlo.writeEndElement(); // cell
    }
