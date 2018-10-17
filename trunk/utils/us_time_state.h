@@ -99,7 +99,7 @@ class US_UTIL_EXTERN US_TimeState : public QObject
       int time_count( );
 
       //! \brief Get the set_speed resolution.
-      //! \return         Number of data records present in the data.
+      //! \return         The set-speed resolution value (default=100).
       int ss_resolution( );
 
       //! \brief Get the nature and parameters of the time range.

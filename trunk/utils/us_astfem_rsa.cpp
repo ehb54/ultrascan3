@@ -1780,8 +1780,8 @@ DbgLv(1) << "C_ni:  Nx" << Nx << "rA0 rAn" << rA[0] << rA[Nx-1];
    // Interpolate initial concentration vector onto C0 grid-
    US_AstfemMath::interpolate_C0( C_init, C0, x );
 
-//   bool is_zero    = false;
-//   const double z_tolerance = 1.0e-5;
+   // Determine zero tolerance: factor of total concentration; or
+   //   zero (if band-forming), so "is_zero" is never set true
    const double z_toler_factor = 1.0e-10;
    double z_tolerance          = tot_conc * z_toler_factor;
    if  ( simparams.band_forming )
@@ -1792,11 +1792,11 @@ DbgLv(1) << "C_ni:  Nx" << Nx << "rA0 rAn" << rA[0] << rA[Nx-1];
       double rad_last = af_params.current_bottom - 0.04;
 
       for ( int jr =  C_init.radius.size() - 1; jr > 1; jr-- )
-      {
+      {  // Look for virtually-zero concentration from last radius back
          if ( C_init.radius[ jr ] < rad_last )
          {
             if ( C_init.concentration[ jr ] < z_tolerance )
-            {
+            {  // Concentration very low, so flag simulation zero here on out
                is_zero         = true;
             }
 DbgLv(1) << "jr" << jr << "C_init.conc[jr]" << C_init.concentration[jr] << "z_toler" << z_tolerance

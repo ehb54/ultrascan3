@@ -513,7 +513,12 @@ void US_Database::deleteDB( void )
       QStringList defaultDB = US_Settings::defaultDB();
 
       if ( defaultDB.at( 0 ) == item )
-        US_Settings::set_defaultDB( QStringList() );
+      {
+        if ( dblist.size() > 0 )
+          US_Settings::set_defaultDB( dblist.at( 0 ) );
+        else
+          US_Settings::set_defaultDB( QStringList() );
+      }
 
       reset();
 
