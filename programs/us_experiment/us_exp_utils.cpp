@@ -974,7 +974,7 @@ DbgLv(1) << "EGCe:inP:     ii" << ii << "jj" << jj << "cell cellj"
 	       //qDebug() << "POPULATING LAST CELL - cbalance   !!!!! :  " << rpCells->used[ jj ].cbalance;
 	       //qDebug() << "POPULATING LAST CELL - centerpiece!!!!! :  " << rpCells->used[ jj ].centerpiece;
 	       //if ( rpCells->used[ jj ].cbalance.contains( tr( "centerpiece" ) ) )
-	       if ( rpCells->used[ jj ].cbalance.isEmpty()  )
+	       if ( rpCells->used[ jj ].cbalance.isEmpty() || rpCells->used[ jj ].cbalance.contains( tr( "centerpiece" ) ) )
 		 cenbal = rpCells->used[ jj ].centerpiece;
 	       else
 		 cenbal = rpCells->used[ jj ].cbalance;
