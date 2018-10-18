@@ -4207,7 +4207,11 @@ void US_ExperGuiUpload::submitExperiment()
        QString cellcount            = QString::number(ncells);
        QString fugeprofile          = QString::number(FugeProfileId);
        QStringList researcher_split = (mainw->currProto.investigator).split(':'); 
+
        QString researcher           = "\'" + researcher_split[1].trimmed() + "\'";
+       QRegExp rx( "[^A-Za-z0-9_-]" );
+       researcher.replace( rx,  "" );
+       
        QString name                 = "\'" + runname + "\'";
        QString exp_comments         = "\'Run by " + researcher_split[1].trimmed() + ": " + mainw->currProto.runname + " based on project " + mainw->currProto.project + "\'";         
        
