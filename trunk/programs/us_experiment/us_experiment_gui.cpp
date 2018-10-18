@@ -4209,7 +4209,7 @@ void US_ExperGuiUpload::submitExperiment()
 
        QStringList researcher_split = (mainw->currProto.investigator).split(':'); 
        QString researcher_trimmed   = researcher_split[1].trimmed();
-       QRegExp rx( "[^A-Za-z0-9_-]" );
+       QRegExp rx( "[^A-Za-z0-9_-, ]" );
        researcher_trimmed.replace( rx,  "" );
        QString researcher           = "\'" + researcher_trimmed + "\'";
        
