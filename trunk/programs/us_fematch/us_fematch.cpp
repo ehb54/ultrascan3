@@ -2138,6 +2138,7 @@ DbgLv(1) << "SimMdl: 1-sec-intv file created";
          }
 
          simparams.simSpeedsFromTimeState( tmst_fpath );
+         simparams.speedstepsFromSSprof();
       }
    }
    else
@@ -2165,7 +2166,7 @@ DbgLv(1) << "SimMdl:  accel-calc:  t1 t2 w2t t_acc speed rate"
    int accel1    = simparams.speed_step[ 0 ].acceleration;
    int rspeed    = simparams.speed_step[ 0 ].rotorspeed;
    int tf_aend   = ( rspeed + accel1 - 1 ) / accel1;
-DbgLv(1)<<"SimMdl: ssck: rspeed accel1 tf_aend tf_scan"
+DbgLv(1) << "SimMdl: ssck: rspeed accel1 tf_aend tf_scan"
  << rspeed << accel1 << tf_aend << tf_scan;
 //x0  1  2  3  4  5
    if ( accel1 < 250  ||  tf_aend > ( tf_scan - 6 ) )
