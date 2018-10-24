@@ -1204,18 +1204,27 @@ bool US_SelectWavelengths_manual::wln_entered( void )
   // CHECK for syntax
   QString text = le_wrange->text();
 
-  QRegExp rx1("[(\\d{3}),]+");
-  QRegExp rx2("[(\\d{3}),]*(\\d{3})-(\\d{3})[,(\\d{3})]*");
-  QRegExp rx3("[(\\d{3}),]*(\\d{3})-(\\d{3}):(\\d+)[,(\\d{3})]*");
-  QRegExp rx4("[(\\d{3}),]*(\\d{3})-(\\d{3})[,(\\d{3})]*(\\d{3})-(\\d{3})[,(\\d{3})]*");
-  QRegExp rx5("[(\\d{3}),]*(\\d{3})-(\\d{3}):(\\d+)[,(\\d{3})]*(\\d{3})-(\\d{3}):(\\d+)[,(\\d{3})]*");
-  QRegExp rx6("[(\\d{3}),]*(\\d{3})-(\\d{3}):(\\d+)[,(\\d{3})]*(\\d{3})-(\\d{3})[,(\\d{3})]*");
-  QRegExp rx7("[(\\d{3}),]*(\\d{3})-(\\d{3})[,(\\d{3})]*(\\d{3})-(\\d{3}):(\\d+)[,(\\d{3})]*");
-
+  //QRegExp rx1("[(\\d{3}),]+");
+  //QRegExp rx2("[(\\d{3}),]*(\\d{3})-(\\d{3})[,(\\d{3})]*");
+  //QRegExp rx3("[(\\d{3}),]*(\\d{3})-(\\d{3}):(\\d+)[,(\\d{3})]*");
+  //QRegExp rx4("[(\\d{3}),]*(\\d{3})-(\\d{3})[,(\\d{3})]*(\\d{3})-(\\d{3})[,(\\d{3})]*");
+  //QRegExp rx5("[(\\d{3}),]*(\\d{3})-(\\d{3}):(\\d+)[,(\\d{3})]*(\\d{3})-(\\d{3}):(\\d+)[,(\\d{3})]*");
+  //QRegExp rx6("[(\\d{3}),]*(\\d{3})-(\\d{3}):(\\d+)[,(\\d{3})]*(\\d{3})-(\\d{3})[,(\\d{3})]*");
+  //QRegExp rx7("[(\\d{3}),]*(\\d{3})-(\\d{3})[,(\\d{3})]*(\\d{3})-(\\d{3}):(\\d+)[,(\\d{3})]*");
+  //QRegExp rx8("[(\\d{3}-\\d{3})]*[(:\\d+)]*[(,)]*");
+  //QRegExp rx9("[(\\d{3}-\\d{3}:\\d+),]+");
   //QRegExp rx_new("[\\d{3},]*[\\d{3}-\\d{3}]*[(:\\d+)]*[,(\\d{3})]*"); //working partially
-  
-  if ( rx1.exactMatch(text)  ||  rx2.exactMatch(text) || rx3.exactMatch(text) 
-       || rx4.exactMatch(text) || rx5.exactMatch(text) || rx6.exactMatch(text) ||  rx7.exactMatch(text) ){
+
+  QRegExp rx_new("[\\d{3},]*[\\d{3}-\\d{3},]*[\\d{3}-\\d{3}:\\d+,]*"); 
+
+  if ( rx_new.exactMatch(text)
+       //|| rx1.exactMatch(text)
+       //||  rx2.exactMatch(text) || rx3.exactMatch(text) 
+       //|| rx4.exactMatch(text) || rx5.exactMatch(text) || rx6.exactMatch(text) ||  rx7.exactMatch(text)
+       //|| rx8.exactMatch(text)
+       //|| rx9.exactMatch(text)
+       )
+    {
     //pb_accept->setEnabled( true );
 
     if ( text_to_numbers() )
