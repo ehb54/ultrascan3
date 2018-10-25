@@ -1154,7 +1154,7 @@ DbgLv(1) << "EGSp: chgKnt:  kk" << kk << "spd acc dur dly"
 
       for ( int kkk = nspeed; kkk < new_nsp; kkk++ )
       {  // Fill in new speed step description and values
-         ssspeed         += 5000.0;
+         ssspeed         += 1000.0;
 	 if (ssspeed > speedmax)                    //ALEXEY
 	   ssspeed = speedmax;
          ssvals[ kkk ][ "speed"    ] = ssspeed;   // Speed
