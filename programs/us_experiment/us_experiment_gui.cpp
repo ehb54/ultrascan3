@@ -3033,7 +3033,9 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
    connect( pb_saverp,    SIGNAL( clicked()          ),
             this,         SLOT  ( saveRunProtocol()  ) );
    connect( pb_submit,    SIGNAL( clicked()          ),
-            this,         SLOT  ( submitExperiment() ) );
+            this,         SLOT  ( submitExperiment_confirm() ) );
+   // connect( pb_submit,    SIGNAL( clicked()          ),
+   //          this,         SLOT  ( submitExperiment() ) );   
 
    panel->addLayout( genL );
    panel->addStretch();
@@ -3469,6 +3471,37 @@ DbgLv(1) << "EGUp:svRP:   dbP" << dbP;
    QString message_done   = tr( "Protocol has been successfully saved." );
    QMessageBox::information( this, mtitle_done, message_done );
    
+}
+
+//Confirm the Optima machine an experiemnt is submitted to.
+void US_ExperGuiUpload::submitExperiment_confirm()
+{
+    QStringList dblist  = US_Settings::defaultXpnHost();
+    QString alias       = dblist[ 0 ];
+    QString dbhost      = dblist[ 1 ];
+    int     dbport      = dblist[ 2 ].toInt();
+
+    QMessageBox msgBox;
+    msgBox.setText(tr("Experiment will be submitted to the following Optima machine:"));
+    msgBox.setInformativeText( QString( tr(    "Alias: %1 <br>  Host:  %2 <br> Port:  %3" ))
+			       .arg(alias)
+			       .arg(dbhost)
+			       .arg(dbport));
+    msgBox.setWindowTitle(tr("Confirm Experiemnt Run Submission"));
+    QPushButton *Accept    = msgBox.addButton(tr("OK"), QMessageBox::YesRole);
+    QPushButton *Cancel    = msgBox.addButton(tr("Cancel"), QMessageBox::RejectRole);
+    
+    msgBox.setIcon(QMessageBox::Question);
+    msgBox.exec();
+
+    if (msgBox.clickedButton() == Accept) {
+      qDebug() << "Submitting...";
+      submitExperiment();
+    }
+    else if (msgBox.clickedButton() == Cancel){
+      return;
+    }
+
 }
 
 // Slot to submit the experiment to the Optima DB

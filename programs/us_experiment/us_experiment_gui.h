@@ -716,6 +716,7 @@ class US_ExperGuiUpload : public US_WidgetsDialog
    private slots:
       void    detailExperiment( void );  // Dialog to detail experiment
       void    testConnection  ( void );  // Test Optima connection
+      void    submitExperiment_confirm( void );  // Submit the experiment
       void    submitExperiment( void );  // Submit the experiment
       void    saveRunProtocol ( void );  // Save the Run Protocol
       QString buildJson       ( void );  // Build the JSON
