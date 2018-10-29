@@ -1191,9 +1191,25 @@ QString scel        = tr( "cell %1" ).arg( ii + 1 );
          QString centp    = rpCells->used[ ii ].centerpiece;
          QString windo    = rpCells->used[ ii ].windows;
          QString cobal    = rpCells->used[ ii ].cbalance;
-         QString centry   = ( ( ii + 1 ) != nholes )
-                          ? celnm + " : " + centp + "  ( " + windo + " )"
-                          : celnm + " : " + cobal;
+
+	 // QString centry   = ( ( ii + 1 ) != nholes )                            // ALEXEY: change needed
+         //                  ? celnm + " : " + centp + "  ( " + windo + " )"
+         //                  : celnm + " : " + cobal;
+
+	 QString centry;                            // ALEXEY: if last cell and not counterbalance, treat as centerpiece
+	 if ( ( ii + 1 ) != nholes )
+	   {
+	     centry =  celnm + " : " + centp + "  ( " + windo + " )";
+	   }
+	 else
+	   {
+	     if ( ! cobal.contains( tr( "counterbalance" )  ) )
+	       centry =  celnm + " : " + centp + "  ( " + windo + " )";
+	     else
+	       centry =  celnm + " : " + cobal;
+	   }
+	 
+	 
 DbgLv(1) << "EGCe:getSL:     ii" << ii << " Entry" << centry;
          value << centry;
       }
