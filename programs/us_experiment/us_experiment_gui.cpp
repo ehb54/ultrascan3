@@ -2081,12 +2081,14 @@ DbgLv(1) << "EGSo: rbS:  nchant" << nchant;
    QStringList sv_sids;
    QStringList sv_chcms;
    int nchan_s         = rpSolut->nschan;
+   qDebug() << "rpSolut->nschan: !!!!!!!!!!!!!! " << rpSolut->nschan;
    int nuniq_s         = rpSolut->nuniqs;
 DbgLv(1) << "EGSo: rbS: nchan_s nuniq_s" << nchan_s << nuniq_s;
 
    for ( int ii = 0; ii < nchan_s; ii++ )
    {
       sv_chans  << rpSolut->chsols[ ii ].channel;
+      qDebug() << "SV_CHANS[sxx] !!!!!!!!!!!!!!!!: " << rpSolut->chsols[ ii ].channel;
       sv_sols   << rpSolut->chsols[ ii ].solution;
       sv_sids   << rpSolut->chsols[ ii ].sol_id;
       sv_chcms  << rpSolut->chsols[ ii ].ch_comment;
@@ -2098,6 +2100,7 @@ DbgLv(1) << "EGSo: rbS: nchan_s nuniq_s" << nchan_s << nuniq_s;
    if ( nchans != nchanr  ||  nchanr == 0 )
    {  // Must set up total rows channels
       QStringList centps  = sibLValue( "cells", "centerpieces" );
+      qDebug() << "After calling siLValue() to DETERMINE rows in SOLUTONS!!!";
       int ncused          = centps.count();
       nchans              = 0;
       srchans.clear();

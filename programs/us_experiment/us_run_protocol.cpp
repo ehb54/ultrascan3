@@ -599,6 +599,8 @@ bool US_RunProtocol::RunProtoSolutions::fromXml( QXmlStreamReader& xmli )
    nuniqs               = 0;
    solus.clear();
    sids .clear();
+
+   //qDebug() << "NSCHAN FOR PROTO: !!!!!!!!!!!!!!!!!!! " << nschan;
    for ( int ii = 0; ii < nschan; ii++ )
    {
       QString sdesc   = chsols[ ii ].solution;
