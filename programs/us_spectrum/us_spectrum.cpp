@@ -404,7 +404,7 @@ void US_Spectrum:: load_spectra(struct WavelengthProfile &profile, const QString
       f.close();
       
       qSort( strList );
-      // qDebug() << "strLIST_size: " << strList.size();
+      //qDebug() << "strLIST_size: " << strList.size();
       for ( int i = 0; i < strList.size(); i++)
 	{
 	  //qDebug() << strList[i]; 
@@ -745,8 +745,8 @@ void US_Spectrum::resetBasis()
 
 void US_Spectrum::overlap()
 {
-  unsigned int highest_lambda_min, lowest_lambda_max, largest, smallest;
-  int exists_target, exists_basis;
+   unsigned int highest_lambda_min, lowest_lambda_max, largest, smallest;
+   int exists_target, exists_basis;
 
    QVector<int> lambdaMins, lambdaMaxs;
 
@@ -773,17 +773,17 @@ void US_Spectrum::overlap()
    //we need a vector of all wavelengths which will be decimated based on overlap with target/basis
    int allpoints = largest - smallest + 1;
    QVector<int> allRange;
-   for (int i=0; i < allpoints; i++)
+   for (int i=0; i < allpoints; ++i)
      {
        allRange.push_back(smallest + i);
      }
 
    qDebug() << "AllRange size_0: " << allRange.size();
-   for (int i=0; i < allRange.size(); i++)
+   for (int i=0; i < allRange.size(); ++i)
      {
        //target
        exists_target = 0;
-       for(int j = 0; j < w_target.wvl.size(); j++)
+       for(int j = 0; j < w_target.wvl.size(); ++j)
 	 {
 	   if (allRange[i] == w_target.wvl.at(j))
 	     exists_target = 1;
@@ -796,35 +796,37 @@ void US_Spectrum::overlap()
      }
    qDebug() << "AllRange size_1: " << allRange.size();
    
-   for (int i=0; i < allRange.size(); i++)
+
+   for(int j = 0; j < v_basis.size(); ++j)
      {
-       //basis
-       for(int j = 0; j < v_basis.size(); j++)
+       for (int i=0; i < allRange.size(); ++i)
 	 {
+	   //basis
 	   exists_basis = 0;
-	   for(int m = 0; m < v_basis.at(j).wvl.size(); m++)
-	     {    
-	       if (allRange[i] == v_basis.at(j).wvl.at(m) )
+   	   for(int m = 0; m < v_basis.at(j).wvl.size(); ++m)
+   	     {
+   	       if (allRange[i] == v_basis.at(j).wvl.at(m) )
 		 exists_basis = 1;
 	     }
-	   if ( !exists_basis )
-	     {
-	       allRange.remove(i);
+   	   if ( !exists_basis )
+   	     {
+   	       allRange.remove(i);
 	       --i;
 	     }
-	 }
-     }
-   qDebug() << "AllRange size_2: " << allRange.size();  
+   	 }
+   }
+
+   qDebug() << "AllRange size_2: " << allRange.size();
 
    
    // basis
-   for(int i = 0; i < v_basis.size(); i++)
+   for(int i = 0; i < v_basis.size(); ++i)
      {
-       for(int j = 0; j < v_basis.at(i).wvl.size(); j++)
+       for(int j = 0; j < v_basis.at(i).wvl.size(); ++j)
 	 {
            // try decimating basis based on values in updated allRange
 	   exists_basis = 0;
-	   for (int m = 0; m < allRange.size(); m++)
+	   for (int m = 0; m < allRange.size(); ++m)
 	     {
 	       if(v_basis.at(i).wvl.at(j) == allRange[m])
 		 exists_basis = 1;
@@ -836,29 +838,14 @@ void US_Spectrum::overlap()
 	       --j;
 	     }
 	 }
-	   
-	   // if(v_basis.at(i).wvl.at(j) >= lowest_lambda_max)
-	   //   {
-	   //     v_basis[i].wvl.remove(j, v_basis.at(i).wvl.size() - j);
-	   //     v_basis[i].extinction.remove(j, v_basis.at(i).wvl.size() - j);
-	   //     break;
-	   //   }
-	  	   
-	   // if(v_basis.at(i).wvl.at(j) < highest_lambda_min)
-	   //   {
-	   //     qDebug() << "i wvl: " << i << " " << v_basis.at(i).wvl.at(j);  
-	   //     v_basis[i].wvl.remove(0, j + 1);
-	   //     v_basis[i].extinction.remove(0, j + 1);
-	   //   }
-           //}
      }
 
    //target
-   for(int j = 0; j < w_target.wvl.size(); j++)
+   for(int j = 0; j < w_target.wvl.size(); ++j)
      {
        // try decimating target based on values in updated allRange
        exists_target = 0;
-       for (int m = 0; m < allRange.size(); m++)
+       for (int m = 0; m < allRange.size(); ++m)
 	 {
 	   if(w_target.wvl.at(j) == allRange[m])
 	     exists_target = 1;
@@ -869,21 +856,8 @@ void US_Spectrum::overlap()
 	   w_target.extinction.remove(j);
 	   --j;
 	 }
-
-       // if(w_target.wvl.at(j) >= lowest_lambda_max)
-       // 	 {
-       // 	   w_target.wvl.remove(j, w_target.wvl.size() - j);
-       // 	   w_target.extinction.remove(j, w_target.wvl.size() - j);
-       // 	   break;
-       // 	 }
-       
-       // if(w_target.wvl.at(j) < highest_lambda_min)
-       // 	 {
-       // 	   w_target.wvl.remove(0, j + 1);
-       // 	   w_target.extinction.remove(0, j + 1);  
-       // 	 }
      }
-
+   
    w_target.lambda_min = highest_lambda_min;
    w_target.lambda_max = lowest_lambda_max;
 
