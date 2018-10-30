@@ -240,23 +240,42 @@ void US_ExperimentMain::help( void )
 }
 
 //Slot to DISABLE tabs and Next/Prev buttons
-void US_ExperimentMain::unable_tabs_buttons( void )
+void US_ExperimentMain::disable_tabs_buttons( void )
 {
-  DbgLv(1) << "UNABLING!!!";
+  DbgLv(1) << "DISBLING Tabs...";
   pb_next   ->setEnabled(false);
   pb_prev   ->setEnabled(false);
   
   for (int i=1; i<tabWidget->count(); i++)
     {
+
+      //qDebug() << "DEFAULT COLOR: TAB TEXT !!!!!!!!!!!: " << tabWidget->tabBar()->tabTextColor( i );
+
       tabWidget ->setTabEnabled( i, false );
       tabWidget ->tabBar()->setTabTextColor( i, Qt::darkGray);
-     
     }
+
+  qApp->processEvents();
   
 }
 
-//Slot to ENABLE tabs and Next/Prev buttons, but make all Widgets read-only
+//Slot to ENABLE tabs and Next/Prev buttons
 void US_ExperimentMain::enable_tabs_buttons( void )
+{
+  DbgLv(1) << "ENABLING!!!";
+  pb_next   ->setEnabled(true);
+  pb_prev   ->setEnabled(true);
+
+  for (int i=1; i<tabWidget->count(); i++)
+    {
+      tabWidget ->setTabEnabled( i, true );
+      QPalette pal = tabWidget ->tabBar()->palette();
+      tabWidget ->tabBar()->setTabTextColor( i, pal.color(QPalette::WindowText) ); // Qt::black
+    }
+}
+
+//Slot to ENABLE tabs and Next/Prev buttons, but make all Widgets read-only
+void US_ExperimentMain::enable_tabs_buttons_readonly( void )
 {
   DbgLv(1) << "ENABLING!!!";
   pb_next   ->setEnabled(true);
@@ -385,6 +404,25 @@ DbgLv(1) << "EGGe: inP: prn,prd counts" << protdata.count() << pr_names.count();
    
 }
 
+void US_ExperGuiGeneral::check_empty_runname( const QString &str )
+{
+  if (str.isEmpty() )
+    emit set_tabs_buttons_inactive();
+  else
+    emit set_tabs_buttons_active();
+}
+
+void US_ExperGuiGeneral::check_runname()
+{
+  QString rname     = le_runid->text();
+  if ( rname.isEmpty() )
+    emit set_tabs_buttons_inactive();
+  else
+    emit set_tabs_buttons_active();
+
+  qApp->processEvents();
+}
+
 //IF USER cannot edit anything (low-level user)
 void US_ExperGuiGeneral::check_user_level()
 {
@@ -396,7 +434,7 @@ void US_ExperGuiGeneral::check_user_level()
       if ( !loaded_proto )
 	emit set_tabs_buttons_inactive();
       else
-	emit set_tabs_buttons_active();
+	emit set_tabs_buttons_active_readonly();
    
       DbgLv(1) << "SIGNAL!!!!" ; 
     }
@@ -412,6 +450,7 @@ void US_ExperGuiGeneral::savePanel()
    currProto->project      = le_project     ->text();
    currProto->temperature  = ct_tempera     ->value();
    currProto->temeq_delay  = ct_tedelay     ->value();
+
 }
 
 // Get a specific panel string value
