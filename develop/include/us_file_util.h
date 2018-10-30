@@ -33,6 +33,9 @@ class US_EXTERN US_File_Util
       bool read( QString     from, QStringList &qsl );
 
       static bool writeuniq( QString & outname, QString & msg, QString basename, QString ext, QString & data );
+      static bool getcontents( QString file, QString & contents, QString & error );
+      static bool putcontents( QString file, QString & contents, QString & error );
+      static bool diff( QString file1, QString file2 );
 
       QString errormsg;
 };

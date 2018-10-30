@@ -311,3 +311,44 @@ void US_Log::flushoff()
    autoflush = false;
 }
 
+bool US_File_Util::getcontents( QString file, QString & contents, QString & error ) {
+   error = "";
+   contents = "";
+   QFile f( file );
+   if ( !f.exists() ) {
+      error = "File does not exist";
+      return false;
+   }
+   if ( !f.open( QIODevice::ReadOnly | QIODevice::Text ) )  {
+      error = "File could not be opened";
+      return false;
+   }
+   QTextStream ts( &f );
+   contents = ts.readAll();
+   f.close();
+   return true;
+}
+
+bool US_File_Util::putcontents( QString file, QString & contents, QString & error ) {
+   error = "";
+   QFile f( file );
+   if ( !f.open( QIODevice::WriteOnly | QIODevice::Text ) )  {
+      error = "File could not be opened for writing";
+      return false;
+   }
+   QTextStream ts( &f );
+   ts << contents;
+   f.close();
+   return true;
+}
+   
+bool US_File_Util::diff( QString file1, QString file2 ) {
+   QString error;
+   QString contents1;
+   QString contents2;
+
+   getcontents( file1, contents1, error );
+   getcontents( file2, contents2, error );
+   
+   return contents1 != contents2;
+}

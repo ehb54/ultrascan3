@@ -1869,9 +1869,9 @@ void US_Hydrodyn_Saxs_Hplc_Svd::update_enables()
    // le_t_end       ->setEnabled( false );
    lb_ev              ->setEnabled( lb_ev->count() );
 
-   pb_svd             ->setEnabled( files.size() && mode_i_of_t == iq_it_state && sources.size() == 1 );
-   pb_efa             ->setEnabled( lb_ev->count() && pb_svd->isEnabled() );
-   pb_efa_decomp      ->setEnabled( efa_lsv.size() && pb_efa->isEnabled() );
+   pb_svd             ->setEnabled( files.size() && mode_i_of_t == iq_it_state && sources.size() == 1 && sources.count( us_tr( "Original data" ) ) );
+   pb_efa             ->setEnabled( lb_ev->count() && pb_svd->isEnabled() && sources.count( us_tr( "Original data" ) ) );
+   pb_efa_decomp      ->setEnabled( efa_lsv.size() && pb_efa->isEnabled() && sources.count( us_tr( "Original data" ) ) );
    pb_stop            ->setEnabled( false );
    // pb_svd_plot        ->setEnabled( lb_ev->count() );
    pb_svd_save        ->setEnabled( lb_ev->count() );
@@ -2558,7 +2558,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::svd_plot( bool axis_change )
    }
    {
 
-      QwtPlotCurve *curve = new QwtPlotCurve( "U (Left Singular Vectors)" );
+      QwtPlotCurve *curve = new QwtPlotCurve( "q-Space Singular Vectors (U, Left)" );
       curve->setStyle( QwtPlotCurve::Lines );
 
       curve->setSamples(
@@ -2583,8 +2583,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::svd_plot( bool axis_change )
       return;
    }
    {
-
-      QwtPlotCurve *curve = new QwtPlotCurve( "V (Right Singular Vectors)" );
+      QwtPlotCurve *curve = new QwtPlotCurve( "Frame-Space (V, Right)" );
       curve->setStyle( QwtPlotCurve::Lines );
 
       curve->setSamples(
@@ -2668,17 +2667,17 @@ void US_Hydrodyn_Saxs_Hplc_Svd::svd() {
 
    last_svd_name += " " + norm_name;
 
-
    // if ( 1 || m >= n ) {
+   int maxmn = m > n ? m : n;
 
-   vector < vector < double > > F       ( m );
+   vector < vector < double > > F       ( maxmn );
    vector < vector < double > > F_errors;
-   vector < double * > a( m );
+   vector < double * > a( maxmn );
 
    svd_F_nonzero = true;
    
    for ( int i = 0; i < m; ++i ) {
-      F[ i ].resize( n );
+      F[ i ].resize( maxmn );
       for ( int j = 0; j < n; ++j ) {
          F[ i ][ j ] = (*f_Iuse)[ files[ j ] ][ i ];
          if ( !F[ i ][ j ] ) {
@@ -2687,6 +2686,10 @@ void US_Hydrodyn_Saxs_Hplc_Svd::svd() {
       }
       a[ i ] = &(F[ i ][ 0 ]);
    }
+   for ( int i = m; i < n; ++i ) {
+      F[ i ].resize( maxmn );
+      a[ i ] = &(F[ i ][ 0 ]);
+   }      
 
    svd_F        = F;
    svd_F_errors = F_errors;
@@ -2709,6 +2712,11 @@ void US_Hydrodyn_Saxs_Hplc_Svd::svd() {
       return;
    }
 
+   F.resize( m );
+   for ( int i = 0; i < m; ++i ) {
+      F[ i ].resize( m );
+   }
+
    list < svd_sortable_double > svals;
 
    svd_sortable_double sval;
@@ -2726,9 +2734,15 @@ void US_Hydrodyn_Saxs_Hplc_Svd::svd() {
    svd_x.clear( );
    svd_y.clear( );
 
-   svd_U = F;
+   if ( m < n ) {
+      svd_U = transpose( F );
+      svd_V = transpose( V );
+   } else {
+      svd_U = F;
+      svd_V = V;
+   }      
    svd_D = W;
-   svd_V = V;
+
    svd_index.resize( svals.size() );
 
    for ( list < svd_sortable_double >::iterator it = svals.begin();
@@ -2813,6 +2827,9 @@ void US_Hydrodyn_Saxs_Hplc_Svd::svd() {
    // }      
 
    lbl_ev->setText( QString( us_tr( "Singular value list for %1" ) ).arg( last_svd_name ) );
+
+   // SVD::cout_vvd( "svd U",  svd_U );
+   // SVD::cout_vvd( "svd V",  svd_V );
 
    svd_autocor_U = autocor( svd_U );
    svd_autocor_V = autocor( svd_V );
@@ -5686,7 +5703,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::set_number_of_svs_for_efa() {
       use_sv_count = 1;
    }
 
-   US_Vector::printvector2( "US_Hydrodyn_Saxs_Hplc_Svd::set_number_of_svs_for_efa svd_autocor_U, V", svd_autocor_U, svd_autocor_V );
+   // US_Vector::printvector2( "US_Hydrodyn_Saxs_Hplc_Svd::set_number_of_svs_for_efa svd_autocor_U, V", svd_autocor_U, svd_autocor_V );
 
    disconnect( qwtc_efas, SIGNAL( valueChanged( double ) ), 0, 0 );
    qwtc_efas->setValue( use_sv_count );
@@ -6136,6 +6153,7 @@ def runExplicitEFARotation(M, D, failed, C, V_bar, T, niter, tol, force_pos):
    SVD::cout_vvd( "Final C", C );
 }
 
+
 void US_Hydrodyn_Saxs_Hplc_Svd::efa_decomp() {
    // init efa decomp bits
    // qDebug() << "efa_decomp()";
@@ -6207,8 +6225,23 @@ void US_Hydrodyn_Saxs_Hplc_Svd::efa_decomp() {
    
    vector < vector < int > > M( num_sv );
 
+   // compute component indices
+
+   vector < int > start_vals;
+   vector < int > end_vals;
+
    for ( int i = 0; i < num_sv; ++i ) {
-      if ( efa_range_start[ i ]->value() >= (int) efa_range_end[ num_sv - i - 1 ]->value() ) {
+      start_vals.push_back( efa_range_start[ i ]->value() );
+      end_vals.push_back( efa_range_end[ i ]->value() );
+   }
+      
+   sort( start_vals.begin(), start_vals.end() );
+   sort( end_vals.begin(), end_vals.end() );
+
+   US_Vector::printvector2( "start value, end vals", start_vals, end_vals );
+
+   for ( int i = 0; i < num_sv; ++i ) {
+      if ( start_vals[ i ]  >= end_vals[ i ] ) {
          editor_msg( "red", QString( us_tr( "Ranges for component %1 is empty or negative.  Please correct.  Note that the component ranges are in reverse order to the S.V's ranges (i.e. the start frame for this component is S.V. %2 and the end frame is S.V. %3.)" ) ).arg( i + 1 ).arg( i + 1 ).arg( num_sv - i ) );
          update_enables();
          return;
@@ -6218,7 +6251,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::efa_decomp() {
    for ( int i = 0; i < num_sv; ++i ) {
       M[ i ].resize( n );
       for ( int j = 0; j < n; ++j ) {
-         M[ i ][ j ] = ( j >= (int) efa_range_start[ i ]->value() && j <= (int) efa_range_end[ num_sv - i - 1 ]->value() ) ? 1 : 0;
+         M[ i ][ j ] = ( j >= start_vals[ i ] && j <= end_vals[ i ] ) ? 1 : 0;
       }
    }
    // qDebug() << "efa_decomp 2";

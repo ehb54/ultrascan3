@@ -16,6 +16,7 @@
 #include "../include/us_hydrodyn_grid_atob.h"
 #include "../include/us_math.h"
 #include "../include/us_dirhist.h"
+#include "../include/us_revision.h"
 #include <qregexp.h>
 #include <qfont.h>
 //Added by qt3to4:
@@ -3685,7 +3686,7 @@ int US_Hydrodyn::read_config(const QString& fname)
    QString str;
    if (fname.isEmpty()) // this is true if we don't explicitely set a user-defined file name
    {
-      f.setFileName(USglobal->config_list.root_dir + "/etc/somo.config");
+      f.setFileName( US_Config::get_home_dir() + "etc/somo.config");
    }
    else
    {
@@ -3697,7 +3698,7 @@ int US_Hydrodyn::read_config(const QString& fname)
       {
          return -1;
       }
-      f.setFileName(USglobal->config_list.system_dir + "/etc/somo.config");
+      f.setFileName( US_Config::get_home_dir() + "etc/somo.config");
       if (!f.open(QIODevice::ReadOnly)) // read system directory
       {
          reset(); // no file available, reset and return
@@ -5681,7 +5682,7 @@ void US_Hydrodyn::set_default()
    QString str;
    int j;
    // only keep one copy of defaults in system root dir
-   f.setFileName(USglobal->config_list.system_dir + "/etc/somo.defaults");
+   f.setFileName( US_Config::get_home_dir() + "etc/somo.defaults");
    bool config_read = false;
    if (f.open(QIODevice::ReadOnly)) // read system directory
    {
@@ -5720,19 +5721,19 @@ void US_Hydrodyn::set_default()
 
    if ( saxs_options.default_atom_filename.isEmpty() )
    {
-      saxs_options.default_atom_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.atom";
+      saxs_options.default_atom_filename = US_Config::get_home_dir() + "etc" + SLASH + "somo.atom";
    }
    if ( saxs_options.default_hybrid_filename.isEmpty() )
    {
-      saxs_options.default_hybrid_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.hybrid";
+      saxs_options.default_hybrid_filename = US_Config::get_home_dir() + "etc" + SLASH + "somo.hybrid";
    }
    if ( saxs_options.default_saxs_filename.isEmpty() )
    {
-      saxs_options.default_saxs_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.saxs_atoms";
+      saxs_options.default_saxs_filename = US_Config::get_home_dir() + "etc" + SLASH + "somo.saxs_atoms";
    }
    if ( saxs_options.default_rotamer_filename.isEmpty() )
    {
-      saxs_options.default_rotamer_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.hydrated_rotamer";
+      saxs_options.default_rotamer_filename = US_Config::get_home_dir() + "etc" + SLASH + "somo.hydrated_rotamer";
    }
    if ( saxs_options.default_ff_filename.isEmpty() )
    {
@@ -5818,7 +5819,7 @@ void US_Hydrodyn::closeEvent(QCloseEvent *e)
    }
    global_Xpos -= 30;
    global_Ypos -= 30;
-   write_config(USglobal->config_list.root_dir + "/etc/somo.config");
+   write_config( US_Config::get_home_dir() + "etc/somo.config");
    // removing the temporary directory requires that the temporary directory is empty.
    // we don't know what else is in the directory if it was created previously.
    // tmp_dir.rmdir(USglobal->config_list.root_dir + "/tmp");
@@ -7783,6 +7784,16 @@ void US_Hydrodyn::list_model_vector(vector < PDB_model > *mv)
 
 bool US_Hydrodyn::install_new_version()
 {
+   QString somorevision = US_Config::get_home_dir() + "etc/somorevision";
+   if ( QFile::exists( somorevision ) ) {
+      QString contents;
+      QString error;
+      if ( US_File_Util::getcontents( somorevision, contents, error ) &&
+           contents == REVISION ) {
+         return true;
+      }
+   }
+      
    vector < QString > names;
    names.push_back("defaults");
    names.push_back("config");
@@ -7815,10 +7826,11 @@ bool US_Hydrodyn::install_new_version()
    for ( unsigned int i = 0; i < names.size(); i++ )
    {
       fnew[i] = USglobal->config_list.system_dir + "/etc/somo." + names[i] + ".new";
-      fcur[i] = USglobal->config_list.system_dir + "/etc/somo." + names[i];
-      install[i] = QFile::exists(fnew[i]);
+      fcur[i] = US_Config::get_home_dir() + "etc/somo." + names[i];
+      bool are_different = US_File_Util::diff( fcur[i], fnew[ i ] );
+      install[i] = QFile::exists(fnew[i]) && are_different;
       any_upgrade |= install[i];
-      backup[i] = install[i] && QFile::exists(fcur[i]);
+      backup[i] = install[i] && QFile::exists(fcur[i]) && are_different;
       any_backup |= backup[i];
    }
 
@@ -7841,7 +7853,8 @@ bool US_Hydrodyn::install_new_version()
          if ( backup[i] )
          {
             while ( QFile::exists(QString("%1/etc/somo-prev-%2.%3")
-                                  .arg(USglobal->config_list.system_dir)
+                                  // .arg(USglobal->config_list.system_dir)
+                                  .arg( US_Config::get_home_dir() )
                                   .arg(version)
                                   .arg(names[i])) )
             {
@@ -7855,9 +7868,9 @@ bool US_Hydrodyn::install_new_version()
    // ask to proceed
 
    QString msg = us_tr("New versions will be installed for the following files:\n");
-#ifdef WIN32
-   msg += us_tr("Note: This step may require you to run as Administrator.\n");
-#endif
+   // #ifdef WIN32
+   //    msg += us_tr("Note: This step may require you to run as Administrator.\n");
+   // #endif
    for ( unsigned int i = 0; i < names.size(); i++ )
    {
       if ( install[i] )
@@ -7875,7 +7888,8 @@ bool US_Hydrodyn::install_new_version()
          {
             fprev[i] = 
                QString("%1/etc/somo-prev-%2.%3")
-               .arg(USglobal->config_list.system_dir)
+               // .arg(USglobal->config_list.system_dir)
+               .arg( US_Config::get_home_dir() )
                .arg(version)
                .arg(names[i]);
             msg += QString("\t%1\n").arg(fprev[i]);
@@ -7896,6 +7910,7 @@ bool US_Hydrodyn::install_new_version()
    case 0: 
       {
          QDir qd;
+         US_File_Util ufu;
          for ( unsigned int i = 0; i < names.size(); i++ )
          {
             if ( backup[i] )
@@ -7917,20 +7932,36 @@ bool US_Hydrodyn::install_new_version()
             if ( install[i] )
             {
                printf("installing %u (<%s> to <%s>\n", i, fnew[i].toLatin1().data(), fcur[i].toLatin1().data());
-               if (!qd.rename(fnew[i], fcur[i]) )
+               if (!ufu.copy( fnew[i], fcur[i]) )
                {
                   QMessageBox::critical( 0, 
                                          us_tr("Could not rename file"),
-                                         QString("An error occured when trying to rename file\n"
-                                                 "%1 to %2\n"
-                                                 "Please check your permissions and try again\n")
-                                         .arg(fnew[i])
-                                         .arg(fcur[i])
+                                         QString( tr( "The following error occured when trying to copy:\n"
+                                                      "%1\n"
+                                                      ) )
+                                         .arg( ufu.errormsg )
                                          );
                   exit(-1);
                }
+               if ( names[ i ] == "config" ) {
+                  qDebug() << "saving directory history";
+                  read_config( fprev[ i ] );
+                  QStringList                save_directory_history       = directory_history;
+                  map < QString, QDateTime > save_directory_last_access   = directory_last_access;
+                  map < QString, QString >   save_directory_last_filetype = directory_last_filetype;
+                  read_config( fcur[ i ] );
+                  directory_history       = save_directory_history;
+                  directory_last_access   = save_directory_last_access;
+                  directory_last_filetype = save_directory_last_filetype;
+                  write_config( fcur[ i ] );
+               }
             }
          }
+      }
+      {
+         QString contents = REVISION;
+         QString error;
+         US_File_Util::putcontents( somorevision, contents, error );
       }
       return false;
       break;

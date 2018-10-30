@@ -57,6 +57,10 @@
 #if defined( PINV_TEST )
 #include "../include/us_svd.h"
 #endif
+// #define SVD_TEST
+#if defined( SVD_TEST )
+#include "../include/us_svd.h"
+#endif
 // #define USE_H
 
 // note: this program uses cout and/or cerr and this should be replaced
@@ -87,6 +91,123 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
 
    SVD::pinv( A, Ainv );
    qDebug() << "PINV_TEST done";
+   exit(0);
+#endif
+
+#if defined( SVD_TEST )
+   qDebug() << "SVD_TEST";
+
+   vector < vector < double > > A2x3 =
+        { { 1, 2, 3 },
+          { 4, 5, 6 } };
+   
+   vector < vector < double > > A3x2 =
+      { { 1, 4 },
+        { 2, 5 },
+        { 3, 6 } }
+   ;
+
+   vector < vector < double > > A = A2x3;
+
+   int m = (int) A.size();
+   int n = (int) A[0].size();
+   
+   qDebug() << "SVD_TEST 1";
+   
+   double a[ m ][ n ];
+   for ( int i = 0; i < m; ++i ) {
+      for ( int j = 0; j < n; ++j) {
+         a[ i ][ j ] = A[ i ][ j ];
+      }
+   }
+
+   qDebug() << "SVD_TEST 2";
+   double *ause[ m ];
+   for ( int j = 0; j < m; ++j ) {
+      ause[ j ] = a[ j ];
+   }
+   
+   qDebug() << "SVD_TEST 3";
+
+   SVD::cout_dpp( "a before svd", ause, m, n );
+
+   qDebug() << "SVD_TEST 4";
+   // w can stay the same?
+
+   double w[ n ];
+         
+   // allocate vt
+   double v[ n ][ n ];
+
+   double *vuse[ n ];
+
+   for ( int i = 0; i < n; ++i ) {
+      vuse[ i ] = v[ i ];
+   }
+   qDebug() << "SVD_TEST 5";
+
+   if ( !SVD::dsvd( ause, m, n, w, vuse ) ) {
+      qDebug() << "SVD failed";
+      exit(0);
+   }
+
+   // convert to vvd, vd
+
+   vector < vector < double > > u_vvd;
+   SVD::dpp_to_vvd( ause, m, m, u_vvd );
+   vector < vector < double > > v_vvd;
+   SVD::dpp_to_vvd( vuse, n, n, v_vvd );
+   vector < double > w_vd;
+   SVD::dp_to_vd( w, n, w_vd );
+   
+   SVD::cout_vvd( "u", u_vvd );
+   SVD::cout_vd( "w", w_vd );
+   SVD::cout_vvd( "v", v_vvd );
+
+   vector < vector < double > > uw = SVD::vvd_usmult( u_vvd, w_vd );
+   SVD::cout_vvd( "uw", uw );
+
+   vector < vector < double > > vt = SVD::vvd_transpose( v_vvd );
+
+   vector < vector < double > > uwvt = SVD::vvd_mult( uw, v_vvd );
+   SVD::cout_vvd( "uwvt", uwvt );
+
+   qDebug() << "max norm org - uwvt " << SVD::vvd2_maxnorm( uwvt, A );
+
+#if defined( OLD_SVD_TEST )
+   SVD::cout_dpp( "u", ause, m, m );
+   SVD::cout_dp( "w", w, n );
+   SVD::cout_dpp( "v", vuse, n, n );
+
+   vector < vector < double > > us( m );
+   for ( int i = 0; i < m; ++i ) {
+      us[ i ].resize( n );
+   }
+
+   vector < vector < double > > afinal = us;
+
+   // mult u * w
+   for ( int i = 0; i < m; ++i ) {
+      for ( int j = 0; j < n; ++j ) {
+         us[ i ][ j ] = ause[ i ][ j ] * w[ j ];
+      }
+   }
+
+   SVD::cout_vvd( "us(u*s) ", us );
+
+   for ( int i = 0; i < m; ++i ) {
+      for ( int j = 0; j < n; ++j ) {
+         afinal[ i ][ j ] = 0;
+         for ( int k = 0; k < n; ++k ) {
+            afinal[ i ][ j ] += us[ i ][ k ] * vuse[ j ][ k ] ;
+         }
+      }
+   }
+
+   SVD::cout_vvd( "afinal ", afinal );
+
+#endif
+   
    exit(0);
 #endif
 
@@ -232,7 +353,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    saveParams = false;
    guiFlag = true;
    bead_model_selected_filter = "";
-   residue_filename = USglobal->config_list.system_dir + "/etc/somo.residue";
+   residue_filename = US_Config::get_home_dir() + "etc/somo.residue";
    editor = (QTextEdit *)0;
 
 #if QT_VERSION >= 0x040000
@@ -440,6 +561,27 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
       gparams[ "zeno_max_cap_pct" ] = "0.5";
    }
 
+   if ( saxs_options.default_atom_filename.isEmpty() )
+   {
+      saxs_options.default_atom_filename = US_Config::get_home_dir() + "etc" + SLASH + "somo.atom";
+   }
+   if ( saxs_options.default_hybrid_filename.isEmpty() )
+   {
+      saxs_options.default_hybrid_filename = US_Config::get_home_dir() + "etc" + SLASH + "somo.hybrid";
+   }
+   if ( saxs_options.default_saxs_filename.isEmpty() )
+   {
+      saxs_options.default_saxs_filename = US_Config::get_home_dir() + "etc" + SLASH + "somo.saxs_atoms";
+   }
+   if ( saxs_options.default_rotamer_filename.isEmpty() )
+   {
+      saxs_options.default_rotamer_filename = US_Config::get_home_dir() + "etc" + SLASH + "somo.hydrated_rotamer";
+   }
+   if ( saxs_options.default_ff_filename.isEmpty() )
+   {
+      saxs_options.default_ff_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.ff";
+   }
+
    saxs_util = new US_Saxs_Util();
    if ( 
        !saxs_util->setup_saxs_maps( 
@@ -456,7 +598,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
       editor->append(us_tr(
                         "Warning: Error setting up SAXS structure factor files.\n"
                         "Bead model SAXS disabled.\n"
-                        "Check to make sure the files in SOMO->SAXS/SANS Options are correct.\n"
+                        "Check to make sure the files in SOMO->SAXS/SANS Options->Miscellaneous are correct.\n"
                         ));
       editor->setTextColor(save_color);
       saxs_options.compute_saxs_coeff_for_bead_models = false;
@@ -1925,7 +2067,7 @@ void US_Hydrodyn::load_config()
 
 void US_Hydrodyn::write_config()
 {
-   QString fname = USglobal->config_list.root_dir + "/etc/somo.config";
+   QString fname = US_Config::get_home_dir() + "etc/somo.config";
    switch (
            QMessageBox::question(
                                  this,
@@ -2015,7 +2157,7 @@ void US_Hydrodyn::reset()
 void US_Hydrodyn::select_residue_file()
 {
    QString old_filename = residue_filename;
-   residue_filename = QFileDialog::getOpenFileName( this , windowTitle() , USglobal->config_list.system_dir + "/etc" , "*.residue *.RESIDUE" );
+   residue_filename = QFileDialog::getOpenFileName( this , windowTitle() , US_Config::get_home_dir() + "/etc" , "*.residue *.RESIDUE" );
    if (residue_filename.isEmpty())
    {
       residue_filename = old_filename;

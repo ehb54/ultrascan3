@@ -208,9 +208,6 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    pb_plot_saxs_sans->setEnabled(bead_model_ok_for_saxs);
    te_filename2->setText(filename);
    model_filename = filename;
-   //   atom_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.atom";
-   //   hybrid_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.hybrid";
-   //   Saxs_filename =  USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.saxs_atoms";
    atom_filename = our_saxs_options->default_atom_filename;
    hybrid_filename = our_saxs_options->default_hybrid_filename;
    saxs_filename = our_saxs_options->default_saxs_filename;
@@ -4959,7 +4956,7 @@ void US_Hydrodyn_Saxs::save()
 void US_Hydrodyn_Saxs::select_atom_file()
 {
    QString old_filename = atom_filename;
-   atom_filename = QFileDialog::getOpenFileName( this , windowTitle() , USglobal->config_list.system_dir + SLASH + "etc" , "*.atom *.ATOM" );
+   atom_filename = QFileDialog::getOpenFileName( this , windowTitle() , US_Config::get_home_dir() + "etc" , "*.atom *.ATOM" );
    if (atom_filename.isEmpty())
    {
       atom_filename = old_filename;
@@ -5003,7 +5000,7 @@ void US_Hydrodyn_Saxs::select_atom_file(const QString &filename)
 void US_Hydrodyn_Saxs::select_hybrid_file()
 {
    QString old_filename = hybrid_filename;
-   hybrid_filename = QFileDialog::getOpenFileName( this , windowTitle() , USglobal->config_list.system_dir + SLASH + "etc" , "*.hybrid *.HYBRID" );
+   hybrid_filename = QFileDialog::getOpenFileName( this , windowTitle() , US_Config::get_home_dir() + "etc" , "*.hybrid *.HYBRID" );
 
    if (hybrid_filename.isEmpty())
    {
@@ -5058,7 +5055,7 @@ void US_Hydrodyn_Saxs::select_saxs_file()
 {
    QString old_filename = saxs_filename;
       
-   saxs_filename = QFileDialog::getOpenFileName( this , windowTitle() , USglobal->config_list.system_dir + SLASH + "etc" , "*.saxs_atoms *.SAXS_ATOMS" );
+   saxs_filename = QFileDialog::getOpenFileName( this , windowTitle() , US_Config::get_home_dir() + "etc" , "*.saxs_atoms *.SAXS_ATOMS" );
    if (saxs_filename.isEmpty())
    {
       saxs_filename = old_filename;

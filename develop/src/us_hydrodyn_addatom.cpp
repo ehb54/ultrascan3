@@ -20,7 +20,7 @@ US_AddAtom::US_AddAtom(bool *widget_flag, QWidget *p, const char *name) : QWidge
    this->widget_flag = widget_flag;
    *widget_flag = true;
    USglobal = new US_Config();
-   atom_filename = USglobal->config_list.system_dir + "/etc/somo.atom";
+   atom_filename = US_Config::get_home_dir() + "etc/somo.atom";
    setPalette( PALET_FRAME );
    setWindowTitle(us_tr("SoMo: Modify Atom Lookup Tables"));
    setupGUI();
@@ -411,7 +411,7 @@ void US_AddAtom::write_atom_file()
 void US_AddAtom::select_atom_file()
 {
    QString old_filename = atom_filename, str1, str2;
-   atom_filename = QFileDialog::getOpenFileName( this , windowTitle() , USglobal->config_list.system_dir + "/etc" , "*.atom *.ATOM" );
+   atom_filename = QFileDialog::getOpenFileName( this , windowTitle() , US_Config::get_home_dir() + "etc" , "*.atom *.ATOM" );
    if (atom_filename.isEmpty())
    {
       atom_filename = old_filename;
@@ -463,7 +463,7 @@ void US_AddAtom::select_atom_file()
 void US_AddAtom::select_hybrid_file()
 {
    QString old_filename = hybrid_filename, str1, str2;
-   hybrid_filename = QFileDialog::getOpenFileName( this , windowTitle() , USglobal->config_list.system_dir + "/etc" , "*.hybrid *.HYBRID" );
+   hybrid_filename = QFileDialog::getOpenFileName( this , windowTitle() ,  US_Config::get_home_dir() + "etc" , "*.hybrid *.HYBRID" );
    if (hybrid_filename.isEmpty())
    {
       hybrid_filename = old_filename;
@@ -512,7 +512,7 @@ void US_AddAtom::select_hybrid_file()
 void US_AddAtom::select_saxs_file()
 {
    QString old_filename = saxs_filename, str1, str2;
-   saxs_filename = QFileDialog::getOpenFileName( this , windowTitle() , USglobal->config_list.system_dir + "/etc" , "*.saxs_atoms *.SAXS_ATOMS" );
+   saxs_filename = QFileDialog::getOpenFileName( this , windowTitle() , US_Config::get_home_dir() + "etc" , "*.saxs_atoms *.SAXS_ATOMS" );
    if (saxs_filename.isEmpty())
    {
       saxs_filename = old_filename;

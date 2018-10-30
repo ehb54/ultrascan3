@@ -966,6 +966,7 @@ bool US_Hydrodyn_Saxs_Hplc::adjacent_select( QListWidget *lb, QString match )
 QString US_Hydrodyn_Saxs_Hplc::select_conc_file( QString tag )
 {
    // make stringlist of set
+
    if ( conc_files.size() == 0 )
    {
       return "";
@@ -1035,6 +1036,18 @@ void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files )
       return;
    }
 
+   {
+      int pos = 1;
+      while ( peak_target == use_conc ) {
+         if ( (int) files.size() <= pos  ) {
+            update_enables();
+            return;
+         }
+         peak_target = files[ pos ];
+         ++pos;
+      }
+   }
+   
    set < QString > selected = all_selected_files_set();
    if ( !selected.count( use_conc ) )
    {

@@ -167,8 +167,8 @@ class US_EXTERN US_Config : public QObject
   Q_OBJECT
 
   public:
-    US_Config( QObject* parent=0, const char* name=0 );
-    US_Config( const QString, QObject* parent=0, const char* name=0 );
+    US_Config( QObject* parent=0 );
+    US_Config( const QString, QObject* parent=0 );
     virtual ~US_Config();
 
     struct Config    config_list;
@@ -187,6 +187,7 @@ class US_EXTERN US_Config : public QObject
 
   public:
     static QString get_home_dir();
+    static void    make_home();
     void           move_files();
 
    signals:

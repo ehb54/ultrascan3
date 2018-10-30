@@ -63,7 +63,6 @@ bool US_Saxs_Util::run_hydro(
   
   misc.restore_pb_rule = false;
 
-  //residue_filename = "/src/ultrascan/etc/somo.residue";
   residue_filename = paths + SLASH + "etc" + SLASH + "somo.residue";
   QFileInfo fi_res_filename( residue_filename );
   if ( !fi_res_filename.exists() )

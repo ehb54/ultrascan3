@@ -14,7 +14,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
    return os << qPrintable(str);
 }
 
-US_Config::US_Config( QObject* parent, const char* name)
+US_Config::US_Config( QObject* parent )
    : QObject ( parent )
 {
 #if QT_VERSION >= 0x040000
@@ -41,7 +41,7 @@ US_Config::US_Config( QObject* parent, const char* name)
 
 
 // This is for us_register only
-US_Config::US_Config( QString /* dummy */, QObject* parent, const char* name )
+US_Config::US_Config( QString /* dummy */, QObject* parent )
    : QObject ( parent )
 {
    //  config_list.tar = dummy;  // Dummy to avoid compiler complaint
@@ -721,10 +721,7 @@ QString US_Config::get_home_dir()
    return ( QDir::toNativeSeparators( home ) );
 }
 
-// Move files from old locations to new if necessary
-// At some time in the future, when all users have updated,
-// theis function can be removed
-void  US_Config::move_files()
+void US_Config::make_home()
 {
    QString home    = get_home_dir();
    QString oldhome = QDir::homePath();
@@ -742,6 +739,17 @@ void  US_Config::move_files()
       QDir etc;
       etc.mkdir( home + ETC_DIR );
    }
+}
+
+// Move files from old locations to new if necessary
+// At some time in the future, when all users have updated,
+// this function can be removed
+void  US_Config::move_files()
+{
+   QString home    = get_home_dir();
+   QString oldhome = QDir::homePath();
+
+   make_home();
 
    // Move 4 files if appropriate
 

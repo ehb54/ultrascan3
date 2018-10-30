@@ -500,112 +500,140 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   int rows = 0, columns = 2, spacing = 2, j=0, margin=4;
-   QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
+   int rows = 0, columns = 2, spacing = 2, margin=4;
+   QGridLayout * background = new QGridLayout( this );
+   background->setContentsMargins( 0, 0, 0, 0 );
+   background->setSpacing( spacing );
+   background->setContentsMargins( margin, margin, margin, margin );
 
-   background->addWidget( lbl_guinier_and_cs_guinier , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
-   j++;
-   background->addWidget(lbl_qRgmax, j, 0);
-   background->addWidget(le_qRgmax, j, 1);
-   j++;
+   QGridLayout * leftside = new QGridLayout( 0 );
+   leftside->setContentsMargins( 0, 0, 0, 0 );
+   leftside->setSpacing( spacing );
+   leftside->setContentsMargins( margin, margin, margin, margin );
 
-   // background->addWidget( lbl_cs_guinier , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
-   // j++;
-   background->addWidget(lbl_cs_qRgmax, j, 0);
-   background->addWidget(le_cs_qRgmax, j, 1);
-   j++;
+   QGridLayout * rightside = new QGridLayout( 0 );
+   rightside->setContentsMargins( 0, 0, 0, 0 );
+   rightside->setSpacing( spacing );
+   rightside->setContentsMargins( margin, margin, margin, margin );
 
-   background->addWidget(lbl_Rt_qRtmax, j, 0);
-   background->addWidget(le_Rt_qRtmax, j, 1);
-   j++;
+   {
+      int j = 0;
+      
+      leftside->addWidget( lbl_guinier_and_cs_guinier , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
+      j++;
+      leftside->addWidget(lbl_qRgmax, j, 0);
+      leftside->addWidget(le_qRgmax, j, 1);
+      j++;
 
-   background->addWidget(lbl_qstart, j, 0);
-   background->addWidget(le_qstart, j, 1);
-   j++;
-   background->addWidget(lbl_qend, j, 0);
-   background->addWidget(le_qend, j, 1);
-   j++;
-   background->addWidget(lbl_cs_qstart, j, 0);
-   background->addWidget(le_cs_qstart, j, 1);
-   j++;
-   background->addWidget(lbl_cs_qend, j, 0);
-   background->addWidget(le_cs_qend, j, 1);
-   j++;
-   background->addWidget( cb_guinier_use_qRlimit , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
-   j++;
-   background->addWidget( cb_guinier_use_sd , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
-   j++;
-   background->addWidget(cb_guinier_outlier_reject, j, 0);
-   background->addWidget(le_guinier_outlier_reject_dist, j, 1);
-   j++;
-   background->addWidget(cb_guinier_csv, j, 0);
-   background->addWidget(le_guinier_csv_filename, j, 1);
-   j++;
+      // leftside->addWidget( lbl_cs_guinier , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
+      // j++;
+      leftside->addWidget(lbl_cs_qRgmax, j, 0);
+      leftside->addWidget(le_cs_qRgmax, j, 1);
+      j++;
 
-   background->addWidget( cb_guinier_csv_save_data , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
-   j++;
+      leftside->addWidget(lbl_Rt_qRtmax, j, 0);
+      leftside->addWidget(le_Rt_qRtmax, j, 1);
+      j++;
 
-   background->addWidget( cb_guinier_auto_fit , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
-   j++;
-   background->addWidget(lbl_pointsmin, j, 0);
-   background->addWidget(le_pointsmin, j, 1);
-   j++;
-   background->addWidget(lbl_pointsmax, j, 0);
-   background->addWidget(le_pointsmax, j, 1);
-   j++;
+      leftside->addWidget(lbl_qstart, j, 0);
+      leftside->addWidget(le_qstart, j, 1);
+      j++;
+      leftside->addWidget(lbl_qend, j, 0);
+      leftside->addWidget(le_qend, j, 1);
+      j++;
+      leftside->addWidget(lbl_cs_qstart, j, 0);
+      leftside->addWidget(le_cs_qstart, j, 1);
+      j++;
+      leftside->addWidget(lbl_cs_qend, j, 0);
+      leftside->addWidget(le_cs_qend, j, 1);
+      j++;
+      leftside->addWidget( cb_guinier_use_qRlimit , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
+      j++;
+      leftside->addWidget( cb_guinier_use_sd , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
+      j++;
+      leftside->addWidget(cb_guinier_outlier_reject, j, 0);
+      leftside->addWidget(le_guinier_outlier_reject_dist, j, 1);
+      j++;
+      leftside->addWidget(cb_guinier_csv, j, 0);
+      leftside->addWidget(le_guinier_csv_filename, j, 1);
+      j++;
 
-   background->addWidget( lbl_conc_header , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
-   j++;
+      leftside->addWidget( cb_guinier_csv_save_data , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
+      j++;
 
-   background->addWidget( pb_curve_conc , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
-   j++;
+      leftside->addWidget( cb_guinier_auto_fit , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
+      j++;
+      leftside->addWidget(lbl_pointsmin, j, 0);
+      leftside->addWidget(le_pointsmin, j, 1);
+      j++;
+      leftside->addWidget(lbl_pointsmax, j, 0);
+      leftside->addWidget(le_pointsmax, j, 1);
+      j++;
+   }
 
-   background->addWidget(lbl_conc, j, 0);
-   background->addWidget(le_conc, j, 1);
-   j++;
+   {
+      rightside->setVerticalSpacing( 5 * spacing );
 
-   background->addWidget(lbl_psv, j, 0);
-   background->addWidget(le_psv, j, 1);
-   j++;
+      int j = 0;
+      rightside->addWidget( lbl_conc_header , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
+      j++;
 
-   background->addWidget(cb_use_cs_psv, j, 0);
-   background->addWidget(le_cs_psv, j, 1);
-   j++;
+      rightside->addWidget( pb_curve_conc , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
+      j++;
 
-   background->addWidget(lbl_diffusion_len, j, 0);
-   background->addWidget(le_diffusion_len, j, 1);
-   j++;
+      rightside->addWidget(lbl_conc, j, 0);
+      rightside->addWidget(le_conc, j, 1);
+      j++;
 
-   background->addWidget(lbl_electron_nucleon_ratio, j, 0);
-   background->addWidget(le_electron_nucleon_ratio, j, 1);
-   j++;
+      rightside->addWidget(lbl_psv, j, 0);
+      rightside->addWidget(le_psv, j, 1);
+      j++;
 
-   background->addWidget(lbl_nucleon_mass, j, 0);
-   background->addWidget(le_nucleon_mass, j, 1);
-   j++;
+      rightside->addWidget(cb_use_cs_psv, j, 0);
+      rightside->addWidget(le_cs_psv, j, 1);
+      j++;
 
-   background->addWidget( cb_guinier_use_standards , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
-   j++;
+      rightside->addWidget(lbl_diffusion_len, j, 0);
+      rightside->addWidget(le_diffusion_len, j, 1);
+      j++;
 
-   background->addWidget(lbl_I0_exp, j, 0);
-   background->addWidget(le_I0_exp, j, 1);
-   j++;
+      rightside->addWidget(lbl_electron_nucleon_ratio, j, 0);
+      rightside->addWidget(le_electron_nucleon_ratio, j, 1);
+      j++;
 
-   background->addWidget(lbl_I0_theo, j, 0);
-   background->addWidget(le_I0_theo, j, 1);
-   j++;
+      rightside->addWidget(lbl_nucleon_mass, j, 0);
+      rightside->addWidget(le_nucleon_mass, j, 1);
+      j++;
 
-   background->addWidget(lbl_mwt_k, j, 0);
-   background->addWidget(le_mwt_k, j, 1);
-   j++;
+      rightside->addWidget( cb_guinier_use_standards , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
+      j++;
 
-   background->addWidget(lbl_mwt_c, j, 0);
-   background->addWidget(le_mwt_c, j, 1);
-   j++;
+      rightside->addWidget(lbl_I0_exp, j, 0);
+      rightside->addWidget(le_I0_exp, j, 1);
+      j++;
 
-   background->addWidget(lbl_mwt_qmax, j, 0);
-   background->addWidget(le_mwt_qmax, j, 1);
-   j++;
+      rightside->addWidget(lbl_I0_theo, j, 0);
+      rightside->addWidget(le_I0_theo, j, 1);
+      j++;
+
+      rightside->addWidget(lbl_mwt_k, j, 0);
+      rightside->addWidget(le_mwt_k, j, 1);
+      j++;
+
+      rightside->addWidget(lbl_mwt_c, j, 0);
+      rightside->addWidget(le_mwt_c, j, 1);
+      j++;
+
+      rightside->addWidget(lbl_mwt_qmax, j, 0);
+      rightside->addWidget(le_mwt_qmax, j, 1);
+      j++;
+   }
+
+   int j = 0;
+
+   background->addLayout( leftside, j, 0 );
+   background->addLayout( rightside, j, 1 );
+   ++j;
 
    {
       QGridLayout * gl2 = new QGridLayout( 0 ); gl2->setContentsMargins( 0, 0, 0, 0 ); gl2->setSpacing( 0 );
@@ -629,7 +657,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
       le_cs_psv->hide();
    }
       
-   setMinimumWidth( 400 );
+   setMinimumWidth( 800 );
 }
 
 void US_Hydrodyn_SasOptionsGuinier::cancel()

@@ -9,6 +9,7 @@
  *
  * Input to dsvd is as follows:
  *   a = mxn matrix to be decomposed, gets overwritten with u
+ *       *** if m < n, a must be preallocated nxn
  *   m = row dimension of a
  *   n = column dimension of a
  *   w = preallocated n-vector returns the vector of singular values of a
@@ -95,6 +96,7 @@ namespace SVD {
          /*
           * Input to dsvd is as follows:
           *   a = mxn matrix to be decomposed, gets overwritten with u
+          *       *** if m < n, a must be preallocated nxn
           *   m = row dimension of a
           *   n = column dimension of a
           *   w = preallocated n-vector returns the vector of singular values of a
@@ -709,6 +711,13 @@ namespace SVD {
       }
    }
 
+   void dp_to_vd( double *dp, int m, std::vector < double > &vd ) {
+      vd.resize( m );
+      for ( int i = 0; i < m; ++i ) {
+         vd[ i ] = dp[ i ];
+      }
+   }
+
    void cout_vvd( const char *tag, std::vector < std::vector < double > > &vvd ) {
       cout << "SVD::cout_vvd " << tag << endl;
 
@@ -812,6 +821,86 @@ namespace SVD {
             result[ i ][ j ] = vvd[ j ][ i ];
          }
       }
+      return result;
+   }
+
+   std::vector < std::vector < double > > vvd_usmult( std::vector < std::vector < double > > &U,
+                                                      std::vector < double > &S ) {
+      std::vector < std::vector < double > > result;
+      int m = (int) U.size();
+      if ( !m ) {
+         cout << "SVD::vvd_usmult U has no rows\n";
+         return result;
+      }
+      int m1 = (int) U[ 0 ].size();
+      if ( !m1 ) {
+         cout << "SVD::vvd_mult U has no columns\n";
+         return result;
+      }
+      if ( m1 != m ) {
+         cout << "SVD::vvd_mult U is not square\n";
+         return result;
+      }
+
+      int n = (int) S.size();
+      if ( !n ) {
+         cout << "SVD::vvd_mult S is empty\n";
+         return result;
+      }
+      result.resize( m );
+      for ( int i = 0; i < m; ++i ) {
+         result[ i ].resize( n );
+      }
+
+      for ( int i = 0; i < m; ++i ) {
+         for ( int j = 0; j < n; ++j ) {
+            result[ i ][ j ] = U[ i ][ j ] * S[ j ];
+         }
+      }
+      return result;
+   }
+  
+   std::vector < std::vector < double > > vvd_mult( std::vector < std::vector < double > > &A,
+                                                    std::vector < std::vector < double > > &B ) {
+      std::vector < std::vector < double > > result;
+
+      int m = (int) A.size();
+      if ( !m ) {
+         cout << "SVD::vvd_mult A has no rows\n";
+         return result;
+      }
+      int n = (int) A[ 0 ].size();
+      if ( !n ) {
+         cout << "SVD::vvd_mult A has no columns\n";
+         return result;
+      }
+      int o = (int) B.size();
+      if ( !o ) {
+         cout << "SVD::vvd_mult B has no rows\n";
+         return result;
+      }
+      int p = (int) B[ 0 ].size();
+      if ( !p ) {
+         cout << "SVD::vvd_mult B has no columns\n";
+         return result;
+      }
+      if ( n != o ) {
+         cout << "SVD::vvd_mult incompatible A & B, columns of A differs from rows of B\n";
+         return result;
+      }
+      result.resize( m );
+      for ( int i = 0; i < m; ++i ) {
+         result[ i ].resize( p );
+      }
+
+      for ( int i = 0; i < m; ++i ) {
+         for ( int j = 0; j < p; ++j ) {
+            for ( int k = 0; k < n; ++k ) {
+               result[ i ][ j ] += A[ i ][ k ] * B[ k ][ j ];
+            }
+         }
+      }
+
       return result;
    }
 
@@ -929,4 +1018,43 @@ namespace SVD {
 
       return true;
    }      
+
+   double vvd2_maxnorm( std::vector < std::vector < double > > &A,
+                        std::vector < std::vector < double > > &B ) {
+      double result = 1e99;
+      
+      int m1;
+      int n1;
+      int m2;
+      int n2;
+
+      vvd_shape( A, m1, n1 );
+      vvd_shape( B, m2, n2 );
+      if ( !m1 ) {
+         cout << "SVD::vvd2_maxnorm A has no rows\n";
+         return result;
+      }
+      if ( !n1 ) {
+         cout << "SVD::vvd2_maxnorm A has no columns\n";
+         return result;
+      }
+         
+      if ( m1 != m2 ||
+           n1 != n2 ) {
+         cout << "SVD::vvd2_maxnorm incompatible: A B shapes differ\n";
+         return result;
+      }
+         
+      result = 0e0;
+
+      for ( int i = 0; i < m1; ++i ) {
+         for ( int j = 0; j < n1; ++j ) {
+            double absdiff = fabs( A[ i ][ j ] - B[ i ][ j ] );
+            if ( result < absdiff ) {
+               result = absdiff;
+            }
+         }
+      }
+      return result;
+   }
 };

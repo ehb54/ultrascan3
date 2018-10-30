@@ -3850,21 +3850,22 @@ bool US_Hydrodyn_Saxs_Hplc::check_zi_window( QStringList & files, const QString 
 
    if ( window >= (int) f_qs[ files[ 0 ] ].size() )
    {
+      
       QMessageBox::warning(
                            this,
                            this->windowTitle() + us_tr(": I(t) negative integral window test" ),
                            QString( us_tr(
-                                       "The created I(t) curves have fewer time points (%1) than the negative integral window size (%2)\n"
-                                       "The negative integral window test will not be performed.\n"
-                                       "You may wish to decrease this value in 'Options'.\n"
-                                       "Typically this might occur at large q values where the detector instabilities surpass the associated errors.\n"
-                                       "It could also arise from problems with buffer subtraction.\n"
-                                       ) )
-                           .arg( f_qs[ files[ 0 ] ].size() )
-                           .arg( window ),
-                           QMessageBox::Ok | QMessageBox::Default,
-                           QMessageBox::NoButton
-                           );
+                                        "The created I(t) curves have fewer time points (%1) than the negative integral window size (%2)\n"
+                                        "The negative integral window test will not be performed.\n"
+                                        "You may wish to decrease this value in 'Options'.\n"
+                                        "Typically this might occur at large q values where the detector instabilities surpass the associated errors.\n"
+                                        "It could also arise from problems with buffer subtraction.\n"
+                                        ) )
+                            .arg( f_qs[ files[ 0 ] ].size() )
+                            .arg( window ),
+                            QMessageBox::Ok | QMessageBox::Default,
+                            QMessageBox::NoButton
+                            );
       return false;
    }
 
@@ -3930,7 +3931,7 @@ bool US_Hydrodyn_Saxs_Hplc::check_zi_window( QStringList & files, const QString 
    if ( messages.size() )
    {
       QStringList qsl;
-      for ( int i = 0; i < (int)messages.size() && i < 15; i++ )
+      for ( int i = 0; i < (int)messages.size() && i < 10; i++ )
       {
          qsl << messages[ i ];
       }
@@ -3940,21 +3941,29 @@ bool US_Hydrodyn_Saxs_Hplc::check_zi_window( QStringList & files, const QString 
          qsl << QString( us_tr( "... and %1 more not listed" ) ).arg( messages.size() - qsl.size() );
       }
 
-      QMessageBox::warning(
-                           this,
-                           this->windowTitle() + us_tr(": I(t) negative integral window test" ),
-                           QString( extra_text +
-                                    us_tr( "Please note:\n\n"
-                                        "These files have failed the negative integral window test of size %1\n"
-                                        "%2\n\n"
-                                        "Typically this might occur at large q values where the detector instabilities surpass the associated errors.\n"
-                                        "It could also arise from problems with buffer subtraction.\n"
-                                        ) )
-                           .arg( window )
-                           .arg( qsl.join( "\n" ) ),
-                           QMessageBox::Ok | QMessageBox::Default,
-                           QMessageBox::NoButton
-                           );
+
+      QMessageBox msg(
+                      QMessageBox::Warning,
+                      this->windowTitle() + us_tr(": I(t) negative integral window test" ),
+                      QString( extra_text +
+                               us_tr( "Please note:\n\n"
+                                      "These files have failed the negative integral window test of size %1\n"
+                                      "%2\n\n"
+                                      "Typically this might occur at large q values where the detector instabilities surpass the associated errors.\n"
+                                      "It could also arise from problems with buffer subtraction.\n"
+                                      ) )
+                      .arg( window )
+                      .arg( qsl.join( "\n" ) ),
+                      QMessageBox::Ok | QMessageBox::Default,
+                      this
+                      );
+
+      QSpacerItem* horizontalSpacer = new QSpacerItem(800, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
+      QGridLayout* layout = (QGridLayout*)msg.layout();
+      layout->addItem(horizontalSpacer, layout->rowCount(), 0, 1, layout->columnCount());
+
+      msg.exec();
+      
       return false;
    }
    

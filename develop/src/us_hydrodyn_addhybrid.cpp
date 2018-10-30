@@ -19,7 +19,7 @@ US_AddHybridization::US_AddHybridization(bool *widget_flag, QWidget *p, const ch
    this->widget_flag = widget_flag;
    *widget_flag = true;
    USglobal = new US_Config();
-   hybrid_filename = USglobal->config_list.system_dir + "/etc/somo.hybrid";
+   hybrid_filename = US_Config::get_home_dir() + "etc/somo.hybrid";
    setPalette( PALET_FRAME );
    setWindowTitle(us_tr("SoMo: Modify Hybridization Lookup Tables"));
    setupGUI();
@@ -315,7 +315,7 @@ void US_AddHybridization::add()
 void US_AddHybridization::select_file()
 {
    QString old_filename = hybrid_filename, str1, str2;
-   hybrid_filename = QFileDialog::getOpenFileName( this , windowTitle() , USglobal->config_list.system_dir + "/etc" , "*.hybrid *.HYBRID" );
+   hybrid_filename = QFileDialog::getOpenFileName( this , windowTitle() , US_Config::get_home_dir() + "etc" , "*.hybrid *.HYBRID" );
    if (hybrid_filename.isEmpty())
    {
       hybrid_filename = old_filename;
@@ -365,7 +365,7 @@ void US_AddHybridization::select_file()
 void US_AddHybridization::select_saxs_file()
 {
    QString old_filename = saxs_filename, str1, str2;
-   saxs_filename = QFileDialog::getOpenFileName( this , windowTitle() , USglobal->config_list.system_dir + "/etc" , "*.saxs_atoms *.SAXS_ATOMS" );
+   saxs_filename = QFileDialog::getOpenFileName( this , windowTitle() , US_Config::get_home_dir() + "etc" , "*.saxs_atoms *.SAXS_ATOMS" );
    if (saxs_filename.isEmpty())
    {
       saxs_filename = old_filename;

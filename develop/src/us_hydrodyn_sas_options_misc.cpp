@@ -472,7 +472,7 @@ void US_Hydrodyn_SasOptionsMisc::closeEvent(QCloseEvent *e)
 
 void US_Hydrodyn_SasOptionsMisc::default_atom_filename()
 {
-   QString atom_filename = QFileDialog::getOpenFileName( this , windowTitle() , USglobal->config_list.system_dir + SLASH + "etc" , "*.atom *.ATOM" );
+   QString atom_filename = QFileDialog::getOpenFileName( this , windowTitle() , US_Config::get_home_dir() + "etc" , "*.atom *.ATOM" );
    if (atom_filename.isEmpty())
    {
       return;
@@ -495,7 +495,7 @@ void US_Hydrodyn_SasOptionsMisc::default_atom_filename()
 
 void US_Hydrodyn_SasOptionsMisc::default_hybrid_filename()
 {
-   QString hybrid_filename = QFileDialog::getOpenFileName( this , windowTitle() , USglobal->config_list.system_dir + SLASH + "etc" , "*.hybrid *.HYBRID" );
+   QString hybrid_filename = QFileDialog::getOpenFileName( this , windowTitle() , US_Config::get_home_dir() + "etc" , "*.hybrid *.HYBRID" );
    if (hybrid_filename.isEmpty())
    {
       return;
@@ -518,7 +518,7 @@ void US_Hydrodyn_SasOptionsMisc::default_hybrid_filename()
 
 void US_Hydrodyn_SasOptionsMisc::default_saxs_filename()
 {
-   QString saxs_filename = QFileDialog::getOpenFileName( this , windowTitle() , USglobal->config_list.system_dir + SLASH + "etc" , "*.saxs_atoms *.SAXS_ATOMS" );
+   QString saxs_filename = QFileDialog::getOpenFileName( this , windowTitle() , US_Config::get_home_dir() + "etc" , "*.saxs_atoms *.SAXS_ATOMS" );
    if (saxs_filename.isEmpty())
    {
       return;
@@ -541,7 +541,7 @@ void US_Hydrodyn_SasOptionsMisc::default_saxs_filename()
 
 void US_Hydrodyn_SasOptionsMisc::default_ff_filename()
 {
-   QString ff_filename = QFileDialog::getOpenFileName( this , windowTitle() , USglobal->config_list.system_dir + SLASH + "etc" , "*.ff *.SAXS_ATOMS" );
+   QString ff_filename = QFileDialog::getOpenFileName( this , windowTitle() , US_Config::get_home_dir() + "etc" , "*.ff *.SAXS_ATOMS" );
    if (ff_filename.isEmpty())
    {
       return;

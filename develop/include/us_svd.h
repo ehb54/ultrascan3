@@ -9,6 +9,7 @@
  *
  * Input to dsvd is as follows:
  *   a = mxn matrix to be decomposed, gets overwritten with u
+ *       *** if m < n, a must be preallocated nxn
  *   m = row dimension of a
  *   n = column dimension of a
  *   w = preallocated n-vector returns the vector of singular values of a
@@ -28,6 +29,8 @@
 namespace SVD {
    extern char errormsg[ 128 ];
 
+   bool dsvd(double **a, int m, int n, double *w, double **v);
+
    // work in vector or dp space?
    // np.dot
    // np.sum
@@ -41,21 +44,31 @@ namespace SVD {
    void dp_inv_nz( double *dp, int m ); // invert nonzeros inplace
 
    void dpp_to_vvd( double **dpp, int m, int n, std::vector < std::vector < double > > &vvd );
+   void dp_to_vd( double *dp, int m, std::vector < double > &vd );
+
+   double vvd2_maxnorm( std::vector < std::vector < double > > &A,
+                        std::vector < std::vector < double > > &B );
+                        
+   void vvd_shape( std::vector < std::vector < double > > &vvd, int & m, int & n );
+   std::vector < std::vector < double > > vvd_transpose( std::vector < std::vector < double > > &vvd );
+   std::vector < std::vector < double > > vvd_mult( std::vector < std::vector < double > > &A,
+                                                    std::vector < std::vector < double > > &B );
+   std::vector < std::vector < double > > vvd_usmult( std::vector < std::vector < double > > &U,
+                                                      std::vector < double > &S );
+   
+   // utility printouts
+
    void cout_vvd( const char *tag, std::vector < std::vector < double > > &vvd );
    void cout_vvi( const char *tag, std::vector < std::vector < int > > &vvi );
    void cout_vd( const char *tag, std::vector < double > &vd );
    void cout_vd( const char *tag, std::vector < double > &vd );
    void cout_dpp( const char *tag, double **dpp, int m, int n );
    void cout_dp( const char *tag, double *dp, int m );
-
-
-   bool dsvd(double **a, int m, int n, double *w, double **v);
-   void vvd_shape( std::vector < std::vector < double > > &vvd, int & m, int & n );
-   std::vector < std::vector < double > > vvd_transpose( std::vector < std::vector < double > > &vvd );
-   
    void dvalidate(double **a, int m, int n, double *w, double **v);
    void dinfo(double **a, int m, int n, double *w, double **v);
  
+   // deprecated fsvd
+
    bool fsvd(float **a, int m, int n, float *w, float **v);
 }
 

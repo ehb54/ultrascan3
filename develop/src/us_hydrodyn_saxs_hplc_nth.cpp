@@ -408,12 +408,21 @@ void US_Hydrodyn_Saxs_Hplc_Nth::closeEvent( QCloseEvent *e )
 
 void US_Hydrodyn_Saxs_Hplc_Nth::update_enables()
 {
-   lbl_start_name->setText( ( (US_Hydrodyn_Saxs_Hplc*)us_hydrodyn_saxs_hplc)->lb_files->item( le_start->text().toInt() - 1 )->text() );
-   lbl_end_name  ->setText( ( (US_Hydrodyn_Saxs_Hplc*)us_hydrodyn_saxs_hplc)->lb_files->item( le_end  ->text().toInt() - 1 )->text() );
-
-   int n   = le_n->text().toInt();
+   int fcnt = ( (US_Hydrodyn_Saxs_Hplc*)us_hydrodyn_saxs_hplc)->lb_files->count();
    int ofs = le_start->text().toInt();
    int end = le_end->text().toInt();
+   if ( ofs >= 1 && ofs <= fcnt ) {
+      lbl_start_name->setText( ( (US_Hydrodyn_Saxs_Hplc*)us_hydrodyn_saxs_hplc)->lb_files->item( ofs- 1 )->text() );
+   } else {
+      lbl_start_name->setText( "" );
+   }
+   if ( end >= 1 && end <= fcnt ) {
+      lbl_end_name->setText( ( (US_Hydrodyn_Saxs_Hplc*)us_hydrodyn_saxs_hplc)->lb_files->item( end- 1 )->text() );
+   } else {
+      lbl_end_name->setText( "" );
+   }
+
+   int n   = le_n->text().toInt();
 
    set < int > selected;
    set < int > contains;

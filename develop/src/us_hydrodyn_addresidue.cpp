@@ -50,8 +50,8 @@ US_AddResidue::US_AddResidue(bool *widget_flag, const double hydrovol, QWidget *
    current_atom = 0;
    current_bead = 0;
    atom_hydration = 0;
-   atom_filename = USglobal->config_list.system_dir + "/etc/somo.atom";
-   residue_filename = USglobal->config_list.system_dir + "/etc/somo.residue";
+   atom_filename = US_Config::get_home_dir() + "etc/somo.atom";
+   residue_filename = US_Config::get_home_dir() + "etc/somo.residue";
    setPalette( PALET_FRAME );
    setWindowTitle(us_tr("SoMo: Modify Residue Lookup Tables"));
    setupGUI();
@@ -1090,7 +1090,7 @@ void US_AddResidue::read_residue_file(const QString & filename)
 void US_AddResidue::select_residue_file()
 {
    QString old_filename = residue_filename, str1;
-   residue_filename = QFileDialog::getOpenFileName( this , windowTitle() , USglobal->config_list.system_dir + "/etc" , "*.residue *.RESIDUE" );
+   residue_filename = QFileDialog::getOpenFileName( this , windowTitle() , US_Config::get_home_dir() + "etc" , "*.residue *.RESIDUE" );
    if (residue_filename.isEmpty())
    {
       residue_filename = old_filename;
@@ -1164,7 +1164,7 @@ void US_AddResidue::calc_bead_mw(struct residue *res)
 void US_AddResidue::select_atom_file()
 {
    QString old_filename = atom_filename, str1, str2;
-   atom_filename = QFileDialog::getOpenFileName( this , windowTitle() , USglobal->config_list.system_dir + "/etc" , "*.atom *.ATOM" );
+   atom_filename = QFileDialog::getOpenFileName( this , windowTitle() , US_Config::get_home_dir() + "etc" , "*.atom *.ATOM" );
    if (atom_filename.isEmpty())
    {
       atom_filename = old_filename;
