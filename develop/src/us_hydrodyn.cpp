@@ -300,12 +300,6 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    advanced_config.debug_5 = false;
    advanced_config.debug_6 = false;
    advanced_config.debug_7 = false;
-   if ( !install_new_version() )
-   {
-      exit(0);
-   }
-   set_default();   // setup configuration defaults before reading initial config
-   read_config(""); // specify default configuration by leaving argument empty
    atom_widget                     = false;
    best_widget                     = false;
    residue_widget                  = false;
@@ -347,10 +341,16 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    batch_widget = false;
    save_widget = false;
    comparative_widget = false;
+   if ( !install_new_version() )
+   {
+      exit(0);
+   }
+   set_default();   // setup configuration defaults before reading initial config
+   read_config(""); // specify default configuration by leaving argument empty
    calcAutoHydro = false;
-   setSuffix = true;
    overwrite = false;
    saveParams = false;
+   setSuffix = true;
    guiFlag = true;
    bead_model_selected_filter = "";
    residue_filename = US_Config::get_home_dir() + "etc/somo.residue";

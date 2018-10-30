@@ -7836,6 +7836,11 @@ bool US_Hydrodyn::install_new_version()
 
    if ( !any_upgrade ) 
    {
+      QString contents = REVISION;
+      QString error;
+      if ( !US_File_Util::putcontents( somorevision, contents, error ) ) {
+         qDebug() << "putcontents file:" << somorevision << " contents:'" << contents << "' error:" << error;
+      }
       return true;
    }
 
@@ -7943,8 +7948,7 @@ bool US_Hydrodyn::install_new_version()
                                          );
                   exit(-1);
                }
-               if ( names[ i ] == "config" ) {
-                  qDebug() << "saving directory history";
+               if ( names[ i ] == "config" && backup[ i ] ) {
                   read_config( fprev[ i ] );
                   QStringList                save_directory_history       = directory_history;
                   map < QString, QDateTime > save_directory_last_access   = directory_last_access;
@@ -7961,7 +7965,9 @@ bool US_Hydrodyn::install_new_version()
       {
          QString contents = REVISION;
          QString error;
-         US_File_Util::putcontents( somorevision, contents, error );
+         if ( !US_File_Util::putcontents( somorevision, contents, error ) ) {
+            qDebug() << "putcontents file:" << somorevision << " contents:'" << contents << "' error:" << error;
+         }
       }
       return false;
       break;
