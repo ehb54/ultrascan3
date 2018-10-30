@@ -42,6 +42,7 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
 
    // Create tab and panel widgets
    tabWidget           = us_tabwidget();
+   
    tabWidget->setTabPosition( QTabWidget::North );
 
    epanGeneral         = new US_ExperGuiGeneral  ( this );
@@ -66,7 +67,7 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    tabWidget->setCurrentIndex( curr_panx );
 
    //tabWidget->tabBar()->setEnabled(false);
-   
+
    // Add bottom buttons
    //QPushButton* pb_close  = us_pushbutton( tr( "Close" ) );
    pb_close = us_pushbutton( tr( "Close" ) );;
@@ -102,7 +103,8 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    main->addLayout( statL );
    main->addLayout( buttL );
 
-   connect( epanGeneral, SIGNAL( set_tabs_buttons_inactive( void )), this, SLOT( unable_tabs_buttons( void ) ));
+   connect( epanGeneral, SIGNAL( set_tabs_buttons_inactive( void )), this, SLOT( disable_tabs_buttons( void ) ));
+   connect( epanGeneral, SIGNAL( set_tabs_buttons_active_readonly( void )),   this, SLOT( enable_tabs_buttons_readonly( void ) ));
    connect( epanGeneral, SIGNAL( set_tabs_buttons_active( void )),   this, SLOT( enable_tabs_buttons( void ) ));
 
    //int min_width = tabWidget->tabBar()->width();
@@ -114,6 +116,8 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    //epanGeneral->initPanel();
    epanGeneral->loaded_proto = 0;
    epanGeneral->check_user_level();
+   epanGeneral->check_runname();
+   
    reset();
 }
 
@@ -171,6 +175,8 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
    QSpacerItem* spacer1         = new QSpacerItem( 20, ihgt );
    QSpacerItem* spacer2         = new QSpacerItem( 20, ihgt );
 
+   le_runid->setPlaceholderText("Enter Run ID to continue");
+   
    ct_tempera->setSingleStep( 1 );
    ct_tempera->setValue     ( 20 );
    ct_tempera->adjustSize   ();
@@ -220,6 +226,8 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
    panel->addStretch();
 
    // Set up signal and slot connections
+   connect( le_runid,        SIGNAL( textEdited(const QString &)  ),
+	    this,            SLOT(   check_empty_runname(const QString &) ) );
    connect( le_runid,        SIGNAL( editingFinished()  ),
             this,            SLOT(   run_name_entered() ) );
    connect( pb_project,      SIGNAL( clicked()          ), 
@@ -247,7 +255,10 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
 DbgLv(1) << "EGGe: main : prnames,prdata counts" << pr_names.count() << protdata.count();
 
  
- mainw->solutions_change = false; 
+ mainw->solutions_change = false;
+
+ //check_runname();
+ 
    // Do the initialization we do at panel entry
    initPanel();
 }
@@ -337,6 +348,8 @@ DbgLv(1) << "EGGe: rchg: changed" << changed;
       le_runid->setText( rname );
       currProto->runname = rname;
    }
+
+   check_runname();
 }
 
 // Select DB investigator
@@ -471,6 +484,10 @@ DbgLv(1) << "EGGe:ldPro:    cOhost" << mainw->currProto.optimahost
 DbgLv(1) << "EGGe:ldPro:    cTempe" << mainw->currProto.temperature
  << "lTempe" << mainw->loadProto.temperature;
 
+ QString rname     = le_runid->text();
+ if ( !rname.isEmpty() )
+   mainw->currProto.runname = rname;
+ 
  loaded_proto = 1;
    // Initialize all other panels using the new protocol
    mainw->initPanels();

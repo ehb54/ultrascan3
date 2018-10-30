@@ -58,8 +58,10 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
       bool        updateProtos( const QStringList );
 
       void check_user_level( void );
+      void check_runname( void );
+      
       int loaded_proto;
-
+            
    private:
       US_ExperimentMain*    mainw;      // Parent to all panels
       US_RunProtocol*       currProto;  // Current RunProtocol controls pointer
@@ -95,10 +97,11 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
       void load_protocol   ( void );        // Slot for protocol loaded
       void changed_protocol( void );        // Slot for change in protocol name
       void centerpieceInfo ( void );        // Function for all centerpieces
-            
+      void check_empty_runname(const QString &);       
    signals:
       void  set_tabs_buttons_inactive ( void );
-      void  set_tabs_buttons_active   ( void ); 
+      void  set_tabs_buttons_active_readonly   ( void );
+      void  set_tabs_buttons_active  ( void ); 
 };
 
 //! \brief Experiment Rotor panel
@@ -784,9 +787,10 @@ class US_ExperimentMain : public US_Widgets
       void panelDown ( void );     // Move to previous panel
       void help      ( void );     // Show documentation window
 
-      void unable_tabs_buttons( void);  // Slot to unable Tabs and Buttons when user level is low
-      void enable_tabs_buttons( void);  // Slot to enable Tabs and Buttons after protocol is loaded
-
+      void disable_tabs_buttons( void);  // Slot to unable Tabs and Buttons when user level is low
+      void enable_tabs_buttons_readonly( void);  // Slot to enable Tabs and Buttons after protocol is loaded
+      void enable_tabs_buttons( void);  // Slot to enable Tabs and Buttons after run_name is entered
+      
     public slots:
       void close_program( void );
       void optima_submitted( QMap < QString, QString > &protocol_details );
