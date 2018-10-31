@@ -208,7 +208,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    connect(le_pointsmax, SIGNAL( textChanged( const QString & ) ), SLOT(update_pointsmax( const QString & )));
 
    cb_guinier_use_qRlimit = new QCheckBox(this);
-   cb_guinier_use_qRlimit->setText(us_tr(" Limit maximum q to max q*Rg, q*Rc or q*Rg\n(not active in Search mode)"));
+   cb_guinier_use_qRlimit->setText(us_tr(" Limit maximum q to max q*Rg, q*Rc or q*Rg\n (not active in Search mode)"));
    cb_guinier_use_qRlimit->setEnabled(true);
    cb_guinier_use_qRlimit->setChecked( ( ( US_Hydrodyn * )us_hydrodyn)->gparams.count( "guinier_use_qRlimit" ) &&
                                        ( ( US_Hydrodyn * )us_hydrodyn)->gparams[ "guinier_use_qRlimit" ] == "1" );
