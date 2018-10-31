@@ -208,7 +208,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    connect(le_pointsmax, SIGNAL( textChanged( const QString & ) ), SLOT(update_pointsmax( const QString & )));
 
    cb_guinier_use_qRlimit = new QCheckBox(this);
-   cb_guinier_use_qRlimit->setText(us_tr(" Limit maximum q to maximum q*Rg, q*Rc or q*Rg (not active in Search mode)"));
+   cb_guinier_use_qRlimit->setText(us_tr(" Limit maximum q to max q*Rg, q*Rc or q*Rg\n(not active in Search mode)"));
    cb_guinier_use_qRlimit->setEnabled(true);
    cb_guinier_use_qRlimit->setChecked( ( ( US_Hydrodyn * )us_hydrodyn)->gparams.count( "guinier_use_qRlimit" ) &&
                                        ( ( US_Hydrodyn * )us_hydrodyn)->gparams[ "guinier_use_qRlimit" ] == "1" );
@@ -227,7 +227,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    connect(cb_guinier_use_sd, SIGNAL(clicked()), this, SLOT(set_guinier_use_sd()));
 
    cb_guinier_outlier_reject = new QCheckBox(this);
-   cb_guinier_outlier_reject->setText(us_tr(" Repeat the analysis after discarding points\n over the regression line by more than SD of "));
+   cb_guinier_outlier_reject->setText(us_tr(" Repeat the analysis after discarding\n points over the regression line\n by more than SD of "));
    cb_guinier_outlier_reject->setEnabled(true);
    cb_guinier_outlier_reject->setChecked((*saxs_options).guinier_outlier_reject);
    cb_guinier_outlier_reject->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -554,8 +554,9 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
       leftside->addWidget(cb_guinier_outlier_reject, j, 0);
       leftside->addWidget(le_guinier_outlier_reject_dist, j, 1);
       j++;
-      leftside->addWidget(cb_guinier_csv, j, 0);
-      leftside->addWidget(le_guinier_csv_filename, j, 1);
+      leftside->addWidget(cb_guinier_csv, j, 0, 1, 2 );
+      j++;
+      leftside->addWidget(le_guinier_csv_filename, j, 0, 1, 2 );
       j++;
 
       leftside->addWidget( cb_guinier_csv_save_data , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
@@ -572,7 +573,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    }
 
    {
-      rightside->setVerticalSpacing( 5 * spacing );
+      rightside->setVerticalSpacing( 7.5 * spacing );
 
       int j = 0;
       rightside->addWidget( lbl_conc_header , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
@@ -657,7 +658,8 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
       le_cs_psv->hide();
    }
       
-   setMinimumWidth( 800 );
+   le_guinier_csv_filename->setEnabled( cb_guinier_csv->isChecked() );
+   setMinimumWidth( 900 );
 }
 
 void US_Hydrodyn_SasOptionsGuinier::cancel()
@@ -772,6 +774,7 @@ void US_Hydrodyn_SasOptionsGuinier::update_pointsmax( const QString & str )
 void US_Hydrodyn_SasOptionsGuinier::set_guinier_csv()
 {
    (*saxs_options).guinier_csv = cb_guinier_csv->isChecked();
+   le_guinier_csv_filename->setEnabled( cb_guinier_csv->isChecked() );
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
