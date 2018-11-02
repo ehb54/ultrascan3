@@ -356,6 +356,7 @@ class US_RunProtocol
       QString      project;        //!< Project description
       QString      optimahost;     //!< Optima host (numeric IP address)
 
+      int          projectID; 
       double       temperature;    //!< Run temperature in degrees centigrade
       double       temeq_delay;    //!< Temperature-equilibration delay minutes
 
