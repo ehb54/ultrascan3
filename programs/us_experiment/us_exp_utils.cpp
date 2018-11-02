@@ -40,6 +40,7 @@
 #include "us_license_t.h"
 #include "us_sleep.h"
 #include "us_util.h"
+#include "us_crypto.h"
 
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c)  setData(a,b,c)
@@ -399,9 +400,48 @@ DbgLv(1) << "EGGe: inP: prn,prd counts" << protdata.count() << pr_names.count();
    le_project     ->setText ( currProto->project );
    ct_tempera     ->setValue( currProto->temperature );
    ct_tedelay     ->setValue( currProto->temeq_delay );
-   
+
    check_user_level();
    
+}
+
+void US_ExperGuiGeneral::test_optima_connection()
+{
+  US_Passwd pw_op;
+   QStringList dblist  = US_Settings::defaultXpnHost();
+   QString name        = dblist[ 0 ];
+   QString xpnhost     = dblist[ 1 ];
+   int     xpnport     = dblist[ 2 ].toInt();
+   QString dbname      = dblist[ 3 ];
+   QString dbuser      = dblist[ 4 ];
+   QString epasw       = dblist[ 5 ];
+   QString epasw0      = epasw.section( "^", 0, 0 );
+   QString epasw1      = epasw.section( "^", 1, 1 );
+   QString dbpasw      = US_Crypto::decrypt( epasw0, pw_op.getPasswd(), epasw1 );
+   US_XpnData* xpn_data = new US_XpnData();
+   bool o_connected           = xpn_data->connect_data( xpnhost, xpnport, dbname, dbuser,  dbpasw );
+   xpn_data->close();
+   delete xpn_data;
+   
+   QPalette orig_pal = le_optima_connected->palette();
+   if ( o_connected )
+     {
+       le_optima_connected->setText( "connected" );
+       QPalette *new_palette = new QPalette();
+       new_palette->setColor(QPalette::Text, Qt::darkGreen);
+       new_palette->setColor(QPalette::Base, orig_pal.color(QPalette::Base));
+       le_optima_connected->setPalette(*new_palette);
+     }
+   else
+     {
+       le_optima_connected->setText( "disconnected" );
+       QPalette *new_palette = new QPalette();
+       new_palette->setColor(QPalette::Text,Qt::red);
+       new_palette->setColor(QPalette::Base, orig_pal.color(QPalette::Base));
+       le_optima_connected->setPalette(*new_palette);
+     }
+
+   le_optima      ->setText( name );
 }
 
 void US_ExperGuiGeneral::check_empty_runname( const QString &str )

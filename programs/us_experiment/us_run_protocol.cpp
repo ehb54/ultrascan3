@@ -50,6 +50,11 @@ bool US_RunProtocol::toXml( QXmlStreamWriter& xmlo )
 
    xmlo.writeStartElement ( "protocol" );
    xmlo.writeAttribute    ( "description",  protname );
+
+   //ALEXEY: place for project name
+   xmlo.writeAttribute    ("project", project);
+   xmlo.writeAttribute    ("projectid",  QString::number( projectID ) );
+   
    xmlo.writeAttribute    ( "guid",         pGUID );
    xmlo.writeAttribute    ( "optima_host",  optimahost );
    xmlo.writeAttribute    ( "investigator", investigator );
@@ -85,6 +90,10 @@ bool US_RunProtocol::fromXml( QXmlStreamReader& xmli )
          if ( ename == "protocol" )
          {
             QXmlStreamAttributes attr = xmli.attributes();
+	    //ALEXEY: project
+	    project         = attr.value( "project"  ).toString();
+	    projectID       = attr.value( "projectid"  ).toInt();
+	    
             protname        = attr.value( "description"  ).toString();
             pGUID           = attr.value( "guid"         ).toString();
             optimahost      = attr.value( "optima_host"  ).toString();

@@ -61,7 +61,7 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
       void check_runname( void );
       
       int loaded_proto;
-            
+                  
    private:
       US_ExperimentMain*    mainw;      // Parent to all panels
       US_RunProtocol*       currProto;  // Current RunProtocol controls pointer
@@ -75,6 +75,9 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
       QLineEdit*   le_project;          // Project name line edit
       QLineEdit*   le_investigator;     // Investigator line edit
 
+      QLineEdit*   le_optima;
+      QLineEdit*   le_optima_connected;
+
       QwtCounter*  ct_tempera;          // Temperature counter
       QwtCounter*  ct_tedelay;          // Temp-equil-delay counter
 
@@ -87,7 +90,7 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
 
       QList< US_AbstractCenterpiece >  acp_list; // Full Centerpiece information
 
-
+      void test_optima_connection( void );
       
    private slots:
       void sel_project     ( void );        // Slot for project button clicked
@@ -758,7 +761,7 @@ class US_ExperimentMain : public US_Widgets
       QPushButton* pb_close;
 
       bool solutions_change;
-
+      
    private:
 
       QTabWidget*           tabWidget;      // Tab Widget holding the panels

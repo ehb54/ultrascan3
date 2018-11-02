@@ -175,6 +175,16 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
    QSpacerItem* spacer1         = new QSpacerItem( 20, ihgt );
    QSpacerItem* spacer2         = new QSpacerItem( 20, ihgt );
 
+
+   //Optima in use
+   QLabel*      lb_optima_banner    = us_banner( tr( "Optima Machine in Use" ) );
+   QLabel*      lb_optima           = us_label( tr( "Optima Name: " ) );
+                le_optima           = us_lineedit( "", 0, true );
+   QLabel*      lb_optima_connected = us_label( tr( "Connection Status: " ) );
+                le_optima_connected = us_lineedit( "", 0, true );
+
+   test_optima_connection();		
+  
    le_runid->setPlaceholderText("Enter Run ID to continue");
    
    ct_tempera->setSingleStep( 1 );
@@ -219,7 +229,16 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
    genL->addItem  ( spacer1,         row++, 5, 1, 3 );
    genL->addWidget( lb_tedelay,      row,   0, 1, 3 );
    genL->addWidget( ct_tedelay,      row,   3, 1, 2 );
-   genL->addWidget( lb_tedmins,      row,   5, 1, 1 );
+   genL->addWidget( lb_tedmins,      row++,   5, 1, 1 );
+   
+   genL->addItem  ( spacer2,         row++, 6, 1, 2 );
+   
+   genL->addWidget( lb_optima_banner, row++, 0, 1, 8 );
+   genL->addWidget( lb_optima,      row,     0, 1, 3 );
+   genL->addWidget( le_optima,      row++,   3, 1, 3 );
+   genL->addWidget( lb_optima_connected,      row,     0, 1, 3 );
+   genL->addWidget( le_optima_connected,      row++,   3, 1, 3 );   
+   
    genL->addItem  ( spacer2,         row++, 6, 1, 2 );
 
    panel->addLayout( genL );
@@ -476,6 +495,9 @@ DbgLv(1) << "EGGe:ldPro:  REJECT";
    mainw->currProto      = mainw->loadProto;
    ct_tempera->setValue( mainw->currProto.temperature );
    ct_tedelay->setValue( mainw->currProto.temeq_delay );
+   //ALEXEY: set Project name
+   le_project->setText(mainw->currProto.project);
+
 DbgLv(1) << "EGGe:ldPro:    dur0" << mainw->currProto.rpSpeed.ssteps[0].duration;
 DbgLv(1) << "EGGe:ldPro:    cPname" << mainw->currProto.protname
  << "lPname" << mainw->loadProto.protname;
@@ -525,6 +547,9 @@ DbgLv(1) << "projinfo: proj.guid" << project.projectGUID;
 
    le_project->setText( project.projectDesc );
    currProto->project   = project.projectDesc;
+
+   //ALEXEY
+   currProto->projectID   = project.projectID;
 }
 
 // Get centerpiece information (initially or after DB/Disk change
@@ -3123,6 +3148,7 @@ DbgLv(1) << "EGUp: host port name user pasw" << xpnhost << xpnport
    US_XpnData* xpn_data = new US_XpnData();
    connected           = xpn_data->connect_data( xpnhost, xpnport, dbname,
                                                  dbuser,  dbpasw );
+      
 DbgLv(1) << "EGUp:  connected" << connected;
    xpn_data->close();
    delete xpn_data;
@@ -3440,6 +3466,9 @@ DbgLv(1) << "EGUp:svRP:   currProto previous protname" << currProto->protname;
 DbgLv(1) << "EGUp:svRP:   currProto updated  guid" << currProto->pGUID;
 DbgLv(1) << "EGUp:svRP:   currProto updated  protname" << currProto->protname;
 
+//ALEXEY: bug - us_xml string has to be cleared each time Protocol is saved
+   rpSubmt->us_xml.clear();
+ 
    QXmlStreamWriter xmlo( &rpSubmt->us_xml ); // Compose XML representation
    xmlo.setAutoFormatting( true );
    currProto->toXml( xmlo );
@@ -3503,7 +3532,7 @@ void US_ExperGuiUpload::submitExperiment_confirm()
 
     QMessageBox msgBox;
     msgBox.setText(tr("Experiment will be submitted to the following Optima machine:"));
-    msgBox.setInformativeText( QString( tr(    "Alias: %1 <br>  Host:  %2 <br> Port:  %3" ))
+    msgBox.setInformativeText( QString( tr(    "Name: %1 <br>  Host:  %2 <br> Port:  %3" ))
 			       .arg(alias)
 			       .arg(dbhost)
 			       .arg(dbport));
