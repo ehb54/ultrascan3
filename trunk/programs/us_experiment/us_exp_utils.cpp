@@ -249,9 +249,6 @@ void US_ExperimentMain::disable_tabs_buttons( void )
   
   for (int i=1; i<tabWidget->count(); i++)
     {
-
-      //qDebug() << "DEFAULT COLOR: TAB TEXT !!!!!!!!!!!: " << tabWidget->tabBar()->tabTextColor( i );
-
       tabWidget ->setTabEnabled( i, false );
       tabWidget ->tabBar()->setTabTextColor( i, Qt::darkGray);
     }
@@ -446,10 +443,13 @@ void US_ExperGuiGeneral::test_optima_connection()
 
 void US_ExperGuiGeneral::check_empty_runname( const QString &str )
 {
-  if (str.isEmpty() )
+  if ( str.isEmpty() )
     emit set_tabs_buttons_inactive();
   else
-    emit set_tabs_buttons_active();
+    {
+      if ( !le_project->text().isEmpty() )
+	emit set_tabs_buttons_active();
+    }
 }
 
 void US_ExperGuiGeneral::check_runname()
@@ -458,8 +458,10 @@ void US_ExperGuiGeneral::check_runname()
   if ( rname.isEmpty() )
     emit set_tabs_buttons_inactive();
   else
-    emit set_tabs_buttons_active();
-
+    {
+      if ( !le_project->text().isEmpty() )
+	emit set_tabs_buttons_active();
+    }
   qApp->processEvents();
 }
 
