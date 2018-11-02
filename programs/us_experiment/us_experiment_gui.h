@@ -230,6 +230,7 @@ class US_ExperGuiSpeeds : public US_WidgetsDialog
 
       QCheckBox*   ck_endoff;
       QCheckBox*   ck_radcal;
+      QCheckBox*   ck_sync_delay;
 
       QVector< QString >  profdesc;              // Speed profile description
       QVector< QMap< QString, double> >  ssvals; // Speed-step values
@@ -286,6 +287,9 @@ class US_ExperGuiSpeeds : public US_WidgetsDialog
 
       //! \brief Function to adjust delay based on speed,accel,delay-hrs
       void    adjustDelay   ( void   );
+
+      void    stageDelay_sync     ( void );
+      void    syncdelayChecked    ( bool );
 #if 0
       //! \brief Function to populate a day,hour,minute,second list
       void    timeToList    ( double&, QList< int >& );

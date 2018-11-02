@@ -186,6 +186,7 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
    test_optima_connection();		
   
    le_runid->setPlaceholderText("Enter Run ID to continue");
+   le_project->setPlaceholderText("Select Project to continue");
    
    ct_tempera->setSingleStep( 1 );
    ct_tempera->setValue     ( 20 );
@@ -431,6 +432,8 @@ void US_ExperGuiGeneral::sel_investigator( void )
        currProto->temeq_delay  = 10.0;
        initPanel();
      }
+
+   check_runname();
       
 }
 
@@ -513,6 +516,8 @@ DbgLv(1) << "EGGe:ldPro:    cTempe" << mainw->currProto.temperature
  loaded_proto = 1;
    // Initialize all other panels using the new protocol
    mainw->initPanels();
+
+   check_runname();
 }
 
 // Verify entered protocol name
@@ -550,6 +555,8 @@ DbgLv(1) << "projinfo: proj.guid" << project.projectGUID;
 
    //ALEXEY
    currProto->projectID   = project.projectID;
+
+   check_runname();
 }
 
 // Get centerpiece information (initially or after DB/Disk change
@@ -861,7 +868,12 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    QLabel*  lb_durat   = us_label( tr( "Active Scanning Time (hh[H] mm[M]):" ) );
    QLabel*  lb_delay   = us_label( tr( "Delay to First Scan (hh[H] mm[M]):" ) );
 
-   QLabel*  lb_delay_stage   = us_label( tr( "Stage Delay (hh[H] mm[M]):" ) );
+   QLabel*  lb_delay_stage    = us_label( tr( "Stage Delay (hh[H] mm[M]):" ) );
+
+   QLayout* lo_delay_stage_sync  = us_checkbox( tr( "Synchronize Stage Delay with the 1st Speed Profile: " ), ck_sync_delay, false );
+
+   connect( ck_sync_delay, SIGNAL( toggled     ( bool ) ),
+               this,       SLOT  ( syncdelayChecked( bool ) ) );
    
    QLayout* lo_endoff  = us_checkbox( tr( "Spin down centrifuge at job end" ),
                                       ck_endoff, true );
@@ -1028,7 +1040,9 @@ DbgLv(1) << "EGSp: addWidg/Layo DD";
 
   genL->addWidget( lb_delay_stage,    row,    0, 1,  5 );
   genL->addLayout( lo_delaylay_stage, row++,  5, 1,  1 );
+  genL->addLayout( lo_delay_stage_sync, row++,0, 1,  5 );
 
+  
   
 DbgLv(1) << "EGSp: addWidg/Layo EE";
   genL->addWidget( lb_scnint,  row,    0, 1,  5 );
@@ -1243,6 +1257,7 @@ DbgLv(1) << "EGSp: chgKnt:    kkk" << kkk << "pdesc" << profdesc[kkk];
 
    nspeed      = new_nsp;
 }
+
 
 // Slot for change in speed-step profile index
 void US_ExperGuiSpeeds::ssChangeProfx( int ssp )
@@ -1657,6 +1672,10 @@ void US_ExperGuiSpeeds::ssChgDelayStageTime_hh( int val )
    double ssdlysec  = (double)sb_delay_st_ss->value();
    double ssdlytim  = ( ssdlyhr * 3600.0 ) + ( ssdlymin * 60.0 ) + ssdlysec;
    ssvals[ curssx ][ "delay_stage" ] = ssdlytim;  // Set Delay Stage in step vals vector
+
+   if ( curssx == 0 && ck_sync_delay->isChecked() ) //1st stage
+     stageDelay_sync();
+     
 }
 
 // Slot for change in delay time (mins)
@@ -1667,6 +1686,34 @@ void US_ExperGuiSpeeds::ssChgDelayStageTime_mm( int val )
    double ssdlysec  = (double)sb_delay_st_ss->value();
    double ssdlytim  = ( ssdlyhr * 3600.0 ) + ( ssdlymin * 60.0 ) + ssdlysec;
    ssvals[ curssx ][ "delay_stage" ] = ssdlytim;  // Set Delay in step vals vector
+
+   if ( curssx == 0  && ck_sync_delay->isChecked() ) //1st stage
+     stageDelay_sync();
+}
+
+
+//Slot to synchronize all stage delays with that for the 1st stage
+void US_ExperGuiSpeeds::stageDelay_sync( void )
+{
+  double delay = ssvals[ 0 ][ "delay_stage" ];                //delay fo the 1st stage in sec
+
+  double delay_hh   = qFloor( delay / 3600.0 );               // Delay in hh
+  double delay_mm   = (delay / 60.0) - ( delay_hh * 60.0 );   // Delay in min
+
+  sb_delay_st_hh ->setValue( (int)delay_hh );
+  sb_delay_st_mm ->setValue( (int)delay_mm );
+  
+  for ( int i = 1; i < nspeed; i++ )
+    {
+      ssvals[ i ][ "delay_stage" ] = delay; 
+    }
+
+}
+
+void US_ExperGuiSpeeds::syncdelayChecked( bool checked )
+{
+  if (checked)
+    stageDelay_sync();
 }
 
 // Function to adjust delay minimum when related values are changed
