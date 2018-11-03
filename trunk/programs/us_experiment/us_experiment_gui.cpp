@@ -2031,7 +2031,10 @@ DbgLv(1) << "EGSo:  nholes mxrow" << nholes << mxrow;
 
    for ( int ii = 0; ii < mxrow; ii++ )
    {  // Loop to build initial place-holder solution rows
-      QString schan;
+
+     solution_comment_init[ ii ] = false;                       //ALEXEY: initialize channel comments in solutions
+
+     QString schan;
       if      ( ii == 0 ) schan = QString( "2 / A" );
       else if ( ii == 1 ) schan = QString( "2 / B" );
       else if ( ii == 2 ) schan = QString( "6 / A" );
@@ -2586,18 +2589,29 @@ DbgLv(1) << "EGSo:addComm: IN";
    QObject* sobj       = sender();   // Sender object
    QString sname       = sobj->objectName();
    int irow            = sname.section( ":", 0, 0 ).toInt();
-   
+      
 DbgLv(1) << "EGSo:addComm: sname irow" << sname << irow;
    QString cclabl      = cc_labls[ irow ]->text();
 DbgLv(1) << "EGSo:addComm:  cclabl" << cclabl;
    QString sdescr      = cc_solus[ irow ]->currentText();
-   //manual_comment[ sdescr ] = "";  // Initialize manual comment for solution
-     
+
    // Get list of channel comment component strings
    //  and compose default channel comment string
 
    //ALEXEY make manual_comment per channel, not per solution name
    QString row_comment =  QString::number( irow );
+
+   //ALEXEY: check if channel comment was read in from protocol ONCE...
+   if ( !solution_comment_init[ irow ] )
+     {
+       QString protocol_comment = rpSolut->chsols[ irow ].ch_comment;
+       protocol_comment.replace(sdescr, "");
+       protocol_comment.remove( QRegExp("^[,\\s*]+") );
+       
+       manual_comment[ row_comment ] = protocol_comment.trimmed();  // Initialize manual comment for solution from protocol
+       solution_comment_init[ irow ]  = true;
+     }
+   
    commentStrings( sdescr, chcomm, comms, irow );
    int ncc             = comms.count();  // Number of component strings
 

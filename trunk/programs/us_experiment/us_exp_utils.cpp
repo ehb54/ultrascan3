@@ -348,10 +348,16 @@ void US_ExperimentMain::initPanels()
    epanRotor    ->initPanel();
    epanSpeeds   ->initPanel();
    epanCells    ->initPanel();
+
    epanSolutions->initPanel();
+   for ( int ii = 0; ii < epanSolutions->mxrow; ii++ )    //ALEXEY: reset channel comment while protocol re-loaded
+     epanSolutions->solution_comment_init[ ii ] = false;
+   
    epanOptical  ->initPanel();
    epanRanges   ->initPanel();
    epanUpload   ->initPanel();
+
+   
 }
 
 //========================= End:   Main      section =========================
