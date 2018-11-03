@@ -1611,10 +1611,13 @@ DbgLv(1) << "WrDa:  plot" << ii << "pd" << pd;
 DbgLv(1) << "WrDa: maxnvl" << maxnvl << "nplots" << nplots;
    char  valfm1[] = "\"%.5f\",\"%.5f\"";
    char  valfm2[] = "\"%.4e\",\"%.5f\"";
+   char  valfm3[] = "\"%.4e\",\"%.4e\"";
    char  valfx1[] = "\"%.5f\"";
-   char  valfy1[] = "\"%.5f\"";
    char  valfx2[] = "\"%.4e\"";
+   char  valfx3[] = "\"%.4e\"";
+   char  valfy1[] = "\"%.5f\"";
    char  valfy2[] = "\"%.5f\"";
+   char  valfy3[] = "\"%.4e\"";
    QString dummy_pair( "\"\",\"\"," );
    QString dummy_valu( "\"\"" );
    char* valfmt   = valfm1;
@@ -1623,9 +1626,29 @@ DbgLv(1) << "WrDa: maxnvl" << maxnvl << "nplots" << nplots;
    maxnvl         = qMax( maxnvl, nenvvl );
    if ( xtype == 1  ||  xtype == 2  || xtype == 5 )
    {
-         valfmt   = valfm2;                // Formatting for "MW"/"D"/"MWlog"
-         valfmx   = valfx2;
-         valfmy   = valfy2;
+      valfmt         = valfm2;        // Formatting for "MW"/"D"/"MWlog"
+      valfmx         = valfx2;
+      valfmy         = valfy2;
+   }
+   // Test whether X or X are below 1.0
+   double xvmin      = 1e99;
+   double yvmin      = 1e99;
+   for ( int jj = 0; jj < maxnvl; jj++ )
+   {
+      for ( int ii = 0; ii < nplots; ii++ )
+      {
+         double xv   = pdistrs[ ii ].xvals[ jj ];
+         double yv   = pdistrs[ ii ].xvals[ jj ];
+         xvmin       = qMin( xvmin, xv );
+         yvmin       = qMin( yvmin, yv );
+         yvals       = &pdistrs[ ii ].yvals;
+      }
+   }
+   if ( xvmin < 0.1  ||  yvmin < 0.1 )
+   {
+      valfmt         = valfm3;        // Formatting for values below 1.0
+      valfmx         = valfx3;
+      valfmy         = valfy3;
    }
 
    for ( int jj = 0; jj < maxnvl; jj++ )
