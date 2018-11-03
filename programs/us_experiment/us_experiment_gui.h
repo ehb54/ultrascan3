@@ -367,12 +367,15 @@ class US_ExperGuiSolutions : public US_WidgetsDialog
       void        help     ( void )
          { showHelp.show_help( "manual/experiment_solutions.html" ); };
 
+      QMap <int, bool> solution_comment_init;
+      int      mxrow;                           // Max rows (24)
+      
    private:
       US_ExperimentMain*   mainw;
       US_RunProtocol::RunProtoSolutions*  rpSolut;
       US_Help  showHelp;
       int      dbg_level;
-      int      mxrow;                           // Max rows (24)
+      //int      mxrow;                           // Max rows (24)
       int      nchant;                          // Number total rows
       int      nchanf;                          // Number rows with solutions
 
@@ -390,6 +393,7 @@ class US_ExperGuiSolutions : public US_WidgetsDialog
       QMap< QString, QString >      run_comms;  // Map run channel comments
 
       QMap< QString, QString >      manual_comment;  //Map for manual comment for solution
+     
             
    private slots:
       // \brief Open a solution dialog and return selected solution
