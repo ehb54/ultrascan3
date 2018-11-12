@@ -750,7 +750,10 @@ simparams.debug();
                         - simparams.speed_step[ 0 ].time_first )
                         / (double)( nscans - 1 );
    double w2tval      = simparams.speed_step[ 0 ].w2t_first;
-   double w2tinc      = timeinc * simparams.speed_step[ 0 ].rotorspeed * M_PI / 30.0;
+   double w2tinc      = timeinc * pow( simparams.speed_step[ 0 ].rotorspeed * M_PI / 30.0, 2.0 );
+DbgLv(1) << "rdata0 tf tl" << simparams.speed_step[0].time_first << simparams.speed_step[0].time_last
+ << "w2f w2l" << simparams.speed_step[0].w2t_first << simparams.speed_step[0].w2t_last
+ << "timeinc w2tinc" << timeinc << w2tinc;
 
    // For each scan, set the information for the experimental grid.
    for ( int js = 0; js < nscans; js++ )
@@ -769,7 +772,7 @@ simparams.debug();
       timeval          += timeinc;
       w2tval           += w2tinc;
 if(js==0  || js==(nscans-1))
- DbgLv(1) << "rdata0 sc seconds" << scan->seconds << "js" << js;
+ DbgLv(1) << "rdata0 sc seconds" << scan->seconds << "omg2t" << scan->omega2t << "js" << js;
    }
 }
 
