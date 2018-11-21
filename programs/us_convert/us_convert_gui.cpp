@@ -41,18 +41,379 @@
 #endif
 #endif
 
-int main( int argc, char* argv[] )
+
+US_ConvertGui::US_ConvertGui(QString auto_mode) : US_Widgets()
 {
-   QApplication application( argc, argv );
+   ExpData.invID = US_Settings::us_inv_ID();
 
-   #include "main1.inc"
+   // Ensure data directories are there
+   QDir dir;
+   dir.mkpath( US_Settings::workBaseDir() );
+   dir.mkpath( US_Settings::importDir()   );
+   dir.mkpath( US_Settings::tmpDir()      );
+   dir.mkpath( US_Settings::dataDir()     );
+   dir.mkpath( US_Settings::archiveDir()  );
+   dir.mkpath( US_Settings::resultDir()   );
+   dir.mkpath( US_Settings::reportDir()   );
+   dir.mkpath( US_Settings::etcDir()      );
 
-   // License is OK.  Start up.
+   setWindowTitle( tr( "Import Experimental Data (Beckman-XLA/XLI,"
+                       " Aviv Fluorescence, OpenAUC Multiwavelength)" ) );
+   setPalette( US_GuiSettings::frameColor() );
 
-   US_ConvertGui w;
-   w.show();                   //!< \memberof QWidget
-   return application.exec();  //!< \memberof QApplication
+   isMwl        = false;
+   tmst_fnamei  = QString( "" );
+   dbg_level    = US_Settings::us_debug();
+DbgLv(0) << "CGui: dbg_level" << dbg_level;
+
+   QGridLayout* settings = new QGridLayout;
+
+   int  row     = 0;
+
+   // First row
+   QStringList DB   = US_Settings::defaultDB();
+   if ( DB.isEmpty() ) DB << "Undefined";
+   QLabel* lb_DB    = us_banner( tr( "Database: " ) + DB.at( 0 ) );
+   lb_DB->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+
+   // Investigator
+   bool isadmin     = ( US_Settings::us_inv_level() > 2 );
+   QWidget* wg_investigator;
+   QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator"));
+
+   if ( isadmin )
+   {  // Admin gets investigator button
+      wg_investigator         = (QWidget*)pb_investigator;
+   }
+   else
+   {  // Non-admin gets only investigator label
+      QLabel* lb_investigator = us_label( tr( "Investigator:" ) );
+      wg_investigator         = (QWidget*)lb_investigator;
+      pb_investigator->setVisible( false );
+   }
+
+   le_investigator   = us_lineedit(   tr( "Not Selected" ), 0, true );
+
+   // Radio buttons
+   disk_controls     = new US_Disk_DB_Controls( US_Disk_DB_Controls::Default );
+   save_diskDB       = US_Disk_DB_Controls::Default;
+
+   // Display status
+   QLabel* lb_status = us_label(      tr( "Status:" ) );
+   le_status         = us_lineedit(   tr( "(no data loaded)" ), 1, true );
+   QPalette stpal;
+   stpal.setColor( QPalette::Text, Qt::white );
+   stpal.setColor( QPalette::Base, Qt::blue  );
+   le_status->setPalette( stpal );
+
+   // Display Run ID
+   QLabel* lb_runID  = us_label(      tr( "Run ID:" ) );
+   // Add this later, after tabs:settings->addWidget( lb_runID, row, 0 );
+   lb_runID->setVisible( false ); // for now
+
+   le_runID          = us_lineedit(   "", 1, true );
+   //le_runID ->setMinimumWidth( 280 );
+   // Add this later, after tabs: settings->addWidget( le_runID, row++, 1 );
+   le_runID ->setVisible ( false );  // for now
+
+   // Load the run
+   QLabel* lb_run    = us_banner(     tr( "Load the Run" ) );
+
+   // Pushbuttons to load and reload data
+   pb_import         = us_pushbutton( tr( "Import Experimental Data" ) );
+
+   // External program to enter experiment information
+   pb_editRuninfo    = us_pushbutton( tr( "Edit Run Information" ) );
+   pb_editRuninfo->setEnabled( false );
+
+   // Load US3 data ( that perhaps has been done offline )
+   pb_loadUS3        = us_pushbutton( tr( "Load US3 OpenAUC Run" ), true );
+
+   // Show TimeState
+   pb_showTmst       = us_pushbutton( tr( "Show TimeState" ), false );
+
+   // Run details
+   pb_details        = us_pushbutton( tr( "Run Details" ), false );
+
+   // Set the wavelength tolerance for c/c/w determination
+   QLabel* lb_tolerance = us_label(   tr( "Separation Tolerance:" ) );
+   ct_tolerance      = us_counter ( 2, 0.0, 100.0, 5.0 );
+   ct_tolerance->setSingleStep( 1 );
+
+   // Set up MWL controls
+   QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
+   QFontMetrics fmet( font );
+   static QChar clambda( 955 );   // Lambda character
+
+   lb_mwlctrl   = us_banner  ( tr( "Multi-Wavelength Lambda Controls" ) );
+   lb_lambstrt  = us_label   ( tr( "%1 Start:"    ).arg( clambda ) );
+   lb_lambstop  = us_label   ( tr( "%1 End:"      ).arg( clambda ) );
+   lb_lambplot  = us_label   ( tr( "Plot %1:"     ).arg( clambda ) );
+   cb_lambstrt  = us_comboBox();
+   cb_lambstop  = us_comboBox();
+   cb_lambplot  = us_comboBox();
+   pb_lambprev  = us_pushbutton( "previous", true, -2 );
+   pb_lambnext  = us_pushbutton( "next",     true, -2 );
+   pb_lambprev->setIcon( US_Images::getIcon( US_Images::ARROW_LEFT  ) );
+   pb_lambnext->setIcon( US_Images::getIcon( US_Images::ARROW_RIGHT ) );
+
+   mwl_connect( true );
+
+   QLabel* lb_runinfo  = us_banner(   tr( "Run Information" ) );
+
+   // Change Run ID
+   QLabel* lb_runID2   = us_label(    tr( "Run ID:" ) );
+   le_runID2           = us_lineedit( "", 1 );
+   //le_runID2 ->setMinimumWidth( 225 );
+
+   // Directory
+   QLabel* lb_dir      = us_label(    tr( "Directory:" ) );
+   le_dir              = us_lineedit( "", 1, true );
+
+   // Description
+   lb_description      = us_label(    tr( "Description:" ), 0 );
+   //lb_description ->setMaximumWidth( 175 );
+   le_description      = us_lineedit( "", 1 );
+
+   // Cell / Channel / Wavelength
+   QGridLayout* ccw    = new QGridLayout();
+
+   lb_triple           = us_banner(
+                            tr( "Cell / Channel / Wavelength" ), -1 );
+   lw_triple           = us_listwidget();
+   QLabel* lb_ccwinfo  = us_label(
+                            tr( "Enter Associated Triple (c/c/w) Info:" ) );
+
+   // Set up centerpiece drop-down
+   cb_centerpiece      = new US_SelectBox( this );
+   centerpieceInfo();
+   cb_centerpiece -> load();
+
+   // External program to enter solution information
+   pb_solution         = us_pushbutton( tr( "Manage Solutions"       ), false );
+   pb_applyAll         = us_pushbutton( tr( "Apply to All"           ), false );
+   // Defining data subsets
+   pb_define           = us_pushbutton( tr( "Define Subsets"         ), false );
+   pb_process          = us_pushbutton( tr( "Process Subsets"        ), false );
+   // Choosing reference channel
+   pb_reference        = us_pushbutton( tr( "Define Reference Scans" ), false );
+   pb_cancelref        = us_pushbutton( tr( "Undo Reference Scans"   ), false );
+   // Define intensity profile
+   pb_intensity        = us_pushbutton( tr( "Show Intensity Profile" ), false );
+   // Drop Triples or Channel or Cell/Channel
+   pb_dropTrips        = us_pushbutton( tr( "Drop Selected Triples"  ), false );
+   pb_dropCelch        = us_pushbutton( tr( "Drop Selected Data"     ), false );
+   pb_dropChan         = us_pushbutton( tr( "Drop All Channel 'A's"  ), false );
+   // Document solutio
+   QLabel* lb_solution = us_label(      tr( "Solution:" ) );
+   le_solutionDesc     = us_lineedit(   "", 1, true );
+   // Scan Controls
+   lb_scan             = us_banner(     tr( "Scan Controls" ) );
+   // Scan focus from
+   lb_from             = us_label(      tr( "Scan Focus from:" ), 0 );
+   lb_from->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
+   ct_from             = us_counter ( 3, 0.0, 0.0 ); // Update range upon load
+   ct_from->setSingleStep( 1 );
+   // Scan focus to
+   lb_to               = us_label(      tr( "Scan Focus to:"   ), 0 );
+   lb_to->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
+   ct_to = us_counter ( 3, 0.0, 0.0 ); // Update range upon load
+   ct_to->setSingleStep( 1 );
+
+   // Exclude and Include pushbuttons
+   pb_exclude          = us_pushbutton( tr( "Exclude Scan(s)" ), false );
+   pb_include          = us_pushbutton( tr( "Include All"     ), false );
+   pb_include ->setEnabled( false );
+   // Standard pushbuttons
+   QPushButton* pb_reset  = us_pushbutton( tr( "Reset" ) );
+   QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
+   pb_saveUS3             = us_pushbutton( tr( "Save" ) );
+   QPushButton* pb_close  = us_pushbutton( tr( "Close" ) );
+
+   // Add widgets to layouts
+   settings ->addWidget( lb_DB,           row++, 0, 1, 4 );
+   settings ->addWidget( wg_investigator, row,   0, 1, 2 );
+   settings ->addWidget( le_investigator, row++, 2, 1, 2 );
+   settings ->addLayout( disk_controls,   row++, 0, 1, 4 );
+   settings ->addWidget( lb_run,          row++, 0, 1, 4 );
+   settings ->addWidget( pb_import,       row,   0, 1, 2 );
+   settings ->addWidget( pb_editRuninfo,  row++, 2, 1, 2 );
+   settings ->addWidget( pb_loadUS3,      row,   0, 1, 2 );
+   settings ->addWidget( pb_showTmst,     row,   2, 1, 1 );
+   settings ->addWidget( pb_details,      row++, 3, 1, 1 );
+   settings ->addWidget( lb_tolerance,    row,   0, 1, 2 );
+   settings ->addWidget( ct_tolerance,    row++, 2, 1, 2 );
+   settings ->addWidget( lb_mwlctrl,      row++, 0, 1, 4 );
+   settings ->addWidget( lb_lambstrt,     row,   0, 1, 1 );
+   settings ->addWidget( cb_lambstrt,     row,   1, 1, 1 );
+   settings ->addWidget( lb_lambstop,     row,   2, 1, 1 );
+   settings ->addWidget( cb_lambstop,     row++, 3, 1, 1 );
+   settings ->addWidget( lb_lambplot,     row,   0, 1, 1 );
+   settings ->addWidget( cb_lambplot,     row,   1, 1, 1 );
+   settings ->addWidget( pb_lambprev,     row,   2, 1, 1 );
+   settings ->addWidget( pb_lambnext,     row++, 3, 1, 1 );
+
+   ccw      ->addWidget( lb_runinfo,      row++, 0, 1, 12 );
+   ccw      ->addWidget( lb_runID2,       row,   0, 1,  3 );
+   ccw      ->addWidget( le_runID2,       row++, 3, 1,  9 );
+   ccw      ->addWidget( lb_dir,          row,   0, 1,  3 );
+   ccw      ->addWidget( le_dir,          row++, 3, 1,  9 );
+   ccw      ->addWidget( lb_triple,       row++, 0, 1, 12 );
+   ccw      ->addWidget( lb_description,  row,   0, 1,  3 );
+   ccw      ->addWidget( le_description,  row++, 3, 1,  9 );
+   ccw      ->addWidget( lw_triple,       row,   0, 7,  4 );
+   ccw      ->addWidget( lb_ccwinfo,      row++, 4, 1,  8 );
+   ccw      ->addWidget( cb_centerpiece,  row++, 4, 1,  8 );
+   ccw      ->addWidget( pb_solution,     row,   4, 1,  4 );
+   ccw      ->addWidget( pb_applyAll,     row++, 8, 1,  4 );
+   ccw      ->addWidget( pb_define,       row,   4, 1,  4 );
+   ccw      ->addWidget( pb_process,      row++, 8, 1,  4 );
+   ccw      ->addWidget( pb_reference,    row,   4, 1,  4 );
+   ccw      ->addWidget( pb_cancelref,    row++, 8, 1,  4 );
+   ccw      ->addWidget( pb_intensity,    row,   4, 1,  4 );
+   ccw      ->addWidget( pb_dropTrips,    row++, 8, 1,  4 );
+   ccw      ->addWidget( pb_dropCelch,    row,   4, 1,  4 );
+   ccw      ->addWidget( pb_dropChan,     row++, 8, 1,  4 );
+   ccw      ->addWidget( lb_solution,     row,   0, 1,  3 );
+   ccw      ->addWidget( le_solutionDesc, row++, 3, 1,  9 );
+   ccw      ->addWidget( lb_status,       row,   0, 1,  2 );
+   ccw      ->addWidget( le_status,       row++, 2, 1, 10 );
+
+   settings ->addLayout( ccw,             row++, 0, 1, 4 );
+
+   settings ->addWidget( pb_reset,        row,   0, 1, 1 );
+   settings ->addWidget( pb_help,         row,   1, 1, 1 );
+   settings ->addWidget( pb_saveUS3,      row,   2, 1, 1 );
+   settings ->addWidget( pb_close,        row++, 3, 1, 1 );
+
+   // Plot layout for the right side of window
+   QBoxLayout* plot = new US_Plot( data_plot,
+                                   tr( "Absorbance Data" ),
+                                   tr( "Radius (in cm)" ),
+                                   tr( "Absorbance" ) );
+
+   data_plot->setMinimumSize( 500, 300 );
+
+   data_plot->enableAxis( QwtPlot::xBottom, true );
+   data_plot->enableAxis( QwtPlot::yLeft  , true );
+
+   data_plot->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
+   data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
+
+   picker = new US_PlotPicker( data_plot );
+   picker ->setRubberBand    ( QwtPicker::VLineRubberBand );
+   picker->setMousePattern   ( QwtEventPattern::MouseSelect1,
+                               Qt::LeftButton, Qt::ControlModifier );
+
+   QGridLayout* todo = new QGridLayout();
+
+   // Instructions ( missing to do items )
+   QLabel* lb_todoinfo = us_banner( tr( "Instructions ( to do list )" ), 0 );
+   lw_todoinfo = us_listwidget();
+   lw_todoinfo->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Fixed );
+   lw_todoinfo->setMaximumHeight ( 90 );
+   lw_todoinfo->setSelectionMode( QAbstractItemView::NoSelection );
+
+   // Scan controls:
+   todo->addWidget( lb_scan,         row++, 0, 1, 4 );
+   todo->addWidget( lb_from,         row,   0, 1, 2 );
+   todo->addWidget( ct_from,         row++, 2, 1, 2 );
+   todo->addWidget( lb_to,           row,   0, 1, 2 );
+   todo->addWidget( ct_to,           row++, 2, 1, 2 );
+   todo->addWidget( pb_exclude,      row,   0, 1, 2 );
+   todo->addWidget( pb_include,      row++, 2, 1, 2 );
+   todo->addWidget( lb_todoinfo,     row++, 0, 1, 4 );
+   todo->addWidget( lw_todoinfo,     row++, 0, 1, 4 );
+
+
+   // Hide scan Control
+   if ( auto_mode.toStdString() == "AUTO")
+     { 
+       // ALEXEY TO BE ADDED...
+     }
+   
+   // Connect signals and slots
+   if ( isadmin )
+      connect( pb_investigator, SIGNAL( clicked()          ),
+                                SLOT(   sel_investigator() ) );
+   connect( disk_controls,  SIGNAL( changed       ( bool ) ),
+                            SLOT  ( source_changed( bool ) ) );
+   connect( pb_import,      SIGNAL( clicked()       ),
+                            SLOT(   import()        ) );
+   connect( pb_editRuninfo, SIGNAL( clicked()       ),
+                            SLOT(   editRuninfo()   ) );
+   connect( pb_loadUS3,     SIGNAL( clicked()       ),
+                            SLOT(   loadUS3()       ) );
+   connect( pb_showTmst,    SIGNAL( clicked()       ),
+                            SLOT(   showTimeState() ) );
+   connect( pb_details,     SIGNAL( clicked()       ),
+                            SLOT(   runDetails()    ) );
+   connect( ct_tolerance,   SIGNAL( valueChanged         ( double ) ),
+                            SLOT  ( toleranceValueChanged( double ) ) );
+   connect( le_description, SIGNAL( textEdited( QString )      ),
+                            SLOT  ( changeDescription()        ) );
+   connect( lw_triple,      SIGNAL( itemSelectionChanged()     ),
+                            SLOT  ( changeTriple()             ) );
+   connect( cb_centerpiece, SIGNAL( activated          ( int ) ),
+                            SLOT  ( getCenterpieceIndex( int ) ) );
+   connect( pb_solution,    SIGNAL( clicked()          ),
+                            SLOT(   getSolutionInfo()  ) );
+   connect( pb_applyAll,    SIGNAL( clicked()          ),
+                            SLOT(   tripleApplyAll()   ) );
+   connect( pb_define,      SIGNAL( clicked()          ),
+                            SLOT(   define_subsets()   ) );
+   connect( pb_process,     SIGNAL( clicked()          ),
+                            SLOT(   process_subsets()  ) );
+   connect( pb_reference,   SIGNAL( clicked()          ),
+                            SLOT(   define_reference() ) );
+   connect( pb_cancelref,   SIGNAL( clicked()          ),
+                            SLOT(   cancel_reference() ) );
+   connect( pb_intensity,   SIGNAL( clicked()          ),
+                            SLOT(   show_intensity()   ) );
+   connect( pb_dropTrips,   SIGNAL( clicked()          ),
+                            SLOT(   drop_reference()   ) );
+   connect( pb_dropCelch,   SIGNAL( clicked()          ),
+                            SLOT(   drop_cellchan()    ) );
+   connect( pb_dropChan,    SIGNAL( clicked()          ),
+                            SLOT(   drop_channel()     ) );
+   connect( pb_exclude,     SIGNAL( clicked()          ),
+                            SLOT(   exclude_scans()    ) );
+   connect( pb_include,     SIGNAL( clicked()  ),
+                            SLOT(   include()  ) );
+   connect( pb_reset,       SIGNAL( clicked()  ),
+                            SLOT(   resetAll() ) );
+   connect( pb_help,        SIGNAL( clicked()  ),
+                            SLOT(   help()     ) );
+   connect( pb_saveUS3,     SIGNAL( clicked()  ),
+                            SLOT(   saveUS3()  ) );
+   connect( pb_close,       SIGNAL( clicked()  ),
+                            SLOT(   close() )  );
+
+   // Now let's assemble the page
+
+   QVBoxLayout* left     = new QVBoxLayout;
+
+   left->addLayout( settings );
+
+   QVBoxLayout* right    = new QVBoxLayout;
+
+   right->addLayout( plot );
+   right->addLayout( todo );
+
+   QHBoxLayout* main = new QHBoxLayout( this );
+   main->setSpacing         ( 2 );
+   main->setContentsMargins ( 2, 2, 2, 2 );
+
+   main->addLayout( left );
+   main->addLayout( right );
+   main->setStretchFactor( left,  3 );
+   main->setStretchFactor( right, 5 );
+
+DbgLv(1) << "CGui: GUI setup complete";
+   reset();
+DbgLv(1) << "CGui: reset complete";
 }
+
 
 US_ConvertGui::US_ConvertGui() : US_Widgets()
 {
@@ -616,6 +977,11 @@ void US_ConvertGui::toleranceValueChanged( double )
    toleranceChanged = true;
    scanTolerance    = ct_tolerance->value();
    reimport();
+}
+
+void US_ConvertGui::import_data_auto ( QString & currDir)
+{
+  // ALEXEY TO BE ADDED...
 }
 
 // User pressed the import data button
@@ -3705,6 +4071,113 @@ void US_ConvertGui::saveReportsToDB( void )
    }
 
 }
+
+int US_ConvertGui::getImports_auto() // ALEXEY TO BE EDITED...
+{
+   QString dir;
+   int impType  = 0;
+
+   dir = QFileDialog::getExistingDirectory( this,
+         tr( "Raw Data Directory" ),
+         US_Settings::importDir(),
+         QFileDialog::DontResolveSymlinks );
+
+   dir.replace( "\\", "/" );
+
+   if ( dir.isEmpty() )      // If no directory chosen, return now
+      return -1;
+
+   QDir readDir( dir, "*", QDir::Name, QDir::Files | QDir::Readable );
+   readDir.makeAbsolute();
+   if ( dir.right( 1 ) != "/" ) dir += "/";  // Ensure trailing "/"
+
+   // See if we need to fix the runID
+   QString new_runID = dir.section( "/", -2, -2 );
+   QRegExp rx( "[^A-Za-z0-9_-]" );
+
+   int pos = 0;
+   bool runID_changed = false;
+   while ( ( pos = rx.indexIn( new_runID ) ) != -1 )
+   {
+      new_runID.replace( pos, 1, "_" );      // Replace 1 char at position pos
+      runID_changed = true;
+   }
+DbgLv(1) << "CGui:gI: dir" << dir << "new_runID" << new_runID
+ << "rID_chgd" << runID_changed;
+
+   // Let the user know if the runID name has changed
+   if ( runID_changed )
+   {
+      QMessageBox::warning( this,
+            tr( "RunID Name Changed" ),
+            tr( "The runID name has been changed. It may consist only"
+                "of alphanumeric \n"
+                " characters, the underscore, and the hyphen. New runID: " )
+            + new_runID );
+   }
+
+   // Set the runID and directory
+   runID       = new_runID;
+   le_runID ->setText( runID );
+   le_runID2->setText( runID );
+   le_dir   ->setText( dir );
+   currentDir  = QString( dir );
+
+   // Get the list of files in the chosen directory
+   QStringList nameFilters = QStringList( "*" );
+   QStringList files =  readDir.entryList( nameFilters,
+         QDir::Files | QDir::Readable, QDir::Name );
+
+   QString tmstFname;
+   QString txmlFname;
+   int nauc    = 0;
+   int nmwrs   = 0;
+   int nother  = 0;
+   int ntmst   = 0;
+   int ntxml   = 0;
+   int ntotf   = files.size();
+DbgLv(1) << "CGui:gI: ntotf" << ntotf;
+
+   for ( int jj = 0; jj < ntotf; jj++ )
+   {
+      QString fname = files[ jj ];
+
+      if (      fname.endsWith( ".mwrs" ) )
+         nmwrs++;
+
+      else if ( fname.endsWith( ".auc" ) )
+         nauc++;
+
+      else if ( fname.endsWith( "time_state.xml" ) )
+      {
+         ntxml++;
+         txmlFname     = fname;
+      }
+      else if ( fname.endsWith( "time_state.tmst" ) )
+      {
+         ntmst++;
+         tmstFname     = fname;
+      }
+      else
+         nother++;
+   }
+DbgLv(1) << "CGui:gI: nmwrs nauc ntxml ntmst nother"
+ << nmwrs << nauc << ntxml << ntmst << nother;
+
+   if ( nmwrs > 0 )
+      impType     = 1;             // Flag import of MWL data
+
+   else if ( nauc > 0 )
+      impType     = 2;             // Flag import of AUC data
+
+   else
+      impType     = 0;             // Flag import of Beckman Raw
+
+DbgLv(1) << "CGui:gI:  RTN impType" << impType;
+   return impType;
+}
+
+
 
 int US_ConvertGui::getImports()
 {

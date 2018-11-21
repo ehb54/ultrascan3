@@ -8,6 +8,8 @@
 #include "us_plot.h"
 #include "us_convert.h"
 #include "us_experiment.h"
+#include "us_license_t.h"
+#include "us_license.h"
 #include "us_dataIO.h"
 #include "us_solution.h"
 #include "us_simparms.h"
@@ -35,6 +37,9 @@ class US_ConvertGui : public US_Widgets
 
       //! \brief  Generic constructor for the US_ConvertGui() program.
       US_ConvertGui();
+
+      // New constructor for automated read/upload/update
+      US_ConvertGui(QString auto_mode);
 
       US_Disk_DB_Controls*    disk_controls;  //!< Radiobuttons for disk/db choice
       bool                    save_diskDB;    //!< To keep track of changes
@@ -201,11 +206,16 @@ class US_ConvertGui : public US_Widgets
       */
       void assign_investigator( int );
 
+      void import_data_auto   (QString &);
+      
       void import            ( void );
       void reimport          ( void );
       void importMWL         ( void );
       void importAUC         ( void );
+
       int  getImports        ( void );
+      int  getImports_auto   ( void );
+      
       void enableControls    ( void );
       void runIDChanged      ( void );
       void toleranceValueChanged( double );     // signal to notify of change

@@ -1,6 +1,6 @@
 //! \file us_experiment.h
-#ifndef US_EXPERIMENT_H
-#define US_EXPERIMENT_H
+#ifndef US_EXPERIMENT_CONVERT_H
+#define US_EXPERIMENT_CONVERT_H
 
 #include "us_extern.h"
 #include "us_convert.h"

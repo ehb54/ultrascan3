@@ -6,8 +6,17 @@
 #include <fstream>
 #include <QtSql>
 
-#include "../us_experiment/us_experiment_gui.h"
+#include "../us_experiment/us_experiment_gui_optima.h"
 #include "../us_xpn_viewer/us_xpn_viewer_gui.h"
+#include "../us_convert/us_experiment.h"     
+#include "../us_convert/us_experiment_gui.h" 
+#include "../us_convert/us_convert_gui.h"    
+#include "../us_convert/us_convertio.h"      
+#include "../us_convert/us_get_run.h"        
+#include "../us_convert/us_intensity.h"      
+#include "../us_convert/us_selectbox.h"      
+#include "../us_convert/us_select_triples.h"
+
 #include "us_protocol_util.h"
 #include "us_project_gui.h"
 #include "us_editor.h"
@@ -68,6 +77,11 @@ class US_ExperGui : public US_WidgetsDialog
       QLabel*     lb_exp_banner;
       QPushButton* pb_openexp;          // Button to open exper.
       QLineEdit*   opening_msg;
+      US_ExperimentMain*    sdiag;
+      int offset;
+
+ protected:
+      void resizeEvent(QResizeEvent *event) override;
      
       
    private slots:
@@ -92,11 +106,18 @@ class US_ObservGui : public US_WidgetsDialog
 
  private:
       US_ComProjectMain*    mainw;      // Parent to all panels
+      US_XpnDataViewer*    sdiag;
+      int offset;
+
+ protected:
+      void resizeEvent(QResizeEvent *event) override;
       
  private slots:
-      void process_protocol_details( QMap < QString, QString > & protocol_details );            
+      void process_protocol_details( QMap < QString, QString > & protocol_details );
+      void to_post_processing( QString & currDir );   
  signals:
-      void to_xpn_viewer( QMap < QString, QString > & protocol_details ); 
+      void to_xpn_viewer( QMap < QString, QString > & protocol_details );
+      void switch_to_post_processing( QString & currDir );
       
 };
 
@@ -113,9 +134,17 @@ class US_PostProdGui : public US_WidgetsDialog
          
   private:
     US_ComProjectMain*    mainw;      // Parent to all panels
-  
+    US_ConvertGui*        sdiag;
+    int offset;
+
+ protected:
+    void resizeEvent(QResizeEvent *event) override;
+      
   private slots:
-    
+    void import_data_us_convert( QString & currDir);
+
+  signals:
+    void to_post_prod( QString & currDir);
   
       
 };
@@ -155,11 +184,12 @@ private slots:
    
   //void unable_tabs_buttons( void);  // Slot to unable Tabs and Buttons when user level is low
   //void enable_tabs_buttons( void);  // Slot to enable Tabs and Buttons after protocol is loaded
-  void switch_to_live_update( QMap < QString, QString > & protocol_details ); 
+  void switch_to_live_update( QMap < QString, QString > & protocol_details );
+  void switch_to_post_processing( QString & currDir); 
   
 signals:
   void pass_to_live_update( QMap < QString, QString > & protocol_details ); 
-  
+  void import_data_us_convert( QString & currDir);
 };
 
 

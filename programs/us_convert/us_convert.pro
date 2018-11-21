@@ -17,7 +17,8 @@ HEADERS       = us_convert.h           \
                 us_selectbox.h         \
                 us_select_triples.h
 
-SOURCES       = us_convert.cpp         \
+SOURCES       = us_convert_main.cpp    \
+                us_convert.cpp         \
                 us_convert_gui.cpp     \
                 us_convertio.cpp       \
                 us_get_run.cpp         \

@@ -124,9 +124,10 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
 
    connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
    connect( this   , SIGNAL( pass_to_live_update( QMap < QString, QString > &) ),   epanObserv, SLOT( process_protocol_details( QMap < QString, QString > & )  ) );
+   connect( epanObserv, SIGNAL( switch_to_post_processing( QString &) ), this, SLOT( switch_to_post_processing( QString & )  ) );
+   connect( this, SIGNAL( import_data_us_convert( QString &) ),  epanPostProd, SLOT( import_data_us_convert( QString & )  ) );
    
-   
-   setMinimumSize( QSize( 1225, 825 ) );
+   setMinimumSize( QSize( 1350, 875 ) );
    adjustSize();
 
 }
@@ -137,6 +138,14 @@ void US_ComProjectMain::switch_to_live_update( QMap < QString, QString > & proto
   tabWidget->setCurrentIndex( 1 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ?? 
 
    emit pass_to_live_update( protocol_details );
+}
+
+// Slot to switch from the Live Update to PostProcessifn tab
+void US_ComProjectMain::switch_to_post_processing( QString  & currDir)
+{
+   tabWidget->setCurrentIndex( 2 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ?? 
+
+   emit import_data_us_convert( currDir );
 }
      
 
@@ -211,7 +220,8 @@ US_ExperGui::US_ExperGui( QWidget* topw )
    //manageExperiment();
 
    // Open US_Experiment without button...  
-   US_ExperimentMain* sdiag = new US_ExperimentMain;
+   //US_ExperimentMain* sdiag = new US_ExperimentMain;
+   sdiag = new US_ExperimentMain;
    sdiag->setParent(this, Qt::Widget);
    
    connect( sdiag, SIGNAL( us_exp_is_closed() ), this, SLOT( us_exp_is_closed_set_button() ) );
@@ -219,14 +229,46 @@ US_ExperGui::US_ExperGui( QWidget* topw )
 	    this,  SLOT( to_live_update( QMap < QString, QString > & ) ) );
 
    sdiag->pb_close->setEnabled(false);  // Disable Close button
-   int offset = 20;
+   offset = 20;
    sdiag->move(offset, 2*offset);
    sdiag->setFrameShape( QFrame::Box);
    sdiag->setLineWidth(2); 
    
    sdiag->show();
+
      
 }
+
+
+void US_ExperGui::resizeEvent(QResizeEvent *event)
+{
+    int tab_width = mainw->tabWidget->tabBar()->width();
+    int upper_height = mainw->gen_banner->height() + mainw->welcome->height() + mainw->logWidget->height() + mainw->test_footer->height();
+     
+    int new_main_w = mainw->width() - 3*offset - tab_width;
+    int new_main_h = mainw->height() - 4*offset - upper_height;
+    
+    //if (mainw->width() - offset > sdiag->width() || mainw->height() - 2*offset > sdiag->height()) {
+    if ( new_main_w > sdiag->width() || new_main_h > sdiag->height()) {
+      int newWidth = qMax( new_main_w, sdiag->width());
+      int newHeight = qMax( new_main_h, sdiag->height());
+      sdiag->setMaximumSize( newWidth, newHeight );
+      sdiag->resize( QSize(newWidth, newHeight) );
+      update();
+    }
+
+    //if (mainw->width() < sdiag->width() || mainw->height() < sdiag->height()) {
+    if ( new_main_w < sdiag->width() ||  new_main_h < sdiag->height() ) {
+      int newWidth = qMin( new_main_w, sdiag->width());
+      int newHeight = qMin( new_main_h, sdiag->height());
+      sdiag->setMaximumSize( newWidth, newHeight );
+      sdiag->resize( QSize(newWidth, newHeight) );
+      update();
+    }
+     
+    QWidget::resizeEvent(event);
+}
+
 
 //When run is submitted to Optima & protocol details are passed .. 
 void US_ExperGui::to_live_update( QMap < QString, QString > & protocol_details)
@@ -331,18 +373,51 @@ US_ObservGui::US_ObservGui( QWidget* topw )
    main->addStretch();
 
    // Open US_Xpn_Viewer ...  
-   US_XpnDataViewer* sdiag = new US_XpnDataViewer("AUTO");
+   sdiag = new US_XpnDataViewer("AUTO");
    sdiag->setParent(this, Qt::Widget);
 
    connect( this, SIGNAL( to_xpn_viewer( QMap < QString, QString > &) ), sdiag, SLOT( check_for_data ( QMap < QString, QString > & )  ) );
+
+   //ALEXEY: devise SLOT saying what to do upon completion of experiment and exporting AUC data to hard drive - Import Experimental Data  !!! 
+   connect( sdiag, SIGNAL( experiment_complete_auto( QString & ) ), this, SLOT( to_post_processing ( QString &) ) );
    
-   int offset = 20;
+   offset = 20;
    sdiag->move(offset, 2*offset);
    sdiag->setFrameShape( QFrame::Box);
    sdiag->setLineWidth(2);
 
    sdiag->show();
 
+}
+
+
+void US_ObservGui::resizeEvent(QResizeEvent *event)
+{
+    int tab_width = mainw->tabWidget->tabBar()->width();
+    int upper_height = mainw->gen_banner->height() + mainw->welcome->height() + mainw->logWidget->height() + mainw->test_footer->height();
+     
+    int new_main_w = mainw->width() - 3*offset - tab_width;
+    int new_main_h = mainw->height() - 4*offset - upper_height;
+    
+    //if (mainw->width() - offset > sdiag->width() || mainw->height() - 2*offset > sdiag->height()) {
+    if ( new_main_w > sdiag->width() || new_main_h > sdiag->height()) {
+      int newWidth = qMax( new_main_w, sdiag->width());
+      int newHeight = qMax( new_main_h, sdiag->height());
+      sdiag->setMaximumSize( newWidth, newHeight );
+      sdiag->resize( QSize(newWidth, newHeight) );
+      update();
+    }
+
+    //if (mainw->width() < sdiag->width() || mainw->height() < sdiag->height()) {
+    if ( new_main_w < sdiag->width() ||  new_main_h < sdiag->height() ) {
+      int newWidth = qMin( new_main_w, sdiag->width());
+      int newHeight = qMin( new_main_h, sdiag->height());
+      sdiag->setMaximumSize( newWidth, newHeight );
+      sdiag->resize( QSize(newWidth, newHeight) );
+      update();
+    }
+     
+    QWidget::resizeEvent(event);
 }
 
 // Live Update's get and use submitted run's protocol details
@@ -359,11 +434,98 @@ void US_ObservGui::process_protocol_details( QMap < QString, QString > & protoco
   emit to_xpn_viewer( protocol_details );
 }
 
+void US_ObservGui::to_post_processing( QString & currDir )
+{
+  emit switch_to_post_processing( currDir );
+}
+
+
 
 // US_PostProd
 US_PostProdGui::US_PostProdGui( QWidget* topw )
    : US_WidgetsDialog( topw, 0 )
 {
    mainw               = (US_ComProjectMain*)topw;
+
+   setPalette( US_GuiSettings::frameColor() );
+   QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
+   QFontMetrics fmet( sfont );
+   int fwid     = fmet.maxWidth();
+   int lwid     = fwid * 4;
+   int swid     = lwid + fwid;
    
+   // Main VBox
+   QVBoxLayout* main     = new QVBoxLayout (this);
+   main->setSpacing        ( 2 );
+   main->setContentsMargins( 2, 2, 2, 2 );
+      
+   QGridLayout* genL   = new QGridLayout();
+   //QPlainTextEdit* panel_desc = new QPlainTextEdit(this);
+   QTextEdit* panel_desc = new QTextEdit(this);
+   panel_desc->viewport()->setAutoFillBackground(false);
+   panel_desc->setFrameStyle(QFrame::NoFrame);
+   panel_desc->setPlainText(" Tab to Retrieve and Process Experimental Data...");
+   panel_desc->setReadOnly(true);
+   //panel_desc->setMaximumHeight(30);
+   QFontMetrics m (panel_desc -> font()) ;
+   int RowHeight = m.lineSpacing() ;
+   panel_desc -> setFixedHeight  (2* RowHeight) ;
+
+   int row = 0;
+   genL->addWidget( panel_desc,  row++,   0, 1, 12);
+ 
+   // assemble main
+   main->addLayout(genL);
+   main->addStretch();
+
+
+   // Open US_Convert ...  
+   sdiag = new US_ConvertGui("AUTO");
+   sdiag->setParent(this, Qt::Widget);
+
+   connect( this, SIGNAL( to_post_prod( QString &) ), sdiag, SLOT( import_data_auto ( QString & )  ) );
+   
+   offset = 20;
+   sdiag->move(offset, 2*offset);
+   sdiag->setFrameShape( QFrame::Box);
+   sdiag->setLineWidth(2);
+
+   sdiag->show();
+
+}
+
+void US_PostProdGui::resizeEvent(QResizeEvent *event)
+{
+    int tab_width = mainw->tabWidget->tabBar()->width();
+    int upper_height = mainw->gen_banner->height() + mainw->welcome->height() + mainw->logWidget->height() + mainw->test_footer->height();
+     
+    int new_main_w = mainw->width() - 3*offset - tab_width;
+    int new_main_h = mainw->height() - 4*offset - upper_height;
+    
+    //if (mainw->width() - offset > sdiag->width() || mainw->height() - 2*offset > sdiag->height()) {
+    if ( new_main_w > sdiag->width() || new_main_h > sdiag->height()) {
+      int newWidth = qMax( new_main_w, sdiag->width());
+      int newHeight = qMax( new_main_h, sdiag->height());
+      sdiag->setMaximumSize( newWidth, newHeight );
+      sdiag->resize( QSize(newWidth, newHeight) );
+      update();
+    }
+
+    //if (mainw->width() < sdiag->width() || mainw->height() < sdiag->height()) {
+    if ( new_main_w < sdiag->width() ||  new_main_h < sdiag->height() ) {
+      int newWidth = qMin( new_main_w, sdiag->width());
+      int newHeight = qMin( new_main_h, sdiag->height());
+      sdiag->setMaximumSize( newWidth, newHeight );
+      sdiag->resize( QSize(newWidth, newHeight) );
+      update();
+    }
+     
+    QWidget::resizeEvent(event);
+}
+
+
+
+void US_PostProdGui::import_data_us_convert( QString & currDir )
+{
+   emit to_post_prod( currDir );
 }

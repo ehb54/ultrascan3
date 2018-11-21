@@ -2158,6 +2158,21 @@ void US_XpnDataViewer::connect_ranges( bool conn )
    }
 }
 
+// export_auc data in us_com_project
+void US_XpnDataViewer::export_auc_auto()
+{
+   correct_radii();      // Perform chromatic aberration radius corrections
+
+   int nfiles     = xpn_data->export_auc( allData );
+
+   QString tspath = currentDir + "/" + runID + ".time_state.tmst";
+   haveTmst       = QFile( tspath ).exists();
+
+   le_status  ->setText( tr( "%1 AUC/TMST files written ..." ).arg( nfiles ) );
+   //pb_showtmst->setEnabled( haveTmst );
+   qApp->processEvents();
+}
+
 // Slot to export to openAUC
 void US_XpnDataViewer::export_auc()
 {
@@ -2492,14 +2507,16 @@ DbgLv(1) << "RLd:       NO CHANGE";
 	  timer_data_reload->stop();
 	  disconnect(timer_data_reload, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
 	  
-	  // Export AUC data:
-	  export_auc();
+	  // ALEXEY Export AUC data: devise export_auc_auto() function which would return directory name with saved data - to pass to emit signal below... 
+	  export_auc_auto();
 	  
 	  QString mtitle_complete  = tr( "Complete!" );
-	  QString message_done     = tr( "Experiement was completed. Optima produced data saved..." );
+	  QString message_done     = tr( "Experiement was completed. Optima data saved..." );
 	  QMessageBox::information( this, mtitle_complete, message_done );
 	  
-	  emit experiment_complete_auto( RunID_to_retrieve );  // Updtade later: what should be passed with signal ?? 
+	  emit experiment_complete_auto( currentDir );  // Updtade later: what should be passed with signal ??
+
+	  return;
 	}
 
        in_reload   = false;         // Flag no longer in the midst of reload

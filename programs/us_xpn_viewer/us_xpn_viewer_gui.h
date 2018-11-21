@@ -173,7 +173,10 @@ class US_XpnDataViewer : public US_Widgets
      void   plot_all       ( void );
      void   enableControls ( void );
      void   runDetails     ( void );
+     
      void   export_auc     ( void );
+     void   export_auc_auto( void );
+
      void   changeRadius   ( void );
      void   changeCellCh   ( void );
      void   changeRecord   ( void );
