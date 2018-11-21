@@ -66,10 +66,12 @@ simparams.debug();
    US_SimulationParameters::SpeedProfile* sp_prev;
 DbgLv(1) << "AMATH:wrts: writetimestate : no of scans" << nscans;
    QList< int > scantimes;
+   QList< double > scantemps;
 
    for ( int ii = 0; ii < nscans; ii++ )
-   {  // Accumulate the times at scans
+   {  // Accumulate the times and temperatures at scans
       scantimes << sim_data.scanData[ ii ].seconds;
+      scantemps << sim_data.scanData[ ii ].temperature;
 DbgLv(1) << "AMATH:wrts:scantimes" << scantimes[ii] << sim_data.scanData[ii].omega2t
  << ii << sim_data.scanData[ii].rpm;
    }
@@ -199,6 +201,7 @@ DbgLv(1)<< "AMATH:wrts: rate is given by user : t_acc from timestate" << t_acc <
          itime       = ii;
          int scanx   = scantimes.indexOf( itime );
          scan_nbr    = ( scanx < 0 ) ? 0 : ( scanx + 1 );
+         temperature = ( scanx < 0 ) ? temperature : scantemps[ scanx ];
 //if(scan_nbr>0)
 if((scan_nbr>0)||(ii<(d1+2))||((ii>(tacc-2))&&(ii<(tacc+2)))||((ii+3)>d2))
  DbgLv(1) << "AMATH:wrts: ii(time)" << ii << "scanx scan_nbr" << scanx << scan_nbr

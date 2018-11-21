@@ -1,4 +1,4 @@
-//! \file us_experiment/us_experiment_gui.cpp
+//! \file us_experiment/us_experiment_gui_optima.cpp
 
 #include "us_experiment_gui_optima.h"
 #include "us_rotor_gui.h"

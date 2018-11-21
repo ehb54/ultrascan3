@@ -1,4 +1,4 @@
-//! \file us_experiment/us_experiment_gui.h
+//! \file us_experiment/us_experiment_gui_optima.h
 
 #ifndef US_EXPERIMENT_H
 #define US_EXPERIMENT_H
