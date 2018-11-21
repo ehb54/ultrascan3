@@ -999,6 +999,8 @@ DbgLv(1) << "  ii nscnu" << ii << nscnu << " js lscnCount" << js << lscnCount;
       bdleft      = bdtoler * bdifcsqr
          / ( bdiff_sedc * omegasq * ( bottom + edata->meniscus ) * timesqr );
       xbdleft     = US_Math2::find_root( bdleft );
+DbgLv(1) << "  bottom meniscus bdleft" << bottom << edata->meniscus << bdleft
+ << "tcor tsqr tm_corr" << timecor << timesqr << time_correction;
 
       // radD = bottom - ( 2 * US_Math2::find_root(left) * sqrt( diff * time ) )
 
@@ -1011,7 +1013,6 @@ DbgLv(1) << "  ii nscnu" << ii << nscnu << " js lscnCount" << js << lscnCount;
       //  the back diffusion limit radius and corresponding concentration
       xr[ nscnu ] = radD;                    // BD Radius
       yr[ nscnu ] = dscan->rvalues[ mm ];    // BD Concentration
-DbgLv(1) << "  bottom meniscus bdleft" << bottom << edata->meniscus << bdleft;
 DbgLv(1) << "  bdifsedc find_root toler" << bdiff_sedc << xbdleft << bdtoler;
 DbgLv(1) << "BD x,y " << nscnu+1 << radD << yr[nscnu] << "  mm" << mm;
 DbgLv(1) << "  ii nscnu" << ii << nscnu+1 << " bdsed radD yr"
@@ -1799,8 +1800,8 @@ DbgLv(1) << "FITTED_PLATEAUS";
    positPct   = ct_boundaryPos    ->value() / 100.0;
    baseline   = calc_baseline();
    correc     = solution.s20w_correction * 1.0e13;
-	C0         = 0.0;
-	Swavg      = 0.0;
+   C0         = 0.0;
+   Swavg      = 0.0;
    omega      = edata->scanData[ 0 ].rpm * M_PI / 30.0;
 
    // Do first experimental plateau calcs based on horizontal zones
@@ -1947,7 +1948,7 @@ DbgLv(1) << " KRELP" << krelp << "   slope intcp sigma"
  << slope << intcp << sigma;
 
    Swavg      = slope / ( -2.0 * omega * omega );  // Swavg func of slope
-	C0         = exp( intcp );                      // C0 func of intercept
+   C0         = exp( intcp );                      // C0 func of intercept
    total_conc = C0;
 DbgLv(1) << "Swavg(c): " << Swavg*correc << " C0: " << C0 ;
 
@@ -1989,8 +1990,8 @@ DbgLv(1) << "Mpl:ncmp" << ncomp << "scorr" << scorr << solution.s20w_correction;
    valueCount   = expda->pointCount();
    scanCount    = expda->scanCount();
    scPlats.fill( 0.0, lscnCount );
-	C0           = 0.0;
-	Swavg        = 0.0;
+   C0           = 0.0;
+   Swavg        = 0.0;
    total_conc   = 0.0;
 
    for ( int ii = 0; ii < lscnCount; ii++ )
@@ -2021,7 +2022,7 @@ DbgLv(1) << "Mpl:ncmp" << ncomp << "scorr" << scorr << solution.s20w_correction;
       C0            += cplat;
    }
 
-	C0           = ( lscnCount < 1 ) ? 0.0 : ( C0 / (double)lscnCount );
+   C0           = ( lscnCount < 1 ) ? 0.0 : ( C0 / (double)lscnCount );
 //*TIMING
 kmsecs[4]+=sttime.msecsTo(QDateTime::currentDateTime());
 //*TIMING
@@ -2053,8 +2054,8 @@ kcalls[5]+=1;QDateTime sttime=QDateTime::currentDateTime();
    divsCount  = qRound( ct_division->value() );
    totalCount = scanCount * divsCount;
    divfac     = 1.0 / (double)divsCount;
-	C0         = 0.0;
-	Swavg      = 0.0;
+   C0         = 0.0;
+   Swavg      = 0.0;
    edata      = ( ck_use_fed->isChecked()  &&  have_model() )
                 ? &dsimList[ row ] : &dataList[ row ];
 
