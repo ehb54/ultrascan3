@@ -140,6 +140,8 @@ else
 
    // Plot controls     
    QLabel*      lb_prcntls  = us_banner( tr( "Plot Controls" ) );
+   lb_prcntls->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+
    QLabel*      lb_rstart   = us_label( tr( "Radius Start:"   ), -1 );
                  cb_rstart   = us_comboBox();
    QLabel*      lb_rend     = us_label( tr( "Radius End:"     ), -1 );
@@ -195,6 +197,7 @@ else
 
    // Status and standard pushbuttons
    QLabel*      lb_status   = us_banner( tr( "Status" ) );
+   lb_status->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
                 le_status   = us_lineedit( tr( "(no data loaded)" ), -1, true );
    QPalette stpal;
    stpal.setColor( QPalette::Text, Qt::white );

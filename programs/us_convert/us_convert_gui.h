@@ -121,6 +121,7 @@ class US_ConvertGui : public US_Widgets
       QPushButton*  pb_showTmst;
 
       US_SelectBox*  cb_centerpiece;
+      QLineEdit*     le_centerpieceDesc;
 
       QList< US_DataIO::BeckmanRawScan > legacyData;   //!< legacy data fr file
       QVector< US_DataIO::RawData >      allData;      //!< All loaded data
