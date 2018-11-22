@@ -163,7 +163,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
 
    // Change Run ID
    QLabel* lb_runID2   = us_label(    tr( "Run ID:" ) );
-   le_runID2           = us_lineedit( "", 1 );
+   le_runID2           = us_lineedit( "", 1, true );
    //le_runID2 ->setMinimumWidth( 225 );
 
    // Directory
@@ -173,16 +173,20 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    // Description
    lb_description      = us_label(    tr( "Description:" ), 0 );
    //lb_description ->setMaximumWidth( 175 );
-   le_description      = us_lineedit( "", 1 );
+   le_description      = us_lineedit( "", 1, true );
 
    // Cell / Channel / Wavelength
    QGridLayout* ccw    = new QGridLayout();
 
    lb_triple           = us_banner(
-                            tr( "Cell / Channel / Wavelength" ), -1 );
+                            tr( "Cell / Channel / Wavelength" ) );
    lw_triple           = us_listwidget();
+   // QLabel* lb_ccwinfo  = us_label(
+   //                          tr( "Enter Associated Triple (c/c/w) Info:" ) );
    QLabel* lb_ccwinfo  = us_label(
-                            tr( "Enter Associated Triple (c/c/w) Info:" ) );
+                            tr( "Triple (c/c/w) Info:" ) );
+
+   le_centerpieceDesc     = us_lineedit(   "", 1, true );
 
    // Set up centerpiece drop-down
    cb_centerpiece      = new US_SelectBox( this );
@@ -234,7 +238,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    settings ->addWidget( lb_DB,           row++, 0, 1, 4 );
    settings ->addWidget( wg_investigator, row,   0, 1, 2 );
    settings ->addWidget( le_investigator, row++, 2, 1, 2 );
-   settings ->addLayout( disk_controls,   row++, 0, 1, 4 );
+   //settings ->addLayout( disk_controls,   row++, 0, 1, 4 );
    settings ->addWidget( lb_run,          row++, 0, 1, 4 );
    settings ->addWidget( pb_import,       row,   0, 1, 2 );
    settings ->addWidget( pb_editRuninfo,  row++, 2, 1, 2 );
@@ -256,54 +260,44 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    ccw      ->addWidget( lb_runinfo,      row++, 0, 1, 12 );
    ccw      ->addWidget( lb_runID2,       row,   0, 1,  3 );
    ccw      ->addWidget( le_runID2,       row++, 3, 1,  9 );
-   ccw      ->addWidget( lb_dir,          row,   0, 1,  3 );
-   ccw      ->addWidget( le_dir,          row++, 3, 1,  9 );
+   //ccw      ->addWidget( lb_dir,          row,   0, 1,  3 );
+   //ccw      ->addWidget( le_dir,          row++, 3, 1,  9 );
    ccw      ->addWidget( lb_triple,       row++, 0, 1, 12 );
    ccw      ->addWidget( lb_description,  row,   0, 1,  3 );
    ccw      ->addWidget( le_description,  row++, 3, 1,  9 );
-   ccw      ->addWidget( lw_triple,       row,   0, 7,  4 );
-   ccw      ->addWidget( lb_ccwinfo,      row++, 4, 1,  8 );
-   ccw      ->addWidget( cb_centerpiece,  row++, 4, 1,  8 );
-   ccw      ->addWidget( pb_solution,     row,   4, 1,  4 );
-   ccw      ->addWidget( pb_applyAll,     row++, 8, 1,  4 );
-   ccw      ->addWidget( pb_define,       row,   4, 1,  4 );
-   ccw      ->addWidget( pb_process,      row++, 8, 1,  4 );
+   ccw      ->addWidget( lw_triple,       row,   0, 4,  4 );
+   //ccw      ->addWidget( lb_ccwinfo,      row++, 4, 1,  8 );
+   //ccw      ->addWidget( cb_centerpiece,  row++, 4, 1,  8 );
+   //ccw      ->addWidget( pb_solution,     row,   4, 1,  4 );
+   //ccw      ->addWidget( pb_applyAll,     row++, 8, 1,  4 );
+   //ccw      ->addWidget( pb_define,       row,   4, 1,  4 );
+   //ccw      ->addWidget( pb_process,      row++, 8, 1,  4 );
    ccw      ->addWidget( pb_reference,    row,   4, 1,  4 );
    ccw      ->addWidget( pb_cancelref,    row++, 8, 1,  4 );
-   ccw      ->addWidget( pb_intensity,    row,   4, 1,  4 );
-   ccw      ->addWidget( pb_dropTrips,    row++, 8, 1,  4 );
+
+   //ccw      ->addWidget( pb_intensity,    row,   4, 1,  4 );
+   //ccw      ->addWidget( pb_dropTrips,    row++, 8, 1,  4 );
+   ccw      ->addWidget( pb_dropTrips,    row++, 4, 1,  8 );
+
    ccw      ->addWidget( pb_dropCelch,    row,   4, 1,  4 );
    ccw      ->addWidget( pb_dropChan,     row++, 8, 1,  4 );
+
+   ++row;
+   ccw      ->addWidget( lb_ccwinfo,          row,   0, 1,  3 );
+   ccw      ->addWidget( le_centerpieceDesc,  row++, 3, 1,  9 );
+   //ccw      ->addWidget( cb_centerpiece,  row++, 3, 1,  9 );
    ccw      ->addWidget( lb_solution,     row,   0, 1,  3 );
    ccw      ->addWidget( le_solutionDesc, row++, 3, 1,  9 );
-   ccw      ->addWidget( lb_status,       row,   0, 1,  2 );
-   ccw      ->addWidget( le_status,       row++, 2, 1, 10 );
+   // ccw      ->addWidget( lb_status,       row,   0, 1,  2 );
+   // ccw      ->addWidget( le_status,       row++, 2, 1, 10 );
 
    settings ->addLayout( ccw,             row++, 0, 1, 4 );
 
-   settings ->addWidget( pb_reset,        row,   0, 1, 1 );
-   settings ->addWidget( pb_help,         row,   1, 1, 1 );
-   settings ->addWidget( pb_saveUS3,      row,   2, 1, 1 );
-   settings ->addWidget( pb_close,        row++, 3, 1, 1 );
+   // settings ->addWidget( pb_reset,        row,   0, 1, 1 );
+   // settings ->addWidget( pb_help,         row,   1, 1, 1 );
+   // settings ->addWidget( pb_saveUS3,      row,   2, 1, 1 );
+   // settings ->addWidget( pb_close,        row++, 3, 1, 1 );
 
-   // Plot layout for the right side of window
-   QBoxLayout* plot = new US_Plot( data_plot,
-                                   tr( "Absorbance Data" ),
-                                   tr( "Radius (in cm)" ),
-                                   tr( "Absorbance" ) );
-
-   data_plot->setMinimumSize( 500, 300 );
-
-   data_plot->enableAxis( QwtPlot::xBottom, true );
-   data_plot->enableAxis( QwtPlot::yLeft  , true );
-
-   data_plot->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
-   data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
-
-   picker = new US_PlotPicker( data_plot );
-   picker ->setRubberBand    ( QwtPicker::VLineRubberBand );
-   picker->setMousePattern   ( QwtEventPattern::MouseSelect1,
-                               Qt::LeftButton, Qt::ControlModifier );
 
    QGridLayout* todo = new QGridLayout();
 
@@ -325,13 +319,34 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    todo->addWidget( lb_todoinfo,     row++, 0, 1, 4 );
    todo->addWidget( lw_todoinfo,     row++, 0, 1, 4 );
 
-
-   // Hide scan Control
-   if ( auto_mode.toStdString() == "AUTO")
-     { 
-       // ALEXEY TO BE ADDED...
-     }
+   settings ->addLayout( todo,       row++, 0, 1, 4 );
    
+   settings ->addWidget( lb_status,       row,     0, 1,  1 );
+   settings ->addWidget( le_status,       row++,   1, 1,  3 );
+   settings ->addWidget( pb_help,         row,     0, 1, 2 );
+   settings ->addWidget( pb_saveUS3,      row++,   2, 1, 2 );
+   
+   // Plot layout for the right side of window
+   QBoxLayout* plot = new US_Plot( data_plot,
+                                   tr( "Absorbance Data" ),
+                                   tr( "Radius (in cm)" ),
+                                   tr( "Absorbance" ) );
+
+   data_plot->setMinimumSize( 400, 300 );
+
+   data_plot->enableAxis( QwtPlot::xBottom, true );
+   data_plot->enableAxis( QwtPlot::yLeft  , true );
+
+   data_plot->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
+   data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
+
+   picker = new US_PlotPicker( data_plot );
+   picker ->setRubberBand    ( QwtPicker::VLineRubberBand );
+   picker->setMousePattern   ( QwtEventPattern::MouseSelect1,
+                               Qt::LeftButton, Qt::ControlModifier );
+
+
+
    // Connect signals and slots
    if ( isadmin )
       connect( pb_investigator, SIGNAL( clicked()          ),
@@ -389,29 +404,73 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    connect( pb_close,       SIGNAL( clicked()  ),
                             SLOT(   close() )  );
 
+
+   // Hide scan Control
+   if ( auto_mode.toStdString() == "AUTO")
+     { 
+       lb_DB->hide();
+       pb_investigator->hide();
+       le_investigator->hide();
+       lb_run->hide();
+       pb_import->hide();
+       pb_editRuninfo->hide();
+       pb_loadUS3->hide();
+       pb_showTmst->hide();  
+       pb_details->hide();   
+       lb_tolerance->hide(); 
+       ct_tolerance->hide();
+
+       lb_dir->hide();
+       le_dir->hide();
+       
+       pb_solution->hide();
+       pb_applyAll->hide();
+       pb_define->hide();
+       pb_process->hide();
+       pb_intensity->hide();
+
+       cb_centerpiece->hide();
+       
+       lb_todoinfo->hide();
+       lw_todoinfo->hide();
+
+       pb_reset->hide();
+       pb_close->hide();
+       
+     }
+   
    // Now let's assemble the page
 
    QVBoxLayout* left     = new QVBoxLayout;
-
    left->addLayout( settings );
 
+   
+   
    QVBoxLayout* right    = new QVBoxLayout;
-
    right->addLayout( plot );
-   right->addLayout( todo );
+   //right->addLayout( todo );
 
+   
+   
    QHBoxLayout* main = new QHBoxLayout( this );
    main->setSpacing         ( 2 );
    main->setContentsMargins ( 2, 2, 2, 2 );
 
    main->addLayout( left );
    main->addLayout( right );
+
+   // main->setStretch( 0, 3 );
+   // main->setStretch( 1, 7 );
    main->setStretchFactor( left,  3 );
    main->setStretchFactor( right, 5 );
 
-DbgLv(1) << "CGui: GUI setup complete";
+   DbgLv(1) << "CGui: GUI setup complete";
    reset();
 DbgLv(1) << "CGui: reset complete";
+  
+   us_setReadOnly( le_runID2, true );  // ALEXEY Run ID alwys in read-only mode
+   setMinimumSize( 950, 450 );
+   adjustSize();
 }
 
 
