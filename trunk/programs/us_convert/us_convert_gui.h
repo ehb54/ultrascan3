@@ -172,7 +172,12 @@ class US_ConvertGui : public US_Widgets
       void enableRunIDControl( bool );
       void enableScanControls( void );
       void enableSaveBtn   ( void );
+
       void getExpInfo      ( void );
+      void readProtocol_auto ( void );
+      void getExpInfo_auto ( void );
+      void getLabInstrumentOperatorInfo_auto   ( void );
+      
       void setTripleInfo   ( void );
       void checkTemperature( void );
       int  findTripleIndex ( void );
@@ -198,6 +203,8 @@ class US_ConvertGui : public US_Widgets
       void db_error        ( const QString& );
       void triple_index    ( void );
 
+      //US_Solution * solution_auto;
+
   private slots:
       //! \brief Select the current investigator
       void sel_investigator( void );
@@ -207,7 +214,7 @@ class US_ConvertGui : public US_Widgets
       */
       void assign_investigator( int );
 
-      void import_data_auto   (QString &);
+      void import_data_auto  (QString);
       
       void import            ( void );
       void reimport          ( void );
@@ -215,7 +222,7 @@ class US_ConvertGui : public US_Widgets
       void importAUC         ( void );
 
       int  getImports        ( void );
-      int  getImports_auto   ( void );
+      int  getImports_auto   ( QString & );
       
       void enableControls    ( void );
       void runIDChanged      ( void );
@@ -225,7 +232,10 @@ class US_ConvertGui : public US_Widgets
       void lambdaPlotChanged ( int );
       void lambdaPrevClicked ( void );
       void lambdaNextClicked ( void );
+
       void editRuninfo       ( void );
+      void editRuninfo_auto  ( void );
+      
       void loadUS3           ( void );
       void loadUS3Disk       ( void );
       void loadUS3Disk       ( QString );

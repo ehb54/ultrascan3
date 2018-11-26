@@ -11,6 +11,7 @@ int main( int argc, char* argv[] )
 
    // License is OK.  Start up.
 
+   //US_ConvertGui w("AUTO");
    US_ConvertGui w;
    w.show();                   //!< \memberof QWidget
    return application.exec();  //!< \memberof QApplication
