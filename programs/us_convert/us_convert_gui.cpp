@@ -471,6 +471,56 @@ DbgLv(1) << "CGui: reset complete";
    us_setReadOnly( le_runID2, true );  // ALEXEY Run ID alwys in read-only mode
    setMinimumSize( 950, 450 );
    adjustSize();
+
+   import_data_auto("/home/alexey/ultrascan/imports/CHorne-NanR_3r-DNA-MW_50K_111318-run656");
+   //import_data_auto("/home/alexey/ultrascan/imports/CHorne-NanR_3r-DNA-MW_50K_111318-run656_1");
+   //import_data_auto("/home/alexey/ultrascan/imports/Photometric_Accuracy_-_Radial_Scan-run613");
+   
+   
+   editRuninfo_auto();
+
+   readProtocol_auto();
+   
+   getLabInstrumentOperatorInfo_auto();
+   
+qDebug() << "ExpData: ";
+
+ qDebug() << "ExpData.invID " << ExpData.invID;             
+ qDebug() << "ExpData.invGUI" << ExpData.invGUID;           
+
+ qDebug() << "ExpData.name" <<    ExpData.name;              
+ qDebug() << "ExpData.expID" <<   ExpData.expID;             
+ qDebug() << "ExpData.expGUID" << ExpData.expGUID;           
+//qDebug() << ExpData.project;           
+qDebug() << "ExpData.runID" <<              ExpData.runID;             
+qDebug() << "ExpData.labID" <<              ExpData.labID;             
+qDebug() << "ExpData.instrumentID" <<       ExpData.instrumentID;        
+qDebug() << "ExpData.instrumentSerial" <<   ExpData.instrumentSerial;  
+qDebug() << "ExpData.operatorID" <<         ExpData.operatorID;        
+qDebug() << "ExpData.operatorGUID" <<       ExpData.operatorGUID;      
+qDebug() << "ExpData.rotorID" <<            ExpData.rotorID;           
+qDebug() << "ExpData.rotorGUID" <<          ExpData.rotorGUID;         
+qDebug() << "ExpData.rotorSerial" <<        ExpData.rotorSerial;       
+qDebug() << "ExpData.rotorName" <<          ExpData.rotorName;         
+qDebug() << "ExpData.calibrationID" <<      ExpData.calibrationID;     
+qDebug() << "ExpData.rotorCoeff1" <<        ExpData.rotorCoeff1;       
+qDebug() << "ExpData.rotorCoeff2" <<        ExpData.rotorCoeff2;       
+qDebug() << "ExpData.rotorUpdated" <<       ExpData.rotorUpdated;      
+qDebug() << "ExpData.expType" <<            ExpData.expType;           
+qDebug() << "ExpData.opticalSystem" <<      ExpData.opticalSystem;        
+//qDebug() << ExpData.rpms;              
+qDebug() << "ExpData.runTemp" <<            ExpData.runTemp;           
+qDebug() << "ExpData.label" <<              ExpData.label;             
+qDebug() << "ExpData.comments" <<           ExpData.comments;          
+qDebug() << "ExpData.centrifugeProtocol" << ExpData.centrifugeProtocol;
+qDebug() << "ExpData.date" <<               ExpData.date;              
+qDebug() << "ExpData.syncOK" <<             ExpData.syncOK;                
+qDebug() << "ExpData.experimentTypes" <<    ExpData.experimentTypes;    
+//qDebug() << ExpData.RIProfile;        
+//qDebug() << ExpData.RIwvlns;          
+qDebug() << "ExpData.RI_nscans" <<  ExpData.RI_nscans;        
+qDebug() << "ExpData.RI_nwvlns" <<  ExpData.RI_nwvlns;      
+
 }
 
 
@@ -1038,9 +1088,81 @@ void US_ConvertGui::toleranceValueChanged( double )
    reimport();
 }
 
-void US_ConvertGui::import_data_auto ( QString & currDir)
+void US_ConvertGui::import_data_auto( QString currDir)
 {
   // ALEXEY TO BE ADDED...
+     int impType = getImports_auto( currDir );
+
+   if ( impType == 1 )
+   {
+      importMWL();
+      return;
+   }
+
+   else if ( impType == 2 )
+   {
+      importAUC();
+      return;
+   }
+
+DbgLv(1) << "CGui:IMP: IN";
+   bool success = false;
+   le_status->setText( tr( "Importing experimental data ..." ) );
+
+   success = read();                // Read the legacy data
+
+   if ( ! success ) return;
+
+   // Define default tolerances before converting
+   scanTolerance = ( runType == "WA" ) ? 0.1 : 5.0;
+   connectTolerance( false );
+   ct_tolerance->setValue( scanTolerance );
+   connectTolerance( true );
+
+   // Figure out all the triple combinations and convert data
+   success = convert();
+
+   if ( ! success ) return;
+
+   // Initialize export data pointers vector
+   success = init_output_data();
+
+   if ( ! success ) return;
+
+   setTripleInfo();
+
+   checkTemperature();          // Check to see if temperature varied too much
+
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+
+   // Initialize exclude list
+DbgLv(1) << "CGui:IMP: init_excludes CALL";
+   init_excludes();
+
+   plot_current();
+
+   QApplication::restoreOverrideCursor();
+
+   connect( ct_from, SIGNAL( valueChanged ( double ) ),
+                     SLOT  ( focus_from   ( double ) ) );
+
+   connect( ct_to  , SIGNAL( valueChanged ( double ) ),
+                     SLOT  ( focus_to     ( double ) ) );
+
+   saveStatus = NOT_SAVED;
+
+   // Ok to enable some buttons now
+DbgLv(1) << "CGui:IMP: enableControls CALL";
+   enableControls();
+
+   if ( runType == "RI" )
+   {
+      referenceDefined = false;
+      pb_reference->setEnabled( true );
+DbgLv(1) << "CGui: (2)referDef=" << referenceDefined;
+   }
+DbgLv(1) << "CGui: import: RTN";
+   le_status->setText( tr( "Legacy data has been imported." ) );
 }
 
 // User pressed the import data button
@@ -1710,6 +1832,210 @@ void US_ConvertGui::runIDChanged( void )
    le_dir ->setText( currentDir );
 }
 
+
+void US_ConvertGui::readProtocol_auto( void)
+{
+  //ALEXEY: TO DO...
+}
+
+  
+void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
+{
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
+
+   if ( db.lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Could not connect to database \n" ) + db.lastError() );
+       return;
+     }
+   
+   QVector< US_Rotor::Lab > labList_auto;
+   
+   if ( db.lastErrno() == US_DB2::OK )
+     US_Rotor::readLabsDB( labList_auto, &db );
+
+   //Lab
+   int currentLab_auto;
+   for ( int ii = 0; ii < labList_auto.size(); ii++ )
+     if (labList_auto[ii].ID == 1)  // ALEXEY change '1' to labid passed from prototcol
+       {
+	 currentLab_auto = ii;
+	 qDebug() << "LAB: " << labList_auto[ii].name << ", ID: " << labList_auto[ii].ID;
+	 ExpData.labID = labList_auto[ii].ID;
+       }
+
+   //Rotor
+   US_Rotor::Rotor rotor_auto;
+   US_Rotor::RotorCalibration calibration_auto;
+
+   //ALEXEY change these to what passed from protocol
+   int rotorID = 5;
+   int calibrationID = 7;
+   
+   rotor_auto.readDB( rotorID, &db );
+   calibration_auto.readDB( calibrationID, &db );
+   
+   ExpData.rotorID       = rotor_auto.ID;
+   ExpData.rotorGUID     = rotor_auto.GUID;
+   ExpData.rotorSerial   = rotor_auto.serialNumber;
+   ExpData.rotorName     = rotor_auto.name;
+   ExpData.labID         = rotor_auto.labID;
+   ExpData.calibrationID = calibration_auto.ID;
+   ExpData.rotorCoeff1   = calibration_auto.coeff1;
+   ExpData.rotorCoeff2   = calibration_auto.coeff2;
+   ExpData.rotorUpdated  = calibration_auto.lastUpdated;
+
+   // Instrument
+   QList< US_Rotor::Instrument > instruments = labList_auto[ currentLab_auto ].instruments;
+   US_Rotor::Instrument currentInstrument_auto; 
+   foreach ( US_Rotor::Instrument instrument, instruments )
+     {
+       if ( QString::number( instrument.ID ).toInt() == 1 || instrument.name == "Optima 1") // ALEXEY change '1' & 'Optima 1' to instrument ID & inst. name  passed from prototcol
+	 {
+	   currentInstrument_auto   = instrument;  
+	   ExpData.instrumentID     = QString::number( instrument.ID ).toInt();
+	   ExpData.instrumentSerial = instrument.serial;
+	 }
+     }
+
+   // Operator
+   QList< US_Rotor::Operator > operators = currentInstrument_auto.operators;
+   
+   foreach ( US_Rotor::Operator oper, operators )
+     {
+       if ( oper.ID == 6 ) // ALEXEY change '1' to operatorID passed from prototcol
+	 {
+	   ExpData.operatorID   = oper.ID;
+	   ExpData.operatorGUID = oper.GUID;
+	 }
+     }
+
+   //Project
+   US_Project project_auto;
+
+   //ALEXEY change this to what passed from protocol
+   int projectID = 1;
+   project_auto.readFromDB ( projectID, &db );
+   ExpData.project = project_auto;
+
+
+
+   //Solutions / Triple Descriptions
+   int solutionID = 15;  // ALEXEY change to protocol's solution IDs
+   US_Solution solution_auto;
+
+   int nchans     = out_channels.count();
+   int ntrips     = out_triples .count();
+
+   qDebug() << "Sizes: out_chaninfo.size() " << out_chaninfo.size() << ", out_tripinfo.size() " <<  out_tripinfo.size();
+   qDebug() << "Sizes: out_channels.size() " << out_channels.count() << ", out_triples.size() " <<  out_triples .count();
+
+   /* Centerpieces   */
+   // void US_ConvertGui::getCenterpieceIndex( int )
+   // {
+   //   int cpID      = cb_centerpiece->getLogicalID();                    <-- abstractCenterpieceID from abstractCenterpiece Table !!!
+   //   out_chaninfo[ tripListx ].centerpiece = cpID;
+   //   DbgLv(1) << "getCenterpieceIndex " << out_chaninfo[tripListx].centerpiece;
+     
+   //   // For MWL, duplicate centerpiece to all triples of the channel
+   //   if ( isMwl )
+   //     {
+   // 	 int idax   = out_chandatx[ tripListx ];
+   // 	 int ldax   = tripListx + 1;
+   // 	 ldax       = ldax < out_chandatx.size()
+   // 			     ? out_chandatx[ ldax ]
+   // 			     : out_tripinfo.size();
+	 
+   // 	 while ( idax < ldax )
+   // 	   {
+   // 	     out_tripinfo[ idax++ ].centerpiece = cpID;
+   // 	   }
+   //     }
+   //   else
+   //     out_tripinfo[ tripListx ].centerpiece = cpID;
+     
+   //   enableSaveBtn();
+   // }
+   
+  
+   if ( isMwl )
+     {
+       for (int i = 0; i < nchans; ++i )
+	 {
+	   solution_auto.readFromDB(solutionID+i, &db);  //ALEXEY solIds are for test only!!
+
+	   out_chaninfo[ i ].solution = solution_auto;
+	   out_tripinfo[ out_chandatx[ i ] + cb_lambplot->currentIndex() ].solution = solution_auto;
+
+	   // For MWL, duplicate solution to all triples of the channel
+	   int idax   = out_chandatx[ i ];
+	   int ldax   = i + 1;
+	   ldax       = ldax < out_chandatx.size()
+			       ? out_chandatx[ ldax ]
+			       : out_tripinfo.size();
+	       
+	   while ( idax < ldax )
+	     {
+	       out_tripinfo[ idax++ ].solution = solution_auto;
+	       //qDebug() << "CGui: updSol: dax" << idax << "s.desc s.id" << solution_auto.solutionDesc << solution_auto.solutionID << solution_auto.solutionGUID;
+	     }
+
+	   // Description
+	   QString triple_desc = "Description " + QString::number(i);  //change to channel's comment from protocol
+	   outData[ out_chandatx[ i ] + cb_lambplot->currentIndex() ]->description = triple_desc;
+	   //Propagate description to all triples of channel
+	   out_chaninfo[ i ].description   = triple_desc;
+	   int trxs        = out_chandatx[ i ];
+	   int trxe        = trxs + nlambda;
+
+	   qDebug() << "Channel " << i << ": ldax, trxe: " << ldax << ", " << trxe;
+	   
+	   for ( int trx = trxs; trx < trxe; trx++ )
+	     {
+	       outData[ trx ]->description = triple_desc;
+	       //qDebug() << "Triple Description: " << trx << ", " << triple_desc;
+	     }
+	 }
+     }
+   else
+     {
+       for (int i = 0; i < ntrips; ++i )
+	 {
+	   solution_auto.readFromDB(solutionID+i, &db);  //ALEXEY solIds are for test only!!
+	   
+	   out_chaninfo[ i ].solution = solution_auto;
+	   out_tripinfo[ i ].solution = solution_auto;
+
+	   //Description
+	   QString triple_desc = "Description " + QString::number(i);  //change to channel's comment from protocol 
+	   outData[ i ]->description = triple_desc;
+	 }
+     }
+   triple_index();
+   le_solutionDesc->setText( out_chaninfo[ tripListx ].solution.solutionDesc );
+   le_description ->setText( outData[ tripDatax ]->description );
+   
+   
+}
+
+// Function to generate a new guid for experiment, and associate with DB
+void US_ConvertGui::editRuninfo_auto( void )
+{
+DbgLv(1) << "CGui: edRuninfo: IN";
+   if ( saveStatus == NOT_SAVED )
+   {
+      // Create a new GUID for the experiment as a whole
+      ExpData.expGUID = US_Util::new_guid();
+
+   }
+
+   getExpInfo_auto( );
+DbgLv(1) << "CGui: edRuninfo: getExpInfo complete";
+}
+
 // Function to generate a new guid for experiment, and associate with DB
 void US_ConvertGui::editRuninfo( void )
 {
@@ -2210,6 +2536,129 @@ DbgLv(1) << "CGui: ldUS3DB: call ldUS3Dk";
    qApp->processEvents();
 
 DbgLv(1) << "CGui: ldUS3DB: RTN";
+}
+
+
+void US_ConvertGui::getExpInfo_auto( void )
+{
+DbgLv(1) << "CGui: gExpInf: IN";
+   ExpData.runID = le_runID -> text();
+
+   if ( disk_controls->db() )
+   {
+      // Then we're working in DB, so verify connectivity
+      US_Passwd pw;
+      QString masterPW = pw.getPasswd();
+      US_DB2 db( masterPW );
+
+      if ( db.lastErrno() != US_DB2::OK )
+      {
+         QMessageBox::information( this,
+                tr( "Error" ),
+                tr( "Error making the DB connection.\n" ) );
+         return;
+      }
+
+      // Check if the run ID already exists in the DB
+      int recStatus = ExpData.checkRunID( &db );
+
+      // if saveStatus == BOTH, then we are editing the record from the database
+      if ( ( recStatus == US_DB2::OK ) && ( saveStatus != BOTH ) )
+      {
+         QMessageBox::information( this,
+                tr( "Error" ),
+                tr( "The current runID already exists in the database.\n"
+                    "To edit that information, load it from the database\n"
+                    "to start with." ) );
+         return;
+      }
+   }
+
+   // OK, proceed
+
+   // Calculate average temperature
+   double sum   = 0.0;
+   double count = 0.0;
+   for ( int ii = 0; ii < allData.size(); ii++ )
+   {
+      US_DataIO::RawData* raw = &allData[ ii ];
+      int kscan    = raw->scanData.size();
+      for ( int jj = 0; jj < kscan; jj++ )
+      {
+         sum         += raw->scanData[ jj ].temperature;
+      }
+
+      count       += kscan;
+   }
+
+   ExpData.runTemp       = QString::number( sum / count );
+
+   // Load information we're passing
+   char* optSysPtr       = ExpData.opticalSystem.data();
+   strncpy( optSysPtr, allData[ 0 ].type, 2 );
+   optSysPtr[ 2 ] = '\0';
+
+   double ss_reso      = 100.0;
+   // If debug_text so directs, change set_speed_resolution
+   QStringList dbgtxt = US_Settings::debug_text();
+   for ( int ii = 0; ii < dbgtxt.count(); ii++ )
+   {  // If debug text modifies ss_reso, apply it
+      if ( dbgtxt[ ii ].startsWith( "SetSpeedReso" ) )
+         ss_reso       = QString( dbgtxt[ ii ] ).section( "=", 1, 1 ).toDouble();
+   }
+
+   // A list of unique rpms
+   ExpData.rpms.clear();
+   for ( int ii = 0; ii < allData.size(); ii++ )
+   {
+      US_DataIO::RawData* raw = &allData[ ii ];
+      for ( int jj = 0; jj < raw->scanData.size(); jj++ )
+      {
+         double rpm     = raw->scanData[ jj ].rpm;
+         rpm            = qRound( rpm / ss_reso ) * ss_reso;
+         if ( ! ExpData.rpms.contains( rpm ) )
+            ExpData.rpms << rpm;
+      }
+   }
+
+   // Now sort the rpm list.  Use a modified bubble sort;
+   // the list might already be almost ordered
+   bool done = false;
+   while ( !done )
+   {
+      done = true;
+      for ( int i = 0; i < ExpData.rpms.size() - 1; i++ )
+      {
+         if ( ExpData.rpms[ i ] > ExpData.rpms[ i + 1 ] )
+         {
+            ExpData.rpms.swap( i, i + 1 );
+            done = false;
+         }
+      }
+   }
+
+
+// ALEXEY: fill the rest of ExpData from protocol saved, not from US_Exp..Gui...
+   
+//    int dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
+//                                         : US_Disk_DB_Controls::Disk;
+
+//    US_ExperimentGui* expInfo = new US_ExperimentGui( true,    // signal_wanted
+//                                                      ExpData,
+//                                                      dbdisk );
+
+//    connect( expInfo, SIGNAL( updateExpInfoSelection( US_Experiment& ) ),
+//             this   , SLOT  ( updateExpInfo         ( US_Experiment& ) ) );
+
+//    connect( expInfo, SIGNAL( cancelExpInfoSelection() ),
+//             this   , SLOT  ( cancelExpInfo         () ) );
+
+//    connect( expInfo, SIGNAL( use_db        ( bool ) ),
+//                      SLOT  ( update_disk_db( bool ) ) );
+
+//    expInfo->exec();
+// DbgLv(1) << "CGui: gExpInf: RTN";
+   
 }
 
 void US_ConvertGui::getExpInfo( void )
@@ -3444,7 +3893,47 @@ DbgLv(1) << "DelChan:  EXCLUDED cc trx" << celchn << trx;
 // Function to save US3 data
 void US_ConvertGui::saveUS3( void )
 {
-   // Test to see if this is multi-speed data
+
+  // qDebug() << "ExpData: ";
+
+  // qDebug() << "ExpData.invID " << ExpData.invID;             
+  // qDebug() << "ExpData.invGUI" << ExpData.invGUID;           
+  
+  // qDebug() << "ExpData.name" <<    ExpData.name;              
+  // qDebug() << "ExpData.expID" <<   ExpData.expID;             
+  // qDebug() << "ExpData.expGUID" << ExpData.expGUID;           
+  // //qDebug() << ExpData.project;           
+  // qDebug() << "ExpData.runID" <<              ExpData.runID;             
+  // qDebug() << "ExpData.labID" <<              ExpData.labID;             
+  // qDebug() << "ExpData.instrumentID" <<       ExpData.instrumentID;        
+  // qDebug() << "ExpData.instrumentSerial" <<   ExpData.instrumentSerial;  
+  // qDebug() << "ExpData.operatorID" <<         ExpData.operatorID;        
+  // qDebug() << "ExpData.operatorGUID" <<       ExpData.operatorGUID;      
+  // qDebug() << "ExpData.rotorID" <<            ExpData.rotorID;           
+  // qDebug() << "ExpData.rotorGUID" <<          ExpData.rotorGUID;         
+  // qDebug() << "ExpData.rotorSerial" <<        ExpData.rotorSerial;       
+  // qDebug() << "ExpData.rotorName" <<          ExpData.rotorName;         
+  // qDebug() << "ExpData.calibrationID" <<      ExpData.calibrationID;     
+  // qDebug() << "ExpData.rotorCoeff1" <<        ExpData.rotorCoeff1;       
+  // qDebug() << "ExpData.rotorCoeff2" <<        ExpData.rotorCoeff2;       
+  // qDebug() << "ExpData.rotorUpdated" <<       ExpData.rotorUpdated;      
+  // qDebug() << "ExpData.expType" <<            ExpData.expType;           
+  // qDebug() << "ExpData.opticalSystem" <<      ExpData.opticalSystem;        
+  // //qDebug() << ExpData.rpms;              
+  // qDebug() << "ExpData.runTemp" <<            ExpData.runTemp;           
+  // qDebug() << "ExpData.label" <<              ExpData.label;             
+  // qDebug() << "ExpData.comments" <<           ExpData.comments;          
+  // qDebug() << "ExpData.centrifugeProtocol" << ExpData.centrifugeProtocol;
+  // qDebug() << "ExpData.date" <<               ExpData.date;              
+  // qDebug() << "ExpData.syncOK" <<             ExpData.syncOK;                
+  // qDebug() << "ExpData.experimentTypes" <<    ExpData.experimentTypes;    
+  // //qDebug() << ExpData.RIProfile;        
+  // //qDebug() << ExpData.RIwvlns;          
+  // qDebug() << "ExpData.RI_nscans" <<  ExpData.RI_nscans;        
+  // qDebug() << "ExpData.RI_nwvlns" <<  ExpData.RI_nwvlns;        
+  
+    
+  // Test to see if this is multi-speed data
    QVector< int > speeds;
    int notrips  = 0;
    int nspeeds  = countSpeeds( speeds, &notrips );
@@ -3556,6 +4045,8 @@ DbgLv(1) << "Writing to disk";
    QMessageBox::information( this,
        tr( "Save is Complete" ),
        tr( "The save of all data and reports is complete." ) );
+
+  
 }
 
 // Save to disk (default directory)
@@ -4131,15 +4622,17 @@ void US_ConvertGui::saveReportsToDB( void )
 
 }
 
-int US_ConvertGui::getImports_auto() // ALEXEY TO BE EDITED...
+int US_ConvertGui::getImports_auto( QString & CurrDir) // ALEXEY TO BE EDITED...
 {
    QString dir;
    int impType  = 0;
 
-   dir = QFileDialog::getExistingDirectory( this,
-         tr( "Raw Data Directory" ),
-         US_Settings::importDir(),
-         QFileDialog::DontResolveSymlinks );
+   // dir = QFileDialog::getExistingDirectory( this,
+   //       tr( "Raw Data Directory" ),
+   //       US_Settings::importDir(),
+   //       QFileDialog::DontResolveSymlinks );
+
+   dir = CurrDir;
 
    dir.replace( "\\", "/" );
 
