@@ -319,6 +319,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    todo->addWidget( lb_todoinfo,     row++, 0, 1, 4 );
    todo->addWidget( lw_todoinfo,     row++, 0, 1, 4 );
 
+   //ALEXEY hide todo layout
    settings ->addLayout( todo,       row++, 0, 1, 4 );
    
    settings ->addWidget( lb_status,       row,     0, 1,  1 );
@@ -430,9 +431,10 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
        pb_intensity->hide();
 
        cb_centerpiece->hide();
-       
-       lb_todoinfo->hide();
-       lw_todoinfo->hide();
+
+       //ALEXEY hide todo layout
+       //lb_todoinfo->hide();
+       //lw_todoinfo->hide();
 
        pb_reset->hide();
        pb_close->hide();
@@ -448,7 +450,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    
    QVBoxLayout* right    = new QVBoxLayout;
    right->addLayout( plot );
-   //right->addLayout( todo );
+   right->addLayout( todo );
 
    
    
@@ -472,10 +474,12 @@ DbgLv(1) << "CGui: reset complete";
    setMinimumSize( 950, 450 );
    adjustSize();
 
-   import_data_auto("/home/alexey/ultrascan/imports/CHorne-NanR_3r-DNA-MW_50K_111318-run656");
-   //import_data_auto("/home/alexey/ultrascan/imports/CHorne-NanR_3r-DNA-MW_50K_111318-run656_1");
+   //import_data_auto("/home/alexey/ultrascan/imports/CHorne-NanR_3r-DNA-MW_50K_111318-run656");
+   import_data_auto("/home/alexey/ultrascan/imports/CHorne-NanR_3r-DNA-MW_60K_110918-run653");
+   //import_data_auto("/home/alexey/ultrascan/imports/DemchukA_exosomes40K_111418-run658");
    //import_data_auto("/home/alexey/ultrascan/imports/Photometric_Accuracy_-_Radial_Scan-run613");
-   
+   //import_data_auto("/home/alexey/ultrascan/imports/demo1_veloc1");
+   //import_data_auto("/home/alexey/ultrascan/imports/DanS_ParticleIntegrity_testcell3_112118-run663");
    
    editRuninfo_auto();
 
@@ -491,7 +495,8 @@ qDebug() << "ExpData: ";
  qDebug() << "ExpData.name" <<    ExpData.name;              
  qDebug() << "ExpData.expID" <<   ExpData.expID;             
  qDebug() << "ExpData.expGUID" << ExpData.expGUID;           
-//qDebug() << ExpData.project;           
+//qDebug() << ExpData.project;
+ qDebug() << "ExpData.project.projectGUID" << ExpData.project.projectGUID;
 qDebug() << "ExpData.runID" <<              ExpData.runID;             
 qDebug() << "ExpData.labID" <<              ExpData.labID;             
 qDebug() << "ExpData.instrumentID" <<       ExpData.instrumentID;        
@@ -665,6 +670,10 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    lw_triple           = us_listwidget();
    QLabel* lb_ccwinfo  = us_label(
                             tr( "Enter Associated Triple (c/c/w) Info:" ) );
+
+   //ALEXEY needed for us_convert in auto mode...
+   le_centerpieceDesc     = us_lineedit( "", 1, true );
+   le_centerpieceDesc->hide();
 
    // Set up centerpiece drop-down
    cb_centerpiece      = new US_SelectBox( this );
@@ -1429,6 +1438,8 @@ void US_ConvertGui::importAUC( void )
    QString importDir = currentDir;
    QDir readDir( importDir );
 
+   qDebug() << "CURRENT DIR_1: " << importDir;
+
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    le_status->setText( tr( "Loading AUC simulation data ..." ) );
    QStringList nameFilters = QStringList( "*.auc" );
@@ -1473,6 +1484,9 @@ DbgLv(1) << "rIA: trx" << trx << "uuid" << uuidst << importDir;
    QString fname = files[ 0 ];
    runType       = QString( fname ).section( ".", -5, -5 );
    runID         = QString( fname ).section( ".",  0, -6 );
+
+   qDebug() << "RUNID from files[0]: files[0]" << fname << ", runID: " << runID;  
+     
    le_runID2->setText( runID );
    le_runID ->setText( runID );
    scanTolerance = 5.0;
@@ -1489,6 +1503,7 @@ DbgLv(1) << "rIA: trx" << trx << "uuid" << uuidst << importDir;
 
    // Point to any existing time state file
    QDir ddir( currentDir );
+   qDebug() << "CURRENT DIR_2: " << currentDir;
    QStringList tmsfs = ddir.entryList( QStringList( "*.time_state.*" ),
          QDir::Files, QDir::Name );
    QString defs_fnamei;
@@ -1841,6 +1856,8 @@ void US_ConvertGui::readProtocol_auto( void)
   
 void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 {
+
+  // Check DB connection
    US_Passwd pw;
    QString masterPW = pw.getPasswd();
    US_DB2 db( masterPW );
@@ -1851,13 +1868,28 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 			     tr( "Could not connect to database \n" ) + db.lastError() );
        return;
      }
+
+
+   //Investigator
+   ExpData.invID = US_Settings::us_inv_ID();     // just to be sure
+   ExpData.name  = US_Settings::us_inv_name();
+
+   if ( db.lastErrno() == US_DB2::OK )
+     {
+       QStringList q( "get_person_info" );
+       q << QString::number( ExpData.invID );
+       db.query( q );
+       
+       if ( db.next() )
+	 ExpData.invGUID   = db.value( 9 ).toString();
+     }
    
+   //Lab
    QVector< US_Rotor::Lab > labList_auto;
    
    if ( db.lastErrno() == US_DB2::OK )
      US_Rotor::readLabsDB( labList_auto, &db );
-
-   //Lab
+   
    int currentLab_auto;
    for ( int ii = 0; ii < labList_auto.size(); ii++ )
      if (labList_auto[ii].ID == 1)  // ALEXEY change '1' to labid passed from prototcol
@@ -1872,8 +1904,8 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    US_Rotor::RotorCalibration calibration_auto;
 
    //ALEXEY change these to what passed from protocol
-   int rotorID = 5;
-   int calibrationID = 7;
+   int rotorID = 2;              // <-- rotor table;
+   int calibrationID = 2;        // <-- rotorCalibration table;
    
    rotor_auto.readDB( rotorID, &db );
    calibration_auto.readDB( calibrationID, &db );
@@ -1906,7 +1938,7 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    
    foreach ( US_Rotor::Operator oper, operators )
      {
-       if ( oper.ID == 6 ) // ALEXEY change '1' to operatorID passed from prototcol
+       if ( oper.ID == 6 ) // ALEXEY change '6' to operatorID passed from prototcol
 	 {
 	   ExpData.operatorID   = oper.ID;
 	   ExpData.operatorGUID = oper.GUID;
@@ -1917,58 +1949,42 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    US_Project project_auto;
 
    //ALEXEY change this to what passed from protocol
-   int projectID = 1;
+   int projectID = 811;
    project_auto.readFromDB ( projectID, &db );
    ExpData.project = project_auto;
 
+   qDebug() << "PROJECTGUID: " <<  ExpData.project.projectGUID;
+   qDebug() << "PROJECTDESC: " <<  ExpData.project.projectDesc;
 
+   //Experiment Type
+   ExpData.expType = "velocity";  //ALEXEY change to what is passed from protocol
 
-   //Solutions / Triple Descriptions
-   int solutionID = 15;  // ALEXEY change to protocol's solution IDs
+   //Experiment Label
+   ExpData.label = "some label";
+
+   //Solutions / Triple / Centerpiece Descriptions
+   int solutionID = 32;  // ALEXEY change to protocol's solution IDs
    US_Solution solution_auto;
 
    int nchans     = out_channels.count();
    int ntrips     = out_triples .count();
 
+   int cpID = 2;  //ALEXEY rnadom abstractCenterpieceID: <-- abstractCenterpieceID from abstractCenterpiece Table !!!
+     
    qDebug() << "Sizes: out_chaninfo.size() " << out_chaninfo.size() << ", out_tripinfo.size() " <<  out_tripinfo.size();
    qDebug() << "Sizes: out_channels.size() " << out_channels.count() << ", out_triples.size() " <<  out_triples .count();
 
-   /* Centerpieces   */
-   // void US_ConvertGui::getCenterpieceIndex( int )
-   // {
-   //   int cpID      = cb_centerpiece->getLogicalID();                    <-- abstractCenterpieceID from abstractCenterpiece Table !!!
-   //   out_chaninfo[ tripListx ].centerpiece = cpID;
-   //   DbgLv(1) << "getCenterpieceIndex " << out_chaninfo[tripListx].centerpiece;
-     
-   //   // For MWL, duplicate centerpiece to all triples of the channel
-   //   if ( isMwl )
-   //     {
-   // 	 int idax   = out_chandatx[ tripListx ];
-   // 	 int ldax   = tripListx + 1;
-   // 	 ldax       = ldax < out_chandatx.size()
-   // 			     ? out_chandatx[ ldax ]
-   // 			     : out_tripinfo.size();
-	 
-   // 	 while ( idax < ldax )
-   // 	   {
-   // 	     out_tripinfo[ idax++ ].centerpiece = cpID;
-   // 	   }
-   //     }
-   //   else
-   //     out_tripinfo[ tripListx ].centerpiece = cpID;
-     
-   //   enableSaveBtn();
-   // }
-   
-  
    if ( isMwl )
      {
        for (int i = 0; i < nchans; ++i )
 	 {
+	   //Solution
 	   solution_auto.readFromDB(solutionID+i, &db);  //ALEXEY solIds are for test only!!
-
 	   out_chaninfo[ i ].solution = solution_auto;
 	   out_tripinfo[ out_chandatx[ i ] + cb_lambplot->currentIndex() ].solution = solution_auto;
+
+	   //Centerpiece
+	   out_chaninfo[ i ].centerpiece = cpID + i;   //ALEXEY abstractCenterpieceIDs have to be passed from protocol
 
 	   // For MWL, duplicate solution to all triples of the channel
 	   int idax   = out_chandatx[ i ];
@@ -1979,8 +1995,14 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 	       
 	   while ( idax < ldax )
 	     {
-	       out_tripinfo[ idax++ ].solution = solution_auto;
-	       //qDebug() << "CGui: updSol: dax" << idax << "s.desc s.id" << solution_auto.solutionDesc << solution_auto.solutionID << solution_auto.solutionGUID;
+	       int jj = idax++;
+	       //Solution
+	       out_tripinfo[ jj ].solution = solution_auto;
+	       //qDebug() << "CGui: updSol: dax" << jj << "s.desc s.id" << solution_auto.solutionDesc << solution_auto.solutionID << solution_auto.solutionGUID;
+
+	       //Centerpiece
+	       out_tripinfo[ jj ].centerpiece = cpID + i;  //ALEXEY abstractCenterpieceIDs have to be passed from protocol
+	       //qDebug() << "Centerpiece: " << i << ", " << jj << ", " << out_tripinfo[ jj ].centerpiece;
 	     }
 
 	   // Description
@@ -2004,21 +2026,31 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
      {
        for (int i = 0; i < ntrips; ++i )
 	 {
+	   //Solution
 	   solution_auto.readFromDB(solutionID+i, &db);  //ALEXEY solIds are for test only!!
-	   
 	   out_chaninfo[ i ].solution = solution_auto;
 	   out_tripinfo[ i ].solution = solution_auto;
 
 	   //Description
 	   QString triple_desc = "Description " + QString::number(i);  //change to channel's comment from protocol 
 	   outData[ i ]->description = triple_desc;
+
+	   //Centerpiece
+	   out_chaninfo[ i ].centerpiece = cpID + i;    //ALEXEY abstractCenterpieceIDs have to be passed from protocol
+	   out_tripinfo[ i ].centerpiece = cpID + i;    //ALEXEY abstractCenterpieceIDs have to be passed from protocol
 	 }
      }
+
+   // SyncOK ?
+   ExpData.syncOK = true;
+   
    triple_index();
    le_solutionDesc->setText( out_chaninfo[ tripListx ].solution.solutionDesc );
    le_description ->setText( outData[ tripDatax ]->description );
+   //le_centerpieceDesc ->setText( QString::number(out_tripinfo[ tripDatax ].centerpiece) );
+   le_centerpieceDesc ->setText( QString::number(out_chaninfo[ tripListx ].centerpiece) );
    
-   
+   enableSaveBtn();
 }
 
 // Function to generate a new guid for experiment, and associate with DB
@@ -2988,6 +3020,10 @@ DbgLv(1) << "chgTrp: trDx trLx" << tripDatax << tripListx
    le_dir         ->setText( currentDir );
    le_description ->setText( outData[ tripDatax ]->description );
    le_solutionDesc->setText( out_chaninfo[ tripListx ].solution.solutionDesc );
+
+   le_centerpieceDesc ->setText( QString::number(out_chaninfo[ tripListx ].centerpiece) );
+   qDebug() << "Cent. INFO : " << QString::number(out_chaninfo[ tripListx ].centerpiece) ;
+   
 
    // If MWL, set the cell/channel index and get the lambda range
    if ( isMwl )
