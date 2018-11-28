@@ -59,6 +59,7 @@ class US_Convert
          QString     tripleFilename;  //!< The filename of this auc file
          bool        excluded;        //!< Whether triple was dropped or not
          int         centerpiece;     //!< The ID of the centerpiece used
+	 QString     centerpieceName; // Name of the centerpiece 
          US_Solution solution;        //!< The solution information for triple
          int         channelID;       //!< The channel triple is associated with
          TripleInfo();                //!< A generic constructor

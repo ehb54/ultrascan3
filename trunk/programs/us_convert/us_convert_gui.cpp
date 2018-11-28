@@ -27,6 +27,7 @@
 #include "us_images.h"
 #include "us_tmst_plot.h"
 #include "us_astfem_math.h"
+#include "us_protocol_util.h"
 
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c)  setData(a,b,c)
@@ -474,8 +475,8 @@ DbgLv(1) << "CGui: reset complete";
    setMinimumSize( 950, 450 );
    adjustSize();
 
-   //import_data_auto("/home/alexey/ultrascan/imports/CHorne-NanR_3r-DNA-MW_50K_111318-run656");
-   import_data_auto("/home/alexey/ultrascan/imports/CHorne-NanR_3r-DNA-MW_60K_110918-run653");
+   import_data_auto("/home/alexey/ultrascan/imports/CHorne-NanR_3r-DNA-MW_50K_111318-run656");
+   //import_data_auto("/home/alexey/ultrascan/imports/CHorne-NanR_3r-DNA-MW_60K_110918-run653");
    //import_data_auto("/home/alexey/ultrascan/imports/DemchukA_exosomes40K_111418-run658");
    //import_data_auto("/home/alexey/ultrascan/imports/Photometric_Accuracy_-_Radial_Scan-run613");
    //import_data_auto("/home/alexey/ultrascan/imports/demo1_veloc1");
@@ -1848,12 +1849,176 @@ void US_ConvertGui::runIDChanged( void )
 }
 
 
-void US_ConvertGui::readProtocol_auto( void)
+void US_ConvertGui::readProtocol_auto( void )
 {
-  //ALEXEY: TO DO...
+  // Check DB connection
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
+   
+   if ( db.lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Read protocol: Could not connect to database \n" ) + db.lastError() );
+       return;
+     }
+   
+   QString pname = "CHorne-NanR_3r-DNA-MW_50K_111318";       // invID = 23
+   //QString pname = "DemchukA_exosomes40K_111418";              // invID = 25 
+   QString xmlstr( "" );
+   US_ProtocolUtil::read_record( pname, &xmlstr, NULL, &db );
+
+   qDebug() << "Protocol READ !!! ";
+    
+   QXmlStreamReader xmli( xmlstr );
+   //mainw->loadProto.fromXml( xmli );
+   
+   while( ! xmli.atEnd() )
+     {
+       xmli.readNext();
+       
+       if ( xmli.isStartElement() )
+	 {
+	   QString ename   = xmli.name().toString();
+	   
+	   if ( ename == "protocol" )
+	     {
+	       QXmlStreamAttributes attr = xmli.attributes();
+	       ProtInfo.project         = attr.value( "project"  ).toString();
+	       ProtInfo.projectID       = attr.value( "projectid"  ).toInt();
+	       ProtInfo.protname        = attr.value( "description"  ).toString();
+	       ProtInfo.pGUID           = attr.value( "guid"         ).toString();
+	       ProtInfo.optimahost      = attr.value( "optima_host"  ).toString();
+	       ProtInfo.investigator    = attr.value( "investigator" ).toString();
+	       ProtInfo.temperature     = attr.value( "temperature"  ).toString().toDouble();
+	     }
+	   
+	   else if ( ename == "rotor" )      { readProtocolRotor_auto( xmli ); }
+	   // else if ( ename == "speed" )      { rpSpeed.fromXml( xmli ); }
+	   else if ( ename == "cells" )      { readProtocolCells_auto( xmli ); }
+	   else if ( ename == "solutions" )  { readProtocolSolutions_auto( xmli ); }
+	   // else if ( ename == "optics" )     { rpOptic.fromXml( xmli ); }
+	   // else if ( ename == "ranges"  )    { rpRange.fromXml( xmli ); }
+	   // else if ( ename == "spectra" )    { rpRange.fromXml( xmli ); }
+	 }
+     }
+
+   qDebug() << "Protocol Sections READ !!! ";
 }
 
+bool US_ConvertGui::readProtocolRotor_auto( QXmlStreamReader& xmli )
+{
+   while( ! xmli.atEnd() )
+   {
+      QString ename   = xmli.name().toString();
+
+      if ( xmli.isStartElement() )
+      {
+         if ( ename == "rotor" )
+         {
+            QXmlStreamAttributes attr = xmli.attributes();
+            ProtInfo.ProtRotor.laboratory  = attr.value( "laboratory"  ).toString();
+            ProtInfo.ProtRotor.rotor       = attr.value( "rotor"       ).toString();
+            ProtInfo.ProtRotor.calibration = attr.value( "calibration" ).toString();
+            ProtInfo.ProtRotor.labID       = attr.value( "labid"       ).toString().toInt();
+            ProtInfo.ProtRotor.rotID       = attr.value( "rotid"       ).toString().toInt();
+            ProtInfo.ProtRotor.calID       = attr.value( "calid"       ).toString().toInt();
+            ProtInfo.ProtRotor.absID       = attr.value( "absid"       ).toString().toInt();
+            ProtInfo.ProtRotor.labGUID     = attr.value( "labguid"     ).toString();
+            ProtInfo.ProtRotor.rotGUID     = attr.value( "rotguid"     ).toString();
+            ProtInfo.ProtRotor.calGUID     = attr.value( "calguid"     ).toString();
+            ProtInfo.ProtRotor.absGUID     = attr.value( "absguid"     ).toString();
+         }
+
+         else
+            break;
+      }
+
+      else if ( xmli.isEndElement()  &&  ename == "rotor" )
+         break;
+
+      xmli.readNext();
+   }
+
+   return ( ! xmli.hasError() );
+}
+
+bool US_ConvertGui::readProtocolCells_auto( QXmlStreamReader& xmli )
+{
+  ProtInfo.ProtCells.cells_used.clear();
   
+  while( ! xmli.atEnd() )
+    {
+      QString ename   = xmli.name().toString();
+      
+      if ( xmli.isStartElement() )
+	{
+	  
+	  if ( ename == "cells" )
+	    {
+	      QXmlStreamAttributes attr = xmli.attributes();
+	      ProtInfo.ProtCells.ncell          = attr.value( "total_holes" ).toString().toInt();
+	      ProtInfo.ProtCells.nused          = attr.value( "used_holes"  ).toString().toInt();
+	    }
+	  
+	  else if ( ename == "cell" )
+	    {
+	      QXmlStreamAttributes attr = xmli.attributes();
+	      Cell cu;
+	      cu.cell        = attr.value( "id"             ).toString().toInt();
+	      cu.centerpiece = attr.value( "centerpiece"    ).toString();
+	      cu.windows     = attr.value( "windows"        ).toString();
+	      cu.cbalance    = attr.value( "counterbalance" ).toString();
+	      // do not include counterbalance
+	      if ( cu.cbalance.isEmpty() )
+		ProtInfo.ProtCells.cells_used << cu;
+	    }
+	}
+      
+      bool was_end    = xmli.isEndElement();  // Just read was End of element?
+      xmli.readNext();                        // Read the next element
+      
+      if ( was_end  &&  ename == "cells" )    // Break after "</cells>"
+	break;
+    }
+  
+  return ( ! xmli.hasError() );
+}
+
+bool US_ConvertGui::readProtocolSolutions_auto( QXmlStreamReader& xmli )
+{
+   // nschan               = 0;
+   ProtInfo.ProtSolutions.chsols.clear();
+
+   while( ! xmli.atEnd() )
+   {  // Read elements from solution portion of XML stream
+      QString ename   = xmli.name().toString();
+
+      if ( xmli.isStartElement() )
+      {
+         if ( ename == "solution" )
+         {  // Accumulate each solution object
+            ChanSolu cs;
+            QXmlStreamAttributes attr = xmli.attributes();
+            cs.channel     = attr.value( "channel"      ).toString();
+            cs.solution    = attr.value( "name"         ).toString();
+            cs.sol_id      = attr.value( "id"           ).toString();
+            cs.ch_comment  = attr.value( "chan_comment" ).toString();
+            ProtInfo.ProtSolutions.chsols << cs;
+            //nschan++;
+         }
+      }
+
+      bool was_end    = xmli.isEndElement();   // Just read was End of element?
+      xmli.readNext();                         // Read the next element
+
+      if ( was_end  &&  ename == "solutions" ) // Break after "</solutions>"
+         break;
+   }
+   return ( ! xmli.hasError() );
+}
+
+
 void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 {
 
@@ -1892,20 +2057,25 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    
    int currentLab_auto;
    for ( int ii = 0; ii < labList_auto.size(); ii++ )
-     if (labList_auto[ii].ID == 1)  // ALEXEY change '1' to labid passed from prototcol
-       {
-	 currentLab_auto = ii;
-	 qDebug() << "LAB: " << labList_auto[ii].name << ", ID: " << labList_auto[ii].ID;
-	 ExpData.labID = labList_auto[ii].ID;
-       }
+     {
+       qDebug() << "labList_auto[ii].ID == ProtInfo.ProtRotor.labID: " << labList_auto[ii].ID << " == " << ProtInfo.ProtRotor.labID;
+       qDebug() << "Laboratory name: " << ProtInfo.ProtRotor.laboratory;
+       if (labList_auto[ii].ID == ProtInfo.ProtRotor.labID )  // ALEXEY change '1' to labid passed from prototcol
+	 {
+	   currentLab_auto = ii;
+	   qDebug() << "LAB: " << labList_auto[ii].name << ", ID: " << labList_auto[ii].ID;
+	   ExpData.labID = labList_auto[ii].ID;
+	 }
+     }
+   qDebug() << "LabID  READ!!! ";
 
    //Rotor
    US_Rotor::Rotor rotor_auto;
    US_Rotor::RotorCalibration calibration_auto;
 
    //ALEXEY change these to what passed from protocol
-   int rotorID = 2;              // <-- rotor table;
-   int calibrationID = 2;        // <-- rotorCalibration table;
+   int rotorID       = ProtInfo.ProtRotor.rotID;        // <-- rotor table;
+   int calibrationID = ProtInfo.ProtRotor.calID;        // <-- rotorCalibration table;
    
    rotor_auto.readDB( rotorID, &db );
    calibration_auto.readDB( calibrationID, &db );
@@ -1920,6 +2090,8 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    ExpData.rotorCoeff2   = calibration_auto.coeff2;
    ExpData.rotorUpdated  = calibration_auto.lastUpdated;
 
+   qDebug() << "RotorID/CalID  READ!!! ";
+   
    // Instrument
    QList< US_Rotor::Instrument > instruments = labList_auto[ currentLab_auto ].instruments;
    US_Rotor::Instrument currentInstrument_auto; 
@@ -1933,6 +2105,8 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 	 }
      }
 
+   qDebug() << "InstrumentID  READ!!! ";
+   
    // Operator
    QList< US_Rotor::Operator > operators = currentInstrument_auto.operators;
    
@@ -1945,16 +2119,19 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 	 }
      }
 
+   qDebug() << "OperatorID  READ!!! ";
+   
    //Project
    US_Project project_auto;
 
    //ALEXEY change this to what passed from protocol
-   int projectID = 811;
+   int projectID = ProtInfo.projectID;                   // projectID
    project_auto.readFromDB ( projectID, &db );
    ExpData.project = project_auto;
-
-   qDebug() << "PROJECTGUID: " <<  ExpData.project.projectGUID;
-   qDebug() << "PROJECTDESC: " <<  ExpData.project.projectDesc;
+   
+   qDebug() << "PROJEC_ID:    " <<  ExpData.project.projectID;
+   qDebug() << "PROJECT_GUID: " <<  ExpData.project.projectGUID;
+   qDebug() << "PROJECT_DESC: " <<  ExpData.project.projectDesc;
 
    //Experiment Type
    ExpData.expType = "velocity";  //ALEXEY change to what is passed from protocol
@@ -1962,6 +2139,20 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    //Experiment Label
    ExpData.label = "some label";
 
+   // ReadCenterpieces
+   QStringList q( "get_abstractCenterpiece_names" );
+   db.query( q );
+   
+   QList<listInfo> cent_options;
+   while ( db.next() )
+     {
+       struct listInfo option;
+       option.ID      = db.value( 0 ).toString();
+       option.text    = db.value( 1 ).toString();
+       cent_options << option;
+     }
+
+   
    //Solutions / Triple / Centerpiece Descriptions
    int solutionID = 32;  // ALEXEY change to protocol's solution IDs
    US_Solution solution_auto;
@@ -1969,24 +2160,42 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    int nchans     = out_channels.count();
    int ntrips     = out_triples .count();
 
-   int cpID = 2;  //ALEXEY rnadom abstractCenterpieceID: <-- abstractCenterpieceID from abstractCenterpiece Table !!!
-     
+   int     cpID = 1;  //ALEXEY rnadom abstractCenterpieceID: <-- abstractCenterpieceID from abstractCenterpiece Table !!!
+   QString cpName("");
+   QString triple_desc("");
+   
    qDebug() << "Sizes: out_chaninfo.size() " << out_chaninfo.size() << ", out_tripinfo.size() " <<  out_tripinfo.size();
    qDebug() << "Sizes: out_channels.size() " << out_channels.count() << ", out_triples.size() " <<  out_triples .count();
-
+   qDebug() << "Size ProtInfo.ProtCells.cells_used: " << ProtInfo.ProtCells.cells_used.size();
+   qDebug() << "Size ProtInfo.ProtSolutions.chsols: " << ProtInfo.ProtSolutions.chsols.size();
+   
    if ( isMwl )
      {
        for (int i = 0; i < nchans; ++i )
 	 {
 	   //Solution
-	   solution_auto.readFromDB(solutionID+i, &db);  //ALEXEY solIds are for test only!!
+	   solutionID = ProtInfo.ProtSolutions.chsols[ i ].sol_id.toInt();
+	   solution_auto.readFromDB(solutionID, &db);  
 	   out_chaninfo[ i ].solution = solution_auto;
 	   out_tripinfo[ out_chandatx[ i ] + cb_lambplot->currentIndex() ].solution = solution_auto;
 
 	   //Centerpiece
-	   out_chaninfo[ i ].centerpiece = cpID + i;   //ALEXEY abstractCenterpieceIDs have to be passed from protocol
-
-	   // For MWL, duplicate solution to all triples of the channel
+	   if ( i < nchans-1 && i%2 == 0 ) //every second channel
+	     {
+	       int cellnumber = i / 2;
+	       for ( int aa = 0; aa < cent_options.size(); ++aa )
+		 if (ProtInfo.ProtCells.cells_used[ cellnumber ].centerpiece == cent_options[aa].text)
+		   {
+		     cpID   = cent_options[aa].ID.toInt();
+		     cpName = cent_options[aa].text;
+		   }
+	     }
+	   
+	   //ALEXEY abstractCenterpieceIDs inferred from cent. name passed from protocol
+	   out_chaninfo[ i ]   .centerpiece     = cpID;
+	   out_chaninfo[ i ]   .centerpieceName = cpName;
+	   	   
+	   // For MWL, duplicate solution & centerpices to all triples of the channel
 	   int idax   = out_chandatx[ i ];
 	   int ldax   = i + 1;
 	   ldax       = ldax < out_chandatx.size()
@@ -2001,12 +2210,12 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 	       //qDebug() << "CGui: updSol: dax" << jj << "s.desc s.id" << solution_auto.solutionDesc << solution_auto.solutionID << solution_auto.solutionGUID;
 
 	       //Centerpiece
-	       out_tripinfo[ jj ].centerpiece = cpID + i;  //ALEXEY abstractCenterpieceIDs have to be passed from protocol
+	       out_tripinfo[ jj ].centerpiece = cpID;  //ALEXEY abstractCenterpieceIDs passed from protocol
 	       //qDebug() << "Centerpiece: " << i << ", " << jj << ", " << out_tripinfo[ jj ].centerpiece;
 	     }
 
 	   // Description
-	   QString triple_desc = "Description " + QString::number(i);  //change to channel's comment from protocol
+	   triple_desc = ProtInfo.ProtSolutions.chsols[ i ].ch_comment;  //channel's comment from protocol
 	   outData[ out_chandatx[ i ] + cb_lambplot->currentIndex() ]->description = triple_desc;
 	   //Propagate description to all triples of channel
 	   out_chaninfo[ i ].description   = triple_desc;
@@ -2027,17 +2236,29 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
        for (int i = 0; i < ntrips; ++i )
 	 {
 	   //Solution
-	   solution_auto.readFromDB(solutionID+i, &db);  //ALEXEY solIds are for test only!!
+	   solutionID = ProtInfo.ProtSolutions.chsols[ i ].sol_id.toInt();
+	   solution_auto.readFromDB(solutionID, &db);  
 	   out_chaninfo[ i ].solution = solution_auto;
 	   out_tripinfo[ i ].solution = solution_auto;
 
 	   //Description
-	   QString triple_desc = "Description " + QString::number(i);  //change to channel's comment from protocol 
+	   triple_desc = ProtInfo.ProtSolutions.chsols[ i ].ch_comment;  //channel's comment from protocol
 	   outData[ i ]->description = triple_desc;
 
 	   //Centerpiece
-	   out_chaninfo[ i ].centerpiece = cpID + i;    //ALEXEY abstractCenterpieceIDs have to be passed from protocol
-	   out_tripinfo[ i ].centerpiece = cpID + i;    //ALEXEY abstractCenterpieceIDs have to be passed from protocol
+	   if ( i < ntrips-1 && i%2 == 0 ) //every second channel
+	     {
+	       int cellnumber = i / 2;
+	       for ( int aa = 0; aa < cent_options.size(); ++aa )
+		 if (ProtInfo.ProtCells.cells_used[ cellnumber ].centerpiece == cent_options[aa].text)
+		   {
+		     cpID = cent_options[aa].ID.toInt();
+		     cpName = cent_options[aa].text;
+		   }
+	     }
+	   out_chaninfo[ i ].centerpiece     = cpID;    //ALEXEY abstractCenterpieceIDs passed from protocol
+	   out_tripinfo[ i ].centerpiece     = cpID;    //ALEXEY abstractCenterpieceIDs passed from protocol
+	   out_chaninfo[ i ].centerpieceName = cpName; 
 	 }
      }
 
@@ -2047,8 +2268,8 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    triple_index();
    le_solutionDesc->setText( out_chaninfo[ tripListx ].solution.solutionDesc );
    le_description ->setText( outData[ tripDatax ]->description );
-   //le_centerpieceDesc ->setText( QString::number(out_tripinfo[ tripDatax ].centerpiece) );
-   le_centerpieceDesc ->setText( QString::number(out_chaninfo[ tripListx ].centerpiece) );
+   //le_centerpieceDesc ->setText( QString::number(out_chaninfo[ tripListx ].centerpiece) );
+   le_centerpieceDesc ->setText( out_chaninfo[ tripListx ].centerpieceName );
    
    enableSaveBtn();
 }
@@ -3021,8 +3242,8 @@ DbgLv(1) << "chgTrp: trDx trLx" << tripDatax << tripListx
    le_description ->setText( outData[ tripDatax ]->description );
    le_solutionDesc->setText( out_chaninfo[ tripListx ].solution.solutionDesc );
 
-   le_centerpieceDesc ->setText( QString::number(out_chaninfo[ tripListx ].centerpiece) );
-   qDebug() << "Cent. INFO : " << QString::number(out_chaninfo[ tripListx ].centerpiece) ;
+   le_centerpieceDesc ->setText( out_chaninfo[ tripListx ].centerpieceName );
+   qDebug() << "Cent. INFO : " << out_chaninfo[ tripListx ].centerpieceName ;
    
 
    // If MWL, set the cell/channel index and get the lambda range
