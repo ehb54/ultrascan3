@@ -52,6 +52,72 @@ class US_ConvertGui : public US_Widgets
 
   private:
 
+      struct ChanSolu
+      {
+	QString     channel;       //!< Channel name ("2 / A")
+	QString     solution;      //!< Solution name
+	QString     sol_id;        //!< Solution Id/GUID
+	QString     ch_comment;    //!< Channel protocol comment
+      };
+  
+      struct ProtocolSolutions
+      {
+	QVector< ChanSolu > chsols;  //!< Channel solutions,comments
+      };
+
+      struct Cell
+      {
+	int         cell;          //!< Cell number
+	QString     centerpiece;   //!< Centerpiece description
+	QString     windows;       //!< Windows (quartz|sapphire)
+	QString     cbalance;      //!< Counterbalance description
+      };
+  
+      struct ProtocolCells
+      {
+	int         ncell;         //!< Number of total cells
+	int         nused;         //!< Number of cells used
+	QVector< Cell > cells_used;
+      };
+  
+      struct ProtocolRotor
+      {
+	QString     laboratory;    //!< Laboratory with rotor
+	QString     rotor;         //!< Rotor description
+	QString     calibration;   //!< Rotor Calibration description
+	
+	QString     labGUID;       //!< Laboratory GUID
+	QString     rotGUID;       //!< Rotor GUID
+	QString     calGUID;       //!< Rotor Calibration GUID
+	QString     absGUID;       //!< Abstract Rotor GUID
+	
+	int         labID;         //!< Laboratory bB Id
+	int         rotID;         //!< Rotor DB Id
+	int         calID;         //!< Rotor Calibration DB Id
+	int         absID;         //!< Abstract Rotor DB Id
+      };
+  
+      struct ProtocolInfo
+      {
+	QString      investigator;   //!< Investigator name
+	QString      runname;        //!< Run ID (name)
+	QString      protname;       //!< Protocol name (description)
+	QString      pGUID;          //!< Protocol GUID
+	QString      project;        //!< Project description
+	QString      optimahost;     //!< Optima host (numeric IP address)
+	
+	int          projectID; 
+	double       temperature;    //!< Run temperature in degrees centigrade
+	double       temeq_delay;    //!< Temperature-equilibration delay minutes
+
+	ProtocolRotor     ProtRotor;
+	ProtocolCells     ProtCells;
+	ProtocolSolutions ProtSolutions;
+
+      };
+       
+      ProtocolInfo ProtInfo;
+      
       enum { SPLIT, REFERENCE, NONE } step;
 
       aucStatus      saveStatus;
@@ -175,6 +241,10 @@ class US_ConvertGui : public US_Widgets
 
       void getExpInfo      ( void );
       void readProtocol_auto ( void );
+      bool readProtocolRotor_auto ( QXmlStreamReader& );
+      bool readProtocolCells_auto ( QXmlStreamReader& );
+      bool readProtocolSolutions_auto ( QXmlStreamReader& );
+      
       void getExpInfo_auto ( void );
       void getLabInstrumentOperatorInfo_auto   ( void );
       
