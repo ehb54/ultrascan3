@@ -2055,7 +2055,7 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    if ( db.lastErrno() == US_DB2::OK )
      US_Rotor::readLabsDB( labList_auto, &db );
    
-   int currentLab_auto;
+   int currentLab_auto = 0;
    for ( int ii = 0; ii < labList_auto.size(); ii++ )
      {
        qDebug() << "labList_auto[ii].ID == ProtInfo.ProtRotor.labID: " << labList_auto[ii].ID << " == " << ProtInfo.ProtRotor.labID;
