@@ -2681,22 +2681,40 @@ DbgLv(1) << "EGSo:addComm: sname irow" << sname << irow;
 DbgLv(1) << "EGSo:addComm:  cclabl" << cclabl;
    QString sdescr      = cc_solus[ irow ]->currentText();
 
+   qDebug() << "ADD_Comment: 1";
+   
    // Get list of channel comment component strings
    //  and compose default channel comment string
 
    //ALEXEY make manual_comment per channel, not per solution name
    QString row_comment =  QString::number( irow );
 
+   qDebug() << "ADD_Comment: 1a";
+   
    //ALEXEY: check if channel comment was read in from protocol ONCE...
    if ( !solution_comment_init[ irow ] )
      {
-       QString protocol_comment = rpSolut->chsols[ irow ].ch_comment;
+       qDebug() << "ADD_Comment: 1a1";
+       
+       qDebug() << "irow: " << irow << ",  rpSolut->chsols.size() " << rpSolut->chsols.size();  //ALEXEY  rpSolut->chsols.size() is ZERO: bug
+	 
+       QString protocol_comment("");
+
+       if ( rpSolut->chsols.size() > irow )
+       	 protocol_comment += rpSolut->chsols[ irow ].ch_comment;     
+
+       qDebug() << "ADD_Comment: 1aa";
        protocol_comment.replace(sdescr, "");
        protocol_comment.remove( QRegExp("^[,\\s*]+") );
        
        manual_comment[ row_comment ] = protocol_comment.trimmed();  // Initialize manual comment for solution from protocol
+
+       qDebug() << "ADD_Comment: 1aaa";
+
        solution_comment_init[ irow ]  = true;
      }
+
+   qDebug() << "ADD_Comment: 2";
    
    commentStrings( sdescr, chcomm, comms, irow );
    int ncc             = comms.count();  // Number of component strings
@@ -2744,6 +2762,8 @@ DbgLv(1) << "EGSo:addComm:  cclabl" << cclabl;
       }
    }
 
+   qDebug() << "ADD_Comment: 3";
+   
    // Complete dialog text and display the dialog
    msg         = msg 
       + tr( "You may enter additional characters to append to<br/>" )
