@@ -445,6 +445,10 @@ void US_ExperGuiGeneral::test_optima_connection()
      }
 
    le_optima      ->setText( name );
+
+   mainw->connection_status = o_connected;
+   mainw->xpnhost = xpnhost;
+   mainw->xpnport = xpnport;
 }
 
 void US_ExperGuiGeneral::check_empty_runname( const QString &str )
@@ -587,6 +591,18 @@ DbgLv(1) << "EGRo: inP: was_changed" << was_changed;
                                 + rpRotor->rotor );
    setCbCurrentText( cb_calibr, QString::number( rpRotor->calID ) + ": "
                                 + rpRotor->calibration );
+   setCbCurrentText( cb_operator, QString::number( rpRotor->operID ) + ": "
+                                + rpRotor->operatorname );
+
+   // ALEXEY - do NOT initialize instrument info as it's dependent on connection, not on the protocol
+   /* 
+    if ( !QString::number( rpRotor->instID ).isEmpty() && !rpRotor->instrumentname.isEmpty() )
+      le_instrument->setText( QString::number( rpRotor->instID ) + ": "
+    			     + rpRotor->instrumentname );
+   */
+   
+   setCbCurrentText( cb_exptype,  rpRotor->exptype );
+
    changed              = was_changed;   // Restore changed state
 DbgLv(1) << "EGRo: inP:  rotID" << rpRotor->rotID << "rotor" << rpRotor->rotor
  << "cb_rotor text" << cb_rotor->currentText();
@@ -599,12 +615,30 @@ void US_ExperGuiRotor::savePanel()
    QString lab          = cb_lab   ->currentText();
    QString rot          = cb_rotor ->currentText();
    QString cal          = cb_calibr->currentText();
+   QString oper         = cb_operator->currentText();
+   QString exptype      = cb_exptype ->currentText();
+   QString instr        = le_instrument ->text(); 
+      
    rpRotor->laboratory  = QString( lab ).section( ":", 1, 1 ).simplified();
    rpRotor->rotor       = QString( rot ).section( ":", 1, 1 ).simplified();
    rpRotor->calibration = QString( cal ).section( ":", 1, 1 ).simplified();
+   rpRotor->operatorname = QString( oper ).section( ":", 1, 1 ).simplified();
+   rpRotor->instrumentname = QString( instr ).section( ":", 1, 1 ).simplified();
+   
    rpRotor->labID       = QString( lab ).section( ":", 0, 0 ).toInt();
    rpRotor->rotID       = QString( rot ).section( ":", 0, 0 ).toInt();
    rpRotor->calID       = QString( cal ).section( ":", 0, 0 ).toInt();
+   rpRotor->operID      = QString( oper ).section( ":", 0, 0 ).toInt();
+   rpRotor->instID      = QString( instr ).section( ":", 0, 0 ).toInt();
+
+   rpRotor->exptype     = exptype;
+
+   qDebug() << "OPERATORID / INSTRUMENT / ExpType in SAVE: "
+	    <<  rpRotor->operID  << ", " << rpRotor->operatorname << " / "
+	    <<  rpRotor->instID  << ", " << rpRotor->instrumentname  << " / "
+	    <<  rpRotor->exptype;
+   
+   
 DbgLv(1) << "EGRo:  svP:  rotID" << rpRotor->rotID << "rotor" << rpRotor->rotor
  << "cb_rotor text" << rot;
 

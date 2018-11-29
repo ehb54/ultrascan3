@@ -137,6 +137,8 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       QComboBox* cb_lab;                              // Lab combo box
       QComboBox* cb_rotor;                            // Rotor combo box
       QComboBox* cb_calibr;                           // Calibration combo box
+      QComboBox* cb_operator;                         // Operator combo box
+      QComboBox* cb_exptype;                          // Exp. Type combo box
 
       QVector< US_Rotor::Lab >               labs;    // All labs
       QVector< US_Rotor::Rotor >             rotors;  // All rotors in lab
@@ -147,16 +149,27 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       QStringList sl_rotors;       // Rotor combo choices
       QStringList sl_arotors;      // Abstract rotor combo choices
       QStringList sl_calibs;       // Calibration combo choices
+
+      QStringList sl_operators;    // Operator combo choices
+      QLineEdit *  le_instrument;
+      
       int         dbg_level;
       int         nholes;          // Number of holes for current rotor
       bool        changed;         // Has rotor protocol changed?
       bool        first_time_init;
-      int         curr_rotor; 
+      int         curr_rotor;
+      //int         currentInstrumentID;
+
+      QStringList            experimentTypes;
 
    private slots:
       void changeLab  ( int );     // Slot for change in lab
       void changeRotor( int );     // Slot for change in rotor
       void changeCalib( int );     // Slot for change in calibration
+
+      void changeOperator( int );  // Slot for change in operator
+      void changeExpType( int );   // Slot for change in exp. type
+      
       void advRotor   ( void );    // Function for advanced rotor dialog
       // Rotor dialog value selected and accepted return values
       void advRotorChanged( US_Rotor::Rotor&,
@@ -769,6 +782,10 @@ class US_ExperimentMain : public US_Widgets
       QPushButton* pb_close;
 
       bool solutions_change;
+
+      bool connection_status;
+      QString xpnhost;
+      int     xpnport;
       
    private:
 

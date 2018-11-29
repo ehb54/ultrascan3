@@ -602,6 +602,13 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
                 cb_calibr   = new QComboBox( this );
    QSpacerItem* spacer1     = new QSpacerItem( 20, ihgt );
 
+   QLabel*      lb_instrument = us_label( tr( "Instrument:" ) );
+                le_instrument = us_lineedit(   "", 1, true );
+   QLabel*      lb_exptype    = us_label( tr( "Experiment Type:" ) );
+                cb_exptype    = new QComboBox( this );
+   QLabel*      lb_operator   = us_label( tr( "Select Operator:" ) );
+                cb_operator   = new QComboBox( this );
+   
    int row     = 0;
    genL->addWidget( lb_lab,          row,   0, 1, 1 );
    genL->addWidget( cb_lab,          row++, 1, 1, 1 );
@@ -612,6 +619,15 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    genL->addItem  ( spacer1,         row++, 0, 1, 4 );
    genL->addWidget( pb_advrotor,     row++, 0, 1, 4 );
 
+   row++;
+   
+   genL->addWidget( lb_instrument,      row,     0, 1, 1 );
+   genL->addWidget( le_instrument,      row++,   1, 1, 1 );
+   genL->addWidget( lb_operator,        row,     0, 1, 1 );
+   genL->addWidget( cb_operator,        row++,   1, 1, 1 );
+   genL->addWidget( lb_exptype,         row,     0, 1, 1 );
+   genL->addWidget( cb_exptype,         row++,   1, 1, 1 );   
+   
    panel->addLayout( genL );
    panel->addStretch();
 
@@ -693,6 +709,76 @@ DbgLv(1) << "EGR: chgLab labID desc" << labID << descr;
    cb_rotor->addItems( sl_rotors );
 DbgLv(1) << "EGR: chgLab  sl_rotors count" << sl_rotors.count();
    changeRotor( 0 );
+
+   //ALEXEY identify instruments & operators, fill Gui elements
+   US_Rotor::Lab lab_selected;
+   lab_selected.readDB( labID, dbP );
+   QList< US_Rotor::Instrument > instruments = lab_selected.instruments;
+   //Connection
+   QString inst_name("");
+   if (mainw->xpnport == 5551)  //Should be configured in instrument table
+     inst_name = "Optima 1";
+   else if (mainw->xpnport == 5552)
+     inst_name = "Optima 2";
+   else
+     inst_name = "Optima 1";
+
+   QString conn_status = mainw->connection_status ? "connected" : "disconnected";
+   
+   // QString inst_name_conn = inst_name + " ( " +  conn_status + " ) ";
+   // le_instrument->setText( inst_name_conn );
+
+   US_Rotor::Instrument currentInstrument;
+   foreach ( US_Rotor::Instrument instrument, instruments )
+     {
+       if ( instrument.name == inst_name ) 
+	 currentInstrument   = instrument;  
+     }
+
+   //currentInstrumentID = currentInstrument.ID;
+   le_instrument->setText( QString::number( currentInstrument.ID ) + ": " + inst_name );
+   
+   qDebug() << "INSTRUMENT ID: " << currentInstrument.ID;;
+   
+   //Operators
+   sl_operators.clear();
+   QList< US_Rotor::Operator > operators = currentInstrument.operators;
+   foreach ( US_Rotor::Operator oper, operators )
+     {
+       sl_operators << QString::number( oper.ID )
+                 + ": " + oper.fname + " " + oper.lname;
+     }
+   cb_operator->clear();
+   cb_operator->addItems( sl_operators );
+
+   changeOperator(0);
+
+   //ExpType
+   experimentTypes.clear();
+   cb_exptype->clear();
+   experimentTypes << "Velocity"
+                   << "Equilibrium"
+                   << "Diffusion"
+                   << "Buoyancy"
+                   << "Calibration"
+                   << "Other";
+
+   cb_exptype->addItems( experimentTypes );
+   changeExpType( 0 );
+}
+
+// Slot for change in ExpType selection
+void US_ExperGuiRotor::changeExpType( int ndx )
+{
+  //changed             = true;
+  cb_exptype->setCurrentIndex( ndx );
+}
+
+// Slot for change in Operator selection
+void US_ExperGuiRotor::changeOperator( int ndx )
+{
+  //changed             = true;
+  cb_operator->setCurrentIndex( ndx );
 }
 
 // Slot for change in Rotor selection
@@ -3241,6 +3327,10 @@ DbgLv(1) << "EGUp:detE: ufont" << ufont.family();
    QString v_lab     = rpRotor->laboratory;
    QString v_rotor   = rpRotor->rotor;
    QString v_calib   = rpRotor->calibration;
+   QString v_operID  = QString::number(rpRotor->operID);
+   QString v_instID  = QString::number(rpRotor->instID);
+   QString v_exptype = rpRotor->exptype;
+      
    int     i_centp   = rpCells->nused;
    QString v_centp   = QString::number( i_centp  );
    QString v_ccbal   = sibSValue( "cells",     "counterbalance" );
@@ -3296,12 +3386,17 @@ DbgLv(1) << "EGUp:dE: solus solus" << ssolut;
    dtext += tr( "  DB / Disk:                  " ) + v_dbdisk + "\n";
    dtext += tr( "  RunId:                      " ) + v_run    + "\n";
    dtext += tr( "  Project:                    " ) + v_proj   + "\n";
+
    dtext += tr( "\nRotor\n" );
    dtext += tr( "  ALL SPECIFIED:              " ) + v_rotok  + "\n";
    dtext += tr( "  USER CHANGES:               " ) + v_rotuc  + "\n";
    dtext += tr( "  Laboratory:                 " ) + v_lab    + "\n";
    dtext += tr( "  Rotor:                      " ) + v_rotor  + "\n";
    dtext += tr( "  Calibration:                " ) + v_calib  + "\n";
+   dtext += tr( "  InstrumentID:               " ) + v_instID + "\n";
+   dtext += tr( "  OperatorID:                 " ) + v_operID + "\n";
+   dtext += tr( "  Experiment Type:            " ) + v_exptype + "\n";
+   
    dtext += tr( "\nSpeeds\n" );
    dtext += tr( "  ALL SPECIFIED:              " ) + v_speok  + "\n";
    dtext += tr( "  USER CHANGES:               " ) + v_speuc  + "\n";

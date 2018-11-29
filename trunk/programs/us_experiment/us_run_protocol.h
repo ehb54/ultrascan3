@@ -33,7 +33,10 @@ class US_RunProtocol
             QString     laboratory;    //!< Laboratory with rotor
             QString     rotor;         //!< Rotor description
             QString     calibration;   //!< Rotor Calibration description
-
+	    QString     exptype;
+	    QString     operatorname; 
+	    QString     instrumentname;
+	    
             QString     labGUID;       //!< Laboratory GUID
             QString     rotGUID;       //!< Rotor GUID
             QString     calGUID;       //!< Rotor Calibration GUID
@@ -43,6 +46,8 @@ class US_RunProtocol
             int         rotID;         //!< Rotor DB Id
             int         calID;         //!< Rotor Calibration DB Id
             int         absID;         //!< Abstract Rotor DB Id
+	    int         operID;
+	    int         instID;
       };
 
       //! \brief Protocol Speed Steps controls class

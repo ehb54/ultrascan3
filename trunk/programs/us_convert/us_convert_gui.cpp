@@ -488,44 +488,44 @@ DbgLv(1) << "CGui: reset complete";
    
    getLabInstrumentOperatorInfo_auto();
    
-qDebug() << "ExpData: ";
+   qDebug() << "ExpData: ";
 
- qDebug() << "ExpData.invID " << ExpData.invID;             
- qDebug() << "ExpData.invGUI" << ExpData.invGUID;           
-
- qDebug() << "ExpData.name" <<    ExpData.name;              
- qDebug() << "ExpData.expID" <<   ExpData.expID;             
- qDebug() << "ExpData.expGUID" << ExpData.expGUID;           
-//qDebug() << ExpData.project;
- qDebug() << "ExpData.project.projectGUID" << ExpData.project.projectGUID;
-qDebug() << "ExpData.runID" <<              ExpData.runID;             
-qDebug() << "ExpData.labID" <<              ExpData.labID;             
-qDebug() << "ExpData.instrumentID" <<       ExpData.instrumentID;        
-qDebug() << "ExpData.instrumentSerial" <<   ExpData.instrumentSerial;  
-qDebug() << "ExpData.operatorID" <<         ExpData.operatorID;        
-qDebug() << "ExpData.operatorGUID" <<       ExpData.operatorGUID;      
-qDebug() << "ExpData.rotorID" <<            ExpData.rotorID;           
-qDebug() << "ExpData.rotorGUID" <<          ExpData.rotorGUID;         
-qDebug() << "ExpData.rotorSerial" <<        ExpData.rotorSerial;       
-qDebug() << "ExpData.rotorName" <<          ExpData.rotorName;         
-qDebug() << "ExpData.calibrationID" <<      ExpData.calibrationID;     
-qDebug() << "ExpData.rotorCoeff1" <<        ExpData.rotorCoeff1;       
-qDebug() << "ExpData.rotorCoeff2" <<        ExpData.rotorCoeff2;       
-qDebug() << "ExpData.rotorUpdated" <<       ExpData.rotorUpdated;      
-qDebug() << "ExpData.expType" <<            ExpData.expType;           
-qDebug() << "ExpData.opticalSystem" <<      ExpData.opticalSystem;        
-//qDebug() << ExpData.rpms;              
-qDebug() << "ExpData.runTemp" <<            ExpData.runTemp;           
-qDebug() << "ExpData.label" <<              ExpData.label;             
-qDebug() << "ExpData.comments" <<           ExpData.comments;          
-qDebug() << "ExpData.centrifugeProtocol" << ExpData.centrifugeProtocol;
-qDebug() << "ExpData.date" <<               ExpData.date;              
-qDebug() << "ExpData.syncOK" <<             ExpData.syncOK;                
-qDebug() << "ExpData.experimentTypes" <<    ExpData.experimentTypes;    
-//qDebug() << ExpData.RIProfile;        
-//qDebug() << ExpData.RIwvlns;          
-qDebug() << "ExpData.RI_nscans" <<  ExpData.RI_nscans;        
-qDebug() << "ExpData.RI_nwvlns" <<  ExpData.RI_nwvlns;      
+   qDebug() << "ExpData.invID " << ExpData.invID;             
+   qDebug() << "ExpData.invGUI" << ExpData.invGUID;           
+   
+   qDebug() << "ExpData.name" <<    ExpData.name;              
+   qDebug() << "ExpData.expID" <<   ExpData.expID;             
+   qDebug() << "ExpData.expGUID" << ExpData.expGUID;           
+   //qDebug() << ExpData.project;
+   qDebug() << "ExpData.project.projectGUID" << ExpData.project.projectGUID;
+   qDebug() << "ExpData.runID" <<              ExpData.runID;             
+   qDebug() << "ExpData.labID" <<              ExpData.labID;             
+   qDebug() << "ExpData.instrumentID" <<       ExpData.instrumentID;        
+   qDebug() << "ExpData.instrumentSerial" <<   ExpData.instrumentSerial;  
+   qDebug() << "ExpData.operatorID" <<         ExpData.operatorID;        
+   qDebug() << "ExpData.operatorGUID" <<       ExpData.operatorGUID;      
+   qDebug() << "ExpData.rotorID" <<            ExpData.rotorID;           
+   qDebug() << "ExpData.rotorGUID" <<          ExpData.rotorGUID;         
+   qDebug() << "ExpData.rotorSerial" <<        ExpData.rotorSerial;       
+   qDebug() << "ExpData.rotorName" <<          ExpData.rotorName;         
+   qDebug() << "ExpData.calibrationID" <<      ExpData.calibrationID;     
+   qDebug() << "ExpData.rotorCoeff1" <<        ExpData.rotorCoeff1;       
+   qDebug() << "ExpData.rotorCoeff2" <<        ExpData.rotorCoeff2;       
+   qDebug() << "ExpData.rotorUpdated" <<       ExpData.rotorUpdated;      
+   qDebug() << "ExpData.expType" <<            ExpData.expType;           
+   qDebug() << "ExpData.opticalSystem" <<      ExpData.opticalSystem;        
+   //qDebug() << ExpData.rpms;              
+   qDebug() << "ExpData.runTemp" <<            ExpData.runTemp;           
+   qDebug() << "ExpData.label" <<              ExpData.label;             
+   qDebug() << "ExpData.comments" <<           ExpData.comments;          
+   qDebug() << "ExpData.centrifugeProtocol" << ExpData.centrifugeProtocol;
+   qDebug() << "ExpData.date" <<               ExpData.date;              
+   qDebug() << "ExpData.syncOK" <<             ExpData.syncOK;                
+   qDebug() << "ExpData.experimentTypes" <<    ExpData.experimentTypes;    
+   //qDebug() << ExpData.RIProfile;        
+   //qDebug() << ExpData.RIwvlns;          
+   qDebug() << "ExpData.RI_nscans" <<  ExpData.RI_nscans;        
+   qDebug() << "ExpData.RI_nwvlns" <<  ExpData.RI_nwvlns;      
 
 }
 
@@ -1863,8 +1863,10 @@ void US_ConvertGui::readProtocol_auto( void )
        return;
      }
    
-   QString pname = "CHorne-NanR_3r-DNA-MW_50K_111318";       // invID = 23
-   //QString pname = "DemchukA_exosomes40K_111418";              // invID = 25 
+   //QString pname = "CHorne-NanR_3r-DNA-MW_50K_111318";       // invID = 23   (Chris, H)          in uslims3_CHH
+   //QString pname = "DemchukA_exosomes40K_111418";            // invID = 25   (Aubrey, Demchuk)   in uslims3_CHH
+   QString pname = "test1_alexey";                             // invID = 12   (Alexey, S)         in uslims3_CHH  
+   
    QString xmlstr( "" );
    US_ProtocolUtil::read_record( pname, &xmlstr, NULL, &db );
 
@@ -1928,6 +1930,10 @@ bool US_ConvertGui::readProtocolRotor_auto( QXmlStreamReader& xmli )
             ProtInfo.ProtRotor.rotGUID     = attr.value( "rotguid"     ).toString();
             ProtInfo.ProtRotor.calGUID     = attr.value( "calguid"     ).toString();
             ProtInfo.ProtRotor.absGUID     = attr.value( "absguid"     ).toString();
+	    
+	    ProtInfo.ProtRotor.operID      = attr.value( "operid"       ).toString().toInt();
+	    ProtInfo.ProtRotor.exptype     = attr.value( "exptype"      ).toString();
+	    ProtInfo.ProtRotor.instID      = attr.value( "instid"       ).toString().toInt();
          }
 
          else
@@ -2061,12 +2067,18 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
        qDebug() << "labList_auto[ii].ID == ProtInfo.ProtRotor.labID: " << labList_auto[ii].ID << " == " << ProtInfo.ProtRotor.labID;
        qDebug() << "Laboratory name: " << ProtInfo.ProtRotor.laboratory;
        if (labList_auto[ii].ID == ProtInfo.ProtRotor.labID )  // ALEXEY change '1' to labid passed from prototcol
-	 {
-	   currentLab_auto = ii;
-	   qDebug() << "LAB: " << labList_auto[ii].name << ", ID: " << labList_auto[ii].ID;
-	   ExpData.labID = labList_auto[ii].ID;
-	 }
+   	 {
+   	   currentLab_auto = ii;
+   	   qDebug() << "LAB: " << labList_auto[ii].name << ", ID: " << labList_auto[ii].ID;
+   	   ExpData.labID = labList_auto[ii].ID;
+   	 }
      }
+   
+   // US_Rotor::Lab lab_auto;
+   // int labID = ProtInfo.ProtRotor.labID;
+   // lab_auto.readDB( labID, &db );
+   // ExpData.labID = lab_auto.ID;
+     
    qDebug() << "LabID  READ!!! ";
 
    //Rotor
@@ -2097,7 +2109,7 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    US_Rotor::Instrument currentInstrument_auto; 
    foreach ( US_Rotor::Instrument instrument, instruments )
      {
-       if ( QString::number( instrument.ID ).toInt() == 1 || instrument.name == "Optima 1") // ALEXEY change '1' & 'Optima 1' to instrument ID & inst. name  passed from prototcol
+       if ( QString::number( instrument.ID ).toInt() == ProtInfo.ProtRotor.instID ) 
 	 {
 	   currentInstrument_auto   = instrument;  
 	   ExpData.instrumentID     = QString::number( instrument.ID ).toInt();
@@ -2112,7 +2124,7 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    
    foreach ( US_Rotor::Operator oper, operators )
      {
-       if ( oper.ID == 6 ) // ALEXEY change '6' to operatorID passed from prototcol
+       if ( oper.ID == ProtInfo.ProtRotor.operID ) // ALEXEY change '6' to operatorID passed from prototcol
 	 {
 	   ExpData.operatorID   = oper.ID;
 	   ExpData.operatorGUID = oper.GUID;
@@ -2134,7 +2146,7 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    qDebug() << "PROJECT_DESC: " <<  ExpData.project.projectDesc;
 
    //Experiment Type
-   ExpData.expType = "velocity";  //ALEXEY change to what is passed from protocol
+   ExpData.expType = ProtInfo.ProtRotor.exptype; //"velocity";  //ALEXEY change to what is passed from protocol
 
    //Experiment Label
    ExpData.label = "some label";
