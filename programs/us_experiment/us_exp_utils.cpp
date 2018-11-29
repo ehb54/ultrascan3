@@ -1511,7 +1511,7 @@ DbgLv(1) << "EGSo: svP:    nchanf" << nchanf << "sol_id" << sol_id;
       {
 	//ch_comment          = pro_comms[ solution ];
 	ch_comment          = pro_comms[ iistr ];
-	 //ALEXEY - to remember changes to Soluton comments if manual commnets was added while returninf to "Solutons" tab
+	 //ALEXEY - to remember changes to Soluton comments if manual commnets was added while returning to "Solutons" tab
 	 
 	commentStrings( solution, ch_comment, cs, ii );   
       }
