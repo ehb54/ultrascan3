@@ -85,6 +85,9 @@ class US_ConvertGui : public US_Widgets
 	QString     laboratory;    //!< Laboratory with rotor
 	QString     rotor;         //!< Rotor description
 	QString     calibration;   //!< Rotor Calibration description
+	QString     exptype;
+	QString     operatorname; 
+	QString     instrumentname;
 	
 	QString     labGUID;       //!< Laboratory GUID
 	QString     rotGUID;       //!< Rotor GUID
@@ -95,6 +98,8 @@ class US_ConvertGui : public US_Widgets
 	int         rotID;         //!< Rotor DB Id
 	int         calID;         //!< Rotor Calibration DB Id
 	int         absID;         //!< Abstract Rotor DB Id
+	int         operID;
+	int         instID;
       };
   
       struct ProtocolInfo

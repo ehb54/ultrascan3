@@ -251,6 +251,12 @@ bool US_RunProtocol::RunProtoRotor::fromXml( QXmlStreamReader& xmli )
             rotGUID     = attr.value( "rotguid"     ).toString();
             calGUID     = attr.value( "calguid"     ).toString();
             absGUID     = attr.value( "absguid"     ).toString();
+
+	    exptype     = attr.value( "exptype"     ).toString();
+	    operatorname = attr.value( "opername"   ).toString();
+	    operID      = attr.value( "operid"       ).toString().toInt();
+	    instID      = attr.value( "instid"       ).toString().toInt();
+	    instrumentname  = attr.value( "instname" ).toString();;
          }
 
          else
@@ -278,6 +284,13 @@ bool US_RunProtocol::RunProtoRotor::toXml( QXmlStreamWriter& xmlo )
    xmlo.writeAttribute( "rotid",       QString::number( rotID ) );
    xmlo.writeAttribute( "calid",       QString::number( calID ) );
    xmlo.writeAttribute( "absid",       QString::number( absID ) );
+
+   xmlo.writeAttribute( "instid",      QString::number( instID ) );
+   xmlo.writeAttribute( "instname",    instrumentname );
+   xmlo.writeAttribute( "operid",      QString::number( operID ) );
+   xmlo.writeAttribute( "opername",    operatorname );
+   xmlo.writeAttribute( "exptype",     exptype );
+   
    xmlo.writeAttribute( "labguid",     labGUID );
    xmlo.writeAttribute( "rotguid",     rotGUID );
    xmlo.writeAttribute( "calguid",     calGUID );
