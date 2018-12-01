@@ -2518,9 +2518,9 @@ DbgLv(1) << "RLd:       NO CHANGE";
 	  QString message_done     = tr( "Experiement was completed. Optima data saved..." );
 	  QMessageBox::information( this, mtitle_complete, message_done );
 	  
-	  //emit experiment_complete_auto( currentDir, ProtocolName  );  // Updtade later: what should be passed with signal ??
-	  QString temp_protname("DemchukA_exosomes40K_111418");
-	  emit experiment_complete_auto( currentDir, temp_protname  );  
+	  emit experiment_complete_auto( currentDir, ProtocolName  );  // Updtade later: what should be passed with signal ??
+	  //QString temp_protname("DemchukA_exosomes40K_111418");
+	  //emit experiment_complete_auto( currentDir, temp_protname  );  
 	  
 	  return;
 	}

@@ -40,7 +40,10 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    QGridLayout* statL     = new QGridLayout();
    QHBoxLayout* buttL     = new QHBoxLayout();
 
-   // Create tab and panel widgets
+   connection_status = false;
+   automode = false;
+
+      // Create tab and panel widgets
    tabWidget           = us_tabwidget();
    
    tabWidget->setTabPosition( QTabWidget::North );
@@ -121,9 +124,24 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    reset();
 }
 
+
 // Reset parameters to their defaults
 void US_ExperimentMain::reset( void )
 {
+}
+
+void US_ExperimentMain::auto_mode_passed( void )
+{
+  qDebug() << "AUTOMODE SIGNAL: "; 
+  automode = true;
+  //epanUpload->reinitPanel();
+  epanUpload->     pb_connect->hide();
+  epanUpload->     pb_saverp->hide();
+  epanUpload->genL->addWidget( epanUpload->pb_details, 1,   0, 1, 4 );
+  epanUpload->genL->addWidget( epanUpload->pb_submit,  1,   4, 1, 8 );
+
+  this->pb_close->hide();
+ 
 }
 
 // Reset parameters to their defaults
@@ -183,7 +201,9 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
    QLabel*      lb_optima_connected = us_label( tr( "Connection Status: " ) );
                 le_optima_connected = us_lineedit( "", 0, true );
 
-   test_optima_connection();		
+   test_optima_connection();
+
+   qDebug() << "CONNECTION STATUS: General: " << mainw->connection_status;
   
    le_runid->setPlaceholderText("Enter Run ID to continue");
    le_project->setPlaceholderText("Select Project to continue");
@@ -723,6 +743,8 @@ DbgLv(1) << "EGR: chgLab  sl_rotors count" << sl_rotors.count();
    else
      inst_name = "Optima 1";
 
+
+   
    QString conn_status = mainw->connection_status ? "connected" : "disconnected";
    
    // QString inst_name_conn = inst_name + " ( " +  conn_status + " ) ";
@@ -3150,15 +3172,18 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
    QLabel* lb_panel    = us_banner( tr( "7: Submit an Experiment"
                                         " to the Optima" ) );
    panel->addWidget( lb_panel );
-   QGridLayout* genL   = new QGridLayout();
-
+   //QGridLayout* genL   = new QGridLayout();
+   genL   = new QGridLayout();
+   
    // Push buttons
-   QPushButton* pb_details  = us_pushbutton( tr( "View Experiment Details" ) );
-   QPushButton* pb_connect  = us_pushbutton( tr( "Test Connection" ) );
-                pb_submit   = us_pushbutton( tr( "Submit the Run"  ) );
-                pb_saverp   = us_pushbutton( tr( "Save the Protocol" ) );
-
-		pb_submit->setEnabled( false );                                  // <-- Temporary enabled for testing
+   //QPushButton* pb_details  = us_pushbutton( tr( "View Experiment Details" ) );
+   //QPushButton* pb_connect  = us_pushbutton( tr( "Test Connection" ) );
+   pb_details  = us_pushbutton( tr( "View Experiment Details" ) );
+   pb_connect  = us_pushbutton( tr( "Test Connection" ) );
+   pb_submit   = us_pushbutton( tr( "Submit the Run"  ) );
+   pb_saverp   = us_pushbutton( tr( "Save the Protocol" ) );
+   
+   pb_submit->setEnabled( false );                                  // <-- Temporary enabled for testing
 
    // Check boxes showing current completed parameterizations
    QLayout* lo_run          = us_checkbox( tr( "RunID" ),
@@ -3215,11 +3240,12 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
 
    // Build the layout
    int row             = 1;
+
    genL->addWidget( pb_details,      row,   0, 1, 2 );
    genL->addWidget( pb_connect,      row,   2, 1, 2 );
    genL->addWidget( pb_saverp,       row,   4, 1, 2 );
-   genL->addWidget( pb_submit,       row++, 6, 1, 2 );
-
+   genL->addWidget( pb_submit,       row++, 6, 1, 2 );       
+      
    genL->addLayout( lo_run,          row,   1, 1, 3 );
    genL->addLayout( lo_project,      row++, 4, 1, 3 );
    genL->addLayout( lo_rotor,        row,   1, 1, 3 );
@@ -3706,6 +3732,8 @@ void US_ExperGuiUpload::submitExperiment_confirm()
     QString dbhost      = dblist[ 1 ];
     int     dbport      = dblist[ 2 ].toInt();
 
+    saveRunProtocol();
+    
     QMessageBox msgBox;
     msgBox.setText(tr("Experiment will be submitted to the following Optima machine:"));
     msgBox.setInformativeText( QString( tr(    "Name: %1 <br>  Host:  %2 <br> Port:  %3" ))
@@ -4493,8 +4521,8 @@ void US_ExperGuiUpload::submitExperiment()
 
 	   qDebug() << "ExperimentDefinition record created";
 
-	   //protocol_details[ "experimentId" ]  = QString::number(ExpDefId);
-	   protocol_details[ "experimentId" ]  = QString::number(405);
+	   //protocol_details[ "experimentId" ]  = QString::number(405);
+	   protocol_details[ "experimentId" ]  = QString::number(ExpDefId);
 	   protocol_details[ "experimentName" ] = runname;                         
 	   protocol_details[ "protocolName" ] = currProto->protname;             //ALEXEY pass also to Live Update/PostProd protocol name
    

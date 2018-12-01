@@ -225,6 +225,7 @@ US_ExperGui::US_ExperGui( QWidget* topw )
    sdiag->setParent(this, Qt::Widget);
    
    connect( sdiag, SIGNAL( us_exp_is_closed() ), this, SLOT( us_exp_is_closed_set_button() ) );
+   //connect( this,  SIGNAL( set_auto_mode() ),   sdiag, SLOT( auto_mode_passed() ) );
    connect( sdiag, SIGNAL( to_live_update( QMap < QString, QString > & ) ),
 	    this,  SLOT( to_live_update( QMap < QString, QString > & ) ) );
 
@@ -233,9 +234,10 @@ US_ExperGui::US_ExperGui( QWidget* topw )
    sdiag->move(offset, 2*offset);
    sdiag->setFrameShape( QFrame::Box);
    sdiag->setLineWidth(2); 
+
+   sdiag->auto_mode_passed();
    
    sdiag->show();
-
      
 }
 
@@ -344,9 +346,9 @@ US_ObservGui::US_ObservGui( QWidget* topw )
    setPalette( US_GuiSettings::frameColor() );
    QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
    QFontMetrics fmet( sfont );
-   int fwid     = fmet.maxWidth();
-   int lwid     = fwid * 4;
-   int swid     = lwid + fwid;
+   //int fwid     = fmet.maxWidth();
+   //int lwid     = fwid * 4;
+   //int swid     = lwid + fwid;
    
    // Main VBox
    QVBoxLayout* main     = new QVBoxLayout (this);
@@ -450,9 +452,9 @@ US_PostProdGui::US_PostProdGui( QWidget* topw )
    setPalette( US_GuiSettings::frameColor() );
    QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
    QFontMetrics fmet( sfont );
-   int fwid     = fmet.maxWidth();
-   int lwid     = fwid * 4;
-   int swid     = lwid + fwid;
+   //int fwid     = fmet.maxWidth();
+   //int lwid     = fwid * 4;
+   //int swid     = lwid + fwid;
    
    // Main VBox
    QVBoxLayout* main     = new QVBoxLayout (this);

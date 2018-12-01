@@ -682,6 +682,13 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       void        help     ( void )
          { showHelp.show_help( "manual/experiment_submit.html" ); };
 
+      QPushButton* pb_saverp;
+      QPushButton* pb_connect;      
+      QPushButton* pb_submit;
+      QPushButton* pb_details;
+
+      QGridLayout* genL;
+      
    private:
       US_ExperimentMain*   mainw;
       US_RunProtocol*       loadProto;  // Loaded RunProtocol controls pointer
@@ -695,8 +702,8 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       US_RunProtocol::RunProtoUpload*     rpSubmt;  //!< Submit controls
       US_Help  showHelp;
 
-      QPushButton* pb_saverp;
-      QPushButton* pb_submit;
+      //QPushButton* pb_saverp;
+      //QPushButton* pb_submit;
 
       QCheckBox*   ck_run;
       QCheckBox*   ck_project;
@@ -783,9 +790,12 @@ class US_ExperimentMain : public US_Widgets
 
       bool solutions_change;
 
-      bool connection_status;
+      bool    connection_status;
       QString xpnhost;
       int     xpnport;
+
+      bool    automode;
+      void    auto_mode_passed( void ); 
       
    private:
 
@@ -822,6 +832,7 @@ class US_ExperimentMain : public US_Widgets
     public slots:
       void close_program( void );
       void optima_submitted( QMap < QString, QString > &protocol_details );
+      //void auto_mode_passed( void ); 
 
     signals:
       void us_exp_is_closed( void );
