@@ -90,7 +90,8 @@ class US_ExperGui : public US_WidgetsDialog
       void to_live_update( QMap < QString, QString > & protocol_details ); 
      
    signals:
-      void switch_to_live_update( QMap < QString, QString > & protocol_details ); 
+      void switch_to_live_update( QMap < QString, QString > & protocol_details );
+      void set_auto_mode( void );
       
 };
 
