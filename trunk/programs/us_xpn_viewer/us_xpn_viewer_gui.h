@@ -156,6 +156,7 @@ class US_XpnDataViewer : public US_Widgets
      QMessageBox*   msg_data_avail;
      QString        RunID_to_retrieve;
      QString        ExpID_to_use;
+     QString        ProtocolName;
 	 
   private slots:
      void   reset          ( void );
@@ -204,7 +205,7 @@ class US_XpnDataViewer : public US_Widgets
      { showHelp.show_help( "xpn_viewer.html" ); };
 
    signals:
-     void experiment_complete_auto( QString & );
+     void experiment_complete_auto( QString &, QString & );
 };
 #endif
 

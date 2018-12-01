@@ -114,10 +114,10 @@ class US_ObservGui : public US_WidgetsDialog
       
  private slots:
       void process_protocol_details( QMap < QString, QString > & protocol_details );
-      void to_post_processing( QString & currDir );   
+      void to_post_processing( QString & currDir, QString & protocolName );   
  signals:
       void to_xpn_viewer( QMap < QString, QString > & protocol_details );
-      void switch_to_post_processing( QString & currDir );
+      void switch_to_post_processing( QString & currDir, QString & protocolName );
       
 };
 
@@ -141,12 +141,10 @@ class US_PostProdGui : public US_WidgetsDialog
     void resizeEvent(QResizeEvent *event) override;
       
   private slots:
-    void import_data_us_convert( QString & currDir);
+    void import_data_us_convert( QString & currDir, QString & protocolName );
 
   signals:
-    void to_post_prod( QString & currDir);
-  
-      
+    void to_post_prod( QString & currDir, QString & protocolName );
 };
 
 
@@ -185,11 +183,11 @@ private slots:
   //void unable_tabs_buttons( void);  // Slot to unable Tabs and Buttons when user level is low
   //void enable_tabs_buttons( void);  // Slot to enable Tabs and Buttons after protocol is loaded
   void switch_to_live_update( QMap < QString, QString > & protocol_details );
-  void switch_to_post_processing( QString & currDir); 
+  void switch_to_post_processing( QString & currDir, QString & protocolName ); 
   
 signals:
   void pass_to_live_update( QMap < QString, QString > & protocol_details ); 
-  void import_data_us_convert( QString & currDir);
+  void import_data_us_convert( QString & currDir, QString & protocolName );
 };
 
 

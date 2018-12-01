@@ -249,6 +249,8 @@ class US_ConvertGui : public US_Widgets
       bool readProtocolRotor_auto ( QXmlStreamReader& );
       bool readProtocolCells_auto ( QXmlStreamReader& );
       bool readProtocolSolutions_auto ( QXmlStreamReader& );
+
+      QString ProtocolName_auto;
       
       void getExpInfo_auto ( void );
       void getLabInstrumentOperatorInfo_auto   ( void );
@@ -289,7 +291,7 @@ class US_ConvertGui : public US_Widgets
       */
       void assign_investigator( int );
 
-      void import_data_auto  (QString);
+      void import_data_auto  (QString &, QString &);
       
       void import            ( void );
       void reimport          ( void );
