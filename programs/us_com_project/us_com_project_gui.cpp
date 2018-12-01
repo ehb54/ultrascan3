@@ -124,8 +124,8 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
 
    connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
    connect( this   , SIGNAL( pass_to_live_update( QMap < QString, QString > &) ),   epanObserv, SLOT( process_protocol_details( QMap < QString, QString > & )  ) );
-   connect( epanObserv, SIGNAL( switch_to_post_processing( QString &) ), this, SLOT( switch_to_post_processing( QString & )  ) );
-   connect( this, SIGNAL( import_data_us_convert( QString &) ),  epanPostProd, SLOT( import_data_us_convert( QString & )  ) );
+   connect( epanObserv, SIGNAL( switch_to_post_processing( QString &, QString &) ), this, SLOT( switch_to_post_processing( QString &, QString & )  ) );
+   connect( this, SIGNAL( import_data_us_convert( QString &, QString & ) ),  epanPostProd, SLOT( import_data_us_convert( QString &, QString & )  ) );
    
    setMinimumSize( QSize( 1350, 875 ) );
    adjustSize();
@@ -141,11 +141,11 @@ void US_ComProjectMain::switch_to_live_update( QMap < QString, QString > & proto
 }
 
 // Slot to switch from the Live Update to PostProcessifn tab
-void US_ComProjectMain::switch_to_post_processing( QString  & currDir)
+void US_ComProjectMain::switch_to_post_processing( QString  & currDir, QString & protocolName)
 {
    tabWidget->setCurrentIndex( 2 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ?? 
 
-   emit import_data_us_convert( currDir );
+   emit import_data_us_convert( currDir, protocolName );
 }
      
 
@@ -379,7 +379,7 @@ US_ObservGui::US_ObservGui( QWidget* topw )
    connect( this, SIGNAL( to_xpn_viewer( QMap < QString, QString > &) ), sdiag, SLOT( check_for_data ( QMap < QString, QString > & )  ) );
 
    //ALEXEY: devise SLOT saying what to do upon completion of experiment and exporting AUC data to hard drive - Import Experimental Data  !!! 
-   connect( sdiag, SIGNAL( experiment_complete_auto( QString & ) ), this, SLOT( to_post_processing ( QString &) ) );
+   connect( sdiag, SIGNAL( experiment_complete_auto( QString &, QString & ) ), this, SLOT( to_post_processing ( QString &, QString &) ) );
    
    offset = 20;
    sdiag->move(offset, 2*offset);
@@ -434,9 +434,9 @@ void US_ObservGui::process_protocol_details( QMap < QString, QString > & protoco
   emit to_xpn_viewer( protocol_details );
 }
 
-void US_ObservGui::to_post_processing( QString & currDir )
+void US_ObservGui::to_post_processing( QString & currDir, QString & protocolName )
 {
-  emit switch_to_post_processing( currDir );
+  emit switch_to_post_processing( currDir, protocolName );
 }
 
 
@@ -483,7 +483,7 @@ US_PostProdGui::US_PostProdGui( QWidget* topw )
    sdiag = new US_ConvertGui("AUTO");
    sdiag->setParent(this, Qt::Widget);
 
-   connect( this, SIGNAL( to_post_prod( QString &) ), sdiag, SLOT( import_data_auto ( QString & )  ) );
+   connect( this, SIGNAL( to_post_prod( QString &, QString & ) ), sdiag, SLOT( import_data_auto ( QString &, QString & )  ) );
    
    offset = 20;
    sdiag->move(offset, 2*offset);
@@ -525,7 +525,7 @@ void US_PostProdGui::resizeEvent(QResizeEvent *event)
 
 
 
-void US_PostProdGui::import_data_us_convert( QString & currDir )
+void US_PostProdGui::import_data_us_convert( QString & currDir, QString & protocolName )
 {
-   emit to_post_prod( currDir );
+  emit to_post_prod( currDir, protocolName );
 }

@@ -4493,8 +4493,10 @@ void US_ExperGuiUpload::submitExperiment()
 
 	   qDebug() << "ExperimentDefinition record created";
 
-	   protocol_details[ "experimentId" ]  = QString::number(ExpDefId);
-	   protocol_details[ "experimentName" ] = runname;
+	   //protocol_details[ "experimentId" ]  = QString::number(ExpDefId);
+	   protocol_details[ "experimentId" ]  = QString::number(405);
+	   protocol_details[ "experimentName" ] = runname;                         
+	   protocol_details[ "protocolName" ] = currProto->protname;             //ALEXEY pass also to Live Update/PostProd protocol name
    
 	 }
        else

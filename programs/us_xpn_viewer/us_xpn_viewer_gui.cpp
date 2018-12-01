@@ -987,7 +987,8 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
 void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_details)
 {
   ExpID_to_use = protocol_details["experimentId"];   
-
+  ProtocolName = protocol_details["protocolName"];   
+  
   timer_data_init = new QTimer;
   connect(timer_data_init, SIGNAL(timeout()), this, SLOT( load_xpn_raw_auto( ) ));
   timer_data_init->start(5000);     // 5 sec
@@ -2517,8 +2518,10 @@ DbgLv(1) << "RLd:       NO CHANGE";
 	  QString message_done     = tr( "Experiement was completed. Optima data saved..." );
 	  QMessageBox::information( this, mtitle_complete, message_done );
 	  
-	  emit experiment_complete_auto( currentDir );  // Updtade later: what should be passed with signal ??
-
+	  //emit experiment_complete_auto( currentDir, ProtocolName  );  // Updtade later: what should be passed with signal ??
+	  QString temp_protname("DemchukA_exosomes40K_111418");
+	  emit experiment_complete_auto( currentDir, temp_protname  );  
+	  
 	  return;
 	}
 

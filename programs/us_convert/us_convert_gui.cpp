@@ -475,57 +475,57 @@ DbgLv(1) << "CGui: reset complete";
    setMinimumSize( 950, 450 );
    adjustSize();
 
-   import_data_auto("/home/alexey/ultrascan/imports/CHorne-NanR_3r-DNA-MW_50K_111318-run656");
+   //import_data_auto("/home/alexey/ultrascan/imports/CHorne-NanR_3r-DNA-MW_50K_111318-run656");
    //import_data_auto("/home/alexey/ultrascan/imports/CHorne-NanR_3r-DNA-MW_60K_110918-run653");
    //import_data_auto("/home/alexey/ultrascan/imports/DemchukA_exosomes40K_111418-run658");
    //import_data_auto("/home/alexey/ultrascan/imports/Photometric_Accuracy_-_Radial_Scan-run613");
    //import_data_auto("/home/alexey/ultrascan/imports/demo1_veloc1");
    //import_data_auto("/home/alexey/ultrascan/imports/DanS_ParticleIntegrity_testcell3_112118-run663");
    
-   editRuninfo_auto();
+   // editRuninfo_auto();
 
-   readProtocol_auto();
+   // readProtocol_auto();
    
-   getLabInstrumentOperatorInfo_auto();
+   // getLabInstrumentOperatorInfo_auto();
    
-   qDebug() << "ExpData: ";
+   // qDebug() << "ExpData: ";
 
-   qDebug() << "ExpData.invID " << ExpData.invID;             
-   qDebug() << "ExpData.invGUI" << ExpData.invGUID;           
+   // qDebug() << "ExpData.invID " << ExpData.invID;             
+   // qDebug() << "ExpData.invGUI" << ExpData.invGUID;           
    
-   qDebug() << "ExpData.name" <<    ExpData.name;              
-   qDebug() << "ExpData.expID" <<   ExpData.expID;             
-   qDebug() << "ExpData.expGUID" << ExpData.expGUID;           
-   //qDebug() << ExpData.project;
-   qDebug() << "ExpData.project.projectGUID" << ExpData.project.projectGUID;
-   qDebug() << "ExpData.runID" <<              ExpData.runID;             
-   qDebug() << "ExpData.labID" <<              ExpData.labID;             
-   qDebug() << "ExpData.instrumentID" <<       ExpData.instrumentID;        
-   qDebug() << "ExpData.instrumentSerial" <<   ExpData.instrumentSerial;  
-   qDebug() << "ExpData.operatorID" <<         ExpData.operatorID;        
-   qDebug() << "ExpData.operatorGUID" <<       ExpData.operatorGUID;      
-   qDebug() << "ExpData.rotorID" <<            ExpData.rotorID;           
-   qDebug() << "ExpData.rotorGUID" <<          ExpData.rotorGUID;         
-   qDebug() << "ExpData.rotorSerial" <<        ExpData.rotorSerial;       
-   qDebug() << "ExpData.rotorName" <<          ExpData.rotorName;         
-   qDebug() << "ExpData.calibrationID" <<      ExpData.calibrationID;     
-   qDebug() << "ExpData.rotorCoeff1" <<        ExpData.rotorCoeff1;       
-   qDebug() << "ExpData.rotorCoeff2" <<        ExpData.rotorCoeff2;       
-   qDebug() << "ExpData.rotorUpdated" <<       ExpData.rotorUpdated;      
-   qDebug() << "ExpData.expType" <<            ExpData.expType;           
-   qDebug() << "ExpData.opticalSystem" <<      ExpData.opticalSystem;        
-   //qDebug() << ExpData.rpms;              
-   qDebug() << "ExpData.runTemp" <<            ExpData.runTemp;           
-   qDebug() << "ExpData.label" <<              ExpData.label;             
-   qDebug() << "ExpData.comments" <<           ExpData.comments;          
-   qDebug() << "ExpData.centrifugeProtocol" << ExpData.centrifugeProtocol;
-   qDebug() << "ExpData.date" <<               ExpData.date;              
-   qDebug() << "ExpData.syncOK" <<             ExpData.syncOK;                
-   qDebug() << "ExpData.experimentTypes" <<    ExpData.experimentTypes;    
-   //qDebug() << ExpData.RIProfile;        
-   //qDebug() << ExpData.RIwvlns;          
-   qDebug() << "ExpData.RI_nscans" <<  ExpData.RI_nscans;        
-   qDebug() << "ExpData.RI_nwvlns" <<  ExpData.RI_nwvlns;      
+   // qDebug() << "ExpData.name" <<    ExpData.name;              
+   // qDebug() << "ExpData.expID" <<   ExpData.expID;             
+   // qDebug() << "ExpData.expGUID" << ExpData.expGUID;           
+   // //qDebug() << ExpData.project;
+   // qDebug() << "ExpData.project.projectGUID" << ExpData.project.projectGUID;
+   // qDebug() << "ExpData.runID" <<              ExpData.runID;             
+   // qDebug() << "ExpData.labID" <<              ExpData.labID;             
+   // qDebug() << "ExpData.instrumentID" <<       ExpData.instrumentID;        
+   // qDebug() << "ExpData.instrumentSerial" <<   ExpData.instrumentSerial;  
+   // qDebug() << "ExpData.operatorID" <<         ExpData.operatorID;        
+   // qDebug() << "ExpData.operatorGUID" <<       ExpData.operatorGUID;      
+   // qDebug() << "ExpData.rotorID" <<            ExpData.rotorID;           
+   // qDebug() << "ExpData.rotorGUID" <<          ExpData.rotorGUID;         
+   // qDebug() << "ExpData.rotorSerial" <<        ExpData.rotorSerial;       
+   // qDebug() << "ExpData.rotorName" <<          ExpData.rotorName;         
+   // qDebug() << "ExpData.calibrationID" <<      ExpData.calibrationID;     
+   // qDebug() << "ExpData.rotorCoeff1" <<        ExpData.rotorCoeff1;       
+   // qDebug() << "ExpData.rotorCoeff2" <<        ExpData.rotorCoeff2;       
+   // qDebug() << "ExpData.rotorUpdated" <<       ExpData.rotorUpdated;      
+   // qDebug() << "ExpData.expType" <<            ExpData.expType;           
+   // qDebug() << "ExpData.opticalSystem" <<      ExpData.opticalSystem;        
+   // //qDebug() << ExpData.rpms;              
+   // qDebug() << "ExpData.runTemp" <<            ExpData.runTemp;           
+   // qDebug() << "ExpData.label" <<              ExpData.label;             
+   // qDebug() << "ExpData.comments" <<           ExpData.comments;          
+   // qDebug() << "ExpData.centrifugeProtocol" << ExpData.centrifugeProtocol;
+   // qDebug() << "ExpData.date" <<               ExpData.date;              
+   // qDebug() << "ExpData.syncOK" <<             ExpData.syncOK;                
+   // qDebug() << "ExpData.experimentTypes" <<    ExpData.experimentTypes;    
+   // //qDebug() << ExpData.RIProfile;        
+   // //qDebug() << ExpData.RIwvlns;          
+   // qDebug() << "ExpData.RI_nscans" <<  ExpData.RI_nscans;        
+   // qDebug() << "ExpData.RI_nwvlns" <<  ExpData.RI_nwvlns;      
 
 }
 
@@ -1098,20 +1098,31 @@ void US_ConvertGui::toleranceValueChanged( double )
    reimport();
 }
 
-void US_ConvertGui::import_data_auto( QString currDir)
+void US_ConvertGui::import_data_auto( QString &currDir, QString &protocolName )
 {
   // ALEXEY TO BE ADDED...
-     int impType = getImports_auto( currDir );
+  int impType = getImports_auto( currDir );
+  ProtocolName_auto = protocolName;   
 
    if ( impType == 1 )
    {
       importMWL();
+
+      editRuninfo_auto();
+      readProtocol_auto();
+      getLabInstrumentOperatorInfo_auto();
+      
       return;
    }
 
    else if ( impType == 2 )
    {
       importAUC();
+
+      editRuninfo_auto();
+      readProtocol_auto();
+      getLabInstrumentOperatorInfo_auto();
+
       return;
    }
 
@@ -1849,6 +1860,10 @@ void US_ConvertGui::runIDChanged( void )
 }
 
 
+
+
+
+// Read Protocol details
 void US_ConvertGui::readProtocol_auto( void )
 {
   // Check DB connection
@@ -1865,11 +1880,13 @@ void US_ConvertGui::readProtocol_auto( void )
    
    //QString pname = "CHorne-NanR_3r-DNA-MW_50K_111318";       // invID = 23   (Chris, H)          in uslims3_CHH
    //QString pname = "DemchukA_exosomes40K_111418";            // invID = 25   (Aubrey, Demchuk)   in uslims3_CHH
-   QString pname = "test1_alexey";                             // invID = 12   (Alexey, S)         in uslims3_CHH  
+   //QString pname = "test1_alexey";                             // invID = 12   (Alexey, S)         in uslims3_CHH  
+
    
    QString xmlstr( "" );
-   US_ProtocolUtil::read_record( pname, &xmlstr, NULL, &db );
-
+   //US_ProtocolUtil::read_record( pname, &xmlstr, NULL, &db );
+   US_ProtocolUtil::read_record( ProtocolName_auto, &xmlstr, NULL, &db );
+   
    qDebug() << "Protocol READ !!! ";
     
    QXmlStreamReader xmli( xmlstr );
@@ -2192,7 +2209,7 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 	   out_tripinfo[ out_chandatx[ i ] + cb_lambplot->currentIndex() ].solution = solution_auto;
 
 	   //Centerpiece
-	   if ( i < nchans-1 && i%2 == 0 ) //every second channel
+	   if ( i < nchans-1 && i%2 == 0 ) //every second channel, or other # ?
 	     {
 	       int cellnumber = i / 2;
 	       for ( int aa = 0; aa < cent_options.size(); ++aa )
