@@ -968,17 +968,17 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
      }
   else if ( RunID_to_retrieve.toInt() != 0  )
     {
-      runInfo.clear();
-      xpn_data->scan_runs( runInfo );                          // ALEXEY initial query (for us_comproject needs to be based on ExpId ) 
-      xpn_data->filter_runs( runInfo );                        // ALEXEY Optima data filtering by type [Absorbance, Interference etc.]
-
       status_ok = true;
       timer_data_init->stop();
       disconnect(timer_data_init, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
       msg_data_avail->close();
 
       qDebug() << "RunID_to_retrieve 2: " << RunID_to_retrieve;
-      
+
+      runInfo.clear();
+      xpn_data->scan_runs( runInfo );                          // ALEXEY initial query (for us_comproject needs to be based on ExpId ) 
+      xpn_data->filter_runs( runInfo );                        // ALEXEY Optima data filtering by type [Absorbance, Interference etc.]
+            
       retrieve_xpn_raw_auto ( RunID_to_retrieve );
 
       // Auto-update hereafter
@@ -1015,25 +1015,29 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
   msg_data_avail->exec();
 }
 
-void US_XpnDataViewer::retrieve_xpn_raw_auto( QString RunID )
+void US_XpnDataViewer::retrieve_xpn_raw_auto( QString & RunID )
 {
    QString drDesc    = "";
-   QString delim;
+   QString delim       = ( runInfo.count() > 0 ) ?
+                         QString( runInfo[ 0 ] ).left( 1 ) :
+                         "";
    /************* For Automated *****/
    // Search description list and choose the item with matching runID
    for ( int ii = 0; ii < runInfo.count(); ii++ )                   // In principle there should be just 1 record in runInfo
    {
       QString rDesc       = runInfo[ ii ];
-      delim               = QString( rDesc ).left( 1 );
       QString lRunID      = QString( rDesc ).mid( 1 ).section( delim, 0, 0 );
 
+      qDebug() << "IN retrieve_xpn_raw_auto: rDesc " << rDesc << ", lRunID: "  << lRunID << ", RunID: " << RunID ;
+      
       if ( lRunID == RunID )                                       // ExpII is passed from US_Experiment
-      {
-         drDesc = rDesc;
-         break;
-      }
+	{
+	  qDebug() << "RunID found !!!";
+	  drDesc = rDesc;
+	  break;
+	}
    }
- 
+   
 //   US_XpnRunRaw* lddiag = new US_XpnRunRaw( drDesc, runInfo );
 //    if ( lddiag->exec() == QDialog::Rejected )                    //ALEXEY need drDesc but do NOT need dialog
 //    {
@@ -2464,7 +2468,7 @@ DbgLv(1) << "RLd:      build-raw done: tm1 tm2" << tm1 << tm2
 }
 
 
-bool US_XpnDataViewer::CheckExpComplete_auto( QString runid )
+bool US_XpnDataViewer::CheckExpComplete_auto( QString & runid )
 {
   bool status = false;
 
