@@ -968,6 +968,10 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
      }
   else if ( RunID_to_retrieve.toInt() != 0  )
     {
+      runInfo.clear();
+      xpn_data->scan_runs( runInfo );                          // ALEXEY initial query (for us_comproject needs to be based on ExpId ) 
+      xpn_data->filter_runs( runInfo );                        // ALEXEY Optima data filtering by type [Absorbance, Interference etc.]
+
       status_ok = true;
       timer_data_init->stop();
       disconnect(timer_data_init, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
@@ -1095,6 +1099,8 @@ QDateTime sttime=QDateTime::currentDateTime();
    scanmask          += QString( sMasks ).mid( 6, 1 ) == "1" ? 8 : 0;
 DbgLv(1) << "RDr:     iRId" << iRunId << "sMsks scnmask" << sMasks << scanmask;
 
+ qDebug() << "RDr:     iRId" << iRunId << "sMsks scnmask" << sMasks << scanmask;
+   
  xpn_data->import_data( iRunId, scanmask );                              // ALEXEY <-- actual data retreiving
    int ntsrows        = xpn_data->countOf( "scan_rows" );
 DbgLv(1) << "RDr:     ntsrows" << ntsrows;
