@@ -950,6 +950,15 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
             
       xpn_data->scan_runs( runInfo );                          // ALEXEY initial query (for us_comproject needs to be based on ExpId ) 
       xpn_data->filter_runs( runInfo );                        // ALEXEY Optima data filtering by type [Absorbance, Interference etc.]
+
+      for ( int ii = 0; ii < runInfo.count(); ii++ )
+	{
+	  QString delim_t       = QString( runInfo[ 0 ] ).left( 1 );
+	  QString rDesc_t       = runInfo[ ii ];
+	  QString lRunID_t      = QString( rDesc_t ).mid( 1 ).section( delim_t, 0, 0 );
+
+	  qDebug() << "FIRST: runInfo: delim, rDesc, lRunID: " << delim_t << ", " << rDesc_t << ", " << lRunID_t;
+	}
     }
   else
     {
@@ -978,7 +987,16 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
       runInfo.clear();
       xpn_data->scan_runs( runInfo );                          // ALEXEY initial query (for us_comproject needs to be based on ExpId ) 
       xpn_data->filter_runs( runInfo );                        // ALEXEY Optima data filtering by type [Absorbance, Interference etc.]
-            
+
+      for ( int ii = 0; ii < runInfo.count(); ii++ )
+	{
+	  QString delim_t       = QString( runInfo[ 0 ] ).left( 1 );
+	  QString rDesc_t       = runInfo[ ii ];
+	  QString lRunID_t      = QString( rDesc_t ).mid( 1 ).section( delim_t, 0, 0 );
+	  
+	  qDebug() << "SECOND: runInfo: delim, rDesc, lRunID: " << delim_t << ", " << rDesc_t << ", " << lRunID_t;
+	}
+      
       retrieve_xpn_raw_auto ( RunID_to_retrieve );
 
       // Auto-update hereafter
