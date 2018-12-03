@@ -947,7 +947,8 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
       RunID_to_retrieve = QString::number(xpn_data->get_runid( ExpID_to_use));
 
       qDebug() << "RunID_to_retrieve 1: " << RunID_to_retrieve;
-            
+      runInfo.clear();
+      
       xpn_data->scan_runs( runInfo );                          // ALEXEY initial query (for us_comproject needs to be based on ExpId ) 
       xpn_data->filter_runs( runInfo );                        // ALEXEY Optima data filtering by type [Absorbance, Interference etc.]
 
@@ -984,9 +985,9 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
 
       qDebug() << "RunID_to_retrieve 2: " << RunID_to_retrieve;
 
-      runInfo.clear();
-      xpn_data->scan_runs( runInfo );                          // ALEXEY initial query (for us_comproject needs to be based on ExpId ) 
-      xpn_data->filter_runs( runInfo );                        // ALEXEY Optima data filtering by type [Absorbance, Interference etc.]
+      // runInfo.clear();
+      // xpn_data->scan_runs( runInfo );                          // ALEXEY initial query (for us_comproject needs to be based on ExpId ) 
+      // xpn_data->filter_runs( runInfo );                        // ALEXEY Optima data filtering by type [Absorbance, Interference etc.]
 
       for ( int ii = 0; ii < runInfo.count(); ii++ )
 	{
