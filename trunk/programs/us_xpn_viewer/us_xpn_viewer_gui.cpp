@@ -945,6 +945,8 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
 
       // Implement: query ExperiementRun and based on ExpID build array of RunIDs, find the bigger (the latest) and call it RunID_to_retrieve
       RunID_to_retrieve = QString::number(xpn_data->get_runid( ExpID_to_use));
+
+      qDebug() << "RunID_to_retrieve 1: " << RunID_to_retrieve;
             
       xpn_data->scan_runs( runInfo );                          // ALEXEY initial query (for us_comproject needs to be based on ExpId ) 
       xpn_data->filter_runs( runInfo );                        // ALEXEY Optima data filtering by type [Absorbance, Interference etc.]
@@ -964,12 +966,15 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
       // OR Message on connection to Optima: BUT it should be connected here as experiment has just been submitted...
       status_ok = false;
      }
-  else
+  else if ( RunID_to_retrieve.toInt() != 0  )
     {
       status_ok = true;
       timer_data_init->stop();
       disconnect(timer_data_init, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
       msg_data_avail->close();
+
+      qDebug() << "RunID_to_retrieve 2: " << RunID_to_retrieve;
+      
       retrieve_xpn_raw_auto ( RunID_to_retrieve );
 
       // Auto-update hereafter
