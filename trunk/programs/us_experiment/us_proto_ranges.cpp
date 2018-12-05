@@ -95,9 +95,9 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
       cclabl           = us_label( scel );
       pbwavln          = us_pushbutton( swavln );
       lbwlrng          = us_label( "2,  278 to 282" );
-      ctradfr          = us_counter( 3, 5.6, 7.4, 5.8 );
+      ctradfr          = us_counter( 3, 5.75, 7.25, 5.75 );
       lablto           = us_label( srngto );
-      ctradto          = us_counter( 3, 5.6, 7.4, 7.2 );
+      ctradto          = us_counter( 3, 5.75, 7.25, 7.25 );
       QString strow    = QString::number( ii );
       cclabl ->setObjectName( strow + ": label" );
       pbwavln->setObjectName( strow + ": pb_wavln" );
@@ -330,8 +330,8 @@ DbgLv(1) << "EGRn: rbR:     spx" << spx;
       {  // No such channel in old protocol:  use basic entry
          US_RunProtocol::RunProtoRanges::Ranges  chrng;
          chrng.channel      = channel;
-         chrng.lo_rad       = 5.8;
-         chrng.hi_rad       = 7.2;
+         chrng.lo_rad       = 5.75;
+         chrng.hi_rad       = 7.25;
          chrng.wvlens << 280.0;
          rpRange->chrngs << chrng;
       }

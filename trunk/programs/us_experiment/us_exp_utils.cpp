@@ -1056,9 +1056,15 @@ DbgLv(1) << "EGCe:inP: nholes" << nholes << "nused" << nused;
       int cell            = ii + 1;             // Cell number
       bool is_used        = false;              // By default unused
 
-      if ( ii != icbal   &&
-           cc_cenps[ ii ]->currentText().contains( tr( "counterbalance" ) ) )
+      //qDebug() << "cell: " << ii+1 << ", text: " << cc_cenps[ ii ]->currentText();
+      
+      if ( ( ii != icbal   &&
+	     cc_cenps[ ii ]->currentText().contains( tr( "counterbalance" ) ) ) ||
+	   ( ii != icbal   &&
+	     !cc_cenps[ ii ]->currentText().contains( tr( "counterbalance" ) ) )  )
       {  // Centerpiece when list is counterbalances: reset list
+
+	//qDebug() << "CELL NOT LAST BUT counterbalance: text,  " << cc_cenps[ ii ]->currentText();
 	 cc_cenps[ ii ]->clear();
 	 cc_cenps[ ii ]->addItem( tr( "empty" ) );                     // ALEXEY
          cc_cenps[ ii ]->addItems( cpnames );   // Choose from centerpieces
@@ -1067,6 +1073,8 @@ DbgLv(1) << "EGCe:inP: nholes" << nholes << "nused" << nused;
       else if ( ii == icbal   &&
          ! cc_cenps[ ii ]->currentText().contains( tr( "counterbalance" ) ) )
       {  // Counterbalance when list is centerpieces: reset list
+
+	//qDebug() << "CELL LAST BUT not counterbalance: text,  " << cc_cenps[ ii ]->currentText();
          cc_cenps[ ii ]->clear();
 	 cc_cenps[ ii ]->addItems( sl_bals );   // Choose from counterbalances
 
