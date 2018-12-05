@@ -3740,7 +3740,7 @@ void US_ExperGuiUpload::submitExperiment_confirm()
 			       .arg(alias)
 			       .arg(dbhost)
 			       .arg(dbport));
-    msgBox.setWindowTitle(tr("Confirm Experiemnt Run Submission"));
+    msgBox.setWindowTitle(tr("Confirm Experiment Run Submission"));
     QPushButton *Accept    = msgBox.addButton(tr("OK"), QMessageBox::YesRole);
     QPushButton *Cancel    = msgBox.addButton(tr("Cancel"), QMessageBox::RejectRole);
     
