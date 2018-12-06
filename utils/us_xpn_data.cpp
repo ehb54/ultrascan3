@@ -170,7 +170,7 @@ DbgLv(1) << "XpDa:scn: ExpRun rows" << rows;
                        .arg( rows ).arg( tabname );
    emit status_text( stat_text );
 
-   QString qtxt  = QString( "SELECT * from " ) + qrytab;        //ALEXEY add WHERE ExperimentID=xxx for us_comproject
+   QString qtxt  = QString( "SELECT * from " ) + qrytab;        
    const QString delim( "^" );
    runInfo.clear();
    runInfo.reserve( rows );
@@ -232,6 +232,104 @@ DbgLv(1) << "XpDa:inforow: run exp 0 estart ename rname A F I W stat";
    nruns         = runInfo.size();
    return nruns;
 }
+
+
+// Scan an XPN database for run information
+int US_XpnData::scan_runs_auto( QStringList& runInfo, QString & RunID_to_retrieve )
+{
+   int nruns     = 0;
+   QString RunID = RunID_to_retrieve;
+
+   if ( !dbxpn.isOpen() )
+      return nruns;
+
+   QString tabname( "ExperimentRun" );
+   QSqlQuery  sqry;
+   QString schname( "AUC_schema" );
+   QString sqtab   = schname + "." + tabname;
+   QString qrytab  = "\"" + schname + "\".\"" + tabname + "\"";
+   QStringList cnames;
+   QList< int > cxs;
+
+   int cols        = column_indexes( tabname, cnames, cxs );
+
+   sqry            = dbxpn.exec( "SELECT count(*) from " + qrytab + ";" );
+   sqry.next();
+   int rows        = sqry.value( 0 ).toInt();
+DbgLv(1) << "XpDa:scn: ExpRun rows" << rows;
+
+   if ( rows < 1 )
+   {
+      return rows;
+   }
+
+   QString stat_text = tr( "Scanning %1 rows from %2 table..." )
+                       .arg( rows ).arg( tabname );
+   emit status_text( stat_text );
+
+   QString qtxt  = QString( "SELECT * from " ) + qrytab + QString( " WHERE \"RunId\" = %1" ).arg(RunID);        //ALEXEY add WHERE ExperimentID=xxx for us_comproject
+   const QString delim( "^" );
+   runInfo.clear();
+   runInfo.reserve( rows );
+
+   sqry          = dbxpn.exec( qtxt );
+   int row       = 0;
+DbgLv(1) << "XpDa:scn: tabname" << tabname << "rows" << rows
+ << "cols" << cols << "qtxt" << qtxt;
+DbgLv(1) << "XpDa:inforow: run exp 0 estart ename rname A F I W stat";
+
+   while( sqry.next() )
+   {  // Loop to pick up values from rows of the table
+      row++;
+
+      tbExpRun exprow;
+      exprow.runId     = sqry.value( cxs[ 0] ).toInt();
+      exprow.expId     = sqry.value( cxs[ 1] ).toInt();
+      exprow.rotorSN   = sqry.value( cxs[ 2] ).toInt();
+      exprow.datapath  = sqry.value( cxs[ 3] ).toString();
+      exprow.expstart  = sqry.value( cxs[ 4] ).toDateTime();
+      exprow.instrSN   = sqry.value( cxs[ 5] ).toString();
+      exprow.scimo1sn  = sqry.value( cxs[ 6] ).toString();
+      exprow.scimo2sn  = sqry.value( cxs[ 7] ).toString();
+      exprow.scimo3sn  = sqry.value( cxs[ 8] ).toString();
+      exprow.runstat   = sqry.value( cxs[ 9] ).toInt();
+      exprow.expdef    = sqry.value( cxs[10] ).toString();
+      exprow.expname   = sqry.value( cxs[11] ).toString();
+      exprow.resname   = sqry.value( cxs[12] ).toString();
+      exprow.abscnf    = sqry.value( cxs[13] ).toBool();
+      exprow.flscnf    = sqry.value( cxs[14] ).toBool();
+      exprow.inscnf    = sqry.value( cxs[15] ).toBool();
+      exprow.wlscnf    = sqry.value( cxs[16] ).toBool();
+
+      // Skip any runs with no associated scan table entries
+      if ( ! ( exprow.abscnf || exprow.flscnf ||
+               exprow.inscnf || exprow.wlscnf ) )
+         continue;
+
+      // Save experiment row
+      tExprun << exprow;
+
+      QString inforow = delim + QString::number( exprow.runId )
+                      + delim + QString::number( exprow.expId )
+                      + delim + "0"
+                      + delim + exprow.expstart.toString( Qt::ISODate )
+                                               .replace( "T", " " )
+                      + delim + exprow.expname
+                      + delim + exprow.resname
+                      + delim + QString( exprow.abscnf ? "1" : "0" )
+                      + delim + QString( exprow.flscnf ? "1" : "0" )
+                      + delim + QString( exprow.inscnf ? "1" : "0" )
+                      + delim + QString( exprow.wlscnf ? "1" : "0" )
+                      + delim + QString::number( exprow.runstat );
+      runInfo << inforow;
+DbgLv(1) << "XpDa: inforow" << inforow;
+   }
+DbgLv(1) << "XpDa:inforow: run exp 0 estart ename rname A F I W stat";
+
+   nruns         = runInfo.size();
+   return nruns;
+}
+
 
 // Filter runs list to eliminate zero-data entries
 int US_XpnData::filter_runs( QStringList& runInfo )

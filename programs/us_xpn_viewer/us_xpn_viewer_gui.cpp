@@ -947,19 +947,19 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
       RunID_to_retrieve = QString::number(xpn_data->get_runid( ExpID_to_use));
 
       qDebug() << "RunID_to_retrieve 1: " << RunID_to_retrieve;
-      runInfo.clear();
+      // runInfo.clear();
       
-      xpn_data->scan_runs( runInfo );                          // ALEXEY initial query (for us_comproject needs to be based on ExpId ) 
-      xpn_data->filter_runs( runInfo );                        // ALEXEY Optima data filtering by type [Absorbance, Interference etc.]
+      //xpn_data->scan_runs( runInfo );                          // ALEXEY initial query (for us_comproject needs to be based on ExpId ) 
+      // xpn_data->filter_runs( runInfo );                        // ALEXEY Optima data filtering by type [Absorbance, Interference etc.]
 
-      for ( int ii = 0; ii < runInfo.count(); ii++ )
-	{
-	  QString delim_t       = QString( runInfo[ 0 ] ).left( 1 );
-	  QString rDesc_t       = runInfo[ ii ];
-	  QString lRunID_t      = QString( rDesc_t ).mid( 1 ).section( delim_t, 0, 0 );
+      // for ( int ii = 0; ii < runInfo.count(); ii++ )
+      // 	{
+      // 	  QString delim_t       = QString( runInfo[ 0 ] ).left( 1 );
+      // 	  QString rDesc_t       = runInfo[ ii ];
+      // 	  QString lRunID_t      = QString( rDesc_t ).mid( 1 ).section( delim_t, 0, 0 );
 
-	  qDebug() << "FIRST: runInfo: delim, rDesc, lRunID: " << delim_t << ", " << rDesc_t << ", " << lRunID_t;
-	}
+      // 	  qDebug() << "FIRST: runInfo: delim, rDesc, lRunID: " << delim_t << ", " << rDesc_t << ", " << lRunID_t;
+      // 	}
     }
   else
     {
@@ -967,7 +967,8 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
     }
   
   // Check if there are non-zero data 
-  if ( runInfo.size() < 1 )
+  //if ( runInfo.size() < 1 )
+  if ( RunID_to_retrieve.toInt() == 0) 
     {
       // QMessageBox::information( this,
       // 				tr( "Status" ),
@@ -975,8 +976,8 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
       // 				    "Awaiting for data to emerge... \n" ) );
       // OR Message on connection to Optima: BUT it should be connected here as experiment has just been submitted...
       status_ok = false;
-     }
-  else if ( RunID_to_retrieve.toInt() != 0  )
+    }
+  else 
     {
       status_ok = true;
       timer_data_init->stop();
@@ -985,10 +986,9 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
 
       qDebug() << "RunID_to_retrieve 2: " << RunID_to_retrieve;
 
-      // runInfo.clear();
-      // xpn_data->scan_runs( runInfo );                          // ALEXEY initial query (for us_comproject needs to be based on ExpId ) 
-      // xpn_data->filter_runs( runInfo );                        // ALEXEY Optima data filtering by type [Absorbance, Interference etc.]
-
+      runInfo.clear();
+      xpn_data->scan_runs_auto( runInfo, RunID_to_retrieve );                          // ALEXEY initial query (for us_comproject needs to be based on ExpId ) 
+      
       for ( int ii = 0; ii < runInfo.count(); ii++ )
 	{
 	  QString delim_t       = QString( runInfo[ 0 ] ).left( 1 );
@@ -997,7 +997,11 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
 	  
 	  qDebug() << "SECOND: runInfo: delim, rDesc, lRunID: " << delim_t << ", " << rDesc_t << ", " << lRunID_t;
 	}
-      
+
+      // // Check if all triple info is available
+      // timer_all_data_avail = new QTimer;
+      // connect(timer_all_data_avail, SIGNAL(timeout()), this, SLOT( retrieve_xpn_raw_auto ( RunID_to_retrieve ) ));
+      // timer_data_avail->start(10000);     // 10 sec
       retrieve_xpn_raw_auto ( RunID_to_retrieve );
 
       // Auto-update hereafter
@@ -1072,7 +1076,7 @@ void US_XpnDataViewer::retrieve_xpn_raw_auto( QString & RunID )
    // See if we need to fix the runID
 
 
-   QString fRunId    = QString( drDesc ).section( delim, 1, 1 );  // WHAT IS fRunId ????
+   QString fRunId    = QString( drDesc ).section( delim, 1, 1 );  
 
    qDebug() << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!DRDESC: " << drDesc << ", fRunId:  " << fRunId; 
 
@@ -1272,6 +1276,11 @@ DbgLv(1) << "RDr: allData size" << allData.size();
 
    // Ok to enable some buttons now
    enableControls();                                    //ALEXEY ...and actual plotting data
+
+   // if ( ncellch == )
+   //   {
+       
+   //   }
 }
 
 
@@ -2504,7 +2513,7 @@ bool US_XpnDataViewer::CheckExpComplete_auto( QString & runid )
 // Slot to reload data
 void US_XpnDataViewer::reloadData_auto()
 {
-   if ( in_reload )             // If already doing a reload,
+   if ( in_reload )            // If already doing a reload,
      return;                   //  skip starting a new one
 
    in_reload   = true;          // Flag in the midst of a reload

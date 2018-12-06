@@ -232,7 +232,8 @@ class US_UTIL_EXTERN US_XpnData : public QObject
       //! \param runInfo Reference for returned run info strings
       //! \returns       Number of runs (runInfo size)
       int     scan_runs( QStringList& );
-
+      int     scan_runs_auto( QStringList& , QString&  );
+      
       int     get_runid( QString );
 
       int     checkExpStatus( QString );
