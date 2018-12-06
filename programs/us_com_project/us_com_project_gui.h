@@ -171,6 +171,8 @@ class US_ComProjectMain : public US_Widgets
   //int         statflag;        // Composite panels status flag
   //int         dbg_level;       // Debug print flag
   int         curr_panx;       // Current panel index (0-7)
+
+  void check_current_stage( void );
   
   
 private slots:

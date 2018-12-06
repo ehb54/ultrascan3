@@ -413,6 +413,7 @@ if(mcknt>0)
    setMinimumSize( 950, 450 );
    adjustSize();
 
+   /*
    //Temporary test - C. Horne's experiment: ExpID = 408 (ExperimentDefinition, Postgres); ProtocolID = 43 (Us-lims, Mysql);
    // 2 cells; 41 wvls; 82 triples; 
    QMap < QString, QString > protocol_details;
@@ -421,6 +422,7 @@ if(mcknt>0)
    
    check_for_data( protocol_details );
    // End of test
+   */
 }
 
 
@@ -1024,6 +1026,7 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
   in_reload_data_init   = false;
   return status_ok;
 }
+
 
 //Query for Optima DB periodically, see if data available
 void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_details)

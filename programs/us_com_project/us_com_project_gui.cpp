@@ -130,7 +130,55 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    setMinimumSize( QSize( 1350, 875 ) );
    adjustSize();
 
+   /* Check for current stage & redirect to specific tab */
+   //check_current_stage();
+
 }
+
+
+// Function that checks for current program stage based on US-lims DB entry
+void US_ComProjectMain::check_current_stage( void )
+{
+  // (1) Query 'autoflow' table for stage#, protocol name/ID, ExpRun ID
+  // (2) Query 'protocol' table for details: e.g. CellChNumber, TripleNumber
+  // (3) Identify currDir where .auc data have been saved (unique name based on protocolName + runID)
+  //     * this maybe an 'autoflow' table field recorded after stage 1 (Live Update); DEFAULT empty
+
+  /* 
+  QString currDir = QString("");
+
+  currDir = curDirr_query.isEmprty() ? curDir : curDirr_query; 
+  
+  QMap < QString, QString > protocol_details;
+  protocol_details[ "experimentId" ] = ExpID;
+  protocol_details[ "protocolName" ] = ProtName;
+  protocol_details[ "CellChNumber" ] = CellChNumber;
+  protocol_details[ "TripleNumber" ] = TprileNumber;;
+
+  
+  switch ( stageNumber )
+    {
+    case 0:       //Experiment submit
+      {
+	break;
+      }
+    case 1:       //Live Update / us_xpn_viwer
+      {
+	//do something
+	switch_to_live_update( protocol_details );
+	break;
+      }
+    case 2:       //PostProd / us_convert  
+      {
+	//do something
+	switch_to_post_processing( currDir, ProtName);
+	break;
+      }
+      //and so on...
+    } 
+  */
+}
+
 
 // Slot to pass submitted to Optima run info to the Live Update tab
 void US_ComProjectMain::switch_to_live_update( QMap < QString, QString > & protocol_details)
