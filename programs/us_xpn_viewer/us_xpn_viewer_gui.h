@@ -143,6 +143,7 @@ class US_XpnDataViewer : public US_Widgets
      bool           in_reload;
 
      bool           in_reload_data_init;
+     bool           in_reload_all_data;
 
      double         last_xmin;
      double         last_xmax;
@@ -153,6 +154,8 @@ class US_XpnDataViewer : public US_Widgets
 
      QTimer*        timer_data_init;
      QTimer*        timer_data_reload;
+     QTimer*        timer_all_data_avail;
+     
      QMessageBox*   msg_data_avail;
      QString        RunID_to_retrieve;
      QString        ExpID_to_use;
@@ -164,7 +167,8 @@ class US_XpnDataViewer : public US_Widgets
 
      bool   load_xpn_raw_auto   ( void );
      void   check_for_data ( QMap < QString, QString > & );
-     void   retrieve_xpn_raw_auto ( QString & );
+     //void   retrieve_xpn_raw_auto ( QString & );
+     void   retrieve_xpn_raw_auto ( void );
      void   reloadData_auto     ( void );
      bool   CheckExpComplete_auto( QString & );
      
