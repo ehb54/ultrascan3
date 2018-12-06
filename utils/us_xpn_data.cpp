@@ -2663,6 +2663,9 @@ void US_XpnData::build_internals( )
    mxscnn        = 0;
    nlambda       = 0;
    ntriple       = 0;
+   
+   //ncelchn       = 0;  //ALEXEY do we need to reset it fro automated flow and in general ?
+      
    int sdknt     = 0;
    sdknt         = ( runType == "RI" ) ? tAsdata.count() : sdknt;
    sdknt         = ( runType == "FI" ) ? tFsdata.count() : sdknt;

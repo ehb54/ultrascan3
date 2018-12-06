@@ -4522,10 +4522,18 @@ void US_ExperGuiUpload::submitExperiment()
 	   qDebug() << "ExperimentDefinition record created";
 
 	   //protocol_details[ "experimentId" ]  = QString::number(405);
-	   protocol_details[ "experimentId" ]  = QString::number(ExpDefId);
+	   protocol_details[ "experimentId" ]  = QString::number(ExpDefId);      //ALEXEY: this should be put into new table connceting protocol && experiment 
 	   protocol_details[ "experimentName" ] = runname;                         
-	   protocol_details[ "protocolName" ] = currProto->protname;             //ALEXEY pass also to Live Update/PostProd protocol name
-   
+	   protocol_details[ "protocolName" ] = currProto->protname;                   //ALEXEY pass also to Live Update/PostProd protocol name
+	   protocol_details[ "CellChNumber" ]   = QString::number(rpSolut->nschan);    //ALEXEY: this can be read from protocl in US-lims DB
+
+	   int nwavl_tot = 0;
+	   for ( int kk = 0; kk < rpRange->nranges; kk++ )
+	     {
+	       nwavl_tot  += rpRange->chrngs[ kk ].wvlens.count();
+	     }
+	   protocol_details[ "TripleNumber" ] = QString::number(nwavl_tot);
+	   
 	 }
        else
 	 {
