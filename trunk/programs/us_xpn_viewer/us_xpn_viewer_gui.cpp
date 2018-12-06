@@ -72,6 +72,7 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
    rlt_id       = 0;
    currentDir   = "";
    in_reload    = false;
+   in_reload_all_data  = false;
    in_reload_data_init = false;
    
    QStringList xpnentr = US_Settings::defaultXpnHost();
@@ -412,14 +413,14 @@ if(mcknt>0)
    setMinimumSize( 950, 450 );
    adjustSize();
 
-   //Temporary test
+   //Temporary test - C. Horne's experiment: ExpID = 408 (ExperimentDefinition, Postgres); ProtocolID = 43 (Us-lims, Mysql);
+   // 2 cells; 41 wvls; 82 triples; 
    QMap < QString, QString > protocol_details;
-   protocol_details["experimentId"] = "431";   
-   protocol_details["protocolName"] = "some_prot";
+   protocol_details["experimentId"] = QString("408");   
+   protocol_details["protocolName"] = QString("some_prot");
    
-
    check_for_data( protocol_details );
-
+   // End of test
 }
 
 
@@ -952,7 +953,7 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
 	xpn_data->dump_tables();
 
       // Implement: query ExperiementRun and based on ExpID build array of RunIDs, find the bigger (the latest) and call it RunID_to_retrieve
-      RunID_to_retrieve = QString::number(xpn_data->get_runid( ExpID_to_use));
+      RunID_to_retrieve = QString::number(xpn_data->get_runid( ExpID_to_use ));
 
       qDebug() << "RunID_to_retrieve 1: " << RunID_to_retrieve;
       // runInfo.clear();
@@ -1006,16 +1007,17 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
 	  qDebug() << "SECOND: runInfo: delim, rDesc, lRunID: " << delim_t << ", " << rDesc_t << ", " << lRunID_t;
 	}
 
-      // // Check if all triple info is available
-      // timer_all_data_avail = new QTimer;
-      // connect(timer_all_data_avail, SIGNAL(timeout()), this, SLOT( retrieve_xpn_raw_auto ( RunID_to_retrieve ) ));
-      // timer_data_avail->start(10000);     // 10 sec
-      retrieve_xpn_raw_auto ( RunID_to_retrieve );
+      // Check if all triple info is available
+      timer_all_data_avail = new QTimer;
+      connect(timer_all_data_avail, SIGNAL(timeout()), this, SLOT( retrieve_xpn_raw_auto ( ) ));
+      timer_all_data_avail->start(10000);     // 10 sec
 
-      // Auto-update hereafter
-      timer_data_reload = new QTimer;
-      connect(timer_data_reload, SIGNAL(timeout()), this, SLOT( reloadData_auto( ) ));
-      timer_data_reload->start(10000);     // 5 sec
+      //retrieve_xpn_raw_auto ( RunID_to_retrieve );
+
+      // // Auto-update hereafter
+      // timer_data_reload = new QTimer;
+      // connect(timer_data_reload, SIGNAL(timeout()), this, SLOT( reloadData_auto( ) ));
+      // timer_data_reload->start(10000);     // 5 sec
 
     }
   
@@ -1046,8 +1048,14 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
   msg_data_avail->exec();
 }
 
-void US_XpnDataViewer::retrieve_xpn_raw_auto( QString & RunID )
+//void US_XpnDataViewer::retrieve_xpn_raw_auto( QString & RunID )
+void US_XpnDataViewer::retrieve_xpn_raw_auto( )
 {
+   if ( in_reload_all_data )            // If already doing a reload,
+     return;                            //  skip starting a new one
+  
+   in_reload_all_data   = true;          // Flag in the midst of a reload
+  
    QString drDesc    = "";
    QString delim       = ( runInfo.count() > 0 ) ?
                          QString( runInfo[ 0 ] ).left( 1 ) :
@@ -1059,9 +1067,9 @@ void US_XpnDataViewer::retrieve_xpn_raw_auto( QString & RunID )
       QString rDesc       = runInfo[ ii ];
       QString lRunID      = QString( rDesc ).mid( 1 ).section( delim, 0, 0 );
 
-      qDebug() << "IN retrieve_xpn_raw_auto: rDesc " << rDesc << ", lRunID: "  << lRunID << ", RunID: " << RunID ;
+      qDebug() << "IN retrieve_xpn_raw_auto: rDesc " << rDesc << ", lRunID: "  << lRunID << ", RunID: " <<  RunID_to_retrieve;
       
-      if ( lRunID == RunID )                                       // ExpII is passed from US_Experiment
+      if ( lRunID == RunID_to_retrieve )                                       // ExpII is passed from US_Experiment
 	{
 	  qDebug() << "RunID found !!!";
 	  drDesc = rDesc;
@@ -1274,9 +1282,16 @@ DbgLv(1) << "RDr: nwl wvlo wvhi" << nlambda << wvlo << wvhi
 DbgLv(1) << "RDr: nwl wvlo wvhi" << nlambda << wvlo << wvhi
    << "ncellch" << ncellch << "nlambda" << nlambda << "ntriple" << ntriple
    << triples.count();
+
+ qDebug() << "RDr: nwl wvlo wvhi" << nlambda << wvlo << wvhi
+   << "ncellch" << ncellch << "nlambda" << nlambda << "ntriple" << ntriple
+   << triples.count();
 #endif
 
 DbgLv(1) << "RDr: allData size" << allData.size();
+
+ qDebug() << "RDr: allData size" << allData.size();
+
    QApplication::restoreOverrideCursor();
    QString tspath = currentDir + "/" + runID + ".time_state.tmst";
    haveTmst       = QFile( tspath ).exists();
@@ -1284,11 +1299,22 @@ DbgLv(1) << "RDr: allData size" << allData.size();
 
    // Ok to enable some buttons now
    enableControls();                                    //ALEXEY ...and actual plotting data
-
-   // if ( ncellch == )
-   //   {
+   
+   if ( ncellch == 2 && ntriple == 82 )
+     {
+       //stop timer
+       timer_all_data_avail->stop();
+       disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
        
-   //   }
+       // Auto-update hereafter
+       timer_data_reload = new QTimer;
+       connect(timer_data_reload, SIGNAL(timeout()), this, SLOT( reloadData_auto( ) ));
+       timer_data_reload->start(10000);     // 5 sec
+
+       in_reload_all_data   = false;  
+     }
+
+   in_reload_all_data   = false;  
 }
 
 
