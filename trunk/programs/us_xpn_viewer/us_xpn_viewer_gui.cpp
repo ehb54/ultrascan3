@@ -1029,7 +1029,10 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
 void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_details)
 {
   ExpID_to_use = protocol_details["experimentId"];   
-  ProtocolName = protocol_details["protocolName"];   
+  ProtocolName = protocol_details["protocolName"];
+  CellChNumber   = protocol_details[ "CellChNumber" ];
+  TripleNumber = protocol_details[ "TripleNumber" ];
+	   
   
   timer_data_init = new QTimer;
   connect(timer_data_init, SIGNAL(timeout()), this, SLOT( load_xpn_raw_auto( ) ));
@@ -1300,7 +1303,7 @@ DbgLv(1) << "RDr: allData size" << allData.size();
    // Ok to enable some buttons now
    enableControls();                                    //ALEXEY ...and actual plotting data
    
-   if ( ncellch == 2 && ntriple == 82 )
+   if ( cellchans.count() == CellChNumber.toInt() && ntriple == TripleNumber.toInt() )                // <--- Change to the values from the protocol
      {
        //stop timer
        timer_all_data_avail->stop();
