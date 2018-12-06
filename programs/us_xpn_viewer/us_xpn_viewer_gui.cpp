@@ -412,6 +412,14 @@ if(mcknt>0)
    setMinimumSize( 950, 450 );
    adjustSize();
 
+   //Temporary test
+   QMap < QString, QString > protocol_details;
+   protocol_details["experimentId"] = "431";   
+   protocol_details["protocolName"] = "some_prot";
+   
+
+   check_for_data( protocol_details );
+
 }
 
 

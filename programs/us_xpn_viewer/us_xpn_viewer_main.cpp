@@ -13,8 +13,9 @@ int main( int argc, char* argv[] )
    #include "main1.inc"
 
    // License is OK.  Start up.
-   
-   US_XpnDataViewer ww;
+
+   US_XpnDataViewer ww("AUTO");
+   //US_XpnDataViewer ww;
    ww.show();                  //!< \memberof QWidget
    return application.exec();  //!< \memberof QApplication
 }
