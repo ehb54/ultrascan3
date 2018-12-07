@@ -1307,6 +1307,9 @@ DbgLv(1) << "RDr: allData size" << allData.size();
 
    // Ok to enable some buttons now
    enableControls();                                    //ALEXEY ...and actual plotting data
+
+   qDebug() << "CellChNumber, cellchans.count() " << CellChNumber.toInt() << ", " << cellchans.count();
+   qDebug() << "TripleNumber, ntriple " << TripleNumber.toInt() << ", " << ntriple;
    
    if ( cellchans.count() == CellChNumber.toInt() && ntriple == TripleNumber.toInt() )                // <--- Change to the values from the protocol
      {
