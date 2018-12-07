@@ -1160,6 +1160,8 @@ DbgLv(1) << "RDr:      knt(triple)   " << xpn_data->countOf( "triple"    );
    {
       le_status->setText( tr( "Run %1 has no associated data!!!" )
                           .arg( fRunId ) );
+
+      in_reload_all_data   = false;  
       return;
    }
 
