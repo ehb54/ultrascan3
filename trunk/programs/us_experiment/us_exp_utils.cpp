@@ -617,10 +617,13 @@ void US_ExperGuiRotor::savePanel()
    QString cal          = cb_calibr->currentText();
    QString oper         = cb_operator->currentText();
    QString exptype      = cb_exptype ->currentText();
-   QString instr        = le_instrument ->text(); 
+   QString instr        = le_instrument ->text();
       
    rpRotor->laboratory  = QString( lab ).section( ":", 1, 1 ).simplified();
    rpRotor->rotor       = QString( rot ).section( ":", 1, 1 ).simplified();
+
+   qDebug() << "NAME OF THE ROTOR IN SAVE: rot, rpRotor->rotor: " << rot << ", "  << rpRotor->rotor;
+
    rpRotor->calibration = QString( cal ).section( ":", 1, 1 ).simplified();
    rpRotor->operatorname = QString( oper ).section( ":", 1, 1 ).simplified();
    rpRotor->instrumentname = QString( instr ).section( ":", 1, 1 ).simplified();
@@ -666,6 +669,8 @@ DbgLv(1) << "EGRo:  svP:  rotID" << rpRotor->rotID << "rotor" << rpRotor->rotor
       if ( rpRotor->calID == calibs[ ii ].ID )
          rpRotor->calGUID  = calibs[ ii ].GUID;
    }
+
+   qDebug() << "Rotor Save panel Done: " ;
 }
 
 // Get a specific panel string value
