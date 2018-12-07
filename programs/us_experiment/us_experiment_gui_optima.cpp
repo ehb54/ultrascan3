@@ -931,8 +931,10 @@ DbgLv(1) << "EGR:  absR: rotor" << rotor;
    for ( int ii = 0; ii < rotors.count(); ii++ )
    {  // Search for a match to the rotor name
 DbgLv(1) << "EGR:  absR:   ii" << ii << "rname" << rotors[ii].name;
-      if ( rotors[ ii ].name == rotor )
+ if ( rotors[ ii ].name.trimmed() == rotor )
       {  // Match found:  break with abstractRotor ID value
+	
+	qDebug() << "ABSTROT: ROTOR INFO !!!!: " << rotors[ ii ].name << ", " << rotors[ ii ].abstractRotorID <<  ", " << rotors[ ii ].labID << ", "  << rotors[ ii ].serialNumber;
          arID           = rotors[ ii ].abstractRotorID;
          break;
       }

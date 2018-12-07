@@ -229,7 +229,7 @@ void US_AbstractRotorGui::select()
    // Now update the current rotor information
    currentRotor->abstractRotorID   = ar.ID;
    currentRotor->abstractRotorGUID = ar.GUID;
-   currentRotor->name              = le_name->text();
+   currentRotor->name              = le_name->text().trimmed();
    currentRotor->serialNumber      = le_serialNumber->text();
       
    accept();

@@ -139,7 +139,8 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
 // Function that checks for current program stage based on US-lims DB entry
 void US_ComProjectMain::check_current_stage( void )
 {
-  // (1) Query 'autoflow' table for stage#, protocol name/ID, ExpRun ID
+  // (0) 'autoflow' table is initially updated with protocol name/ID & returned Optima's ExpID in us_experimet (submitExperiment(); ) 
+  // (1) Query 'autoflow' table for stage#, protocol name/ID, ExperimentID 
   // (2) Query 'protocol' table for details: e.g. CellChNumber, TripleNumber
   // (3) Identify currDir where .auc data have been saved (unique name based on protocolName + runID)
   //     * this maybe an 'autoflow' table field recorded after stage 1 (Live Update); DEFAULT empty
@@ -183,15 +184,21 @@ void US_ComProjectMain::check_current_stage( void )
 // Slot to pass submitted to Optima run info to the Live Update tab
 void US_ComProjectMain::switch_to_live_update( QMap < QString, QString > & protocol_details)
 {
-  tabWidget->setCurrentIndex( 1 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ?? 
+   tabWidget->setCurrentIndex( 1 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ?? 
 
+   // ALEXEY:
+   // (1) Make a record to 'autoflow' table - stage# = 1;
+   // (2) inside us_xpn_viewer - update 'curDirr' field with generated directory where .auc data saved 
+   
    emit pass_to_live_update( protocol_details );
 }
 
 // Slot to switch from the Live Update to PostProcessifn tab
 void US_ComProjectMain::switch_to_post_processing( QString  & currDir, QString & protocolName)
 {
-   tabWidget->setCurrentIndex( 2 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ?? 
+   tabWidget->setCurrentIndex( 2 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
+
+   // ALEXEY: Make a record to 'autoflow' table: stage# = 2; 
 
    emit import_data_us_convert( currDir, protocolName );
 }

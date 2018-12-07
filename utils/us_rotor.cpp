@@ -340,6 +340,8 @@ US_Rotor::Status US_Rotor::readRotorsFromDB( QVector< US_Rotor::Rotor >& rotors,
       rotor.serialNumber       = db->value( 2 ).toString();
 
       rotors << rotor;
+
+      //qDebug() << "ROTOR INFO !!!!: " << rotors[ ii ].name << ", " << rotors[ ii ].abstractRotorID <<  ", " << rotors[ ii ].labID << ", "  << rotors[ ii ].serialNumber;
    }
 
    if ( rotors.size() == 0 )
