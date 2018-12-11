@@ -74,8 +74,7 @@ double US_Hydrodyn_Pdb_Tool::pair_dist( QTreeWidgetItem *item1, QTreeWidgetItem 
 US_Hydrodyn_Pdb_Tool::US_Hydrodyn_Pdb_Tool(
                                            csv csv1,
                                            void *us_hydrodyn, 
-                                           QWidget *p, 
-                                           const char *name
+                                           QWidget *p
                                            ) : QFrame( p )
 {
    this->csv1 = csv1;
@@ -718,7 +717,8 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv2_sol2wat->setPalette( PALET_PUSHB );
    connect(pb_csv2_sol2wat, SIGNAL(clicked()), SLOT(csv2_sol2wat()));
 
-   panel2_widgets.push_back( pb_csv2_sol2wat );
+   // panel2_widgets.push_back( pb_csv2_sol2wat );
+   pb_csv2_sol2wat->hide();
 
    pb_csv2_reseq = new QPushButton(us_tr("Reseq"), this);
    pb_csv2_reseq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -1145,7 +1145,7 @@ void US_Hydrodyn_Pdb_Tool::update_enables_csv()
    pb_csv_merge                ->setEnabled( any_csv_selected && merge_ok() );
    pb_csv2_merge               ->setEnabled( any_csv2_selected && merge_ok() );
    pb_csv_angle                ->setEnabled( counts.atoms == 3 );
-   pb_csv_sol2wat              ->setEnabled( counts.SOLs );
+   pb_csv_sol2wat              ->setEnabled( true /* counts.SOLs */ );
    pb_csv_reseq                ->setEnabled( csv1.data.size() );
    pb_csv_check                ->setEnabled( csv1.data.size() );
    pb_csv_sort                 ->setEnabled( counts.models > 1 );
@@ -1188,7 +1188,7 @@ void US_Hydrodyn_Pdb_Tool::update_enables_csv2()
    pb_csv_merge                 ->setEnabled( any_csv_selected && merge_ok() );
    pb_csv2_merge                ->setEnabled( any_csv2_selected && merge_ok() );
    pb_csv2_angle                ->setEnabled( counts.atoms == 3 );
-   pb_csv2_sol2wat              ->setEnabled( counts.SOLs );
+   pb_csv2_sol2wat              ->setEnabled( true /* counts.SOLs */ );
    pb_csv2_reseq                ->setEnabled( csv2[ csv2_pos ].data.size() );
    pb_csv2_check                ->setEnabled( csv2[ csv2_pos ].data.size() );
    pb_csv2_sort                 ->setEnabled( counts.models > 1 );
@@ -1378,7 +1378,7 @@ void US_Hydrodyn_Pdb_Tool::csv2_save()
    save_csv( lv_csv2 );
 }
 
-void US_Hydrodyn_Pdb_Tool::save_csv( QTreeWidget *lv )
+void US_Hydrodyn_Pdb_Tool::save_csv( QTreeWidget *lv, QString filename )
 {
    csv csv_to_save;
    if ( lv == lv_csv )
@@ -1395,23 +1395,25 @@ void US_Hydrodyn_Pdb_Tool::save_csv( QTreeWidget *lv )
 
    us_qdebug( QString( "csv_to_save.name %1 csv_to_save.filename %2" ).arg( csv_to_save.name ).arg( csv_to_save.filename ) );
    
-   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+   if ( filename.isEmpty() ) {
+      ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
 
-   QString filename = QFileDialog::getSaveFileName( this , us_tr("Choose a filename to save the pdb") , use_dir + "/" + csv_to_save.name , "*.pdb *.PDB" );
+      filename = QFileDialog::getSaveFileName( this , us_tr("Choose a filename to save the pdb") , use_dir + "/" + csv_to_save.name , "*.pdb *.PDB" );
 
-   if ( filename.isEmpty() )
-   {
-      return;
-   }
+      if ( filename.isEmpty() )
+      {
+         return;
+      }
 
-   if ( !filename.contains(QRegExp(".pdb$", Qt::CaseInsensitive )) )
-   {
-      filename += ".pdb";
-   }
+      if ( !filename.contains(QRegExp(".pdb$", Qt::CaseInsensitive )) )
+      {
+         filename += ".pdb";
+      }
 
-   if ( QFile::exists(filename) )
-   {
-      filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( filename, 0, this );
+      if ( QFile::exists(filename) )
+      {
+         filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( filename, 0, this );
+      }
    }
 
    QFile f(filename);
@@ -3530,42 +3532,48 @@ void US_Hydrodyn_Pdb_Tool::distances( QTreeWidget *lv )
    editor_msg( "blue", QString( us_tr( "Pairwise distance report for %1 atoms done") ).arg( atoms ) );
 }
 
-void US_Hydrodyn_Pdb_Tool::sol2wat( QTreeWidget *lv )
+bool US_Hydrodyn_Pdb_Tool::sol2wat( QTreeWidget *lv, double use_radius, QString filepath, int frame, QString reportpath )
 {
    // get threshold
 
    bool ok;
    double theo_hydroradius = pow( ( 3.0/( 4.0 * M_PI ) ) * ((US_Hydrodyn *)us_hydrodyn)->misc.hydrovol, 1.0 / 3.0 );
+   double hydroradius = use_radius;
+
+   qDebug() << "sol2wat 1";
+   if ( hydroradius == 0e0 ) {
+      // non zero if traj
+      hydration_summary.clear();
+
+      hydroradius = US_Static::getDouble(
+                                         us_tr( "US-SOMO: PDB editor : SOL->WAT" ) ,
+                                         QString( us_tr( "Enter a radius in Angstrom for water.\n"
+                                                         "This will be used as a threshold to determine if the SOL is converted to WAT.\n"
+                                                         "The radius will be added to the vdW radius of the nearest non-water and\n"
+                                                         "if the distance between centers is less than or equal to the sum of the\n"
+                                                         "radii, the water will be kept.\n"
+                                                         ) )
+                                         ,
+                                         theo_hydroradius,
+                                         0.0001,
+                                         10,
+                                         4,
+                                         &ok, 
+                                         this
+                                         );
+
+      if ( !ok ) {
+         return false;
+      }
+
+      editor_msg( "brown", QString( us_tr( "SOL->WAT using radius %1 [A]" ).arg( hydroradius, 0, 'f', 3 ) ) );
 
 
-   double hydroradius = US_Static::getDouble(
-                                                us_tr( "US-SOMO: PDB editor : SOL->WAT" ) ,
-                                                QString( us_tr( "Enter a radius in Angstrom for water.\n"
-                                                             "This will be used as a threshold to determine if the SOL is converted to WAT.\n"
-                                                             "The radius will be added to the vdW radius of the nearest non-water and\n"
-                                                             "if the distance between centers is less than or equal to the sum of the\n"
-                                                             "radii, the water will be kept.\n"
-                                                             ) )
-                                                ,
-                                                theo_hydroradius,
-                                                0.0001,
-                                                10,
-                                                4,
-                                                &ok, 
-                                                this
-                                                );
-
-   if ( !ok ) {
-      return;
+      // editor_msg( "brown", QString( us_tr( "SOL->WAT water radius %1 [A]" ).arg( hydroradius, 0, 'f', 3 ) ) );
+      qApp->processEvents();
    }
 
-
-   editor_msg( "brown", QString( us_tr( "SOL->WAT using radius %1 [A]" ).arg( hydroradius, 0, 'f', 3 ) ) );
-
-
-   // editor_msg( "brown", QString( us_tr( "SOL->WAT water radius %1 [A]" ).arg( hydroradius, 0, 'f', 3 ) ) );
-   qApp->processEvents();
-
+   qDebug() << "sol2wat 2";
    csv tmp_csv;
    if ( lv == lv_csv )
    {
@@ -3573,6 +3581,7 @@ void US_Hydrodyn_Pdb_Tool::sol2wat( QTreeWidget *lv )
    } else {
       tmp_csv = to_csv( lv_csv2, csv2[ csv2_pos ] );
    }
+   qDebug() << "sol2wat 3";
    QString report_header;
    report_header += QString( us_tr( "SOL->WAT using radius %1 [A]\n" ) ).arg( hydroradius, 0, 'f', 3 );
    report_header += QString( us_tr( "Name %1\n" ) ).arg( tmp_csv.name );
@@ -3629,6 +3638,30 @@ void US_Hydrodyn_Pdb_Tool::sol2wat( QTreeWidget *lv )
    int minimum_computed_radius_posi = 0;
    int minimum_computed_radius_posj = 0;
 
+   // new csv detail report
+   csv detail_csv;
+   detail_csv.name     = QFileInfo( filepath ).baseName() + "_sol2wat_detail";
+   detail_csv.filename = filepath +  "_sol2wat_detail.csv";
+
+   detail_csv.header.push_back( "Solute residue name" );
+   detail_csv.header.push_back( "Solute residue number" );
+   detail_csv.header.push_back( "Solute atom name" );
+   detail_csv.header.push_back( "Solute atom number" );
+   detail_csv.header.push_back( "Solute position X" );
+   detail_csv.header.push_back( "Solute position Y" );
+   detail_csv.header.push_back( "Solute position Z" );
+   detail_csv.header.push_back( "Solute vdW radius" );
+   detail_csv.header.push_back( "Water rank" );
+   detail_csv.header.push_back( "Water residue name" );
+   detail_csv.header.push_back( "Water residue numbe" );
+   detail_csv.header.push_back( "Water atom nam" );
+   detail_csv.header.push_back( "Water atom numbe" );
+   detail_csv.header.push_back( "Water position X" );
+   detail_csv.header.push_back( "Water position Y" );
+   detail_csv.header.push_back( "Water position Z" );
+   detail_csv.header.push_back( "Distance" );
+   detail_csv.header.push_back( "Water Computed Radius" );
+   
    for ( int j = 0; j < (int) compares.size(); ++j ) {
       t2 = compare_points[ j ];
       double use_thresh = hydroradius + compare_vdw[ j ];
@@ -3640,6 +3673,10 @@ void US_Hydrodyn_Pdb_Tool::sol2wat( QTreeWidget *lv )
               .arg( use_thresh )
               );
       
+      map < double, int > paired_sols_by_distance;
+
+      int csvj = compares[ j ];
+
       for ( int i = 0; i < (int) SOLs.size(); ++i ) {
          t = SOL_points[ i ];
 
@@ -3666,7 +3703,6 @@ void US_Hydrodyn_Pdb_Tool::sol2wat( QTreeWidget *lv )
                      sol2wat_csv_index.insert( csvi );
                      SOL_nonSOL_hits[ csvi ]++;
                      {
-                        int csvj = compares[ j ];
                         double d = sqrt( d2 );
                         double this_computed_radius = d - compare_vdw[ j ];
                         if ( minimum_computed_radius > this_computed_radius ) {
@@ -3719,8 +3755,79 @@ void US_Hydrodyn_Pdb_Tool::sol2wat( QTreeWidget *lv )
                                     d - compare_vdw[ j ]
                                     )
                            ;
+
+                        // new detail info
+
+                        paired_sols_by_distance[ d ] = i;
                      }
                   }
+               }
+            }
+         }
+      } // end of SOLs loop
+
+      {
+         // build up detail
+         int rank = 1;
+         for ( map < double, int >::iterator it = paired_sols_by_distance.begin();
+               it != paired_sols_by_distance.end();
+               ++it ) {
+            int csvi = SOLs[ it->second ]; // the water
+            vector < QString > tmp_data;
+            // solute info
+            tmp_data.push_back( tmp_csv.data[ csvj ][ 2 ] );
+            tmp_data.push_back( tmp_csv.data[ csvj ][ 3 ] );
+            tmp_data.push_back( tmp_csv.data[ csvj ][ 4 ] );
+            tmp_data.push_back( tmp_csv.data[ csvj ][ 5 ] );
+            tmp_data.push_back( tmp_csv.data[ csvj ][ 8 ] );
+            tmp_data.push_back( tmp_csv.data[ csvj ][ 9 ] );
+            tmp_data.push_back( tmp_csv.data[ csvj ][ 10 ] );
+
+            // solute radius
+            tmp_data.push_back( QString( "%1" ).arg( compare_vdw[ j ] ) );
+
+            // rank
+            tmp_data.push_back( QString( "%1" ).arg( rank++ ) );
+
+            // water info
+
+            tmp_data.push_back( tmp_csv.data[ csvi ][ 2 ] );
+            tmp_data.push_back( tmp_csv.data[ csvi ][ 3 ] );
+            tmp_data.push_back( tmp_csv.data[ csvi ][ 4 ] );
+            tmp_data.push_back( tmp_csv.data[ csvi ][ 5 ] );
+            tmp_data.push_back( tmp_csv.data[ csvi ][ 8 ] );
+            tmp_data.push_back( tmp_csv.data[ csvi ][ 9 ] );
+            tmp_data.push_back( tmp_csv.data[ csvi ][ 10 ] );
+
+            // distance, computed radius
+
+            tmp_data.push_back( QString( "%1" ).arg( it->first ) );
+            tmp_data.push_back( QString( "%1" ).arg( it->first - compare_vdw[ j ] ) );
+
+            detail_csv.data.push_back( tmp_data );
+
+            // this is per frame
+            hydration_info hi;
+            hi.d = it->first;
+            hi.r = it->first - compare_vdw[ j ];
+            hydration_summary[ csvj ][ frame ].push_back( hi );
+            if ( !hydration_header.count( csvj ) ) {
+               hydration_header_info hhi;
+               hhi.vdw     = compare_vdw[ j ];
+               hhi.rname   = tmp_csv.data[ csvj ][ 2 ];
+               hhi.rnum    = tmp_csv.data[ csvj ][ 3 ];
+               hhi.aname   = tmp_csv.data[ csvj ][ 4 ];
+               hhi.anum    = tmp_csv.data[ csvj ][ 5 ];
+               hydration_header[ csvj ] = hhi;
+            } else {
+               if ( 
+                   hydration_header[ csvj ].vdw     != compare_vdw[ j ] ||
+                   hydration_header[ csvj ].rname   != tmp_csv.data[ csvj ][ 2 ] ||
+                   hydration_header[ csvj ].rnum    != tmp_csv.data[ csvj ][ 3 ] ||
+                   hydration_header[ csvj ].aname   != tmp_csv.data[ csvj ][ 4 ] ||
+                   hydration_header[ csvj ].anum    != tmp_csv.data[ csvj ][ 5 ]
+                    ) {
+                  editor_msg( "red", us_tr( "Error: pdbs don't have identical structure" ) );
                }
             }
          }
@@ -3836,22 +3943,28 @@ void US_Hydrodyn_Pdb_Tool::sol2wat( QTreeWidget *lv )
 
    // get save file name for report
    {
-      QString use_dir = 
-         ((US_Hydrodyn *)us_hydrodyn)->path_view_pdb.isEmpty() ?
-         ((US_Hydrodyn *)us_hydrodyn)->somo_pdb_dir :
-         ((US_Hydrodyn *)us_hydrodyn)->path_view_pdb;
+      QString filename;
+      if ( filepath.isEmpty() ) {
+         QString use_dir = 
+            ((US_Hydrodyn *)us_hydrodyn)->path_view_pdb.isEmpty() ?
+            ((US_Hydrodyn *)us_hydrodyn)->somo_pdb_dir :
+            ((US_Hydrodyn *)us_hydrodyn)->path_view_pdb;
 
-      ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+         ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
 
-      QString fn = new_name.replace(QRegExp("\\.(pdb|PDB)$"),"") + "_sol2wat_report.txt";
+         QString fn = new_name.replace(QRegExp("\\.(pdb|PDB)$"),"") + "_sol2wat_report.txt";
 
-      QString filename = QFileDialog::getSaveFileName( this , us_tr("Choose a filename to save the SOL->WAT report") , use_dir + "/" + fn , "TXT (*.txt *.TXT)" );
+         filename = QFileDialog::getSaveFileName( this , us_tr("Choose a filename to save the SOL->WAT report") , use_dir + "/" + fn , "TXT (*.txt *.TXT)" );
 
-
-      if ( !filename.isEmpty() ) {
          if ( QFile::exists(filename) ) {
             filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( filename, 0, this );
          }
+
+      } else {
+         filename = reportpath + "/" + QFileInfo( filepath ).baseName() + "_sol2wat_detail.txt";
+      }
+
+      if ( !filename.isEmpty() ) {
       
          QFile f( filename );
 
@@ -3859,7 +3972,7 @@ void US_Hydrodyn_Pdb_Tool::sol2wat( QTreeWidget *lv )
          {
             QMessageBox::warning( this, windowTitle(),
                                   QString(us_tr("Could not open %1 for writing!")).arg(filename) );
-            return;
+            return false;
          }
 
          QTextStream t( &f );
@@ -3872,11 +3985,66 @@ void US_Hydrodyn_Pdb_Tool::sol2wat( QTreeWidget *lv )
             t << it->second;
          }
          f.close();
+         ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename, this );
+         editor_msg("black", QString("File %1 written\n").arg( filename ) );
+      }
+   }
+
+   // get save file name for detail csv
+   {
+      QString filename;
+      if ( filepath.isEmpty() ) {
+         QString use_dir = 
+            ((US_Hydrodyn *)us_hydrodyn)->path_view_pdb.isEmpty() ?
+            ((US_Hydrodyn *)us_hydrodyn)->somo_pdb_dir :
+            ((US_Hydrodyn *)us_hydrodyn)->path_view_pdb;
+
+         ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+
+         QString fn = new_name.replace(QRegExp("\\.(pdb|PDB)$"),"") + "_sol2wat_detail.csv";
+
+         filename = QFileDialog::getSaveFileName( this , us_tr("Choose a filename to save the SOL->WAT detail csv") , use_dir + "/" + fn , "CSV (*.csv *.CSV)" );
+
+         if ( QFile::exists(filename) ) {
+            filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( filename, 0, this );
+         }
+      
+      } else {
+         filename = reportpath + "/" + QFileInfo( filepath ).baseName() + "_sol2wat_detail.csv";
+      }
+
+      if ( !filename.isEmpty() ) {
+         QFile f( filename );
+
+         if ( !f.open( QIODevice::WriteOnly ) )
+         {
+            QMessageBox::warning( this, windowTitle(),
+                                  QString(us_tr("Could not open %1 for writing!")).arg(filename) );
+            return false;
+         }
+
+         QTextStream t( &f );
+
+         QString qs;
+         for ( unsigned int i = 0; i < detail_csv.header.size(); i++ ) {
+            qs += QString( "%1\"%2\"" ).arg( i ? "," : "" ).arg( detail_csv.header[ i ] );
+         }
+         t << qs << endl;
+         for ( unsigned int i = 0; i < detail_csv.data.size(); ++i ) {
+            qs = "";
+            for ( unsigned int j = 0; j < detail_csv.data[i].size(); ++j ) {
+               qs += QString( "%1%2" ).arg( j ? "," : "" ).arg( detail_csv.data[ i ][ j ] );
+            }
+            t << qs << endl;
+         }
+         f.close();
+         ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename, this );
          editor_msg("black", QString("File %1 written\n").arg( filename ) );
       }
    }
 
    update_enables();
+   return true;
 }
 
 void US_Hydrodyn_Pdb_Tool::compute_angle( QTreeWidget *lv )
@@ -4145,8 +4313,369 @@ void US_Hydrodyn_Pdb_Tool::csv_angle()
 
 void US_Hydrodyn_Pdb_Tool::csv_sol2wat()
 {
-   sol2wat( lv_csv );
+   pdb_sel_count  counts            = count_selected( lv_csv );
+
+   if ( !counts.SOLs ||
+        QMessageBox::question(this, 
+                              us_tr( "US-SOMO: PDB Editor : Sol2wat " ),
+                              QString( us_tr( "What do you want to process?" ) ),
+                              us_tr( "A &single file that is already loaded" ),
+                              us_tr( "A &trajectory" ),
+                              QString::null,
+                              0,
+                              1
+                              ) == 1 )
+   {
+      sol2wat_traj( lv_csv );
+   } else {
+      sol2wat( lv_csv );
+   }
 }
+
+void US_Hydrodyn_Pdb_Tool::sol2wat_traj( QTreeWidget *lv ) {
+   // select a directory
+   
+   QString use_dir = QDir::currentPath();
+   bool not_ok = ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+   // raise();
+
+   QStringList filenames;
+
+   QString dirname = use_dir;
+   if ( !not_ok ) {
+      QDir up_one( use_dir );
+      up_one.cdUp();
+      dirname = QFileDialog::getExistingDirectory( this
+                                                   ,"Add all .pdb files in directory"
+                                                   ,up_one.canonicalPath()
+                                                   ,QFileDialog::ShowDirsOnly );
+   }
+   if ( !dirname.isEmpty() ) {
+      QDir dir( dirname );
+      QStringList filters;
+      filters << "*.pdb"; 
+      filenames = dir.entryList( filters ).replaceInStrings( QRegExp( "^" ), dirname + "/" );
+   } else {
+      return;
+   }
+
+   if ( filenames.isEmpty() ) {
+      return;
+   }
+
+   // get parameters
+
+   bool ok;
+   double theo_hydroradius = pow( ( 3.0/( 4.0 * M_PI ) ) * ((US_Hydrodyn *)us_hydrodyn)->misc.hydrovol, 1.0 / 3.0 );
+   
+   double hydroradius = US_Static::getDouble(
+                                             us_tr( "US-SOMO: PDB editor : SOL->WAT" ) ,
+                                             QString( us_tr( "Enter a radius in Angstrom for water.\n"
+                                                             "This will be used as a threshold to determine if the SOL is converted to WAT.\n"
+                                                             "The radius will be added to the vdW radius of the nearest non-water and\n"
+                                                             "if the distance between centers is less than or equal to the sum of the\n"
+                                                             "radii, the water will be kept.\n"
+                                                             ) )
+                                             ,
+                                             theo_hydroradius,
+                                             0.0001,
+                                             10,
+                                             4,
+                                             &ok, 
+                                             this
+                                             );
+
+   if ( !ok ) {
+      return;
+   }
+
+   // process all pdbs and save
+
+   qDebug() << "now process all of them\n";
+   hydration_summary.clear();
+
+   QString reportpath = QFileInfo( filenames[ 0 ] ).path() + QString( "/Hr_%1" ).arg( hydroradius ).replace( ".", "_" );
+   qDebug() << "report dir path " << reportpath;
+   {
+      QDir tmp_dir;
+      if ( !tmp_dir.mkpath( reportpath ) ) {
+         editor_msg( "red", QString( us_tr( "Could not create report directory %1" ) ).arg( reportpath ) );
+      }
+   }
+
+   QRegularExpression re( "_F_(\\d+).pdb$" );
+   for ( int i = 0; i < (int) filenames.size(); ++i ) {
+      QRegularExpressionMatch match = re.match( filenames[ i ] );
+      if ( match.hasMatch() ) {
+         qDebug() << QString( "file %1 has match value %2" ).arg( filenames[ i ] ).arg( match.captured( 1 ).toUInt() );
+
+         load( lv, filenames[ i ] );
+         lv->selectAll();
+         pdb_sel_count  counts = count_selected( lv );
+         if ( !counts.SOLs ) {
+            editor_msg( "red", QString( us_tr( "Warning: no SOLs defined for file '%1', skipped" ) ).arg( filenames[ i ] ) );
+         } else {
+            if ( sol2wat( lv, hydroradius, filenames[ i ], match.captured( 1 ).toUInt(), reportpath ) ) {
+               save_csv( lv_csv2, reportpath + "/" + QFileInfo( filenames[ i ] ).baseName() + "_Hr_" + QString( "%1" ).arg( hydroradius ).replace( ".", "_" ) + ".pdb" );
+            }
+         }
+      }
+   }      
+   // summary report
+
+   // map < int, map < int, vector < hydration_info > > > hydration_summary; // atom, frame, hydration_info
+   // loop thru lv_csv, process all frames of each, produce summary report
+   // global info later
+
+   // find max rank (maximum number of waters)
+
+   int max_rank = 0;
+
+   for ( map < int, map < int, vector < hydration_info > > > ::iterator it1 = hydration_summary.begin();
+         it1 != hydration_summary.end();
+         ++it1 ) {
+      int csvj = it1->first;
+      if ( !hydration_header.count( csvj ) ) {
+         editor_msg( "red", QString( us_tr( "Internal Error: no header info for '%1', quitting!" ) ).arg( csvj ) );
+         return;
+      }
+   
+      for ( map < int, vector < hydration_info > >::iterator it2 = hydration_summary[ csvj ].begin();
+            it2 != hydration_summary[ csvj ].end();
+            ++it2 ) {
+         if ( max_rank < (int) it2->second.size() ) {
+            max_rank = (int) it2->second.size();
+         }
+      }
+   }
+
+   qDebug() << QString( "max rank found %1" ).arg( max_rank );
+   
+   csv header_csv;
+   header_csv.name     = "sol2wat_header";
+   header_csv.filename = "sol2wat_header";
+   header_csv.header.push_back( "PDB name" );
+   header_csv.header.push_back( "Trajectory file" );
+   header_csv.header.push_back( "Duration" );
+   header_csv.header.push_back( "Frame interval" );
+   header_csv.header.push_back( "Number of frames" );
+   header_csv.header.push_back( "Cutoff" );
+   header_csv.header.push_back( "Max number of water per solute atom" );
+
+   QString base_name = QFileInfo( filenames[ 0 ] ).baseName().replace( QRegularExpression( "_F_\\d+$" ), "" );
+                       
+   // header info
+   {
+      vector < QString > tmp_data;
+      tmp_data.push_back( QFileInfo( filenames[ 0 ] ).path() + "/" + base_name + ".pdb" );
+      tmp_data.push_back( QFileInfo( filenames[ 0 ] ).path() + "/" + base_name + ".xtc" );
+      tmp_data.push_back( "?" );
+      tmp_data.push_back( "?" );
+      tmp_data.push_back( QString( "%1" ).arg( filenames.size() ) );
+      tmp_data.push_back( QString( "%1" ).arg( hydroradius ) );
+      tmp_data.push_back( QString( "%1" ).arg( max_rank ) );
+      header_csv.data.push_back( tmp_data );
+   }
+
+   QString summary_name =
+      base_name
+      + "_Hr_" + QString( "%1" ).arg( hydroradius ).replace( ".", "_" )
+      + "_summary"
+      ;
+      
+   csv summary_csv;
+   summary_csv.name     = summary_name;
+   summary_csv.filename = reportpath + "/" + summary_name + ".csv";
+
+   summary_csv.header.push_back( "Solute residue name" );
+   summary_csv.header.push_back( "Solute residue number" );
+   summary_csv.header.push_back( "Solute atom name" );
+   summary_csv.header.push_back( "Solute atom number" );
+   summary_csv.header.push_back( "Solute vdW radius" );
+
+   summary_csv.header.push_back( "Minimum number of waters in cutoff" );
+   summary_csv.header.push_back( "Maximum number of waters in cutoff" );
+   summary_csv.header.push_back( "Average number of waters in cutoff" );
+   summary_csv.header.push_back( "S.D. of number of waters in cutoff" );
+   summary_csv.header.push_back( "Skew of number of waters in cutoff" );
+
+   for ( int i = 1; i <= max_rank; ++i ) {
+      summary_csv.header.push_back( QString( "Minimum distance to rank %1 waters" ).arg( i ) );
+      summary_csv.header.push_back( QString( "Maximum distance to rank %1 waters" ).arg( i ) );
+      summary_csv.header.push_back( QString( "Average distance to rank %1 waters" ).arg( i ) );
+      summary_csv.header.push_back( QString( "S.D. of distance to rank %1 waters" ).arg( i ) );
+      summary_csv.header.push_back( QString( "Skew of distance to rank %1 waters" ).arg( i ) );
+
+      summary_csv.header.push_back( QString( "Minimum radius of rank %1 waters" ).arg( i ) );
+      summary_csv.header.push_back( QString( "Maximum radius of rank %1 waters" ).arg( i ) );
+      summary_csv.header.push_back( QString( "Average radius of rank %1 waters" ).arg( i ) );
+      summary_csv.header.push_back( QString( "S.D. of radius of rank %1 waters" ).arg( i ) );
+      summary_csv.header.push_back( QString( "Skew of radius of rank %1 waters" ).arg( i ) );
+   }
+
+   QStringList stat_headers;
+   stat_headers
+      << "w_min"
+      << "w_max"
+      << "w_avg"
+      << "w_sd"
+      << "w_skew"
+      ;      
+
+   for ( int rank = 0; rank < max_rank; ++rank ) {
+      stat_headers
+         << QString( "d_min %1" ).arg( rank )
+         << QString( "d_max %1" ).arg( rank )
+         << QString( "d_avg %1" ).arg( rank )
+         << QString( "d_sd %1" ).arg( rank )
+         << QString( "d_skew %1" ).arg( rank )
+         << QString( "r_min %1" ).arg( rank )
+         << QString( "r_max %1" ).arg( rank )
+         << QString( "r_avg %1" ).arg( rank )
+         << QString( "r_sd %1" ).arg( rank )
+         << QString( "r_skew %1" ).arg( rank )
+         ;
+   }
+
+   for ( map < int, map < int, vector < hydration_info > > > ::iterator it1 = hydration_summary.begin();
+         it1 != hydration_summary.end();
+         ++it1 ) {
+      int csvj = it1->first;
+      vector < QString > tmp_data;
+
+      tmp_data.push_back( hydration_header[ csvj ].rname );
+      tmp_data.push_back( hydration_header[ csvj ].rnum );
+      tmp_data.push_back( hydration_header[ csvj ].aname );
+      tmp_data.push_back( hydration_header[ csvj ].anum );
+      tmp_data.push_back( QString( "%1" ).arg( hydration_header[ csvj ].vdw ) );
+
+      // now compute avg, min, max, sd, skew of each
+
+      map < QString, double > stats;
+      for ( int i = 0; i < (int) stat_headers.size(); ++i ) {
+         stats[ stat_headers[ i ] ] = 0e0;
+      }
+      map < QString, US_Stat > us_stats;
+
+      // for each frame
+      for ( map < int, vector < hydration_info > >::iterator it2 = hydration_summary[ csvj ].begin();
+            it2 != hydration_summary[ csvj ].end();
+            ++it2 ) {
+         us_stats[ "w" ].add_point( (double) it2->second.size() );
+
+         for ( int this_max_rank = 1; this_max_rank <= max_rank; ++this_max_rank ) {
+            QString qsrank = QString( " %1" ).arg( this_max_rank );
+            for ( int rank = 0; rank < (int) this_max_rank && rank < (int) it2->second.size(); ++rank ) {
+               us_stats[ "d" + qsrank ].add_point( it2->second[ rank ].d );
+               us_stats[ "r" + qsrank ].add_point( it2->second[ rank ].r );
+            }
+         } // this_max_rank
+      } // frame
+      if ( us_stats[ "w" ].count() < (int) filenames.size() ) {
+         vector < double > x( (int) filenames.size() - us_stats[ "w" ].count(), 0e0 );
+         us_stats[ "w" ].add_points( x );
+      }
+
+      if ( us_stats[ "w" ].count() ) {
+         stats[ "w_min"  ] = us_stats[ "w" ].min();
+         stats[ "w_max"  ] = us_stats[ "w" ].max();
+         stats[ "w_avg"  ] = us_stats[ "w" ].avg();
+         stats[ "w_sd"   ] = us_stats[ "w" ].sd();
+         stats[ "w_skew" ] = us_stats[ "w" ].skew();
+      }
+
+      for ( int this_max_rank = 1; this_max_rank <= max_rank; ++this_max_rank ) {
+         QString qsrank = QString( " %1" ).arg( this_max_rank );
+         if ( us_stats[ "d" + qsrank ].count() ) {
+            stats[ "d_min"  + qsrank ] = us_stats[ "d" + qsrank ].min();
+            stats[ "d_max"  + qsrank ] = us_stats[ "d" + qsrank ].max();
+            stats[ "d_avg"  + qsrank ] = us_stats[ "d" + qsrank ].avg();
+            stats[ "d_sd"   + qsrank ] = us_stats[ "d" + qsrank ].sd();
+            stats[ "d_skew" + qsrank ] = us_stats[ "d" + qsrank ].skew();
+         }
+
+         if ( us_stats[ "r" + qsrank ].count() ) {
+            stats[ "r_min"  + qsrank ] = us_stats[ "r" + qsrank ].min();
+            stats[ "r_max"  + qsrank ] = us_stats[ "r" + qsrank ].max();
+            stats[ "r_avg"  + qsrank ] = us_stats[ "r" + qsrank ].avg();
+            stats[ "r_sd"   + qsrank ] = us_stats[ "r" + qsrank ].sd();
+            stats[ "r_skew" + qsrank ] = us_stats[ "r" + qsrank ].skew();
+         }
+      }
+
+      tmp_data.push_back( QString( "%1" ).arg( stats[ "w_min" ] ) );
+      tmp_data.push_back( QString( "%1" ).arg( stats[ "w_max" ] ) );
+      tmp_data.push_back( QString( "%1" ).arg( stats[ "w_avg" ] ) );
+      tmp_data.push_back( QString( "%1" ).arg( stats[ "w_sd" ] ) );
+      tmp_data.push_back( QString( "%1" ).arg( stats[ "w_skew" ] ) );
+
+      for ( int rank = 1; rank <= max_rank; ++rank ) {
+         QString qsrank = QString( " %1" ).arg( rank );
+         tmp_data.push_back( QString( "%1" ).arg( stats[ "d_min"  + qsrank ] ) );
+         tmp_data.push_back( QString( "%1" ).arg( stats[ "d_max"  + qsrank ] ) );
+         tmp_data.push_back( QString( "%1" ).arg( stats[ "d_avg"  + qsrank ] ) );
+         tmp_data.push_back( QString( "%1" ).arg( stats[ "d_sd"   + qsrank ] ) );
+         tmp_data.push_back( QString( "%1" ).arg( stats[ "d_skew" + qsrank ] ) );
+
+         tmp_data.push_back( QString( "%1" ).arg( stats[ "r_min"  + qsrank ] ) );
+         tmp_data.push_back( QString( "%1" ).arg( stats[ "r_max"  + qsrank ] ) );
+         tmp_data.push_back( QString( "%1" ).arg( stats[ "r_avg"  + qsrank ] ) );
+         tmp_data.push_back( QString( "%1" ).arg( stats[ "r_sd"   + qsrank ] ) );
+         tmp_data.push_back( QString( "%1" ).arg( stats[ "r_skew" + qsrank ] ) );
+      }
+
+      summary_csv.data.push_back( tmp_data );
+   }
+
+   {
+      QString filename = summary_csv.filename;
+      
+      QFile f( filename );
+
+      if ( !f.open( QIODevice::WriteOnly ) )
+      {
+         QMessageBox::warning( this, windowTitle(),
+                               QString(us_tr("Could not open %1 for writing!")).arg(filename) );
+         return;
+      }
+
+      QTextStream t( &f );
+
+      QString qs;
+      for ( unsigned int i = 0; i < header_csv.header.size(); i++ ) {
+         qs += QString( "%1\"%2\"" ).arg( i ? "," : "" ).arg( header_csv.header[ i ] );
+      }
+      t << qs << endl;
+      for ( unsigned int i = 0; i < header_csv.data.size(); ++i ) {
+         qs = "";
+         for ( unsigned int j = 0; j < header_csv.data[i].size(); ++j ) {
+            qs += QString( "%1%2" ).arg( j ? "," : "" ).arg( header_csv.data[ i ][ j ] );
+         }
+         t << qs << endl;
+      }
+
+      t << endl;
+
+      qs = "";
+      for ( unsigned int i = 0; i < summary_csv.header.size(); i++ ) {
+         qs += QString( "%1\"%2\"" ).arg( i ? "," : "" ).arg( summary_csv.header[ i ] );
+      }
+      t << qs << endl;
+      for ( unsigned int i = 0; i < summary_csv.data.size(); ++i ) {
+         qs = "";
+         for ( unsigned int j = 0; j < summary_csv.data[i].size(); ++j ) {
+            qs += QString( "%1%2" ).arg( j ? "," : "" ).arg( summary_csv.data[ i ][ j ] );
+         }
+         t << qs << endl;
+      }
+      f.close();
+      ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename, this );
+      editor_msg("black", QString("File %1 written\n").arg( filename ) );
+   }   
+      
+   editor_msg( "dark blue", QString( us_tr( "SOL2WAT done. All produced files in directory %1" ) ).arg( reportpath ) );
+}
+
 
 void US_Hydrodyn_Pdb_Tool::csv_sel_msg()
 {
@@ -4206,7 +4735,22 @@ void US_Hydrodyn_Pdb_Tool::csv2_angle()
 
 void US_Hydrodyn_Pdb_Tool::csv2_sol2wat()
 {
-   sol2wat( lv_csv2 );
+   pdb_sel_count  counts            = count_selected( lv_csv2 );
+   if ( !counts.SOLs ||
+        QMessageBox::question(this, 
+                              us_tr( "US-SOMO: PDB Editor : Sol2wat " ),
+                              QString( us_tr( "What do you want to process?" ) ),
+                              us_tr( "A &single file that is already loaded" ),
+                              us_tr( "A &trajectory" ),
+                              QString::null,
+                              0,
+                              1
+                              ) == 1 )
+   {
+      sol2wat_traj( lv_csv2 );
+   } else {
+      sol2wat( lv_csv2 );
+   }
 }
 
 void US_Hydrodyn_Pdb_Tool::csv2_sel_msg()

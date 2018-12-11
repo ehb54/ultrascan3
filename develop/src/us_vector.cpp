@@ -337,3 +337,166 @@ QString US_Vector::qs_vector_vector( QString qs, vector < vector < double > > m,
    result += "\n";
    return result;
 }
+
+US_Stat::US_Stat() {
+   clear();
+}
+
+void US_Stat::clear() {
+   pts.clear();
+   sum = 0e0;
+   sum2 = 0e0;
+}
+
+void US_Stat::add_point( double x ) {
+   if ( pts.size() ) {
+      if ( pmin > x ) {
+         pmin = x;
+      }
+      if ( pmax < x ) {
+        pmax = x;
+      }
+   } else {
+      pmin = x;
+      pmax = x;
+   }
+   pts.push_back( x );
+   sum += x;
+   sum2 += x * x;
+}
+
+void US_Stat::add_points( vector < double > & x ) {
+   int n = (int) x.size();
+   for ( int i = 0; i < n; ++i ) {
+      add_point( x[ i ] );
+   }
+}
+
+int US_Stat::count() {
+   return (int) pts.size();
+}
+
+double US_Stat::min() {
+   return pmin;
+}
+
+double US_Stat::max() {
+   return pmax;
+}
+
+double US_Stat::avg() {
+   double n = (double) count();
+   if ( n ) {
+      double countinv = 1e0 / n;
+      return sum * countinv;
+   }
+   return US_STAT_ERROR;
+}
+
+double US_Stat::sd( bool pop ) {
+   double n = (double) count();
+   if ( n > 1 ) {
+      double countinv = 1e0 / n;
+      double countm1inv;
+      if ( pop ) {
+         countm1inv = 1e0 / ( n );
+      } else {
+         countm1inv = 1e0 / ( n - 1e0 );
+      }
+      return sqrt( countm1inv * ( sum2 - countinv * sum * sum ) );
+   }
+   return 0;
+}
+
+#include <QTextStream>
+
+
+double US_Stat::skew( bool adjusted ) {
+   // adjusted fisher-pearson coefficient of skewness
+   int n = count();
+   if ( n < 3 ) {
+      return 0;
+   }
+
+   double m = avg();
+   double s = sd( true );
+   if ( s == 0 ) {
+      return 0;
+   }
+   double recips3 = 1e0 / ( s * s * s );
+
+   double symybar3 = 0e0;
+   for ( int i = 0; i < n; ++i ) {
+      double ymybar = pts[ i ] - m;
+      symybar3 += ymybar * ymybar * ymybar;
+   }
+   double symybar3_n = symybar3 / (double) n;
+   double retval = symybar3_n * recips3;
+   /*
+   QTextStream( stdout ) << QString(
+                       "symybar3   = %1\n"
+                        "symybar3_n = %2\n"
+                        "recips3    = %3\n"
+                        "retval     = %4\n"
+                       )
+      .arg( symybar3 )
+      .arg( symybar3_n )
+      .arg( recips3 )
+      .arg( retval )
+      ;
+   */
+
+   if ( adjusted ) {
+      retval *= sqrt( n * ( n - 1e0 ) ) / ( n - 2 );
+   }
+   return retval;
+}
+
+QString US_Stat::summary() {
+   return QString(
+                  "points     %1\n"
+                  "min        %2\n"
+                  "max        %3\n"
+                  "avg        %4\n"
+                  "sd sample  %5\n"
+                  "sd pop     %6\n"
+                  "skew       %7\n"
+                  "skew adj   %8\n"
+                  )
+      .arg( count() )
+      .arg( min() )
+      .arg( max() )
+      .arg( avg() )
+      .arg( sd() )
+      .arg( sd( true ) )
+      .arg( skew( false ) )
+      .arg( skew() )
+      ;
+}
+                  
+void US_Stat::test() {
+   QTextStream tso( stdout );
+
+   {
+      vector < double > x{ 1e0, 2e0, 3e0, 4e0 };
+      clear();
+      add_points( x );
+      tso << US_Vector::qs_vector( "data", pts );
+      tso << summary();
+   }
+   {
+      vector < double > x{ 2, 4, 5, 7, 8, 10, 11, 25, 26, 27, 36 };
+      clear();
+      add_points( x );
+      tso << US_Vector::qs_vector( "data", pts );
+      tso << summary();
+   }
+   {
+      vector < double > x{ 1, 1, 4 };
+      clear();
+      add_points( x );
+      tso << US_Vector::qs_vector( "data", pts );
+      tso << summary();
+   }
+}
+

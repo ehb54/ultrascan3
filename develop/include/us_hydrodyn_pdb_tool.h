@@ -46,6 +46,24 @@ using namespace std;
 # endif
 #endif
 
+struct _hydration_info
+{
+   double d; // distance
+   double r; // computed radius
+};
+
+struct _hydration_header_info
+{
+   double  vdw; // vdW radius
+   QString rname;
+   QString rnum;
+   QString aname;
+   QString anum;
+};
+
+typedef _hydration_info        hydration_info;
+typedef _hydration_header_info hydration_header_info;
+   
 class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
 {
 
@@ -57,8 +75,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       US_Hydrodyn_Pdb_Tool(
                              csv csv1,
                              void *us_hydrodyn, 
-                             QWidget *p = 0, 
-                             const char *name = 0
+                             QWidget *p = 0
                              );
       ~US_Hydrodyn_Pdb_Tool();
 
@@ -199,7 +216,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       QStringList   csv_to_pdb_qsl         ( csv &csv1, bool only_atoms = false );
       QString       data_to_key            ( vector < QString > &data );
       QString       key_to_bottom_key      ( csv &csv1 );
-      void          save_csv               ( QTreeWidget *lv );
+      void          save_csv               ( QTreeWidget *lv, QString filename = "" );
 
       void          visualize              ( QTreeWidget *lv );
 
@@ -251,7 +268,8 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void          select_chain           ( QTreeWidget *lv, QStringList chains ); // selected a set of chains
       void          select_chain           ( QTreeWidget *lv, QString chain ); // selected one chain
       void          compute_angle          ( QTreeWidget *lv );
-      void          sol2wat                ( QTreeWidget *lv );
+      bool          sol2wat                ( QTreeWidget *lv, double use_radius = 0e0, QString filepath = "", int frame = 0, QString reportpath = "" );
+      void          sol2wat_traj           ( QTreeWidget *lv );
 
       csv           reseq_csv              ( QTreeWidget *lv, csv &ref_csv, bool only_selected = false );
 
@@ -287,6 +305,9 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void hide_widgets( vector < QWidget * >, bool do_hide = true );
 
       bool        bm_active;
+
+      map < int, map < int, vector < hydration_info > > > hydration_summary; // atom, frame, hydration_info
+      map < int, hydration_header_info >                  hydration_header;  // header info
 
    private slots:
       

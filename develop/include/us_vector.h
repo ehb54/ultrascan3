@@ -52,4 +52,34 @@ class US_Vector
 
 };
 
+#define US_STAT_ERROR -1e99
+
+class US_Stat
+{
+ public:
+   US_Stat();
+   void              test();
+   
+   void              clear();
+
+   void              add_point( double x );
+   void              add_points( vector < double > & x );
+   int               count();
+   double            min();
+   double            max();
+   double            avg();
+   double            sd( bool pop = false );
+   double            skew( bool adjusted = true );
+
+   QString           summary();
+
+ private:
+   vector < double > pts;
+   double            pmin;
+   double            pmax;
+   double            sum;
+   double            sum2;
+};
+
+
 #endif
