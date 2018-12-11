@@ -4467,7 +4467,7 @@ void US_Hydrodyn_Pdb_Tool::sol2wat_traj( QTreeWidget *lv ) {
    // header info
    {
       vector < QString > tmp_data;
-      tmp_data.push_back( QFileInfo( filenames[ 0 ] ).path() + "/" + base_name + ".pdb" );
+      tmp_data.push_back( QFileInfo( filenames[ 0 ] ).path() + "/" + base_name + ".gro" );
       tmp_data.push_back( QFileInfo( filenames[ 0 ] ).path() + "/" + base_name + ".xtc" );
       tmp_data.push_back( "?" );
       tmp_data.push_back( "?" );
