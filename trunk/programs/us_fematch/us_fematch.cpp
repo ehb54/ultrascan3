@@ -2118,6 +2118,7 @@ DbgLv(1) << "SimMdl: speed_steps:" << simparams.speed_step.size();
          simparams.simSpeedsFromTimeState( tmst_fpath );
 DbgLv(1) << "SimMdl: timestate file exists" << tmst_fpath << " timestateobject,count = "
  << simparams.tsobj << simparams.sim_speed_prof.count();
+         simparams.speedstepsFromSSprof();
       }
 
       else
