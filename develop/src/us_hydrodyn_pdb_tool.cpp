@@ -4477,12 +4477,23 @@ void US_Hydrodyn_Pdb_Tool::sol2wat_traj( QTreeWidget *lv ) {
       header_csv.data.push_back( tmp_data );
    }
 
-   QString summary_name =
+   QString name_prefix =
       base_name
       + "_Hr_" + QString( "%1" ).arg( hydroradius ).replace( ".", "_" )
-      + "_summary"
       ;
-      
+   
+   QString summary_name = name_prefix + "_summary";
+   QString bin_name = name_prefix + "_bin";
+
+   csv bin_csv;
+   bin_csv.name     = bin_name;
+   bin_csv.filename = reportpath + "/" + bin_name + ".csv";
+   bin_csv.header.push_back( "Radius" );
+   
+   for ( int i = 1; i <= max_rank; ++i ) {
+      bin_csv.header.push_back( QString( "Rank %1 frequency" ).arg( i ) );
+   }
+
    csv summary_csv;
    summary_csv.name     = summary_name;
    summary_csv.filename = reportpath + "/" + summary_name + ".csv";
@@ -4537,6 +4548,9 @@ void US_Hydrodyn_Pdb_Tool::sol2wat_traj( QTreeWidget *lv ) {
          ;
    }
 
+   map < double, map < int, int > > bins2; // distance, rank, frequency
+   map < double, map < int, int > > bins3; // distance, rank, frequency
+
    for ( map < int, map < int, vector < hydration_info > > > ::iterator it1 = hydration_summary.begin();
          it1 != hydration_summary.end();
          ++it1 ) {
@@ -4568,6 +4582,8 @@ void US_Hydrodyn_Pdb_Tool::sol2wat_traj( QTreeWidget *lv ) {
             for ( int rank = 0; rank < (int) this_max_rank && rank < (int) it2->second.size(); ++rank ) {
                us_stats[ "d" + qsrank ].add_point( it2->second[ rank ].d );
                us_stats[ "r" + qsrank ].add_point( it2->second[ rank ].r );
+               bins2[ 0.01  * round( it2->second[ rank ].r * 100  ) ][ this_max_rank - 1 ]++;
+               bins3[ 0.001 * round( it2->second[ rank ].r * 1000 ) ][ this_max_rank - 1 ]++;
             }
          } // this_max_rank
       } // frame
@@ -4628,6 +4644,43 @@ void US_Hydrodyn_Pdb_Tool::sol2wat_traj( QTreeWidget *lv ) {
    }
 
    {
+      for ( map < double, map < int, int > >::iterator it = bins2.begin();
+            it != bins2.end();
+            ++it ) {
+         vector < QString > tmp_data;
+         tmp_data.push_back( QString( "%1" ).arg( it->first ) );
+         for ( int rank = 0; rank < max_rank; ++rank ) {
+            if ( it->second.count( rank ) ) {
+               tmp_data.push_back( QString( "%1" ).arg( it->second[ rank ] ) );
+            } else {
+               tmp_data.push_back( "0" );
+            }
+         }
+         bin_csv.data.push_back( tmp_data );
+      }
+
+      {
+         vector < QString > tmp_data;
+         bin_csv.data.push_back( tmp_data );
+      }
+
+      for ( map < double, map < int, int > >::iterator it = bins3.begin();
+            it != bins3.end();
+            ++it ) {
+         vector < QString > tmp_data;
+         tmp_data.push_back( QString( "%1" ).arg( it->first ) );
+         for ( int rank = 0; rank < max_rank; ++rank ) {
+            if ( it->second.count( rank ) ) {
+               tmp_data.push_back( QString( "%1" ).arg( it->second[ rank ] ) );
+            } else {
+               tmp_data.push_back( "0" );
+            }
+         }
+         bin_csv.data.push_back( tmp_data );
+      }
+   }
+               
+   {
       QString filename = summary_csv.filename;
       
       QFile f( filename );
@@ -4672,6 +4725,37 @@ void US_Hydrodyn_Pdb_Tool::sol2wat_traj( QTreeWidget *lv ) {
       ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename, this );
       editor_msg("black", QString("File %1 written\n").arg( filename ) );
    }   
+
+   {
+      QString filename = bin_csv.filename;
+      
+      QFile f( filename );
+
+      if ( !f.open( QIODevice::WriteOnly ) )
+      {
+         QMessageBox::warning( this, windowTitle(),
+                               QString(us_tr("Could not open %1 for writing!")).arg(filename) );
+         return;
+      }
+
+      QTextStream t( &f );
+
+      QString qs;
+      for ( unsigned int i = 0; i < bin_csv.header.size(); i++ ) {
+         qs += QString( "%1\"%2\"" ).arg( i ? "," : "" ).arg( bin_csv.header[ i ] );
+      }
+      t << qs << endl;
+      for ( unsigned int i = 0; i < bin_csv.data.size(); ++i ) {
+         qs = "";
+         for ( unsigned int j = 0; j < bin_csv.data[i].size(); ++j ) {
+            qs += QString( "%1%2" ).arg( j ? "," : "" ).arg( bin_csv.data[ i ][ j ] );
+         }
+         t << qs << endl;
+      }
+      ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename, this );
+      editor_msg("black", QString("File %1 written\n").arg( filename ) );
+   }   
+
       
    editor_msg( "dark blue", QString( us_tr( "SOL2WAT done. All produced files in directory %1" ) ).arg( reportpath ) );
 }
