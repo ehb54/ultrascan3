@@ -1228,7 +1228,7 @@ BEGIN
       SELECT @OK AS status;
 
       IF ( count_rcal_instrs = 0 ) THEN
-        SELECT   name, serialNumber, labID, dateUpdated, radialCalID, optimaHost, optimaPort, optimaDBname, optimaDBusername, selected
+        SELECT   name, serialNumber, labID, dateUpdated, radialCalID, optimaHost, optimaPort, optimaDBname, optimaDBusername, optimaDBpassw, selected
         FROM     instrument
         WHERE    instrumentID = p_instrumentID;
 
@@ -1282,7 +1282,7 @@ BEGIN
 END$$
 
 
--- adds a new instrument
+-- adds a new instrument with more information
 DROP PROCEDURE IF EXISTS add_instrument_new$$
 CREATE PROCEDURE add_instrument_new ( p_personGUID    CHAR(36),
                                     p_password      VARCHAR(80),
@@ -1292,7 +1292,8 @@ CREATE PROCEDURE add_instrument_new ( p_personGUID    CHAR(36),
 				    p_host          TEXT,
 				    p_port          INT,
 				    p_optimadbname  TEXT,
-				    p_optimadbuser  TEXT  )
+				    p_optimadbuser  TEXT,
+				    p_optimadbpassw  VARCHAR(100) )
   MODIFIES SQL DATA
 
 BEGIN
@@ -1310,6 +1311,7 @@ BEGIN
       optimaPort        = p_port,
       optimaDBname      = p_optimadbname,
       optimaDBusername  = p_optimadbuser,
+      optimaDBpassw     = p_optimadbpassw,
       dateUpdated       = NOW();
 
     SET @LAST_INSERT_ID = LAST_INSERT_ID();

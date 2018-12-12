@@ -249,14 +249,15 @@ void US_XpnHostDB::readInstruments( US_DB2* db )
 	  db->query( q );
 	  db->next();
 	  
-	  instrument.ID     = ID;
-	  instrument.name   = db->value( 0 ).toString();
-	  instrument.serial = db->value( 1 ).toString();
-	  instrument.optimaHost = db->value( 5 ).toString();
-	  instrument.optimaPort = db->value( 6 ).toString().toInt();
-	  instrument.optimaDBname = db->value( 7 ).toString();
+	  instrument.ID               = ID;
+	  instrument.name             = db->value( 0 ).toString();
+	  instrument.serial           = db->value( 1 ).toString();
+	  instrument.optimaHost       = db->value( 5 ).toString();
+	  instrument.optimaPort       = db->value( 6 ).toString().toInt();
+	  instrument.optimaDBname     = db->value( 7 ).toString();
 	  instrument.optimaDBusername = db->value( 8 ).toString();
-	  instrument.selected         = db->value( 9 ).toString().toInt();
+	  instrument.optimaDBpassw    = db->value( 9 ).toString();
+	  instrument.selected         = db->value( 10 ).toString().toInt();
 
 	  if ( instrument.name.contains("Optima") )
 	    this->instruments << instrument;
@@ -315,9 +316,9 @@ void US_XpnHostDB::select_db( QListWidgetItem* entry, const bool showmsg )
    // Pick up decrypted password and encrypt it.
    // The encrypted form is <cipher>"^"<initvect>
    QString masterpw = pw.getPasswd();
-   QString decpw    = le_pasw->text();
-   QStringList pwl  = US_Crypto::encrypt( decpw, masterpw );
-   QString encpw    = pwl[ 0 ] + "^" + pwl[ 1 ];
+   // QString decpw    = le_pasw->text();
+   // QStringList pwl  = US_Crypto::encrypt( decpw, masterpw );
+   // QString encpw    = pwl[ 0 ] + "^" + pwl[ 1 ];
 
    for ( int ii = 0; ii < instruments.size(); ii++ )
    {
@@ -329,11 +330,15 @@ void US_XpnHostDB::select_db( QListWidgetItem* entry, const bool showmsg )
 	le_port       ->setText( QString::number( instruments[ii].optimaPort ) );
 	le_name       ->setText( instruments[ii].optimaDBname );
 	le_user       ->setText( instruments[ii].optimaDBusername );
-	// encpw            = instruments[ii].optimaDBpassw;    // Encrypted password
-	// QString cipher   = encpw.section( "^", 0, 0 ); // Cipher
-	// QString initve   = encpw.section( "^", 1, 1 ); // initVector
-	// decpw            = US_Crypto::decrypt( cipher, masterpw, initve );
-	// le_pasw       ->setText( decpw );              // Decrypted password
+
+	QString encpw    = instruments[ii].optimaDBpassw;    // Encrypted password
+	QString cipher   = encpw.section( "^", 0, 0 ); // Cipher
+	QString initve   = encpw.section( "^", 1, 1 ); // initVector
+	QString decpw    = US_Crypto::decrypt( cipher, masterpw, initve );
+	le_pasw       ->setText( decpw );              // Decrypted password
+
+	qDebug() << "SELECT: Passw.: decrypted, encrypted: " << decpw << ", " << encpw;
+	
 	// cb_os1        ->setCurrentIndex( cb_os1->findText(
 	// 						  dblist.at( ii ).at( 6 ) ) );
 	// cb_os2        ->setCurrentIndex( cb_os2->findText(
@@ -425,7 +430,14 @@ void US_XpnHostDB::newHost( QMap < QString, QString > & newInstrument  )
   qDebug() << "New Instrument: " << newInstrument["name"] << ", " << newInstrument[ "optimaHost" ];
 
   US_Passwd pw;
-  US_DB2* db = use_db ? new US_DB2( pw.getPasswd() ) : NULL;
+  QString masterpw = pw.getPasswd();
+  US_DB2* db = use_db ? new US_DB2( masterpw ) : NULL;
+
+  QString decpw    = newInstrument[ "optimaDBpassw" ];            // Decrypted password
+  QStringList pwl  = US_Crypto::encrypt( decpw, masterpw );
+  QString encpw    = pwl[ 0 ] + "^" + pwl[ 1 ];  // Encrypted password
+
+  qDebug() << "Passw.: decrypted, encrypted: " << decpw << ", " << encpw;
   
   QStringList q( "" );
   q.clear();
@@ -436,7 +448,8 @@ void US_XpnHostDB::newHost( QMap < QString, QString > & newInstrument  )
      << newInstrument[ "optimaHost" ]
      << newInstrument[ "optimaPort" ]
      << newInstrument[ "optimaDBname" ]
-     << newInstrument[ "optimaDBusername" ];                    
+     << newInstrument[ "optimaDBusername" ]
+     << encpw;
 	
   db->query( q );
   

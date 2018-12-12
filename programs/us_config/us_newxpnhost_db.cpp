@@ -151,6 +151,7 @@ void US_NewXpnHostDB::save_new( void )
   newInstrument[ "optimaPort" ] = le_port->text();
   newInstrument[ "optimaDBname" ]  = le_name->text();
   newInstrument[ "optimaDBusername" ] = le_user->text();
+  newInstrument[ "optimaDBpassw" ] = le_pasw->text();
 
   newInstrument[ "serialNumber"] = le_serialNumber->text();
   newInstrument[ "labID"] = QString::number(1);
