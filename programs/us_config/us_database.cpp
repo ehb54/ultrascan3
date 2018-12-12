@@ -48,7 +48,7 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
 
   // Populate db_list
   QStringList DB = US_Settings::defaultDB();
-//qDebug() << "USCFG: defDBl" << DB;
+ qDebug() << "USCFG: defDBl" << DB;
   QString     defaultDB;
   if ( DB.size() > 0 ) defaultDB = US_Settings::defaultDB().at( 0 );
 //qDebug() << "USCFG: defDBd" << defaultDB;

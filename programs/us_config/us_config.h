@@ -8,6 +8,7 @@
 #include "us_admin.h"
 #include "us_advanced.h"
 #include "us_xpnhost.h"
+#include "us_xpnhost_db.h"
 
 //! \brief Provide the top level window for user configuration
 
@@ -41,6 +42,7 @@ private:
   US_Admin*       admin;
   US_Advanced*    advanced;
   US_XpnHost*     xpnhost;
+  US_XpnHostDB*     xpnhost_db;
                  
   QPushButton*    pb_help;
   QPushButton*    pb_save;

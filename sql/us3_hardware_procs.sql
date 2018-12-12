@@ -1190,6 +1190,67 @@ BEGIN
 
 END$$
 
+
+-- Returns a more complete list of information about one instrument including connection, optimaDB name etc.
+DROP PROCEDURE IF EXISTS get_instrument_info_new$$
+CREATE PROCEDURE get_instrument_info_new ( p_personGUID    CHAR(36),
+                                       p_password      VARCHAR(80),
+                                       p_instrumentID  INT )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_instruments INT;
+  DECLARE count_rcal_instrs INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_instruments
+  FROM       instrument
+  WHERE      instrumentID = p_instrumentID;
+
+  SELECT     COUNT(*)
+  INTO       count_rcal_instrs
+  FROM       instrument ins, radialCalibration rac
+  WHERE      ins.instrumentID = p_instrumentID
+  AND        rac.radialCalID = ins.radialCalID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_instruments = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      IF ( count_rcal_instrs = 0 ) THEN
+        SELECT   name, serialNumber, labID, dateUpdated, radialCalID, optimaHost, optimaPort, optimaDBname, optimaDBusername, selected
+        FROM     instrument
+        WHERE    instrumentID = p_instrumentID;
+
+      ELSE
+        SELECT   name, serialNumber, labID, dateUpdated, radialCalID,
+                 rac.speed, rac.rotorCalID, roc.coeff1, roc.coeff2
+        FROM     instrument ins, radialCalibration rac, rotorCalibration roc
+        WHERE    instrumentID = p_instrumentID
+        AND      rac.radialCalID = ins.radialCalID
+        AND      roc.rotorCalibrationID = rac.rotorCalID ;
+
+      END IF;
+
+    END IF;
+
+  ELSE
+    SELECT @US3_LAST_ERRNO AS status;
+
+  END IF;
+
+END$$
+
 -- adds a new instrument
 DROP PROCEDURE IF EXISTS add_instrument$$
 CREATE PROCEDURE add_instrument ( p_personGUID    CHAR(36),
@@ -1210,6 +1271,45 @@ BEGIN
       name              = p_name,
       serialNumber      = p_serialNumber,
       labID             = p_labID,
+      dateUpdated       = NOW();
+
+    SET @LAST_INSERT_ID = LAST_INSERT_ID();
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
+-- adds a new instrument
+DROP PROCEDURE IF EXISTS add_instrument_new$$
+CREATE PROCEDURE add_instrument_new ( p_personGUID    CHAR(36),
+                                    p_password      VARCHAR(80),
+                                    p_name          TEXT,
+                                    p_serialNumber  TEXT,
+                                    p_labID         INT,
+				    p_host          TEXT,
+				    p_port          INT,
+				    p_optimadbname  TEXT,
+				    p_optimadbuser  TEXT  )
+  MODIFIES SQL DATA
+
+BEGIN
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET @LAST_INSERT_ID = 0;
+
+  IF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
+    INSERT INTO instrument SET
+      name              = p_name,
+      serialNumber      = p_serialNumber,
+      labID             = p_labID,
+      optimaHost        = p_host,
+      optimaPort        = p_port,
+      optimaDBname      = p_optimadbname,
+      optimaDBusername  = p_optimadbuser,
       dateUpdated       = NOW();
 
     SET @LAST_INSERT_ID = LAST_INSERT_ID();
@@ -1244,6 +1344,56 @@ BEGIN
   SELECT @US3_LAST_ERRNO AS status;
 
 END$$
+
+
+-- UPDATEs an existing instrument: set selected
+DROP PROCEDURE IF EXISTS update_instrument_set_selected$$
+CREATE PROCEDURE update_instrument_set_selected ( p_personGUID    CHAR(36),
+                                     p_password      VARCHAR(80),
+                                     p_name          TEXT )
+  MODIFIES SQL DATA
+
+BEGIN
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
+
+    UPDATE instrument SET selected = 1 
+    WHERE name = p_name;
+
+  END IF;
+      
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+-- UPDATEs an existing instrument: set unselected
+DROP PROCEDURE IF EXISTS update_instrument_set_unselected$$
+CREATE PROCEDURE update_instrument_set_unselected ( p_personGUID    CHAR(36),
+                                     p_password      VARCHAR(80),
+                                     p_name          TEXT )
+  MODIFIES SQL DATA
+
+BEGIN
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
+
+    UPDATE instrument SET selected = 0  
+    WHERE name = p_name;
+
+  END IF;
+      
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
 
 -- SELECTs names of all operators permitted to operate a specified instrument
 DROP PROCEDURE IF EXISTS get_operator_names$$
