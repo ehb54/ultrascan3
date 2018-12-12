@@ -1630,20 +1630,25 @@ DbgLv(1) << "WrDa: maxnvl" << maxnvl << "nplots" << nplots;
       valfmx         = valfx2;
       valfmy         = valfy2;
    }
-   // Test whether X or X are below 1.0
+
+   // Test whether X or Y are below 1.0
    double xvmin      = 1e99;
    double yvmin      = 1e99;
    for ( int jj = 0; jj < maxnvl; jj++ )
    {
       for ( int ii = 0; ii < nplots; ii++ )
       {
-         double xv   = pdistrs[ ii ].xvals[ jj ];
-         double yv   = pdistrs[ ii ].xvals[ jj ];
-         xvmin       = qMin( xvmin, xv );
-         yvmin       = qMin( yvmin, yv );
+         xvals       = &pdistrs[ ii ].xvals;
          yvals       = &pdistrs[ ii ].yvals;
+
+         if ( jj < xvals->size() )
+         {
+            xvmin       = qMin( xvmin, xvals->at( jj ) );
+            yvmin       = qMin( yvmin, yvals->at( jj ) );
+         }
       }
    }
+
    if ( xvmin < 0.1  ||  yvmin < 0.1 )
    {
       valfmt         = valfm3;        // Formatting for values below 1.0
