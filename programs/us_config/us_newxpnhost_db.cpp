@@ -117,11 +117,12 @@ void US_NewXpnHostDB::save_new( void )
       return;
     }
 
-  // Check for instrument name duplication:
+  // Check for instrument name, port & host duplications:
   US_Passwd pw;
   US_DB2* db = use_db ? new US_DB2( pw.getPasswd() ) : NULL;
   QStringList instrumentNames( "" );
   QStringList q( "" );
+  QList< int > instrumentIDs;
   q.clear();
   q  << QString( "get_instrument_names" )
      << QString::number( 1 );                    //ALEXEY '1' for the (only) labID
@@ -132,8 +133,11 @@ void US_NewXpnHostDB::save_new( void )
     {
       QString name = db->value( 1 ).toString();
       instrumentNames << name;
+      int ID = db->value( 0 ).toString().toInt();
+      instrumentIDs << ID;
     }
 
+  // Name check
   for (QStringList::iterator it = instrumentNames.begin(); it != instrumentNames.end(); ++it) 
     {
       QString current = *it;
@@ -145,6 +149,27 @@ void US_NewXpnHostDB::save_new( void )
 	}
     }
 
+  foreach ( int ID, instrumentIDs )
+    {
+      q.clear();
+      q  << QString( "get_instrument_info_new" )
+	 << QString::number( ID );
+      db->query( q );
+      db->next();
+
+      QString optimaHost       = db->value( 5 ).toString();
+      int     optimaPort       = db->value( 6 ).toString().toInt();
+
+      if ( optimaHost == le_host->text() && optimaPort == le_port->text().toInt() )
+	{
+	  QMessageBox::critical( this, tr( "Duplicate Optima Machine Connection Info:" ),
+				 QString( tr( "Specified combination of the host (%1) and port (%2) is currently used by other machine!") 
+					  .arg(optimaHost).arg(QString::number(optimaPort)) ) );
+	  return;
+	}
+    }
+
+  
   QMap <QString, QString> newInstrument;
   newInstrument[ "name"]        = le_description->text();
   newInstrument[ "optimaHost" ] = le_host->text();

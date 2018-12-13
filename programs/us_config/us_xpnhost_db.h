@@ -81,7 +81,7 @@ class US_XpnHostDB : public US_Widgets
     /* void check_add   ( void ); */
     /* void reset       ( void ); */
     /* void save_default( void ); */
-    /* void deleteDB    ( void ); */
+    void deleteDB    ( void ); 
     bool test_connect( void ); 
     void readInstruments ( US_DB2* = 0 );
     void newHost( QMap <QString, QString> & newInstrument );
