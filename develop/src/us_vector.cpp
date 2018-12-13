@@ -346,6 +346,7 @@ void US_Stat::clear() {
    pts.clear();
    sum = 0e0;
    sum2 = 0e0;
+   accum_ok = false;
 }
 
 void US_Stat::add_point( double x ) {
@@ -363,6 +364,29 @@ void US_Stat::add_point( double x ) {
    pts.push_back( x );
    sum += x;
    sum2 += x * x;
+}
+
+void US_Stat::add_accum( double x ) {
+   if ( !accum_ok ) {
+      init_accum();
+   }
+   accum += x;
+}
+
+void US_Stat::init_accum() {
+   accum = 0;
+   accum_ok = true;
+}
+
+void US_Stat::push_accum() {
+   if ( accum_ok ) {
+      add_point( accum );
+   }
+   init_accum();
+}
+
+bool US_Stat::has_accum() {
+   return accum_ok;
 }
 
 void US_Stat::add_points( vector < double > & x ) {

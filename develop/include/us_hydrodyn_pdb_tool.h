@@ -306,8 +306,20 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
 
       bool        bm_active;
 
-      map < int, map < int, vector < hydration_info > > > hydration_summary; // atom, frame, hydration_info
-      map < int, hydration_header_info >                  hydration_header;  // header info
+      map < int, map < int, vector < hydration_info > > >     hydration_summary;
+                                                              // atom, frame, hydration_info
+
+      map < QString, map < QString, map < int, vector < hydration_info > > > >
+                                                                                hydration_summary_res;
+                                                                                // rname, rnum, frame, hydration_info
+
+      map < QString, map < QString, map < QString, map < int, vector < hydration_info > > > > >
+                                                                                hydration_summary_res_atom;
+                                                                                // rname, aname, rnum, frame, hydration_info
+
+      map < int, hydration_header_info >                      hydration_header;           // header info
+      bool        csv_write( csv & header_csv, csv & detail_csv );
+      bool        csv_write( csv & detail_csv );
 
    private slots:
       

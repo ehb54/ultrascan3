@@ -3543,7 +3543,9 @@ bool US_Hydrodyn_Pdb_Tool::sol2wat( QTreeWidget *lv, double use_radius, QString 
    qDebug() << "sol2wat 1";
    if ( hydroradius == 0e0 ) {
       // non zero if traj
-      hydration_summary.clear();
+      hydration_summary         .clear();
+      hydration_summary_res     .clear();
+      hydration_summary_res_atom.clear();
 
       hydroradius = US_Static::getDouble(
                                          us_tr( "US-SOMO: PDB editor : SOL->WAT" ) ,
@@ -3810,7 +3812,12 @@ bool US_Hydrodyn_Pdb_Tool::sol2wat( QTreeWidget *lv, double use_radius, QString 
             hydration_info hi;
             hi.d = it->first;
             hi.r = it->first - compare_vdw[ j ];
-            hydration_summary[ csvj ][ frame ].push_back( hi );
+            QString rname = tmp_csv.data[ csvj ][ 2 ];
+            QString rnum  = tmp_csv.data[ csvj ][ 3 ];
+            QString aname = tmp_csv.data[ csvj ][ 4 ];
+            hydration_summary[ csvj ][ frame ]                           .push_back( hi );
+            hydration_summary_res     [ rname ][ rnum ][ frame ]         .push_back( hi );
+            hydration_summary_res_atom[ rname ][ aname ][ rnum ][ frame ].push_back( hi );
             if ( !hydration_header.count( csvj ) ) {
                hydration_header_info hhi;
                hhi.vdw     = compare_vdw[ j ];
@@ -4392,7 +4399,9 @@ void US_Hydrodyn_Pdb_Tool::sol2wat_traj( QTreeWidget *lv ) {
    // process all pdbs and save
 
    qDebug() << "now process all of them\n";
-   hydration_summary.clear();
+   hydration_summary         .clear();
+   hydration_summary_res     .clear();
+   hydration_summary_res_atom.clear();
 
    QString reportpath = QFileInfo( filenames[ 0 ] ).path() + QString( "/Hr_%1" ).arg( hydroradius ).replace( ".", "_" );
    qDebug() << "report dir path " << reportpath;
@@ -4451,6 +4460,52 @@ void US_Hydrodyn_Pdb_Tool::sol2wat_traj( QTreeWidget *lv ) {
 
    qDebug() << QString( "max rank found %1" ).arg( max_rank );
    
+   int max_rank_res = 0;
+
+   for ( map < QString, map < QString, map < int, vector < hydration_info > > > >::iterator it1 = hydration_summary_res.begin();
+         it1 != hydration_summary_res.end();
+         ++it1 ) {
+      QString rname = it1->first;
+      for ( map < QString, map < int, vector < hydration_info > > >::iterator it2 = it1->second.begin();
+            it2 != it1->second.end();
+            ++it2 ) {
+         for ( map < int, vector < hydration_info > >::iterator it3 = it2->second.begin();
+               it3 != it2->second.end();
+               ++it3 ) {
+            if ( max_rank_res < (int) it3->second.size() ) {
+               max_rank_res = (int) it3->second.size();
+            }
+         } // frame
+      } // rnum
+   } // rname
+
+   qDebug() << QString( "max rank res found %1" ).arg( max_rank_res );
+
+   int max_rank_res_atom = 0;
+
+   for ( map < QString, map < QString, map < QString, map < int, vector < hydration_info > > > > >::iterator it1 = hydration_summary_res_atom.begin();
+         it1 != hydration_summary_res_atom.end();
+         ++it1 ) {
+      QString rname = it1->first;
+      for ( map < QString, map < QString, map < int, vector < hydration_info > > > >::iterator it2 = it1->second.begin();
+            it2 != it1->second.end();
+            ++it2 ) {
+         for ( map < QString, map < int, vector < hydration_info > > >::iterator it3 = it2->second.begin();
+               it3 != it2->second.end();
+               ++it3 ) {
+            for ( map < int, vector < hydration_info > >::iterator it4 = it3->second.begin();
+                  it4 != it3->second.end();
+                  ++it4 ) {
+               if ( max_rank_res_atom < (int) it4->second.size() ) {
+                  max_rank_res_atom = (int) it4->second.size();
+               }
+            } // frame
+         } // rnum
+      } // aname 
+   } // rname
+
+   qDebug() << QString( "max rank res atom found %1" ).arg( max_rank_res_atom );
+   
    csv header_csv;
    header_csv.name     = "sol2wat_header";
    header_csv.filename = "sol2wat_header";
@@ -4462,6 +4517,28 @@ void US_Hydrodyn_Pdb_Tool::sol2wat_traj( QTreeWidget *lv ) {
    header_csv.header.push_back( "Cutoff" );
    header_csv.header.push_back( "Max number of water per solute atom" );
 
+   csv header_res_csv;
+   header_res_csv.name     = "sol2wat_header_res";
+   header_res_csv.filename = "sol2wat_header_res";
+   header_res_csv.header.push_back( "PDB name" );
+   header_res_csv.header.push_back( "Trajectory file" );
+   header_res_csv.header.push_back( "Duration" );
+   header_res_csv.header.push_back( "Frame interval" );
+   header_res_csv.header.push_back( "Number of frames" );
+   header_res_csv.header.push_back( "Cutoff" );
+   header_res_csv.header.push_back( "Max number of water per residue" );
+
+   csv header_res_atom_csv;
+   header_res_atom_csv.name     = "sol2wat_header_res_atom";
+   header_res_atom_csv.filename = "sol2wat_header_res_atom";
+   header_res_atom_csv.header.push_back( "PDB name" );
+   header_res_atom_csv.header.push_back( "Trajectory file" );
+   header_res_atom_csv.header.push_back( "Duration" );
+   header_res_atom_csv.header.push_back( "Frame interval" );
+   header_res_atom_csv.header.push_back( "Number of frames" );
+   header_res_atom_csv.header.push_back( "Cutoff" );
+   header_res_atom_csv.header.push_back( "Max number of water per solute atom" );
+   
    QString base_name = QFileInfo( filenames[ 0 ] ).baseName().replace( QRegularExpression( "_F_\\d+$" ), "" );
                        
    // header info
@@ -4477,13 +4554,41 @@ void US_Hydrodyn_Pdb_Tool::sol2wat_traj( QTreeWidget *lv ) {
       header_csv.data.push_back( tmp_data );
    }
 
+   // header res info
+   {
+      vector < QString > tmp_data;
+      tmp_data.push_back( QFileInfo( filenames[ 0 ] ).path() + "/" + base_name + ".gro" );
+      tmp_data.push_back( QFileInfo( filenames[ 0 ] ).path() + "/" + base_name + ".xtc" );
+      tmp_data.push_back( "?" );
+      tmp_data.push_back( "?" );
+      tmp_data.push_back( QString( "%1" ).arg( filenames.size() ) );
+      tmp_data.push_back( QString( "%1" ).arg( hydroradius ) );
+      tmp_data.push_back( QString( "%1" ).arg( max_rank_res ) );
+      header_res_csv.data.push_back( tmp_data );
+   }
+
+   // header res atom info
+   {
+      vector < QString > tmp_data;
+      tmp_data.push_back( QFileInfo( filenames[ 0 ] ).path() + "/" + base_name + ".gro" );
+      tmp_data.push_back( QFileInfo( filenames[ 0 ] ).path() + "/" + base_name + ".xtc" );
+      tmp_data.push_back( "?" );
+      tmp_data.push_back( "?" );
+      tmp_data.push_back( QString( "%1" ).arg( filenames.size() ) );
+      tmp_data.push_back( QString( "%1" ).arg( hydroradius ) );
+      tmp_data.push_back( QString( "%1" ).arg( max_rank_res_atom ) );
+      header_res_atom_csv.data.push_back( tmp_data );
+   }
+   
    QString name_prefix =
       base_name
       + "_Hr_" + QString( "%1" ).arg( hydroradius ).replace( ".", "_" )
       ;
    
-   QString summary_name = name_prefix + "_summary";
-   QString bin_name = name_prefix + "_bin";
+   QString summary_name           = name_prefix + "_summary";
+   QString summary_res_name       = name_prefix + "_summary_res";
+   QString summary_res_atom_name  = name_prefix + "_summary_res_atom";
+   QString bin_name               = name_prefix + "_bin";
 
    csv bin_csv;
    bin_csv.name     = bin_name;
@@ -4495,6 +4600,9 @@ void US_Hydrodyn_Pdb_Tool::sol2wat_traj( QTreeWidget *lv ) {
    }
 
    csv summary_csv;
+   csv summary_res_csv;
+   csv summary_res_atom_csv;
+
    summary_csv.name     = summary_name;
    summary_csv.filename = reportpath + "/" + summary_name + ".csv";
 
@@ -4510,6 +4618,31 @@ void US_Hydrodyn_Pdb_Tool::sol2wat_traj( QTreeWidget *lv ) {
    summary_csv.header.push_back( "S.D. of number of waters in cutoff" );
    summary_csv.header.push_back( "Skew of number of waters in cutoff" );
 
+   summary_res_csv.name     = summary_res_name;
+   summary_res_csv.filename = reportpath + "/" + summary_res_name + ".csv";
+
+   summary_res_csv.header.push_back( "Solute residue name" );
+   summary_res_csv.header.push_back( "Number of occurrences" );
+
+   summary_res_csv.header.push_back( "Minimum number of waters in cutoff" );
+   summary_res_csv.header.push_back( "Maximum number of waters in cutoff" );
+   summary_res_csv.header.push_back( "Average number of waters in cutoff" );
+   summary_res_csv.header.push_back( "S.D. of number of waters in cutoff" );
+   summary_res_csv.header.push_back( "Skew of number of waters in cutoff" );
+
+   summary_res_atom_csv.name     = summary_res_atom_name;
+   summary_res_atom_csv.filename = reportpath + "/" + summary_res_atom_name + ".csv";
+
+   summary_res_atom_csv.header.push_back( "Solute residue name" );
+   summary_res_atom_csv.header.push_back( "Solute atom name" );
+   summary_res_atom_csv.header.push_back( "Number of occurrences" );
+
+   summary_res_atom_csv.header.push_back( "Minimum number of waters in cutoff" );
+   summary_res_atom_csv.header.push_back( "Maximum number of waters in cutoff" );
+   summary_res_atom_csv.header.push_back( "Average number of waters in cutoff" );
+   summary_res_atom_csv.header.push_back( "S.D. of number of waters in cutoff" );
+   summary_res_atom_csv.header.push_back( "Skew of number of waters in cutoff" );
+   
    for ( int i = 1; i <= max_rank; ++i ) {
       summary_csv.header.push_back( QString( "Minimum distance to rank %1 waters" ).arg( i ) );
       summary_csv.header.push_back( QString( "Maximum distance to rank %1 waters" ).arg( i ) );
@@ -4522,6 +4655,35 @@ void US_Hydrodyn_Pdb_Tool::sol2wat_traj( QTreeWidget *lv ) {
       summary_csv.header.push_back( QString( "Average radius of rank %1 waters" ).arg( i ) );
       summary_csv.header.push_back( QString( "S.D. of radius of rank %1 waters" ).arg( i ) );
       summary_csv.header.push_back( QString( "Skew of radius of rank %1 waters" ).arg( i ) );
+
+   }
+
+   for ( int i = 1; i <= max_rank_res; ++i ) {
+      summary_res_csv.header.push_back( QString( "Minimum distance to rank %1 waters" ).arg( i ) );
+      summary_res_csv.header.push_back( QString( "Maximum distance to rank %1 waters" ).arg( i ) );
+      summary_res_csv.header.push_back( QString( "Average distance to rank %1 waters" ).arg( i ) );
+      summary_res_csv.header.push_back( QString( "S.D. of distance to rank %1 waters" ).arg( i ) );
+      summary_res_csv.header.push_back( QString( "Skew of distance to rank %1 waters" ).arg( i ) );
+
+      summary_res_csv.header.push_back( QString( "Minimum radius of rank %1 waters" ).arg( i ) );
+      summary_res_csv.header.push_back( QString( "Maximum radius of rank %1 waters" ).arg( i ) );
+      summary_res_csv.header.push_back( QString( "Average radius of rank %1 waters" ).arg( i ) );
+      summary_res_csv.header.push_back( QString( "S.D. of radius of rank %1 waters" ).arg( i ) );
+      summary_res_csv.header.push_back( QString( "Skew of radius of rank %1 waters" ).arg( i ) );
+   }
+
+   for ( int i = 1; i <= max_rank_res_atom; ++i ) {
+      summary_res_atom_csv.header.push_back( QString( "Minimum distance to rank %1 waters" ).arg( i ) );
+      summary_res_atom_csv.header.push_back( QString( "Maximum distance to rank %1 waters" ).arg( i ) );
+      summary_res_atom_csv.header.push_back( QString( "Average distance to rank %1 waters" ).arg( i ) );
+      summary_res_atom_csv.header.push_back( QString( "S.D. of distance to rank %1 waters" ).arg( i ) );
+      summary_res_atom_csv.header.push_back( QString( "Skew of distance to rank %1 waters" ).arg( i ) );
+
+      summary_res_atom_csv.header.push_back( QString( "Minimum radius of rank %1 waters" ).arg( i ) );
+      summary_res_atom_csv.header.push_back( QString( "Maximum radius of rank %1 waters" ).arg( i ) );
+      summary_res_atom_csv.header.push_back( QString( "Average radius of rank %1 waters" ).arg( i ) );
+      summary_res_atom_csv.header.push_back( QString( "S.D. of radius of rank %1 waters" ).arg( i ) );
+      summary_res_atom_csv.header.push_back( QString( "Skew of radius of rank %1 waters" ).arg( i ) );
    }
 
    QStringList stat_headers;
@@ -4551,6 +4713,131 @@ void US_Hydrodyn_Pdb_Tool::sol2wat_traj( QTreeWidget *lv ) {
    map < double, map < int, int > > bins2; // distance, rank, frequency
    map < double, map < int, int > > bins3; // distance, rank, frequency
 
+   // by residue info
+   
+   // map < int, map < int, vector < hydration_info > > > hydration_summary_res; // residue#, frame, hydration_info
+   // map < QString, map < QString, map < int, vector < hydration_info > > > >
+   //                                                                             hydration_summary_res;
+   //                                                                            // rname, rnum, frame, hydration_info
+
+   for ( map < QString, map < QString, map < int, vector < hydration_info > > > >::iterator it1 = hydration_summary_res.begin();
+         it1 != hydration_summary_res.end();
+         ++it1 ) {
+      QString rname = it1->first;
+      vector < QString > tmp_data;
+
+      tmp_data.push_back( rname );
+      tmp_data.push_back( QString( "%1" ).arg( it1->second.size() ) );
+      
+      map < QString, US_Stat > us_stats;
+      
+      for ( map < QString, map < int, vector < hydration_info > > >::iterator it2 = it1->second.begin();
+            it2 != it1->second.end();
+            ++it2 ) {
+         for ( map < int, vector < hydration_info > >::iterator it3 = it2->second.begin();
+               it3 != it2->second.end();
+               ++it3 ) {
+            us_stats[ "w" ].add_point( (double) it3->second.size() );
+            for ( int this_max_rank = 1; this_max_rank <= max_rank_res; ++this_max_rank ) {
+               QString qsrank = QString( " %1" ).arg( this_max_rank );
+               for ( int rank = 0; rank < (int) this_max_rank && rank < (int) it3->second.size(); ++rank ) {
+                  us_stats[ "d" + qsrank ].add_point( it3->second[ rank ].d );
+                  us_stats[ "r" + qsrank ].add_point( it3->second[ rank ].r );
+               }
+            } // this_max_rank
+         } // frames
+      } // rnum
+
+      tmp_data.push_back( QString( "%1" ).arg( us_stats[ "w" ].min() ) );
+      tmp_data.push_back( QString( "%1" ).arg( us_stats[ "w" ].max() ) );
+      tmp_data.push_back( QString( "%1" ).arg( us_stats[ "w" ].avg() ) );
+      tmp_data.push_back( QString( "%1" ).arg( us_stats[ "w" ].sd() ) );
+      tmp_data.push_back( QString( "%1" ).arg( us_stats[ "w" ].skew() ) );
+
+      for ( int rank = 1; rank <= max_rank_res; ++rank ) {
+         QString qsrank = QString( " %1" ).arg( rank );
+         tmp_data.push_back( QString( "%1" ).arg( us_stats[ "d" + qsrank ].min()  ) );
+         tmp_data.push_back( QString( "%1" ).arg( us_stats[ "d" + qsrank ].max()  ) );
+         tmp_data.push_back( QString( "%1" ).arg( us_stats[ "d" + qsrank ].avg()  ) );
+         tmp_data.push_back( QString( "%1" ).arg( us_stats[ "d" + qsrank ].sd()   ) );
+         tmp_data.push_back( QString( "%1" ).arg( us_stats[ "d" + qsrank ].skew() ) );
+
+         tmp_data.push_back( QString( "%1" ).arg( us_stats[ "r" + qsrank ].min()  ) );
+         tmp_data.push_back( QString( "%1" ).arg( us_stats[ "r" + qsrank ].max()  ) );
+         tmp_data.push_back( QString( "%1" ).arg( us_stats[ "r" + qsrank ].avg()  ) );
+         tmp_data.push_back( QString( "%1" ).arg( us_stats[ "r" + qsrank ].sd()   ) );
+         tmp_data.push_back( QString( "%1" ).arg( us_stats[ "r" + qsrank ].skew() ) );
+      }
+
+      summary_res_csv.data.push_back( tmp_data );      
+   } // rname
+
+   // by residue atom info
+   
+   //   map < QString, map < QString, map < QString, map < int, vector < hydration_info > > > > >
+   //                                                                               hydration_summary_res_atom;
+   //                                                                               // rname, aname, rnum, frame, hydration_info
+
+
+   for ( map < QString, map < QString, map < QString, map < int, vector < hydration_info > > > > >::iterator it1 = hydration_summary_res_atom.begin();
+         it1 != hydration_summary_res_atom.end();
+         ++it1 ) {
+      QString rname = it1->first;
+      for ( map < QString, map < QString, map < int, vector < hydration_info > > > >::iterator it2 = it1->second.begin();
+            it2 != it1->second.end();
+            ++it2 ) {
+         QString aname = it2->first;
+
+         vector < QString > tmp_data;
+
+         tmp_data.push_back( rname );
+         tmp_data.push_back( aname );
+         tmp_data.push_back( QString( "%1" ).arg( it2->second.size() ) );
+      
+         map < QString, US_Stat > us_stats;
+      
+         for ( map < QString, map < int, vector < hydration_info > > >::iterator it3 = it2->second.begin();
+               it3 != it2->second.end();
+               ++it3 ) {
+            for ( map < int, vector < hydration_info > >::iterator it4 = it3->second.begin();
+                  it4 != it3->second.end();
+                  ++it4 ) {
+               us_stats[ "w" ].add_point( (double) it4->second.size() );
+               for ( int this_max_rank = 1; this_max_rank <= max_rank_res_atom; ++this_max_rank ) {
+                  QString qsrank = QString( " %1" ).arg( this_max_rank );
+                  for ( int rank = 0; rank < (int) this_max_rank && rank < (int) it4->second.size(); ++rank ) {
+                     us_stats[ "d" + qsrank ].add_point( it4->second[ rank ].d );
+                     us_stats[ "r" + qsrank ].add_point( it4->second[ rank ].r );
+                  }
+               } // this_max_rank
+            } // frames
+         } // rnum
+
+         tmp_data.push_back( QString( "%1" ).arg( us_stats[ "w" ].min() ) );
+         tmp_data.push_back( QString( "%1" ).arg( us_stats[ "w" ].max() ) );
+         tmp_data.push_back( QString( "%1" ).arg( us_stats[ "w" ].avg() ) );
+         tmp_data.push_back( QString( "%1" ).arg( us_stats[ "w" ].sd() ) );
+         tmp_data.push_back( QString( "%1" ).arg( us_stats[ "w" ].skew() ) );
+
+         for ( int rank = 1; rank <= max_rank_res_atom; ++rank ) {
+            QString qsrank = QString( " %1" ).arg( rank );
+            tmp_data.push_back( QString( "%1" ).arg( us_stats[ "d" + qsrank ].min()  ) );
+            tmp_data.push_back( QString( "%1" ).arg( us_stats[ "d" + qsrank ].max()  ) );
+            tmp_data.push_back( QString( "%1" ).arg( us_stats[ "d" + qsrank ].avg()  ) );
+            tmp_data.push_back( QString( "%1" ).arg( us_stats[ "d" + qsrank ].sd()   ) );
+            tmp_data.push_back( QString( "%1" ).arg( us_stats[ "d" + qsrank ].skew() ) );
+
+            tmp_data.push_back( QString( "%1" ).arg( us_stats[ "r" + qsrank ].min()  ) );
+            tmp_data.push_back( QString( "%1" ).arg( us_stats[ "r" + qsrank ].max()  ) );
+            tmp_data.push_back( QString( "%1" ).arg( us_stats[ "r" + qsrank ].avg()  ) );
+            tmp_data.push_back( QString( "%1" ).arg( us_stats[ "r" + qsrank ].sd()   ) );
+            tmp_data.push_back( QString( "%1" ).arg( us_stats[ "r" + qsrank ].skew() ) );
+         }
+
+         summary_res_atom_csv.data.push_back( tmp_data );      
+      } // aname
+   } // rname
+   
    for ( map < int, map < int, vector < hydration_info > > > ::iterator it1 = hydration_summary.begin();
          it1 != hydration_summary.end();
          ++it1 ) {
@@ -4563,12 +4850,11 @@ void US_Hydrodyn_Pdb_Tool::sol2wat_traj( QTreeWidget *lv ) {
       tmp_data.push_back( hydration_header[ csvj ].anum );
       tmp_data.push_back( QString( "%1" ).arg( hydration_header[ csvj ].vdw ) );
 
+      QString rname = hydration_header[ csvj ].rname;
+      QString aname = hydration_header[ csvj ].aname;
+
       // now compute avg, min, max, sd, skew of each
 
-      map < QString, double > stats;
-      for ( int i = 0; i < (int) stat_headers.size(); ++i ) {
-         stats[ stat_headers[ i ] ] = 0e0;
-      }
       map < QString, US_Stat > us_stats;
 
       // for each frame
@@ -4582,6 +4868,7 @@ void US_Hydrodyn_Pdb_Tool::sol2wat_traj( QTreeWidget *lv ) {
             for ( int rank = 0; rank < (int) this_max_rank && rank < (int) it2->second.size(); ++rank ) {
                us_stats[ "d" + qsrank ].add_point( it2->second[ rank ].d );
                us_stats[ "r" + qsrank ].add_point( it2->second[ rank ].r );
+
                bins2[ 0.01  * round( it2->second[ rank ].r * 100  ) ][ this_max_rank - 1 ]++;
                bins3[ 0.001 * round( it2->second[ rank ].r * 1000 ) ][ this_max_rank - 1 ]++;
             }
@@ -4592,52 +4879,26 @@ void US_Hydrodyn_Pdb_Tool::sol2wat_traj( QTreeWidget *lv ) {
          us_stats[ "w" ].add_points( x );
       }
 
-      if ( us_stats[ "w" ].count() ) {
-         stats[ "w_min"  ] = us_stats[ "w" ].min();
-         stats[ "w_max"  ] = us_stats[ "w" ].max();
-         stats[ "w_avg"  ] = us_stats[ "w" ].avg();
-         stats[ "w_sd"   ] = us_stats[ "w" ].sd();
-         stats[ "w_skew" ] = us_stats[ "w" ].skew();
-      }
-
-      for ( int this_max_rank = 1; this_max_rank <= max_rank; ++this_max_rank ) {
-         QString qsrank = QString( " %1" ).arg( this_max_rank );
-         if ( us_stats[ "d" + qsrank ].count() ) {
-            stats[ "d_min"  + qsrank ] = us_stats[ "d" + qsrank ].min();
-            stats[ "d_max"  + qsrank ] = us_stats[ "d" + qsrank ].max();
-            stats[ "d_avg"  + qsrank ] = us_stats[ "d" + qsrank ].avg();
-            stats[ "d_sd"   + qsrank ] = us_stats[ "d" + qsrank ].sd();
-            stats[ "d_skew" + qsrank ] = us_stats[ "d" + qsrank ].skew();
-         }
-
-         if ( us_stats[ "r" + qsrank ].count() ) {
-            stats[ "r_min"  + qsrank ] = us_stats[ "r" + qsrank ].min();
-            stats[ "r_max"  + qsrank ] = us_stats[ "r" + qsrank ].max();
-            stats[ "r_avg"  + qsrank ] = us_stats[ "r" + qsrank ].avg();
-            stats[ "r_sd"   + qsrank ] = us_stats[ "r" + qsrank ].sd();
-            stats[ "r_skew" + qsrank ] = us_stats[ "r" + qsrank ].skew();
-         }
-      }
-
-      tmp_data.push_back( QString( "%1" ).arg( stats[ "w_min" ] ) );
-      tmp_data.push_back( QString( "%1" ).arg( stats[ "w_max" ] ) );
-      tmp_data.push_back( QString( "%1" ).arg( stats[ "w_avg" ] ) );
-      tmp_data.push_back( QString( "%1" ).arg( stats[ "w_sd" ] ) );
-      tmp_data.push_back( QString( "%1" ).arg( stats[ "w_skew" ] ) );
+      tmp_data.push_back( QString( "%1" ).arg( us_stats[ "w" ].min()  ) );
+      tmp_data.push_back( QString( "%1" ).arg( us_stats[ "w" ].max()  ) );
+      tmp_data.push_back( QString( "%1" ).arg( us_stats[ "w" ].avg()  ) );
+      tmp_data.push_back( QString( "%1" ).arg( us_stats[ "w" ].sd()   ) );
+      tmp_data.push_back( QString( "%1" ).arg( us_stats[ "w" ].skew() ) );
 
       for ( int rank = 1; rank <= max_rank; ++rank ) {
          QString qsrank = QString( " %1" ).arg( rank );
-         tmp_data.push_back( QString( "%1" ).arg( stats[ "d_min"  + qsrank ] ) );
-         tmp_data.push_back( QString( "%1" ).arg( stats[ "d_max"  + qsrank ] ) );
-         tmp_data.push_back( QString( "%1" ).arg( stats[ "d_avg"  + qsrank ] ) );
-         tmp_data.push_back( QString( "%1" ).arg( stats[ "d_sd"   + qsrank ] ) );
-         tmp_data.push_back( QString( "%1" ).arg( stats[ "d_skew" + qsrank ] ) );
 
-         tmp_data.push_back( QString( "%1" ).arg( stats[ "r_min"  + qsrank ] ) );
-         tmp_data.push_back( QString( "%1" ).arg( stats[ "r_max"  + qsrank ] ) );
-         tmp_data.push_back( QString( "%1" ).arg( stats[ "r_avg"  + qsrank ] ) );
-         tmp_data.push_back( QString( "%1" ).arg( stats[ "r_sd"   + qsrank ] ) );
-         tmp_data.push_back( QString( "%1" ).arg( stats[ "r_skew" + qsrank ] ) );
+         tmp_data.push_back( QString( "%1" ).arg( us_stats[ "d" + qsrank ].min()  ) );
+         tmp_data.push_back( QString( "%1" ).arg( us_stats[ "d" + qsrank ].max()  ) );
+         tmp_data.push_back( QString( "%1" ).arg( us_stats[ "d" + qsrank ].avg()  ) );
+         tmp_data.push_back( QString( "%1" ).arg( us_stats[ "d" + qsrank ].sd()   ) );
+         tmp_data.push_back( QString( "%1" ).arg( us_stats[ "d" + qsrank ].skew() ) );
+
+         tmp_data.push_back( QString( "%1" ).arg( us_stats[ "r" + qsrank ].min()  ) );
+         tmp_data.push_back( QString( "%1" ).arg( us_stats[ "r" + qsrank ].max()  ) );
+         tmp_data.push_back( QString( "%1" ).arg( us_stats[ "r" + qsrank ].avg()  ) );
+         tmp_data.push_back( QString( "%1" ).arg( us_stats[ "r" + qsrank ].sd()   ) );
+         tmp_data.push_back( QString( "%1" ).arg( us_stats[ "r" + qsrank ].skew() ) );
       }
 
       summary_csv.data.push_back( tmp_data );
@@ -4680,86 +4941,96 @@ void US_Hydrodyn_Pdb_Tool::sol2wat_traj( QTreeWidget *lv ) {
       }
    }
                
-   {
-      QString filename = summary_csv.filename;
-      
-      QFile f( filename );
+   if (
+       !csv_write( header_csv, summary_csv ) ||
+       !csv_write( header_res_csv, summary_res_csv ) ||
+       !csv_write( header_res_atom_csv, summary_res_atom_csv ) ||
+       !csv_write( bin_csv )
+       ) {
+      return;
+   }
 
-      if ( !f.open( QIODevice::WriteOnly ) )
-      {
-         QMessageBox::warning( this, windowTitle(),
-                               QString(us_tr("Could not open %1 for writing!")).arg(filename) );
-         return;
-      }
-
-      QTextStream t( &f );
-
-      QString qs;
-      for ( unsigned int i = 0; i < header_csv.header.size(); i++ ) {
-         qs += QString( "%1\"%2\"" ).arg( i ? "," : "" ).arg( header_csv.header[ i ] );
-      }
-      t << qs << endl;
-      for ( unsigned int i = 0; i < header_csv.data.size(); ++i ) {
-         qs = "";
-         for ( unsigned int j = 0; j < header_csv.data[i].size(); ++j ) {
-            qs += QString( "%1%2" ).arg( j ? "," : "" ).arg( header_csv.data[ i ][ j ] );
-         }
-         t << qs << endl;
-      }
-
-      t << endl;
-
-      qs = "";
-      for ( unsigned int i = 0; i < summary_csv.header.size(); i++ ) {
-         qs += QString( "%1\"%2\"" ).arg( i ? "," : "" ).arg( summary_csv.header[ i ] );
-      }
-      t << qs << endl;
-      for ( unsigned int i = 0; i < summary_csv.data.size(); ++i ) {
-         qs = "";
-         for ( unsigned int j = 0; j < summary_csv.data[i].size(); ++j ) {
-            qs += QString( "%1%2" ).arg( j ? "," : "" ).arg( summary_csv.data[ i ][ j ] );
-         }
-         t << qs << endl;
-      }
-      f.close();
-      ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename, this );
-      editor_msg("black", QString("File %1 written\n").arg( filename ) );
-   }   
-
-   {
-      QString filename = bin_csv.filename;
-      
-      QFile f( filename );
-
-      if ( !f.open( QIODevice::WriteOnly ) )
-      {
-         QMessageBox::warning( this, windowTitle(),
-                               QString(us_tr("Could not open %1 for writing!")).arg(filename) );
-         return;
-      }
-
-      QTextStream t( &f );
-
-      QString qs;
-      for ( unsigned int i = 0; i < bin_csv.header.size(); i++ ) {
-         qs += QString( "%1\"%2\"" ).arg( i ? "," : "" ).arg( bin_csv.header[ i ] );
-      }
-      t << qs << endl;
-      for ( unsigned int i = 0; i < bin_csv.data.size(); ++i ) {
-         qs = "";
-         for ( unsigned int j = 0; j < bin_csv.data[i].size(); ++j ) {
-            qs += QString( "%1%2" ).arg( j ? "," : "" ).arg( bin_csv.data[ i ][ j ] );
-         }
-         t << qs << endl;
-      }
-      ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename, this );
-      editor_msg("black", QString("File %1 written\n").arg( filename ) );
-   }   
-
-      
    editor_msg( "dark blue", QString( us_tr( "SOL2WAT done. All produced files in directory %1" ) ).arg( reportpath ) );
 }
 
+bool US_Hydrodyn_Pdb_Tool::csv_write( csv & header_csv, csv & detail_csv ) {
+   QString filename = detail_csv.filename;
+      
+   QFile f( filename );
+
+   if ( !f.open( QIODevice::WriteOnly ) )
+   {
+      QMessageBox::warning( this, windowTitle(),
+                            QString(us_tr("Could not open %1 for writing!")).arg(filename) );
+      return false;
+   }
+
+   QTextStream t( &f );
+
+   QString qs;
+   for ( unsigned int i = 0; i < header_csv.header.size(); i++ ) {
+      qs += QString( "%1\"%2\"" ).arg( i ? "," : "" ).arg( header_csv.header[ i ] );
+   }
+   t << qs << endl;
+   for ( unsigned int i = 0; i < header_csv.data.size(); ++i ) {
+      qs = "";
+      for ( unsigned int j = 0; j < header_csv.data[i].size(); ++j ) {
+         qs += QString( "%1%2" ).arg( j ? "," : "" ).arg( header_csv.data[ i ][ j ] );
+      }
+      t << qs << endl;
+   }
+
+   t << endl;
+
+   qs = "";
+   for ( unsigned int i = 0; i < detail_csv.header.size(); i++ ) {
+      qs += QString( "%1\"%2\"" ).arg( i ? "," : "" ).arg( detail_csv.header[ i ] );
+   }
+   t << qs << endl;
+   for ( unsigned int i = 0; i < detail_csv.data.size(); ++i ) {
+      qs = "";
+      for ( unsigned int j = 0; j < detail_csv.data[i].size(); ++j ) {
+         qs += QString( "%1%2" ).arg( j ? "," : "" ).arg( detail_csv.data[ i ][ j ] );
+      }
+      t << qs << endl;
+   }
+   f.close();
+   ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename, this );
+   editor_msg("black", QString("File %1 written\n").arg( filename ) );
+   return true;
+}
+   
+bool US_Hydrodyn_Pdb_Tool::csv_write( csv & detail_csv ) {
+   QString filename = detail_csv.filename;
+      
+   QFile f( filename );
+
+   if ( !f.open( QIODevice::WriteOnly ) )
+   {
+      QMessageBox::warning( this, windowTitle(),
+                            QString(us_tr("Could not open %1 for writing!")).arg(filename) );
+      return false;
+   }
+
+   QTextStream t( &f );
+
+   QString qs;
+   for ( unsigned int i = 0; i < detail_csv.header.size(); i++ ) {
+      qs += QString( "%1\"%2\"" ).arg( i ? "," : "" ).arg( detail_csv.header[ i ] );
+   }
+   t << qs << endl;
+   for ( unsigned int i = 0; i < detail_csv.data.size(); ++i ) {
+      qs = "";
+      for ( unsigned int j = 0; j < detail_csv.data[i].size(); ++j ) {
+         qs += QString( "%1%2" ).arg( j ? "," : "" ).arg( detail_csv.data[ i ][ j ] );
+      }
+      t << qs << endl;
+   }
+   ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename, this );
+   editor_msg("black", QString("File %1 written\n").arg( filename ) );
+   return true;
+}
+   
 
 void US_Hydrodyn_Pdb_Tool::csv_sel_msg()
 {

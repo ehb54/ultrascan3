@@ -64,6 +64,10 @@ class US_Stat
 
    void              add_point( double x );
    void              add_points( vector < double > & x );
+   void              add_accum( double x );
+   void              push_accum();
+   bool              has_accum();
+   
    int               count();
    double            min();
    double            max();
@@ -74,11 +78,14 @@ class US_Stat
    QString           summary();
 
  private:
+   void              init_accum();
    vector < double > pts;
    double            pmin;
    double            pmax;
    double            sum;
    double            sum2;
+   double            accum;
+   bool              accum_ok;
 };
 
 
