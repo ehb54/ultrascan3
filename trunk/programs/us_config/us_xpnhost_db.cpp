@@ -166,8 +166,8 @@ US_XpnHostDB::US_XpnHostDB( QWidget* w, Qt::WindowFlags flags )
 
    pb_delete = us_pushbutton( tr( "Delete Current Entry" ) );
    pb_delete->setEnabled( true );
-   // connect( pb_delete,      SIGNAL( clicked()  ),
-   //          this,           SLOT  ( deleteDB() ) );
+   connect( pb_delete,      SIGNAL( clicked()  ),
+	    this,           SLOT  ( deleteDB() ) );
    buttons->addWidget( pb_delete, row++, 1 );
 
    pb_testConnect = us_pushbutton( tr( "Test Optima Host Connectivity" ) );
@@ -310,16 +310,19 @@ void US_XpnHostDB::update_lw( )
 void US_XpnHostDB::select_db( QListWidgetItem* entry, const bool showmsg )
 {
    qDebug() << "xpnH:selDB:  etext" << entry->text();
-   // Delete trailing "(default)" if that is present
-   US_Passwd pw;
-   QString item     = entry->text().remove( " (default)" );
-   // Pick up decrypted password and encrypt it.
+   
+   //US_Passwd pw;
+      // Pick up decrypted password and encrypt it.
    // The encrypted form is <cipher>"^"<initvect>
-   QString masterpw = pw.getPasswd();
+   //QString masterpw = pw.getPasswd();
    // QString decpw    = le_pasw->text();
    // QStringList pwl  = US_Crypto::encrypt( decpw, masterpw );
    // QString encpw    = pwl[ 0 ] + "^" + pwl[ 1 ];
+   
 
+   // Delete trailing "(default)" if that is present
+   QString item     = entry->text().remove( " (default)" );
+   
    for ( int ii = 0; ii < instruments.size(); ii++ )
    {
       if ( item == instruments[ii].name )
@@ -330,14 +333,15 @@ void US_XpnHostDB::select_db( QListWidgetItem* entry, const bool showmsg )
 	le_port       ->setText( QString::number( instruments[ii].optimaPort ) );
 	le_name       ->setText( instruments[ii].optimaDBname );
 	le_user       ->setText( instruments[ii].optimaDBusername );
+	le_pasw       ->setText( instruments[ii].optimaDBpassw );
+	
+	// QString encpw    = instruments[ii].optimaDBpassw;    // Encrypted password
+	// QString cipher   = encpw.section( "^", 0, 0 ); // Cipher
+	// QString initve   = encpw.section( "^", 1, 1 ); // initVector
+	// QString decpw    = US_Crypto::decrypt( cipher, masterpw, initve );
+	//le_pasw       ->setText( decpw );              // Decrypted password
 
-	QString encpw    = instruments[ii].optimaDBpassw;    // Encrypted password
-	QString cipher   = encpw.section( "^", 0, 0 ); // Cipher
-	QString initve   = encpw.section( "^", 1, 1 ); // initVector
-	QString decpw    = US_Crypto::decrypt( cipher, masterpw, initve );
-	le_pasw       ->setText( decpw );              // Decrypted password
-
-	qDebug() << "SELECT: Passw.: decrypted, encrypted: " << decpw << ", " << encpw;
+	qDebug() << "SELECT: Passw.: decrypted " << le_pasw->text();
 	
 	// cb_os1        ->setCurrentIndex( cb_os1->findText(
 	// 						  dblist.at( ii ).at( 6 ) ) );
@@ -375,8 +379,6 @@ void US_XpnHostDB::select_db( QListWidgetItem* entry, const bool showmsg )
 	    
 	    db->query( q );
 	  }
-
-	
 	
 	update_lw( );
 	
@@ -433,11 +435,15 @@ void US_XpnHostDB::newHost( QMap < QString, QString > & newInstrument  )
   QString masterpw = pw.getPasswd();
   US_DB2* db = use_db ? new US_DB2( masterpw ) : NULL;
 
-  QString decpw    = newInstrument[ "optimaDBpassw" ];            // Decrypted password
-  QStringList pwl  = US_Crypto::encrypt( decpw, masterpw );
-  QString encpw    = pwl[ 0 ] + "^" + pwl[ 1 ];  // Encrypted password
 
-  qDebug() << "Passw.: decrypted, encrypted: " << decpw << ", " << encpw;
+  // ALEXEY: we better use internal MySQL encryption with the same 'secret' for all users...
+  // Use of default password encryption is a problem as it uses masterpassword for secret to ecrypt/decrypt OptimaDB password
+  
+  // QString decpw    = newInstrument[ "optimaDBpassw" ];            // Decrypted password
+  // QStringList pwl  = US_Crypto::encrypt( decpw, masterpw );
+  // QString encpw    = pwl[ 0 ] + "^" + pwl[ 1 ];  // Encrypted password
+
+  // qDebug() << "Passw.: decrypted, encrypted: " << decpw << ", " << encpw;
   
   QStringList q( "" );
   q.clear();
@@ -449,7 +455,8 @@ void US_XpnHostDB::newHost( QMap < QString, QString > & newInstrument  )
      << newInstrument[ "optimaPort" ]
      << newInstrument[ "optimaDBname" ]
      << newInstrument[ "optimaDBusername" ]
-     << encpw;
+     << newInstrument[ "optimaDBpassw" ];
+    //<< encpw;
 	
   db->query( q );
   
@@ -542,6 +549,75 @@ qDebug() << "test_connect: (2)dbpasw" << dbpasw;
 
    //pb_save->setEnabled( true );
    return ok;
+}
+
+// Delete stored host from DB
+void US_XpnHostDB::deleteDB( void )
+{
+   QListWidgetItem* entry = lw_entries->currentItem();
+   QString item = entry->text().remove( " (default)" );
+qDebug() << "deleteDB:  item" << item;
+
+   int response = QMessageBox::question( this,
+      tr( "Delete Entry?" ),
+      tr( "You have selected the following entry to delete:\n    \"" )
+      + item + tr( "\"\n\nProceed?" ),
+      QMessageBox::Yes, QMessageBox::Cancel );
+
+   if ( response != QMessageBox::Yes )
+      return;
+
+   // Go through list and delete the one matching description
+   for ( int ii = 0; ii < instruments.size(); ii++ )
+   {
+     QString desc = instruments[ii].name;
+     
+     // Look for the current description
+     if ( desc == item )
+       {
+	 int instrID = instruments[ii].ID;
+	 
+	 US_Passwd pw;
+	 US_DB2* db = use_db ? new US_DB2( pw.getPasswd() ) : NULL;
+	 QStringList q( "" );
+	 QList< int > instrumentIDs;
+	 q.clear();
+	 q  << QString( "delete_instrument" )
+	    << QString::number( instrID );      
+	 
+	 db->query( q );
+	 
+	 // dblist.removeAt( ii );
+         // US_Settings::set_xpn_db_hosts( dblist );
+	 
+         // // Check if the default DB matches
+         // QStringList defaultDB = US_Settings::defaultXpnHost();
+	 
+         // if ( defaultDB.at( 0 ) == item )
+         // {
+         //    if ( dblist.size() > 0 )
+         //       US_Settings::set_def_xpn_host( dblist.at(0) );
+         //    else
+         //       US_Settings::set_def_xpn_host( QStringList() );
+         // }
+	 
+         // reset();
+
+	 instruments.removeAt(ii);
+	 update_lw( );
+
+	 QMessageBox::information( this,
+				   tr( "XpnHost Removed" ),
+				   tr( "The database has been removed." ) );
+	 
+         return;
+       }
+   }
+
+   QMessageBox::warning( this,
+      tr( "XpnHost Problem" ),
+      tr( "The description does not match any in the database list.\n"
+          "The database has not been removed." ) );
 }
 
 

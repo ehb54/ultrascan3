@@ -1311,7 +1311,7 @@ BEGIN
       optimaPort        = p_port,
       optimaDBname      = p_optimadbname,
       optimaDBusername  = p_optimadbuser,
-      optimaDBpassw     = p_optimadbpassw,
+      optimaDBpassw     = ENCODE( p_optimadbpassw, 'secretOptimaDB' ),
       dateUpdated       = NOW();
 
     SET @LAST_INSERT_ID = LAST_INSERT_ID();
@@ -1389,6 +1389,54 @@ BEGIN
 
     UPDATE instrument SET selected = 0  
     WHERE name = p_name;
+
+  END IF;
+      
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+-- DELETE  existing instrument:
+DROP PROCEDURE IF EXISTS delete_instrument$$
+CREATE PROCEDURE delete_instrument ( p_personGUID    CHAR(36),
+                                     p_password      VARCHAR(80),
+                                     p_instrumentID  INT )
+  MODIFIES SQL DATA
+
+BEGIN
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
+
+    DELETE FROM instrument
+    WHERE instrumentID = p_instrumentID;
+
+  END IF;
+      
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+-- ENCODE instrument's DB password:
+DROP PROCEDURE IF EXISTS decode_instrument_passw$$
+CREATE PROCEDURE decode_instrument_passw ( p_personGUID    CHAR(36),
+                                     	 p_password      VARCHAR(80),
+                                     	 p_instrumentID  INT )
+  READS SQL DATA
+
+BEGIN
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
+
+    SELECT DECODE(optimaDBpassw,'secretOptimaDB') FROM instrument
+    WHERE instrumentID = p_instrumentID;
 
   END IF;
       
