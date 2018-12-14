@@ -140,6 +140,7 @@ void US_ExperimentMain::auto_mode_passed( void )
   epanUpload->genL->addWidget( epanUpload->pb_details, 1,   0, 1, 4 );
   epanUpload->genL->addWidget( epanUpload->pb_submit,  1,   4, 1, 8 );
 
+    
   this->pb_close->hide();
  
 }
@@ -3749,19 +3750,20 @@ void US_ExperGuiUpload::submitExperiment_confirm()
    QString optima_name = mainw->currentInstrument[ "name" ];
    QString dbhost      = mainw->currentInstrument[ "optimaHost" ];
    QString dbport      = mainw->currentInstrument[ "optimaPort" ];
+
+   if ( mainw->automode )
+     saveRunProtocol();
+    
+   QMessageBox msgBox;
+   msgBox.setText(tr("Experiment will be submitted to the following Optima machine:"));
+   msgBox.setInformativeText( QString( tr(    "Name: %1 <br>  Host:  %2 <br> Port:  %3" ))
+			      .arg(optima_name)
+			      .arg(dbhost)
+			      .arg(dbport));
+   msgBox.setWindowTitle(tr("Confirm Experiment Run Submission"));
+   QPushButton *Accept    = msgBox.addButton(tr("OK"), QMessageBox::YesRole);
+   QPushButton *Cancel    = msgBox.addButton(tr("Cancel"), QMessageBox::RejectRole);
    
-    saveRunProtocol();
-    
-    QMessageBox msgBox;
-    msgBox.setText(tr("Experiment will be submitted to the following Optima machine:"));
-    msgBox.setInformativeText( QString( tr(    "Name: %1 <br>  Host:  %2 <br> Port:  %3" ))
-			       .arg(optima_name)
-			       .arg(dbhost)
-			       .arg(dbport));
-    msgBox.setWindowTitle(tr("Confirm Experiment Run Submission"));
-    QPushButton *Accept    = msgBox.addButton(tr("OK"), QMessageBox::YesRole);
-    QPushButton *Cancel    = msgBox.addButton(tr("Cancel"), QMessageBox::RejectRole);
-    
     msgBox.setIcon(QMessageBox::Question);
     msgBox.exec();
 
