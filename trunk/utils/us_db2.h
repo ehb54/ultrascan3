@@ -90,6 +90,8 @@ class US_UTIL_EXTERN US_DB2
       NO_REPORT      = 520,     //!< No global report structure with that ID exists
       NO_REPORT_DETAIL = 521,   //!< No report detail with the specified ID exists
       NO_REPORT_DOCUMENT = 522, //!< No report document with the specified ID exists
+
+      INSTRUMENT_IN_USE = 553, 
       UNKNOWN_ERR    = 999      //!< No project with the specified ID exists
     };
 

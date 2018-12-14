@@ -1119,7 +1119,7 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   instrumentID, name
+      SELECT   instrumentID, name, selected 
       FROM     instrument
       WHERE    labID = p_labID 
       ORDER BY name;
@@ -1228,7 +1228,9 @@ BEGIN
       SELECT @OK AS status;
 
       IF ( count_rcal_instrs = 0 ) THEN
-        SELECT   name, serialNumber, labID, dateUpdated, radialCalID, optimaHost, optimaPort, optimaDBname, optimaDBusername, optimaDBpassw, selected
+        SELECT   name, serialNumber, labID, dateUpdated, radialCalID, 
+	         optimaHost, optimaPort, optimaDBname, optimaDBusername, 
+		 DECODE(optimaDBpassw,'secretOptimaDB'), selected
         FROM     instrument
         WHERE    instrumentID = p_instrumentID;
 
@@ -1291,7 +1293,7 @@ CREATE PROCEDURE add_instrument_new ( p_personGUID    CHAR(36),
                                     p_labID         INT,
 				    p_host          TEXT,
 				    p_port          INT,
-				    p_optimadbname  TEXT,
+        			    p_optimadbname  TEXT,
 				    p_optimadbuser  TEXT,
 				    p_optimadbpassw  VARCHAR(100) )
   MODIFIES SQL DATA
@@ -1348,6 +1350,49 @@ BEGIN
 END$$
 
 
+-- UPDATEs an existing instrument                                                                                                    
+DROP PROCEDURE IF EXISTS update_instrument_new$$
+CREATE PROCEDURE update_instrument_new ( p_personGUID    CHAR(36),
+                                       p_password      VARCHAR(80),
+                                       p_instrumentID  INT,
+                                       p_name          TEXT,
+                                       p_serialNumber  TEXT,
+                                       p_labID         INT,
+                                       p_host          TEXT,
+                                       p_port          INT,
+                                       p_optimadbname  TEXT,
+                                       p_optimadbuser  TEXT,
+                                       p_optimadbpassw  VARCHAR(100) )
+
+  MODIFIES SQL DATA
+
+BEGIN
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
+
+    UPDATE instrument SET 
+      name              = p_name,
+      serialNumber      = p_serialNumber,
+      labID             = p_labID,
+      optimaHost        = p_host,
+      optimaPort        = p_port,
+      optimaDBname      = p_optimadbname,
+      optimaDBusername  = p_optimadbuser,
+      optimaDBpassw     = ENCODE( p_optimadbpassw, 'secretOptimaDB' ),
+      dateUpdated       = NOW()
+    WHERE instrumentID = p_instrumentID;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
 -- UPDATEs an existing instrument: set selected
 DROP PROCEDURE IF EXISTS update_instrument_set_selected$$
 CREATE PROCEDURE update_instrument_set_selected ( p_personGUID    CHAR(36),
@@ -1396,6 +1441,7 @@ BEGIN
 
 END$$
 
+
 -- DELETE  existing instrument:
 DROP PROCEDURE IF EXISTS delete_instrument$$
 CREATE PROCEDURE delete_instrument ( p_personGUID    CHAR(36),
@@ -1404,15 +1450,28 @@ CREATE PROCEDURE delete_instrument ( p_personGUID    CHAR(36),
   MODIFIES SQL DATA
 
 BEGIN
-
+  DECLARE count_instruments INT;	
+	
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
-
-    DELETE FROM instrument
+  IF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN  ) = @OK ) THEN
+    
+    -- Find out if this instrument is used in any experiment first
+    SELECT COUNT(*) INTO count_instruments 
+    FROM experiment 
     WHERE instrumentID = p_instrumentID;
+
+    IF ( count_instruments = 0 ) THEN
+       DELETE FROM instrument
+       WHERE instrumentID = p_instrumentID;
+
+    ELSE
+      SET @US3_LAST_ERRNO = @INSTRUMENT_IN_USE;
+      SET @US3_LAST_ERROR = 'The instrument is in use in experiment';   
+    
+    END IF;  
 
   END IF;
       
@@ -1423,8 +1482,8 @@ END$$
 -- ENCODE instrument's DB password:
 DROP PROCEDURE IF EXISTS decode_instrument_passw$$
 CREATE PROCEDURE decode_instrument_passw ( p_personGUID    CHAR(36),
-                                     	 p_password      VARCHAR(80),
-                                     	 p_instrumentID  INT )
+                                     	  p_password      VARCHAR(80),
+                                     	   p_instrumentID  INT )
   READS SQL DATA
 
 BEGIN
@@ -1437,6 +1496,30 @@ BEGIN
 
     SELECT DECODE(optimaDBpassw,'secretOptimaDB') FROM instrument
     WHERE instrumentID = p_instrumentID;
+
+  END IF;
+      
+  SELECT @US3_LAST_ERRNO AS status;
+  
+END$$
+
+-- Get ID of the selected instrument ---
+DROP PROCEDURE IF EXISTS get_instrument_selected$$
+CREATE PROCEDURE get_instrument_selected ( p_personGUID    CHAR(36),
+                                           p_password      VARCHAR(80),
+					   p_selected      TINYINT )
+                                     	       
+  READS SQL DATA
+
+BEGIN
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
+
+    SELECT instrumentID FROM instrument WHERE selected = p_selected;
 
   END IF;
       

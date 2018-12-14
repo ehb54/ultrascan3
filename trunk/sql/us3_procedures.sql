@@ -68,7 +68,8 @@ BEGIN
   SET @NO_MRECS       = 525;
   SET @NO_PROTOCOL    = 526;
   SET @NO_ROTOR_CAL   = 527;
-
+  SET @INSTRUMENT_IN_USE = 553;
+  
   -- Some user levels
   SET @US3_USER       = 0;
   SET @US3_PRIV       = 1;

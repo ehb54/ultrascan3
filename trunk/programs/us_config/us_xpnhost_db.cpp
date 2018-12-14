@@ -64,19 +64,6 @@ US_XpnHostDB::US_XpnHostDB( QWidget* w, Qt::WindowFlags flags )
 
 
 
-   // Populate instrument list and pull instrument detailed info
-   US_Passwd pw;
-   US_DB2* dbP = use_db ? new US_DB2( pw.getPasswd() ) : NULL;
-   if ( dbP != NULL )    //fromDB
-     readInstruments( dbP );
-
-   if ( instruments.size() > 0 )
-     update_lw( );
-
-   connect( lw_entries, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
-	                SLOT  ( select_db        ( QListWidgetItem* ) ) );
-   
-
    // Detail info
    QLabel* info = us_banner( tr( "Optima Host Detailed Information" ) );
    topbox->addWidget( info );
@@ -165,15 +152,22 @@ US_XpnHostDB::US_XpnHostDB( QWidget* w, Qt::WindowFlags flags )
    buttons->addWidget( pb_add, row, 0 );
 
    pb_delete = us_pushbutton( tr( "Delete Current Entry" ) );
-   pb_delete->setEnabled( true );
+   pb_delete->setEnabled( false );
    connect( pb_delete,      SIGNAL( clicked()  ),
 	    this,           SLOT  ( deleteDB() ) );
    buttons->addWidget( pb_delete, row++, 1 );
 
-   pb_testConnect = us_pushbutton( tr( "Test Optima Host Connectivity" ) );
+   pb_edit = us_pushbutton( tr( "Edit Current Entry" ) );
+   pb_edit->setEnabled( false );
+   connect( pb_edit,        SIGNAL( clicked()  ),
+	    this,           SLOT  ( editDB() ) );
+   buttons->addWidget( pb_edit, row, 0 );
+
+   pb_testConnect = us_pushbutton( tr( "Test Connectivity" ) );
+   pb_testConnect->setEnabled( false );
    connect( pb_testConnect, SIGNAL( clicked()      ),
             this,           SLOT  ( test_connect() ) );
-   buttons->addWidget( pb_testConnect, row++, 0, 1, 2 );
+   buttons->addWidget( pb_testConnect, row++, 1 );
 
    QHBoxLayout* std_buttons = new QHBoxLayout;
    pb_reset = us_pushbutton( tr( "Reset" ) );
@@ -200,6 +194,20 @@ US_XpnHostDB::US_XpnHostDB( QWidget* w, Qt::WindowFlags flags )
    lw_entries->resize( lwid, lhgt );
    adjustSize();
 
+
+   // Populate instrument list and pull instrument detailed info
+   US_Passwd pw;
+   US_DB2* dbP = use_db ? new US_DB2( pw.getPasswd() ) : NULL;
+   if ( dbP != NULL )    //fromDB
+     readInstruments( dbP );
+
+   if ( instruments.size() > 0 )
+     update_lw( );
+
+   connect( lw_entries, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
+	                SLOT  ( select_db        ( QListWidgetItem* ) ) );
+   
+
 //    // Start out with default entry shown
 // qDebug() << "xpnH:Main: call xpn_db_hosts";
 //    dblist                = US_Settings::xpn_db_hosts();
@@ -217,6 +225,16 @@ void US_XpnHostDB::readInstruments( US_DB2* db )
 {
   qDebug() << "Reading Instrument: ";
   instruments.clear();
+
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this,
+			    tr( "Database Connection Problem!" ),
+			    tr( "You are not currently connected to a US3-LIMS DB! \n Information on Instruments cannnot be displayed! " ));
+			   
+      //pb_add->setEnabled( false );
+      return;
+    }
   
   QStringList q( "" );
   q.clear();
@@ -256,7 +274,7 @@ void US_XpnHostDB::readInstruments( US_DB2* db )
 	  instrument.optimaPort       = db->value( 6 ).toString().toInt();
 	  instrument.optimaDBname     = db->value( 7 ).toString();
 	  instrument.optimaDBusername = db->value( 8 ).toString();
-	  instrument.optimaDBpassw    = db->value( 9 ).toString();
+  instrument.optimaDBpassw    = db->value( 9 ).toString();
 	  instrument.selected         = db->value( 10 ).toString().toInt();
 
 	  if ( instrument.name.contains("Optima") )
@@ -299,6 +317,10 @@ void US_XpnHostDB::update_lw( )
 	 {  // Insure that *something* is selected!
 	   lw_entries->setCurrentRow( 0 );
 	 }
+
+       pb_testConnect->setEnabled( true );
+       pb_delete     ->setEnabled( true );
+       pb_edit       ->setEnabled( true );
      }
    else
      {
@@ -357,6 +379,14 @@ void US_XpnHostDB::select_db( QListWidgetItem* entry, const bool showmsg )
 	//ALEXEY: set in DB selected to '1' for this entry and reset selected to '0' for all others...
 	US_Passwd pw;
 	US_DB2* db = use_db ? new US_DB2( pw.getPasswd() ) : NULL;
+	
+	if ( db->lastErrno() != US_DB2::OK )
+	  {
+	    QMessageBox::warning( this,
+				  tr( "Database Connection Problem!" ),
+				  tr( "You are not currently connected to a US3-LIMS DB! \n" ) );
+	    return;
+	  }
 	
 	QStringList q( "" );
 	q.clear();
@@ -424,6 +454,95 @@ void US_XpnHostDB::add_new( void )
    new_xpnhost_db -> show();
 }
 
+// Edit Entry
+void US_XpnHostDB::editDB( void )
+{
+   QListWidgetItem* entry = lw_entries->currentItem();
+   QString item = entry->text().remove( " (default)" );
+   qDebug() << "editDB:  item" << item;
+
+   int instID = 0;
+   // int inst_count = 0;
+   QMap<QString, QString> currentInstrument;
+   // Go through list and chose matching description
+   for ( int ii = 0; ii < instruments.size(); ii++ )
+     {
+       QString desc = instruments[ii].name;
+       
+       // Look for the current description
+       if ( desc == item )
+	 {
+	   instID = instruments[ii].ID;
+	   instID_toedit = instID;
+	   
+	   currentInstrument[ "ID" ]      = QString::number( instruments[ii].ID );
+	   currentInstrument[ "name" ]    = instruments[ii].name;  
+	   currentInstrument[ "serial" ]  = instruments[ii].serial;
+	   currentInstrument[ "host" ]    = instruments[ii].optimaHost;
+	   currentInstrument[ "port" ]    = QString::number( instruments[ii].optimaPort ); 
+	   currentInstrument[ "dbname" ]  = instruments[ii].optimaDBname;
+	   currentInstrument[ "dbusername" ] = instruments[ii].optimaDBusername; 
+	   currentInstrument[ "dbpassw" ]  = instruments[ii].optimaDBpassw;   
+	   currentInstrument[ "selected" ] = instruments[ii].selected;        
+	   
+	   break;
+	 }
+     }
+   
+   if ( ! instID )
+     {
+       QMessageBox::warning( this,
+			     tr( "XpnHost Problem" ),
+			     tr( "The description does not match any in the database list.\n" ) );
+       
+       return;
+     }
+  
+  
+   US_NewXpnHostDB* edit_xpnhost_db  = new US_NewXpnHostDB( currentInstrument );
+   edit_xpnhost_db ->setParent(this, Qt::Window);
+   edit_xpnhost_db->setWindowModality(Qt::WindowModal);
+   edit_xpnhost_db->setAttribute(Qt::WA_DeleteOnClose);
+   
+   connect( edit_xpnhost_db, SIGNAL ( accepted( QMap <QString, QString> &) ), this, SLOT ( editHost( QMap <QString, QString> &) ) ); 
+   edit_xpnhost_db -> show();
+}
+
+void US_XpnHostDB::editHost( QMap < QString, QString > & newInstrument  )
+{
+  US_Passwd pw;
+  QString masterpw = pw.getPasswd();
+  US_DB2* db = use_db ? new US_DB2( masterpw ) : NULL;
+
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this,
+			     tr( "Database Connection Problem!" ),
+			     tr( "You are not currently connected to DB! \n" ) );
+      return;
+    }
+
+  
+  QStringList q( "" );
+  q.clear();
+  q  << QString( "update_instrument_new" )
+     << QString::number( instID_toedit )
+     << newInstrument[ "name"]
+     << newInstrument[ "serialNumber"]
+     << newInstrument[ "labID"]
+     << newInstrument[ "optimaHost" ]
+     << newInstrument[ "optimaPort" ]
+     << newInstrument[ "optimaDBname" ]
+     << newInstrument[ "optimaDBusername" ]
+     << newInstrument[ "optimaDBpassw" ];
+    //<< encpw;
+	
+  db->query( q );
+  
+  readInstruments( db );
+  update_lw( );
+}
+
 
 void US_XpnHostDB::newHost( QMap < QString, QString > & newInstrument  )
 {
@@ -435,6 +554,13 @@ void US_XpnHostDB::newHost( QMap < QString, QString > & newInstrument  )
   QString masterpw = pw.getPasswd();
   US_DB2* db = use_db ? new US_DB2( masterpw ) : NULL;
 
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this,
+			     tr( "Database Connection Problem!" ),
+			     tr( "You are not currently connected to DB! \n" ) );
+      return;
+    }
 
   // ALEXEY: we better use internal MySQL encryption with the same 'secret' for all users...
   // Use of default password encryption is a problem as it uses masterpassword for secret to ecrypt/decrypt OptimaDB password
@@ -448,8 +574,8 @@ void US_XpnHostDB::newHost( QMap < QString, QString > & newInstrument  )
   QStringList q( "" );
   q.clear();
   q  << QString( "add_instrument_new" )
-     << newInstrument["name"]
-     << newInstrument["serialNumber"]
+     << newInstrument[ "name"]
+     << newInstrument[ "serialNumber"]
      << newInstrument[ "labID"]
      << newInstrument[ "optimaHost" ]
      << newInstrument[ "optimaPort" ]
@@ -551,6 +677,8 @@ qDebug() << "test_connect: (2)dbpasw" << dbpasw;
    return ok;
 }
 
+
+
 // Delete stored host from DB
 void US_XpnHostDB::deleteDB( void )
 {
@@ -567,57 +695,71 @@ qDebug() << "deleteDB:  item" << item;
    if ( response != QMessageBox::Yes )
       return;
 
+   int instID = 0;
+   int inst_count = 0;
    // Go through list and delete the one matching description
    for ( int ii = 0; ii < instruments.size(); ii++ )
-   {
-     QString desc = instruments[ii].name;
-     
-     // Look for the current description
-     if ( desc == item )
-       {
-	 int instrID = instruments[ii].ID;
-	 
-	 US_Passwd pw;
-	 US_DB2* db = use_db ? new US_DB2( pw.getPasswd() ) : NULL;
-	 QStringList q( "" );
-	 QList< int > instrumentIDs;
-	 q.clear();
-	 q  << QString( "delete_instrument" )
-	    << QString::number( instrID );      
-	 
-	 db->query( q );
-	 
-	 // dblist.removeAt( ii );
-         // US_Settings::set_xpn_db_hosts( dblist );
-	 
-         // // Check if the default DB matches
-         // QStringList defaultDB = US_Settings::defaultXpnHost();
-	 
-         // if ( defaultDB.at( 0 ) == item )
-         // {
-         //    if ( dblist.size() > 0 )
-         //       US_Settings::set_def_xpn_host( dblist.at(0) );
-         //    else
-         //       US_Settings::set_def_xpn_host( QStringList() );
-         // }
-	 
-         // reset();
+     {
+       QString desc = instruments[ii].name;
+       
+       // Look for the current description
+       if ( desc == item )
+	 {
+	   instID = instruments[ii].ID;
+	   inst_count = ii;
+	   break;
+	 }
+     }
 
-	 instruments.removeAt(ii);
-	 update_lw( );
-
-	 QMessageBox::information( this,
-				   tr( "XpnHost Removed" ),
-				   tr( "The database has been removed." ) );
-	 
-         return;
-       }
-   }
-
+   if ( instID )
+     {
+       US_Passwd pw;
+       US_DB2* db = use_db ? new US_DB2( pw.getPasswd() ) : NULL;
+       QStringList q( "" );
+       q.clear();
+       q  << QString( "delete_instrument" )
+	  << QString::number( instID );      
+       
+       int status = db->statusQuery( q );
+       
+       if ( status == US_DB2::INSTRUMENT_IN_USE )
+	 {
+	   QMessageBox::warning( this,
+				 tr( "Instrument Not Deleted" ),
+				 tr( "This instrument could not be deleted since\n"
+				     "it is in use in one or more experiments." ) );
+	   return;
+	 }
+       
+       // dblist.removeAt( ii );
+       // US_Settings::set_xpn_db_hosts( dblist );
+       
+       // // Check if the default DB matches
+       // QStringList defaultDB = US_Settings::defaultXpnHost();
+       
+       // if ( defaultDB.at( 0 ) == item )
+       // {
+       //    if ( dblist.size() > 0 )
+       //       US_Settings::set_def_xpn_host( dblist.at(0) );
+       //    else
+       //       US_Settings::set_def_xpn_host( QStringList() );
+       // }
+       
+       // reset();
+       
+       instruments.removeAt( inst_count );
+       update_lw( );
+       
+       QMessageBox::information( this,
+				 tr( "XpnHost Removed" ),
+				 tr( "The database has been removed." ) );
+       return;
+     }
+   
    QMessageBox::warning( this,
-      tr( "XpnHost Problem" ),
-      tr( "The description does not match any in the database list.\n"
-          "The database has not been removed." ) );
+			 tr( "XpnHost Problem" ),
+			 tr( "The description does not match any in the database list.\n"
+			     "The database has not been removed." ) );
 }
 
 

@@ -75,40 +75,53 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
    in_reload_all_data  = false;
    in_reload_data_init = false;
    
-   QStringList xpnentr = US_Settings::defaultXpnHost();
-DbgLv(1) << "xpnentr count" << xpnentr.count();
 
-   if ( xpnentr.count() == 0 )
-   {
-      xpnentr << "test-host" << "bcf.uthscsa.edu" << "5432";
+   // //ALEXEY: old way, form .cong file
+   // QStringList xpnentr = US_Settings::defaultXpnHost();
+   // DbgLv(1) << "xpnentr count" << xpnentr.count();
 
-      QMessageBox::warning( this,
-            tr( "No Optima Host Entry" ),
-            tr( "A default Optima Host entry is being used.\n"
-                "You should add entries via Preferences:Optima Host Preferences\n"
-                "as soon as possible" ) );
-   }
-else
- DbgLv(1) << "xpnentr ..." << xpnentr;
+   // if ( xpnentr.count() == 0 )
+   //   {
+   //     xpnentr << "test-host" << "bcf.uthscsa.edu" << "5432";
+       
+   //     QMessageBox::warning( this,
+   // 			     tr( "No Optima Host Entry" ),
+   // 			     tr( "A default Optima Host entry is being used.\n"
+   // 				 "You should add entries via Preferences:Optima Host Preferences\n"
+   // 				 "as soon as possible" ) );
+   //   }
+   // else
+   //   DbgLv(1) << "xpnentr ..." << xpnentr;
+   
+   // QString encpw;
+   // QString decpw;
+   // QString encpw0;
+   // QString encpw1;
+   // QString masterpw;
+   // US_Passwd pw;
+   // xpndesc      = xpnentr.at( 0 );
+   // xpnhost      = xpnentr.at( 1 );
+   // xpnport      = xpnentr.at( 2 );
+   // xpnname      = xpnentr.at( 3 );
+   // xpnuser      = xpnentr.at( 4 );
+   // encpw        = xpnentr.at( 5 );
+   // encpw0       = encpw.section( "^", 0, 0 );
+   // encpw1       = encpw.section( "^", 1, 1 );
+   // masterpw     = pw.getPasswd();
+   // xpnpasw      = US_Crypto::decrypt( encpw0, masterpw, encpw1 );
 
-   clean_etc_dir();  // Make sure */ultrascan/etc is populated
-
-   QString encpw;
-   QString decpw;
-   QString encpw0;
-   QString encpw1;
-   QString masterpw;
+   // clean_etc_dir();  // Make sure */ultrascan/etc is populated
+   
    US_Passwd pw;
-   xpndesc      = xpnentr.at( 0 );
-   xpnhost      = xpnentr.at( 1 );
-   xpnport      = xpnentr.at( 2 );
-   xpnname      = xpnentr.at( 3 );
-   xpnuser      = xpnentr.at( 4 );
-   encpw        = xpnentr.at( 5 );
-   encpw0       = encpw.section( "^", 0, 0 );
-   encpw1       = encpw.section( "^", 1, 1 );
-   masterpw     = pw.getPasswd();
-   xpnpasw      = US_Crypto::decrypt( encpw0, masterpw, encpw1 );
+   US_DB2*   dbP = new US_DB2( pw.getPasswd() );
+   currentInstrument = returnSelectedInstrument( dbP );
+   xpndesc     = currentInstrument[ "name" ];
+   xpnhost     = currentInstrument[ "optimaHost" ];
+   xpnport     = currentInstrument[ "optimaPort" ];
+   xpnname     = currentInstrument[ "optimaDBname" ];
+   xpnuser     = currentInstrument[ "optimaDBusername" ];
+   xpnpasw     = currentInstrument[ "optimaDBpassw" ];
+   
 
    // Load controls     
    QLabel*      lb_run      = us_banner( tr( "Load the Run" ) );
@@ -453,39 +466,52 @@ US_XpnDataViewer::US_XpnDataViewer() : US_Widgets()
    rlt_id       = 0;
    currentDir   = "";
    in_reload    = false;
-   QStringList xpnentr = US_Settings::defaultXpnHost();
-DbgLv(1) << "xpnentr count" << xpnentr.count();
 
-   if ( xpnentr.count() == 0 )
-   {
-      xpnentr << "test-host" << "bcf.uthscsa.edu" << "5432";
+   //ALEXEY: old way, from .conf file
+   // QStringList xpnentr = US_Settings::defaultXpnHost();
+   // DbgLv(1) << "xpnentr count" << xpnentr.count();
+   
+   // if ( xpnentr.count() == 0 )
+   //   {
+   //     xpnentr << "test-host" << "bcf.uthscsa.edu" << "5432";
+       
+   //     QMessageBox::warning( this,
+   // 			     tr( "No Optima Host Entry" ),
+   // 			     tr( "A default Optima Host entry is being used.\n"
+   // 				 "You should add entries via Preferences:Optima Host Preferences\n"
+   // 				 "as soon as possible" ) );
+   //   }
+   // else
+   //   DbgLv(1) << "xpnentr ..." << xpnentr;
+   
+   // QString encpw;
+   // QString decpw;
+   // QString encpw0;
+   // QString encpw1;
+   // QString masterpw;
+   // US_Passwd pw;
+   // xpndesc      = xpnentr.at( 0 );
+   // xpnhost      = xpnentr.at( 1 );
+   // xpnport      = xpnentr.at( 2 );
+   // xpnname      = xpnentr.at( 3 );
+   // xpnuser      = xpnentr.at( 4 );
+   // encpw        = xpnentr.at( 5 );
+   // encpw0       = encpw.section( "^", 0, 0 );
+   // encpw1       = encpw.section( "^", 1, 1 );
+   // masterpw     = pw.getPasswd();
+   // xpnpasw      = US_Crypto::decrypt( encpw0, masterpw, encpw1 );
 
-      QMessageBox::warning( this,
-            tr( "No Optima Host Entry" ),
-            tr( "A default Optima Host entry is being used.\n"
-                "You should add entries via Preferences:Optima Host Preferences\n"
-                "as soon as possible" ) );
-   }
-else
- DbgLv(1) << "xpnentr ..." << xpnentr;
-
-   QString encpw;
-   QString decpw;
-   QString encpw0;
-   QString encpw1;
-   QString masterpw;
    US_Passwd pw;
-   xpndesc      = xpnentr.at( 0 );
-   xpnhost      = xpnentr.at( 1 );
-   xpnport      = xpnentr.at( 2 );
-   xpnname      = xpnentr.at( 3 );
-   xpnuser      = xpnentr.at( 4 );
-   encpw        = xpnentr.at( 5 );
-   encpw0       = encpw.section( "^", 0, 0 );
-   encpw1       = encpw.section( "^", 1, 1 );
-   masterpw     = pw.getPasswd();
-   xpnpasw      = US_Crypto::decrypt( encpw0, masterpw, encpw1 );
+   US_DB2*   dbP = new US_DB2( pw.getPasswd() );
+   currentInstrument = returnSelectedInstrument( dbP );
+   xpndesc     = currentInstrument[ "name" ];
+   xpnhost     = currentInstrument[ "optimaHost" ];
+   xpnport     = currentInstrument[ "optimaPort" ];
+   xpnname     = currentInstrument[ "optimaDBname" ];
+   xpnuser     = currentInstrument[ "optimaDBusername" ];
+   xpnpasw     = currentInstrument[ "optimaDBpassw" ];
 
+   
    // Load controls     
    QLabel*      lb_run      = us_banner( tr( "Load the Run" ) );
 
@@ -729,6 +755,53 @@ if(mcknt>0)
 
    reset();
    adjustSize();
+}
+
+
+QMap<QString, QString> US_XpnDataViewer::returnSelectedInstrument( US_DB2* db )
+{
+  QMap<QString, QString> instrument;
+  int ID = 0;
+  
+  QStringList q( "" );
+  q.clear();
+  q  << QString( "get_instrument_names" )
+     << QString::number( 1 );
+  db->query( q );
+  
+  qDebug() << "ID, db->lastErrno()  " << ID << " " << db->lastErrno();
+  if ( db->lastErrno() == US_DB2::OK )      // If not, no instruments defined
+    {
+      while ( db->next() )
+	{
+	  if ( db->value( 2 ).toString().toInt() )
+	    {
+	      ID = db->value( 0 ).toString().toInt();
+	      break;
+	    }
+	}
+
+      qDebug() << "ID: " << ID;
+      
+      q.clear();
+      q  << QString( "get_instrument_info_new" )
+	 << QString::number( ID );
+      db->query( q );
+      db->next();
+      
+      instrument[ "ID" ]               = ID;
+      instrument[ "name" ]             = db->value( 0 ).toString();
+      instrument[ "serial" ]           = db->value( 1 ).toString();
+      instrument[ "optimaHost" ]       = db->value( 5 ).toString();
+      instrument[ "optimaPort" ]       = db->value( 6 ).toString();
+      instrument[ "optimaDBname" ]     = db->value( 7 ).toString();
+      instrument[ "optimaDBusername" ] = db->value( 8 ).toString();
+      instrument[ "optimaDBpassw" ]    = db->value( 9 ).toString();
+      instrument[ "selected" ]         = db->value( 10 ).toString();
+    }
+
+  qDebug() << "ID: " << ID;
+  return instrument;
 }
 
 void US_XpnDataViewer::reset( void )
