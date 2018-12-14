@@ -33,7 +33,10 @@ class US_XpnHostDB : public US_Widgets
       QString   optimaDBusername;
       QString   optimaDBpassw;
       int       selected;
-
+      QString   os1;
+      QString   os2;
+      QString   os3;
+      
       //Instrument();
       
       void reset (void); 
@@ -61,7 +64,11 @@ class US_XpnHostDB : public US_Widgets
     QLineEdit*   le_port;  
     QLineEdit*   le_name;  
     QLineEdit*   le_user;  
-    QLineEdit*   le_pasw;  
+    QLineEdit*   le_pasw;
+
+    QLineEdit*   le_os1;  
+    QLineEdit*   le_os2;  
+    QLineEdit*   le_os3;  
 
     QComboBox*   cb_os1;
     QComboBox*   cb_os2;
@@ -79,7 +86,8 @@ class US_XpnHostDB : public US_Widgets
     void select_db   ( QListWidgetItem*, const bool = true );
     void add_new     ( void ); 
     /* void check_add   ( void ); */
-    /* void reset       ( void ); */
+    void reset       ( void ); 
+    void close_program ( void ); 
     void editDB      ( void ); 
     void deleteDB    ( void ); 
     bool test_connect( void ); 
