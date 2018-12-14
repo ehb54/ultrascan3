@@ -86,19 +86,22 @@ US_XpnHostDB::US_XpnHostDB( QWidget* w, Qt::WindowFlags flags )
 
    // Row 3
    QLabel* port        = us_label( tr( "Optima DB Port:" ) );
-   le_port             = us_lineedit( def_port, 0, true );
+   //le_port             = us_lineedit( def_port, 0, true );
+   le_port             = us_lineedit( "", 0, true );
    details->addWidget( port,           row,   0, 1, 2 );
    details->addWidget( le_port,        row++, 2, 1, 2 );
 
    // Row 4
    QLabel* name        = us_label( tr( "Optima DB Name:" ) );
-   le_name             = us_lineedit( def_name, 0, true );
+   //le_name             = us_lineedit( def_name, 0, true );
+   le_name             = us_lineedit( "", 0, true );
    details->addWidget( name,           row,   0, 1, 2 );
    details->addWidget( le_name,        row++, 2, 1, 2 );
 
    // Row 5
    QLabel* user        = us_label( tr( "DB Username:" ) );
-   le_user             = us_lineedit( def_user, 0, true );
+   //le_user             = us_lineedit( def_user, 0, true );
+   le_user             = us_lineedit( "", 0, true );
    details->addWidget( user,           row,   0, 1, 2 );
    details->addWidget( le_user,        row++, 2, 1, 2 );
 
@@ -114,31 +117,20 @@ US_XpnHostDB::US_XpnHostDB( QWidget* w, Qt::WindowFlags flags )
    details->addWidget( bn_optsys,      row++, 0, 1, 4 );
 
    // Rows 8,9,10
-   QStringList osyss;
-   osyss << "UV/visible"
-         << "Rayleigh Interference"
-#if 0
-         << "Fluorescense"
-#endif
-         << "(not installed)";
    QLabel* lb_os1      = us_label( tr( "Op Sys1:" ) );
+   le_os1              = us_lineedit( "", 0, true );
+   details->addWidget( lb_os1,        row,   0, 1, 1 );
+   details->addWidget( le_os1,        row++, 1, 1, 3 );
+   
    QLabel* lb_os2      = us_label( tr( "Op Sys2:" ) );
+   le_os2              = us_lineedit( "", 0, true );
+   details->addWidget( lb_os2,        row,   0, 1, 1 );
+   details->addWidget( le_os2,        row++, 1, 1, 3 );  
+
    QLabel* lb_os3      = us_label( tr( "Op Sys3:" ) );
-   cb_os1              = us_comboBox();
-   cb_os2              = us_comboBox();
-   cb_os3              = us_comboBox();
-   cb_os1->addItems( osyss );
-   cb_os2->addItems( osyss );
-   cb_os3->addItems( osyss );
-   details->addWidget( lb_os1,         row,   0, 1, 1 );
-   details->addWidget( cb_os1,         row++, 1, 1, 3 );
-   details->addWidget( lb_os2,         row,   0, 1, 1 );
-   details->addWidget( cb_os2,         row++, 1, 1, 3 );
-   details->addWidget( lb_os3,         row,   0, 1, 1 );
-   details->addWidget( cb_os3,         row++, 1, 1, 3 );
-   cb_os1->setCurrentIndex( 0 );
-   cb_os2->setCurrentIndex( 1 );
-   cb_os3->setCurrentIndex( 2 );
+   le_os3              = us_lineedit( "", 0, true );
+   details->addWidget( lb_os3,        row,   0, 1, 1 );
+   details->addWidget( le_os3,        row++, 1, 1, 3 ); 
    
    topbox->addLayout( details );
 
@@ -182,7 +174,7 @@ US_XpnHostDB::US_XpnHostDB( QWidget* w, Qt::WindowFlags flags )
 
    QPushButton* pb_cancel = us_pushbutton( tr( "Close" ) );
    connect( pb_cancel,      SIGNAL( clicked() ),
-	    this,           SLOT  ( close()   ) );
+	    this,           SLOT  ( close_program()   ) );
    std_buttons->addWidget( pb_cancel );
 
    topbox->addLayout( buttons );
@@ -274,9 +266,13 @@ void US_XpnHostDB::readInstruments( US_DB2* db )
 	  instrument.optimaPort       = db->value( 6 ).toString().toInt();
 	  instrument.optimaDBname     = db->value( 7 ).toString();
 	  instrument.optimaDBusername = db->value( 8 ).toString();
-  instrument.optimaDBpassw    = db->value( 9 ).toString();
+	  instrument.optimaDBpassw    = db->value( 9 ).toString();
 	  instrument.selected         = db->value( 10 ).toString().toInt();
-
+	  
+	  instrument.os1              = db->value( 11 ).toString();
+	  instrument.os2              = db->value( 12 ).toString();
+	  instrument.os3              = db->value( 13 ).toString();
+	  
 	  if ( instrument.name.contains("Optima") )
 	    this->instruments << instrument;
 	}
@@ -365,12 +361,13 @@ void US_XpnHostDB::select_db( QListWidgetItem* entry, const bool showmsg )
 
 	qDebug() << "SELECT: Passw.: decrypted " << le_pasw->text();
 	
-	// cb_os1        ->setCurrentIndex( cb_os1->findText(
-	// 						  dblist.at( ii ).at( 6 ) ) );
-	// cb_os2        ->setCurrentIndex( cb_os2->findText(
-	// 						  dblist.at( ii ).at( 7 ) ) );
-	// cb_os3        ->setCurrentIndex( cb_os3->findText(
-	// 						  dblist.at( ii ).at( 8 ) ) );
+	// cb_os1        ->setCurrentIndex( cb_os1->findText( instruments[ii].os1 ) );
+	// cb_os2        ->setCurrentIndex( cb_os2->findText( instruments[ii].os2 ) );
+	// cb_os3        ->setCurrentIndex( cb_os3->findText( instruments[ii].os3 ) );
+
+	le_os1        ->setText( instruments[ii].os1 );
+	le_os2        ->setText( instruments[ii].os2 );
+	le_os3        ->setText( instruments[ii].os3 );
 	
 	// // Set the default DB and user for that DB
 	// US_Settings::set_def_xpn_host( dblist.at( ii ) );
@@ -443,8 +440,9 @@ void US_XpnHostDB::Instrument::reset( void )
 
 // Add New Entry
 void US_XpnHostDB::add_new( void )
-{
-  //currentInstrument.reset();
+{  
+   reset();
+   
    US_NewXpnHostDB* new_xpnhost_db  = new US_NewXpnHostDB;
    new_xpnhost_db ->setParent(this, Qt::Window);
    new_xpnhost_db->setWindowModality(Qt::WindowModal);
@@ -457,6 +455,8 @@ void US_XpnHostDB::add_new( void )
 // Edit Entry
 void US_XpnHostDB::editDB( void )
 {
+   reset();
+    
    QListWidgetItem* entry = lw_entries->currentItem();
    QString item = entry->text().remove( " (default)" );
    qDebug() << "editDB:  item" << item;
@@ -483,7 +483,10 @@ void US_XpnHostDB::editDB( void )
 	   currentInstrument[ "dbname" ]  = instruments[ii].optimaDBname;
 	   currentInstrument[ "dbusername" ] = instruments[ii].optimaDBusername; 
 	   currentInstrument[ "dbpassw" ]  = instruments[ii].optimaDBpassw;   
-	   currentInstrument[ "selected" ] = instruments[ii].selected;        
+	   currentInstrument[ "selected" ] = instruments[ii].selected;
+	   currentInstrument[ "os1" ]      = instruments[ii].os1; 
+	   currentInstrument[ "os2" ]      = instruments[ii].os2;   
+	   currentInstrument[ "os3" ]      = instruments[ii].os3;
 	   
 	   break;
 	 }
@@ -534,7 +537,10 @@ void US_XpnHostDB::editHost( QMap < QString, QString > & newInstrument  )
      << newInstrument[ "optimaPort" ]
      << newInstrument[ "optimaDBname" ]
      << newInstrument[ "optimaDBusername" ]
-     << newInstrument[ "optimaDBpassw" ];
+     << newInstrument[ "optimaDBpassw" ]
+     << newInstrument[ "os1" ]
+     << newInstrument[ "os2" ]
+     << newInstrument[ "os3" ];
     //<< encpw;
 	
   db->query( q );
@@ -581,7 +587,10 @@ void US_XpnHostDB::newHost( QMap < QString, QString > & newInstrument  )
      << newInstrument[ "optimaPort" ]
      << newInstrument[ "optimaDBname" ]
      << newInstrument[ "optimaDBusername" ]
-     << newInstrument[ "optimaDBpassw" ];
+     << newInstrument[ "optimaDBpassw" ]
+     << newInstrument[ "os1" ]
+     << newInstrument[ "os2" ]
+     << newInstrument[ "os3" ];    
     //<< encpw;
 	
   db->query( q );
@@ -682,9 +691,15 @@ qDebug() << "test_connect: (2)dbpasw" << dbpasw;
 // Delete stored host from DB
 void US_XpnHostDB::deleteDB( void )
 {
+   bool default_to_remove = false;
+  
    QListWidgetItem* entry = lw_entries->currentItem();
+
+   if ( entry->text().contains("(default)")  )
+     default_to_remove = true;
+     
    QString item = entry->text().remove( " (default)" );
-qDebug() << "deleteDB:  item" << item;
+   qDebug() << "deleteDB:  item" << item;
 
    int response = QMessageBox::question( this,
       tr( "Delete Entry?" ),
@@ -730,29 +745,50 @@ qDebug() << "deleteDB:  item" << item;
 				     "it is in use in one or more experiments." ) );
 	   return;
 	 }
-       
-       // dblist.removeAt( ii );
-       // US_Settings::set_xpn_db_hosts( dblist );
-       
-       // // Check if the default DB matches
-       // QStringList defaultDB = US_Settings::defaultXpnHost();
-       
-       // if ( defaultDB.at( 0 ) == item )
-       // {
-       //    if ( dblist.size() > 0 )
-       //       US_Settings::set_def_xpn_host( dblist.at(0) );
-       //    else
-       //       US_Settings::set_def_xpn_host( QStringList() );
-       // }
-       
-       // reset();
-       
+
        instruments.removeAt( inst_count );
        update_lw( );
+
+       QString msg("The database has been removed.\n");
        
+       // ALEXEY: now check if the default DB was removed: if yes, reset default to the first in the list
+       if ( default_to_remove )
+	 {
+	   US_Passwd pw;
+	   US_DB2* db = use_db ? new US_DB2( pw.getPasswd() ) : NULL;
+	   
+	   if ( db->lastErrno() != US_DB2::OK )
+	     {
+	       QMessageBox::warning( this,
+				     tr( "Database Connection Problem!" ),
+				     tr( "You are not currently connected to a US3-LIMS DB! \n" ) );
+	       return;
+	     }
+
+	   QListWidgetItem* currentItem = lw_entries->currentItem();
+	   	   
+	   QStringList q( "" );
+	   q.clear();
+	   q  << QString( "update_instrument_set_selected" )
+	      << currentItem->text();
+	   
+	   db->query( q );
+
+	   for ( int jj = 0; jj < instruments.size(); jj++)
+	     {
+	       if ( instruments[jj].name == currentItem->text() )
+		 instruments[jj].selected = 1;
+	     }
+
+	   update_lw( );
+	   msg += QString("\n NOTE: the default DB was reset to %1").arg("Optima 1");
+	 }
+
+       reset();
        QMessageBox::information( this,
 				 tr( "XpnHost Removed" ),
-				 tr( "The database has been removed." ) );
+				 msg );
+       
        return;
      }
    
@@ -760,6 +796,28 @@ qDebug() << "deleteDB:  item" << item;
 			 tr( "XpnHost Problem" ),
 			 tr( "The description does not match any in the database list.\n"
 			     "The database has not been removed." ) );
+}
+
+// reset all fields 
+void US_XpnHostDB::reset( void )
+{
+   le_description->setText( "" );
+   le_host       ->setText( "" );
+   le_port       ->setText( "" );
+   le_name       ->setText( "" );
+   le_user       ->setText( "" );
+   le_pasw       ->setText( "" );
+   le_os1        ->setText( "" );
+   le_os2        ->setText( "" );
+   le_os3        ->setText( "" );
+
+}
+
+// Close & check if default Optima is selected
+void US_XpnHostDB::close_program( void )
+{
+  
+  close();
 }
 
 

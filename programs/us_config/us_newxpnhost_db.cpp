@@ -25,7 +25,7 @@ US_NewXpnHostDB::US_NewXpnHostDB() : US_Widgets()
    // Frame layout
    setPalette( US_GuiSettings::frameColor() );
 
-   setWindowTitle( "Optima DB Host Configuration" );
+   setWindowTitle( "New Optima DB Host Configuration" );
    setAttribute( Qt::WA_DeleteOnClose );
 
    use_db              = ( US_Settings::default_data_location() < 2 );
@@ -45,6 +45,7 @@ US_NewXpnHostDB::US_NewXpnHostDB() : US_Widgets()
    // Row 1
    QLabel* desc         = us_label( tr( "Optima Host Description:" ) );
    le_description       = us_lineedit( "", 0 );
+   le_description->setPlaceholderText("SYNTAX: 'Optima #'");
    details->addWidget( desc,           row,   0, 1, 2 );
    details->addWidget( le_description, row++, 2, 1, 2 );
 
@@ -85,6 +86,36 @@ US_NewXpnHostDB::US_NewXpnHostDB() : US_Widgets()
    details->addWidget( pasw,           row,   0, 1, 2 );
    details->addWidget( le_pasw,        row++, 2, 1, 2 );
 
+
+   // Row 7
+   QLabel* bn_optsys   = us_banner( tr( "Installed Optical Systems" ) );
+   details->addWidget( bn_optsys,      row++, 0, 1, 4 );
+
+   // Rows 8,9,10
+   QStringList osyss;
+   osyss << "UV/visible"
+         << "Rayleigh Interference"
+         << "Fluorescense"
+         << "(not installed)";
+   QLabel* lb_os1      = us_label( tr( "Op Sys1:" ) );
+   QLabel* lb_os2      = us_label( tr( "Op Sys2:" ) );
+   QLabel* lb_os3      = us_label( tr( "Op Sys3:" ) );
+   cb_os1              = us_comboBox();
+   cb_os2              = us_comboBox();
+   cb_os3              = us_comboBox();
+   cb_os1->addItems( osyss );
+   cb_os2->addItems( osyss );
+   cb_os3->addItems( osyss );
+   details->addWidget( lb_os1,         row,   0, 1, 1 );
+   details->addWidget( cb_os1,         row++, 1, 1, 3 );
+   details->addWidget( lb_os2,         row,   0, 1, 1 );
+   details->addWidget( cb_os2,         row++, 1, 1, 3 );
+   details->addWidget( lb_os3,         row,   0, 1, 1 );
+   details->addWidget( cb_os3,         row++, 1, 1, 3 );
+   cb_os1->setCurrentIndex( 0 );
+   cb_os2->setCurrentIndex( 1 );
+   cb_os3->setCurrentIndex( 3 );
+      
    topbox->addLayout( details );
 
    //Pushbuttons
@@ -103,6 +134,8 @@ US_NewXpnHostDB::US_NewXpnHostDB() : US_Widgets()
    buttons->addWidget( pb_cancel, row++, 1 );
    
    topbox->addLayout( buttons );
+
+   setMinimumSize( 450 , 400 );
    adjustSize();
 }
 
@@ -114,7 +147,7 @@ US_NewXpnHostDB::US_NewXpnHostDB( QMap <QString,QString> currentInstrument ) : U
    // Frame layout
    setPalette( US_GuiSettings::frameColor() );
 
-   setWindowTitle( "Optima DB Host Configuration" );
+   setWindowTitle( "Modify Optima DB Host Configuration" );
    setAttribute( Qt::WA_DeleteOnClose );
 
    use_db              = ( US_Settings::default_data_location() < 2 );
@@ -123,7 +156,7 @@ US_NewXpnHostDB::US_NewXpnHostDB( QMap <QString,QString> currentInstrument ) : U
    QBoxLayout* topbox = new QVBoxLayout( this );
    topbox->setSpacing( 2 );
 
-   QLabel* banner = us_banner( tr( "Enter Info for the New Xpn Host:" ) );
+   QLabel* banner = us_banner( tr( "Change Xpn Host Configuration:" ) );
    topbox->addWidget( banner );
 
       // Row 0
@@ -132,7 +165,7 @@ US_NewXpnHostDB::US_NewXpnHostDB( QMap <QString,QString> currentInstrument ) : U
 
    // Row 1
    QLabel* desc         = us_label( tr( "Optima Host Description:" ) );
-   le_description       = us_lineedit( "", 0 );
+   le_description       = us_lineedit( "", 0, true );
    details->addWidget( desc,           row,   0, 1, 2 );
    details->addWidget( le_description, row++, 2, 1, 2 );
 
@@ -173,6 +206,35 @@ US_NewXpnHostDB::US_NewXpnHostDB( QMap <QString,QString> currentInstrument ) : U
    details->addWidget( pasw,           row,   0, 1, 2 );
    details->addWidget( le_pasw,        row++, 2, 1, 2 );
 
+   // Row 7
+   QLabel* bn_optsys   = us_banner( tr( "Installed Optical Systems" ) );
+   details->addWidget( bn_optsys,      row++, 0, 1, 4 );
+
+   // Rows 8,9,10
+   QStringList osyss;
+   osyss << "UV/visible"
+         << "Rayleigh Interference"
+         << "Fluorescense"
+         << "(not installed)";
+   QLabel* lb_os1      = us_label( tr( "Op Sys1:" ) );
+   QLabel* lb_os2      = us_label( tr( "Op Sys2:" ) );
+   QLabel* lb_os3      = us_label( tr( "Op Sys3:" ) );
+   cb_os1              = us_comboBox();
+   cb_os2              = us_comboBox();
+   cb_os3              = us_comboBox();
+   cb_os1->addItems( osyss );
+   cb_os2->addItems( osyss );
+   cb_os3->addItems( osyss );
+   details->addWidget( lb_os1,         row,   0, 1, 1 );
+   details->addWidget( cb_os1,         row++, 1, 1, 3 );
+   details->addWidget( lb_os2,         row,   0, 1, 1 );
+   details->addWidget( cb_os2,         row++, 1, 1, 3 );
+   details->addWidget( lb_os3,         row,   0, 1, 1 );
+   details->addWidget( cb_os3,         row++, 1, 1, 3 );
+   cb_os1->setCurrentIndex( 0 );
+   cb_os2->setCurrentIndex( 1 );
+   cb_os3->setCurrentIndex( 3 );
+      
    topbox->addLayout( details );
 
    //Pushbuttons
@@ -191,6 +253,8 @@ US_NewXpnHostDB::US_NewXpnHostDB( QMap <QString,QString> currentInstrument ) : U
    buttons->addWidget( pb_cancel, row++, 1 );
    
    topbox->addLayout( buttons );
+
+   setMinimumSize( 450 , 400 );
    adjustSize();
 
    fillGui();
@@ -201,8 +265,7 @@ void US_NewXpnHostDB::fillGui( void )
 {
   if ( !instrumentedit["name"].isEmpty()  )
     le_description->setText( instrumentedit["name"] );
-  le_description->setReadOnly(true);
-
+  
   if ( !instrumentedit["serial"].isEmpty()  )
     le_serialNumber->setText( instrumentedit["serial"] );
   
@@ -219,8 +282,12 @@ void US_NewXpnHostDB::fillGui( void )
     le_name->setText( instrumentedit["dbname"] );
 
   if ( !instrumentedit["dbpassw"].isEmpty()  )
-    le_pasw->setText( instrumentedit["dbpassw"] );  
+    le_pasw->setText( instrumentedit["dbpassw"] );
+
   
+  cb_os1->setCurrentIndex( cb_os1->findText( instrumentedit[ "os1" ] ) );
+  cb_os2->setCurrentIndex( cb_os2->findText( instrumentedit[ "os2" ] ) );
+  cb_os3->setCurrentIndex( cb_os3->findText( instrumentedit[ "os3" ] ) );
 }
 
 
@@ -262,6 +329,7 @@ void US_NewXpnHostDB::save_new( void )
   for (QStringList::iterator it = instrumentNames.begin(); it != instrumentNames.end(); ++it) 
     {
       QString current = *it;
+
       if ( current == le_description->text() && !update_instrument )
 	{
 	  QMessageBox::critical( this, tr( "Duplicate Optima Machine Name:" ),
@@ -270,8 +338,12 @@ void US_NewXpnHostDB::save_new( void )
 	}
     }
 
+  // Host & Port check
   foreach ( int ID, instrumentIDs )
     {
+      if ( ID == instrumentedit["ID"].toInt() && update_instrument )
+	continue;
+      
       q.clear();
       q  << QString( "get_instrument_info_new" )
 	 << QString::number( ID );
@@ -301,6 +373,10 @@ void US_NewXpnHostDB::save_new( void )
 
   newInstrument[ "serialNumber"] = le_serialNumber->text();
   newInstrument[ "labID"] = QString::number(1);
+
+  newInstrument[ "os1" ] = cb_os1->currentText();
+  newInstrument[ "os2" ] = cb_os2->currentText();
+  newInstrument[ "os3" ] = cb_os3->currentText();
   
   emit accepted( newInstrument );
 
