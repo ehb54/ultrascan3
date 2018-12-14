@@ -3663,6 +3663,8 @@ bool US_Hydrodyn_Pdb_Tool::sol2wat( QTreeWidget *lv, double use_radius, QString 
    detail_csv.header.push_back( "Water position Z" );
    detail_csv.header.push_back( "Distance" );
    detail_csv.header.push_back( "Water Computed Radius" );
+
+   map < QString, map < QString, set < int > > > res_SOL_used; // map of residue names and SOLs used // rname, rnum, SOL
    
    for ( int j = 0; j < (int) compares.size(); ++j ) {
       t2 = compare_points[ j ];
@@ -3816,7 +3818,13 @@ bool US_Hydrodyn_Pdb_Tool::sol2wat( QTreeWidget *lv, double use_radius, QString 
             QString rnum  = tmp_csv.data[ csvj ][ 3 ];
             QString aname = tmp_csv.data[ csvj ][ 4 ];
             hydration_summary[ csvj ][ frame ]                           .push_back( hi );
-            hydration_summary_res     [ rname ][ rnum ][ frame ]         .push_back( hi );
+            if ( !res_SOL_used.count( rname ) ||
+                 !res_SOL_used[ rname ].count( rnum ) ||
+                 !res_SOL_used[ rname ][ rnum ].count( csvi ) ) {
+               hydration_summary_res     [ rname ][ rnum ][ frame ]         .push_back( hi );
+               res_SOL_used[ rname ][ rnum ].insert( csvi );
+            }
+                 
             hydration_summary_res_atom[ rname ][ aname ][ rnum ][ frame ].push_back( hi );
             if ( !hydration_header.count( csvj ) ) {
                hydration_header_info hhi;
