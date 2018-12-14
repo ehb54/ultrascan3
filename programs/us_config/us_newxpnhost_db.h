@@ -20,15 +20,20 @@ class US_NewXpnHostDB : public US_Widgets
  public:
   
   //!  Construct the window to manage database parameters.
-  US_NewXpnHostDB( QWidget* w = 0, Qt::WindowFlags flags = 0 );
-  
+  /* US_NewXpnHostDB( QWidget* w = 0, Qt::WindowFlags flags = 0 ); */
+  /* US_NewXpnHostDB( QWidget* w = 0, Qt::WindowFlags flags = 0, QMap<QString, QString> ); */
+  US_NewXpnHostDB();
+  US_NewXpnHostDB( QMap<QString, QString> instrument );
+		  
  private:
   //US_XpnHostDB::Instrument   currentInstrument;
   
-  QList<QStringList> dblist;
-  QString            uuid;
-  QMap< QString, QString > conn_stat;
-  
+  /* QList<QStringList> dblist; */
+  /* QString            uuid; */
+  /* QMap< QString, QString > conn_stat; */
+
+  QMap< QString, QString > instrumentedit;
+    
   QPushButton* pb_save;   
   QPushButton* pb_cancel;
   
@@ -46,11 +51,14 @@ class US_NewXpnHostDB : public US_Widgets
   QComboBox*   cb_os3;
   
   bool use_db;
+
+  bool update_instrument;
   
   
  private slots:
    void save_new     ( void ); 
    void cancel       ( void ); 
+   void fillGui      ( void ); 
    /* void reset       ( void ); */
    /* void save_default( void ); */
    /* void deleteDB    ( void ); */

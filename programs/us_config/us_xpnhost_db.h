@@ -40,6 +40,7 @@ class US_XpnHostDB : public US_Widgets
     };
 
     Instrument currentInstrument;
+    int        instID_toedit;
     
  private:
     //US_NewXpnHostDB* new_xpnhost_db;
@@ -50,6 +51,7 @@ class US_XpnHostDB : public US_Widgets
     
     QPushButton* pb_add;   
     QPushButton* pb_delete;
+    QPushButton* pb_edit;
     QPushButton* pb_reset; 
     QPushButton* pb_testConnect;
     
@@ -70,8 +72,6 @@ class US_XpnHostDB : public US_Widgets
     void update_lw( void );
     bool use_db;
     
-
-
     QList< Instrument > instruments; 
     
   private slots:
@@ -80,10 +80,11 @@ class US_XpnHostDB : public US_Widgets
     void add_new     ( void ); 
     /* void check_add   ( void ); */
     /* void reset       ( void ); */
-    /* void save_default( void ); */
+    void editDB      ( void ); 
     void deleteDB    ( void ); 
     bool test_connect( void ); 
     void readInstruments ( US_DB2* = 0 );
     void newHost( QMap <QString, QString> & newInstrument );
+    void editHost( QMap <QString, QString> & newInstrument );
 };
 #endif

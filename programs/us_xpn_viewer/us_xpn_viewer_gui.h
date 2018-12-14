@@ -101,6 +101,7 @@ class US_XpnDataViewer : public US_Widgets
      QString        xpnname;
      QString        xpnuser;
      QString        xpnpasw;
+     QMap<QString, QString> currentInstrument;
 
      int            nscan;
      int            ncell;
@@ -166,6 +167,8 @@ class US_XpnDataViewer : public US_Widgets
   private slots:
      void   reset          ( void );
      void   load_xpn_raw   ( void );
+
+     QMap <QString, QString> returnSelectedInstrument( US_DB2* = 0 );
 
      bool   load_xpn_raw_auto   ( void );
      void   check_for_data ( QMap < QString, QString > & );

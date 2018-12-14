@@ -59,9 +59,9 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
 
       void check_user_level( void );
       void check_runname( void );
-      
       int loaded_proto;
-                  
+      QMap < QString, QString > returnSelectedInstrument( US_DB2* = 0 );
+      
    private:
       US_ExperimentMain*    mainw;      // Parent to all panels
       US_RunProtocol*       currProto;  // Current RunProtocol controls pointer
@@ -793,7 +793,8 @@ class US_ExperimentMain : public US_Widgets
       bool    connection_status;
       QString xpnhost;
       int     xpnport;
-
+      QMap< QString, QString > currentInstrument;
+      
       bool    automode;
       void    auto_mode_passed( void ); 
       
