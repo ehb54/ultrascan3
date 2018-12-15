@@ -58,7 +58,8 @@ class US_NewXpnHostDB : public US_Widgets
  private slots:
    void save_new     ( void ); 
    void cancel       ( void ); 
-   void fillGui      ( void ); 
+   void fillGui      ( void );
+   void desc_changed ( QString );
    /* void reset       ( void ); */
    /* void save_default( void ); */
    /* void deleteDB    ( void ); */

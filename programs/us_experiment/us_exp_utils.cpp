@@ -449,6 +449,9 @@ QMap<QString, QString> US_ExperGuiGeneral::returnSelectedInstrument( US_DB2* db 
       instrument[ "optimaDBusername" ] = db->value( 8 ).toString();
       instrument[ "optimaDBpassw" ]    = db->value( 9 ).toString();
       instrument[ "selected" ]         = db->value( 10 ).toString();
+      instrument[ "opsys1" ]           = db->value( 11 ).toString();
+      instrument[ "opsys2" ]           = db->value( 12 ).toString();
+      instrument[ "opsys3" ]           = db->value( 13 ).toString();
     }
 
   qDebug() << "ID: " << ID;
@@ -459,35 +462,35 @@ void US_ExperGuiGeneral::test_optima_connection()
 {
 
   // ALEXEY: the old way, form .conf file...
-   // US_Passwd pw_op;
-   // QStringList dblist  = US_Settings::defaultXpnHost();
-   // QString name        = dblist[ 0 ];
-   // QString xpnhost     = dblist[ 1 ];
-   // int     xpnport     = dblist[ 2 ].toInt();
-   // QString dbname      = dblist[ 3 ];
-   // QString dbuser      = dblist[ 4 ];
-   // QString epasw       = dblist[ 5 ];
-   // QString epasw0      = epasw.section( "^", 0, 0 );
-   // QString epasw1      = epasw.section( "^", 1, 1 );
-   // QString dbpasw      = US_Crypto::decrypt( epasw0, pw_op.getPasswd(), epasw1 );
+  US_Passwd pw_op;
+  QStringList dblist  = US_Settings::defaultXpnHost();
+  QString name        = dblist[ 0 ];
+  QString xpnhost     = dblist[ 1 ];
+  int     xpnport     = dblist[ 2 ].toInt();
+  QString dbname      = dblist[ 3 ];
+  QString dbuser      = dblist[ 4 ];
+  QString epasw       = dblist[ 5 ];
+  QString epasw0      = epasw.section( "^", 0, 0 );
+  QString epasw1      = epasw.section( "^", 1, 1 );
+  QString dbpasw      = US_Crypto::decrypt( epasw0, pw_op.getPasswd(), epasw1 );
 
 
-   //ALEXEY: new way: reading directly from DB
-   qDebug() << "TEST CONNECTION : ";
+   // //ALEXEY: new way: reading directly from DB
+   // qDebug() << "TEST CONNECTION : ";
   
-   US_Passwd pw;
-   US_DB2* dbP = new US_DB2( pw.getPasswd() );
-   mainw->currentInstrument = returnSelectedInstrument( dbP );
+   // US_Passwd pw;
+   // US_DB2* dbP = new US_DB2( pw.getPasswd() );
+   // mainw->currentInstrument = returnSelectedInstrument( dbP );
    
-   QString name        = mainw->currentInstrument[ "name" ];
-   QString xpnhost     = mainw->currentInstrument[ "optimaHost" ];
-   int     xpnport     = mainw->currentInstrument[ "optimaPort" ].toInt();
-   QString dbname      = mainw->currentInstrument[ "optimaDBname" ];
-   QString dbuser      = mainw->currentInstrument[ "optimaDBusername" ];
-   QString dbpasw      = mainw->currentInstrument[ "optimaDBpassw" ];
+   // QString name        = mainw->currentInstrument[ "name" ];
+   // QString xpnhost     = mainw->currentInstrument[ "optimaHost" ];
+   // int     xpnport     = mainw->currentInstrument[ "optimaPort" ].toInt();
+   // QString dbname      = mainw->currentInstrument[ "optimaDBname" ];
+   // QString dbuser      = mainw->currentInstrument[ "optimaDBusername" ];
+   // QString dbpasw      = mainw->currentInstrument[ "optimaDBpassw" ];
    
-   qDebug() << "Optima in use: name, host, port, dbname, dbuser, dbpasw: " << name << " " << xpnhost << " "
-	    << xpnport << " "  << dbname << " " << dbuser << " " << dbpasw ;
+   // qDebug() << "Optima in use: name, host, port, dbname, dbuser, dbpasw: " << name << " " << xpnhost << " "
+   // 	    << xpnport << " "  << dbname << " " << dbuser << " " << dbpasw ;
 
 
    QPalette orig_pal = le_optima_connected->palette();

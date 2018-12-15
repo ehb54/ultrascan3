@@ -94,5 +94,6 @@ class US_XpnHostDB : public US_Widgets
     void readInstruments ( US_DB2* = 0 );
     void newHost( QMap <QString, QString> & newInstrument );
     void editHost( QMap <QString, QString> & newInstrument );
+    void fillGui( QMap <QString, QString> & );
 };
 #endif

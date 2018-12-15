@@ -48,6 +48,8 @@ US_NewXpnHostDB::US_NewXpnHostDB() : US_Widgets()
    le_description->setPlaceholderText("SYNTAX: 'Optima #'");
    details->addWidget( desc,           row,   0, 1, 2 );
    details->addWidget( le_description, row++, 2, 1, 2 );
+   connect( le_description, SIGNAL( textChanged(QString) ),
+            this,      SLOT  ( desc_changed(QString) ) );
 
    // Row 1a
    QLabel* serialNum    = us_label( tr( "Optima Serial Number:" ) );
@@ -291,6 +293,16 @@ void US_NewXpnHostDB::fillGui( void )
 }
 
 
+// Entered wavelength(s):  check for syntax
+void US_NewXpnHostDB::desc_changed( QString text )
+{
+  QPalette *palette = new QPalette();
+  palette->setColor(QPalette::Text,Qt::black);
+  palette->setColor(QPalette::Base,Qt::white);
+  le_description->setPalette(*palette);
+  le_description->setText(text);
+}
+
 
 // read Instrument names/info from DB
 void US_NewXpnHostDB::save_new( void )
@@ -301,6 +313,23 @@ void US_NewXpnHostDB::save_new( void )
     {
       QMessageBox::warning( this, tr( "Please provide the missing information:" ),
                         tr( "Fill out all fields!"));
+      return;
+    }
+
+  //RegEx for Optima name:
+  QRegExp rx_desc("^(Optima)\\s[1-9]\\d*$");  // e.g. 'Optima 9'
+
+  if ( !rx_desc.exactMatch(le_description->text() ) )
+    {
+      QString mtitle_error    = tr( "Error" );
+      QString message_error   = tr( "Syntax error for Optima Host Description!\n\nThe description template is the following:\n  'Optima #' (Optima|space|number)" );
+      QMessageBox::critical( this, mtitle_error, message_error );
+
+      QPalette *palette = new QPalette();
+      palette->setColor(QPalette::Text,Qt::red);
+      palette->setColor(QPalette::Base,Qt::white);
+      le_description->setPalette(*palette);
+      
       return;
     }
 

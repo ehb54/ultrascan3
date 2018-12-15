@@ -736,15 +736,17 @@ DbgLv(1) << "EGR: chgLab  sl_rotors count" << sl_rotors.count();
    lab_selected.readDB( labID, dbP );
    QList< US_Rotor::Instrument > instruments = lab_selected.instruments;
    //Connection
+   //ALEXEY: old way
    QString inst_name("");
-   // if (mainw->xpnport == 5551)  //Should be configured in instrument table
-   //   inst_name = "Optima 1";
-   // else if (mainw->xpnport == 5552)
-   //   inst_name = "Optima 2";
-   // else
-   //   inst_name = "Optima 1";
+   if (mainw->xpnport == 5551)  //Should be configured in instrument table
+     inst_name = "Optima 1";
+   else if (mainw->xpnport == 5552)
+     inst_name = "Optima 2";
+   else
+     inst_name = "Optima 1";
 
-   inst_name = mainw->currentInstrument[ "name" ];
+   //ALEXEY: new way
+   // inst_name = mainw->currentInstrument[ "name" ];
    
    QString conn_status = mainw->connection_status ? "connected" : "disconnected";
    
@@ -2903,6 +2905,7 @@ DbgLv(1) << "EGOp:  nholes mxcels" << nholes << mxcels;
                              US_GuiSettings::fontSize  (),
                              QFont::Bold );
    //QFontMetrics fm( ckfont );
+   // ALEXEY: old way from .conf file
    QStringList optentr = US_Settings::defaultXpnHost();
    int nopten       = optentr.count();
    int nopsys       = nopten - 6;
@@ -2915,6 +2918,11 @@ DbgLv(1) << "EGOp:main:  nopten" << nopten << "nopsys" << nopsys;
    QString opsys3   = ( nopten > 8 ) ? optentr[ 8 ]
                                      : tr( "(not installed)" );
 DbgLv(1) << "EGOp:main:   opsys1-3" << opsys1 << opsys2 << opsys3;
+
+   // QString opsys1   = mainw-> currentInstrument[ "opsys1" ];
+   // QString opsys2   = mainw-> currentInstrument[ "opsys2" ];
+   // QString opsys3   = mainw-> currentInstrument[ "opsys3" ];
+   
    int nckopt       = 0;
    nckopt          += opsys1.contains( tr( "not installed" ) ) ? 0 : 1;
    nckopt          += opsys2.contains( tr( "not installed" ) ) ? 0 : 1;
@@ -3300,47 +3308,61 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
    submitted           = false;
    connected           = false;
 
-   // Connect to the Optima if possible
-   QStringList dblist  = US_Settings::defaultXpnHost();
-   int ndble           = dblist.count();
+   // ALEXEY: old way
+    // Connect to the Optima if possible
+    QStringList dblist  = US_Settings::defaultXpnHost();
+    int ndble           = dblist.count();
 
-   if ( ndble < 9 )
-   {  // Handle a default entry without exactly 9 parts
-      QStringList dblold  = dblist;
-      dblist.clear();
+    if ( ndble < 9 )
+    {  // Handle a default entry without exactly 9 parts
+       QStringList dblold  = dblist;
+       dblist.clear();
 
-      dblist << "test_connect";
-      dblist << "bcf.uthscsa.edu";
-      dblist << "5432";
-      dblist << "AUC_DATA_DB";
-      dblist << "auc_admin";
-      dblist << "encpasswd";
-      dblist << tr( "UV/visible" );
-      dblist << tr( "Rayleigh Interference" );
-      dblist << tr( "(not installed)" );
+       dblist << "test_connect";
+       dblist << "bcf.uthscsa.edu";
+       dblist << "5432";
+       dblist << "AUC_DATA_DB";
+       dblist << "auc_admin";
+       dblist << "encpasswd";
+       dblist << tr( "UV/visible" );
+       dblist << tr( "Rayleigh Interference" );
+       dblist << tr( "(not installed)" );
 
-      for ( int ii = 0; ii < ndble; ii++ )
-      {
-         dblist.replace( ii, dblold[ ii ] );
-      }
-DbgLv(1) << "EGUp:main:   opsys1-3" << dblist[6] << dblist[7] << dblist[8];
+       for ( int ii = 0; ii < ndble; ii++ )
+       {
+          dblist.replace( ii, dblold[ ii ] );
+       }
+ DbgLv(1) << "EGUp:main:   opsys1-3" << dblist[6] << dblist[7] << dblist[8];
 
-      dblist << dblist[ 4 ];
-      
-      US_Settings::set_def_xpn_host( dblist );
-   }
+       dblist << dblist[ 4 ];
+    
+       US_Settings::set_def_xpn_host( dblist );
+    }
 
-   US_Passwd pw;
-   QString xpnhost     = dblist[ 1 ];
-   int     xpnport     = dblist[ 2 ].toInt();
-   QString dbname      = dblist[ 3 ];
-   QString dbuser      = dblist[ 4 ];
-   QString epasw       = dblist[ 5 ];
-   QString epasw0      = epasw.section( "^", 0, 0 );
-   QString epasw1      = epasw.section( "^", 1, 1 );
-   QString dbpasw      = US_Crypto::decrypt( epasw0, pw.getPasswd(), epasw1 );
-DbgLv(1) << "EGUp: host port name user pasw" << xpnhost << xpnport
- << dbname << dbuser << epasw;
+    US_Passwd pw;
+    QString xpnhost     = dblist[ 1 ];
+    int     xpnport     = dblist[ 2 ].toInt();
+    QString dbname      = dblist[ 3 ];
+    QString dbuser      = dblist[ 4 ];
+    QString epasw       = dblist[ 5 ];
+    QString epasw0      = epasw.section( "^", 0, 0 );
+    QString epasw1      = epasw.section( "^", 1, 1 );
+    QString dbpasw      = US_Crypto::decrypt( epasw0, pw.getPasswd(), epasw1 );
+
+   // //ALEXEY: new way 
+   // QString xpnhost      = mainw->currentInstrument[ "optimaHost" ];
+   // int     xpnport      = mainw->currentInstrument[ "optimaPort" ].toInt();
+   // QString dbname       = mainw->currentInstrument[ "optimaDBname" ];
+   // QString dbuser       = mainw->currentInstrument[ "optimaDBusername" ];
+   // QString dbpasw       = mainw->currentInstrument[ "optimaDBpassw" ];
+
+   // QString opsys1       = mainw->currentInstrument[ "opsys1" ];
+   // QString opsys2       = mainw->currentInstrument[ "opsys2" ];
+   // QString opsys3       = mainw->currentInstrument[ "opsys3" ];
+   // DbgLv(1) << "EGUp:main:   opsys1-3" << opsys1 << opsys2 << opsys3;
+
+   DbgLv(1) << "EGUp: host port name user pasw" << xpnhost << xpnport
+	    << dbname << dbuser << dbpasw;
    US_XpnData* xpn_data = new US_XpnData();
    connected           = xpn_data->connect_data( xpnhost, xpnport, dbname,
                                                  dbuser,  dbpasw );
@@ -3564,28 +3586,29 @@ DbgLv(1) << "EGUp:dE: nsolut" << ssolut.count();
 void US_ExperGuiUpload::testConnection()
 {
   // ALEXEY: old way
-  //    US_Passwd pw;
-  //    QStringList dblist  = US_Settings::defaultXpnHost();
-  //    QString xpnhost     = dblist[ 1 ];
-  //    int     xpnport     = dblist[ 2 ].toInt();
-  //    QString dbname      = dblist[ 3 ];
-  //    QString dbuser      = dblist[ 4 ];
-  //    QString epasw       = dblist[ 5 ];
-  //    QString epasw0      = epasw.section( "^", 0, 0 );
-  //    QString epasw1      = epasw.section( "^", 1, 1 );
-  //    QString dbpasw      = US_Crypto::decrypt( epasw0, pw.getPasswd(), epasw1 );
-  // DbgLv(1) << "EGUp: host port name user pasw" << xpnhost << xpnport
-  //  << dbname << dbuser << epasw;
+      US_Passwd pw;
+      QStringList dblist  = US_Settings::defaultXpnHost();
+      QString xpnhost     = dblist[ 1 ];
+      int     xpnport     = dblist[ 2 ].toInt();
+      QString dbname      = dblist[ 3 ];
+      QString dbuser      = dblist[ 4 ];
+      QString epasw       = dblist[ 5 ];
+      QString epasw0      = epasw.section( "^", 0, 0 );
+      QString epasw1      = epasw.section( "^", 1, 1 );
+      QString dbpasw      = US_Crypto::decrypt( epasw0, pw.getPasswd(), epasw1 );
+   DbgLv(1) << "EGUp: host port name user pasw" << xpnhost << xpnport
+    << dbname << dbuser << epasw;
 
-   QString name        = mainw->currentInstrument[ "name" ];
-   QString xpnhost     = mainw->currentInstrument[ "optimaHost" ];
-   int     xpnport     = mainw->currentInstrument[ "optimaPort" ].toInt();
-   QString dbname      = mainw->currentInstrument[ "optimaDBname" ];
-   QString dbuser      = mainw->currentInstrument[ "optimaDBusername" ];
-   QString dbpasw      = mainw->currentInstrument[ "optimaDBpassw" ];
+   //ALEXEY: new way
+   // QString name        = mainw->currentInstrument[ "name" ];
+   // QString xpnhost     = mainw->currentInstrument[ "optimaHost" ];
+   // int     xpnport     = mainw->currentInstrument[ "optimaPort" ].toInt();
+   // QString dbname      = mainw->currentInstrument[ "optimaDBname" ];
+   // QString dbuser      = mainw->currentInstrument[ "optimaDBusername" ];
+   // QString dbpasw      = mainw->currentInstrument[ "optimaDBpassw" ];
    
-   qDebug() << "Optima in use: name, host, port, dbname, dbuser, dbpasw: " << name << " " << xpnhost << " "
-	    << xpnport << " "  << dbname << " " << dbuser << " " << dbpasw ;
+   // qDebug() << "Optima in use: name, host, port, dbname, dbuser, dbpasw: " << name << " " << xpnhost << " "
+   // 	    << xpnport << " "  << dbname << " " << dbuser << " " << dbpasw ;
   
    US_XpnData* xpn_data = new US_XpnData();
    connected           = xpn_data->connect_data( xpnhost, xpnport, dbname,
@@ -3742,14 +3765,16 @@ DbgLv(1) << "EGUp:svRP:   dbP" << dbP;
 //Confirm the Optima machine an experiemnt is submitted to.
 void US_ExperGuiUpload::submitExperiment_confirm()
 {
-    // QStringList dblist  = US_Settings::defaultXpnHost();
-    // QString alias       = dblist[ 0 ];
-    // QString dbhost      = dblist[ 1 ];
-    // int     dbport      = dblist[ 2 ].toInt();
-  
-   QString optima_name = mainw->currentInstrument[ "name" ];
-   QString dbhost      = mainw->currentInstrument[ "optimaHost" ];
-   QString dbport      = mainw->currentInstrument[ "optimaPort" ];
+  // ALEXEY: old way
+  QStringList dblist  = US_Settings::defaultXpnHost();
+  QString alias       = dblist[ 0 ];
+  QString dbhost      = dblist[ 1 ];
+  int     dbport      = dblist[ 2 ].toInt();
+
+  // //ALEXEY: new way
+  //  QString alias       = mainw->currentInstrument[ "name" ];
+  //  QString dbhost      = mainw->currentInstrument[ "optimaHost" ];
+  //  QString dbport      = mainw->currentInstrument[ "optimaPort" ];
 
    if ( mainw->automode )
      saveRunProtocol();
@@ -3757,7 +3782,7 @@ void US_ExperGuiUpload::submitExperiment_confirm()
    QMessageBox msgBox;
    msgBox.setText(tr("Experiment will be submitted to the following Optima machine:"));
    msgBox.setInformativeText( QString( tr(    "Name: %1 <br>  Host:  %2 <br> Port:  %3" ))
-			      .arg(optima_name)
+			      .arg(alias)
 			      .arg(dbhost)
 			      .arg(dbport));
    msgBox.setWindowTitle(tr("Confirm Experiment Run Submission"));
@@ -3781,26 +3806,26 @@ void US_ExperGuiUpload::submitExperiment_confirm()
 void US_ExperGuiUpload::submitExperiment()
 {
     
-   // //ALEXEY connect to DB AUC: old way
-   // US_Passwd pw;
-   // QStringList dblist  = US_Settings::defaultXpnHost();
-   // QString dbhost      = dblist[ 1 ];
-   // int     dbport      = dblist[ 2 ].toInt();
-   // QString dbname      = dblist[ 3 ];
-   // QString dbuser      = dblist[ 4 ];
-   // QString epasw       = dblist[ 5 ];
-   // QString epasw0      = epasw.section( "^", 0, 0 );
-   // QString epasw1      = epasw.section( "^", 1, 1 );
-   // QString dbpasw      = US_Crypto::decrypt( epasw0, pw.getPasswd(), epasw1 );
+   //ALEXEY connect to DB AUC: old way
+   US_Passwd pw;
+   QStringList dblist  = US_Settings::defaultXpnHost();
+   QString dbhost      = dblist[ 1 ];
+   int     dbport      = dblist[ 2 ].toInt();
+   QString dbname      = dblist[ 3 ];
+   QString dbuser      = dblist[ 4 ];
+   QString epasw       = dblist[ 5 ];
+   QString epasw0      = epasw.section( "^", 0, 0 );
+   QString epasw1      = epasw.section( "^", 1, 1 );
+   QString dbpasw      = US_Crypto::decrypt( epasw0, pw.getPasswd(), epasw1 );
 
-   //ALEXEY: new way 
-   QString dbhost      = mainw->currentInstrument[ "optimaHost" ];
-   int     dbport      = mainw->currentInstrument[ "optimaPort" ].toInt();
-   QString dbname      = mainw->currentInstrument[ "optimaDBname" ];
-   QString dbuser      = mainw->currentInstrument[ "optimaDBusername" ];
-   QString dbpasw      = mainw->currentInstrument[ "optimaDBpassw" ];
+   // //ALEXEY: new way 
+   // QString dbhost      = mainw->currentInstrument[ "optimaHost" ];
+   // int     dbport      = mainw->currentInstrument[ "optimaPort" ].toInt();
+   // QString dbname      = mainw->currentInstrument[ "optimaDBname" ];
+   // QString dbuser      = mainw->currentInstrument[ "optimaDBusername" ];
+   // QString dbpasw      = mainw->currentInstrument[ "optimaDBpassw" ];
     
-   qDebug() << "OPTIMA: host port name user pasw" << dbhost << dbport << dbname << dbuser << dbpasw;
+   // qDebug() << "OPTIMA: host port name user pasw" << dbhost << dbport << dbname << dbuser << dbpasw;
    
    dbxpn           = QSqlDatabase::addDatabase( "QPSQL", "" );
    // DbgLv(1) << "XpDa:cnc: drivers" << dbxpn.drivers();
