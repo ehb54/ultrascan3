@@ -273,7 +273,7 @@ void US_XpnHostDB::readInstruments( US_DB2* db )
 	  instrument.os2              = db->value( 12 ).toString();
 	  instrument.os3              = db->value( 13 ).toString();
 	  
-	  if ( instrument.name.contains("Optima") )
+	  if ( instrument.name.contains("Optima") || instrument.optimaHost.contains("AUC_DATA_DB") )
 	    this->instruments << instrument;
 	}
     }
@@ -285,13 +285,12 @@ void US_XpnHostDB::readInstruments( US_DB2* db )
 void US_XpnHostDB::update_lw( )
 {
    lw_entries->clear();
-   bool def_sel;
+   bool def_sel = false;
    
    if ( instruments.size() > 0 )
      {
        for ( int ii = 0; ii < instruments.size(); ii++ )
 	 {
-	   def_sel = false;
 	   QString desc = instruments[ii].name.trimmed();
 
 	   qDebug() << "Instrument Name: " << desc;
@@ -305,13 +304,14 @@ void US_XpnHostDB::update_lw( )
 	   QListWidgetItem* widget = new QListWidgetItem( desc );
 	   lw_entries->addItem( widget );
 
-	   if ( def_sel )
+	   if ( instruments[ii].selected )
 	     lw_entries->setCurrentItem( widget, QItemSelectionModel::Select );
 	 }
 
-       if ( ! def_sel  &&  instruments.size() > 0 )
+       if ( !def_sel  &&  instruments.size() > 0 )
 	 {  // Insure that *something* is selected!
 	   lw_entries->setCurrentRow( 0 );
+	   qDebug() << "Def. sel. selected!!!";
 	 }
 
        pb_testConnect->setEnabled( true );
@@ -547,8 +547,49 @@ void US_XpnHostDB::editHost( QMap < QString, QString > & newInstrument  )
   
   readInstruments( db );
   update_lw( );
+
+  // fillGui( newInstrument );
+
+  // //QListWidgetItem* item_by_text = new QListWidgetItem;
+  // for(int i = 0; i < lw_entries->count(); ++i)
+  //   {
+  //     QListWidgetItem* item_by_text = lw_entries->item(i);
+  //     if ( item_by_text->text() == newInstrument[ "name"] )
+  // 	lw_entries->setCurrentItem( item_by_text, QItemSelectionModel::Select );
+  //     else
+  // 	lw_entries->setCurrentItem( item_by_text, QItemSelectionModel::Deselect );
+  //   }
+  
 }
 
+// Fill available GUI elements
+void US_XpnHostDB::fillGui( QMap<QString, QString> & instrument )
+{
+  if ( !instrument["name"].isEmpty()  )
+    le_description->setText( instrument["name"] );
+  
+  // if ( !instrument["serial"].isEmpty()  )
+  // le_serialNumber->setText( instrument["serial"] );
+  
+  if ( !instrument["optimaHost"].isEmpty()  )
+    le_host->setText( instrument["optimaHost"] );
+
+  if ( !instrument["optimaPort"].isEmpty()  )
+    le_port->setText( instrument["optimaPort"] );
+
+  if ( !instrument["optimaDBusername"].isEmpty()  )
+    le_user->setText( instrument["optimaDBusername"] );
+
+  if ( !instrument["optimaDBname"].isEmpty()  )
+    le_name->setText( instrument["optimaDBname"] );
+
+  if ( !instrument["optimaDBpassw"].isEmpty()  )
+    le_pasw->setText( instrument["optimaDBpassw"] );
+
+  le_os1->setText( instrument[ "os1" ] );
+  le_os2->setText( instrument[ "os2" ] );
+  le_os3->setText( instrument[ "os3" ] );
+}
 
 void US_XpnHostDB::newHost( QMap < QString, QString > & newInstrument  )
 {
@@ -597,6 +638,7 @@ void US_XpnHostDB::newHost( QMap < QString, QString > & newInstrument  )
   
   readInstruments( db );
   update_lw( );
+
 }
 
 
@@ -722,6 +764,7 @@ void US_XpnHostDB::deleteDB( void )
 	 {
 	   instID = instruments[ii].ID;
 	   inst_count = ii;
+	   qDebug() << "DeleteDB ! instID: " << instID; 
 	   break;
 	 }
      }
@@ -751,7 +794,7 @@ void US_XpnHostDB::deleteDB( void )
 
        QString msg("The database has been removed.\n");
        
-       // ALEXEY: now check if the default DB was removed: if yes, reset default to the first in the list
+       // ALEXEY: now check if the default DB was removed: if yes, reset default to the first in the item list
        if ( default_to_remove )
 	 {
 	   US_Passwd pw;

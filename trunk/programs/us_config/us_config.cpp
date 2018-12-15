@@ -266,18 +266,18 @@ void US_Config::update_advanced( void )
 void US_Config::update_xpnhost( void )
 {
   /* Existing: from .conf file */
-   // xpnhost  = new US_XpnHost;
-   // xpnhost ->setParent(this, Qt::Window);
-   // xpnhost->setWindowModality(Qt::WindowModal);
-   // xpnhost->setAttribute(Qt::WA_DeleteOnClose);
-   // xpnhost ->show();
+  xpnhost  = new US_XpnHost;
+  xpnhost ->setParent(this, Qt::Window);
+  xpnhost->setWindowModality(Qt::WindowModal);
+  xpnhost->setAttribute(Qt::WA_DeleteOnClose);
+  xpnhost ->show();
 
   /* New: from us-lims DB */
-  xpnhost_db  = new US_XpnHostDB;
-  xpnhost_db ->setParent(this, Qt::Window);
-  xpnhost_db->setWindowModality(Qt::WindowModal);
-  xpnhost_db->setAttribute(Qt::WA_DeleteOnClose);
-  xpnhost_db ->show();
+  // xpnhost_db  = new US_XpnHostDB;
+  // xpnhost_db ->setParent(this, Qt::Window);
+  // xpnhost_db->setWindowModality(Qt::WindowModal);
+  // xpnhost_db->setAttribute(Qt::WA_DeleteOnClose);
+  // xpnhost_db ->show();
 }
 
 void US_Config::open_browser( void )
