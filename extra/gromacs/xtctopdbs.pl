@@ -1,8 +1,9 @@
 #!/usr/bin/perl
 
-$notes = "usage: $0 file-base-name nmdist
+$notes = "usage: $0 file-base-name nmdist {skip}
 where 'name' is the name of the file
 and 'nmdist' is the nm cutoff for SOLS
+optionally skip is the number of starting frames to skip
 (further refinement can be done in us-somo)
 
 the program will 
@@ -14,6 +15,7 @@ the program will
 
 $traj = shift || die $notes;
 $nmdist = shift || die $notes;
+$skip = shift;
 
 $traj =~ s/\.(xtc|gro)$//;
 
@@ -55,6 +57,10 @@ for $f ( @f ) {
     docmd( "mv ${traj}_tmp.pdb $traj/$f" );
     docmd( "rm ${traj}_tmp.ndx" );
     ( $base, $num, $ext ) = $f =~ /^(.*[^0-9])(\d+)(\.pdb)$/;
+    if ( $skip && $num < $skip ) {
+        docmd( "rm $traj/$f" );
+        next;
+    }
     $num = '0'x(5 - length( $num ) ) . $num;
     $fo = "${base}_F_${num}${ext}";
     open my $fh, "$traj/$f";
@@ -72,8 +78,12 @@ for $f ( @f ) {
             next;
         }
 
-        if ( substr( $l, 13, 1 ) eq 'H' ||
-             substr( $l, 13, 3 ) eq 'MW4' ) {
+        if ( 
+            substr( $l, 13, 1 ) eq 'H' ||
+            substr( $l, 13, 3 ) eq 'MW4' ||
+            substr( $l, 13, 3 ) eq 'SOD' ||
+            substr( $l, 13, 3 ) eq 'CLA'
+            ) {
             next;
         }
 
@@ -89,6 +99,7 @@ for $f ( @f ) {
         $l =~ s/ OC2 LEU / OXT LEU /;
         $l =~ s/ OT1 LEU / O   LEU /;
         $l =~ s/ OT2 LEU / OXT LEU /;
+        $l =~ s/ OH2 / OW  /;
 
         push @lnew, sprintf( "ATOM  %5d%s%5d %s",
                              $atomno,
