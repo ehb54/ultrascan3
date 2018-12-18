@@ -142,7 +142,8 @@ class US_XpnDataViewer : public US_Widgets
      bool           haveData;
      bool           haveTmst;
      bool           in_reload;
-
+     bool           in_reload_auto;
+     
      bool           in_reload_data_init;
      bool           in_reload_all_data;
 
