@@ -71,7 +71,7 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
    runType      = "RI";
    rlt_id       = 0;
    currentDir   = "";
-   in_reload    = false;
+   in_reload_auto    = false;
    in_reload_all_data  = false;
    in_reload_data_init = false;
    
@@ -1378,7 +1378,7 @@ DbgLv(1) << "RDr: allData size" << allData.size();
    QApplication::restoreOverrideCursor();
    QString tspath = currentDir + "/" + runID + ".time_state.tmst";
    haveTmst       = QFile( tspath ).exists();
-   in_reload      = false;
+   in_reload_auto      = false;
 
    // Ok to enable some buttons now
    enableControls();                                    //ALEXEY ...and actual plotting data
@@ -2633,10 +2633,10 @@ bool US_XpnDataViewer::CheckExpComplete_auto( QString & runid )
 // Slot to reload data
 void US_XpnDataViewer::reloadData_auto()
 {
-   if ( in_reload )            // If already doing a reload,
+   if ( in_reload_auto )            // If already doing a reload,
      return;                   //  skip starting a new one
 
-   in_reload   = true;          // Flag in the midst of a reload
+   in_reload_auto   = true;          // Flag in the midst of a reload
 
    int runix          = runID.lastIndexOf( "-run" ) + 4;
    QString fRunId     = runID.mid( runix );
@@ -2688,7 +2688,7 @@ DbgLv(1) << "RLd:       NO CHANGE";
 	  return;
 	}
 
-       in_reload   = false;         // Flag no longer in the midst of reload
+       in_reload_auto   = false;         // Flag no longer in the midst of reload
        return;     // Return with no change in AUC data
    }
 double tm1=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
@@ -2716,7 +2716,7 @@ DbgLv(1) << "RLd:      build-raw done: tm1 tm2" << tm1 << tm2
 
    // Do resets and re-plot the current triple
    changeCellCh();
-   in_reload   = false;         // Flag no longer in the midst of reload
+   in_reload_auto   = false;         // Flag no longer in the midst of reload
 }
 
 // Slot to respond to a timer event (auto-reload)
