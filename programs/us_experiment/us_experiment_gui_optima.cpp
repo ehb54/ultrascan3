@@ -148,6 +148,8 @@ void US_ExperimentMain::auto_mode_passed( void )
 // Reset parameters to their defaults
 void US_ExperimentMain::close_program( void )
 {
+  
+    
   emit us_exp_is_closed();
   close();
 }
@@ -1331,7 +1333,18 @@ DbgLv(1) << "EGSp: chgKnt:  kk" << kk << "spd acc dur dly"
          ssvals[ kkk ][ "duration" ] = ssdurtim;  // Duration in minutes  // No, in seconds
          ssvals[ kkk ][ "delay"    ] = ssdlytim;  // Delay in seconds
 
-	 ssvals[ kkk ][ "delay_stage"    ] = 0.0; 
+	 if ( ck_sync_delay->isChecked() )
+	   {
+	     qDebug() << "Syncing stage delays...";
+	     stageDelay_sync();
+
+	   }
+	 else
+	   {
+	     qDebug() << "Syncing stage NOT checked !!!!!!!";
+	     ssvals[ kkk ][ "delay_stage"    ] = 0.0; 
+	   }
+	 
 	 ssChangeScInt( ssspeed, kkk );  //ALEXEY
 	 	 
          profdesc[ kkk ]             = speedp_description( kkk );
@@ -1808,15 +1821,17 @@ void US_ExperGuiSpeeds::ssChgDelayStageTime_mm( int val )
 //Slot to synchronize all stage delays with that for the 1st stage
 void US_ExperGuiSpeeds::stageDelay_sync( void )
 {
-  double delay = ssvals[ 0 ][ "delay_stage" ];                //delay fo the 1st stage in sec
+  double delay = ssvals[ 0 ][ "delay_stage" ];                //delay for the 1st stage in sec
 
   double delay_hh   = qFloor( delay / 3600.0 );               // Delay in hh
   double delay_mm   = (delay / 60.0) - ( delay_hh * 60.0 );   // Delay in min
 
   sb_delay_st_hh ->setValue( (int)delay_hh );
   sb_delay_st_mm ->setValue( (int)delay_mm );
-  
-  for ( int i = 1; i < nspeed; i++ )
+
+  qDebug() << "IN STAGE SYNC: nspeed: " << nspeed;
+  int tot_speeds = ssvals.size();
+  for ( int i = 1; i < tot_speeds; i++ )
     {
       ssvals[ i ][ "delay_stage" ] = delay; 
     }
