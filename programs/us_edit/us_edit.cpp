@@ -1629,7 +1629,7 @@ void US_Edit::mouse( const QwtDoublePoint& p )
          else
          {
             // Sometime we get two clicks
-            if ( qAbs( p.x() - airGap_left ) < 0.020 ) return;
+            if ( qAbs( p.x() - airGap_left ) < 0.005 ) return;
 
             airGap_right = p.x();
 
