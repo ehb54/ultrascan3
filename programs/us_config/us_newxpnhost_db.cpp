@@ -13,7 +13,7 @@
 
 #define def_desc QString("place-holder")
 #define def_host QString("192.168.1.1")
-#define def_port QString("5432")
+#define def_port QString("")
 #define def_name QString("AUC_DATA_DB")
 #define def_user QString("")
 #define def_pasw QString("")
@@ -88,7 +88,24 @@ US_NewXpnHostDB::US_NewXpnHostDB() : US_Widgets()
    details->addWidget( pasw,           row,   0, 1, 2 );
    details->addWidget( le_pasw,        row++, 2, 1, 2 );
 
+   //Row 6a
+   QLabel* bn_chromoab   = us_banner( tr( "Chromatic Aberation Information" ) );
+   details->addWidget( bn_chromoab,      row++, 0, 1, 4 );
 
+   //Row 6b
+   QLabel* lb_radcalwvl  = us_label( tr( "Radial Calibration Wavelength:" ) );
+   ct_radcalwvl          = us_counter( 2,   190,   800,  280 );
+   ct_radcalwvl ->setSingleStep( 1 );
+   details->addWidget( lb_radcalwvl,    row,   0, 1, 2 );
+   details->addWidget( ct_radcalwvl,    row++, 2, 1, 2 );
+   
+   //Row 6c
+   QPushButton* pb_loadchromo     = us_pushbutton( tr( "Load Chromatic Abberation Array" ) );
+   le_chromofile          = us_lineedit( "", 0, true );
+   details->addWidget( pb_loadchromo,    row,   0, 1, 2 );
+   details->addWidget( le_chromofile,    row++, 2, 1, 2 );  
+
+   
    // Row 7
    QLabel* bn_optsys   = us_banner( tr( "Installed Optical Systems" ) );
    details->addWidget( bn_optsys,      row++, 0, 1, 4 );
@@ -208,6 +225,25 @@ US_NewXpnHostDB::US_NewXpnHostDB( QMap <QString,QString> currentInstrument ) : U
    details->addWidget( pasw,           row,   0, 1, 2 );
    details->addWidget( le_pasw,        row++, 2, 1, 2 );
 
+   //Row 6a
+   QLabel* bn_chromoab   = us_banner( tr( "Chromatic Aberation Information" ) );
+   details->addWidget( bn_chromoab,      row++, 0, 1, 4 );
+
+   //Row 6b
+   QLabel* lb_radcalwvl  = us_label( tr( "Radial Calibration Wavelength:" ) );
+   ct_radcalwvl          = us_counter( 2,   190,   800,  280 );
+   ct_radcalwvl ->setSingleStep( 1 );
+   details->addWidget( lb_radcalwvl,    row,   0, 1, 2 );
+   details->addWidget( ct_radcalwvl,    row++, 2, 1, 2 );
+   
+   //Row 6c
+   QPushButton* pb_loadchromo     = us_pushbutton( tr( "Load Chromatic Abberation Array" ) );
+   le_chromofile          = us_lineedit( "", 0, true );
+   details->addWidget( pb_loadchromo,    row,   0, 1, 2 );
+   details->addWidget( le_chromofile,    row++, 2, 1, 2 );
+   connect( pb_loadchromo,     SIGNAL( clicked()          ), 
+              this,            SLOT(   load_chromo()    ) ); 
+
    // Row 7
    QLabel* bn_optsys   = us_banner( tr( "Installed Optical Systems" ) );
    details->addWidget( bn_optsys,      row++, 0, 1, 4 );
@@ -262,6 +298,111 @@ US_NewXpnHostDB::US_NewXpnHostDB( QMap <QString,QString> currentInstrument ) : U
    fillGui();
 }
 
+
+// Load Chromo Array
+void US_NewXpnHostDB::load_chromo( void )
+{
+  QStringList files;
+  QFile f;
+  
+  QFileDialog dialog (this);
+  dialog.setNameFilter(tr("Text files (*.[Tt][Xx][Tt] *.[Cc][Ss][Vv] *.[Dd][Aa][Tt]);;All files (*)"));
+    
+  dialog.setFileMode(QFileDialog::ExistingFile);
+  dialog.setViewMode(QFileDialog::Detail);
+
+  QString work_dir_data  = US_Settings::etcDir();
+  dialog.setDirectory(work_dir_data);
+  
+  if(dialog.exec())
+    {
+      files = dialog.selectedFiles();
+      readingChromoArrayFile(files[0]);
+    }
+
+  le_chromofile->setText("Uploaded");
+}
+
+//Read Chromatic Aberration Array from uploaded file 
+void US_NewXpnHostDB::readingChromoArrayFile( const QString &fileName )
+{
+  QString str1, str2;
+  float temp_x, temp_y;
+  QStringList strl;
+  corr_lambda.clear();
+  corr_value.clear();
+  
+  if(!fileName.isEmpty())
+    {
+      QFile f(fileName);
+      
+      if(f.open(QIODevice::ReadOnly | QIODevice::Text))
+	{
+	  QTextStream ts(&f);
+	  while(!ts.atEnd())
+	    {
+	      str1 = ts.readLine();
+	      str1 = str1.simplified();
+
+	      if (str1.isEmpty())
+		continue;
+
+	      str1 = str1.replace("\"", " ");
+	      str1 = str1.replace(",", " ");
+
+	      //qDebug() << str1;
+	      
+	      strl = str1.split(QRegExp("[\r\n\t ,]+"));
+	      temp_x = strl.at(0).trimmed().toFloat();
+	      temp_y = strl.at(1).trimmed().toFloat();
+
+	      qDebug() << temp_x << "," << temp_y;
+
+	      corr_lambda.push_back( double(temp_x) );
+	      corr_value.push_back( double(temp_y) );
+	    }
+	}
+    }
+  qDebug() << "Upload Finished ";
+}
+
+//Read Existing Chromatic Aberration Array from DB 
+void US_NewXpnHostDB::readingChromoArrayDB( )
+{
+  corr_lambda.clear();
+  corr_value.clear();
+  QString chromoArrayString;
+  QStringList strl;
+  chromoArrayString = instrumentedit["chromoab"].trimmed();
+  strl = chromoArrayString.split(QRegExp("[\r\n\t ]+"));
+
+  foreach (QString str, strl)
+    {
+      str.remove("(");
+      str.remove(")");
+
+      corr_lambda.push_back( double( str.split(",")[0].trimmed().toFloat() ) );
+      corr_value.push_back( double( str.split(",")[1].trimmed().toFloat() ) );
+      
+      qDebug() << str.split(",")[0].trimmed() << " " << str.split(",")[1].trimmed();
+    }
+}
+
+void US_NewXpnHostDB::shiftChromoArray( double val )
+{
+  ChromoArrayList.clear();
+  double shift = 0;
+  for (int i = 0; i < corr_lambda.size(); ++i)
+    if( corr_lambda[i] == val )
+      shift = corr_value[i];
+
+  for (int i = 0; i < corr_value.size(); ++i)
+    {
+      corr_value[i] -= shift;
+      ChromoArrayList += " (" + QString::number( corr_lambda[i] ) + "," + QString::number( corr_value[i] ) + ") ";
+    }
+}
+
 // Fill available GUI elements
 void US_NewXpnHostDB::fillGui( void )
 {
@@ -290,6 +431,16 @@ void US_NewXpnHostDB::fillGui( void )
   cb_os1->setCurrentIndex( cb_os1->findText( instrumentedit[ "os1" ] ) );
   cb_os2->setCurrentIndex( cb_os2->findText( instrumentedit[ "os2" ] ) );
   cb_os3->setCurrentIndex( cb_os3->findText( instrumentedit[ "os3" ] ) );
+
+  if ( !instrumentedit["radcalwvl"].isEmpty()  )
+    ct_radcalwvl->setValue( double(instrumentedit["radcalwvl"].toFloat()) );
+  
+  if ( !instrumentedit["chromoab"].isEmpty()  )
+    {
+      le_chromofile->setText( "Uploaded" );
+
+      readingChromoArrayDB( );
+    }
 }
 
 
@@ -309,10 +460,11 @@ void US_NewXpnHostDB::save_new( void )
 {
   if ( le_name->text().isEmpty() || le_description->text().isEmpty()
        || le_host->text().isEmpty() || le_port->text().isEmpty()
-       || le_user->text().isEmpty() || le_pasw->text().isEmpty() || le_serialNumber->text().isEmpty() )
+       || le_user->text().isEmpty() || le_pasw->text().isEmpty()
+       || le_serialNumber->text().isEmpty() || le_chromofile->text().isEmpty() )
     {
       QMessageBox::warning( this, tr( "Please provide the missing information:" ),
-                        tr( "Fill out all fields!"));
+                        tr( "Fill out all fields and/or upload chromatic aberration array!"));
       return;
     }
 
@@ -391,6 +543,10 @@ void US_NewXpnHostDB::save_new( void )
 	}
     }
 
+  //Chromo Array shifting/forming
+  double radwvl = ct_radcalwvl->value();
+  shiftChromoArray( radwvl );
+  
   
   QMap <QString, QString> newInstrument;
   newInstrument[ "name"]        = le_description->text();
@@ -400,6 +556,9 @@ void US_NewXpnHostDB::save_new( void )
   newInstrument[ "optimaDBusername" ] = le_user->text();
   newInstrument[ "optimaDBpassw" ] = le_pasw->text();
 
+  newInstrument[ "radCalWvl" ] = QString::number(radwvl);
+  newInstrument[ "chromoArray" ] = ChromoArrayList;
+    
   newInstrument[ "serialNumber"] = le_serialNumber->text();
   newInstrument[ "labID"] = QString::number(1);
 
@@ -415,5 +574,6 @@ void US_NewXpnHostDB::save_new( void )
 // read Instrument names/info from DB
 void US_NewXpnHostDB::cancel( void )
 {
+  emit editnew_cancelled();
   close();
 }
