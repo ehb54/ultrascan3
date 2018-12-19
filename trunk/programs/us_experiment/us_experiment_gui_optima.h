@@ -60,8 +60,7 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
       void check_user_level( void );
       void check_runname( void );
       int loaded_proto;
-      QMap < QString, QString > returnSelectedInstrument( US_DB2* = 0 );
-      
+            
    private:
       US_ExperimentMain*    mainw;      // Parent to all panels
       US_RunProtocol*       currProto;  // Current RunProtocol controls pointer
@@ -75,9 +74,6 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
       QLineEdit*   le_project;          // Project name line edit
       QLineEdit*   le_investigator;     // Investigator line edit
 
-      QLineEdit*   le_optima;
-      QLineEdit*   le_optima_connected;
-
       QwtCounter*  ct_tempera;          // Temperature counter
       QwtCounter*  ct_tedelay;          // Temp-equil-delay counter
 
@@ -90,8 +86,6 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
 
       QList< US_AbstractCenterpiece >  acp_list; // Full Centerpiece information
 
-      void test_optima_connection( void );
-      
    private slots:
       void sel_project     ( void );        // Slot for project button clicked
       void project_info    ( US_Project& ); // Slot for project diag results
@@ -100,7 +94,7 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
       void load_protocol   ( void );        // Slot for protocol loaded
       void changed_protocol( void );        // Slot for change in protocol name
       void centerpieceInfo ( void );        // Function for all centerpieces
-      void check_empty_runname(const QString &);       
+      void check_empty_runname(const QString &);
    signals:
       void  set_tabs_buttons_inactive ( void );
       void  set_tabs_buttons_active_readonly   ( void );
@@ -139,12 +133,17 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       QComboBox* cb_calibr;                           // Calibration combo box
       QComboBox* cb_operator;                         // Operator combo box
       QComboBox* cb_exptype;                          // Exp. Type combo box
-
+      QComboBox*   cb_optima;
+      QStringList  sl_optimas;
+      
       QVector< US_Rotor::Lab >               labs;    // All labs
       QVector< US_Rotor::Rotor >             rotors;  // All rotors in lab
       QVector< US_Rotor::AbstractRotor >     arotors; // All abstract rotors
       QVector< US_Rotor::RotorCalibration >  calibs;  // Calibrations of rotor
+      QList  < US_Rotor::Instrument >       instruments; 
 
+      US_Rotor::Instrument     currentInstrument; 
+	
       QStringList sl_labs;         // Lab combo choices
       QStringList sl_rotors;       // Rotor combo choices
       QStringList sl_arotors;      // Abstract rotor combo choices
@@ -152,6 +151,7 @@ class US_ExperGuiRotor : public US_WidgetsDialog
 
       QStringList sl_operators;    // Operator combo choices
       QLineEdit *  le_instrument;
+      QLineEdit*   le_optima_connected;
       
       int         dbg_level;
       int         nholes;          // Number of holes for current rotor
@@ -169,6 +169,7 @@ class US_ExperGuiRotor : public US_WidgetsDialog
 
       void changeOperator( int );  // Slot for change in operator
       void changeExpType( int );   // Slot for change in exp. type
+      void changeOptima ( int );   // Slot for change in exp. type
       
       void advRotor   ( void );    // Function for advanced rotor dialog
       // Rotor dialog value selected and accepted return values
@@ -176,12 +177,13 @@ class US_ExperGuiRotor : public US_WidgetsDialog
                             US_Rotor::RotorCalibration& );
       // Get pointer to abstractRotor for named rotor
       US_Rotor::AbstractRotor* abstractRotor( const QString );
+      void test_optima_connection( void );
 };
 
 //! \brief Experiment Speeds panel
 class US_ExperGuiSpeeds : public US_WidgetsDialog 
 {
-   Q_OBJECT
+   Q_OBJECT 
 
    public:
       US_ExperGuiSpeeds( QWidget* );

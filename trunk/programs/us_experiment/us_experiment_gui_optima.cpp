@@ -197,17 +197,6 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
    QSpacerItem* spacer2         = new QSpacerItem( 20, ihgt );
 
 
-   //Optima in use
-   QLabel*      lb_optima_banner    = us_banner( tr( "Optima Machine in Use" ) );
-   QLabel*      lb_optima           = us_label( tr( "Optima Name: " ) );
-                le_optima           = us_lineedit( "", 0, true );
-   QLabel*      lb_optima_connected = us_label( tr( "Connection Status: " ) );
-                le_optima_connected = us_lineedit( "", 0, true );
-
-   test_optima_connection();
-
-   qDebug() << "CONNECTION STATUS: General: " << mainw->connection_status;
-  
    le_runid->setPlaceholderText("Enter Run ID to continue");
    le_project->setPlaceholderText("Select Project to continue");
    
@@ -257,14 +246,6 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
    
    genL->addItem  ( spacer2,         row++, 6, 1, 2 );
    
-   genL->addWidget( lb_optima_banner, row++, 0, 1, 8 );
-   genL->addWidget( lb_optima,      row,     0, 1, 3 );
-   genL->addWidget( le_optima,      row++,   3, 1, 3 );
-   genL->addWidget( lb_optima_connected,      row,     0, 1, 3 );
-   genL->addWidget( le_optima_connected,      row++,   3, 1, 3 );   
-   
-   genL->addItem  ( spacer2,         row++, 6, 1, 2 );
-
    panel->addLayout( genL );
    panel->addStretch();
 
@@ -297,7 +278,6 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
       pr_names << protdata[ ii ][ 0 ];
 DbgLv(1) << "EGGe: main : prnames,prdata counts" << pr_names.count() << protdata.count();
 
- 
  mainw->solutions_change = false;
 
  //check_runname();
@@ -305,6 +285,7 @@ DbgLv(1) << "EGGe: main : prnames,prdata counts" << pr_names.count() << protdata
    // Do the initialization we do at panel entry
    initPanel();
 }
+
 
 // Return detail information for a specific centerpiece as named
 bool US_ExperGuiGeneral::centpInfo( const QString cpname,
@@ -625,13 +606,21 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
                 cb_calibr   = new QComboBox( this );
    QSpacerItem* spacer1     = new QSpacerItem( 20, ihgt );
 
+
+   QLabel*      lb_optima_banner    = us_banner( tr( "Select Optima Machine, Operator and Experiment Type " ) );
    QLabel*      lb_instrument = us_label( tr( "Instrument:" ) );
-                le_instrument = us_lineedit(   "", 1, true );
-   QLabel*      lb_exptype    = us_label( tr( "Experiment Type:" ) );
-                cb_exptype    = new QComboBox( this );
+   //le_instrument = us_lineedit(   "", 1, true );
+                cb_optima           = new QComboBox( this );
+   QLabel*      lb_optima_connected = us_label( tr( "Connection Status: " ) );
+                le_optima_connected = us_lineedit( "", 0, true );
+
    QLabel*      lb_operator   = us_label( tr( "Select Operator:" ) );
                 cb_operator   = new QComboBox( this );
    
+   QLabel*      lb_exptype    = us_label( tr( "Experiment Type:" ) );
+                cb_exptype    = new QComboBox( this );
+
+		
    int row     = 0;
    genL->addWidget( lb_lab,          row,   0, 1, 1 );
    genL->addWidget( cb_lab,          row++, 1, 1, 1 );
@@ -643,11 +632,19 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    genL->addWidget( pb_advrotor,     row++, 0, 1, 4 );
 
    row++;
+
+   genL->addItem  ( spacer1,         row++, 0, 1, 4 );
+   genL->addWidget( lb_optima_banner,row++, 0, 1, 4 );
    
-   genL->addWidget( lb_instrument,      row,     0, 1, 1 );
-   genL->addWidget( le_instrument,      row++,   1, 1, 1 );
+   
+   genL->addWidget( lb_instrument,         row,     0, 1, 1 );
+   genL->addWidget( cb_optima,             row,     1, 1, 1 );
+   genL->addWidget( lb_optima_connected,   row,     2, 1, 1 );
+   genL->addWidget( le_optima_connected,   row++,   3, 1, 1 );
+   
    genL->addWidget( lb_operator,        row,     0, 1, 1 );
    genL->addWidget( cb_operator,        row++,   1, 1, 1 );
+
    genL->addWidget( lb_exptype,         row,     0, 1, 1 );
    genL->addWidget( cb_exptype,         row++,   1, 1, 1 );   
    
@@ -736,50 +733,24 @@ DbgLv(1) << "EGR: chgLab  sl_rotors count" << sl_rotors.count();
    //ALEXEY identify instruments & operators, fill Gui elements
    US_Rotor::Lab lab_selected;
    lab_selected.readDB( labID, dbP );
-   QList< US_Rotor::Instrument > instruments = lab_selected.instruments;
-   //Connection
-   //ALEXEY: old way
-   QString inst_name("");
-   if (mainw->xpnport == 5551)  //Should be configured in instrument table
-     inst_name = "Optima 1";
-   else if (mainw->xpnport == 5552)
-     inst_name = "Optima 2";
-   else
-     inst_name = "Optima 1";
-
-   //ALEXEY: new way
-   // inst_name = mainw->currentInstrument[ "name" ];
+   instruments = lab_selected.instruments;
    
-   QString conn_status = mainw->connection_status ? "connected" : "disconnected";
-   
-   // QString inst_name_conn = inst_name + " ( " +  conn_status + " ) ";
-   // le_instrument->setText( inst_name_conn );
-
-   US_Rotor::Instrument currentInstrument;
+   //Instruments
+   sl_optimas.clear();
    foreach ( US_Rotor::Instrument instrument, instruments )
      {
-       if ( instrument.name == inst_name ) 
-	 currentInstrument   = instrument;  
+       if(instrument.name.contains("Optima")) 
+	 sl_optimas << QString::number( instrument.ID )
+	   + ": " + instrument.name;
      }
+   cb_optima->clear();
+   cb_optima->addItems( sl_optimas );
 
-   //currentInstrumentID = currentInstrument.ID;
-   le_instrument->setText( QString::number( currentInstrument.ID ) + ": " + inst_name );
-   
-   qDebug() << "INSTRUMENT ID: " << currentInstrument.ID;;
-   
-   //Operators
-   sl_operators.clear();
-   QList< US_Rotor::Operator > operators = currentInstrument.operators;
-   foreach ( US_Rotor::Operator oper, operators )
-     {
-       sl_operators << QString::number( oper.ID )
-                 + ": " + oper.fname + " " + oper.lname;
-     }
-   cb_operator->clear();
-   cb_operator->addItems( sl_operators );
+   connect( cb_optima,    SIGNAL( activated      ( int ) ),
+            this,         SLOT  ( changeOptima   ( int ) ) );
 
-   changeOperator(0);
-
+   changeOptima(0);
+ 
    //ExpType
    experimentTypes.clear();
    cb_exptype->clear();
@@ -792,6 +763,52 @@ DbgLv(1) << "EGR: chgLab  sl_rotors count" << sl_rotors.count();
 
    cb_exptype->addItems( experimentTypes );
    changeExpType( 0 );
+}
+
+
+// Slot for select in Optima in use
+void US_ExperGuiRotor::changeOptima( int ndx )
+{
+   cb_optima->setCurrentIndex( ndx );
+   QString coptima     = cb_optima->currentText();
+   QString descr       = coptima.section( ":", 1, 1 ).simplified();
+
+   for ( int ii = 0; ii < instruments.size(); ii++ )
+     {
+       QString name = instruments[ii].name.trimmed();
+       if ( name == descr )
+	 {
+	   currentInstrument = instruments[ii];
+
+	   mainw->currentInstrument[ "ID" ]              = QString::number( instruments[ii].ID );
+	   mainw->currentInstrument[ "serial" ]          = instruments[ii].serial;
+	   mainw->currentInstrument[ "name" ]            = instruments[ii].name;
+	   mainw->currentInstrument[ "optimaHost" ]      = instruments[ii].optimaHost;
+	   mainw->currentInstrument[ "optimaPort" ]      = QString::number( instruments[ii].optimaPort );
+	   mainw->currentInstrument[ "optimaDBname" ]    = instruments[ii].optimaDBname;
+	   mainw->currentInstrument[ "optimaDBusername" ] = instruments[ii].optimaDBusername;
+	   mainw->currentInstrument[ "optimaDBpassw" ]    = instruments[ii].optimaDBpassw;
+	   
+	   mainw->currentInstrument[ "opsys1" ]          = instruments[ii].os1;
+	   mainw->currentInstrument[ "opsys2" ]          = instruments[ii].os2;
+	   mainw->currentInstrument[ "opsys3" ]          = instruments[ii].os3;
+	 }
+     }
+   //Operators
+   sl_operators.clear();
+   QList< US_Rotor::Operator > operators = currentInstrument.operators;
+   foreach ( US_Rotor::Operator oper, operators )
+     {
+       qDebug() << "Operator: " << oper.lname;
+       sl_operators << QString::number( oper.ID )
+	 + ": " + oper.fname + " " + oper.lname;
+     }
+   cb_operator->clear();
+   cb_operator->addItems( sl_operators );
+   
+   changeOperator(0); 
+      
+   test_optima_connection();
 }
 
 // Slot for change in ExpType selection

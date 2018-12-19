@@ -38,6 +38,7 @@ class US_UTIL_EXTERN US_Rotor
          QString   GUID;      //!< The GUID of the operator
          QString   lname;     //!< The last name of the operator
          QString   fname;     //!< The first name of the operator
+
       };
 
       //! \brief the Instrument class describes an AUC instrument
@@ -47,6 +48,20 @@ class US_UTIL_EXTERN US_Rotor
          int       ID;        //!< The database ID of the instrument
          QString   name;      //!< The name of the instrument
          QString   serial;    //!< The serial number of the instrument
+	 int       radialCalID;
+	 QString   optimaHost;
+	 int       optimaPort;
+	 QString   optimaDBname;
+	 QString   optimaDBusername;
+	 QString   optimaDBpassw;
+	 int       selected;
+	 QString   os1;
+	 QString   os2;
+	 QString   os3;
+	 
+	 QString   radcalwvl;
+	 QString   chromoab;
+	 
          QList< Operator > operators;  //!< A list of people authorized to use the instrument
       };
 
