@@ -725,7 +725,7 @@ US_Rotor::Status US_Rotor::Lab::readDB( int labID, US_DB2* db )
          US_Rotor::Instrument instrument;
 
          q.clear();
-         q  << QString( "get_instrument_info" )
+         q  << QString( "get_instrument_info_new" )
             << QString::number( ID );
          db->query( q );
          db->next();
@@ -733,6 +733,19 @@ US_Rotor::Status US_Rotor::Lab::readDB( int labID, US_DB2* db )
          instrument.ID     = ID;
          instrument.name   = db->value( 0 ).toString();
          instrument.serial = db->value( 1 ).toString();
+	 instrument.optimaHost       = db->value( 5 ).toString();
+	 instrument.optimaPort       = db->value( 6 ).toString().toInt();
+	 instrument.optimaDBname     = db->value( 7 ).toString();
+	 instrument.optimaDBusername = db->value( 8 ).toString();
+	 instrument.optimaDBpassw    = db->value( 9 ).toString();
+	 instrument.selected         = db->value( 10 ).toString().toInt();
+	 
+	 instrument.os1              = db->value( 11 ).toString();
+	 instrument.os2              = db->value( 12 ).toString();
+	 instrument.os3              = db->value( 13 ).toString();
+	 
+	 instrument.radcalwvl        = db->value( 14 ).toString();
+	 instrument.chromoab         = db->value( 15 ).toString();
          instrument.operators.clear();
 
          this->instruments << instrument;

@@ -409,135 +409,6 @@ DbgLv(1) << "EGGe: inP: prn,prd counts" << protdata.count() << pr_names.count();
    
 }
 
-QMap<QString, QString> US_ExperGuiGeneral::returnSelectedInstrument( US_DB2* db )
-{
-  QMap<QString, QString> instrument;
-  int ID = 0;
-  
-  QStringList q( "" );
-  q.clear();
-  q  << QString( "get_instrument_names" )
-     << QString::number( 1 );
-  db->query( q );
-  
-  qDebug() << "ID, db->lastErrno()  " << ID << " " << db->lastErrno();
-  if ( db->lastErrno() == US_DB2::OK )      // If not, no instruments defined
-    {
-      while ( db->next() )
-	{
-	  if ( db->value( 2 ).toString().toInt() )
-	    {
-	      ID = db->value( 0 ).toString().toInt();
-	      break;
-	    }
-	}
-
-      qDebug() << "ID: " << ID;
-      
-      q.clear();
-      q  << QString( "get_instrument_info_new" )
-	 << QString::number( ID );
-      db->query( q );
-      db->next();
-      
-      instrument[ "ID" ]               = ID;
-      instrument[ "name" ]             = db->value( 0 ).toString();
-      instrument[ "serial" ]           = db->value( 1 ).toString();
-      instrument[ "optimaHost" ]       = db->value( 5 ).toString();
-      instrument[ "optimaPort" ]       = db->value( 6 ).toString();
-      instrument[ "optimaDBname" ]     = db->value( 7 ).toString();
-      instrument[ "optimaDBusername" ] = db->value( 8 ).toString();
-      instrument[ "optimaDBpassw" ]    = db->value( 9 ).toString();
-      instrument[ "selected" ]         = db->value( 10 ).toString();
-      instrument[ "opsys1" ]           = db->value( 11 ).toString();
-      instrument[ "opsys2" ]           = db->value( 12 ).toString();
-      instrument[ "opsys3" ]           = db->value( 13 ).toString();
-    }
-
-  qDebug() << "ID: " << ID;
-  return instrument;
-}
-
-void US_ExperGuiGeneral::test_optima_connection()
-{
-
-  // ALEXEY: the old way, form .conf file...
-  US_Passwd pw_op;
-  QStringList dblist  = US_Settings::defaultXpnHost();
-  QString name        = dblist[ 0 ];
-  QString xpnhost     = dblist[ 1 ];
-  int     xpnport     = dblist[ 2 ].toInt();
-  QString dbname      = dblist[ 3 ];
-  QString dbuser      = dblist[ 4 ];
-  QString epasw       = dblist[ 5 ];
-  QString epasw0      = epasw.section( "^", 0, 0 );
-  QString epasw1      = epasw.section( "^", 1, 1 );
-  QString dbpasw      = US_Crypto::decrypt( epasw0, pw_op.getPasswd(), epasw1 );
-
-
-   // //ALEXEY: new way: reading directly from DB
-   // qDebug() << "TEST CONNECTION : ";
-  
-   // US_Passwd pw;
-   // US_DB2* dbP = new US_DB2( pw.getPasswd() );
-   // mainw->currentInstrument = returnSelectedInstrument( dbP );
-   
-   // QString name        = mainw->currentInstrument[ "name" ];
-   // QString xpnhost     = mainw->currentInstrument[ "optimaHost" ];
-   // int     xpnport     = mainw->currentInstrument[ "optimaPort" ].toInt();
-   // QString dbname      = mainw->currentInstrument[ "optimaDBname" ];
-   // QString dbuser      = mainw->currentInstrument[ "optimaDBusername" ];
-   // QString dbpasw      = mainw->currentInstrument[ "optimaDBpassw" ];
-   
-   // qDebug() << "Optima in use: name, host, port, dbname, dbuser, dbpasw: " << name << " " << xpnhost << " "
-   // 	    << xpnport << " "  << dbname << " " << dbuser << " " << dbpasw ;
-
-
-   QPalette orig_pal = le_optima_connected->palette();
-   
-   if ( xpnhost.isEmpty() || QString::number(xpnport).isEmpty()
-	|| dbname.isEmpty() || dbuser.isEmpty() || dbpasw.isEmpty()  )
-     {
-       le_optima_connected->setText( "disconnected" );
-       QPalette *new_palette = new QPalette();
-       new_palette->setColor(QPalette::Text,Qt::red);
-       new_palette->setColor(QPalette::Base, orig_pal.color(QPalette::Base));
-       le_optima_connected->setPalette(*new_palette);
-
-       le_optima      ->setText( name );
-       
-       mainw->connection_status = false;
-       return;
-     }
-   
-   US_XpnData* xpn_data = new US_XpnData();
-   bool o_connected           = xpn_data->connect_data( xpnhost, xpnport, dbname, dbuser,  dbpasw );
-   xpn_data->close();
-   delete xpn_data;
-      
-   if ( o_connected )
-     {
-       le_optima_connected->setText( "connected" );
-       QPalette *new_palette = new QPalette();
-       new_palette->setColor(QPalette::Text, Qt::darkGreen);
-       new_palette->setColor(QPalette::Base, orig_pal.color(QPalette::Base));
-       le_optima_connected->setPalette(*new_palette);
-     }
-   else
-     {
-       le_optima_connected->setText( "disconnected" );
-       QPalette *new_palette = new QPalette();
-       new_palette->setColor(QPalette::Text,Qt::red);
-       new_palette->setColor(QPalette::Base, orig_pal.color(QPalette::Base));
-       le_optima_connected->setPalette(*new_palette);
-     }
-
-   le_optima      ->setText( name );
-
-   mainw->connection_status = o_connected;
-   mainw->xpnhost = xpnhost;
-   mainw->xpnport = xpnport;
-}
 
 void US_ExperGuiGeneral::check_empty_runname( const QString &str )
 {
@@ -696,6 +567,64 @@ DbgLv(1) << "EGRo: inP:  rotID" << rpRotor->rotID << "rotor" << rpRotor->rotor
  << "cb_rotor text" << cb_rotor->currentText();
 }
 
+
+void US_ExperGuiRotor::test_optima_connection()
+{
+
+   QString name        = mainw->currentInstrument[ "name" ];
+   QString xpnhost     = mainw->currentInstrument[ "optimaHost" ];
+   int     xpnport     = mainw->currentInstrument[ "optimaPort" ].toInt();
+   QString dbname      = mainw->currentInstrument[ "optimaDBname" ];
+   QString dbuser      = mainw->currentInstrument[ "optimaDBusername" ];
+   QString dbpasw      = mainw->currentInstrument[ "optimaDBpassw" ];
+   
+   qDebug() << "Optima in use: name, host, port, dbname, dbuser, dbpasw: " << name << " " << xpnhost << " "
+   	    << xpnport << " "  << dbname << " " << dbuser << " " << dbpasw ;
+
+
+   QPalette orig_pal = le_optima_connected->palette();
+   
+   if ( xpnhost.isEmpty() || QString::number(xpnport).isEmpty()
+	|| dbname.isEmpty() || dbuser.isEmpty() || dbpasw.isEmpty()  )
+     {
+       le_optima_connected->setText( "disconnected" );
+       QPalette *new_palette = new QPalette();
+       new_palette->setColor(QPalette::Text,Qt::red);
+       new_palette->setColor(QPalette::Base, orig_pal.color(QPalette::Base));
+       le_optima_connected->setPalette(*new_palette);
+
+       mainw->connection_status = false;
+       return;
+     }
+   
+   US_XpnData* xpn_data = new US_XpnData();
+   bool o_connected           = xpn_data->connect_data( xpnhost, xpnport, dbname, dbuser,  dbpasw );
+   xpn_data->close();
+   delete xpn_data;
+      
+   if ( o_connected )
+     {
+       le_optima_connected->setText( "connected" );
+       QPalette *new_palette = new QPalette();
+       new_palette->setColor(QPalette::Text, Qt::darkGreen);
+       new_palette->setColor(QPalette::Base, orig_pal.color(QPalette::Base));
+       le_optima_connected->setPalette(*new_palette);
+     }
+   else
+     {
+       le_optima_connected->setText( "disconnected" );
+       QPalette *new_palette = new QPalette();
+       new_palette->setColor(QPalette::Text,Qt::red);
+       new_palette->setColor(QPalette::Base, orig_pal.color(QPalette::Base));
+       le_optima_connected->setPalette(*new_palette);
+     }
+
+   mainw->connection_status = o_connected;
+   mainw->xpnhost = xpnhost;
+   mainw->xpnport = xpnport;
+}
+
+
 // Save panel controls when about to leave the panel
 void US_ExperGuiRotor::savePanel()
 {
@@ -705,7 +634,7 @@ void US_ExperGuiRotor::savePanel()
    QString cal          = cb_calibr->currentText();
    QString oper         = cb_operator->currentText();
    QString exptype      = cb_exptype ->currentText();
-   QString instr        = le_instrument ->text();
+   QString instr        = cb_optima ->currentText();
       
    rpRotor->laboratory  = QString( lab ).section( ":", 1, 1 ).simplified();
    rpRotor->rotor       = QString( rot ).section( ":", 1, 1 ).simplified();
