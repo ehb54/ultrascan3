@@ -36,6 +36,9 @@ class US_XpnHostDB : public US_Widgets
       QString   os1;
       QString   os2;
       QString   os3;
+
+      QString   radcalwvl;
+      QString   chromoab; 
       
       //Instrument();
       
@@ -66,6 +69,9 @@ class US_XpnHostDB : public US_Widgets
     QLineEdit*   le_user;  
     QLineEdit*   le_pasw;
 
+    QLineEdit*   le_radcalwvl;
+    QLineEdit*   le_chromofile;
+
     QLineEdit*   le_os1;  
     QLineEdit*   le_os2;  
     QLineEdit*   le_os3;  
@@ -95,5 +101,9 @@ class US_XpnHostDB : public US_Widgets
     void newHost( QMap <QString, QString> & newInstrument );
     void editHost( QMap <QString, QString> & newInstrument );
     void fillGui( QMap <QString, QString> & );
+    void optima_selected( void );
+    void optima_selected( QListWidgetItem* );
+    void editnew_cancelled( void );
+    bool check_user_level( void );
 };
 #endif

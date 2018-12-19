@@ -1230,7 +1230,7 @@ BEGIN
       IF ( count_rcal_instrs = 0 ) THEN
         SELECT   name, serialNumber, labID, dateUpdated, radialCalID, 
 	         optimaHost, optimaPort, optimaDBname, optimaDBusername, 
-		 DECODE(optimaDBpassw,'secretOptimaDB'), selected, opsys1, opsys2, opsys3
+		 DECODE(optimaDBpassw,'secretOptimaDB'), selected, opsys1, opsys2, opsys3, RadCalWvl, chromaticAB
         FROM     instrument
         WHERE    instrumentID = p_instrumentID;
 
@@ -1298,7 +1298,9 @@ CREATE PROCEDURE add_instrument_new ( p_personGUID    CHAR(36),
 				    p_optimadbpassw  VARCHAR(100),
 				    p_opsys1        TEXT,
                                     p_opsys2        TEXT,
-                                    p_opsys3        TEXT )
+                                    p_opsys3        TEXT,
+				    p_radcalwvl     TEXT,
+                                    p_chromoab      TEXT )
 
   MODIFIES SQL DATA
 
@@ -1321,6 +1323,8 @@ BEGIN
       opsys1            = p_opsys1,
       opsys2		= p_opsys2,
       opsys3            = p_opsys3,
+      RadCalWvl         = p_radcalwvl,
+      chromaticAB       = p_chromoab,
       dateUpdated       = NOW();
 
     SET @LAST_INSERT_ID = LAST_INSERT_ID();
@@ -1372,7 +1376,9 @@ CREATE PROCEDURE update_instrument_new ( p_personGUID    CHAR(36),
                                        p_optimadbpassw  VARCHAR(100),
 				       p_opsys1        TEXT,
 				       p_opsys2        TEXT,
-				       p_opsys3        TEXT )
+				       p_opsys3        TEXT,
+				       p_radcalwvl     TEXT,
+				       p_chromoab      TEXT )
 
   MODIFIES SQL DATA
 
@@ -1396,6 +1402,8 @@ BEGIN
       opsys1            = p_opsys1,
       opsys2            = p_opsys2,
       opsys3            = p_opsys3,	
+      RadCalWvl         = p_radcalwvl,
+      chromaticAB       = p_chromoab,
       dateUpdated       = NOW()
     WHERE instrumentID = p_instrumentID;
 

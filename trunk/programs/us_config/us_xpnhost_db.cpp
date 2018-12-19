@@ -43,9 +43,9 @@ US_XpnHostDB::US_XpnHostDB( QWidget* w, Qt::WindowFlags flags )
    QLabel* banner = us_banner( tr( "Optima Host List" ) );
    topbox->addWidget( banner );
 
-   QLabel* banner2 = us_banner(
-        tr( "(Doubleclick for details and set the default)" ), -1 );
-   topbox->addWidget( banner2 );
+   // QLabel* banner2 = us_banner(
+   //      tr( "(Doubleclick for details and set the default)" ), -1 );
+   // topbox->addWidget( banner2 );
 
    lw_entries = new QListWidget();
    lw_entries->setSortingEnabled( true );
@@ -65,7 +65,7 @@ US_XpnHostDB::US_XpnHostDB( QWidget* w, Qt::WindowFlags flags )
 
 
    // Detail info
-   QLabel* info = us_banner( tr( "Optima Host Detailed Information" ) );
+   QLabel* info = us_banner( tr( "Optima Host Connection Information" ) );
    topbox->addWidget( info );
 
    // Row 0
@@ -112,10 +112,27 @@ US_XpnHostDB::US_XpnHostDB( QWidget* w, Qt::WindowFlags flags )
    details->addWidget( pasw,           row,   0, 1, 2 );
    details->addWidget( le_pasw,        row++, 2, 1, 2 );
 
+   //Row 6a
+   QLabel* bn_chromoab   = us_banner( tr( "Chromatic Aberation Information" ) );
+   details->addWidget( bn_chromoab,      row++, 0, 1, 4 );
+
+   //Row 6b
+   QLabel* lb_radcalwvl  = us_label( tr( "Radial Calibration Wavelength:" ) );
+   le_radcalwvl          = us_lineedit( "", 0, true );
+   details->addWidget( lb_radcalwvl,    row,   0, 1, 2 );
+   details->addWidget( le_radcalwvl,    row++, 2, 1, 2 );
+   
+   //Row 6c
+   QLabel* lb_chromofile  = us_label( tr( "Chromatic Aberration Array:" ) );
+   le_chromofile          = us_lineedit( "", 0, true );
+   details->addWidget( lb_chromofile,    row,   0, 1, 2 );
+   details->addWidget( le_chromofile,    row++, 2, 1, 2 );  
+
    // Row 7
    QLabel* bn_optsys   = us_banner( tr( "Installed Optical Systems" ) );
    details->addWidget( bn_optsys,      row++, 0, 1, 4 );
-
+      
+ 
    // Rows 8,9,10
    QLabel* lb_os1      = us_label( tr( "Op Sys1:" ) );
    le_os1              = us_lineedit( "", 0, true );
@@ -196,9 +213,11 @@ US_XpnHostDB::US_XpnHostDB( QWidget* w, Qt::WindowFlags flags )
    if ( instruments.size() > 0 )
      update_lw( );
 
-   connect( lw_entries, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
-	                SLOT  ( select_db        ( QListWidgetItem* ) ) );
-   
+   // connect( lw_entries, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
+   // 	                SLOT  ( select_db        ( QListWidgetItem* ) ) );
+
+   connect( lw_entries, SIGNAL( itemSelectionChanged() ),
+                        SLOT  ( optima_selected() ) );
 
 //    // Start out with default entry shown
 // qDebug() << "xpnH:Main: call xpn_db_hosts";
@@ -209,6 +228,9 @@ US_XpnHostDB::US_XpnHostDB( QWidget* w, Qt::WindowFlags flags )
 // qDebug() << "xpnH:Main: call select_db";
 //    select_db( lw_entries->currentItem(), false );
 
+
+   setMinimumSize( 450 , 400 );
+   adjustSize();
 }
 
 
@@ -272,6 +294,10 @@ void US_XpnHostDB::readInstruments( US_DB2* db )
 	  instrument.os1              = db->value( 11 ).toString();
 	  instrument.os2              = db->value( 12 ).toString();
 	  instrument.os3              = db->value( 13 ).toString();
+
+	  instrument.radcalwvl        = db->value( 14 ).toString();
+	  instrument.chromoab         = db->value( 15 ).toString();
+
 	  
 	  if ( instrument.name.contains("Optima") || instrument.optimaHost.contains("AUC_DATA_DB") )
 	    this->instruments << instrument;
@@ -294,12 +320,13 @@ void US_XpnHostDB::update_lw( )
 	   QString desc = instruments[ii].name.trimmed();
 
 	   qDebug() << "Instrument Name: " << desc;
-	   
-	   if ( instruments[ii].selected )
-	     {  // Select the matching entry in the list and flag it as selected
-	       desc.append( " (default)" );
-	       def_sel         = true;    // Flag a default selection made
-	     }
+
+	   //ALEXEY: do not add any "default" as we won't enable settign default (from this program)
+	   // if ( instruments[ii].selected )
+	   //   {  // Select the matching entry in the list and flag it as selected
+	   //     desc.append( " (default)" );
+	   //     def_sel         = true;    // Flag a default selection made
+	   //   }
 
 	   QListWidgetItem* widget = new QListWidgetItem( desc );
 	   lw_entries->addItem( widget );
@@ -311,6 +338,8 @@ void US_XpnHostDB::update_lw( )
        if ( !def_sel  &&  instruments.size() > 0 )
 	 {  // Insure that *something* is selected!
 	   lw_entries->setCurrentRow( 0 );
+	   QListWidgetItem* item = lw_entries->item( 0 );
+	   optima_selected( item );
 	   qDebug() << "Def. sel. selected!!!";
 	 }
 
@@ -322,6 +351,93 @@ void US_XpnHostDB::update_lw( )
      {
        
      }
+}
+
+// When selected, fill GUI
+void US_XpnHostDB::optima_selected( )
+{
+  if ( lw_entries->currentRow() < 0 )
+   {
+      reset();
+      return;
+   }
+
+  QListWidgetItem *entry = lw_entries->currentItem();
+  QString item           = entry->text().remove( " (default)" );
+  
+  for ( int ii = 0; ii < instruments.size(); ii++ )
+   {
+     if ( item == instruments[ii].name )
+       {
+	 // Populate current entry GUI slots
+	 le_description->setText( item );
+	 le_host       ->setText( instruments[ii].optimaHost );
+	 le_port       ->setText( QString::number( instruments[ii].optimaPort ) );
+	 le_name       ->setText( instruments[ii].optimaDBname );
+	 le_user       ->setText( instruments[ii].optimaDBusername );
+	 le_pasw       ->setText( instruments[ii].optimaDBpassw );
+
+	 le_os1        ->setText( instruments[ii].os1 );
+	 le_os2        ->setText( instruments[ii].os2 );
+	 le_os3        ->setText( instruments[ii].os3 );
+
+	 if ( instruments[ii].radcalwvl.isEmpty() || instruments[ii].chromoab.isEmpty() )
+	   le_radcalwvl  ->setText( "N/A" );
+	 else
+	   le_radcalwvl  ->setText( instruments[ii].radcalwvl );
+
+	 if ( instruments[ii].chromoab.isEmpty()  )
+	   le_chromofile  ->setText( "Not Uploaded (zero)" );
+	 else
+	   le_chromofile  ->setText( "Uploaded" );
+	 
+	 
+       }
+
+   }
+}
+
+// When selected, fill GUI
+void US_XpnHostDB::optima_selected( QListWidgetItem *tmp_item )
+{
+  if ( lw_entries->currentRow() < 0 )
+   {
+      reset();
+      return;
+   }
+
+  QListWidgetItem *entry = tmp_item;
+  QString item           = entry->text().remove( " (default)" );
+  
+  for ( int ii = 0; ii < instruments.size(); ii++ )
+   {
+     if ( item == instruments[ii].name )
+       {
+	 // Populate current entry GUI slots
+	 le_description->setText( item );
+	 le_host       ->setText( instruments[ii].optimaHost );
+	 le_port       ->setText( QString::number( instruments[ii].optimaPort ) );
+	 le_name       ->setText( instruments[ii].optimaDBname );
+	 le_user       ->setText( instruments[ii].optimaDBusername );
+	 le_pasw       ->setText( instruments[ii].optimaDBpassw );
+
+	 le_os1        ->setText( instruments[ii].os1 );
+	 le_os2        ->setText( instruments[ii].os2 );
+	 le_os3        ->setText( instruments[ii].os3 );
+
+	 if ( instruments[ii].radcalwvl.isEmpty() || instruments[ii].chromoab.isEmpty() )
+	   le_radcalwvl  ->setText( "N/A" );
+	 else
+	   le_radcalwvl  ->setText( instruments[ii].radcalwvl );
+
+	 if ( instruments[ii].chromoab.isEmpty()  )
+	   le_chromofile  ->setText( "Not Uploaded (zero)" );
+	 else
+	   le_chromofile  ->setText( "Uploaded" );
+	 
+       }
+
+   }
 }
 
 // Select instrument
@@ -438,9 +554,30 @@ void US_XpnHostDB::Instrument::reset( void )
    selected = 0;
 }
 
+bool US_XpnHostDB::check_user_level()
+{
+  bool status = false;
+
+  qDebug() << "User Level: " << US_Settings::us_inv_level();
+  
+  if ( US_Settings::us_inv_level() < 4 )
+    {
+      QMessageBox::warning( this,
+			    tr( "Check User Level" ),
+			    tr( "Low user level!\n This user cannot Add, Edit and Delete Entries.\n" ) );
+      status = true;
+    }
+  return status;
+}
+
+
 // Add New Entry
 void US_XpnHostDB::add_new( void )
-{  
+{
+
+  if ( check_user_level() )
+    return;
+ 
    reset();
    
    US_NewXpnHostDB* new_xpnhost_db  = new US_NewXpnHostDB;
@@ -448,13 +585,17 @@ void US_XpnHostDB::add_new( void )
    new_xpnhost_db->setWindowModality(Qt::WindowModal);
    new_xpnhost_db->setAttribute(Qt::WA_DeleteOnClose);
    
-   connect( new_xpnhost_db, SIGNAL ( accepted( QMap <QString, QString> &) ), this, SLOT ( newHost( QMap <QString, QString> &) ) ); 
+   connect( new_xpnhost_db, SIGNAL ( accepted( QMap <QString, QString> &) ), this, SLOT ( newHost( QMap <QString, QString> &) ) );
+   connect( new_xpnhost_db, SIGNAL ( editnew_cancelled( ) ), this, SLOT ( editnew_cancelled() ) ); 
    new_xpnhost_db -> show();
 }
 
 // Edit Entry
 void US_XpnHostDB::editDB( void )
 {
+   if ( check_user_level() )
+     return;
+  
    reset();
     
    QListWidgetItem* entry = lw_entries->currentItem();
@@ -487,6 +628,9 @@ void US_XpnHostDB::editDB( void )
 	   currentInstrument[ "os1" ]      = instruments[ii].os1; 
 	   currentInstrument[ "os2" ]      = instruments[ii].os2;   
 	   currentInstrument[ "os3" ]      = instruments[ii].os3;
+
+	   currentInstrument[ "radcalwvl" ]  = instruments[ii].radcalwvl;
+	   currentInstrument[ "chromoab" ]   = instruments[ii].chromoab;
 	   
 	   break;
 	 }
@@ -507,7 +651,8 @@ void US_XpnHostDB::editDB( void )
    edit_xpnhost_db->setWindowModality(Qt::WindowModal);
    edit_xpnhost_db->setAttribute(Qt::WA_DeleteOnClose);
    
-   connect( edit_xpnhost_db, SIGNAL ( accepted( QMap <QString, QString> &) ), this, SLOT ( editHost( QMap <QString, QString> &) ) ); 
+   connect( edit_xpnhost_db, SIGNAL ( accepted( QMap <QString, QString> &) ), this, SLOT ( editHost( QMap <QString, QString> &) ) );
+   connect( edit_xpnhost_db, SIGNAL ( editnew_cancelled( ) ), this, SLOT ( editnew_cancelled() ) ); 
    edit_xpnhost_db -> show();
 }
 
@@ -540,8 +685,9 @@ void US_XpnHostDB::editHost( QMap < QString, QString > & newInstrument  )
      << newInstrument[ "optimaDBpassw" ]
      << newInstrument[ "os1" ]
      << newInstrument[ "os2" ]
-     << newInstrument[ "os3" ];
-    //<< encpw;
+     << newInstrument[ "os3" ]
+     << newInstrument[ "radCalWvl" ]
+     << newInstrument[ "chromoArray" ];
 	
   db->query( q );
   
@@ -560,6 +706,11 @@ void US_XpnHostDB::editHost( QMap < QString, QString > & newInstrument  )
   // 	lw_entries->setCurrentItem( item_by_text, QItemSelectionModel::Deselect );
   //   }
   
+}
+
+void US_XpnHostDB::editnew_cancelled( )
+{
+  update_lw( );
 }
 
 // Fill available GUI elements
@@ -631,7 +782,10 @@ void US_XpnHostDB::newHost( QMap < QString, QString > & newInstrument  )
      << newInstrument[ "optimaDBpassw" ]
      << newInstrument[ "os1" ]
      << newInstrument[ "os2" ]
-     << newInstrument[ "os3" ];    
+     << newInstrument[ "os3" ]
+     << newInstrument[ "radCalWvl" ]
+     << newInstrument[ "chromoArray" ];
+	
     //<< encpw;
 	
   db->query( q );
@@ -733,6 +887,9 @@ qDebug() << "test_connect: (2)dbpasw" << dbpasw;
 // Delete stored host from DB
 void US_XpnHostDB::deleteDB( void )
 {
+   if ( check_user_level() )
+     return;
+  
    bool default_to_remove = false;
   
    QListWidgetItem* entry = lw_entries->currentItem();
@@ -827,7 +984,7 @@ void US_XpnHostDB::deleteDB( void )
 	   msg += QString("\n NOTE: the default DB was reset to %1").arg("Optima 1");
 	 }
 
-       reset();
+       //reset();
        QMessageBox::information( this,
 				 tr( "XpnHost Removed" ),
 				 msg );
@@ -853,6 +1010,9 @@ void US_XpnHostDB::reset( void )
    le_os1        ->setText( "" );
    le_os2        ->setText( "" );
    le_os3        ->setText( "" );
+
+   le_radcalwvl  ->setText( "" );
+   le_chromofile ->setText( "" );
 
 }
 

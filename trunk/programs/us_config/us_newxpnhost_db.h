@@ -44,7 +44,10 @@ class US_NewXpnHostDB : public US_Widgets
   QLineEdit*   le_port;  
   QLineEdit*   le_name;  
   QLineEdit*   le_user;  
-  QLineEdit*   le_pasw;  
+  QLineEdit*   le_pasw;
+
+  QwtCounter*  ct_radcalwvl;
+  QLineEdit*   le_chromofile;
   
   QComboBox*   cb_os1;
   QComboBox*   cb_os2;
@@ -53,13 +56,21 @@ class US_NewXpnHostDB : public US_Widgets
   bool use_db;
 
   bool update_instrument;
-  
+  QString ChromoArrayList;
+  QMap<double,double> ChromoArray;
+
+  QVector<double> corr_lambda;
+  QVector<double> corr_value;
   
  private slots:
    void save_new     ( void ); 
    void cancel       ( void ); 
    void fillGui      ( void );
    void desc_changed ( QString );
+   void load_chromo  ( void );
+   void readingChromoArrayFile  (const QString&);
+   void readingChromoArrayDB   ( void );
+   void shiftChromoArray  ( double );
    /* void reset       ( void ); */
    /* void save_default( void ); */
    /* void deleteDB    ( void ); */
@@ -67,5 +78,6 @@ class US_NewXpnHostDB : public US_Widgets
    
  signals:
    void accepted( QMap <QString, QString> & newInstrument );
+   void editnew_cancelled( void );
 };
 #endif

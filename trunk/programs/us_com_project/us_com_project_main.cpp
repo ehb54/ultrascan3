@@ -12,10 +12,10 @@ int main( int argc, char* argv[] )
 
    // License is OK.  Start up.
 
-   US_ComProjectMain w;
+   US_ComProjectMain * w = new US_ComProjectMain;
    //w.setFrameShape( QFrame::Box);
    //w.setLineWidth(1);
-   w.show();                   //!< \memberof QWidget
+   w->show();                   //!< \memberof QWidget
    return application.exec();  //!< \memberof QApplication
 }
 
