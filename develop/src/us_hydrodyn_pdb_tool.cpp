@@ -4596,7 +4596,9 @@ void US_Hydrodyn_Pdb_Tool::sol2wat_traj( QTreeWidget *lv ) {
    QString summary_name           = name_prefix + "_summary";
    QString summary_res_name       = name_prefix + "_summary_res";
    QString summary_res_atom_name  = name_prefix + "_summary_res_atom";
-   QString bin_name               = name_prefix + "_bin";
+   QString bin_name               = name_prefix + "_bin_r";
+   QString bind_name              = name_prefix + "_bin_d";
+   QString binda_name             = name_prefix + "_bin_d_a";
 
    csv bin_csv;
    bin_csv.name     = bin_name;
@@ -4607,6 +4609,30 @@ void US_Hydrodyn_Pdb_Tool::sol2wat_traj( QTreeWidget *lv ) {
       bin_csv.header.push_back( QString( "Rank %1 frequency" ).arg( i ) );
    }
 
+   csv bind_csv;
+   bind_csv.name     = bind_name;
+   bind_csv.filename = reportpath + "/" + bind_name + ".csv";
+   bind_csv.header.push_back( "Distance" );
+   
+   for ( int i = 1; i <= max_rank; ++i ) {
+      bind_csv.header.push_back( QString( "Rank %1 frequency" ).arg( i ) );
+   }
+
+   csv binda_csv;
+   binda_csv.name     = binda_name;
+   binda_csv.filename = reportpath + "/" + binda_name + ".csv";
+   binda_csv.header.push_back( "Distance" );
+   QStringList binda_atoms;
+   binda_atoms
+      << "C"
+      << "O"
+      << "N"
+      ;
+   
+   for ( int i = 0; i < binda_atoms.size(); ++i ) {
+      binda_csv.header.push_back( QString( "Atom %1" ).arg( binda_atoms[ i ] ) );
+   }
+   
    csv summary_csv;
    csv summary_res_csv;
    csv summary_res_atom_csv;
@@ -4718,8 +4744,13 @@ void US_Hydrodyn_Pdb_Tool::sol2wat_traj( QTreeWidget *lv ) {
          ;
    }
 
-   map < double, map < int, int > > bins2; // distance, rank, frequency
-   map < double, map < int, int > > bins3; // distance, rank, frequency
+   map < double, map < int, int > > bins2; // radius, rank, frequency
+   map < double, map < int, int > > bins3; // radius, rank, frequency
+   map < double, map < int, int > > binds2; // distance, rank, frequency
+   map < double, map < int, int > > binds3; // distance, rank, frequency
+
+   map < double, map < QString, int > > bindas2; // distance, atom, frequency
+   map < double, map < QString, int > > bindas3; // distance, atom, frequency
 
    // by residue info
    
@@ -4860,6 +4891,7 @@ void US_Hydrodyn_Pdb_Tool::sol2wat_traj( QTreeWidget *lv ) {
 
       QString rname = hydration_header[ csvj ].rname;
       QString aname = hydration_header[ csvj ].aname;
+      QString atom  = aname.trimmed().left( 1 );
 
       // now compute avg, min, max, sd, skew of each
 
@@ -4877,10 +4909,18 @@ void US_Hydrodyn_Pdb_Tool::sol2wat_traj( QTreeWidget *lv ) {
                us_stats[ "d" + qsrank ].add_point( it2->second[ rank ].d );
                us_stats[ "r" + qsrank ].add_point( it2->second[ rank ].r );
 
-               bins2[ 0.01  * round( it2->second[ rank ].r * 100  ) ][ this_max_rank - 1 ]++;
-               bins3[ 0.001 * round( it2->second[ rank ].r * 1000 ) ][ this_max_rank - 1 ]++;
+               bins2  [ 0.01  * round( it2->second[ rank ].r * 100  ) ][ this_max_rank - 1 ]++;
+               bins3  [ 0.001 * round( it2->second[ rank ].r * 1000 ) ][ this_max_rank - 1 ]++;
+               binds2 [ 0.01  * round( it2->second[ rank ].d * 100  ) ][ this_max_rank - 1 ]++;
+               binds3 [ 0.001 * round( it2->second[ rank ].d * 1000 ) ][ this_max_rank - 1 ]++;
             }
          } // this_max_rank
+
+         // just rank 1 for atom distance binning
+         if ( it2->second.size() ) {
+            bindas2[ 0.01  * round( it2->second[ 0 ].d * 100  ) ][ atom ]++;
+            bindas3[ 0.001 * round( it2->second[ 0 ].d * 1000 ) ][ atom ]++;
+         }
       } // frame
       if ( us_stats[ "w" ].count() < (int) filenames.size() ) {
          vector < double > x( (int) filenames.size() - us_stats[ "w" ].count(), 0e0 );
@@ -4948,12 +4988,88 @@ void US_Hydrodyn_Pdb_Tool::sol2wat_traj( QTreeWidget *lv ) {
          bin_csv.data.push_back( tmp_data );
       }
    }
-               
+
+   {
+      for ( map < double, map < int, int > >::iterator it = binds2.begin();
+            it != binds2.end();
+            ++it ) {
+         vector < QString > tmp_data;
+         tmp_data.push_back( QString( "%1" ).arg( it->first ) );
+         for ( int rank = 0; rank < max_rank; ++rank ) {
+            if ( it->second.count( rank ) ) {
+               tmp_data.push_back( QString( "%1" ).arg( it->second[ rank ] ) );
+            } else {
+               tmp_data.push_back( "0" );
+            }
+         }
+         bind_csv.data.push_back( tmp_data );
+      }
+
+      {
+         vector < QString > tmp_data;
+         bind_csv.data.push_back( tmp_data );
+      }
+
+      for ( map < double, map < int, int > >::iterator it = binds3.begin();
+            it != binds3.end();
+            ++it ) {
+         vector < QString > tmp_data;
+         tmp_data.push_back( QString( "%1" ).arg( it->first ) );
+         for ( int rank = 0; rank < max_rank; ++rank ) {
+            if ( it->second.count( rank ) ) {
+               tmp_data.push_back( QString( "%1" ).arg( it->second[ rank ] ) );
+            } else {
+               tmp_data.push_back( "0" );
+            }
+         }
+         bind_csv.data.push_back( tmp_data );
+      }
+   }
+
+   {
+      for ( map < double, map < QString, int > >::iterator it = bindas2.begin();
+            it != bindas2.end();
+            ++it ) {
+         vector < QString > tmp_data;
+         tmp_data.push_back( QString( "%1" ).arg( it->first ) );
+         for ( int i = 0; i < (int) binda_atoms.size(); ++i ) {
+            if ( it->second.count( binda_atoms[ i ] ) ) {
+               tmp_data.push_back( QString( "%1" ).arg( it->second[ binda_atoms[ i ] ] ) );
+            } else {
+               tmp_data.push_back( "0" );
+            }
+         }
+         binda_csv.data.push_back( tmp_data );
+      }
+
+      {
+         vector < QString > tmp_data;
+         binda_csv.data.push_back( tmp_data );
+      }
+
+      for ( map < double, map < QString, int > >::iterator it = bindas3.begin();
+            it != bindas3.end();
+            ++it ) {
+         vector < QString > tmp_data;
+         tmp_data.push_back( QString( "%1" ).arg( it->first ) );
+         for ( int i = 0; i < (int) binda_atoms.size(); ++i ) {
+            if ( it->second.count( binda_atoms[ i ] ) ) {
+               tmp_data.push_back( QString( "%1" ).arg( it->second[ binda_atoms[ i ] ] ) );
+            } else {
+               tmp_data.push_back( "0" );
+            }
+         }
+         binda_csv.data.push_back( tmp_data );
+      }
+   }
+   
    if (
        !csv_write( header_csv, summary_csv ) ||
        !csv_write( header_res_csv, summary_res_csv ) ||
        !csv_write( header_res_atom_csv, summary_res_atom_csv ) ||
-       !csv_write( bin_csv )
+       !csv_write( bin_csv ) ||
+       !csv_write( bind_csv ) ||
+       !csv_write( binda_csv )
        ) {
       return;
    }
