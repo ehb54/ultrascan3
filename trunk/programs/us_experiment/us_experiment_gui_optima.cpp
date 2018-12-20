@@ -4617,7 +4617,7 @@ void US_ExperGuiUpload::submitExperiment()
 	       nwavl_tot  += rpRange->chrngs[ kk ].wvlens.count();
 	     }
 	   protocol_details[ "TripleNumber" ] = QString::number(nwavl_tot);
-	   
+	   protocol_details[ "OptimaName" ]   = rpRotor->instrumentname;
 	 }
        else
 	 {
