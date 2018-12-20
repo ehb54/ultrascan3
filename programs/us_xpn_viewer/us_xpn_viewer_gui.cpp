@@ -1060,27 +1060,18 @@ void US_XpnDataViewer::enableControls( void )
    nscan       = allData[ 0 ].scanCount();
    npoint      = allData[ 0 ].pointCount();
    ntpoint     = nscan * npoint;
-   isMWL       = ( nlambda > 2 );
-   if ( isMWL )
-   {  // If apparently MWL, test for all wavelengths each channel
-      int ktrip   = ncellch * nlambda;
-      if ( ntriple != ktrip )
-      {  // Possibly to be treated on triple basis (not MWL)
-         if ( ntriple <= ( nlambda * 2 )  ||  ntriple < 16 )
-         {
-            isMWL       = false;
-            cb_cellchn ->setEnabled( false );
-         }
-      }
-   }
+   int ktrip   = ncellch * nlambda;
+   isMWL       = ( nlambda > 2  &&  ntriple == ktrip  &&  ntriple > 48 );
+   cb_cellchn ->setEnabled( isMWL );
+
 DbgLv(1) << "ec: ncc nwl nsc npt ntpt" << ncellch << nlambda << nscan
  << npoint << ntpoint << "Mwl" << isMWL;
+DbgLv(1) << "ec: npoint" << npoint << "radsize" << r_radii.count();
+DbgLv(1) << "ec: nlambda" << nlambda << "lmbsize" << lambdas.count();
+DbgLv(1) << "ec: ntriple" << ntriple << "trpsize" << triples.count() << "ktrip" << ktrip;
    QStringList slrads;
    QStringList sllmbs;
    QStringList plrecs;
-DbgLv(1) << "ec: npoint" << npoint << "radsize" << r_radii.count();
-DbgLv(1) << "ec: nlambda" << nlambda << "lmbsize" << lambdas.count();
-DbgLv(1) << "ec: ntriple" << ntriple << "trpsize" << triples.count();
 
    for ( int jj = 0; jj < npoint; jj++ )
       slrads << QString().sprintf( "%.3f", r_radii[ jj ] );
