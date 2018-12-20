@@ -51,6 +51,10 @@ class US_XpnDataViewer : public US_Widgets
 
      QLineEdit*     le_dir;
      QLineEdit*     le_dbhost;
+     QComboBox*     cb_optima;           // New
+     QStringList    sl_optimas;          // New
+     QLineEdit*     le_optima_connected; //New
+     
      QLineEdit*     le_runID;
      QLineEdit*     le_lrange;
      QLineEdit*     le_status;
@@ -101,7 +105,9 @@ class US_XpnDataViewer : public US_Widgets
      QString        xpnname;
      QString        xpnuser;
      QString        xpnpasw;
-     QMap<QString, QString> currentInstrument;
+     QMap<QString, QString> currentInstrument;      //New
+ 
+     QList< QMap<QString, QString> > instruments;   //New
 
      int            nscan;
      int            ncell;
@@ -164,12 +170,13 @@ class US_XpnDataViewer : public US_Widgets
      QString        ProtocolName;
      QString        CellChNumber;
      QString        TripleNumber;
+     QString        OptimaName;          //New  
 	 
   private slots:
      void   reset          ( void );
      void   load_xpn_raw   ( void );
 
-     QMap <QString, QString> returnSelectedInstrument( US_DB2* = 0 );
+     //QMap <QString, QString> returnSelectedInstrument( US_DB2* = 0 );
 
      bool   load_xpn_raw_auto   ( void );
      void   check_for_data ( QMap < QString, QString > & );
@@ -215,6 +222,11 @@ class US_XpnDataViewer : public US_Widgets
      void   help           ( void )
      { showHelp.show_help( "xpn_viewer.html" ); };
 
+     void read_optima_machines( US_DB2* = 0 );         //New 
+     void changeOptima ( int );                        //New
+     void selectOptimaByName_auto( QString );          //New
+     void test_optima_connection( void );              //New
+     
    signals:
      void experiment_complete_auto( QString &, QString & );
 };

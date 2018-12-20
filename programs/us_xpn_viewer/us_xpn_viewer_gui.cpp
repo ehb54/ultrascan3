@@ -76,54 +76,61 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
    in_reload_data_init = false;
    
 
-   //ALEXEY: old way, form .cong file
-   QStringList xpnentr = US_Settings::defaultXpnHost();
-   DbgLv(1) << "xpnentr count" << xpnentr.count();
+   // //ALEXEY: old way, form .cong file
+   // QStringList xpnentr = US_Settings::defaultXpnHost();
+   // DbgLv(1) << "xpnentr count" << xpnentr.count();
 
-   if ( xpnentr.count() == 0 )
-     {
-       xpnentr << "test-host" << "bcf.uthscsa.edu" << "5432";
-    
-       QMessageBox::warning( this,
-   			     tr( "No Optima Host Entry" ),
-   			     tr( "A default Optima Host entry is being used.\n"
-   				 "You should add entries via Preferences:Optima Host Preferences\n"
-   				 "as soon as possible" ) );
-     }
-   else
-     DbgLv(1) << "xpnentr ..." << xpnentr;
+   // if ( xpnentr.count() == 0 )
+   //   {
+   //     xpnentr << "test-host" << "bcf.uthscsa.edu" << "5432";
    
-   QString encpw;
-   QString decpw;
-   QString encpw0;
-   QString encpw1;
-   QString masterpw;
-   US_Passwd pw;
-   xpndesc      = xpnentr.at( 0 );
-   xpnhost      = xpnentr.at( 1 );
-   xpnport      = xpnentr.at( 2 );
-   xpnname      = xpnentr.at( 3 );
-   xpnuser      = xpnentr.at( 4 );
-   encpw        = xpnentr.at( 5 );
-   encpw0       = encpw.section( "^", 0, 0 );
-   encpw1       = encpw.section( "^", 1, 1 );
-   masterpw     = pw.getPasswd();
-   xpnpasw      = US_Crypto::decrypt( encpw0, masterpw, encpw1 );
-
-   clean_etc_dir();  // Make sure */ultrascan/etc is populated
-
-   // //ALEXEY: new way
+   //     QMessageBox::warning( this,
+   // 			     tr( "No Optima Host Entry" ),
+   // 			     tr( "A default Optima Host entry is being used.\n"
+   // 				 "You should add entries via Preferences:Optima Host Preferences\n"
+   // 				 "as soon as possible" ) );
+   //   }
+   // else
+   //   DbgLv(1) << "xpnentr ..." << xpnentr;
+   
+   // QString encpw;
+   // QString decpw;
+   // QString encpw0;
+   // QString encpw1;
+   // QString masterpw;
    // US_Passwd pw;
-   // US_DB2*   dbP = new US_DB2( pw.getPasswd() );
-   // currentInstrument = returnSelectedInstrument( dbP );
-   // xpndesc     = currentInstrument[ "name" ];
-   // xpnhost     = currentInstrument[ "optimaHost" ];
-   // xpnport     = currentInstrument[ "optimaPort" ];
-   // xpnname     = currentInstrument[ "optimaDBname" ];
-   // xpnuser     = currentInstrument[ "optimaDBusername" ];
-   // xpnpasw     = currentInstrument[ "optimaDBpassw" ];
-   
+   // xpndesc      = xpnentr.at( 0 );
+   // xpnhost      = xpnentr.at( 1 );
+   // xpnport      = xpnentr.at( 2 );
+   // xpnname      = xpnentr.at( 3 );
+   // xpnuser      = xpnentr.at( 4 );
+   // encpw        = xpnentr.at( 5 );
+   // encpw0       = encpw.section( "^", 0, 0 );
+   // encpw1       = encpw.section( "^", 1, 1 );
+   // masterpw     = pw.getPasswd();
+   // xpnpasw      = US_Crypto::decrypt( encpw0, masterpw, encpw1 );
 
+   // clean_etc_dir();  // Make sure */ultrascan/etc is populated
+
+   //ALEXEY: new way
+   US_Passwd pw;
+   US_DB2*   dbP = new US_DB2( pw.getPasswd() );
+   if ( dbP != NULL )
+     read_optima_machines( dbP );
+
+   // for ( int ii = 0; ii < instruments.count(); ii++ )
+   //   sl_optimas << QString::number( instruments[ ii ].ID )
+   //     + ": " + instruments[ ii ].name;
+   
+   // cb_optima->clear();
+   // cb_optima->addItems( sl_optimas );
+   
+   // connect( cb_optima,    SIGNAL( activated      ( int ) ),
+   //          this,         SLOT  ( changeOptima   ( int ) ) );
+   
+   // changeOptima(0); 
+   // /* End of Optima machines read */
+   
    // Load controls     
    QLabel*      lb_run      = us_banner( tr( "Load the Run" ) );
    
@@ -469,51 +476,39 @@ US_XpnDataViewer::US_XpnDataViewer() : US_Widgets()
    in_reload    = false;
 
    //ALEXEY: old way, from .conf file
-   QStringList xpnentr = US_Settings::defaultXpnHost();
-   DbgLv(1) << "xpnentr count" << xpnentr.count();
+   // QStringList xpnentr = US_Settings::defaultXpnHost();
+   // DbgLv(1) << "xpnentr count" << xpnentr.count();
    
-   if ( xpnentr.count() == 0 )
-     {
-       xpnentr << "test-host" << "bcf.uthscsa.edu" << "5432";
+   // if ( xpnentr.count() == 0 )
+   //   {
+   //     xpnentr << "test-host" << "bcf.uthscsa.edu" << "5432";
     
-       QMessageBox::warning( this,
-   			     tr( "No Optima Host Entry" ),
-   			     tr( "A default Optima Host entry is being used.\n"
-   				 "You should add entries via Preferences:Optima Host Preferences\n"
-   				 "as soon as possible" ) );
-     }
-   else
-     DbgLv(1) << "xpnentr ..." << xpnentr;
-   
-   QString encpw;
-   QString decpw;
-   QString encpw0;
-   QString encpw1;
-   QString masterpw;
-   US_Passwd pw;
-   xpndesc      = xpnentr.at( 0 );
-   xpnhost      = xpnentr.at( 1 );
-   xpnport      = xpnentr.at( 2 );
-   xpnname      = xpnentr.at( 3 );
-   xpnuser      = xpnentr.at( 4 );
-   encpw        = xpnentr.at( 5 );
-   encpw0       = encpw.section( "^", 0, 0 );
-   encpw1       = encpw.section( "^", 1, 1 );
-   masterpw     = pw.getPasswd();
-   xpnpasw      = US_Crypto::decrypt( encpw0, masterpw, encpw1 );
-
-   // //ALEXEY: new way
+   //     QMessageBox::warning( this,
+   // 			     tr( "No Optima Host Entry" ),
+   // 			     tr( "A default Optima Host entry is being used.\n"
+   // 				 "You should add entries via Preferences:Optima Host Preferences\n"
+   // 				 "as soon as possible" ) );
+   //   }
+   // else
+   //   DbgLv(1) << "xpnentr ..." << xpnentr;
+   // QString encpw;
+   // QString decpw;
+   // QString encpw0;
+   // QString encpw1;
+   // QString masterpw;
    // US_Passwd pw;
-   // US_DB2*   dbP = new US_DB2( pw.getPasswd() );
-   // currentInstrument = returnSelectedInstrument( dbP );
-   // xpndesc     = currentInstrument[ "name" ];
-   // xpnhost     = currentInstrument[ "optimaHost" ];
-   // xpnport     = currentInstrument[ "optimaPort" ];
-   // xpnname     = currentInstrument[ "optimaDBname" ];
-   // xpnuser     = currentInstrument[ "optimaDBusername" ];
-   // xpnpasw     = currentInstrument[ "optimaDBpassw" ];
+   // xpndesc      = xpnentr.at( 0 );
+   // xpnhost      = xpnentr.at( 1 );
+   // xpnport      = xpnentr.at( 2 );
+   // xpnname      = xpnentr.at( 3 );
+   // xpnuser      = xpnentr.at( 4 );
+   // encpw        = xpnentr.at( 5 );
+   // encpw0       = encpw.section( "^", 0, 0 );
+   // encpw1       = encpw.section( "^", 1, 1 );
+   // masterpw     = pw.getPasswd();
+   // xpnpasw      = US_Crypto::decrypt( encpw0, masterpw, encpw1 );
 
-   
+
    // Load controls     
    QLabel*      lb_run      = us_banner( tr( "Load the Run" ) );
 
@@ -531,8 +526,31 @@ US_XpnDataViewer::US_XpnDataViewer() : US_Widgets()
                 le_dir      = us_lineedit( "", -1, true );
 
    QLabel*      lb_dbhost   = us_label( tr( "DB Host" ), -1 );
-                le_dbhost   = us_lineedit( "", -1, true );
+                //le_dbhost   = us_lineedit( "", -1, true );
+   cb_optima           = new QComboBox( this );                                // New
+   QLabel*      lb_optima_connected = us_label( tr( "Connection Status: " ) ); //New
+   le_optima_connected = us_lineedit( "", 0, true );                           //New
+   
+   //ALEXEY: new way <--------------------------------------------- //New
+   US_Passwd pw;
+   US_DB2*   dbP = new US_DB2( pw.getPasswd() );
+   if ( dbP != NULL )
+     read_optima_machines( dbP );
 
+   for ( int ii = 0; ii < instruments.count(); ii++ )
+     sl_optimas << instruments[ ii ][ "ID" ] 
+       + ": " + instruments[ ii ][ "name" ];
+   
+   cb_optima->clear();
+   cb_optima->addItems( sl_optimas );
+   
+   connect( cb_optima,    SIGNAL( activated      ( int ) ),
+            this,         SLOT  ( changeOptima   ( int ) ) );
+   
+   changeOptima(0); 
+   /* End of Optima machines read                                      //New    */ 
+
+		
    QLabel*      lb_runID    = us_label( tr( "Run ID:" ), -1 );
                 le_runID    = us_lineedit( "", -1, false );
 
@@ -667,8 +685,14 @@ if(mcknt>0)
    settings->addWidget( lb_run,        row++, 0, 1, 8 );
    settings->addWidget( lb_dir,        row++, 0, 1, 8 );
    settings->addWidget( le_dir,        row++, 0, 1, 8 );
+
    settings->addWidget( lb_dbhost,     row,   0, 1, 2 );
-   settings->addWidget( le_dbhost,     row++, 2, 1, 6 );
+   //settings->addWidget( le_dbhost,     row++, 2, 1, 6 );
+   settings->addWidget( cb_optima,     row++, 2, 1, 6 );      //New
+
+   settings->addWidget( lb_optima_connected,     row,   0, 1, 2 );      //New
+   settings->addWidget( le_optima_connected,     row++, 2, 1, 6 );      //New
+   
    settings->addWidget( lb_runID,      row,   0, 1, 2 );
    settings->addWidget( le_runID,      row++, 2, 1, 6 );
    settings->addWidget( pb_loadXpn,    row,   0, 1, 4 );
@@ -760,51 +784,6 @@ if(mcknt>0)
 }
 
 
-QMap<QString, QString> US_XpnDataViewer::returnSelectedInstrument( US_DB2* db )
-{
-  QMap<QString, QString> instrument;
-  int ID = 0;
-  
-  QStringList q( "" );
-  q.clear();
-  q  << QString( "get_instrument_names" )
-     << QString::number( 1 );
-  db->query( q );
-  
-  qDebug() << "ID, db->lastErrno()  " << ID << " " << db->lastErrno();
-  if ( db->lastErrno() == US_DB2::OK )      // If not, no instruments defined
-    {
-      while ( db->next() )
-	{
-	  if ( db->value( 2 ).toString().toInt() )
-	    {
-	      ID = db->value( 0 ).toString().toInt();
-	      break;
-	    }
-	}
-
-      qDebug() << "ID: " << ID;
-      
-      q.clear();
-      q  << QString( "get_instrument_info_new" )
-	 << QString::number( ID );
-      db->query( q );
-      db->next();
-      
-      instrument[ "ID" ]               = ID;
-      instrument[ "name" ]             = db->value( 0 ).toString();
-      instrument[ "serial" ]           = db->value( 1 ).toString();
-      instrument[ "optimaHost" ]       = db->value( 5 ).toString();
-      instrument[ "optimaPort" ]       = db->value( 6 ).toString();
-      instrument[ "optimaDBname" ]     = db->value( 7 ).toString();
-      instrument[ "optimaDBusername" ] = db->value( 8 ).toString();
-      instrument[ "optimaDBpassw" ]    = db->value( 9 ).toString();
-      instrument[ "selected" ]         = db->value( 10 ).toString();
-    }
-
-  qDebug() << "ID: " << ID;
-  return instrument;
-}
 
 void US_XpnDataViewer::reset( void )
 {
@@ -814,7 +793,7 @@ void US_XpnDataViewer::reset( void )
    cb_cellchn ->clear();
    le_dir     ->setText( currentDir );
    le_runID   ->setText( runID );
-   le_dbhost  ->setText( xpnhost + ":" + xpnport + "   (" + xpndesc + ")" );
+   //le_dbhost  ->setText( xpnhost + ":" + xpnport + "   (" + xpndesc + ")" );       //New
 
    pb_loadXpn ->setEnabled( true );
    pb_loadAUC ->setEnabled( true );
@@ -875,6 +854,153 @@ void US_XpnDataViewer::reset( void )
    le_status->setText( tr( "(no data loaded)" ) );
 
 }
+
+// Slot to read all Optima machines <------------------------------- // New
+void US_XpnDataViewer::read_optima_machines( US_DB2* db )
+{
+  QStringList q( "" );
+  q.clear();
+  q  << QString( "get_instrument_names" )
+     << QString::number( 1 );
+  db->query( q );
+  
+  if ( db->lastErrno() == US_DB2::OK )      // If not, no instruments defined
+    {
+      QList< int > instrumentIDs;
+      
+      // Grab all the IDs so we can reuse the db connection
+      while ( db->next() )
+	{
+	  int ID = db->value( 0 ).toString().toInt();
+	  instrumentIDs << ID;
+	  
+	  qDebug() << "InstID: " << ID;
+	}
+      
+      // Instrument information
+      foreach ( int ID, instrumentIDs )
+	{
+	  QMap<QString,QString> instrument;
+	  
+	  q.clear();
+	  q  << QString( "get_instrument_info_new" )
+	     << QString::number( ID );
+	  db->query( q );
+	  db->next();
+
+	  instrument[ "ID" ]              =   QString::number( ID );
+	  instrument[ "name" ]            =   db->value( 0 ).toString();
+	  instrument[ "serial" ]          =   db->value( 1 ).toString();
+	  instrument[ "optimaHost" ]      =   db->value( 5 ).toString();	   
+	  instrument[ "optimaPort" ]      =   db->value( 6 ).toString(); 
+	  instrument[ "optimaDBname" ]    =   db->value( 7 ).toString();	   
+	  instrument[ "optimaDBusername" ] =  db->value( 8 ).toString();	   
+	  instrument[ "optimaDBpassw" ]    =  db->value( 9 ).toString();	   
+	  instrument[ "selected" ]        =   db->value( 10 ).toString();
+	    
+	  instrument[ "opsys1" ]  = db->value( 11 ).toString();
+	  instrument[ "opsys2" ]  = db->value( 12 ).toString();
+	  instrument[ "opsys3" ]  = db->value( 13 ).toString();
+
+	  instrument[ "radcalwvl" ]  =  db->value( 14 ).toString();
+	  instrument[ "chromoab" ]   =  db->value( 15 ).toString();
+
+	  
+	  if ( instrument[ "name" ].contains("Optima") || instrument[ "optimaHost" ].contains("AUC_DATA_DB") )
+	    this->instruments << instrument;
+	}
+    }
+  qDebug() << "Reading Instrument: FINISH";
+}
+
+// Slot to select in Optima in use        <----------------------- // New   
+void US_XpnDataViewer::changeOptima( int ndx )
+{
+   cb_optima->setCurrentIndex( ndx );
+   QString coptima     = cb_optima->currentText();
+   QString descr       = coptima.section( ":", 1, 1 ).simplified();
+
+   for ( int ii = 0; ii < instruments.size(); ii++ )
+     {
+       QString name = instruments[ii][ "name" ].trimmed();
+       if ( name == descr )
+	 currentInstrument = instruments[ii];
+     }
+
+   xpndesc     = currentInstrument[ "name" ];
+   xpnhost     = currentInstrument[ "optimaHost" ];
+   xpnport     = currentInstrument[ "optimaPort" ];
+   xpnname     = currentInstrument[ "optimaDBname" ];
+   xpnuser     = currentInstrument[ "optimaDBusername" ];
+   xpnpasw     = currentInstrument[ "optimaDBpassw" ];
+
+   test_optima_connection();
+}
+
+//Slot to test Optima connection when Optima selection changed <------------- //New
+void US_XpnDataViewer::test_optima_connection()
+{
+
+   qDebug() << "Optima in use: name, host, port, dbname, dbuser, dbpasw: " << xpndesc << " " << xpnhost << " "
+   	    << xpnport << " "  << xpnname << " " << xpnuser << " " << xpnpasw ;
+
+
+   QPalette orig_pal = le_optima_connected->palette();
+   
+   if ( xpnhost.isEmpty() || xpnport.isEmpty()
+	|| xpnname.isEmpty() || xpnuser.isEmpty() || xpnpasw.isEmpty()  )
+     {
+       le_optima_connected->setText( "disconnected" );
+       QPalette *new_palette = new QPalette();
+       new_palette->setColor(QPalette::Text,Qt::red);
+       new_palette->setColor(QPalette::Base, orig_pal.color(QPalette::Base));
+       le_optima_connected->setPalette(*new_palette);
+
+       return;
+     }
+   
+   US_XpnData* xpn_data = new US_XpnData();
+   bool o_connected           = xpn_data->connect_data( xpnhost, xpnport.toInt(), xpnname, xpnuser,  xpnpasw );
+   xpn_data->close();
+   delete xpn_data;
+      
+   if ( o_connected )
+     {
+       le_optima_connected->setText( "connected" );
+       QPalette *new_palette = new QPalette();
+       new_palette->setColor(QPalette::Text, Qt::darkGreen);
+       new_palette->setColor(QPalette::Base, orig_pal.color(QPalette::Base));
+       le_optima_connected->setPalette(*new_palette);
+     }
+   else
+     {
+       le_optima_connected->setText( "disconnected" );
+       QPalette *new_palette = new QPalette();
+       new_palette->setColor(QPalette::Text,Qt::red);
+       new_palette->setColor(QPalette::Base, orig_pal.color(QPalette::Base));
+       le_optima_connected->setPalette(*new_palette);
+     }
+}
+
+
+// Slot to select Optima in use by name for autoflow    <----------------------- // New   
+void US_XpnDataViewer::selectOptimaByName_auto( QString OptimaName )
+{
+  for ( int ii = 0; ii < instruments.size(); ii++ )
+    {
+      QString name = instruments[ii][ "name" ].trimmed();
+      if ( name == OptimaName )
+	currentInstrument = instruments[ii];
+    }
+  
+  xpndesc     = currentInstrument[ "name" ];
+  xpnhost     = currentInstrument[ "optimaHost" ];
+  xpnport     = currentInstrument[ "optimaPort" ];
+  xpnname     = currentInstrument[ "optimaDBname" ];
+  xpnuser     = currentInstrument[ "optimaDBusername" ];
+  xpnpasw     = currentInstrument[ "optimaDBpassw" ];
+}
+
 
 void US_XpnDataViewer::resetAll( void )
 {
@@ -1110,7 +1236,9 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
   ProtocolName = protocol_details["protocolName"];
   CellChNumber   = protocol_details[ "CellChNumber" ];
   TripleNumber = protocol_details[ "TripleNumber" ];
-	   
+  OptimaName   = protocol_details[ "OptimaName" ];               //New
+
+  selectOptimaByName_auto( OptimaName );                         //New  
   
   timer_data_init = new QTimer;
   connect(timer_data_init, SIGNAL(timeout()), this, SLOT( load_xpn_raw_auto( ) ));
@@ -2811,7 +2939,8 @@ DbgLv(1) << "sCM: mcolors count" << mcknt;
       plot_all();
 }
 
-// Apply a chromatic aberration correction to auc data radius values
+
+// Apply a chromatic aberration correction to auc data radius values <--- New function: uses lambdas/corr. from DB
 void US_XpnDataViewer::correct_radii()
 {
    const double rad_inc = 1e-5;     // Radius precision
@@ -2824,7 +2953,72 @@ void US_XpnDataViewer::correct_radii()
    lambda.clear();
    correction.clear();
 
-   // If coefficient values are in an */etc file, use them
+   QString chromoArrayString;
+   QStringList strl;
+   chromoArrayString = currentInstrument["chromoab"].trimmed();  //<--- From DB
+   strl = chromoArrayString.split(QRegExp("[\r\n\t ]+"));
+   
+  foreach (QString str, strl)
+    {
+      str.remove("(");
+      str.remove(")");
+
+      lambda.push_back( double( str.split(",")[0].trimmed().toFloat() ) );
+      correction.push_back( double( str.split(",")[1].trimmed().toFloat() ) );
+      
+      qDebug() << str.split(",")[0].trimmed() << " " << str.split(",")[1].trimmed();
+    }
+
+   // a correction was found
+   if (correction.size() > 0)
+   {
+     QMessageBox::warning( this,
+            tr( "Chromatic Aberration Correction:" ),
+	    tr( "Wavelength correction data for currently used Optima machine\n"
+		"are found in DB and will be used to correct your data for\n"
+		"chromatic aberration between 190 nm and 800 nm.\n\n"
+		"Exported data will be modified!\n") );
+     
+      // For each triple, get the wavelength; then compute and apply a correction
+      for ( int jd = 0; jd < ntripl; jd++ )
+      {
+         int i=0;
+         while ((int) lambda.at(i) != (int) allData[ jd ].scanData[ 0 ].wavelength)
+         {
+            i++; // Wavelength index
+            if (i > 610) break;
+            if (correction.at(i)  != 0.0 )
+            {
+               for ( int jr = 0; jr < npoint; jr++ )
+               {  // Correct each radial point
+                  radval = r_radii[ jr ] - correction.at(i);     // Corrected radius
+                  radval = qRound( radval / rad_inc ) * rad_inc; // Rounded
+                  allData[ jd ].xvalues[ jr ] = radval;          // Replace radius
+               }
+            }
+         }
+if (jd<3 || (jd+4)>ntripl )
+DbgLv(1) << "c_r:  ri0 ro0" << r_radii[0] << allData[jd].xvalues[0]
+ << "rin ron" << r_radii[npoint-1] << allData[jd].xvalues[npoint-1];
+      }
+   }
+}
+
+/*
+// Apply a chromatic aberration correction to auc data radius values       <--- OLD function
+void US_XpnDataViewer::correct_radii()
+{
+   const double rad_inc = 1e-5;     // Radius precision
+   int ntripl = allData.count();
+   int npoint = allData[ 0 ].pointCount();
+   double radval;
+   QString fline;
+   QVector <double> lambda;
+   QVector <double> correction;
+   lambda.clear();
+   correction.clear();
+
+   // If coefficient values are in an etc file, use them
    QString cofname = US_Settings::etcDir() + "/chromo-aberration-array.dat";
    QFile cofile( cofname );
 
@@ -2957,6 +3151,9 @@ DbgLv(1) << "c_r:  ri0 ro0" << r_radii[0] << allData[jd].xvalues[0]
       }
    }
 }
+*/
+
+
 
 // Capture X range of latest Zoom
 void US_XpnDataViewer::currentRectf( QRectF rectf )
