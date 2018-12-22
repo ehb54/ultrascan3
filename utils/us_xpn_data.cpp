@@ -1424,6 +1424,9 @@ time10=QDateTime::currentDateTime();
    nscnn           = scnnbrs.count();
    int    stgnbr   = 0;
    nstgn           = stgnbrs.count();
+DbgLv(1) << "rBldRawD ntriple nstgn nscnn" << ntriple << nstgn << nscnn
+ << "st0 stn" << stgnbrs[0] << stgnbrs[nstgn-1]
+ << "sc0 scn" << scnnbrs[0] << scnnbrs[nscnn-1];
 time20=QDateTime::currentDateTime();
 timi1+=time10.msecsTo(time20);
 QDateTime time30=time20;
@@ -1499,13 +1502,18 @@ if(scx<3 || (scx+4)>nscnn)
 DbgLv(1) << "rBldRawD        scx" << scx << "rvalues size" << scan.rvalues.size()
  << "rvalues[mid]" << scan.rvalues[scan.rvalues.size()/2];
 
-            if ( ( scx + 1 ) == oscknt )
+            //if ( ( scx + 1 ) == oscknt )
+            if ( ndscan == oscknt )
             {  // If last of old scans, update in case readings were added
-               rdata->scanData[ scx ] = scan;
+               int ksc           = sgx * nscnn + scx;
+               rdata->scanData[ ksc ] = scan;
+DbgLv(1) << "rBldRawD        ksc" << ksc << "++Scan Replace";
             }
             else
             {  // If new scan, append the scan to the triple
                rdata->scanData << scan;
+int nscknt=rdata->scanCount();
+DbgLv(1) << "rBldRawD        ndscan oscknt" << ndscan << oscknt << "++Scan Add  nscknt" << nscknt;
             }
 time20=QDateTime::currentDateTime();
 timi4+=time10.msecsTo(time20);
@@ -1513,7 +1521,7 @@ timi4+=time10.msecsTo(time20);
       } // END: stage loop
 QDateTime time07b=QDateTime::currentDateTime();
 timi7+=time07a.msecsTo(time07b);
-DbgLv(1) << "rBldRawD         EoSl: trx" << trx;
+DbgLv(1) << "rBldRawD         EoSl: trx" << trx << "ndscan" << ndscan;
 //QDateTime time20=QDateTime::currentDateTime();
 //DbgLv(1) << "rBldRawD trx" << trx << "TIMEMS:scan loop time"
 // << time10.msecsTo(time20);
@@ -1524,7 +1532,7 @@ time10=QDateTime::currentDateTime();
       mxscnn            = qMax( mxscnn, ndscan );
       ntscan           += ndscan;
 
-DbgLv(1) << "BldRawD     trx" << trx << " saving allData... ndscan" << ndscan;
+DbgLv(1) << "rBldRawD    trx" << trx << " saving allData... ndscan" << ndscan;
 
       QString stat_text = tr( "Of %1 raw AUCs, updated %2" )
                           .arg( ntriple ).arg( trx + 1 );
@@ -1544,7 +1552,7 @@ DbgLv(1) << "BldRawD     trx" << trx << " saving allData... ndscan" << ndscan;
          {
 //            tscans.clear();
 int memAv2 = US_Memory::memory_profile();
-DbgLv(1) << "BldRawD  memfree %: 1memAV" << memAv << "2memAV" << memAv2;
+DbgLv(1) << "rBldRawD  memfree %: 1memAV" << memAv << "2memAV" << memAv2;
          }
       }
 time20=QDateTime::currentDateTime();
@@ -2339,14 +2347,15 @@ DbgLv(1) << "XpDa:grd: trx sgx scx" << trx << sgx << scx
    if ( datx < 0 )
    {
 DbgLv(0) << "XpDa:grd: *** Unable to find data for" << trnode << stgnbr << scnnbr;
-      return 0;
+      return datx;
    }
 
    set_scan_data( datx );
 
    interp_rvalues( *csdrec.rads, *csdrec.vals, a_radii, rvalues );
 
-   return npoint;
+   //return npoint;
+   return datx;
 }
 
 // Interpolate readings values for a scan for radii at a regular interval
@@ -2880,9 +2889,11 @@ DbgLv(1) << "XpDa:b_i:       rad0 radn" << a_radii[0] << a_radii[rkntl-1]
 // Rebuild the internal variables and arrays (mainly, just scan information)
 void US_XpnData::rebuild_internals( )
 {
-   int nscno     = scnnbrs.count();
 
+   int nscno     = scnnbrs.count();
+   int nstgo     = stgnbrs.count();
    scnnbrs   .clear();
+   stgnbrs   .clear();
    mnscnn        = 99999;
    mxscnn        = 0;
    int sdknt     = 0;
@@ -2892,7 +2903,7 @@ void US_XpnData::rebuild_internals( )
    sdknt         = ( runType == "WI" ) ? tWsdata.count() : sdknt;
 
    // Analyze *ScanData table values
-DbgLv(1) << "XpDa:rb_i:   csdrec count" << sdknt << "nscno" << nscno;
+DbgLv(1) << "XpDa:rb_i:   csdrec count" << sdknt << "nscno" << nscno << "nstgo" << nstgo;
    for ( int ii = 0; ii < sdknt; ii++ )
    {  // Get cell/channel, triple, lambda lists
       set_scan_data( ii );
@@ -2914,7 +2925,13 @@ DbgLv(1) << "XpDa:rb_i:   csdrec count" << sdknt << "nscno" << nscno;
 DbgLv(1) << "XpDa:b_i: ii" << ii << "scnnbr" << scnnbr
  << "darec" << darec;
 
-      // Update lists of used scans, datarecs (trnode.stage.scan)
+      // Update lists of used stages, scans, datarecs (trnode.stage.scan)
+
+      int stgnx     = stgnbrs.indexOf( stage  );
+      if ( stgnx < 0 )
+      {
+         stgnbrs << stage;               // Save unique StageNumber
+      }
 
       int scnnx     = scnnbrs.indexOf( scnnbr );
       if ( scnnx < 0 )
