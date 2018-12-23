@@ -1299,7 +1299,7 @@ CREATE PROCEDURE add_instrument_new ( p_personGUID    CHAR(36),
 				    p_opsys1        TEXT,
                                     p_opsys2        TEXT,
                                     p_opsys3        TEXT,
-				    p_radcalwvl     TEXT,
+				    p_radcalwvl     INT,
                                     p_chromoab      TEXT )
 
   MODIFIES SQL DATA
@@ -1377,7 +1377,7 @@ CREATE PROCEDURE update_instrument_new ( p_personGUID    CHAR(36),
 				       p_opsys1        TEXT,
 				       p_opsys2        TEXT,
 				       p_opsys3        TEXT,
-				       p_radcalwvl     TEXT,
+				       p_radcalwvl     INT,
 				       p_chromoab      TEXT )
 
   MODIFIES SQL DATA
