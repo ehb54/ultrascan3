@@ -911,24 +911,24 @@ void US_vHW_Combine::possibleSymbols()
    colors  << QColor( 255,   0,   0 );
    colors  << QColor(   0, 255,   0 );
    colors  << QColor(   0,   0, 255 );
-   colors  << QColor( 122,   0, 255 );
-   colors  << QColor(   0, 255, 122 );
-   colors  << QColor(   0, 122, 255 );
-   colors  << QColor( 255, 122,   0 );
-   colors  << QColor( 122, 255,   0 );
-   colors  << QColor( 255, 255,   0 );
-   colors  << QColor( 255,   0, 255 );
    colors  << QColor(   0, 255, 255 );
-   colors  << QColor(  80,   0, 255 );
-   colors  << QColor( 255,   0,  80 );
-   colors  << QColor(  80,   0, 255 );
-   colors  << QColor( 255,   0,  80 );
-   colors  << QColor(   0, 255,  80 );
-   colors  << QColor(   0,  80, 255 );
-   colors  << QColor(  80, 255,   0 );
-   colors  << QColor( 255,  80,  40 );
-   colors  << QColor(  40, 255,  40 );
-   colors  << QColor(  40,  40, 255 );
+   colors  << QColor( 255, 255,   0 );
+   colors  << QColor( 255, 170,   0 );
+   colors  << QColor( 255,   0, 255 );
+   colors  << QColor(   0,  85,   0 );
+   colors  << QColor( 170,   0, 255 );
+   colors  << QColor( 255, 255, 255 );
+   colors  << QColor( 200, 100, 100 );
+   colors  << QColor( 100, 200, 100 );
+   colors  << QColor( 100,   0, 100 );
+   colors  << QColor(   0, 155, 255 );
+   colors  << QColor( 155, 250,  80 );
+   colors  << QColor( 170, 170, 255 );
+   colors  << QColor( 170,   0, 127 );
+   colors  << QColor(   0, 170,   0 );
+   colors  << QColor( 255, 180,  40 );
+   colors  << QColor(  38, 170, 148 );
+   colors  << QColor(  40, 180, 255 );
 }
 
 // Return an expanded version ("1 / A / 260") of a triple string ("1A260")
