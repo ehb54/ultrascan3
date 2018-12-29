@@ -104,7 +104,8 @@ US_NewXpnHostDB::US_NewXpnHostDB() : US_Widgets()
    le_chromofile          = us_lineedit( "", 0, true );
    details->addWidget( pb_loadchromo,    row,   0, 1, 2 );
    details->addWidget( le_chromofile,    row++, 2, 1, 2 );  
-
+   connect( pb_loadchromo,     SIGNAL( clicked()          ), 
+              this,            SLOT(   load_chromo()    ) ); 
    
    // Row 7
    QLabel* bn_optsys   = us_banner( tr( "Installed Optical Systems" ) );
@@ -461,10 +462,10 @@ void US_NewXpnHostDB::save_new( void )
   if ( le_name->text().isEmpty() || le_description->text().isEmpty()
        || le_host->text().isEmpty() || le_port->text().isEmpty()
        || le_user->text().isEmpty() || le_pasw->text().isEmpty()
-       || le_serialNumber->text().isEmpty() || le_chromofile->text().isEmpty() )
+       || le_serialNumber->text().isEmpty() ) //|| le_chromofile->text().isEmpty() )
     {
       QMessageBox::warning( this, tr( "Please provide the missing information:" ),
-                        tr( "Fill out all fields and/or upload chromatic aberration array!"));
+                        tr( "Fill out all fields!"));
       return;
     }
 
