@@ -61,6 +61,9 @@ class US_NewXpnHostDB : public US_Widgets
 
   QVector<double> corr_lambda;
   QVector<double> corr_value;
+  QVector<double> corr_lambda_current;
+  QVector<double> corr_value_current;
+
   
  private slots:
    void save_new     ( void ); 

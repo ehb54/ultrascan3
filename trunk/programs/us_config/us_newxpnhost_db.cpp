@@ -321,7 +321,8 @@ void US_NewXpnHostDB::load_chromo( void )
       readingChromoArrayFile(files[0]);
     }
 
-  le_chromofile->setText("Uploaded");
+  if ( corr_lambda.size()!=0 )
+    le_chromofile->setText("Uploaded");
 }
 
 //Read Chromatic Aberration Array from uploaded file 
@@ -339,13 +340,14 @@ void US_NewXpnHostDB::readingChromoArrayFile( const QString &fileName )
       
       if(f.open(QIODevice::ReadOnly | QIODevice::Text))
 	{
+	  int i=190;
 	  QTextStream ts(&f);
 	  while(!ts.atEnd())
 	    {
 	      str1 = ts.readLine();
 	      str1 = str1.simplified();
 
-	      if (str1.isEmpty())
+	      if ( str1.isEmpty() || str1.startsWith( "#" ) ) // <---- add more conditions if needed
 		continue;
 
 	      str1 = str1.replace("\"", " ");
@@ -361,10 +363,28 @@ void US_NewXpnHostDB::readingChromoArrayFile( const QString &fileName )
 
 	      corr_lambda.push_back( double(temp_x) );
 	      corr_value.push_back( double(temp_y) );
+	      
+	      i++;
+	    }
+
+	  
+	  if (i != 801)
+	    {
+	      corr_lambda.clear(); 
+	      corr_value.clear();
+	      corr_lambda = corr_lambda_current;
+	      corr_value = corr_value_current;
+	      QMessageBox::warning( this,
+				    tr( "Incorrect File Format..." ),
+				    tr( "The wavelength correction file\n"
+					"is incorrectly formatted or contains invalid data.\n"
+					"DB entry for chromatic aberration is not changed." ) );
+	      
 	    }
 	}
     }
-  qDebug() << "Upload Finished ";
+  
+  qDebug() << "Upload Finished, corr_lambda.size(), corr_lambda_current.size(): "  <<  corr_lambda.size() << ", " << corr_lambda_current.size();
 }
 
 //Read Existing Chromatic Aberration Array from DB 
@@ -372,6 +392,7 @@ void US_NewXpnHostDB::readingChromoArrayDB( )
 {
   corr_lambda.clear();
   corr_value.clear();
+  
   QString chromoArrayString;
   QStringList strl;
   chromoArrayString = instrumentedit["chromoab"].trimmed();
@@ -387,6 +408,9 @@ void US_NewXpnHostDB::readingChromoArrayDB( )
       
       qDebug() << str.split(",")[0].trimmed() << " " << str.split(",")[1].trimmed();
     }
+
+  corr_lambda_current = corr_lambda;
+  corr_value_current = corr_value;
 }
 
 void US_NewXpnHostDB::shiftChromoArray( double val )
@@ -402,6 +426,13 @@ void US_NewXpnHostDB::shiftChromoArray( double val )
       corr_value[i] -= shift;
       ChromoArrayList += " (" + QString::number( corr_lambda[i] ) + "," + QString::number( corr_value[i] ) + ") ";
     }
+
+  // //If no data from file was uploaded, generate zero array  -------> DO we need this ?? 
+  // if( ChromoArrayList.isEmpty() )
+  //   {
+  //     for ( int i=190; i<801; ++i )
+  // 	ChromoArrayList += " (" + QString::number( i ) + "," + QString::number( 0 ) + ") ";
+  //   }
 }
 
 // Fill available GUI elements
