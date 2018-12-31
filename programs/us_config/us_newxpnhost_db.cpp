@@ -106,6 +106,7 @@ US_NewXpnHostDB::US_NewXpnHostDB() : US_Widgets()
    details->addWidget( le_chromofile,    row++, 2, 1, 2 );  
    connect( pb_loadchromo,     SIGNAL( clicked()          ), 
               this,            SLOT(   load_chromo()    ) ); 
+
    
    // Row 7
    QLabel* bn_optsys   = us_banner( tr( "Installed Optical Systems" ) );
@@ -538,7 +539,7 @@ void US_NewXpnHostDB::save_new( void )
     }
 
   // Name check
-  qDebug() << "Update Instruemnt: " << update_instrument;
+  qDebug() << "Update Instrument: " << update_instrument;
   for (QStringList::iterator it = instrumentNames.begin(); it != instrumentNames.end(); ++it) 
     {
       QString current = *it;

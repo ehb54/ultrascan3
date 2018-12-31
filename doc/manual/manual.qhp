@@ -115,6 +115,11 @@
             <file>database_config.html</file>
             <file>images/database.png</file>
            
+            <file>optima_host_config.html</file>
+            <file>images/optima_host_config.png</file>
+            <file>images/optima_config_new.png</file>
+            <file>images/optima_config_edit.png</file>
+           
             <file>us_edit.html</file>
             <file>us_edit_mwl.html</file>
             <file>images/us_edit.png</file>
