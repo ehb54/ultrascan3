@@ -36,19 +36,19 @@
     <ul>
       <li><b>Optima Host Description</b> An Optima host description always given
       in a strict "Optima (number)" form, such as "Optima 1".</li>
-      <li><b>Optima Serial Number</b> The instruments serial number. </li>
+      <li><b>Optima Serial Number</b> The instrument's serial number. </li>
       <li><b>Optima DB Host Address</b> IP address to the Optima, generally in a
       local domain.  </li>
       <li><b>Optima DB Port</b> Port to the Optima; for example, 5432. </li>
-      <li><b>Optima DB Name</b> Name of the database on the Optima,
-      often "AUC_DATA_DB". </li>
+      <li><b>Optima DB Name</b> Name of the PostGreSQL database on the Optima
+      AUC system. </li>
       <li><b>DB Username</b> Optima database login name. </li>
       <li><b>DB Password</b> Optima database login password. </li>
       <li><b>Radial Calibration Wavelength</b> Wavelength at which radial
       calibration was performed. </li>
-      <li><b>(Load) Chromatic Abberation Array</b> A file (specified in a file
-      dialog) from which a array of wavelength/value pairs is read to specify
-      chromatic abberation corrections can be made.
+      <li><b>(Load) Chromatic Aberration Array</b> A file (specified in a file
+      dialog) containing an array of wavelength/value pairs that specify radial
+      position corrections for each wavelength.
       </li>
       <li><b>Installed Optical Systems</b> Up to three optical systems available
       on the instrument where choices are:

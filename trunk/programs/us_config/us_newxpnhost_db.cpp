@@ -89,7 +89,7 @@ US_NewXpnHostDB::US_NewXpnHostDB() : US_Widgets()
    details->addWidget( le_pasw,        row++, 2, 1, 2 );
 
    //Row 6a
-   QLabel* bn_chromoab   = us_banner( tr( "Chromatic Aberation Information" ) );
+   QLabel* bn_chromoab   = us_banner( tr( "Chromatic Aberration Information" ) );
    details->addWidget( bn_chromoab,      row++, 0, 1, 4 );
 
    //Row 6b
@@ -100,7 +100,7 @@ US_NewXpnHostDB::US_NewXpnHostDB() : US_Widgets()
    details->addWidget( ct_radcalwvl,    row++, 2, 1, 2 );
    
    //Row 6c
-   QPushButton* pb_loadchromo     = us_pushbutton( tr( "Load Chromatic Abberation Array" ) );
+   QPushButton* pb_loadchromo     = us_pushbutton( tr( "Load Chromatic Aberration Array" ) );
    le_chromofile          = us_lineedit( "", 0, true );
    details->addWidget( pb_loadchromo,    row,   0, 1, 2 );
    details->addWidget( le_chromofile,    row++, 2, 1, 2 );  
@@ -228,7 +228,7 @@ US_NewXpnHostDB::US_NewXpnHostDB( QMap <QString,QString> currentInstrument ) : U
    details->addWidget( le_pasw,        row++, 2, 1, 2 );
 
    //Row 6a
-   QLabel* bn_chromoab   = us_banner( tr( "Chromatic Aberation Information" ) );
+   QLabel* bn_chromoab   = us_banner( tr( "Chromatic Aberration Information" ) );
    details->addWidget( bn_chromoab,      row++, 0, 1, 4 );
 
    //Row 6b
@@ -239,7 +239,7 @@ US_NewXpnHostDB::US_NewXpnHostDB( QMap <QString,QString> currentInstrument ) : U
    details->addWidget( ct_radcalwvl,    row++, 2, 1, 2 );
    
    //Row 6c
-   QPushButton* pb_loadchromo     = us_pushbutton( tr( "Load Chromatic Abberation Array" ) );
+   QPushButton* pb_loadchromo     = us_pushbutton( tr( "Load Chromatic Aberration Array" ) );
    le_chromofile          = us_lineedit( "", 0, true );
    details->addWidget( pb_loadchromo,    row,   0, 1, 2 );
    details->addWidget( le_chromofile,    row++, 2, 1, 2 );

@@ -113,7 +113,7 @@ US_XpnHostDB::US_XpnHostDB( QWidget* w, Qt::WindowFlags flags )
    details->addWidget( le_pasw,        row++, 2, 1, 2 );
 
    //Row 6a
-   QLabel* bn_chromoab   = us_banner( tr( "Chromatic Aberation Information" ) );
+   QLabel* bn_chromoab   = us_banner( tr( "Chromatic Aberration Information" ) );
    details->addWidget( bn_chromoab,      row++, 0, 1, 4 );
 
    //Row 6b
