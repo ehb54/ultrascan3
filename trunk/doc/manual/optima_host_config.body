@@ -1,0 +1,69 @@
+[% INCLUDE header.us3
+   title = 'UltraScan III Optima Host Configuration Panel'
+%]
+    <h2> Optima Host Configuration Panel </h2>
+
+
+    <p> <b>Note</b>: Whenever <b><i>UltraScan</i></b> needs to use an Optima
+    host entry, it needs the user's master password.  The first time it is
+    needed, it will prompt for it and save it in memory, but not on disk
+    storage.  When needed again, <b><i>UltraScan</i></b> uses the stored
+    password.  Before this can be done, the master password needs to be set up
+    and a cryptographic hash of the password stored.  Use the <a
+    href="master_pw.html">Master Password</a> panel, accessed from the main
+    configuration panel, to set up or change the master password. </p>
+
+    <p class='center'> <img src="images/optima_host_config.png" alt='Optima Host
+    Configuration Panel'/> </p>
+
+    <p> The optima host configuration panel allows you to configure the
+    connection to one or more Optima instruments in your lab. Here you can
+    enter the description, host address and port of the Optima instrument,
+    as well as Optima database name, user name, and password. Additional
+    information includes a radial calibration wavelength, a file from which
+    to upload a chromatic abberation array, and installed optical systems. </p> 
+    
+    <p>When <em>Add New Entry</em> or <em>Edit Current Entry</em> is
+    selected, one of the following dialogs is opened: </p>
+
+    <p class='center'> <img src="images/optima_config_new.png" alt='New Optima Host
+    Configuration Panel'/> </p>
+    <p class='center'> <img src="images/optima_config_edit.png" alt='Edit Optima Host
+    Configuration Panel'/> </p>
+
+    <h4>Dialog Items:</h4>
+
+    <ul>
+      <li><b>Optima Host Description</b> An Optima host description always given
+      in a strict "Optima (number)" form, such as "Optima 1".</li>
+      <li><b>Optima Serial Number</b> The instruments serial number. </li>
+      <li><b>Optima DB Host Address</b> IP address to the Optima, generally in a
+      local domain.  </li>
+      <li><b>Optima DB Port</b> Port to the Optima; for example, 5432. </li>
+      <li><b>Optima DB Name</b> Name of the database on the Optima,
+      often "AUC_DATA_DB". </li>
+      <li><b>DB Username</b> Optima database login name. </li>
+      <li><b>DB Password</b> Optima database login password. </li>
+      <li><b>Radial Calibration Wavelength</b> Wavelength at which radial
+      calibration was performed. </li>
+      <li><b>(Load) Chromatic Abberation Array</b> A file (specified in a file
+      dialog) from which a array of wavelength/value pairs is read to specify
+      chromatic abberation corrections can be made.
+      </li>
+      <li><b>Installed Optical Systems</b> Up to three optical systems available
+      on the instrument where choices are:
+        <ul>
+          <li> UV/visible</li>
+          <li> Rayleigh interference</li>
+          <li> Fluorescence</li>
+          <li> (not installed)</li>
+        </ul>
+      </li>
+    </ul>
+
+    <p> For appropriate Optima Host values, consult with your administrator or with
+    the authors of this software.</p>
+    <p> To delete an entry, select it and click on <em>Delete Current
+    Entry</em>.</p>
+
+[% INCLUDE footer.us3 %]
