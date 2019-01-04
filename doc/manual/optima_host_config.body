@@ -59,6 +59,8 @@
           <li> (not installed)</li>
         </ul>
       </li>
+      <li><b>Save Entry</b> Update instrument settings in the database.</li>
+      <li><b>Cancel</b> Close the dialog without updating the database.</li>
     </ul>
 
     <p> For appropriate Optima Host values, consult with your administrator or with
