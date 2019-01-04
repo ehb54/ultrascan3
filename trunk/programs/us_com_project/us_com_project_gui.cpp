@@ -32,7 +32,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
   //   dbg_level    = US_Settings::us_debug();
    curr_panx    = 0;
 
-   setWindowTitle( tr( "Commercial Project" ) );
+   setWindowTitle( tr( "UltraScan Optima AUC Interface" ) );
    setPalette( US_GuiSettings::frameColor() );
 
    QVBoxLayout* main      = new QVBoxLayout( this );
@@ -71,7 +71,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    int RowHeight = m.lineSpacing() ;
    welcome -> setFixedHeight  (6* RowHeight) ;
    
-   main->addWidget(welcome);
+   //main->addWidget(welcome);
 
    // Create tab and panel widgets
    tabWidget           = us_tabwidget();
@@ -82,12 +82,18 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    epanExp             = new US_ExperGui   ( this );
    epanObserv          = new US_ObservGui  ( this );
    epanPostProd        = new US_PostProdGui( this );
+   epanAnalysis        = new US_AnalysisGui( this );
+   epanReport          = new US_ReportGui  ( this );
+   
    //   statflag            = 0;
 
    // Add panels to the tab widget
    tabWidget->addTab( epanExp,       tr( "1: Experiment"   ) );
    tabWidget->addTab( epanObserv,    tr( "2: Live Update" ) );
-   tabWidget->addTab( epanPostProd,  tr( "3: Post Production"  ) );
+   tabWidget->addTab( epanPostProd,  tr( "3: Editing"  ) );
+   tabWidget->addTab( epanAnalysis,  tr( "4: Analysis"  ) );
+   tabWidget->addTab( epanReport,    tr( "5: Report"  ) );
+   
    tabWidget->setCurrentIndex( curr_panx );
    tabWidget->tabBar()->setFixedHeight(500);
    
@@ -101,14 +107,16 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    tabWidget->setTabIcon( 0, US_Images::getIcon( US_Images::SETUP_COM  ) );
    tabWidget->setTabIcon( 1, US_Images::getIcon( US_Images::LIVE_UPDATE_COM  ) );
    tabWidget->setTabIcon( 2, US_Images::getIcon( US_Images::ANALYSIS_COM ) );
+   tabWidget->setTabIcon( 3, US_Images::getIcon( US_Images::ANALYSIS_COM_2 ) );
+   tabWidget->setTabIcon( 4, US_Images::getIcon( US_Images::REPORT_COM ) );
    
    tabWidget->tabBar()->setIconSize(QSize(50,50));
 
    tabWidget->tabBar()->setStyleSheet("QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:hover {background: lightgray;}");
    main->addWidget( tabWidget );
    
-   logWidget = us_textedit();;
-   logWidget->setMaximumHeight(60);
+   logWidget = us_textedit();
+   logWidget->setMaximumHeight(30);
    logWidget->setReadOnly(true);
    logWidget->append("Log comes here...");
    logWidget->verticalScrollBar()->setValue(logWidget->verticalScrollBar()->maximum());
@@ -120,14 +128,14 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    test_footer->setMaximumHeight(30);
    test_footer->setReadOnly(true);
    test_footer->setStyleSheet("color: #D3D9DF; background-color: #36454f;");
-   main->addWidget( test_footer );
+   //main->addWidget( test_footer );
 
    connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
    connect( this   , SIGNAL( pass_to_live_update( QMap < QString, QString > &) ),   epanObserv, SLOT( process_protocol_details( QMap < QString, QString > & )  ) );
    connect( epanObserv, SIGNAL( switch_to_post_processing( QString &, QString &) ), this, SLOT( switch_to_post_processing( QString &, QString & )  ) );
    connect( this, SIGNAL( import_data_us_convert( QString &, QString & ) ),  epanPostProd, SLOT( import_data_us_convert( QString &, QString & )  ) );
    
-   setMinimumSize( QSize( 1350, 875 ) );
+   setMinimumSize( QSize( 1350, 800 ) );
    adjustSize();
 
    /* Check for current stage & redirect to specific tab */
@@ -249,19 +257,21 @@ US_ExperGui::US_ExperGui( QWidget* topw )
 
    
    // Build main layout
-   int row         = 0;
+   //int row         = 0;
 
-   //QPlainTextEdit* panel_desc = new QPlainTextEdit(this);
-   QTextEdit* panel_desc = new QTextEdit(this);
-   panel_desc->viewport()->setAutoFillBackground(false);
-   panel_desc->setFrameStyle(QFrame::NoFrame);
-   panel_desc->setPlainText(" Tab to Set Up New Experiment...");
-   panel_desc->setReadOnly(true);
-   QFontMetrics m (panel_desc -> font()) ;
-   int RowHeight = m.lineSpacing() ;
-   panel_desc -> setFixedHeight  (2* RowHeight) ;
+   // //QPlainTextEdit* panel_desc = new QPlainTextEdit(this);
+   // QTextEdit* panel_desc = new QTextEdit(this);
+   // panel_desc->viewport()->setAutoFillBackground(false);
+   // panel_desc->setFrameStyle(QFrame::NoFrame);
+   // panel_desc->setPlainText(" Tab to Set Up New Experiment...");
+   // panel_desc->setReadOnly(true);
+   // QFontMetrics m (panel_desc -> font()) ;
+   // int RowHeight = m.lineSpacing() ;
+   // panel_desc -> setFixedHeight  (2* RowHeight) ;
    
-   genL->addWidget( panel_desc,  row,   0, 1, 12);
+   // genL->addWidget( panel_desc,  row,   0, 1, 12);
+
+   
    //genL->addWidget( pb_openexp,  row,   12, 1, 1, Qt::AlignTop);
    // genL->addWidget( panel_desc,  row,   0, 1, 2);
    // genL->addWidget( pb_openexp,  row,   2, 1, 2, Qt::AlignCenter);
@@ -274,6 +284,8 @@ US_ExperGui::US_ExperGui( QWidget* topw )
 
    //manageExperiment();
 
+
+   
    // Open US_Experiment without button...  
    //US_ExperimentMain* sdiag = new US_ExperimentMain;
    sdiag = new US_ExperimentMain;
@@ -285,7 +297,7 @@ US_ExperGui::US_ExperGui( QWidget* topw )
 	    this,  SLOT( to_live_update( QMap < QString, QString > & ) ) );
 
    sdiag->pb_close->setEnabled(false);  // Disable Close button
-   offset = 20;
+   offset = 0;
    sdiag->move(offset, 2*offset);
    sdiag->setFrameShape( QFrame::Box);
    sdiag->setLineWidth(2); 
@@ -293,14 +305,15 @@ US_ExperGui::US_ExperGui( QWidget* topw )
    sdiag->auto_mode_passed();
    
    sdiag->show();
-     
+   
 }
 
 
 void US_ExperGui::resizeEvent(QResizeEvent *event)
 {
     int tab_width = mainw->tabWidget->tabBar()->width();
-    int upper_height = mainw->gen_banner->height() + mainw->welcome->height() + mainw->logWidget->height() + mainw->test_footer->height();
+    int upper_height = mainw->gen_banner->height() + //mainw->welcome->height()
+      + mainw->logWidget->height() + mainw->test_footer->height();
      
     int new_main_w = mainw->width() - 3*offset - tab_width;
     int new_main_h = mainw->height() - 4*offset - upper_height;
@@ -411,20 +424,23 @@ US_ObservGui::US_ObservGui( QWidget* topw )
    main->setContentsMargins( 2, 2, 2, 2 );
       
    QGridLayout* genL   = new QGridLayout();
-   //QPlainTextEdit* panel_desc = new QPlainTextEdit(this);
-   QTextEdit* panel_desc = new QTextEdit(this);
-   panel_desc->viewport()->setAutoFillBackground(false);
-   panel_desc->setFrameStyle(QFrame::NoFrame);
-   panel_desc->setPlainText(" Tab to Monitor Experiment Progress...");
-   panel_desc->setReadOnly(true);
-   //panel_desc->setMaximumHeight(30);
-   QFontMetrics m (panel_desc -> font()) ;
-   int RowHeight = m.lineSpacing() ;
-   panel_desc -> setFixedHeight  (2* RowHeight) ;
 
-   int row = 0;
-   genL->addWidget( panel_desc,  row++,   0, 1, 12);
- 
+   // //QPlainTextEdit* panel_desc = new QPlainTextEdit(this);
+   // QTextEdit* panel_desc = new QTextEdit(this);
+   // panel_desc->viewport()->setAutoFillBackground(false);
+   // panel_desc->setFrameStyle(QFrame::NoFrame);
+   // panel_desc->setPlainText(" Tab to Monitor Experiment Progress...");
+   // panel_desc->setReadOnly(true);
+   // //panel_desc->setMaximumHeight(30);
+   // QFontMetrics m (panel_desc -> font()) ;
+   // int RowHeight = m.lineSpacing() ;
+   // panel_desc -> setFixedHeight  (2* RowHeight) ;
+
+   // int row = 0;
+   // genL->addWidget( panel_desc,  row++,   0, 1, 12);
+
+
+   
    // assemble main
    main->addLayout(genL);
    main->addStretch();
@@ -438,7 +454,7 @@ US_ObservGui::US_ObservGui( QWidget* topw )
    //ALEXEY: devise SLOT saying what to do upon completion of experiment and exporting AUC data to hard drive - Import Experimental Data  !!! 
    connect( sdiag, SIGNAL( experiment_complete_auto( QString &, QString & ) ), this, SLOT( to_post_processing ( QString &, QString &) ) );
    
-   offset = 20;
+   offset = 0;
    sdiag->move(offset, 2*offset);
    sdiag->setFrameShape( QFrame::Box);
    sdiag->setLineWidth(2);
@@ -451,7 +467,8 @@ US_ObservGui::US_ObservGui( QWidget* topw )
 void US_ObservGui::resizeEvent(QResizeEvent *event)
 {
     int tab_width = mainw->tabWidget->tabBar()->width();
-    int upper_height = mainw->gen_banner->height() + mainw->welcome->height() + mainw->logWidget->height() + mainw->test_footer->height();
+    int upper_height = mainw->gen_banner->height() + //mainw->welcome->height()
+      + mainw->logWidget->height() + mainw->test_footer->height();
      
     int new_main_w = mainw->width() - 3*offset - tab_width;
     int new_main_h = mainw->height() - 4*offset - upper_height;
@@ -517,19 +534,20 @@ US_PostProdGui::US_PostProdGui( QWidget* topw )
    main->setContentsMargins( 2, 2, 2, 2 );
       
    QGridLayout* genL   = new QGridLayout();
-   //QPlainTextEdit* panel_desc = new QPlainTextEdit(this);
-   QTextEdit* panel_desc = new QTextEdit(this);
-   panel_desc->viewport()->setAutoFillBackground(false);
-   panel_desc->setFrameStyle(QFrame::NoFrame);
-   panel_desc->setPlainText(" Tab to Retrieve and Process Experimental Data...");
-   panel_desc->setReadOnly(true);
-   //panel_desc->setMaximumHeight(30);
-   QFontMetrics m (panel_desc -> font()) ;
-   int RowHeight = m.lineSpacing() ;
-   panel_desc -> setFixedHeight  (2* RowHeight) ;
 
-   int row = 0;
-   genL->addWidget( panel_desc,  row++,   0, 1, 12);
+   // //QPlainTextEdit* panel_desc = new QPlainTextEdit(this);
+   // QTextEdit* panel_desc = new QTextEdit(this);
+   // panel_desc->viewport()->setAutoFillBackground(false);
+   // panel_desc->setFrameStyle(QFrame::NoFrame);
+   // panel_desc->setPlainText(" Tab to Retrieve and Process Experimental Data...");
+   // panel_desc->setReadOnly(true);
+   // //panel_desc->setMaximumHeight(30);
+   // QFontMetrics m (panel_desc -> font()) ;
+   // int RowHeight = m.lineSpacing() ;
+   // panel_desc -> setFixedHeight  (2* RowHeight) ;
+
+   // int row = 0;
+   // genL->addWidget( panel_desc,  row++,   0, 1, 12);
  
    // assemble main
    main->addLayout(genL);
@@ -542,7 +560,7 @@ US_PostProdGui::US_PostProdGui( QWidget* topw )
 
    connect( this, SIGNAL( to_post_prod( QString &, QString & ) ), sdiag, SLOT( import_data_auto ( QString &, QString & )  ) );
    
-   offset = 20;
+   offset = 0;
    sdiag->move(offset, 2*offset);
    sdiag->setFrameShape( QFrame::Box);
    sdiag->setLineWidth(2);
@@ -554,7 +572,8 @@ US_PostProdGui::US_PostProdGui( QWidget* topw )
 void US_PostProdGui::resizeEvent(QResizeEvent *event)
 {
     int tab_width = mainw->tabWidget->tabBar()->width();
-    int upper_height = mainw->gen_banner->height() + mainw->welcome->height() + mainw->logWidget->height() + mainw->test_footer->height();
+    int upper_height = mainw->gen_banner->height() + //mainw->welcome->height()
+      + mainw->logWidget->height() + mainw->test_footer->height();
      
     int new_main_w = mainw->width() - 3*offset - tab_width;
     int new_main_h = mainw->height() - 4*offset - upper_height;
@@ -586,3 +605,85 @@ void US_PostProdGui::import_data_us_convert( QString & currDir, QString & protoc
 {
   emit to_post_prod( currDir, protocolName );
 }
+
+
+// US_Analysis
+US_AnalysisGui::US_AnalysisGui( QWidget* topw )
+   : US_WidgetsDialog( topw, 0 )
+{
+   mainw               = (US_ComProjectMain*)topw;
+
+   setPalette( US_GuiSettings::frameColor() );
+   QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
+   QFontMetrics fmet( sfont );
+   //int fwid     = fmet.maxWidth();
+   //int lwid     = fwid * 4;
+   //int swid     = lwid + fwid;
+   
+   // Main VBox
+   QVBoxLayout* main     = new QVBoxLayout (this);
+   main->setSpacing        ( 2 );
+   main->setContentsMargins( 2, 2, 2, 2 );
+      
+   QGridLayout* genL   = new QGridLayout();
+
+   // //QPlainTextEdit* panel_desc = new QPlainTextEdit(this);
+   // QTextEdit* panel_desc = new QTextEdit(this);
+   // panel_desc->viewport()->setAutoFillBackground(false);
+   // panel_desc->setFrameStyle(QFrame::NoFrame);
+   // panel_desc->setPlainText(" Tab to Retrieve and Process Experimental Data...");
+   // panel_desc->setReadOnly(true);
+   // //panel_desc->setMaximumHeight(30);
+   // QFontMetrics m (panel_desc -> font()) ;
+   // int RowHeight = m.lineSpacing() ;
+   // panel_desc -> setFixedHeight  (2* RowHeight) ;
+
+   // int row = 0;
+   // genL->addWidget( panel_desc,  row++,   0, 1, 12);
+ 
+   // assemble main
+   main->addLayout(genL);
+   main->addStretch();
+}
+
+
+
+// US_Report
+US_ReportGui::US_ReportGui( QWidget* topw )
+   : US_WidgetsDialog( topw, 0 )
+{
+   mainw               = (US_ComProjectMain*)topw;
+
+   setPalette( US_GuiSettings::frameColor() );
+   QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
+   QFontMetrics fmet( sfont );
+   //int fwid     = fmet.maxWidth();
+   //int lwid     = fwid * 4;
+   //int swid     = lwid + fwid;
+   
+   // Main VBox
+   QVBoxLayout* main     = new QVBoxLayout (this);
+   main->setSpacing        ( 2 );
+   main->setContentsMargins( 2, 2, 2, 2 );
+      
+   QGridLayout* genL   = new QGridLayout();
+
+   // //QPlainTextEdit* panel_desc = new QPlainTextEdit(this);
+   // QTextEdit* panel_desc = new QTextEdit(this);
+   // panel_desc->viewport()->setAutoFillBackground(false);
+   // panel_desc->setFrameStyle(QFrame::NoFrame);
+   // panel_desc->setPlainText(" Tab to Retrieve and Process Experimental Data...");
+   // panel_desc->setReadOnly(true);
+   // //panel_desc->setMaximumHeight(30);
+   // QFontMetrics m (panel_desc -> font()) ;
+   // int RowHeight = m.lineSpacing() ;
+   // panel_desc -> setFixedHeight  (2* RowHeight) ;
+
+   // int row = 0;
+   // genL->addWidget( panel_desc,  row++,   0, 1, 12);
+ 
+   // assemble main
+   main->addLayout(genL);
+   main->addStretch();
+}
+

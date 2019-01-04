@@ -148,6 +148,55 @@ class US_PostProdGui : public US_WidgetsDialog
     void to_post_prod( QString & currDir, QString & protocolName );
 };
 
+//! \brief Analysis panel
+class US_AnalysisGui : public US_WidgetsDialog 
+{
+  Q_OBJECT
+  
+  public:
+    US_AnalysisGui( QWidget* );
+    ~US_AnalysisGui() {};
+  
+         
+  private:
+    US_ComProjectMain*    mainw;      // Parent to all panels
+    int offset;
+
+ protected:
+    //void resizeEvent(QResizeEvent *event) override;
+      
+  private slots:
+    
+
+  signals:
+    
+};
+
+
+//! \brief Report panel
+class US_ReportGui : public US_WidgetsDialog 
+{
+  Q_OBJECT
+  
+  public:
+    US_ReportGui( QWidget* );
+    ~US_ReportGui() {};
+  
+         
+  private:
+    US_ComProjectMain*    mainw;      // Parent to all panels
+    int offset;
+
+ protected:
+    //void resizeEvent(QResizeEvent *event) override;
+      
+  private slots:
+    
+
+  signals:
+    
+};
+
 
 //! \brief ComProject Main Window
 class US_ComProjectMain : public US_Widgets
@@ -167,6 +216,8 @@ class US_ComProjectMain : public US_Widgets
   US_ExperGui*      epanExp;         // US_Exp panel
   US_ObservGui*     epanObserv;      // US_Observ panel
   US_PostProdGui*   epanPostProd;    // US_PostProd panel
+  US_AnalysisGui*   epanAnalysis;    // US_Analysis panel
+  US_ReportGui*     epanReport;      // US_Report panel
   
   //int         statflag;        // Composite panels status flag
   //int         dbg_level;       // Debug print flag
