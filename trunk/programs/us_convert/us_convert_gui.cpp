@@ -273,8 +273,8 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    //ccw      ->addWidget( pb_applyAll,     row++, 8, 1,  4 );
    //ccw      ->addWidget( pb_define,       row,   4, 1,  4 );
    //ccw      ->addWidget( pb_process,      row++, 8, 1,  4 );
-   ccw      ->addWidget( pb_reference,    row,   4, 1,  4 );
-   ccw      ->addWidget( pb_cancelref,    row++, 8, 1,  4 );
+   ccw      ->addWidget( pb_reference,    row++, 4, 1,  8 );
+   ccw      ->addWidget( pb_cancelref,    row++, 4, 1,  8 );
 
    //ccw      ->addWidget( pb_intensity,    row,   4, 1,  4 );
    //ccw      ->addWidget( pb_dropTrips,    row++, 8, 1,  4 );
