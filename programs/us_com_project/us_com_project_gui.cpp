@@ -120,15 +120,16 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    logWidget->setReadOnly(true);
    logWidget->append("Log comes here...");
    logWidget->verticalScrollBar()->setValue(logWidget->verticalScrollBar()->maximum());
-   main->addWidget( logWidget );
+   logWidget->hide();
+   //main->addWidget( logWidget );
    
    test_footer = new QTextEdit;
-   test_footer->setText("Test footer: by AUC solutions");
+   test_footer->setText("UltraScan by AUC Solutions");
    test_footer->setTextColor(Qt::white);
    test_footer->setMaximumHeight(30);
    test_footer->setReadOnly(true);
    test_footer->setStyleSheet("color: #D3D9DF; background-color: #36454f;");
-   //main->addWidget( test_footer );
+   main->addWidget( test_footer );
 
    connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
    connect( this   , SIGNAL( pass_to_live_update( QMap < QString, QString > &) ),   epanObserv, SLOT( process_protocol_details( QMap < QString, QString > & )  ) );
