@@ -1822,7 +1822,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
          if (mascor == 1)
             mascor1 = (float) pesmol;
 
-         temp = f * 1.0E-07 * fconv / 
+         // ff0 calc
+         temp = f * 1.0E-08 / 
             ( 6.0 * M_PI * ETAo *
               pow( 3.0 * mascor1 * partvol / (4.0 * M_PI * AVOGADRO), 1.0/3.0));
          ff0_t += temp;
@@ -2393,30 +2394,34 @@ stampa_ris()
 
    if (raflag == -1.0) 
    {
-      printf("%s%.2f\t%s (%s)\n", "- SED. COEFF. (psv from unhydrated radii) = ",
+      printf("%s%.2g\t%s (%s)\n", "- SED. COEFF. (psv from unhydrated radii) = ",
              (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] ", tag2.toLatin1().data());
-      // us_qdebug( QString( "ra -1 mascor1 is %1 partvolc %2 DENS %3 f %4" )
-      //         .arg( mascor1 )
-      //         .arg( partvolc )
-      //         .arg( DENS )
-      //         .arg( f ) );
+#if defined( DEBUG_S )
+      us_qdebug( QString( "ra -1 mascor1 is %1 partvolc %2 DENS %3 f %4" )
+              .arg( mascor1 )
+              .arg( partvolc )
+              .arg( DENS )
+              .arg( f ) );
+#endif
       supc_results->s20w = (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO);
    }
 
    if ((raflag == -2.0) || (raflag == -5.0))
    {
-      printf("- SED. COEFF. (psv %s) = %.2f\t%s (%s)\n", 
+      printf("- SED. COEFF. (psv %s) = %.2g\t%s (%s)\n", 
              us_hydrodyn->misc.compute_vbar ?
              ( us_hydrodyn->bead_model_from_file ?
                "from file" : "computed" ) : "user entered",
              (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] ", 
              tag2.toLatin1().data()
              );
-      // us_qdebug( QString( "ra -2 or -5 mascor1 is %1 partvol %2 DENS %3 f %4" )
-      //         .arg( mascor1 )
-      //         .arg( partvol )
-      //         .arg( DENS )
-      //         .arg( f ) );
+#if defined( DEBUG_S )
+       us_qdebug( QString( "ra -2 or -5 mascor1 is %1 partvol %2 DENS %3 f %4" )
+               .arg( mascor1 )
+               .arg( partvol )
+               .arg( DENS )
+               .arg( f ) );
+#endif
       supc_results->s20w = (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO);
       if ((nat + colorzero + colorsix) < numero_sfere)
          printf
@@ -2425,33 +2430,39 @@ stampa_ris()
 
    if (raflag == -3.0)
    {
-      printf("- SED. COEFF. (psv %s) = %.2f\t%s (%s)\n",
+      printf("- SED. COEFF. (psv %s) = %.2g\t%s (%s)\n",
              us_hydrodyn->misc.compute_vbar ?
              ( us_hydrodyn->bead_model_from_file ?
                "from file" : "computed" ) : "user entered",
              (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] ", 
              tag2.toLatin1().data()
              );
-      // us_qdebug( QString( "ra -3 mascor1 is %1 partvol %2 DENS %3 f %4" )
-      //         .arg( mascor1 )
-      //         .arg( partvol )
-      //         .arg( DENS )
-      //         .arg( f ) );
+#if defined( DEBUG_S )
+       us_qdebug( QString( "ra -3 mascor1 is %1 partvol %2 DENS %3 f %4" )
+               .arg( mascor1 )
+               .arg( partvol )
+               .arg( DENS )
+               .arg( f ) );
+#endif
       supc_results->s20w = (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO);
       if ((nat + colorzero + colorsix) < numero_sfere)
          printf
             ("- !!WARNING: ONLY PART OF THE MODEL HAS BEEN ANALYZED, BUT THE PSV UTILIZED         IS THAT OF THE ENTIRE MODEL!! - \n");
 
-      printf("%s%.2f\t%s (%s)\n", "- SED. COEFF. (psv from unhydrated radii) = ",
+      printf("%s%.2g\t%s (%s)\n", "- SED. COEFF. (psv from unhydrated radii) = ",
              (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] ", tag2.toLatin1().data());
    }
 
-   //   us_qdebug( QString( "f is %1 ETAo %2 partvol %3 fconv %4 mass %5" ).arg( f ).arg( ETAo ).arg( partvol ).arg( fconv ).arg( supc_results->mass ) );
+#if defined( DEBUG_S )
+   us_qdebug( QString( "f is %1 ETAo %2 partvol %3 fconv %4 mass %5" ).arg( f ).arg( ETAo ).arg( partvol ).arg( fconv ).arg( supc_results->mass ) );
+#endif
+
+   // ff0 calc
    supc_results->ff0 = 
-      f * 1.0E-07 * fconv / ( 6.0 * M_PI * ETAo *
+      f * 1.0E-08 / ( 6.0 * M_PI * ETAo *
       pow( 3.0 * supc_results->mass * partvol / (4.0 * M_PI * AVOGADRO), 1.0/3.0));
 
-   printf("%s%.2f\n", "- FRICTIONAL RATIO                = ", supc_results->ff0);
+   printf("%s%.2g\n", "- FRICTIONAL RATIO                = ", supc_results->ff0);
 
    temp = 0.0;
    for (i = 0; i < 3; i++)
@@ -2946,7 +2957,7 @@ mem_ris(int model)
 
    if (raflag == -1.0)
    {
-      hydro_res.sprintf("%s%.2f\t%s (%s)\n", "- SED. COEFF. (psv from unhydrated radii) = ",
+      hydro_res.sprintf("%s%.2g\t%s (%s)\n", "- SED. COEFF. (psv from unhydrated radii) = ",
               (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] ", tag2.toLatin1().data());
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
@@ -2956,7 +2967,7 @@ mem_ris(int model)
 
    if ((raflag == -2.0) || (raflag == -5.0))
    {
-      hydro_res.sprintf("%s%.2f\t%s (%s)\n", "- SED. COEFF.           = ",
+      hydro_res.sprintf("%s%.2g\t%s (%s)\n", "- SED. COEFF.           = ",
               (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "        [S] ", tag2.toLatin1().data());
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
@@ -2971,7 +2982,7 @@ mem_ris(int model)
 
    if (raflag == -3.0)
    {
-      hydro_res.sprintf("- SED. COEFF. (psv %s) = %.2f\t%s (%s)\n", 
+      hydro_res.sprintf("- SED. COEFF. (psv %s) = %.2g\t%s (%s)\n", 
               us_hydrodyn->misc.compute_vbar ?
               ( us_hydrodyn->bead_model_from_file ?
                 "from file" : "computed" ) : "user entered",
@@ -2987,20 +2998,23 @@ mem_ris(int model)
          this_data.hydro_res += hydro_res;
       }
 
-      hydro_res.sprintf("%s%.2f\t%s (%s)\n", "- SED. COEFF. (psv from unhydrated radii) = ",
+      hydro_res.sprintf("%s%.2g\t%s (%s)\n", "- SED. COEFF. (psv from unhydrated radii) = ",
               (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] ", tag2.toLatin1().data());
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;      
    }
 
+   // ff0 calc
    hydro_res.sprintf("%s%.2f\n", "- FRICTIONAL RATIO      = ", 
-           f * 1.0E-07 * fconv / 
+           f * 1.0E-08 / 
            ( 6.0 * M_PI * ETAo *
              pow( 3.0 * supc_results->mass * partvol / (4.0 * M_PI * AVOGADRO), 1.0/3.0)));
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
+
+   // ff0 calc
    this_data.results.ff0 = 
-      f * 1.0E-07 * fconv / 
+      f * 1.0E-08 / 
       ( 6.0 * M_PI * ETAo *
         pow( 3.0 * supc_results->mass * partvol / (4.0 * M_PI * AVOGADRO), 1.0/3.0));
 
@@ -3587,7 +3601,7 @@ val_med()
    if (raflag == -1.0)
    {
       temp = fabs((CST2 - pow(CST, 2) / num) / (num - 1));
-      fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- SED. COEFF. (psv unhyd.rad.)", CST / num, sqrt(temp), "[S]");
+      fprintf(ris, "%s\t%.2g\t\t%.2f\t\t%s\n", "- SED. COEFF. (psv unhyd.rad.)", CST / num, sqrt(temp), "[S]");
       supc_results->s20w = CST / num;
       supc_results->s20w_sd = sqrt(temp);
    }
@@ -3595,7 +3609,7 @@ val_med()
    if ((raflag == -2.0) || (raflag == -5.0))
    {
       temp = fabs((CSTF2 - pow(CSTF, 2) / num) / (num - 1));
-      fprintf(ris, "- SED. COEFF. (psv %s) \t%.2f\t\t%.2f\t\t%s\n", 
+      fprintf(ris, "- SED. COEFF. (psv %s) \t%.2g\t\t%.2g\t\t%s\n", 
               us_hydrodyn->misc.compute_vbar ?
               ( us_hydrodyn->bead_model_from_file ?
                 "from file" : "computed" ) : "user entered",
@@ -3610,7 +3624,7 @@ val_med()
    if (raflag == -3.0)
    {
       temp = fabs((CSTF2 - pow(CSTF, 2) / num) / (num - 1));
-      fprintf(ris, "- SED. COEFF. (psv %s) \t%.2f\t\t%.2f\t\t%s\n", 
+      fprintf(ris, "- SED. COEFF. (psv %s) \t%.2g\t\t%.2g\t\t%s\n", 
               us_hydrodyn->misc.compute_vbar ?
               ( us_hydrodyn->bead_model_from_file ?
                 "from file" : "computed" ) : "user entered",
@@ -3621,7 +3635,7 @@ val_med()
          fprintf(ris,
                  "- !!WARNING: ONLY PART(S) OF THE MODELS HAVE BEEN ANALYZED, BUT THE PSV UTILIZED    IS THAT OF THE ENTIRE MODEL!! - \n");
       temp = fabs((CST2 - pow(CST, 2) / num) / (num - 1));
-      fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- SED. COEFF. (psv unhyd.rad.)", CST / num, sqrt(temp), "[S]");
+      fprintf(ris, "%s\t%.2g\t\t%.2g\t\t%s\n", "- SED. COEFF. (psv unhyd.rad.)", CST / num, sqrt(temp), "[S]");
    }
 
    temp = sqrt(fabs((ff0_t2 - pow(ff0_t, 2) / num) / (num - 1)));

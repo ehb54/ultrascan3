@@ -13704,7 +13704,7 @@ bool US_Hydrodyn_Zeno::run(
          .arg( (*bead_model)[ i ].bead_computed_radius )
          ;
       sum_mass += (*bead_model)[ i ].bead_ref_mw;
-      sum_volume += M_PI * pow( (*bead_model)[ i ].bead_computed_radius, 3 );
+      sum_volume += ( 4.0 / 3.0 ) * M_PI * pow( (*bead_model)[ i ].bead_computed_radius, 3 );
    }
 
    // additional info

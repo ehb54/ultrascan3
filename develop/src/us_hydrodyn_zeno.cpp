@@ -13532,7 +13532,7 @@ bool US_Hydrodyn_Zeno::run(
          .arg( (*bead_model)[ i ].bead_computed_radius )
          ;
       sum_mass   += (*bead_model)[ i ].bead_ref_mw;
-      sum_volume += M_PI * pow( (*bead_model)[ i ].bead_computed_radius, 3 );
+      sum_volume += (4e0 / 3e0 ) * M_PI * pow( (*bead_model)[ i ].bead_computed_radius, 3 );
    }
 
    // additional info
@@ -13871,6 +13871,13 @@ bool US_Hydrodyn::calc_zeno()
       editor_msg( "blue", QString( "ZENO will repeat %1 times\n" ).arg( repeats ) );
    }
 
+   bool has_overlap = overlap_check( true, true, true,
+                                     hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance, 1 ) > 0;
+
+   if ( has_overlap ) {
+      editor_msg( "dark red", QString( us_tr( "Bead models have overlap, dimensionless intrinsic viscosity not computed.\n" ) ) );
+   }      
+
    for (current_model = 0; current_model < (unsigned int)lb_model->count(); current_model++) {
       if (lb_model->item(current_model)->isSelected()) {
          if (somo_processed[current_model]) {
@@ -13961,6 +13968,7 @@ bool US_Hydrodyn::calc_zeno()
                   this_data.use_bead_mass                 = 0e0;
                   this_data.con_factor                    = 0e0;
                   this_data.tra_fric_coef                 = 0e0;
+                  this_data.tra_fric_coef_sd              = 0e0;
                   this_data.rot_fric_coef                 = 0e0;
                   this_data.rot_diff_coef                 = 0e0;
                   this_data.rot_fric_coef_x               = 0e0;
@@ -14023,6 +14031,8 @@ bool US_Hydrodyn::calc_zeno()
                   this_data.results.solvent_acronym       = "";
                   this_data.results.solvent_viscosity     = 0e0;
                   this_data.results.solvent_density       = 0e0;
+                  this_data.zeno_mep                      = 0e0;
+                  this_data.zeno_eta_prefactor            = 0e0;
 
                   this_data.hydro                         = hydro;
                   this_data.model_idx                     = model_vector[ current_model ].model_id;
@@ -14091,11 +14101,11 @@ bool US_Hydrodyn::calc_zeno()
                      // param_cap_pos.push_back( 1 );
 #else
 
-                     param_rx     .push_back( QRegExp( "^Capacitance .A.:\\s+(\\S+)\\s+./-\\s+(\\S+)$" ) );
+                     param_rx     .push_back( QRegExp( "^Capacitance .(?:\\S+).:\\s+(\\S+)\\s+./-\\s+(\\S+)$" ) );
                      param_name   .push_back( "results.rs" );
                      param_cap_pos.push_back( 1 );
 
-                     param_rx     .push_back( QRegExp( "^Capacitance .A.:\\s+(\\S+)\\s+./-\\s+(\\S+)$" ) );
+                     param_rx     .push_back( QRegExp( "^Capacitance .(?:\\S+).:\\s+(\\S+)\\s+./-\\s+(\\S+)$" ) );
                      param_name   .push_back( "results.rs_sd" );
                      param_cap_pos.push_back( 2 );
 
@@ -14111,12 +14121,32 @@ bool US_Hydrodyn::calc_zeno()
                      param_name   .push_back( "tra_fric_coef" );
                      param_cap_pos.push_back( 1 );
 
+                     param_rx     .push_back( QRegExp( "^Friction coefficient .d.s/cm.:\\s+(\\S+)\\s+./-\\s+(\\S+)$" ) );
+                     param_name   .push_back( "tra_fric_coef_sd" );
+                     param_cap_pos.push_back( 2 );
+
                      param_rx     .push_back( QRegExp( "^Diffusion coefficient .cm.2/s.:\\s+(\\S+)\\s+./-\\s+(\\S+)$" ) );
                      param_name   .push_back( "results.D20w" );
                      param_cap_pos.push_back( 1 );
 
                      param_rx     .push_back( QRegExp( "^Diffusion coefficient .cm.2/s.:\\s+(\\S+)\\s+./-\\s+(\\S+)$" ) );
                      param_name   .push_back( "results.D20w_sd" );
+                     param_cap_pos.push_back( 2 );
+
+                     param_rx     .push_back( QRegExp( "^Prefactor for computing intrinsic viscosity:\\s+(\\S+)\\s+./-\\s+(\\S+)$" ) );
+                     param_name   .push_back( "zeno_eta_prefactor" );
+                     param_cap_pos.push_back( 1 );
+
+                     param_rx     .push_back( QRegExp( "^Prefactor for computing intrinsic viscosity:\\s+(\\S+)\\s+./-\\s+(\\S+)$" ) );
+                     param_name   .push_back( "zeno_eta_prefactor_sd" );
+                     param_cap_pos.push_back( 2 );
+
+                     param_rx     .push_back( QRegExp( "^Mean electric polarizability .(?:\\S+).:\\s+(\\S+)\\s+./-\\s+(\\S+)$" ) );
+                     param_name   .push_back( "zeno_mep" );
+                     param_cap_pos.push_back( 1 );
+
+                     param_rx     .push_back( QRegExp( "^Mean electric polarizability .(?:\\S+).:\\s+(\\S+)\\s+./-\\s+(\\S+)$" ) );
+                     param_name   .push_back( "zeno_mep_sd" );
                      param_cap_pos.push_back( 2 );
 #endif
                   } else {
@@ -14152,7 +14182,6 @@ bool US_Hydrodyn::calc_zeno()
                      param_rx     .push_back( QRegExp( "^f  . . . . . . . . . . . . . .\\s+(\\S+)\\s+" ) );
                      param_name   .push_back( "tra_fric_coef" );
                      param_cap_pos.push_back( 1 );
-
                   }
 
                   for ( unsigned int i = 0; i < ( unsigned int ) param_rx.size(); i++ )
@@ -14215,11 +14244,19 @@ bool US_Hydrodyn::calc_zeno()
                            if ( param_name[ i ] == "results.rs" )
                            {
                               this_data.results.rs        = qd * 0.1;
+                              if ( hydro.unit == -9 ) {
+                                 this_data.results.rs      *= 10;
+                              }
+                                 
                               break;
                            }
                            if ( param_name[ i ] == "results.rs_sd" )
                            {
                               this_data.results.rs_sd     = qd * 0.1;
+                              if ( hydro.unit == -9 ) {
+                                 this_data.results.rs_sd      *= 10;
+                              }
+                                 
                               break;
                            }
                            if ( param_name[ i ] == "tot_surf_area" )
@@ -14235,7 +14272,32 @@ bool US_Hydrodyn::calc_zeno()
                            }
                            if ( param_name[ i ] == "tra_fric_coef" )
                            {
-                              this_data.tra_fric_coef     = qd * 1e8;
+                              this_data.tra_fric_coef     = qd;
+                              break;
+                           }
+                           if ( param_name[ i ] == "tra_fric_coef_sd" )
+                           {
+                              this_data.tra_fric_coef_sd     = qd;
+                              break;
+                           }
+                           if ( param_name[ i ] == "zeno_eta_prefactor" )
+                           {
+                              this_data.zeno_eta_prefactor     = qd;
+                              break;
+                           }
+                           if ( param_name[ i ] == "zeno_eta_prefactor_sd" )
+                           {
+                              this_data.zeno_eta_prefactor_sd  = qd;
+                              break;
+                           }
+                           if ( param_name[ i ] == "zeno_mep" )
+                           {
+                              this_data.zeno_mep     = qd;
+                              break;
+                           }
+                           if ( param_name[ i ] == "zeno_mep_sd" )
+                           {
+                              this_data.zeno_mep_sd  = qd;
                               break;
                            }
                         } 
@@ -14272,9 +14334,10 @@ bool US_Hydrodyn::calc_zeno()
                      }
 
                      this_data.tra_fric_coef = 6e0 * M_PI * hydro.solvent_viscosity * this_data.results.rs * 1e-1;
+                     
                      if ( this_data.tra_fric_coef ) {
                         // 1.3864852e-8 is  boltzman's constant with a conversion, probably needs fconv
-                        this_data.results.D20w = ( K0 + hydro.temperature ) * 1.38064852e-8 / this_data.tra_fric_coef;
+                        this_data.results.D20w = ( K0 + hydro.temperature ) * 1.38064852e-8 / ( this_data.tra_fric_coef * fconv );
                      } else {
                         this_data.results.D20w = 0e0;
                      }
@@ -14316,9 +14379,11 @@ bool US_Hydrodyn::calc_zeno()
                         //         );
 
                         this_data.results.ff0 = 
-                           this_data.tra_fric_coef * 1e-7 * fconv / 
-                           ( 6e0 * M_PI *  this_data.hydro.solvent_viscosity * 1e-2 * 
+                           this_data.tra_fric_coef * 10 / 
+                           ( fconv * 6e0 * M_PI *  this_data.hydro.solvent_viscosity * 
                              pow( 3.0 * this_data.results.mass * this_data.results.vbar / (4.0 * M_PI * AVOGADRO), 1.0/3.0 ) );
+
+                        this_data.results.ff0_sd = this_data.results.ff0 * this_data.tra_fric_coef_sd / this_data.tra_fric_coef;
 
                         us_qdebug( QString( "computed ff0 %1" ).arg( this_data.results.ff0 ) );
                      }
@@ -14340,9 +14405,12 @@ bool US_Hydrodyn::calc_zeno()
                            //      ( 1e0 - this_data.results.vbar * this_data.hydro.solvent_density ) / 
                            //      ( this_data.tra_fric_coef * fconv * AVOGADRO ) );
                         
-                           this_data.results.mass * 1e21 *
+                           this_data.results.mass * 1e22 *
                            ( 1e0 - ( this_data.results.vbar * this_data.hydro.solvent_density ) ) /
-                           ( 6e0 * M_PI * hydro.solvent_viscosity * this_data.results.rs * AVOGADRO * fconv );
+                           ( 6e0 * M_PI * hydro.solvent_viscosity * this_data.results.rs * AVOGADRO );
+
+                        this_data.results.s20w_sd =
+                           this_data.results.s20w * this_data.results.rs_sd / this_data.results.rs;
 
                         // alternate way via Dt
                         // double alt_s20w = 
@@ -14436,31 +14504,65 @@ bool US_Hydrodyn::calc_zeno()
                                    "\n"
                                    "US-SOMO Derived Parameters:\n"
                                    "\n"
-                                   " Sedimentation Coefficient  s : %1\n"
-                                   " Frictional Ratio        f/f0 : %2\n"
-                                   " Radius of Gyration        Rg : %3\n"
+                                   " Sedimentation Coefficient             s : %1%2\n"
+                                   " Frictional Ratio                   f/f0 : %3%4\n"
+                                   " Radius of Gyration                   Rg : %5\n"
                                     ) )
                         .arg( QString( "" ).sprintf( "%4.2e S" , this_data.results.s20w ) )
+                        .arg( this_data.results.s20w_sd ? QString( "" ).sprintf( " [%4.2e]"      , this_data.results.s20w_sd ) : "" )
                         .arg( QString( "" ).sprintf( "%3.2f"   , this_data.results.ff0  ) )
+                        .arg( this_data.results.ff0_sd ? QString( "" ).sprintf( " [%4.2e]"      , this_data.results.ff0_sd ) : "" )
                         .arg( QString( "" ).sprintf( "%4.2e nm", this_data.results.rg   ) )
                         ;
 
                      if ( zeno_cxx ) {
                         add_to_zeno +=
                            QString( 
-                                   " Stokes Radius             Rs : %1%2\n"
-                                   " Intrinsic Viscosity    [eta] : %3%4\n"
-                                   " Tr. Frictional coefficient f : %5\n"
-                                   " Tr. Diffusion Coefficient Dt : %6%7\n"
+                                   " Stokes Radius                        Rs : %1%2\n"
+                                   " Intrinsic Viscosity               [eta] : %3%4\n"
+                                   " Tr. Frictional coefficient            f : %5%6\n"
+                                   " Tr. Diffusion Coefficient            Dt : %7%8\n"
                                     )
                            .arg( QString( "" ).sprintf( "%4.2e nm"      , this_data.results.rs ) )
                            .arg( this_data.results.rs_sd ? QString( "" ).sprintf( " [%4.2e]"      , this_data.results.rs_sd ) : "" )
                            .arg( QString( "" ).sprintf( "%4.2e cm^3/g"  , this_data.results.viscosity ) )
                            .arg( this_data.results.viscosity_sd ? QString( "" ).sprintf( " [%4.2e]"      , this_data.results.viscosity_sd ) : "" )
                            .arg( QString( "" ).sprintf( "%4.2e g/s"     , this_data.tra_fric_coef ) )
+                           .arg( this_data.tra_fric_coef_sd ? QString( "" ).sprintf( " [%4.2e]"      , this_data.tra_fric_coef_sd ) : "" )
                            .arg( QString( "" ).sprintf( "%4.2e cm/sec^2", this_data.results.D20w ) )
                            .arg( this_data.results.D20w_sd ? QString( "" ).sprintf( " [%4.2e]"      , this_data.results.D20w_sd ) : "" )
                            ;
+
+                        {
+                           double use_rs    = this_data.results.rs;
+                           double use_rs_sd = this_data.results.rs_sd;
+                           if ( hydro.unit == -10 ) {
+                              use_rs    *= 10;
+                              use_rs_sd *= 10;
+                           }
+
+                           add_to_zeno +=
+                              QString(
+                                      "                                   Dt/d0 : %1%2\n"
+                                      )
+                              .arg( QString( "" ).sprintf( "%4.2e"      , 1e0 / use_rs ) )
+                              .arg( use_rs_sd ? QString( "" ).sprintf( " [%4.2e]"      , use_rs_sd / ( use_rs * use_rs ) ) : "" )
+                              ;
+
+                           if ( !has_overlap ) {
+                              add_to_zeno +=
+                                 QString(
+                                         " Dimensionless Intrinsic Viscosity [eta] : %1%2\n"
+                                         )
+                                 .arg( this_data.zeno_eta_prefactor * this_data.zeno_mep / sum_volume )
+                                 .arg( this_data.zeno_eta_prefactor_sd && this_data.zeno_mep_sd ?
+                                       QString( "" ).sprintf( " [%4.2e]",
+                                                              ( this_data.zeno_eta_prefactor * this_data.zeno_mep / sum_volume ) *
+                                                              sqrt( this_data.zeno_eta_prefactor_sd * this_data.zeno_eta_prefactor_sd / ( this_data.zeno_eta_prefactor * this_data.zeno_eta_prefactor ) +
+                                                                    this_data.zeno_mep_sd           * this_data.zeno_mep_sd           / ( this_data.zeno_mep * this_data.zeno_mep ) ) ) : "" )
+                                 ;
+                           }
+                        }
                      }
 
                      QFile f( last_hydro_res );

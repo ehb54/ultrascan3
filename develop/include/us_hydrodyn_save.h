@@ -57,6 +57,7 @@ struct save_data
    double        use_bead_mass;     // "Used bead mass [Da]"
    double        con_factor;        // "Conversion Factor"
    double        tra_fric_coef;     // "Translational frictional coefficient [g*cm^2/s]"
+   double        tra_fric_coef_sd;  // sd of "Translational frictional coefficient [g*cm^2/s]"
    double        rot_fric_coef;     // "Rotational frictional coefficient [g*cm^2/s]"
    double        rot_diff_coef;     // "Rotational diffusion coefficient [1/s]"
    double        rot_fric_coef_x;   // "Rotational frictional coefficient [ X ]"
@@ -98,6 +99,11 @@ struct save_data
    double        axi_ratios_xy;     // "Axial ratios [ X:Y ] "
    double        axi_ratios_yz;     // "Axial ratios [ Y:Z ] "
    double        proc_time;         // "Processing time [ s ] "
+
+   double        zeno_eta_prefactor;
+   double        zeno_eta_prefactor_sd;
+   double        zeno_mep;
+   double        zeno_mep_sd;
 };
 
 struct save_info 
