@@ -14049,6 +14049,11 @@ bool US_Hydrodyn::calc_zeno()
                   // this_data.proc_time                     = 0e0;
                   this_data.proc_time                     = (double)(us_timers.times[ "compute zeno" ]) / 1e3;
                   
+                  this_data.dt_d0                         = 0e0;
+                  this_data.dt_d0_sd                      = 0e0;
+                  this_data.dimless_eta                   = 0e0;
+                  this_data.dimless_eta_sd                = 0e0;
+
                   QFile f( last_hydro_res );
                   if ( !f.exists() || !f.open( QIODevice::ReadOnly ) )
                   {
@@ -14467,6 +14472,32 @@ bool US_Hydrodyn::calc_zeno()
                      }
                   }
 
+                  {
+                     // dimensionless params
+                     double use_rs    = this_data.results.rs;
+                     double use_rs_sd = this_data.results.rs_sd;
+                     if ( hydro.unit == -10 ) {
+                        use_rs    *= 10;
+                        use_rs_sd *= 10;
+                     }
+
+                     if ( this_data.results.rs ) {
+                        this_data.dt_d0 = 1e0 / use_rs;
+                        if ( this_data.results.rs_sd ) {
+                           this_data.dt_d0_sd = use_rs_sd / ( use_rs * use_rs );
+                        }
+                     }
+
+                     if ( !has_overlap && sum_volume ) {
+                        this_data.dimless_eta = this_data.zeno_eta_prefactor * this_data.zeno_mep / sum_volume;
+                        if ( this_data.zeno_eta_prefactor_sd && this_data.zeno_mep_sd ) {
+                           this_data.dimless_eta_sd = ( this_data.zeno_eta_prefactor * this_data.zeno_mep / sum_volume ) *
+                              sqrt( this_data.zeno_eta_prefactor_sd * this_data.zeno_eta_prefactor_sd / ( this_data.zeno_eta_prefactor * this_data.zeno_eta_prefactor ) +
+                                    this_data.zeno_mep_sd           * this_data.zeno_mep_sd           / ( this_data.zeno_mep * this_data.zeno_mep ) );
+                        }
+                     }
+                  }
+
                   // append to zno file
                   {
                      QString add_to_zeno;
@@ -14545,21 +14576,17 @@ bool US_Hydrodyn::calc_zeno()
                               QString(
                                       "                                   Dt/d0 : %1%2\n"
                                       )
-                              .arg( QString( "" ).sprintf( "%4.2e"      , 1e0 / use_rs ) )
-                              .arg( use_rs_sd ? QString( "" ).sprintf( " [%4.2e]"      , use_rs_sd / ( use_rs * use_rs ) ) : "" )
+                              .arg( QString( "" ).sprintf( "%4.2e"      , this_data.dt_d0 ) )
+                              .arg( this_data.dt_d0_sd ? QString( "" ).sprintf( " [%4.2e]"  , this_data.dt_d0_sd ) : "" )
                               ;
-
+                           
                            if ( !has_overlap ) {
                               add_to_zeno +=
                                  QString(
                                          " Dimensionless Intrinsic Viscosity [eta] : %1%2\n"
                                          )
-                                 .arg( this_data.zeno_eta_prefactor * this_data.zeno_mep / sum_volume )
-                                 .arg( this_data.zeno_eta_prefactor_sd && this_data.zeno_mep_sd ?
-                                       QString( "" ).sprintf( " [%4.2e]",
-                                                              ( this_data.zeno_eta_prefactor * this_data.zeno_mep / sum_volume ) *
-                                                              sqrt( this_data.zeno_eta_prefactor_sd * this_data.zeno_eta_prefactor_sd / ( this_data.zeno_eta_prefactor * this_data.zeno_eta_prefactor ) +
-                                                                    this_data.zeno_mep_sd           * this_data.zeno_mep_sd           / ( this_data.zeno_mep * this_data.zeno_mep ) ) ) : "" )
+                                 .arg( QString( "" ).sprintf( "%4.2e"      , this_data.dimless_eta ) )
+                                 .arg( this_data.dimless_eta_sd ? QString( "" ).sprintf( " [%4.2e]"      , this_data.dimless_eta_sd ) : "" )
                                  ;
                            }
                         }

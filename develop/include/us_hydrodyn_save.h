@@ -100,6 +100,11 @@ struct save_data
    double        axi_ratios_yz;     // "Axial ratios [ Y:Z ] "
    double        proc_time;         // "Processing time [ s ] "
 
+   double        dt_d0;             // "Dt/d0"
+   double        dt_d0_sd;          // "sd of Dt/d0"
+   double        dimless_eta;       // "Dimensionless intrinsic viscosity [eta]"
+   double        dimless_eta_sd;    // "sd of Dimensionless intrinsic viscosity [eta]"
+
    double        zeno_eta_prefactor;
    double        zeno_eta_prefactor_sd;
    double        zeno_mep;
