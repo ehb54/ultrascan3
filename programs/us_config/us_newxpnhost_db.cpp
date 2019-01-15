@@ -25,25 +25,56 @@ US_NewXpnHostDB::US_NewXpnHostDB() : US_Widgets()
    // Frame layout
    setPalette( US_GuiSettings::frameColor() );
 
-   setWindowTitle( "New Optima DB Host Configuration" );
+   setWindowTitle( "New Instrument Configuration" );
    setAttribute( Qt::WA_DeleteOnClose );
 
    use_db              = ( US_Settings::default_data_location() < 2 );
 
    update_instrument = false;
+
+   nonOptima_selected = false;
    
    QBoxLayout* topbox = new QVBoxLayout( this );
    topbox->setSpacing( 2 );
 
-   QLabel* banner = us_banner( tr( "Enter Info for the New Xpn Host:" ) );
-   topbox->addWidget( banner );
-
-      // Row 0
+   /* ALEXEY: NEW portion */
+   // QLabel* banner = us_banner( tr( "Enter Info for the New Xpn Host:" ) );
+   // topbox->addWidget( banner );
+   
    int row = 0;
    QGridLayout* details = new QGridLayout();
 
+   // Row 0
+   QLabel* banner_type   = us_banner( tr( "Select Instrument Type:" ) );
+   banner_type->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+   details->addWidget( banner_type,      row++, 0, 1, 4 );
+
+   // Row 0a
+   QLabel* lb_type      = us_label( tr( "Instument Type:" ) );
+   
+   cb_type              = us_comboBox();
+   QStringList itypes;
+   itypes << "Optima (Beckman)"
+	  << "non-Optima";
+   cb_type->addItems( itypes );
+   details->addWidget( lb_type,        row,   0, 1, 1 );
+   details->addWidget( cb_type,        row++, 1, 1, 3 );
+   cb_type->setCurrentIndex( 0 );
+
+   connect( cb_type,      SIGNAL( activated    ( int ) ),
+            this,         SLOT  ( changeType   ( int ) ) );
+   
+   // Row 0b
+   QLabel* banner   = us_banner( tr( "Enter Info for the New Instrument:" ) );
+   banner->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+   details->addWidget( banner,      row++, 0, 1, 4 );
+
+   /* ALEXEY: End of NEW portion */
+
+   
+
    // Row 1
-   QLabel* desc         = us_label( tr( "Optima Host Description:" ) );
+   QLabel* desc         = us_label( tr( "Instrument Host Description:" ) );
    le_description       = us_lineedit( "", 0 );
    le_description->setPlaceholderText("SYNTAX: 'Optima #'");
    details->addWidget( desc,           row,   0, 1, 2 );
@@ -52,55 +83,55 @@ US_NewXpnHostDB::US_NewXpnHostDB() : US_Widgets()
             this,      SLOT  ( desc_changed(QString) ) );
 
    // Row 1a
-   QLabel* serialNum    = us_label( tr( "Optima Serial Number:" ) );
+   QLabel* serialNum    = us_label( tr( "Instrument Serial Number:" ) );
    le_serialNumber      = us_lineedit( "", 0 );
    details->addWidget( serialNum,       row,   0, 1, 2 );
    details->addWidget( le_serialNumber, row++, 2, 1, 2 );   
 
    // Row 2
-   QLabel* host        = us_label( tr( "Optima DB Host Address:" ) );
+   host                = us_label( tr( "Instrument DB Host Address:" ) );
    le_host             = us_lineedit( "", 0 );
    details->addWidget( host,           row,   0, 1, 2 );
    details->addWidget( le_host,        row++, 2, 1, 2 );
 
    // Row 3
-   QLabel* port        = us_label( tr( "Optima DB Port:" ) );
+   port                = us_label( tr( "Instument DB Port:" ) );
    le_port             = us_lineedit( def_port, 0 );
    details->addWidget( port,           row,   0, 1, 2 );
    details->addWidget( le_port,        row++, 2, 1, 2 );
 
    // Row 4
-   QLabel* name        = us_label( tr( "Optima DB Name:" ) );
+   name        = us_label( tr( "Instrument DB Name:" ) );
    le_name             = us_lineedit( def_name, 0 );
    details->addWidget( name,           row,   0, 1, 2 );
    details->addWidget( le_name,        row++, 2, 1, 2 );
 
    // Row 5
-   QLabel* user        = us_label( tr( "DB Username:" ) );
+   user        = us_label( tr( "Instrument DB Username:" ) );
    le_user             = us_lineedit( def_user, 0 );
    details->addWidget( user,           row,   0, 1, 2 );
    details->addWidget( le_user,        row++, 2, 1, 2 );
 
    // Row 6
-   QLabel* pasw        = us_label( tr( "DB Password:" ) );
+   pasw        = us_label( tr( "Instrument DB Password:" ) );
    le_pasw             = us_lineedit( def_pasw, 0 );
    le_pasw->setEchoMode( QLineEdit::Password );
    details->addWidget( pasw,           row,   0, 1, 2 );
    details->addWidget( le_pasw,        row++, 2, 1, 2 );
 
    //Row 6a
-   QLabel* bn_chromoab   = us_banner( tr( "Chromatic Aberration Information" ) );
+   bn_chromoab   = us_banner( tr( "Chromatic Aberration Information" ) );
    details->addWidget( bn_chromoab,      row++, 0, 1, 4 );
 
    //Row 6b
-   QLabel* lb_radcalwvl  = us_label( tr( "Radial Calibration Wavelength:" ) );
+   lb_radcalwvl  = us_label( tr( "Radial Calibration Wavelength:" ) );
    ct_radcalwvl          = us_counter( 2,   190,   800,  280 );
    ct_radcalwvl ->setSingleStep( 1 );
    details->addWidget( lb_radcalwvl,    row,   0, 1, 2 );
    details->addWidget( ct_radcalwvl,    row++, 2, 1, 2 );
    
    //Row 6c
-   QPushButton* pb_loadchromo     = us_pushbutton( tr( "Load Chromatic Aberration Array" ) );
+   pb_loadchromo     = us_pushbutton( tr( "Load Chromatic Aberration Array" ) );
    le_chromofile          = us_lineedit( "", 0, true );
    details->addWidget( pb_loadchromo,    row,   0, 1, 2 );
    details->addWidget( le_chromofile,    row++, 2, 1, 2 );  
@@ -110,6 +141,7 @@ US_NewXpnHostDB::US_NewXpnHostDB() : US_Widgets()
    
    // Row 7
    QLabel* bn_optsys   = us_banner( tr( "Installed Optical Systems" ) );
+   bn_optsys->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    details->addWidget( bn_optsys,      row++, 0, 1, 4 );
 
    // Rows 8,9,10
@@ -165,10 +197,18 @@ US_NewXpnHostDB::US_NewXpnHostDB( QMap <QString,QString> currentInstrument ) : U
 {
 
    this->instrumentedit = currentInstrument;
+
+   if ( !instrumentedit[ "name" ].contains("Optima") )
+     nonOptima_selected = true;
+   else
+     nonOptima_selected = false;
+
+   qDebug() << " non-Optima ? " << nonOptima_selected; 
+   
    // Frame layout
    setPalette( US_GuiSettings::frameColor() );
 
-   setWindowTitle( "Modify Optima DB Host Configuration" );
+   setWindowTitle( "Modify Instrument DB Host Configuration" );
    setAttribute( Qt::WA_DeleteOnClose );
 
    use_db              = ( US_Settings::default_data_location() < 2 );
@@ -177,69 +217,74 @@ US_NewXpnHostDB::US_NewXpnHostDB( QMap <QString,QString> currentInstrument ) : U
    QBoxLayout* topbox = new QVBoxLayout( this );
    topbox->setSpacing( 2 );
 
-   QLabel* banner = us_banner( tr( "Change Xpn Host Configuration:" ) );
-   topbox->addWidget( banner );
+   // QLabel* banner = us_banner( tr( "Change Xpn Host Configuration:" ) );
+   // banner->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+   // topbox->addWidget( banner );
 
-      // Row 0
+   // Row 0
    int row = 0;
    QGridLayout* details = new QGridLayout();
 
+   QLabel* banner = us_banner( tr( "Change Instrument Configuration:" ) );
+   banner->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+   details->addWidget( banner, row++, 0, 1, 4 );
+
    // Row 1
-   QLabel* desc         = us_label( tr( "Optima Host Description:" ) );
+   QLabel* desc         = us_label( tr( "Instrument Host Description:" ) );
    le_description       = us_lineedit( "", 0, true );
    details->addWidget( desc,           row,   0, 1, 2 );
    details->addWidget( le_description, row++, 2, 1, 2 );
 
    // Row 1a
-   QLabel* serialNum    = us_label( tr( "Optima Serial Number:" ) );
+   QLabel* serialNum    = us_label( tr( "Instrument Serial Number:" ) );
    le_serialNumber      = us_lineedit( "", 0 );
    details->addWidget( serialNum,       row,   0, 1, 2 );
    details->addWidget( le_serialNumber, row++, 2, 1, 2 );   
 
    // Row 2
-   QLabel* host        = us_label( tr( "Optima DB Host Address:" ) );
+   host        = us_label( tr( "Instrument DB Host Address:" ) );
    le_host             = us_lineedit( "", 0 );
    details->addWidget( host,           row,   0, 1, 2 );
    details->addWidget( le_host,        row++, 2, 1, 2 );
 
    // Row 3
-   QLabel* port        = us_label( tr( "Optima DB Port:" ) );
+   port        = us_label( tr( "Instrument DB Port:" ) );
    le_port             = us_lineedit( def_port, 0 );
    details->addWidget( port,           row,   0, 1, 2 );
    details->addWidget( le_port,        row++, 2, 1, 2 );
 
    // Row 4
-   QLabel* name        = us_label( tr( "Optima DB Name:" ) );
+   name        = us_label( tr( "Instrument DB Name:" ) );
    le_name             = us_lineedit( def_name, 0 );
    details->addWidget( name,           row,   0, 1, 2 );
    details->addWidget( le_name,        row++, 2, 1, 2 );
 
    // Row 5
-   QLabel* user        = us_label( tr( "DB Username:" ) );
+   user        = us_label( tr( "Instrument DB Username:" ) );
    le_user             = us_lineedit( def_user, 0 );
    details->addWidget( user,           row,   0, 1, 2 );
    details->addWidget( le_user,        row++, 2, 1, 2 );
 
    // Row 6
-   QLabel* pasw        = us_label( tr( "DB Password:" ) );
+   pasw        = us_label( tr( "Instrument DB Password:" ) );
    le_pasw             = us_lineedit( def_pasw, 0 );
    le_pasw->setEchoMode( QLineEdit::Password );
    details->addWidget( pasw,           row,   0, 1, 2 );
    details->addWidget( le_pasw,        row++, 2, 1, 2 );
 
    //Row 6a
-   QLabel* bn_chromoab   = us_banner( tr( "Chromatic Aberration Information" ) );
+   bn_chromoab   = us_banner( tr( "Chromatic Aberration Information" ) );
    details->addWidget( bn_chromoab,      row++, 0, 1, 4 );
 
    //Row 6b
-   QLabel* lb_radcalwvl  = us_label( tr( "Radial Calibration Wavelength:" ) );
+   lb_radcalwvl  = us_label( tr( "Radial Calibration Wavelength:" ) );
    ct_radcalwvl          = us_counter( 2,   190,   800,  280 );
    ct_radcalwvl ->setSingleStep( 1 );
    details->addWidget( lb_radcalwvl,    row,   0, 1, 2 );
    details->addWidget( ct_radcalwvl,    row++, 2, 1, 2 );
    
    //Row 6c
-   QPushButton* pb_loadchromo     = us_pushbutton( tr( "Load Chromatic Aberration Array" ) );
+   pb_loadchromo     = us_pushbutton( tr( "Load Chromatic Aberration Array" ) );
    le_chromofile          = us_lineedit( "", 0, true );
    details->addWidget( pb_loadchromo,    row,   0, 1, 2 );
    details->addWidget( le_chromofile,    row++, 2, 1, 2 );
@@ -248,6 +293,7 @@ US_NewXpnHostDB::US_NewXpnHostDB( QMap <QString,QString> currentInstrument ) : U
 
    // Row 7
    QLabel* bn_optsys   = us_banner( tr( "Installed Optical Systems" ) );
+   bn_optsys->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    details->addWidget( bn_optsys,      row++, 0, 1, 4 );
 
    // Rows 8,9,10
@@ -299,6 +345,61 @@ US_NewXpnHostDB::US_NewXpnHostDB( QMap <QString,QString> currentInstrument ) : U
 
    fillGui();
 }
+
+
+void US_NewXpnHostDB::changeType( int ndx )
+{
+   cb_type->setCurrentIndex( ndx );
+   QString ctype        = cb_type->currentText();
+
+   if ( ctype.contains("non-Optima") )
+     {
+       le_description->setPlaceholderText("");
+       
+       host   ->setVisible( false );
+       le_host->setVisible( false );
+       port   ->setVisible( false );
+       le_port->setVisible( false );
+       name->setVisible( false );
+       le_name->setVisible( false );
+       user   ->setVisible( false );
+       le_user->setVisible( false );
+       pasw   ->setVisible( false );
+       le_pasw->setVisible( false );
+       bn_chromoab->setVisible( false );
+       pb_loadchromo->setVisible( false );
+       lb_radcalwvl->setVisible( false );
+       ct_radcalwvl->setVisible( false );
+       le_chromofile->setVisible( false );
+
+       nonOptima_selected = true;
+     }
+
+   else
+     {
+       le_description->setPlaceholderText("SYNTAX: 'Optima #'");
+       host   ->setVisible( true );
+       le_host->setVisible( true );
+       port   ->setVisible( true );
+       le_port->setVisible( true );
+       name->setVisible( true );
+       le_name->setVisible( true );
+       user   ->setVisible( true );
+       le_user->setVisible( true );
+       pasw   ->setVisible( true );
+       le_pasw->setVisible( true );
+       bn_chromoab->setVisible( true );
+       pb_loadchromo->setVisible( true );
+       lb_radcalwvl->setVisible( true );
+       ct_radcalwvl->setVisible( true );
+       le_chromofile->setVisible( true );
+
+       nonOptima_selected = false;
+     }
+
+   this->adjustSize();
+}
+
 
 
 // Load Chromo Array
@@ -474,6 +575,27 @@ void US_NewXpnHostDB::fillGui( void )
 
       readingChromoArrayDB( );
     }
+
+  // Check the type of machine to Edit:
+  if ( nonOptima_selected )
+    {
+      host   ->setVisible( false );
+      le_host->setVisible( false );
+      port   ->setVisible( false );
+      le_port->setVisible( false );
+      name->setVisible( false );
+      le_name->setVisible( false );
+      user   ->setVisible( false );
+      le_user->setVisible( false );
+      pasw   ->setVisible( false );
+      le_pasw->setVisible( false );
+      bn_chromoab->setVisible( false );
+      pb_loadchromo->setVisible( false );
+      lb_radcalwvl->setVisible( false );
+      ct_radcalwvl->setVisible( false );
+      le_chromofile->setVisible( false );
+    }
+  
 }
 
 
@@ -488,35 +610,69 @@ void US_NewXpnHostDB::desc_changed( QString text )
 }
 
 
-// read Instrument names/info from DB
+// Save New Instrument
 void US_NewXpnHostDB::save_new( void )
 {
-  if ( le_name->text().isEmpty() || le_description->text().isEmpty()
-       || le_host->text().isEmpty() || le_port->text().isEmpty()
-       || le_user->text().isEmpty() || le_pasw->text().isEmpty()
-       || le_serialNumber->text().isEmpty() ) //|| le_chromofile->text().isEmpty() )
+  if ( !nonOptima_selected )
     {
-      QMessageBox::warning( this, tr( "Please provide the missing information:" ),
-                        tr( "Fill out all fields!"));
-      return;
+      if ( le_name->text().isEmpty() || le_description->text().isEmpty()
+	   || le_host->text().isEmpty() || le_port->text().isEmpty()
+	   || le_user->text().isEmpty() || le_pasw->text().isEmpty()
+	   || le_serialNumber->text().isEmpty() ) //|| le_chromofile->text().isEmpty() )
+	{
+	  QMessageBox::warning( this, tr( "Please provide the missing information:" ),
+				tr( "Fill out all fields!"));
+	  return;
+	}
     }
+  else
+    {
+      if ( le_description->text().isEmpty() || le_serialNumber->text().isEmpty() )
+	{
+	  QMessageBox::warning( this, tr( "Please provide the missing information:" ),
+				tr( "Fill out all fields!"));
+	  return;
+	}
+    }
+  
 
   //RegEx for Optima name:
   QRegExp rx_desc("^(Optima)\\s[1-9]\\d*$");  // e.g. 'Optima 9'
-
-  if ( !rx_desc.exactMatch(le_description->text() ) )
+  
+  
+  if ( !nonOptima_selected )
     {
-      QString mtitle_error    = tr( "Error" );
-      QString message_error   = tr( "Syntax error for Optima Host Description!\n\nThe description template is the following:\n  'Optima #' (Optima|space|number)" );
-      QMessageBox::critical( this, mtitle_error, message_error );
-
-      QPalette *palette = new QPalette();
-      palette->setColor(QPalette::Text,Qt::red);
-      palette->setColor(QPalette::Base,Qt::white);
-      le_description->setPalette(*palette);
-      
-      return;
+      if( !rx_desc.exactMatch(le_description->text() ) )
+	{
+	  QString mtitle_error    = tr( "Error" );
+	  QString message_error   = tr( "Syntax error for Optima Host Description!\n\nThe description template is the following:\n  'Optima #' (Optima|space|number)" );
+	  QMessageBox::critical( this, mtitle_error, message_error );
+	  
+	  QPalette *palette = new QPalette();
+	  palette->setColor(QPalette::Text,Qt::red);
+	  palette->setColor(QPalette::Base,Qt::white);
+	  le_description->setPalette(*palette);
+	  
+	  return;
+	}
     }
+  else
+    {
+      if( le_description->text().contains("Optima") ||  le_description->text().contains("optima") )
+	{
+	  QString mtitle_error    = tr( "Error" );
+	  QString message_error   = tr( "Syntax error for Instrument Description: non-Optima type cannot include words 'Optima' or 'optima' in its description!" );
+	  QMessageBox::critical( this, mtitle_error, message_error );
+	  
+	  QPalette *palette = new QPalette();
+	  palette->setColor(QPalette::Text,Qt::red);
+	  palette->setColor(QPalette::Base,Qt::white);
+	  le_description->setPalette(*palette);
+	  
+	  return;
+	}
+    }
+  
 
   // Check for instrument name, port & host duplications:
   US_Passwd pw;
@@ -567,7 +723,7 @@ void US_NewXpnHostDB::save_new( void )
       QString optimaHost       = db->value( 5 ).toString();
       int     optimaPort       = db->value( 6 ).toString().toInt();
 
-      if ( optimaHost == le_host->text() && optimaPort == le_port->text().toInt() )
+      if ( optimaHost == le_host->text() && optimaPort == le_port->text().toInt() && !nonOptima_selected )
 	{
 	  QMessageBox::critical( this, tr( "Duplicate Optima Machine Connection Info:" ),
 				 QString( tr( "Specified combination of the host (%1) and port (%2) is currently used by other machine!") 

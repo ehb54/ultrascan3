@@ -60,8 +60,18 @@ class US_XpnHostDB : public US_Widgets
     QPushButton* pb_edit;
     QPushButton* pb_reset; 
     QPushButton* pb_testConnect;
+
+    QLabel* host;
+    QLabel* port;
+    QLabel* name;
+    QLabel* user;
+    QLabel* pasw;
+    QLabel* bn_chromoab;
+    QLabel* lb_radcalwvl;
+    QLabel* lb_chromofile;
     
     QLineEdit*   le_description;
+    QLineEdit*   le_serial;
     QLineEdit*   le_dbname; 
     QLineEdit*   le_host;  
     QLineEdit*   le_port;  

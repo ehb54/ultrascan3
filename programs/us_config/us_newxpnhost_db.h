@@ -36,6 +36,16 @@ class US_NewXpnHostDB : public US_Widgets
     
   QPushButton* pb_save;   
   QPushButton* pb_cancel;
+  QPushButton* pb_loadchromo;
+    
+  QLabel* host;
+  QLabel* port;
+  QLabel* name;
+  QLabel* user;
+  QLabel* pasw;
+  QLabel* bn_chromoab;
+  QLabel* lb_radcalwvl;
+  
   
   QLineEdit*   le_description;
   QLineEdit*   le_serialNumber;
@@ -53,7 +63,10 @@ class US_NewXpnHostDB : public US_Widgets
   QComboBox*   cb_os2;
   QComboBox*   cb_os3;
   
+  QComboBox*   cb_type;
+  
   bool use_db;
+  bool nonOptima_selected;
 
   bool update_instrument;
   QString ChromoArrayList;
@@ -74,6 +87,7 @@ class US_NewXpnHostDB : public US_Widgets
    void readingChromoArrayFile  (const QString&);
    void readingChromoArrayDB   ( void );
    void shiftChromoArray  ( double );
+   void changeType   ( int ); 
    /* void reset       ( void ); */
    /* void save_default( void ); */
    /* void deleteDB    ( void ); */
