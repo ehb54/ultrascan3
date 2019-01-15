@@ -21,7 +21,7 @@ US_XpnHostDB::US_XpnHostDB( QWidget* w, Qt::WindowFlags flags )
    // Frame layout
    setPalette( US_GuiSettings::frameColor() );
 
-   setWindowTitle( "Optima DB Host Configuration" );
+   setWindowTitle( "Instrument Configuration" );
    setAttribute( Qt::WA_DeleteOnClose );
 
    use_db              = ( US_Settings::default_data_location() < 2 );
@@ -40,7 +40,7 @@ US_XpnHostDB::US_XpnHostDB( QWidget* w, Qt::WindowFlags flags )
    topbox->setSpacing( 2 );
 
    // Set up the database list window
-   QLabel* banner = us_banner( tr( "Optima Host List" ) );
+   QLabel* banner = us_banner( tr( "Instrument List" ) );
    topbox->addWidget( banner );
 
    // QLabel* banner2 = us_banner(
@@ -73,57 +73,63 @@ US_XpnHostDB::US_XpnHostDB( QWidget* w, Qt::WindowFlags flags )
    QGridLayout* details = new QGridLayout();
 
    // Row 1
-   QLabel* desc         = us_label( tr( "Optima Host Description:" ) );
+   QLabel* desc         = us_label( tr( "Instrument Description:" ) );
    le_description       = us_lineedit( "", 0, true );
    details->addWidget( desc,           row,   0, 1, 2 );
    details->addWidget( le_description, row++, 2, 1, 2 );
 
+   // Row 1a
+   QLabel* serial       = us_label( tr( "Instrument Serial Number:" ) );
+   le_serial            = us_lineedit( "", 0, true );
+   details->addWidget( serial,           row,   0, 1, 2 );
+   details->addWidget( le_serial, row++, 2, 1, 2 );
+
    // Row 2
-   QLabel* host        = us_label( tr( "Optima DB Host Address:" ) );
+   host        = us_label( tr( "Instrument DB Host Address:" ) );
    le_host             = us_lineedit( "", 0, true );
    details->addWidget( host,           row,   0, 1, 2 );
    details->addWidget( le_host,        row++, 2, 1, 2 );
 
    // Row 3
-   QLabel* port        = us_label( tr( "Optima DB Port:" ) );
+   port        = us_label( tr( "Instrument DB Port:" ) );
    //le_port             = us_lineedit( def_port, 0, true );
    le_port             = us_lineedit( "", 0, true );
    details->addWidget( port,           row,   0, 1, 2 );
    details->addWidget( le_port,        row++, 2, 1, 2 );
 
    // Row 4
-   QLabel* name        = us_label( tr( "Optima DB Name:" ) );
+   name        = us_label( tr( "Instrument DB Name:" ) );
    //le_name             = us_lineedit( def_name, 0, true );
    le_name             = us_lineedit( "", 0, true );
    details->addWidget( name,           row,   0, 1, 2 );
    details->addWidget( le_name,        row++, 2, 1, 2 );
 
    // Row 5
-   QLabel* user        = us_label( tr( "DB Username:" ) );
+   user        = us_label( tr( "Instrument DB Username:" ) );
    //le_user             = us_lineedit( def_user, 0, true );
    le_user             = us_lineedit( "", 0, true );
    details->addWidget( user,           row,   0, 1, 2 );
    details->addWidget( le_user,        row++, 2, 1, 2 );
 
    // Row 6
-   QLabel* pasw        = us_label( tr( "DB Password:" ) );
+   pasw        = us_label( tr( "Instrument DB Password:" ) );
    le_pasw             = us_lineedit( def_pasw, 0, true );
    le_pasw->setEchoMode( QLineEdit::Password );
    details->addWidget( pasw,           row,   0, 1, 2 );
    details->addWidget( le_pasw,        row++, 2, 1, 2 );
 
    //Row 6a
-   QLabel* bn_chromoab   = us_banner( tr( "Chromatic Aberration Information" ) );
+   bn_chromoab   = us_banner( tr( "Chromatic Aberration Information" ) );
    details->addWidget( bn_chromoab,      row++, 0, 1, 4 );
 
    //Row 6b
-   QLabel* lb_radcalwvl  = us_label( tr( "Radial Calibration Wavelength:" ) );
+   lb_radcalwvl  = us_label( tr( "Radial Calibration Wavelength:" ) );
    le_radcalwvl          = us_lineedit( "", 0, true );
    details->addWidget( lb_radcalwvl,    row,   0, 1, 2 );
    details->addWidget( le_radcalwvl,    row++, 2, 1, 2 );
    
    //Row 6c
-   QLabel* lb_chromofile  = us_label( tr( "Chromatic Aberration Array:" ) );
+   lb_chromofile  = us_label( tr( "Chromatic Aberration Array:" ) );
    le_chromofile          = us_lineedit( "", 0, true );
    details->addWidget( lb_chromofile,    row,   0, 1, 2 );
    details->addWidget( le_chromofile,    row++, 2, 1, 2 );  
@@ -210,8 +216,12 @@ US_XpnHostDB::US_XpnHostDB( QWidget* w, Qt::WindowFlags flags )
    if ( dbP != NULL )    //fromDB
      readInstruments( dbP );
 
+   qDebug() << "Read Instr. and NOT updated_lw() ";
+   
    if ( instruments.size() > 0 )
      update_lw( );
+
+   qDebug() << "Read Instr. and updated_lw() ";
 
    // connect( lw_entries, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
    // 	                SLOT  ( select_db        ( QListWidgetItem* ) ) );
@@ -299,7 +309,7 @@ void US_XpnHostDB::readInstruments( US_DB2* db )
 	  instrument.chromoab         = db->value( 15 ).toString();
 
 	  
-	  if ( instrument.name.contains("Optima") || instrument.optimaHost.contains("AUC_DATA_DB") )
+	  // if ( instrument.name.contains("Optima") || instrument.optimaHost.contains("AUC_DATA_DB") )
 	    this->instruments << instrument;
 	}
     }
@@ -340,6 +350,7 @@ void US_XpnHostDB::update_lw( )
 	   lw_entries->setCurrentRow( 0 );
 	   QListWidgetItem* item = lw_entries->item( 0 );
 	   optima_selected( item );
+	 
 	   qDebug() << "Def. sel. selected!!!";
 	 }
 
@@ -371,6 +382,7 @@ void US_XpnHostDB::optima_selected( )
        {
 	 // Populate current entry GUI slots
 	 le_description->setText( item );
+	 le_serial     ->setText( instruments[ii].serial );
 	 le_host       ->setText( instruments[ii].optimaHost );
 	 le_port       ->setText( QString::number( instruments[ii].optimaPort ) );
 	 le_name       ->setText( instruments[ii].optimaDBname );
@@ -391,10 +403,54 @@ void US_XpnHostDB::optima_selected( )
 	 else
 	   le_chromofile  ->setText( "Uploaded" );
 	 
-	 
        }
-
    }
+  
+  if ( !item.contains("Optima")  )
+    {
+
+      host          ->setVisible( false );
+      le_host       ->setVisible( false );
+      port	    ->setVisible( false );
+      le_port       ->setVisible( false );
+      name	    ->setVisible( false );
+      le_name       ->setVisible( false );
+      user	    ->setVisible( false );
+      le_user       ->setVisible( false );
+      pasw	    ->setVisible( false );
+      le_pasw       ->setVisible( false );
+      
+      bn_chromoab   ->setVisible( false );
+      lb_radcalwvl  ->setVisible( false );
+      le_radcalwvl  ->setVisible( false );
+      lb_chromofile ->setVisible( false );
+      le_chromofile ->setVisible( false );
+
+      pb_testConnect->setEnabled( false );
+      
+    }
+  else
+    {
+      host          ->setVisible( true );
+      le_host       ->setVisible( true );
+      port	    ->setVisible( true );
+      le_port       ->setVisible( true );
+      name	    ->setVisible( true );
+      le_name       ->setVisible( true );
+      user	    ->setVisible( true );
+      le_user       ->setVisible( true );
+      pasw	    ->setVisible( true );
+      le_pasw       ->setVisible( true );
+			
+      bn_chromoab   ->setVisible( true );
+      lb_radcalwvl  ->setVisible( true );
+      le_radcalwvl  ->setVisible( true );
+      lb_chromofile ->setVisible( true );
+      le_chromofile ->setVisible( true );
+      
+      pb_testConnect->setEnabled( true );
+      
+    }
 }
 
 // When selected, fill GUI
@@ -408,6 +464,8 @@ void US_XpnHostDB::optima_selected( QListWidgetItem *tmp_item )
 
   QListWidgetItem *entry = tmp_item;
   QString item           = entry->text().remove( " (default)" );
+
+  qDebug() << "OPTIMA NAME: " << item;
   
   for ( int ii = 0; ii < instruments.size(); ii++ )
    {
@@ -415,6 +473,7 @@ void US_XpnHostDB::optima_selected( QListWidgetItem *tmp_item )
        {
 	 // Populate current entry GUI slots
 	 le_description->setText( item );
+	 le_serial     ->setText( instruments[ii].serial );
 	 le_host       ->setText( instruments[ii].optimaHost );
 	 le_port       ->setText( QString::number( instruments[ii].optimaPort ) );
 	 le_name       ->setText( instruments[ii].optimaDBname );
@@ -436,8 +495,52 @@ void US_XpnHostDB::optima_selected( QListWidgetItem *tmp_item )
 	   le_chromofile  ->setText( "Uploaded" );
 	 
        }
-
    }
+    if ( !item.contains("Optima")  )
+    {
+
+      qDebug() << "NON_OPTIMA !!!!" ; 
+      host          ->setVisible( false );
+      le_host       ->setVisible( false );
+      port	    ->setVisible( false );
+      le_port       ->setVisible( false );
+      name	    ->setVisible( false );
+      le_name       ->setVisible( false );
+      user	    ->setVisible( false );
+      le_user       ->setVisible( false );
+      pasw	    ->setVisible( false );
+      le_pasw       ->setVisible( false );
+      
+      bn_chromoab   ->setVisible( false );
+      lb_radcalwvl  ->setVisible( false );
+      le_radcalwvl  ->setVisible( false );
+      lb_chromofile ->setVisible( false );
+      le_chromofile ->setVisible( false );
+
+      pb_testConnect->setEnabled( false );
+      
+    }
+  else
+    {
+      host          ->setVisible( true );
+      le_host       ->setVisible( true );
+      port	    ->setVisible( true );
+      le_port       ->setVisible( true );
+      name	    ->setVisible( true );
+      le_name       ->setVisible( true );
+      user	    ->setVisible( true );
+      le_user       ->setVisible( true );
+      pasw	    ->setVisible( true );
+      le_pasw       ->setVisible( true );
+			
+      bn_chromoab   ->setVisible( true );
+      lb_radcalwvl  ->setVisible( true );
+      le_radcalwvl  ->setVisible( true );
+      lb_chromofile ->setVisible( true );
+      le_chromofile ->setVisible( true );
+
+      pb_testConnect->setEnabled( true );
+    }
 }
 
 // Select instrument
@@ -560,7 +663,7 @@ bool US_XpnHostDB::check_user_level()
 
   qDebug() << "User Level: " << US_Settings::us_inv_level();
   
-  if ( US_Settings::us_inv_level() < 4 )
+  if ( US_Settings::us_inv_level() < 3 )
     {
       QMessageBox::warning( this,
 			    tr( "Check User Level" ),

@@ -176,7 +176,7 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   connect( pb_advanced, SIGNAL( clicked() ), this, SLOT( update_advanced() ) );
 
   // Optima Host
-  QLabel* lb_xpnhost = us_label( "Optima Host Preferences:" );
+  QLabel* lb_xpnhost = us_label( "Instrument Preferences:" );
   otherSettings->addWidget( lb_xpnhost, row, 0 );
 
   pb_xpnh = us_pushbutton( tr( "Change" ) );
