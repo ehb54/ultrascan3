@@ -247,7 +247,10 @@ DbgLv(1) << "EGRn: rbR:  protname" << protname << "cur_pname" << cur_pname;
    {  // Protocol has changed:  rebuild internals
       protname            = cur_pname;
       nrnchan             = nrange_sv;
-      rpRange->nranges    = nuvvis;
+
+      //rpRange->nranges    = nuvvis;   //ALEXEY: Bug: cannot use nuvvis which is max #of channels when protocol says #channels with ranges is less...
+      rpRange->nranges    = nrnchan;
+
       rchans .resize( nrnchan );
       swvlens.resize( nrnchan );
       locrads.resize( nrnchan );
