@@ -2099,18 +2099,26 @@ DbgLv(1) << "EGwS:inP:    ii" << ii << "channel" << channel;
    
    for (int i=0; i<nsp; i++)
      Total_wvl[i] = 0;
+
+   qDebug() << "Total_wvl.size():  " << Total_wvl.size();
    
    for (int i=0; i<nsp; i++)
-     { 
+     {
+       qDebug() << "Speed # " << i;
+       
        for (int j=0; j<ncells; j++)
 	 {
+	   qDebug() << "Cell # " << j;
 	   //Compute total # wvl per stage
 	   QString channel;
+
+	   qDebug() << "rpRange->nranges: " << rpRange->nranges;
 	   for ( int ii = 0; ii < rpRange->nranges; ii++ )
 	     {
 	       channel  = rpRange->chrngs[ ii ].channel;
 	       if ( channel.contains("sample") && channel.startsWith(QString::number(j+1)) )  // <-- Judge only by sample (channel A) for now
 		 {
+		   qDebug() << "# of Ranges for cell " << j << ": " << rpRange->chrngs[ ii ].wvlens.count();
 		   Total_wvl[i]  += rpRange->chrngs[ ii ].wvlens.count();
 		 }
 	     }
