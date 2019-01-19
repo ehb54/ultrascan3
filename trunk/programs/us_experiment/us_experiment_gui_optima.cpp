@@ -1053,7 +1053,7 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
     //                       = us_timeedit( tm_scnint, 0, &sb_scnint );
    
    
-   QHBoxLayout* lo_duratlay        = us_ddhhmmsslay( 0, 1,0,0,1, &sb_durat_dd, &sb_durat_hh, &sb_durat_mm,  &sb_durat_ss ); // ALEXEY 1 - visible, 0 - hidden
+   QHBoxLayout* lo_duratlay        = us_ddhhmmsslay( 0, 0,0,0,1, &sb_durat_dd, &sb_durat_hh, &sb_durat_mm,  &sb_durat_ss ); // ALEXEY 0 - visible, 1 - hidden
    QHBoxLayout* lo_delaylay_stage  = us_ddhhmmsslay( 0, 1,0,0,1, &sb_delay_st_dd, &sb_delay_st_hh, &sb_delay_st_mm,  &sb_delay_st_ss );
    QHBoxLayout* lo_delaylay        = us_ddhhmmsslay( 0, 1,0,0,1, &sb_delay_dd, &sb_delay_hh, &sb_delay_mm,  &sb_delay_ss );
    sb_delay_hh->setEnabled(false);
@@ -1605,42 +1605,46 @@ DbgLv(1) << "EGSp: chgAcc: val" << val << "ssx" << curssx;
 // Slot for change in duration time (hours)
 void US_ExperGuiSpeeds::ssChgDuratTime_hh( int val )
 {
+   double ssdurday  = (double)sb_durat_dd->value();
    double ssdurhr   = val;
    double ssdurmin  = (double)sb_durat_mm->value();
    double ssdursec  = (double)sb_durat_ss->value();
-   double ssdurtim  = ( ssdurhr * 3600.0 ) + ( ssdurmin * 60.0 ) + ssdursec;
-DbgLv(1) << "EGSp: chgDlyT:  ssdly h m s" << ssdurhr << ssdurmin << ssdursec
- << "t" << ssdurtim;
+   double ssdurtim  = ( ssdurday * 3600.0 * 24 ) + ( ssdurhr * 3600.0 ) + ( ssdurmin * 60.0 ) + ssdursec;
+   
    ssvals[ curssx ][ "duration" ] = ssdurtim;  // Set Duration in step vals vector
 
    profdesc[ curssx ] = speedp_description( curssx );
    cb_prof->setItemText( curssx, profdesc[ curssx ] );
+
+   qDebug() << "Time in sec aftes HH changed: " << ssdurtim;
 }
 
 // Slot for change in duration time (mins)
 void US_ExperGuiSpeeds::ssChgDuratTime_mm( int val )
 {
+   double ssdurday  = (double)sb_durat_dd->value();
    double ssdurhr   = (double)sb_durat_hh->value();
    double ssdurmin  = val;
    double ssdursec  = (double)sb_durat_ss->value();
-   double ssdurtim  = ( ssdurhr * 3600.0 ) + ( ssdurmin * 60.0 ) + ssdursec;
-DbgLv(1) << "EGSp: chgDlyT:  ssdly h m s" << ssdurhr << ssdurmin << ssdursec
- << "t" << ssdurtim;
+   double ssdurtim  = ( ssdurday * 3600.0 * 24 ) + ( ssdurhr * 3600.0 ) + ( ssdurmin * 60.0 ) + ssdursec;
+
    ssvals[ curssx ][ "duration" ] = ssdurtim;  // Set Duration in step vals vector
 
    profdesc[ curssx ] = speedp_description( curssx );
    cb_prof->setItemText( curssx, profdesc[ curssx ] );
+
+   qDebug() << "Time in sec aftes MINS changed: " << ssdurtim;
 }
 
 // Slot for change in duration time (sec)
 void US_ExperGuiSpeeds::ssChgDuratTime_ss( int val )
 {
+   double ssdurday  = (double)sb_durat_dd->value();
    double ssdurhr   = (double)sb_durat_hh->value();
    double ssdurmin  = (double)sb_durat_mm->value();
    double ssdursec  = val;
-   double ssdurtim  = ( ssdurhr * 3600.0 ) + ( ssdurmin * 60.0 ) + ssdursec;
-DbgLv(1) << "EGSp: chgDlyT:  ssdly h m s" << ssdurhr << ssdurmin << ssdursec
- << "t" << ssdurtim;
+   double ssdurtim  = ( ssdurday * 3600.0 * 24 ) + ( ssdurhr * 3600.0 ) + ( ssdurmin * 60.0 ) + ssdursec;
+
    ssvals[ curssx ][ "duration" ] = ssdurtim;  // Set Duration in step vals vector
 
    profdesc[ curssx ] = speedp_description( curssx );
@@ -1651,20 +1655,17 @@ DbgLv(1) << "EGSp: chgDlyT:  ssdly h m s" << ssdurhr << ssdurmin << ssdursec
 void US_ExperGuiSpeeds::ssChgDuratDay( int val )
 {
    double ssdurday  = val;
-//  double ssdurhr   = tm_durat->sectionText( QDateTimeEdit::HourSection ).toDouble(); //ALEXEY
-   
    double ssdurhr   = (double)sb_durat_hh->value();
    double ssdurmin  = (double)sb_durat_mm->value();
    double ssdursec  = (double)sb_durat_ss->value();
-DbgLv(1) << "EGSp: chgDlyD: val" << val << "ssdly d h"
-  << ssdurday << ssdurhr;
-// << ssdurhr << ssdurmin << ssdursec << "t" << ssdurtim;
- 
-   double ssdurtim  = ( val * 3600.0 * 24 ) + ( ssdurhr * 3600.0 ) + ( ssdurmin * 60.0 ) + ssdursec;
+   double ssdurtim  = ( ssdurday * 3600.0 * 24 ) + ( ssdurhr * 3600.0 ) + ( ssdurmin * 60.0 ) + ssdursec;
+
    ssvals[ curssx ][ "duration" ] = ssdurtim;  // Set Duration in step vals vector
 
    profdesc[ curssx ] = speedp_description( curssx );
    cb_prof->setItemText( curssx, profdesc[ curssx ] );
+
+   qDebug() << "Time in sec aftes DAYS changed: " << ssdurtim;
 }
 
 // // Slot for change in delay time (hour/minute/second)                     \\ALEXEY
