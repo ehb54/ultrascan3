@@ -28,6 +28,11 @@ class US_GUI_EXTERN US_SelectItem : public US_WidgetsDialog
       US_SelectItem( QList< QStringList >&, QStringList&, const QString,
                      int*, const int = (-1) );
 
+      // Same as above but with Delete button and delete functionality for us_experiment
+      US_SelectItem( QList< QStringList >&, QStringList&, const QString,
+                     int*, QString, const int = (-1) );
+
+
       //! \brief Alternate constructor for dialog to select multiple items
       //! \param items    A list of item string lists to comprise select list
       //! \param hdrs     A list of headers for the table widget
@@ -55,6 +60,7 @@ class US_GUI_EXTERN US_SelectItem : public US_WidgetsDialog
       QStringList    itemlist;    //!< List of column-0 item text
 
       bool           multi_sel;   //!< Flag: multiple selections enabled?
+      bool           deleted_button; //If Delete button is present
       Qt::SortOrder  sort_ord;    //!< Default sort order flag
       int            sort_col;    //!< Default sort column
       int            nitems;      //!< Number of items (rows)
@@ -66,8 +72,11 @@ class US_GUI_EXTERN US_SelectItem : public US_WidgetsDialog
       void search         ( const QString& );
       void cancelled      ( void );
       void accepted       ( void );
+      void deleted        ( void );
       void help           ( void )
       { showHelp.show_help( "select_item.html" ); };
 
+   signals:
+      void accept_deletion( void ); 
 };
 #endif

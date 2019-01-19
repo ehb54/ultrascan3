@@ -3,6 +3,10 @@
 #include "us_select_item.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_passwd.h"
+#include "us_help.h"
+#include "us_crypto.h"
+#include "us_db2.h"
 
 //! \brief Class for simple table widget display of
 //!        a list of item columns.
@@ -14,6 +18,31 @@ US_SelectItem::US_SelectItem( QList< QStringList >& items,
    : US_WidgetsDialog( 0, 0 ), items( items ), hdrs( hdrs )
 {
    multi_sel         = false;
+   deleted_button    = false;
+   selxP             = aselxP;
+   selxsP            = NULL;
+   sort_ord          = ( def_sort < 0 ) ? Qt::DescendingOrder
+                                        : Qt::AscendingOrder;
+   sort_col          = qAbs( def_sort ) - 1;
+
+   build_layout( titl );
+
+   tw_data->setSelectionMode( QAbstractItemView::SingleSelection );
+
+   show();
+}
+
+// Alternate constructor to enable selecting a single item with Delete button
+US_SelectItem::US_SelectItem( QList< QStringList >& items,
+			      QStringList& hdrs, const QString titl, int* aselxP, QString deleted,
+			      const int def_sort )
+  : US_WidgetsDialog( 0, 0 ), items( items ), hdrs( hdrs )
+{
+   multi_sel         = false;
+
+   if ( !deleted.isEmpty() )
+     deleted_button    = true;
+   
    selxP             = aselxP;
    selxsP            = NULL;
    sort_ord          = ( def_sort < 0 ) ? Qt::DescendingOrder
@@ -34,6 +63,7 @@ US_SelectItem::US_SelectItem( QList< QStringList >& items,
    : US_WidgetsDialog( 0, 0 ), items( items ), hdrs( hdrs )
 {
    multi_sel         = true;
+   deleted_button    = false;
    selxP             = NULL;
    selxsP            = aselxsP;
    sort_ord          = ( def_sort < 0 ) ? Qt::DescendingOrder
@@ -77,14 +107,15 @@ void US_SelectItem::build_layout( const QString titl )
    // Create a list of column 0 values
    QFont tw_font( US_Widgets::fixedFont().family(),
                   US_GuiSettings::fontSize() );
-   nitems              = items.count();
    ncols               = hdrs.count();
-   itemlist.clear();
 
-   for ( int ii = 0; ii < nitems; ii++ )
-   {  // Save column0 description in a separate list
-      itemlist << items[ ii ][ 0 ];
-   }
+   // nitems              = items.count();
+   // itemlist.clear();
+
+   // for ( int ii = 0; ii < nitems; ii++ )
+   // {  // Save column0 description in a separate list
+   //    itemlist << items[ ii ][ 0 ];
+   // }
 
    // Construct the table widget 
 
@@ -108,11 +139,19 @@ void US_SelectItem::build_layout( const QString titl )
                                            tr( "Select Item(s)" ) :
                                            tr( "Select Item"    ) );
 
+   
+   QPushButton* pb_delete = us_pushbutton( tr( "Delete Item" ) );
+   
    buttons->addWidget( pb_cancel );
+   buttons->addWidget( pb_delete );
    buttons->addWidget( pb_accept );
 
    connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancelled() ) );
    connect( pb_accept, SIGNAL( clicked() ), SLOT( accepted() ) );
+   connect( pb_delete, SIGNAL( clicked() ), SLOT( deleted() ) );
+
+   if ( !deleted_button )
+     pb_delete->hide();
 
    main->addLayout( buttons );
    resize( 700, 250 );
@@ -143,6 +182,18 @@ void US_SelectItem::list_data()
    QFontMetrics* fm = new QFontMetrics( tw_font );
    int rowhgt       = fm->height() + 2;     // Row height based on font
    bool have_search = ! dsearch.isEmpty();  // Flag if searching by filter
+
+   //ALEXEY: moved here from build_layout()
+   nitems              = items.count();
+   itemlist.clear();
+
+   for ( int ii = 0; ii < nitems; ii++ )
+   {  // Save column0 description in a separate list
+      itemlist << items[ ii ][ 0 ];
+   }
+   //////////////////
+
+   
    int mxrows       = itemlist.size();      // Count of total items
    int nrows        = 0;                    // Initial displayed items count
 
@@ -249,9 +300,86 @@ void US_SelectItem::accepted()
       twi               = tw_data->item( irow, 0 );
 
       (*selxP)          = qMax( 0, itemlist.indexOf( twi->text() ) );
+
    }
 
    accept();        // Signal that selection was accepted
    close();
 }
 
+
+// Delete button:
+      /*  ALEXEY: For future Delete() function:
+
+	  to get ptotID -> items[selxP][2]; 
+	  delete (stored procedure) 
+	         + emit signal to us_experiment to update protdata BEFORE any selection; 
+	  then remove items[selxP] from QList; 
+	  then rebuild list by running list_data(); [move part of ]
+      */
+void US_SelectItem::deleted()
+{
+   QList< QTableWidgetItem* > selitems = tw_data->selectedItems();
+
+   int     ProtRow;
+   QString ProtID;
+   if ( selitems.size() == 0 )
+   {
+      QMessageBox::information( this,
+            tr( "No Data Selected" ),
+            tr( "You have not selected any data.\nSelect or Cancel" ) );
+      return;
+   }
+
+   // Return the index to the selected item
+   QTableWidgetItem* twi  = selitems.at( 0 );
+   int irow          = twi->row();
+   twi               = tw_data->item( irow, 0 );
+   
+   ProtRow            = qMax( 0, itemlist.indexOf( twi->text() ) );
+   
+   ProtID = items[ ProtRow ][ 2 ];
+
+   //Attempt protocol deletion:
+   qDebug() << "Prtotcol ID to delete: ID, name: " << ProtID << ", " << items[ ProtRow ][ 0 ];
+
+   int response = QMessageBox::question( this,
+					 tr( "Delete Protocol?" ),
+					 tr( "You have selected the following Protocol to delete:\n    \"" )
+					 + items[ ProtRow ][ 0 ] + tr( "\"\n\nProceed?" ),
+					 QMessageBox::Yes, QMessageBox::Cancel );
+   
+   if ( response != QMessageBox::Yes )
+     return;
+
+   US_Passwd pw;
+   US_DB2* db = new US_DB2( pw.getPasswd() );
+   QStringList q( "" );
+   q.clear();
+   q  << QString( "delete_protocol" )
+      << ProtID;      
+   
+   int status = db->statusQuery( q );
+
+   if ( status == US_DB2::PROTOCOL_IN_USE )
+     {
+       QMessageBox::warning( this,
+			     tr( "Protocol Not Deleted" ),
+			     tr( "This protocol could not be deleted since\n"
+				 "it is in use in one or more experiments." ) );
+       return;
+     }
+
+   qDebug() << "Items.size() BEROFE deletion: " << items.size();
+   items.removeAt( ProtRow );     // Remove deleted item row
+   qDebug() << "Items.size() AFTER deletion: " << items.size();
+   
+   list_data();                   // Rebuild protocol list in the dialog
+
+   QString msg("Protocol has been successfully deleted.");
+   QMessageBox::information( this,
+			     tr( "Protocol Deleted" ),
+			     msg );
+   
+   emit accept_deletion();        // Signal to pass to us_experiment to update (re-read reduced) protdata
+}
