@@ -476,7 +476,7 @@ QHBoxLayout* US_WidgetsDialog::us_ddhhmmsslay(
    if ( hh != NULL )
    {
       *hh              = new QSpinBox( this );
-      (*hh)->setRange(0, 999);
+      (*hh)->setRange(0, 24);
       (*hh)->setPalette( pal );
       (*hh)->setAutoFillBackground( true );
       (*hh)->setFont( font );

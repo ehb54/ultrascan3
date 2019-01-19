@@ -119,13 +119,29 @@ bool US_RunProtocol::fromXml( QXmlStreamReader& xmli )
 // Function to convert from a time to a day,hour,minute,second list
 void US_RunProtocol::timeToList( double& sectime, QList< int >& dhms )
 {
-   int t_minute     = (int)( sectime / 60.0 );
-   int t_second     = qRound( sectime - t_minute * 60.0 );
-   int t_hour       = (int)( t_minute / 60 );
-       t_minute    -= ( t_hour * 60 );
-   int t_day        = (int)( t_hour / 24 );
-       t_day       -= ( t_day * 24 );
+   int t_day = (int)( sectime / (24*3600) );
+   sectime -= t_day * 24 * 3600;
 
+   int t_hour = (int)( sectime / 3600 );
+   sectime -= t_hour * 3600;
+
+   int t_minute = (int)( sectime / 60 );
+   sectime -= t_minute * 60;
+
+   int t_second = sectime;
+
+  // int t_minute     = (int)( sectime / 60.0 );
+   // int t_second     = qRound( sectime - t_minute * 60.0 );
+   // int t_hour       = (int)( t_minute / 60.0 );
+   //     t_minute    -= ( t_hour * 60 );
+   // int t_day        = (int)( t_hour / 24 );
+   //     t_hour      -= ( t_day * 24 ); 
+
+   qDebug() << "TimeToList(): DD: " << t_day;
+   qDebug() << "TimeToList(): HH: " << t_hour;
+   qDebug() << "TimeToList(): MM: " << t_minute;
+   qDebug() << "TimeToList(): SS: " << t_second;
+   
    dhms.clear();
    dhms << t_day << t_hour << t_minute << t_second;
 }
