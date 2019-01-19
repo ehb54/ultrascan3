@@ -1054,12 +1054,18 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    
    
    QHBoxLayout* lo_duratlay        = us_ddhhmmsslay( 0, 0,0,0,1, &sb_durat_dd, &sb_durat_hh, &sb_durat_mm,  &sb_durat_ss ); // ALEXEY 0 - visible, 1 - hidden
-   QHBoxLayout* lo_delaylay_stage  = us_ddhhmmsslay( 0, 1,0,0,1, &sb_delay_st_dd, &sb_delay_st_hh, &sb_delay_st_mm,  &sb_delay_st_ss );
-   QHBoxLayout* lo_delaylay        = us_ddhhmmsslay( 0, 1,0,0,1, &sb_delay_dd, &sb_delay_hh, &sb_delay_mm,  &sb_delay_ss );
+   QHBoxLayout* lo_delaylay_stage  = us_ddhhmmsslay( 0, 0,0,0,1, &sb_delay_st_dd, &sb_delay_st_hh, &sb_delay_st_mm,  &sb_delay_st_ss );
+   QHBoxLayout* lo_delaylay        = us_ddhhmmsslay( 0, 0,0,0,1, &sb_delay_dd, &sb_delay_hh, &sb_delay_mm,  &sb_delay_ss );
+
+   sb_delay_st_dd->setEnabled(false);
+   
+   sb_delay_dd->setEnabled(false);
    sb_delay_hh->setEnabled(false);
    sb_delay_mm->setEnabled(false);
-   QHBoxLayout* lo_scnintlay       = us_ddhhmmsslay( 0, 1,0,0,0, &sb_scnint_dd, &sb_scnint_hh, &sb_scnint_mm,  &sb_scnint_ss );
+   QHBoxLayout* lo_scnintlay       = us_ddhhmmsslay( 0, 0,0,0,0, &sb_scnint_dd, &sb_scnint_hh, &sb_scnint_mm,  &sb_scnint_ss );
 
+   sb_scnint_dd->setEnabled(false);
+   
    le_maxrpm           = us_lineedit( tr( "Maximum speed for AN50 rotor:"
                                           "  50000 rpm" ), 0, true );
 
