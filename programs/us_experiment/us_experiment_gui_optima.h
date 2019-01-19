@@ -95,10 +95,11 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
       void changed_protocol( void );        // Slot for change in protocol name
       void centerpieceInfo ( void );        // Function for all centerpieces
       void check_empty_runname(const QString &);
-   signals:
+      void update_protdata( void );
+ signals:
       void  set_tabs_buttons_inactive ( void );
       void  set_tabs_buttons_active_readonly   ( void );
-      void  set_tabs_buttons_active  ( void ); 
+      void  set_tabs_buttons_active  ( void );
 };
 
 //! \brief Experiment Rotor panel

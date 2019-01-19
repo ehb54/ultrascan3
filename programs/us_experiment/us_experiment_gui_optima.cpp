@@ -474,11 +474,16 @@ DbgLv(1) << "EGGe:ldPro: Disk-B: load_db" << load_db;
         << ( load_db ? "DbID" : "File Name" );
 
    // Select a protocol
-   US_SelectItem pdiag( protdata, hdrs, pdtitle, &prx, -2 );
+   QString delete_button = "DELETE";
+   //US_SelectItem pdiag( protdata, hdrs, pdtitle, &prx, -2 );
+   US_SelectItem* pdiag = new  US_SelectItem( protdata, hdrs, pdtitle, &prx, delete_button, -2 );  //ALEXEY <-- wit Delete button and functionality
 
-   if ( pdiag.exec() == QDialog::Accepted )
+   connect( pdiag, SIGNAL( accept_deletion() ), this, SLOT( update_protdata() )); 
+
+   if ( pdiag->exec() == QDialog::Accepted )
    {  // Accept in dialog:  get selected protocol name and its XML
-DbgLv(1) << "EGGe:ldPro:  ACCEPT  prx" << prx << "sel proto" << protdata[prx][0];
+     DbgLv(1) << "EGGe:ldPro:  ACCEPT  prx" << prx << "sel proto" << protdata[prx][0] << "protID" << protdata[prx][2];
+
       QString pname         = protdata[ prx ][ 0 ];
 
       // Get the protocol XML that matches the selected protocol name
@@ -522,6 +527,23 @@ DbgLv(1) << "EGGe:ldPro:    cTempe" << mainw->currProto.temperature
    mainw->initPanels();
 
    check_runname();
+}
+
+// Update protdata when protocol deleted in pdialog...
+void US_ExperGuiGeneral::update_protdata( void )
+{
+   bool fromdisk         = US_Settings::debug_match( "protocolFromDisk" );
+   bool load_db          = fromdisk ? false : use_db;
+   US_Passwd  pw;
+   US_DB2* dbP           = load_db ? new US_DB2( pw.getPasswd() ) : NULL;
+
+   US_ProtocolUtil::list_all( protdata, dbP );
+
+   pr_names.clear();
+   for ( int ii = 0; ii < protdata.count(); ii++ )
+      pr_names << protdata[ ii ][ 0 ];
+
+   qDebug() << "# of pr_names: " << pr_names.count();
 }
 
 // Verify entered protocol name

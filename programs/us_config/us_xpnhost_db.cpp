@@ -283,6 +283,7 @@ void US_XpnHostDB::readInstruments( US_DB2* db )
       // Instrument information
       foreach ( int ID, instrumentIDs )
 	{
+	  qDebug() << "Inside INSTR. loop!!! ";
 	  US_XpnHostDB::Instrument instrument;
 	  
 	  q.clear();
@@ -308,6 +309,8 @@ void US_XpnHostDB::readInstruments( US_DB2* db )
 	  instrument.radcalwvl        = db->value( 14 ).toString();
 	  instrument.chromoab         = db->value( 15 ).toString();
 
+	  qDebug() << "Ist.ID:  " << instrument.ID;
+	  qDebug() << "Ist.name: " << instrument.name;
 	  
 	  // if ( instrument.name.contains("Optima") || instrument.optimaHost.contains("AUC_DATA_DB") )
 	    this->instruments << instrument;

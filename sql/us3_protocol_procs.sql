@@ -339,19 +339,42 @@ CREATE PROCEDURE delete_protocol ( p_personGUID  CHAR(36),
   MODIFIES SQL DATA
 
 BEGIN
+  DECLARE count_protocols INT;	
+
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
   IF ( verify_protocol_permission( p_personGUID, p_password, p_protocolID ) = @OK ) THEN
 
-    -- Make sure records match if they have related tables or not
-    -- Have to do it in a couple of stages because of the constraints
-    DELETE FROM protocolPerson
-    WHERE protocolID = p_protocolID;
+     -- Make sure records match if they have related tables or not
+     -- Have to do it in a couple of stages because of the constraints
+     DELETE FROM protocolPerson
+     WHERE protocolID = p_protocolID;
 
-    DELETE FROM protocol
-    WHERE protocolID = p_protocolID;
+     DELETE FROM protocol
+     WHERE protocolID = p_protocolID;
+
+--  FUTURE: when 'autoflow' (and maybe others) table is created which connects experiment with protocol...
+--    -- Find out if this protocol is used first
+--    SELECT COUNT(*) INTO count_protocols 
+--    FROM autoflow 
+--    WHERE protID = p_protocolID;
+--
+--    IF ( count_protocols = 0 ) THEN
+--       -- Make sure records match if they have related tables or not
+--       -- Have to do it in a couple of stages because of the constraints
+--       DELETE FROM protocolPerson
+--       WHERE protocolID = p_protocolID;
+--
+--       DELETE FROM protocol
+--       WHERE protocolID = p_protocolID;
+--
+--    ELSE
+--      SET @US3_LAST_ERRNO = @PROTOCOL_IN_USE;
+--      SET @US3_LAST_ERROR = 'The protocol is in use in experiment';   
+--    
+--    END IF;
 
   END IF;
 
