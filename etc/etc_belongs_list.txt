@@ -54,6 +54,7 @@ cm-b-cyan-white.xml
 cm-g-cyan-magenta-red-blue.xml
 cm-g-cyan-magenta-red-white.xml
 cm-rainbow.xml
+cm-yellow.xml
 cm-w-cyan-magenta-red-black.xml
 cm-w-green-blue-magenta-red.xml
 cm-w-green-blue-red-black.xml

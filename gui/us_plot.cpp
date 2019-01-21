@@ -1,11 +1,14 @@
 //! \file us_plot.cpp
 
+#include <QApplication>
 #include <QtSvg>
 #include "us_plot.h"
 #if QT_VERSION > 0x050000
 #include <QtPrintSupport>
+#include "us_colorgradIO.h"
 #include "qwt_picker_machine.h"
 #include "qwt_picker.h"
+#include "qwt_color_map.h"
 #define canvasBackground() canvasBackground().color()
 #else
 #define majorPen(a)    majPen(a)
@@ -56,7 +59,8 @@ US_Zoomer::US_Zoomer( int xAxis, int yAxis, QwtPlotCanvas* canvas )
 
 // A new plot returns a QBoxLayout
 US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
-      const QString& x_axis, const QString& y_axis ) : QHBoxLayout()
+      const QString& x_axis, const QString& y_axis, const bool cmEnab,
+      const QString cmMatch ) : QHBoxLayout()
 {
    zoomer = NULL;
    setSpacing( 0 );
@@ -65,7 +69,8 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
                      US_GuiSettings::fontSize() - 2 );
 
    // Add the tool bar 
-   QToolBar* toolBar = new QToolBar;
+//   QToolBar* toolBar = new QToolBar;
+   toolBar = new QToolBar;
    toolBar->setAutoFillBackground( true );
    toolBar->setPalette( US_GuiSettings::plotColor() );
    toolBar->setOrientation( Qt::Vertical );
@@ -106,11 +111,22 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    btnConfig->setFont( buttonFont );
    connect( btnConfig, SIGNAL( clicked() ), SLOT( config() ) );
 
+   btnCMap                = new QToolButton( toolBar );
+   btnCMap  ->setText( "CMap" );
+   btnCMap  ->setIcon( QIcon( QPixmap( cmap_xpm ) ) );
+   btnCMap  ->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
+   btnCMap  ->setFont( buttonFont );
+   cmapEnab      = cmEnab;
+   cmapMatch     = cmMatch;
+   btnCMap  ->setVisible( cmapEnab );
+   connect( btnCMap,   SIGNAL( clicked() ), SLOT( colorMap() ) );
+
    toolBar->addWidget( btnZoom   );
    toolBar->addWidget( btnPrint  );
    toolBar->addWidget( btnSVG    );
    toolBar->addWidget( btnPNG    );
    toolBar->addWidget( btnConfig );
+   toolBar->addWidget( btnCMap   );
 
    addWidget( toolBar );
 
@@ -323,6 +339,82 @@ void US_Plot::config( void )
    configWidget->exec();
    qApp->processEvents();
    delete configWidget;
+}
+
+void US_Plot::colorMap( void )
+{
+qDebug() << "UP:CM: colorMap chosen";
+
+  QString cmapname;
+  QwtLinearColorMap* colormap;
+  QString filter = tr( "Color Map files (*cm-*.xml);;" )
+         + tr( "Any XML files (*.xml);;" )
+         + tr( "Any files (*)" );
+
+   // Get an xml file name for the color map
+   QString fname = QFileDialog::getOpenFileName( (QWidget*)plot,
+      tr( "Load Color Map File" ),
+      US_Settings::etcDir(), filter, 0, 0 );
+
+   if ( fname.isEmpty() )
+      return;
+
+   // Get the map from the file
+   QList< QColor > mcolors;
+   QList< QColor > cmcolor;
+   QList< double > cmvalue;
+
+   US_ColorGradIO::read_color_steps( fname, cmcolor, cmvalue );
+   colormap  = new QwtLinearColorMap( cmcolor.first(), cmcolor.last() );
+
+   for ( int jj = 1; jj < cmvalue.size() - 1; jj++ )
+   {
+      colormap->addColorStop( cmvalue.at( jj ), cmcolor.at( jj ) );
+   }
+   QFileInfo fi( fname );
+   cmapname  = tr( "Color Map: " ) + fi.baseName();
+qDebug() << "UP:CM: fname" << fname << "cmapname" << cmapname;
+
+   // Count curves that match any curve title pattern given
+   if ( ! cmapMatch.isEmpty() )
+   {
+      int ntcurv  = 0;
+      int nmcurv  = 0;
+      QwtPlotItemList list = plot->itemList();
+      QRegExp cmMatch( cmapMatch );
+qDebug() << "UP:CM: cmapMatch" << cmapMatch;
+      QList< QwtPlotCurve* > curves;
+      for ( int ii = 0; ii < list.size(); ii++ )
+      {
+         if ( list[ ii ]->rtti() == QwtPlotItem::Rtti_PlotCurve )
+         {
+            ntcurv++;
+            QwtPlotCurve* curve = dynamic_cast< QwtPlotCurve* >( list[ ii ] );
+            QString ctitle      = curve->title().text();
+qDebug() << "UP:CM:   ii" << ii << "ctitle" << ctitle;
+            if ( ctitle.contains( cmMatch ) )
+            {
+               nmcurv++;
+qDebug() << "UP:CM:     *MATCH* nmcurv" << nmcurv;
+               curves << curve;
+            }
+         }
+      }
+      US_ColorGradIO::read_color_gradient( fname, mcolors );
+      int nmcols  = mcolors.count();
+qDebug() << "UP:CM: ntcurv" << ntcurv << "nmcurv" << nmcurv << "nmcols" << nmcols;
+      int mcolx   = 0;
+
+      for ( int ii = 0; ii < nmcurv; ii++ )
+      {
+         QwtPlotCurve* curve = curves[ ii ];
+qDebug() << "UP:CM:   ii" << ii << "mcolx" << mcolx << "mcolor" << mcolors[mcolx];
+         curve->setPen( QPen( mcolors[ mcolx ] ) );
+         if ( (++mcolx) >= nmcols )
+            mcolx       = 0;
+      }
+      plot->replot();
+   }
 }
 
 /*

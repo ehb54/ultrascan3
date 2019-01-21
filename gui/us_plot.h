@@ -55,7 +55,8 @@ class US_GUI_EXTERN US_Plot : public QHBoxLayout
       //! \param x_axis - The title of the x (bottom) axis
       //! \param y_axis - The title of the y (left) axis
 
-      US_Plot( QwtPlot*& plot, const QString&, const QString&, const QString& );
+      US_Plot( QwtPlot*& plot, const QString&, const QString&, const QString&,
+               const bool cmEnab = false, const QString = QString("") );
 
       //! Make access to the zoom button public
       QToolButton* btnZoom;
@@ -76,16 +77,22 @@ class US_GUI_EXTERN US_Plot : public QHBoxLayout
       QwtPlotPicker* picker;
       QwtPlotPanner* panner;
 
+      bool           cmapEnab;
+      QString        cmapMatch;
+      QToolButton*   btnCMap;
+      QToolBar*      toolBar;
+
    private slots:
-      void zoom  ( bool );
-      void print ( void );
-      void svg   ( void );
-      void png   ( void );
-      void config( void );
+      void zoom    ( bool );
+      void print   ( void );
+      void svg     ( void );
+      void png     ( void );
+      void config  ( void );
+      void colorMap( void );
 };
 
 //! \brief A specialized push button class for US_Plot to automatically
-//!        tie a specialed signal to a the push button
+//!        tie a specialized signal to a push button
 class US_PlotPushbutton : public QPushButton
 {
    Q_OBJECT

@@ -33,7 +33,7 @@ if [ "${REV}" != "${REVL}" ]; then
   echo "Rev from ${SURL}:   ${REV}"
   echo "Rev from ${SRCDIR}:   ${REVL}"
   echo "  Do 'svn update' and build, then re-run this script"
-  exit 1
+##  exit 1
 fi
 
 QTLIBS4=" \
