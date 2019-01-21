@@ -21,7 +21,7 @@
     enter the description, host address and port of the Optima instrument,
     as well as Optima database name, user name, and password. Additional
     information includes a radial calibration wavelength, a file from which
-    to upload a chromatic abberation array, and installed optical systems. </p> 
+    to upload a chromatic aberration array, and installed optical systems. </p> 
     
     <p>When <em>Add New Entry</em> or <em>Edit Current Entry</em> is
     selected, one of the following dialogs is opened: </p>

@@ -26,6 +26,7 @@
 #include "us_astfem_math.h"
 #include "us_time_state.h"
 #include "us_simparms.h"
+#include "us_colorgradIO.h"
 #include <QFileInfo>
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c)  setData(a,b,c)
@@ -298,7 +299,8 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    plotLayout2 = new US_Plot( data_plot2,
             tr( "Velocity Data" ),
             tr( "Radius (cm)" ),
-            tr( "Absorbance" ) );
+            tr( "Absorbance" ),
+            true, ".*in range" );
 
    data_plot1->setCanvasBackground( Qt::black );
    data_plot2->setCanvasBackground( Qt::black );
@@ -419,6 +421,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    sdata          = &wsdata;
 
    setMaximumSize( qApp->desktop()->size() - QSize( 40, 40 ) );
+   data_plot2->replot();
 }
 
 // public function to get pointer to edit data
