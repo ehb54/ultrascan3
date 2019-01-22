@@ -61,6 +61,11 @@ class US_GUI_EXTERN US_Plot : public QHBoxLayout
       //! Make access to the zoom button public
       QToolButton* btnZoom;
 
+      //! \brief Public method to return map colors list and count
+      //! \param mcolors - Map colors reference for colors list return
+      //! returns        - Count of colors in color gradient list
+      int map_colors( QList< QColor >& );
+
    signals:
       //! \brief A signal that provides the bounding rectangle of a zoomed area
 #if QT_VERSION < 0x050000
@@ -79,8 +84,8 @@ class US_GUI_EXTERN US_Plot : public QHBoxLayout
 
       bool           cmapEnab;
       QString        cmapMatch;
+      QString        cmfpath;
       QToolButton*   btnCMap;
-      QToolBar*      toolBar;
 
    private slots:
       void zoom    ( bool );
