@@ -69,7 +69,7 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
                      US_GuiSettings::fontSize() - 2 );
 
    // Add the tool bar 
-//   QToolBar* toolBar = new QToolBar;
+   QToolBar* toolBar = new QToolBar;
    toolBar = new QToolBar;
    toolBar->setAutoFillBackground( true );
    toolBar->setPalette( US_GuiSettings::plotColor() );
@@ -188,6 +188,7 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    plot->setCanvasBackground( US_GuiSettings::plotCanvasBG() );
 
    addWidget( plot );
+   cmfpath        = QString();
 }
 
 void US_Plot::zoom( bool on )
@@ -341,80 +342,81 @@ void US_Plot::config( void )
    delete configWidget;
 }
 
+// Slot to set curve colors by color gradient read from file
 void US_Plot::colorMap( void )
 {
 qDebug() << "UP:CM: colorMap chosen";
-
-  QString cmapname;
-  QwtLinearColorMap* colormap;
-  QString filter = tr( "Color Map files (*cm-*.xml);;" )
+   // Get an xml file name for the color map
+   QString filter = tr( "Color Map files (*cm-*.xml);;" )
          + tr( "Any XML files (*.xml);;" )
          + tr( "Any files (*)" );
 
-   // Get an xml file name for the color map
-   QString fname = QFileDialog::getOpenFileName( (QWidget*)plot,
+   cmfpath        = QFileDialog::getOpenFileName( (QWidget*)plot,
       tr( "Load Color Map File" ),
       US_Settings::etcDir(), filter, 0, 0 );
 
-   if ( fname.isEmpty() )
+   if ( cmfpath.isEmpty() )
       return;
 
-   // Get the map from the file
+   // Get the color gradient from the file
    QList< QColor > mcolors;
-   QList< QColor > cmcolor;
-   QList< double > cmvalue;
-
-   US_ColorGradIO::read_color_steps( fname, cmcolor, cmvalue );
-   colormap  = new QwtLinearColorMap( cmcolor.first(), cmcolor.last() );
-
-   for ( int jj = 1; jj < cmvalue.size() - 1; jj++ )
-   {
-      colormap->addColorStop( cmvalue.at( jj ), cmcolor.at( jj ) );
-   }
-   QFileInfo fi( fname );
-   cmapname  = tr( "Color Map: " ) + fi.baseName();
-qDebug() << "UP:CM: fname" << fname << "cmapname" << cmapname;
-
-   // Count curves that match any curve title pattern given
-   if ( ! cmapMatch.isEmpty() )
-   {
-      int ntcurv  = 0;
-      int nmcurv  = 0;
-      QwtPlotItemList list = plot->itemList();
-      QRegExp cmMatch( cmapMatch );
-qDebug() << "UP:CM: cmapMatch" << cmapMatch;
+   US_ColorGradIO::read_color_gradient( cmfpath, mcolors );
+   int nmcols    = mcolors.count();
+qDebug() << "UP:CM: cmfpath" << cmfpath << "nmcols" << nmcols;
+   int ntcurv    = 0;
+   int nmcurv    = 0;
+   int mcolx     = 0;
+   bool tmatch   = ! cmapMatch.isEmpty();    // Curve type filter
+   QRegExp cmMatch( cmapMatch );             // Curve title match
+qDebug() << "UP:CM: cmapMatch" << cmapMatch << "tmatch" << tmatch;
+   QwtPlotItemList list = plot->itemList();  // All plot items
       QList< QwtPlotCurve* > curves;
-      for ( int ii = 0; ii < list.size(); ii++ )
-      {
-         if ( list[ ii ]->rtti() == QwtPlotItem::Rtti_PlotCurve )
-         {
-            ntcurv++;
-            QwtPlotCurve* curve = dynamic_cast< QwtPlotCurve* >( list[ ii ] );
-            QString ctitle      = curve->title().text();
+
+   // Examine each plot item, looking for curves and ones that match
+   for ( int ii = 0; ii < list.size(); ii++ )
+   {
+      if ( list[ ii ]->rtti() == QwtPlotItem::Rtti_PlotCurve )
+      {  // This is a curve
+         ntcurv++;      // Total curves
+         QwtPlotCurve* curve = dynamic_cast< QwtPlotCurve* >( list[ ii ] );
+         QString ctitle      = curve->title().text();
 qDebug() << "UP:CM:   ii" << ii << "ctitle" << ctitle;
-            if ( ctitle.contains( cmMatch ) )
-            {
-               nmcurv++;
+         if ( !tmatch  ||  ctitle.contains( cmMatch ) )
+         {  // No matching or this curve's title matches
+            nmcurv++;   // Matching curves
+            // Set curve color using modulo color gradient color
 qDebug() << "UP:CM:     *MATCH* nmcurv" << nmcurv;
-               curves << curve;
-            }
+qDebug() << "UP:CM:   ii" << ii << "mcolx" << mcolx << "mcolor" << mcolors[mcolx];
+            curve->setPen( QPen( mcolors[ mcolx ] ) );
+            mcolx++;    // Match-curve index modulo colors
+            if ( mcolx >= nmcols )
+               mcolx       = 0;
          }
       }
-      US_ColorGradIO::read_color_gradient( fname, mcolors );
-      int nmcols  = mcolors.count();
-qDebug() << "UP:CM: ntcurv" << ntcurv << "nmcurv" << nmcurv << "nmcols" << nmcols;
-      int mcolx   = 0;
-
-      for ( int ii = 0; ii < nmcurv; ii++ )
-      {
-         QwtPlotCurve* curve = curves[ ii ];
-qDebug() << "UP:CM:   ii" << ii << "mcolx" << mcolx << "mcolor" << mcolors[mcolx];
-         curve->setPen( QPen( mcolors[ mcolx ] ) );
-         if ( (++mcolx) >= nmcols )
-            mcolx       = 0;
-      }
-      plot->replot();
    }
+   plot->replot();
+qDebug() << "UP:CM: ntcurv" << ntcurv << "nmcurv" << nmcurv;
+}
+
+// Public method to return color gradient list and its count
+int US_Plot::map_colors( QList< QColor >& mcolors )
+{
+   int nmcol   = 0;
+
+   if ( cmfpath.isEmpty() )
+   {  // No color map file was read:  revert to single color
+      mcolors.clear();
+      mcolors << US_GuiSettings::plotCurve();
+      nmcol       = 1;
+   }
+
+   else
+   {  // Get and return the colors from a map file
+      US_ColorGradIO::read_color_gradient( cmfpath, mcolors );
+      nmcol       = mcolors.count();
+   }
+
+   return nmcol;
 }
 
 /*

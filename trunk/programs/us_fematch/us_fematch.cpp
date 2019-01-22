@@ -862,6 +862,12 @@ void US_FeMatch::data_plot( void )
    QPen          pen_red(  Qt::red );
    QPen          pen_plot( US_GuiSettings::plotCurve() );
 
+   // See if a color map gradient has been loaded
+   QList< QColor > mcolors;
+   int nmcols        = plotLayout2->map_colors( mcolors );
+   if ( nmcols == 1 )
+      pen_plot       = QPen( mcolors[ 0 ] );
+
    // Calculate basic parameters for other functions
    double avgTemp     = edata->average_temperature();
    solution.density   = le_density  ->text().toDouble();
@@ -887,6 +893,12 @@ void US_FeMatch::data_plot( void )
    for ( int ii = 0; ii < scanCount; ii++ )
    {
       if ( excludedScans.contains( ii ) ) continue;
+
+      if ( nmcols > 1 )
+      {  // Get pen plot color from gradient
+         int colx       = ii % nmcols;
+         pen_plot       = QPen( mcolors[ colx ] );
+      }
 
       scan_nbr++;
       bool highlight = ( scan_nbr >= from  &&  scan_nbr <= to );
