@@ -60,7 +60,7 @@ US_Zoomer::US_Zoomer( int xAxis, int yAxis, QwtPlotCanvas* canvas )
 // A new plot returns a QBoxLayout
 US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
       const QString& x_axis, const QString& y_axis, const bool cmEnab,
-      const QString cmMatch ) : QHBoxLayout()
+      const QString cmMatch, const QString cmName ) : QHBoxLayout()
 {
    zoomer = NULL;
    setSpacing( 0 );
@@ -188,7 +188,25 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    plot->setCanvasBackground( US_GuiSettings::plotCanvasBG() );
 
    addWidget( plot );
+
+   // Create default color map file path if need be
    cmfpath        = QString();
+qDebug() << "UP:main: cmName" << cmName;
+   if ( ! cmName.isEmpty() )
+   {  // Default Color Map Name is given
+      cmfpath        = cmName;
+      if ( ! cmfpath.startsWith( "cm-" ) )
+      {  // Prepend with "cm-" if missing
+         cmfpath        = "cm-" + cmfpath;
+      }
+      if ( ! cmfpath.endsWith( ".xml-" ) )
+      {  // Append with ".xml" if missing
+         cmfpath        = cmfpath + ".xml";
+      }
+      // Prepend with etc directory to make full path
+      cmfpath        = US_Settings::etcDir() + "/" + cmfpath;
+   }
+qDebug() << "UP:main: cmfpath" << cmfpath;
 }
 
 void US_Plot::zoom( bool on )
@@ -380,13 +398,13 @@ qDebug() << "UP:CM: cmapMatch" << cmapMatch << "tmatch" << tmatch;
          ntcurv++;      // Total curves
          QwtPlotCurve* curve = dynamic_cast< QwtPlotCurve* >( list[ ii ] );
          QString ctitle      = curve->title().text();
-qDebug() << "UP:CM:   ii" << ii << "ctitle" << ctitle;
+//qDebug() << "UP:CM:   ii" << ii << "ctitle" << ctitle;
          if ( !tmatch  ||  ctitle.contains( cmMatch ) )
          {  // No matching or this curve's title matches
             nmcurv++;   // Matching curves
             // Set curve color using modulo color gradient color
-qDebug() << "UP:CM:     *MATCH* nmcurv" << nmcurv;
-qDebug() << "UP:CM:   ii" << ii << "mcolx" << mcolx << "mcolor" << mcolors[mcolx];
+//qDebug() << "UP:CM:     *MATCH* nmcurv" << nmcurv;
+//qDebug() << "UP:CM:   ii" << ii << "mcolx" << mcolx << "mcolor" << mcolors[mcolx];
             curve->setPen( QPen( mcolors[ mcolx ] ) );
             mcolx++;    // Match-curve index modulo colors
             if ( mcolx >= nmcols )

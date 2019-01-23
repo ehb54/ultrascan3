@@ -128,6 +128,7 @@ class US_ConvertGui : public US_Widgets
       aucStatus      saveStatus;
       US_Help        showHelp;
       US_PlotPicker* picker;
+      US_Plot*       usplot;
 
       QString       runType;
       QString       oldRunType;
