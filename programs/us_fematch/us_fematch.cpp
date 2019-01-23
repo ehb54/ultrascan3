@@ -294,13 +294,14 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    plotLayout1 = new US_Plot( data_plot1,
             tr( "Residuals" ),
             tr( "Radius (cm)" ),
-            tr( "OD Difference" ) );
+            tr( "OD Difference" ),
+            true, "^resids [0-9].*", "rainbow" );
 
    plotLayout2 = new US_Plot( data_plot2,
             tr( "Velocity Data" ),
             tr( "Radius (cm)" ),
             tr( "Absorbance" ),
-            true, ".*in range" );
+            true, ".*in range", "rainbow" );
 
    data_plot1->setCanvasBackground( Qt::black );
    data_plot2->setCanvasBackground( Qt::black );
@@ -837,7 +838,9 @@ void US_FeMatch::data_plot( void )
    data_plot2->setAxisTitle( QwtPlot::xBottom,
       tr( "Radius (cm)" ) );
 
-   us_grid( data_plot2 );
+   QwtPlotGrid*  data_grid = us_grid( data_plot2 );
+   data_grid->setMajorPen(
+      QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine ) );
 
    int     scan_nbr  = 0;
    int     from      = (int)ct_from->value();
@@ -1428,6 +1431,7 @@ void US_FeMatch::distrib_plot_stick( int type )
    QwtPlotGrid*  data_grid = us_grid(  data_plot1 );
    QwtPlotCurve* data_curv = us_curve( data_plot1, "distro" );
 
+
    int     dsize  = model_used.components.size();
    QVector< double > vecx( dsize );
    QVector< double > vecy( dsize );
@@ -1467,7 +1471,7 @@ void US_FeMatch::distrib_plot_stick( int type )
    data_grid->enableYMin ( true );
    data_grid->enableY    ( true );
    data_grid->setMajorPen(
-      QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
+      QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine ) );
 
    data_curv->setSamples( xx, yy, dsize );
    data_curv->setPen    ( QPen( Qt::yellow, 3, Qt::SolidLine ) );
@@ -1583,7 +1587,7 @@ void US_FeMatch::distrib_plot_2d( int type )
    data_grid->enableYMin ( true );
    data_grid->enableY    ( true );
    data_grid->setMajorPen(
-      QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
+      QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine ) );
 
    symbol->setStyle( QwtSymbol::Ellipse );
    symbol->setPen(   QPen(   Qt::red    ) );
@@ -1617,6 +1621,14 @@ void US_FeMatch::distrib_plot_resids( )
    QString yatitle = tr( "OD Difference" );
    QString xatitle = tr( "Radius (cm)" );
 
+   // See if a color map gradient has been loaded to old plot
+   QPen pen_plot( Qt::yellow );
+   QList< QColor > mcolors;
+   int nmcols        = plotLayout1->map_colors( mcolors );
+   if ( nmcols == 1 )
+      pen_plot       = QPen( mcolors[ 0 ] );
+DbgLv(1) << "FEM: DPR: nmcols" << nmcols;
+
    dataPlotClear( data_plot1 );
 
    data_plot1->setTitle(     pltitle );
@@ -1624,6 +1636,8 @@ void US_FeMatch::distrib_plot_resids( )
    data_plot1->setAxisTitle( QwtPlot::xBottom, xatitle );
 
    QwtPlotGrid*  data_grid = us_grid( data_plot1 );
+   data_grid->setMajorPen(
+      QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine ) );
    QwtPlotCurve* data_curv;
    QwtPlotCurve* line_curv = us_curve( data_plot1, "resids zline" );
 
@@ -1672,7 +1686,7 @@ void US_FeMatch::distrib_plot_resids( )
    data_grid->enableYMin ( true );
    data_grid->enableY    (    true );
    data_grid->setMajorPen(
-      QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
+      QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine ) );
 
    data_plot1->setAxisAutoScale( QwtPlot::xBottom );
    data_plot1->setAxisAutoScale( QwtPlot::yLeft   );
@@ -1686,6 +1700,7 @@ void US_FeMatch::distrib_plot_resids( )
    zy[ 1 ] = 0.0;
    line_curv->setPen    ( QPen( Qt::red ) );
    line_curv->setSamples( zx, zy, 2 );
+DbgLv(1) << "FEM: DPR: 2)nmcols" << nmcols;
 
    for ( int ii = 0; ii < scanCount; ii++ )
    {  // draw residual dots a scan at a time
@@ -1695,9 +1710,13 @@ void US_FeMatch::distrib_plot_resids( )
          yy[ jj ] = resids[ ii ][ jj ];
       }
 
+      // Possibly set pen color from gradient
+      if ( nmcols > 0 )
+         pen_plot       = QPen( mcolors[ ii % nmcols ] );
+
       // plot the residual scatter for this scan
       data_curv = us_curve( data_plot1, "resids " +  QString::number( ii ) );
-      data_curv->setPen    ( QPen( Qt::yellow ) );
+      data_curv->setPen    ( pen_plot );
       data_curv->setStyle  ( QwtPlotCurve::Dots );
       data_curv->setSamples( xx, yy, dsize );
    }

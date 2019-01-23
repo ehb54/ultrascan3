@@ -329,10 +329,11 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    settings ->addWidget( pb_saveUS3,      row++,   2, 1, 2 );
    
    // Plot layout for the right side of window
-   QBoxLayout* plot = new US_Plot( data_plot,
+   usplot           = new US_Plot( data_plot,
                                    tr( "Absorbance Data" ),
                                    tr( "Radius (in cm)" ),
-                                   tr( "Absorbance" ) );
+                                   tr( "Absorbance" ),
+                                   true, "Raw", "rainbow" );
 
    data_plot->setMinimumSize( 400, 300 );
 
@@ -450,7 +451,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    
    
    QVBoxLayout* right    = new QVBoxLayout;
-   right->addLayout( plot );
+   right->addLayout( usplot );
    right->addLayout( todo );
 
    
@@ -779,10 +780,11 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    settings ->addWidget( pb_close,        row++, 3, 1, 1 );
 
    // Plot layout for the right side of window
-   QBoxLayout* plot = new US_Plot( data_plot,
+   usplot           = new US_Plot( data_plot,
                                    tr( "Absorbance Data" ),
                                    tr( "Radius (in cm)" ),
-                                   tr( "Absorbance" ) );
+                                   tr( "Absorbance" ),
+                                   true, "", "rainbow" );
 
    data_plot->setMinimumSize( 500, 300 );
 
@@ -882,7 +884,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
 
    QVBoxLayout* right    = new QVBoxLayout;
 
-   right->addLayout( plot );
+   right->addLayout( usplot );
    right->addLayout( todo );
 
    QHBoxLayout* main = new QHBoxLayout( this );
@@ -5280,9 +5282,11 @@ DbgLv(1) << " PlCur:  tDx szoutD" << tripDatax << outData.count();
    if ( currentData.scanData.empty() ) return;
 
    plot_titles();
+DbgLv(1) << " PlCur:  plot_titles return";
 
    // Plot current data for cell / channel / wavelength triple
    plot_all();
+DbgLv(1) << " PlCur:  plot_all return";
 
    // Set the Scan spin boxes
    enableScanControls();
@@ -5362,17 +5366,24 @@ DbgLv(1) << "  PlTit: dataType" << dataType;
    data_plot->setTitle( title );
    data_plot->setAxisTitle( QwtPlot::yLeft, yLegend );
    data_plot->setAxisTitle( QwtPlot::xBottom, xLegend );
-
+DbgLv(1) << "  PlTit: title" << title;
 }
 
 void US_ConvertGui::plot_all( void )
 {
    US_DataIO::RawData* currentData = outData[ tripDatax ];
+DbgLv(1) << " PlAll:  outData count" << outData.count();
 
+   QList< QColor > mcolors;
+   int nmcols  = usplot->map_colors( mcolors );
+DbgLv(1) << " PlAll:  nmcols" << nmcols;
    dataPlotClear( data_plot );
    grid        = us_grid( data_plot );
    int kcpoint = currentData->pointCount();
    int kcscan  = currentData->scanCount();
+   QPen pen_plot( US_GuiSettings::plotCurve() );
+   if ( nmcols == 1 )
+      pen_plot    = QPen( mcolors[ 0 ] );
 
    QVector< double > rvec( kcpoint );
    QVector< double > vvec( kcpoint );
@@ -5421,6 +5432,12 @@ void US_ConvertGui::plot_all( void )
          + QString::number( scan->seconds ) + tr( " seconds" );
 
       QwtPlotCurve* curv = us_curve( data_plot, title );
+      if ( nmcols > 1 )
+      {
+         pen_plot        = QPen( mcolors[ ii % nmcols ] );
+DbgLv(2) << " PlAll:    ii" << ii << "pen_plot" << pen_plot;
+      }
+      curv->setPen    ( pen_plot );
       curv->setSamples( rr, vv, kcpoint );
 
    }
@@ -5455,7 +5472,6 @@ void US_ConvertGui::set_colors( const QList< int >& focus )
 
    QPen   p   = curves[ 0 ]->pen();
    QBrush b   = curves[ 0 ]->brush();
-   QColor std = US_GuiSettings::plotCurve();
 
    // Mark these scans in red
    for ( int i = 0; i < curves.size(); i++ )
@@ -5463,15 +5479,9 @@ void US_ConvertGui::set_colors( const QList< int >& focus )
       if ( focus.contains( i ) )
       {
          p.setColor( Qt::red );
+         curves[ i ]->setPen  ( p );
+         curves[ i ]->setBrush( b );
       }
-      else
-      {
-         p.setColor( std );
-         b.setColor( std );
-      }
-
-      curves[ i ]->setPen  ( p );
-      curves[ i ]->setBrush( b );
    }
 
    data_plot->replot();

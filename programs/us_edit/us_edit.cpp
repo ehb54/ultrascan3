@@ -434,7 +434,8 @@ pb_plateau->setVisible(false);
    // Plot layout on right side of window
    plot = new US_Plot( data_plot, 
          tr( "Absorbance Data" ),
-         tr( "Radius (in cm)" ), tr( "Absorbance" ) );
+         tr( "Radius (in cm)" ), tr( "Absorbance" ),
+         true, "", "rainbow" );
    
    data_plot->setMinimumSize( 600, 400 );
 
@@ -2214,6 +2215,12 @@ void US_Edit::plot_all( void )
       plot_mwl();
       return;
    }
+   QList< QColor > mcolors;
+   int nmcols  = plot->map_colors( mcolors );
+DbgLv(1) << " PlAll:  nmcols" << nmcols;
+   QPen pen_plot( US_GuiSettings::plotCurve() );
+   if ( nmcols == 1 )
+      pen_plot    = QPen( mcolors[ 0 ] );
 
    if ( plot->btnZoom->isChecked() )
       plot->btnZoom->setChecked( false );
@@ -2256,6 +2263,13 @@ void US_Edit::plot_all( void )
 
       QwtPlotCurve* c = us_curve( data_plot, title );
       c->setPaintAttribute( QwtPlotCurve::ClipPolygons, true );
+      if ( nmcols > 1 )
+      {
+         pen_plot        = QPen( mcolors[ i % nmcols ] );
+DbgLv(2) << " PlAll:      i" << i << "pen_plot" << pen_plot;
+      }
+      c->setPen    ( pen_plot );
+
       c->setSamples( r, v, size );
    }
 
@@ -2277,6 +2291,12 @@ void US_Edit::plot_range( void )
    if ( plot->btnZoom->isChecked() )
       plot->btnZoom->setChecked( false );
 
+   QList< QColor > mcolors;
+   int nmcols  = plot->map_colors( mcolors );
+DbgLv(1) << " PlRng:  nmcols" << nmcols;
+   QPen pen_plot( US_GuiSettings::plotCurve() );
+   if ( nmcols == 1 )
+      pen_plot    = QPen( mcolors[ 0 ] );
    data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
    v_line = NULL;
 
@@ -2380,6 +2400,12 @@ DbgLv(1) << "plot_range(): ccx wvx indext" << ccx << wvx << indext;
          + " #" + QString::number( i );
 
       QwtPlotCurve* c = us_curve( data_plot, title );
+      if ( nmcols > 1 )
+      {
+         pen_plot        = QPen( mcolors[ i % nmcols ] );
+DbgLv(2) << " PlRng:      i" << i << "pen_plot" << pen_plot;
+      }
+      c->setPen    ( pen_plot );
       c->setSamples( r, v, count );
    }
 
@@ -2791,7 +2817,6 @@ void US_Edit::set_colors( const QList< int >& focus )
 
    QPen   p   = curves[ 0 ]->pen();
    QBrush b   = curves[ 0 ]->brush();
-   QColor std = US_GuiSettings::plotCurve();
    QColor foc = Qt::red;
 
    // Mark these scans in red
@@ -2803,15 +2828,10 @@ void US_Edit::set_colors( const QList< int >& focus )
       {
          p.setColor( foc );
          b.setColor( foc );
-      }
-      else
-      {
-         p.setColor( std );
-         b.setColor( std );
-      }
 
-      curves[ i ]->setPen  ( p );
-      curves[ i ]->setBrush( b );
+         curves[ i ]->setPen  ( p );
+         curves[ i ]->setBrush( b );
+      }
    }
 
    data_plot->replot();

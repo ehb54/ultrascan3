@@ -93,7 +93,8 @@ US_ResidPlotFem::US_ResidPlotFem( QWidget* parent )
    plotLayout1 = new US_Plot( data_plot1,
          tr( "Experimental Data" ),
          tr( "Radius (cm)" ),
-         tr( "Absorbance" ) );
+         tr( "Absorbance" ),
+         true, "^Curve" );
 
    plotLayout2 = new US_Plot( data_plot2,
          tr( "Residuals" ),
@@ -403,6 +404,10 @@ void US_ResidPlotFem::plot_data()
 // plot the experimental data
 void US_ResidPlotFem::plot_edata()
 {
+   // Get any previous map colors set up
+   QList< QColor > mcolors;
+   int nmcols        = plotLayout1->map_colors( mcolors );
+   // Clear the upper plot for re-do
    dataPlotClear( data_plot1 );
 
    bool   do_plteda = have_ed  &&  ck_plteda->isChecked();
@@ -479,6 +484,9 @@ void US_ResidPlotFem::plot_edata()
       count    = edata->scanCount();
       rinoi    = 0.0;
       tinoi    = 0.0;
+      if ( nmcols == 1 )
+         pen_plot       = QPen( mcolors[ 0 ] );
+
 
       for ( int jj = 0; jj < points; jj++ )
       {  // get radii (x) just once
@@ -502,6 +510,12 @@ void US_ResidPlotFem::plot_edata()
 
          title   = tr( "Curve " ) + QString::number( ii );
          curv    = us_curve( data_plot1, title );
+
+         if ( nmcols > 1 )
+         {  // Get pen plot color from gradient
+            int colx       = ii % nmcols;
+            pen_plot       = QPen( mcolors[ colx ] );
+         }
 
          curv->setPen    ( pen_plot );
          curv->setSamples( rr, vv, points );

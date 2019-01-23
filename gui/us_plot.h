@@ -51,12 +51,16 @@ class US_GUI_EXTERN US_Plot : public QHBoxLayout
 
    public:
       //! \param plot   - The plot component created for the caller
-      //! \param title  - The title of the plot
-      //! \param x_axis - The title of the x (bottom) axis
-      //! \param y_axis - The title of the y (left) axis
+      //! \param title   - The title of the plot
+      //! \param x_axis  - The title of the x (bottom) axis
+      //! \param y_axis  - The title of the y (left) axis
+      //! \param cmEnab  - Flag to enable/show CMap button
+      //! \param cmMatch - Curve title pattern to match for gradient curves
+      //! \param cmName  - Color map name for default gradient (e.g., "rainbow")
 
       US_Plot( QwtPlot*& plot, const QString&, const QString&, const QString&,
-               const bool cmEnab = false, const QString = QString("") );
+               const bool = false, const QString = QString(""),
+               const QString = QString("") );
 
       //! Make access to the zoom button public
       QToolButton* btnZoom;
