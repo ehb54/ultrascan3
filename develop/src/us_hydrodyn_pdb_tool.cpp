@@ -1396,9 +1396,11 @@ void US_Hydrodyn_Pdb_Tool::save_csv( QTreeWidget *lv, QString filename )
    us_qdebug( QString( "csv_to_save.name %1 csv_to_save.filename %2" ).arg( csv_to_save.name ).arg( csv_to_save.filename ) );
    
    if ( filename.isEmpty() ) {
-      ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+      if ( !((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this ) ) {
+         use_dir = QFileInfo( csv_to_save.name ).path();
+      }
 
-      filename = QFileDialog::getSaveFileName( this , us_tr("Choose a filename to save the pdb") , use_dir + "/" + csv_to_save.name , "*.pdb *.PDB" );
+      filename = QFileDialog::getSaveFileName( this , us_tr("Choose a filename to save the pdb") , use_dir + "/" + QFileInfo( csv_to_save.name ).fileName(), "*.pdb *.PDB" );
 
       if ( filename.isEmpty() )
       {
@@ -3540,7 +3542,7 @@ bool US_Hydrodyn_Pdb_Tool::sol2wat( QTreeWidget *lv, double use_radius, QString 
    double theo_hydroradius = pow( ( 3.0/( 4.0 * M_PI ) ) * ((US_Hydrodyn *)us_hydrodyn)->misc.hydrovol, 1.0 / 3.0 );
    double hydroradius = use_radius;
 
-   qDebug() << "sol2wat 1";
+   // qDebug() << "sol2wat 1";
    if ( hydroradius == 0e0 ) {
       // non zero if traj
       hydration_summary         .clear();
@@ -3575,7 +3577,7 @@ bool US_Hydrodyn_Pdb_Tool::sol2wat( QTreeWidget *lv, double use_radius, QString 
       qApp->processEvents();
    }
 
-   qDebug() << "sol2wat 2";
+   // qDebug() << "sol2wat 2";
    csv tmp_csv;
    if ( lv == lv_csv )
    {
@@ -3583,7 +3585,7 @@ bool US_Hydrodyn_Pdb_Tool::sol2wat( QTreeWidget *lv, double use_radius, QString 
    } else {
       tmp_csv = to_csv( lv_csv2, csv2[ csv2_pos ] );
    }
-   qDebug() << "sol2wat 3";
+   // qDebug() << "sol2wat 3";
    QString report_header;
    report_header += QString( us_tr( "SOL->WAT using radius %1 [A]\n" ) ).arg( hydroradius, 0, 'f', 3 );
    report_header += QString( us_tr( "Name %1\n" ) ).arg( tmp_csv.name );
@@ -3666,6 +3668,8 @@ bool US_Hydrodyn_Pdb_Tool::sol2wat( QTreeWidget *lv, double use_radius, QString 
 
    map < QString, map < QString, set < int > > > res_SOL_used; // map of residue names and SOLs used // rname, rnum, SOL
    
+   map < QString, map < QString, double > > chosen_radius_for_SOLs; // map of residue number, atom number to chosen radius for SOL
+
    for ( int j = 0; j < (int) compares.size(); ++j ) {
       t2 = compare_points[ j ];
       double use_thresh = hydroradius + compare_vdw[ j ];
@@ -3817,6 +3821,24 @@ bool US_Hydrodyn_Pdb_Tool::sol2wat( QTreeWidget *lv, double use_radius, QString 
             QString rname = tmp_csv.data[ csvj ][ 2 ];
             QString rnum  = tmp_csv.data[ csvj ][ 3 ];
             QString aname = tmp_csv.data[ csvj ][ 4 ];
+
+
+            // pick minimum radius for SOL
+            {
+               QString wrnum = tmp_csv.data[ csvi ][ 3 ];
+               QString wanum = tmp_csv.data[ csvi ][ 5 ];
+
+               if (
+                   chosen_radius_for_SOLs.count( wrnum ) &&
+                   chosen_radius_for_SOLs[ wrnum ].count( wanum ) ) {
+                  if ( chosen_radius_for_SOLs[ wrnum ][ wanum ] > hi.r ) {
+                     chosen_radius_for_SOLs[ wrnum ][ wanum ] = hi.r;
+                  }
+               } else {
+                  chosen_radius_for_SOLs[ wrnum ][ wanum ] = hi.r;
+               }
+            }
+
             hydration_summary[ csvj ][ frame ]                           .push_back( hi );
             if ( !res_SOL_used.count( rname ) ||
                  !res_SOL_used[ rname ].count( rnum ) ||
@@ -3944,6 +3966,28 @@ bool US_Hydrodyn_Pdb_Tool::sol2wat( QTreeWidget *lv, double use_radius, QString 
       } else {
          if ( sol2wat_csv_index.count( i ) ) {
             tmp_csv.data[ i ][ 2 ] = "WAT";
+            if ( chosen_radius_for_SOLs.count( tmp_csv.data[ i ][ 3 ] ) &&
+                 chosen_radius_for_SOLs[ tmp_csv.data[ i ][ 3 ] ].count( tmp_csv.data[ i ][ 5 ] ) ) {
+               tmp_csv.data[ i ][ 12 ] = QString( "" ).sprintf( "%6.2f", chosen_radius_for_SOLs[ tmp_csv.data[ i ][ 3 ] ][ tmp_csv.data[ i ][ 5 ] ] );
+               // QTextStream( stderr ) <<
+               //    QString( us_tr( "WAT pdb Tf radius for WAT %1 OW %2 is %3 but chosen_radius is %4\n" ) )
+               //    .arg( tmp_csv.data[ i ][ 3 ] )
+               //    .arg( tmp_csv.data[ i ][ 5 ] )
+               //    .arg( tmp_csv.data[ i ][ 12 ] )
+               //    .arg( chosen_radius_for_SOLs[ tmp_csv.data[ i ][ 3 ] ][ tmp_csv.data[ i ][ 5 ] ] )
+               //    ;
+            } else {
+               editor_msg( "red",
+                           QString( us_tr( "Warning, missing radius for WAT %1 OW %2\n" ) )
+                           .arg( tmp_csv.data[ i ][ 3 ] )
+                           .arg( tmp_csv.data[ i ][ 5 ] )
+                           );
+               // QTextStream( stderr ) <<
+               //    QString( us_tr( "Warning, missing radius for WAT %1 OW %2\n" ) )
+               //    .arg( tmp_csv.data[ i ][ 3 ] )
+               //    .arg( tmp_csv.data[ i ][ 5 ] )
+               //    ;
+            }
             new_csv.data.push_back( tmp_csv.data[ i ] );
          }
       }
