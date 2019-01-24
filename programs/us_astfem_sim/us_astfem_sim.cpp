@@ -171,7 +171,8 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    plot2              = new US_Plot( scanPlot,
                                      tr( "Saved Scans" ),
                                      tr( "Radius (cm)" ),
-                                     tr( "Concentration" ) );
+                                     tr( "Concentration" ),
+                                     true, "Concentration", "rainbow" );
    QwtPlotGrid* grid2 = us_grid  ( scanPlot );
    grid2->enableX(    true );
    grid2->enableY(    true );
@@ -1394,6 +1395,8 @@ DbgLv(1) << "Sim:SV: after_write_rawdata" << ofname;
 //          points     = exp_data[speed_step].pointCount();
 void US_Astfem_Sim::plot( int step )
 {
+   QList< QColor > mcolors;
+   int nmcols     = plot2->map_colors( mcolors );
   // dataPlotClear( scanPlot );
 
    // Set plot scale
@@ -1414,6 +1417,11 @@ void US_Astfem_Sim::plot( int step )
    QwtPlotGrid* grid2 = us_grid( scanPlot );
    grid2->enableX(    true );
    grid2->enableY(    true );
+
+   // Walk scan index through previous steps
+   int scanx        = 0;
+   for ( int jj = 0; jj < step; jj++ )
+      scanx           += sim_datas[ jj ].scanCount();
 
    // Plot the simulation
    if ( ! stopFlag )
@@ -1442,12 +1450,16 @@ void US_Astfem_Sim::plot( int step )
 
       for ( int j = 0; j < scan_count; j++ )
       {
-         QString title = "Concentration" + QString::number( j );
+         QString title = "Concentration" + QString::number( scanx );
          QwtPlotCurve* plotCurve = new QwtPlotCurve( title );
 
-         plotCurve->setPen    ( QPen( Qt::yellow ) );
+         if ( nmcols > 0 )
+            plotCurve->setPen ( QPen( mcolors[ scanx % nmcols ] ) );
+         else
+            plotCurve->setPen ( QPen( Qt::yellow ) );
          plotCurve->attach    ( scanPlot );
          plotCurve->setSamples( x, y[ j ], points );
+         scanx++;
       }
 
       delete [] x;
