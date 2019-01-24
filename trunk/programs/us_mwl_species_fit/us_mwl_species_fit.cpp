@@ -133,8 +133,11 @@ void US_MwlSpeciesFit::data_plot( void )
 
 void US_MwlSpeciesFit::plot_data2( void )
 {
+   QList< QColor > mcolors;
+   int nmcols         = plotLayout2->map_colors( mcolors );
    dPlotClearAll( data_plot2 );
-   int                    tripx = triple_index( lw_triples->currentRow() );
+
+   int tripx          = triple_index( lw_triples->currentRow() );
    US_DataIO::EditedData* edata = &dataList[ tripx ];
 
    QString                        dataType = tr( "Absorbance" );
@@ -176,6 +179,7 @@ void US_MwlSpeciesFit::plot_data2( void )
    for ( int ii = 0; ii < scanCount; ii++ )
    {
       if ( excludedScans.contains( ii ) ) continue;
+DbgLv(1) << "MSF: dc: ii" << ii << "NON_EXCLUDED";
 
       scan_number++;
       bool highlight = scan_number >= from  &&  scan_number <= to;
@@ -232,6 +236,8 @@ void US_MwlSpeciesFit::plot_data2( void )
 
          if ( highlight )
             curv->setPen( QPen( Qt::red ) );
+         else if ( nmcols > 0 )
+            curv->setPen( QPen( mcolors[ ii % nmcols ] ) );
          else
             curv->setPen( QPen( US_GuiSettings::plotCurve() ) );
          
@@ -348,12 +354,6 @@ DbgLv(1) << "PlotData1:  jspec ispec" << jspec << ispec;
    te_desc->setText( rdata->description );
 
    return;
-}
-
-void US_MwlSpeciesFit::exclude( void )
-{
-   US_AnalysisBase2::exclude();
-   pb_reset_exclude->setEnabled( true );
 }
 
 void US_MwlSpeciesFit::write_report( QTextStream& ts )

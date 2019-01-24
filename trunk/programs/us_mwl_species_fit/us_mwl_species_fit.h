@@ -55,7 +55,6 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
 
    private slots:
       void write_report   ( QTextStream& );
-      void exclude        ( void );
       void load           ( void );
       void view           ( void );
       void save           ( void );

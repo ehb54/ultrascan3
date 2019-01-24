@@ -70,7 +70,6 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
 
    // Add the tool bar 
    QToolBar* toolBar = new QToolBar;
-   toolBar = new QToolBar;
    toolBar->setAutoFillBackground( true );
    toolBar->setPalette( US_GuiSettings::plotColor() );
    toolBar->setOrientation( Qt::Vertical );
@@ -372,14 +371,21 @@ qDebug() << "UP:CM: colorMap chosen";
    cmfpath        = QFileDialog::getOpenFileName( (QWidget*)plot,
       tr( "Load Color Map File" ),
       US_Settings::etcDir(), filter, 0, 0 );
-
-   if ( cmfpath.isEmpty() )
-      return;
+qDebug() << "UP:CM: post-dialog cmfpath" << cmfpath;
 
    // Get the color gradient from the file
    QList< QColor > mcolors;
-   US_ColorGradIO::read_color_gradient( cmfpath, mcolors );
-   int nmcols    = mcolors.count();
+   int nmcols    = 0;
+   if ( !cmfpath.isEmpty() )
+   {
+      US_ColorGradIO::read_color_gradient( cmfpath, mcolors );
+      nmcols        = mcolors.count();
+   }
+   if ( nmcols == 0 )
+   {
+      nmcols        = 1;
+      mcolors << US_GuiSettings::plotCurve();
+   }
 qDebug() << "UP:CM: cmfpath" << cmfpath << "nmcols" << nmcols;
    int ntcurv    = 0;
    int nmcurv    = 0;
@@ -388,7 +394,6 @@ qDebug() << "UP:CM: cmfpath" << cmfpath << "nmcols" << nmcols;
    QRegExp cmMatch( cmapMatch );             // Curve title match
 qDebug() << "UP:CM: cmapMatch" << cmapMatch << "tmatch" << tmatch;
    QwtPlotItemList list = plot->itemList();  // All plot items
-      QList< QwtPlotCurve* > curves;
 
    // Examine each plot item, looking for curves and ones that match
    for ( int ii = 0; ii < list.size(); ii++ )

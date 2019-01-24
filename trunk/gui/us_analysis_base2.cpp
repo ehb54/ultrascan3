@@ -58,7 +58,8 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    plotLayout2 = new US_Plot( data_plot2,
             tr( "Plot 2 Title" ),
             tr( "X-Axis Title" ),
-            tr( "Y-Axis Title" ) );
+            tr( "Y-Axis Title" ),
+            true, ".*in range", "rainbow" );
 
    data_plot2->setMinimumSize( 600, 150 );
 
@@ -470,6 +471,8 @@ void US_AnalysisBase2::data_plot( void )
    solution.manual    = manual;
    double avgTemp     = d->average_temperature();
    solution.vbar      = US_Math2::calcCommonVbar( solution_rec, avgTemp );
+   QList< QColor > mcolors;
+   int nmcols         = plotLayout2->map_colors( mcolors );
 
    US_Math2::data_correction( avgTemp, solution );
 
@@ -533,6 +536,8 @@ void US_AnalysisBase2::data_plot( void )
 
          if ( highlight )
             c->setPen( QPen( Qt::red ) );
+         else if ( nmcols > 0 )
+            c->setPen( QPen( mcolors[ i % nmcols ] ) );
          else
             c->setPen( QPen( US_GuiSettings::plotCurve() ) );
          
@@ -648,6 +653,7 @@ void US_AnalysisBase2::exclude( void )
 
    allExcls[ index ] = excludedScans;
    pb_reset_exclude->setEnabled( true );
+   data_plot();
 }
 
 void US_AnalysisBase2::reset_excludes( void )
