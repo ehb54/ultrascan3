@@ -6429,6 +6429,8 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
       }         
    }
 
+   int WAT_Tf_used = 0;
+
    for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++) {
       for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); k++) {
          PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
@@ -6460,6 +6462,14 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
                }
             } else {
                tmp_atom.bead_computed_radius = this_vdwf.r;
+               if ( this_atom->resName == "WAT" &&
+                    this_atom->tempFactor ) {
+                  // QTextStream( stderr ) <<
+                  //    QString( "create_vdw_beads WAT Tf %1\n" ).arg( this_atom->tempFactor )
+                  //    ;
+                  tmp_atom.bead_computed_radius = this_atom->tempFactor;
+                  WAT_Tf_used++;
+               }
             }
             // us_qdebug( QString( "bead model radius for %1 = %2" ).arg( res_idx ).arg(  tmp_atom.bead_computed_radius ) );
             tmp_atom.bead_ref_mw = this_vdwf.mw;
@@ -6489,6 +6499,10 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
          }
       }
    }      
+
+   if ( WAT_Tf_used ) {
+      editor_msg( "dark blue", QString( us_tr( "Notice: %1 WATs using PDB's Tf radius recognized\n" ) ).arg( WAT_Tf_used ) );
+   }
 
    bead_models[ current_model ] = bead_model;
    somo_processed[ current_model ] = 1;
