@@ -77,6 +77,8 @@ struct batch_info
    bool hydrate;
    bool saxs_search;
    bool equi_grid;
+   bool results_dir;
+   QString results_dir_name;
 };
 
 class US_EXTERN US_Hydrodyn_Batch : public QFrame
@@ -168,6 +170,8 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       QCheckBox     *cb_hullrad;
       QCheckBox     *cb_avg_hydro;
       QLineEdit     *le_avg_hydro_name;
+      QCheckBox     *cb_results_dir;
+      QLineEdit     *le_results_dir_name;
 
       QPushButton   *pb_select_save_params;
       QPushButton   *pb_start;
@@ -297,6 +301,8 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       void set_avg_hydro();
       void update_avg_hydro_name(const QString &);
       void set_csv_saxs();
+      void set_results_dir();
+      void update_results_dir_name(const QString &);
       void update_csv_saxs_name(const QString &);
       void set_create_native_saxs();
       void set_hydrate();

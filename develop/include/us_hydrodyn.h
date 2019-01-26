@@ -847,6 +847,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QString hullrad_filename;
       map < QString, vector < double > > hullrad_captures;
 
+      QString get_somo_dir();
+
    private slots:
       void hullrad_readFromStdout();
       void hullrad_readFromStderr();
@@ -1084,7 +1086,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       // admin
       void run_us_config();
       void run_us_admin();
-      
+
    protected slots:
 
       void closeEvent(QCloseEvent *);

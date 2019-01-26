@@ -91,6 +91,9 @@ US_Hydrodyn_Batch::US_Hydrodyn_Batch(
    batch->compute_prr_std_dev = false;
    batch->hydrate = false;
    batch->equi_grid = false;
+   batch->results_dir = false;
+   batch->results_dir_name = "run_results";
+   
    // if ( !batch->somo && !batch->grid && !batch->iqq && !batch->iqq && !batch->dmd )
    // {
    // batch->somo = true;
@@ -645,6 +648,23 @@ void US_Hydrodyn_Batch::setupGUI()
    le_avg_hydro_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    connect(le_avg_hydro_name, SIGNAL(textChanged(const QString &)), SLOT(update_avg_hydro_name(const QString &)));
 
+   cb_results_dir = new QCheckBox(this);
+   cb_results_dir->setText(us_tr(" Put individual files in specified results directory:"));
+   cb_results_dir->setChecked(batch->results_dir);
+   cb_results_dir->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_results_dir->setPalette( qp_cb ); AUTFBACK( cb_results_dir );
+   connect(cb_results_dir, SIGNAL(clicked()), this, SLOT(set_results_dir()));
+   cb_results_dir->setToolTip( "Currently only available when Build vdW bead model & Calculate RB hydrodynamics ZENO are checked" );
+
+   le_results_dir_name = new QLineEdit( this );    le_results_dir_name->setObjectName( "results_dir_name Line Edit" );
+   le_results_dir_name->setText(batch->results_dir_name);
+   le_results_dir_name->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_results_dir_name->setMinimumWidth(100);
+   le_results_dir_name->setPalette( qp_cb ); AUTFBACK( le_results_dir_name );
+   le_results_dir_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   connect(le_results_dir_name, SIGNAL(textChanged(const QString &)), SLOT(update_results_dir_name(const QString &)));
+   cb_results_dir->setToolTip( "Currently only available when Build vdW bead model & Calculate RB hydrodynamics ZENO are checked" );
+
    pb_select_save_params = new QPushButton(us_tr("Select Parameters to be Saved"), this);
    Q_CHECK_PTR(pb_select_save_params);
    //   pb_select_save_params->setMinimumHeight(minHeight1);
@@ -816,6 +836,10 @@ void US_Hydrodyn_Batch::setupGUI()
    hbl_hydro->addWidget(cb_avg_hydro);
    hbl_hydro->addWidget(le_avg_hydro_name);
 
+   QHBoxLayout * hbl_results_dir = new QHBoxLayout; hbl_hydro->setContentsMargins( 0, 0, 0, 0 ); hbl_hydro->setSpacing( 0 );
+   hbl_results_dir->addWidget(cb_results_dir);
+   hbl_results_dir->addWidget(le_results_dir_name);
+
    QHBoxLayout * hbl_somo_grid = new QHBoxLayout; hbl_somo_grid->setContentsMargins( 0, 0, 0, 0 ); hbl_somo_grid->setSpacing( 0 );
    hbl_somo_grid->addWidget(cb_somo);
    hbl_somo_grid->addWidget(cb_somo_o);
@@ -887,6 +911,7 @@ void US_Hydrodyn_Batch::setupGUI()
    leftside->addLayout(hbl_prr_avg_std_dev);
    leftside->addLayout( hbl_hydro_zeno );
    leftside->addLayout(hbl_hydro);
+   leftside->addLayout(hbl_results_dir);
    leftside->addLayout(hbl_save);
    leftside->addLayout(hbl_process);
    leftside->addSpacing(5);
@@ -1312,6 +1337,7 @@ void US_Hydrodyn_Batch::update_enables()
       cb_compute_prr_avg       ->setChecked( false );
       cb_compute_prr_std_dev   ->setChecked( false );
       cb_avg_hydro             ->setChecked( false );
+      cb_results_dir           ->setChecked( false );
 
       cb_somo                  ->setEnabled( false );
       cb_somo_o                ->setEnabled( false );
@@ -1335,6 +1361,8 @@ void US_Hydrodyn_Batch::update_enables()
       cb_avg_hydro             ->setEnabled( false );
       le_avg_hydro_name        ->setEnabled( false );
       le_csv_saxs_name         ->setEnabled( false );
+      cb_results_dir           ->setEnabled( false );
+      le_results_dir_name      ->setEnabled( false );
 
       batch->somo                  = false;
       batch->somo_o                = false;
@@ -1357,6 +1385,7 @@ void US_Hydrodyn_Batch::update_enables()
       batch->compute_prr_avg       = false;
       batch->compute_prr_std_dev   = false;
       batch->avg_hydro             = false;
+      batch->results_dir           = false;
    } else {
       if ( any_pdb_selected ) {
          bg_atoms    ->setEnabled( true );
@@ -1556,6 +1585,15 @@ void US_Hydrodyn_Batch::update_enables()
             batch->avg_hydro             = false;
          }
       }
+   }
+
+   if (
+       cb_vdw_beads         ->isChecked() &&
+       cb_zeno              ->isChecked()
+       ) {
+      // just zeno for now
+      cb_results_dir       ->setEnabled( true );
+      le_results_dir_name  ->setEnabled( true );
    }
 
    bool 
@@ -2040,6 +2078,24 @@ void US_Hydrodyn_Batch::update_avg_hydro_name(const QString &str)
    batch->avg_hydro_name = str;
 }
 
+void US_Hydrodyn_Batch::set_results_dir()
+{
+   batch->results_dir = cb_results_dir->isChecked();
+   update_enables();
+}
+
+void US_Hydrodyn_Batch::update_results_dir_name(const QString &str)
+{
+   QString fixedstr = str;
+   fixedstr.replace( QRegularExpression( "[^A-Za-z0-9-._]" ), "" );
+   if ( fixedstr != str ) {
+      disconnect( le_results_dir_name, SIGNAL(textChanged(const QString &)), 0, 0 );
+      le_results_dir_name->setText( fixedstr );
+      connect( le_results_dir_name, SIGNAL(textChanged(const QString &)), SLOT(update_results_dir_name(const QString &)));
+   }
+   batch->results_dir_name = fixedstr;
+}
+
 void US_Hydrodyn_Batch::select_save_params()
 {
    ((US_Hydrodyn *)us_hydrodyn)->select_save_params();
@@ -2076,6 +2132,8 @@ void US_Hydrodyn_Batch::disable_after_start()
    cb_hullrad->setEnabled(false);
    cb_avg_hydro->setEnabled(false);
    le_avg_hydro_name->setEnabled(false);
+   cb_results_dir->setEnabled(false);
+   le_results_dir_name->setEnabled(false);
    pb_select_save_params->setEnabled(false);
    cb_saveParams->setEnabled(false);
    pb_cluster->setEnabled(false);

@@ -13766,7 +13766,7 @@ bool US_Hydrodyn::calc_zeno()
       }
    }
 
-   QDir::setCurrent(somo_dir);
+   QDir::setCurrent( get_somo_dir() );
 
    qApp->processEvents();
    if (stopFlag)
@@ -13896,7 +13896,7 @@ bool US_Hydrodyn::calc_zeno()
                ;
 
                QString fname =
-                  QString( somo_dir 
+                  QString( get_somo_dir() 
                            + QDir::separator() 
                            + project 
                            + QString( "_%1" ).arg( current_model + 1 )

@@ -6430,6 +6430,9 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
    }
 
    int WAT_Tf_used = 0;
+   bool use_WAT_Tf =
+      gparams.count( "use_WAT_Tf_pdb" ) &&
+      gparams[ "use_WAT_Tf_pdb" ] == "true";
 
    for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++) {
       for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); k++) {
@@ -6462,8 +6465,10 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
                }
             } else {
                tmp_atom.bead_computed_radius = this_vdwf.r;
-               if ( this_atom->resName == "WAT" &&
-                    this_atom->tempFactor ) {
+               if (
+                   use_WAT_Tf &&
+                   this_atom->resName == "WAT" &&
+                   this_atom->tempFactor ) {
                   // QTextStream( stderr ) <<
                   //    QString( "create_vdw_beads WAT Tf %1\n" ).arg( this_atom->tempFactor )
                   //    ;
@@ -6507,7 +6512,7 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
    bead_models[ current_model ] = bead_model;
    somo_processed[ current_model ] = 1;
    
-   write_bead_model( somo_dir + SLASH + project + fix_file_name( QString("_%1").arg( model_name( current_model ) ) ) +
+   write_bead_model( get_somo_dir() + SLASH + project + fix_file_name( QString("_%1").arg( model_name( current_model ) ) ) +
                      QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
                      , &bead_model);
    
@@ -7391,4 +7396,30 @@ bool US_Hydrodyn::calc_fasta_vbar( QStringList & seq_chars, double & result, QSt
    result = (double)floor(0.5 + ( ( mw_vbar_sum / mw_sum ) * 1000e0 ) ) / 1000e0;
    // qDebug() << "calc_fasta_vbar result for seq of " << seq_chars.size() << " elements computed as " << result;
    return true;
+}
+
+QString US_Hydrodyn::get_somo_dir() {
+   if ( !batch_widget ||
+        !batch.results_dir ||
+        batch.results_dir_name.isEmpty() ) {
+      return somo_dir;
+   }
+
+   //  check && create if needed
+   QString dir_path = somo_dir + QDir::separator() + batch.results_dir_name;
+   // QTextStream( stderr ) << "somo results dir is '" + dir_path + "'\n";
+
+   QDir dir( dir_path );
+   if ( !dir.exists() ) {
+      dir.mkdir( dir_path );
+   }
+   if ( dir.exists() ) {
+      return dir_path;
+   }
+   batch_window->editor_msg( "red"
+                             ,QString( us_tr( "WARNING: results directory %1 could not be created, using %2" ) )
+                             .arg( dir.path() )
+                             .arg( somo_dir )
+                             );
+   return somo_dir;
 }

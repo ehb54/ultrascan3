@@ -84,6 +84,8 @@ class US_EXTERN US_Hydrodyn_PDB_Parsing : public QFrame
       QRadioButton *rb_atom_skip;
       QRadioButton *rb_atom_auto;
       
+      QCheckBox *cb_use_WAT_Tf;
+
    private slots:
       
       void setupGUI();
@@ -95,6 +97,7 @@ class US_EXTERN US_Hydrodyn_PDB_Parsing : public QFrame
       void residue();
       void residue(int);
       void atom();
+      void use_WAT_Tf();
       void atom(int);
       void cancel();
       void help();
