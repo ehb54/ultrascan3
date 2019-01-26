@@ -47,6 +47,8 @@ if ( !$quickrun ) {
 }
 
 # get files created
+use File::Basename;
+my $dirname = dirname(__FILE__);
 
 @f = `ls $traj`;
 grep chomp, @f;
@@ -114,5 +116,6 @@ for $f ( @f ) {
     print OUT join '', @lnew;
     close OUT;
     docmd( "mv $traj/$f $traj/$fo" ) if $f ne $fo;
+    docmd( "perl $dirname/renumpdbres.pl $traj/$fo" );
 }
 

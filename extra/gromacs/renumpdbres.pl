@@ -35,6 +35,12 @@ do {
             next;
         }
 
+        $atomname = substr( $l, 13, 4 );
+
+        if ( $atomname =~ /^MW  / ) {
+            next;
+        }
+
         if ( !$resnum ) {
             $resnum = substr( $l, 22, 4 );
             $resnum =~ s/ //g;
