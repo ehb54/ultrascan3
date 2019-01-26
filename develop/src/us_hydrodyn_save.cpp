@@ -1875,6 +1875,13 @@ QString US_Hydrodyn_Save::hydroFormatStats(vector < save_data > stats)
    result += QString("").sprintf("- ROTAT. STOKES' RADIUS [ Z ] \t%.2f\t\t%.2f\t\t[nm]\n",
                                  stats[0].rot_stokes_rad_z,
                                  stats[1].rot_stokes_rad_z);
+
+   if ( stats[ 0 ].results.viscosity ) {
+      result += QString("").sprintf("\n- ZENO INTRINSIC VISC.     \t%.2f\t\t%.2f\t\t[cm^3/g]\n",
+                                    stats[0].results.viscosity,
+                                    stats[1].results.viscosity);
+   }
+   
    result += QString("").sprintf("\n- UNCORRECTED INTRINSIC VISC. \t%.2f\t\t%.2f\t\t[cm^3/g]\n",
                                  stats[0].unc_int_visc,
                                  stats[1].unc_int_visc);

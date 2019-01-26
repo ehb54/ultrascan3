@@ -22,6 +22,11 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
 {
    US_Timer us_timers;
 
+   int WAT_Tf_used = 0;
+   bool use_WAT_Tf =
+      ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "use_WAT_Tf_pdb" ) &&
+      ((US_Hydrodyn *)us_hydrodyn)->gparams[ "use_WAT_Tf_pdb" ] == "true";
+
    // don't forget to later merge deleted waters into model_vector
    // right now we are going with first residue map entry
    stopFlag = false;
@@ -191,6 +196,16 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
 //                ;
 
             new_atom.excl_vol = atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
+            if ( use_WAT_Tf &&
+                 this_atom->resName == "WAT" &&
+                 this_atom->tempFactor ) {
+               new_atom.excl_vol =
+                  this_atom->tempFactor *
+                  this_atom->tempFactor *
+                  this_atom->tempFactor *
+                  M_PI * 4e0 / 3e0;
+               WAT_Tf_used++;
+            }
 
             new_atom.atom_name = this_atom->name;
             new_atom.residue_name = use_resname;
@@ -958,6 +973,10 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
       }
    }
 
+
+   if ( WAT_Tf_used ) {
+      editor_msg( "dark blue", QString( us_tr( "Notice: %1 WATs using PDB's Tf radius recognized\n" ) ).arg( WAT_Tf_used ) );
+   }
 
    progress_saxs->reset();
    lbl_core_progress->setText("");
