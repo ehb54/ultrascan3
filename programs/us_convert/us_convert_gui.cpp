@@ -3745,12 +3745,20 @@ void US_ConvertGui::process_reference( const QwtDoublePoint& p )
       if ( trx != Pseudo_reference_triple )
       {
          tripListx = trx;
+DbgLv(1) << "CGui: procref: nonreftripx" << tripListx;
          break;
       }
    }
 
+DbgLv(1) << "CGui: procref: setrow-tripx" << tripListx;
+   if ( isMwl )
+   {
+      triple_index();
+DbgLv(1) << "CGui: procref: 2)setrow-tripx" << tripListx;
+   }
    lw_triple->setCurrentRow( tripListx );
    plot_current();
+DbgLv(1) << "CGui: procref:  plot_current complete";
    QApplication::restoreOverrideCursor();
 
    pb_reference  ->setEnabled( false );
