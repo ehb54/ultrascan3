@@ -3546,6 +3546,7 @@ DbgLv(1) << "EGUp:dE: nspeed" << nspeed;
       dtext += tr( "      Delay (accel.):" ) + sspeed[ jj++ ] + "\n";
       dtext += tr( "      Stage Delay:   " ) + sspeed[ jj++ ] + "\n";
       dtext += tr( "      Scan Interval: " ) + sspeed[ jj++ ] + "\n";
+
    }
 
    dtext += tr( "\nCells\n" );
@@ -3756,6 +3757,9 @@ DbgLv(1) << "EGUp:svRP:   prnames" << prnames;
       }
    }
 
+   qDebug() << "SAVE_PROTOCOL 0: rpSpeed->ssteps[0].duration: " <<  rpSpeed->ssteps[0].duration;
+
+   
    // Save the new name and compose the XML representing the protocol
    protname            = newpname;
 DbgLv(1) << "EGUp:svRP:   NEW protname" << protname;
@@ -3769,15 +3773,30 @@ DbgLv(1) << "EGUp:svRP:   currProto updated  protname" << currProto->protname;
 
 //ALEXEY: bug - us_xml string has to be cleared each time Protocol is saved
    rpSubmt->us_xml.clear();
- 
+
+
+   qDebug() << "SAVE_PROTOCOL 0a: rpSpeed->ssteps[0].duration: " <<  rpSpeed->ssteps[0].duration;
+   
    QXmlStreamWriter xmlo( &rpSubmt->us_xml ); // Compose XML representation
+
+   qDebug() << "SAVE_PROTOCOL 0aa: rpSpeed->ssteps[0].duration: " <<  rpSpeed->ssteps[0].duration;
+
    xmlo.setAutoFormatting( true );
+   
+   qDebug() << "SAVE_PROTOCOL 0aaa: rpSpeed->ssteps[0].duration: rpSpeed->ssteps[0].scanintv: " <<  rpSpeed->ssteps[0].duration << " : " << rpSpeed->ssteps[0].scanintv;
+      
    currProto->toXml( xmlo );
+
+   qDebug() << "SAVE_PROTOCOL 0aaaa: rpSpeed->ssteps[0].duration: rpSpeed->ssteps[0].scanintv: " <<  rpSpeed->ssteps[0].duration << " : " << rpSpeed->ssteps[0].scanintv;
+   
 DbgLv(1) << "EGUp:svRP:    guid" << currProto->pGUID;
 DbgLv(1) << "EGUp:svRP:    xml(s)" << QString(rpSubmt->us_xml).left(100);
 int xe=rpSubmt->us_xml.length()-101;
 DbgLv(1) << "EGUp:svRP:    xml(e)" << QString(rpSubmt->us_xml).mid(xe);
 
+
+ qDebug() << "SAVE_PROTOCOL 1: rpSpeed->ssteps[0].duration: " <<  rpSpeed->ssteps[0].duration;
+ 
    // Save the new protocol to database or disk
    US_Passwd  pw;
    US_DB2* dbP         = ( sibSValue( "general", "dbdisk" ) == "DB" )
@@ -3817,6 +3836,8 @@ DbgLv(1) << "EGUp:svRP:   dbP" << dbP;
    DbgLv(1) << "BEFORE!!!"; 
    //DbgLv(1) << "EGUp:svRP:  new protname" << protname << "prdats0" << prdats[0]; //ALEXEY: this statement caused issues when no protocol existed
 
+   qDebug() << "SAVE_PROTOCOL 2: rpSpeed->ssteps[0].duration: " <<  rpSpeed->ssteps[0].duration;
+   
    QString mtitle_done    = tr( "Success" );
    QString message_done   = tr( "Protocol has been successfully saved." );
    QMessageBox::information( this, mtitle_done, message_done );
@@ -4009,7 +4030,8 @@ void US_ExperGuiUpload::submitExperiment()
 	   double scanint_sec_min  = rpSpeed->ssteps[ curr_stage ].scanintv_min;
 
 	   qDebug() << "Size of rpSpeed is: " << rpSpeed->ssteps.size() << ", while nstages_size is: " << nstages_size << ", size of Total_wvl is: " <<  Total_wvl.size();
-
+	   qDebug() << "DURATION!!! duration_sec = rpSpeed->ssteps[ curr_stage ].duration: " << duration_sec <<  "=" <<  rpSpeed->ssteps[ curr_stage ].duration;
+	   
 	   // <-- Which delay should we substract ? (not a stage delay but due to acceleration ONLY ? )
 	   //int ScanCount = int( (duration_sec - delay_sec) / (scanint_sec * Total_wvl[i]) );
 
