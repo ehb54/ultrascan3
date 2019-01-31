@@ -2805,6 +2805,13 @@ void US_Edit::focus( int from, int to )
 // Set curve colors
 void US_Edit::set_colors( const QList< int >& focus )
 {
+   QList< QColor > mcolors;
+   int nmcols  = plot->map_colors( mcolors );
+DbgLv(1) << "ED:scol: nmcols" << nmcols << mcolors.size();
+   QPen pen_plot( US_GuiSettings::plotCurve() );
+   if ( nmcols == 1 )
+      pen_plot    = QPen( mcolors[ 0 ] );
+
    // Get pointers to curves
    QwtPlotItemList        list = data_plot->itemList();
    QList< QwtPlotCurve* > curves;
@@ -2831,6 +2838,14 @@ void US_Edit::set_colors( const QList< int >& focus )
 
          curves[ i ]->setPen  ( p );
          curves[ i ]->setBrush( b );
+      }
+      else if ( scnnbr > 0 )
+      {
+         scnnbr--;
+//DbgLv(1) << "ED:scol:   i" << i << "scnx" << scnnbr;
+         if ( nmcols > 1 )
+            pen_plot        = QPen( mcolors[ scnnbr % nmcols ] );
+         curves[ i ]->setPen( pen_plot );
       }
    }
 
