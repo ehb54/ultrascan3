@@ -177,7 +177,9 @@ void US_RunProtocol::timeFromList( QTime& timeobj, int& days,
 void US_RunProtocol::timeToString( double& sectime, QString& strtime )
 {
    QList< int > dhms;
-   timeToList( sectime, dhms );
+   // timeToList( sectime, dhms );         //ALEXEY: bug!!!
+   double sectime_to_list = sectime;
+   timeToList( sectime_to_list, dhms );
    strtime          = QString().sprintf( "%dd %02d:%02d:%02d",
                          dhms[ 0 ], dhms[ 1 ], dhms[ 2 ], dhms[ 3 ] );
 }
@@ -408,12 +410,15 @@ bool US_RunProtocol::RunProtoSpeed::toXml( QXmlStreamWriter& xmlo )
 
    for ( int ii = 0; ii < ssteps.count(); ii++ )
    {
+     qDebug() << "SPEED toXml ssteps[ii].duration, ssteps[ii].scanintv  0 : " << ssteps[ii].duration << ", "<< ssteps[ii].scanintv;
       QString s_durat;
       QString s_delay;
       QString s_sintv;
       US_RunProtocol::timeToString( ssteps[ ii ].duration, s_durat );
       US_RunProtocol::timeToString( ssteps[ ii ].delay,    s_delay );
       US_RunProtocol::timeToString( ssteps[ ii ].scanintv, s_sintv );
+
+      qDebug() << "SPEED toXml ssteps[ii].duration, ssteps[ii].scanintv  1 : " << ssteps[ii].duration << ", "<< ssteps[ii].scanintv;
 
       xmlo.writeStartElement( "speedstep" );
       xmlo.writeAttribute   ( "rotorspeed",
@@ -424,8 +429,12 @@ bool US_RunProtocol::RunProtoSpeed::toXml( QXmlStreamWriter& xmlo )
       xmlo.writeAttribute   ( "delay",         s_delay );
       xmlo.writeAttribute   ( "scan_interval", s_sintv );
       xmlo.writeEndElement  (); // speedstep
+
+      // qDebug() << "SPEED toXml 2 : " << rpSpeed->ssteps[ii].duration;
    }
    xmlo.writeEndElement();    // speed
+
+   //qDebug() << "SPEED toXml 3 : " << rpSpeed->ssteps[ii].duration;
 
    return ( ! xmlo.hasError() );
 }

@@ -899,10 +899,12 @@ DbgLv(1) << "EGSp:svP: nspeed" << nspeed;
       rpSpeed->ssteps[ ii ].delay_stage    = ssvals[ ii ][ "delay_stage"    ];
       rpSpeed->ssteps[ ii ].scanintv = ssvals[ ii ][ "scanintv" ];
       rpSpeed->ssteps[ ii ].scanintv_min = ssvals[ ii ][ "scanintv_min" ];
-DbgLv(1) << "EGSp:svP:  ii" << ii << "speed accel durat delay scnint"
+ DbgLv(1) << "EGSp:svP:  ii" << ii << "speed accel durat delay scnint"
  << ssvals[ii]["speed"   ] << ssvals[ii]["accel"]
  << ssvals[ii]["duration"] << ssvals[ii]["delay"]
  << ssvals[ii]["delay_stage"] << ssvals[ii]["scanintv"];
+
+ qDebug() << " DURATION SAVED IN  PROTOTCOL: speed " << ii <<  ", duration: " << rpSpeed->ssteps[ ii ].duration;
    }
 }
 
@@ -2272,6 +2274,10 @@ void US_ExperGuiUpload::initPanel()
    rpOptic         = &currProto->rpOptic;
    rpRange         = &currProto->rpRange;
    rpSubmt         = &currProto->rpSubmt;
+
+
+   qDebug() << "rpSPEED: duration: " << rpSpeed->ssteps[0].duration;
+   
 if(rps_differ)
 {
 US_RunProtocol* cRP = currProto;
