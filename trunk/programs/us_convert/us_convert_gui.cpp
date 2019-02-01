@@ -476,19 +476,15 @@ DbgLv(1) << "CGui: reset complete";
    setMinimumSize( 950, 450 );
    adjustSize();
 
-   //import_data_auto("/home/alexey/ultrascan/imports/CHorne-NanR_3r-DNA-MW_50K_111318-run656");
-   //import_data_auto("/home/alexey/ultrascan/imports/CHorne-NanR_3r-DNA-MW_60K_110918-run653");
-   //import_data_auto("/home/alexey/ultrascan/imports/DemchukA_exosomes40K_111418-run658");
-   //import_data_auto("/home/alexey/ultrascan/imports/Photometric_Accuracy_-_Radial_Scan-run613");
-   //import_data_auto("/home/alexey/ultrascan/imports/demo1_veloc1");
-   //import_data_auto("/home/alexey/ultrascan/imports/DanS_ParticleIntegrity_testcell3_112118-run663");
-   
-   // editRuninfo_auto();
+   // QString curdir = "/home/alexey/ultrascan/imports/CHorne-NanR_Trunc_2r-DNA-MWL_60K_111918-run661";
+   // QString protname = "CHorne-NanR_Trunc_2r-DNA-MWL_60K_111918";
 
-   // readProtocol_auto();
-   
-   // getLabInstrumentOperatorInfo_auto();
-   
+   // // QString curdir = "/home/alexey/ultrascan/imports/KentonR_coprohenQ-comproject-013119-run221";
+   // // QString protname = "KentonR_coprohenQ-comproject-013119";
+
+   // import_data_auto(curdir, protname);
+
+
    // qDebug() << "ExpData: ";
 
    // qDebug() << "ExpData.invID " << ExpData.invID;             
@@ -1108,6 +1104,7 @@ void US_ConvertGui::import_data_auto( QString &currDir, QString &protocolName )
 
    if ( impType == 1 )
    {
+     qDebug() << "IMPORT MWL auto...";
       importMWL();
 
       editRuninfo_auto();
@@ -1119,6 +1116,7 @@ void US_ConvertGui::import_data_auto( QString &currDir, QString &protocolName )
 
    else if ( impType == 2 )
    {
+     qDebug() << "IMPORT AUC auto...";
       importAUC();
 
       editRuninfo_auto();
@@ -1195,12 +1193,14 @@ void US_ConvertGui::import()
 
    if ( impType == 1 )
    {
+      qDebug() << "IMPORT MWL not auto...";
       importMWL();
       return;
    }
 
    else if ( impType == 2 )
    {
+     qDebug() << "IMPORT AUC not auto...";
       importAUC();
       return;
    }
@@ -2189,7 +2189,7 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    US_Solution solution_auto;
 
    int nchans     = out_channels.count();
-   int ntrips     = out_triples .count();
+   int ntrips     = out_triples.count();
 
    int     cpID = 1;  //ALEXEY rnadom abstractCenterpieceID: <-- abstractCenterpieceID from abstractCenterpiece Table !!!
    QString cpName("");
@@ -2202,8 +2202,9 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    
    if ( isMwl )
      {
+       qDebug() << "SOLUTION is READ in MWL mode !!! ";
        for (int i = 0; i < nchans; ++i )
-	 {
+	 {	   
 	   //Solution
 	   solutionID = ProtInfo.ProtSolutions.chsols[ i ].sol_id.toInt();
 	   solution_auto.readFromDB(solutionID, &db);  
@@ -2264,34 +2265,46 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
      }
    else
      {
-       for (int i = 0; i < ntrips; ++i )
-	 {
-	   //Solution
-	   solutionID = ProtInfo.ProtSolutions.chsols[ i ].sol_id.toInt();
-	   solution_auto.readFromDB(solutionID, &db);  
-	   out_chaninfo[ i ].solution = solution_auto;
-	   out_tripinfo[ i ].solution = solution_auto;
+       qDebug() << "SOLUTION is READ in NON MWL mode !!! ntrips: " << ntrips;
+       qDebug() << "SIZE of out_chaninfo.size(): " << out_chaninfo.size() ;
+       qDebug() << "SIZE of out_tripinfo.size(): " << out_tripinfo.size() ;
+       // for (int i = 0; i < ntrips; ++i )
+       // 	 {
+       // 	   qDebug() << "Trying next solution #: " << i;
+       // 	   //Solution
+       // 	   solutionID = ProtInfo.ProtSolutions.chsols[ i ].sol_id.toInt();
 
-	   //Description
-	   triple_desc = ProtInfo.ProtSolutions.chsols[ i ].ch_comment;  //channel's comment from protocol
-	   outData[ i ]->description = triple_desc;
+       // 	   qDebug() << "solitionID for triple " << i << ": " << solutionID;
+	     
+       // 	   solution_auto.readFromDB(solutionID, &db);
 
-	   //Centerpiece
-	   if ( i < ntrips-1 && i%2 == 0 ) //every second channel
-	     {
-	       int cellnumber = i / 2;
-	       for ( int aa = 0; aa < cent_options.size(); ++aa )
-		 if (ProtInfo.ProtCells.cells_used[ cellnumber ].centerpiece == cent_options[aa].text)
-		   {
-		     cpID = cent_options[aa].ID.toInt();
-		     cpName = cent_options[aa].text;
-		   }
-	     }
-	   out_chaninfo[ i ].centerpiece     = cpID;    //ALEXEY abstractCenterpieceIDs passed from protocol
-	   out_tripinfo[ i ].centerpiece     = cpID;    //ALEXEY abstractCenterpieceIDs passed from protocol
-	   out_chaninfo[ i ].centerpieceName = cpName; 
-	 }
+       // 	   qDebug() << "Solution READ OK!";
+	   
+       // 	   out_chaninfo[ i ].solution = solution_auto;
+       // 	   out_tripinfo[ i ].solution = solution_auto;
+
+       // 	   //Description
+       // 	   triple_desc = ProtInfo.ProtSolutions.chsols[ i ].ch_comment;  //channel's comment from protocol
+       // 	   outData[ i ]->description = triple_desc;
+
+       // 	   //Centerpiece
+       // 	   if ( i < ntrips-1 && i%2 == 0 ) //every second channel
+       // 	     {
+       // 	       int cellnumber = i / 2;
+       // 	       for ( int aa = 0; aa < cent_options.size(); ++aa )
+       // 		 if (ProtInfo.ProtCells.cells_used[ cellnumber ].centerpiece == cent_options[aa].text)
+       // 		   {
+       // 		     cpID = cent_options[aa].ID.toInt();
+       // 		     cpName = cent_options[aa].text;
+       // 		   }
+       // 	     }
+       // 	   out_chaninfo[ i ].centerpiece     = cpID;    //ALEXEY abstractCenterpieceIDs passed from protocol
+       // 	   out_tripinfo[ i ].centerpiece     = cpID;    //ALEXEY abstractCenterpieceIDs passed from protocol
+       // 	   out_chaninfo[ i ].centerpieceName = cpName; 
+       // 	 }
      }
+
+   qDebug() << "ALL Solutions read !!";
 
    // SyncOK ?
    ExpData.syncOK = true;
