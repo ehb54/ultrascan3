@@ -2314,8 +2314,9 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    le_description ->setText( outData[ tripDatax ]->description );
    //le_centerpieceDesc ->setText( QString::number(out_chaninfo[ tripListx ].centerpiece) );
    le_centerpieceDesc ->setText( out_chaninfo[ tripListx ].centerpieceName );
-   
-   enableSaveBtn();
+
+   pb_saveUS3 ->setEnabled(true);
+   //enableSaveBtn();
 }
 
 // Function to generate a new guid for experiment, and associate with DB
