@@ -476,11 +476,14 @@ DbgLv(1) << "CGui: reset complete";
    setMinimumSize( 950, 450 );
    adjustSize();
 
-   // QString curdir = "/home/alexey/ultrascan/imports/CHorne-NanR_Trunc_2r-DNA-MWL_60K_111918-run661";
+   // QString curdir = "/home/alexey/ultrascan/imports/CHorne-NanR_Trunc_2r-DNA-MWL_60K_111918-run661"; // Chris H.
    // QString protname = "CHorne-NanR_Trunc_2r-DNA-MWL_60K_111918";
 
-   // // QString curdir = "/home/alexey/ultrascan/imports/KentonR_coprohenQ-comproject-013119-run221";
-   // // QString protname = "KentonR_coprohenQ-comproject-013119";
+   // QString curdir = "/home/alexey/ultrascan/imports/KentonR_coprohenQ-comproject-013119-run221"; // Kenton
+   // QString protname = "KentonR_coprohenQ-comproject-013119";
+
+   // QString curdir = "/home/alexey/ultrascan/imports/test-comproject-2wavelength-2cell-2-run227"; // Amy
+   // QString protname = "test-comproject-2wavelength-2cell-2";
 
    // import_data_auto(curdir, protname);
 
@@ -2199,6 +2202,9 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    qDebug() << "Sizes: out_channels.size() " << out_channels.count() << ", out_triples.size() " <<  out_triples .count();
    qDebug() << "Size ProtInfo.ProtCells.cells_used: " << ProtInfo.ProtCells.cells_used.size();
    qDebug() << "Size ProtInfo.ProtSolutions.chsols: " << ProtInfo.ProtSolutions.chsols.size();
+
+   int num_cent_holes = int(ProtInfo.ProtSolutions.chsols.size()/ProtInfo.ProtCells.cells_used.size());
+   int cellnumber;
    
    if ( isMwl )
      {
@@ -2211,17 +2217,29 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 	   out_chaninfo[ i ].solution = solution_auto;
 	   out_tripinfo[ out_chandatx[ i ] + cb_lambplot->currentIndex() ].solution = solution_auto;
 
+
 	   //Centerpiece
-	   if ( i < nchans-1 && i%2 == 0 ) //every second channel, or other # ?
+	   // if ( i < nchans-1 && i%2 == 0 ) //every second channel, or other # ?
+	   //   {
+	   //     cellnumber = i / 2;
+	   //     for ( int aa = 0; aa < cent_options.size(); ++aa )
+	   // 	 if (ProtInfo.ProtCells.cells_used[ cellnumber ].centerpiece == cent_options[aa].text)
+	   // 	   {
+	   // 	     cpID   = cent_options[aa].ID.toInt();
+	   // 	     cpName = cent_options[aa].text;
+	   // 	   }
+	   //   }
+
+	   cellnumber = i / num_cent_holes;
+	   for ( int aa = 0; aa < cent_options.size(); ++aa )
 	     {
-	       int cellnumber = i / 2;
-	       for ( int aa = 0; aa < cent_options.size(); ++aa )
-		 if (ProtInfo.ProtCells.cells_used[ cellnumber ].centerpiece == cent_options[aa].text)
-		   {
-		     cpID   = cent_options[aa].ID.toInt();
-		     cpName = cent_options[aa].text;
-		   }
+	       if (ProtInfo.ProtCells.cells_used[ cellnumber ].centerpiece == cent_options[aa].text)
+		 {
+		   cpID   = cent_options[aa].ID.toInt();
+		   cpName = cent_options[aa].text;
+		 }
 	     }
+	   	   
 	   
 	   //ALEXEY abstractCenterpieceIDs inferred from cent. name passed from protocol
 	   out_chaninfo[ i ]   .centerpiece     = cpID;
@@ -2268,40 +2286,99 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
        qDebug() << "SOLUTION is READ in NON MWL mode !!! ntrips: " << ntrips;
        qDebug() << "SIZE of out_chaninfo.size(): " << out_chaninfo.size() ;
        qDebug() << "SIZE of out_tripinfo.size(): " << out_tripinfo.size() ;
-       // for (int i = 0; i < ntrips; ++i )
-       // 	 {
-       // 	   qDebug() << "Trying next solution #: " << i;
-       // 	   //Solution
-       // 	   solutionID = ProtInfo.ProtSolutions.chsols[ i ].sol_id.toInt();
 
-       // 	   qDebug() << "solitionID for triple " << i << ": " << solutionID;
-	     
-       // 	   solution_auto.readFromDB(solutionID, &db);
+       if (ntrips ==  nchans)
+	 {
+	   for (int i = 0; i < ntrips; ++i )
+	     {
+	       //Solution
+	       solutionID = ProtInfo.ProtSolutions.chsols[ i ].sol_id.toInt();
+	       solution_auto.readFromDB(solutionID, &db);
+	       out_chaninfo[ i ].solution = solution_auto;
+	       out_tripinfo[ i ].solution = solution_auto;
+	       
+	       //Description
+	       triple_desc = ProtInfo.ProtSolutions.chsols[ i ].ch_comment;  //channel's comment from protocol
+	       outData[ i ]->description = triple_desc;
+	       
+	       //Centerpiece
+	       // if ( i < ntrips-1 && i%2 == 0 ) //every second channel
+	       // 	 {
+	       // 	   cellnumber = i / 2;
+	       // 	   for ( int aa = 0; aa < cent_options.size(); ++aa )
+	       // 	     if (ProtInfo.ProtCells.cells_used[ cellnumber ].centerpiece == cent_options[aa].text)
+	       // 	       {
+	       // 		 cpID = cent_options[aa].ID.toInt();
+	       // 		 cpName = cent_options[aa].text;
+	       // 	       }
+	       // 	 }
 
-       // 	   qDebug() << "Solution READ OK!";
+	       cellnumber = i / num_cent_holes;
+	       for ( int aa = 0; aa < cent_options.size(); ++aa )
+		 {
+		   if (ProtInfo.ProtCells.cells_used[ cellnumber ].centerpiece == cent_options[aa].text)
+		     {
+		       cpID = cent_options[aa].ID.toInt();
+		       cpName = cent_options[aa].text;
+		     }
+		 }
+
+	       
+	       out_chaninfo[ i ].centerpiece     = cpID;    //ALEXEY abstractCenterpieceIDs passed from protocol
+	       out_tripinfo[ i ].centerpiece     = cpID;    //ALEXEY abstractCenterpieceIDs passed from protocol
+	       out_chaninfo[ i ].centerpieceName = cpName; 
+	     }
+	 }
+       else
+	 {
+	   //ALEXEY: put that other case of #triples noeq #channels here...
+
+	   qDebug() << "nchans: " << nchans << ", ntrips: " << ntrips << "outData.size(): " << outData.size() << ", num_cent_holes: " << num_cent_holes;
+	   for (int i = 0; i < nchans; ++i )
+	     {	   
+	       //Solution
+	       solutionID = ProtInfo.ProtSolutions.chsols[ i ].sol_id.toInt();
+	       solution_auto.readFromDB(solutionID, &db);  
 	   
-       // 	   out_chaninfo[ i ].solution = solution_auto;
-       // 	   out_tripinfo[ i ].solution = solution_auto;
+	       //Description
+	       triple_desc = ProtInfo.ProtSolutions.chsols[ i ].ch_comment;  //channel's comment from protocol
+	       //outData[ i ]->description = triple_desc;
 
-       // 	   //Description
-       // 	   triple_desc = ProtInfo.ProtSolutions.chsols[ i ].ch_comment;  //channel's comment from protocol
-       // 	   outData[ i ]->description = triple_desc;
+	       //Centerpiece
+	       cellnumber = i / num_cent_holes;
+	       for ( int aa = 0; aa < cent_options.size(); ++aa )
+		 {
+		   if (ProtInfo.ProtCells.cells_used[ cellnumber ].centerpiece == cent_options[aa].text)
+		     {
+		       cpID   = cent_options[aa].ID.toInt();
+		       cpName = cent_options[aa].text;
+		     }
+		 }
 
-       // 	   //Centerpiece
-       // 	   if ( i < ntrips-1 && i%2 == 0 ) //every second channel
-       // 	     {
-       // 	       int cellnumber = i / 2;
-       // 	       for ( int aa = 0; aa < cent_options.size(); ++aa )
-       // 		 if (ProtInfo.ProtCells.cells_used[ cellnumber ].centerpiece == cent_options[aa].text)
-       // 		   {
-       // 		     cpID = cent_options[aa].ID.toInt();
-       // 		     cpName = cent_options[aa].text;
-       // 		   }
-       // 	     }
-       // 	   out_chaninfo[ i ].centerpiece     = cpID;    //ALEXEY abstractCenterpieceIDs passed from protocol
-       // 	   out_tripinfo[ i ].centerpiece     = cpID;    //ALEXEY abstractCenterpieceIDs passed from protocol
-       // 	   out_chaninfo[ i ].centerpieceName = cpName; 
-       // 	 }
+	       
+	       for (int j=0; j < ntrips; ++j)
+		 {		   
+		   if ( out_triples[ j ].section( "/", 0, 0 ).simplified() == out_channels[ i ].section( "/", 0, 0 ).simplified() )
+		     {
+		       qDebug() << "Triple. #: " << out_triples[ j ].section( "/", 0, 0 ).simplified()
+				<< ", Cell. #: "   << out_channels[ i ].section( "/", 0, 0 ).simplified()
+				<< ", Centerpiece Name: " << cpName << ", CenterpieceID: " << cpID;
+		       
+		       out_chaninfo[ j ].centerpiece     = cpID;   
+		       out_tripinfo[ j ].centerpiece     = cpID;   
+		       out_chaninfo[ j ].centerpieceName = cpName; 
+		     }
+		   
+		   if ( out_triples[ j ].section( "/", 0, 1 ).simplified() == out_channels[ i ] )
+		     {
+		       qDebug() << "Triple. NAME: " << out_triples[ j ] << "Channel. NAME: " << out_channels[ i ];
+		       out_chaninfo[ j ].solution = solution_auto;
+		       out_tripinfo[ j ].solution = solution_auto;
+		       outData[ j ]->description = triple_desc;
+		     }
+		 }
+	     }
+	 }
      }
 
    qDebug() << "ALL Solutions read !!";
@@ -2315,8 +2392,7 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    //le_centerpieceDesc ->setText( QString::number(out_chaninfo[ tripListx ].centerpiece) );
    le_centerpieceDesc ->setText( out_chaninfo[ tripListx ].centerpieceName );
 
-   pb_saveUS3 ->setEnabled(true);
-   //enableSaveBtn();
+   enableSaveBtn();
 }
 
 // Function to generate a new guid for experiment, and associate with DB
