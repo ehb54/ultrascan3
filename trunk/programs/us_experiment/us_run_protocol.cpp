@@ -902,8 +902,8 @@ US_RunProtocol::RunProtoRanges::Ranges::Ranges()
 {
    channel.clear();
    wvlens .clear();
-   lo_rad               = 5.8;
-   hi_rad               = 7.2;
+   lo_rad               = 5.75;
+   hi_rad               = 7.25;
 }
 
 // RunProtoRanges::Ranges subclass Equality operator
