@@ -1225,6 +1225,7 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
 {
   ExpID_to_use = protocol_details["experimentId"];   
   ProtocolName = protocol_details["protocolName"];
+  RunName      = protocol_details[ "experimentName" ];
   CellChNumber   = protocol_details[ "CellChNumber" ];
   TripleNumber = protocol_details[ "TripleNumber" ];
   OptimaName   = protocol_details[ "OptimaName" ];               //New
@@ -1242,9 +1243,9 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
   okButton->hide();
   
   msg_data_avail->setIcon(QMessageBox::Information);
-  msg_data_avail->setText(tr( "Run was submitted to the Optima, but not launched yet. \n"
-		              "Awaiting for data to emerge... \n"
-			      "Experient ID to check: %1 \n ").arg(ExpID_to_use) );
+  msg_data_avail->setText(tr( "Run named %1 was submitted to:\n\n"
+		              "%2 \n\n"
+			      "Please start this method scan from the instrument panel.").arg(RunName).arg(OptimaName) );
   msg_data_avail->exec();
 }
 

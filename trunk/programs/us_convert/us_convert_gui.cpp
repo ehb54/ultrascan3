@@ -483,7 +483,7 @@ DbgLv(1) << "CGui: reset complete";
    // QString protname = "KentonR_coprohenQ-comproject-013119";
 
    // QString curdir = "/home/alexey/ultrascan/imports/test-comproject-2wavelength-2cell-2-run227"; // Amy
-   // QString protname = "test-comproject-2wavelength-2cell-2";
+   //  QString protname = "test-comproject-2wavelength-2cell-2";
 
    // import_data_auto(curdir, protname);
 
@@ -1458,7 +1458,7 @@ void US_ConvertGui::importAUC( void )
    qDebug() << "CURRENT DIR_1: " << importDir;
 
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-   le_status->setText( tr( "Loading AUC simulation data ..." ) );
+   le_status->setText( tr( "Loading AUC data ..." ) );
    QStringList nameFilters = QStringList( "*.auc" );
    QStringList files =  readDir.entryList( nameFilters,
          QDir::Files | QDir::Readable, QDir::Name );
@@ -1560,7 +1560,7 @@ DbgLv(1) << "rTS: NON_EXIST:" << tmst_fnamei;
       tmst_fnamei.clear();
    }
 
-   le_status->setText( tr( "AUC simulation data import IS COMPLETE." ) );
+   le_status->setText( tr( "AUC data import IS COMPLETE." ) );
    pb_showTmst->setEnabled( ! tmst_fnamei.isEmpty() );
 }
 

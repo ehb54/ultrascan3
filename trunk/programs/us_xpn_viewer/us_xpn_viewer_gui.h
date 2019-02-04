@@ -168,6 +168,7 @@ class US_XpnDataViewer : public US_Widgets
      QString        RunID_to_retrieve;
      QString        ExpID_to_use;
      QString        ProtocolName;
+     QString        RunName;
      QString        CellChNumber;
      QString        TripleNumber;
      QString        OptimaName;          //New  
