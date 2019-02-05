@@ -6023,7 +6023,7 @@ void US_Hydrodyn::write_bead_spt(QString fname,
    {
       last_spt_text += QString("")
          .sprintf(
-                  "write ppm %s.ppm\n"
+                  "save ppm %s.ppm\n"
                   "exit\n",
                   fname.toLatin1().data()
                   );
@@ -8996,7 +8996,8 @@ void US_Hydrodyn::add_to_directory_history( QString filename, bool accessed )
 }
 
 void US_Hydrodyn::model_viewer( QString file,
-                                QString prefix ) {
+                                QString prefix,
+                                bool nodisplay ) {
    QStringList args;
    
    QString prog = 
@@ -9007,33 +9008,58 @@ void US_Hydrodyn::model_viewer( QString file,
 #  endif
       ;
 
-#if QT_VERSION < 0x040000
-# if !defined(WIN32) && !defined(MAC)
-   args.append( "xterm" );
-   args.append( "-e" );
-# endif
-   args.append( prog );
-   if ( prefix != "" ) {
-      args.append( prefix );
-   }
-      
-   args.append( QFileInfo( file ).fileName() );
-   rasmol->setWorkingDirectory( QFileInfo( file ).path() );
-   rasmol->setArguments( args );
-   if ( !rasmol->start() ) {
-      US_Static::us_message(us_tr("Please note:"), us_tr("There was a problem starting RASMOL\n"
-                                                  "Please check to make sure RASMOL is properly installed..."));
-   }
-#else
    {
       QProcess * process = new QProcess( this );
 # if !defined(WIN32) && !defined(MAC)
-      args
-         << "-e"
-         << prog
-         ;
-      prog = "xterm";
+      //      args
+      //         << "-e"
+      //         << prog
+      //         ;
+      //      prog = "xterm";
 # endif
+      if ( nodisplay ) {
+         qDebug() << "rasmol no display****************";
+         args << "-nodisplay";
+         qDebug() << QFileInfo( file ).fileName();
+         process->setWorkingDirectory( QFileInfo( file ).path() );
+         // process->setReadChannelMode(QProcess::SeparateChannels);
+         process->setStandardInputFile( file );
+         process->setStandardOutputFile( file + ".rmout" );
+         process->setStandardErrorFile( file + ".rmerr" );
+         prog = "/usr/lib/rasmol/rasmol.8";
+         if ( !QFileInfo( prog ).exists() ) {
+            qDebug() << "prog not found:" << prog;
+            US_Static::us_message( us_tr("Please note:"),
+                                   QString( us_tr( "nodisplay RASMOL: '%1' not found\n" ) ).arg( prog ) );
+            delete process;
+            return;
+         }
+         qDebug() << args;
+         qDebug() << "rasmol no display START****************";
+         process->start( prog, args );
+
+         if ( !process->waitForStarted() ) {
+            qDebug() << "process wait for started failed";
+            qDebug() << "error:" << process->error();
+            US_Static::us_message( us_tr("Please note:"),
+                                   QString( us_tr( "nodisplay RASMOL: '%1' could not start.  Does input file %2 exist?\n" ) )
+                                   .arg( prog )
+                                   .arg( file )
+                                   );
+            delete process;
+            return;
+         }
+
+         qDebug() << "rasmol no display WAIT****************";
+         process->waitForFinished();
+         qDebug() << "rasmol no display FINISHED****************";
+         qDebug() << "process finished";
+         process->close();
+         qDebug() << "rasmol no display CLOSED****************";
+         delete process;
+         return;
+      }
+
       if ( prefix != "" ) {
          args << prefix;
       }
@@ -9042,9 +9068,8 @@ void US_Hydrodyn::model_viewer( QString file,
 
       if ( !process->startDetached( prog, args, QFileInfo( file ).path() ) ) {
          US_Static::us_message(us_tr("Please note:"), us_tr("There was a problem starting RASMOL\n"
-                                                     "Please check to make sure RASMOL is properly installed..."));
+                                                            "Please check to make sure RASMOL is properly installed..."));
       }
    }
-#endif
 }
 

@@ -252,7 +252,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       // view a pdb or bead model file running in directory of file
 
       void model_viewer( QString file,
-                         QString prefix = "" );  
+                         QString prefix = "",
+                         bool nodisplay = false );  
 
    private:
 

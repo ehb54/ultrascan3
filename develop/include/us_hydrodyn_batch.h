@@ -114,6 +114,8 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
 
       US_Config     *USglobal;
 
+      bool           started_in_expert_mode;
+
       QLabel        *lbl_selection;
       QListWidget      *lb_files;
       QListWidget      *lb_model;

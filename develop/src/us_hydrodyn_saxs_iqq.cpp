@@ -1724,7 +1724,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
             }
 
 #if defined(SAXS_DEBUG2)
-            cout << "Atom: "
+            QTextStream( stderr ) << "Atom: "
                  << this_atom->name
                  << " Residue: "
                  << use_resname

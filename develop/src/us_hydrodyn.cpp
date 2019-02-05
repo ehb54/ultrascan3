@@ -77,6 +77,37 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
                          QWidget *p, 
                          const char *name) : QFrame( p )
 {
+   // #define PROCESS_TEST
+#if defined( PROCESS_TEST )
+   QProcess * process = new QProcess( this );
+   QString prog = "/usr/lib/rasmol/rasmol.16";
+   QString file = "/root/testprocess.input";
+   QStringList args;
+   args << "-nodisplay";
+   process->setWorkingDirectory( QFileInfo( file ).path() );
+   //   process->setReadChannelMode(QProcess::SeparateChannels);
+   qDebug() << "filename " << QFileInfo( file ).fileName();
+   process->setStandardInputFile( file );
+   process->setStandardOutputFile( file + ".rmout" );
+   process->setStandardErrorFile( file + ".rmerr" );
+   qDebug() << "rasmol no display START****************";
+   process->start( prog, args );
+   if ( !process->waitForStarted() ) {
+      qDebug() << "process wait for started failed";
+      qDebug() << "error:" << process->error();
+      exit(-1);
+   }
+      
+   qDebug() << "rasmol no display WAIT****************";
+   process->waitForFinished();
+   qDebug() << "rasmol no display FINISHED****************";
+   qDebug() << "process finished";
+   process->close();
+   qDebug() << "rasmol no display CLOSED****************";
+   delete process;
+   exit(0);
+#endif
+
 #if defined( PINV_TEST )
    qDebug() << "PINV_TEST";
 
@@ -4584,7 +4615,7 @@ void US_Hydrodyn::visualize( bool movie_frame,
                             black_background );
 
             editor->append(QString("Visualizing model %1\n").arg(current_model + 1));
-            model_viewer( use_dir + SLASH + spt_name + ".spt", "-script" );
+            model_viewer( use_dir + SLASH + spt_name + ".spt", "-script", movie_frame );
 
 #if defined( TODO_FIX_MOVIE_FRAME )
             if ( movie_frame )

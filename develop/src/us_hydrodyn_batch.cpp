@@ -63,11 +63,15 @@ US_Hydrodyn_Batch::US_Hydrodyn_Batch(
                                      const char *name
                                      ) : QFrame( p )
 {
+
    batch_job_running = false;
    save_batch_active = false;
    this->batch_widget = batch_widget;
    this->batch = batch;
    this->us_hydrodyn = us_hydrodyn;
+
+   started_in_expert_mode = ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode;
+
    this->lb_model = ((US_Hydrodyn *)us_hydrodyn)->lb_model;
    cb_hydrate = (QCheckBox *)0;
    *batch_widget = true;
@@ -232,7 +236,7 @@ void US_Hydrodyn_Batch::setupGUI()
 #if defined(WIN32)
    pb_make_movie = (QPushButton *) 0;
 #else
-   if ( U_EXPT )
+   if ( started_in_expert_mode )
    {
       pb_make_movie = new QPushButton(us_tr("Make movie"), this);
       Q_CHECK_PTR(pb_make_movie);
@@ -3438,8 +3442,12 @@ void US_Hydrodyn_Batch::make_movie()
       return;
    }
    
+   progress->reset();
+   progress->setMaximum( lb_files->count() * 2 );
    for ( int i = 0; i < lb_files->count(); i++ )
    {
+      progress->setValue( i );
+      qApp->processEvents();
       // load file into somo
       if ( lb_files->item(i)->isSelected() )
       {
@@ -3504,6 +3512,9 @@ void US_Hydrodyn_Batch::make_movie()
       vector < QString > cmd3;
       for ( unsigned int i = 0; i < ((US_Hydrodyn *)us_hydrodyn)->movie_text.size(); i++ )
       {
+         progress->setValue( i + lb_files->count() );
+         qApp->processEvents();
+
          QString file = ((US_Hydrodyn *)us_hydrodyn)->movie_text[i];
          QFileInfo fi(file);
          cout << i << ":" << fi.fileName() << endl;
@@ -3530,8 +3541,12 @@ void US_Hydrodyn_Batch::make_movie()
          cmd3.push_back(cd +
                         "rm " + fi.fileName() + ".gif;"
                         "rm " + fi.fileName() + ".ppm;"
+                        "rm " + fi.fileName() + "-q.ppm;"
                         "rm " + fi.fileName() + ".spt;"
-                        "rm " + fi.fileName() + ".bms\n");
+                        "rm " + fi.fileName() + ".bms;"
+                        "rm " + fi.fileName() + ".spt.rmout;"
+                        "rm " + fi.fileName() + ".spt.rmerr\n"
+                        );
          tc_start += tc_delta;
       }
       cout << "cmdlog [" << cmdlog << "]\n";
@@ -3552,9 +3567,11 @@ void US_Hydrodyn_Batch::make_movie()
             system(cmd3[i].toLatin1().data());
          }
       }
+      editor_msg( "dark blue", QString(us_tr("Created movie file %1")).arg( QFileInfo( file ).path() + "/" + output_file + ".avi" ) );
    } else {
       cout << "what, no movie text?\n";
    }
+   progress->reset();
    disable_updates = false;
    update_enables();
 #endif
