@@ -3567,7 +3567,7 @@ void US_Hydrodyn_Batch::make_movie()
             system(cmd3[i].toLatin1().data());
          }
       }
-      editor_msg( "dark blue", QString(us_tr("Created movie file %1")).arg( QFileInfo( file ).path() + "/" + output_file + ".avi" ) );
+      editor_msg( "dark blue", QString(us_tr("Created movie file %1")).arg( output_file + ".avi" ) );
    } else {
       cout << "what, no movie text?\n";
    }
