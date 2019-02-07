@@ -4590,7 +4590,8 @@ void US_Hydrodyn::view_bead_model()
 void US_Hydrodyn::visualize( bool movie_frame, 
                              QString dir, 
                              float scale, 
-                             bool black_background )
+                             bool black_background,
+                             bool do_pat )
 {
    QString use_dir = ( dir == "" ? somo_dir : dir );
 
@@ -4608,12 +4609,33 @@ void US_Hydrodyn::visualize( bool movie_frame,
 
             spt_name = spt_name.left( 30 );
 
-            write_bead_spt( use_dir + SLASH + spt_name,
-                            &bead_model, 
-                            movie_frame, 
-                            scale, 
-                            black_background );
-
+            if ( do_pat ) {
+               PDB_chain tmp_chain;
+               tmp_chain.atom = bead_model;
+               PDB_model tmp_model;
+               tmp_model.molecule.push_back( tmp_chain );
+               if ( US_Saxs_Util::pat_model( tmp_model, true ) ) {
+                  write_bead_spt( use_dir + SLASH + spt_name,
+                                  &tmp_model.molecule[ 0 ].atom, 
+                                  movie_frame, 
+                                  scale, 
+                                  black_background );
+               } else {
+                  editor_msg( "red", QString( us_tr( "PAT failed for model %1" ) ).arg( current_model ) );
+                  write_bead_spt( use_dir + SLASH + spt_name,
+                                  &bead_model, 
+                                  movie_frame, 
+                                  scale, 
+                                  black_background );
+               }
+            } else {
+               write_bead_spt( use_dir + SLASH + spt_name,
+                               &bead_model, 
+                               movie_frame, 
+                               scale, 
+                               black_background );
+            }
+            
             editor->append(QString("Visualizing model %1\n").arg(current_model + 1));
             model_viewer( use_dir + SLASH + spt_name + ".spt", "-script", movie_frame );
 

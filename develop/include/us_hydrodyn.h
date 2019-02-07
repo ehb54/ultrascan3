@@ -922,7 +922,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void anaflex_load_results();
 
       void stop_calc(); // stop some operations
-      void visualize(bool movie_frame = false, QString dir = "", float scale = 1.0, bool black_background = false);
+      void visualize(bool movie_frame = false, QString dir = "", float scale = 1.0, bool black_background = false, bool do_pat = false);
 
       void dmd_static_pairs();
 

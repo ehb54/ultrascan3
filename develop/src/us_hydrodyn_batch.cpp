@@ -658,7 +658,7 @@ void US_Hydrodyn_Batch::setupGUI()
    cb_results_dir->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_results_dir->setPalette( qp_cb ); AUTFBACK( cb_results_dir );
    connect(cb_results_dir, SIGNAL(clicked()), this, SLOT(set_results_dir()));
-   cb_results_dir->setToolTip( "Currently only available when Build vdW bead model & Calculate RB hydrodynamics ZENO are checked" );
+   cb_results_dir->setToolTip( "Currently only available when only Build vdW bead model or Calculate RB hydrodynamics ZENO are checked" );
 
    le_results_dir_name = new QLineEdit( this );    le_results_dir_name->setObjectName( "results_dir_name Line Edit" );
    le_results_dir_name->setText(batch->results_dir_name);
@@ -1591,14 +1591,6 @@ void US_Hydrodyn_Batch::update_enables()
       }
    }
 
-   if (
-       cb_vdw_beads         ->isChecked() &&
-       cb_zeno              ->isChecked()
-       ) {
-      // just zeno for now
-      cb_results_dir       ->setEnabled( true );
-      le_results_dir_name  ->setEnabled( true );
-   }
 
    bool 
       anything_to_do =
@@ -1614,6 +1606,26 @@ void US_Hydrodyn_Batch::update_enables()
       cb_dmd               ->isChecked() || 
       0;
       
+   if (
+       ( cb_vdw_beads         ->isChecked() ||
+         cb_zeno              ->isChecked() ) &&
+       !cb_somo              ->isChecked() &&
+       !cb_somo_o            ->isChecked() &&
+       !cb_grid              ->isChecked() &&
+       !cb_iqq               ->isChecked() &&
+       !cb_prr               ->isChecked() &&
+       !cb_hydro             ->isChecked() &&
+       !cb_hullrad           ->isChecked() &&
+       !cb_dmd               ->isChecked() 
+       ) {
+      // just zeno for now
+      cb_results_dir       ->setEnabled( true );
+      le_results_dir_name  ->setEnabled( true );
+   } else {
+      cb_results_dir       ->setEnabled( false );
+      le_results_dir_name  ->setEnabled( false );
+   }
+
    pb_start->setEnabled( anything_to_do );
 
    set_counts();
@@ -3362,6 +3374,7 @@ void US_Hydrodyn_Batch::make_movie()
    double tc_delta = 0.0;
    float tc_pointsize = 20;
    bool black_background = true;
+   bool do_pat = false;
 
    for ( int i = 0; i < lb_files->count(); i++ )
    {
@@ -3391,7 +3404,8 @@ void US_Hydrodyn_Batch::make_movie()
                                         &tc_start,
                                         &tc_delta,
                                         &tc_pointsize,
-                                        &black_background
+                                        &black_background,
+                                        &do_pat
                                         );
    US_Hydrodyn::fixWinButtons( hbmo );
 
@@ -3472,7 +3486,7 @@ void US_Hydrodyn_Batch::make_movie()
             }
             editor->setTextColor("dark blue");
             editor->append(QString(us_tr("Creating movie frame for %1")).arg(file));
-            ((US_Hydrodyn *)us_hydrodyn)->visualize(true,proc_dir,scale,black_background);
+            ((US_Hydrodyn *)us_hydrodyn)->visualize(true,proc_dir,scale,black_background,do_pat);
          }
       }
    }
@@ -3486,6 +3500,12 @@ void US_Hydrodyn_Batch::make_movie()
    }
    cout << "tc format: " << tc_format_string << endl;
 
+   /* required programs // ubuntu install
+      mencoder  // apt install mencoder
+      pnmquant  // should be present?
+      ppmtogif  // should be present?
+      morgify   // apt install imagemagick
+   */
 
    if ( ((US_Hydrodyn *)us_hydrodyn)->movie_text.size() ) 
    {

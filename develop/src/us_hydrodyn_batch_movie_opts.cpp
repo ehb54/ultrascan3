@@ -21,8 +21,9 @@ US_Hydrodyn_Batch_Movie_Opts::US_Hydrodyn_Batch_Movie_Opts(
                                                            double     *tc_delta,
                                                            float      *tc_pointsize,
                                                            bool       *black_background,
+                                                           bool       *do_pat,
                                                            QWidget *p,
-                                                           const char *name
+                                                           const char *
                                                            ) : QDialog( p )
 {
    this->msg = msg;
@@ -41,6 +42,7 @@ US_Hydrodyn_Batch_Movie_Opts::US_Hydrodyn_Batch_Movie_Opts(
    this->tc_delta = tc_delta;
    this->tc_pointsize = tc_pointsize;
    this->black_background = black_background;
+   this->do_pat = do_pat;
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
@@ -231,6 +233,15 @@ void US_Hydrodyn_Batch_Movie_Opts::setupGUI()
    AUTFBACK( cb_black_background );
    connect(cb_black_background, SIGNAL(clicked()), this, SLOT(set_black_background()));
 
+   cb_do_pat = new QCheckBox(this);
+   cb_do_pat->setText(us_tr("Perform PAT on each frame:"));
+   cb_do_pat->setEnabled(true);
+   cb_do_pat->setChecked(*do_pat);
+   cb_do_pat->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_do_pat->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_do_pat );
+   connect(cb_do_pat, SIGNAL(clicked()), this, SLOT(set_do_pat()));
+
    cb_clean_up = new QCheckBox(this);
    cb_clean_up->setText(us_tr("Clean up files (ppm, gifs, spts)"));
    cb_clean_up->setEnabled(true);
@@ -291,6 +302,8 @@ void US_Hydrodyn_Batch_Movie_Opts::setupGUI()
    background->addWidget(le_tc_pointsize, j, 1);
    j++;
    background->addWidget( cb_black_background , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
+   j++;
+   background->addWidget( cb_do_pat , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
    background->addWidget( cb_clean_up , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
@@ -377,6 +390,11 @@ void US_Hydrodyn_Batch_Movie_Opts::set_use_tc()
 void US_Hydrodyn_Batch_Movie_Opts::set_black_background()
 {
    *black_background = cb_black_background->isChecked();
+}
+
+void US_Hydrodyn_Batch_Movie_Opts::set_do_pat()
+{
+   *do_pat = cb_do_pat->isChecked();
 }
 
 void US_Hydrodyn_Batch_Movie_Opts::update_enables()

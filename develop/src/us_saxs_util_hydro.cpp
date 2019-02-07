@@ -860,6 +860,7 @@ bool US_Saxs_Util::screen_pdb(QString filename, bool parameters_set_first_model 
   issue_info.clear( );
    // }
    // clear_pdb_info( "screen_pdb" );
+   // qDebug() << "screen_pdb:: 0";
 
    // if ( misc.restore_pb_rule ) {
    //    // us_qdebug( "screen_pdb() restoring pb rule" );
@@ -924,6 +925,7 @@ bool US_Saxs_Util::screen_pdb(QString filename, bool parameters_set_first_model 
 //    }
 // #endif
 
+   // qDebug() << "screen_pdb:: 1";
    QFileInfo fi(filename);
    project = fi.baseName();
 
@@ -946,13 +948,13 @@ bool US_Saxs_Util::screen_pdb(QString filename, bool parameters_set_first_model 
       return false;
    }
 
-   
-
-   //cout << "Current Model: " << current_model << endl;
+   // qDebug() << "Current Model: " << current_model << endl;
  
+   // qDebug() << "screen_pdb:: 2";
    QString error_string = "";
-   for(unsigned int i = 0; i < model_vector.size(); i++)
-   {
+   for(unsigned int i = 0; i < model_vector.size(); i++) {
+
+      // qDebug() << "screen_pdb:: 3";
       multi_residue_map = save_multi_residue_map;
       
       us_log->log(QString("Checking the pdb structure for model %1\n").arg(  i+1  ) );
@@ -967,8 +969,9 @@ bool US_Saxs_Util::screen_pdb(QString filename, bool parameters_set_first_model 
       accumulated_msgs +=  QString("Checking the pdb structure for model %1\\n").arg(  i+1  );
       
 
-      if (check_for_missing_atoms_hydro(&error_string, &model_vector[i], parameters_set_first_model) )
-      	  {
+      // qDebug() << "screen_pdb:: 4";
+      if ( check_for_missing_atoms_hydro( &error_string, &model_vector[i], parameters_set_first_model ) ) {
+         // qDebug() << "screen_pdb::check_for_missing_atoms failed";
 
       // if ( !(check_for_missing_atoms( &model_vector[i]) ) )
       // 	{
@@ -1000,6 +1003,7 @@ bool US_Saxs_Util::screen_pdb(QString filename, bool parameters_set_first_model 
       //cout << "Check: model#: " << i << " " << model_vector[i].vbar << endl;
    }
 
+   // qDebug() << "screen_pdb::after check_for_missing_atoms";
 
    
 
@@ -1011,6 +1015,7 @@ bool US_Saxs_Util::screen_pdb(QString filename, bool parameters_set_first_model 
    }
    //cout << "Current_model!: " << current_model << endl;
 
+   // qDebug() << "screen_pdb:: 5";
    model_vector_as_loaded = model_vector;
    // set_pdb_info( "screen_pdb" );
    if ( !model_vector.size() ||
@@ -1032,6 +1037,8 @@ bool US_Saxs_Util::screen_pdb(QString filename, bool parameters_set_first_model 
      //editor->setTextColor(save_color);
      errors_found++;
    }
+
+   // qDebug() << "screen_pdb:: 6";
 
    us_log->log(QString("Loaded pdb file : %1\n").arg(errors_found ? "ERRORS PRESENT" : "ok\n"));
    if ( us_udp_msg )
@@ -2640,6 +2647,8 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
 //       f.close();
 //    }
 // #endif
+
+   qDebug() << "debug 1\n";
    if ( !misc.compute_vbar || hydro.mass_correction )
    {
      QString str = us_tr("ATTENTION: User entered");
@@ -2664,6 +2673,7 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
       accumulated_msgs += str + "\\n";
       //editor->setTextColor(save_color);
    }
+   qDebug() << "debug 2\n";
    return 0;
 }
 

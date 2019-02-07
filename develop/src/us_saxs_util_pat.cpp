@@ -3,7 +3,120 @@
 //Added by qt3to4:
 #include <QTextStream>
 
-bool US_Saxs_Util::pat_model( PDB_model & model )
+bool US_Saxs_Util::run_pat(
+                           map < QString, QString >           & parameters,
+                           map < QString, QString >           & results
+                           )
+{
+#if  defined( CMDLINE )
+   //results[ "errors" ] = " ";
+   //USglobal = new US_Config();
+ 
+   paths += getenv("ULTRASCAN");
+
+   if ( !set_default(results, parameters) )         // setup configuration defaults before reading initial config
+      return false;
+  
+  
+   misc.restore_pb_rule = false;
+
+   residue_filename = paths + "/" + "etc" + "/" + "somo.residue";
+   QFileInfo fi_res_filename( residue_filename );
+   if ( !fi_res_filename.exists() )
+   {
+      results[ "errors" ] += QString( " file %1 does not exist." ).arg( residue_filename );
+      return false;
+   }
+  
+   accumulated_msgs = "";
+  
+   read_residue_file();
+  
+   //   reset_hydro_res(results_hydro);
+
+   // Read pdb_file name ////////////////////////////////////////////
+
+   if ( !parameters.count( "pdbfile" ) ) {
+      results[ "errors" ] = "no pdbfile specified";
+      return false;
+   }
+
+   if ( !parameters.count( "_base_directory" ) ) {
+      parameters[ "_base_directory" ] = ".";
+   }
+  
+   QString file;
+    
+   QString files_try = parameters[ "pdbfile" ].replace('"', "").replace("\\/","/") ;
+   parameters[ "_base_directory" ] = parameters[ "_base_directory" ].replace("\\/","/");
+
+   //    results["check_file"] = files_try;
+
+   QFileInfo fi( files_try );
+   if ( !fi.exists() ) {
+      results[ "errors" ] += QString( " file %1 does not exist." ).arg( files_try );
+      return false;
+   } else {
+      if ( !fi.isReadable() ) {
+         results[ "errors" ] += QString( " file %1 exists but is not readable." ).arg( files_try );
+         return false;
+      } else {
+         file = fi.filePath(); //files_try;
+      }
+   }
+
+   bool parameters_set_first_model;
+   if ( !parameters.count( "first_model" ) ) {
+      parameters_set_first_model = false;
+   } else {
+      parameters_set_first_model = true;
+   } 
+    
+   bead_model_from_file = false;
+   new_residues.clear( );
+
+   if ( misc.pb_rule_on ) {
+      residue_list = save_residue_list;
+   } else {
+      residue_list = save_residue_list_no_pbr;
+   }
+
+   multi_residue_map = save_multi_residue_map;
+   if ( read_pdb_hydro( file, parameters_set_first_model) ) {
+      return false;
+   }
+
+   if ( !model_vector.size() ) {
+      results[ "errors" ] += QString( " file %1: empty model vector?" ).arg( file );
+      return false;
+   }
+      
+   if ( !pat_model( model_vector[ 0 ] ) ) {
+      results[ "errors" ] += QString( " pat error" ).arg( file );
+      return false;
+   }
+
+   results[ "progress" ] += "pat finished ok.";
+
+   QString outfile = file + ".pat";
+   results[ "errors" ] += QString( " write pdb not yet implemented in saxs util" );
+#endif
+   return false;
+
+   // needs better write pdb
+   // if ( write_pdb_hydro( outfile, model_vector[ 0 ] ) ) {
+   //    results[ "errors" ] += QString( " write pdb error" ).arg( outfile );
+   //    return false;
+   // }
+
+   
+   
+   // results[ "progress" ] += " write ok."
+   
+   // return true;
+}
+
+bool US_Saxs_Util::pat_model( PDB_model & model, bool bead_coordinates )
 {
    if ( !model.molecule.size() )
    {
@@ -12,67 +125,135 @@ bool US_Saxs_Util::pat_model( PDB_model & model )
 
    // run pat? i.e. do a principal axis transformation
 
-   {
-      vector < dati1_supc > in_dt;
-      int dt_pos = 0;
-      for ( int j = 0; j < (int) model.molecule.size (); ++j ) 
+   if ( bead_coordinates ) {
       {
-         for ( int k = 0; k < (int) model.molecule[ j ].atom.size (); ++k ) 
-         {
-            PDB_atom *this_atom = &( model.molecule[ j ].atom[ k ] );
-            
-            dati1_supc dt;
-               
-            dt.x  = this_atom->coordinate.axis[ 0 ];
-            dt.y  = this_atom->coordinate.axis[ 1 ];
-            dt.z  = this_atom->coordinate.axis[ 2 ];
-            dt.r  = this_atom->radius;
-            dt.ru = this_atom->radius;
-            dt.m  = this_atom->mw;
-            
-            in_dt.push_back( dt );
-
-            // us_qdebug( QString( "atom %1 coords %2 %3 %4 radius %5 mw %6" )
-            //         .arg( dt_pos )
-            //         .arg( dt.x )
-            //         .arg( dt.y )
-            //         .arg( dt.z )
-            //         .arg( dt.r )
-            //         .arg( dt.m )
-            //         );
-            ++dt_pos;
-         }
-      }
-
-      int out_nat;
-      vector < dati1_pat > out_dt( in_dt.size() + 1 );
-
-      if ( !us_hydrodyn_pat_main( ( int ) in_dt.size(),
-                                  ( int ) in_dt.size(),
-                                  &( in_dt[ 0 ] ),
-                                  &out_nat,
-                                  &( out_dt[ 0 ] ) ) )
-      {
-         // cout << QString( "pat ok, out_nat %1\n" ).arg( out_nat );
+         vector < dati1_supc > in_dt;
          int dt_pos = 0;
-
          for ( int j = 0; j < (int) model.molecule.size (); ++j ) 
          {
             for ( int k = 0; k < (int) model.molecule[ j ].atom.size (); ++k ) 
             {
                PDB_atom *this_atom = &( model.molecule[ j ].atom[ k ] );
             
-               this_atom->coordinate.axis[ 0 ] = out_dt[ dt_pos ].x;
-               this_atom->coordinate.axis[ 1 ] = out_dt[ dt_pos ].y;
-               this_atom->coordinate.axis[ 2 ] = out_dt[ dt_pos ].z;
-               // us_qdebug( QString( "results atom %1 coords %2 %3 %4" )
-               //         .arg( dt_pos )
-               //         .arg( out_dt[ dt_pos ].x )
-               //         .arg( out_dt[ dt_pos ].y )
-               //         .arg( out_dt[ dt_pos ].z )
-               //         );
+               dati1_supc dt;
+               
+               dt.x  = this_atom->bead_coordinate.axis[ 0 ];
+               dt.y  = this_atom->bead_coordinate.axis[ 1 ];
+               dt.z  = this_atom->bead_coordinate.axis[ 2 ];
+               dt.r  = this_atom->bead_computed_radius;
+               dt.ru = this_atom->bead_computed_radius;
+               dt.m  = this_atom->bead_mw;
+            
+               in_dt.push_back( dt );
 
+               // us_qdebug( QString( "atom %1 coords %2 %3 %4 radius %5 mw %6" )
+               //         .arg( dt_pos )
+               //         .arg( dt.x )
+               //         .arg( dt.y )
+               //         .arg( dt.z )
+               //         .arg( dt.r )
+               //         .arg( dt.m )
+               //         );
                ++dt_pos;
+            }
+         }
+
+         int out_nat;
+         vector < dati1_pat > out_dt( in_dt.size() + 1 );
+
+         if ( !us_hydrodyn_pat_main( ( int ) in_dt.size(),
+                                     ( int ) in_dt.size(),
+                                     &( in_dt[ 0 ] ),
+                                     &out_nat,
+                                     &( out_dt[ 0 ] ) ) )
+         {
+            // cout << QString( "pat ok, out_nat %1\n" ).arg( out_nat );
+            int dt_pos = 0;
+
+            for ( int j = 0; j < (int) model.molecule.size (); ++j ) 
+            {
+               for ( int k = 0; k < (int) model.molecule[ j ].atom.size (); ++k ) 
+               {
+                  PDB_atom *this_atom = &( model.molecule[ j ].atom[ k ] );
+            
+                  this_atom->bead_coordinate.axis[ 0 ] = out_dt[ dt_pos ].x;
+                  this_atom->bead_coordinate.axis[ 1 ] = out_dt[ dt_pos ].y;
+                  this_atom->bead_coordinate.axis[ 2 ] = out_dt[ dt_pos ].z;
+                  // us_qdebug( QString( "results atom %1 coords %2 %3 %4" )
+                  //         .arg( dt_pos )
+                  //         .arg( out_dt[ dt_pos ].x )
+                  //         .arg( out_dt[ dt_pos ].y )
+                  //         .arg( out_dt[ dt_pos ].z )
+                  //         );
+
+                  ++dt_pos;
+               }
+            }
+         }
+      }
+   } else {
+      {
+         vector < dati1_supc > in_dt;
+         int dt_pos = 0;
+         for ( int j = 0; j < (int) model.molecule.size (); ++j ) 
+         {
+            for ( int k = 0; k < (int) model.molecule[ j ].atom.size (); ++k ) 
+            {
+               PDB_atom *this_atom = &( model.molecule[ j ].atom[ k ] );
+            
+               dati1_supc dt;
+               
+               dt.x  = this_atom->coordinate.axis[ 0 ];
+               dt.y  = this_atom->coordinate.axis[ 1 ];
+               dt.z  = this_atom->coordinate.axis[ 2 ];
+               dt.r  = this_atom->radius;
+               dt.ru = this_atom->radius;
+               dt.m  = this_atom->mw;
+            
+               in_dt.push_back( dt );
+
+               // us_qdebug( QString( "atom %1 coords %2 %3 %4 radius %5 mw %6" )
+               //         .arg( dt_pos )
+               //         .arg( dt.x )
+               //         .arg( dt.y )
+               //         .arg( dt.z )
+               //         .arg( dt.r )
+               //         .arg( dt.m )
+               //         );
+               ++dt_pos;
+            }
+         }
+
+         int out_nat;
+         vector < dati1_pat > out_dt( in_dt.size() + 1 );
+
+         if ( !us_hydrodyn_pat_main( ( int ) in_dt.size(),
+                                     ( int ) in_dt.size(),
+                                     &( in_dt[ 0 ] ),
+                                     &out_nat,
+                                     &( out_dt[ 0 ] ) ) )
+         {
+            // cout << QString( "pat ok, out_nat %1\n" ).arg( out_nat );
+            int dt_pos = 0;
+
+            for ( int j = 0; j < (int) model.molecule.size (); ++j ) 
+            {
+               for ( int k = 0; k < (int) model.molecule[ j ].atom.size (); ++k ) 
+               {
+                  PDB_atom *this_atom = &( model.molecule[ j ].atom[ k ] );
+            
+                  this_atom->coordinate.axis[ 0 ] = out_dt[ dt_pos ].x;
+                  this_atom->coordinate.axis[ 1 ] = out_dt[ dt_pos ].y;
+                  this_atom->coordinate.axis[ 2 ] = out_dt[ dt_pos ].z;
+                  // us_qdebug( QString( "results atom %1 coords %2 %3 %4" )
+                  //         .arg( dt_pos )
+                  //         .arg( out_dt[ dt_pos ].x )
+                  //         .arg( out_dt[ dt_pos ].y )
+                  //         .arg( out_dt[ dt_pos ].z )
+                  //         );
+
+                  ++dt_pos;
+               }
             }
          }
       }

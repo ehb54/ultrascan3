@@ -54,6 +54,7 @@ QString US_Saxs_Util::run_json( QString & json )
       supported
          << "pmrun"
 	 << "hydro"
+	 << "pat"
 	;
       
       int count = 0;
@@ -97,6 +98,15 @@ QString US_Saxs_Util::run_json( QString & json )
 	 }
      }
    
+   if ( parameters.count( "pat" ) )
+     {
+       if ( !run_pat( parameters, results ) )
+	 {
+	   results[ "errors" ] += " pat failed:" + errormsg;
+	   //return US_Json::compose( results );
+	 }
+     }
+   
    
    // if ( us_log )
    // {
@@ -115,6 +125,11 @@ bool US_Saxs_Util::run_hydro(
 {
    return false;
 }
+
+void US_Saxs_Util::read_residue_file() {};
+bool US_Saxs_Util::screen_pdb(QString, bool) { return false; };
+bool US_Saxs_Util::set_default(map < QString, QString > & , map < QString, QString > & ) { return false; };
+
 #endif
 
 bool US_Saxs_Util::run_pm(

@@ -35,6 +35,7 @@ class US_EXTERN US_Hydrodyn_Batch_Movie_Opts : public QDialog
                                    double     *tc_delta,
                                    float      *tc_pointsize,
                                    bool       *black_background,
+                                   bool       *do_pat,
                                    QWidget    *p = 0, 
                                    const char *name = 0
                                    );
@@ -69,6 +70,7 @@ class US_EXTERN US_Hydrodyn_Batch_Movie_Opts : public QDialog
       QCheckBox *cb_clean_up;
       QCheckBox *cb_use_tc;
       QCheckBox *cb_black_background;
+      QCheckBox *cb_do_pat;
 
       void setupGUI();
 
@@ -90,6 +92,7 @@ class US_EXTERN US_Hydrodyn_Batch_Movie_Opts : public QDialog
       double     *tc_delta;
       float      *tc_pointsize;
       bool       *black_background;
+      bool       *do_pat;
 
       QPalette label_font_ok;
       QPalette label_font_warning;
@@ -117,6 +120,7 @@ class US_EXTERN US_Hydrodyn_Batch_Movie_Opts : public QDialog
       void set_clean_up();
       void set_use_tc();
       void set_black_background();
+      void set_do_pat();
 
       void cancel();
       void help();

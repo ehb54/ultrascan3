@@ -903,7 +903,7 @@ class US_EXTERN US_Saxs_Util
 
       static double       spline_erf( double x );
 
-      static bool         pat_model( PDB_model & model );
+      static bool         pat_model( PDB_model & model, bool bead_coordinates = false );
       static bool         write_model( PDB_model & model, QString filename );
 
       static void         compute_tau( double drrev1,
@@ -1011,6 +1011,11 @@ class US_EXTERN US_Saxs_Util
       QString pdb_file;
 
       bool run_hydro   (
+                        map < QString, QString >           & parameters,
+                        map < QString, QString >           & results
+                       );
+
+      bool run_pat     (
                         map < QString, QString >           & parameters,
                         map < QString, QString >           & results
                        );
