@@ -180,6 +180,9 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   otherSettings->addWidget( lb_xpnhost, row, 0 );
 
   pb_xpnh = us_pushbutton( tr( "Change" ) );
+  if ( !disk_db_control->db() )
+    pb_xpnh->setEnabled(false);
+    
   otherSettings->addWidget( pb_xpnh, row++, 1 );
   connect( pb_xpnh, SIGNAL( clicked() ), this, SLOT( update_xpnhost() ) );
 
@@ -227,10 +230,16 @@ void US_Config::save( void )
 
 void US_Config::set_data_location( bool )
 {
-   if ( disk_db_control->db() ) 
-      US_Settings::set_default_data_location( US_Disk_DB_Controls::DB );
+   if ( disk_db_control->db() )
+     {
+       US_Settings::set_default_data_location( US_Disk_DB_Controls::DB );
+       pb_xpnh->setEnabled(true);
+     }
    else
-      US_Settings::set_default_data_location( US_Disk_DB_Controls::Disk );
+     {
+       US_Settings::set_default_data_location( US_Disk_DB_Controls::Disk );
+       pb_xpnh->setEnabled(false);
+     }
 }
 
 void US_Config::update_colors( void )
