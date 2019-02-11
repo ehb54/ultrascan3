@@ -2502,8 +2502,11 @@ void US_XpnDataViewer::export_auc()
 
    // Export the AUC data to a local directory and build TMST
 
-   correct_radii();      // Perform chromatic aberration radius corrections
 
+   qDebug() << "EXPORT AUC: BEFORE correct_radii() !!!!";
+   correct_radii();      // Perform chromatic aberration radius corrections
+   qDebug() << "EXPORT AUC: AFTER correct_radii() !!!!";
+   
    int nfiles     = xpn_data->export_auc( allData );
 
    QString tspath = currentDir + "/" + runID + ".time_state.tmst";
@@ -2947,20 +2950,24 @@ void US_XpnDataViewer::correct_radii()
 
    QString chromoArrayString;
    QStringList strl;
+
    chromoArrayString = currentInstrument["chromoab"].trimmed();  //<--- From DB
-   strl = chromoArrayString.split(QRegExp("[\r\n\t ]+"));
-   
-  foreach (QString str, strl)
-    {
-      str.remove("(");
-      str.remove(")");
 
-      lambda.push_back( double( str.split(",")[0].trimmed().toFloat() ) );
-      correction.push_back( double( str.split(",")[1].trimmed().toFloat() ) );
-      
-      qDebug() << str.split(",")[0].trimmed() << " " << str.split(",")[1].trimmed();
-    }
-
+   if ( !chromoArrayString.isEmpty() )
+     {
+       strl = chromoArrayString.split(QRegExp("[\r\n\t ]+"));
+       
+       foreach (QString str, strl)
+	 {
+	   str.remove("(");
+	   str.remove(")");
+	   
+	   lambda.push_back( double( str.split(",")[0].trimmed().toFloat() ) );
+	   correction.push_back( double( str.split(",")[1].trimmed().toFloat() ) );
+	   
+	   qDebug() << str.split(",")[0].trimmed() << " " << str.split(",")[1].trimmed();
+	 }
+     }
    // a correction was found
    if (correction.size() > 0)
    {
