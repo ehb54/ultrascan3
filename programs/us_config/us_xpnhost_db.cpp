@@ -238,11 +238,44 @@ US_XpnHostDB::US_XpnHostDB( QWidget* w, Qt::WindowFlags flags )
 // qDebug() << "xpnH:Main: call select_db";
 //    select_db( lw_entries->currentItem(), false );
 
-
+   update_inv();
+   
    setMinimumSize( 450 , 400 );
    adjustSize();
 }
 
+
+void US_XpnHostDB::update_inv( void )
+{
+   US_Passwd   pw;
+   US_DB2      db( pw.getPasswd() );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+//qDebug() << "USCFG: UpdInv: ERROR connect";
+      QMessageBox::information( this,
+         tr( "Error" ),
+         tr( "Error making the DB connection.\n" ) );
+
+      return;
+   }
+
+   QStringList q( "get_user_info" );
+   db.query( q );
+   db.next();
+
+   int ID        = db.value( 0 ).toInt();
+   QString fname = db.value( 1 ).toString();
+   QString lname = db.value( 2 ).toString();
+   int     level = db.value( 5 ).toInt();
+
+   qDebug() << "USCFG: UpdInv: ID,name,lev" << ID << fname << lname << level;
+//if(ID<1) return;
+
+   US_Settings::set_us_inv_name ( lname + ", " + fname );
+   US_Settings::set_us_inv_ID   ( ID );
+   US_Settings::set_us_inv_level( level );
+}
 
 // read Instrument names/info from DB
 void US_XpnHostDB::readInstruments( US_DB2* db )

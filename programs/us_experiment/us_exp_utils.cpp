@@ -434,9 +434,44 @@ void US_ExperGuiGeneral::check_runname()
   qApp->processEvents();
 }
 
+
+void US_ExperGuiGeneral::update_inv( void )
+{
+   US_Passwd   pw;
+   US_DB2      db( pw.getPasswd() );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+//qDebug() << "USCFG: UpdInv: ERROR connect";
+      QMessageBox::information( this,
+         tr( "Error" ),
+         tr( "Error making the DB connection.\n" ) );
+
+      return;
+   }
+
+   QStringList q( "get_user_info" );
+   db.query( q );
+   db.next();
+
+   int ID        = db.value( 0 ).toInt();
+   QString fname = db.value( 1 ).toString();
+   QString lname = db.value( 2 ).toString();
+   int     level = db.value( 5 ).toInt();
+
+   qDebug() << "USCFG: UpdInv: ID,name,lev" << ID << fname << lname << level;
+//if(ID<1) return;
+
+   US_Settings::set_us_inv_name ( lname + ", " + fname );
+   US_Settings::set_us_inv_ID   ( ID );
+   US_Settings::set_us_inv_level( level );
+}
+
+
 //IF USER cannot edit anything (low-level user)
 void US_ExperGuiGeneral::check_user_level()
 {
+  update_inv();
   if ( US_Settings::us_inv_level() < 3 )
     {
       pb_investigator->setEnabled( false );

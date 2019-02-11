@@ -93,6 +93,7 @@ class US_XpnHostDB : public US_Widgets
     QListWidget* lw_entries;
 
     void update_lw( void );
+    void update_inv( void );
     bool use_db;
     
     QList< Instrument > instruments; 

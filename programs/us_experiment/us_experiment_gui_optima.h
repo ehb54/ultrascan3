@@ -58,6 +58,7 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
       bool        updateProtos( const QStringList );
 
       void check_user_level( void );
+      void update_inv( void );
       void check_runname( void );
       int loaded_proto;
             
