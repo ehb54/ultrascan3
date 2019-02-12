@@ -4751,11 +4751,23 @@ DbgLv(1) << "DBSv:     dset tripleID    " << out_tripinfo[0].tripleID;
 
    if ( status == US_DB2::BADGUID )
    {
-      QMessageBox::information( this,
-            tr( "Error" ),
-            tr( "Bad GUID format.\n"
+      QString errmsg;
+      if ( ExpData.operatorGUID.isEmpty()  ||
+           ExpData.operatorGUID.length() != 36 )
+      {
+         errmsg = tr( "Bad Operator GUID format.\n"
+                      "Use LIMS Admin Info -> Edit User Info\n"
+                      "to insure all instruments are permitted\n"
+                      "for at least one user.\n\n"
+                      "Contact UltraScan support for guidance." );
+      }
+      else
+      {
+         errmsg = tr( "Bad GUID format.\n"
                 "Please click on Edit Run Information"
-                " and re-select hardware.\n" ) );
+                " and re-select hardware.\n" );
+      }
+      QMessageBox::information( this, tr( "Error" ), errmsg );
       return;
    }
 
