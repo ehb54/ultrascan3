@@ -883,6 +883,7 @@ CREATE TABLE IF NOT EXISTS HPCAnalysisRequest (
   submitTime datetime NOT NULL default '0000-00-00 00:00:00',
   clusterName varchar(80) default NULL,
   method enum('2DSA','2DSA_CG','2DSA_MW','GA','GA_MW','GA_SC','DMGA','PCSA') NOT NULL default '2DSA',
+  analType text DEFAULT NULL ,
   PRIMARY KEY (HPCAnalysisRequestID) )
 ENGINE=InnoDB;
 

@@ -2939,6 +2939,18 @@ DbgLv(1) << "sCM: mcolors count" << mcknt;
 void US_XpnDataViewer::correct_radii()
 {
    const double rad_inc = 1e-5;     // Radius precision
+
+   char wktyp[ 3 ];
+   strncpy( wktyp, allData[ 0 ].type, 2 );
+   wktyp[ 2 ] = '\0';
+   QString dtype = QString( wktyp );
+DbgLv(1) << "CR: dtype" << dtype << wktyp;
+   if ( dtype == "IP" )
+   {
+DbgLv(0) << "NO Chromatic Aberration correction for Interference data";
+      return;			// No correction for Interference data
+   }
+
    int ntripl = allData.count();
    int npoint = allData[ 0 ].pointCount();
    double radval;
