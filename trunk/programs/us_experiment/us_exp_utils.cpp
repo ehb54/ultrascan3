@@ -471,7 +471,7 @@ void US_ExperGuiGeneral::update_inv( void )
 //IF USER cannot edit anything (low-level user)
 void US_ExperGuiGeneral::check_user_level()
 {
-  update_inv();
+  //update_inv();
   if ( US_Settings::us_inv_level() < 3 )
     {
       pb_investigator->setEnabled( false );

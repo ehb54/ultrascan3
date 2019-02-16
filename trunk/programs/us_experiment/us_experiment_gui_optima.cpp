@@ -118,6 +118,7 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
 
    //epanGeneral->initPanel();
    epanGeneral->loaded_proto = 0;
+   //epanGeneral->update_inv();
    epanGeneral->check_user_level();
    epanGeneral->check_runname();
    
