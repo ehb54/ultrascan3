@@ -67,6 +67,9 @@ US_Edit::US_Edit() : US_Widgets()
    dbg_level    = US_Settings::us_debug();
    dbP          = NULL;
    chlamb       = QChar( 955 );
+   gap_thresh   = 50.0;
+   gap_fringe   = 0.4;
+DbgLv(1) << " 0)gap_fringe" << gap_fringe;
 
    setWindowTitle( tr( "Edit UltraScan Data" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -659,6 +662,7 @@ void US_Edit::reset_triple( void )
    cb_triple    ->disconnect();
    cb_rpms      ->disconnect();
    cb_rpms      ->clear();
+   ct_gaps      ->disconnect();
 }
 
 // Display run details
@@ -675,6 +679,7 @@ void US_Edit::details( void )
 void US_Edit::gap_check( void )
 {
    int threshold = (int)ct_gaps->value();
+   gap_thresh    = ct_gaps->value();
             
    US_DataIO::Scan  s;
    QString          gaps;
@@ -2176,10 +2181,14 @@ void US_Edit::set_plateau( void )
 }
 
 // Set up for a Fringe Tolerance pick
-void US_Edit::set_fringe_tolerance( double /* tolerance */)
+void US_Edit::set_fringe_tolerance( double ftvalue )
 {
+DbgLv(1) << "   gap_fringe" << gap_fringe << "SFT: dataType" << dataType << "ftvalue" << ftvalue;
    // This is only valid for interference data
    if ( dataType != "IP" ) return;
+
+   gap_fringe         = ftvalue;
+DbgLv(1) << " 1)gap_fringe" << gap_fringe;
 
    // If we haven't yet set the range, just ignore the change
    if ( step == MENISCUS  ||  step == AIRGAP  ||  step == RANGE ) return;
@@ -2202,6 +2211,7 @@ void US_Edit::set_fringe_tolerance( double /* tolerance */)
    edits.rangeLeft    = range_left;
    edits.rangeRight   = range_right;
    edits.gapTolerance = ct_gaps->value();
+DbgLv(1) << " 3)gap_fringe" << gap_fringe << "index" << index;
 
    US_DataIO::calc_integral( data, edits );
    replot();
@@ -3193,7 +3203,8 @@ void US_Edit::subtract_residuals( void )
 void US_Edit::new_triple( int index )
 {
    triple_index    = index;
-DbgLv(1) << "EDT:NewTr: tripindex" << triple_index << "chgs" << changes_made;
+   double gap_val  = ct_gaps->value();
+DbgLv(1) << "EDT:NewTr: tripindex" << triple_index << "chgs" << changes_made << "gap_val" << gap_val;
 
    if ( changes_made )
    {
@@ -3216,6 +3227,8 @@ DbgLv(1) << "EDT:NewTr: tripindex" << triple_index << "chgs" << changes_made;
          return;
       }
    }
+
+   ct_gaps->disconnect();
 
    // Set up data indexes
    rb_radius->setChecked( true );
@@ -3261,12 +3274,35 @@ DbgLv(1) << "EDT:NewTr:  nwavelo" << nwavelo;
    connect( cb_triple, SIGNAL( currentIndexChanged( int ) ), 
                        SLOT  ( new_triple         ( int ) ) );
 
+   QString otdt   = dataType;
    edata          = outData[ data_index ];
    data           = *edata;
    QString swavl  = cb_lplot ->currentText();
    QString triple = cb_triple->currentText() + ( isMwl ? " / " + swavl : "" );
    int     idax   = triples.indexOf( triple );
-DbgLv(1) << "EDT:NewTr:   sw tri dx" << swavl << triple << idax;
+   dataType = QString( QChar( data.type[ 0 ] ) ) 
+            + QString( QChar( data.type[ 1 ] ) );
+DbgLv(1) << "EDT:NewTr:   sw tri dx" << swavl << triple << idax << "dataType" << dataType
+ << "gap_fringe gap_thresh" << gap_fringe << gap_thresh;
+   if ( otdt != dataType )
+   {  // Reset gap controls for new datatype
+      if ( dataType == "IP" )
+      {
+         gap_thresh   = gap_val;
+         ct_gaps->setValue     ( gap_fringe );
+         ct_gaps->setRange     ( 0.0, 20.0 );
+         ct_gaps->setSingleStep( 0.001 );
+         ct_gaps->setNumButtons( 3 );
+      }
+      else
+      {
+         gap_fringe   = gap_val;
+         ct_gaps->disconnect   ();
+         ct_gaps->setRange     ( 10.0, 100.0 );
+         ct_gaps->setSingleStep( 10.0 );
+         ct_gaps->setValue     ( gap_thresh );
+      }
+   }
 
    // Enable pushbuttons
    pb_details  ->setEnabled( true );
@@ -3288,9 +3324,11 @@ DbgLv(1) << "EDT:NewTr:   sw tri dx" << swavl << triple << idax;
 
    connect( ct_from, SIGNAL( valueChanged ( double ) ),
                      SLOT  ( focus_from   ( double ) ) );
-
    connect( ct_to,   SIGNAL( valueChanged ( double ) ),
                      SLOT  ( focus_to     ( double ) ) );
+
+   connect( ct_gaps, SIGNAL( valueChanged        ( double ) ), 
+                     SLOT  ( set_fringe_tolerance( double ) ) );
 
    if ( expIsEquil )
    {  // Equilibrium
@@ -3400,6 +3438,31 @@ DbgLv(1) << "EDT:NewTr:   tr type,valu" << trtype << trvalu;
 
 DbgLv(1) << "EDT:NewTr:   men" << meniscus << "dx" << idax;
       plot_current( idax );
+   }
+
+   // Reset GAPS labels and values based on this triple's type
+   if ( dataType == "IP" )
+   {
+      lb_gaps->setText( tr( "Fringe Tolerance" ) );
+
+      ct_gaps->setValue     ( gap_fringe );
+      ct_gaps->setRange     ( 0.0, 20.0 );
+      ct_gaps->setSingleStep( 0.001 );
+      ct_gaps->setNumButtons( 3 );
+DbgLv(1) << " 2)gap_fringe" << gap_fringe << "idax" << idax;
+
+      connect( ct_gaps, SIGNAL( valueChanged        ( double ) ), 
+                        SLOT  ( set_fringe_tolerance( double ) ) );
+   }
+   else
+   {
+      lb_gaps->setText( tr( "Threshold for Scan Gaps" ) );
+      
+      ct_gaps->disconnect   ();
+      ct_gaps->setRange     ( 10.0, 100.0 );
+      ct_gaps->setSingleStep( 10.0 );
+      ct_gaps->setValue     ( gap_thresh );
+      ct_gaps->setNumButtons( 1 );
    }
 
    replot();

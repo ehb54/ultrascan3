@@ -63,6 +63,8 @@ class US_Edit : public US_Widgets
       double             baseline;
       double             invert;
       double             plateau;
+      double             gap_fringe;
+      double             gap_thresh;
 
       QChar              chlamb;
 
