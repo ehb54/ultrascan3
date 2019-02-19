@@ -591,7 +591,8 @@ DbgLv(1) << "XpDa:s_x: sRunId" << sRunId << "count" << count;
 
    // Get columns and determine indecies of fields
    qrytext         = "SELECT * from " + qrytab
-                     + " WHERE \"RunId\"=" + sRunId + ";";
+                     + " WHERE \"RunId\"=" + sRunId
+                     + " ORDER BY \"DataId\" ;";
    if ( scantype == 'C' )
       qrytext         = "SELECT * from " + qrytab + ";";
 
@@ -607,7 +608,8 @@ DbgLv(1) << "XpDa:s_x:  cols" << cols << "cnames" << cnames[0] << "..."
    isctyp        = ( scantype == 'W' ) ? 4 : isctyp;
    isctyp        = ( scantype == 'S' ) ? 5 : isctyp;
    isctyp        = ( scantype == 'C' ) ? 6 : isctyp;
-DbgLv(1) << "XpDa:s_x:  isctyp scantype" << isctyp << scantype;
+DbgLv(1) << "XpDa:s_x:  isctyp scantype" << isctyp << scantype
+ << "qrytext" << qrytext;
 
    // Loop to read data and store in internal array
 
