@@ -209,7 +209,7 @@ CREATE  TABLE IF NOT EXISTS experiment (
   type ENUM('velocity', 'equilibrium', 'diffusion', 'buoyancy', 'calibration', 'other') NULL 
     DEFAULT 'velocity',
   runType ENUM('RA', 'RI', 'IP', 'FI', 'WA', 'WI', 'RI+IP', 'RI+FI', 'IP+FI', 'RI+IP+FI') NULL
-    DEFAULT NULL;
+    DEFAULT NULL,
   dateBegin DATE NOT NULL ,
   runTemp FLOAT NULL ,
   label VARCHAR(80) NULL ,
