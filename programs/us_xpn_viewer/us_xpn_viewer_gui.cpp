@@ -2271,7 +2271,7 @@ void US_XpnDataViewer::changeOptics( void )
    else if ( ostyp == "Wavelength" )
       rtype          = "WI";
 DbgLv(1) << "chgOpt: optrx" << optrx << "ostyp" << ostyp
- << "rtype" << rtype;
+ << "rtype" << rtype << "nopts" << cb_optsys->children().count();
 
   // If simply re-choosing the same optics, bale out now
    if ( rtype == runType )
@@ -2501,21 +2501,38 @@ void US_XpnDataViewer::export_auc()
    }
 
    // Export the AUC data to a local directory and build TMST
-
-
-   qDebug() << "EXPORT AUC: BEFORE correct_radii() !!!!";
+DbgLv(1) << "ExpAuc: BEFORE correct_radii() !!!!";
    correct_radii();      // Perform chromatic aberration radius corrections
-   qDebug() << "EXPORT AUC: AFTER correct_radii() !!!!";
-   
-   int nfiles     = xpn_data->export_auc( allData );
+DbgLv(1) << "ExpAuc: AFTER correct_radii() !!!!";
+   int nfiles     = xpn_data->export_auc( allData );  // Export AUC/TMST
 
    QString tspath = currentDir + "/" + runID + ".time_state.tmst";
    haveTmst       = QFile( tspath ).exists();
 
-   le_status  ->setText( tr( "%1 AUC/TMST files written ..." ).arg( nfiles ) );
    pb_showtmst->setEnabled( haveTmst );
    qApp->processEvents();
 DbgLv(1) << "ExpAuc: haveTmst" << haveTmst << "tmst file" << tspath;
+   int noptsy     = cb_optsys->children().count();
+
+   if ( noptsy > 1 )
+   {  // Export data from Optical Systems other than currently selected one
+      int currsx     = cb_optsys->currentIndex();
+
+      for ( int osx = 0; osx < noptsy; osx++ )
+      {
+         if ( osx == currsx )  continue;   // Skip already-handled opt sys
+
+         cb_optsys->setCurrentIndex( osx );
+         correct_radii();                  // Chromatic aberration correction if needed
+         int kfiles     = xpn_data->export_auc( allData ) - 2;  // Export data
+         nfiles        += kfiles;          // Total files written
+      }
+
+      // Restore Optical System selection to what it was before
+      cb_optsys->setCurrentIndex( currsx );
+   }
+
+   le_status  ->setText( tr( "%1 AUC/TMST files written ..." ).arg( nfiles ) );
 }
 
 // Slot to handle a change in scan exclude "from" value
