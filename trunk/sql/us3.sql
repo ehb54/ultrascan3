@@ -33,7 +33,7 @@ CREATE  TABLE IF NOT EXISTS people (
   activated TINYINT(1) NOT NULL DEFAULT false ,
   signup TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ,
   lastLogin DATETIME NULL ,
-  clusterAuthorizations VARCHAR(255) NOT NULL default 'lonestar5:stampede2:comet:alamo:jetstream',
+  clusterAuthorizations VARCHAR(255) NOT NULL default 'lonestar5:stampede2:comet:jetstream',
   userlevel TINYINT NOT NULL DEFAULT 0 ,
   advancelevel TINYINT NOT NULL DEFAULT 0 ,
   PRIMARY KEY (personID) )
@@ -208,7 +208,8 @@ CREATE  TABLE IF NOT EXISTS experiment (
   experimentGUID CHAR(36) NULL UNIQUE,
   type ENUM('velocity', 'equilibrium', 'diffusion', 'buoyancy', 'calibration', 'other') NULL 
     DEFAULT 'velocity',
-  runType ENUM( 'RA', 'RI', 'IP', 'FI', 'WA', 'WI' ) NULL DEFAULT NULL,
+  runType ENUM('RA', 'RI', 'IP', 'FI', 'WA', 'WI', 'RI+IP', 'RI+FI', 'IP+FI', 'RI+IP+FI') NULL
+    DEFAULT NULL;
   dateBegin DATE NOT NULL ,
   runTemp FLOAT NULL ,
   label VARCHAR(80) NULL ,
