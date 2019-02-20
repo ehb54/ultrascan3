@@ -2451,12 +2451,27 @@ void US_XpnDataViewer::export_auc_auto()
    correct_radii();      // Perform chromatic aberration radius corrections
 
    int nfiles     = xpn_data->export_auc( allData );
+   int noptsy     = cb_optsys->children().count();
 
-   QString tspath = currentDir + "/" + runID + ".time_state.tmst";
-   haveTmst       = QFile( tspath ).exists();
+   if ( noptsy > 1 )
+   {  // Export data from Optical Systems other than currently selected one
+      int currsx     = cb_optsys->currentIndex();
+
+      for ( int osx = 0; osx < noptsy; osx++ )
+      {
+         if ( osx == currsx )  continue;   // Skip already-handled opt sys
+
+         cb_optsys->setCurrentIndex( osx );
+         correct_radii();                  // Chromatic aberration correction if needed
+         int kfiles     = xpn_data->export_auc( allData ) - 2;  // Export data
+         nfiles        += kfiles;          // Total files written
+      }
+
+      // Restore Optical System selection to what it was before
+      cb_optsys->setCurrentIndex( currsx );
+   }
 
    le_status  ->setText( tr( "%1 AUC/TMST files written ..." ).arg( nfiles ) );
-   //pb_showtmst->setEnabled( haveTmst );
    qApp->processEvents();
 }
 
