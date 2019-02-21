@@ -4005,7 +4005,8 @@ void US_ExperGuiUpload::submitExperiment()
        2       [0,1,2,3,4,5,6,7]
 	 
        */
-
+       QString uvvis       = tr( "UV/visible" );
+       QStringList oprof   = sibLValue( "optical", "profiles" );
        
        qDebug() << "Begin AbsInsert";
        bool is_dummy = false;
@@ -4060,129 +4061,148 @@ void US_ExperGuiUpload::submitExperiment()
 	       double hi_radi;
 	       bool is_wvl_range   = false;
 
-	       for ( int ii = 0; ii < rpRange->nranges; ii++ )
+
+	       bool has_absorbance = false;
+	       for ( int kk = 0; kk < oprof.count(); kk++ )
 		 {
-		   channel  = rpRange->chrngs[ ii ].channel;
-		   
-		   if ( channel.contains("sample") && channel.startsWith(QString::number(j+1)) )  // <-- Judge only by sample (channel A) for now
+		   if ( oprof[ kk ].contains( uvvis ) )
 		     {
-		       nwavl    = rpRange->chrngs[ ii ].wvlens.count();
-		       wvl_list = rpRange->chrngs[ ii ].wvlens;
-		       lo_radi  = rpRange->chrngs[ ii ].lo_rad;
-		       hi_radi  = rpRange->chrngs[ ii ].hi_rad;
-		       is_wvl_range = true;
-		       break;
-		     }
-		 }
-	       // Create query VALUE strings and Make insertions into AbsScanParams table
-	       if (is_wvl_range)
-		 {
-		   QString wvl_count        = QString::number( nwavl );
-		   QString wvl_array        = "\'{";
-		   QString scan_inner_array = "\'{";
-		   QString scan_outer_array = "\'{";
-		   QString scan_steps_array = "\'{";
-		   QString scan_starts_array = "\'{";
-		   QString replicate_counts_array = "\'{";
-		   QString continuous_mode_array = "\'{";
-		   QString scan_counts = "\'{";
-		   QString scan_intervals = "\'{";
-		   for (int r=0; r<nwavl; r++)
-		     {
-		       wvl_array        +=  QString::number(wvl_list[r]);
-		       qDebug() << "Wvl: " << r << " " << wvl_list[r]; 
-		       scan_inner_array += QString::number(lo_radi);
-		       scan_outer_array += QString::number(hi_radi);
-		       scan_steps_array += QString::number(10);                     // <-- 10 um
-		       scan_starts_array += QString::number(0);                     // <-- '0' to allow control by scan interval
-		       replicate_counts_array += QString::number(1);                // <-- shoud be '1'
-		       continuous_mode_array += "t";                                // <-- always 't'
-		       scan_counts += QString::number(ScanCount);                   // <-- ScanCount
-		       scan_intervals += QString::number(int(ScanInt));         // <-- ScanInterval
-		       if (r != nwavl - 1)
+		       channel =  oprof[ kk ].section( ":", 0, 0 );
+		       if (channel.startsWith(QString::number(j+1)))
 			 {
-			   wvl_array        += ",";
-			   scan_inner_array += ",";
-			   scan_outer_array += ",";
-			   scan_steps_array += ",";
-			   scan_starts_array += ",";
-			   replicate_counts_array += ",";
-			   continuous_mode_array += ",";
-			   scan_counts += ",";
-			   scan_intervals += ",";
+			   has_absorbance = true;
+			   break;
 			 }
 		     }
-		   wvl_array        += "}\'";
-		   scan_inner_array += "}\'";
-		   scan_outer_array += "}\'";
-		   scan_steps_array += "}\'";
-		   scan_starts_array += "}\'";
-		   replicate_counts_array += "}\'";
-		   continuous_mode_array += "}\'";
-		   scan_counts += "}\'";
-		   scan_intervals += "}\'";
-		   
-		   qDebug() << "Wvl_Array: " << wvl_array;
-		   QString rad_path = "DEFAULT";
-		   //QString rad_path = "\'A\'";
-		   //QString rad_path = "\'B\'";
+		 }
+	       
+	       if ( has_absorbance )
+		 {
 
-		   if ( QString::compare(rad_path, "DEFAULT",Qt::CaseSensitive) )
-		     qDebug() << "RadialPath is NOT DEFAULT";
-		     
-		     
-		   QSqlQuery query_abs_scan(dbxpn);
-		   if(! query_abs_scan.prepare(QString("INSERT INTO %1 (\"ContinuousMode\",\"ReplicateCounts\",\"ScanInnerLimits\",\"ScanOuterLimits\",\"ScanStarts\",\"ScanSteps\",\"ScanTypeFlag\",\"WavelengthCount\",\"Wavelengths\",\"ScanCounts\",\"ScanIntervals\",\"RadialPath\") VALUES (%2, %3, %4, %5, %6, %7, %8, %9, %10, %11, %12, %13) RETURNING \"ScanId\"")
-					       .arg(qrytab_abs)
-					       .arg(continuous_mode_array)
-					       .arg(replicate_counts_array)
-					       .arg(scan_inner_array)
-					       .arg(scan_outer_array)
-					       .arg(scan_starts_array)
-					       .arg(scan_steps_array)
-					       .arg("\'I\'")
-					       .arg(wvl_count)
-					       .arg(wvl_array)
-					       .arg(scan_counts)
-					       .arg(scan_intervals)
-					       .arg(rad_path)
-					       //.arg("DEFAULT")
-					       //.arg("\'A\'")
-					       ) )
-		     qDebug() << query_abs_scan.lastError().text();
-		   
-		   //qDebug() << "Stop here" << ", ScanInt: " << scan_intervals << ", ScanCount: " << scan_counts;
-		   //return;
-		   
-		   if (query_abs_scan.exec()) 
+		   for ( int ii = 0; ii < rpRange->nranges; ii++ )
 		     {
-		       qDebug() << "AbsorbaceScanParameters record created";
+		       channel  = rpRange->chrngs[ ii ].channel;
 		       
-		       query_abs_scan.next();
-		       AbsScanIds[i][j] = query_abs_scan.value(0).toInt();         // <-- Save AbsScanID inserted [for given stage#/cell#]
+		       if ( channel.contains("sample") && channel.startsWith(QString::number(j+1)) )  // <-- Judge only by sample (channel A) for now
+			 {
+			   nwavl    = rpRange->chrngs[ ii ].wvlens.count();
+			   wvl_list = rpRange->chrngs[ ii ].wvlens;
+			   lo_radi  = rpRange->chrngs[ ii ].lo_rad;
+			   hi_radi  = rpRange->chrngs[ ii ].hi_rad;
+			   is_wvl_range = true;
+			   break;
+			 }
+		     }
+		   // Create query VALUE strings and Make insertions into AbsScanParams table
+		   if (is_wvl_range)
+		     {
+		       QString wvl_count        = QString::number( nwavl );
+		       QString wvl_array        = "\'{";
+		       QString scan_inner_array = "\'{";
+		       QString scan_outer_array = "\'{";
+		       QString scan_steps_array = "\'{";
+		       QString scan_starts_array = "\'{";
+		       QString replicate_counts_array = "\'{";
+		       QString continuous_mode_array = "\'{";
+		       QString scan_counts = "\'{";
+		       QString scan_intervals = "\'{";
+		       for (int r=0; r<nwavl; r++)
+			 {
+			   wvl_array        +=  QString::number(wvl_list[r]);
+			   qDebug() << "Wvl: " << r << " " << wvl_list[r]; 
+			   scan_inner_array += QString::number(lo_radi);
+			   scan_outer_array += QString::number(hi_radi);
+			   scan_steps_array += QString::number(10);                     // <-- 10 um
+			   scan_starts_array += QString::number(0);                     // <-- '0' to allow control by scan interval
+			   replicate_counts_array += QString::number(1);                // <-- shoud be '1'
+			   continuous_mode_array += "t";                                // <-- always 't'
+			   scan_counts += QString::number(ScanCount);                   // <-- ScanCount
+			   scan_intervals += QString::number(int(ScanInt));         // <-- ScanInterval
+			   if (r != nwavl - 1)
+			     {
+			       wvl_array        += ",";
+			       scan_inner_array += ",";
+			       scan_outer_array += ",";
+			       scan_steps_array += ",";
+			       scan_starts_array += ",";
+			       replicate_counts_array += ",";
+			       continuous_mode_array += ",";
+			       scan_counts += ",";
+			       scan_intervals += ",";
+			     }
+			 }
+		       wvl_array        += "}\'";
+		       scan_inner_array += "}\'";
+		       scan_outer_array += "}\'";
+		       scan_steps_array += "}\'";
+		       scan_starts_array += "}\'";
+		       replicate_counts_array += "}\'";
+		       continuous_mode_array += "}\'";
+		       scan_counts += "}\'";
+		       scan_intervals += "}\'";
 		       
+		       qDebug() << "Wvl_Array: " << wvl_array;
+		       QString rad_path = "DEFAULT";
+		       //QString rad_path = "\'A\'";
+		       //QString rad_path = "\'B\'";
 		       
 		       if ( QString::compare(rad_path, "DEFAULT",Qt::CaseSensitive) )
-		    	 {
-		    	   AbsRadialPath[i][j] = 1;
-		    	   qDebug() << "RadialPath is NOT DEFAULT: 1-channel.";
-		    	 }
+			 qDebug() << "RadialPath is NOT DEFAULT";
 		       
-		       qDebug() << "ScanId: "     << query_abs_scan.value(0).toInt();
-		       qDebug() << "RadialPath: " << AbsRadialPath[i][j];
-		     } 
-		   else 
-		     {
-		       QString errmsg   = "Create record error: " + query_abs_scan.lastError().text();;
-		       QMessageBox::critical( this,
-		    			      tr( "*ERROR* in Submitting Protocol" ),
-		    			      tr( "An error occurred in the attempt to submit"
-		    				  " protocol to AUC DB\n  %1 table\n  %2 ." ).arg( qrytab_abs ).arg( errmsg ) );
-		       return;
+		       
+		       QSqlQuery query_abs_scan(dbxpn);
+		       if(! query_abs_scan.prepare(QString("INSERT INTO %1 (\"ContinuousMode\",\"ReplicateCounts\",\"ScanInnerLimits\",\"ScanOuterLimits\",\"ScanStarts\",\"ScanSteps\",\"ScanTypeFlag\",\"WavelengthCount\",\"Wavelengths\",\"ScanCounts\",\"ScanIntervals\",\"RadialPath\") VALUES (%2, %3, %4, %5, %6, %7, %8, %9, %10, %11, %12, %13) RETURNING \"ScanId\"")
+						   .arg(qrytab_abs)
+						   .arg(continuous_mode_array)
+						   .arg(replicate_counts_array)
+						   .arg(scan_inner_array)
+						   .arg(scan_outer_array)
+						   .arg(scan_starts_array)
+						   .arg(scan_steps_array)
+						   .arg("\'I\'")
+						   .arg(wvl_count)
+						   .arg(wvl_array)
+						   .arg(scan_counts)
+						   .arg(scan_intervals)
+						   .arg(rad_path)
+						   //.arg("DEFAULT")
+						   //.arg("\'A\'")
+						   ) )
+			 qDebug() << query_abs_scan.lastError().text();
+		       
+		       //qDebug() << "Stop here" << ", ScanInt: " << scan_intervals << ", ScanCount: " << scan_counts;
+		       //return;
+		       
+		       if (query_abs_scan.exec()) 
+			 {
+			   qDebug() << "AbsorbaceScanParameters record created";
+			   
+			   query_abs_scan.next();
+			   AbsScanIds[i][j] = query_abs_scan.value(0).toInt();         // <-- Save AbsScanID inserted [for given stage#/cell#]
+			   
+		       
+			   if ( QString::compare(rad_path, "DEFAULT",Qt::CaseSensitive) )
+			     {
+			       AbsRadialPath[i][j] = 1;
+			       qDebug() << "RadialPath is NOT DEFAULT: 1-channel.";
+			     }
+			   
+			   qDebug() << "ScanId: "     << query_abs_scan.value(0).toInt();
+			   qDebug() << "RadialPath: " << AbsRadialPath[i][j];
+			 } 
+		       else 
+			 {
+			   QString errmsg   = "Create record error: " + query_abs_scan.lastError().text();;
+			   QMessageBox::critical( this,
+						  tr( "*ERROR* in Submitting Protocol" ),
+						  tr( "An error occurred in the attempt to submit"
+						      " protocol to AUC DB\n  %1 table\n  %2 ." ).arg( qrytab_abs ).arg( errmsg ) );
+			   return;
+			 }
+		       
 		     }
-		   
+		   qDebug() << "Cell " << j << "is processed ";
 		 }
-	       qDebug() << "Cell " << j << "is processed ";
 	     }
 	   qDebug() << "AFTER CELLS processed";
 	 }
@@ -4217,8 +4237,8 @@ void US_ExperGuiUpload::submitExperiment()
 	 
        */
 
-       QString uvvis       = tr( "Rayleigh Interference" );
-       QStringList oprof   = sibLValue( "optical", "profiles" );
+       QString rayleigh       = tr( "Rayleigh Interference" );
+       //QStringList oprof   = sibLValue( "optical", "profiles" );
        
 
        QVector < QVector < int >> InterScanIds(nstages_size);
@@ -4277,7 +4297,7 @@ void US_ExperGuiUpload::submitExperiment()
 	       bool has_interference = false;
 	       for ( int ii = 0; ii < oprof.count(); ii++ )
 		 {
-		   if ( oprof[ ii ].contains( uvvis ) )
+		   if ( oprof[ ii ].contains( rayleigh ) )
 		     {
 		       channel =  oprof[ ii ].section( ":", 0, 0 );
 		       if (channel.startsWith(QString::number(j+1)))
