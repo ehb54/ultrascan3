@@ -4258,7 +4258,7 @@ void US_ExperGuiUpload::submitExperiment()
 
 	   int ScanCount;
 	   int ScanInt;
-	   if ( scanint_sec > scanint_sec_min * Total_wvl[i] )
+	   if ( scanint_sec > scanint_sec_min * Total_wvl[i] )   //ALEXEY: shouldn't be Total_wvl[i] be always 1 ? (660nm)
 	     {
 	       ScanCount = int( duration_sec / scanint_sec );
 	       ScanInt   = scanint_sec;
