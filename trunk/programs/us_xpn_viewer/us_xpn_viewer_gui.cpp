@@ -434,16 +434,32 @@ if(mcknt>0)
    setMinimumSize( 950, 450 );
    adjustSize();
 
-   /*
-   //Temporary test - C. Horne's experiment: ExpID = 408 (ExperimentDefinition, Postgres); ProtocolID = 43 (Us-lims, Mysql);
-   // 2 cells; 41 wvls; 82 triples; 
-   QMap < QString, QString > protocol_details;
-   protocol_details["experimentId"] = QString("408");   
-   protocol_details["protocolName"] = QString("some_prot");
    
-   check_for_data( protocol_details );
+   // //1. Temporary test - C. Horne's experiment: ExpID = 408 (ExperimentDefinition, Postgres, Optima 1); ProtocolID = 43 (Us-lims, Mysql);
+   // // description = CHorne-NanR_Trunc_2r-DNA-MWL_60K_111918;
+   // // 2 cells; 41 wvls; 82 triples; 
+   // QMap < QString, QString > protocol_details;
+   // protocol_details["experimentId"] = QString("408");   
+   // protocol_details["protocolName"] = QString("some_prot");
+   // protocol_details[ "experimentName" ] = QString("some_name");
+   // protocol_details[ "CellChNumber" ] = QString("2");
+   // protocol_details[ "TripleNumber" ] = QString("82");
+   // protocol_details[ "OptimaName" ] = QString("Optima 1");
+
+   //2. Temporary test - S. Ling's experiment: ExpID = 465 (ExperimentDefinition, Postgres, Optima 1); ProtocolID = 150 (Us-lims, Mysql);
+   // description = CCLing-PZ5077-27k-021519;
+   // 2 cells; 1 wvls; 2 triples - for absorbance ONLY!! 
+   // QMap < QString, QString > protocol_details;
+   // protocol_details["experimentId"] = QString("465");   
+   // protocol_details["protocolName"] = QString("some_prot");
+   // protocol_details[ "experimentName" ] = QString("some_name");
+   // protocol_details[ "CellChNumber" ] = QString("2");
+   // protocol_details[ "TripleNumber" ] = QString("2");
+   // protocol_details[ "OptimaName" ] = QString("Optima 1"); 
+   
+   // check_for_data( protocol_details );
    // End of test
-   */
+   
 }
 
 
@@ -1422,16 +1438,31 @@ double tm1=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
       }
    }
 
+   // qApp->processEvents();  //ALEXEY: maybe this will help
+   
+   qDebug() << "1. Crashes HERE!!!!";
+     
    cb_optsys->disconnect();
    cb_optsys->clear();
+
+   qDebug() << "1a. Crashes HERE!!!!";
+   
    cb_optsys->addItems( opsys );                                  // ALEXEY fill out Optics listbox
+
+   qDebug() << "1ab. Crashes HERE!!!! - BEFORE Setting index to cb_optsys";
    cb_optsys->setCurrentIndex( optndx );
+   qDebug() << "1ac. Crashes HERE!!!! - AFTER Setting index to cb_optsys";
+   
    connect( cb_optsys,    SIGNAL( currentIndexChanged( int ) ),
             this,         SLOT  ( changeOptics( )            ) );
 
+   qDebug() << "1b. Crashes HERE!!!!";
+   
    runID         = new_runID;
 DbgLv(1) << "RDr:  runID" << runID << "runType" << runType;
-   xpn_data->set_run_values( runID, runType );                    // ALEXEY 
+   xpn_data->set_run_values( runID, runType );                    // ALEXEY
+
+   qDebug() << "2. Crashes HERE!!!! (after xpn_data->set_run_values( runID, runType ) )";
 
    // Build the AUC equivalent
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor) );
@@ -1439,6 +1470,9 @@ DbgLv(1) << "RDr:  runID" << runID << "runType" << runType;
    qApp->processEvents();
 
    xpn_data->build_rawData( allData );                            // ALEXEY Builds Raw Data
+
+   qDebug() << "3. Crashes HERE!!!! (after  xpn_data->build_rawData( allData ))";
+   
 double tm2=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
 DbgLv(1) << "RDr:      build-raw done: tm1 tm2" << tm1 << tm2;
 
