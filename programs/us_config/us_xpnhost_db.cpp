@@ -804,8 +804,9 @@ void US_XpnHostDB::editHost( QMap < QString, QString > & newInstrument  )
   if ( db->lastErrno() != US_DB2::OK )
     {
       QMessageBox::warning( this,
-			     tr( "Database Connection Problem!" ),
-			     tr( "You are not currently connected to DB! \n" ) );
+			    tr( "Database Connection Problem!" ),
+			    tr( "You are not currently connected to DB! \n" ),
+			    tr( "Error: " + db->lastErrno() ) );
       return;
     }
 
@@ -829,7 +830,12 @@ void US_XpnHostDB::editHost( QMap < QString, QString > & newInstrument  )
      << newInstrument[ "chromoArray" ];
 	
   db->query( q );
+
+  QString mtitle_done    = tr( "Success" );
+  QString message_done   = tr( "Instrument information has been successfully edited." );
+  QMessageBox::information( this, mtitle_done, message_done );
   
+    
   readInstruments( db );
   update_lw( );
 
@@ -894,8 +900,9 @@ void US_XpnHostDB::newHost( QMap < QString, QString > & newInstrument  )
   if ( db->lastErrno() != US_DB2::OK )
     {
       QMessageBox::warning( this,
-			     tr( "Database Connection Problem!" ),
-			     tr( "You are not currently connected to DB! \n" ) );
+			    tr( "Database Connection Problem!" ),
+			    tr( "You are not currently connected to DB! \n" ),
+			    tr( "Error: " +  db->lastErrno() ) );
       return;
     }
 
@@ -928,7 +935,11 @@ void US_XpnHostDB::newHost( QMap < QString, QString > & newInstrument  )
     //<< encpw;
 	
   db->query( q );
-  
+
+  QString mtitle_done    = tr( "Success" );
+  QString message_done   = tr( "New instrument has been successfully added to DB." );
+  QMessageBox::information( this, mtitle_done, message_done );
+		  
   readInstruments( db );
   update_lw( );
 
