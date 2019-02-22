@@ -3948,6 +3948,7 @@ void US_ExperGuiUpload::submitExperiment()
 
        // Define array of the total # wvl per stage
        QVector < int > Total_wvl(nstages_size);
+       // ALEXEY: should we introduce separate for interference? (1 wvl 660 per stage per cell ?)
        
        for (int i=0; i<nstages_size; i++)
 	 {
