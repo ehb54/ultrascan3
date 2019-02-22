@@ -71,8 +71,6 @@ US_NewXpnHostDB::US_NewXpnHostDB() : US_Widgets()
 
    /* ALEXEY: End of NEW portion */
 
-   
-
    // Row 1
    QLabel* desc         = us_label( tr( "Instrument Host Description:" ) );
    le_description       = us_lineedit( "", 0 );
