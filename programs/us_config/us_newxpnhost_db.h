@@ -37,6 +37,7 @@ class US_NewXpnHostDB : public US_Widgets
   QPushButton* pb_save;   
   QPushButton* pb_cancel;
   QPushButton* pb_loadchromo;
+  QPushButton* pb_testconn;
     
   QLabel* host;
   QLabel* port;
@@ -87,7 +88,8 @@ class US_NewXpnHostDB : public US_Widgets
    void readingChromoArrayFile  (const QString&);
    void readingChromoArrayDB   ( void );
    void shiftChromoArray  ( double );
-   void changeType   ( int ); 
+   void changeType   ( int );
+   bool test_connectivity( void );
    /* void reset       ( void ); */
    /* void save_default( void ); */
    /* void deleteDB    ( void ); */

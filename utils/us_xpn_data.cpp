@@ -124,7 +124,7 @@ int US_XpnData::get_runid( QString expid)
                         + " WHERE \"ExperimentId\"=" + expid + ";";
    sqry            = dbxpn.exec( qrytext );
 
-   while( sqry.next() )
+   while( sqry.next() )       //ALEXEY: does NOT seem to see all records with the same ExpId ???
      {
        qDebug() << "ARRAY of RunIDs: " << sqry.value( 0 ).toInt() ;
        RunIDs.push_back( sqry.value( 0 ).toInt() );

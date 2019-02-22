@@ -175,16 +175,22 @@ US_NewXpnHostDB::US_NewXpnHostDB() : US_Widgets()
    row = 0;
    QGridLayout* buttons = new QGridLayout();
 
+   pb_testconn = us_pushbutton( tr( "Test Connectivity" ) );
+   pb_testconn->setEnabled( true );
+   connect( pb_testconn, SIGNAL( clicked( ) ), this, SLOT( test_connectivity( ) ) );
+   buttons->addWidget( pb_testconn, row++, 0, 1, 2 );
+   
    pb_save = us_pushbutton( tr( "Save Entry" ) );
    pb_save->setEnabled( true );
    connect( pb_save, SIGNAL( clicked( ) ), this, SLOT( save_new( ) ) );
-   buttons->addWidget( pb_save, row, 0 );
+   buttons->addWidget( pb_save, row, 0, 1, 1 );
+   pb_save->setEnabled(false);
 
    pb_cancel = us_pushbutton( tr( "Cancel" ) );
    pb_cancel->setEnabled( true );
    connect( pb_cancel,      SIGNAL( clicked()  ),
 	    this,           SLOT  ( cancel() ) );
-   buttons->addWidget( pb_cancel, row++, 1 );
+   buttons->addWidget( pb_cancel, row++, 1, 1, 1 );
    
    topbox->addLayout( buttons );
 
@@ -327,17 +333,23 @@ US_NewXpnHostDB::US_NewXpnHostDB( QMap <QString,QString> currentInstrument ) : U
    row = 0;
    QGridLayout* buttons = new QGridLayout();
 
+   pb_testconn = us_pushbutton( tr( "Test Connectivity" ) );
+   pb_testconn->setEnabled( true );
+   connect( pb_testconn, SIGNAL( clicked( ) ), this, SLOT( test_connectivity( ) ) );
+   buttons->addWidget( pb_testconn, row++, 0, 1, 2 );
+   
    pb_save = us_pushbutton( tr( "Save Entry" ) );
    pb_save->setEnabled( true );
    connect( pb_save, SIGNAL( clicked( ) ), this, SLOT( save_new( ) ) );
-   buttons->addWidget( pb_save, row, 0 );
+   buttons->addWidget( pb_save, row, 0, 1, 1 );
+   pb_save->setEnabled(false);
 
    pb_cancel = us_pushbutton( tr( "Cancel" ) );
    pb_cancel->setEnabled( true );
    connect( pb_cancel,      SIGNAL( clicked()  ),
 	    this,           SLOT  ( cancel() ) );
-   buttons->addWidget( pb_cancel, row++, 1 );
-   
+   buttons->addWidget( pb_cancel, row++, 1, 1, 1 );
+
    topbox->addLayout( buttons );
 
    setMinimumSize( 450 , 400 );
@@ -346,6 +358,57 @@ US_NewXpnHostDB::US_NewXpnHostDB( QMap <QString,QString> currentInstrument ) : U
    fillGui();
 }
 
+
+bool US_NewXpnHostDB::test_connectivity( void )
+{
+   QString xpnhost = le_host->text();
+   QString xpnport = le_port->text();
+   QString dbname  = le_name->text();
+   QString dbuser  = le_user->text();
+   QString dbpasw  = le_pasw->text();
+   QString xpndesc = le_description->text();
+qDebug() << "test_connect: dbpasw" << dbpasw;
+
+   if ( xpnhost.isEmpty()  ||  xpnport.isEmpty()  ||
+        dbuser .isEmpty()  ||  dbpasw .isEmpty() )
+     {
+       QMessageBox::warning( this,
+			     tr( "Missing Data" ),
+			     tr( "Please fill in all fields before testing the connection." ) );
+       
+       return false;
+     }
+   
+   US_XpnData* xpn_data = new US_XpnData();
+   int ixpport     = xpnport.toInt();
+
+qDebug() << "test_connect: (2)dbpasw" << dbpasw;
+   bool ok         = xpn_data->connect_data( xpnhost, ixpport, dbname,
+                                             dbuser, dbpasw );
+
+   xpn_data->close();
+   delete xpn_data;
+
+   if ( ok )
+     {
+       QMessageBox::information( this,
+				 tr( "OptimaHost Connection" ),
+				 tr( "The connection was successful." ) );
+       
+       pb_save->setEnabled( true );
+     }
+   else
+     {
+       QMessageBox::warning( this,
+			     tr( "OptimaHost Connection" ),
+			     tr( "The connection failed.\n" ) + xpn_data->lastError() );
+       
+       //pb_save->setEnabled( true );
+     }
+   
+   return ok;
+   
+}
 
 void US_NewXpnHostDB::changeType( int ndx )
 {
@@ -371,6 +434,9 @@ void US_NewXpnHostDB::changeType( int ndx )
        lb_radcalwvl->setVisible( false );
        ct_radcalwvl->setVisible( false );
        le_chromofile->setVisible( false );
+       pb_testconn->setVisible( false );
+
+       pb_save->setEnabled(true);
 
        nonOptima_selected = true;
      }
@@ -703,7 +769,8 @@ void US_NewXpnHostDB::save_new( void )
       if ( current == le_description->text() && !update_instrument )
 	{
 	  QMessageBox::critical( this, tr( "Duplicate Optima Machine Name:" ),
-				QString( tr( "The name selected (%1) is currently used by other machine. Please select different name.").arg(current) ) );
+				QString( tr( "The name selected (%1) is currently used by other machine! Please select different name.")
+					 .arg(current) ) );
 	  return;
 	}
     }
@@ -726,8 +793,10 @@ void US_NewXpnHostDB::save_new( void )
       if ( optimaHost == le_host->text() && optimaPort == le_port->text().toInt() && !nonOptima_selected )
 	{
 	  QMessageBox::critical( this, tr( "Duplicate Optima Machine Connection Info:" ),
-				 QString( tr( "Specified combination of the host (%1) and port (%2) is currently used by other machine!") 
+				 QString( tr( "Specified combination of the host (%1) and port (%2) is currently used by other machine!  Please edit host and/or port and re-test the connection") 
 					  .arg(optimaHost).arg(QString::number(optimaPort)) ) );
+
+	  pb_save->setEnabled(false);
 	  return;
 	}
     }
