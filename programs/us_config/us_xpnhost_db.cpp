@@ -286,9 +286,10 @@ void US_XpnHostDB::readInstruments( US_DB2* db )
   if ( db->lastErrno() != US_DB2::OK )
     {
       QMessageBox::warning( this,
-			    tr( "Database Connection Problem!" ),
-			    tr( "You are not currently connected to a US3-LIMS DB! \n Information on Instruments cannnot be displayed! " ));
-			   
+                            tr( "Database Connection Problem!" ),
+                            tr( "You are not currently connected to a US3-LIMS DB!\n"
+                                "Information on Instruments cannot be displayed! " ) );
+
       //pb_add->setEnabled( false );
       return;
     }
@@ -306,16 +307,16 @@ void US_XpnHostDB::readInstruments( US_DB2* db )
       
       // Grab all the IDs so we can reuse the db connection
       while ( db->next() )
-	{
+      {
 	  int ID = db->value( 0 ).toString().toInt();
 	  instrumentIDs << ID;
 
 	  qDebug() << "InstID: " << ID;
-	}
+      }
       
       // Instrument information
       foreach ( int ID, instrumentIDs )
-	{
+      {
 	  qDebug() << "Inside INSTR. loop!!! ";
 	  US_XpnHostDB::Instrument instrument;
 	  
@@ -347,7 +348,7 @@ void US_XpnHostDB::readInstruments( US_DB2* db )
 	  
 	  // if ( instrument.name.contains("Optima") || instrument.optimaHost.contains("AUC_DATA_DB") )
 	    this->instruments << instrument;
-	}
+      }
     }
    qDebug() << "Reading Instrument: FINISH";
 
@@ -636,7 +637,7 @@ void US_XpnHostDB::select_db( QListWidgetItem* entry, const bool showmsg )
 	  {
 	    QMessageBox::warning( this,
 				  tr( "Database Connection Problem!" ),
-				  tr( "You are not currently connected to a US3-LIMS DB! \n" ) );
+				  tr( "You are not currently connected to a US3-LIMS DB!\n" ) );
 	    return;
 	  }
 	
@@ -700,12 +701,13 @@ bool US_XpnHostDB::check_user_level()
   qDebug() << "User Level: " << US_Settings::us_inv_level();
   
   if ( US_Settings::us_inv_level() < 3 )
-    {
+  {
       QMessageBox::warning( this,
-			    tr( "Check User Level" ),
-			    tr( "Low user level!\n This user cannot Add, Edit and Delete Entries.\n" ) );
+                            tr( "Check User Level" ),
+                            tr( "Low user level!\n This user cannot"
+                                " Add, Edit and Delete Entries.\n" ) );
       status = true;
-    }
+  }
   return status;
 }
 
@@ -804,9 +806,9 @@ void US_XpnHostDB::editHost( QMap < QString, QString > & newInstrument  )
   if ( db->lastErrno() != US_DB2::OK )
     {
       QMessageBox::warning( this,
-			    tr( "Database Connection Problem!" ),
-			    tr( "You are not currently connected to DB! \n" ),
-			    tr( "Error: " + db->lastErrno() ) );
+                            tr( "Database Connection Problem!" ),
+                            tr( "You are not currently connected to the DB!\n"
+                                "Error: " ) + db->lastErrno() + "\n" );
       return;
     }
 
@@ -828,7 +830,7 @@ void US_XpnHostDB::editHost( QMap < QString, QString > & newInstrument  )
      << newInstrument[ "os3" ]
      << newInstrument[ "radCalWvl" ]
      << newInstrument[ "chromoArray" ];
-	
+
   db->query( q );
 
   QString mtitle_done    = tr( "Success" );
@@ -900,9 +902,9 @@ void US_XpnHostDB::newHost( QMap < QString, QString > & newInstrument  )
   if ( db->lastErrno() != US_DB2::OK )
     {
       QMessageBox::warning( this,
-			    tr( "Database Connection Problem!" ),
-			    tr( "You are not currently connected to DB! \n" ),
-			    tr( "Error: " +  db->lastErrno() ) );
+                            tr( "Database Connection Problem!" ),
+                            tr( "You are not currently connected to the DB!\n"
+                                "Error: " ) + db->lastErrno() + "\n" );
       return;
     }
 
