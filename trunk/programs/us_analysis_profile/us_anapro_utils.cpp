@@ -390,8 +390,8 @@ void US_AnaprofPanGen::check_user_level()
 DbgLv(1) << "APGe:ckul: level" << US_Settings::us_inv_level();
   if ( US_Settings::us_inv_level() < 3 )
     {
-      pb_investigator->setEnabled( false );
-      pb_project     ->setEnabled( false );
+//      pb_investigator->setEnabled( false );
+      pb_profname    ->setEnabled( false );
    
 //      if ( !loaded_prof )
 //	emit set_tabs_buttons_inactive();
@@ -407,7 +407,7 @@ void US_AnaprofPanGen::savePanel()
 {
 DbgLv(1) << "APge: svP: IN";
    // Populate protocol controls from GUI settings
-   currProf->investigator = le_investigator->text();
+//   currProf->investigator = le_investigator->text();
 //   currProf->runname      = le_runid       ->text();
 //   currProf->protname     = le_protocol    ->text();
 //   currProf->project      = le_project     ->text();
@@ -668,15 +668,16 @@ void US_AnaprofPan2DSA::initPanel()
    ap2DSA             = &(mainw->currProf.ap2DSA);
 DbgLv(1) << "AP2d:   iP: IN";
 
+#if 0
    QList< int > dhms1;
    QList< int > dhms2;
    QList< int > dhms2a;
    QList< int > dhms3;
    
    // Populate GUI settings from protocol controls
-   nspeed               = ap2DSA ->nstep;
+//   nspeed               = ap2DSA ->nstep;
 //   curssx               = qMin( (nspeed-1), qMax( 0, cb_prof->currentIndex() ) );
-curssx=0;
+//curssx=0;
 DbgLv(1) << "AP2d:   iP: AA";
    double duration      = ap2DSA->ssteps[ curssx ].duration;
    double delay         = ap2DSA->ssteps[ curssx ].delay;
@@ -690,6 +691,7 @@ DbgLv(1) << "AP2d:   iP: BB";
    US_AnaProfParms::timeToList( delay_stage,    dhms2a );
    US_AnaProfParms::timeToList( scanintv, dhms3 );
 DbgLv(1) << "AP2d:   iP: CC";
+#endif
 
    bool was_changed     = changed;       // Save changed state
 #if 0
@@ -796,33 +798,9 @@ QString US_AnaprofPan2DSA::getSValue( const QString type )
 {
    QString value( "" );
 
-   if ( type == "nspeeds" )
+   if ( type == "what?" )
    {
-      value = QString::number( ssvals.count() );
-   }
-   else if ( type == "speed" )
-   {
-      value = QString::number( ssvals[ 0 ][ "speed" ] );
-   }
-   else if ( type == "accel" )
-   {
-      value = QString::number( ssvals[ 0 ][ "accel" ] );
-   }
-   else if ( type == "duration" )
-   {
-      US_AnaProfParms::timeToString( ssvals[ 0 ][ "duration" ], value );
-   }
-   else if ( type == "delay" )
-   {
-      US_AnaProfParms::timeToString( ssvals[ 0 ][ "delay" ], value );
-   }
-   else if ( type == "delay_stage" )
-   {
-      US_AnaProfParms::timeToString( ssvals[ 0 ][ "delay_stage" ], value );
-   }   
-   else if ( type == "scanintv" )
-   {
-      US_AnaProfParms::timeToString( ssvals[ 0 ][ "scanintv" ], value );
+      value = "what";
    }
    else if ( type == "changed" )
    {
