@@ -57,15 +57,13 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       US_AnaProfParms*    currProf;     // Current AnaProfParms controls
       US_Help  showHelp;
 
-      QPushButton* pb_investigator;     // Button to select investigator
-      QPushButton* pb_project;          // Button to select project
+      QPushButton* pb_profname;
+      QPushButton* pb_runID;
 
-      QLineEdit*   le_runid;            // Run name line edit
-      QLineEdit*   le_project;          // Project name line edit
-      QLineEdit*   le_investigator;     // Investigator line edit
-
-      QwtCounter*  ct_tempera;          // Temperature counter
-      QwtCounter*  ct_tedelay;          // Temp-equil-delay counter
+      QLineEdit*   le_profname;
+      QLineEdit*   le_runID;
+      QLineEdit*   le_loadconc;
+      QLineEdit*   le_lctoler;
 
       int          dbg_level;
       bool         use_db;              // Using the LIMS database?
@@ -105,21 +103,14 @@ class US_AnaprofPanEdit : public US_WidgetsDialog
       US_AnalysisProfile*  mainw;
       US_AnaProfParms::AProfParmsEdit*   apEdit;      // Edit controls
       US_Help  showHelp;
-      QComboBox* cb_lab;                              // Lab combo box
-      QComboBox* cb_calibr;                           // Calibration combo box
-      QComboBox* cb_operator;                         // Operator combo box
-      QComboBox* cb_exptype;                          // Exp. Type combo box
-      QComboBox*   cb_optima;
-      QStringList  sl_optimas;
       
-      QLineEdit *  le_instrument;
+      QLineEdit *  le_loadvol;
+      QLineEdit *  le_voltoler;
+      QLineEdit *  le_dataend;
       
       int         dbg_level;
-      int         nholes;          // Number of holes for current rotor
       bool        first_time_init;
-      int         curr_rotor;
       bool        changed;
-      //int         currentInstrumentID;
 
       QStringList            experimentTypes;
 
@@ -127,7 +118,7 @@ class US_AnaprofPanEdit : public US_WidgetsDialog
       
 };
 
-//! \brief Experiment Speeds panel
+//! \brief 2DSA controls panel
 class US_AnaprofPan2DSA : public US_WidgetsDialog 
 {
    Q_OBJECT 
@@ -155,56 +146,36 @@ class US_AnaprofPan2DSA : public US_WidgetsDialog
       US_AnaProfParms::AProfParms2DSA*   ap2DSA;    // 2DSA controls
       US_Help      showHelp;
 
-      QComboBox*   cb_prof;      // Choice: current speed step
-      QwtCounter*  ct_speed;     // Counter: step's rotor speed
-      QwtCounter*  ct_accel;     // Counter: step's acceleration
+      QPushButton* pb_custmg; 
+      QPushButton* pbp_custmg; 
 
-      QLineEdit*   le_maxrpm;    // Text line: max speed for current rotor
+      QLineEdit*   le_smin; 
+      QLineEdit*   le_smax; 
+      QLineEdit*   le_sgrpts; 
+      QLineEdit*   le_kmin; 
+      QLineEdit*   le_kmax; 
+      QLineEdit*   le_kgrpts; 
+      QLineEdit*   le_grreps; 
+      QLineEdit*   le_custmg; 
+      QLineEdit*   le_constk; 
+      QLineEdit*   lep_smin; 
+      QLineEdit*   lep_smax; 
+      QLineEdit*   lep_sgrpts; 
+      QLineEdit*   lep_kmin; 
+      QLineEdit*   lep_kmax; 
+      QLineEdit*   lep_kgrpts; 
+      QLineEdit*   lep_grreps; 
+      QLineEdit*   lep_custmg; 
+      QLineEdit*   lep_constk; 
 
-      QTimeEdit*   tm_delay;
-      QTimeEdit*   tm_durat;
-      QTimeEdit*   tm_scnint;
+      QCheckBox*   ck_varyvb;
+      QCheckBox*   ckp_varyvb;
 
-      QSpinBox*    sb_count;
-      QSpinBox*    sb_delay;
-      QSpinBox*    sb_durat;
-      QSpinBox*    sb_scnint;
+      QComboBox*   cbp_chnsel; 
 
-      QSpinBox*    sb_durat_dd;
-      QSpinBox*    sb_durat_hh;
-      QSpinBox*    sb_durat_mm;
-      QSpinBox*    sb_durat_ss;
-
-      QSpinBox*    sb_delay_dd;
-      QSpinBox*    sb_delay_hh;
-      QSpinBox*    sb_delay_mm;
-      QSpinBox*    sb_delay_ss;
-
-      QSpinBox*    sb_delay_st_dd;
-      QSpinBox*    sb_delay_st_hh;
-      QSpinBox*    sb_delay_st_mm;
-      QSpinBox*    sb_delay_st_ss;     
-
-      QSpinBox*    sb_scnint_dd;
-      QSpinBox*    sb_scnint_hh;
-      QSpinBox*    sb_scnint_mm;
-      QSpinBox*    sb_scnint_ss;
-
-      QCheckBox*   ck_endoff;
-      QCheckBox*   ck_radcal;
-      QCheckBox*   ck_sync_delay;
-
-      QVector< QString >  profdesc;              // Speed profile description
-      QVector< QMap< QString, double> >  ssvals; // Speed-step values
-
+      QStringList  sl_chnsel;
       int          dbg_level;     // Debug flag
-      int          nspeed;        // Number of speed steps
-      int          curssx;        // Current speed step index
       bool         changed;       // Flag if any speed step changes
-      QVector<int> scanint_ss_min;// Min value for ScanInt seconds Counter
-      QVector<int> scanint_mm_min;// Min value for ScanInt minutes Counter
-      QVector<int> scanint_hh_min;// Min value for ScanInt minutes Counter
-      QVector<int> delay_mm_min;  // Min value for Delay minutes Counter
       
    private slots:
       //! \brief Compose a speed step description
@@ -244,13 +215,28 @@ class US_AnaprofPanPCSA : public US_WidgetsDialog
       US_AnalysisProfile*   mainw;
       US_AnaProfParms::AProfParmsPCSA*   apPCSA;    // PCSA controls
       US_Help  showHelp;
-      QList< QLabel* >     cc_labls;   // Cell label object pointers
-      QList< QComboBox* >  cc_winds;   // Windows object pointers
-      QStringList          tcb_centps; // CPs paired w/ Titanium Counterbalance
+
+      QComboBox*   cb_curvtype;
+      QComboBox*   cb_xaxistyp;
+      QComboBox*   cb_yaxistyp;
+      QComboBox*   cb_zaxistyp;
+
+      QLineEdit*   le_xmin;
+      QLineEdit*   le_xmax;
+      QLineEdit*   le_ymin;
+      QLineEdit*   le_ymax;
+      QLineEdit*   le_zvalue;
+      QLineEdit*   le_varcount;
+      QLineEdit*   le_grfiters;
+      QLineEdit*   le_crpoints;
+      QLineEdit*   le_regparam;
+      QLineEdit*   le_mciters;
+
+      QCheckBox*   ck_tinoise;
+      QCheckBox*   ck_rinoise;
+
       bool         changed;
       int          dbg_level;
-      int          ncells;             // Number of cell rows
-      int          nused;              // Number of cell centerpieces given
 
    private slots:
 };
@@ -367,6 +353,8 @@ class US_AnalysisProfile : public US_Widgets
       int         getProfiles   ( QStringList&, QList< QStringList >& );
       // \brief Update the list of protocols with a newly named entry
       bool        updateProfiles( const QStringList );
+      // \brief Add a even-12-column spacing row
+      void        addColumnSpacing( QGridLayout* genL, int& row );
 
       US_AnaProfParms  loadProf;   // Prof params as loaded from AP record
       US_AnaProfParms  currProf;   // Current AnaProfParms controls
