@@ -34,8 +34,8 @@ class US_RunProtocol
             QString     rotor;         //!< Rotor description
             QString     calibration;   //!< Rotor Calibration description
 	    QString     exptype;
-	    QString     operatorname; 
-	    QString     instrumentname;
+	    QString     opername; 
+	    QString     instrname;
 	    
             QString     labGUID;       //!< Laboratory GUID
             QString     rotGUID;       //!< Rotor GUID

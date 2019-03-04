@@ -579,20 +579,31 @@ void US_ExperGuiRotor::initPanel()
    // Populate GUI settings from protocol controls
    bool was_changed     = changed;       // Save changed state
 DbgLv(1) << "EGRo: inP: was_changed" << was_changed;
+
+   QString cal_entr     = QString::number( rpRotor->calID ) + ": "
+                          + rpRotor->calibration;
+   QString rot_entr     = QString::number( rpRotor->rotID ) + ": "
+                          + rpRotor->rotor;
    setCbCurrentText( cb_lab,    QString::number( rpRotor->labID ) + ": "
                                 + rpRotor->laboratory );
-   setCbCurrentText( cb_rotor,  QString::number( rpRotor->rotID ) + ": "
-                                + rpRotor->rotor );
-   setCbCurrentText( cb_calibr, QString::number( rpRotor->calID ) + ": "
-                                + rpRotor->calibration );
+   setCbCurrentText( cb_rotor,  rot_entr );
+
+DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
+   if ( cb_calibr->findText( cal_entr ) < 0 )
+   {  // Repopulate calibration combo box to have current calibration
+      int rndx          = cb_rotor->findText( rot_entr );
+      changeRotor( rndx );
+   }
+
+   setCbCurrentText( cb_calibr,   cal_entr );
    setCbCurrentText( cb_operator, QString::number( rpRotor->operID ) + ": "
-                                + rpRotor->operatorname );
+                                + rpRotor->opername );
 
    // ALEXEY - do NOT initialize instrument info as it's dependent on connection, not on the protocol
    /* 
-    if ( !QString::number( rpRotor->instID ).isEmpty() && !rpRotor->instrumentname.isEmpty() )
+    if ( !QString::number( rpRotor->instID ).isEmpty() && !rpRotor->instrname.isEmpty() )
       le_instrument->setText( QString::number( rpRotor->instID ) + ": "
-    			     + rpRotor->instrumentname );
+    			     + rpRotor->instrname );
    */
    
    setCbCurrentText( cb_exptype,  rpRotor->exptype );
@@ -600,6 +611,7 @@ DbgLv(1) << "EGRo: inP: was_changed" << was_changed;
    changed              = was_changed;   // Restore changed state
 DbgLv(1) << "EGRo: inP:  rotID" << rpRotor->rotID << "rotor" << rpRotor->rotor
  << "cb_rotor text" << cb_rotor->currentText();
+DbgLv(1) << "EGRo: inP:   calID" << rpRotor->calID << "calib" << rpRotor->calibration;
 }
 
 
@@ -674,11 +686,11 @@ void US_ExperGuiRotor::savePanel()
    rpRotor->laboratory  = QString( lab ).section( ":", 1, 1 ).simplified();
    rpRotor->rotor       = QString( rot ).section( ":", 1, 1 ).simplified();
 
-   qDebug() << "NAME OF THE ROTOR IN SAVE: rot, rpRotor->rotor: " << rot << ", "  << rpRotor->rotor;
+qDebug() << "NAME OF THE ROTOR IN SAVE: rot, rpRotor->rotor: " << rot << ", "  << rpRotor->rotor;
 
    rpRotor->calibration = QString( cal ).section( ":", 1, 1 ).simplified();
-   rpRotor->operatorname = QString( oper ).section( ":", 1, 1 ).simplified();
-   rpRotor->instrumentname = QString( instr ).section( ":", 1, 1 ).simplified();
+   rpRotor->opername    = QString( oper ).section( ":", 1, 1 ).simplified();
+   rpRotor->instrname   = QString( instr ).section( ":", 1, 1 ).simplified();
    
    rpRotor->labID       = QString( lab ).section( ":", 0, 0 ).toInt();
    rpRotor->rotID       = QString( rot ).section( ":", 0, 0 ).toInt();
@@ -688,10 +700,10 @@ void US_ExperGuiRotor::savePanel()
 
    rpRotor->exptype     = exptype;
 
-   qDebug() << "OPERATORID / INSTRUMENT / ExpType in SAVE: "
-	    <<  rpRotor->operID  << ", " << rpRotor->operatorname << " / "
-	    <<  rpRotor->instID  << ", " << rpRotor->instrumentname  << " / "
-	    <<  rpRotor->exptype;
+qDebug() << "OPERATORID / INSTRUMENT / ExpType in SAVE: "
+         <<  rpRotor->operID  << ", " << rpRotor->opername << " / "
+         <<  rpRotor->instID  << ", " << rpRotor->instrname  << " / "
+         <<  rpRotor->exptype;
    
    
 DbgLv(1) << "EGRo:  svP:  rotID" << rpRotor->rotID << "rotor" << rpRotor->rotor
@@ -719,7 +731,11 @@ DbgLv(1) << "EGRo:  svP:  rotID" << rpRotor->rotID << "rotor" << rpRotor->rotor
    for ( int ii = 0; ii < calibs.count(); ii++ )
    {
       if ( rpRotor->calID == calibs[ ii ].ID )
+      {
+DbgLv(1) << "EGRo:  svP:  calGUID was" << rpRotor->calGUID;
          rpRotor->calGUID  = calibs[ ii ].GUID;
+DbgLv(1) << "EGRo:  svP:  calndx" << ii << "calGUID" << rpRotor->calGUID;
+      }
    }
 
    qDebug() << "Rotor Save panel Done: " ;
@@ -1259,7 +1275,7 @@ DbgLv(1) << "EGCe:svP:    centp" << centp;
          if ( ii != icbal )                               //ALEXEY - change needed
          {
             rpCells->used[ jj ].centerpiece = centp;
-            rpCells->used[ jj ].cbalance    = "(centerpiece)";
+            rpCells->used[ jj ].cbalance    = "";
             rpCells->used[ jj ].windows     = cc_winds[ ii ]->currentText();
          }
          else
@@ -1269,13 +1285,13 @@ DbgLv(1) << "EGCe:svP:    centp" << centp;
 	   if ( ! centp.contains( tr( "counterbalance" ) ) )
 	     {
 	       rpCells->used[ jj ].centerpiece = centp;
-	       rpCells->used[ jj ].cbalance    = "(centerpiece)";
+	       rpCells->used[ jj ].cbalance    = "";
 	       rpCells->used[ jj ].windows     = cc_winds[ ii ]->currentText();
 	     }
 	   else
 	     {     
 	       rpCells->used[ jj ].cbalance    = centp;
-	       rpCells->used[ jj ].centerpiece = "(counterbalance)";
+	       rpCells->used[ jj ].centerpiece = "";
 	       rpCells->used[ jj ].windows     = "";
 	     }
 	 }
@@ -1415,7 +1431,7 @@ DbgLv(1) << "EGCe:getSL:     ii" << ii << " Entry" << centry;
 
  //if ( icell >= icbal )   continue;                   // Skip counterbal.      //ALEXEY bug
 
-         if ( icell > icbal && rpCells->used[ ii ].cbalance.contains( tr( "countebalance" ) ) )
+         if ( icell > icbal && rpCells->used[ ii ].cbalance.contains( tr( "counterbalance" ) ) )
 	   continue;                                             // Skip counterbal. ONLY if it's NOT centerpiece
 	 
 	 
