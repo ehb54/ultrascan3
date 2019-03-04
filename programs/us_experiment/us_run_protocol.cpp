@@ -23,19 +23,32 @@ US_RunProtocol::US_RunProtocol()
 // RunProtocol Equality operator
 bool US_RunProtocol::operator== ( const US_RunProtocol& rp ) const
 {
+qDebug() << "RP:eq?";
    if ( investigator != rp.investigator )  return false;
+qDebug() << "RP: EQ inv";
    if ( protname     != rp.protname     )  return false;
+qDebug() << "RP: EQ pnm";
    if ( pGUID        != rp.pGUID        )  return false;
+qDebug() << "RP: EQ pgu";
    if ( optimahost   != rp.optimahost   )  return false;
+qDebug() << "RP: EQ oho";
    if ( temperature  != rp.temperature  )  return false;
+qDebug() << "RP: EQ tem";
    if ( temeq_delay  != rp.temeq_delay  )  return false;
+qDebug() << "RP: EQ dly";
 
    if ( rpRotor      != rp.rpRotor      )  return false;
+qDebug() << "RP: EQ ROT";
    if ( rpSpeed      != rp.rpSpeed      )  return false;
+qDebug() << "RP: EQ SPD";
    if ( rpCells      != rp.rpCells      )  return false;
+qDebug() << "RP: EQ CEL";
    if ( rpSolut      != rp.rpSolut      )  return false;
+qDebug() << "RP: EQ SOL";
    if ( rpOptic      != rp.rpOptic      )  return false;
+qDebug() << "RP: EQ OPT";
    if ( rpRange      != rp.rpRange      )  return false;
+qDebug() << "RP: EQ RNG";
 
    return true;
 }
@@ -90,10 +103,10 @@ bool US_RunProtocol::fromXml( QXmlStreamReader& xmli )
          if ( ename == "protocol" )
          {
             QXmlStreamAttributes attr = xmli.attributes();
-	    //ALEXEY: project
-	    project         = attr.value( "project"  ).toString();
-	    projectID       = attr.value( "projectid"  ).toInt();
-	    
+            //ALEXEY: project
+            project         = attr.value( "project"  ).toString();
+            projectID       = attr.value( "projectid"  ).toInt();
+
             protname        = attr.value( "description"  ).toString();
             pGUID           = attr.value( "guid"         ).toString();
             optimahost      = attr.value( "optima_host"  ).toString();
@@ -238,10 +251,18 @@ US_RunProtocol::RunProtoRotor::RunProtoRotor()
 bool US_RunProtocol::RunProtoRotor::operator== 
                   ( const RunProtoRotor& rp ) const
 {
+qDebug() << "RP:ROT: labG" << labGUID << rp.labGUID;
+qDebug() << "RP:ROT: rotG" << rotGUID << rp.rotGUID;
+qDebug() << "RP:ROT: calG" << calGUID << rp.calGUID;
+qDebug() << "RP:ROT: absG" << absGUID << rp.absGUID;
    if ( labGUID != rp.labGUID ) return false;
+qDebug() << "RP:ROT: EQ labG";
    if ( rotGUID != rp.rotGUID ) return false;
+qDebug() << "RP:ROT: EQ rotG";
    if ( calGUID != rp.calGUID ) return false;
+qDebug() << "RP:ROT: EQ calG";
    if ( absGUID != rp.absGUID ) return false;
+qDebug() << "RP:ROT: EQ absG";
 
    return true;
 }
@@ -270,11 +291,11 @@ bool US_RunProtocol::RunProtoRotor::fromXml( QXmlStreamReader& xmli )
             calGUID     = attr.value( "calguid"     ).toString();
             absGUID     = attr.value( "absguid"     ).toString();
 
-	    exptype     = attr.value( "exptype"     ).toString();
-	    operatorname = attr.value( "opername"   ).toString();
-	    operID      = attr.value( "operid"       ).toString().toInt();
-	    instID      = attr.value( "instid"       ).toString().toInt();
-	    instrumentname  = attr.value( "instname" ).toString();;
+            exptype     = attr.value( "exptype"     ).toString();
+            opername    = attr.value( "opername"   ).toString();
+            operID      = attr.value( "operid"       ).toString().toInt();
+            instID      = attr.value( "instid"       ).toString().toInt();
+            instrname   = attr.value( "instname" ).toString();;
          }
 
          else
@@ -304,9 +325,9 @@ bool US_RunProtocol::RunProtoRotor::toXml( QXmlStreamWriter& xmlo )
    xmlo.writeAttribute( "absid",       QString::number( absID ) );
 
    xmlo.writeAttribute( "instid",      QString::number( instID ) );
-   xmlo.writeAttribute( "instname",    instrumentname );
+   xmlo.writeAttribute( "instname",    instrname );
    xmlo.writeAttribute( "operid",      QString::number( operID ) );
-   xmlo.writeAttribute( "opername",    operatorname );
+   xmlo.writeAttribute( "opername",    opername );
    xmlo.writeAttribute( "exptype",     exptype );
    
    xmlo.writeAttribute( "labguid",     labGUID );
@@ -479,8 +500,11 @@ bool US_RunProtocol::RunProtoCells::operator==
                   ( const RunProtoCells& rp ) const
 {
    if ( ncell  != rp.ncell ) return false;
+qDebug() << "RP:CEL: EQ nce" << ncell << rp.ncell;
    if ( nused  != rp.nused ) return false;
+qDebug() << "RP:CEL: EQ nus" << nused << rp.nused;
    if ( used   != rp.used  ) return false;
+qDebug() << "RP:CEL: EQ use";
 
    return true;
 }
@@ -512,6 +536,8 @@ bool US_RunProtocol::RunProtoCells::fromXml( QXmlStreamReader& xmli )
             cu.centerpiece = attr.value( "centerpiece"    ).toString();
             cu.windows     = attr.value( "windows"        ).toString();
             cu.cbalance    = attr.value( "counterbalance" ).toString();
+qDebug() << "fX:cel: cel cen win bal"
+ << cu.cell << cu.centerpiece << cu.windows << cu.cbalance;
             used << cu;
          }
       }
@@ -544,19 +570,19 @@ bool US_RunProtocol::RunProtoCells::toXml( QXmlStreamWriter& xmlo )
       //    xmlo.writeAttribute( "windows",        used[ ii ].windows     );
       // }
       if ( used[ ii ].cell != ncell )
-       {
-          xmlo.writeAttribute( "centerpiece",    used[ ii ].centerpiece );
-          xmlo.writeAttribute( "windows",        used[ ii ].windows     );
-       }           
+      {
+         xmlo.writeAttribute( "centerpiece",    used[ ii ].centerpiece );
+         xmlo.writeAttribute( "windows",        used[ ii ].windows     );
+      }           
       else
       {
-	if ( used[ ii ].cbalance.contains( "centerpiece"  ) )
-	  {
-	    xmlo.writeAttribute( "centerpiece",    used[ ii ].centerpiece );
-	    xmlo.writeAttribute( "windows",        used[ ii ].windows     );
-	  }
-	else
-	  xmlo.writeAttribute( "counterbalance", used[ ii ].cbalance    );   // ALEXEY: not always counterbalance
+         if ( used[ ii ].cbalance.contains( "centerpiece"  ) )
+         {
+            xmlo.writeAttribute( "centerpiece",    used[ ii ].centerpiece );
+            xmlo.writeAttribute( "windows",        used[ ii ].windows     );
+         }
+         else
+            xmlo.writeAttribute( "counterbalance", used[ ii ].cbalance    );   // ALEXEY: not always counterbalance
       }
       xmlo.writeEndElement(); // cell
    }
@@ -579,10 +605,18 @@ US_RunProtocol::RunProtoCells::CellUse::CellUse()
 bool US_RunProtocol::RunProtoCells::CellUse::operator==
                   ( const CellUse& c ) const
 {
+qDebug() << "RP: CU: cel" << cell << c.cell;
+qDebug() << "RP: CU: cen" << centerpiece << c.centerpiece;
+qDebug() << "RP: CU: win" << windows << c.windows;
+qDebug() << "RP: CU: bal" << cbalance << c.cbalance;
    if ( cell        != c.cell        ) return false;
+qDebug() << "RP: CU: EQ cel";
    if ( centerpiece != c.centerpiece ) return false;
+qDebug() << "RP: CU: EQ cen";
    if ( windows     != c.windows     ) return false;
+qDebug() << "RP: CU: EQ win";
    if ( cbalance    != c.cbalance    ) return false;
+qDebug() << "RP: CU: EQ bal";
 
    return true;
 }
@@ -602,10 +636,26 @@ US_RunProtocol::RunProtoSolutions::RunProtoSolutions()
 bool US_RunProtocol::RunProtoSolutions::operator== 
                   ( const RunProtoSolutions& rp ) const
 {
+qDebug() << "RP:SOL: nch" << nschan << rp.nschan;
+qDebug() << "RP:SOL: nun" << nuniqs << rp.nuniqs;
+qDebug() << "RP:SOL: chs"
+ << chsols[0].channel   << rp.chsols[0].channel
+ << chsols[0].solution  << rp.chsols[0].solution
+ << chsols[0].sol_id    << rp.chsols[0].sol_id
+ << chsols[0].ch_comment<< rp.chsols[0].ch_comment;
+//            cs.channel     = attr.value( "channel"      ).toString();
+//            cs.solution    = attr.value( "name"         ).toString();
+//            cs.sol_id      = attr.value( "id"           ).toString();
+//            cs.ch_comment  = attr.value( "chan_comment" ).toString();
+qDebug() << "RP:SOL: sid" << sids << rp.sids;
    if ( nschan != rp.nschan ) return false;
+qDebug() << "RP:SOL: EQ nsc";
    if ( nuniqs != rp.nuniqs ) return false;
+qDebug() << "RP:SOL: EQ nun";
    if ( chsols != rp.chsols ) return false;
+qDebug() << "RP:SOL: EQ chs";
    if ( sids   != rp.sids   ) return false;
+qDebug() << "RP:SOL: EQ sid";
 
    return true;
 }
@@ -716,7 +766,9 @@ bool US_RunProtocol::RunProtoOptics::operator==
                   ( const RunProtoOptics& rp ) const
 {
    if ( nochan != rp.nochan ) return false;
+qDebug() << "RP:OPT: EQ nch";
    if ( chopts != rp.chopts ) return false;
+qDebug() << "RP:OPT: EQ cho";
 
    return true;
 }
@@ -812,7 +864,9 @@ bool US_RunProtocol::RunProtoRanges::operator==
                   ( const RunProtoRanges& rp ) const
 {
    if ( nranges != rp.nranges  ) return false;
+qDebug() << "RP:RNG: EQ nrn";
    if ( chrngs  != rp.chrngs )   return false;
+qDebug() << "RP:RNG: EQ chr";
 
    return true;
 }
