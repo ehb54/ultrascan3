@@ -45,7 +45,7 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
 
       // Create tab and panel widgets
    tabWidget           = us_tabwidget();
-   
+
    tabWidget->setTabPosition( QTabWidget::North );
 
    epanGeneral         = new US_ExperGuiGeneral  ( this );
@@ -100,7 +100,7 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
 
    connect( epanUpload, SIGNAL( expdef_submitted( QMap < QString, QString > &) ),
             this,       SLOT  ( optima_submitted( QMap < QString, QString > & ) ) );
-   
+
 
    main->addWidget( tabWidget );
    main->addLayout( statL );
@@ -121,7 +121,7 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    //epanGeneral->update_inv();
    epanGeneral->check_user_level();
    epanGeneral->check_runname();
-   
+
    reset();
 }
 
@@ -133,7 +133,7 @@ void US_ExperimentMain::reset( void )
 
 void US_ExperimentMain::auto_mode_passed( void )
 {
-  qDebug() << "AUTOMODE SIGNAL: "; 
+  qDebug() << "AUTOMODE SIGNAL: ";
   automode = true;
   //epanUpload->reinitPanel();
   epanUpload->     pb_connect->hide();
@@ -141,16 +141,16 @@ void US_ExperimentMain::auto_mode_passed( void )
   epanUpload->genL->addWidget( epanUpload->pb_details, 1,   0, 1, 4 );
   epanUpload->genL->addWidget( epanUpload->pb_submit,  1,   4, 1, 8 );
 
-    
+
   this->pb_close->hide();
- 
+
 }
 
 // Reset parameters to their defaults
 void US_ExperimentMain::close_program( void )
 {
-  
-    
+
+
   emit us_exp_is_closed();
   close();
 }
@@ -200,7 +200,7 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
 
    le_runid->setPlaceholderText("Enter Run ID to continue");
    le_project->setPlaceholderText("Select Project to continue");
-   
+
    ct_tempera->setSingleStep( 1 );
    ct_tempera->setValue     ( 20 );
    ct_tempera->adjustSize   ();
@@ -244,9 +244,9 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
    genL->addWidget( lb_tedelay,      row,   0, 1, 3 );
    genL->addWidget( ct_tedelay,      row,   3, 1, 2 );
    genL->addWidget( lb_tedmins,      row++,   5, 1, 1 );
-   
+
    genL->addItem  ( spacer2,         row++, 6, 1, 2 );
-   
+
    panel->addLayout( genL );
    panel->addStretch();
 
@@ -255,11 +255,11 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
             this,            SLOT(   check_empty_runname(const QString &) ) );
    connect( le_runid,        SIGNAL( editingFinished()  ),
             this,            SLOT(   run_name_entered() ) );
-   connect( pb_project,      SIGNAL( clicked()          ), 
+   connect( pb_project,      SIGNAL( clicked()          ),
             this,            SLOT(   sel_project()      ) );
-   connect( pb_investigator, SIGNAL( clicked()          ), 
+   connect( pb_investigator, SIGNAL( clicked()          ),
             this,            SLOT(   sel_investigator() ) );
-   connect( pb_protocol,     SIGNAL( clicked()          ), 
+   connect( pb_protocol,     SIGNAL( clicked()          ),
             this,            SLOT(   load_protocol()    ) );
    connect( le_protocol,     SIGNAL( editingFinished()  ),
             this,            SLOT(   changed_protocol() ) );
@@ -282,7 +282,7 @@ DbgLv(1) << "EGGe: main : prnames,prdata counts" << pr_names.count() << protdata
  mainw->solutions_change = false;
 
  //check_runname();
- 
+
    // Do the initialization we do at panel entry
    initPanel();
 }
@@ -343,7 +343,7 @@ DbgLv(1) << "EGGe: rchg: old_rname" << old_rname;
    rname.replace( rx,  "_" );
 DbgLv(1) << "EGGe: rchg:     rname" << rname;
    bool changed      = false;
-   
+
    if ( rname != old_rname )
    {  // Report on invalid characters replaced
       QMessageBox::warning( this,
@@ -395,9 +395,9 @@ void US_ExperGuiGeneral::sel_investigator( void )
 {
    int investID     = US_Settings::us_inv_ID();
    int old_investID  = investID;
-   
+
    qDebug() << "Old invID: " << investID;
-   
+
    US_Investigator* dialog = new US_Investigator( true, investID );
    dialog->exec();
 
@@ -408,7 +408,7 @@ void US_ExperGuiGeneral::sel_investigator( void )
 
    currProto->investigator  = inv_text;
    le_investigator->setText( inv_text );
-   
+
    DbgLv(1) << "User Level: " << US_Settings::us_inv_level();
    qDebug() << "NEW invID: " << investID;
 
@@ -417,18 +417,18 @@ void US_ExperGuiGeneral::sel_investigator( void )
    if (investID != old_investID)
      {
        mainw->solutions_change = true;
-       
+
        bool fromdisk         = US_Settings::debug_match( "protocolFromDisk" );
        bool load_db          = fromdisk ? false : use_db;
        US_Passwd  pw;
        US_DB2* dbP           = load_db ? new US_DB2( pw.getPasswd() ) : NULL;
-       
+
        US_ProtocolUtil::list_all( protdata, dbP );
-       
+
        for ( int ii = 0; ii < protdata.count(); ii++ )
           pr_names << protdata[ ii ][ 0 ];
        DbgLv(1) << "EGGe: main : prnames,prdata counts" << pr_names.count() << protdata.count();
-       
+
        // Reset and Initialize
        currProto->runname      = "";
        currProto->protname     = "";
@@ -439,7 +439,7 @@ void US_ExperGuiGeneral::sel_investigator( void )
      }
 
    check_runname();
-      
+
 }
 
 
@@ -479,7 +479,7 @@ DbgLv(1) << "EGGe:ldPro: Disk-B: load_db" << load_db;
    //US_SelectItem pdiag( protdata, hdrs, pdtitle, &prx, -2 );
    US_SelectItem* pdiag = new  US_SelectItem( protdata, hdrs, pdtitle, &prx, delete_button, -2 );  //ALEXEY <-- wit Delete button and functionality
 
-   connect( pdiag, SIGNAL( accept_deletion() ), this, SLOT( update_protdata() )); 
+   connect( pdiag, SIGNAL( accept_deletion() ), this, SLOT( update_protdata() ));
 
    if ( pdiag->exec() == QDialog::Accepted )
    {  // Accept in dialog:  get selected protocol name and its XML
@@ -522,7 +522,7 @@ DbgLv(1) << "EGGe:ldPro:    cTempe" << mainw->currProto.temperature
  QString rname     = le_runid->text();
  if ( !rname.isEmpty() )
    mainw->currProto.runname = rname;
- 
+
  loaded_proto = 1;
    // Initialize all other panels using the new protocol
    mainw->initPanels();
@@ -568,7 +568,7 @@ void US_ExperGuiGeneral::changed_protocol( void )
    }
    else
       currProto->protname  = protname;
- 
+
 }
 
 // Capture selected project information
@@ -639,7 +639,7 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
 
    QLabel*      lb_operator   = us_label( tr( "Select Operator:" ) );
                 cb_operator   = new QComboBox( this );
-   
+
    QLabel*      lb_exptype    = us_label( tr( "Experiment Type:" ) );
                 cb_exptype    = new QComboBox( this );
 
@@ -657,19 +657,19 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
 
    genL->addItem  ( spacer1,         row++, 0, 1, 4 );
    genL->addWidget( lb_optima_banner,row++, 0, 1, 4 );
-   
-   
+
+
    genL->addWidget( lb_instrument,         row,     0, 1, 1 );
    genL->addWidget( cb_optima,             row,     1, 1, 1 );
    genL->addWidget( lb_optima_connected,   row,     2, 1, 1 );
    genL->addWidget( le_optima_connected,   row++,   3, 1, 1 );
-   
+
    genL->addWidget( lb_operator,        row,     0, 1, 1 );
    genL->addWidget( cb_operator,        row++,   1, 1, 1 );
 
    genL->addWidget( lb_exptype,         row,     0, 1, 1 );
-   genL->addWidget( cb_exptype,         row++,   1, 1, 1 );   
-   
+   genL->addWidget( cb_exptype,         row++,   1, 1, 1 );
+
    panel->addLayout( genL );
    panel->addStretch();
 
@@ -698,11 +698,10 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
             this,         SLOT  ( advRotor() ) );
 
    first_time_init = true;
-   curr_rotor = 0;
-   //changeLab( 0 );
+   curr_rotor      = 0;
    changeLab( curr_rotor );
    savePanel();
-   changed             = false;
+   changed         = false;
 
    initPanel();
 
@@ -743,7 +742,7 @@ DbgLv(1) << "EGR: chgLab labID desc" << labID << descr;
    {
       if ( rotors[ ii ].name.contains("Simulation", Qt::CaseSensitive) )   //ALEXEY do not include 'Simulation' rotor
          continue;
-     
+
       sl_rotors << QString::number( rotors[ ii ].ID )
                  + ": " + rotors[ ii ].name;
    }
@@ -767,12 +766,12 @@ DbgLv(1) << "EGR: chgLab   rot_ent" << rot_ent << "rndx" << rndx;
    US_Rotor::Lab lab_selected;
    lab_selected.readDB( labID, dbP );
    instruments = lab_selected.instruments;
-   
+
    //Instruments
    sl_optimas.clear();
    foreach ( US_Rotor::Instrument instrument, instruments )
    {
-      if(instrument.name.contains("Optima")) 
+      if(instrument.name.contains("Optima"))
          sl_optimas << QString::number( instrument.ID )
                        + ": " + instrument.name;
    }
@@ -783,7 +782,7 @@ DbgLv(1) << "EGR: chgLab   rot_ent" << rot_ent << "rndx" << rndx;
             this,         SLOT  ( changeOptima   ( int ) ) );
 
    changeOptima(0);
- 
+
    //ExpType
    experimentTypes.clear();
    cb_exptype->clear();
@@ -838,9 +837,9 @@ void US_ExperGuiRotor::changeOptima( int ndx )
    }
    cb_operator->clear();
    cb_operator->addItems( sl_operators );
-   
-   changeOperator(0); 
-      
+
+   changeOperator(0);
+
    test_optima_connection();
 }
 
@@ -899,23 +898,19 @@ DbgLv(1) << "EGR: chgRotor calibs count" << calibs.count();
    }
 
    cb_calibr->addItems( sl_calibs );
-#if 0
-   int lndx            = calibs.count() - 1;
-   if ( lndx >= 0 )
-      cb_calibr->setCurrentIndex( lndx );
-#endif
-   QString calibent    = QString::number( rpRotor->calID ) + ": " + rpRotor->calibration;
-   int cndx            = qMax( sl_calibs.indexOf( calibent ), 0 );
+
+   QString calib_ent   = QString::number( rpRotor->calID ) + ": " + rpRotor->calibration;
+   int cndx            = qMax( sl_calibs.indexOf( calib_ent ), 0 );
    cb_calibr->setCurrentIndex( cndx );
 
-   if ( !first_time_init && changed && curr_rotor != ndx )
+   if ( !first_time_init  &&  changed  &&  ( curr_rotor != ndx ) )
    {
       QMessageBox::information( this,
          tr( "NOTE:  Rotor Changed" ),
          tr( "Cells and all subsequent tabs will be reset upon initialization."));
    }
 
-   curr_rotor = ndx;
+   curr_rotor          = ndx;
 }
 
 // Slot for change in Calibration selection
@@ -946,7 +941,7 @@ DbgLv(1) << "EGR: advR: IN rID cID" << rotor.ID << calibr.ID;
 
    connect( rotorInfo, SIGNAL( RotorCalibrationSelected(
                           US_Rotor::Rotor&, US_Rotor::RotorCalibration& ) ),
-            this,      SLOT  ( advRotorChanged( 
+            this,      SLOT  ( advRotorChanged(
                           US_Rotor::Rotor&, US_Rotor::RotorCalibration& ) ) );
 
    rotorInfo->exec();
@@ -1034,7 +1029,7 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    QLabel* lb_panel    = us_banner( tr( "3: Specify speed steps" ) );
    panel->addWidget( lb_panel );
    QGridLayout* genL   = new QGridLayout();
-   
+
    // Labels
    QLabel*  lb_count   = us_label( tr( "Number of Speed Profiles:" ) );
    QLabel*  lb_speed   = us_label( tr( "Rotor Speed (rpm):" ) );
@@ -1052,7 +1047,7 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
 
    connect( ck_sync_delay, SIGNAL( toggled     ( bool ) ),
                this,       SLOT  ( syncdelayChecked( bool ) ) );
-   
+
    QLayout* lo_endoff  = us_checkbox( tr( "Spin down centrifuge at job end" ),
                                       ck_endoff, true );
    QLayout* lo_radcal  = us_checkbox( tr( "Perform radial calibration" ),
@@ -1075,21 +1070,21 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
     //                       = us_timeedit( tm_delay,  0, &sb_delay  );
     // QHBoxLayout* lo_scnint
     //                       = us_timeedit( tm_scnint, 0, &sb_scnint );
-   
-   
+
+
    QHBoxLayout* lo_duratlay        = us_ddhhmmsslay( 0, 0,0,0,1, &sb_durat_dd, &sb_durat_hh, &sb_durat_mm,  &sb_durat_ss ); // ALEXEY 0 - visible, 1 - hidden
    QHBoxLayout* lo_delaylay_stage  = us_ddhhmmsslay( 0, 0,0,0,1, &sb_delay_st_dd, &sb_delay_st_hh, &sb_delay_st_mm,  &sb_delay_st_ss );
    QHBoxLayout* lo_delaylay        = us_ddhhmmsslay( 0, 0,0,0,1, &sb_delay_dd, &sb_delay_hh, &sb_delay_mm,  &sb_delay_ss );
 
    sb_delay_st_dd->setEnabled(false);
-   
+
    sb_delay_dd->setEnabled(false);
    sb_delay_hh->setEnabled(false);
    sb_delay_mm->setEnabled(false);
    QHBoxLayout* lo_scnintlay       = us_ddhhmmsslay( 0, 0,0,0,0, &sb_scnint_dd, &sb_scnint_hh, &sb_scnint_mm,  &sb_scnint_ss );
 
    sb_scnint_dd->setEnabled(false);
-   
+
    le_maxrpm           = us_lineedit( tr( "Maximum speed for AN50 rotor:"
                                           "  50000 rpm" ), 0, true );
 
@@ -1105,7 +1100,7 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
 
    double df_scint     = rpSpeed->ssteps[ 0 ].scanintv; //ALEXEY read default scanint in secs corresponding to default RPM
    double df_scint_min = rpSpeed->ssteps[ 0 ].scanintv_min;
-   
+
    QList< int > dhms_dur;
    QList< int > dhms_dly;
    QList< int > dhms_dly_stage;
@@ -1127,17 +1122,17 @@ DbgLv(1) << "EGSp:   def  d h m s " << dhms_dly;
    scanint_hh_min.resize( nspeed );
    delay_mm_min  .resize( nspeed );
 
-   
+
    ssvals[ 0 ][ "speed" ]    = df_speed;  // Speed default
    ssvals[ 0 ][ "accel" ]    = df_accel;  // Acceleration default
    ssvals[ 0 ][ "duration" ] = df_duratm; // Duration in seconds default (5h 30m)
    ssvals[ 0 ][ "delay" ]    = df_delatm; // Delay to 1st scan in seconds default (2m 30s) DUE to acceleration
 
-   ssvals[ 0 ][ "delay_stage" ]  = df_delatm_stage; // Delay of the stage in seconds 
+   ssvals[ 0 ][ "delay_stage" ]  = df_delatm_stage; // Delay of the stage in seconds
 
    ssvals[ 0 ][ "scanintv" ]     = df_scint;  //ALEXEY
    ssvals[ 0 ][ "scanintv_min" ] = df_scint_min;  //ALEXEY
-   
+
    // Set up counters and profile description
    ct_speed ->setSingleStep( 100 );
    ct_accel ->setSingleStep(  50 );
@@ -1167,25 +1162,25 @@ DbgLv(1) << "EGSp: init sb/de components";
    sb_delay_st_dd ->setValue( (int)dhms_dly_stage[ 0 ] );
    sb_delay_st_hh ->setValue( (int)dhms_dly_stage[ 1 ] );
    sb_delay_st_mm ->setValue( (int)dhms_dly_stage[ 2 ] );
-   sb_delay_st_ss ->setValue( (int)dhms_dly_stage[ 3 ] );   
+   sb_delay_st_ss ->setValue( (int)dhms_dly_stage[ 3 ] );
 
-   
-   // sb_scnint->setValue( 0 );                    //ALEXEY  
+
+   // sb_scnint->setValue( 0 );                    //ALEXEY
    // tm_scnint->setTime ( QTime( 0, 0 ) );
-   
+
    sb_scnint_hh ->setMinimum( (int)hms_scint[ 1 ] );
    sb_scnint_mm ->setMinimum( (int)hms_scint[ 2 ] );
    sb_scnint_ss ->setMinimum( (int)hms_scint[ 3 ] );
-   
+
    sb_scnint_dd ->setValue( 0 );
    sb_scnint_hh ->setValue( (int)hms_scint[ 1 ] );
    sb_scnint_mm ->setValue( (int)hms_scint[ 2 ] );
    sb_scnint_ss ->setValue( (int)hms_scint[ 3 ] );
-   
+
    scanint_ss_min[0] = (int)hms_scint[ 3 ];
    scanint_mm_min[0] = (int)hms_scint[ 2 ];
    scanint_hh_min[0] = (int)hms_scint[ 1 ];
-   
+
 DbgLv(1) << "EGSp: DONE init sb/de components";
 
    // Speed profile 1 description;
@@ -1226,8 +1221,8 @@ DbgLv(1) << "EGSp: addWidg/Layo DD";
   genL->addLayout( lo_delaylay_stage, row++,  5, 1,  1 );
   genL->addLayout( lo_delay_stage_sync, row++,0, 1,  5 );
 
-  
-  
+
+
 DbgLv(1) << "EGSp: addWidg/Layo EE";
   genL->addWidget( lb_scnint,  row,    0, 1,  5 );
 DbgLv(1) << "EGSp: addWidg/Layo FF";
@@ -1240,7 +1235,7 @@ DbgLv(1) << "EGSp: addWidg/Layo HH";
    genL->addLayout( lo_endoff,  row,    0, 1,  4 );
 DbgLv(1) << "EGSp: addWidg/Layo II";
    genL->addLayout( lo_radcal,  row++,  4, 1,  4 );
-   
+
    genL->setColumnStretch(  0, 4 );
    genL->setColumnStretch(  1, 4 );
    genL->setColumnStretch(  2, 4 );
@@ -1269,7 +1264,7 @@ DbgLv(1) << "EGSp: addWidg/Layo II";
    // connect( tm_delay,  SIGNAL( timeChanged    ( const QTime& ) ),
    //          this,      SLOT  ( ssChgDelayTime ( const QTime& ) ) );
 
-   connect( sb_durat_dd,  SIGNAL( valueChanged   ( int ) ),               
+   connect( sb_durat_dd,  SIGNAL( valueChanged   ( int ) ),
             this,         SLOT  ( ssChgDuratDay  ( int ) ) );
    connect( sb_durat_hh,  SIGNAL( valueChanged   ( int ) ),
             this,         SLOT  ( ssChgDuratTime_hh ( int ) ) );
@@ -1290,16 +1285,16 @@ DbgLv(1) << "EGSp: addWidg/Layo II";
    connect( sb_delay_st_hh,  SIGNAL( valueChanged   ( int ) ),
             this,         SLOT  ( ssChgDelayStageTime_hh ( int ) ) );
    connect( sb_delay_st_mm,  SIGNAL( valueChanged   ( int ) ),
-            this,         SLOT  ( ssChgDelayStageTime_mm ( int ) ) );  
+            this,         SLOT  ( ssChgDelayStageTime_mm ( int ) ) );
 
    connect( sb_scnint_hh, SIGNAL( valueChanged   ( int ) ),
             this,         SLOT  ( ssChgScIntTime_hh ( int ) ) );
    connect( sb_scnint_mm, SIGNAL( valueChanged   ( int ) ),
             this,         SLOT  ( ssChgScIntTime_mm ( int ) ) );
    connect( sb_scnint_ss, SIGNAL( valueChanged   ( int ) ),
-            this,         SLOT  ( ssChgScIntTime_ss ( int ) ) ); 
+            this,         SLOT  ( ssChgScIntTime_ss ( int ) ) );
 
-   
+
 DbgLv(1) << "EGSp: addWidg/Layo II";
 
    // Complete overall layout
@@ -1325,18 +1320,18 @@ QString US_ExperGuiSpeeds::speedp_description( int ssx )
    // double durmin  = durtim - ( durhr * 60.0 );   // Duration residual minutes
    double durmin  = (durtim / 60.0) - ( durhr * 60.0 );   // Duration residual minutes
 
-   //int    escans  = qRound( durtim * 6.0 );      // Estimated step scans             //ALEXEY: 6 scans per minute ??? 
+   //int    escans  = qRound( durtim * 6.0 );      // Estimated step scans             //ALEXEY: 6 scans per minute ???
    //int    escans  = qRound( (durtim / 60.0) * 6.0 );      // Estimated step scans             //ALEXEY: 6 scans per minute ???
 
    double scaninterval =  ssvals[ ssx ][ "scanintv" ];  //ALEXEY: ssval[]["scanintv"] is set (in secs)  according to table: RPM vs scanint
    int escans = qRound( durtim / scaninterval );
-   
+
    int tscans  = 0;
    for ( int ii = 0; ii < ssvals.size(); ii++ )
      tscans        += qRound( ssvals[ ii ][ "duration" ] / ssvals[ ii ][ "scanintv" ] );  //ALEXEY bug fixed
-      
-   qDebug() << "SCAN INT: " << scaninterval << ", # Scans: " << tscans; 
-     
+
+   qDebug() << "SCAN INT: " << scaninterval << ", # Scans: " << tscans;
+
 DbgLv(1) << "EGSp: spDesc: ssx" << ssx
  << "dur tim,hr,min" << durtim << durhr << durmin;
 
@@ -1352,18 +1347,18 @@ void US_ExperGuiSpeeds::ssChangeCount( int val )
    changed          = true;
    int new_nsp      = val;
 DbgLv(1) << "EGSp: chgKnt: nsp nnsp" << nspeed << new_nsp;
-  
-  double speedmax  = sibDValue( "rotor",   "maxrpm" ); 
+
+  double speedmax  = sibDValue( "rotor",   "maxrpm" );
   if ( new_nsp > nspeed )
    {  // Number of speed steps increases
       profdesc.resize( new_nsp );
       ssvals  .resize( new_nsp );
-      
+
       scanint_ss_min.resize( new_nsp );
       scanint_mm_min.resize( new_nsp );
       scanint_hh_min.resize( new_nsp );
       delay_mm_min  .resize( new_nsp );
-      
+
       int kk           = nspeed - 1;
       double ssspeed   = ssvals[ kk ][ "speed" ];
       double ssaccel   = ssvals[ kk ][ "accel" ];
@@ -1389,7 +1384,7 @@ DbgLv(1) << "EGSp: chgKnt: nsp nnsp" << nspeed << new_nsp;
       //ssdurtim         = ( ssdurhr * 60.0 ) + ssdurmin;                        //ALEXEY in minutes [duration]
       ssdurtim         = ( ssdurhr * 3600.0 ) + ( ssdurmin * 60.0 ) + ssdursec;  //ALEXEY in seconds [duration]
       ssdlytim         = ( ssdlyhr * 3600.0 ) + ( ssdlymin * 60.0 ) + ssdlysec;  //ALEXEY in seconds [delay]
-DbgLv(1) << "EGSp: chgKnt:  kk" << kk << "spd acc dur dly" 
+DbgLv(1) << "EGSp: chgKnt:  kk" << kk << "spd acc dur dly"
  << ssspeed << ssaccel << ssdurtim << ssdlytim;
 
       for ( int kkk = nspeed; kkk < new_nsp; kkk++ )
@@ -1411,9 +1406,9 @@ DbgLv(1) << "EGSp: chgKnt:  kk" << kk << "spd acc dur dly"
          else
          {
             qDebug() << "Syncing stage NOT checked !!!!!!!";
-            ssvals[ kkk ][ "delay_stage"    ] = 0.0; 
+            ssvals[ kkk ][ "delay_stage"    ] = 0.0;
          }
-         
+
          ssChangeScInt( ssspeed, kkk );  //ALEXEY
 
          profdesc[ kkk ]             = speedp_description( kkk );
@@ -1439,7 +1434,7 @@ DbgLv(1) << "EGSp: chgKnt:    kkk" << kkk << "pdesc" << profdesc[kkk];
       scanint_mm_min.resize( new_nsp );
       scanint_hh_min.resize( new_nsp );
       delay_mm_min  .resize( new_nsp );
-      
+
       cb_prof->clear();
       for ( int ii = 0; ii < new_nsp; ii++ )
          cb_prof->addItem( profdesc[ ii ] );
@@ -1471,7 +1466,7 @@ DbgLv(1) << "EGSp: chgPfx:  speed-c speed-p"
    double ssdlytim  = ssvals[ curssx ][ "delay" ];
 
    double ssdlystagetim  = ssvals[ curssx ][ "delay_stage" ];
-   
+
    double speedmax  = sibDValue( "rotor",   "maxrpm" );
 
    double scinttim  = ssvals[ curssx ][ "scanintv" ]; // ALEXEY added scaninterval
@@ -1483,13 +1478,13 @@ DbgLv(1) << "EGSp: chgPfx:  speed-c speed-p"
    US_RunProtocol::timeToList( ssdurtim, dhms_dur );
    US_RunProtocol::timeToList( ssdlytim, dhms_dly );
    US_RunProtocol::timeToList( ssdlystagetim, dhms_dly_stage );
-   US_RunProtocol::timeToList( scinttim, dhms_scint ); 
+   US_RunProtocol::timeToList( scinttim, dhms_scint );
 DbgLv(1) << "EGSp: chgPfx:   durtim" << ssdurtim << "dhms_dur" << dhms_dur;
 DbgLv(1) << "EGSp: chgPfx:    speedmax" << speedmax;
    ct_speed ->setMaximum( speedmax );      // Set speed max based on rotor max
    ct_speed ->setValue( ssspeed  );        // Set counter values
    ct_accel ->setValue( ssaccel  );
-   
+
 
    // sb_durat ->setValue( (int)dhms_dur[ 0 ] );            //ALEXEY
    // tm_durat ->setTime ( QTime( dhms_dur[ 1 ],
@@ -1513,7 +1508,7 @@ DbgLv(1) << "EGSp: chgPfx:    speedmax" << speedmax;
    // and so on....
 
    sb_delay_mm ->setMinimum( delay_mm_min[ curssx ] );
-      
+
    sb_delay_dd ->setValue( (int)dhms_dly[ 0 ] );
    sb_delay_hh ->setValue( (int)dhms_dly[ 1 ] );
    sb_delay_mm ->setValue( (int)dhms_dly[ 2 ] );
@@ -1522,16 +1517,16 @@ DbgLv(1) << "EGSp: chgPfx:    speedmax" << speedmax;
    sb_delay_st_dd ->setValue( (int)dhms_dly_stage[ 0 ] );
    sb_delay_st_hh ->setValue( (int)dhms_dly_stage[ 1 ] );
    sb_delay_st_mm ->setValue( (int)dhms_dly_stage[ 2 ] );
-   sb_delay_st_ss ->setValue( (int)dhms_dly_stage[ 3 ] );   
+   sb_delay_st_ss ->setValue( (int)dhms_dly_stage[ 3 ] );
 
    sb_scnint_hh ->setMinimum( scanint_hh_min[curssx] );
    sb_scnint_mm ->setMinimum( scanint_mm_min[curssx] );
    sb_scnint_ss ->setMinimum( scanint_ss_min[curssx] );
 
-   sb_scnint_hh ->setValue( (int)dhms_scint[ 1 ] ); 
+   sb_scnint_hh ->setValue( (int)dhms_scint[ 1 ] );
    sb_scnint_mm ->setValue( (int)dhms_scint[ 2 ] );
    sb_scnint_ss ->setValue( (int)dhms_scint[ 3 ] );
- 
+
 
    //adjustDelay();        // Important: not needed here as it re-writes delay to default min.
 }
@@ -1547,11 +1542,11 @@ DbgLv(1) << "EGSp: chgSpe: val" << val << "ssx" << curssx;
    sb_scnint_hh ->setMinimum( scanint_hh_min[curssx] );
    sb_scnint_mm ->setMinimum( scanint_mm_min[curssx] );
    sb_scnint_ss ->setMinimum( scanint_ss_min[curssx] );
-   
+
    sb_scnint_hh ->setValue( scanint_hh_min[curssx] );
    sb_scnint_mm ->setValue( scanint_mm_min[curssx] );
    sb_scnint_ss ->setValue( scanint_ss_min[curssx] );
-        
+
    profdesc[ curssx ] = speedp_description( curssx );
    cb_prof->setItemText( curssx, profdesc[ curssx ] );
 
@@ -1581,10 +1576,10 @@ void US_ExperGuiSpeeds::ssChangeScInt( double val, int row )
     time_scint = a0[2] + qRound( a1[2]/val );
   if (val >= 51000 and val <= 60000 )
     time_scint = a0[3] + qRound( a1[3]/val );
-  
+
   ssvals[row]["scanintv"]     = time_scint;
   ssvals[row]["scanintv_min"] = time_scint;
-  
+
   QList< int > hms_scint;
   US_RunProtocol::timeToList( time_scint, hms_scint );
 
@@ -1592,7 +1587,7 @@ void US_ExperGuiSpeeds::ssChangeScInt( double val, int row )
   // sb_scnint_hh ->setMinimum( (int)hms_scint[ 1 ] );
   // sb_scnint_mm ->setMinimum( (int)hms_scint[ 2 ] );
   // sb_scnint_ss ->setMinimum( (int)hms_scint[ 3 ] );
-  
+
   // sb_scnint_hh ->setValue( (int)hms_scint[ 1 ] );
   // sb_scnint_mm ->setValue( (int)hms_scint[ 2 ] );
   // sb_scnint_ss ->setValue( (int)hms_scint[ 3 ] );
@@ -1600,7 +1595,7 @@ void US_ExperGuiSpeeds::ssChangeScInt( double val, int row )
   scanint_ss_min[row] = (int)hms_scint[ 3 ];
   scanint_mm_min[row] = (int)hms_scint[ 2 ];
   scanint_hh_min[row] = (int)hms_scint[ 1 ];
-  
+
   qDebug() << "ScanInt: " << ssvals[row]["scanintv"];
 }
 
@@ -1640,7 +1635,7 @@ void US_ExperGuiSpeeds::ssChgDuratTime_hh( int val )
    double ssdurmin  = (double)sb_durat_mm->value();
    double ssdursec  = (double)sb_durat_ss->value();
    double ssdurtim  = ( ssdurday * 3600.0 * 24 ) + ( ssdurhr * 3600.0 ) + ( ssdurmin * 60.0 ) + ssdursec;
-   
+
    ssvals[ curssx ][ "duration" ] = ssdurtim;  // Set Duration in step vals vector
 
    profdesc[ curssx ] = speedp_description( curssx );
@@ -1719,12 +1714,12 @@ void US_ExperGuiSpeeds::ssChgScIntTime_hh( int val )
    double minimum_mm =  scanint_mm_min[curssx];
    double minimum_ss =  scanint_ss_min[curssx];
 
-   double ssscintmin;  
-   double ssscintsec;  
+   double ssscintmin;
+   double ssscintsec;
 
    ssscintmin = (double)sb_scnint_mm->value();
    ssscintsec = (double)sb_scnint_ss->value();
-   
+
    if ( val - minimum_hh == 1 )
    {
       sb_scnint_mm->setMinimum(0);
@@ -1740,10 +1735,10 @@ void US_ExperGuiSpeeds::ssChgScIntTime_hh( int val )
          sb_scnint_ss->setValue(minimum_ss);
 
          ssscintmin  = (double)sb_scnint_mm->value();  // Bug fixed
-         ssscintsec  = (double)sb_scnint_ss->value(); 
+         ssscintsec  = (double)sb_scnint_ss->value();
       }
    }
-      
+
    double ssscinttim  = ( ssscinthr * 3600.0 ) + ( ssscintmin * 60.0 ) + ssscintsec;
    ssvals[ curssx ][ "scanintv" ] = ssscinttim;  // Set ScInt in step vals vector
 
@@ -1773,7 +1768,7 @@ void US_ExperGuiSpeeds::ssChgScIntTime_mm( int val )
          sb_scnint_ss->setValue(minimum_ss);
       }
    }
-   
+
    double ssscintsec  = (double)sb_scnint_ss->value();
    double ssscinttim  = ( ssscinthr * 3600.0 ) + ( ssscintmin * 60.0 ) + ssscintsec;
    ssvals[ curssx ][ "scanintv" ] = ssscinttim;  // Set Duration in step vals vector
@@ -1807,7 +1802,7 @@ void US_ExperGuiSpeeds::ssChgDelayTime_hh( int val )
 
    if ( val == 0 )
      sb_delay_mm->setMinimum(minimum_mm);
-   
+
    double ssdlymin  = (double)sb_delay_mm->value();
    double ssdlysec  = (double)sb_delay_ss->value();
    double ssdlytim  = ( ssdlyhr * 3600.0 ) + ( ssdlymin * 60.0 ) + ssdlysec;
@@ -1845,7 +1840,7 @@ void US_ExperGuiSpeeds::ssChgDelayDay( int val )
 {
    double ssdlyday  = (double)val;
 //    double ssdlyhr   = tm_delay->sectionText( QDateTimeEdit::HourSection ).toDouble();  //ALEXEY
-   
+
    double ssdlyhr   = (double)sb_delay_hh->value();
    double ssdlymin  = (double)sb_delay_mm->value();
    double ssdlysec  = (double)sb_delay_ss->value();
@@ -1863,7 +1858,6 @@ DbgLv(1) << "EGSp: chgDlyD: val" << val << "ssdly d h"
 void US_ExperGuiSpeeds::ssChgDelayStageTime_hh( int val )
 {
    double ssdlyhr   = val;
-     
    double ssdlymin  = (double)sb_delay_st_mm->value();
    double ssdlysec  = (double)sb_delay_st_ss->value();
    double ssdlytim  = ( ssdlyhr * 3600.0 ) + ( ssdlymin * 60.0 ) + ssdlysec;
@@ -1871,7 +1865,7 @@ void US_ExperGuiSpeeds::ssChgDelayStageTime_hh( int val )
 
    if ( curssx == 0 && ck_sync_delay->isChecked() ) //1st stage
      stageDelay_sync();
-     
+
 }
 
 // Slot for change in delay time (mins)
@@ -1903,7 +1897,7 @@ void US_ExperGuiSpeeds::stageDelay_sync( void )
   int tot_speeds = ssvals.size();
   for ( int i = 1; i < tot_speeds; i++ )
     {
-      ssvals[ i ][ "delay_stage" ] = delay; 
+      ssvals[ i ][ "delay_stage" ] = delay;
     }
 
 }
@@ -2059,19 +2053,19 @@ DbgLv(1) << "EGCe:rbC: H<C: nused" << rpCells->nused;
          kused++;
 DbgLv(1) << "EGCe:rbC:    ii" << ii << "kused" << kused;
       }
- 
+
       //rpCells->nused      = kused;      // Resize used-cells vector
       //rpCells->used.resize( kused );
 
       rpCells->nused        = 0;      // ALEXEY: # used cells should be 0 when Rotor
-      rpCells->used.clear();          // ALEXEY: no used cells when rotor is changed - otherwise cells are not populated correcly 
+      rpCells->used.clear();          // ALEXEY: no used cells when rotor is changed - otherwise cells are not populated correcly
    }
    else
      { // If cells count increases, same as above: clear used, i.e. make all fresh-empty, and counterbalance (empty-counterbalance)
        rpCells->nused        = 0;      // ALEXEY: # used cells should be 0 when Rotor
-       rpCells->used.clear();          // ALEXEY: no used cells when rotor is changed - otherwise cells are not populated correcly 
+       rpCells->used.clear();          // ALEXEY: no used cells when rotor is changed - otherwise cells are not populated correcly
      }
-   
+
 
    rpCells->ncell      = nholes;        // Reset total cells count up/down
 DbgLv(1) << "EGCe:rbC: ncell" << nholes;
@@ -2121,7 +2115,7 @@ DbgLv(1) << "EGCe:cpChg:   CB:jsel" << jsel;
       {
          cc_winds[ irow ]->setVisible( true );
          //ALEXEY: change cross cell centerpiece (8->4, or 4->2)
-         int halfnh_c          = nholes / 2; 
+         int halfnh_c          = nholes / 2;
          int xrow_c            = irow - halfnh_c;
          int jsel_c            = sel - 3;        // Use same centerpiece for cross (minus 3 since cent. list is longer in counterbalance rows)
 
@@ -2157,9 +2151,9 @@ DbgLv(1) << "EGCe:wiChg:  sname irow" << sname << irow;
 
       if ( xrow == icbal )
       {
-         // ALEXEY: Cross cell is counterbalance but used as centerpiece 
+         // ALEXEY: Cross cell is counterbalance but used as centerpiece
          if ( ! cc_cenps[ xrow ]->currentText().contains( tr( "counterbalance" ) ) )
-         {  
+         {
             cc_winds[ xrow ]->setCurrentIndex( sel );
          }
       }
@@ -2172,12 +2166,12 @@ DbgLv(1) << "EGCe:wiChg:  sname irow" << sname << irow;
       if ( ! cpname_counter.contains( tr( "counterbalance" ) ) )
       {
          //ALEXEY: change cross cell centerpiece (8->4, or 4->2)
-         int halfnh_c          = nholes / 2; 
+         int halfnh_c          = nholes / 2;
          int xrow_c            = irow - halfnh_c;
          cc_winds[ xrow_c ]->setCurrentIndex( sel );
       }
    }
-}                  
+}
 
 // Panel for Solutions parameters
 US_ExperGuiSolutions::US_ExperGuiSolutions( QWidget* topw )
@@ -2195,7 +2189,7 @@ US_ExperGuiSolutions::US_ExperGuiSolutions( QWidget* topw )
    QLabel* lb_panel    = us_banner(
                             tr( "5: Specify a solution for each cell/channel" ) );
    panel->addWidget( lb_panel );
-   
+
    QPushButton* pb_manage   = us_pushbutton( tr( "Manage Solutions" ) );
    QPushButton* pb_details  = us_pushbutton( tr( "View Solution Details" ) );
    QLabel* lb_hdr1          = us_banner( tr( "Cell / Channel" ) );
@@ -2305,14 +2299,14 @@ DbgLv(1) << "EGSo: rbS: nchans nchant" << nchans << nchant
 
  // if ( nchans == nchant )     // No cells change means no rebuild //ALEXEY: wrong condition !!! have to also compare content of channels vs cells
  //     {
-      
+
  //       //ALEXEY: need to compare srchans QStringLists from Solutions && Cells:
  //       QStringList srchans_check;
  //       srchans_check.clear();
-       
+
  //       QStringList centps_check  = sibLValue( "cells", "centerpieces" );
  //       int ncused_check          = centps_check.count();
-              
+
  //       for ( int ii = 0; ii < ncused_check; ii++ )
  // 	 {
  // 	   QString centry_check      = centps_check[ ii ];
@@ -2336,22 +2330,22 @@ DbgLv(1) << "EGSo: rbS: nchans nchant" << nchans << nchant
  // 		 }
  // 	     }
  // 	 }
-       
+
  //       DbgLv(1) << "SRCHANS from (Solutions):         " << srchans;
  //       DbgLv(1) << "SRCHANS (from actual Cells):      " << srchans_check;
 
  //       if (srchans_check == srchans )
  // 	 return;                                         //ALEXEY: only now we can return
-       
+
  //       // if (srchans_check == srchans && !mainw->solutions_change )
  //       // 	 {
- //       // 	   qDebug()<< "Exiting Rebulding Solutions "; 
- //       // 	   return;                                 //ALEXEY: only now we can return        
+ //       // 	   qDebug()<< "Exiting Rebulding Solutions ";
+ //       // 	   return;                                 //ALEXEY: only now we can return
  //       // 	 }
  //     }
 
 
-       
+
    if ( rpSolut->nschan == 0 )
    {  // No existing Solutions protocol, so initialize a rudimentary one
       rpSolut->nuniqs     = 0;
@@ -2421,7 +2415,7 @@ DbgLv(1) << "EGSo: rbS: nchan_s nuniq_s" << nchan_s << nuniq_s;
       }
       nchans              = srchans.count();
    }
-      
+
    int nuniqs          = 0;
    int nschan          = 0;
    suchans.clear();
@@ -2430,7 +2424,7 @@ DbgLv(1) << "EGSo: rbS: nchan_s nuniq_s" << nchan_s << nuniq_s;
 
    for ( int ii = 0; ii < nchans; ii++ )
    {
-      US_RunProtocol::RunProtoSolutions::ChanSolu chsol;  
+      US_RunProtocol::RunProtoSolutions::ChanSolu chsol;
       QString chan        = srchans[ ii ];
       int scx             = sv_chans.indexOf( chan );
 DbgLv(1) << "EGSo: rbS:  ii" << ii << "chan" << chan << "scx" << scx;
@@ -2468,8 +2462,8 @@ void US_ExperGuiSolutions::manageSolutions()
 {
    US_SolutionGui* sdiag = new US_SolutionGui;
 
-   connect(sdiag, SIGNAL( newSolAdded() ), this, SLOT( regenSolList() ) ); //ALEXEY when solution added from US_Exp, update sotution list 
-   
+   connect(sdiag, SIGNAL( newSolAdded() ), this, SLOT( regenSolList() ) ); //ALEXEY when solution added from US_Exp, update sotution list
+
    sdiag->show();
 }
 
@@ -2478,7 +2472,7 @@ void US_ExperGuiSolutions::regenSolList()
 {
    allSolutions();
    qDebug() << "NEW SOLNAMES: " << sonames;
-  
+
    for ( int ii = 0; ii < cc_solus.count(); ii++ )
    {
       QComboBox* cbsolu  = cc_solus[ ii ];
@@ -2486,12 +2480,12 @@ void US_ExperGuiSolutions::regenSolList()
          break;
 
       // Before cleaning save currently selected text for each channel in case protocol is loaded
-      QString sdescr     = cbsolu->currentText(); 
+      QString sdescr     = cbsolu->currentText();
       QString usolu       = tr( "(unspecified)" );
-      
+
       cbsolu->clear();
       cbsolu->addItems( sonames );
-      
+
       if ( !sdescr.contains( usolu ) )  // Skip "(unspecified)"
          cbsolu->setCurrentText( sdescr );
    }
@@ -2765,13 +2759,13 @@ DbgLv(1) << "EGSo: allSo:      desc" << descr << "solID" << solID;
    {  // There were duplicates, so re-do the name-to-id mapping
       solu_ids.clear();
       for ( int ii = 0; ii < sonames.count(); ii++ )
-      { 
+      {
          QString sname     = sonames[ ii ];
          solu_ids[ sname ] = soids  [ ii ];
       }
    }  // Re-mapping ids to names
 DbgLv(1) << "EGSo: allSo: sids count" << solu_ids.keys().count();
- 
+
    return solu_ids.keys().count();
 }
 
@@ -2781,20 +2775,20 @@ void US_ExperGuiSolutions::addComments()
 DbgLv(1) << "EGSo:addComm: IN";
    bool ok;
    QString chcomm( "" );
-  
+
    QStringList comms;
    QString sufx        = "";
    QObject* sobj       = sender();   // Sender object
    QString sname       = sobj->objectName();
    int irow            = sname.section( ":", 0, 0 ).toInt();
-      
+
 DbgLv(1) << "EGSo:addComm: sname irow" << sname << irow;
    QString cclabl      = cc_labls[ irow ]->text();
 DbgLv(1) << "EGSo:addComm:  cclabl" << cclabl;
    QString sdescr      = cc_solus[ irow ]->currentText();
 
    qDebug() << "ADD_Comment: 1";
-   
+
    // Get list of channel comment component strings
    //  and compose default channel comment string
 
@@ -2802,23 +2796,23 @@ DbgLv(1) << "EGSo:addComm:  cclabl" << cclabl;
    QString row_comment =  QString::number( irow );
 
    qDebug() << "ADD_Comment: 1a";
-   
+
    //ALEXEY: check if channel comment was read in from protocol ONCE...
    if ( !solution_comment_init[ irow ] )
      {
        qDebug() << "ADD_Comment: 1a1";
-       
+
        qDebug() << "irow: " << irow << ",  rpSolut->chsols.size() " << rpSolut->chsols.size();  //ALEXEY  rpSolut->chsols.size() is ZERO: bug
 
        QString protocol_comment("");
 
        if ( rpSolut->chsols.size() > irow )
-          protocol_comment += rpSolut->chsols[ irow ].ch_comment;     
+          protocol_comment += rpSolut->chsols[ irow ].ch_comment;
 
        qDebug() << "ADD_Comment: 1aa";
        protocol_comment.replace(sdescr, "");
        protocol_comment.remove( QRegExp("^[,\\s*]+") );
-       
+
        manual_comment[ row_comment ] = protocol_comment.trimmed();  // Initialize manual comment for solution from protocol
 
        qDebug() << "ADD_Comment: 1aaa";
@@ -2827,7 +2821,7 @@ DbgLv(1) << "EGSo:addComm:  cclabl" << cclabl;
      }
 
    qDebug() << "ADD_Comment: 2";
-   
+
    commentStrings( sdescr, chcomm, comms, irow );
    int ncc             = comms.count();  // Number of component strings
 
@@ -2875,9 +2869,9 @@ DbgLv(1) << "EGSo:addComm:  cclabl" << cclabl;
    }
 
    qDebug() << "ADD_Comment: 3";
-   
+
    // Complete dialog text and display the dialog
-   msg         = msg 
+   msg         = msg
       + tr( "You may enter additional characters to append to<br/>" )
       + tr( "this text, then click on <b>OK</b>:<br/><br/>" );
 
@@ -2961,7 +2955,7 @@ US_ExperGuiOptical::US_ExperGuiOptical( QWidget* topw )
    panel->setContentsMargins( 2, 2, 2, 2 );
    QLabel* lb_panel    = us_banner( tr( "6: Specify optical system scans for each channel" ) );
    panel->addWidget( lb_panel );
- 
+
 
    QLabel* lb_hdr1     = us_banner( tr( "Cell / Channel" ) );
    QLabel* lb_hdr2     = us_banner( tr( "Optical System Scans to Perform" ) );
@@ -2974,7 +2968,7 @@ US_ExperGuiOptical::US_ExperGuiOptical( QWidget* topw )
    QGridLayout* genL   = new QGridLayout();
    genL->setSpacing        ( 2 );
    genL->setContentsMargins( 2, 2, 2, 2 );
-   
+
    row = 1;
    const int mxcels    = 8;
    int nholes          = sibIValue( "rotor", "nholes" );
@@ -3008,7 +3002,7 @@ DbgLv(1) << "EGOp:  nholes mxcels" << nholes << mxcels;
    QString opsys1   = mainw-> currentInstrument[ "opsys1" ];
    QString opsys2   = mainw-> currentInstrument[ "opsys2" ];
    QString opsys3   = mainw-> currentInstrument[ "opsys3" ];
-   
+
    int nckopt       = 0;
    nckopt          += opsys1.contains( tr( "not installed" ) ) ? 0 : 1;
    nckopt          += opsys2.contains( tr( "not installed" ) ) ? 0 : 1;
@@ -3097,8 +3091,8 @@ DbgLv(1) << "EGOp:main: call initPanel";
 // Function to rebuild the Optical protocol after Solutions change
 void US_ExperGuiOptical::rebuild_Optic( void )
 {
-  
-   
+
+
    int nchanf          = sibIValue( "solutions", "nchanf" );
    QStringList ochans  = sibLValue( "solutions", "sochannels" );
    int kochan          = ochans.count();
@@ -3109,7 +3103,7 @@ DbgLv(1) << "EGOp rbO: nchanf" << nchanf << "nochan" << nochan << "kochan" << ko
       nochan              = ochans.count();
       int ndiff           = ( nochan == nchanf ) ? 0 : 1;
       nochan              = qMin( nochan, nchanf );
-      
+
       for ( int ii = 0; ii < nochan; ii++ )
       {
          if ( rpOptic->chopts[ ii ].channel != ochans[ ii ] )
@@ -3130,17 +3124,17 @@ DbgLv(1) << "EGOp rbO: rp.nochan" << rpOptic->nochan;
       nuchan              = 0;
       nuvvis              = 0;
       QString notinst     = tr( "(not installed)" );
- 
+
       for ( int ii = 0; ii < nochan; ii++ )
       {
          rpOptic->chopts[ ii ].channel = ochans[ ii ];
-         rpOptic->chopts[ ii ].scan1   = ii < 4 
+         rpOptic->chopts[ ii ].scan1   = ii < 4
                                        ? cc_osyss[ ii ]->button( 1 )->text()
                                        : notinst;
-         rpOptic->chopts[ ii ].scan2   = ii < 4 
+         rpOptic->chopts[ ii ].scan2   = ii < 4
                                        ? cc_osyss[ ii ]->button( 2 )->text()
                                        : notinst;
-         rpOptic->chopts[ ii ].scan3   = ii < 4 
+         rpOptic->chopts[ ii ].scan3   = ii < 4
                                        ? cc_osyss[ ii ]->button( 3 )->text()
                                        : notinst;
       }
@@ -3158,7 +3152,7 @@ DbgLv(1) << "EGOp rbO:  nochan" << nochan << "nochan_sv" << nochan_sv;
 
    // Rebuild Optical protocol
    QStringList solentrs = sibLValue( "solutions", "channel_solutions" );
-   int kechan          = solentrs.count(); 
+   int kechan          = solentrs.count();
    rpOptic->chopts.clear();
 DbgLv(1) << "EGOp rbO:   solentrs count" << solentrs << kechan;
 
@@ -3179,9 +3173,9 @@ DbgLv(1) << "EGOp rbO:    ii" << ii << "jj" << jj
             rpOptic->chopts[ ii ] = chopts_sv[ jj ]; //ALEXEY bug fixed
             break;
          }
-         else                                       //ALEXEY bug fixed  
-         { 
-            rpOptic->chopts[ ii ].channel = channel;  
+         else                                       //ALEXEY bug fixed
+         {
+            rpOptic->chopts[ ii ].channel = channel;
             rpOptic->chopts[ ii ].scan1   = cc_osyss[ ii ]->button( 1 )->text();
             rpOptic->chopts[ ii ].scan2   = cc_osyss[ ii ]->button( 2 )->text();
             rpOptic->chopts[ ii ].scan3   = cc_osyss[ ii ]->button( 3 )->text();
@@ -3271,7 +3265,7 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
    panel->addWidget( lb_panel );
    //QGridLayout* genL   = new QGridLayout();
    genL   = new QGridLayout();
-   
+
    // Push buttons
    //QPushButton* pb_details  = us_pushbutton( tr( "View Experiment Details" ) );
    //QPushButton* pb_connect  = us_pushbutton( tr( "Test Connection" ) );
@@ -3279,7 +3273,7 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
    pb_connect  = us_pushbutton( tr( "Test Connection" ) );
    pb_submit   = us_pushbutton( tr( "Submit the Run"  ) );
    pb_saverp   = us_pushbutton( tr( "Save the Protocol" ) );
-   
+
    pb_submit->setEnabled( false );                                  // <-- Temporary enabled for testing
 
    // Check boxes showing current completed parameterizations
@@ -3341,8 +3335,8 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
    genL->addWidget( pb_details,      row,   0, 1, 2 );
    genL->addWidget( pb_connect,      row,   2, 1, 2 );
    genL->addWidget( pb_saverp,       row,   4, 1, 2 );
-   genL->addWidget( pb_submit,       row++, 6, 1, 2 );       
-      
+   genL->addWidget( pb_submit,       row++, 6, 1, 2 );
+
    genL->addLayout( lo_run,          row,   1, 1, 3 );
    genL->addLayout( lo_project,      row++, 4, 1, 3 );
    genL->addLayout( lo_rotor,        row,   1, 1, 3 );
@@ -3370,7 +3364,7 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
    connect( pb_submit,    SIGNAL( clicked()          ),
             this,         SLOT  ( submitExperiment_confirm() ) );
    // connect( pb_submit,    SIGNAL( clicked()          ),
-   //          this,         SLOT  ( submitExperiment() ) );   
+   //          this,         SLOT  ( submitExperiment() ) );
 
    panel->addLayout( genL );
    panel->addStretch();
@@ -3421,7 +3415,7 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
  // DbgLv(1) << "EGUp:main:   opsys1-3" << dblist[6] << dblist[7] << dblist[8];
 
  //       dblist << dblist[ 4 ];
-    
+
  //       US_Settings::set_def_xpn_host( dblist );
  //    }
 
@@ -3435,7 +3429,7 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
  //    QString epasw1      = epasw.section( "^", 1, 1 );
  //    QString dbpasw      = US_Crypto::decrypt( epasw0, pw.getPasswd(), epasw1 );
 
-   //ALEXEY: new way 
+   //ALEXEY: new way
    QString xpnhost      = mainw->currentInstrument[ "optimaHost" ];
    int     xpnport      = mainw->currentInstrument[ "optimaPort" ].toInt();
    QString dbname       = mainw->currentInstrument[ "optimaDBname" ];
@@ -3451,7 +3445,7 @@ DbgLv(1) << "EGUp: host port name user pasw" << xpnhost << xpnport
    US_XpnData* xpn_data = new US_XpnData();
    connected           = xpn_data->connect_data( xpnhost, xpnport, dbname,
                                                  dbuser,  dbpasw );
-      
+
 DbgLv(1) << "EGUp:  connected" << connected;
    xpn_data->close();
    delete xpn_data;
@@ -3486,7 +3480,7 @@ DbgLv(1) << "EGUp:detE: ufont" << ufont.family();
    QString v_operID  = QString::number(rpRotor->operID);
    QString v_instID  = QString::number(rpRotor->instID);
    QString v_exptype = rpRotor->exptype;
-      
+
    int     i_centp   = rpCells->nused;
    QString v_centp   = QString::number( i_centp  );
    QString v_ccbal   = sibSValue( "cells",     "counterbalance" );
@@ -3552,7 +3546,7 @@ DbgLv(1) << "EGUp:dE: solus solus" << ssolut;
    dtext += tr( "  InstrumentID:               " ) + v_instID + "\n";
    dtext += tr( "  OperatorID:                 " ) + v_operID + "\n";
    dtext += tr( "  Experiment Type:            " ) + v_exptype + "\n";
-   
+
    dtext += tr( "\nSpeeds\n" );
    dtext += tr( "  ALL SPECIFIED:              " ) + v_speok  + "\n";
    dtext += tr( "  USER CHANGES:               " ) + v_speuc  + "\n";
@@ -3692,10 +3686,10 @@ void US_ExperGuiUpload::testConnection()
     QString dbname      = mainw->currentInstrument[ "optimaDBname" ];
     QString dbuser      = mainw->currentInstrument[ "optimaDBusername" ];
     QString dbpasw      = mainw->currentInstrument[ "optimaDBpassw" ];
-   
+
     qDebug() << "Optima in use: name, host, port, dbname, dbuser, dbpasw: " << name << " " << xpnhost << " "
              << xpnport << " "  << dbname << " " << dbuser << " " << dbpasw ;
-  
+
    US_XpnData* xpn_data = new US_XpnData();
    connected           = xpn_data->connect_data( xpnhost, xpnport, dbname,
                                                  dbuser,  dbpasw );
@@ -3783,7 +3777,7 @@ DbgLv(1) << "EGUp:svRP:   prnames" << prnames;
 
    qDebug() << "SAVE_PROTOCOL 0: rpSpeed->ssteps[0].duration: " <<  rpSpeed->ssteps[0].duration;
 
-   
+
    // Save the new name and compose the XML representing the protocol
    protname            = newpname;
 DbgLv(1) << "EGUp:svRP:   NEW protname" << protname;
@@ -3800,19 +3794,19 @@ DbgLv(1) << "EGUp:svRP:   currProto updated  protname" << currProto->protname;
 
 
    qDebug() << "SAVE_PROTOCOL 0a: rpSpeed->ssteps[0].duration: " <<  rpSpeed->ssteps[0].duration;
-   
+
    QXmlStreamWriter xmlo( &rpSubmt->us_xml ); // Compose XML representation
 
    qDebug() << "SAVE_PROTOCOL 0aa: rpSpeed->ssteps[0].duration: " <<  rpSpeed->ssteps[0].duration;
 
    xmlo.setAutoFormatting( true );
-   
+
    qDebug() << "SAVE_PROTOCOL 0aaa: rpSpeed->ssteps[0].duration: rpSpeed->ssteps[0].scanintv: " <<  rpSpeed->ssteps[0].duration << " : " << rpSpeed->ssteps[0].scanintv;
-      
+
    currProto->toXml( xmlo );
 
    qDebug() << "SAVE_PROTOCOL 0aaaa: rpSpeed->ssteps[0].duration: rpSpeed->ssteps[0].scanintv: " <<  rpSpeed->ssteps[0].duration << " : " << rpSpeed->ssteps[0].scanintv;
-   
+
 DbgLv(1) << "EGUp:svRP:    guid" << currProto->pGUID;
 DbgLv(1) << "EGUp:svRP:    xml(s)" << QString(rpSubmt->us_xml).left(100);
 int xe=rpSubmt->us_xml.length()-101;
@@ -3820,7 +3814,7 @@ DbgLv(1) << "EGUp:svRP:    xml(e)" << QString(rpSubmt->us_xml).mid(xe);
 
 
  qDebug() << "SAVE_PROTOCOL 1: rpSpeed->ssteps[0].duration: " <<  rpSpeed->ssteps[0].duration;
- 
+
    // Save the new protocol to database or disk
    US_Passwd  pw;
    US_DB2* dbP         = ( sibSValue( "general", "dbdisk" ) == "DB" )
@@ -3857,15 +3851,15 @@ DbgLv(1) << "EGUp:svRP:   dbP" << dbP;
    mainw->updateProtos( prentry );            // Update existing protocols list
    proto_svd           = true;
    ck_prot_svd->setChecked( true );
-   DbgLv(1) << "BEFORE!!!"; 
+   DbgLv(1) << "BEFORE!!!";
    //DbgLv(1) << "EGUp:svRP:  new protname" << protname << "prdats0" << prdats[0]; //ALEXEY: this statement caused issues when no protocol existed
 
    qDebug() << "SAVE_PROTOCOL 2: rpSpeed->ssteps[0].duration: " <<  rpSpeed->ssteps[0].duration;
-   
+
    QString mtitle_done    = tr( "Success" );
    QString message_done   = tr( "Protocol has been successfully saved." );
    QMessageBox::information( this, mtitle_done, message_done );
-   
+
 }
 
 //Confirm the Optima machine an experiemnt is submitted to.
@@ -3884,7 +3878,7 @@ void US_ExperGuiUpload::submitExperiment_confirm()
 
    if ( mainw->automode )
      saveRunProtocol();
-    
+
    QMessageBox msgBox;
    msgBox.setText(tr("Experiment will be submitted to the following Optima machine:"));
    msgBox.setInformativeText( QString( tr(    "Name: %1 <br>  Host:  %2 <br> Port:  %3" ))
@@ -3894,7 +3888,7 @@ void US_ExperGuiUpload::submitExperiment_confirm()
    msgBox.setWindowTitle(tr("Confirm Experiment Run Submission"));
    QPushButton *Accept    = msgBox.addButton(tr("OK"), QMessageBox::YesRole);
    QPushButton *Cancel    = msgBox.addButton(tr("Cancel"), QMessageBox::RejectRole);
-   
+
     msgBox.setIcon(QMessageBox::Question);
     msgBox.exec();
 
@@ -3911,7 +3905,7 @@ void US_ExperGuiUpload::submitExperiment_confirm()
 // Slot to submit the experiment to the Optima DB
 void US_ExperGuiUpload::submitExperiment()
 {
-    
+
    // //ALEXEY connect to DB AUC: old way
    // US_Passwd pw;
    // QStringList dblist  = US_Settings::defaultXpnHost();
@@ -3924,15 +3918,15 @@ void US_ExperGuiUpload::submitExperiment()
    // QString epasw1      = epasw.section( "^", 1, 1 );
    // QString dbpasw      = US_Crypto::decrypt( epasw0, pw.getPasswd(), epasw1 );
 
-   //ALEXEY: new way 
+   //ALEXEY: new way
    QString dbhost      = mainw->currentInstrument[ "optimaHost" ];
    int     dbport      = mainw->currentInstrument[ "optimaPort" ].toInt();
    QString dbname      = mainw->currentInstrument[ "optimaDBname" ];
    QString dbuser      = mainw->currentInstrument[ "optimaDBusername" ];
    QString dbpasw      = mainw->currentInstrument[ "optimaDBpassw" ];
-   
+
    qDebug() << "OPTIMA: host port name user pasw" << dbhost << dbport << dbname << dbuser << dbpasw;
-   
+
    dbxpn           = QSqlDatabase::addDatabase( "QPSQL", "" );
    // DbgLv(1) << "XpDa:cnc: drivers" << dbxpn.drivers();
    dbxpn.setDatabaseName( "XpnData" );
@@ -3943,15 +3937,15 @@ void US_ExperGuiUpload::submitExperiment()
    dbxpn.setPassword    ( dbpasw );
 
 
-   QMap <QString, QString > protocol_details;                          // QMap to pass later to US_com_project' Live Updates 
-   
+   QMap <QString, QString > protocol_details;                          // QMap to pass later to US_com_project' Live Updates
+
    //US_XpnData* xpn_data = new US_XpnData();
    // connected           = xpn_data->connect_data( xpnhost, xpnport, dbname, dbuser,  dbpasw );
 
    if (  dbxpn.open() )
    { // dbxpn.open()
       qDebug() << "Connected !!!";
-    
+
 
       // Get # satges, cells
       int nstages = sibIValue( "speeds",  "nspeeds" );
@@ -3960,11 +3954,11 @@ void US_ExperGuiUpload::submitExperiment()
       int nstages_size;
       nstages_size = tem_delay_sec ? nstages + 1 : nstages;               // Total # stages
       int ncells  = sibIValue( "rotor",   "nholes" );
-       
+
       qDebug() << "#Stages: " << nstages;
       qDebug() << "#Cells: " << ncells;
 
-      // Define AbsScanId array of arrays 
+      // Define AbsScanId array of arrays
       QVector < QVector < int >> AbsScanIds(nstages_size);
       // Add extra array QVector < QVector < QString >> RadialPath(nstages_size); to be filled with DEFAULT/ */
       QVector < QVector < int >> AbsRadialPath(nstages_size);
@@ -3972,7 +3966,7 @@ void US_ExperGuiUpload::submitExperiment()
       // Define array of the total # wvl per stage
       QVector < int > Total_wvl(nstages_size);
       // ALEXEY: should we introduce separate for interference? (1 wvl 660 per stage per cell ?)
-       
+
       for (int i=0; i<nstages_size; i++)
       {
          AbsScanIds[i].resize(ncells);
@@ -3980,9 +3974,9 @@ void US_ExperGuiUpload::submitExperiment()
 
          Total_wvl[i] = 0;
       }
-       
+
       for (int i=0; i<nstages_size; i++)
-      { 
+      {
          for (int j=0; j<ncells; j++)
          {
             AbsScanIds[i][j] = 0;
@@ -4002,12 +3996,12 @@ void US_ExperGuiUpload::submitExperiment()
          }
       }
 
-       
+
       // Absorbance INSERT ////////////////////////////////////////////////////////////////////////
       QString tabname_abs( "AbsorbanceScanParameters" );
       QString schname( "AUC_schema" );
       QString qrytab_abs  = "\"" + schname + "\".\"" + tabname_abs + "\"";
-                 
+
       /* WHAT TO INSERT: fields
        "ScanCounts": []                   <-- computations
        "ScanIntervals": []                <-- computations
@@ -4015,13 +4009,13 @@ void US_ExperGuiUpload::submitExperiment()
        "ScanOuterLimits": []              <-- 7.25 cm default
        "ScanSteps": [10,10,10..]          <-- VERIFY it's 10 um for each wvl
        "ScanTypeFlag":                    <-- "I" always for Absorbance scan
-       "WavelengthCount": 
+       "WavelengthCount":
        "Wavelengths": []
-       "RadialPath":  ""                  <-- "A", "B", or ""               
+       "RadialPath":  ""                  <-- "A", "B", or ""
       */
 
       /* Define 2D array "AbsScanIDs[number_of_stages + 1][number_of_cells]"
-       
+
        stage#  cell# (e.g. 8-hole rotor)
        0       [0,1,2,3,4,5,6,7]        <-- Extra dummy zeroth stage
        --------------------------
@@ -4031,12 +4025,12 @@ void US_ExperGuiUpload::submitExperiment()
       */
       QString uvvis       = tr( "UV/visible" );
       QStringList oprof   = sibLValue( "optical", "profiles" );
-       
+
       qDebug() << "Begin AbsInsert";
       bool is_dummy = false;
       int curr_stage;
       for (int i=0; i<nstages_size; i++)
-      { 
+      {
          if (i==0 && tem_delay_sec)
          {
             is_dummy = true;
@@ -4047,11 +4041,11 @@ void US_ExperGuiUpload::submitExperiment()
             curr_stage = i - 1;
          else
             curr_stage = i;
-      
+
          qDebug() << "index i: " << i << ", curr_stage: " << curr_stage;
 
          double duration_sec = rpSpeed->ssteps[ curr_stage ].duration;
-         double delay_sec    = rpSpeed->ssteps[ curr_stage ].delay;  
+         double delay_sec    = rpSpeed->ssteps[ curr_stage ].delay;
          double scanint_sec  = rpSpeed->ssteps[ curr_stage ].scanintv;
          double scanint_sec_min  = rpSpeed->ssteps[ curr_stage ].scanintv_min;
 
@@ -4078,7 +4072,7 @@ void US_ExperGuiUpload::submitExperiment()
          for (int j=0; j<ncells; j++)
          {
             QString channel;
-            int    nwavl;  
+            int    nwavl;
             QList< double > wvl_list;
             double lo_radi;
             double hi_radi;
@@ -4098,13 +4092,13 @@ void US_ExperGuiUpload::submitExperiment()
                   }
                }
             }
-         
+
             if ( has_absorbance )
             {
                for ( int ii = 0; ii < rpRange->nranges; ii++ )
                {
                   channel  = rpRange->chrngs[ ii ].channel;
-         
+
                   if ( channel.contains("sample") && channel.startsWith(QString::number(j+1)) )  // <-- Judge only by sample (channel A) for now
                   {
                      nwavl    = rpRange->chrngs[ ii ].wvlens.count();
@@ -4131,7 +4125,7 @@ void US_ExperGuiUpload::submitExperiment()
                   for (int r=0; r<nwavl; r++)
                   {
                      wvl_array        +=  QString::number(wvl_list[r]);
-                     qDebug() << "Wvl: " << r << " " << wvl_list[r]; 
+                     qDebug() << "Wvl: " << r << " " << wvl_list[r];
                      scan_inner_array += QString::number(lo_radi);
                      scan_outer_array += QString::number(hi_radi);
                      scan_steps_array += QString::number(10);                     // <-- 10 um
@@ -4162,16 +4156,16 @@ void US_ExperGuiUpload::submitExperiment()
                   continuous_mode_array += "}\'";
                   scan_counts += "}\'";
                   scan_intervals += "}\'";
-               
+
                   qDebug() << "Wvl_Array: " << wvl_array;
                   QString rad_path = "DEFAULT";
                   //QString rad_path = "\'A\'";
                   //QString rad_path = "\'B\'";
-               
+
                   if ( QString::compare(rad_path, "DEFAULT",Qt::CaseSensitive) )
                      qDebug() << "RadialPath is NOT DEFAULT";
-               
-               
+
+
                   QSqlQuery query_abs_scan(dbxpn);
                   if(! query_abs_scan.prepare(QString("INSERT INTO %1 (\"ContinuousMode\",\"ReplicateCounts\",\"ScanInnerLimits\",\"ScanOuterLimits\",\"ScanStarts\",\"ScanSteps\",\"ScanTypeFlag\",\"WavelengthCount\",\"Wavelengths\",\"ScanCounts\",\"ScanIntervals\",\"RadialPath\") VALUES (%2, %3, %4, %5, %6, %7, %8, %9, %10, %11, %12, %13) RETURNING \"ScanId\"")
                      .arg(qrytab_abs)
@@ -4191,28 +4185,28 @@ void US_ExperGuiUpload::submitExperiment()
                      //.arg("\'A\'")
                      ) )
                         qDebug() << query_abs_scan.lastError().text();
-               
+
                   //qDebug() << "Stop here" << ", ScanInt: " << scan_intervals << ", ScanCount: " << scan_counts;
                   //return;
-               
-                  if (query_abs_scan.exec()) 
+
+                  if (query_abs_scan.exec())
                   {
                      qDebug() << "AbsorbaceScanParameters record created";
-               
+
                      query_abs_scan.next();
                      AbsScanIds[i][j] = query_abs_scan.value(0).toInt();         // <-- Save AbsScanID inserted [for given stage#/cell#]
-               
-               
+
+
                      if ( QString::compare(rad_path, "DEFAULT",Qt::CaseSensitive) )
                      {
                         AbsRadialPath[i][j] = 1;
                         qDebug() << "RadialPath is NOT DEFAULT: 1-channel.";
                      }
-               
+
                      qDebug() << "ScanId: "     << query_abs_scan.value(0).toInt();
                      qDebug() << "RadialPath: " << AbsRadialPath[i][j];
-                  } 
-                  else 
+                  }
+                  else
                   {
                      QString errmsg   = "Create record error: " + query_abs_scan.lastError().text();;
                      QMessageBox::critical( this,
@@ -4221,7 +4215,7 @@ void US_ExperGuiUpload::submitExperiment()
                         " protocol to AUC DB\n  %1 table\n  %2 ." ).arg( qrytab_abs ).arg( errmsg ) );
                      return;
                   }
-               
+
                }
                qDebug() << "Cell " << j << "is processed ";
             }
@@ -4230,7 +4224,7 @@ void US_ExperGuiUpload::submitExperiment()
       }
       qDebug() << "AFTER STAGES processed";
 
-       
+
       // Interference INSERT ////////////////////////////////////////////////////////////////////////
       QString tabname_inter( "InterferenceScanParameters" );
       QString qrytab_inter  = "\"" + schname + "\".\"" + tabname_inter + "\"";
@@ -4245,12 +4239,12 @@ void US_ExperGuiUpload::submitExperiment()
 	  "ScanTypeName": " ",        >> default 'Interference'
 	  "Wavelength": " ",          >> default 660 nm  - laser wvl
 
-	  "ScanCount": " ",           >> computation  Same as AbsScan ?   
+	  "ScanCount": " ",           >> computation  Same as AbsScan ?
 	  "ScanInterval": " ",        >> computation  Sama as AbsScan ?
        */
 
        /* Define 2D array "InterScanIDs[number_of_stages + 1][number_of_cells]"
-       
+
        stage#  cell# (e.g. 8-hole rotor)
        0       [0,1,2,3,4,5,6,7]        <-- Extra dummy zeroth stage
        --------------------------
@@ -4261,24 +4255,24 @@ void US_ExperGuiUpload::submitExperiment()
 
       QString rayleigh       = tr( "Rayleigh Interference" );
       //QStringList oprof   = sibLValue( "optical", "profiles" );
-       
+
 
       QVector < QVector < int >> InterScanIds(nstages_size);
       for (int i=0; i<nstages_size; ++i)
          InterScanIds[i].resize(ncells);
 
       for (int i=0; i<nstages_size; ++i)
-      { 
+      {
          for (int j=0; j<ncells; ++j)
          {
             InterScanIds[i][j] = 0;
          }
       }
 
-       
+
       bool is_dummy_int = false;
       int curr_stage_int;
-       
+
       for (int i=0; i<nstages_size; i++)
       {
          if (i==0 && tem_delay_sec)
@@ -4286,14 +4280,14 @@ void US_ExperGuiUpload::submitExperiment()
             is_dummy_int = true;
             continue;                    // skip dummy stage for InterferenceScanParams
          }
-      
+
          if (is_dummy_int)
             curr_stage_int = i - 1;
          else
             curr_stage_int = i;
 
          double duration_sec = rpSpeed->ssteps[ curr_stage_int ].duration;
-         double delay_sec    = rpSpeed->ssteps[ curr_stage_int ].delay;  
+         double delay_sec    = rpSpeed->ssteps[ curr_stage_int ].delay;
          double scanint_sec  = rpSpeed->ssteps[ curr_stage_int ].scanintv;
          double scanint_sec_min  = rpSpeed->ssteps[ curr_stage_int ].scanintv_min;
 
@@ -4342,15 +4336,15 @@ void US_ExperGuiUpload::submitExperiment()
                if(! query_inter_scan.prepare(query_str) )
                   qDebug() << query_inter_scan.lastError().text();
 
-               if (query_inter_scan.exec()) 
+               if (query_inter_scan.exec())
                {
                   qDebug() << "InterferenceScanParameters record created";
 
                   query_inter_scan.next();
                   InterScanIds[i][j] = query_inter_scan.value(0).toInt();         // <-- Save InterScanID inserted [for given stage#/cell#]
                   qDebug() << "ScanId: " << query_inter_scan.value(0).toInt();
-               } 
-               else 
+               }
+               else
                {
                   QString errmsg   = "Create record error: " + query_inter_scan.lastError().text();;
                   QMessageBox::critical( this,
@@ -4367,11 +4361,11 @@ void US_ExperGuiUpload::submitExperiment()
       // Cell INSERT ////////////////////////////////////////////////////////////////////////
       QString tabname_cell( "CellParameters" );
       QString qrytab_cell  = "\"" + schname + "\".\"" + tabname_cell + "\"";
-                 
+
       /* WHAT TO INSERT: fields
 
          "CellPosition": " ",         >> 1 to 4, or 1 to 8
-         "CellSectors": " ",          >> 2 or 99 
+         "CellSectors": " ",          >> 2 or 99
          "CenterpieceTypeId": " ",    >> 0 in all DB records
          "Comments": " "
          "SampleName": " ",
@@ -4380,7 +4374,7 @@ void US_ExperGuiUpload::submitExperiment()
       */
 
       /* Define 2D array "CellIDs[number_of_stages + 1][number_of_cells]"
-       
+
       stage#  cell# (8-hole rotor)
        0       [0,1,2,3,4,5,6,7]        <-- Extra dummy zeroth stage
        --------------------------
@@ -4392,19 +4386,19 @@ void US_ExperGuiUpload::submitExperiment()
       QVector < QVector < int >> CellIds(nstages_size);
       for (int i=0; i<nstages_size; ++i)
          CellIds[i].resize(ncells);
-       
+
       for (int i=0; i<nstages_size; ++i)
-      { 
+      {
          for (int j=0; j<ncells; ++j)
          {
             CellIds[i][j] = 0;
          }
       }
-       
+
       QSqlQuery query_cell(dbxpn);
 
       for (int i=0; i<nstages_size; i++)
-      { 
+      {
          for (int j=0; j<ncells; j++)
          {
             QString cell_pos = QString::number( j+1 );
@@ -4433,10 +4427,10 @@ void US_ExperGuiUpload::submitExperiment()
                {
                   if ( channel_cell.contains("sample") )                                                     // <-- Channel A
                      solname += ": A: " + sol_split[0] + ", "        // <-- solution name
-                        + sol_split[sol_split.size()-1] + "; ";             // <-- solution manual comment  
+                        + sol_split[sol_split.size()-1] + "; ";             // <-- solution manual comment
                   if ( channel_cell.contains("reference") )                                                  // <-- Channel B
                      solname += "B: " + sol_split[0] + " "           // <-- solution name
-                        + sol_split[sol_split.size()-1];             // <-- solution manual comment  
+                        + sol_split[sol_split.size()-1];             // <-- solution manual comment
                }
             }
             solname += "\'";
@@ -4446,8 +4440,8 @@ void US_ExperGuiUpload::submitExperiment()
             QString inter_scanid  = QString::number( InterScanIds[i][j] );
             QString comment;
 
-            // <-- dummy stage 
-            if (i==0  && tem_delay_sec)                         
+            // <-- dummy stage
+            if (i==0  && tem_delay_sec)
             {
                cell_query_str = QString("INSERT INTO %1 (\"CellPosition\",\"CellSectors\",\"SampleName\") VALUES (%2, %3, %4) RETURNING \"CellParamId\"")
                   .arg(qrytab_cell).arg(cell_pos)
@@ -4455,10 +4449,10 @@ void US_ExperGuiUpload::submitExperiment()
                comment = "Dummy stage";
             }
             // <-- Active stages
-            else                                                       
+            else
             {
                // <-- Active Stage: ONLY AbsScan exists
-               if ( AbsScanIds[i][j] && !InterScanIds[i][j] )          
+               if ( AbsScanIds[i][j] && !InterScanIds[i][j] )
                {
                   cell_query_str = QString("INSERT INTO %1 (\"CellPosition\",\"CellSectors\",\"AbsorbanceScan\",\"AbsorbanceScanId\",\"SampleName\") VALUES (%2, %3, %4, %5, %6) RETURNING \"CellParamId\"")
                      .arg(qrytab_cell)
@@ -4470,7 +4464,7 @@ void US_ExperGuiUpload::submitExperiment()
                   comment = "Active Stage --> AbsScan ONLY EXISTS";
                }
                // <-- Active Stage: ONLY InterferenceScan exists
-               else if ( !AbsScanIds[i][j] && InterScanIds[i][j] )          
+               else if ( !AbsScanIds[i][j] && InterScanIds[i][j] )
                {
                   cell_query_str = QString("INSERT INTO %1 (\"CellPosition\",\"CellSectors\",\"InterferenceScan\",\"InterferenceScanId\",\"SampleName\") VALUES (%2, %3, %4, %5, %6) RETURNING \"CellParamId\"")
                      .arg(qrytab_cell)
@@ -4482,7 +4476,7 @@ void US_ExperGuiUpload::submitExperiment()
                   comment = "Active Stage --> InterferenceScan ONLY EXISTS";
                }
                // <-- Active Stage: BOTH AbsScan && InterferenceScan exist - RARE CASE
-               else if ( AbsScanIds[i][j] && InterScanIds[i][j] )          
+               else if ( AbsScanIds[i][j] && InterScanIds[i][j] )
                {
                   cell_query_str = QString("INSERT INTO %1 (\"CellPosition\",\"CellSectors\",\"AbsorbanceScan\",\"AbsorbanceScanId\",\"InterferenceScan\",\"InterferenceScanId\",\"SampleName\") VALUES (%2, %3, %4, %5, %6, %7, %8) RETURNING \"CellParamId\"")
                      .arg(qrytab_cell)
@@ -4496,7 +4490,7 @@ void US_ExperGuiUpload::submitExperiment()
                   comment = "Active Stage --> AbsScan and InterferenceScan BOTH EXIST";
                }
                // <-- Active Stage: No Scans exist
-               else                                                        
+               else
                {
                   cell_query_str = QString("INSERT INTO %1 (\"CellPosition\",\"CellSectors\",\"SampleName\") VALUES (%2, %3, %4) RETURNING \"CellParamId\"")
                      .arg(qrytab_cell)
@@ -4511,15 +4505,15 @@ void US_ExperGuiUpload::submitExperiment()
             if(! query_cell.prepare(cell_query_str ) )
             qDebug() << query_cell.lastError().text();
 
-            if (query_cell.exec()) 
+            if (query_cell.exec())
             {
                qDebug() << "CellParameters record created: " + comment;
-            
+
                query_cell.next();
                CellIds[i][j] = query_cell.value(0).toInt();         // <-- Save CellID inserted [for given stage#/cell#]
                qDebug() << "CellId: " << query_cell.value(0).toInt();
-            } 
-            else 
+            }
+            else
             {
                QString errmsg   = "Create record error: " + query_cell.lastError().text();;
                QMessageBox::critical( this,
@@ -4534,7 +4528,7 @@ void US_ExperGuiUpload::submitExperiment()
       // FugeProfile INSERT ////////////////////////////////////////////////////////////////////////
       QString tabname_fuge( "CentrifugeRunProfile" );
       QString qrytab_fuge  = "\"" + schname + "\".\"" + tabname_fuge + "\"";
-                 
+
       /* WHAT TO INSERT: fields
 
 	  "StageCellParameterIds":  [
@@ -4545,7 +4539,7 @@ void US_ExperGuiUpload::submitExperiment()
 	                                                     ONLY for dummy stage
 	  "StageRPM"             : []
 	  "Stages"               : " ",                  <-- # of stages
-	  "Temperature"          : " ", 
+	  "Temperature"          : " ",
 	  "SystemStatusInterval" : " "                   <--  interval in seconds [1s] between system status record insertions
       */
 
@@ -4554,22 +4548,22 @@ void US_ExperGuiUpload::submitExperiment()
 
       int FugeProfileId = 0;
       QSqlQuery query_fuge(dbxpn);
-       
+
       QString cellids       = "\'{";
       QString stagedur      = "\'{";
       QString stagestart    = "\'{";
       QString stagerpm      = "\'{";
-      QString stageaccl     = "\'{";     
+      QString stageaccl     = "\'{";
       QString stagenum      = QString::number(nstages_size);
       QString temperature   = QString::number(mainw->currProto.temperature);
       QString sysstatint    = QString::number(1);
       QStringList speeds    = sibLValue( "speeds",    "profiles" );
-       
+
       int curr_stage_fuge;
       bool is_dummy_fuge = false;
-      //int ss                = 0;                                      // <-- for reading RPMs from speeds 
+      //int ss                = 0;                                      // <-- for reading RPMs from speeds
       for (int i=0; i<nstages_size; i++)
-      { 
+      {
          cellids += "{";
          for (int j=0; j<ncells; j++)
          {
@@ -4580,11 +4574,11 @@ void US_ExperGuiUpload::submitExperiment()
          cellids += "}";
 
          stagedur    += QString::number(0);                          // <-- stageduration <-- ALWAYS 0
-         stageaccl   += QString::number(0);                          // <-- stageaccelrate   
+         stageaccl   += QString::number(0);                          // <-- stageaccelrate
 
          if (i==0 && tem_delay_sec)
          {
-            stagestart  += QString::number(tem_delay_sec);          // <-- stagestart dummy stages 
+            stagestart  += QString::number(tem_delay_sec);          // <-- stagestart dummy stages
             stagerpm    += QString::number(0);                      // <-- RPM (0) dummy stage
             is_dummy_fuge = true;
          }
@@ -4616,7 +4610,7 @@ void US_ExperGuiUpload::submitExperiment()
       stagestart  += "}\'";
       stagerpm    += "}\'";
       stageaccl   += "}\'";
-       
+
       // // Query
       if(! query_fuge.prepare(QString("INSERT INTO %1 (\"StageCellParameterIds\",\"StageDuration\",\"StageStart\",\"StageRPM\",\"Stages\",\"SystemStatusInterval\",\"Temperature\",\"StageAccelRate\",\"HoldSpeedAfterFinal\") VALUES (%2, %3, %4, %5, %6, %7, %8, %9, %10) RETURNING \"FugeRunProfileId\"")
          .arg(qrytab_fuge)
@@ -4630,15 +4624,15 @@ void US_ExperGuiUpload::submitExperiment()
          .arg(stageaccl)
          .arg("\'TRUE\'") ) )
           qDebug() << query_fuge.lastError().text();
-       
-      if (query_fuge.exec()) 
+
+      if (query_fuge.exec())
       {
          qDebug() << "FugeProfile record created";
 
          query_fuge.next();
-         FugeProfileId = query_fuge.value(0).toInt();                                // <-- Save FugeRunProfileID 
+         FugeProfileId = query_fuge.value(0).toInt();                                // <-- Save FugeRunProfileID
          qDebug() << "FugeId: " << query_fuge.value(0).toInt();
-      } 
+      }
       else
       {
          QString errmsg   = "Create record error: " + query_fuge.lastError().text();;
@@ -4648,39 +4642,39 @@ void US_ExperGuiUpload::submitExperiment()
                 " protocol to AUC DB\n  %1 table\n  %2 ." ).arg( qrytab_fuge ).arg( errmsg ) );
          return;
       }
-       
+
       // ExperimentDefinition INSERT ////////////////////////////////////////////////////////////////////////
       QString tabname_expdef( "ExperimentDefinition" );
       QString qrytab_expdef  = "\"" + schname + "\".\"" + tabname_expdef + "\"";
       int ExpDefId = 0;
       QString runname = mainw->currProto.runname;
-       
+
       QSqlQuery query_expdef(dbxpn);
 
        /* WHAT TO INSERT: fields
-	  "CellCount": " ",  
+	  "CellCount": " ",
 	  "Comments": " ",            >> Some defualt comment should be inserted
 	  "FugeRunProfileId": " ",    >> reference to the profile used; must be in the database when this object is added
 	  "Name": " ",
 	  "Project": " ",
 	  "Researcher": " ",
        */
-      
+
       QString cellcount            = QString::number(ncells);
       QString fugeprofile          = QString::number(FugeProfileId);
 
-      QStringList researcher_split = (mainw->currProto.investigator).split(':'); 
+      QStringList researcher_split = (mainw->currProto.investigator).split(':');
       QString researcher_trimmed   = researcher_split[1].trimmed();
       QRegExp rx( "[^A-Za-z0-9_-, ]" );
       researcher_trimmed.replace( rx,  "" );
       QString researcher           = "\'" + researcher_trimmed + "\'";
-       
-       
+
+
       QString name                 = "\'" + runname + "\'";
       QString exp_comments         = "\'Run by " + researcher_trimmed + ": "
                                      + mainw->currProto.runname + " based on project "
-                                     + mainw->currProto.project + "\'";         
-       
+                                     + mainw->currProto.project + "\'";
+
       // Query
       if(! query_expdef.prepare(QString("INSERT INTO %1 (\"CellCount\",\"Comments\",\"FugeRunProfileId\",\"Name\",\"Researcher\") VALUES (%2, %3, %4, %5, %6) RETURNING \"ExperimentId\"")
             .arg(qrytab_expdef)
@@ -4690,18 +4684,18 @@ void US_ExperGuiUpload::submitExperiment()
             .arg(name)
             .arg(researcher) ) )
          qDebug() << query_expdef.lastError().text();
-       
+
       if (query_expdef.exec())
       {
          query_expdef.next();
-         ExpDefId = query_expdef.value(0).toInt();                                // <-- Save ExpDefID 
+         ExpDefId = query_expdef.value(0).toInt();                                // <-- Save ExpDefID
          qDebug() << "ExpDefId: " << query_expdef.value(0).toInt();
 
          qDebug() << "ExperimentDefinition record created";
 
          //protocol_details[ "experimentId" ]  = QString::number(405);
-         protocol_details[ "experimentId" ]  = QString::number(ExpDefId);      //ALEXEY: this should be put into new table connceting protocol && experiment 
-         protocol_details[ "experimentName" ] = runname;                         
+         protocol_details[ "experimentId" ]  = QString::number(ExpDefId);      //ALEXEY: this should be put into new table connceting protocol && experiment
+         protocol_details[ "experimentName" ] = runname;
          protocol_details[ "protocolName" ] = currProto->protname;                   //ALEXEY pass also to Live Update/PostProd protocol name
          protocol_details[ "CellChNumber" ]   = QString::number(rpSolut->nschan);    //ALEXEY: this can be read from protocl in US-lims DB
 
@@ -4723,7 +4717,7 @@ void US_ExperGuiUpload::submitExperiment()
          return;
       }
    }
-   else 
+   else
    { // Inform user of failure and give instructions
       QString mtitle    = tr( "Failed Connection to Optima" );
       QString message   = tr( "The failure to connect to the Optima most likely means\n"
@@ -4734,10 +4728,10 @@ void US_ExperGuiUpload::submitExperiment()
    }
    //submitted    = true;
 
-   // Make DB record on what protocol was submitted and what runname it's  associated with ... 
-   // suggested table name is 'protocolExperiment';  
+   // Make DB record on what protocol was submitted and what runname it's  associated with ...
+   // suggested table name is 'protocolExperiment';
    //
-   
+
    ck_sub_done->setChecked( true );
    QString mtitle_done    = tr( "Success" );
    QString message_done   = tr( "Protocol has been successfully submitted to Optima DB." );
@@ -4818,7 +4812,7 @@ DbgLv(1) << "EGUp:bj: ck: run proj cent solu epro"
    jo_exper.insert( "rotor", QJsonValue( jo_rotor ) );
 
 
-DbgLv(1) << "JSON_1";  
+DbgLv(1) << "JSON_1";
    int jj            = 0;
    for ( int ii = 0; ii < nspeed; ii++, jj+= 6 )
    {
@@ -4836,7 +4830,7 @@ DbgLv(1) << "JSON_1";
    jo_exper.insert( "speeds", ja_speed );
 
 
-DbgLv(1) << "JSON_2";  
+DbgLv(1) << "JSON_2";
    for ( int ii = 0; ii < scentp.count(); ii++ )
    {
       QJsonObject   jo_centp;
@@ -4863,7 +4857,7 @@ DbgLv(1) << "JSON_2";
    jo_exper.insert( "centerpieces", ja_centp );
 
 
-DbgLv(1) << "JSON_3";  
+DbgLv(1) << "JSON_3";
    for ( int ii = 0; ii < ssolut.count(); ii++ )
    {
       QJsonObject   jo_solut;
@@ -4880,7 +4874,7 @@ DbgLv(1) << "JSON_3";
    }
    jo_exper.insert( "solutions", ja_solut );
 
-DbgLv(1) << "JSON_4";  
+DbgLv(1) << "JSON_4";
 
    // Format the byte array and string form of Json
    QJsonDocument jd_exper( jo_exper );

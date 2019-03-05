@@ -190,9 +190,9 @@ DbgLv(1) << "newPanel panx=" << panx << "prev.panx=" << curr_panx;
 	 }
        epanUpload   ->initPanel();
      }
-   
+
    curr_panx              = panx;         // Set new current panel
-   
+
    // Update status flag for all panels
    statUpdate();
 }
@@ -247,7 +247,7 @@ void US_ExperimentMain::disable_tabs_buttons( void )
   DbgLv(1) << "DISBLING Tabs...";
   pb_next   ->setEnabled(false);
   pb_prev   ->setEnabled(false);
-  
+
   for (int i=1; i<tabWidget->count(); i++)
     {
       tabWidget ->setTabEnabled( i, false );
@@ -255,7 +255,7 @@ void US_ExperimentMain::disable_tabs_buttons( void )
     }
 
   qApp->processEvents();
-  
+
 }
 
 //Slot to ENABLE tabs and Next/Prev buttons
@@ -279,17 +279,16 @@ void US_ExperimentMain::enable_tabs_buttons_readonly( void )
   DbgLv(1) << "ENABLING!!!";
   pb_next   ->setEnabled(true);
   pb_prev   ->setEnabled(true);
-  
- 
+
   for (int i=1; i<tabWidget->count(); i++)
     {
       tabWidget ->setTabEnabled( i, true );
       QPalette pal = tabWidget ->tabBar()->palette();
       //DbgLv(1) << "PALETTE: " << pal.color(QPalette::WindowText);
       tabWidget ->tabBar()->setTabTextColor( i, pal.color(QPalette::WindowText) ); // Qt::black
-      
+
       QWidget* pWidget= tabWidget->widget(i);
-      
+
       //Find all children of each Tab in QTabWidget [children of all types...]
       QList<QPushButton *> allPButtons = pWidget->findChildren<QPushButton *>();
       QList<QComboBox *>   allCBoxes   = pWidget->findChildren<QComboBox *>();
@@ -298,10 +297,10 @@ void US_ExperimentMain::enable_tabs_buttons_readonly( void )
       QList<QCheckBox *>   allChBoxes  = pWidget->findChildren<QCheckBox *>();
 
       // and so on ..
-      
+
       for (int i=0; i < allPButtons.count(); i++)
 	{
-	  if ( (allPButtons[i]->text()).contains("View Solution Details") || 
+	  if ( (allPButtons[i]->text()).contains("View Solution Details") ||
 	       (allPButtons[i]->text()).contains("View Current Range Settings") ||
 	       (allPButtons[i]->text()).contains("View Experiment Details") ||
 	       (allPButtons[i]->text()).contains("Test Connection") )
@@ -309,7 +308,7 @@ void US_ExperimentMain::enable_tabs_buttons_readonly( void )
 	  else
 	    allPButtons[i]->setEnabled(false);
 	}
-      
+
       for (int i=0; i < allCBoxes.count(); i++)
 	{
 	  if ( (allCBoxes[i]->currentText()).contains("Speed Profile") )
@@ -320,13 +319,13 @@ void US_ExperimentMain::enable_tabs_buttons_readonly( void )
       for (int i=0; i < allSBoxes.count(); i++)
 	allSBoxes[i]->setEnabled(false);
       for (int i=0; i < allCounters.count(); i++)
-	allCounters[i]->setEnabled(false); 
+	allCounters[i]->setEnabled(false);
       for (int i=0; i < allChBoxes.count(); i++)
 	allChBoxes[i]->setEnabled(false);
       // and so on ..
-      
+
     }
-  
+
 }
 
 
@@ -353,12 +352,10 @@ void US_ExperimentMain::initPanels()
    epanSolutions->initPanel();
    for ( int ii = 0; ii < epanSolutions->mxrow; ii++ )    //ALEXEY: reset channel comment while protocol re-loaded
      epanSolutions->solution_comment_init[ ii ] = false;
-   
+
    epanOptical  ->initPanel();
    epanRanges   ->initPanel();
    epanUpload   ->initPanel();
-
-   
 }
 
 //========================= End:   Main      section =========================
@@ -406,7 +403,7 @@ DbgLv(1) << "EGGe: inP: prn,prd counts" << protdata.count() << pr_names.count();
    ct_tedelay     ->setValue( currProto->temeq_delay );
 
    check_user_level();
-   
+
 }
 
 
@@ -476,13 +473,13 @@ void US_ExperGuiGeneral::check_user_level()
     {
       pb_investigator->setEnabled( false );
       pb_project     ->setEnabled( false );
-   
+
       if ( !loaded_proto )
 	emit set_tabs_buttons_inactive();
       else
 	emit set_tabs_buttons_active_readonly();
-   
-      DbgLv(1) << "SIGNAL!!!!" ; 
+
+      DbgLv(1) << "SIGNAL!!!!" ;
     }
 }
 
@@ -568,9 +565,9 @@ int US_ExperGuiGeneral::status()
 
 //========================= End:   General   section =========================
 
- 
+
 //========================= Start: Rotor     section =========================
- 
+
 // Initialize a Rotor panel, especially after clicking on its tab
 void US_ExperGuiRotor::initPanel()
 {
@@ -592,7 +589,10 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
    if ( cb_calibr->findText( cal_entr ) < 0 )
    {  // Repopulate calibration combo box to have current calibration
       int rndx          = cb_rotor->findText( rot_entr );
+      bool save_fti     = first_time_init;
+      first_time_init   = true;
       changeRotor( rndx );
+      first_time_init   = save_fti;
    }
 
    setCbCurrentText( cb_calibr,   cal_entr );
@@ -600,12 +600,12 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
                                 + rpRotor->opername );
 
    // ALEXEY - do NOT initialize instrument info as it's dependent on connection, not on the protocol
-   /* 
+   /*
     if ( !QString::number( rpRotor->instID ).isEmpty() && !rpRotor->instrname.isEmpty() )
       le_instrument->setText( QString::number( rpRotor->instID ) + ": "
     			     + rpRotor->instrname );
    */
-   
+
    setCbCurrentText( cb_exptype,  rpRotor->exptype );
 
    changed              = was_changed;   // Restore changed state
@@ -624,13 +624,13 @@ void US_ExperGuiRotor::test_optima_connection()
    QString dbname      = mainw->currentInstrument[ "optimaDBname" ];
    QString dbuser      = mainw->currentInstrument[ "optimaDBusername" ];
    QString dbpasw      = mainw->currentInstrument[ "optimaDBpassw" ];
-   
+
    qDebug() << "Optima in use: name, host, port, dbname, dbuser, dbpasw: " << name << " " << xpnhost << " "
    	    << xpnport << " "  << dbname << " " << dbuser << " " << dbpasw ;
 
 
    QPalette orig_pal = le_optima_connected->palette();
-   
+
    if ( xpnhost.isEmpty() || QString::number(xpnport).isEmpty()
 	|| dbname.isEmpty() || dbuser.isEmpty() || dbpasw.isEmpty()  )
      {
@@ -643,12 +643,12 @@ void US_ExperGuiRotor::test_optima_connection()
        mainw->connection_status = false;
        return;
      }
-   
+
    US_XpnData* xpn_data = new US_XpnData();
    bool o_connected           = xpn_data->connect_data( xpnhost, xpnport, dbname, dbuser,  dbpasw );
    xpn_data->close();
    delete xpn_data;
-      
+
    if ( o_connected )
      {
        le_optima_connected->setText( "connected" );
@@ -682,7 +682,7 @@ void US_ExperGuiRotor::savePanel()
    QString oper         = cb_operator->currentText();
    QString exptype      = cb_exptype ->currentText();
    QString instr        = cb_optima ->currentText();
-      
+
    rpRotor->laboratory  = QString( lab ).section( ":", 1, 1 ).simplified();
    rpRotor->rotor       = QString( rot ).section( ":", 1, 1 ).simplified();
 
@@ -691,7 +691,7 @@ qDebug() << "NAME OF THE ROTOR IN SAVE: rot, rpRotor->rotor: " << rot << ", "  <
    rpRotor->calibration = QString( cal ).section( ":", 1, 1 ).simplified();
    rpRotor->opername    = QString( oper ).section( ":", 1, 1 ).simplified();
    rpRotor->instrname   = QString( instr ).section( ":", 1, 1 ).simplified();
-   
+
    rpRotor->labID       = QString( lab ).section( ":", 0, 0 ).toInt();
    rpRotor->rotID       = QString( rot ).section( ":", 0, 0 ).toInt();
    rpRotor->calID       = QString( cal ).section( ":", 0, 0 ).toInt();
@@ -704,8 +704,7 @@ qDebug() << "OPERATORID / INSTRUMENT / ExpType in SAVE: "
          <<  rpRotor->operID  << ", " << rpRotor->opername << " / "
          <<  rpRotor->instID  << ", " << rpRotor->instrname  << " / "
          <<  rpRotor->exptype;
-   
-   
+
 DbgLv(1) << "EGRo:  svP:  rotID" << rpRotor->rotID << "rotor" << rpRotor->rotor
  << "cb_rotor text" << rot;
 
@@ -855,7 +854,7 @@ void US_ExperGuiSpeeds::initPanel()
    QList< int > dhms2;
    QList< int > dhms2a;
    QList< int > dhms3;
-   
+
    // Populate GUI settings from protocol controls
    nspeed               = rpSpeed ->nstep;
    curssx               = qMin( (nspeed-1), qMax( 0, cb_prof->currentIndex() ) );
@@ -875,7 +874,7 @@ void US_ExperGuiSpeeds::initPanel()
    ct_speed ->setMaximum( speedmax );    // Set speed max based on rotor max
    ct_speed ->setValue  ( rpSpeed->ssteps[ curssx ].speed );
    ct_accel ->setValue  ( rpSpeed->ssteps[ curssx ].accel );
-   
+
    //ALEXEY Comment for now -> transform "Speeds" panel: seperate spinBoxes...
    // sb_durat ->setValue  ( dhms1[ 0 ] );
    // tm_durat ->setTime   ( QTime( dhms1[ 1 ], dhms1[ 2 ], dhms1[ 3 ] ) );
@@ -987,7 +986,7 @@ QString US_ExperGuiSpeeds::getSValue( const QString type )
    else if ( type == "delay_stage" )
    {
       US_RunProtocol::timeToString( ssvals[ 0 ][ "delay_stage" ], value );
-   }   
+   }
    else if ( type == "scanintv" )
    {
       US_RunProtocol::timeToString( ssvals[ 0 ][ "scanintv" ], value );
@@ -1038,7 +1037,7 @@ DbgLv(1) << "EGSp:getLV: type" << type;
 	 double scint         = rpSpeed->ssteps[ ii ].scanintv;
 
 	 qDebug() << "ScanInt: " << scint;
-	 
+
          // double durathrs      = qFloor( duration / 60.0 );
          // double duratmin      = duration - ( durathrs * 60.0 );
          // double delaymin      = qFloor( delay / 60.0 );
@@ -1046,17 +1045,17 @@ DbgLv(1) << "EGSp:getLV: type" << type;
 
 	 double durathrs      = qFloor( duration / 3600.0 );
          double duratmin      = qFloor(duration - ( durathrs * 3600.0 )) / 60.0;
-	 
+
 	 double delayhrs      = qFloor( delay / 3600.0 );
 	 double delaymin      = qFloor(delay - ( delayhrs * 3600.0 )) / 60.0;
 
 	 double delaystagehrs = qFloor( delay_stage / 3600.0 );
 	 double delaystagemin = qFloor(delay_stage - ( delaystagehrs * 3600.0 )) / 60.0;
-         
+
 	 double scinthrs      = qFloor( scint / 3600.0 );
 	 double scintmin      = qFloor(( scint - ( scinthrs * 3600.0 )) / 60.0);
          double scintsec      = scint - ( scinthrs * 3600.0 ) - ( scintmin * 60.0 );
-	 
+
          value << tr( "%1 rpm" ).arg( speed );
          value << tr( "%1 rpm/sec" ).arg( accel );
          value << tr( "%1 h %2 m" )
@@ -1127,12 +1126,12 @@ DbgLv(1) << "EGCe:inP: prb: nholes" << rpCells->ncell << "nused" << rpCells->nus
 DbgLv(1) << "EGCe:inP: nholes" << nholes << "nused" << nused;
 
    for ( int ii = 0; ii < nholes; ii++ )
-   {  // 
+   {  //
       int cell            = ii + 1;             // Cell number
       bool is_used        = false;              // By default unused
 
       //qDebug() << "cell: " << ii+1 << ", text: " << cc_cenps[ ii ]->currentText();
-      
+
       if ( ( ii != icbal   &&
 	     cc_cenps[ ii ]->currentText().contains( tr( "counterbalance" ) ) ) ||
 	   ( ii != icbal   &&
@@ -1183,7 +1182,7 @@ DbgLv(1) << "EGCe:inP:     ii" << ii << "jj" << jj << "cell cellj"
 	       else
 		 cenbal = rpCells->used[ jj ].cbalance;
 	     }
-	   
+
             setCbCurrentText( cc_cenps[ ii ], cenbal );
             setCbCurrentText( cc_winds[ ii ], rpCells->used[ jj ].windows );
             is_used             = true;
@@ -1195,7 +1194,7 @@ DbgLv(1) << "EGCe:inP:       kused" << kused;
 
       // Set visibility of Windows column based on is/not counterbalance
       cc_labls[ ii ]->setVisible( true );
-      cc_cenps[ ii ]->setVisible( true );    
+      cc_cenps[ ii ]->setVisible( true );
       //cc_winds[ ii ]->setVisible( ii != icbal );                    //ALEXEY  - to change!!!
       if ( ii != icbal )
 	cc_winds[ ii ]->setVisible( true );
@@ -1208,7 +1207,7 @@ DbgLv(1) << "EGCe:inP:       kused" << kused;
 	  else
 	    cc_winds[ ii ]->setVisible( false );
 	}
-      
+
       // Select "empty" for not-used cells
       if ( ! is_used )
       {
@@ -1281,7 +1280,7 @@ DbgLv(1) << "EGCe:svP:    centp" << centp;
          else
          {
 	   // ALEXEY: check if last cell is used as centerpiece
-	   qDebug() << "LAST CELL###: " << centp; 
+	   qDebug() << "LAST CELL###: " << centp;
 	   if ( ! centp.contains( tr( "counterbalance" ) ) )
 	     {
 	       rpCells->used[ jj ].centerpiece = centp;
@@ -1289,7 +1288,7 @@ DbgLv(1) << "EGCe:svP:    centp" << centp;
 	       rpCells->used[ jj ].windows     = cc_winds[ ii ]->currentText();
 	     }
 	   else
-	     {     
+	     {
 	       rpCells->used[ jj ].cbalance    = centp;
 	       rpCells->used[ jj ].centerpiece = "";
 	       rpCells->used[ jj ].windows     = "";
@@ -1402,18 +1401,17 @@ QString scel        = tr( "cell %1" ).arg( ii + 1 );
 
 	 QString centry;                            // ALEXEY: if last cell and not counterbalance, treat as centerpiece
 	 if ( ( ii + 1 ) != nholes )
-	   {
+         {
 	     centry =  celnm + " : " + centp + "  ( " + windo + " )";
-	   }
+         }
 	 else
-	   {
+         {
 	     if ( ! cobal.contains( tr( "counterbalance" )  ) )
 	       centry =  celnm + " : " + centp + "  ( " + windo + " )";
 	     else
 	       centry =  celnm + " : " + cobal;
-	   }
-	 
-	 
+         }
+
 DbgLv(1) << "EGCe:getSL:     ii" << ii << " Entry" << centry;
          value << centry;
       }
@@ -1427,14 +1425,13 @@ DbgLv(1) << "EGCe:getSL:     ii" << ii << " Entry" << centry;
       for ( int ii = 0; ii < rpCells->nused; ii++ )
       {  // Examine the used cells
          int icell        = rpCells->used[ ii ].cell;
- DbgLv(1) << "USED CELL: " << icell;	 
+ DbgLv(1) << "USED CELL: " << icell;
 
  //if ( icell >= icbal )   continue;                   // Skip counterbal.      //ALEXEY bug
 
          if ( icell > icbal && rpCells->used[ ii ].cbalance.contains( tr( "counterbalance" ) ) )
 	   continue;                                             // Skip counterbal. ONLY if it's NOT centerpiece
-	 
-	 
+
          QString channel  = QString( "%1 / " ).arg( icell ); // Start channel
          QString centp    = rpCells->used[ ii ].centerpiece; // Centerpiece
          int chx          = centp.indexOf( "-channel" );     // Index chan count
@@ -1452,7 +1449,6 @@ DbgLv(1) << "EGCe:getSL:     ii" << ii << " Entry" << centry;
 		value << channel + rchans.mid( jj, 1 ) + ", reference [left]";
 	      else
 		value << channel + rchans.mid( jj, 1 );
-	      
             }
          }
       }
@@ -1489,7 +1485,7 @@ DbgLv(1) << "EGCe:st: nused is_done" << rpCells->nused << is_done;
 
 
 //========================= Start: Solutions section =========================
- 
+
 // Initialize a Solutions panel, especially after clicking on its tab
 void US_ExperGuiSolutions::initPanel()
 {
@@ -1512,7 +1508,7 @@ DbgLv(1) << "EGSo:inP: call rbS";
   rebuild_Solut();
 
   qDebug() << "SOLUTIONS: " << mainw->solutions_change;
-  
+
   DbgLv(1) << "EGSo:inP:  aft rbS nchant" << nchant << "nchanf" << nchanf;
 
    QString unspec      = tr( "(unspecified)" );
@@ -1595,14 +1591,14 @@ DbgLv(1) << "EGSo: svP:    nchanf" << nchanf << "sol_id" << sol_id;
 	//ch_comment          = pro_comms[ solution ];
 	ch_comment          = pro_comms[ iistr ];
 	 //ALEXEY - to remember changes to Soluton comments if manual commnets was added while returning to "Solutons" tab
-	 
-	commentStrings( solution, ch_comment, cs, ii );   
+
+	commentStrings( solution, ch_comment, cs, ii );
       }
     else
       {
 	commentStrings( solution, ch_comment, cs, ii );
       }
-    
+
     US_Solution soludata;
     solutionData( solution, soludata );
     solu_ids [ solution ]  = sol_id;
@@ -1610,7 +1606,7 @@ DbgLv(1) << "EGSo: svP:    nchanf" << nchanf << "sol_id" << sol_id;
     //pro_comms[ solution ]  = ch_comment;
     pro_comms[ iistr ]  = ch_comment;
    }
-   
+
    rpSolut->chsols.resize( nchanf );
    QStringList solus;                      // Unique solutions list
    QStringList sids;                       // Corresponding Id list
@@ -1628,7 +1624,7 @@ DbgLv(1) << "EGSo: svP: nchanf" << nchanf << "nchant" << nchant;
 
       QString iistr = QString::number(ii);
       rpSolut->chsols[ ii ].ch_comment = pro_comms[ iistr ];
-      
+
       if ( !solus.contains( solution ) )
       {
          solus << solution;
@@ -1805,14 +1801,14 @@ DbgLv(1) << "EGOp:inP: nochan" << nochan;
    for ( int ii = 0; ii < nochan; ii++ )
      {
        QString channel     = rpOptic->chopts[ ii ].channel;
-       
+
        int cell_number = ((channel.split(QRegExp("\\s+"), QString::SkipEmptyParts))[0]).toInt();
        qDebug() << "CELL ####: " << cell_number;
        if ( nholes == cell_number )
-	 ctrbal_is_centerpiece = true; 
+	 ctrbal_is_centerpiece = true;
      }
 
-   
+
    for ( int ii = 0; ii < nochan; ii++ )
    {
       QString channel     = rpOptic->chopts[ ii ].channel;
@@ -1843,14 +1839,14 @@ DbgLv(1) << "EGOp:inP:  ii" << ii << "channel" << channel
       ckbox2->setEnabled(true);
       if ( ctrbal_is_centerpiece )
 	ckbox2->setEnabled(false);
-      
+
       ckbox3->setChecked( prscans.contains( ckscan3 ) );
       ckbox1->setVisible( ! ckscan1.contains( notinst ) );
       ckbox2->setVisible( ! ckscan2.contains( notinst ) );
       ckbox3->setVisible( ! ckscan3.contains( notinst ) );
    }
 
-   
+
 DbgLv(1) << "EGOp:inP: nochan" << nochan << "mxrow" << mxrow;
    // Make remaining rows invisible
    for ( int ii = nochan; ii < mxrow; ii++ )
@@ -2033,7 +2029,7 @@ int US_ExperGuiOptical::status()
    QString notinst     = tr( "(not installed)" );
    QString l_uvvis     = tr( "UV/visible" );
    QString slabl_n( "none" );
-   nochan              = rpOptic->nochan; 
+   nochan              = rpOptic->nochan;
    nuchan              = 0;           // Initialize count of used rows
    nuvvis              = 0;           // Initialize count of UV/vis rows
    for ( int ii = 0; ii < nochan; ii++ )
@@ -2083,7 +2079,7 @@ DbgLv(1) << "EGOp:st: nochan nuchan done" << nochan << nuchan << is_done;
 
 
 //========================= Start: Ranges    section =========================
-                   
+
 // Initialize a Ranges panel, especially after clicking on its tab
 void US_ExperGuiRanges::initPanel()
 {
@@ -2121,7 +2117,7 @@ DbgLv(1) << "EGwS:inP:    ii" << ii << "channel" << channel;
       cc_lrads[ ii ]->setVisible( true );
       cc_hrads[ ii ]->setVisible( true );
 
-      if ( channel.contains("reference") )   //ALEXEY do not allow to set wavelengths/radial ranges for B channels (reference) 
+      if ( channel.contains("reference") )   //ALEXEY do not allow to set wavelengths/radial ranges for B channels (reference)
 	{
 	   cc_wavls[ ii ]->setEnabled( false );
 	   cc_lrads[ ii ]->setEnabled( false );
@@ -2129,7 +2125,7 @@ DbgLv(1) << "EGwS:inP:    ii" << ii << "channel" << channel;
 	}
 
    }
-   
+
    // Make remaining rows invisible
    for ( int ii = nrnchan; ii < mxrow; ii++ )
    {
@@ -2147,18 +2143,18 @@ DbgLv(1) << "EGwS:inP:    ii" << ii << "channel" << channel;
    int nsp = sibIValue( "speeds",  "nspeeds" );
    int ncells  = sibIValue( "rotor",   "nholes" );
    qDebug() << "# speeds, #cells: " << nsp << ", " << ncells;
-   
+
    QVector < int > Total_wvl(nsp);
-   
+
    for (int i=0; i<nsp; i++)
      Total_wvl[i] = 0;
 
    qDebug() << "Total_wvl.size():  " << Total_wvl.size();
-   
+
    for (int i=0; i<nsp; i++)
      {
        qDebug() << "Speed # " << i;
-       
+
        for (int j=0; j<ncells; j++)
 	 {
 	   qDebug() << "Cell # " << j;
@@ -2178,7 +2174,7 @@ DbgLv(1) << "EGwS:inP:    ii" << ii << "channel" << channel;
 	   qDebug() << "#Wvl for cell: " << j << " is: " << Total_wvl[i];
 	 }
      }
-   
+
    cb_scancount->clear();
    for ( int i = 0; i < nsp; i++ )
      {
@@ -2200,7 +2196,7 @@ DbgLv(1) << "EGwS:inP:    ii" << ii << "channel" << channel;
        cb_scancount->addItem( scancount_stage );
      }
    // End of ScanCount listbox
-      
+
 }
 
 // Save panel controls when about to leave the panel
@@ -2251,7 +2247,7 @@ int US_ExperGuiRanges::getIValue( const QString type )
    else if ( type == "alldone" ) { value = ( status() > 0 ) ? 1 : 0; }
    else if ( type == "status"  ) { value = status(); }
 
-   return value; 
+   return value;
 }
 
 // Get a specific panel double value
@@ -2328,7 +2324,7 @@ void US_ExperGuiUpload::initPanel()
 
 
    qDebug() << "rpSPEED: duration: " << rpSpeed->ssteps[0].duration;
-   
+
 if(rps_differ)
 {
 US_RunProtocol* cRP = currProto;
@@ -2397,9 +2393,9 @@ QString US_ExperGuiUpload::getSValue( const QString type )
              type == "len_xml"  ||
              type == "len_json" )
       value  = QString::number( getIValue( type ) );
-   else if ( type == "xml" )  
+   else if ( type == "xml" )
       value  = rpSubmt->us_xml;
-   else if ( type == "json" ) 
+   else if ( type == "json" )
       value  = rpSubmt->op_json;
 
    return value;

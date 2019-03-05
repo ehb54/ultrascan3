@@ -227,17 +227,18 @@ class US_AnaProfParms
       AProfParmsPCSA     apPCSA;   //!< PCSA controls
       AProfParmsUpload   apSubmt;  //!< Upload controls
 
-      QString      investigator;   //!< Investigator name
-      QString      runname;        //!< Run ID (name)
-      QString      protname;       //!< Protocol name (description)
-      QString      pGUID;          //!< Protocol GUID
-      QString      project;        //!< Project description
-      QString      optimahost;     //!< Optima host (numeric IP address)
+      QString      aprofname;      //!< Analysis profile name
+      QString      aprofGUID;      //!< Analysis profile GUID
+      QString      protoname;      //!< Protocol name (description)
+      QString      protoGUID;      //!< Protocol GUID
 
-      int          projectID; 
-      double       temperature;    //!< Run temperature in degrees centigrade
-      double       temeq_delay;    //!< Temperature-equilibration delay minutes
+      int          protoID;        //!< Protocol DB ID
 
+      QStringList  pchans;         //!< Profile channels
+      QStringList  chndescs;       //!< Channel descriptions
+
+      QList< double> lc_ratios;    //!< Loading concentration ratios
+      QList< double> lc_tolers;    //!< Load concentration tolerances
    private:
 };
 #endif

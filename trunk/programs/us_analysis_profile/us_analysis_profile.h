@@ -57,13 +57,20 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       US_AnaProfParms*    currProf;     // Current AnaProfParms controls
       US_Help  showHelp;
 
-      QPushButton* pb_profname;
-      QPushButton* pb_runID;
+      QPushButton* pb_aproname;
+      QPushButton* pb_protname;
 
-      QLineEdit*   le_profname;
-      QLineEdit*   le_runID;
-      QLineEdit*   le_loadconc;
-      QLineEdit*   le_lctoler;
+      QLineEdit*   le_aproname;
+      QLineEdit*   le_protname;
+
+      QStringList  sl_chnsel;
+
+      QList< QLabel* >       lb_chns;
+      QList< QLabel* >       lb_lcrats;
+      QList< QLabel* >       lb_lctols;
+      QList< QLineEdit* >    le_lcrats;
+      QList< QLineEdit* >    le_lctols;
+      QList< QPushButton* >  pb_aplya;
 
       int          dbg_level;
       bool         use_db;              // Using the LIMS database?
@@ -108,6 +115,16 @@ class US_AnaprofPanEdit : public US_WidgetsDialog
       QLineEdit *  le_voltoler;
       QLineEdit *  le_dataend;
       
+      QStringList  sl_chnsel;
+
+      QList< QLabel* >       lb_chns;
+      QList< QLabel* >       lb_ldvols;
+      QList< QLabel* >       lb_lvtols;
+      QList< QLabel* >       lb_daends;
+      QList< QLineEdit* >    le_ldvols;
+      QList< QLineEdit* >    le_lvtols;
+      QList< QLineEdit* >    le_daends;
+      QList< QPushButton* >  pb_aplya;
       int         dbg_level;
       bool        first_time_init;
       bool        changed;
@@ -147,7 +164,7 @@ class US_AnaprofPan2DSA : public US_WidgetsDialog
       US_Help      showHelp;
 
       QPushButton* pb_custmg; 
-      QPushButton* pbp_custmg; 
+      QPushButton* pb_applya; 
 
       QLineEdit*   le_smin; 
       QLineEdit*   le_smax; 
@@ -158,34 +175,28 @@ class US_AnaprofPan2DSA : public US_WidgetsDialog
       QLineEdit*   le_grreps; 
       QLineEdit*   le_custmg; 
       QLineEdit*   le_constk; 
-      QLineEdit*   lep_smin; 
-      QLineEdit*   lep_smax; 
-      QLineEdit*   lep_sgrpts; 
-      QLineEdit*   lep_kmin; 
-      QLineEdit*   lep_kmax; 
-      QLineEdit*   lep_kgrpts; 
-      QLineEdit*   lep_grreps; 
-      QLineEdit*   lep_custmg; 
-      QLineEdit*   lep_constk; 
+      QLineEdit*   le_j2gpts;
+      QLineEdit*   le_j2mrng;
+      QLineEdit*   le_j4iter;
+      QLineEdit*   le_j5iter;
 
       QCheckBox*   ck_varyvb;
-      QCheckBox*   ckp_varyvb;
+      QCheckBox*   ck_j1run;
+      QCheckBox*   ck_j2run;
+      QCheckBox*   ck_j3run;
+      QCheckBox*   ck_j4run;
+      QCheckBox*   ck_j5run;
+      QCheckBox*   ck_j3auto;
 
-      QComboBox*   cbp_chnsel; 
+      QComboBox*   cb_chnsel; 
 
       QStringList  sl_chnsel;
       int          dbg_level;     // Debug flag
       bool         changed;       // Flag if any speed step changes
       
    private slots:
-      //! \brief Compose a speed step description
-      QString speedp_description( const int );
-
-      //! \brief Function to adjust delay based on speed,accel,delay-hrs
-      void    adjustDelay   ( void   );
-
-      void    stageDelay_sync     ( void );
-      void    syncdelayChecked    ( bool );
+      //! \brief XXXX
+//      QString speedp_description( const int );
 };
 
 //! \brief Experiment Cells panel
@@ -216,10 +227,13 @@ class US_AnaprofPanPCSA : public US_WidgetsDialog
       US_AnaProfParms::AProfParmsPCSA*   apPCSA;    // PCSA controls
       US_Help  showHelp;
 
+      QPushButton* pb_applya; 
+
       QComboBox*   cb_curvtype;
       QComboBox*   cb_xaxistyp;
       QComboBox*   cb_yaxistyp;
       QComboBox*   cb_zaxistyp;
+      QComboBox*   cb_chnsel;
 
       QLineEdit*   le_xmin;
       QLineEdit*   le_xmax;
@@ -234,9 +248,13 @@ class US_AnaprofPanPCSA : public US_WidgetsDialog
 
       QCheckBox*   ck_tinoise;
       QCheckBox*   ck_rinoise;
+      QCheckBox*   ck_tregoff;
+      QCheckBox*   ck_tregspec;
+      QCheckBox*   ck_tregauto;
 
       bool         changed;
       int          dbg_level;
+      QStringList  sl_chnsel;
 
    private slots:
 };
@@ -317,9 +335,6 @@ class US_AnaprofPanUpload : public US_WidgetsDialog
       bool         submitted;   // Run controls have been Submitted
       bool         connected;   // We are Connected to the Optima
       bool         changed;
-      QString      json_upl;    // JSON to upload
-
-      QJsonObject absorbanceObject;
 
       QSqlDatabase dbxpn;
       
@@ -329,7 +344,6 @@ class US_AnaprofPanUpload : public US_WidgetsDialog
       void    testConnection  ( void );  // Test Optima connection
       void    submitExperiment_confirm( void );  // Submit the experiment
       void    submitExperiment( void );  // Submit the experiment
-      QString buildJson       ( void );  // Build the JSON
 
    signals:
 };
@@ -362,13 +376,11 @@ class US_AnalysisProfile : public US_Widgets
       QPushButton* pb_next;
       QPushButton* pb_prev;
       QPushButton* pb_close;
-
-      bool solutions_change;
+      QPushButton* pb_apply;
 
       bool    connection_status;
       QString xpnhost;
       int     xpnport;
-      QMap< QString, QString > currentInstrument;
       
       bool    automode;
       void    auto_mode_passed( void ); 

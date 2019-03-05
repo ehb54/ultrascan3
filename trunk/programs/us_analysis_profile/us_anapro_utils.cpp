@@ -325,7 +325,7 @@ use_db=false;
 //   le_project     ->setText ( currProf->project );
 //   ct_tempera     ->setValue( currProf->temperature );
 //   ct_tedelay     ->setValue( currProf->temeq_delay );
-DbgLv(1) << "APGe: inP: temp tede" << currProf->temperature << currProf->temeq_delay;
+DbgLv(1) << "APGe: inP: aname pname" << currProf->aprofname << currProf->protoname;
 
 DbgLv(1) << "APGe: CALL check_user_level()";
    check_user_level();
@@ -391,7 +391,7 @@ DbgLv(1) << "APGe:ckul: level" << US_Settings::us_inv_level();
   if ( US_Settings::us_inv_level() < 3 )
     {
 //      pb_investigator->setEnabled( false );
-      pb_profname    ->setEnabled( false );
+      pb_aproname    ->setEnabled( false );
    
 //      if ( !loaded_prof )
 //	emit set_tabs_buttons_inactive();
@@ -422,12 +422,9 @@ QString US_AnaprofPanGen::getSValue( const QString type )
 {
    QString value( "" );
 
-   if      ( type == "runID"  ||
-             type == "runname" )      { value = currProf->runname; }
-   else if ( type == "protocol" )     { value = currProf->protname; }
-   else if ( type == "project" )      { value = currProf->project; }
-   else if ( type == "investigator" ) { value = currProf->investigator; }
-   else if ( type == "dbdisk" )       { value = use_db ? "DB" : "Disk"; }
+   if      ( type == "aprofname" )    { value = currProf->aprofname; }
+   else if ( type == "protoname" )    { value = currProf->protoname; }
+   else if ( type == "aprofGUID" )    { value = currProf->aprofGUID; }
 
    return value;
 }
@@ -444,7 +441,8 @@ int US_AnaprofPanGen::getIValue( const QString type )
 double US_AnaprofPanGen::getDValue( const QString type )
 {
    double value   = 0.0;
-   if      ( type == "temperature" ) { value = currProf->temperature; }
+//   if      ( type == "none"        ) { value = currProf->temperature; }
+   if      ( type == "none"        ) { value = 0.0; }
 
    return value;
 }
@@ -454,8 +452,7 @@ QStringList US_AnaprofPanGen::getLValue( const QString type )
 {
    QStringList value( "" );
 
-   if      ( type == "centerpieces" )   { value << "CP"; }
-//   if      ( type == "centerpieces" )   { value = cp_names; }
+   if      ( type == "channels" )       { value = sl_chnsel; }
 //   else if ( type == "protocol_names" ) { value = pr_names; }
 
    return value;
@@ -480,8 +477,8 @@ QStringList US_AnaprofPanGen::sibLValue( const QString sibling, const QString ty
 // Return status flag for the panel
 int US_AnaprofPanGen::status()
 {
-   bool is_done  = !( currProf->runname.isEmpty()  ||
-                      currProf->project.isEmpty() );
+   bool is_done  = !( currProf->aprofname.isEmpty()  ||
+                      currProf->protoname.isEmpty() );
    return ( is_done ? 1 : 0 );
 }
 
@@ -1100,11 +1097,11 @@ if(rps_differ)
 US_AnaProfParms* cAP = currProf;
 US_AnaProfParms* lAP = loadProf;
 DbgLv(1) << "APUp:inP: APs DIFFER";
-DbgLv(1) << "APUp:inP:  cPname" << cAP->protname << "lPname" << lAP->protname;
-DbgLv(1) << "APUp:inP:  cInves" << cAP->investigator << "lInves" << lAP->investigator;
-DbgLv(1) << "APUp:inP:  cPguid" << cAP->pGUID << "lPguid" << lAP->pGUID;
-DbgLv(1) << "APUp:inP:  cOhost" << cAP->optimahost << "lOhost" << lAP->optimahost;
-DbgLv(1) << "APUp:inP:  cTempe" << cAP->temperature << "lTempe" << lAP->temperature;
+DbgLv(1) << "APUp:inP:  cAname" << cAP->aprofname << "lAname" << lAP->aprofname;
+DbgLv(1) << "APUp:inP:  cPname" << cAP->protoname << "lPname" << lAP->protoname;
+DbgLv(1) << "APUp:inP:  cAguid" << cAP->aprofGUID << "lAguid" << lAP->aprofGUID;
+DbgLv(1) << "APUp:inP:  cPguid" << cAP->protoGUID << "lPguid" << lAP->protoGUID;
+DbgLv(1) << "APUp:inP:  cPId  " << cAP->protoID << "lPId" << lAP->protoID;
 DbgLv(1) << "APUp:inP:   apEdit diff" << (cAP->apEdit!=lAP->apEdit);
 DbgLv(1) << "APUp:inP:   ap2DSA diff" << (cAP->ap2DSA!=lAP->ap2DSA);
 DbgLv(1) << "APUp:inP:   apPCSA diff" << (cAP->apPCSA!=lAP->apPCSA);
@@ -1163,13 +1160,10 @@ QString US_AnaprofPanUpload::getSValue( const QString type )
 
    if      ( type == "alldone"  ||
              type == "status"   ||
-             type == "len_xml"  ||
-             type == "len_json" )
+             type == "len_xml"  )
       value  = QString::number( getIValue( type ) );
    else if ( type == "xml" )  
       value  = apSubmt->us_xml;
-   else if ( type == "json" ) 
-      value  = apSubmt->op_json;
 
    return value;
 }
@@ -1181,7 +1175,6 @@ int US_AnaprofPanUpload::getIValue( const QString type )
    if      ( type == "alldone" )  { value = ( status() > 0 ) ? 1 : 0; }
    else if ( type == "status"  )  { value = status(); }
    else if ( type == "len_xml" )  { value = apSubmt->us_xml.length(); }
-   else if ( type == "len_json" ) { value = apSubmt->op_json.length(); }
    return value;
 }
 

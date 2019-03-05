@@ -9,30 +9,26 @@
 #define _TR_(a) QObject::tr(a)
 #endif
 
-// RunProtocol constructor
+// AnaProfParms constructor
 US_AnaProfParms::US_AnaProfParms()
 {
-   protname        = "";
-   pGUID           = QString( "00000000-0000-0000-0000-000000000000" );
-   optimahost      = "192.168.1.1";
-   investigator    = "";
-   temperature     = 20.0;
-   temeq_delay     = 10.0;
+   aprofname       = "";
+   aprofGUID       = QString( "00000000-0000-0000-0000-000000000000" );
+   protoname       = "";
+   protoGUID       = QString( "00000000-0000-0000-0000-000000000000" );
 }
 
-// RunProtocol Equality operator
+// AnaProfParms Equality operator
 bool US_AnaProfParms::operator== ( const US_AnaProfParms& rp ) const
 {
-   if ( investigator != rp.investigator )  return false;
-   if ( protname     != rp.protname     )  return false;
-   if ( pGUID        != rp.pGUID        )  return false;
-   if ( optimahost   != rp.optimahost   )  return false;
-   if ( temperature  != rp.temperature  )  return false;
-   if ( temeq_delay  != rp.temeq_delay  )  return false;
+   if ( aprofname    != rp.aprofname    )  return false;
+   if ( aprofGUID    != rp.aprofGUID    )  return false;
+   if ( protoname    != rp.protoname    )  return false;
+   if ( protoGUID    != rp.protoGUID    )  return false;
 
-   if ( apEdit      != rp.apEdit      )  return false;
-   if ( ap2DSA      != rp.ap2DSA      )  return false;
-   if ( apPCSA      != rp.apPCSA      )  return false;
+   if ( apEdit       != rp.apEdit  )  return false;
+   if ( ap2DSA       != rp.ap2DSA  )  return false;
+   if ( apPCSA       != rp.apPCSA  )  return false;
 
    return true;
 }
@@ -41,30 +37,35 @@ bool US_AnaProfParms::operator== ( const US_AnaProfParms& rp ) const
 bool US_AnaProfParms::toXml( QXmlStreamWriter& xmlo )
 {
    xmlo.writeStartDocument();
-   xmlo.writeDTD          ( "<!DOCTYPE US_AnaProfParms>" );
-   xmlo.writeStartElement ( "ProtocolData" );
+   xmlo.writeDTD          ( "<!DOCTYPE US_AnalysisProfile>" );
+   xmlo.writeStartElement ( "AnalysisProfileData" );
    xmlo.writeAttribute    ( "version", "1.0" );
 
-   xmlo.writeStartElement ( "protocol" );
-   xmlo.writeAttribute    ( "description",  protname );
+   xmlo.writeStartElement ( "analysis_profile" );
+   xmlo.writeAttribute    ( "description",    aprofname );
+   xmlo.writeAttribute    ( "guid",           aprofGUID );
+   xmlo.writeAttribute    ( "protoGUID",      protoGUID );
+   xmlo.writeAttribute    ( "protocol_name",  protoname );
 
-   //ALEXEY: place for project name
-   xmlo.writeAttribute    ("project", project);
-   xmlo.writeAttribute    ("projectid",  QString::number( projectID ) );
-   
-   xmlo.writeAttribute    ( "guid",         pGUID );
-   xmlo.writeAttribute    ( "optima_host",  optimahost );
-   xmlo.writeAttribute    ( "investigator", investigator );
-   xmlo.writeAttribute    ( "temperature",  QString::number( temperature ) );
-   xmlo.writeAttribute    ( "temeq_delay",  QString::number( temeq_delay ) );
+   for ( int ii = 0; ii < pchans.count(); ii++ )
+   {
+      xmlo.writeStartElement ( "channel_parms" );
+      xmlo.writeAttribute    ( "channel",  pchans  [ ii ] );
+      xmlo.writeAttribute    ( "chandesc", chndescs[ ii ] );
+      xmlo.writeAttribute    ( "load_concen_ratio",
+                               QString::number( lc_ratios[ ii ] ) );
+      xmlo.writeAttribute    ( "lcr_tolerance",
+                               QString::number( lc_tolers[ ii ] ) );
+      xmlo.writeEndElement();    // channel_parms
+   }
 
    apEdit.toXml( xmlo );
    ap2DSA.toXml( xmlo );
    apPCSA.toXml( xmlo );
 
-   xmlo.writeEndElement();    // protocol
+   xmlo.writeEndElement();    // analysis_profile
 
-   xmlo.writeEndElement();    // ProtocolData
+   xmlo.writeEndElement();    // AnalysisProfileData
    xmlo.writeEndDocument();
 
    return ( ! xmlo.hasError() );
@@ -73,6 +74,8 @@ bool US_AnaProfParms::toXml( QXmlStreamWriter& xmlo )
 // Read all current controls from an XML stream
 bool US_AnaProfParms::fromXml( QXmlStreamReader& xmli )
 {
+   int chx            = 0;
+
    while( ! xmli.atEnd() )
    {
       xmli.readNext();
@@ -81,25 +84,29 @@ bool US_AnaProfParms::fromXml( QXmlStreamReader& xmli )
       {
          QString ename   = xmli.name().toString();
 
-         if ( ename == "protocol" )
+         if ( ename == "analysis_profile" )
          {
             QXmlStreamAttributes attr = xmli.attributes();
-	    //ALEXEY: project
-	    project         = attr.value( "project"  ).toString();
-	    projectID       = attr.value( "projectid"  ).toInt();
+	    aprofname       = attr.value( "project"  ).toString();
+	    aprofGUID       = attr.value( "projectid"  ).toInt();
 	    
-            protname        = attr.value( "description"  ).toString();
-            pGUID           = attr.value( "guid"         ).toString();
-            optimahost      = attr.value( "optima_host"  ).toString();
-            investigator    = attr.value( "investigator" ).toString();
-            temperature     = attr.value( "temperature"  ).toString().toDouble();
-            QString s_ted   = attr.value( "temeq_delay"  ).toString();
-            temeq_delay     = s_ted.isEmpty() ? temeq_delay : s_ted.toDouble();
+            protoname       = attr.value( "description"  ).toString();
+            protoGUID       = attr.value( "guid"         ).toString();
          }
 
-         else if ( ename == "rotor" )      { apEdit.fromXml( xmli ); }
-         else if ( ename == "speed" )      { ap2DSA.fromXml( xmli ); }
-         else if ( ename == "cells" )      { apPCSA.fromXml( xmli ); }
+         else if ( ename == "channel_parms" )
+         {
+            QXmlStreamAttributes attr = xmli.attributes();
+            pchans   [ chx ] = attr.value( "channel"           ).toString();
+            chndescs [ chx ] = attr.value( "chandesc"          ).toString();
+            lc_ratios[ chx ] = attr.value( "load_concen_ratio" ).toString().toDouble();
+            lc_tolers[ chx ] = attr.value( "lcr_toleraance"    ).toString().toDouble();
+            chx++;
+         }
+
+         else if ( ename == "edit" )      { apEdit.fromXml( xmli ); }
+         else if ( ename == "2DSA" )      { ap2DSA.fromXml( xmli ); }
+         else if ( ename == "PCSA" )      { apPCSA.fromXml( xmli ); }
       }
    }
 
@@ -236,7 +243,7 @@ bool US_AnaProfParms::AProfParmsEdit::operator==
    return true;
 }
 
-// Read all current Rotor controls from an XML stream
+// Read all current Edit controls from an XML stream
 bool US_AnaProfParms::AProfParmsEdit::fromXml( QXmlStreamReader& xmli )
 {
    while( ! xmli.atEnd() )
@@ -245,11 +252,11 @@ bool US_AnaProfParms::AProfParmsEdit::fromXml( QXmlStreamReader& xmli )
 
       if ( xmli.isStartElement() )
       {
-         if ( ename == "rotor" )
+         if ( ename == "edit" )
          {
             QXmlStreamAttributes attr = xmli.attributes();
-            laboratory  = attr.value( "laboratory"  ).toString();
-            rotor       = attr.value( "rotor"       ).toString();
+//            loadvolume  = attr.value( "load_volume"  ).toString();
+//            lv_toler    = attr.value( "lv_tolerance" ).toString();
             calibration = attr.value( "calibration" ).toString();
             labID       = attr.value( "labid"       ).toString().toInt();
             rotID       = attr.value( "rotid"       ).toString().toInt();
@@ -582,7 +589,6 @@ bool US_AnaProfParms::AProfParmsPCSA::CellUse::operator==
 US_AnaProfParms::AProfParmsUpload::AProfParmsUpload()
 {
    us_xml .clear();
-   op_json.clear();
 }
 
 // AProfParmsUpload subclass Equality operator
@@ -590,7 +596,6 @@ bool US_AnaProfParms::AProfParmsUpload::operator==
                   ( const AProfParmsUpload& u ) const
 {
    if ( us_xml  != u.us_xml  ) return false;
-   if ( op_json != u.op_json ) return false;
 
    return true;
 }
