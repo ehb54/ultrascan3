@@ -61,9 +61,8 @@ QString US_AnalysisProfile::childSValue( const QString child, const QString type
 {
    QString value( "" );
    if      ( child == "general"  ) { value = apanGeneral  ->getSValue( type ); }
-   else if ( child == "rotor"    ) { value = apanEdit    ->getSValue( type ); }
-   else if ( child == "speeds"   ) { value = apan2DSA   ->getSValue( type ); }
-   else if ( child == "cells"    ) { value = apanPCSA    ->getSValue( type ); }
+   else if ( child == "2dsa"     ) { value = apan2DSA   ->getSValue( type ); }
+   else if ( child == "pcsa"     ) { value = apanPCSA    ->getSValue( type ); }
    return value;
 }
 
@@ -72,9 +71,8 @@ int US_AnalysisProfile::childIValue( const QString child, const QString type )
 {
    int value      = 0;
    if      ( child == "general"  ) { value = apanGeneral  ->getIValue( type ); }
-   else if ( child == "rotor"    ) { value = apanEdit    ->getIValue( type ); }
-   else if ( child == "speeds"   ) { value = apan2DSA   ->getIValue( type ); }
-   else if ( child == "cells"    ) { value = apanPCSA    ->getIValue( type ); }
+   else if ( child == "2dsa"     ) { value = apan2DSA   ->getIValue( type ); }
+   else if ( child == "pcsa"     ) { value = apanPCSA    ->getIValue( type ); }
    return value;
 }
 
@@ -83,9 +81,8 @@ double US_AnalysisProfile::childDValue( const QString child, const QString type 
 {
    double value   = 0.0;
    if      ( child == "general"  ) { value = apanGeneral  ->getDValue( type ); }
-   else if ( child == "rotor"    ) { value = apanEdit    ->getDValue( type ); }
-   else if ( child == "speeds"   ) { value = apan2DSA   ->getDValue( type ); }
-   else if ( child == "cells"    ) { value = apanPCSA    ->getDValue( type ); }
+   else if ( child == "2dsa"     ) { value = apan2DSA   ->getDValue( type ); }
+   else if ( child == "pcsa"     ) { value = apanPCSA    ->getDValue( type ); }
    return value;
 }
 
@@ -95,9 +92,8 @@ QStringList US_AnalysisProfile::childLValue( const QString child, const QString 
    QStringList value;
 
    if      ( child == "general"  ) { value = apanGeneral  ->getLValue( type ); }
-   else if ( child == "rotor"    ) { value = apanEdit    ->getLValue( type ); }
-   else if ( child == "speeds"   ) { value = apan2DSA   ->getLValue( type ); }
-   else if ( child == "cells"    ) { value = apanPCSA    ->getLValue( type ); }
+   else if ( child == "2dsa"     ) { value = apan2DSA   ->getLValue( type ); }
+   else if ( child == "pcsa"     ) { value = apanPCSA    ->getLValue( type ); }
 
    return value;
 }
@@ -110,16 +106,14 @@ DbgLv(1) << "newPanel panx=" << panx << "prev.panx=" << curr_panx;
    if      ( curr_panx == panx )  return;  // No change in panel
 
    if      ( curr_panx == 0 ) apanGeneral->savePanel();
-   else if ( curr_panx == 1 ) apanEdit   ->savePanel();
-   else if ( curr_panx == 2 ) apan2DSA   ->savePanel();
-   else if ( curr_panx == 3 ) apanPCSA   ->savePanel();
+   else if ( curr_panx == 1 ) apan2DSA   ->savePanel();
+   else if ( curr_panx == 2 ) apanPCSA   ->savePanel();
 DbgLv(1) << "newPanel   savePanel done";
 
    // Initialize the new current panel after possible changes
    if      ( panx == 0 )      apanGeneral->initPanel();
-   else if ( panx == 1 )      apanEdit   ->initPanel();
-   else if ( panx == 2 )      apan2DSA   ->initPanel();
-   else if ( panx == 3 )      apanPCSA   ->initPanel();
+   else if ( panx == 1 )      apan2DSA   ->initPanel();
+   else if ( panx == 2 )      apanPCSA   ->initPanel();
    {
        if ( panx - curr_panx > 1 )
 	 {
@@ -142,7 +136,6 @@ void US_AnalysisProfile::statUpdate()
 {
 DbgLv(1) << "statUpd: IN stat" << statflag;
    statflag   = apanGeneral  ->status()
-              + apanEdit    ->status()
               + apan2DSA   ->status()
               + apanPCSA    ->status();
 DbgLv(1) << "statUpd:  MOD stat" << statflag;
@@ -168,9 +161,8 @@ void US_AnalysisProfile::panelDown()
 void US_AnalysisProfile::help( void )
 {
    if      ( curr_panx == 0 ) apanGeneral ->help();
-   else if ( curr_panx == 1 ) apanEdit    ->help();
-   else if ( curr_panx == 2 ) apan2DSA    ->help();
-   else if ( curr_panx == 3 ) apanPCSA    ->help();
+   else if ( curr_panx == 1 ) apan2DSA    ->help();
+   else if ( curr_panx == 2 ) apanPCSA    ->help();
 }
 
 //Slot to DISABLE tabs and Next/Prev buttons
@@ -274,8 +266,6 @@ void US_AnalysisProfile::initPanels()
 DbgLv(1) << "AP:iP: IN initPanels()";
    apanGeneral  ->initPanel();
 DbgLv(1) << "AP:iP: pG return";
-   apanEdit     ->initPanel();
-DbgLv(1) << "AP:iP: pE return";
    apan2DSA     ->initPanel();
 DbgLv(1) << "AP:iP: p2 return";
    apanPCSA     ->initPanel();
@@ -483,178 +473,6 @@ int US_AnaprofPanGen::status()
 }
 
 //========================= End:   General   section =========================
-
- 
-//========================= Start: Edit      section =========================
- 
-// Initialize a Rotor panel, especially after clicking on its tab
-void US_AnaprofPanEdit::initPanel()
-{
-   apEdit             = &(mainw->currProf.apEdit);
-
-   // Populate GUI settings from protocol controls
-   bool was_changed     = true;          // Save changed state
-DbgLv(1) << "APEd: inP: was_changed" << was_changed;
-//   setCbCurrentText( cb_lab,    QString::number( apEdit->labID ) + ": "
-//                                + apEdit->laboratory );
-//   setCbCurrentText( cb_calibr, QString::number( apEdit->calID ) + ": "
-//                                + apEdit->calibration );
-//   setCbCurrentText( cb_operator, QString::number( apEdit->operID ) + ": "
-//                                + apEdit->operatorname );
-
-   // ALEXEY - do NOT initialize instrument info as it's dependent on connection, not on the protocol
-   /* 
-    if ( !QString::number( apEdit->instID ).isEmpty() && !apEdit->instrumentname.isEmpty() )
-      le_instrument->setText( QString::number( apEdit->instID ) + ": "
-    			     + apEdit->instrumentname );
-   */
-   
-//   setCbCurrentText( cb_exptype,  apEdit->exptype );
-
-   changed              = was_changed;   // Restore changed state
-DbgLv(1) << "APEd: inP: OUT";
-//DbgLv(1) << "EGRo: inP:  rotID" << apEdit->rotID << "rotor" << apEdit->rotor
-// << "cb_rotor text" << cb_rotor->currentText();
-}
-
-
-// Save panel controls when about to leave the panel
-void US_AnaprofPanEdit::savePanel()
-{
-   // Populate protocol controls from GUI settings
-DbgLv(1) << "APEd:svP: IN";
-//   QString lab          = cb_lab   ->currentText();
-DbgLv(1) << "APEd:svP: AA";
-//   QString cal          = cb_calibr->currentText();
-DbgLv(1) << "APEd:svP: BB";
-//   QString oper         = cb_operator->currentText();
-DbgLv(1) << "APEd:svP: CC";
-//   QString exptype      = cb_exptype ->currentText();
-DbgLv(1) << "APEd:svP: DD";
-//   QString instr        = cb_optima ->currentText();
-DbgLv(1) << "APEd:svP: EE";
-      
-//   apEdit->laboratory     = QString( lab )  .section( ":", 1, 1 ).simplified();
-//   apEdit->calibration    = QString( cal )  .section( ":", 1, 1 ).simplified();
-//   apEdit->operatorname   = QString( oper ) .section( ":", 1, 1 ).simplified();
-//   apEdit->instrumentname = QString( instr ).section( ":", 1, 1 ).simplified();
-   
-//   apEdit->labID       = QString( lab )  .section( ":", 0, 0 ).toInt();
-//   apEdit->calID       = QString( cal )  .section( ":", 0, 0 ).toInt();
-//   apEdit->operID      = QString( oper ) .section( ":", 0, 0 ).toInt();
-//   apEdit->instID      = QString( instr ).section( ":", 0, 0 ).toInt();
-
-//   apEdit->exptype     = exptype;
-DbgLv(1) << "APEd:svP: KK";
-
-//qDebug() << "OPERATORID / INSTRUMENT / ExpType in SAVE: "
-//         <<  apEdit->operID  << ", " << apEdit->operatorname << " / "
-//         <<  apEdit->instID  << ", " << apEdit->instrumentname  << " / "
-//         <<  apEdit->exptype;
-DbgLv(1) << "APEd:svP: LL";
-   
-   
-//DbgLv(1) << "EGRo:  svP:  rotID" << apEdit->rotID << "rotor" << apEdit->rotor
-// << "cb_rotor text" << rot;
-
-   // Set the GUIDs by matching up with IDs
-
-   qDebug() << "Edit Save panel Done: " ;
-}
-
-// Get a specific panel string value
-QString US_AnaprofPanEdit::getSValue( const QString type )
-{
-   QString value( "" );
-
-   if      ( type == "lab" )     { value = apEdit->laboratory; }
-   else if ( type == "rotor" )   { value = apEdit->rotor; }
-   else if ( type == "calib" )   { value = apEdit->calibration; }
-
-   else if ( type == "arotor" )
-   {
-      value          = "";
-   }
-
-   else if ( type == "nholes" )
-   {
-      value          = QString::number( getIValue( "nholes" ) );
-   }
-
-   return value;
-}
-
-// Get a specific panel integer value
-int US_AnaprofPanEdit::getIValue( const QString type )
-{
-   int value   = 0;
-DbgLv(1) << "APEd:gIV: type" << type;
-   if ( type == "nholes" )
-   {
-      value          = 0;
-   }
-   else if ( type == "maxrpm" )
-   {
-      value          = 50000;
-   }
-   else if ( type == "labID" )   { value = apEdit->labID; }
-   else if ( type == "rotID" )   { value = apEdit->rotID; }
-   else if ( type == "calID" )   { value = apEdit->calID; }
-
-   return value;
-}
-
-// Get a specific panel double value
-double US_AnaprofPanEdit::getDValue( const QString type )
-{
-   double value   = 0;
-   if      ( type == "maxrpm" ) { value = (double) getIValue( type ); }
-
-   return value;
-}
-
-// Get specific panel list values
-QStringList US_AnaprofPanEdit::getLValue( const QString type )
-{
-   QStringList value( "" );
-
-   if ( type == "all" )
-   {
-      value.clear();
-      value << getSValue( "lab" );
-      value << getSValue( "rotor" );
-      value << getSValue( "calib" );
-   }
-
-   return value;
-}
-
-// Get a specific panel value from a sibling panel
-QString US_AnaprofPanEdit::sibSValue( const QString sibling, const QString type )
-{ return mainw->childSValue( sibling, type ); }
-
-// Get a specific panel integer value from a sibling panel
-int US_AnaprofPanEdit::sibIValue( const QString sibling, const QString type )
-{ return mainw->childIValue( sibling, type ); }
-
-// Get a specific panel double value from a sibling panel
-double US_AnaprofPanEdit::sibDValue( const QString sibling, const QString type )
-{ return mainw->childDValue( sibling, type ); }
-
-// Get a specific panel list from a sibling panel
-QStringList US_AnaprofPanEdit::sibLValue( const QString sibling, const QString type )
-{ return mainw->childLValue( sibling, type ); }
-
-// Return status flag for the panel
-int US_AnaprofPanEdit::status()
-{
-   bool is_done = !( apEdit->laboratory .isEmpty()  ||
-                     apEdit->rotor      .isEmpty()  ||
-                     apEdit->calibration.isEmpty() );
-   return ( is_done ? 2 : 0 );
-}
-
-//========================= End:   Edit      section =========================
 
 
 //========================= Start: 2DSA      section =========================
@@ -1084,7 +902,6 @@ void US_AnaprofPanUpload::initPanel()
    currProf        = &mainw->currProf;
    loadProf        = &mainw->loadProf;
    rps_differ      = ( mainw->currProf !=  mainw->loadProf );
-   apEdit          = &currProf->apEdit;
    ap2DSA          = &currProf->ap2DSA;
    apPCSA          = &currProf->apPCSA;
    apSubmt         = &currProf->apSubmt;
@@ -1102,7 +919,6 @@ DbgLv(1) << "APUp:inP:  cPname" << cAP->protoname << "lPname" << lAP->protoname;
 DbgLv(1) << "APUp:inP:  cAguid" << cAP->aprofGUID << "lAguid" << lAP->aprofGUID;
 DbgLv(1) << "APUp:inP:  cPguid" << cAP->protoGUID << "lPguid" << lAP->protoGUID;
 DbgLv(1) << "APUp:inP:  cPId  " << cAP->protoID << "lPId" << lAP->protoID;
-DbgLv(1) << "APUp:inP:   apEdit diff" << (cAP->apEdit!=lAP->apEdit);
 DbgLv(1) << "APUp:inP:   ap2DSA diff" << (cAP->ap2DSA!=lAP->ap2DSA);
 DbgLv(1) << "APUp:inP:   apPCSA diff" << (cAP->apPCSA!=lAP->apPCSA);
 DbgLv(1) << "APUp:inP:   apSubmt diff" << (cAP->apSubmt!=lAP->apSubmt);

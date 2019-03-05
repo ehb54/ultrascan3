@@ -60,8 +60,6 @@ US_AnalysisProfile::US_AnalysisProfile() : US_Widgets()
 DbgLv(1) << "MAIN: create panels";
    apanGeneral         = new US_AnaprofPanGen   ( this );
 DbgLv(1) << "MAIN:  apGE done";
-   apanEdit            = new US_AnaprofPanEdit  ( this );
-DbgLv(1) << "MAIN:  apED done";
    apan2DSA            = new US_AnaprofPan2DSA  ( this );
 DbgLv(1) << "MAIN:  ap2D done";
    apanPCSA            = new US_AnaprofPanPCSA  ( this );
@@ -72,9 +70,8 @@ DbgLv(1) << "MAIN:  apUP done";
 
    // Add panels to the tab widget
    tabWidget->addTab( apanGeneral,   tr( "1: General" ) );
-   tabWidget->addTab( apanEdit,      tr( "2: Edit"    ) );
-   tabWidget->addTab( apan2DSA,      tr( "3: 2DSA"    ) );
-   tabWidget->addTab( apanPCSA,      tr( "4: PCSA"    ) );
+   tabWidget->addTab( apan2DSA,      tr( "2: 2DSA"    ) );
+   tabWidget->addTab( apanPCSA,      tr( "3: PCSA"    ) );
    tabWidget->addTab( apanUpload,    tr( "9: Upload"  ) );
    tabWidget->setCurrentIndex( curr_panx );
 DbgLv(1) << "MAIN:  tabs added";
@@ -220,16 +217,10 @@ US_AnaprofPanGen::US_AnaprofPanGen( QWidget* topw )
 
    pb_aproname     = us_pushbutton( tr( "Analysis Profile Name" ) );
    pb_protname     = us_pushbutton( tr( "Protocol Name" ) );
-//   QLabel* lb_loadconc  = us_label( tr( "Loading Concentration Ratio:" ) );
-//   QLabel* lb_lctoler   = us_label( tr( "+/- Ratio Tolerance:" ) );
-//   int     ihgt         = pb_aproname->height();
-//   QSpacerItem* spacer1 = new QSpacerItem( 20, ihgt );
 
    // Set up line edits
    le_aproname     = us_lineedit( "(default)", 0, false );
    le_protname     = us_lineedit( "Test-1234", 0, false );
-//   le_loadconc     = us_lineedit( "0.800", 0, false );
-//   le_lctoler      = us_lineedit( "0.500", 0, false );
 
    // Set defaults
    currProf        = &mainw->currProf;
@@ -242,48 +233,83 @@ US_AnaprofPanGen::US_AnaprofPanGen( QWidget* topw )
    genL->addWidget( le_protname,     row++, 2, 1, 6 );
 
    // Build channel lists and rows
-#if 1
-   sl_chnsel << tr( "1A: UV/visible (solution 1)" )
-             << tr( "2A: UV/visible (solution 2)" )
-             << tr( "3A: Interference (solution 3)" );
-#endif
+   sl_chnsel << tr( "1A-UV/vis.:Protein A in PBS" )
+             << tr( "1B-UV/vis.:(solution 2)" )
+             << tr( "2A-UV/vis.:(solution 3)" )
+             << tr( "2B-UV/vis.:(solution 4)" )
+             << tr( "3A-Interf.:(solution 5)" )
+             << tr( "3B-Interf.:(solution 6)" )
+             << tr( "4A-Interf.:(solution 7)" )
+             << tr( "4B-Interf.:(solution 8)" )
+             << tr( "5A-Interf.:(solution 9)" )
+             << tr( "5B-Interf.:(solution A)" )
+             << tr( "6A-Interf.:(solution B)" )
+             << tr( "6B-Interf.:(solution C)" )
+             << tr( "7A-Interf.:(solution D)" )
+             << tr( "7B-Interf.:(solution E)" )
+             << tr( "8A-Interf.:(solution F)" )
+             << tr( "8B-Interf.:(solution G)" );
    int nchn        = sl_chnsel.count();
-   lb_chns  .clear();
-   lb_lcrats.clear();
-   lb_lctols.clear();
-   le_lcrats.clear();
-   le_lctols.clear();
-   pb_aplya .clear();
+   QLabel* lb_chann  = us_label( tr( "CellChannel-\n"
+                                     "Optics: Solution" ) );
+   lb_chann->setAlignment ( Qt::AlignVCenter | Qt::AlignLeft );
+   QLabel* lb_lcrat  = us_label( tr( "Loading\nRatio" ) );
+   QLabel* lb_lctol  = us_label( tr( "+/- %\nToler." ) );
+   QLabel* lb_ldvol  = us_label( tr( "Loading\nVolume (" )
+                                 + QString( QChar( 181 ) ) + "l)" );
+   QLabel* lb_lvtol  = us_label( tr( "+/- %\nToler." ) );
+   QLabel* lb_daend  = us_label( tr( "Data End\n(cm)" ) );
+           pb_applya = us_pushbutton( tr( "Apply to All" ) );
+
+   genL->addWidget( lb_chann, row,    0, 2, 5 );
+   genL->addWidget( lb_lcrat, row,    5, 2, 1 );
+   genL->addWidget( lb_lctol, row,    6, 2, 1 );
+   genL->addWidget( lb_ldvol, row,    7, 2, 2 );
+   genL->addWidget( lb_lvtol, row,    9, 2, 1 );
+   genL->addWidget( lb_daend, row++, 10, 2, 1 ); row++;
 
    for ( int ii = 0; ii < nchn; ii++ )
    {
-      lb_chns   << us_banner( sl_chnsel[ ii ] );
-      lb_lcrats << us_label( tr( "Loading Concentration Ratio:" ) );
-      lb_lctols << us_label( tr( "+/- Ratio Tolerance:" ) );
-      le_lcrats << us_lineedit( "0.800", 0, false );
-      le_lctols << us_lineedit( "0.500", 0, false );
-      pb_aplya  << us_pushbutton( tr( "Apply to All" ) );
+      QString schan( sl_chnsel[ ii ] );
+      QLineEdit* le_chann = us_lineedit( schan, 0, true  );
+      QLineEdit* le_lcrat = us_lineedit( "1.0", 0, false );
+      QLineEdit* le_lctol = us_lineedit( "5",   0, false );
+      QLineEdit* le_ldvol = us_lineedit( "460", 0, false );
+      QLineEdit* le_lvtol = us_lineedit( "10",  0, false );
+      QLineEdit* le_daend = us_lineedit( "7.0", 0, false );
 
-      genL->addWidget( lb_chns  [ ii ], row++, 1, 1, 7 );
-      genL->addWidget( lb_lcrats[ ii ], row,   0, 1, 2 );
-      genL->addWidget( le_lcrats[ ii ], row,   2, 1, 1 );
-      genL->addWidget( lb_lctols[ ii ], row,   3, 1, 2 );
-      genL->addWidget( le_lctols[ ii ], row,   5, 1, 1 );
-      genL->addWidget( pb_aplya [ ii ], row++, 6, 1, 2 );
+      le_lcrats << le_lcrat;
+      le_lctols << le_lctol;
+      le_ldvols << le_ldvol;
+      le_lvtols << le_lvtol;
+      le_daends << le_daend;
+      genL->addWidget( le_chann,  row,    0, 1, 5 );
+      genL->addWidget( le_lcrat,  row,    5, 1, 1 );
+      genL->addWidget( le_lctol,  row,    6, 1, 1 );
+      genL->addWidget( le_ldvol,  row,    7, 1, 2 );
+      genL->addWidget( le_lvtol,  row,    9, 1, 1 );
+      genL->addWidget( le_daend,  row,   10, 1, 1 );
+      if ( ii == 0 )
+      {
+         genL->addWidget( pb_applya, row++, 11, 1, 1 );
+      }
+      else
+      {
+         row++;
+      }
    }
 
-#if 0
-   // Build channel profile rows
-   genL->addWidget( lb_loadconc,     row,   1, 1, 2 );
-   genL->addWidget( le_loadconc,     row,   3, 1, 1 );
-   genL->addWidget( lb_lctoler,      row,   4, 1, 2 );
-   genL->addWidget( le_lctoler,      row++, 6, 1, 1 );
-#endif
+   mainw->addColumnSpacing( genL, row );
 
-//   genL->addItem  ( spacer1,         row++, 6, 1, 2 );
-   
-   panel->addLayout( genL );
-   panel->addStretch();
+   QScrollArea *scrollArea  = new QScrollArea( this );
+   QWidget* containerWidget = new QWidget;
+   containerWidget->setLayout( genL );
+   scrollArea->setWidgetResizable( true );
+   scrollArea->setWidget( containerWidget );
+//   panel->addLayout( genL );
+   panel->addWidget( scrollArea );
+   adjustSize();
+//   panel->addStretch();
 
    // Set up signal and slot connections
 //   connect( le_runid,        SIGNAL( textEdited(const QString &)  ),
@@ -315,102 +341,6 @@ bool US_AnaprofPanGen::updateProfiles( const QStringList )
    return true;
 }
 
-// Panel for Lab/Rotor parameters
-US_AnaprofPanEdit::US_AnaprofPanEdit( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
-{
-DbgLv(1) << "APEd: IN";
-   mainw                = (US_AnalysisProfile*)topw;
-   dbg_level            = US_Settings::us_debug();
-   QVBoxLayout* panel   = new QVBoxLayout( this );
-   panel->setSpacing        ( 2 );
-   panel->setContentsMargins( 2, 2, 2, 2 );
-   QLabel* lb_panel     = us_banner( tr( "2: Specify Edit parameters" ) );
-   panel->addWidget( lb_panel );
-   QGridLayout* genL    = new QGridLayout();
-
-#if 0
-   QLabel* lb_loadvol   = us_label( tr( "Loading Volume (ml):" ) );
-   QLabel* lb_voltoler  = us_label( tr( "Volume Tolerance (+/-,ml):" ) );
-   QLabel* lb_dataend   = us_label( tr( "Data End (nm):" ) );
-//   QPushButton* pb_advrotor = us_pushbutton( tr( "Advanced Lab/Rotor/Calibration" ) );
-   int ihgt             = lb_loadvol->height();
-   QSpacerItem* spacer1 = new QSpacerItem( 20, ihgt );
-#endif
-#if 0
-   le_loadvol      = us_lineedit( "460", 0, false );
-   le_voltoler     = us_lineedit( "10", 0, false );
-   le_dataend      = us_lineedit( "7.00", 0, false );
-#endif
-
-
-//   QLabel*      lb_optima_banner    = us_banner( tr( "Select Optima Machine, Operator and Experiment Type " ) );
-   sl_chnsel   = sibLValue( "general", "channels" );
-#if 0
-   sl_chnsel << tr( "1A: UV/visible (solution 1)" )
-             << tr( "2A: UV/visible (solution 2)" )
-             << tr( "3A: Interference (solution 3)" );
-#endif
-   int nchn        = sl_chnsel.count();
-   int row     = 0;
-
-   for ( int ii = 0; ii < nchn; ii++ )
-   {
-      lb_chns   << us_banner( sl_chnsel[ ii ] );
-      lb_ldvols << us_label( tr( "Loading Volume (ml):" ) );
-      lb_lvtols << us_label( tr( "Volume Tolerance (+/-,ml):" ) );
-      lb_daends << us_label( tr( "Data End (nm):" ) );
-      le_ldvols << us_lineedit( "460", 0, false );
-      le_lvtols << us_lineedit( "10", 0, false );
-      le_daends << us_lineedit( "7.00", 0, false );
-      pb_aplya  << us_pushbutton( tr( "Apply to All" ) );
-
-      genL->addWidget( lb_chns  [ ii ], row++,  1, 1, 8 );
-      genL->addWidget( lb_ldvols[ ii ], row,    0, 1, 3 );
-      genL->addWidget( le_ldvols[ ii ], row,    3, 1, 1 );
-      genL->addWidget( lb_lvtols[ ii ], row,    4, 1, 3 );
-      genL->addWidget( le_lvtols[ ii ], row,    7, 1, 1 );
-      genL->addWidget( lb_daends[ ii ], row,    8, 1, 2 );
-      genL->addWidget( le_daends[ ii ], row,   10, 1, 1 );
-      genL->addWidget( pb_aplya [ ii ], row++, 11, 1, 1 );
-   }
-#if 0
-   int row     = 0;
-   genL->addWidget( lb_loadvol,      row,    0, 1, 3 );
-   genL->addWidget( le_loadvol,      row,    3, 1, 1 );
-   genL->addWidget( lb_voltoler,     row,    4, 1, 3 );
-   genL->addWidget( le_voltoler,     row,    7, 1, 1 );
-   genL->addWidget( lb_dataend,      row,    8, 1, 3 );
-   genL->addWidget( le_dataend,      row++, 11, 1, 1 );
-   genL->addItem  ( spacer1,         row++,  0, 1, 4 );
-
-   row++;
-
-   genL->addItem  ( spacer1,         row++,  0, 1, 12 );
-#endif
-DbgLv(1) << "APEd: JJ";
-   mainw->addColumnSpacing( genL, row );
-   
-   panel->addLayout( genL );
-   panel->addStretch();
-
-
-//   connect( cb_lab,       SIGNAL( activated   ( int ) ),
-//            this,         SLOT  ( changeLab   ( int ) ) );
-
-   first_time_init = true;
-DbgLv(1) << "APEd: MM";
-   savePanel();
-DbgLv(1) << "APEd: NN";
-//   changed             = false;
-
-   initPanel();
-DbgLv(1) << "APEd: OO";
-
-   first_time_init = false;
-DbgLv(1) << "APEd: ZZ";
-}
-
 
 // Panel for 2DSA parameters
 US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
@@ -439,6 +369,8 @@ US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
    QLabel*  lb_grreps  = us_label ( tr( "Grid Repetitions:  " ) );
             pb_custmg  = us_pushbutton( tr( "Custom Grid" ) );;
             pb_applya  = us_pushbutton( tr( "Apply to All" ) );;
+   QPushButton*
+            pb_nextch  = us_pushbutton( tr( "Next Channel" ) );;
 
    QLabel*  lb_jflow   = us_banner( tr( "2DSA Job Flow"   ) );
    QLabel*  lb_sumry   = us_label ( tr( "Flow Summary:   "
@@ -511,7 +443,8 @@ US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
    int row     = 0;
    genL->addWidget( lb_chnpro,  row++,  0, 1, 12 );
    genL->addWidget( lb_chnsel,  row,    0, 1,  3 );
-   genL->addWidget( cb_chnsel,  row++,  3, 1,  7 );
+   genL->addWidget( cb_chnsel,  row,    3, 1,  7 );
+   genL->addWidget( pb_nextch,  row++, 10, 1,  2 );
    genL->addWidget( lb_smin,    row,    0, 1,  3 );
    genL->addWidget( le_smin,    row,    3, 1,  1 );
    genL->addWidget( lb_smax,    row,    4, 1,  3 );
@@ -613,6 +546,8 @@ DbgLv(1) << "APpc: IN";
    QLabel* lb_chnsel   = us_label ( tr( "Channel [ Chn: Opt (Solut) ]" ) );
    QLabel* lb_tregtype = us_label ( tr( "Tikhonov Regularization:" ) );
            pb_applya   = us_pushbutton( tr( "Apply to All" ) );;
+   QPushButton*
+           pb_nextch   = us_pushbutton( tr( "Next Channel" ) );;
 
    QStringList sl_curvtype;
    sl_curvtype << tr( "Increasing Sigmoid" )
@@ -675,7 +610,8 @@ DbgLv(1) << "APpc: IN";
    int row             = 0;
    genL->addWidget( lb_chnpro,   row++,  0, 1, 12 );
    genL->addWidget( lb_chnsel,   row,    0, 1,  3 );
-   genL->addWidget( cb_chnsel,   row++,  3, 1,  7 );
+   genL->addWidget( cb_chnsel,   row,    3, 1,  7 );
+   genL->addWidget( pb_nextch,   row++, 10, 1,  2 );
    genL->addWidget( lb_curvtype, row,    0, 1,  3 );
    genL->addWidget( cb_curvtype, row,    3, 1,  3 );
    genL->addWidget( pb_applya,   row++, 10, 1,  2 );
