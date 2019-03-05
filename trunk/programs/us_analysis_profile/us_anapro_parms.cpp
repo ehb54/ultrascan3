@@ -26,7 +26,6 @@ bool US_AnaProfParms::operator== ( const US_AnaProfParms& rp ) const
    if ( protoname    != rp.protoname    )  return false;
    if ( protoGUID    != rp.protoGUID    )  return false;
 
-   if ( apEdit       != rp.apEdit  )  return false;
    if ( ap2DSA       != rp.ap2DSA  )  return false;
    if ( apPCSA       != rp.apPCSA  )  return false;
 
@@ -59,7 +58,6 @@ bool US_AnaProfParms::toXml( QXmlStreamWriter& xmlo )
       xmlo.writeEndElement();    // channel_parms
    }
 
-   apEdit.toXml( xmlo );
    ap2DSA.toXml( xmlo );
    apPCSA.toXml( xmlo );
 
@@ -104,7 +102,6 @@ bool US_AnaProfParms::fromXml( QXmlStreamReader& xmli )
             chx++;
          }
 
-         else if ( ename == "edit" )      { apEdit.fromXml( xmli ); }
          else if ( ename == "2DSA" )      { ap2DSA.fromXml( xmli ); }
          else if ( ename == "PCSA" )      { apPCSA.fromXml( xmli ); }
       }
@@ -211,109 +208,6 @@ void US_AnaProfParms::timeFromString( QTime& timeobj, int& days,
    int t_minute     = strtime.section( ":", 1, 1 ).toInt();
    int t_second     = strtime.section( ":", 2, 2 ).toInt();
    timeobj          = QTime( t_hour, t_minute, t_second );
-}
-
-
-// AProfParmsEdit subclass constructor
-US_AnaProfParms::AProfParmsEdit::AProfParmsEdit()
-{
-   laboratory           = "New Lab";
-   rotor                = "New Rotor";
-   calibration          = "New Calibration";
-   labGUID              = QString( "00000000-0000-0000-0000-000000000000" );
-   rotGUID              = labGUID;
-   calGUID              = labGUID;
-   absGUID              = labGUID;
-   labID                = -1;
-   rotID                = -1;
-   calID                = -1;
-   absID                = -1;
-}
-//3-------------------------------------------------------------------------->80
-
-// AProfParmsEdit subclass Equality operator
-bool US_AnaProfParms::AProfParmsEdit::operator== 
-                  ( const AProfParmsEdit& rp ) const
-{
-   if ( labGUID != rp.labGUID ) return false;
-   if ( rotGUID != rp.rotGUID ) return false;
-   if ( calGUID != rp.calGUID ) return false;
-   if ( absGUID != rp.absGUID ) return false;
-
-   return true;
-}
-
-// Read all current Edit controls from an XML stream
-bool US_AnaProfParms::AProfParmsEdit::fromXml( QXmlStreamReader& xmli )
-{
-   while( ! xmli.atEnd() )
-   {
-      QString ename   = xmli.name().toString();
-
-      if ( xmli.isStartElement() )
-      {
-         if ( ename == "edit" )
-         {
-            QXmlStreamAttributes attr = xmli.attributes();
-//            loadvolume  = attr.value( "load_volume"  ).toString();
-//            lv_toler    = attr.value( "lv_tolerance" ).toString();
-            calibration = attr.value( "calibration" ).toString();
-            labID       = attr.value( "labid"       ).toString().toInt();
-            rotID       = attr.value( "rotid"       ).toString().toInt();
-            calID       = attr.value( "calid"       ).toString().toInt();
-            absID       = attr.value( "absid"       ).toString().toInt();
-            labGUID     = attr.value( "labguid"     ).toString();
-            rotGUID     = attr.value( "rotguid"     ).toString();
-            calGUID     = attr.value( "calguid"     ).toString();
-            absGUID     = attr.value( "absguid"     ).toString();
-
-	    exptype     = attr.value( "exptype"     ).toString();
-	    operatorname = attr.value( "opername"   ).toString();
-	    operID      = attr.value( "operid"       ).toString().toInt();
-	    instID      = attr.value( "instid"       ).toString().toInt();
-	    instrumentname  = attr.value( "instname" ).toString();;
-         }
-
-         else
-            break;
-      }
-
-      else if ( xmli.isEndElement()  &&  ename == "rotor" )
-         break;
-
-      xmli.readNext();
-   }
-
-   return ( ! xmli.hasError() );
-}
-
-// Write the current Rotor portion of controls to an XML stream
-bool US_AnaProfParms::AProfParmsEdit::toXml( QXmlStreamWriter& xmlo )
-{
-   xmlo.writeStartElement( "rotor" );
-
-   xmlo.writeAttribute( "laboratory",  laboratory );
-   xmlo.writeAttribute( "rotor",       rotor );
-   xmlo.writeAttribute( "calibration", calibration );
-   xmlo.writeAttribute( "labid",       QString::number( labID ) );
-   xmlo.writeAttribute( "rotid",       QString::number( rotID ) );
-   xmlo.writeAttribute( "calid",       QString::number( calID ) );
-   xmlo.writeAttribute( "absid",       QString::number( absID ) );
-
-   xmlo.writeAttribute( "instid",      QString::number( instID ) );
-   xmlo.writeAttribute( "instname",    instrumentname );
-   xmlo.writeAttribute( "operid",      QString::number( operID ) );
-   xmlo.writeAttribute( "opername",    operatorname );
-   xmlo.writeAttribute( "exptype",     exptype );
-   
-   xmlo.writeAttribute( "labguid",     labGUID );
-   xmlo.writeAttribute( "rotguid",     rotGUID );
-   xmlo.writeAttribute( "calguid",     calGUID );
-   xmlo.writeAttribute( "absguid",     absGUID );
-
-   xmlo.writeEndElement();    // rotor
-
-   return ( ! xmlo.hasError() );
 }
 
 

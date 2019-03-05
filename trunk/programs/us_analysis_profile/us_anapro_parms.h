@@ -11,46 +11,8 @@
 class US_AnaProfParms
 {
    public:
-      //! \brief Protocol Lab/Rotor controls class
-      class AProfParmsEdit
-      {
-         public:
-            AProfParmsEdit();
 
-            //! A test for identical components
-            bool operator== ( const AProfParmsEdit& ) const;
-
-            //! A test for unequal components
-            inline bool operator!= ( const AProfParmsEdit& p ) const 
-            { return ! operator==(p); }
-
-            //! Load controls from XML
-            bool fromXml( QXmlStreamReader& );
-
-            //! Save controls to XML
-            bool toXml  ( QXmlStreamWriter& );
-
-            QString     laboratory;    //!< Laboratory with rotor
-            QString     rotor;         //!< Rotor description
-            QString     calibration;   //!< Rotor Calibration description
-	    QString     exptype;
-	    QString     operatorname; 
-	    QString     instrumentname;
-	    
-            QString     labGUID;       //!< Laboratory GUID
-            QString     rotGUID;       //!< Rotor GUID
-            QString     calGUID;       //!< Rotor Calibration GUID
-            QString     absGUID;       //!< Abstract Rotor GUID
-
-            int         labID;         //!< Laboratory bB Id
-            int         rotID;         //!< Rotor DB Id
-            int         calID;         //!< Rotor Calibration DB Id
-            int         absID;         //!< Abstract Rotor DB Id
-	    int         operID;
-	    int         instID;
-      };
-
-      //! \brief Protocol Speed Steps controls class
+      //! \brief Protocol 2DSA controls class
       class AProfParms2DSA
       {
          public:
@@ -96,7 +58,7 @@ class US_AnaProfParms
             QVector< SpeedStep > ssteps; //!< The speed steps
       };
 
-      //! \brief Protocol Cells controls class
+      //! \brief Analysis Profile PCSA controls class
       class AProfParmsPCSA
       {
          public:
@@ -139,7 +101,7 @@ class US_AnaProfParms
       };
 
 
-      //! \brief Protocol Upload controls class
+      //! \brief Analysis Profile Upload controls class
       class AProfParmsUpload
       {
          public:
@@ -222,7 +184,6 @@ class US_AnaProfParms
       static void timeFromString( QTime&, int&, QString& );
 
 //3-------------------------------------------------------------------------->80
-      AProfParmsEdit     apEdit;   //!< Edit controls
       AProfParms2DSA     ap2DSA;   //!< 2DSA controls
       AProfParmsPCSA     apPCSA;   //!< PCSA controls
       AProfParmsUpload   apSubmt;  //!< Upload controls

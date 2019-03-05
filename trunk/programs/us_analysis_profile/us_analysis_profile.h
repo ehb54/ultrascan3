@@ -59,18 +59,18 @@ class US_AnaprofPanGen : public US_WidgetsDialog
 
       QPushButton* pb_aproname;
       QPushButton* pb_protname;
+      QPushButton* pb_applya;
 
       QLineEdit*   le_aproname;
       QLineEdit*   le_protname;
 
-      QStringList  sl_chnsel;
-
-      QList< QLabel* >       lb_chns;
-      QList< QLabel* >       lb_lcrats;
-      QList< QLabel* >       lb_lctols;
       QList< QLineEdit* >    le_lcrats;
       QList< QLineEdit* >    le_lctols;
-      QList< QPushButton* >  pb_aplya;
+      QList< QLineEdit* >    le_ldvols;
+      QList< QLineEdit* >    le_lvtols;
+      QList< QLineEdit* >    le_daends;
+      
+      QStringList  sl_chnsel;
 
       int          dbg_level;
       bool         use_db;              // Using the LIMS database?
@@ -81,58 +81,6 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       void  set_tabs_buttons_inactive ( void );
       void  set_tabs_buttons_active_readonly   ( void );
       void  set_tabs_buttons_active  ( void );
-};
-
-//! \brief AnalysisProf Edit panel
-class US_AnaprofPanEdit : public US_WidgetsDialog 
-{
-   Q_OBJECT
-
-   public:
-      US_AnaprofPanEdit( QWidget* );
-      ~US_AnaprofPanEdit() {};
-
-      void        initPanel( void );    // Standard panel utilities
-      void        savePanel( void );
-      QString     getSValue( const QString );
-      int         getIValue( const QString );
-      double      getDValue( const QString );
-      QStringList getLValue( const QString );
-      QString     sibSValue( const QString, const QString );
-      int         sibIValue( const QString, const QString );
-      double      sibDValue( const QString, const QString );
-      QStringList sibLValue( const QString, const QString );
-      int         status   ( void );
-      void        help     ( void )
-         { showHelp.show_help( "manual/experiment_rotor.html" ); };
-
-   private:
-      US_AnalysisProfile*  mainw;
-      US_AnaProfParms::AProfParmsEdit*   apEdit;      // Edit controls
-      US_Help  showHelp;
-      
-      QLineEdit *  le_loadvol;
-      QLineEdit *  le_voltoler;
-      QLineEdit *  le_dataend;
-      
-      QStringList  sl_chnsel;
-
-      QList< QLabel* >       lb_chns;
-      QList< QLabel* >       lb_ldvols;
-      QList< QLabel* >       lb_lvtols;
-      QList< QLabel* >       lb_daends;
-      QList< QLineEdit* >    le_ldvols;
-      QList< QLineEdit* >    le_lvtols;
-      QList< QLineEdit* >    le_daends;
-      QList< QPushButton* >  pb_aplya;
-      int         dbg_level;
-      bool        first_time_init;
-      bool        changed;
-
-      QStringList            experimentTypes;
-
-   private slots:
-      
 };
 
 //! \brief 2DSA controls panel
@@ -294,7 +242,6 @@ class US_AnaprofPanUpload : public US_WidgetsDialog
       US_AnalysisProfile*  mainw;
       US_AnaProfParms*     loadProf;   // Prof params as loaded from AP record
       US_AnaProfParms*     currProf;   // Current AnaProfParms controls
-      US_AnaProfParms::AProfParmsEdit*   apEdit;    // Edit controls
       US_AnaProfParms::AProfParms2DSA*   ap2DSA;    // 2DSA controls
       US_AnaProfParms::AProfParmsPCSA*   apPCSA;    // PCSA controls
       US_AnaProfParms::AProfParmsUpload* apSubmt;   // Upload controls
@@ -390,7 +337,6 @@ class US_AnalysisProfile : public US_Widgets
       QTabWidget*           tabWidget;      // Tab Widget holding the panels
 
       US_AnaprofPanGen*     apanGeneral;    // General panel
-      US_AnaprofPanEdit*    apanEdit;       // Edit panel
       US_AnaprofPan2DSA*    apan2DSA;       // 2DSA panel
       US_AnaprofPanPCSA*    apanPCSA;       // PCSA panel
       US_AnaprofPanUpload*  apanUpload;     // Upload panel
