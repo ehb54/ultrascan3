@@ -74,6 +74,7 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
 
    //tabWidget->tabBar()->setEnabled(false);
 
+  
    // Add bottom buttons
    //QPushButton* pb_close  = us_pushbutton( tr( "Close" ) );
    pb_close = us_pushbutton( tr( "Close" ) );;
@@ -86,6 +87,9 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    buttL->addWidget( pb_prev  );
    buttL->addWidget( pb_next  );
    buttL->addWidget( pb_close );
+
+   tabHeight = tabWidget->tabBar()->height();
+   buttLHeight = pb_prev->height();
 
    // Connect signals to slots
    connect( tabWidget, SIGNAL( currentChanged( int ) ),
@@ -3272,11 +3276,40 @@ US_ExperGuiAProfile::US_ExperGuiAProfile( QWidget* topw )
    // Embed AnalysisProfile object in panel
    sdiag               = new US_AnalysisProfile;
    sdiag->setParent( this, Qt::Widget );
-   sdiag->move( 0, 0 );
+   int offset =  lb_panel->height() + 10;
+   sdiag->move( 0, offset );
    sdiag->setFrameShape( QFrame::Box );
-   sdiag->setLineWidth( 2 );
+   sdiag->setLineWidth( 1 );
    sdiag->show();
 }
+
+//Resize AnalysisProfile properly
+void US_ExperGuiAProfile::resizeEvent(QResizeEvent *event)
+{
+    int upper_height = mainw->tabHeight +  mainw->buttLHeight + 25;
+    int new_main_w = mainw->width();
+    int new_main_h = mainw->height() - upper_height;
+    
+    if ( new_main_w > sdiag->width() || new_main_h > sdiag->height()) {
+      int newWidth = qMax( new_main_w, sdiag->width());
+      int newHeight = qMax( new_main_h, sdiag->height());
+      sdiag->setMaximumSize( newWidth, newHeight );
+      sdiag->resize( QSize(newWidth, newHeight) );
+      update();
+    }
+
+    if ( new_main_w < sdiag->width() ||  new_main_h < sdiag->height() ) {
+      int newWidth = qMin( new_main_w, sdiag->width());
+      int newHeight = qMin( new_main_h, sdiag->height());
+      sdiag->setMaximumSize( newWidth, newHeight );
+      sdiag->resize( QSize(newWidth, newHeight) );
+      update();
+    }
+     
+    QWidget::resizeEvent(event);
+}
+
+
 
 // Slot to show details of an analysis profile
 void US_ExperGuiAProfile::detailProfile()
