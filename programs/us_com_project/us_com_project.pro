@@ -6,7 +6,9 @@ QT           += sql
 QT           += xml
 
 HEADERS       = us_com_project_gui.h \
-                ../us_experiment/us_experiment_gui_optima.h \
+                ../us_experiment/us_experiment_gui_optima.h  \
+                ../us_analysis_profile/us_analysis_profile.h \
+                ../us_analysis_profile/us_anapro_parms.h     \
                 ../us_xpn_viewer/us_xpn_viewer_gui.h \
                 ../us_xpn_viewer/us_xpn_run_raw.h \
                 ../us_xpn_viewer/us_xpn_run_auc.h \
@@ -18,14 +20,16 @@ HEADERS       = us_com_project_gui.h \
                 ../us_convert/us_intensity.h \
                 ../us_convert/us_selectbox.h \
                 ../us_convert/us_select_triples.h
-                              
-                
+
 SOURCES       = us_com_project_main.cpp \
-                us_com_project_gui.cpp \                
+                us_com_project_gui.cpp \
                 ../us_experiment/us_experiment_gui_optima.cpp \
-                ../us_experiment/us_exp_utils.cpp \ 
+                ../us_experiment/us_exp_utils.cpp \
                 ../us_experiment/us_proto_ranges.cpp \
                 ../us_experiment/us_run_protocol.cpp \
+                ../us_analysis_profile/us_analysis_profile.cpp \
+                ../us_analysis_profile/us_anapro_utils.cpp     \
+                ../us_analysis_profile/us_anapro_parms.cpp     \
                 ../us_xpn_viewer/us_xpn_viewer_gui.cpp \
                 ../us_xpn_viewer/us_xpn_run_raw.cpp \
                 ../us_xpn_viewer/us_xpn_run_auc.cpp \
@@ -38,6 +42,4 @@ SOURCES       = us_com_project_main.cpp \
                 ../us_convert/us_intensity.cpp       \
                 ../us_convert/us_selectbox.cpp       \
                 ../us_convert/us_select_triples.cpp
-                               
-                
-                
+

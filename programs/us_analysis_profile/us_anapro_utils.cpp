@@ -146,15 +146,18 @@ void US_AnalysisProfile::panelUp()
 {
    int newndx = tabWidget->currentIndex() + 1;
    int maxndx = tabWidget->count() - 1;
+   newndx     = ( newndx > maxndx ) ? 0 : newndx;
 DbgLv(1) << "panUp: newndx, maxndx" << newndx << maxndx;
-   tabWidget->setCurrentIndex( qMin( newndx, maxndx ) );
+   tabWidget->setCurrentIndex( newndx );
 }
 
 // Slot to retreat to the previous panel
 void US_AnalysisProfile::panelDown()
 {
    int newndx = tabWidget->currentIndex() - 1;
-   tabWidget->setCurrentIndex( qMax( newndx, 0 ) );
+   newndx     = ( newndx < 0 ) ? tabWidget->count() - 1 : newndx;
+DbgLv(1) << "panDown: newndx" << newndx;
+   tabWidget->setCurrentIndex( newndx );
 }
 
 // Open manual help appropriate to the current panel

@@ -10,6 +10,7 @@
 
 #include "us_run_protocol.h"
 #include "us_protocol_util.h"
+#include "../us_analysis_profile/us_analysis_profile.h"
 #include "us_project_gui.h"
 #include "us_editor.h"
 #include "us_settings.h"
@@ -504,7 +505,7 @@ class US_ExperGuiRanges : public US_WidgetsDialog
    private:
       US_ExperimentMain*   mainw;
       US_RunProtocol::RunProtoRanges*  rpRange;
-      US_RunProtocol::RunProtoSpeed*      rpSpeed;  //!< Speed controls
+      US_RunProtocol::RunProtoSpeed*   rpSpeed;  //!< Speed controls
       US_Help  showHelp;
       QList< QLabel* >         cc_labls;   // Pointers to channel labels
       QList< QPushButton* >    cc_wavls;   // Pointers to wavelength buttons
@@ -703,6 +704,7 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       US_RunProtocol::RunProtoSolutions*  rpSolut;  //!< Solutions controls
       US_RunProtocol::RunProtoOptics*     rpOptic;  //!< Optical Systems controls
       US_RunProtocol::RunProtoRanges*     rpRange;  //!< Ranges controls
+      US_RunProtocol::RunProtoAProfile*   rpAprof;  //!< Analysis Profile controls
       US_RunProtocol::RunProtoUpload*     rpSubmt;  //!< Submit controls
       US_Help  showHelp;
 
@@ -763,6 +765,66 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       void expdef_submitted( QMap < QString, QString > &protocol_details );
 };
 
+//! \brief Experiment AnalysisProfile panel
+class US_ExperGuiAProfile : public US_WidgetsDialog 
+{
+   Q_OBJECT
+
+   public:
+      US_ExperGuiAProfile( QWidget* );
+      ~US_ExperGuiAProfile() {};
+
+      void        initPanel( void );    // Standard panel utilities
+      void        savePanel( void );
+      QString     getSValue( const QString );
+      int         getIValue( const QString );
+      double      getDValue( const QString );
+      QStringList getLValue( const QString );
+      QString     sibSValue( const QString, const QString );
+      int         sibIValue( const QString, const QString );
+      double      sibDValue( const QString, const QString );
+      QStringList sibLValue( const QString, const QString );
+      int         status   ( void );
+      void        help     ( void )
+         { showHelp.show_help( "manual/experiment_submit.html" ); };
+
+      QPushButton* pb_saverp;
+
+      QGridLayout* genL;
+      
+   private:
+      US_ExperimentMain*   mainw;
+      US_RunProtocol*       loadProto;  // Loaded RunProtocol controls pointer
+      US_RunProtocol*       currProto;  // Current RunProtocol controls pointer
+      US_RunProtocol::RunProtoRotor*      rpRotor;  //!< Rotor controls
+      US_RunProtocol::RunProtoSpeed*      rpSpeed;  //!< Speed controls
+      US_RunProtocol::RunProtoCells*      rpCells;  //!< Cells controls
+      US_RunProtocol::RunProtoSolutions*  rpSolut;  //!< Solutions controls
+      US_RunProtocol::RunProtoOptics*     rpOptic;  //!< Optical Systems controls
+      US_RunProtocol::RunProtoRanges*     rpRange;  //!< Ranges controls
+      US_RunProtocol::RunProtoAProfile*   rpAprof;  //!< Submit controls
+      US_RunProtocol::RunProtoUpload*     rpSubmt;  //!< Submit controls
+      US_Help  showHelp;
+      US_AnalysisProfile*   sdiag;      // Analysis Profile in panel
+
+      //QPushButton* pb_saverp;
+      //QPushButton* pb_submit;
+
+      //QCheckBox*   ck_sub_done;
+
+      int          dbg_level;
+      bool         have_prof;   // Have Analysis Profile specified
+      bool         submitted;   // Run controls have been Submitted
+      bool         connected;   // We are Connected to the Optima
+
+   private slots:
+      void    detailProfile   ( void );  // Dialog to detail profile
+//      void    saveRunProtocol ( void );  // Save the Run Protocol
+
+   signals:
+      void expdef_submitted( QMap < QString, QString > &protocol_details );
+};
+
 //! \brief Experiment Main Window
 class US_ExperimentMain : public US_Widgets
 {
@@ -813,6 +875,7 @@ class US_ExperimentMain : public US_Widgets
       US_ExperGuiSolutions* epanSolutions;  // Solutions panel
       US_ExperGuiOptical*   epanOptical;    // Optics panel
       US_ExperGuiRanges*    epanRanges;     // Ranges panel
+      US_ExperGuiAProfile*  epanAProfile;   // Analysis Profile panel
       US_ExperGuiUpload*    epanUpload;     // Submit panel
 
       int         statflag;        // Composite panels status flag

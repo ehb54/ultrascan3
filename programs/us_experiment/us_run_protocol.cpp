@@ -973,6 +973,25 @@ bool US_RunProtocol::RunProtoRanges::Ranges::operator==
 }
 
 
+// RunProtoAProfile subclass constructor
+US_RunProtocol::RunProtoAProfile::RunProtoAProfile()
+{
+   profname      = "";
+   profGUID      = QString( "00000000-0000-0000-0000-000000000000" );
+   profID        = 0;
+}
+
+// RunProtoUpload subclass Equality operator
+bool US_RunProtocol::RunProtoAProfile::operator== 
+                  ( const RunProtoAProfile& u ) const
+{
+   if ( profname  != u.profname  ) return false;
+   if ( profGUID  != u.profGUID  ) return false;
+
+   return true;
+}
+
+
 // RunProtoUpload subclass constructor
 US_RunProtocol::RunProtoUpload::RunProtoUpload()
 {
