@@ -23,9 +23,9 @@ class US_AnaProfParms
                   double      accel;         //!< Acceleration in rpm/sec
                   double      duration;      //!< Duration in seconds
                   double      delay;         //!< Delay in seconds
-		  double      delay_stage;   //!< Delay in seconds
+                  double      delay_stage;   //!< Delay in seconds
                   double      scanintv;      //!< Scan interval in seconds
-		  double      scanintv_min;  //!< Fastest scan interval
+                  double      scanintv_min;  //!< Fastest scan interval
 
                   SpeedStep();
 

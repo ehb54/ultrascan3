@@ -263,6 +263,31 @@ class US_RunProtocol
             QVector< Ranges >  chrngs;      //!< Channel ranges
       };
 
+      //! \brief Protocol Analysis Profile controls class
+      class RunProtoAProfile
+      {
+         public:
+            RunProtoAProfile();
+
+            //! A test for identical components
+            bool operator== ( const RunProtoAProfile& ) const;
+
+            //! A test for unequal components
+            inline bool operator!= ( const RunProtoAProfile& p ) const 
+            { return ! operator==(p); }
+
+            //! Load controls from XML
+            bool fromXml( QXmlStreamReader& );
+
+            //! Save controls to XML
+            bool toXml  ( QXmlStreamWriter& );
+
+            QString     profname;      //!< Profile name/description
+            QString     profGUID;      //!< Profile GUID
+	    
+            int         profID;        //!< Profile DB Id
+      };
+
       //! \brief Protocol Upload controls class
       class RunProtoUpload
       {
@@ -352,6 +377,7 @@ class US_RunProtocol
       RunProtoSolutions  rpSolut;  //!< Solutions controls
       RunProtoOptics     rpOptic;  //!< Optical Systems controls
       RunProtoRanges     rpRange;  //!< Ranges controls
+      RunProtoAProfile   rpAprof;  //!< Analysis Profile controls
       RunProtoUpload     rpSubmt;  //!< Upload controls
 
       QString      investigator;   //!< Investigator name

@@ -1,6 +1,7 @@
 //! \file us_experiment/us_experiment_gui_optima.cpp
 
 #include "us_experiment_gui_optima.h"
+#include "../us_analysis_profile/us_analysis_profile.h"
 #include "us_rotor_gui.h"
 #include "us_solution_gui.h"
 #include "us_extinction_gui.h"
@@ -55,6 +56,7 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    epanSolutions       = new US_ExperGuiSolutions( this );
    epanOptical         = new US_ExperGuiOptical  ( this );
    epanRanges          = new US_ExperGuiRanges   ( this );
+   epanAProfile        = new US_ExperGuiAProfile ( this );
    epanUpload          = new US_ExperGuiUpload   ( this );
    statflag            = 0;
 
@@ -66,7 +68,8 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    tabWidget->addTab( epanSolutions, tr( "5: Solutions" ) );
    tabWidget->addTab( epanOptical,   tr( "6: Optics"    ) );
    tabWidget->addTab( epanRanges,    tr( "7: Ranges"    ) );
-   tabWidget->addTab( epanUpload,    tr( "8: Submit"    ) );
+   tabWidget->addTab( epanAProfile,  tr( "8: AProfile"  ) );
+   tabWidget->addTab( epanUpload,    tr( "9: Submit"    ) );
    tabWidget->setCurrentIndex( curr_panx );
 
    //tabWidget->tabBar()->setEnabled(false);
@@ -3242,6 +3245,55 @@ DbgLv(1) << "EGOp: oCk: ccrows" << ccrows;
 }
 
 
+// Panel for Analysis Profile parameters to Optima DB
+US_ExperGuiAProfile::US_ExperGuiAProfile( QWidget* topw )
+   : US_WidgetsDialog( topw, 0 )
+{
+   mainw               = (US_ExperimentMain*)topw;
+   rpRotor             = &(mainw->currProto.rpRotor);
+   rpSpeed             = &(mainw->currProto.rpSpeed);
+   rpCells             = &(mainw->currProto.rpCells);
+   rpSolut             = &(mainw->currProto.rpSolut);
+   rpOptic             = &(mainw->currProto.rpOptic);
+   rpRange             = &(mainw->currProto.rpRange);
+   rpAprof             = &(mainw->currProto.rpAprof);
+   rpSubmt             = &(mainw->currProto.rpSubmt);
+   dbg_level           = US_Settings::us_debug();
+   QVBoxLayout* panel  = new QVBoxLayout( this );
+   panel->setSpacing        ( 2 );
+   panel->setContentsMargins( 2, 2, 2, 2 );
+   QLabel* lb_panel    = us_banner( tr( "8: Review an Analysis"
+                                        " Profile" ) );
+   panel->addWidget( lb_panel );
+   genL                = new QGridLayout();
+   panel->addLayout( genL );
+   panel->addStretch();
+
+   // Embed AnalysisProfile object in panel
+   sdiag               = new US_AnalysisProfile;
+   sdiag->setParent( this, Qt::Widget );
+   sdiag->move( 0, 0 );
+   sdiag->setFrameShape( QFrame::Box );
+   sdiag->setLineWidth( 2 );
+   sdiag->show();
+}
+
+// Slot to show details of an analysis profile
+void US_ExperGuiAProfile::detailProfile()
+{
+   // Create a new editor text dialog with fixed font
+   US_Editor* ediag = new US_Editor( US_Editor::DEFAULT, true, "", this );
+   ediag->setWindowTitle( tr( "Details on Analysis Profile" ) );
+   ediag->resize( 720, 440 );
+   ediag->e->setFont( QFont( US_Widgets::fixedFont().family(),
+                             US_GuiSettings::fontSize() - 1,
+                             QFont::Bold ) );
+QFont ufont=ediag->e->font();
+DbgLv(1) << "EGUp:detE: ufont" << ufont.family();
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+}
+
+
 // Panel for Uploading parameters to Optima DB
 US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
    : US_WidgetsDialog( topw, 0 )
@@ -3260,7 +3312,7 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
    QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
    panel->setContentsMargins( 2, 2, 2, 2 );
-   QLabel* lb_panel    = us_banner( tr( "7: Submit an Experiment"
+   QLabel* lb_panel    = us_banner( tr( "9: Submit an Experiment"
                                         " to the Optima" ) );
    panel->addWidget( lb_panel );
    //QGridLayout* genL   = new QGridLayout();

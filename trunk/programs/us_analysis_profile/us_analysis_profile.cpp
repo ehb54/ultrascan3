@@ -18,6 +18,7 @@
 #endif
 
 
+#if 0
 //! \brief Main program for US_AnalysisProfile. Loads translators and starts
 //         the class US_AnalysisProfile
 
@@ -33,6 +34,7 @@ int main( int argc, char* argv[] )
    w->show();                   //!< \memberof QWidget
    return application.exec();  //!< \memberof QApplication
 }
+#endif
 
 // Constructor:  build the main layout with tab widget panels
 US_AnalysisProfile::US_AnalysisProfile() : US_Widgets()
@@ -49,8 +51,8 @@ US_AnalysisProfile::US_AnalysisProfile() : US_Widgets()
    QGridLayout* statL     = new QGridLayout();
    QHBoxLayout* buttL     = new QHBoxLayout();
 
-   connection_status = false;
-   automode = false;
+   connection_status   = false;
+   automode            = false;
 
       // Create tab and panel widgets
    tabWidget           = us_tabwidget();
@@ -72,19 +74,20 @@ DbgLv(1) << "MAIN:  apUP done";
    tabWidget->addTab( apanGeneral,   tr( "1: General" ) );
    tabWidget->addTab( apan2DSA,      tr( "2: 2DSA"    ) );
    tabWidget->addTab( apanPCSA,      tr( "3: PCSA"    ) );
-   tabWidget->addTab( apanUpload,    tr( "9: Upload"  ) );
+   tabWidget->addTab( apanUpload,    tr( "9: Status"  ) );
    tabWidget->setCurrentIndex( curr_panx );
 DbgLv(1) << "MAIN:  tabs added";
 
    //tabWidget->tabBar()->setEnabled(false);
 
    // Add bottom buttons
-   //QPushButton* pb_close  = us_pushbutton( tr( "Close" ) );
    QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
    pb_next   = us_pushbutton( tr( "Next Panel" ) );
    pb_prev   = us_pushbutton( tr( "Previous Panel" ) );
    pb_close  = us_pushbutton( tr( "Close" ) );;
    pb_apply  = us_pushbutton( tr( "Save/Apply" ) );;
+   pb_apply->setEnabled( false );
+
    buttL->addWidget( pb_help  );
    buttL->addWidget( pb_prev  );
    buttL->addWidget( pb_next  );
@@ -145,6 +148,12 @@ void US_AnalysisProfile::reset( void )
 {
 }
 
+// Set auto mode (comes from ComProject)
+void US_AnalysisProfile::auto_mode_passed( void )
+{
+   automode            = true;
+}
+
 // Reset parameters to their defaults
 void US_AnalysisProfile::close_program( void )
 {
@@ -157,6 +166,9 @@ void US_AnalysisProfile::close_program( void )
 // Add widgets to a grid layout row to set even 12-column spacing
 void US_AnalysisProfile::addColumnSpacing( QGridLayout* genL, int& row )
 {
+//*DEBUG
+//if(row>0) return;
+//*DEBUG
    // Blank text boxes to enforce column spacing
    QLineEdit* le_1 = us_lineedit( " ", 0, true );
    QLineEdit* le_2 = us_lineedit( " ", 0, true );
@@ -303,6 +315,8 @@ US_AnaprofPanGen::US_AnaprofPanGen( QWidget* topw )
 
    QScrollArea *scrollArea  = new QScrollArea( this );
    QWidget* containerWidget = new QWidget;
+   genL->setSpacing         ( 2 );
+   genL->setContentsMargins ( 2, 2, 2, 2 );
    containerWidget->setLayout( genL );
    scrollArea->setWidgetResizable( true );
    scrollArea->setWidget( containerWidget );
