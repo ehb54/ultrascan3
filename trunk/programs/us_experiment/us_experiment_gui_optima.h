@@ -817,6 +817,9 @@ class US_ExperGuiAProfile : public US_WidgetsDialog
       bool         submitted;   // Run controls have been Submitted
       bool         connected;   // We are Connected to the Optima
 
+   protected:
+      void resizeEvent(QResizeEvent *event) override;   
+
    private slots:
       void    detailProfile   ( void );  // Dialog to detail profile
 //      void    saveRunProtocol ( void );  // Save the Run Protocol
@@ -862,7 +865,10 @@ class US_ExperimentMain : public US_Widgets
       QMap< QString, QString > currentInstrument;
       
       bool    automode;
-      void    auto_mode_passed( void ); 
+      void    auto_mode_passed( void );
+
+      int tabHeight;
+      int buttLHeight;
       
    private:
 

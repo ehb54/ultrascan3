@@ -2375,7 +2375,7 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
    ck_rp_diff ->setChecked( rps_differ );
 
    pb_submit  ->setEnabled( subm_enab  );                                  // <-- Temporary enabled for testing
-   pb_saverp  ->setEnabled( have_cells && have_solus && have_range );
+   pb_saverp  ->setEnabled( have_cells && have_solus && have_range );      // ALEXEY: add check here is rps_differ == true (protocols differ)
 }
 
 // Save panel controls when about to leave the panel
