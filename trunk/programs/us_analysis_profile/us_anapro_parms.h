@@ -101,17 +101,17 @@ class US_AnaProfParms
       };
 
 
-      //! \brief Analysis Profile Upload controls class
-      class AProfParmsUpload
+      //! \brief Analysis Profile Status controls class
+      class AProfParmsStatus
       {
          public:
-            AProfParmsUpload();
+            AProfParmsStatus();
 
             //! A test for identical components
-            bool operator== ( const AProfParmsUpload& ) const;
+            bool operator== ( const AProfParmsStatus& ) const;
 
             //! A test for unequal components
-            inline bool operator!= ( const AProfParmsUpload& p ) const 
+            inline bool operator!= ( const AProfParmsStatus& p ) const 
             { return ! operator==(p); }
 
             QString     us_xml;        //!< Run protocol XML
@@ -186,13 +186,14 @@ class US_AnaProfParms
 //3-------------------------------------------------------------------------->80
       AProfParms2DSA     ap2DSA;   //!< 2DSA controls
       AProfParmsPCSA     apPCSA;   //!< PCSA controls
-      AProfParmsUpload   apSubmt;  //!< Upload controls
+      AProfParmsStatus   apStat;   //!< Status controls
 
       QString      aprofname;      //!< Analysis profile name
       QString      aprofGUID;      //!< Analysis profile GUID
       QString      protoname;      //!< Protocol name (description)
       QString      protoGUID;      //!< Protocol GUID
 
+      int          aprofID;        //!< Analysis Profile DB ID
       int          protoID;        //!< Protocol DB ID
 
       QStringList  pchans;         //!< Profile channels
@@ -200,6 +201,8 @@ class US_AnaProfParms
 
       QList< double> lc_ratios;    //!< Loading concentration ratios
       QList< double> lc_tolers;    //!< Load concentration tolerances
+      QList< double> l_volumes;    //!< Loading volumes
+      QList< double> lv_tolers;    //!< Load volume tolerances
    private:
 };
 #endif

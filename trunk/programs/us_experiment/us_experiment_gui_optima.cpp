@@ -74,7 +74,7 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
 
    //tabWidget->tabBar()->setEnabled(false);
 
-  
+
    // Add bottom buttons
    //QPushButton* pb_close  = us_pushbutton( tr( "Close" ) );
    pb_close = us_pushbutton( tr( "Close" ) );;
@@ -3276,7 +3276,7 @@ US_ExperGuiAProfile::US_ExperGuiAProfile( QWidget* topw )
    // Embed AnalysisProfile object in panel
    sdiag               = new US_AnalysisProfile;
    sdiag->setParent( this, Qt::Widget );
-   int offset =  lb_panel->height() + 10;
+   int offset          =  lb_panel->height() + 2;
    sdiag->move( 0, offset );
    sdiag->setFrameShape( QFrame::Box );
    sdiag->setLineWidth( 1 );
@@ -3284,29 +3284,31 @@ US_ExperGuiAProfile::US_ExperGuiAProfile( QWidget* topw )
 }
 
 //Resize AnalysisProfile properly
-void US_ExperGuiAProfile::resizeEvent(QResizeEvent *event)
+void US_ExperGuiAProfile::resizeEvent( QResizeEvent *event )
 {
-    int upper_height = mainw->tabHeight +  mainw->buttLHeight + 25;
-    int new_main_w = mainw->width();
-    int new_main_h = mainw->height() - upper_height;
-    
-    if ( new_main_w > sdiag->width() || new_main_h > sdiag->height()) {
-      int newWidth = qMax( new_main_w, sdiag->width());
-      int newHeight = qMax( new_main_h, sdiag->height());
-      sdiag->setMaximumSize( newWidth, newHeight );
-      sdiag->resize( QSize(newWidth, newHeight) );
-      update();
-    }
+   int upper_height = mainw->tabHeight +  mainw->buttLHeight + 25;
+   int new_main_w   = mainw->width();
+   int new_main_h   = mainw->height() - upper_height;
 
-    if ( new_main_w < sdiag->width() ||  new_main_h < sdiag->height() ) {
-      int newWidth = qMin( new_main_w, sdiag->width());
-      int newHeight = qMin( new_main_h, sdiag->height());
+   if ( new_main_w > sdiag->width() || new_main_h > sdiag->height())
+   {
+      int newWidth   = qMax( new_main_w, sdiag->width());
+      int newHeight  = qMax( new_main_h, sdiag->height());
       sdiag->setMaximumSize( newWidth, newHeight );
-      sdiag->resize( QSize(newWidth, newHeight) );
+      sdiag->resize( QSize( newWidth, newHeight ) );
       update();
-    }
-     
-    QWidget::resizeEvent(event);
+   }
+
+   if ( new_main_w < sdiag->width() ||  new_main_h < sdiag->height() )
+   {
+      int newWidth   = qMin( new_main_w, sdiag->width());
+      int newHeight  = qMin( new_main_h, sdiag->height());
+      sdiag->setMaximumSize( newWidth, newHeight );
+      sdiag->resize( QSize( newWidth, newHeight ) );
+      update();
+   }
+
+   QWidget::resizeEvent(event);
 }
 
 

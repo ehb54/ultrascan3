@@ -479,15 +479,15 @@ bool US_AnaProfParms::AProfParmsPCSA::CellUse::operator==
 }
 
 
-// AProfParmsUpload subclass constructor
-US_AnaProfParms::AProfParmsUpload::AProfParmsUpload()
+// AProfParmsStatus subclass constructor
+US_AnaProfParms::AProfParmsStatus::AProfParmsStatus()
 {
    us_xml .clear();
 }
 
-// AProfParmsUpload subclass Equality operator
-bool US_AnaProfParms::AProfParmsUpload::operator== 
-                  ( const AProfParmsUpload& u ) const
+// AProfParmsStatus subclass Equality operator
+bool US_AnaProfParms::AProfParmsStatus::operator== 
+                  ( const AProfParmsStatus& u ) const
 {
    if ( us_xml  != u.us_xml  ) return false;
 

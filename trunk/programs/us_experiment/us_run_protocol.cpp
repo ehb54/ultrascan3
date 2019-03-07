@@ -49,6 +49,8 @@ qDebug() << "RP: EQ SOL";
 qDebug() << "RP: EQ OPT";
    if ( rpRange      != rp.rpRange      )  return false;
 qDebug() << "RP: EQ RNG";
+   if ( rpAprof      != rp.rpAprof      )  return false;
+qDebug() << "RP: EQ APR";
 
    return true;
 }
@@ -80,6 +82,7 @@ bool US_RunProtocol::toXml( QXmlStreamWriter& xmlo )
    rpSolut.toXml( xmlo );
    rpOptic.toXml( xmlo );
    rpRange.toXml( xmlo );
+   rpAprof.toXml( xmlo );
 
    xmlo.writeEndElement();    // protocol
 
@@ -123,6 +126,7 @@ bool US_RunProtocol::fromXml( QXmlStreamReader& xmli )
          else if ( ename == "optics" )     { rpOptic.fromXml( xmli ); }
          else if ( ename == "ranges"  )    { rpRange.fromXml( xmli ); }
          else if ( ename == "spectra" )    { rpRange.fromXml( xmli ); }
+         else if ( ename == "aprofile" )   { rpAprof.fromXml( xmli ); }
       }
    }
 
@@ -989,6 +993,48 @@ bool US_RunProtocol::RunProtoAProfile::operator==
    if ( profGUID  != u.profGUID  ) return false;
 
    return true;
+}
+
+// Read all current Analysis Profile controls from an XML stream
+bool US_RunProtocol::RunProtoAProfile::fromXml( QXmlStreamReader& xmli )
+{
+   while( ! xmli.atEnd() )
+   {
+      QString ename   = xmli.name().toString();
+
+      if ( xmli.isStartElement() )
+      {
+         if ( ename == "aprofile" )
+         {
+            QXmlStreamAttributes attr = xmli.attributes();
+            profname    = attr.value( "name"  ).toString();
+            profGUID    = attr.value( "guid"  ).toString();
+         }
+
+         else
+            break;
+      }
+
+      else if ( xmli.isEndElement()  &&  ename == "aprofile" )
+         break;
+
+      xmli.readNext();
+   }
+
+   return ( ! xmli.hasError() );
+}
+
+// Write the current Analysis Profile portion to an XML stream
+bool US_RunProtocol::RunProtoAProfile::toXml( QXmlStreamWriter& xmlo )
+{
+   xmlo.writeStartElement( "aprofile" );
+
+   xmlo.writeAttribute( "name", profname );
+   xmlo.writeAttribute( "guid", profGUID );
+
+   xmlo.writeEndElement();    // aprofile
+
+   return ( ! xmlo.hasError() );
 }
 
 

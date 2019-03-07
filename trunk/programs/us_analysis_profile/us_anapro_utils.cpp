@@ -60,9 +60,10 @@
 QString US_AnalysisProfile::childSValue( const QString child, const QString type )
 {
    QString value( "" );
-   if      ( child == "general"  ) { value = apanGeneral  ->getSValue( type ); }
+   if      ( child == "general"  ) { value = apanGeneral->getSValue( type ); }
    else if ( child == "2dsa"     ) { value = apan2DSA   ->getSValue( type ); }
-   else if ( child == "pcsa"     ) { value = apanPCSA    ->getSValue( type ); }
+   else if ( child == "pcsa"     ) { value = apanPCSA   ->getSValue( type ); }
+   else if ( child == "status"   ) { value = apanStatus ->getSValue( type ); }
    return value;
 }
 
@@ -70,9 +71,10 @@ QString US_AnalysisProfile::childSValue( const QString child, const QString type
 int US_AnalysisProfile::childIValue( const QString child, const QString type )
 {
    int value      = 0;
-   if      ( child == "general"  ) { value = apanGeneral  ->getIValue( type ); }
+   if      ( child == "general"  ) { value = apanGeneral->getIValue( type ); }
    else if ( child == "2dsa"     ) { value = apan2DSA   ->getIValue( type ); }
-   else if ( child == "pcsa"     ) { value = apanPCSA    ->getIValue( type ); }
+   else if ( child == "pcsa"     ) { value = apanPCSA   ->getIValue( type ); }
+   else if ( child == "status"   ) { value = apanStatus ->getIValue( type ); }
    return value;
 }
 
@@ -80,9 +82,10 @@ int US_AnalysisProfile::childIValue( const QString child, const QString type )
 double US_AnalysisProfile::childDValue( const QString child, const QString type )
 {
    double value   = 0.0;
-   if      ( child == "general"  ) { value = apanGeneral  ->getDValue( type ); }
+   if      ( child == "general"  ) { value = apanGeneral->getDValue( type ); }
    else if ( child == "2dsa"     ) { value = apan2DSA   ->getDValue( type ); }
-   else if ( child == "pcsa"     ) { value = apanPCSA    ->getDValue( type ); }
+   else if ( child == "pcsa"     ) { value = apanPCSA   ->getDValue( type ); }
+   else if ( child == "status"   ) { value = apanStatus ->getDValue( type ); }
    return value;
 }
 
@@ -91,9 +94,10 @@ QStringList US_AnalysisProfile::childLValue( const QString child, const QString 
 {
    QStringList value;
 
-   if      ( child == "general"  ) { value = apanGeneral  ->getLValue( type ); }
+   if      ( child == "general"  ) { value = apanGeneral->getLValue( type ); }
    else if ( child == "2dsa"     ) { value = apan2DSA   ->getLValue( type ); }
-   else if ( child == "pcsa"     ) { value = apanPCSA    ->getLValue( type ); }
+   else if ( child == "pcsa"     ) { value = apanPCSA   ->getLValue( type ); }
+   else if ( child == "status"   ) { value = apanStatus ->getLValue( type ); }
 
    return value;
 }
@@ -108,19 +112,21 @@ DbgLv(1) << "newPanel panx=" << panx << "prev.panx=" << curr_panx;
    if      ( curr_panx == 0 ) apanGeneral->savePanel();
    else if ( curr_panx == 1 ) apan2DSA   ->savePanel();
    else if ( curr_panx == 2 ) apanPCSA   ->savePanel();
+   else if ( curr_panx == 3 ) apanStatus ->savePanel();
 DbgLv(1) << "newPanel   savePanel done";
 
    // Initialize the new current panel after possible changes
    if      ( panx == 0 )      apanGeneral->initPanel();
    else if ( panx == 1 )      apan2DSA   ->initPanel();
    else if ( panx == 2 )      apanPCSA   ->initPanel();
+   else if ( panx == 3 )      apanStatus ->initPanel();
    {
-       if ( panx - curr_panx > 1 )
-	 {
-	   apanPCSA    ->initPanel();
-	   apanPCSA    ->savePanel();
-	 }
-       apanGeneral->initPanel();
+      if ( panx - curr_panx > 1 )
+      {
+         apanPCSA    ->initPanel();
+         apanPCSA    ->savePanel();
+      }
+      apanGeneral->initPanel();
    }
 DbgLv(1) << "newPanel   initPanel done";
    
@@ -135,9 +141,9 @@ DbgLv(1) << "newPanel   statUpdate done";
 void US_AnalysisProfile::statUpdate()
 {
 DbgLv(1) << "statUpd: IN stat" << statflag;
-   statflag   = apanGeneral  ->status()
+   statflag   = apanGeneral->status()
               + apan2DSA   ->status()
-              + apanPCSA    ->status();
+              + apanPCSA   ->status();
 DbgLv(1) << "statUpd:  MOD stat" << statflag;
 }
 
@@ -166,94 +172,95 @@ void US_AnalysisProfile::help( void )
    if      ( curr_panx == 0 ) apanGeneral ->help();
    else if ( curr_panx == 1 ) apan2DSA    ->help();
    else if ( curr_panx == 2 ) apanPCSA    ->help();
+   else if ( curr_panx == 3 ) apanStatus  ->help();
 }
 
 //Slot to DISABLE tabs and Next/Prev buttons
 void US_AnalysisProfile::disable_tabs_buttons( void )
 {
-  DbgLv(1) << "DISBLING Tabs...";
-  pb_next   ->setEnabled(false);
-  pb_prev   ->setEnabled(false);
+DbgLv(1) << "DISBLING Tabs...";
+   pb_next   ->setEnabled( false );
+   pb_prev   ->setEnabled( false );
   
-  for (int i=1; i<tabWidget->count(); i++)
-    {
-      tabWidget ->setTabEnabled( i, false );
-      tabWidget ->tabBar()->setTabTextColor( i, Qt::darkGray);
-    }
+   for ( int ii = 1; ii < tabWidget->count(); ii++ )
+   {
+      tabWidget ->setTabEnabled( ii, false );
+      tabWidget ->tabBar()->setTabTextColor( ii, Qt::darkGray );
+   }
 
-  qApp->processEvents();
+   qApp->processEvents();
   
 }
 
 //Slot to ENABLE tabs and Next/Prev buttons
 void US_AnalysisProfile::enable_tabs_buttons( void )
 {
-  DbgLv(1) << "ENABLING!!!";
-  pb_next   ->setEnabled(true);
-  pb_prev   ->setEnabled(true);
+DbgLv(1) << "ENABLING!!!";
+   pb_next   ->setEnabled(true);
+   pb_prev   ->setEnabled(true);
 
-  for (int i=1; i<tabWidget->count(); i++)
-    {
-      tabWidget ->setTabEnabled( i, true );
+   for ( int ii = 1; ii < tabWidget->count(); ii++ )
+   {
+      tabWidget ->setTabEnabled( ii, true );
       QPalette pal = tabWidget ->tabBar()->palette();
-      tabWidget ->tabBar()->setTabTextColor( i, pal.color(QPalette::WindowText) ); // Qt::black
-    }
+      tabWidget ->tabBar()->setTabTextColor( ii, pal.color(QPalette::WindowText) ); // Qt::black
+   }
 }
 
 //Slot to ENABLE tabs and Next/Prev buttons, but make all Widgets read-only
 void US_AnalysisProfile::enable_tabs_buttons_readonly( void )
 {
-  DbgLv(1) << "ENABLING!!!";
-  pb_next   ->setEnabled(true);
-  pb_prev   ->setEnabled(true);
+DbgLv(1) << "ENABLING!!!";
+   pb_next   ->setEnabled( true );
+   pb_prev   ->setEnabled( true );
   
  
-  for (int i=1; i<tabWidget->count(); i++)
-    {
-      tabWidget ->setTabEnabled( i, true );
+   for ( int ii = 1; ii < tabWidget->count(); ii++ )
+   {
+      tabWidget ->setTabEnabled( ii, true );
       QPalette pal = tabWidget ->tabBar()->palette();
-      //DbgLv(1) << "PALETTE: " << pal.color(QPalette::WindowText);
-      tabWidget ->tabBar()->setTabTextColor( i, pal.color(QPalette::WindowText) ); // Qt::black
+//DbgLv(1) << "PALETTE: " << pal.color(QPalette::WindowText);
+      tabWidget ->tabBar()->setTabTextColor( ii, pal.color( QPalette::WindowText ) ); // Qt::black
       
-      QWidget* pWidget= tabWidget->widget(i);
+      QWidget* pWidget= tabWidget->widget( ii );
       
       //Find all children of each Tab in QTabWidget [children of all types...]
-      QList<QPushButton *> allPButtons = pWidget->findChildren<QPushButton *>();
-      QList<QComboBox *>   allCBoxes   = pWidget->findChildren<QComboBox *>();
-      QList<QSpinBox *>    allSBoxes   = pWidget->findChildren<QSpinBox *>();
-      QList<QwtCounter *>  allCounters = pWidget->findChildren<QwtCounter *>();
-      QList<QCheckBox *>   allChBoxes  = pWidget->findChildren<QCheckBox *>();
+      QList< QPushButton* > allPButtons = pWidget->findChildren< QPushButton* >();
+      QList< QComboBox* >   allCBoxes   = pWidget->findChildren< QComboBox* >();
+      QList< QSpinBox* >    allSBoxes   = pWidget->findChildren< QSpinBox* >();
+      QList< QwtCounter* >  allCounters = pWidget->findChildren< QwtCounter* >();
+      QList< QCheckBox* >   allChBoxes  = pWidget->findChildren< QCheckBox* >();
 
       // and so on ..
       
-      for (int i=0; i < allPButtons.count(); i++)
-	{
-	  if ( (allPButtons[i]->text()).contains("View Solution Details") || 
-	       (allPButtons[i]->text()).contains("View Current Range Settings") ||
-	       (allPButtons[i]->text()).contains("View Experiment Details") ||
-	       (allPButtons[i]->text()).contains("Test Connection") )
-	    allPButtons[i]->setEnabled(true);
-	  else
-	    allPButtons[i]->setEnabled(false);
-	}
+      for ( int jj = 0; jj < allPButtons.count(); jj++ )
+      {
+         if ( ( allPButtons[ jj ]->text()).contains( "View Solution Details" ) || 
+              ( allPButtons[ jj ]->text()).contains( "View Current Range Settings" ) ||
+              ( allPButtons[ jj ]->text()).contains( "View Experiment Details" ) ||
+              ( allPButtons[ jj ]->text()).contains( "Test Connection" ) )
+            allPButtons[ jj ]->setEnabled( true );
+         else
+            allPButtons[ jj ]->setEnabled( false );
+      }
       
-      for (int i=0; i < allCBoxes.count(); i++)
-	{
-	  if ( (allCBoxes[i]->currentText()).contains("Speed Profile") )
-	    allCBoxes[i]->setEnabled(true);
-	  else
-	    allCBoxes[i]->setEnabled(false);
-	}
-      for (int i=0; i < allSBoxes.count(); i++)
-	allSBoxes[i]->setEnabled(false);
-      for (int i=0; i < allCounters.count(); i++)
-	allCounters[i]->setEnabled(false); 
-      for (int i=0; i < allChBoxes.count(); i++)
-	allChBoxes[i]->setEnabled(false);
+      for ( int jj = 0; jj < allCBoxes.count(); jj++ )
+      {
+         if ( (allCBoxes[jj]->currentText()).contains("Speed Profile") )
+            allCBoxes[jj]->setEnabled(true);
+         else
+            allCBoxes[jj]->setEnabled(false);
+      }
+      for (int jj = 0; jj < allSBoxes.count(); jj++ )
+         allSBoxes[jj]  ->setEnabled(false);
+      for (int jj = 0; jj < allCounters.count(); jj++ )
+         allCounters[jj]->setEnabled(false); 
+      for (int jj = 0; jj < allChBoxes.count(); jj++ )
+         allChBoxes[jj] ->setEnabled(false);
       // and so on ..
       
-    }
-  
+   }
+
 }
 
 int  US_AnalysisProfile::getProfiles( QStringList& par1,
@@ -273,6 +280,8 @@ DbgLv(1) << "AP:iP: pG return";
 DbgLv(1) << "AP:iP: p2 return";
    apanPCSA     ->initPanel();
 DbgLv(1) << "AP:iP: pP return";
+   apanStatus   ->initPanel();
+DbgLv(1) << "AP:iP: pP return";
 }
 
 //========================= End:   Main      section =========================
@@ -283,41 +292,12 @@ DbgLv(1) << "AP:iP: pP return";
 // Initialize a General panel, especially after clicking on its tab
 void US_AnaprofPanGen::initPanel()
 {
-//*Test*
-QList<QStringList> lsl1;
-QList<QStringList> lsl2;
-QString llstring;
-QString llstring2;
-QStringList ii1;
-QStringList ii2;
-QStringList ii3;
-
-ii1 << "1AA" << "1BB" << "1CC";
-ii2 << "2AA" << "2BB";
-ii3 << "3AA" << "3BB" << "3CC" << "3DD";
-lsl1 << ii1 << ii2 << ii3;
-US_Util::listlistBuild( lsl1, llstring );
-US_Util::listlistParse( lsl2, llstring );
-for ( int ii=0;ii<lsl1.count();ii++ )
-{ qDebug() << "TEST: lsl1" << ii << lsl1[ii]; }
-qDebug() << "TEST: llstring" << llstring;
-for ( int ii=0;ii<lsl2.count();ii++ )
-{ qDebug() << "TEST: lsl2" << ii << lsl2[ii]; }
-US_Util::listlistBuild( lsl1, llstring2 );
-qDebug() << "TEST: llstring2" << llstring2;
-//*Test*
 #if 0
 use_db=false;
 #endif
-//DbgLv(1) << "EGGe: inP: prn,prd counts" << protdata.count() << pr_names.count();
-
-   // Populate GUI settings from protocol controls
-//   le_investigator->setText ( currProf->investigator );
-//   le_runid       ->setText ( currProf->runname );
-   //le_protocol    ->setText ( currProf->protname );
-//   le_project     ->setText ( currProf->project );
-//   ct_tempera     ->setValue( currProf->temperature );
-//   ct_tedelay     ->setValue( currProf->temeq_delay );
+   // Populate GUI settings from protocol,analysis controls
+   le_protname   ->setText ( currProf->protoname );
+   le_aproname   ->setText ( currProf->aprofname );
 DbgLv(1) << "APGe: inP: aname pname" << currProf->aprofname << currProf->protoname;
 
 DbgLv(1) << "APGe: CALL check_user_level()";
@@ -330,15 +310,15 @@ DbgLv(1) << "APGe:  RTN check_user_level()";
 void US_AnaprofPanGen::check_runname()
 {
 #if 0
-  QString rname     = le_runid->text();
-  if ( rname.isEmpty() )
-    emit set_tabs_buttons_inactive();
-  else
-    {
+   QString rname     = le_runid->text();
+   if ( rname.isEmpty() )
+      emit set_tabs_buttons_inactive();
+   else
+   {
       if ( !le_project->text().isEmpty() )
-	emit set_tabs_buttons_active();
-    }
-  qApp->processEvents();
+      emit set_tabs_buttons_active();
+   }
+   qApp->processEvents();
 #endif
 }
 
@@ -379,20 +359,20 @@ void US_AnaprofPanGen::update_inv( void )
 //IF USER cannot edit anything (low-level user)
 void US_AnaprofPanGen::check_user_level()
 {
-  //update_inv();
+   //update_inv();
 DbgLv(1) << "APGe:ckul: level" << US_Settings::us_inv_level();
-  if ( US_Settings::us_inv_level() < 3 )
-    {
-//      pb_investigator->setEnabled( false );
-      pb_aproname    ->setEnabled( false );
+   if ( US_Settings::us_inv_level() < 3 )
+   {
+      pb_aproname->setEnabled( false );
+      pb_protname->setEnabled( false );
    
 //      if ( !loaded_prof )
-//	emit set_tabs_buttons_inactive();
+//         emit set_tabs_buttons_inactive();
 //      else
-//	emit set_tabs_buttons_active_readonly();
+//         emit set_tabs_buttons_active_readonly();
    
-      DbgLv(1) << "SIGNAL!!!!" ; 
-    }
+DbgLv(1) << "SIGNAL!!!!" ; 
+   }
 }
 
 // Save panel controls when about to leave the panel
@@ -400,14 +380,9 @@ void US_AnaprofPanGen::savePanel()
 {
 DbgLv(1) << "APge: svP: IN";
    // Populate protocol controls from GUI settings
-//   currProf->investigator = le_investigator->text();
-//   currProf->runname      = le_runid       ->text();
-//   currProf->protname     = le_protocol    ->text();
-//   currProf->project      = le_project     ->text();
-//   currProf->temperature  = ct_tempera     ->value();
-//   currProf->temeq_delay  = ct_tedelay     ->value();
+   currProf->protoname  = le_protname->text();
+   currProf->aprofname  = le_aproname->text();
 DbgLv(1) << "APge: svP:  done";
-
 }
 
 // Get a specific panel string value
@@ -415,9 +390,10 @@ QString US_AnaprofPanGen::getSValue( const QString type )
 {
    QString value( "" );
 
-   if      ( type == "aprofname" )    { value = currProf->aprofname; }
-   else if ( type == "protoname" )    { value = currProf->protoname; }
-   else if ( type == "aprofGUID" )    { value = currProf->aprofGUID; }
+   if      ( type == "aprofname" )  { value = currProf->aprofname; }
+   else if ( type == "protoname" )  { value = currProf->protoname; }
+   else if ( type == "aprofGUID" )  { value = currProf->aprofGUID; }
+   else if ( type == "protoGUID" )  { value = currProf->protoGUID; }
 
    return value;
 }
@@ -426,7 +402,10 @@ QString US_AnaprofPanGen::getSValue( const QString type )
 int US_AnaprofPanGen::getIValue( const QString type )
 {
    int value   = 0;
-   if      ( type == "dbdisk" )       { value = use_db ? 1 : 0; }
+   if      ( type == "dbdisk"  )    { value = use_db ? 1 : 0; }
+   else if ( type == "aprofID" )    { value = currProf->aprofID; }
+   else if ( type == "protoID" )    { value = currProf->protoID; }
+   else if ( type == "nchan"   )    { value = sl_chnsel.count(); }
    return value;
 }
 
@@ -434,8 +413,26 @@ int US_AnaprofPanGen::getIValue( const QString type )
 double US_AnaprofPanGen::getDValue( const QString type )
 {
    double value   = 0.0;
-//   if      ( type == "none"        ) { value = currProf->temperature; }
-   if      ( type == "none"        ) { value = 0.0; }
+   int nchan      = sl_chnsel.count();
+   int kk         = nchan - 1;
+
+   if      ( type == "none"    )    { value = 0.0; }
+   else if ( type == "f_lcrat"   )
+   {  value = ( nchan > 0 ) ? currProf->lc_ratios[  0 ] : 0.0; }
+   else if ( type == "l_lcrat"   )
+   {  value = ( nchan > 0 ) ? currProf->lc_ratios[ kk ] : 0.0; }
+   else if ( type == "f_lctol"   )
+   {  value = ( nchan > 0 ) ? currProf->lc_tolers[  0 ] : 0.0; }
+   else if ( type == "l_lctol"   )
+   {  value = ( nchan > 0 ) ? currProf->lc_tolers[ kk ] : 0.0; }
+   else if ( type == "f_ldvol"   )
+   {  value = ( nchan > 0 ) ? currProf->l_volumes[  0 ] : 0.0; }
+   else if ( type == "l_ldvol"   )
+   {  value = ( nchan > 0 ) ? currProf->l_volumes[ kk ] : 0.0; }
+   else if ( type == "f_lvtol"   )
+   {  value = ( nchan > 0 ) ? currProf->lv_tolers[  0 ] : 0.0; }
+   else if ( type == "l_lvtol"   )
+   {  value = ( nchan > 0 ) ? currProf->lv_tolers[ kk ] : 0.0; }
 
    return value;
 }
@@ -444,9 +441,37 @@ double US_AnaprofPanGen::getDValue( const QString type )
 QStringList US_AnaprofPanGen::getLValue( const QString type )
 {
    QStringList value( "" );
+   int nchan      = sl_chnsel.count();
 
    if      ( type == "channels" )       { value = sl_chnsel; }
-//   else if ( type == "protocol_names" ) { value = pr_names; }
+   else if ( type == "lcratios" )
+   {
+      for ( int ii = 0; ii < nchan; ii++ )
+      {
+         value << QString::number( currProf->lc_ratios[ ii ] );
+      }
+   }
+   else if ( type == "lctolers" )
+   {
+      for ( int ii = 0; ii < nchan; ii++ )
+      {
+         value << QString::number( currProf->lc_tolers[ ii ] );
+      }
+   }
+   else if ( type == "lvolumes" )
+   {
+      for ( int ii = 0; ii < nchan; ii++ )
+      {
+         value << QString::number( currProf->l_volumes[ ii ] );
+      }
+   }
+   else if ( type == "lvtolers" )
+   {
+      for ( int ii = 0; ii < nchan; ii++ )
+      {
+         value << QString::number( currProf->lv_tolers[ ii ] );
+      }
+   }
 
    return value;
 }
@@ -662,39 +687,39 @@ DbgLv(1) << "AP2d:getLV: type" << type;
          double accel         = ap2DSA->ssteps[ ii ].accel;
          double duration      = ap2DSA->ssteps[ ii ].duration;   // In seconds
          double delay         = ap2DSA->ssteps[ ii ].delay;      // In seconds
-	 double delay_stage   = ap2DSA->ssteps[ ii ].delay_stage;// In seconds
-	 double scint         = ap2DSA->ssteps[ ii ].scanintv;
+         double delay_stage   = ap2DSA->ssteps[ ii ].delay_stage;// In seconds
+         double scint         = ap2DSA->ssteps[ ii ].scanintv;
 
-	 qDebug() << "ScanInt: " << scint;
-	 
+         qDebug() << "ScanInt: " << scint;
+         
          // double durathrs      = qFloor( duration / 60.0 );
          // double duratmin      = duration - ( durathrs * 60.0 );
          // double delaymin      = qFloor( delay / 60.0 );
          // double delaysec      = delay - ( delaymin * 60.0 );
 
-	 double durathrs      = qFloor( duration / 3600.0 );
+         double durathrs      = qFloor( duration / 3600.0 );
          double duratmin      = qFloor(duration - ( durathrs * 3600.0 )) / 60.0;
-	 
-	 double delayhrs      = qFloor( delay / 3600.0 );
-	 double delaymin      = qFloor(delay - ( delayhrs * 3600.0 )) / 60.0;
-
-	 double delaystagehrs = qFloor( delay_stage / 3600.0 );
-	 double delaystagemin = qFloor(delay_stage - ( delaystagehrs * 3600.0 )) / 60.0;
          
-	 double scinthrs      = qFloor( scint / 3600.0 );
-	 double scintmin      = qFloor(( scint - ( scinthrs * 3600.0 )) / 60.0);
+         double delayhrs      = qFloor( delay / 3600.0 );
+         double delaymin      = qFloor(delay - ( delayhrs * 3600.0 )) / 60.0;
+
+         double delaystagehrs = qFloor( delay_stage / 3600.0 );
+         double delaystagemin = qFloor(delay_stage - ( delaystagehrs * 3600.0 )) / 60.0;
+         
+         double scinthrs      = qFloor( scint / 3600.0 );
+         double scintmin      = qFloor(( scint - ( scinthrs * 3600.0 )) / 60.0);
          double scintsec      = scint - ( scinthrs * 3600.0 ) - ( scintmin * 60.0 );
-	 
+         
          value << tr( "%1 rpm" ).arg( speed );
          value << tr( "%1 rpm/sec" ).arg( accel );
          value << tr( "%1 h %2 m" )
                   .arg( durathrs ).arg( duratmin );
          value << tr( "%1 h %2 m " )
                   .arg( delayhrs ).arg( delaymin );
-	 value << tr( "%1 h %2 m " )
+         value << tr( "%1 h %2 m " )
                   .arg( delaystagehrs ).arg( delaystagemin );
-	 value << tr( "%1 h %2 m %3 s" )                                        //ALEXEY: added scan interval
-	          .arg( scinthrs ).arg( scintmin ).arg( scintsec );
+         value << tr( "%1 h %2 m %3 s" )                                        //ALEXEY: added scan interval
+                  .arg( scinthrs ).arg( scintmin ).arg( scintsec );
       }
    }
 
@@ -897,17 +922,17 @@ DbgLv(1) << "EGCe:st: nused is_done" << apPCSA->nused << is_done;
 //========================= End:   PCSA      section =========================
 
 
-//========================= Start: Upload    section =========================
+//========================= Start: Status    section =========================
 
-// Initialize an Upload panel, especially after clicking on its tab
-void US_AnaprofPanUpload::initPanel()
+// Initialize an Status panel, especially after clicking on its tab
+void US_AnaprofPanStatus::initPanel()
 {
    currProf        = &mainw->currProf;
    loadProf        = &mainw->loadProf;
    rps_differ      = ( mainw->currProf !=  mainw->loadProf );
    ap2DSA          = &currProf->ap2DSA;
    apPCSA          = &currProf->apPCSA;
-   apSubmt         = &currProf->apSubmt;
+   apStat          = &currProf->apStat;
 
 
    qDebug() << "apSPEED: duration: " << ap2DSA->ssteps[0].duration;
@@ -924,7 +949,7 @@ DbgLv(1) << "APUp:inP:  cPguid" << cAP->protoGUID << "lPguid" << lAP->protoGUID;
 DbgLv(1) << "APUp:inP:  cPId  " << cAP->protoID << "lPId" << lAP->protoID;
 DbgLv(1) << "APUp:inP:   ap2DSA diff" << (cAP->ap2DSA!=lAP->ap2DSA);
 DbgLv(1) << "APUp:inP:   apPCSA diff" << (cAP->apPCSA!=lAP->apPCSA);
-DbgLv(1) << "APUp:inP:   apSubmt diff" << (cAP->apSubmt!=lAP->apSubmt);
+DbgLv(1) << "APUp:inP:   apStat diff" << (cAP->apStat!=lAP->apStat);
 }
 
    have_run          = ! sibSValue( "general",   "runID"    ).isEmpty();
@@ -967,13 +992,13 @@ DbgLv(1) << "APUp:inP: OUT";
 }
 
 // Save panel controls when about to leave the panel
-void US_AnaprofPanUpload::savePanel()
+void US_AnaprofPanStatus::savePanel()
 {
 DbgLv(1) << "APUp:svP: IN";
 }
 
 // Get a specific panel value
-QString US_AnaprofPanUpload::getSValue( const QString type )
+QString US_AnaprofPanStatus::getSValue( const QString type )
 {
    QString value( "" );
 
@@ -982,23 +1007,23 @@ QString US_AnaprofPanUpload::getSValue( const QString type )
              type == "len_xml"  )
       value  = QString::number( getIValue( type ) );
    else if ( type == "xml" )  
-      value  = apSubmt->us_xml;
+      value  = apStat->us_xml;
 
    return value;
 }
 
 // Get a specific panel integer value
-int US_AnaprofPanUpload::getIValue( const QString type )
+int US_AnaprofPanStatus::getIValue( const QString type )
 {
    int value   = 0;
    if      ( type == "alldone" )  { value = ( status() > 0 ) ? 1 : 0; }
    else if ( type == "status"  )  { value = status(); }
-   else if ( type == "len_xml" )  { value = apSubmt->us_xml.length(); }
+   else if ( type == "len_xml" )  { value = apStat->us_xml.length(); }
    return value;
 }
 
 // Get a specific panel double value
-double US_AnaprofPanUpload::getDValue( const QString type )
+double US_AnaprofPanStatus::getDValue( const QString type )
 {
    double value   = 0;
    if ( type == "dbdisk" ) { value = 1; }
@@ -1007,7 +1032,7 @@ double US_AnaprofPanUpload::getDValue( const QString type )
 }
 
 // Get specific panel list values
-QStringList US_AnaprofPanUpload::getLValue( const QString type )
+QStringList US_AnaprofPanStatus::getLValue( const QString type )
 {
    QStringList value( "" );
 
@@ -1020,23 +1045,23 @@ QStringList US_AnaprofPanUpload::getLValue( const QString type )
 }
 
 // Get a specific panel value from a sibling panel
-QString US_AnaprofPanUpload::sibSValue( const QString sibling, const QString type )
+QString US_AnaprofPanStatus::sibSValue( const QString sibling, const QString type )
 { return mainw->childSValue( sibling, type ); }
 
 // Get a specific panel integer value from a sibling panel
-int US_AnaprofPanUpload::sibIValue( const QString sibling, const QString type )
+int US_AnaprofPanStatus::sibIValue( const QString sibling, const QString type )
 { return mainw->childIValue( sibling, type ); }
 
 // Get a specific panel double value from a sibling panel
-double US_AnaprofPanUpload::sibDValue( const QString sibling, const QString type )
+double US_AnaprofPanStatus::sibDValue( const QString sibling, const QString type )
 { return mainw->childDValue( sibling, type ); }
 
 // Get a specific panel list from a sibling panel
-QStringList US_AnaprofPanUpload::sibLValue( const QString sibling, const QString type )
+QStringList US_AnaprofPanStatus::sibLValue( const QString sibling, const QString type )
 { return mainw->childLValue( sibling, type ); }
 
 // Return status string for the panel
-int US_AnaprofPanUpload::status()
+int US_AnaprofPanStatus::status()
 {
 //   bool is_done  = ( ! le_runid->text().isEmpty() &&
 //                     ! le_project->text().isEmpty() );
@@ -1044,5 +1069,5 @@ bool is_done=false;
    return ( is_done ? 128 : 0 );
 }
 
-//========================= End:   Upload    section =========================
+//========================= End:   Status    section =========================
 
