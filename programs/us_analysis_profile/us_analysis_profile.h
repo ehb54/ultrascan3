@@ -77,10 +77,20 @@ class US_AnaprofPanGen : public US_WidgetsDialog
 
 
    private slots:
+      void  apro_button_clicked( void );
+      void  prot_button_clicked( void );
+      void  apro_text_changed  ( void );
+      void  prot_text_changed  ( void );
+      void  lcrat_text_changed ( void );
+      void  lctol_text_changed ( void );
+      void  ldvol_text_changed ( void );
+      void  lvtol_text_changed ( void );
+      void  daend_text_changed ( void );
+      void  applied_to_all     ( void );
  signals:
-      void  set_tabs_buttons_inactive ( void );
-      void  set_tabs_buttons_active_readonly   ( void );
-      void  set_tabs_buttons_active  ( void );
+      void  set_tabs_buttons_inactive       ( void );
+      void  set_tabs_buttons_active_readonly( void );
+      void  set_tabs_buttons_active         ( void );
 };
 
 //! \brief 2DSA controls panel
@@ -113,6 +123,7 @@ class US_AnaprofPan2DSA : public US_WidgetsDialog
 
       QPushButton* pb_custmg; 
       QPushButton* pb_applya; 
+      QPushButton* pb_nextch; 
 
       QLineEdit*   le_smin; 
       QLineEdit*   le_smax; 
@@ -143,8 +154,30 @@ class US_AnaprofPan2DSA : public US_WidgetsDialog
       bool         changed;       // Flag if any speed step changes
       
    private slots:
-      //! \brief XXXX
-//      QString speedp_description( const int );
+      void channel_selected ( int );
+      void next_channel     ( );
+      void smin_changed     ( );
+      void smax_changed     ( );
+      void sgpoints_changed ( );
+      void kmin_changed     ( );
+      void kmax_changed     ( );
+      void kgpoints_changed ( );
+      void grid_reps_changed( );
+      void cust_grid_clicked( );
+      void cust_grid_changed( );
+      void vary_vbar_checked( bool );
+      void constk_changed   ( );
+      void apply_all_clicked( );
+      void job1_run_checked ( bool );
+      void job2_run_checked ( bool );
+      void mgpoints_changed ( );
+      void mfrange_changed  ( );
+      void job3_run_checked ( bool );
+      void autopick_checked ( bool );
+      void job4_run_checked ( bool );
+      void rfiters_changed  ( );
+      void job5_run_checked ( bool );
+      void mciters_changed  ( );
 };
 
 //! \brief Experiment Cells panel
@@ -176,6 +209,7 @@ class US_AnaprofPanPCSA : public US_WidgetsDialog
       US_Help  showHelp;
 
       QPushButton* pb_applya; 
+      QPushButton* pb_nextch; 
 
       QComboBox*   cb_curvtype;
       QComboBox*   cb_xaxistyp;
@@ -191,9 +225,10 @@ class US_AnaprofPanPCSA : public US_WidgetsDialog
       QLineEdit*   le_varcount;
       QLineEdit*   le_grfiters;
       QLineEdit*   le_crpoints;
-      QLineEdit*   le_regparam;
+      QLineEdit*   le_regalpha;
       QLineEdit*   le_mciters;
 
+      QCheckBox*   ck_nopcsa;
       QCheckBox*   ck_tinoise;
       QCheckBox*   ck_rinoise;
       QCheckBox*   ck_tregoff;
@@ -205,17 +240,25 @@ class US_AnaprofPanPCSA : public US_WidgetsDialog
       QStringList  sl_chnsel;
 
    private slots:
+      void nopcsa_checked   ( bool );
+      void channel_selected ( int );
+      void next_channel     ( );
+      void curvtype_selected( int );
+      void apply_all_clicked( );
+      void xaxis_selected   ( int );
+      void xmin_changed     ( );
+      void xmax_changed     ( );
 };
 
 
-//! \brief Experiment Upload panel
-class US_AnaprofPanUpload : public US_WidgetsDialog 
+//! \brief AnalysisProfile Status panel
+class US_AnaprofPanStatus : public US_WidgetsDialog 
 {
    Q_OBJECT
 
    public:
-      US_AnaprofPanUpload( QWidget* );
-      ~US_AnaprofPanUpload() {};
+      US_AnaprofPanStatus( QWidget* );
+      ~US_AnaprofPanStatus() {};
 
       void        initPanel( void );    // Standard panel utilities
       void        savePanel( void );
@@ -244,7 +287,7 @@ class US_AnaprofPanUpload : public US_WidgetsDialog
       US_AnaProfParms*     currProf;   // Current AnaProfParms controls
       US_AnaProfParms::AProfParms2DSA*   ap2DSA;    // 2DSA controls
       US_AnaProfParms::AProfParmsPCSA*   apPCSA;    // PCSA controls
-      US_AnaProfParms::AProfParmsUpload* apSubmt;   // Upload controls
+      US_AnaProfParms::AProfParmsStatus* apStat;    // Status controls
       US_Help  showHelp;
 
       //QPushButton* pb_saverp;
@@ -339,7 +382,7 @@ class US_AnalysisProfile : public US_Widgets
       US_AnaprofPanGen*     apanGeneral;    // General panel
       US_AnaprofPan2DSA*    apan2DSA;       // 2DSA panel
       US_AnaprofPanPCSA*    apanPCSA;       // PCSA panel
-      US_AnaprofPanUpload*  apanUpload;     // Upload panel
+      US_AnaprofPanStatus*  apanStatus;     // Status panel
 
       int         statflag;        // Composite panels status flag
       int         dbg_level;       // Debug print flag
@@ -362,6 +405,7 @@ class US_AnalysisProfile : public US_Widgets
       
     public slots:
       void close_program( void );
+      void apply_profile( void );
       //void auto_mode_passed( void ); 
 
     signals:

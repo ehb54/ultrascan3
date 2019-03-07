@@ -18,24 +18,6 @@
 #endif
 
 
-#if 0
-//! \brief Main program for US_AnalysisProfile. Loads translators and starts
-//         the class US_AnalysisProfile
-
-int main( int argc, char* argv[] )
-{
-   QApplication application( argc, argv );
-
-   #include "main1.inc"
-
-   // License is OK.  Start up.
-
-   US_AnalysisProfile * w = new US_AnalysisProfile;
-   w->show();                   //!< \memberof QWidget
-   return application.exec();  //!< \memberof QApplication
-}
-#endif
-
 // Constructor:  build the main layout with tab widget panels
 US_AnalysisProfile::US_AnalysisProfile() : US_Widgets()
 {
@@ -66,7 +48,7 @@ DbgLv(1) << "MAIN:  apGE done";
 DbgLv(1) << "MAIN:  ap2D done";
    apanPCSA            = new US_AnaprofPanPCSA  ( this );
 DbgLv(1) << "MAIN:  apPC done";
-   apanUpload          = new US_AnaprofPanUpload( this );
+   apanStatus          = new US_AnaprofPanStatus( this );
 DbgLv(1) << "MAIN:  apUP done";
    statflag            = 0;
 
@@ -74,7 +56,7 @@ DbgLv(1) << "MAIN:  apUP done";
    tabWidget->addTab( apanGeneral,   tr( "1: General" ) );
    tabWidget->addTab( apan2DSA,      tr( "2: 2DSA"    ) );
    tabWidget->addTab( apanPCSA,      tr( "3: PCSA"    ) );
-   tabWidget->addTab( apanUpload,    tr( "9: Status"  ) );
+   tabWidget->addTab( apanStatus,    tr( "9: Status"  ) );
    tabWidget->setCurrentIndex( curr_panx );
 DbgLv(1) << "MAIN:  tabs added";
 
@@ -97,20 +79,16 @@ DbgLv(1) << "MAIN:  tabs added";
    // Connect signals to slots
    connect( tabWidget, SIGNAL( currentChanged( int ) ),
             this,      SLOT  ( newPanel      ( int ) ) );
-   connect( pb_next,   SIGNAL( clicked()    ),
-            this,      SLOT  ( panelUp()    ) );
-   connect( pb_prev,   SIGNAL( clicked()    ),
-            this,      SLOT  ( panelDown()  ) );
-   connect( pb_close,  SIGNAL( clicked()    ),
-            this,      SLOT  ( close_program()      ) );
-//   connect( pb_apply,  SIGNAL( clicked()    ),
-//            this,      SLOT  ( apply_profile()      ) );
-   connect( pb_help,   SIGNAL( clicked()    ),
-            this,      SLOT  ( help()       ) );
-
-//   connect( apanUpload, SIGNAL( expdef_submitted( QMap < QString, QString > &) ),
-//	    this,       SLOT  ( optima_submitted( QMap < QString, QString > & ) ) );
-   
+   connect( pb_next,   SIGNAL( clicked()   ),
+            this,      SLOT  ( panelUp()   ) );
+   connect( pb_prev,   SIGNAL( clicked()   ),
+            this,      SLOT  ( panelDown() ) );
+   connect( pb_close,  SIGNAL( clicked()       ),
+            this,      SLOT  ( close_program() ) );
+   connect( pb_apply,  SIGNAL( clicked()       ),
+            this,      SLOT  ( apply_profile() ) );
+   connect( pb_help,   SIGNAL( clicked()   ),
+            this,      SLOT  ( help()      ) );
 
    main->addWidget( tabWidget );
    main->addLayout( statL );
@@ -161,6 +139,12 @@ void US_AnalysisProfile::close_program( void )
     
   emit us_exp_is_closed();
   close();
+}
+
+// Apply Profile
+void US_AnalysisProfile::apply_profile( void )
+{
+DbgLv(1) << "MN:SL: APPLY_PROFILE";
 }
 
 // Add widgets to a grid layout row to set even 12-column spacing
@@ -239,35 +223,45 @@ US_AnaprofPanGen::US_AnaprofPanGen( QWidget* topw )
 
    // Start building main layout
    int row         = 0;
-   genL->addWidget( pb_aproname,     row,   0, 1, 2 );
-   genL->addWidget( le_aproname,     row++, 2, 1, 6 );
-   genL->addWidget( pb_protname,     row,   0, 1, 2 );
-   genL->addWidget( le_protname,     row++, 2, 1, 6 );
+
+   genL->addWidget( pb_aproname,     row,    0, 1, 3 );
+   genL->addWidget( le_aproname,     row++,  3, 1, 6 );
+   genL->addWidget( pb_protname,     row,    0, 1, 3 );
+   genL->addWidget( le_protname,     row++,  3, 1, 6 );
+
+   connect( pb_aproname, SIGNAL( clicked            ( ) ),
+            this,        SLOT(   apro_button_clicked( ) ) );
+   connect( pb_protname, SIGNAL( clicked            ( ) ),
+            this,        SLOT(   prot_button_clicked( ) ) );
+   connect( le_aproname, SIGNAL( editingFinished  ( void ) ),
+            this,        SLOT(   apro_text_changed( void ) ) );
+   connect( le_protname, SIGNAL( editingFinished  ( void ) ),
+            this,        SLOT(   prot_text_changed( void ) ) );
 
    // Build channel lists and rows
-   sl_chnsel << tr( "1A-UV/vis.:Protein A in PBS" )
-             << tr( "1B-UV/vis.:(solution 2)" )
-             << tr( "2A-UV/vis.:(solution 3)" )
-             << tr( "2B-UV/vis.:(solution 4)" )
-             << tr( "3A-Interf.:(solution 5)" )
-             << tr( "3B-Interf.:(solution 6)" )
-             << tr( "4A-Interf.:(solution 7)" )
-             << tr( "4B-Interf.:(solution 8)" )
-             << tr( "5A-Interf.:(solution 9)" )
-             << tr( "5B-Interf.:(solution A)" )
-             << tr( "6A-Interf.:(solution B)" )
-             << tr( "6B-Interf.:(solution C)" )
-             << tr( "7A-Interf.:(solution D)" )
-             << tr( "7B-Interf.:(solution E)" )
-             << tr( "8A-Interf.:(solution F)" )
-             << tr( "8B-Interf.:(solution G)" );
+   sl_chnsel << tr( "1A:UV/vis.:Protein A in PBS" )
+             << tr( "1B:UV/vis.:solution 2" )
+             << tr( "2A:UV/vis.:solution 3" )
+             << tr( "2B:UV/vis.:solution 4" )
+             << tr( "3A:Interf.:solution 5" )
+             << tr( "3B:Interf.:solution 6" )
+             << tr( "4A:Interf.:solution 7" )
+             << tr( "4B:Interf.:solution 8" )
+             << tr( "5A:Interf.:solution 9" )
+             << tr( "5B:Interf.:solution A" )
+             << tr( "6A:Interf.:solution B" )
+             << tr( "6B:Interf.:solution C" )
+             << tr( "7A:Interf.:solution D" )
+             << tr( "7B:Interf.:solution E" )
+             << tr( "8A:Interf.:solution F" )
+             << tr( "8B:Interf.:solution G" );
    int nchn        = sl_chnsel.count();
-   QLabel* lb_chann  = us_label( tr( "CellChannel-\n"
+   QLabel* lb_chann  = us_label( tr( "CellChannel:\n"
                                      "Optics: Solution" ) );
    lb_chann->setAlignment ( Qt::AlignVCenter | Qt::AlignLeft );
    QLabel* lb_lcrat  = us_label( tr( "Loading\nRatio" ) );
    QLabel* lb_lctol  = us_label( tr( "+/- %\nToler." ) );
-   QLabel* lb_ldvol  = us_label( tr( "Loading\nVolume (" )
+   QLabel* lb_ldvol  = us_label( tr( "Loading\nVol. (" )
                                  + QString( QChar( 181 ) ) + "l)" );
    QLabel* lb_lvtol  = us_label( tr( "+/- %\nToler." ) );
    QLabel* lb_daend  = us_label( tr( "Data End\n(cm)" ) );
@@ -276,9 +270,9 @@ US_AnaprofPanGen::US_AnaprofPanGen( QWidget* topw )
    genL->addWidget( lb_chann, row,    0, 2, 5 );
    genL->addWidget( lb_lcrat, row,    5, 2, 1 );
    genL->addWidget( lb_lctol, row,    6, 2, 1 );
-   genL->addWidget( lb_ldvol, row,    7, 2, 2 );
-   genL->addWidget( lb_lvtol, row,    9, 2, 1 );
-   genL->addWidget( lb_daend, row++, 10, 2, 1 ); row++;
+   genL->addWidget( lb_ldvol, row,    7, 2, 1 );
+   genL->addWidget( lb_lvtol, row,    8, 2, 1 );
+   genL->addWidget( lb_daend, row++,  9, 2, 1 ); row++;
 
    for ( int ii = 0; ii < nchn; ii++ )
    {
@@ -290,28 +284,51 @@ US_AnaprofPanGen::US_AnaprofPanGen( QWidget* topw )
       QLineEdit* le_lvtol = us_lineedit( "10",  0, false );
       QLineEdit* le_daend = us_lineedit( "7.0", 0, false );
 
+      QString stchan      = QString::number( ii );
+      le_chann->setObjectName( stchan + ": channel" );
+      le_lcrat->setObjectName( stchan + ": loadconc_ratio" );
+      le_lctol->setObjectName( stchan + ": loadconc_tolerance" );
+      le_ldvol->setObjectName( stchan + ": load_volume" );
+      le_lvtol->setObjectName( stchan + ": loadvol_tolerance" );
+      le_daend->setObjectName( stchan + ": dataend" );
+
       le_lcrats << le_lcrat;
       le_lctols << le_lctol;
       le_ldvols << le_ldvol;
       le_lvtols << le_lvtol;
       le_daends << le_daend;
+
       genL->addWidget( le_chann,  row,    0, 1, 5 );
       genL->addWidget( le_lcrat,  row,    5, 1, 1 );
       genL->addWidget( le_lctol,  row,    6, 1, 1 );
-      genL->addWidget( le_ldvol,  row,    7, 1, 2 );
-      genL->addWidget( le_lvtol,  row,    9, 1, 1 );
-      genL->addWidget( le_daend,  row,   10, 1, 1 );
+      genL->addWidget( le_ldvol,  row,    7, 1, 1 );
+      genL->addWidget( le_lvtol,  row,    8, 1, 1 );
+      genL->addWidget( le_daend,  row,    9, 1, 1 );
       if ( ii == 0 )
       {
-         genL->addWidget( pb_applya, row++, 11, 1, 1 );
+         genL->addWidget( pb_applya, row++, 10, 1, 2 );
+         connect( pb_applya, SIGNAL( clicked       ( ) ),
+                  this,      SLOT(   applied_to_all( ) ) );
       }
       else
       {
          row++;
       }
-   }
 
+      connect( le_lcrat,    SIGNAL( editingFinished   ( void ) ),
+               this,        SLOT(   lcrat_text_changed( void ) ) );
+      connect( le_lctol,    SIGNAL( editingFinished   ( void ) ),
+               this,        SLOT(   lctol_text_changed( void ) ) );
+      connect( le_ldvol,    SIGNAL( editingFinished   ( void ) ),
+               this,        SLOT(   ldvol_text_changed( void ) ) );
+      connect( le_lvtol,    SIGNAL( editingFinished   ( void ) ),
+               this,        SLOT(   lvtol_text_changed( void ) ) );
+      connect( le_daend,    SIGNAL( editingFinished   ( void ) ),
+               this,        SLOT(   daend_text_changed( void ) ) );
+   }
+#if 1
    mainw->addColumnSpacing( genL, row );
+#endif
 
    QScrollArea *scrollArea  = new QScrollArea( this );
    QWidget* containerWidget = new QWidget;
@@ -320,10 +337,8 @@ US_AnaprofPanGen::US_AnaprofPanGen( QWidget* topw )
    containerWidget->setLayout( genL );
    scrollArea->setWidgetResizable( true );
    scrollArea->setWidget( containerWidget );
-//   panel->addLayout( genL );
    panel->addWidget( scrollArea );
    adjustSize();
-//   panel->addStretch();
 
    // Set up signal and slot connections
 //   connect( le_runid,        SIGNAL( textEdited(const QString &)  ),
@@ -355,6 +370,127 @@ bool US_AnaprofPanGen::updateProfiles( const QStringList )
    return true;
 }
 
+// General Panel SLOTS
+
+// Analysis Profile button clicked
+void US_AnaprofPanGen::apro_button_clicked() 
+{
+DbgLv(1) << "GP:SL: APRO BTN";
+//*TEMPORARY
+QMessageBox::information( this, "Under Development",
+ "This will lead to an AnalysisProfile selection dialog" );
+//*TEMPORARY
+}
+
+// Protocol button clicked
+void US_AnaprofPanGen::prot_button_clicked() 
+{
+DbgLv(1) << "GP:SL: PROT BTN";
+//*TEMPORARY
+QMessageBox::information( this, "Under Development",
+ "This will lead to a Protocol selection dialog" );
+//*TEMPORARY
+}
+
+// Analysis Profile name text changed
+void US_AnaprofPanGen::apro_text_changed( )
+{
+   QString str = le_aproname->text();
+DbgLv(1) << "GP:SL: APRO TEXT" << str;
+}
+
+// Protocol name text changed
+void US_AnaprofPanGen::prot_text_changed()
+{
+   QString str = le_protname->text();
+DbgLv(1) << "GP:SL: PROT TEXT" << str;
+}
+
+// Load Concentration Ratio text changed
+void US_AnaprofPanGen::lcrat_text_changed( )
+{
+   QObject* sobj      = sender();
+   QString sname      = sobj->objectName();
+   int chnx           = sname.section( ":", 0, 0 ).toInt();
+   QString str        = le_lcrats[ chnx ]->text();
+DbgLv(1) << "GP:SL: LCRAT TEXT" << str << sname << chnx;
+}
+
+// Load Concentration Tolerance text changed
+void US_AnaprofPanGen::lctol_text_changed( ) 
+{
+   QObject* sobj      = sender();
+   QString sname      = sobj->objectName();
+   int chnx           = sname.section( ":", 0, 0 ).toInt();
+   QString str        = le_lctols[ chnx ]->text();
+DbgLv(1) << "GP:SL: LCTOL TEXT" << str << sname << chnx;
+}
+
+// Load Voluume text changed
+void US_AnaprofPanGen::ldvol_text_changed( )
+{
+   QObject* sobj      = sender();
+   QString sname      = sobj->objectName();
+   int chnx           = sname.section( ":", 0, 0 ).toInt();
+   QString str        = le_ldvols[ chnx ]->text();
+DbgLv(1) << "GP:SL: LDVOL TEXT" << str << sname << chnx;
+}
+
+// Load Volume Tolerance text changed
+void US_AnaprofPanGen::lvtol_text_changed( )
+{
+   QObject* sobj      = sender();
+   QString sname      = sobj->objectName();
+   int chnx           = sname.section( ":", 0, 0 ).toInt();
+   QString str        = le_lvtols[ chnx ]->text();
+DbgLv(1) << "GP:SL: LVTOL TEXT" << str << sname << chnx;
+}
+
+// Data End text changed
+void US_AnaprofPanGen::daend_text_changed( ) 
+{
+   QObject* sobj      = sender();
+   QString sname      = sobj->objectName();
+   int chnx           = sname.section( ":", 0, 0 ).toInt();
+   QString str        = le_daends[ chnx ]->text();
+DbgLv(1) << "GP:SL: DAEND TEXT" << str << sname << chnx;
+}
+
+// Apply to All button clicked
+void US_AnaprofPanGen::applied_to_all() 
+{
+DbgLv(1) << "GP:SL: APPLIED ALL";
+//*TEMPORARY
+//QMessageBox::information( this, "Under Development",
+// "This will lead to all channel rows being populated from row 0" );
+//*TEMPORARY
+
+   // Get the string values of the columns in row 0
+   QString lcrat  = le_lcrats[ 0 ]->text();
+   QString lctol  = le_lctols[ 0 ]->text();
+   QString ldvol  = le_ldvols[ 0 ]->text();
+   QString lvtol  = le_lvtols[ 0 ]->text();
+   QString daend  = le_daends[ 0 ]->text();
+
+   for ( int jj = 1; jj < sl_chnsel.count(); jj++ )
+   {  // Replace values in all other rows where row 0 changed
+      if ( le_lcrats[ jj ]->text() != lcrat )
+         le_lcrats[ jj ]->setText( lcrat );
+
+      if ( le_lctols[ jj ]->text() != lctol )
+         le_lctols[ jj ]->setText( lctol );
+
+      if ( le_ldvols[ jj ]->text() != ldvol )
+         le_ldvols[ jj ]->setText( ldvol );
+
+      if ( le_lvtols[ jj ]->text() != lvtol )
+         le_lvtols[ jj ]->setText( lvtol );
+
+      if ( le_daends[ jj ]->text() != daend )
+         le_daends[ jj ]->setText( daend );
+   }
+}
+
 
 // Panel for 2DSA parameters
 US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
@@ -365,13 +501,13 @@ US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
    QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
    panel->setContentsMargins( 2, 2, 2, 2 );
-   QLabel* lb_panel    = us_banner( tr( "3: Specify 2DSA Analysis Controls" ) );
+   QLabel* lb_panel    = us_banner( tr( "2: Specify 2DSA Analysis Controls" ) );
    panel->addWidget( lb_panel );
    QGridLayout* genL   = new QGridLayout();
 
    // Labels and buttons
    QLabel*  lb_chnpro  = us_banner( tr( "Per-Channel Profile" ) );
-   QLabel*  lb_chnsel  = us_label ( tr( "Channel [ Chn: Opt (Solut) ]" ) );
+   QLabel*  lb_chnsel  = us_label ( tr( "Channel [ Chn:Opt:Solut ]" ) );
    QLabel*  lb_smin    = us_label ( tr( "s Minimum:         " ) );
    QLabel*  lb_smax    = us_label ( tr( "s Maximum:         " ) );
    QLabel*  lb_sgrpts  = us_label ( tr( "s Grid Points:     " ) );
@@ -383,7 +519,6 @@ US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
    QLabel*  lb_grreps  = us_label ( tr( "Grid Repetitions:  " ) );
             pb_custmg  = us_pushbutton( tr( "Custom Grid" ) );;
             pb_applya  = us_pushbutton( tr( "Apply to All" ) );;
-   QPushButton*
             pb_nextch  = us_pushbutton( tr( "Next Channel" ) );;
 
    QLabel*  lb_jflow   = us_banner( tr( "2DSA Job Flow"   ) );
@@ -424,29 +559,29 @@ US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
    cb_chnsel       = new QComboBox( this );
    sl_chnsel       = sibLValue( "general", "channels" );
    cb_chnsel->addItems( sl_chnsel );
-   ck_j1run        = new QCheckBox( "Run", this );
+   ck_j1run        = new QCheckBox( tr( "Run" ), this );
    ck_j1run ->setPalette( US_GuiSettings::normalColor() );
    ck_j1run ->setChecked( true );
    ck_j1run ->setAutoFillBackground( true  );
-   ck_j2run        = new QCheckBox( "Run", this );
+   ck_j2run        = new QCheckBox( tr( "Run" ), this );
    ck_j2run ->setPalette( US_GuiSettings::normalColor() );
    ck_j2run ->setChecked( true );
    ck_j2run ->setAutoFillBackground( true  );
-   ck_j3run        = new QCheckBox( "Run", this );
+   ck_j3run        = new QCheckBox( tr( "Run" ), this );
    ck_j3run ->setPalette( US_GuiSettings::normalColor() );
    ck_j3run ->setChecked( true );
    ck_j3run ->setAutoFillBackground( true  );
-   ck_j4run        = new QCheckBox( "Run", this );
+   ck_j4run        = new QCheckBox( tr( "Run" ), this );
    ck_j4run ->setPalette( US_GuiSettings::normalColor() );
    ck_j4run ->setChecked( true );
    ck_j4run ->setAutoFillBackground( true  );
-   ck_j5run        = new QCheckBox( "Run", this );
+   ck_j5run        = new QCheckBox( tr( "Run" ), this );
    ck_j5run ->setPalette( US_GuiSettings::normalColor() );
    ck_j5run ->setChecked( true );
    ck_j5run ->setAutoFillBackground( true  );
    le_j2gpts       = us_lineedit( "10", 0, false );
    le_j2mrng       = us_lineedit( "0.03", 0, false );
-   ck_j3auto       = new QCheckBox( "Auto-pick", this );
+   ck_j3auto       = new QCheckBox( tr( "Auto-pick" ), this );
    ck_j3auto->setPalette( US_GuiSettings::normalColor() );
    ck_j3auto->setChecked( true );
    ck_j3auto->setAutoFillBackground( true  );
@@ -508,13 +643,58 @@ US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
    genL->addWidget( le_j5iter,  row++,  7, 1,  1 );
 
    mainw->addColumnSpacing( genL, row );
+
    // Connect signals and slots
-//   connect( sb_scnint_ss, SIGNAL( valueChanged   ( int ) ),
-//            this,         SLOT  ( ssChgScIntTime_ss ( int ) ) ); 
+   connect( cb_chnsel,    SIGNAL( activated        ( int )  ),
+            this,         SLOT  ( channel_selected ( int )  ) ); 
+   connect( pb_nextch,    SIGNAL( clicked          ( )      ),
+            this,         SLOT  ( next_channel     ( )      ) ); 
+   connect( le_smin,      SIGNAL( editingFinished  ( )      ),
+            this,         SLOT  ( smin_changed     ( )      ) ); 
+   connect( le_smax,      SIGNAL( editingFinished  ( )      ),
+            this,         SLOT  ( smax_changed     ( )      ) ); 
+   connect( le_sgrpts,    SIGNAL( editingFinished  ( )      ),
+            this,         SLOT  ( sgpoints_changed ( )      ) ); 
+   connect( le_kmin,      SIGNAL( editingFinished  ( )      ),
+            this,         SLOT  ( kmin_changed     ( )      ) ); 
+   connect( le_kmax,      SIGNAL( editingFinished  ( )      ),
+            this,         SLOT  ( kmax_changed     ( )      ) ); 
+   connect( le_kgrpts,    SIGNAL( editingFinished  ( )      ),
+            this,         SLOT  ( kgpoints_changed ( )      ) ); 
+   connect( le_grreps,    SIGNAL( editingFinished  ( )      ),
+            this,         SLOT  ( grid_reps_changed( )      ) ); 
+   connect( pb_custmg,    SIGNAL( clicked          ( )      ),
+            this,         SLOT  ( cust_grid_clicked( )      ) ); 
+   connect( le_custmg,    SIGNAL( editingFinished  ( )      ),
+            this,         SLOT  ( cust_grid_changed( )      ) ); 
+   connect( ck_varyvb,    SIGNAL( toggled          ( bool ) ),
+            this,         SLOT  ( vary_vbar_checked( bool ) ) ); 
+   connect( le_constk,    SIGNAL( editingFinished  ( )      ),
+            this,         SLOT  ( constk_changed   ( )      ) ); 
+   connect( pb_applya,    SIGNAL( clicked          ( )      ),
+            this,         SLOT  ( apply_all_clicked( )      ) ); 
+   connect( ck_j1run,     SIGNAL( toggled          ( bool ) ),
+            this,         SLOT  ( job1_run_checked ( bool ) ) ); 
+   connect( ck_j2run,     SIGNAL( toggled          ( bool ) ),
+            this,         SLOT  ( job2_run_checked ( bool ) ) ); 
+   connect( le_j2gpts,    SIGNAL( editingFinished  ( )      ),
+            this,         SLOT  ( mgpoints_changed ( )      ) ); 
+   connect( le_j2mrng,    SIGNAL( editingFinished  ( )      ),
+            this,         SLOT  ( mfrange_changed  ( )      ) ); 
+   connect( ck_j3run,     SIGNAL( toggled          ( bool ) ),
+            this,         SLOT  ( job3_run_checked ( bool ) ) ); 
+   connect( ck_j3auto,    SIGNAL( toggled          ( bool ) ),
+            this,         SLOT  ( autopick_checked ( bool ) ) ); 
+   connect( ck_j4run,     SIGNAL( toggled          ( bool ) ),
+            this,         SLOT  ( job4_run_checked ( bool ) ) ); 
+   connect( le_j4iter,    SIGNAL( editingFinished  ( )      ),
+            this,         SLOT  ( rfiters_changed  ( )      ) ); 
+   connect( ck_j5run,     SIGNAL( toggled          ( bool ) ),
+            this,         SLOT  ( job5_run_checked ( bool ) ) ); 
+   connect( le_j5iter,    SIGNAL( editingFinished  ( )      ),
+            this,         SLOT  ( mciters_changed  ( )      ) ); 
 
-   
 DbgLv(1) << "AP2d: addWidg/Layo II";
-
    // Complete overall layout
    panel->addLayout( genL );
    panel->addStretch();
@@ -527,6 +707,113 @@ DbgLv(1) << "AP2d:  RTN initPanel()";
 //qDebug() << "SCANINT: " << ssvals[ 0 ][ "scanintv" ]  << ", SCANINT FROM rpSpeed: " <<  rpSpeed->ssteps[ 0 ].scanintv;
 }
 
+// 2DSA Panel Slots
+
+// Channel Selected
+void US_AnaprofPan2DSA::channel_selected( int chnx )
+{
+DbgLv(1) << "2D:SL: CHAN_SEL" << chnx;
+   int lndx    = sl_chnsel.count() - 1;
+   pb_nextch->setEnabled( chnx < lndx );
+}
+void US_AnaprofPan2DSA::next_channel( )
+{
+DbgLv(1) << "2D:SL: NEXT_CHAN";
+   int lndx    = sl_chnsel.count() - 1;
+   int chnx    = qMin( cb_chnsel->currentIndex() + 1, lndx );
+   cb_chnsel->setCurrentIndex( chnx );
+   pb_nextch->setEnabled( chnx < lndx );
+}
+void US_AnaprofPan2DSA::smin_changed( )
+{
+DbgLv(1) << "2D:SL: SMIN_CHG";
+}
+void US_AnaprofPan2DSA::smax_changed( )
+{
+DbgLv(1) << "2D:SL: SMAX_CHG";
+}
+void US_AnaprofPan2DSA::sgpoints_changed( )
+{
+DbgLv(1) << "2D:SL: SGPTS_CHG";
+}
+void US_AnaprofPan2DSA::kmin_changed( )
+{
+DbgLv(1) << "2D:SL: KMIN_CHG";
+}
+void US_AnaprofPan2DSA::kmax_changed( )
+{
+DbgLv(1) << "2D:SL: KMAX_CHG";
+}
+void US_AnaprofPan2DSA::kgpoints_changed( )
+{
+DbgLv(1) << "2D:SL: KGPTS_CHG";
+}
+void US_AnaprofPan2DSA::grid_reps_changed( )
+{
+DbgLv(1) << "2D:SL: GRDREPS_CHG";
+}
+void US_AnaprofPan2DSA::cust_grid_clicked( )
+{
+DbgLv(1) << "2D:SL: CUSTG_CLK";
+}
+void US_AnaprofPan2DSA::cust_grid_changed( )
+{
+DbgLv(1) << "2D:SL: CUSTG_CHG";
+}
+void US_AnaprofPan2DSA::vary_vbar_checked( bool chkd )
+{
+DbgLv(1) << "2D:SL: VVBAR_CKD" << chkd;
+}
+void US_AnaprofPan2DSA::constk_changed( )
+{
+DbgLv(1) << "2D:SL: CONSTK_CHG";
+}
+void US_AnaprofPan2DSA::apply_all_clicked( )
+{
+DbgLv(1) << "2D:SL: APLALL_CLK";
+}
+void US_AnaprofPan2DSA::job1_run_checked( bool chkd )
+{
+DbgLv(1) << "2D:SL: JOB1RUN_CKD" << chkd;
+}
+void US_AnaprofPan2DSA::job2_run_checked( bool chkd )
+{
+DbgLv(1) << "2D:SL: JOB2RUN_CKD" << chkd;
+}
+void US_AnaprofPan2DSA::mgpoints_changed( )
+{
+DbgLv(1) << "2D:SL: J2MGPT_CHG";
+}
+void US_AnaprofPan2DSA::mfrange_changed( )
+{
+DbgLv(1) << "2D:SL: J2MRNG_CHG";
+}
+void US_AnaprofPan2DSA::job3_run_checked( bool chkd )
+{
+DbgLv(1) << "2D:SL: JOB3RUN_CKD" << chkd;
+}
+void US_AnaprofPan2DSA::autopick_checked( bool chkd )
+{
+DbgLv(1) << "2D:SL: J3AUTO_CKD" << chkd;
+}
+void US_AnaprofPan2DSA::job4_run_checked( bool chkd )
+{
+DbgLv(1) << "2D:SL: JOB4RUN_CKD" << chkd;
+}
+void US_AnaprofPan2DSA::rfiters_changed( )
+{
+DbgLv(1) << "2D:SL: J4RFITER_CHG";
+}
+void US_AnaprofPan2DSA::job5_run_checked( bool chkd )
+{
+DbgLv(1) << "2D:SL: JOB5RUN_CKD" << chkd;
+}
+void US_AnaprofPan2DSA::mciters_changed( )
+{
+DbgLv(1) << "2D:SL: J5_MCITER_CHG";
+}
+
+
 // Panel for PCSA parameters
 US_AnaprofPanPCSA::US_AnaprofPanPCSA( QWidget* topw )
    : US_WidgetsDialog( topw, 0 )
@@ -537,8 +824,13 @@ DbgLv(1) << "APpc: IN";
    QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
    panel->setContentsMargins( 2, 2, 2, 2 );
-   QLabel* lb_panel    = us_banner( tr( "4: Define PCSA Analysis Controls" ) );
+   QLabel* lb_panel    = us_banner( tr( "3: Define PCSA Analysis Controls" ) );
    panel->addWidget( lb_panel );
+   ck_nopcsa       = new QCheckBox( tr( "Do NOT Include PCSA Among Analyses" ), this );
+   ck_nopcsa  ->setPalette( US_GuiSettings::normalColor() );
+   ck_nopcsa  ->setChecked( false );
+   ck_nopcsa  ->setAutoFillBackground( true  );
+   panel->addWidget( ck_nopcsa );
    QGridLayout* genL   = new QGridLayout();
 
    QLabel* lb_curvtype = us_label ( tr( "Curve Type:" ) );
@@ -553,18 +845,18 @@ DbgLv(1) << "APpc: IN";
    QLabel* lb_varcount = us_label ( tr( "Variations Count:" ) );
    QLabel* lb_grfiters = us_label ( tr( "Grid Fit Iterations:" ) );
    QLabel* lb_crpoints = us_label ( tr( "Curve Resolution Points:" ) );
-   QLabel* lb_regparam = us_label ( tr( "Regularization Parameter:" ) );
+   QLabel* lb_regalpha = us_label ( tr( "Regularization Alpha:" ) );
    QLabel* lb_mciters  = us_label ( tr( "Monte-Carlo Iterations:" ) );
    QLabel* lb_tinoise  = us_label ( tr( "Fit Time-Invariant Noise:" ) );
    QLabel* lb_rinoise  = us_label ( tr( "Fit Radially-Invariant Noise:" ) );
-   QLabel* lb_chnsel   = us_label ( tr( "Channel [ Chn: Opt (Solut) ]" ) );
+   QLabel* lb_chnsel   = us_label ( tr( "Channel [ Chn:Opt:Solut ]" ) );
    QLabel* lb_tregtype = us_label ( tr( "Tikhonov Regularization:" ) );
            pb_applya   = us_pushbutton( tr( "Apply to All" ) );;
-   QPushButton*
            pb_nextch   = us_pushbutton( tr( "Next Channel" ) );;
 
    QStringList sl_curvtype;
-   sl_curvtype << tr( "Increasing Sigmoid" )
+   sl_curvtype << tr( "All (IS + DS + SL)" )
+               << tr( "Increasing Sigmoid" )
                << tr( "Decreasing Sigmoid" )
                << tr( "Straight Line" )
                << tr( "Horizontal Line [ C(s) ]" )
@@ -591,19 +883,19 @@ DbgLv(1) << "APpc: IN";
    le_varcount     = us_lineedit( "6", 0, false );
    le_grfiters     = us_lineedit( "3", 0, false );
    le_crpoints     = us_lineedit( "200", 0, false );
-   ck_tregoff      = new QCheckBox( "Off", this );
+   ck_tregoff      = new QCheckBox( tr( "Off" ), this );
    ck_tregoff ->setPalette( US_GuiSettings::normalColor() );
    ck_tregoff ->setChecked( true );
    ck_tregoff ->setAutoFillBackground( true  );
-   ck_tregspec     = new QCheckBox( "On-specified", this );
+   ck_tregspec     = new QCheckBox( tr( "On-specified" ), this );
    ck_tregspec->setPalette( US_GuiSettings::normalColor() );
    ck_tregspec->setChecked( false );
    ck_tregspec->setAutoFillBackground( true  );
-   ck_tregauto     = new QCheckBox( "On-auto", this );
+   ck_tregauto     = new QCheckBox( tr( "On-auto" ), this );
    ck_tregauto->setPalette( US_GuiSettings::normalColor() );
    ck_tregauto->setChecked( false );
    ck_tregauto->setAutoFillBackground( true  );
-   le_regparam     = us_lineedit( "0", 0, false );
+   le_regalpha     = us_lineedit( "0", 0, false );
    le_mciters      = us_lineedit( "0", 0, false );
    ck_tinoise      = new QCheckBox( "TI", this );
    ck_tinoise ->setPalette( US_GuiSettings::normalColor() );
@@ -651,22 +943,39 @@ DbgLv(1) << "APpc: IN";
    genL->addWidget( le_grfiters, row,    3, 1,  1 );
    genL->addWidget( lb_crpoints, row,    4, 1,  3 );
    genL->addWidget( le_crpoints, row++,  7, 1,  1 );
-   genL->addWidget( lb_tregtype, row,    0, 1,  3 );
-   genL->addWidget( ck_tregoff,  row,    3, 1,  1 );
-   genL->addWidget( ck_tregspec, row,    4, 1,  2 );
-   genL->addWidget( ck_tregauto, row,    6, 1,  2 );
-   genL->addWidget( lb_regparam, row,    8, 1,  3 );
-   genL->addWidget( le_regparam, row++, 11, 1,  1 );
-   genL->addWidget( lb_mciters,  row,    0, 1,  3 );
-   genL->addWidget( le_mciters,  row,    3, 1,  1 );
    genL->addWidget( lb_tinoise,  row,    4, 1,  3 );
    genL->addWidget( ck_tinoise,  row,    7, 1,  1 );
    genL->addWidget( lb_rinoise,  row,    8, 1,  3 );
    genL->addWidget( ck_rinoise,  row++, 11, 1,  1 );
+   genL->addWidget( lb_tregtype, row,    0, 1,  3 );
+   genL->addWidget( ck_tregoff,  row,    3, 1,  1 );
+   genL->addWidget( ck_tregspec, row,    4, 1,  2 );
+   genL->addWidget( ck_tregauto, row,    6, 1,  2 );
+   genL->addWidget( lb_regalpha, row,    8, 1,  3 );
+   genL->addWidget( le_regalpha, row++, 11, 1,  1 );
+   genL->addWidget( lb_mciters,  row,    0, 1,  3 );
+   genL->addWidget( le_mciters,  row++,  3, 1,  1 );
 
    mainw->addColumnSpacing( genL, row );
    panel->addLayout( genL );
    panel->addStretch();
+
+   connect( ck_nopcsa,    SIGNAL( toggled          ( bool ) ),
+            this,         SLOT  ( nopcsa_checked   ( bool ) ) ); 
+   connect( cb_chnsel,    SIGNAL( activated        ( int )  ),
+            this,         SLOT  ( channel_selected ( int )  ) ); 
+   connect( pb_nextch,    SIGNAL( clicked          ( )      ),
+            this,         SLOT  ( next_channel     ( )      ) ); 
+   connect( cb_curvtype,  SIGNAL( activated        ( int )  ),
+            this,         SLOT  ( curvtype_selected( int )  ) ); 
+   connect( pb_applya,    SIGNAL( clicked          ( )      ),
+            this,         SLOT  ( apply_all_clicked( )      ) ); 
+   connect( cb_xaxistyp,  SIGNAL( activated        ( int )  ),
+            this,         SLOT  ( xaxis_selected   ( int )  ) ); 
+   connect( le_xmin,      SIGNAL( editingFinished  ( )      ),
+            this,         SLOT  ( xmin_changed     ( )      ) ); 
+   connect( le_xmax,      SIGNAL( editingFinished  ( )      ),
+            this,         SLOT  ( xmax_changed     ( )      ) ); 
 
    // Do first pass at initializing the panel layout
    initPanel();
@@ -674,8 +983,56 @@ QString pval1 = sibSValue( "rotor", "rotor" );
 DbgLv(1) << "APpc: rotor+rotor=" << pval1;
 }
 
-// Panel for Upload parameters
-US_AnaprofPanUpload::US_AnaprofPanUpload( QWidget* topw )
+// PCSA Panel Slots
+
+// NO PCSA Checked
+void US_AnaprofPanPCSA::nopcsa_checked( bool chkd )
+{
+DbgLv(1) << "PC:SL: NOPCSA_CKD" << chkd;
+}
+// Channel Selected
+void US_AnaprofPanPCSA::channel_selected( int chnx )
+{
+DbgLv(1) << "PC:SL: CHAN_SEL" << chnx;
+   int lndx    = sl_chnsel.count() - 1;
+   pb_nextch->setEnabled( chnx < lndx );
+}
+// Next Channel
+void US_AnaprofPanPCSA::next_channel( )
+{
+DbgLv(1) << "PC:SL: NEXT_CHAN";
+   int lndx    = sl_chnsel.count() - 1;
+   int chnx    = qMin( cb_chnsel->currentIndex() + 1, lndx );
+   cb_chnsel->setCurrentIndex( chnx );
+   pb_nextch->setEnabled( chnx < lndx );
+}
+void US_AnaprofPanPCSA::apply_all_clicked( )
+{
+DbgLv(1) << "PC:SL: APLALL_CLK";
+}
+// Curve Type Selected
+void US_AnaprofPanPCSA::curvtype_selected( int curx )
+{
+DbgLv(1) << "PC:SL: CTYPE_SEL" << curx;
+}
+// X Axis Selected
+void US_AnaprofPanPCSA::xaxis_selected( int xaxx )
+{
+DbgLv(1) << "PC:SL: XAXIS_SEL" << xaxx;
+}
+// X Min Changed
+void US_AnaprofPanPCSA::xmin_changed( )
+{
+DbgLv(1) << "PC:SL: XMIN_CHG";
+}
+// X Max Changed
+void US_AnaprofPanPCSA::xmax_changed( )
+{
+DbgLv(1) << "PC:SL: XMAX_CHG";
+}
+
+// Panel for Status parameters
+US_AnaprofPanStatus::US_AnaprofPanStatus( QWidget* topw )
    : US_WidgetsDialog( topw, 0 )
 {
 DbgLv(1) << "APup: IN";
@@ -684,16 +1041,16 @@ DbgLv(1) << "APup: IN";
    QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
    panel->setContentsMargins( 2, 2, 2, 2 );
-   QLabel* lb_panel    = us_banner( tr( "9: Define Upload Controls" ) );
+   QLabel* lb_panel    = us_banner( tr( "9: Show Analysis Profile Status" ) );
    panel->addWidget( lb_panel );
    QGridLayout* genL   = new QGridLayout();
 
 
    QLabel* lb_hdr1     = us_banner( tr( "Status" ) );
-   QLabel* lb_hdr2     = us_banner( tr( "Upload" ) );
+//   QLabel* lb_hdr2     = us_banner( tr( "Upload" ) );
    int row             = 0;
    genL->addWidget( lb_hdr1, row++, 0, 1, 2 );
-   genL->addWidget( lb_hdr2, row++, 0, 1, 2 );
+//   genL->addWidget( lb_hdr2, row++, 0, 1, 2 );
 
 
    panel->addLayout( genL );
@@ -701,23 +1058,21 @@ DbgLv(1) << "APup: IN";
 
    // Do first pass at initializing the panel layout
    initPanel();
-QString pval1 = sibSValue( "rotor", "rotor" );
-DbgLv(1) << "APpc: rotor+rotor=" << pval1;
 }
 
-void US_AnaprofPanUpload::submitExperiment( void )
+void US_AnaprofPanStatus::submitExperiment( void )
 {
    return;
 }
-void US_AnaprofPanUpload::submitExperiment_confirm( void )
+void US_AnaprofPanStatus::submitExperiment_confirm( void )
 {
    return;
 }
-void US_AnaprofPanUpload::testConnection( void )
+void US_AnaprofPanStatus::testConnection( void )
 {
    return;
 }
-void US_AnaprofPanUpload::detailExperiment( void )
+void US_AnaprofPanStatus::detailExperiment( void )
 {
    return;
 }
