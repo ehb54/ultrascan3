@@ -385,6 +385,10 @@ bool US_RunProtocol::RunProtoSpeed::fromXml( QXmlStreamReader& xmli )
             QString s_si = attr.value( "scan_interval" ).toString();
             double d_du  = attr.value( "duration_minutes" ).toString().toDouble();
             double d_dy  = attr.value( "delay_seconds"    ).toString().toDouble();
+	    QString stage_delay = attr.value( "stage_delay"    ).toString();
+
+	    if ( ! stage_delay.isEmpty() )
+	      US_RunProtocol::timeFromString( ss.delay_stage, stage_delay );
 
             if ( ! s_du.isEmpty() )
                US_RunProtocol::timeFromString( ss.duration, s_du );
@@ -439,11 +443,13 @@ bool US_RunProtocol::RunProtoSpeed::toXml( QXmlStreamWriter& xmlo )
       QString s_durat;
       QString s_delay;
       QString s_sintv;
+      QString s_stdelay;
       US_RunProtocol::timeToString( ssteps[ ii ].duration, s_durat );
       US_RunProtocol::timeToString( ssteps[ ii ].delay,    s_delay );
       US_RunProtocol::timeToString( ssteps[ ii ].scanintv, s_sintv );
-
-      qDebug() << "SPEED toXml ssteps[ii].duration, ssteps[ii].scanintv  1 : " << ssteps[ii].duration << ", "<< ssteps[ii].scanintv;
+      US_RunProtocol::timeToString( ssteps[ ii ].delay_stage, s_stdelay );
+    
+      qDebug() << "SPEED toXml ssteps[ii].duration, ssteps[ii].scanintv  1 : " << ssteps[ii].duration << ", "<< ssteps[ii].scanintv << ", " << ssteps[ ii ].delay_stage;
 
       xmlo.writeStartElement( "speedstep" );
       xmlo.writeAttribute   ( "rotorspeed",
@@ -453,6 +459,8 @@ bool US_RunProtocol::RunProtoSpeed::toXml( QXmlStreamWriter& xmlo )
       xmlo.writeAttribute   ( "duration",      s_durat );
       xmlo.writeAttribute   ( "delay",         s_delay );
       xmlo.writeAttribute   ( "scan_interval", s_sintv );
+      xmlo.writeAttribute   ( "stage_delay", s_stdelay );
+      
       xmlo.writeEndElement  (); // speedstep
 
       // qDebug() << "SPEED toXml 2 : " << rpSpeed->ssteps[ii].duration;
