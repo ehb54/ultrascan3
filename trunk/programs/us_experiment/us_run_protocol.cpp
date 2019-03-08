@@ -588,7 +588,8 @@ bool US_RunProtocol::RunProtoCells::toXml( QXmlStreamWriter& xmlo )
       }           
       else
       {
-         if ( used[ ii ].cbalance.contains( "centerpiece"  ) )
+	//if ( used[ ii ].cbalance.contains( "centerpiece"  ) )
+	if ( !used[ ii ].cbalance.contains( "counterbalance"  ) )
          {
             xmlo.writeAttribute( "centerpiece",    used[ ii ].centerpiece );
             xmlo.writeAttribute( "windows",        used[ ii ].windows     );
