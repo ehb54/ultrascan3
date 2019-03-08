@@ -4422,6 +4422,34 @@ void US_Hydrodyn_Pdb_Tool::sol2wat_traj( QTreeWidget *lv ) {
       return;
    }
 
+   // optionally decimate
+
+   if ( filenames.size() > 5 ) {
+      bool ok;
+      unsigned int decimate = ( unsigned int )US_Static::getInteger(
+                                                                    "US-SOMO: PDB Editor : Sol2Wat", 
+                                                                    QString( us_tr( "You have %1 files, enter the decimation value\n(1 = no decimation, 2 = every second, etc:" ) )
+                                                                    .arg( filenames.size() )
+                                                                    ,
+                                                                    1,
+                                                                    1, 
+                                                                    filenames.size(),
+                                                                    1,
+                                                                    &ok, 
+                                                                    this );
+      if ( !ok ) {
+         return;
+      }
+
+      if ( decimate > 1 ) {
+         QStringList new_filenames;
+         for ( int i = 0; i < (int) filenames.size(); i += decimate ) {
+            new_filenames.push_back( filenames[ i ] );
+         }
+         filenames = new_filenames;
+      }
+   }
+   
    // get parameters
 
    bool ok;

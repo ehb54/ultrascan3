@@ -235,7 +235,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
 
             if ( our_saxs_options->hybrid_radius_excl_vol )
             {
-               new_atom.excl_vol = M_PI * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius;
+               new_atom.excl_vol = (4.0/3.0) * M_PI * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius * hybrid_map[hybrid_name].radius;
             }
                
             if ( our_saxs_options->iqq_use_saxs_excl_vol )
