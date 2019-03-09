@@ -231,7 +231,6 @@ class US_AnaprofPanPCSA : public US_WidgetsDialog
       QCheckBox*   ck_nopcsa;
       QCheckBox*   ck_tinoise;
       QCheckBox*   ck_rinoise;
-      QCheckBox*   ck_tregoff;
       QCheckBox*   ck_tregspec;
       QCheckBox*   ck_tregauto;
 
@@ -248,6 +247,20 @@ class US_AnaprofPanPCSA : public US_WidgetsDialog
       void xaxis_selected   ( int );
       void xmin_changed     ( );
       void xmax_changed     ( );
+      void yaxis_selected( int );
+      void ymin_changed( );
+      void ymax_changed( );
+      void zaxis_selected( int );
+      void zvalue_changed( );
+      void varcount_changed( );
+      void grfiters_changed( );
+      void crpoints_changed( );
+      void tinoise_checked( bool );
+      void rinoise_checked( bool );
+      void tregspec_checked( bool );
+      void tregauto_checked( bool );
+      void alpha_changed( );
+      void mciters_changed ( );
 };
 
 

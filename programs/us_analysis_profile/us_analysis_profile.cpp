@@ -151,7 +151,7 @@ DbgLv(1) << "MN:SL: APPLY_PROFILE";
 void US_AnalysisProfile::addColumnSpacing( QGridLayout* genL, int& row )
 {
 //*DEBUG
-//if(row>0) return;
+//if(row<9999) return;
 //*DEBUG
    // Blank text boxes to enforce column spacing
    QLineEdit* le_1 = us_lineedit( " ", 0, true );
@@ -883,10 +883,6 @@ DbgLv(1) << "APpc: IN";
    le_varcount     = us_lineedit( "6", 0, false );
    le_grfiters     = us_lineedit( "3", 0, false );
    le_crpoints     = us_lineedit( "200", 0, false );
-   ck_tregoff      = new QCheckBox( tr( "Off" ), this );
-   ck_tregoff ->setPalette( US_GuiSettings::normalColor() );
-   ck_tregoff ->setChecked( true );
-   ck_tregoff ->setAutoFillBackground( true  );
    ck_tregspec     = new QCheckBox( tr( "On-specified" ), this );
    ck_tregspec->setPalette( US_GuiSettings::normalColor() );
    ck_tregspec->setChecked( false );
@@ -895,7 +891,8 @@ DbgLv(1) << "APpc: IN";
    ck_tregauto->setPalette( US_GuiSettings::normalColor() );
    ck_tregauto->setChecked( false );
    ck_tregauto->setAutoFillBackground( true  );
-   le_regalpha     = us_lineedit( "0", 0, false );
+   le_regalpha     = us_lineedit( "0", 0, true );
+   us_setReadOnly( le_regalpha, true );
    le_mciters      = us_lineedit( "0", 0, false );
    ck_tinoise      = new QCheckBox( "TI", this );
    ck_tinoise ->setPalette( US_GuiSettings::normalColor() );
@@ -948,9 +945,8 @@ DbgLv(1) << "APpc: IN";
    genL->addWidget( lb_rinoise,  row,    8, 1,  3 );
    genL->addWidget( ck_rinoise,  row++, 11, 1,  1 );
    genL->addWidget( lb_tregtype, row,    0, 1,  3 );
-   genL->addWidget( ck_tregoff,  row,    3, 1,  1 );
-   genL->addWidget( ck_tregspec, row,    4, 1,  2 );
-   genL->addWidget( ck_tregauto, row,    6, 1,  2 );
+   genL->addWidget( ck_tregspec, row,    3, 1,  2 );
+   genL->addWidget( ck_tregauto, row,    5, 1,  2 );
    genL->addWidget( lb_regalpha, row,    8, 1,  3 );
    genL->addWidget( le_regalpha, row++, 11, 1,  1 );
    genL->addWidget( lb_mciters,  row,    0, 1,  3 );
@@ -976,6 +972,34 @@ DbgLv(1) << "APpc: IN";
             this,         SLOT  ( xmin_changed     ( )      ) ); 
    connect( le_xmax,      SIGNAL( editingFinished  ( )      ),
             this,         SLOT  ( xmax_changed     ( )      ) ); 
+   connect( cb_yaxistyp,  SIGNAL( activated        ( int )  ),
+            this,         SLOT  ( yaxis_selected   ( int )  ) ); 
+   connect( le_ymin,      SIGNAL( editingFinished  ( )      ),
+            this,         SLOT  ( ymin_changed     ( )      ) ); 
+   connect( le_ymax,      SIGNAL( editingFinished  ( )      ),
+            this,         SLOT  ( ymax_changed     ( )      ) ); 
+   connect( cb_zaxistyp,  SIGNAL( activated        ( int )  ),
+            this,         SLOT  ( zaxis_selected   ( int )  ) ); 
+   connect( le_zvalue,    SIGNAL( editingFinished  ( )      ),
+            this,         SLOT  ( zvalue_changed   ( )      ) ); 
+   connect( le_varcount,  SIGNAL( editingFinished  ( )      ),
+            this,         SLOT  ( varcount_changed ( )      ) ); 
+   connect( le_grfiters,  SIGNAL( editingFinished  ( )      ),
+            this,         SLOT  ( grfiters_changed ( )      ) ); 
+   connect( le_crpoints,  SIGNAL( editingFinished  ( )      ),
+            this,         SLOT  ( crpoints_changed ( )      ) ); 
+   connect( ck_tinoise,   SIGNAL( toggled          ( bool ) ),
+            this,         SLOT  ( tinoise_checked  ( bool ) ) ); 
+   connect( ck_rinoise,   SIGNAL( toggled          ( bool ) ),
+            this,         SLOT  ( rinoise_checked  ( bool ) ) ); 
+   connect( ck_tregspec,  SIGNAL( toggled          ( bool ) ),
+            this,         SLOT  ( tregspec_checked ( bool ) ) ); 
+   connect( ck_tregauto,  SIGNAL( toggled          ( bool ) ),
+            this,         SLOT  ( tregauto_checked ( bool ) ) ); 
+   connect( le_regalpha,  SIGNAL( editingFinished  ( )      ),
+            this,         SLOT  ( alpha_changed    ( )      ) ); 
+   connect( le_mciters,   SIGNAL( editingFinished  ( )      ),
+            this,         SLOT  ( mciters_changed  ( )      ) ); 
 
    // Do first pass at initializing the panel layout
    initPanel();
@@ -1029,6 +1053,88 @@ DbgLv(1) << "PC:SL: XMIN_CHG";
 void US_AnaprofPanPCSA::xmax_changed( )
 {
 DbgLv(1) << "PC:SL: XMAX_CHG";
+}
+// Y Axis selected
+void US_AnaprofPanPCSA::yaxis_selected( int yaxx )
+{
+DbgLv(1) << "PC:SL: YAXIS_SEL" << yaxx;
+}
+// Y Min changed
+void US_AnaprofPanPCSA::ymin_changed( )
+{
+DbgLv(1) << "PC:SL: YMIN_CHG";
+}
+// Y Max changed
+void US_AnaprofPanPCSA::ymax_changed( )
+{
+DbgLv(1) << "PC:SL: YMAX_CHG";
+}
+// Z Axis type selected
+void US_AnaprofPanPCSA::zaxis_selected( int zaxx )
+{
+DbgLv(1) << "PC:SL: ZAXIS_SEL" << zaxx;
+}
+// Z Value changed
+void US_AnaprofPanPCSA::zvalue_changed( )
+{
+DbgLv(1) << "PC:SL: ZVAL_CHG";
+}
+// Variations Count changed
+void US_AnaprofPanPCSA::varcount_changed( )
+{
+DbgLv(1) << "PC:SL: VCNT_CHG";
+}
+// Grid Fit Iterations changed
+void US_AnaprofPanPCSA::grfiters_changed( )
+{
+DbgLv(1) << "PC:SL: GFITER_CHG";
+}
+// Curve Resolution Points changed
+void US_AnaprofPanPCSA::crpoints_changed( )
+{
+DbgLv(1) << "PC:SL: CRPTS_CHG";
+}
+// TI Noise checked
+void US_AnaprofPanPCSA::tinoise_checked( bool chkd )
+{
+DbgLv(1) << "PC:SL: TNOI_CKD" << chkd;
+}
+// RI Noise checked
+void US_AnaprofPanPCSA::rinoise_checked( bool chkd )
+{
+DbgLv(1) << "PC:SL: RNOI_CKD" << chkd;
+}
+// Regularization Type: On-Specified checked
+void US_AnaprofPanPCSA::tregspec_checked( bool chkd )
+{
+DbgLv(1) << "PC:SL: TRSPEC_CKD" << chkd;
+   if ( chkd )
+   {  // On-Specified checked, so uncheck On-Auto
+      ck_tregauto->setChecked( false );
+   }
+   // Alpha read-only except when On-Specified is checked
+   us_setReadOnly( le_regalpha, !ck_tregspec->isChecked() );
+}
+// Regularization Type: On-Auto checked
+void US_AnaprofPanPCSA::tregauto_checked( bool chkd )
+{
+DbgLv(1) << "PC:SL: TRAUTO_CKD" << chkd;
+   if ( chkd )
+   {  // On-Auto checked, so uncheck On-Specified
+      ck_tregspec->setChecked( false );
+   }
+   // Alpha read-only except when On-Specified is checked
+   us_setReadOnly( le_regalpha, !ck_tregspec->isChecked() );
+}
+// Regularization Alpha value changed
+void US_AnaprofPanPCSA::alpha_changed( )
+{
+DbgLv(1) << "PC:SL: ALPHA_CHG";
+}
+// Monte-Carlo Iterations changed
+void US_AnaprofPanPCSA::mciters_changed ( )
+{
+DbgLv(1) << "PC:SL: MCITER_CHG";
 }
 
 // Panel for Status parameters

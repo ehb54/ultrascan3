@@ -141,7 +141,7 @@ US_Investigator::US_Investigator( bool signal, int inv )
 
    // Pushbuttons
    QHBoxLayout* buttons1 = new QHBoxLayout;
-   QPushButton* pb_queryDB = us_pushbutton( tr( "Query DB" ) );
+   pb_queryDB = us_pushbutton( tr( "Query DB" ) );
    connect( pb_queryDB, SIGNAL( clicked() ), SLOT( queryDB() ) );
    buttons1->addWidget( pb_queryDB, row );
 
@@ -153,7 +153,7 @@ US_Investigator::US_Investigator( bool signal, int inv )
    // Button row 
    QBoxLayout* buttons2 = new QHBoxLayout;
  
-   QPushButton* pb_reset = us_pushbutton( tr( "Reset" ) );
+   pb_reset = us_pushbutton( tr( "Reset" ) );
    connect( pb_reset, SIGNAL( clicked() ), SLOT( reset() ) );
    buttons2->addWidget( pb_reset );
  
@@ -161,7 +161,6 @@ US_Investigator::US_Investigator( bool signal, int inv )
    connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
    buttons2->addWidget( pb_help );
    
-   QPushButton* pb_close;
    int lev = US_Settings::us_inv_level();
 
    if ( signal_wanted )
@@ -171,7 +170,7 @@ US_Investigator::US_Investigator( bool signal, int inv )
       buttons2->addWidget( pb_cancel );
 
       pb_close = us_pushbutton( tr( "Accept" ) );
-      pb_close->setEnabled( lev > 2 );
+      pb_close->setEnabled( user_permit  ||  lev > 2 );
    }
    else
       pb_close = us_pushbutton( tr( "Close" ) );
@@ -199,6 +198,8 @@ US_Investigator::US_Investigator( bool signal, int inv )
       }
    }
 
+   user_permit   = false;
+
    // Disable GUI elements where login user not admin
    if ( lev < 3 )
    {
@@ -206,6 +207,20 @@ US_Investigator::US_Investigator( bool signal, int inv )
       pb_update ->setEnabled( false );
       pb_reset  ->setEnabled( false );
       le_search ->setEnabled( false );
+   }
+}
+
+void US_Investigator::override_permit( bool is_enab )
+{
+   user_permit   = is_enab;
+
+   if ( is_enab )
+   {
+      pb_queryDB->setEnabled( true );
+      pb_update ->setEnabled( true );
+      pb_reset  ->setEnabled( true );
+      le_search ->setEnabled( true );
+      pb_close  ->setEnabled( true );
    }
 }
 
@@ -244,7 +259,7 @@ qDebug() << "INV:qDB: inv" << inv << "lev" << lev;
       data.firstName = db.value( 2 ).toString();
 
       // Only add to investigator list if admin login or login-inv match
-      if ( lev < 3  &&  inv != data.invID )
+      if ( !user_permit  &&  lev < 3  &&  inv != data.invID )
          continue;
 
       investigators << data;
@@ -403,7 +418,8 @@ void US_Investigator::get_inv_data( QListWidgetItem* item )
    le_org    ->setText( info.organization ); 
    le_invGuid->setText( info.invGuid      ); 
 
-   pb_update ->setEnabled( US_Settings::us_inv_level() > 2 );
+   pb_update ->setEnabled( US_Settings::us_inv_level() > 2  ||
+                           user_permit );
 
 }
 

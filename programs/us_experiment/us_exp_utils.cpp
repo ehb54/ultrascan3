@@ -32,6 +32,7 @@
 #include "us_experiment_gui_optima.h"
 #include "us_run_protocol.h"
 #include "us_rotor_gui.h"
+#include "us_rotor.h"
 #include "us_solution_gui.h"
 #include "us_extinction_gui.h"
 #include "us_table.h"
@@ -208,6 +209,7 @@ DbgLv(1) << "statUpd: IN stat" << statflag;
               + epanSolutions->status()
               + epanOptical  ->status()
               + epanRanges   ->status()
+              + epanAProfile ->status()
               + epanUpload   ->status();
 DbgLv(1) << "statUpd:  MOD stat" << statflag;
 }
@@ -238,7 +240,8 @@ void US_ExperimentMain::help( void )
    else if ( curr_panx == 4 ) epanSolutions->help();
    else if ( curr_panx == 5 ) epanOptical  ->help();
    else if ( curr_panx == 6 ) epanRanges   ->help();
-   else if ( curr_panx == 7 ) epanUpload   ->help();
+   else if ( curr_panx == 7 ) epanAProfile ->help();
+   else if ( curr_panx == 8 ) epanUpload   ->help();
 }
 
 //Slot to DISABLE tabs and Next/Prev buttons
@@ -409,26 +412,34 @@ DbgLv(1) << "EGGe: inP: prn,prd counts" << protdata.count() << pr_names.count();
 
 void US_ExperGuiGeneral::check_empty_runname( const QString &str )
 {
-  if ( str.isEmpty() )
-    emit set_tabs_buttons_inactive();
-  else
-    {
+#if 0
+   if ( str.isEmpty() )
+      emit set_tabs_buttons_inactive();
+   else
+   {
+#endif
       if ( !le_project->text().isEmpty() )
-	emit set_tabs_buttons_active();
-    }
+         emit set_tabs_buttons_active();
+#if 0
+   }
+#endif
 }
 
 void US_ExperGuiGeneral::check_runname()
 {
-  QString rname     = le_runid->text();
-  if ( rname.isEmpty() )
-    emit set_tabs_buttons_inactive();
-  else
-    {
+#if 0
+   QString rname     = le_runid->text();
+   if ( rname.isEmpty() )
+      emit set_tabs_buttons_inactive();
+   else
+   {
+#endif
       if ( !le_project->text().isEmpty() )
-	emit set_tabs_buttons_active();
-    }
-  qApp->processEvents();
+         emit set_tabs_buttons_active();
+#if 0
+   }
+#endif
+   qApp->processEvents();
 }
 
 
@@ -468,19 +479,91 @@ void US_ExperGuiGeneral::update_inv( void )
 //IF USER cannot edit anything (low-level user)
 void US_ExperGuiGeneral::check_user_level()
 {
-  //update_inv();
-  if ( US_Settings::us_inv_level() < 3 )
-    {
+   //update_inv();
+   // Default flag:  user not enabled to change investigator
+   usr_enab       = false;
+   int inv_lev    = US_Settings::us_inv_level();
+
+   if ( inv_lev > 2 )
+   {  // All admin users and above are enabled
+      usr_enab       = true;
+   }
+   else
+   {  // Non-admin users enabled if they have instrument permit
+      int inv_id     = US_Settings::us_inv_ID();
+      QString pID    = QString::number( inv_id );
+
+      if ( instr_opers.count() < 1 )
+      {  // Must read lab/instrument/operator info one time
+         US_Passwd   pw;
+         US_DB2      db( pw.getPasswd() );
+
+         if ( db.lastErrno() != US_DB2::OK )
+         {
+            QMessageBox::information( this, tr( "Error" ),
+               tr( "Error making the DB connection.\n" ) );
+         }
+
+         QVector< US_Rotor::Lab > lablist;
+         US_Rotor::readLabsDB( lablist, &db );
+
+         for ( int ii = 0; ii < lablist.count(); ii++ )
+         {  // Look through lab info
+            QList< US_Rotor::Instrument > instruments
+                           = lablist[ ii ].instruments;
+
+            for ( int jj = 0; jj < instruments.count(); jj++ )
+            {  // Look at instruments in the lab
+               QString inname = instruments[ jj ].name;
+
+               // Skip any non-Optima
+               if ( ! inname.startsWith( "Optima" ) )
+                  continue;
+
+               QList< US_Rotor::Operator > operators
+                              = instruments[ jj ].operators;
+
+               for ( int kk = 0; kk < operators.count(); kk++ )
+               {  // Look at operators permitted on the instrument
+                  int opr_id     = operators[ kk ].ID;
+                  QString olname = operators[ kk ].lname;
+                  QString ofname = operators[ kk ].fname;
+                  QString oID    = QString::number( opr_id );
+
+                  // Entry is string combining operator and instrument name
+                  instr_opers << oID + ": " + olname + ", " + ofname
+                                 + "^" + inname;
+               } // END: operators for instrument
+            } // END: instruments for lab
+         } // END: labs
+      } // END: No list of operator^instrument entries
+
+      // See if investigator is in permit list
+      for ( int ii = 0; ii < instr_opers.count(); ii++ )
+      {
+         QString iID    = instr_opers[ ii ].section( ":", 0, 0 );
+
+         if ( pID == iID )
+         {  // Person ID matches an Instrument ID in the list
+            usr_enab       = true;
+            break;
+         }
+      }
+   } // END: Test of non-admin instrument permit
+
+
+   if ( ! usr_enab )
+   {  // User not enabled to set investigator
       pb_investigator->setEnabled( false );
       pb_project     ->setEnabled( false );
 
       if ( !loaded_proto )
-	emit set_tabs_buttons_inactive();
+         emit set_tabs_buttons_inactive();
       else
-	emit set_tabs_buttons_active_readonly();
+         emit set_tabs_buttons_active_readonly();
 
-      DbgLv(1) << "SIGNAL!!!!" ;
-    }
+DbgLv(1) << "EGGe:ckulev: SIGNAL!!!!" ;
+   }
 }
 
 // Save panel controls when about to leave the panel
@@ -2306,6 +2389,19 @@ DbgLv(1) << "EGwS:st:   ii" << ii << "is_done(wvlens count)" << is_done;
 
 //========================= End:   Ranges    section =========================
 
+//========================= Start: Aprofile  section =========================
+
+// Initialize an Upload panel, especially after clicking on its tab
+void US_ExperGuiAProfile::initPanel() { }
+void US_ExperGuiAProfile::savePanel() { }
+int  US_ExperGuiAProfile::status()
+{
+bool is_done=true;
+   return ( is_done ? 128 : 0 );
+}
+
+//========================= End:   Aprofile  section =========================
+
 //========================= Start: Upload    section =========================
 
 // Initialize an Upload panel, especially after clicking on its tab
@@ -2320,6 +2416,7 @@ void US_ExperGuiUpload::initPanel()
    rpSolut         = &currProto->rpSolut;
    rpOptic         = &currProto->rpOptic;
    rpRange         = &currProto->rpRange;
+   rpAprof         = &currProto->rpAprof;
    rpSubmt         = &currProto->rpSubmt;
 
 
@@ -2341,6 +2438,7 @@ DbgLv(1) << "EGUp:inP:   rpCells diff" << (cRP->rpCells!=lRP->rpCells);
 DbgLv(1) << "EGUp:inP:   rpSolut diff" << (cRP->rpSolut!=lRP->rpSolut);
 DbgLv(1) << "EGUp:inP:   rpOptic diff" << (cRP->rpOptic!=lRP->rpOptic);
 DbgLv(1) << "EGUp:inP:   rpRange diff" << (cRP->rpRange!=lRP->rpRange);
+DbgLv(1) << "EGUp:inP:   rpAprof diff" << (cRP->rpAprof!=lRP->rpAprof);
 DbgLv(1) << "EGUp:inP:   rpSubmt diff" << (cRP->rpSubmt!=lRP->rpSubmt);
 }
 
