@@ -113,9 +113,12 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    main->addLayout( statL );
    main->addLayout( buttL );
 
-   connect( epanGeneral, SIGNAL( set_tabs_buttons_inactive( void )), this, SLOT( disable_tabs_buttons( void ) ));
-   connect( epanGeneral, SIGNAL( set_tabs_buttons_active_readonly( void )),   this, SLOT( enable_tabs_buttons_readonly( void ) ));
-   connect( epanGeneral, SIGNAL( set_tabs_buttons_active( void )),   this, SLOT( enable_tabs_buttons( void ) ));
+   connect( epanGeneral, SIGNAL( set_tabs_buttons_inactive( void )),
+            this,        SLOT(   disable_tabs_buttons( void ) ));
+   connect( epanGeneral, SIGNAL( set_tabs_buttons_active_readonly( void )),
+              this,      SLOT(   enable_tabs_buttons_readonly( void ) ));
+   connect( epanGeneral, SIGNAL( set_tabs_buttons_active( void )),
+              this,      SLOT(   enable_tabs_buttons( void ) ));
 
    //int min_width = tabWidget->tabBar()->width();
 
@@ -190,9 +193,7 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
    QLabel*      lb_tempera      = us_label( tr( "Run Temperature " ) + DEGC + ":" );
    QLabel*      lb_tedelay      = us_label( tr( "Temperature-Equilibration Delay" ) );
    QLabel*      lb_tedmins      = us_label( tr( "Minutes" ) );
-   //QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
    pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
-   //QPushButton* pb_project      = us_pushbutton( tr( "Select Project" ) );
    pb_project      = us_pushbutton( tr( "Select Project" ) );
    QPushButton* pb_protocol     = us_pushbutton( tr( "Load Protocol" ) );
                 le_runid        = us_lineedit( "", 0, false );
@@ -225,6 +226,18 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
       : "";
    QString invtxt  = invnbr + US_Settings::us_inv_name();
    le_investigator = us_lineedit( invtxt, 0, true );
+DbgLv(1) << "EGGe:main: invtxt" << invtxt
+ << "invlev" << US_Settings::us_inv_level()
+ << "invenab" << pb_investigator->isEnabled();
+//*DEBUG*
+QStringList gxhosts;
+QList< QStringList > gxentrs;
+gxentrs = US_Settings::xpn_db_hosts();
+for (int jj=0;jj<gxentrs.count();jj++)
+{
+ DbgLv(1) << "EGGe:main: jj xpnentr" << jj << gxentrs[jj];
+}
+//*DEBUG*
 
    // Set defaults
    currProto       = &mainw->currProto;
@@ -284,14 +297,16 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
 
    for ( int ii = 0; ii < protdata.count(); ii++ )
       pr_names << protdata[ ii ][ 0 ];
-DbgLv(1) << "EGGe: main : prnames,prdata counts" << pr_names.count() << protdata.count();
+DbgLv(1) << "EGGe:main: prnames,prdata counts" << pr_names.count() << protdata.count();
 
  mainw->solutions_change = false;
 
  //check_runname();
 
    // Do the initialization we do at panel entry
+DbgLv(1) << "EGGe:main: (2)pb_inv_enab" << pb_investigator->isEnabled();
    initPanel();
+DbgLv(1) << "EGGe:main: (3)pb_inv_enab" << pb_investigator->isEnabled();
 }
 
 
@@ -406,6 +421,8 @@ void US_ExperGuiGeneral::sel_investigator( void )
    qDebug() << "Old invID: " << investID;
 
    US_Investigator* dialog = new US_Investigator( true, investID );
+   check_user_level();
+   dialog->override_permit( usr_enab );
    dialog->exec();
 
    investID         = US_Settings::us_inv_ID();
@@ -421,29 +438,46 @@ void US_ExperGuiGeneral::sel_investigator( void )
 
 
    // ALEXEY: Re-read in summary information on all existing run protocols when user changed
+#if 0  // GARY: Suppress re-read after investigator change
    if (investID != old_investID)
-     {
-       mainw->solutions_change = true;
+   {
+      mainw->solutions_change = true;
 
-       bool fromdisk         = US_Settings::debug_match( "protocolFromDisk" );
-       bool load_db          = fromdisk ? false : use_db;
-       US_Passwd  pw;
-       US_DB2* dbP           = load_db ? new US_DB2( pw.getPasswd() ) : NULL;
+      bool fromdisk         = US_Settings::debug_match( "protocolFromDisk" );
+      bool load_db          = fromdisk ? false : use_db;
+      US_Passwd  pw;
+      US_DB2* dbP           = load_db ? new US_DB2( pw.getPasswd() ) : NULL;
 
-       US_ProtocolUtil::list_all( protdata, dbP );
+      US_ProtocolUtil::list_all( protdata, dbP );
 
-       for ( int ii = 0; ii < protdata.count(); ii++ )
-          pr_names << protdata[ ii ][ 0 ];
-       DbgLv(1) << "EGGe: main : prnames,prdata counts" << pr_names.count() << protdata.count();
+      for ( int ii = 0; ii < protdata.count(); ii++ )
+         pr_names << protdata[ ii ][ 0 ];
+DbgLv(1) << "EGGe:main: prnames,prdata counts" << pr_names.count() << protdata.count();
 
-       // Reset and Initialize
-       currProto->runname      = "";
-       currProto->protname     = "";
-       currProto->project      = "";
-       currProto->temperature  = 20.0;
-       currProto->temeq_delay  = 10.0;
-       initPanel();
-     }
+      // Reset and Initialize
+      currProto->runname      = "";
+      currProto->protname     = "";
+      currProto->project      = "";
+      currProto->temperature  = 20.0;
+      currProto->temeq_delay  = 10.0;
+      initPanel();
+   }
+#endif
+#if 1  // GARY: Rebuild protocol list after investigator change
+   if ( investID != old_investID )
+   {
+      bool fromdisk         = US_Settings::debug_match( "protocolFromDisk" );
+      bool load_db          = fromdisk ? false : use_db;
+      US_Passwd  pw;
+      US_DB2* dbP           = load_db ? new US_DB2( pw.getPasswd() ) : NULL;
+
+      US_ProtocolUtil::list_all( protdata, dbP );
+
+      for ( int ii = 0; ii < protdata.count(); ii++ )
+         pr_names << protdata[ ii ][ 0 ];
+DbgLv(1) << "EGGe:main: prnames,prdata counts" << pr_names.count() << protdata.count();
+   }
+#endif
 
    check_runname();
 

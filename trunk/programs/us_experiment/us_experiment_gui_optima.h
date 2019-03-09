@@ -81,10 +81,13 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
 
       int          dbg_level;
       bool         use_db;              // Using the LIMS database?
+      bool         usr_enab;            // Overrideable user level
 
       QList< QStringList >  protdata;   // List of all protocol data strings
       QStringList           cp_names;   // List of Centerpiece names
       QStringList           pr_names;   // List of protocol names
+      QStringList           instr_opers;  // Instrument operators
+
 
       QList< US_AbstractCenterpiece >  acp_list; // Full Centerpiece information
 
@@ -793,7 +796,7 @@ class US_ExperGuiAProfile : public US_WidgetsDialog
       QGridLayout* genL;
       
    private:
-      US_ExperimentMain*   mainw;
+      US_ExperimentMain*    mainw;
       US_RunProtocol*       loadProto;  // Loaded RunProtocol controls pointer
       US_RunProtocol*       currProto;  // Current RunProtocol controls pointer
       US_RunProtocol::RunProtoRotor*      rpRotor;  //!< Rotor controls
@@ -802,7 +805,7 @@ class US_ExperGuiAProfile : public US_WidgetsDialog
       US_RunProtocol::RunProtoSolutions*  rpSolut;  //!< Solutions controls
       US_RunProtocol::RunProtoOptics*     rpOptic;  //!< Optical Systems controls
       US_RunProtocol::RunProtoRanges*     rpRange;  //!< Ranges controls
-      US_RunProtocol::RunProtoAProfile*   rpAprof;  //!< Submit controls
+      US_RunProtocol::RunProtoAProfile*   rpAprof;  //!< AProfile controls
       US_RunProtocol::RunProtoUpload*     rpSubmt;  //!< Submit controls
       US_Help  showHelp;
       US_AnalysisProfile*   sdiag;      // Analysis Profile in panel
@@ -887,8 +890,6 @@ class US_ExperimentMain : public US_Widgets
       int         statflag;        // Composite panels status flag
       int         dbg_level;       // Debug print flag
       int         curr_panx;       // Current panel index (0-7)
-
-      
 
    private slots:
 

@@ -23,7 +23,8 @@ class US_GUI_EXTERN US_Investigator : public US_WidgetsDialog
    public:
       US_Investigator( bool = false, int = -1 );
 
-      //! \brief A class for storing investigator data in the DB.
+      //! \brief A method for overriding user permissions
+      void override_permit( bool );
 
       /*! Each element corresponds to an entry field in DB table
           'people'.
@@ -70,8 +71,13 @@ class US_GUI_EXTERN US_Investigator : public US_WidgetsDialog
       QListWidget* lw_names;
 
       QPushButton* pb_update;
+      QPushButton* pb_queryDB;
+      QPushButton* pb_reset;
+      QPushButton* pb_close;
 
       US_Help      showHelp;
+
+      bool         user_permit;
 
       bool         check_fields( void );
       bool         changed     ( void );
