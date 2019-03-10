@@ -1908,10 +1908,10 @@ void US_ConvertGui::readProtocol_auto( void )
 	   if ( ename == "protocol" )
 	     {
 	       QXmlStreamAttributes attr = xmli.attributes();
-	       ProtInfo.project         = attr.value( "project"  ).toString();
-	       ProtInfo.projectID       = attr.value( "projectid"  ).toInt();
 	       ProtInfo.protname        = attr.value( "description"  ).toString();
-	       ProtInfo.pGUID           = attr.value( "guid"         ).toString();
+	       ProtInfo.protGUID        = attr.value( "guid"         ).toString();
+	       ProtInfo.project         = attr.value( "project"      ).toString();
+	       ProtInfo.projectID       = attr.value( "projectid"    ).toString().toInt();
 	       ProtInfo.optimahost      = attr.value( "optima_host"  ).toString();
 	       ProtInfo.investigator    = attr.value( "investigator" ).toString();
 	       ProtInfo.temperature     = attr.value( "temperature"  ).toString().toDouble();

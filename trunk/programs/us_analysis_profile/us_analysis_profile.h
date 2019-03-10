@@ -370,8 +370,8 @@ class US_AnalysisProfile : public US_Widgets
       int         getProfiles   ( QStringList&, QList< QStringList >& );
       // \brief Update the list of protocols with a newly named entry
       bool        updateProfiles( const QStringList );
-      // \brief Add a even-12-column spacing row
-      void        addColumnSpacing( QGridLayout* genL, int& row );
+      // \brief Set an even-12-column stretch in the grid layout
+      void        setColumnStretch( QGridLayout* genL );
 
       US_AnaProfParms  loadProf;   // Prof params as loaded from AP record
       US_AnaProfParms  currProf;   // Current AnaProfParms controls

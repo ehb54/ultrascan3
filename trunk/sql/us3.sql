@@ -215,6 +215,7 @@ CREATE  TABLE IF NOT EXISTS experiment (
   label VARCHAR(80) NULL ,
   comment TEXT NULL ,
   RIProfile LONGTEXT NULL ,
+  protocolGUID CHAR(36) NULL ,
   centrifugeProtocol TEXT NULL ,
   dateUpdated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ,
   PRIMARY KEY (experimentID) ,
@@ -1792,12 +1793,13 @@ CREATE  TABLE IF NOT EXISTS protocol (
   solution1 varchar(80) NULL ,
   solution2 varchar(80) NULL ,
   wavelengths int(11) NULL ,
+  aprofileGUID char(36) NULL ,
   PRIMARY KEY (protocolID) )
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table prototcolPerson
+-- Table protocolPerson
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS protocolPerson ;
 
@@ -1814,6 +1816,67 @@ CREATE  TABLE IF NOT EXISTS protocolPerson (
   CONSTRAINT fk_protocolPerson_protocolID
     FOREIGN KEY (protocolID )
     REFERENCES protocol (protocolID )
+    ON DELETE NO ACTION
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table analysisprofile
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS analysisprofile ;
+
+CREATE TABLE IF NOT EXISTS analysisprofile (
+  aprofileID int(11) NOT NULL AUTO_INCREMENT ,
+  aprofileGUID char(36) NOT NULL UNIQUE ,
+  name TEXT NOT NULL ,
+  xml LONGTEXT NOT NULL ,
+  dateUpdated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ,
+  PRIMARY KEY (aprofileID) )
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table protocolAprofile
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS protocolAprofile ;
+
+CREATE  TABLE IF NOT EXISTS protocolAprofile (
+  protocolID int(11) NOT NULL ,
+  aprofileID int(11) NOT NULL ,
+  INDEX ndx_protocolAprofile_aprofileID (aprofileID ASC) ,
+  INDEX ndx_protocolAprofile_protocolID (protocolID ASC) ,
+  CONSTRAINT fk_protocolAprofile_aprofileID
+    FOREIGN KEY (aprofileID )
+    REFERENCES analysisprofile (aprofileID )
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_protocolAprofile_protocolID
+    FOREIGN KEY (protocolID )
+    REFERENCES protocol (protocolID )
+    ON DELETE NO ACTION
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table experimentProtocol
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS experimentProtocol ;
+
+CREATE  TABLE IF NOT EXISTS experimentProtocol (
+  experimentID int(11) NOT NULL ,
+  protocolID int(11) NOT NULL ,
+  INDEX ndx_experimentProtocol_protocolID (protocolID ASC) ,
+  INDEX ndx_experimentProtocol_experimentID (experimentID ASC) ,
+  CONSTRAINT fk_experimentProtocol_protocolID
+    FOREIGN KEY (protocolID )
+    REFERENCES protocol (protocolID )
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_experimentProtocol_experimentID
+    FOREIGN KEY (experimentID )
+    REFERENCES experiment (experimentID )
     ON DELETE NO ACTION
     ON UPDATE CASCADE)
 ENGINE = InnoDB;

@@ -3310,7 +3310,7 @@ US_ExperGuiAProfile::US_ExperGuiAProfile( QWidget* topw )
    // Embed AnalysisProfile object in panel
    sdiag               = new US_AnalysisProfile;
    sdiag->setParent( this, Qt::Widget );
-   int offset          =  lb_panel->height() + 2;
+   int offset          =  lb_panel->height() + 4;
    sdiag->move( 0, offset );
    sdiag->setFrameShape( QFrame::Box );
    sdiag->setLineWidth( 1 );
@@ -3320,14 +3320,14 @@ US_ExperGuiAProfile::US_ExperGuiAProfile( QWidget* topw )
 //Resize AnalysisProfile properly
 void US_ExperGuiAProfile::resizeEvent( QResizeEvent *event )
 {
-   int upper_height = mainw->tabHeight +  mainw->buttLHeight + 25;
+   int upper_height = mainw->tabHeight +  mainw->buttLHeight * 3 - 8;
    int new_main_w   = mainw->width();
    int new_main_h   = mainw->height() - upper_height;
 
    if ( new_main_w > sdiag->width() || new_main_h > sdiag->height())
    {
-      int newWidth   = qMax( new_main_w, sdiag->width());
-      int newHeight  = qMax( new_main_h, sdiag->height());
+      int newWidth   = qMax( new_main_w, sdiag->width() );
+      int newHeight  = qMax( new_main_h, sdiag->height() );
       sdiag->setMaximumSize( newWidth, newHeight );
       sdiag->resize( QSize( newWidth, newHeight ) );
       update();
@@ -3335,8 +3335,8 @@ void US_ExperGuiAProfile::resizeEvent( QResizeEvent *event )
 
    if ( new_main_w < sdiag->width() ||  new_main_h < sdiag->height() )
    {
-      int newWidth   = qMin( new_main_w, sdiag->width());
-      int newHeight  = qMin( new_main_h, sdiag->height());
+      int newWidth   = qMin( new_main_w, sdiag->width() );
+      int newHeight  = qMin( new_main_h, sdiag->height() );
       sdiag->setMaximumSize( newWidth, newHeight );
       sdiag->resize( QSize( newWidth, newHeight ) );
       update();
@@ -3902,12 +3902,12 @@ DbgLv(1) << "EGUp:svRP:   prnames" << prnames;
    // Save the new name and compose the XML representing the protocol
    protname            = newpname;
 DbgLv(1) << "EGUp:svRP:   NEW protname" << protname;
-DbgLv(1) << "EGUp:svRP:   currProto previous guid" << currProto->pGUID;
+DbgLv(1) << "EGUp:svRP:   currProto previous guid" << currProto->protGUID;
 DbgLv(1) << "EGUp:svRP:   currProto previous protname" << currProto->protname;
 
    currProto->protname = protname;            // Update current protocol
-   currProto->pGUID    = US_Util::new_guid(); // Get a new GUID
-DbgLv(1) << "EGUp:svRP:   currProto updated  guid" << currProto->pGUID;
+   currProto->protGUID = US_Util::new_guid(); // Get a new GUID
+DbgLv(1) << "EGUp:svRP:   currProto updated  guid" << currProto->protGUID;
 DbgLv(1) << "EGUp:svRP:   currProto updated  protname" << currProto->protname;
 
 //ALEXEY: bug - us_xml string has to be cleared each time Protocol is saved
@@ -3928,7 +3928,7 @@ DbgLv(1) << "EGUp:svRP:   currProto updated  protname" << currProto->protname;
 
    qDebug() << "SAVE_PROTOCOL 0aaaa: rpSpeed->ssteps[0].duration: rpSpeed->ssteps[0].scanintv: " <<  rpSpeed->ssteps[0].duration << " : " << rpSpeed->ssteps[0].scanintv;
 
-DbgLv(1) << "EGUp:svRP:    guid" << currProto->pGUID;
+DbgLv(1) << "EGUp:svRP:    guid" << currProto->protGUID;
 DbgLv(1) << "EGUp:svRP:    xml(s)" << QString(rpSubmt->us_xml).left(100);
 int xe=rpSubmt->us_xml.length()-101;
 DbgLv(1) << "EGUp:svRP:    xml(e)" << QString(rpSubmt->us_xml).mid(xe);
@@ -3966,7 +3966,7 @@ DbgLv(1) << "EGUp:svRP:   dbP" << dbP;
                             .toString( "yyyy/MM/dd HH:mm" ), true );
    QString protid      = ( dbP != NULL ) ? QString::number( idProt )
                          : "R" + QString().sprintf( "%7d", idProt ) + ".xml";
-   QString pguid       = currProto->pGUID;
+   QString pguid       = currProto->protGUID;
    prentry << protname << pdate << protid << pguid;
 
    mainw->updateProtos( prentry );            // Update existing protocols list
