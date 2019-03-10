@@ -91,7 +91,7 @@ qDebug() << "Exp:svToDB: projsv status(+NO_PR)" << status << US_DB2::NO_PROJECT
          << runTemp
          << label
          << comments
-         << centrifugeProtocol;
+         << protocolGUID;
 
       saveStatus = db->statusQuery( q );
    }
@@ -115,7 +115,7 @@ qDebug() << "Exp:svToDB: projsv status(+NO_PR)" << status << US_DB2::NO_PROJECT
          << runTemp
          << label
          << comments
-         << centrifugeProtocol
+         << protocolGUID
          << QString::number( US_Settings::us_inv_ID() );
 
       saveStatus = db->statusQuery( q );
@@ -186,7 +186,7 @@ int US_Experiment::readFromDB( QString runID, US_DB2* db,
       runTemp            = db->value( 9 ).toString();
       label              = db->value( 10 ).toString();
       comments           = db->value( 11 ).toString();
-      centrifugeProtocol = db->value( 12 ).toString();
+      protocolGUID       = db->value( 12 ).toString();
       date               = db->value( 13 ).toString();
       invID              = db->value( 14 ).toInt();
       opticalSystem      = db->value( 15 ).toString().toLatin1();
@@ -469,7 +469,7 @@ qDebug() << "  EsTD: triples loop" << triples.size();
 
    xml.writeTextElement ( "label", this->label );
    xml.writeTextElement ( "comments", this->comments );
-   xml.writeTextElement ( "centrifugeProtocol", this->centrifugeProtocol );
+   xml.writeTextElement ( "protocolGUID", this->protocolGUID );
 
    xml.writeEndElement(); // US_Scandata
    xml.writeEndDocument();
@@ -691,10 +691,10 @@ void US_Experiment::readExperiment(
             this->comments = xml.text().toString();
          }
 
-         else if ( xml.name() == "centrifugeProtocol" )
+         else if ( xml.name() == "protocolGUID" )
          {
             xml.readNext();
-            this->centrifugeProtocol = xml.text().toString();
+            this->protocolGUID = xml.text().toString();
          }
       }
    }
@@ -1056,7 +1056,7 @@ void US_Experiment::clear( void )
    runTemp            = QString( "" );
    label              = QString( "" );
    comments           = QString( "" );
-   centrifugeProtocol = QString( "" );
+   protocolGUID       = QString( "" );
    date               = QString( "" );
    syncOK             = false;
    RIProfile.clear();
@@ -1095,7 +1095,7 @@ void US_Experiment::show( void )
             << "runTemp      = " << runTemp << '\n'
             << "label        = " << label << '\n'
             << "comments     = " << comments << '\n'
-            << "centrifugeProtocol = " << centrifugeProtocol << '\n'
+            << "protocolGUID = " << protocolGUID << '\n'
             << "date         = " << date << '\n'
             << "syncOK       = " << syncOK_text << '\n';
 

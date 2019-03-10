@@ -43,8 +43,6 @@ bool US_AnaProfParms::toXml( QXmlStreamWriter& xmlo )
    xmlo.writeStartElement ( "analysis_profile" );
    xmlo.writeAttribute    ( "description",    aprofname );
    xmlo.writeAttribute    ( "guid",           aprofGUID );
-   xmlo.writeAttribute    ( "protoGUID",      protoGUID );
-   xmlo.writeAttribute    ( "protocol_name",  protoname );
 
    for ( int ii = 0; ii < pchans.count(); ii++ )
    {
@@ -55,6 +53,10 @@ bool US_AnaProfParms::toXml( QXmlStreamWriter& xmlo )
                                QString::number( lc_ratios[ ii ] ) );
       xmlo.writeAttribute    ( "lcr_tolerance",
                                QString::number( lc_tolers[ ii ] ) );
+      xmlo.writeAttribute    ( "load_volume",
+                               QString::number( l_volumes[ ii ] ) );
+      xmlo.writeAttribute    ( "lv_tolerance",
+                               QString::number( lv_tolers[ ii ] ) );
       xmlo.writeEndElement();    // channel_parms
    }
 
@@ -99,6 +101,8 @@ bool US_AnaProfParms::fromXml( QXmlStreamReader& xmli )
             chndescs [ chx ] = attr.value( "chandesc"          ).toString();
             lc_ratios[ chx ] = attr.value( "load_concen_ratio" ).toString().toDouble();
             lc_tolers[ chx ] = attr.value( "lcr_toleraance"    ).toString().toDouble();
+            l_volumes[ chx ] = attr.value( "load_volume"       ).toString().toDouble();
+            lv_tolers[ chx ] = attr.value( "lv_toleraance"     ).toString().toDouble();
             chx++;
          }
 

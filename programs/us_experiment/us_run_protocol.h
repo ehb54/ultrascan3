@@ -383,7 +383,7 @@ class US_RunProtocol
       QString      investigator;   //!< Investigator name
       QString      runname;        //!< Run ID (name)
       QString      protname;       //!< Protocol name (description)
-      QString      pGUID;          //!< Protocol GUID
+      QString      protGUID;       //!< Protocol GUID
       QString      project;        //!< Project description
       QString      optimahost;     //!< Optima host (numeric IP address)
 

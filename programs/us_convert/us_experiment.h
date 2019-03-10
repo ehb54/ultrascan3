@@ -64,7 +64,7 @@ class US_Experiment
       QString          runTemp;            //!< The run temperature
       QString          label;              //!< The experiment label, or identifying information
       QString          comments;           //!< Comments that were associated with the experiment
-      QString          centrifugeProtocol; //!< The governing centrifuge protocol
+      QString          protocolGUID;       //!< The protocol GUID
       QString          date;               //!< The date the record was entered or last updated
       bool             syncOK;             //!< The user has connected with the db
       QStringList      experimentTypes;    //!< A list of possible experiment types

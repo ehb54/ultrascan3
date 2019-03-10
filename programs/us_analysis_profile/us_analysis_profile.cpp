@@ -147,52 +147,11 @@ void US_AnalysisProfile::apply_profile( void )
 DbgLv(1) << "MN:SL: APPLY_PROFILE";
 }
 
-// Add widgets to a grid layout row to set even 12-column spacing
-void US_AnalysisProfile::addColumnSpacing( QGridLayout* genL, int& row )
+// Set even spacing in the grid layout for all 12 columns
+void US_AnalysisProfile::setColumnStretch( QGridLayout* genL )
 {
-//*DEBUG
-//if(row<9999) return;
-//*DEBUG
-   // Blank text boxes to enforce column spacing
-   QLineEdit* le_1 = us_lineedit( " ", 0, true );
-   QLineEdit* le_2 = us_lineedit( " ", 0, true );
-   QLineEdit* le_3 = us_lineedit( " ", 0, true );
-   QLineEdit* le_4 = us_lineedit( " ", 0, true );
-   QLineEdit* le_5 = us_lineedit( " ", 0, true );
-   QLineEdit* le_6 = us_lineedit( " ", 0, true );
-   QLineEdit* le_7 = us_lineedit( " ", 0, true );
-   QLineEdit* le_8 = us_lineedit( " ", 0, true );
-   QLineEdit* le_9 = us_lineedit( " ", 0, true );
-   QLineEdit* le_a = us_lineedit( " ", 0, true );
-   QLineEdit* le_b = us_lineedit( " ", 0, true );
-   QLineEdit* le_c = us_lineedit( " ", 0, true );
-   // Disallow setting focus to any of the boxes
-   le_1->setFocusPolicy( Qt::NoFocus );
-   le_2->setFocusPolicy( Qt::NoFocus );
-   le_3->setFocusPolicy( Qt::NoFocus );
-   le_4->setFocusPolicy( Qt::NoFocus );
-   le_5->setFocusPolicy( Qt::NoFocus );
-   le_6->setFocusPolicy( Qt::NoFocus );
-   le_7->setFocusPolicy( Qt::NoFocus );
-   le_8->setFocusPolicy( Qt::NoFocus );
-   le_9->setFocusPolicy( Qt::NoFocus );
-   le_a->setFocusPolicy( Qt::NoFocus );
-   le_b->setFocusPolicy( Qt::NoFocus );
-   le_c->setFocusPolicy( Qt::NoFocus );
-
-   // Create a grid layout row
-   genL->addWidget( le_1,            row,    0, 1,  1 );
-   genL->addWidget( le_2,            row,    1, 1,  1 );
-   genL->addWidget( le_3,            row,    2, 1,  1 );
-   genL->addWidget( le_4,            row,    3, 1,  1 );
-   genL->addWidget( le_5,            row,    4, 1,  1 );
-   genL->addWidget( le_6,            row,    5, 1,  1 );
-   genL->addWidget( le_7,            row,    6, 1,  1 );
-   genL->addWidget( le_8,            row,    7, 1,  1 );
-   genL->addWidget( le_9,            row,    8, 1,  1 );
-   genL->addWidget( le_a,            row,    9, 1,  1 );
-   genL->addWidget( le_b,            row,   10, 1,  1 );
-   genL->addWidget( le_c,            row++, 11, 1,  1 );
+   for ( int ii = 0; ii < 12; ii++ )
+      genL->setColumnStretch( ii, 1 );
 }
 
 // Panel for run and other general parameters
@@ -326,9 +285,7 @@ US_AnaprofPanGen::US_AnaprofPanGen( QWidget* topw )
       connect( le_daend,    SIGNAL( editingFinished   ( void ) ),
                this,        SLOT(   daend_text_changed( void ) ) );
    }
-#if 1
-   mainw->addColumnSpacing( genL, row );
-#endif
+   mainw->setColumnStretch( genL );
 
    QScrollArea *scrollArea  = new QScrollArea( this );
    QWidget* containerWidget = new QWidget;
@@ -642,7 +599,7 @@ US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
    genL->addWidget( lb_j5iter,  row,    5, 1,  2 );
    genL->addWidget( le_j5iter,  row++,  7, 1,  1 );
 
-   mainw->addColumnSpacing( genL, row );
+   mainw->setColumnStretch( genL );
 
    // Connect signals and slots
    connect( cb_chnsel,    SIGNAL( activated        ( int )  ),
@@ -952,7 +909,7 @@ DbgLv(1) << "APpc: IN";
    genL->addWidget( lb_mciters,  row,    0, 1,  3 );
    genL->addWidget( le_mciters,  row++,  3, 1,  1 );
 
-   mainw->addColumnSpacing( genL, row );
+   mainw->setColumnStretch( genL );
    panel->addLayout( genL );
    panel->addStretch();
 

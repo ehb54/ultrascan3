@@ -13,7 +13,7 @@
 US_RunProtocol::US_RunProtocol()
 {
    protname        = "";
-   pGUID           = QString( "00000000-0000-0000-0000-000000000000" );
+   protGUID        = QString( "00000000-0000-0000-0000-000000000000" );
    optimahost      = "192.168.1.1";
    investigator    = "";
    temperature     = 20.0;
@@ -28,7 +28,7 @@ qDebug() << "RP:eq?";
 qDebug() << "RP: EQ inv";
    if ( protname     != rp.protname     )  return false;
 qDebug() << "RP: EQ pnm";
-   if ( pGUID        != rp.pGUID        )  return false;
+   if ( protGUID     != rp.protGUID     )  return false;
 qDebug() << "RP: EQ pgu";
    if ( optimahost   != rp.optimahost   )  return false;
 qDebug() << "RP: EQ oho";
@@ -65,12 +65,11 @@ bool US_RunProtocol::toXml( QXmlStreamWriter& xmlo )
 
    xmlo.writeStartElement ( "protocol" );
    xmlo.writeAttribute    ( "description",  protname );
+   xmlo.writeAttribute    ( "guid",         protGUID );
 
-   //ALEXEY: place for project name
-   xmlo.writeAttribute    ("project", project);
-   xmlo.writeAttribute    ("projectid",  QString::number( projectID ) );
+   xmlo.writeAttribute    ( "project",      project );
+   xmlo.writeAttribute    ( "projectid",    QString::number( projectID ) );
    
-   xmlo.writeAttribute    ( "guid",         pGUID );
    xmlo.writeAttribute    ( "optima_host",  optimahost );
    xmlo.writeAttribute    ( "investigator", investigator );
    xmlo.writeAttribute    ( "temperature",  QString::number( temperature ) );
@@ -106,12 +105,11 @@ bool US_RunProtocol::fromXml( QXmlStreamReader& xmli )
          if ( ename == "protocol" )
          {
             QXmlStreamAttributes attr = xmli.attributes();
-            //ALEXEY: project
-            project         = attr.value( "project"  ).toString();
-            projectID       = attr.value( "projectid"  ).toInt();
 
             protname        = attr.value( "description"  ).toString();
-            pGUID           = attr.value( "guid"         ).toString();
+            protGUID        = attr.value( "guid"         ).toString();
+            project         = attr.value( "project"      ).toString();
+            projectID       = attr.value( "projectid"    ).toString().toInt();
             optimahost      = attr.value( "optima_host"  ).toString();
             investigator    = attr.value( "investigator" ).toString();
             temperature     = attr.value( "temperature"  ).toString().toDouble();

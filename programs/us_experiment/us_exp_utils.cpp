@@ -410,7 +410,7 @@ DbgLv(1) << "EGGe: inP: prn,prd counts" << protdata.count() << pr_names.count();
 }
 
 
-void US_ExperGuiGeneral::check_empty_runname( const QString &str )
+void US_ExperGuiGeneral::check_empty_runname( const QString &/*str*/ )
 {
 #if 0
    if ( str.isEmpty() )
@@ -2429,7 +2429,7 @@ US_RunProtocol* lRP = loadProto;
 DbgLv(1) << "EGUp:inP: RPs DIFFER";
 DbgLv(1) << "EGUp:inP:  cPname" << cRP->protname << "lPname" << lRP->protname;
 DbgLv(1) << "EGUp:inP:  cInves" << cRP->investigator << "lInves" << lRP->investigator;
-DbgLv(1) << "EGUp:inP:  cPguid" << cRP->pGUID << "lPguid" << lRP->pGUID;
+DbgLv(1) << "EGUp:inP:  cPguid" << cRP->protGUID << "lPguid" << lRP->protGUID;
 DbgLv(1) << "EGUp:inP:  cOhost" << cRP->optimahost << "lOhost" << lRP->optimahost;
 DbgLv(1) << "EGUp:inP:  cTempe" << cRP->temperature << "lTempe" << lRP->temperature;
 DbgLv(1) << "EGUp:inP:   rpRotor diff" << (cRP->rpRotor!=lRP->rpRotor);
