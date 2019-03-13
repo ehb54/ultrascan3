@@ -65,6 +65,13 @@ class US_RunProtocol
                   double      scanintv;      //!< Scan interval in seconds
 		  double      scanintv_min;  //!< Fastest scan interval
 
+		  double      delay_int;     //!< Delay in seconds (interference)
+		  double      scanintv_int;  //!< Scan interval in seconds (interference)
+		  double      scanintv_int_min;  //!< Fastest scan interval (interference)
+
+		  bool        has_uvvis;
+		  bool        has_interference;
+		  
                   SpeedStep();
 
                   bool operator== ( const SpeedStep& ) const;
@@ -93,7 +100,7 @@ class US_RunProtocol
             bool        spin_down;       //!< Flag: spin down at job end
             bool        radial_calib;    //!< Flag: radial calibration
 
-            QVector< SpeedStep > ssteps; //!< The speed steps
+	    QVector< SpeedStep > ssteps; //!< The speed steps
       };
 
       //! \brief Protocol Cells controls class
