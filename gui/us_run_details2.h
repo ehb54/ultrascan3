@@ -65,6 +65,7 @@ class US_GUI_EXTERN US_RunDetails2 : public US_WidgetsDialog
       QLineEdit*   le_desc;
       QLineEdit*   le_avgTemp;
       QLineEdit*   le_runLen;
+      QLineEdit*   le_firstScan;
       QLineEdit*   le_timeCorr;
       QLineEdit*   le_rotorSpeed;
       QLineEdit*   le_runID;
