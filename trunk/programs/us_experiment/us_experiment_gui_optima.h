@@ -220,6 +220,8 @@ class US_ExperGuiSpeeds : public US_WidgetsDialog
 
       QLineEdit*   le_maxrpm;    // Text line: max speed for current rotor
 
+      
+
       QTimeEdit*   tm_delay;
       QTimeEdit*   tm_durat;
       QTimeEdit*   tm_scnint;
@@ -229,25 +231,41 @@ class US_ExperGuiSpeeds : public US_WidgetsDialog
       QSpinBox*    sb_durat;
       QSpinBox*    sb_scnint;
 
+      //duration
       QSpinBox*    sb_durat_dd;
       QSpinBox*    sb_durat_hh;
       QSpinBox*    sb_durat_mm;
       QSpinBox*    sb_durat_ss;
 
+      //Uv-vis delay
       QSpinBox*    sb_delay_dd;
       QSpinBox*    sb_delay_hh;
       QSpinBox*    sb_delay_mm;
       QSpinBox*    sb_delay_ss;
 
+      //interference delay
+      QSpinBox*    sb_delay_int_dd;
+      QSpinBox*    sb_delay_int_hh;
+      QSpinBox*    sb_delay_int_mm;
+      QSpinBox*    sb_delay_int_ss;
+
+      //Stage delay
       QSpinBox*    sb_delay_st_dd;
       QSpinBox*    sb_delay_st_hh;
       QSpinBox*    sb_delay_st_mm;
       QSpinBox*    sb_delay_st_ss;     
 
+      //Uv-vis scanint
       QSpinBox*    sb_scnint_dd;
       QSpinBox*    sb_scnint_hh;
       QSpinBox*    sb_scnint_mm;
       QSpinBox*    sb_scnint_ss;
+
+      //interference scanint
+      QSpinBox*    sb_scnint_int_dd;
+      QSpinBox*    sb_scnint_int_hh;
+      QSpinBox*    sb_scnint_int_mm;
+      QSpinBox*    sb_scnint_int_ss;
 
       QCheckBox*   ck_endoff;
       QCheckBox*   ck_radcal;
@@ -260,10 +278,16 @@ class US_ExperGuiSpeeds : public US_WidgetsDialog
       int          nspeed;        // Number of speed steps
       int          curssx;        // Current speed step index
       bool         changed;       // Flag if any speed step changes
+      //Uv-vis
       QVector<int> scanint_ss_min;// Min value for ScanInt seconds Counter
       QVector<int> scanint_mm_min;// Min value for ScanInt minutes Counter
-      QVector<int> scanint_hh_min;// Min value for ScanInt minutes Counter
+      QVector<int> scanint_hh_min;// Min value for ScanInt hours Counter
       QVector<int> delay_mm_min;  // Min value for Delay minutes Counter
+      //interference
+      QVector<int> scanint_ss_int_min;// Min value for ScanInt seconds Counter
+      QVector<int> scanint_mm_int_min;// Min value for ScanInt minutes Counter
+      QVector<int> scanint_hh_int_min;// Min value for ScanInt hours Counter
+      QVector<int> delay_mm_int_min;  // Min value for Delay minutes Counter
       
    private slots:
       //! \brief Compose a speed step description
@@ -289,23 +313,32 @@ class US_ExperGuiSpeeds : public US_WidgetsDialog
       void    ssChgDuratTime_ss( int );
 
       //! \brief Slot for SS change in delay day
+      //Uv-vis
       void    ssChgDelayDay ( int );
-
-      //! \brief Slot for SS change in delay time
-      //void    ssChgDelayTime( const QTime& );
       void    ssChgDelayTime_hh( int );
       void    ssChgDelayTime_mm( int );
       void    ssChgDelayTime_ss( int );
+      //interference
+      void    ssChgDelayDay_int ( int );
+      void    ssChgDelayTime_int_hh( int );
+      void    ssChgDelayTime_int_mm( int );
+      void    ssChgDelayTime_int_ss( int );
+     
 
       //! \brief Slot for SS change in delay_stage time
       void    ssChgDelayStageTime_hh( int );
       void    ssChgDelayStageTime_mm( int );
       
       //! \brief Slot for change in Scan Interval time
+      //Uv-vis
       void    ssChgScIntTime_hh( int );
       void    ssChgScIntTime_mm( int );
       void    ssChgScIntTime_ss( int );
-
+      //interference
+      void    ssChgScIntTime_int_hh( int );
+      void    ssChgScIntTime_int_mm( int );
+      void    ssChgScIntTime_int_ss( int );     
+      
       //! \brief Function to adjust delay based on speed,accel,delay-hrs
       void    adjustDelay   ( void   );
 

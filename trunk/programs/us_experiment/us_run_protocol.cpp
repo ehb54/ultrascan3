@@ -379,26 +379,40 @@ bool US_RunProtocol::RunProtoSpeed::fromXml( QXmlStreamReader& xmli )
             ss.speed     = attr.value( "rotorspeed"       ).toString().toDouble();
             ss.accel     = attr.value( "acceleration"     ).toString().toDouble();
             QString s_du = attr.value( "duration" )     .toString();
-            QString s_dy = attr.value( "delay" )        .toString();
+	    //Uv-vis
+	    QString s_dy = attr.value( "delay" )        .toString();
             QString s_si = attr.value( "scan_interval" ).toString();
+	    //interference
+	    QString s_dy_int = attr.value( "delay_int" )        .toString();
+            QString s_si_int = attr.value( "scan_interval_int" ).toString();
+	    
             double d_du  = attr.value( "duration_minutes" ).toString().toDouble();
             double d_dy  = attr.value( "delay_seconds"    ).toString().toDouble();
 	    QString stage_delay = attr.value( "stage_delay"    ).toString();
 
-	    if ( ! stage_delay.isEmpty() )
-	      US_RunProtocol::timeFromString( ss.delay_stage, stage_delay );
-
-            if ( ! s_du.isEmpty() )
-               US_RunProtocol::timeFromString( ss.duration, s_du );
+	    //duration
+	    if ( ! s_du.isEmpty() )
+	      US_RunProtocol::timeFromString( ss.duration, s_du );
             else
-               ss.duration  = d_du * 60.0;
+	      ss.duration  = d_du * 60.0;                      // ALEXEY why do we need this?
 
+	    //Uv-vis
             if ( ! s_dy.isEmpty() )
-               US_RunProtocol::timeFromString( ss.delay, s_dy );
+	      US_RunProtocol::timeFromString( ss.delay, s_dy );
             else
-               ss.delay     = d_dy;
+	      ss.delay     = d_dy;                            // ALEXEY why do we need this?  
+	    if ( ! s_si.isEmpty() )
+	      US_RunProtocol::timeFromString( ss.scanintv, s_si );
+	    
+	    //interference
+	    if ( ! s_dy_int.isEmpty() )
+	      US_RunProtocol::timeFromString( ss.delay_int, s_dy_int );
+	    if ( ! s_si_int.isEmpty() )
+	      US_RunProtocol::timeFromString( ss.scanintv_int, s_si_int );
 
-            US_RunProtocol::timeFromString( ss.scanintv, s_si );
+	    //Stage delay
+	    if ( ! stage_delay.isEmpty() )
+	      US_RunProtocol::timeFromString( ss.delay_stage, stage_delay ); 
 
             ssteps << ss;
          }
@@ -431,7 +445,7 @@ bool US_RunProtocol::RunProtoSpeed::fromXml( QXmlStreamReader& xmli )
 // Write the current Speed portion of controls to an XML stream
 bool US_RunProtocol::RunProtoSpeed::toXml( QXmlStreamWriter& xmlo )
 {
-   xmlo.writeStartElement( "speed" );
+  xmlo.writeStartElement( "speed" );
    xmlo.writeAttribute( "spin_down",          spin_down    ? "1" : "0" );
    xmlo.writeAttribute( "radial_calibration", radial_calib ? "1" : "0" );
 
@@ -439,13 +453,23 @@ bool US_RunProtocol::RunProtoSpeed::toXml( QXmlStreamWriter& xmlo )
    {
      qDebug() << "SPEED toXml ssteps[ii].duration, ssteps[ii].scanintv  0 : " << ssteps[ii].duration << ", "<< ssteps[ii].scanintv;
       QString s_durat;
+      QString s_stdelay;
+      //Uv-vis
       QString s_delay;
       QString s_sintv;
-      QString s_stdelay;
+      //interference
+      QString s_delay_int;
+      QString s_sintv_int;
+
       US_RunProtocol::timeToString( ssteps[ ii ].duration, s_durat );
+      US_RunProtocol::timeToString( ssteps[ ii ].delay_stage, s_stdelay );
+      //Uv-vis
       US_RunProtocol::timeToString( ssteps[ ii ].delay,    s_delay );
       US_RunProtocol::timeToString( ssteps[ ii ].scanintv, s_sintv );
-      US_RunProtocol::timeToString( ssteps[ ii ].delay_stage, s_stdelay );
+      //onterference
+      US_RunProtocol::timeToString( ssteps[ ii ].delay_int,    s_delay_int );
+      US_RunProtocol::timeToString( ssteps[ ii ].scanintv_int, s_sintv_int );
+     
     
       qDebug() << "SPEED toXml ssteps[ii].duration, ssteps[ii].scanintv  1 : " << ssteps[ii].duration << ", "<< ssteps[ii].scanintv << ", " << ssteps[ ii ].delay_stage;
 
@@ -455,8 +479,16 @@ bool US_RunProtocol::RunProtoSpeed::toXml( QXmlStreamWriter& xmlo )
       xmlo.writeAttribute   ( "acceleration",
                               QString::number( ssteps[ ii ].accel ) );
       xmlo.writeAttribute   ( "duration",      s_durat );
+
+      //Uv_vis
       xmlo.writeAttribute   ( "delay",         s_delay );
       xmlo.writeAttribute   ( "scan_interval", s_sintv );
+      
+      //interference
+      xmlo.writeAttribute   ( "delay_int",         s_delay_int );
+      xmlo.writeAttribute   ( "scan_interval_int", s_sintv_int );      
+
+      //stage delay
       xmlo.writeAttribute   ( "stage_delay", s_stdelay );
       
       xmlo.writeEndElement  (); // speedstep
@@ -477,10 +509,18 @@ US_RunProtocol::RunProtoSpeed::SpeedStep::SpeedStep()
    accel       = 400.0;
    //duration    = 330.0;
    duration    = 5*3600 + 30*60;  // 5h 30 min - total in seconds
-   delay       = 120.0;
    delay_stage = 0.0;
+   //Uv-vis
+   delay       = 120.0;
    scanintv    = 16.85;             //ALEXEY: set default scanint (in secs) which corresponds to 45000 RPM
    scanintv_min = scanintv;
+   //Interference
+   delay_int       = 300.0;
+   scanintv_int    = 5.0;  
+   scanintv_int_min = scanintv_int;
+
+   has_uvvis = false;
+   has_interference = false;
 }
 
 // RunProtoSpeed::SpeedStep subclass Equality operator

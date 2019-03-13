@@ -1080,7 +1080,10 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    // QLabel*  lb_delay   = us_label( tr( "Delay to First Scan (days[D] hh[H] mm[M] ss[S]):" ) );
    //QLabel*  lb_durat   = us_label( tr( "Duration of Experiment (hh[H] mm[M]):" ) );
    QLabel*  lb_durat   = us_label( tr( "Active Scanning Time (hh[H] mm[M]):" ) );
-   QLabel*  lb_delay   = us_label( tr( "Delay to First Scan (hh[H] mm[M]):" ) );
+   
+   QLabel*  lb_delay       = us_label( tr( "Delay to First Scan (hh[H] mm[M]):" ) );
+   QLabel*  lb_delay_int   = us_label( tr( "Delay to First Scan (hh[H] mm[M]):" ) );
+
 
    QLabel*  lb_delay_stage    = us_label( tr( "Stage Delay (hh[H] mm[M]):" ) );
 
@@ -1097,6 +1100,7 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    // QLabel*  lb_scnint  = us_label( tr( "Scan Interval (days[D] hh[H] mm[M] ss[S];"
    //                                     " 0 => fast-as-possible)" ) );
    QLabel*  lb_scnint  = us_label( tr( "Scan Interval (hh[H] mm[M] ss[S]:" ) );
+   QLabel*  lb_scnint_int  = us_label( tr( "Scan Interval (hh[H] mm[M] ss[S]:" ) );
 
    // ComboBox, counters, time-edits, spinbox
    sb_count            = us_spinbox();
@@ -1113,19 +1117,32 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
     //                       = us_timeedit( tm_scnint, 0, &sb_scnint );
 
 
+   
    QHBoxLayout* lo_duratlay        = us_ddhhmmsslay( 0, 0,0,0,1, &sb_durat_dd, &sb_durat_hh, &sb_durat_mm,  &sb_durat_ss ); // ALEXEY 0 - visible, 1 - hidden
    QHBoxLayout* lo_delaylay_stage  = us_ddhhmmsslay( 0, 0,0,0,1, &sb_delay_st_dd, &sb_delay_st_hh, &sb_delay_st_mm,  &sb_delay_st_ss );
-   QHBoxLayout* lo_delaylay        = us_ddhhmmsslay( 0, 0,0,0,1, &sb_delay_dd, &sb_delay_hh, &sb_delay_mm,  &sb_delay_ss );
-
    sb_delay_st_dd->setEnabled(false);
-
+   
+   //UV_vis
+   QHBoxLayout* lo_delaylay        = us_ddhhmmsslay( 0, 0,0,0,1, &sb_delay_dd, &sb_delay_hh, &sb_delay_mm,  &sb_delay_ss );
    sb_delay_dd->setEnabled(false);
    sb_delay_hh->setEnabled(false);
    sb_delay_mm->setEnabled(false);
-   QHBoxLayout* lo_scnintlay       = us_ddhhmmsslay( 0, 0,0,0,0, &sb_scnint_dd, &sb_scnint_hh, &sb_scnint_mm,  &sb_scnint_ss );
 
+   //Interference
+   QHBoxLayout* lo_delaylay_int    = us_ddhhmmsslay( 0, 0,0,0,1, &sb_delay_int_dd, &sb_delay_int_hh, &sb_delay_int_mm,  &sb_delay_int_ss );
+   sb_delay_int_dd->setEnabled(false);
+   sb_delay_int_hh->setEnabled(false);
+   sb_delay_int_mm->setEnabled(false);
+
+   
+   //UV-vis
+   QHBoxLayout* lo_scnintlay               = us_ddhhmmsslay( 0, 0,0,0,0, &sb_scnint_dd, &sb_scnint_hh, &sb_scnint_mm,  &sb_scnint_ss );
    sb_scnint_dd->setEnabled(false);
-
+   
+   //Interference
+   QHBoxLayout* lo_scnintlay_int           = us_ddhhmmsslay( 0, 0,0,0,0, &sb_scnint_int_dd, &sb_scnint_int_hh, &sb_scnint_int_mm,  &sb_scnint_int_ss );
+   sb_scnint_int_dd->setEnabled(false);
+   
    le_maxrpm           = us_lineedit( tr( "Maximum speed for AN50 rotor:"
                                           "  50000 rpm" ), 0, true );
 
@@ -1135,21 +1152,34 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    double df_speed     = rpSpeed->ssteps[ 0 ].speed;
    double df_accel     = rpSpeed->ssteps[ 0 ].accel;
    double df_duratm    = rpSpeed->ssteps[ 0 ].duration;
-   double df_delatm    = rpSpeed->ssteps[ 0 ].delay;
-
    double df_delatm_stage    = rpSpeed->ssteps[ 0 ].delay_stage;
-
+   
+   //interference
+   double df_delatm_int    = rpSpeed->ssteps[ 0 ].delay_int;
+   double df_scint_int     = rpSpeed->ssteps[ 0 ].scanintv_int;
+   double df_scint_int_min = rpSpeed->ssteps[ 0 ].scanintv_int_min;
+   //Uv-vis
+   double df_delatm    = rpSpeed->ssteps[ 0 ].delay;
    double df_scint     = rpSpeed->ssteps[ 0 ].scanintv; //ALEXEY read default scanint in secs corresponding to default RPM
    double df_scint_min = rpSpeed->ssteps[ 0 ].scanintv_min;
-
+   
+   
    QList< int > dhms_dur;
-   QList< int > dhms_dly;
    QList< int > dhms_dly_stage;
+   //Uv-vis
+   QList< int > dhms_dly;
    QList< int > hms_scint;
+   //interference
+   QList< int > dhms_dly_int;
+   QList< int > hms_scint_int;
    US_RunProtocol::timeToList( df_duratm, dhms_dur );
-   US_RunProtocol::timeToList( df_delatm, dhms_dly );
    US_RunProtocol::timeToList( df_delatm_stage, dhms_dly_stage );
+   //Uv-vis
+   US_RunProtocol::timeToList( df_delatm, dhms_dly );
    US_RunProtocol::timeToList( df_scint,  hms_scint );
+   //interference
+   US_RunProtocol::timeToList( df_delatm_int, dhms_dly_int );
+   US_RunProtocol::timeToList( df_scint_int,  hms_scint_int );
 
 DbgLv(1) << "EGSp: df_duratm" << df_duratm;
 DbgLv(1) << "EGSp:   def  d h m s " << dhms_dur;
@@ -1158,22 +1188,36 @@ DbgLv(1) << "EGSp:   def  d h m s " << dhms_dly;
    profdesc.resize( nspeed );  // Speed profile descriptions
    ssvals  .resize( nspeed );  // Speed step values
 
+   //Uv-vis
    scanint_ss_min.resize( nspeed );
    scanint_mm_min.resize( nspeed );
    scanint_hh_min.resize( nspeed );
    delay_mm_min  .resize( nspeed );
-
+   //interference
+   scanint_ss_int_min.resize( nspeed );
+   scanint_mm_int_min.resize( nspeed );
+   scanint_hh_int_min.resize( nspeed );
+   delay_mm_int_min  .resize( nspeed );
 
    ssvals[ 0 ][ "speed" ]    = df_speed;  // Speed default
    ssvals[ 0 ][ "accel" ]    = df_accel;  // Acceleration default
    ssvals[ 0 ][ "duration" ] = df_duratm; // Duration in seconds default (5h 30m)
-   ssvals[ 0 ][ "delay" ]    = df_delatm; // Delay to 1st scan in seconds default (2m 30s) DUE to acceleration
 
+   //Uv-vis
+   ssvals[ 0 ][ "delay" ]    = df_delatm; // Delay to 1st scan in seconds default (2m 30s) DUE to acceleration
+   //interference
+   ssvals[ 0 ][ "delay_int" ]    = df_delatm_int;
+   
    ssvals[ 0 ][ "delay_stage" ]  = df_delatm_stage; // Delay of the stage in seconds
 
+   //Uv-vis
    ssvals[ 0 ][ "scanintv" ]     = df_scint;  //ALEXEY
    ssvals[ 0 ][ "scanintv_min" ] = df_scint_min;  //ALEXEY
-
+   //interference
+   ssvals[ 0 ][ "scanintv_int" ]     = df_scint_int;  //ALEXEY
+   ssvals[ 0 ][ "scanintv_min_int" ] = df_scint_int_min;  //ALEXEY  
+   
+   
    // Set up counters and profile description
    ct_speed ->setSingleStep( 100 );
    ct_accel ->setSingleStep(  50 );
@@ -1195,11 +1239,20 @@ DbgLv(1) << "EGSp: init sb/de components";
    // tm_delay ->setTime ( QTime( dhms_dly[ 1 ],
    //                             dhms_dly[ 2 ],
    //                             dhms_dly[ 3 ] ) );
+
+   //Uv-vis
    sb_delay_dd ->setValue( (int)dhms_dly[ 0 ] );
    sb_delay_hh ->setValue( (int)dhms_dly[ 1 ] );
    sb_delay_mm ->setValue( (int)dhms_dly[ 2 ] );
    sb_delay_ss ->setValue( (int)dhms_dly[ 3 ] );
 
+   //interference
+   sb_delay_int_dd ->setValue( (int)dhms_dly_int[ 0 ] );
+   sb_delay_int_hh ->setValue( (int)dhms_dly_int[ 1 ] );
+   sb_delay_int_mm ->setValue( (int)dhms_dly_int[ 2 ] );
+   sb_delay_int_ss ->setValue( (int)dhms_dly_int[ 3 ] );
+   
+   
    sb_delay_st_dd ->setValue( (int)dhms_dly_stage[ 0 ] );
    sb_delay_st_hh ->setValue( (int)dhms_dly_stage[ 1 ] );
    sb_delay_st_mm ->setValue( (int)dhms_dly_stage[ 2 ] );
@@ -1209,6 +1262,7 @@ DbgLv(1) << "EGSp: init sb/de components";
    // sb_scnint->setValue( 0 );                    //ALEXEY
    // tm_scnint->setTime ( QTime( 0, 0 ) );
 
+   //Uv-vis
    sb_scnint_hh ->setMinimum( (int)hms_scint[ 1 ] );
    sb_scnint_mm ->setMinimum( (int)hms_scint[ 2 ] );
    sb_scnint_ss ->setMinimum( (int)hms_scint[ 3 ] );
@@ -1221,6 +1275,20 @@ DbgLv(1) << "EGSp: init sb/de components";
    scanint_ss_min[0] = (int)hms_scint[ 3 ];
    scanint_mm_min[0] = (int)hms_scint[ 2 ];
    scanint_hh_min[0] = (int)hms_scint[ 1 ];
+
+   //interference
+   sb_scnint_int_hh ->setMinimum( (int)hms_scint_int[ 1 ] );
+   sb_scnint_int_mm ->setMinimum( (int)hms_scint_int[ 2 ] );
+   sb_scnint_int_ss ->setMinimum( (int)hms_scint_int[ 3 ] );
+
+   sb_scnint_int_dd ->setValue( 0 );
+   sb_scnint_int_hh ->setValue( (int)hms_scint_int[ 1 ] );
+   sb_scnint_int_mm ->setValue( (int)hms_scint_int[ 2 ] );
+   sb_scnint_int_ss ->setValue( (int)hms_scint_int[ 3 ] );
+
+   scanint_ss_int_min[0] = (int)hms_scint_int[ 3 ];
+   scanint_mm_int_min[0] = (int)hms_scint_int[ 2 ];
+   scanint_hh_int_min[0] = (int)hms_scint_int[ 1 ];
 
 DbgLv(1) << "EGSp: DONE init sb/de components";
 
@@ -1252,24 +1320,30 @@ DbgLv(1) << "EGSp: addWidg/Layo BB";
 //genL->addLayout( lo_durat,   row++,  6, 1,  2);
   genL->addLayout( lo_duratlay,   row++,  5, 1,  1);
 
-DbgLv(1) << "EGSp: addWidg/Layo CC";
-  genL->addWidget( lb_delay,   row,    0, 1,  5 );
-DbgLv(1) << "EGSp: addWidg/Layo DD";
-// genL->addLayout( lo_delay,   row++,  6, 1,  2 );
-  genL->addLayout( lo_delaylay,   row++,  5, 1,  1 );
 
   genL->addWidget( lb_delay_stage,    row,    0, 1,  5 );
   genL->addLayout( lo_delaylay_stage, row++,  5, 1,  1 );
   genL->addLayout( lo_delay_stage_sync, row++,0, 1,  5 );
+ 
 
-
-
-DbgLv(1) << "EGSp: addWidg/Layo EE";
+  //UV-vis.
+  QLabel* lb_uvvis    = us_banner( tr( "UV-Visible::" ) );
+  genL->addWidget( lb_uvvis,     row++,    0, 1,  8 );
+  genL->addWidget( lb_delay,   row,    0, 1,  5 );
+  genL->addLayout( lo_delaylay,   row++,  5, 1,  1 );
   genL->addWidget( lb_scnint,  row,    0, 1,  5 );
-DbgLv(1) << "EGSp: addWidg/Layo FF";
-// genL->addLayout( lo_scnint,  row++,  6, 1,  2 );
   genL->addLayout( lo_scnintlay,  row++,  5, 1,  3 );
 
+
+  // Interference
+  QLabel* lb_int    = us_banner( tr( "Interference:" ) );
+  genL->addWidget( lb_int,     row++,    0, 1,  8 );
+  genL->addWidget( lb_delay_int,   row,    0, 1,  5 );
+  genL->addLayout( lo_delaylay_int,   row++,  5, 1,  1 );
+  genL->addWidget( lb_scnint_int,     row,    0, 1,  5 );
+  genL->addLayout( lo_scnintlay_int,  row++,  5, 1,  3 ); 
+
+  
 DbgLv(1) << "EGSp: addWidg/Layo GG";
    genL->addWidget( le_maxrpm,  row++,  0, 1,  4 );
 DbgLv(1) << "EGSp: addWidg/Layo HH";
@@ -1314,6 +1388,7 @@ DbgLv(1) << "EGSp: addWidg/Layo II";
    connect( sb_durat_ss,  SIGNAL( valueChanged   ( int ) ),
             this,         SLOT  ( ssChgDuratTime_ss ( int ) ) );
 
+   //Uv-vis
    connect( sb_delay_dd,  SIGNAL( valueChanged   ( int ) ),
             this,         SLOT  ( ssChgDelayDay  ( int ) ) );
    connect( sb_delay_hh,  SIGNAL( valueChanged   ( int ) ),
@@ -1323,17 +1398,37 @@ DbgLv(1) << "EGSp: addWidg/Layo II";
    connect( sb_delay_ss,  SIGNAL( valueChanged   ( int ) ),
             this,         SLOT  ( ssChgDelayTime_ss ( int ) ) );
 
+   //interference
+   connect( sb_delay_int_dd,  SIGNAL( valueChanged   ( int ) ),
+            this,         SLOT  ( ssChgDelayDay_int  ( int ) ) );
+   connect( sb_delay_int_hh,  SIGNAL( valueChanged   ( int ) ),
+            this,         SLOT  ( ssChgDelayTime_int_hh ( int ) ) );
+   connect( sb_delay_int_mm,  SIGNAL( valueChanged   ( int ) ),
+            this,         SLOT  ( ssChgDelayTime_int_mm ( int ) ) );
+   connect( sb_delay_int_ss,  SIGNAL( valueChanged   ( int ) ),
+            this,         SLOT  ( ssChgDelayTime_int_ss ( int ) ) );
+
+   //Stage delay
    connect( sb_delay_st_hh,  SIGNAL( valueChanged   ( int ) ),
             this,         SLOT  ( ssChgDelayStageTime_hh ( int ) ) );
    connect( sb_delay_st_mm,  SIGNAL( valueChanged   ( int ) ),
             this,         SLOT  ( ssChgDelayStageTime_mm ( int ) ) );
 
+   //Uv-vis
    connect( sb_scnint_hh, SIGNAL( valueChanged   ( int ) ),
             this,         SLOT  ( ssChgScIntTime_hh ( int ) ) );
    connect( sb_scnint_mm, SIGNAL( valueChanged   ( int ) ),
             this,         SLOT  ( ssChgScIntTime_mm ( int ) ) );
    connect( sb_scnint_ss, SIGNAL( valueChanged   ( int ) ),
             this,         SLOT  ( ssChgScIntTime_ss ( int ) ) );
+
+   //interference
+   connect( sb_scnint_int_hh, SIGNAL( valueChanged   ( int ) ),
+            this,         SLOT  ( ssChgScIntTime_int_hh ( int ) ) );
+   connect( sb_scnint_int_mm, SIGNAL( valueChanged   ( int ) ),
+            this,         SLOT  ( ssChgScIntTime_int_mm ( int ) ) );
+   connect( sb_scnint_int_ss, SIGNAL( valueChanged   ( int ) ),
+            this,         SLOT  ( ssChgScIntTime_int_ss ( int ) ) );
 
 
 DbgLv(1) << "EGSp: addWidg/Layo II";
@@ -1364,22 +1459,33 @@ QString US_ExperGuiSpeeds::speedp_description( int ssx )
    //int    escans  = qRound( durtim * 6.0 );      // Estimated step scans             //ALEXEY: 6 scans per minute ???
    //int    escans  = qRound( (durtim / 60.0) * 6.0 );      // Estimated step scans             //ALEXEY: 6 scans per minute ???
 
+   //Uv-vis
    double scaninterval =  ssvals[ ssx ][ "scanintv" ];  //ALEXEY: ssval[]["scanintv"] is set (in secs)  according to table: RPM vs scanint
    int escans = qRound( durtim / scaninterval );
+   //interference
+   double scaninterval_int =  ssvals[ ssx ][ "scanintv_int" ]; 
+   int escans_int = qRound( durtim / scaninterval_int );  
 
+   
    int tscans  = 0;
+   int tscans_int  = 0;
    for ( int ii = 0; ii < ssvals.size(); ii++ )
-     tscans        += qRound( ssvals[ ii ][ "duration" ] / ssvals[ ii ][ "scanintv" ] );  //ALEXEY bug fixed
-
+     {
+       tscans        += qRound( ssvals[ ii ][ "duration" ] / ssvals[ ii ][ "scanintv" ] );  //ALEXEY bug fixed
+       tscans_int    += qRound( ssvals[ ii ][ "duration" ] / ssvals[ ii ][ "scanintv_int" ] ); 
+     }
    qDebug() << "SCAN INT: " << scaninterval << ", # Scans: " << tscans;
 
-DbgLv(1) << "EGSp: spDesc: ssx" << ssx
- << "dur tim,hr,min" << durtim << durhr << durmin;
+
+   // return tr( "Speed Profile %1 :    %2 rpm for %3 hr %4 min"
+   //            "  (%5 estimated scans, %6 run total)" )
+   //        .arg( ssx + 1 ).arg( ssvals[ ssx ][ "speed" ] )
+   //        .arg( durhr ).arg( durmin ).arg( escans ).arg( tscans );
 
    return tr( "Speed Profile %1 :    %2 rpm for %3 hr %4 min"
-              "  (%5 estimated scans, %6 run total)" )
+              "  Estimated # of scans: %5 (UV-vis), %6 (Interference)" )
           .arg( ssx + 1 ).arg( ssvals[ ssx ][ "speed" ] )
-          .arg( durhr ).arg( durmin ).arg( escans ).arg( tscans );
+      .arg( durhr ).arg( durmin ).arg( escans ).arg( escans_int );  
 }
 
 // Slot for change in speed-step count
@@ -1395,10 +1501,16 @@ DbgLv(1) << "EGSp: chgKnt: nsp nnsp" << nspeed << new_nsp;
       profdesc.resize( new_nsp );
       ssvals  .resize( new_nsp );
 
+      //Uv-vis
       scanint_ss_min.resize( new_nsp );
       scanint_mm_min.resize( new_nsp );
       scanint_hh_min.resize( new_nsp );
       delay_mm_min  .resize( new_nsp );
+      //interference
+      scanint_ss_int_min.resize( new_nsp );
+      scanint_mm_int_min.resize( new_nsp );
+      scanint_hh_int_min.resize( new_nsp );
+      delay_mm_int_min  .resize( new_nsp );     
 
       int kk           = nspeed - 1;
       double ssspeed   = ssvals[ kk ][ "speed" ];
@@ -1409,23 +1521,34 @@ DbgLv(1) << "EGSp: chgKnt: nsp nnsp" << nspeed << new_nsp;
       double ssdurtim  = ssvals[ kk ][ "duration" ];        //ALEXEY - minutes ??? should be seconds ...
       // double ssdurhr   = qFloor( ssdurtim / 60.0 );
       // double ssdurmin  = ssdurtim - ( ssdurhr * 60.0 );
-       double ssdurmin  = qFloor( ssdurtim / 60.0 );         //ALEXEY redone in secons for duration
-       double ssdurhr   = qFloor( ssdurmin / 60.0 );
-       ssdurmin        -= ( ssdurhr * 60.0 );
-       double ssdursec  = ssdurtim - ( ssdurhr * 3600.0 )
+      double ssdurmin  = qFloor( ssdurtim / 60.0 );         //ALEXEY redone in secons for duration
+      double ssdurhr   = qFloor( ssdurmin / 60.0 );
+      ssdurmin        -= ( ssdurhr * 60.0 );
+      double ssdursec  = ssdurtim - ( ssdurhr * 3600.0 )
                                    - ( ssdurmin * 60.0 );
-
+      //Uv-vis
       double ssdlytim  = ssvals[ kk ][ "delay" ];           //ALEXEY - seconds (correct..)
       double ssdlymin  = qFloor( ssdlytim / 60.0 );
       double ssdlyhr   = qFloor( ssdlymin / 60.0 );
       ssdlymin        -= ( ssdlyhr * 60.0 );
       double ssdlysec  = ssdlytim - ( ssdlyhr * 3600.0 )
                                   - ( ssdlymin * 60.0 );
+      //interference
+      double ssdlytim_int  = ssvals[ kk ][ "delay_int" ];           //ALEXEY - seconds (correct..)
+      double ssdlymin_int  = qFloor( ssdlytim_int / 60.0 );
+      double ssdlyhr_int   = qFloor( ssdlymin_int / 60.0 );
+      ssdlymin_int        -= ( ssdlyhr_int * 60.0 );
+      double ssdlysec_int  = ssdlytim_int - ( ssdlyhr_int * 3600.0 )
+                                  - ( ssdlymin_int * 60.0 );      
 
       //ssdurtim         = ( ssdurhr * 60.0 ) + ssdurmin;                        //ALEXEY in minutes [duration]
       ssdurtim         = ( ssdurhr * 3600.0 ) + ( ssdurmin * 60.0 ) + ssdursec;  //ALEXEY in seconds [duration]
+      //Uv-vis
       ssdlytim         = ( ssdlyhr * 3600.0 ) + ( ssdlymin * 60.0 ) + ssdlysec;  //ALEXEY in seconds [delay]
-DbgLv(1) << "EGSp: chgKnt:  kk" << kk << "spd acc dur dly"
+      //interference
+      ssdlytim_int     = ( ssdlyhr_int * 3600.0 ) + ( ssdlymin_int * 60.0 ) + ssdlysec_int;  //ALEXEY in seconds [delay]
+
+ DbgLv(1) << "EGSp: chgKnt:  kk" << kk << "spd acc dur dly"
  << ssspeed << ssaccel << ssdurtim << ssdlytim;
 
       for ( int kkk = nspeed; kkk < new_nsp; kkk++ )
@@ -1436,8 +1559,11 @@ DbgLv(1) << "EGSp: chgKnt:  kk" << kk << "spd acc dur dly"
          ssvals[ kkk ][ "speed"    ] = ssspeed;   // Speed
          ssvals[ kkk ][ "accel"    ] = ssaccel;   // Acceleration
          ssvals[ kkk ][ "duration" ] = ssdurtim;  // Duration in minutes  // No, in seconds
+	 //Uv-vis
          ssvals[ kkk ][ "delay"    ] = ssdlytim;  // Delay in seconds
-
+	 //interference
+         ssvals[ kkk ][ "delay_int"    ] = ssdlytim_int;  // Delay in seconds (interference)
+	 
          if ( ck_sync_delay->isChecked() )
          {
             qDebug() << "Syncing stage delays...";
@@ -1471,10 +1597,16 @@ DbgLv(1) << "EGSp: chgKnt:    kkk" << kkk << "pdesc" << profdesc[kkk];
       profdesc.resize( new_nsp );
       ssvals  .resize( new_nsp );
 
+      //Uv-vis
       scanint_ss_min.resize( new_nsp );
       scanint_mm_min.resize( new_nsp );
       scanint_hh_min.resize( new_nsp );
       delay_mm_min  .resize( new_nsp );
+      //interference
+      scanint_ss_int_min.resize( new_nsp );
+      scanint_mm_int_min.resize( new_nsp );
+      scanint_hh_int_min.resize( new_nsp );
+      delay_mm_int_min  .resize( new_nsp );      
 
       cb_prof->clear();
       for ( int ii = 0; ii < new_nsp; ii++ )
@@ -1504,37 +1636,38 @@ DbgLv(1) << "EGSp: chgPfx:  speed-c speed-p"
    double ssspeed   = ssvals[ curssx ][ "speed" ];
    double ssaccel   = ssvals[ curssx ][ "accel" ];
    double ssdurtim  = ssvals[ curssx ][ "duration" ];
-   double ssdlytim  = ssvals[ curssx ][ "delay" ];
-
    double ssdlystagetim  = ssvals[ curssx ][ "delay_stage" ];
-
    double speedmax  = sibDValue( "rotor",   "maxrpm" );
-
+   //Uv-vis
+   double ssdlytim  = ssvals[ curssx ][ "delay" ];
    double scinttim  = ssvals[ curssx ][ "scanintv" ]; // ALEXEY added scaninterval
-
+   //interference
+   double ssdlytim_int  = ssvals[ curssx ][ "delay_int" ];
+   double scinttim_int  = ssvals[ curssx ][ "scanintv_int" ]; 
+      
+      
    QList< int > dhms_dur;
-   QList< int > dhms_dly;
    QList< int > dhms_dly_stage;
+   //Uv-vis
+   QList< int > dhms_dly;
    QList< int > dhms_scint;
+   //interference
+   QList< int > dhms_dly_int;
+   QList< int > dhms_scint_int;
+   
    US_RunProtocol::timeToList( ssdurtim, dhms_dur );
-   US_RunProtocol::timeToList( ssdlytim, dhms_dly );
    US_RunProtocol::timeToList( ssdlystagetim, dhms_dly_stage );
+   //Uv-vis
+   US_RunProtocol::timeToList( ssdlytim, dhms_dly );
    US_RunProtocol::timeToList( scinttim, dhms_scint );
+   //interference
+   US_RunProtocol::timeToList( ssdlytim_int, dhms_dly_int );
+   US_RunProtocol::timeToList( scinttim_int, dhms_scint_int );   
 DbgLv(1) << "EGSp: chgPfx:   durtim" << ssdurtim << "dhms_dur" << dhms_dur;
 DbgLv(1) << "EGSp: chgPfx:    speedmax" << speedmax;
    ct_speed ->setMaximum( speedmax );      // Set speed max based on rotor max
    ct_speed ->setValue( ssspeed  );        // Set counter values
    ct_accel ->setValue( ssaccel  );
-
-
-   // sb_durat ->setValue( (int)dhms_dur[ 0 ] );            //ALEXEY
-   // tm_durat ->setTime ( QTime( dhms_dur[ 1 ],
-   //                             dhms_dur[ 2 ],
-   //                             dhms_dur[ 3 ] ) );
-   // sb_delay ->setValue( (int)dhms_dly[ 0 ] );
-   // tm_delay ->setTime ( QTime( dhms_dly[ 1 ],
-   //                             dhms_dly[ 2 ],
-   //                             dhms_dly[ 3 ] ) );
 
    sb_durat_dd ->setValue( (int)dhms_dur[ 0 ] );
    sb_durat_hh ->setValue( (int)dhms_dur[ 1 ] );
@@ -1548,17 +1681,19 @@ DbgLv(1) << "EGSp: chgPfx:    speedmax" << speedmax;
    // sb_delay_mm ->setMinimum( delay_mm_min[ curssx ] );
    // and so on....
 
-   sb_delay_mm ->setMinimum( delay_mm_min[ curssx ] );
-
-   sb_delay_dd ->setValue( (int)dhms_dly[ 0 ] );
-   sb_delay_hh ->setValue( (int)dhms_dly[ 1 ] );
-   sb_delay_mm ->setValue( (int)dhms_dly[ 2 ] );
-   sb_delay_ss ->setValue( (int)dhms_dly[ 3 ] );
-
+   //Stage delay
    sb_delay_st_dd ->setValue( (int)dhms_dly_stage[ 0 ] );
    sb_delay_st_hh ->setValue( (int)dhms_dly_stage[ 1 ] );
    sb_delay_st_mm ->setValue( (int)dhms_dly_stage[ 2 ] );
    sb_delay_st_ss ->setValue( (int)dhms_dly_stage[ 3 ] );
+
+
+   //Uv-vis
+   sb_delay_mm ->setMinimum( delay_mm_min[ curssx ] );
+   sb_delay_dd ->setValue( (int)dhms_dly[ 0 ] );
+   sb_delay_hh ->setValue( (int)dhms_dly[ 1 ] );
+   sb_delay_mm ->setValue( (int)dhms_dly[ 2 ] );
+   sb_delay_ss ->setValue( (int)dhms_dly[ 3 ] );
 
    sb_scnint_hh ->setMinimum( scanint_hh_min[curssx] );
    sb_scnint_mm ->setMinimum( scanint_mm_min[curssx] );
@@ -1568,6 +1703,20 @@ DbgLv(1) << "EGSp: chgPfx:    speedmax" << speedmax;
    sb_scnint_mm ->setValue( (int)dhms_scint[ 2 ] );
    sb_scnint_ss ->setValue( (int)dhms_scint[ 3 ] );
 
+   //interference
+   sb_delay_int_mm ->setMinimum( delay_mm_int_min[ curssx ] );
+   sb_delay_int_dd ->setValue( (int)dhms_dly_int[ 0 ] );
+   sb_delay_int_hh ->setValue( (int)dhms_dly_int[ 1 ] );
+   sb_delay_int_mm ->setValue( (int)dhms_dly_int[ 2 ] );
+   sb_delay_int_ss ->setValue( (int)dhms_dly_int[ 3 ] );
+
+   sb_scnint_int_hh ->setMinimum( scanint_hh_int_min[curssx] );
+   sb_scnint_int_mm ->setMinimum( scanint_mm_int_min[curssx] );
+   sb_scnint_int_ss ->setMinimum( scanint_ss_int_min[curssx] );
+
+   sb_scnint_int_hh ->setValue( (int)dhms_scint_int[ 1 ] );
+   sb_scnint_int_mm ->setValue( (int)dhms_scint_int[ 2 ] );
+   sb_scnint_int_ss ->setValue( (int)dhms_scint_int[ 3 ] );   
 
    //adjustDelay();        // Important: not needed here as it re-writes delay to default min.
 }
@@ -1578,8 +1727,9 @@ void US_ExperGuiSpeeds::ssChangeSpeed( double val )
 DbgLv(1) << "EGSp: chgSpe: val" << val << "ssx" << curssx;
    ssvals  [ curssx ][ "speed" ] = val;  // Set Speed in step vals vector
 
-   ssChangeScInt(val, curssx);
+   ssChangeScInt(val, curssx); 
 
+   //Uv-vis
    sb_scnint_hh ->setMinimum( scanint_hh_min[curssx] );
    sb_scnint_mm ->setMinimum( scanint_mm_min[curssx] );
    sb_scnint_ss ->setMinimum( scanint_ss_min[curssx] );
@@ -1588,6 +1738,15 @@ DbgLv(1) << "EGSp: chgSpe: val" << val << "ssx" << curssx;
    sb_scnint_mm ->setValue( scanint_mm_min[curssx] );
    sb_scnint_ss ->setValue( scanint_ss_min[curssx] );
 
+   //interference
+   sb_scnint_int_hh ->setMinimum( scanint_hh_int_min[curssx] );
+   sb_scnint_int_mm ->setMinimum( scanint_mm_int_min[curssx] );
+   sb_scnint_int_ss ->setMinimum( scanint_ss_int_min[curssx] );
+
+   sb_scnint_int_hh ->setValue( scanint_hh_int_min[curssx] );
+   sb_scnint_int_mm ->setValue( scanint_mm_int_min[curssx] );
+   sb_scnint_int_ss ->setValue( scanint_ss_int_min[curssx] );  
+   
    profdesc[ curssx ] = speedp_description( curssx );
    cb_prof->setItemText( curssx, profdesc[ curssx ] );
 
@@ -1638,7 +1797,21 @@ void US_ExperGuiSpeeds::ssChangeScInt( double val, int row )
   scanint_hh_min[row] = (int)hms_scint[ 1 ];
 
   qDebug() << "ScanInt: " << ssvals[row]["scanintv"];
+
+  //interference: do not change default minimum values (from us_run_protocol.ccp SpeedStep.scanintv_int)
+  double default_interval_int = 5.0;
+  ssvals[row]["scanintv_int"]     = default_interval_int; // rpSpeed->ssteps[0].scanintv_int;
+  ssvals[row]["scanintv_min_int"] = default_interval_int; // rpSpeed->ssteps[0].scanintv_int;
+
+  QList< int > hms_scint_int;
+  US_RunProtocol::timeToList( default_interval_int, hms_scint_int );
+
+  scanint_ss_int_min[row] = (int)hms_scint_int[ 3 ];
+  scanint_mm_int_min[row] = (int)hms_scint_int[ 2 ];
+  scanint_hh_int_min[row] = (int)hms_scint_int[ 1 ];
 }
+
+
 
 // Slot for change in acceleration value
 void US_ExperGuiSpeeds::ssChangeAccel( double val )
@@ -1652,22 +1825,9 @@ DbgLv(1) << "EGSp: chgAcc: val" << val << "ssx" << curssx;
    changed          = true;              // Flag this as a user change
 }
 
-// // Slot for change in duration time (hour/minute/second)           //ALEXEY
-// void US_ExperGuiSpeeds::ssChgDuratTime( const QTime& tval )
-// {
-// DbgLv(1) << "EGSp: chgDlyT: tval" << tval;
-//    double ssdurhr   = tval.hour();
-//    double ssdurmin  = tval.minute();
-//    double ssdursec  = tval.second();
-//    double ssdurtim  = ( ssdurhr * 3600.0 ) + ( ssdurmin * 60.0 ) + ssdursec;
-// DbgLv(1) << "EGSp: chgDlyT:  ssdly h m s" << ssdurhr << ssdurmin << ssdursec
-//  << "t" << ssdurtim;
-//    ssvals[ curssx ][ "duration" ] = ssdurtim;  // Set Duration in step vals vector
-// }
 
 
-
-
+/* DURATION ***********************************************************************************/
 // Slot for change in duration time (hours)
 void US_ExperGuiSpeeds::ssChgDuratTime_hh( int val )
 {
@@ -1733,20 +1893,10 @@ void US_ExperGuiSpeeds::ssChgDuratDay( int val )
 
    qDebug() << "Time in sec aftes DAYS changed: " << ssdurtim;
 }
+/* END OF DURATION ***********************************************************************************/
 
-// // Slot for change in delay time (hour/minute/second)                     \\ALEXEY
-// void US_ExperGuiSpeeds::ssChgDelayTime( const QTime& tval )
-// {
-// DbgLv(1) << "EGSp: chgDlyT: tval" << tval;
-//    double ssdlyhr   = tval.hour();
-//    double ssdlymin  = tval.minute();
-//    double ssdlysec  = tval.second();
-//    double ssdlytim  = ( ssdlyhr * 3600.0 ) + ( ssdlymin * 60.0 ) + ssdlysec;
-// DbgLv(1) << "EGSp: chgDlyT:  ssdly h m s" << ssdlyhr << ssdlymin << ssdlysec
-// << "t" << ssdlytim;
-//    ssvals[ curssx ][ "delay" ] = ssdlytim;  // Set Delay in step vals vector
-// }
 
+/* UV-vis SCAN Int ***********************************************************************************/
 // Slot for change in Scan Int time (hours)
 void US_ExperGuiSpeeds::ssChgScIntTime_hh( int val )
 {
@@ -1830,8 +1980,102 @@ void US_ExperGuiSpeeds::ssChgScIntTime_ss( int val )
    profdesc[ curssx ] = speedp_description( curssx );
    cb_prof->setItemText( curssx, profdesc[ curssx ] );
 }
+/* END OF UV-vis SCAN Int ***********************************************************************************/
 
 
+
+/* Interference SCAN Int ***********************************************************************************/
+// Slot for change in Scan Int time (hours)
+void US_ExperGuiSpeeds::ssChgScIntTime_int_hh( int val )
+{
+   double ssscinthr   = val;
+   double minimum_hh =  scanint_hh_int_min[curssx];
+   double minimum_mm =  scanint_mm_int_min[curssx];
+   double minimum_ss =  scanint_ss_int_min[curssx];
+
+   double ssscintmin;
+   double ssscintsec;
+
+   ssscintmin = (double)sb_scnint_int_mm->value();
+   ssscintsec = (double)sb_scnint_int_ss->value();
+
+   if ( val - minimum_hh == 1 )
+   {
+      sb_scnint_int_mm->setMinimum(0);
+      sb_scnint_int_ss->setMinimum(0);
+   }
+   if ( val == minimum_hh )
+   {
+      if ( ssscintmin <= minimum_mm )
+      {
+         sb_scnint_int_mm->setMinimum(minimum_mm);
+         sb_scnint_int_mm->setValue(minimum_mm);
+         sb_scnint_int_ss->setMinimum(minimum_ss);
+         sb_scnint_int_ss->setValue(minimum_ss);
+
+         ssscintmin  = (double)sb_scnint_int_mm->value();  // Bug fixed
+         ssscintsec  = (double)sb_scnint_int_ss->value();
+      }
+   }
+
+   double ssscinttim  = ( ssscinthr * 3600.0 ) + ( ssscintmin * 60.0 ) + ssscintsec;
+   ssvals[ curssx ][ "scanintv_int" ] = ssscinttim;  // Set ScInt in step vals vector
+
+   profdesc[ curssx ] = speedp_description( curssx );
+   cb_prof->setItemText( curssx, profdesc[ curssx ] );
+}
+
+// Slot for change in Scan Int time (mins)
+void US_ExperGuiSpeeds::ssChgScIntTime_int_mm( int val )
+{
+   double ssscinthr   = (double)sb_scnint_int_hh->value();
+   double ssscintmin  = val;
+   double minimum_hh =  scanint_hh_int_min[curssx];
+   double minimum_mm =  scanint_mm_int_min[curssx];
+   double minimum_ss =  scanint_ss_int_min[curssx];
+
+   if ( val - minimum_mm == 1 )
+     {
+       sb_scnint_int_ss->setMinimum(0);
+       //sb_scnint_ss->setValue(0);
+     }
+   if ( val == minimum_mm )
+   {
+      if ( ssscinthr == minimum_hh )
+      {
+         sb_scnint_int_ss->setMinimum(minimum_ss);
+         sb_scnint_int_ss->setValue(minimum_ss);
+      }
+   }
+
+   double ssscintsec  = (double)sb_scnint_int_ss->value();
+   double ssscinttim  = ( ssscinthr * 3600.0 ) + ( ssscintmin * 60.0 ) + ssscintsec;
+   ssvals[ curssx ][ "scanintv_int" ] = ssscinttim;  // Set Duration in step vals vector
+
+   profdesc[ curssx ] = speedp_description( curssx );
+   cb_prof->setItemText( curssx, profdesc[ curssx ] );
+}
+
+// Slot for change in Scan Int time (sec)
+void US_ExperGuiSpeeds::ssChgScIntTime_int_ss( int val )
+{
+   double ssscinthr   = (double)sb_scnint_int_hh->value();
+   double ssscintmin  = (double)sb_scnint_int_mm->value();
+   double ssscintsec  = val;
+   double ssscinttim  = ( ssscinthr * 3600.0 ) + ( ssscintmin * 60.0 ) + ssscintsec;
+   ssvals[ curssx ][ "scanintv_int" ] = ssscinttim;  // Set Duration in step vals vector
+
+   profdesc[ curssx ] = speedp_description( curssx );
+   cb_prof->setItemText( curssx, profdesc[ curssx ] );
+}
+/* END OF Interference SCAN Int ***********************************************************************************/
+
+
+
+
+
+/* UV-vis DELAY ***********************************************************************************/
+/* Delay counters are disabled and updated programmatically... but we retain this slots...*/
 // Slot for change in delay time (hours)
 void US_ExperGuiSpeeds::ssChgDelayTime_hh( int val )
 {
@@ -1893,8 +2137,75 @@ DbgLv(1) << "EGSp: chgDlyD: val" << val << "ssdly d h"
    double ssdlytim  = ( val * 3600.0 * 24 ) + ( ssdlyhr * 3600.0 ) + ( ssdlymin * 60.0 ) + ssdlysec;
    ssvals[ curssx ][ "delay" ] = ssdlytim;  // Set Delay in step vals vector
 }
+/* END OF UV-vis DELAY ***********************************************************************************/
+
+/* Interference DELAY ***********************************************************************************/
+/* Delay counters are disabled and updated programmatically... but we retain this slots...*/
+// Slot for change in delay time (hours)
+void US_ExperGuiSpeeds::ssChgDelayTime_int_hh( int val )
+{
+   double ssdlyhr   = val;
+   double minimum_mm =  delay_mm_int_min[curssx];
+
+   if ( val > 0 )
+     sb_delay_int_mm->setMinimum(0);
+
+   if ( val == 0 )
+     sb_delay_int_mm->setMinimum(minimum_mm);
+
+   double ssdlymin  = (double)sb_delay_int_mm->value();
+   double ssdlysec  = (double)sb_delay_int_ss->value();
+   double ssdlytim  = ( ssdlyhr * 3600.0 ) + ( ssdlymin * 60.0 ) + ssdlysec;
+DbgLv(1) << "EGSp: chgDlyT:  ssdly h m s" << ssdlyhr << ssdlymin << ssdlysec
+<< "t" << ssdlytim;
+   ssvals[ curssx ][ "delay_int" ] = ssdlytim;  // Set Delay in step vals vector
+}
+
+// Slot for change in delay time (mins)
+void US_ExperGuiSpeeds::ssChgDelayTime_int_mm( int val )
+{
+   double ssdlyhr   = (double)sb_delay_int_hh->value();
+   double ssdlymin  = val;
+   double ssdlysec  = (double)sb_delay_int_ss->value();
+   double ssdlytim  = ( ssdlyhr * 3600.0 ) + ( ssdlymin * 60.0 ) + ssdlysec;
+DbgLv(1) << "EGSp: chgDlyT:  ssdly h m s" << ssdlyhr << ssdlymin << ssdlysec
+<< "t" << ssdlytim;
+   ssvals[ curssx ][ "delay_int" ] = ssdlytim;  // Set Delay in step vals vector
+}
+
+// Slot for change in delay time (hour/minute/second)
+void US_ExperGuiSpeeds::ssChgDelayTime_int_ss( int val )
+{
+   double ssdlyhr   = (double)sb_delay_int_hh->value();
+   double ssdlymin  = (double)sb_delay_int_mm->value();
+   double ssdlysec  = val;
+   double ssdlytim  = ( ssdlyhr * 3600.0 ) + ( ssdlymin * 60.0 ) + ssdlysec;
+DbgLv(1) << "EGSp: chgDlyT:  ssdly h m s" << ssdlyhr << ssdlymin << ssdlysec
+<< "t" << ssdlytim;
+   ssvals[ curssx ][ "delay_int" ] = ssdlytim;  // Set Delay in step vals vector
+}
+
+// Slot for change in delay day
+void US_ExperGuiSpeeds::ssChgDelayDay_int( int val )
+{
+   double ssdlyday  = (double)val;
+//    double ssdlyhr   = tm_delay->sectionText( QDateTimeEdit::HourSection ).toDouble();  //ALEXEY
+
+   double ssdlyhr   = (double)sb_delay_int_hh->value();
+   double ssdlymin  = (double)sb_delay_int_mm->value();
+   double ssdlysec  = (double)sb_delay_int_ss->value();
+
+DbgLv(1) << "EGSp: chgDlyD: val" << val << "ssdly d h"
+<< ssdlyday << ssdlyhr;
+// << ssdlyhr << ssdlymin << ssdlysec << "t" << ssdlytim;
+
+   double ssdlytim  = ( val * 3600.0 * 24 ) + ( ssdlyhr * 3600.0 ) + ( ssdlymin * 60.0 ) + ssdlysec;
+   ssvals[ curssx ][ "delay_int" ] = ssdlytim;  // Set Delay in step vals vector
+}
+/* END OF Interference DELAY ***********************************************************************************/
 
 
+/* STAGE DELAY ***********************************************************************************/
 // Slot for change in delay_stage time (hours)
 void US_ExperGuiSpeeds::ssChgDelayStageTime_hh( int val )
 {
@@ -1921,7 +2232,7 @@ void US_ExperGuiSpeeds::ssChgDelayStageTime_mm( int val )
    if ( curssx == 0  && ck_sync_delay->isChecked() ) //1st stage
      stageDelay_sync();
 }
-
+/* END OF STAGE DELAY ***********************************************************************************/
 
 //Slot to synchronize all stage delays with that for the 1st stage
 void US_ExperGuiSpeeds::stageDelay_sync( void )
@@ -1959,10 +2270,10 @@ void US_ExperGuiSpeeds::adjustDelay( void )
    double accel     = ssvals[ curssx ][ "accel" ];   // Acceleration
    double delaylow  = qCeil( spdelta / accel );      // Low seconds delay
 
+   //Uv-vis
    QList< int > dhms;
-   US_RunProtocol::timeToList( delaylow, dhms );
-   //tm_delay->setMinimumTime( QTime( dhms[ 1 ], dhms[ 2 ], dhms[ 3 ] ) ); //ALEXEY
-   //sb_delay_dd ->setValue( (int)dhms[ 0 ] );                             //ALEXEY - No days ??
+   double actual_delaylow = 2*60 + delaylow;   // ALEXEY: Uv-vis delay = 2 mins + speed/accel;
+   US_RunProtocol::timeToList( actual_delaylow, dhms );
    sb_delay_hh ->setValue( (int)dhms[ 1 ] );
 
    if ( (int)dhms[ 3 ] > 0 )                 //ALEXEY round to nearest min.
@@ -1983,11 +2294,34 @@ void US_ExperGuiSpeeds::adjustDelay( void )
       sb_delay_mm->setMinimum( (int)dhms[ 2 ] );
       sb_delay_mm ->setValue( (int)dhms[ 2 ] );
    }
-   //sb_delay_mm ->setValue( (int)dhms[ 2 ] );
-   //sb_delay_ss ->setValue( (int)dhms[ 3 ] );
-
    delay_mm_min[ curssx ] = sb_delay_mm->value();
 
+   //interference
+   QList< int > dhms_int;
+   double actual_delaylow_int = 6*60 + delaylow;   // ALEXEY: Interference delay = 6 mins + speed/accel;
+   US_RunProtocol::timeToList( actual_delaylow_int, dhms_int );
+   sb_delay_int_hh ->setValue( (int)dhms_int[ 1 ] );
+
+   if ( (int)dhms_int[ 3 ] > 0 )                 //ALEXEY round to nearest min.
+   {
+      if ( (int)dhms_int[ 2 ] == 0 )
+      {
+         sb_delay_int_mm->setMinimum(1);
+         sb_delay_int_mm ->setValue(1);
+      }
+      if ( (int)dhms_int[ 2 ] > 0 )
+      {
+         sb_delay_int_mm->setMinimum( (int)dhms_int[ 2 ] + 1 );
+         sb_delay_int_mm ->setValue( (int)dhms_int[ 2 ] + 1 );
+      }
+   }
+   else
+   {
+      sb_delay_int_mm->setMinimum( (int)dhms_int[ 2 ] );
+      sb_delay_int_mm ->setValue( (int)dhms_int[ 2 ] );
+   }
+   delay_mm_int_min[ curssx ] = sb_delay_int_mm->value();
+   
 }
 
 // Panel for Cells parameters
@@ -3898,6 +4232,12 @@ DbgLv(1) << "EGUp:svRP:   prnames" << prnames;
 
    qDebug() << "SAVE_PROTOCOL 0: rpSpeed->ssteps[0].duration: " <<  rpSpeed->ssteps[0].duration;
 
+   // //ALEXEY: check if has_interference or has_uvvis or both for cells//
+   // QString uvvis       = tr( "UV/visible" );
+   // QString rayleigh    = tr( "Rayleigh Interference" );
+   // QStringList oprof   = sibLValue( "optical", "profiles" );
+   
+   
 
    // Save the new name and compose the XML representing the protocol
    protname            = newpname;
@@ -4067,7 +4407,6 @@ void US_ExperGuiUpload::submitExperiment()
    { // dbxpn.open()
       qDebug() << "Connected !!!";
 
-
       // Get # satges, cells
       int nstages = sibIValue( "speeds",  "nspeeds" );
 
@@ -4075,7 +4414,7 @@ void US_ExperGuiUpload::submitExperiment()
       int nstages_size;
       nstages_size = tem_delay_sec ? nstages + 1 : nstages;               // Total # stages
       int ncells  = sibIValue( "rotor",   "nholes" );
-
+      
       qDebug() << "#Stages: " << nstages;
       qDebug() << "#Cells: " << ncells;
 
@@ -4096,6 +4435,19 @@ void US_ExperGuiUpload::submitExperiment()
          Total_wvl[i] = 0;
       }
 
+      //Opt system check, what cells will be uvvis and/or interference
+      QStringList oprof   = sibLValue( "optical", "profiles" );
+      QString uvvis       = tr( "UV/visible" );
+      QString rayleigh    = tr( "Rayleigh Interference" );
+
+      //get # cells with interference channels
+      int ncells_interference = 0;
+      for ( int kk = 0; kk < oprof.count(); kk++ )
+	{
+	  if ( oprof[ kk ].contains( rayleigh ) )
+	    ++ncells_interference;
+	}
+      
       for (int i=0; i<nstages_size; i++)
       {
          for (int j=0; j<ncells; j++)
@@ -4144,8 +4496,7 @@ void US_ExperGuiUpload::submitExperiment()
        2       [0,1,2,3,4,5,6,7]
 
       */
-      QString uvvis       = tr( "UV/visible" );
-      QStringList oprof   = sibLValue( "optical", "profiles" );
+         
 
       qDebug() << "Begin AbsInsert";
       bool is_dummy = false;
@@ -4374,7 +4725,7 @@ void US_ExperGuiUpload::submitExperiment()
 
        */
 
-      QString rayleigh       = tr( "Rayleigh Interference" );
+      
       //QStringList oprof   = sibLValue( "optical", "profiles" );
 
 
@@ -4408,23 +4759,16 @@ void US_ExperGuiUpload::submitExperiment()
             curr_stage_int = i;
 
          double duration_sec = rpSpeed->ssteps[ curr_stage_int ].duration;
-         double delay_sec    = rpSpeed->ssteps[ curr_stage_int ].delay;
-         double scanint_sec  = rpSpeed->ssteps[ curr_stage_int ].scanintv;
-         double scanint_sec_min  = rpSpeed->ssteps[ curr_stage_int ].scanintv_min;
+         double delay_sec    = rpSpeed->ssteps[ curr_stage_int ].delay_int;
+         double scanint_sec  = rpSpeed->ssteps[ curr_stage_int ].scanintv_int;
+         //double scanint_sec_min  = rpSpeed->ssteps[ curr_stage_int ].scanintv_int_min;
 
          int ScanCount;
          int ScanInt;
-         if ( scanint_sec > scanint_sec_min * Total_wvl[i] )   //ALEXEY: shouldn't be Total_wvl[i] be always 1 ? (660nm)
-         {
-            ScanCount = int( duration_sec / scanint_sec );
-            ScanInt   = scanint_sec;
-         }
-         else
-         {
-            ScanCount = int( duration_sec / (scanint_sec_min * Total_wvl[i] ) );
-            ScanInt   = scanint_sec_min * Total_wvl[i];
-         }
-         qDebug() << "Duration_sec: " << duration_sec << ", delay_sec: " << delay_sec << ", scanint_sec: " << scanint_sec << ", Tot_wvl: " << Total_wvl[i];
+	 ScanCount = int( duration_sec / (scanint_sec * ncells_interference ));
+	 ScanInt   = scanint_sec;
+
+         qDebug() << "Duration_sec: " << duration_sec << ", delay_sec_int: " << delay_sec << ", scanint_sec_int: " << scanint_sec;
 
          for (int j=0; j<ncells; j++)
          {

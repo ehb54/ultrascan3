@@ -937,20 +937,32 @@ void US_ExperGuiSpeeds::initPanel()
    QList< int > dhms2;
    QList< int > dhms2a;
    QList< int > dhms3;
+   QList< int > dhms4;
+   QList< int > dhms5;
+
 
    // Populate GUI settings from protocol controls
    nspeed               = rpSpeed ->nstep;
    curssx               = qMin( (nspeed-1), qMax( 0, cb_prof->currentIndex() ) );
    double duration      = rpSpeed->ssteps[ curssx ].duration;
-   double delay         = rpSpeed->ssteps[ curssx ].delay;
    double delay_stage   = rpSpeed->ssteps[ curssx ].delay_stage;
+   //uv-vis
+   double delay         = rpSpeed->ssteps[ curssx ].delay;
    double scanintv      = rpSpeed->ssteps[ curssx ].scanintv;
+   //interference
+   double delay_int     = rpSpeed->ssteps[ curssx ].delay_int;
+   double scanintv_int  = rpSpeed->ssteps[ curssx ].scanintv_int;
+
+   
    double speedmax      = sibDValue( "rotor", "maxrpm" );
 
    US_RunProtocol::timeToList( duration, dhms1 );
    US_RunProtocol::timeToList( delay,    dhms2 );
    US_RunProtocol::timeToList( delay_stage,    dhms2a );
    US_RunProtocol::timeToList( scanintv, dhms3 );
+   //Interference
+   US_RunProtocol::timeToList( delay_int,  dhms4 );
+   US_RunProtocol::timeToList( scanintv_int, dhms5 );
 
    bool was_changed     = changed;       // Save changed state
    sb_count ->setValue  ( nspeed  );
@@ -982,6 +994,15 @@ void US_ExperGuiSpeeds::initPanel()
    sb_scnint_hh ->setValue( (int)dhms3[ 1 ] );
    sb_scnint_mm ->setValue( (int)dhms3[ 2 ] );
    sb_scnint_ss ->setValue( (int)dhms3[ 3 ] );
+   //Interference
+   sb_delay_int_dd ->setValue( (int)dhms4[ 0 ] );
+   sb_delay_int_hh ->setValue( (int)dhms4[ 1 ] );
+   sb_delay_int_mm ->setValue( (int)dhms4[ 2 ] );
+   sb_delay_int_ss ->setValue( (int)dhms4[ 3 ] );
+   sb_scnint_int_dd ->setValue( (int)dhms5[ 0 ] );
+   sb_scnint_int_hh ->setValue( (int)dhms5[ 1 ] );
+   sb_scnint_int_mm ->setValue( (int)dhms5[ 2 ] );
+   sb_scnint_int_ss ->setValue( (int)dhms5[ 3 ] );
 
    ck_endoff->setChecked( rpSpeed->spin_down );
    ck_radcal->setChecked( rpSpeed->radial_calib );
@@ -1003,9 +1024,16 @@ DbgLv(1) << "EGSp:inP: nspeed" << nspeed;
       ssvals[ ii ][ "delay_stage"    ] = rpSpeed->ssteps[ ii ].delay_stage;
       ssvals[ ii ][ "scanintv" ] = rpSpeed->ssteps[ ii ].scanintv;
       ssvals[ ii ][ "scanintv_min" ] = rpSpeed->ssteps[ ii ].scanintv_min;
+
+      //interference
+      ssvals[ ii ][ "delay_int"    ] = rpSpeed->ssteps[ ii ].delay_int;
+      ssvals[ ii ][ "scanintv_int" ] = rpSpeed->ssteps[ ii ].scanintv_int;
+      ssvals[ ii ][ "scanintv_int_min" ] = rpSpeed->ssteps[ ii ].scanintv_int_min; 
+      
 DbgLv(1) << "EGSp:inP:  ii" << ii << "speed accel durat delay scnint"
  << ssvals[ii]["speed"   ] << ssvals[ii]["accel"]
- << ssvals[ii]["duration"] << ssvals[ii]["delay"];
+ << ssvals[ii]["duration"] << ssvals[ii]["delay"]
+ << ssvals[ii]["delay_int"] << ssvals[ii]["scanintv_int"] ;
 
       //profdesc[ curssx ] = speedp_description( curssx );
       cb_prof->setItemText( ii, speedp_description( ii ) );
@@ -1032,6 +1060,11 @@ DbgLv(1) << "EGSp:svP: nspeed" << nspeed;
       rpSpeed->ssteps[ ii ].delay_stage    = ssvals[ ii ][ "delay_stage"    ];
       rpSpeed->ssteps[ ii ].scanintv = ssvals[ ii ][ "scanintv" ];
       rpSpeed->ssteps[ ii ].scanintv_min = ssvals[ ii ][ "scanintv_min" ];
+      //interference
+      rpSpeed->ssteps[ ii ].delay_int    = ssvals[ ii ][ "delay_int"    ];
+      rpSpeed->ssteps[ ii ].scanintv_int = ssvals[ ii ][ "scanintv_int" ];
+      rpSpeed->ssteps[ ii ].scanintv_int_min = ssvals[ ii ][ "scanintv_int_min" ];
+      
  DbgLv(1) << "EGSp:svP:  ii" << ii << "speed accel durat delay scnint"
  << ssvals[ii]["speed"   ] << ssvals[ii]["accel"]
  << ssvals[ii]["duration"] << ssvals[ii]["delay"]
