@@ -80,12 +80,12 @@ US_RunDetails2::US_RunDetails2( const QVector< US_DataIO::RawData >& data,
    lw_rpm = us_listwidget();
    lw_rpm->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Minimum );
    lw_rpm->setMinimumSize( 100, 50 );
-   main->addWidget( lw_rpm, row, 2, 5, 2 );
+   main->addWidget( lw_rpm, row, 2, 6, 2 );
 
    lw_triples = us_listwidget();
    lw_triples->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Minimum );
    lw_triples->setMinimumSize( 100, 50 );
-   main->addWidget( lw_triples, row, 4, 5, 2 );
+   main->addWidget( lw_triples, row, 4, 6, 2 );
 
    le_runID = us_lineedit();
    le_runID->setReadOnly( true );
@@ -99,6 +99,14 @@ US_RunDetails2::US_RunDetails2( const QVector< US_DataIO::RawData >& data,
    le_runLen = us_lineedit();
    le_runLen->setReadOnly( true );
    main->addWidget( le_runLen, row++, 1 );
+
+   // Row
+   QLabel* lb_firstScan = us_label( tr( "Time of Scan 1:" ) );
+   main->addWidget( lb_firstScan, row, 0 );
+
+   le_firstScan = us_lineedit();
+   le_firstScan->setReadOnly( true );
+   main->addWidget( le_firstScan, row++, 1 );
 
    // Row
    QLabel* lb_timeCorr = us_label( tr( "Time Correction:" ) );
@@ -231,15 +239,14 @@ void US_RunDetails2::setup( void )
    int  hours    = (int)qFloor( last / 3600.0 );
    int  mins     = (int)qRound( ( last - hours * 3600.0 ) / 60.0 );
 
-   QString hh    = ( hours == 1 ) ? tr( "hour" ) : tr( "hours" );
-   QString wks   = QString().sprintf( "%d %s %02d min",
-      hours, hh.toLatin1().data(), mins );
+   QString hh    = ( hours == 1 ) ? tr( "hr" ) : tr( "hrs" );
+	        hh    = "h";
+   QString wks   = QString().sprintf( "%d %s %02d m", hours, hh.toLatin1().data(), mins );
    int fmins     = (int)qFloor( first / 60.0 );
    int fsecs     = first - fmins * 60.0;
-   QString mm    = ( fmins == 1 ) ? tr( "minute" ) : tr( "minutes" );
+   QString mm    = ( fmins == 1 ) ? tr( "min" ) : tr( "mins" );
 
-   wks          += QString().sprintf( "   (scan 1 time: %d m %02d s)",
-      fmins, fsecs );
+   QString scan1time = QString().sprintf( "%d m %02d s", fmins, fsecs );
 //*DEBUG*
 data=dataList[0];
 double s1tim=data.scanData[0].seconds;
@@ -249,6 +256,7 @@ qDebug() << "dtails: ds 1, scan 1: secs,omg2t,rpm" << s1tim << s1omg << s1rpm;
 //*DEBUG*
  
    le_runLen->setText( wks );
+   le_firstScan->setText( scan1time );
 
    // Set Time Correction
    double correction = 0.0;
@@ -270,7 +278,7 @@ qDebug() << "dtails: ds 1, scan 1: secs,omg2t,rpm" << s1tim << s1omg << s1rpm;
    int minutes = (int) correction / 60;
    int seconds = (int) correction % 60;
 
-   le_timeCorr->setText( wks.sprintf( "%d min %02d sec", minutes, seconds ) );
+   le_timeCorr->setText( wks.sprintf( "%d m %02d s", minutes, seconds ) );
 
    int ss_reso         = 100;
    // If debug_text so directs, change set_speed_resolution
