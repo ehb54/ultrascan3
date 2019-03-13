@@ -289,10 +289,10 @@ class US_RunProtocol
             //! Save controls to XML
             bool toXml  ( QXmlStreamWriter& );
 
-            QString     profname;      //!< Profile name/description
-            QString     profGUID;      //!< Profile GUID
+            QString     aprofname;     //!< Profile name/description
+            QString     aprofGUID;     //!< Profile GUID
 	    
-            int         profID;        //!< Profile DB Id
+            int         aprofID;       //!< Profile DB Id
       };
 
       //! \brief Protocol Upload controls class
@@ -389,8 +389,8 @@ class US_RunProtocol
 
       QString      investigator;   //!< Investigator name
       QString      runname;        //!< Run ID (name)
-      QString      protname;       //!< Protocol name (description)
-      QString      protGUID;       //!< Protocol GUID
+      QString      protoname;      //!< Protocol name (description)
+      QString      protoGUID;      //!< Protocol GUID
       QString      project;        //!< Project description
       QString      optimahost;     //!< Optima host (numeric IP address)
 

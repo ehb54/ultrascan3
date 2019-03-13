@@ -554,7 +554,7 @@ class US_ExperGuiRanges : public US_WidgetsDialog
       int          mxrow;                  // Maximum possible rows (24)
       int          nrnchan;                // Number Ranges channels (rows)
       int          chrow;                  // Channel row currently modified
-      QString      protname;               // Protocol used by Ranges
+      QString      protoname;              // Protocol used by Ranges
 
       QVector< QString >         rchans;   // Selected Range channel, ea. row
       QVector< QList< double > > swvlens;  // Selected wavelengths, ea. channel

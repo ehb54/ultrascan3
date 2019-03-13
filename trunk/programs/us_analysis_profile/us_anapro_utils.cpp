@@ -63,7 +63,7 @@ QString US_AnalysisProfile::childSValue( const QString child, const QString type
    if      ( child == "general"  ) { value = apanGeneral->getSValue( type ); }
    else if ( child == "2dsa"     ) { value = apan2DSA   ->getSValue( type ); }
    else if ( child == "pcsa"     ) { value = apanPCSA   ->getSValue( type ); }
-   else if ( child == "status"   ) { value = apanStatus ->getSValue( type ); }
+//   else if ( child == "status"   ) { value = apanStatus ->getSValue( type ); }
    return value;
 }
 
@@ -74,7 +74,7 @@ int US_AnalysisProfile::childIValue( const QString child, const QString type )
    if      ( child == "general"  ) { value = apanGeneral->getIValue( type ); }
    else if ( child == "2dsa"     ) { value = apan2DSA   ->getIValue( type ); }
    else if ( child == "pcsa"     ) { value = apanPCSA   ->getIValue( type ); }
-   else if ( child == "status"   ) { value = apanStatus ->getIValue( type ); }
+//   else if ( child == "status"   ) { value = apanStatus ->getIValue( type ); }
    return value;
 }
 
@@ -85,7 +85,7 @@ double US_AnalysisProfile::childDValue( const QString child, const QString type 
    if      ( child == "general"  ) { value = apanGeneral->getDValue( type ); }
    else if ( child == "2dsa"     ) { value = apan2DSA   ->getDValue( type ); }
    else if ( child == "pcsa"     ) { value = apanPCSA   ->getDValue( type ); }
-   else if ( child == "status"   ) { value = apanStatus ->getDValue( type ); }
+//   else if ( child == "status"   ) { value = apanStatus ->getDValue( type ); }
    return value;
 }
 
@@ -97,7 +97,7 @@ QStringList US_AnalysisProfile::childLValue( const QString child, const QString 
    if      ( child == "general"  ) { value = apanGeneral->getLValue( type ); }
    else if ( child == "2dsa"     ) { value = apan2DSA   ->getLValue( type ); }
    else if ( child == "pcsa"     ) { value = apanPCSA   ->getLValue( type ); }
-   else if ( child == "status"   ) { value = apanStatus ->getLValue( type ); }
+//   else if ( child == "status"   ) { value = apanStatus ->getLValue( type ); }
 
    return value;
 }
@@ -112,14 +112,14 @@ DbgLv(1) << "newPanel panx=" << panx << "prev.panx=" << curr_panx;
    if      ( curr_panx == 0 ) apanGeneral->savePanel();
    else if ( curr_panx == 1 ) apan2DSA   ->savePanel();
    else if ( curr_panx == 2 ) apanPCSA   ->savePanel();
-   else if ( curr_panx == 3 ) apanStatus ->savePanel();
+//   else if ( curr_panx == 3 ) apanStatus ->savePanel();
 DbgLv(1) << "newPanel   savePanel done";
 
    // Initialize the new current panel after possible changes
    if      ( panx == 0 )      apanGeneral->initPanel();
    else if ( panx == 1 )      apan2DSA   ->initPanel();
    else if ( panx == 2 )      apanPCSA   ->initPanel();
-   else if ( panx == 3 )      apanStatus ->initPanel();
+//   else if ( panx == 3 )      apanStatus ->initPanel();
    {
       if ( panx - curr_panx > 1 )
       {
@@ -172,7 +172,7 @@ void US_AnalysisProfile::help( void )
    if      ( curr_panx == 0 ) apanGeneral ->help();
    else if ( curr_panx == 1 ) apan2DSA    ->help();
    else if ( curr_panx == 2 ) apanPCSA    ->help();
-   else if ( curr_panx == 3 ) apanStatus  ->help();
+//   else if ( curr_panx == 3 ) apanStatus  ->help();
 }
 
 //Slot to DISABLE tabs and Next/Prev buttons
@@ -280,8 +280,8 @@ DbgLv(1) << "AP:iP: pG return";
 DbgLv(1) << "AP:iP: p2 return";
    apanPCSA     ->initPanel();
 DbgLv(1) << "AP:iP: pP return";
-   apanStatus   ->initPanel();
-DbgLv(1) << "AP:iP: pP return";
+//   apanStatus   ->initPanel();
+//DbgLv(1) << "AP:iP: pP return";
 }
 
 //========================= End:   Main      section =========================
@@ -922,6 +922,7 @@ DbgLv(1) << "EGCe:st: nused is_done" << apPCSA->nused << is_done;
 //========================= End:   PCSA      section =========================
 
 
+#if 0
 //========================= Start: Status    section =========================
 
 // Initialize an Status panel, especially after clicking on its tab
@@ -1070,4 +1071,5 @@ bool is_done=false;
 }
 
 //========================= End:   Status    section =========================
+#endif
 

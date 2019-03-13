@@ -243,7 +243,7 @@ for (int jj=0;jj<gxentrs.count();jj++)
    currProto       = &mainw->currProto;
    currProto->investigator = invtxt;
    currProto->runname      = "";
-   currProto->protname     = "";
+   currProto->protoname    = "";
    currProto->project      = "";
    currProto->temperature  = 20.0;
    currProto->temeq_delay  = 10.0;
@@ -456,7 +456,7 @@ DbgLv(1) << "EGGe:main: prnames,prdata counts" << pr_names.count() << protdata.c
 
       // Reset and Initialize
       currProto->runname      = "";
-      currProto->protname     = "";
+      currProto->protoname    = "";
       currProto->project      = "";
       currProto->temperature  = 20.0;
       currProto->temeq_delay  = 10.0;
@@ -466,6 +466,8 @@ DbgLv(1) << "EGGe:main: prnames,prdata counts" << pr_names.count() << protdata.c
 #if 1  // GARY: Rebuild protocol list after investigator change
    if ( investID != old_investID )
    {
+      mainw->solutions_change = true;
+
       bool fromdisk         = US_Settings::debug_match( "protocolFromDisk" );
       bool load_db          = fromdisk ? false : use_db;
       US_Passwd  pw;
@@ -553,8 +555,8 @@ DbgLv(1) << "EGGe:ldPro:  REJECT";
    le_project->setText(mainw->currProto.project);
 
 DbgLv(1) << "EGGe:ldPro:    dur0" << mainw->currProto.rpSpeed.ssteps[0].duration;
-DbgLv(1) << "EGGe:ldPro:    cPname" << mainw->currProto.protname
- << "lPname" << mainw->loadProto.protname;
+DbgLv(1) << "EGGe:ldPro:    cPname" << mainw->currProto.protoname
+ << "lPname" << mainw->loadProto.protoname;
 DbgLv(1) << "EGGe:ldPro:    cOhost" << mainw->currProto.optimahost
  << "lOhost" << mainw->loadProto.optimahost;
 DbgLv(1) << "EGGe:ldPro:    cTempe" << mainw->currProto.temperature
@@ -591,13 +593,13 @@ void US_ExperGuiGeneral::update_protdata( void )
 // Verify entered protocol name
 void US_ExperGuiGeneral::changed_protocol( void )
 {
-   QString protname     = le_protocol->text();
+   QString protoname    = le_protocol->text();
 
-   if ( pr_names.contains( protname ) or protname.trimmed() == "" )
+   if ( pr_names.contains( protoname ) or protoname.trimmed() == "" )
    {
       QString msg          =
          tr( "The protocol name given<br/>" )
-         +  "  ( <b>" + protname + "</b> )<br/>"
+         +  "  ( <b>" + protoname + "</b> )<br/>"
          + tr( "is already being used or empty.  It will need to be<br/>"
                "changed if/when this protocol is saved.<br/><br/>"
                "If you plan to make changes to this protocol,<br/>"
@@ -608,7 +610,7 @@ void US_ExperGuiGeneral::changed_protocol( void )
                                 msg );
    }
    else
-      currProto->protname  = protname;
+      currProto->protoname = protoname;
 
 }
 
@@ -3648,6 +3650,14 @@ US_ExperGuiAProfile::US_ExperGuiAProfile( QWidget* topw )
    sdiag->move( 0, offset );
    sdiag->setFrameShape( QFrame::Box );
    sdiag->setLineWidth( 1 );
+   sdiag->auto_mode_passed();
+   QString protoname   = mainw->currProto.protoname;
+   if ( protoname.isEmpty() )
+      protoname           = mainw->loadProto.protoname;
+   QString aprofname   = rpAprof->aprofname;
+   if ( aprofname.isEmpty() )
+      aprofname           = protoname;
+   sdiag->auto_name_passed( protoname, aprofname );
    sdiag->show();
 }
 
@@ -3925,7 +3935,7 @@ DbgLv(1) << "EGUp:detE: ufont" << ufont.family();
    QString v_dbdisk  = sibSValue( "general",   "dbdisk" );
    QString v_run     = mainw->currProto.runname;
    QString v_proj    = mainw->currProto.project;
-   QString v_prot    = mainw->currProto.protname;
+   QString v_prot    = mainw->currProto.protoname;
    QString v_ohost   = mainw->currProto.optimahost;
    double  d_temper  = mainw->currProto.temperature;
    QString v_temper  = QString::number( d_temper );
@@ -4191,10 +4201,10 @@ DbgLv(1) << "EGUp:svRP:  call getProtos()";
    mainw->getProtos( prnames, prdats );
 DbgLv(1) << "EGUp:svRP:   prnames" << prnames;
 
-   QString protname    = sibSValue( "general", "protocol" );
-//DbgLv(1) << "EGUp:svRP:  protname" << protname << "prdats0" << prdats[0];  //ALEXEY: important: this statement caused bug when no protocols existed in the DB
+   QString protoname   = sibSValue( "general", "protocol" );
+//DbgLv(1) << "EGUp:svRP:  protoname" << protoname << "prdats0" << prdats[0];  //ALEXEY: important: this statement caused bug when no protocols existed in the DB
 
-   if ( prnames.contains( protname ) or protname.trimmed().isEmpty() )
+   if ( prnames.contains( protoname ) or protoname.trimmed().isEmpty() )
    {  // Cannot save until a new protocol name is given
       QString mtitle  = tr( "Protocol Name not New" );
       QString message = tr( "The current Run Protocol cannot be saved until\n"
@@ -4205,7 +4215,7 @@ DbgLv(1) << "EGUp:svRP:   prnames" << prnames;
       QMessageBox::critical( this, mtitle, message );
    }
    bool ok;
-   QString newpname    = protname;
+   QString newpname    = protoname;
    QString msg         =
       tr( "Enter a new Run Protocol name (description text)<br/>"
           "for the record to be saved; or modify the<br/>"
@@ -4240,15 +4250,15 @@ DbgLv(1) << "EGUp:svRP:   prnames" << prnames;
    
 
    // Save the new name and compose the XML representing the protocol
-   protname            = newpname;
-DbgLv(1) << "EGUp:svRP:   NEW protname" << protname;
-DbgLv(1) << "EGUp:svRP:   currProto previous guid" << currProto->protGUID;
-DbgLv(1) << "EGUp:svRP:   currProto previous protname" << currProto->protname;
+   protoname           = newpname;
+DbgLv(1) << "EGUp:svRP:   NEW protoname" << protoname;
+DbgLv(1) << "EGUp:svRP:   currProto previous guid" << currProto->protoGUID;
+DbgLv(1) << "EGUp:svRP:   currProto previous protoname" << currProto->protoname;
 
-   currProto->protname = protname;            // Update current protocol
-   currProto->protGUID = US_Util::new_guid(); // Get a new GUID
-DbgLv(1) << "EGUp:svRP:   currProto updated  guid" << currProto->protGUID;
-DbgLv(1) << "EGUp:svRP:   currProto updated  protname" << currProto->protname;
+   currProto->protoname = protoname;            // Update current protocol
+   currProto->protoGUID = US_Util::new_guid(); // Get a new GUID
+DbgLv(1) << "EGUp:svRP:   currProto updated  guid" << currProto->protoGUID;
+DbgLv(1) << "EGUp:svRP:   currProto updated  protoname" << currProto->protoname;
 
 //ALEXEY: bug - us_xml string has to be cleared each time Protocol is saved
    rpSubmt->us_xml.clear();
@@ -4268,7 +4278,7 @@ DbgLv(1) << "EGUp:svRP:   currProto updated  protname" << currProto->protname;
 
    qDebug() << "SAVE_PROTOCOL 0aaaa: rpSpeed->ssteps[0].duration: rpSpeed->ssteps[0].scanintv: " <<  rpSpeed->ssteps[0].duration << " : " << rpSpeed->ssteps[0].scanintv;
 
-DbgLv(1) << "EGUp:svRP:    guid" << currProto->protGUID;
+DbgLv(1) << "EGUp:svRP:    guid" << currProto->protoGUID;
 DbgLv(1) << "EGUp:svRP:    xml(s)" << QString(rpSubmt->us_xml).left(100);
 int xe=rpSubmt->us_xml.length()-101;
 DbgLv(1) << "EGUp:svRP:    xml(e)" << QString(rpSubmt->us_xml).mid(xe);
@@ -4295,7 +4305,7 @@ DbgLv(1) << "EGUp:svRP:   dbP" << dbP;
       QMessageBox::critical( this,
          tr( "*ERROR* in Protocol Write" ),
          tr( "An error occurred in the attempt to save"
-             " new protocol\n  %1\n  %2 ." ).arg( protname ).arg( errmsg ) );
+             " new protocol\n  %1\n  %2 ." ).arg( protoname ).arg( errmsg ) );
       return;
    }
 
@@ -4306,14 +4316,14 @@ DbgLv(1) << "EGUp:svRP:   dbP" << dbP;
                             .toString( "yyyy/MM/dd HH:mm" ), true );
    QString protid      = ( dbP != NULL ) ? QString::number( idProt )
                          : "R" + QString().sprintf( "%7d", idProt ) + ".xml";
-   QString pguid       = currProto->protGUID;
-   prentry << protname << pdate << protid << pguid;
+   QString pguid       = currProto->protoGUID;
+   prentry << protoname << pdate << protid << pguid;
 
    mainw->updateProtos( prentry );            // Update existing protocols list
    proto_svd           = true;
    ck_prot_svd->setChecked( true );
    DbgLv(1) << "BEFORE!!!";
-   //DbgLv(1) << "EGUp:svRP:  new protname" << protname << "prdats0" << prdats[0]; //ALEXEY: this statement caused issues when no protocol existed
+   //DbgLv(1) << "EGUp:svRP:  new protoname" << protoname << "prdats0" << prdats[0]; //ALEXEY: this statement caused issues when no protocol existed
 
    qDebug() << "SAVE_PROTOCOL 2: rpSpeed->ssteps[0].duration: " <<  rpSpeed->ssteps[0].duration;
 
@@ -5159,10 +5169,10 @@ void US_ExperGuiUpload::submitExperiment()
          qDebug() << "ExperimentDefinition record created";
 
          //protocol_details[ "experimentId" ]  = QString::number(405);
-         protocol_details[ "experimentId" ]  = QString::number(ExpDefId);      //ALEXEY: this should be put into new table connceting protocol && experiment
+         protocol_details[ "experimentId" ]   = QString::number(ExpDefId);        // this should be put into new table connceting protocol && experiment
          protocol_details[ "experimentName" ] = runname;
-         protocol_details[ "protocolName" ] = currProto->protname;                   //ALEXEY pass also to Live Update/PostProd protocol name
-         protocol_details[ "CellChNumber" ]   = QString::number(rpSolut->nschan);    //ALEXEY: this can be read from protocl in US-lims DB
+         protocol_details[ "protocolName" ]   = currProto->protoname;             // pass also to Live Update/PostProd protocol name
+         protocol_details[ "CellChNumber" ]   = QString::number(rpSolut->nschan); // this can be read from protocol in US-lims DB
 
          int nwavl_tot = 0;
          for ( int kk = 0; kk < rpRange->nranges; kk++ )
