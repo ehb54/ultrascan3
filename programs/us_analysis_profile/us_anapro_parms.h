@@ -101,6 +101,7 @@ class US_AnaProfParms
       };
 
 
+#if 0
       //! \brief Analysis Profile Status controls class
       class AProfParmsStatus
       {
@@ -117,6 +118,7 @@ class US_AnaProfParms
             QString     us_xml;        //!< Run protocol XML
             QString     op_json;       //!< Optima JSON
       };
+#endif
 
       //! \brief Constructor for the US_AnaProfParms class
       US_AnaProfParms();
@@ -186,7 +188,7 @@ class US_AnaProfParms
 //3-------------------------------------------------------------------------->80
       AProfParms2DSA     ap2DSA;   //!< 2DSA controls
       AProfParmsPCSA     apPCSA;   //!< PCSA controls
-      AProfParmsStatus   apStat;   //!< Status controls
+//      AProfParmsStatus   apStat;   //!< Status controls
 
       QString      aprofname;      //!< Analysis profile name
       QString      aprofGUID;      //!< Analysis profile GUID

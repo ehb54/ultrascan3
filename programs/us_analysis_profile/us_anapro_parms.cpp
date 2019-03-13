@@ -483,6 +483,7 @@ bool US_AnaProfParms::AProfParmsPCSA::CellUse::operator==
 }
 
 
+#if 0
 // AProfParmsStatus subclass constructor
 US_AnaProfParms::AProfParmsStatus::AProfParmsStatus()
 {
@@ -497,4 +498,5 @@ bool US_AnaProfParms::AProfParmsStatus::operator==
 
    return true;
 }
+#endif
 

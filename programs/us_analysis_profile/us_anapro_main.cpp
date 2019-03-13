@@ -1,4 +1,4 @@
-//! \file us_aprof_main.cpp
+//! \file us_anapro_main.cpp
 
 #include "us_analysis_profile.h"
 

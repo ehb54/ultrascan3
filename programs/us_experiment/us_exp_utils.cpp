@@ -136,7 +136,7 @@ DbgLv(1) << "newPanel panx=" << panx << "prev.panx=" << curr_panx;
    else if ( curr_panx == 4 ) epanSolutions->savePanel();
    else if ( curr_panx == 5 ) epanOptical  ->savePanel();
    else if ( curr_panx == 6 ) epanRanges   ->savePanel();
-   else if ( curr_panx == 7 ) epanRotor    ->savePanel();
+   else if ( curr_panx == 7 ) epanAProfile ->savePanel();
 
    // Initialize the new current panel after possible changes
    if      ( panx == 0 )      epanGeneral  ->initPanel();
@@ -144,42 +144,43 @@ DbgLv(1) << "newPanel panx=" << panx << "prev.panx=" << curr_panx;
    else if ( panx == 2 )      epanSpeeds   ->initPanel();
    else if ( panx == 3 )      epanCells    ->initPanel();
    else if ( panx == 4 )                                    // Solutions
-     {
-       if ( panx - curr_panx > 1 )
-	 {
-	   epanCells    ->initPanel();
-	   epanCells    ->savePanel();
-	 }
-       epanSolutions->initPanel();
-     }
+   {
+      if ( panx - curr_panx > 1 )
+      {
+         epanCells    ->initPanel();
+         epanCells    ->savePanel();
+      }
+      epanSolutions->initPanel();
+   }
    else if ( panx == 5 )                                    // Optics
-     {
-       if ( panx - curr_panx > 1 )
-	 {
-	   epanCells    ->initPanel();
-	   epanCells    ->savePanel();
-	   epanSolutions->initPanel();
-	   epanSolutions->savePanel();
-	 }
-       epanOptical  ->initPanel();
-     }
+   {
+      if ( panx - curr_panx > 1 )
+      {
+         epanCells    ->initPanel();
+         epanCells    ->savePanel();
+         epanSolutions->initPanel();
+         epanSolutions->savePanel();
+      }
+      epanOptical  ->initPanel();
+   }
    else if ( panx == 6 )
-     {
-       if ( panx - curr_panx > 1 )                          // Ranges
-	 {
+   {
+      if ( panx - curr_panx > 1 )                          // Ranges
+      {
 	   epanCells    ->initPanel();
 	   epanCells    ->savePanel();
 	   epanSolutions->initPanel();
 	   epanSolutions->savePanel();
 	   epanOptical  ->initPanel();
 	   epanOptical  ->savePanel();
-	 }
-       epanRanges   ->initPanel();
-     }
-   else if ( panx == 7 )
-     {
-       if ( panx - curr_panx > 1 )                          // Ranges
-	 {
+      }
+      epanRanges   ->initPanel();
+   }
+   else if ( panx == 7 )      epanAProfile ->initPanel();
+   else if ( panx == 8 )
+   {
+      if ( panx - curr_panx > 1 )                          // Upload
+      {
 	   epanCells    ->initPanel();
 	   epanCells    ->savePanel();
 	   epanSolutions->initPanel();
@@ -347,18 +348,30 @@ bool US_ExperimentMain::updateProtos( const QStringList par1 )
 // Initialize all panels after loading a new protocol
 void US_ExperimentMain::initPanels()
 {
+DbgLv(1) << "main: iP:";
+DbgLv(1) << "main:  Ge:iP:";
    epanGeneral  ->initPanel();
+DbgLv(1) << "main:  Ro:iP:";
    epanRotor    ->initPanel();
+DbgLv(1) << "main:  Sp:iP:";
    epanSpeeds   ->initPanel();
+DbgLv(1) << "main:  Ce:iP:";
    epanCells    ->initPanel();
 
+DbgLv(1) << "main:  So:iP:";
    epanSolutions->initPanel();
    for ( int ii = 0; ii < epanSolutions->mxrow; ii++ )    //ALEXEY: reset channel comment while protocol re-loaded
      epanSolutions->solution_comment_init[ ii ] = false;
 
+DbgLv(1) << "main:  Op:iP:";
    epanOptical  ->initPanel();
+DbgLv(1) << "main:  Rn:iP:";
    epanRanges   ->initPanel();
+DbgLv(1) << "main:  Ap:iP:";
+   epanAProfile ->initPanel();
+DbgLv(1) << "main:  Up:iP:";
    epanUpload   ->initPanel();
+DbgLv(1) << "main: iP DONE";
 }
 
 //========================= End:   Main      section =========================
@@ -400,7 +413,7 @@ DbgLv(1) << "EGGe: inP: prn,prd counts" << protdata.count() << pr_names.count();
    // Populate GUI settings from protocol controls
    le_investigator->setText ( currProto->investigator );
    le_runid       ->setText ( currProto->runname );
-   le_protocol    ->setText ( currProto->protname );
+   le_protocol    ->setText ( currProto->protoname );
    le_project     ->setText ( currProto->project );
    ct_tempera     ->setValue( currProto->temperature );
    ct_tedelay     ->setValue( currProto->temeq_delay );
@@ -572,7 +585,7 @@ void US_ExperGuiGeneral::savePanel()
    // Populate protocol controls from GUI settings
    currProto->investigator = le_investigator->text();
    currProto->runname      = le_runid       ->text();
-   currProto->protname     = le_protocol    ->text();
+   currProto->protoname    = le_protocol    ->text();
    currProto->project      = le_project     ->text();
    currProto->temperature  = ct_tempera     ->value();
    currProto->temeq_delay  = ct_tedelay     ->value();
@@ -586,7 +599,7 @@ QString US_ExperGuiGeneral::getSValue( const QString type )
 
    if      ( type == "runID"  ||
              type == "runname" )      { value = currProto->runname; }
-   else if ( type == "protocol" )     { value = currProto->protname; }
+   else if ( type == "protocol" )     { value = currProto->protoname; }
    else if ( type == "project" )      { value = currProto->project; }
    else if ( type == "investigator" ) { value = currProto->investigator; }
    else if ( type == "dbdisk" )       { value = use_db ? "DB" : "Disk"; }
@@ -2201,18 +2214,18 @@ void US_ExperGuiRanges::initPanel()
 {
    rpRange             = &(mainw->currProto.rpRange);
 
-DbgLv(1) << "EGwS:inP:  call rbS";
+DbgLv(1) << "EGRn:inP:  call rbS";
    rebuild_Ranges();
 
    QString ch_none( "none" );
-DbgLv(1) << "EGwS:inP:  nrnchan" << nrnchan;
+DbgLv(1) << "EGRn:inP:  nrnchan" << nrnchan;
 
    for ( int ii = 0; ii < nrnchan; ii++ )
    {
       QString channel     = rchans[ ii ];
       QString labwlr;
       int kswavl          = swvlens[ ii ].count();
-DbgLv(1) << "EGwS:inP:    ii" << ii << "channel" << channel;
+DbgLv(1) << "EGRn:inP:    ii" << ii << "channel" << channel;
       if ( kswavl == 0 )
          labwlr              = tr( "0 selected" );
       else if ( kswavl == 1 )
@@ -2258,59 +2271,60 @@ DbgLv(1) << "EGwS:inP:    ii" << ii << "channel" << channel;
    // Fill ScanCount info: # scans per stage/per wavelength
    int nsp = sibIValue( "speeds",  "nspeeds" );
    int ncells  = sibIValue( "rotor",   "nholes" );
-   qDebug() << "# speeds, #cells: " << nsp << ", " << ncells;
+DbgLv(1) << "EGRn:inP: # speeds, #cells: " << nsp << ", " << ncells;
 
    QVector < int > Total_wvl(nsp);
 
    for (int i=0; i<nsp; i++)
      Total_wvl[i] = 0;
 
-   qDebug() << "Total_wvl.size():  " << Total_wvl.size();
+DbgLv(1) << "EGRn:inP: Total_wvl.size():  " << Total_wvl.size();
 
    for (int i=0; i<nsp; i++)
-     {
-       qDebug() << "Speed # " << i;
+   {
+DbgLv(1) << "EGRn:inP: Speed # " << i;
 
-       for (int j=0; j<ncells; j++)
-	 {
-	   qDebug() << "Cell # " << j;
-	   //Compute total # wvl per stage
-	   QString channel;
+      for (int j=0; j<ncells; j++)
+      {
+DbgLv(1) << "EGRn:inP:  Cell # " << j;
+         //Compute total # wvl per stage
+         QString channel;
 
-	   qDebug() << "rpRange->nranges: " << rpRange->nranges;
-	   for ( int ii = 0; ii < rpRange->nranges; ii++ )
-	     {
-	       channel  = rpRange->chrngs[ ii ].channel;
-	       if ( channel.contains("sample") && channel.startsWith(QString::number(j+1)) )  // <-- Judge only by sample (channel A) for now
-		 {
-		   qDebug() << "# of Ranges for cell " << j << ": " << rpRange->chrngs[ ii ].wvlens.count();
-		   Total_wvl[i]  += rpRange->chrngs[ ii ].wvlens.count();
-		 }
-	     }
-	   qDebug() << "#Wvl for cell: " << j << " is: " << Total_wvl[i];
-	 }
-     }
+DbgLv(1) << "EGRn:inP:  rpRange->nranges: " << rpRange->nranges;
+         for ( int ii = 0; ii < rpRange->nranges; ii++ )
+         {
+            channel  = rpRange->chrngs[ ii ].channel;
+            if ( channel.contains("sample") && channel.startsWith(QString::number(j+1)) )  // <-- Judge only by sample (channel A) for now
+            {
+DbgLv(1) << "EGRn:inP:   # of Ranges for cell " << j << ": " << rpRange->chrngs[ ii ].wvlens.count();
+               Total_wvl[i]  += rpRange->chrngs[ ii ].wvlens.count();
+            }
+         }
+DbgLv(1) << "EGRn:inP:  #Wvl for cell: " << j << " is: " << Total_wvl[i];
+      }
+   }
 
    cb_scancount->clear();
    for ( int i = 0; i < nsp; i++ )
-     {
-       double duration_sec = rpSpeed->ssteps[ i ].duration;
-       double scanint_sec  = rpSpeed->ssteps[ i ].scanintv;
-       double scanint_sec_min = rpSpeed->ssteps[ i ].scanintv_min;
+   {
+      double duration_sec = rpSpeed->ssteps[ i ].duration;
+      double scanint_sec  = rpSpeed->ssteps[ i ].scanintv;
+      double scanint_sec_min = rpSpeed->ssteps[ i ].scanintv_min;
 
-       int scancount;
-       if ( Total_wvl[i] == 0 )
-	 scancount = 0;
-       else
-	 {
-	   if ( scanint_sec > scanint_sec_min * Total_wvl[i])
-	     scancount = int( duration_sec / scanint_sec );
-	   else
-	     scancount = int( duration_sec / (scanint_sec_min * Total_wvl[i]) );
-	 }
-       QString scancount_stage = tr( "Stage %1. Number of Scans per Wavelength: %2 " ).arg(i+1).arg(scancount);
-       cb_scancount->addItem( scancount_stage );
-     }
+      int scancount;
+      if ( Total_wvl[i] == 0 )
+         scancount = 0;
+      else
+      {
+         if ( scanint_sec > scanint_sec_min * Total_wvl[i])
+            scancount = int( duration_sec / scanint_sec );
+         else
+            scancount = int( duration_sec / ( scanint_sec_min * Total_wvl[i] ) );
+      }
+DbgLv(1) << "EGRn:inP:  speed" << i << "scancount" << scancount;
+      QString scancount_stage = tr( "Stage %1. Number of Scans per Wavelength: %2 " ).arg(i+1).arg(scancount);
+      cb_scancount->addItem( scancount_stage );
+   }
    // End of ScanCount listbox
 
 }
@@ -2425,7 +2439,32 @@ DbgLv(1) << "EGwS:st:   ii" << ii << "is_done(wvlens count)" << is_done;
 //========================= Start: Aprofile  section =========================
 
 // Initialize an Upload panel, especially after clicking on its tab
-void US_ExperGuiAProfile::initPanel() { }
+void US_ExperGuiAProfile::initPanel()
+{
+DbgLv(1) << "EGAp:inP: IN";
+   currProto       = &mainw->currProto;
+   loadProto       = &mainw->loadProto;
+   rpRotor         = &currProto->rpRotor;
+   rpSpeed         = &currProto->rpSpeed;
+   rpCells         = &currProto->rpCells;
+   rpSolut         = &currProto->rpSolut;
+   rpOptic         = &currProto->rpOptic;
+   rpRange         = &currProto->rpRange;
+   rpAprof         = &currProto->rpAprof;
+DbgLv(1) << "EGAp:inP: aa  rpAprof" << rpAprof;
+   QString protoname  = currProto->protoname;
+DbgLv(1) << "EGAp:inP: bb" << protoname;
+   QString aprofname  = rpAprof->aprofname;
+DbgLv(1) << "EGAp:inP: protoname" << protoname << "aprofname" << aprofname;
+   if ( protoname.isEmpty() )
+      protoname       = mainw->loadProto.protoname;
+   if ( aprofname.isEmpty() )
+      aprofname       = protoname;
+DbgLv(1) << "EGAp:inP:  protoname" << protoname << "aprofname" << aprofname;
+DbgLv(1) << "EGAp:inP:  sdiag" << sdiag;
+   sdiag->auto_name_passed( protoname, aprofname );
+DbgLv(1) << "EGAp:inP:  sdiag names passed";
+}
 void US_ExperGuiAProfile::savePanel() { }
 int  US_ExperGuiAProfile::status()
 {
@@ -2460,9 +2499,9 @@ if(rps_differ)
 US_RunProtocol* cRP = currProto;
 US_RunProtocol* lRP = loadProto;
 DbgLv(1) << "EGUp:inP: RPs DIFFER";
-DbgLv(1) << "EGUp:inP:  cPname" << cRP->protname << "lPname" << lRP->protname;
+DbgLv(1) << "EGUp:inP:  cPname" << cRP->protoname << "lPname" << lRP->protoname;
 DbgLv(1) << "EGUp:inP:  cInves" << cRP->investigator << "lInves" << lRP->investigator;
-DbgLv(1) << "EGUp:inP:  cPguid" << cRP->protGUID << "lPguid" << lRP->protGUID;
+DbgLv(1) << "EGUp:inP:  cPguid" << cRP->protoGUID << "lPguid" << lRP->protoGUID;
 DbgLv(1) << "EGUp:inP:  cOhost" << cRP->optimahost << "lOhost" << lRP->optimahost;
 DbgLv(1) << "EGUp:inP:  cTempe" << cRP->temperature << "lTempe" << lRP->temperature;
 DbgLv(1) << "EGUp:inP:   rpRotor diff" << (cRP->rpRotor!=lRP->rpRotor);

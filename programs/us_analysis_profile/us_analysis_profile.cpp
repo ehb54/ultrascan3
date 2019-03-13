@@ -38,7 +38,7 @@ US_AnalysisProfile::US_AnalysisProfile() : US_Widgets()
 
       // Create tab and panel widgets
    tabWidget           = us_tabwidget();
-   
+
    tabWidget->setTabPosition( QTabWidget::North );
 
 DbgLv(1) << "MAIN: create panels";
@@ -48,15 +48,15 @@ DbgLv(1) << "MAIN:  apGE done";
 DbgLv(1) << "MAIN:  ap2D done";
    apanPCSA            = new US_AnaprofPanPCSA  ( this );
 DbgLv(1) << "MAIN:  apPC done";
-   apanStatus          = new US_AnaprofPanStatus( this );
-DbgLv(1) << "MAIN:  apUP done";
+//   apanStatus          = new US_AnaprofPanStatus( this );
+//DbgLv(1) << "MAIN:  apUP done";
    statflag            = 0;
 
    // Add panels to the tab widget
    tabWidget->addTab( apanGeneral,   tr( "1: General" ) );
    tabWidget->addTab( apan2DSA,      tr( "2: 2DSA"    ) );
    tabWidget->addTab( apanPCSA,      tr( "3: PCSA"    ) );
-   tabWidget->addTab( apanStatus,    tr( "9: Status"  ) );
+//   tabWidget->addTab( apanStatus,    tr( "9: Status"  ) );
    tabWidget->setCurrentIndex( curr_panx );
 DbgLv(1) << "MAIN:  tabs added";
 
@@ -126,19 +126,30 @@ void US_AnalysisProfile::reset( void )
 {
 }
 
-// Set auto mode (comes from ComProject)
+// Set auto mode (comes from ComProject or Experiment)
 void US_AnalysisProfile::auto_mode_passed( void )
 {
    automode            = true;
 }
 
+// Set auto protocol and aprofile names
+void US_AnalysisProfile::auto_name_passed( QString& p_protname, QString& p_aproname )
+{
+   currProf.protoname   = p_protname;
+   currProf.aprofname   = p_aproname;
+
+   if ( automode )
+   {
+      apanGeneral->disable_name_buttons();
+      apanGeneral->pass_names( p_protname, p_aproname );
+   }
+}
+
 // Reset parameters to their defaults
 void US_AnalysisProfile::close_program( void )
 {
-  
-    
-  emit us_exp_is_closed();
-  close();
+   emit us_exp_is_closed();
+   close();
 }
 
 // Apply Profile
@@ -148,7 +159,7 @@ DbgLv(1) << "MN:SL: APPLY_PROFILE";
 }
 
 // Set even spacing in the grid layout for all 12 columns
-void US_AnalysisProfile::setColumnStretch( QGridLayout* genL )
+void US_AnalysisProfile::setColumnStretches( QGridLayout* genL )
 {
    for ( int ii = 0; ii < 12; ii++ )
       genL->setColumnStretch( ii, 1 );
@@ -285,7 +296,7 @@ US_AnaprofPanGen::US_AnaprofPanGen( QWidget* topw )
       connect( le_daend,    SIGNAL( editingFinished   ( void ) ),
                this,        SLOT(   daend_text_changed( void ) ) );
    }
-   mainw->setColumnStretch( genL );
+   mainw->setColumnStretches( genL );
 
    QScrollArea *scrollArea  = new QScrollArea( this );
    QWidget* containerWidget = new QWidget;
@@ -303,7 +314,7 @@ US_AnaprofPanGen::US_AnaprofPanGen( QWidget* topw )
 
 
  //check_runname();
- 
+
    // Do the initialization we do at panel entry
 DbgLv(1) << "APGe: CALL initPanel()";
    initPanel();
@@ -327,10 +338,27 @@ bool US_AnaprofPanGen::updateProfiles( const QStringList )
    return true;
 }
 
+void US_AnaprofPanGen::disable_name_buttons()
+{
+   pb_protname->setEnabled( false );
+   pb_aproname->setEnabled( false );
+}
+void US_AnaprofPanGen::pass_names( QString& protname, QString& aproname )
+{
+   le_protname->setText( protname );
+   le_aproname->setText( aproname );
+   if ( mainw->automode )
+   {
+      us_setReadOnly( le_protname, true );
+      mainw->pb_close->setVisible( false );
+      mainw->pb_apply->setVisible( false );
+   }
+}
+
 // General Panel SLOTS
 
 // Analysis Profile button clicked
-void US_AnaprofPanGen::apro_button_clicked() 
+void US_AnaprofPanGen::apro_button_clicked()
 {
 DbgLv(1) << "GP:SL: APRO BTN";
 //*TEMPORARY
@@ -340,7 +368,7 @@ QMessageBox::information( this, "Under Development",
 }
 
 // Protocol button clicked
-void US_AnaprofPanGen::prot_button_clicked() 
+void US_AnaprofPanGen::prot_button_clicked()
 {
 DbgLv(1) << "GP:SL: PROT BTN";
 //*TEMPORARY
@@ -374,7 +402,7 @@ DbgLv(1) << "GP:SL: LCRAT TEXT" << str << sname << chnx;
 }
 
 // Load Concentration Tolerance text changed
-void US_AnaprofPanGen::lctol_text_changed( ) 
+void US_AnaprofPanGen::lctol_text_changed( )
 {
    QObject* sobj      = sender();
    QString sname      = sobj->objectName();
@@ -404,7 +432,7 @@ DbgLv(1) << "GP:SL: LVTOL TEXT" << str << sname << chnx;
 }
 
 // Data End text changed
-void US_AnaprofPanGen::daend_text_changed( ) 
+void US_AnaprofPanGen::daend_text_changed( )
 {
    QObject* sobj      = sender();
    QString sname      = sobj->objectName();
@@ -414,7 +442,7 @@ DbgLv(1) << "GP:SL: DAEND TEXT" << str << sname << chnx;
 }
 
 // Apply to All button clicked
-void US_AnaprofPanGen::applied_to_all() 
+void US_AnaprofPanGen::applied_to_all()
 {
 DbgLv(1) << "GP:SL: APPLIED ALL";
 //*TEMPORARY
@@ -599,57 +627,57 @@ US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
    genL->addWidget( lb_j5iter,  row,    5, 1,  2 );
    genL->addWidget( le_j5iter,  row++,  7, 1,  1 );
 
-   mainw->setColumnStretch( genL );
+   mainw->setColumnStretches( genL );
 
    // Connect signals and slots
    connect( cb_chnsel,    SIGNAL( activated        ( int )  ),
-            this,         SLOT  ( channel_selected ( int )  ) ); 
+            this,         SLOT  ( channel_selected ( int )  ) );
    connect( pb_nextch,    SIGNAL( clicked          ( )      ),
-            this,         SLOT  ( next_channel     ( )      ) ); 
+            this,         SLOT  ( next_channel     ( )      ) );
    connect( le_smin,      SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( smin_changed     ( )      ) ); 
+            this,         SLOT  ( smin_changed     ( )      ) );
    connect( le_smax,      SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( smax_changed     ( )      ) ); 
+            this,         SLOT  ( smax_changed     ( )      ) );
    connect( le_sgrpts,    SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( sgpoints_changed ( )      ) ); 
+            this,         SLOT  ( sgpoints_changed ( )      ) );
    connect( le_kmin,      SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( kmin_changed     ( )      ) ); 
+            this,         SLOT  ( kmin_changed     ( )      ) );
    connect( le_kmax,      SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( kmax_changed     ( )      ) ); 
+            this,         SLOT  ( kmax_changed     ( )      ) );
    connect( le_kgrpts,    SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( kgpoints_changed ( )      ) ); 
+            this,         SLOT  ( kgpoints_changed ( )      ) );
    connect( le_grreps,    SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( grid_reps_changed( )      ) ); 
+            this,         SLOT  ( grid_reps_changed( )      ) );
    connect( pb_custmg,    SIGNAL( clicked          ( )      ),
-            this,         SLOT  ( cust_grid_clicked( )      ) ); 
+            this,         SLOT  ( cust_grid_clicked( )      ) );
    connect( le_custmg,    SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( cust_grid_changed( )      ) ); 
+            this,         SLOT  ( cust_grid_changed( )      ) );
    connect( ck_varyvb,    SIGNAL( toggled          ( bool ) ),
-            this,         SLOT  ( vary_vbar_checked( bool ) ) ); 
+            this,         SLOT  ( vary_vbar_checked( bool ) ) );
    connect( le_constk,    SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( constk_changed   ( )      ) ); 
+            this,         SLOT  ( constk_changed   ( )      ) );
    connect( pb_applya,    SIGNAL( clicked          ( )      ),
-            this,         SLOT  ( apply_all_clicked( )      ) ); 
+            this,         SLOT  ( apply_all_clicked( )      ) );
    connect( ck_j1run,     SIGNAL( toggled          ( bool ) ),
-            this,         SLOT  ( job1_run_checked ( bool ) ) ); 
+            this,         SLOT  ( job1_run_checked ( bool ) ) );
    connect( ck_j2run,     SIGNAL( toggled          ( bool ) ),
-            this,         SLOT  ( job2_run_checked ( bool ) ) ); 
+            this,         SLOT  ( job2_run_checked ( bool ) ) );
    connect( le_j2gpts,    SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( mgpoints_changed ( )      ) ); 
+            this,         SLOT  ( mgpoints_changed ( )      ) );
    connect( le_j2mrng,    SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( mfrange_changed  ( )      ) ); 
+            this,         SLOT  ( mfrange_changed  ( )      ) );
    connect( ck_j3run,     SIGNAL( toggled          ( bool ) ),
-            this,         SLOT  ( job3_run_checked ( bool ) ) ); 
+            this,         SLOT  ( job3_run_checked ( bool ) ) );
    connect( ck_j3auto,    SIGNAL( toggled          ( bool ) ),
-            this,         SLOT  ( autopick_checked ( bool ) ) ); 
+            this,         SLOT  ( autopick_checked ( bool ) ) );
    connect( ck_j4run,     SIGNAL( toggled          ( bool ) ),
-            this,         SLOT  ( job4_run_checked ( bool ) ) ); 
+            this,         SLOT  ( job4_run_checked ( bool ) ) );
    connect( le_j4iter,    SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( rfiters_changed  ( )      ) ); 
+            this,         SLOT  ( rfiters_changed  ( )      ) );
    connect( ck_j5run,     SIGNAL( toggled          ( bool ) ),
-            this,         SLOT  ( job5_run_checked ( bool ) ) ); 
+            this,         SLOT  ( job5_run_checked ( bool ) ) );
    connect( le_j5iter,    SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( mciters_changed  ( )      ) ); 
+            this,         SLOT  ( mciters_changed  ( )      ) );
 
 DbgLv(1) << "AP2d: addWidg/Layo II";
    // Complete overall layout
@@ -909,54 +937,54 @@ DbgLv(1) << "APpc: IN";
    genL->addWidget( lb_mciters,  row,    0, 1,  3 );
    genL->addWidget( le_mciters,  row++,  3, 1,  1 );
 
-   mainw->setColumnStretch( genL );
+   mainw->setColumnStretches( genL );
    panel->addLayout( genL );
    panel->addStretch();
 
    connect( ck_nopcsa,    SIGNAL( toggled          ( bool ) ),
-            this,         SLOT  ( nopcsa_checked   ( bool ) ) ); 
+            this,         SLOT  ( nopcsa_checked   ( bool ) ) );
    connect( cb_chnsel,    SIGNAL( activated        ( int )  ),
-            this,         SLOT  ( channel_selected ( int )  ) ); 
+            this,         SLOT  ( channel_selected ( int )  ) );
    connect( pb_nextch,    SIGNAL( clicked          ( )      ),
-            this,         SLOT  ( next_channel     ( )      ) ); 
+            this,         SLOT  ( next_channel     ( )      ) );
    connect( cb_curvtype,  SIGNAL( activated        ( int )  ),
-            this,         SLOT  ( curvtype_selected( int )  ) ); 
+            this,         SLOT  ( curvtype_selected( int )  ) );
    connect( pb_applya,    SIGNAL( clicked          ( )      ),
-            this,         SLOT  ( apply_all_clicked( )      ) ); 
+            this,         SLOT  ( apply_all_clicked( )      ) );
    connect( cb_xaxistyp,  SIGNAL( activated        ( int )  ),
-            this,         SLOT  ( xaxis_selected   ( int )  ) ); 
+            this,         SLOT  ( xaxis_selected   ( int )  ) );
    connect( le_xmin,      SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( xmin_changed     ( )      ) ); 
+            this,         SLOT  ( xmin_changed     ( )      ) );
    connect( le_xmax,      SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( xmax_changed     ( )      ) ); 
+            this,         SLOT  ( xmax_changed     ( )      ) );
    connect( cb_yaxistyp,  SIGNAL( activated        ( int )  ),
-            this,         SLOT  ( yaxis_selected   ( int )  ) ); 
+            this,         SLOT  ( yaxis_selected   ( int )  ) );
    connect( le_ymin,      SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( ymin_changed     ( )      ) ); 
+            this,         SLOT  ( ymin_changed     ( )      ) );
    connect( le_ymax,      SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( ymax_changed     ( )      ) ); 
+            this,         SLOT  ( ymax_changed     ( )      ) );
    connect( cb_zaxistyp,  SIGNAL( activated        ( int )  ),
-            this,         SLOT  ( zaxis_selected   ( int )  ) ); 
+            this,         SLOT  ( zaxis_selected   ( int )  ) );
    connect( le_zvalue,    SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( zvalue_changed   ( )      ) ); 
+            this,         SLOT  ( zvalue_changed   ( )      ) );
    connect( le_varcount,  SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( varcount_changed ( )      ) ); 
+            this,         SLOT  ( varcount_changed ( )      ) );
    connect( le_grfiters,  SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( grfiters_changed ( )      ) ); 
+            this,         SLOT  ( grfiters_changed ( )      ) );
    connect( le_crpoints,  SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( crpoints_changed ( )      ) ); 
+            this,         SLOT  ( crpoints_changed ( )      ) );
    connect( ck_tinoise,   SIGNAL( toggled          ( bool ) ),
-            this,         SLOT  ( tinoise_checked  ( bool ) ) ); 
+            this,         SLOT  ( tinoise_checked  ( bool ) ) );
    connect( ck_rinoise,   SIGNAL( toggled          ( bool ) ),
-            this,         SLOT  ( rinoise_checked  ( bool ) ) ); 
+            this,         SLOT  ( rinoise_checked  ( bool ) ) );
    connect( ck_tregspec,  SIGNAL( toggled          ( bool ) ),
-            this,         SLOT  ( tregspec_checked ( bool ) ) ); 
+            this,         SLOT  ( tregspec_checked ( bool ) ) );
    connect( ck_tregauto,  SIGNAL( toggled          ( bool ) ),
-            this,         SLOT  ( tregauto_checked ( bool ) ) ); 
+            this,         SLOT  ( tregauto_checked ( bool ) ) );
    connect( le_regalpha,  SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( alpha_changed    ( )      ) ); 
+            this,         SLOT  ( alpha_changed    ( )      ) );
    connect( le_mciters,   SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( mciters_changed  ( )      ) ); 
+            this,         SLOT  ( mciters_changed  ( )      ) );
 
    // Do first pass at initializing the panel layout
    initPanel();
@@ -1094,6 +1122,7 @@ void US_AnaprofPanPCSA::mciters_changed ( )
 DbgLv(1) << "PC:SL: MCITER_CHG";
 }
 
+#if 0
 // Panel for Status parameters
 US_AnaprofPanStatus::US_AnaprofPanStatus( QWidget* topw )
    : US_WidgetsDialog( topw, 0 )
@@ -1139,4 +1168,5 @@ void US_AnaprofPanStatus::detailExperiment( void )
 {
    return;
 }
+#endif
 

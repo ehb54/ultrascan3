@@ -12,8 +12,8 @@
 // RunProtocol constructor
 US_RunProtocol::US_RunProtocol()
 {
-   protname        = "";
-   protGUID        = QString( "00000000-0000-0000-0000-000000000000" );
+   protoname       = "";
+   protoGUID       = QString( "00000000-0000-0000-0000-000000000000" );
    optimahost      = "192.168.1.1";
    investigator    = "";
    temperature     = 20.0;
@@ -26,9 +26,9 @@ bool US_RunProtocol::operator== ( const US_RunProtocol& rp ) const
 qDebug() << "RP:eq?";
    if ( investigator != rp.investigator )  return false;
 qDebug() << "RP: EQ inv";
-   if ( protname     != rp.protname     )  return false;
+   if ( protoname    != rp.protoname    )  return false;
 qDebug() << "RP: EQ pnm";
-   if ( protGUID     != rp.protGUID     )  return false;
+   if ( protoGUID    != rp.protoGUID    )  return false;
 qDebug() << "RP: EQ pgu";
    if ( optimahost   != rp.optimahost   )  return false;
 qDebug() << "RP: EQ oho";
@@ -64,8 +64,8 @@ bool US_RunProtocol::toXml( QXmlStreamWriter& xmlo )
    xmlo.writeAttribute    ( "version", "1.0" );
 
    xmlo.writeStartElement ( "protocol" );
-   xmlo.writeAttribute    ( "description",  protname );
-   xmlo.writeAttribute    ( "guid",         protGUID );
+   xmlo.writeAttribute    ( "description",  protoname );
+   xmlo.writeAttribute    ( "guid",         protoGUID );
 
    xmlo.writeAttribute    ( "project",      project );
    xmlo.writeAttribute    ( "projectid",    QString::number( projectID ) );
@@ -106,8 +106,8 @@ bool US_RunProtocol::fromXml( QXmlStreamReader& xmli )
          {
             QXmlStreamAttributes attr = xmli.attributes();
 
-            protname        = attr.value( "description"  ).toString();
-            protGUID        = attr.value( "guid"         ).toString();
+            protoname       = attr.value( "description"  ).toString();
+            protoGUID       = attr.value( "guid"         ).toString();
             project         = attr.value( "project"      ).toString();
             projectID       = attr.value( "projectid"    ).toString().toInt();
             optimahost      = attr.value( "optima_host"  ).toString();
@@ -1027,17 +1027,17 @@ bool US_RunProtocol::RunProtoRanges::Ranges::operator==
 // RunProtoAProfile subclass constructor
 US_RunProtocol::RunProtoAProfile::RunProtoAProfile()
 {
-   profname      = "";
-   profGUID      = QString( "00000000-0000-0000-0000-000000000000" );
-   profID        = 0;
+   aprofname     = "";
+   aprofGUID     = QString( "00000000-0000-0000-0000-000000000000" );
+   aprofID       = 0;
 }
 
 // RunProtoUpload subclass Equality operator
 bool US_RunProtocol::RunProtoAProfile::operator== 
                   ( const RunProtoAProfile& u ) const
 {
-   if ( profname  != u.profname  ) return false;
-   if ( profGUID  != u.profGUID  ) return false;
+   if ( aprofname  != u.aprofname  ) return false;
+   if ( aprofGUID  != u.aprofGUID  ) return false;
 
    return true;
 }
@@ -1054,8 +1054,8 @@ bool US_RunProtocol::RunProtoAProfile::fromXml( QXmlStreamReader& xmli )
          if ( ename == "aprofile" )
          {
             QXmlStreamAttributes attr = xmli.attributes();
-            profname    = attr.value( "name"  ).toString();
-            profGUID    = attr.value( "guid"  ).toString();
+            aprofname   = attr.value( "name"  ).toString();
+            aprofGUID   = attr.value( "guid"  ).toString();
          }
 
          else
@@ -1076,8 +1076,8 @@ bool US_RunProtocol::RunProtoAProfile::toXml( QXmlStreamWriter& xmlo )
 {
    xmlo.writeStartElement( "aprofile" );
 
-   xmlo.writeAttribute( "name", profname );
-   xmlo.writeAttribute( "guid", profGUID );
+   xmlo.writeAttribute( "name", aprofname );
+   xmlo.writeAttribute( "guid", aprofGUID );
 
    xmlo.writeEndElement();    // aprofile
 

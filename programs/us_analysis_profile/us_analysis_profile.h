@@ -51,6 +51,8 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       void check_user_level( void );
       void update_inv( void );
       void check_runname( void );
+      void disable_name_buttons( void );
+      void pass_names( QString&, QString& );
             
    private:
       US_AnalysisProfile* mainw;        // Parent to all panels
@@ -264,6 +266,7 @@ class US_AnaprofPanPCSA : public US_WidgetsDialog
 };
 
 
+#if 0
 //! \brief AnalysisProfile Status panel
 class US_AnaprofPanStatus : public US_WidgetsDialog 
 {
@@ -350,6 +353,7 @@ class US_AnaprofPanStatus : public US_WidgetsDialog
 
    signals:
 };
+#endif
 
 //! \brief Analysis Profile Main Window
 class US_AnalysisProfile : public US_Widgets
@@ -370,8 +374,8 @@ class US_AnalysisProfile : public US_Widgets
       int         getProfiles   ( QStringList&, QList< QStringList >& );
       // \brief Update the list of protocols with a newly named entry
       bool        updateProfiles( const QStringList );
-      // \brief Set an even-12-column stretch in the grid layout
-      void        setColumnStretch( QGridLayout* genL );
+      // \brief Set even-12-column stretches in the grid layout
+      void        setColumnStretches( QGridLayout* genL );
 
       US_AnaProfParms  loadProf;   // Prof params as loaded from AP record
       US_AnaProfParms  currProf;   // Current AnaProfParms controls
@@ -387,6 +391,7 @@ class US_AnalysisProfile : public US_Widgets
       
       bool    automode;
       void    auto_mode_passed( void ); 
+      void    auto_name_passed( QString&, QString& ); 
       
    private:
 
@@ -395,7 +400,7 @@ class US_AnalysisProfile : public US_Widgets
       US_AnaprofPanGen*     apanGeneral;    // General panel
       US_AnaprofPan2DSA*    apan2DSA;       // 2DSA panel
       US_AnaprofPanPCSA*    apanPCSA;       // PCSA panel
-      US_AnaprofPanStatus*  apanStatus;     // Status panel
+//      US_AnaprofPanStatus*  apanStatus;     // Status panel
 
       int         statflag;        // Composite panels status flag
       int         dbg_level;       // Debug print flag

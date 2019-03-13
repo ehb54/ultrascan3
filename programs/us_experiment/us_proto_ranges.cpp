@@ -27,7 +27,7 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
    rpRange             = &(mainw->currProto.rpRange);
    mxrow               = 24;     // Maximum possible rows
    nrnchan             = 0;
-   protname            = mainw->currProto.protname;
+   protoname           = mainw->currProto.protoname;
    chrow               = -1;
    dbg_level           = US_Settings::us_debug();
    QVBoxLayout* panel  = new QVBoxLayout( this );
@@ -241,11 +241,11 @@ DbgLv(1) << "Rn:CONTENT 11 inside: channel, wavelength: " << rpRange->chrngs[ ku
 DbgLv(1) << "RANGE_1";
    
    QString cur_pname   = sibSValue( "general", "protocol" );
-DbgLv(1) << "EGRn: rbR:  protname" << protname << "cur_pname" << cur_pname;
+DbgLv(1) << "EGRn: rbR:  pprotoname" << protoname << "cur_pname" << cur_pname;
 
-   if ( protname != cur_pname )
+   if ( protoname != cur_pname )
    {  // Protocol has changed:  rebuild internals
-      protname            = cur_pname;
+      protoname           = cur_pname;
       nrnchan             = nrange_sv;
 
       //rpRange->nranges    = nuvvis;   //ALEXEY: Bug: cannot use nuvvis which is max #of channels when protocol says #channels with ranges is less...
