@@ -2246,13 +2246,19 @@ DbgLv(1) << "EGRn:inP:    ii" << ii << "channel" << channel;
       cc_lrads[ ii ]->setVisible( true );
       cc_hrads[ ii ]->setVisible( true );
 
-      if ( channel.contains("reference") )   //ALEXEY do not allow to set wavelengths/radial ranges for B channels (reference)
-	{
-	   cc_wavls[ ii ]->setEnabled( false );
-	   cc_lrads[ ii ]->setEnabled( false );
-	   cc_hrads[ ii ]->setEnabled( false );
-	}
-
+       if ( channel.contains(tr("reference")) )   //ALEXEY do not allow to set wavelengths/radial ranges for B channels (reference)
+       	{
+	  qDebug() << "Channel: " << channel;
+       	  cc_wavls[ ii ]->setEnabled( false );
+       	  cc_lrads[ ii ]->setEnabled( false );
+       	  cc_hrads[ ii ]->setEnabled( false );
+       	}
+       else
+	 {
+	   cc_wavls[ ii ]->setEnabled( true );
+	   cc_lrads[ ii ]->setEnabled( true );
+	   cc_hrads[ ii ]->setEnabled( true );
+	 }
    }
 
    // Make remaining rows invisible
