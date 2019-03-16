@@ -1,12 +1,12 @@
-//! \file us_analysis_profile.h
+//! \file us_analysis_profile_gui.h
 
-#ifndef US_ANAPROF_H
-#define US_ANAPROF_H
+#ifndef US_APROFG_H
+#define US_APROFG_H
 
 #include <QApplication>
 #include <QtSql>
 
-#include "us_anapro_parms.h"
+#include "us_ana_profile.h"
 #include "us_editor.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
@@ -18,7 +18,7 @@
 #include "us_license_t.h"
 #include "us_license.h"
 
-class US_AnalysisProfile;
+class US_AnalysisProfileGui;
 
 //! \brief Experiment General panel
 class US_AnaprofPanGen : public US_WidgetsDialog 
@@ -55,8 +55,8 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       void pass_names( QString&, QString& );
             
    private:
-      US_AnalysisProfile* mainw;        // Parent to all panels
-      US_AnaProfParms*    currProf;     // Current AnaProfParms controls
+      US_AnalysisProfileGui* mainw;   // Parent to all panels
+      US_AnaProfile*    currProf;     // Current AnaProfile controls
       US_Help  showHelp;
 
       QPushButton* pb_aproname;
@@ -119,8 +119,8 @@ class US_AnaprofPan2DSA : public US_WidgetsDialog
          { showHelp.show_help( "manual/experiment_speeds.html" ); };
 
    private:
-      US_AnalysisProfile*  mainw;
-      US_AnaProfParms::AProfParms2DSA*   ap2DSA;    // 2DSA controls
+      US_AnalysisProfileGui*  mainw;
+      US_AnaProfile::AnaProf2DSA*   ap2DSA;    // 2DSA controls
       US_Help      showHelp;
 
       QPushButton* pb_custmg; 
@@ -206,8 +206,8 @@ class US_AnaprofPanPCSA : public US_WidgetsDialog
          { showHelp.show_help( "manual/experiment_cells.html" ); };
 
    private:
-      US_AnalysisProfile*   mainw;
-      US_AnaProfParms::AProfParmsPCSA*   apPCSA;    // PCSA controls
+      US_AnalysisProfileGui*   mainw;
+      US_AnaProfile::AnaProfPCSA*   apPCSA;    // PCSA controls
       US_Help  showHelp;
 
       QPushButton* pb_applya; 
@@ -267,7 +267,7 @@ class US_AnaprofPanPCSA : public US_WidgetsDialog
 
 
 #if 0
-//! \brief AnalysisProfile Status panel
+//! \brief AnalysisProfileGui Status panel
 class US_AnaprofPanStatus : public US_WidgetsDialog 
 {
    Q_OBJECT
@@ -298,12 +298,11 @@ class US_AnaprofPanStatus : public US_WidgetsDialog
       QGridLayout* genL;
       
    private:
-      US_AnalysisProfile*  mainw;
-      US_AnaProfParms*     loadProf;   // Prof params as loaded from AP record
-      US_AnaProfParms*     currProf;   // Current AnaProfParms controls
-      US_AnaProfParms::AProfParms2DSA*   ap2DSA;    // 2DSA controls
-      US_AnaProfParms::AProfParmsPCSA*   apPCSA;    // PCSA controls
-      US_AnaProfParms::AProfParmsStatus* apStat;    // Status controls
+      US_AnalysisProfileGui*  mainw;
+      US_AnaProfile*     loadProf;   // Prof params as loaded from AP record
+      US_AnaProfile*     currProf;   // Current AnaProfile controls
+      US_AnaProfile::AnaProf2DSA*   ap2DSA;    // 2DSA controls
+      US_AnaProfile::AnaProfPCSA*   apPCSA;    // PCSA controls
       US_Help  showHelp;
 
       //QPushButton* pb_saverp;
@@ -355,13 +354,13 @@ class US_AnaprofPanStatus : public US_WidgetsDialog
 };
 #endif
 
-//! \brief Analysis Profile Main Window
-class US_AnalysisProfile : public US_Widgets
+//! \brief Analysis Profile GUI Main Window
+class US_AnalysisProfileGui : public US_Widgets
 {
    Q_OBJECT
 
    public:
-      US_AnalysisProfile();
+      US_AnalysisProfileGui();
 
       // \brief Get a named child panel's value of a given type
       QString     childSValue ( const QString, const QString );
@@ -377,8 +376,8 @@ class US_AnalysisProfile : public US_Widgets
       // \brief Set even-12-column stretches in the grid layout
       void        setColumnStretches( QGridLayout* genL );
 
-      US_AnaProfParms  loadProf;   // Prof params as loaded from AP record
-      US_AnaProfParms  currProf;   // Current AnaProfParms controls
+      US_AnaProfile  loadProf;   // Prof params as loaded from AP record
+      US_AnaProfile  currProf;   // Current AnaProfile controls
 
       QPushButton* pb_next;
       QPushButton* pb_prev;

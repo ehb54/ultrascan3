@@ -2,8 +2,8 @@
 
 #include "us_analysis_profile.h"
 
-//! \brief Main program for US_AnalysisProfile. Loads translators and starts
-//         the class US_AnalysisProfile
+//! \brief Main program for US_AnalysisProfileGui. Loads translators and starts
+//         the class US_AnalysisProfileGui
 
 int main( int argc, char* argv[] )
 {
@@ -13,7 +13,7 @@ int main( int argc, char* argv[] )
 
    // License is OK.  Start up.
 
-   US_AnalysisProfile * w = new US_AnalysisProfile;
+   US_AnalysisProfileGui * w = new US_AnalysisProfileGui;
    w->show();                   //!< \memberof QWidget
    return application.exec();  //!< \memberof QApplication
 }

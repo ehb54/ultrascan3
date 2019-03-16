@@ -23,7 +23,8 @@ TRANSLATIONS = $${TARGET}_DE_de.ts
 # Consolidate us_femglobal and us_femglobal_new when development is
 # progressed to a point where us_femglobal can be removed
 
-HEADERS      = us_analyte.h       \
+HEADERS      = us_ana_profile.h   \
+               us_analyte.h       \
                us_astfem_math.h   \
                us_astfem_rsa.h    \
                us_buffer.h        \
@@ -53,6 +54,7 @@ HEADERS      = us_analyte.h       \
                us_protocol_util.h \
                us_report.h        \
                us_rotor.h         \
+               us_run_protocol.h  \
                us_settings.h      \
                us_simparms.h      \
                us_solute.h        \
@@ -68,7 +70,8 @@ HEADERS      = us_analyte.h       \
                us_xpn_data.h      \
                us_zsolute.h
 
-SOURCES      = us_analyte.cpp       \
+SOURCES      = us_ana_profile.cpp   \
+               us_analyte.cpp       \
                us_astfem_math.cpp   \
                us_astfem_rsa.cpp    \
                us_buffer.cpp        \
@@ -98,6 +101,7 @@ SOURCES      = us_analyte.cpp       \
                us_protocol_util.cpp \
                us_report.cpp        \
                us_rotor.cpp         \
+               us_run_protocol.cpp  \
                us_settings.cpp      \
                us_simparms.cpp      \
                us_solute.cpp        \

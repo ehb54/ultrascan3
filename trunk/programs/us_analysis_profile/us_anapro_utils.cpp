@@ -1,7 +1,7 @@
 //! \file us_anapro_utils.cpp
 
 // This source file is meant to hold those portions of the
-// US_AnalysisProfile class and its subclasses that are common
+// US_AnalysisProfileGui class and its subclasses that are common
 // utility functions used by the class and its subclasses.
 // Thereby, the length of any one source file is reduced and the
 // us_analysis_profile.cpp file contains only very class-specific source
@@ -30,7 +30,7 @@
 //       status();           (subclasses)
 
 #include "us_analysis_profile.h"
-#include "us_anapro_parms.h"
+#include "us_ana_profile.h"
 #include "us_table.h"
 #include "us_xpn_data.h"
 #include "us_license.h"
@@ -56,8 +56,8 @@
 
 //========================= Start: Main      section =========================
 
-// Return a string parameter value from a US_AnalysisProfile child panel
-QString US_AnalysisProfile::childSValue( const QString child, const QString type )
+// Return a string parameter value from a US_AnalysisProfileGui child panel
+QString US_AnalysisProfileGui::childSValue( const QString child, const QString type )
 {
    QString value( "" );
    if      ( child == "general"  ) { value = apanGeneral->getSValue( type ); }
@@ -67,8 +67,8 @@ QString US_AnalysisProfile::childSValue( const QString child, const QString type
    return value;
 }
 
-// Return an integer parameter value from a US_AnalysisProfile child panel
-int US_AnalysisProfile::childIValue( const QString child, const QString type )
+// Return an integer parameter value from a US_AnalysisProfileGui child panel
+int US_AnalysisProfileGui::childIValue( const QString child, const QString type )
 {
    int value      = 0;
    if      ( child == "general"  ) { value = apanGeneral->getIValue( type ); }
@@ -78,8 +78,8 @@ int US_AnalysisProfile::childIValue( const QString child, const QString type )
    return value;
 }
 
-// Return a double parameter value from a US_AnalysisProfile child panel
-double US_AnalysisProfile::childDValue( const QString child, const QString type )
+// Return a double parameter value from a US_AnalysisProfileGui child panel
+double US_AnalysisProfileGui::childDValue( const QString child, const QString type )
 {
    double value   = 0.0;
    if      ( child == "general"  ) { value = apanGeneral->getDValue( type ); }
@@ -89,8 +89,8 @@ double US_AnalysisProfile::childDValue( const QString child, const QString type 
    return value;
 }
 
-// Return a stringlist parameter value from a US_AnalysisProfile child panel
-QStringList US_AnalysisProfile::childLValue( const QString child, const QString type )
+// Return a stringlist parameter value from a US_AnalysisProfileGui child panel
+QStringList US_AnalysisProfileGui::childLValue( const QString child, const QString type )
 {
    QStringList value;
 
@@ -103,7 +103,7 @@ QStringList US_AnalysisProfile::childLValue( const QString child, const QString 
 }
 
 // Slot to handle a new panel selected
-void US_AnalysisProfile::newPanel( int panx )
+void US_AnalysisProfileGui::newPanel( int panx )
 {
 DbgLv(1) << "newPanel panx=" << panx << "prev.panx=" << curr_panx;
    // Save any changes in the old current panel
@@ -138,7 +138,7 @@ DbgLv(1) << "newPanel   statUpdate done";
 }
 
 // Slot to update status flag for all panels
-void US_AnalysisProfile::statUpdate()
+void US_AnalysisProfileGui::statUpdate()
 {
 DbgLv(1) << "statUpd: IN stat" << statflag;
    statflag   = apanGeneral->status()
@@ -148,7 +148,7 @@ DbgLv(1) << "statUpd:  MOD stat" << statflag;
 }
 
 // Slot to advance to the next panel
-void US_AnalysisProfile::panelUp()
+void US_AnalysisProfileGui::panelUp()
 {
    int newndx = tabWidget->currentIndex() + 1;
    int maxndx = tabWidget->count() - 1;
@@ -158,7 +158,7 @@ DbgLv(1) << "panUp: newndx, maxndx" << newndx << maxndx;
 }
 
 // Slot to retreat to the previous panel
-void US_AnalysisProfile::panelDown()
+void US_AnalysisProfileGui::panelDown()
 {
    int newndx = tabWidget->currentIndex() - 1;
    newndx     = ( newndx < 0 ) ? tabWidget->count() - 1 : newndx;
@@ -167,7 +167,7 @@ DbgLv(1) << "panDown: newndx" << newndx;
 }
 
 // Open manual help appropriate to the current panel
-void US_AnalysisProfile::help( void )
+void US_AnalysisProfileGui::help( void )
 {
    if      ( curr_panx == 0 ) apanGeneral ->help();
    else if ( curr_panx == 1 ) apan2DSA    ->help();
@@ -176,7 +176,7 @@ void US_AnalysisProfile::help( void )
 }
 
 //Slot to DISABLE tabs and Next/Prev buttons
-void US_AnalysisProfile::disable_tabs_buttons( void )
+void US_AnalysisProfileGui::disable_tabs_buttons( void )
 {
 DbgLv(1) << "DISBLING Tabs...";
    pb_next   ->setEnabled( false );
@@ -193,7 +193,7 @@ DbgLv(1) << "DISBLING Tabs...";
 }
 
 //Slot to ENABLE tabs and Next/Prev buttons
-void US_AnalysisProfile::enable_tabs_buttons( void )
+void US_AnalysisProfileGui::enable_tabs_buttons( void )
 {
 DbgLv(1) << "ENABLING!!!";
    pb_next   ->setEnabled(true);
@@ -208,7 +208,7 @@ DbgLv(1) << "ENABLING!!!";
 }
 
 //Slot to ENABLE tabs and Next/Prev buttons, but make all Widgets read-only
-void US_AnalysisProfile::enable_tabs_buttons_readonly( void )
+void US_AnalysisProfileGui::enable_tabs_buttons_readonly( void )
 {
 DbgLv(1) << "ENABLING!!!";
    pb_next   ->setEnabled( true );
@@ -263,15 +263,15 @@ DbgLv(1) << "ENABLING!!!";
 
 }
 
-int  US_AnalysisProfile::getProfiles( QStringList& par1,
+int  US_AnalysisProfileGui::getProfiles( QStringList& par1,
                                    QList< QStringList >& par2 )
 { return apanGeneral->getProfiles( par1, par2 ); }
 
-bool US_AnalysisProfile::updateProfiles( const QStringList par1 )
+bool US_AnalysisProfileGui::updateProfiles( const QStringList par1 )
 { return apanGeneral->updateProfiles( par1 ); }
 
 // Initialize all panels after loading a new protocol
-void US_AnalysisProfile::initPanels()
+void US_AnalysisProfileGui::initPanels()
 {
 DbgLv(1) << "AP:iP: IN initPanels()";
    apanGeneral  ->initPanel();
@@ -512,27 +512,14 @@ void US_AnaprofPan2DSA::initPanel()
 DbgLv(1) << "AP2d:   iP: IN";
 
 #if 0
-   QList< int > dhms1;
-   QList< int > dhms2;
-   QList< int > dhms2a;
-   QList< int > dhms3;
-   
    // Populate GUI settings from protocol controls
-//   nspeed               = ap2DSA ->nstep;
+//   nchan                = ap2DSA ->nchan;
 //   curssx               = qMin( (nspeed-1), qMax( 0, cb_prof->currentIndex() ) );
 //curssx=0;
 DbgLv(1) << "AP2d:   iP: AA";
-   double duration      = ap2DSA->ssteps[ curssx ].duration;
-   double delay         = ap2DSA->ssteps[ curssx ].delay;
-   double delay_stage   = ap2DSA->ssteps[ curssx ].delay_stage;
-   double scanintv      = ap2DSA->ssteps[ curssx ].scanintv;
 //   double speedmax      = sibDValue( "rotor", "maxrpm" );
 DbgLv(1) << "AP2d:   iP: BB";
 
-   US_AnaProfParms::timeToList( duration, dhms1 );
-   US_AnaProfParms::timeToList( delay,    dhms2 );
-   US_AnaProfParms::timeToList( delay_stage,    dhms2a );
-   US_AnaProfParms::timeToList( scanintv, dhms3 );
 DbgLv(1) << "AP2d:   iP: CC";
 #endif
 
@@ -657,7 +644,7 @@ QString US_AnaprofPan2DSA::getSValue( const QString type )
 int US_AnaprofPan2DSA::getIValue( const QString type )
 {
    int value   = 0;
-   if ( type == "nspeeds" ) { value = ap2DSA->nstep;  }
+   if ( type == "nchan"   ) { value = ap2DSA->nchan;  }
    if ( type == "changed" ) { value = changed ? 1 : 0; }
    return value;
 }
@@ -677,6 +664,7 @@ QStringList US_AnaprofPan2DSA::getLValue( const QString type )
    QStringList value( "" );
 
 DbgLv(1) << "AP2d:getLV: type" << type;
+#if 0
    if ( type == "profiles" )
    {  // Compose list of all speed-step values (4 lines per step)
       value.clear();
@@ -722,6 +710,7 @@ DbgLv(1) << "AP2d:getLV: type" << type;
                   .arg( scinthrs ).arg( scintmin ).arg( scintsec );
       }
    }
+#endif
 
    return value;
 }
@@ -768,20 +757,19 @@ void US_AnaprofPanPCSA::initPanel()
            << tr( "Fluorescence 5-channel counterbalance" );
 
    // Possibly rebuild Cells protocol if there was a rotor change
-DbgLv(1) << "EGCe:inP: prb: nholes" << apPCSA->ncell << "nused" << apPCSA->nused;
+DbgLv(1) << "EGCe:inP: prb: nchan" << apPCSA->nchan;
 //   rebuild_Cells();
 
    // Now build cell rows from protocol
-   int nholes          = apPCSA->ncell;
-   int nused           = apPCSA->nused;
-   int kused           = 0;
-DbgLv(1) << "EGCe:inP: nholes" << nholes << "nused" << nused;
+   int nchan           = apPCSA->nchan;
+   int kchan           = 0;
+DbgLv(1) << "EGCe:inP: nchan" << nchan;
 
 
    // Insure rows beyond nholes are totally invisible
 
-DbgLv(1) << "EGCe:inP: kused" << kused << "nused" << nused;
-   nused               = kused;
+DbgLv(1) << "EGCe:inP: kchan" << kchan << "nchan" << nchan;
+   nchan               = kchan;
 }
 
 // Save Cells panel controls when about to leave the panel
@@ -789,15 +777,14 @@ void US_AnaprofPanPCSA::savePanel()
 {
 DbgLv(1) << "APPc:svP: IN";
    // Recount cells used and fill vector based on GUI state
-   int nholes          = sibIValue( "rotor", "nholes" );
-   int nused           = 0;
+//   int nholes          = sibIValue( "rotor", "nholes" );
+   int nchan           = 0;
    QStringList ulabs;
    QString txtempty    = tr( "empty" );
 
    // Now fill vector of used cell entries
-   apPCSA->ncell      = nholes;
-   apPCSA->nused      = nused;
-   apPCSA->used.resize( nused );
+   apPCSA->nchan      = nchan;
+//   apPCSA->used.resize( nchan );
 
 }
 
@@ -807,25 +794,15 @@ QString US_AnaprofPanPCSA::getSValue( const QString type )
 DbgLv(1) << "EGCe:getSV: type" << type;
    QString txtempty = tr( "empty" );
    QString value( "" );
-   int ncell    = apPCSA->ncell;
-   int nused    = apPCSA->nused;
+   int nchan    = apPCSA->nchan;
 
-   if ( type == "ncells" )
+   if ( type == "nchan" )
    {
-      value        = QString::number( ncell );
-   }
-   else if ( type == "nused" )
-   {
-      value        = QString::number( nused );
+      value        = QString::number( nchan );
    }
    else if ( type == "alldone" )
    {
-      value        = ( nused > 0 ) ? "1" : "0";
-   }
-   else if ( type == "counterbalance" )
-   {
-      value        = ( nused > 0 ) ? apPCSA->used[ nused - 1 ].cbalance : value;
-DbgLv(1) << "EGCe:getSV:   CB nused" << nused << "cbal" << value;
+      value        = ( nchan > 0 ) ? "1" : "0";
    }
 DbgLv(1) << "EGCe:getSV: type" << type << "value" << value;
 
@@ -837,24 +814,23 @@ int US_AnaprofPanPCSA::getIValue( const QString type )
 {
    int value      = 0;
 
-   if      ( type == "ncells" )  { value = apPCSA->ncell; }
-   else if ( type == "nused" )   { value = apPCSA->nused; }
-   else if ( type == "alldone" ) { value = ( apPCSA->nused > 0 ) ? 1 : 0; }
+   if      ( type == "nchan" )   { value = apPCSA->nchan; }
+   else if ( type == "alldone" ) { value = ( apPCSA->nchan > 0 ) ? 1 : 0; }
    else if ( type == "nchans" )
    {
       int nchans     = 0;
 
-      for ( int ii = 0; ii < apPCSA->nused; ii++ )
+      for ( int ii = 0; ii < apPCSA->nchan; ii++ )
       {
-         QString centp  = apPCSA->used[ ii ].centerpiece;
-         int chx        = centp.indexOf( "-channel" );
+//         QString centp  = apPCSA->used[ ii ].centerpiece;
+//         int chx        = centp.indexOf( "-channel" );
 
-         if ( chx > 0 )
-         {
-            int ncchn      = QString( centp ).left( chx ).section( " ", -1, -1 )
-                                             .simplified().toInt();
-            nchans        += ncchn;
-         }
+//         if ( chx > 0 )
+//         {
+//            int ncchn      = QString( centp ).left( chx ).section( " ", -1, -1 )
+//                                             .simplified().toInt();
+//            nchans        += ncchn;
+//         }
       }
 
       value          = nchans;
@@ -867,12 +843,12 @@ DbgLv(1) << "EGCe:getIV: type" << type << "value" << value;
 // Get a specific panel double value
 double US_AnaprofPanPCSA::getDValue( const QString type )
 {
-   int ncell      = apPCSA->ncell;
+   int nchan      = apPCSA->nchan;
    double value   = 0;
 
-   if ( type == "ncells" )
+   if ( type == "nchan" )
    {
-      value          = (double)ncell;
+      value          = (double)nchan;
    }
 
    return value;
@@ -914,8 +890,8 @@ QStringList US_AnaprofPanPCSA::sibLValue( const QString sibling, const QString t
 // Return status flag for the panel
 int US_AnaprofPanPCSA::status()
 {
-   bool is_done        = ( apPCSA->nused > 0 );   // Done when not all empty
-DbgLv(1) << "EGCe:st: nused is_done" << apPCSA->nused << is_done;
+   bool is_done        = ( apPCSA->nchan > 0 );   // Done when not all empty
+DbgLv(1) << "EGCe:st: nchan is_done" << apPCSA->nchan << is_done;
    return ( is_done ? 8 : 0 );
 }
 
