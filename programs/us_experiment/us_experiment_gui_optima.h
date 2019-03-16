@@ -841,7 +841,7 @@ class US_ExperGuiAProfile : public US_WidgetsDialog
       US_RunProtocol::RunProtoAProfile*   rpAprof;  //!< AProfile controls
       US_RunProtocol::RunProtoUpload*     rpSubmt;  //!< Submit controls
       US_Help  showHelp;
-      US_AnalysisProfile*   sdiag;      // Analysis Profile in panel
+      US_AnalysisProfileGui* sdiag;      // Analysis Profile in panel
 
       //QPushButton* pb_saverp;
       //QPushButton* pb_submit;

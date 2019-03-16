@@ -19,7 +19,7 @@
 
 
 // Constructor:  build the main layout with tab widget panels
-US_AnalysisProfile::US_AnalysisProfile() : US_Widgets()
+US_AnalysisProfileGui::US_AnalysisProfileGui() : US_Widgets()
 {
    dbg_level    = US_Settings::us_debug();
    curr_panx    = 0;
@@ -122,18 +122,18 @@ DbgLv(1) << "MAIN:  CALL reset()";
 
 
 // Reset parameters to their defaults
-void US_AnalysisProfile::reset( void )
+void US_AnalysisProfileGui::reset( void )
 {
 }
 
 // Set auto mode (comes from ComProject or Experiment)
-void US_AnalysisProfile::auto_mode_passed( void )
+void US_AnalysisProfileGui::auto_mode_passed( void )
 {
    automode            = true;
 }
 
 // Set auto protocol and aprofile names
-void US_AnalysisProfile::auto_name_passed( QString& p_protname, QString& p_aproname )
+void US_AnalysisProfileGui::auto_name_passed( QString& p_protname, QString& p_aproname )
 {
    currProf.protoname   = p_protname;
    currProf.aprofname   = p_aproname;
@@ -146,20 +146,20 @@ void US_AnalysisProfile::auto_name_passed( QString& p_protname, QString& p_apron
 }
 
 // Reset parameters to their defaults
-void US_AnalysisProfile::close_program( void )
+void US_AnalysisProfileGui::close_program( void )
 {
    emit us_exp_is_closed();
    close();
 }
 
 // Apply Profile
-void US_AnalysisProfile::apply_profile( void )
+void US_AnalysisProfileGui::apply_profile( void )
 {
 DbgLv(1) << "MN:SL: APPLY_PROFILE";
 }
 
 // Set even spacing in the grid layout for all 12 columns
-void US_AnalysisProfile::setColumnStretches( QGridLayout* genL )
+void US_AnalysisProfileGui::setColumnStretches( QGridLayout* genL )
 {
    for ( int ii = 0; ii < 12; ii++ )
       genL->setColumnStretch( ii, 1 );
@@ -169,7 +169,7 @@ void US_AnalysisProfile::setColumnStretches( QGridLayout* genL )
 US_AnaprofPanGen::US_AnaprofPanGen( QWidget* topw )
    : US_WidgetsDialog( topw, 0 )
 {
-   mainw               = (US_AnalysisProfile*)topw;
+   mainw               = (US_AnalysisProfileGui*)topw;
    dbg_level           = US_Settings::us_debug();
    use_db              = ( US_Settings::default_data_location() < 2 );
    QVBoxLayout* panel  = new QVBoxLayout( this );
@@ -363,7 +363,7 @@ void US_AnaprofPanGen::apro_button_clicked()
 DbgLv(1) << "GP:SL: APRO BTN";
 //*TEMPORARY
 QMessageBox::information( this, "Under Development",
- "This will lead to an AnalysisProfile selection dialog" );
+ "This will lead to an AnalysisProfileGui selection dialog" );
 //*TEMPORARY
 }
 
@@ -481,7 +481,7 @@ DbgLv(1) << "GP:SL: APPLIED ALL";
 US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
    : US_WidgetsDialog( topw, 0 )
 {
-   mainw               = (US_AnalysisProfile*)topw;
+   mainw               = (US_AnalysisProfileGui*)topw;
    dbg_level           = US_Settings::us_debug();
    QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
@@ -804,7 +804,7 @@ US_AnaprofPanPCSA::US_AnaprofPanPCSA( QWidget* topw )
    : US_WidgetsDialog( topw, 0 )
 {
 DbgLv(1) << "APpc: IN";
-   mainw               = (US_AnalysisProfile*)topw;
+   mainw               = (US_AnalysisProfileGui*)topw;
    dbg_level           = US_Settings::us_debug();
    QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
@@ -1128,7 +1128,7 @@ US_AnaprofPanStatus::US_AnaprofPanStatus( QWidget* topw )
    : US_WidgetsDialog( topw, 0 )
 {
 DbgLv(1) << "APup: IN";
-   mainw               = (US_AnalysisProfile*)topw;
+   mainw               = (US_AnalysisProfileGui*)topw;
    dbg_level           = US_Settings::us_debug();
    QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );

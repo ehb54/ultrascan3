@@ -3644,7 +3644,7 @@ US_ExperGuiAProfile::US_ExperGuiAProfile( QWidget* topw )
    panel->addStretch();
 
    // Embed AnalysisProfile object in panel
-   sdiag               = new US_AnalysisProfile;
+   sdiag               = new US_AnalysisProfileGui;
    sdiag->setParent( this, Qt::Widget );
    int offset          =  lb_panel->height() + 4;
    sdiag->move( 0, offset );

@@ -6,9 +6,8 @@
 #include "us_extern.h"
 #include "us_db2.h"
 
-//! A class to define a Run Protocol object for US_ExperimentMain and
-//!  related classes
-class US_RunProtocol
+//! A class to define a Run Protocol object
+class US_UTIL_EXTERN US_RunProtocol
 {
    public:
       //! \brief Protocol Lab/Rotor controls class
