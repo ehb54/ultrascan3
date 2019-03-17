@@ -1043,19 +1043,11 @@ DbgLv(1) << "BufN:SL: adco:" << item->text();
 
    if ( bcomp.unit != runit )
    { // Change limits to component (not range) units
-      double rfact   = 1.0;
-
       if ( runit == "M" )
       { // Range in M, Concentration in mM; so multiple by 1000
-         rfact          = 1000.0;
+         rlow          *= 1000.0;
+         rhigh         *= 1000.0;
       }
-      else
-      { // Range in mM, Concentration mM; so divide by 1000
-         rfact          = 0.001;
-      }
-
-      rlow          *= rfact;
-      rhigh         *= rfact;
 DbgLv(1) << "BufN:SL: adco:  runit" << runit << "cunit" << bcomp.unit
  << "rlow rhigh" << rlow << rhigh;
    }

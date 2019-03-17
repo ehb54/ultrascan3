@@ -69,7 +69,7 @@
         <densityCoefficients c0="0.99821" c1="0.00000" c2="6.82008" c3="0.19704" c4="-4.13821" c5="57.37880"/>
         <viscosityCoefficients c0="1.00014" c1="-67.69800" c2="65.23700" c3="-115.74700" c4="2080.65500" c5="0.00000"/>
     </component>
-    <component id="25" name="Glycerol%" unit="%weight/weight" range="0-32% by weight/weight" gradient_forming="0">
+    <component id="25" name="Glycerol%" unit="%weight/weight" range="0-32 %weight/weight" gradient_forming="0">
         <densityCoefficients c0="0.99823" c1="0.03086" c2="0.22490" c3="0.00633" c4="0.00003" c5="0.00004"/>
         <viscosityCoefficients c0="1.00180" c1="-8.24760" c2="2.67300" c3="0.31090" c4="0.11430" c5="0.12230"/>
     </component>

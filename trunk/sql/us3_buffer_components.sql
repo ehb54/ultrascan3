@@ -204,7 +204,7 @@ INSERT INTO bufferComponent SET
   description       = 'Glycerol%',
   viscosity         = '1.0018 -8.2476 2.673 0.3109 0.1143 0.1223',
   density           = '0.99823 0.030859 0.2249 6.333e-3 2.505e-5 4.151e-5',
-  c_range           = '0-32% by weight/weight';
+  c_range           = '0-32 %weight/weight';
 
 INSERT INTO bufferComponent SET
   bufferComponentID =  26,
