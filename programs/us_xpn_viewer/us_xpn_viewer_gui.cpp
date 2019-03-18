@@ -43,7 +43,170 @@
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
- 
+
+// DialBox 
+DialBox::DialBox( QWidget *parent ):
+  QWidget( parent )
+{
+    d_dial = createDial();
+    d_label = new QLabel( this );
+    d_label->setAlignment( Qt::AlignCenter );
+    d_label->setStyleSheet("font: bold;color: black;");
+    
+    QVBoxLayout *layout = new QVBoxLayout( this );;
+    layout->setSpacing( 0 );
+    layout->addWidget( d_dial, 15 );
+    layout->addWidget( d_label );
+
+    connect( d_dial, SIGNAL( valueChanged( double ) ), this, SLOT( setNum( double ) ) );
+
+    setNum( d_dial->value() );
+}
+
+void DialBox::setNum( double v )
+{
+    QString text;
+    //text.setNum( v, 'f', 2 );
+    text = "Rotor Speed: " + QString::number(v*1000) + " rpm";
+
+    d_label->setText( text );
+}
+
+SpeedoMeter *DialBox::createDial( void ) const  
+{
+  SpeedoMeter *dial = new SpeedoMeter;
+
+  dial->setScaleStepSize( 5 );
+  dial->setScale( 0, 60 );
+  dial->scaleDraw()->setPenWidth( 2 );
+  dial->setValue(45);
+
+  return dial;
+}
+
+// END of Dial box
+
+
+// Speedometer
+SpeedoMeter::SpeedoMeter( QWidget *parent ):
+    QwtDial( parent ),
+    d_label( "RPM" )
+{
+    QwtRoundScaleDraw *scaleDraw = new QwtRoundScaleDraw();
+    scaleDraw->setSpacing( 8 );
+    scaleDraw->enableComponent( QwtAbstractScaleDraw::Backbone, false );
+    scaleDraw->setTickLength( QwtScaleDiv::MinorTick, 0 );
+    scaleDraw->setTickLength( QwtScaleDiv::MediumTick, 4 );
+    scaleDraw->setTickLength( QwtScaleDiv::MajorTick, 8 );
+    setScaleDraw( scaleDraw );
+
+    setWrapping( false );
+    //setReadOnly( true );
+
+    setOrigin( 135.0 );
+    setScaleArc( 0.0, 270.0 );
+
+    
+    QwtDialSimpleNeedle *needle = new QwtDialSimpleNeedle(
+        QwtDialSimpleNeedle::Arrow, true, Qt::red,
+        QColor( Qt::gray ).light( 130 ) );
+    setNeedle( needle );
+}
+
+void SpeedoMeter::setLabel( const QString &label )
+{
+    d_label = label;
+    update();
+}
+
+QString SpeedoMeter::label() const
+{
+    return d_label;
+}
+
+// Reloaded virtual function - needed to display units label (RPM)
+void SpeedoMeter::drawScaleContents( QPainter *painter,
+    const QPointF &center, double radius ) const
+{
+    QRectF rect( 0.0, 0.0, 2.0 * radius, 2.0 * radius - 10.0 );
+    rect.moveCenter( center );
+
+    const QColor color = palette().color( QPalette::Text );
+    painter->setPen( color );
+
+    const int flags = Qt::AlignBottom | Qt::AlignHCenter;
+    painter->drawText( rect, flags, d_label );
+}
+// END of Speedometer calss
+
+// WheelBox
+WheelBox::WheelBox( Qt::Orientation orientation, QWidget *parent ): QWidget( parent )
+{
+    QWidget *box = createBox( orientation );
+    d_label = new QLabel( this );
+    d_label->setAlignment( Qt::AlignHCenter | Qt::AlignTop );
+    d_label->setStyleSheet("font: bold;color: black;");
+
+    // QHBoxLayout* main = new QHBoxLayout( this );
+    // main->setSpacing         ( 0 );
+    // main->setContentsMargins ( 0, 0, 0, 0 );
+    
+    // QBoxLayout *thermo_label = new QVBoxLayout( this );
+    // QLabel* t_label = new QLabel(this);;
+    // QString text;
+    // text =  "Celsius";
+    // t_label->setText( text );
+    // thermo_label->addWidget( t_label );
+
+    QVBoxLayout *layout       = new QVBoxLayout( this );
+    layout->addWidget( box, 10 );
+    layout->addWidget( d_label );
+
+    //main->addLayout(thermo_label);
+    //main->addLayout(layout);
+    
+    setNum( d_thermo->value() );
+}
+
+QWidget *WheelBox::createBox( Qt::Orientation orientation ) 
+{
+    d_thermo = new QwtThermo();
+    d_thermo->setOrientation( orientation );
+
+    d_thermo->setScalePosition( QwtThermo::TrailingScale );
+
+    QwtLinearColorMap *colorMap = new QwtLinearColorMap(); 
+    colorMap->setColorInterval( Qt::blue, Qt::red );
+    d_thermo->setColorMap( colorMap );
+
+    double min = 0;
+    double max = 40;
+
+    d_thermo->setScale( min, max );
+    d_thermo->setValue( max );
+
+    QWidget *box = new QWidget();
+    QBoxLayout *layout;
+    layout = new QVBoxLayout( box );
+
+    layout->addWidget( d_thermo, Qt::AlignCenter );
+    
+    return box;
+}
+
+
+void WheelBox::setNum( double v )
+{
+  
+    QString text;
+    //text.setNum( v, 'f', 2 );
+
+    text = "Temp.: " + QString::number(v) + QChar(0x2103);
+    d_label->setText( text );
+}
+
+//END of WheelBox
+
 
 // Constructor for use in automated app
 US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
@@ -53,8 +216,10 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
    setWindowTitle( tr( "Beckman Optima Data Viewer" ) );
    setPalette( US_GuiSettings::frameColor() );
 
-   QGridLayout* settings = new QGridLayout;
-
+   QGridLayout* settings    = new QGridLayout;
+   QGridLayout* live_params = new QGridLayout;
+   QGridLayout* time_params = new QGridLayout;
+   
    navgrec      = 10;
    dbg_level    = US_Settings::us_debug();
    QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
@@ -229,6 +394,9 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
    QPushButton* pb_help     = us_pushbutton( tr( "Help" ) );
    QPushButton* pb_close    = us_pushbutton( tr( "Close" ) );
 
+   pb_stop =  us_pushbutton( tr( "STOP" ) );
+   pb_stop->setStyleSheet("font: bold;color: red;");
+
    pb_close  ->setEnabled(false);
 
       // Hide scan Control
@@ -371,6 +539,11 @@ if(mcknt>0)
    settings->addWidget( cb_pltrec,     row,   2, 1, 2 );
    settings->addWidget( pb_prev,       row,   4, 1, 2 );
    settings->addWidget( pb_next,       row++, 6, 1, 2 );
+
+   settings->addWidget( lb_status,     row,   0, 1, 4 );
+   settings->addWidget( pb_stop,       row,   4, 1, 2 );
+   settings->addWidget( pb_help,       row++, 6, 1, 2 );
+   
    settings->addWidget( ck_autoscy,    row,   0, 1, 4 );
    settings->addWidget( pb_showtmst,   row++, 4, 1, 4 );
    settings->addWidget( pb_colmap,     row,   0, 1, 2 );
@@ -382,9 +555,11 @@ if(mcknt>0)
    settings->addWidget( ct_to,         row++, 5, 1, 3 );
    settings->addWidget( pb_exclude,    row,   0, 1, 4 );
    settings->addWidget( pb_include,    row++, 4, 1, 4 );
-   settings->addWidget( lb_status,     row++, 0, 1, 8 );
+
+   //settings->addWidget( lb_status,     row++, 0, 1, 8 );
+
    settings->addWidget( le_status,     row++, 0, 1, 8 );
-   settings->addWidget( pb_help,       row,   0, 1, 8 );
+   //settings->addWidget( pb_help,       row,   0, 1, 8 );
    //settings->addWidget( pb_close,      row++, 4, 1, 4 );
 
    // Plot layout for the right side of window
@@ -394,7 +569,7 @@ if(mcknt>0)
                                    tr( "Radius (in cm)" ), 
                                    tr( "Intensity" ) );
 
-   data_plot->setMinimumSize( 400, 400 );
+   data_plot->setMinimumSize( 450, 450 );
 
    data_plot->enableAxis( QwtPlot::xBottom, true );
    data_plot->enableAxis( QwtPlot::yLeft  , true );
@@ -410,25 +585,102 @@ if(mcknt>0)
    connect( plot, SIGNAL( zoomedCorners( QRectF ) ),
             this, SLOT  ( currentRectf ( QRectF ) ) );
 
+   //Live params (rpm speed, temp.)
+   int row_params = 0;
+   rpm_box = new DialBox( this );
+   live_params->addWidget( rpm_box, row_params, 0, 1, 6 );
+
+   temperature_box = new WheelBox( Qt::Vertical  );  // Blue/Red box
+   live_params->addWidget( temperature_box, row_params++, 6, 1, 2 );
+
+   QLabel*      lb_elapsed     = us_label( tr( "Elapsed Time:" ), -1 );
+                le_elapsed     = us_lineedit( "00:00:00", -1, true );
+   QLabel*      lb_remaining   = us_label( tr( "Remaining Time:" ), -1 );
+                le_remaining   = us_lineedit( "00:00:00", -1, true );
+
+		
+   time_params-> addWidget( lb_elapsed,   row_params,   0, 1, 2 );
+   time_params-> addWidget( le_elapsed,   row_params,   2, 1, 2 );
+   time_params-> addWidget( lb_remaining, row_params,   4, 1, 2 );
+   time_params-> addWidget( le_remaining, row_params++, 6, 1, 2 );
+   
    // Now let's assemble the page
    
    QVBoxLayout* left     = new QVBoxLayout;
 
    left->addLayout( settings );
+   left->addLayout( live_params );
+   left->addLayout( time_params );
    
    QVBoxLayout* right    = new QVBoxLayout;
    
    right->addLayout( plot );
 
-   QHBoxLayout* main = new QHBoxLayout( this );
-   main->setSpacing         ( 2 );
-   main->setContentsMargins ( 2, 2, 2, 2 );
+   QHBoxLayout* main = new QHBoxLayout;
+   // main->setSpacing         ( 2 );
+   // main->setContentsMargins ( 2, 2, 2, 2 );
 
    main->addLayout( left );
    main->addLayout( right );
 
    main->setStretch( 0, 3 );
    main->setStretch( 1, 7 );
+     
+   //Plots for Temp.
+   plot_temp             = new US_Plot( data_plot_temp, "", "", QString("Degrees, ")+QChar(0x2103));
+  
+   //data_plot_temp->setMinimumSize( 50, 400 );
+
+   data_plot_temp->enableAxis( QwtPlot::xBottom, false );
+   data_plot_temp->enableAxis( QwtPlot::yLeft  , true );
+
+   data_plot_temp->setAxisScale( QwtPlot::xBottom, 5.8,  7.2 );
+   data_plot_temp->setAxisScale( QwtPlot::yLeft  , 0.0, 5e+4 );
+
+   picker_temp = new US_PlotPicker( data_plot_temp );
+   picker_temp->setRubberBand     ( QwtPicker::VLineRubberBand );
+   picker_temp->setMousePattern   ( QwtEventPattern::MouseSelect1,
+   				    Qt::LeftButton, Qt::ControlModifier );
+
+   connect( plot_temp, SIGNAL( zoomedCorners( QRectF ) ),
+            this, SLOT  ( currentRectf ( QRectF ) ) );
+
+   //plot RPM
+   plot_rpm             = new US_Plot( data_plot_rpm, "", tr( "Time (minutes)" ), QString("RPM"));
+  
+   //data_plot_rpm->setMinimumSize( 50, 400 );
+
+   data_plot_rpm->enableAxis( QwtPlot::xBottom, true );
+   data_plot_rpm->enableAxis( QwtPlot::yLeft  , true );
+
+   data_plot_rpm->setAxisScale( QwtPlot::xBottom, 5.8,  7.2 );
+   data_plot_rpm->setAxisScale( QwtPlot::yLeft  , 0.0, 5e+4 );
+
+   picker_rpm = new US_PlotPicker( data_plot_rpm );
+   picker_rpm->setRubberBand     ( QwtPicker::VLineRubberBand );
+   picker_rpm->setMousePattern   ( QwtEventPattern::MouseSelect1,
+				   Qt::LeftButton, Qt::ControlModifier );
+
+   connect( plot_rpm, SIGNAL( zoomedCorners( QRectF ) ),
+            this, SLOT  ( currentRectf ( QRectF ) ) );
+
+   
+
+   QHBoxLayout* running_temp  = new QHBoxLayout;
+   running_temp->addLayout( plot_temp );
+   QHBoxLayout* running_rpm  = new QHBoxLayout;
+   running_rpm->addLayout( plot_rpm );
+
+   // MAIN panel
+   QVBoxLayout* supermain = new QVBoxLayout( this );
+   supermain->setSpacing         ( 2 );
+   supermain->setContentsMargins ( 2, 2, 2, 2 );     
+   supermain->addLayout( main );
+   //supermain->addLayout( running_temp );
+   supermain->addLayout( running_rpm );
+
+   // supermain->setStretch( 0, 7 );
+   // supermain->setStretch( 1, 3 );
 
    reset();
    setMinimumSize( 950, 450 );
@@ -852,6 +1104,23 @@ void US_XpnDataViewer::reset( void )
    data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 5e+4 );
    grid          = us_grid( data_plot );
    data_plot->replot();
+
+
+   dPlotClearAll( data_plot_temp );
+   picker_temp   ->disconnect();
+   data_plot_temp->setAxisScale( QwtPlot::xBottom, 5.8,  7.2 );
+   data_plot_temp->setAxisScale( QwtPlot::yLeft  , 0.0, 5e+4 );
+   grid_temp          = us_grid( data_plot_temp );
+   data_plot_temp->replot();
+
+   dPlotClearAll( data_plot_rpm );
+   picker_rpm   ->disconnect();
+   data_plot_rpm->setAxisScale( QwtPlot::xBottom, 5.8,  7.2 );
+   data_plot_rpm->setAxisScale( QwtPlot::yLeft  , 0.0, 5e+4 );
+   grid_rpm          = us_grid( data_plot_rpm );
+   data_plot_rpm->replot();
+
+   
    connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
             this,         SLOT  ( changeCellCh(            ) ) );
 //   connect( plot, SIGNAL( zoomedCorners( QRectF ) ),
