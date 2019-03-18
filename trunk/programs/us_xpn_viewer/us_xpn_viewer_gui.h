@@ -3,6 +3,15 @@
 #define US_XPN_VIEWERG_H
 
 #include <QtGui>
+#include <qwt_dial.h>
+#include <qpainter.h>
+#include <qwt_dial_needle.h>
+#include <qwt_round_scale_draw.h>
+#include <qwt_wheel.h>
+#include <qwt_thermo.h>
+#include <qwt_scale_engine.h>
+#include <qwt_transform.h>
+#include <qwt_color_map.h>
 
 #include "us_extern.h"
 #include "us_xpn_data.h"
@@ -14,6 +23,63 @@
 #include "us_license.h"
 #include "us_xpn_run_raw.h"
 #include "us_xpn_run_auc.h"
+
+
+class SpeedoMeter: public QwtDial
+{
+
+  Q_OBJECT
+ 
+public:
+    SpeedoMeter( QWidget *parent = NULL );
+
+    void setLabel( const QString & );
+    QString label() const;
+
+protected:
+    virtual void drawScaleContents( QPainter *painter,
+        const QPointF &center, double radius ) const;
+
+private:
+    QString d_label;
+};
+
+
+
+class DialBox: public QWidget
+{
+    Q_OBJECT
+public:
+    DialBox( QWidget *parent );
+
+private Q_SLOTS:
+    void setNum( double v );
+
+private:
+    SpeedoMeter *createDial( void ) const;
+    SpeedoMeter *d_dial;
+    QLabel  *d_label;
+};
+
+
+
+
+class WheelBox: public QWidget
+{
+    Q_OBJECT
+public:
+    WheelBox( Qt::Orientation, QWidget *parent = NULL );
+    
+private Q_SLOTS:
+    void setNum( double v );
+
+private:
+    QWidget *createBox( Qt::Orientation  );
+private:
+    QwtThermo *d_thermo;
+    QLabel *d_label;
+};
+
 
 class US_XpnDataViewer : public US_Widgets
 {
@@ -37,6 +103,10 @@ class US_XpnDataViewer : public US_Widgets
 
      QList< QColor >   mcolors;     //!< Map colors for scan curves
 
+     SpeedoMeter*   rpm_speed;
+     DialBox*       rpm_box;
+     WheelBox*      temperature_box;
+
      US_XpnData*    xpn_data;       //!< Raw XPN (.postres) data loaded
 
      QStringList    runInfo;        //!< List of run information strings
@@ -47,8 +117,14 @@ class US_XpnDataViewer : public US_Widgets
      US_Help        showHelp;
      US_PlotPicker* picker;
 
-     QLabel*        lb_pltrec;
+     US_PlotPicker* picker_temp;
+     US_PlotPicker* picker_rpm;
 
+     QLabel*        lb_pltrec;
+     
+     QLineEdit*     le_elapsed;
+     QLineEdit*     le_remaining;
+     
      QLineEdit*     le_dir;
      QLineEdit*     le_dbhost;
      QComboBox*     cb_optima;           // New
@@ -89,9 +165,19 @@ class US_XpnDataViewer : public US_Widgets
      QPushButton*   pb_reload;
      QPushButton*   pb_colmap;
 
+     QPushButton*   pb_stop;
+
      QwtPlot*       data_plot;
      QwtPlotGrid*   grid;
      US_Plot*       plot;
+
+     QwtPlot*       data_plot_temp;
+     QwtPlotGrid*   grid_temp;
+     US_Plot*       plot_temp;
+
+     QwtPlot*       data_plot_rpm;
+     QwtPlotGrid*   grid_rpm;
+     US_Plot*       plot_rpm;
 
      QString        currentDir;
      QString        runID;
