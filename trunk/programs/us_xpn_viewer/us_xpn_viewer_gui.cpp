@@ -1106,19 +1106,19 @@ void US_XpnDataViewer::reset( void )
    data_plot->replot();
 
 
-   dPlotClearAll( data_plot_temp );
-   picker_temp   ->disconnect();
-   data_plot_temp->setAxisScale( QwtPlot::xBottom, 5.8,  7.2 );
-   data_plot_temp->setAxisScale( QwtPlot::yLeft  , 0.0, 5e+4 );
-   grid_temp          = us_grid( data_plot_temp );
-   data_plot_temp->replot();
+   // dPlotClearAll( data_plot_temp );
+   // picker_temp   ->disconnect();
+   // data_plot_temp->setAxisScale( QwtPlot::xBottom, 5.8,  7.2 );
+   // data_plot_temp->setAxisScale( QwtPlot::yLeft  , 0.0, 5e+4 );
+   // grid_temp          = us_grid( data_plot_temp );
+   // data_plot_temp->replot();
 
-   dPlotClearAll( data_plot_rpm );
-   picker_rpm   ->disconnect();
-   data_plot_rpm->setAxisScale( QwtPlot::xBottom, 5.8,  7.2 );
-   data_plot_rpm->setAxisScale( QwtPlot::yLeft  , 0.0, 5e+4 );
-   grid_rpm          = us_grid( data_plot_rpm );
-   data_plot_rpm->replot();
+   // dPlotClearAll( data_plot_rpm );
+   // picker_rpm   ->disconnect();
+   // data_plot_rpm->setAxisScale( QwtPlot::xBottom, 5.8,  7.2 );
+   // data_plot_rpm->setAxisScale( QwtPlot::yLeft  , 0.0, 5e+4 );
+   // grid_rpm          = us_grid( data_plot_rpm );
+   // data_plot_rpm->replot();
 
    
    connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
