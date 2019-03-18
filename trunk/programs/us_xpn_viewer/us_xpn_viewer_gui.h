@@ -124,6 +124,7 @@ class US_XpnDataViewer : public US_Widgets
      
      QLineEdit*     le_elapsed;
      QLineEdit*     le_remaining;
+     QLineEdit*     le_running;
      
      QLineEdit*     le_dir;
      QLineEdit*     le_dbhost;

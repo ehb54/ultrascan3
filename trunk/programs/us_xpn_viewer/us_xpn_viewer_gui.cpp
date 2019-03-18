@@ -159,7 +159,7 @@ WheelBox::WheelBox( Qt::Orientation orientation, QWidget *parent ): QWidget( par
     // thermo_label->addWidget( t_label );
 
     QVBoxLayout *layout       = new QVBoxLayout( this );
-    layout->addWidget( box, 10 );
+    layout->addWidget( box, 15 );
     layout->addWidget( d_label );
 
     //main->addLayout(thermo_label);
@@ -595,14 +595,18 @@ if(mcknt>0)
 
    QLabel*      lb_elapsed     = us_label( tr( "Elapsed Time:" ), -1 );
                 le_elapsed     = us_lineedit( "00:00:00", -1, true );
+   QLabel*      lb_running     = us_label( tr( "Running Time:" ), -1 );
+                le_running     = us_lineedit( "00:00:00", -1, true );		
    QLabel*      lb_remaining   = us_label( tr( "Remaining Time:" ), -1 );
                 le_remaining   = us_lineedit( "00:00:00", -1, true );
 
 		
    time_params-> addWidget( lb_elapsed,   row_params,   0, 1, 2 );
    time_params-> addWidget( le_elapsed,   row_params,   2, 1, 2 );
-   time_params-> addWidget( lb_remaining, row_params,   4, 1, 2 );
-   time_params-> addWidget( le_remaining, row_params++, 6, 1, 2 );
+   time_params-> addWidget( lb_running,   row_params,   4, 1, 2 );
+   time_params-> addWidget( le_running,   row_params,   6, 1, 2 );
+   time_params-> addWidget( lb_remaining, row_params,   8, 1, 2 );
+   time_params-> addWidget( le_remaining, row_params++, 10, 1, 2 );
    
    // Now let's assemble the page
    
@@ -610,11 +614,12 @@ if(mcknt>0)
 
    left->addLayout( settings );
    left->addLayout( live_params );
-   left->addLayout( time_params );
+   //left->addLayout( time_params );
    
    QVBoxLayout* right    = new QVBoxLayout;
    
    right->addLayout( plot );
+   right->addLayout( time_params );
 
    QHBoxLayout* main = new QHBoxLayout;
    // main->setSpacing         ( 2 );
