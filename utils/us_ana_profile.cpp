@@ -16,6 +16,14 @@ US_AnaProfile::US_AnaProfile()
    aprofGUID       = QString( "00000000-0000-0000-0000-000000000000" );
    protoname       = "";
    protoGUID       = QString( "00000000-0000-0000-0000-000000000000" );
+
+   pchans    << "1A";
+   chndescs  << "1A:UV/vis.:(unspecified)";
+   lc_ratios << 1.0;
+   lc_tolers << 5.0;
+   l_volumes << 460.0;
+   lv_tolers << 10.0;
+   data_ends << 7.0;
 }
 
 // AnaProfile Equality operator
@@ -57,6 +65,8 @@ bool US_AnaProfile::toXml( QXmlStreamWriter& xmlo )
                                QString::number( l_volumes[ ii ] ) );
       xmlo.writeAttribute    ( "lv_tolerance",
                                QString::number( lv_tolers[ ii ] ) );
+      xmlo.writeAttribute    ( "data_end",
+                               QString::number( data_ends[ ii ] ) );
       xmlo.writeEndElement();    // channel_parms
    }
 
@@ -75,6 +85,13 @@ bool US_AnaProfile::toXml( QXmlStreamWriter& xmlo )
 bool US_AnaProfile::fromXml( QXmlStreamReader& xmli )
 {
    int chx            = 0;
+   pchans   .clear();
+   chndescs .clear();
+   lc_ratios.clear();
+   lc_tolers.clear();
+   l_volumes.clear();
+   lv_tolers.clear();
+   data_ends.clear();
 
    while( ! xmli.atEnd() )
    {
@@ -87,22 +104,21 @@ bool US_AnaProfile::fromXml( QXmlStreamReader& xmli )
          if ( ename == "analysis_profile" )
          {
             QXmlStreamAttributes attr = xmli.attributes();
-	    aprofname       = attr.value( "project"  ).toString();
-	    aprofGUID       = attr.value( "projectid"  ).toInt();
-	    
-            protoname       = attr.value( "description"  ).toString();
-            protoGUID       = attr.value( "guid"         ).toString();
+	    aprofname       = attr.value( "name" ).toString();
+            aprofGUID       = attr.value( "guid" ).toString();
          }
 
          else if ( ename == "channel_parms" )
          {
             QXmlStreamAttributes attr = xmli.attributes();
-            pchans   [ chx ] = attr.value( "channel"           ).toString();
-            chndescs [ chx ] = attr.value( "chandesc"          ).toString();
-            lc_ratios[ chx ] = attr.value( "load_concen_ratio" ).toString().toDouble();
-            lc_tolers[ chx ] = attr.value( "lcr_toleraance"    ).toString().toDouble();
-            l_volumes[ chx ] = attr.value( "load_volume"       ).toString().toDouble();
-            lv_tolers[ chx ] = attr.value( "lv_toleraance"     ).toString().toDouble();
+            pchans    << attr.value( "channel" ).toString();
+            chndescs  << attr.value( "chandesc" ).toString();
+            lc_ratios << attr.value( "load_concen_ratio" ).toString().toDouble();
+            lc_tolers << attr.value( "lcr_tolerance" ).toString().toDouble();
+            l_volumes << attr.value( "load_volume" ).toString().toDouble();
+            lv_tolers << attr.value( "lv_tolerance" ).toString().toDouble();
+            data_ends << attr.value( "data_end" ).toString().toDouble();
+//3-------------------------------------------------------------------------->80
             chx++;
          }
 
@@ -118,8 +134,24 @@ bool US_AnaProfile::fromXml( QXmlStreamReader& xmli )
 // AnaProf2DSA subclass constructor
 US_AnaProfile::AnaProf2DSA::AnaProf2DSA()
 {
-   nchan                = 0;
+   fitrng      = 0.3;
+   nchan       = 1;
+   grpoints    = 64;
+   rfiters     = 0;
+   mciters     = 0;
+   job1run     = false;
+   job2run     = false;
+   job3run     = false;
+   job4run     = false;
+   job5run     = false;
+   job3auto    = true;
+   job1nois    = "ti";
+   job2nois    = "both";
+   job4nois    = "both";
+
    parms.clear();
+   Parm2DSA parm1;
+   parms << parm1;
 }
 
 // AnaProf2DSA subclass Equality operator
@@ -135,6 +167,8 @@ bool US_AnaProfile::AnaProf2DSA::operator==
 bool US_AnaProfile::AnaProf2DSA::fromXml( QXmlStreamReader& xmli )
 {
    nchan           = 0;
+   parms.clear();
+   Parm2DSA parm1;
 
    while( ! xmli.atEnd() )
    {
@@ -147,39 +181,42 @@ bool US_AnaProfile::AnaProf2DSA::fromXml( QXmlStreamReader& xmli )
          {
             QXmlStreamAttributes attr = xmli.attributes();
             QString chan   = attr.value( "channel" ).toString();
-            QString cgrid  = attr.value( "custom_grid" ).toString();
+            QString vvflag = attr.value( "vary_vbar" ).toString();
+            QString cgrid  = attr.value( "custom_grid_guid" ).toString();
             double smin    = attr.value( "s_min" ).toString().toDouble();
             double smax    = attr.value( "s_max" ).toString().toDouble();
-            double sgpts   = attr.value( "s_gridpoints" ).toString().toInt();
-            double kmin    = attr.value( "ff0_min" ).toString().toDouble();
-            double kmax    = attr.value( "ff0_max" ).toString().toDouble();
-            double kgpts   = attr.value( "ff0_gridpoints" ).toString().toInt();
-            int vvflag     = attr.value( "vary_vbar" ).toString().toInt();
-            double grreps  = attr.value( "grid_repetitions" ).toString().toInt();
-            parms[ nchan ].channel    = chan;
-            parms[ nchan ].s_min      = smin;
-            parms[ nchan ].s_max      = smax;
-            parms[ nchan ].s_grpts    = sgpts;
-            parms[ nchan ].k_min      = kmin;
-            parms[ nchan ].k_max      = kmax;
-            parms[ nchan ].k_grpts    = kgpts;
-            parms[ nchan ].gridreps   = grreps;
-            parms[ nchan ].cust_grid  = cgrid;
-            parms[ nchan ].varyvbar   = ( vvflag != 0 );
-            parms[ nchan ].have_custg = ( ! cgrid.isEmpty()  &&  cgrid != "none" );
+            int sgpts      = attr.value( "s_gridpoints" ).toString().toInt();
+            double kmin    = attr.value( "k_min" ).toString().toDouble();
+            double kmax    = attr.value( "k_max" ).toString().toDouble();
+            int kgpts      = attr.value( "k_gridpoints" ).toString().toInt();
+            int grreps     = attr.value( "grid_repetitions" ).toString().toInt();
+            parm1.channel    = chan;
+            parm1.s_min      = smin;
+            parm1.s_max      = smax;
+            parm1.s_grpts    = sgpts;
+            parm1.k_min      = kmin;
+            parm1.k_max      = kmax;
+            parm1.k_grpts    = kgpts;
+            parm1.gridreps   = grreps;
+            parm1.cust_grid  = cgrid;
+            parm1.cgrid_name = "";
+            parm1.varyvbar   = US_Util::bool_flag( vvflag );
+            parm1.have_custg = ( ! cgrid.isEmpty()  &&
+                                          cgrid.length() != 36 );
 
+            parms << parm1;
             nchan++;
          }
          else if ( ename == "job_2dsa" )
          {
             QXmlStreamAttributes attr = xmli.attributes();
-            job1run        = attr.value( "run" ).toString().toInt() != 0;
+            job1run        = US_Util::bool_flag( attr.value( "run" ).toString() );
             job1nois       = attr.value( "noise" ).toString();
          }
          else if ( ename == "job_2dsa_fm" )
          {
             QXmlStreamAttributes attr = xmli.attributes();
-            job1run        = attr.value( "run" ).toString().toInt() != 0;
+            job1run        = US_Util::bool_flag( attr.value( "run" ).toString() );
             job2nois       = attr.value( "noise" ).toString();
             fitrng         = attr.value( "fit_range" ).toString().toDouble();
             grpoints       = attr.value( "grid_points" ).toString().toInt();
@@ -187,20 +224,20 @@ bool US_AnaProfile::AnaProf2DSA::fromXml( QXmlStreamReader& xmli )
          else if ( ename == "job_fitmen" )
          {
             QXmlStreamAttributes attr = xmli.attributes();
-            job3run        = attr.value( "run" ).toString().toInt() != 0;
+            job3run        = US_Util::bool_flag( attr.value( "run" ).toString() );
             job3auto       = attr.value( "interactive" ).toString().toInt() == 0;
          }
          else if ( ename == "job_2dsa_it" )
          {
             QXmlStreamAttributes attr = xmli.attributes();
-            job4run        = attr.value( "run" ).toString().toInt() != 0;
+            job4run        = US_Util::bool_flag( attr.value( "run" ).toString() );
             job4nois       = attr.value( "noise" ).toString();
             rfiters        = attr.value( "max_iterations" ).toString().toInt();
          }
          else if ( ename == "job_2dsa_mc" )
          {
             QXmlStreamAttributes attr = xmli.attributes();
-            job5run        = attr.value( "run" ).toString().toInt();
+            job5run        = US_Util::bool_flag( attr.value( "run" ).toString() );
             mciters        = attr.value( "mc_iterations" ).toString().toInt();
          }
       }
@@ -230,17 +267,17 @@ bool US_AnaProfile::AnaProf2DSA::toXml( QXmlStreamWriter& xmlo )
                                                     parms[ ii ].s_max ) );
       xmlo.writeAttribute   ( "s_gridpoints",       QString::number(
                                                     parms[ ii ].s_grpts ) );
-      xmlo.writeAttribute   ( "ff0_min",            QString::number(
+      xmlo.writeAttribute   ( "k_min",              QString::number(
                                                     parms[ ii ].k_min ) );
-      xmlo.writeAttribute   ( "ff0_max",            QString::number(
+      xmlo.writeAttribute   ( "k_max",              QString::number(
                                                     parms[ ii ].k_max ) );
-      xmlo.writeAttribute   ( "ff0_gridpoints",     QString::number(
+      xmlo.writeAttribute   ( "k_gridpoints",       QString::number(
                                                     parms[ ii ].k_grpts ) );
       xmlo.writeAttribute   ( "vary_vbar",          US_Util::bool_string(
                                                     parms[ ii ].varyvbar ) );
       xmlo.writeAttribute   ( "constant_ff0",       QString::number(
-                                                    parms[ ii ].k_const ) );
-      xmlo.writeAttribute   ( "custom_grid",        parms[ ii ].cust_grid );
+                                                    parms[ ii ].ff0_const ) );
+      xmlo.writeAttribute   ( "custom_grid_guid",   parms[ ii ].cust_grid );
 
       xmlo.writeEndElement  (); // channel_parms
    }
@@ -286,13 +323,13 @@ bool US_AnaProfile::AnaProf2DSA::toXml( QXmlStreamWriter& xmlo )
 /*
         <2dsa>
             <channel_parms channel="1A" s_min="1" s_max="10" s_gridpoints="64"
-                ff0_min="1" ff0_max="4" ff0_gridpoints="64"
+                k_min="1" k_max="4" k_gridpoints="64"
                 vary_vbar="false" constant_ff0="2" grid_repetitions="8"
-                custom_grid="none" />
+                custom_grid_guid="" />
             <channel_parms channel="1B" s_min="1" s_max="10" s_gridpoints="64"
-                ff0_min="1" ff0_max="4" ff0_gridpoints="64"
+                k_min="1" k_max="4" k_gridpoints="64"
                 vary_vbar="false" constant_ff0="2" grid_repetitions="8"
-                custom_grid="none" />
+                custom_grid_guid="" />
             <job_2dsa run="1" noise="TI" />
             <job_2dsa_fm run="1" noise="both" fit_range="0.03" grid_points="10" />
             <job_fitmen run="1" interactive="true" />
@@ -307,6 +344,19 @@ bool US_AnaProfile::AnaProf2DSA::toXml( QXmlStreamWriter& xmlo )
 // AnaProf2DSA::Parm2DSA subclass constructor
 US_AnaProfile::AnaProf2DSA::Parm2DSA::Parm2DSA()
 {
+   s_min      = 1.0;
+   s_max      = 10.0;
+   k_min      = 1.0;
+   k_max      = 5.0;
+   ff0_const  = 0.72;
+   s_grpts    = 64;
+   k_grpts    = 64;
+   gridreps   = 8;
+   varyvbar   = false;
+   have_custg = false;
+   channel    = "1A";
+   cust_grid  = "";
+   cgrid_name = "";
 }
 
 // AnaProf2DSA::Parm2DSA subclass Equality operator
@@ -340,6 +390,7 @@ bool US_AnaProfile::AnaProfPCSA::fromXml( QXmlStreamReader& xmli )
 {
    parms.clear();
    nchan           = 0;
+   ParmPCSA parm1;
 
    while( ! xmli.atEnd() )
    {
@@ -356,8 +407,9 @@ bool US_AnaProfile::AnaProfPCSA::fromXml( QXmlStreamReader& xmli )
             QString xtype  = attr.value( "x_type" ).toString();
             QString ytype  = attr.value( "y_type" ).toString();
             QString ztype  = attr.value( "z_type" ).toString();
-            QString ttype  = attr.value( "regularization" ).toString();
             QString ntype  = attr.value( "noise" ).toString();
+            QString ttype  = attr.value( "regularization" ).toString();
+            QString jobrun = attr.value( "job_run" ).toString();
             double xmin    = attr.value( "x_min" ).toString().toDouble();
             double xmax    = attr.value( "x_max" ).toString().toDouble();
             double ymin    = attr.value( "y_min" ).toString().toDouble();
@@ -368,37 +420,38 @@ bool US_AnaProfile::AnaProfPCSA::fromXml( QXmlStreamReader& xmli )
             int griter     = attr.value( "gridfit_iterations" ).toString().toInt();
             int respts     = attr.value( "curve_reso_points" ).toString().toInt();
             int mciter     = attr.value( "mc_iterations" ).toString().toInt();
-            int jobrun     = attr.value( "job_run" ).toString().toInt();
-            bool dotreg    = ( ttype != "none" );
-            bool domcit    = ( mciter > 1 );
-            bool jobrunf   = ( jobrun > 0 );
             int noisflg    = 0;
             noisflg        = ( ntype == "ti"   ) ? 1 : noisflg;
             noisflg        = ( ntype == "ri"   ) ? 2 : noisflg;
             noisflg        = ( ntype == "both" ) ? 3 : noisflg;
+            int tregflg    = 0;
+            tregflg        = ( ttype == "spec" ) ? 1 : tregflg;
+            tregflg        = ( ttype == "auto" ) ? 2 : tregflg;
+            bool jobrunf   = US_Util::bool_flag( jobrun );
 
-            parms[ nchan ].channel    = chan;
-            parms[ nchan ].curv_type  = ctype;
-            parms[ nchan ].x_type     = xtype;
-            parms[ nchan ].y_type     = ytype;
-            parms[ nchan ].z_type     = ztype;
-            parms[ nchan ].treg_type  = ttype;
-            parms[ nchan ].noise_type = ntype;
-            parms[ nchan ].x_min      = xmin;
-            parms[ nchan ].x_max      = xmax;
-            parms[ nchan ].y_min      = ymin;
-            parms[ nchan ].y_max      = ymax;
-            parms[ nchan ].z_value    = zval;
-            parms[ nchan ].tr_alpha   = alph;
-            parms[ nchan ].varcount   = varcnt;
-            parms[ nchan ].grf_iters  = griter;
-            parms[ nchan ].creso_pts  = respts;
+            parm1.channel    = chan;
+            parm1.curv_type  = ctype;
+            parm1.x_type     = xtype;
+            parm1.y_type     = ytype;
+            parm1.z_type     = ztype;
+            parm1.treg_type  = ttype;
+            parm1.noise_type = ntype;
+            parm1.x_min      = xmin;
+            parm1.x_max      = xmax;
+            parm1.y_min      = ymin;
+            parm1.y_max      = ymax;
+            parm1.z_value    = zval;
+            parm1.tr_alpha   = alph;
+            parm1.varcount   = varcnt;
+            parm1.grf_iters  = griter;
+            parm1.creso_pts  = respts;
 
-            parms[ nchan ].noise_flag = noisflg;
-            parms[ nchan ].do_tikreg  = dotreg;
-            parms[ nchan ].do_mcarlo  = domcit;
-            parms[ nchan ].job_run    = jobrunf;
+            parm1.noise_flag = noisflg;
+            parm1.treg_flag  = tregflg;
+            parm1.mc_iters   = mciter;
+            parm1.job_run    = jobrunf;
 
+            parms << parm1;
             nchan++;
          }
       }
@@ -406,7 +459,7 @@ bool US_AnaProfile::AnaProfPCSA::fromXml( QXmlStreamReader& xmli )
       bool was_end    = xmli.isEndElement();  // Just read was End of element?
       xmli.readNext();                        // Read the next element
 
-      if ( was_end  &&  ename == "cells" )    // Break after "</cells>"
+      if ( was_end  &&  ename == "pcsa" )     // Break after "</pcsa>"
          break;
    }
 
@@ -462,6 +515,26 @@ bool US_AnaProfile::AnaProfPCSA::toXml( QXmlStreamWriter& xmlo )
 // AnaProfPCSA::ParmPCSA subclass constructor
 US_AnaProfile::AnaProfPCSA::ParmPCSA::ParmPCSA()
 {
+   x_min      = 1.0;
+   x_max      = 10.0;
+   y_min      = 1.0;
+   y_max      = 4.0;
+   z_value    = 0.72;
+   tr_alpha   = 0.0;
+   varcount   = 3;
+   grf_iters  = 6;
+   creso_pts  = 100;
+   noise_flag = 0;
+   treg_flag  = 0;
+   mc_iters   = 0;
+   job_run    = false;
+   channel    = "1A";
+   curv_type  = "All";
+   x_type     = "s";
+   y_type     = "f/f0";
+   z_type     = "vbar";
+   noise_type = "none";
+   treg_type  = "none";
 }
 
 // AnaProfPCSA::ParmPCSA subclass Equality operator

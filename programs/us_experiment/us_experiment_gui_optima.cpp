@@ -438,8 +438,8 @@ void US_ExperGuiGeneral::sel_investigator( void )
 
 
    // ALEXEY: Re-read in summary information on all existing run protocols when user changed
-#if 0  // GARY: Suppress re-read after investigator change
-   if (investID != old_investID)
+#if 1  // GARY: Suppress re-read after investigator change
+   if ( investID != old_investID )
    {
       mainw->solutions_change = true;
 
@@ -461,9 +461,11 @@ DbgLv(1) << "EGGe:main: prnames,prdata counts" << pr_names.count() << protdata.c
       currProto->temperature  = 20.0;
       currProto->temeq_delay  = 10.0;
       initPanel();
+      le_protocol->setText( "" );
+      le_project ->setText( "" );
    }
 #endif
-#if 1  // GARY: Rebuild protocol list after investigator change
+#if 0  // GARY: Rebuild protocol list after investigator change
    if ( investID != old_investID )
    {
       mainw->solutions_change = true;
@@ -3505,6 +3507,7 @@ DbgLv(1) << "EGOp rbO: rp.nochan" << rpOptic->nochan;
       for ( int ii = 0; ii < nochan; ii++ )
       {
          rpOptic->chopts[ ii ].channel = ochans[ ii ];
+#if 0
          rpOptic->chopts[ ii ].scan1   = ii < 4
                                        ? cc_osyss[ ii ]->button( 1 )->text()
                                        : notinst;
@@ -3514,6 +3517,24 @@ DbgLv(1) << "EGOp rbO: rp.nochan" << rpOptic->nochan;
          rpOptic->chopts[ ii ].scan3   = ii < 4
                                        ? cc_osyss[ ii ]->button( 3 )->text()
                                        : notinst;
+#endif
+#if 1
+         rpOptic->chopts[ ii ].scan1   = ii > 3
+                                       ? notinst
+                                       : ( cc_osyss[ ii ]->button( 1 )->isChecked()
+                                         ? cc_osyss[ ii ]->button( 1 )->text()
+                                         : "" );
+         rpOptic->chopts[ ii ].scan2   = ii > 3
+                                       ? notinst
+                                       : ( cc_osyss[ ii ]->button( 2 )->isChecked()
+                                         ? cc_osyss[ ii ]->button( 2 )->text()
+                                         : "" );
+         rpOptic->chopts[ ii ].scan3   = ii > 3
+                                       ? notinst
+                                       : ( cc_osyss[ ii ]->button( 3 )->isChecked()
+                                         ? cc_osyss[ ii ]->button( 3 )->text()
+                                         : "" );
+#endif
       }
 DbgLv(1) << "EGOp rbO: nochan" << nochan << "(RUDIMENTARY)";
       return;
@@ -3553,9 +3574,24 @@ DbgLv(1) << "EGOp rbO:    ii" << ii << "jj" << jj
          else                                       //ALEXEY bug fixed
          {
             rpOptic->chopts[ ii ].channel = channel;
+#if 0
             rpOptic->chopts[ ii ].scan1   = cc_osyss[ ii ]->button( 1 )->text();
             rpOptic->chopts[ ii ].scan2   = cc_osyss[ ii ]->button( 2 )->text();
             rpOptic->chopts[ ii ].scan3   = cc_osyss[ ii ]->button( 3 )->text();
+#endif
+#if 1
+            rpOptic->chopts[ ii ].scan1   = cc_osyss[ ii ]->button( 1 )->isChecked()
+                                          ? cc_osyss[ ii ]->button( 1 )->text()
+                                          : "";
+            rpOptic->chopts[ ii ].scan2   = cc_osyss[ ii ]->button( 2 )->isChecked()
+                                          ? cc_osyss[ ii ]->button( 2 )->text()
+                                          : "";
+            rpOptic->chopts[ ii ].scan3   = cc_osyss[ ii ]->button( 3 )->isChecked()
+                                          ? cc_osyss[ ii ]->button( 3 )->text()
+                                          : "";
+DbgLv(1) << "EGOp rbO:    scan1" << rpOptic->chopts[ ii ].scan1
+ << "CKD?" << cc_osyss[ ii ]->button( 1 )->isChecked();
+#endif
             break;
          }
       }
@@ -3658,6 +3694,7 @@ US_ExperGuiAProfile::US_ExperGuiAProfile( QWidget* topw )
    if ( aprofname.isEmpty() )
       aprofname           = protoname;
    sdiag->auto_name_passed( protoname, aprofname );
+   sdiag->inherit_protocol( &mainw->currProto );
    sdiag->show();
 }
 

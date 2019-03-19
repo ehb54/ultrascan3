@@ -167,31 +167,47 @@ DbgLv(1) << "newPanel panx=" << panx << "prev.panx=" << curr_panx;
    {
       if ( panx - curr_panx > 1 )                          // Ranges
       {
-	   epanCells    ->initPanel();
-	   epanCells    ->savePanel();
-	   epanSolutions->initPanel();
-	   epanSolutions->savePanel();
-	   epanOptical  ->initPanel();
-	   epanOptical  ->savePanel();
+         epanCells    ->initPanel();
+         epanCells    ->savePanel();
+         epanSolutions->initPanel();
+         epanSolutions->savePanel();
+         epanOptical  ->initPanel();
+         epanOptical  ->savePanel();
       }
       epanRanges   ->initPanel();
    }
-   else if ( panx == 7 )      epanAProfile ->initPanel();
+   else if ( panx == 7 )
+   {
+      if ( panx - curr_panx > 1 )                          // AProfile
+      {
+         epanCells    ->initPanel();
+         epanCells    ->savePanel();
+         epanSolutions->initPanel();
+         epanSolutions->savePanel();
+         epanOptical  ->initPanel();
+         epanOptical  ->savePanel();
+         epanRanges   ->initPanel();
+         epanRanges   ->savePanel();
+      }
+      epanAProfile ->initPanel();
+   }
    else if ( panx == 8 )
    {
       if ( panx - curr_panx > 1 )                          // Upload
       {
-	   epanCells    ->initPanel();
-	   epanCells    ->savePanel();
-	   epanSolutions->initPanel();
-	   epanSolutions->savePanel();
-	   epanOptical  ->initPanel();
-	   epanOptical  ->savePanel();
-	   epanRanges   ->initPanel();
-	   epanRanges   ->savePanel();
-	 }
-       epanUpload   ->initPanel();
-     }
+         epanCells    ->initPanel();
+         epanCells    ->savePanel();
+         epanSolutions->initPanel();
+         epanSolutions->savePanel();
+         epanOptical  ->initPanel();
+         epanOptical  ->savePanel();
+         epanRanges   ->initPanel();
+         epanRanges   ->savePanel();
+         epanAProfile ->initPanel();
+         epanAProfile ->savePanel();
+      }
+      epanUpload   ->initPanel();
+   }
 
    curr_panx              = panx;         // Set new current panel
 
@@ -303,29 +319,29 @@ void US_ExperimentMain::enable_tabs_buttons_readonly( void )
       // and so on ..
 
       for (int i=0; i < allPButtons.count(); i++)
-	{
-	  if ( (allPButtons[i]->text()).contains("View Solution Details") ||
-	       (allPButtons[i]->text()).contains("View Current Range Settings") ||
-	       (allPButtons[i]->text()).contains("View Experiment Details") ||
-	       (allPButtons[i]->text()).contains("Test Connection") )
-	    allPButtons[i]->setEnabled(true);
-	  else
-	    allPButtons[i]->setEnabled(false);
-	}
+      {
+         if ( (allPButtons[i]->text()).contains("View Solution Details" ) ||
+              (allPButtons[i]->text()).contains("View Current Range Settings" ) ||
+              (allPButtons[i]->text()).contains("View Experiment Details" ) ||
+              (allPButtons[i]->text()).contains("Test Connection" ) )
+            allPButtons[i]->setEnabled(true);
+         else
+            allPButtons[i]->setEnabled(false);
+      }
 
-      for (int i=0; i < allCBoxes.count(); i++)
-	{
-	  if ( (allCBoxes[i]->currentText()).contains("Speed Profile") )
-	    allCBoxes[i]->setEnabled(true);
-	  else
-	    allCBoxes[i]->setEnabled(false);
-	}
-      for (int i=0; i < allSBoxes.count(); i++)
-	allSBoxes[i]->setEnabled(false);
-      for (int i=0; i < allCounters.count(); i++)
-	allCounters[i]->setEnabled(false);
-      for (int i=0; i < allChBoxes.count(); i++)
-	allChBoxes[i]->setEnabled(false);
+      for ( int i = 0; i < allCBoxes.count(); i++ )
+      {
+         if ( (allCBoxes[i]->currentText()).contains("Speed Profile") )
+            allCBoxes[i]->setEnabled(true);
+         else
+            allCBoxes[i]->setEnabled(false);
+      }
+      for ( int i = 0; i < allSBoxes.count(); i++ )
+         allSBoxes[i]->setEnabled(false);
+      for ( int i = 0; i < allCounters.count(); i++ )
+         allCounters[i]->setEnabled(false);
+      for ( int i = 0; i < allChBoxes.count(); i++ )
+         allChBoxes[i]->setEnabled(false);
       // and so on ..
 
     }
@@ -699,7 +715,7 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
    /*
     if ( !QString::number( rpRotor->instID ).isEmpty() && !rpRotor->instrname.isEmpty() )
       le_instrument->setText( QString::number( rpRotor->instID ) + ": "
-    			     + rpRotor->instrname );
+                              + rpRotor->instrname );
    */
 
    setCbCurrentText( cb_exptype,  rpRotor->exptype );
@@ -721,24 +737,24 @@ void US_ExperGuiRotor::test_optima_connection()
    QString dbuser      = mainw->currentInstrument[ "optimaDBusername" ];
    QString dbpasw      = mainw->currentInstrument[ "optimaDBpassw" ];
 
-   qDebug() << "Optima in use: name, host, port, dbname, dbuser, dbpasw: " << name << " " << xpnhost << " "
-   	    << xpnport << " "  << dbname << " " << dbuser << " " << dbpasw ;
+qDebug() << "Optima in use: name, host, port, dbname, dbuser, dbpasw: " << name << " " << xpnhost << " "
+ << xpnport << " "  << dbname << " " << dbuser << " " << dbpasw ;
 
 
    QPalette orig_pal = le_optima_connected->palette();
 
    if ( xpnhost.isEmpty() || QString::number(xpnport).isEmpty()
-	|| dbname.isEmpty() || dbuser.isEmpty() || dbpasw.isEmpty()  )
-     {
-       le_optima_connected->setText( "disconnected" );
-       QPalette *new_palette = new QPalette();
-       new_palette->setColor(QPalette::Text,Qt::red);
-       new_palette->setColor(QPalette::Base, orig_pal.color(QPalette::Base));
-       le_optima_connected->setPalette(*new_palette);
+     || dbname.isEmpty() || dbuser.isEmpty() || dbpasw.isEmpty()  )
+   {
+      le_optima_connected->setText( "disconnected" );
+      QPalette *new_palette = new QPalette();
+      new_palette->setColor(QPalette::Text,Qt::red);
+      new_palette->setColor(QPalette::Base, orig_pal.color(QPalette::Base));
+      le_optima_connected->setPalette(*new_palette);
 
-       mainw->connection_status = false;
-       return;
-     }
+      mainw->connection_status = false;
+      return;
+   }
 
    US_XpnData* xpn_data = new US_XpnData();
    bool o_connected           = xpn_data->connect_data( xpnhost, xpnport, dbname, dbuser,  dbpasw );
@@ -1916,6 +1932,7 @@ DbgLv(1) << "EGSo:st: nchant" << nchant << "nchanf" << nchanf << " is_done"
 void US_ExperGuiOptical::initPanel()
 {
    rpOptic             = &(mainw->currProto.rpOptic);
+   nochan              = rpOptic->chopts.count();
 DbgLv(1) << "EGOp:inP:  call rbO";
 
    rebuild_Optic();
@@ -1997,6 +2014,7 @@ void US_ExperGuiOptical::savePanel()
    // Save GUI settings to optics protocol object
    rpOptic->nochan     = nochan;
    rpOptic->chopts.resize( nochan );
+DbgLv(1) << "EGOp:svP:  nochan" << nochan;
 
    for ( int ii = 0; ii < nochan; ii++ )
    {
@@ -2167,6 +2185,8 @@ int US_ExperGuiOptical::status()
       QString scan1       = rpOptic->chopts[ ii ].scan1;
       QString scan2       = rpOptic->chopts[ ii ].scan2;
       QString scan3       = rpOptic->chopts[ ii ].scan3;
+DbgLv(1) << "EGOp:st:  ii" << ii << "ch s1 s2 s3"
+ << channel << scan1 << scan2 << scan3;
       bool have_used      = false;
       bool have_uvvis     = false;
 
@@ -2196,6 +2216,8 @@ int US_ExperGuiOptical::status()
 
       if ( have_uvvis )
          nuvvis++;
+DbgLv(1) << "EGOp:st:    hvu hvv nuch nuvv" << have_used << have_uvvis
+ << nuchan << nuvvis;
    }
 
    bool is_done  = ( nochan > 0  &&  nuchan == nochan );
@@ -2469,9 +2491,14 @@ DbgLv(1) << "EGAp:inP: protoname" << protoname << "aprofname" << aprofname;
 DbgLv(1) << "EGAp:inP:  protoname" << protoname << "aprofname" << aprofname;
 DbgLv(1) << "EGAp:inP:  sdiag" << sdiag;
    sdiag->auto_name_passed( protoname, aprofname );
+   sdiag->inherit_protocol( currProto );
 DbgLv(1) << "EGAp:inP:  sdiag names passed";
 }
-void US_ExperGuiAProfile::savePanel() { }
+
+void US_ExperGuiAProfile::savePanel()
+{
+}
+
 int  US_ExperGuiAProfile::status()
 {
 bool is_done=true;
