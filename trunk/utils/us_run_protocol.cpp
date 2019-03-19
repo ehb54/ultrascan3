@@ -844,6 +844,8 @@ bool US_RunProtocol::RunProtoOptics::fromXml( QXmlStreamReader& xmli )
             os.scan1     = attr.value( "scan1"   ).toString();
             os.scan2     = attr.value( "scan2"   ).toString();
             os.scan3     = attr.value( "scan3"   ).toString();
+qDebug() << "RP:OPT: fX: ch,s1,s2,s3"
+ << os.channel << os.scan1 << os.scan2 << os.scan3;
             chopts << os;
             nochan++;
          }
@@ -875,6 +877,8 @@ bool US_RunProtocol::RunProtoOptics::toXml( QXmlStreamWriter& xmlo )
       if ( ! chopts[ ii ].scan3.isEmpty() )
          xmlo.writeAttribute   ( "scan3",   chopts[ ii ].scan3 );
       xmlo.writeEndElement(); // optical_system
+qDebug() << "RP:OPT: tX: ch,s1,s2,s3"
+ << chopts[ii].channel << chopts[ii].scan1 << chopts[ii].scan2 << chopts[ii].scan3;
    }
    xmlo.writeEndElement(); // optics
 

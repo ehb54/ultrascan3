@@ -112,14 +112,12 @@ DbgLv(1) << "newPanel panx=" << panx << "prev.panx=" << curr_panx;
    if      ( curr_panx == 0 ) apanGeneral->savePanel();
    else if ( curr_panx == 1 ) apan2DSA   ->savePanel();
    else if ( curr_panx == 2 ) apanPCSA   ->savePanel();
-//   else if ( curr_panx == 3 ) apanStatus ->savePanel();
 DbgLv(1) << "newPanel   savePanel done";
 
    // Initialize the new current panel after possible changes
    if      ( panx == 0 )      apanGeneral->initPanel();
    else if ( panx == 1 )      apan2DSA   ->initPanel();
    else if ( panx == 2 )      apanPCSA   ->initPanel();
-//   else if ( panx == 3 )      apanStatus ->initPanel();
    {
       if ( panx - curr_panx > 1 )
       {
@@ -300,10 +298,176 @@ use_db=false;
    le_aproname   ->setText ( currProf->aprofname );
 DbgLv(1) << "APGe: inP: aname pname" << currProf->aprofname << currProf->protoname;
 
-DbgLv(1) << "APGe: CALL check_user_level()";
+DbgLv(1) << "APGe: inP: CALL check_user_level()";
    check_user_level();
-DbgLv(1) << "APGe:  RTN check_user_level()";
+DbgLv(1) << "APGe: inP:  RTN check_user_level()";
+ 
+   int nchan      = currProf->pchans.count();
+DbgLv(1) << "APGe: inP: nchan" << nchan;
+   sl_chnsel.clear();
+
+   // Recompose the list of channel descriptions from protocol
+   for ( int ii = 0; ii < nchan; ii++ )
+   {
+      QString chann  = currProf->pchans  [ ii ];
+      QString chdesc = currProf->chndescs[ ii ];
+      QString chopts = QString( chdesc ).section( ":", 1, 1 );
+
+      if ( chopts.contains( tr( "(unspecified)"   ) ) )   continue;
+      if ( chopts.contains( tr( "(not installed)" ) ) )   continue;
+
+      QString chname = QString( chdesc ).section( ":", 0, 0 )
+                                        .section( ",", 0, 0 );
+      QString chsolu = QString( chdesc ).section( ":", 2, 2 );
+      QString chnsel = chname + ":" + chopts + ":" + chsolu;
+      sl_chnsel << chnsel;
+DbgLv(1) << "APGe: inP:  ch" << ii << "chdesc" << chdesc
+ << "chnsel" << chnsel;
+   }
+//*DEBUG*
+QObject* pwidg=le_aproname->parent();
+QList<QObject*> allObjects=pwidg->children();
+for ( int ii=0; ii<allObjects.count(); ii++ )
+{ QObject* child  = allObjects[ ii ];
+  QString objname = child->objectName();
+DbgLv(1) << "APGe: inP:   ox" << ii << "oName" << objname;
+}
+//*DEBUG*
+
+#if 0
+   // Find the "GeneralLayout" layout and existing channel parms
+   QGridLayout* genL = NULL;
+   int nchang      = -1;
+
+   for ( int ii = 0; ii < allObjects.count(); ii++ )
+   {
+      QObject* child  = allObjects[ ii ];
+      QString objname = child->objectName();
+DbgLv(1) << "APGe: inP:   ox" << ii << "oName" << objname;
+
+      if ( objname == "GeneralLayout" )
+      {  // Save the GridLayout pointer
+         genL           = (QGridLayout*)child;
+      }
+
+      else if ( objname.contains( ": channel" ) )
+      {  // Save the last channel index present in the GUI
+         nchang         = objname.section( ":", 0, 0 ).toInt();
+      }
+   }
+   nchang++;     // Convert last index to a count
+DbgLv(1) << "APGe: inP: nchang" << nchang << "genL" << genL;
+
+   // Delete channel related rows of GridLayout
+   for ( int ii = 6; ii < allObjects.count(); ii++ )
+   {
+   }
+
+   // Update the rows of the main GridLayout
+   int row        = 2;
+   for ( int ii = 0; ii < nchan; ii++ )
+   {
+      QString chdesc = currProf->chndescs[ ii ];
+      QString chname = QString( chdesc ).section( ":", 0, 0 );
+      QString chopts = QString( chdesc ).section( ":", 1, 1 );
+      QString chsolu = QString( chdesc ).section( ":", 2, 2 );
+      QString schan  = chname.section( ",", 0, 0 ) + ":"
+                       + chopts + ":" + chsolu;
+      QString slrat  = QString::number( currProf->lc_ratios[ ii ] );
+      QString srtol  = QString::number( currProf->lc_tolers[ ii ] );
+      QString slvol  = QString::number( currProf->l_volumes[ ii ] );
+      QString svtol  = QString::number( currProf->lv_tolers[ ii ] );
+      QString sdend  = QString::number( currProf->data_ends[ ii ] );
+      QLineEdit* le_chann = us_lineedit( schan, 0, true  );
+      QLineEdit* le_lcrat = us_lineedit( slrat, 0, false );
+      QLineEdit* le_lctol = us_lineedit( srtol, 0, false );
+      QLineEdit* le_ldvol = us_lineedit( slvol, 0, false );
+      QLineEdit* le_lvtol = us_lineedit( svtol, 0, false );
+      QLineEdit* le_daend = us_lineedit( sdend, 0, false );
+
+      QString stchan      = QString::number( ii );
+      le_chann->setObjectName( stchan + ": channel" );
+      le_lcrat->setObjectName( stchan + ": loadconc_ratio" );
+      le_lctol->setObjectName( stchan + ": loadconc_tolerance" );
+      le_ldvol->setObjectName( stchan + ": load_volume" );
+      le_lvtol->setObjectName( stchan + ": loadvol_tolerance" );
+      le_daend->setObjectName( stchan + ": dataend" );
+
+      le_lcrats << le_lcrat;
+      le_lctols << le_lctol;
+      le_ldvols << le_ldvol;
+      le_lvtols << le_lvtol;
+      le_daends << le_daend;
+
+      genL->addWidget( le_chann,  row,    0, 1, 5 );
+      genL->addWidget( le_lcrat,  row,    5, 1, 1 );
+      genL->addWidget( le_lctol,  row,    6, 1, 1 );
+      genL->addWidget( le_ldvol,  row,    7, 1, 1 );
+      genL->addWidget( le_lvtol,  row,    8, 1, 1 );
+      genL->addWidget( le_daend,  row,    9, 1, 1 );
+      if ( ii == 0 )
+      {
+         genL->addWidget( pb_applya, row++, 10, 1, 2 );
+         connect( pb_applya, SIGNAL( clicked       ( ) ),
+                  this,      SLOT(   applied_to_all( ) ) );
+      }
+      else
+      {
+         row++;
+      }
+
+      connect( le_lcrat,    SIGNAL( editingFinished   ( void ) ),
+               this,        SLOT(   lcrat_text_changed( void ) ) );
+      connect( le_lctol,    SIGNAL( editingFinished   ( void ) ),
+               this,        SLOT(   lctol_text_changed( void ) ) );
+      connect( le_ldvol,    SIGNAL( editingFinished   ( void ) ),
+               this,        SLOT(   ldvol_text_changed( void ) ) );
+      connect( le_lvtol,    SIGNAL( editingFinished   ( void ) ),
+               this,        SLOT(   lvtol_text_changed( void ) ) );
+      connect( le_daend,    SIGNAL( editingFinished   ( void ) ),
+               this,        SLOT(   daend_text_changed( void ) ) );
+   }
+   int ihgt        = pb_aproname->height();
+   QSpacerItem* spacer1 = new QSpacerItem( 20, ihgt );
+   genL->addItem( spacer1,  row++,  0, 1, 1 );
+#endif
+
+   delete genL;
+   genL            = new QGridLayout();
+   genL->setObjectName( "GeneralLayout" );
+
    
+   build_general_layout( );
+
+#if 0
+   QList< QLineEdit* > allLineEdits = findChildren< QLineEdit* >();
+   QList< QLineEdit* > chnLineEdits;
+
+   for ( int ii = 0; ii < allLineEdits.count(); ii++ )
+   {
+      QLineEdit* ledit = allLineEdits[ ii ];
+DbgLv(1) << "APGe: inP:  le" << ii << "oName" << ledit->objectName();
+
+      if ( ledit->objectName().contains( ": channel" ) )
+      {
+         chnLineEdits << ledit;
+      }
+   }
+DbgLv(1) << "APGe: inP: nAllLE" << allLineEdits.count()
+ << "nChnLE" << chnLineEdits.count();
+bool is_widg=pwidg->isWidgetType();
+DbgLv(1) << "APGe: inP: parent" << pwidg->objectName()
+ << "is_widg" << is_widg;
+   QList< QWidget* > allWidgets = pwidg->findChildren< QWidget* >();
+   for ( int ii = 0; ii < allWidgets.count(); ii++ )
+   {
+DbgLv(1) << "APGe: inP:  wx" << ii << "oName" << allWidgets[ii]->objectName();
+   }
+   for ( int ii = 0; ii < allObjects.count(); ii++ )
+   {
+DbgLv(1) << "APGe: inP:   ox" << ii << "oName" << allObjects[ii]->objectName();
+   }
+#endif
 }
 
 
@@ -523,6 +687,9 @@ DbgLv(1) << "AP2d:   iP: BB";
 DbgLv(1) << "AP2d:   iP: CC";
 #endif
 
+   sl_chnsel       = sibLValue( "general", "channels" );
+   cb_chnsel->clear();
+   cb_chnsel->addItems( sl_chnsel );
    bool was_changed     = changed;       // Save changed state
 #if 0
    sb_count ->setValue  ( nspeed  );
@@ -759,6 +926,10 @@ void US_AnaprofPanPCSA::initPanel()
    // Possibly rebuild Cells protocol if there was a rotor change
 DbgLv(1) << "EGCe:inP: prb: nchan" << apPCSA->nchan;
 //   rebuild_Cells();
+
+   sl_chnsel       = sibLValue( "general", "channels" );
+   cb_chnsel->clear();
+   cb_chnsel->addItems( sl_chnsel );
 
    // Now build cell rows from protocol
    int nchan           = apPCSA->nchan;

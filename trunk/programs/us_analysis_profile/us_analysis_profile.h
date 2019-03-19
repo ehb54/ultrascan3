@@ -1,4 +1,4 @@
-//! \file us_analysis_profile_gui.h
+//! \file us_analysis_profile.h
 
 #ifndef US_APROFG_H
 #define US_APROFG_H
@@ -7,6 +7,7 @@
 #include <QtSql>
 
 #include "us_ana_profile.h"
+#include "us_run_protocol.h"
 #include "us_editor.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
@@ -53,11 +54,17 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       void check_runname( void );
       void disable_name_buttons( void );
       void pass_names( QString&, QString& );
+      void inherit_protocol( US_RunProtocol* );
             
    private:
       US_AnalysisProfileGui* mainw;   // Parent to all panels
       US_AnaProfile*    currProf;     // Current AnaProfile controls
       US_Help  showHelp;
+
+      QGridLayout* genL;
+      QVBoxLayout* panel;
+      QScrollArea* scrollArea;
+      QWidget*     containerWidget;
 
       QPushButton* pb_aproname;
       QPushButton* pb_protname;
@@ -79,6 +86,8 @@ class US_AnaprofPanGen : public US_WidgetsDialog
 
 
    private slots:
+      void  build_general_layout( void );
+
       void  apro_button_clicked( void );
       void  prot_button_clicked( void );
       void  apro_text_changed  ( void );
@@ -379,6 +388,7 @@ class US_AnalysisProfileGui : public US_Widgets
       US_AnaProfile  loadProf;   // Prof params as loaded from AP record
       US_AnaProfile  currProf;   // Current AnaProfile controls
 
+      QPushButton* pb_help;
       QPushButton* pb_next;
       QPushButton* pb_prev;
       QPushButton* pb_close;
@@ -391,6 +401,7 @@ class US_AnalysisProfileGui : public US_Widgets
       bool    automode;
       void    auto_mode_passed( void ); 
       void    auto_name_passed( QString&, QString& ); 
+      void    inherit_protocol( US_RunProtocol* );
       
    private:
 

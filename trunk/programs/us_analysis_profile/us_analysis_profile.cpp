@@ -63,7 +63,7 @@ DbgLv(1) << "MAIN:  tabs added";
    //tabWidget->tabBar()->setEnabled(false);
 
    // Add bottom buttons
-   QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
+   pb_help   = us_pushbutton( tr( "Help" ) );
    pb_next   = us_pushbutton( tr( "Next Panel" ) );
    pb_prev   = us_pushbutton( tr( "Previous Panel" ) );
    pb_close  = us_pushbutton( tr( "Close" ) );;
@@ -145,6 +145,103 @@ void US_AnalysisProfileGui::auto_name_passed( QString& p_protname, QString& p_ap
    }
 }
 
+// Update analysis profile based on inherited protocol
+void US_AnalysisProfileGui::inherit_protocol( US_RunProtocol* iProto )
+{
+   int kchn        = currProf.pchans.count();
+   QStringList sl_chns;
+   QStringList sl_sols;
+   QStringList sl_opts;
+   int nchs        = iProto->rpSolut.chsols.count();
+   int ncho        = iProto->rpOptic.chopts.count();
+
+   if ( nchs < 1  ||  ncho < 1 )
+      return;
+
+   int nchn        = 0;
+DbgLv(1) << "APG: ipro: kchn nchs ncho" << kchn << nchs << ncho;
+if(iProto->rpOptic.chopts.count()>0)
+DbgLv(1) << "APG: ipro: 0)ch s1 s2 s3"
+ << iProto->rpOptic.chopts[0].channel
+ << iProto->rpOptic.chopts[0].scan1
+ << iProto->rpOptic.chopts[0].scan2
+ << iProto->rpOptic.chopts[0].scan3;
+if(iProto->rpOptic.chopts.count()>1)
+DbgLv(1) << "APG: ipro: 1)ch s1 s2 s3"
+ << iProto->rpOptic.chopts[1].channel
+ << iProto->rpOptic.chopts[1].scan1
+ << iProto->rpOptic.chopts[1].scan2
+ << iProto->rpOptic.chopts[1].scan3;
+
+   for ( int ii = 0; ii < nchs; ii++ )
+   {  // Examine protocol's channel solutions
+      QString chname  = iProto->rpSolut.chsols[ ii ].channel;
+      QString sodesc  = iProto->rpSolut.chsols[ ii ].solution;
+      chname          = QString( chname ).section( ":", 0, 0 )
+                                         .section( ",", 0, 0 )
+                                         .replace( " / ", "" );
+      sl_chns << chname;
+      sl_sols << sodesc;
+DbgLv(1) << "APG: ipro:  s:ii" << ii << "chname" << chname << "sodesc" << sodesc;
+   }
+
+   for ( int ii = 0; ii < ncho; ii++ )
+   {  // Examine protocol's channel optics
+      QString chname  = iProto->rpOptic.chopts[ ii ].channel;
+      QString scan1   = iProto->rpOptic.chopts[ ii ].scan1;
+      QString scan2   = iProto->rpOptic.chopts[ ii ].scan2;
+      QString scan3   = iProto->rpOptic.chopts[ ii ].scan3;
+DbgLv(1) << "APG: ipro:  o.ii" << ii << "chname" << chname
+ << "scan1 scan2 scan3" << scan1 << scan2 << scan3;
+      if ( scan1.isEmpty() )  continue;
+
+      QStringList ods;       // Optics descriptions, this channel
+      chname          = QString( chname ).section( ":", 0, 0 )
+                                         .section( ",", 0, 0 )
+                                         .replace( " / ", "" );
+      ods << scan1;          // First optics
+      if ( ! scan2.isEmpty() )
+         ods << scan2;       // Additional optics
+      if ( ! scan3.isEmpty() )
+         ods << scan3;       // Additional optics
+      int chx         = sl_chns.indexOf( chname );
+      if ( chx < 0 )          continue;
+
+      QString sodesc  = sl_sols[ chx ];  // Channel's solution
+
+      for ( int jj = 0; jj < ods.count(); jj++ )
+      {  // Create a channel entry for each optics type of this channel
+         QString opdesc  = ods[ jj ];
+         opdesc          = opdesc.replace( "visible", "vis." );
+         opdesc          = opdesc.replace( "Rayleigh Interference", "Interf." );
+         opdesc          = opdesc.replace( "Fluorescence", "Fluor." );
+         QString chentr  = chname + ":" + opdesc + ":" + sodesc;
+DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
+
+         if ( nchn < kchn )
+         {  // Replace channel and channel description
+            currProf.pchans  [ nchn ] = chname;
+            currProf.chndescs[ nchn ] = chentr;
+         }
+         else
+         {  // Append channel and channel description
+            currProf.pchans   << chname;
+            currProf.chndescs << chentr;
+            int lch         = nchn - 1;
+            // Duplicate previous parameter values
+            currProf.lc_ratios << currProf.lc_ratios[ lch ];
+            currProf.lc_tolers << currProf.lc_tolers[ lch ];
+            currProf.l_volumes << currProf.l_volumes[ lch ];
+            currProf.lv_tolers << currProf.lv_tolers[ lch ];
+         }
+         nchn++;
+      }
+   }
+
+DbgLv(1) << "APG: ipro: nchn" << nchn << "call pGen iP";
+   apanGeneral->initPanel();
+}
+
 // Reset parameters to their defaults
 void US_AnalysisProfileGui::close_program( void )
 {
@@ -172,14 +269,15 @@ US_AnaprofPanGen::US_AnaprofPanGen( QWidget* topw )
    mainw               = (US_AnalysisProfileGui*)topw;
    dbg_level           = US_Settings::us_debug();
    use_db              = ( US_Settings::default_data_location() < 2 );
-   QVBoxLayout* panel  = new QVBoxLayout( this );
+   panel               = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
    panel->setContentsMargins( 2, 2, 2, 2 );
    QLabel* lb_panel    = us_banner( tr( "1: Specify OD range and other general parameters" ) );
    panel->addWidget( lb_panel );
 
    // Create layout and GUI components
-   QGridLayout* genL    = new QGridLayout();
+//   genL            = new QGridLayout();
+   genL            = NULL;
 
    pb_aproname     = us_pushbutton( tr( "Analysis Profile Name" ) );
    pb_protname     = us_pushbutton( tr( "Protocol Name" ) );
@@ -187,10 +285,19 @@ US_AnaprofPanGen::US_AnaprofPanGen( QWidget* topw )
    // Set up line edits
    le_aproname     = us_lineedit( "(default)", 0, false );
    le_protname     = us_lineedit( "Test-1234", 0, false );
+//   int ihgt        = pb_aproname->height();
+//   QSpacerItem* spacer1 = new QSpacerItem( 20, ihgt );
+
+//   genL       ->setObjectName( "GeneralLayout" );
+   pb_aproname->setObjectName( "Aprof Button" );
+   le_aproname->setObjectName( "Aprof LineEdit" );
+   pb_protname->setObjectName( "Proto Button" );
+   le_protname->setObjectName( "Proto LineEdit" );
 
    // Set defaults
    currProf        = &mainw->currProf;
 
+#if 0
    // Start building main layout
    int row         = 0;
 
@@ -209,6 +316,7 @@ US_AnaprofPanGen::US_AnaprofPanGen( QWidget* topw )
             this,        SLOT(   prot_text_changed( void ) ) );
 
    // Build channel lists and rows
+#if 0
    sl_chnsel << tr( "1A:UV/vis.:Protein A in PBS" )
              << tr( "1B:UV/vis.:solution 2" )
              << tr( "2A:UV/vis.:solution 3" )
@@ -225,7 +333,12 @@ US_AnaprofPanGen::US_AnaprofPanGen( QWidget* topw )
              << tr( "7B:Interf.:solution E" )
              << tr( "8A:Interf.:solution F" )
              << tr( "8B:Interf.:solution G" );
+#endif
+#if 1
+   sl_chnsel << tr( "1A:UV/vis.:(unspecified)" );
+#endif
    int nchn        = sl_chnsel.count();
+DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
    QLabel* lb_chann  = us_label( tr( "CellChannel:\n"
                                      "Optics: Solution" ) );
    lb_chann->setAlignment ( Qt::AlignVCenter | Qt::AlignLeft );
@@ -236,6 +349,21 @@ US_AnaprofPanGen::US_AnaprofPanGen( QWidget* topw )
    QLabel* lb_lvtol  = us_label( tr( "+/- %\nToler." ) );
    QLabel* lb_daend  = us_label( tr( "Data End\n(cm)" ) );
            pb_applya = us_pushbutton( tr( "Apply to All" ) );
+   lb_chann ->setObjectName( "Chann Label" );
+   lb_lcrat ->setObjectName( "LcRat Label" );
+   lb_lctol ->setObjectName( "LcTol Label" );
+   lb_ldvol ->setObjectName( "LdVol Label" );
+   lb_lvtol ->setObjectName( "LvTol Label" );
+   lb_daend ->setObjectName( "DaEnd Label" );
+   pb_applya->setObjectName( "ApplyAll Button" );
+
+   int lbhgt       = pb_aproname->height() * 2;
+   lb_chann->setMaximumHeight( lbhgt );
+   lb_lcrat->setMaximumHeight( lbhgt );
+   lb_lctol->setMaximumHeight( lbhgt );
+   lb_ldvol->setMaximumHeight( lbhgt );
+   lb_lvtol->setMaximumHeight( lbhgt );
+   lb_daend->setMaximumHeight( lbhgt );
 
    genL->addWidget( lb_chann, row,    0, 2, 5 );
    genL->addWidget( lb_lcrat, row,    5, 2, 1 );
@@ -243,6 +371,8 @@ US_AnaprofPanGen::US_AnaprofPanGen( QWidget* topw )
    genL->addWidget( lb_ldvol, row,    7, 2, 1 );
    genL->addWidget( lb_lvtol, row,    8, 2, 1 );
    genL->addWidget( lb_daend, row++,  9, 2, 1 ); row++;
+   genL->setRowStretch( 0, 0 );
+   genL->setRowStretch( 1, 0 );
 
    for ( int ii = 0; ii < nchn; ii++ )
    {
@@ -296,6 +426,9 @@ US_AnaprofPanGen::US_AnaprofPanGen( QWidget* topw )
       connect( le_daend,    SIGNAL( editingFinished   ( void ) ),
                this,        SLOT(   daend_text_changed( void ) ) );
    }
+
+   genL->setRowStretch( row, 1 );
+   genL->addItem( spacer1,  row++,  0, 1, 1 );
    mainw->setColumnStretches( genL );
 
    QScrollArea *scrollArea  = new QScrollArea( this );
@@ -307,11 +440,21 @@ US_AnaprofPanGen::US_AnaprofPanGen( QWidget* topw )
    scrollArea->setWidget( containerWidget );
    panel->addWidget( scrollArea );
    adjustSize();
+   containerWidget->setObjectName( "containerWidget" );
+   scrollArea     ->setObjectName( "scrollArea" );
+   panel          ->setObjectName( "GeneralPanel" );
+QLayout* glay=containerWidget->layout();
+DbgLv(1) << "APGe: layout-of-contW object:" << glay;
+#endif
 
-   // Set up signal and slot connections
-//   connect( le_runid,        SIGNAL( textEdited(const QString &)  ),
-//	    this,            SLOT(   check_empty_runname(const QString &) ) );
-
+   build_general_layout( );
+QLayout* play=panel->layout();
+DbgLv(1) << "APGe: layout-of-panel object:" << play;
+QString plname=play->objectName();
+DbgLv(1) << "APGe: layout-of-panel name:" << plname;
+QList< QObject* > globjs = genL->children();
+for (int jj=0; jj<globjs.count(); jj++)
+ DbgLv(1) << "APGe: jj" << jj << "object" << globjs[jj]->objectName();
 
  //check_runname();
 
@@ -319,6 +462,219 @@ US_AnaprofPanGen::US_AnaprofPanGen( QWidget* topw )
 DbgLv(1) << "APGe: CALL initPanel()";
    initPanel();
 DbgLv(1) << "APGe:  RTN initPanel()";
+}
+
+void US_AnaprofPanGen::build_general_layout()
+{
+   bool have_genl  = true;
+   if ( genL != NULL )
+   {
+/*
+QObject* pwidg=le_aproname->parent();
+QList<QObject*> allObjects=pwidg->children();
+for ( int ii=0; ii<allObjects.count(); ii++ )
+{ QObject* child  = allObjects[ ii ];
+  QString objname = child->objectName();
+DbgLv(1) << "APGe: inP:   ox" << ii << "oName" << objname;
+}
+ */
+      QObject* pwidg  = le_aproname->parent();
+      QList< QObject* > allObjects = pwidg->children();
+      for ( int ii = 0; ii < allObjects.count(); ii++ )
+      {
+         QObject* child  = allObjects[ ii ];
+         QString objname = child->objectName();
+DbgLv(1) << "APGe: bgL:   ox" << ii << "oName" << objname;
+         if ( objname.isEmpty() )
+            continue;
+
+         if ( objname.contains( "GeneralLayout" ) )
+         {  // Child is the general layout
+            have_genl       = true;
+DbgLv(1) << "APGe: bgL:    HAVE_GENL=true";
+         }
+
+         else if ( have_genl )
+         {  // Child is a widget after layout was given
+            if ( child->isWidgetType() )
+            {
+DbgLv(1) << "APGe: bgL:    CHILD DELETE (Widget)";
+               genL->removeWidget( (QWidget*)child );
+DbgLv(1) << "APGe: bgL:    CHILD DELETED (Widget)";
+            }
+            else
+            {
+DbgLv(1) << "APGe: bgL:    CHILD DELETE (Item)";
+               genL->removeItem  ( (QLayoutItem*)child );
+DbgLv(1) << "APGe: bgL:    CHILD DELETED (Item)";
+            }
+         }
+         else
+         {
+DbgLv(1) << "APGe: bgL:    CHILD *NOT* DELETED  have_genl" << have_genl;
+         }
+      }
+
+      scrollArea->takeWidget();
+DbgLv(1) << "APGe: bgL:    scrollArea widget *REMOVED*";
+      QList< QScrollArea* > ssaa = panel->findChildren< QScrollArea* >();
+      if ( ssaa.count() == 1 )
+      {
+         QWidget* cwidg   = (QWidget*)ssaa[ 0 ];
+         panel->removeWidget( cwidg );
+DbgLv(1) << "APGe: bgL:    scrollArea child *REMOVED*";
+      }
+else
+DbgLv(1) << "APGe: bgL:    scrollArea children count ZERO";
+
+      delete genL;
+      delete scrollArea;
+      //delete containerWidget;
+//   scrollArea      = new QScrollArea( this );
+//   containerWidget = new QWidget;
+//   genL->setContentsMargins ( 2, 2, 2, 2 );
+//   containerWidget->setLayout( genL );
+//   scrollArea->setWidgetResizable( true );
+//   scrollArea->setWidget( containerWidget );
+//   panel->addWidget( scrollArea );
+   }
+
+   genL            = new QGridLayout();
+   genL->setObjectName( "GeneralLayout" );
+   le_lcrats.clear();
+   le_lctols.clear();
+   le_ldvols.clear();
+   le_lvtols.clear();
+   le_daends.clear();
+
+   // Start building main layout
+   int row         = 0;
+
+   genL->addWidget( pb_aproname,     row,    0, 1, 3 );
+   genL->addWidget( le_aproname,     row++,  3, 1, 6 );
+   genL->addWidget( pb_protname,     row,    0, 1, 3 );
+   genL->addWidget( le_protname,     row++,  3, 1, 6 );
+
+   connect( pb_aproname, SIGNAL( clicked            ( ) ),
+            this,        SLOT(   apro_button_clicked( ) ) );
+   connect( pb_protname, SIGNAL( clicked            ( ) ),
+            this,        SLOT(   prot_button_clicked( ) ) );
+   connect( le_aproname, SIGNAL( editingFinished  ( void ) ),
+            this,        SLOT(   apro_text_changed( void ) ) );
+   connect( le_protname, SIGNAL( editingFinished  ( void ) ),
+            this,        SLOT(   prot_text_changed( void ) ) );
+
+   // Build channel lists and rows
+   int nchn          = sl_chnsel.count();
+DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
+   QLabel* lb_chann  = us_label( tr( "CellChannel:\n"
+                                     "Optics: Solution" ) );
+   lb_chann->setAlignment ( Qt::AlignVCenter | Qt::AlignLeft );
+   QLabel* lb_lcrat  = us_label( tr( "Loading\nRatio" ) );
+   QLabel* lb_lctol  = us_label( tr( "+/- %\nToler." ) );
+   QLabel* lb_ldvol  = us_label( tr( "Loading\nVol. (" )
+                                 + QString( QChar( 181 ) ) + "l)" );
+   QLabel* lb_lvtol  = us_label( tr( "+/- %\nToler." ) );
+   QLabel* lb_daend  = us_label( tr( "Data End\n(cm)" ) );
+           pb_applya = us_pushbutton( tr( "Apply to All" ) );
+   lb_chann ->setObjectName( "Chann Label" );
+   lb_lcrat ->setObjectName( "LcRat Label" );
+   lb_lctol ->setObjectName( "LcTol Label" );
+   lb_ldvol ->setObjectName( "LdVol Label" );
+   lb_lvtol ->setObjectName( "LvTol Label" );
+   lb_daend ->setObjectName( "DaEnd Label" );
+   pb_applya->setObjectName( "ApplyAll Button" );
+
+   int lbhgt       = pb_aproname->height() * 2;
+   lb_chann->setMaximumHeight( lbhgt );
+   lb_lcrat->setMaximumHeight( lbhgt );
+   lb_lctol->setMaximumHeight( lbhgt );
+   lb_ldvol->setMaximumHeight( lbhgt );
+   lb_lvtol->setMaximumHeight( lbhgt );
+   lb_daend->setMaximumHeight( lbhgt );
+
+   genL->addWidget( lb_chann, row,    0, 2, 5 );
+   genL->addWidget( lb_lcrat, row,    5, 2, 1 );
+   genL->addWidget( lb_lctol, row,    6, 2, 1 );
+   genL->addWidget( lb_ldvol, row,    7, 2, 1 );
+   genL->addWidget( lb_lvtol, row,    8, 2, 1 );
+   genL->addWidget( lb_daend, row++,  9, 2, 1 ); row++;
+   genL->setRowStretch( 0, 0 );
+   genL->setRowStretch( 1, 0 );
+
+   for ( int ii = 0; ii < nchn; ii++ )
+   {
+      QString schan( sl_chnsel[ ii ] );
+      QLineEdit* le_chann = us_lineedit( schan, 0, true  );
+      QLineEdit* le_lcrat = us_lineedit( "1.0", 0, false );
+      QLineEdit* le_lctol = us_lineedit( "5",   0, false );
+      QLineEdit* le_ldvol = us_lineedit( "460", 0, false );
+      QLineEdit* le_lvtol = us_lineedit( "10",  0, false );
+      QLineEdit* le_daend = us_lineedit( "7.0", 0, false );
+
+      QString stchan      = QString::number( ii );
+      le_chann->setObjectName( stchan + ": channel" );
+      le_lcrat->setObjectName( stchan + ": loadconc_ratio" );
+      le_lctol->setObjectName( stchan + ": loadconc_tolerance" );
+      le_ldvol->setObjectName( stchan + ": load_volume" );
+      le_lvtol->setObjectName( stchan + ": loadvol_tolerance" );
+      le_daend->setObjectName( stchan + ": dataend" );
+
+      le_lcrats << le_lcrat;
+      le_lctols << le_lctol;
+      le_ldvols << le_ldvol;
+      le_lvtols << le_lvtol;
+      le_daends << le_daend;
+
+      genL->addWidget( le_chann,  row,    0, 1, 5 );
+      genL->addWidget( le_lcrat,  row,    5, 1, 1 );
+      genL->addWidget( le_lctol,  row,    6, 1, 1 );
+      genL->addWidget( le_ldvol,  row,    7, 1, 1 );
+      genL->addWidget( le_lvtol,  row,    8, 1, 1 );
+      genL->addWidget( le_daend,  row,    9, 1, 1 );
+      if ( ii == 0 )
+      {
+         genL->addWidget( pb_applya, row++, 10, 1, 2 );
+         connect( pb_applya, SIGNAL( clicked       ( ) ),
+                  this,      SLOT(   applied_to_all( ) ) );
+      }
+      else
+      {
+         row++;
+      }
+
+      connect( le_lcrat,    SIGNAL( editingFinished   ( void ) ),
+               this,        SLOT(   lcrat_text_changed( void ) ) );
+      connect( le_lctol,    SIGNAL( editingFinished   ( void ) ),
+               this,        SLOT(   lctol_text_changed( void ) ) );
+      connect( le_ldvol,    SIGNAL( editingFinished   ( void ) ),
+               this,        SLOT(   ldvol_text_changed( void ) ) );
+      connect( le_lvtol,    SIGNAL( editingFinished   ( void ) ),
+               this,        SLOT(   lvtol_text_changed( void ) ) );
+      connect( le_daend,    SIGNAL( editingFinished   ( void ) ),
+               this,        SLOT(   daend_text_changed( void ) ) );
+   }
+
+   int ihgt        = pb_aproname->height();
+   QSpacerItem* spacer1 = new QSpacerItem( 20, ihgt );
+   genL->setRowStretch( row, 1 );
+   genL->addItem( spacer1,  row++,  0, 1, 1 );
+   mainw->setColumnStretches( genL );
+
+//   QScrollArea *scrollArea  = new QScrollArea( this );
+//   QWidget* containerWidget = new QWidget;
+   scrollArea      = new QScrollArea( this );
+   containerWidget = new QWidget;
+   panel          ->setObjectName( "GeneralPanel" );
+   scrollArea     ->setObjectName( "scrollArea" );
+   containerWidget->setObjectName( "containerWidget" );
+   genL           ->setSpacing         ( 2 );
+   genL           ->setContentsMargins ( 2, 2, 2, 2 );
+   containerWidget->setLayout( genL );
+   scrollArea     ->setWidgetResizable( true );
+   scrollArea     ->setWidget( containerWidget );
+   panel          ->addWidget( scrollArea );
+   adjustSize();
 }
 
 int US_AnaprofPanGen::getProfiles( QStringList& prnames,
@@ -343,6 +699,7 @@ void US_AnaprofPanGen::disable_name_buttons()
    pb_protname->setEnabled( false );
    pb_aproname->setEnabled( false );
 }
+
 void US_AnaprofPanGen::pass_names( QString& protname, QString& aproname )
 {
    le_protname->setText( protname );
@@ -350,6 +707,9 @@ void US_AnaprofPanGen::pass_names( QString& protname, QString& aproname )
    if ( mainw->automode )
    {
       us_setReadOnly( le_protname, true );
+      mainw->pb_help ->setVisible( false );
+      mainw->pb_next ->setVisible( false );
+      mainw->pb_prev ->setVisible( false );
       mainw->pb_close->setVisible( false );
       mainw->pb_apply->setVisible( false );
    }

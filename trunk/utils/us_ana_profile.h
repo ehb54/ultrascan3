@@ -24,7 +24,7 @@ class US_UTIL_EXTERN US_AnaProfile
                   double       s_max;
                   double       k_min;
                   double       k_max;
-                  double       k_const;
+                  double       ff0_const;
                   int          s_grpts;
                   int          k_grpts;
                   int          gridreps;
@@ -32,11 +32,12 @@ class US_UTIL_EXTERN US_AnaProfile
                   bool         have_custg;
                   QString      channel;
                   QString      cust_grid;
+                  QString      cgrid_name;
 /*
           <channel_parms channel="1A" s_min="1" s_max="10" s_gridpoints="64"
                 ff0_min="1" ff0_max="4" ff0_gridpoints="64"
                 vary_vbar="0" constant_ff0="2" grid_repetitions="8"
-                custom_grid="" />
+                custom_grid_guid="" />
 
  */
                   Parm2DSA();
@@ -107,17 +108,16 @@ class US_UTIL_EXTERN US_AnaProfile
                   int          grf_iters;
                   int          creso_pts;
                   int          noise_flag;
+                  int          treg_flag;
                   int          mc_iters;
-                  bool         do_tikreg;
-                  bool         do_mcarlo;
                   bool         job_run;
                   QString      channel;
                   QString      curv_type;
                   QString      x_type;
                   QString      y_type;
                   QString      z_type;
-                  QString      treg_type;
                   QString      noise_type;
+                  QString      treg_type;
 /*
        <pcsa>
            <channel_parms channel="1A" curve_type="IS" x_type="s" y_type="ff0"
@@ -197,6 +197,7 @@ class US_UTIL_EXTERN US_AnaProfile
       QList< double> lc_tolers;    //!< Load concentration tolerances
       QList< double> l_volumes;    //!< Loading volumes
       QList< double> lv_tolers;    //!< Load volume tolerances
+      QList< double> data_ends;    //!< Load volume tolerances
    private:
 };
 #endif
