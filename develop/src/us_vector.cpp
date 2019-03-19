@@ -245,7 +245,38 @@ QString US_Vector::qs_vector2( QString qs, vector < double > x, vector < double 
    return result;
 }
 
+QString US_Vector::qs_vector2( QString qs, vector < int > x, vector < double > y, int digits )
+{
+   QString result;
+   result += QString( "%1: size %2 %3:\n" ).arg( qs ).arg( x.size() ).arg( y.size() );
+   unsigned int max_size = ( unsigned int )( x.size() > y.size() ? x.size() : y.size() );
+   for ( unsigned int i = 0; i < max_size; i++ )
+   {
+      result += QString( "\t%1 %2\n" )
+         .arg( ( x.size() > i ) ? QString( "%1" ).arg( x[ i ] ) : QString( "n/a" ) )
+         .arg( ( y.size() > i ) ? QString( "%1" ).arg( y[ i ], 0, 'g', digits ) : QString( "n/a" ) )
+         ;
+   }
+   return result;
+}
+
+
 QString US_Vector::qs_vector2( QString qs, vector < int > x, vector < int > y )
+{
+   QString result;
+   result += QString( "%1: size %2 %3:\n" ).arg( qs ).arg( x.size() ).arg( y.size() );
+   unsigned int max_size = ( unsigned int )( x.size() > y.size() ? x.size() : y.size() );
+   for ( unsigned int i = 0; i < max_size; i++ )
+   {
+      result += QString( "\t%1 %2\n" )
+         .arg( ( x.size() > i ) ? QString( "%1" ).arg( x[ i ] ) : QString( "n/a" ) )
+         .arg( ( y.size() > i ) ? QString( "%1" ).arg( y[ i ] ) : QString( "n/a" ) )
+         ;
+   }
+   return result;
+}
+
+QString US_Vector::qs_vector2( QString qs, vector < QString > x, vector < QString > y )
 {
    QString result;
    result += QString( "%1: size %2 %3:\n" ).arg( qs ).arg( x.size() ).arg( y.size() );

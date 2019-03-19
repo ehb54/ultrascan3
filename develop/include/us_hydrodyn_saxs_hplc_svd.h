@@ -16,12 +16,6 @@
 
 using namespace std;
 
-#ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
-
 class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
 {
    Q_OBJECT
@@ -35,7 +29,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
 
       ~US_Hydrodyn_Saxs_Hplc_Svd();
 
+
    private:
+
       US_Config             * USglobal;
 
       US_Hydrodyn_Saxs_Hplc * hplc_win;
@@ -210,6 +206,14 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       vector < double >            efa_decomp_x;
       vector < vector < double > > efa_decomp_Ct;
 
+      // ------ norm utils
+      enum                     norms {
+         NO_NORM
+         ,NORM_NOT
+         ,NORM_PW
+         ,NORM_AVG
+      };
+
       // ------ process section
 
       mQLabel               * lbl_process;
@@ -288,18 +292,22 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       void                                hide_widgets( vector < QWidget *> widgets, bool hide );
 
       void plot_files();
-      void plot_files( QStringList files );
+      void plot_files( QStringList files, norms norm_mode = NO_NORM );
+
       bool plot_file( QString file,
                       double &minx,
                       double &maxx,
                       double &miny,
-                      double &maxy );
+                      double &maxy,
+                      norms norm_mode = NO_NORM );
 
       bool get_min_max( QString file,
                         double &minx,
                         double &maxx,
                         double &miny,
-                        double &maxy );
+                        double &maxy,
+                        norms norm_mode = NO_NORM );
+
 
       bool                         running;
 
@@ -389,7 +397,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       QStringList                  add_subset_data( QStringList files );
       QString                      get_related_source_name( QString name );
       QStringList                  get_files_by_name( QString name );
-      bool                         get_plot_files( QStringList &use_list, QStringList &use_ref_list );
+      bool                         get_plot_files( QStringList &use_list, QStringList &use_ref_list, norms &ref_norm_mode );
 
       vector < double >            plot_errors_jumps;
       void                         plot_errors_jump_markers();
@@ -547,6 +555,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       void                     efa_decomp_plot();
       int                      efa_plot_count;
 
+      map < norms, QString >   norm_name_map;
+
+      bool                     get_name_norm_mode( QString fullname, QString &name, norms &norm_mode );
+
    private slots:
 
       // ------ data section 
@@ -635,11 +647,5 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       void closeEvent(QCloseEvent *);
    
 };
-
-#ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
-#endif
 
 #endif

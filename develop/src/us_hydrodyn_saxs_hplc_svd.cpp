@@ -56,6 +56,10 @@ US_Hydrodyn_Saxs_Hplc_Svd::US_Hydrodyn_Saxs_Hplc_Svd(
       return;
    }
 
+   norm_name_map[ NORM_NOT ] = "not normed";
+   norm_name_map[ NORM_PW  ] = "normed by p.w. errors";
+   norm_name_map[ NORM_AVG ] = "normed by avg. errors";
+
    QStringList original_data;
 
    mode_i_of_t = false;
@@ -851,6 +855,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    pb_svd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_svd->setMinimumHeight(minHeight3);
    pb_svd->setPalette( PALET_PUSHB );
+   pb_svd->setToolTip( us_tr( "SVD is only available in I(q) mode, adjust the plot type to use." ) );
    connect(pb_svd, SIGNAL(clicked()), SLOT(svd()));
    process_widgets.push_back( pb_svd );
 
@@ -893,6 +898,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    pb_recon->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_recon->setMinimumHeight(minHeight3);
    pb_recon->setPalette( PALET_PUSHB );
+   pb_recon->setToolTip( us_tr( "Reconstruction is only enabled when all normalization off and SVs are selected" ) );
    connect(pb_recon, SIGNAL(clicked()), SLOT(recon()));
    process_widgets.push_back( pb_recon );
 
@@ -900,6 +906,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    pb_indiv_recon->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_indiv_recon->setMinimumHeight(minHeight3);
    pb_indiv_recon->setPalette( PALET_PUSHB );
+   pb_indiv_recon->setToolTip( us_tr( "Reconstruction is only enabled when all normalization off and SVs are selected" ) );
    connect(pb_indiv_recon, SIGNAL(clicked()), SLOT(indiv_recon()));
    process_widgets.push_back( pb_indiv_recon );
 
@@ -907,6 +914,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    pb_inc_recon->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_inc_recon->setMinimumHeight(minHeight3);
    pb_inc_recon->setPalette( PALET_PUSHB );
+   pb_inc_recon->setToolTip( us_tr( "Reconstruction is only enabled when all normalization off and SVs are selected" ) );
    connect(pb_inc_recon, SIGNAL(clicked()), SLOT(inc_recon()));
    process_widgets.push_back( pb_inc_recon );
 
@@ -1311,7 +1319,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::plot_files()
    update_plot_errors();
 }
 
-void US_Hydrodyn_Saxs_Hplc_Svd::plot_files( QStringList add_files )
+void US_Hydrodyn_Saxs_Hplc_Svd::plot_files( QStringList add_files, norms norm_mode )
 {
    // puts( "plot_files" );
    plot_data->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_data->detachItems( QwtPlotItem::Rtti_PlotMarker );;
@@ -1366,7 +1374,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::plot_files( QStringList add_files )
 
    for ( int i = 0; i < (int) add_files.size(); ++i )
    {
-      if ( plot_file( add_files[ i ], file_minx, file_maxx, file_miny, file_maxy ) )
+      if ( plot_file( add_files[ i ], file_minx, file_maxx, file_miny, file_maxy, norm_mode ) )
       {
          if ( first )
          {
@@ -1419,18 +1427,34 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::plot_file( QString file,
                                            double &minx,
                                            double &maxx,
                                            double &miny,
-                                           double &maxy )
+                                           double &maxy,
+                                           norms norm_mode )
 {
+   map < QString, vector < double > >  * f_Iuse = &f_Is;
+
+   switch( norm_mode ) {
+   case NORM_PW :
+      f_Iuse = &f_Is_norm_pw;
+      break;
+
+   case NORM_AVG :
+      f_Iuse = &f_Is_norm_avg;
+      break;
+
+   default :
+      break;
+   }
+
    if ( !f_qs_string .count( file ) ||
         !f_qs        .count( file ) ||
-        !f_Is        .count( file ) ||
+        !(*f_Iuse)   .count( file ) ||
         !f_pos       .count( file ) )
    {
       editor_msg( "red", QString( us_tr( "Internal error: request to plot %1, but not found in data" ) ).arg( file ) );
       return false;
    }
 
-   get_min_max( file, minx, maxx, miny, maxy );
+   get_min_max( file, minx, maxx, miny, maxy, norm_mode );
 
    QwtPlotCurve *curve = new QwtPlotCurve( file );
    plotted_curves[ file ] = curve;
@@ -1442,7 +1466,7 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::plot_file( QString file,
    {
       curve->setSamples(
                      (double *)&( f_qs[ file ][ 0 ] ),
-                     (double *)&( f_Is[ file ][ 0 ] ),
+                     (double *)&( (*f_Iuse)[ file ][ 0 ] ),
                      q_points
                      );
 
@@ -1453,10 +1477,10 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::plot_file( QString file,
       vector < double > I;
       for ( unsigned int i = 0; i < q_points; i++ )
       {
-         if ( f_Is[ file ][ i ] > 0e0 )
+         if ( (*f_Iuse)[ file ][ i ] > 0e0 )
          {
             q.push_back( f_qs[ file ][ i ] );
-            I.push_back( f_Is[ file ][ i ] );
+            I.push_back( (*f_Iuse)[ file ][ i ] );
          }
       }
       q_points = ( unsigned int )q.size();
@@ -1478,11 +1502,27 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::get_min_max( QString file,
                                              double &minx,
                                              double &maxx,
                                              double &miny,
-                                             double &maxy )
+                                             double &maxy,
+                                             norms norm_mode )
 {
+   map < QString, vector < double > >  * f_Iuse = &f_Is;
+
+   switch( norm_mode ) {
+   case NORM_PW :
+      f_Iuse = &f_Is_norm_pw;
+      break;
+
+   case NORM_AVG :
+      f_Iuse = &f_Is_norm_avg;
+      break;
+
+   default :
+      break;
+   }
+
    if ( 
-        !f_Is        .count( file ) ||
-        !f_pos       .count( file ) )
+       !(*f_Iuse)   .count( file ) ||
+       !f_pos       .count( file ) )
    {
       // editor_msg( "red", QString( us_tr( "Internal error: requested %1, but not found in data" ) ).arg( file ) );
       return false;
@@ -1491,29 +1531,29 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::get_min_max( QString file,
    minx = f_qs[ file ][ 0 ];
    maxx = f_qs[ file ].back();
 
-   miny = f_Is[ file ][ 0 ];
-   maxy = f_Is[ file ][ 0 ];
+   miny = (*f_Iuse)[ file ][ 0 ];
+   maxy = (*f_Iuse)[ file ][ 0 ];
 
    if ( axis_y_log )
    {
       unsigned int i = 0;
-      while ( miny <= 0e0 && i < f_Is[ file ].size() )
+      while ( miny <= 0e0 && i < (*f_Iuse)[ file ].size() )
       {
-         miny = f_Is[ file ][ i ];
-         maxy = f_Is[ file ][ i ];
+         miny = (*f_Iuse)[ file ][ i ];
+         maxy = (*f_Iuse)[ file ][ i ];
          minx = f_qs[ file ][ i ];
          maxx = f_qs[ file ][ i ];
          i++;
       }
-      for ( ; i < f_Is[ file ].size(); i++ )
+      for ( ; i < (*f_Iuse)[ file ].size(); i++ )
       {
-         if ( miny > f_Is[ file ][ i ] && f_Is[ file ][ i ] > 0e0 )
+         if ( miny > (*f_Iuse)[ file ][ i ] && (*f_Iuse)[ file ][ i ] > 0e0 )
          {
-            miny = f_Is[ file ][ i ];
+            miny = (*f_Iuse)[ file ][ i ];
          }
-         if ( maxy < f_Is[ file ][ i ] )
+         if ( maxy < (*f_Iuse)[ file ][ i ] )
          {
-            maxy = f_Is[ file ][ i ];
+            maxy = (*f_Iuse)[ file ][ i ];
          }
          if ( maxx < f_qs[ file ][ i ] )
          {
@@ -1525,15 +1565,15 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::get_min_max( QString file,
          miny = 1e0;
       }
    } else {
-      for ( unsigned int i = 1; i < f_Is[ file ].size(); i++ )
+      for ( unsigned int i = 1; i < (*f_Iuse)[ file ].size(); i++ )
       {
-         if ( miny > f_Is[ file ][ i ] )
+         if ( miny > (*f_Iuse)[ file ][ i ] )
          {
-            miny = f_Is[ file ][ i ];
+            miny = (*f_Iuse)[ file ][ i ];
          }
-         if ( maxy < f_Is[ file ][ i ] )
+         if ( maxy < (*f_Iuse)[ file ][ i ] )
          {
-            maxy = f_Is[ file ][ i ];
+            maxy = (*f_Iuse)[ file ][ i ];
          }
       }
    }
@@ -1875,13 +1915,16 @@ void US_Hydrodyn_Saxs_Hplc_Svd::update_enables()
    pb_stop            ->setEnabled( false );
    // pb_svd_plot        ->setEnabled( lb_ev->count() );
    pb_svd_save        ->setEnabled( lb_ev->count() );
-   pb_recon           ->setEnabled( sv_items );
+
+   bool no_norm = !cb_norm_pw->isChecked() && !cb_norm_avg->isChecked();
+
+   pb_recon           ->setEnabled( sv_items && no_norm );
 
    pb_inc_rmsd_plot   ->setEnabled( rmsd_x.size() );
    pb_rmsd_save       ->setEnabled( rmsd_x.size() );
    pb_inc_chi_plot    ->setEnabled( chi_x.size() );
-   pb_inc_recon       ->setEnabled( sv_items );
-   pb_indiv_recon     ->setEnabled( sv_items );
+   pb_inc_recon       ->setEnabled( sv_items && no_norm );
+   pb_indiv_recon     ->setEnabled( sv_items && no_norm );
 
    rb_mode_iqit       ->setEnabled( true );
    rb_mode_svd        ->setEnabled( true );
@@ -2653,15 +2696,15 @@ void US_Hydrodyn_Saxs_Hplc_Svd::svd() {
 
    map < QString, vector < double > >  * f_Iuse = &f_Is;
    check_norm( files );
-   QString norm_name = "not normed";
+   QString norm_name = norm_name_map[ NORM_NOT ];
    if ( norm_ok ) {
       if ( cb_norm_pw->isChecked() ) {
          f_Iuse = &f_Is_norm_pw;
-         norm_name = "normed by p.w. errors";
+         norm_name = norm_name_map[ NORM_PW ];
       }
       if ( cb_norm_avg->isChecked() ) {
          f_Iuse = &f_Is_norm_avg;
-         norm_name = "normed by avg. errors";
+         norm_name = norm_name_map[ NORM_AVG ];
       }
    }
 
@@ -3170,6 +3213,12 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_recon()
    set < QString > current_files = get_current_files();
 
    QString tag = QString( "TSVD%1_%2" ).arg( sv_count ).arg( sv_count == 1 ? QString( "%1_").arg( last_ev ).replace( ".","_" ) : QString( "" ) );
+   // QTextStream( stdout ) <<
+   //    QString( "do_recon():1 tag '%1' last_ev '%2'\n" )
+   //    .arg( tag )
+   //    .arg( last_ev )
+   //    ;
+
    int ext = 0;
 
    // find consistent ext
@@ -3191,6 +3240,10 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_recon()
    } while( any_found );
    tag += ext ? QString( "%1_" ).arg( ext ) : QString( "" );
    //   cout << QString( "tag <%1> any_found %2 %3\n" ).arg( tag ).arg( any_found ? "true" : "false" ).arg( ext );
+   // QTextStream( stdout ) <<
+   //    QString( "do_recon():2 tag '%1'\n" )
+   //    .arg( tag )
+   //    ;
 
    QStringList final_files;
 
@@ -3227,12 +3280,15 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_recon()
       }         
 
       QString this_name = tag + last_svd_data[ i ];
-#if QT_VERSION < 0x040000
-      lvinext = new QTreeWidgetItem( iqs, lvinext, this_name );
-#else
+      // QTextStream( stdout ) <<
+      //    QString( "do_recon():d i %1 tag '%2' last_svd_data[i] %3\n" )
+      //    .arg( i )
+      //    .arg( tag )
+      //    .arg( last_svd_data[ i ] )
+      //    ;
+      
       lvinext = new QTreeWidgetItem( iqs, lvinext );
       lvinext->setText( 0, this_name );
-#endif
 
       final_files << this_name;
 
@@ -3377,6 +3433,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::indiv_recon()
 
 void US_Hydrodyn_Saxs_Hplc_Svd::set_plot_errors()
 {
+   // qDebug() << "set_plot_errors()";
    if ( cb_plot_errors->isChecked() )
    {
       hide_widgets( errors_widgets, false );
@@ -3450,6 +3507,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::set_plot_errors_ref()
 
 void US_Hydrodyn_Saxs_Hplc_Svd::update_plot_errors( bool do_update_enables )
 {
+   // qDebug() << "update_plot_errors()";
    disable_all();
    if ( cb_plot_errors->isChecked() )
    {
@@ -3575,6 +3633,12 @@ QString US_Hydrodyn_Saxs_Hplc_Svd::get_related_source_name( QString name )
 
 QStringList US_Hydrodyn_Saxs_Hplc_Svd::get_files_by_name( QString name )
 {
+   // QTextStream( stdout ) << "get_files_by_name( " << name << " )\n";
+   QString odata = us_tr( "Original data" );
+   if ( name.left( odata.length() ) == odata ) {
+      name = odata;
+   }
+
    QStringList result;
    QString iq_or_it = iq_it_state ? "I(t)" : "I(q)";
 
@@ -3595,8 +3659,27 @@ QStringList US_Hydrodyn_Saxs_Hplc_Svd::get_files_by_name( QString name )
    return result;
 }
 
-bool US_Hydrodyn_Saxs_Hplc_Svd::get_plot_files( QStringList &use_list, QStringList &use_ref_list )
+bool US_Hydrodyn_Saxs_Hplc_Svd::get_name_norm_mode( QString fullname, QString &name, norms &norm_mode ) {
+   // QTextStream( stdout ) << "get_name_norm_mode( " << fullname << " );\n";
+   for ( int i = NORM_NOT; i <= NORM_AVG; ++i ) {
+      QRegExp rx = QRegExp( " " + norm_name_map[ static_cast<norms>(i) ] + "$" );
+      // QTextStream( stdout ) << "get_name_norm_mode: checking for '" << norm_name_map[ static_cast<norms>(i) ] << "'\n";
+      if ( fullname.contains( rx ) ) {
+         norm_mode = static_cast<norms>(i);
+         name = fullname.replace( rx, "" );
+         // QTextStream( stdout ) << "get_name_norm_mode() matched, returning true, name is now: '" << name << "'\n";
+         return true;
+      }
+   }
+   name = fullname;
+   norm_mode = NO_NORM;
+   // QTextStream( stdout ) << "get_name_norm_mode() dropping out, returning false, name is now: '" << name << "'\n";
+   return false;
+}
+
+bool US_Hydrodyn_Saxs_Hplc_Svd::get_plot_files( QStringList &use_list, QStringList &use_ref_list, norms &ref_norm_mode )
 {
+   // qDebug() << "get_plot_files()";
    set < QString > sources = get_selected_sources();
    if ( !sources.size() )
    {
@@ -3604,16 +3687,20 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::get_plot_files( QStringList &use_list, QStringLi
    }
    if ( sources.size() > 1 )
    {
-      editor_msg( "red", QString( us_tr( "Internal error: get_plot_files() with more than one source (%1)" ) ).arg( sources.size() ) );
+      // editor_msg( "red", QString( us_tr( "Internal error: get_plot_files() with more than one source (%1)" ) ).arg( sources.size() ) );
       return false;
    }
 
    QString source     = *( sources.begin() );
-   QString ref_source = get_related_source_name( source );
+   QString ref_source;
+   (void) get_name_norm_mode( get_related_source_name( source ), ref_source, ref_norm_mode );
+   // QTextStream( stdout ) << "ref source:" << ref_source << "  ref_norm_mode:" << norm_name_map[ ref_norm_mode ] << "\n";
    
    if ( ref_source.isEmpty() )
    {
-      editor_msg( "red", QString( us_tr( "Internal error: get_plot_files() could not find related name for source %1" ) ).arg( source ) );
+      if ( source != us_tr( "Original data" ) ) {
+         editor_msg( "red", QString( us_tr( "Internal error: get_plot_files() could not find related name for source %1" ) ).arg( source ) );
+      }
       return false;
    }
 
@@ -3625,7 +3712,8 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::get_plot_files( QStringList &use_list, QStringLi
 
    QStringList full_list     = get_files_by_name( source     );
    QStringList full_ref_list = get_files_by_name( ref_source );
-
+ 
+   // qDebug() << "get_plot_files(): after get_files_by_name()";
    if ( full_list.size() != full_ref_list.size() )
    {
       editor_msg( "red", QString( us_tr( "Internal error: get_plot_files() file list count mismatch %1 %2" ) ).arg( full_list.size() ).arg( full_ref_list.size() ) );
@@ -3656,15 +3744,31 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::get_plot_files( QStringList &use_list, QStringLi
    
 void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
 {
-   // cout << "do plot errors\n";
+   // qDebug() << "do_plot_errors()\n";
    
    QStringList use_list;
    QStringList use_ref_list;
-   if ( !get_plot_files( use_list, use_ref_list ) )
+   norms ref_norm_mode;
+   if ( !get_plot_files( use_list, use_ref_list, ref_norm_mode ) )
    {
       return;
    }
    
+   map < QString, vector < double > >  * ref_f_Iuse = &f_Is;
+
+   switch( ref_norm_mode ) {
+   case NORM_PW :
+      ref_f_Iuse = &f_Is_norm_pw;
+      break;
+
+   case NORM_AVG :
+      ref_f_Iuse = &f_Is_norm_avg;
+      break;
+
+   default :
+      break;
+   }
+
    plot_errors->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_errors->detachItems( QwtPlotItem::Rtti_PlotMarker );;
    plot_errors_reference.clear( );
 
@@ -3682,8 +3786,32 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
    vector < int >    use_pos;
    vector < QColor > use_color( (int) use_list.size() );
 
+   if ( use_ref_list.size() != use_list.size() ) {
+      qDebug() << "do_plot_errors(): list sizes differ";
+   }
+
    for ( int i = 0; i < (int) use_list.size(); ++i )
    {
+      // QTextStream( stdout )
+      //    <<
+      //    QString( "use %1 list name '%2' fe %4 qs %5 qss %6 ref list name '%3' fe %7 qs %8 qss %9" )
+      //    .arg( i )
+      //    .arg( use_list[ i ] )
+      //    .arg( use_ref_list[ i ] )
+      //    .arg( f_errors.count( use_list[ i ] ) ? "yes" : "NO" )
+      //    .arg( f_qs.count( use_list[ i ] ) ? "yes" : "NO" )
+      //    .arg( f_qs_string.count( use_list[ i ] ) ? "yes" : "NO" )
+      //    .arg( f_errors.count( use_ref_list[ i ] ) ? "yes" : "NO" )
+      //    .arg( f_qs.count( use_ref_list[ i ] ) ? "yes" : "NO" )
+      //    .arg( f_qs_string.count( use_ref_list[ i ] ) ? "yes" : "NO" )
+      //    <<
+      //    QString( "f_Is[ use_list ] %1 (*ref_f_Iuse)[use_ref_list] %2" )
+      //    .arg( f_Is.count( use_list[ i ] ) ? "yes" : "NO" )
+      //    .arg( (*ref_f_Iuse).count( use_ref_list[ i ] ) ? "yes" : "NO" )
+      //    <<
+      //    "\n";
+
+
       if ( use_errors &&
            ( f_errors[ use_ref_list[ i ] ].size() !=
              f_qs    [ use_ref_list[ i ] ].size() ||
@@ -3699,6 +3827,27 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
       if ( f_qs_string[ use_ref_list[ i ] ] != 
            f_qs_string[ use_list    [ i ] ] )
       {
+         QTextStream( stdout )
+            <<
+            QString( "do_plot_errors() i=%1 use_ref_list[i] = %2 use_list[i] = %3\n" )
+            .arg( i )
+            .arg( use_ref_list[ i ] )
+            .arg( use_list[ i ] )
+
+            <<
+            US_Vector::qs_vector2( "f_qs[use_ref_list[i]] f_qs[ref_list][i]",
+                                   f_qs[ use_ref_list[ i ] ],
+                                   f_qs[ use_list[ i ] ] )
+
+            <<
+            US_Vector::qs_vector2( "f_qs_string[use_ref_list[i]] f_qs_string[ref_list][i]",
+                                   f_qs_string[ use_ref_list[ i ] ],
+                                   f_qs_string[ use_list[ i ] ] )
+
+            <<
+            "\n"
+            ;
+
          editor_msg( "red", QString( us_tr( "Error: plot residuals: curve grid mismatch" ) ) );
          return;
       }
@@ -3707,14 +3856,24 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
       {
          grid   .push_back( f_qs[ use_list[ i ] ][ j ] - f_qs[ use_list[ i ] ][ 0 ] + grid_ofs );
          fit    .push_back( f_Is[ use_list[ i ] ][ j ] );
-         target .push_back( f_Is[ use_ref_list[ i ] ][ j ] );
+         target .push_back( (*ref_f_Iuse)[ use_ref_list[ i ] ][ j ] );
          use_pos.push_back( i );   
          if ( use_errors )
          {
             errors.push_back( f_errors[ use_ref_list[ i ] ][ j ] );
          }
       }
+
       grid_ofs += f_qs[ use_list[ i ] ].back() - f_qs[ use_list[ i ] ][ 0 ];
+      // QTextStream( stdout )
+      //    <<
+      //    QString( "grid_ofs for i = %1 is %2; f_pos is %3 color pos %4 colors size %5\n" )
+      //    .arg( i )
+      //    .arg( grid_ofs )
+      //    .arg( f_pos[ use_list[ i ] ] )
+      //    .arg( f_pos[ use_list[ i ] ] % plot_colors.size() )
+      //    .arg( plot_colors.size() )
+      //    ;
       plot_errors_jumps.push_back( grid_ofs );
    }
    plot_errors_jumps.pop_back();
@@ -3725,6 +3884,21 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
       fit = target;
       target = tmp;
    }
+
+   // check grid
+   QTextStream( stdout ) << QString( "checking grid size %1\n" ).arg( grid.size() );
+   
+   for ( int i = 1; i < (int) grid.size(); ++i ) {
+      if ( grid[ i - 1 ] > grid[ i ] ) {
+         QTextStream( stdout ) << QString( "grid error grid[%1]=%2 > grid[%3]=%4\n" )
+            .arg( i - 1 )
+            .arg( grid[ i - 1 ] )
+            .arg( i )
+            .arg( grid[ i ] )
+            ;
+      }
+   }
+   QTextStream( stdout ) << QString( "grid check done\n" );
 
    vector < vector < double > > x( (int) use_list.size() );
    vector < vector < double > > y( (int) use_list.size() );
@@ -3783,7 +3957,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
 
    for ( int j = 0; j < (int) e.size(); ++j )
    {
-      for ( unsigned int i = 0; i < ( unsigned int ) e.size(); i++ )
+      for ( unsigned int i = 0; i < ( unsigned int ) e[ j ].size(); i++ )
       {
          if ( e[ j ][ i ] < -50e0 )
          {
@@ -3797,29 +3971,15 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
       }
    }
 
-   // printvector( "x", x );
-   // printvector( "e", e );
 
+   // QTextStream( stdout ) << US_Vector::qs_vector2( "use_pos, grid", use_pos, grid ) << "\n";
+   
    for ( int j = 0; j < (int) x.size(); ++j )
    {
+      // US_Vector::printvector2( "x[j], e[j]", x[j], e[j] );
       {
-#if QT_VERSION < 0x040000
-         long curve;
-         curve = plot_errors->insertCurve( "base" );
-         plot_errors->setCurveStyle( curve, QwtCurve::Lines );
-#else
          QwtPlotCurve *curve = new QwtPlotCurve( "base" );
          curve->setStyle( QwtPlotCurve::Lines );
-#endif
-
-#if QT_VERSION < 0x040000
-         plot_errors->setCurvePen( curve, QPen( Qt::green, use_line_width, Qt::SolidLine ) );
-         plot_errors->setCurveData( curve,
-                                    (double *)&x[ j ][ 0 ],
-                                    (double *)&y[ j ][ 0 ],
-                                    x[ j ].size()
-                                    );
-#else
          curve->setPen( QPen( Qt::green, use_line_width, Qt::SolidLine ) );
          curve->setSamples(
                         (double *)&x[ j ][ 0 ],
@@ -3827,28 +3987,11 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
                         x[ j ].size()
                         );
          curve->attach( plot_errors );
-#endif
       }
 
       {
-#if QT_VERSION < 0x040000
-         long curve;
-         curve = plot_errors->insertCurve( "errors" );
-         plot_errors->setCurveStyle( curve, QwtCurve::Lines );
-#else
          QwtPlotCurve *curve = new QwtPlotCurve( "errors" );
          curve->setStyle( QwtPlotCurve::Lines );
-#endif
-
-#if QT_VERSION < 0x040000
-         plot_errors->setCurvePen( curve, QPen( use_color[ j ], use_line_width, Qt::SolidLine ) );
-         plot_errors->setCurveData( curve,
-                                    (double *)&x[ j ][ 0 ],
-                                    (double *)&e[ j ][ 0 ],
-                                    x[ j ].size()
-                                    );
-         plot_errors->curve( curve )->setStyle( QwtCurve::Sticks );
-#else
          curve->setPen( QPen( use_color[ j ], use_line_width, Qt::SolidLine ) );
          curve->setSamples(
                         (double *)&x[ j ][ 0 ],
@@ -3857,7 +4000,6 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
                         );
          curve->setStyle( QwtPlotCurve::Sticks );
          curve->attach( plot_errors );
-#endif
       }
    }
 
@@ -3883,14 +4025,12 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
                                                               "delta I%1/sd" : "delta I%1" 
                                                               ) ) ).arg( iq_it_state ? "I(t)" : "I(q)" ) );
 
-      plot_errors->setAxisScale( QwtPlot::xBottom, x[ 0 ][ 0 ], x.back().back() );
+      // plot_errors->setAxisScale( QwtPlot::xBottom, x[ 0 ][ 0 ], x.back().back() );
+      plot_errors->setAxisScale( QwtPlot::xBottom, grid[ 0 ], grid.back() );
       plot_errors->setAxisScale( QwtPlot::yLeft  , -maxy * 1.2e0 , maxy * 1.2e0 );
 
       plot_errors_zoomer = new ScrollZoomer(plot_errors->canvas());
       plot_errors_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-      plot_errors_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
       // connect( plot_errors_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_errors_zoomed( const QRectF & ) ) );
    }
 
@@ -3904,7 +4044,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
       {
          plot_errors_reference.insert( use_ref_list[ i ] );
       }
-      plot_files( use_ref_list );
+      plot_files( use_ref_list, ref_norm_mode );
    }
 }
 
@@ -3918,15 +4058,6 @@ void US_Hydrodyn_Saxs_Hplc_Svd::plot_errors_jump_markers()
 
    for ( int i = 0; i < (int) plot_errors_jumps.size(); i++ )
    {
-#if QT_VERSION < 0x040000
-      long marker = plot_errors->insertMarker();
-      plot_errors->setMarkerLineStyle ( marker, QwtMarker::VLine );
-      plot_errors->setMarkerPos       ( marker, plot_errors_jumps[ i ], 0e0 );
-      plot_errors->setMarkerLabelAlign( marker, Qt::AlignRight | Qt::AlignTop );
-      plot_errors->setMarkerPen       ( marker, QPen( Qt::cyan, 1, DashDotDotLine));
-      plot_errors->setMarkerFont      ( marker, QFont("Helvetica", 11, QFont::Bold) );
-      plot_errors->setMarkerLabelText ( marker, QString( "%1" ).arg( i + 1 ) );
-#else
       QwtPlotMarker * marker = new QwtPlotMarker;
       marker->setLineStyle       ( QwtPlotMarker::VLine );
       marker->setLinePen         ( QPen( Qt::cyan, 2, Qt::DashDotDotLine ) );
@@ -3939,20 +4070,36 @@ void US_Hydrodyn_Saxs_Hplc_Svd::plot_errors_jump_markers()
          marker->setLabel           ( qwtt );
       }
       marker->attach             ( plot_errors );
-#endif
    }
    plot_errors->replot();
 }
 
 void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors_group()
 {
-   // cout << "do plot errors group\n";
+   // qDebug() << "do_plot_errors_group()\n";
 
    QStringList use_list;
    QStringList use_ref_list;
-   if ( !get_plot_files( use_list, use_ref_list ) )
+   norms       ref_norm_mode;
+   if ( !get_plot_files( use_list, use_ref_list, ref_norm_mode ) )
    {
       return;
+   }
+
+   map < QString, vector < double > >  * ref_f_Iuse = &f_Is;
+   map < QString, vector < double > >  * org_f_Iuse = &f_Is;
+
+   switch( ref_norm_mode ) {
+   case NORM_PW :
+      ref_f_Iuse = &f_Is_norm_pw;
+      break;
+
+   case NORM_AVG :
+      ref_f_Iuse = &f_Is_norm_avg;
+      break;
+
+   default :
+      break;
    }
 
    plot_errors->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_errors->detachItems( QwtPlotItem::Rtti_PlotMarker );;
@@ -3975,6 +4122,12 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors_group()
          cb_plot_errors_sd->setChecked( false );
          cb_plot_errors_sd->hide();
       }
+   }
+
+   if ( cb_plot_errors_rev->isChecked() ) {
+      map < QString, vector < double > >  * tmp_f_Iuse = org_f_Iuse;
+      org_f_Iuse = ref_f_Iuse;
+      ref_f_Iuse = tmp_f_Iuse;
    }
 
    for ( int j = 0; j < (int) use_list.size(); ++j )
@@ -4003,11 +4156,11 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors_group()
             // cout << "pct mode with errors, not acceptable\n";
             for ( int i = 0; i < (int) f_qs[ this_file ].size(); ++i )
             {
-               if ( f_Is[ this_ref_file ][ i ] != 0e0 )
+               if ( (*ref_f_Iuse)[ this_ref_file ][ i ] != 0e0 )
                {
                   x.push_back( f_qs[ this_file ][ i ] );
                   y.push_back( 0e0 );
-                  e.push_back( 100.0 * ( f_Is[ this_ref_file ][ i ] - f_Is[ this_file ][ i ] ) / f_Is[ this_ref_file ][ i ] );
+                  e.push_back( 100.0 * ( (*ref_f_Iuse)[ this_ref_file ][ i ] - (*org_f_Iuse)[ this_file ][ i ] ) / (*ref_f_Iuse)[ this_ref_file ][ i ] );
                }
             }
          } else {
@@ -4015,11 +4168,11 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors_group()
 
             for ( int i = 0; i < (int) f_qs[ this_file ].size(); ++i )
             {
-               if ( f_Is[ this_ref_file ][ i ] != 0e0 )
+               if ( (*ref_f_Iuse)[ this_ref_file ][ i ] != 0e0 )
                {
                   x.push_back( f_qs[ this_file ][ i ] );
                   y.push_back( 0e0 );
-                  e.push_back( 100.0 * ( f_Is[ this_ref_file ][ i ] - f_Is[ this_file ][ i ] ) / f_Is[ this_ref_file ][ i ] );
+                  e.push_back( 100.0 * ( (*ref_f_Iuse)[ this_ref_file ][ i ] - (*org_f_Iuse)[ this_file ][ i ] ) / (*ref_f_Iuse)[ this_ref_file ][ i ] );
                } else {
                   cout << QString( "target at pos %1 is zero\n" ).arg( i );
                }
@@ -4033,7 +4186,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors_group()
             {
                x.push_back( f_qs[ this_file ][ i ] );
                y.push_back( 0e0 );
-               e.push_back( ( f_Is[ this_ref_file ][ i ] - f_Is[ this_file ][ i ] ) / f_errors[ this_ref_errors ][ i ] );
+               e.push_back( ( (*ref_f_Iuse)[ this_ref_file ][ i ] - (*org_f_Iuse)[ this_file ][ i ] ) / f_errors[ this_ref_errors ][ i ] );
             }
          } else {
             // cout << "errors not ok & not used\n";
@@ -4041,7 +4194,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors_group()
             {
                x.push_back( f_qs[ this_file ][ i ] );
                y.push_back( 0e0 );
-               e.push_back( f_Is[ this_ref_file ][ i ] - f_Is[ this_file ][ i ] );
+               e.push_back( (*ref_f_Iuse)[ this_ref_file ][ i ] - (*org_f_Iuse)[ this_file ][ i ] );
             }
          }
       }
@@ -4066,23 +4219,8 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors_group()
 
       if ( !j ) 
       {
-#if QT_VERSION < 0x040000
-         long curve;
-         curve = plot_errors->insertCurve( "base" );
-         plot_errors->setCurveStyle( curve, QwtCurve::Lines );
-#else
          QwtPlotCurve *curve = new QwtPlotCurve( "base" );
          curve->setStyle( QwtPlotCurve::Lines );
-#endif
-
-#if QT_VERSION < 0x040000
-         plot_errors->setCurvePen( curve, QPen( Qt::green, use_line_width, Qt::SolidLine ) );
-         plot_errors->setCurveData( curve,
-                                    (double *)&x[ 0 ],
-                                    (double *)&y[ 0 ],
-                                    x.size()
-                                    );
-#else
          curve->setPen( QPen( Qt::green, use_line_width, Qt::SolidLine ) );
          curve->setSamples(
                         (double *)&x[ 0 ],
@@ -4090,28 +4228,11 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors_group()
                         x.size()
                         );
          curve->attach( plot_errors );
-#endif
       }
 
       {
-#if QT_VERSION < 0x040000
-         long curve;
-         curve = plot_errors->insertCurve( "errors" );
-         plot_errors->setCurveStyle( curve, QwtCurve::Lines );
-#else
          QwtPlotCurve *curve = new QwtPlotCurve( "errors" );
          curve->setStyle( QwtPlotCurve::Lines );
-#endif
-
-#if QT_VERSION < 0x040000
-         plot_errors->setCurvePen( curve, QPen( plot_colors[ f_pos[ this_color_file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
-         plot_errors->setCurveData( curve,
-                                    (double *)&x[ 0 ],
-                                    (double *)&e[ 0 ],
-                                    x.size()
-                                    );
-         plot_errors->curve( curve )->setStyle( QwtCurve::Sticks );
-#else
          curve->setPen( QPen( plot_colors[ f_pos[ this_color_file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
          curve->setSamples(
                         (double *)&x[ 0 ],
@@ -4120,7 +4241,6 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors_group()
                         );
          curve->setStyle( QwtPlotCurve::Sticks );
          curve->attach( plot_errors );
-#endif
       }
 
       if ( !j )
@@ -4176,7 +4296,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors_group()
       {
          plot_errors_reference.insert( use_ref_list[ i ] );
       }
-      plot_files( use_ref_list );
+      plot_files( use_ref_list, ref_norm_mode );
    }
 }
 
@@ -4413,15 +4533,15 @@ void US_Hydrodyn_Saxs_Hplc_Svd::efa() {
 
    map < QString, vector < double > >  * f_Iuse = &f_Is;
    check_norm( files );
-   QString norm_name = "not normed";
+   QString norm_name = norm_name_map[ NORM_NOT ];
    if ( norm_ok ) {
       if ( cb_norm_pw->isChecked() ) {
          f_Iuse = &f_Is_norm_pw;
-         norm_name = "normed by p.w. errors";
+         norm_name = norm_name_map[ NORM_PW ];
       }
       if ( cb_norm_avg->isChecked() ) {
          f_Iuse = &f_Is_norm_avg;
-         norm_name = "normed by avg. errors";
+         norm_name = norm_name_map[ NORM_AVG ];
       }
    }
    last_efa_name += " " + norm_name;
@@ -6191,15 +6311,15 @@ void US_Hydrodyn_Saxs_Hplc_Svd::efa_decomp() {
    
    map < QString, vector < double > >  * f_Iuse = &f_Is;
    check_norm( files );
-   QString norm_name = "not normed";
+   QString norm_name = norm_name_map[ NORM_NOT ];
    if ( norm_ok ) {
       if ( cb_norm_pw->isChecked() ) {
          f_Iuse = &f_Is_norm_pw;
-         norm_name = "normed by p.w. errors";
+         norm_name = norm_name_map[ NORM_PW ];
       }
       if ( cb_norm_avg->isChecked() ) {
          f_Iuse = &f_Is_norm_avg;
-         norm_name = "normed by avg. errors";
+         norm_name = norm_name_map[ NORM_AVG ];
       }
    }
 

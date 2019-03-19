@@ -35,7 +35,9 @@ class US_Vector
    static QString qs_vector( QString qs, vector < int > x );
    static QString qs_vector( QString qs, vector < double > x, int digits = 8, int newline = 0 );
    static QString qs_vector2( QString qs, vector < double > x, vector < double > y, int digits = 8 );
+   static QString qs_vector2( QString qs, vector < int > x, vector < double > y, int digits = 8 );
    static QString qs_vector2( QString qs, vector < int > x, vector < int > y );
+   static QString qs_vector2( QString qs, vector < QString > x, vector < QString > y );
    static QString qs_vector( QString qs, vector < bool > x );
    static QString qs_vector3( QString qs, vector < double > x, vector < double > y, vector < double > z, int digits = 8 );
    static QString qs_vector4( QString qs, vector < double > x, vector < double > y, vector < double > z, vector < double > s, int digits = 8 );
