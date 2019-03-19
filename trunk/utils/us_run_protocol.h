@@ -11,7 +11,7 @@ class US_UTIL_EXTERN US_RunProtocol
 {
    public:
       //! \brief Protocol Lab/Rotor controls class
-      class RunProtoRotor
+      class US_UTIL_EXTERN RunProtoRotor
       {
          public:
             RunProtoRotor();
@@ -50,10 +50,10 @@ class US_UTIL_EXTERN US_RunProtocol
       };
 
       //! \brief Protocol Speed Steps controls class
-      class RunProtoSpeed
+      class US_UTIL_EXTERN RunProtoSpeed
       {
          public:
-            class SpeedStep
+            class US_UTIL_EXTERN SpeedStep
             {
                public:
                   double      speed;         //!< Step rotor speed in rpm
@@ -103,10 +103,10 @@ class US_UTIL_EXTERN US_RunProtocol
       };
 
       //! \brief Protocol Cells controls class
-      class RunProtoCells
+      class US_UTIL_EXTERN RunProtoCells
       {
          public:
-            class CellUse
+            class US_UTIL_EXTERN CellUse
             {
                public:
                   int         cell;          //!< Cell number
@@ -145,10 +145,10 @@ class US_UTIL_EXTERN US_RunProtocol
       };
 
       //! \brief Protocol Solutions controls class
-      class RunProtoSolutions
+      class US_UTIL_EXTERN RunProtoSolutions
       {
          public:
-            class ChanSolu
+            class US_UTIL_EXTERN ChanSolu
             {
                public:
                   QString     channel;       //!< Channel name ("2 / A")
@@ -190,10 +190,10 @@ class US_UTIL_EXTERN US_RunProtocol
       };
 
       //! \brief Protocol Optical Systems controls class
-      class RunProtoOptics
+      class US_UTIL_EXTERN RunProtoOptics
       {
          public:
-            class OpticSys
+            class US_UTIL_EXTERN OpticSys
             {
                public:
                   QString     channel;       //!< Channel description ("2 / A")
@@ -230,10 +230,10 @@ class US_UTIL_EXTERN US_RunProtocol
       };
 
       //! \brief Protocol Ranges controls class
-      class RunProtoRanges
+      class US_UTIL_EXTERN RunProtoRanges
       {
          public:
-            class Ranges
+            class US_UTIL_EXTERN Ranges
             {
                public:
                   QString          channel;  //!< Channel description ("2 / A")
@@ -270,7 +270,7 @@ class US_UTIL_EXTERN US_RunProtocol
       };
 
       //! \brief Protocol Analysis Profile controls class
-      class RunProtoAProfile
+      class US_UTIL_EXTERN RunProtoAProfile
       {
          public:
             RunProtoAProfile();
@@ -295,7 +295,7 @@ class US_UTIL_EXTERN US_RunProtocol
       };
 
       //! \brief Protocol Upload controls class
-      class RunProtoUpload
+      class US_UTIL_EXTERN RunProtoUpload
       {
          public:
             RunProtoUpload();
