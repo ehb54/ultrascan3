@@ -106,6 +106,95 @@ int US_XpnData::checkExpStatus( QString runid )
    return sqry.value( 0 ).toInt();
 }
 
+
+// Query and update data for the latest SystemStatusData table entry
+int US_XpnData::update_isysrec( const int runId )
+{
+   int lastrpm     = -1;
+   static QStringList  cnames;
+   static QList< int > cxs;
+   static int cols = -1;
+
+   QSqlQuery    sqry;
+   QSqlRecord   qrec;
+   QString sRunId  = QString::number( runId );
+   QString sExpTm;
+   QString schname( "AUC_schema" );
+   QString tabname( "SystemStatusData" );
+   QString sqtab, qrytab, qrytext;
+   int nnrows      = 0;
+
+   if ( cols < 1 )
+   {
+      cols            = column_indexes( tabname, cnames, cxs );
+   }
+
+   // Count the number of rows now in the data table
+   
+   sqtab           = schname + "." + tabname;
+   qrytab          = "\"" + schname + "\".\"" + tabname + "\"";
+   qrytext         = "SELECT count(*) from " + qrytab
+                   + " WHERE \"RunId\"=" + sRunId + ";";
+   sqry            = dbxpn.exec( qrytext );
+   sqry.next();
+   nnrows          = sqry.value( 0 ).toInt();
+
+   if ( nnrows < 1 )
+   {  // If no data yet, return with negative speed
+      isyrec.dataId   = -1;
+      isyrec.runId    = runId;
+      isyrec.exptime  = -1;
+      isyrec.stageNum = 0;
+      isyrec.tempera  = 0.0;
+      isyrec.speed    = 0.0;
+      isyrec.omgSqT   = 0.0;
+      return -1;
+   }
+
+   // Otherwise, get the latest SystemStatusData row
+   qrytext         = "SELECT * from " + qrytab
+                   + " WHERE \"RunId\"=" + sRunId
+                   + " ORDER BY \"DataId\" DESC LIMIT 1;";
+/*
+      flds << "DataId" << "RunId" << "ExperimentStart" << "ExperimentTime"
+           << "Temperature" << "RPM" << "OmegaSquaredT" << "StageNum";
+      class tbSyData
+      {
+         public:
+            int       dataId;        //!< Data table entry ID
+            int       runId;         //!< Run ID
+            int       exptime;       //!< Time in seconds from exp. start
+            int       stageNum;      //!< Stage number
+            double    tempera;       //!< Temperature
+            double    speed;         //!< Speed in revs per minute
+            double    omgSqT;        //!< OmegaSquaredT
+            QDateTime expstart;      //!< Experiment start
+      };
+*/
+   sqry            = dbxpn.exec( qrytext );
+   sqry.next();
+
+   isyrec.dataId   = sqry.value( cxs[  0 ] ).toInt();
+   isyrec.runId    = sqry.value( cxs[  1 ] ).toInt();
+   isyrec.expstart = sqry.value( cxs[  2 ] ).toDateTime();
+   isyrec.exptime  = sqry.value( cxs[  3 ] ).toInt();
+   isyrec.tempera  = sqry.value( cxs[  4 ] ).toDouble();
+   isyrec.speed    = sqry.value( cxs[  5 ] ).toDouble();
+   isyrec.omgSqT   = sqry.value( cxs[  6 ] ).toDouble();
+   isyrec.stageNum = sqry.value( cxs[  7 ] ).toInt();
+
+   lastrpm         = qRound( isyrec.speed );
+
+   if ( lastrpm > 0  &&  etimoff == 0 )
+   {  // When speed is non-zero and no offset set, get offset
+      scan_xpndata( runId, QChar( 'S' ) );
+   }
+
+DbgLv(1) << "XpDa:ussx:  lastrpm" << lastrpm << "time temp rpm"
+ << isyrec.exptime << isyrec.tempera << isyrec.speed;
+   return lastrpm;
+}
+
 // Get RunID from ExpID
 int US_XpnData::get_runid( QString expid)
 {
@@ -1979,6 +2068,24 @@ int US_XpnData::countOf( QString key )
    return counts[ key ];
 }
 
+// Return a counts of sysData
+QString US_XpnData::countOf_sysdata( QString key )
+{
+   mapCounts_sysdata();
+
+   return counts_sysdata[ key ];
+}
+
+// Private slot to map counts and sizes
+void US_XpnData::mapCounts_sysdata( void )
+{
+  counts_sysdata[ "exp_time"  ]  = QString::number(isyrec.exptime);
+  counts_sysdata[ "stage_number" ]  = QString::number(isyrec.stageNum);
+  counts_sysdata[ "tempera" ]    = QString::number(isyrec.tempera);
+  counts_sysdata[ "last_rpm"  ]  =  QString::number(isyrec.speed);
+  counts_sysdata[ "etim_off"  ]  = QString::number(etimoff);
+}
+
 // Return the channel description string for a given cell/channel
 QString US_XpnData::cc_description( QString celchn )
 {
@@ -2122,6 +2229,9 @@ void US_XpnData::mapCounts( void )
    counts[ "elambda"   ]  = elambda;
    counts[ "scan_all"  ]  = ntscan;
    counts[ "scan_rows" ]  = ntsrow;
+
+   counts[ "last_rpm"  ]  = qRound( isyrec.speed );
+   counts[ "etim_off"  ]  = etimoff;
 }
 
 #if 0
@@ -2566,6 +2676,10 @@ QString US_XpnData::runDetails( void )
 
    }  // END: table type loop
 
+
+   msg += tr( "    System Status Interval:   %1\n" ).arg( sstintv );
+   msg += tr( "    Instant SysStat Interval: %1\n" ).arg( issintv );
+   
    // Compose message for values in System Status Data table
    int ssknt      = tSydata.count();
    if ( ssknt < 2 )

@@ -25,6 +25,7 @@ class US_UTIL_EXTERN US_XpnData : public QObject
    public:
       US_XpnData( );
 
+ 
       //! ExperimentRun table values
       class tbExpRun
       {
@@ -256,6 +257,13 @@ class US_UTIL_EXTERN US_XpnData : public QObject
       //! \                negative count if no new rows added.
       int     update_xpndata( const int, const QChar );
 
+      //! \brief Update current System Status record (isyrec)
+      //! \param runId    Run ID to match
+      //! \returns        Current f rows of match ScanData found or
+      //! \                negative count if no new rows added.
+      //int     update_isysrec( const int, tbSyData& );
+      int     update_isysrec( const int );
+      
       //! \brief Import ScanData from the postgres database
       //! \param runId    Run ID to match
       //! \param scanMask Scan mask (AFIW, 1 to 15) of tables
@@ -313,6 +321,8 @@ class US_UTIL_EXTERN US_XpnData : public QObject
       //! \param key     Key string for which to map a value ("file",...)
       //! \returns       Number of values for the array with given key
       int     countOf       ( QString );
+
+      QString   countOf_sysdata  ( QString );
 
       //! \brief Return the cell/channel description string
       //! \param celchn  Cell/channel to examine (e.g.,"1 / A")
@@ -382,6 +392,7 @@ class US_UTIL_EXTERN US_XpnData : public QObject
       QVector< double >   a_rpms;    //!< Average RPMs from speed steps
 
       tbCsData            csdrec;    //!< Common values scan data record
+      tbSyData            isyrec;    //!< Instantaneous System status data
 
       QStringList         fpaths;    //!< Input file paths
       QStringList         fnames;    //!< Input file names
@@ -395,6 +406,7 @@ class US_UTIL_EXTERN US_XpnData : public QObject
       QSqlDatabase        dbxpn;     //!< PostgresSql XPN database
 
       QMap< QString, int >  counts;  //!< Map of type counts for tables
+      QMap< QString, QString >  counts_sysdata;  //!< Map of type counts for tables
       QMap< QString, int >  totals;  //!< Map of total rows for tables
 
       int       sctype;              //!< Scan type captured (1<==>Data)
@@ -419,11 +431,16 @@ class US_UTIL_EXTERN US_XpnData : public QObject
       int       mxscnn;              //!< Maximum scan number
       int       ntscan;              //!< Total scans for all triples
       int       ntsrow;              //!< Total (A+F+I+W) scan rows
+      
       int       etimoff;             //!< Experimental time offset
       int       sstintv;             //!< System Status interval
+      int       issintv;             //!< Instantaneous System Status interval
 
+      
       double    radinc;              //!< Output AUC data radial increment
+      double    cur_rpm;             //!< Current SS speed in RPM;
 
+      
       bool      is_absorb;           //!< Flag if import is absorbance
       bool      is_mwl;              //!< Flag if multi-wavelength
       bool      is_raw;              //!< Flag if loaded from raw XPN
@@ -437,6 +454,10 @@ class US_UTIL_EXTERN US_XpnData : public QObject
 
       // Create key-indexed mappings of useful values
       void   mapCounts     ( void );
+
+      // Create key-indexed mappings of sysdata
+      void   mapCounts_sysdata ( void );
+      
       // Return a scan ID index within the tCFAMeta vector
       int    scan_data_index( const QString, const int, const int );
       // Get data readings from a range of Scans table records
