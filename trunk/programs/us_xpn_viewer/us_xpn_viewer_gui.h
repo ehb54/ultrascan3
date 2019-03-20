@@ -48,14 +48,15 @@ private:
 
 class DialBox: public QWidget
 {
-    Q_OBJECT
-public:
-    DialBox( QWidget *parent );
-
-private Q_SLOTS:
+  Q_OBJECT
+ public:
+  DialBox( QWidget *parent );
+  void setSpeed( double );
+  
+ private Q_SLOTS:
     void setNum( double v );
-
-private:
+    
+ private:
     SpeedoMeter *createDial( void ) const;
     SpeedoMeter *d_dial;
     QLabel  *d_label;
@@ -69,6 +70,7 @@ class WheelBox: public QWidget
     Q_OBJECT
 public:
     WheelBox( Qt::Orientation, QWidget *parent = NULL );
+    void setTemp( double );
     
 private Q_SLOTS:
     void setNum( double v );
@@ -239,7 +241,9 @@ class US_XpnDataViewer : public US_Widgets
      
      bool           in_reload_data_init;
      bool           in_reload_all_data;
+     bool           in_reload_check_sysdata;
 
+     
      double         last_xmin;
      double         last_xmax;
      double         last_ymin;
@@ -250,6 +254,7 @@ class US_XpnDataViewer : public US_Widgets
      QTimer*        timer_data_init;
      QTimer*        timer_data_reload;
      QTimer*        timer_all_data_avail;
+     QTimer*        timer_check_sysdata;
      
      QMessageBox*   msg_data_avail;
      QString        RunID_to_retrieve;
@@ -268,7 +273,8 @@ class US_XpnDataViewer : public US_Widgets
 
      bool   load_xpn_raw_auto   ( void );
      void   check_for_data ( QMap < QString, QString > & );
-          
+     void   check_for_sysdata ( QString & );
+     
      //void   retrieve_xpn_raw_auto ( QString & );
      void   retrieve_xpn_raw_auto ( void );
      void   reloadData_auto     ( void );

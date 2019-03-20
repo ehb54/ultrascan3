@@ -60,8 +60,13 @@ DialBox::DialBox( QWidget *parent ):
     layout->addWidget( d_label );
 
     connect( d_dial, SIGNAL( valueChanged( double ) ), this, SLOT( setNum( double ) ) );
-
+   
     setNum( d_dial->value() );
+}
+
+void DialBox::setSpeed( double v )
+{
+  d_dial->setValue( v );
 }
 
 void DialBox::setNum( double v )
@@ -80,7 +85,7 @@ SpeedoMeter *DialBox::createDial( void ) const
   dial->setScaleStepSize( 5 );
   dial->setScale( 0, 60 );
   dial->scaleDraw()->setPenWidth( 2 );
-  dial->setValue(45);
+  dial->setValue(0);
 
   return dial;
 }
@@ -102,7 +107,7 @@ SpeedoMeter::SpeedoMeter( QWidget *parent ):
     setScaleDraw( scaleDraw );
 
     setWrapping( false );
-    //setReadOnly( true );
+    setReadOnly( true );
 
     setOrigin( 135.0 );
     setScaleArc( 0.0, 270.0 );
@@ -148,23 +153,11 @@ WheelBox::WheelBox( Qt::Orientation orientation, QWidget *parent ): QWidget( par
     d_label->setAlignment( Qt::AlignHCenter | Qt::AlignTop );
     d_label->setStyleSheet("font: bold;color: black;");
 
-    // QHBoxLayout* main = new QHBoxLayout( this );
-    // main->setSpacing         ( 0 );
-    // main->setContentsMargins ( 0, 0, 0, 0 );
-    
-    // QBoxLayout *thermo_label = new QVBoxLayout( this );
-    // QLabel* t_label = new QLabel(this);;
-    // QString text;
-    // text =  "Celsius";
-    // t_label->setText( text );
-    // thermo_label->addWidget( t_label );
-
     QVBoxLayout *layout       = new QVBoxLayout( this );
     layout->addWidget( box, 15 );
     layout->addWidget( d_label );
 
-    //main->addLayout(thermo_label);
-    //main->addLayout(layout);
+    connect( d_thermo, SIGNAL( valueChanged( double ) ), this, SLOT( setNum( double ) ) );
     
     setNum( d_thermo->value() );
 }
@@ -184,7 +177,7 @@ QWidget *WheelBox::createBox( Qt::Orientation orientation )
     double max = 40;
 
     d_thermo->setScale( min, max );
-    d_thermo->setValue( max );
+    d_thermo->setValue( min );
 
     QWidget *box = new QWidget();
     QBoxLayout *layout;
@@ -195,6 +188,10 @@ QWidget *WheelBox::createBox( Qt::Orientation orientation )
     return box;
 }
 
+void WheelBox::setTemp( double v )
+{
+  d_thermo->setValue( v );
+}
 
 void WheelBox::setNum( double v )
 {
@@ -240,8 +237,10 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
    in_reload_auto    = false;
    in_reload_all_data  = false;
    in_reload_data_init = false;
-   
+   in_reload_check_sysdata  = false;
 
+   //double rmp_s = xpn_data->isyrec.speed;
+   
    // //ALEXEY: old way, form .cong file
    // QStringList xpnentr = US_Settings::defaultXpnHost();
    // DbgLv(1) << "xpnentr count" << xpnentr.count();
@@ -1514,19 +1513,45 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
       connect(timer_all_data_avail, SIGNAL(timeout()), this, SLOT( retrieve_xpn_raw_auto ( ) ));
       timer_all_data_avail->start(10000);     // 10 sec
 
-      //retrieve_xpn_raw_auto ( RunID_to_retrieve );
 
-      // // Auto-update hereafter
-      // timer_data_reload = new QTimer;
-      // connect(timer_data_reload, SIGNAL(timeout()), this, SLOT( reloadData_auto( ) ));
-      // timer_data_reload->start(10000);     // 5 sec
-
+      //ALEXEY: Start another timer - SysData (RPM, Temp.)
+      timer_check_sysdata = new QTimer;
+      connect(timer_check_sysdata, SIGNAL(timeout()), this, SLOT(  check_for_sysdata( RunID_to_retrieve )  ));
+      timer_check_sysdata->start(500);     // 
+      
     }
   
   in_reload_data_init   = false;
   return status_ok;
 }
 
+
+// Check periodically for SysData
+void US_XpnDataViewer::check_for_sysdata( QString &runId )
+{
+  if ( in_reload_check_sysdata )            // If already doing a reload,
+    return;                                //  skip starting a new one
+  
+  in_reload_check_sysdata   = true;          // Flag in the midst of a reload
+
+  
+  int idrun = runId.toInt();
+  xpn_data->update_isysrec( idrun );
+
+  int exp_time       = xpn_data->countOf_sysdata( "exp_time"  ).toInt();     //time form the start
+  int stage_number   = xpn_data->countOf_sysdata( "stage_number" ).toInt();  //stage number
+  double temperature = xpn_data->countOf_sysdata( "tempera" ).toDouble();    //temperature 
+  int rpm            = xpn_data->countOf_sysdata( "last_rpm"  ).toInt();     //revolutions per minute !
+  int etimoff        = xpn_data->countOf_sysdata( "etim_off"  ).toInt();     //experimental time offset 
+
+  // Update rmp, temperature GUI icons...
+  double rpm_for_meter = double(rpm/1000.0);
+  rpm_box->setSpeed(rpm_for_meter);
+
+  temperature_box->setTemp(temperature);
+  
+  in_reload_check_sysdata   = false; 
+}
 
 //Query for Optima DB periodically, see if data available
 void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_details)
@@ -3152,6 +3177,10 @@ DbgLv(1) << "RLd:       NO CHANGE";
       /*** Check Experiement Status: if completed, kill the timer, export the data into AUC format, return, signal to switch panels in US_comproject ***/
       if ( CheckExpComplete_auto( RunID_to_retrieve  ) )
 	{
+	  //ALEXEY: stop another timer - for live update of SysData (RPM, Temperature etc. )
+	  timer_check_sysdata->stop();
+	  disconnect(timer_check_sysdata, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+	  
 	  timer_data_reload->stop();
 	  disconnect(timer_data_reload, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
 	  
