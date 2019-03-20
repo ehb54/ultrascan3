@@ -4516,7 +4516,31 @@ void US_ExperGuiUpload::submitExperiment()
          }
       }
 
-
+      //Total duration
+      bool is_dummy_dur = false;
+      int curr_stage_dur;
+      int Total_duration = tem_delay_sec;
+      for (int i=0; i<nstages_size; i++)
+	{
+	  if (i==0 && tem_delay_sec)
+	    {
+	      is_dummy_dur = true;
+	      continue;                     // skip dummy stage for AbsScanParams
+	    }
+	  
+	  if (is_dummy_dur)
+            curr_stage_dur = i - 1;
+	  else
+            curr_stage_dur = i;
+	  
+	  qDebug() << "index i: " << i << ", curr_stage_DUR: " << curr_stage_dur;
+	  
+	  Total_duration += rpSpeed->ssteps[ curr_stage_dur ].duration;
+	  Total_duration += rpSpeed->ssteps[ curr_stage_dur ].delay_stage;
+	  //ALEXEY: do we need also delays to first scans for abs/interference into total duration? 
+	}
+      
+	 
       // Absorbance INSERT ////////////////////////////////////////////////////////////////////////
       QString tabname_abs( "AbsorbanceScanParameters" );
       QString schname( "AUC_schema" );
@@ -5210,7 +5234,8 @@ void US_ExperGuiUpload::submitExperiment()
          protocol_details[ "experimentName" ] = runname;
          protocol_details[ "protocolName" ]   = currProto->protoname;             // pass also to Live Update/PostProd protocol name
          protocol_details[ "CellChNumber" ]   = QString::number(rpSolut->nschan); // this can be read from protocol in US-lims DB
-
+	 protocol_details[ "duration" ]       = QString::number(Total_duration);
+	 
          int nwavl_tot = 0;
          for ( int kk = 0; kk < rpRange->nranges; kk++ )
          {

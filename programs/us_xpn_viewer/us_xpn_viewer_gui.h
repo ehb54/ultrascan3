@@ -263,7 +263,10 @@ class US_XpnDataViewer : public US_Widgets
      QString        RunName;
      QString        CellChNumber;
      QString        TripleNumber;
-     QString        OptimaName;          //New  
+     QString        OptimaName;          //New
+     QString        TotalDuration;       //New
+
+     void           timeToList( int&, QList< int >& );
 	 
   private slots:
      void   reset          ( void );
