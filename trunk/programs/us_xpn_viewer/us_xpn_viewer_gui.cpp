@@ -21,6 +21,7 @@
 #include "us_editor.h"
 #include "us_images.h"
 #include "us_colorgradIO.h"
+#include "qwt_legend.h"
 
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c)  setData(a,b,c)
@@ -651,15 +652,32 @@ if(mcknt>0)
             this, SLOT  ( currentRectf ( QRectF ) ) );
 
    //plot RPM
-   plot_rpm             = new US_Plot( data_plot_rpm, "", tr( "Time (minutes)" ), QString("RPM"));
+   plot_rpm             = new US_Plot( data_plot_rpm, "", tr( "Time (minutes)" ),
+                                                          tr( "RPM" ) );
+   QFont tfont( US_GuiSettings::fontFamily(),
+                US_GuiSettings::fontSize(),
+                QFont::Bold );
+
+   QwtText qwtTitleR( tr( "Temp." ) + DEGC );
+   qwtTitleR.setFont( tfont );
+   data_plot_rpm->setAxisTitle( QwtPlot::yRight , qwtTitleR );
+
+   QwtLegend *legend = new QwtLegend;
+   legend->setFrameStyle( QFrame::Box | QFrame::Sunken );
+   legend->setFont( QFont( US_GuiSettings::fontFamily(),
+                           US_GuiSettings::fontSize() - 1 ) );
+   data_plot_rpm->insertLegend( legend, QwtPlot::BottomLegend  );
+
   
    //data_plot_rpm->setMinimumSize( 50, 400 );
 
    data_plot_rpm->enableAxis( QwtPlot::xBottom, true );
    data_plot_rpm->enableAxis( QwtPlot::yLeft  , true );
+   data_plot_rpm->enableAxis( QwtPlot::yRight , true );
 
-   data_plot_rpm->setAxisScale( QwtPlot::xBottom, 5.8,  7.2 );
+   data_plot_rpm->setAxisScale( QwtPlot::xBottom, 1.0, 14400.0 );
    data_plot_rpm->setAxisScale( QwtPlot::yLeft  , 0.0, 5e+4 );
+   data_plot_rpm->setAxisScale( QwtPlot::yRight , 0.0, 40 );
 
    picker_rpm = new US_PlotPicker( data_plot_rpm );
    picker_rpm->setRubberBand     ( QwtPicker::VLineRubberBand );

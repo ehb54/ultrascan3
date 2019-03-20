@@ -312,14 +312,21 @@ DbgLv(1) << "APGe: inP: nchan" << nchan;
       QString chann  = currProf->pchans  [ ii ];
       QString chdesc = currProf->chndescs[ ii ];
       QString chopts = QString( chdesc ).section( ":", 1, 1 );
-
-      if ( chopts.contains( tr( "(unspecified)"   ) ) )   continue;
-      if ( chopts.contains( tr( "(not installed)" ) ) )   continue;
-
       QString chname = QString( chdesc ).section( ":", 0, 0 )
                                         .section( ",", 0, 0 );
+
+      // Skip adding this channel if Optics is unspecified
+      // or not installed or if channel B of Interference
+      if ( ( chopts.contains( tr( "(unspecified)"   ) ) )  ||
+           ( chopts.contains( tr( "(not installed)" ) ) )  ||
+           ( chopts.contains( "nterf" )  &&
+             chname.contains( "B" ) ) )
+         continue;
+
+      // Otherwise, recompose "channel:optics:solution" and add
       QString chsolu = QString( chdesc ).section( ":", 2, 2 );
       QString chnsel = chname + ":" + chopts + ":" + chsolu;
+
       sl_chnsel << chnsel;
 DbgLv(1) << "APGe: inP:  ch" << ii << "chdesc" << chdesc
  << "chnsel" << chnsel;
@@ -334,143 +341,17 @@ DbgLv(1) << "APGe: inP:   ox" << ii << "oName" << objname;
 }
 //*DEBUG*
 
-#if 0
-   // Find the "GeneralLayout" layout and existing channel parms
-   QGridLayout* genL = NULL;
-   int nchang      = -1;
-
-   for ( int ii = 0; ii < allObjects.count(); ii++ )
-   {
-      QObject* child  = allObjects[ ii ];
-      QString objname = child->objectName();
-DbgLv(1) << "APGe: inP:   ox" << ii << "oName" << objname;
-
-      if ( objname == "GeneralLayout" )
-      {  // Save the GridLayout pointer
-         genL           = (QGridLayout*)child;
-      }
-
-      else if ( objname.contains( ": channel" ) )
-      {  // Save the last channel index present in the GUI
-         nchang         = objname.section( ":", 0, 0 ).toInt();
-      }
-   }
-   nchang++;     // Convert last index to a count
-DbgLv(1) << "APGe: inP: nchang" << nchang << "genL" << genL;
-
-   // Delete channel related rows of GridLayout
-   for ( int ii = 6; ii < allObjects.count(); ii++ )
-   {
-   }
-
-   // Update the rows of the main GridLayout
-   int row        = 2;
-   for ( int ii = 0; ii < nchan; ii++ )
-   {
-      QString chdesc = currProf->chndescs[ ii ];
-      QString chname = QString( chdesc ).section( ":", 0, 0 );
-      QString chopts = QString( chdesc ).section( ":", 1, 1 );
-      QString chsolu = QString( chdesc ).section( ":", 2, 2 );
-      QString schan  = chname.section( ",", 0, 0 ) + ":"
-                       + chopts + ":" + chsolu;
-      QString slrat  = QString::number( currProf->lc_ratios[ ii ] );
-      QString srtol  = QString::number( currProf->lc_tolers[ ii ] );
-      QString slvol  = QString::number( currProf->l_volumes[ ii ] );
-      QString svtol  = QString::number( currProf->lv_tolers[ ii ] );
-      QString sdend  = QString::number( currProf->data_ends[ ii ] );
-      QLineEdit* le_chann = us_lineedit( schan, 0, true  );
-      QLineEdit* le_lcrat = us_lineedit( slrat, 0, false );
-      QLineEdit* le_lctol = us_lineedit( srtol, 0, false );
-      QLineEdit* le_ldvol = us_lineedit( slvol, 0, false );
-      QLineEdit* le_lvtol = us_lineedit( svtol, 0, false );
-      QLineEdit* le_daend = us_lineedit( sdend, 0, false );
-
-      QString stchan      = QString::number( ii );
-      le_chann->setObjectName( stchan + ": channel" );
-      le_lcrat->setObjectName( stchan + ": loadconc_ratio" );
-      le_lctol->setObjectName( stchan + ": loadconc_tolerance" );
-      le_ldvol->setObjectName( stchan + ": load_volume" );
-      le_lvtol->setObjectName( stchan + ": loadvol_tolerance" );
-      le_daend->setObjectName( stchan + ": dataend" );
-
-      le_lcrats << le_lcrat;
-      le_lctols << le_lctol;
-      le_ldvols << le_ldvol;
-      le_lvtols << le_lvtol;
-      le_daends << le_daend;
-
-      genL->addWidget( le_chann,  row,    0, 1, 5 );
-      genL->addWidget( le_lcrat,  row,    5, 1, 1 );
-      genL->addWidget( le_lctol,  row,    6, 1, 1 );
-      genL->addWidget( le_ldvol,  row,    7, 1, 1 );
-      genL->addWidget( le_lvtol,  row,    8, 1, 1 );
-      genL->addWidget( le_daend,  row,    9, 1, 1 );
-      if ( ii == 0 )
-      {
-         genL->addWidget( pb_applya, row++, 10, 1, 2 );
-         connect( pb_applya, SIGNAL( clicked       ( ) ),
-                  this,      SLOT(   applied_to_all( ) ) );
-      }
-      else
-      {
-         row++;
-      }
-
-      connect( le_lcrat,    SIGNAL( editingFinished   ( void ) ),
-               this,        SLOT(   lcrat_text_changed( void ) ) );
-      connect( le_lctol,    SIGNAL( editingFinished   ( void ) ),
-               this,        SLOT(   lctol_text_changed( void ) ) );
-      connect( le_ldvol,    SIGNAL( editingFinished   ( void ) ),
-               this,        SLOT(   ldvol_text_changed( void ) ) );
-      connect( le_lvtol,    SIGNAL( editingFinished   ( void ) ),
-               this,        SLOT(   lvtol_text_changed( void ) ) );
-      connect( le_daend,    SIGNAL( editingFinished   ( void ) ),
-               this,        SLOT(   daend_text_changed( void ) ) );
-   }
-   int ihgt        = pb_aproname->height();
-   QSpacerItem* spacer1 = new QSpacerItem( 20, ihgt );
-   genL->addItem( spacer1,  row++,  0, 1, 1 );
-#endif
-
+   // Reset layout
    delete genL;
    genL            = new QGridLayout();
    genL->setObjectName( "GeneralLayout" );
 
-   
+   // Build the General Layout
    build_general_layout( );
 
-#if 0
-   QList< QLineEdit* > allLineEdits = findChildren< QLineEdit* >();
-   QList< QLineEdit* > chnLineEdits;
-
-   for ( int ii = 0; ii < allLineEdits.count(); ii++ )
-   {
-      QLineEdit* ledit = allLineEdits[ ii ];
-DbgLv(1) << "APGe: inP:  le" << ii << "oName" << ledit->objectName();
-
-      if ( ledit->objectName().contains( ": channel" ) )
-      {
-         chnLineEdits << ledit;
-      }
-   }
-DbgLv(1) << "APGe: inP: nAllLE" << allLineEdits.count()
- << "nChnLE" << chnLineEdits.count();
-bool is_widg=pwidg->isWidgetType();
-DbgLv(1) << "APGe: inP: parent" << pwidg->objectName()
- << "is_widg" << is_widg;
-   QList< QWidget* > allWidgets = pwidg->findChildren< QWidget* >();
-   for ( int ii = 0; ii < allWidgets.count(); ii++ )
-   {
-DbgLv(1) << "APGe: inP:  wx" << ii << "oName" << allWidgets[ii]->objectName();
-   }
-   for ( int ii = 0; ii < allObjects.count(); ii++ )
-   {
-DbgLv(1) << "APGe: inP:   ox" << ii << "oName" << allObjects[ii]->objectName();
-   }
-#endif
 }
 
-
+// Check the Run name
 void US_AnaprofPanGen::check_runname()
 {
 #if 0
@@ -486,7 +367,7 @@ void US_AnaprofPanGen::check_runname()
 #endif
 }
 
-
+// Update the investigator
 void US_AnaprofPanGen::update_inv( void )
 {
    US_Passwd   pw;
@@ -678,115 +559,28 @@ DbgLv(1) << "AP2d:   iP: IN";
 #if 0
    // Populate GUI settings from protocol controls
 //   nchan                = ap2DSA ->nchan;
-//   curssx               = qMin( (nspeed-1), qMax( 0, cb_prof->currentIndex() ) );
-//curssx=0;
-DbgLv(1) << "AP2d:   iP: AA";
-//   double speedmax      = sibDValue( "rotor", "maxrpm" );
-DbgLv(1) << "AP2d:   iP: BB";
-
-DbgLv(1) << "AP2d:   iP: CC";
 #endif
 
    sl_chnsel       = sibLValue( "general", "channels" );
    cb_chnsel->clear();
    cb_chnsel->addItems( sl_chnsel );
    bool was_changed     = changed;       // Save changed state
-#if 0
-   sb_count ->setValue  ( nspeed  );
-   ct_speed ->setMaximum( speedmax );    // Set speed max based on rotor max
-   ct_speed ->setValue  ( ap2DSA->ssteps[ curssx ].speed );
-   ct_accel ->setValue  ( ap2DSA->ssteps[ curssx ].accel );
-#endif
    
-   //ALEXEY Comment for now -> transform "Speeds" panel: seperate spinBoxes...
-   // sb_durat ->setValue  ( dhms1[ 0 ] );
-   // tm_durat ->setTime   ( QTime( dhms1[ 1 ], dhms1[ 2 ], dhms1[ 3 ] ) );
-   // sb_delay ->setValue  ( dhms2[ 0 ] );
-   // tm_delay ->setTime   ( QTime( dhms2[ 1 ], dhms2[ 2 ], dhms2[ 3 ] ) );
-   // sb_scnint->setValue  ( dhms3[ 0 ] );
-   // tm_scnint->setTime   ( QTime( dhms3[ 1 ], dhms3[ 2 ], dhms3[ 3 ] ) );
-
-#if 0
-   sb_durat_dd ->setValue( (int)dhms1[ 0 ] );
-   sb_durat_hh ->setValue( (int)dhms1[ 1 ] );
-   sb_durat_mm ->setValue( (int)dhms1[ 2 ] );
-   sb_durat_ss ->setValue( (int)dhms1[ 3 ] );
-   sb_delay_dd ->setValue( (int)dhms2[ 0 ] );
-   sb_delay_hh ->setValue( (int)dhms2[ 1 ] );
-   sb_delay_mm ->setValue( (int)dhms2[ 2 ] );
-   sb_delay_ss ->setValue( (int)dhms2[ 3 ] );
-   sb_delay_st_dd ->setValue( (int)dhms2a[ 0 ] );
-   sb_delay_st_hh ->setValue( (int)dhms2a[ 1 ] );
-   sb_delay_st_mm ->setValue( (int)dhms2a[ 2 ] );
-   sb_delay_st_ss ->setValue( (int)dhms2a[ 3 ] );
-   sb_scnint_dd ->setValue( (int)dhms3[ 0 ] );
-   sb_scnint_hh ->setValue( (int)dhms3[ 1 ] );
-   sb_scnint_mm ->setValue( (int)dhms3[ 2 ] );
-   sb_scnint_ss ->setValue( (int)dhms3[ 3 ] );
-
-   ck_endoff->setChecked( ap2DSA->spin_down );
-   ck_radcal->setChecked( ap2DSA->radial_calib );
-#endif
    changed              = was_changed;   // Restore changed state
-DbgLv(1) << "AP2d:   iP: EE";
 
-//   QString arotor       = sibSValue( "rotor", "arotor" );
-//   le_maxrpm->setText( tr( "Maximum speed for %1 rotor:  %2 rpm" )
-//                       .arg( arotor ).arg( speedmax ) );
-
-DbgLv(1) << "AP2d:   iP: FF";
-   // Populate internal speed-step control
-#if 0
-   ssvals.resize( nspeed );
-   for ( int ii = 0; ii < nspeed; ii++ )
-   {
-      ssvals[ ii ][ "speed"    ] = ap2DSA->ssteps[ ii ].speed;
-      ssvals[ ii ][ "accel"    ] = ap2DSA->ssteps[ ii ].accel;
-      ssvals[ ii ][ "duration" ] = ap2DSA->ssteps[ ii ].duration;
-      ssvals[ ii ][ "delay"    ] = ap2DSA->ssteps[ ii ].delay;
-      ssvals[ ii ][ "delay_stage"    ] = ap2DSA->ssteps[ ii ].delay_stage;
-      ssvals[ ii ][ "scanintv" ] = ap2DSA->ssteps[ ii ].scanintv;
-      ssvals[ ii ][ "scanintv_min" ] = ap2DSA->ssteps[ ii ].scanintv_min;
-DbgLv(1) << "AP2d:inP:  ii" << ii << "speed accel durat delay scnint"
- << ssvals[ii]["speed"   ] << ssvals[ii]["accel"]
- << ssvals[ii]["duration"] << ssvals[ii]["delay"];
-
-      //profdesc[ curssx ] = speedp_description( curssx );
-//      cb_prof->setItemText( ii, speedp_description( ii ) );
-   }
-#endif
-DbgLv(1) << "AP2d:   iP: ZZ";
 }
 
 // Save panel controls when about to leave the panel
 void US_AnaprofPan2DSA::savePanel()
 {
 DbgLv(1) << "AP2d:svP: IN";
-   // Populate protocol speed controls from internal panel control
+   // Populate protocol 2DSA controls from internal panel control
 #if 0
    nspeed                = ssvals.count();
    ap2DSA->nstep        = nspeed;
    ap2DSA->spin_down    = ck_endoff->isChecked();
    ap2DSA->radial_calib = ck_radcal->isChecked();
 DbgLv(1) << "AP2d:svP: nspeed" << nspeed;
-
-   ap2DSA->ssteps.resize( nspeed );  //ALEXEY BUG FIX
-   for ( int ii = 0; ii < nspeed; ii++ )
-   {
-      ap2DSA->ssteps[ ii ].speed    = ssvals[ ii ][ "speed"    ];
-      ap2DSA->ssteps[ ii ].accel    = ssvals[ ii ][ "accel"    ];
-      ap2DSA->ssteps[ ii ].duration = ssvals[ ii ][ "duration" ];
-      ap2DSA->ssteps[ ii ].delay    = ssvals[ ii ][ "delay"    ];
-      ap2DSA->ssteps[ ii ].delay_stage    = ssvals[ ii ][ "delay_stage"    ];
-      ap2DSA->ssteps[ ii ].scanintv = ssvals[ ii ][ "scanintv" ];
-      ap2DSA->ssteps[ ii ].scanintv_min = ssvals[ ii ][ "scanintv_min" ];
- DbgLv(1) << "AP2d:svP:  ii" << ii << "speed accel durat delay scnint"
- << ssvals[ii]["speed"   ] << ssvals[ii]["accel"]
- << ssvals[ii]["duration"] << ssvals[ii]["delay"]
- << ssvals[ii]["delay_stage"] << ssvals[ii]["scanintv"];
-
- qDebug() << " DURATION SAVED IN  PROTOTCOL: speed " << ii <<  ", duration: " << ap2DSA->ssteps[ ii ].duration;
-   }
 #endif
 }
 
@@ -835,47 +629,6 @@ DbgLv(1) << "AP2d:getLV: type" << type;
    if ( type == "profiles" )
    {  // Compose list of all speed-step values (4 lines per step)
       value.clear();
-
-      for ( int ii = 0; ii < ap2DSA->nstep; ii++ )
-      {  // Build list of QString forms of speed-step double
-         double speed         = ap2DSA->ssteps[ ii ].speed;
-         double accel         = ap2DSA->ssteps[ ii ].accel;
-         double duration      = ap2DSA->ssteps[ ii ].duration;   // In seconds
-         double delay         = ap2DSA->ssteps[ ii ].delay;      // In seconds
-         double delay_stage   = ap2DSA->ssteps[ ii ].delay_stage;// In seconds
-         double scint         = ap2DSA->ssteps[ ii ].scanintv;
-
-         qDebug() << "ScanInt: " << scint;
-         
-         // double durathrs      = qFloor( duration / 60.0 );
-         // double duratmin      = duration - ( durathrs * 60.0 );
-         // double delaymin      = qFloor( delay / 60.0 );
-         // double delaysec      = delay - ( delaymin * 60.0 );
-
-         double durathrs      = qFloor( duration / 3600.0 );
-         double duratmin      = qFloor(duration - ( durathrs * 3600.0 )) / 60.0;
-         
-         double delayhrs      = qFloor( delay / 3600.0 );
-         double delaymin      = qFloor(delay - ( delayhrs * 3600.0 )) / 60.0;
-
-         double delaystagehrs = qFloor( delay_stage / 3600.0 );
-         double delaystagemin = qFloor(delay_stage - ( delaystagehrs * 3600.0 )) / 60.0;
-         
-         double scinthrs      = qFloor( scint / 3600.0 );
-         double scintmin      = qFloor(( scint - ( scinthrs * 3600.0 )) / 60.0);
-         double scintsec      = scint - ( scinthrs * 3600.0 ) - ( scintmin * 60.0 );
-         
-         value << tr( "%1 rpm" ).arg( speed );
-         value << tr( "%1 rpm/sec" ).arg( accel );
-         value << tr( "%1 h %2 m" )
-                  .arg( durathrs ).arg( duratmin );
-         value << tr( "%1 h %2 m " )
-                  .arg( delayhrs ).arg( delaymin );
-         value << tr( "%1 h %2 m " )
-                  .arg( delaystagehrs ).arg( delaystagemin );
-         value << tr( "%1 h %2 m %3 s" )                                        //ALEXEY: added scan interval
-                  .arg( scinthrs ).arg( scintmin ).arg( scintsec );
-      }
    }
 #endif
 
@@ -1067,156 +820,4 @@ DbgLv(1) << "EGCe:st: nchan is_done" << apPCSA->nchan << is_done;
 }
 
 //========================= End:   PCSA      section =========================
-
-
-#if 0
-//========================= Start: Status    section =========================
-
-// Initialize an Status panel, especially after clicking on its tab
-void US_AnaprofPanStatus::initPanel()
-{
-   currProf        = &mainw->currProf;
-   loadProf        = &mainw->loadProf;
-   rps_differ      = ( mainw->currProf !=  mainw->loadProf );
-   ap2DSA          = &currProf->ap2DSA;
-   apPCSA          = &currProf->apPCSA;
-   apStat          = &currProf->apStat;
-
-
-   qDebug() << "apSPEED: duration: " << ap2DSA->ssteps[0].duration;
-   
-if(rps_differ)
-{
-US_AnaProfParms* cAP = currProf;
-US_AnaProfParms* lAP = loadProf;
-DbgLv(1) << "APUp:inP: APs DIFFER";
-DbgLv(1) << "APUp:inP:  cAname" << cAP->aprofname << "lAname" << lAP->aprofname;
-DbgLv(1) << "APUp:inP:  cPname" << cAP->protoname << "lPname" << lAP->protoname;
-DbgLv(1) << "APUp:inP:  cAguid" << cAP->aprofGUID << "lAguid" << lAP->aprofGUID;
-DbgLv(1) << "APUp:inP:  cPguid" << cAP->protoGUID << "lPguid" << lAP->protoGUID;
-DbgLv(1) << "APUp:inP:  cPId  " << cAP->protoID << "lPId" << lAP->protoID;
-DbgLv(1) << "APUp:inP:   ap2DSA diff" << (cAP->ap2DSA!=lAP->ap2DSA);
-DbgLv(1) << "APUp:inP:   apPCSA diff" << (cAP->apPCSA!=lAP->apPCSA);
-DbgLv(1) << "APUp:inP:   apStat diff" << (cAP->apStat!=lAP->apStat);
-}
-
-   have_run          = ! sibSValue( "general",   "runID"    ).isEmpty();
-   have_proj         = ! sibSValue( "general",   "project"  ).isEmpty();
-   //chgd_rotor        = ( sibIValue( "rotor",     "changed"  ) > 0 );
-   chgd_speed        = ( sibIValue( "speeds",    "changed"  ) > 0 );
-   have_cells        = ( sibIValue( "cells",     "alldone"  ) > 0 );
-   have_solus        = ( sibIValue( "solutions", "alldone"  ) > 0 );
-   have_optic        = ( sibIValue( "optical",   "alldone"  ) > 0 );
-   have_range        = ( sibIValue( "ranges",    "alldone"  ) > 0 );
-DbgLv(1) << "APUp:inP: ck: run proj cent solu epro"
- << have_run << have_proj << have_cells << have_solus << have_range;
-   //proto_ena         = ( have_cells  &&  have_solus  &&  have_optic  &&
-   //                      have_range );
-   //subm_enab         = ( have_run    &&  have_proj  &&  proto_ena  &&
-   //                      connected );
-
-//   ck_run     ->setChecked( have_run   );
-//   ck_project ->setChecked( have_proj  );
-   //ck_rotor_ok->setChecked( chgd_rotor );
-DbgLv(1) << "APUp:inP:  KK";
-//   ck_speed_ok->setChecked( chgd_speed );
-//   ck_centerp ->setChecked( have_cells );
-//   ck_solution->setChecked( have_solus );
-//   ck_optical ->setChecked( have_optic );
-DbgLv(1) << "APUp:inP:  LL";
-//   ck_ranges  ->setChecked( have_range );
-//   ck_connect ->setChecked( connected  );
-   //ck_prot_ena->setChecked( proto_ena  );
-   //ck_prot_svd->setChecked( proto_svd  );
-   //ck_sub_enab->setChecked( subm_enab  );
-DbgLv(1) << "APUp:inP:  MM";
-//   ck_sub_done->setChecked( submitted  );
-//   ck_rp_diff ->setChecked( rps_differ );
-DbgLv(1) << "APUp:inP:  NN";
-
-//   pb_submit  ->setEnabled( subm_enab  );                                  // <-- Temporary enabled for testing
-//   pb_saverp  ->setEnabled( have_cells && have_solus && have_range );
-DbgLv(1) << "APUp:inP: OUT";
-}
-
-// Save panel controls when about to leave the panel
-void US_AnaprofPanStatus::savePanel()
-{
-DbgLv(1) << "APUp:svP: IN";
-}
-
-// Get a specific panel value
-QString US_AnaprofPanStatus::getSValue( const QString type )
-{
-   QString value( "" );
-
-   if      ( type == "alldone"  ||
-             type == "status"   ||
-             type == "len_xml"  )
-      value  = QString::number( getIValue( type ) );
-   else if ( type == "xml" )  
-      value  = apStat->us_xml;
-
-   return value;
-}
-
-// Get a specific panel integer value
-int US_AnaprofPanStatus::getIValue( const QString type )
-{
-   int value   = 0;
-   if      ( type == "alldone" )  { value = ( status() > 0 ) ? 1 : 0; }
-   else if ( type == "status"  )  { value = status(); }
-   else if ( type == "len_xml" )  { value = apStat->us_xml.length(); }
-   return value;
-}
-
-// Get a specific panel double value
-double US_AnaprofPanStatus::getDValue( const QString type )
-{
-   double value   = 0;
-   if ( type == "dbdisk" ) { value = 1; }
-
-   return value;
-}
-
-// Get specific panel list values
-QStringList US_AnaprofPanStatus::getLValue( const QString type )
-{
-   QStringList value( "" );
-
-   if ( type == "uploaded" )
-   {
-      //value << le_runid->text();
-   }
-
-   return value;
-}
-
-// Get a specific panel value from a sibling panel
-QString US_AnaprofPanStatus::sibSValue( const QString sibling, const QString type )
-{ return mainw->childSValue( sibling, type ); }
-
-// Get a specific panel integer value from a sibling panel
-int US_AnaprofPanStatus::sibIValue( const QString sibling, const QString type )
-{ return mainw->childIValue( sibling, type ); }
-
-// Get a specific panel double value from a sibling panel
-double US_AnaprofPanStatus::sibDValue( const QString sibling, const QString type )
-{ return mainw->childDValue( sibling, type ); }
-
-// Get a specific panel list from a sibling panel
-QStringList US_AnaprofPanStatus::sibLValue( const QString sibling, const QString type )
-{ return mainw->childLValue( sibling, type ); }
-
-// Return status string for the panel
-int US_AnaprofPanStatus::status()
-{
-//   bool is_done  = ( ! le_runid->text().isEmpty() &&
-//                     ! le_project->text().isEmpty() );
-bool is_done=false;
-   return ( is_done ? 128 : 0 );
-}
-
-//========================= End:   Status    section =========================
-#endif
 
