@@ -238,6 +238,21 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
       }
    }
 
+   kchn            = currProf.pchans.count();
+
+   if ( kchn > nchn )
+   {  // Drop any Profile channel values left over from previous
+      for ( int ii = nchn; ii < kchn; ii++ )
+      {
+         currProf.pchans   .removeLast();
+         currProf.chndescs .removeLast();
+         currProf.lc_ratios.removeLast();
+         currProf.lc_tolers.removeLast();
+         currProf.l_volumes.removeLast();
+         currProf.lv_tolers.removeLast();
+      }
+   }
+
 DbgLv(1) << "APG: ipro: nchn" << nchn << "call pGen iP";
    apanGeneral->initPanel();
 }
