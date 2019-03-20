@@ -569,7 +569,7 @@ if(mcknt>0)
                                    tr( "Radius (in cm)" ), 
                                    tr( "Intensity" ) );
 
-   data_plot->setMinimumSize( 450, 450 );
+   data_plot->setMinimumSize( 400, 400 );
 
    data_plot->enableAxis( QwtPlot::xBottom, true );
    data_plot->enableAxis( QwtPlot::yLeft  , true );
@@ -1545,12 +1545,65 @@ void US_XpnDataViewer::check_for_sysdata( QString &runId )
   int etimoff        = xpn_data->countOf_sysdata( "etim_off"  ).toInt();     //experimental time offset 
 
   // Update rmp, temperature GUI icons...
+  //RPM speed
   double rpm_for_meter = double(rpm/1000.0);
   rpm_box->setSpeed(rpm_for_meter);
 
+  //Temperature
   temperature_box->setTemp(temperature);
+
+  //Running Time
+  QList< int > dhms_r;
+  timeToList( exp_time, dhms_r );
+  QString running_time_text;
+  //ALEXEY: hh:mm:ss - OR do we need dd:hh:mm instead ?
+  running_time_text = QString::number(dhms_r[1]) + ":" + QString::number(dhms_r[2]) + ":" + QString::number(dhms_r[3]);
+  le_running->setText( running_time_text );
+
+  //Elapsed Time
+  QList< int > dhms_e;
+  int elapsed_time_complete = exp_time + etimoff;
+  timeToList( elapsed_time_complete, dhms_e );
+  QString elapsed_time_text;
+  //ALEXEY: hh:mm:ss - OR do we need dd:hh:mm instead ?
+  elapsed_time_text = QString::number(dhms_e[1]) + ":" + QString::number(dhms_e[2]) + ":" + QString::number(dhms_e[3]);
+  le_elapsed->setText( elapsed_time_text );
+   
+  //Remaining Time
+  QList< int > dhms_remain;
+  int remaining_time = TotalDuration.toInt() - exp_time;
+  timeToList( remaining_time, dhms_remain );
+  QString remaining_time_text;
+  //ALEXEY: hh:mm:ss - OR do we need dd:hh:mm instead ?
+  remaining_time_text = QString::number(dhms_remain[1]) + ":" + QString::number(dhms_remain[2]) + ":" + QString::number(dhms_remain[3]);
+  le_remaining->setText( remaining_time_text );
+
+  
   
   in_reload_check_sysdata   = false; 
+}
+
+// Function to convert from a time in sec. to days, hours, minutes, seconds 
+void US_XpnDataViewer::timeToList( int& sectime, QList< int >& dhms )
+{
+   int t_day = (int)( sectime / (24*3600) );
+   sectime -= t_day * 24 * 3600;
+
+   int t_hour = (int)( sectime / 3600 );
+   sectime -= t_hour * 3600;
+
+   int t_minute = (int)( sectime / 60 );
+   sectime -= t_minute * 60;
+
+   int t_second = sectime;
+
+   qDebug() << "TimeToList(): DD: " << t_day;
+   qDebug() << "TimeToList(): HH: " << t_hour;
+   qDebug() << "TimeToList(): MM: " << t_minute;
+   qDebug() << "TimeToList(): SS: " << t_second;
+   
+   dhms.clear();
+   dhms << t_day << t_hour << t_minute << t_second;
 }
 
 //Query for Optima DB periodically, see if data available
@@ -1562,6 +1615,7 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
   CellChNumber   = protocol_details[ "CellChNumber" ];
   TripleNumber = protocol_details[ "TripleNumber" ];
   OptimaName   = protocol_details[ "OptimaName" ];               //New
+  TotalDuration = protocol_details[ "duration" ];   
 
   selectOptimaByName_auto( OptimaName );                         //New  
   
