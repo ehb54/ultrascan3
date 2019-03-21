@@ -689,6 +689,7 @@ bool US_RunProtocol::RunProtoSolutions::operator==
 {
 qDebug() << "RP:SOL: nch" << nschan << rp.nschan;
 qDebug() << "RP:SOL: nun" << nuniqs << rp.nuniqs;
+if(nschan>0&&rp.nschan>0)
 qDebug() << "RP:SOL: chs"
  << chsols[0].channel   << rp.chsols[0].channel
  << chsols[0].solution  << rp.chsols[0].solution
