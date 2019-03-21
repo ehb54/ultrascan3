@@ -239,44 +239,6 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
    in_reload_data_init = false;
    in_reload_check_sysdata  = false;
 
-   //double rmp_s = xpn_data->isyrec.speed;
-   
-   // //ALEXEY: old way, form .cong file
-   // QStringList xpnentr = US_Settings::defaultXpnHost();
-   // DbgLv(1) << "xpnentr count" << xpnentr.count();
-
-   // if ( xpnentr.count() == 0 )
-   //   {
-   //     xpnentr << "test-host" << "bcf.uthscsa.edu" << "5432";
-   
-   //     QMessageBox::warning( this,
-   // 			     tr( "No Optima Host Entry" ),
-   // 			     tr( "A default Optima Host entry is being used.\n"
-   // 				 "You should add entries via Preferences:Optima Host Preferences\n"
-   // 				 "as soon as possible" ) );
-   //   }
-   // else
-   //   DbgLv(1) << "xpnentr ..." << xpnentr;
-   
-   // QString encpw;
-   // QString decpw;
-   // QString encpw0;
-   // QString encpw1;
-   // QString masterpw;
-   // US_Passwd pw;
-   // xpndesc      = xpnentr.at( 0 );
-   // xpnhost      = xpnentr.at( 1 );
-   // xpnport      = xpnentr.at( 2 );
-   // xpnname      = xpnentr.at( 3 );
-   // xpnuser      = xpnentr.at( 4 );
-   // encpw        = xpnentr.at( 5 );
-   // encpw0       = encpw.section( "^", 0, 0 );
-   // encpw1       = encpw.section( "^", 1, 1 );
-   // masterpw     = pw.getPasswd();
-   // xpnpasw      = US_Crypto::decrypt( encpw0, masterpw, encpw1 );
-
-   // clean_etc_dir();  // Make sure */ultrascan/etc is populated
-
    //ALEXEY: new way
    US_Passwd pw;
    US_DB2*   dbP = new US_DB2( pw.getPasswd() );
@@ -631,25 +593,26 @@ if(mcknt>0)
    main->setStretch( 0, 3 );
    main->setStretch( 1, 7 );
      
-   //Plots for Temp.
-   plot_temp             = new US_Plot( data_plot_temp, "", "", QString("Degrees, ")+QChar(0x2103));
+   // //Plots for Temp.
+   // plot_temp             = new US_Plot( data_plot_temp, "", "", QString("Degrees, ")+QChar(0x2103));
   
-   //data_plot_temp->setMinimumSize( 50, 400 );
+   // //data_plot_temp->setMinimumSize( 50, 400 );
 
-   data_plot_temp->enableAxis( QwtPlot::xBottom, false );
-   data_plot_temp->enableAxis( QwtPlot::yLeft  , true );
+   // data_plot_temp->enableAxis( QwtPlot::xBottom, false );
+   // data_plot_temp->enableAxis( QwtPlot::yLeft  , true );
 
-   data_plot_temp->setAxisScale( QwtPlot::xBottom, 5.8,  7.2 );
-   data_plot_temp->setAxisScale( QwtPlot::yLeft  , 0.0, 5e+4 );
+   // data_plot_temp->setAxisScale( QwtPlot::xBottom, 5.8,  7.2 );
+   // data_plot_temp->setAxisScale( QwtPlot::yLeft  , 0.0, 5e+4 );
 
-   picker_temp = new US_PlotPicker( data_plot_temp );
-   picker_temp->setRubberBand     ( QwtPicker::VLineRubberBand );
-   picker_temp->setMousePattern   ( QwtEventPattern::MouseSelect1,
-   				    Qt::LeftButton, Qt::ControlModifier );
+   // picker_temp = new US_PlotPicker( data_plot_temp );
+   // picker_temp->setRubberBand     ( QwtPicker::VLineRubberBand );
+   // picker_temp->setMousePattern   ( QwtEventPattern::MouseSelect1,
+   // 				    Qt::LeftButton, Qt::ControlModifier );
 
-   connect( plot_temp, SIGNAL( zoomedCorners( QRectF ) ),
-            this, SLOT  ( currentRectf ( QRectF ) ) );
+   // connect( plot_temp, SIGNAL( zoomedCorners( QRectF ) ),
+   //          this, SLOT  ( currentRectf ( QRectF ) ) );
 
+   
    //plot RPM
    plot_rpm             = new US_Plot( data_plot_rpm, "", tr( "Time (minutes)" ),
                                                           tr( "RPM" ) );
@@ -683,13 +646,15 @@ if(mcknt>0)
    picker_rpm->setMousePattern   ( QwtEventPattern::MouseSelect1,
 				   Qt::LeftButton, Qt::ControlModifier );
 
+   grid_rpm          = us_grid( data_plot_rpm );
+   
    connect( plot_rpm, SIGNAL( zoomedCorners( QRectF ) ),
             this, SLOT  ( currentRectf ( QRectF ) ) );
 
    
 
-   QHBoxLayout* running_temp  = new QHBoxLayout;
-   running_temp->addLayout( plot_temp );
+   // QHBoxLayout* running_temp  = new QHBoxLayout;
+   // running_temp->addLayout( plot_temp );
    QHBoxLayout* running_rpm  = new QHBoxLayout;
    running_rpm->addLayout( plot_rpm );
 
@@ -1127,22 +1092,7 @@ void US_XpnDataViewer::reset( void )
    grid          = us_grid( data_plot );
    data_plot->replot();
 
-
-   // dPlotClearAll( data_plot_temp );
-   // picker_temp   ->disconnect();
-   // data_plot_temp->setAxisScale( QwtPlot::xBottom, 5.8,  7.2 );
-   // data_plot_temp->setAxisScale( QwtPlot::yLeft  , 0.0, 5e+4 );
-   // grid_temp          = us_grid( data_plot_temp );
-   // data_plot_temp->replot();
-
-   // dPlotClearAll( data_plot_rpm );
-   // picker_rpm   ->disconnect();
-   // data_plot_rpm->setAxisScale( QwtPlot::xBottom, 5.8,  7.2 );
-   // data_plot_rpm->setAxisScale( QwtPlot::yLeft  , 0.0, 5e+4 );
-   // grid_rpm          = us_grid( data_plot_rpm );
-   // data_plot_rpm->replot();
-
-   
+ 
    connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
             this,         SLOT  ( changeCellCh(            ) ) );
 //   connect( plot, SIGNAL( zoomedCorners( QRectF ) ),
@@ -1161,6 +1111,7 @@ void US_XpnDataViewer::reset( void )
    le_status->setText( tr( "(no data loaded)" ) );
 
 }
+
 
 // Slot to read all Optima machines <------------------------------- // New
 void US_XpnDataViewer::read_optima_machines( US_DB2* db )
@@ -1266,10 +1217,10 @@ void US_XpnDataViewer::test_optima_connection()
        return;
      }
    
-   US_XpnData* xpn_data = new US_XpnData();
-   bool o_connected           = xpn_data->connect_data( xpnhost, xpnport.toInt(), xpnname, xpnuser,  xpnpasw );
-   xpn_data->close();
-   delete xpn_data;
+   US_XpnData* xpn_data1 = new US_XpnData();
+   bool o_connected           = xpn_data1->connect_data( xpnhost, xpnport.toInt(), xpnname, xpnuser,  xpnpasw );
+   xpn_data1->close();
+   delete xpn_data1;
       
    if ( o_connected )
      {
@@ -1539,7 +1490,7 @@ void US_XpnDataViewer::check_for_sysdata( QString &runId )
   xpn_data->update_isysrec( idrun );
 
   int exp_time       = xpn_data->countOf_sysdata( "exp_time"  ).toInt();     //time form the start
-  int stage_number   = xpn_data->countOf_sysdata( "stage_number" ).toInt();  //stage number
+  //int stage_number   = xpn_data->countOf_sysdata( "stage_number" ).toInt();  //stage number
   double temperature = xpn_data->countOf_sysdata( "tempera" ).toDouble();    //temperature 
   int rpm            = xpn_data->countOf_sysdata( "last_rpm"  ).toInt();     //revolutions per minute !
   int etimoff        = xpn_data->countOf_sysdata( "etim_off"  ).toInt();     //experimental time offset 
@@ -1578,7 +1529,7 @@ void US_XpnDataViewer::check_for_sysdata( QString &runId )
   remaining_time_text = QString::number(dhms_remain[1]) + ":" + QString::number(dhms_remain[2]) + ":" + QString::number(dhms_remain[3]);
   le_remaining->setText( remaining_time_text );
 
-  
+  //RPM/Temp. Plots:
   
   in_reload_check_sysdata   = false; 
 }
@@ -1609,6 +1560,8 @@ void US_XpnDataViewer::timeToList( int& sectime, QList< int >& dhms )
 //Query for Optima DB periodically, see if data available
 void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_details)
 {
+  xpn_data->setEtimOffZero(); //ALEXEY: intialize etimoff to zero for the first time
+  
   ExpID_to_use = protocol_details["experimentId"];   
   ProtocolName = protocol_details["protocolName"];
   RunName      = protocol_details[ "experimentName" ];
