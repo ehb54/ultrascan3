@@ -263,6 +263,9 @@ class US_UTIL_EXTERN US_XpnData : public QObject
       //! \                negative count if no new rows added.
       //int     update_isysrec( const int, tbSyData& );
       int     update_isysrec( const int );
+
+      // set explicitly etimoff variable to 0
+      void    setEtimOffZero ( void );
       
       //! \brief Import ScanData from the postgres database
       //! \param runId    Run ID to match
@@ -457,7 +460,7 @@ class US_UTIL_EXTERN US_XpnData : public QObject
 
       // Create key-indexed mappings of sysdata
       void   mapCounts_sysdata ( void );
-      
+            
       // Return a scan ID index within the tCFAMeta vector
       int    scan_data_index( const QString, const int, const int );
       // Get data readings from a range of Scans table records

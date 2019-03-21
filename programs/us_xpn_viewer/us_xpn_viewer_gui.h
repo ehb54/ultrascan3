@@ -273,7 +273,6 @@ class US_XpnDataViewer : public US_Widgets
      void   load_xpn_raw   ( void );
 
      //QMap <QString, QString> returnSelectedInstrument( US_DB2* = 0 );
-
      bool   load_xpn_raw_auto   ( void );
      void   check_for_data ( QMap < QString, QString > & );
      void   check_for_sysdata ( QString & );

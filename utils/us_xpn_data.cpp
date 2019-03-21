@@ -106,6 +106,11 @@ int US_XpnData::checkExpStatus( QString runid )
    return sqry.value( 0 ).toInt();
 }
 
+void US_XpnData::setEtimOffZero( void )
+{
+  etimoff = 0;
+  qDebug() << "EtimOff set 0";
+}
 
 // Query and update data for the latest SystemStatusData table entry
 int US_XpnData::update_isysrec( const int runId )
