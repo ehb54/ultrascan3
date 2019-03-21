@@ -105,6 +105,10 @@ class US_XpnDataViewer : public US_Widgets
 
      QList< QColor >   mcolors;     //!< Map colors for scan curves
 
+     QVector<double> rpm_data;
+     QVector<double> temp_data;
+     QVector<double> time_data;
+
      SpeedoMeter*   rpm_speed;
      DialBox*       rpm_box;
      WheelBox*      temperature_box;

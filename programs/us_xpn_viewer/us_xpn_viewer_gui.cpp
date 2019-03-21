@@ -1530,6 +1530,18 @@ void US_XpnDataViewer::check_for_sysdata( QString &runId )
   le_remaining->setText( remaining_time_text );
 
   //RPM/Temp. Plots:
+  QwtPlotCurve* curv_rpm  = us_curve( data_plot_rpm, "RPM" );
+  QwtPlotCurve* curv_temp = us_curve( data_plot_rpm, "Temperature" );
+
+  rpm_data.push_back(rpm);
+  temp_data.push_back(temperature);
+  time_data.push_back( double(exp_time/60.0) ); // Elapsed time in minutes
+  
+  curv_rpm->setSamples( rpm_data.data(), time_data.data(), time_data.size() );   
+  curv_temp->setSamples( temp_data.data(), temp_data.data(), time_data.size() );
+
+  //ALEXEY: no plot rescaling to bounds...
+  data_plot_rpm->replot();
   
   in_reload_check_sysdata   = false; 
 }
