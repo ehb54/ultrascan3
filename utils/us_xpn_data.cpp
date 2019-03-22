@@ -144,6 +144,8 @@ int US_XpnData::update_isysrec( const int runId )
    sqry.next();
    nnrows          = sqry.value( 0 ).toInt();
 
+   qDebug() << "Inside xpn_data->update_isysrec: nnrows: " << nnrows;
+
    if ( nnrows < 1 )
    {  // If no data yet, return with negative speed
       isyrec.dataId   = -1;
@@ -190,12 +192,17 @@ int US_XpnData::update_isysrec( const int runId )
 
    lastrpm         = qRound( isyrec.speed );
 
+   qDebug() << "Inside xpn_data->update_isysrec: lastrpm, etimoff " << lastrpm << ", " << etimoff;
+   
    if ( lastrpm > 0  &&  etimoff == 0 )
    {  // When speed is non-zero and no offset set, get offset
       scan_xpndata( runId, QChar( 'S' ) );
    }
 
 DbgLv(1) << "XpDa:ussx:  lastrpm" << lastrpm << "time temp rpm"
+ << isyrec.exptime << isyrec.tempera << isyrec.speed;
+
+ qDebug() << "XpDa:ussx:  lastrpm" << lastrpm << "time temp rpm"
  << isyrec.exptime << isyrec.tempera << isyrec.speed;
    return lastrpm;
 }
