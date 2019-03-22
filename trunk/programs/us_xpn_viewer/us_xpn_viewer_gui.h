@@ -181,11 +181,14 @@ class US_XpnDataViewer : public US_Widgets
      QwtPlot*       data_plot_temp;
      QwtPlotGrid*   grid_temp;
      US_Plot*       plot_temp;
-
+     
      QwtPlot*       data_plot_rpm;
      QwtPlotGrid*   grid_rpm;
      US_Plot*       plot_rpm;
 
+     QwtPlotCurve* curv_rpm;
+     QwtPlotCurve* curv_temp;
+     
      QString        currentDir;
      QString        runID;
      QString        runType;
@@ -235,6 +238,8 @@ class US_XpnDataViewer : public US_Widgets
      int            rlt_dlay;
      int            mcknt;
 
+     int   counter_mins;
+
      bool           have_rngs;
      bool           isMWL;
      bool           isRaw;
@@ -260,6 +265,9 @@ class US_XpnDataViewer : public US_Widgets
      QTimer*        timer_all_data_avail;
      QTimer*        timer_check_sysdata;
      
+     QTimer*        timer_sys_thread;
+     QThread*       sys_thread;
+     
      QMessageBox*   msg_data_avail;
      QString        RunID_to_retrieve;
      QString        ExpID_to_use;
@@ -279,7 +287,7 @@ class US_XpnDataViewer : public US_Widgets
      //QMap <QString, QString> returnSelectedInstrument( US_DB2* = 0 );
      bool   load_xpn_raw_auto   ( void );
      void   check_for_data ( QMap < QString, QString > & );
-     void   check_for_sysdata ( QString & );
+     void   check_for_sysdata ( void );
      
      //void   retrieve_xpn_raw_auto ( QString & );
      void   retrieve_xpn_raw_auto ( void );

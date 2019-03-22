@@ -157,7 +157,7 @@ WheelBox::WheelBox( Qt::Orientation orientation, QWidget *parent ): QWidget( par
     layout->addWidget( box, 15 );
     layout->addWidget( d_label );
 
-    connect( d_thermo, SIGNAL( valueChanged( double ) ), this, SLOT( setNum( double ) ) );
+    //connect( d_thermo, SIGNAL( valueChanged( double ) ), this, SLOT( setNum( double ) ) );
     
     setNum( d_thermo->value() );
 }
@@ -190,7 +190,10 @@ QWidget *WheelBox::createBox( Qt::Orientation orientation )
 
 void WheelBox::setTemp( double v )
 {
+  qDebug() << "Setting Temperature!!!";
   d_thermo->setValue( v );
+
+  setNum( v );
 }
 
 void WheelBox::setNum( double v )
@@ -638,7 +641,7 @@ if(mcknt>0)
    data_plot_rpm->enableAxis( QwtPlot::yRight , true );
 
    data_plot_rpm->setAxisScale( QwtPlot::xBottom, 1.0, 14400.0 );
-   data_plot_rpm->setAxisScale( QwtPlot::yLeft  , 0.0, 5e+4 );
+   data_plot_rpm->setAxisScale( QwtPlot::yLeft  , 0.0, 6e+4 );
    data_plot_rpm->setAxisScale( QwtPlot::yRight , 0.0, 40 );
 
    picker_rpm = new US_PlotPicker( data_plot_rpm );
@@ -647,6 +650,16 @@ if(mcknt>0)
 				   Qt::LeftButton, Qt::ControlModifier );
 
    grid_rpm          = us_grid( data_plot_rpm );
+
+   curv_rpm  = us_curve( data_plot_rpm, "RPM" );
+   curv_temp = us_curve( data_plot_rpm, "Temperature" );
+   curv_temp->setYAxis     ( QwtPlot::yRight );
+
+   QPen    pen_red ( Qt::red );
+   QPen    pen_green ( Qt::green );
+
+   curv_temp->setPen( pen_red);
+   curv_rpm ->setPen( pen_green);
    
    connect( plot_rpm, SIGNAL( zoomedCorners( QRectF ) ),
             this, SLOT  ( currentRectf ( QRectF ) ) );
@@ -684,6 +697,7 @@ if(mcknt>0)
    // protocol_details[ "CellChNumber" ] = QString("2");
    // protocol_details[ "TripleNumber" ] = QString("82");
    // protocol_details[ "OptimaName" ] = QString("Optima 1");
+   // protocol_details[ "duration" ]   = QString("32400");
 
    //2. Temporary test - S. Ling's experiment: ExpID = 465 (ExperimentDefinition, Postgres, Optima 1); ProtocolID = 150 (Us-lims, Mysql);
    // description = CCLing-PZ5077-27k-021519;
@@ -695,6 +709,7 @@ if(mcknt>0)
    // protocol_details[ "CellChNumber" ] = QString("2");
    // protocol_details[ "TripleNumber" ] = QString("2");
    // protocol_details[ "OptimaName" ] = QString("Optima 1"); 
+   // protocol_details[ "duration" ]   = QString("27000");
    
    // check_for_data( protocol_details );
    // End of test
@@ -1459,17 +1474,32 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
 	  qDebug() << "SECOND: runInfo: delim, rDesc, lRunID: " << delim_t << ", " << rDesc_t << ", " << lRunID_t;
 	}
 
-      // Check if all triple info is available
-      timer_all_data_avail = new QTimer;
-      connect(timer_all_data_avail, SIGNAL(timeout()), this, SLOT( retrieve_xpn_raw_auto ( ) ));
-      timer_all_data_avail->start(10000);     // 10 sec
-
-
-      //ALEXEY: Start another timer - SysData (RPM, Temp.)
-      timer_check_sysdata = new QTimer;
-      connect(timer_check_sysdata, SIGNAL(timeout()), this, SLOT(  check_for_sysdata( RunID_to_retrieve )  ));
-      timer_check_sysdata->start(500);     // 
       
+      //ALEXEY: Start another timer - SysData (RPM, Temp.) - should be run in a separate thread!!!
+      timer_check_sysdata = new QTimer(this);
+      connect(timer_check_sysdata, SIGNAL(timeout()), this, SLOT(  check_for_sysdata( )  ));
+      timer_check_sysdata->start(2000);     //
+
+      qDebug() << "sys_timer GOES here after executing: ";
+      
+      // // OR
+      // //Alternativly: put it in separate thread:
+      // sys_thread = new QThread(this);
+      // timer_sys_thread = new QTimer(0); // parent to 0 !
+      // timer_sys_thread->setInterval(2000);
+      // timer_sys_thread->moveToThread(sys_thread);
+      // connect(timer_sys_thread, SIGNAL(timeout()), this, SLOT( check_for_sysdata( )  ) );
+      // connect(sys_thread, SIGNAL( started() ), timer_sys_thread, SLOT( start() ));
+      // sys_thread->start();
+      // // How to stop sys_thread?
+      
+      
+      
+      // Check if all triple info is available
+      timer_all_data_avail = new QTimer(this);
+      connect(timer_all_data_avail, SIGNAL(timeout()), this, SLOT( retrieve_xpn_raw_auto ( ) ));
+      timer_all_data_avail->start(5000);     // 5 sec
+
     }
   
   in_reload_data_init   = false;
@@ -1478,15 +1508,18 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
 
 
 // Check periodically for SysData
-void US_XpnDataViewer::check_for_sysdata( QString &runId )
+void US_XpnDataViewer::check_for_sysdata( void )
 {
+  qDebug() << "sys_timer IS RUNNING here: ";
+  
   if ( in_reload_check_sysdata )            // If already doing a reload,
     return;                                //  skip starting a new one
   
   in_reload_check_sysdata   = true;          // Flag in the midst of a reload
 
   
-  int idrun = runId.toInt();
+  int idrun = RunID_to_retrieve.toInt();
+    
   xpn_data->update_isysrec( idrun );
 
   int exp_time       = xpn_data->countOf_sysdata( "exp_time"  ).toInt();     //time form the start
@@ -1505,7 +1538,8 @@ void US_XpnDataViewer::check_for_sysdata( QString &runId )
 
   //Running Time
   QList< int > dhms_r;
-  timeToList( exp_time, dhms_r );
+  int runnig_time_comp = exp_time + etimoff;
+  timeToList( runnig_time_comp, dhms_r );
   QString running_time_text;
   //ALEXEY: hh:mm:ss - OR do we need dd:hh:mm instead ?
   running_time_text = QString::number(dhms_r[1]) + ":" + QString::number(dhms_r[2]) + ":" + QString::number(dhms_r[3]);
@@ -1513,7 +1547,7 @@ void US_XpnDataViewer::check_for_sysdata( QString &runId )
 
   //Elapsed Time
   QList< int > dhms_e;
-  int elapsed_time_complete = exp_time + etimoff;
+  int elapsed_time_complete = exp_time;
   timeToList( elapsed_time_complete, dhms_e );
   QString elapsed_time_text;
   //ALEXEY: hh:mm:ss - OR do we need dd:hh:mm instead ?
@@ -1530,20 +1564,66 @@ void US_XpnDataViewer::check_for_sysdata( QString &runId )
   le_remaining->setText( remaining_time_text );
 
   //RPM/Temp. Plots:
-  QwtPlotCurve* curv_rpm  = us_curve( data_plot_rpm, "RPM" );
-  QwtPlotCurve* curv_temp = us_curve( data_plot_rpm, "Temperature" );
+
+  counter_mins += 500; //temporary for testing only
 
   rpm_data.push_back(rpm);
   temp_data.push_back(temperature);
-  time_data.push_back( double(exp_time/60.0) ); // Elapsed time in minutes
-  
-  curv_rpm->setSamples( rpm_data.data(), time_data.data(), time_data.size() );   
-  curv_temp->setSamples( temp_data.data(), temp_data.data(), time_data.size() );
+  time_data.push_back( double(exp_time/60.0  ) );  // Elapsed time in minutes
+  //time_data.push_back( double(exp_time/60.0 + counter_mins ) ); // Elapsed time in minutes: for testing only
 
+  for( int i=0; i<time_data.size();++i)
+    {
+      qDebug() << "RPM, Temp, Time: " << rpm_data[i] << ", " << temp_data[i] << ", " << time_data[i]; 
+    }
+
+  double* d_rpm     = rpm_data.data();
+  double* d_temp    = temp_data.data();
+  double* d_time    = time_data.data();
+
+  curv_temp->setSamples( d_time, d_temp, time_data.size() );
+  curv_rpm->setSamples( d_time, d_rpm, time_data.size() );   
+
+  double rpm_min = 0;
+  double rpm_max = rpm + 5000;
+  double temp_min = 0;
+  double temp_max = temperature + 5;
+  data_plot_rpm->setAxisScale( QwtPlot::xBottom, 0.0, double(exp_time/60.0) );
+  //data_plot_rpm->setAxisScale( QwtPlot::xBottom, 0.0, double(exp_time/60.0 + counter_mins ) ); // for testing only
+  data_plot_rpm->setAxisScale( QwtPlot::yLeft, rpm_min, rpm_max );     //Y-RPM 
+  data_plot_rpm->setAxisScale( QwtPlot::yRight, temp_min, temp_max );  //Y-Temp.
+  
   //ALEXEY: no plot rescaling to bounds...
   data_plot_rpm->replot();
+
+   
+  if ( CheckExpComplete_auto( RunID_to_retrieve  ) )
+    {
+      timer_check_sysdata->stop();
+      disconnect(timer_check_sysdata, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+
+      qDebug() << "sys_timer STOPPED here: ";
+
+   
+      if ( !timer_data_reload->isActive()  ) // Check if reload_data Timer is stopped
+  	{
+  	  // ALEXEY Export AUC data: devise export_auc_auto() function which would return directory name with saved data - to pass to emit signal below... 
+  	  export_auc_auto();
+  	  
+  	  QString mtitle_complete  = tr( "Complete!" );
+  	  QString message_done     = tr( "Experiement was completed. Optima data saved..." );
+  	  QMessageBox::information( this, mtitle_complete, message_done );
+  	  
+  	  emit experiment_complete_auto( currentDir, ProtocolName  );  // Updtade later: what should be passed with signal ??
+  	  
+  	  return;
+  	}
+      //where it goes from here?
+    }
   
-  in_reload_check_sysdata   = false; 
+  in_reload_check_sysdata   = false;
+
+  qDebug() << "sys_timer RAN here: ";
 }
 
 // Function to convert from a time in sec. to days, hours, minutes, seconds 
@@ -1573,6 +1653,8 @@ void US_XpnDataViewer::timeToList( int& sectime, QList< int >& dhms )
 void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_details)
 {
   xpn_data->setEtimOffZero(); //ALEXEY: intialize etimoff to zero for the first time
+
+  counter_mins = 0;
   
   ExpID_to_use = protocol_details["experimentId"];   
   ProtocolName = protocol_details["protocolName"];
@@ -1584,7 +1666,7 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
 
   selectOptimaByName_auto( OptimaName );                         //New  
   
-  timer_data_init = new QTimer;
+  timer_data_init = new QTimer(this);
   connect(timer_data_init, SIGNAL(timeout()), this, SLOT( load_xpn_raw_auto( ) ));
   timer_data_init->start(5000);     // 5 sec
 
@@ -1883,7 +1965,7 @@ DbgLv(1) << "RDr: allData size" << allData.size();
        disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
        
        // Auto-update hereafter
-       timer_data_reload = new QTimer;
+       timer_data_reload = new QTimer(this);
        connect(timer_data_reload, SIGNAL(timeout()), this, SLOT( reloadData_auto( ) ));
        timer_data_reload->start(10000);     // 5 sec
 
@@ -3196,25 +3278,29 @@ DbgLv(1) << "RLd:       NO CHANGE";
       /*** Check Experiement Status: if completed, kill the timer, export the data into AUC format, return, signal to switch panels in US_comproject ***/
       if ( CheckExpComplete_auto( RunID_to_retrieve  ) )
 	{
-	  //ALEXEY: stop another timer - for live update of SysData (RPM, Temperature etc. )
-	  timer_check_sysdata->stop();
-	  disconnect(timer_check_sysdata, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+	  // //ALEXEY: stop another timer - for live update of SysData (RPM, Temperature etc. )
+	  // timer_check_sysdata->stop();
+	  // disconnect(timer_check_sysdata, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
 	  
 	  timer_data_reload->stop();
 	  disconnect(timer_data_reload, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+
+
+	  if ( !timer_check_sysdata->isActive()  ) // Check if sys_data Timer is stopped
+	    {
+	      // ALEXEY Export AUC data: devise export_auc_auto() function which would return directory name with saved data - to pass to emit signal below... 
+	      export_auc_auto();
 	  
-	  // ALEXEY Export AUC data: devise export_auc_auto() function which would return directory name with saved data - to pass to emit signal below... 
-	  export_auc_auto();
+	      QString mtitle_complete  = tr( "Complete!" );
+	      QString message_done     = tr( "Experiement was completed. Optima data saved..." );
+	      QMessageBox::information( this, mtitle_complete, message_done );
+	      
+	      emit experiment_complete_auto( currentDir, ProtocolName  );  // Updtade later: what should be passed with signal ??
+	      //QString temp_protname("DemchukA_exosomes40K_111418");
+	      //emit experiment_complete_auto( currentDir, temp_protname  );  
 	  
-	  QString mtitle_complete  = tr( "Complete!" );
-	  QString message_done     = tr( "Experiement was completed. Optima data saved..." );
-	  QMessageBox::information( this, mtitle_complete, message_done );
-	  
-	  emit experiment_complete_auto( currentDir, ProtocolName  );  // Updtade later: what should be passed with signal ??
-	  //QString temp_protname("DemchukA_exosomes40K_111418");
-	  //emit experiment_complete_auto( currentDir, temp_protname  );  
-	  
-	  return;
+	      return;
+	    }
 	}
 
        in_reload_auto   = false;         // Flag no longer in the midst of reload
