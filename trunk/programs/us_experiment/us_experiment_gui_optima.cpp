@@ -4537,6 +4537,7 @@ void US_ExperGuiUpload::submitExperiment()
 	  
 	  Total_duration += rpSpeed->ssteps[ curr_stage_dur ].duration;
 	  Total_duration += rpSpeed->ssteps[ curr_stage_dur ].delay_stage;
+	  Total_duration += rpSpeed->ssteps[ curr_stage_dur ].delay;
 	  //ALEXEY: do we need also delays to first scans for abs/interference into total duration? 
 	}
       
