@@ -18,6 +18,8 @@ US_XpnData::US_XpnData( ) {
    dbname       = QString( "AUC_DATA_DB" );
    dbuser       = QString( "aucuser" );
    dbpasw       = QString( "badpasswd" );
+   fnzstx       = 0;
+   etimoff      = 0;
    sctype       = 1;
    ntscan       = 0;
    runType      = "RI";
@@ -108,8 +110,9 @@ int US_XpnData::checkExpStatus( QString runid )
 
 void US_XpnData::setEtimOffZero( void )
 {
-  etimoff = 0;
-  qDebug() << "EtimOff set 0";
+   etimoff  = 0;
+   fnzstx   = 0;
+DbgLv(1) << "XpDa:sEOZ: EtimOff set 0, 1st-non-zero-speed-time-index to 1";
 }
 
 // Query and update data for the latest SystemStatusData table entry
@@ -191,12 +194,13 @@ int US_XpnData::update_isysrec( const int runId )
    isyrec.stageNum = sqry.value( cxs[  7 ] ).toInt();
 
    lastrpm         = qRound( isyrec.speed );
-
-   qDebug() << "Inside xpn_data->update_isysrec: lastrpm, etimoff " << lastrpm << ", " << etimoff;
+DbgLv(1) << "XpDa:ussx: update_isysrec: lastrpm etimoff " << lastrpm << etimoff;
    
-   if ( lastrpm > 0  &&  etimoff == 0 )
+   if ( lastrpm > 0  &&  fnzstx == 0 )
    {  // When speed is non-zero and no offset set, get offset
       scan_xpndata( runId, QChar( 'S' ) );
+DbgLv(1) << "XpDa:ussx: after scan_xpndata(S):  etimoff " << etimoff
+ << "fnzstx" << fnzstx;
    }
 
 DbgLv(1) << "XpDa:ussx:  lastrpm" << lastrpm << "time temp rpm"
@@ -651,7 +655,7 @@ DbgLv(1) << "XpDa: rei_dat: arows frows irows wrows"
    return status;
 }
 
-// Query and save data for a [AIFW]ScanData table
+// Query and save data for a [AIFW]ScanData or [SC] table
 int US_XpnData::scan_xpndata( const int runId, const QChar scantype )
 {
    QSqlQuery  sqry;
@@ -917,21 +921,48 @@ DbgLv(1) << "XpDa:scn:    FugId" << iFugId << "sstInterval" << sstintv;
    if ( scantype == 'S' )
    {  // Determine experiment time offset (time at last rms=0 point)
       int ntssda        = tSydata.count();
-      int ftx           = 1;
+      fnzstx            = 0;
 
       for ( int ii = 0; ii < ntssda; ii++ )
       {  // Find the index to the first non-zero speed
          int irSpeed       = (int)qRound( tSydata[ ii ].speed );
          if ( irSpeed > 0 )
          {
-            ftx               = ii;
+            fnzstx            = ii;
             break;
          }
       }
 
-      ftx               = ( ftx > 0 ) ? ( ftx - 1 ) : 0;
-      etimoff           = -tSydata[ ftx ].exptime;   // Experiment time offset
-DbgLv(1) << "XpDa:scn: ftx" << ftx << "etimoff" << etimoff;
+      // First non-zero-speed time index
+      fnzstx            = ( fnzstx > 0 ) ? fnzstx : 1;
+      int t2tx          = fnzstx + 1;
+      // Experiment time offset (== negative of first time + interval)
+      int etime1        = tSydata[ fnzstx ].exptime;
+      int timeintv      = sstintv;
+      if ( t2tx < tSydata.count() )
+      {
+         timeintv          = tSydata[ t2tx ].exptime - etime1;
+      }
+      timeintv          = qMax( timeintv, 1 );
+      etimoff           = timeintv - etime1;
+//*DEBUG*
+DbgLv(1) << "XpDa:scn: fnzstx" << fnzstx << "etimoff" << etimoff
+ << "  etime1 timeintv" << etime1 << timeintv << sstintv;
+int nn=qMin(tSydata.count(),fnzstx+3);
+DbgLv(1) << "XpDa:scn: nn" << nn << " Vals nn-5 to nn-1 --";
+DbgLv(1) << "XpDa:scn: tms:"
+ << tSydata[nn-5].exptime
+ << tSydata[nn-4].exptime
+ << tSydata[nn-3].exptime
+ << tSydata[nn-2].exptime
+ << tSydata[nn-1].exptime;
+DbgLv(1) << "XpDa:scn: sps:"
+ << tSydata[nn-5].speed
+ << tSydata[nn-4].speed
+ << tSydata[nn-3].speed
+ << tSydata[nn-2].speed
+ << tSydata[nn-1].speed;
+//*DEBUG*
    }
 
    return rows;

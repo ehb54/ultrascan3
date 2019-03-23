@@ -436,6 +436,7 @@ class US_UTIL_EXTERN US_XpnData : public QObject
       int       ntsrow;              //!< Total (A+F+I+W) scan rows
       
       int       etimoff;             //!< Experimental time offset
+      int       fnzstx;              //!< First non-zero-speed time index
       int       sstintv;             //!< System Status interval
       int       issintv;             //!< Instantaneous System Status interval
 
