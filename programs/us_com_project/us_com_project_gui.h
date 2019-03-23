@@ -143,9 +143,11 @@ class US_PostProdGui : public US_WidgetsDialog
       
   private slots:
     void import_data_us_convert( QString & currDir, QString & protocolName );
-
+    void to_analysis( QString & currDir, QString & protocolName );
+    
   signals:
     void to_post_prod( QString & currDir, QString & protocolName );
+    void switch_to_analysis( QString & currDir, QString & protocolName );
 };
 
 //! \brief Analysis panel
@@ -165,10 +167,11 @@ class US_AnalysisGui : public US_WidgetsDialog
  protected:
     //void resizeEvent(QResizeEvent *event) override;
       
-  private slots:
-    
+ private slots:
+    void do_analysis( QString & currDir, QString & protocolName );
 
-  signals:
+ signals:
+    void start_analysis( QString & currDir, QString & protocolName );
     
 };
 
@@ -237,11 +240,13 @@ private slots:
   //void unable_tabs_buttons( void);  // Slot to unable Tabs and Buttons when user level is low
   //void enable_tabs_buttons( void);  // Slot to enable Tabs and Buttons after protocol is loaded
   void switch_to_live_update( QMap < QString, QString > & protocol_details );
-  void switch_to_post_processing( QString & currDir, QString & protocolName ); 
+  void switch_to_post_processing( QString & currDir, QString & protocolName );
+  void switch_to_analysis( QString & currDir, QString & protocolName ); 
   
 signals:
   void pass_to_live_update( QMap < QString, QString > & protocol_details ); 
   void import_data_us_convert( QString & currDir, QString & protocolName );
+  void pass_to_analysis( QString & currDir, QString & protocolName );
 };
 
 

@@ -47,6 +47,7 @@ class US_ConvertGui : public US_Widgets
       QList< double >         subsets;        //!< A list of subset boundaries
 
   signals:
+      void saving_complete_auto( QString &, QString & );
 
   public slots:
 
@@ -122,6 +123,8 @@ class US_ConvertGui : public US_Widgets
       };
        
       ProtocolInfo ProtInfo;
+
+      bool  us_convert_auto_mode;
       
       enum { SPLIT, REFERENCE, NONE } step;
 
