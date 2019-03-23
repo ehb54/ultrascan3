@@ -2903,7 +2903,9 @@ void US_XpnDataViewer::export_auc_auto()
    correct_radii();      // Perform chromatic aberration radius corrections
 
    int nfiles     = xpn_data->export_auc( allData );
-   int noptsy     = cb_optsys->children().count();
+//   int noptsy     = cb_optsys->children().count();
+   int noptsy     = cb_optsys->count();
+DbgLv(1) << "ExpAucA: noptsy koptsy" << noptsy << cb_optsys->children().count();
 
    if ( noptsy > 1 )
    {  // Export data from Optical Systems other than currently selected one
@@ -2979,7 +2981,9 @@ DbgLv(1) << "ExpAuc: AFTER correct_radii() !!!!";
    pb_showtmst->setEnabled( haveTmst );
    qApp->processEvents();
 DbgLv(1) << "ExpAuc: haveTmst" << haveTmst << "tmst file" << tspath;
-   int noptsy     = cb_optsys->children().count();
+//   int noptsy     = cb_optsys->children().count();
+   int noptsy     = cb_optsys->count();
+DbgLv(1) << "ExpAucA: noptsy koptsy" << noptsy << cb_optsys->children().count();
 
    if ( noptsy > 1 )
    {  // Export data from Optical Systems other than currently selected one
