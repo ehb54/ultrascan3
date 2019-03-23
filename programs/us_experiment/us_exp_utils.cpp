@@ -708,15 +708,19 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
    }
 
    setCbCurrentText( cb_calibr,   cal_entr );
+  
+   // ALEXEY - set Optima name (with checking connection), THEN operator - ORDER IMPORTANT!!!
+   QString optima_name  = QString::number( rpRotor->instID ) + ": "
+                          + rpRotor->instrname;
+
+   //optima machine
+   changeOptima( cb_optima->findText( optima_name ) ); //<-- Do actual connection test in changeLab();
+   //setCbCurrentText( cb_optima,   optima_name );    // <-- NOT ENOUGH, no connection check
+
+   //operator
    setCbCurrentText( cb_operator, QString::number( rpRotor->operID ) + ": "
                                 + rpRotor->opername );
 
-   // ALEXEY - do NOT initialize instrument info as it's dependent on connection, not on the protocol
-   /*
-    if ( !QString::number( rpRotor->instID ).isEmpty() && !rpRotor->instrname.isEmpty() )
-      le_instrument->setText( QString::number( rpRotor->instID ) + ": "
-                              + rpRotor->instrname );
-   */
 
    setCbCurrentText( cb_exptype,  rpRotor->exptype );
 
@@ -781,6 +785,8 @@ qDebug() << "Optima in use: name, host, port, dbname, dbuser, dbpasw: " << name 
    mainw->connection_status = o_connected;
    mainw->xpnhost = xpnhost;
    mainw->xpnport = xpnport;
+
+   mainw->connection_for_instrument[ name ] = QString("checked");
 }
 
 
