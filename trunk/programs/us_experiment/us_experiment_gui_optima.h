@@ -899,6 +899,7 @@ class US_ExperimentMain : public US_Widgets
       QString xpnhost;
       int     xpnport;
       QMap< QString, QString > currentInstrument;
+      QMap< QString, QString > connection_for_instrument;
       
       bool    automode;
       void    auto_mode_passed( void );

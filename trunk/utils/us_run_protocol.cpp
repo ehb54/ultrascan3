@@ -297,7 +297,7 @@ bool US_RunProtocol::RunProtoRotor::fromXml( QXmlStreamReader& xmli )
             opername    = attr.value( "opername"   ).toString();
             operID      = attr.value( "operid"       ).toString().toInt();
             instID      = attr.value( "instid"       ).toString().toInt();
-            instrname   = attr.value( "instname" ).toString();;
+            instrname   = attr.value( "instname" ).toString();
          }
 
          else

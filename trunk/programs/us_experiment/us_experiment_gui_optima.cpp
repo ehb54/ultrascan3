@@ -443,6 +443,8 @@ void US_ExperGuiGeneral::sel_investigator( void )
    {
       mainw->solutions_change = true;
 
+      mainw->connection_for_instrument.clear();  //ALEXEY clear checked connections for all instruments
+
       bool fromdisk         = US_Settings::debug_match( "protocolFromDisk" );
       bool load_db          = fromdisk ? false : use_db;
       US_Passwd  pw;
@@ -825,9 +827,9 @@ DbgLv(1) << "EGR: chgLab   rot_ent" << rot_ent << "rndx" << rndx;
 
    connect( cb_optima,    SIGNAL( activated      ( int ) ),
             this,         SLOT  ( changeOptima   ( int ) ) );
-
+   
    changeOptima(0);
-
+   
    //ExpType
    experimentTypes.clear();
    cb_exptype->clear();
@@ -865,10 +867,10 @@ void US_ExperGuiRotor::changeOptima( int ndx )
          mainw->currentInstrument[ "optimaDBname" ]    = instruments[ii].optimaDBname;
          mainw->currentInstrument[ "optimaDBusername" ] = instruments[ii].optimaDBusername;
          mainw->currentInstrument[ "optimaDBpassw" ]    = instruments[ii].optimaDBpassw;
-
-         mainw->currentInstrument[ "opsys1" ]          = instruments[ii].os1;
+	 mainw->currentInstrument[ "opsys1" ]          = instruments[ii].os1;
          mainw->currentInstrument[ "opsys2" ]          = instruments[ii].os2;
          mainw->currentInstrument[ "opsys3" ]          = instruments[ii].os3;
+	 
       }
    }
    //Operators
@@ -885,7 +887,8 @@ void US_ExperGuiRotor::changeOptima( int ndx )
 
    changeOperator(0);
 
-   test_optima_connection();
+   if ( !mainw->connection_for_instrument.contains( mainw->currentInstrument[ "name" ] ) ) 
+     test_optima_connection();
 }
 
 // Slot for change in ExpType selection
