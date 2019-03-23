@@ -950,19 +950,19 @@ DbgLv(1) << "XpDa:scn: fnzstx" << fnzstx << "etimoff" << etimoff
  << "  etime1 timeintv" << etime1 << timeintv << sstintv;
 int nn=qMin(tSydata.count(),fnzstx+3);
 DbgLv(1) << "XpDa:scn:  nn=" << nn << " Vals nn-5 to nn-1 --";
-if(nn>4) {
-DbgLv(1) << "XpDa:scn: times:"
- << tSydata[nn-5].exptime
- << tSydata[nn-4].exptime
- << tSydata[nn-3].exptime
- << tSydata[nn-2].exptime
- << tSydata[nn-1].exptime;
-DbgLv(1) << "XpDa:scn: speeds:"
- << tSydata[nn-5].speed
- << tSydata[nn-4].speed
- << tSydata[nn-3].speed
- << tSydata[nn-2].speed
- << tSydata[nn-1].speed; }
+//if(nn>4) {
+// DbgLv(1) << "XpDa:scn: times:"
+//  << tSydata[nn-5].exptime
+//  << tSydata[nn-4].exptime
+//  << tSydata[nn-3].exptime
+//  << tSydata[nn-2].exptime
+//  << tSydata[nn-1].exptime;
+// DbgLv(1) << "XpDa:scn: speeds:"
+//  << tSydata[nn-5].speed
+//  << tSydata[nn-4].speed
+//  << tSydata[nn-3].speed
+//  << tSydata[nn-2].speed
+//  << tSydata[nn-1].speed; }
 //*DEBUG*
    }
 

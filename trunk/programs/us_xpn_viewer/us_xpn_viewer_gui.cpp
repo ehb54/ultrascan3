@@ -1561,7 +1561,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
    
   //Remaining Time
   QList< int > dhms_remain;
-  int remaining_time = TotalDuration.toInt() - running_time;
+  int remaining_time = TotalDuration.toInt() - ( exp_time + etimoff );
   timeToList( remaining_time, dhms_remain );
   QString remaining_time_text;
   //ALEXEY: hh:mm:ss - OR do we need dd:hh:mm instead ?
