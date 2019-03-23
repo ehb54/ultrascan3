@@ -1766,7 +1766,7 @@ void US_XpnDataViewer::retrieve_xpn_raw_auto( )
    qApp->processEvents();
 
    // Read the data
-   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor) );
+   //QApplication::setOverrideCursor( QCursor( Qt::WaitCursor) );
    le_status->setText( tr( "Reading Raw Optima data ..." ) );
    qApp->processEvents();
 QDateTime sttime=QDateTime::currentDateTime();
@@ -1885,7 +1885,7 @@ DbgLv(1) << "RDr:  runID" << runID << "runType" << runType;
    qDebug() << "2. Crashes HERE!!!! (after xpn_data->set_run_values( runID, runType ) )";
 
    // Build the AUC equivalent
-   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor) );
+   //QApplication::setOverrideCursor( QCursor( Qt::WaitCursor) );
    le_status->setText( tr( "Building AUC data ..." ) );
    qApp->processEvents();
 
@@ -1949,7 +1949,7 @@ DbgLv(1) << "RDr: allData size" << allData.size();
 
  qDebug() << "RDr: allData size" << allData.size();
 
-   QApplication::restoreOverrideCursor();
+ //QApplication::restoreOverrideCursor();
    QString tspath = currentDir + "/" + runID + ".time_state.tmst";
    haveTmst       = QFile( tspath ).exists();
    in_reload_auto      = false;

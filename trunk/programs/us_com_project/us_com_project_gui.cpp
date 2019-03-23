@@ -133,8 +133,12 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
 
    connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
    connect( this   , SIGNAL( pass_to_live_update( QMap < QString, QString > &) ),   epanObserv, SLOT( process_protocol_details( QMap < QString, QString > & )  ) );
+
    connect( epanObserv, SIGNAL( switch_to_post_processing( QString &, QString &) ), this, SLOT( switch_to_post_processing( QString &, QString & )  ) );
    connect( this, SIGNAL( import_data_us_convert( QString &, QString & ) ),  epanPostProd, SLOT( import_data_us_convert( QString &, QString & )  ) );
+
+   connect( epanPostProd, SIGNAL( switch_to_analysis( QString &, QString &) ),  this, SLOT( switch_to_analysis( QString &, QString & )  ) );
+   connect( this, SIGNAL( pass_to_analysis( QString &, QString & ) ),   epanAnalysis, SLOT( do_analysis( QString &, QString & )  ) );
    
    setMinimumSize( QSize( 1350, 800 ) );
    adjustSize();
@@ -202,7 +206,7 @@ void US_ComProjectMain::switch_to_live_update( QMap < QString, QString > & proto
    emit pass_to_live_update( protocol_details );
 }
 
-// Slot to switch from the Live Update to PostProcessifn tab
+// Slot to switch from the Live Update to Editing tab
 void US_ComProjectMain::switch_to_post_processing( QString  & currDir, QString & protocolName)
 {
    tabWidget->setCurrentIndex( 2 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
@@ -212,6 +216,18 @@ void US_ComProjectMain::switch_to_post_processing( QString  & currDir, QString &
    emit import_data_us_convert( currDir, protocolName );
 }
      
+
+// Slot to switch from the Editing to Analysis tab
+void US_ComProjectMain::switch_to_analysis( QString  & currDir, QString & protocolName)
+{
+   tabWidget->setCurrentIndex( 3 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
+  
+   // ALEXEY: Make a record to 'autoflow' table: stage# = 3; 
+
+   emit pass_to_analysis( currDir, protocolName );
+}
+
+
 
 // US_ExperGUI
 US_ExperGui::US_ExperGui( QWidget* topw )
@@ -560,6 +576,9 @@ US_PostProdGui::US_PostProdGui( QWidget* topw )
    sdiag->setParent(this, Qt::Widget);
 
    connect( this, SIGNAL( to_post_prod( QString &, QString & ) ), sdiag, SLOT( import_data_auto ( QString &, QString & )  ) );
+   //ALEXEY: switch to Analysis
+   connect( sdiag, SIGNAL( saving_complete_auto( QString &, QString & ) ), this, SLOT( to_analysis ( QString &, QString &) ) );
+   
    
    offset = 0;
    sdiag->move(offset, 2*offset);
@@ -568,6 +587,16 @@ US_PostProdGui::US_PostProdGui( QWidget* topw )
 
    sdiag->show();
 
+}
+
+void US_PostProdGui::import_data_us_convert( QString & currDir, QString & protocolName )
+{
+  emit to_post_prod( currDir, protocolName );
+}
+
+void US_PostProdGui::to_analysis( QString & currDir, QString & protocolName )
+{
+  emit switch_to_analysis( currDir, protocolName );
 }
 
 void US_PostProdGui::resizeEvent(QResizeEvent *event)
@@ -602,10 +631,7 @@ void US_PostProdGui::resizeEvent(QResizeEvent *event)
 
 
 
-void US_PostProdGui::import_data_us_convert( QString & currDir, QString & protocolName )
-{
-  emit to_post_prod( currDir, protocolName );
-}
+
 
 
 // US_Analysis
@@ -629,23 +655,35 @@ US_AnalysisGui::US_AnalysisGui( QWidget* topw )
    QGridLayout* genL   = new QGridLayout();
 
    // //QPlainTextEdit* panel_desc = new QPlainTextEdit(this);
-   // QTextEdit* panel_desc = new QTextEdit(this);
-   // panel_desc->viewport()->setAutoFillBackground(false);
-   // panel_desc->setFrameStyle(QFrame::NoFrame);
-   // panel_desc->setPlainText(" Tab to Retrieve and Process Experimental Data...");
-   // panel_desc->setReadOnly(true);
-   // //panel_desc->setMaximumHeight(30);
-   // QFontMetrics m (panel_desc -> font()) ;
-   // int RowHeight = m.lineSpacing() ;
-   // panel_desc -> setFixedHeight  (2* RowHeight) ;
+   QTextEdit* panel_desc = new QTextEdit(this);
+   panel_desc->viewport()->setAutoFillBackground(false);
+   panel_desc->setFrameStyle(QFrame::NoFrame);
+   panel_desc->setPlainText(" Tab to Analyse Experimental Data... ---UNDER CONSTRUCTION--- ");
+   panel_desc->setReadOnly(true);
+   //panel_desc->setMaximumHeight(30);
+   QFontMetrics m (panel_desc -> font()) ;
+   int RowHeight = m.lineSpacing() ;
+   panel_desc -> setFixedHeight  (2* RowHeight) ;
 
-   // int row = 0;
-   // genL->addWidget( panel_desc,  row++,   0, 1, 12);
+   int row = 0;
+   genL->addWidget( panel_desc,  row++,   0, 1, 12);
  
    // assemble main
    main->addLayout(genL);
    main->addStretch();
+
+
+   // //Later - do actual analysis form sdiag - whatever it will be:
+   // connect( this, SIGNAL( start_analysis( QString &, QString & ) ), sdiag, SLOT( analyze_auto ( QString &, QString & )  ) );
+   
 }
+
+void US_AnalysisGui::do_analysis( QString & currDir, QString & protocolName )
+{
+  emit start_analysis( currDir, protocolName );
+}
+
+
 
 
 
@@ -670,18 +708,18 @@ US_ReportGui::US_ReportGui( QWidget* topw )
    QGridLayout* genL   = new QGridLayout();
 
    // //QPlainTextEdit* panel_desc = new QPlainTextEdit(this);
-   // QTextEdit* panel_desc = new QTextEdit(this);
-   // panel_desc->viewport()->setAutoFillBackground(false);
-   // panel_desc->setFrameStyle(QFrame::NoFrame);
-   // panel_desc->setPlainText(" Tab to Retrieve and Process Experimental Data...");
-   // panel_desc->setReadOnly(true);
-   // //panel_desc->setMaximumHeight(30);
-   // QFontMetrics m (panel_desc -> font()) ;
-   // int RowHeight = m.lineSpacing() ;
-   // panel_desc -> setFixedHeight  (2* RowHeight) ;
+   QTextEdit* panel_desc = new QTextEdit(this);
+   panel_desc->viewport()->setAutoFillBackground(false);
+   panel_desc->setFrameStyle(QFrame::NoFrame);
+   panel_desc->setPlainText(" Tab to Generate Report...  ---UNDER CONSTRUCTION--- ");
+   panel_desc->setReadOnly(true);
+   //panel_desc->setMaximumHeight(30);
+   QFontMetrics m (panel_desc -> font()) ;
+   int RowHeight = m.lineSpacing() ;
+   panel_desc -> setFixedHeight  (2* RowHeight) ;
 
-   // int row = 0;
-   // genL->addWidget( panel_desc,  row++,   0, 1, 12);
+   int row = 0;
+   genL->addWidget( panel_desc,  row++,   0, 1, 12);
  
    // assemble main
    main->addLayout(genL);

@@ -67,6 +67,9 @@ US_ConvertGui::US_ConvertGui(QString auto_mode) : US_Widgets()
    dbg_level    = US_Settings::us_debug();
 DbgLv(0) << "CGui: dbg_level" << dbg_level;
 
+
+   us_convert_auto_mode = true;
+ 
    QGridLayout* settings = new QGridLayout;
 
    int  row     = 0;
@@ -554,6 +557,8 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    dbg_level    = US_Settings::us_debug();
 DbgLv(0) << "CGui: dbg_level" << dbg_level;
 
+   us_convert_auto_mode = false;
+ 
    QGridLayout* settings = new QGridLayout;
 
    int  row     = 0;
@@ -4428,11 +4433,22 @@ DbgLv(1) << "Writing to disk";
    } // End of 'else' loop for multispeed case
 
 // x  x  x  x  x
-   QMessageBox::information( this,
-       tr( "Save is Complete" ),
-       tr( "The save of all data and reports is complete." ) );
+   if ( !us_convert_auto_mode )
+     {
+       QMessageBox::information( this,
+				 tr( "Save is Complete" ),
+				 tr( "The save of all data and reports is complete." ) );
+     }
+   else
+     {
+       // ALEXEY: // If "AUTO" - emit signal to pass to stage 4. Analysis
+       QMessageBox::information( this,
+				 tr( "Save is Complete" ),
+				 tr( "The save of all data and reports is complete.\n\n"
+				     "The program will switch to Analysis stage." ) );
 
-  
+       emit saving_complete_auto( currentDir, ProtocolName_auto  );  
+     }
 }
 
 // Save to disk (default directory)
