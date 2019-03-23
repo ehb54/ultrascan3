@@ -1459,7 +1459,10 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
       timer_data_init->stop();
       disconnect(timer_data_init, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
       msg_data_avail->close();
-
+      //ALEXEY: elapsed timer start
+      elapsed_timer = new QElapsedTimer;
+      elapsed_timer->start();
+      
       qDebug() << "RunID_to_retrieve 2: " << RunID_to_retrieve;
 
       runInfo.clear();
@@ -1476,6 +1479,7 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
 
       
       //ALEXEY: Start another timer - SysData (RPM, Temp.) - should be run in a separate thread!!!
+      //Plus to check_for_sys_Data: elapsed time counter!!!
       timer_check_sysdata = new QTimer(this);
       connect(timer_check_sysdata, SIGNAL(timeout()), this, SLOT(  check_for_sysdata( )  ));
       timer_check_sysdata->start(2000);     //
@@ -1517,7 +1521,6 @@ void US_XpnDataViewer::check_for_sysdata( void )
   
   in_reload_check_sysdata   = true;          // Flag in the midst of a reload
 
-  
   int idrun = RunID_to_retrieve.toInt();
     
   xpn_data->update_isysrec( idrun );
@@ -1534,12 +1537,13 @@ void US_XpnDataViewer::check_for_sysdata( void )
   rpm_box->setSpeed(rpm_for_meter);
 
   //Temperature
-  temperature_box->setTemp(temperature);
+  if ( temperature )
+    temperature_box->setTemp(temperature);
 
   //Running Time
   QList< int > dhms_r;
-  int runnig_time_comp = exp_time + etimoff;
-  timeToList( runnig_time_comp, dhms_r );
+  int running_time = exp_time + etimoff; //ALEXEY: OR elapsed_time + etimoff? OR just exp_time ???? //ALEXEY: etimoff < 0 ?
+  timeToList( running_time, dhms_r );
   QString running_time_text;
   //ALEXEY: hh:mm:ss - OR do we need dd:hh:mm instead ?
   running_time_text = QString::number(dhms_r[1]) + ":" + QString::number(dhms_r[2]) + ":" + QString::number(dhms_r[3]);
@@ -1547,8 +1551,9 @@ void US_XpnDataViewer::check_for_sysdata( void )
 
   //Elapsed Time
   QList< int > dhms_e;
-  int elapsed_time_complete = exp_time;
-  timeToList( elapsed_time_complete, dhms_e );
+  int elapsed_time = int( elapsed_timer->elapsed() / 1000 );
+  //int elapsed_time = exp_time;
+  timeToList( elapsed_time, dhms_e );
   QString elapsed_time_text;
   //ALEXEY: hh:mm:ss - OR do we need dd:hh:mm instead ?
   elapsed_time_text = QString::number(dhms_e[1]) + ":" + QString::number(dhms_e[2]) + ":" + QString::number(dhms_e[3]);
@@ -1556,7 +1561,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
    
   //Remaining Time
   QList< int > dhms_remain;
-  int remaining_time = TotalDuration.toInt() - exp_time;
+  int remaining_time = TotalDuration.toInt() - running_time;
   timeToList( remaining_time, dhms_remain );
   QString remaining_time_text;
   //ALEXEY: hh:mm:ss - OR do we need dd:hh:mm instead ?
@@ -1569,14 +1574,12 @@ void US_XpnDataViewer::check_for_sysdata( void )
 
   rpm_data.push_back(rpm);
   temp_data.push_back(temperature);
-  time_data.push_back( double(exp_time/60.0  ) );  // Elapsed time in minutes
-  //time_data.push_back( double(exp_time/60.0 + counter_mins ) ); // Elapsed time in minutes: for testing only
+  time_data.push_back( double(exp_time/60.0  ) );  // Running time in minutes
+  //time_data.push_back( double(exp_time/60.0 + counter_mins ) ); // Running time in minutes: for testing only
 
   for( int i=0; i<time_data.size();++i)
-    {
-      qDebug() << "RPM, Temp, Time: " << rpm_data[i] << ", " << temp_data[i] << ", " << time_data[i]; 
-    }
-
+    qDebug() << "RPM, Temp, Time: " << rpm_data[i] << ", " << temp_data[i] << ", " << time_data[i]; 
+    
   double* d_rpm     = rpm_data.data();
   double* d_temp    = temp_data.data();
   double* d_time    = time_data.data();
@@ -1595,7 +1598,6 @@ void US_XpnDataViewer::check_for_sysdata( void )
   
   //ALEXEY: no plot rescaling to bounds...
   data_plot_rpm->replot();
-
    
   if ( CheckExpComplete_auto( RunID_to_retrieve  ) )
     {
@@ -1604,21 +1606,21 @@ void US_XpnDataViewer::check_for_sysdata( void )
 
       qDebug() << "sys_timer STOPPED here: ";
 
-   
+      rpm_box->setSpeed( 0 );
+  
       if ( !timer_data_reload->isActive()  ) // Check if reload_data Timer is stopped
-  	{
-  	  // ALEXEY Export AUC data: devise export_auc_auto() function which would return directory name with saved data - to pass to emit signal below... 
-  	  export_auc_auto();
+       	{
+       	  // ALEXEY Export AUC data: devise export_auc_auto() function which would return directory name with saved data - to pass to emit signal below... 
+       	  export_auc_auto();
   	  
-  	  QString mtitle_complete  = tr( "Complete!" );
-  	  QString message_done     = tr( "Experiement was completed. Optima data saved..." );
-  	  QMessageBox::information( this, mtitle_complete, message_done );
+       	  QString mtitle_complete  = tr( "Complete!" );
+       	  QString message_done     = tr( "Experiment was completed. Optima data saved..." );
+       	  QMessageBox::information( this, mtitle_complete, message_done );
   	  
-  	  emit experiment_complete_auto( currentDir, ProtocolName  );  // Updtade later: what should be passed with signal ??
+       	  emit experiment_complete_auto( currentDir, ProtocolName  );  // Updtade later: what should be passed with signal ??
   	  
-  	  return;
-  	}
-      //where it goes from here?
+       	  return;
+       	}
     }
   
   in_reload_check_sysdata   = false;
@@ -2985,6 +2987,8 @@ DbgLv(1) << "ExpAuc: haveTmst" << haveTmst << "tmst file" << tspath;
    int noptsy     = cb_optsys->count();
 DbgLv(1) << "ExpAucA: noptsy koptsy" << noptsy << cb_optsys->children().count();
 
+   qDebug() << "Optical Systems Count: (noptsy) = " << cb_optsys->children().count();
+   
    if ( noptsy > 1 )
    {  // Export data from Optical Systems other than currently selected one
       int currsx     = cb_optsys->currentIndex();
@@ -3296,7 +3300,7 @@ DbgLv(1) << "RLd:       NO CHANGE";
 	      export_auc_auto();
 	  
 	      QString mtitle_complete  = tr( "Complete!" );
-	      QString message_done     = tr( "Experiement was completed. Optima data saved..." );
+	      QString message_done     = tr( "Experiment was completed. Optima data saved..." );
 	      QMessageBox::information( this, mtitle_complete, message_done );
 	      
 	      emit experiment_complete_auto( currentDir, ProtocolName  );  // Updtade later: what should be passed with signal ??

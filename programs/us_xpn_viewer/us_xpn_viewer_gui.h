@@ -264,6 +264,8 @@ class US_XpnDataViewer : public US_Widgets
      QTimer*        timer_data_reload;
      QTimer*        timer_all_data_avail;
      QTimer*        timer_check_sysdata;
+
+     QElapsedTimer*  elapsed_timer;
      
      QTimer*        timer_sys_thread;
      QThread*       sys_thread;

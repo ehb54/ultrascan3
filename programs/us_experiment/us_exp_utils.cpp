@@ -2260,6 +2260,10 @@ DbgLv(1) << "EGRn:inP:    ii" << ii << "channel" << channel;
                                .arg( swvlens[ ii ][ kswavl - 1 ] );
       cc_labls[ ii ]->setText( channel );
       cc_lrngs[ ii ]->setText( labwlr  );
+
+      cc_lrads[ ii ]->setValue( locrads[ ii ] );
+      cc_hrads[ ii ]->setValue( hicrads[ ii ] );
+           
       cc_labls[ ii ]->setVisible( true );
       cc_lrngs[ ii ]->setVisible( true );
       cc_lbtos[ ii ]->setVisible( true );
