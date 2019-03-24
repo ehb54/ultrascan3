@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export MAKE="make -j 7"
+
 QTVERS=`qmake --version|sed -n 2,2p|awk '{print $4}'`
 echo "Make All for Qt Version ${QTVERS} ..."
 QTMAJV=`echo ${QTVERS}|cut -d. -f1`
