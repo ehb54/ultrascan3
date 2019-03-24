@@ -4280,15 +4280,12 @@ DbgLv(1) << "EGUp:svRP:   prnames" << prnames;
       }
    }
 
-   qDebug() << "SAVE_PROTOCOL 0: rpSpeed->ssteps[0].duration: " <<  rpSpeed->ssteps[0].duration;
-
    // //ALEXEY: check if has_interference or has_uvvis or both for cells//
    // QString uvvis       = tr( "UV/visible" );
    // QString rayleigh    = tr( "Rayleigh Interference" );
    // QStringList oprof   = sibLValue( "optical", "profiles" );
    
-   
-
+  
    // Save the new name and compose the XML representing the protocol
    protoname           = newpname;
 DbgLv(1) << "EGUp:svRP:   NEW protoname" << protoname;
@@ -4303,28 +4300,16 @@ DbgLv(1) << "EGUp:svRP:   currProto updated  protoname" << currProto->protoname;
 //ALEXEY: bug - us_xml string has to be cleared each time Protocol is saved
    rpSubmt->us_xml.clear();
 
-
-   qDebug() << "SAVE_PROTOCOL 0a: rpSpeed->ssteps[0].duration: " <<  rpSpeed->ssteps[0].duration;
-
    QXmlStreamWriter xmlo( &rpSubmt->us_xml ); // Compose XML representation
-
-   qDebug() << "SAVE_PROTOCOL 0aa: rpSpeed->ssteps[0].duration: " <<  rpSpeed->ssteps[0].duration;
-
    xmlo.setAutoFormatting( true );
-
-   qDebug() << "SAVE_PROTOCOL 0aaa: rpSpeed->ssteps[0].duration: rpSpeed->ssteps[0].scanintv: " <<  rpSpeed->ssteps[0].duration << " : " << rpSpeed->ssteps[0].scanintv;
-
    currProto->toXml( xmlo );
 
-   qDebug() << "SAVE_PROTOCOL 0aaaa: rpSpeed->ssteps[0].duration: rpSpeed->ssteps[0].scanintv: " <<  rpSpeed->ssteps[0].duration << " : " << rpSpeed->ssteps[0].scanintv;
 
 DbgLv(1) << "EGUp:svRP:    guid" << currProto->protoGUID;
 DbgLv(1) << "EGUp:svRP:    xml(s)" << QString(rpSubmt->us_xml).left(100);
 int xe=rpSubmt->us_xml.length()-101;
 DbgLv(1) << "EGUp:svRP:    xml(e)" << QString(rpSubmt->us_xml).mid(xe);
 
-
- qDebug() << "SAVE_PROTOCOL 1: rpSpeed->ssteps[0].duration: " <<  rpSpeed->ssteps[0].duration;
 
    // Save the new protocol to database or disk
    US_Passwd  pw;
@@ -4362,15 +4347,20 @@ DbgLv(1) << "EGUp:svRP:   dbP" << dbP;
    mainw->updateProtos( prentry );            // Update existing protocols list
    proto_svd           = true;
    ck_prot_svd->setChecked( true );
-   DbgLv(1) << "BEFORE!!!";
-   //DbgLv(1) << "EGUp:svRP:  new protoname" << protoname << "prdats0" << prdats[0]; //ALEXEY: this statement caused issues when no protocol existed
+   
 
-   qDebug() << "SAVE_PROTOCOL 2: rpSpeed->ssteps[0].duration: " <<  rpSpeed->ssteps[0].duration;
-
-   QString mtitle_done    = tr( "Success" );
-   QString message_done   = tr( "Protocol has been successfully saved." );
-   QMessageBox::information( this, mtitle_done, message_done );
-
+   if ( mainw->automode && !have_run)
+     {
+       QString mtitle_done    = tr( "Success" );
+       QString message_done   = tr( "Protocol has been successfully saved." );
+       QMessageBox::information( this, mtitle_done, message_done );
+     }
+   else if ( !mainw->automode )
+     {
+       QString mtitle_done    = tr( "Success" );
+       QString message_done   = tr( "Protocol has been successfully saved." );
+       QMessageBox::information( this, mtitle_done, message_done );
+     }
 }
 
 //Confirm the Optima machine an experiemnt is submitted to.
@@ -4389,9 +4379,16 @@ void US_ExperGuiUpload::submitExperiment_confirm()
 
    if ( mainw->automode )
      saveRunProtocol();
-
+   else if ( !mainw->automode && have_run )
+     saveRunProtocol();
+   
+   
    QMessageBox msgBox;
-   msgBox.setText(tr("Experiment will be submitted to the following Optima machine:"));
+   QString message_protocol = tr( "Protocol has been successfully saved to US-LIMS DB. \n\n");
+   QString message_submission = message_protocol + tr("Experiment will be submitted to the following Optima machine:");
+   
+   //msgBox.setText(tr("Experiment will be submitted to the following Optima machine:"));
+   msgBox.setText( message_submission );
    msgBox.setInformativeText( QString( tr(    "Name: %1 <br>  Host:  %2 <br> Port:  %3" ))
                               .arg(alias)
                               .arg(dbhost)
@@ -5266,6 +5263,8 @@ void US_ExperGuiUpload::submitExperiment()
                               "Reset them in UltraScan's 'Optima Host Preferences'\n"
                               "and return to retry connecting here." );
       QMessageBox::critical( this, mtitle, message );
+
+      return;
    }
    //submitted    = true;
 
@@ -5274,10 +5273,14 @@ void US_ExperGuiUpload::submitExperiment()
    //
 
    ck_sub_done->setChecked( true );
-   QString mtitle_done    = tr( "Success" );
-   QString message_done   = tr( "Protocol has been successfully submitted to Optima DB." );
-   QMessageBox::information( this, mtitle_done, message_done );
 
+   if ( !mainw->automode )
+     {
+       QString mtitle_done    = tr( "Success" );
+       QString message_done   = tr( "Protocol has been successfully submitted to Optima DB." );
+       QMessageBox::information( this, mtitle_done, message_done );
+     }
+   
    emit expdef_submitted( protocol_details );
 }
 
