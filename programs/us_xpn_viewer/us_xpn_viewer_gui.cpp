@@ -617,7 +617,7 @@ if(mcknt>0)
 
    
    //plot RPM
-   plot_rpm             = new US_Plot( data_plot_rpm, "", tr( "Time (minutes)" ),
+   plot_rpm             = new US_Plot( data_plot_rpm, "", tr( "Elapsed Time (minutes)" ),
                                                           tr( "RPM" ) );
    QFont tfont( US_GuiSettings::fontFamily(),
                 US_GuiSettings::fontSize(),
@@ -1480,6 +1480,10 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
       
       //ALEXEY: Start another timer - SysData (RPM, Temp.) - should be run in a separate thread!!!
       //Plus to check_for_sys_Data: elapsed time counter!!!
+      temp_data.clear();
+      rpm_data.clear();
+      time_data.clear();
+      
       timer_check_sysdata = new QTimer(this);
       connect(timer_check_sysdata, SIGNAL(timeout()), this, SLOT(  check_for_sysdata( )  ));
       timer_check_sysdata->start(2000);     //
@@ -1523,13 +1527,21 @@ void US_XpnDataViewer::check_for_sysdata( void )
 
   int idrun = RunID_to_retrieve.toInt();
     
-  xpn_data->update_isysrec( idrun );
+  //xpn_data->update_isysrec( idrun );
 
-  int exp_time       = xpn_data->countOf_sysdata( "exp_time"  ).toInt();     //time form the start
-  //int stage_number   = xpn_data->countOf_sysdata( "stage_number" ).toInt();  //stage number
-  double temperature = xpn_data->countOf_sysdata( "tempera" ).toDouble();    //temperature 
-  int rpm            = xpn_data->countOf_sysdata( "last_rpm"  ).toInt();     //revolutions per minute !
-  int etimoff        = xpn_data->countOf_sysdata( "etim_off"  ).toInt();     //experimental time offset 
+  int exp_time = 0;
+  double temperature=0;
+  int rpm, etimoff;
+  //int stage_number;
+  while ( temperature == 0 ) // what if the temperature is actually set to zero degrees?
+  {
+    xpn_data->update_isysrec( idrun );
+    exp_time       = xpn_data->countOf_sysdata( "exp_time"  ).toInt();     //time form the start
+  //stage_number   = xpn_data->countOf_sysdata( "stage_number" ).toInt();  //stage number
+    temperature    = xpn_data->countOf_sysdata( "tempera" ).toDouble();    //temperature 
+    rpm            = xpn_data->countOf_sysdata( "last_rpm"  ).toInt();     //revolutions per minute !
+    etimoff        = xpn_data->countOf_sysdata( "etim_off"  ).toInt();     //experimental time offset 
+  }
 
   // Update rmp, temperature GUI icons...
   //RPM speed
@@ -1541,7 +1553,9 @@ void US_XpnDataViewer::check_for_sysdata( void )
 
   //Running Time
   QList< int > dhms_r;
-  int running_time = exp_time + etimoff; //ALEXEY: OR elapsed_time + etimoff? OR just exp_time ???? //ALEXEY: etimoff < 0 ?
+  int running_time = exp_time;// + etimoff; //ALEXEY: OR elapsed_time + etimoff? OR just exp_time ???? //ALEXEY: etimoff < 0 ?
+  if ( running_time < 0 )
+    running_time = 0;
   timeToList( running_time, dhms_r );
   QString running_time_text;
   //ALEXEY: hh:mm:ss - OR do we need dd:hh:mm instead ?
@@ -1551,7 +1565,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
   //Elapsed Time
   QList< int > dhms_e;
   int elapsed_time = int( elapsed_timer->elapsed() / 1000 );
-  //int elapsed_time = exp_time;
+  int elapsed_time_1 = elapsed_time;
   timeToList( elapsed_time, dhms_e );
   QString elapsed_time_text;
   //ALEXEY: hh:mm:ss - OR do we need dd:hh:mm instead ?
@@ -1569,45 +1583,34 @@ void US_XpnDataViewer::check_for_sysdata( void )
 
   //RPM/Temp. Plots:
 
-  counter_mins += 500; //temporary for testing only
+  //counter_mins += 500; //temporary for testing only
 
   rpm_data.push_back(rpm);
-  time_data_rpm.push_back( double(exp_time/60.0  ) );  // Running time in minutes
+  time_data.push_back( double(elapsed_time_1/60.0) );  // Running time in minutes
+  temp_data.push_back(temperature);
+  
+  //time_data.push_back( double(elapsed_time_1/60.0) );  // Running time in minutes
 
-  if ( temperature > 0 )
-    {
-      temp_data.push_back(temperature);
-      time_data_temp.push_back( double(exp_time/60.0  ) );  // Running time in minutes
-    }
-
-  //Debugs for RPM, Temp., Time
-  qDebug() << "Sizes of arrays: RMP.size(), temperature.size() " <<  rpm_data.size() << ", " << temp_data.size(); 
-
-  for( int i=0; i<time_data_rpm.size();++i)
-    qDebug() << "RPM, Time: " << rpm_data[i] << ", " << time_data_rpm[i];
-
-  for( int i=0; i<time_data_temp.size();++i)
-    qDebug() << "Temp., Time: " << temp_data[i] << ", " << time_data_temp[i];
-    
+  // //Debugs for RPM, Temp., Time
+  //qDebug() << "Sizes of arrays: RMP.size(), temperature.size() " <<  rpm_data.size() << ", " << temp_data.size(); 
+     
   double* d_rpm          = rpm_data.data();
   double* d_temp         = temp_data.data();
-  double* d_time_rpm     = time_data_rpm.data();
-  double* d_time_temp    = time_data_temp.data();
+  double* d_time         = time_data.data();
 
   //axis ranges, temporary
   double rpm_min = 0;
   double rpm_max = rpm + 5000;
-  double temp_min = temperature - 5;
+  double temp_min = temperature - 1;
   if(temp_min < 0)
     temp_min = 0;
-  double temp_max = temperature + 5;
+  double temp_max = temperature + 1;
 
-  if (temp_data.size() != 0 )
-    curv_temp->setSamples( d_time_temp, d_temp, time_data_temp.size() );
+  //if (temp_data.size() != 0 )
+  curv_temp->setSamples( d_time, d_temp, time_data.size() );
+  curv_rpm->setSamples(  d_time, d_rpm,  time_data.size() );   
 
-  curv_rpm->setSamples( d_time_rpm, d_rpm, time_data_rpm.size() );   
-
-  data_plot_rpm->setAxisScale( QwtPlot::xBottom, 0.0, double(exp_time/60.0) );
+  data_plot_rpm->setAxisScale( QwtPlot::xBottom, 0.0, double(elapsed_time_1/60.0) );  // <-- HERE
   //data_plot_rpm->setAxisScale( QwtPlot::xBottom, 0.0, double(exp_time/60.0 + counter_mins ) ); // for testing only
   data_plot_rpm->setAxisScale( QwtPlot::yLeft, rpm_min, rpm_max );     //Y-RPM 
   data_plot_rpm->setAxisScale( QwtPlot::yRight, temp_min, temp_max );  //Y-Temp.
