@@ -202,7 +202,7 @@ void WheelBox::setNum( double v )
     QString text;
     //text.setNum( v, 'f', 2 );
 
-    text = "Temp.: " + QString::number(v) + QChar(0x2103);
+    text = "Temp.: " + QString::number( v, 'f', 1 ) + QChar(0x2103);
     d_label->setText( text );
 }
 
@@ -1537,8 +1537,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
   rpm_box->setSpeed(rpm_for_meter);
 
   //Temperature
-  if ( temperature )
-    temperature_box->setTemp(temperature);
+  temperature_box->setTemp(temperature);
 
   //Running Time
   QList< int > dhms_r;
@@ -1573,24 +1572,41 @@ void US_XpnDataViewer::check_for_sysdata( void )
   counter_mins += 500; //temporary for testing only
 
   rpm_data.push_back(rpm);
-  temp_data.push_back(temperature);
-  time_data.push_back( double(exp_time/60.0  ) );  // Running time in minutes
-  //time_data.push_back( double(exp_time/60.0 + counter_mins ) ); // Running time in minutes: for testing only
+  time_data_rpm.push_back( double(exp_time/60.0  ) );  // Running time in minutes
 
-  for( int i=0; i<time_data.size();++i)
-    qDebug() << "RPM, Temp, Time: " << rpm_data[i] << ", " << temp_data[i] << ", " << time_data[i]; 
+  if ( temperature > 0 )
+    {
+      temp_data.push_back(temperature);
+      time_data_temp.push_back( double(exp_time/60.0  ) );  // Running time in minutes
+    }
+
+  //Debugs for RPM, Temp., Time
+  qDebug() << "Sizes of arrays: RMP.size(), temperature.size() " <<  rpm_data.size() << ", " << temp_data.size(); 
+
+  for( int i=0; i<time_data_rpm.size();++i)
+    qDebug() << "RPM, Time: " << rpm_data[i] << ", " << time_data_rpm[i];
+
+  for( int i=0; i<time_data_temp.size();++i)
+    qDebug() << "Temp., Time: " << temp_data[i] << ", " << time_data_temp[i];
     
-  double* d_rpm     = rpm_data.data();
-  double* d_temp    = temp_data.data();
-  double* d_time    = time_data.data();
+  double* d_rpm          = rpm_data.data();
+  double* d_temp         = temp_data.data();
+  double* d_time_rpm     = time_data_rpm.data();
+  double* d_time_temp    = time_data_temp.data();
 
-  curv_temp->setSamples( d_time, d_temp, time_data.size() );
-  curv_rpm->setSamples( d_time, d_rpm, time_data.size() );   
-
+  //axis ranges, temporary
   double rpm_min = 0;
   double rpm_max = rpm + 5000;
-  double temp_min = 0;
+  double temp_min = temperature - 5;
+  if(temp_min < 0)
+    temp_min = 0;
   double temp_max = temperature + 5;
+
+  if (temp_data.size() != 0 )
+    curv_temp->setSamples( d_time_temp, d_temp, time_data_temp.size() );
+
+  curv_rpm->setSamples( d_time_rpm, d_rpm, time_data_rpm.size() );   
+
   data_plot_rpm->setAxisScale( QwtPlot::xBottom, 0.0, double(exp_time/60.0) );
   //data_plot_rpm->setAxisScale( QwtPlot::xBottom, 0.0, double(exp_time/60.0 + counter_mins ) ); // for testing only
   data_plot_rpm->setAxisScale( QwtPlot::yLeft, rpm_min, rpm_max );     //Y-RPM 
@@ -1607,6 +1623,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
       qDebug() << "sys_timer STOPPED here: ";
 
       rpm_box->setSpeed( 0 );
+      le_remaining->setText( "00:00:00" );
   
       if ( !timer_data_reload->isActive()  ) // Check if reload_data Timer is stopped
        	{

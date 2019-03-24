@@ -107,7 +107,8 @@ class US_XpnDataViewer : public US_Widgets
 
      QVector<double> rpm_data;
      QVector<double> temp_data;
-     QVector<double> time_data;
+     QVector<double> time_data_rpm;
+     QVector<double> time_data_temp;
 
      SpeedoMeter*   rpm_speed;
      DialBox*       rpm_box;
