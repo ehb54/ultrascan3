@@ -934,10 +934,21 @@ DbgLv(1) << "XpDa:scn:    FugId" << iFugId << "sstInterval" << sstintv;
       }
 
       // First non-zero-speed time index
-      fnzstx            = ( fnzstx > 0 ) ? fnzstx : 1;
+      fnzstx            = ( fnzstx > 0 ) ? fnzstx : 1;                        //ALEXEY: if tSydata.count() == 1 (so only tSydata[0] exists), AND fnzstx was 0, THEN
+                                                                              //        fnzstx = ( fnzstx > 0 ) ? fnzstx : 1; will lead to fnzstx = 1 !!!
+                                                                              //        THEN   int etime1        = tSydata[ 1 ].exptime; WILL CRASH  
       int t2tx          = fnzstx + 1;
       // Experiment time offset (== negative of first time + interval)
-      int etime1        = tSydata[ fnzstx ].exptime;
+      //int etime1        = tSydata[ fnzstx ].exptime;
+
+      //ALEXEY: check additionally if tSydata[fnzstx] exists!!! 
+      int etime1 = 0;
+      if ( fnzstx < tSydata.count() )
+      {
+	etime1          = tSydata[ fnzstx ].exptime;
+      }
+      ////////////////
+      
       int timeintv      = sstintv;
       if ( t2tx < tSydata.count() )
       {
