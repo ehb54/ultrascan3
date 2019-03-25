@@ -1484,22 +1484,22 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
       rpm_data.clear();
       time_data.clear();
       
-      timer_check_sysdata = new QTimer(this);
-      connect(timer_check_sysdata, SIGNAL(timeout()), this, SLOT(  check_for_sysdata( )  ));
-      timer_check_sysdata->start(2000);     //
+      // timer_check_sysdata = new QTimer(this);
+      // connect(timer_check_sysdata, SIGNAL(timeout()), this, SLOT(  check_for_sysdata( )  ));
+      // timer_check_sysdata->start(2000);     //
 
       qDebug() << "sys_timer GOES here after executing: ";
       
-      // // OR
-      // //Alternativly: put it in separate thread:
-      // sys_thread = new QThread(this);
-      // timer_sys_thread = new QTimer(0); // parent to 0 !
-      // timer_sys_thread->setInterval(2000);
-      // timer_sys_thread->moveToThread(sys_thread);
-      // connect(timer_sys_thread, SIGNAL(timeout()), this, SLOT( check_for_sysdata( )  ) );
-      // connect(sys_thread, SIGNAL( started() ), timer_sys_thread, SLOT( start() ));
-      // sys_thread->start();
-      // // How to stop sys_thread?
+      // OR
+      //Alternativly: put it in separate thread:
+      sys_thread = new QThread(this);
+      timer_check_sysdata = new QTimer(0); // parent to 0 !
+      timer_check_sysdata->setInterval(2000);
+      timer_check_sysdata->moveToThread(sys_thread);
+      connect( timer_check_sysdata, SIGNAL(timeout()), this, SLOT( check_for_sysdata( )  ) );
+      connect( sys_thread, SIGNAL( started() ), timer_check_sysdata, SLOT( start() ));
+      sys_thread->start();
+      // How to stop sys_thread?
       
       
       
@@ -1629,23 +1629,26 @@ void US_XpnDataViewer::check_for_sysdata( void )
       rpm_box->setSpeed( 0 );
       le_remaining->setText( "00:00:00" );
   
-      if ( !timer_data_reload->isActive()  ) // Check if reload_data Timer is stopped
+      if ( !timer_all_data_avail->isActive() ) // Check if reload_data Timer is stopped
        	{
-       	  // ALEXEY Export AUC data: devise export_auc_auto() function which would return directory name with saved data - to pass to emit signal below... 
-       	  export_auc_auto();
-  	  
-       	  QString mtitle_complete  = tr( "Complete!" );
-       	  QString message_done     = tr( "Experiment was completed. Optima data saved..." );
-       	  QMessageBox::information( this, mtitle_complete, message_done );
-  	  
-       	  emit experiment_complete_auto( currentDir, ProtocolName  );  // Updtade later: what should be passed with signal ??
-  	  
-       	  return;
-       	}
+	  if ( !timer_data_reload->isActive() )
+	    {
+	      // ALEXEY Export AUC data: devise export_auc_auto() function which would return directory name with saved data - to pass to emit signal below... 
+	      export_auc_auto();
+	      
+	      QString mtitle_complete  = tr( "Complete!" );
+	      QString message_done     = tr( "Experiment was completed. Optima data saved..." );
+	      QMessageBox::information( this, mtitle_complete, message_done );
+	      
+	      emit experiment_complete_auto( currentDir, ProtocolName  );  // Updtade later: what should be passed with signal ??
+	      
+	      return;
+	    }
+	}
     }
   
   in_reload_check_sysdata   = false;
-
+  
   qDebug() << "sys_timer RAN here: ";
 }
 
