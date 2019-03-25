@@ -1531,7 +1531,8 @@ void US_XpnDataViewer::check_for_sysdata( void )
 
   int exp_time = 0;
   double temperature=0;
-  int rpm, etimoff;
+  int rpm;
+  //int etimoff;
   //int stage_number;
   while ( temperature == 0 ) // what if the temperature is actually set to zero degrees?
   {
@@ -1540,7 +1541,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
   //stage_number   = xpn_data->countOf_sysdata( "stage_number" ).toInt();  //stage number
     temperature    = xpn_data->countOf_sysdata( "tempera" ).toDouble();    //temperature 
     rpm            = xpn_data->countOf_sysdata( "last_rpm"  ).toInt();     //revolutions per minute !
-    etimoff        = xpn_data->countOf_sysdata( "etim_off"  ).toInt();     //experimental time offset 
+    //etimoff        = xpn_data->countOf_sysdata( "etim_off"  ).toInt();     //experimental time offset 
   }
 
   // Update rmp, temperature GUI icons...
@@ -1574,7 +1575,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
    
   //Remaining Time
   QList< int > dhms_remain;
-  int remaining_time = TotalDuration.toInt() - ( exp_time + etimoff );
+  int remaining_time = TotalDuration.toInt() - ( exp_time ); //+ etimoff );
   timeToList( remaining_time, dhms_remain );
   QString remaining_time_text;
   //ALEXEY: hh:mm:ss - OR do we need dd:hh:mm instead ?

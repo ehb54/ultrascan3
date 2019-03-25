@@ -110,9 +110,9 @@ int US_XpnData::checkExpStatus( QString runid )
 
 void US_XpnData::setEtimOffZero( void )
 {
-   etimoff  = 0;
-   fnzstx   = 0;
-DbgLv(1) << "XpDa:sEOZ: EtimOff set 0, 1st-non-zero-speed-time-index to 1";
+   //etimoff  = 0;
+   //fnzstx   = 0;
+   DbgLv(1) << "XpDa:sEOZ: EtimOff set 0, 1st-non-zero-speed-time-index to 1";
 }
 
 // Query and update data for the latest SystemStatusData table entry
@@ -196,12 +196,12 @@ int US_XpnData::update_isysrec( const int runId )
    lastrpm         = qRound( isyrec.speed );
 DbgLv(1) << "XpDa:ussx: update_isysrec: lastrpm etimoff " << lastrpm << etimoff;
    
-   if ( lastrpm > 0  &&  fnzstx == 0 )
-   {  // When speed is non-zero and no offset set, get offset
-      scan_xpndata( runId, QChar( 'S' ) );
-DbgLv(1) << "XpDa:ussx: after scan_xpndata(S):  etimoff " << etimoff
- << "fnzstx" << fnzstx;
-   }
+//    if ( lastrpm > 0  &&  fnzstx == 0 )
+//    {  // When speed is non-zero and no offset set, get offset
+//       scan_xpndata( runId, QChar( 'S' ) );
+// DbgLv(1) << "XpDa:ussx: after scan_xpndata(S):  etimoff " << etimoff
+//  << "fnzstx" << fnzstx;
+//    }
 
 DbgLv(1) << "XpDa:ussx:  lastrpm" << lastrpm << "time temp rpm"
  << isyrec.exptime << isyrec.tempera << isyrec.speed;
