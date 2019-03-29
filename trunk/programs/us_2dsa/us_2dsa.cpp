@@ -1228,7 +1228,8 @@ QString US_2dsa::distrib_info()
    sd.vbar20       = vbar20;
    sd.vbar         = vbartb;
    sd.manual       = manual;
-DbgLv(1) << "Data_Corr manual" << sd.manual;
+DbgLv(1) << "Data_Corr manual" << sd.manual << "avTemp" << avTemp << "vbar20" << sd.vbar20
+ << "vbart" << sd.vbar;
    US_Math2::data_correction( avTemp, sd );
 
    for ( int ii = 0; ii < ncomp; ii++ )
@@ -1244,7 +1245,7 @@ DbgLv(1) << "Data_Corr manual" << sd.manual;
          vbar20      = model.components[ ii ].vbar20;
          f_f0        = vbar20;
          sd.vbar20   = vbar20;
-         sd.vbar     = US_Math2::adjust_vbar( vbar20, avTemp );
+         sd.vbar     = US_Math2::adjust_vbar20( vbar20, avTemp );
          US_Math2::data_correction( avTemp, sd );
       }
 

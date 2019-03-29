@@ -664,6 +664,10 @@ DbgLv(1) << "CR: attr_ x,y,z" << attr_x << attr_y << attr_z << stype << smask
          set_comp_attr( zcomponent, sim_vals.solutes[ 0 ], attr_z );
       }
 
+      double vbartb  = data_sets[ 0 ]->vbartb;  // In case Z is vbar
+      double scorre  = data_sets[ 0 ]->s20w_correction;
+      double dcorre  = data_sets[ 0 ]->D20w_correction;
+
       for ( int cc = 0; cc < ksolutes; cc++ )
       {  // Solve for each solute
          if ( abort ) return;
@@ -711,8 +715,17 @@ DbgLv(1) << "CR: cc" << cc << " use_zsol" << use_zsol;
             sd.density     = dset->density;
             sd.manual      = dset->manual;
             sd.vbar20      = model.components[ 0 ].vbar20;
-            sd.vbar        = US_Math2::adjust_vbar20( sd.vbar20, avtemp );
-            US_Math2::data_correction( avtemp, sd );
+            if ( attr_z != 3 )
+            {  // Vbar not fixed:  temperature adjust vbar20
+               sd.vbar        = US_Math2::adjust_vbar20( sd.vbar20, avtemp );
+               US_Math2::data_correction( avtemp, sd );
+            }
+            else
+            {  // Vbar fixed:  use already computed vbar, corrections
+               sd.vbar        = vbartb;
+               sd.s20w_correction = scorre;
+               sd.D20w_correction = dcorre;
+            }
 
             model.components[ 0 ].s   /= sd.s20w_correction;
             model.components[ 0 ].D   /= sd.D20w_correction;

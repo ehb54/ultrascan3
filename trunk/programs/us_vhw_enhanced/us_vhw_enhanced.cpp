@@ -2529,7 +2529,7 @@ DbgLv(1) << " cr.sim.:  model:" << model.description;
       if ( vari_vbar )
       {  // Compute data corrections for varying vbar
          solution.vbar20    = amodel.components[ ii ].vbar20;
-         solution.vbar      = US_Math2::adjust_vbar( solution.vbar20, avgTemp );
+         solution.vbar      = US_Math2::adjust_vbar20( solution.vbar20, avgTemp );
          US_Math2::data_correction( avgTemp, solution );
       }
 
