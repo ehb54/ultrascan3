@@ -877,7 +877,7 @@ void US_FeMatch::data_plot( void )
    solution.viscosity = le_viscosity->text().toDouble();
    solution.manual    = manual;
    solution.vbar20    = le_vbar     ->text().toDouble();
-   solution.vbar      = US_Math2::adjust_vbar20( solution.vbar20, avgTemp );
+   solution.vbar      = US_Math2::calcCommonVbar( solution_rec, avgTemp );
 
    US_Math2::data_correction( avgTemp, solution );
 
@@ -1855,7 +1855,7 @@ void US_FeMatch::adjust_model()
    solution.viscosity = le_viscosity->text().toDouble();
    solution.manual    = manual;
    solution.vbar20    = vbar20;
-   solution.vbar      = US_Math2::adjust_vbar20( solution.vbar20, avgTemp );
+   solution.vbar      = US_Math2::calcCommonVbar( solution_rec, avgTemp );
 
    US_Math2::data_correction( avgTemp, solution );
 
@@ -1877,12 +1877,13 @@ void US_FeMatch::adjust_model()
    {  // Use vbar from the model component, instead of from the solution
       sd.vbar20    = mc_vbar;
       sd.vbar      = US_Math2::adjust_vbar20( sd.vbar20, avgTemp );
-DbgLv(1) << "Fem:Adj:  avgT" << avgTemp << "vb20 vb" << sd.vbar20 << sd.vbar;
       US_Math2::data_correction( avgTemp, sd );
       scorrec      = sd.s20w_correction;
       dcorrec      = sd.D20w_correction;
    }
-   // Convert to experiment space: adjust s,D based on buffer
+DbgLv(1) << "Fem:Adj:  avgT" << avgTemp << "vb20 vb" << sd.vbar20 << sd.vbar;
+
+   // Convert to experiment space: adjust s,D based on solution,temperature
 
    for ( int jj = 0; jj < model.components.size(); jj++ )
    {
@@ -1904,7 +1905,7 @@ double d20w=sc->D;
       sc->s      /= scorrec;
       sc->D      /= dcorrec;
 DbgLv(1) << "Fem:Adj:  s20w D20w" << s20w << d20w
- << "s D" << sc->s << sc->D;
+ << "s D" << sc->s << sc->D << "  jj" << jj;
 
       if ( sc->extinction > 0.0 )
          sc->molar_concentration = sc->signal_concentration / sc->extinction;
@@ -2922,6 +2923,8 @@ QString US_FeMatch::hydrodynamics( void ) const
    solution.manual    = manual;
    solution.vbar20    = le_vbar     ->text().toDouble();
    solution.vbar      = US_Math2::adjust_vbar20( solution.vbar20, avgTemp );
+//   US_Solution solution_rec        = this->solution_rec;
+//   solution.vbar      = US_Math2::calcCommonVbar( solution_rec, avgTemp );
 
    US_Math2::data_correction( avgTemp, solution );
 

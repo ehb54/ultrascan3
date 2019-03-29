@@ -1,7 +1,5 @@
 #!/bin/bash
 
-export MAKE="make -j 7"
-
 QTVERS=`qmake --version|sed -n 2,2p|awk '{print $4}'`
 echo "Make All for Qt Version ${QTVERS} ..."
 QTMAJV=`echo ${QTVERS}|cut -d. -f1`
@@ -13,7 +11,10 @@ if [ `echo "45"|grep -ci "${QTMAJV}"` -eq 0 ]; then
 fi
 
 MKARGS="$@"
-MAKE="make ${MKARGS}"
+if [ $# -eq 0 ]; then
+  MKARGS="-j 7"
+fi
+export MAKE="make ${MKARGS}"
 
 ISMAC=0
 FIXMAC=""

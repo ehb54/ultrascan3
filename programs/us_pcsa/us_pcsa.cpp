@@ -1115,7 +1115,7 @@ DbgLv(1) << "distrinfo: ncomp" << ncomp;
          vbar20      = model.components[ ii ].vbar20;
          f_f0        = vbar20;
          sd.vbar20   = vbar20;
-         sd.vbar     = US_Math2::adjust_vbar( vbar20, avTemp );
+         sd.vbar     = US_Math2::adjust_vbar20( vbar20, avTemp );
          US_Math2::data_correction( avTemp, sd );
       }
 
