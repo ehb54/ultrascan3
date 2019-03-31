@@ -191,6 +191,8 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   QMenu* spectrum    = new QMenu( tr( "Spectral &Analysis" ),   this );
   addMenu(  P_SPECFIT  , tr( "&Spectrum Fitter"                  ), spectrum);
   addMenu(  P_SPECDEC  , tr( "Spectrum &Decomposition"           ), spectrum);
+  
+  addMenu(  P_GETDATA  , tr( "&Data Acquisition"                 ), utilities );
   addMenu(  P_CONVERT  , tr( "&Import Experimental Data"         ), utilities );
   addMenu(  P_EXPORT   , tr( "&Export OpenAUC Data"              ), utilities );
 #if 0    // temporarily disable Create Experiment until truly ready

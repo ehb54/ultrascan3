@@ -27,6 +27,138 @@
 
 
 //// Constructor:  build the main layout with tab widget panels
+US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
+{
+  //   dbg_level    = US_Settings::us_debug();
+   curr_panx    = 0;
+
+   setWindowTitle( tr( "UltraScan Optima AUC Interface" ) );
+   setPalette( US_GuiSettings::frameColor() );
+
+   QVBoxLayout* main      = new QVBoxLayout( this );
+   //main      = new QVBoxLayout( this );
+   main->setSpacing         ( 2 );
+   main->setContentsMargins ( 2, 2, 2, 2 );
+   //QGridLayout* statL     = new QGridLayout();
+   //QHBoxLayout* buttL     = new QHBoxLayout();
+
+   gen_banner = us_banner( tr( "TEST PROGRAM, v. 0.1" ) );
+   //gen_banner = new QLabel;
+   //gen_banner->setText("TEST PROGRAM, v. 0.1");
+   //gen_banner->setAlignment(Qt::AlignCenter);
+   //gen_banner->setStyleSheet("background-color: #36454f; color : #D3D9DF;");
+   
+   //set font
+   QFont font_gen = gen_banner->font();
+   font_gen.setPointSize(20);
+   font_gen.setBold(true);
+   gen_banner->setFont(font_gen);
+   
+   main->addWidget(gen_banner);
+
+   welcome = new QTextEdit;
+   welcome->setText(" <br> Welcome to the TEST PROGRAM <br> for setting up, monitoring, editing and analyzing <br> AUC experiments and produced data... <br>");
+   //welcome->setMaximumHeight(120);
+   welcome->setReadOnly(true);
+   welcome->setAlignment(Qt::AlignCenter);
+   QFont font_wel = welcome->font();
+   font_wel.setPointSize(10);
+   font_wel.setItalic(true);
+   font_wel.setBold(true);
+   welcome->setStyleSheet("color: black; background-color: #979aaa;");
+   welcome->setFont(font_wel);
+   QFontMetrics m (welcome -> font()) ;
+   int RowHeight = m.lineSpacing() ;
+   welcome -> setFixedHeight  (6* RowHeight) ;
+   
+   //main->addWidget(welcome);
+
+   // Create tab and panel widgets
+   tabWidget           = us_tabwidget();
+   //tabWidget           = new QTabWidget;
+   tabWidget->setTabPosition( QTabWidget::West );
+   tabWidget->tabBar()->setStyle(new VerticalTabStyle);
+   
+   epanExp             = new US_ExperGui   ( this );
+   epanObserv          = new US_ObservGui  ( this );
+   epanPostProd        = new US_PostProdGui( this );
+   // epanAnalysis        = new US_AnalysisGui( this );
+   // epanReport          = new US_ReportGui  ( this );
+   
+   //   statflag            = 0;
+
+   // Add panels to the tab widget
+   tabWidget->addTab( epanExp,       tr( "1: Experiment"   ) );
+   tabWidget->addTab( epanObserv,    tr( "2: Live Update" ) );
+   tabWidget->addTab( epanPostProd,  tr( "3: Editing"  ) );
+   // tabWidget->addTab( epanAnalysis,  tr( "4: Analysis"  ) );
+   // tabWidget->addTab( epanReport,    tr( "5: Report"  ) );
+   
+   tabWidget->setCurrentIndex( curr_panx );
+   tabWidget->tabBar()->setFixedHeight(500);
+   
+   //icon_path = std::getenv("ULTRASCAN");
+   //qDebug() << "Path is: " << icon_path;
+   //icon_path.append("/etc/"); 
+   //tabWidget->setTabIcon(0,QIcon(icon_path + "setup.png"));
+   //tabWidget->setTabIcon(1,QIcon(icon_path + "live_update.gif"));
+   //tabWidget->setTabIcon(2,QIcon(icon_path + "analysis.png"));
+   
+   tabWidget->setTabIcon( 0, US_Images::getIcon( US_Images::SETUP_COM  ) );
+   tabWidget->setTabIcon( 1, US_Images::getIcon( US_Images::LIVE_UPDATE_COM  ) );
+   tabWidget->setTabIcon( 2, US_Images::getIcon( US_Images::ANALYSIS_COM ) );
+   // tabWidget->setTabIcon( 3, US_Images::getIcon( US_Images::ANALYSIS_COM_2 ) );
+   // tabWidget->setTabIcon( 4, US_Images::getIcon( US_Images::REPORT_COM ) );
+
+   // if ( us_mode.toStdString() == "US_MODE")
+   //   {
+   //     tabWidget->removeTab(3);
+   //     tabWidget->removeTab(3);
+   //   }
+   
+   tabWidget->tabBar()->setIconSize(QSize(50,50));
+
+   tabWidget->tabBar()->setStyleSheet("QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:hover {background: lightgray;}");
+   main->addWidget( tabWidget );
+   
+   logWidget = us_textedit();
+   logWidget->setMaximumHeight(30);
+   logWidget->setReadOnly(true);
+   logWidget->append("Log comes here...");
+   logWidget->verticalScrollBar()->setValue(logWidget->verticalScrollBar()->maximum());
+   logWidget->hide();
+   //main->addWidget( logWidget );
+   
+   test_footer = new QTextEdit;
+   test_footer->setText("UltraScan by AUC Solutions");
+   test_footer->setTextColor(Qt::white);
+   test_footer->setMaximumHeight(30);
+   test_footer->setReadOnly(true);
+   test_footer->setStyleSheet("color: #D3D9DF; background-color: #36454f;");
+   main->addWidget( test_footer );
+
+   connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
+   connect( this   , SIGNAL( pass_to_live_update( QMap < QString, QString > &) ),   epanObserv, SLOT( process_protocol_details( QMap < QString, QString > & )  ) );
+
+   connect( epanObserv, SIGNAL( switch_to_post_processing( QString &, QString &) ), this, SLOT( switch_to_post_processing( QString &, QString & )  ) );
+   connect( this, SIGNAL( import_data_us_convert( QString &, QString & ) ),  epanPostProd, SLOT( import_data_us_convert( QString &, QString & )  ) );
+
+   connect( epanPostProd, SIGNAL( switch_to_analysis( QString &, QString &) ),  this, SLOT( switch_to_analysis( QString &, QString & )  ) );
+   //connect( this, SIGNAL( pass_to_analysis( QString &, QString & ) ),   epanAnalysis, SLOT( do_analysis( QString &, QString & )  ) );
+
+
+   
+   setMinimumSize( QSize( 1350, 800 ) );
+   adjustSize();
+
+   /* Check for current stage & redirect to specific tab */
+   //check_current_stage();
+
+}
+
+
+
+//// Constructor:  build the main layout with tab widget panels
 US_ComProjectMain::US_ComProjectMain() : US_Widgets()
 {
   //   dbg_level    = US_Settings::us_debug();

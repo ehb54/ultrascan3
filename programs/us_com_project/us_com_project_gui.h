@@ -208,6 +208,9 @@ class US_ComProjectMain : public US_Widgets
   
  public:
   US_ComProjectMain();
+
+  US_ComProjectMain(QString us_mode);
+  
   QLabel*           gen_banner;
   QTextEdit*        welcome;
   QTabWidget*       tabWidget;       // Tab Widget holding the panels
