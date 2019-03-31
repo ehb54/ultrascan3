@@ -21,7 +21,7 @@ namespace US_WinData
 
     P_GLOBFITEQ,                                // Global Fit Menu
 
-    P_CONVERT,      P_EXPORT,       P_CEXPERI,  // Utilities Menu
+    P_GETDATA,      P_CONVERT,      P_EXPORT,       P_CEXPERI,  // Utilities Menu
     P_FDSMAN,       P_FITMEN,       P_COLORGRAD,
     P_RPTGEN,       P_ROTORCAL,     P_LICENSE,
     P_VHWCOMB,      P_DDCOMB,       P_GLOMODL,
@@ -160,6 +160,11 @@ namespace US_WinData
       QObject::tr( "Global Equilibrium Fit Program" )
     },
 
+    { P_GETDATA,  1, 0, "us_comproject_academic",
+      QObject::tr( "Acquisition Experimental Data Routine" ),
+      QObject::tr( "Acquisition Experimental Data Program" )
+    },
+    
     { P_CONVERT,  1, 0, "us_convert",
       QObject::tr( "Loading Experimental Data Import Routine" ),
       QObject::tr( "Experimental Data Import Program" )
