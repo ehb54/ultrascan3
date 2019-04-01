@@ -902,7 +902,9 @@ class US_ExperimentMain : public US_Widgets
       QMap< QString, QString > connection_for_instrument;
       
       bool    automode;
+      bool    usmode;
       void    auto_mode_passed( void );
+      void    us_mode_passed( void );
 
       int tabHeight;
       int buttLHeight;

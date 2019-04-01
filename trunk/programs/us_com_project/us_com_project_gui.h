@@ -217,6 +217,8 @@ class US_ComProjectMain : public US_Widgets
   QTextEdit*        logWidget;  
   QTextEdit*        test_footer;
   QString           icon_path;
+
+  bool us_mode_bool;
   
  private:
   US_ExperGui*      epanExp;         // US_Exp panel
@@ -230,8 +232,8 @@ class US_ComProjectMain : public US_Widgets
   int         curr_panx;       // Current panel index (0-7)
 
   void check_current_stage( void );
-  
-  
+
+   
 private slots:
   //void reset     ( void );
   //void newPanel  ( int  );     // Move to a new panel
