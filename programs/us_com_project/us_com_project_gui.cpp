@@ -145,7 +145,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    connect( epanObserv, SIGNAL( switch_to_post_processing( QString &, QString &) ), this, SLOT( switch_to_post_processing( QString &, QString & )  ) );
    connect( this, SIGNAL( import_data_us_convert( QString &, QString & ) ),  epanPostProd, SLOT( import_data_us_convert( QString &, QString & )  ) );
 
-   connect( epanPostProd, SIGNAL( switch_to_analysis( QString &, QString &) ),  this, SLOT( switch_to_analysis( QString &, QString & )  ) );
+   //connect( epanPostProd, SIGNAL( switch_to_analysis( QString &, QString &) ),  this, SLOT( switch_to_analysis( QString &, QString & )  ) );
    //connect( this, SIGNAL( pass_to_analysis( QString &, QString & ) ),   epanAnalysis, SLOT( do_analysis( QString &, QString & )  ) );
 
 
