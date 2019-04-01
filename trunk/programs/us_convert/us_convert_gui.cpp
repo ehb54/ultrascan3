@@ -4447,7 +4447,8 @@ DbgLv(1) << "Writing to disk";
 				 tr( "The save of all data and reports is complete.\n\n"
 				     "The program will switch to Analysis stage." ) );
 
-       emit saving_complete_auto( currentDir, ProtocolName_auto  );  
+       // Either emit ONLY if not US_MODE, or do NOT connect with slot on us_comproject...
+       emit saving_complete_auto( currentDir, ProtocolName_auto  );   
      }
 }
 
