@@ -178,22 +178,26 @@ DbgLv(1) << "newPanel panx=" << panx << "prev.panx=" << curr_panx;
    }
    else if ( panx == 7 )
    {
-      if ( panx - curr_panx > 1 )                          // AProfile
-      {
-         epanCells    ->initPanel();
-         epanCells    ->savePanel();
-         epanSolutions->initPanel();
-         epanSolutions->savePanel();
-         epanOptical  ->initPanel();
-         epanOptical  ->savePanel();
-         epanRanges   ->initPanel();
-         epanRanges   ->savePanel();
-      }
-      epanAProfile ->initPanel();
+     
+     if ( panx - curr_panx > 1 )                          // AProfile OR Upload
+       {
+	 epanCells    ->initPanel();
+	 epanCells    ->savePanel();
+	 epanSolutions->initPanel();
+	 epanSolutions->savePanel();
+	 epanOptical  ->initPanel();
+	 epanOptical  ->savePanel();
+	 epanRanges   ->initPanel();
+	 epanRanges   ->savePanel();
+       }
+     if ( !usmode )                                         // Active AProfile panel => 7 AProfile
+       epanAProfile ->initPanel();
+     else                                                   //No active AProfile panel => 7 Upload
+       epanUpload   ->initPanel();
    }
    else if ( panx == 8 )
    {
-      if ( panx - curr_panx > 1 )                          // Upload
+      if ( panx - curr_panx > 1 )                          // Upload OR NONE
       {
          epanCells    ->initPanel();
          epanCells    ->savePanel();

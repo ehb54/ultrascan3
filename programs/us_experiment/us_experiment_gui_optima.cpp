@@ -43,6 +43,7 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
 
    connection_status = false;
    automode = false;
+   usmode = false;
 
       // Create tab and panel widgets
    tabWidget           = us_tabwidget();
@@ -139,6 +140,14 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
 // Reset parameters to their defaults
 void US_ExperimentMain::reset( void )
 {
+}
+
+void US_ExperimentMain::us_mode_passed( void )
+{
+  qDebug() << "US_MODE SIGNAL: ";
+  usmode = true;
+  this->tabWidget->removeTab(7);
+  this->tabWidget->setTabText( 7, "8: Submit");
 }
 
 void US_ExperimentMain::auto_mode_passed( void )

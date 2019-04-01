@@ -32,6 +32,8 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
   //   dbg_level    = US_Settings::us_debug();
    curr_panx    = 0;
 
+   us_mode_bool = true;
+
    setWindowTitle( tr( "UltraScan Optima AUC Interface" ) );
    setPalette( US_GuiSettings::frameColor() );
 
@@ -164,6 +166,8 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
   //   dbg_level    = US_Settings::us_debug();
    curr_panx    = 0;
 
+   us_mode_bool = false;
+   
    setWindowTitle( tr( "UltraScan Optima AUC Interface" ) );
    setPalette( US_GuiSettings::frameColor() );
 
@@ -432,13 +436,16 @@ US_ExperGui::US_ExperGui( QWidget* topw )
    //          this,            SLOT(   manageExperiment() ) );
 
    //manageExperiment();
-
-
    
    // Open US_Experiment without button...  
    //US_ExperimentMain* sdiag = new US_ExperimentMain;
+
+  
    sdiag = new US_ExperimentMain;
+
    sdiag->setParent(this, Qt::Widget);
+
+    
    
    connect( sdiag, SIGNAL( us_exp_is_closed() ), this, SLOT( us_exp_is_closed_set_button() ) );
    //connect( this,  SIGNAL( set_auto_mode() ),   sdiag, SLOT( auto_mode_passed() ) );
@@ -452,6 +459,9 @@ US_ExperGui::US_ExperGui( QWidget* topw )
    sdiag->setLineWidth(2); 
 
    sdiag->auto_mode_passed();
+
+   if ( mainw->us_mode_bool )
+     sdiag->us_mode_passed();
    
    sdiag->show();
    
