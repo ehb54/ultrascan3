@@ -2043,7 +2043,8 @@ void US_DDistr_Combine::ltypeChanged()
 // Determine if two values are functionally equivalent within a given epsilon
 bool US_DDistr_Combine::equivalent( double aa, double bb, double eps )
 {
-   double dd       = ( aa != 0.0 ) ? aa : ( bb != 0.0 ? bb : 1.0 );
+   double dd       = ( aa != 0.0 ) ? qAbs( aa )
+                     : ( bb != 0.0 ? qAbs( bb ) : 1.0 );
    return ( ( qAbs( aa - bb ) / dd ) <= eps );
 }
 
