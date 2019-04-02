@@ -1488,23 +1488,22 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
       // connect(timer_check_sysdata, SIGNAL(timeout()), this, SLOT(  check_for_sysdata( )  ));
       // timer_check_sysdata->start(2000);     //
 
-      qDebug() << "sys_timer GOES here after executing: ";
-      
       // OR
       //Alternativly: put it in separate thread:
-      sys_thread = new QThread(this);
+      QThread* sys_thread = new QThread(this);
       timer_check_sysdata = new QTimer(0); // parent to 0 !
       timer_check_sysdata->setInterval(2000);
       timer_check_sysdata->moveToThread(sys_thread);
       connect( timer_check_sysdata, SIGNAL(timeout()), this, SLOT( check_for_sysdata( )  ) );
-      connect( sys_thread, SIGNAL( started() ), timer_check_sysdata, SLOT( start() ));
+      //QThread's started() SIGNAL: before the run()/exec() function is called!!! Is this a potential issue, timer is started from a thread???
+      connect( sys_thread, SIGNAL( started() ), timer_check_sysdata, SLOT( start() ));      
       sys_thread->start();
       // How to stop sys_thread?
       
       
       
       // Check if all triple info is available
-      timer_all_data_avail = new QTimer(this);
+      timer_all_data_avail = new QTimer;
       connect(timer_all_data_avail, SIGNAL(timeout()), this, SLOT( retrieve_xpn_raw_auto ( ) ));
       timer_all_data_avail->start(5000);     // 5 sec
 
@@ -1692,7 +1691,7 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
 
   selectOptimaByName_auto( OptimaName );                         //New  
   
-  timer_data_init = new QTimer(this);
+  timer_data_init = new QTimer;
   connect(timer_data_init, SIGNAL(timeout()), this, SLOT( load_xpn_raw_auto( ) ));
   timer_data_init->start(5000);     // 5 sec
 
@@ -1991,7 +1990,7 @@ DbgLv(1) << "RDr: allData size" << allData.size();
        disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
        
        // Auto-update hereafter
-       timer_data_reload = new QTimer(this);
+       timer_data_reload = new QTimer;
        connect(timer_data_reload, SIGNAL(timeout()), this, SLOT( reloadData_auto( ) ));
        timer_data_reload->start(10000);     // 5 sec
 
