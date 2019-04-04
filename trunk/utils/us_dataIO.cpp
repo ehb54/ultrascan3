@@ -541,7 +541,6 @@ int US_DataIO::readRawData( const QString& file, RawData& data )
       unsigned char ver[ 2 ];
       read( ds, (char*) ver, 2, crc );
       quint32 version = ( ( ver[ 0 ] & 0x0f ) << 8 ) | ( ver[ 1 ] & 0x0f );
-//      if ( version != format_version ) throw BAD_VERSION;
       if ( version > format_version ) throw BAD_VERSION;
 
       bool wvlf_new  = ( version > (quint32)4 );
@@ -875,6 +874,7 @@ void US_DataIO::params( QXmlStreamReader& xml, EditValues& parameters )
    parameters.speedData.clear();
    bool isEquil = ( parameters.expType == "Equilibrium" );
    int  spx     = 0;
+   parameters.bottom   = 0.0;
 
    while ( ! xml.atEnd() )
    {
@@ -908,6 +908,12 @@ void US_DataIO::params( QXmlStreamReader& xml, EditValues& parameters )
 
          if ( isEquil )
             parameters.speedData[ spx ].meniscus = parameters.meniscus;
+      }
+
+      else if ( xml.name() == "bottom" )
+      {
+         QXmlStreamAttributes a = xml.attributes();
+         parameters.bottom   = a.value( "radius" ).toString().toDouble();
       }
 
       else if ( xml.name() == "plateau" )
@@ -1109,6 +1115,7 @@ int US_DataIO::loadData( const QString&         directory,
    ed.dataGUID    = ev.dataGUID;
    ed.editGUID    = ev.editGUID;
    ed.meniscus    = ev.meniscus;
+   ed.bottom      = ev.bottom;
    ed.plateau     = ev.plateau;
    ed.baseline    = ev.baseline;
    ed.ODlimit     = ( ed.dataType == "RA"  ||  ed.dataType == "RI" ) ?

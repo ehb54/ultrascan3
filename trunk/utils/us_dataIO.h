@@ -151,6 +151,7 @@ class US_UTIL_EXTERN US_DataIO
             floatingData = false;
             noiseOrder   = 0;
             ODlimit      = 1.5;
+            bottom       = 0.0;
 
             //! Air Gap is only for interference data
             airGapLeft   = 0.0;
@@ -166,6 +167,7 @@ class US_UTIL_EXTERN US_DataIO
          QString       editGUID;    //!< A globally unique ID for edit
          QString       dataGUID;    //!< A globally unique ID for data
          double        meniscus;    //!< Designated radius of meniscus
+         double        bottom;      //!< Designated radius of bottom
          double        airGapLeft;  //!< Start of air gap for interference data
          double        airGapRight; //!< End of air gap for interfence data
          double        gapTolerance;//!< Tolerance for interference adjustments
@@ -200,6 +202,7 @@ class US_UTIL_EXTERN US_DataIO
          QString       editGUID;     //!< A globally unique ID for edit
          QString       dataGUID;     //!< A globally unique ID for data
          double        meniscus;     //!< Designated radius of meniscus
+         double        bottom;       //!< Designated radius of bottom
          double        plateau;      //!< Loc. max. value of data, a radius
          double        baseline;     //!< Designated baseline value of data
          double        ODlimit;      //!< OD limit for RMSD calculations
@@ -234,6 +237,7 @@ class US_UTIL_EXTERN US_DataIO
          QString       editGUID;     //!< A globally unique ID for edit
          QString       dataGUID;     //!< A globally unique ID for data
          double        meniscus;     //!< Designated radius of meniscus
+         double        bottom;       //!< Designated radius of bottom
          double        plateau;      //!< Loc. max. value of data, a radius
          double        baseline;     //!< Designated baseline value of data
          double        ODlimit;      //!< OD limit for RMSD calculations

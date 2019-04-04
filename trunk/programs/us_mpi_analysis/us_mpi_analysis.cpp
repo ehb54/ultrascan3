@@ -462,8 +462,12 @@ if ( my_rank == 0 )
       int nssp            = ds->simparams.speed_step.count();
       bool incl_speed     = ( nssp < 1 );
       ds->simparams.initFromData( NULL, *edata, incl_speed );
+      // Use bottom from edited data if it is given
+      double bottom_ds    = ( edata->bottom > 0.0 ) ? edata->bottom
+                            : ds->centerpiece_bottom;
 if ( my_rank == 0 )
- DbgLv(0) << "incl_speed" << incl_speed << "nssp" << nssp;
+ DbgLv(0) << "incl_speed" << incl_speed << "nssp" << nssp
+  << "bottom_ds bottom_cp" << bottom_ds << ds->centerpiece_bottom;
  
       if ( ! incl_speed &&  ! redo_ss )
       {  // If experiment speed step used, test against data set times
@@ -484,7 +488,7 @@ if ( my_rank == 0 )
       ds->simparams.rotorcoeffs[ 0 ]  = ds->rotor_stretch[ 0 ];
       ds->simparams.rotorcoeffs[ 1 ]  = ds->rotor_stretch[ 1 ];
       ds->simparams.bottom_position   = ds->centerpiece_bottom;
-      ds->simparams.bottom            = ds->centerpiece_bottom;
+      ds->simparams.bottom            = bottom_ds;
       ds->simparams.band_forming      = ds->simparams.band_volume != 0.0;
       US_SolveSim::DataSet*  ds0      = data_sets[ 0 ];
 
@@ -666,7 +670,7 @@ DbgLv(0) << "rank" << my_rank << ": ee" << ee << "(EX)tmst_file" << ds->tmst_fil
 //DbgLv(0) << "rank" << my_rank << ": barrier3 :TM:" << ELAPSED_SECS;
    }  // END:  Re-do timestate files
 
-   // Load dataset timestate(s)
+   // Load dataset timestate(s)  [ and maybe adjust bottom ]
 
    for ( int ee = 0; ee < count_datasets; ee++ )
    {
@@ -686,6 +690,29 @@ DbgLv(0) << "rank" << my_rank << ": ee" << ee << "   tmst UPLOADED";
       }
 DbgLv(0) << "rank" << my_rank << ": ee" << ee << "tmst_file" << ds->tmst_file
  << "ssp count" << ds->simparams.sim_speed_prof.count();
+
+      // If EditedData has a bottom, use that to adjust bottom_position
+      US_DataIO::EditedData* edata = &ds->run_data;
+
+      if ( edata->bottom > 0.0 )
+      {
+         // Compute speed-adjusted bottom and compare that to edit value
+         double bottom_pos  = ds->simparams.bottom_position;
+         double speed       = edata->scanData[ 0 ].rpm;
+         double bottom_clc  = US_AstfemMath::calc_bottom( speed, bottom_pos,
+                                  ds->simparams.rotorcoeffs );
+         if ( bottom_clc != edata->bottom )
+         {  // Calculated and dataset bottoms differ:
+            // We change the centerpiece unstretched bottom position so
+            // that Astfem_Rsa's adjust_limits() function arrives at a
+            // post-stretch bottom value equal to what is in the EditedData
+            ds->simparams.bottom_position += ( edata->bottom - bottom_clc );
+if ( my_rank == 0 )
+ DbgLv(0) << "rank" << my_rank << ": ee" << ee << "bottom_pos" << bottom_pos
+  << "speed" << speed << "bottom_clc bottom_ds" << bottom_clc << edata->bottom
+  << "adj.bottom_pos" << ds->simparams.bottom_position;
+         }
+      }
    }  // END: datasets loop to upload timestate
 //DbgLv(0) << "rank" << my_rank << ": simSpeed :TM:" << ELAPSED_SECS;
 //   }

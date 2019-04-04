@@ -410,14 +410,19 @@ DbgLv(1) << "Sim parms:        cp_id" << cp_id << "sv" << cpIDsv;
    setHardware( db, rotorCalID, -cp_id, ch );
 
    // Calculate bottom using RPM, start bottom, and rotor coefficients
-   bottom = US_AstfemMath::calc_bottom( rpm, bottom_position, rotorcoeffs );
+   bottom    = US_AstfemMath::calc_bottom( rpm, bottom_position, rotorcoeffs );
 #else
    // For NO_DB (back end) the bottom needs to be set after this function
-   bottom = bottom_position;
-   db     = NULL; // Stop compiler warning
+   bottom    = bottom_position;
+   db        = NULL; // Stop compiler warning
 DbgLv(2) << "SP:iFD: db" << db;
 #endif
-DbgLv(2) << "SP:iFD: bottom" << bottom;
+DbgLv(1) << "SP:iFD: bottom" << bottom;
+
+   // If EditedData has bottom given, use that
+   bottom    = ( editdata.bottom > 0.0 ) ? editdata.bottom : bottom;
+DbgLv(1) << "SP:iFD: bottom" << bottom << "bottom_ed"
+ << editdata.bottom;
 
 //-------------------------------------------
 

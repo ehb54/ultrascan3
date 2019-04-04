@@ -1,0 +1,10 @@
+#!/bin/sh
+#	propignore   - svn propignore in current dir, files Makefile moc obj
+
+IGNORE_TEXT=~/tmp/ignore.txt
+echo "Makefile" > $IGNORE_TEXT
+echo "moc" >> $IGNORE_TEXT
+echo "obj" >> $IGNORE_TEXT
+echo ".qmake.stash" >> $IGNORE_TEXT
+svn propset svn:ignore -F $IGNORE_TEXT .
+

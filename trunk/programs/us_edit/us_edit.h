@@ -12,12 +12,12 @@
 
 class US_Edit : public US_Widgets
 {
-	Q_OBJECT
+   Q_OBJECT
 
-	public:
-		US_Edit();
+      public:
+         US_Edit();
 
-	private:
+      private:
 
       enum { MENISCUS, AIRGAP, RANGE, PLATEAU, BASELINE, FINISHED } step;
 
@@ -65,6 +65,7 @@ class US_Edit : public US_Widgets
       double             plateau;
       double             gap_fringe;
       double             gap_thresh;
+      double             bottom;
 
       QChar              chlamb;
 
@@ -242,7 +243,7 @@ class US_Edit : public US_Widgets
       void reset_excludes    ( void );
       void set_colors        ( const QList< int >& );
                           
-	private slots:         
+      private slots:         
       void load              ( void );
       void details           ( void );
       void new_triple        ( int  );

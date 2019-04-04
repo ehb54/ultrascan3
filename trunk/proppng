@@ -1,0 +1,6 @@
+#!/bin/sh
+#	proppng  <files>  - svn propset for PNG files
+
+svn propset svn:mime-type image/png $@
+svn -v proplist $@
+ 
