@@ -1,0 +1,6 @@
+#!/bin/sh
+#	proptext <files>   - svn propset for text files
+
+svn propset svn:keywords "LastChangedDate Author" $@
+svn -v proplist $@
+

@@ -15,7 +15,7 @@
 
 #include "qwt_counter.h"
 
-//! \brief A base class for analysis programs.  Other programs will derive from 
+//! \brief A base class for analysis programs.  Other programs will derive from
 //!        this class and override layouts and functions as required for the
 //!        specific analysis to be done.
 
@@ -44,7 +44,7 @@ class US_GUI_EXTERN US_AnalysisBase2 : public US_Widgets
 
       //! The solution data corresponding to the current triple
       US_Math2::SolutionData            solution;
- 
+
       bool         dataLoaded;      //!< A flag to indicate data is loaded
       bool         def_local;       //!< Flag if default source is local
       bool         buffLoaded;      //!< Flag to indicate buffer is loaded
@@ -92,7 +92,7 @@ class US_GUI_EXTERN US_AnalysisBase2 : public US_Widgets
       US_Plot*     plotLayout2;     //!< Bottom plot layout
 
       // Widgets
-      QwtPlot*     data_plot1;      //!< Access to the top qwt plot 
+      QwtPlot*     data_plot1;      //!< Access to the top qwt plot
       QwtPlot*     data_plot2;      //!< Access to the bottom qwt plot
 
       QPushButton* pb_load;         //!< Pushbutton to load data
@@ -138,7 +138,7 @@ class US_GUI_EXTERN US_AnalysisBase2 : public US_Widgets
    protected slots:
       //! Resets the class to a default state.
       virtual void reset        ( void );
-    
+
       //! Update the class to show data for a new triple.
       virtual void new_triple   ( int  );
 
@@ -166,25 +166,29 @@ class US_GUI_EXTERN US_AnalysisBase2 : public US_Widgets
 
       //! Return scan information in an html formatted string.
       QString      scan_info    ( void )                           const;
-      
+
       //! Returns an html string of a two column table row.
       QString      table_row    ( const QString&, const QString& ) const;
 
       //! Returns an html string of a three column table row.
-      QString      table_row    ( const QString&, const QString&, 
+      QString      table_row    ( const QString&, const QString&,
                                   const QString& )                 const;
-      
+
+      //! Returns an html string of a four column table row.
+      QString      table_row    ( const QString&, const QString&,
+                                  const QString&, const QString& ) const;
+
       //! Returns an html string of a five column table row.
-      QString      table_row    ( const QString&, const QString&, 
-                                  const QString&, const QString&, 
+      QString      table_row    ( const QString&, const QString&,
+                                  const QString&, const QString&,
                                   const QString& )                 const;
-      
+
       //! Returns an html string of a seven column table row.
-      QString      table_row    ( const QString&, const QString&, 
-                                  const QString&, const QString&, 
-                                  const QString&, const QString&, 
+      QString      table_row    ( const QString&, const QString&,
+                                  const QString&, const QString&,
+                                  const QString&, const QString&,
                                   const QString& )                 const;
-      
+
       //! Calculate the 11 point average of the last point in the current
       //! dataset boundary.  Assumes that there are at least 5 points
       //! available above the boundary.
@@ -214,7 +218,7 @@ class US_GUI_EXTERN US_AnalysisBase2 : public US_Widgets
    private:
       double* x_weights;
       double* y_weights;
-      
+
       double smooth_point( int, int, int, int, int = 0 );
 
    private slots:

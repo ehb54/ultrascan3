@@ -69,6 +69,7 @@ US_Edit::US_Edit() : US_Widgets()
    chlamb       = QChar( 955 );
    gap_thresh   = 50.0;
    gap_fringe   = 0.4;
+   bottom       = 0.0;
 DbgLv(1) << " 0)gap_fringe" << gap_fringe;
 
    setWindowTitle( tr( "Edit UltraScan Data" ) );
@@ -495,6 +496,7 @@ void US_Edit::reset( void )
    range_right   = 9.0;
    plateau       = 0.0;
    baseline      = 0.0;
+   bottom        = 0.0;
    invert        = 1.0;  // Multiplier = 1.0 or -1.0
    noise_order   = 0;
    triple_index  = 0;
@@ -627,6 +629,7 @@ void US_Edit::reset_triple( void )
    range_right   = 9.0;
    plateau       = 0.0;
    baseline      = 0.0;
+   bottom        = 0.0;
    invert        = 1.0;  // Multiplier = 1.0 or -1.0
    noise_order   = 0;
 
@@ -3494,7 +3497,32 @@ void US_Edit::floating( void )
 
 // Save edit profile(s)
 void US_Edit::write( void )
-{ 
+{
+   // Determine if we are using the database
+   US_DB2* dbP    = NULL;
+
+   if ( disk_controls->db() )
+   {
+      US_Passwd pw;
+      dbP            = new US_DB2( pw.getPasswd() );
+
+      if ( dbP->lastErrno() != US_DB2::OK )
+      {
+         QMessageBox::warning( this, tr( "Connection Problem" ),
+           tr( "Could not connect to database: \n" ) + dbP->lastError() );
+         return;
+      }
+   }
+
+   // Compute and store the post-stream bottom value
+   US_SimulationParameters simparams;
+   simparams.initFromData( dbP, data, false, runID, dataType );
+   bottom         = simparams.bottom;
+//*DEBUG*
+//bottom+=0.001;
+//*DEBUG*
+DbgLv(1) << "ED: Wr : bottom" << bottom;
+
    if ( !expIsEquil )
    {  // non-Equilibrium:  write single current edit (if "all" unchecked)
       if ( isMwl &&  ck_writemwl->isChecked() )
@@ -4307,7 +4335,8 @@ void US_Edit::next_triple( void )
    data    = *outData[ dax ];
 
    new_triple( dax );
-	pb_nextChan ->setEnabled( false );
+
+   pb_nextChan ->setEnabled( false );
 }
 
 // Evaluate whether all edits are complete
@@ -5099,6 +5128,10 @@ DbgLv(1) << "EDT:WrXml:  waveln" << waveln;
       xml.writeStartElement( "meniscus" );
       xml.writeAttribute   ( "radius",
          QString::number( meniscus, 'f', 8 ) );
+      xml.writeEndElement  ();
+      xml.writeStartElement( "bottom" );
+      xml.writeAttribute   ( "radius",
+         QString::number( bottom, 'f', 8 ) );
       xml.writeEndElement  ();
 
       if ( dataType == "IP" )
