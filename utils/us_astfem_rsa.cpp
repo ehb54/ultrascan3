@@ -131,6 +131,9 @@ DbgLv(1)<< "RSA:calc:   cdsx" << cdsx << "time_first time_last"
          break;
       }
    }
+//DbgLv(0)<< "RSA:calc ===ST===";
+//printsimparams( );
+//DbgLv(0)<< "RSA:calc ===EN===";
 
    // Initialization of different parameters for simulation begins here-
    af_params.simpoints   = simparams.simpoints;     // Number of simulation i.e. radial grid points
@@ -2122,7 +2125,7 @@ void US_Astfem_RSA::mesh_gen( QVector< double >& nu, int MeshOpt )
 
          if ( nu[ 0 ] > 0 )
          {
-DbgLv(1)<< "refine in bottom"<< nu[ 0 ] ;
+DbgLv(2)<< "refine in bottom"<< nu[ 0 ] ;
             mesh_gen_s_pos( nu );
          }
 

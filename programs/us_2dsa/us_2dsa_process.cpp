@@ -37,6 +37,12 @@ US_2dsaProcess::US_2dsaProcess( QList< SS_DATASET* >& dsets,
    ical_sols.clear();                 // iteration final calculated solutes
    simparms = &dsets[ 0 ]->simparams; // pointer to simulation parameters
 
+   s_rfiter         = QString( "" );
+   s_mmiter         = QString( "" );
+   s_variance       = QString( "" );
+   s_meniscus       = QString( "" );
+   s_bottom         = QString( "" );
+   vari_curr        = 0.0;
    nscans           = bdata->scanCount();
    npoints          = bdata->pointCount();
 
@@ -56,7 +62,7 @@ void US_2dsaProcess::start_fit( double sll, double sul,  int nss,
                                 double kll, double kul,  int nks,
                                 int    ngr, int    nthr, int noif )
 {
-   DbgLv(1) << "2P(2dsaProc): start_fit()";
+DbgLv(1) << "2P(2dsaProc): start_fit()";
    abort       = false;
    slolim      = sll;
    suplim      = sul;
@@ -75,6 +81,7 @@ void US_2dsaProcess::start_fit( double sll, double sul,  int nss,
    ntcsols     = 0;
    r_iter      = 0;
    mm_iter     = 0;
+   vari_curr   = 0.0;
 
    if ( jgrefine < 0 )
    {  // Special model-grid or model-ratio grid refinement
@@ -104,7 +111,7 @@ void US_2dsaProcess::start_fit( double sll, double sul,  int nss,
    itvaris  .clear();
    ical_sols.clear();
 
-DbgLv(1) << "2P: sll sul nss" << slolim << suplim << nssteps
+DbgLv(1) << "2P:SF: sll sul nss" << slolim << suplim << nssteps
  << " kll kul nks" << klolim << kuplim << nksteps
  << " ngref nthr noif" << ngrefine << nthreads << noisflag;
 
@@ -114,22 +121,36 @@ DbgLv(1) << "2P: sll sul nss" << slolim << suplim << nssteps
 
    if ( mmtype > 0 )
    {  // for meniscus or monte carlo, make a working copy of the base data
-      wdata = *bdata;
+      wdata              = *bdata;
 
       if ( mmtype == 1 )
-      {  // if meniscus, use the start meniscus value
+      {  // if meniscus, use the start meniscus,bottom values
          edata              = &wdata;
          double bmeniscus   = bdata->meniscus;
+         double bbottom     = bdata->bottom;
+         if ( bbottom == 0.0 )
+         {
+            bbottom            = dsets[ 0 ]->simparams.bottom;
+            bdata->bottom      = bbottom;
+         }
          edata->meniscus    = bmeniscus - menrange * 0.5;
+         edata->bottom      = bbottom   - menrange * 0.5;
          dsets[ 0 ]->simparams.meniscus = edata->meniscus;
-         DbgLv(1) << "MENISC: mm_iter meniscus bmeniscus"
-                  << mm_iter << edata->meniscus << bmeniscus;
+         dsets[ 0 ]->simparams.bottom   = edata->bottom;
+DbgLv(1) << "2P:SF: MENISC: mm_iter" << mm_iter
+ << "bmeniscus bbottom" << bmeniscus << bbottom
+ << "emeniscus ebottom" << edata->meniscus << edata->bottom;
+
+//         set_meniscus();
       }
    }
+DbgLv(1) << "2P:SF: AA:";
+DbgLv(1) << "2P:SF: AA: edata" << edata;
 
    // Experiment data dimensions
    nscans      = edata->scanCount();
    npoints     = edata->pointCount();
+DbgLv(1) << "2P:SF: scans points" << nscans << npoints;
 
    // Determine subgrid counts and deltas
    int nsubp_s = ( nssteps + ngrefine - 1 ) / ngrefine;
@@ -154,25 +175,29 @@ DbgLv(1) << "2P: sll sul nss" << slolim << suplim << nssteps
    int kgrefsq = sq( kgref );
    int kksubg  = nksteps * nssteps
                  - ( kgref + kgrefsq ) * ( nsubp_s + nsubp_k ) + kgrefsq;
-DbgLv(1) << "2P:    kgref kgrefsq kksubg" << kgref << kgrefsq << kksubg;
+DbgLv(1) << "2P:SF:    kgref kgrefsq kksubg" << kgref << kgrefsq << kksubg;
    maxtsols    = qMax( maxtsols, mintsols );
 
    int ktcsol  = maxtsols - 5;
    int nnstep  = ( noisflag > 0 ? ( sq( ktcsol ) / 10 + 2 ) : 2 ) * nsubgrid;
    nctotal     = kksubg + nnstep + estimate_steps( ( kksubg / 8 ) );
 
+   if ( mmtype == 1 )
+      set_meniscus();
+
    kcsteps     = 0;
+DbgLv(1) << "2P:SF:   kcsteps nctotal" << kcsteps << nctotal;
    emit stage_complete( kcsteps, nctotal );
    kctask      = 0;
    kstask      = 0;
    nthreads    = ( nthreads < nsubgrid ) ? nthreads : nsubgrid;
-   DbgLv(1) << "2P:   nscans npoints" << nscans << npoints;
-   DbgLv(1) << "2P:   gdelta_s gdelta_k" << gdelta_s << gdelta_k
-            << " sdelta_s sdelta_k" << sdelta_s << sdelta_k;
-   DbgLv(1) << "2P:   nsubgrid nctotal nthreads maxtsols"
-            << nsubgrid << nctotal << nthreads << maxtsols;
+DbgLv(1) << "2P:SF:   nscans npoints" << nscans << npoints;
+DbgLv(1) << "2P:SF:   gdelta_s gdelta_k" << gdelta_s << gdelta_k
+ << " sdelta_s sdelta_k" << sdelta_s << sdelta_k;
+DbgLv(1) << "2P:SF:   nsubgrid nctotal nthreads maxtsols"
+ << nsubgrid << nctotal << nthreads << maxtsols;
    max_rss();
-   DbgLv(1) << "2P: (1)maxrss" << maxrss << "jgrefine" << jgrefine;
+DbgLv(1) << "2P:SF: (1)maxrss" << maxrss << "jgrefine" << jgrefine;
 
    int    jdpth = 0;
    int    jnois = fnoionly ? 0 : noisflag;
@@ -265,7 +290,7 @@ DbgLv(1) << "2P:    kgref kgrefsq kksubg" << kgref << kgrefsq << kksubg;
 int k0=orig_sols.count() - 1;
 int k1=orig_sols[0].count() - 1;
 int k2=orig_sols[k0].count() - 1;
-DbgLv(1) << "2P: orig_sols: "
+DbgLv(1) << "2P:SF: orig_sols: "
  << orig_sols[0][0].s*1.e+13 << orig_sols[0][0].k << "  "
  << orig_sols[0][k1].s*1.e+13 << orig_sols[0][k1].k << "  "
  << orig_sols[k0][0].s*1.e+13 << orig_sols[k0][0].k << "  "
@@ -299,7 +324,7 @@ DbgLv(1) << "2P: orig_sols: "
 
    max_rss();
    kstask = nthreads;     // count of started tasks is initially thread count
-   DbgLv(1) << "2P:   kstask nthreads" << kstask << nthreads << job_queue.size();
+DbgLv(1) << "2P:SF:   kstask nthreads" << kstask << nthreads << job_queue.size();
 
    emit message_update( pmessage_head() +
       tr( "Starting computations of %1 subgrids\n using %2 threads ..." )
@@ -318,6 +343,7 @@ void US_2dsaProcess::set_iters( int    mxiter, int    mciter, int    mniter,
    mmiters    = ( mmtype == 0 ) ? 0 : qMax( mciter, mniter );
    varitol    = vtoler;
    menrange   = menrng;
+   mendelta   = menrange / (double)( mmiters - 1 );
    cnstff0    = cff0;
    jgrefine   = jgref;
 
@@ -331,7 +357,7 @@ void US_2dsaProcess::set_iters( int    mxiter, int    mciter, int    mniter,
       stype   = 2;            // Custom grid
 
    dsets[ 0 ]->solute_type = stype;   // Store solute type
-   DbgLv(1) << "2PSI: cnstff0 jgrefine stype" << cnstff0 << jgrefine << stype;
+DbgLv(1) << "2PSI: cnstff0 jgrefine stype" << cnstff0 << jgrefine << stype;
 }
 
 // Abort a fit run
@@ -341,7 +367,7 @@ void US_2dsaProcess::stop_fit()
 
    for ( int ii = 0; ii < wthreads.size(); ii++ )
    {
-      DbgLv(1) << "StopFit test Thread" << ii + 1;
+DbgLv(1) << "StopFit test Thread" << ii + 1;
       WorkerThread2D* wthr = wthreads[ ii ];
 
       if ( wthr != 0 )
@@ -356,7 +382,7 @@ void US_2dsaProcess::stop_fit()
          }
 
          delete wthr;
-         DbgLv(1) << "  STOPTHR:  thread deleted";
+DbgLv(1) << "  STOPTHR:  thread deleted";
       }
 
       wthreads[ ii ] = 0;
@@ -392,13 +418,14 @@ void US_2dsaProcess::step_progress( int ksteps )
 {
    max_rss();
    kcsteps   += ksteps;              // bump completed steps count
-   //DbgLv(2) << "StpPr: ks kcs    " << ksteps << kcsteps;
+//DbgLv(2) << "StpPr: ks kcs    " << ksteps << kcsteps;
    emit progress_update( ksteps );   // pass progress on to control window
 }
 
 // Use a worker thread one last time to compute, using all computed solutes
 void US_2dsaProcess::final_computes()
 {
+DbgLv(1) << "2P:FC:  abort" << abort;
    if ( abort ) return;
 
    max_rss();
@@ -420,7 +447,7 @@ void US_2dsaProcess::final_computes()
    // This time, input solutes are all the subgrid-computed ones where
    // the concentration is positive.
    qSort( c_solutes[ depth ] );
-DbgLv(1) << "FinalComp: szSoluC" << c_solutes[ depth ].size();
+DbgLv(1) << "2P:FC:  szSoluC" << c_solutes[ depth ].size();
    wtask.isolutes.clear();
 
    for ( int ii = 0; ii < c_solutes[ depth ].size(); ii++ )
@@ -460,6 +487,7 @@ DbgLv(1) << "FinalComp: szSoluC" << c_solutes[ depth ].size();
 // Slot to handle output of final pass on composite calculated solutes
 void US_2dsaProcess::process_final( WorkerThread2D* wthrd )
 {
+DbgLv(1) << "2P:PF: abort" << abort;
    if ( abort ) return;
 
    WorkPacket2D wresult;
@@ -513,6 +541,8 @@ DbgLv(1) << "FIN_FIN:    ti,ri counts" << ti_noise.count << ri_noise.count;
    double vbar20      = dset->vbar20;
 DbgLv(1) << "FIN_FIN: s20w,D20w_corr" << dset->s20w_correction
  << dset->D20w_correction << "sfac dfac" << sfactor << dfactor;
+DbgLv(1) << "FIN_FIN:    wresult menisc bott"
+ << dset->simparams.meniscus << dset->simparams.bottom;
    model.components.resize( nsolutes );
 
    qSort( c_solutes[ maxdepth ] );
@@ -712,19 +742,33 @@ DbgLv(1) << "FIN_FIN: edatm" << edata->value(mms,mmr)
 
    // set variance and communicate to control through residual's scan 0
    vari            /= (double)( nscans * npoints );
+   vari_curr        = vari;
 double rmsd2=sqrt(vari2);
 DbgLv(1) << "FIN_FIN: vari" << vari << "vari2" << vari2 << "rmsd2" << rmsd2
  << "s20w,D20w_corr" << dset->s20w_correction << dset->D20w_correction;
    itvaris   << vari;
    ical_sols << c_solutes[ maxdepth ];
+#if 0
    US_DataIO::Scan* rscan0 = &rdata.scanData[ 0 ];
    rscan0->delta_r    = vari;
    rscan0->rpm        = (double)( r_iter + 1 );
    rscan0->seconds    = ( mmtype == 0 ) ? 0.0 : (double)( mm_iter + 1 );
    rscan0->plateau    = ( mmtype != 1 ) ? 0.0 : edata->meniscus;
+   rscan0->seconds    = ( mmtype == 0 ) ? 0.0 : (double)( mm_iter + 1 );
+#endif
+#if 1
+   s_rfiter           = QString::number( r_iter + 1 );
+   s_mmiter           = mmtype > 0 ? QString::number( mm_iter + 1 ) : "0";
+   s_variance         = QString::number( vari );
+   s_meniscus         = QString::number( edata->meniscus );
+   s_bottom           = QString::number( edata->bottom );
+   vari_curr          = vari;
+#endif
 
-DbgLv(1) << "FIN_FIN: vari riter miter menisc" << rscan0->delta_r
-            << rscan0->rpm << rscan0->seconds << rscan0->plateau;
+//DbgLv(1) << "FIN_FIN: vari riter miter menisc" << rscan0->delta_r
+//            << rscan0->rpm << rscan0->seconds << rscan0->plateau;
+DbgLv(1) << "FIN_FIN: vari riter miter menisc bott" << s_variance
+            << s_rfiter << s_mmiter << s_meniscus << s_bottom;
 
    // determine elapsed time
    int ktimes  = ( timer.elapsed() + 500 ) / 1000;
@@ -849,9 +893,29 @@ DbgLv(1) << " cc 20w comp D" << model.components[ cc ].D;
    }
 
    // Done with refinement iterations:   check for meniscus or MC iteration
+   int mtiters        = mmiters * mmiters;
+   int k_iter         = mm_iter;
 
-   if ( mmtype > 0  &&  ++mm_iter < mmiters )
+   if ( mmtype > 0  &&  ++mm_iter < mtiters )
    {  // doing meniscus or monte carlo and more to do
+      int m_iter         = k_iter / mmiters;
+      int b_iter         = k_iter % mmiters;
+      double bmeniscus   = bdata->meniscus;
+      double bbottom     = bdata->bottom;
+      double smeniscus   = bmeniscus - menrange * 0.5;
+      double sbottom     = bbottom   - menrange * 0.5;
+      edata->meniscus    = smeniscus + (double)m_iter * mendelta;
+      edata->bottom      = sbottom   + (double)b_iter * mendelta;
+      simparms->meniscus = edata->meniscus;
+      simparms->bottom   = edata->bottom;
+      s_rfiter           = QString::number( r_iter + 1 );
+      s_mmiter           = QString::number( mm_iter );
+      s_variance         = QString::number( vari_curr );
+      s_meniscus         = QString::number( edata->meniscus );
+      s_bottom           = QString::number( edata->bottom );
+
+DbgLv(1) << "MENISC: k_iter m_iter b_iter" << k_iter << m_iter << b_iter
+ << "meniscus bottom" << edata->meniscus << simparms->bottom << bbottom;
       emit process_complete( mmtype );  // signal that iteration is complete
 
       if ( mmtype == 1 )
@@ -862,6 +926,25 @@ DbgLv(1) << " cc 20w comp D" << model.components[ cc ].D;
 
       return;
    }
+else
+DbgLv(1) << "MENISC: k_iter mm_iter mtiter mmtype" << k_iter << mm_iter << mtiters << mmtype;
+
+
+   if ( mmtype == 1 )
+   {
+      int m_iter         = k_iter / mmiters;
+      int b_iter         = k_iter % mmiters;
+      double bmeniscus   = bdata->meniscus;
+      double bbottom     = bdata->bottom;
+      double smeniscus   = bmeniscus - menrange * 0.5;
+      double sbottom     = bbottom   - menrange * 0.5;
+      edata->meniscus    = smeniscus + (double)m_iter * mendelta;
+      edata->bottom      = sbottom   + (double)b_iter * mendelta;
+   }
+
+   s_variance         = QString::number( vari_curr );
+   s_meniscus         = QString::number( edata->meniscus );
+   s_bottom           = QString::number( edata->bottom );
 
    emit process_complete( 9 );     // signal that all processing is complete
 }
@@ -876,6 +959,7 @@ bool US_2dsaProcess::get_results( US_DataIO::RawData* da_sim,
    bool all_ok = true;
 
    if ( abort ) return false;
+DbgLv(1) << "2P:GR: vari_curr" << vari_curr;
 
    *da_sim     = sdata;                           // copy simulation data
    *da_res     = rdata;                           // copy residuals data
@@ -887,8 +971,38 @@ bool US_2dsaProcess::get_results( US_DataIO::RawData* da_sim,
    if ( ( noisflag & 2 ) != 0  &&  da_rin != 0 )
       *da_rin     = ri_noise;                     // copy any ri noise
 
-DbgLv(1) << " GET_RES:    VARI" << rdata.scanData[0].delta_r
- << da_res->scanData[0].delta_r;
+double vari2 = 0.0;
+for (int ss=0; ss<nscans; ss++)
+ for (int rr=0; rr<npoints; rr++)
+  vari2+=sq(rdata.value(ss,rr));
+vari2 /= (double)( nscans * npoints );
+int mms=nscans/2;
+int mmr=npoints/2;
+DbgLv(1) << " GET_RES:    VARI" << vari_curr << vari2 << s_variance
+ << "rdatmm" << rdata.value(mms,mmr);
+   return all_ok;
+}
+
+// Public slot to get values upon completion of all refinements
+bool US_2dsaProcess::get_values( QMap< QString, QString >& mp_val )
+{
+   bool all_ok = true;
+DbgLv(1) << "2P:GV: variance" << s_variance << vari_curr << "iter" << s_mmiter;
+
+   mp_val[ "rf_iteration" ]    = s_rfiter;
+   mp_val[ "mm_iteration" ]    = s_mmiter;
+   mp_val[ "variance"     ]    = s_variance;
+   mp_val[ "meniscus"     ]    = s_meniscus;
+   mp_val[ "bottom"       ]    = s_bottom;
+DbgLv(1) << " GET_VAL: rfit mcit vari meni bott"
+ << s_rfiter << s_mmiter << s_variance << s_meniscus << s_bottom;
+
+   all_ok      = s_rfiter  .isEmpty() ? false : all_ok;
+   all_ok      = s_mmiter  .isEmpty() ? false : all_ok;
+   all_ok      = s_variance.isEmpty() ? false : all_ok;
+   all_ok      = s_meniscus.isEmpty() ? false : all_ok;
+   all_ok      = s_bottom  .isEmpty() ? false : all_ok;
+
    return all_ok;
 }
 
@@ -1410,16 +1524,31 @@ int US_2dsaProcess::jobs_at_depth( int depth )
 void US_2dsaProcess::set_meniscus()
 {
    // Give the working data set an appropriate meniscus value
+//   int k_iter         = mm_iter - 1;
+   int k_iter         = mm_iter;
+   int m_iter         = k_iter / mmiters;
+   int b_iter         = k_iter % mmiters;
+DbgLv(1) << "SET_MEN: k_iter m_iter b_iter" << k_iter << m_iter << b_iter;
    double bmeniscus   = bdata->meniscus;
-   double mendelta    = menrange / (double)( mmiters - 1 );
+   double bbottom     = bdata->bottom;
+DbgLv(1) << "SET_MEN: bmeniscus bbottom" << bmeniscus << bbottom;
    double smeniscus   = bmeniscus - menrange * 0.5;
-   edata->meniscus    = smeniscus + (double)mm_iter * mendelta;
+   double sbottom     = bbottom   - menrange * 0.5;
+DbgLv(1) << "SET_MEN: smeniscus sbottom" << smeniscus << sbottom;
+   edata->meniscus    = smeniscus + (double)m_iter * mendelta;
+   edata->bottom      = sbottom   + (double)b_iter * mendelta;
+DbgLv(1) << "SET_MEN: emeniscus ebottom" << edata->meniscus << edata->bottom;
    simparms->meniscus = edata->meniscus;
-DbgLv(1) << "MENISC: mm_iter meniscus" << mm_iter << edata->meniscus;
+   simparms->bottom   = edata->bottom;
+DbgLv(1) << "SET_MEN: k_iter m_iter b_iter" << k_iter << m_iter << b_iter
+ << "meniscus bottom" << edata->meniscus << simparms->bottom << bbottom;
 
    // Re-queue all the original subgrid tasks
-
-   requeue_tasks();
+   if ( mm_iter > 0 )
+   {
+      requeue_tasks();
+DbgLv(1) << "SET_MEN:    RQUE RETURN";
+   }
 }
 
 // Set up for another monte carlo pass
