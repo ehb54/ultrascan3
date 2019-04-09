@@ -6,8 +6,16 @@
 #include "us_help.h"
 #include "us_editor.h"
 #include "us_plot.h"
+#include "us_spectrodata.h"
 
 #include "qwt_plot_marker.h"
+#include "qwt_plot_spectrogram.h"
+#include "qwt_plot_layout.h"
+#include "qwt_plot_zoomer.h"
+#include "qwt_plot_panner.h"
+#include "qwt_scale_widget.h"
+#include "qwt_scale_draw.h"
+#include "qwt_color_map.h"
 
 #define DbgLv(a) if(dbg_level>=a)qDebug()  //!< dbg_level-conditioned qDebug()
 
@@ -59,9 +67,24 @@ class US_FitMeniscus : public US_Widgets
       };
 
    private:
-      QLineEdit*           le_fit;
-      QLineEdit*           le_rms_error;
+      QLabel*              lb_men_lor;
+      QLabel*              lb_bot_lor;
+      QLabel*              lb_men_fit;
+      QLabel*              lb_bot_fit;
+      QLabel*              lb_mprads; 
+      QLabel*              lb_zfloor;
+      QLabel*              lb_order;
+      QLabel*              lb_men_sel;
+      QLabel*              lb_rms_error;
+
+      QLineEdit*           le_men_lor;
+      QLineEdit*           le_bot_lor;
+      QLineEdit*           le_men_fit;
+      QLineEdit*           le_bot_fit;
+      QLineEdit*           le_mprads;
       QLineEdit*           le_status;
+      QLineEdit*           le_men_sel;
+      QLineEdit*           le_rms_error;
 
       US_Help              showHelp;
       
@@ -77,12 +100,23 @@ class US_FitMeniscus : public US_Widgets
 
       QSpinBox*            sb_order;
 
+      QwtCounter*          ct_zfloor;
+
       QwtPlot*             meniscus_plot;
+      QwtPlot*             menibott_plot;
       QwtPlotCurve*        raw_curve;
       QwtPlotCurve*        fit_curve;
       QwtPlotCurve*        minimum_curve;
+      QwtPlotSpectrogram*  d_spectrogram;
+      US_SpectrogramData*  spec_dat;
+      QwtLinearColorMap*   colormap;
+      US_PlotPicker*       pick;
  
       US_Disk_DB_Controls* dkdb_cntrls;
+
+      QVector< double >    v_meni;
+      QVector< double >    v_bott;
+      QVector< double >    v_rmsd;
 
       QString              filedir;
       QString              fname_load;
@@ -93,10 +127,15 @@ class US_FitMeniscus : public US_Widgets
       int                  nedtfs;
       int                  idEdit;
       int                  dbg_level;
+
+      bool                 have3val;
    private slots:
       void reset    (      void );
+      void load_data(      void );
       void plot_data(      void );
       void plot_data(      int );
+      void plot_2d  (      void );
+      void plot_3d  (      void );
       void edit_update(    void );
       void scan_dbase(     void );
       void file_loaded(    QString );
@@ -105,6 +144,7 @@ class US_FitMeniscus : public US_Widgets
       void remove_models(  void );
       void noises_in_edit( QString, QStringList&,
                            QStringList&, QStringList& );
+      QwtLinearColorMap* ColorMapCopy( QwtLinearColorMap* );
 
       void help     ( void )
       { showHelp.show_help( "manual/fit_meniscus.html" ); };

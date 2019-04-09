@@ -81,8 +81,9 @@ US_Model::US_Model()
    wavelength      = 0.0;
    variance        = 0.0;
    meniscus        = 0.0;
+   bottom          = 0.0;
    alphaRP         = 0.0;
-	subGrids			 = 0;
+   subGrids        = 0;
    description     = "New Model";
    optics          = ABSORBANCE;
    analysis        = MANUAL;
@@ -106,6 +107,7 @@ bool US_Model::operator== ( const US_Model& m ) const
    if ( wavelength      != m.wavelength      ) return false;
    if ( variance        != m.variance        ) return false;
    if ( meniscus        != m.meniscus        ) return false;
+   if ( bottom          != m.bottom          ) return false;
    if ( alphaRP         != m.alphaRP         ) return false;
    if ( modelGUID       != m.modelGUID       ) return false;
    if ( editGUID        != m.editGUID        ) return false;
@@ -670,6 +672,8 @@ int US_Model::load_stream( QXmlStreamReader& xml )
             variance        = vari.isEmpty() ? 0.0 : vari.toDouble();
             QString meni    = a.value( "meniscus"       ).toString();
             meniscus        = meni.isEmpty() ? 0.0 : meni.toDouble();
+            QString bott    = a.value( "bottom"         ).toString();
+            bottom          = bott.isEmpty() ? 0.0 : bott.toDouble();
             QString alph    = a.value( "alphaRP"        ).toString();
             alphaRP         = alph.isEmpty() ? 0.0 : alph.toDouble();
             description     = a.value( "description"    ).toString();
@@ -1119,6 +1123,8 @@ void US_Model::write_stream( QXmlStreamWriter& xml )
       xml.writeAttribute( "variance",    QString::number( variance     ) );
    if ( meniscus != 0.0 )
       xml.writeAttribute( "meniscus",    QString::number( meniscus     ) );
+   if ( bottom   != 0.0 )
+      xml.writeAttribute( "bottom",      QString::number( bottom       ) );
    if ( alphaRP  != 0.0 )
       xml.writeAttribute( "alphaRP",     QString::number( alphaRP      ) );
    xml.writeAttribute   ( "coSedSolute", QString::number( coSedSolute  ) );
@@ -1627,6 +1633,7 @@ void US_Model::debug( void )
    qDebug() << "model guid" << modelGUID;
    qDebug() << "variance" << variance;
    qDebug() << "meniscus" << meniscus;
+   qDebug() << "bottom" << bottom;
    qDebug() << "alphaRP" << alphaRP;
    qDebug() << "edit guid" << editGUID;
    qDebug() << "request guid" << requestGUID;

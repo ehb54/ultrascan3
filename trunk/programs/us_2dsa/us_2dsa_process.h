@@ -80,6 +80,11 @@ class US_2dsaProcess : public QObject
       bool get_results( US_DataIO::RawData*, US_DataIO::RawData*,
                         US_Model*, US_Noise*, US_Noise* );
 
+      //! \brief Get results upon completion of all refinements
+      //! \param mp_val  Calculated simulation data
+      //! \returns       Success flag:  true if successful
+      bool get_values( QMap< QString, QString >& );
+
       //! \brief Stop the current fit processing
       void stop_fit(       void );
 
@@ -147,6 +152,11 @@ private:
       QObject*   parentw;      // parent object
 
       QString    errMsg;       // message from last error
+      QString    s_rfiter;     // current process refine iteration as text
+      QString    s_mmiter;     // current process mc/fit iteration as text
+      QString    s_variance;   // current process variance as text
+      QString    s_meniscus;   // current process meniscus as text
+      QString    s_bottom;     // current process bottom as text
 
       int        dbg_level;    // debug level
       int        nthreads;     // number of worker threads
@@ -185,7 +195,9 @@ private:
       double     sdelta_s;     // subgrid delta in s
       double     sdelta_k;     // subgrid delta in k
       double     varitol;      // variance difference tolerance
+      double     vari_curr;    // current variance
       double     menrange;     // meniscus range
+      double     mendelta;     // meniscus delta per iteration
       double     cnstff0;      // constant f/f0 (or 0.0)
 
       QTime      timer;        // timer for elapsed time measure

@@ -166,7 +166,7 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_tol->setIncSteps( QwtCounter::Button2,  10 );
 
    ct_menisrng  = us_counter( 3, 0.01, 0.65, 0.03 );
-   ct_menispts  = us_counter( 2,    3,   21,   10 );
+   ct_menispts  = us_counter( 2,    3,   51,   11 );
    ct_mciters   = us_counter( 3,    3, 2000,   20 );
    ct_menisrng ->setSingleStep( 0.01 );
    ct_menispts ->setSingleStep(    1 );
@@ -945,7 +945,9 @@ DbgLv(1) << "AC:cs: prmx nct kcs" << b_progress->maximum() << nct << kcs;
    nctotal      = nct;
 
    b_progress->setPBMaximum( nctotal );
+DbgLv(1) << "AC:cs: BB";
    b_progress->setValue(   ncsteps );
+DbgLv(1) << "AC:cs: CC";
 
    qApp->processEvents();
 }
@@ -965,8 +967,10 @@ DbgLv(1) << "AC:cp: stage alldone" << stage << alldone;
       return;
    }
 
+   QMap< QString, QString >  rval_map;
    processor->get_results( sdata, rdata, model, ti_noise, ri_noise );
 DbgLv(1) << "norm_size_anal_control" << ti_noise->count << ri_noise->count ;
+   processor->get_values( rval_map );
 //DBG-DATA
 if (dbg_level>0)
 {
@@ -988,15 +992,32 @@ if (dbg_level>0)
 }
 //DBG-DATA
 
+   QString s_inum  = rval_map[ "rf_iteration" ];
+   QString s_mmit  = rval_map[ "mm_iteration" ];
+   QString s_vari  = rval_map[ "variance" ];
+   QString s_meni  = rval_map[ "meniscus" ];
+   QString s_bott  = rval_map[ "bottom" ];
+#if 0
    US_DataIO::Scan* rscan0 = &rdata->scanData[ 0 ];
    int    iternum  = (int)rscan0->rpm;
    int    mmitnum  = (int)rscan0->seconds;
    double varinew  = rscan0->delta_r;
    double meniscus = rscan0->plateau;
+   double bottom   = rscan0->wavelength;
+#endif
+#if 1
+   int    iternum  = s_inum.toInt();
+   int    mmitnum  = s_mmit.toInt();
+   double varinew  = s_vari.toDouble();
+   double meniscus = s_meni.toDouble();
+   double bottom   = s_bott.toDouble();
+#endif
    double variold  = le_newvari  ->text().toDouble();
    double vimprov  = variold - varinew;
+DbgLv(1) << "AC:cp inum mmit vari meni bott"
+ << iternum << mmitnum << varinew << meniscus << bottom;
    le_oldvari  ->setText( QString::number( variold ) );
-   le_newvari  ->setText( QString::number( varinew ) );
+   le_newvari  ->setText( s_vari );
    le_improve  ->setText( QString::number( vimprov ) );
 
    if ( mmitnum == 0 )
@@ -1009,11 +1030,12 @@ if (dbg_level>0)
    else if ( ck_menisc->isChecked() )
    {  // Meniscus
       model->global      = US_Model::MENISCUS;
-      model->description = QString( "MMITER=%1 VARI=%2 MENISCUS=%3" )
-                           .arg( mmitnum ).arg( varinew ).arg( meniscus );
-      le_iteration->setText( QString::number( iternum  ) + "   ( Model " +
+      model->description = QString( "MMITER=%1 VARI=%2 MENISCUS=%3 BOTTOM=%4" )
+                           .arg( mmitnum ).arg( varinew ).arg( meniscus ).arg( bottom );
+      le_iteration->setText( QString::number( iternum  ) + " , Model " +
                              QString::number( mmitnum  ) + " , Meniscus " +
-                             QString::number( meniscus ) + " )" );
+                             QString::number( meniscus ) + " , Bottom " +
+                             QString::number( bottom ) );
    }
 
    else

@@ -204,7 +204,10 @@ void US_2dsa::analysis_done( int updflag )
       le_vari->setText( QString::number( vari ) );
       le_rmsd->setText( QString::number( rmsd ) );
 DbgLv(1) << "Analysis Done VARI" << vari << "model,noise counts"
- << models.count() << ti_noises.count();
+ << models.count() << (ti_noises.count()+ri_noises.count())
+ << "menisc bott"
+ << mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 ).section( " ", 0, 0 )
+ << mdesc.mid( mdesc.indexOf( "BOTTOM=" ) + 7 ).section( " ", 0, 0 );
 
       qApp->processEvents();
       return;
@@ -212,8 +215,8 @@ DbgLv(1) << "Analysis Done VARI" << vari << "model,noise counts"
 
    // if here, an analysis is all done
 
-   bool plotdata     = updflag == 1;
-   bool savedata     = updflag == 2;
+   bool plotdata     = ( updflag == 1 );
+   bool savedata     = ( updflag == 2 );
 
 DbgLv(1) << "Analysis Done" << updflag;
 DbgLv(1) << "  model components size" << model.components.size();
@@ -226,17 +229,51 @@ DbgLv(1) << "  edat0 sdat0 rdat0 tnoi0"
    pb_view  ->setEnabled( true );
    pb_save  ->setEnabled( true );
 
+   // Plot data in main window
    data_plot();
 
    if ( plotdata )
-   {
+   {  // Plot 3D and Residuals
       open_3dplot();
       open_resplot();
    }
 
    else if ( savedata )
-   {
+   {  // Save the data and reports
       save();
+   }
+
+   // For multiple models (e.g., Fit-Meniscus) report on best
+   int nmodels     = models.count();
+   bool fitMeni    = ( model.global == US_Model::MENISCUS );
+   if ( nmodels > 1  &&  fitMeni )
+   {
+      double b_rmsd   = 1.0e+99;
+      double b_meni   = 0.0;
+      double b_bott   = 0.0;
+
+      for ( int ii = 0; ii < nmodels; ii++ )
+      {
+         QString mdesc = models[ ii ].description;
+DbgLv(2) << "FitMens Done:  ii desc" << ii << mdesc;
+         double vari   = mdesc.mid( mdesc.indexOf( "VARI=" ) + 5 )
+                         .section( " ", 0, 0 ).toDouble();
+         double rmsd   = sqrt( vari );
+
+         if ( rmsd < b_rmsd )
+         {
+            b_rmsd        = rmsd;
+            b_meni        = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 )
+                            .section( " ", 0, 0 ).toDouble();
+            b_bott        = mdesc.mid( mdesc.indexOf( "BOTTOM=" ) + 7 )
+                            .section( " ", 0, 0 ).toDouble();
+DbgLv(1) << "FitMens Done:    b_ rmsd,meni,bott" << b_rmsd << b_meni << b_bott
+ << "  ix" << (ii+1);
+         }
+      }
+DbgLv(1) << "FitMens Done: BEST rmsd,meniscus,bottom"
+ << b_rmsd << b_meni << b_bott;
+
    }
 }
 
@@ -556,6 +593,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
                     + min( ri_noise.count, 1 );  // noise files per model
    int     nnoises  = nmodels * knois;           // number of noises to save
    double  meniscus = edata->meniscus;
+   double  bottom   = edata->bottom;
    double  dwavelen = edata->wavelength.toDouble();
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
@@ -649,7 +687,10 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
       {
          meniscus          = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 )
                              .section( ' ', 0, 0 ).toDouble();
-         iterID.sprintf( "i%02d-m%05d", iterNum, qRound( meniscus * 10000 ) );
+         bottom            = mdesc.mid( mdesc.indexOf( "BOTTOM=" ) + 7 )
+                             .section( ' ', 0, 0 ).toDouble();
+         iterID.sprintf( "i%02d-m%05db%05d", iterNum, qRound( meniscus * 10000 ),
+                         qRound( bottom * 10000 ) );
       }
 
       // fill in actual model parameters needed for output
@@ -1001,6 +1042,10 @@ DbgLv(0) << "2DSA d_corr v vW vT d dW dT" << sd.viscosity << sd.viscosity_wt
    // Skip adding speed steps if this is multi-speed, initially,
    // but set speed steps to the experiment vector.
    dset.simparams.initFromData( dbP, dataList[ drow ], !exp_steps );
+   edata->bottom   = ( edata->bottom > 0.0 ) ?
+                     edata->bottom :
+                     dset.simparams.bottom;
+DbgLv(1) << "2DSA:o_fit: ebottom" << edata->bottom;
 
    if ( exp_steps )
    {
@@ -1321,6 +1366,7 @@ QString US_2dsa::iteration_info()
    else
       mstr += table_row( tr( "Iteration" ),
                          tr( "Meniscus" ),
+                         tr( "Bottom" ),
                          tr( "RMSD" ) );
 
    for ( int ii = 0; ii < nmodels; ii++ )
@@ -1341,7 +1387,9 @@ QString US_2dsa::iteration_info()
       {
          QString ameni = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 )
                          .section( " ", 0, 0 );
-         mstr         += table_row( itnum, ameni, armsd );
+         QString abott = mdesc.mid( mdesc.indexOf( "BOTTOM=" ) + 7 )
+                         .section( " ", 0, 0 );
+         mstr         += table_row( itnum, ameni, abott, armsd );
       }
    }
 
@@ -1454,10 +1502,39 @@ QString US_2dsa::fit_meniscus_data()
       QString armsd = QString().sprintf( "%10.8f", rmsd );
       QString ameni = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 )
                       .section( " ", 0, 0 );
-      mstr         += ( ameni + " " + armsd + "\n" );
+      QString abott = mdesc.mid( mdesc.indexOf( "BOTTOM=" ) + 7 )
+                      .section( " ", 0, 0 );
+      mstr         += ( ameni + " " + abott + " " + armsd + "\n" );
+DbgLv(1) << "fitmdat:  ii" << ii << "meni bott rmsd"
+ << ameni << abott << armsd;
    }
    
    return mstr;
+}
+
+// Fit meniscus,bottom data table string
+QString US_2dsa::fit_menibott_data()
+{
+   QString mbstr = "";
+   int nmodels   = models.size();
+   
+   if ( nmodels < 2 )
+      return mbstr;
+
+   for ( int ii = 0; ii < nmodels; ii++ )
+   {
+      QString mdesc = models[ ii ].description;
+      QString avari = mdesc.mid( mdesc.indexOf( "VARI=" ) + 5 );
+      double  rmsd  = sqrt( avari.section( " ", 0, 0 ).toDouble() );
+      QString armsd = QString().sprintf( "%10.8f", rmsd );
+      QString ameni = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 )
+                      .section( " ", 0, 0 );
+      QString abott = mdesc.mid( mdesc.indexOf( "BOTTOM=" ) + 7 )
+                      .section( " ", 0, 0 );
+      mbstr        += ( ameni + " " + abott + " " + armsd + "\n" );
+   }
+   
+   return mbstr;
 }
 
 // Public slot to mark residual plot dialog closed
