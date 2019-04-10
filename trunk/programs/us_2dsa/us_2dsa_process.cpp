@@ -32,10 +32,15 @@ US_2dsaProcess::US_2dsaProcess( QList< SS_DATASET* >& dsets,
    mmtype           = 0;              // meniscus/montecarlo type (NONE)
    mmiters          = 0;              // meniscus/montecarlo iterations
    fnoionly         = US_Settings::debug_match( "2dsaFinalNoiseOnly" );
+//   fit_bottom       = false;
   
    itvaris  .clear();                 // iteration variances
    ical_sols.clear();                 // iteration final calculated solutes
    simparms = &dsets[ 0 ]->simparams; // pointer to simulation parameters
+   if ( bdata->bottom == simparms->bottom_position )
+   {
+      bdata->bottom    = 0.0;
+   }
 
    s_rfiter         = QString( "" );
    s_mmiter         = QString( "" );
@@ -336,16 +341,25 @@ DbgLv(1) << "2P:SF:   kstask nthreads" << kstask << nthreads << job_queue.size()
 // Set iteration parameters
 void US_2dsaProcess::set_iters( int    mxiter, int    mciter, int    mniter,
                                 double vtoler, double menrng, double cff0,
-                                int    jgref )
+                                int    jgref,  int    fittyp )
 {
    maxiters   = mxiter;
    mmtype     = ( mciter > 1 ) ? 2 : ( ( mniter > 1 ) ? 1 : 0 );
    mmiters    = ( mmtype == 0 ) ? 0 : qMax( mciter, mniter );
+   fit_type   = fittyp;
    varitol    = vtoler;
    menrange   = menrng;
    mendelta   = menrange / (double)( mmiters - 1 );
    cnstff0    = cff0;
    jgrefine   = jgref;
+   ff_none    = ( fit_type == 0 );
+   ff_omeni   = ( fit_type == 1 );
+   ff_obott   = ( fit_type == 2 );
+   ff_menbot  = ( fit_type == 3 );
+   ff_meni    = ( ( fit_type & 1 ) != 0 );
+   ff_bott    = ( ( fit_type & 2 ) != 0 );
+DbgLv(1) << "2PSI: fittyp" << fit_type << "ff_omeni obott menbot meni bott"
+ << ff_omeni << ff_obott << ff_menbot << ff_meni << ff_bott;
 
    int stype  = 0;            // Constant vbar, varying f/f0
    if ( jgrefine > 0 )
@@ -893,21 +907,33 @@ DbgLv(1) << " cc 20w comp D" << model.components[ cc ].D;
    }
 
    // Done with refinement iterations:   check for meniscus or MC iteration
-   int mtiters        = mmiters * mmiters;
+   int mtiters        = ff_menbot ? ( mmiters * mmiters ) : mmiters;
    int k_iter         = mm_iter;
 
    if ( mmtype > 0  &&  ++mm_iter < mtiters )
    {  // doing meniscus or monte carlo and more to do
-      int m_iter         = k_iter / mmiters;
-      int b_iter         = k_iter % mmiters;
+      int m_iter         = ff_menbot ? ( k_iter / mmiters ) :
+                           ( ff_meni ? k_iter : 0 );
+      int b_iter         = ff_menbot ? ( k_iter % mmiters ) :
+                           ( ff_bott ? k_iter : 0 );
       double bmeniscus   = bdata->meniscus;
       double bbottom     = bdata->bottom;
-      double smeniscus   = bmeniscus - menrange * 0.5;
-      double sbottom     = bbottom   - menrange * 0.5;
-      edata->meniscus    = smeniscus + (double)m_iter * mendelta;
-      edata->bottom      = sbottom   + (double)b_iter * mendelta;
-      simparms->meniscus = edata->meniscus;
-      simparms->bottom   = edata->bottom;
+      double emeniscus   = bmeniscus;
+      double ebottom     = bbottom;
+      if ( ff_meni )
+      {
+         emeniscus          = ( bmeniscus - menrange * 0.5 ) +
+                              ( (double)m_iter * mendelta );
+      }
+      if ( ff_bott )
+      {
+         ebottom            = ( bbottom   - menrange * 0.5 ) +
+                              ( (double)b_iter * mendelta );
+      }
+      edata->meniscus    = emeniscus;
+      edata->bottom      = ebottom;
+      simparms->meniscus = emeniscus;
+      simparms->bottom   = ebottom;
       s_rfiter           = QString::number( r_iter + 1 );
       s_mmiter           = QString::number( mm_iter );
       s_variance         = QString::number( vari_curr );
@@ -915,7 +941,13 @@ DbgLv(1) << " cc 20w comp D" << model.components[ cc ].D;
       s_bottom           = QString::number( edata->bottom );
 
 DbgLv(1) << "MENISC: k_iter m_iter b_iter" << k_iter << m_iter << b_iter
- << "meniscus bottom" << edata->meniscus << simparms->bottom << bbottom;
+ << "meniscus bottom" << edata->meniscus << simparms->bottom
+ << "bbottom mtiters" << bbottom << mtiters;
+if(mtiters>50)
+ DbgLv(1) << "MENISC: mtiters mmiters" << mtiters << mmiters
+  << "ff_: omeni" << ff_omeni << "obott" << ff_obott
+  << "menbot" << ff_menbot << "meni" << ff_meni << "bott" << ff_bott;
+
       emit process_complete( mmtype );  // signal that iteration is complete
 
       if ( mmtype == 1 )
@@ -929,17 +961,21 @@ DbgLv(1) << "MENISC: k_iter m_iter b_iter" << k_iter << m_iter << b_iter
 else
 DbgLv(1) << "MENISC: k_iter mm_iter mtiter mmtype" << k_iter << mm_iter << mtiters << mmtype;
 
-
    if ( mmtype == 1 )
    {
-      int m_iter         = k_iter / mmiters;
-      int b_iter         = k_iter % mmiters;
-      double bmeniscus   = bdata->meniscus;
-      double bbottom     = bdata->bottom;
-      double smeniscus   = bmeniscus - menrange * 0.5;
-      double sbottom     = bbottom   - menrange * 0.5;
+      int m_iter         = ff_menbot ? ( k_iter / mmiters ) :
+                           ( ff_meni ? k_iter : 0 );
+      double smeniscus   = bdata->meniscus - menrange * 0.5;
       edata->meniscus    = smeniscus + (double)m_iter * mendelta;
-      edata->bottom      = sbottom   + (double)b_iter * mendelta;
+      edata->bottom      = bdata->bottom;
+
+      if ( ff_bott )
+      {
+         int b_iter         = ff_menbot ? ( k_iter % mmiters ) :
+                              ( ff_bott ? k_iter : 0 );
+         double sbottom     = bdata->bottom   - menrange * 0.5;
+         edata->bottom      = sbottom   + (double)b_iter * mendelta;
+      }
    }
 
    s_variance         = QString::number( vari_curr );
@@ -1526,22 +1562,33 @@ void US_2dsaProcess::set_meniscus()
    // Give the working data set an appropriate meniscus value
 //   int k_iter         = mm_iter - 1;
    int k_iter         = mm_iter;
-   int m_iter         = k_iter / mmiters;
-   int b_iter         = k_iter % mmiters;
+   int m_iter         = ff_menbot ? ( k_iter / mmiters ) :
+                        ( ff_meni ? k_iter : 0 );
+   int b_iter         = ff_menbot ? ( k_iter % mmiters ) :
+                        ( ff_bott ? k_iter : 0 );
 DbgLv(1) << "SET_MEN: k_iter m_iter b_iter" << k_iter << m_iter << b_iter;
    double bmeniscus   = bdata->meniscus;
    double bbottom     = bdata->bottom;
 DbgLv(1) << "SET_MEN: bmeniscus bbottom" << bmeniscus << bbottom;
-   double smeniscus   = bmeniscus - menrange * 0.5;
-   double sbottom     = bbottom   - menrange * 0.5;
-DbgLv(1) << "SET_MEN: smeniscus sbottom" << smeniscus << sbottom;
-   edata->meniscus    = smeniscus + (double)m_iter * mendelta;
-   edata->bottom      = sbottom   + (double)b_iter * mendelta;
+   double emeniscus   = bmeniscus;
+   double ebottom     = bbottom;
+   if ( ff_meni )
+   {
+      emeniscus          = ( bmeniscus - menrange * 0.5 ) +
+                           ( (double)m_iter * mendelta );
+   }
+   if ( ff_bott )
+   {
+      ebottom            = ( bbottom   - menrange * 0.5 ) +
+                           ( (double)b_iter * mendelta );
+   }
+   edata->meniscus    = emeniscus;
+   edata->bottom      = ebottom;
 DbgLv(1) << "SET_MEN: emeniscus ebottom" << edata->meniscus << edata->bottom;
    simparms->meniscus = edata->meniscus;
    simparms->bottom   = edata->bottom;
 DbgLv(1) << "SET_MEN: k_iter m_iter b_iter" << k_iter << m_iter << b_iter
- << "meniscus bottom" << edata->meniscus << simparms->bottom << bbottom;
+ << "meniscus bottom" << edata->meniscus << simparms->bottom << "bbot" << bbottom;
 
    // Re-queue all the original subgrid tasks
    if ( mm_iter > 0 )

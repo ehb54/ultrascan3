@@ -120,6 +120,7 @@ class US_AnalysisControl2D : public US_WidgetsDialog
       QCheckBox*    ck_unifgr;
       QCheckBox*    ck_custgr;
       QCheckBox*    ck_menisc;
+      QCheckBox*    ck_bottom;
       QCheckBox*    ck_ranlgr;
       QCheckBox*    ck_soluco;
       QCheckBox*    ck_clipcs;

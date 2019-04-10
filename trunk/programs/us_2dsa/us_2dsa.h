@@ -110,7 +110,6 @@ class US_2dsa : public US_AnalysisBase2
       QString distrib_info(      void );
       QString iteration_info(    void );
       QString fit_meniscus_data( void );
-      QString fit_menibott_data( void );
       void data_plot( void );
       void write_report( QTextStream& );
       void write_bmap( const QString );
