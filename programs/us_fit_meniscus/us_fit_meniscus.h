@@ -102,6 +102,7 @@ class US_FitMeniscus : public US_Widgets
 
       QwtCounter*          ct_zfloor;
 
+      QBoxLayout*          plot;
       QwtPlot*             meniscus_plot;
       QwtPlot*             menibott_plot;
       QwtPlotCurve*        raw_curve;
@@ -129,6 +130,8 @@ class US_FitMeniscus : public US_Widgets
       int                  dbg_level;
 
       bool                 have3val;
+      bool                 bott_fit;
+
    private slots:
       void reset    (      void );
       void load_data(      void );
@@ -145,6 +148,7 @@ class US_FitMeniscus : public US_Widgets
       void noises_in_edit( QString, QStringList&,
                            QStringList&, QStringList& );
       QwtLinearColorMap* ColorMapCopy( QwtLinearColorMap* );
+      void change_plot_type( void );
 
       void help     ( void )
       { showHelp.show_help( "manual/fit_meniscus.html" ); };

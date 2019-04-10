@@ -572,10 +572,12 @@ void US_2dsa::save( void )
    bool    refIter      = model.description.contains( "REFITERS" );
 DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    bool    fitMeni      = ( model.global == US_Model::MENISCUS );
+   bool    fitBott      = ( model.global == US_Model::BOTTOM );
    bool    montCar      = model.monteCarlo;
    QString analysisType = QString( cusGrid ? "2DSA-CG" : "2DSA" )
                         + QString( refIter ? "-IT" : "" )
                         + QString( fitMeni ? "-FM" : "" )
+                        + QString( fitBott ? "-FB" : "" )
                         + QString( montCar ? "-MC" : "" );
    QString requestID    = "local";
    QString tripleID     = edata->cell + edata->channel + edata->wavelength; 
@@ -689,8 +691,17 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
                              .section( ' ', 0, 0 ).toDouble();
          bottom            = mdesc.mid( mdesc.indexOf( "BOTTOM=" ) + 7 )
                              .section( ' ', 0, 0 ).toDouble();
-         iterID.sprintf( "i%02d-m%05db%05d", iterNum, qRound( meniscus * 10000 ),
-                         qRound( bottom * 10000 ) );
+         if ( bottom > 0.0 )
+            iterID.sprintf( "i%02d-m%05db%05d", iterNum, qRound( meniscus * 10000 ),
+                            qRound( bottom * 10000 ) );
+         else
+            iterID.sprintf( "i%02d-m%05d", iterNum, qRound( meniscus * 10000 ) );
+      }
+      else if ( fitBott )
+      {
+         bottom            = mdesc.mid( mdesc.indexOf( "BOTTOM=" ) + 7 )
+                             .section( ' ', 0, 0 ).toDouble();
+         iterID.sprintf( "i%02d-b%05d", iterNum, qRound( bottom * 10000 ) );
       }
 
       // fill in actual model parameters needed for output
@@ -822,6 +833,11 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    QString plot4File = filebase + "velocity_nc.svgz";
    QString fitFile   = filebase + "fitmen.dat";
    QString fresFile  = respath  + "2dsa-fm" + dext2 + ".fitmen.dat";
+   if ( fitBott )
+   {
+      fitFile           = filebase + "fitbot.dat";
+      fresFile          = respath  + "2dsa-fb" + dext2 + ".fitbot.dat";
+   }
    QString dsinfFile = QString( filebase ).replace( analynode, "/dsinfo." )
                                 + "dataset_info.html";
 
@@ -906,8 +922,8 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    update_filelist( repfiles, plot3File );
    update_filelist( repfiles, plot4File );
 
-   // Add fit files if fit-meniscus
-   if ( fitMeni )
+   // Add fit files if fit-meniscus or fit-bottom
+   if ( fitMeni  ||  fitBott )
    {
       QString fitstr = fit_meniscus_data();
 
@@ -1044,7 +1060,8 @@ DbgLv(0) << "2DSA d_corr v vW vT d dW dT" << sd.viscosity << sd.viscosity_wt
    dset.simparams.initFromData( dbP, dataList[ drow ], !exp_steps );
    edata->bottom   = ( edata->bottom > 0.0 ) ?
                      edata->bottom :
-                     dset.simparams.bottom;
+                     0.0;
+//                     dset.simparams.bottom;
 DbgLv(1) << "2DSA:o_fit: ebottom" << edata->bottom;
 
    if ( exp_steps )
@@ -1494,6 +1511,9 @@ QString US_2dsa::fit_meniscus_data()
    if ( nmodels < 2 )
       return mstr;
 
+    bool usebot  = ( QString( models[ 0 ].description )
+                     .indexOf( "BOTTOM=" ) > 0 );
+
    for ( int ii = 0; ii < nmodels; ii++ )
    {
       QString mdesc = models[ ii ].description;
@@ -1502,39 +1522,23 @@ QString US_2dsa::fit_meniscus_data()
       QString armsd = QString().sprintf( "%10.8f", rmsd );
       QString ameni = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 )
                       .section( " ", 0, 0 );
-      QString abott = mdesc.mid( mdesc.indexOf( "BOTTOM=" ) + 7 )
-                      .section( " ", 0, 0 );
-      mstr         += ( ameni + " " + abott + " " + armsd + "\n" );
+      if ( usebot )
+      {
+         QString abott = mdesc.mid( mdesc.indexOf( "BOTTOM=" ) + 7 )
+                         .section( " ", 0, 0 );
+         mstr         += ( ameni + " " + abott + " " + armsd + "\n" );
 DbgLv(1) << "fitmdat:  ii" << ii << "meni bott rmsd"
  << ameni << abott << armsd;
+      }
+      else
+      {
+         mstr         += ( ameni + " " + armsd + "\n" );
+DbgLv(1) << "fitmdat:  ii" << ii << "meni rmsd"
+ << ameni << armsd;
+      }
    }
    
    return mstr;
-}
-
-// Fit meniscus,bottom data table string
-QString US_2dsa::fit_menibott_data()
-{
-   QString mbstr = "";
-   int nmodels   = models.size();
-   
-   if ( nmodels < 2 )
-      return mbstr;
-
-   for ( int ii = 0; ii < nmodels; ii++ )
-   {
-      QString mdesc = models[ ii ].description;
-      QString avari = mdesc.mid( mdesc.indexOf( "VARI=" ) + 5 );
-      double  rmsd  = sqrt( avari.section( " ", 0, 0 ).toDouble() );
-      QString armsd = QString().sprintf( "%10.8f", rmsd );
-      QString ameni = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 )
-                      .section( " ", 0, 0 );
-      QString abott = mdesc.mid( mdesc.indexOf( "BOTTOM=" ) + 7 )
-                      .section( " ", 0, 0 );
-      mbstr        += ( ameni + " " + abott + " " + armsd + "\n" );
-   }
-   
-   return mbstr;
 }
 
 // Public slot to mark residual plot dialog closed

@@ -402,6 +402,9 @@ QString US_Model::typeText( int subtype )
          if ( global == MENISCUS )          // Fit Meniscus subtype
             tdesc    = tdesc + "-FM";
 
+         else if ( global == BOTTOM )       // Fit Bottom subtype
+            tdesc    = tdesc + "-FB";
+
          else if ( global == GLOBAL )       // Global subtype
          {
             tdesc    = ( jj > 0 ) ? tdesc + "-GL" : "Global";

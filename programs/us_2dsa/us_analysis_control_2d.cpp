@@ -85,8 +85,9 @@ US_AnalysisControl2D::US_AnalysisControl2D( QList< SS_DATASET* >& dsets,
 
    QLabel* lb_optimiz      = us_banner( tr( "Optimization Methods:" ) );
    QLabel* lb_gridreps     = us_label(  tr( "Grid Repetitions:" ) );
-   QLabel* lb_menisrng     = us_label(  tr( "Meniscus Fit Range (cm):" ) );
-   QLabel* lb_menispts     = us_label(  tr( "Meniscus Grid Points:" ) );
+//   QLabel* lb_menisrng     = us_label(  tr( "Meniscus Fit Range (cm):" ) );
+   QLabel* lb_menisrng     = us_label(  tr( "Fit Range (cm):" ) );
+   QLabel* lb_menispts     = us_label(  tr( "Fit Grid Points:" ) );
    QLabel* lb_mciters      = us_label(  tr( "Monte Carlo Iterations:" ) );
    QLabel* lb_iters        = us_label(  tr( "Maximum Iterations:" ) );
    QLabel* lb_statinfo     = us_banner( tr( "Status Information:" ) );
@@ -151,7 +152,9 @@ DbgLv(1) << "idealThrCout" << nthr;
    QLayout*  lo_custgr  =
       us_checkbox( tr( "Custom Grid"             ), ck_custgr, false );
    QLayout*  lo_menisc  =
-      us_checkbox( tr( "Float Meniscus Position" ), ck_menisc, false );
+      us_checkbox( tr( "Float Meniscus"          ), ck_menisc, false );
+   QLayout*  lo_bottom  =
+      us_checkbox( tr( "Float Bottom"            ), ck_bottom, false );
    QLayout*  lo_mcarlo  =
       us_checkbox( tr( "Monte Carlo Iterations"  ), ck_mcarlo, false );
 
@@ -168,7 +171,7 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_menisrng  = us_counter( 3, 0.01, 0.65, 0.03 );
    ct_menispts  = us_counter( 2,    3,   51,   11 );
    ct_mciters   = us_counter( 3,    3, 2000,   20 );
-   ct_menisrng ->setSingleStep( 0.01 );
+   ct_menisrng ->setSingleStep( 0.001 );
    ct_menispts ->setSingleStep(    1 );
    ct_mciters  ->setSingleStep(    1 );
    ct_iters    ->setSingleStep(    1 );
@@ -224,9 +227,13 @@ DbgLv(1) << "idealThrCout" << nthr;
    optimizeLayout->addWidget( le_gridreps,   row++, 1, 1, 3 );
    optimizeLayout->addLayout( lo_custgr,     row,   0, 1, 2 );
    optimizeLayout->addWidget( pb_ldmodel,    row++, 2, 1, 2 );
-   optimizeLayout->addLayout( lo_menisc,     row++, 0, 1, 4 );
-   optimizeLayout->addWidget( lb_menisrng,   row,   0, 1, 2 );
-   optimizeLayout->addWidget( ct_menisrng,   row++, 2, 1, 2 );
+//   optimizeLayout->addLayout( lo_menisc,     row++, 0, 1, 4 );
+   optimizeLayout->addLayout( lo_menisc,     row,   0, 1, 2 );
+   optimizeLayout->addLayout( lo_bottom,     row++, 2, 1, 2 );
+//   optimizeLayout->addWidget( lb_menisrng,   row,   0, 1, 2 );
+//   optimizeLayout->addWidget( ct_menisrng,   row++, 2, 1, 2 );
+   optimizeLayout->addWidget( lb_menisrng,   row,   0, 1, 1 );
+   optimizeLayout->addWidget( ct_menisrng,   row++, 1, 1, 3 );
    optimizeLayout->addWidget( lb_menispts,   row,   0, 1, 2 );
    optimizeLayout->addWidget( ct_menispts,   row++, 2, 1, 2 );
    optimizeLayout->addLayout( lo_mcarlo,     row++, 0, 1, 4 );
@@ -263,6 +270,8 @@ DbgLv(1) << "idealThrCout" << nthr;
    connect( ck_custgr, SIGNAL( toggled( bool ) ),
             this,  SLOT( checkCusGrid(  bool ) ) );
    connect( ck_menisc, SIGNAL( toggled( bool ) ),
+            this,  SLOT( checkMeniscus( bool ) ) );
+   connect( ck_bottom, SIGNAL( toggled( bool ) ),
             this,  SLOT( checkMeniscus( bool ) ) );
    connect( ck_mcarlo, SIGNAL( toggled( bool ) ),
             this,  SLOT( checkMonteCar( bool ) ) );
@@ -315,8 +324,11 @@ DbgLv(1) << "idealThrCout" << nthr;
 // enable/disable optimize counters based on chosen method
 void US_AnalysisControl2D::optimize_options()
 {
-   ct_menisrng->setEnabled( ck_menisc->isChecked() );
-   ct_menispts->setEnabled( ck_menisc->isChecked() );
+   ct_menisrng->setEnabled( ck_menisc->isChecked() ||
+                            ck_bottom->isChecked() );
+   ct_menispts->setEnabled( ck_menisc->isChecked() ||
+                            ck_bottom->isChecked() );
+//   ck_bottom  ->setEnabled( ck_menisc->isChecked() );
    ct_mciters ->setEnabled( ck_mcarlo->isChecked() );
 
    ck_tinoise ->setEnabled( ! ck_mcarlo->isChecked() );
@@ -631,10 +643,14 @@ DbgLv(1) << "AnaC:St: sdelt kdelt" << sdelt << kdelt
    connect( processor, SIGNAL( process_complete(  int  ) ),
             this,      SLOT(   completed_process( int  ) ) );
 
-   int    mxiter = (int)ct_iters->value();
-   int    mniter = ck_menisc->isChecked() ?
+   int mxiter    = (int)ct_iters->value();
+   int mniter    = ( ck_menisc->isChecked() ||
+                     ck_bottom->isChecked() ) ?
                    (int)ct_menispts->value() : 0;
-   int    mciter = ck_mcarlo->isChecked() ?
+   int fittype   = 0;
+   fittype      |= ( ck_menisc->isChecked() ? 1 : 0 );
+   fittype      |= ( ck_bottom->isChecked() ? 2 : 0 );
+   int mciter    = ck_mcarlo->isChecked() ?
                    (int)ct_mciters ->value() : 0;
    double vtoler = 1.0e-12;
    double menrng = ct_menisrng->value();
@@ -646,7 +662,8 @@ DbgLv(1) << "AnaC:St: sdelt kdelt" << sdelt << kdelt
       return;
 
    // Begin the fit
-   processor->set_iters( mxiter, mciter, mniter, vtoler, menrng, cff0, ngrr );
+   processor->set_iters( mxiter, mciter, mniter, vtoler, menrng,
+                         cff0, ngrr, fittype );
 
    processor->start_fit( slo, sup, nss, klo, kup, nks,
          ngrr, nthr, noif );
@@ -1028,13 +1045,34 @@ DbgLv(1) << "AC:cp inum mmit vari meni bott"
    }
 
    else if ( ck_menisc->isChecked() )
-   {  // Meniscus
+   {  // Meniscus (or Meniscus,Bottom)
       model->global      = US_Model::MENISCUS;
-      model->description = QString( "MMITER=%1 VARI=%2 MENISCUS=%3 BOTTOM=%4" )
-                           .arg( mmitnum ).arg( varinew ).arg( meniscus ).arg( bottom );
+      if ( ck_bottom->isChecked() )
+      {  // Meniscus,Bottom-fit
+         model->description = QString( "MMITER=%1 VARI=%2 MENISCUS=%3 BOTTOM=%4" )
+                              .arg( mmitnum ).arg( varinew ).arg( meniscus ).arg( bottom );
+         le_iteration->setText( QString::number( iternum  ) + " , Model " +
+                                QString::number( mmitnum  ) + " , Meniscus " +
+                                QString::number( meniscus ) + " , Bottom " +
+                                QString::number( bottom ) );
+      }
+      else
+      {  // Meniscus-fit
+         model->description = QString( "MMITER=%1 VARI=%2 MENISCUS=%3" )
+                              .arg( mmitnum ).arg( varinew ).arg( meniscus );
+         le_iteration->setText( QString::number( iternum  ) + " , Model " +
+                                QString::number( mmitnum  ) + " , Meniscus " +
+                                QString::number( meniscus ) );
+      }
+   }
+
+   else if ( ck_bottom->isChecked() )
+   {  // Bottom-fit (only)
+      model->global      = US_Model::BOTTOM;
+      model->description = QString( "MMITER=%1 VARI=%2 BOTTOM=%4" )
+                           .arg( mmitnum ).arg( varinew ).arg( bottom );
       le_iteration->setText( QString::number( iternum  ) + " , Model " +
-                             QString::number( mmitnum  ) + " , Meniscus " +
-                             QString::number( meniscus ) + " , Bottom " +
+                             QString::number( mmitnum  ) + " , Bottom " +
                              QString::number( bottom ) );
    }
 

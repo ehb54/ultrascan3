@@ -68,7 +68,9 @@ class US_2dsaProcess : public QObject
       //! \param menrng  Meniscus range
       //! \param cff0    Constant f/f0 (or 0.0)
       //! \param jgref   Flag of refine/solute type
-      void set_iters( int, int, int, double, double, double, int );
+      //! \param fittyp  Flag of fit: 0-3 -> none,meni,bott,menbot
+      void set_iters( int, int, int, double, double, double, int,
+                      int = 0 );
 
       //! \brief Get results upon completion of all refinements
       //! \param da_sim  Calculated simulation data
@@ -182,9 +184,16 @@ private:
       int        mm_iter;      // meniscus/MC iteration index
       int        ntisols;      // number total task input solutes
       int        ntcsols;      // number total task computed solutes
+      int        fit_type;     // fit type flag: 0-3 => none,meni,bott,menbot
 
       bool       abort;        // flag used with stop_fit clicked
       bool       fnoionly;     // flag to use noise flag on final call only
+      bool       ff_none;      // fit flag: no fits
+      bool       ff_omeni;     // fit flag: only fit-meniscus
+      bool       ff_obott;     // fit flag: only fit-bottom
+      bool       ff_menbot;    // fit flag: fit-meniscus+bottom
+      bool       ff_meni;      // fit flag: fit-meniscus (omeni or menbot)
+      bool       ff_bott;      // fit flag: fit-bottom (obott or menbot)
 
       double     slolim;       // s lower limit
       double     suplim;       // s upper limit

@@ -19,9 +19,6 @@
 #define setSamples(a,b,c)  setData(a,b,c)
 #define setSymbol(a)       setSymbol(*a)
 #endif
-#if 1
-#define USE_3DPLOT
-#endif
 
 //! \brief Main program for US_FitMeniscus. Loads translators and starts
 //         the class US_FitMeniscus.
@@ -60,8 +57,10 @@ US_FitMeniscus::US_FitMeniscus() : US_Widgets()
 DbgLv(1) << "Main: AA";
 
    // Lay out the meniscus,rmsd text box
+//   te_data = new US_Editor( US_Editor::LOAD, false,
+//         "results/*-fm*.fit*dat;;*.dat;;*.*" );
    te_data = new US_Editor( US_Editor::LOAD, false,
-         "results/*-fm*.fit*dat;;*.dat;;*.*" );
+         "results/*.fitmen.dat;;*.fitbot.dat;;*.dat;;*.*" );
    connect( te_data, SIGNAL( US_EditorLoadComplete( QString ) ), 
                      SLOT  ( file_loaded(           QString ) ) );
    
@@ -110,22 +109,21 @@ DbgLv(1) << "Main: BB";
    connect( ct_zfloor, SIGNAL( valueChanged( double ) ),
             this,      SLOT  ( plot_data()            ) );
 
-   lb_order      = us_label( tr( "Fit Order:" ) );
+
+   lb_order     = us_label( tr( "Fit Order:" ) );
+   lb_men_sel   = us_label( tr( "Meniscus selected:" ) );
+   lb_rms_error = us_label( tr( "RMS Error:" ) );
+   lb_men_lor   = us_label( tr( "Low-RMSD Meniscus:" ) );
+   lb_bot_lor   = us_label( tr( "Low-RMSD Bottom:" ) );
+   lb_men_fit   = us_label( tr( "Fit Meniscus:" ) );
+   lb_bot_fit   = us_label( tr( "Fit Bottom:" ) );
+   lb_mprads    = us_label( tr( "Mid-Point Radii:" ) );
 
    sb_order = new QSpinBox();
    sb_order->setRange( 2, 9 );
    sb_order->setValue( 2 );
    sb_order->setPalette( US_GuiSettings::editColor() );
    sb_order->setToolTip( tr( "Order of fitting curve" ) );
-   connect( sb_order, SIGNAL( valueChanged( int ) ),
-            this,     SLOT( plot_data( int ) ) );
-
-   lb_men_sel   = us_label( tr( "Meniscus selected:" ) );
-   lb_men_lor   = us_label( tr( "Low-RMSD Meniscus:" ) );
-   lb_bot_lor   = us_label( tr( "Low-RMSD Bottom:" ) );
-   lb_men_fit   = us_label( tr( "Fit Meniscus:" ) );
-   lb_bot_fit   = us_label( tr( "Fit Bottom:" ) );
-   lb_mprads    = us_label( tr( "Mid-Point Radii:" ) );
 
    le_men_lor   = us_lineedit( "", -1, false );
    le_men_lor->setToolTip(
@@ -146,11 +144,13 @@ DbgLv(1) << "Main: BB";
    le_men_sel   = us_lineedit( "", -1, false );
    le_men_sel->setToolTip(
          tr( "Selected/Editable meniscus radius value" ) );
-   lb_rms_error = us_label( tr( "RMS Error:" ) );
    
    le_rms_error = us_lineedit( "", -1, true );
    le_rms_error->setToolTip(
          tr( "RMS error of curve to meniscus,rmsd points" ) );
+
+   connect( sb_order, SIGNAL( valueChanged( int ) ),
+            this,     SLOT( plot_data( int ) ) );
 
    dkdb_cntrls            = new US_Disk_DB_Controls(
          US_Settings::default_data_location() );
@@ -206,14 +206,16 @@ DbgLv(1) << "Main: BB";
    int row = 0;
    cntrlsLayout->addWidget( lb_status,    row,    0, 1,  1 );
    cntrlsLayout->addWidget( le_status,    row++,  1, 1, 15 );
+   cntrlsLayout->addWidget( lb_men_sel,   row,    0, 1,  5 );
+   cntrlsLayout->addWidget( le_men_sel,   row,    5, 1,  3 );
+   cntrlsLayout->addWidget( lb_rms_error, row,    8, 1,  2 );
+   cntrlsLayout->addWidget( le_rms_error, row,   10, 1,  2 );
+   cntrlsLayout->addWidget( lb_order,     row,   12, 1,  2 );
+   cntrlsLayout->addWidget( sb_order,     row++, 14, 1,  2 );
    cntrlsLayout->addWidget( lb_men_lor,   row,    0, 1,  3 );
    cntrlsLayout->addWidget( le_men_lor,   row,    3, 1,  3 );
    cntrlsLayout->addWidget( lb_men_fit,   row,    6, 1,  3 );
    cntrlsLayout->addWidget( le_men_fit,   row,    9, 1,  2 );
-//   cntrlsLayout->addWidget( lb_rms_error, row,    8, 1,  2 );
-//   cntrlsLayout->addWidget( le_rms_error, row,   10, 1,  2 );
-//   cntrlsLayout->addWidget( lb_order,     row,   12, 1,  2 );
-//   cntrlsLayout->addWidget( sb_order,     row++, 14, 1,  2 );
    cntrlsLayout->addWidget( lb_zfloor,    row,   11, 1,  3 );
    cntrlsLayout->addWidget( ct_zfloor,    row++, 14, 1,  2 );
    cntrlsLayout->addWidget( lb_bot_lor,   row,    0, 1,  3 );
@@ -231,9 +233,11 @@ DbgLv(1) << "Main: BB";
    cntrlsLayout->addWidget( pb_reset,     row,    4, 1,  4 );
    cntrlsLayout->addWidget( pb_help,      row,    8, 1,  4 );
    cntrlsLayout->addWidget( pb_accept,    row,   12, 1,  4 );
+
    for ( int ii = 0; ii < 16; ii++ )
       cntrlsLayout->setColumnStretch( ii, 1 );
-DbgLv(1) << "Main: KK";
+
+   change_plot_type();
 
    // Define final layout
    topLayout   ->addLayout( leftLayout   );
@@ -246,45 +250,33 @@ DbgLv(1) << "Main: KK";
    mainLayout  ->addLayout( bottomLayout );
    mainLayout  ->setStretchFactor( topLayout,    2 );
    mainLayout  ->setStretchFactor( bottomLayout, 2 );
-DbgLv(1) << "Main: XX";
 
    te_data->e->setPlainText( "123 :  6.34567, 7.34567, 0.00567890" );
    te_data->adjustSize();
    adjustSize();
 
 //   te_data->e->setPlainText( "" );
-DbgLv(1) << "Main: YY";
    reset();
-DbgLv(1) << "Main: ZZ";
 }
 
 // Clear the plot, m-r table text, and other elements
 void US_FitMeniscus::reset( void )
 {
-DbgLv(1) << " Res: AA";
-   dataPlotClear( meniscus_plot );
-DbgLv(1) << " Res: BB";
+//   dataPlotClear( meniscus_plot );
    meniscus_plot->replot();
-DbgLv(1) << " Res: CC";
    
    te_data->e   ->setPlainText( "" );
    le_men_lor   ->setText( "" );
    le_bot_lor   ->setText( "" );
    le_men_fit   ->setText( "" );
    le_bot_fit   ->setText( "" );
-DbgLv(1) << " Res: JJ";
    le_mprads    ->setText( "" );
-DbgLv(1) << " Res: KK";
    sb_order     ->setValue( 2 );
-DbgLv(1) << " Res: LL";
    le_rms_error ->setText( "" );
-DbgLv(1) << " Res: MM";
    le_men_sel   ->setText( "" );
-DbgLv(1) << " Res: YY";
    v_meni       .clear();
    v_bott       .clear();
    v_rmsd       .clear();
-DbgLv(1) << " Res: ZZ";
 }
 
 // Plot the data
@@ -322,6 +314,8 @@ void US_FitMeniscus::load_data()
    v_meni.clear();
    v_bott.clear();
    v_rmsd.clear();
+    bott_fit         = fname_load.contains( "fitbot" );
+DbgLv(1) << "LD:  bott_fit" << bott_fit << "fname_load" << fname_load;
 
    for ( int ii = 0; ii < lines.size(); ii++ )
    {
@@ -348,7 +342,6 @@ DbgLv(1) << "LD:  ii" << ii << "valsize" << valsize;
 
       if ( valsize == 3 ) 
       {
-         have3val      = true;
          rmsdv         = values[ 2 ].toDouble();
          v_meni << rmeni;
          v_bott << rbott;
@@ -372,452 +365,19 @@ DbgLv(1) << "LD:  ii" << ii << "valsize" << valsize;
       }
    }
 
+   bool was3val  = have3val;
    have3val      = ( v_bott.count() > 0 );
    te_data->e->setPlainText( parsed.join( "\n" ) );
+
+   if ( ( have3val && !was3val )  || 
+        ( !have3val && was3val ) )
+      change_plot_type();
 }
 
-#ifndef USE_3DPLOT
-// Plot the data
-void US_FitMeniscus::plot_data( void )
-{
-   dataPlotClear( meniscus_plot );
-
-   QString contents = te_data->e->toPlainText();
-   contents.replace( QRegExp( "[^0-9eE\\.\\n\\+\\-]+" ), " " );
-
-   QStringList lines = contents.split( "\n", QString::SkipEmptyParts );
-   QStringList parsed;
-
-   QVector< double > vradi( lines.size() );
-   QVector< double > vrmsd( lines.size() );
-   QVector< QString > rlines;
-
-   double* radius_values = vradi.data();
-   double* rmsd_values   = vrmsd.data();
-   
-   int     count = 0;
-
-   double  minx = 1e20;
-   double  maxx = 0.0;
-
-   double  miny = 1e20;
-   double  maxy = 0.0;
-
-   have3val     = false;
-   rad1off      = 0.0;
-   rad2off      = 0.0;
-
-   // Remove any non-data lines and put values in arrays
-   for ( int ii = 0; ii < lines.size(); ii++ )
-   {
-      QStringList values = lines[ ii ].split( ' ', QString::SkipEmptyParts );
-      int valsize        = values.size();
-DbgLv(1) << "PL:  ii" << ii << "valsize" << valsize;
-
-      if ( valsize < 2 )   continue;
-
-      if ( valsize > 3 )
-      {
-         values.removeFirst();
-         valsize--;
-      }
-
-      double radius = values[ 0 ].toDouble();
-      double rbott  = values[ 1 ].toDouble();
-      double rmsdv  = rbott;
-
-      if ( radius < 5.7  || radius > 7.3 )  continue;
-
-      if ( valsize == 3 ) 
-      {
-         have3val      = true;
-         rad1off       = ( rad1off == 0.0 ) ? radius : rad1off;
-         rad2off       = ( rad2off == 0.0 ) ? rbott  : rad2off;
-
-         double radoff = sqrt( sq( radius - rad1off )  +
-                               sq( rbott  - rad2off ) );
-         rmsdv         = values[ 2 ].toDouble();
-         radius_values[ count ] = radoff;
-         rmsd_values  [ count ] = rmsdv;
-
-         rlines << QString::number( radoff, 'f', 6 ) + " " +
-                   QString().sprintf( "%03d ", ( ii + 1 ) ) +
-                   QString::number( rmsdv,  'f', 8 ) + " " +
-                   QString::number( radius, 'f', 5 ) + " " +
-                   QString::number( rbott,  'f', 5 );
-
-      }
-
-      else if ( valsize == 2 )
-      {
-         radius_values[ count ] = radius;
-         rmsd_values  [ count ] = rmsdv;
-      }
-
-      // Find min and max
-      minx = min( minx, radius_values[ count ] );
-      maxx = max( maxx, radius_values[ count ] );
-
-      miny = min( miny, rmsd_values[ count ] );
-      maxy = max( maxy, rmsd_values[ count ] );
-
-      // Reformat
-         //parsed << QString::number( radius_values[ count ], 'e', 6 ) + ", " +
-         //          QString::number( rmsd_values  [ count ], 'e', 6 ); 
-      if ( ! have3val )
-      {
-         parsed << QString().sprintf( "%3d : ", ii + 1 ) +
-                   QString::number( radius_values[ count ], 'f', 5 ) + ", " +
-                   QString::number( rmsd_values  [ count ], 'f', 8 ); 
-      }
-
-      count++;
-   }
-
-   if ( count < 3 ) return;
-
-   // For meniscus+bottom fit, sort entries into radial distance order
-   if ( have3val )
-   {
-      qSort( rlines );
-      for ( int ii = 0; ii < rlines.count(); ii++ )
-      {
-         QString rline    = rlines[ ii ];
-DbgLv(1) << "  ii" << ii << "rline" << rline;
-         QString s_radoff = rline.section( " ", 0, 0 );
-         QString s_count  = rline.section( " ", 1, 1 );
-         QString s_rmsdv  = rline.section( " ", 2, 2 );
-         QString s_radius = rline.section( " ", 3, 3 );
-         QString s_rbott  = rline.section( " ", 4, 4 );
-DbgLv(1) << "    radoff count rmsdv radius rbott"
- << s_radoff << s_count << s_rmsdv << s_radius << s_rbott;
-
-         parsed << s_count + " : " + s_radius + ", " + s_rbott + ", " +
-                   s_rmsdv + "  " + s_radoff;
-
-         radius_values[ ii ] = s_radoff.toDouble();
-         rmsd_values  [ ii ] = s_rmsdv .toDouble();
-      }
-   }
-
-
-   te_data->e->setPlainText( parsed.join( "\n" ) );
-   le_mprads ->setText( QString::number( rad1off ) + ", " +
-                        QString::number( rad2off ) );
-
-   double overscan = ( maxx - minx ) * 0.10;  // 10% overscan
-
-   meniscus_plot->setAxisScale( QwtPlot::xBottom, 
-         minx - overscan, maxx + overscan );
-    
-   // Adjust y axis to scale all the data
-   double dy = fabs( maxy - miny ) / 10.0;
-
-   meniscus_plot->setAxisScale( QwtPlot::yLeft, miny - dy, maxy + dy );
-
-   raw_curve = us_curve( meniscus_plot, tr( "Raw Data" ) ); 
-   raw_curve->setPen    ( QPen( Qt::yellow ) );
-   raw_curve->setSamples( radius_values, rmsd_values, count );
-
-#if 1
-   // Reduce raw x,y to local minima only
-   QVector< double >  vmradi;
-   QVector< double >  vmrmsd;
-   int rcount  = 0;
-   for ( int ii = 1; ii < ( count - 1 ); ii++ )
-   {
-      if ( rmsd_values[ ii ] < rmsd_values[ ii - 1 ]  &&
-           rmsd_values[ ii ] < rmsd_values[ ii + 1 ] )
-      {
-          vmradi << radius_values[ ii ];
-          vmrmsd << rmsd_values  [ ii ];
-          rcount++;
-      }
-   }
-#endif
-#if 0
-   // Reduce raw x,y to best meniscus and best bottom
-   QVector< double >  vmradi;
-   QVector< double >  vmrmsd;
-   QVector< double >  allmeni;
-   QVector< double >  allbott;
-   QVector< double >  ameni;
-   QVector< double >  abott;
-   QVector< double >  armsd;
-   QVector< double >  adist;
-   double lbmeni  = 0.0;
-   double lbbott  = 0.0;
-   double lomrmsd = 1.0e+99;
-   double lobrmsd = 1.0e+99;
-   int rcount     = 0;
-   
-   for ( int ii = 0; ii < rlines.count(); ii++ )
-   {
-      QString rline    = rlines[ ii ];
-//DbgLv(1) << "  ii" << ii << "rline" << rline;
-      double v_radoff = rline.section( " ", 0, 0 ).toDouble();
-      double v_rmsdv  = rline.section( " ", 2, 2 ).toDouble();
-      double v_radius = rline.section( " ", 3, 3 ).toDouble();
-      double v_rbott  = rline.section( " ", 4, 4 ).toDouble();
-      if ( !allmeni.contains( v_radius ) )
-         allmeni << v_radius;
-      if ( !allbott.contains( v_rbott ) )
-         allbott << v_rbott;
-      ameni << v_radius;
-      abott << v_rbott;
-      armsd << v_rmsdv;
-      adist << v_radoff;
-   }
-   for ( int ii = 0; ii < allmeni.count(); ii++ )
-   {  // Find the meniscus with lowest rmsd sum
-      double v_meni  = allmeni[ ii ];
-      double sumrmsd = 0.0;
-      for ( int jj = 0; jj < ameni.count(); jj++ )
-      {
-         if ( ameni[ jj ] == v_meni )
-            sumrmsd += armsd[ jj ];
-      }
-      if ( sumrmsd < lomrmsd )
-      {
-         lomrmsd = sumrmsd;
-         lbmeni  = v_meni;
-      }
-   }
-   for ( int ii = 0; ii < allbott.count(); ii++ )
-   {  // Find the bottom with lowest rmsd sum
-      double v_bott  = allbott[ ii ];
-      double sumrmsd = 0.0;
-      for ( int jj = 0; jj < abott.count(); jj++ )
-      {
-         if ( abott[ jj ] == v_bott )
-            sumrmsd += armsd[ jj ];
-      }
-      if ( sumrmsd < lobrmsd )
-      {
-         lobrmsd = sumrmsd;
-         lbbott  = v_bott;
-      }
-   }
-   for ( int ii = 0; ii < ameni.count(); ii++ )
-   {  // Fill vectors from values at low meniscus and low bottom
-      if ( ameni[ ii ] == lbmeni  ||
-           abott[ ii ] == lbbott )
-//      if ( ameni[ ii ] == lbmeni )
-//      if ( abott[ ii ] == lbbott )
-      {
-         vmradi << adist[ ii ];
-         vmrmsd << armsd[ ii ];
-         rcount++;
-      }
-   }
-#endif
-   double* radmin_vals  = vmradi.data();
-   double* rrmsd_vals   = vmrmsd.data();
-
-   // Plot ellipse symbols along local minima curve
-   QwtPlotCurve* lmcurve = us_curve( meniscus_plot, tr( "Minimum Points" ) ); 
-   QwtSymbol* msym = new QwtSymbol;
-   msym->setStyle( QwtSymbol::Ellipse );
-   msym->setPen  ( QPen( Qt::blue ) );
-   msym->setBrush( QBrush( Qt::white ) );
-   msym->setSize ( 8 );
-   lmcurve->setStyle  ( QwtPlotCurve::NoCurve );
-   lmcurve->setSymbol ( msym );
-   lmcurve->setSamples( radmin_vals, rrmsd_vals, rcount );
-
-   // Do the fit and get the minimum
-
-   double c[ 10 ];
-
-   int order = sb_order->value();
-
-//   if ( ! US_Matrix::lsfit( c, radius_values, rmsd_values, count, order + 1 ) )
-   if ( ! US_Matrix::lsfit( c, radmin_vals, rrmsd_vals, rcount, order + 1 ) )
-   {
-      QMessageBox::warning( this,
-            tr( "Data Problem" ),
-            tr( "The data is inadequate for this fit order" ) );
-      
-      le_men_fit   ->clear();
-      le_bot_fit   ->clear();
-      le_mprads    ->clear();
-      le_rms_error ->clear();
-      meniscus_plot->replot();
-
-      return;  
-   }
-
-   int fit_count = (int) ( ( maxx - minx + 2 * overscan ) / 0.001 );
-
-   QVector< double > vfitx( fit_count );
-   QVector< double > vfity( fit_count );
-   double* fit_x = vfitx.data();
-   double* fit_y = vfity.data();
-   double  x     = minx - overscan;
-   double minimum;
-
-   for ( int i = 0; i < fit_count; i++, x += 0.001 )
-   {
-      fit_x[ i ] = x;
-      fit_y[ i ] = c[ 0 ];
-
-      for ( int j = 1; j <= order; j++ ) 
-         fit_y[ i ] += c[ j ] * pow( x, j );
-   }
-
-   // Calculate Root Mean Square Error
-   double rms_err = 0.0;
-
-   for ( int i = 0; i < count; i++ )
-   {
-      double x = radius_values[ i ];
-      double y = rmsd_values  [ i ];
-
-      double y_calc = c[ 0 ];
-      
-      for ( int j = 1; j <= order; j++ )  
-         y_calc += c[ j ] * pow( x, j );
-      
-      rms_err += sq ( fabs ( y_calc - y ) );
-   }
-
-   le_rms_error->setText( QString::number( sqrt( rms_err / count ), 'e', 5 ) );
-
-   // Find the minimum
-   if ( order == 2 )
-   {
-      // Take the derivitive and get the minimum
-      // c1 + 2 * c2 * x = 0
-      minimum = - c[ 1 ] / ( 2.0 * c[ 2 ] );
-   }
-   else
-   {
-      // Find the zero of the derivative
-      double dxdy  [ 9 ];
-      double d2xdy2[ 8 ];
-
-      // First take the derivitive
-      for ( int i = 0; i < order; i++ ) 
-         dxdy[ i ] = c[ i + 1 ] * ( i + 1 );
-
-      // And we'll need the 2nd derivitive
-      for ( int i = 0; i < order - 1; i++ ) 
-         d2xdy2[ i ] = dxdy[ i + 1 ] * ( i + 1 );
-
-      // We'll do a quadratic fit for the initial estimate
-      double q[ 3 ];
-      US_Matrix::lsfit( q, radius_values, rmsd_values, count, 3 );
-      minimum = - q[ 1 ] / ( 2.0 * q[ 2 ] );
-
-      const double epsilon = 1.0e-4;
-
-      int    k = 0;
-      double f;
-      double f_prime;
-      do
-      {
-        // f is the 1st derivative
-        f = dxdy[ 0 ];
-        for ( int i = 1; i < order; i++ ) f += dxdy[ i ] * pow( minimum, i );
-
-        // f_prime is the 2nd derivative
-        f_prime = d2xdy2[ 0 ];
-        for ( int i = 1; i < order - 1; i++ ) 
-           f_prime += d2xdy2[ i ] * pow( minimum, i );
-
-        if ( fabs( f ) < epsilon ) break;
-        if ( k++ > 10 ) break;
-
-        // Get the next estimate
-        minimum -= f / f_prime;
-
-      } while ( true );
-   }
-
-   fit_curve = us_curve( meniscus_plot, tr( "Fitted Data" ) ); 
-   fit_curve->setPen    ( QPen( Qt::red ) );
-   fit_curve->setSamples( fit_x, fit_y, fit_count );
-   
-   // Plot the minimum
-
-   minimum_curve = us_curve( meniscus_plot, tr( "Minimum Pointer" ) ); 
-   minimum_curve->setPen( QPen( QBrush( Qt::cyan ), 3.0 ) );
-
-   double radius_min[ 2 ];
-   double rmsd_min  [ 2 ];
-
-   radius_min[ 0 ] = minimum;
-   radius_min[ 1 ] = minimum;
-
-   rmsd_min  [ 0 ] = miny - 1.0 * dy;
-   rmsd_min  [ 1 ] = miny + 2.0 * dy;
-
-   minimum_curve->setSamples( radius_min, rmsd_min, 2 );
-
-   // Find meniscus and bottom closest to the minimum offset
-   if ( have3val )
-   {
-      double min_meni = minimum;
-      double min_bott = 0.0;
-      double min_offs = 1.0e+99;
-      double min_dist = 0.015;
-      int min_ix      = 0;
-
-      for ( int ii = 0; ii < rlines.count(); ii++ )
-      {
-         QString rline    = rlines[ ii ];
-DbgLv(1) << "  ii" << ii << "rline" << rline;
-         double radoff    = rline.section( " ", 0, 0 ).toDouble();
-         double offdev    = qAbs( radoff - minimum );
-         if ( offdev < min_offs )
-         {
-            min_offs         = offdev;
-            min_ix           = ii + 1;
-            min_meni         = rline.section( " ", 3, 3 ).toDouble();
-            min_bott         = rline.section( " ", 4, 4 ).toDouble();
-            min_dist         = rline.section( " ", 0, 0 ).toDouble();
-         }
-      }
-      // Put the minimum in the line edit box also
-      le_men_lor->setText( QString::number( min_meni, 'f', 5 ) +
-                           "  ( " +
-                           QString::number( ( min_ix ) + " )" );
-      le_bot_lor->setText( QString::number( min_bott, 'f', 5 ) );
-   }
-   else
-   {  // Old style:  just display meniscus
-      le_men_sel->setText( QString::number( minimum, 'f', 5 ) );
-   }
-
-
-   // Add the marker label -- bold, font size default + 1, lines 3 pixels wide
-   QPen markerPen( QBrush( Qt::white ), 3.0 );
-   markerPen.setWidth( 3 );
-   
-   QwtPlotMarker* pm  = new QwtPlotMarker();
-   QwtText        label( QString::number( minimum, 'f', 5 ) );
-   QFont          font( pm->label().font() );
-   QwtSymbol*     sym = new QwtSymbol( QwtSymbol::Cross, QBrush( Qt::white ),
-                                       markerPen, QSize( 9, 9 ) );
-
-   font.setBold( true );
-   font.setPointSize( font.pointSize() + 1 );
-   label.setFont( font );
-
-   pm->setValue         ( minimum, miny + 3.0 * dy );
-   pm->setSymbol        ( sym ); 
-   pm->setLabel         ( label );
-   pm->setLabelAlignment( Qt::AlignTop );
-
-   pm->attach( meniscus_plot );
-
-   meniscus_plot->replot();
-}
-#endif
-#ifdef USE_3DPLOT
 // Plot the data
 void US_FitMeniscus::plot_3d( void )
 {
+
    bool auto_lim = false;
    double min_x  = 1.0e+99;
    double min_y  = 1.0e+99;
@@ -940,8 +500,6 @@ DbgLv(1) << "pl3d: colormap bg";
 #endif
 
    QColor bg     = colormap->color1();
-
-DbgLv(1) << "pl3d: set background";
    meniscus_plot->setCanvasBackground( bg );
 
    int csum      = bg.red() + bg.green() + bg.blue();
@@ -1005,7 +563,7 @@ DbgLv(1) << "pl3d:    cblack" << cblack << "cwhite" << cwhite;
    meniscus_plot->setAxisTitle( QwtPlot::yLeft,   tr( "Bottom Radius" ) );
    meniscus_plot->setAxisTitle( QwtPlot::yRight,  tr( "Offset Reciprocal RMSD" ) );
    meniscus_plot->axisTitle( QwtPlot::yRight ).setFont(
-         meniscus_plot->axisTitle( QwtPlot::yLeft ).font() );
+                        meniscus_plot->axisTitle( QwtPlot::yLeft ).font() );
    meniscus_plot->setAxisScale( QwtPlot::yRight,
       spec_dat->range().minValue(), spec_dat->range().maxValue() );
    meniscus_plot->enableAxis( QwtPlot::yRight );
@@ -1057,8 +615,234 @@ DbgLv(1) << "pl3d:    cblack" << cblack << "cwhite" << cwhite;
 
 void US_FitMeniscus::plot_2d( void )
 {
+   if ( ! bott_fit )
+   {
+      meniscus_plot->setTitle    ( tr( "Meniscus Fit" ) );
+      meniscus_plot->setAxisTitle( QwtPlot::yLeft,   tr( "2DSA Meniscus RMSD" ) );
+      meniscus_plot->setAxisTitle( QwtPlot::xBottom, tr( "Meniscus Radius" ) );
+      lb_men_sel->setText( tr( "Meniscus selected:" ) );
+   }
+   else
+   {
+      meniscus_plot->setTitle    ( tr( "Bottom Fit" ) );
+      meniscus_plot->setAxisTitle( QwtPlot::yLeft,   tr( "2DSA Bottom RMSD" ) );
+      meniscus_plot->setAxisTitle( QwtPlot::xBottom, tr( "Bottom Radius" ) );
+      lb_men_sel->setText( tr( "Bottom selected:" ) );
+   }
+      
+   meniscus_plot->enableAxis  ( QwtPlot::yRight,  false );
+   dataPlotClear( meniscus_plot );
+   lb_men_sel  ->setVisible( true  );
+   le_men_sel  ->setVisible( true  );
+   lb_rms_error->setVisible( true  );
+   le_rms_error->setVisible( true  );
+   lb_order    ->setVisible( true  );
+   sb_order    ->setVisible( true  );
+   lb_men_lor  ->setVisible( false );
+   le_men_lor  ->setVisible( false );
+   lb_men_fit  ->setVisible( false );
+   le_men_fit  ->setVisible( false );
+   lb_bot_lor  ->setVisible( false );
+   le_bot_lor  ->setVisible( false );
+   lb_bot_fit  ->setVisible( false );
+   le_bot_fit  ->setVisible( false );
+   lb_mprads   ->setVisible( false );
+   le_mprads   ->setVisible( false );
+   lb_zfloor   ->setVisible( false );
+   ct_zfloor   ->setVisible( false );
+
+   int     count = v_meni.count();
+   double* radius_values = v_meni.data();
+   double* rmsd_values   = v_rmsd.data();
+
+   double  minx = 1e20;
+   double  maxx = 0.0;
+
+   double  miny = 1e20;
+   double  maxy = 0.0;
+
+   // Remove any non-data lines and put values in arrays
+   for ( int ii = 0; ii < count; ii++ )
+   {
+      // Find min and max
+      minx = qMin( minx, radius_values[ ii ] );
+      maxx = qMax( maxx, radius_values[ ii ] );
+
+      miny = qMin( miny, rmsd_values[ ii ] );
+      maxy = qMax( maxy, rmsd_values[ ii ] );
+   }
+
+   if ( count < 3 ) return;
+
+   double overscan = ( maxx - minx ) * 0.10;  // 10% overscan
+
+   meniscus_plot->setAxisScale( QwtPlot::xBottom, 
+         minx - overscan, maxx + overscan );
+    
+   // Adjust y axis to scale all the data
+   double dy = fabs( maxy - miny ) / 10.0;
+
+   meniscus_plot->setAxisScale( QwtPlot::yLeft, miny - dy, maxy + dy );
+
+   raw_curve = us_curve( meniscus_plot, tr( "Raw Data" ) ); 
+   raw_curve->setPen    ( QPen( Qt::yellow ) );
+   raw_curve->setSamples( radius_values, rmsd_values, count );
+
+   // Do the fit and get the minimum
+
+   double c[ 10 ];
+
+   int order = sb_order->value();
+
+   if ( ! US_Matrix::lsfit( c, radius_values, rmsd_values, count, order + 1 ) )
+   {
+      QMessageBox::warning( this,
+            tr( "Data Problem" ),
+            tr( "The data is inadequate for this fit order" ) );
+      
+      le_men_fit   ->clear();
+      le_bot_fit   ->clear();
+      le_mprads    ->clear();
+      le_rms_error ->clear();
+      meniscus_plot->replot();
+
+      return;  
+   }
+
+   int fit_count = (int) ( ( maxx - minx + 2 * overscan ) / 0.001 );
+
+   QVector< double > vfitx( fit_count );
+   QVector< double > vfity( fit_count );
+   double* fit_x = vfitx.data();
+   double* fit_y = vfity.data();
+   double  x     = minx - overscan;
+   double minimum;
+
+   for ( int i = 0; i < fit_count; i++, x += 0.001 )
+   {
+      fit_x[ i ] = x;
+      fit_y[ i ] = c[ 0 ];
+
+      for ( int j = 1; j <= order; j++ ) 
+         fit_y[ i ] += c[ j ] * pow( x, j );
+   }
+
+   // Calculate Root Mean Square Error
+   double rms_err = 0.0;
+
+   for ( int i = 0; i < count; i++ )
+   {
+      double x = radius_values[ i ];
+      double y = rmsd_values  [ i ];
+
+      double y_calc = c[ 0 ];
+      
+      for ( int j = 1; j <= order; j++ )  
+         y_calc += c[ j ] * pow( x, j );
+      
+      rms_err += sq ( fabs ( y_calc - y ) );
+   }
+
+   le_rms_error->setText( QString::number( sqrt( rms_err / count ), 'e', 5 ) );
+
+   // Find the minimum
+   if ( order == 2 )
+   {
+      // Take the derivitive and get the minimum
+      // c1 + 2 * c2 * x = 0
+      minimum = - c[ 1 ] / ( 2.0 * c[ 2 ] );
+   }
+   else
+   {
+      // Find the zero of the derivative
+      double dxdy  [ 9 ];
+      double d2xdy2[ 8 ];
+
+      // First take the derivitive
+      for ( int i = 0; i < order; i++ ) 
+         dxdy[ i ] = c[ i + 1 ] * ( i + 1 );
+
+      // And we'll need the 2nd derivitive
+      for ( int i = 0; i < order - 1; i++ ) 
+         d2xdy2[ i ] = dxdy[ i + 1 ] * ( i + 1 );
+
+      // We'll do a quadratic fit for the initial estimate
+      double q[ 3 ];
+      US_Matrix::lsfit( q, radius_values, rmsd_values, count, 3 );
+      minimum = - q[ 1 ] / ( 2.0 * q[ 2 ] );
+
+      const double epsilon = 1.0e-4;
+
+      int    k = 0;
+      double f;
+      double f_prime;
+      do
+      {
+        // f is the 1st derivative
+        f = dxdy[ 0 ];
+        for ( int i = 1; i < order; i++ ) f += dxdy[ i ] * pow( minimum, i );
+
+        // f_prime is the 2nd derivative
+        f_prime = d2xdy2[ 0 ];
+        for ( int i = 1; i < order - 1; i++ ) 
+           f_prime += d2xdy2[ i ] * pow( minimum, i );
+
+        if ( fabs( f ) < epsilon ) break;
+        if ( k++ > 10 ) break;
+
+        // Get the next estimate
+        minimum -= f / f_prime;
+
+      } while ( true );
+   }
+
+   fit_curve = us_curve( meniscus_plot, tr( "Fitted Data" ) ); 
+   fit_curve->setPen    ( QPen( Qt::red ) );
+   fit_curve->setSamples( fit_x, fit_y, fit_count );
+   
+   // Plot the minimum
+
+   minimum_curve = us_curve( meniscus_plot, tr( "Minimum Pointer" ) ); 
+   minimum_curve->setPen( QPen( QBrush( Qt::cyan ), 3.0 ) );
+
+   double radius_min[ 2 ];
+   double rmsd_min  [ 2 ];
+
+   radius_min[ 0 ] = minimum;
+   radius_min[ 1 ] = minimum;
+
+   rmsd_min  [ 0 ] = miny - 1.0 * dy;
+   rmsd_min  [ 1 ] = miny + 2.0 * dy;
+
+   minimum_curve->setSamples( radius_min, rmsd_min, 2 );
+
+   // Display selected meniscus
+   le_men_sel->setText( QString::number( minimum, 'f', 5 ) );
+
+
+   // Add the marker label -- bold, font size default + 1, lines 3 pixels wide
+   QPen markerPen( QBrush( Qt::white ), 3.0 );
+   markerPen.setWidth( 3 );
+   
+   QwtPlotMarker* pm  = new QwtPlotMarker();
+   QwtText        label( QString::number( minimum, 'f', 5 ) );
+   QFont          font( pm->label().font() );
+   QwtSymbol*     sym = new QwtSymbol( QwtSymbol::Cross, QBrush( Qt::white ),
+                                       markerPen, QSize( 9, 9 ) );
+
+   font.setBold( true );
+   font.setPointSize( font.pointSize() + 1 );
+   label.setFont( font );
+
+   pm->setValue         ( minimum, miny + 3.0 * dy );
+   pm->setSymbol        ( sym ); 
+   pm->setLabel         ( label );
+   pm->setLabelAlignment( Qt::AlignTop );
+
+   pm->attach( meniscus_plot );
+
+   meniscus_plot->replot();
 }
-#endif
 
 // Update an edit file with a new meniscus radius value
 void US_FitMeniscus::edit_update( void )
@@ -2356,5 +2140,52 @@ QwtLinearColorMap* US_FitMeniscus::ColorMapCopy( QwtLinearColorMap* colormap )
    }
 
    return cmapcopy;
+}
+
+// Change plot type and related GUI elements
+void US_FitMeniscus::change_plot_type( )
+{
+   dataPlotClear( meniscus_plot );
+
+   if ( have3val )
+   {  // Set up 3-D plot
+      setWindowTitle( tr( "Fit Meniscus,Bottom from 2DSA Data" ) );
+      meniscus_plot->setTitle    ( tr( "Meniscus,Bottom Fit" ) );
+      meniscus_plot->setAxisTitle( QwtPlot::yLeft,   tr( "2DSA Meniscus,Bottom RMSD" ) );
+      meniscus_plot->setAxisTitle( QwtPlot::xBottom, tr( "Meniscus Radius" ) );
+      meniscus_plot->enableAxis  ( QwtPlot::yRight,  true );
+   }
+
+   else
+   {  // Set up 2-D plot
+      setWindowTitle( tr( "Fit Meniscus from 2DSA Data" ) );
+      meniscus_plot->setTitle    ( tr( "Meniscus Fit" ) );
+      meniscus_plot->setAxisTitle( QwtPlot::yLeft,   tr( "2DSA Meniscus,Bottom RMSD" ) );
+      meniscus_plot->setAxisTitle( QwtPlot::xBottom, tr( "Meniscus Radius" ) );
+      meniscus_plot->enableAxis  ( QwtPlot::yRight, false );
+      meniscus_plot->setCanvasBackground( QBrush( US_GuiSettings::plotCanvasBG() ) );
+   }
+
+   // Turn on/off 2D elements
+   lb_men_sel  ->setVisible( !have3val  );
+   le_men_sel  ->setVisible( !have3val  );
+   lb_rms_error->setVisible( !have3val  );
+   le_rms_error->setVisible( !have3val  );
+   lb_order    ->setVisible( !have3val  );
+   sb_order    ->setVisible( !have3val  );
+
+   // Turn on/off 3D elements
+   lb_men_lor  ->setVisible( have3val );
+   le_men_lor  ->setVisible( have3val );
+   lb_men_fit  ->setVisible( have3val );
+   le_men_fit  ->setVisible( have3val );
+   lb_bot_lor  ->setVisible( have3val );
+   le_bot_lor  ->setVisible( have3val );
+   lb_bot_fit  ->setVisible( have3val );
+   le_bot_fit  ->setVisible( have3val );
+   lb_mprads   ->setVisible( have3val );
+   le_mprads   ->setVisible( have3val );
+   lb_zfloor   ->setVisible( have3val );
+   ct_zfloor   ->setVisible( have3val );
 }
 
