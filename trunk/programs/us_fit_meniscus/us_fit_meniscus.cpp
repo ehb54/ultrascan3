@@ -60,7 +60,7 @@ DbgLv(1) << "Main: AA";
 //   te_data = new US_Editor( US_Editor::LOAD, false,
 //         "results/*-fm*.fit*dat;;*.dat;;*.*" );
    te_data = new US_Editor( US_Editor::LOAD, false,
-         "results/*.fitmen.dat;;*.fitbot.dat;;*.dat;;*.*" );
+         "results/*.dat;;*.fitmen.dat;;*.fitbot.dat;;*.*" );
    connect( te_data, SIGNAL( US_EditorLoadComplete( QString ) ), 
                      SLOT  ( file_loaded(           QString ) ) );
    
@@ -158,7 +158,8 @@ DbgLv(1) << "Main: BB";
             this,        SLOT(   update_disk_db( bool ) ) );
 
    pb_update = us_pushbutton( tr( "Update Edit" ) );
-   connect( pb_update, SIGNAL( clicked() ), SLOT( edit_update() ) );
+   connect( pb_update, SIGNAL( clicked() ),
+            this,      SLOT( edit_update() ) );
    pb_update->setEnabled( false );
    pb_update->setToolTip(
          tr( "Update edit record with meniscus; remove non-chosen models" ) );
@@ -314,7 +315,7 @@ void US_FitMeniscus::load_data()
    v_meni.clear();
    v_bott.clear();
    v_rmsd.clear();
-    bott_fit         = fname_load.contains( "fitbot" );
+   bott_fit          = fname_load.contains( "fitbot" );
 DbgLv(1) << "LD:  bott_fit" << bott_fit << "fname_load" << fname_load;
 
    for ( int ii = 0; ii < lines.size(); ii++ )
@@ -426,7 +427,7 @@ DbgLv(1) << "pl3d: v_meni size" << v_meni.size() << "min,max x,yz"
 
    int nmeni     = v_meni.count( v_meni[ 0 ] );
    int nbott     = v_bott.count( v_bott[ 0 ] );
-   int ix_best   = min_ix - 1;
+   ix_best       = min_ix - 1;
    int ix_men    = ix_best / nbott;
    int ix_bot    = ix_best % nbott;
    QList< int >  ixs;
@@ -716,7 +717,7 @@ void US_FitMeniscus::plot_2d( void )
    double* fit_x = vfitx.data();
    double* fit_y = vfity.data();
    double  x     = minx - overscan;
-   double minimum;
+   double fit_xvl;
 
    for ( int i = 0; i < fit_count; i++, x += 0.001 )
    {
@@ -750,7 +751,7 @@ void US_FitMeniscus::plot_2d( void )
    {
       // Take the derivitive and get the minimum
       // c1 + 2 * c2 * x = 0
-      minimum = - c[ 1 ] / ( 2.0 * c[ 2 ] );
+      fit_xvl = - c[ 1 ] / ( 2.0 * c[ 2 ] );
    }
    else
    {
@@ -769,7 +770,7 @@ void US_FitMeniscus::plot_2d( void )
       // We'll do a quadratic fit for the initial estimate
       double q[ 3 ];
       US_Matrix::lsfit( q, radius_values, rmsd_values, count, 3 );
-      minimum = - q[ 1 ] / ( 2.0 * q[ 2 ] );
+      fit_xvl = - q[ 1 ] / ( 2.0 * q[ 2 ] );
 
       const double epsilon = 1.0e-4;
 
@@ -780,18 +781,18 @@ void US_FitMeniscus::plot_2d( void )
       {
         // f is the 1st derivative
         f = dxdy[ 0 ];
-        for ( int i = 1; i < order; i++ ) f += dxdy[ i ] * pow( minimum, i );
+        for ( int i = 1; i < order; i++ ) f += dxdy[ i ] * pow( fit_xvl, i );
 
         // f_prime is the 2nd derivative
         f_prime = d2xdy2[ 0 ];
         for ( int i = 1; i < order - 1; i++ ) 
-           f_prime += d2xdy2[ i ] * pow( minimum, i );
+           f_prime += d2xdy2[ i ] * pow( fit_xvl, i );
 
         if ( fabs( f ) < epsilon ) break;
         if ( k++ > 10 ) break;
 
         // Get the next estimate
-        minimum -= f / f_prime;
+        fit_xvl -= f / f_prime;
 
       } while ( true );
    }
@@ -808,24 +809,39 @@ void US_FitMeniscus::plot_2d( void )
    double radius_min[ 2 ];
    double rmsd_min  [ 2 ];
 
-   radius_min[ 0 ] = minimum;
-   radius_min[ 1 ] = minimum;
+   radius_min[ 0 ] = fit_xvl;
+   radius_min[ 1 ] = fit_xvl;
 
    rmsd_min  [ 0 ] = miny - 1.0 * dy;
    rmsd_min  [ 1 ] = miny + 2.0 * dy;
 
    minimum_curve->setSamples( radius_min, rmsd_min, 2 );
 
-   // Display selected meniscus
-   le_men_sel->setText( QString::number( minimum, 'f', 5 ) );
+   // Display selected meniscus/bottom
+   le_men_sel->setText( QString::number( fit_xvl, 'f', 5 ) );
 
+   // Find the "best-index", index where X closest to fit
+   ix_best           = 0;
+   double diff_min   = 1.0e+99;
+
+   for ( int ii = 0; ii < v_meni.count(); ii++ )
+   {
+      double diff_x     = qAbs( v_meni[ ii ] - fit_xvl );
+
+      if ( diff_x < diff_min )
+      {  // Running least difference and index to it
+         diff_min          = diff_x;
+         ix_best           = ii;
+      }
+   }
+   
 
    // Add the marker label -- bold, font size default + 1, lines 3 pixels wide
    QPen markerPen( QBrush( Qt::white ), 3.0 );
    markerPen.setWidth( 3 );
    
    QwtPlotMarker* pm  = new QwtPlotMarker();
-   QwtText        label( QString::number( minimum, 'f', 5 ) );
+   QwtText        label( QString::number( fit_xvl, 'f', 5 ) );
    QFont          font( pm->label().font() );
    QwtSymbol*     sym = new QwtSymbol( QwtSymbol::Cross, QBrush( Qt::white ),
                                        markerPen, QSize( 9, 9 ) );
@@ -834,7 +850,7 @@ void US_FitMeniscus::plot_2d( void )
    font.setPointSize( font.pointSize() + 1 );
    label.setFont( font );
 
-   pm->setValue         ( minimum, miny + 3.0 * dy );
+   pm->setValue         ( fit_xvl, miny + 3.0 * dy );
    pm->setSymbol        ( sym ); 
    pm->setLabel         ( label );
    pm->setLabelAlignment( Qt::AlignTop );
@@ -844,7 +860,7 @@ void US_FitMeniscus::plot_2d( void )
    meniscus_plot->replot();
 }
 
-// Update an edit file with a new meniscus radius value
+// Update an edit file with a new meniscus and/or bottom radius value
 void US_FitMeniscus::edit_update( void )
 {
    QString fn = filedir + "/" + fname_edit;
@@ -862,52 +878,113 @@ void US_FitMeniscus::edit_update( void )
    bool all_wvl  = ( nedtfs > 1  &&  ck_applymwl->isChecked() );
    bool rmv_mdls = true;
    bool db_upd   = dkdb_cntrls->db();
+//*DEBUG*
+//db_upd=false;
+//*DEBUG*
    int  mlsx     = 0;
    int  meqx     = 0;
    int  mvsx     = 0;
    int  mvcn     = 0;
    int  mlnn     = 0;
+   int  blsx     = 0;
+   int  beqx     = 0;
+   int  bvsx     = 0;
+   int  bvcn     = 0;
+   int  blnn     = 0;
    int  llsx     = 0;
    int  leqx     = 0;
    int  lvsx     = 0;
    int  lvcn     = 0;
-   double menv   = 0.0;
-   double lefv   = 0.0;
-   QString mmsg  = "";
 
-   if ( ! all_wvl )
+   // New meniscus and bottom values
+   double mennew = 0.0;
+   double botnew = 0.0;
+   double lefval = 0.0;
+
+   if ( have3val )
+   {  // Fit is meniscus + bottom
+      mennew         = le_men_fit->text().toDouble();
+      botnew         = le_bot_fit->text().toDouble();
+   }
+   else if ( !bott_fit )
+   {  // Fit is meniscus only
+      mennew         = le_men_sel->text().toDouble();
+   }
+   else
+   {  // Fit is bottom only
+      botnew         = le_men_sel->text().toDouble();
+   }
+
+   QString s_meni = QString().sprintf( "%.5f", mennew );
+   QString s_bott = QString().sprintf( "%.5f", botnew );
+   QString mmsg   = "";
+
+   if ( ! all_wvl  ||  nedtfs == 1 )
    {  // Apply to a single triple
       QTextStream ts( &filei );
       while ( !ts.atEnd() )
          edtext += ts.readLine() + "\n";
       filei.close();
 
-      menv     = le_men_fit->text().toDouble();
       mlsx     = edtext.indexOf( "<meniscus radius=" );
       if ( mlsx < 0 )  return;
       meqx     = edtext.indexOf( "=\"", mlsx );
       mvsx     = meqx + 2;
       mvcn     = edtext.indexOf( "\"",  mvsx + 1 ) - mvsx;
+      mlnn     = edtext.indexOf( ">", mlsx ) - mlsx + 1;
       llsx     = edtext.indexOf( "<data_range left=" );
       if ( llsx < 0 )  return;
       leqx     = edtext.indexOf( "=\"", llsx );
       lvsx     = leqx + 2;
       lvcn     = edtext.indexOf( "\"",  lvsx + 1 ) - lvsx;
-      lefv     = edtext.mid( lvsx, lvcn ).toDouble();
-DbgLv(1) << " eupd:  menv" << menv << "lefv" << lefv;
+      lefval   = edtext.mid( lvsx, lvcn ).toDouble();
+      blsx     = edtext.indexOf( "<bottom radius=" );
+      if ( blsx > 0 )
+      {
+         beqx     = edtext.indexOf( "=\"", blsx );
+         bvsx     = beqx + 2;
+         bvcn     = edtext.indexOf( "\"",  bvsx + 1 ) - bvsx;
+         blnn     = edtext.indexOf( ">", blsx ) - blsx + 1;
+      }
+DbgLv(1) << " eupd:  mennew" << mennew << "lefval" << lefval << "botnew" << botnew;
+DbgLv(1) << " eupd:   mlsx blsx" << mlsx << blsx << "mlnn blnn" << mlnn << blnn;
 
-      if ( menv >= lefv )
+      if ( mennew >= lefval )
       {
          QMessageBox::warning( this, tr( "Meniscus within Data Range" ),
             tr( "The selected Meniscus value, %1 , extends into the data"
                 " range whose left-side value is %2 . This Edit update"
-                " cannot be performed!" ).arg( menv ).arg( lefv ) );
+                " cannot be performed!" ).arg( mennew ).arg( lefval ) );
          return;
       }
 
-//      edtext   = edtext.replace( mvsx, mvcn, le_men_fit->text() );
-edtext   = edtext.replace( mvsx, mvcn, "5.87075" );
-      mlnn     = edtext.indexOf( ">", mlsx ) - mlsx + 1;
+      if ( have3val )
+      {  // Replace meniscus and bottom values in edit
+         edtext.replace( mvsx, mvcn, s_meni );
+         if ( bvsx > 0 )
+            edtext.replace( bvsx, bvcn, s_bott );
+         else
+         {  // Must insert an entirely new line for bottom
+            QString bline = QString( "\n      <bottom radius=\"" )
+                            + botnew + QString( "\"/>" );
+            edtext.insert( mlsx + mlnn, bline );
+         }
+      }
+      else if ( !bott_fit )
+      {  // Replace meniscus value in edit
+         edtext.replace( mvsx, mvcn, s_meni );
+      }
+      else
+      {  // Replace bottom value in edit
+         if ( bvsx > 0 )
+            edtext.replace( bvsx, bvcn, s_bott );
+         else
+         {  // Must insert an entirely new line for bottom
+            QString bline = QString( "\n      <bottom radius=\"" )
+                            + s_bott + QString( "\"/>" );
+            edtext.insert( mlsx + mlnn, bline );
+         }
+      }
 
       QFile fileo( fn );
 
@@ -921,9 +998,23 @@ edtext   = edtext.replace( mvsx, mvcn, "5.87075" );
       fileo.close();
 
       mmsg     = tr( "In file directory\n    " ) + filedir + " ,\n" +
-                 tr( "file\n    " ) + fname_edit + "\n" +
-                 tr( "has been modified with the line:\n    " ) + 
-                 edtext.mid( mlsx, mlnn );
+                 tr( "file\n    " ) + fname_edit + "\n";
+      if ( have3val )
+      {
+         mmsg     = mmsg + tr( "has been modified with the lines:" )
+                    + "\n    " + edtext.mid( mlsx, mlnn )
+                    + "\n    " + edtext.mid( blsx, blnn );
+      }
+      else if ( !bott_fit )
+      {
+         mmsg     = mmsg + tr( "has been modified with the line:" )
+                    + "\n    " + edtext.mid( mlsx, mlnn );
+      }
+      else
+      {
+         mmsg     = mmsg + tr( "has been modified with the line:" )
+                    + "\n    " + edtext.mid( blsx, blnn );
+      }
    
       // If using DB, update the edit record there
 
@@ -934,20 +1025,23 @@ edtext   = edtext.replace( mvsx, mvcn, "5.87075" );
 
       if ( confirm )
       {  // Confirm at each update step
-         mmsg    += tr( "\n\nDo you want to remove all fit-meniscus models"
+         mmsg    += tr( "\n\nDo you want to remove all fit models"
                         " (and associated noises) except for the one"
-                        " associated with the nearest meniscus value?" );
+                        " associated with the best RMSD value?" );
 
-         int response = QMessageBox::question( this, tr( "Edit File Updated" ),
-               mmsg, QMessageBox::Yes, QMessageBox::Cancel );
+         int response = QMessageBox::question( this,
+                                               tr( "Edit File Updated" ),
+                                               mmsg,
+                                               QMessageBox::Yes,
+                                               QMessageBox::Cancel );
+
          rmv_mdls     = ( response == QMessageBox::Yes );
       }
    }  // END: apply to single triple
 
    else
    {  // Apply to all wavelengths in a cell/channel
-      QString dmsg  = "";
-      menv     = le_men_fit->text().toDouble();
+      QString dmsg   = "";
 DbgLv(1) << " eupd: AppWvl: nedtfs" << nedtfs;
       QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
@@ -971,24 +1065,30 @@ DbgLv(1) << " eupd:     jj" << jj << "fn" << fn;
          meqx     = edtext.indexOf( "=\"", mlsx );
          mvsx     = meqx + 2;
          mvcn     = edtext.indexOf( "\"",  mvsx + 1 ) - mvsx;
+         mlnn     = edtext.indexOf( ">", mlsx ) - mlsx + 1;
          llsx     = edtext.indexOf( "<data_range left=" );
          if ( llsx < 0 )  continue;
          leqx     = edtext.indexOf( "=\"", llsx );
          lvsx     = leqx + 2;
          lvcn     = edtext.indexOf( "\"",  lvsx + 1 ) - lvsx;
-         lefv     = edtext.mid( lvsx, lvcn ).toDouble();
+         lefval   = edtext.mid( lvsx, lvcn ).toDouble();
+         blsx     = edtext.indexOf( "<bottom radius=" );
+         if ( blsx < 0  && ( bott_fit || have3val ) )  return;
+         beqx     = edtext.indexOf( "=\"", blsx );
+         bvsx     = beqx + 2;
+         bvcn     = edtext.indexOf( "\"",  bvsx + 1 ) - bvsx;
+         blnn     = edtext.indexOf( ">", blsx ) - blsx + 1;
 
-         if ( menv >= lefv )
+         if ( mennew >= lefval )
          {
             QMessageBox::warning( this, tr( "Meniscus within Data Range" ),
                tr( "The selected Meniscus value, %1 , extends into the data"
                    " range whose left-side value is %2 . This Edit update"
-                   " cannot be performed!" ).arg( menv ).arg( lefv ) );
+                   " cannot be performed!" ).arg( mennew ).arg( lefval ) );
             continue;
          }
 
          edtext   = edtext.replace( mvsx, mvcn, le_men_fit->text() );
-         mlnn     = edtext.indexOf( ">", mlsx ) - mlsx + 1;
 
 DbgLv(1) << " eupd:      mlsx mlnn" << mlsx << mlnn;
          QFile fileo( fn );
@@ -1042,8 +1142,8 @@ DbgLv(1) << " call Remove Models";
    if ( ! confirm )
    {
       mmsg    += tr( "\n\nAll fit-meniscus models (and associated noises),"
-                     " except for the one set associated with the nearest"
-                     " meniscus value, were removed." );
+                     " except for the one set associated with the best"
+                     " RMSD value, were removed." );
 
       QMessageBox::information( this, tr( "Edit File Updated" ), mmsg );
    }
@@ -1443,8 +1543,16 @@ DbgLv(1) << "updDbEd: idEdit" << idEdit;
 
    if ( nedtfs == 1  ||  ! ck_applymwl->isChecked() )
    {
-      msg += tr( "\n\nThe meniscus value was also updated for the"
-                 " corresponding edit record in the database." );
+      if ( have3val )
+         msg += tr( "\n\nThe meniscus and bottom values were"
+                    " also updated for the corresponding edit"
+                    " record in the database." );
+      else if ( !bott_fit )
+         msg += tr( "\n\nThe meniscus value was also updated for the"
+                    " corresponding edit record in the database." );
+      else
+         msg += tr( "\n\nThe bottom value was also updated for the"
+                    " corresponding edit record in the database." );
    }
 
    else
@@ -1453,8 +1561,16 @@ DbgLv(1) << "updDbEd: idEdit" << idEdit;
       int lstfx        = nedtfs - 1;
       if ( fn == edtfiles[ lstfx ] )
       {
-         msg += tr( "\n\nThe meniscus value was also updated for the"
-                    " corresponding edit records in the database." );
+         if ( have3val )
+            msg += tr( "\n\nThe meniscus and bottom values were"
+                       " also updated for the corresponding edit"
+                       " record ins the database." );
+         else if ( !bott_fit )
+            msg += tr( "\n\nThe meniscus value was also updated for the"
+                       " corresponding edit records in the database." );
+         else
+            msg += tr( "\n\nThe bottom value was also updated for the"
+                       " corresponding edit records in the database." );
       }
    }
 
@@ -1468,8 +1584,9 @@ void US_FitMeniscus::remove_models()
    QString srchEdit = fname_load.section( ".", -3, -3 );
    QString srchTrip = srchEdit.section( "-", -1, -1 );
            srchEdit = srchEdit.section( "-",  0, -2 );
+   QString msetBase;
 DbgLv(1) << "RmvMod: scn1 srchRun srchEdit srchTrip"
- << srchRun << srchEdit << srchTrip;
+ << srchRun << srchEdit << srchTrip << " msetBase" << msetBase;
 
    // Scan models files; get list of fit-meniscus type matching run/edit/triple
    QStringList modfilt;
@@ -1478,8 +1595,6 @@ DbgLv(1) << "RmvMod: scn1 srchRun srchEdit srchTrip"
    QStringList modfiles = QDir( moddir ).entryList(
          modfilt, QDir::Files, QDir::Name );
    moddir               = moddir + "/";
-   double cmeniscus     = le_men_fit->text().toDouble();
-//   double cbottom       = le_bot_fit->text().toDouble();
 
    QList< ModelDesc >  lMDescrs;
    QList< ModelDesc >  dMDescrs;
@@ -1504,7 +1619,11 @@ DbgLv(1) << "RmvMod: scn1 srchRun srchEdit srchTrip"
    int lkModx           = -1;
    int dkModx           = -1;
    bool db_upd          = dkdb_cntrls->db();
+//*DEBUG*
+//db_upd=false;
+//*DEBUG*
 
+DbgLv(1) << "RmvMod: dk: modfiles size" << modfiles.size();
    for ( int ii = 0; ii < modfiles.size(); ii++ )
    {
       ModelDesc lmodd;
@@ -1513,24 +1632,38 @@ DbgLv(1) << "RmvMod: scn1 srchRun srchEdit srchTrip"
       US_Model model;
       
       if ( model.load( modpath ) != US_DB2::OK )
+      {
+DbgLv(1) << "RmvMod:  *LOAD ERR*" << modfname;
          continue;    // Can't use if can't load
+      }
 
       QString descript   = model.description;
       QString runID      = descript.section( '.',  0, -4 );
       QString tripID     = descript.section( '.', -3, -3 );
       QString anRunID    = descript.section( '.', -2, -2 );
       QString editLabl   = anRunID .section( '_',  0, -5 );
-//DbgLv(1) << "RmvMod:  scn1 ii runID editLabl tripID"
-// << ii << runID << editLabl << tripID;
+      QString iterID     = anRunID .section( '_', -1, -1 );
+//DbgLv(1) << "RmvMod:    iterID" << iterID;
+if(ii<3 || (ii+4)>modfiles.size() || ii==(modfiles.size()/2))
+ DbgLv(1) << "RmvMod:  scn1 ii runID editLabl tripID"
+  << ii << runID << editLabl << tripID;
 
       if ( runID != srchRun  ||  editLabl != srchEdit  ||  tripID != srchTrip )
          continue;    // Can't use if from a different runID or edit or triple
 
-      QString iterID     = anRunID .section( '_', -1, -1 );
-//DbgLv(1) << "RmvMod:    iterID" << iterID;
+      if ( !iterID.contains( "-m" )  &&  !iterID.contains( "-b" ) )
+      {
+DbgLv(1) << "RmvMod:   ii" << ii << "iterID" << iterID
+ << "has -m" << iterID.contains("-m") << "has -b" << iterID.contains("-b");
+         continue;    // Can't use if not a fit-meniscus or fit-bottom type
+      }
 
-      if ( iterID.length() != 10  ||  ! iterID.contains( "-m" ) )
-         continue;    // Can't use if not a fit-meniscus type
+      if ( msetBase.isEmpty() )
+      {
+         msetBase       = descript.section( ".", 0, -3 ) + "." + 
+                          anRunID .section( "_", 0,  3 );
+DbgLv(1) << "RmvMod:lfiles: msetBase" << msetBase << "ii" << ii;
+      }
 
       // Probably a file from the right set, but let's check for other sets
       int     arTime     = anRunID .section( '_', -4, -4 ).mid( 1 ).toInt();
@@ -1568,27 +1701,30 @@ DbgLv(1) << "RmvMod:    arTime lArTime" << arTime << lArTime;
 
    nlmods         = lMDescrs.size();
    qSort( lMDescrs );
-DbgLv(1) << "RmvMod: nlmods" << nlmods;
-   double minMdif = 99e+10;
+DbgLv(1) << "RmvMod: nlmods" << nlmods << "msetBase" << msetBase;
 
    for ( int ii = 0; ii < nlmods; ii++ )
-   {  // Scan to identify model in set with lowest variance
+   {  // Scan to identify model in set with iteration index
+      //  corresponding to best fit
       ModelDesc lmodd = lMDescrs[ ii ];
-      double diffMen  = qAbs( lmodd.meniscus - cmeniscus );
-DbgLv(1) << "low Mdif scan: ii vari meni desc" << ii << lmodd.variance
- << lmodd.meniscus << lmodd.description.right( 22 );
+      QString descrip = QString( lmodd.description );
+      QString ansysID = descrip.section( '.', -2, -2 );
+      QString iterID  = ansysID.section( '_', -1, -1 );
+      int iterx       = iterID .section( '-',  0,  0 )
+                               .mid( 1 ).toInt() - 1;
+DbgLv(1) << "RmvMod: best ndx scan: ii vari" << ii << lmodd.variance
+ << "iterID iters" << iterID << iterx;
 
-      if ( diffMen < minMdif )
+      if ( iterx == ix_best )
       {
-         minMdif        = diffMen;
          lkModx         = ii;
-//DbgLv(1) << "low Mdif scan:   minMdif lkModx" << minMdif << lkModx;
+DbgLv(1) << "RmvMod:   best ndx scan:   lkModx" << lkModx;
       }
    }
-DbgLv(1) << "RmvMod:  minMdif lkModx" << minMdif << lkModx;
+DbgLv(1) << "RmvMod:  ix_best lkModx" << ix_best << lkModx;
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
-   // Make a list of f-m models that match for DB, if possible
+   // Make a list of fit models that match for DB, if possible
    if ( db_upd )
    {
       ModelDesc dmodd;
@@ -1612,13 +1748,14 @@ DbgLv(1) << "RmvMod:  idEdit" << idEdit << "query" << query;
       {
          QString modelID    = db.value( 0 ).toString();
          QString descript   = db.value( 2 ).toString();
-         QString runID      = descript.section( '.',  0, 0 );
+         QString runID      = descript.section( '.',  0, -4 );
          if ( runID == srchRun )
          {
             modIDs << modelID;
          }
       }
 
+DbgLv(1) << "RmvMod:  modIDs size" << modIDs.size();
       for ( int ii = 0; ii < modIDs.size(); ii++ )
       {
          QString modelID    = modIDs.at( ii );
@@ -1633,13 +1770,22 @@ DbgLv(1) << "RmvMod:  idEdit" << idEdit << "query" << query;
          QString modelGUID  = db.value( 0 ).toString();
          QString descript1  = db.value( 1 ).toString();
          QString contents   = db.value( 2 ).toString();
-         int     jdtx       = contents.indexOf( "description=" );
+         int jdtx           = contents.indexOf( "description=" );
 
          if ( jdtx < 1 )  continue;
 
-         int     jdx        = contents.indexOf( "\"", jdtx ) + 1;
-         int     lend       = contents.indexOf( "\"", jdx  ) - jdx;
+         int jdx            = contents.indexOf( "\"", jdtx ) + 1;
+         int lend           = contents.indexOf( "\"", jdx  ) - jdx;
          QString descript   = contents.mid( jdx, lend );
+
+         // Skip model that is not from the right set
+         if ( !msetBase.isEmpty()  &&
+              !descript.startsWith( msetBase ) )
+         {
+DbgLv(1) << "RmvMod:  descript" << descript << "msetBase" << msetBase << "ii" << ii;
+            continue;
+         }
+
          double  variance   = db.value( 3 ).toString().toDouble();
          double  meniscus   = db.value( 4 ).toString().toDouble();
          QString runID      = descript.section( '.',  0, -4 );
@@ -1649,15 +1795,17 @@ DbgLv(1) << "RmvMod:  idEdit" << idEdit << "query" << query;
 //DbgLv(1) << "RmvMod:  scn1 ii runID editLabl tripID"
 // << ii << runID << editLabl << tripID;
 
-         if ( runID != srchRun  ||  editLabl != srchEdit
-          ||  tripID != srchTrip )
+         if ( runID != srchRun  ||  editLabl != srchEdit  ||
+              tripID != srchTrip )
          continue;    // Can't use if from a different runID or edit or triple
 
          QString iterID     = anRunID .section( '_', -1, -1 );
 //DbgLv(1) << "RmvMod:    iterID" << iterID;
 
-         if ( iterID.length() != 10  ||  ! iterID.contains( "-m" ) )
+         if ( !iterID.contains( "-m" )  &&  !iterID.contains( "-b" ) )
+         {
             continue;    // Can't use if not a fit-meniscus type
+         }
 
          // Probably a file from the right set, but let's check for other sets
          int     arTime     = anRunID .section( '_', -4, -4 ).mid( 1 ).toInt();
@@ -1700,22 +1848,23 @@ DbgLv(1) << "RmvMod:  scn2 ii dmodDesc" << descript;
          nlmods         = 0;
       else if ( lArTime > dArTime )
          ndmods         = 0;
-
 DbgLv(1) << "RmvMod: ndmods" << ndmods;
-      double minMdif = 99e+10;
 
       for ( int ii = 0; ii < ndmods; ii++ )
       {  // Scan to identify model in set with lowest variance
          ModelDesc dmodd = dMDescrs[ ii ];
-         double diffMen  = qAbs( dmodd.meniscus - cmeniscus );
-DbgLv(1) << "low Mdif scan: ii vari meni desc" << ii << dmodd.variance
- << dmodd.meniscus << dmodd.description.right( 22 );
+         QString descrip = QString( dmodd.description );
+         QString ansysID = descrip.section( '.', -2, -2 );
+         QString iterID  = ansysID.section( '_', -1, -1 );
+         int iterx       = iterID .section( '-',  0,  0 )
+                               .mid( 1 ).toInt() - 1;
+DbgLv(1) << "RmvMod: best ndx scan: ii vari" << ii << dmodd.variance
+ << "iterID iters" << iterID << iterx;
 
-         if ( diffMen < minMdif )
+         if ( iterx == ix_best )
          {
-            minMdif        = diffMen;
             dkModx         = ii;
-DbgLv(1) << "low Mdif scan:   minMdif dkModx" << minMdif << dkModx;
+DbgLv(1) << "RmvMod:   best ndx scan:   dkModx" << dkModx;
          }
       }
 
@@ -2006,10 +2155,13 @@ void US_FitMeniscus::noises_in_edit( QString modDesc, QStringList& nieDescs,
                       .section( "_", 0, 0 ).mid( 1 );
 DbgLv(1) << "NIE: msetBase" << msetBase;
    QStringList query;
-   QString     fname;
-   QString     noiID;
-   int         nlnois = 0;
-   bool        usesDB = dkdb_cntrls->db();
+   QString fname;
+   QString noiID;
+   int nlnois   = 0;
+   bool db_upd  = dkdb_cntrls->db();
+//*DEBUG*
+//db_upd=false;
+//*DEBUG*
 
    QStringList noifilt;
    noifilt << "N*.xml";
@@ -2040,11 +2192,11 @@ DbgLv(1) << "NIE:  ii noiDesc" << ii << noiDesc;
       nieFnams << noiPath;
 DbgLv(1) << "NIE:     noiFname" << noiFname;
 
-      if ( ! usesDB )
+      if ( ! db_upd )
          nieIDs   << "-1";
    }
 
-   if ( usesDB )
+   if ( db_upd )
    {
       US_Passwd pw;
       US_DB2 db( pw.getPasswd() );
@@ -2118,7 +2270,7 @@ DbgLv(1) << "NIE:  ii noiID noiDesc" << ii << noiID << noiDesc;
          }
       }
    }
-DbgLv(1) << "NIE: usesDB" << usesDB << "nlnois" << nlnois
+DbgLv(1) << "NIE: db_upd" << db_upd << "nlnois" << nlnois
  << "nieDescs-size" << nieDescs.size() << "nieIDs-size" << nieIDs.size();
 
    return;

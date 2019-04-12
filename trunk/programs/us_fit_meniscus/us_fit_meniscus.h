@@ -127,6 +127,7 @@ class US_FitMeniscus : public US_Widgets
 
       int                  nedtfs;
       int                  idEdit;
+      int                  ix_best;
       int                  dbg_level;
 
       bool                 have3val;
