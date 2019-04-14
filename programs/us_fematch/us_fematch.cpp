@@ -2085,7 +2085,7 @@ DbgLv(1) << "SimMdl: n) s D c"
    simparams.meshType          = US_SimulationParameters::ASTFEM;
    simparams.gridType          = US_SimulationParameters::MOVING;
    simparams.radial_resolution = (double)( radhi - radlo ) / ( nconc - 1 );
-   simparams.bottom            = simparams.bottom_position;
+//   simparams.bottom            = simparams.bottom_position;
 DbgLv(1) << "SimMdl: simpoints" << simparams.simpoints
  << "rreso" << simparams.radial_resolution;
    //simparams.meniscus          = 5.8;

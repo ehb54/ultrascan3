@@ -337,7 +337,7 @@ DbgLv(1) << "LD:  ii" << ii << "valsize" << valsize;
       double rbott  = values[ 1 ].toDouble();
       double rmsdv  = rbott;
 
-      if ( rmeni < 5.7  || rmeni > 7.3 )  continue;
+      if ( rmeni < 5.0  || rmeni > 8.0 )  continue;
 
       count++;
 
@@ -369,6 +369,9 @@ DbgLv(1) << "LD:  ii" << ii << "valsize" << valsize;
    bool was3val  = have3val;
    have3val      = ( v_bott.count() > 0 );
    te_data->e->setPlainText( parsed.join( "\n" ) );
+DbgLv(1) << "LD:  was3val have3val" << was3val << have3val
+ << "v_rmsd size" << v_rmsd.size() << "parsed length"
+ << parsed.length();
 
    if ( ( have3val && !was3val )  || 
         ( !have3val && was3val ) )
