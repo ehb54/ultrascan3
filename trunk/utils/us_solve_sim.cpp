@@ -474,10 +474,11 @@ DbgLv(0) << "solve_sim_1: timestate file does not exist" << tmst_fpath << dset->
                }
             }
 else
- DbgLv(1) << "solve_sim_1: timestate object exists  sspknt=" << dset->simparams.sim_speed_prof.count()
+ DbgLv(2) << "solve_sim_1: timestate object exists  sspknt=" << dset->simparams.sim_speed_prof.count()
   << " timestateobject=" << dset->simparams.tsobj;
 
 //DebugTime("BEG: clcr-NA-astfem");
+DbgLv(2) << "solve_sim_2: smeni sbott" << dset->simparams.meniscus << dset->simparams.bottom;
             US_Astfem_RSA astfem_rsa( model, dset->simparams );
 DbgLv(2) << "   CR:113  rss now" << US_Memory::rss_now() << "cc" << cc;
 

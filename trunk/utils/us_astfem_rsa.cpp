@@ -153,7 +153,7 @@ DbgLv(1)<< "RSA:calc:    cdset_speed" << af_params.cdset_speed;
    af_params.current_meniscus = simparams.meniscus; // Meniscus from simparams structure
    af_params.current_bottom   = simparams.bottom;   // Bottom from simparams structure
 #endif
-//DbgLv(1)<< "RSA:calc: meniscus bottom" << simparams.meniscus << simparams.bottom;
+DbgLv(1)<< "RSA:calc: meniscus bottom" << af_params.current_meniscus << af_params.current_bottom;
 
    // Loads the experimental data exp_data of 'RawData'type
    //   to af_data of 'MfemData' type.
@@ -500,7 +500,11 @@ DbgLv(1) << "RSA:calc: break inside astfem_rsa (step-time beyond last scan-time)
             time2        = ( double )( time_end[ speed_step ] );
             omeg2        = w2t_end[ speed_step ];
 
+DbgLv(1)<< "RSA:2-calc: meniscus bottom" << af_params.current_meniscus << af_params.current_bottom;
+#if 0
             adjust_limits( sp->rotorspeed ); // Does rotor stretch
+#endif
+DbgLv(1)<< "RSA:3-calc: meniscus bottom" << af_params.current_meniscus << af_params.current_bottom;
 
             ed->meniscus = af_params.current_meniscus; // Update meniscus for experimental grid
             ed->bottom   = af_params.current_bottom;   // Update bottom for experimental grid
@@ -863,7 +867,9 @@ DbgLv(1)<< "subha: rsa readings: " << accel_times[step] << accel_w2ts[step];
          ed           = &af_data;
          step_speed   = (double)sp->rotorspeed;
 
+#if 0
          adjust_limits( sp->rotorspeed );
+#endif
 
          accel_time   = 0.0;
          fscan        = 0;

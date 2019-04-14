@@ -1511,6 +1511,8 @@ QString US_2dsa::fit_meniscus_data()
    if ( nmodels < 2 )
       return mstr;
 
+    bool usemen  = ( QString( models[ 0 ].description )
+                     .indexOf( "MENISCUS=" ) > 0 );
     bool usebot  = ( QString( models[ 0 ].description )
                      .indexOf( "BOTTOM=" ) > 0 );
 
@@ -1520,21 +1522,31 @@ QString US_2dsa::fit_meniscus_data()
       QString avari = mdesc.mid( mdesc.indexOf( "VARI=" ) + 5 );
       double  rmsd  = sqrt( avari.section( " ", 0, 0 ).toDouble() );
       QString armsd = QString().sprintf( "%10.8f", rmsd );
-      QString ameni = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 )
-                      .section( " ", 0, 0 );
-      if ( usebot )
+      if ( usemen && usebot )
       {
+         QString ameni = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 )
+                         .section( " ", 0, 0 );
          QString abott = mdesc.mid( mdesc.indexOf( "BOTTOM=" ) + 7 )
                          .section( " ", 0, 0 );
          mstr         += ( ameni + " " + abott + " " + armsd + "\n" );
 DbgLv(1) << "fitmdat:  ii" << ii << "meni bott rmsd"
  << ameni << abott << armsd;
       }
-      else
+      else if ( usemen )
       {
+         QString ameni = mdesc.mid( mdesc.indexOf( "MENISCUS=" ) + 9 )
+                         .section( " ", 0, 0 );
          mstr         += ( ameni + " " + armsd + "\n" );
 DbgLv(1) << "fitmdat:  ii" << ii << "meni rmsd"
  << ameni << armsd;
+      }
+      else if ( usebot )
+      {
+         QString abott = mdesc.mid( mdesc.indexOf( "BOTTOM=" ) + 7 )
+                         .section( " ", 0, 0 );
+         mstr         += ( abott + " " + armsd + "\n" );
+DbgLv(1) << "fitbdat:  ii" << ii << "bott rmsd"
+ << abott << armsd;
       }
    }
    
