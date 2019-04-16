@@ -824,6 +824,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    reppath           = reppath + "/" + runID + "/";
    respath           = respath + "/" + runID + "/";
    QString analybase = fitMeni ? "2DSA-FM" : ( montCar ? "2DSA-MC" : "2DSA" );
+   analybase         = fitBott ? "2DSA-FB" : analybase;
    QString analynode = "/" + analybase + ".";
    QString filebase  = reppath  + analybase + dext + ".";
    QString htmlFile  = filebase + "report.html";
@@ -831,13 +832,11 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    QString plot2File = filebase + "residuals.png";
    QString plot3File = filebase + "rbitmap.png";
    QString plot4File = filebase + "velocity_nc.svgz";
-   QString fitFile   = filebase + "fitmen.dat";
-   QString fresFile  = respath  + "2dsa-fm" + dext2 + ".fitmen.dat";
-   if ( fitBott )
-   {
-      fitFile           = filebase + "fitbot.dat";
-      fresFile          = respath  + "2dsa-fb" + dext2 + ".fitbot.dat";
-   }
+   QString fitFile   = filebase + ( fitBott ?
+                                    "fitbot.dat" :
+                                    "fitmen.dat" );
+   QString fresFile  = respath  + QString( fitFile )
+                                  .section( "/", -1, -1 );
    QString dsinfFile = QString( filebase ).replace( analynode, "/dsinfo." )
                                 + "dataset_info.html";
 
@@ -1520,7 +1519,8 @@ QString US_2dsa::fit_meniscus_data()
    {
       QString mdesc = models[ ii ].description;
       QString avari = mdesc.mid( mdesc.indexOf( "VARI=" ) + 5 );
-      double  rmsd  = sqrt( avari.section( " ", 0, 0 ).toDouble() );
+      double  variv = avari.section( " ", 0, 0 ).toDouble();
+      double  rmsd  = ( variv > 0.0 ) ? sqrt( variv ) : 0.0;
       QString armsd = QString().sprintf( "%10.8f", rmsd );
       if ( usemen && usebot )
       {
