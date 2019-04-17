@@ -141,7 +141,8 @@ DbgLv(1) << "idealThrCout" << nthr;
    le_newvari   = us_lineedit( "0.000e-05",    -1, true );
    le_improve   = us_lineedit( "0.000e-08",    -1, true );
    le_gridreps  = us_lineedit(
-      tr( "8  ( -> 36 36-point subgrids )" ),  -1, true );
+      tr( "8  -> 64 64-point subgrids" ),  -1, true );
+   le_gridreps->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    b_progress   = us_progressBar( 0, 100, 0 );
 
@@ -604,30 +605,13 @@ DbgLv(1) << "AnaC:St:MEM (2)rssnow" << US_Memory::rss_now();
    int    nthr   = (int)ct_thrdcnt->value();
    int    noif   = ( ck_tinoise->isChecked() ? 1 : 0 ) +
                    ( ck_rinoise->isChecked() ? 2 : 0 );
-   double srng   = sup - slo;
-   double krng   = kup - klo;
-   double sdelt  = srng / (double)( nss - 1 );
-   double kdelt  = krng / (double)( nks - 1 );
 
    int    ngrr   = ( grtype < 0 ) ? grtype
                  : US_Math2::best_grid_reps( nss, nks );
 
-   ct_nstepss->setValue( nss );
-   ct_nstepsk->setValue( nks );
-
-   // Adjust upper limits if need be so deltas work out
-   double sup_u  = slo + ( sdelt * (double)( nss - 1 ) );
-   double kup_u  = klo + ( kdelt * (double)( nks - 1 ) );
-DbgLv(1) << "AnaC:St: sdelt kdelt" << sdelt << kdelt
- << "srng krng" << srng << krng << "sup_u kup_u" << sup_u << kup_u;
-
-   if ( sup_u != sup  ||  kup_u != kup )
-   {
-      ct_uplimits->setValue( sup_u );
-      ct_uplimitk->setValue( kup_u );
-      sup           = sup_u;
-      kup           = kup_u;
-   }
+   // Adjust grid points to be multiples of grid repetitions
+   nss           = ( ( nss + ngrr / 2 ) / ngrr ) * ngrr;
+   nks           = ( ( nks + ngrr / 2 ) / ngrr ) * ngrr;
 
    ti_noise->values.clear();
    ri_noise->values.clear();
@@ -797,7 +781,20 @@ void US_AnalysisControl2D::grid_change()
 
    int    ngrrep = US_Math2::best_grid_reps( nsteps, nstepk );
 
-   int    ngstep = nsteps * nstepk;                   // # grid steps
+   // Adjust grid points to be multiples of grid repetitions
+   nsteps        = ( ( nsteps + ngrrep - 1 ) / ngrrep ) * ngrrep;
+   nstepk        = ( ( nstepk + ngrrep - 1 ) / ngrrep ) * ngrrep;
+DbgLv(1) << "GC: ngrrep" << ngrrep << "nss nks" << nsteps << nstepk;
+
+   ct_nstepss->disconnect();
+   ct_nstepss->setValue( nsteps );
+   connect( ct_nstepss,  SIGNAL( valueChanged( double ) ),
+            this,        SLOT(   grid_change()          ) );
+
+   ct_nstepsk->disconnect();
+   ct_nstepsk->setValue( nstepk );
+   connect( ct_nstepsk,  SIGNAL( valueChanged( double ) ),
+            this,        SLOT(   grid_change()          ) );
 
    if ( parentw )
    {  // Get the starting base rss memory of this dataset and parameters
@@ -833,19 +830,18 @@ DbgLv(1) << "GC:  baserss tdata mdata ndatas nthrd" << baserss
 DbgLv(1) << "GC:  ngrrep nsteps nstepk" << ngrrep << nsteps << nstepk;
 
    // Output a message documenting the grid and subgrid dimensions
-//   int nss       = nsteps / ngrrep;
-//   int nsk       = nstepk / ngrrep;
    int nss       = nsteps / ngrrep;
    int nsk       = nstepk / ngrrep;
    int nspts     = nss * nsk;
    int nsubg     = sq( ngrrep );
+   int ngstep    = nsteps * nstepk;     // # total grid steps
    QString gmsg = tr( "Total grid is approximately %1 points (%2 x %3).\n" )
       .arg( ngstep ).arg( nsteps ).arg( nstepk );
    gmsg += tr( "Subgrid repetitions is %1 subgrids (%2 ^ 2)\n"
                "  with a maximum of %3 points each (%4 x %5)." )
       .arg( nsubg ).arg( ngrrep ).arg( nspts ).arg( nss ).arg( nsk );
    te_status  ->setText( gmsg );
-   le_gridreps->setText( tr( "%1   ( -> %2 %3-point subgrids )" )
+   le_gridreps->setText( tr( "%1  -> %2 %3-point subgrids" )
          .arg( ngrrep ).arg( nsubg ).arg( nspts ) );
 }
 
@@ -1014,21 +1010,11 @@ if (dbg_level>0)
    QString s_vari  = rval_map[ "variance" ];
    QString s_meni  = rval_map[ "meniscus" ];
    QString s_bott  = rval_map[ "bottom" ];
-#if 0
-   US_DataIO::Scan* rscan0 = &rdata->scanData[ 0 ];
-   int    iternum  = (int)rscan0->rpm;
-   int    mmitnum  = (int)rscan0->seconds;
-   double varinew  = rscan0->delta_r;
-   double meniscus = rscan0->plateau;
-   double bottom   = rscan0->wavelength;
-#endif
-#if 1
    int    iternum  = s_inum.toInt();
    int    mmitnum  = s_mmit.toInt();
    double varinew  = s_vari.toDouble();
    double meniscus = s_meni.toDouble();
    double bottom   = s_bott.toDouble();
-#endif
    double variold  = le_newvari  ->text().toDouble();
    double vimprov  = variold - varinew;
 DbgLv(1) << "AC:cp inum mmit vari meni bott"
