@@ -31,7 +31,9 @@ class US_SolutionMgrSelect: public US_Widgets
       //! \param select_db_disk Indicates whether the default search
       //!    is on the local disk or in the DB
       //! \param tmp_solution    Pointer for selected solution
-      US_SolutionMgrSelect( int*, int*, US_Solution* );
+      //! \param tmp_experimentID Experiment ID
+      //! \param tmp_channelID    Channel ID
+      US_SolutionMgrSelect( int*, int*, US_Solution*, int, int );
 
       US_Solution*   solution;
       US_Solution*   tmp_solution;
@@ -70,6 +72,7 @@ class US_SolutionMgrSelect: public US_Widgets
       QPushButton*  pb_delete;
       QPushButton*  pb_spectrum;
       QPushButton*  pb_help;
+      QPushButton*  pb_upload;
 
       // For list widget
       class SolutionInfo
@@ -103,22 +106,21 @@ class US_SolutionMgrSelect: public US_Widgets
       
    private slots:
 
-      void search              ( const QString& = QString() );
-      void selectSolution      ( QListWidgetItem* );
-      void reset               ( void );
-      void db_error            ( const QString& );
+      void search             ( const QString& = QString() );
+      void selectSolution     ( QListWidgetItem* );
+      void reset              ( void );
+      void db_error           ( const QString& );
   
       void selectAnalyte      ( QListWidgetItem* );
       
-      //void load               ( void );
       void loadDisk           ( void );
       void loadDB             ( void );
-      //void loadSolutions      ( void );
       
-      void accept_solution  ( void ); 
-      void spectrum        ( void ); 
-      void delete_solution ( void ); 
-      void reject          ( void ); 
+      void accept_solution( void ); 
+      void spectrum       ( void ); 
+      void delete_solution( void ); 
+      void reject         ( void ); 
+      void upload_solution( void ); 
       
        
       /* void delete_disk     ( void ); */
@@ -143,7 +145,7 @@ class US_SolutionMgrSelect: public US_Widgets
 
    public slots:
      void load               ( void );
-     //void init_solution		( void );
+     //void init_solution      ( void );
 };
 
 //!      This class provides a tabbed entry for new solution creation
@@ -301,7 +303,7 @@ class US_SolutionMgrEdit : public US_Widgets
       void description       ( void );
 
    public slots:
-     void init_solution	     ( void );
+     void init_solution      ( void );
 };
 
 
@@ -410,17 +412,17 @@ class US_GUI_EXTERN US_SolutionGui : public US_WidgetsDialog
       void valueSolutionID( const int solutionID );
 
       /*! \brief The signal that is emitted when the user chooses
-	to accept the current choices. This information is
-	passed back to the calling function.
-	
-	\param solution A reference to a structure that contains the
-	solution, buffer and analyte choices for a 
-	single c/c/w combination 
+        to accept the current choices. This information is
+        passed back to the calling function.
+
+        \param solution A reference to a structure that contains the
+        solution, buffer and analyte choices for a 
+        single c/c/w combination 
       */
       void updateSolutionGuiSelection( US_Solution solution );
       
       /*! \brief The signal that is emitted when the user chooses
-	to cancel the current selection. In this case all
+        to cancel the current selection. In this case all
                  previously-entered experiment parameter associations
                  are erased.
       */
