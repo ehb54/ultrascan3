@@ -492,18 +492,11 @@ DbgLv(1) << "pl3d: set pick:";
    pick           = new US_PlotPicker( meniscus_plot );
 DbgLv(1) << "pl3d: colormap bg";
    colormap       = new QwtLinearColorMap( Qt::white, Qt::black );
-#if 0
-   colormap->addColorStop( 0.10, Qt::cyan );
-   colormap->addColorStop( 0.50, Qt::magenta );
-   colormap->addColorStop( 0.80, Qt::red );
-#endif
-#if 1
    colormap->addColorStop( 0.15, Qt::cyan );
    colormap->addColorStop( 0.33, Qt::green );
    colormap->addColorStop( 0.50, Qt::blue );
    colormap->addColorStop( 0.67, Qt::magenta );
    colormap->addColorStop( 0.85, Qt::red );
-#endif
 
    QColor bg     = colormap->color1();
    meniscus_plot->setCanvasBackground( bg );
@@ -869,6 +862,8 @@ void US_FitMeniscus::plot_2d( void )
 void US_FitMeniscus::edit_update( void )
 {
    QString fn = filedir + "/" + fname_edit;
+DbgLv(1) << " eupd:  fname_edit" << fname_edit;
+DbgLv(1) << " eupd:  fn" << fn;
    idEdit     = 0;
    QFile filei( fn );
    QString edtext;
@@ -922,6 +917,7 @@ void US_FitMeniscus::edit_update( void )
 
    QString s_meni = QString().sprintf( "%.5f", mennew );
    QString s_bott = QString().sprintf( "%.5f", botnew );
+DbgLv(1) << " eupd:  s_meni s_bott" << s_meni << s_bott;
    QString mmsg   = "";
 
    if ( ! all_wvl  ||  nedtfs == 1 )
@@ -1238,26 +1234,29 @@ DbgLv(1) << "EDITFILT" << edtfilt << "nedtfs" << nedtfs;
    if ( nedtfs == 1 )
    {  // Choose the single corresponding edit
       fname_edit       = edtfiles.at( 0 );
+      pb_update->setEnabled( true );
    }
 
    else if ( nedtfs > 0 )
    {  // Choose the latest edit
       int min_ms       = 999999;
-      QString fpath    = edtfiles.at( 0 );
+      QString fname    = edtfiles.at( 0 );
+      QString fpath    = filedir + "/" + fname;
       QDateTime cdate  = QFileInfo( QFile( fpath ) )
                          .lastModified().toUTC();
 
       for ( int jj = 0; jj < nedtfs; jj++ )
       {
-         fpath            = edtfiles.at( jj );
+         fname            = edtfiles.at( jj );
+         fpath            = filedir + "/" + fname;
          QDateTime fdate  = QFileInfo( QFile( fpath ) )
                             .lastModified().toUTC();
-         int file_ms      = cdate.msecsTo( fdate );
+         int file_ms      = fdate.msecsTo( cdate );
 DbgLv(1) << "     jj" << jj << "fdate" << fdate << "file_ms" << file_ms;
          if ( file_ms < min_ms )
          {
             min_ms           = file_ms;
-            fname_edit       = fpath;
+            fname_edit       = fname;
          }
       }
 DbgLv(1) << " nedtfs" << nedtfs << "fname_edit" << fname_edit;
@@ -1281,16 +1280,25 @@ if(nedtfs>1) DbgLv(1) << "   f1" << edtfiles.at(1);
             + fname_load + tr( "\nof run\n     " ) + runID );
    }
 
+   // If apply-to-all-wavelengths, get list with all wavelengths
+   if ( ck_applymwl->isChecked() )
+   {
+      edtfilt.clear();
+      edtfilt << fname_edit.section( ".", 0, -3 ) + ".*.xml";
+      edtfiles   = QDir( filedir ).entryList( edtfilt, QDir::Files, QDir::Name );
+      nedtfs     = edtfiles.size();
+DbgLv(1) << "FL: aplmwl: nedtfs" << nedtfs << "edtfilt" << edtfilt;
+   }
+
    plot_data();
 
    le_status->setText( tr( "Data loaded:  " ) + runID + "/" + fname_load );
 }
 
-#if 0
 // Scan the database for models to use to write local fit table files
 void US_FitMeniscus::scan_dbase()
 {
-   QList< ModelDesc > mDescrs;     // List of model description objects
+   QVector< ModelDesc > mDescrs;   // Vector of model description objects
    US_Passwd pw;                   // DB password
    US_DB2 db( pw.getPasswd() );    // DB control
    QStringList query;              // DB query string list
@@ -1300,6 +1308,7 @@ void US_FitMeniscus::scan_dbase()
    QStringList tmodels;            // List: IDs of models with truncated descrs
    QStringList tedGIDs;            // List: edit GUIDs of models w/ trunc descrs
    QStringList tedIDs;             // List: edit IDs of models w/ trunc descrs
+   QList< int > botredo;           // List: bottom-redo Mdescr vector
 
    int         nfmods = 0;         // Number of fit-meniscus models
    int         nfsets = 0;         // Number of fit-meniscus analysis sets
@@ -1308,7 +1317,7 @@ void US_FitMeniscus::scan_dbase()
    int         nfexss = 0;         // Number of fit files left as they existed
 
    QString invID   = QString::number( US_Settings::us_inv_ID() );
-   QRegExp fmIter  = QRegExp( "i\?\?-m*",
+   QRegExp fmIter  = QRegExp( "i\?\?-[mb]*",
          Qt::CaseSensitive, QRegExp::Wildcard );
 
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
@@ -1331,7 +1340,7 @@ void US_FitMeniscus::scan_dbase()
 
       if ( descript.length() == 80 )
       {  // Truncated description:  save ID and skip update for now
-//DbgLv(1) << "DbSc:     TRUNC: modelID" << modelID;
+DbgLv(1) << "DbSc:     TRUNC: modelID" << modelID << "descr" << descript;
          tmodels << modelID;
          tedGIDs << editGUID;
          tedIDs  << editID;
@@ -1340,6 +1349,7 @@ void US_FitMeniscus::scan_dbase()
 
       double  variance   = db.value( 3 ).toString().toDouble();
       double  meniscus   = db.value( 4 ).toString().toDouble();
+      double  bottom     = 0.0;
       QDateTime lmtime   = db.value( 7 ).toDateTime();
       lmtime.setTimeSpec( Qt::UTC );
       QString ansysID    = descript.section( '.', -2, -2 );
@@ -1347,16 +1357,32 @@ void US_FitMeniscus::scan_dbase()
 DbgLv(1) << "DbSc:   modelID vari meni" << modelID << variance << meniscus
  << "ansysID" << ansysID << "iterID" << iterID;
 
-      if ( ansysID.contains( "2DSA-FM" )  ||  iterID.contains( fmIter ) )
+      if ( ansysID.contains( "2DSA-F" )  ||  iterID.contains( fmIter ) )
       {  // Model from meniscus fit, so save information
-DbgLv(1) << "DbSc:    *FIT* " << descript;
 
          // Format and save the potential fit table file name
+         QString fitVals    = iterID  .section( '-',  1,  1 );
+DbgLv(1) << "DbSc:    *FIT* " << descript << "fitVals" << fitVals;
+         int fittype        = 0;         // no fit
+         if ( fitVals.length() > 6 )
+            fittype            = 3;      // meniscus+bottom fit
+         else if ( fitVals.startsWith( "b" ) )
+            fittype            = 2;      // bottom fit
+         else if ( fitVals.startsWith( "m" ) )
+            fittype            = 1;      // meniscus fit
+         QString fextn      = ( fittype != 2 ) ?
+                              ".fitmen.dat" : ".fitbot.dat";
+DbgLv(1) << "DbSc:     fittype" << fittype << "fextn" << fextn;
+         if ( fittype == 2  ||  fittype == 3 )
+         {  // Bottom or Meniscus+Bottom:  add to list of bottom redo's
+            botredo << mDescrs.count();
+         }
          QString runID      = descript.section( '.',  0, -4 );
          QString tripleID   = descript.section( '.', -3, -3 );
          QString editLabel  = ansysID .section( '_',  0, -5 );
-         QString ftfname    = runID + "/2dsa-fm." + editLabel +
-                              "-" + tripleID + ".fitmen.dat";
+         QString anType     = ansysID .section( '_',  2, -3 );
+         QString ftfname    = runID + "/" + anType + "."
+                              + tripleID + fextn;
          mdescr.description = descript;
          mdescr.baseDescr   = runID + "." + tripleID + "."
                               + ansysID.section( "-", 0, 3 );
@@ -1367,18 +1393,20 @@ DbgLv(1) << "DbSc:    *FIT* " << descript;
          mdescr.editGUID    = editGUID;
          mdescr.variance    = variance;
          mdescr.meniscus    = meniscus;
+         mdescr.bottom      = bottom;
          mdescr.antime      = descript.section( '.', -2, -2 )
                               .section( '_',  1,  1 ).mid( 1 );
          mdescr.lmtime      = lmtime;
 
          mDescrs << mdescr;
-      }
-   }
+      } // END: model is fit type
+   } // END: database model record reads
 DbgLv(1) << "DbSc: tmodels size" << tmodels.size() << "ted sizes"
  << tedGIDs.size() << tedIDs.size();
 
+   // Review models with truncated descriptions
    for ( int ii = 0; ii < tmodels.size(); ii++ )
-   {  // Review models with truncated descriptions
+   {
       QString modelID    = tmodels[ ii ];
       query.clear();
       query << "get_model_info" << modelID;
@@ -1410,17 +1438,35 @@ DbgLv(1) << "DbSc: tmodels size" << tmodels.size() << "ted sizes"
       QString iterID     = ansysID .section( '_', -1, -1 );
 //DbgLv(1) << "DbSc:   dscr1" << descript1 << "dcs" << descript;
 
-      if ( ansysID.contains( "2DSA-FM" )  ||  iterID.contains( fmIter ) )
+      if ( ansysID.contains( "2DSA-F" )  ||  iterID.contains( fmIter ) )
       {  // Model from meniscus fit, so save information
 DbgLv(1) << "DbSc:    *FIT* " << descript;
          ModelDesc mdescr;
+         double  bottom     = 0.0;
 
          // Format and save the potential fit table file name
          QString runID      = descript.section( '.',  0, -4 );
          QString tripleID   = descript.section( '.', -3, -3 );
          QString editLabel  = ansysID .section( '_',  0, -5 );
-         QString ftfname    = runID + "/2dsa-fm." + editLabel +
-                              "-" + tripleID + ".fitmen.dat";
+         QString fitVals    = iterID  .section( '-',  1,  1 );
+         int fittype        = 0;
+         if ( fitVals.length() > 6 )
+            fittype            = 3;
+         else if ( fitVals.startsWith( "b" ) )
+            fittype            = 2;
+         else if ( fitVals.startsWith( "f" ) )
+            fittype            = 1;
+         QString fextn      = ( fittype != 2 ) ?
+                              ".fitmen.dat" : ".fitbot.dat";
+
+         if ( fittype != 1 )
+         {  // Bottom or Meniscus+Bottom:  add to list of bottom redo's
+            botredo << mDescrs.count();
+         }
+
+         QString anType     = ansysID .section( '_',  2, -3 );
+         QString ftfname    = runID + "/" + anType + "."
+                              + tripleID + fextn;
          mdescr.description = descript;
          mdescr.baseDescr   = runID + "." + tripleID + "."
                               + ansysID.section( "-", 0, 3 );
@@ -1431,6 +1477,7 @@ DbgLv(1) << "DbSc:    *FIT* " << descript;
          mdescr.editGUID    = editGUID;
          mdescr.variance    = variance;
          mdescr.meniscus    = meniscus;
+         mdescr.bottom      = bottom;
          mdescr.antime      = descript.section( '.', -2, -2 )
                               .section( '_',  1,  1 ).mid( 1 );
          mdescr.lmtime      = lmtime;
@@ -1439,7 +1486,39 @@ DbgLv(1) << "DbSc:    *FIT* " << descript;
       }
    }
 
-   nfmods     = mDescrs.size();
+   // Redo any model descriptions that need a bottom value
+   for ( int ii = 0; ii < botredo.count(); ii++ )
+   {
+      int jj             = botredo[ ii ];
+      ModelDesc mdescr   = mDescrs[ jj ];
+      QString modelID    = mdescr.modelID;
+      US_Model wmodel;
+      wmodel.load( modelID, &db );
+      double bottom      = wmodel.bottom;
+
+      if ( bottom < 1.0 )
+      {  // Bottom not reliable in model, get from model description
+         QString descript   = mdescr.description;
+         QString ansysID    = descript.section( '.', -2, -2 );
+         QString iterID     = ansysID .section( '_', -1, -1 );
+         QString fitVals    = iterID  .section( '-',  1,  1 );
+         int fittype        = 0;         // no fit
+         if ( fitVals.length() > 6 )
+            fittype            = 3;      // meniscus+bottom fit
+         else if ( fitVals.startsWith( "b" ) )
+            fittype            = 2;      // bottom fit
+         else if ( fitVals.startsWith( "m" ) )
+            fittype            = 1;      // meniscus fit
+         bottom             = ( fittype == 2 ) ?
+                              ( fitVals.mid( 1, 5 ).toDouble() / 10000.0 ) :
+                              ( fitVals.mid( 6, 5 ).toDouble() / 10000.0 );
+      }
+
+      mdescr.bottom      = bottom;
+      mDescrs[ jj ]      = mdescr;
+   }
+
+   nfmods     = mDescrs.count();
 DbgLv(1) << "Number of FM models found: " << nfmods;
 if(nfmods>0) {
 DbgLv(1) << " pre:D0" <<  mDescrs[0].description;
@@ -1492,6 +1571,7 @@ DbgLv(1) << "Number of FM analysis set duplicates: " << ndupl;
       if ( mfnams.count( ftfname ) == 1 )
       {  // Not really a set; single fit model after previous fm run
          nfsets--;
+DbgLv(1) << "ScDB: SINGLE:" << ftfname;
          continue;
       }
 
@@ -1526,6 +1606,7 @@ DbgLv(1) << "   jj desc" << jj << mDescrs[jj].description
       {  // File does not exist, so we definitely need to create it
          nfadds++;
          QString ftfpath    = QString( rdir + ftfname ).section( "/", 0, -2 );
+DbgLv(1) << "ScDB: NOT-EXIST local:  nfadds" << nfadds;
          QDir().mkpath( ftfpath );
       }
 
@@ -1543,15 +1624,33 @@ DbgLv(1) << "   jj desc" << jj << mDescrs[jj].description
 
 DbgLv(1) << " Creating" << ftfname << "jf,jl" << jfirst << jlast;
       for ( int jj = jfirst; jj < jlast; jj++ )
-      {  // First build the pairs list
+      {  // First build the pairs (or triples) list
+         double bottom   = mDescrs[ jj ].bottom;
          double meniscus = mDescrs[ jj ].meniscus;
          double variance = mDescrs[ jj ].variance;
          double rmsd     = sqrt( variance );
          QString antime  = mDescrs[ jj ].antime;
+         QString mrpair  = QString::number( meniscus, 'f', 6 ) + " "
+                         + QString::number( rmsd,     'e', 6 ); 
+
+         if ( bottom > 1.0 )
+         {  // Either Bottom or Meniscus+Bottom
+            if ( ftfname.contains( "FB" ) )
+            {  // Bottom only
+               mrpair          = QString::number( bottom,   'f', 6 ) + " "
+                               + QString::number( rmsd,     'e', 6 ); 
+            }
+            else
+            {  // Meniscus and Bottom
+               mrpair          = QString::number( meniscus, 'f', 6 ) + " "
+                               + QString::number( bottom,   'f', 6 ) + " "
+                               + QString::number( rmsd,     'e', 6 ); 
+            }
+         }
 DbgLv(1) << "  jj desc" << jj << mDescrs[jj].description;
+
          if ( antime == antiml )
-            mrpairs << QString::number( meniscus, 'f', 6 ) + " "
-                     + QString::number( rmsd,     'e', 6 ); 
+            mrpairs << mrpair;
       }
 
       mrpairs.sort();
@@ -1593,329 +1692,6 @@ DbgLv(1) << "Number of FM EXISTING sets: " << nfexss;
    QApplication::restoreOverrideCursor();
    QApplication::restoreOverrideCursor();
 }
-#endif
-#if 1
-// Scan the database for fit table documents to possibly download
-void US_FitMeniscus::scan_dbase()
-{
-   US_Passwd pw;                   // DB password
-   US_DB2 db( pw.getPasswd() );    // DB control
-
-   if ( db.lastErrno() != US_DB2::OK )
-   {
-      QMessageBox::information( this,
-         tr( "DB Connection Problem" ),
-         tr( "There was an error connecting to the database:\n" )
-         + db.lastError() );
-      return;
-   }
-
-   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-
-   QStringList query;              // DB query string list
-   QString invID   = QString::number( US_Settings::us_inv_ID() );
-   QString resdir  = US_Settings::resultDir() + "/";
-   QDir dirres( resdir );
-   QStringList resruns = dirres.entryList(
-         QDir::AllDirs | QDir::NoDotAndDotDot, QDir::Name );
-   QString rptdir = US_Settings::reportDir() + "/";
-   QDir dirrpt( rptdir );
-   QVector< US_Report::ReportDocument > docdocs;
-   QVector< int >      docids;
-   QVector< QString >  docruns;
-   QVector< QString >  mdlpaths;
-   QVector< QString >  md2paths;
-   QVector< QString >  mdltimes;
-   QStringList docpaths;
-   QStringList runids;
-   int kreports   = 0;
-   int nfitdocs   = 0;
-
-   query.clear();
-   query << "count_reports" << invID;
-   int nreports = db.functionQuery( query );
-   if ( nreports < 1 )
-   {
-      QMessageBox::information( this,
-         tr( "No DB Reports to Scan" ),
-         tr( "There were no database reports to scan" ) );
-      return;
-   }
-DbgLv(1) << "ScDB: nreports" << nreports;
-
-   // Scan reports for run IDs
-   query.clear();
-   query << "get_report_desc" << invID;
-   db.query( query );
-   if ( db.lastErrno() != US_DB2::OK )
-      qDebug() << "ScDB: db *ERR*" << db.lastErrno() << db.lastError();
-
-   while ( db.next() )
-   {
-      runids << db.value( 4 ).toString();
-      kreports++;
-   }
-DbgLv(1) << "ScDB: kreports" << kreports;
-DbgLv(1) << "ScDB: db *ERR*" << db.lastErrno() << db.lastError();
-
-   // Scan triple reports
-   for ( int ii = 0; ii < kreports; ii++ )
-   {
-      QString runID    = runids[ ii ];
-      US_Report freport;
-      freport.readDB( runID, &db );
-
-      int ntriples     = freport.triples.count();
-DbgLv(1) << "ScDB:  rep" << ii << "ntriples" << ntriples << "runID" << runID;
-
-      for ( int jj = 0; jj < ntriples; jj++ )
-      {
-         US_Report::ReportTriple* tripl = &freport.triples[ jj ];
-         int ndocs        = tripl->docs.count();
-DbgLv(1) << "ScDB:     trp" << jj << "ndocs" << ndocs;
-
-         // Scan documents of triples
-         for ( int kk = 0; kk < ndocs; kk++ )
-         {
-            US_Report::ReportDocument* doc = &tripl->docs[ kk ];
-            QString fname = doc->filename;
-            int docID     = doc->documentID;
-//DbgLv(1) << "ScDB:        doc" << kk << "fname" << fname << "docID" << docID;
-
-            // Skip all but fit documents
-            if ( !fname.endsWith( ".doc" )  &&
-                 !fname.contains( "fit" ) )
-               continue;
-
-            // Save docs and doc file names
-            QString docpath = runID + "/" + fname;
-            int rdx         = docpaths.indexOf( docpath );
-            if ( rdx < 0 )
-            {  // New document
-               docdocs << *doc;
-               docids  << docID;
-               docruns << runID;
-               docpaths << docpath;
-               nfitdocs++;
-            }
-            else
-            {  // Duplicate document:  save latest
-               docdocs [ rdx ] = *doc;
-               docids  [ rdx ] = docID;
-               docruns [ rdx ] = runID;
-               docpaths[ rdx ] = docpath;
-            }
-DbgLv(1) << "ScDB:          nfitdocs" << nfitdocs << "run" << runID << "fn" << fname << "doc" << docID;
-         }  // END: documents loop
-      }  // END: triples loop
-   }  // END: reports loop
-
-DbgLv(1) << "ScDB: nfitdocs" << nfitdocs << "kfitdocs" << docids.count();
-   le_status->setText(
-         tr( "Comparing to existing local fit data files ..." ) );
-
-   // Scan fit models for fit paths and last-mod times
-   QRegExp fmIter  = QRegExp( "i\?\?-[mb]*",
-         Qt::CaseSensitive, QRegExp::Wildcard );
-   query.clear();
-   query << "get_model_desc" << invID;
-   db.query( query );
-
-   while( db.next() )
-   {  // Loop through current user's models
-      QString modelID    = db.value( 0 ).toString();
-      QString descript   = db.value( 2 ).toString();
-      QString editID     = db.value( 6 ).toString();
-      QString ansysID    = descript.section( '.', -2, -2 );
-      QString iterID     = ansysID .section( '_', -1, -1 );
-DbgLv(1) << "DbSc:   modelID editID" << modelID << editID
- << "ansysID" << ansysID << "iterID" << iterID;
-
-      // Skip any non-fit model
-      if ( !ansysID.contains( "2DSA-FM" )  &&
-           !ansysID.contains( "2DSA-FB" )  &&
-           !iterID.contains( fmIter ) )
-         continue;
-DbgLv(1) << "DbSc:    *FIT* model " << descript;
-
-      // Fit model, so get more information about it
-      QString runID      = descript.section( '.',  0, -4 );
-      QString tripleID   = descript.section( '.', -3, -3 );
-      QString editLabel  = ansysID .section( '_',  0, -5 );
-      QString anTime     = ansysID .section( '_',  1, -4 );
-      QString anType     = ansysID .section( '_',  2, -3 );
-      QString fextn      = ansysID.contains( "2DSA-FM" ) ?
-                           ".fitmen.dat" : ".fitbot.dat";
-      QString ftfname    = runID + "/" + anType +
-                           "." + tripleID + fextn;
-      int docx           = docpaths.indexOf( ftfname );
-      int mdlx           = mdlpaths.indexOf( ftfname );
-DbgLv(1) << "DbSc:    ftfname" << ftfname << "docx mdlx" << docx << mdlx;
-
-      if ( docx < 0 )
-      {  // Give doc search another try using "2DSA" instead of "2DSA-FB"
-         QString ftfnam2    = runID + "/" + anType.section( "-", 0, 0 ) +
-                              "." + tripleID + fextn;
-         int docx2          = docpaths.indexOf( ftfnam2 );
-DbgLv(1) << "DbSc:     ftfnam2" << ftfnam2 << "docx2" << docx2;
-         if ( docx2 >= 0 )
-         {
-            ftfname            = ftfnam2;
-            docx               = docx2;
-         }
-      }
-
-      // Skip any fit model not associated with fit document
-      if ( docx < 0 )
-         continue;
-
-      if ( mdlx < 0 )
-      {  // No model information yet, so add it
-         mdlpaths << ftfname;
-         mdltimes << anTime;
-      }
-      else
-      {  // Duplicate model, so update it
-         mdltimes[ mdlx ] = anTime;
-      }
-DbgLv(1) << "DbSc:      model anTime" << anTime;
-   }
-
-   int nfadds      = 0;
-   int nfrpls      = 0;
-   int nfexss      = 0;
-   QString fpathsv;
-
-   // Download any fit documents new to local or newer than local
-   for ( int ii = 0; ii < nfitdocs; ii++ )
-   {
-      QString runID   = docruns [ ii ];
-      QString fpath   = docpaths[ ii ];
-      int docID       = docids  [ ii ];
-      int mdlx        = mdlpaths.indexOf( fpath );
-DbgLv(1) << "ScDB: scnloc:  ii" << ii << "docID" << docID << "mdlx" << mdlx;
-
-      // Skip any documents with no corresponding model information
-      if ( mdlx < 0 )
-         continue;
-
-      // Determine existence of local files
-      QString respath = resdir + fpath;
-      QString rptpath = rptdir + fpath;
-      QString dresdir = QString( respath ).section( "/", 0, -2 );
-      QString drptdir = QString( rptpath ).section( "/", 0, -2 );
-      QFile resfile( respath );
-      QFile rptfile( rptpath );
-      bool exs_res    = resfile.exists();
-      bool exs_rpt    = rptfile.exists();
-      bool dwn_res    = true;
-      bool dwn_rpt    = true;
-DbgLv(1) << "ScDB: scnloc: exists" << exs_res << "respath" << respath;
-DbgLv(1) << "ScDB: scnloc: exists" << exs_rpt << "rptpath" << rptpath;
-
-      // Set results,reports download flags:  true if no local or older than db
-      if ( exs_res )
-      {  // File in results:  turn off download if local newer than db
-         QDateTime fdate = QFileInfo( resfile ).lastModified().toUTC();
-         QDateTime rdate = QDateTime::fromString( mdltimes[ mdlx ], "YYMMDDhhmm" );
-         rdate           = rdate.toUTC();
-         dwn_res         = ( fdate.msecsTo( rdate ) > 0 );
-         if ( dwn_res )
-         {  // Will be downloading, so delete the file to be replaced
-DbgLv(1) << " ii rdate fdate" << ii << rdate << fdate << "   fpath"
-   << fpath << "  fdate.msecsTo(rdate)" << fdate.msecsTo(rdate);
-            resfile.remove();
-            nfrpls++;
-DbgLv(1) << "ScDB: scnloc:  nfrpls" << nfrpls;
-         }
-         else
-         {  // Newer local file:  leave as is
-            nfexss++;
-DbgLv(1) << "ScDB: scnloc:  nfexss" << nfexss;
-         }
-      }
-      else
-      {  // Download of brand new local file
-         nfadds++;
-DbgLv(1) << "ScDB: scnloc:  nfadds" << nfadds;
-      }
-
-      if ( dwn_res )
-      {  // Make a local copy of the database document
-DbgLv(0) << "  docID(a)" << docids[ii] << "docID(r)" << docdocs[ii].documentID;
-         int rstat       = docdocs[ ii ].readDB( dresdir, &db );
-
-         if ( rstat != US_DB2::OK )
-         {
-            qDebug() << "ReportDoc read ERROR: status" << rstat << fpath;
-DbgLv(0) << "  db error:" << db.lastError();
-DbgLv(0) << "  dresdir:" << dresdir;
-DbgLv(0) << "  doc.documentID:" << docdocs[ii].documentID;
-DbgLv(0) << "  doc.filename:" << docdocs[ii].filename;
-         }
-
-         fpathsv         = fpath;
-//         fpathsv         = fpathsv.isEmpty() ? fpath : fpathsv;
-      }
-
-      if ( exs_rpt )
-      {  // File in reports:  turn off download if local newer than db
-         QDateTime fdate = QFileInfo( rptfile ).lastModified().toUTC();
-         QDateTime rdate = QDateTime::fromString( mdltimes[ mdlx ], "YYMMDDhhmm" );
-         rdate           = rdate.toUTC();
-         dwn_rpt         = ( fdate.msecsTo( rdate ) > 0 );
-         if ( dwn_rpt )
-         {  // Will be downloading, so delete the file to be replaced
-DbgLv(1) << " ii rdate fdate" << ii << rdate << fdate << "   fpath"
-   << fpath << "  fdate.msecsTo(rdate)" << fdate.msecsTo(rdate);
-            rptfile.remove();
-         }
-      }
-
-      if ( dwn_rpt )
-      {  // Make a local copy of the DB document in the reports directory
-DbgLv(0) << "  docID(a)" << docids[ii] << "docID(r)" << docdocs[ii].documentID;
-         int rstat       = docdocs[ ii ].readDB( drptdir, &db );
-
-         if ( rstat != US_DB2::OK )
-         {
-            qDebug() << "ReportDoc read ERROR: status" << rstat << fpath;
-DbgLv(0) << "  db error:" << db.lastError();
-DbgLv(0) << "  drptdir:" << drptdir;
-DbgLv(0) << "  doc.documentID:" << docdocs[ii].documentID;
-DbgLv(0) << "  doc.filename:" << docdocs[ii].filename;
-         }
-      }
-   }  // END:  Fit documents loop
-
-DbgLv(1) << "Number of FM REPLACE  sets: " << nfrpls;
-DbgLv(1) << "Number of FM ADD      sets: " << nfadds;
-DbgLv(1) << "Number of FM EXISTING sets: " << nfexss;
-
-   // Report
-   QString msg = tr( "File" );
-   int nftota  = nfadds + nfrpls;
-
-   if      ( nfadds == 1  &&  nfrpls == 0 )
-      msg += tr( " added: " );
-
-   else if ( nfadds == 0  &&  nfrpls == 1 )
-      msg += tr( " updated: " );
-
-   else if ( nfadds == 0  &&  nfrpls == 0 )
-      msg  = tr( "No new fit files were created." );
-
-   else
-      msg  = tr( "Last of %1 added/updated: " ).arg( nftota );
-
-   if ( nftota > 0 )
-      msg += fpathsv;
-
-   le_status->setText( msg );
-   QApplication::restoreOverrideCursor();
-   QApplication::restoreOverrideCursor();
-}
-#endif
 
 // Reset state of database scan button based on DB/Disk choice
 void US_FitMeniscus::update_disk_db( bool isDB )
@@ -1950,6 +1726,7 @@ DbgLv(1) << "updDbEd: idEdit" << idEdit;
       return;
    }
 
+DbgLv(1) << "updDbEd: nedtfs" << nedtfs << "applymwl" << ck_applymwl->isChecked();
    if ( nedtfs == 1  ||  ! ck_applymwl->isChecked() )
    {
       if ( have3val )
@@ -1993,13 +1770,15 @@ else
 // Remove f-m models (and associated noise) except for the single chosen one
 void US_FitMeniscus::remove_models()
 {
-   QString srchRun  = filedir.section( "/", -1, -1 );
-   QString srchEdit = fname_load.section( ".", -3, -3 );
-   QString srchTrip = srchEdit.section( "-", -1, -1 );
-           srchEdit = srchEdit.section( "-",  0, -2 );
+   QString srchRun  = filedir.section   ( "/", -1, -1 );
+   QString srchEdit = "e" +
+                      fname_edit.section( ".", -6, -6 );
+   QString srchTrip = fname_load.section( ".", -3, -3 );
    QString msetBase;
-DbgLv(1) << "RmvMod: scn1 srchRun srchEdit srchTrip"
- << srchRun << srchEdit << srchTrip << " msetBase" << msetBase;
+DbgLv(1) << "RmvMod: fname_load" << fname_load;
+DbgLv(1) << "RmvMod: fname_edit" << fname_edit;
+DbgLv(1) << "RmvMod: scn1  srchRun"
+ << srchRun << "srchEdit" << srchEdit << "srchTrip" << srchTrip;
 
    // Scan models files; get list of fit-meniscus type matching run/edit/triple
    QStringList modfilt;
@@ -2007,6 +1786,7 @@ DbgLv(1) << "RmvMod: scn1 srchRun srchEdit srchTrip"
    QString     moddir   = US_Settings::dataDir() + "/models";
    QStringList modfiles = QDir( moddir ).entryList(
          modfilt, QDir::Files, QDir::Name );
+DbgLv(1) << "RmvMod: raw modfiles count" << modfiles.count();
    moddir               = moddir + "/";
 
    QList< ModelDesc >  lMDescrs;
@@ -2056,6 +1836,7 @@ DbgLv(1) << "RmvMod:  *LOAD ERR*" << modfname;
       QString anRunID    = descript.section( '.', -2, -2 );
       QString editLabl   = anRunID .section( '_',  0, -5 );
       QString iterID     = anRunID .section( '_', -1, -1 );
+      QString itNum      = iterID  .section( '-',  0,  0 );
 //DbgLv(1) << "RmvMod:    iterID" << iterID;
 if(ii<3 || (ii+4)>modfiles.size() || ii==(modfiles.size()/2))
  DbgLv(1) << "RmvMod:  scn1 ii runID editLabl tripID"
@@ -2071,8 +1852,8 @@ DbgLv(1) << "RmvMod:   ii" << ii << "iterID" << iterID
          continue;    // Can't use if not a fit-meniscus or fit-bottom type
       }
 
-      if ( msetBase.isEmpty() )
-      {
+      if ( itNum == "01"  &&  msetBase.isEmpty() )
+      {  // When fit iteration is "01" and not yet saved, save model set base
          msetBase       = descript.section( ".", 0, -3 ) + "." + 
                           anRunID .section( "_", 0,  3 );
 DbgLv(1) << "RmvMod:lfiles: msetBase" << msetBase << "ii" << ii;

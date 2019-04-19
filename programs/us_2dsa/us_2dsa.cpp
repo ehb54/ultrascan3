@@ -716,6 +716,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
       model.analysis    = US_Model::TWODSA;
       model.variance    = variance;
       model.meniscus    = meniscus;
+      model.bottom      = bottom;
       model.wavelength  = dwavelen;
       model.dataDescrip = edata->description;
 
