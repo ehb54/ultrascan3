@@ -42,6 +42,7 @@ class US_FitMeniscus : public US_Widgets
             QDateTime lmtime;         // Record lastmod date & time
             double    variance;       // Variance value
             double    meniscus;       // Meniscus radius value
+            double    bottom;         // Bottom radius value
 
             // Less than operator to enable sort
             bool operator< ( const ModelDesc& md )
