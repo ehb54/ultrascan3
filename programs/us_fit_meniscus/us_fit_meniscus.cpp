@@ -1037,6 +1037,12 @@ DbgLv(1) << " eupd:   mlsx blsx" << mlsx << blsx << "mlnn blnn" << mlnn << blnn;
                                                QMessageBox::Cancel );
 
          rmv_mdls     = ( response == QMessageBox::Yes );
+//*DEBUG*
+//DbgLv(1) << "Test call to get index";
+//index_model_setfit();
+//DbgLv(1) << "RETURN: ix_setfit" << ix_setfit;
+//rmv_mdls=false;
+//*DEBUG*
       }
    }  // END: apply to single triple
 
@@ -1188,7 +1194,6 @@ DbgLv(1) << " eupd:       ret fr upd_db_ed";
          rmv_mdls = ( response == QMessageBox::Yes );
       }
 
-//      idEdit        = 0;
    }  // END: apply to all wavelengths
 
    if ( rmv_mdls )
@@ -1780,6 +1785,9 @@ DbgLv(1) << "RmvMod: fname_edit" << fname_edit;
 DbgLv(1) << "RmvMod: scn1  srchRun"
  << srchRun << "srchEdit" << srchEdit << "srchTrip" << srchTrip;
 
+   // Get the model,list index to selected meniscus/bottom value(s)
+   index_model_setfit();
+
    // Scan models files; get list of fit-meniscus type matching run/edit/triple
    QStringList modfilt;
    modfilt << "M*.xml";
@@ -1909,13 +1917,13 @@ DbgLv(1) << "RmvMod: nlmods" << nlmods << "msetBase" << msetBase;
 DbgLv(1) << "RmvMod: best ndx scan: ii vari" << ii << lmodd.variance
  << "iterID iters" << iterID << iterx;
 
-      if ( iterx == ix_best )
+      if ( iterx == ix_setfit )
       {
          lkModx         = ii;
 DbgLv(1) << "RmvMod:   best ndx scan:   lkModx" << lkModx;
       }
    }
-DbgLv(1) << "RmvMod:  ix_best lkModx" << ix_best << lkModx;
+DbgLv(1) << "RmvMod:  ix_setfit lkModx" << ix_setfit << lkModx;
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
    // Make a list of fit models that match for DB, if possible
@@ -2055,7 +2063,7 @@ DbgLv(1) << "RmvMod: ndmods" << ndmods;
 DbgLv(1) << "RmvMod: best ndx scan: ii vari" << ii << dmodd.variance
  << "iterID iters" << iterID << iterx;
 
-         if ( iterx == ix_best )
+         if ( iterx == ix_setfit )
          {
             dkModx         = ii;
 DbgLv(1) << "RmvMod:   best ndx scan:   dkModx" << dkModx;
@@ -2533,5 +2541,53 @@ void US_FitMeniscus::change_plot_type( )
    le_mprads   ->setVisible( have3val );
    lb_zfloor   ->setVisible( have3val );
    ct_zfloor   ->setVisible( have3val );
+}
+
+// Set the fit models index for set fit meniscus/bottom
+void US_FitMeniscus::index_model_setfit()
+{
+   if ( have3val )
+   {  // Fit Mensicus + Bottom:  find closest x,y in list
+      double xmeni  = le_men_fit->text().toDouble();
+      double ybott  = le_bot_fit->text().toDouble();
+      double lowxyd = 1.0e+99;
+DbgLv(1) << "IMS:  xmeni ybott" << xmeni << ybott;
+
+      for ( int ii = 0; ii < v_meni.count(); ii++ )
+      {  // Find lowest difference in X,Y list
+         double xydiff = sq( ( xmeni - v_meni[ ii ] ) ) +
+                         sq( ( ybott - v_bott[ ii ] ) );
+         xydiff        = ( xydiff == 0.0 ) ? 0.0 : sqrt( xydiff );
+
+         if ( xydiff < lowxyd )
+         {  // Save lowest difference so far and its index
+            ix_setfit     = ii;
+            lowxyd        = xydiff;
+DbgLv(1) << "IMS:    ii" << ii << "lowxyd" << lowxyd;
+         }
+      }
+   }
+
+   else
+   {  // Fit Meniscus OR Fit Bottom:  find close X in list
+      double xselec = le_men_sel->text().toDouble();
+      double lowxd  = 1.0e+99;
+DbgLv(1) << "IMS:  xselec" << xselec << "v_meni count" << v_meni.count();
+
+      for ( int ii = 0; ii < v_meni.count(); ii++ )
+      {  // Find lowest difference in X list
+         double xdiff  = qAbs( ( xselec - v_meni[ ii ] ) );
+
+         if ( xdiff < lowxd )
+         {  // Save lowest difference so far and its index
+            ix_setfit     = ii;
+            lowxd         = xdiff;
+DbgLv(1) << "IMS:    ii" << ii << "lowxd" << lowxd << "v_meni-ii" << v_meni[ii];
+         }
+      }
+   }
+DbgLv(1) << "IMS: ix_setfit" << ix_setfit;
+
+   return;
 }
 
