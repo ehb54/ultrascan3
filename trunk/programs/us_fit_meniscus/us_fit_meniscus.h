@@ -129,6 +129,7 @@ class US_FitMeniscus : public US_Widgets
       int                  nedtfs;
       int                  idEdit;
       int                  ix_best;
+      int                  ix_setfit;
       int                  dbg_level;
 
       bool                 have3val;
@@ -149,6 +150,7 @@ class US_FitMeniscus : public US_Widgets
       void remove_models(  void );
       void noises_in_edit( QString, QStringList&,
                            QStringList&, QStringList& );
+      void index_model_setfit( void );
       QwtLinearColorMap* ColorMapCopy( QwtLinearColorMap* );
       void change_plot_type( void );
 
