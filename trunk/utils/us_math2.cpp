@@ -1460,15 +1460,64 @@ int US_Math2::best_grid_reps( int& ngrid_s, int& ngrid_k )
    const int min_reps = 1;    // Repetitions at least 1
    const int max_reps = 160;  // Repetitions at most 160
 
+qDebug() << "BGR: IN";
    // Insure grid points are within reasonable limits
    ngrid_s         = qMin( max_grid, qMax( min_grid, ngrid_s ) );
    ngrid_k         = qMin( max_grid, qMax( min_grid, ngrid_k ) );
    int ngrid_s_i   = ngrid_s;
    int ngrid_k_i   = ngrid_k;
+qDebug() << "BGR: ngrid_s_i" << ngrid_s_i << "ngrid_k_i" << ngrid_k_i;
 
-   // Compute the initial best grid-repetitions value
-   int    nreps_g  = qRound( pow( (double)( ngrid_s * ngrid_k ), 0.25 ) );
+   // Build the list of repetition values that divide into s grid points
+   QList< int > reps;
+
+   for ( int jreps = min_reps; jreps <= max_reps; jreps++ )
+   {
+      int jgrid_s     = ( ngrid_s / jreps ) * jreps;
+
+      if ( jgrid_s == ngrid_s )
+      {  // Save a repetition that divides evenly into S grid points
+         reps << jreps;
+qDebug() << "BGR:   jgrid_s" << jgrid_s << "jreps" << jreps;
+      }
+   }
+
+   // Find the repetitions and k grid points that work best
+   int kdiff       = 99999;
+   int kreps       = reps[ 0 ];
+   int kgrid_k     = ngrid_k;
+
+   for ( int ii = 0; ii < reps.count(); ii++ )
+   {
+      int jreps       = reps[ ii ];
+      int dim_s       = ngrid_s / jreps;
+      int dim_k       = ngrid_k / jreps;
+      int jgrid_k     = dim_k * jreps;
+      int nsubgs      = jreps * jreps;
+      int subgsz      = dim_s * dim_k;
+      int jdiff       = qAbs( nsubgs - subgsz );
+qDebug() << "BGR:   ii" << ii << "jreps" << jreps << "jgrid_k" << jgrid_k;
+
+      if ( jdiff < kdiff )
+      {  // Count and size of subgrid closely matched
+         kdiff           = jdiff;
+         kreps           = jreps;
+         kgrid_k         = jgrid_k;
+qDebug() << "BGR:     ii" << ii << "kdiff" << kdiff;
+      }
+   }
+
+   ngrid_k         = kgrid_k;
+   int nreps_g     = kreps;
+   int nsubg_s     = ngrid_s / nreps_g;
+   int nsubg_k     = ngrid_k / nreps_g;
+qDebug() << "BGR: ngrid_s" << ngrid_s << "ngrid_k ngrid_k_i" << ngrid_k << ngrid_k_i;
+qDebug() << "BGR:  nsubgs" << (nreps_g*nreps_g) << "subgsz" << (nsubg_s*nsubg_k)
+ << "totgsz" << (ngrid_s*ngrid_k) << "nreps_g" << nreps_g;
+   
+#if 0
    double grfact   = 1.0;
+qDebug() << "BGR: nreps_g" << nreps_g;
    // If debug text modifies grid-rep factor, apply it
    QStringList tgrfact = US_Settings::debug_text();
 
@@ -1478,42 +1527,29 @@ int US_Math2::best_grid_reps( int& ngrid_s, int& ngrid_k )
          grfact    = QString( tgrfact[ ii ]) .section( "=", 1, 1 ).toDouble();
    }
    nreps_g         = qRound( grfact * nreps_g );
-
-   // Compute the initial sub-grid point counts in each dimension,
-   //  insuring the next highest integers are used.
-   int nsubg_s     = ( ngrid_s + nreps_g - 1 ) / nreps_g;
-   int nsubg_k     = ( ngrid_k + nreps_g - 1 ) / nreps_g;
+qDebug() << "BGR: grfact" << grfact << "nreps_g" << nreps_g;
+#endif
 
    // Adjust values until the product yields no more than 200 sub-grid points
-   while ( ( nsubg_s * nsubg_k ) > max_subg  &&  nreps_g < max_reps )
+   while ( ( nsubg_s * nsubg_k ) > max_subg  ||  nreps_g < min_reps )
    {  // Increase grid-reps and recompute sub-grid points
       nreps_g++;
-      nsubg_s         = ( ngrid_s + nreps_g - 1 ) / nreps_g;
-      nsubg_k         = ( ngrid_k + nreps_g - 1 ) / nreps_g;
+      nsubg_s         = ngrid_s / nreps_g;
+      nsubg_k         = ngrid_k / nreps_g;
    }
 
    // Adjust values until the product yields no less than 40 sub-grid points
-   while ( ( nsubg_s * nsubg_k ) < min_subg  &&  nreps_g > min_reps )
+   while ( ( nsubg_s * nsubg_k ) < min_subg  ||  nreps_g > max_reps )
    {  // Decrease grid-reps and recompute sub-grid points
       nreps_g--;
-      nsubg_s         = ( ngrid_s + nreps_g - 1 ) / nreps_g;
-      nsubg_k         = ( ngrid_k + nreps_g - 1 ) / nreps_g;
+      nsubg_s         = ngrid_s / nreps_g;
+      nsubg_k         = ngrid_k / nreps_g;
    }
 
    // Recalculate the total grid points in each dimension
    //  to be multiples of the grid repetitions
    ngrid_s         = nsubg_s * nreps_g;
    ngrid_k         = nsubg_k * nreps_g;
-
-   if ( ngrid_s < ngrid_s_i )
-   { // If S grid points less than user-given, bump by grid reps
-      ngrid_s        += nreps_g;
-   }
-
-   if ( ngrid_k < ngrid_k_i )
-   { // If K grid points less than user-given, bump by grid reps
-      ngrid_k        += nreps_g;
-   }
 
    // Return the computed number of grid repetitions
    return nreps_g;

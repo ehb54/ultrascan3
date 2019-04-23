@@ -771,20 +771,41 @@ void US_AnalysisControl2D::close_all()
 // Reset memory estimate when grid steps, threads or repetitions changes
 void US_AnalysisControl2D::grid_change()
 {
-   int    nsteps = (int)ct_nstepss ->value();         // # steps s
-   int    nstepk = (int)ct_nstepsk ->value();         // # steps k
-   int    nthrd  = (int)ct_thrdcnt ->value();         // # threads
-   int    nscan  = edata->scanCount();                // # scans
-   int    nconc  = edata->pointCount();               // # concentrations
-   int    ntconc = nconc * nscan;                     // # total readings
+   static int ksteps = 0;
+   static int kstepk = 0;
+   int nsteps    = (int)ct_nstepss ->value();         // # steps s
+   int nstepk    = (int)ct_nstepsk ->value();         // # steps k
+   int nthrd     = (int)ct_thrdcnt ->value();         // # threads
+   int nscan     = edata->scanCount();                // # scans
+   int nconc     = edata->pointCount();               // # concentrations
+   int ntconc    = nconc * nscan;                     // # total readings
    double megas  = sq( 1024.0 );
+   ksteps        = ( ksteps == 0 ) ? nsteps : ksteps;
+   kstepk        = ( kstepk == 0 ) ? nstepk : kstepk;
+//   int jsteps    = nsteps;
+//   int jstepk    = nstepk;
 
-   int    ngrrep = US_Math2::best_grid_reps( nsteps, nstepk );
+DbgLv(1) << "GC: 1) nss nsk" << nsteps << nstepk;
+   int ngrrep    = US_Math2::best_grid_reps( nsteps, nstepk );
+DbgLv(1) << "GC: 2)ngrrep" << ngrrep << "nss nsk" << nsteps << nstepk;
+
+   if ( nsteps != ksteps )
+   {  // S grid points just changed:  adjust K points
+      nstepk        = ( nstepk / ngrrep ) * ngrrep;
+      ngrrep        = US_Math2::best_grid_reps( nsteps, nstepk );
+DbgLv(1) << "GC: 3)ngrrep" << ngrrep << "nss nsk" << nsteps << nstepk;
+   }
+   else if ( nstepk != kstepk )
+   {  // K grid points just changed:  adjust S points
+      nsteps        = ( nsteps / ngrrep ) * ngrrep;
+      ngrrep        = US_Math2::best_grid_reps( nsteps, nstepk );
+DbgLv(1) << "GC: 4)ngrrep" << ngrrep << "nss nsk" << nsteps << nstepk;
+   }
 
    // Adjust grid points to be multiples of grid repetitions
-   nsteps        = ( ( nsteps + ngrrep - 1 ) / ngrrep ) * ngrrep;
-   nstepk        = ( ( nstepk + ngrrep - 1 ) / ngrrep ) * ngrrep;
-DbgLv(1) << "GC: ngrrep" << ngrrep << "nss nks" << nsteps << nstepk;
+   nsteps        = ( ( nsteps + ngrrep / 2 ) / ngrrep ) * ngrrep;
+   nstepk        = ( ( nstepk + ngrrep / 2 ) / ngrrep ) * ngrrep;
+DbgLv(1) << "GC: 5)ngrrep" << ngrrep << "nss nks" << nsteps << nstepk;
 
    ct_nstepss->disconnect();
    ct_nstepss->setValue( nsteps );
@@ -811,10 +832,10 @@ DbgLv(1) << "GC: ngrrep" << ngrrep << "nss nks" << nsteps << nstepk;
    const double x_fact  = 17.20;
    const double y_fact  = 2.28;
    const int    nxdata  = 4;
-   int    nsstep = ( nsteps / ngrrep ) * ( nstepk / ngrrep );
+   int    nsbpts = ( nsteps / ngrrep ) * ( nstepk / ngrrep );
    int    noif   = ( ck_tinoise->isChecked() ? 1 : 0 ) +
                    ( ck_rinoise->isChecked() ? 2 : 0 );
-   int    ndatas = nsstep + nxdata + noif;
+   int    ndatas = nsbpts + nxdata + noif;
    double mdata  = ( (double)ntconc * ndatas * sizeof( double ) ) / megas;
    double tdata  = x_fact + mdata * y_fact;
    memneed       = baserss + qRound( tdata * (double)nthrd );
@@ -843,6 +864,10 @@ DbgLv(1) << "GC:  ngrrep nsteps nstepk" << ngrrep << nsteps << nstepk;
    te_status  ->setText( gmsg );
    le_gridreps->setText( tr( "%1  -> %2 %3-point subgrids" )
          .arg( ngrrep ).arg( nsubg ).arg( nspts ) );
+
+   // Save grid points to detect any further user resets
+   ksteps        = nsteps;
+   kstepk        = nstepk;
 }
 
 // Adjust s-limit ranges when s-limit value changes
