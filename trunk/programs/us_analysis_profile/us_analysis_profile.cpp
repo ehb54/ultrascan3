@@ -116,7 +116,7 @@ DbgLv(1) << "MAIN:  CALL check_runname()";
    apanGeneral->check_runname();
 
 DbgLv(1) << "MAIN:  CALL reset()";
-   reset();
+//reset();
    resize( 500, 450 );
 }
 
@@ -124,6 +124,10 @@ DbgLv(1) << "MAIN:  CALL reset()";
 // Reset parameters to their defaults
 void US_AnalysisProfileGui::reset( void )
 {
+  qDebug() << "Resetting internal protocol...";
+  currProf = US_AnaProfile();
+  initPanels();
+  
 }
 
 // Set auto mode (comes from ComProject or Experiment)
@@ -155,9 +159,11 @@ void US_AnalysisProfileGui::inherit_protocol( US_RunProtocol* iProto )
    int nchs        = iProto->rpSolut.chsols.count();
    int ncho        = iProto->rpOptic.chopts.count();
 
-   if ( nchs < 1  ||  ncho < 1 )
-      return;
+ DbgLv(1) << "APG00: ipro: kchn nchs ncho" << kchn << nchs << ncho;  
 
+   if ( nchs < 1  ||  ncho < 1 )
+     return;
+   
    int nchn        = 0;
 DbgLv(1) << "APG: ipro: kchn nchs ncho" << kchn << nchs << ncho;
 if(iProto->rpOptic.chopts.count()>0)
@@ -165,7 +171,7 @@ DbgLv(1) << "APG: ipro: 0)ch s1 s2 s3"
  << iProto->rpOptic.chopts[0].channel
  << iProto->rpOptic.chopts[0].scan1
  << iProto->rpOptic.chopts[0].scan2
- << iProto->rpOptic.chopts[0].scan3;
+ << iProto->rpOptic.chopts[0].scan3; 
 if(iProto->rpOptic.chopts.count()>1)
 DbgLv(1) << "APG: ipro: 1)ch s1 s2 s3"
  << iProto->rpOptic.chopts[1].channel

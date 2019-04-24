@@ -689,6 +689,11 @@ void US_ExperGuiRotor::initPanel()
 {
    rpRotor             = &(mainw->currProto.rpRotor);
 
+   qDebug() << "GLOBAL RESET: " << mainw->global_reset;
+   if (mainw->global_reset)
+     mainw->global_reset = false;
+   qDebug() << "GLOBAL RESET: " << mainw->global_reset;
+   
    // Populate GUI settings from protocol controls
    bool was_changed     = changed;       // Save changed state
 DbgLv(1) << "EGRo: inP: was_changed" << was_changed;
@@ -2505,8 +2510,17 @@ DbgLv(1) << "EGAp:inP: protoname" << protoname << "aprofname" << aprofname;
 DbgLv(1) << "EGAp:inP:  protoname" << protoname << "aprofname" << aprofname;
 DbgLv(1) << "EGAp:inP:  sdiag" << sdiag;
    sdiag->auto_name_passed( protoname, aprofname );
+
+   
+   //sdiag->reset();
+   
    sdiag->inherit_protocol( currProto );
 DbgLv(1) << "EGAp:inP:  sdiag names passed";
+}
+
+void US_ExperGuiAProfile::reset_sdiag( void )
+{
+  sdiag->reset();
 }
 
 void US_ExperGuiAProfile::savePanel()

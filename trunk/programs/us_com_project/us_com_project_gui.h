@@ -87,11 +87,13 @@ class US_ExperGui : public US_WidgetsDialog
    private slots:
       void manageExperiment ( void );        // Slot for exp.  button clicked
       void us_exp_is_closed_set_button( void );
-      void to_live_update( QMap < QString, QString > & protocol_details ); 
+      void to_live_update( QMap < QString, QString > & protocol_details );
+      void clear_experiment( QString & protocolName);
      
    signals:
       void switch_to_live_update( QMap < QString, QString > & protocol_details );
       void set_auto_mode( void );
+      void reset_experiment( QString & protocolName);
       
 };
 
@@ -115,11 +117,12 @@ class US_ObservGui : public US_WidgetsDialog
       
  private slots:
       void process_protocol_details( QMap < QString, QString > & protocol_details );
-      void to_post_processing( QString & currDir, QString & protocolName );   
+      void to_post_processing( QString & currDir, QString & protocolName );
+      void to_experiment( QString & protocolName );
  signals:
       void to_xpn_viewer( QMap < QString, QString > & protocol_details );
       void switch_to_post_processing( QString & currDir, QString & protocolName );
-      
+      void switch_to_experiment( QString & protocolName );
 };
 
 
@@ -246,12 +249,14 @@ private slots:
   //void enable_tabs_buttons( void);  // Slot to enable Tabs and Buttons after protocol is loaded
   void switch_to_live_update( QMap < QString, QString > & protocol_details );
   void switch_to_post_processing( QString & currDir, QString & protocolName );
-  void switch_to_analysis( QString & currDir, QString & protocolName ); 
+  void switch_to_analysis( QString & currDir, QString & protocolName );
+  void switch_to_experiment( QString & protocolName );
   
 signals:
   void pass_to_live_update( QMap < QString, QString > & protocol_details ); 
   void import_data_us_convert( QString & currDir, QString & protocolName );
   void pass_to_analysis( QString & currDir, QString & protocolName );
+  void clear_experiment( QString & protocolName);
 };
 
 

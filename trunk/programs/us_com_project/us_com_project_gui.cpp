@@ -144,6 +144,8 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
 
    connect( epanObserv, SIGNAL( switch_to_post_processing( QString &, QString &) ), this, SLOT( switch_to_post_processing( QString &, QString & )  ) );
    connect( this, SIGNAL( import_data_us_convert( QString &, QString & ) ),  epanPostProd, SLOT( import_data_us_convert( QString &, QString & )  ) );
+   connect( epanObserv, SIGNAL( switch_to_experiment( QString &) ), this, SLOT( switch_to_experiment(  QString & )  ) );
+   connect( this, SIGNAL( clear_experiment( QString & ) ),  epanExp, SLOT( clear_experiment( QString & )  ) );
 
    //connect( epanPostProd, SIGNAL( switch_to_analysis( QString &, QString &) ),  this, SLOT( switch_to_analysis( QString &, QString & )  ) );
    //connect( this, SIGNAL( pass_to_analysis( QString &, QString & ) ),   epanAnalysis, SLOT( do_analysis( QString &, QString & )  ) );
@@ -272,7 +274,9 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
 
    connect( epanObserv, SIGNAL( switch_to_post_processing( QString &, QString &) ), this, SLOT( switch_to_post_processing( QString &, QString & )  ) );
    connect( this, SIGNAL( import_data_us_convert( QString &, QString & ) ),  epanPostProd, SLOT( import_data_us_convert( QString &, QString & )  ) );
-
+   connect( epanObserv, SIGNAL( switch_to_experiment( QString &) ), this, SLOT( switch_to_experiment(  QString & )  ) );
+   connect( this, SIGNAL( clear_experiment( QString & ) ),  epanExp, SLOT( clear_experiment( QString & )  ) );
+   
    connect( epanPostProd, SIGNAL( switch_to_analysis( QString &, QString &) ),  this, SLOT( switch_to_analysis( QString &, QString & )  ) );
    connect( this, SIGNAL( pass_to_analysis( QString &, QString & ) ),   epanAnalysis, SLOT( do_analysis( QString &, QString & )  ) );
    
@@ -352,6 +356,16 @@ void US_ComProjectMain::switch_to_post_processing( QString  & currDir, QString &
    emit import_data_us_convert( currDir, protocolName );
 }
      
+// Slot to switch back from the Live Update to Experiment tab
+void US_ComProjectMain::switch_to_experiment( QString & protocolName)
+{
+   tabWidget->setCurrentIndex( 0 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
+
+   // ALEXEY: Make a record to 'autoflow' table: stage# = 2; 
+
+   emit clear_experiment( protocolName );
+}
+   
 
 // Slot to switch from the Editing to Analysis tab
 void US_ComProjectMain::switch_to_analysis( QString  & currDir, QString & protocolName)
@@ -452,6 +466,8 @@ US_ExperGui::US_ExperGui( QWidget* topw )
    connect( sdiag, SIGNAL( to_live_update( QMap < QString, QString > & ) ),
 	    this,  SLOT( to_live_update( QMap < QString, QString > & ) ) );
 
+   connect( this, SIGNAL( reset_experiment( QString & ) ), sdiag, SLOT( us_exp_clear( QString & ) ) );
+   
    sdiag->pb_close->setEnabled(false);  // Disable Close button
    offset = 0;
    sdiag->move(offset, 2*offset);
@@ -511,6 +527,12 @@ void US_ExperGui::us_exp_is_closed_set_button()
   pb_openexp->setEnabled(true);
   mainw->resize(QSize(1000, 700));
   mainw->logWidget->append("US_Experiment has been closed!");
+}
+
+//Clear Experiment after manual abortion & data not saved .. 
+void US_ExperGui::clear_experiment( QString & protocolName )
+{
+  emit reset_experiment( protocolName );
 }
 
 
@@ -612,6 +634,9 @@ US_ObservGui::US_ObservGui( QWidget* topw )
 
    //ALEXEY: devise SLOT saying what to do upon completion of experiment and exporting AUC data to hard drive - Import Experimental Data  !!! 
    connect( sdiag, SIGNAL( experiment_complete_auto( QString &, QString & ) ), this, SLOT( to_post_processing ( QString &, QString &) ) );
+
+   //ALEXEY: return to 1st panel when exp. aborted & no data saved..
+   connect( sdiag, SIGNAL( return_to_experiment( QString & ) ), this, SLOT( to_experiment ( QString &) ) );
    
    offset = 0;
    sdiag->move(offset, 2*offset);
@@ -672,7 +697,10 @@ void US_ObservGui::to_post_processing( QString & currDir, QString & protocolName
   emit switch_to_post_processing( currDir, protocolName );
 }
 
-
+void US_ObservGui::to_experiment( QString & protocolName )
+{
+  emit switch_to_experiment( protocolName );
+}
 
 // US_PostProd
 US_PostProdGui::US_PostProdGui( QWidget* topw )
