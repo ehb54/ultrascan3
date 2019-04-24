@@ -38,13 +38,18 @@ DbgLv(1) << "w:" << my_rank << ": job_recvd  length" << job.length
  << "command" << job.command;
 
       meniscus_value     = job.meniscus_value;
+      bottom_value       = job.bottom_value;
       int offset         = job.dataset_offset;
       int dataset_count  = job.dataset_count;
       int job_length     = job.length;
+      int noisflag       = ( parameters[ "tinoise_option" ].toInt() > 0 ?  1 : 0 )
+                         + ( parameters[ "rinoise_option" ].toInt() > 0 ?  2 : 0 );
 DbgLv(1) << "w:" << my_rank << ": offs cnt" << offset << dataset_count;
 
       data_sets[ offset ]->run_data.meniscus  = meniscus_value;
+      data_sets[ offset ]->run_data.bottom    = bottom_value;
       data_sets[ offset ]->simparams.meniscus = meniscus_value;
+      data_sets[ offset ]->simparams.bottom   = bottom_value;
 
       switch( job.command )
       {
@@ -52,10 +57,7 @@ DbgLv(1) << "w:" << my_rank << ": offs cnt" << offset << dataset_count;
          case MPI_Job::PROCESS:  // Process solutes
             {
                US_SolveSim::Simulation simulation_values;
-               simulation_values.noisflag    =
-                  parameters[ "tinoise_option" ].toInt() > 0 ?  1 : 0;
-               simulation_values.noisflag   +=
-                  parameters[ "rinoise_option" ].toInt() > 0 ?  2 : 0;
+               simulation_values.noisflag    = noisflag;
                simulation_values.dbg_level   = dbg_level;
                simulation_values.dbg_timing  = dbg_timing;
 
@@ -80,10 +82,11 @@ DbgLv(1) << "w:" << my_rank << ": sols size" << job.length;
  int nn = simulation_values.solutes.size() - 1;
  int mm = nn/2;
  DbgLv(1) << "w:" << my_rank << ": offs dscnt" << offset << dataset_count
-  << "vbar s20wc bott"
+  << "vbar s20wc cpbott dabott"
   << data_sets[offset]->vbar20
   << data_sets[offset]->s20w_correction
-  << data_sets[offset]->centerpiece_bottom;
+  << data_sets[offset]->centerpiece_bottom
+  << data_sets[offset]->run_data.bottom;
  DbgLv(1) << "w:" << my_rank << ": sol0 solm soln"
   << simulation_values.solutes[0].s << simulation_values.solutes[0].k
   << simulation_values.solutes[mm].s << simulation_values.solutes[mm].k

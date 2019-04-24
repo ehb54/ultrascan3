@@ -957,7 +957,9 @@ DbgLv(1) << "RSA:emit ctime: accel:current_time" << current_time << "step" << st
          // Time left to be simulated after accelaration zone
          duration   = time2 - current_time;
 
+#if 0
          adjust_limits( sp->rotorspeed ); // Does rotor stretch
+#endif
 
          //duration      = time2 - time0;
          //delay         = time1 - time0;

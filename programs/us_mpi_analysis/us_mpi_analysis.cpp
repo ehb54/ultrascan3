@@ -302,10 +302,52 @@ DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
    mc_iterations   = parameters[ "mc_iterations" ].toInt();
    mc_iterations   = qMax( mc_iterations, 1 );
 
+   // Set Fit-Meniscus/Bottom parameters
+   fit_mb_select   = parameters[ "fit_mb_select"   ].toInt();
    meniscus_range  = parameters[ "meniscus_range"  ].toDouble();
    meniscus_points = parameters[ "meniscus_points" ].toInt();
-   meniscus_points = qMax( meniscus_points, 1 );
-   meniscus_range  = ( meniscus_points > 1 ) ? meniscus_range : 0.0;
+   fit_mb_select   = ( meniscus_points > 1 ) ? fit_mb_select : 0;
+   fit_meni        = ( ( fit_mb_select & 1 ) != 0 );
+   fit_bott        = ( ( fit_mb_select & 2 ) != 0 );
+   fit_menbot      = ( fit_meni  &&  fit_bott );
+if (my_rank==0) {
+DbgLv(0) << "FMB: fit_mb_select" << fit_mb_select
+ << "    fit_meni _bott _menbot" << fit_meni << fit_bott << fit_menbot; }
+
+   if ( fit_menbot )
+   {  // Meniscus-and-bottom fit iterations will be run
+      bottom_range    = meniscus_range;
+      bottom_points   = meniscus_points;
+      menibott_count  = meniscus_points * bottom_points;
+   }
+
+   else if ( fit_meni )
+   {  // Meniscus-only fit iterations will be run
+      bottom_range    = 0.0;
+      bottom_points   = 1;
+      menibott_count  = meniscus_points;
+   }
+
+   else if ( fit_bott )
+   {  // Bottom-only fit iterations will be run
+      bottom_range    = meniscus_range;
+      bottom_points   = meniscus_points;
+      meniscus_range  = 0.0;
+      meniscus_points = 1;
+      menibott_count  = bottom_points;
+   }
+
+   else
+   {  // No meniscus/bottom fit
+      meniscus_range  = 0.0;
+      meniscus_points = 1;
+      bottom_range    = 0.0;
+      bottom_points   = 1;
+      menibott_count  = 1;
+   }
+if (my_rank==0) {
+DbgLv(0) << "FMB: meni range points" << meniscus_range << meniscus_points
+ << "  bott range points" << bottom_range << bottom_points; }
 
    // Do some parameter checking
    count_datasets     = data_sets.size();
@@ -379,17 +421,20 @@ DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
    double meniscus_start = data_sets[ 0 ]->run_data.meniscus 
                          - meniscus_range / 2.0;
    
-   double dm             = ( meniscus_points > 1 )
-                         ? meniscus_range / ( meniscus_points - 1 ): 0.0;
+   double dmen           = fit_meni ?
+                           ( meniscus_range / ( meniscus_points - 1 ) ) :
+                           0.0;
 
-   for ( int i = 0; i < meniscus_points; i++ )
+   for ( int ii = 0; ii < meniscus_points; ii++ )
    {
-      meniscus_values[ i ]  = meniscus_start + dm * i;
+      meniscus_values[ ii ]  = meniscus_start + dmen * ii;
    }
 
    // Get lower limit of data and last (largest) meniscus value
    double start_range    = data_sets[ 0 ]->run_data.radius( 0 );
    double last_meniscus  = meniscus_values[ meniscus_points - 1 ];
+if (my_rank==0) {
+ DbgLv(0) << "FMB: meniscus:  start delta" << meniscus_start << dmen; }
 
    if ( last_meniscus >= start_range )
    {
@@ -400,12 +445,29 @@ DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
          qDebug() << " meniscus_start" << meniscus_start;
          qDebug() << " meniscus_range" << meniscus_range;
          qDebug() << " meniscus_points" << meniscus_points;
-         qDebug() << " dm" << dm;
+         qDebug() << " meniscus delta" << dmen;
          qDebug() << " last_meniscus" << last_meniscus;
          qDebug() << " left_data" << start_range;
       }
       abort( "Meniscus value extends into data" );
    }
+
+   // Calculate bottom values
+   bottom_values.resize( bottom_points );
+
+   double bottom_start = data_sets[ 0 ]->run_data.bottom 
+                         - bottom_range / 2.0;
+   
+   double dbot         = fit_bott ?
+                         ( bottom_range / ( bottom_points - 1 ) ) :
+                         0.0;
+
+   for ( int ii = 0; ii < bottom_points; ii++ )
+   {
+      bottom_values[ ii ]  = bottom_start + dbot * ii;
+   }
+if (my_rank==0) {
+ DbgLv(0) << "FMB: bottom:  start delta" << bottom_start << dbot; }
 
    population              = parameters[ "population"     ].toInt();
    generations             = parameters[ "generations"    ].toInt();
@@ -691,6 +753,7 @@ DbgLv(0) << "rank" << my_rank << ": ee" << ee << "   tmst UPLOADED";
 DbgLv(0) << "rank" << my_rank << ": ee" << ee << "tmst_file" << ds->tmst_file
  << "ssp count" << ds->simparams.sim_speed_prof.count();
 
+#if 0
       // If EditedData has a bottom, use that to adjust bottom_position
       US_DataIO::EditedData* edata = &ds->run_data;
 
@@ -713,6 +776,7 @@ if ( my_rank == 0 )
   << "adj.bottom_pos" << ds->simparams.bottom_position;
          }
       }
+#endif
    }  // END: datasets loop to upload timestate
 //DbgLv(0) << "rank" << my_rank << ": simSpeed :TM:" << ELAPSED_SECS;
 //   }
@@ -890,7 +954,9 @@ if (my_rank==0) DbgLv(0) << "ckGrSz: ssp count"
       parameters[ "p_mutate_sk"  ] = "20";
 
    count_calc_residuals = 0;   // Internal instrumentation
+   menibott_ndx         = 0;
    meniscus_run         = 0;
+   bottom_run           = 0;
    mc_iteration         = 0;
 
    // Determine masters-group count and related controls
@@ -1424,6 +1490,7 @@ void US_MPI_Analysis::write_output( void )
    US_SolveSim::Simulation sim = simulation_values;
 
    double save_meniscus = meniscus_value;
+   double save_bottom   = bottom_value;
    US_Model::AnalysisType mdl_type = model_type( analysis_type );
    int mxdssz   = -1;
 
@@ -1494,6 +1561,8 @@ DbgLv(1) << "WrO: mxdssz" << mxdssz;
 DbgLv(1) << "WrO: meniscus_run" << meniscus_run << "mvsz" << meniscus_values.size();
    meniscus_value  = meniscus_run < meniscus_values.size() 
                      ? meniscus_values[ meniscus_run ] : save_meniscus;
+   bottom_value    = bottom_run < bottom_values.size() 
+                     ? bottom_values[ bottom_run ] : save_bottom;
 
    if ( mdl_type == US_Model::PCSA )
    {
@@ -1510,6 +1579,7 @@ DbgLv(1) << "WrO: qSort solutes  sssz" << sim.solutes.size();
 DbgLv(1) << "WrO: wr_model  mdl_type" << mdl_type;
    write_model( sim, mdl_type );
    meniscus_value  = save_meniscus;
+   bottom_value    = save_bottom;
 
 DbgLv(1) << "WrO: wr_noise";
    if (  parameters[ "tinoise_option" ].toInt() > 0 )
@@ -1924,8 +1994,11 @@ DbgLv(1) << "wrMo:  mc mciter mGUID" << model.monteCarlo << mc_iter
    model.analysis    = type;
    QString runID     = edata->runID;
 
-   if ( meniscus_points > 1 ) 
+   if ( fit_meni )
       model.global      = US_Model::MENISCUS;
+
+   else if ( fit_bott )
+      model.global      = US_Model::BOTTOM;
 
    else if ( is_global_fit )
    {
@@ -1937,9 +2010,11 @@ DbgLv(1) << "wrMo:  mc mciter mGUID" << model.monteCarlo << mc_iter
 
    else
       model.global      = US_Model::NONE; 
-DbgLv(1) << "wrMo:  is_glob glob_sols" << is_global_fit << glob_sols;
+DbgLv(0) << "wrMo:  is_glob glob_sols" << is_global_fit << glob_sols
+ << "f_men f_bot" << fit_meni << fit_bott << "m.glob" << model.global;
 
    model.meniscus    = meniscus_value;
+   model.bottom      = fit_bott ? bottom_value : 0.0;
    model.variance    = sim.variance;
 
    // demo1_veloc. 1A999. e201101171200_a201101171400_2DSA us3-0000003           .model
@@ -1962,10 +2037,19 @@ DbgLv(1) << "wrMo: tripleID" << tripleID << "dates" << dates;
 
    if ( mc_iterations > 1 )
       iterID.sprintf( "mc%04d", mc_iter );
-   else if (  meniscus_points > 1 )
+   else if ( fit_menbot )
+      iterID.sprintf( "i%02d-m%05db%05d", 
+              menibott_ndx + 1,
+              (int)( meniscus_value * 10000 ),
+              (int)( bottom_value * 10000 ) );
+   else if (  fit_meni )
       iterID.sprintf( "i%02d-m%05d", 
               meniscus_run + 1,
-              (int)(meniscus_value * 10000 ) );
+              (int)( meniscus_value * 10000 ) );
+   else if (  fit_bott )
+      iterID.sprintf( "i%02d-b%05d", 
+              bottom_run + 1,
+              (int)( bottom_value * 10000 ) );
    else
       iterID = "i01";
 
@@ -1980,7 +2064,7 @@ DbgLv(1) << "wrMo: tripleID" << tripleID << "dates" << dates;
    double  vbar20    = data_sets[ current_dataset ]->vbar20;
 
    model.description = runID + "." + tripleID + "." + analyID + ".model";
-DbgLv(1) << "wrMo: model descr" << model.description;
+DbgLv(0) << "wrMo: model descr" << model.description;
 
    // Save as class variable for later reference
    modelGUID         = model.modelGUID;
@@ -2054,8 +2138,8 @@ DbgLv(1) << "wrMo: stype" << stype << QString().sprintf("0%o",stype)
 
    int run     = 1;
 
-   if ( meniscus_run > 0 ) 
-       run        = meniscus_run + 1;
+   if ( menibott_ndx > 0 ) 
+       run        = menibott_ndx + 1;
    else if ( mc_iterations > 0 )
        run        = mc_iter;
 
@@ -2065,6 +2149,7 @@ DbgLv(1) << "wrMo: stype" << stype << QString().sprintf("0%o",stype)
                << ";MC_iteration="   << mc_iter
                << ";variance="       << sim.variance
                << ";run="            << runstring
+               << ";bottom_value="   << bottom_value
                << "\n";
    fileo.close();
 }
@@ -2118,9 +2203,19 @@ void US_MPI_Analysis::write_noise( US_Noise::NoiseType      type,
    if ( mc_iterations > 1 )           // MonteCarlo iteration
       iterID.sprintf( "mc%04d", mc_iteration + 1 );
 
-   else if (  meniscus_points > 1 )   // Fit meniscus
-      iterID.sprintf( "i%02d-m%05d", meniscus_run + 1,
-              (int)(meniscus_values[ meniscus_run ] * 10000 ) );
+   else if ( fit_menbot )             // Meniscus+Bottom fit
+      iterID.sprintf( "i%02d-m%05db%05d", 
+              menibott_ndx + 1,
+              (int)( meniscus_value * 10000 ),
+              (int)( bottom_value * 10000 ) );
+   else if (  fit_meni )              // Meniscus fit
+      iterID.sprintf( "i%02d-m%05d", 
+              meniscus_run + 1,
+              (int)( meniscus_value * 10000 ) );
+   else if (  fit_bott )              // Bottom fit
+      iterID.sprintf( "i%02d-b%05d", 
+              bottom_run + 1,
+              (int)( bottom_value * 10000 ) );
 
    else                               // Non-iterative single
       iterID = "i01";
@@ -2402,10 +2497,19 @@ DbgLv(1) << "wrMo: tripleID" << tripleID << "dates" << dates;
 
    if ( mc_iterations > 1 )
       iterID.sprintf( "mc%04d", mc_iter );
-   else if (  meniscus_points > 1 )
+   else if ( fit_menbot )
+      iterID.sprintf( "i%02d-m%05db%05d", 
+              menibott_ndx + 1,
+              (int)( meniscus_value * 10000 ),
+              (int)( bottom_value * 10000 ) );
+   else if (  fit_meni )
       iterID.sprintf( "i%02d-m%05d", 
               meniscus_run + 1,
-              (int)(meniscus_value * 10000 ) );
+              (int)( meniscus_value * 10000 ) );
+   else if (  fit_bott )
+      iterID.sprintf( "i%02d-b%05d", 
+              bottom_run + 1,
+              (int)( bottom_value * 10000 ) );
    else
       iterID = "i01";
 
@@ -2489,8 +2593,8 @@ DbgLv(1) << "wrMo: stype" << stype << QString().sprintf("0%o",stype)
 
    int run     = 1;
 
-   if ( meniscus_run > 0 ) 
-       run        = meniscus_run + 1;
+   if ( menibott_ndx > 0 ) 
+       run        = menibott_ndx + 1;
    else if ( mc_iterations > 0 )
        run        = mc_iter;
 
@@ -2500,6 +2604,7 @@ DbgLv(1) << "wrMo: stype" << stype << QString().sprintf("0%o",stype)
                << ";MC_iteration="   << mc_iter
                << ";variance="       << sim.variance
                << ";run="            << runstring
+               << ";bottom_value="   << bottom_value
                << "\n";
    fileo.close();
 }

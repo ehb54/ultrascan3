@@ -22,12 +22,39 @@ void US_MPI_Analysis::_2dsa_master( void )
    if ( mc_iterations > 1 )
       max_iterations   = max_iters_all > 1 ? max_iters_all : 5;
 
+   menibott_ndx        = 0;
+   meniscus_run        = 0;
+   bottom_run          = 0;
+   if ( fit_mb_select == 0 )
+   {
+      menibott_count      = 1;
+      meniscus_points     = 1;
+      bottom_points       = 1;
+   }
+   else if ( fit_menbot )
+   {
+      menibott_count      = meniscus_points * bottom_points;
+   }
+   else if ( fit_meni )
+   {
+      menibott_count      = meniscus_points;
+      bottom_points       = 1;
+   }
+   else if ( fit_bott )
+   {
+      menibott_count      = bottom_points;
+      meniscus_points     = 1;
+   }
+
    while ( true )
    {
       int worker;
-      meniscus_value   = meniscus_values.size() == 1 ?
-                         data_sets[ current_dataset ]->run_data.meniscus :
-                         meniscus_values[ meniscus_run ];
+      meniscus_value       = ( meniscus_points == 1 )
+                           ? data_sets[ current_dataset ]->run_data.meniscus
+                           : meniscus_values[ meniscus_run ];
+      bottom_value       = ( bottom_points == 1 )
+                           ? data_sets[ current_dataset ]->run_data.bottom
+                           : bottom_values  [ bottom_run   ];
 //if ( max_depth > 1 )
 // DbgLv(1) << " master loop-TOP:  jq-empty?" << job_queue.isEmpty() << "   areReady?" << worker_status.contains(READY)
 //    << "  areWorking?" << worker_status.contains(WORKING);
@@ -64,11 +91,23 @@ void US_MPI_Analysis::_2dsa_master( void )
             progress     += "; MonteCarlo: "
                             + QString::number( mc_iteration + 1 );
 
-         else if ( meniscus_values.size() > 1 )
+         else if ( fit_menbot )
             progress     += "; Meniscus: "
-               + QString::number( meniscus_value, 'f', 3 )
+               + QString::number( meniscus_value, 'f', 4 )
+               + "; Bottom: "
+               + QString::number( bottom_value,   'f', 4 )
+               + QString().sprintf( "  ( m%2d b%2d )",
+                    ( meniscus_run + 1 ), ( bottom_run + 1 ) );
+         else if ( fit_meni )
+            progress     += "; Meniscus: "
+               + QString::number( meniscus_value, 'f', 4 )
                + tr( " (%1 of %2)" ).arg( meniscus_run + 1 )
-                                    .arg( meniscus_values.size() );
+                                    .arg( meniscus_points );
+         else if ( fit_bott )
+            progress     += "; Bottom: "
+               + QString::number( bottom_value,   'f', 4 )
+               + tr( " (%1 of %2)" ).arg( bottom_run + 1 )
+                                    .arg( bottom_points );
          else
             progress     += "; RMSD: "
                + QString::number( sqrt( simulation_values.variance ) );
@@ -121,7 +160,7 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
             write_output();
 
          // Fit meniscus
-         if ( ( meniscus_run + 1 ) < meniscus_values.size() )
+         if ( ( menibott_ndx + 1 ) < menibott_count )
          {
             set_meniscus();
          }
@@ -178,27 +217,39 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
 DbgLv(1) << " master loop-BOT:    cds kds" << current_dataset << count_datasets;
             if ( current_dataset < count_datasets )
             {
+               menibott_ndx    = 0;
                meniscus_run    = 0;
+               bottom_run      = 0;
                iterations      = 1;
                mc_iteration    = 0;
 
-               if ( meniscus_points > 1 )
-               {  // Reset the range of fit-meniscus points for this data set
+               if ( menibott_count > 1 )
+               {  // Reset the range of fit-meniscus/bottom points for this data set
                   US_DataIO::EditedData* edata
                                   = &data_sets[ current_dataset ]->run_data;
-                  double men_str  = edata->meniscus - meniscus_range / 2.0;
-                  double men_inc  = meniscus_range / ( meniscus_points - 1.0 );
                   double dat_str  = edata->radius( 0 );
+                  double men_dpt  = ( meniscus_points > 1 ) ?
+                                    (double)( meniscus_points - 1 ) : 1;
+                  double bot_dpt  = ( bottom_points > 1 ) ?
+                                    (double)( bottom_points   - 1 ) : 1;
+                  double men_str  = edata->meniscus - ( meniscus_range * 0.5 );
+                  double bot_str  = edata->bottom   - ( bottom_range   * 0.5 );
+                  double men_inc  = meniscus_range / men_dpt;
+                  double bot_inc  = bottom_range   / bot_dpt;
                   double men_end  = men_str + meniscus_range - men_inc;
                   if ( men_end >= dat_str )
                   {  // Adjust first meniscus so range remains below data range
-                     men_end         = dat_str - men_inc / 2.0;
+                     men_end         = dat_str - ( men_inc * 0.5 );
                      men_str         = men_end - meniscus_range + men_inc;
                   }
                   for ( int ii = 0; ii < meniscus_points; ii++ )
                      meniscus_values[ ii ] = men_str + men_inc * ii;
-DbgLv(1) << " master loop-BOT:     menpt" << meniscus_points << "mv0 mvn"
+                  for ( int ii = 0; ii < bottom_points; ii++ )
+                     bottom_values[ ii ]   = bot_str + bot_inc * ii;
+DbgLv(0) << " master loop-BOT:     menpt" << meniscus_points << "mv0 mvn"
  << meniscus_values[0] << meniscus_values[meniscus_points-1]
+ << "botpt" << bottom_points << "bv0 bvn"
+ << bottom_values[0] << bottom_values[bottom_points-1]
  << "gcores_count" << gcores_count;
                }
 
@@ -267,10 +318,10 @@ void US_MPI_Analysis::init_solutes( void )
 {
    calculated_solutes.clear();
    orig_solutes.clear();
-   simulation_values.noisflag    = parameters[ "tinoise_option" ].toInt() > 0 ?
-                                   1 : 0;
-   simulation_values.noisflag   += parameters[ "rinoise_option" ].toInt() > 0 ?
-                                   2 : 0;
+   simulation_values.noisflag    = ( parameters[ "tinoise_option" ].toInt() > 0 ?
+                                     1 : 0 )
+                                 + ( parameters[ "rinoise_option" ].toInt() > 0 ?
+                                     2 : 0 );
    simulation_values.dbg_level   = dbg_level;
    simulation_values.dbg_timing  = dbg_timing;
 DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
@@ -305,7 +356,6 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
 
       int    nsstep   = (int)( s_pts );
       int    nkstep   = (int)( ff0_pts );
-      //grid_reps       = US_Math2::best_grid_reps( nsstep, nkstep );
 
 DbgLv(0) << "InSol: nss nks" << s_pts << ff0_pts << nsstep << nkstep << "grid_reps" << grid_reps;
       US_Solute::init_solutes( s_min,   s_max,   nsstep,
@@ -535,7 +585,29 @@ DbgLv(1) << "ScaledData fill/solclear complete";
 // Reset for a fit-meniscus iteration
 void US_MPI_Analysis::set_meniscus( void )
 {
-   meniscus_run++;
+   menibott_ndx++;
+
+   if ( fit_menbot )
+   {
+      meniscus_run   = menibott_ndx / meniscus_points;
+      bottom_run     = menibott_ndx % meniscus_points;
+   }
+   else if ( fit_meni )
+   {
+      meniscus_run   = menibott_ndx;
+   }
+   else if ( fit_bott )
+   {
+      bottom_run     = menibott_ndx;
+   }
+   else
+   {
+DbgLv(0) << "FMB:set_meniscus: HUH????: mb m b:"
+ << fit_menbot << fit_meni << fit_bott;
+   }
+DbgLv(0) << "FMB:set_meniscus:  mb_ndx men_run bot_run"
+ << menibott_ndx << meniscus_run << bottom_run << "mb m b mbc"
+ << fit_menbot << fit_meni << fit_bott << menibott_count;
 
    // We incremented meniscus_run above.  Just rerun from the beginning.
    for ( int i = 0; i < orig_solutes.size(); i++ )
@@ -823,6 +895,7 @@ void US_MPI_Analysis::iterate( void )
    job.mpi_job.dataset_offset = current_dataset;
    job.mpi_job.dataset_count  = datasets_to_process;
    job.mpi_job.meniscus_value = meniscus_value;
+   job.mpi_job.bottom_value   = bottom_value;
    max_experiment_size        = min_experiment_size;
 
    QVector< US_Solute > prev_solutes = simulation_values.solutes;
@@ -863,6 +936,7 @@ void US_MPI_Analysis::submit( Sa_Job& job, int worker )
    job.mpi_job.command        = MPI_Job::PROCESS;
    job.mpi_job.length         = job.solutes.size();
    job.mpi_job.meniscus_value = meniscus_value;
+   job.mpi_job.bottom_value   = bottom_value;
    job.mpi_job.solution       = mc_iteration;
    job.mpi_job.dataset_offset = current_dataset;
    job.mpi_job.dataset_count  = datasets_to_process;
@@ -1135,9 +1209,12 @@ DbgLv(1) << "Mast:   queue REMAINDER" << remainder << " d=" << d+1;
       Sa_Job job;
       job.solutes          = calculated_solutes[ depth ];
       job.mpi_job.depth    = next_depth;
-      meniscus_value       = ( meniscus_values.size() == 1 )
+      meniscus_value       = ( meniscus_points == 1 )
                            ? data_sets[ current_dataset ]->run_data.meniscus
                            : meniscus_values[ meniscus_run ];
+      bottom_value         = ( bottom_points == 1 )
+                           ? data_sets[ current_dataset ]->run_data.bottom
+                           : bottom_values  [ bottom_run   ];
       qSort( job.solutes );
 DbgLv(1) << "Mast:   queue LAST ns=" << job.solutes.size() << "  d=" << depth+1
  << max_depth << "  nsvs=" << simulation_values.solutes.size();
