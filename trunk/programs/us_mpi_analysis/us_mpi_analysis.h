@@ -95,23 +95,38 @@ class US_MPI_Analysis : public QObject
     QList< int >        ds_points;
     QVector< double >   gl_nnls_a;
     QVector< double >   gl_nnls_b;
-    int                 max_depth;
-    int                 worknext;
-    enum                WorkerStatus { INIT, READY, WORKING };
-    enum                PMGTag { ADATESIZE=1000, ADATE, STARTITER, STARTLAST,
-                                 UDPSIZE, UDPMSG, DONEITER, DONELAST };
-                        
-    int                 meniscus_points;
-    int                 meniscus_run;
-    double              meniscus_range;   // Only used by master
-    double              meniscus_value;   // Only used by worker
     QVector< double >   meniscus_values;
+    QVector< double >   bottom_values;
 
     QVector< double >   concentrations;
     QVector< double >   maxods;
     QVector< double >   mc_data;
     QVector< double >   sigmas;
     QVector< long >     work_rss;
+
+    double              meniscus_range;   // Only used by master
+    double              meniscus_value;   // Only used by worker
+    double              bottom_range;     // Only used by master
+    double              bottom_value;     // Only used by worker
+
+    int                 max_depth;
+    int                 worknext;
+    int                 fit_mb_select;    // Fit meniscus/bottom selection (0-3)
+    int                 menibott_ndx;
+    int                 meniscus_run;
+    int                 bottom_run;
+    int                 menibott_count;
+    int                 meniscus_points;
+    int                 bottom_points;
+    int                 set_count;
+
+    enum                WorkerStatus { INIT, READY, WORKING };
+    enum                PMGTag { ADATESIZE=1000, ADATE, STARTITER, STARTLAST,
+                                 UDPSIZE, UDPMSG, DONEITER, DONELAST };
+
+    bool                fit_meni;         // Fit-meniscus flag
+    bool                fit_bott;         // Fit-bottom flag
+    bool                fit_menbot;       // Fit-meniscus+bottom flag
 
     US_DataIO::RawData* res_data;        // Populated in calc_residuals
     US_DataIO::RawData* sim_data;        // Populated in calc_residuals
@@ -142,7 +157,6 @@ class US_MPI_Analysis : public QObject
     QDateTime           submitTime;
     QDateTime           startTime;
 
-    int                 set_count;
     QList< DATASET* >   data_sets;
 
     class MPI_Job
@@ -159,6 +173,7 @@ class US_MPI_Analysis : public QObject
             Command command;
             int     depth;
             double  meniscus_value;
+            double  bottom_value;
             int     dataset_offset;
             int     dataset_count;
 
@@ -169,6 +184,7 @@ class US_MPI_Analysis : public QObject
                 command        = IDLE;
                 depth          = 0;
                 meniscus_value = 0.0;
+                bottom_value   = 0.0;
                 dataset_offset = 0;
                 dataset_count  = 1;
             };
@@ -294,7 +310,7 @@ class US_MPI_Analysis : public QObject
       public:
        int    generation;  // From worker: -1 = final; From master: 1 = done
        int    size;        // Number of solutes in the following vector or
-                           // or genes requested for emmigration
+                           // or genes requested for emigration
        double fitness;     // Fitness of best result
     };
 

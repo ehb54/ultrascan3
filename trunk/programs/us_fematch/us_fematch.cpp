@@ -2087,7 +2087,8 @@ DbgLv(1) << "SimMdl: n) s D c"
    simparams.radial_resolution = (double)( radhi - radlo ) / ( nconc - 1 );
 //   simparams.bottom            = simparams.bottom_position;
 DbgLv(1) << "SimMdl: simpoints" << simparams.simpoints
- << "rreso" << simparams.radial_resolution;
+ << "rreso" << simparams.radial_resolution
+ << "bottom_sim" << simparams.bottom << "bottom_dat" << edata->bottom;
    //simparams.meniscus          = 5.8;
 
    //sdata.scanData.resize( total_scans );
