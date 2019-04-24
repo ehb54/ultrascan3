@@ -294,7 +294,10 @@ class US_XpnDataViewer : public US_Widgets
      //void   retrieve_xpn_raw_auto ( QString & );
      void   retrieve_xpn_raw_auto ( void );
      void   reloadData_auto     ( void );
-     bool   CheckExpComplete_auto( QString & );
+     int    CheckExpComplete_auto( QString & );
+
+     void   expStatFive( void );
+     void   expStatTwo( void );
      
      void   load_auc_xpn   ( void );
      void   plot_current   ( void );
@@ -339,6 +342,7 @@ class US_XpnDataViewer : public US_Widgets
      
    signals:
      void experiment_complete_auto( QString &, QString & );
+     void return_to_experiment( QString & );
 };
 #endif
 

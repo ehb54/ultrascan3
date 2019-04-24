@@ -44,7 +44,8 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    connection_status = false;
    automode = false;
    usmode = false;
-
+   global_reset = false;
+   
       // Create tab and panel widgets
    tabWidget           = us_tabwidget();
 
@@ -133,13 +134,53 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    epanGeneral->check_user_level();
    epanGeneral->check_runname();
 
-   reset();
+   //reset();
 }
 
 
 // Reset parameters to their defaults
 void US_ExperimentMain::reset( void )
 {
+  global_reset = true;
+  
+  //Clean Reset
+  currProto = US_RunProtocol();
+  loadProto = US_RunProtocol();
+
+  epanRotor->setFirstLab();  //need to reset Lab && savePanel() for Rotors
+
+  epanAProfile->reset_sdiag(); //need to reset basic AProfile's protocol to defaults
+  
+  /*
+  // Reset General panel
+  currProto.runname      = "";
+  currProto.protoname    = "";
+  currProto.project      = "";
+  currProto.temperature  = 20.0;
+  currProto.temeq_delay  = 10.0;
+  epanGeneral->initPanel();
+
+  //Cells
+  currProto.rpCells.ncell = 0;
+  epanCells->initPanel();
+
+  //Solutions
+  currProto.rpSolut.nschan = 0;
+  epanSolutions->initPanel();
+
+  //Optics
+  currProto.rpOptic.nochan = 0; 
+  epanOptical->initPanel();
+
+  //Ranges
+  currProto.rpRange.nranges = 0;
+  epanRanges->initPanel();
+  
+  //AProfile
+  //if ( !usmode )
+  epanAProfile->initPanel();
+  */
+
 }
 
 void US_ExperimentMain::us_mode_passed( void )
@@ -168,10 +209,19 @@ void US_ExperimentMain::auto_mode_passed( void )
 // Reset parameters to their defaults
 void US_ExperimentMain::close_program( void )
 {
-
-
   emit us_exp_is_closed();
   close();
+}
+
+// When run submitted to Optima
+void US_ExperimentMain::us_exp_clear( QString &protocolName )
+{
+  tabWidget->setCurrentIndex( 0 );
+  qDebug() << "Protocol Name to be cleared: " << protocolName;
+
+  // ALEXEY: do proper reset of everything
+  reset();
+  //emit to_live_update( protocol_details );
 }
 
 // When run submitted to Optima
@@ -180,7 +230,6 @@ void US_ExperimentMain::optima_submitted( QMap < QString, QString > &protocol_de
   tabWidget->setCurrentIndex( 0 );
   emit to_live_update( protocol_details );
 }
-
 
 // Panel for run and other general parameters
 US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
@@ -474,6 +523,8 @@ DbgLv(1) << "EGGe:main: prnames,prdata counts" << pr_names.count() << protdata.c
       initPanel();
       le_protocol->setText( "" );
       le_project ->setText( "" );
+
+      /////mainw->reset();  //testing
    }
 #endif
 #if 0  // GARY: Rebuild protocol list after investigator change
@@ -765,6 +816,13 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
 }
 
 // Slot for change in Lab selection
+void US_ExperGuiRotor::setFirstLab( void )
+{
+  changeLab( 0 );
+  savePanel();
+}
+
+// Slot for change in Lab selection
 void US_ExperGuiRotor::changeLab( int ndx )
 {
 DbgLv(1) << "EGR:chgLab  ndx" << ndx << "rotorID" << rpRotor->rotID
@@ -960,7 +1018,7 @@ DbgLv(1) << "EGR: chgRotor calibs count" << calibs.count();
    int cndx            = qMax( sl_calibs.indexOf( calib_ent ), 0 );
    cb_calibr->setCurrentIndex( cndx );
 
-   if ( !first_time_init  &&  changed  &&  ( curr_rotor != ndx ) )
+   if ( !first_time_init  && !mainw->global_reset  &&  changed  &&  ( curr_rotor != ndx ) )
    {
       QMessageBox::information( this,
          tr( "NOTE:  Rotor Changed" ),

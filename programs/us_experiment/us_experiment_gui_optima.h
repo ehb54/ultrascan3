@@ -118,6 +118,9 @@ class US_ExperGuiRotor : public US_WidgetsDialog
 
       void        initPanel( void );    // Standard panel utilities
       void        savePanel( void );
+      void        setFirstLab( void );
+      
+           
       QString     getSValue( const QString );
       int         getIValue( const QString );
       double      getDValue( const QString );
@@ -827,6 +830,8 @@ class US_ExperGuiAProfile : public US_WidgetsDialog
       QPushButton* pb_saverp;
 
       QGridLayout* genL;
+
+      void reset_sdiag( void );
       
    private:
       US_ExperimentMain*    mainw;
@@ -903,6 +908,8 @@ class US_ExperimentMain : public US_Widgets
       
       bool    automode;
       bool    usmode;
+      bool    global_reset;
+      
       void    auto_mode_passed( void );
       void    us_mode_passed( void );
 
@@ -929,7 +936,7 @@ class US_ExperimentMain : public US_Widgets
 
    private slots:
 
-      void reset     ( void );
+     //void reset     ( void );
       void newPanel  ( int  );     // Move to a new panel
       void statUpdate( void );     // Get a status flag update
       void panelUp   ( void );     // Move to next panel
@@ -943,8 +950,10 @@ class US_ExperimentMain : public US_Widgets
     public slots:
       void close_program( void );
       void optima_submitted( QMap < QString, QString > &protocol_details );
+      void us_exp_clear( QString &protocolName );
       //void auto_mode_passed( void ); 
-
+      void reset     ( void );
+      
     signals:
       void us_exp_is_closed( void );
       void to_live_update( QMap < QString, QString > &protocol_details );

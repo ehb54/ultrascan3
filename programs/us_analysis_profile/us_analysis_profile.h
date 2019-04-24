@@ -420,7 +420,7 @@ class US_AnalysisProfileGui : public US_Widgets
 
    private slots:
 
-      void reset     ( void );
+     //void reset     ( void );
       void newPanel  ( int  );     // Move to a new panel
       void statUpdate( void );     // Get a status flag update
       void panelUp   ( void );     // Move to next panel
@@ -432,6 +432,7 @@ class US_AnalysisProfileGui : public US_Widgets
       void enable_tabs_buttons( void);  // Slot to enable Tabs and Buttons after run_name is entered
       
     public slots:
+      void reset     ( void );
       void close_program( void );
       void apply_profile( void );
       //void auto_mode_passed( void ); 

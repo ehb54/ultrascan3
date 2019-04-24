@@ -1617,39 +1617,102 @@ void US_XpnDataViewer::check_for_sysdata( void )
   
   //ALEXEY: no plot rescaling to bounds...
   data_plot_rpm->replot();
+
+  int exp_status = CheckExpComplete_auto( RunID_to_retrieve  );
    
-  if ( CheckExpComplete_auto( RunID_to_retrieve  ) )
+  if ( exp_status == 5 )
     {
-      timer_check_sysdata->stop();
-      disconnect(timer_check_sysdata, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
-
-      qDebug() << "sys_timer STOPPED here: ";
-
-      rpm_box->setSpeed( 0 );
-      le_remaining->setText( "00:00:00" );
-  
-      if ( !timer_all_data_avail->isActive() ) // Check if reload_data Timer is stopped
-       	{
-	  if ( !timer_data_reload->isActive() )
-	    {
-	      // ALEXEY Export AUC data: devise export_auc_auto() function which would return directory name with saved data - to pass to emit signal below... 
-	      export_auc_auto();
-	      
-	      QString mtitle_complete  = tr( "Complete!" );
-	      QString message_done     = tr( "Experiment was completed. Optima data saved..." );
-	      QMessageBox::information( this, mtitle_complete, message_done );
-	      
-	      emit experiment_complete_auto( currentDir, ProtocolName  );  // Updtade later: what should be passed with signal ??
-	      
-	      return;
-	    }
-	}
+      expStatFive();
+      return;
     }
+   if ( exp_status == 2 )
+    {
+      expStatTwo();
+      return;
+    } 
   
   in_reload_check_sysdata   = false;
   
   qDebug() << "sys_timer RAN here: ";
 }
+
+// Stop/reset all system panels and pass to stage 3 when exp_Status == 5
+void US_XpnDataViewer::expStatFive( void )
+{
+  timer_check_sysdata->stop();
+  disconnect(timer_check_sysdata, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+  
+  qDebug() << "ExpStat: 5  - sys_timer STOPPED here: ";
+  
+  rpm_box->setSpeed( 0 );
+  le_remaining->setText( "00:00:00" );
+  
+  if ( !timer_all_data_avail->isActive() ) // Check if reload_data Timer is stopped
+    {
+      if ( !timer_data_reload->isActive() )
+	{
+	  // ALEXEY Export AUC data: devise export_auc_auto() function which would return directory name with saved data - to pass to emit signal below... 
+	  export_auc_auto();
+	  
+	  QString mtitle_complete  = tr( "Complete!" );
+	  QString message_done     = tr( "Experiment was completed. Optima data saved..." );
+	  QMessageBox::information( this, mtitle_complete, message_done );
+	  
+	  emit experiment_complete_auto( currentDir, ProtocolName  );  // Updtade later: what should be passed with signal ??
+	  
+	  return;
+	}
+    }
+}
+
+// Stop/reset all system panels and pass to stage 3 when exp_Status == 2
+void US_XpnDataViewer::expStatTwo( void )
+{
+  timer_check_sysdata->stop();
+  disconnect(timer_check_sysdata, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+  
+  qDebug() << "ExpStat: 2  - sys_timer STOPPED here: ";
+  
+  rpm_box->setSpeed( 0 );
+  le_remaining->setText( "00:00:00" );
+
+  if ( !timer_all_data_avail->isActive() ) // Check if reload_data Timer is stopped
+    {
+      if ( !timer_data_reload->isActive() )
+	{
+	  // Ask if data retrived so far should be saved:
+
+	  QMessageBox msgBox;
+	  msgBox.setText(tr("Experiment was aborted!"));
+	  msgBox.setInformativeText("The data retrieved so far can be saved or disregarded. If saved, the program will proceed to the next stage (Editing). Otherwise, it will return to the initial stage (Experiment).");
+	  msgBox.setWindowTitle(tr("Experiment Abortion"));
+	  QPushButton *Save      = msgBox.addButton(tr("Save Data"), QMessageBox::YesRole);
+	  QPushButton *Ignore    = msgBox.addButton(tr("Ignore Data"), QMessageBox::RejectRole);
+	  
+	  msgBox.setIcon(QMessageBox::Question);
+	  msgBox.exec();
+	  
+	  if (msgBox.clickedButton() == Save)
+	    {
+	      export_auc_auto();
+	      
+	      QString mtitle_complete  = tr( "Complete!" );
+	      QString message_done     = tr( "Experiment was completed. Optima data saved..." );
+	      QMessageBox::information( this, mtitle_complete, message_done );
+	      emit experiment_complete_auto( currentDir, ProtocolName  );  // Updtade later: what should be passed with signal ??
+	      return;
+	    }
+	  
+	  else if (msgBox.clickedButton() == Ignore)
+	    {
+	      reset();
+	      emit return_to_experiment( ProtocolName  ); 
+	      return;
+	    }
+	}
+    }  
+}
+
 
 // Function to convert from a time in sec. to days, hours, minutes, seconds 
 void US_XpnDataViewer::timeToList( int& sectime, QList< int >& dhms )
@@ -3254,18 +3317,13 @@ DbgLv(1) << "RLd:      build-raw done: tm1 tm2" << tm1 << tm2
 }
 
 
-bool US_XpnDataViewer::CheckExpComplete_auto( QString & runid )
+int US_XpnDataViewer::CheckExpComplete_auto( QString & runid )
 {
-  bool status = false;
-
   // Implement Optima's ExperimentRun query for RunStatus field [enum: 0 - NoRunInfo; 2- InProgress; 5- CompleteOK], look in db_defines.h of Dennis's util
   // in utils/us_xpn_data.cpp
   int exp_status =  xpn_data->checkExpStatus( runid );
 
-  if (exp_status == 5)
-    status = true;
-
-  return status;
+  return exp_status;
 }
 
 // Slot to reload data
@@ -3307,12 +3365,8 @@ QDateTime sttime=QDateTime::currentDateTime();
 DbgLv(1) << "RLd:       NO CHANGE";
 
       /*** Check Experiement Status: if completed, kill the timer, export the data into AUC format, return, signal to switch panels in US_comproject ***/
-      if ( CheckExpComplete_auto( RunID_to_retrieve  ) )
+      if ( CheckExpComplete_auto( RunID_to_retrieve  ) == 5 )
 	{
-	  // //ALEXEY: stop another timer - for live update of SysData (RPM, Temperature etc. )
-	  // timer_check_sysdata->stop();
-	  // disconnect(timer_check_sysdata, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
-	  
 	  timer_data_reload->stop();
 	  disconnect(timer_data_reload, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
 
@@ -3333,6 +3387,46 @@ DbgLv(1) << "RLd:       NO CHANGE";
 	      return;
 	    }
 	}
+
+      /** Experiment Aborted ***/
+      if ( CheckExpComplete_auto( RunID_to_retrieve  ) == 2 )
+	{
+	  timer_data_reload->stop();
+	  disconnect(timer_data_reload, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+
+	  if ( !timer_check_sysdata->isActive()  ) // Check if sys_data Timer is stopped
+	    {
+	      // Ask if data retrived so far should be saved:
+	      
+	      QMessageBox msgBox;
+	      msgBox.setText(tr("Experiment was aborted!"));
+	      msgBox.setInformativeText("The data retrieved so far can be saved or disregarded. If saved, the program will proceed to the next stage (Editing). Otherwise, it will return to the initial stage (Experiment).");
+	      msgBox.setWindowTitle(tr("Experiment Abortion"));
+	      QPushButton *Save      = msgBox.addButton(tr("Save Data"), QMessageBox::YesRole);
+	      QPushButton *Ignore    = msgBox.addButton(tr("Ignore Data"), QMessageBox::RejectRole);
+	      
+	      msgBox.setIcon(QMessageBox::Question);
+	      msgBox.exec();
+	      
+	      if (msgBox.clickedButton() == Save)
+		{
+		  export_auc_auto();
+		  
+		  QString mtitle_complete  = tr( "Complete!" );
+		  QString message_done     = tr( "Experiment was completed. Optima data saved..." );
+		  QMessageBox::information( this, mtitle_complete, message_done );
+		  emit experiment_complete_auto( currentDir, ProtocolName  );  // Updtade later: what should be passed with signal ??
+		  return;
+		}
+	      
+	      else if (msgBox.clickedButton() == Ignore)
+		{
+		  reset();
+		  emit return_to_experiment( ProtocolName  ); 
+		  return;
+		}
+	    }
+	}      
 
        in_reload_auto   = false;         // Flag no longer in the midst of reload
        return;     // Return with no change in AUC data
