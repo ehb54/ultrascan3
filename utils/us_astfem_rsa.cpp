@@ -146,10 +146,10 @@ DbgLv(1)<< "RSA:calc:    cdset_speed" << af_params.cdset_speed;
    af_params.omega_s     = sq( s0speed * M_PI / 30.0 ); // omega_square
    af_params.start_om2t  = af_params.omega_s;       // Starting omega square t
    af_params.start_time  = 0.0;                     // Starting time
-#if 0
+#if 1
    adjust_limits( af_params.cdset_speed );          // Does rotor stretch
 #endif
-#if 1
+#if 0
    af_params.current_meniscus = simparams.meniscus; // Meniscus from simparams structure
    af_params.current_bottom   = simparams.bottom;   // Bottom from simparams structure
 #endif
@@ -501,7 +501,7 @@ DbgLv(1) << "RSA:calc: break inside astfem_rsa (step-time beyond last scan-time)
             omeg2        = w2t_end[ speed_step ];
 
 DbgLv(1)<< "RSA:2-calc: meniscus bottom" << af_params.current_meniscus << af_params.current_bottom;
-#if 0
+#if 1
             adjust_limits( sp->rotorspeed ); // Does rotor stretch
 #endif
 DbgLv(1)<< "RSA:3-calc: meniscus bottom" << af_params.current_meniscus << af_params.current_bottom;
@@ -867,7 +867,7 @@ DbgLv(1)<< "subha: rsa readings: " << accel_times[step] << accel_w2ts[step];
          ed           = &af_data;
          step_speed   = (double)sp->rotorspeed;
 
-#if 0
+#if 1
          adjust_limits( sp->rotorspeed );
 #endif
 
@@ -957,7 +957,7 @@ DbgLv(1) << "RSA:emit ctime: accel:current_time" << current_time << "step" << st
          // Time left to be simulated after accelaration zone
          duration   = time2 - current_time;
 
-#if 0
+#if 1
          adjust_limits( sp->rotorspeed ); // Does rotor stretch
 #endif
 
@@ -1231,8 +1231,17 @@ DbgLv(1)<< "RSA:adjlim  stretch2" << stretch_value << "speed" << speed;
    // Add current stretch to meniscus at rest
    af_params.current_meniscus += stretch_value;
 
+#if 0
    // Add current stretch to bottom at rest
    af_params.current_bottom    = simparams.bottom_position + stretch_value;
+#endif
+#if 1
+   // Either use current bottom or add current stretch to bottom at rest
+   if ( simparams.bottom > simparams.bottom_position )
+      af_params.current_bottom = simparams.bottom;
+   else
+      af_params.current_bottom = simparams.bottom_position + stretch_value;
+#endif
 }
 
 // Calculates stretch for rotor coefficients array and rpm
