@@ -83,6 +83,7 @@ class US_Experiment
           \param    db For database access, an open database connection
       */
       int checkRunID( US_DB2* = 0 );
+      int checkRunID_auto( int invID_passed, US_DB2* = 0 );
 
       /*! \brief    Function to save the experiment information to db
 

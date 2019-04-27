@@ -5303,6 +5303,7 @@ void US_ExperGuiUpload::submitExperiment()
          protocol_details[ "protocolName" ]   = currProto->protoname;             // pass also to Live Update/PostProd protocol name
          protocol_details[ "CellChNumber" ]   = QString::number(rpSolut->nschan); // this can be read from protocol in US-lims DB
 	 protocol_details[ "duration" ]       = QString::number(Total_duration);
+	 protocol_details[ "invID_passed" ]   = QString::number(US_Settings::us_inv_ID());
 	 
          int nwavl_tot = 0;
          for ( int kk = 0; kk < rpRange->nranges; kk++ )
@@ -5335,10 +5336,6 @@ void US_ExperGuiUpload::submitExperiment()
    }
    //submitted    = true;
 
-   // Make DB record on what protocol was submitted and what runname it's  associated with ...
-   // suggested table name is 'protocolExperiment';
-   //
-
    ck_sub_done->setChecked( true );
 
    if ( !mainw->automode )
@@ -5347,8 +5344,44 @@ void US_ExperGuiUpload::submitExperiment()
        QString message_done   = tr( "Protocol has been successfully submitted to Optima DB." );
        QMessageBox::information( this, mtitle_done, message_done );
      }
+
+   //Make 'autoflow' table record:
+   if ( mainw->automode )
+     add_autoflow_record( protocol_details );
    
    emit expdef_submitted( protocol_details );
+}
+
+// Read Protocol details
+void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_details )
+{
+  // Check DB connection
+   US_Passwd pw;
+   QString masterpw = pw.getPasswd();
+   US_DB2* db = new US_DB2( masterpw );
+   
+   if ( db->lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+       return;
+     }
+
+    if ( db != NULL )
+      {
+	QStringList qry;
+	qry << "add_autoflow_record"
+	    << protocol_details[ "protocolName" ]
+	    << protocol_details[ "CellChNumber" ]
+	    << protocol_details[ "TripleNumber" ]
+	    << protocol_details[ "duration" ]
+	    << protocol_details[ "experimentName" ]
+	    << protocol_details[ "experimentId" ]
+	    << protocol_details[ "OptimaName" ]
+	    << protocol_details[ "invID_passed" ];
+
+	db->query( qry );
+      }
 }
 
 // Function to build a Json object and document holding experiment controls

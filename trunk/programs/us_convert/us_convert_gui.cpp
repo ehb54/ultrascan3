@@ -1104,9 +1104,20 @@ void US_ConvertGui::toleranceValueChanged( double )
    reimport();
 }
 
-void US_ConvertGui::import_data_auto( QString &currDir, QString &protocolName )
+void US_ConvertGui::import_data_auto( QString &currDir, QString &protocolName, QString &invID_passed )
 {
   // ALEXEY TO BE ADDED...
+  /* 
+     assign investigator HERE passed in (QString &currDir, QString &protocolName, QString &invID_passed) as 3rd parameter; saved in 'autoflow' table
+
+     ExpData.invID = invID_passed.toInt();
+  */
+
+  //ExpData.invID = 41; // Nemetchek's ID
+  ExpData.invID = invID_passed.toInt();
+
+  qDebug() << "US_CONVERT: ExpData.invID, invID_passed: " << ExpData.invID << ", " << invID_passed;
+  
   int impType = getImports_auto( currDir );
   ProtocolName_auto = protocolName;   
 
@@ -1830,6 +1841,139 @@ DbgLv(1) << " enabCtl: tLx infsz" << tripListx << out_chaninfo.count();
    pb_saveUS3 ->setEnabled( completed );
 }
 
+
+// copy of :enableSaveBtn for autoflow
+void US_ConvertGui::enableSaveBtn_auto( void )
+{
+   lw_todoinfo->clear();
+   int count = 0;
+   bool completed = true;
+DbgLv(1) << " enabCtl: tLx infsz" << tripListx << out_chaninfo.count();
+   cb_centerpiece->setLogicalIndex( out_chaninfo[ tripListx ].centerpiece );
+
+   if ( allData.size() == 0 )
+   {
+      count++;
+      lw_todoinfo->addItem( QString::number( count )
+            + tr( ": Load or import some AUC data" ) );
+      completed = false;
+   }
+
+   // Do we have any triples?
+   if ( all_tripinfo.size() == 0 )
+   {
+      count++;
+      lw_todoinfo->addItem( QString::number( count )
+            + tr( ": Load or import some AUC data" ) );
+      completed = false;
+   }
+
+   // Is the run info defined?
+   QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
+
+   // Not checking operator on disk -- defined as "Local"
+   if ( ( ExpData.rotorID == 0 )              ||
+        ( ExpData.calibrationID == 0 )        ||
+        ( ExpData.labID == 0 )                ||
+        ( ExpData.instrumentID == 0 )         ||
+        ( ExpData.label.isEmpty() )           ||
+        ( ! rx.exactMatch( ExpData.project.projectGUID ) ) )
+   {
+      if ( ! referenceDefined )
+      {
+         count++;
+         lw_todoinfo->addItem( QString::number( count )
+               + tr( ": Modify run ID (optional)" ) );
+      }
+      count++;
+      lw_todoinfo->addItem( QString::number( count )
+            + tr( ": Edit run information" ) );
+      completed = false;
+   }
+
+   // Have we filled out all the c/c/w info?
+   // Check GUIDs, because solutionID's may not be present yet.
+   foreach ( US_Convert::TripleInfo tripinfo, out_chaninfo )
+   {
+      if ( ! rx.exactMatch( tripinfo.solution.solutionGUID ) )
+      {
+         count++;
+         lw_todoinfo->addItem( QString::number( count ) +
+                               tr( ": Select solution for triple " ) +
+                               tripinfo.tripleDesc );
+         completed = false;
+      }
+   }
+
+   foreach ( US_Convert::TripleInfo tripinfo, out_chaninfo )
+   {
+      if ( tripinfo.centerpiece == 0 )
+      {
+         count++;
+         lw_todoinfo->addItem( QString::number( count ) +
+                               tr( ": Select centerpiece for triple " ) +
+                               tripinfo.tripleDesc );
+         completed = false;
+      }
+   }
+
+   if ( disk_controls->db() )
+   {
+      // Verify connectivity
+      US_Passwd pw;
+      QString masterPW = pw.getPasswd();
+      US_DB2 db( masterPW );
+
+      if ( db.lastErrno() != US_DB2::OK )
+      {
+         count++;
+         lw_todoinfo->addItem( QString::number( count ) +
+                               tr( ": Verify database connectivity" ) );
+         completed = false;
+      }
+
+      // Information is there, but we need to see if the runID exists in the
+      // DB. If we didn't load it from there, then we shouldn't be able to sync
+      int recStatus = ExpData.checkRunID_auto( ExpData.invID, &db );
+
+      // if a record is found but saveStatus==BOTH,
+      //  then we are editing that record
+      if ( ( recStatus == US_DB2::OK ) && ( saveStatus != BOTH ) ) // ||
+           // ( ! ExpData.syncOK ) )
+      {
+         count++;
+         lw_todoinfo->addItem( QString::number( count ) +
+                               tr( ": Select a different runID" ) );
+         completed = false;
+      }
+
+      // Not checking operator on disk -- defined as "Local"
+      if ( ExpData.operatorID == 0 )
+      {
+         count++;
+         lw_todoinfo->addItem( QString::number( count )
+               + tr( ": Select operator in run information" ) );
+         completed = false;
+      }
+
+   }
+
+   // This can go on the todo list, but should not prevent user from saving
+   if ( ( runType == "RI" ) && ( ! referenceDefined ) )
+   {
+      count++;
+      lw_todoinfo->addItem( QString::number( count ) +
+                            tr( ": Define reference scans" ) );
+
+      if ( count == 1 )
+         pb_reference->setEnabled( true );
+   }
+
+   // If we made it here, user can save
+   pb_saveUS3 ->setEnabled( completed );
+}
+
+
 // Process when the user changes the runID
 void US_ConvertGui::runIDChanged( void )
 {
@@ -1894,8 +2038,8 @@ void US_ConvertGui::readProtocol_auto( void )
 
    
    QString xmlstr( "" );
-   //US_ProtocolUtil::read_record( pname, &xmlstr, NULL, &db );
-   US_ProtocolUtil::read_record( ProtocolName_auto, &xmlstr, NULL, &db );
+   //US_ProtocolUtil::read_record( ProtocolName_auto, &xmlstr, NULL, &db );
+   US_ProtocolUtil::read_record_auto( ProtocolName_auto, ExpData.invID,  &xmlstr, NULL, &db );
    
    qDebug() << "Protocol READ !!! ";
     
@@ -2069,9 +2213,11 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 
 
    //Investigator
-   ExpData.invID = US_Settings::us_inv_ID();     // just to be sure
+   // ExpData.invID = US_Settings::us_inv_ID();     // just to be sure
    ExpData.name  = US_Settings::us_inv_name();
 
+   qDebug() << "Investigator ID: " <<  ExpData.invID;
+   
    if ( db.lastErrno() == US_DB2::OK )
      {
        QStringList q( "get_person_info" );
@@ -2397,7 +2543,7 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    //le_centerpieceDesc ->setText( QString::number(out_chaninfo[ tripListx ].centerpiece) );
    le_centerpieceDesc ->setText( out_chaninfo[ tripListx ].centerpieceName );
 
-   enableSaveBtn();
+   enableSaveBtn_auto();
 }
 
 // Function to generate a new guid for experiment, and associate with DB
@@ -2939,8 +3085,9 @@ DbgLv(1) << "CGui: gExpInf: IN";
       }
 
       // Check if the run ID already exists in the DB
-      int recStatus = ExpData.checkRunID( &db );
-
+      //int recStatus = ExpData.checkRunID( &db );
+      int recStatus = ExpData.checkRunID_auto( ExpData.invID, &db );
+      
       // if saveStatus == BOTH, then we are editing the record from the database
       if ( ( recStatus == US_DB2::OK ) && ( saveStatus != BOTH ) )
       {

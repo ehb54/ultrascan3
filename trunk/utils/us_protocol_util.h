@@ -66,6 +66,10 @@ class US_UTIL_EXTERN US_ProtocolUtil
       static int read_record( const QString protname, QString* xml,
                               QStringList*, US_DB2* );
 
+      static int read_record_auto( const QString protname,
+				   int invID_passed, QString* xml,
+				   QStringList*, US_DB2* );
+
       //! \brief Delete a protocol record from the database or local disk.
       //!
       //! This function uses a protocol DB ID (or GUID if local disk)

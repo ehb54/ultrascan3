@@ -398,6 +398,113 @@ int US_ProtocolUtil::read_record( const QString protname, QString* xml,
    return idprot;
 }
 
+// Copy of the read_record for autoflow when inv_ID is propagated 
+int US_ProtocolUtil::read_record_auto( const QString protname, int invID_passed, QString* xml,
+				       QStringList* protentry, US_DB2* dbP )
+{
+   int idprot       = -1;
+
+   if ( xml != NULL )
+      xml      ->clear();
+   if ( protentry != NULL )
+      protentry->clear();
+
+   if ( dbP != NULL )
+   {  // Find the record in the database with a matching name
+      QStringList qry;
+      qry << "get_protocol_desc" << QString::number( invID_passed );
+      dbP->query( qry );
+
+      if ( dbP->lastErrno() != US_DB2::OK )
+         return idprot;    // Error exit:  unable to read DB record
+
+      while ( dbP->next() )
+      {
+         QString pname    = dbP->value( 2 ).toString();
+
+         if ( pname == protname )
+         {  // Name match:  store information and break out
+            QString pdbid    = dbP->value( 0 ).toString();
+            QString pguid    = dbP->value( 1 ).toString();
+            QDateTime date   = dbP->value( 5 ).toDateTime().toUTC();
+            QString pdate    = US_Util::toUTCDatetimeText( date
+                                  .toString( Qt::ISODate ), true )
+                                  .section( " ", 0, 0 ).simplified();
+
+            // Return entry, xml, and protocol ID
+            if ( protentry != NULL )
+               *protentry << pname << pdate << pdbid << pguid;
+            if ( xml != NULL )
+               *xml             = dbP->value( 3 ).toString();
+
+            idprot           = pdbid.toInt();
+            break;
+         }
+      }  // END: db records
+   }  // END: from database
+
+   else
+   {  // Find the record in a local file with a matching name
+      QString datdir      = US_Settings::dataDir() + "/projects/";
+      datdir.replace( "\\", "/" );        // Possible Windows fix
+      QStringList rfilt( "R*.xml" );      // "~/ultrascan/data/projects/R*.xml"
+      QStringList pfiles  = QDir( datdir ).entryList(
+                                              rfilt, QDir::Files, QDir::Name );
+      int nfiles          = pfiles.count();
+
+      for ( int ii = 0; ii < nfiles; ii++ )
+      {  // Examine each "R000*.xml" file in the directory
+         QString pname;
+         QString pguid;  
+         QString pfname      = pfiles[ ii ];
+         QString pfpath      = datdir + pfname;
+         QFile pfile( pfpath );
+         // Skip if there is a file-open problem
+         if ( ! pfile.open( QIODevice::ReadOnly ) )  continue;
+
+         // Capture the XML as a string and start XML reader
+         QTextStream tsi( &pfile );
+         QString xmlstr      = tsi.readAll();
+         pfile.close();
+         QXmlStreamReader xmli( xmlstr );
+
+         while( ! xmli.atEnd() )
+         {  // Parse XML for description and guid
+            xmli.readNext();
+            QString ename       = xmli.name().toString();
+            if ( xmli.isStartElement()  &&  ename == "protocol" )
+            {
+               QXmlStreamAttributes attr = xmli.attributes();
+               pname               = attr.value( "description" ).toString();
+               pguid               = attr.value( "guid" ).toString();
+               break;
+            }
+         }
+
+         if ( pname == protname )
+         {  // Name match:  store information and break out
+            QString fdate       = US_Util::toUTCDatetimeText(
+                                  QFileInfo( pfpath ).lastModified().toUTC()
+                                  .toString( Qt::ISODate ), true )
+                                  .section( " ", 0, 0 ).simplified();
+
+            // Return entry, xml, and protocol ID (filename numeric)
+            if ( protentry != NULL )
+               *protentry << pname << fdate << pfname << pguid;
+            if ( xml != NULL )
+               *xml             = xmlstr;
+
+            idprot           = QString( pfname ).section( ".", 0, 0 ).mid( 1 ).toInt();
+            break;
+         }
+      }  // END: file loop
+   }  // END: local disk
+
+   return idprot;
+}
+
+
+
 // Delete a protocol record from the database or local disk.
 //
 // This function uses a protocol ID (database record ID or "R*.xml"
