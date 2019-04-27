@@ -247,7 +247,8 @@ class US_ConvertGui : public US_Widgets
       void enableRunIDControl( bool );
       void enableScanControls( void );
       void enableSaveBtn   ( void );
-
+      void enableSaveBtn_auto   ( void );
+      
       void getExpInfo      ( void );
       void readProtocol_auto ( void );
       bool readProtocolRotor_auto ( QXmlStreamReader& );
@@ -295,7 +296,7 @@ class US_ConvertGui : public US_Widgets
       */
       void assign_investigator( int );
 
-      void import_data_auto  (QString &, QString &);
+      void import_data_auto  (QString &, QString &, QString &);
       
       void import            ( void );
       void reimport          ( void );

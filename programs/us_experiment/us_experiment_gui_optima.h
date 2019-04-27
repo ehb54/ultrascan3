@@ -799,7 +799,8 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       void    submitExperiment( void );  // Submit the experiment
       void    saveRunProtocol ( void );  // Save the Run Protocol
       QString buildJson       ( void );  // Build the JSON
-
+      void    add_autoflow_record( QMap< QString, QString> &protocol_details );
+      
    signals:
       void expdef_submitted( QMap < QString, QString > &protocol_details );
 };

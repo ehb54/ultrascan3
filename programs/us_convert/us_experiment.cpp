@@ -40,6 +40,24 @@ int US_Experiment::checkRunID( US_DB2* db )
    return US_DB2::OK;
 }
 
+// Copy of checkRunID when invID propagated in autoflow
+int US_Experiment::checkRunID_auto( int invID_passed, US_DB2* db )
+{
+   // Let's see if we can find the run ID
+   expID = 0;
+   QStringList q( "get_experiment_info_by_runID" );
+   q << runID
+     << QString::number( invID_passed );
+   db->query( q );
+   if ( db->lastErrno() == US_DB2::NOROWS )
+      return US_DB2::NOROWS;
+   
+   // Ok, let's update the experiment ID
+   db->next();
+   expID = db->value( 1 ).toString().toInt();
+   return US_DB2::OK;
+}
+
 int US_Experiment::saveToDB( bool update, US_DB2* db,
                              QVector< SP_SPEEDPROFILE >& speedsteps )
 {

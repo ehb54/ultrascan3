@@ -279,6 +279,7 @@ class US_XpnDataViewer : public US_Widgets
      QString        TripleNumber;
      QString        OptimaName;          //New
      QString        TotalDuration;       //New
+     QString        invID_passed;  
 
      void           timeToList( int&, QList< int >& );
 	 
@@ -341,7 +342,7 @@ class US_XpnDataViewer : public US_Widgets
      void test_optima_connection( void );              //New
      
    signals:
-     void experiment_complete_auto( QString &, QString & );
+     void experiment_complete_auto( QString &, QString &, QString & );
      void return_to_experiment( QString & );
 };
 #endif

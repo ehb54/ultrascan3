@@ -13,6 +13,7 @@
 #include "us_crypto.h"
 #include "us_select_item.h"
 #include "us_images.h"
+#include "us_select_item.h"
 
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c)  setData(a,b,c)
@@ -142,8 +143,8 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
    connect( this   , SIGNAL( pass_to_live_update( QMap < QString, QString > &) ),   epanObserv, SLOT( process_protocol_details( QMap < QString, QString > & )  ) );
 
-   connect( epanObserv, SIGNAL( switch_to_post_processing( QString &, QString &) ), this, SLOT( switch_to_post_processing( QString &, QString & )  ) );
-   connect( this, SIGNAL( import_data_us_convert( QString &, QString & ) ),  epanPostProd, SLOT( import_data_us_convert( QString &, QString & )  ) );
+   connect( epanObserv, SIGNAL( switch_to_post_processing( QString &, QString &, QString &) ), this, SLOT( switch_to_post_processing( QString &, QString &, QString &) ) );
+   connect( this, SIGNAL( import_data_us_convert( QString &, QString &, QString & ) ),  epanPostProd, SLOT( import_data_us_convert( QString &, QString &, QString & )  ) );
    connect( epanObserv, SIGNAL( switch_to_experiment( QString &) ), this, SLOT( switch_to_experiment(  QString & )  ) );
    connect( this, SIGNAL( clear_experiment( QString & ) ),  epanExp, SLOT( clear_experiment( QString & )  ) );
 
@@ -156,7 +157,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    adjustSize();
 
    /* Check for current stage & redirect to specific tab */
-   //check_current_stage();
+   check_current_stage();
 
 }
 
@@ -272,8 +273,8 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
    connect( this   , SIGNAL( pass_to_live_update( QMap < QString, QString > &) ),   epanObserv, SLOT( process_protocol_details( QMap < QString, QString > & )  ) );
 
-   connect( epanObserv, SIGNAL( switch_to_post_processing( QString &, QString &) ), this, SLOT( switch_to_post_processing( QString &, QString & )  ) );
-   connect( this, SIGNAL( import_data_us_convert( QString &, QString & ) ),  epanPostProd, SLOT( import_data_us_convert( QString &, QString & )  ) );
+   connect( epanObserv, SIGNAL( switch_to_post_processing( QString &, QString &, QString & ) ), this, SLOT( switch_to_post_processing( QString &, QString &, QString & )));
+   connect( this, SIGNAL( import_data_us_convert( QString &, QString &, QString & ) ),  epanPostProd, SLOT( import_data_us_convert( QString &, QString &, QString & )  ) );
    connect( epanObserv, SIGNAL( switch_to_experiment( QString &) ), this, SLOT( switch_to_experiment(  QString & )  ) );
    connect( this, SIGNAL( clear_experiment( QString & ) ),  epanExp, SLOT( clear_experiment( QString & )  ) );
    
@@ -284,10 +285,11 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    adjustSize();
 
    /* Check for current stage & redirect to specific tab */
-   //check_current_stage();
-
+   check_current_stage();
+   
+   //connect( epanExp, SIGNAL( check_stage() ), this, SLOT( check_current_stage()  ) );
+   //emit check_stage();
 }
-
 
 // Function that checks for current program stage based on US-lims DB entry
 void US_ComProjectMain::check_current_stage( void )
@@ -298,46 +300,247 @@ void US_ComProjectMain::check_current_stage( void )
   // (3) Identify currDir where .auc data have been saved (unique name based on protocolName + runID)
   //     * this maybe an 'autoflow' table field recorded after stage 1 (Live Update); DEFAULT empty
 
-  /* 
-  QString currDir = QString("");
-
-  currDir = curDirr_query.isEmprty() ? curDir : curDirr_query; 
+  /*
+ 
+    1. Query 'autoflow' table - proc. 'count_autoflow_records()': 
+            if 0 - return; 
+	    else
+	       sort by OptimaName:
+	       list active Optima machines:
+	       identify which Optima is running via autoflow, which is free & offer to chose - either monitor existing run, OR submit new run on free machine
+	       When to consider Optima "free" ? (after stage 'LIVE_UPDATE' passed ?)
+    
+    2. If autoflow record exists: 
+             proc. 'read_autoflow_record()'
   
-  QMap < QString, QString > protocol_details;
-  protocol_details[ "experimentId" ] = ExpID;
-  protocol_details[ "protocolName" ] = ProtName;
-  protocol_details[ "CellChNumber" ] = CellChNumber;
-  protocol_details[ "TripleNumber" ] = TprileNumber;;
-
-  
-  switch ( stageNumber )
-    {
-    case 0:       //Experiment submit
-      {
-	break;
-      }
-    case 1:       //Live Update / us_xpn_viwer
-      {
-	//do something
-	switch_to_live_update( protocol_details );
-	break;
-      }
-    case 2:       //PostProd / us_convert  
-      {
-	//do something
-	switch_to_post_processing( currDir, ProtName);
-	break;
-      }
-      //and so on...
-    } 
   */
+
+  // // Ling's exp. Optima 1!!!
+  // QMap < QString, QString > protocol_details;
+  // protocol_details[ "experimentId" ]   = QString("465");   
+  // protocol_details[ "protocolName" ]   = QString("CCLing-PZ5077-27k-021519");
+  // protocol_details[ "experimentName" ] = QString("some_name");
+  // protocol_details[ "CellChNumber" ]   = QString("2");
+  // protocol_details[ "TripleNumber" ]   = QString("2");
+  // protocol_details[ "OptimaName" ]     = QString("Optima 1");    // <-- Optima 1
+  // protocol_details[ "duration" ]       = QString("27000");
+  // protocol_details[ "invID_passed" ]   = QString("34"); //Ling's ID
+  
+  // -------------------------------------------------------------------------------------------  
+
+  // // Nemetchek's exp. Optima 2 !!!
+  // QMap < QString, QString > protocol_details;
+  // protocol_details["experimentId"] = QString("287");   
+  // protocol_details["protocolName"] = QString("RxRPPARhet-PPRE-MWL_180419");
+  // protocol_details[ "experimentName" ] = QString("some_name");
+  // protocol_details[ "CellChNumber" ] = QString("8");
+  // protocol_details[ "TripleNumber" ] = QString("38");
+  // protocol_details[ "OptimaName" ] = QString("Optima 2");     // <-- Optima 2
+  // protocol_details[ "duration" ]   = QString("36000");
+  // protocol_details[ "invID_passed" ]  = QString("41");  //Nemetchek's ID
+  
+  // QString stage                        = "LIVE_UPDATE";
+  // QString currDir                      = "";
+  // QString ProtName                     = "";
+  // QString invID_passed                 = protocol_details[ "invID_passed" ];
+
+  // --------------------------------------------------------------------------------------------
+ 
+
+  // Query 'autoflow': get cout of records
+  int autoflow_records = get_autoflow_records();
+
+  qDebug() << "Autoflow record #: " << autoflow_records;
+
+  if ( autoflow_records < 1 )
+    return;
+
+
+  // Dialog of aexisting autoflow records
+  US_Passwd  pw;
+  US_DB2* dbP  = new US_DB2( pw.getPasswd() );
+  list_all_autoflow_records( autoflowdata, dbP );
+  
+  QString pdtitle( tr( "Select Optima Run to Follow" ) );
+  QStringList hdrs;
+  int         prx;
+  hdrs << "ID"
+       << "Run Name"
+       << "Optima"
+       << "Created"
+       << "Started";
+  
+  US_SelectItem pdiag( autoflowdata, hdrs, pdtitle, &prx, -2 );
+  QString autoflow_id_selected("");
+  
+  if ( pdiag.exec() == QDialog::Accepted )
+    autoflow_id_selected  = autoflowdata[ prx ][ 0 ];
+  else
+    return;
+  
+
+  // -------------------------------------------------------------------------------------------------
+  // Get detailed info on the autoflow record
+  QMap < QString, QString > protocol_details;
+  int autoflowID = autoflow_id_selected.toInt();
+
+  protocol_details = read_autoflow_record( autoflowID );
+
+  QString stage        = protocol_details[ "status" ];
+  QString currDir      = protocol_details[ "dataPath" ];
+  QString invID_passed = protocol_details[ "invID_passed" ];
+  QString ProtName     = protocol_details[ "protocolName" ];
+
+    
+  if ( stage == "LIVE_UPDATE" )
+    {
+      //do something
+      switch_to_live_update( protocol_details );
+      return;
+    }
+  
+  if ( stage == "EDITING" )
+    {
+      //do something
+      switch_to_post_processing( currDir, ProtName, invID_passed );
+
+      //ALEXEY: should pass investigator as well: should be saved in 'autoflow'
+      /*
+       switch_to_post_processing( currDir, ProtName, invID_passed );  
+       see us_convert:
+           void US_ConvertGui::import_data_auto( QString &currDir, QString &protocolName )
+	    {
+	       assign investigator HERE passed in (QString &currDir, QString &protocolName, QString &invID_passed) as 3rd parameter; saved in 'autoflow' table
+	       ExpData.invID = invID_passed.toInt();
+	       ....
+
+	in us_convert: use function      read_record_auto( ProtocolName_auto, &xmlstr, NULL, &db );  
+      */
+      
+      return;
+    }
+  //and so on...
+  
+  
 }
+
+// Query autoflow for # records
+int US_ComProjectMain::list_all_autoflow_records( QList< QStringList >& autoflowdata, US_DB2* dbP )
+{
+  int nrecs        = 0;   
+  autoflowdata.clear();
+
+  QStringList qry;
+  qry << "get_autoflow_desc";
+  dbP->query( qry );
+
+  if ( dbP->lastErrno() != US_DB2::OK )
+    return nrecs;
+  
+  while ( dbP->next() )
+    {
+      QStringList autoflowentry;
+      QString id                 = dbP->value( 0 ).toString();
+      QString runname            = dbP->value( 5 ).toString();
+      QString optimaname         = dbP->value( 10 ).toString();
+      
+      QDateTime time_started     = dbP->value( 11 ).toDateTime().toUTC();
+
+      QDateTime time_created     = dbP->value( 13 ).toDateTime().toUTC();
+      QDateTime local(QDateTime::currentDateTime());
+
+      autoflowentry << id << runname << optimaname  << time_created.toString(); // << time_started.toString(); // << local.toString( Qt::ISODate );
+
+      if ( time_started.toString().isEmpty() )
+	autoflowentry << "not started";
+      else
+	autoflowentry << time_started.toString();
+      
+      autoflowdata  << autoflowentry;
+      nrecs++;
+    }
+
+  return nrecs;
+}
+
+    
+// Query autoflow for # records
+int US_ComProjectMain::get_autoflow_records( void )
+{
+   // Check DB connection
+   US_Passwd pw;
+   QString masterpw = pw.getPasswd();
+   US_DB2* db = new US_DB2( masterpw );
+
+   int record_number = 0;
+   
+   if ( db->lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+       return record_number;
+     }
+
+   QStringList qry;
+   qry << "count_autoflow_records";
+   
+   record_number = db->functionQuery( qry );
+
+   return record_number;
+}
+
+
+// Query autoflow for # records
+QMap< QString, QString> US_ComProjectMain::read_autoflow_record( int autoflowID  )
+{
+   // Check DB connection
+   US_Passwd pw;
+   QString masterpw = pw.getPasswd();
+   US_DB2* db = new US_DB2( masterpw );
+
+   QMap <QString, QString> protocol_details;
+   
+   if ( db->lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+       return protocol_details;
+     }
+
+   QStringList qry;
+   qry << "read_autoflow_record"
+       << QString::number( autoflowID );
+   
+   db->query( qry );
+
+   if ( db->lastErrno() == US_DB2::OK )      // Autoflow record exists
+     {
+       while ( db->next() )
+	 {
+	   protocol_details[ "protocolName" ]   = db->value( 0 ).toString();
+	   protocol_details[ "CellChNumber" ]   = db->value( 1 ).toString();
+	   protocol_details[ "TripleNumber" ]   = db->value( 2 ).toString();
+	   protocol_details[ "duration" ]       = db->value( 3 ).toString();
+	   protocol_details[ "experimentName" ] = db->value( 4 ).toString();
+	   protocol_details[ "experimentId" ]   = db->value( 5 ).toString();
+	   protocol_details[ "runID" ]          = db->value( 6 ).toString();
+	   protocol_details[ "status" ]         = db->value( 7 ).toString();
+           protocol_details[ "dataPath" ]       = db->value( 8 ).toString();   
+	   protocol_details[ "OptimaName" ]     = db->value( 9 ).toString();
+	   protocol_details[ "runStarted" ]     = db->value( 10 ).toString();
+	   protocol_details[ "invID_passed" ]   = db->value( 11 ).toString(); 
+	 }
+     }
+
+   return protocol_details;
+}
+
 
 
 // Slot to pass submitted to Optima run info to the Live Update tab
 void US_ComProjectMain::switch_to_live_update( QMap < QString, QString > & protocol_details)
 {
-   tabWidget->setCurrentIndex( 1 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ?? 
+  tabWidget->setCurrentIndex( 1 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ?? 
 
    // ALEXEY:
    // (1) Make a record to 'autoflow' table - stage# = 1;
@@ -347,22 +550,22 @@ void US_ComProjectMain::switch_to_live_update( QMap < QString, QString > & proto
 }
 
 // Slot to switch from the Live Update to Editing tab
-void US_ComProjectMain::switch_to_post_processing( QString  & currDir, QString & protocolName)
+void US_ComProjectMain::switch_to_post_processing( QString  & currDir, QString & protocolName,  QString & invID_passed )
 {
    tabWidget->setCurrentIndex( 2 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
 
    // ALEXEY: Make a record to 'autoflow' table: stage# = 2; 
 
-   emit import_data_us_convert( currDir, protocolName );
+   emit import_data_us_convert( currDir, protocolName, invID_passed );
 }
      
 // Slot to switch back from the Live Update to Experiment tab
-void US_ComProjectMain::switch_to_experiment( QString & protocolName)
+void US_ComProjectMain::switch_to_experiment( QString & protocolName )
 {
    tabWidget->setCurrentIndex( 0 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
 
-   // ALEXEY: Make a record to 'autoflow' table: stage# = 2; 
-
+   //delete_autoflow_record( runID );
+   
    emit clear_experiment( protocolName );
 }
    
@@ -454,7 +657,6 @@ US_ExperGui::US_ExperGui( QWidget* topw )
    // Open US_Experiment without button...  
    //US_ExperimentMain* sdiag = new US_ExperimentMain;
 
-  
    sdiag = new US_ExperimentMain;
 
    sdiag->setParent(this, Qt::Widget);
@@ -480,6 +682,7 @@ US_ExperGui::US_ExperGui( QWidget* topw )
      sdiag->us_mode_passed();
    
    sdiag->show();
+
    
 }
 
@@ -633,7 +836,7 @@ US_ObservGui::US_ObservGui( QWidget* topw )
    connect( this, SIGNAL( to_xpn_viewer( QMap < QString, QString > &) ), sdiag, SLOT( check_for_data ( QMap < QString, QString > & )  ) );
 
    //ALEXEY: devise SLOT saying what to do upon completion of experiment and exporting AUC data to hard drive - Import Experimental Data  !!! 
-   connect( sdiag, SIGNAL( experiment_complete_auto( QString &, QString & ) ), this, SLOT( to_post_processing ( QString &, QString &) ) );
+   connect( sdiag, SIGNAL( experiment_complete_auto( QString &, QString &, QString & ) ), this, SLOT( to_post_processing ( QString &, QString &, QString &) ) );
 
    //ALEXEY: return to 1st panel when exp. aborted & no data saved..
    connect( sdiag, SIGNAL( return_to_experiment( QString & ) ), this, SLOT( to_experiment ( QString &) ) );
@@ -692,9 +895,9 @@ void US_ObservGui::process_protocol_details( QMap < QString, QString > & protoco
   emit to_xpn_viewer( protocol_details );
 }
 
-void US_ObservGui::to_post_processing( QString & currDir, QString & protocolName )
+void US_ObservGui::to_post_processing( QString & currDir, QString & protocolName, QString & invID_passed )
 {
-  emit switch_to_post_processing( currDir, protocolName );
+  emit switch_to_post_processing( currDir, protocolName, invID_passed );
 }
 
 void US_ObservGui::to_experiment( QString & protocolName )
@@ -745,7 +948,7 @@ US_PostProdGui::US_PostProdGui( QWidget* topw )
    sdiag = new US_ConvertGui("AUTO");
    sdiag->setParent(this, Qt::Widget);
 
-   connect( this, SIGNAL( to_post_prod( QString &, QString & ) ), sdiag, SLOT( import_data_auto ( QString &, QString & )  ) );
+   connect( this, SIGNAL( to_post_prod( QString &, QString &, QString & ) ), sdiag, SLOT( import_data_auto ( QString &, QString &, QString & )  ) );
    //ALEXEY: switch to Analysis
    connect( sdiag, SIGNAL( saving_complete_auto( QString &, QString & ) ), this, SLOT( to_analysis ( QString &, QString &) ) );
    
@@ -759,9 +962,9 @@ US_PostProdGui::US_PostProdGui( QWidget* topw )
 
 }
 
-void US_PostProdGui::import_data_us_convert( QString & currDir, QString & protocolName )
+void US_PostProdGui::import_data_us_convert( QString & currDir, QString & protocolName, QString & invID_passed )
 {
-  emit to_post_prod( currDir, protocolName );
+  emit to_post_prod( currDir, protocolName, invID_passed );
 }
 
 void US_PostProdGui::to_analysis( QString & currDir, QString & protocolName )
