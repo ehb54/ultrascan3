@@ -279,7 +279,8 @@ class US_XpnDataViewer : public US_Widgets
      QString        TripleNumber;
      QString        OptimaName;          //New
      QString        TotalDuration;       //New
-     QString        invID_passed;  
+     QString        invID_passed;
+     int            ElapsedTimeOffset;
 
      void           timeToList( int&, QList< int >& );
 	 
@@ -296,6 +297,10 @@ class US_XpnDataViewer : public US_Widgets
      void   retrieve_xpn_raw_auto ( void );
      void   reloadData_auto     ( void );
      int    CheckExpComplete_auto( QString & );
+     void   update_autoflow_runId_timeStarted( void );
+     int    read_timeElapsed_offset( void );
+     void   delete_autoflow_record( void );
+     void   updateautoflow_record_atLiveUpdate( void );
 
      void   expStatFive( void );
      void   expStatTwo( void );
