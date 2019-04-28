@@ -242,6 +242,8 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
    in_reload_data_init = false;
    in_reload_check_sysdata  = false;
 
+   ElapsedTimeOffset = 0;
+
    //ALEXEY: new way
    US_Passwd pw;
    US_DB2*   dbP = new US_DB2( pw.getPasswd() );
@@ -1436,6 +1438,11 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
       RunID_to_retrieve = QString::number(xpn_data->get_runid( ExpID_to_use ));
 
       qDebug() << "RunID_to_retrieve 1: " << RunID_to_retrieve;
+
+      // ElapsedTimeOffset = read_timeElapsed_offset();
+      // qDebug() << "Elapsed Time Offset: " << ElapsedTimeOffset;
+      
+
       // runInfo.clear();
       
       //xpn_data->scan_runs( runInfo );                          // ALEXEY initial query (for us_comproject needs to be based on ExpId ) 
@@ -1473,8 +1480,13 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
       disconnect(timer_data_init, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
       msg_data_avail->close();
       
-      //ALEXEY: need to update 'autoflow' table with the unique  RunID_to_retrieve && Start Run Time fields !!!
-      
+      //ALEXEY: need to update 'autoflow' table with the unique RunID_to_retrieve && Start Run Time fields !!!
+      //Conditional:  Do it ONLY once !!! 
+      update_autoflow_runId_timeStarted();
+
+      //ALEXEY: retrieve startTime from autoflow table:
+      ElapsedTimeOffset = read_timeElapsed_offset();
+       
       //ALEXEY: elapsed timer start
       elapsed_timer = new QElapsedTimer;
       elapsed_timer->start();
@@ -1529,6 +1541,129 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
 }
 
 
+// When Optima run started & runID aqcuried, update 'autoflow' table
+void US_XpnDataViewer::update_autoflow_runId_timeStarted( void )
+{
+   // Check DB connection
+   US_Passwd pw;
+   QString masterpw = pw.getPasswd();
+   US_DB2* db = new US_DB2( masterpw );
+
+   if ( db->lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+       return;
+     }
+
+   QStringList qry;
+   qry << "update_autoflow_runid_starttime"
+       << ExpID_to_use
+       << RunID_to_retrieve;
+
+   db->query( qry );
+   //ALEXEY: Updates with runID && timeStarted only once, when runID && runStarttime IS NULL
+}
+
+// Read diffference btw started tiem and NOW() as an offset for Elapsed time
+int US_XpnDataViewer::read_timeElapsed_offset( void )
+{
+   // Check DB connection
+   US_Passwd pw;
+   QString masterpw = pw.getPasswd();
+   US_DB2* db = new US_DB2( masterpw );
+
+   int time_offset = 0;
+   
+   if ( db->lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+       return time_offset;
+     }
+
+   QStringList qry;
+   qry << "read_autoflow_times"
+       << RunID_to_retrieve;
+   
+   time_offset = db->functionQuery( qry );
+
+   return time_offset;
+}
+
+//Delete autoflow record upon Run abortion
+void US_XpnDataViewer::delete_autoflow_record( void )
+{
+   // Check DB connection
+   US_Passwd pw;
+   QString masterpw = pw.getPasswd();
+   US_DB2* db = new US_DB2( masterpw );
+
+   if ( db->lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+       return;
+     }
+
+   QStringList qry;
+   qry << "delete_autoflow_record"
+       << RunID_to_retrieve;
+
+   //db->query( qry );
+
+   // OR
+   
+   int status = db->statusQuery( qry );
+   
+   if ( status == US_DB2::NO_AUTOFLOW_RECORD )
+     {
+       QMessageBox::warning( this,
+			     tr( "Autoflow Record Not Deleted" ),
+			     tr( "No autoflow record\n"
+				 "associated with this experiment." ) );
+       return;
+     }
+}
+   
+
+//Delete autoflow record upon Run abortion
+void US_XpnDataViewer::updateautoflow_record_atLiveUpdate( void )
+{
+   // Check DB connection
+   US_Passwd pw;
+   QString masterpw = pw.getPasswd();
+   US_DB2* db = new US_DB2( masterpw );
+
+   if ( db->lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+       return;
+     }
+
+   QStringList qry;
+   qry << "update_autoflow_at_live_update"
+       << RunID_to_retrieve
+       << currentDir;
+
+   //db->query( qry );
+
+   // OR
+   
+   int status = db->statusQuery( qry );
+   
+   if ( status == US_DB2::NO_AUTOFLOW_RECORD )
+     {
+       QMessageBox::warning( this,
+			     tr( "Autoflow Record Not Updated" ),
+			     tr( "No autoflow record\n"
+				 "associated with this experiment." ) );
+       return;
+     }
+}
+   
+
 // Check periodically for SysData
 void US_XpnDataViewer::check_for_sysdata( void )
 {
@@ -1581,10 +1716,9 @@ void US_XpnDataViewer::check_for_sysdata( void )
   le_running->setText( running_time_text );
   qApp->processEvents();
 
-  
   //Elapsed Time
   QList< int > dhms_e;
-  int elapsed_time = int( elapsed_timer->elapsed() / 1000 );
+  int elapsed_time = int( elapsed_timer->elapsed() / 1000 ) + ElapsedTimeOffset;
   int elapsed_time_1 = elapsed_time;
   timeToList( elapsed_time, dhms_e );
   QString elapsed_time_text;
@@ -1705,6 +1839,7 @@ void US_XpnDataViewer::expStatFive( void )
 	  QString message_done     = tr( "Experiment was completed. Optima data saved..." );
 	  QMessageBox::information( this, mtitle_complete, message_done );
 	  
+	  updateautoflow_record_atLiveUpdate();
 	  emit experiment_complete_auto( currentDir, ProtocolName, invID_passed  );  // Updtade later: what should be passed with signal ??
 	  
 	  return;
@@ -1746,6 +1881,8 @@ void US_XpnDataViewer::expStatTwo( void )
 	      QString mtitle_complete  = tr( "Complete!" );
 	      QString message_done     = tr( "Experiment was completed. Optima data saved..." );
 	      QMessageBox::information( this, mtitle_complete, message_done );
+
+	      updateautoflow_record_atLiveUpdate();
 	      emit experiment_complete_auto( currentDir, ProtocolName, invID_passed  );  // Updtade later: what should be passed with signal ??
 	      return;
 	    }
@@ -1753,6 +1890,7 @@ void US_XpnDataViewer::expStatTwo( void )
 	  else if (msgBox.clickedButton() == Ignore)
 	    {
 	      reset();
+	      delete_autoflow_record();
 	      emit return_to_experiment( ProtocolName  ); 
 	      return;
 	    }
@@ -1790,6 +1928,7 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
   xpn_data->setEtimOffZero(); //ALEXEY: intialize etimoff to zero for the first time
 
   counter_mins = 0;
+  ElapsedTimeOffset = 0;
   
   ExpID_to_use = protocol_details["experimentId"];   
   ProtocolName = protocol_details["protocolName"];
@@ -3430,6 +3569,8 @@ DbgLv(1) << "RLd:       NO CHANGE";
 	      QString mtitle_complete  = tr( "Complete!" );
 	      QString message_done     = tr( "Experiment was completed. Optima data saved..." );
 	      QMessageBox::information( this, mtitle_complete, message_done );
+
+	      updateautoflow_record_atLiveUpdate();
 	      
 	      emit experiment_complete_auto( currentDir, ProtocolName, invID_passed  );  // Updtade later: what should be passed with signal ??
 	      //QString temp_protname("DemchukA_exosomes40K_111418");
@@ -3462,10 +3603,12 @@ DbgLv(1) << "RLd:       NO CHANGE";
 	      if (msgBox.clickedButton() == Save)
 		{
 		  export_auc_auto();
-		  
+
 		  QString mtitle_complete  = tr( "Complete!" );
 		  QString message_done     = tr( "Experiment was completed. Optima data saved..." );
 		  QMessageBox::information( this, mtitle_complete, message_done );
+
+		  updateautoflow_record_atLiveUpdate();
 		  emit experiment_complete_auto( currentDir, ProtocolName, invID_passed  );  // Updtade later: what should be passed with signal ??
 		  return;
 		}
@@ -3473,6 +3616,7 @@ DbgLv(1) << "RLd:       NO CHANGE";
 	      else if (msgBox.clickedButton() == Ignore)
 		{
 		  reset();
+		  delete_autoflow_record();
 		  emit return_to_experiment( ProtocolName  ); 
 		  return;
 		}

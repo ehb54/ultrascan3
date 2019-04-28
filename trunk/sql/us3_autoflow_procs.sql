@@ -217,23 +217,20 @@ CREATE PROCEDURE update_autoflow_runid_starttime ( p_personGUID    CHAR(36),
   MODIFIES SQL DATA  
 
 BEGIN
-  DECLARE count_records INT;
+  DECLARE curr_runid INT;
 
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-SELECT     COUNT(*)
-  INTO       count_records
+  SELECT     runID
+  INTO       curr_runid
   FROM       autoflow
   WHERE      expID = p_expID;
 
-  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
-    IF ( count_records = 0 ) THEN
-      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
-      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
 
-    ELSE
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( curr_runid IS NULL ) THEN
       UPDATE   autoflow
       SET      runID = p_runid, runStarted = NOW()
       WHERE    expID = p_expID;
@@ -242,7 +239,7 @@ SELECT     COUNT(*)
 
   END IF;
 
-  SELECT @US3_LAST_ERRNO AS status;
+ -- SELECT @US3_LAST_ERRNO AS status;
 
 END$$
 
@@ -262,7 +259,7 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-SELECT     COUNT(*)
+  SELECT     COUNT(*)
   INTO       count_records
   FROM       autoflow
   WHERE      runID = p_runID AND status = 'LIVE_UPDATE';
