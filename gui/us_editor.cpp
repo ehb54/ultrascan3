@@ -5,8 +5,8 @@
 #include <QtPrintSupport>
 #endif
 
-US_Editor::US_Editor( int menu, bool readonly, const QString& extension, 
-      QWidget* parent,  Qt::WindowFlags flags ) : QMainWindow( parent, flags )                                                             
+US_Editor::US_Editor( int menu, bool readonly, const QString& extension,
+      QWidget* parent,  Qt::WindowFlags flags ) : QMainWindow( parent, flags )
 {
    file_extension = extension;
    file_directory = US_Settings::dataDir();
@@ -36,6 +36,7 @@ US_Editor::US_Editor( int menu, bool readonly, const QString& extension,
 #else
 #if QT_VERSION > 0x050000
    edMenuBar       = menuBar();
+   edMenuBar->setNativeMenuBar( false );
 #else
    edMenuBar       = new QMenuBar( 0 );
 #endif
@@ -85,13 +86,13 @@ US_Editor::US_Editor( int menu, bool readonly, const QString& extension,
          fileMenu->addAction( clearAction );
    }
 
-   menuBar()->setPalette( US_GuiSettings::normalColor() );
-   menuBar()->setFont   ( QFont( US_GuiSettings::fontFamily(),
+   edMenuBar->setPalette( US_GuiSettings::normalColor() );
+   edMenuBar->setFont   ( QFont( US_GuiSettings::fontFamily(),
                           US_GuiSettings::fontSize() ) );
 
-   currentFont = QFont( "monospace", US_GuiSettings::fontSize() - 1, 
+   currentFont = QFont( "monospace", US_GuiSettings::fontSize() - 1,
                         QFont::Bold );
-   
+
    e = new QTextEdit( this );
    e->setFont          ( currentFont );
    e->setPalette       ( US_GuiSettings::editColor() );
@@ -106,9 +107,9 @@ void US_Editor::load( void )
    QString fn;
    QString text;
 
-   fn = QFileDialog::getOpenFileName( this, 
+   fn = QFileDialog::getOpenFileName( this,
          tr( "Open File" ),
-         file_directory, 
+         file_directory,
          file_extension );
 
   if ( fn == "" ) return;
@@ -136,7 +137,7 @@ void US_Editor::load( void )
 
 void US_Editor::save(  )
 {
-   if ( filename == "" ) 
+   if ( filename == "" )
       saveAs();
    else
       saveFile();
@@ -147,7 +148,7 @@ void US_Editor::saveAs(  )
    QString fn;
 
    fn = QFileDialog::getSaveFileName( this );
-   
+
    if ( ! fn.isEmpty(  ) )
    {
       filename = fn;
@@ -158,7 +159,7 @@ void US_Editor::saveAs(  )
 void US_Editor::saveFile( void )
 {
       QString text = e->toPlainText();
-      
+
       QFile f( filename );
 
       if ( f.open( QIODevice::WriteOnly | QIODevice::Text ) )
@@ -179,7 +180,7 @@ void US_Editor::update_font(  )
    bool  ok;
    currentFont   = e->font();
    QFont newFont = QFontDialog::getFont( &ok, currentFont, this );
-   
+
    if ( ok )
    {
       currentFont = newFont;
@@ -193,7 +194,7 @@ void US_Editor::print( void )
    QPrintDialog* dialog = new QPrintDialog( &printer, this );
 
    dialog->setWindowTitle( tr( "Print Document" ) );
-   
+
    if ( dialog->exec() != QDialog::Accepted ) return;
 
    QStringList text = e->toPlainText().split( "\n" );
@@ -201,10 +202,10 @@ void US_Editor::print( void )
 
    p.begin( &printer );      // paint on printer
    p.setFont( e->font() );
-      
+
    int yPos = 0;             // y position for each line
    QFontMetrics fm = p.fontMetrics();
-   
+
    const int MARGIN = 10;
 
    for ( int i = 0; i < text.size(); i++ )
@@ -214,15 +215,15 @@ void US_Editor::print( void )
          printer.newPage();   // no more room on this page
          yPos = 0;            // back to top of page
       }
-      
+
       p.drawText( MARGIN, MARGIN + yPos,
                   printer.width(), fm.lineSpacing(),
                   Qt::TextExpandTabs, text[ i ]  );
-      
+
       yPos = yPos + fm.lineSpacing();
     }
 
     p.end();                  // send job to printer
 }
-   
+
 

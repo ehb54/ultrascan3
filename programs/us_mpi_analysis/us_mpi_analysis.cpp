@@ -306,7 +306,7 @@ DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
    fit_mb_select   = parameters[ "fit_mb_select"   ].toInt();
    meniscus_range  = parameters[ "meniscus_range"  ].toDouble();
    meniscus_points = parameters[ "meniscus_points" ].toInt();
-   fit_mb_select   = ( meniscus_points > 1 ) ? fit_mb_select : 0;
+   fit_mb_select   = ( meniscus_points > 1 ) ?  qMax( 1, fit_mb_select ) : 0;
    fit_meni        = ( ( fit_mb_select & 1 ) != 0 );
    fit_bott        = ( ( fit_mb_select & 2 ) != 0 );
    fit_menbot      = ( fit_meni  &&  fit_bott );

@@ -146,6 +146,18 @@ DbgLv(1)<< "RSA:calc:    cdset_speed" << af_params.cdset_speed;
    af_params.omega_s     = sq( s0speed * M_PI / 30.0 ); // omega_square
    af_params.start_om2t  = af_params.omega_s;       // Starting omega square t
    af_params.start_time  = 0.0;                     // Starting time
+   af_params.bottom_pos  = simparams.bottom_position;   // Centerpiece bottom
+   if ( simparams.bottom > simparams.bottom_position )
+   {
+      double stretch_val  = stretch( simparams.rotorcoeffs,
+                                     (int)af_params.cdset_speed );
+      double bottom_clc   = simparams.bottom_position + stretch_val;
+      double bott_diff    = simparams.bottom - bottom_clc;
+      if ( qAbs( bott_diff ) > 1.e-5 )
+      {
+         af_params.bottom_pos  = simparams.bottom_position + bott_diff;
+      }
+   }
 #if 1
    adjust_limits( af_params.cdset_speed );          // Does rotor stretch
 #endif
@@ -1217,8 +1229,8 @@ DbgLv(2) << "AFRSA:  ncomp st1 st2" << ncomp << stoich1 << stoich2;
 void US_Astfem_RSA::adjust_limits( int speed )
 {
    // First correct meniscus to theoretical position at rest:
-   double stretch_value        = stretch( simparams.rotorcoeffs,
-                                          (int)af_params.cdset_speed );
+   int icset_speed             = (int)af_params.cdset_speed;
+   double stretch_value        = stretch( simparams.rotorcoeffs, icset_speed );
 DbgLv(1)<< "RSA:adjlim stretch1" << stretch_value << "speed" << af_params.cdset_speed;
 
    // This is the meniscus at rest
@@ -1237,10 +1249,17 @@ DbgLv(1)<< "RSA:adjlim  stretch2" << stretch_value << "speed" << speed;
 #endif
 #if 1
    // Either use current bottom or add current stretch to bottom at rest
-   if ( simparams.bottom > simparams.bottom_position )
+   if ( icset_speed == speed  &&
+        simparams.bottom > simparams.bottom_position )
+   {  // If the current speed step matches the dataset speed step
+      // and a specific bottom was given, then use that bottom value.
       af_params.current_bottom = simparams.bottom;
+   }
    else
-      af_params.current_bottom = simparams.bottom_position + stretch_value;
+   {  // If no bottom was given or we are at a speed step preceding the
+      // current dataset's, then calculate the bottom value.
+      af_params.current_bottom = af_params.bottom_pos + stretch_value;
+   }
 #endif
 }
 
