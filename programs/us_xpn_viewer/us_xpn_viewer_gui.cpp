@@ -1066,6 +1066,7 @@ if(mcknt>0)
 
    reset();
    adjustSize();
+
 }
 
 
@@ -1417,7 +1418,6 @@ DbgLv(1) << "ec: call changeCellCh";
 // Load Optima raw (.postgres) data
 bool US_XpnDataViewer::load_xpn_raw_auto( )
 {
-
   bool status_ok = false;
 
   if ( in_reload_data_init )             // If already doing a reload,
@@ -1439,10 +1439,12 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
 
       qDebug() << "RunID_to_retrieve 1: " << RunID_to_retrieve;
 
-      // ElapsedTimeOffset = read_timeElapsed_offset();
-      // qDebug() << "Elapsed Time Offset: " << ElapsedTimeOffset;
-      
 
+      // //Test
+      // ElapsedTimeOffset = read_timeElapsed_offset();
+      // qDebug() << "TEST: Elapsed time from autoflow: " << ElapsedTimeOffset;
+
+      
       // runInfo.clear();
       
       //xpn_data->scan_runs( runInfo );                          // ALEXEY initial query (for us_comproject needs to be based on ExpId ) 
@@ -1581,11 +1583,14 @@ int US_XpnDataViewer::read_timeElapsed_offset( void )
 			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
        return time_offset;
      }
-
-   QStringList qry;
-   qry << "read_autoflow_times"
-       << RunID_to_retrieve;
    
+   QStringList qry;
+   qry << "read_autoflow_times_mod"
+       << RunID_to_retrieve;
+
+   // //Test only
+   // qry << "read_autoflow_times_mod_test";
+     
    time_offset = db->functionQuery( qry );
 
    return time_offset;
@@ -2255,6 +2260,7 @@ DbgLv(1) << "RDr: allData size" << allData.size();
 // Load Optima raw (.postgres) data
 void US_XpnDataViewer::load_xpn_raw( )
 {
+
    // Ask for data directory
    QString dbhost    = xpnhost;
    int     dbport    = xpnport.toInt();

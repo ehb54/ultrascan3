@@ -208,7 +208,7 @@ BEGIN
 END$$
 
 
--- Update autoflow record with Optima's RunID
+-- Update autoflow record with Optima's RunID (ONLY once, first time )
 DROP PROCEDURE IF EXISTS update_autoflow_runid_starttime$$
 CREATE PROCEDURE update_autoflow_runid_starttime ( p_personGUID    CHAR(36),
                                          	 p_password      VARCHAR(80),
@@ -309,10 +309,99 @@ BEGIN
 
   SELECT TIMESTAMPDIFF( SECOND, runStarted, NOW() ) 
   INTO l_sec_difference 
-  FROM autoflow WHERE runID = p_runID;
+  FROM autoflow WHERE runID = p_runID AND runStarted IS NOT NULL;
 
 
   RETURN( l_sec_difference );
 
 END$$
 
+
+
+----  get initial elapsed time upon reattachment ----------------------------- 
+DROP FUNCTION IF EXISTS read_autoflow_times_mod$$
+CREATE FUNCTION read_autoflow_times_mod ( p_personGUID CHAR(36),
+                                       	p_password   VARCHAR(80), 
+				       	p_runID      INT )
+                                       
+  RETURNS INT
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_records INT;
+  DECLARE l_sec_difference INT;
+  DECLARE cur_runStarted TIMESTAMP; 
+  	  
+  SET l_sec_difference = 0;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflow
+  WHERE      runID = p_runID;
+
+  SELECT     runStarted
+  INTO       cur_runStarted
+  FROM       autoflow
+  WHERE      runID = p_runID;
+  
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records > 0 ) THEN
+      IF ( cur_runStarted IS NOT NULL ) THEN 
+        
+	SELECT TIMESTAMPDIFF( SECOND, curr_runStarted, NOW() ) 
+ 	INTO l_sec_difference; 
+
+      END IF;	
+    END IF;
+  END IF;
+    
+  RETURN( l_sec_difference );
+
+END$$
+
+----  TEST: TO BE DELETED: get initial elapsed time upon reattachment ----------------------------- 
+DROP FUNCTION IF EXISTS read_autoflow_times_mod_test$$
+CREATE FUNCTION read_autoflow_times_mod_test ( p_personGUID CHAR(36),
+                                       	     p_password   VARCHAR(80) ) 
+				       	
+                                       
+  RETURNS INT
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_records INT;
+  DECLARE l_sec_difference INT;
+  DECLARE cur_runStarted TIMESTAMP; 
+  	  
+  SET l_sec_difference = 0;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflow;
+ 
+  SELECT     created
+  INTO       cur_runStarted
+  FROM       autoflow LIMIT 1;
+   
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records > 0 ) THEN
+      IF ( cur_runStarted IS NOT NULL ) THEN 
+        
+	SELECT TIMESTAMPDIFF( SECOND, cur_runStarted, NOW() ) 
+ 	INTO l_sec_difference; 
+  	
+      END IF;	
+    END IF;
+  END IF;
+    
+  RETURN( l_sec_difference );
+
+END$$
