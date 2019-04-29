@@ -61,6 +61,7 @@ class US_GUI_EXTERN US_SelectItem : public US_WidgetsDialog
 
       bool           multi_sel;   //!< Flag: multiple selections enabled?
       bool           deleted_button; //If Delete button is present
+      bool           autoflow_button; //If autoflow, Cancel becomes define another Experiment
       Qt::SortOrder  sort_ord;    //!< Default sort order flag
       int            sort_col;    //!< Default sort column
       int            nitems;      //!< Number of items (rows)

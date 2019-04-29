@@ -19,6 +19,7 @@ US_SelectItem::US_SelectItem( QList< QStringList >& items,
 {
    multi_sel         = false;
    deleted_button    = false;
+   autoflow_button   = false;
    selxP             = aselxP;
    selxsP            = NULL;
    sort_ord          = ( def_sort < 0 ) ? Qt::DescendingOrder
@@ -34,14 +35,22 @@ US_SelectItem::US_SelectItem( QList< QStringList >& items,
 
 // Alternate constructor to enable selecting a single item with Delete button
 US_SelectItem::US_SelectItem( QList< QStringList >& items,
-			      QStringList& hdrs, const QString titl, int* aselxP, QString deleted,
+			      QStringList& hdrs, const QString titl, int* aselxP, QString add_label,
 			      const int def_sort )
   : US_WidgetsDialog( 0, 0 ), items( items ), hdrs( hdrs )
 {
    multi_sel         = false;
-
-   if ( !deleted.isEmpty() )
-     deleted_button    = true;
+   deleted_button    = false;
+   autoflow_button   = false;
+   
+   
+   if ( !add_label.isEmpty() )
+     {
+       if ( add_label == "DELETE" )
+	 deleted_button    = true;
+       if ( add_label == "AUTOFLOW" )
+	 autoflow_button = true;
+     }
    
    selxP             = aselxP;
    selxsP            = NULL;
@@ -52,7 +61,7 @@ US_SelectItem::US_SelectItem( QList< QStringList >& items,
    build_layout( titl );
 
    tw_data->setSelectionMode( QAbstractItemView::SingleSelection );
-
+   
    show();
 }
 
@@ -134,7 +143,11 @@ void US_SelectItem::build_layout( const QString titl )
    // Button Row
    QHBoxLayout* buttons = new QHBoxLayout;
 
-   QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
+   QString cancel_pb_label("Cancel");
+   if ( autoflow_button )
+     cancel_pb_label = tr("Define Another Experiment");
+          
+   QPushButton* pb_cancel = us_pushbutton( cancel_pb_label  );
    QPushButton* pb_accept = us_pushbutton( multi_sel ?
                                            tr( "Select Item(s)" ) :
                                            tr( "Select Item"    ) );

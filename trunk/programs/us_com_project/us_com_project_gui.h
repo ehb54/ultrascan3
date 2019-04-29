@@ -94,7 +94,6 @@ class US_ExperGui : public US_WidgetsDialog
       void switch_to_live_update( QMap < QString, QString > & protocol_details );
       void set_auto_mode( void );
       void reset_experiment( QString & protocolName);
-      void check_stage( void );
 };
 
 
@@ -200,7 +199,6 @@ class US_ReportGui : public US_WidgetsDialog
     
 
   signals:
-    
 };
 
 
@@ -224,7 +222,9 @@ class US_ComProjectMain : public US_Widgets
   bool us_mode_bool;
 
   QList< QStringList >  autoflowdata;
-    
+
+  void check_current_stage( void );
+  
  private:
   US_ExperGui*      epanExp;         // US_Exp panel
   US_ObservGui*     epanObserv;      // US_Observ panel
@@ -240,7 +240,8 @@ class US_ComProjectMain : public US_Widgets
   int  get_autoflow_records( void );
   QMap < QString, QString > read_autoflow_record( int );
   static int list_all_autoflow_records( QList< QStringList >&, US_DB2* );
-   
+  
+  
 private slots:
   //void reset     ( void );
   //void newPanel  ( int  );     // Move to a new panel
@@ -255,14 +256,13 @@ private slots:
   void switch_to_post_processing( QString & currDir, QString & protocolName, QString & invID_passed  );
   void switch_to_analysis( QString & currDir, QString & protocolName );
   void switch_to_experiment( QString & protocolName );
-  void check_current_stage( void );
+  //void check_current_stage( void );
   
 signals:
   void pass_to_live_update( QMap < QString, QString > & protocol_details ); 
   void import_data_us_convert( QString & currDir, QString & protocolName, QString & invID_passed );
   void pass_to_analysis( QString & currDir, QString & protocolName );
   void clear_experiment( QString & protocolName);
-  //void check_stage( void );
 };
 
 

@@ -16,6 +16,9 @@ int main( int argc, char* argv[] )
    //w.setFrameShape( QFrame::Box);
    //w.setLineWidth(1);
    w->show();                   //!< \memberof QWidget
+
+   w->check_current_stage();
+
    return application.exec();  //!< \memberof QApplication
 }
 
