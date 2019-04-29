@@ -19,4 +19,3 @@ US_EditorGui::US_EditorGui() : US_WidgetsDialog( 0, 0 )
    main->addWidget( editor );
 }
 
-

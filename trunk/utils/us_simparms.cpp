@@ -1206,8 +1206,8 @@ DbgLv(1) << "Sim parms:ssProf: have_keys" << have_keys;
             (int)qRound( tsobj->time_dvalue( "SetSpeed" ) ) :
                          tsobj->time_ivalue( "SetSpeed" );  // Current set speed
 
-      //if ( ss3 == ss2  &&  ss2 == ss1  &&  ss3 > 0 )
-      if ( ss3 == ss2  &&  ss2 == ss1  &&  ss3 > 3500 )
+      if ( ss3 == ss2  &&  ss2 == ss1  &&  ss3 > 0 )
+      //if ( ss3 == ss2  &&  ss2 == ss1  &&  ss3 > 3500 )
       { // This non-zero set-speed and both previous are the same
          if ( ! cspeeds.contains( ss3 ) )
             cspeeds << ss3;                // Save it if first time encountered

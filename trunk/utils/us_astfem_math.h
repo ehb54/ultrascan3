@@ -409,6 +409,7 @@ class US_UTIL_EXTERN US_AstfemMath
          double start_om2t;       //!< start omega^2t of simulation
          double current_meniscus; //!< actual meniscus for current speed
          double current_bottom;   //!< actual bottom for current speed
+         double bottom_pos;       //!< centerpiece bottom (possibly adjusted)
          int    cdset_speed;      //!< constant speed for current dataset
          int    rg_index;         //!< reaction group index
 

@@ -537,6 +537,12 @@ DbgLv(1) << "SimPar:MAIN:SetP: last scan:  time omega2t" << time2  << w2tsum;
    US_AstfemMath::writetimestate( tmst_tfpath, simparams, sim_data_all );
 
    simparams.simSpeedsFromTimeState( tmst_tfpath );
+//*DEBUG*
+DbgLv(1) << "ASIM: === speed steps from SSprof ===";
+simparams.speedstepsFromSSprof();
+simparams.debug();
+DbgLv(1) << "ASIM: === speed steps from SSprof ===";
+//*DEBUG*
 
    // Report simulation parameters
    change_status();
