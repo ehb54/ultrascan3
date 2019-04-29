@@ -157,7 +157,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    adjustSize();
 
    /* Check for current stage & redirect to specific tab */
-   check_current_stage();
+   //check_current_stage();
 
 }
 
@@ -285,10 +285,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    adjustSize();
 
    /* Check for current stage & redirect to specific tab */
-   check_current_stage();
-   
-   //connect( epanExp, SIGNAL( check_stage() ), this, SLOT( check_current_stage()  ) );
-   //emit check_stage();
+   //check_current_stage();
 }
 
 // Function that checks for current program stage based on US-lims DB entry
@@ -346,7 +343,7 @@ void US_ComProjectMain::check_current_stage( void )
 
   // --------------------------------------------------------------------------------------------
  
-
+    
   // Query 'autoflow': get cout of records
   int autoflow_records = get_autoflow_records();
 
@@ -370,10 +367,18 @@ void US_ComProjectMain::check_current_stage( void )
        << "Created"
        << "Started";
   
-  US_SelectItem pdiag( autoflowdata, hdrs, pdtitle, &prx, -2 );
+  QString autoflow_btn = "AUTOFLOW";
+  
+  //US_SelectItem pdiag( autoflowdata, hdrs, pdtitle, &prx, autoflow_btn, -2 );
+  US_SelectItem* pdiag = new  US_SelectItem( autoflowdata, hdrs, pdtitle, &prx, autoflow_btn, -2 );
+  
+  pdiag->setParent(this, Qt::Window);
+  pdiag->setWindowFlags(Qt::Dialog | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint  );
+  //pdiag->setWindowFlags(Qt::Window | Qt::WindowCloseButtonHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint  );
+  
   QString autoflow_id_selected("");
   
-  if ( pdiag.exec() == QDialog::Accepted )
+  if ( pdiag->exec() == QDialog::Accepted )
     autoflow_id_selected  = autoflowdata[ prx ][ 0 ];
   else
     return;
@@ -1097,5 +1102,6 @@ US_ReportGui::US_ReportGui( QWidget* topw )
    // assemble main
    main->addLayout(genL);
    main->addStretch();
+
 }
 
