@@ -1795,9 +1795,9 @@ void US_XpnDataViewer::check_for_sysdata( void )
 
   qDebug() << "SYS_STAT: After replot(), BEFORE CheExpStat!! ";
   
-  //int exp_status = CheckExpComplete_auto( RunID_to_retrieve  );
+  int exp_status = CheckExpComplete_auto( RunID_to_retrieve  );
    
-  if ( CheckExpComplete_auto( RunID_to_retrieve ) == 5 )
+  if ( exp_status == 5 )
     {
       timer_check_sysdata->stop();
       disconnect(timer_check_sysdata, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
@@ -1828,7 +1828,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
     }
   
   
-  if ( CheckExpComplete_auto( RunID_to_retrieve ) == 3 )
+  if ( exp_status == 3 )
     {
       timer_check_sysdata->stop();
       disconnect(timer_check_sysdata, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
@@ -2326,6 +2326,51 @@ DbgLv(1) << "RDr: allData size" << allData.size();
 
    qDebug() << "CellChNumber, cellchans.count() " << CellChNumber.toInt() << ", " << cellchans.count();
    qDebug() << "TripleNumber, ntriple " << TripleNumber.toInt() << ", " << ntriple;
+
+   //ALEXEY: Add Exp. Abortion Exception HERE... 
+   if ( CheckExpComplete_auto( RunID_to_retrieve ) == 3 )
+     {
+       timer_all_data_avail->stop();
+       disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+       
+       if ( !timer_check_sysdata->isActive()  ) // Check if sys_data Timer is stopped
+	 {
+	   // Ask if data retrived so far should be saved:
+	   
+	   QMessageBox msgBox;
+	   msgBox.setText(tr("Experiment was aborted!"));
+	   msgBox.setInformativeText("The data retrieved so far can be saved or disregarded. If saved, the program will proceed to the next stage (Editing). Otherwise, it will return to the initial stage (Experiment).");
+	   msgBox.setWindowTitle(tr("Experiment Abortion"));
+	   QPushButton *Save      = msgBox.addButton(tr("Save Data"), QMessageBox::YesRole);
+	   QPushButton *Ignore    = msgBox.addButton(tr("Ignore Data"), QMessageBox::RejectRole);
+	   
+	   msgBox.setIcon(QMessageBox::Question);
+	   msgBox.exec();
+	   
+	   if (msgBox.clickedButton() == Save)
+	     {
+	       export_auc_auto();
+	       
+	       QString mtitle_complete  = tr( "Complete!" );
+	       QString message_done     = tr( "Experiment was completed. Optima data saved..." );
+	       QMessageBox::information( this, mtitle_complete, message_done );
+	       
+	       updateautoflow_record_atLiveUpdate();
+	       emit experiment_complete_auto( currentDir, ProtocolName, invID_passed  );  // Updtade later: what should be passed with signal ??
+	       return;
+	     }
+	   
+	   else if (msgBox.clickedButton() == Ignore)
+	     {
+	       reset();
+	       delete_autoflow_record();
+	       emit return_to_experiment( ProtocolName  ); 
+	       return;
+	     }
+	 }
+     }      
+   
+   
    
    if ( cellchans.count() == CellChNumber.toInt() && ntriple == TripleNumber.toInt() )                // <--- Change to the values from the protocol
      {
