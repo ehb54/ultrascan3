@@ -143,14 +143,19 @@ void US_SelectItem::build_layout( const QString titl )
    // Button Row
    QHBoxLayout* buttons = new QHBoxLayout;
 
-   QString cancel_pb_label("Cancel");
+   QString cancel_pb_label( tr("Cancel") );
    if ( autoflow_button )
      cancel_pb_label = tr("Define Another Experiment");
           
    QPushButton* pb_cancel = us_pushbutton( cancel_pb_label  );
+
+   QString accept_pb_label( tr( "Select Item" ) );
+   if ( autoflow_button )
+     accept_pb_label = tr("Select Optima Run to Follow");
+   
    QPushButton* pb_accept = us_pushbutton( multi_sel ?
                                            tr( "Select Item(s)" ) :
-                                           tr( "Select Item"    ) );
+                                           accept_pb_label );
 
    
    QPushButton* pb_delete = us_pushbutton( tr( "Delete Item" ) );

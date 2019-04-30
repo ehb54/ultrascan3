@@ -349,6 +349,7 @@ class US_XpnDataViewer : public US_Widgets
    signals:
      void experiment_complete_auto( QString &, QString &, QString & );
      void return_to_experiment( QString & );
+     void close_program( void );
 };
 #endif
 

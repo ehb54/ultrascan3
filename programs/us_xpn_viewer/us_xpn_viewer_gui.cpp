@@ -1954,14 +1954,30 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
   msg_data_avail = new QMessageBox;
   //msg_data_avail->setStandardButtons(0);
   msg_data_avail->setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint);
-  QPushButton *okButton = msg_data_avail->addButton(tr("Ok"), QMessageBox::AcceptRole);
-  okButton->hide();
+  // QPushButton *okButton = msg_data_avail->addButton(tr("Ok"), QMessageBox::AcceptRole);
+  // okButton->hide();
+
+  QPushButton *Close    = msg_data_avail->addButton(tr("Close Program Now?"), QMessageBox::AcceptRole);
   
   msg_data_avail->setIcon(QMessageBox::Information);
   msg_data_avail->setText(tr( "Run named %1 was submitted to:\n\n"
 		              "%2 \n\n"
-			      "Please start this method scan from the instrument panel.").arg(RunName).arg(OptimaName) );
+			      "Please start this method scan from the instrument panel. \n\n\n"
+			      "You may close program now and reattach later by reopening and "
+			      "selecting among the list of Optima runs to follow. "
+			      "Alternatively, you can wait untill the method is started from "
+			      "the Optima panel and monitor the progress.")
+			  .arg(RunName).arg(OptimaName) );
+
   msg_data_avail->exec();
+  
+  if (msg_data_avail->clickedButton() == Close)
+    {
+      timer_data_init->stop();
+      disconnect(timer_data_init, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+
+      emit close_program(); 
+    }
 }
 
 //void US_XpnDataViewer::retrieve_xpn_raw_auto( QString & RunID )
