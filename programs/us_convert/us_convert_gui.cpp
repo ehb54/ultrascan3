@@ -1966,7 +1966,11 @@ DbgLv(1) << " enabCtl: tLx infsz" << tripListx << out_chaninfo.count();
                             tr( ": Define reference scans" ) );
 
       if ( count == 1 )
-         pb_reference->setEnabled( true );
+	{
+	  pb_reference->setEnabled( true ); 
+	  //ALEXEY <--- Save btn is disabled when Reference scan is NOT defined (for Absorbance)
+	  completed = false;
+	}
    }
 
    // If we made it here, user can save

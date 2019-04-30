@@ -351,9 +351,9 @@ BEGIN
   IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( count_records > 0 ) THEN
       IF ( cur_runStarted IS NOT NULL ) THEN 
-        
-	SELECT TIMESTAMPDIFF( SECOND, curr_runStarted, NOW() ) 
- 	INTO l_sec_difference; 
+        	
+	SELECT TIMESTAMPDIFF( SECOND, runStarted, NOW() )
+	INTO l_sec_difference FROM autoflow WHERE runID = p_runID; 
 
       END IF;	
     END IF;
