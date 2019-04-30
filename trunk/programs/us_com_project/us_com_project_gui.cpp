@@ -469,7 +469,7 @@ int US_ComProjectMain::list_all_autoflow_records( QList< QStringList >& autoflow
       autoflowentry << id << runname << optimaname  << time_created.toString(); // << time_started.toString(); // << local.toString( Qt::ISODate );
 
       if ( time_started.toString().isEmpty() )
-	autoflowentry << "not started";
+	autoflowentry << QString( tr( "NOT STARTED" ) );
       else
 	autoflowentry << time_started.toString();
       
