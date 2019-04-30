@@ -118,10 +118,12 @@ class US_ObservGui : public US_WidgetsDialog
       void process_protocol_details( QMap < QString, QString > & protocol_details );
       void to_post_processing( QString & currDir, QString & protocolName, QString & invID_passed );
       void to_experiment( QString & protocolName );
+      void to_close_program( void );
  signals:
       void to_xpn_viewer( QMap < QString, QString > & protocol_details );
       void switch_to_post_processing( QString & currDir, QString & protocolName, QString & invID_passed  );
       void switch_to_experiment( QString & protocolName );
+      void close_everything( void );
 };
 
 
@@ -224,6 +226,8 @@ class US_ComProjectMain : public US_Widgets
   QList< QStringList >  autoflowdata;
 
   void check_current_stage( void );
+
+  bool window_closed;
   
  private:
   US_ExperGui*      epanExp;         // US_Exp panel
@@ -257,12 +261,15 @@ private slots:
   void switch_to_analysis( QString & currDir, QString & protocolName );
   void switch_to_experiment( QString & protocolName );
   //void check_current_stage( void );
+  void close_all( void );
+  void closeEvent      ( QCloseEvent* );
   
 signals:
   void pass_to_live_update( QMap < QString, QString > & protocol_details ); 
   void import_data_us_convert( QString & currDir, QString & protocolName, QString & invID_passed );
   void pass_to_analysis( QString & currDir, QString & protocolName );
   void clear_experiment( QString & protocolName);
+  void us_comproject_closed( void );
 };
 
 

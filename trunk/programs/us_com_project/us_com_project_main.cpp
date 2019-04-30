@@ -18,7 +18,10 @@ int main( int argc, char* argv[] )
    w->show();                   //!< \memberof QWidget
 
    w->check_current_stage();
-   
+
+   if ( w->window_closed )
+     return 0;
+     
    return application.exec();  //!< \memberof QApplication
 }
 

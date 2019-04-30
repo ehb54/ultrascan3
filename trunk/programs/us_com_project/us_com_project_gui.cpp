@@ -32,7 +32,8 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
 {
   //   dbg_level    = US_Settings::us_debug();
    curr_panx    = 0;
-
+   window_closed = false;
+   
    us_mode_bool = true;
 
    setWindowTitle( tr( "UltraScan Optima AUC Interface" ) );
@@ -147,7 +148,8 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    connect( this, SIGNAL( import_data_us_convert( QString &, QString &, QString & ) ),  epanPostProd, SLOT( import_data_us_convert( QString &, QString &, QString & )  ) );
    connect( epanObserv, SIGNAL( switch_to_experiment( QString &) ), this, SLOT( switch_to_experiment(  QString & )  ) );
    connect( this, SIGNAL( clear_experiment( QString & ) ),  epanExp, SLOT( clear_experiment( QString & )  ) );
-
+   connect( epanObserv, SIGNAL( close_everything() ), this, SLOT( close_all() ));
+   
    //connect( epanPostProd, SIGNAL( switch_to_analysis( QString &, QString &) ),  this, SLOT( switch_to_analysis( QString &, QString & )  ) );
    //connect( this, SIGNAL( pass_to_analysis( QString &, QString & ) ),   epanAnalysis, SLOT( do_analysis( QString &, QString & )  ) );
 
@@ -169,6 +171,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
   //   dbg_level    = US_Settings::us_debug();
    curr_panx    = 0;
 
+   window_closed = false;
    us_mode_bool = false;
    
    setWindowTitle( tr( "UltraScan Optima AUC Interface" ) );
@@ -277,7 +280,8 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( this, SIGNAL( import_data_us_convert( QString &, QString &, QString & ) ),  epanPostProd, SLOT( import_data_us_convert( QString &, QString &, QString & )  ) );
    connect( epanObserv, SIGNAL( switch_to_experiment( QString &) ), this, SLOT( switch_to_experiment(  QString & )  ) );
    connect( this, SIGNAL( clear_experiment( QString & ) ),  epanExp, SLOT( clear_experiment( QString & )  ) );
-   
+   connect( epanObserv, SIGNAL( close_everything() ), this, SLOT( close_all() ));
+      
    connect( epanPostProd, SIGNAL( switch_to_analysis( QString &, QString &) ),  this, SLOT( switch_to_analysis( QString &, QString & )  ) );
    connect( this, SIGNAL( pass_to_analysis( QString &, QString & ) ),   epanAnalysis, SLOT( do_analysis( QString &, QString & )  ) );
    
@@ -286,6 +290,14 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
 
    /* Check for current stage & redirect to specific tab */
    //check_current_stage();
+}
+
+
+void US_ComProjectMain::closeEvent( QCloseEvent* event )
+{
+    window_closed = true;
+    emit us_comproject_closed();
+    event->accept();
 }
 
 // Function that checks for current program stage based on US-lims DB entry
@@ -552,6 +564,42 @@ void US_ComProjectMain::switch_to_live_update( QMap < QString, QString > & proto
    // (2) inside us_xpn_viewer - update 'curDirr' field with generated directory where .auc data saved 
    
    emit pass_to_live_update( protocol_details );
+}
+
+// Slot to pass submitted to Optima run info to the Live Update tab
+void US_ComProjectMain::close_all( void )
+{
+  tabWidget->setCurrentIndex( 0 );   
+  qDebug() << "CLOSING PROGRAM !!!";
+
+  close();
+  
+  // QProcess process;
+  // QString pgm("pgrep");
+  // QStringList args = QStringList() << "us_comproject";
+  // process.start(pgm, args);
+  // process.waitForReadyRead();
+  // if(!process.readAllStandardOutput().isEmpty()) 
+  //   {
+  //     //app still running
+  //     //Linux
+  //     system("pkill us_comproject");
+  //     //Windows
+  //     system("taskkill /im us_comproject /f");
+      
+  //     process.kill();
+  //   }
+
+  //Linux
+  //system("pkill us_comproject");
+
+  
+  //system("pkill us_comproject_academic");
+  //Windows//
+  //system("taskkill /im us_comproject /f");
+  //system("taskkill /im us_comproject_academic /f");
+  //Mac ??
+  
 }
 
 // Slot to switch from the Live Update to Editing tab
@@ -845,6 +893,9 @@ US_ObservGui::US_ObservGui( QWidget* topw )
 
    //ALEXEY: return to 1st panel when exp. aborted & no data saved..
    connect( sdiag, SIGNAL( return_to_experiment( QString & ) ), this, SLOT( to_experiment ( QString &) ) );
+
+   //ALEXEY: close program, emitted from sdiag
+   connect( sdiag, SIGNAL( close_program() ), this, SLOT( to_close_program()  ) );
    
    offset = 0;
    sdiag->move(offset, 2*offset);
@@ -908,6 +959,12 @@ void US_ObservGui::to_post_processing( QString & currDir, QString & protocolName
 void US_ObservGui::to_experiment( QString & protocolName )
 {
   emit switch_to_experiment( protocolName );
+}
+
+void US_ObservGui::to_close_program( void )
+{
+  //sdiag->close();
+  emit close_everything();
 }
 
 // US_PostProd
