@@ -152,7 +152,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    
    //connect( epanPostProd, SIGNAL( switch_to_analysis( QString &, QString &) ),  this, SLOT( switch_to_analysis( QString &, QString & )  ) );
    //connect( this, SIGNAL( pass_to_analysis( QString &, QString & ) ),   epanAnalysis, SLOT( do_analysis( QString &, QString & )  ) );
-
+   connect( epanPostProd, SIGNAL( switch_to_exp( QString & ) ), this, SLOT( switch_to_experiment( QString & )  ) );
 
    
    setMinimumSize( QSize( 1350, 800 ) );
@@ -408,7 +408,13 @@ void US_ComProjectMain::check_current_stage( void )
   QString invID_passed = protocol_details[ "invID_passed" ];
   QString ProtName     = protocol_details[ "protocolName" ];
 
+  //ALEXEY: if stage=="EDITING" && curDir.isEmpty() (NULL)
+  /*
+        -- that means that Run Completed but Directory was created on different computer
+	-- possible solution: return (set) to stage == "LIVE_UPDATE" & re-save to local directory on current computer
     
+  */
+  
   if ( stage == "LIVE_UPDATE" )
     {
       //do something
@@ -1013,7 +1019,8 @@ US_PostProdGui::US_PostProdGui( QWidget* topw )
    connect( this, SIGNAL( to_post_prod( QString &, QString &, QString & ) ), sdiag, SLOT( import_data_auto ( QString &, QString &, QString & )  ) );
    //ALEXEY: switch to Analysis
    connect( sdiag, SIGNAL( saving_complete_auto( QString &, QString & ) ), this, SLOT( to_analysis ( QString &, QString &) ) );
-   
+   //ALEXEY: for academic ver. switch back to experiment
+   connect( sdiag, SIGNAL( saving_complete_back_to_exp( QString & ) ), this, SLOT( to_experiment (  QString & ) ) );
    
    offset = 0;
    sdiag->move(offset, 2*offset);
@@ -1033,6 +1040,11 @@ void US_PostProdGui::to_analysis( QString & currDir, QString & protocolName )
 {
   emit switch_to_analysis( currDir, protocolName );
 }
+
+void US_PostProdGui::to_experiment( QString & protocolName )
+{
+  emit switch_to_exp( protocolName  );
+} 
 
 void US_PostProdGui::resizeEvent(QResizeEvent *event)
 {

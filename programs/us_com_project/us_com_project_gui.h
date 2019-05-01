@@ -148,10 +148,12 @@ class US_PostProdGui : public US_WidgetsDialog
   private slots:
     void import_data_us_convert( QString & currDir, QString & protocolName, QString & invID_passed  );
     void to_analysis( QString & currDir, QString & protocolName );
+    void to_experiment( QString & protocolName );
     
   signals:
     void to_post_prod( QString & currDir, QString & protocolName, QString & invID_passed  );
     void switch_to_analysis( QString & currDir, QString & protocolName );
+    void switch_to_exp( QString & protocolName );
 };
 
 //! \brief Analysis panel
