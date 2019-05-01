@@ -1828,7 +1828,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
     }
   
   
-  if ( exp_status == 3 )
+  if ( exp_status == 0 ) //ALEXEY should be == 3 as per documentation
     {
       timer_check_sysdata->stop();
       disconnect(timer_check_sysdata, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
@@ -2328,7 +2328,7 @@ DbgLv(1) << "RDr: allData size" << allData.size();
    qDebug() << "TripleNumber, ntriple " << TripleNumber.toInt() << ", " << ntriple;
 
    //ALEXEY: Add Exp. Abortion Exception HERE... 
-   if ( CheckExpComplete_auto( RunID_to_retrieve ) == 3 )
+   if ( CheckExpComplete_auto( RunID_to_retrieve ) == 0 ) //ALEXEY should be == 3 as per documentation
      {
        timer_all_data_avail->stop();
        disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
@@ -3722,7 +3722,7 @@ DbgLv(1) << "RLd:       NO CHANGE";
       
       /** Experiment Aborted ***/
       
-      if ( statusExp == 3 )
+      if ( statusExp == 0 ) //ALEXEY should be == 3 as per documentation
 	{
 	  timer_data_reload->stop();
 	  disconnect(timer_data_reload, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
