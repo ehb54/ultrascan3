@@ -4589,6 +4589,11 @@ DbgLv(1) << "Writing to disk";
        QMessageBox::information( this,
 				 tr( "Save is Complete" ),
 				 tr( "The save of all data and reports is complete." ) );
+
+       //ALEXY: need to delete autoflow record here
+       delete_autoflow_record();
+       emit saving_complete_back_to_exp( ProtocolName_auto );
+       return;
      }
    else
      {
@@ -4602,6 +4607,42 @@ DbgLv(1) << "Writing to disk";
        emit saving_complete_auto( currentDir, ProtocolName_auto  );   
      }
 }
+
+//Delete autoflow record upon Run abortion
+void US_ConvertGui::delete_autoflow_record( void )
+{
+   // Check DB connection
+   US_Passwd pw;
+   QString masterpw = pw.getPasswd();
+   US_DB2* db = new US_DB2( masterpw );
+
+   if ( db->lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+       return;
+     }
+
+   QStringList qry;
+   qry << "delete_autoflow_record"
+       << runID;
+
+   //db->query( qry );
+
+   // OR
+   
+   int status = db->statusQuery( qry );
+   
+   if ( status == US_DB2::NO_AUTOFLOW_RECORD )
+     {
+       QMessageBox::warning( this,
+			     tr( "Autoflow Record Not Deleted" ),
+			     tr( "No autoflow record\n"
+				 "associated with this experiment." ) );
+       return;
+     }
+}
+   
 
 // Save to disk (default directory)
 int US_ConvertGui::saveUS3Disk( void )

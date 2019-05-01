@@ -48,7 +48,8 @@ class US_ConvertGui : public US_Widgets
 
   signals:
       void saving_complete_auto( QString &, QString & );
-
+      void saving_complete_back_to_exp( QString & );
+      
   public slots:
 
   private:
@@ -259,6 +260,8 @@ class US_ConvertGui : public US_Widgets
       
       void getExpInfo_auto ( void );
       void getLabInstrumentOperatorInfo_auto   ( void );
+      void delete_autoflow_record ( void );
+
       
       void setTripleInfo   ( void );
       void checkTemperature( void );
