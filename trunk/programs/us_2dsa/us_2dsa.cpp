@@ -575,9 +575,9 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    bool    fitBott      = ( model.global == US_Model::BOTTOM );
    bool    montCar      = model.monteCarlo;
    QString analysisType = QString( cusGrid ? "2DSA-CG" : "2DSA" )
-                        + QString( refIter ? "-IT" : "" )
                         + QString( fitMeni ? "-FM" : "" )
                         + QString( fitBott ? "-FB" : "" )
+                        + QString( refIter ? "-IT" : "" )
                         + QString( montCar ? "-MC" : "" );
    QString requestID    = "local";
    QString tripleID     = edata->cell + edata->channel + edata->wavelength; 
