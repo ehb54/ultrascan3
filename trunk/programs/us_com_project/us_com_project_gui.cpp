@@ -344,6 +344,7 @@ void US_ComProjectMain::check_current_stage( void )
   // protocol_details[ "experimentName" ] = QString("some_name");
   // protocol_details[ "CellChNumber" ] = QString("8");
   // protocol_details[ "TripleNumber" ] = QString("38");
+  // //protocol_details[ "TripleNumber" ] = QString("39"); //ALEXEY - incorrect - for testing
   // protocol_details[ "OptimaName" ] = QString("Optima 2");     // <-- Optima 2
   // protocol_details[ "duration" ]   = QString("36000");
   // protocol_details[ "dataPath" ]   = QString("/home/alexey/ultrascan/imports/RxRPPARhet-PPRE-MWL_180419-run352");
