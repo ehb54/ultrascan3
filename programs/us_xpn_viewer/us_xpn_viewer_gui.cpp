@@ -1531,7 +1531,7 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
       timer_check_sysdata->setInterval(2000);
       timer_check_sysdata->moveToThread(sys_thread);
       //connect( timer_check_sysdata, SIGNAL(timeout()), this, SLOT( check_for_sysdata( )  ), Qt::QueuedConnection ) ; //Qt::DirectConnection );
-      connect( timer_check_sysdata, SIGNAL(timeout()), this, SLOT( check_for_sysdata( )  ) ) ; //Qt::DirectConnection );
+      connect( timer_check_sysdata, SIGNAL(timeout()), this, SLOT( check_for_sysdata( )  ) );//, Qt::QueuedConnection );
       //QThread's started() SIGNAL: before the run()/exec() function is called!!! Is this a potential issue, timer is started from a thread???
       connect( sys_thread, SIGNAL( started() ), timer_check_sysdata, SLOT( start() ));      
       sys_thread->start();
@@ -1662,7 +1662,8 @@ void US_XpnDataViewer::updateautoflow_record_atLiveUpdate( void )
    //db->query( qry );
 
    // OR
-   
+
+   qDebug() << "Trying to Update Autoflow table AT LIVE_UPDATE!!";
    int status = db->statusQuery( qry );
    
    if ( status == US_DB2::NO_AUTOFLOW_RECORD )
@@ -1670,7 +1671,7 @@ void US_XpnDataViewer::updateautoflow_record_atLiveUpdate( void )
        QMessageBox::warning( this,
 			     tr( "Autoflow Record Not Updated" ),
 			     tr( "No autoflow record\n"
-				 "associated with this experiment." ) );
+				 "associated with RunID %1 exists!" ).arg( RunID_to_retrieve ) );
        return;
      }
 }
@@ -1710,11 +1711,11 @@ void US_XpnDataViewer::check_for_sysdata( void )
   //RPM speed
   double rpm_for_meter = double(rpm/1000.0);
   rpm_box->setSpeed(rpm_for_meter);
-  //qApp->processEvents();
+  qApp->processEvents();
   
   //Temperature
   temperature_box->setTemp(temperature);
-  //qApp->processEvents();
+  qApp->processEvents();
   
   //Running Time
   QList< int > dhms_r;
@@ -1726,7 +1727,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
   //ALEXEY: hh:mm:ss - OR do we need dd:hh:mm instead ?
   running_time_text = QString::number(dhms_r[1]) + ":" + QString::number(dhms_r[2]) + ":" + QString::number(dhms_r[3]);
   le_running->setText( running_time_text );
-  //qApp->processEvents();
+  qApp->processEvents();
 
   //Elapsed Time
   qDebug() << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Elapsed Time Offset as read form autoflow table DB:" << ElapsedTimeOffset;
@@ -1739,7 +1740,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
   //ALEXEY: hh:mm:ss - OR do we need dd:hh:mm instead ?
   elapsed_time_text = QString::number(dhms_e[1]) + ":" + QString::number(dhms_e[2]) + ":" + QString::number(dhms_e[3]);
   le_elapsed->setText( elapsed_time_text );
-  // qApp->processEvents();
+  qApp->processEvents();
   
   //Remaining Time
   QList< int > dhms_remain;
@@ -1749,7 +1750,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
   //ALEXEY: hh:mm:ss - OR do we need dd:hh:mm instead ?
   remaining_time_text = QString::number(dhms_remain[1]) + ":" + QString::number(dhms_remain[2]) + ":" + QString::number(dhms_remain[3]);
   le_remaining->setText( remaining_time_text );
-  //  qApp->processEvents();
+  qApp->processEvents();
   
   //RPM/Temp. Plots:
 
@@ -1791,7 +1792,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
   qDebug() << "SYS_STAT: BEFORE replot(), BEFORE CheExpStat!! ";
    
   data_plot_rpm->replot();
-  //  qApp->processEvents();
+  qApp->processEvents();
 
   qDebug() << "SYS_STAT: After replot(), BEFORE CheExpStat!! ";
   
@@ -1800,17 +1801,22 @@ void US_XpnDataViewer::check_for_sysdata( void )
   if ( exp_status == 5 )
     {
       timer_check_sysdata->stop();
+      //ALEXEY: This timer cannot be stopped from another thread, but can be dealt with signal/slot upon Qthread termination..
+      //        disconnection maybe enough...
       disconnect(timer_check_sysdata, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
       
       qDebug() << "ExpStat: 5  - sys_timer STOPPED here: ";
       
       rpm_box->setSpeed( 0 );
-      le_remaining->setText( "00:00:00" );   
+      le_remaining->setText( "00:00:00" );
+      qApp->processEvents();
       
       if ( !timer_all_data_avail->isActive() ) // Check if reload_data Timer is stopped
 	{
 	  if ( !timer_data_reload->isActive() )
 	    {
+
+	      qDebug() << "TRY PROCEED INTO ==5 from check_for_sys_data()....";
 	      // ALEXEY Export AUC data: devise export_auc_auto() function which would return directory name with saved data - to pass to emit signal below... 
 	      export_auc_auto();
 	      
@@ -1824,7 +1830,6 @@ void US_XpnDataViewer::check_for_sysdata( void )
 	      return;
 	    }
 	}
-      //expStatFive();
     }
   
   
@@ -1875,8 +1880,6 @@ void US_XpnDataViewer::check_for_sysdata( void )
 		  return;
 		}
 	    }  
-
-	  //expStatThree();
 	}
     }
   
@@ -1885,87 +1888,6 @@ void US_XpnDataViewer::check_for_sysdata( void )
    in_reload_check_sysdata   = false;
   
   //qDebug() << "sys_timer RAN here: ";
-}
-
-// Stop/reset all system panels and pass to stage 3 when exp_Status == 5
-void US_XpnDataViewer::expStatFive( void )
-{
-  // timer_check_sysdata->stop();
-  // disconnect(timer_check_sysdata, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
-  
-  // qDebug() << "ExpStat: 5  - sys_timer STOPPED here: ";
-  
-  // rpm_box->setSpeed( 0 );
-  // le_remaining->setText( "00:00:00" );
-  
-  if ( !timer_all_data_avail->isActive() ) // Check if reload_data Timer is stopped
-    {
-      if ( !timer_data_reload->isActive() )
-	{
-	  // ALEXEY Export AUC data: devise export_auc_auto() function which would return directory name with saved data - to pass to emit signal below... 
-	  export_auc_auto();
-	  
-	  QString mtitle_complete  = tr( "Complete!" );
-	  QString message_done     = tr( "Experiment was completed. Optima data saved..." );
-	  QMessageBox::information( this, mtitle_complete, message_done );
-	  
-	  updateautoflow_record_atLiveUpdate();
-	  emit experiment_complete_auto( currentDir, ProtocolName, invID_passed  );  // Updtade later: what should be passed with signal ??
-	  
-	  return;
-	}
-    }
-}
-
-// Stop/reset all system panels and pass to stage 3 when exp_Status == 3
-void US_XpnDataViewer::expStatThree( void )
-{
-  // timer_check_sysdata->stop();
-  // disconnect(timer_check_sysdata, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
-  
-  // qDebug() << "ExpStat: 3  - sys_timer STOPPED here: ";
-  
-  // rpm_box->setSpeed( 0 );
-  // le_remaining->setText( "00:00:00" );
-
-  if ( !timer_all_data_avail->isActive() ) // Check if reload_data Timer is stopped
-    {
-      if ( !timer_data_reload->isActive() )
-	{
-	  // Ask if data retrived so far should be saved:
-
-	  QMessageBox msgBox;
-	  msgBox.setText(tr("Experiment was aborted!"));
-	  msgBox.setInformativeText("The data retrieved so far can be saved or disregarded. If saved, the program will proceed to the next stage (Editing). Otherwise, it will return to the initial stage (Experiment).");
-	  msgBox.setWindowTitle(tr("Experiment Abortion"));
-	  QPushButton *Save      = msgBox.addButton(tr("Save Data"), QMessageBox::YesRole);
-	  QPushButton *Ignore    = msgBox.addButton(tr("Ignore Data"), QMessageBox::RejectRole);
-	  
-	  msgBox.setIcon(QMessageBox::Question);
-	  msgBox.exec();
-	  
-	  if (msgBox.clickedButton() == Save)
-	    {
-	      export_auc_auto();
-	      
-	      QString mtitle_complete  = tr( "Complete!" );
-	      QString message_done     = tr( "Experiment was completed. Optima data saved..." );
-	      QMessageBox::information( this, mtitle_complete, message_done );
-
-	      updateautoflow_record_atLiveUpdate();
-	      emit experiment_complete_auto( currentDir, ProtocolName, invID_passed  );  // Updtade later: what should be passed with signal ??
-	      return;
-	    }
-	  
-	  else if (msgBox.clickedButton() == Ignore)
-	    {
-	      reset();
-	      delete_autoflow_record();
-	      emit return_to_experiment( ProtocolName  ); 
-	      return;
-	    }
-	}
-    }  
 }
 
 
@@ -2152,7 +2074,7 @@ DbgLv(1) << "RDr:     iRId" << iRunId << "sMsks scnmask" << sMasks << scanmask;
    int ntsrows        = xpn_data->countOf( "scan_rows" );
 DbgLv(1) << "RDr:     ntsrows" << ntsrows;
 DbgLv(1) << "RDr:      knt(triple)   " << xpn_data->countOf( "triple"    );
-
+ qApp->processEvents();
 
    if ( ntsrows < 1 )
    {
@@ -2225,7 +2147,7 @@ double tm1=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
       }
    }
 
-   // qApp->processEvents();  //ALEXEY: maybe this will help
+   qApp->processEvents();  //ALEXEY: maybe this will help
    
    qDebug() << "1. Crashes HERE!!!!";
      

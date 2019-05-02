@@ -346,16 +346,17 @@ void US_ComProjectMain::check_current_stage( void )
   // protocol_details[ "TripleNumber" ] = QString("38");
   // protocol_details[ "OptimaName" ] = QString("Optima 2");     // <-- Optima 2
   // protocol_details[ "duration" ]   = QString("36000");
+  // protocol_details[ "dataPath" ]   = QString("/home/alexey/ultrascan/imports/RxRPPARhet-PPRE-MWL_180419-run352");
   // protocol_details[ "invID_passed" ]  = QString("41");  //Nemetchek's ID
   
   // QString stage                        = "LIVE_UPDATE";
-  // QString currDir                      = "";
-  // QString ProtName                     = "";
+  // QString currDir                      = protocol_details[ "dataPath" ];
+  // QString ProtName                     = protocol_details[ "protocolName" ];
   // QString invID_passed                 = protocol_details[ "invID_passed" ];
 
   // --------------------------------------------------------------------------------------------
  
-    
+  
   // Query 'autoflow': get cout of records
   int autoflow_records = get_autoflow_records();
 
@@ -407,6 +408,8 @@ void US_ComProjectMain::check_current_stage( void )
   QString currDir      = protocol_details[ "dataPath" ];
   QString invID_passed = protocol_details[ "invID_passed" ];
   QString ProtName     = protocol_details[ "protocolName" ];
+  
+  
 
   //ALEXEY: if stage=="EDITING" && curDir.isEmpty() (NULL)
   /*

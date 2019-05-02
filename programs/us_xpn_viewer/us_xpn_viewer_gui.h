@@ -302,8 +302,8 @@ class US_XpnDataViewer : public US_Widgets
      void   delete_autoflow_record( void );
      void   updateautoflow_record_atLiveUpdate( void );
 
-     void   expStatFive( void );
-     void   expStatThree( void );
+     //void   expStatFive( void );
+     //void   expStatThree( void );
      
      void   load_auc_xpn   ( void );
      void   plot_current   ( void );

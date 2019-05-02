@@ -70,6 +70,7 @@ BEGIN
   SET @NO_ROTOR_CAL   = 527;
   SET @INSTRUMENT_IN_USE = 553;
   SET @PROTOCOL_IN_USE   = 554;
+  SET @NO_AUTOFLOW_RECORD = 555;  
 
   -- Some user levels
   SET @US3_USER       = 0;
