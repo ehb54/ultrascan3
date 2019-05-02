@@ -1049,6 +1049,7 @@ DbgLv(1) << " eupd:   mlsx blsx" << mlsx << blsx << "mlnn blnn" << mlnn << blnn;
    else
    {  // Apply to all wavelengths in a cell/channel
       QString dmsg   = "";
+      int idEdsv   = idEdit;
 DbgLv(1) << " eupd: AppWvl: nedtfs" << nedtfs;
       QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
@@ -1150,10 +1151,16 @@ DbgLv(1) << " eupd:  write: fn" << fn;
          {
 DbgLv(1) << " eupd:       call upd_db_ed";
             update_db_edit( edtext, fn, dmsg );
-DbgLv(1) << " eupd:       ret fr upd_db_ed";
+DbgLv(1) << " eupd:       ret fr upd_db_ed  idEdit" << idEdit;
+
+            if ( edtfiles[ jj ] == fname_edit )
+               idEdsv       = idEdit;
          }
 
       }  // END: wavelengths loop
+DbgLv(1) << " eupd:       idEdit idEdsv" << idEdit << idEdsv;
+      idEdit       = idEdsv;
+DbgLv(1) << " eupd:       idEdit" << idEdit;
 
       QApplication::restoreOverrideCursor();
       QApplication::restoreOverrideCursor();
@@ -2152,6 +2159,9 @@ DbgLv(1) << "  nlmods ndmods" << nlmods << ndmods;
       int             ntmods = ( ndmods > 0 ) ? ndmods : nlmods;
       int             ikModx = ( ndmods > 0 ) ? dkModx : lkModx;
 DbgLv(1) << "  ntmods ikModx" << ntmods << ikModx;
+//*DEBUG*
+//if ( ndmods > 0  ||  nlmods > 0 ) return;
+//*DEBUG*
 
       QString modDesc    = "";
 
