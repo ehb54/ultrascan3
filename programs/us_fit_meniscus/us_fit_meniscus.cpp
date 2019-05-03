@@ -2199,6 +2199,7 @@ DbgLv(1) << "  ntmods ikModx" << ntmods << ikModx;
             rmodIDs   << mID;
             rmodFnams << fname;
             rmodDescs << mDesc;
+//DbgLv(1) << "RmvMod: jj" << jj << "mID" << mID << "mDesc" << mDesc;
 
             if ( modDesc.isEmpty() )
             {
@@ -2208,10 +2209,13 @@ DbgLv(1) << "RmvMod: 1st rmv-mod: jj modDesc" << jj << modDesc;
                noises_in_edit( modDesc, nieDescs, nieIDs, nieFnams );
             }
 
-            tiDesc = QString( mDesc ).replace( ".model", ".ti_noise" );
-            riDesc = QString( mDesc ).replace( ".model", ".ri_noise" );
+            tiDesc = QString( mDesc ).replace( ".model", ".ti_noise" )
+                                     .replace( "2DSA-FM-IT", "2DSA-FM" );
+            riDesc = QString( mDesc ).replace( ".model", ".ri_noise" )
+                                     .replace( "2DSA-FM-IT", "2DSA-FM" );
             itix   = nieDescs.indexOf( tiDesc );
             irix   = nieDescs.indexOf( riDesc );
+//DbgLv(1) << "RmvMod:    itix irix" << itix << irix;
 
             if ( itix >= 0 )
             {  // There is a TI noise to remove
@@ -2366,6 +2370,11 @@ void US_FitMeniscus::noises_in_edit( QString modDesc, QStringList& nieDescs,
                       msetBase.section( ".", -1, -1 )
                       .section( "_", 0, 0 ).mid( 1 );
 DbgLv(1) << "NIE: msetBase" << msetBase;
+   if ( msetBase.contains( "2DSA-FM-IT" ) )
+   {
+      msetBase     = msetBase.replace( "2DSA-FM-IT", "2DSA-FM" );
+DbgLv(1) << "NIE: msetBase" << msetBase;
+   }
    QStringList query;
    QString fname;
    QString noiID;
