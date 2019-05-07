@@ -358,7 +358,7 @@ void US_ComProjectMain::check_current_stage( void )
   // --------------------------------------------------------------------------------------------
  
   
-  // Query 'autoflow': get cout of records
+  // Query 'autoflow': get count of records
   int autoflow_records = get_autoflow_records();
 
   qDebug() << "Autoflow record #: " << autoflow_records;

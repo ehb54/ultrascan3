@@ -1424,9 +1424,7 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
     return status_ok;                   //  skip starting a new one
   
   in_reload_data_init   = true;
-  
-  //msg_data_avail->accept();
-  
+
   // Ask for data directory
   QString dbhost    = xpnhost;
   int     dbport    = xpnport.toInt();
