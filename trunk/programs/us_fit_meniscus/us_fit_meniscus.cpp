@@ -861,6 +861,8 @@ void US_FitMeniscus::plot_2d( void )
 // Update an edit file with a new meniscus and/or bottom radius value
 void US_FitMeniscus::edit_update( void )
 {
+#define MENI_HIGHVAL 7.0
+#define BOTT_LOWVAL 7.0
    QString fn = filedir + "/" + fname_edit;
 DbgLv(1) << " eupd:  fname_edit" << fname_edit;
 DbgLv(1) << " eupd:  fn" << fn;
@@ -919,6 +921,71 @@ DbgLv(1) << " eupd:  fn" << fn;
    QString s_bott = QString().sprintf( "%.5f", botnew );
 DbgLv(1) << " eupd:  s_meni s_bott" << s_meni << s_bott;
    QString mmsg   = "";
+   QString mhdr   = "";
+   bool bad_vals  = false;
+
+   // Check meniscus and bottom values for reasonableness
+   if ( mennew > MENI_HIGHVAL )
+   {
+      bad_vals       = true;
+
+      if ( botnew != 0.0  &&  botnew < BOTT_LOWVAL )
+      {
+         mhdr           = tr( "Unreasonable Meniscus and Bottom" );
+         mmsg           = tr( "Both the currently selected Mensicus and\n"
+                              "Bottom values" ) + " ( " + s_meni + ", "
+                        + s_bott + " )\n"
+                        + tr( "are unreasonable !\n\nIt is recommended"
+                              " that you \"Cancel\" the \"Update Edit\"\n"
+                              "and retry after setting reasonable values." );
+      }
+      else
+      {
+         mhdr           = tr( "Unreasonable Meniscus" );
+         mmsg           = tr( "The currently selected Mensicus value" )
+                        + " ( " + s_meni + " )\n"
+                        + tr( "is unreasonable !\n\nIt is recommended"
+                              " that you \"Cancel\" the \"Update Edit\"\n"
+                              "and retry after setting a reasonable value." );
+      }
+   }
+   else if ( botnew != 0.0  &&  botnew < BOTT_LOWVAL )
+   {
+      bad_vals       = true;
+      mhdr           = tr( "Unreasonable Bottom" );
+      mmsg           = tr( "The currently selected Bottom value" )
+                     + " ( " + s_bott + " )\n"
+                     + tr( "is unreasonable !\n\nIt is recommended"
+                              " that you \"Cancel\" the \"Update Edit\"\n"
+                              "and retry after setting a reasonable value." );
+   }
+
+   if ( bad_vals )
+   {
+      int response   = QMessageBox::critical( (QWidget*)this,
+                                               mhdr,
+                                               mmsg,
+                                               QMessageBox::Save,
+                                               QMessageBox::Cancel );
+
+      if ( response == QMessageBox::Cancel )
+      {
+         QMessageBox::information( (QWidget*)this,
+                                   tr( "Canceled" ),
+                                   tr( "\"Update Edit\" has been canceled!" ) );
+         return;
+      }
+      else
+      {
+         QMessageBox::information( (QWidget*)this,
+                                   tr( "Saving" ),
+                                   tr( "\"Update Edit\" will proceed!" ) );
+      }
+   }
+
+   mmsg           = "";
+
+   // Proceed with updating the Edit data
 
    if ( ! all_wvl  ||  nedtfs == 1 )
    {  // Apply to a single triple
