@@ -96,9 +96,31 @@ void US_SelectItem::build_layout( const QString titl )
    main->setContentsMargins( 2, 2, 2, 2 );
    main->setSpacing        ( 2 );
 
+   //Inormation field for autoflow
+   QTextEdit*     le_info;
+
+   if ( autoflow_button )
+     {
+       le_info = us_textedit();
+       QFontMetrics m (le_info -> font()) ;
+       int RowHeight = m.lineSpacing() ;
+       le_info -> setFixedHeight  (5 * RowHeight) ;
+
+       QPalette p = le_info->palette(); 
+       p.setColor(QPalette::Base, Qt::lightGray);
+       p.setColor(QPalette::Text, Qt::darkRed);
+       le_info->setPalette(p);
+       
+       le_info->setText(tr( "<ul><li>Information on one or more experimental methods submitted to Bechman Optima(s) is available. "
+			    "You can reattach to the job by selecting the run from the list below. "
+			    "Alternatively, you can define new experiment method. </ul></li>" ));
+       
+       main->addWidget( le_info );
+     }
+   
    // Top layout: buttons and fields above list widget
    QGridLayout* top  = new QGridLayout;
-
+   
    // Search line
    QLabel* lb_filtdata = us_label( tr( "Search" ) );
    le_dfilter          = us_lineedit();
