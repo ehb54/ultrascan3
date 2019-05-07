@@ -455,8 +455,17 @@ if (my_rank==0) {
    // Calculate bottom values
    bottom_values.resize( bottom_points );
 
-   double bottom_start = data_sets[ 0 ]->run_data.bottom 
-                         - bottom_range / 2.0;
+   // Use bottom from edited data if it is given
+   US_SolveSim::DataSet*  ds    = data_sets[ 0 ];
+   double bottom_ds    = ds->run_data.bottom;
+   if ( bottom_ds == 0.0 )
+   {
+      double rpm          = ds->run_data.scanData[ 0 ].rpm;
+      bottom_ds           = US_AstfemMath::calc_bottom( rpm,
+                                                        ds->centerpiece_bottom,
+                                                        ds->rotor_stretch );
+   }
+   double bottom_start = bottom_ds - bottom_range / 2.0;
    
    double dbot         = fit_bott ?
                          ( bottom_range / ( bottom_points - 1 ) ) :
