@@ -883,20 +883,19 @@ DbgLv(1) << " eupd:  fn" << fn;
 //*DEBUG*
 //db_upd=false;
 //*DEBUG*
-   int  mlsx     = 0;
-   int  meqx     = 0;
-   int  mvsx     = 0;
-   int  mvcn     = 0;
-   int  mlnn     = 0;
-   int  blsx     = 0;
-   int  beqx     = 0;
-   int  bvsx     = 0;
-   int  bvcn     = 0;
-   int  blnn     = 0;
-   int  llsx     = 0;
-   int  leqx     = 0;
-   int  lvsx     = 0;
-   int  lvcn     = 0;
+   int ixmlin    = 0;     // Meniscus line start index
+   int ixmval    = 0;     // Meniscus value start index
+   int ncmval    = 0;     // Meniscus value number characters
+   int ncmlin    = 0;     // Meniscus line number characters
+   int ixblin    = 0;     // Bottom line start index
+   int ixbval    = 0;     // Bottom value start index
+   int ncbval    = 0;     // Bottom value number characters
+   int ncblin    = 0;     // Botton line number characters
+   int ixllin    = 0;     // Left-data line start index
+   int ixlval    = 0;     // Left-data value start index
+   int nclval    = 0;     // Left-data value number characters
+   int demval    = 0;     // Delta old/new meniscus value
+   int debval    = 0;     // Delta old/new bottom value
 
    // New meniscus and bottom values
    double mennew = 0.0;
@@ -994,28 +993,25 @@ DbgLv(1) << " eupd:  s_meni s_bott" << s_meni << s_bott;
          edtext += ts.readLine() + "\n";
       filei.close();
 
-      mlsx     = edtext.indexOf( "<meniscus radius=" );
-      if ( mlsx < 0 )  return;
-      meqx     = edtext.indexOf( "=\"", mlsx );
-      mvsx     = meqx + 2;
-      mvcn     = edtext.indexOf( "\"",  mvsx + 1 ) - mvsx;
-      mlnn     = edtext.indexOf( ">", mlsx ) - mlsx + 1;
-      llsx     = edtext.indexOf( "<data_range left=" );
-      if ( llsx < 0 )  return;
-      leqx     = edtext.indexOf( "=\"", llsx );
-      lvsx     = leqx + 2;
-      lvcn     = edtext.indexOf( "\"",  lvsx + 1 ) - lvsx;
-      lefval   = edtext.mid( lvsx, lvcn ).toDouble();
-      blsx     = edtext.indexOf( "<bottom radius=" );
-      if ( blsx > 0 )
+      ixmlin   = edtext.indexOf( "<meniscus radius=" );
+      if ( ixmlin < 0 )  return;
+      ixmval   = edtext.indexOf( "=\"", ixmlin ) + 2;
+      ncmval   = edtext.indexOf( "\"",  ixmval + 1 ) - ixmval;
+      ncmlin   = edtext.indexOf( ">", ixmlin ) - ixmlin + 1;
+      ixllin   = edtext.indexOf( "<data_range left=" );
+      if ( ixllin < 0 )  return;
+      ixlval   = edtext.indexOf( "=\"", ixllin ) + 2;
+      nclval   = edtext.indexOf( "\"",  ixlval + 1 ) - ixlval;
+      lefval   = edtext.mid( ixlval, nclval ).toDouble();
+      ixblin   = edtext.indexOf( "<bottom radius=" );
+      if ( ixblin > 0 )
       {
-         beqx     = edtext.indexOf( "=\"", blsx );
-         bvsx     = beqx + 2;
-         bvcn     = edtext.indexOf( "\"",  bvsx + 1 ) - bvsx;
-         blnn     = edtext.indexOf( ">", blsx ) - blsx + 1;
+         ixbval   = edtext.indexOf( "=\"", ixblin ) + 2;
+         ncbval   = edtext.indexOf( "\"",  ixbval + 1 ) - ixbval;
+         ncblin   = edtext.indexOf( ">", ixblin ) - ixblin + 1;
       }
 DbgLv(1) << " eupd:  mennew" << mennew << "lefval" << lefval << "botnew" << botnew;
-DbgLv(1) << " eupd:   mlsx blsx" << mlsx << blsx << "mlnn blnn" << mlnn << blnn;
+DbgLv(1) << " eupd:   ixmlin ixblin" << ixmlin << ixblin << "ncmlin ncblin" << ncmlin << ncblin;
 
       if ( mennew >= lefval )
       {
@@ -1026,31 +1022,54 @@ DbgLv(1) << " eupd:   mlsx blsx" << mlsx << blsx << "mlnn blnn" << mlnn << blnn;
          return;
       }
 
+      demval        = s_meni.length() - ncmval;
+      debval        = s_bott.length() - ncbval;
+
       if ( have3val )
       {  // Replace meniscus and bottom values in edit
-         edtext.replace( mvsx, mvcn, s_meni );
-         if ( bvsx > 0 )
-            edtext.replace( bvsx, bvcn, s_bott );
+         edtext.replace( ixmval, ncmval, s_meni );
+         ncmval       += demval;
+         ncmlin       += demval;
+         if ( ixbval > 0 )
+         {
+            ixbval       += demval;
+            edtext.replace( ixbval, ncbval, s_bott );
+            ixblin       += demval;
+            ncbval       += debval;
+            ncblin       += debval;
+         }
          else
          {  // Must insert an entirely new line for bottom
             QString bline = QString( "\n            <bottom radius=\"" )
                             + s_bott + QString( "\"/>" );
-            edtext.insert( mlsx + mlnn, bline );
+            ixblin        = ixmlin + ncmlin;
+            edtext.insert( ixblin, bline );
+            ncblin        = bline .length();
+            ncbval        = s_bott.length();
          }
       }
       else if ( !bott_fit )
       {  // Replace meniscus value in edit
-         edtext.replace( mvsx, mvcn, s_meni );
+         edtext.replace( ixmval, ncmval, s_meni );
+         ncmval       += demval;
+         ncmlin       += demval;
       }
       else
       {  // Replace bottom value in edit
-         if ( bvsx > 0 )
-            edtext.replace( bvsx, bvcn, s_bott );
+         if ( ixbval > 0 )
+         {
+            edtext.replace( ixbval, ncbval, s_bott );
+            ncbval       += debval;
+            ncblin       += debval;
+         }
          else
          {  // Must insert an entirely new line for bottom
             QString bline = QString( "\n            <bottom radius=\"" )
                             + s_bott + QString( "\"/>" );
-            edtext.insert( mlsx + mlnn, bline );
+            ixblin        = ixmlin + ncmlin;
+            edtext.insert( ixblin, bline );
+            ncblin        = bline .length();
+            ncbval        = s_bott.length();
          }
       }
 
@@ -1070,18 +1089,18 @@ DbgLv(1) << " eupd:   mlsx blsx" << mlsx << blsx << "mlnn blnn" << mlnn << blnn;
       if ( have3val )
       {
          mmsg     = mmsg + tr( "has been modified with the lines:" )
-                    + "\n    " + edtext.mid( mlsx, mlnn )
-                    + "\n    " + edtext.mid( blsx, blnn );
+                    + "\n    " + edtext.mid( ixmlin, ncmlin )
+                    + "\n    " + edtext.mid( ixblin, ncblin );
       }
       else if ( !bott_fit )
       {
          mmsg     = mmsg + tr( "has been modified with the line:" )
-                    + "\n    " + edtext.mid( mlsx, mlnn );
+                    + "\n    " + edtext.mid( ixmlin, ncmlin );
       }
       else
       {
          mmsg     = mmsg + tr( "has been modified with the line:" )
-                    + "\n    " + edtext.mid( blsx, blnn );
+                    + "\n    " + edtext.mid( ixblin, ncblin );
       }
    
       // If using DB, update the edit record there
@@ -1140,27 +1159,24 @@ DbgLv(1) << " eupd:       edtext read";
          filei.close();
 DbgLv(1) << " eupd:       edtext len" << edtext.length();
 
-         mlsx     = edtext.indexOf( "<meniscus radius=" );
-         if ( mlsx < 0 )  continue;
-         meqx     = edtext.indexOf( "=\"", mlsx );
-         mvsx     = meqx + 2;
-         mvcn     = edtext.indexOf( "\"",  mvsx + 1 ) - mvsx;
-         mlnn     = edtext.indexOf( ">", mlsx ) - mlsx + 1;
-         llsx     = edtext.indexOf( "<data_range left=" );
-         if ( llsx < 0 )  continue;
-         leqx     = edtext.indexOf( "=\"", llsx );
-         lvsx     = leqx + 2;
-         lvcn     = edtext.indexOf( "\"",  lvsx + 1 ) - lvsx;
-         lefval   = edtext.mid( lvsx, lvcn ).toDouble();
-         blsx     = edtext.indexOf( "<bottom radius=" );
-         if ( blsx > 0 )
+         ixmlin   = edtext.indexOf( "<meniscus radius=" );
+         if ( ixmlin < 0 )  continue;
+         ixmval   = edtext.indexOf( "=\"", ixmlin ) + 2;
+         ncmval   = edtext.indexOf( "\"",  ixmval + 1 ) - ixmval;
+         ncmlin   = edtext.indexOf( ">", ixmlin ) - ixmlin + 1;
+         ixllin   = edtext.indexOf( "<data_range left=" );
+         if ( ixllin < 0 )  continue;
+         ixlval   = edtext.indexOf( "=\"", ixllin ) + 2;
+         nclval   = edtext.indexOf( "\"",  ixlval + 1 ) - ixlval;
+         lefval   = edtext.mid( ixlval, nclval ).toDouble();
+         ixblin   = edtext.indexOf( "<bottom radius=" );
+         if ( ixblin > 0 )
          {
-            beqx     = edtext.indexOf( "=\"", blsx );
-            bvsx     = beqx + 2;
-            bvcn     = edtext.indexOf( "\"",  bvsx + 1 ) - bvsx;
-            blnn     = edtext.indexOf( ">", blsx ) - blsx + 1;
+            ixbval   = edtext.indexOf( "=\"", ixblin ) + 2;
+            ncbval   = edtext.indexOf( "\"",  ixbval + 1 ) - ixbval;
+            ncblin   = edtext.indexOf( ">", ixblin ) - ixblin + 1;
          }
-DbgLv(1) << " eupd:       mlsx blsx llsx" << mlsx << blsx << llsx;
+DbgLv(1) << " eupd:       ixmlin ixblin ixllin" << ixmlin << ixblin << ixllin;
 
          if ( mennew >= lefval )
          {
@@ -1171,33 +1187,56 @@ DbgLv(1) << " eupd:       mlsx blsx llsx" << mlsx << blsx << llsx;
             continue;
          }
 
+         demval        = s_meni.length() - ncmval;
+         debval        = s_bott.length() - ncbval;
+
          if ( have3val )
          {  // Replace meniscus and bottom values in edit
-            edtext.replace( mvsx, mvcn, s_meni );
-            if ( bvsx > 0 )
-               edtext.replace( bvsx, bvcn, s_bott );
+            edtext.replace( ixmval, ncmval, s_meni );
+            ncmval       += demval;
+            ncmlin       += demval;
+            if ( ixbval > 0 )
+            {
+               ixbval       += demval;
+               edtext.replace( ixbval, ncbval, s_bott );
+               ixblin       += demval;
+               ncbval       += debval;
+               ncblin       += debval;
+            }
             else
             {  // Must insert an entirely new line for bottom
                QString bline = QString( "\n            <bottom radius=\"" )
                                + s_bott + QString( "\"/>" );
-               edtext.insert( mlsx + mlnn, bline );
+               ixblin        = ixmlin + ncmlin;
+               edtext.insert( ixblin, bline );
+               ncblin        = bline .length();
+               ncbval        = s_bott.length();
             }
 DbgLv(1) << " eupd:       3DVL replace";
          }
          else if ( !bott_fit )
          {  // Replace meniscus value in edit
-            edtext.replace( mvsx, mvcn, s_meni );
+            edtext.replace( ixmval, ncmval, s_meni );
+            ncmval       += demval;
+            ncmlin       += demval;
 DbgLv(1) << " eupd:       MENI replace";
          }
          else
          {  // Replace bottom value in edit
-            if ( bvsx > 0 )
-               edtext.replace( bvsx, bvcn, s_bott );
+            if ( ixbval > 0 )
+            {
+               edtext.replace( ixbval, ncbval, s_bott );
+               ncbval       += debval;
+               ncblin       += debval;
+            }
             else
             {  // Must insert an entirely new line for bottom
                QString bline = QString( "\n            <bottom radius=\"" )
                                + s_bott + QString( "\"/>" );
-               edtext.insert( mlsx + mlnn, bline );
+               ixblin        = ixmlin + ncmlin;
+               edtext.insert( ixblin, bline );
+               ncblin        = bline .length();
+               ncbval        = s_bott.length();
             }
 DbgLv(1) << " eupd:       BOTT replace";
          }
@@ -1239,18 +1278,18 @@ DbgLv(1) << " eupd:       idEdit" << idEdit;
       if ( have3val )
       {
          mmsg     = mmsg + tr( "has been modified with the lines:" )
-                    + "\n    " + edtext.mid( mlsx, mlnn )
-                    + "\n    " + edtext.mid( blsx, blnn );
+                    + "\n    " + edtext.mid( ixmlin, ncmlin )
+                    + "\n    " + edtext.mid( ixblin, ncblin );
       }
       else if ( !bott_fit )
       {
          mmsg     = mmsg + tr( "has been modified with the line:" )
-                    + "\n    " + edtext.mid( mlsx, mlnn );
+                    + "\n    " + edtext.mid( ixmlin, ncmlin );
       }
       else
       {
          mmsg     = mmsg + tr( "has been modified with the line:" )
-                    + "\n    " + edtext.mid( blsx, blnn );
+                    + "\n    " + edtext.mid( ixblin, ncblin );
       }
 
       mmsg    += tr( "\n\n%1 other cell/channel files were"
@@ -2277,12 +2316,15 @@ DbgLv(1) << "RmvMod: 1st rmv-mod: jj modDesc" << jj << modDesc;
             }
 
             tiDesc = QString( mDesc ).replace( ".model", ".ti_noise" )
-                                     .replace( "2DSA-FM-IT", "2DSA-FM" );
+                                     .replace( "2DSA-FM-IT", "2DSA-FM" )
+                                     .replace( "2DSA-FB-IT", "2DSA-FB" );
             riDesc = QString( mDesc ).replace( ".model", ".ri_noise" )
-                                     .replace( "2DSA-FM-IT", "2DSA-FM" );
+                                     .replace( "2DSA-FM-IT", "2DSA-FM" )
+                                     .replace( "2DSA-FB-IT", "2DSA-FB" );
             itix   = nieDescs.indexOf( tiDesc );
             irix   = nieDescs.indexOf( riDesc );
-//DbgLv(1) << "RmvMod:    itix irix" << itix << irix;
+DbgLv(1) << "RmvMod:    itix irix" << itix << irix
+ << "tiDesc" << tiDesc << "riDesc" << riDesc;
 
             if ( itix >= 0 )
             {  // There is a TI noise to remove
@@ -2440,6 +2482,11 @@ DbgLv(1) << "NIE: msetBase" << msetBase;
    if ( msetBase.contains( "2DSA-FM-IT" ) )
    {
       msetBase     = msetBase.replace( "2DSA-FM-IT", "2DSA-FM" );
+DbgLv(1) << "NIE: msetBase" << msetBase;
+   }
+   if ( msetBase.contains( "2DSA-FB-IT" ) )
+   {
+      msetBase     = msetBase.replace( "2DSA-FB-IT", "2DSA-FB" );
 DbgLv(1) << "NIE: msetBase" << msetBase;
    }
    QStringList query;
