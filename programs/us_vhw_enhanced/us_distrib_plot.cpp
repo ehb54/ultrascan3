@@ -665,6 +665,7 @@ void US_DistribPlot::save_data_file( QString data2File )
    int nepts  = envel_data( eseds, efrqs );
    double tconc = tot_conc;
 
+#if 0
    if ( tconc < 0.01 )
    {  // If concentration too small, bump it to 1.0e0 range
       double tcpwr = qFloor( log10( tconc ) );
@@ -672,6 +673,7 @@ void US_DistribPlot::save_data_file( QString data2File )
 DbgLv(1) << "SaveDat: tot_conc tconc" << tot_conc << tconc
  << "tcpwr" << tcpwr;
    }
+#endif
 DbgLv(1) << "SaveDat: file" << data2File << "nhpts nepts" << nhpts << nepts;
 
    QFile datf( data2File );
