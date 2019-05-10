@@ -890,7 +890,7 @@ DbgLv(1) << " eupd:  fn" << fn;
    int ixblin    = 0;     // Bottom line start index
    int ixbval    = 0;     // Bottom value start index
    int ncbval    = 0;     // Bottom value number characters
-   int ncblin    = 0;     // Botton line number characters
+   int ncblin    = 0;     // Bottom line number characters
    int ixllin    = 0;     // Left-data line start index
    int ixlval    = 0;     // Left-data value start index
    int nclval    = 0;     // Left-data value number characters
@@ -988,11 +988,12 @@ DbgLv(1) << " eupd:  s_meni s_bott" << s_meni << s_bott;
 
    if ( ! all_wvl  ||  nedtfs == 1 )
    {  // Apply to a single triple
-      QTextStream ts( &filei );
+      QTextStream ts( &filei );    // Build up XML Edit text
       while ( !ts.atEnd() )
          edtext += ts.readLine() + "\n";
       filei.close();
 
+      // Compute indecies,lengths of meniscus,bottom,data lines,values
       ixmlin   = edtext.indexOf( "<meniscus radius=" );
       if ( ixmlin < 0 )  return;
       ixmval   = edtext.indexOf( "=\"", ixmlin ) + 2;
@@ -1022,7 +1023,7 @@ DbgLv(1) << " eupd:   ixmlin ixblin" << ixmlin << ixblin << "ncmlin ncblin" << n
          return;
       }
 
-      demval        = s_meni.length() - ncmval;
+      demval        = s_meni.length() - ncmval;  // Deltas old,new values
       debval        = s_bott.length() - ncbval;
 
       if ( have3val )
@@ -1031,7 +1032,7 @@ DbgLv(1) << " eupd:   ixmlin ixblin" << ixmlin << ixblin << "ncmlin ncblin" << n
          ncmval       += demval;
          ncmlin       += demval;
          if ( ixbval > 0 )
-         {
+         {  // Replace existing bottom value
             ixbval       += demval;
             edtext.replace( ixbval, ncbval, s_bott );
             ixblin       += demval;
@@ -1055,9 +1056,9 @@ DbgLv(1) << " eupd:   ixmlin ixblin" << ixmlin << ixblin << "ncmlin ncblin" << n
          ncmlin       += demval;
       }
       else
-      {  // Replace bottom value in edit
+      {  // Replace/insert bottom value in edit
          if ( ixbval > 0 )
-         {
+         {  // Replace existing bottom value
             edtext.replace( ixbval, ncbval, s_bott );
             ncbval       += debval;
             ncblin       += debval;
@@ -1073,6 +1074,7 @@ DbgLv(1) << " eupd:   ixmlin ixblin" << ixmlin << ixblin << "ncmlin ncblin" << n
          }
       }
 
+      // Write out the modified Edit XML text
       QFile fileo( fn );
 
       if ( ! fileo.open( QIODevice::WriteOnly | QIODevice::Text ) )
@@ -1087,18 +1089,18 @@ DbgLv(1) << " eupd:   ixmlin ixblin" << ixmlin << ixblin << "ncmlin ncblin" << n
       mmsg     = tr( "In file directory\n    " ) + filedir + " ,\n" +
                  tr( "file\n    " ) + fname_edit + "\n";
       if ( have3val )
-      {
+      {  // Report on Meniscus,Bottom mods
          mmsg     = mmsg + tr( "has been modified with the lines:" )
                     + "\n    " + edtext.mid( ixmlin, ncmlin )
                     + "\n    " + edtext.mid( ixblin, ncblin );
       }
       else if ( !bott_fit )
-      {
+      {  // Report on Meniscus mods
          mmsg     = mmsg + tr( "has been modified with the line:" )
                     + "\n    " + edtext.mid( ixmlin, ncmlin );
       }
       else
-      {
+      {  // Report on Bottom mods
          mmsg     = mmsg + tr( "has been modified with the line:" )
                     + "\n    " + edtext.mid( ixblin, ncblin );
       }
@@ -1140,18 +1142,19 @@ DbgLv(1) << " eupd: AppWvl: nedtfs" << nedtfs;
       QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
       for ( int jj = 0; jj < nedtfs; jj++ )
-      {
+      {  // Modify each Edit file corresponding to a wavelength
          QString fn = filedir + "/" + edtfiles.at( jj );
 DbgLv(1) << " eupd:     jj" << jj << "fn" << fn;
          QFile filei( fn );
 
          if ( ! filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
-         {
+         {  // Skip any file we cannot read
 DbgLv(1) << " eupd:       *OPEN ERROR*";
             continue;
          }
 
 DbgLv(1) << " eupd:       edtext read";
+         // Read in the Edit XML text
          QTextStream ts( &filei );
          edtext  = "";
          while ( !ts.atEnd() )
@@ -1159,6 +1162,7 @@ DbgLv(1) << " eupd:       edtext read";
          filei.close();
 DbgLv(1) << " eupd:       edtext len" << edtext.length();
 
+         // Compute locations and lengths of meniscus,bottom,data lines,values
          ixmlin   = edtext.indexOf( "<meniscus radius=" );
          if ( ixmlin < 0 )  continue;
          ixmval   = edtext.indexOf( "=\"", ixmlin ) + 2;
@@ -1187,7 +1191,7 @@ DbgLv(1) << " eupd:       ixmlin ixblin ixllin" << ixmlin << ixblin << ixllin;
             continue;
          }
 
-         demval        = s_meni.length() - ncmval;
+         demval        = s_meni.length() - ncmval;  // Deltas in old,new value strings
          debval        = s_bott.length() - ncbval;
 
          if ( have3val )
@@ -1196,7 +1200,7 @@ DbgLv(1) << " eupd:       ixmlin ixblin ixllin" << ixmlin << ixblin << ixllin;
             ncmval       += demval;
             ncmlin       += demval;
             if ( ixbval > 0 )
-            {
+            {  // Replace an existing bottom line
                ixbval       += demval;
                edtext.replace( ixbval, ncbval, s_bott );
                ixblin       += demval;
@@ -1242,6 +1246,7 @@ DbgLv(1) << " eupd:       BOTT replace";
          }
 
 DbgLv(1) << " eupd:  write: fn" << fn;
+         // Write out the modified Edit XML file
          QFile fileo( fn );
 
          if ( ! fileo.open( QIODevice::WriteOnly | QIODevice::Text ) )
@@ -1276,18 +1281,18 @@ DbgLv(1) << " eupd:       idEdit" << idEdit;
                  tr( "file\n    " ) + fname_edit + "\n";
 
       if ( have3val )
-      {
+      {  // Report on Meniscus+Bottom mods
          mmsg     = mmsg + tr( "has been modified with the lines:" )
                     + "\n    " + edtext.mid( ixmlin, ncmlin )
                     + "\n    " + edtext.mid( ixblin, ncblin );
       }
       else if ( !bott_fit )
-      {
+      {  // Report on Meniscus mods
          mmsg     = mmsg + tr( "has been modified with the line:" )
                     + "\n    " + edtext.mid( ixmlin, ncmlin );
       }
       else
-      {
+      {  // Report on Bottom mods
          mmsg     = mmsg + tr( "has been modified with the line:" )
                     + "\n    " + edtext.mid( ixblin, ncblin );
       }
