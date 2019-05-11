@@ -1524,14 +1524,16 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
 
       // OR
       //Alternativly: put it in separate thread:
-      QThread* sys_thread = new QThread(this);
+      //QThread* sys_thread = new QThread(this);
+      sys_thread = new QThread(this);
       timer_check_sysdata = new QTimer(0); // parent to 0 !
       timer_check_sysdata->setInterval(2000);
       timer_check_sysdata->moveToThread(sys_thread);
       //connect( timer_check_sysdata, SIGNAL(timeout()), this, SLOT( check_for_sysdata( )  ), Qt::QueuedConnection ) ; //Qt::DirectConnection );
       connect( timer_check_sysdata, SIGNAL(timeout()), this, SLOT( check_for_sysdata( )  ) );//, Qt::QueuedConnection );
       //QThread's started() SIGNAL: before the run()/exec() function is called!!! Is this a potential issue, timer is started from a thread???
-      connect( sys_thread, SIGNAL( started() ), timer_check_sysdata, SLOT( start() ));      
+      connect( sys_thread, SIGNAL( started() ), timer_check_sysdata, SLOT( start() ));
+      connect( sys_thread, SIGNAL( finished() ), timer_check_sysdata, SLOT( stop() ));
       sys_thread->start();
       // How to stop sys_thread?
       
@@ -1798,13 +1800,17 @@ void US_XpnDataViewer::check_for_sysdata( void )
    
   if ( exp_status == 5 )
     {
-      timer_check_sysdata->stop();
+      //timer_check_sysdata->stop();
       //ALEXEY: This timer cannot be stopped from another thread, but can be dealt with signal/slot upon Qthread termination..
       //        disconnection maybe enough...
       disconnect(timer_check_sysdata, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+      sys_thread->quit(); // ALEXEY: does this emit Qthread's finished() signal??
       
       qDebug() << "ExpStat: 5  - sys_timer STOPPED here: ";
-      
+
+      if ( !timer_check_sysdata->isActive() )
+	 qDebug() << "QTimer timer_check_sysdata STOPPED by quitting the QThread !!! ";
+	
       rpm_box->setSpeed( 0 );
       le_remaining->setText( "00:00:00" );
       qApp->processEvents();
@@ -1833,9 +1839,9 @@ void US_XpnDataViewer::check_for_sysdata( void )
   
   if ( exp_status == 0 ) //ALEXEY should be == 3 as per documentation
     {
-      timer_check_sysdata->stop();
+      //timer_check_sysdata->stop();
       disconnect(timer_check_sysdata, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
-      
+      sys_thread->quit(); // ALEXEY: does this emit Qthread's finished() signal??
       qDebug() << "ExpStat: 3  - sys_timer STOPPED here: ";
       
       rpm_box->setSpeed( 0 );

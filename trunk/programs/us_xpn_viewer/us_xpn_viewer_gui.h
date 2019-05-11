@@ -268,7 +268,7 @@ class US_XpnDataViewer : public US_Widgets
      QElapsedTimer*  elapsed_timer;
      
      QTimer*        timer_sys_thread;
-     //QThread*       sys_thread;
+     QThread*       sys_thread;
      
      QMessageBox*   msg_data_avail;
      QString        RunID_to_retrieve;

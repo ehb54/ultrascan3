@@ -355,8 +355,28 @@ void US_ComProjectMain::check_current_stage( void )
   // QString ProtName                     = protocol_details[ "protocolName" ];
   // QString invID_passed                 = protocol_details[ "invID_passed" ];
 
+
+  // // --------------------------------------------------------------------------------------------
+  
+  // // Amy's exp. Optima 2 !!!
+  // QMap < QString, QString > protocol_details;
+  // protocol_details["experimentId"] = QString("299");   
+  // protocol_details["protocolName"] = QString("data-aquisition-test29");
+  // protocol_details[ "experimentName" ] = QString("some_name");
+  // protocol_details[ "CellChNumber" ] = QString("8");
+  // protocol_details[ "TripleNumber" ] = QString("12");
+  // protocol_details[ "OptimaName" ] = QString("Optima 2");     // <-- Optima 2
+  // protocol_details[ "duration" ]   = QString("300");
+  // protocol_details[ "dataPath" ]   = QString("/home/alexey/ultrascan/imports/data-aquisition-test29-run364");
+  // protocol_details[ "invID_passed" ]  = QString("6");  //Amy's ID
+  
+  // QString stage                        = "LIVE_UPDATE";
+  // QString currDir                      = protocol_details[ "dataPath" ];
+  // QString ProtName                     = protocol_details[ "protocolName" ];
+  // QString invID_passed                 = protocol_details[ "invID_passed" ];
+
   // --------------------------------------------------------------------------------------------
- 
+  
   
   // Query 'autoflow': get count of records
   int autoflow_records = get_autoflow_records();
@@ -411,7 +431,7 @@ void US_ComProjectMain::check_current_stage( void )
   QString ProtName     = protocol_details[ "protocolName" ];
   
   
-
+  
   //ALEXEY: if stage=="EDITING" && curDir.isEmpty() (NULL)
   /*
         -- that means that Run Completed but Directory was created on different computer
