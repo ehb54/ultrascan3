@@ -485,11 +485,19 @@ DbgLv(1) << "CGui: reset complete";
    // QString curdir = "/home/alexey/ultrascan/imports/KentonR_coprohenQ-comproject-013119-run221"; // Kenton
    // QString protname = "KentonR_coprohenQ-comproject-013119";
 
-   // QString curdir = "/home/alexey/ultrascan/imports/test-comproject-2wavelength-2cell-2-run227"; // Amy
-   //  QString protname = "test-comproject-2wavelength-2cell-2";
+   // QString curdir = "/home/alexey/ultrascan/imports/RxRPPARhet-PPRE-MWL_180419-run352"; //Nemetchek
+   // QString protname = "RxRPPARhet-PPRE-MWL_180419";
+   // QString invid = "41";
 
-   // import_data_auto(curdir, protname);
+   // QString curdir = "/home/alexey/ultrascan/imports/data-aquisition-test29-run364"; //Amy's
+   // QString protname = "data-aquisition-test29";
+   // QString invid = "6"; //Amy ID
 
+   
+   // import_data_auto(curdir, protname, invid);
+
+   
+   
 
    // qDebug() << "ExpData: ";
 
@@ -1518,6 +1526,10 @@ DbgLv(1) << "rIA: trx" << trx << "uuid" << uuidst << importDir;
    runType       = QString( fname ).section( ".", -5, -5 );
    runID         = QString( fname ).section( ".",  0, -6 );
 
+
+   // //TEMP
+   // runID += QString("-test");
+     
    qDebug() << "RUNID from files[0]: files[0]" << fname << ", runID: " << runID;  
      
    le_runID2->setText( runID );
@@ -1576,7 +1588,9 @@ DbgLv(1) << "rTS: NON_EXIST:" << tmst_fnamei;
       tmst_fnamei.clear();
    }
 
-   le_status->setText( tr( "AUC data import IS COMPLETE." ) );
+   if (!us_convert_auto_mode)
+     le_status->setText( tr( "AUC data import IS COMPLETE." ) );
+
    pb_showTmst->setEnabled( ! tmst_fnamei.isEmpty() );
 }
 
@@ -2372,6 +2386,9 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 	   out_chaninfo[ i ].solution = solution_auto;
 	   out_tripinfo[ out_chandatx[ i ] + cb_lambplot->currentIndex() ].solution = solution_auto;
 
+	   //DUPL
+	   all_tripinfo[ i ].solution = solution_auto;  
+	   //all_tripinfo[ out_chandatx[ i ] + cb_lambplot->currentIndex() ].solution = solution_auto;
 
 	   //Centerpiece
 	   // if ( i < nchans-1 && i%2 == 0 ) //every second channel, or other # ?
@@ -2399,14 +2416,21 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 	   //ALEXEY abstractCenterpieceIDs inferred from cent. name passed from protocol
 	   out_chaninfo[ i ]   .centerpiece     = cpID;
 	   out_chaninfo[ i ]   .centerpieceName = cpName;
+
+	   //DUPL
+	   all_tripinfo[ i ] .centerpiece     = cpID;
+	   all_tripinfo[ i ] .centerpieceName = cpName;
 	   	   
 	   // For MWL, duplicate solution & centerpices to all triples of the channel
 	   int idax   = out_chandatx[ i ];
 	   int ldax   = i + 1;
+	   
 	   ldax       = ldax < out_chandatx.size()
 			       ? out_chandatx[ ldax ]
 			       : out_tripinfo.size();
-	       
+
+	   int diff_ldax_idax = ldax - idax;
+	   
 	   while ( idax < ldax )
 	     {
 	       int jj = idax++;
@@ -2417,22 +2441,39 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 	       //Centerpiece
 	       out_tripinfo[ jj ].centerpiece = cpID;  //ALEXEY abstractCenterpieceIDs passed from protocol
 	       //qDebug() << "Centerpiece: " << i << ", " << jj << ", " << out_tripinfo[ jj ].centerpiece;
+
+	       //Centerpiece Name
+	       out_tripinfo[ jj ].centerpieceName = cpName;
+
+	       //DUPL
+	       all_tripinfo[ jj ].solution        = solution_auto;
+	       all_tripinfo[ jj ].centerpiece     = cpID;
+	       all_tripinfo[ jj ].centerpieceName = cpName;
 	     }
 
 	   // Description
 	   triple_desc = ProtInfo.ProtSolutions.chsols[ i ].ch_comment;  //channel's comment from protocol
-	   outData[ out_chandatx[ i ] + cb_lambplot->currentIndex() ]->description = triple_desc;
+	   outData[ out_chandatx[ i ] + cb_lambplot->currentIndex() ]->description = triple_desc;  // ALEXEY : REplicate for all triple in the same channel
 	   //Propagate description to all triples of channel
 	   out_chaninfo[ i ].description   = triple_desc;
-	   int trxs        = out_chandatx[ i ];
-	   int trxe        = trxs + nlambda;
 
-	   qDebug() << "Channel " << i << ": ldax, trxe: " << ldax << ", " << trxe;
+	   //DUPL
+	   allData[ out_chandatx[ i ] + cb_lambplot->currentIndex() ].description = triple_desc;
+	   all_tripinfo[ i ].description   = triple_desc;
+	   
+	   int trxs        = out_chandatx[ i ];
+	   //int trxe        = trxs + nlambda;   //ALEXEY: here was a problem!!
+	   int trxe        = trxs + diff_ldax_idax;
+	   
+	   qDebug() << "Channel " << i << ": diff_ldax_idax, trxs, trxe: " << diff_ldax_idax << ", " << trxs << ", "  << trxe;
 	   
 	   for ( int trx = trxs; trx < trxe; trx++ )
 	     {
 	       outData[ trx ]->description = triple_desc;
-	       //qDebug() << "Triple Description: " << trx << ", " << triple_desc;
+	       qDebug() << "Triple Description for channel #: " << i << ", " << trx << ", " << triple_desc;
+
+	       //DUPL
+	       allData[ trx ].description = triple_desc;
 	     }
 	 }
      }
@@ -2441,6 +2482,7 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
        qDebug() << "SOLUTION is READ in NON MWL mode !!! ntrips: " << ntrips;
        qDebug() << "SIZE of out_chaninfo.size(): " << out_chaninfo.size() ;
        qDebug() << "SIZE of out_tripinfo.size(): " << out_tripinfo.size() ;
+       qDebug() << "nchans, ntrips: " << nchans << ", " << ntrips;
 
        if (ntrips ==  nchans)
 	 {
@@ -2451,10 +2493,16 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 	       solution_auto.readFromDB(solutionID, &db);
 	       out_chaninfo[ i ].solution = solution_auto;
 	       out_tripinfo[ i ].solution = solution_auto;
+
+	       //DUPL
+	       all_tripinfo[ i ].solution = solution_auto;  
 	       
 	       //Description
 	       triple_desc = ProtInfo.ProtSolutions.chsols[ i ].ch_comment;  //channel's comment from protocol
 	       outData[ i ]->description = triple_desc;
+
+	       //DUPL
+	       allData[ i ].description = triple_desc;
 	       
 	       //Centerpiece
 	       // if ( i < ntrips-1 && i%2 == 0 ) //every second channel
@@ -2481,7 +2529,11 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 	       
 	       out_chaninfo[ i ].centerpiece     = cpID;    //ALEXEY abstractCenterpieceIDs passed from protocol
 	       out_tripinfo[ i ].centerpiece     = cpID;    //ALEXEY abstractCenterpieceIDs passed from protocol
-	       out_chaninfo[ i ].centerpieceName = cpName; 
+	       out_chaninfo[ i ].centerpieceName = cpName;
+
+	       //DUPL
+	       all_tripinfo[ i ].centerpiece     = cpID;
+	       all_tripinfo[ i ].centerpieceName = cpName;
 	     }
 	 }
        else
@@ -2521,7 +2573,11 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 		       
 		       out_chaninfo[ j ].centerpiece     = cpID;   
 		       out_tripinfo[ j ].centerpiece     = cpID;   
-		       out_chaninfo[ j ].centerpieceName = cpName; 
+		       out_chaninfo[ j ].centerpieceName = cpName;
+
+		       //DUPL
+		       all_tripinfo[ j ].centerpiece     = cpID;
+		       all_tripinfo[ j ].centerpieceName = cpName;
 		     }
 		   
 		   if ( out_triples[ j ].section( "/", 0, 1 ).simplified() == out_channels[ i ] )
@@ -2530,6 +2586,12 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 		       out_chaninfo[ j ].solution = solution_auto;
 		       out_tripinfo[ j ].solution = solution_auto;
 		       outData[ j ]->description = triple_desc;
+
+		       //DUPL
+		       all_tripinfo[ j ].solution = solution_auto;
+		       allData[ j ].description = triple_desc;
+
+		       
 		     }
 		 }
 	     }
@@ -2547,6 +2609,8 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    //le_centerpieceDesc ->setText( QString::number(out_chaninfo[ tripListx ].centerpiece) );
    le_centerpieceDesc ->setText( out_chaninfo[ tripListx ].centerpieceName );
 
+   le_status->setText( tr( "AUC data import IS COMPLETE." ) );
+   
    enableSaveBtn_auto();
 }
 
@@ -3511,17 +3575,22 @@ void US_ConvertGui::changeTriple()
                     .section( "/", 1, 1 ).simplified();
    pb_dropChan    ->setText( tr( "Drop All Channel '%1's" ).arg( chann ) );
 
+   for ( int i=0; i <  outData.size(); ++i)
+     qDebug() << "i, outData[ i ]->description" << i << ", " << outData[ i ]->description;
+   
    triple_index( );
 DbgLv(1) << "chgTrp: trDx trLx" << tripDatax << tripListx
  << "outDsz chinfsz" << outData.size() << out_chaninfo.size();
 
    le_dir         ->setText( currentDir );
-   le_description ->setText( outData[ tripDatax ]->description );
-   le_solutionDesc->setText( out_chaninfo[ tripListx ].solution.solutionDesc );
 
-   le_centerpieceDesc ->setText( out_chaninfo[ tripListx ].centerpieceName );
-   qDebug() << "Cent. INFO : " << out_chaninfo[ tripListx ].centerpieceName ;
-   
+   // le_description ->setText( outData[ tripDatax ]->description );
+   // le_solutionDesc->setText( out_chaninfo[ tripListx ].solution.solutionDesc );
+   // le_centerpieceDesc ->setText( out_chaninfo[ tripListx ].centerpieceName );
+
+   // qDebug() << "DESCRIPTION      : tripDatax,  outData[ tripDatax ]->description:: " << tripDatax << ", " << outData[ tripDatax ]->description;
+   // qDebug() << "CENTERPIECE INFO : tripListx,  out_chaninfo[ tripListx ].centerpieceName:: " << tripListx << ", " << out_chaninfo[ tripListx ].centerpieceName;
+   // qDebug() << "SOLUTION         : tripListx,  out_chaninfo[ tripListx ].solution.solutionDesc:: " << tripListx << ", " << out_chaninfo[ tripListx ].solution.solutionDesc;
 
    // If MWL, set the cell/channel index and get the lambda range
    if ( isMwl )
@@ -3537,6 +3606,15 @@ DbgLv(1) << "chgTrp: trDx trLx" << tripDatax << tripListx
    // Reset maximum scan control values
    enableScanControls();
 
+   le_description ->setText( outData[ tripDatax ]->description );
+   le_solutionDesc->setText( out_chaninfo[ tripListx ].solution.solutionDesc );
+   le_centerpieceDesc ->setText( out_chaninfo[ tripListx ].centerpieceName );
+
+   qDebug() << "DESCRIPTION      : tripDatax,  outData[ tripDatax ]->description:: " << tripDatax << ", " << outData[ tripDatax ]->description;
+   qDebug() << "CENTERPIECE INFO : tripListx,  out_chaninfo[ tripListx ].centerpieceName:: " << tripListx << ", " << out_chaninfo[ tripListx ].centerpieceName;
+   qDebug() << "SOLUTION         : tripListx,  out_chaninfo[ tripListx ].solution.solutionDesc:: " << tripListx << ", " << out_chaninfo[ tripListx ].solution.solutionDesc;
+   
+   
    // The centerpiece combo box
    cb_centerpiece->setLogicalIndex( out_chaninfo[ tripListx ].centerpiece );
 
@@ -5950,6 +6028,13 @@ void US_ConvertGui::triple_index()
                   : tripListx;
 DbgLv(1) << " triple_index  trLx trDx" << tripListx << tripDatax
  << "  triple" << lw_triple->currentItem()->text();
+
+ if (isMwl) 
+   qDebug() << "CHANGING TRIPLE: out_chandatx[ tripListx ] + cb_lambplot->currentIndex(): " << out_chandatx[ tripListx ] << " + " <<  cb_lambplot->currentIndex();
+ else
+   qDebug() << "CHANGING TRIPLE: tripDatax, tripListx : " << tripDatax << ", " << tripListx;
+
+ qDebug() << "Size of out_chandatx: " << out_chandatx.size();
 }
 
 // Turn MWL connections on or off
