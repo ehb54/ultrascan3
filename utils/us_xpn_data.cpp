@@ -1423,6 +1423,9 @@ DbgLv(1) << "BldRawD        channel" << rdata.channel
 DbgLv(1) << "BldRawD         trip" << trnode << "descr" << rdata.description
  << "celchn" << celchn;
 
+ qDebug() << "BUILD_RAW_DATA trip: descr:  " <<  trnode << "descr" << rdata.description
+ << "celchn" << celchn;
+
 QDateTime time10=QDateTime::currentDateTime();
       for ( int sgx = 0; sgx < nstgn; sgx++ )
       {  // Set scan values
