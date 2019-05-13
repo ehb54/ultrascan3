@@ -5822,7 +5822,7 @@ DbgLv(1) << "  PlTit: title" << title;
 void US_ConvertGui::plot_all( void )
 {
    US_DataIO::RawData* currentData = outData[ tripDatax ];
-DbgLv(1) << " PlAll:  outData count" << outData.count();
+DbgLv(1) << " PlAll:  outData count" << outData.count() << "tripDatax" << tripDatax;
 
    QList< QColor > mcolors;
    int nmcols  = usplot->map_colors( mcolors );
@@ -6076,18 +6076,29 @@ void US_ConvertGui::show_mwl_control( bool show )
 void US_ConvertGui::triple_index()
 {
    tripListx      = lw_triple->currentRow();
-   tripDatax      = isMwl
-                  ? out_chandatx[ tripListx ] + cb_lambplot->currentIndex()
-                  : tripListx;
+
+   if ( isMwl )
+   {  // Compute data index of MWL data
+      int tripnext   = qMin( ( tripListx + 1 ), ( out_chandatx.size() - 1 ) );
+      int tripx1     = out_chandatx[ tripListx ];
+      int tripx2     = out_chandatx[ tripnext  ];
+      tripDatax      = tripx1 + cb_lambplot->currentIndex();
+
+      if ( tripDatax >= tripx2 )
+      {  // Less wavelengths in this channel than in the previous one
+         tripDatax      = ( tripx1 + tripx2 ) / 2;
+         mwl_connect( false );
+         cb_lambplot->setCurrentIndex( ( tripDatax - tripx1 ) );
+         mwl_connect( true  );
+      }
+   }
+
+   else
+   {  // Non-MWL data index is triple index
+      tripDatax      = tripListx;
+   }
 DbgLv(1) << " triple_index  trLx trDx" << tripListx << tripDatax
  << "  triple" << lw_triple->currentItem()->text();
-
- if (isMwl) 
-   qDebug() << "CHANGING TRIPLE: out_chandatx[ tripListx ] + cb_lambplot->currentIndex(): " << out_chandatx[ tripListx ] << " + " <<  cb_lambplot->currentIndex();
- else
-   qDebug() << "CHANGING TRIPLE: tripDatax, tripListx : " << tripDatax << ", " << tripListx;
-
- qDebug() << "Size of out_chandatx: " << out_chandatx.size();
 }
 
 // Turn MWL connections on or off
