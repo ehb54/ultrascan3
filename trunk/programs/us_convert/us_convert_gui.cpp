@@ -1536,54 +1536,54 @@ DbgLv(1) << "rIA: trx" << trx << "uuid" << uuidst << importDir;
    le_runID ->setText( runID );
    scanTolerance = 5.0;
 
-   //ALEXEY: Remove Duplicates in Channel's description
-   for (int i = 0; i < allData.size(); i++)
-     {
-       qDebug() << "Description BEFORE: " << i << ", " << allData[ i ].description;
+   // //ALEXEY: Remove Duplicates in Channel's description
+   // for (int i = 0; i < allData.size(); i++)
+   //   {
+   //     qDebug() << "Description BEFORE: " << i << ", " << allData[ i ].description;
 
-       QString desc   = allData[ i ].description;
-       desc.replace(",", "");
-       QString desc_a = desc.split(QRegExp(";"))[0];
-       QString desc_b = desc.split(QRegExp(";"))[1];
+   //     QString desc   = allData[ i ].description;
+   //     desc.replace(",", "");
+   //     QString desc_a = desc.split(QRegExp(";"))[0];
+   //     QString desc_b = desc.split(QRegExp(";"))[1];
 
-       //list of channel A desc
-       QStringList desc_list_a = desc_a.split(QRegExp("\\s+"));
-       desc_list_a.removeDuplicates();
+   //     //list of channel A desc
+   //     QStringList desc_list_a = desc_a.split(QRegExp("\\s+"));
+   //     desc_list_a.removeDuplicates();
 
-       //list of channel B desc
-       QStringList desc_list_b = desc_b.split(QRegExp("\\s+"));
-       desc_list_b.removeDuplicates();
+   //     //list of channel B desc
+   //     QStringList desc_list_b = desc_b.split(QRegExp("\\s+"));
+   //     desc_list_b.removeDuplicates();
 
-       QString final_desc("");
+   //     QString final_desc("");
        
-       for ( int i=0; i<desc_list_a.size(); i++ )
-	 {
-	   if ( desc_list_a[i].isEmpty() )
-	     continue;
-	   final_desc +=  desc_list_a[i];
+   //     for ( int i=0; i<desc_list_a.size(); i++ )
+   // 	 {
+   // 	   if ( desc_list_a[i].isEmpty() )
+   // 	     continue;
+   // 	   final_desc +=  desc_list_a[i];
 
-	   if ( i != desc_list_a.size() - 1)
-	     final_desc += QString(" ");
-	   else
-	     final_desc += QString("; ");
+   // 	   if ( i != desc_list_a.size() - 1)
+   // 	     final_desc += QString(" ");
+   // 	   else
+   // 	     final_desc += QString("; ");
 
-	 }
-       for ( int i=0; i<desc_list_b.size(); i++ )
-	 {
-	   if ( desc_list_b[i].isEmpty() )
-	     continue;
-	   final_desc +=  desc_list_b[i];
+   // 	 }
+   //     for ( int i=0; i<desc_list_b.size(); i++ )
+   // 	 {
+   // 	   if ( desc_list_b[i].isEmpty() )
+   // 	     continue;
+   // 	   final_desc +=  desc_list_b[i];
 
-	   if ( i != desc_list_b.size() - 1)
-	     final_desc += QString(" ");
-	   // else
-	   //   final_desc += QString("; ");
+   // 	   if ( i != desc_list_b.size() - 1)
+   // 	     final_desc += QString(" ");
+   // 	   // else
+   // 	   //   final_desc += QString("; ");
 	   
-	 }
+   // 	 }
        
-       allData[ i ].description = final_desc;
-       qDebug() << "Description AFTER:  " << i << ", " << allData[ i ].description;
-     }
+   //     allData[ i ].description = final_desc;
+   //     qDebug() << "Description AFTER:  " << i << ", " << allData[ i ].description;
+   //   }
        
    if ( ! init_output_data() )
       return;

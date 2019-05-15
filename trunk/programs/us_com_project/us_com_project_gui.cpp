@@ -387,7 +387,7 @@ void US_ComProjectMain::check_current_stage( void )
     return;
 
 
-  // Dialog of aexisting autoflow records
+  // Dialog of existing autoflow records
   US_Passwd  pw;
   US_DB2* dbP  = new US_DB2( pw.getPasswd() );
   list_all_autoflow_records( autoflowdata, dbP );
@@ -397,7 +397,7 @@ void US_ComProjectMain::check_current_stage( void )
   int         prx;
   hdrs << "ID"
        << "Run Name"
-       << "Optima"
+       << "Optima Name"
        << "Created"
        << "Started";
   
@@ -415,8 +415,12 @@ void US_ComProjectMain::check_current_stage( void )
   if ( pdiag->exec() == QDialog::Accepted )
     autoflow_id_selected  = autoflowdata[ prx ][ 0 ];
   else
-    return;
-  
+    {
+      //ALEXEY: define what to do if Optima is occupied, OR if there is another Optima (occupied or not)
+      // autoflowdata[ i ][ 2 ]; // <-- gives Optima Name
+      // autoflowdata[ i ][ 4 ]; // <-- STARTED / NOT STARTED
+      return;
+    }
 
   // -------------------------------------------------------------------------------------------------
   // Get detailed info on the autoflow record
@@ -430,8 +434,7 @@ void US_ComProjectMain::check_current_stage( void )
   QString invID_passed = protocol_details[ "invID_passed" ];
   QString ProtName     = protocol_details[ "protocolName" ];
   
-  
-  
+ 
   //ALEXEY: if stage=="EDITING" && curDir.isEmpty() (NULL)
   /*
         -- that means that Run Completed but Directory was created on different computer
