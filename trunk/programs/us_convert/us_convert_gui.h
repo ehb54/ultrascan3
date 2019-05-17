@@ -140,6 +140,7 @@ class US_ConvertGui : public US_Widgets
       QString       runType;
       QString       oldRunType;
       QString       runID;
+      QString       runID_numeric;
       QString       tmst_fnamei;
 
       QLabel*       lb_description;
