@@ -89,11 +89,13 @@ class US_ExperGui : public US_WidgetsDialog
       void us_exp_is_closed_set_button( void );
       void to_live_update( QMap < QString, QString > & protocol_details );
       void clear_experiment( QString & protocolName);
-     
+      void exp_cleared( void );
+      
    signals:
       void switch_to_live_update( QMap < QString, QString > & protocol_details );
       void set_auto_mode( void );
       void reset_experiment( QString & protocolName);
+      void to_autoflow_records( void );
 };
 
 
@@ -116,12 +118,12 @@ class US_ObservGui : public US_WidgetsDialog
       
  private slots:
       void process_protocol_details( QMap < QString, QString > & protocol_details );
-      void to_post_processing( QString & currDir, QString & protocolName, QString & invID_passed );
+      void to_post_processing( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii );
       void to_experiment( QString & protocolName );
       void to_close_program( void );
  signals:
       void to_xpn_viewer( QMap < QString, QString > & protocol_details );
-      void switch_to_post_processing( QString & currDir, QString & protocolName, QString & invID_passed  );
+      void switch_to_post_processing( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii  );
       void switch_to_experiment( QString & protocolName );
       void close_everything( void );
 };
@@ -146,12 +148,12 @@ class US_PostProdGui : public US_WidgetsDialog
     void resizeEvent(QResizeEvent *event) override;
       
   private slots:
-    void import_data_us_convert( QString & currDir, QString & protocolName, QString & invID_passed  );
+    void import_data_us_convert( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii  );
     void to_analysis( QString & currDir, QString & protocolName );
     void to_experiment( QString & protocolName );
     
   signals:
-    void to_post_prod( QString & currDir, QString & protocolName, QString & invID_passed  );
+    void to_post_prod( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii  );
     void switch_to_analysis( QString & currDir, QString & protocolName );
     void switch_to_exp( QString & protocolName );
 };
@@ -246,7 +248,10 @@ class US_ComProjectMain : public US_Widgets
   int  get_autoflow_records( void );
   QMap < QString, QString > read_autoflow_record( int );
   static int list_all_autoflow_records( QList< QStringList >&, US_DB2* );
-  
+
+  void read_optima_machines( US_DB2* = 0 ); 
+  QMap<QString, QString> currentInstrument;     
+  QList< QMap<QString, QString> > instruments;  
   
 private slots:
   //void reset     ( void );
@@ -259,16 +264,18 @@ private slots:
   //void unable_tabs_buttons( void);  // Slot to unable Tabs and Buttons when user level is low
   //void enable_tabs_buttons( void);  // Slot to enable Tabs and Buttons after protocol is loaded
   void switch_to_live_update( QMap < QString, QString > & protocol_details );
-  void switch_to_post_processing( QString & currDir, QString & protocolName, QString & invID_passed  );
+  void switch_to_post_processing( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii );
   void switch_to_analysis( QString & currDir, QString & protocolName );
   void switch_to_experiment( QString & protocolName );
   //void check_current_stage( void );
   void close_all( void );
   void closeEvent      ( QCloseEvent* );
+
+  void to_autoflow_records( void );
   
 signals:
   void pass_to_live_update( QMap < QString, QString > & protocol_details ); 
-  void import_data_us_convert( QString & currDir, QString & protocolName, QString & invID_passed );
+  void import_data_us_convert( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii );
   void pass_to_analysis( QString & currDir, QString & protocolName );
   void clear_experiment( QString & protocolName);
   void us_comproject_closed( void );

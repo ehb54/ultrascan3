@@ -958,6 +958,7 @@ class US_ExperimentMain : public US_Widgets
     signals:
       void us_exp_is_closed( void );
       void to_live_update( QMap < QString, QString > &protocol_details );
+      void exp_cleared ( void );
       
       
 };

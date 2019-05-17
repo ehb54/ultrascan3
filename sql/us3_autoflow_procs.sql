@@ -151,7 +151,7 @@ BEGIN
       SELECT @OK AS status;
 
       SELECT   protName, cellChNum, tripleNum, duration, runName, expID, 
-      	       runID, status, dataPath, optimaName, runStarted, invID, created
+      	       runID, status, dataPath, optimaName, runStarted, invID, created, corrRadii 
       FROM     autoflow
       WHERE    ID = p_autoflowID;
 
@@ -273,6 +273,46 @@ BEGIN
       UPDATE   autoflow
       SET      dataPath = p_curDir, status = 'EDITING'
       WHERE    runID = p_runID AND status = 'LIVE_UPDATE';
+
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
+
+-- Update autoflow record with corrRadii value at LIVE_UPDATE
+DROP PROCEDURE IF EXISTS update_autoflow_at_live_update_radiicorr$$
+CREATE PROCEDURE update_autoflow_at_live_update_radiicorr ( p_personGUID    CHAR(36),
+                                             	p_password      VARCHAR(80),
+                                       	     	p_runID    	 INT )
+					 
+  MODIFIES SQL DATA  
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflow
+  WHERE      runID = p_runID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    ELSE
+      UPDATE   autoflow
+      SET      corrRadii = 'NO'
+      WHERE    runID = p_runID;
 
     END IF;
 

@@ -221,7 +221,8 @@ void US_ExperimentMain::us_exp_clear( QString &protocolName )
 
   // ALEXEY: do proper reset of everything
   reset();
-  //emit to_live_update( protocol_details );
+  
+  emit exp_cleared();
 }
 
 // When run submitted to Optima
@@ -5304,6 +5305,7 @@ void US_ExperGuiUpload::submitExperiment()
          protocol_details[ "CellChNumber" ]   = QString::number(rpSolut->nschan); // this can be read from protocol in US-lims DB
 	 protocol_details[ "duration" ]       = QString::number(Total_duration);
 	 protocol_details[ "invID_passed" ]   = QString::number(US_Settings::us_inv_ID());
+	 protocol_details[ "correctRadii" ]   = QString("YES");
 	 
          int nwavl_tot = 0;
          for ( int kk = 0; kk < rpRange->nranges; kk++ )
