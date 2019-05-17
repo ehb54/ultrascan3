@@ -220,6 +220,8 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
    QGridLayout* settings    = new QGridLayout;
    QGridLayout* live_params = new QGridLayout;
    QGridLayout* time_params = new QGridLayout;
+
+   auto_mode_bool = true;
    
    navgrec      = 10;
    dbg_level    = US_Settings::us_debug();
@@ -741,6 +743,8 @@ US_XpnDataViewer::US_XpnDataViewer() : US_Widgets()
    setPalette( US_GuiSettings::frameColor() );
 
    QGridLayout* settings = new QGridLayout;
+   
+   auto_mode_bool = false;
 
    navgrec      = 10;
    dbg_level    = US_Settings::us_debug();
@@ -1659,21 +1663,31 @@ void US_XpnDataViewer::updateautoflow_record_atLiveUpdate( void )
        << RunID_to_retrieve
        << currentDir;
 
-   //db->query( qry );
+   db->query( qry );
 
-   // OR
-
-   qDebug() << "Trying to Update Autoflow table AT LIVE_UPDATE!!";
-   int status = db->statusQuery( qry );
-   
-   if ( status == US_DB2::NO_AUTOFLOW_RECORD )
+   //ALEXEY: if there is NO chromatic Abber. data, set corrRadii in autoflow record to 'NO'
+   if ( correctRadii == "NO" )
      {
-       QMessageBox::warning( this,
-			     tr( "Autoflow Record Not Updated" ),
-			     tr( "No autoflow record\n"
-				 "associated with RunID %1 exists!" ).arg( RunID_to_retrieve ) );
-       return;
+       qry.clear();
+       qry << "update_autoflow_at_live_update_radiicorr"
+	   << RunID_to_retrieve;
+
+       db->query( qry );
      }
+   
+   // // OR
+
+   // qDebug() << "Trying to Update Autoflow table AT LIVE_UPDATE!!";
+   // int status = db->statusQuery( qry );
+   
+   // if ( status == US_DB2::NO_AUTOFLOW_RECORD )
+   //   {
+   //     QMessageBox::warning( this,
+   // 			     tr( "Autoflow Record Not Updated" ),
+   // 			     tr( "No autoflow record\n"
+   // 				 "associated with RunID %1 exists!" ).arg( RunID_to_retrieve ) );
+   //     return;
+   //   }
 }
    
 
@@ -1819,17 +1833,16 @@ void US_XpnDataViewer::check_for_sysdata( void )
 	{
 	  if ( !timer_data_reload->isActive() )
 	    {
-
 	      qDebug() << "TRY PROCEED INTO ==5 from check_for_sys_data()....";
 	      // ALEXEY Export AUC data: devise export_auc_auto() function which would return directory name with saved data - to pass to emit signal below... 
 	      export_auc_auto();
 	      
-	      QString mtitle_complete  = tr( "Complete!" );
-	      QString message_done     = tr( "Experiment was completed. Optima data saved..." );
-	      QMessageBox::information( this, mtitle_complete, message_done );
+	      // QString mtitle_complete  = tr( "Complete!" );
+	      // QString message_done     = tr( "Experiment was completed. Optima data saved..." );
+	      // QMessageBox::information( this, mtitle_complete, message_done );
 	      
 	      updateautoflow_record_atLiveUpdate();
-	      emit experiment_complete_auto( currentDir, ProtocolName, invID_passed  );  // Updtade later: what should be passed with signal ??
+	      emit experiment_complete_auto( currentDir, ProtocolName, invID_passed, correctRadii  );  // Updtade later: what should be passed with signal ??
 	
 	      return;
 	    }
@@ -1855,7 +1868,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
 	      
 	      QMessageBox msgBox;
 	      msgBox.setText(tr("Experiment was aborted!"));
-	      msgBox.setInformativeText("The data retrieved so far can be saved or disregarded. If saved, the program will proceed to the next stage (Editing). Otherwise, it will return to the initial stage (Experiment).");
+	      msgBox.setInformativeText("The data retrieved so far can be saved or disregarded. If saved, the program will proceed to the next stage (Editing). Otherwise, it will return to the initial stage (Experiment), all data will be lost.");
 	      msgBox.setWindowTitle(tr("Experiment Abortion"));
 	      QPushButton *Save      = msgBox.addButton(tr("Save Data"), QMessageBox::YesRole);
 	      QPushButton *Ignore    = msgBox.addButton(tr("Ignore Data"), QMessageBox::RejectRole);
@@ -1872,7 +1885,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
 		  QMessageBox::information( this, mtitle_complete, message_done );
 		  
 		  updateautoflow_record_atLiveUpdate();
-		  emit experiment_complete_auto( currentDir, ProtocolName, invID_passed  );  // Updtade later: what should be passed with signal ??
+		  emit experiment_complete_auto( currentDir, ProtocolName, invID_passed, correctRadii  );  // Updtade later: what should be passed with signal ??
 		  return;
 		}
 	      
@@ -1933,8 +1946,8 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
   TripleNumber = protocol_details[ "TripleNumber" ];
   OptimaName   = protocol_details[ "OptimaName" ];               //New
   TotalDuration = protocol_details[ "duration" ];
-
   invID_passed = protocol_details[ "invID_passed" ];
+  correctRadii = protocol_details[ "correctRadii" ];
 
   selectOptimaByName_auto( OptimaName );                         //New  
   
@@ -2269,7 +2282,7 @@ DbgLv(1) << "RDr: allData size" << allData.size();
 	   
 	   QMessageBox msgBox;
 	   msgBox.setText(tr("Experiment was aborted!"));
-	   msgBox.setInformativeText("The data retrieved so far can be saved or disregarded. If saved, the program will proceed to the next stage (Editing). Otherwise, it will return to the initial stage (Experiment).");
+	   msgBox.setInformativeText("The data retrieved so far can be saved or disregarded. If saved, the program will proceed to the next stage (Editing). Otherwise, it will return to the initial stage (Experiment), all data will be lost.");
 	   msgBox.setWindowTitle(tr("Experiment Abortion"));
 	   QPushButton *Save      = msgBox.addButton(tr("Save Data"), QMessageBox::YesRole);
 	   QPushButton *Ignore    = msgBox.addButton(tr("Ignore Data"), QMessageBox::RejectRole);
@@ -2286,7 +2299,7 @@ DbgLv(1) << "RDr: allData size" << allData.size();
 	       QMessageBox::information( this, mtitle_complete, message_done );
 	       
 	       updateautoflow_record_atLiveUpdate();
-	       emit experiment_complete_auto( currentDir, ProtocolName, invID_passed  );  // Updtade later: what should be passed with signal ??
+	       emit experiment_complete_auto( currentDir, ProtocolName, invID_passed, correctRadii  );  // Updtade later: what should be passed with signal ??
 	       return;
 	     }
 	   
@@ -3635,13 +3648,13 @@ DbgLv(1) << "RLd:       NO CHANGE";
 	      // ALEXEY Export AUC data: devise export_auc_auto() function which would return directory name with saved data - to pass to emit signal below... 
 	      export_auc_auto();
 	  
-	      QString mtitle_complete  = tr( "Complete!" );
-	      QString message_done     = tr( "Experiment was completed. Optima data saved..." );
-	      QMessageBox::information( this, mtitle_complete, message_done );
+	      // QString mtitle_complete  = tr( "Complete!" );
+	      // QString message_done     = tr( "Experiment was completed. Optima data saved..." );
+	      // QMessageBox::information( this, mtitle_complete, message_done );
 
 	      updateautoflow_record_atLiveUpdate();
 	      
-	      emit experiment_complete_auto( currentDir, ProtocolName, invID_passed  );  // Updtade later: what should be passed with signal ??
+	      emit experiment_complete_auto( currentDir, ProtocolName, invID_passed, correctRadii  );  // Updtade later: what should be passed with signal ??
 	      //QString temp_protname("DemchukA_exosomes40K_111418");
 	      //emit experiment_complete_auto( currentDir, temp_protname  );  
 	  
@@ -3663,7 +3676,7 @@ DbgLv(1) << "RLd:       NO CHANGE";
 	      
 	      QMessageBox msgBox;
 	      msgBox.setText(tr("Experiment was aborted!"));
-	      msgBox.setInformativeText("The data retrieved so far can be saved or disregarded. If saved, the program will proceed to the next stage (Editing). Otherwise, it will return to the initial stage (Experiment).");
+	      msgBox.setInformativeText("The data retrieved so far can be saved or disregarded. If saved, the program will proceed to the next stage (Editing). Otherwise, it will return to the initial stage (Experiment), all data will be lost.");
 	      msgBox.setWindowTitle(tr("Experiment Abortion"));
 	      QPushButton *Save      = msgBox.addButton(tr("Save Data"), QMessageBox::YesRole);
 	      QPushButton *Ignore    = msgBox.addButton(tr("Ignore Data"), QMessageBox::RejectRole);
@@ -3680,7 +3693,7 @@ DbgLv(1) << "RLd:       NO CHANGE";
 		  QMessageBox::information( this, mtitle_complete, message_done );
 
 		  updateautoflow_record_atLiveUpdate();
-		  emit experiment_complete_auto( currentDir, ProtocolName, invID_passed  );  // Updtade later: what should be passed with signal ??
+		  emit experiment_complete_auto( currentDir, ProtocolName, invID_passed, correctRadii );  // Updtade later: what should be passed with signal ??
 		  return;
 		}
 	      
@@ -3868,12 +3881,15 @@ DbgLv(0) << "NO Chromatic Aberration correction for Interference data";
    // a correction was found
    if (correction.size() > 0)
    {
-     QMessageBox::warning( this,
-            tr( "Chromatic Aberration Correction:" ),
-	    tr( "Wavelength correction data for currently used Optima machine\n"
-		"are found in DB and will be used to correct your data for\n"
-		"chromatic aberration between 190 nm and 800 nm.\n\n"
-		"Exported data will be modified!\n") );
+     if ( !auto_mode_bool  )
+       {
+	 QMessageBox::warning( this,
+			       tr( "Chromatic Aberration Correction:" ),
+			       tr( "Wavelength correction data for currently used Optima machine\n"
+				   "are found in DB and will be used to correct your data for\n"
+				   "chromatic aberration between 190 nm and 800 nm.\n\n"
+				   "Exported data will be modified!\n") );
+       }
      
       // For each triple, get the wavelength; then compute and apply a correction
       for ( int jd = 0; jd < ntripl; jd++ )
@@ -3893,12 +3909,20 @@ DbgLv(0) << "NO Chromatic Aberration correction for Interference data";
                }
             }
          }
-if (jd<3 || (jd+4)>ntripl )
-DbgLv(1) << "c_r:  ri0 ro0" << r_radii[0] << allData[jd].xvalues[0]
- << "rin ron" << r_radii[npoint-1] << allData[jd].xvalues[npoint-1];
+	 if (jd<3 || (jd+4)>ntripl )
+	   DbgLv(1) << "c_r:  ri0 ro0" << r_radii[0] << allData[jd].xvalues[0]
+		    << "rin ron" << r_radii[npoint-1] << allData[jd].xvalues[npoint-1];
       }
    }
+   else // No chromatic abberation in instrument's table
+     {
+       if ( auto_mode_bool  )
+	 {
+	   correctRadii = QString("NO");
+	 }
+     }
 }
+
 
 /*
 // Apply a chromatic aberration correction to auc data radius values       <--- OLD function

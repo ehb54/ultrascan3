@@ -113,7 +113,7 @@ void US_SelectItem::build_layout( const QString titl )
        
        le_info->setText(tr( "<ul><li>Information on one or more experimental methods submitted to Bechman Optima(s) is available. "
 			    "You can reattach to the job by selecting the run from the list below. "
-			    "Alternatively, you can define new experiment method. </ul></li>" ));
+			    "Alternatively, you can define and submit a new experiment method to the availabale Optima instrument(s). </ul></li>" ));
        
        main->addWidget( le_info );
      }

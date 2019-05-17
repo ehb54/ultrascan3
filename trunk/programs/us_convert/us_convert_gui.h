@@ -46,6 +46,9 @@ class US_ConvertGui : public US_Widgets
       US_SimulationParameters simparams;      //!< Simulation parameters
       QList< double >         subsets;        //!< A list of subset boundaries
 
+      void us_mode_passed  ( void );
+      bool usmode;
+
   signals:
       void saving_complete_auto( QString &, QString & );
       void saving_complete_back_to_exp( QString & );
@@ -299,7 +302,7 @@ class US_ConvertGui : public US_Widgets
       */
       void assign_investigator( int );
 
-      void import_data_auto  (QString &, QString &, QString &);
+      void import_data_auto  (QString &, QString &, QString &, QString &);
       
       void import            ( void );
       void reimport          ( void );

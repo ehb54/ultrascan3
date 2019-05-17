@@ -96,6 +96,8 @@ class US_XpnDataViewer : public US_Widgets
      US_XpnDataViewer(QString auto_mode);
 
   private:
+     bool auto_mode_bool;
+     
      QVector< US_DataIO::RawData >   allData;    //!< All AUC raw data
 
      QVector< double > r_radii;     //!< Loaded radii
@@ -280,6 +282,8 @@ class US_XpnDataViewer : public US_Widgets
      QString        OptimaName;          //New
      QString        TotalDuration;       //New
      QString        invID_passed;
+     QString        correctRadii;
+     
      int            ElapsedTimeOffset;
 
      void           timeToList( int&, QList< int >& );
@@ -347,7 +351,7 @@ class US_XpnDataViewer : public US_Widgets
      void test_optima_connection( void );              //New
      
    signals:
-     void experiment_complete_auto( QString &, QString &, QString & );
+     void experiment_complete_auto( QString &, QString &, QString &, QString & );
      void return_to_experiment( QString & );
      void close_program( void );
 };

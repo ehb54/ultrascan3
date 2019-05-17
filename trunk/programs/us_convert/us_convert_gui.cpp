@@ -47,6 +47,8 @@ US_ConvertGui::US_ConvertGui(QString auto_mode) : US_Widgets()
 {
    ExpData.invID = US_Settings::us_inv_ID();
 
+   usmode = false;
+
    // Ensure data directories are there
    QDir dir;
    dir.mkpath( US_Settings::workBaseDir() );
@@ -544,6 +546,8 @@ DbgLv(1) << "CGui: reset complete";
 US_ConvertGui::US_ConvertGui() : US_Widgets()
 {
    ExpData.invID = US_Settings::us_inv_ID();
+
+   usmode = false;
 
    // Ensure data directories are there
    QDir dir;
@@ -1112,7 +1116,14 @@ void US_ConvertGui::toleranceValueChanged( double )
    reimport();
 }
 
-void US_ConvertGui::import_data_auto( QString &currDir, QString &protocolName, QString &invID_passed )
+void US_ConvertGui::us_mode_passed( void )
+{
+  qDebug() << "US_Convert:   US_MODE SIGNAL: ";
+  usmode = true;
+}
+
+
+void US_ConvertGui::import_data_auto( QString &currDir, QString &protocolName, QString &invID_passed, QString &correctRadii )
 {
   // ALEXEY TO BE ADDED...
   /* 
@@ -1127,7 +1138,59 @@ void US_ConvertGui::import_data_auto( QString &currDir, QString &protocolName, Q
   qDebug() << "US_CONVERT: ExpData.invID, invID_passed: " << ExpData.invID << ", " << invID_passed;
   
   int impType = getImports_auto( currDir );
-  ProtocolName_auto = protocolName;   
+  ProtocolName_auto = protocolName;
+
+  //ALEXEY: if there is no radii_correction data found, return for commercial, and present dialogue for academic:
+  if ( correctRadii == "NO" )
+    {
+      if ( !usmode ) // us_comprojetc
+	{
+	  //return because in commercial ver. ther must be radii corrections for instrument!!!
+	  QMessageBox::information( this,
+				    tr( "No Chromatic Aberration Correction Found: " ),
+				    tr( "NO wavelength correction data for currently used \n"
+					"Optima machine found in DB! \n"
+					"Data will NOT be imported; Program will be reset.") );
+	   
+	   //ALEXY: need to delete autoflow record here
+	   delete_autoflow_record();
+	   emit saving_complete_back_to_exp( ProtocolName_auto );
+	   return;
+	  
+	}
+      else          // us_comproject_academoc / Data Acquisition  
+	{
+	  //dialog
+	  
+	  QMessageBox msgBox;
+	  msgBox.setText(tr("No Chromatic Aberration Correction Found!"));
+	  msgBox.setInformativeText( tr("NO wavelength correction data for currently used \n"
+					"Optima machine found in DB! \n"
+					"Data were NOT modified ! \n\n"
+					"You may proceed with importing data by clicking <b>Continue</b> \n" 
+					"OR disregard data and reset the program by clicking <b>Ignore Data</b> ") );
+	  
+	  msgBox.setWindowTitle(tr("Data Not Modified"));
+	  QPushButton *Continue  = msgBox.addButton(tr("Continue"), QMessageBox::YesRole);
+	  QPushButton *Ignore    = msgBox.addButton(tr("Ignore Data"), QMessageBox::RejectRole);
+	  
+	  msgBox.setIcon(QMessageBox::Question);
+	  msgBox.exec();
+
+	  if (msgBox.clickedButton() == Continue)
+	    {
+	      msgBox.accept();
+	    }
+	  else if ( msgBox.clickedButton() == Ignore )
+	    {
+	      delete_autoflow_record();
+	      emit saving_complete_back_to_exp( ProtocolName_auto );
+	      return;
+	    }
+	}
+    }
+
+  
 
    if ( impType == 1 )
    {
@@ -1536,54 +1599,83 @@ DbgLv(1) << "rIA: trx" << trx << "uuid" << uuidst << importDir;
    le_runID ->setText( runID );
    scanTolerance = 5.0;
 
-   // //ALEXEY: Remove Duplicates in Channel's description
-   // for (int i = 0; i < allData.size(); i++)
-   //   {
-   //     qDebug() << "Description BEFORE: " << i << ", " << allData[ i ].description;
+   // //ALEXEY: Remove Duplicates in Channel's description: Simpler solution
+   //  for (int i = 0; i < allData.size(); i++)
+   //    {
+   // 	qDebug() << "Description BEFORE: " << i << ", " << allData[ i ].description;
+	
+   // 	QString desc   = allData[ i ].description;
+   // 	desc.replace(",", "");
+   // 	desc.replace(";", "");
 
-   //     QString desc   = allData[ i ].description;
-   //     desc.replace(",", "");
-   //     QString desc_a = desc.split(QRegExp(";"))[0];
-   //     QString desc_b = desc.split(QRegExp(";"))[1];
+   // 	QStringList desc_list = desc.split(QRegExp("\\s+"));
+   // 	desc_list.removeDuplicates();
+	
+   // 	QString final_desc("");
+   // 	for ( int i=0; i<desc_list.size(); i++ )
+   // 	  {
+   // 	    if ( desc_list[i].isEmpty() )
+   // 	      continue;
+   // 	    final_desc +=  desc_list[i];
 
-   //     //list of channel A desc
-   //     QStringList desc_list_a = desc_a.split(QRegExp("\\s+"));
-   //     desc_list_a.removeDuplicates();
+   // 	    if ( i != desc_list.size() - 1)
+   // 	      final_desc += QString(" ");
+   // 	  }
 
-   //     //list of channel B desc
-   //     QStringList desc_list_b = desc_b.split(QRegExp("\\s+"));
-   //     desc_list_b.removeDuplicates();
+   // 	allData[ i ].description = final_desc;
+   // 	qDebug() << "Description AFTER:  " << i << ", " << allData[ i ].description;
+   //    }
+     
 
-   //     QString final_desc("");
-       
-   //     for ( int i=0; i<desc_list_a.size(); i++ )
-   // 	 {
-   // 	   if ( desc_list_a[i].isEmpty() )
-   // 	     continue;
-   // 	   final_desc +=  desc_list_a[i];
+    
+     // //ALEXEY: Remove Duplicates in Channel's description
+     // for (int i = 0; i < allData.size(); i++)
+     //   {
+     //     qDebug() << "Description BEFORE: " << i << ", " << allData[ i ].description;
 
-   // 	   if ( i != desc_list_a.size() - 1)
-   // 	     final_desc += QString(" ");
-   // 	   else
-   // 	     final_desc += QString("; ");
+     //     QString desc   = allData[ i ].description;
+     //     desc.replace(",", "");
+     //     QString desc_a = desc.split(QRegExp(";"))[0];
+     //     QString desc_b = desc.split(QRegExp(";"))[1];
 
-   // 	 }
-   //     for ( int i=0; i<desc_list_b.size(); i++ )
-   // 	 {
-   // 	   if ( desc_list_b[i].isEmpty() )
-   // 	     continue;
-   // 	   final_desc +=  desc_list_b[i];
+     //     //list of channel A desc
+     //     QStringList desc_list_a = desc_a.split(QRegExp("\\s+"));
+     //     desc_list_a.removeDuplicates();
 
-   // 	   if ( i != desc_list_b.size() - 1)
-   // 	     final_desc += QString(" ");
-   // 	   // else
-   // 	   //   final_desc += QString("; ");
-	   
-   // 	 }
-       
-   //     allData[ i ].description = final_desc;
-   //     qDebug() << "Description AFTER:  " << i << ", " << allData[ i ].description;
-   //   }
+     //     //list of channel B desc
+     //     QStringList desc_list_b = desc_b.split(QRegExp("\\s+"));
+     //     desc_list_b.removeDuplicates();
+
+     //     QString final_desc("");
+    
+     //     for ( int i=0; i<desc_list_a.size(); i++ )
+     // 	 {
+     // 	   if ( desc_list_a[i].isEmpty() )
+     // 	     continue;
+     // 	   final_desc +=  desc_list_a[i];
+
+     // 	   if ( i != desc_list_a.size() - 1)
+     // 	     final_desc += QString(" ");
+     // 	   else
+     // 	     final_desc += QString("; ");
+
+     // 	 }
+     //     for ( int i=0; i<desc_list_b.size(); i++ )
+     // 	 {
+     // 	   if ( desc_list_b[i].isEmpty() )
+     // 	     continue;
+     // 	   final_desc +=  desc_list_b[i];
+
+     // 	   if ( i != desc_list_b.size() - 1)
+     // 	     final_desc += QString(" ");
+     // 	   // else
+     // 	   //   final_desc += QString("; ");
+    	   
+     // 	 }
+    
+     //     allData[ i ].description = final_desc;
+     //     qDebug() << "Description AFTER:  " << i << ", " << allData[ i ].description;
+     //   }
        
    if ( ! init_output_data() )
       return;
@@ -4715,27 +4807,30 @@ DbgLv(1) << "Writing to disk";
    } // End of 'else' loop for multispeed case
 
 // x  x  x  x  x
-   if ( !us_convert_auto_mode )
+   if ( us_convert_auto_mode )   // if us_comproject OR us_comproject_academic
      {
-       QMessageBox::information( this,
-				 tr( "Save is Complete" ),
-				 tr( "The save of all data and reports is complete." ) );
-
-       //ALEXY: need to delete autoflow record here
-       delete_autoflow_record();
-       emit saving_complete_back_to_exp( ProtocolName_auto );
-       return;
-     }
-   else
-     {
-       // ALEXEY: // If "AUTO" - emit signal to pass to stage 4. Analysis
-       QMessageBox::information( this,
-				 tr( "Save is Complete" ),
-				 tr( "The save of all data and reports is complete.\n\n"
-				     "The program will switch to Analysis stage." ) );
-
-       // Either emit ONLY if not US_MODE, or do NOT connect with slot on us_comproject...
-       emit saving_complete_auto( currentDir, ProtocolName_auto  );   
+       if ( usmode )             // us_comproject_academic
+	 {
+	   QMessageBox::information( this,
+				     tr( "Save is Complete" ),
+				     tr( "The save of all data and reports is complete." ) );
+	   
+	   //ALEXY: need to delete autoflow record here
+	   delete_autoflow_record();
+	   emit saving_complete_back_to_exp( ProtocolName_auto );
+	   return;
+	 }
+       else                       // us_comproject
+	 {
+	   // ALEXEY: // If "AUTO" - emit signal to pass to stage 4. Analysis
+	   QMessageBox::information( this,
+				     tr( "Save is Complete" ),
+				     tr( "The save of all data and reports is complete.\n\n"
+					 "The program will switch to Analysis stage." ) );
+	   
+	   // Either emit ONLY if not US_MODE, or do NOT connect with slot on us_comproject...
+	   emit saving_complete_auto( currentDir, ProtocolName_auto  );   
+	 }
      }
 }
 
