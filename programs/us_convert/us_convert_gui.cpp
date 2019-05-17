@@ -1137,10 +1137,14 @@ void US_ConvertGui::import_data_auto( QString &currDir, QString &protocolName, Q
 
   qDebug() << "US_CONVERT: ExpData.invID, invID_passed: " << ExpData.invID << ", " << invID_passed;
   
+  QStringList currDir_list = currentDir.split("-run");
+  runID_numeric = currDir_list[ currDir_list.size() - 1 ];
+  runID_numeric.replace("/","");
+  
   int impType = getImports_auto( currDir );
   ProtocolName_auto = protocolName;
 
-  //ALEXEY: if there is no radii_correction data found, return for commercial, and present dialogue for academic:
+  //ALEXEY: if there is no radii_correction data found, return for commercial, and present dialog for academic:
   if ( correctRadii == "NO" )
     {
       if ( !usmode ) // us_comprojetc
@@ -1593,7 +1597,12 @@ DbgLv(1) << "rIA: trx" << trx << "uuid" << uuidst << importDir;
    // //TEMP
    // runID += QString("-test");
      
-   qDebug() << "RUNID from files[0]: files[0]" << fname << ", runID: " << runID;  
+   qDebug() << "RUNID from files[0]: files[0]" << fname << ", runID: " << runID;
+   // QStringList currDir_list = currentDir.split("-run");
+   // QString runID_num = currDir_list[ currDir_list.size() - 1 ];
+   // runID_num.replace("/","");
+   // qDebug() << "Exp. RunID: " << runID_num;
+   
      
    le_runID2->setText( runID );
    le_runID ->setText( runID );
@@ -4851,7 +4860,7 @@ void US_ConvertGui::delete_autoflow_record( void )
 
    QStringList qry;
    qry << "delete_autoflow_record"
-       << runID;
+       << runID_numeric;
 
    //db->query( qry );
 
