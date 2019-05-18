@@ -464,6 +464,14 @@ void US_ComProjectMain::check_current_stage( void )
     {
       //ALEXEY: define what to do if some Optima(s) are occupied
       // should emit signal sending list of optima's in use to us_experiment.
+
+      QString list_instruments_in_use = occupied_instruments.join(", ");
+      QMessageBox::warning( this, tr( "Occupied Instruments" ),
+			    tr( "The following Optima instrument(s) \n"
+				"are currently in use: \n\n"
+				"%1 \n\n"
+				"You will not be able to submit another run \n"
+				"to these instruments at the moment.").arg( list_instruments_in_use ) );
       
       define_new_experiment( occupied_instruments );
       return;
@@ -710,6 +718,8 @@ void US_ComProjectMain::define_new_experiment( QStringList & occupied_instrument
 {
   tabWidget->setCurrentIndex( 0 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ?? 
 
+  qDebug() << "In define_new_experiment( QStringList & occupied_instruments )";
+    
   emit pass_used_instruments( occupied_instruments );
 }
 
@@ -947,6 +957,7 @@ void US_ExperGui::resizeEvent(QResizeEvent *event)
 
 void US_ExperGui::pass_used_instruments( QStringList & occupied_instruments )
 {
+  qDebug() << "In US_ExperGui::pass_used_instruments( QStringList & occupied_instruments )";
   emit define_used_instruments( occupied_instruments );
 }
 

@@ -184,7 +184,7 @@ void US_ExperimentMain::reset( void )
 
 }
 
-void US_ExperimentMain::exclude_used_instrument( QStringList & occupied_instruments )
+void US_ExperimentMain::exclude_used_instruments( QStringList & occupied_instruments )
 {
   instruments_in_use.clear();
   qDebug() << "OCCUPIED IINSTRUMENTS: " << occupied_instruments;
