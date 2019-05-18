@@ -43,6 +43,8 @@ class US_GUI_EXTERN US_SelectItem : public US_WidgetsDialog
       US_SelectItem( QList< QStringList >&, QStringList&, const QString,
                      QList< int >*, const int = (-2) );
 
+      QPushButton* pb_cancel;
+
    private:
       QList< QStringList >&  items;
       QStringList&           hdrs;

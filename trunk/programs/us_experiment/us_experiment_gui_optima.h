@@ -914,6 +914,9 @@ class US_ExperimentMain : public US_Widgets
       void    auto_mode_passed( void );
       void    us_mode_passed( void );
 
+      void    exclude_used_instrument( QStringList &);
+      QStringList instruments_in_use;
+
       int tabHeight;
       int buttLHeight;
       

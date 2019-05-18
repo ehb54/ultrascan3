@@ -169,8 +169,10 @@ void US_SelectItem::build_layout( const QString titl )
    if ( autoflow_button )
      cancel_pb_label = tr("Define Another Experiment");
           
-   QPushButton* pb_cancel = us_pushbutton( cancel_pb_label  );
+   //QPushButton* pb_cancel = us_pushbutton( cancel_pb_label  );
 
+   pb_cancel = us_pushbutton( cancel_pb_label  );
+   
    QString accept_pb_label( tr( "Select Item" ) );
    if ( autoflow_button )
      accept_pb_label = tr("Select Optima Run to Follow");
