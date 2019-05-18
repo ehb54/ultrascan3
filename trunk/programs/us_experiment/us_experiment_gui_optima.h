@@ -914,7 +914,6 @@ class US_ExperimentMain : public US_Widgets
       void    auto_mode_passed( void );
       void    us_mode_passed( void );
 
-      void    exclude_used_instrument( QStringList &);
       QStringList instruments_in_use;
 
       int tabHeight;
@@ -957,7 +956,7 @@ class US_ExperimentMain : public US_Widgets
       void us_exp_clear( QString &protocolName );
       //void auto_mode_passed( void ); 
       void reset     ( void );
-      
+      void    exclude_used_instruments( QStringList &);
     signals:
       void us_exp_is_closed( void );
       void to_live_update( QMap < QString, QString > &protocol_details );
