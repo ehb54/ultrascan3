@@ -221,7 +221,8 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
    QGridLayout* live_params = new QGridLayout;
    QGridLayout* time_params = new QGridLayout;
 
-   auto_mode_bool = true;
+   auto_mode_bool     = true;
+   experimentAborted  = false;
    
    navgrec      = 10;
    dbg_level    = US_Settings::us_debug();
@@ -745,7 +746,8 @@ US_XpnDataViewer::US_XpnDataViewer() : US_Widgets()
    QGridLayout* settings = new QGridLayout;
    
    auto_mode_bool = false;
-
+   experimentAborted  = false;
+   
    navgrec      = 10;
    dbg_level    = US_Settings::us_debug();
    QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
@@ -1646,6 +1648,9 @@ void US_XpnDataViewer::delete_autoflow_record( void )
 //Delete autoflow record upon Run abortion
 void US_XpnDataViewer::updateautoflow_record_atLiveUpdate( void )
 {
+
+   details_at_live_update[ "runID" ] = RunID_to_retrieve;
+  
    // Check DB connection
    US_Passwd pw;
    QString masterpw = pw.getPasswd();
@@ -1665,6 +1670,8 @@ void US_XpnDataViewer::updateautoflow_record_atLiveUpdate( void )
 
    db->query( qry );
 
+   details_at_live_update[ "dataPath" ] = currentDir;
+
    //ALEXEY: if there is NO chromatic Abber. data, set corrRadii in autoflow record to 'NO'
    if ( correctRadii == "NO" )
      {
@@ -1673,6 +1680,20 @@ void US_XpnDataViewer::updateautoflow_record_atLiveUpdate( void )
 	   << RunID_to_retrieve;
 
        db->query( qry );
+
+       details_at_live_update[ "correctRadii" ] = QString("NO"); //currentDir;
+     }
+
+   //ALEXEY: if run was aborted manually from the Optima panel, set expAborted to 'YES'
+   if ( experimentAborted )
+     {
+       qry.clear();
+       qry << "update_autoflow_at_live_update_expaborted"
+	   << RunID_to_retrieve;
+
+       db->query( qry );
+
+       details_at_live_update[ "expAborted" ] = QString("YES");
      }
    
    // // OR
@@ -1812,15 +1833,18 @@ void US_XpnDataViewer::check_for_sysdata( void )
   
   int exp_status = CheckExpComplete_auto( RunID_to_retrieve  );
    
-  if ( exp_status == 5 )
+  if ( exp_status == 5 || exp_status == 0 )
     {
+      if ( exp_status == 0)
+	experimentAborted  = true;
+      
       //timer_check_sysdata->stop();
       //ALEXEY: This timer cannot be stopped from another thread, but can be dealt with signal/slot upon Qthread termination..
       //        disconnection maybe enough...
       disconnect(timer_check_sysdata, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
       sys_thread->quit(); // ALEXEY: does this emit Qthread's finished() signal??
       
-      qDebug() << "ExpStat: 5  - sys_timer STOPPED here: ";
+      qDebug() << "ExpStat: 5/0  - sys_timer STOPPED here: ";
 
       if ( !timer_check_sysdata->isActive() )
 	 qDebug() << "QTimer timer_check_sysdata STOPPED by quitting the QThread !!! ";
@@ -1833,8 +1857,8 @@ void US_XpnDataViewer::check_for_sysdata( void )
 	{
 	  if ( !timer_data_reload->isActive() )
 	    {
-	      qDebug() << "TRY PROCEED INTO ==5 from check_for_sys_data()....";
-	      // ALEXEY Export AUC data: devise export_auc_auto() function which would return directory name with saved data - to pass to emit signal below... 
+	      qDebug() << "TRY PROCEED INTO == 5/0 from check_for_sys_data()....";
+
 	      export_auc_auto();
 	      
 	      // QString mtitle_complete  = tr( "Complete!" );
@@ -1842,63 +1866,67 @@ void US_XpnDataViewer::check_for_sysdata( void )
 	      // QMessageBox::information( this, mtitle_complete, message_done );
 	      
 	      updateautoflow_record_atLiveUpdate();
-	      emit experiment_complete_auto( currentDir, ProtocolName, invID_passed, correctRadii  );  // Updtade later: what should be passed with signal ??
-	
+	      //emit experiment_complete_auto( currentDir, ProtocolName, invID_passed, correctRadii  );  // Updtade later: what should be passed with signal ??
+
+	      reset();
+	      emit experiment_complete_auto( details_at_live_update );
+	      
 	      return;
 	    }
 	}
     }
   
   
-  if ( exp_status == 0 ) //ALEXEY should be == 3 as per documentation
-    {
-      //timer_check_sysdata->stop();
-      disconnect(timer_check_sysdata, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
-      sys_thread->quit(); // ALEXEY: does this emit Qthread's finished() signal??
-      qDebug() << "ExpStat: 3  - sys_timer STOPPED here: ";
+  // if ( exp_status == 0 ) //ALEXEY should be == 3 as per documentation
+  //   {
+  //     experimentAborted  = true;
+  //     //timer_check_sysdata->stop();
+  //     disconnect(timer_check_sysdata, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+  //     sys_thread->quit(); // ALEXEY: does this emit Qthread's finished() signal??
+  //     qDebug() << "ExpStat: 3  - sys_timer STOPPED here: ";
       
-      rpm_box->setSpeed( 0 );
-      le_remaining->setText( "00:00:00" );
+  //     rpm_box->setSpeed( 0 );
+  //     le_remaining->setText( "00:00:00" );
       
-      if ( !timer_all_data_avail->isActive() ) // Check if reload_data Timer is stopped
-	{
-	  if ( !timer_data_reload->isActive() )
-	    {
-	      // Ask if data retrived so far should be saved:
+  //     if ( !timer_all_data_avail->isActive() ) // Check if reload_data Timer is stopped
+  // 	{
+  // 	  if ( !timer_data_reload->isActive() )
+  // 	    {
+  // 	      // Ask if data retrived so far should be saved:
 	      
-	      QMessageBox msgBox;
-	      msgBox.setText(tr("Experiment was aborted!"));
-	      msgBox.setInformativeText("The data retrieved so far can be saved or disregarded. If saved, the program will proceed to the next stage (Editing). Otherwise, it will return to the initial stage (Experiment), all data will be lost.");
-	      msgBox.setWindowTitle(tr("Experiment Abortion"));
-	      QPushButton *Save      = msgBox.addButton(tr("Save Data"), QMessageBox::YesRole);
-	      QPushButton *Ignore    = msgBox.addButton(tr("Ignore Data"), QMessageBox::RejectRole);
+  // 	      QMessageBox msgBox;
+  // 	      msgBox.setText(tr("Experiment was aborted!"));
+  // 	      msgBox.setInformativeText("The data retrieved so far can be saved or disregarded. If saved, the program will proceed to the next stage (Editing). Otherwise, it will return to the initial stage (Experiment), all data will be lost.");
+  // 	      msgBox.setWindowTitle(tr("Experiment Abortion"));
+  // 	      QPushButton *Save      = msgBox.addButton(tr("Save Data"), QMessageBox::YesRole);
+  // 	      QPushButton *Ignore    = msgBox.addButton(tr("Ignore Data"), QMessageBox::RejectRole);
 	      
-	      msgBox.setIcon(QMessageBox::Question);
-	      msgBox.exec();
+  // 	      msgBox.setIcon(QMessageBox::Question);
+  // 	      msgBox.exec();
 	      
-	      if (msgBox.clickedButton() == Save)
-		{
-		  export_auc_auto();
+  // 	      if (msgBox.clickedButton() == Save)
+  // 		{
+  // 		  export_auc_auto();
 		  
-		  QString mtitle_complete  = tr( "Complete!" );
-		  QString message_done     = tr( "Experiment was completed. Optima data saved..." );
-		  QMessageBox::information( this, mtitle_complete, message_done );
+  // 		  QString mtitle_complete  = tr( "Complete!" );
+  // 		  QString message_done     = tr( "Experiment was completed. Optima data saved..." );
+  // 		  QMessageBox::information( this, mtitle_complete, message_done );
 		  
-		  updateautoflow_record_atLiveUpdate();
-		  emit experiment_complete_auto( currentDir, ProtocolName, invID_passed, correctRadii  );  // Updtade later: what should be passed with signal ??
-		  return;
-		}
+  // 		  updateautoflow_record_atLiveUpdate();
+  // 		  emit experiment_complete_auto( currentDir, ProtocolName, invID_passed, correctRadii  );  // Updtade later: what should be passed with signal ??
+  // 		  return;
+  // 		}
 	      
-	      else if (msgBox.clickedButton() == Ignore)
-		{
-		  reset();
-		  delete_autoflow_record();
-		  emit return_to_experiment( ProtocolName  ); 
-		  return;
-		}
-	    }  
-	}
-    }
+  // 	      else if (msgBox.clickedButton() == Ignore)
+  // 		{
+  // 		  reset();
+  // 		  delete_autoflow_record();
+  // 		  emit return_to_experiment( ProtocolName  ); 
+  // 		  return;
+  // 		}
+  // 	    }  
+  // 	}
+  //   }
   
 
    qDebug() << "sys_timer RAN here: ";
@@ -1942,12 +1970,15 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
   ExpID_to_use = protocol_details["experimentId"];   
   ProtocolName = protocol_details["protocolName"];
   RunName      = protocol_details[ "experimentName" ];
-  CellChNumber   = protocol_details[ "CellChNumber" ];
+  CellChNumber = protocol_details[ "CellChNumber" ];
   TripleNumber = protocol_details[ "TripleNumber" ];
   OptimaName   = protocol_details[ "OptimaName" ];               //New
   TotalDuration = protocol_details[ "duration" ];
   invID_passed = protocol_details[ "invID_passed" ];
   correctRadii = protocol_details[ "correctRadii" ];
+  expAborted   = protocol_details[ "expAborted" ];
+
+  details_at_live_update = protocol_details;
 
   selectOptimaByName_auto( OptimaName );                         //New  
   
@@ -2273,45 +2304,66 @@ DbgLv(1) << "RDr: allData size" << allData.size();
    //ALEXEY: Add Exp. Abortion Exception HERE... 
    if ( CheckExpComplete_auto( RunID_to_retrieve ) == 0 ) //ALEXEY should be == 3 as per documentation
      {
+       experimentAborted  = true;
+       
        timer_all_data_avail->stop();
        disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
        
        if ( !timer_check_sysdata->isActive()  ) // Check if sys_data Timer is stopped
 	 {
-	   // Ask if data retrived so far should be saved:
-	   
-	   QMessageBox msgBox;
-	   msgBox.setText(tr("Experiment was aborted!"));
-	   msgBox.setInformativeText("The data retrieved so far can be saved or disregarded. If saved, the program will proceed to the next stage (Editing). Otherwise, it will return to the initial stage (Experiment), all data will be lost.");
-	   msgBox.setWindowTitle(tr("Experiment Abortion"));
-	   QPushButton *Save      = msgBox.addButton(tr("Save Data"), QMessageBox::YesRole);
-	   QPushButton *Ignore    = msgBox.addButton(tr("Ignore Data"), QMessageBox::RejectRole);
-	   
-	   msgBox.setIcon(QMessageBox::Question);
-	   msgBox.exec();
-	   
-	   if (msgBox.clickedButton() == Save)
-	     {
-	       export_auc_auto();
-	       
-	       QString mtitle_complete  = tr( "Complete!" );
-	       QString message_done     = tr( "Experiment was completed. Optima data saved..." );
-	       QMessageBox::information( this, mtitle_complete, message_done );
-	       
-	       updateautoflow_record_atLiveUpdate();
-	       emit experiment_complete_auto( currentDir, ProtocolName, invID_passed, correctRadii  );  // Updtade later: what should be passed with signal ??
-	       return;
-	     }
-	   
-	   else if (msgBox.clickedButton() == Ignore)
-	     {
-	       reset();
-	       delete_autoflow_record();
-	       emit return_to_experiment( ProtocolName  ); 
-	       return;
-	     }
+	   export_auc_auto();
+	   updateautoflow_record_atLiveUpdate();
+
+	   reset();
+	   emit experiment_complete_auto( details_at_live_update  ); 
+	   return;
 	 }
-     }      
+     }
+   
+   // //ALEXEY: Add Exp. Abortion Exception HERE... 
+   // if ( CheckExpComplete_auto( RunID_to_retrieve ) == 0 ) //ALEXEY should be == 3 as per documentation
+   //   {
+   //     experimentAborted  = true;
+       
+   //     timer_all_data_avail->stop();
+   //     disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+       
+   //     if ( !timer_check_sysdata->isActive()  ) // Check if sys_data Timer is stopped
+   // 	 {
+   // 	   // Ask if data retrived so far should be saved:
+	   
+   // 	   QMessageBox msgBox;
+   // 	   msgBox.setText(tr("Experiment was aborted!"));
+   // 	   msgBox.setInformativeText("The data retrieved so far can be saved or disregarded. If saved, the program will proceed to the next stage (Editing). Otherwise, it will return to the initial stage (Experiment), all data will be lost.");
+   // 	   msgBox.setWindowTitle(tr("Experiment Abortion"));
+   // 	   QPushButton *Save      = msgBox.addButton(tr("Save Data"), QMessageBox::YesRole);
+   // 	   QPushButton *Ignore    = msgBox.addButton(tr("Ignore Data"), QMessageBox::RejectRole);
+	   
+   // 	   msgBox.setIcon(QMessageBox::Question);
+   // 	   msgBox.exec();
+	   
+   // 	   if (msgBox.clickedButton() == Save)
+   // 	     {
+   // 	       export_auc_auto();
+	       
+   // 	       QString mtitle_complete  = tr( "Complete!" );
+   // 	       QString message_done     = tr( "Experiment was completed. Optima data saved..." );
+   // 	       QMessageBox::information( this, mtitle_complete, message_done );
+	       
+   // 	       updateautoflow_record_atLiveUpdate();
+   // 	       emit experiment_complete_auto( currentDir, ProtocolName, invID_passed, correctRadii  );  // Updtade later: what should be passed with signal ??
+   // 	       return;
+   // 	     }
+	   
+   // 	   else if (msgBox.clickedButton() == Ignore)
+   // 	     {
+   // 	       reset();
+   // 	       delete_autoflow_record();
+   // 	       emit return_to_experiment( ProtocolName  ); 
+   // 	       return;
+   // 	     }
+   // 	 }
+   //   }      
    
    
    
@@ -3637,8 +3689,11 @@ DbgLv(1) << "RLd:       NO CHANGE";
       /*** Check Experiement Status: if completed, kill the timer, export the data into AUC format, return, signal to switch panels in US_comproject ***/
       int statusExp = CheckExpComplete_auto( RunID_to_retrieve  );
 
-      if ( statusExp == 5 )
+      if ( statusExp == 5 || statusExp == 0 )
 	{
+	  if ( statusExp == 0 )
+	    experimentAborted  = true;
+	  
 	  timer_data_reload->stop();
 	  disconnect(timer_data_reload, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
 
@@ -3653,59 +3708,61 @@ DbgLv(1) << "RLd:       NO CHANGE";
 	      // QMessageBox::information( this, mtitle_complete, message_done );
 
 	      updateautoflow_record_atLiveUpdate();
+	      reset();
 	      
-	      emit experiment_complete_auto( currentDir, ProtocolName, invID_passed, correctRadii  );  // Updtade later: what should be passed with signal ??
-	      //QString temp_protname("DemchukA_exosomes40K_111418");
-	      //emit experiment_complete_auto( currentDir, temp_protname  );  
-	  
+	      //emit experiment_complete_auto( currentDir, ProtocolName, invID_passed, correctRadii  );  // Updtade later: what should be passed with signal ??
+	      emit experiment_complete_auto( details_at_live_update );
+	      
 	      return;
 	    }
 	}
 
       
-      /** Experiment Aborted ***/
+      // /** Experiment Aborted ***/
       
-      if ( statusExp == 0 ) //ALEXEY should be == 3 as per documentation
-	{
-	  timer_data_reload->stop();
-	  disconnect(timer_data_reload, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+      // if ( statusExp == 0 ) //ALEXEY should be == 3 as per documentation
+      // 	{
+      // 	  experimentAborted  = true;
 
-	  if ( !timer_check_sysdata->isActive()  ) // Check if sys_data Timer is stopped
-	    {
-	      // Ask if data retrived so far should be saved:
-	      
-	      QMessageBox msgBox;
-	      msgBox.setText(tr("Experiment was aborted!"));
-	      msgBox.setInformativeText("The data retrieved so far can be saved or disregarded. If saved, the program will proceed to the next stage (Editing). Otherwise, it will return to the initial stage (Experiment), all data will be lost.");
-	      msgBox.setWindowTitle(tr("Experiment Abortion"));
-	      QPushButton *Save      = msgBox.addButton(tr("Save Data"), QMessageBox::YesRole);
-	      QPushButton *Ignore    = msgBox.addButton(tr("Ignore Data"), QMessageBox::RejectRole);
-	      
-	      msgBox.setIcon(QMessageBox::Question);
-	      msgBox.exec();
-	      
-	      if (msgBox.clickedButton() == Save)
-		{
-		  export_auc_auto();
+      // 	  timer_data_reload->stop();
+      // 	  disconnect(timer_data_reload, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
 
-		  QString mtitle_complete  = tr( "Complete!" );
-		  QString message_done     = tr( "Experiment was completed. Optima data saved..." );
-		  QMessageBox::information( this, mtitle_complete, message_done );
-
-		  updateautoflow_record_atLiveUpdate();
-		  emit experiment_complete_auto( currentDir, ProtocolName, invID_passed, correctRadii );  // Updtade later: what should be passed with signal ??
-		  return;
-		}
+      // 	  if ( !timer_check_sysdata->isActive()  ) // Check if sys_data Timer is stopped
+      // 	    {
+      // 	      // Ask if data retrived so far should be saved:
 	      
-	      else if (msgBox.clickedButton() == Ignore)
-		{
-		  reset();
-		  delete_autoflow_record();
-		  emit return_to_experiment( ProtocolName  ); 
-		  return;
-		}
-	    }
-	}      
+      // 	      QMessageBox msgBox;
+      // 	      msgBox.setText(tr("Experiment was aborted!"));
+      // 	      msgBox.setInformativeText("The data retrieved so far can be saved or disregarded. If saved, the program will proceed to the next stage (Editing). Otherwise, it will return to the initial stage (Experiment), all data will be lost.");
+      // 	      msgBox.setWindowTitle(tr("Experiment Abortion"));
+      // 	      QPushButton *Save      = msgBox.addButton(tr("Save Data"), QMessageBox::YesRole);
+      // 	      QPushButton *Ignore    = msgBox.addButton(tr("Ignore Data"), QMessageBox::RejectRole);
+	      
+      // 	      msgBox.setIcon(QMessageBox::Question);
+      // 	      msgBox.exec();
+	      
+      // 	      if (msgBox.clickedButton() == Save)
+      // 		{
+      // 		  export_auc_auto();
+
+      // 		  QString mtitle_complete  = tr( "Complete!" );
+      // 		  QString message_done     = tr( "Experiment was completed. Optima data saved..." );
+      // 		  QMessageBox::information( this, mtitle_complete, message_done );
+
+      // 		  updateautoflow_record_atLiveUpdate();
+      // 		  emit experiment_complete_auto( currentDir, ProtocolName, invID_passed, correctRadii );  // Updtade later: what should be passed with signal ??
+      // 		  return;
+      // 		}
+	      
+      // 	      else if (msgBox.clickedButton() == Ignore)
+      // 		{
+      // 		  reset();
+      // 		  delete_autoflow_record();
+      // 		  emit return_to_experiment( ProtocolName  ); 
+      // 		  return;
+      // 		}
+      // 	    }
+      // 	}      
       
       
        in_reload_auto   = false;         // Flag no longer in the midst of reload

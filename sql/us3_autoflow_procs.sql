@@ -151,8 +151,8 @@ BEGIN
       SELECT @OK AS status;
 
       SELECT   protName, cellChNum, tripleNum, duration, runName, expID, 
-      	       runID, status, dataPath, optimaName, runStarted, invID, created, corrRadii 
-      FROM     autoflow
+      	       runID, status, dataPath, optimaName, runStarted, invID, created, corrRadii, expAborted 
+      FROM     autoflow 
       WHERE    ID = p_autoflowID;
 
     END IF;
@@ -321,6 +321,47 @@ BEGIN
   SELECT @US3_LAST_ERRNO AS status;
 
 END$$
+
+
+
+-- Update autoflow record with expAborted value at LIVE_UPDATE
+DROP PROCEDURE IF EXISTS update_autoflow_at_live_update_expaborted$$
+CREATE PROCEDURE update_autoflow_at_live_update_expaborted ( p_personGUID    CHAR(36),
+                                             	p_password      VARCHAR(80),
+                                       	     	p_runID    	 INT )
+					 
+  MODIFIES SQL DATA  
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflow
+  WHERE      runID = p_runID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    ELSE
+      UPDATE   autoflow
+      SET      expAborted = 'YES'
+      WHERE    runID = p_runID;
+
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
 
 
 ----  get initial elapsed time upon reattachment ----------------------------- 

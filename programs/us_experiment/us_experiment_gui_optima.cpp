@@ -45,8 +45,9 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    automode = false;
    usmode = false;
    global_reset = false;
+   instruments_in_use.clear();
    
-      // Create tab and panel widgets
+   // Create tab and panel widgets
    tabWidget           = us_tabwidget();
 
    tabWidget->setTabPosition( QTabWidget::North );
@@ -181,6 +182,18 @@ void US_ExperimentMain::reset( void )
   epanAProfile->initPanel();
   */
 
+}
+
+void US_ExperimentMain::exclude_used_instrument( QStringList & occupied_instruments )
+{
+  instruments_in_use.clear();
+  qDebug() << "OCCUPIED IINSTRUMENTS: " << occupied_instruments;
+
+  for ( int i=0; i < occupied_instruments.size(); i++)
+    instruments_in_use << occupied_instruments[i];
+
+  //Re-initialize Instruments based on  the passed excluded list
+  epanRotor->setFirstLab();
 }
 
 void US_ExperimentMain::us_mode_passed( void )
@@ -887,9 +900,36 @@ DbgLv(1) << "EGR: chgLab   rot_ent" << rot_ent << "rndx" << rndx;
    foreach ( US_Rotor::Instrument instrument, instruments )
    {
       if(instrument.name.contains("Optima"))
-         sl_optimas << QString::number( instrument.ID )
-                       + ": " + instrument.name;
+	{
+	  if ( !mainw->automode )
+	    {
+	      // Regular us_experiment: populate ALL instruments
+	      sl_optimas << QString::number( instrument.ID ) + ": " + instrument.name;
+
+	      qDebug() << "ASSIGNING INSTRUMENTS: " << instrument.name;
+	    }
+	  else
+	    {
+	      //ALEXEY: passed from autoflow: Exclude instruments in USE
+	      bool optima_in_use = false;
+	      for (int ll = 0; ll < mainw->instruments_in_use.size(); ll++)
+	       	{
+	       	  if ( instrument.name == mainw->instruments_in_use[ll] )
+	       	    {
+	       	      optima_in_use = true;
+	       	      break;
+	       	    }
+	       	}
+	      
+	      if ( !optima_in_use)
+		{
+		  sl_optimas << QString::number( instrument.ID ) + ": " + instrument.name;
+		  qDebug() << "ASSIGNING FREE INSTRUMENTS: " << instrument.name;
+		}
+	    }
+	}
    }
+   
    cb_optima->clear();
    cb_optima->addItems( sl_optimas );
 
@@ -5306,6 +5346,7 @@ void US_ExperGuiUpload::submitExperiment()
 	 protocol_details[ "duration" ]       = QString::number(Total_duration);
 	 protocol_details[ "invID_passed" ]   = QString::number(US_Settings::us_inv_ID());
 	 protocol_details[ "correctRadii" ]   = QString("YES");
+	 protocol_details[ "expAborted" ]     = QString("NO");
 	 
          int nwavl_tot = 0;
          for ( int kk = 0; kk < rpRange->nranges; kk++ )

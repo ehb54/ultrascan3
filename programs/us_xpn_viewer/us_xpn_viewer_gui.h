@@ -283,6 +283,11 @@ class US_XpnDataViewer : public US_Widgets
      QString        TotalDuration;       //New
      QString        invID_passed;
      QString        correctRadii;
+     QString        expAborted;
+
+     QMap < QString, QString > details_at_live_update; 
+
+     bool           experimentAborted;
      
      int            ElapsedTimeOffset;
 
@@ -351,7 +356,9 @@ class US_XpnDataViewer : public US_Widgets
      void test_optima_connection( void );              //New
      
    signals:
-     void experiment_complete_auto( QString &, QString &, QString &, QString & );
+     //void experiment_complete_auto( QString &, QString &, QString &, QString & );
+     void experiment_complete_auto( QMap < QString, QString > &);
+     
      void return_to_experiment( QString & );
      void close_program( void );
 };

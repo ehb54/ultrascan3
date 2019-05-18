@@ -737,6 +737,7 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
 DbgLv(1) << "EGRo: inP:  rotID" << rpRotor->rotID << "rotor" << rpRotor->rotor
  << "cb_rotor text" << cb_rotor->currentText();
 DbgLv(1) << "EGRo: inP:   calID" << rpRotor->calID << "calib" << rpRotor->calibration;
+
 }
 
 

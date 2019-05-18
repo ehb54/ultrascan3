@@ -303,7 +303,8 @@ class US_ConvertGui : public US_Widgets
       */
       void assign_investigator( int );
 
-      void import_data_auto  (QString &, QString &, QString &, QString &);
+      //void import_data_auto  (QString &, QString &, QString &, QString &);
+      void import_data_auto  ( QMap < QString, QString > & ) ;
       
       void import            ( void );
       void reimport          ( void );

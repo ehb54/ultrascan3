@@ -141,12 +141,17 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    test_footer->setStyleSheet("color: #D3D9DF; background-color: #36454f;");
    main->addWidget( test_footer );
 
+   connect( this, SIGNAL( pass_used_instruments( QStringList & ) ), epanExp, SLOT( pass_used_instruments( QStringList &)  ) );
+   
    connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
    connect( this   , SIGNAL( pass_to_live_update( QMap < QString, QString > &) ),   epanObserv, SLOT( process_protocol_details( QMap < QString, QString > & )  ) );
    connect( epanExp, SIGNAL( to_autoflow_records( ) ), this, SLOT( to_autoflow_records( ) ) );
    
-   connect( epanObserv, SIGNAL( switch_to_post_processing( QString &, QString &, QString &, SQtring &) ), this, SLOT( switch_to_post_processing( QString &, QString &, QString &, QString &) ) );
-   connect( this, SIGNAL( import_data_us_convert( QString &, QString &, QString &, QString & ) ),  epanPostProd, SLOT( import_data_us_convert( QString &, QString &, QString &, QString & )  ) );
+   // connect( epanObserv, SIGNAL( switch_to_post_processing( QString &, QString &, QString &, SQtring &) ), this, SLOT( switch_to_post_processing( QString &, QString &, QString &, QString &) ) );
+   // connect( this, SIGNAL( import_data_us_convert( QString &, QString &, QString &, QString & ) ),  epanPostProd, SLOT( import_data_us_convert( QString &, QString &, QString &, QString & )  ) );
+   connect( epanObserv, SIGNAL( switch_to_post_processing( QMap < QString, QString > & ) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & ) ) );
+   connect( this, SIGNAL( import_data_us_convert( QMap < QString, QString > & ) ),  epanPostProd, SLOT( import_data_us_convert( QMap < QString, QString > & )  ) );
+   
    connect( epanObserv, SIGNAL( switch_to_experiment( QString &) ), this, SLOT( switch_to_experiment(  QString & )  ) );
    connect( this, SIGNAL( clear_experiment( QString & ) ),  epanExp, SLOT( clear_experiment( QString & )  ) );
    connect( epanObserv, SIGNAL( close_everything() ), this, SLOT( close_all() ));
@@ -274,12 +279,17 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    test_footer->setStyleSheet("color: #D3D9DF; background-color: #36454f;");
    main->addWidget( test_footer );
 
+   connect( this, SIGNAL( pass_used_instruments( QStringList & ) ), epanExp, SLOT( pass_used_instruments( QStringList &)  ) );
+   
    connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
    connect( this   , SIGNAL( pass_to_live_update( QMap < QString, QString > &) ),   epanObserv, SLOT( process_protocol_details( QMap < QString, QString > & )  ) );
    connect( epanExp, SIGNAL( to_autoflow_records( ) ), this, SLOT( to_autoflow_records( ) ) );
    
-   connect( epanObserv, SIGNAL( switch_to_post_processing( QString &, QString &, QString &, QString & ) ), this, SLOT( switch_to_post_processing( QString &, QString &, QString &, QString & )));
-   connect( this, SIGNAL( import_data_us_convert( QString &, QString &, QString &, QString & ) ),  epanPostProd, SLOT( import_data_us_convert( QString &, QString &, QString &, QString & )  ) );
+   // connect( epanObserv, SIGNAL( switch_to_post_processing( QString &, QString &, QString &, QString & ) ), this, SLOT( switch_to_post_processing( QString &, QString &, QString &, QString & )));
+   // connect( this, SIGNAL( import_data_us_convert( QString &, QString &, QString &, QString & ) ),  epanPostProd, SLOT( import_data_us_convert( QString &, QString &, QString &, QString & )  ) );
+   connect( epanObserv, SIGNAL( switch_to_post_processing( QMap < QString, QString > & ) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & ) ) );
+   connect( this, SIGNAL( import_data_us_convert( QMap < QString, QString > & ) ),  epanPostProd, SLOT( import_data_us_convert( QMap < QString, QString > & )  ) );
+   
    connect( epanObserv, SIGNAL( switch_to_experiment( QString &) ), this, SLOT( switch_to_experiment(  QString & )  ) );
    connect( this, SIGNAL( clear_experiment( QString & ) ),  epanExp, SLOT( clear_experiment( QString & )  ) );
    connect( epanObserv, SIGNAL( close_everything() ), this, SLOT( close_all() ));
@@ -408,7 +418,19 @@ void US_ComProjectMain::check_current_stage( void )
   US_DB2* dbP  = new US_DB2( pw.getPasswd() );
 
   //read_optima_machines
+  read_optima_machines( dbP );
+
+  //read autoflow records
   list_all_autoflow_records( autoflowdata, dbP );
+
+  //count instruments in use
+  occupied_instruments.clear();
+  for ( int i=0; i < autoflowdata.size(); i++ )
+    {
+      if ( autoflowdata[ i ][ 5 ] == "LIVE_UPDATE" )
+	occupied_instruments << autoflowdata[ i ][ 2 ];
+    }
+  
   
   QString pdtitle( tr( "Select Optima Run to Follow" ) );
   QStringList hdrs;
@@ -417,7 +439,8 @@ void US_ComProjectMain::check_current_stage( void )
        << "Run Name"
        << "Optima Name"
        << "Created"
-       << "Started";
+       << "Run Status"
+       << "Stage";
   
   QString autoflow_btn = "AUTOFLOW";
   
@@ -427,6 +450,11 @@ void US_ComProjectMain::check_current_stage( void )
   pdiag->setParent(this, Qt::Window);
   pdiag->setWindowFlags(Qt::Dialog | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint  );
   //pdiag->setWindowFlags(Qt::Window | Qt::WindowCloseButtonHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint  );
+
+  //disable 'Define Another Exp.' button if all instruments are in use
+  if ( occupied_instruments.size() == instruments.size() )
+    pdiag->pb_cancel->setEnabled( false );
+  
   
   QString autoflow_id_selected("");
   
@@ -434,9 +462,10 @@ void US_ComProjectMain::check_current_stage( void )
     autoflow_id_selected  = autoflowdata[ prx ][ 0 ];
   else
     {
-      //ALEXEY: define what to do if Optima is occupied, OR if there is another Optima (occupied or not)
-      // autoflowdata[ i ][ 2 ]; // <-- gives Optima Name
-      // autoflowdata[ i ][ 4 ]; // <-- STARTED / NOT STARTED
+      //ALEXEY: define what to do if some Optima(s) are occupied
+      // should emit signal sending list of optima's in use to us_experiment.
+      
+      define_new_experiment( occupied_instruments );
       return;
     }
 
@@ -452,6 +481,7 @@ void US_ComProjectMain::check_current_stage( void )
   QString invID_passed = protocol_details[ "invID_passed" ];
   QString ProtName     = protocol_details[ "protocolName" ];
   QString correctRadii = protocol_details[ "correctRadii" ];
+  QString expAborted   = protocol_details[ "expAborted" ];
  
   //ALEXEY: if stage=="EDITING" && curDir.isEmpty() (NULL)
   /*
@@ -470,8 +500,9 @@ void US_ComProjectMain::check_current_stage( void )
   if ( stage == "EDITING" )
     {
       //do something
-      switch_to_post_processing( currDir, ProtName, invID_passed, correctRadii );
-
+      //switch_to_post_processing( currDir, ProtName, invID_passed, correctRadii );
+      switch_to_post_processing( protocol_details );
+      
       //ALEXEY: should pass investigator as well: should be saved in 'autoflow'
       /*
        switch_to_post_processing( currDir, ProtName, invID_passed );  
@@ -505,7 +536,6 @@ void US_ComProjectMain::read_optima_machines( US_DB2* db )
     {
       QList< int > instrumentIDs;
       
-      // Grab all the IDs so we can reuse the db connection
       while ( db->next() )
 	{
 	  int ID = db->value( 0 ).toString().toInt();
@@ -570,6 +600,7 @@ int US_ComProjectMain::list_all_autoflow_records( QList< QStringList >& autoflow
       QStringList autoflowentry;
       QString id                 = dbP->value( 0 ).toString();
       QString runname            = dbP->value( 5 ).toString();
+      QString status             = dbP->value( 8 ).toString();
       QString optimaname         = dbP->value( 10 ).toString();
       
       QDateTime time_started     = dbP->value( 11 ).toDateTime().toUTC();
@@ -582,8 +613,15 @@ int US_ComProjectMain::list_all_autoflow_records( QList< QStringList >& autoflow
       if ( time_started.toString().isEmpty() )
 	autoflowentry << QString( tr( "NOT STARTED" ) );
       else
-	autoflowentry << QString( tr( "STARTED" ) );
-	//autoflowentry << time_started.toString();
+	{
+	  if ( status == "LIVE_UPDATE" )
+	    autoflowentry << QString( tr( "RUNNING" ) );
+	  if ( status == "EDITING" )
+	    autoflowentry << QString( tr( "COMPLETED" ) );
+	    //autoflowentry << time_started.toString();
+	}
+      
+      autoflowentry << status;
       
       autoflowdata  << autoflowentry;
       nrecs++;
@@ -659,12 +697,21 @@ QMap< QString, QString> US_ComProjectMain::read_autoflow_record( int autoflowID 
 	   protocol_details[ "runStarted" ]     = db->value( 10 ).toString();
 	   protocol_details[ "invID_passed" ]   = db->value( 11 ).toString();
 	   protocol_details[ "correctRadii" ]   = db->value( 12 ).toString();
+	   protocol_details[ "expAborted" ]     = db->value( 13 ).toString();
 	 }
      }
 
    return protocol_details;
 }
 
+
+// Slot to define new exp. (from initial dialog)
+void US_ComProjectMain::define_new_experiment( QStringList & occupied_instruments )
+{
+  tabWidget->setCurrentIndex( 0 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ?? 
+
+  emit pass_used_instruments( occupied_instruments );
+}
 
 
 // Slot to pass submitted to Optima run info to the Live Update tab
@@ -715,14 +762,24 @@ void US_ComProjectMain::close_all( void )
   
 }
 
+// // Slot to switch from the Live Update to Editing tab
+// void US_ComProjectMain::switch_to_post_processing( QString  & currDir, QString & protocolName,  QString & invID_passed, QString & correctRadii )
+// {
+//    tabWidget->setCurrentIndex( 2 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
+
+//    // ALEXEY: Make a record to 'autoflow' table: stage# = 2; 
+
+//    emit import_data_us_convert( currDir, protocolName, invID_passed, correctRadii );
+// }
+
 // Slot to switch from the Live Update to Editing tab
-void US_ComProjectMain::switch_to_post_processing( QString  & currDir, QString & protocolName,  QString & invID_passed, QString & correctRadii )
+void US_ComProjectMain::switch_to_post_processing( QMap < QString, QString > & protocol_details )
 {
-   tabWidget->setCurrentIndex( 2 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
-
-   // ALEXEY: Make a record to 'autoflow' table: stage# = 2; 
-
-   emit import_data_us_convert( currDir, protocolName, invID_passed, correctRadii );
+  tabWidget->setCurrentIndex( 2 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
+  
+  // ALEXEY: Make a record to 'autoflow' table: stage# = 2; 
+  
+  emit import_data_us_convert( protocol_details );
 }
      
 // Slot to switch back from the Live Update to Experiment tab
@@ -831,6 +888,9 @@ US_ExperGui::US_ExperGui( QWidget* topw )
    
    connect( sdiag, SIGNAL( us_exp_is_closed() ), this, SLOT( us_exp_is_closed_set_button() ) );
    //connect( this,  SIGNAL( set_auto_mode() ),   sdiag, SLOT( auto_mode_passed() ) );
+   
+   connect( this, SIGNAL( define_used_instruments( QStringList & ) ), sdiag, SLOT( exclude_used_instruments( QStringList & ) ) );
+   
    connect( sdiag, SIGNAL( to_live_update( QMap < QString, QString > & ) ),
 	    this,  SLOT( to_live_update( QMap < QString, QString > & ) ) );
 
@@ -883,6 +943,11 @@ void US_ExperGui::resizeEvent(QResizeEvent *event)
     }
      
     QWidget::resizeEvent(event);
+}
+
+void US_ExperGui::pass_used_instruments( QStringList & occupied_instruments )
+{
+  emit define_used_instruments( occupied_instruments );
 }
 
 
@@ -1010,8 +1075,10 @@ US_ObservGui::US_ObservGui( QWidget* topw )
    connect( this, SIGNAL( to_xpn_viewer( QMap < QString, QString > &) ), sdiag, SLOT( check_for_data ( QMap < QString, QString > & )  ) );
 
    //ALEXEY: devise SLOT saying what to do upon completion of experiment and exporting AUC data to hard drive - Import Experimental Data  !!! 
-   connect( sdiag, SIGNAL( experiment_complete_auto( QString &, QString &, QString &, QString & ) ), this, SLOT( to_post_processing ( QString &, QString &, QString &, QString & ) ) );
-
+   //connect( sdiag, SIGNAL( experiment_complete_auto( QString &, QString &, QString &, QString & ) ), this, SLOT( to_post_processing ( QString &, QString &, QString &, QString & ) ) );
+   connect( sdiag, SIGNAL( experiment_complete_auto( QMap < QString, QString > & ) ), this, SLOT( to_post_processing ( QMap < QString, QString > & ) ) );
+   
+   
    //ALEXEY: return to 1st panel when exp. aborted & no data saved..
    connect( sdiag, SIGNAL( return_to_experiment( QString & ) ), this, SLOT( to_experiment ( QString &) ) );
 
@@ -1072,9 +1139,14 @@ void US_ObservGui::process_protocol_details( QMap < QString, QString > & protoco
   emit to_xpn_viewer( protocol_details );
 }
 
-void US_ObservGui::to_post_processing( QString & currDir, QString & protocolName, QString & invID_passed,  QString & correctRadii )
+// void US_ObservGui::to_post_processing( QString & currDir, QString & protocolName, QString & invID_passed,  QString & correctRadii )
+// {
+//   emit switch_to_post_processing( currDir, protocolName, invID_passed, correctRadii );
+// }
+
+void US_ObservGui::to_post_processing( QMap < QString, QString > & protocol_details )
 {
-  emit switch_to_post_processing( currDir, protocolName, invID_passed, correctRadii );
+  emit switch_to_post_processing( protocol_details );
 }
 
 void US_ObservGui::to_experiment( QString & protocolName )
@@ -1131,7 +1203,9 @@ US_PostProdGui::US_PostProdGui( QWidget* topw )
    sdiag = new US_ConvertGui("AUTO");
    sdiag->setParent(this, Qt::Widget);
 
-   connect( this, SIGNAL( to_post_prod( QString &, QString &, QString &, QString & ) ), sdiag, SLOT( import_data_auto ( QString &, QString &, QString &, QString & )  ) );
+   //connect( this, SIGNAL( to_post_prod( QString &, QString &, QString &, QString & ) ), sdiag, SLOT( import_data_auto ( QString &, QString &, QString &, QString & )  ) );
+   connect( this, SIGNAL( to_post_prod( QMap < QString, QString > & ) ), sdiag, SLOT( import_data_auto ( QMap < QString, QString > & )  ) );
+   
    //ALEXEY: switch to Analysis
    connect( sdiag, SIGNAL( saving_complete_auto( QString &, QString & ) ), this, SLOT( to_analysis ( QString &, QString &) ) );
    //ALEXEY: for academic ver. switch back to experiment
@@ -1149,9 +1223,14 @@ US_PostProdGui::US_PostProdGui( QWidget* topw )
 
 }
 
-void US_PostProdGui::import_data_us_convert( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii )
+// void US_PostProdGui::import_data_us_convert( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii )
+// {
+//   emit to_post_prod( currDir, protocolName, invID_passed, correctRadii );
+// }
+
+void US_PostProdGui::import_data_us_convert(  QMap < QString, QString > & protocol_details )
 {
-  emit to_post_prod( currDir, protocolName, invID_passed, correctRadii );
+  emit to_post_prod( protocol_details );
 }
 
 void US_PostProdGui::to_analysis( QString & currDir, QString & protocolName )

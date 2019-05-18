@@ -1123,7 +1123,8 @@ void US_ConvertGui::us_mode_passed( void )
 }
 
 
-void US_ConvertGui::import_data_auto( QString &currDir, QString &protocolName, QString &invID_passed, QString &correctRadii )
+//void US_ConvertGui::import_data_auto( QString &currDir, QString &protocolName, QString &invID_passed, QString &correctRadii )
+void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_live_update )
 {
   // ALEXEY TO BE ADDED...
   /* 
@@ -1132,20 +1133,61 @@ void US_ConvertGui::import_data_auto( QString &currDir, QString &protocolName, Q
      ExpData.invID = invID_passed.toInt();
   */
 
-  //ExpData.invID = 41; // Nemetchek's ID
-  ExpData.invID = invID_passed.toInt();
+  // //ExpData.invID = 41; // Nemetchek's ID
+  // ExpData.invID = invID_passed.toInt();
 
-  qDebug() << "US_CONVERT: ExpData.invID, invID_passed: " << ExpData.invID << ", " << invID_passed;
+  // qDebug() << "US_CONVERT: ExpData.invID, invID_passed: " << ExpData.invID << ", " << invID_passed;
   
-  QStringList currDir_list = currentDir.split("-run");
-  runID_numeric = currDir_list[ currDir_list.size() - 1 ];
-  runID_numeric.replace("/","");
-  
-  int impType = getImports_auto( currDir );
-  ProtocolName_auto = protocolName;
+  // int impType = getImports_auto( currDir );
+  // ProtocolName_auto = protocolName;
 
+  // QStringList currDir_list = currDir.split("-run");
+  // runID_numeric = currDir_list[ currDir_list.size() - 1 ];
+  // runID_numeric.replace("/","");
+  
+  // qDebug() << "RunID_numeric from CurrentDir: " << runID_numeric;
+
+  ExpData.invID     = details_at_live_update[ "invID_passed" ].toInt();
+  ProtocolName_auto = details_at_live_update[ "protocolName" ];
+  runID_numeric     = details_at_live_update[ "runID" ];
+  
+  int impType = getImports_auto( details_at_live_update[ "dataPath" ] );
+
+
+  /* -------------------------------------------------------------------------------------------------------------------*/
+  //ALEXEY: Case when Run was manually aborted from Optima panel:
+  if ( details_at_live_update[ "expAborted" ] == "YES" )
+    {
+      QMessageBox msgBox;
+      msgBox.setText(tr("Experiment was aborted!"));
+      msgBox.setInformativeText("The data retrieved so far can be saved or disregarded. " 
+				"If saved, the program will proceed to the next stage (Editing). "
+				"Otherwise, it will return to the initial stage (Experiment), all data will be lost.");
+      msgBox.setWindowTitle(tr("Experiment Abortion"));
+      QPushButton *Save      = msgBox.addButton(tr("Save Data"), QMessageBox::YesRole);
+      QPushButton *Ignore    = msgBox.addButton(tr("Ignore Data"), QMessageBox::RejectRole);
+	      
+      msgBox.setIcon(QMessageBox::Question);
+      msgBox.exec();
+      
+      if (msgBox.clickedButton() == Save)
+	{
+	  msgBox.accept();
+	}
+      
+      else if (msgBox.clickedButton() == Ignore)
+	{
+	  delete_autoflow_record();
+	  emit saving_complete_back_to_exp( ProtocolName_auto );
+	  return;
+	}
+    }
+   
+
+  /* ----------------------------------------------------------------------------------------------------------------------------*/
   //ALEXEY: if there is no radii_correction data found, return for commercial, and present dialog for academic:
-  if ( correctRadii == "NO" )
+  //if ( correctRadii == "NO" )
+  if ( details_at_live_update[ "correctRadii" ] == "NO" )
     {
       if ( !usmode ) // us_comprojetc
 	{
@@ -1193,7 +1235,7 @@ void US_ConvertGui::import_data_auto( QString &currDir, QString &protocolName, Q
 	    }
 	}
     }
-
+  /* ----------------------------------------------------------------------------------------------------------------------------*/
   
 
    if ( impType == 1 )
@@ -1598,11 +1640,6 @@ DbgLv(1) << "rIA: trx" << trx << "uuid" << uuidst << importDir;
    // runID += QString("-test");
      
    qDebug() << "RUNID from files[0]: files[0]" << fname << ", runID: " << runID;
-   // QStringList currDir_list = currentDir.split("-run");
-   // QString runID_num = currDir_list[ currDir_list.size() - 1 ];
-   // runID_num.replace("/","");
-   // qDebug() << "Exp. RunID: " << runID_num;
-   
      
    le_runID2->setText( runID );
    le_runID ->setText( runID );
