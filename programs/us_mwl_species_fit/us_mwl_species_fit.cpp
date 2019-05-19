@@ -715,6 +715,16 @@ DbgLv(1) << " file name" << fname;
       {  // Parse wavelength, concentration from each file line
          fline           = tsi.readLine().simplified();
          int lnf1        = fline.indexOf( " " );
+DbgLv(1) << "lnf1:" << lnf1;
+			if (lnf1 == -1) lnf1 = fline.indexOf( "," ); // if there was no space found, try comma
+			if (lnf1 == -1) lnf1 = fline.indexOf( "\t" ); // if still -1, try tab
+			if (lnf1 == -1) 
+			{
+				QMessageBox::warning( this, tr("IO Error"),
+				tr("The file:\n") + fname + tr("\nis not in the correct format.\n") +  
+				tr("The file should have 2 columns that are comma or space separated."));
+				return;
+			}
          int iwavl       = QString( fline ).left( lnf1 ).toInt();
          double conc     = QString( fline ).mid( lnf1 + 1 ).toDouble();
 
@@ -813,6 +823,8 @@ DbgLv(1) << "sfd: size a,b,x" << nnls_a.count() << nnls_b.count()
       {  // Get wavelength,concentration vectors for this species
          cswavls << spwavls[ kw ];
          csconcs << spconcs[ kw ];
+DbgLv(1) << "sfd: Get wavelength,concentration vectors for species " << ii << ":" << spwavls[ kw ] << spconcs[ kw ];
+
       }
 DbgLv(1) << "sfd:  sp" << ii << "nwavl" << nwavl;
 
@@ -832,6 +844,7 @@ DbgLv(1) << "sfd:  sp" << ii << "nwavl" << nwavl;
                    iwavl > cswavls[ nwavl - 1 ] )
          {  // Data wavelength beyond species range:  use zero concentration
             cval          = 0.0;
+DbgLv(1) << "Data wavelength beyond species range: " << iwavl;
          }
 
          else
