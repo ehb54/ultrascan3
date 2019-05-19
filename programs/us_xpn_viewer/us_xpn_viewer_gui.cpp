@@ -336,8 +336,8 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
    QLabel*      lb_scanctl  = us_banner( tr( "Scan Control" ) );
    QLabel*      lb_from     = us_label( tr( "From:" ) );
    QLabel*      lb_to       = us_label( tr( "To:" ) );
-                ct_from     = us_counter( 2, 0, 500, 1 );
-                ct_to       = us_counter( 2, 0, 500, 1 );
+                ct_from     = us_counter( 3, 0, 500, 1 );
+                ct_to       = us_counter( 3, 0, 500, 1 );
                 pb_exclude  = us_pushbutton( tr( "Exclude Scan Range" ) );
                 pb_include  = us_pushbutton( tr( "Include All Scans"  ) );
    ct_from  ->setFont( sfont );
@@ -888,8 +888,8 @@ US_XpnDataViewer::US_XpnDataViewer() : US_Widgets()
    QLabel*      lb_scanctl  = us_banner( tr( "Scan Control" ) );
    QLabel*      lb_from     = us_label( tr( "From:" ) );
    QLabel*      lb_to       = us_label( tr( "To:" ) );
-                ct_from     = us_counter( 2, 0, 500, 1 );
-                ct_to       = us_counter( 2, 0, 500, 1 );
+                ct_from     = us_counter( 3, 0, 500, 1 );
+                ct_to       = us_counter( 3, 0, 500, 1 );
                 pb_exclude  = us_pushbutton( tr( "Exclude Scan Range" ) );
                 pb_include  = us_pushbutton( tr( "Include All Scans"  ) );
    ct_from  ->setFont( sfont );
