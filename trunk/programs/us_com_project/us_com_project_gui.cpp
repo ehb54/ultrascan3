@@ -491,8 +491,12 @@ void US_ComProjectMain::check_current_stage( void )
   QString correctRadii = protocol_details[ "correctRadii" ];
   QString expAborted   = protocol_details[ "expAborted" ];
 
-
+  QDir directory( currDir );
+  
   qDebug() << "CURR DIRECTORY : " << currDir;
+  qDebug() << "1.ExpAborted: "      << protocol_details[ "expAborted" ];
+  qDebug() << "1.CorrectRadii: "    << protocol_details[ "correctRadii" ];
+
  
   //ALEXEY: if stage=="EDITING" && curDir.isEmpty() (NULL)
   /*
@@ -513,7 +517,7 @@ void US_ComProjectMain::check_current_stage( void )
       //do something
       //switch_to_post_processing( currDir, ProtName, invID_passed, correctRadii );
 
-      if ( currDir.isEmpty() )
+      if ( currDir.isEmpty() || !directory.exists() )
 	switch_to_live_update( protocol_details );
       else	
 	switch_to_post_processing( protocol_details );
@@ -699,8 +703,9 @@ QMap< QString, QString> US_ComProjectMain::read_autoflow_record( int autoflowID 
 	   protocol_details[ "OptimaName" ]     = db->value( 9 ).toString();
 	   protocol_details[ "runStarted" ]     = db->value( 10 ).toString();
 	   protocol_details[ "invID_passed" ]   = db->value( 11 ).toString();
-	   protocol_details[ "correctRadii" ]   = db->value( 12 ).toString();
-	   protocol_details[ "expAborted" ]     = db->value( 13 ).toString();
+
+	   protocol_details[ "correctRadii" ]   = db->value( 13 ).toString();
+	   protocol_details[ "expAborted" ]     = db->value( 14 ).toString();
 	 }
      }
 

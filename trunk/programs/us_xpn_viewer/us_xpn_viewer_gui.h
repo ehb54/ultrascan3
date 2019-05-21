@@ -295,6 +295,7 @@ class US_XpnDataViewer : public US_Widgets
 	 
   private slots:
      void   reset          ( void );
+     void   reset_auto     ( void );
      void   load_xpn_raw   ( void );
 
      //QMap <QString, QString> returnSelectedInstrument( US_DB2* = 0 );
