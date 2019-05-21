@@ -452,7 +452,7 @@ void US_ComProjectMain::check_current_stage( void )
   //pdiag->setWindowFlags(Qt::Window | Qt::WindowCloseButtonHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint  );
 
   //disable 'Define Another Exp.' button if all instruments are in use
-  if ( occupied_instruments.size() == instruments.size() )
+  if ( occupied_instruments.size() >= instruments.size() )
     pdiag->pb_cancel->setEnabled( false );
   
   
@@ -490,6 +490,9 @@ void US_ComProjectMain::check_current_stage( void )
   QString ProtName     = protocol_details[ "protocolName" ];
   QString correctRadii = protocol_details[ "correctRadii" ];
   QString expAborted   = protocol_details[ "expAborted" ];
+
+
+  qDebug() << "CURR DIRECTORY : " << currDir;
  
   //ALEXEY: if stage=="EDITING" && curDir.isEmpty() (NULL)
   /*
@@ -509,21 +512,13 @@ void US_ComProjectMain::check_current_stage( void )
     {
       //do something
       //switch_to_post_processing( currDir, ProtName, invID_passed, correctRadii );
-      switch_to_post_processing( protocol_details );
-      
-      //ALEXEY: should pass investigator as well: should be saved in 'autoflow'
-      /*
-       switch_to_post_processing( currDir, ProtName, invID_passed );  
-       see us_convert:
-           void US_ConvertGui::import_data_auto( QString &currDir, QString &protocolName )
-	    {
-	       assign investigator HERE passed in (QString &currDir, QString &protocolName, QString &invID_passed) as 3rd parameter; saved in 'autoflow' table
-	       ExpData.invID = invID_passed.toInt();
-	       ....
 
-	in us_convert: use function      read_record_auto( ProtocolName_auto, &xmlstr, NULL, &db );  
-      */
+      if ( currDir.isEmpty() )
+	switch_to_live_update( protocol_details );
+      else	
+	switch_to_post_processing( protocol_details );
       
+     
       return;
     }
   //and so on...
