@@ -2119,7 +2119,7 @@ DbgLv(1) << "RDr:     iRId" << iRunId << "sMsks scnmask" << sMasks << scanmask;
  qDebug() << "RDr:     iRId" << iRunId << "sMsks scnmask" << sMasks << scanmask;
 
  //ALEXEY: maybe put in_reload_check_sysdata = true; and then false (after xpn_data->import_data( iRunId, scanmask ); )
- in_reload_check_sysdata = true; //ALEXEY
+ //in_reload_check_sysdata = true; //ALEXEY
  xpn_data->import_data( iRunId, scanmask );                               // ALEXEY <-- actual data retreiving
    int ntsrows        = xpn_data->countOf( "scan_rows" );
 DbgLv(1) << "RDr:     ntsrows" << ntsrows;
@@ -2137,7 +2137,7 @@ DbgLv(1) << "RDr:      knt(triple)   " << xpn_data->countOf( "triple"    );
 
    le_status->setText( tr( "Initial Raw Optima data import complete." ) );
    qApp->processEvents();
-   in_reload_check_sysdata = false; //ALEXEY
+   //in_reload_check_sysdata = false; //ALEXEY
    
 double tm1=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
    QStringList opsys;
