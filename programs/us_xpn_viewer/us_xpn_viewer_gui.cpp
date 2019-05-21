@@ -1149,6 +1149,92 @@ void US_XpnDataViewer::reset( void )
 
 }
 
+void US_XpnDataViewer::reset_auto( void )
+{
+   runID         = "";
+   currentDir    = US_Settings::importDir() + "/" + runID;
+   cb_cellchn ->disconnect();
+   cb_cellchn ->clear();
+   le_dir     ->setText( currentDir );
+   le_runID   ->setText( runID );
+   //le_dbhost  ->setText( xpnhost + ":" + xpnport + "   (" + xpndesc + ")" );       //New
+
+   pb_loadXpn ->setEnabled( true );
+   pb_loadAUC ->setEnabled( true );
+   pb_details ->setEnabled( false );
+   pb_reload  ->setEnabled( false );
+   ck_autorld ->setEnabled( true  );
+   cb_cellchn ->setEnabled( false );
+   cb_rstart  ->setEnabled( false );
+   cb_rend    ->setEnabled( false );
+   cb_pltrec  ->setEnabled( false );
+   pb_prev    ->setEnabled( false );
+   pb_next    ->setEnabled( false );
+   ct_from    ->setEnabled( false );
+   ct_to      ->setEnabled( false );
+   pb_exclude ->setEnabled( false );
+   pb_include ->setEnabled( false );
+   pb_reset   ->setEnabled( false );
+   ct_from    ->setEnabled( false );
+   ct_to      ->setEnabled( false );
+   pb_exclude ->setEnabled( false );
+   pb_include ->setEnabled( false );
+   pb_plot2d  ->setEnabled( false );
+   pb_saveauc ->setEnabled( false );
+   pb_showtmst->setEnabled( false );
+//   pb_movie2d->setEnabled( false );
+
+   // Clear any data structures
+   allData   .clear();
+   lambdas   .clear();
+   r_radii   .clear();
+   excludes  .clear();
+   runInfo   .clear();
+   cellchans .clear();
+   triples   .clear();
+   haveData      = false;
+
+   dPlotClearAll( data_plot );
+   picker   ->disconnect();
+   data_plot->setAxisScale( QwtPlot::xBottom, 5.8,  7.2 );
+   data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 5e+4 );
+   grid          = us_grid( data_plot );
+   data_plot->replot();
+
+   //ALEXEY: also reset sys data plot/temperature bar/RPM speedometer
+   dPlotClearAll( data_plot_rpm );
+   picker_rpm   ->disconnect();
+   data_plot_rpm->setAxisScale( QwtPlot::xBottom, 1.0, 14400.0 );
+   data_plot_rpm->setAxisScale( QwtPlot::yLeft  , 0.0, 6e+4 );
+   data_plot_rpm->setAxisScale( QwtPlot::yRight , 0.0, 40 );
+   grid_rpm      = us_grid( data_plot_rpm );
+   data_plot_rpm->replot();
+   //RPM/Temp.
+   rpm_box->setSpeed(0);
+   temperature_box->setTemp(0);
+   //times
+   le_elapsed  ->setText("00:00:00");
+   le_remaining->setText("00:00:00");
+   le_running  ->setText("00:00:00");
+   
+   connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
+            this,         SLOT  ( changeCellCh(            ) ) );
+//   connect( plot, SIGNAL( zoomedCorners( QRectF ) ),
+//            this, SLOT  ( currentRectf ( QRectF ) ) );
+
+   last_xmin     = -1.0;
+   last_xmax     = -1.0;
+   last_ymin     = -1.0;
+   last_ymax     = -1.0;
+   xpn_data      = ( xpn_data == NULL ) ? new US_XpnData() : xpn_data;
+
+   connect( xpn_data, SIGNAL( status_text  ( QString ) ),
+            this,     SLOT  ( status_report( QString ) ) );
+
+   xpn_data->clear();
+   le_status->setText( tr( "(no data loaded)" ) );
+
+}
 
 // Slot to read all Optima machines <------------------------------- // New
 void US_XpnDataViewer::read_optima_machines( US_DB2* db )
@@ -1868,7 +1954,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
 	      updateautoflow_record_atLiveUpdate();
 	      //emit experiment_complete_auto( currentDir, ProtocolName, invID_passed, correctRadii  );  // Updtade later: what should be passed with signal ??
 
-	      reset();
+	      reset_auto();
 	      emit experiment_complete_auto( details_at_live_update );
 	      
 	      return;
@@ -2314,7 +2400,7 @@ DbgLv(1) << "RDr: allData size" << allData.size();
 	   export_auc_auto();
 	   updateautoflow_record_atLiveUpdate();
 
-	   reset();
+	   reset_auto();
 	   emit experiment_complete_auto( details_at_live_update  ); 
 	   return;
 	 }
@@ -3708,7 +3794,7 @@ DbgLv(1) << "RLd:       NO CHANGE";
 	      // QMessageBox::information( this, mtitle_complete, message_done );
 
 	      updateautoflow_record_atLiveUpdate();
-	      reset();
+	      reset_auto();
 	      
 	      //emit experiment_complete_auto( currentDir, ProtocolName, invID_passed, correctRadii  );  // Updtade later: what should be passed with signal ??
 	      emit experiment_complete_auto( details_at_live_update );

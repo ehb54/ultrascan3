@@ -1153,6 +1153,8 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
   
   int impType = getImports_auto( details_at_live_update[ "dataPath" ] );
 
+  qDebug() << "ExpAborted: "   << details_at_live_update[ "expAborted" ];
+  qDebug() << "CorrectRadii: " << details_at_live_update[ "correctRadii" ];
 
   /* -------------------------------------------------------------------------------------------------------------------*/
   //ALEXEY: Case when Run was manually aborted from Optima panel:
@@ -1778,8 +1780,11 @@ DbgLv(1) << "rTS: NON_EXIST:" << tmst_fnamei;
    }
 
    if (!us_convert_auto_mode)
-     le_status->setText( tr( "AUC data import IS COMPLETE." ) );
-
+     {
+       //le_status->setText( tr( "AUC data import IS COMPLETE." ) );
+       le_status->setText( tr( "Loading Data from Disk Successful." ) );
+     }
+     
    pb_showTmst->setEnabled( ! tmst_fnamei.isEmpty() );
 }
 
@@ -2800,7 +2805,8 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    //le_centerpieceDesc ->setText( QString::number(out_chaninfo[ tripListx ].centerpiece) );
    le_centerpieceDesc ->setText( out_chaninfo[ tripListx ].centerpieceName );
 
-   le_status->setText( tr( "AUC data import IS COMPLETE." ) );
+   //le_status->setText( tr( "AUC data import IS COMPLETE." ) );
+   le_status->setText( tr( "Data Acquision COMPLETE." ) );
    
    enableSaveBtn_auto();
 }
