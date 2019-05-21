@@ -262,7 +262,7 @@ BEGIN
   SELECT     COUNT(*)
   INTO       count_records
   FROM       autoflow
-  WHERE      runID = p_runID AND status = 'LIVE_UPDATE';
+  WHERE      runID = p_runID;
 
   IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( count_records = 0 ) THEN
@@ -272,7 +272,7 @@ BEGIN
     ELSE
       UPDATE   autoflow
       SET      dataPath = p_curDir, status = 'EDITING'
-      WHERE    runID = p_runID AND status = 'LIVE_UPDATE';
+      WHERE    runID = p_runID;
 
     END IF;
 
