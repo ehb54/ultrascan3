@@ -296,6 +296,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
       
    connect( epanPostProd, SIGNAL( switch_to_analysis( QString &, QString &) ),  this, SLOT( switch_to_analysis( QString &, QString & )  ) );
    connect( this, SIGNAL( pass_to_analysis( QString &, QString & ) ),   epanAnalysis, SLOT( do_analysis( QString &, QString & )  ) );
+   connect( epanPostProd, SIGNAL( switch_to_exp( QString & ) ), this, SLOT( switch_to_experiment( QString & )  ) );
    
    setMinimumSize( QSize( 1350, 800 ) );
    adjustSize();
@@ -465,16 +466,21 @@ void US_ComProjectMain::check_current_stage( void )
       //ALEXEY: define what to do if some Optima(s) are occupied
       // should emit signal sending list of optima's in use to us_experiment.
 
-      QString list_instruments_in_use = occupied_instruments.join(", ");
-      QMessageBox::warning( this, tr( "Occupied Instruments" ),
-			    tr( "The following Optima instrument(s) \n"
-				"are currently in use: \n\n"
-				"%1 \n\n"
-				"You will not be able to submit another run \n"
-				"to these instruments at the moment.").arg( list_instruments_in_use ) );
-      
-      define_new_experiment( occupied_instruments );
-      return;
+      if ( occupied_instruments.size() == 0 )
+	return;
+      else
+	{
+	  QString list_instruments_in_use = occupied_instruments.join(", ");
+	  QMessageBox::warning( this, tr( "Occupied Instruments" ),
+				tr( "The following Optima instrument(s) \n"
+				    "are currently in use: \n\n"
+				    "%1 \n\n"
+				    "You will not be able to submit another run \n"
+				    "to these instruments at the moment.").arg( list_instruments_in_use ) );
+	  
+	  define_new_experiment( occupied_instruments );
+	  return;
+	}
     }
 
   // -------------------------------------------------------------------------------------------------
@@ -493,7 +499,7 @@ void US_ComProjectMain::check_current_stage( void )
 
   QDir directory( currDir );
   
-  qDebug() << "CURR DIRECTORY : " << currDir;
+  qDebug() << "CURR DIRECTORY : "   << currDir;
   qDebug() << "1.ExpAborted: "      << protocol_details[ "expAborted" ];
   qDebug() << "1.CorrectRadii: "    << protocol_details[ "correctRadii" ];
 

@@ -358,7 +358,10 @@ class US_ConvertGui : public US_Widgets
       int  saveUS3Disk       ( void );
       void saveUS3DB         ( void );
       void saveReportsToDB   ( void );
+
       void resetAll          ( void );
+      void resetAll_auto     ( void );
+      
       void source_changed    ( bool );
       void update_disk_db    ( bool );
       void show_mwl_control  ( bool );

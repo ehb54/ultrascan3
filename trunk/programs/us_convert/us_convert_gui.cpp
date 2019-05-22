@@ -1049,6 +1049,43 @@ void US_ConvertGui::resetAll( void )
    data_plot->setTitle( tr( "Absorbance Data" ) );
 }
 
+void US_ConvertGui::resetAll_auto( void )
+{
+   QApplication::restoreOverrideCursor();
+   QApplication::restoreOverrideCursor();
+
+   // if ( allData.size() > 0 )
+   // {  // Output warning when resetting (but only if we have data)
+   //    int status = QMessageBox::information( this,
+   //       tr( "New Data Warning" ),
+   //       tr( "This will erase all data currently on the screen, and "
+   //           "reset the program to its starting condition. No hard-drive "
+   //           "data or database information will be affected. Proceed? " ),
+   //       tr( "&OK" ), tr( "&Cancel" ),
+   //       0, 0, 1 );
+
+   //    if ( status != 0 ) return;
+   // }
+
+   reset();
+
+   le_status->setText( tr( "(no data loaded)" ) );
+   subsets.clear();
+   reference_start = 0;
+   reference_end   = 0;
+
+   connectTolerance( false );
+   ct_tolerance    ->setMinimum (   0.0 );
+   ct_tolerance    ->setMaximum ( 100.0 );
+   ct_tolerance    ->setValue   (   5.0 );
+   ct_tolerance    ->setSingleStep( 1 );
+   connectTolerance( true );
+   scanTolerance   = 5.0;
+   runID           = "";
+   data_plot->setTitle( tr( "Absorbance Data" ) );
+}
+
+
 // Function to select the current investigator
 void US_ConvertGui::sel_investigator( void )
 {
@@ -1153,8 +1190,6 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
   
   int impType = getImports_auto( details_at_live_update[ "dataPath" ] );
 
-  qDebug() << "ExpAborted: "   << details_at_live_update[ "expAborted" ];
-  qDebug() << "CorrectRadii: " << details_at_live_update[ "correctRadii" ];
 
   /* -------------------------------------------------------------------------------------------------------------------*/
   //ALEXEY: Case when Run was manually aborted from Optima panel:
@@ -1179,7 +1214,8 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
       
       else if (msgBox.clickedButton() == Ignore)
 	{
-	  delete_autoflow_record();
+	  delete_autoflow_record(); // TEMPORARILY - MUST BE UNCOMMENTED!!!
+	  resetAll_auto();
 	  emit saving_complete_back_to_exp( ProtocolName_auto );
 	  return;
 	}
@@ -1202,6 +1238,7 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
 	   
 	   //ALEXY: need to delete autoflow record here
 	   delete_autoflow_record();
+	   resetAll_auto();
 	   emit saving_complete_back_to_exp( ProtocolName_auto );
 	   return;
 	  
@@ -1232,6 +1269,7 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
 	  else if ( msgBox.clickedButton() == Ignore )
 	    {
 	      delete_autoflow_record();
+	      resetAll_auto();
 	      emit saving_complete_back_to_exp( ProtocolName_auto );
 	      return;
 	    }
@@ -4869,6 +4907,7 @@ DbgLv(1) << "Writing to disk";
 	   
 	   //ALEXY: need to delete autoflow record here
 	   delete_autoflow_record();
+	   resetAll_auto();
 	   emit saving_complete_back_to_exp( ProtocolName_auto );
 	   return;
 	 }
@@ -4881,6 +4920,7 @@ DbgLv(1) << "Writing to disk";
 					 "The program will switch to Analysis stage." ) );
 	   
 	   // Either emit ONLY if not US_MODE, or do NOT connect with slot on us_comproject...
+	   resetAll_auto();
 	   emit saving_complete_auto( currentDir, ProtocolName_auto  );   
 	 }
      }
