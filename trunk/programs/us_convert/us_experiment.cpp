@@ -178,6 +178,128 @@ qDebug() << "Exp:svToDB:     ssstat=" << ssstat;
    return US_DB2::OK;
 }
 
+//Same as above but for AutoFlow with ExpData.invID set as owner
+int US_Experiment::saveToDB_auto( bool update, US_DB2* db,
+				  QVector< SP_SPEEDPROFILE >& speedsteps, int invID_passed )
+{
+qDebug() << "Exp:svToDB: update" << update << "ss-count" << speedsteps.count();
+   // Let's see if the project is in the db already
+   int status = project.saveToDB( db );
+qDebug() << "Exp:svToDB: projsv status(+NO_PR)" << status << US_DB2::NO_PROJECT
+ << "expID" << expID;
+   if ( status == US_DB2::NO_PROJECT )
+      return status;
+
+   else if ( status != US_DB2::OK )
+      return status;
+
+   // Get the RI information, if appropriate
+   QByteArray RIxml;
+   QByteArray RIxmlEscaped;
+   createRIXml( RIxml );
+   //unsigned long length = db->mysqlEscapeString( RIxmlEscaped, RIxml, RIxml.size() );
+   db->mysqlEscapeString( RIxmlEscaped, RIxml, RIxml.size() );
+
+   // Check for experiment runID in database
+   int saveStatus = 0;
+   QStringList q;
+   status = checkRunID( db );
+   if ( status == US_DB2::OK && ! update )
+   {
+      // Then the runID exists already, and we're not updating
+      return US_DB2::DUPFIELD;
+   }
+
+   if ( status == US_DB2::OK )
+   {
+      // It's ok to update the existing experiment entry
+      q.clear();
+      q  << "update_experiment"
+         << QString::number( expID )
+         << QString( expGUID )
+         << QString::number( project.projectID )
+         << runID
+         << QString::number( labID )
+         << QString::number( instrumentID )
+         << QString::number( operatorID )
+         << QString::number( rotorID )
+         << QString::number( calibrationID )
+         << expType
+         << opticalSystem
+         << RIxmlEscaped
+         << runTemp
+         << label
+         << comments
+         << protocolGUID;
+
+      saveStatus = db->statusQuery( q );
+   }
+
+   else if ( status == US_DB2::NOROWS )
+   {
+      // Create new experiment entry
+      q.clear();
+      q  << "new_experiment"
+         << expGUID
+         << QString::number( project.projectID )
+         << runID
+         << QString::number( labID )
+         << QString::number( instrumentID )
+         << QString::number( operatorID )
+         << QString::number( rotorID )
+         << QString::number( calibrationID )
+         << expType
+         << opticalSystem
+         << RIxml
+         << runTemp
+         << label
+         << comments
+         << protocolGUID
+         << QString::number( invID_passed ); //ALEXEY: passed invID, NOT the US_Settings ::us_inv_ID()
+
+      saveStatus = db->statusQuery( q );
+      expID = db->lastInsertID();
+   }
+
+   if ( expID == 0 )      // double check
+   {
+      qDebug() << "Error saving experiment: " << saveStatus
+               << " " << db->lastError();
+      return saveStatus;
+   }
+
+   // Let's get some info after db update
+   QString idExp = QString::number( expID );
+   q.clear();
+   q << "get_experiment_info" << idExp;
+   db->query( q );
+   db->next();
+
+   date = db->value( 12 ).toString();
+
+   // If multispeed, add speed steps to the database
+   q.clear();
+   q << "delete_speedsteps" << idExp;   // Delete any records for experiment
+   saveStatus = db->statusQuery( q );
+   if ( saveStatus != 0 )
+   {
+      qDebug() << "Delete_SpeedSteps" << saveStatus << db->lastError();
+   }
+qDebug() << "Exp:svToDB: delss status" << saveStatus << db->lastError();
+
+qDebug() << "Exp:svToDB:  ss count" << speedsteps.count() << "expID" << expID;
+   for ( int jj = 0; jj < speedsteps.count(); jj++ )
+   {
+qDebug() << "Exp:svToDB:   jj" << jj << "expID" << expID;
+int ssstat=
+      US_SimulationParameters::speedstepToDB( db, expID, &speedsteps[ jj ] );
+qDebug() << "Exp:svToDB:     ssstat=" << ssstat;
+   }
+
+   return US_DB2::OK;
+}
+
+
 // Function to read an experiment from DB
 int US_Experiment::readFromDB( QString runID, US_DB2* db,
                                QVector< SP_SPEEDPROFILE >& speedsteps )

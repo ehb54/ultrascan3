@@ -5376,7 +5376,12 @@ DbgLv(1) << "DBSv:  files count" << files.size();
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    le_status->setText( tr( "Saving Experiment to DB ..." ) );
    qApp->processEvents();
-   status = ExpData.saveToDB( ( saveStatus == BOTH ), &db, speedsteps );
+
+   if ( us_convert_auto_mode ) //ALEXEY: copy of the method with the ExpData.invID set as the owner (not US_Settings::us_inv_ID() )...
+     status = ExpData.saveToDB_auto( ( saveStatus == BOTH ), &db, speedsteps, ExpData.invID );
+   else
+     status = ExpData.saveToDB( ( saveStatus == BOTH ), &db, speedsteps );
+
    QApplication::restoreOverrideCursor();
 
    if ( status == US_DB2::NO_PROJECT )

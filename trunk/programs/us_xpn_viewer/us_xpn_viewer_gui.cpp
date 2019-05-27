@@ -2063,6 +2063,9 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
   invID_passed = protocol_details[ "invID_passed" ];
   correctRadii = protocol_details[ "correctRadii" ];
   expAborted   = protocol_details[ "expAborted" ];
+  runID_passed = protocol_details[ "runID" ];
+
+  qDebug() << "RUNID_PASSED !!! " << runID_passed;
 
   details_at_live_update = protocol_details;
 
@@ -2096,16 +2099,18 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
   //
   //                      .arg(RunName).arg(OptimaName) );
 
-  msg_data_avail->exec();
-  
-  if (msg_data_avail->clickedButton() == Close)
+  if ( runID_passed.isEmpty() || runID_passed == "NULL" )
     {
-      timer_data_init->stop();
-      disconnect(timer_data_init, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
-
-      emit close_program(); 
+      msg_data_avail->exec();
+      
+      if (msg_data_avail->clickedButton() == Close)
+	{
+	  timer_data_init->stop();
+	  disconnect(timer_data_init, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+	  
+	  emit close_program(); 
+	}
     }
-  
 }
 
 //void US_XpnDataViewer::retrieve_xpn_raw_auto( QString & RunID )

@@ -284,6 +284,7 @@ class US_XpnDataViewer : public US_Widgets
      QString        invID_passed;
      QString        correctRadii;
      QString        expAborted;
+     QString        runID_passed;
 
      QMap < QString, QString > details_at_live_update; 
 

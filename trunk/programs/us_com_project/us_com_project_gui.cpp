@@ -402,6 +402,10 @@ void US_ComProjectMain::check_current_stage( void )
 
   qDebug() << "Autoflow record #: " << autoflow_records;
 
+  // //Temporary: delete ExperimentDefinition record ( ExpId = 306, 301 )
+  // int ExpId = 285;
+  // delete_psql_record( ExpId );
+
   if ( autoflow_records < 1 )
     return;
 
@@ -496,7 +500,8 @@ void US_ComProjectMain::check_current_stage( void )
   QString ProtName     = protocol_details[ "protocolName" ];
   QString correctRadii = protocol_details[ "correctRadii" ];
   QString expAborted   = protocol_details[ "expAborted" ];
-
+  QString runID        = protocol_details[ "runID" ];
+  
   QDir directory( currDir );
   
   qDebug() << "CURR DIRECTORY : "   << currDir;
@@ -534,6 +539,111 @@ void US_ComProjectMain::check_current_stage( void )
   //and so on...
   
   
+}
+
+//Slot to delete Postgres Optima ExperimentDefinition record
+void US_ComProjectMain::delete_psql_record( int ExpId )
+{
+  QString schname( "AUC_schema" );
+  
+  QString tabname_expdef( "ExperimentDefinition" );
+  QString tabname_fuge  ( "CentrifugeRunProfile" );
+  QString tabname_abs   ( "AbsorbanceScanParameters" );
+  
+  QString qrytab_expdef  = "\"" + schname + "\".\"" + tabname_expdef + "\"";
+  QString qrytab_fuge    = "\"" + schname + "\".\"" + tabname_fuge + "\"";
+  QString qrytab_abs     = "\"" + schname + "\".\"" + tabname_abs + "\"";
+  
+  
+  QString dbhost      = "demeler5.uleth.ca";
+  int     dbport      = 5552;
+  QString dbname      = "AUC_DATA_DB";
+  QString dbuser      = "";
+  QString dbpasw      = "";
+
+  QSqlDatabase dbxpn;
+  
+  dbxpn           = QSqlDatabase::addDatabase( "QPSQL", "" );
+  dbxpn.setDatabaseName( "XpnData" );
+  dbxpn.setHostName    ( dbhost );
+  dbxpn.setPort        ( dbport );
+  dbxpn.setDatabaseName( dbname  );
+  dbxpn.setUserName    ( dbuser  );
+  dbxpn.setPassword    ( dbpasw );
+
+  qDebug() << "Opening Postgres Connection!!!";
+  
+  if (  dbxpn.open() )
+    {
+      qDebug() << "Connected !!!";
+      
+      QSqlQuery query_expdef(dbxpn);
+      QSqlQuery query_fuge(dbxpn);
+      QSqlQuery query_abs_scan(dbxpn);
+     
+      /*
+      // AbsorbanceScanParameters
+      QString ScanId = "5996";
+      if(! query_abs_scan.prepare(QString("DELETE FROM %1 WHERE \"ScanId\" = %2").arg(qrytab_abs).arg(ScanId) ) )
+	qDebug() << query_abs_scan.lastError().text();
+
+      if (query_abs_scan.exec())
+	{
+	  qDebug() << "AbsorbanceScanParameters record # :" << ScanId  << "deleted !";
+	}
+      else
+	{
+	  QString errmsg   = "Delete record error: " + query_abs_scan.lastError().text();
+	  QMessageBox::critical( this,
+				 tr( "*ERROR* in Deleting Absorbance Record" ),
+				 tr( "An error occurred in the attempt to delete"
+				     " AbsorbanceScanParameters from AUC DB\n  %1 table\n  %2 ." ).arg( qrytab_abs ).arg( errmsg ) );
+	  return;
+	}
+      
+      // Cell Parameters
+      
+      
+      // FugeProfile
+      int FugeId = 308;
+      if(! query_fuge.prepare(QString("DELETE FROM %1 WHERE \"FugeRunProfileId\" = %2").arg(qrytab_fuge).arg(FugeId) ) )
+	qDebug() << query_fuge.lastError().text();
+
+      if (query_fuge.exec())
+	{
+	  qDebug() << "FugeProfile record # :" << FugeId  << "deleted !";
+	}
+      else
+	{
+	  QString errmsg   = "Delete record error: " + query_fuge.lastError().text();;
+	  QMessageBox::critical( this,
+				 tr( "*ERROR* in Deleting Fuge Profile" ),
+				 tr( "An error occurred in the attempt to delete"
+				     " FugeProfile from AUC DB\n  %1 table\n  %2 ." ).arg( qrytab_fuge ).arg( errmsg ) );
+	  return;
+	}
+
+      */
+
+      // ExperimentalDefinition
+      if(! query_expdef.prepare(QString("DELETE FROM %1 WHERE \"ExperimentId\" = %2").arg(qrytab_expdef).arg(ExpId) ) )
+	qDebug() << query_expdef.lastError().text();
+      
+      if (query_expdef.exec())
+	{
+	  qDebug() << "ExperimentDefinition record # :" << ExpId  << "deleted !";
+	}
+      else
+	{
+	  QString errmsg   = "Delete record error: " + query_expdef.lastError().text();;
+	  QMessageBox::critical( this,
+				 tr( "*ERROR* in Deleting Experimental Method" ),
+				 tr( "An error occurred in the attempt to delete"
+				     " exp. method from AUC DB\n  %1 table\n  %2 ." ).arg( qrytab_expdef ).arg( errmsg ) );
+	  return;
+	}
+				
+    }
 }
 
 // Slot to read all Optima machines <------------------------------- // New

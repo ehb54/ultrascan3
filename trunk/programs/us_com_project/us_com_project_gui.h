@@ -286,7 +286,9 @@ private slots:
 
   void to_autoflow_records( void );
 
-  void define_new_experiment( QStringList & ); 
+  void define_new_experiment( QStringList & );
+
+  void delete_psql_record( int );  
   
 signals:
   void pass_to_live_update( QMap < QString, QString > & protocol_details ); 
