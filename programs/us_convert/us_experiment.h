@@ -93,7 +93,8 @@ class US_Experiment
           \param    speedsteps Reference to vector of experiment speed steps
       */
       int saveToDB( bool, US_DB2*, QVector< SP_SPEEDPROFILE >& );
-
+      int saveToDB_auto( bool, US_DB2*, QVector< SP_SPEEDPROFILE >&, int );
+      
       /*! \brief    Reads experiment information from the db
 
           \param runID  The run ID of the experiment.
