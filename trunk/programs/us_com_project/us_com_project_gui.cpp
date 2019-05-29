@@ -501,6 +501,7 @@ void US_ComProjectMain::check_current_stage( void )
   QString correctRadii = protocol_details[ "correctRadii" ];
   QString expAborted   = protocol_details[ "expAborted" ];
   QString runID        = protocol_details[ "runID" ];
+  QString exp_label    = protocol_details[ "label" ];
   
   QDir directory( currDir );
   
@@ -508,6 +509,7 @@ void US_ComProjectMain::check_current_stage( void )
   qDebug() << "1.ExpAborted: "      << protocol_details[ "expAborted" ];
   qDebug() << "1.CorrectRadii: "    << protocol_details[ "correctRadii" ];
 
+  qDebug() << "Exp. Label: "    << protocol_details[ "label" ];
  
   //ALEXEY: if stage=="EDITING" && curDir.isEmpty() (NULL)
   /*
@@ -822,6 +824,7 @@ QMap< QString, QString> US_ComProjectMain::read_autoflow_record( int autoflowID 
 
 	   protocol_details[ "correctRadii" ]   = db->value( 13 ).toString();
 	   protocol_details[ "expAborted" ]     = db->value( 14 ).toString();
+	   protocol_details[ "label" ]          = db->value( 15 ).toString();
 	 }
      }
 

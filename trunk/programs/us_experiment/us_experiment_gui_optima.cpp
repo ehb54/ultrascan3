@@ -214,7 +214,9 @@ void US_ExperimentMain::auto_mode_passed( void )
   epanUpload->genL->addWidget( epanUpload->pb_details, 1,   0, 1, 4 );
   epanUpload->genL->addWidget( epanUpload->pb_submit,  1,   4, 1, 8 );
 
-
+  epanGeneral->lb_label->setVisible(true);
+  epanGeneral->le_label->setVisible(true);
+  
   this->pb_close->hide();
 
 }
@@ -277,6 +279,10 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
    QSpacerItem* spacer1         = new QSpacerItem( 20, ihgt );
    QSpacerItem* spacer2         = new QSpacerItem( 20, ihgt );
 
+   //ALEXEY: if autoflow mode, add label field
+   lb_label          = us_label( tr( "Label:" ) );
+   le_label          = us_lineedit( "", 0, false );
+
 
    le_runid->setPlaceholderText("Enter Run ID to continue");
    le_project->setPlaceholderText("Select Project to continue");
@@ -319,6 +325,7 @@ for (int jj=0;jj<gxentrs.count();jj++)
    currProto->project      = "";
    currProto->temperature  = 20.0;
    currProto->temeq_delay  = 10.0;
+   currProto->exp_label    = "";
 
    // Build main layout
    int row         = 0;
@@ -326,6 +333,10 @@ for (int jj=0;jj<gxentrs.count();jj++)
    genL->addWidget( le_investigator, row++, 2, 1, 6 );
    genL->addWidget( lb_runid,        row,   0, 1, 2 );
    genL->addWidget( le_runid,        row++, 2, 1, 6 );
+
+   genL->addWidget( lb_label,        row,   0, 1, 2 );
+   genL->addWidget( le_label,        row++, 2, 1, 6 );
+   
    genL->addWidget( pb_protocol,     row,   0, 1, 2 );
    genL->addWidget( le_protocol,     row++, 2, 1, 6 );
    genL->addWidget( pb_project,      row,   0, 1, 2 );
@@ -341,6 +352,10 @@ for (int jj=0;jj<gxentrs.count();jj++)
 
    panel->addLayout( genL );
    panel->addStretch();
+
+   //ALEXEY: hide in regular us_experiment, show in auto_mode (later)
+   lb_label->hide();
+   le_label->hide();  
 
    // Set up signal and slot connections
    connect( le_runid,        SIGNAL( textEdited(const QString &)  ),
@@ -537,6 +552,8 @@ DbgLv(1) << "EGGe:main: prnames,prdata counts" << pr_names.count() << protdata.c
       initPanel();
       le_protocol->setText( "" );
       le_project ->setText( "" );
+
+      currProto->exp_label    = "";
 
       /////mainw->reset();  //testing
    }
@@ -5347,6 +5364,8 @@ void US_ExperGuiUpload::submitExperiment()
 	 protocol_details[ "invID_passed" ]   = QString::number(US_Settings::us_inv_ID());
 	 protocol_details[ "correctRadii" ]   = QString("YES");
 	 protocol_details[ "expAborted" ]     = QString("NO");
+
+	 protocol_details[ "label" ]          = currProto->exp_label;
 	 
          int nwavl_tot = 0;
          for ( int kk = 0; kk < rpRange->nranges; kk++ )
@@ -5421,7 +5440,8 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
 	    << protocol_details[ "experimentName" ]
 	    << protocol_details[ "experimentId" ]
 	    << protocol_details[ "OptimaName" ]
-	    << protocol_details[ "invID_passed" ];
+	    << protocol_details[ "invID_passed" ]
+	    << protocol_details[ "label" ];
 
 	db->query( qry );
       }

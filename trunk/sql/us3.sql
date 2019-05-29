@@ -103,6 +103,7 @@ CREATE  TABLE IF NOT EXISTS autoflow (
   created TIMESTAMP NULL,
   corrRadii enum('YES', 'NO') NOT NULL,
   expAborted enum('NO', 'YES') NOT NULL,
+  label varchar(80) NULL,
   PRIMARY KEY (ID) )
 ENGINE = InnoDB;
 

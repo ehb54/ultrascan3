@@ -438,6 +438,8 @@ DbgLv(1) << "EGGe: inP: prn,prd counts" << protdata.count() << pr_names.count();
    ct_tempera     ->setValue( currProto->temperature );
    ct_tedelay     ->setValue( currProto->temeq_delay );
 
+   le_label       ->setText ( currProto->exp_label ); 
+
    check_user_level();
 
 }
@@ -609,6 +611,8 @@ void US_ExperGuiGeneral::savePanel()
    currProto->project      = le_project     ->text();
    currProto->temperature  = ct_tempera     ->value();
    currProto->temeq_delay  = ct_tedelay     ->value();
+
+   currProto->exp_label    = le_label       ->text();
 
 }
 

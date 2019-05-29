@@ -62,6 +62,9 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
       void update_inv( void );
       void check_runname( void );
       int loaded_proto;
+
+      QLabel*      lb_label;
+      QLineEdit*   le_label;            // Run name line edit
             
    private:
       US_ExperimentMain*    mainw;      // Parent to all panels
@@ -78,6 +81,8 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
 
       QwtCounter*  ct_tempera;          // Temperature counter
       QwtCounter*  ct_tedelay;          // Temp-equil-delay counter
+
+
 
       int          dbg_level;
       bool         use_db;              // Using the LIMS database?

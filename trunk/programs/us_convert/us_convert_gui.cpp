@@ -214,6 +214,14 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    pb_dropTrips        = us_pushbutton( tr( "Drop Selected Triples"  ), false );
    pb_dropCelch        = us_pushbutton( tr( "Drop Selected Data"     ), false );
    pb_dropChan         = us_pushbutton( tr( "Drop All Channel 'A's"  ), false );
+
+   //Comments section:
+   QLabel*    lb_comment = us_label( tr( "Comments:" ) );
+   te_comment = us_textedit();
+   te_comment->setMaximumHeight( 60 );
+   te_comment->setReadOnly( false );
+   
+   
    // Document solutio
    QLabel* lb_solution = us_label(      tr( "Solution:" ) );
    le_solutionDesc     = us_lineedit(   "", 1, true );
@@ -271,7 +279,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    ccw      ->addWidget( lb_triple,       row++, 0, 1, 12 );
    ccw      ->addWidget( lb_description,  row,   0, 1,  3 );
    ccw      ->addWidget( le_description,  row++, 3, 1,  9 );
-   ccw      ->addWidget( lw_triple,       row,   0, 4,  4 );
+   ccw      ->addWidget( lw_triple,       row,   0, 4,  4 ); // maybe ccw      ->addWidget( lw_triple,  row,   0, 3,  4 );
    //ccw      ->addWidget( lb_ccwinfo,      row++, 4, 1,  8 );
    //ccw      ->addWidget( cb_centerpiece,  row++, 4, 1,  8 );
    //ccw      ->addWidget( pb_solution,     row,   4, 1,  4 );
@@ -289,6 +297,10 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    ccw      ->addWidget( pb_dropChan,     row++, 8, 1,  4 );
 
    ++row;
+   //ALEXEY: insert comment for exp. here
+   ccw      ->addWidget( lb_comment,     row,   0, 1,  3 );
+   ccw      ->addWidget( te_comment,     row++, 3, 1,  9 );
+   
    ccw      ->addWidget( lb_ccwinfo,          row,   0, 1,  3 );
    ccw      ->addWidget( le_centerpieceDesc,  row++, 3, 1,  9 );
    //ccw      ->addWidget( cb_centerpiece,  row++, 3, 1,  9 );
@@ -1187,6 +1199,8 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
   ExpData.invID     = details_at_live_update[ "invID_passed" ].toInt();
   ProtocolName_auto = details_at_live_update[ "protocolName" ];
   runID_numeric     = details_at_live_update[ "runID" ];
+
+  Exp_label         = details_at_live_update[ "label" ];
   
   int impType = getImports_auto( details_at_live_update[ "dataPath" ] );
 
@@ -2574,8 +2588,9 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    ExpData.expType = ProtInfo.ProtRotor.exptype; //"velocity";  //ALEXEY change to what is passed from protocol
 
    //Experiment Label
-   ExpData.label = "some label";
-
+   //ExpData.label = "some label";
+   ExpData.label = Exp_label;
+   
    // ReadCenterpieces
    QStringList q( "get_abstractCenterpiece_names" );
    db.query( q );
@@ -4787,7 +4802,10 @@ void US_ConvertGui::saveUS3( void )
   // qDebug() << "ExpData.RI_nscans" <<  ExpData.RI_nscans;        
   // qDebug() << "ExpData.RI_nwvlns" <<  ExpData.RI_nwvlns;        
   
-    
+
+  // Comments
+  ExpData.comments = this->te_comment ->toPlainText();
+  
   // Test to see if this is multi-speed data
    QVector< int > speeds;
    int notrips  = 0;

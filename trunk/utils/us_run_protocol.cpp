@@ -18,6 +18,7 @@ US_RunProtocol::US_RunProtocol()
    investigator    = "";
    temperature     = 20.0;
    temeq_delay     = 10.0;
+   exp_label       = "";
 }
 
 // RunProtocol Equality operator

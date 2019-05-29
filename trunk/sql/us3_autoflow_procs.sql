@@ -51,7 +51,8 @@ CREATE PROCEDURE add_autoflow_record ( p_personGUID  CHAR(36),
 				     p_runname       VARCHAR(80),
 				     p_expid         INT,
 				     p_optimaname    VARCHAR(80),
-				     p_invID         INT )
+				     p_invID         INT,
+				     p_label         VARCHAR(80) )
                                     
   MODIFIES SQL DATA
 
@@ -71,6 +72,7 @@ BEGIN
       expID             = p_expid,
       optimaName        = p_optimaname,
       invID             = p_invID,
+      label		= p_label,
       created           = NOW();
 
     SET @LAST_INSERT_ID = LAST_INSERT_ID();
@@ -151,7 +153,7 @@ BEGIN
       SELECT @OK AS status;
 
       SELECT   protName, cellChNum, tripleNum, duration, runName, expID, 
-      	       runID, status, dataPath, optimaName, runStarted, invID, created, corrRadii, expAborted 
+      	       runID, status, dataPath, optimaName, runStarted, invID, created, corrRadii, expAborted, label 
       FROM     autoflow 
       WHERE    ID = p_autoflowID;
 
@@ -195,7 +197,7 @@ BEGIN
       SELECT @OK AS status;
 
       SELECT   ID, protName, cellChNum, tripleNum, duration, runName, expID, 
-      	       runID, status, dataPath, optimaName, runStarted, invID, created  
+      	       runID, status, dataPath, optimaName, runStarted, invID, created, label  
       FROM     autoflow;
      
     END IF;
