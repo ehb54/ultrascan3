@@ -2050,6 +2050,7 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
 {
   xpn_data->setEtimOffZero(); //ALEXEY: intialize etimoff to zero for the first time
 
+  experimentAborted  = false;
   counter_mins = 0;
   ElapsedTimeOffset = 0;
   
@@ -2064,7 +2065,7 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
   correctRadii = protocol_details[ "correctRadii" ];
   expAborted   = protocol_details[ "expAborted" ];
   runID_passed = protocol_details[ "runID" ];
-
+  
   qDebug() << "RUNID_PASSED !!! " << runID_passed;
 
   details_at_live_update = protocol_details;

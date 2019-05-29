@@ -165,6 +165,8 @@ class US_ConvertGui : public US_Widgets
 
       QwtCounter*   ct_tolerance;
 
+      QTextEdit*    te_comment;
+      
       QLabel*       lb_mwlctrl;
       QLabel*       lb_mwlctre;
       QLabel*       lb_lambstrt;
@@ -261,6 +263,7 @@ class US_ConvertGui : public US_Widgets
       bool readProtocolSolutions_auto ( QXmlStreamReader& );
 
       QString ProtocolName_auto;
+      QString Exp_label;
       
       void getExpInfo_auto ( void );
       void getLabInstrumentOperatorInfo_auto   ( void );
