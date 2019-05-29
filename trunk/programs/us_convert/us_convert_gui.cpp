@@ -1025,6 +1025,106 @@ DbgLv(1) << "CGui: (1)referDef=" << referenceDefined;
    show_mwl_control( false );
 }
 
+void US_ConvertGui::reset_auto( void )
+{
+   te_comment      ->clear();
+   
+   lw_triple       ->clear();
+
+   le_dir          ->setText( "" );
+
+   le_description  ->setText( "" );
+   le_runID        ->setText( "" );
+   le_runID2       ->setText( "" );
+   le_solutionDesc ->setText( "" );
+
+   pb_import     ->setEnabled( true  );
+   pb_loadUS3    ->setEnabled( true  );
+   pb_exclude    ->setEnabled( false );
+   pb_include    ->setEnabled( false );
+   pb_showTmst   ->setEnabled( false );
+   pb_details    ->setEnabled( false );
+   pb_intensity  ->setEnabled( false );
+   pb_cancelref  ->setEnabled( false );
+   pb_dropTrips  ->setEnabled( false );
+   pb_dropCelch  ->setEnabled( false );
+   pb_dropChan   ->setEnabled( false );
+   pb_solution   ->setEnabled( false );
+   pb_editRuninfo->setEnabled( false );
+   pb_applyAll   ->setEnabled( false );
+   pb_saveUS3    ->setEnabled( false );
+
+   ct_tolerance  ->setEnabled( true  );
+
+   cb_centerpiece->setEnabled( false );
+
+   ct_from       ->disconnect();
+   ct_from       ->setMinimum ( 0 );
+   ct_from       ->setMaximum ( 0 );
+   ct_from       ->setValue   ( 0 );
+
+   ct_to         ->disconnect();
+   ct_to         ->setMinimum ( 0 );
+   ct_to         ->setMaximum ( 0 );
+   ct_to         ->setValue   ( 0 );
+
+   // Clear any data structures
+   legacyData  .clear();
+   allExcludes .clear();
+   all_tripinfo.clear();
+   all_chaninfo.clear();
+   all_triples .clear();
+   all_channels.clear();
+   out_tripinfo.clear();
+   out_chaninfo.clear();
+   out_triples .clear();
+   out_channels.clear();
+   allData     .clear();
+   outData     .clear();
+   ExpData     .clear();
+   if ( isMwl )
+      mwl_data.clear();
+   show_plot_progress = true;
+
+   // Erase the todo list
+   lw_todoinfo->clear();
+   lw_todoinfo->addItem( "Load or import some AUC data" );
+
+   dataPlotClear( data_plot );
+   picker        ->disconnect();
+   data_plot     ->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
+   data_plot     ->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
+   grid          = us_grid( data_plot );
+   data_plot     ->replot();
+
+   pb_define     ->setEnabled( false );
+   pb_process    ->setEnabled( false );
+   step          = NONE;
+
+   enableRunIDControl( true );
+
+   toleranceChanged = false;
+   saveStatus       = NOT_SAVED;
+   isPseudo         = false;
+   isMwl            = false;
+
+   pb_reference   ->setEnabled( false );
+   referenceDefined = false;
+DbgLv(1) << "CGui: (1)referDef=" << referenceDefined;
+
+   // Display investigator
+   ExpData.invID = US_Settings::us_inv_ID();
+
+   QString number = ( ExpData.invID > 0 )
+      ?  QString::number( ExpData.invID ) + ": "
+      : "";
+
+   le_investigator->setText( number + US_Settings::us_inv_name() );
+   show_mwl_control( false );
+}
+
+
+
 void US_ConvertGui::resetAll( void )
 {
    QApplication::restoreOverrideCursor();
@@ -1079,7 +1179,7 @@ void US_ConvertGui::resetAll_auto( void )
    //    if ( status != 0 ) return;
    // }
 
-   reset();
+   reset_auto();
 
    le_status->setText( tr( "(no data loaded)" ) );
    subsets.clear();
