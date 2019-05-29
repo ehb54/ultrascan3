@@ -52,7 +52,8 @@ CREATE PROCEDURE add_autoflow_record ( p_personGUID  CHAR(36),
 				     p_expid         INT,
 				     p_optimaname    VARCHAR(80),
 				     p_invID         INT,
-				     p_label         VARCHAR(80) )
+				     p_label         VARCHAR(80),
+				     p_gmprun        VARCHAR(80) )
                                     
   MODIFIES SQL DATA
 
@@ -73,7 +74,8 @@ BEGIN
       optimaName        = p_optimaname,
       invID             = p_invID,
       label		= p_label,
-      created           = NOW();
+      created           = NOW(),
+      gmpRun            = p_gmprun;
 
     SET @LAST_INSERT_ID = LAST_INSERT_ID();
 
@@ -82,6 +84,7 @@ BEGIN
   SELECT @US3_LAST_ERRNO AS status;
 
 END$$
+
 
 
 -- DELETE  autoflow record ( when Optima run aborted manually )
@@ -153,7 +156,8 @@ BEGIN
       SELECT @OK AS status;
 
       SELECT   protName, cellChNum, tripleNum, duration, runName, expID, 
-      	       runID, status, dataPath, optimaName, runStarted, invID, created, corrRadii, expAborted, label 
+      	       runID, status, dataPath, optimaName, runStarted, invID, created, 
+	       corrRadii, expAborted, label, gmpRun  
       FROM     autoflow 
       WHERE    ID = p_autoflowID;
 
@@ -197,7 +201,7 @@ BEGIN
       SELECT @OK AS status;
 
       SELECT   ID, protName, cellChNum, tripleNum, duration, runName, expID, 
-      	       runID, status, dataPath, optimaName, runStarted, invID, created, label  
+      	       runID, status, dataPath, optimaName, runStarted, invID, created, gmpRun  
       FROM     autoflow;
      
     END IF;

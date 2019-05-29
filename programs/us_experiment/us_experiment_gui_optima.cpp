@@ -5374,6 +5374,7 @@ void US_ExperGuiUpload::submitExperiment()
          }
          protocol_details[ "TripleNumber" ] = QString::number(nwavl_tot);
          protocol_details[ "OptimaName" ]   = rpRotor->instrname;
+	 //protocol_details[ "OptimaName" ]   = mainw->currentInstrument[ "name" ];
       }
       else
       {
@@ -5417,6 +5418,14 @@ void US_ExperGuiUpload::submitExperiment()
 // Read Protocol details
 void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_details )
 {
+  QString gmpRun;
+  if ( mainw->usmode )
+    gmpRun = "NO";
+  else
+    gmpRun = "YES";
+
+  qDebug() << "GMPRUN FIELD: " << gmpRun;
+    
   // Check DB connection
    US_Passwd pw;
    QString masterpw = pw.getPasswd();
@@ -5441,7 +5450,8 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
 	    << protocol_details[ "experimentId" ]
 	    << protocol_details[ "OptimaName" ]
 	    << protocol_details[ "invID_passed" ]
-	    << protocol_details[ "label" ];
+	    << protocol_details[ "label" ]
+	    << gmpRun;
 
 	db->query( qry );
       }

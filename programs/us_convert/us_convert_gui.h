@@ -251,6 +251,8 @@ class US_ConvertGui : public US_Widgets
       US_Experiment ExpData;                   // Experiment data object
 
       void reset           ( void );
+      void reset_auto      ( void );
+      
       void enableRunIDControl( bool );
       void enableScanControls( void );
       void enableSaveBtn   ( void );

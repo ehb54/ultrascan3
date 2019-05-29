@@ -20,6 +20,7 @@ US_SelectItem::US_SelectItem( QList< QStringList >& items,
    multi_sel         = false;
    deleted_button    = false;
    autoflow_button   = false;
+   autoflow_da       = false;
    selxP             = aselxP;
    selxsP            = NULL;
    sort_ord          = ( def_sort < 0 ) ? Qt::DescendingOrder
@@ -42,14 +43,20 @@ US_SelectItem::US_SelectItem( QList< QStringList >& items,
    multi_sel         = false;
    deleted_button    = false;
    autoflow_button   = false;
+   autoflow_da       = false;
    
    
    if ( !add_label.isEmpty() )
      {
        if ( add_label == "DELETE" )
 	 deleted_button    = true;
-       if ( add_label == "AUTOFLOW" )
+       if ( add_label == "AUTOFLOW_GMP" )
 	 autoflow_button = true;
+       if ( add_label == "AUTOFLOW_DA" )
+	 {
+	   autoflow_button = true;
+	   autoflow_da     = true;
+	 }
      }
    
    selxP             = aselxP;
@@ -281,10 +288,28 @@ void US_SelectItem::list_data()
       // Set the column 0 name field
       tw_data->setItem( kk, 0, new QTableWidgetItem( iname ) );
 
+      
+      //ALEXEY: if GMP run ("YES") & open with DA software (autoflow_da == true), make item unselectable:
+      if ( autoflow_da && items[ ii ][ ncols -1 ] == "YES" ) 
+	{
+	  tw_data->item( kk, 0)->setFlags(Qt::NoItemFlags);
+	  // //tw_data->item( kk, 0)->setForeground(QBrush(QColor(250,0,0)));
+	  tw_data->item( kk, 0)->setForeground(QBrush(Qt::gray));
+	}
+      
       for ( int jj = 1; jj < ncols; jj++ )
       {  // Set fields for remaining columns of the present row
          tw_data->setItem( kk, jj,
                            new QTableWidgetItem( items[ ii ][ jj ] ) );
+
+
+	 //ALEXEY: if GMP run ("YES") & open with DA software (autoflow_da == true), make item unselectable:
+	 if ( autoflow_da && items[ ii ][ ncols -1 ] == "YES" ) 
+	   {
+	     tw_data->item( kk, jj)->setFlags(Qt::NoItemFlags);
+	     // //tw_data->item( kk, 0)->setForeground(QBrush(QColor(250,0,0)));
+	     tw_data->item( kk, jj)->setForeground(QBrush(Qt::gray));
+	   }
       }
 
       tw_data->setRowHeight( kk++, rowhgt );

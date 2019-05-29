@@ -445,9 +445,15 @@ void US_ComProjectMain::check_current_stage( void )
        << "Optima Name"
        << "Created"
        << "Run Status"
-       << "Stage";
+       << "Stage"
+       << "GMP";
   
-  QString autoflow_btn = "AUTOFLOW";
+  QString autoflow_btn;
+
+  if ( us_mode_bool )
+    autoflow_btn = "AUTOFLOW_DA";
+  else
+    autoflow_btn = "AUTOFLOW_GMP";
   
   //US_SelectItem pdiag( autoflowdata, hdrs, pdtitle, &prx, autoflow_btn, -2 );
   US_SelectItem* pdiag = new  US_SelectItem( autoflowdata, hdrs, pdtitle, &prx, autoflow_btn, -2 );
@@ -502,6 +508,8 @@ void US_ComProjectMain::check_current_stage( void )
   QString expAborted   = protocol_details[ "expAborted" ];
   QString runID        = protocol_details[ "runID" ];
   QString exp_label    = protocol_details[ "label" ];
+
+  QString gmp_Run      = protocol_details[ "gmpRun" ];
   
   QDir directory( currDir );
   
@@ -510,7 +518,8 @@ void US_ComProjectMain::check_current_stage( void )
   qDebug() << "1.CorrectRadii: "    << protocol_details[ "correctRadii" ];
 
   qDebug() << "Exp. Label: "    << protocol_details[ "label" ];
- 
+  qDebug() << "GMP Run ? "      << protocol_details[ "gmpRun" ];
+  
   //ALEXEY: if stage=="EDITING" && curDir.isEmpty() (NULL)
   /*
         -- that means that Run Completed but Directory was created on different computer
@@ -731,6 +740,8 @@ int US_ComProjectMain::list_all_autoflow_records( QList< QStringList >& autoflow
       QDateTime time_started     = dbP->value( 11 ).toDateTime().toUTC();
 
       QDateTime time_created     = dbP->value( 13 ).toDateTime().toUTC();
+      QString gmpRun             = dbP->value( 14 ).toString();
+      
       QDateTime local(QDateTime::currentDateTime());
 
       autoflowentry << id << runname << optimaname  << time_created.toString(); // << time_started.toString(); // << local.toString( Qt::ISODate );
@@ -746,7 +757,7 @@ int US_ComProjectMain::list_all_autoflow_records( QList< QStringList >& autoflow
 	    //autoflowentry << time_started.toString();
 	}
       
-      autoflowentry << status;
+      autoflowentry << status << gmpRun;
       
       autoflowdata  << autoflowentry;
       nrecs++;
@@ -825,6 +836,8 @@ QMap< QString, QString> US_ComProjectMain::read_autoflow_record( int autoflowID 
 	   protocol_details[ "correctRadii" ]   = db->value( 13 ).toString();
 	   protocol_details[ "expAborted" ]     = db->value( 14 ).toString();
 	   protocol_details[ "label" ]          = db->value( 15 ).toString();
+	   protocol_details[ "gmpRun" ]         = db->value( 16 ).toString();
+	   
 	 }
      }
 
