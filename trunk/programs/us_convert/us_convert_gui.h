@@ -266,6 +266,7 @@ class US_ConvertGui : public US_Widgets
 
       QString ProtocolName_auto;
       QString Exp_label;
+      bool    gmpRun_bool;
       
       void getExpInfo_auto ( void );
       void getLabInstrumentOperatorInfo_auto   ( void );
