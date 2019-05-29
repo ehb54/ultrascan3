@@ -5366,6 +5366,14 @@ void US_ExperGuiUpload::submitExperiment()
 	 protocol_details[ "expAborted" ]     = QString("NO");
 
 	 protocol_details[ "label" ]          = currProto->exp_label;
+
+	 QString gmpRun_str;
+	 if ( mainw->usmode )
+	   gmpRun_str = "NO";
+	 else
+	   gmpRun_str = "YES";
+
+	 protocol_details[ "gmpRun" ]         = gmpRun_str; 
 	 
          int nwavl_tot = 0;
          for ( int kk = 0; kk < rpRange->nranges; kk++ )
@@ -5418,13 +5426,7 @@ void US_ExperGuiUpload::submitExperiment()
 // Read Protocol details
 void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_details )
 {
-  QString gmpRun;
-  if ( mainw->usmode )
-    gmpRun = "NO";
-  else
-    gmpRun = "YES";
-
-  qDebug() << "GMPRUN FIELD: " << gmpRun;
+  qDebug() << "GMPRUN FIELD: " << protocol_details[ "gmpRun" ];
     
   // Check DB connection
    US_Passwd pw;
@@ -5451,7 +5453,7 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
 	    << protocol_details[ "OptimaName" ]
 	    << protocol_details[ "invID_passed" ]
 	    << protocol_details[ "label" ]
-	    << gmpRun;
+	    << protocol_details[ "gmpRun" ];
 
 	db->query( qry );
       }

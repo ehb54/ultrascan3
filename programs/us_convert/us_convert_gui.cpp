@@ -1301,6 +1301,12 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
   runID_numeric     = details_at_live_update[ "runID" ];
 
   Exp_label         = details_at_live_update[ "label" ];
+
+  gmpRun_bool = false;
+  
+  if ( details_at_live_update[ "gmpRun" ] == "YES" )
+    gmpRun_bool = true;
+ 
   
   int impType = getImports_auto( details_at_live_update[ "dataPath" ] );
 
@@ -5017,7 +5023,7 @@ DbgLv(1) << "Writing to disk";
 // x  x  x  x  x
    if ( us_convert_auto_mode )   // if us_comproject OR us_comproject_academic
      {
-       if ( usmode )             // us_comproject_academic
+       if ( usmode )             // us_comproject_academic / DA
 	 {
 	   QMessageBox::information( this,
 				     tr( "Save is Complete" ),
@@ -5029,17 +5035,32 @@ DbgLv(1) << "Writing to disk";
 	   emit saving_complete_back_to_exp( ProtocolName_auto );
 	   return;
 	 }
-       else                       // us_comproject
+       else                             // us_comproject
 	 {
-	   // ALEXEY: // If "AUTO" - emit signal to pass to stage 4. Analysis
-	   QMessageBox::information( this,
-				     tr( "Save is Complete" ),
-				     tr( "The save of all data and reports is complete.\n\n"
-					 "The program will switch to Analysis stage." ) );
-	   
-	   // Either emit ONLY if not US_MODE, or do NOT connect with slot on us_comproject...
-	   resetAll_auto();
-	   emit saving_complete_auto( currentDir, ProtocolName_auto  );   
+
+	   if ( !gmpRun_bool )    // us_comproject BUT the run is NOT GMP, so complete here 
+	     {
+	       QMessageBox::information( this,
+					 tr( "Save is Complete" ),
+					 tr( "The save of all data and reports is complete." ) );
+	       
+	       //ALEXY: need to delete autoflow record here
+	       delete_autoflow_record();
+	       resetAll_auto();
+	       emit saving_complete_back_to_exp( ProtocolName_auto );
+	       return;
+	     }
+	   else                   // us_comproject BUT the run IS GMP, so procced                    
+	     {
+	       QMessageBox::information( this,
+					 tr( "Save is Complete" ),
+					 tr( "The save of all data and reports is complete.\n\n"
+					     "The program will switch to Analysis stage." ) );
+	       
+	       // Either emit ONLY if not US_MODE, or do NOT connect with slot on us_comproject...
+	       resetAll_auto();
+	       emit saving_complete_auto( currentDir, ProtocolName_auto  );   
+	     }
 	 }
      }
 }
