@@ -33,7 +33,7 @@ CREATE  TABLE IF NOT EXISTS people (
   activated TINYINT(1) NOT NULL DEFAULT false ,
   signup TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ,
   lastLogin DATETIME NULL ,
-  clusterAuthorizations VARCHAR(255) NOT NULL default 'lonestar5:stampede:comet:gordon:jetstream:demeler3-local',
+  clusterAuthorizations VARCHAR(255) NOT NULL default 'lonestar5:stampede2:comet:jetstream',
   userlevel TINYINT NOT NULL DEFAULT 0 ,
   advancelevel TINYINT NOT NULL DEFAULT 0 ,
   PRIMARY KEY (personID) )
@@ -80,6 +80,36 @@ CREATE  TABLE IF NOT EXISTS lab (
 ENGINE = InnoDB;
 
 
+-----------------------------------------------------
+-- Table autoflow--
+-----------------------------------------------------
+
+DROP TABLE IF EXISTS autoflow;
+
+CREATE  TABLE IF NOT EXISTS autoflow (
+  ID int(11) NOT NULL AUTO_INCREMENT ,
+  protName varchar(80) NULL,
+  cellChNum int(10) NULL,
+  tripleNum int(10) NULL,
+  duration int(10)  NULL,
+  runName varchar(300) NULL,
+  expID  int(10) NULL,
+  runID  int(10) NULL,
+  status enum('LIVE_UPDATE','EDITING','ANALYSIS','REPORT') NOT NULL,
+  dataPath varchar(300) NULL,
+  optimaName varchar(300) NULL,
+  runStarted TIMESTAMP NULL,
+  invID  INT NULL,
+  created TIMESTAMP NULL,
+  corrRadii enum('YES', 'NO') NOT NULL,
+  expAborted enum('NO', 'YES') NOT NULL,
+  label varchar(80) NULL,
+  gmpRun enum ('NO', 'YES') NOT	NULL,
+  PRIMARY KEY (ID) )
+ENGINE = InnoDB;
+
+
+
 -- -----------------------------------------------------
 -- Table instrument
 -- -----------------------------------------------------
@@ -91,6 +121,18 @@ CREATE  TABLE IF NOT EXISTS instrument (
   name TEXT NULL ,
   serialNumber TEXT NULL ,
   dateUpdated TIMESTAMP NULL ,
+  radialCalID int(11) NOT NULL DEFAULT 0 ,
+  optimaHost TEXT NULL ,
+  optimaPort int(11) NULL ,
+  optimaDBname TEXT NULL ,
+  optimaDBusername TEXT NULL ,
+  optimaDBpassw BLOB NULL ,
+  chromaticAB TEXT NULL ,
+  selected BOOL DEFAULT false ,
+  opsys1 ENUM ('UV/visible', 'Rayleigh Interference', 'Fluorescense', '(not installed)') NOT NULL ,
+  opsys2 ENUM ('UV/visible', 'Rayleigh Interference', 'Fluorescense', '(not installed)') NOT NULL ,
+  opsys3 ENUM ('UV/visible', 'Rayleigh Interference', 'Fluorescense', '(not installed)') NOT NULL ,
+  RadCalWvl int(11) NULL ,
   PRIMARY KEY (instrumentID) ,
   INDEX ndx_instrument_labID (labID ASC) ,
   CONSTRAINT fk_instrument_labID
@@ -196,14 +238,16 @@ CREATE  TABLE IF NOT EXISTS experiment (
   experimentGUID CHAR(36) NULL UNIQUE,
   type ENUM('velocity', 'equilibrium', 'diffusion', 'buoyancy', 'calibration', 'other') NULL 
     DEFAULT 'velocity',
-  runType ENUM( 'RA', 'RI', 'IP', 'FI', 'WA', 'WI' ) NULL DEFAULT NULL,
+  runType ENUM('RA', 'RI', 'IP', 'FI', 'WA', 'WI', 'RI+IP', 'RI+FI', 'IP+FI', 'RI+IP+FI') NULL
+    DEFAULT NULL,
   dateBegin DATE NOT NULL ,
   runTemp FLOAT NULL ,
   label VARCHAR(80) NULL ,
   comment TEXT NULL ,
   RIProfile LONGTEXT NULL ,
+  protocolGUID CHAR(36) NULL ,
   centrifugeProtocol TEXT NULL ,
-  dateUpdated DATETIME NULL ,
+  dateUpdated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ,
   PRIMARY KEY (experimentID) ,
   INDEX ndx_experiment_projectID (projectID ASC) ,
   INDEX ndx_experiment_operatorID (operatorID ASC) ,
@@ -267,8 +311,23 @@ CREATE  TABLE IF NOT EXISTS abstractCenterpiece (
   canHoldSample INT NULL ,
   materialRefURI TEXT NULL ,
   centerpieceRefURI TEXT NULL ,
-  dataUpdated TIMESTAMP NULL ,
+  dataUpdated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ,
   PRIMARY KEY (abstractCenterpieceID) )
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table radialCalibration
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS radialCalibration ;
+
+CREATE  TABLE IF NOT EXISTS radialCalibration (
+  radialCalID int(11) NOT NULL AUTO_INCREMENT ,
+  radialCalGUID char(36) NOT NULL UNIQUE ,
+  speed int(11) NOT NULL DEFAULT 0 ,
+  rotorCalID int(11) NOT NULL DEFAULT 0 ,
+  dateUpdated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ,
+  PRIMARY KEY (radialCalID) )
 ENGINE = InnoDB;
 
 
@@ -486,7 +545,7 @@ CREATE  TABLE IF NOT EXISTS rawData (
   experimentID int(11) NOT NULL ,
   solutionID int(11) NOT NULL ,
   channelID int(11) NOT NULL ,
-  lastUpdated DATETIME NULL ,
+  lastUpdated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ,
   PRIMARY KEY (rawDataID) ,
   INDEX ndx_rawData_experimentID (experimentID ASC) ,
   INDEX ndx_rawData_channelID (channelID ASC) ,
@@ -514,13 +573,13 @@ DROP TABLE IF EXISTS editedData ;
 
 CREATE  TABLE IF NOT EXISTS editedData (
   editedDataID int(11) NOT NULL AUTO_INCREMENT ,
-  rawDataID int(11) NULL DEFAULT NULL,
+  rawDataID int(11) NULL DEFAULT NULL ,
   editGUID CHAR(36) NOT NULL UNIQUE ,
-  label VARCHAR(80) NOT NULL DEFAULT '',
-  data LONGBLOB NOT NULL ,
-  filename VARCHAR(255) NOT NULL DEFAULT '',
+  label VARCHAR(80) NOT NULL DEFAULT '' ,
+  data LONGBLOB NULL ,
+  filename VARCHAR(255) NOT NULL DEFAULT '' ,
   comment TEXT NULL ,
-  lastUpdated DATETIME NULL ,
+  lastUpdated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ,
   PRIMARY KEY (editedDataID) ,
   INDEX ndx_editedData_rawDataID (rawDataID ASC) ,
   CONSTRAINT fk_editedData_rawDataID
@@ -856,6 +915,7 @@ CREATE TABLE IF NOT EXISTS HPCAnalysisRequest (
   submitTime datetime NOT NULL default '0000-00-00 00:00:00',
   clusterName varchar(80) default NULL,
   method enum('2DSA','2DSA_CG','2DSA_MW','GA','GA_MW','GA_SC','DMGA','PCSA') NOT NULL default '2DSA',
+  analType text DEFAULT NULL ,
   PRIMARY KEY (HPCAnalysisRequestID) )
 ENGINE=InnoDB;
 
@@ -1733,7 +1793,7 @@ CREATE  TABLE IF NOT EXISTS timestate (
   filename varchar(255) NOT NULL default '',
   definitions longtext,
   data longblob,
-  lastUpdated TIMESTAMP NULL ,
+  lastUpdated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ,
   PRIMARY KEY (timestateID) ,
   CONSTRAINT fk_timestate_experimentID
     FOREIGN KEY (experimentID)
@@ -1763,12 +1823,13 @@ CREATE  TABLE IF NOT EXISTS protocol (
   solution1 varchar(80) NULL ,
   solution2 varchar(80) NULL ,
   wavelengths int(11) NULL ,
+  aprofileGUID char(36) NULL ,
   PRIMARY KEY (protocolID) )
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table prototcolPerson
+-- Table protocolPerson
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS protocolPerson ;
 
@@ -1785,6 +1846,67 @@ CREATE  TABLE IF NOT EXISTS protocolPerson (
   CONSTRAINT fk_protocolPerson_protocolID
     FOREIGN KEY (protocolID )
     REFERENCES protocol (protocolID )
+    ON DELETE NO ACTION
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table analysisprofile
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS analysisprofile ;
+
+CREATE TABLE IF NOT EXISTS analysisprofile (
+  aprofileID int(11) NOT NULL AUTO_INCREMENT ,
+  aprofileGUID char(36) NOT NULL UNIQUE ,
+  name TEXT NOT NULL ,
+  xml LONGTEXT NOT NULL ,
+  dateUpdated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ,
+  PRIMARY KEY (aprofileID) )
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table protocolAprofile
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS protocolAprofile ;
+
+CREATE  TABLE IF NOT EXISTS protocolAprofile (
+  protocolID int(11) NOT NULL ,
+  aprofileID int(11) NOT NULL ,
+  INDEX ndx_protocolAprofile_aprofileID (aprofileID ASC) ,
+  INDEX ndx_protocolAprofile_protocolID (protocolID ASC) ,
+  CONSTRAINT fk_protocolAprofile_aprofileID
+    FOREIGN KEY (aprofileID )
+    REFERENCES analysisprofile (aprofileID )
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_protocolAprofile_protocolID
+    FOREIGN KEY (protocolID )
+    REFERENCES protocol (protocolID )
+    ON DELETE NO ACTION
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table experimentProtocol
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS experimentProtocol ;
+
+CREATE  TABLE IF NOT EXISTS experimentProtocol (
+  experimentID int(11) NOT NULL ,
+  protocolID int(11) NOT NULL ,
+  INDEX ndx_experimentProtocol_protocolID (protocolID ASC) ,
+  INDEX ndx_experimentProtocol_experimentID (experimentID ASC) ,
+  CONSTRAINT fk_experimentProtocol_protocolID
+    FOREIGN KEY (protocolID )
+    REFERENCES protocol (protocolID )
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_experimentProtocol_experimentID
+    FOREIGN KEY (experimentID )
+    REFERENCES experiment (experimentID )
     ON DELETE NO ACTION
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
