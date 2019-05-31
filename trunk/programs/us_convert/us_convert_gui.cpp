@@ -69,7 +69,6 @@ US_ConvertGui::US_ConvertGui(QString auto_mode) : US_Widgets()
    dbg_level    = US_Settings::us_debug();
 DbgLv(0) << "CGui: dbg_level" << dbg_level;
 
-
    us_convert_auto_mode = true;
  
    QGridLayout* settings = new QGridLayout;
@@ -4870,6 +4869,8 @@ DbgLv(1) << "DelChan:  EXCLUDED cc trx" << celchn << trx;
 void US_ConvertGui::saveUS3( void )
 {
 
+  qDebug() << "Save INIT 1: ";
+
   // qDebug() << "ExpData: ";
 
   // qDebug() << "ExpData.invID " << ExpData.invID;             
@@ -4910,7 +4911,13 @@ void US_ConvertGui::saveUS3( void )
   
 
   // Comments
-  ExpData.comments = this->te_comment ->toPlainText();
+  if ( us_convert_auto_mode )
+    {
+      qDebug() << "Save: Comments: " << this->te_comment ->toPlainText();
+      ExpData.comments = this->te_comment ->toPlainText();
+    }
+  
+  qDebug() << "Save INIT 2:";
   
   // Test to see if this is multi-speed data
    QVector< int > speeds;
