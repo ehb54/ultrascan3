@@ -113,6 +113,8 @@ class US_UTIL_EXTERN US_Settings
     static QStringList debug_text(     void );
     //! \brief Get a flag if given string matches any in debug text
     static bool        debug_match(    QString );
+    //! \brief Get the string value for a match in debug_text
+    static QString     debug_value(    QString );
     //! \brief Set the Debug text setting as a string list
     static void        set_debug_text( QStringList );
 

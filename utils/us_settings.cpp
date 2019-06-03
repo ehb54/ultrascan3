@@ -253,6 +253,22 @@ bool US_Settings::debug_match( QString match )
    return debug_text().contains( match, Qt::CaseInsensitive );
 }
 
+QString US_Settings::debug_value( QString match )
+{
+   QStringList dbgtxt = debug_text();
+   QString dbgval( "" );
+
+   for ( int ii = 0; ii < dbgtxt.count(); ii++ )
+   {
+      if ( dbgtxt[ ii ].startsWith( match, Qt::CaseInsensitive ) )
+      {
+         dbgval        = QString( dbgtxt[ ii ] ).section( "=", 1, 1 );
+         break;
+      }
+   }
+
+   return dbgval;
+}
 
 // Investigator
 QString US_Settings::us_inv_name( void )
