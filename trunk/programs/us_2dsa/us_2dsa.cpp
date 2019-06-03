@@ -1116,14 +1116,16 @@ DbgLv(1)<<"2dsa : timestate newly created.  timestateobject = "
    // Do a quick test of the speed step implied by TimeState
    int tf_scan   = dset.simparams.speed_step[ 0 ].time_first;
    int accel1    = dset.simparams.speed_step[ 0 ].acceleration;
+   QString svalu = US_Settings::debug_value( "SetSpeedLowA" );
+   int lo_ss_acc = svalu.isEmpty() ? 250 : svalu.toInt();
    int rspeed    = dset.simparams.speed_step[ 0 ].rotorspeed;
    int tf_aend   = ( rspeed + accel1 - 1 ) / accel1;
    int accel2    = dset.simparams.sim_speed_prof[ 0 ].acceleration;
 DbgLv(1)<<"2dsa : ssck: rspeed accel1 tf_aend tf_scan"
  << rspeed << accel1 << tf_aend << tf_scan
- << "accel2" << accel2;
+ << "accel2" << accel2 << "lo_ss_acc" << lo_ss_acc;
 //x0  1  2  3  4  5
-   if ( accel1 < 250  ||  tf_aend > ( tf_scan - 6 ) )
+   if ( accel1 < lo_ss_acc  ||  tf_aend > ( tf_scan - 6 ) )
    {
       QString wmsg = tr( "The TimeState used is likely bad:<br/>"
                          "The acceleration implied is %1 rpm/sec.<br/>"
