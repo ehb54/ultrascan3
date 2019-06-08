@@ -2169,12 +2169,19 @@ void US_XpnDataViewer::retrieve_xpn_raw_auto( )
    QRegExp rx( "[^A-Za-z0-9_-]" );
 
    int pos            = 0;
-
    bool runID_changed = false;
+
+   if ( new_runID.length() > 60 )
+   {
+      int kchar         = 60 - 4 - fRunId.length();
+      new_runID         = fExpNm.left( kchar ) + "-run" + fRunId;
+      runID_changed     = true;
+   }
+
    while ( ( pos = rx.indexIn( new_runID ) ) != -1 )
    {
       new_runID.replace( pos, 1, "_" );         // Replace 1 char at pos
-      runID_changed = true;
+      runID_changed     = true;
    }
 
    // Let the user know if the runID name has changed
@@ -2184,7 +2191,8 @@ void US_XpnDataViewer::retrieve_xpn_raw_auto( )
             tr( "RunId Name Changed" ),
             tr( "The runId name has been changed.\nIt may consist only "
                 "of alphanumeric characters,\nthe underscore, and the "
-                "hyphen.\nNew runId:\n  " ) + new_runID );
+                "hyphen;\nand may be at most 60 characters in length."
+                "\nNew runId:\n  " ) + new_runID );
    }
 
    // Set the runID and directory
@@ -2525,12 +2533,19 @@ DbgLv(1) << "RDr:   drDesc" << drDesc;
    QRegExp rx( "[^A-Za-z0-9_-]" );
 
    int pos            = 0;
-
    bool runID_changed = false;
+
+   if ( new_runID.length() > 60 )
+   {
+      int kchar         = 60 - 4 - fRunId.length();
+      new_runID         = fExpNm.left( kchar ) + "-run" + fRunId;
+      runID_changed     = true;
+   }
+
    while ( ( pos = rx.indexIn( new_runID ) ) != -1 )
    {
       new_runID.replace( pos, 1, "_" );         // Replace 1 char at pos
-      runID_changed = true;
+      runID_changed     = true;
    }
 
    // Let the user know if the runID name has changed
@@ -2540,7 +2555,8 @@ DbgLv(1) << "RDr:   drDesc" << drDesc;
             tr( "RunId Name Changed" ),
             tr( "The runId name has been changed.\nIt may consist only "
                 "of alphanumeric characters,\nthe underscore, and the "
-                "hyphen.\nNew runId:\n  " ) + new_runID );
+                "hyphen;\nand may be at most 60 characters in length."
+                "\nNew runId:\n  " ) + new_runID );
    }
 
    // Set the runID and directory
@@ -3444,6 +3460,8 @@ void US_XpnDataViewer::export_auc()
       if ( status != 0 ) return;
    }
    QString runIDt = le_runID->text();              // User given run ID text
+DbgLv(1) << "ExpAuc: runIDt" << runIDt;
+DbgLv(1) << "ExpAuc: runID" << runID;
 
    if ( runIDt != runID )
    {  // Set runID to new entry given by user
@@ -3454,6 +3472,15 @@ void US_XpnDataViewer::export_auc()
       while ( ( pos = rx.indexIn( new_runID ) ) != -1 )
       {  // Loop thru any invalid characters given (not alphanum.,'_','-')
          new_runID.replace( pos, 1, "_" );         // Replace 1 char at pos
+      }
+
+DbgLv(1) << "ExpAuc: new_runID len" << new_runID.length();
+      if ( new_runID.length() > 60 )
+      {
+         new_runID          = QString( new_runID ).left( 52 )
+                            + QString( new_runID ).right( 8 );
+DbgLv(1) << "ExpAuc: corr new_runID len" << new_runID.length();
+DbgLv(1) << "ExpAuc: new_runID" << new_runID;
       }
 
       // Let the user know that the runID name has changed
