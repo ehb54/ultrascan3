@@ -2736,10 +2736,20 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 	 {	   
 	   //Solution
 	   solutionID = ProtInfo.ProtSolutions.chsols[ i ].sol_id.toInt();
-	   solution_auto.readFromDB(solutionID, &db);  
-	   out_chaninfo[ i ].solution = solution_auto;
-	   out_tripinfo[ out_chandatx[ i ] + cb_lambplot->currentIndex() ].solution = solution_auto;
+	   solution_auto.readFromDB(solutionID, &db);
 
+	   qDebug() << "SOLS 0";
+	   
+	   out_chaninfo[ i ].solution = solution_auto;
+
+	   qDebug() << "SOLS 0a";
+
+	   qDebug() << "out_chandatx[ i ] + cb_lambplot->currentIndex() " <<  out_chandatx[ i ] << " + " <<  cb_lambplot->currentIndex() << out_chandatx[ i ] + cb_lambplot->currentIndex();
+	   
+	   //out_tripinfo[ out_chandatx[ i ] + cb_lambplot->currentIndex() ].solution = solution_auto; // ALEXEY <-- BUG
+
+	   qDebug() << "SOLS 1";
+	   
 	   //DUPL
 	   all_tripinfo[ i ].solution = solution_auto;  
 	   //all_tripinfo[ out_chandatx[ i ] + cb_lambplot->currentIndex() ].solution = solution_auto;
@@ -2756,6 +2766,8 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 	   // 	   }
 	   //   }
 
+	   qDebug() << "SOLS 2";
+	   
 	   cellnumber = i / num_cent_holes;
 	   for ( int aa = 0; aa < cent_options.size(); ++aa )
 	     {
@@ -2766,7 +2778,8 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 		 }
 	     }
 	   	   
-	   
+	    qDebug() << "SOLS 3";
+	    
 	   //ALEXEY abstractCenterpieceIDs inferred from cent. name passed from protocol
 	   out_chaninfo[ i ]   .centerpiece     = cpID;
 	   out_chaninfo[ i ]   .centerpieceName = cpName;
@@ -2805,14 +2818,22 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 	       all_tripinfo[ jj ].centerpieceName = cpName;
 	     }
 
+	    qDebug() << "SOLS 4";
+	    
 	   // Description
 	   triple_desc = ProtInfo.ProtSolutions.chsols[ i ].ch_comment;  //channel's comment from protocol
-	   outData[ out_chandatx[ i ] + cb_lambplot->currentIndex() ]->description = triple_desc;  // ALEXEY : REplicate for all triple in the same channel
+
+	   //ALEXEY: a problem here
+	   //outData[ out_chandatx[ i ] + cb_lambplot->currentIndex() ]->description = triple_desc;  // ALEXEY : REplicate for all triple in the same channel
+
+
 	   //Propagate description to all triples of channel
 	   out_chaninfo[ i ].description   = triple_desc;
 
 	   //DUPL
-	   allData[ out_chandatx[ i ] + cb_lambplot->currentIndex() ].description = triple_desc;
+	   //allData[ out_chandatx[ i ] + cb_lambplot->currentIndex() ].description = triple_desc;
+	   //ALEXEY: Cause a problem when out_chandatx[ i ] + cb_lambplot->currentIndex() > allData.size(), or out_triples .count()
+
 	   all_tripinfo[ i ].description   = triple_desc;
 	   
 	   int trxs        = out_chandatx[ i ];
@@ -2829,6 +2850,8 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 	       //DUPL
 	       allData[ trx ].description = triple_desc;
 	     }
+
+	   qDebug() << "Triples Replicated !!";
 	 }
      }
    else
