@@ -353,6 +353,7 @@ void US_ComProjectMain::check_current_stage( void )
   // protocol_details[ "OptimaName" ]     = QString("Optima 1");    // <-- Optima 1
   // protocol_details[ "duration" ]       = QString("27000");
   // protocol_details[ "invID_passed" ]   = QString("34"); //Ling's ID
+  // QDir directory( currDir );
   
   // -------------------------------------------------------------------------------------------  
 
@@ -373,7 +374,7 @@ void US_ComProjectMain::check_current_stage( void )
   // QString currDir                      = protocol_details[ "dataPath" ];
   // QString ProtName                     = protocol_details[ "protocolName" ];
   // QString invID_passed                 = protocol_details[ "invID_passed" ];
-
+  // QDir directory( currDir );
 
   // // --------------------------------------------------------------------------------------------
   
@@ -393,8 +394,33 @@ void US_ComProjectMain::check_current_stage( void )
   // QString currDir                      = protocol_details[ "dataPath" ];
   // QString ProtName                     = protocol_details[ "protocolName" ];
   // QString invID_passed                 = protocol_details[ "invID_passed" ];
+  // QDir directory( currDir );
 
   // --------------------------------------------------------------------------------------------
+
+  // // --------------------------------------------------------------------------------------------
+  
+  // // D Souza exp. Optima 1 !!!
+  // QMap < QString, QString > protocol_details;
+  // protocol_details["experimentId"] = QString("577");   
+  // protocol_details["protocolName"] = QString("DsouzaS_RVFV1-DDX17-MWL1_060819");
+  // protocol_details[ "experimentName" ] = QString("some_name");
+  // protocol_details[ "CellChNumber" ] = QString("4");
+  // protocol_details[ "TripleNumber" ] = QString("80");
+  // protocol_details[ "OptimaName" ]   = QString("Optima 1");     // <-- Optima 1
+  // protocol_details[ "duration" ]     = QString("61320");
+  // protocol_details[ "dataPath" ]     = QString("/home/alexey/ultrascan/imports/DsouzaS_RVFV1-DDX17-MWL1_060819-run865");
+  // protocol_details[ "invID_passed" ] = QString("20");  //D'Souza ID
+  // protocol_details[ "label" ]        = QString("DsouzaS_RVFV1-DDX17-MWL1_060819");
+  
+  // QString stage                        = "EDITING";
+  // QString currDir                      = protocol_details[ "dataPath" ];
+  // QString ProtName                     = protocol_details[ "protocolName" ];
+  // QString invID_passed                 = protocol_details[ "invID_passed" ];
+  // QDir directory( currDir );
+
+  // // --------------------------------------------------------------------------------------------
+  
   
   
   // Query 'autoflow': get count of records
@@ -409,15 +435,7 @@ void US_ComProjectMain::check_current_stage( void )
   if ( autoflow_records < 1 )
     return;
 
-  //ALEXEY:
-  /*
-      -- Read (and count) Optima Instruments;
-      -- If the number of 'autoflow' records with the status LIVE_UPDATE && RUNNING is the same as # instruments, disable 'Def. New Exp.' buttion
-      -- Identify free Optima(s) & pass the list to the us_experiment (Lab/Rotors tab -> instruments)
-      -- 
-   */
-
-
+  
   // Dialog of existing autoflow records
   US_Passwd  pw;
   US_DB2* dbP  = new US_DB2( pw.getPasswd() );
@@ -519,13 +537,8 @@ void US_ComProjectMain::check_current_stage( void )
 
   qDebug() << "Exp. Label: "    << protocol_details[ "label" ];
   qDebug() << "GMP Run ? "      << protocol_details[ "gmpRun" ];
+
   
-  //ALEXEY: if stage=="EDITING" && curDir.isEmpty() (NULL)
-  /*
-        -- that means that Run Completed but Directory was created on different computer
-	-- possible solution: return (set) to stage == "LIVE_UPDATE" & re-save to local directory on current computer
-    
-  */
   
   if ( stage == "LIVE_UPDATE" )
     {

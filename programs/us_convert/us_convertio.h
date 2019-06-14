@@ -69,6 +69,10 @@ class US_ConvertIO
                  US_Experiment&,
                  QList< US_Convert::TripleInfo >& ,
                  US_DB2* = 0 );
+      static int checkDiskData_auto( 
+                 US_Experiment&,
+                 QList< US_Convert::TripleInfo >& ,
+                 US_DB2* = 0 );
 
    private:
       static QString readRawDataFromDB( 

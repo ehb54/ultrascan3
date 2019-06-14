@@ -1301,6 +1301,8 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
 
   Exp_label         = details_at_live_update[ "label" ];
 
+  qDebug() << "Exp_label: " << Exp_label;
+  
   gmpRun_bool = false;
   
   if ( details_at_live_update[ "gmpRun" ] == "YES" )
@@ -1796,7 +1798,7 @@ DbgLv(1) << "rIA: trx" << trx << "uuid" << uuidst << importDir;
 
 
    // //TEMP
-   // runID += QString("-test");
+   //runID += QString("-test");
      
    qDebug() << "RUNID from files[0]: files[0]" << fname << ", runID: " << runID;
      
@@ -4896,8 +4898,8 @@ void US_ConvertGui::saveUS3( void )
 
   // qDebug() << "ExpData: ";
 
-  // qDebug() << "ExpData.invID " << ExpData.invID;             
-  // qDebug() << "ExpData.invGUI" << ExpData.invGUID;           
+  qDebug() << "ExpData.invID " << ExpData.invID;             
+  qDebug() << "ExpData.invGUI" << ExpData.invGUID;           
   
   // qDebug() << "ExpData.name" <<    ExpData.name;              
   // qDebug() << "ExpData.expID" <<   ExpData.expID;             
@@ -4921,7 +4923,7 @@ void US_ConvertGui::saveUS3( void )
   // qDebug() << "ExpData.opticalSystem" <<      ExpData.opticalSystem;        
   // //qDebug() << ExpData.rpms;              
   // qDebug() << "ExpData.runTemp" <<            ExpData.runTemp;           
-  // qDebug() << "ExpData.label" <<              ExpData.label;             
+   qDebug() << "ExpData.label" <<              ExpData.label;             
   // qDebug() << "ExpData.comments" <<           ExpData.comments;          
   // qDebug() << "ExpData.centrifugeProtocol" << ExpData.centrifugeProtocol;
   // qDebug() << "ExpData.date" <<               ExpData.date;              
@@ -4939,7 +4941,8 @@ void US_ConvertGui::saveUS3( void )
       qDebug() << "Save: Comments: " << this->te_comment ->toPlainText();
       ExpData.comments = this->te_comment ->toPlainText();
     }
-  
+  qDebug() << "ExpData.comments" <<           ExpData.comments;      
+
   qDebug() << "Save INIT 2:";
   
   // Test to see if this is multi-speed data
@@ -4959,6 +4962,7 @@ DbgLv(1) << "SV: nspeeds,itrips,otrips" << nspeeds << nitrips << notrips;
       //  and also save single run if Buoyancy or Calibration experiment type
       if ( disk_controls->db() )
       {
+	qDebug() << "SINGLE_SPEED DATA SAVE: ExpData.invID = " << ExpData.invID; 
          saveUS3DB();          // Save AUCs to disk then DB
          writeTimeStateDisk(); // Get TimeState in results
          writeTimeStateDB();   // Save TimeState to database
@@ -5036,6 +5040,7 @@ DbgLv(1) << "SV:    trx" << trx << "scans" << allData[ trx ].scanData.count();
          // Save the triples of the current speed-run
          if ( disk_controls->db() )
          {
+	   qDebug() << "MULTI_SPEED DATA SAVE: ExpData.invID = " << ExpData.invID; 
             saveUS3DB();          // Save AUCs to disk then DB
             writeTimeStateDisk(); // Get TimeState in results
             writeTimeStateDB();   // Save TimeState to database
@@ -5070,6 +5075,8 @@ DbgLv(1) << "Writing to disk";
 
 	   if ( !gmpRun_bool )    // us_comproject BUT the run is NOT GMP, so complete here 
 	     {
+	       qDebug() << " Saving COMPLETE: NO GMP RUN !!!";
+
 	       QMessageBox::information( this,
 					 tr( "Save is Complete" ),
 					 tr( "The save of all data and reports is complete." ) );
@@ -5092,6 +5099,12 @@ DbgLv(1) << "Writing to disk";
 	       emit saving_complete_auto( currentDir, ProtocolName_auto  );   
 	     }
 	 }
+     }
+   else
+     {
+       QMessageBox::information( this,
+				 tr( "Save is Complete" ),
+				 tr( "The save of all data and reports is complete." ) );
      }
 }
 
@@ -5427,7 +5440,17 @@ DbgLv(1) << "DBSv:     tripleGUID       "
    le_status->setText( tr( "Preparing Save with DB check ..." ) );
    qApp->processEvents();
 
-   int status = US_ConvertIO::checkDiskData( ExpData, out_tripinfo, &db );
+   qDebug() << "BEFORE checkDiskData(): ExpData.invID = " << ExpData.invID;
+
+   int status;
+
+   if ( us_convert_auto_mode )
+     status = US_ConvertIO::checkDiskData_auto( ExpData, out_tripinfo, &db );
+   else
+     status = US_ConvertIO::checkDiskData( ExpData, out_tripinfo, &db );
+   
+   qDebug() << "AFTER checkDiskData(): ExpData.invID = " << ExpData.invID;
+   
 DbgLv(1) << "Status from SaveUs3DB" << status;
    // Save a flag for need to repeat the disk write later
    bool repeat_disk = ( status == US_DB2::NO_RAWDATA );
@@ -5491,9 +5514,14 @@ DbgLv(1) << "DBSv:     dset tripleID    " << out_tripinfo[0].tripleID;
    qApp->processEvents();
 DbgLv(1) << "DBSv:  (2)dset tripleID    " << out_tripinfo[0].tripleID;
 
+
+ qDebug() << "BEFORE saveUS3Disk(): ExpData.invID = " << ExpData.invID;
+ 
    status = saveUS3Disk();
 DbgLv(1) << "DBSv: Status after saveUS3Disk()" << status;
 
+ qDebug() << "AFTER saveUS3Disk(): ExpData.invID = " << ExpData.invID;
+ 
    if ( status != US_Convert::OK )
       return;
 DbgLv(1) << "DBSv:  local files saved";
@@ -5546,11 +5574,17 @@ DbgLv(1) << "DBSv:  files count" << files.size();
    le_status->setText( tr( "Saving Experiment to DB ..." ) );
    qApp->processEvents();
 
+   qDebug() << "SAVE to DB - Initiation!!  us_convert_auto_mode = " << us_convert_auto_mode;
    if ( us_convert_auto_mode ) //ALEXEY: copy of the method with the ExpData.invID set as the owner (not US_Settings::us_inv_ID() )...
-     status = ExpData.saveToDB_auto( ( saveStatus == BOTH ), &db, speedsteps, ExpData.invID );
+     {
+       qDebug() << "SAVE to DB - CALLING AUTO method!!! ExpData.invID = " << ExpData.invID;
+       status = ExpData.saveToDB_auto( ( saveStatus == BOTH ), &db, speedsteps, ExpData.invID );
+     }
    else
-     status = ExpData.saveToDB( ( saveStatus == BOTH ), &db, speedsteps );
-
+     {
+       qDebug() << "SAVE to DB - CALLING DEFAULT method!!!";;
+       status = ExpData.saveToDB( ( saveStatus == BOTH ), &db, speedsteps );
+     }
    QApplication::restoreOverrideCursor();
 
    if ( status == US_DB2::NO_PROJECT )
