@@ -223,6 +223,8 @@ class US_UTIL_EXTERN US_Report
       //  \param    db For database access, an open database connection
       //  \returns  One of the US_Report error codes
       Status        saveDB( US_DB2* = 0 );
+      Status        saveDB_auto( int, US_DB2* = 0 );
+      
 
       //! \brief    Function to add a new empty triple record to the report
       //! \param    triple          The triple identifying which channel
@@ -273,6 +275,9 @@ class US_UTIL_EXTERN US_Report
       //! \returns  One of the US_Report error codes
       Status       saveDocumentFromFile( const QString&, const QString&,
                                          US_DB2*, int = 1, const QString = "" );
+
+      Status       saveDocumentFromFile_auto( int, const QString&, const QString&,
+					      US_DB2*, int = 1, const QString = "" );
 
       //! \brief Store multiple reportDocument records from the same triple.
       //! \param  dir      The directory where the report file is located.
