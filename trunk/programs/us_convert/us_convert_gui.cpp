@@ -5666,6 +5666,8 @@ DbgLv(1) << "DBSv:  REPEAT disk save for raw IDs";
    saveStatus = BOTH;
    enableRunIDControl( false );
 
+   //ALEXEY <- Proceeds here OK! Problem below with saveReportsToDB()
+
    saveReportsToDB();
    QApplication::restoreOverrideCursor();
    QApplication::restoreOverrideCursor();
@@ -5734,8 +5736,17 @@ void US_ConvertGui::saveReportsToDB( void )
 
       // Edit data ID is not known yet, so use 1. It goes in the report document
       //   table itself, so we're not overwriting anything.
-      US_Report::Status status = myReport.saveDocumentFromFile(
-            dir, file, &db, 1, description );
+
+      US_Report::Status status;
+      if ( us_convert_auto_mode )
+	{
+	  qDebug() << "SAVING Reports in AUTO mode !!";
+	  status = myReport.saveDocumentFromFile_auto( ExpData.invID, dir, file, &db, 1, description );
+	}
+      else
+	status = myReport.saveDocumentFromFile( dir, file, &db, 1, description );
+      
+      
       if ( status != US_Report::REPORT_OK )
       {
          errorMsg += file + " was not saved to report database; error code: "

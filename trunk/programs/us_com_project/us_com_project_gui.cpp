@@ -421,7 +421,29 @@ void US_ComProjectMain::check_current_stage( void )
 
   // // --------------------------------------------------------------------------------------------
   
+  // // --------------------------------------------------------------------------------------------
   
+  // // H Steele exp. Optima 1 !!!
+  // QMap < QString, QString > protocol_details;
+  // protocol_details["experimentId"] = QString("581");   
+  // protocol_details["protocolName"] = QString("SteeleH_Cytc-ND-titrations_061719");
+  // protocol_details[ "experimentName" ] = QString("some_name");
+  // protocol_details[ "CellChNumber" ] = QString("8");
+  // protocol_details[ "TripleNumber" ] = QString("16");
+  // protocol_details[ "OptimaName" ]   = QString("Optima 1");     // <-- Optima 1
+  // protocol_details[ "duration" ]     = QString("45000");
+  // protocol_details[ "dataPath" ]     = QString("/home/alexey/ultrascan/imports/SteeleH_Cytc-ND-titrations_061719-run872");
+  // protocol_details[ "invID_passed" ] = QString("22");  //Harmen's 
+  // protocol_details[ "label" ]        = QString("SteeleH_Cytc-ND-titrations_061719");
+  
+  // QString stage                        = "EDITING";
+  // QString currDir                      = protocol_details[ "dataPath" ];
+  // QString ProtName                     = protocol_details[ "protocolName" ];
+  // QString invID_passed                 = protocol_details[ "invID_passed" ];
+  // QDir directory( currDir );
+
+  // // --------------------------------------------------------------------------------------------  
+
   
   // Query 'autoflow': get count of records
   int autoflow_records = get_autoflow_records();
@@ -537,7 +559,7 @@ void US_ComProjectMain::check_current_stage( void )
 
   qDebug() << "Exp. Label: "    << protocol_details[ "label" ];
   qDebug() << "GMP Run ? "      << protocol_details[ "gmpRun" ];
-
+  
   
   
   if ( stage == "LIVE_UPDATE" )
