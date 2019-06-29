@@ -2325,6 +2325,7 @@ DbgLv(1) << " enabCtl: tLx infsz" << tripListx << out_chaninfo.count();
 
    }
 
+   
    // This can go on the todo list, but should not prevent user from saving
    if ( ( runType == "RI" ) && ( ! referenceDefined ) )
    {
@@ -2336,7 +2337,9 @@ DbgLv(1) << " enabCtl: tLx infsz" << tripListx << out_chaninfo.count();
 	{
 	  pb_reference->setEnabled( true ); 
 	  //ALEXEY <--- Save btn is disabled when Reference scan is NOT defined (for Absorbance)
-	  completed = false;
+
+	  if ( ! ExpData.expType.contains( "calibrat", Qt::CaseInsensitive ) )
+	    completed = false;
 	}
    }
 

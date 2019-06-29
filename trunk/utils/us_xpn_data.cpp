@@ -1385,7 +1385,7 @@ DbgLv(1) << "BldRawD IN";
    int    ccx      = 0;
    int    wvx      = 0;
    int    scnnbr   = 0;
-   nscnn           = scnnbrs.count();
+   nscnn           = scnnbrs.count();                       // ALEXEY: is nscnn, the #scans, is the same for all stages ? NO!
    int    stgnbr   = 0;
    nstgn           = stgnbrs.count();
    ntscan          = 0;
@@ -1572,7 +1572,7 @@ time10=QDateTime::currentDateTime();
    int    ccx      = 0;
    int    wvx      = 0;
    int    scnnbr   = 0;
-   nscnn           = scnnbrs.count();
+   nscnn           = scnnbrs.count();                  //ALEXEY: is nscnn (# scan) is the same for all stages ? NO!
    int    stgnbr   = 0;
    nstgn           = stgnbrs.count();
 DbgLv(1) << "rBldRawD ntriple nstgn nscnn" << ntriple << nstgn << nscnn
@@ -1599,7 +1599,7 @@ QDateTime time07a=QDateTime::currentDateTime();
       for ( int sgx = 0; sgx < nstgn; sgx++ )
       {  // Set stage values
          stgnbr            = stgnbrs[ sgx ];
-         for ( int scx = 0; scx < nscnn; scx++ )
+         for ( int scx = 0; scx < nscnn; scx++ )        //ALEXEY: is nscnn (# scan) is the same for all stages ? NO! 
          {  // Set scan values
 time10=QDateTime::currentDateTime();
             scnnbr            = scnnbrs[ scx ];
@@ -1646,9 +1646,14 @@ timi3+=time10.msecsTo(time20);
 time10=QDateTime::currentDateTime();
             int kpoint        = get_readings( scan.rvalues, trx, sgx, scx );
 
+	    qDebug() << "INSIDE xpn_data: AFTER get_readings() 0";
+	    
             if ( kpoint < 0 )
                continue;                 // Skip output if no stage,scan match
 
+	    
+	    qDebug() << "INSIDE xpn_data: AFTER get_readings() 1";
+	     
 if(scx<3 || (scx+4)>nscnn)
 DbgLv(1) << "rBldRawD        scx" << scx << "rvalues size" << scan.rvalues.size()
  << "rvalues[mid]" << scan.rvalues[scan.rvalues.size()/2];
@@ -1656,7 +1661,16 @@ DbgLv(1) << "rBldRawD        scx" << scx << "rvalues size" << scan.rvalues.size(
             //if ( ( scx + 1 ) == oscknt )
             if ( ndscan == oscknt )
             {  // If last of old scans, update in case readings were added
-               int ksc           = sgx * nscnn + scx;
+
+
+	       //int ksc           = sgx * nscnn + scx;                          //ALEXEY: crashes after this line: is this correct for ksc at multi-speed ?
+	       //ALEXEY: is nscnn (# scan) is the same for all stages ? NO!
+
+	       int ksc = oscknt - 1;
+
+	       qDebug() << "INSIDE xpn_data: AFTER get_readings() 2a: ksc = sgx * nscnn + scx: " <<  sgx << " * " <<  nscnn << " + " << scx; 
+	       qDebug() << "INSIDE xpn_data: AFTER get_readings() 2: ksc: " << ksc << ", rdata->scanData.size(): " << rdata->scanData.size();
+		 
                rdata->scanData[ ksc ] = scan;
 DbgLv(1) << "rBldRawD        ksc" << ksc << "++Scan Replace";
             }
@@ -1667,7 +1681,12 @@ int nscknt=rdata->scanCount();
 DbgLv(1) << "rBldRawD        ndscan oscknt" << ndscan << oscknt << "++Scan Add  nscknt" << nscknt;
             }
 time20=QDateTime::currentDateTime();
+
+ qDebug() << "INSIDE xpn_Data 1";
+   
 timi4+=time10.msecsTo(time20);
+
+  qDebug() << "INSIDE xpn_Data 2";
          } // END: scan loop
       } // END: stage loop
 QDateTime time07b=QDateTime::currentDateTime();
