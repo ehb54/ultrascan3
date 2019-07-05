@@ -1125,7 +1125,7 @@ DbgLv(1)<<"2dsa : ssck: rspeed accel1 tf_aend tf_scan"
  << rspeed << accel1 << tf_aend << tf_scan
  << "accel2" << accel2 << "lo_ss_acc" << lo_ss_acc;
 //x0  1  2  3  4  5
-   if ( accel1 < lo_ss_acc  ||  tf_aend > ( tf_scan - 6 ) )
+   if ( accel1 < lo_ss_acc  ||  tf_aend > ( tf_scan - 3 ) )
    {
       QString wmsg = tr( "The TimeState used is likely bad:<br/>"
                          "The acceleration implied is %1 rpm/sec.<br/>"

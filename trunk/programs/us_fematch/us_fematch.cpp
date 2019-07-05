@@ -1856,6 +1856,7 @@ void US_FeMatch::adjust_model()
    solution.manual    = manual;
    solution.vbar20    = vbar20;
    solution.vbar      = US_Math2::calcCommonVbar( solution_rec, avgTemp );
+//   solution.vbar      = US_Math2::adjust_vbar20( solution.vbar20, avgTemp );
 
    US_Math2::data_correction( avgTemp, solution );
 
@@ -1872,6 +1873,7 @@ void US_FeMatch::adjust_model()
    sd.vbar20       = solution.vbar20;
    sd.vbar         = solution.vbar;
    sd.manual       = solution.manual;
+DbgLv(1) << "Fem:Adj:  avgT" << avgTemp << "scorr dcorr" << scorrec << dcorrec;
 
    if ( cnstvb  &&  mc_vbar != sd.vbar20  &&  mc_vbar != 0.0 )
    {  // Use vbar from the model component, instead of from the solution
@@ -1880,6 +1882,7 @@ void US_FeMatch::adjust_model()
       US_Math2::data_correction( avgTemp, sd );
       scorrec      = sd.s20w_correction;
       dcorrec      = sd.D20w_correction;
+DbgLv(1) << "Fem:Adj:   cnstvb" << cnstvb << "  scorr dcorr" << scorrec << dcorrec;
    }
 DbgLv(1) << "Fem:Adj:  avgT" << avgTemp << "vb20 vb" << sd.vbar20 << sd.vbar;
 
@@ -1905,7 +1908,7 @@ double d20w=sc->D;
       sc->s      /= scorrec;
       sc->D      /= dcorrec;
 DbgLv(1) << "Fem:Adj:  s20w D20w" << s20w << d20w
- << "s D" << sc->s << sc->D << "  jj" << jj;
+ << "s D" << sc->s << sc->D << "  jj" << jj << "vb20 vb" << sc->vbar20 << sd.vbar;
 
       if ( sc->extinction > 0.0 )
          sc->molar_concentration = sc->signal_concentration / sc->extinction;
@@ -2209,7 +2212,7 @@ DbgLv(1) << "SimMdl: ssck: rspeed accel1 lo_ss_acc"
  << rspeed << accel1 << lo_ss_acc << "tf_aend tf_scan"
  << tf_aend << tf_scan;
 //x0  1  2  3  4  5
-   if ( accel1 < lo_ss_acc  ||  tf_aend > ( tf_scan - 6 ) )
+   if ( accel1 < lo_ss_acc  ||  tf_aend > ( tf_scan - 3 ) )
    {
       QString wmsg = tr( "The TimeState computed/used is likely bad:<br/>"
                          "The acceleration implied is %1 rpm/sec.<br/>"

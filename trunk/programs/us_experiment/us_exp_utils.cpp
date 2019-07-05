@@ -905,14 +905,14 @@ DbgLv(1) << "EGRo:gIV: type" << type;
    {
       US_Rotor::AbstractRotor* arotor = abstractRotor( rpRotor->rotor );
       value          = ( arotor != NULL ) ? arotor->numHoles : 0;
-DbgLv(1) << "EGRo:gIV:  arotor" << arotor->name << "value" << value;
+DbgLv(1) << "EGRo:gIV:  arotor" << getSValue("arotor") << "value" << value;
    }
    else if ( type == "maxrpm" )
    {
       US_Rotor::AbstractRotor* arotor = abstractRotor( rpRotor->rotor );
 DbgLv(1) << "EGRo:gIV:  arotor" << arotor << "rotor" << rpRotor->rotor;
       value          = ( arotor != NULL ) ? arotor->maxRPM : 50000;
-DbgLv(1) << "EGRo:gIV:  arotor" << arotor->name << "value" << value;
+DbgLv(1) << "EGRo:gIV:  arotor" << getSValue("arotor") << "value" << value;
    }
    else if ( type == "labID" )   { value = rpRotor->labID; }
    else if ( type == "rotID" )   { value = rpRotor->rotID; }

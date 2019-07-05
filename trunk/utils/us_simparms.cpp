@@ -9,6 +9,9 @@
 
 //!< level-conditioned debug print
 #define DbgLv(a) if(dbg_level>=a)qDebug()
+#define DSS_RESO   100   // default SetSpeedResolution
+#define DSS_LO_RPM 1500  // default SetSpeedLowRpm
+#define DSS_LO_SEC 20    // default SpeedStepLowSec
 
 US_SimulationParameters::US_SimulationParameters()
 {
@@ -1182,11 +1185,13 @@ DbgLv(1) << "Sim parms:ssProf: have_keys" << have_keys;
       return -1;                           // Do not have needed keys
 
    // If debug_text so directs, change set_speed_resolution
-   //  and/or set_speed_low_rpm
+   //  and/or set_speed_low_rpm and/or speed_step_low_secs
    QString dbgval   = US_Settings::debug_value( "SetSpeedReso" );
-   int ss_reso      = dbgval.isEmpty() ? 100  : dbgval.toInt();
+   int ss_reso      = dbgval.isEmpty() ? DSS_RESO  : dbgval.toInt();
    dbgval           = US_Settings::debug_value( "SetSpeedLowR" );
-   int ss_lo_rpm    = dbgval.isEmpty() ? 1500 : dbgval.toInt();
+   int ss_lo_rpm    = dbgval.isEmpty() ? DSS_LO_RPM : dbgval.toInt();
+   dbgval           = US_Settings::debug_value( "SpeedStepLowSec" );
+   int ss_lo_sec    = dbgval.isEmpty() ? DSS_LO_SEC : dbgval.toInt();
 
    int nrec         = tsobj->time_count(); // Total time record count
    QList< int >  cspeeds;                  // Constant speeds list
@@ -1354,10 +1359,10 @@ DbgLv(1) << "Sim parms:ssProf: const-end ss_p ss_c" << ss_p << ss_c
  << "rs_p rs_c" << rs_p << rs_c << "ss_c_ts" << ss_c_ts;
 
             // But, wait a minute! If the "constant zone" just ending is less than
-            // 5 minutes long or contains no scans, then add it to the current
+            // 20 seconds long or contains no scans, then add it to the current
             // speed step's acceleration zone and resume looking for an end
             // to the acceleration zone
-            if ( ndtimes < 300  ||  ssp.time_f_scan < 1 )
+            if ( ndtimes < ss_lo_sec  ||  ssp.time_f_scan < 1 )
             {
                in_accel         = true;
                naintvs         += ndtimes;
