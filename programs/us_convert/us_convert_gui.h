@@ -243,6 +243,7 @@ class US_ConvertGui : public US_Widgets
       int           elambda;                   // End Lambda on output
       int           nlamb_i;                   // Lambda count for raw input
       int           dbg_level;                 // Debug level
+      int           impType;                   // Import type flag: 0,1,2 == Beck,MWL,AUC
 
       QString       currentDir;                // Current data file directory
       QString       saveDescription;           // Saved channel description

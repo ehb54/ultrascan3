@@ -1062,3 +1062,103 @@ void US_Convert::TripleInfo::show( void )
 
    if ( excluded ) qDebug() << "excluded";
 }
+
+// Adjusts times and omegas in AUCs and speedsteps so that
+//  the first speed step acceleration is 400 rpm/second.
+int US_Convert::adjustSpeedstep( QVector< US_DataIO::RawData >& allData,
+     QVector< US_SimulationParameters::SpeedProfile >& speedsteps )
+{
+   int stat          = 0;
+
+   // Re-check that there is a problem with low acceleration.
+   //  [ See comments for US_AstfemMath::low_acceleration() ]
+   const double tfac = ( 4.0 / 3.0 );
+   double t2         = speedsteps[ 0 ].time_first;
+   double w2t        = speedsteps[ 0 ].w2t_first;
+   double om1t       = speedsteps[ 0 ].rotorspeed * M_PI / 30.0;
+   double w2         = sq( om1t );
+   double t1w        = w2t / w2;
+   double t1         = tfac * ( t2 - t1w );
+
+   if ( t1 >= t2 )
+   {  // Something wrong!  set t1 to a few seconds before t2
+      t1             = t2 - 5.0;
+   }
+
+   int t_acc      = (int)qRound( t1 );
+   t1             = (double)t_acc;
+   double rate    = (double)( speedsteps[ 0 ].rotorspeed ) / t1;
+qDebug() << "CVT:Adj: t_acc rate" << t_acc << rate;
+
+   if ( rate >= 250.0 )
+   {  // No adjustment will be done, since acceleration is large enough.
+      return 1;
+   }
+
+   // Determine time and omega offsets. A "t0" value is initially time-zero,
+   //  the beginning of the first acceleration zone. Using an acceleration
+   //  of 400.0 rpm/second, a new zone start is determined and that becomes
+   //  the time offset to subtract from all AUC and speedstep times. The
+   //  omega^2t offset is based on the value at the new zone start.
+   double azdur      = (double)qRound( speedsteps[ 0 ].rotorspeed / 400.0 );
+   double t_offs     = t1 - azdur;
+   double azwrate    = sq( rate * M_PI / 30.0 );
+   double w_offs     = w2t - ( w2 * ( t2 - t1 ) ) - ( azwrate * azdur );
+qDebug() << "CVT:Adj: azdur azwrate" << azdur << azwrate << "t_offs w_offs"
+ << t_offs << w_offs;
+
+   for ( int ii = 0; ii < allData.count(); ii++ )
+   {  // Adjust scan times,omegas so t0 is zero
+      US_DataIO::RawData* rdata = &allData[ ii ];
+      for ( int jj = 0; jj < rdata->scanCount(); jj++ )
+      {
+qDebug() << "CVT:Adj:  t w" << rdata->scanData[ jj ].seconds
+ << rdata->scanData[ jj ].omega2t << "ii jj" << ii << jj;
+         rdata->scanData[ jj ].seconds  -= t_offs;
+         rdata->scanData[ jj ].omega2t  -= w_offs;
+qDebug() << "CVT:Adj:    new t w" << rdata->scanData[ jj ].seconds
+ << rdata->scanData[ jj ].omega2t;
+      }
+   }
+
+   for ( int ii = 0; ii < speedsteps.count(); ii++ )
+   {  // Adjust speed step times,omegas
+qDebug() << "CVT:Adj:  tf tl" << speedsteps[ii].time_first
+ << speedsteps[ii].time_last << "wf wl" << speedsteps[ii].w2t_first
+ << speedsteps[ii].w2t_last;
+      speedsteps[ ii ].time_first  -= t_offs;
+      speedsteps[ ii ].w2t_first   -= w_offs;
+      speedsteps[ ii ].time_last   -= t_offs;
+      speedsteps[ ii ].w2t_last    -= w_offs;
+      speedsteps[ ii ].acceleration = 400;
+qDebug() << "CVT:Adj:   new tf tl" << speedsteps[ii].time_first
+ << speedsteps[ii].time_last << "wf wl" << speedsteps[ii].w2t_first
+ << speedsteps[ii].w2t_last;
+
+      if ( ii == 0 )
+      {  // For 1st step, adjust duration and delay-to-1st-scan
+         double dur_sec    =  speedsteps[ ii ].duration_hours * 3600
+                            + speedsteps[ ii ].duration_minutes * 60.0
+                            - t_offs;
+         double dur_min    = dur_sec / 60.0;
+         int    dur_hrs    = (int)( dur_min / 60.0 );
+         dur_min           = dur_min - ( dur_hrs * 60 );
+         speedsteps[ ii ].duration_hours   = dur_hrs;
+         speedsteps[ ii ].duration_minutes = dur_min;
+         double dly_sec    =  speedsteps[ ii ].delay_hours * 3600
+                            + speedsteps[ ii ].delay_minutes * 60.0
+                            - t_offs;
+         double dly_min    = dly_sec / 60.0;
+         int    dly_hrs    = (int)( dly_min / 60.0 );
+         dly_min           = dly_min - ( dly_hrs * 60 );
+         speedsteps[ ii ].delay_hours   = dly_hrs;
+         speedsteps[ ii ].delay_minutes = dly_min;
+qDebug() << "CVT:Adj:   new dur" << speedsteps[ii].duration_hours
+ << speedsteps[ii].duration_minutes << "new dly" << speedsteps[ii].delay_hours
+ << speedsteps[ii].delay_minutes;
+      }
+   }
+
+   return stat;
+}
+

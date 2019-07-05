@@ -5,6 +5,7 @@
 #include "us_extern.h"
 #include "us_dataIO.h"
 #include "us_solution.h"
+#include "us_simparms.h"
 
 //! \class US_Convert
 //!        This class provides the ability to convert raw data in the
@@ -173,6 +174,14 @@ class US_Convert
                                 int ,
                                 QList< double >& );
 
+      //! \brief Adjusts times and omegas in AUC and speedstep so that
+      //!        the first speed step acceleration is 400 rpm/second.
+      //! \param allData     Input/Output raw AUC data
+      //! \param speedsteps  Input/Output speed step profile
+      //! \returns           A status code (0=OK)
+      static int  adjustSpeedstep( QVector< US_DataIO::RawData >& ,
+                                   QVector< US_SimulationParameters::SpeedProfile >& );
+                                   
    private:
       static void convert( QList< US_DataIO::BeckmanRawScan >& rawLegacyData,
                            US_DataIO::RawData&          newRawData,

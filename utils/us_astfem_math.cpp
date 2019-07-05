@@ -6,7 +6,7 @@
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug() //!< debug-level-conditioned qDebug()
 #endif
-
+#define DSS_LO_ACC 250.0  // default SetSpeedLowAccel
 
 #if 0
 #ifdef NO_DB
@@ -52,8 +52,9 @@ simparams.debug();
    int    step_nbr      = 0;
    double temperature   = sim_data.scanData[ 0 ].temperature;
    int nscans           = sim_data.scanData.size(); // Used for number of scans
-   int t_acc;    // Used for time when accelerated up to the specified rotor speed
-   double rate, speed;
+   int t_acc            = 1; // Used for time when accelerated up to the specified rotor speed
+   double rate          = 1.0;
+   double speed         = 1000.0;
    int ss_reso          = 100;
    // If debug_text so directs, change set_speed_resolution
    QStringList dbgtxt = US_Settings::debug_text();
@@ -79,53 +80,15 @@ DbgLv(1) << "AMATH:wrts:scantimes" << scantimes[ii] << sim_data.scanData[ii].ome
 
    if ( simparams.sim == false )
    {  // Handle 1st acceleration zone for real data (compute acceleration rate)
-      const double tfac = ( 4.0 / 3.0 );
-      double t2   = simparams.speed_step[ 0 ].time_first;
-      double w2t  = simparams.speed_step[ 0 ].w2t_first;
-      double om1t = simparams.speed_step[ 0 ].rotorspeed * M_PI / 30.0;
-      double w2   = sq( om1t ); 
-      // For the first speed step, we compute "t1", the end of the initial
-      // acceleration zone, using
-      //   "t2"   , the time in seconds for the first scan;
-      //   "w2t"  , the omega^2_t integral for the first scan time;
-      //   "w2"   , the omega^2 value for the constant zone speed;
-      //   "tfac" , a factor (==(4/3)==1.333333) derived from the following.
-      // The acceleration zone begins at t0=0.0.
-      // It ends at time "t1".
-      // The time between t1 and t2 is at constant speed.
-      // The time between 0 and t1 is at changing speeds averaging (rpm/2).
-      // For I1 and I2, the omega^2t integrals at t1 and t2,
-      //        ( I2 - I1 ) = ( t2 - t1 ) * w2       (equ.1)
-      //        I1 = ( (rpm/2) * PI / 30 )^2 * t1    (equ.2)
-      //        I1 = ( ( rpm * PI / 30 )^2 / 4 ) * t1
-      //        w2 = ( rpm * PI / 30 )^2
-      //        I1 = ( w2 / 4 ) * t1
-      //        I2 = w2t
-      // Substituting into equ.1, we get:
-      //        ( w2t - ( ( w2 / 4 ) * t1 ) ) = ( t2 - t1 ) * w2
-      //        t1 * ( w2 - ( w2 / 4 ) )      = t2 * w2 - w2t
-      //        t1 * ( 3 / 4 ) * w2           = t2 * w2 - w2t
-      //        t1  = ( 4 / 3 ) * ( t2 - ( w2t / w2 ) )
-      double t1   = tfac * ( t2 - ( w2t / w2 ) );
-double t1w=(w2t/w2);
-DbgLv(1) << "AMATH:wrts: om1t w2 w2t" << om1t << w2 << w2t
- << "t1w" << t1w << "tfac" << tfac;
-      if ( t1 >= t2 )
-      {  // Something wrong!  set t1 to a few seconds before t2
-         t1          = t2 - 5.0;
-      }
-//      t_acc       = qCeil( t1 );
-      t_acc       = (int)qRound( t1 );
-      rate        = (double)( simparams.speed_step[ 0 ].rotorspeed )
-                    / (double)t_acc;
-DbgLv(1) << "AMATH:wrts:t1 t2" << t1 << t2 << "t_acc rate" << t_acc << rate;
-//DbgLv(1)<<  "from speed profile"
-// << "t_acc=" << t_acc << "rate=" << rate << "first_time:" << simparams.speed_step[0].time_first
-// << "first_w2t" << simparams.speed_step[0].w2t_first
-// << "rpm=" << simparams.speed_step[0].rotorspeed;
-//DbgLv(1) << " from sim_data"
-// << "t_acc=" << t_acc1 << "rate= " << rate1 << "first_time: " << sim_data.scanData[0].seconds
-// << "first_w2t" << sim_data.scanData[0].omega2t << "rpm=" << sim_data.scanData[0].rpm;
+      // If debug_text so directs, change set_speed_low_accel
+      QString dbgval   = US_Settings::debug_value( "SetSpeedLowAcc" );
+      double low_accel = dbgval.isEmpty() ? DSS_LO_ACC : dbgval.toDouble();
+
+      // Get the 1st acceleration zone's rate and end-time
+      low_acceleration( simparams.speed_step, low_accel, rate );
+      t_acc       = (int)qRound( (double)( simparams.speed_step[ 0 ].rotorspeed )
+                                           / rate );
+DbgLv(1)<< "AMATH:wrts: computed rate:" << rate;
    }
    else
    {  // Handle 1st acceleration zone for simulation (astfem_sim) data
@@ -258,9 +221,63 @@ if((scan_nbr>0)||(ii<(d1+2))||((ii>(tacc-2))&&(ii<(tacc+2)))||((ii+3)>d2))
    return timestate.time_count();
 }
 
+// Determine if first time step's acceleration is too low
+bool US_AstfemMath::low_acceleration(
+      const QVector< US_SimulationParameters::SpeedProfile >& speedsteps,
+      const double min_accel, double& rate )
+{
+   int dbg_level     = US_Settings::us_debug();
+   const double tfac = ( 4.0 / 3.0 );
+   double t2         = speedsteps[ 0 ].time_first;
+   double w2t        = speedsteps[ 0 ].w2t_first;
+   double om1t       = speedsteps[ 0 ].rotorspeed * M_PI / 30.0;
+   double w2         = sq( om1t ); 
+   double t1w        = w2t / w2;
+
+   // =====================================================================
+   // For the first speed step, we compute "t1", the end of the initial
+   // acceleration zone, using
+   //   "t2"   , the time in seconds for the first scan;
+   //   "w2t"  , the omega^2_t integral for the first scan time;
+   //   "w2"   , the omega^2 value for the constant zone speed;
+   //   "tfac" , a factor (==(4/3)==1.333333) derived from the following.
+   // The acceleration zone begins at t0=0.0.
+   // It ends at time "t1".
+   // The time between t1 and t2 is at constant speed.
+   // The time between 0 and t1 is at changing speeds averaging (rpm/2).
+   // For I1 and I2, the omega^2t integrals at t1 and t2,
+   //        ( I2 - I1 ) = ( t2 - t1 ) * w2       (equ.1)
+   //        I1 = ( (rpm/2) * PI / 30 )^2 * t1    (equ.2)
+   //        I1 = ( ( rpm * PI / 30 )^2 / 4 ) * t1
+   //        w2 = ( rpm * PI / 30 )^2
+   //        I1 = ( w2 / 4 ) * t1
+   //        I2 = w2t
+   // Substituting into equ.1, we get:
+   //        ( w2t - ( ( w2 / 4 ) * t1 ) ) = ( t2 - t1 ) * w2
+   //        t1 * ( w2 - ( w2 / 4 ) )      = t2 * w2 - w2t
+   //        t1 * ( 3 / 4 ) * w2           = t2 * w2 - w2t
+   //        t1  = ( 4 / 3 ) * ( t2 - ( w2t / w2 ) )
+   // =====================================================================
+
+   double t1      = tfac * ( t2 - t1w );
+DbgLv(1) << "AMATH:loac: om1t w2 w2t" << om1t << w2 << w2t
+ << "t1w" << t1w << "tfac" << tfac;
+
+   if ( t1 >= t2 )
+   {  // Something wrong!  set t1 to a few seconds before t2
+      t1             = t2 - 5.0;
+   }
+
+   int t_acc      = (int)qRound( t1 );
+   rate           = (double)( speedsteps[ 0 ].rotorspeed ) / (double)t_acc;
+DbgLv(1) << "AMATH:loac:t1 t2" << t1 << t2 << "t_acc rate" << t_acc << rate;
+
+   return ( rate < min_accel );
+}
+
 // Determine if a timestate file holds one-second-interval records
 bool US_AstfemMath::timestate_onesec( const QString& tmst_fpath,
-                                      US_DataIO::RawData& sim_data )
+                                      US_DataIO::RawData&      sim_data )
 {
    bool onesec_intv = false;
    bool constti     = false;

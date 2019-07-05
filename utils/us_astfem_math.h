@@ -37,6 +37,14 @@ class US_UTIL_EXTERN US_AstfemMath
       static int  writetimestate( const QString&, US_SimulationParameters&,
                                   US_DataIO::RawData& );
 
+      //! \brief Determine if first time step's acceleration is too low
+      //! \param speedsteps  Vector of speed steps
+      //! \param min_accel   Minimum reasonable acceleration value
+      //! \param rate        Returned computed first-step acceleration rate
+      //! \returns Flag:     True iff acceleration rate is too low
+      static bool low_acceleration( const QVector< US_SimulationParameters::SpeedProfile >&,
+                                    const double, double& );
+
       //! \brief Determine if a timestate file holds one-second-interval records
       //! \param tmst_fpath  Full path to timestate file to examine
       //! \param sim_data    Raw data with scans to examine

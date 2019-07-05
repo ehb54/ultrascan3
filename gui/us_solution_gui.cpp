@@ -816,7 +816,7 @@ DbgLv(1) << "We are at RESET: ";
    // Let's calculate if we're eligible to save this solution
    //pb_save         -> setEnabled( false );
 
-DbgLv(1) << "We are at RESET_1: ";
+DbgLv(1) << "We are at RESET_1:  aInf count" << solution->analyteInfo.count();
 
    if ( ! bufferDesc.isEmpty() ) //we can have a solution with buffer only
    {
@@ -840,6 +840,7 @@ DbgLv(1) << "pb_upload enable:" << ( list_sel && !from_db ) << list_sel << from_
 
       lw_analytes->addItem( item );
    }
+DbgLv(1) << "We are at RESET_2:  aInf count" << solution->analyteInfo.count() << ai.size();
 
    // Turn the red label back
    //QPalette p = lb_amount->palette();
@@ -872,14 +873,21 @@ DbgLv(1) << "pb_upload enable:" << ( list_sel && !from_db ) << list_sel << from_
    //    : "";
 
    // le_investigator->setText( number +  US_Settings::us_inv_name() );
+DbgLv(1) << "We are at RESET_9:  aInf count" << solution->analyteInfo.count() << ai.size();
 }
 
 // Function to handle when solution listwidget item is selected
 void US_SolutionMgrSelect::selectAnalyte( QListWidgetItem* item )
 {
+qDebug() << "Sol:SselAna: IN";
    // Get the right index in the sorted list, and load the amount
+qDebug() << "Sol:SselAna:  aMap count" << analyteMap.size();
    int ndx = analyteMap[ item ];
+qDebug() << "Sol:SselAna:  ndx" << ndx;
+qDebug() << "Sol:SselAna:  aInf count" << solution->analyteInfo.size();
+qDebug() << "Sol:SselAna:  amt" << solution->analyteInfo[ ndx ].amount;
    le_amount ->setText( QString::number( solution->analyteInfo[ ndx ].amount ) );
+qDebug() << "Sol:SselAna:  amt" << le_amount->text();
 
    QPalette p = lb_amount->palette();
    p.setColor( QPalette::WindowText, Qt::red );
@@ -1290,8 +1298,11 @@ void US_SolutionMgrNew::calcCommonVbar20( void )
 // Function to handle when solution listwidget item is selected
 void US_SolutionMgrNew::selectAnalyte( QListWidgetItem* item )
 {
+qDebug() << "Sol:NselAna: IN";
    // Get the right index in the sorted list, and load the amount
+qDebug() << "Sol:NselAna:  aMap count" << analyteMap.size();
    int ndx = analyteMap[ item ];
+qDebug() << "Sol:NselAna:  ndx" << ndx;
    ct_amount ->setValue( solution->analyteInfo[ ndx ].amount );
 
    // Now turn the label red to catch attention

@@ -1309,7 +1309,7 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
     gmpRun_bool = true;
  
   
-  int impType = getImports_auto( details_at_live_update[ "dataPath" ] );
+  impType     = getImports_auto( details_at_live_update[ "dataPath" ] );
 
 
   /* -------------------------------------------------------------------------------------------------------------------*/
@@ -1486,7 +1486,7 @@ DbgLv(1) << "CGui: import: RTN";
 // User pressed the import data button
 void US_ConvertGui::import()
 {
-   int impType = getImports();
+   impType     = getImports();
 
    if ( impType == 1 )
    {
@@ -2325,7 +2325,6 @@ DbgLv(1) << " enabCtl: tLx infsz" << tripListx << out_chaninfo.count();
 
    }
 
-   
    // This can go on the todo list, but should not prevent user from saving
    if ( ( runType == "RI" ) && ( ! referenceDefined ) )
    {
@@ -2334,13 +2333,12 @@ DbgLv(1) << " enabCtl: tLx infsz" << tripListx << out_chaninfo.count();
                             tr( ": Define reference scans" ) );
 
       if ( count == 1 )
-	{
-	  pb_reference->setEnabled( true ); 
-	  //ALEXEY <--- Save btn is disabled when Reference scan is NOT defined (for Absorbance)
-
-	  if ( ! ExpData.expType.contains( "calibrat", Qt::CaseInsensitive ) )
-	    completed = false;
-	}
+      {
+         pb_reference->setEnabled( true ); 
+         //ALEXEY <--- Save btn is disabled when Reference scan is NOT defined (for Absorbance)
+         if ( ! ExpData.expType.contains( "calibrat", Qt::CaseInsensitive ) )
+            completed = false;
+      }
    }
 
    // If we made it here, user can save
@@ -5772,7 +5770,7 @@ void US_ConvertGui::saveReportsToDB( void )
 int US_ConvertGui::getImports_auto( QString & CurrDir) // ALEXEY TO BE EDITED...
 {
    QString dir;
-   int impType  = 0;
+   int jmpType      = 0;
 
    // dir = QFileDialog::getExistingDirectory( this,
    //       tr( "Raw Data Directory" ),
@@ -5864,16 +5862,16 @@ DbgLv(1) << "CGui:gI: nmwrs nauc ntxml ntmst nother"
  << nmwrs << nauc << ntxml << ntmst << nother;
 
    if ( nmwrs > 0 )
-      impType     = 1;             // Flag import of MWL data
+      jmpType     = 1;             // Flag import of MWL data
 
    else if ( nauc > 0 )
-      impType     = 2;             // Flag import of AUC data
+      jmpType     = 2;             // Flag import of AUC data
 
    else
-      impType     = 0;             // Flag import of Beckman Raw
+      jmpType     = 0;             // Flag import of Beckman Raw
 
-DbgLv(1) << "CGui:gI:  RTN impType" << impType;
-   return impType;
+DbgLv(1) << "CGui:gI:  RTN jmpType" << jmpType;
+   return jmpType;
 }
 
 
@@ -5881,7 +5879,7 @@ DbgLv(1) << "CGui:gI:  RTN impType" << impType;
 int US_ConvertGui::getImports()
 {
    QString dir;
-   int impType  = 0;
+   int jmpType  = 0;
 
    dir = QFileDialog::getExistingDirectory( this,
          tr( "Raw Data Directory" ),
@@ -5971,16 +5969,16 @@ DbgLv(1) << "CGui:gI: nmwrs nauc ntxml ntmst nother"
  << nmwrs << nauc << ntxml << ntmst << nother;
 
    if ( nmwrs > 0 )
-      impType     = 1;             // Flag import of MWL data
+      jmpType     = 1;             // Flag import of MWL data
 
    else if ( nauc > 0 )
-      impType     = 2;             // Flag import of AUC data
+      jmpType     = 2;             // Flag import of AUC data
 
    else
-      impType     = 0;             // Flag import of Beckman Raw
+      jmpType     = 0;             // Flag import of Beckman Raw
 
-DbgLv(1) << "CGui:gI:  RTN impType" << impType;
-   return impType;
+DbgLv(1) << "CGui:gI:  RTN jmpType" << jmpType;
+   return jmpType;
 }
 
 bool US_ConvertGui::read( void )
@@ -6826,6 +6824,8 @@ DbgLv(1) << "CGui:IOD:  ochx" << trx << "celchn cID" << celchn << chanID;
    int     nspeed   = US_SimulationParameters::readSpeedSteps( runID, dataType,
                                                                speedsteps );
    int     nspeedc  = 0;
+   bool low_accel   = false;
+   double rate      = 400.0;
 DbgLv(1) << "CGui:IOD:   rSS nspeed" << nspeed;
 
    if ( nspeed == 0 )
@@ -6833,8 +6833,57 @@ DbgLv(1) << "CGui:IOD:   rSS nspeed" << nspeed;
       US_SimulationParameters::computeSpeedSteps( allData, speedsteps );
       nspeedc          = speedsteps.size();
       nspeed           = nspeedc;
-   }
 DbgLv(1) << "CGui:IOD:   cSS nspeed" << speedsteps.size();
+
+      // Check to see if implied 1st acceleration is too low
+#define DSS_LO_ACC 250.0 // default SetSpeedLowAccel
+      if ( impType != 2 )  // Check if not imported AUC
+      {
+         QString dbgval   = US_Settings::debug_value( "SetSpeedLowAcc" );
+         double ss_lo_acc = dbgval.isEmpty() ? DSS_LO_ACC : dbgval.toDouble();
+         low_accel        = US_AstfemMath::low_acceleration( speedsteps, ss_lo_acc, rate );
+      }
+   }
+
+   // Report problematic 1st speed step
+   if ( low_accel )
+   {
+      int tf_scan      = speedsteps[ 0 ].time_first;
+      int accel1       = (int)qRound( rate );
+      int rspeed       = speedsteps[ 0 ].rotorspeed;
+      int tf_aend      = ( rspeed + accel1 - 1 ) / accel1;
+
+      QString wmsg = tr( "The SpeedStep computed/used is likely bad:<br/>"
+                         "The acceleration implied is %1 rpm/sec.<br/>"
+                         "The acceleration zone ends at %2 seconds,<br/>"
+                         "with a first scan time of %3 seconds.<br/><br/>"
+                         "<b>You should rerun the experiment without<br/>"
+                         "any interim constant speed, and then<br/>"
+                         "you should reimport the data.</b>" )
+                     .arg( accel1 ).arg( tf_aend ).arg( tf_scan );
+
+      QMessageBox msgBox( this );
+      msgBox.setWindowTitle( tr( "Bad TimeState Implied!" ) );
+      msgBox.setTextFormat( Qt::RichText );
+      msgBox.setText( wmsg );
+      msgBox.addButton( tr( "Continue" ), QMessageBox::RejectRole );
+      QPushButton* bAbort = msgBox.addButton( tr( "Abort" ),
+            QMessageBox::YesRole    );
+      msgBox.setDefaultButton( bAbort );
+      msgBox.exec();
+      if ( msgBox.clickedButton() == bAbort )
+      {  // Abort the import of this data
+         QApplication::restoreOverrideCursor();
+         qApp->processEvents();
+         reset();
+         return false;
+      }
+      else
+      {  // Modify times and omegas of this data, then proceed to import
+         int status = US_Convert::adjustSpeedstep( allData, speedsteps );
+DbgLv(1) << "CGui:IOD: adjSS stat" << status;
+      }
+   }
 
    // MultiWaveLength if channels and triples counts differ
    isMwl            = ( all_chaninfo.count() != all_tripinfo.count() );
@@ -7219,3 +7268,4 @@ DbgLv(1) << "BldLCtr:     ccx nlam" << 0 << exp_lambdas.count();
    reset_lambdas();      // Make sure internal MWL lambdas are right
 
 }
+
