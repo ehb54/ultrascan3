@@ -74,8 +74,11 @@ const QString US_Images::image_name( int itype )
       { ARROW_RIGHT,     "arrow_right" },
       { SETUP_COM,       "setup"       },
       { ANALYSIS_COM,    "analysis"    },
+      { EDITING_COM,     "editing"     },
       { ANALYSIS_COM_2,  "analysis_2"  },
       { LIVE_UPDATE_COM, "live_update" },
+      { IMPORT_COM_1,    "import_1" },
+      { IMPORT_COM_2,    "import_2" },
       { REPORT_COM,      "report" },
       { NEW_ITEM_COM,    "new_item2" }
    }; 
