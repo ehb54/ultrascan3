@@ -157,15 +157,41 @@ class US_PostProdGui : public US_WidgetsDialog
     //void import_data_us_convert( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii  );
     void import_data_us_convert( QMap < QString, QString > &);
     
-    void to_analysis( QString & currDir, QString & protocolName );
+    void to_editing( QString & currDir, QString & protocolName );
     void to_experiment( QString & protocolName );
     
   signals:
     //void to_post_prod( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii  );
     void to_post_prod( QMap < QString, QString > & ); 
     
-    void switch_to_analysis( QString & currDir, QString & protocolName );
+    void switch_to_editing( QString & currDir, QString & protocolName );
     void switch_to_exp( QString & protocolName );
+};
+
+
+//! \brief Editing panel
+class US_EditingGui : public US_WidgetsDialog 
+{
+  Q_OBJECT
+  
+  public:
+    US_EditingGui( QWidget* );
+    ~US_EditingGui() {};
+  
+         
+  private:
+    US_ComProjectMain*    mainw;      // Parent to all panels
+    int offset;
+
+ protected:
+    //void resizeEvent(QResizeEvent *event) override;
+      
+ private slots:
+   void do_editing( QString & currDir, QString & protocolName );
+
+ signals:
+   void start_editing( QString & currDir, QString & protocolName );
+    
 };
 
 //! \brief Analysis panel
@@ -249,6 +275,7 @@ class US_ComProjectMain : public US_Widgets
   US_ExperGui*      epanExp;         // US_Exp panel
   US_ObservGui*     epanObserv;      // US_Observ panel
   US_PostProdGui*   epanPostProd;    // US_PostProd panel
+  US_EditingGui*    epanEditing;     // US_Editing panel
   US_AnalysisGui*   epanAnalysis;    // US_Analysis panel
   US_ReportGui*     epanReport;      // US_Report panel
   
@@ -278,7 +305,7 @@ private slots:
   //void switch_to_post_processing( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii );
   void switch_to_post_processing( QMap < QString, QString > & );
   
-  void switch_to_analysis( QString & currDir, QString & protocolName );
+  void switch_to_editing( QString & currDir, QString & protocolName );
   void switch_to_experiment( QString & protocolName );
   //void check_current_stage( void );
   void close_all( void );
@@ -295,7 +322,7 @@ signals:
   //void import_data_us_convert( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii );
   void import_data_us_convert(  QMap < QString, QString > & );
 
-  void pass_to_analysis( QString & currDir, QString & protocolName );
+  void pass_to_editing( QString & currDir, QString & protocolName );
   void clear_experiment( QString & protocolName);
   void us_comproject_closed( void );
   void pass_used_instruments( QStringList & );

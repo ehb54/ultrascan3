@@ -5093,7 +5093,7 @@ DbgLv(1) << "Writing to disk";
 	       QMessageBox::information( this,
 					 tr( "Save is Complete" ),
 					 tr( "The save of all data and reports is complete.\n\n"
-					     "The program will switch to Analysis stage." ) );
+					     "The program will switch to Editing stage." ) );
 	       
 	       // Either emit ONLY if not US_MODE, or do NOT connect with slot on us_comproject...
 	       resetAll_auto();

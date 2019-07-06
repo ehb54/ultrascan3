@@ -94,7 +94,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    // Add panels to the tab widget
    tabWidget->addTab( epanExp,       tr( "1: Experiment"   ) );
    tabWidget->addTab( epanObserv,    tr( "2: Live Update" ) );
-   tabWidget->addTab( epanPostProd,  tr( "3: Editing"  ) );
+   tabWidget->addTab( epanPostProd,  tr( "3: LIMS Import"  ) );
    // tabWidget->addTab( epanAnalysis,  tr( "4: Analysis"  ) );
    // tabWidget->addTab( epanReport,    tr( "5: Report"  ) );
    
@@ -110,7 +110,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    
    tabWidget->setTabIcon( 0, US_Images::getIcon( US_Images::SETUP_COM  ) );
    tabWidget->setTabIcon( 1, US_Images::getIcon( US_Images::LIVE_UPDATE_COM  ) );
-   tabWidget->setTabIcon( 2, US_Images::getIcon( US_Images::ANALYSIS_COM ) );
+   tabWidget->setTabIcon( 2, US_Images::getIcon( US_Images::IMPORT_COM_1 ) );
    // tabWidget->setTabIcon( 3, US_Images::getIcon( US_Images::ANALYSIS_COM_2 ) );
    // tabWidget->setTabIcon( 4, US_Images::getIcon( US_Images::REPORT_COM ) );
 
@@ -230,6 +230,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    epanExp             = new US_ExperGui   ( this );
    epanObserv          = new US_ObservGui  ( this );
    epanPostProd        = new US_PostProdGui( this );
+   epanEditing         = new US_EditingGui ( this );
    epanAnalysis        = new US_AnalysisGui( this );
    epanReport          = new US_ReportGui  ( this );
    
@@ -238,9 +239,10 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    // Add panels to the tab widget
    tabWidget->addTab( epanExp,       tr( "1: Experiment"   ) );
    tabWidget->addTab( epanObserv,    tr( "2: Live Update" ) );
-   tabWidget->addTab( epanPostProd,  tr( "3: Editing"  ) );
-   tabWidget->addTab( epanAnalysis,  tr( "4: Analysis"  ) );
-   tabWidget->addTab( epanReport,    tr( "5: Report"  ) );
+   tabWidget->addTab( epanPostProd,  tr( "3: LIMS Import"  ) );
+   tabWidget->addTab( epanEditing,   tr( "4: Editing"  ) );
+   tabWidget->addTab( epanAnalysis,  tr( "5: Analysis"  ) );
+   tabWidget->addTab( epanReport,    tr( "6: Report"  ) );
    
    tabWidget->setCurrentIndex( curr_panx );
    tabWidget->tabBar()->setFixedHeight(500);
@@ -254,9 +256,10 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    
    tabWidget->setTabIcon( 0, US_Images::getIcon( US_Images::SETUP_COM  ) );
    tabWidget->setTabIcon( 1, US_Images::getIcon( US_Images::LIVE_UPDATE_COM  ) );
-   tabWidget->setTabIcon( 2, US_Images::getIcon( US_Images::ANALYSIS_COM ) );
-   tabWidget->setTabIcon( 3, US_Images::getIcon( US_Images::ANALYSIS_COM_2 ) );
-   tabWidget->setTabIcon( 4, US_Images::getIcon( US_Images::REPORT_COM ) );
+   tabWidget->setTabIcon( 2, US_Images::getIcon( US_Images::IMPORT_COM_1 ) );
+   tabWidget->setTabIcon( 3, US_Images::getIcon( US_Images::EDITING_COM ) );
+   tabWidget->setTabIcon( 4, US_Images::getIcon( US_Images::ANALYSIS_COM_2 ) );
+   tabWidget->setTabIcon( 5, US_Images::getIcon( US_Images::REPORT_COM ) );
    
    tabWidget->tabBar()->setIconSize(QSize(50,50));
 
@@ -294,8 +297,8 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( this, SIGNAL( clear_experiment( QString & ) ),  epanExp, SLOT( clear_experiment( QString & )  ) );
    connect( epanObserv, SIGNAL( close_everything() ), this, SLOT( close_all() ));
       
-   connect( epanPostProd, SIGNAL( switch_to_analysis( QString &, QString &) ),  this, SLOT( switch_to_analysis( QString &, QString & )  ) );
-   connect( this, SIGNAL( pass_to_analysis( QString &, QString & ) ),   epanAnalysis, SLOT( do_analysis( QString &, QString & )  ) );
+   connect( epanPostProd, SIGNAL( switch_to_editing( QString &, QString &) ),  this, SLOT( switch_to_editing( QString &, QString & )  ) );
+   connect( this, SIGNAL( pass_to_editing( QString &, QString & ) ),   epanEditing, SLOT( do_editing( QString &, QString & )  ) );
    connect( epanPostProd, SIGNAL( switch_to_exp( QString & ) ), this, SLOT( switch_to_experiment( QString & )  ) );
    
    setMinimumSize( QSize( 1350, 800 ) );
@@ -970,14 +973,14 @@ void US_ComProjectMain::switch_to_experiment( QString & protocolName )
 }
    
 
-// Slot to switch from the Editing to Analysis tab
-void US_ComProjectMain::switch_to_analysis( QString  & currDir, QString & protocolName)
+// Slot to switch from the Import to Editing tab
+void US_ComProjectMain::switch_to_editing( QString  & currDir, QString & protocolName)
 {
    tabWidget->setCurrentIndex( 3 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
   
    // ALEXEY: Make a record to 'autoflow' table: stage# = 3; 
 
-   emit pass_to_analysis( currDir, protocolName );
+   emit pass_to_editing( currDir, protocolName );
 }
 
 
@@ -1384,8 +1387,8 @@ US_PostProdGui::US_PostProdGui( QWidget* topw )
    //connect( this, SIGNAL( to_post_prod( QString &, QString &, QString &, QString & ) ), sdiag, SLOT( import_data_auto ( QString &, QString &, QString &, QString & )  ) );
    connect( this, SIGNAL( to_post_prod( QMap < QString, QString > & ) ), sdiag, SLOT( import_data_auto ( QMap < QString, QString > & )  ) );
    
-   //ALEXEY: switch to Analysis
-   connect( sdiag, SIGNAL( saving_complete_auto( QString &, QString & ) ), this, SLOT( to_analysis ( QString &, QString &) ) );
+   //ALEXEY: switch to Editing
+   connect( sdiag, SIGNAL( saving_complete_auto( QString &, QString & ) ), this, SLOT( to_editing ( QString &, QString &) ) );
    //ALEXEY: for academic ver. switch back to experiment
    connect( sdiag, SIGNAL( saving_complete_back_to_exp( QString & ) ), this, SLOT( to_experiment (  QString & ) ) );
    
@@ -1411,9 +1414,9 @@ void US_PostProdGui::import_data_us_convert(  QMap < QString, QString > & protoc
   emit to_post_prod( protocol_details );
 }
 
-void US_PostProdGui::to_analysis( QString & currDir, QString & protocolName )
+void US_PostProdGui::to_editing( QString & currDir, QString & protocolName )
 {
-  emit switch_to_analysis( currDir, protocolName );
+  emit switch_to_editing( currDir, protocolName );
 }
 
 void US_PostProdGui::to_experiment( QString & protocolName )
@@ -1453,7 +1456,53 @@ void US_PostProdGui::resizeEvent(QResizeEvent *event)
 
 
 
+// US_Editing
+US_EditingGui::US_EditingGui( QWidget* topw )
+   : US_WidgetsDialog( topw, 0 )
+{
+   mainw               = (US_ComProjectMain*)topw;
 
+   setPalette( US_GuiSettings::frameColor() );
+   QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
+   QFontMetrics fmet( sfont );
+   //int fwid     = fmet.maxWidth();
+   //int lwid     = fwid * 4;
+   //int swid     = lwid + fwid;
+   
+   // Main VBox
+   QVBoxLayout* main     = new QVBoxLayout (this);
+   main->setSpacing        ( 2 );
+   main->setContentsMargins( 2, 2, 2, 2 );
+      
+   QGridLayout* genL   = new QGridLayout();
+
+   // //QPlainTextEdit* panel_desc = new QPlainTextEdit(this);
+   QTextEdit* panel_desc = new QTextEdit(this);
+   panel_desc->viewport()->setAutoFillBackground(false);
+   panel_desc->setFrameStyle(QFrame::NoFrame);
+   panel_desc->setPlainText(" Tab to Edit Experimental Data... ---UNDER CONSTRUCTION--- ");
+   panel_desc->setReadOnly(true);
+   //panel_desc->setMaximumHeight(30);
+   QFontMetrics m (panel_desc -> font()) ;
+   int RowHeight = m.lineSpacing() ;
+   panel_desc -> setFixedHeight  (2* RowHeight) ;
+
+   int row = 0;
+   genL->addWidget( panel_desc,  row++,   0, 1, 12);
+ 
+   // assemble main
+   main->addLayout(genL);
+   main->addStretch();
+
+   // //Later - do actual editing form sdiag - whatever it will be: (us_edit.cpp)
+   // connect( this, SIGNAL( start_editing( QString &, QString & ) ), sdiag, SLOT( edit_auto ( QString &, QString & )  ) );
+   
+}
+
+void US_EditingGui::do_editing( QString & currDir, QString & protocolName )
+{
+  emit start_editing( currDir, protocolName );
+}
 
 
 // US_Analysis
@@ -1504,7 +1553,6 @@ void US_AnalysisGui::do_analysis( QString & currDir, QString & protocolName )
 {
   emit start_analysis( currDir, protocolName );
 }
-
 
 
 
