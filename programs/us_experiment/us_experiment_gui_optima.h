@@ -138,6 +138,8 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       void        help     ( void )
          { showHelp.show_help( "manual/experiment_rotor.html" ); };
 
+      bool message_instr_shown;
+
    private:
       US_ExperimentMain*   mainw;
       US_RunProtocol::RunProtoRotor*  rpRotor;        // Rotor protocol

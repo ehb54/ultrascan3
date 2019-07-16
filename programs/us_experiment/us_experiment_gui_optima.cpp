@@ -840,6 +840,7 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    changeLab( curr_rotor );
    savePanel();
    changed         = false;
+   message_instr_shown = false;
 
    initPanel();
 
@@ -1012,8 +1013,10 @@ void US_ExperGuiRotor::changeOptima( int ndx )
 
    changeOperator(0);
 
-   if ( !mainw->connection_for_instrument.contains( mainw->currentInstrument[ "name" ] ) ) 
-     test_optima_connection();
+   // if ( !mainw->connection_for_instrument.contains( mainw->currentInstrument[ "name" ] ) ) 
+   //   test_optima_connection();
+
+   test_optima_connection();
 }
 
 // Slot for change in ExpType selection
