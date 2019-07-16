@@ -726,8 +726,31 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
    QString optima_name  = QString::number( rpRotor->instID ) + ": "
                           + rpRotor->instrname;
 
-   //optima machine
-   changeOptima( cb_optima->findText( optima_name ) ); //<-- Do actual connection test in changeLab();
+   qDebug() << "OPTIMA NAME in initPANEL()  :" << optima_name;
+   qDebug() << "OPTIMA INDEX in initPANEL() :" << cb_optima->findText( optima_name ) ;
+
+   // optima machine
+   // IF optima_name is NOT present in the list of the available instruments (from autoflow),
+   // then use 1st available instr. with informimng user that Optima was changed
+   if( cb_optima->findText( optima_name ) < 0 )
+     {
+       changeOptima( 0 );                                //<-- Do actual connection test in changeLab();
+       //Message
+       QMessageBox * msg_instr_avail = new QMessageBox;
+       msg_instr_avail->setIcon(QMessageBox::Information);
+       msg_instr_avail->setText(tr( "Loaded protocol specified <b>%1</b> as the instrument in use.<br><br>" 
+				    "However, due to its current unavailability, the instrument in use will be changed to the first available intrument, <b>%2</b>." )
+				.arg(  rpRotor->instrname ).arg( mainw->currentInstrument[ "name" ] ));
+
+       if ( !message_instr_shown )
+	 {
+	   msg_instr_avail->show();
+	   message_instr_shown = true;
+	 }
+     }
+   else
+     changeOptima( cb_optima->findText( optima_name ) ); //<-- Do actual connection test in changeLab();
+   
    //setCbCurrentText( cb_optima,   optima_name );    // <-- NOT ENOUGH, no connection check
 
    //operator
@@ -2592,8 +2615,12 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
  << have_run << have_proj << have_cells << have_solus << have_range;
    proto_ena         = ( have_cells  &&  have_solus  &&  have_optic  &&
                          have_range );
+   // subm_enab         = ( have_run    &&  have_proj  &&  proto_ena  &&
+   //                       connected );                                     
+
    subm_enab         = ( have_run    &&  have_proj  &&  proto_ena  &&
-                         connected );
+			 mainw->connection_status &&                // ALEXEY: use top-level connection boolean!
+			 !currProto->exp_label.isEmpty() );         // ALEXEY: and label is present        
 
    ck_run     ->setChecked( have_run   );
    ck_project ->setChecked( have_proj  );

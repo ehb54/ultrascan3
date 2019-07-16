@@ -524,12 +524,17 @@ void US_ComProjectMain::check_current_stage( void )
       else
 	{
 	  QString list_instruments_in_use = occupied_instruments.join(", ");
-	  QMessageBox::warning( this, tr( "Occupied Instruments" ),
-				tr( "The following Optima instrument(s) \n"
-				    "are currently in use: \n\n"
-				    "%1 \n\n"
-				    "You will not be able to submit another run \n"
-				    "to these instruments at the moment.").arg( list_instruments_in_use ) );
+	  
+	  QMessageBox * msg_instr_use = new QMessageBox;
+	  msg_instr_use->setIcon(QMessageBox::Information);
+	  msg_instr_use->setText(tr( "The following Optima instrument(s)<br>"
+				       "are currently in use: <br><br>"
+				       "<b>%1</b> <br><br>"
+				       "You will not be able to submit another run<br>"
+				       "to these instruments at the moment." )
+				   .arg( list_instruments_in_use ) );
+
+	  msg_instr_use->exec();
 	  
 	  define_new_experiment( occupied_instruments );
 	  return;
@@ -982,6 +987,9 @@ void US_ComProjectMain::switch_to_editing( QString  & currDir, QString & protoco
 
    emit pass_to_editing( currDir, protocolName );
 }
+
+
+
 
 
 
