@@ -42,6 +42,7 @@ US_SelectItem::US_SelectItem( QList< QStringList >& items,
 {
    multi_sel         = false;
    deleted_button    = false;
+   deleted_button_autoflow    = false;
    autoflow_button   = false;
    autoflow_da       = false;
    
@@ -51,10 +52,14 @@ US_SelectItem::US_SelectItem( QList< QStringList >& items,
        if ( add_label == "DELETE" )
 	 deleted_button    = true;
        if ( add_label == "AUTOFLOW_GMP" )
-	 autoflow_button = true;
+	 {
+	   autoflow_button = true;
+	   deleted_button_autoflow  = true;
+	 }
        if ( add_label == "AUTOFLOW_DA" )
 	 {
 	   autoflow_button = true;
+	   deleted_button_autoflow  = true;
 	   autoflow_da     = true;
 	 }
      }
@@ -189,19 +194,26 @@ void US_SelectItem::build_layout( const QString titl )
                                            accept_pb_label );
 
    
-   QPushButton* pb_delete = us_pushbutton( tr( "Delete Item" ) );
+   QPushButton* pb_delete          = us_pushbutton( tr( "Delete Item" ) );
+   QPushButton* pb_delete_autoflow = us_pushbutton( tr( "Delete Record" ) );
    
    buttons->addWidget( pb_cancel );
    buttons->addWidget( pb_delete );
+   buttons->addWidget( pb_delete_autoflow );
    buttons->addWidget( pb_accept );
 
    connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancelled() ) );
    connect( pb_accept, SIGNAL( clicked() ), SLOT( accepted() ) );
    connect( pb_delete, SIGNAL( clicked() ), SLOT( deleted() ) );
+   connect( pb_delete_autoflow, SIGNAL( clicked() ), SLOT( deleted_autoflow() ) );
 
    if ( !deleted_button )
      pb_delete->hide();
 
+   if ( !deleted_button_autoflow )
+     pb_delete_autoflow->hide();
+
+   
    main->addLayout( buttons );
    resize( 700, 250 );
 
@@ -378,12 +390,91 @@ void US_SelectItem::accepted()
 // Delete button:
       /*  ALEXEY: For future Delete() function:
 
-	  to get ptotID -> items[selxP][2]; 
+	  to get autoflow ID -> items[selxP][0]; 
 	  delete (stored procedure) 
 	         + emit signal to us_experiment to update protdata BEFORE any selection; 
 	  then remove items[selxP] from QList; 
 	  then rebuild list by running list_data(); [move part of ]
       */
+void US_SelectItem::deleted_autoflow()
+{
+   QList< QTableWidgetItem* > selitems = tw_data->selectedItems();
+   
+   int     AutoflowRow;
+   QString AutoflowID;
+   if ( selitems.size() == 0 )
+     {
+       QMessageBox::information( this,
+				 tr( "No Autoflow Record Selected" ),
+				 tr( "You have not selected any auflow record.\nSelect or Cancel" ) );
+       return;
+     }
+
+   // Return the index to the selected item
+   QTableWidgetItem* twi  = selitems.at( 0 );
+   int irow          = twi->row();
+   twi               = tw_data->item( irow, 0 );
+   
+   AutoflowRow            = qMax( 0, itemlist.indexOf( twi->text() ) );
+   
+   AutoflowID = items[ AutoflowRow ][ 0 ];
+
+   //Attempt autoflow record deletion:
+   qDebug() << "Autoflow ID to delete: ID, name, run status: " << AutoflowID << ", " << items[ AutoflowRow ][ 1 ] << ", " << items[ AutoflowRow ][ 4 ];
+
+   QMessageBox msgBox;
+   msgBox.setText(tr( "You have selected the following Record to delete:<br><br>" )
+		  + tr("<b>ID:&emsp;</b>") + items[ AutoflowRow ][ 0 ]
+		  + tr("<br>")
+		  + tr("<b>Name:&emsp;</b>") + items[ AutoflowRow ][ 1 ]
+		  + tr("<br>")
+		  + tr("<b>Status:&emsp;</b> ") + items[ AutoflowRow ][ 4 ]
+		  + tr( "<br><br>Proceed?" ));
+   msgBox.setInformativeText("<font color='red'><b>NOTE:</b> if deleted, this run cannot be monitored with this program anymore!</font>");
+   msgBox.setWindowTitle(tr("Delete Autoflow Record"));
+   QPushButton *Confirm   = msgBox.addButton(tr("Delete"), QMessageBox::YesRole);
+   QPushButton *Cancel    = msgBox.addButton(tr("Cancel"), QMessageBox::RejectRole);
+
+   msgBox.setIcon(QMessageBox::Question);
+   msgBox.exec();
+    
+   if (msgBox.clickedButton() == Cancel) 
+     return;
+   else if (msgBox.clickedButton() == Confirm)
+     {
+       US_Passwd pw;
+       US_DB2* db = new US_DB2( pw.getPasswd() );
+       QStringList q( "" );
+       q.clear();
+       q  << QString( "delete_autoflow_record_by_id" )
+	  << AutoflowID;
+
+       int status = db->statusQuery( q );
+       
+       if ( status == US_DB2::NO_AUTOFLOW_RECORD )
+	 {
+	   QMessageBox::warning( this,
+				 tr( "Autoflow Record Not Deleted" ),
+				 tr( "This record could not be deleted since\n"
+				     "it is not present in the LIMS DB." ) );
+	   return;
+	 }
+
+       items.removeAt( AutoflowRow );     // Remove deleted item row
+       list_data();                       // Rebuild protocol list in the dialog
+       
+       QString msg("Autoflow record  has been successfully deleted.");
+       QMessageBox::information( this,
+			     tr( "Autoflow Record  Deleted" ),
+			     msg );
+
+
+       emit accept_autoflow_deletion();        // Signal to pass to us_comproject to update (re-read reduced) autoflow records
+       
+     }
+}
+
+
 void US_SelectItem::deleted()
 {
    QList< QTableWidgetItem* > selitems = tw_data->selectedItems();

@@ -13,7 +13,7 @@
 #include "us_crypto.h"
 #include "us_select_item.h"
 #include "us_images.h"
-#include "us_select_item.h"
+//#include "us_select_item.h"
 
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c)  setData(a,b,c)
@@ -498,21 +498,25 @@ void US_ComProjectMain::check_current_stage( void )
   else
     autoflow_btn = "AUTOFLOW_GMP";
   
-  //US_SelectItem pdiag( autoflowdata, hdrs, pdtitle, &prx, autoflow_btn, -2 );
-  US_SelectItem* pdiag = new  US_SelectItem( autoflowdata, hdrs, pdtitle, &prx, autoflow_btn, -2 );
+  //US_SelectItem pdiag_autoflow( autoflowdata, hdrs, pdtitle, &prx, autoflow_btn, -2 );
+  //US_SelectItem* pdiag_autoflow = new  US_SelectItem( autoflowdata, hdrs, pdtitle, &prx, autoflow_btn, -2 );
+
+  pdiag_autoflow = new  US_SelectItem( autoflowdata, hdrs, pdtitle, &prx, autoflow_btn, -2 );
   
-  pdiag->setParent(this, Qt::Window);
-  pdiag->setWindowFlags(Qt::Dialog | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint  );
-  //pdiag->setWindowFlags(Qt::Window | Qt::WindowCloseButtonHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint  );
+  connect( pdiag_autoflow, SIGNAL( accept_autoflow_deletion() ), this, SLOT( update_autoflow_data() ));
+  
+  pdiag_autoflow->setParent(this, Qt::Window);
+  pdiag_autoflow->setWindowFlags(Qt::Dialog | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint  );
+  //pdiag_autoflow->setWindowFlags(Qt::Window | Qt::WindowCloseButtonHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint  );
 
   //disable 'Define Another Exp.' button if all instruments are in use
   if ( occupied_instruments.size() >= instruments.size() )
-    pdiag->pb_cancel->setEnabled( false );
+    pdiag_autoflow->pb_cancel->setEnabled( false );
   
   
   QString autoflow_id_selected("");
   
-  if ( pdiag->exec() == QDialog::Accepted )
+  if ( pdiag_autoflow->exec() == QDialog::Accepted )
     autoflow_id_selected  = autoflowdata[ prx ][ 0 ];
   else
     {
@@ -591,9 +595,38 @@ void US_ComProjectMain::check_current_stage( void )
       return;
     }
   //and so on...
+   
+}
+
+//Re-evaluate autoflow records & occupied instruments & if Define Another Exp. should be enabled....
+void US_ComProjectMain::update_autoflow_data( void )
+{
+  qDebug() << "Updating autoflow records!!!";
   
+  US_Passwd  pw;
+  US_DB2* dbP  = new US_DB2( pw.getPasswd() );
+
+  //Re-read autoflow records
+  list_all_autoflow_records( autoflowdata, dbP );
+
+  //Re-count instruments in use
+  occupied_instruments.clear();
+  for ( int i=0; i < autoflowdata.size(); i++ )
+    {
+      if ( autoflowdata[ i ][ 5 ] == "LIVE_UPDATE" )
+	occupied_instruments << autoflowdata[ i ][ 2 ];
+    }
+  
+  //Re-set Define Another Exp. button
+  if ( occupied_instruments.size() >= instruments.size() )
+    pdiag_autoflow->pb_cancel->setEnabled( false );
+  else
+    pdiag_autoflow->pb_cancel->setEnabled( true );
+
+  qDebug() << "Define Another Exp. button reset";
   
 }
+
 
 //Slot to delete Postgres Optima ExperimentDefinition record
 void US_ComProjectMain::delete_psql_record( int ExpId )
