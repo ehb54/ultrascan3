@@ -1034,8 +1034,8 @@ DbgLv(1) << "SelWl:    k_pot k_sel" << potential.count() << selected.count();
    QLabel* lb_strwln      = us_label(  tr( "Start Wavelength" ) );
    QLabel* lb_endwln      = us_label(  tr( "End Wavelength" ) );
    QLabel* lb_incwln      = us_label(  tr( "Wavelength Increment" ) );
-   ct_strwln              = us_counter( 2, 100, 800, 1 );
-   ct_endwln              = us_counter( 2, 100, 800, 1 );
+   ct_strwln              = us_counter( 2, 180, 800, 1 );
+   ct_endwln              = us_counter( 2, 180, 800, 1 );
    ct_incwln              = us_counter( 2,   1,  20, 1 );
    const int def_swl      = 200;
    const int def_ewl      = 600;
@@ -1352,7 +1352,7 @@ bool US_SelectWavelengths_manual::text_to_numbers( void )
 
   qDebug() << "First and Last element: " << selected[0].toDouble() << ", " << selected[ selected.size() -1 ].toDouble();
   
-  if ( selected[0].toDouble() < 100.0 || selected[ selected.size() -1 ].toDouble() > 800.0  )   // Boundaries [100-800] nm
+  if ( selected[0].toDouble() < 180.0 || selected[ selected.size() -1 ].toDouble() > 800.0  )   // Boundaries [100-800] nm
     {
       QPalette *palette = new QPalette();
       palette->setColor(QPalette::Text,Qt::red);
@@ -1360,7 +1360,7 @@ bool US_SelectWavelengths_manual::text_to_numbers( void )
       le_wrange->setPalette(*palette);
       
       QString mtitle_error    = tr( "Error" );
-      QString message_error   = tr( "Selected wavelengths are outside of accepted range of [100-800] nm!" );
+      QString message_error   = tr( "Selected wavelengths are outside of accepted range of [180-800] nm!" );
       QMessageBox::critical( this, mtitle_error, message_error );
       
       selected.clear();

@@ -1846,6 +1846,10 @@ void US_XpnDataViewer::check_for_sysdata( void )
   timeToList( running_time, dhms_r );
   QString running_time_text;
   //ALEXEY: hh:mm:ss - OR do we need dd:hh:mm instead ?
+  //ALEXEY: if times >~1 day, update #hours
+  if ( dhms_r[0] > 0 )
+    dhms_r[1] += 24;
+  
   running_time_text = QString::number(dhms_r[1]) + ":" + QString::number(dhms_r[2]) + ":" + QString::number(dhms_r[3]);
   le_running->setText( running_time_text );
   qApp->processEvents();
@@ -1859,6 +1863,10 @@ void US_XpnDataViewer::check_for_sysdata( void )
   timeToList( elapsed_time, dhms_e );
   QString elapsed_time_text;
   //ALEXEY: hh:mm:ss - OR do we need dd:hh:mm instead ?
+  //ALEXEY: if times >~1 day, update #hours
+  if ( dhms_e[0] > 0 )
+    dhms_e[1] += 24;
+  
   elapsed_time_text = QString::number(dhms_e[1]) + ":" + QString::number(dhms_e[2]) + ":" + QString::number(dhms_e[3]);
   le_elapsed->setText( elapsed_time_text );
   qApp->processEvents();
@@ -1869,6 +1877,10 @@ void US_XpnDataViewer::check_for_sysdata( void )
   timeToList( remaining_time, dhms_remain );
   QString remaining_time_text;
   //ALEXEY: hh:mm:ss - OR do we need dd:hh:mm instead ?
+  //ALEXEY: if times >~1 day, update #hours
+  if ( dhms_remain[0] > 0 )
+    dhms_remain[1] += 24;
+    
   remaining_time_text = QString::number(dhms_remain[1]) + ":" + QString::number(dhms_remain[2]) + ":" + QString::number(dhms_remain[3]);
   le_remaining->setText( remaining_time_text );
   qApp->processEvents();

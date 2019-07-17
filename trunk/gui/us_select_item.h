@@ -63,6 +63,7 @@ class US_GUI_EXTERN US_SelectItem : public US_WidgetsDialog
 
       bool           multi_sel;   //!< Flag: multiple selections enabled?
       bool           deleted_button; //If Delete button is present
+      bool           deleted_button_autoflow; //If Delete Autoflow button is present
       bool           autoflow_button; //If autoflow, Cancel becomes define another Experiment
       bool           autoflow_da;  // If called by non-GMP us_comproject (DA)
       
@@ -78,10 +79,12 @@ class US_GUI_EXTERN US_SelectItem : public US_WidgetsDialog
       void cancelled      ( void );
       void accepted       ( void );
       void deleted        ( void );
+      void deleted_autoflow ( void );
       void help           ( void )
       { showHelp.show_help( "select_item.html" ); };
 
    signals:
-      void accept_deletion( void ); 
+      void accept_deletion( void );
+      void accept_autoflow_deletion( void ); 
 };
 #endif

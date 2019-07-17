@@ -33,6 +33,7 @@
 #include "us_license_t.h"
 #include "us_plot.h"
 #include "us_license.h"
+#include "us_select_item.h"
 
 class US_ComProjectMain;
 
@@ -270,6 +271,8 @@ class US_ComProjectMain : public US_Widgets
   bool window_closed;
   
   QStringList occupied_instruments;
+
+  US_SelectItem* pdiag_autoflow;
     
  private:
   US_ExperGui*      epanExp;         // US_Exp panel
@@ -315,7 +318,8 @@ private slots:
 
   void define_new_experiment( QStringList & );
 
-  void delete_psql_record( int );  
+  void delete_psql_record( int );
+  void update_autoflow_data( void );  
   
 signals:
   void pass_to_live_update( QMap < QString, QString > & protocol_details ); 
