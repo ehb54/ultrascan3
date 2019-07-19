@@ -62,6 +62,52 @@ public:
 };
 
 
+//! \brief Initial panel
+class US_InitDialogueGui : public US_WidgetsDialog 
+{
+  Q_OBJECT
+  
+  public:
+    US_InitDialogueGui( QWidget* );
+    ~US_InitDialogueGui() {};
+
+
+   QList< QStringList >  autoflowdata;
+   QStringList occupied_instruments;
+   US_SelectItem* pdiag_autoflow;
+
+   void initRecordsDialogue( void );
+   bool initDialogueOpen;
+            
+  private:
+    US_ComProjectMain*    mainw;      // Parent to all panels
+    int offset;
+
+    void initRecords( void );
+    //void initRecordsDialogue( void );
+    
+    int  get_autoflow_records( void );
+    QMap < QString, QString > read_autoflow_record( int );
+    static int list_all_autoflow_records( QList< QStringList >&, US_DB2* );
+    
+    void read_optima_machines( US_DB2* = 0 ); 
+    QList< QMap<QString, QString> > instruments;  
+    
+
+ protected:
+    void resizeEvent(QResizeEvent *event) override;
+      
+  private slots:
+     void update_autoflow_data( void );
+     
+  signals:
+     void define_new_experiment_init ( QStringList & );
+     void switch_to_live_update_init(  QMap < QString, QString > & protocol_details );
+     void switch_to_post_processing_init(  QMap < QString, QString > & protocol_details );
+};
+
+
+
 //! \brief Experiment panel
 class US_ExperGui : public US_WidgetsDialog 
 {
@@ -264,17 +310,21 @@ class US_ComProjectMain : public US_Widgets
 
   bool us_mode_bool;
 
-  QList< QStringList >  autoflowdata;
+  //QList< QStringList >  autoflowdata;
 
-  void check_current_stage( void );
+  //void check_current_stage( void );
+
+  void call_AutoflowDialogue();
+  void close_initDialogue();
 
   bool window_closed;
   
-  QStringList occupied_instruments;
+  //QStringList occupied_instruments;
 
-  US_SelectItem* pdiag_autoflow;
+  //US_SelectItem* pdiag_autoflow;
     
  private:
+  US_InitDialogueGui*  epanInit;     // US_Init panel
   US_ExperGui*      epanExp;         // US_Exp panel
   US_ObservGui*     epanObserv;      // US_Observ panel
   US_PostProdGui*   epanPostProd;    // US_PostProd panel
@@ -286,13 +336,12 @@ class US_ComProjectMain : public US_Widgets
   //int         dbg_level;       // Debug print flag
   int         curr_panx;       // Current panel index (0-7)
 
-  //void check_current_stage( void );
-  int  get_autoflow_records( void );
-  QMap < QString, QString > read_autoflow_record( int );
-  static int list_all_autoflow_records( QList< QStringList >&, US_DB2* );
+  //int  get_autoflow_records( void );
+  //QMap < QString, QString > read_autoflow_record( int );
+  //static int list_all_autoflow_records( QList< QStringList >&, US_DB2* );
 
-  void read_optima_machines( US_DB2* = 0 ); 
-  QList< QMap<QString, QString> > instruments;  
+  //void read_optima_machines( US_DB2* = 0 ); 
+  //QList< QMap<QString, QString> > instruments;  
   
 private slots:
   //void reset     ( void );
@@ -319,7 +368,7 @@ private slots:
   void define_new_experiment( QStringList & );
 
   void delete_psql_record( int );
-  void update_autoflow_data( void );  
+  //void update_autoflow_data( void );  
   
 signals:
   void pass_to_live_update( QMap < QString, QString > & protocol_details ); 

@@ -17,8 +17,9 @@ int main( int argc, char* argv[] )
    //w.setLineWidth(1);
    w->show();                   //!< \memberof QWidget
 
-   w->check_current_stage();
-
+   //w->check_current_stage();
+   w->call_AutoflowDialogue();
+   
    if ( w->window_closed )
      return 0;
    

@@ -73,7 +73,7 @@ US_SelectItem::US_SelectItem( QList< QStringList >& items,
    build_layout( titl );
 
    tw_data->setSelectionMode( QAbstractItemView::SingleSelection );
-   
+
    show();
 }
 
@@ -221,6 +221,7 @@ void US_SelectItem::build_layout( const QString titl )
    list_data();
 
    show();
+   
 qDebug() << "SelI: main: post-ld tw size" << tw_data->size();
    resize( ( tw_data->width() + 4 ), ( tw_data->height() + 30 ) );
 qDebug() << "SelI: main: post-ld ma size" << size();

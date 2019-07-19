@@ -82,7 +82,8 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    //tabWidget           = new QTabWidget;
    tabWidget->setTabPosition( QTabWidget::West );
    tabWidget->tabBar()->setStyle(new VerticalTabStyle);
-   
+
+   epanInit            = new US_InitDialogueGui   ( this );
    epanExp             = new US_ExperGui   ( this );
    epanObserv          = new US_ObservGui  ( this );
    epanPostProd        = new US_PostProdGui( this );
@@ -92,6 +93,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    //   statflag            = 0;
 
    // Add panels to the tab widget
+   tabWidget->addTab( epanInit,      tr( "Manage Optima Runs"   ) );
    tabWidget->addTab( epanExp,       tr( "1: Experiment"   ) );
    tabWidget->addTab( epanObserv,    tr( "2: Live Update" ) );
    tabWidget->addTab( epanPostProd,  tr( "3: LIMS Import"  ) );
@@ -108,9 +110,9 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    //tabWidget->setTabIcon(1,QIcon(icon_path + "live_update.gif"));
    //tabWidget->setTabIcon(2,QIcon(icon_path + "analysis.png"));
    
-   tabWidget->setTabIcon( 0, US_Images::getIcon( US_Images::SETUP_COM  ) );
-   tabWidget->setTabIcon( 1, US_Images::getIcon( US_Images::LIVE_UPDATE_COM  ) );
-   tabWidget->setTabIcon( 2, US_Images::getIcon( US_Images::IMPORT_COM_1 ) );
+   tabWidget->setTabIcon( 1, US_Images::getIcon( US_Images::SETUP_COM  ) );
+   tabWidget->setTabIcon( 2, US_Images::getIcon( US_Images::LIVE_UPDATE_COM  ) );
+   tabWidget->setTabIcon( 3, US_Images::getIcon( US_Images::IMPORT_COM_1 ) );
    // tabWidget->setTabIcon( 3, US_Images::getIcon( US_Images::ANALYSIS_COM_2 ) );
    // tabWidget->setTabIcon( 4, US_Images::getIcon( US_Images::REPORT_COM ) );
 
@@ -122,7 +124,8 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    
    tabWidget->tabBar()->setIconSize(QSize(50,50));
 
-   tabWidget->tabBar()->setStyleSheet("QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:hover {background: lightgray;}");
+   tabWidget->tabBar()->setStyleSheet( "QTabBar::tab {min-width: 70;} QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:hover {background: lightgray;} QTabBar::tab:first {background: blue; color: lightgray; min-width: 50;} ");
+
    main->addWidget( tabWidget );
    
    logWidget = us_textedit();
@@ -141,6 +144,10 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    test_footer->setStyleSheet("color: #D3D9DF; background-color: #36454f;");
    main->addWidget( test_footer );
 
+   connect( epanInit, SIGNAL( define_new_experiment_init( QStringList & ) ), this, SLOT( define_new_experiment( QStringList &)  ) );
+   connect( epanInit, SIGNAL( switch_to_live_update_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
+   connect( epanInit, SIGNAL( switch_to_post_processing_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & )  ) );
+   
    connect( this, SIGNAL( pass_used_instruments( QStringList & ) ), epanExp, SLOT( pass_used_instruments( QStringList &)  ) );
    
    connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
@@ -226,7 +233,8 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    //tabWidget           = new QTabWidget;
    tabWidget->setTabPosition( QTabWidget::West );
    tabWidget->tabBar()->setStyle(new VerticalTabStyle);
-   
+
+   epanInit            = new US_InitDialogueGui ( this );
    epanExp             = new US_ExperGui   ( this );
    epanObserv          = new US_ObservGui  ( this );
    epanPostProd        = new US_PostProdGui( this );
@@ -237,6 +245,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    //   statflag            = 0;
 
    // Add panels to the tab widget
+   tabWidget->addTab( epanInit,      tr( "Manage Optima Runs"   ) );
    tabWidget->addTab( epanExp,       tr( "1: Experiment"   ) );
    tabWidget->addTab( epanObserv,    tr( "2: Live Update" ) );
    tabWidget->addTab( epanPostProd,  tr( "3: LIMS Import"  ) );
@@ -254,16 +263,26 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    //tabWidget->setTabIcon(1,QIcon(icon_path + "live_update.gif"));
    //tabWidget->setTabIcon(2,QIcon(icon_path + "analysis.png"));
    
-   tabWidget->setTabIcon( 0, US_Images::getIcon( US_Images::SETUP_COM  ) );
-   tabWidget->setTabIcon( 1, US_Images::getIcon( US_Images::LIVE_UPDATE_COM  ) );
-   tabWidget->setTabIcon( 2, US_Images::getIcon( US_Images::IMPORT_COM_1 ) );
-   tabWidget->setTabIcon( 3, US_Images::getIcon( US_Images::EDITING_COM ) );
-   tabWidget->setTabIcon( 4, US_Images::getIcon( US_Images::ANALYSIS_COM_2 ) );
-   tabWidget->setTabIcon( 5, US_Images::getIcon( US_Images::REPORT_COM ) );
-   
+   tabWidget->setTabIcon( 1, US_Images::getIcon( US_Images::SETUP_COM  ) );
+   tabWidget->setTabIcon( 2, US_Images::getIcon( US_Images::LIVE_UPDATE_COM  ) );
+   tabWidget->setTabIcon( 3, US_Images::getIcon( US_Images::IMPORT_COM_1 ) );
+   tabWidget->setTabIcon( 4, US_Images::getIcon( US_Images::EDITING_COM ) );
+   tabWidget->setTabIcon( 5, US_Images::getIcon( US_Images::ANALYSIS_COM_2 ) );
+   tabWidget->setTabIcon( 6, US_Images::getIcon( US_Images::REPORT_COM ) );
+
    tabWidget->tabBar()->setIconSize(QSize(50,50));
 
-   tabWidget->tabBar()->setStyleSheet("QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:hover {background: lightgray;}");
+   tabWidget->tabBar()->setStyleSheet( "QTabBar::tab {min-width: 70;} QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:hover {background: lightgray;} QTabBar::tab:first {background: blue; color: lightgray; min-width: 50;} ");
+
+ 
+   //QLabel * init_lbl;
+   //init_lbl = new QLabel();
+   //init_lbl->setText("Manage Optima Runs");
+   //init_lbl->setStyleSheet("QLabel { background-color : blue; color : white; }");
+   //tabWidget->tabBar()->setTabButton(0, QTabBar::LeftSide, init_lbl);
+
+   //tabWidget->tabBar()->setTabTextColor(0, Qt::white);
+   
    main->addWidget( tabWidget );
    
    logWidget = us_textedit();
@@ -282,6 +301,11 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    test_footer->setStyleSheet("color: #D3D9DF; background-color: #36454f;");
    main->addWidget( test_footer );
 
+
+   connect( epanInit, SIGNAL( define_new_experiment_init( QStringList & ) ), this, SLOT( define_new_experiment( QStringList &)  ) );
+   connect( epanInit, SIGNAL( switch_to_live_update_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
+   connect( epanInit, SIGNAL( switch_to_post_processing_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & )  ) );
+   
    connect( this, SIGNAL( pass_used_instruments( QStringList & ) ), epanExp, SLOT( pass_used_instruments( QStringList &)  ) );
    
    connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
@@ -313,318 +337,20 @@ void US_ComProjectMain::closeEvent( QCloseEvent* event )
 {
     window_closed = true;
     emit us_comproject_closed();
+    close_initDialogue();
     event->accept();
 }
 
 void US_ComProjectMain::to_autoflow_records( void )
 {
-  check_current_stage();
+  //check_current_stage();
 }
 
 
-// Function that checks for current program stage based on US-lims DB entry
-void US_ComProjectMain::check_current_stage( void )
+
+void US_ComProjectMain::close_initDialogue( void )
 {
-  // (0) 'autoflow' table is initially updated with protocol name/ID & returned Optima's ExpID in us_experimet (submitExperiment(); ) 
-  // (1) Query 'autoflow' table for stage#, protocol name/ID, ExperimentID 
-  // (2) Query 'protocol' table for details: e.g. CellChNumber, TripleNumber
-  // (3) Identify currDir where .auc data have been saved (unique name based on protocolName + runID)
-  //     * this maybe an 'autoflow' table field recorded after stage 1 (Live Update); DEFAULT empty
-
-  /*
- 
-    1. Query 'autoflow' table - proc. 'count_autoflow_records()': 
-            if 0 - return; 
-	    else
-	       sort by OptimaName:
-	       list active Optima machines:
-	       identify which Optima is running via autoflow, which is free & offer to chose - either monitor existing run, OR submit new run on free machine
-	       When to consider Optima "free" ? (after stage 'LIVE_UPDATE' passed ?)
-    
-    2. If autoflow record exists: 
-             proc. 'read_autoflow_record()'
-  
-  */
-
-  // // Ling's exp. Optima 1!!!
-  // QMap < QString, QString > protocol_details;
-  // protocol_details[ "experimentId" ]   = QString("465");   
-  // protocol_details[ "protocolName" ]   = QString("CCLing-PZ5077-27k-021519");
-  // protocol_details[ "experimentName" ] = QString("some_name");
-  // protocol_details[ "CellChNumber" ]   = QString("2");
-  // protocol_details[ "TripleNumber" ]   = QString("2");
-  // protocol_details[ "OptimaName" ]     = QString("Optima 1");    // <-- Optima 1
-  // protocol_details[ "duration" ]       = QString("27000");
-  // protocol_details[ "invID_passed" ]   = QString("34"); //Ling's ID
-  // QDir directory( currDir );
-  
-  // -------------------------------------------------------------------------------------------  
-
-  // // Nemetchek's exp. Optima 2 !!!
-  // QMap < QString, QString > protocol_details;
-  // protocol_details["experimentId"] = QString("287");   
-  // protocol_details["protocolName"] = QString("RxRPPARhet-PPRE-MWL_180419");
-  // protocol_details[ "experimentName" ] = QString("some_name");
-  // protocol_details[ "CellChNumber" ] = QString("8");
-  // protocol_details[ "TripleNumber" ] = QString("38");
-  // //protocol_details[ "TripleNumber" ] = QString("39"); //ALEXEY - incorrect - for testing
-  // protocol_details[ "OptimaName" ] = QString("Optima 2");     // <-- Optima 2
-  // protocol_details[ "duration" ]   = QString("36000");
-  // protocol_details[ "dataPath" ]   = QString("/home/alexey/ultrascan/imports/RxRPPARhet-PPRE-MWL_180419-run352");
-  // protocol_details[ "invID_passed" ]  = QString("41");  //Nemetchek's ID
-  
-  // QString stage                        = "LIVE_UPDATE";
-  // QString currDir                      = protocol_details[ "dataPath" ];
-  // QString ProtName                     = protocol_details[ "protocolName" ];
-  // QString invID_passed                 = protocol_details[ "invID_passed" ];
-  // QDir directory( currDir );
-
-  // // --------------------------------------------------------------------------------------------
-  
-  // // Amy's exp. Optima 2 !!!
-  // QMap < QString, QString > protocol_details;
-  // protocol_details["experimentId"] = QString("299");   
-  // protocol_details["protocolName"] = QString("data-aquisition-test29");
-  // protocol_details[ "experimentName" ] = QString("some_name");
-  // protocol_details[ "CellChNumber" ] = QString("8");
-  // protocol_details[ "TripleNumber" ] = QString("12");
-  // protocol_details[ "OptimaName" ] = QString("Optima 2");     // <-- Optima 2
-  // protocol_details[ "duration" ]   = QString("300");
-  // protocol_details[ "dataPath" ]   = QString("/home/alexey/ultrascan/imports/data-aquisition-test29-run364");
-  // protocol_details[ "invID_passed" ]  = QString("6");  //Amy's ID
-  
-  // QString stage                        = "LIVE_UPDATE";
-  // QString currDir                      = protocol_details[ "dataPath" ];
-  // QString ProtName                     = protocol_details[ "protocolName" ];
-  // QString invID_passed                 = protocol_details[ "invID_passed" ];
-  // QDir directory( currDir );
-
-  // --------------------------------------------------------------------------------------------
-
-  // // --------------------------------------------------------------------------------------------
-  
-  // // D Souza exp. Optima 1 !!!
-  // QMap < QString, QString > protocol_details;
-  // protocol_details["experimentId"] = QString("577");   
-  // protocol_details["protocolName"] = QString("DsouzaS_RVFV1-DDX17-MWL1_060819");
-  // protocol_details[ "experimentName" ] = QString("some_name");
-  // protocol_details[ "CellChNumber" ] = QString("4");
-  // protocol_details[ "TripleNumber" ] = QString("80");
-  // protocol_details[ "OptimaName" ]   = QString("Optima 1");     // <-- Optima 1
-  // protocol_details[ "duration" ]     = QString("61320");
-  // protocol_details[ "dataPath" ]     = QString("/home/alexey/ultrascan/imports/DsouzaS_RVFV1-DDX17-MWL1_060819-run865");
-  // protocol_details[ "invID_passed" ] = QString("20");  //D'Souza ID
-  // protocol_details[ "label" ]        = QString("DsouzaS_RVFV1-DDX17-MWL1_060819");
-  
-  // QString stage                        = "EDITING";
-  // QString currDir                      = protocol_details[ "dataPath" ];
-  // QString ProtName                     = protocol_details[ "protocolName" ];
-  // QString invID_passed                 = protocol_details[ "invID_passed" ];
-  // QDir directory( currDir );
-
-  // // --------------------------------------------------------------------------------------------
-  
-  // // --------------------------------------------------------------------------------------------
-  
-  // // H Steele exp. Optima 1 !!!
-  // QMap < QString, QString > protocol_details;
-  // protocol_details["experimentId"] = QString("581");   
-  // protocol_details["protocolName"] = QString("SteeleH_Cytc-ND-titrations_061719");
-  // protocol_details[ "experimentName" ] = QString("some_name");
-  // protocol_details[ "CellChNumber" ] = QString("8");
-  // protocol_details[ "TripleNumber" ] = QString("16");
-  // protocol_details[ "OptimaName" ]   = QString("Optima 1");     // <-- Optima 1
-  // protocol_details[ "duration" ]     = QString("45000");
-  // protocol_details[ "dataPath" ]     = QString("/home/alexey/ultrascan/imports/SteeleH_Cytc-ND-titrations_061719-run872");
-  // protocol_details[ "invID_passed" ] = QString("22");  //Harmen's 
-  // protocol_details[ "label" ]        = QString("SteeleH_Cytc-ND-titrations_061719");
-  
-  // QString stage                        = "EDITING";
-  // QString currDir                      = protocol_details[ "dataPath" ];
-  // QString ProtName                     = protocol_details[ "protocolName" ];
-  // QString invID_passed                 = protocol_details[ "invID_passed" ];
-  // QDir directory( currDir );
-
-  // // --------------------------------------------------------------------------------------------  
-
-  
-  // Query 'autoflow': get count of records
-  int autoflow_records = get_autoflow_records();
-
-  qDebug() << "Autoflow record #: " << autoflow_records;
-
-  // //Temporary: delete ExperimentDefinition record ( ExpId = 306, 301 )
-  // int ExpId = 285;
-  // delete_psql_record( ExpId );
-
-  if ( autoflow_records < 1 )
-    return;
-
-  
-  // Dialog of existing autoflow records
-  US_Passwd  pw;
-  US_DB2* dbP  = new US_DB2( pw.getPasswd() );
-
-  //read_optima_machines
-  read_optima_machines( dbP );
-
-  //read autoflow records
-  list_all_autoflow_records( autoflowdata, dbP );
-
-  //count instruments in use
-  occupied_instruments.clear();
-  for ( int i=0; i < autoflowdata.size(); i++ )
-    {
-      if ( autoflowdata[ i ][ 5 ] == "LIVE_UPDATE" )
-	occupied_instruments << autoflowdata[ i ][ 2 ];
-    }
-  
-  
-  QString pdtitle( tr( "Select Optima Run to Follow" ) );
-  QStringList hdrs;
-  int         prx;
-  hdrs << "ID"
-       << "Run Name"
-       << "Optima Name"
-       << "Created"
-       << "Run Status"
-       << "Stage"
-       << "GMP";
-  
-  QString autoflow_btn;
-
-  if ( us_mode_bool )
-    autoflow_btn = "AUTOFLOW_DA";
-  else
-    autoflow_btn = "AUTOFLOW_GMP";
-  
-  //US_SelectItem pdiag_autoflow( autoflowdata, hdrs, pdtitle, &prx, autoflow_btn, -2 );
-  //US_SelectItem* pdiag_autoflow = new  US_SelectItem( autoflowdata, hdrs, pdtitle, &prx, autoflow_btn, -2 );
-
-  pdiag_autoflow = new  US_SelectItem( autoflowdata, hdrs, pdtitle, &prx, autoflow_btn, -2 );
-  
-  connect( pdiag_autoflow, SIGNAL( accept_autoflow_deletion() ), this, SLOT( update_autoflow_data() ));
-  
-  pdiag_autoflow->setParent(this, Qt::Window);
-  pdiag_autoflow->setWindowFlags(Qt::Dialog | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint  );
-  //pdiag_autoflow->setWindowFlags(Qt::Window | Qt::WindowCloseButtonHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint  );
-
-  //disable 'Define Another Exp.' button if all instruments are in use
-  if ( occupied_instruments.size() >= instruments.size() )
-    pdiag_autoflow->pb_cancel->setEnabled( false );
-  
-  
-  QString autoflow_id_selected("");
-  
-  if ( pdiag_autoflow->exec() == QDialog::Accepted )
-    autoflow_id_selected  = autoflowdata[ prx ][ 0 ];
-  else
-    {
-      //ALEXEY: define what to do if some Optima(s) are occupied
-      // should emit signal sending list of optima's in use to us_experiment.
-
-      if ( occupied_instruments.size() == 0 )
-	return;
-      else
-	{
-	  QString list_instruments_in_use = occupied_instruments.join(", ");
-	  
-	  QMessageBox * msg_instr_use = new QMessageBox;
-	  msg_instr_use->setIcon(QMessageBox::Information);
-	  msg_instr_use->setText(tr( "The following Optima instrument(s)<br>"
-				       "are currently in use: <br><br>"
-				       "<b>%1</b> <br><br>"
-				       "You will not be able to submit another run<br>"
-				       "to these instruments at the moment." )
-				   .arg( list_instruments_in_use ) );
-
-	  msg_instr_use->exec();
-	  
-	  define_new_experiment( occupied_instruments );
-	  return;
-	}
-    }
-
-  // -------------------------------------------------------------------------------------------------
-  // Get detailed info on the autoflow record
-  QMap < QString, QString > protocol_details;
-  int autoflowID = autoflow_id_selected.toInt();
-
-  protocol_details = read_autoflow_record( autoflowID );
-
-  QString stage        = protocol_details[ "status" ];
-  QString currDir      = protocol_details[ "dataPath" ];
-  QString invID_passed = protocol_details[ "invID_passed" ];
-  QString ProtName     = protocol_details[ "protocolName" ];
-  QString correctRadii = protocol_details[ "correctRadii" ];
-  QString expAborted   = protocol_details[ "expAborted" ];
-  QString runID        = protocol_details[ "runID" ];
-  QString exp_label    = protocol_details[ "label" ];
-
-  QString gmp_Run      = protocol_details[ "gmpRun" ];
-  
-  QDir directory( currDir );
-  
-  qDebug() << "CURR DIRECTORY : "   << currDir;
-  qDebug() << "1.ExpAborted: "      << protocol_details[ "expAborted" ];
-  qDebug() << "1.CorrectRadii: "    << protocol_details[ "correctRadii" ];
-
-  qDebug() << "Exp. Label: "    << protocol_details[ "label" ];
-  qDebug() << "GMP Run ? "      << protocol_details[ "gmpRun" ];
-  
-  
-  
-  if ( stage == "LIVE_UPDATE" )
-    {
-      //do something
-      switch_to_live_update( protocol_details );
-      return;
-    }
-  
-  if ( stage == "EDITING" )
-    {
-      //do something
-      //switch_to_post_processing( currDir, ProtName, invID_passed, correctRadii );
-
-      if ( currDir.isEmpty() || !directory.exists() )
-	switch_to_live_update( protocol_details );
-      else	
-	switch_to_post_processing( protocol_details );
-      
-     
-      return;
-    }
-  //and so on...
-   
-}
-
-//Re-evaluate autoflow records & occupied instruments & if Define Another Exp. should be enabled....
-void US_ComProjectMain::update_autoflow_data( void )
-{
-  qDebug() << "Updating autoflow records!!!";
-  
-  US_Passwd  pw;
-  US_DB2* dbP  = new US_DB2( pw.getPasswd() );
-
-  //Re-read autoflow records
-  list_all_autoflow_records( autoflowdata, dbP );
-
-  //Re-count instruments in use
-  occupied_instruments.clear();
-  for ( int i=0; i < autoflowdata.size(); i++ )
-    {
-      if ( autoflowdata[ i ][ 5 ] == "LIVE_UPDATE" )
-	occupied_instruments << autoflowdata[ i ][ 2 ];
-    }
-  
-  //Re-set Define Another Exp. button
-  if ( occupied_instruments.size() >= instruments.size() )
-    pdiag_autoflow->pb_cancel->setEnabled( false );
-  else
-    pdiag_autoflow->pb_cancel->setEnabled( true );
-
-  qDebug() << "Define Another Exp. button reset";
-  
+  epanInit->pdiag_autoflow->close();
 }
 
 
@@ -733,8 +459,401 @@ void US_ComProjectMain::delete_psql_record( int ExpId )
     }
 }
 
+
+// Slot to define new exp. (from initial dialog)
+void US_ComProjectMain::define_new_experiment( QStringList & occupied_instruments )
+{
+  tabWidget->setCurrentIndex( 1 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ?? 
+
+  qDebug() << "In define_new_experiment( QStringList & occupied_instruments )";
+    
+  emit pass_used_instruments( occupied_instruments );
+}
+
+
+
+// Slot to pass submitted to Optima run info to the Live Update tab
+void US_ComProjectMain::switch_to_live_update( QMap < QString, QString > & protocol_details)
+{
+  tabWidget->setCurrentIndex( 2 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ?? 
+
+   // ALEXEY:
+   // (1) Make a record to 'autoflow' table - stage# = 1;
+   // (2) inside us_xpn_viewer - update 'curDirr' field with generated directory where .auc data saved 
+   
+   emit pass_to_live_update( protocol_details );
+}
+
+// Slot to pass submitted to Optima run info to the Live Update tab
+void US_ComProjectMain::close_all( void )
+{
+  tabWidget->setCurrentIndex( 0 );   
+  qDebug() << "CLOSING PROGRAM !!!";
+
+  close();
+  
+  // QProcess process;
+  // QString pgm("pgrep");
+  // QStringList args = QStringList() << "us_comproject";
+  // process.start(pgm, args);
+  // process.waitForReadyRead();
+  // if(!process.readAllStandardOutput().isEmpty()) 
+  //   {
+  //     //app still running
+  //     //Linux
+  //     system("pkill us_comproject");
+  //     //Windows
+  //     system("taskkill /im us_comproject /f");
+      
+  //     process.kill();
+  //   }
+
+  //Linux
+  //system("pkill us_comproject");
+
+  
+  //system("pkill us_comproject_academic");
+  //Windows//
+  //system("taskkill /im us_comproject /f");
+  //system("taskkill /im us_comproject_academic /f");
+  //Mac ??
+  
+}
+
+
+// Slot to switch from the Live Update to Editing tab
+void US_ComProjectMain::switch_to_post_processing( QMap < QString, QString > & protocol_details )
+{
+  tabWidget->setCurrentIndex( 3 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
+  
+  // ALEXEY: Make a record to 'autoflow' table: stage# = 2; 
+  
+  emit import_data_us_convert( protocol_details );
+}
+     
+// Slot to switch back from the Live Update to Experiment tab
+void US_ComProjectMain::switch_to_experiment( QString & protocolName )
+{
+   tabWidget->setCurrentIndex( 1 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
+
+   //delete_autoflow_record( runID );
+   
+   emit clear_experiment( protocolName );
+}
+   
+
+// Slot to switch from the Import to Editing tab
+void US_ComProjectMain::switch_to_editing( QString  & currDir, QString & protocolName)
+{
+   tabWidget->setCurrentIndex( 4 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
+  
+   // ALEXEY: Make a record to 'autoflow' table: stage# = 3; 
+
+   emit pass_to_editing( currDir, protocolName );
+}
+
+// Function to Call initiation of the Autoflow Record Dialogue form _main.cpp
+void US_ComProjectMain::call_AutoflowDialogue( void )
+{
+  epanInit->initRecordsDialogue();
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////////////
+//New Initial Decision-making Tab:
+US_InitDialogueGui::US_InitDialogueGui( QWidget* topw )
+   : US_WidgetsDialog( topw, 0 )
+{
+   mainw               = (US_ComProjectMain*)topw;
+
+   initDialogueOpen = false;
+
+   setPalette( US_GuiSettings::frameColor() );
+   QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
+   QFontMetrics fmet( sfont );
+   //int fwid     = fmet.maxWidth();
+   //int lwid     = fwid * 4;
+   //int swid     = lwid + fwid;
+   
+   // Main VBox
+   QVBoxLayout* main     = new QVBoxLayout (this);
+   main->setSpacing        ( 2 );
+   main->setContentsMargins( 2, 2, 2, 2 );
+      
+   QGridLayout* genL   = new QGridLayout();
+
+   // // //QPlainTextEdit* panel_desc = new QPlainTextEdit(this);
+   // QTextEdit* panel_desc = new QTextEdit(this);
+   // panel_desc->viewport()->setAutoFillBackground(false);
+   // panel_desc->setFrameStyle(QFrame::NoFrame);
+   // panel_desc->setPlainText(" Tab to Show Init Dialogue...  ---UNDER CONSTRUCTION--- ");
+   // panel_desc->setReadOnly(true);
+   // //panel_desc->setMaximumHeight(30);
+   // QFontMetrics m (panel_desc -> font()) ;
+   // int RowHeight = m.lineSpacing() ;
+   // panel_desc -> setFixedHeight  (2* RowHeight) ;
+
+   // int row = 0;
+   // genL->addWidget( panel_desc,  row++,   0, 1, 12);
+ 
+   // assemble main
+   main->addLayout(genL);
+   main->addStretch();
+
+   initRecords( );
+   
+}
+
+void US_InitDialogueGui::resizeEvent(QResizeEvent *event)
+{
+     int tab_width = mainw->tabWidget->tabBar()->width();
+     int upper_height = mainw->gen_banner->height() + //mainw->welcome->height()
+       + mainw->logWidget->height() + mainw->test_footer->height();
+    
+     int new_main_w = mainw->width() - 3*offset - tab_width;
+     int new_main_h = mainw->height() - 4*offset - upper_height;
+
+     if ( initDialogueOpen ){
+       //qDebug() << "Is PDIAG visible? " << pdiag_autoflow->isVisible();
+          
+       if ( new_main_w > pdiag_autoflow->width() || new_main_h > pdiag_autoflow->height()) {
+	 int newWidth = qMax( new_main_w, pdiag_autoflow->width());
+	 int newHeight = qMax( new_main_h, pdiag_autoflow->height());
+	 
+	 //qDebug() << "New sizes of PDIAG!! " << new_main_w << ", " << pdiag_autoflow->width();
+	 pdiag_autoflow->setMaximumSize( newWidth, newHeight );
+	 pdiag_autoflow->resize( QSize(newWidth, newHeight) );
+	 update();
+       }
+       
+       if ( new_main_w < pdiag_autoflow->width() ||  new_main_h < pdiag_autoflow->height() ) {
+         int newWidth = qMin( new_main_w, pdiag_autoflow->width());
+         int newHeight = qMin( new_main_h, pdiag_autoflow->height());
+         pdiag_autoflow->setMaximumSize( newWidth, newHeight );
+         pdiag_autoflow->resize( QSize(newWidth, newHeight) );
+         update();
+       }
+     }     
+     QWidget::resizeEvent(event);
+}
+
+
+
+// Init Autoflow records
+void US_InitDialogueGui::initRecords( void )
+{
+  // Query 'autoflow': get count of records
+  int autoflow_records = get_autoflow_records();
+  
+  qDebug() << "Autoflow record #: " << autoflow_records;
+  
+  // //Temporary: delete ExperimentDefinition record ( ExpId = 306, 301 )
+  // int ExpId = 285;
+  // delete_psql_record( ExpId );
+  
+  if ( autoflow_records < 1 )
+    return;
+  
+  
+  // Dialog of existing autoflow records
+  US_Passwd  pw;
+  US_DB2* dbP  = new US_DB2( pw.getPasswd() );
+  
+  //read_optima_machines
+  read_optima_machines( dbP );
+  
+  //read autoflow records
+  list_all_autoflow_records( autoflowdata, dbP );
+  
+  //count instruments in use
+  occupied_instruments.clear();
+  for ( int i=0; i < autoflowdata.size(); i++ )
+    {
+      if ( autoflowdata[ i ][ 5 ] == "LIVE_UPDATE" )
+	occupied_instruments << autoflowdata[ i ][ 2 ];
+    }
+
+  qDebug() << "Init Autoflow Records: DONE";
+}
+
+// Init AutoflowRecords Dialogue: call from _main.cpp
+void US_InitDialogueGui::initRecordsDialogue( void )
+{
+  QString pdtitle( tr( "Select Optima Run to Follow" ) );
+  QStringList hdrs;
+  int         prx;
+  hdrs << "ID"
+       << "Run Name"
+       << "Optima Name"
+       << "Created"
+       << "Run Status"
+       << "Stage"
+       << "GMP";
+  
+  QString autoflow_btn;
+
+  if ( mainw->us_mode_bool )
+    autoflow_btn = "AUTOFLOW_DA";
+  else
+    autoflow_btn = "AUTOFLOW_GMP";
+  
+  //US_SelectItem pdiag_autoflow( autoflowdata, hdrs, pdtitle, &prx, autoflow_btn, -2 );
+  //US_SelectItem* pdiag_autoflow = new  US_SelectItem( autoflowdata, hdrs, pdtitle, &prx, autoflow_btn, -2 );
+
+  pdiag_autoflow = new US_SelectItem( autoflowdata, hdrs, pdtitle, &prx, autoflow_btn, -2 );
+  
+  connect( pdiag_autoflow, SIGNAL( accept_autoflow_deletion() ), this, SLOT( update_autoflow_data() ));
+  pdiag_autoflow->setParent(this, Qt::Widget);
+
+  offset = 20;
+  pdiag_autoflow->move(offset, 2*offset);
+
+  initDialogueOpen = true;
+
+  // Trigger resize to update size of the InitDialogue
+  int curr_h = this->height() + 1;
+  int curr_w = this->width() + 1;
+
+  this->resize( QSize(curr_w, curr_h) );
+  //qDebug() << "Size of the InitDialogue widget: " << this->size();
+
+  //pdiag_autoflow->setFrameShape( QFrame::Box);
+  //pdiag_autoflow->setLineWidth(2); 
+
+  //disable 'Define Another Exp.' button if all instruments are in use
+  if ( occupied_instruments.size() >= instruments.size() )
+    pdiag_autoflow->pb_cancel->setEnabled( false );
+  
+  
+  QString autoflow_id_selected("");
+  
+  if ( pdiag_autoflow->exec() == QDialog::Accepted )
+    autoflow_id_selected  = autoflowdata[ prx ][ 0 ];
+  else
+    {
+      //ALEXEY: define what to do if some Optima(s) are occupied
+      // should emit signal sending list of optima's in use to us_experiment.
+
+      if ( mainw-> window_closed)
+	return;
+      
+      if ( occupied_instruments.size() == 0 )
+	return;
+      else
+	{
+	  QString list_instruments_in_use = occupied_instruments.join(", ");
+	  
+	  QMessageBox * msg_instr_use = new QMessageBox;
+	  msg_instr_use->setIcon(QMessageBox::Information);
+	  msg_instr_use->setText(tr( "The following Optima instrument(s)<br>"
+				       "are currently in use: <br><br>"
+				       "<b>%1</b> <br><br>"
+				       "You will not be able to submit another run<br>"
+				       "to these instruments at the moment." )
+				   .arg( list_instruments_in_use ) );
+
+	  msg_instr_use->exec();
+	  
+	  emit define_new_experiment_init( occupied_instruments );
+	  return;
+	}
+      
+    }
+
+  // -------------------------------------------------------------------------------------------------
+  // Get detailed info on the autoflow record
+  QMap < QString, QString > protocol_details;
+  int autoflowID = autoflow_id_selected.toInt();
+
+  protocol_details = read_autoflow_record( autoflowID );
+
+  QString stage        = protocol_details[ "status" ];
+  QString currDir      = protocol_details[ "dataPath" ];
+  QString invID_passed = protocol_details[ "invID_passed" ];
+  QString ProtName     = protocol_details[ "protocolName" ];
+  QString correctRadii = protocol_details[ "correctRadii" ];
+  QString expAborted   = protocol_details[ "expAborted" ];
+  QString runID        = protocol_details[ "runID" ];
+  QString exp_label    = protocol_details[ "label" ];
+
+  QString gmp_Run      = protocol_details[ "gmpRun" ];
+  
+  QDir directory( currDir );
+  
+  qDebug() << "CURR DIRECTORY : "   << currDir;
+  qDebug() << "1.ExpAborted: "      << protocol_details[ "expAborted" ];
+  qDebug() << "1.CorrectRadii: "    << protocol_details[ "correctRadii" ];
+
+  qDebug() << "Exp. Label: "    << protocol_details[ "label" ];
+  qDebug() << "GMP Run ? "      << protocol_details[ "gmpRun" ];
+  
+  
+  
+  if ( stage == "LIVE_UPDATE" )
+    {
+      //do something
+      //switch_to_live_update( protocol_details );
+
+      emit switch_to_live_update_init( protocol_details );
+      
+      return;
+    }
+  
+  if ( stage == "EDITING" )
+    {
+      //do something
+      //switch_to_post_processing( currDir, ProtName, invID_passed, correctRadii );
+
+      if ( currDir.isEmpty() || !directory.exists() )
+	{
+	  //switch_to_live_update( protocol_details );
+	  emit switch_to_live_update_init( protocol_details );
+	}
+      else
+	{
+	  //switch_to_post_processing( protocol_details );
+	  emit switch_to_post_processing_init( protocol_details );
+	}
+      
+     
+      return;
+    }
+  //and so on...
+   
+}
+
+
+//Re-evaluate autoflow records & occupied instruments & if Define Another Exp. should be enabled....
+void US_InitDialogueGui::update_autoflow_data( void )
+{
+  qDebug() << "Updating autoflow records!!!";
+  
+  US_Passwd  pw;
+  US_DB2* dbP  = new US_DB2( pw.getPasswd() );
+
+  //Re-read autoflow records
+  list_all_autoflow_records( autoflowdata, dbP );
+
+  //Re-count instruments in use
+  occupied_instruments.clear();
+  for ( int i=0; i < autoflowdata.size(); i++ )
+    {
+      if ( autoflowdata[ i ][ 5 ] == "LIVE_UPDATE" )
+	occupied_instruments << autoflowdata[ i ][ 2 ];
+    }
+  
+  //Re-set Define Another Exp. button
+  if ( occupied_instruments.size() >= instruments.size() )
+    pdiag_autoflow->pb_cancel->setEnabled( false );
+  else
+    pdiag_autoflow->pb_cancel->setEnabled( true );
+
+  qDebug() << "Define Another Exp. button reset";
+  
+}
+
 // Slot to read all Optima machines <------------------------------- // New
-void US_ComProjectMain::read_optima_machines( US_DB2* db )
+void US_InitDialogueGui::read_optima_machines( US_DB2* db )
 {
   QStringList q( "" );
   q.clear();
@@ -793,7 +912,7 @@ void US_ComProjectMain::read_optima_machines( US_DB2* db )
 
 
 // Query autoflow for # records
-int US_ComProjectMain::list_all_autoflow_records( QList< QStringList >& autoflowdata, US_DB2* dbP )
+int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflowdata, US_DB2* dbP )
 {
   int nrecs        = 0;   
   autoflowdata.clear();
@@ -844,7 +963,7 @@ int US_ComProjectMain::list_all_autoflow_records( QList< QStringList >& autoflow
 
     
 // Query autoflow for # records
-int US_ComProjectMain::get_autoflow_records( void )
+int US_InitDialogueGui::get_autoflow_records( void )
 {
    // Check DB connection
    US_Passwd pw;
@@ -870,7 +989,7 @@ int US_ComProjectMain::get_autoflow_records( void )
 
 
 // Query autoflow for # records
-QMap< QString, QString> US_ComProjectMain::read_autoflow_record( int autoflowID  )
+QMap< QString, QString> US_InitDialogueGui::read_autoflow_record( int autoflowID  )
 {
    // Check DB connection
    US_Passwd pw;
@@ -921,111 +1040,14 @@ QMap< QString, QString> US_ComProjectMain::read_autoflow_record( int autoflowID 
 }
 
 
-// Slot to define new exp. (from initial dialog)
-void US_ComProjectMain::define_new_experiment( QStringList & occupied_instruments )
-{
-  tabWidget->setCurrentIndex( 0 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ?? 
-
-  qDebug() << "In define_new_experiment( QStringList & occupied_instruments )";
-    
-  emit pass_used_instruments( occupied_instruments );
-}
-
-
-// Slot to pass submitted to Optima run info to the Live Update tab
-void US_ComProjectMain::switch_to_live_update( QMap < QString, QString > & protocol_details)
-{
-  tabWidget->setCurrentIndex( 1 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ?? 
-
-   // ALEXEY:
-   // (1) Make a record to 'autoflow' table - stage# = 1;
-   // (2) inside us_xpn_viewer - update 'curDirr' field with generated directory where .auc data saved 
-   
-   emit pass_to_live_update( protocol_details );
-}
-
-// Slot to pass submitted to Optima run info to the Live Update tab
-void US_ComProjectMain::close_all( void )
-{
-  tabWidget->setCurrentIndex( 0 );   
-  qDebug() << "CLOSING PROGRAM !!!";
-
-  close();
-  
-  // QProcess process;
-  // QString pgm("pgrep");
-  // QStringList args = QStringList() << "us_comproject";
-  // process.start(pgm, args);
-  // process.waitForReadyRead();
-  // if(!process.readAllStandardOutput().isEmpty()) 
-  //   {
-  //     //app still running
-  //     //Linux
-  //     system("pkill us_comproject");
-  //     //Windows
-  //     system("taskkill /im us_comproject /f");
-      
-  //     process.kill();
-  //   }
-
-  //Linux
-  //system("pkill us_comproject");
-
-  
-  //system("pkill us_comproject_academic");
-  //Windows//
-  //system("taskkill /im us_comproject /f");
-  //system("taskkill /im us_comproject_academic /f");
-  //Mac ??
-  
-}
-
-// // Slot to switch from the Live Update to Editing tab
-// void US_ComProjectMain::switch_to_post_processing( QString  & currDir, QString & protocolName,  QString & invID_passed, QString & correctRadii )
-// {
-//    tabWidget->setCurrentIndex( 2 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
-
-//    // ALEXEY: Make a record to 'autoflow' table: stage# = 2; 
-
-//    emit import_data_us_convert( currDir, protocolName, invID_passed, correctRadii );
-// }
-
-// Slot to switch from the Live Update to Editing tab
-void US_ComProjectMain::switch_to_post_processing( QMap < QString, QString > & protocol_details )
-{
-  tabWidget->setCurrentIndex( 2 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
-  
-  // ALEXEY: Make a record to 'autoflow' table: stage# = 2; 
-  
-  emit import_data_us_convert( protocol_details );
-}
-     
-// Slot to switch back from the Live Update to Experiment tab
-void US_ComProjectMain::switch_to_experiment( QString & protocolName )
-{
-   tabWidget->setCurrentIndex( 0 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
-
-   //delete_autoflow_record( runID );
-   
-   emit clear_experiment( protocolName );
-}
-   
-
-// Slot to switch from the Import to Editing tab
-void US_ComProjectMain::switch_to_editing( QString  & currDir, QString & protocolName)
-{
-   tabWidget->setCurrentIndex( 3 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
-  
-   // ALEXEY: Make a record to 'autoflow' table: stage# = 3; 
-
-   emit pass_to_editing( currDir, protocolName );
-}
 
 
 
 
 
 
+
+//////////////////////////////////////////////////////////////////////////////////
 // US_ExperGUI
 US_ExperGui::US_ExperGui( QWidget* topw )
    : US_WidgetsDialog( topw, 0 )
