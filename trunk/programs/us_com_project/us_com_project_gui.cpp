@@ -548,7 +548,10 @@ void US_ComProjectMain::switch_to_live_update( QMap < QString, QString > & proto
 void US_ComProjectMain::close_all( void )
 {
   tabWidget->setCurrentIndex( 0 );   
-  epanInit  ->initAutoflowPanel();
+  //epanInit  ->initAutoflowPanel();  //DO NOT Duplicate - was called in previous line while changing Tab!!!
+  qDebug() << "XPN viwer closed!";
+  qApp->processEvents();
+  
 
   //qDebug() << "CLOSING PROGRAM !!!";
   //close();
@@ -925,7 +928,7 @@ void US_InitDialogueGui::update_autoflow_data( void )
 
   if ( autoflowdata.size() < 1 )
     {
-      pdiag_autoflow->close();
+      pdiag_autoflow->reject();
       pdiag_autoflow->close();
       qApp->processEvents();
       
@@ -935,7 +938,7 @@ void US_InitDialogueGui::update_autoflow_data( void )
       
       QMessageBox * msg_norec_del = new QMessageBox;
       msg_norec_del->setIcon(QMessageBox::Information);
-      msg_norec_del->setText(tr( "There are no Optima runs to follow.<br><br>"
+      msg_norec_del->setText(tr( "There are no Optima runs to follow (from update_autoflow_data()).<br><br>"
 			     "You will be switched to <b>Experiment</b> stage to design and submit new protocol."
 			     ));
       msg_norec_del->exec();
