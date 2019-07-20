@@ -265,6 +265,7 @@ void US_SelectItem::list_data()
    {  // Return now if there are no list items
       QString clabel = tr( "No data found." );
       tw_data->setItem ( 0, 0, new QTableWidgetItem( clabel ) );
+      qApp->processEvents();
       return;
    }
 

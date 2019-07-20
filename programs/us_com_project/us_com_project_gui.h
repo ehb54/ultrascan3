@@ -78,10 +78,13 @@ class US_InitDialogueGui : public US_WidgetsDialog
 
    void initRecordsDialogue( void );
    bool initDialogueOpen;
+   void initAutoflowPanel( void ); 
             
   private:
     US_ComProjectMain*    mainw;      // Parent to all panels
     int offset;
+
+    int autoflow_records;
 
     void initRecords( void );
     //void initRecordsDialogue( void );
@@ -138,6 +141,7 @@ class US_ExperGui : public US_WidgetsDialog
       void clear_experiment( QString & protocolName);
       void exp_cleared( void );
       void pass_used_instruments( QStringList & );
+      void expsetup_msg_closed( void );
       
    signals:
       void switch_to_live_update( QMap < QString, QString > & protocol_details );
@@ -145,6 +149,7 @@ class US_ExperGui : public US_WidgetsDialog
       void reset_experiment( QString & protocolName);
       void to_autoflow_records( void );
       void define_used_instruments( QStringList & );
+      //void close_expsetup_msg( void );
 };
 
 
@@ -310,6 +315,9 @@ class US_ComProjectMain : public US_Widgets
 
   bool us_mode_bool;
 
+  QMessageBox * msg_expsetup;
+  QDialog *     diag_expsetup;
+  
   //QList< QStringList >  autoflowdata;
 
   //void check_current_stage( void );
@@ -318,7 +326,7 @@ class US_ComProjectMain : public US_Widgets
   void close_initDialogue();
 
   bool window_closed;
-  
+  int         curr_panx;       // Current panel index (0-7)
   //QStringList occupied_instruments;
 
   //US_SelectItem* pdiag_autoflow;
@@ -334,7 +342,7 @@ class US_ComProjectMain : public US_Widgets
   
   //int         statflag;        // Composite panels status flag
   //int         dbg_level;       // Debug print flag
-  int         curr_panx;       // Current panel index (0-7)
+  //int         curr_panx;       // Current panel index (0-7)
 
   //int  get_autoflow_records( void );
   //QMap < QString, QString > read_autoflow_record( int );
@@ -344,6 +352,7 @@ class US_ComProjectMain : public US_Widgets
   //QList< QMap<QString, QString> > instruments;  
   
 private slots:
+  void initPanels  ( int  );     // Move to a new panel
   //void reset     ( void );
   //void newPanel  ( int  );     // Move to a new panel
   //void statUpdate( void );     // Get a status flag update

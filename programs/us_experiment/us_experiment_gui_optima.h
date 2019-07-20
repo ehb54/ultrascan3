@@ -65,6 +65,8 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
 
       QLabel*      lb_label;
       QLineEdit*   le_label;            // Run name line edit
+
+      void resetPanel( void );
             
    private:
       US_ExperimentMain*    mainw;      // Parent to all panels
@@ -968,6 +970,7 @@ class US_ExperimentMain : public US_Widgets
       void us_exp_is_closed( void );
       void to_live_update( QMap < QString, QString > &protocol_details );
       void exp_cleared ( void );
+      void close_expsetup_msg( void ); 
       
       
 };
