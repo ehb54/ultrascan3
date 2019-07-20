@@ -127,6 +127,9 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    tabWidget->tabBar()->setStyleSheet( "QTabBar::tab {min-width: 70;} QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:hover {background: lightgray;} QTabBar::tab:first {background: blue; color: lightgray; min-width: 50;} ");
 
    main->addWidget( tabWidget );
+
+   connect( tabWidget, SIGNAL( currentChanged( int ) ), this, SLOT( initPanels( int ) ) );
+   
    
    logWidget = us_textedit();
    logWidget->setMaximumHeight(30);
@@ -284,7 +287,9 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    //tabWidget->tabBar()->setTabTextColor(0, Qt::white);
    
    main->addWidget( tabWidget );
-   
+
+   connect( tabWidget, SIGNAL( currentChanged( int ) ), this, SLOT( initPanels( int ) ) );
+      
    logWidget = us_textedit();
    logWidget->setMaximumHeight(30);
    logWidget->setReadOnly(true);
@@ -332,6 +337,25 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    //check_current_stage();
 }
 
+// Slot to init some panels (mainly Manage Opima Runs)
+void US_ComProjectMain::initPanels( int  panx )
+{
+  qDebug() << "NEWPanel panx=" << panx << "OLDPanel curr_panx=" << curr_panx;
+  
+  // if ( curr_panx == panx )
+  //   return;
+  
+  if ( panx == 0 )  //Autoflow Records
+    {
+      // Depending on from we jump to InitDialogue, we may need to stop/reset current stages:
+      // E.g., LIVE_UPDATE: stop all timers, reset GUI etc..
+      epanInit  ->initAutoflowPanel();
+    }
+  // else
+  //   return;
+  
+  //curr_panx = panx;         // Set new current panel
+}
 
 void US_ComProjectMain::closeEvent( QCloseEvent* event )
 {
@@ -345,7 +369,6 @@ void US_ComProjectMain::to_autoflow_records( void )
 {
   //check_current_stage();
 }
-
 
 
 void US_ComProjectMain::close_initDialogue( void )
@@ -463,11 +486,46 @@ void US_ComProjectMain::delete_psql_record( int ExpId )
 // Slot to define new exp. (from initial dialog)
 void US_ComProjectMain::define_new_experiment( QStringList & occupied_instruments )
 {
+  msg_expsetup = new QMessageBox(this);
+  msg_expsetup->setIcon(QMessageBox::Information);
+  msg_expsetup->setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowStaysOnTopHint);
+  msg_expsetup->setStandardButtons(0);
+  msg_expsetup->setText(tr( "Setting up Experiment panel... Please wait...") );
+  msg_expsetup->setStyleSheet("background-color: #36454f; color : #D3D9DF;");
+    
+  //msg_expsetup->setWindowModality(Qt::NonModal);
+  //msg_expsetup->setModal( false );
+  //msg_expsetup->setAttribute( Qt::WA_DeleteOnClose ); 
+  //msg_expsetup->raise();
+   
+  int tab_width = this->tabWidget->tabBar()->width();
+  int upper_height = this->gen_banner->height() + //this->welcome->height()
+    + this->logWidget->height() + this->test_footer->height();
+
+  int pos_x = this->width()/2 - tab_width;
+  int pos_y = this->height()/2 - upper_height;     
+  msg_expsetup->move(pos_x, pos_y);
+  
+  msg_expsetup->show();
+  //msg_expsetup->repaint();
+  qApp->processEvents();
+  
+  
+  // //msg_expsetup->exec();
+
+  // diag_expsetup = new QDialog( this );
+  // Qt::WindowFlags flags = diag_expsetup->windowFlags();
+  // diag_expsetup->setWindowFlags(flags | Qt::Tool);
+  // diag_expsetup->show();
+
+
   tabWidget->setCurrentIndex( 1 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ?? 
+  curr_panx = 1;
 
   qDebug() << "In define_new_experiment( QStringList & occupied_instruments )";
-    
+
   emit pass_used_instruments( occupied_instruments );
+
 }
 
 
@@ -476,21 +534,24 @@ void US_ComProjectMain::define_new_experiment( QStringList & occupied_instrument
 void US_ComProjectMain::switch_to_live_update( QMap < QString, QString > & protocol_details)
 {
   tabWidget->setCurrentIndex( 2 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ?? 
+  curr_panx = 2;
 
-   // ALEXEY:
+  // ALEXEY:
    // (1) Make a record to 'autoflow' table - stage# = 1;
    // (2) inside us_xpn_viewer - update 'curDirr' field with generated directory where .auc data saved 
    
    emit pass_to_live_update( protocol_details );
 }
 
+
 // Slot to pass submitted to Optima run info to the Live Update tab
 void US_ComProjectMain::close_all( void )
 {
   tabWidget->setCurrentIndex( 0 );   
-  qDebug() << "CLOSING PROGRAM !!!";
+  epanInit  ->initAutoflowPanel();
 
-  close();
+  //qDebug() << "CLOSING PROGRAM !!!";
+  //close();
   
   // QProcess process;
   // QString pgm("pgrep");
@@ -525,7 +586,8 @@ void US_ComProjectMain::close_all( void )
 void US_ComProjectMain::switch_to_post_processing( QMap < QString, QString > & protocol_details )
 {
   tabWidget->setCurrentIndex( 3 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
-  
+  curr_panx = 3;
+
   // ALEXEY: Make a record to 'autoflow' table: stage# = 2; 
   
   emit import_data_us_convert( protocol_details );
@@ -534,8 +596,8 @@ void US_ComProjectMain::switch_to_post_processing( QMap < QString, QString > & p
 // Slot to switch back from the Live Update to Experiment tab
 void US_ComProjectMain::switch_to_experiment( QString & protocolName )
 {
-   tabWidget->setCurrentIndex( 1 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
-
+  tabWidget->setCurrentIndex( 1 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
+  curr_panx = 1;
    //delete_autoflow_record( runID );
    
    emit clear_experiment( protocolName );
@@ -546,7 +608,8 @@ void US_ComProjectMain::switch_to_experiment( QString & protocolName )
 void US_ComProjectMain::switch_to_editing( QString  & currDir, QString & protocolName)
 {
    tabWidget->setCurrentIndex( 4 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
-  
+   curr_panx = 4;
+
    // ALEXEY: Make a record to 'autoflow' table: stage# = 3; 
 
    emit pass_to_editing( currDir, protocolName );
@@ -638,12 +701,19 @@ void US_InitDialogueGui::resizeEvent(QResizeEvent *event)
 }
 
 
+// Init Autoflow Panel
+void US_InitDialogueGui::initAutoflowPanel( void )
+{
+  initRecords();
+  initRecordsDialogue();
+}
+
 
 // Init Autoflow records
 void US_InitDialogueGui::initRecords( void )
 {
   // Query 'autoflow': get count of records
-  int autoflow_records = get_autoflow_records();
+  autoflow_records = get_autoflow_records();
   
   qDebug() << "Autoflow record #: " << autoflow_records;
   
@@ -673,12 +743,31 @@ void US_InitDialogueGui::initRecords( void )
 	occupied_instruments << autoflowdata[ i ][ 2 ];
     }
 
-  qDebug() << "Init Autoflow Records: DONE";
+  qDebug() << "Init Autoflow Records: DONE, occupied instruments: " << occupied_instruments;
 }
 
 // Init AutoflowRecords Dialogue: call from _main.cpp
 void US_InitDialogueGui::initRecordsDialogue( void )
 {
+
+  if ( autoflow_records < 1 )
+    {
+      //ALEXEY: should close pdiag_autoflow if wasn't closed already
+      
+      occupied_instruments.clear();
+      
+      QMessageBox * msg_norec = new QMessageBox;
+      msg_norec->setIcon(QMessageBox::Information);
+      msg_norec->setText(tr( "There are no Optima runs to follow.<br><br>"
+			     "You will be switched to <b>Experiment</b> stage to design and submit new protocol."
+			     ));
+      msg_norec->exec();
+      
+      emit define_new_experiment_init( occupied_instruments );
+      
+      return;
+    }
+  
   QString pdtitle( tr( "Select Optima Run to Follow" ) );
   QStringList hdrs;
   int         prx;
@@ -723,6 +812,8 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   //disable 'Define Another Exp.' button if all instruments are in use
   if ( occupied_instruments.size() >= instruments.size() )
     pdiag_autoflow->pb_cancel->setEnabled( false );
+
+  qDebug() << "occupied_instruments.size(), instruments.size()" << occupied_instruments.size() << ", " <<  instruments.size();
   
   
   QString autoflow_id_selected("");
@@ -757,7 +848,6 @@ void US_InitDialogueGui::initRecordsDialogue( void )
 	  emit define_new_experiment_init( occupied_instruments );
 	  return;
 	}
-      
     }
 
   // -------------------------------------------------------------------------------------------------
@@ -787,8 +877,7 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   qDebug() << "Exp. Label: "    << protocol_details[ "label" ];
   qDebug() << "GMP Run ? "      << protocol_details[ "gmpRun" ];
   
-  
-  
+    
   if ( stage == "LIVE_UPDATE" )
     {
       //do something
@@ -834,6 +923,30 @@ void US_InitDialogueGui::update_autoflow_data( void )
   //Re-read autoflow records
   list_all_autoflow_records( autoflowdata, dbP );
 
+  if ( autoflowdata.size() < 1 )
+    {
+      pdiag_autoflow->close();
+      pdiag_autoflow->close();
+      qApp->processEvents();
+      
+      qDebug() << "Was pdiag closed ?? ";
+      
+      occupied_instruments.clear();
+      
+      QMessageBox * msg_norec_del = new QMessageBox;
+      msg_norec_del->setIcon(QMessageBox::Information);
+      msg_norec_del->setText(tr( "There are no Optima runs to follow.<br><br>"
+			     "You will be switched to <b>Experiment</b> stage to design and submit new protocol."
+			     ));
+      msg_norec_del->exec();
+      
+      emit define_new_experiment_init( occupied_instruments );
+      
+      return;
+    }
+  
+
+  
   //Re-count instruments in use
   occupied_instruments.clear();
   for ( int i=0; i < autoflowdata.size(); i++ )
@@ -848,6 +961,7 @@ void US_InitDialogueGui::update_autoflow_data( void )
   else
     pdiag_autoflow->pb_cancel->setEnabled( true );
 
+
   qDebug() << "Define Another Exp. button reset";
   
 }
@@ -855,6 +969,8 @@ void US_InitDialogueGui::update_autoflow_data( void )
 // Slot to read all Optima machines <------------------------------- // New
 void US_InitDialogueGui::read_optima_machines( US_DB2* db )
 {
+  this->instruments.clear();
+  
   QStringList q( "" );
   q.clear();
   q  << QString( "get_instrument_names" )
@@ -1127,12 +1243,13 @@ US_ExperGui::US_ExperGui( QWidget* topw )
 
    sdiag->setParent(this, Qt::Widget);
 
-    
-   
+      
    connect( sdiag, SIGNAL( us_exp_is_closed() ), this, SLOT( us_exp_is_closed_set_button() ) );
    //connect( this,  SIGNAL( set_auto_mode() ),   sdiag, SLOT( auto_mode_passed() ) );
    
    connect( this, SIGNAL( define_used_instruments( QStringList & ) ), sdiag, SLOT( exclude_used_instruments( QStringList & ) ) );
+
+   connect( sdiag, SIGNAL( close_expsetup_msg() ), this, SLOT ( expsetup_msg_closed() ) ); 
    
    connect( sdiag, SIGNAL( to_live_update( QMap < QString, QString > & ) ),
 	    this,  SLOT( to_live_update( QMap < QString, QString > & ) ) );
@@ -1220,6 +1337,14 @@ void US_ExperGui::exp_cleared( void )
 {
   emit to_autoflow_records();
 }
+
+//Close msg on setting up new EXP
+void US_ExperGui::expsetup_msg_closed( void )
+{
+  mainw->msg_expsetup->accept();
+  //mainw->diag_expsetup->close();
+}
+
 
 
 // On click to open US_Experiment  <-- NOT USED, us_experimnet is loaded immediately

@@ -148,6 +148,8 @@ void US_ExperimentMain::reset( void )
   currProto = US_RunProtocol();
   loadProto = US_RunProtocol();
 
+  epanGeneral->resetPanel();
+  
   epanRotor->setFirstLab();  //need to reset Lab && savePanel() for Rotors
 
   epanAProfile->reset_sdiag(); //need to reset basic AProfile's protocol to defaults
@@ -186,6 +188,21 @@ void US_ExperimentMain::reset( void )
 
 void US_ExperimentMain::exclude_used_instruments( QStringList & occupied_instruments )
 {
+
+  // QMessageBox * msg_expsetup = new QMessageBox;
+  // msg_expsetup->setIcon(QMessageBox::Information);
+  // msg_expsetup->setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint);
+  // msg_expsetup->setWindowTitle(tr( "Setting Up Experiment Stage") );
+  // msg_expsetup->setText(tr( "Preparing to set up new Experiment...") );
+  // msg_expsetup-> setInformativeText( "<font color='red'>Preparing to set up new Experiment...</font>" );
+  // msg_expsetup->setModal(false);
+  // //msg_expsetup->raise();
+  // msg_expsetup->show();
+  // msg_expsetup->update();
+  // qApp->processEvents();
+
+  reset();
+  
   instruments_in_use.clear();
   qDebug() << "OCCUPIED IINSTRUMENTS: " << occupied_instruments;
 
@@ -194,6 +211,10 @@ void US_ExperimentMain::exclude_used_instruments( QStringList & occupied_instrum
 
   //Re-initialize Instruments based on  the passed excluded list
   epanRotor->setFirstLab();
+
+  //qApp->processEvents();
+  //msg_expsetup->close();
+  emit close_expsetup_msg();
 }
 
 void US_ExperimentMain::us_mode_passed( void )
@@ -397,6 +418,16 @@ DbgLv(1) << "EGGe:main: (3)pb_inv_enab" << pb_investigator->isEnabled();
 }
 
 
+//resetPanel
+void US_ExperGuiGeneral::resetPanel( void )
+{
+  le_runid       ->setText ("");
+  le_protocol    ->setText ("");
+  le_project     ->setText ("");
+  le_label       ->setText ("");
+  
+}
+
 // Return detail information for a specific centerpiece as named
 bool US_ExperGuiGeneral::centpInfo( const QString cpname,
       US_AbstractCenterpiece& cpEntry )
@@ -552,6 +583,7 @@ DbgLv(1) << "EGGe:main: prnames,prdata counts" << pr_names.count() << protdata.c
       initPanel();
       le_protocol->setText( "" );
       le_project ->setText( "" );
+      le_label ->setText( "" );
 
       currProto->exp_label    = "";
 

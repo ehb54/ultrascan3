@@ -2096,11 +2096,11 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
   // QPushButton *okButton = msg_data_avail->addButton(tr("Ok"), QMessageBox::AcceptRole);
   // okButton->hide();
 
-  QPushButton *Close    = msg_data_avail->addButton(tr("Close Program Now?"), QMessageBox::RejectRole);
+  QPushButton *Close    = msg_data_avail->addButton(tr("Return to Managing Optima Runs?"), QMessageBox::RejectRole);
   msg_data_avail->setText(tr( "Run named <b>%1</b> was submitted to: <br>"
    		              "<br><b>%2</b> <br>"
    			      "<br>Please start this method scan from the instrument panel. <br>"
-   			      "<br>You may close program now and reattach later by reopening and "
+   			      "<br>You may return to managing Optima runs now and reattach later by reopening and "
    			      "selecting <b>%1</b> among the list of Optima runs to follow. "
    			      "Alternatively, you can wait untill the method is started from "
    			      "the Optima panel and monitor the progress.")
@@ -2120,7 +2120,8 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
 	{
 	  timer_data_init->stop();
 	  disconnect(timer_data_init, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
-	  
+
+	  reset_auto();
 	  emit close_program(); 
 	}
     }
