@@ -78,7 +78,9 @@ class US_InitDialogueGui : public US_WidgetsDialog
 
    void initRecordsDialogue( void );
    bool initDialogueOpen;
-   void initAutoflowPanel( void ); 
+   void initAutoflowPanel( void );
+
+   QLabel* movie_label;
             
   private:
     US_ComProjectMain*    mainw;      // Parent to all panels
