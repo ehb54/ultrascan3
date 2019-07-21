@@ -486,29 +486,44 @@ void US_ComProjectMain::delete_psql_record( int ExpId )
 // Slot to define new exp. (from initial dialog)
 void US_ComProjectMain::define_new_experiment( QStringList & occupied_instruments )
 {
-  msg_expsetup = new QMessageBox(this);
-  msg_expsetup->setIcon(QMessageBox::Information);
-  msg_expsetup->setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowStaysOnTopHint);
-  msg_expsetup->setStandardButtons(0);
-  msg_expsetup->setText(tr( "Setting up Experiment panel... Please wait...") );
-  msg_expsetup->setStyleSheet("background-color: #36454f; color : #D3D9DF;");
-    
-  //msg_expsetup->setWindowModality(Qt::NonModal);
-  //msg_expsetup->setModal( false );
-  //msg_expsetup->setAttribute( Qt::WA_DeleteOnClose ); 
-  //msg_expsetup->raise();
-   
-  int tab_width = this->tabWidget->tabBar()->width();
-  int upper_height = this->gen_banner->height() + //this->welcome->height()
-    + this->logWidget->height() + this->test_footer->height();
 
-  int pos_x = this->width()/2 - tab_width;
-  int pos_y = this->height()/2 - upper_height;     
-  msg_expsetup->move(pos_x, pos_y);
+   msg_expsetup = new QMessageBox(this);
+   msg_expsetup->setIcon(QMessageBox::Information);
+
+   // QLabel m_label;
+   // QMovie * movie_diag = new QMovie(path_gif);
+   // m_label.setMovie(movie_diag);
+   // movie_diag->start();
+
+   // msg_expsetup->layout()->addWidget(&m_label);
   
-  msg_expsetup->show();
-  //msg_expsetup->repaint();
-  qApp->processEvents();
+   // msg_expsetup->setIconPixmap(QPixmap(path_gif).scaledToWidth(50));
+   // QLabel icon_label;
+   // msg_expsetup->layout()->addWidget(&icon_label);
+   // QLabel *icon_label1 = msg_expsetup->findChild<QLabel*>("qt_msgboxex_icon_label");
+   // QMovie *movie = new QMovie(path_gif);
+   // icon_label1->setMovie(movie);
+   // movie->start();
+   // //icon_label1->show();
+  
+   msg_expsetup->setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowStaysOnTopHint);
+   msg_expsetup->setStandardButtons(0);
+   msg_expsetup->setWindowTitle(tr("Updating..."));
+   msg_expsetup->setText(tr( "Setting up Experiment panel... Please wait...") );
+   msg_expsetup->setStyleSheet("background-color: #36454f; color : #D3D9DF;");
+  
+  
+   int tab_width = this->tabWidget->tabBar()->width();
+   int upper_height = this->gen_banner->height() + //this->welcome->height()
+     + this->logWidget->height() + this->test_footer->height();
+
+   int pos_x = this->width()/2 - tab_width;
+   int pos_y = this->height()/2 - upper_height;     
+   msg_expsetup->move(pos_x, pos_y);
+  
+   msg_expsetup->show();
+   //msg_expsetup->repaint();
+   qApp->processEvents();
   
   
   // //msg_expsetup->exec();
@@ -662,7 +677,18 @@ US_InitDialogueGui::US_InitDialogueGui( QWidget* topw )
    // int row = 0;
    // genL->addWidget( panel_desc,  row++,   0, 1, 12);
  
-   // assemble main
+   
+   // movie_label = new QLabel;
+   // QString icon_path = std::getenv("ULTRASCAN");
+   // icon_path.append("/etc/"); 
+   // QString path_gif = icon_path + "setup.gif";
+   
+   // QMovie * movie_diag = new QMovie(path_gif);
+   // movie_label->setMovie(movie_diag);
+   // movie_diag->start();
+   
+   //assemble main
+   //main->addWidget(movie_label); 
    main->addLayout(genL);
    main->addStretch();
 
@@ -764,6 +790,16 @@ void US_InitDialogueGui::initRecordsDialogue( void )
       msg_norec->setText(tr( "There are no Optima runs to follow.<br><br>"
 			     "You will be switched to <b>Experiment</b> stage to design and submit new protocol."
 			     ));
+      
+      msg_norec->setParent(this, Qt::Widget);
+      msg_norec->setStyleSheet("background-color: #36454f; color : #D3D9DF;");
+
+      //position
+      int pos_x = msg_norec->width()/2;
+      int pos_y = msg_norec->height()/2;
+      msg_norec->move(pos_x, pos_y);
+
+      connect(msg_norec, SIGNAL( accept() ), SLOT(close()) ); 
       msg_norec->exec();
       
       emit define_new_experiment_init( occupied_instruments );
@@ -938,9 +974,20 @@ void US_InitDialogueGui::update_autoflow_data( void )
       
       QMessageBox * msg_norec_del = new QMessageBox;
       msg_norec_del->setIcon(QMessageBox::Information);
-      msg_norec_del->setText(tr( "There are no Optima runs to follow (from update_autoflow_data()).<br><br>"
+      msg_norec_del->setText(tr( "There are no Optima runs to follow.<br><br>"
 			     "You will be switched to <b>Experiment</b> stage to design and submit new protocol."
 			     ));
+
+      msg_norec_del->setParent(this, Qt::Widget);
+      msg_norec_del->setStyleSheet("background-color: #36454f; color : #D3D9DF;");
+
+      //position
+      int pos_x = msg_norec_del->width()/2;
+      int pos_y = msg_norec_del->height()/2;
+      msg_norec_del->move(pos_x, pos_y);
+
+      connect(msg_norec_del, SIGNAL( accept() ), SLOT(close()) ); 
+
       msg_norec_del->exec();
       
       emit define_new_experiment_init( occupied_instruments );
