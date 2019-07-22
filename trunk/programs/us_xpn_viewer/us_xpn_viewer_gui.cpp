@@ -2106,6 +2106,7 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
    			      "the Optima panel and monitor the progress.")
    			  .arg(RunName).arg(OptimaName) );
 
+  msg_data_avail->setWindowTitle(tr("Live Update"));
   //msg_data_avail->setText(tr( "Run named %1 was submitted to:\n\n"
   // 		              "%2 \n\n"
   // 			      "Please start this method scan from the instrument panel. \n\n\n")

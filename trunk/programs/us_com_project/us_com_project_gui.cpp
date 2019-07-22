@@ -352,9 +352,18 @@ void US_ComProjectMain::initPanels( int  panx )
       epanInit  ->initAutoflowPanel();
     }
   // else
-  //   return;
+  //   {
+  //     if ( epanInit->initMsgNorecOpen )
+  // 	{
+  // 	  epanInit->msg_norec->reject();
+  // 	  //epanInit->msg_norec->close();
+  // 	}
+  //     if ( epanInit->initMsgNorecDelOpen )
+  // 	epanInit->msg_norec_del->close();
+  //   }
   
-  //curr_panx = panx;         // Set new current panel
+  
+  curr_panx = panx;         // Set new current panel
 }
 
 void US_ComProjectMain::closeEvent( QCloseEvent* event )
@@ -648,6 +657,8 @@ US_InitDialogueGui::US_InitDialogueGui( QWidget* topw )
    mainw               = (US_ComProjectMain*)topw;
 
    initDialogueOpen = false;
+   initMsgNorecOpen = false;
+   initMsgNorecDelOpen = false;
 
    setPalette( US_GuiSettings::frameColor() );
    QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
@@ -705,16 +716,33 @@ void US_InitDialogueGui::resizeEvent(QResizeEvent *event)
      int new_main_w = mainw->width() - 3*offset - tab_width;
      int new_main_h = mainw->height() - 4*offset - upper_height;
 
+     if ( initMsgNorecOpen )
+       {
+	 int pos_x = this->width()/2 - msg_norec->width()/2;
+	 int pos_y = this->height()/2 - msg_norec->height() * 0.75;
+	 msg_norec->move(pos_x,pos_y);
+
+	 update();
+       }
+
+     if ( initMsgNorecDelOpen )
+       {
+	 int pos_x = this->width()/2 - msg_norec_del->width()/2;
+	 int pos_y = this->height()/2 - msg_norec_del->height() * 0.75;
+	 msg_norec_del->move(pos_x,pos_y);
+
+	 update();
+       }
+     
      if ( initDialogueOpen ){
        //qDebug() << "Is PDIAG visible? " << pdiag_autoflow->isVisible();
           
        if ( new_main_w > pdiag_autoflow->width() || new_main_h > pdiag_autoflow->height()) {
 	 int newWidth = qMax( new_main_w, pdiag_autoflow->width());
 	 int newHeight = qMax( new_main_h, pdiag_autoflow->height());
-	 
-	 //qDebug() << "New sizes of PDIAG!! " << new_main_w << ", " << pdiag_autoflow->width();
 	 pdiag_autoflow->setMaximumSize( newWidth, newHeight );
 	 pdiag_autoflow->resize( QSize(newWidth, newHeight) );
+	 	  
 	 update();
        }
        
@@ -723,8 +751,10 @@ void US_InitDialogueGui::resizeEvent(QResizeEvent *event)
          int newHeight = qMin( new_main_h, pdiag_autoflow->height());
          pdiag_autoflow->setMaximumSize( newWidth, newHeight );
          pdiag_autoflow->resize( QSize(newWidth, newHeight) );
-         update();
+
+	 update();
        }
+       
      }     
      QWidget::resizeEvent(event);
 }
@@ -778,14 +808,42 @@ void US_InitDialogueGui::initRecords( void )
 // Init AutoflowRecords Dialogue: call from _main.cpp
 void US_InitDialogueGui::initRecordsDialogue( void )
 {
+ 
+  // ALEXEY: ensure that NO pdiag_dialog(s) open before initialization... IMPORTANT!
+  // Will Not be needed in the production version where all but currently active Tab is enabled...
+  // But may be a good idea to retain... 
+  /* ---------------------------------------------------------------------------------------*/
+  if ( initDialogueOpen )
+    {
+      pdiag_autoflow->close();
+      initDialogueOpen = false;
 
+      qDebug() << "Spurious/Old Autoflow dialogues closed!!!";
+    }
+  if ( initMsgNorecOpen )
+    {
+      msg_norec->reject();      // Not just close() - as it triggers setting up exp panel...
+      initMsgNorecOpen = false;
+
+      qDebug() << "Spurious/Old NoRec msg closed!!!";
+    }
+  if ( initMsgNorecDelOpen )
+    {
+      msg_norec_del->reject();  // Not just close() - as it triggers setting up exp panel...
+      initMsgNorecDelOpen = false;
+      
+      qDebug() << "Spurious/Old NoRec After Deletion msg closed!!!";
+    }
+  /* ---------------------------------------------------------------------------------------*/
+    
   if ( autoflow_records < 1 )
     {
       //ALEXEY: should close pdiag_autoflow if wasn't closed already
+      initMsgNorecOpen = true;
       
       occupied_instruments.clear();
       
-      QMessageBox * msg_norec = new QMessageBox;
+      msg_norec = new QMessageBox;
       msg_norec->setIcon(QMessageBox::Information);
       msg_norec->setText(tr( "There are no Optima runs to follow.<br><br>"
 			     "You will be switched to <b>Experiment</b> stage to design and submit new protocol."
@@ -795,14 +853,18 @@ void US_InitDialogueGui::initRecordsDialogue( void )
       msg_norec->setStyleSheet("background-color: #36454f; color : #D3D9DF;");
 
       //position
-      int pos_x = msg_norec->width()/2;
-      int pos_y = msg_norec->height()/2;
+      int pos_x = this->width()/2 - msg_norec->width()/2;
+      int pos_y = this->height()/2 - msg_norec->height()/4;
       msg_norec->move(pos_x, pos_y);
+ 
+      if( msg_norec->exec() == QMessageBox::Ok )
+       	{
+       	  msg_norec->close();
+	  emit define_new_experiment_init( occupied_instruments );
+       	  //qApp->processEvents();
+       	}
 
-      connect(msg_norec, SIGNAL( accept() ), SLOT(close()) ); 
-      msg_norec->exec();
-      
-      emit define_new_experiment_init( occupied_instruments );
+      //emit define_new_experiment_init( occupied_instruments );
       
       return;
     }
@@ -955,6 +1017,8 @@ void US_InitDialogueGui::initRecordsDialogue( void )
 void US_InitDialogueGui::update_autoflow_data( void )
 {
   qDebug() << "Updating autoflow records!!!";
+
+  initMsgNorecDelOpen = false;
   
   US_Passwd  pw;
   US_DB2* dbP  = new US_DB2( pw.getPasswd() );
@@ -964,7 +1028,9 @@ void US_InitDialogueGui::update_autoflow_data( void )
 
   if ( autoflowdata.size() < 1 )
     {
-      pdiag_autoflow->reject();
+      initMsgNorecDelOpen = true;
+
+      //pdiag_autoflow->reject();
       pdiag_autoflow->close();
       qApp->processEvents();
       
@@ -972,7 +1038,7 @@ void US_InitDialogueGui::update_autoflow_data( void )
       
       occupied_instruments.clear();
       
-      QMessageBox * msg_norec_del = new QMessageBox;
+      msg_norec_del = new QMessageBox;
       msg_norec_del->setIcon(QMessageBox::Information);
       msg_norec_del->setText(tr( "There are no Optima runs to follow.<br><br>"
 			     "You will be switched to <b>Experiment</b> stage to design and submit new protocol."
@@ -982,15 +1048,22 @@ void US_InitDialogueGui::update_autoflow_data( void )
       msg_norec_del->setStyleSheet("background-color: #36454f; color : #D3D9DF;");
 
       //position
-      int pos_x = msg_norec_del->width()/2;
-      int pos_y = msg_norec_del->height()/2;
+      int pos_x = this->width()/2 - msg_norec_del->width()/2;
+      int pos_y = this->height()/2 - msg_norec_del->height()/4;
       msg_norec_del->move(pos_x, pos_y);
 
-      connect(msg_norec_del, SIGNAL( accept() ), SLOT(close()) ); 
-
-      msg_norec_del->exec();
+      //connect(msg_norec_del, SIGNAL( accept() ), SLOT(close()) ); 
+      if( msg_norec_del->exec() == QMessageBox::Ok )
+	{
+	  msg_norec_del->close();
+	  emit define_new_experiment_init( occupied_instruments );
+	  
+	  //qApp->processEvents();
+	}
       
-      emit define_new_experiment_init( occupied_instruments );
+      //msg_norec_del->exec();
+      
+      //emit define_new_experiment_init( occupied_instruments );
       
       return;
     }
