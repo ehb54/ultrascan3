@@ -77,10 +77,18 @@ class US_InitDialogueGui : public US_WidgetsDialog
    US_SelectItem* pdiag_autoflow;
 
    void initRecordsDialogue( void );
+
    bool initDialogueOpen;
+   bool initMsgNorecOpen;
+   bool initMsgNorecDelOpen;
+   
    void initAutoflowPanel( void );
 
    QLabel* movie_label;
+
+   QMessageBox * msg_norec;
+   QMessageBox * msg_norec_del;
+   
             
   private:
     US_ComProjectMain*    mainw;      // Parent to all panels
