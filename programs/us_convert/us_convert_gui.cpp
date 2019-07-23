@@ -1337,7 +1337,8 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
 	{
 	  delete_autoflow_record(); // TEMPORARILY - MUST BE UNCOMMENTED!!!
 	  resetAll_auto();
-	  emit saving_complete_back_to_exp( ProtocolName_auto );
+	  //emit saving_complete_back_to_exp( ProtocolName_auto );
+	  emit saving_complete_back_to_initAutoflow( );
 	  return;
 	}
     }
@@ -1360,7 +1361,8 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
 	   //ALEXY: need to delete autoflow record here
 	   delete_autoflow_record();
 	   resetAll_auto();
-	   emit saving_complete_back_to_exp( ProtocolName_auto );
+	   //emit saving_complete_back_to_exp( ProtocolName_auto );
+	   emit saving_complete_back_to_initAutoflow();
 	   return;
 	  
 	}
@@ -1391,7 +1393,8 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
 	    {
 	      delete_autoflow_record();
 	      resetAll_auto();
-	      emit saving_complete_back_to_exp( ProtocolName_auto );
+	      //emit saving_complete_back_to_exp( ProtocolName_auto );
+	      emit saving_complete_back_to_initAutoflow( );
 	      return;
 	    }
 	}
@@ -5068,7 +5071,8 @@ DbgLv(1) << "Writing to disk";
 	   //ALEXY: need to delete autoflow record here
 	   delete_autoflow_record();
 	   resetAll_auto();
-	   emit saving_complete_back_to_exp( ProtocolName_auto );
+	   //emit saving_complete_back_to_exp( ProtocolName_auto );
+	   emit saving_complete_back_to_initAutoflow( );
 	   return;
 	 }
        else                             // us_comproject
@@ -5085,7 +5089,8 @@ DbgLv(1) << "Writing to disk";
 	       //ALEXY: need to delete autoflow record here
 	       delete_autoflow_record();
 	       resetAll_auto();
-	       emit saving_complete_back_to_exp( ProtocolName_auto );
+	       //emit saving_complete_back_to_exp( ProtocolName_auto );
+	       emit saving_complete_back_to_initAutoflow();
 	       return;
 	     }
 	   else                   // us_comproject BUT the run IS GMP, so procced                    

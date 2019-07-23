@@ -184,15 +184,11 @@ class US_ObservGui : public US_WidgetsDialog
       void process_protocol_details( QMap < QString, QString > & protocol_details );
       //void to_post_processing( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii );
       void to_post_processing( QMap < QString, QString > & );
-      
-      void to_experiment( QString & protocolName );
       void to_close_program( void );
  signals:
       void to_xpn_viewer( QMap < QString, QString > & protocol_details );
       //void switch_to_post_processing( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii  );
       void switch_to_post_processing( QMap < QString, QString > &  );
-      
-      void switch_to_experiment( QString & protocolName );
       void close_everything( void );
 };
 
@@ -220,14 +216,16 @@ class US_PostProdGui : public US_WidgetsDialog
     void import_data_us_convert( QMap < QString, QString > &);
     
     void to_editing( QString & currDir, QString & protocolName );
-    void to_experiment( QString & protocolName );
+    //void to_experiment( QString & protocolName );
+    void to_initAutoflow( void );
     
   signals:
     //void to_post_prod( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii  );
     void to_post_prod( QMap < QString, QString > & ); 
     
     void switch_to_editing( QString & currDir, QString & protocolName );
-    void switch_to_exp( QString & protocolName );
+    //void switch_to_exp( QString & protocolName );
+    void switch_to_initAutoflow( void);
 };
 
 
@@ -377,7 +375,7 @@ private slots:
   void switch_to_post_processing( QMap < QString, QString > & );
   
   void switch_to_editing( QString & currDir, QString & protocolName );
-  void switch_to_experiment( QString & protocolName );
+  //void switch_to_experiment( QString & protocolName );
   //void check_current_stage( void );
   void close_all( void );
   void closeEvent      ( QCloseEvent* );
