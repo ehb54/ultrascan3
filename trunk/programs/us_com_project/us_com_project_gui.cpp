@@ -128,6 +128,15 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
 
    main->addWidget( tabWidget );
 
+   for (int i=0; i < tabWidget->count(); ++i )
+     {
+       //ALEXEY: OR enable all tabs ? (e.g. for demonstration, in a read-only mode or the like ?)
+       if ( i == 0 ) 
+	 tabWidget->tabBar()->setTabEnabled(i, true);
+       else
+	 tabWidget->tabBar()->setTabEnabled(i, false);
+     }
+
    connect( tabWidget, SIGNAL( currentChanged( int ) ), this, SLOT( initPanels( int ) ) );
    
    
@@ -162,14 +171,13 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    connect( epanObserv, SIGNAL( switch_to_post_processing( QMap < QString, QString > & ) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & ) ) );
    connect( this, SIGNAL( import_data_us_convert( QMap < QString, QString > & ) ),  epanPostProd, SLOT( import_data_us_convert( QMap < QString, QString > & )  ) );
    
-   connect( epanObserv, SIGNAL( switch_to_experiment( QString &) ), this, SLOT( switch_to_experiment(  QString & )  ) );
    connect( this, SIGNAL( clear_experiment( QString & ) ),  epanExp, SLOT( clear_experiment( QString & )  ) );
    connect( epanObserv, SIGNAL( close_everything() ), this, SLOT( close_all() ));
    
    //connect( epanPostProd, SIGNAL( switch_to_analysis( QString &, QString &) ),  this, SLOT( switch_to_analysis( QString &, QString & )  ) );
    //connect( this, SIGNAL( pass_to_analysis( QString &, QString & ) ),   epanAnalysis, SLOT( do_analysis( QString &, QString & )  ) );
-   connect( epanPostProd, SIGNAL( switch_to_exp( QString & ) ), this, SLOT( switch_to_experiment( QString & )  ) );
-
+   //connect( epanPostProd, SIGNAL( switch_to_exp( QString & ) ), this, SLOT( switch_to_experiment( QString & )  ) );
+   connect( epanPostProd, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
    
    setMinimumSize( QSize( 1350, 800 ) );
    adjustSize();
@@ -275,18 +283,23 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
 
    tabWidget->tabBar()->setIconSize(QSize(50,50));
 
-   tabWidget->tabBar()->setStyleSheet( "QTabBar::tab {min-width: 70;} QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:hover {background: lightgray;} QTabBar::tab:first {background: blue; color: lightgray; min-width: 50;} ");
+   tabWidget->tabBar()->setStyleSheet( "QTabBar::tab {min-width: 70;} QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:hover {background: lightgray;} QTabBar::tab:first {background: blue; color: lightgray; min-width: 50;}  QTabBar::tab:first:hover {background: #4169E1; color: white}  QTabBar::tab:disabled {} ");
 
- 
-   //QLabel * init_lbl;
-   //init_lbl = new QLabel();
-   //init_lbl->setText("Manage Optima Runs");
-   //init_lbl->setStyleSheet("QLabel { background-color : blue; color : white; }");
-   //tabWidget->tabBar()->setTabButton(0, QTabBar::LeftSide, init_lbl);
-
-   //tabWidget->tabBar()->setTabTextColor(0, Qt::white);
-   
    main->addWidget( tabWidget );
+   
+   for (int i=0; i < tabWidget->count(); ++i )
+     {
+       //ALEXEY: OR enable all tabs ? (e.g. for demonstration, in a read-only mode or the like ?)
+       if ( i == 0 ) 
+	 tabWidget->tabBar()->setTabEnabled(i, true);
+       else
+	 tabWidget->tabBar()->setTabEnabled(i, false);
+     }
+
+   //QPalette pal = tabWidget->tabBar()->palette();
+   //qDebug() << "Palette: color, group: " << pal.color(QPalette::Background) << ", " << pal.currentColorGroup();
+   //pal.setCurrentColorGroup(QPalette::Active);
+   //tabWidget->tabBar()->setPalette(pal);
 
    connect( tabWidget, SIGNAL( currentChanged( int ) ), this, SLOT( initPanels( int ) ) );
       
@@ -322,13 +335,13 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( epanObserv, SIGNAL( switch_to_post_processing( QMap < QString, QString > & ) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & ) ) );
    connect( this, SIGNAL( import_data_us_convert( QMap < QString, QString > & ) ),  epanPostProd, SLOT( import_data_us_convert( QMap < QString, QString > & )  ) );
    
-   connect( epanObserv, SIGNAL( switch_to_experiment( QString &) ), this, SLOT( switch_to_experiment(  QString & )  ) );
    connect( this, SIGNAL( clear_experiment( QString & ) ),  epanExp, SLOT( clear_experiment( QString & )  ) );
    connect( epanObserv, SIGNAL( close_everything() ), this, SLOT( close_all() ));
       
    connect( epanPostProd, SIGNAL( switch_to_editing( QString &, QString &) ),  this, SLOT( switch_to_editing( QString &, QString & )  ) );
    connect( this, SIGNAL( pass_to_editing( QString &, QString & ) ),   epanEditing, SLOT( do_editing( QString &, QString & )  ) );
-   connect( epanPostProd, SIGNAL( switch_to_exp( QString & ) ), this, SLOT( switch_to_experiment( QString & )  ) );
+   //connect( epanPostProd, SIGNAL( switch_to_exp( QString & ) ), this, SLOT( switch_to_experiment( QString & )  ) );
+   connect( epanPostProd, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
    
    setMinimumSize( QSize( 1350, 800 ) );
    adjustSize();
@@ -546,6 +559,14 @@ void US_ComProjectMain::define_new_experiment( QStringList & occupied_instrument
   tabWidget->setCurrentIndex( 1 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ?? 
   curr_panx = 1;
 
+  for (int i = 1; i < tabWidget->count(); ++i )
+    {
+      if ( i == 1 )
+	tabWidget->tabBar()->setTabEnabled(i, true);
+      else
+	tabWidget->tabBar()->setTabEnabled(i, false);
+    }
+
   qDebug() << "In define_new_experiment( QStringList & occupied_instruments )";
 
   emit pass_used_instruments( occupied_instruments );
@@ -557,9 +578,24 @@ void US_ComProjectMain::define_new_experiment( QStringList & occupied_instrument
 // Slot to pass submitted to Optima run info to the Live Update tab
 void US_ComProjectMain::switch_to_live_update( QMap < QString, QString > & protocol_details)
 {
-  tabWidget->setCurrentIndex( 2 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ?? 
+  tabWidget->setCurrentIndex( 2 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()->setEnabled(false) ?? 
   curr_panx = 2;
 
+ 
+  for (int i = 1; i < tabWidget->count(); ++i )
+    {
+      if ( i == 2 )
+	tabWidget->tabBar()->setTabEnabled(i, true);
+      else
+	tabWidget->tabBar()->setTabEnabled(i, false);
+    }
+
+  // QPalette pal = tabWidget->currentWidget()->palette();
+  // pal.setCurrentColorGroup(QPalette::Disabled);
+  // tabWidget->currentWidget()->setPalette(pal);
+
+  // qDebug() << "LIVE UPDATE palette: " << tabWidget->currentWidget()->palette().currentColorGroup();
+  
   // ALEXEY:
    // (1) Make a record to 'autoflow' table - stage# = 1;
    // (2) inside us_xpn_viewer - update 'curDirr' field with generated directory where .auc data saved 
@@ -615,20 +651,29 @@ void US_ComProjectMain::switch_to_post_processing( QMap < QString, QString > & p
   tabWidget->setCurrentIndex( 3 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
   curr_panx = 3;
 
+  for (int i = 1; i < tabWidget->count(); ++i )
+    {
+      if ( i == 3 )
+	tabWidget->tabBar()->setTabEnabled(i, true);
+      else
+	tabWidget->tabBar()->setTabEnabled(i, false);
+    }
+  
   // ALEXEY: Make a record to 'autoflow' table: stage# = 2; 
   
   emit import_data_us_convert( protocol_details );
 }
-     
-// Slot to switch back from the Live Update to Experiment tab
-void US_ComProjectMain::switch_to_experiment( QString & protocolName )
-{
-  tabWidget->setCurrentIndex( 1 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
-  curr_panx = 1;
-   //delete_autoflow_record( runID );
+
+// Obsolete
+// // Slot to switch back from the Live Update to Experiment tab
+// void US_ComProjectMain::switch_to_experiment( QString & protocolName )
+// {
+//   tabWidget->setCurrentIndex( 1 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
+//   curr_panx = 1;
+//    //delete_autoflow_record( runID );
    
-   emit clear_experiment( protocolName );
-}
+//    emit clear_experiment( protocolName );
+// }
    
 
 // Slot to switch from the Import to Editing tab
@@ -636,6 +681,17 @@ void US_ComProjectMain::switch_to_editing( QString  & currDir, QString & protoco
 {
    tabWidget->setCurrentIndex( 4 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
    curr_panx = 4;
+
+   // ALEXEY: Temporariy NOT lock here... Will need later
+   /*  
+   for (int i = 1; i < tabWidget->count(); ++i )
+     {
+       if ( i == 4 )
+	 tabWidget->tabBar()->setTabEnabled(i, true);
+      else
+	tabWidget->tabBar()->setTabEnabled(i, false);
+     }
+   */
 
    // ALEXEY: Make a record to 'autoflow' table: stage# = 3; 
 
@@ -771,6 +827,15 @@ void US_InitDialogueGui::initAutoflowPanel( void )
 // Init Autoflow records
 void US_InitDialogueGui::initRecords( void )
 {
+  for (int i=0; i < mainw->tabWidget->count(); ++i )
+    {
+      //ALEXEY: OR enable all tabs ? (e.g. for demonstration, in a read-only mode or the like ?)
+      if ( i == 0 ) 
+	mainw->tabWidget->tabBar()->setTabEnabled(i, true);
+      else
+	mainw->tabWidget->tabBar()->setTabEnabled(i, false);
+    }
+  
   // Query 'autoflow': get count of records
   autoflow_records = get_autoflow_records();
   
@@ -886,12 +951,9 @@ void US_InitDialogueGui::initRecordsDialogue( void )
     autoflow_btn = "AUTOFLOW_DA";
   else
     autoflow_btn = "AUTOFLOW_GMP";
-  
-  //US_SelectItem pdiag_autoflow( autoflowdata, hdrs, pdtitle, &prx, autoflow_btn, -2 );
-  //US_SelectItem* pdiag_autoflow = new  US_SelectItem( autoflowdata, hdrs, pdtitle, &prx, autoflow_btn, -2 );
 
   pdiag_autoflow = new US_SelectItem( autoflowdata, hdrs, pdtitle, &prx, autoflow_btn, -2 );
-  
+
   connect( pdiag_autoflow, SIGNAL( accept_autoflow_deletion() ), this, SLOT( update_autoflow_data() ));
   pdiag_autoflow->setParent(this, Qt::Widget);
 
@@ -910,6 +972,10 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   //pdiag_autoflow->setFrameShape( QFrame::Box);
   //pdiag_autoflow->setLineWidth(2); 
 
+  // pdiag_autoflow->setObjectName("hello");
+  // pdiag_autoflow->setWindowFlags(Qt::FramelessWindowHint);
+  // pdiag_autoflow->setStyleSheet("#hello{border:4px solid darkgrey}");
+    
   //disable 'Define Another Exp.' button if all instruments are in use
   if ( occupied_instruments.size() >= instruments.size() )
     pdiag_autoflow->pb_cancel->setEnabled( false );
@@ -1567,13 +1633,8 @@ US_ObservGui::US_ObservGui( QWidget* topw )
    connect( this, SIGNAL( to_xpn_viewer( QMap < QString, QString > &) ), sdiag, SLOT( check_for_data ( QMap < QString, QString > & )  ) );
 
    //ALEXEY: devise SLOT saying what to do upon completion of experiment and exporting AUC data to hard drive - Import Experimental Data  !!! 
-   //connect( sdiag, SIGNAL( experiment_complete_auto( QString &, QString &, QString &, QString & ) ), this, SLOT( to_post_processing ( QString &, QString &, QString &, QString & ) ) );
    connect( sdiag, SIGNAL( experiment_complete_auto( QMap < QString, QString > & ) ), this, SLOT( to_post_processing ( QMap < QString, QString > & ) ) );
    
-   
-   //ALEXEY: return to 1st panel when exp. aborted & no data saved..
-   connect( sdiag, SIGNAL( return_to_experiment( QString & ) ), this, SLOT( to_experiment ( QString &) ) );
-
    //ALEXEY: close program, emitted from sdiag
    connect( sdiag, SIGNAL( close_program() ), this, SLOT( to_close_program()  ) );
    
@@ -1641,10 +1702,6 @@ void US_ObservGui::to_post_processing( QMap < QString, QString > & protocol_deta
   emit switch_to_post_processing( protocol_details );
 }
 
-void US_ObservGui::to_experiment( QString & protocolName )
-{
-  emit switch_to_experiment( protocolName );
-}
 
 void US_ObservGui::to_close_program( void )
 {
@@ -1701,7 +1758,8 @@ US_PostProdGui::US_PostProdGui( QWidget* topw )
    //ALEXEY: switch to Editing
    connect( sdiag, SIGNAL( saving_complete_auto( QString &, QString & ) ), this, SLOT( to_editing ( QString &, QString &) ) );
    //ALEXEY: for academic ver. switch back to experiment
-   connect( sdiag, SIGNAL( saving_complete_back_to_exp( QString & ) ), this, SLOT( to_experiment (  QString & ) ) );
+   //connect( sdiag, SIGNAL( saving_complete_back_to_exp( QString & ) ), this, SLOT( to_experiment (  QString & ) ) );
+   connect( sdiag, SIGNAL( saving_complete_back_to_initAutoflow( ) ), this, SLOT( to_initAutoflow ( ) ) );
    
    offset = 0;
    sdiag->move(offset, 2*offset);
@@ -1730,10 +1788,15 @@ void US_PostProdGui::to_editing( QString & currDir, QString & protocolName )
   emit switch_to_editing( currDir, protocolName );
 }
 
-void US_PostProdGui::to_experiment( QString & protocolName )
+// void US_PostProdGui::to_experiment( QString & protocolName )
+// {
+//   emit switch_to_exp( protocolName  );
+// }
+
+void US_PostProdGui::to_initAutoflow( void )
 {
-  emit switch_to_exp( protocolName  );
-} 
+  emit switch_to_initAutoflow();
+}
 
 void US_PostProdGui::resizeEvent(QResizeEvent *event)
 {

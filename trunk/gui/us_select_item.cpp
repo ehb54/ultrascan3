@@ -124,8 +124,8 @@ void US_SelectItem::build_layout( const QString titl )
        le_info->setPalette(p);
        
        le_info->setText(tr( "<ul><li>Information on one or more experimental methods submitted to Bechman Optima(s) is available. "
-			    "You can reattach to the job by selecting the run from the list below. "
-			    "Alternatively, you can define and submit a new experiment method to the availabale Optima instrument(s). </ul></li>" ));
+			    "<br>You can reattach to the job by selecting the run from the list below. "
+			    "<br>Alternatively, you can define and submit a new experiment method to the availabale Optima instrument(s). </ul></li>" ));
        
        main->addWidget( le_info );
      }
@@ -458,7 +458,14 @@ void US_SelectItem::deleted_autoflow()
 	   QMessageBox::warning( this,
 				 tr( "Autoflow Record Not Deleted" ),
 				 tr( "This record could not be deleted since\n"
-				     "it is not present in the LIMS DB." ) );
+				     "it is not present in the LIMS DB. \n"
+				     "It will be removed from the list of records." ) );
+
+	   items.removeAt( AutoflowRow );     // Remove deleted item row
+	   list_data();                       // Rebuild protocol list in the dialog
+
+	   emit accept_autoflow_deletion();        // Signal to pass to us_comproject to update (re-read reduced) autoflow records
+	   
 	   return;
 	 }
 
@@ -467,7 +474,7 @@ void US_SelectItem::deleted_autoflow()
        
        QString msg("Autoflow record  has been successfully deleted.");
        QMessageBox::information( this,
-			     tr( "Autoflow Record  Deleted" ),
+			     tr( "Autoflow Record Deleted" ),
 			     msg );
 
 
