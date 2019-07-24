@@ -124,8 +124,11 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    
    tabWidget->tabBar()->setIconSize(QSize(50,50));
 
-   tabWidget->tabBar()->setStyleSheet( "QTabBar::tab {min-width: 70;} QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:hover {background: lightgray;} QTabBar::tab:first {background: blue; color: lightgray; min-width: 50;} ");
+   //tabWidget->tabBar()->setStyleSheet( "QTabBar::tab {min-width: 70;} QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:hover {background: lightgray;} QTabBar::tab:first {background: blue; color: lightgray; min-width: 50;}  QTabBar::tab:first:hover {background: #4169E1; color: white}  QTabBar::tab:disabled { color: rgba(0, 0, 0, 70%) } ");
 
+   //no hoover
+   tabWidget->tabBar()->setStyleSheet( "QTabBar::tab {min-width: 70;} QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:first {background: blue; color: lightgray; min-width: 50;}  QTabBar::tab:first:hover {background: #4169E1; color: white}  QTabBar::tab:disabled { color: rgba(0, 0, 0, 70%) } ");
+   
    main->addWidget( tabWidget );
 
    for (int i=0; i < tabWidget->count(); ++i )
@@ -138,8 +141,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
      }
 
    connect( tabWidget, SIGNAL( currentChanged( int ) ), this, SLOT( initPanels( int ) ) );
-   
-   
+
    logWidget = us_textedit();
    logWidget->setMaximumHeight(30);
    logWidget->setReadOnly(true);
@@ -166,18 +168,17 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    connect( this   , SIGNAL( pass_to_live_update( QMap < QString, QString > &) ),   epanObserv, SLOT( process_protocol_details( QMap < QString, QString > & )  ) );
    connect( epanExp, SIGNAL( to_autoflow_records( ) ), this, SLOT( to_autoflow_records( ) ) );
    
-   // connect( epanObserv, SIGNAL( switch_to_post_processing( QString &, QString &, QString &, SQtring &) ), this, SLOT( switch_to_post_processing( QString &, QString &, QString &, QString &) ) );
-   // connect( this, SIGNAL( import_data_us_convert( QString &, QString &, QString &, QString & ) ),  epanPostProd, SLOT( import_data_us_convert( QString &, QString &, QString &, QString & )  ) );
    connect( epanObserv, SIGNAL( switch_to_post_processing( QMap < QString, QString > & ) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & ) ) );
    connect( this, SIGNAL( import_data_us_convert( QMap < QString, QString > & ) ),  epanPostProd, SLOT( import_data_us_convert( QMap < QString, QString > & )  ) );
    
-   connect( this, SIGNAL( clear_experiment( QString & ) ),  epanExp, SLOT( clear_experiment( QString & )  ) );
+   //connect( this, SIGNAL( clear_experiment( QString & ) ),  epanExp, SLOT( clear_experiment( QString & )  ) );
    connect( epanObserv, SIGNAL( close_everything() ), this, SLOT( close_all() ));
    
    //connect( epanPostProd, SIGNAL( switch_to_analysis( QString &, QString &) ),  this, SLOT( switch_to_analysis( QString &, QString & )  ) );
    //connect( this, SIGNAL( pass_to_analysis( QString &, QString & ) ),   epanAnalysis, SLOT( do_analysis( QString &, QString & )  ) );
    //connect( epanPostProd, SIGNAL( switch_to_exp( QString & ) ), this, SLOT( switch_to_experiment( QString & )  ) );
    connect( epanPostProd, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
+   connect( this, SIGNAL( reset_lims_import() ),  epanPostProd, SLOT( reset_lims_import( )  ) );
    
    setMinimumSize( QSize( 1350, 800 ) );
    adjustSize();
@@ -283,7 +284,10 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
 
    tabWidget->tabBar()->setIconSize(QSize(50,50));
 
-   tabWidget->tabBar()->setStyleSheet( "QTabBar::tab {min-width: 70;} QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:hover {background: lightgray;} QTabBar::tab:first {background: blue; color: lightgray; min-width: 50;}  QTabBar::tab:first:hover {background: #4169E1; color: white}  QTabBar::tab:disabled {} ");
+   //tabWidget->tabBar()->setStyleSheet( "QTabBar::tab {min-width: 70;} QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:hover {background: lightgray;} QTabBar::tab:first {background: blue; color: lightgray; min-width: 50;}  QTabBar::tab:first:hover {background: #4169E1; color: white}  QTabBar::tab:disabled { color: rgba(0, 0, 0, 70%)  } ");
+
+   //no hoover
+   tabWidget->tabBar()->setStyleSheet( "QTabBar::tab {min-width: 70;} QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:first {background: blue; color: lightgray; min-width: 50;}  QTabBar::tab:first:hover {background: #4169E1; color: white}  QTabBar::tab:disabled { color: rgba(0, 0, 0, 70%)  } ");
 
    main->addWidget( tabWidget );
    
@@ -330,18 +334,17 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( this   , SIGNAL( pass_to_live_update( QMap < QString, QString > &) ),   epanObserv, SLOT( process_protocol_details( QMap < QString, QString > & )  ) );
    connect( epanExp, SIGNAL( to_autoflow_records( ) ), this, SLOT( to_autoflow_records( ) ) );
    
-   // connect( epanObserv, SIGNAL( switch_to_post_processing( QString &, QString &, QString &, QString & ) ), this, SLOT( switch_to_post_processing( QString &, QString &, QString &, QString & )));
-   // connect( this, SIGNAL( import_data_us_convert( QString &, QString &, QString &, QString & ) ),  epanPostProd, SLOT( import_data_us_convert( QString &, QString &, QString &, QString & )  ) );
    connect( epanObserv, SIGNAL( switch_to_post_processing( QMap < QString, QString > & ) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & ) ) );
    connect( this, SIGNAL( import_data_us_convert( QMap < QString, QString > & ) ),  epanPostProd, SLOT( import_data_us_convert( QMap < QString, QString > & )  ) );
-   
-   connect( this, SIGNAL( clear_experiment( QString & ) ),  epanExp, SLOT( clear_experiment( QString & )  ) );
    connect( epanObserv, SIGNAL( close_everything() ), this, SLOT( close_all() ));
-      
+   
    connect( epanPostProd, SIGNAL( switch_to_editing( QString &, QString &) ),  this, SLOT( switch_to_editing( QString &, QString & )  ) );
+   connect( this, SIGNAL( reset_lims_import() ),  epanPostProd, SLOT( reset_lims_import( )  ) );
+
    connect( this, SIGNAL( pass_to_editing( QString &, QString & ) ),   epanEditing, SLOT( do_editing( QString &, QString & )  ) );
-   //connect( epanPostProd, SIGNAL( switch_to_exp( QString & ) ), this, SLOT( switch_to_experiment( QString & )  ) );
    connect( epanPostProd, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
+   
+   
    
    setMinimumSize( QSize( 1350, 800 ) );
    adjustSize();
@@ -362,21 +365,38 @@ void US_ComProjectMain::initPanels( int  panx )
     {
       // Depending on from we jump to InitDialogue, we may need to stop/reset current stages:
       // E.g., LIVE_UPDATE: stop all timers, reset GUI etc..
+      // Maybe a warning message "You are going to leave this panel.." needs to be shown 
+      
+      if ( curr_panx == 1 )
+	{
+	  //Fully set: nothing needs to be done/reset:
+	  qDebug() << "Jumping from EXPERIMENT.";
+	}
+
+      if ( curr_panx == 2 )
+	{
+	  // 2 cases:
+	  /* 
+	        1. Avaiting for run to be launched ("Back to Managing Optima Runs") -- SET
+		2. More complex: Back to Managing runs from active LIVE_UPDATE stage -- stop all timers and other processes...
+	  */ 
+	  qDebug() << "Jumping from LIVE UPDATE.";
+	}
+
+      if ( curr_panx == 3 )
+	{
+	  qDebug() << "Jumping from LIMS IMPORT.";
+	  //Send sigmal to reset LIMS IMPORT tab... Fully SET
+	  emit reset_lims_import();
+	}
+      
+      if ( curr_panx == 4 )
+	qDebug() << "Jumping from EDITING.";
+      
       epanInit  ->initAutoflowPanel();
     }
-  // else
-  //   {
-  //     if ( epanInit->initMsgNorecOpen )
-  // 	{
-  // 	  epanInit->msg_norec->reject();
-  // 	  //epanInit->msg_norec->close();
-  // 	}
-  //     if ( epanInit->initMsgNorecDelOpen )
-  // 	epanInit->msg_norec_del->close();
-  //   }
-  
-  
-  curr_panx = panx;         // Set new current panel
+
+  //curr_panx = panx;         // Set new current panel
 }
 
 void US_ComProjectMain::closeEvent( QCloseEvent* event )
@@ -609,7 +629,7 @@ void US_ComProjectMain::close_all( void )
 {
   tabWidget->setCurrentIndex( 0 );   
   //epanInit  ->initAutoflowPanel();  //DO NOT Duplicate - was called in previous line while changing Tab!!!
-  qDebug() << "XPN viwer closed!";
+  qDebug() << "XPN viewer /US_convert  closed!";
   qApp->processEvents();
   
 
@@ -1431,7 +1451,6 @@ US_ExperGui::US_ExperGui( QWidget* topw )
    sdiag = new US_ExperimentMain;
 
    sdiag->setParent(this, Qt::Widget);
-
       
    connect( sdiag, SIGNAL( us_exp_is_closed() ), this, SLOT( us_exp_is_closed_set_button() ) );
    //connect( this,  SIGNAL( set_auto_mode() ),   sdiag, SLOT( auto_mode_passed() ) );
@@ -1515,11 +1534,14 @@ void US_ExperGui::us_exp_is_closed_set_button()
   mainw->logWidget->append("US_Experiment has been closed!");
 }
 
-//Clear Experiment after manual abortion & data not saved .. 
-void US_ExperGui::clear_experiment( QString & protocolName )
-{
-  emit reset_experiment( protocolName );
-}
+
+//Obsolete
+// //Clear Experiment after manual abortion & data not saved .. 
+// void US_ExperGui::clear_experiment( QString & protocolName )
+// {
+//   emit reset_experiment( protocolName );
+// }
+
 
 //Upon clearing Experiment .. 
 void US_ExperGui::exp_cleared( void )
@@ -1755,10 +1777,11 @@ US_PostProdGui::US_PostProdGui( QWidget* topw )
    //connect( this, SIGNAL( to_post_prod( QString &, QString &, QString &, QString & ) ), sdiag, SLOT( import_data_auto ( QString &, QString &, QString &, QString & )  ) );
    connect( this, SIGNAL( to_post_prod( QMap < QString, QString > & ) ), sdiag, SLOT( import_data_auto ( QMap < QString, QString > & )  ) );
    
+   connect( this, SIGNAL( reset_lims_import_passed( ) ), sdiag, SLOT( reset_limsimport_panel ( )  ) );
+   
    //ALEXEY: switch to Editing
    connect( sdiag, SIGNAL( saving_complete_auto( QString &, QString & ) ), this, SLOT( to_editing ( QString &, QString &) ) );
    //ALEXEY: for academic ver. switch back to experiment
-   //connect( sdiag, SIGNAL( saving_complete_back_to_exp( QString & ) ), this, SLOT( to_experiment (  QString & ) ) );
    connect( sdiag, SIGNAL( saving_complete_back_to_initAutoflow( ) ), this, SLOT( to_initAutoflow ( ) ) );
    
    offset = 0;
@@ -1777,6 +1800,11 @@ US_PostProdGui::US_PostProdGui( QWidget* topw )
 // {
 //   emit to_post_prod( currDir, protocolName, invID_passed, correctRadii );
 // }
+
+void US_PostProdGui::reset_lims_import( void )
+{
+  emit reset_lims_import_passed();
+}
 
 void US_PostProdGui::import_data_us_convert(  QMap < QString, QString > & protocol_details )
 {

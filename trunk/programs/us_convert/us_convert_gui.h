@@ -369,6 +369,7 @@ class US_ConvertGui : public US_Widgets
 
       void resetAll          ( void );
       void resetAll_auto     ( void );
+      void reset_limsimport_panel( void );
       
       void source_changed    ( bool );
       void update_disk_db    ( bool );

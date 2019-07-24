@@ -111,22 +111,28 @@ void US_SelectItem::build_layout( const QString titl )
    //Inormation field for autoflow
    QTextEdit*     le_info;
 
+   QFont le_info_font( US_Widgets::fixedFont().family(),
+		       US_GuiSettings::fontSize() );
+   
    if ( autoflow_button )
      {
        le_info = us_textedit();
        QFontMetrics m (le_info -> font()) ;
        int RowHeight = m.lineSpacing() ;
-       le_info -> setFixedHeight  (5 * RowHeight) ;
+       le_info -> setFixedHeight  (10 * RowHeight) ;
 
        QPalette p = le_info->palette(); 
        p.setColor(QPalette::Base, Qt::lightGray);
        p.setColor(QPalette::Text, Qt::darkRed);
        le_info->setPalette(p);
        
-       le_info->setText(tr( "<ul><li>Information on one or more experimental methods submitted to Bechman Optima(s) is available. "
-			    "<br>You can reattach to the job by selecting the run from the list below. "
-			    "<br>Alternatively, you can define and submit a new experiment method to the availabale Optima instrument(s). </ul></li>" ));
+       le_info->setText(tr( "Information on one or more experimental methods submitted to Bechman Optima(s) is available."
+			    "<ul><li>You can reattach to specific job by selecting from the list below and clicking \"Select Optima Run to Follow\"</ul></li>"
+			    "<ul><li>Alternatively, you can click \"Define Another Experiment\" to design and/or submit a new experiment method to the availabale Optima instrument(s)</ul></li>"
+			    "<ul><li>Finally, records can be deleted (\"Delete Record\"). Use with caution</ul></li>" ));
+
        
+       le_info->setFont(le_info_font);
        main->addWidget( le_info );
      }
    

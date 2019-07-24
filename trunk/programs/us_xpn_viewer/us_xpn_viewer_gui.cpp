@@ -190,7 +190,7 @@ QWidget *WheelBox::createBox( Qt::Orientation orientation )
 
 void WheelBox::setTemp( double v )
 {
-  qDebug() << "Setting Temperature!!!";
+  qDebug() << "Setting Temperature!!! Value: " << v ;
   d_thermo->setValue( v );
 
   setNum( v );
@@ -1940,13 +1940,18 @@ void US_XpnDataViewer::check_for_sysdata( void )
       //ALEXEY: This timer cannot be stopped from another thread, but can be dealt with signal/slot upon Qthread termination..
       //        disconnection maybe enough...
       disconnect(timer_check_sysdata, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
-      sys_thread->quit(); // ALEXEY: does this emit Qthread's finished() signal??
+      //Maybe add this?
+      sys_thread->quit();     // ALEXEY: I think this emits Qthread's finished() signal... (connected to stopping timer_sysdata)
+      qApp->processEvents();  // <-- IMPORTANT to process event loop while stopping thread!!!
       
-      qDebug() << "ExpStat: 5/0  - sys_timer STOPPED here: ";
-
+      if ( sys_thread->isFinished() )
+	qDebug() << "QThread STOPPED !!! ";
+      
       if ( !timer_check_sysdata->isActive() )
-	 qDebug() << "QTimer timer_check_sysdata STOPPED by quitting the QThread !!! ";
-	
+	qDebug() << "QTimer timer_check_sysdata STOPPED by quitting the QThread !!! ";
+
+      qDebug() << "ExpStat: 5/0  - sys_timer STOPPED here: ";
+      
       rpm_box->setSpeed( 0 );
       le_remaining->setText( "00:00:00" );
       qApp->processEvents();
@@ -2107,12 +2112,7 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
    			  .arg(RunName).arg(OptimaName) );
 
   msg_data_avail->setWindowTitle(tr("Live Update"));
-  //msg_data_avail->setText(tr( "Run named %1 was submitted to:\n\n"
-  // 		              "%2 \n\n"
-  // 			      "Please start this method scan from the instrument panel. \n\n\n")
-  //
-  //                      .arg(RunName).arg(OptimaName) );
-
+  
   if ( runID_passed.isEmpty() || runID_passed == "NULL" )
     {
       msg_data_avail->exec();
@@ -2418,6 +2418,8 @@ DbgLv(1) << "RDr: allData size" << allData.size();
    //ALEXEY: Add Exp. Abortion Exception HERE... 
    if ( CheckExpComplete_auto( RunID_to_retrieve ) == 0 ) //ALEXEY should be == 3 as per documentation
      {
+       qDebug() << "ABORTION IN EARLY STAGE...";
+       
        experimentAborted  = true;
        
        timer_all_data_avail->stop();
@@ -3830,9 +3832,12 @@ DbgLv(1) << "RLd:       NO CHANGE";
 	  timer_data_reload->stop();
 	  disconnect(timer_data_reload, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
 
+	  qDebug() << "STOPPING timer_data_reload...";
 
 	  if ( !timer_check_sysdata->isActive()  ) // Check if sys_data Timer is stopped
 	    {
+
+	      qDebug() << "Exporing/Writing to disk...";
 	      // ALEXEY Export AUC data: devise export_auc_auto() function which would return directory name with saved data - to pass to emit signal below... 
 	      export_auc_auto();
 	  

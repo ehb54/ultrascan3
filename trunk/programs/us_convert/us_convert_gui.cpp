@@ -1160,6 +1160,18 @@ void US_ConvertGui::resetAll( void )
    data_plot->setTitle( tr( "Absorbance Data" ) );
 }
 
+//
+void US_ConvertGui::reset_limsimport_panel( void )
+{
+  qDebug() << "Resetting panel BEFORE going to Manage runs... ";
+  
+  resetAll_auto( );
+  //emit saving_complete_back_to_initAutoflow( ); // Not needed...
+  
+  qDebug() << "LIMS IMPROT reset ..";
+}
+
+
 void US_ConvertGui::resetAll_auto( void )
 {
    QApplication::restoreOverrideCursor();
@@ -1407,6 +1419,15 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
      qDebug() << "IMPORT MWL auto...";
       importMWL();
 
+      //ALEXEY: For autoflow: Reset to-do list && maybe solutions, triple desc.
+      if ( us_convert_auto_mode ) 
+	{
+	  lw_todoinfo->clear();
+	  le_solutionDesc ->setText( "" );
+	  le_description  ->setText( "" );
+	  le_centerpieceDesc -> setText( "");
+	}
+      
       editRuninfo_auto();
       readProtocol_auto();
       getLabInstrumentOperatorInfo_auto();
@@ -1419,6 +1440,15 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
      qDebug() << "IMPORT AUC auto...";
       importAUC();
 
+      //ALEXEY: For autoflow: Reset to-do list && maybe solutions, triple desc.
+      if ( us_convert_auto_mode ) 
+	{
+	  lw_todoinfo->clear();
+	  le_solutionDesc ->setText( "" );
+	  le_description  ->setText( "" );
+	  le_centerpieceDesc -> setText( "");
+	}
+      
       editRuninfo_auto();
       readProtocol_auto();
       getLabInstrumentOperatorInfo_auto();
