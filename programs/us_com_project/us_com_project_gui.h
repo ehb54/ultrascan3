@@ -148,7 +148,7 @@ class US_ExperGui : public US_WidgetsDialog
       void manageExperiment ( void );        // Slot for exp.  button clicked
       void us_exp_is_closed_set_button( void );
       void to_live_update( QMap < QString, QString > & protocol_details );
-      void clear_experiment( QString & protocolName);
+      //void clear_experiment( QString & protocolName);
       void exp_cleared( void );
       void pass_used_instruments( QStringList & );
       void expsetup_msg_closed( void );
@@ -218,6 +218,7 @@ class US_PostProdGui : public US_WidgetsDialog
     void to_editing( QString & currDir, QString & protocolName );
     //void to_experiment( QString & protocolName );
     void to_initAutoflow( void );
+    void reset_lims_import( void );
     
   signals:
     //void to_post_prod( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii  );
@@ -226,6 +227,7 @@ class US_PostProdGui : public US_WidgetsDialog
     void switch_to_editing( QString & currDir, QString & protocolName );
     //void switch_to_exp( QString & protocolName );
     void switch_to_initAutoflow( void);
+    void reset_lims_import_passed( void );
 };
 
 
@@ -393,9 +395,10 @@ signals:
   void import_data_us_convert(  QMap < QString, QString > & );
 
   void pass_to_editing( QString & currDir, QString & protocolName );
-  void clear_experiment( QString & protocolName);
+  //void clear_experiment( QString & protocolName);
   void us_comproject_closed( void );
   void pass_used_instruments( QStringList & );
+  void reset_lims_import( void );
 };
 
 
