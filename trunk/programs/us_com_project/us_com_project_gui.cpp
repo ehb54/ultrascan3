@@ -33,6 +33,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
   //   dbg_level    = US_Settings::us_debug();
    curr_panx    = 0;
    window_closed = false;
+   xpn_viewer_closed_soft = false;  
    
    us_mode_bool = true;
 
@@ -173,6 +174,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    
    //connect( this, SIGNAL( clear_experiment( QString & ) ),  epanExp, SLOT( clear_experiment( QString & )  ) );
    connect( epanObserv, SIGNAL( close_everything() ), this, SLOT( close_all() ));
+   connect( this, SIGNAL( reset_live_update() ),  epanObserv, SLOT( reset_live_update( )  ) );
    
    //connect( epanPostProd, SIGNAL( switch_to_analysis( QString &, QString &) ),  this, SLOT( switch_to_analysis( QString &, QString & )  ) );
    //connect( this, SIGNAL( pass_to_analysis( QString &, QString & ) ),   epanAnalysis, SLOT( do_analysis( QString &, QString & )  ) );
@@ -197,6 +199,8 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    curr_panx    = 0;
 
    window_closed = false;
+   xpn_viewer_closed_soft = false;  
+   
    us_mode_bool = false;
    
    setWindowTitle( tr( "UltraScan Optima AUC Interface" ) );
@@ -337,6 +341,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( epanObserv, SIGNAL( switch_to_post_processing( QMap < QString, QString > & ) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & ) ) );
    connect( this, SIGNAL( import_data_us_convert( QMap < QString, QString > & ) ),  epanPostProd, SLOT( import_data_us_convert( QMap < QString, QString > & )  ) );
    connect( epanObserv, SIGNAL( close_everything() ), this, SLOT( close_all() ));
+   connect( this, SIGNAL( reset_live_update() ),  epanObserv, SLOT( reset_live_update( )  ) );
    
    connect( epanPostProd, SIGNAL( switch_to_editing( QString &, QString &) ),  this, SLOT( switch_to_editing( QString &, QString & )  ) );
    connect( this, SIGNAL( reset_lims_import() ),  epanPostProd, SLOT( reset_lims_import( )  ) );
@@ -381,18 +386,23 @@ void US_ComProjectMain::initPanels( int  panx )
 		2. More complex: Back to Managing runs from active LIVE_UPDATE stage -- stop all timers and other processes...
 	  */ 
 	  qDebug() << "Jumping from LIVE UPDATE.";
+	  
+	  //2. Stop all timers/threads, reset GUI - when stopping fully working LIVE UPDATE
+	  if ( !xpn_viewer_closed_soft )
+	    emit reset_live_update();
 	}
 
       if ( curr_panx == 3 )
 	{
 	  qDebug() << "Jumping from LIMS IMPORT.";
-	  //Send sigmal to reset LIMS IMPORT tab... Fully SET
+	  //Send signal to reset LIMS IMPORT tab... Fully SET
 	  emit reset_lims_import();
 	}
       
       if ( curr_panx == 4 )
 	qDebug() << "Jumping from EDITING.";
-      
+
+      xpn_viewer_closed_soft = false;
       epanInit  ->initAutoflowPanel();
     }
 
@@ -627,6 +637,7 @@ void US_ComProjectMain::switch_to_live_update( QMap < QString, QString > & proto
 // Slot to pass submitted to Optima run info to the Live Update tab
 void US_ComProjectMain::close_all( void )
 {
+  xpn_viewer_closed_soft = true;  
   tabWidget->setCurrentIndex( 0 );   
   //epanInit  ->initAutoflowPanel();  //DO NOT Duplicate - was called in previous line while changing Tab!!!
   qDebug() << "XPN viewer /US_convert  closed!";
@@ -671,6 +682,12 @@ void US_ComProjectMain::switch_to_post_processing( QMap < QString, QString > & p
   tabWidget->setCurrentIndex( 3 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
   curr_panx = 3;
 
+  // Trigger resize to update size of the PostProcs
+  int curr_h = this->height() + 1;
+  int curr_w = this->width() + 1;
+
+  this->resize( QSize(curr_w, curr_h) );
+  
   for (int i = 1; i < tabWidget->count(); ++i )
     {
       if ( i == 3 )
@@ -1021,7 +1038,7 @@ void US_InitDialogueGui::initRecordsDialogue( void )
 	{
 	  QString list_instruments_in_use = occupied_instruments.join(", ");
 	  
-	  QMessageBox * msg_instr_use = new QMessageBox;
+	  QMessageBox * msg_instr_use = new QMessageBox(this);
 	  msg_instr_use->setIcon(QMessageBox::Information);
 	  msg_instr_use->setText(tr( "The following Optima instrument(s)<br>"
 				       "are currently in use: <br><br>"
@@ -1656,6 +1673,9 @@ US_ObservGui::US_ObservGui( QWidget* topw )
 
    //ALEXEY: devise SLOT saying what to do upon completion of experiment and exporting AUC data to hard drive - Import Experimental Data  !!! 
    connect( sdiag, SIGNAL( experiment_complete_auto( QMap < QString, QString > & ) ), this, SLOT( to_post_processing ( QMap < QString, QString > & ) ) );
+
+   //ALEXEY: to reset timers/threads and GUI when returning back to InitDialog
+   connect( this, SIGNAL( reset_live_update_passed( ) ), sdiag, SLOT( reset_liveupdate_panel ( )  ) );
    
    //ALEXEY: close program, emitted from sdiag
    connect( sdiag, SIGNAL( close_program() ), this, SLOT( to_close_program()  ) );
@@ -1698,6 +1718,11 @@ void US_ObservGui::resizeEvent(QResizeEvent *event)
     }
      
     QWidget::resizeEvent(event);
+}
+
+void US_ObservGui::reset_live_update( void )
+{
+  emit reset_live_update_passed(); 
 }
 
 // Live Update's get and use submitted run's protocol details
