@@ -656,6 +656,7 @@ if(mcknt>0)
 
    grid_rpm          = us_grid( data_plot_rpm );
 
+   //ALEXEY: curves for sysdata must be re-defined in the reset_auto() !!!
    curv_rpm  = us_curve( data_plot_rpm, "RPM" );
    curv_temp = us_curve( data_plot_rpm, "Temperature" );
    curv_temp->setYAxis     ( QwtPlot::yRight );
@@ -665,6 +666,8 @@ if(mcknt>0)
 
    curv_temp->setPen( pen_red);
    curv_rpm ->setPen( pen_green);
+   /*************************************************************************/
+
    
    connect( plot_rpm, SIGNAL( zoomedCorners( QRectF ) ),
             this, SLOT  ( currentRectf ( QRectF ) ) );
@@ -1209,6 +1212,15 @@ void US_XpnDataViewer::reset_auto( void )
    data_plot_rpm->setAxisScale( QwtPlot::yRight , 0.0, 40 );
    grid_rpm      = us_grid( data_plot_rpm );
    data_plot_rpm->replot();
+   //Curves for RPM/Temp.
+   curv_rpm  = us_curve( data_plot_rpm, "RPM" );
+   curv_temp = us_curve( data_plot_rpm, "Temperature" );
+   curv_temp->setYAxis     ( QwtPlot::yRight );
+   QPen    pen_red ( Qt::red );
+   QPen    pen_green ( Qt::green );
+   curv_temp->setPen( pen_red);
+   curv_rpm ->setPen( pen_green);
+   
    //RPM/Temp.
    rpm_box->setSpeed(0);
    temperature_box->setTemp(0);
@@ -1884,7 +1896,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
   remaining_time_text = QString::number(dhms_remain[1]) + ":" + QString::number(dhms_remain[2]) + ":" + QString::number(dhms_remain[3]);
   le_remaining->setText( remaining_time_text );
   qApp->processEvents();
-  
+
   //RPM/Temp. Plots:
 
   //counter_mins += 500; //temporary for testing only
@@ -1901,7 +1913,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
   double* d_rpm          = rpm_data.data();
   double* d_temp         = temp_data.data();
   double* d_time         = time_data.data();
-
+  
   //axis ranges, temporary
   double rpm_min = 0;
   double rpm_max = rpm + 5000;
@@ -1913,7 +1925,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
   //if (temp_data.size() != 0 )
   curv_temp->setSamples( d_time, d_temp, time_data.size() );
   curv_rpm->setSamples(  d_time, d_rpm,  time_data.size() );   
-
+  
   //data_plot_rpm->setAxisScale( QwtPlot::xBottom, 0.0, double(elapsed_time_1/60.0) );  // <-- HERE
   data_plot_rpm->setAxisScale( QwtPlot::xBottom, double(ElapsedTimeOffset/60.0), double(elapsed_time_1/60.0) );  // 
   //data_plot_rpm->setAxisScale( QwtPlot::xBottom, 0.0, double(exp_time/60.0 + counter_mins ) ); // for testing only
@@ -2121,15 +2133,84 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
 	{
 	  timer_data_init->stop();
 	  disconnect(timer_data_init, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
-
+	  
 	  reset_auto();
+
 	  emit close_program(); 
 	}
     }
 }
 
+// Reset LIVE UPDATE panel && stop timers && quit threads
+void US_XpnDataViewer::reset_liveupdate_panel ( void )
+{
+  //Quit sys_thread, emit finished() to stop timer_check_sysdata from withing thread
+  if ( !sys_thread->isFinished() )
+    {
+      sys_thread->quit();    
+      qApp->processEvents();
+    }
+
+  //Disconnect timer_check_sysdata
+  if ( timer_check_sysdata->isActive() )
+    {
+      timer_check_sysdata->stop();
+      disconnect(timer_check_sysdata, SIGNAL(timeout()), 0, 0);
+    }
+  
+  //Stop other timers if active
+  if ( timer_all_data_avail->isActive() ) 
+    {
+      timer_all_data_avail->stop();
+      disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);
+    }
+  
+  if ( timer_data_reload->isActive() )
+    {
+      timer_data_reload->stop();
+      disconnect(timer_data_reload, SIGNAL(timeout()), 0, 0);
+    }
+
+  if ( timer_data_init->isActive() )
+    {
+      timer_data_init->stop();
+      disconnect(timer_data_init, SIGNAL(timeout()), 0, 0);
+    }
+
+  qApp->processEvents();
+  
+  /***** DEBUG ***********************/
+  if ( sys_thread->isFinished() )
+    qDebug() << "QThread STOPPED upon clickig Manage Optima runs !!! ";
+  
+  if ( !timer_check_sysdata->isActive() )
+    qDebug() << "QTimer timer_check_sysdata STOPPED by clickig Manage Optima runs !!! ";
+
+  if ( !timer_data_init->isActive() )
+    qDebug() << "QTimer timer_data_init STOPPED by clickig Manage Optima runs !!! ";
+  
+  if ( !timer_all_data_avail->isActive() )
+    qDebug() << "QTimer timer_all_data_avail STOPPED by clickig Manage Optima runs !!! ";
+
+  if ( !timer_data_reload->isActive() )
+    qDebug() << "QTimer timer_data_reload STOPPED by clickig Manage Optima runs !!! ";
+  /*************************************/
+  
+  reset_auto();
+
+  qDebug() << in_reload_auto << ", " << in_reload_all_data << ", " << in_reload_data_init << ", " << in_reload_check_sysdata;
+  
+  in_reload_auto    = false;
+  in_reload_all_data  = false;
+  in_reload_data_init = false;
+  in_reload_check_sysdata  = false;
+  
+  qApp->processEvents();
+}
+
+
 //void US_XpnDataViewer::retrieve_xpn_raw_auto( QString & RunID )
-void US_XpnDataViewer::retrieve_xpn_raw_auto( )
+void US_XpnDataViewer::retrieve_xpn_raw_auto( void )
 {
    if ( in_reload_all_data )            // If already doing a reload,
      return;                            //  skip starting a new one

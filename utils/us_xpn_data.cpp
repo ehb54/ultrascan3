@@ -55,7 +55,7 @@ DbgLv(1) << "XpDa:cnc: drivers" << dbxpn.drivers();
    dbxpn.setUserName    ( dbuser  );
    dbxpn.setPassword    ( dbpasw );
 
-   dbxpn.setConnectOptions("connect_timeout=3");
+   dbxpn.setConnectOptions("connect_timeout=5");
      
    if ( dbxpn.open() )
    {

@@ -303,6 +303,8 @@ class US_XpnDataViewer : public US_Widgets
      bool   load_xpn_raw_auto   ( void );
      void   check_for_data ( QMap < QString, QString > & );
      void   check_for_sysdata ( void );
+
+     void   reset_liveupdate_panel ( void );
      
      //void   retrieve_xpn_raw_auto ( QString & );
      void   retrieve_xpn_raw_auto ( void );
