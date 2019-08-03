@@ -4159,14 +4159,15 @@ DbgLv(0) << "NO Chromatic Aberration correction for Interference data";
    {
      if ( !auto_mode_bool  )
        {
-	 QMessageBox::warning( this,
+	 		int response=QMessageBox::question( this,
 			       tr( "Chromatic Aberration Correction:" ),
 			       tr( "Wavelength correction data for currently used Optima machine\n"
 				   "are found in DB and will be used to correct your data for\n"
 				   "chromatic aberration between 190 nm and 800 nm.\n\n"
 				   "Exported data will be modified!\n") );
+			if (response == QMessageBox::No) return;
        }
-     
+      DbgLv(1) << "go ahead and correct..."; 
       // For each triple, get the wavelength; then compute and apply a correction
       for ( int jd = 0; jd < ntripl; jd++ )
       {
