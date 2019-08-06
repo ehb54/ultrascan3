@@ -126,9 +126,9 @@ void US_SelectItem::build_layout( const QString titl )
        p.setColor(QPalette::Text, Qt::darkRed);
        le_info->setPalette(p);
        
-       le_info->setText(tr( "Information on one or more experimental methods submitted to Bechman Optima(s) is available."
-			    "<ul><li>You can reattach to specific job by selecting from the list below and clicking \"Select Optima Run to Follow\"</ul></li>"
-			    "<ul><li>Alternatively, you can click \"Define Another Experiment\" to design and/or submit a new experiment method to the availabale Optima instrument(s)</ul></li>"
+       le_info->setText(tr( "Information on one or more experimental methods submitted to Beckman Optima AUC Instruments is available."
+			    "<ul><li>You can reattach to a specific job by selecting it from the list below and clicking \"Select Optima Run to Follow\"</ul></li>"
+			    "<ul><li>Alternatively, you can click \"Define Another Experiment\" to design and/or submit a new experimental method to the availabale Optima instrument(s)</ul></li>"
 			    "<ul><li>Finally, records can be deleted (\"Delete Record\"). Use with caution</ul></li>" ));
 
        
