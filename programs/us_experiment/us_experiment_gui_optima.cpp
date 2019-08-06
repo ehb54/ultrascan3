@@ -4799,6 +4799,19 @@ void US_ExperGuiUpload::submitExperiment()
 
             if ( has_absorbance )
             {
+
+	      //Stop if ScanCount > 1501
+	      if ( ScanCount > 1501 )
+		{
+		  QMessageBox::critical( this,
+					 tr( "*ERROR* in Submitting Protocol" ),
+					 tr( "Protocol cannot be submitted: \n"
+					     "Number of scans per cell per wavelengths is %1. \n" 
+					     "It must be less than 1501. \n\n"
+					     "Please revise experiment parameters accordingly." ).arg( ScanCount ) );
+		  return;
+		}
+	      
                for ( int ii = 0; ii < rpRange->nranges; ii++ )
                {
                   channel  = rpRange->chrngs[ ii ].channel;
@@ -5020,6 +5033,19 @@ void US_ExperGuiUpload::submitExperiment()
             }
             if ( has_interference )
             {
+	      //ALEXEY: For interference as well ?
+	      if ( ScanCount > 1501 )
+		{
+		  QMessageBox::critical( this,
+					 tr( "*ERROR* in Submitting Protocol" ),
+					 tr( "Protocol cannot be submitted: \n"
+					     "Number of scans per cell per wavelengths is %1. \n" 
+					     "It must be less than 1501. \n\n"
+					     "Please revise experiment parameters accordingly." ).arg( ScanCount ) );
+
+		  return;
+		}
+	      
                QString scan_count        = QString::number( ScanCount );               // <-- ScanInterval
                QString scan_interval     = QString::number( int(ScanInt) );            // <-- ScanCount
 

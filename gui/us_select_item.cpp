@@ -119,7 +119,7 @@ void US_SelectItem::build_layout( const QString titl )
        le_info = us_textedit();
        QFontMetrics m (le_info -> font()) ;
        int RowHeight = m.lineSpacing() ;
-       le_info -> setFixedHeight  (10 * RowHeight) ;
+       le_info -> setFixedHeight  (11 * RowHeight) ;
 
        QPalette p = le_info->palette(); 
        p.setColor(QPalette::Base, Qt::lightGray);
