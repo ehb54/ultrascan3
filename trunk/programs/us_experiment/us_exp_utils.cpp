@@ -2618,9 +2618,14 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
    // subm_enab         = ( have_run    &&  have_proj  &&  proto_ena  &&
    //                       connected );                                     
 
-   subm_enab         = ( have_run    &&  have_proj  &&  proto_ena  &&
-			 mainw->connection_status &&                // ALEXEY: use top-level connection boolean!
-			 !currProto->exp_label.isEmpty() );         // ALEXEY: and label is present        
+   if ( mainw->automode ) 
+     subm_enab         = ( have_run    &&  have_proj  &&  proto_ena  &&
+			   mainw->connection_status &&                // ALEXEY: use top-level connection boolean!
+			   !currProto->exp_label.isEmpty() );         // ALEXEY: and label is present
+   else
+     subm_enab         = ( have_run    &&  have_proj  &&  proto_ena  &&
+			   mainw->connection_status );               // ALEXEY: use top-level connection boolean!
+			  
 
    ck_run     ->setChecked( have_run   );
    ck_project ->setChecked( have_proj  );
