@@ -47,9 +47,9 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    //QGridLayout* statL     = new QGridLayout();
    //QHBoxLayout* buttL     = new QHBoxLayout();
 
-   gen_banner = us_banner( tr( "TEST PROGRAM, v. 0.1" ) );
+   gen_banner = us_banner( tr( "UltraScan GMP, v. 0.1" ) );
    //gen_banner = new QLabel;
-   //gen_banner->setText("TEST PROGRAM, v. 0.1");
+   //gen_banner->setText("UltraScan GMP, v. 0.1");
    //gen_banner->setAlignment(Qt::AlignCenter);
    //gen_banner->setStyleSheet("background-color: #36454f; color : #D3D9DF;");
    
@@ -62,7 +62,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    main->addWidget(gen_banner);
 
    welcome = new QTextEdit;
-   welcome->setText(" <br> Welcome to the TEST PROGRAM <br> for setting up, monitoring, editing and analyzing <br> AUC experiments and produced data... <br>");
+   welcome->setText(" <br> Welcome to UltraScan GMP<br> for setting up, monitoring, editing and analyzing <br> AUC experiments and produced data... <br>");
    //welcome->setMaximumHeight(120);
    welcome->setReadOnly(true);
    welcome->setAlignment(Qt::AlignCenter);
@@ -213,9 +213,9 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    //QGridLayout* statL     = new QGridLayout();
    //QHBoxLayout* buttL     = new QHBoxLayout();
 
-   gen_banner = us_banner( tr( "TEST PROGRAM, v. 0.1" ) );
+   gen_banner = us_banner( tr( "UltraScan GMP, v. 0.1" ) );
    //gen_banner = new QLabel;
-   //gen_banner->setText("TEST PROGRAM, v. 0.1");
+   //gen_banner->setText("UltraScan GMP, v. 0.1");
    //gen_banner->setAlignment(Qt::AlignCenter);
    //gen_banner->setStyleSheet("background-color: #36454f; color : #D3D9DF;");
    
@@ -228,7 +228,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    main->addWidget(gen_banner);
 
    welcome = new QTextEdit;
-   welcome->setText(" <br> Welcome to the TEST PROGRAM <br> for setting up, monitoring, editing and analyzing <br> AUC experiments and produced data... <br>");
+   welcome->setText(" <br> Welcome to UltraScan GMP<br> for setting up, monitoring, editing and analyzing <br> AUC experiments and produced data... <br>");
    //welcome->setMaximumHeight(120);
    welcome->setReadOnly(true);
    welcome->setAlignment(Qt::AlignCenter);
