@@ -46,6 +46,7 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    usmode = false;
    global_reset = false;
    instruments_in_use.clear();
+   ScanCount_global = 0;
    
    // Create tab and panel widgets
    tabWidget           = us_tabwidget();
@@ -4393,6 +4394,18 @@ DbgLv(1) << "EGUp:  connected" << connected;
 // Slot to save the current Run Protocol
 void US_ExperGuiUpload::saveRunProtocol()
 {
+
+  if ( mainw->ScanCount_global > 1501 )
+    {
+      QMessageBox::critical( this,
+			     tr( "*ERROR* in Saving Protocol" ),
+			     tr( "Protocol cannot be saved: \n"
+				 "Number of scans per cell per wavelengths is %1. \n" 
+				 "It must not exceed 1501. \n\n"
+				 "Please revise experiment parameters accordingly." ).arg( mainw->ScanCount_global ) );
+      return;
+    }
+  
 DbgLv(1) << "EGUp:svRP: IN";
    // Test that the current protocol name is new
    QStringList           prnames;
@@ -4807,7 +4820,7 @@ void US_ExperGuiUpload::submitExperiment()
 					 tr( "*ERROR* in Submitting Protocol" ),
 					 tr( "Protocol cannot be submitted: \n"
 					     "Number of scans per cell per wavelengths is %1. \n" 
-					     "It must be less than 1501. \n\n"
+					     "It must not exceed 1501. \n\n"
 					     "Please revise experiment parameters accordingly." ).arg( ScanCount ) );
 		  return;
 		}
@@ -5040,7 +5053,7 @@ void US_ExperGuiUpload::submitExperiment()
 					 tr( "*ERROR* in Submitting Protocol" ),
 					 tr( "Protocol cannot be submitted: \n"
 					     "Number of scans per cell per wavelengths is %1. \n" 
-					     "It must be less than 1501. \n\n"
+					     "It must not exceed 1501. \n\n"
 					     "Please revise experiment parameters accordingly." ).arg( ScanCount ) );
 
 		  return;

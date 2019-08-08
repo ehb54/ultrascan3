@@ -910,6 +910,8 @@ class US_ExperimentMain : public US_Widgets
 
       bool solutions_change;
 
+      int ScanCount_global;
+
       bool    connection_status;
       QString xpnhost;
       int     xpnport;

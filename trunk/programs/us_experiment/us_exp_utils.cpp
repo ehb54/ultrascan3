@@ -2396,6 +2396,9 @@ DbgLv(1) << "EGRn:inP:  #Wvl for cell: " << j << " is: " << Total_wvl[i];
          else
             scancount = int( duration_sec / ( scanint_sec_min * Total_wvl[i] ) );
       }
+
+      mainw->ScanCount_global = scancount;
+      
 DbgLv(1) << "EGRn:inP:  speed" << i << "scancount" << scancount;
       QString scancount_stage = tr( "Stage %1. Number of Scans per Wavelength: %2 " ).arg(i+1).arg(scancount);
       cb_scancount->addItem( scancount_stage );
