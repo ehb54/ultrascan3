@@ -637,7 +637,8 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 	 scancount = int( duration_sec / scanint_sec );
        else
 	 scancount = int( duration_sec / (scanint_sec_min * tot_wvl) );
-       
+
+       mainw->ScanCount_global = scancount;
        QString scancount_stage = tr( "Stage %1. Number of Scans per Wavelength: %2 " ).arg(i+1).arg(scancount);
        cb_scancount->addItem( scancount_stage );
      }
@@ -777,6 +778,8 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 	 scancount = int( duration_sec / scanint_sec );
        else
 	 scancount = int( duration_sec / (scanint_sec_min * tot_wvl) );
+
+       mainw->ScanCount_global = scancount;
        
        QString scancount_stage = tr( "Stage %1. Number of Scans per Wavelength: %2 " ).arg(i+1).arg(scancount);
        cb_scancount->addItem( scancount_stage );
