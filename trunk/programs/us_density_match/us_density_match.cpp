@@ -8,6 +8,7 @@
 #include "us_model.h"
 #include "us_license_t.h"
 #include "us_license.h"
+#include "us_solution_vals.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
@@ -17,14 +18,8 @@
 #include "us_passwd.h"
 #include "us_report.h"
 #include "us_constants.h"
-#define DbgLv(a) if(dbg_level>=a)qDebug()
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c) setData(a,b,c)
-#define setMinimum(a)     setMinValue(a)
-#define setMaximum(a)     setMaxValue(a)
-#endif
 
-#define PA_TMDIS_MS 0   // default Plotall time per distro in milliseconds
+#define DbgLv(a) if(dbg_level>=a)qDebug()
 
 // main program
 int main( int argc, char* argv[] )
@@ -42,21 +37,21 @@ int main( int argc, char* argv[] )
 
 // qSort LessThan method for S_Solute sort
 bool distro_lessthan( const S_Solute &solu1, const S_Solute &solu2 )
-{  // TRUE iff  (s1<s2) || (s1==s2 && k1<k2)
+{  // TRUE iff  (s1<s2) || (s1==s2 && d1<d2)
    return ( solu1.s < solu2.s ) ||
-          ( ( solu1.s == solu2.s ) && ( solu1.k < solu2.k ) );
+          ( ( solu1.s == solu2.s ) && ( solu1.d < solu2.d ) );
 }
 
 // US_Density_Match class constructor
 US_Density_Match::US_Density_Match() : US_Widgets()
 {
-   // set up the GUI
+   // Set up the GUI
 
    setWindowTitle( tr( "Density Matching" ) );
    setPalette( US_GuiSettings::frameColor() );
 
 
-   // primary layouts
+   // Primary layouts
    QHBoxLayout* main = new QHBoxLayout( this );
    QVBoxLayout* left = new QVBoxLayout();
    QGridLayout* spec = new QGridLayout();
@@ -70,7 +65,7 @@ US_Density_Match::US_Density_Match() : US_Widgets()
    int s_row = 0;
    dbg_level = US_Settings::us_debug();
 DbgLv(1) << "MD: main: AA";
-   clean_etc_dir();
+//   clean_etc_dir();
 
    // Top banner
    QLabel* lb_info1      = us_banner( tr( "Model Selection Controls" ) );
@@ -94,62 +89,28 @@ DbgLv(1) << "MD: main: AA";
             + tr( "    analysisID" ) );
    us_setReadOnly( te_distr_info, true );
 
-//   le_cmap_name  = us_lineedit(
-//         tr( "Default Color Map: w-cyan-magenta-red-black" ), -1, true );
-//   te_distr_info->setMaximumHeight( le_cmap_name->height() * 2 );
+   plot_x      = 0;
 
-           plot_x      = 0;
-           plot_y      = 1;
-#if 0
    QLabel* lb_x_axis   = us_label( tr( "Plot X:" ) );
-   QLabel* lb_y_axis   = us_label( tr( "Plot Y:" ) );
            bg_x_axis   = new QButtonGroup( this );
-           bg_y_axis   = new QButtonGroup( this );
-   QGridLayout*  gl_x_s    = us_radiobutton( tr( "s"   ), rb_x_s,    true  );
+   QGridLayout*  gl_x_mass = us_radiobutton( tr( "m.mass"   ), rb_x_mass, true  );
    QGridLayout*  gl_x_ff0  = us_radiobutton( tr( "ff0" ), rb_x_ff0,  false );
-   QGridLayout*  gl_x_mw   = us_radiobutton( tr( "mw"  ), rb_x_mw,   false );
+   QGridLayout*  gl_x_rh   = us_radiobutton( tr( "Rh"  ), rb_x_rh,   false );
    QGridLayout*  gl_x_vbar = us_radiobutton( tr( "vbar"), rb_x_vbar, false );
-   QGridLayout*  gl_x_D    = us_radiobutton( tr( "D"   ), rb_x_D,    false );
-   QGridLayout*  gl_x_f    = us_radiobutton( tr( "f"   ), rb_x_f,    false );
-   QGridLayout*  gl_y_s    = us_radiobutton( tr( "s"   ), rb_y_s,    false );
-   QGridLayout*  gl_y_ff0  = us_radiobutton( tr( "ff0" ), rb_y_ff0,  true  );
-   QGridLayout*  gl_y_mw   = us_radiobutton( tr( "mw"  ), rb_y_mw,   false );
-   QGridLayout*  gl_y_vbar = us_radiobutton( tr( "vbar"), rb_y_vbar, false );
-   QGridLayout*  gl_y_D    = us_radiobutton( tr( "D"   ), rb_y_D,    false );
-   QGridLayout*  gl_y_f    = us_radiobutton( tr( "f"   ), rb_y_f,    false );
-   bg_x_axis->addButton( rb_x_s,    ATTR_S );
+   QGridLayout*  gl_x_s    = us_radiobutton( tr( "s"   ), rb_x_s,    false );
+   bg_x_axis->addButton( rb_x_mass, ATTR_W );
    bg_x_axis->addButton( rb_x_ff0,  ATTR_K );
-   bg_x_axis->addButton( rb_x_mw,   ATTR_W );
+   bg_x_axis->addButton( rb_x_rh,   ATTR_R );
    bg_x_axis->addButton( rb_x_vbar, ATTR_V );
-   bg_x_axis->addButton( rb_x_D,    ATTR_D );
-   bg_x_axis->addButton( rb_x_f,    ATTR_F );
-   bg_y_axis->addButton( rb_y_s,    ATTR_S );
-   bg_y_axis->addButton( rb_y_ff0,  ATTR_K );
-   bg_y_axis->addButton( rb_y_mw,   ATTR_W );
-   bg_y_axis->addButton( rb_y_vbar, ATTR_V );
-   bg_y_axis->addButton( rb_y_D,    ATTR_D );
-   bg_y_axis->addButton( rb_y_f,    ATTR_F );
-   rb_x_s   ->setChecked( true  );
-   rb_y_s   ->setEnabled( false );
-   rb_y_ff0 ->setChecked( true  );
-   rb_x_ff0 ->setEnabled( false );
-   rb_x_s   ->setToolTip( tr( "Set X axis to Sedimentation Coefficient" ) );
+   bg_x_axis->addButton( rb_x_s,    ATTR_S );
+   rb_x_mass->setChecked( true  );
+   rb_x_mass->setToolTip( tr( "Set X axis to Molar Mass"                ) );
    rb_x_ff0 ->setToolTip( tr( "Set X axis to Frictional Ratio"          ) );
-   rb_x_mw  ->setToolTip( tr( "Set X axis to Molecular Weight"          ) );
+   rb_x_rh  ->setToolTip( tr( "Set X axis to Hydrodynamic Radius"       ) );
    rb_x_vbar->setToolTip( tr( "Set X axis to Partial Specific Volume"   ) );
-   rb_x_D   ->setToolTip( tr( "Set X axis to Diffusion Coefficient"     ) );
-   rb_x_f   ->setToolTip( tr( "Set X axis to Frictional Coefficient"    ) );
-   rb_y_s   ->setToolTip( tr( "Set Y axis to Sedimentation Coefficient" ) );
-   rb_y_ff0 ->setToolTip( tr( "Set Y axis to Frictional Ratio"          ) );
-   rb_y_mw  ->setToolTip( tr( "Set Y axis to Molecular Weight"          ) );
-   rb_y_vbar->setToolTip( tr( "Set Y axis to Partial Specific Volume"   ) );
-   rb_y_D   ->setToolTip( tr( "Set Y axis to Diffusion Coefficient"     ) );
-   rb_y_f   ->setToolTip( tr( "Set Y axis to Frictional Coefficient"    ) );
+   rb_x_s   ->setToolTip( tr( "Set X axis to Sedimentation Coefficient" ) );
    connect( bg_x_axis,  SIGNAL( buttonReleased( int ) ),
             this,       SLOT  ( select_x_axis ( int ) ) );
-   connect( bg_y_axis,  SIGNAL( buttonReleased( int ) ),
-            this,       SLOT  ( select_y_axis ( int ) ) );
-#endif
 
    pb_refresh    = us_pushbutton( tr( "Refresh Plot" ) );
    pb_refresh->setEnabled(  false );
@@ -167,13 +128,6 @@ DbgLv(1) << "MD: main: AA";
             this,   SLOT( update_disk_db( bool ) ) );
 
    pb_prefilt    = us_pushbutton( tr( "Select PreFilter" ) );
-
-#if 0
-   pb_ldcolor    = us_pushbutton( tr( "Load Color File" ) );
-   pb_ldcolor->setEnabled( true );
-   connect( pb_ldcolor, SIGNAL( clicked() ),
-            this,       SLOT( load_color() ) );
-#endif
 
    le_prefilt    = us_lineedit( tr( "" ), -1, true );
    connect( pb_prefilt, SIGNAL( clicked() ),
@@ -204,92 +158,62 @@ DbgLv(1) << "MD: main: AA";
    spec->addLayout( dkdb_cntrls,   s_row++, 0, 1, 8 );
    spec->addWidget( le_prefilt,    s_row++, 0, 1, 8 );
    spec->addWidget( pb_prefilt,    s_row++, 0, 1, 4 );
-   //spec->addWidget( pb_ldcolor,    s_row++, 4, 1, 4 );
    spec->addWidget( pb_lddistr,    s_row,   0, 1, 4 );
    spec->addWidget( pb_rmvdist,    s_row++, 4, 1, 4 );
    spec->addWidget( pb_refresh,    s_row,   0, 1, 4 );
    spec->addWidget( pb_reset,      s_row++, 4, 1, 4 );
-
-
+   spec->addWidget( lb_x_axis,     s_row,   0, 1, 2 );
+   spec->addLayout( gl_x_mass,     s_row,   2, 1, 2 );
+   spec->addLayout( gl_x_ff0,      s_row,   4, 1, 2 );
+   spec->addLayout( gl_x_rh,       s_row++, 6, 1, 2 );
+   spec->addLayout( gl_x_vbar,     s_row,   2, 1, 2 );
+   spec->addLayout( gl_x_s,        s_row++, 4, 1, 2 );
    spec->addWidget( ck_savepl,     s_row,   0, 1, 4 );
    spec->addWidget( ck_locsave,    s_row++, 4, 1, 4 );
-//   spec->addWidget( lb_curr_distr, s_row,   0, 1, 4 );
-//   spec->addWidget( ct_curr_distr, s_row++, 4, 1, 4 );
    spec->addWidget( te_distr_info, s_row,   0, 2, 8 ); s_row += 2;
-   //spec->addWidget( le_cmap_name,  s_row++, 0, 1, 8 );
-#if 0
-   spec->addWidget( lb_x_axis,     s_row,   0, 1, 2 );
-   spec->addLayout( gl_x_s,        s_row,   2, 1, 1 );
-   spec->addLayout( gl_x_ff0,      s_row,   3, 1, 1 );
-   spec->addLayout( gl_x_mw,       s_row,   4, 1, 1 );
-   spec->addLayout( gl_x_vbar,     s_row,   5, 1, 1 );
-   spec->addLayout( gl_x_D,        s_row,   6, 1, 1 );
-   spec->addLayout( gl_x_f,        s_row++, 7, 1, 1 );
-   spec->addWidget( lb_y_axis,     s_row,   0, 1, 2 );
-   spec->addLayout( gl_y_s,        s_row,   2, 1, 1 );
-   spec->addLayout( gl_y_ff0,      s_row,   3, 1, 1 );
-   spec->addLayout( gl_y_mw,       s_row,   4, 1, 1 );
-   spec->addLayout( gl_y_vbar,     s_row,   5, 1, 1 );
-   spec->addLayout( gl_y_D,        s_row,   6, 1, 1 );
-   spec->addLayout( gl_y_f,        s_row++, 7, 1, 1 );
-#endif
 
    // Set up analysis controls
    QLabel* lb_analysis     = us_banner( tr( "Analysis Controls"      ) );
-   QLabel* lb_smoothing    = us_label ( tr( "Data Smoothing:"        ) );
-   QLabel* lb_boundPercent = us_label ( tr( "% of Boundary:"         ) );
+   QLabel* lb_boundPct     = us_label ( tr( "% of Boundary:"         ) );
    QLabel* lb_boundPos     = us_label ( tr( "Boundary Position (%):" ) );
-#if 0
-   lb_tolerance  = us_label( tr( "Back Diffusion Tolerance:" ) );
-   lb_tolerance->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
+   QLabel* lb_smoothing    = us_label ( tr( "Data Smoothing:"        ) );
 
-   ct_tolerance  = us_counter( 3, 0.001, 1.0, 0.001 );
-   ct_tolerance->setSingleStep( 0.001 );
-   ct_tolerance->setEnabled( true );
-   connect( ct_tolerance, SIGNAL( valueChanged(   double ) ),
-            this,          SLOT(  update_bdtoler( double ) ) );
-#endif
-
-   lb_division   = us_label( tr( "Divisions:" ) );
+   lb_division     = us_label( tr( "Divisions:" ) );
    lb_division->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
-   ct_division   = us_counter( 3, 0, 100, 50 );
+   ct_division     = us_counter( 2, 0, 100, 50 );
    ct_division->setSingleStep( 1 );
    ct_division->setEnabled( true );
    connect( ct_division, SIGNAL( valueChanged(  double ) ),
             this,         SLOT(  update_divis(  double ) ) );
-   ct_smoothing  = us_counter( 2, 1, 100, 1 );
-   ct_boundaryPercent  = us_counter( 3, 10, 100, 1 );
-   ct_boundaryPos  = us_counter( 3, 0, 100, 1 );
+   ct_boundaryPct  = us_counter( 2, 10, 100, 1 );
+   ct_boundaryPos  = us_counter( 2, 0, 100, 1 );
+   ct_smoothing    = us_counter( 2, 1, 100, 1 );
 
-   ct_smoothing      ->setSingleStep(  1 );
-   ct_boundaryPercent->setSingleStep(  1 );
-   ct_boundaryPos    ->setSingleStep(  1 );
-   ct_smoothing      ->setValue(  1 );
-   ct_boundaryPercent->setValue( 90 );
-   ct_boundaryPos    ->setValue(  5 );
+   ct_boundaryPct->setSingleStep(  1 );
+   ct_boundaryPos->setSingleStep(  1 );
+   ct_smoothing  ->setSingleStep(  1 );
+   ct_boundaryPct->setValue( 90 );
+   ct_boundaryPos->setValue(  5 );
+   ct_smoothing  ->setValue(  1 );
 
    spec->addWidget( lb_analysis       , s_row++, 0, 1, 8 );
-//   spec->addWidget( lb_tolerance      , s_row,   0, 1, 4 );
-//   spec->addWidget( ct_tolerance      , s_row++, 4, 1, 4 );
    spec->addWidget( lb_division       , s_row,   0, 1, 4 );
    spec->addWidget( ct_division       , s_row++, 4, 1, 4 );
-   spec->addWidget( lb_smoothing      , s_row,   0, 1, 4 );
-   spec->addWidget( ct_smoothing      , s_row++, 4, 1, 4 );
-   spec->addWidget( lb_boundPercent   , s_row,   0, 1, 4 );
-   spec->addWidget( ct_boundaryPercent, s_row++, 4, 1, 4 );
+   spec->addWidget( lb_boundPct       , s_row,   0, 1, 4 );
+   spec->addWidget( ct_boundaryPct    , s_row++, 4, 1, 4 );
    spec->addWidget( lb_boundPos       , s_row,   0, 1, 4 );
    spec->addWidget( ct_boundaryPos    , s_row++, 4, 1, 4 );
+   spec->addWidget( lb_smoothing      , s_row,   0, 1, 4 );
+   spec->addWidget( ct_smoothing      , s_row++, 4, 1, 4 );
 
 
    spec->addWidget( pb_help,          ++s_row,   0, 1, 4 );
    spec->addWidget( pb_close,           s_row++, 4, 1, 4 );
 
    // Set up plot component window on right side
-   //xa_title    = anno_title( ATTR_S );
-   //ya_title    = anno_title( ATTR_K );
-   xa_title    = tr( "Sedimentation Coefficient x 1.e+13" );
-   ya_title    = tr( "Boundary Fraction" );
+   xa_title    = anno_title( ATTR_S );
+   ya_title    = anno_title( ATTR_F );
    QBoxLayout* plot = new US_Plot( data_plot, 
       tr( "Density Matching Data" ), xa_title, ya_title );
 
@@ -300,17 +224,11 @@ DbgLv(1) << "MD: main: AA";
    data_plot->setAxisScale( QwtPlot::xBottom, -200.0, 200.0 );
    data_plot->setAxisScale( QwtPlot::yLeft,      0.0,   1.0 );
    data_plot->setCanvasBackground( Qt::white );
-#if 0
-   QwtText zTitle( "Partial Concentration" );
-   zTitle.setFont( QFont( US_GuiSettings::fontFamily(),
-      US_GuiSettings::fontSize(), QFont::Bold ) );
-   data_plot->setAxisTitle( QwtPlot::yRight, zTitle );
-#endif
 
    pick = new US_PlotPicker( data_plot );
    pick->setRubberBand( QwtPicker::RectRubberBand );
 
-   // put layouts together for overall layout
+   // Put layouts together for overall layout
    left->addLayout( spec );
    left->addStretch();
 
@@ -326,7 +244,6 @@ DbgLv(1) << "MD: main: AA";
    latest     = true;
 
    // Set up variables and initial state of GUI
-
    reset();
 }
 
@@ -339,7 +256,6 @@ DbgLv(1) << "MD:   reset: AA";
    need_save  = false;
 
    plot_x     = ATTR_S;
-   plot_y     = ATTR_K;
 //   resolu     = 90.0;
 //   ct_resolu->setRange( 1.0, 100.0 );
 //   ct_resolu->setSingleStep( 1.0 );
@@ -398,15 +314,7 @@ DbgLv(1) << "MD:   reset: AA";
    ct_curr_distr->setEnabled( false );
 #endif
 
-   // default to white-cyan-magenta-red-black color map
-   colormap  = new QwtLinearColorMap( Qt::white, Qt::black );
-   colormap->addColorStop( 0.10, Qt::cyan );
-   colormap->addColorStop( 0.50, Qt::magenta );
-   colormap->addColorStop( 0.80, Qt::red );
-   cmapname  = tr( "Default Color Map: w-cyan-magenta-red-black" );
-
-   stop();
-   system.clear();
+   alldis.clear();
    pfilts.clear();
 //   pb_pltall ->setEnabled( false );
    pb_refresh->setEnabled( false );
@@ -417,7 +325,7 @@ DbgLv(1) << "MD:   reset: AA";
 // plot the data
 void US_Density_Match::plot_data( void )
 {
-   int syssiz = system.size();
+   int syssiz = alldis.size();
 
    if ( syssiz < 1 )
       return;
@@ -430,54 +338,24 @@ void US_Density_Match::plot_data( void )
       curr_distr     = qBound( curr_distr, 0, syssiz );
    }
 
-   zpcent   = ck_zpcent->isChecked();
+//   zpcent   = ck_zpcent->isChecked();
 
-   // Get current distro and (if need be) rebuild XY distro
-   DisSys* tsys   = (DisSys*)&system.at( curr_distr );
-   QList< S_Solute >* sol_d = &tsys->sk_distro;
+   // Get current distro and (if need be) rebuild BF distro
+   DisSys* tsys   = (DisSys*)&alldis.at( curr_distr );
+   QList< S_Solute >* sol_d = &tsys->in_distro;
 
-   build_xy_distro();
-
-   if ( zpcent )
-   {
-      data_plot->setAxisTitle( QwtPlot::yRight,
-         tr( "Percent of Total Concentration" ) );
-      sol_d    = &tsys->xy_distro_zp;
-   }
-
-   else
-   {
-      data_plot->setAxisTitle( QwtPlot::yRight,
-         tr( "Partial Concentration" ) );
-      sol_d    = &tsys->xy_distro;
-   }
-
-   colormap = tsys->colormap;
-   cmapname = tsys->cmapname;
+   build_bf_distro();
 
    QString tstr = tsys->run_name + "\n" + tsys->analys_name
                   + "\n" + tsys->method;
    data_plot->setTitle( tstr );
    data_plot->detachItems( QwtPlotItem::Rtti_PlotSpectrogram );
-   QColor bg   = colormap->color1();
+   QColor bg   = QColor( Qt::white );
    data_plot->setCanvasBackground( bg );
    int    csum = bg.red() + bg.green() + bg.blue();
    pick->setTrackerPen( QPen( csum > 600 ? QColor( Qt::black ) :
                                            QColor( Qt::white ) ) );
 
-   // Set up spectrogram data
-   QwtPlotSpectrogram* d_spectrogram = new QwtPlotSpectrogram();
-#if QT_VERSION < 0x050000
-   d_spectrogram->setData( US_SpectrogramData() );
-   d_spectrogram->setColorMap( *colormap );
-   US_SpectrogramData& spec_dat = (US_SpectrogramData&)d_spectrogram->data();
-#else
-   US_SpectrogramData* rdata = new US_SpectrogramData();
-   d_spectrogram->setData( rdata );
-//   d_spectrogram->setColorMap( (QwtColorMap*)colormap );
-   d_spectrogram->setColorMap( ColorMapCopy( colormap ) );
-   US_SpectrogramData& spec_dat = (US_SpectrogramData&)*(d_spectrogram->data());
-#endif
    QwtDoubleRect drect;
 
    if ( auto_sxy )
@@ -489,8 +367,8 @@ void US_Density_Match::plot_data( void )
             ( plt_smax - plt_smin ), ( plt_kmax - plt_kmin ) );
    }
 
-   plt_zmin = zpcent ? 100.0 :  1e+8;
-   plt_zmax = zpcent ?   0.0 : -1e+8;
+   plt_zmin = 1e+8;
+   plt_zmax = -1e+8;
 
    if ( auto_scz )
    {  // Find Z min,max for current distribution
@@ -503,11 +381,10 @@ void US_Density_Match::plot_data( void )
    }
    else
    {  // Find Z min,max for all distributions
-      for ( int ii = 0; ii < system.size(); ii++ )
+      for ( int ii = 0; ii < alldis.size(); ii++ )
       {
-         DisSys* tsys = (DisSys*)&system.at( ii );
-         QList< S_Solute >* sol_z  = zpcent ? &tsys->sk_distro_zp
-                                            : &tsys->sk_distro;
+         DisSys* tsys = (DisSys*)&alldis.at( ii );
+         QList< S_Solute >* sol_z  = &tsys->in_distro;
 
          for ( int jj = 0; jj < sol_z->size(); jj++ )
          {
@@ -518,18 +395,9 @@ void US_Density_Match::plot_data( void )
       }
    }
 
-   spec_dat.setRastRanges( xreso, yreso, resolu, zfloor, drect );
-   spec_dat.setZRange( 0.0, plt_zmax );
-   spec_dat.setRaster( sol_d );
-
-   d_spectrogram->attach( data_plot );
-
-   // set color map and axis settings
-   QwtScaleWidget *rightAxis = data_plot->axisWidget( QwtPlot::yRight );
-   rightAxis->setColorBarEnabled( true );
-
+   // Set axis settings
    xa_title    = anno_title( plot_x );
-   ya_title    = anno_title( plot_y );
+   ya_title    = anno_title( ATTR_F );
    data_plot->setAxisTitle( QwtPlot::xBottom, xa_title );
    data_plot->setAxisTitle( QwtPlot::yLeft,   ya_title );
 
@@ -546,45 +414,26 @@ void US_Density_Match::plot_data( void )
       data_plot->setAxisScale( QwtPlot::yLeft,   plt_kmin, plt_kmax, lStep );
    }
 
-#if QT_VERSION < 0x050000
-   rightAxis->setColorMap( QwtDoubleInterval( 0.0, plt_zmax ),
-      d_spectrogram->colorMap() );
-#else
-//   rightAxis->setColorMap( QwtInterval( plt_zmin, plt_zmax ),
-//      (QwtColorMap*)d_spectrogram->colorMap() );
-   rightAxis->setColorMap( QwtInterval( 0.0, plt_zmax ),
-                           ColorMapCopy( colormap ) );
-#endif
-//   data_plot->setAxisScale( QwtPlot::yRight,  plt_zmin, plt_zmax );
-   data_plot->setAxisScale( QwtPlot::yRight,  0.0, plt_zmax );
-
    data_plot->replot();
 
    //QString dtext = te_distr_info->toPlainText().section( "\n", 0, 1 );
    QString dtext  = tr( "Run:  " ) + tsys->run_name
          + " (" + tsys->method + ")\n    " + tsys->analys_name;
 
-   bool sv_plot = ck_savepl->isChecked()  &&
-                  ( ( looping  &&  !ck_conloop->isChecked() ) || !looping );
-DbgLv(2) << "(1) sv_plot" << sv_plot << "looping" << looping;
+   bool sv_plot = ck_savepl->isChecked();
+DbgLv(2) << "(1) sv_plot" << sv_plot;
 
 DbgLv(2) << "(3)   need_save sv_plot" << need_save << sv_plot;
    //if ( need_save  &&  sv_plot )
    if ( sv_plot )
    {  // Automatically save plot image in a PNG file
       const QString s_attrs[] = { "s", "ff0", "MW", "vbar", "D", "f" };
-#if QT_VERSION > 0x050000
       QPixmap plotmap = ((QWidget*)data_plot)->grab();
-#else
-      QSize pmsize    = data_plot->size();
-      QPixmap plotmap = QPixmap::grabWidget( data_plot, 0, 0,
-                                             pmsize.width(), pmsize.height() );
-#endif
 
       QString runid   = tsys->run_name.section( ".",  0, -2 );
       QString triple  = tsys->run_name.section( ".", -1, -1 );
       QString report  = QString( "pseudo3d_" ) + s_attrs[ plot_x ]
-         + "_" + s_attrs[ plot_y ];
+         + "_" + s_attrs[ ATTR_F ];
 
       QString ofdir   = US_Settings::reportDir() + "/" + runid;
       QDir dirof( ofdir );
@@ -644,32 +493,10 @@ void US_Density_Match::update_yreso( double dval )
    yreso  = dval;
 }
 
-void US_Density_Match::update_zfloor( double dval )
-{
-   zfloor = dval;
-}
-
 void US_Density_Match::update_curr_distr( double dval )
 {
    curr_distr   = qRound( dval ) - 1;
 DbgLv(1) << "upd_curr_distr" << curr_distr;
-
-   if ( curr_distr > (-1)  &&  curr_distr < system.size() )
-   {
-      DisSys* tsys = (DisSys*)&system.at( curr_distr );
-      cmapname     = tsys->cmapname;
-//      le_cmap_name->setText( cmapname );
-      colormap     = tsys->colormap;
-      if ( ! looping )
-         te_distr_info->setText( tr( "Run:  " ) + tsys->run_name
-            + " (" + tsys->method + ")\n    " + tsys->analys_name );
-   }
-
-   build_xy_distro();
-
-   set_limits();
-
-   plot_data();
 }
 
 void US_Density_Match::update_plot_smin( double dval )
@@ -712,28 +539,9 @@ void US_Density_Match::select_autoscz()
    set_limits();
 }
 
-void US_Density_Match::select_conloop()
-{
-   cont_loop  = ck_conloop->isChecked();
-   DisSys* tsys   = (DisSys*)&system.at( curr_distr );
-   QString dtext  = tr( "Run:  " ) + tsys->run_name
-         + " (" + tsys->method + ")\n    " + tsys->analys_name;
-
-   if ( cont_loop )
-   {
-      pb_pltall->setText( tr( "Plot All Distros in a Loop" ) );
-      dtext          = dtext +
-         tr( "\nWith continuous loop, plot files are not saved." );
-   }
-   else
-      pb_pltall->setText( tr( "Plot All Distros" ) );
-
-   te_distr_info->setText( dtext );
-}
-
 void US_Density_Match::load_distro()
 {
-   // get a model description or set of descriptions for distribution data
+   // Get a model description or set of descriptions for distribution data
    QList< US_Model > models;
    QStringList       mdescs;
    bool              loadDB = dkdb_cntrls->db();
@@ -752,32 +560,29 @@ void US_Density_Match::load_distro()
    need_save  = false;
 
    for ( int jj = 0; jj < models.count(); jj++ )
-   {  // load each selected distribution model
+   {  // Load each selected distribution model
       load_distro( models[ jj ], mdescs[ jj ] );
    }
 
-   curr_distr = system.size() - 1;
+   curr_distr = alldis.size() - 1;
    need_save  = ck_savepl->isChecked()  &&  !cont_loop;
-   ct_curr_distr->setEnabled( true );
-   ct_curr_distr->setValue( curr_distr + 1 );
    pb_rmvdist->setEnabled( models.count() > 0 );
 
-   update_curr_distr( (double)system.size() );
+   update_curr_distr( (double)alldis.size() );
 }
 
+// Create distributions from a loaded model
 void US_Density_Match::load_distro( US_Model model, QString mdescr )
 {
    DisSys      tsys;
-   S_Solute    sol_sk;
-   S_Solute    sol_xy;
+   S_Solute    sol_in;
+   S_Solute    sol_nm;
+   S_Solute    sol_bf;
+   QList< S_Solute >   wk_distro;
 
    model.update_coefficients();          // fill in any missing coefficients
 
-   QString mdesc = mdescr.section( mdescr.left( 1 ), 1, 1 );
-
-   // load current colormap
-   tsys.colormap     = colormap;
-   tsys.cmapname     = cmapname;
+   QString mdesc     = mdescr.section( mdescr.left( 1 ), 1, 1 );
 
    tsys.run_name     = mdesc.section( ".",  0, -3 );
    QString asys      = mdesc.section( ".", -2, -2 );
@@ -794,7 +599,6 @@ void US_Density_Match::load_distro( US_Model model, QString mdescr )
    }
    tsys.editGUID     = model.editGUID;
    tsys.plot_x       = plot_x;
-   tsys.plot_y       = plot_y;
 DbgLv(1) << "LD: method" << tsys.method << "mdesc" << mdesc;
 
    if ( tsys.method == "Manual"  ||  tsys.method == "CUSTOMGRID" )
@@ -807,133 +611,133 @@ DbgLv(1) << "LD:  run_name" << tsys.run_name;
 DbgLv(1) << "LD:  analys_name" << tsys.analys_name;
    }
 
+DbgLv(1) << "LD:  model:" << model.description;
    tsys.distro_type  = (int)model.analysis;
-   tsys.monte_carlo  = model.monteCarlo;
+   QString edir      = US_Settings::tmpDir();
+   QString efname    = tsys.run_name + ".xml";
 
-   if ( model.monteCarlo )
-   {  // Revisit setting if Monte Carlo
-      QString miter = mdescr.section( mdescr.left( 1 ), 6 );
-      int     kiter = miter.isEmpty() ? 0 : miter.toInt();
+   // Read in edit for this model
+   US_DataIO::EditedData edata;
+   US_DB2* dbP       = NULL;
 
-      if ( kiter < 2 )
-      {  // Turn off flag if not composite MC model (is individual MC)
-         tsys.monte_carlo = false;
-      }
+   if ( dkdb_cntrls->db() )
+   {  // Set up to read from database
+      US_Passwd pw;
+      dbP               = new US_DB2( pw.getPasswd() );
+      QStringList qry;
+      qry << "get_editID" << model.editGUID;
+      dbP->query( qry );
+      dbP->next();
+      QString editID    = dbP->value( 0 ).toString();
+      int idEdit        = editID.toInt();
+DbgLv(1) << "LD:   idEdit" << idEdit;
+      qry.clear();
+      qry << "get_editedData" << editID;
+      dbP->query( qry );
+      dbP->next();
+      int idRaw         = dbP->value( 0 ).toString().toInt();
+      efname            = dbP->value( 3 ).toString();
+DbgLv(1) << "LD:   edir" << edir;
+DbgLv(1) << "LD:   efname" << efname;
+      QString epath     = edir + "/" + efname;
+      QString rpath     = edir + "/" + efname.section( ".", 0, -7 ) + "."
+                          + efname.section( ".", -5, -2 ) + ".auc";
+
+      dbP->readBlobFromDB( epath, "download_editData", idEdit );
+      dbP->readBlobFromDB( rpath, "download_aucData",  idRaw );
    }
-      
 
+   // Read in edit
+   US_DataIO::loadData( edir, efname, edata );
+DbgLv(1) << "LD:  edata: desc run cell chan"
+ << edata.description << edata.runID << edata.cell << edata.channel;
+
+   // Now, get associated solution,buffer values
+   QString soluID;
+   QString cvbar20;
+   QString bdens;
+   QString bvisc;
+   QString cmprss;
+   QString bmanu;
+   QString errmsg;
+DbgLv(1) << "LD:  solvals CALL";
+   US_SolutionVals::values( dbP, &edata,
+      soluID, cvbar20, bdens, bvisc, cmprss, bmanu, errmsg );
+DbgLv(1) << "LD:  solval: bdens soluID errmsg"
+ << bdens << soluID << errmsg;
+
+   
    te_distr_info->setText( tr( "Run:  " ) + tsys.run_name
       + " (" + tsys.method + ")\n    " + tsys.analys_name );
-   plt_zmin_co = 1e+8;
-   plt_zmax_co = -1e+8;
-   plt_zmin_zp = 100.0;
-   plt_zmax_zp = 0.0;
    int nsolmc  = model.components.size();
 
-   // read in and set distribution s,k,c,... values
-   if ( tsys.distro_type != (int)US_Model::COFS )
+   // Read in and set distribution s,k,c,... values
+   double tot_conc = 0.0;
+
+   for ( int jj = 0; jj < nsolmc; jj++ )
    {
-      double tot_conc = 0.0;
+      sol_in.s  = model.components[ jj ].s * 1.0e13;
+      sol_in.k  = model.components[ jj ].f_f0;
+      sol_in.c  = model.components[ jj ].signal_concentration;
+      sol_in.w  = model.components[ jj ].mw;
+      sol_in.v  = model.components[ jj ].vbar20;
+      sol_in.d  = model.components[ jj ].D * 1.0e7;
+      sol_in.f  = model.components[ jj ].f;
 
-      for ( int jj = 0; jj < nsolmc; jj++ )
-      {
-         sol_sk.s  = model.components[ jj ].s * 1.0e13;
-         sol_sk.k  = model.components[ jj ].f_f0;
-         sol_sk.c  = model.components[ jj ].signal_concentration;
-         sol_sk.w  = model.components[ jj ].mw;
-         sol_sk.v  = model.components[ jj ].vbar20;
-         sol_sk.d  = model.components[ jj ].D * 1.0e7;
-         sol_sk.f  = model.components[ jj ].f;
+      tsys.in_distro << sol_in;
+      wk_distro << sol_in;
 
-         sol_xy    = sol_sk;
-         sol_xy.s  = ( plot_x == ATTR_S ) ? sol_sk.s : sol_xy.s;
-         sol_xy.s  = ( plot_x == ATTR_K ) ? sol_sk.k : sol_xy.s;
-         sol_xy.s  = ( plot_x == ATTR_W ) ? sol_sk.w : sol_xy.s;
-         sol_xy.s  = ( plot_x == ATTR_V ) ? sol_sk.v : sol_xy.s;
-         sol_xy.s  = ( plot_x == ATTR_D ) ? sol_sk.d : sol_xy.s;
-         sol_xy.s  = ( plot_x == ATTR_F ) ? sol_sk.f : sol_xy.s;
-         sol_xy.k  = ( plot_y == ATTR_S ) ? sol_sk.s : sol_xy.k;
-         sol_xy.k  = ( plot_y == ATTR_K ) ? sol_sk.k : sol_xy.k;
-         sol_xy.k  = ( plot_y == ATTR_W ) ? sol_sk.w : sol_xy.k;
-         sol_xy.k  = ( plot_y == ATTR_V ) ? sol_sk.v : sol_xy.k;
-         sol_xy.k  = ( plot_y == ATTR_D ) ? sol_sk.d : sol_xy.k;
-         sol_xy.k  = ( plot_y == ATTR_F ) ? sol_sk.f : sol_xy.k;
-
-         tsys.sk_distro << sol_sk;
-         tsys.xy_distro << sol_xy;
-
-         plt_zmin_co = qMin( plt_zmin_co, sol_sk.c );
-         plt_zmax_co = qMax( plt_zmax_co, sol_sk.c );
-         tot_conc   += sol_sk.c;
-      }
-DbgLv(1) << "LD: zmin zmax totconc" << plt_zmin_co << plt_zmax_co << tot_conc;
-
-      // sort and reduce distributions
-      sort_distro( tsys.sk_distro, false );
-      sort_distro( tsys.xy_distro, true  );
-      int nsolsk = tsys.sk_distro.size();
-      int nsolxy = tsys.xy_distro.size();
-DbgLv(1) << "LD: nsolsk nsolxy nsolmc" << nsolsk << nsolxy << nsolmc;
-      tsys.sk_distro_zp.clear();
-      tsys.xy_distro_zp.clear();
-
-      // Create Z-as-percentage version of distributions
-
-      for ( int jj = 0; jj < nsolmc; jj++ )
-      {
-         double cozpc;
-
-         if ( jj < nsolsk )
-         {
-            sol_sk      = tsys.sk_distro[ jj ];
-            cozpc       = sol_sk.c * 100.0 / tot_conc;
-            sol_sk.c    = cozpc;
-            plt_zmin_zp = qMin( plt_zmin_zp, cozpc );
-            plt_zmax_zp = qMax( plt_zmax_zp, cozpc );
-            tsys.sk_distro_zp << sol_sk;
-         }
-
-         if ( jj < nsolxy )
-         {
-            sol_xy      = tsys.xy_distro[ jj ];
-            cozpc       = sol_xy.c * 100.0 / tot_conc;
-            sol_xy.c    = cozpc;
-            plt_zmin_zp = qMin( plt_zmin_zp, cozpc );
-            plt_zmax_zp = qMax( plt_zmax_zp, cozpc );
-            tsys.xy_distro_zp << sol_xy;
-         }
-      }
-DbgLv(1) << "LD: zminzp zmaxzp" << plt_zmin_zp << plt_zmax_zp;
+      tot_conc += sol_in.c;
+if ( jj<3   ||  (jj+4)>nsolmc )
+ DbgLv(1) << "LD:    jj" << jj << "soli s,d,c,t"
+  << sol_in.s << sol_in.d << sol_in.c << tot_conc;
    }
 
-   // update current distribution record
-   system.append( tsys );
-   int jd     = system.size();
-   curr_distr = jd - 1;
-   ct_curr_distr->setRange( 1.0, jd );
-   ct_curr_distr->setSingleStep( 1.0 );
-   ct_curr_distr->setValue( jd );
-   ct_curr_distr->setEnabled( true );
+   // Sort and reduce distributions, then normalize
+   sort_distro( wk_distro, true  );
 
+   tsys.nm_distro.clear();
+   int nsolin = tsys.in_distro.size();
+   int nsolnm = wk_distro.size();
+DbgLv(1) << "LD: totconc" << tot_conc << "nsolin nsolnm" << nsolin << nsolnm;
+   for ( int jj = 0; jj < nsolnm; jj++ )
+   {
+      sol_nm      = wk_distro[ jj ];
+      sol_nm.c   /= tot_conc;
+      tsys.nm_distro << sol_nm;
+if ( jj<3   ||  (jj+4)>nsolnm )
+ DbgLv(1) << "LD:    jj" << jj << "soln s,d,c"
+  << sol_nm.s << sol_nm.d << sol_nm.c;
+   }
+DbgLv(1) << "LD: nsolin nsolnm" << nsolin << nsolnm << tsys.nm_distro.size();
+
+   // Create version of distribution with boundary fraction
+
+   wk_distro.clear();
+   double sum_co  = 0.0;
+
+   for ( int jj = 0; jj < nsolnm; jj++ )
+   {
+      sol_nm      = tsys.nm_distro[ jj ];
+      sum_co     += sol_nm.c;
+      sol_bf      = sol_nm;
+      sol_bf.f    = sum_co;
+      wk_distro << sol_bf;
+if ( jj<3   ||  (jj+4)>nsolnm )
+ DbgLv(1) << "LD:    jj" << jj << "solb s,d,c,f"
+  << sol_bf.d << sol_bf.d << sol_bf.c << sol_bf.f;
+   }
+
+   // Update current distribution record
+DbgLv(1) << "LD:  call alldis.append";
+   alldis.append( tsys );
+DbgLv(1) << "LD:   retn fr alldis.append";
+
+#if 0
    if ( auto_sxy )
    {
 DbgLv(1) << "LD:  auto_sxy call set_limits";
       set_limits();
-DbgLv(1) << "LD:  auto_sxy  rtn fr set_limits";
-      ct_plt_kmin->setEnabled( false );
-      ct_plt_kmax->setEnabled( false );
-      ct_plt_smin->setEnabled( false );
-      ct_plt_smax->setEnabled( false );
-   }
-   else
-   {
-      plt_smin    = ct_plt_smin->value();
-      plt_smax    = ct_plt_smax->value();
-      plt_kmin    = ct_plt_kmin->value();
-      plt_kmax    = ct_plt_kmax->value();
-DbgLv(1) << "LD:  non-auto_sxy call set_limits";
-      set_limits();
-DbgLv(1) << "LD:  non-auto_sxy  rtn fr set_limits";
    }
    data_plot->setAxisScale( QwtPlot::xBottom, plt_smin, plt_smax );
    data_plot->setAxisScale( QwtPlot::yLeft,   plt_kmin, plt_kmax );
@@ -946,53 +750,13 @@ DbgLv(1) << "LD:  non-auto_sxy  rtn fr set_limits";
       pb_pltall->setText( tr( "Plot All Distros in a Loop" ) );
    else
       pb_pltall->setText( tr( "Plot All Distros" ) );
+#endif
 DbgLv(1) << "LD: RETURN";
-}
-
-void US_Density_Match::load_color()
-{
-   QString filter = tr( "Color Map files (*cm-*.xml);;" )
-         + tr( "Any XML files (*.xml);;" )
-         + tr( "Any files (*)" );
-
-   // get an xml file name for the color map
-   QString fname = QFileDialog::getOpenFileName( this,
-      tr( "Load Color Map File" ),
-      US_Settings::etcDir(), filter, 0, 0 );
-
-   if ( fname.isEmpty() )
-      return;
-
-   // get the map from the file
-   QList< QColor > cmcolor;
-   QList< double > cmvalue;
-
-   US_ColorGradIO::read_color_steps( fname, cmcolor, cmvalue );
-   colormap  = new QwtLinearColorMap( cmcolor.first(), cmcolor.last() );
-
-   for ( int jj = 1; jj < cmvalue.size() - 1; jj++ )
-   {
-      colormap->addColorStop( cmvalue.at( jj ), cmcolor.at( jj ) );
-   }
-   QFileInfo fi( fname );
-   cmapname  = tr( "Color Map: " ) + fi.baseName();
-//   le_cmap_name->setText( cmapname );
-
-   // save the map information for the current distribution
-   if ( curr_distr < system.size() )
-   {
-      DisSys* tsys    = (DisSys*)&system.at( curr_distr );
-      tsys->colormap  = colormap;
-      tsys->cmapname  = cmapname;
-   }
-
-   plot_data();
 }
 
 // Start a loop of plotting all distros
 void US_Density_Match::plotall()
 {
-   looping    = true;
    pb_stopplt->setEnabled( true );
    curr_distr = 0;
    plot_data();
@@ -1000,16 +764,9 @@ void US_Density_Match::plotall()
 
    patm_id    = startTimer( patm_dlay );
 
-   if ( curr_distr == system.size() )
+   if ( curr_distr == alldis.size() )
       curr_distr--;
 
-   need_save  = ck_savepl->isChecked()  &&  !cont_loop;
-}
-
-// Stop the distros-plotting loop
-void US_Density_Match::stop()
-{
-   looping    = false;
    need_save  = ck_savepl->isChecked()  &&  !cont_loop;
 }
 
@@ -1022,23 +779,23 @@ void US_Density_Match::set_limits()
    double sinc;
    double kinc;
    xa_title    = anno_title( plot_x );
-   ya_title    = anno_title( plot_y );
+   ya_title    = anno_title( ATTR_F );
 
    data_plot->setAxisTitle( QwtPlot::xBottom, xa_title );
    data_plot->setAxisTitle( QwtPlot::yLeft,   ya_title );
 
-   if ( system.size() < 1 )
+   if ( alldis.size() < 1 )
       return;
 
    // find min,max for X,Y distributions
-   for ( int ii = 0; ii < system.size(); ii++ )
+   for ( int ii = 0; ii < alldis.size(); ii++ )
    {
-      DisSys* tsys = (DisSys*)&system.at( ii );
+      DisSys* tsys = (DisSys*)&alldis.at( ii );
 
-      for ( int jj = 0; jj < tsys->xy_distro.size(); jj++ )
+      for ( int jj = 0; jj < tsys->nm_distro.size(); jj++ )
       {
-         double sval = tsys->xy_distro.at( jj ).s;
-         double kval = tsys->xy_distro.at( jj ).k;
+         double sval = tsys->nm_distro.at( jj ).s;
+         double kval = tsys->nm_distro.at( jj ).k;
          smin        = qMin( smin, sval );
          smax        = qMax( smax, sval );
          kmin        = qMin( kmin, kval );
@@ -1102,7 +859,7 @@ DbgLv(1) << "SL: plt_smin _smax _kmin _kmax" << plt_smin << plt_smax
  << plt_kmin << plt_kmax;
 }
 
-// Sort distribution solute list by s,k values and optionally reduce
+// Sort distribution solute list by s,d values and optionally reduce
 void US_Density_Match::sort_distro( QList< S_Solute >& listsols,
       bool reduce )
 {
@@ -1132,7 +889,7 @@ void US_Density_Match::sort_distro( QList< S_Solute >& listsols,
       {     // loop to compare each entry to previous
           sol2    = *jj;         // solute entry
 
-          if ( sol1.s != sol2.s  ||  sol1.k != sol2.k )
+          if ( sol1.s != sol2.s  ||  sol1.d != sol2.d )
           {   // not a duplicate, so output to temporary list
              reduced.append( sol2 );
              jdup    = 0;
@@ -1141,8 +898,8 @@ void US_Density_Match::sort_distro( QList< S_Solute >& listsols,
           else
           {  // duplicate, so sum c value;
              sol2.c += sol1.c;   // sum c value
-             sol2.s  = ( sol1.s + sol2.s ) * 0.5;  // average s,k
-             sol2.k  = ( sol1.k + sol2.k ) * 0.5;
+             sol2.s  = ( sol1.s + sol2.s ) * 0.5;  // average s,d
+             sol2.d  = ( sol1.d + sol2.d ) * 0.5;
              reduced.replace( reduced.size() - 1, sol2 );
              kdup    = max( kdup, ++jdup );
           }
@@ -1167,51 +924,6 @@ DbgLv(1) << " reduced-size" << reduced.size();
    }
 DbgLv(1) << " sol-size" << listsols.size();
    return;
-}
-
-void US_Density_Match::timerEvent( QTimerEvent *event )
-{
-   int tm_id  = event->timerId();
-
-   if ( tm_id != patm_id )
-   {  // if other than plot loop timer event, pass on to normal handler
-      QWidget::timerEvent( event );
-      return;
-   }
-
-   int syssiz = system.size();
-   int maxsiz = syssiz - 1;
-   int jdistr = curr_distr + 1;
-
-   if ( syssiz > 0  &&  looping )
-   {   // If still looping, plot the next distribution
-      if ( jdistr > maxsiz )
-      {  // If we have passed the end in looping, reset
-         jdistr     = 0;
-
-         if ( ! cont_loop )
-         {  // If not in continuous loop, turn off looping flag
-            jdistr     = curr_distr;
-            looping    = false;
-         }
-
-         else
-         {  // If in continuous loop, turn off save-plot flag
-            need_save  = false;
-         }
-      }
-      curr_distr = jdistr;
-      plot_data();
-   }
-
-   if ( curr_distr > maxsiz  ||  !looping )
-   {  // If past last distro or Stop clicked, stop the loop
-      killTimer( tm_id );
-      pb_stopplt->setEnabled( false );
-      curr_distr = ( curr_distr > maxsiz ) ? maxsiz : curr_distr;
-      need_save  = ck_savepl->isChecked()  &&  !cont_loop;
-   }
-   ct_curr_distr->setValue( curr_distr + 1 );
 }
 
 // Reset Disk_DB control whenever data source is changed in any dialog
@@ -1256,11 +968,11 @@ void US_Density_Match::select_prefilt( void )
 void US_Density_Match::remove_distro( void )
 {
 qDebug() << "Remove Distros";
-   US_RemoveModels rmvd( system );
+   US_RemoveModels rmvd( alldis );
 
    if ( rmvd.exec() == QDialog::Accepted )
    {
-      int jd     = system.size();
+      int jd     = alldis.size();
 
       if ( jd < 1 )
       {
@@ -1281,15 +993,34 @@ qDebug() << "Remove Distros";
 // Select coordinate for horizontal axis
 void US_Density_Match::select_x_axis( int ival )
 {
+DbgLv(1) << "sel_x:  ival" << ival;
+#if 0
+   const QString xlabs[] = {   "mass", "f/f0",   "rh", "vbar",     "s" };
+   const double  xvlos[] = {     2e+4,   1.0,    2e+4,  0.60,      1.0 };
+   const double  xvhis[] = {     1e+5,   4.0,    1e+5,  0.80,     10.0 };
+   const double  xmins[] = {      0.0,   1.0,     0.0,  0.01, -10000.0 };
+   const double  xmaxs[] = {    1e+10,  50.0,   1e+10,  3.00,  10000.0 };
+   const double  xincs[] = {   1000.0,  0.01,  1000.0,  0.01,     0.01 };
+#endif
+
+   const QString xlabs[] = {      "s", "f/f0", "mass","vbar", "D", "f",  "r"   };
+   const double  xvlos[] = {      1.0,   1.0,    2e+4,  0.60, 1e-8, 1e-8, 1e-8 };
+   const double  xvhis[] = {     10.0,   4.0,    1e+5,  0.80, 1e-7, 1e-7, 1e-7 };
+   const double  xmins[] = { -10000.0,   1.0,     0.0,  0.01, 1e-9, 1e-9, 1e-9 };
+   const double  xmaxs[] = {  10000.0,  50.0,   1e+10,  3.00, 1e-5, 1e-5, 1e-4 };
+   const double  xincs[] = {     0.01,  0.01,  1000.0,  0.01, 1e-9, 1e-9, 1e-9 };
+#if 0
    const QString xlabs[] = {      "s", "f/f0",  "MW", "vbar", "D", "f"  };
    const double  xvlos[] = {      1.0,   1.0,   2e+4,  0.60, 1e-8, 1e-8 };
    const double  xvhis[] = {     10.0,   4.0,   1e+5,  0.80, 1e-7, 1e-7 };
    const double  xmins[] = { -10000.0,   1.0,    0.0,  0.01, 1e-9, 1e-9 };
    const double  xmaxs[] = {  10000.0,  50.0,  1e+10,  3.00, 1e-5, 1e-5 };
    const double  xincs[] = {     0.01,  0.01, 1000.0,  0.01, 1e-9, 1e-9 };
+#endif
 
    plot_x     = ival;
 
+#if 0
    lb_plt_smin->setText( tr( "Plot Limit " ) + xlabs[ plot_x ]
                        + tr( " Minimum:" ) );
    lb_plt_smax->setText( tr( "Plot Limit " ) + xlabs[ plot_x ]
@@ -1300,115 +1031,61 @@ void US_Density_Match::select_x_axis( int ival )
    ct_plt_smax->setSingleStep( xincs[ plot_x ] );
    ct_plt_smin->setValue( xvlos[ plot_x ] );
    ct_plt_smax->setValue( xvhis[ plot_x ] );
+#endif
+DbgLv(1) << "sel_x:   lab vlos vhis xmin xmax xinc" << xlabs[plot_x]
+ << xvlos[plot_x] << xvhis[plot_x] << xmins[plot_x] << xmaxs[plot_x]
+ << xincs[plot_x];
 
-   rb_y_s   ->setEnabled( plot_x != ATTR_S );
-   rb_y_ff0 ->setEnabled( plot_x != ATTR_K );
-   rb_y_mw  ->setEnabled( plot_x != ATTR_W );
-   rb_y_vbar->setEnabled( plot_x != ATTR_V );
-   rb_y_D   ->setEnabled( plot_x != ATTR_D );
-   rb_y_f   ->setEnabled( plot_x != ATTR_F );
-
-   build_xy_distro();
+   build_bf_distro();
 
    set_limits();
 
    plot_data();
 }
 
-// Select coordinate for vertical axis
-void US_Density_Match::select_y_axis( int ival )
+// (Re-)generate the BF version of the current distribution
+void US_Density_Match::build_bf_distro()
 {
-   const QString ylabs[] = {      "s", "f/f0",  "MW", "vbar",    "D", "f"  };
-   const double  yvlos[] = {      1.0,   1.0,   2e+4,  0.60,     0.0, 1e-8 };
-   const double  yvhis[] = {     10.0,   4.0,   1e+5,  0.80,    30.0, 1e-7 };
-   const double  ymins[] = { -10000.0,   1.0,    0.0,  0.01,     0.0, 1e-9 };
-   const double  ymaxs[] = {  10000.0,  50.0,  1e+10,  3.00, 10000.0, 1e-5 };
-   const double  yincs[] = {     0.01,  0.01, 1000.0,  0.01,    0.01, 1e-9 };
-
-   plot_y     = ival;
-qDebug() << "select-y: plot_y" << plot_y;
-
-   lb_plt_kmin->setText( tr( "Plot Limit " ) + ylabs[ plot_y ]
-                       + tr( " Minimum:" ) );
-   lb_plt_kmax->setText( tr( "Plot Limit " ) + ylabs[ plot_y ]
-                       + tr( " Maximum:" ) );
-qDebug() << "  ylab" << ylabs[plot_y];
-   ct_plt_kmin->setRange( ymins[ plot_y ], ymaxs[ plot_y ] );
-   ct_plt_kmax->setRange( ymins[ plot_y ], ymaxs[ plot_y ] );
-   ct_plt_kmin->setSingleStep( yincs[ plot_y ] );
-   ct_plt_kmax->setSingleStep( yincs[ plot_y ] );
-   ct_plt_kmin->setValue( yvlos[ plot_y ] );
-   ct_plt_kmax->setValue( yvhis[ plot_y ] );
-qDebug() << "  yval-lo val-hi" << yvlos[plot_y] << yvhis[plot_y];
-
-   rb_x_s   ->setEnabled( plot_y != ATTR_S );
-   rb_x_ff0 ->setEnabled( plot_y != ATTR_K );
-   rb_x_mw  ->setEnabled( plot_y != ATTR_W );
-   rb_x_vbar->setEnabled( plot_y != ATTR_V );
-   rb_x_D   ->setEnabled( plot_y != ATTR_D );
-   rb_x_f   ->setEnabled( plot_y != ATTR_F );
-
-   build_xy_distro();
-
-   set_limits();
-
-   plot_data();
-}
-
-// Re-generate the XY version of the current distribution
-void US_Density_Match::build_xy_distro()
-{
-   if ( system.size() < 1 )
+   if ( alldis.size() < 1 )
       return;
-   DisSys* tsys     = (DisSys*)&system.at( curr_distr );
-   if ( tsys->plot_x == plot_x  && tsys->plot_y == plot_y )
+   DisSys* tsys     = (DisSys*)&alldis.at( curr_distr );
+   if ( tsys->plot_x == plot_x )
       return;
 
-   tsys->xy_distro.clear();
+   tsys->nm_distro.clear();
    tsys->plot_x     = plot_x;
-   tsys->plot_y     = plot_y;
    double tot_conc  = 0.0;
-   int    nsolsk    = tsys->sk_distro.size();
+   int    nsolin    = tsys->in_distro.size();
 
    // Create solute list with specified x,y
-   for ( int ii = 0; ii < nsolsk; ii++ )
+   for ( int ii = 0; ii < nsolin; ii++ )
    {
-      S_Solute sol_sk  = tsys->sk_distro[ ii ];
-      S_Solute sol_xy  = sol_sk;
+      S_Solute sol_in  = tsys->in_distro[ ii ];
+      S_Solute sol_nm  = sol_in;
 
-      sol_xy.s  = ( plot_x == ATTR_S ) ? sol_sk.s : sol_xy.s;
-      sol_xy.s  = ( plot_x == ATTR_K ) ? sol_sk.k : sol_xy.s;
-      sol_xy.s  = ( plot_x == ATTR_W ) ? sol_sk.w : sol_xy.s;
-      sol_xy.s  = ( plot_x == ATTR_V ) ? sol_sk.v : sol_xy.s;
-      sol_xy.s  = ( plot_x == ATTR_D ) ? sol_sk.d : sol_xy.s;
-      sol_xy.s  = ( plot_x == ATTR_F ) ? sol_sk.f : sol_xy.s;
-      sol_xy.k  = ( plot_y == ATTR_S ) ? sol_sk.s : sol_xy.k;
-      sol_xy.k  = ( plot_y == ATTR_K ) ? sol_sk.k : sol_xy.k;
-      sol_xy.k  = ( plot_y == ATTR_W ) ? sol_sk.w : sol_xy.k;
-      sol_xy.k  = ( plot_y == ATTR_V ) ? sol_sk.v : sol_xy.k;
-      sol_xy.k  = ( plot_y == ATTR_D ) ? sol_sk.d : sol_xy.k;
-      sol_xy.k  = ( plot_y == ATTR_F ) ? sol_sk.f : sol_xy.k;
-      tot_conc += sol_sk.c;
-      tsys->xy_distro << sol_xy;
+      sol_nm.s  = ( plot_x == ATTR_S ) ? sol_in.s : sol_nm.s;
+      sol_nm.s  = ( plot_x == ATTR_K ) ? sol_in.k : sol_nm.s;
+      sol_nm.s  = ( plot_x == ATTR_W ) ? sol_in.w : sol_nm.s;
+      sol_nm.s  = ( plot_x == ATTR_V ) ? sol_in.v : sol_nm.s;
+      sol_nm.s  = ( plot_x == ATTR_D ) ? sol_in.d : sol_nm.s;
+      sol_nm.s  = ( plot_x == ATTR_F ) ? sol_in.f : sol_nm.s;
+      tot_conc += sol_in.c;
+      tsys->nm_distro << sol_nm;
    }
 
    // Sort and possibly reduce XY distro
-   sort_distro( tsys->xy_distro, true );
+   sort_distro( tsys->nm_distro, true );
 
    // Create Z-as-percentage version of xy distribution
-   int    nsolxy = tsys->xy_distro.size();
-DbgLv(1) << "Bld: nsolsk nsolxy" << nsolsk << nsolxy;
-   tsys->xy_distro_zp.clear();
+   int    nsolnm = tsys->nm_distro.size();
+DbgLv(1) << "Bld: nsolin nsolnm" << nsolin << nsolnm;
 
-   for ( int ii = 0; ii < nsolxy; ii++ )
+   for ( int ii = 0; ii < nsolnm; ii++ )
    {
-      S_Solute sol_xy  = tsys->xy_distro[ ii ];
-      double cozpc     = sol_xy.c * 100.0 / tot_conc;
-      sol_xy.c         = cozpc;
-      plt_zmin_zp      = qMin( plt_zmin_zp, cozpc );
-      plt_zmax_zp      = qMax( plt_zmax_zp, cozpc );
+      S_Solute sol_nm  = tsys->nm_distro[ ii ];
+      sol_nm.c        /= tot_conc;
 
-      tsys->xy_distro_zp << sol_xy;
+      tsys->nm_distro << sol_nm;
    }
 }
 
@@ -1423,32 +1100,22 @@ QString US_Density_Match::anno_title( int pltndx )
    else if ( pltndx == ATTR_K )
       a_title  = tr( "Frictional Ratio f/f0" );
    else if ( pltndx == ATTR_W )
-      a_title  = tr( "Molecular Weight (Dalton)" );
+      a_title  = tr( "Molar Mass (Dalton)" );
    else if ( pltndx == ATTR_V )
       a_title  = tr( "Vbar at 20" ) + DEGC;
    else if ( pltndx == ATTR_D )
       a_title  = tr( "Diffusion Coefficient (1e-7)" );
+   else if ( pltndx == ATTR_R )
+      a_title  = tr( "Hydrodynamic Radius" );
    else if ( pltndx == ATTR_F )
-      a_title  = tr( "Frictional Coefficient" );
+      a_title  = tr( "Boundary Fraction" );
 
    return a_title;
 }
 
-// Make a ColorMap copy and return a pointer to the new ColorMap
-QwtLinearColorMap* US_Density_Match::ColorMapCopy( QwtLinearColorMap* colormap )
+// Update structures and plot after division change
+void US_Density_Match::update_divis( double dval )
 {
-   QVector< double >  cstops   = colormap->colorStops();
-   int                lstop    = cstops.count() - 1;
-   QwtInterval        csvals( 0.0, 1.0 );
-   QwtLinearColorMap* cmapcopy = new QwtLinearColorMap( colormap->color1(),
-                                                        colormap->color2() );
-
-   for ( int jj = 1; jj < lstop; jj++ )
-   {
-      QColor scolor = colormap->color( csvals, cstops[ jj ] );
-      cmapcopy->addColorStop( cstops[ jj ], scolor );
-   }
-
-   return cmapcopy;
+DbgLv(1) << "UpdDiv:" << dval;
 }
 

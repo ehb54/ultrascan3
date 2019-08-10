@@ -22,20 +22,19 @@
 //!< \brief Distribution structure
 typedef struct distro_sys
 {
-   QList< S_Solute >   sk_distro;
-   QList< S_Solute >   xy_distro;
-   QList< S_Solute >   sk_distro_zp;
-   QList< S_Solute >   xy_distro_zp;
-   QwtLinearColorMap*  colormap;
+   QList< S_Solute >   in_distro;      // Raw input distribution
+   QList< S_Solute >   nm_distro;      // Normalized concentration distro
+   QList< S_Solute >   bf_distro;      // Boundary fractions distro
    QString             run_name;
    QString             analys_name;
    QString             method;
-   QString             cmapname;
    QString             editGUID;
+   QString             solutionGUID;
+   QString             label;
    int                 distro_type;
    int                 plot_x;
-   int                 plot_y;
-   bool                monte_carlo;
+   int                 solutionID;
+   double              d2opct;
 } DisSys;
 
 //! \brief Less-than function for sorting distributions
@@ -52,7 +51,7 @@ class US_Density_Match : public US_Widgets
 
    private:
 
-      enum attr_type { ATTR_S, ATTR_K, ATTR_W, ATTR_V, ATTR_D, ATTR_F };
+      enum attr_type { ATTR_S, ATTR_K, ATTR_W, ATTR_V, ATTR_D, ATTR_F, ATTR_R };
 
       QLabel*       lb_plt_smin;
       QLabel*       lb_plt_smax;
@@ -63,7 +62,6 @@ class US_Density_Match : public US_Widgets
 
       QTextEdit*    te_distr_info;
 
-      QLineEdit*    le_cmap_name;
       QLineEdit*    le_prefilt;
 
       US_Help       showHelp;
@@ -81,14 +79,12 @@ class US_Density_Match : public US_Widgets
       QwtCounter*   ct_tolerance;
       QwtCounter*   ct_division;
       QwtCounter*   ct_smoothing;
-      QwtCounter*   ct_boundaryPercent;
+      QwtCounter*   ct_boundaryPct;
       QwtCounter*   ct_boundaryPos;
 
       QwtPlot*      data_plot;
 
       QwtPlotPicker* pick;
-
-      QwtLinearColorMap* colormap;
 
       US_Disk_DB_Controls* dkdb_cntrls;
 
@@ -98,39 +94,28 @@ class US_Density_Match : public US_Widgets
       QPushButton*  pb_reset;
       QPushButton*  pb_prefilt;
       QPushButton*  pb_lddistr;
-      QPushButton*  pb_ldcolor;
       QPushButton*  pb_help;
       QPushButton*  pb_close;
       QPushButton*  pb_rmvdist;
 
       QCheckBox*    ck_autosxy;
       QCheckBox*    ck_autoscz;
-      QCheckBox*    ck_conloop;
       QCheckBox*    ck_plot_sk;
       QCheckBox*    ck_plot_wk;
       QCheckBox*    ck_plot_sv;
       QCheckBox*    ck_plot_wv;
-      QCheckBox*    ck_zpcent;
       QCheckBox*    ck_savepl;
       QCheckBox*    ck_locsave;
 
-      QRadioButton* rb_x_s;
+      QRadioButton* rb_x_mass;
       QRadioButton* rb_x_ff0;
-      QRadioButton* rb_x_mw;
+      QRadioButton* rb_x_rh;
       QRadioButton* rb_x_vbar;
-      QRadioButton* rb_x_D;
-      QRadioButton* rb_x_f;
-      QRadioButton* rb_y_s;
-      QRadioButton* rb_y_ff0;
-      QRadioButton* rb_y_mw;
-      QRadioButton* rb_y_vbar;
-      QRadioButton* rb_y_D;
-      QRadioButton* rb_y_f;
+      QRadioButton* rb_x_s;
 
       QButtonGroup* bg_x_axis;
-      QButtonGroup* bg_y_axis;
 
-      QList< DisSys > system;
+      QList< DisSys > alldis;
 
       double        resolu;
       double        plt_smin;
@@ -139,10 +124,6 @@ class US_Density_Match : public US_Widgets
       double        plt_kmax;
       double        plt_zmin;
       double        plt_zmax;
-      double        plt_zmin_zp;
-      double        plt_zmax_zp;
-      double        plt_zmin_co;
-      double        plt_zmax_co;
       double        s_range;
       double        k_range;
       double        xreso;
@@ -150,27 +131,20 @@ class US_Density_Match : public US_Widgets
       double        zfloor;
 
       int           curr_distr;
-      int           init_solutes;
-      int           mc_iters;
       int           patm_id;
       int           patm_dlay;
       int           dbg_level;
       int           plot_x;
-      int           plot_y;
 
-      bool          cnst_vbar;
       bool          auto_sxy;
       bool          auto_scz;
       bool          cont_loop;
-      bool          looping;
       bool          need_save;
       bool          runsel;
       bool          latest;
-      bool          zpcent;
 
       QString       xa_title;
       QString       ya_title;
-      QString       cmapname;
       QString       mfilter;
 
       QStringList   pfilts;
@@ -180,7 +154,6 @@ class US_Density_Match : public US_Widgets
       void update_resolu(     double );
       void update_xreso(      double );
       void update_yreso(      double );
-      void update_zfloor(     double );
       void update_curr_distr( double );
       void update_plot_smin(  double );
       void update_plot_smax(  double );
@@ -190,28 +163,21 @@ class US_Density_Match : public US_Widgets
       void plot_data(      void );
       void select_autosxy( void );
       void select_autoscz( void );
-      void select_conloop( void );
       void update_disk_db( bool );
+      void update_divis  ( double );
       void select_prefilt( void );
       void load_distro(    void );
       void load_distro(    US_Model, QString );
-      void load_color(     void );
       void plotall(     void );
-      void stop(        void );
       void reset(       void );
       void set_limits(  void );
       void sort_distro( QList< S_Solute >&, bool );
       void remove_distro( void );
       void select_x_axis( int  );
-      void select_y_axis( int  );
-      void build_xy_distro( void );
+      void build_bf_distro( void );
       QString anno_title  ( int );
-      QwtLinearColorMap* ColorMapCopy( QwtLinearColorMap* );
 
       void help       ( void )
       { showHelp.show_help( "pseudo3d_combine.html" ); };
-
-   protected:
-      virtual void timerEvent( QTimerEvent *e );
 };
 #endif
