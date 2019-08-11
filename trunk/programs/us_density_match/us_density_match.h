@@ -6,24 +6,23 @@
 #include "us_help.h"
 #include "us_editor.h"
 #include "us_model_loader.h"
-#include "us_plot.h"
-#include "us_colorgradIO.h"
+#include "us_solute.h"
 #include "us_spectrodata.h"
+#include "us_plot.h"
 
 #include "qwt_plot_marker.h"
-#include "qwt_plot_spectrogram.h"
 #include "qwt_plot_layout.h"
 #include "qwt_plot_zoomer.h"
 #include "qwt_plot_panner.h"
 #include "qwt_scale_widget.h"
 #include "qwt_scale_draw.h"
-#include "qwt_color_map.h"
 
 //!< \brief Distribution structure
 typedef struct distro_sys
 {
    QList< S_Solute >   in_distro;      // Raw input distribution
    QList< S_Solute >   nm_distro;      // Normalized concentration distro
+   QList< S_Solute >   bo_distro;      // Boundary distro w/ orig points
    QList< S_Solute >   bf_distro;      // Boundary fractions distro
    QString             run_name;
    QString             analys_name;
@@ -35,6 +34,7 @@ typedef struct distro_sys
    int                 plot_x;
    int                 solutionID;
    double              d2opct;
+   double              bdensity;
 } DisSys;
 
 //! \brief Less-than function for sorting distributions
@@ -97,6 +97,8 @@ class US_Density_Match : public US_Widgets
       QPushButton*  pb_help;
       QPushButton*  pb_close;
       QPushButton*  pb_rmvdist;
+      QPushButton*  pb_mdlpars;
+      QPushButton*  pb_save;
 
       QCheckBox*    ck_autosxy;
       QCheckBox*    ck_autoscz;
@@ -112,10 +114,19 @@ class US_Density_Match : public US_Widgets
       QRadioButton* rb_x_rh;
       QRadioButton* rb_x_vbar;
       QRadioButton* rb_x_s;
+      QRadioButton* rb_x_d;
 
       QButtonGroup* bg_x_axis;
 
-      QList< DisSys > alldis;
+      QVector< DisSys >             alldis;
+
+      QVector< double >             v_bfracs;
+      QVector< double >             v_vbars;
+      QVector< double >             v_mmass;
+      QVector< double >             v_frats;
+      QVector< double >             v_hrads;
+      QVector< QVector< double > >  v_sedcs;
+      QVector< QVector< double > >  v_difcs;
 
       double        resolu;
       double        plt_smin;
@@ -148,6 +159,7 @@ class US_Density_Match : public US_Widgets
       QString       mfilter;
 
       QStringList   pfilts;
+      QStringList   mdescs;
 
    private slots:
 
@@ -168,12 +180,14 @@ class US_Density_Match : public US_Widgets
       void select_prefilt( void );
       void load_distro(    void );
       void load_distro(    US_Model, QString );
-      void plotall(     void );
-      void reset(       void );
-      void set_limits(  void );
-      void sort_distro( QList< S_Solute >&, bool );
-      void remove_distro( void );
-      void select_x_axis( int  );
+      void plotall( void );
+      void reset(   void );
+      void save(    void );
+      void set_limits     (  void );
+      void sort_distro    ( QList< S_Solute >&, bool );
+      void remove_distro  ( void );
+      void set_mparms     ( void );
+      void select_x_axis  ( int  );
       void build_bf_distro( void );
       QString anno_title  ( int );
 

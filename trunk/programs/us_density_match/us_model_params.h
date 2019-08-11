@@ -1,59 +1,59 @@
-//! \file us_remove_distros.h
-#ifndef US_RMVMODEL_H
-#define US_RMVMODEL_H
+//! \file us_model_params.h
+#ifndef US_MDLPARAM_H
+#define US_MDLPARAM_H
 
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
 #include "us_density_match.h"
 #include "us_help.h"
 
-#include <qwt_plot.h>
+//! \brief A class to provide a window for setting parameters for each model
 
-//! \brief A class to provide a window for remove_distros analysis controls
-
-class US_RemoveModels : public US_WidgetsDialog
+class US_ModelParams : public US_WidgetsDialog
 {
    Q_OBJECT
 
    public:
-      //! \brief US_RemoveModels constructor
+      //! \brief US_ModelParams constructor
       //! \param adistros Pointer to model distributions list
       //! \param p        Pointer to the parent of this widget
-      US_RemoveModels( QVector< DisSys >&, QWidget* p = 0 );
+      US_ModelParams( QVector< DisSys >&, QWidget* p = 0 );
 
    private:
       QVector< DisSys >&  distros; // Reference to model distributions vector
 
       int           nd_orig;       // Number of distributions in original
-      int           nd_removed;    // Number of total distributions removed
-      int           nd_selected;   // Number of currently selected distributions
+      int           dbg_level;
 
       QGridLayout*  mainLayout;    // 
+
+      QList< QLabel* >  labels;
+      QList< double >   d2opcts;
+      QList< double >   bdensts;
+      QStringList       modelids;
+      QStringList       mlabels;
+      QStringList       mdescrs; 
 
       QStringList   mdesc_orig;    // List of descriptions from original
       QStringList   mdesc_list;    // List of descriptions now listed
 
-      QListWidget*  lw_distrs;     // List widget of distributions
-
-      QTextEdit*    te_status;     // Status text box
-
-      QPushButton*  pb_restore;    // Restore button
-      QPushButton*  pb_remove;     // Remove  button
       QPushButton*  pb_help;       // Help    button
       QPushButton*  pb_cancel;     // Cancel  button
       QPushButton*  pb_accept;     // Accept  button
+      QPushButton*  pb_compute;    // Compute button
 
    protected:
       US_Help       showHelp;
 
    private slots:
 
-      void selectionsChanged( void );
-      void remove           ( void );
-      void restore          ( void );
+      void d2opctChanged    ( int );
+      void labelChanged     ( int );
+      void canceled         ( void );
       void accepted         ( void );
+      void compute_densities( void );
       void help             ( void )
-      { showHelp.show_help( "mass_distrib_rmv.html" ); };
+      { showHelp.show_help( "dens_match_mparam.html" ); };
 };
 #endif
 
