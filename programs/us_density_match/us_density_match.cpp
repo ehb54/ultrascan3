@@ -4,6 +4,7 @@
 
 #include "us_density_match.h"
 #include "us_remove_models.h"
+#include "us_model_params.h"
 #include "us_select_runs.h"
 #include "us_model.h"
 #include "us_license_t.h"
@@ -74,16 +75,6 @@ DbgLv(1) << "MD: main: AA";
    us_checkbox( tr( "Save Plot(s)"    ), ck_savepl,  false );
    us_checkbox( tr( "Local Save Only" ), ck_locsave, true  );
 
-#if 0
-   QLabel* lb_curr_distr = us_label( tr( "Current Distro:" ) );
-   lb_curr_distr->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-
-   ct_curr_distr = us_counter( 3, 0.0, 10.0, 0.0 );
-   ct_curr_distr->setSingleStep( 1 );
-   connect( ct_curr_distr, SIGNAL( valueChanged     ( double ) ),
-            this,          SLOT(   update_curr_distr( double ) ) );
-#endif
-
    te_distr_info = us_textedit();
    te_distr_info->setText    ( tr( "Run:  runID.triple (method)\n" )
             + tr( "    analysisID" ) );
@@ -98,17 +89,20 @@ DbgLv(1) << "MD: main: AA";
    QGridLayout*  gl_x_rh   = us_radiobutton( tr( "Rh"  ), rb_x_rh,   false );
    QGridLayout*  gl_x_vbar = us_radiobutton( tr( "vbar"), rb_x_vbar, false );
    QGridLayout*  gl_x_s    = us_radiobutton( tr( "s"   ), rb_x_s,    false );
+   QGridLayout*  gl_x_d    = us_radiobutton( tr( "D"   ), rb_x_d,    false );
    bg_x_axis->addButton( rb_x_mass, ATTR_W );
    bg_x_axis->addButton( rb_x_ff0,  ATTR_K );
    bg_x_axis->addButton( rb_x_rh,   ATTR_R );
    bg_x_axis->addButton( rb_x_vbar, ATTR_V );
    bg_x_axis->addButton( rb_x_s,    ATTR_S );
+   bg_x_axis->addButton( rb_x_d,    ATTR_D );
    rb_x_mass->setChecked( true  );
    rb_x_mass->setToolTip( tr( "Set X axis to Molar Mass"                ) );
    rb_x_ff0 ->setToolTip( tr( "Set X axis to Frictional Ratio"          ) );
    rb_x_rh  ->setToolTip( tr( "Set X axis to Hydrodynamic Radius"       ) );
    rb_x_vbar->setToolTip( tr( "Set X axis to Partial Specific Volume"   ) );
    rb_x_s   ->setToolTip( tr( "Set X axis to Sedimentation Coefficient" ) );
+   rb_x_d   ->setToolTip( tr( "Set X axis to Diffusion Coefficient"     ) );
    connect( bg_x_axis,  SIGNAL( buttonReleased( int ) ),
             this,       SLOT  ( select_x_axis ( int ) ) );
 
@@ -143,6 +137,16 @@ DbgLv(1) << "MD: main: AA";
    connect( pb_rmvdist, SIGNAL( clicked() ),
             this,       SLOT( remove_distro() ) );
 
+   pb_mdlpars    = us_pushbutton( tr( "Set Model Parameters" ) );
+   pb_mdlpars->setEnabled( true );
+   connect( pb_mdlpars, SIGNAL( clicked() ),
+            this,       SLOT( set_mparms()   ) );
+
+   pb_save       = us_pushbutton( tr( "Save" ) );
+   pb_save   ->setEnabled( true );
+   connect( pb_save,    SIGNAL( clicked() ),
+            this,       SLOT( save()         ) );
+
    pb_help       = us_pushbutton( tr( "Help" ) );
    pb_help->setEnabled( true );
    connect( pb_help,    SIGNAL( clicked() ),
@@ -162,12 +166,15 @@ DbgLv(1) << "MD: main: AA";
    spec->addWidget( pb_rmvdist,    s_row++, 4, 1, 4 );
    spec->addWidget( pb_refresh,    s_row,   0, 1, 4 );
    spec->addWidget( pb_reset,      s_row++, 4, 1, 4 );
+   spec->addWidget( pb_mdlpars,    s_row,   0, 1, 4 );
+   spec->addWidget( pb_save,       s_row++, 4, 1, 4 );
    spec->addWidget( lb_x_axis,     s_row,   0, 1, 2 );
    spec->addLayout( gl_x_mass,     s_row,   2, 1, 2 );
    spec->addLayout( gl_x_ff0,      s_row,   4, 1, 2 );
    spec->addLayout( gl_x_rh,       s_row++, 6, 1, 2 );
    spec->addLayout( gl_x_vbar,     s_row,   2, 1, 2 );
-   spec->addLayout( gl_x_s,        s_row++, 4, 1, 2 );
+   spec->addLayout( gl_x_s,        s_row,   4, 1, 2 );
+   spec->addLayout( gl_x_d,        s_row++, 6, 1, 2 );
    spec->addWidget( ck_savepl,     s_row,   0, 1, 4 );
    spec->addWidget( ck_locsave,    s_row++, 4, 1, 4 );
    spec->addWidget( te_distr_info, s_row,   0, 2, 8 ); s_row += 2;
@@ -255,7 +262,7 @@ DbgLv(1) << "MD:   reset: AA";
  
    need_save  = false;
 
-   plot_x     = ATTR_S;
+   plot_x     = ATTR_V;
 //   resolu     = 90.0;
 //   ct_resolu->setRange( 1.0, 100.0 );
 //   ct_resolu->setSingleStep( 1.0 );
@@ -316,10 +323,13 @@ DbgLv(1) << "MD:   reset: AA";
 
    alldis.clear();
    pfilts.clear();
-//   pb_pltall ->setEnabled( false );
    pb_refresh->setEnabled( false );
    pb_rmvdist->setEnabled( false );
    le_prefilt->setText( tr( "(no prefilter)" ) );
+}
+
+void US_Density_Match::save( void )
+{
 }
 
 // plot the data
@@ -543,7 +553,6 @@ void US_Density_Match::load_distro()
 {
    // Get a model description or set of descriptions for distribution data
    QList< US_Model > models;
-   QStringList       mdescs;
    bool              loadDB = dkdb_cntrls->db();
 
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
@@ -568,7 +577,16 @@ void US_Density_Match::load_distro()
    need_save  = ck_savepl->isChecked()  &&  !cont_loop;
    pb_rmvdist->setEnabled( models.count() > 0 );
 
-   update_curr_distr( (double)alldis.size() );
+   // Notify user of need to set D2O-percent, label, density model values
+   QString qmsg = tr( "%1 models are loaded. In the dialog to follow,\n"
+                      "you must set D2O Percent values for each,\n"
+                      "then review and set Label and Density values for them.\n"
+                      "Begin with the model(s) with 0% D2O." )
+                      .arg( alldis.size() );
+   QMessageBox::warning( this, tr( "Model Parameters" ), qmsg );
+
+   // Set model distributions parameters
+   set_mparms();
 }
 
 // Create distributions from a loaded model
@@ -651,6 +669,8 @@ DbgLv(1) << "LD:   efname" << efname;
    US_DataIO::loadData( edir, efname, edata );
 DbgLv(1) << "LD:  edata: desc run cell chan"
  << edata.description << edata.runID << edata.cell << edata.channel;
+   tsys.label    = edata.description;
+   tsys.d2opct   = -1.0;
 
    // Now, get associated solution,buffer values
    QString soluID;
@@ -663,8 +683,9 @@ DbgLv(1) << "LD:  edata: desc run cell chan"
 DbgLv(1) << "LD:  solvals CALL";
    US_SolutionVals::values( dbP, &edata,
       soluID, cvbar20, bdens, bvisc, cmprss, bmanu, errmsg );
-DbgLv(1) << "LD:  solval: bdens soluID errmsg"
- << bdens << soluID << errmsg;
+   tsys.bdensity = bdens.toDouble();
+DbgLv(1) << "LD:  solval: bdens soluID bdensity"
+ << bdens << soluID << tsys.bdensity;
 
    
    te_distr_info->setText( tr( "Run:  " ) + tsys.run_name
@@ -713,7 +734,7 @@ DbgLv(1) << "LD: nsolin nsolnm" << nsolin << nsolnm << tsys.nm_distro.size();
 
    // Create version of distribution with boundary fraction
 
-   wk_distro.clear();
+   tsys.bo_distro.clear();
    double sum_co  = 0.0;
 
    for ( int jj = 0; jj < nsolnm; jj++ )
@@ -722,10 +743,10 @@ DbgLv(1) << "LD: nsolin nsolnm" << nsolin << nsolnm << tsys.nm_distro.size();
       sum_co     += sol_nm.c;
       sol_bf      = sol_nm;
       sol_bf.f    = sum_co;
-      wk_distro << sol_bf;
+      tsys.bo_distro << sol_bf;
 if ( jj<3   ||  (jj+4)>nsolnm )
  DbgLv(1) << "LD:    jj" << jj << "solb s,d,c,f"
-  << sol_bf.d << sol_bf.d << sol_bf.c << sol_bf.f;
+  << sol_bf.s << sol_bf.d << sol_bf.c << sol_bf.f;
    }
 
    // Update current distribution record
@@ -767,7 +788,7 @@ void US_Density_Match::plotall()
    if ( curr_distr == alldis.size() )
       curr_distr--;
 
-   need_save  = ck_savepl->isChecked()  &&  !cont_loop;
+//   need_save  = ck_savepl->isChecked()  &&  !cont_loop;
 }
 
 void US_Density_Match::set_limits()
@@ -838,10 +859,12 @@ DbgLv(1) << "SL: adjusted smin smax kmin kmax" << smin << smax << kmin << kmax;
       kmax        = qFloor( kmax / kinc ) * kinc + kinc;
 
 DbgLv(1) << "SL: setVal kmin kmax" << kmin << kmax;
+#if 0
       ct_plt_smin->setValue( smin );
       ct_plt_smax->setValue( smax );
       ct_plt_kmin->setValue( kmin );
       ct_plt_kmax->setValue( kmax );
+#endif
 
       plt_smin    = smin;
       plt_smax    = smax;
@@ -850,10 +873,12 @@ DbgLv(1) << "SL: setVal kmin kmax" << kmin << kmax;
    }
    else
    {
+#if 0
       plt_smin    = ct_plt_smin->value();
       plt_smax    = ct_plt_smax->value();
       plt_kmin    = ct_plt_kmin->value();
       plt_kmax    = ct_plt_kmax->value();
+#endif
    }
 DbgLv(1) << "SL: plt_smin _smax _kmin _kmax" << plt_smin << plt_smax
  << plt_kmin << plt_kmax;
@@ -967,7 +992,7 @@ void US_Density_Match::select_prefilt( void )
 // Remove distribution(s) from the models list
 void US_Density_Match::remove_distro( void )
 {
-qDebug() << "Remove Distros";
+qDebug() << "rmvdis:Remove Distros";
    US_RemoveModels rmvd( alldis );
 
    if ( rmvd.exec() == QDialog::Accepted )
@@ -981,13 +1006,49 @@ qDebug() << "Remove Distros";
       }
 
       curr_distr = 0;
-      ct_curr_distr->setRange( 1, jd );
-      ct_curr_distr->setSingleStep( 1.0 );
-      ct_curr_distr->setValue( 1 );
-      ct_curr_distr->setEnabled( true );
+qDebug() << "rmvdis:Accepted";
    }
 
+qDebug() << "rmvdis:plot_data";
    plot_data();
+qDebug() << "rmvdis:DONE";
+}
+
+// Set/modify model distribution parameters
+void US_Density_Match::set_mparms( void )
+{
+qDebug() << "mdlpar:Set Model Parameters";
+   US_ModelParams mpdiag( alldis, this );
+
+   if ( mpdiag.exec() == QDialog::Accepted )
+   {  // Redo text box summarizing models; calculate vectors
+      QString dinfo;
+      QString mdesc     = mdescs[ 0 ].section( mdescs[ 0 ].left( 1 ), 1, 1 );
+//      int kk            = mdesc.indexOf( "-run" );
+//      mdesc             = ( kk > 0 ) ? QString( mdesc ).mid( ( kk + 1 ) )
+//                                     : mdesc;
+      mdesc             = QString( mdesc ).left( 50 );
+      dinfo             = tr( "Run:\n  " ) + mdesc + "...\n\n"
+                        + tr( "  D2O Percent  Density  Label  MDescr.\n" );
+
+      for ( int jj = 0; jj < alldis.size(); jj++ )
+      {
+         double d2opct     = alldis[ jj ].d2opct;
+         double bdens      = alldis[ jj ].bdensity;
+         QString mlab      = alldis[ jj ].label;
+         mdesc             = mdescs[ jj ].section( mdescs[ jj ].left( 1 ), 1, 1 );
+         mdesc             = alldis[ jj ].run_name;
+         int kk            = mdesc.indexOf( "-run" );
+         mdesc             = ( kk > 0 ) 
+                            ? "..." + QString( mdesc ).mid( ( kk + 1 ), 20 )
+                              + "..."
+                            : mdesc;
+         dinfo            += QString().sprintf( "%.1f  %f  ", d2opct, bdens )
+                             + mlab + "  " + mdesc + "\n";
+      }
+
+      te_distr_info->setText( dinfo );
+   }
 }
 
 // Select coordinate for horizontal axis
@@ -1038,7 +1099,7 @@ DbgLv(1) << "sel_x:   lab vlos vhis xmin xmax xinc" << xlabs[plot_x]
 
    build_bf_distro();
 
-   set_limits();
+//   set_limits();
 
    plot_data();
 }
