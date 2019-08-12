@@ -123,8 +123,8 @@ class US_Density_Match : public US_Widgets
       QVector< double >             v_bfracs;
       QVector< double >             v_vbars;
       QVector< double >             v_mmass;
-      QVector< double >             v_frats;
       QVector< double >             v_hrads;
+      QVector< double >             v_frats;
       QVector< QVector< double > >  v_sedcs;
       QVector< QVector< double > >  v_difcs;
 
@@ -139,11 +139,8 @@ class US_Density_Match : public US_Widgets
       double        k_range;
       double        xreso;
       double        yreso;
-      double        zfloor;
 
       int           curr_distr;
-      int           patm_id;
-      int           patm_dlay;
       int           dbg_level;
       int           plot_x;
 
@@ -180,7 +177,6 @@ class US_Density_Match : public US_Widgets
       void select_prefilt( void );
       void load_distro(    void );
       void load_distro(    US_Model, QString );
-      void plotall( void );
       void reset(   void );
       void save(    void );
       void set_limits     (  void );
@@ -188,10 +184,13 @@ class US_Density_Match : public US_Widgets
       void remove_distro  ( void );
       void set_mparms     ( void );
       void select_x_axis  ( int  );
-      void build_bf_distro( void );
+      void build_bf_distro( int  );
+      void build_bf_dists ( void );
+      void build_bf_vects ( void );
+      int  plot_x_select  ( void );
       QString anno_title  ( int );
 
       void help       ( void )
-      { showHelp.show_help( "pseudo3d_combine.html" ); };
+      { showHelp.show_help( "dens_match.html" ); };
 };
 #endif

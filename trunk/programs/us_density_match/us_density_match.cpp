@@ -19,6 +19,7 @@
 #include "us_passwd.h"
 #include "us_report.h"
 #include "us_constants.h"
+#include "qwt_legend.h"
 
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 
@@ -189,20 +190,26 @@ DbgLv(1) << "MD: main: AA";
    lb_division->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_division     = us_counter( 2, 0, 100, 50 );
-   ct_division->setSingleStep( 1 );
-   ct_division->setEnabled( true );
-   connect( ct_division, SIGNAL( valueChanged(  double ) ),
-            this,         SLOT(  update_divis(  double ) ) );
    ct_boundaryPct  = us_counter( 2, 10, 100, 1 );
    ct_boundaryPos  = us_counter( 2, 0, 100, 1 );
    ct_smoothing    = us_counter( 2, 1, 100, 1 );
 
-   ct_boundaryPct->setSingleStep(  1 );
-   ct_boundaryPos->setSingleStep(  1 );
-   ct_smoothing  ->setSingleStep(  1 );
+   ct_division   ->setSingleStep( 1 );
+//   ct_division->setEnabled( true );
+   ct_boundaryPct->setSingleStep( 1 );
+   ct_boundaryPos->setSingleStep( 1 );
+   ct_smoothing  ->setSingleStep( 1 );
+   ct_division   ->setValue( 50 );
    ct_boundaryPct->setValue( 90 );
    ct_boundaryPos->setValue(  5 );
    ct_smoothing  ->setValue(  1 );
+
+   connect( ct_division,    SIGNAL( valueChanged( double ) ),
+            this,           SLOT(  update_divis(  double ) ) );
+   connect( ct_boundaryPct, SIGNAL( valueChanged( double ) ),
+            this,           SLOT(  update_divis(  double ) ) );
+   connect( ct_boundaryPos, SIGNAL( valueChanged( double ) ),
+            this,           SLOT(  update_divis(  double ) ) );
 
    spec->addWidget( lb_analysis       , s_row++, 0, 1, 8 );
    spec->addWidget( lb_division       , s_row,   0, 1, 4 );
@@ -245,10 +252,6 @@ DbgLv(1) << "MD: main: AA";
    main->setStretchFactor( plot, 5 );
 
    mfilter    = "";
-   plt_zmin   = 1e+8;
-   plt_zmax   = -1e+8;
-   runsel     = true;
-   latest     = true;
 
    // Set up variables and initial state of GUI
    reset();
@@ -263,63 +266,6 @@ DbgLv(1) << "MD:   reset: AA";
    need_save  = false;
 
    plot_x     = ATTR_V;
-//   resolu     = 90.0;
-//   ct_resolu->setRange( 1.0, 100.0 );
-//   ct_resolu->setSingleStep( 1.0 );
-//   ct_resolu->setValue( resolu );  
-
-#if 0
-   xreso      = 300.0;
-   yreso      = 300.0;
-   ct_xreso->setRange( 10.0, 1000.0 );
-   ct_xreso->setSingleStep( 1.0 );
-   ct_xreso->setValue( (double)xreso );
-   ct_yreso->setRange( 10.0, 1000.0 );
-   ct_yreso->setSingleStep( 1.0 );
-   ct_yreso->setValue( (double)yreso );
-
-   zfloor     = 100.0;
-   ct_zfloor->setRange( 50.0, 150.0 );
-   ct_zfloor->setSingleStep( 1.0 );
-   ct_zfloor->setValue( (double)zfloor );
-
-   auto_sxy   = true;
-   ck_autosxy->setChecked( auto_sxy );
-   auto_scz   = true;
-   ck_autoscz->setChecked( auto_scz );
-   cont_loop  = false;
-   ck_conloop->setChecked( cont_loop );
-   ck_savepl ->setChecked( false     );
-   ck_locsave->setChecked( true      );
-
-   plt_kmin   = 0.8;
-   plt_kmax   = 4.2;
-   ct_plt_kmin->setRange( 0.0, 50.0 );
-   ct_plt_kmin->setSingleStep( 0.01 );
-   ct_plt_kmin->setValue( plt_kmin );
-   ct_plt_kmin->setEnabled( false );
-   ct_plt_kmax->setRange( 1.0, 50.0 );
-   ct_plt_kmax->setSingleStep( 0.01 );
-   ct_plt_kmax->setValue( plt_kmax );
-   ct_plt_kmax->setEnabled( false );
-
-   plt_smin   = 1.0;
-   plt_smax   = 10.0;
-   ct_plt_smin->setRange( -10.0, 10000.0 );
-   ct_plt_smin->setSingleStep( 0.01 );
-   ct_plt_smin->setValue( plt_smin );
-   ct_plt_smin->setEnabled( false );
-   ct_plt_smax->setRange(   0.0, 10000.0 );
-   ct_plt_smax->setSingleStep( 0.01 );
-   ct_plt_smax->setValue( plt_smax );
-   ct_plt_smax->setEnabled( false );
-
-   curr_distr = 0;
-   ct_curr_distr->setRange( 1.0, 1.0 );
-   ct_curr_distr->setSingleStep( 1.0 );
-   ct_curr_distr->setValue( curr_distr + 1 );
-   ct_curr_distr->setEnabled( false );
-#endif
 
    alldis.clear();
    pfilts.clear();
@@ -330,102 +276,7 @@ DbgLv(1) << "MD:   reset: AA";
 
 void US_Density_Match::save( void )
 {
-}
-
-// plot the data
-void US_Density_Match::plot_data( void )
-{
-   int syssiz = alldis.size();
-
-   if ( syssiz < 1 )
-      return;
-
-   if ( curr_distr < 0  ||  curr_distr >= syssiz )
-   {   // current distro index somehow out of valid range
-      qDebug() << "curr_distr=" << curr_distr
-         << "  ( sys.size()=" << syssiz << " )";
-      syssiz--;
-      curr_distr     = qBound( curr_distr, 0, syssiz );
-   }
-
-//   zpcent   = ck_zpcent->isChecked();
-
-   // Get current distro and (if need be) rebuild BF distro
-   DisSys* tsys   = (DisSys*)&alldis.at( curr_distr );
-   QList< S_Solute >* sol_d = &tsys->in_distro;
-
-   build_bf_distro();
-
-   QString tstr = tsys->run_name + "\n" + tsys->analys_name
-                  + "\n" + tsys->method;
-   data_plot->setTitle( tstr );
-   data_plot->detachItems( QwtPlotItem::Rtti_PlotSpectrogram );
-   QColor bg   = QColor( Qt::white );
-   data_plot->setCanvasBackground( bg );
-   int    csum = bg.red() + bg.green() + bg.blue();
-   pick->setTrackerPen( QPen( csum > 600 ? QColor( Qt::black ) :
-                                           QColor( Qt::white ) ) );
-
-   QwtDoubleRect drect;
-
-   if ( auto_sxy )
-      drect = QwtDoubleRect( 0.0, 0.0, 0.0, 0.0 );
-
-   else
-   {
-      drect = QwtDoubleRect( plt_smin, plt_kmin,
-            ( plt_smax - plt_smin ), ( plt_kmax - plt_kmin ) );
-   }
-
-   plt_zmin = 1e+8;
-   plt_zmax = -1e+8;
-
-   if ( auto_scz )
-   {  // Find Z min,max for current distribution
-      for ( int jj = 0; jj < sol_d->size(); jj++ )
-      {
-         double zval = sol_d->at( jj ).c;
-         plt_zmin    = qMin( plt_zmin, zval );
-         plt_zmax    = qMax( plt_zmax, zval );
-      }
-   }
-   else
-   {  // Find Z min,max for all distributions
-      for ( int ii = 0; ii < alldis.size(); ii++ )
-      {
-         DisSys* tsys = (DisSys*)&alldis.at( ii );
-         QList< S_Solute >* sol_z  = &tsys->in_distro;
-
-         for ( int jj = 0; jj < sol_z->size(); jj++ )
-         {
-            double zval = sol_z->at( jj ).c;
-            plt_zmin    = qMin( plt_zmin, zval );
-            plt_zmax    = qMax( plt_zmax, zval );
-         }
-      }
-   }
-
-   // Set axis settings
-   xa_title    = anno_title( plot_x );
-   ya_title    = anno_title( ATTR_F );
-   data_plot->setAxisTitle( QwtPlot::xBottom, xa_title );
-   data_plot->setAxisTitle( QwtPlot::yLeft,   ya_title );
-
-   if ( auto_sxy )
-   { // Auto scale x and y
-      data_plot->setAxisAutoScale( QwtPlot::yLeft   );
-      data_plot->setAxisAutoScale( QwtPlot::xBottom );
-   }
-   else
-   { // Manual limits on x and y
-      double lStep = data_plot->axisStepSize( QwtPlot::yLeft   );
-      double bStep = data_plot->axisStepSize( QwtPlot::xBottom );
-      data_plot->setAxisScale( QwtPlot::xBottom, plt_smin, plt_smax, bStep );
-      data_plot->setAxisScale( QwtPlot::yLeft,   plt_kmin, plt_kmax, lStep );
-   }
-
-   data_plot->replot();
-
+#if 0
    //QString dtext = te_distr_info->toPlainText().section( "\n", 0, 1 );
    QString dtext  = tr( "Run:  " ) + tsys->run_name
          + " (" + tsys->method + ")\n    " + tsys->analys_name;
@@ -480,12 +331,175 @@ qDebug() << "DB-save: currdist" << curr_distr
       dtext          = dtext + tr( "\n(no plot saved)" );
 
    te_distr_info->setText( dtext );
-
+#endif
 }
 
-void US_Density_Match::plot_data( int )
+// plot the data
+void US_Density_Match::plot_data( void )
 {
+   int syssiz = alldis.size();
+
+   if ( syssiz < 1 )
+      return;
+
+   DisSys* tsys   = (DisSys*)&alldis.at( 0 );
+   plot_x         = ( plot_x < 0 ) ? plot_x_select() : plot_x;
+
+
+#if 0
+auto_sxy=true;
+   if ( auto_sxy )
+   { // Auto scale x and y
+      data_plot->setAxisAutoScale( QwtPlot::yLeft   );
+      data_plot->setAxisAutoScale( QwtPlot::xBottom );
+   }
+   else
+   { // Manual limits on x and y
+      double lStep = data_plot->axisStepSize( QwtPlot::yLeft   );
+      double bStep = data_plot->axisStepSize( QwtPlot::xBottom );
+      data_plot->setAxisScale( QwtPlot::xBottom, plt_smin, plt_smax, bStep );
+      data_plot->setAxisScale( QwtPlot::yLeft,   plt_kmin, plt_kmax, lStep );
+   }
+#endif
+
+
+#if 0
+   QVector< double >             v_bfracs;
+   QVector< double >             v_vbars;
+   QVector< double >             v_mmass;
+   QVector< double >             v_hrads;
+   QVector< double >             v_frats;
+   QVector< QVector< double > >  v_sedcs;
+   QVector< QVector< double > >  v_difcs;
+#endif
+   int npoint     = v_bfracs.size();
+   int ncurvs     = 1;
+   double* yy     = v_bfracs.data();
+   double* xx     = v_sedcs[ 0 ].data();
+   QString curvtitl( "curve" );
+   QString tstr   = QString( tsys->run_name ).section( ".", 0, -2 );
+DbgLv(1) << "DaPl: (1)tstr" << tstr;
+DbgLv(1) << "DaPl:    tstr len" << tstr.length();
+   if ( tstr.length() > 30 )
+   {
+      tstr           = QString( tstr ).left( 15 ) + "..." +
+                       QString( tstr ).right( 15 ) + "\n";
+   }
+   else
+      tstr          += "\n";
+DbgLv(1) << "DaPl: (2)tstr" << tstr;
+
+   if      ( plot_x == ATTR_S )
+   {
+      xx             = v_sedcs[ 0 ].data();
+      ncurvs         = v_sedcs.size();
+      curvtitl       = alldis[ 0 ].label;
+      tstr          += tr( "Sedimentation Coeffs. per Distribution" );
+   }
+   else if ( plot_x == ATTR_W )
+   {
+      xx             = v_mmass.data();
+      curvtitl       = tr( "Mmass_curve" );
+      tstr          += tr( "Molar Mass" );
+   }
+   else if ( plot_x == ATTR_V )
+   {
+      xx             = v_vbars.data();
+DbgLv(1) << "DaPl: v_vbars" << v_vbars;
+      curvtitl       = tr( "Vbar_curve" );
+      tstr          += tr( "Specific Density" );
+   }
+   else if ( plot_x == ATTR_D )
+   {
+      xx             = v_difcs[ 0 ].data();
+      ncurvs         = v_difcs.size();
+      curvtitl       = alldis[ 0 ].label;
+      tstr          += tr( "Diffusion Coeffs. per Distribution" );
+   }
+   else if ( plot_x == ATTR_R )
+   {
+      xx             = v_hrads.data();
+      curvtitl       = tr( "Rh_curve" );
+      tstr          += tr( "Hydrodynamic Radius" );
+   }
+   else if ( plot_x == ATTR_K )
+   {
+      xx             = v_frats.data();
+      curvtitl       = tr( "Ff0_curve" );
+      tstr          += tr( "Frictional Ratio" );
+   }
+DbgLv(1) << "DaPl: (3)tstr" << tstr;
+
+   dataPlotClear( data_plot );
+   data_plot->replot();
+   data_plot->setTitle( tstr );
+   QColor bg      = QColor( Qt::white );
+   data_plot->setCanvasBackground( bg );
+   int csum       = bg.red() + bg.green() + bg.blue();
+   pick->setTrackerPen( QPen( csum > 600 ? QColor( Qt::black ) :
+                                           QColor( Qt::white ) ) );
+
+   // Set axis settings
+   xa_title       = anno_title( plot_x );
+   ya_title       = anno_title( ATTR_F );
+   data_plot->setAxisTitle( QwtPlot::xBottom, xa_title );
+   data_plot->setAxisTitle( QwtPlot::yLeft,   ya_title );
+   QwtPlotCurve* data_curv;
+   data_plot->setAxisAutoScale( QwtPlot::xBottom );
+   data_plot->setAxisScale    ( QwtPlot::yLeft, 0.0, 1.0 );
+
+   if ( ncurvs == 1 )
+   {
+      // Plot a single line
+      QColor colr1( Qt::blue );
+      data_curv      = us_curve( data_plot, curvtitl );
+      data_curv->setPen  ( QPen( QBrush( colr1 ), 3.0, Qt::SolidLine ) );
+      data_curv->setStyle( QwtPlotCurve::Lines );
+
+DbgLv(1) << "DaPl: npoint" << npoint << "xx" << xx[0] << xx[npoint-1]
+ << "yy" << yy[0] << yy[npoint-1];
+      data_curv->setSamples( xx, yy, npoint );
+
+      data_plot->replot();
+      return;
+   }
+
+   // Plot multiple lines, one for each model
+   QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
+   QwtLegend *legend = new QwtLegend;
+   legend->setFrameStyle( QFrame::Box | QFrame::Sunken );
+   legend->setFont( sfont );
+   data_plot->insertLegend( legend, QwtPlot::BottomLegend  );
+
+   QColor lncolrs[] = { QColor( Qt::blue ),
+                        QColor( Qt::red ),
+                        QColor( Qt::green ),
+                        QColor( Qt::magenta ),
+                        QColor( Qt::cyan ),
+                        QColor( Qt::yellow ),
+                        QColor( Qt::gray ),
+                        QColor( Qt::black )
+                    };
+
+   for ( int ii = 0; ii < ncurvs; ii++ )
+   {  // Draw each model line
+      curvtitl       = alldis[ ii ].label;
+      data_curv      = us_curve( data_plot, curvtitl );
+      data_curv->setPen( QPen( QBrush( lncolrs[ ii ] ), 3.0, Qt::SolidLine ) );
+      xx             = ( plot_x == ATTR_S ) ? v_sedcs[ ii ].data()
+                                            : v_difcs[ ii ].data();
+      data_curv->setStyle( QwtPlotCurve::Lines );
+      data_curv->setItemAttribute( QwtPlotItem::Legend, true );
+      data_curv->setSamples( xx, yy, npoint );
+   }
+   data_plot->replot();
+}
+
+void US_Density_Match::plot_data( int cplx )
+{
+   plot_x         = cplx;
    plot_data();
+   plot_x         = plot_x_select();
 }
 
 void US_Density_Match::update_resolu( double dval )
@@ -775,20 +789,17 @@ DbgLv(1) << "LD:  auto_sxy call set_limits";
 DbgLv(1) << "LD: RETURN";
 }
 
-// Start a loop of plotting all distros
-void US_Density_Match::plotall()
+// Determine type of plot currently selected
+int US_Density_Match::plot_x_select()
 {
-   pb_stopplt->setEnabled( true );
-   curr_distr = 0;
-   plot_data();
-   patm_dlay  = qRound( ct_plt_dlay->value() * 1000.0 );
-
-   patm_id    = startTimer( patm_dlay );
-
-   if ( curr_distr == alldis.size() )
-      curr_distr--;
-
-//   need_save  = ck_savepl->isChecked()  &&  !cont_loop;
+   int plotx   = ATTR_S;
+   plotx       = rb_x_mass->isChecked() ? ATTR_W : plotx;
+   plotx       = rb_x_ff0 ->isChecked() ? ATTR_K : plotx;
+   plotx       = rb_x_rh  ->isChecked() ? ATTR_R : plotx;
+   plotx       = rb_x_vbar->isChecked() ? ATTR_V : plotx;
+   plotx       = rb_x_s   ->isChecked() ? ATTR_S : plotx;
+   plotx       = rb_x_d   ->isChecked() ? ATTR_D : plotx;
+   return plotx;
 }
 
 void US_Density_Match::set_limits()
@@ -1097,57 +1108,199 @@ DbgLv(1) << "sel_x:   lab vlos vhis xmin xmax xinc" << xlabs[plot_x]
  << xvlos[plot_x] << xvhis[plot_x] << xmins[plot_x] << xmaxs[plot_x]
  << xincs[plot_x];
 
-   build_bf_distro();
+   build_bf_dists();
+   build_bf_vects();
 
 //   set_limits();
 
    plot_data();
 }
 
-// (Re-)generate the BF version of the current distribution
-void US_Density_Match::build_bf_distro()
+// Generate the BF version of the current distribution
+void US_Density_Match::build_bf_distro( int modx )
 {
-   if ( alldis.size() < 1 )
-      return;
-   DisSys* tsys     = (DisSys*)&alldis.at( curr_distr );
-   if ( tsys->plot_x == plot_x )
+   if ( alldis.size() <= modx )
       return;
 
-   tsys->nm_distro.clear();
-   tsys->plot_x     = plot_x;
-   double tot_conc  = 0.0;
-   int    nsolin    = tsys->in_distro.size();
+   DisSys* tsys     = (DisSys*)&alldis.at( modx );
+DbgLv(1) << "BldBf: modx" << modx;
 
-   // Create solute list with specified x,y
-   for ( int ii = 0; ii < nsolin; ii++ )
+   tsys->bf_distro.clear();
+   int    nsolbo    = tsys->bo_distro.size();
+   double bfrac     = ct_boundaryPos->value() * 0.01;
+   double bfextn    = ct_boundaryPct->value() * 0.01;
+   int    ksolbf    = (int)( ct_division ->value() );
+   int    nsolbf    = ksolbf + 1;
+   double bfincr    = bfextn / (double)ksolbf;
+DbgLv(1) << "BldBf: bfrac bfextn bfincr" << bfrac << bfextn << bfincr
+ << "nsolbo nsolbf" << nsolbo << nsolbf << (bfextn/bfincr) << ksolbf;
+   int    j2        = 1;
+   int    j1        = 0;
+
+   // Create solute points with specified boundary fraction extent
+   for ( int kk = 0; kk < nsolbf; kk++ )
    {
-      S_Solute sol_in  = tsys->in_distro[ ii ];
-      S_Solute sol_nm  = sol_in;
+      while ( j2 < nsolbo )
+      {  // Position boundary fraction within input distribution
+         if ( bfrac <= tsys->bo_distro[ j2 ].f  ||
+              j2 == ( nsolbo - 1 ) )
+            break;
+         j2++;
+      }
 
-      sol_nm.s  = ( plot_x == ATTR_S ) ? sol_in.s : sol_nm.s;
-      sol_nm.s  = ( plot_x == ATTR_K ) ? sol_in.k : sol_nm.s;
-      sol_nm.s  = ( plot_x == ATTR_W ) ? sol_in.w : sol_nm.s;
-      sol_nm.s  = ( plot_x == ATTR_V ) ? sol_in.v : sol_nm.s;
-      sol_nm.s  = ( plot_x == ATTR_D ) ? sol_in.d : sol_nm.s;
-      sol_nm.s  = ( plot_x == ATTR_F ) ? sol_in.f : sol_nm.s;
-      tot_conc += sol_in.c;
-      tsys->nm_distro << sol_nm;
+      // Interpolate values for current output fraction
+      j1               = j2 - 1;
+      S_Solute sol_bf  = tsys->bo_distro[ j2 ];
+      sol_bf.f         = bfrac;
+      double x1        = tsys->bo_distro[ j1 ].f;
+      double x2        = tsys->bo_distro[ j2 ].f;
+      double xfrac     = ( bfrac - x1 ) / ( x2 - x1 );
+      double y1        = tsys->bo_distro[ j1 ].s;
+      double y2        = tsys->bo_distro[ j2 ].s;
+      sol_bf.s         = y1 + ( y2 - y1 ) * xfrac;
+      y1               = tsys->bo_distro[ j1 ].k;
+      y2               = tsys->bo_distro[ j2 ].k;
+      sol_bf.k         = y1 + ( y2 - y1 ) * xfrac;
+      y1               = tsys->bo_distro[ j1 ].c;
+      y2               = tsys->bo_distro[ j2 ].c;
+      sol_bf.c         = y1 + ( y2 - y1 ) * xfrac;
+      y1               = tsys->bo_distro[ j1 ].w;
+      y2               = tsys->bo_distro[ j2 ].w;
+      sol_bf.w         = y1 + ( y2 - y1 ) * xfrac;
+      y1               = tsys->bo_distro[ j1 ].v;
+      y2               = tsys->bo_distro[ j2 ].v;
+      sol_bf.v         = y1 + ( y2 - y1 ) * xfrac;
+      y1               = tsys->bo_distro[ j1 ].d;
+      y2               = tsys->bo_distro[ j2 ].d;
+      sol_bf.d         = y1 + ( y2 - y1 ) * xfrac;
+if (kk<3 || (kk+4)>nsolbf)
+ DbgLv(1) << "BldBf:  kk bfrac" << kk << bfrac << "j1 j2" << j1 << j2
+  << "x1 x2 y1 y2" << x1 << x2 << y1 << y2 << "d" << sol_bf.d;
+ 
+
+      tsys->bf_distro << sol_bf;
+      bfrac           += bfincr;
    }
 
-   // Sort and possibly reduce XY distro
-   sort_distro( tsys->nm_distro, true );
+DbgLv(1) << "BldBf: nsolbo nsolbf" << nsolbo << nsolbf;
+}
 
-   // Create Z-as-percentage version of xy distribution
-   int    nsolnm = tsys->nm_distro.size();
-DbgLv(1) << "Bld: nsolin nsolnm" << nsolin << nsolnm;
-
-   for ( int ii = 0; ii < nsolnm; ii++ )
+// Generate the BF version of all distributions
+void US_Density_Match::build_bf_dists()
+{
+   for ( int jj = 0; jj < alldis.size(); jj++ )
    {
-      S_Solute sol_nm  = tsys->nm_distro[ ii ];
-      sol_nm.c        /= tot_conc;
-
-      tsys->nm_distro << sol_nm;
+      build_bf_distro( jj );
    }
+}
+
+// Generate the BF vectors
+void US_Density_Match::build_bf_vects()
+{
+   int    nsmoo     = (int)( ct_smoothing->value() );
+DbgLv(1) << "BldVc: nsmoo" << nsmoo;
+   QVector< double > v_dens;
+   QVector< double > v_seds;
+
+   // Build the boundary fractions (x) vector
+   int ndists       = alldis.size();
+   if ( ndists < 1 )
+      return;
+   int npoints      = alldis[ 0 ].bf_distro.size();
+   v_bfracs.clear();
+   v_bfracs.reserve( npoints );
+   for ( int jj = 0; jj < npoints; jj++ )
+   {
+      v_bfracs << alldis[ 0 ].bf_distro[ jj ].f;
+   }
+DbgLv(1) << "BldVc: bf 0 1 k n" << v_bfracs[0] << v_bfracs[1]
+ << v_bfracs[npoints-2] << v_bfracs[npoints-1];
+
+   // Build sedimentation and diffusion vectors for each model
+   v_sedcs.clear();
+   v_sedcs.resize( ndists );
+   v_difcs.clear();
+   v_difcs.resize( ndists );
+   for ( int ii = 0; ii < ndists; ii++ )
+   {
+      // Save density for each model distribution
+      double density   = alldis[ ii ].bdensity;
+      v_dens << density;
+      v_sedcs[ ii ].clear();
+      v_difcs[ ii ].clear();
+      v_sedcs[ ii ].reserve( npoints );
+      v_difcs[ ii ].reserve( npoints );
+
+      // Build vectors of s and D for this model
+      for ( int jj = 0; jj < npoints; jj++ )
+      {
+         v_sedcs[ ii ] << alldis[ ii ].bf_distro[ jj ].s;
+         v_difcs[ ii ] << alldis[ ii ].bf_distro[ jj ].d;
+      }
+DbgLv(1) << "BldVc: ii" << ii << "se 0 1 k n" << v_sedcs[ii][0] << v_sedcs[ii][1]
+ << v_sedcs[ii][npoints-2] << v_sedcs[ii][npoints-1];
+DbgLv(1) << "BldVc:     di 0 1 k n" << v_difcs[ii][0] << v_difcs[ii][1]
+ << v_difcs[ii][npoints-2] << v_difcs[ii][npoints-1];
+   }
+DbgLv(1) << "BldVc: vdens" << v_dens;
+
+   // Build vbars vector by fitting sedc,density across models at each bfrac
+   v_vbars.clear();
+   v_vbars.reserve( npoints );
+   for ( int jj = 0; jj < npoints; jj++ )
+   {
+      v_seds.clear();
+      for ( int ii = 0; ii < ndists; ii++ )
+      {
+         v_seds << alldis[ ii ].bf_distro[ jj ].s;
+      }
+      double* xx       = v_seds.data();
+      double* yy       = v_dens.data();
+      double slope, intcept, sigma, corre;
+      US_Math2::linefit( &xx, &yy, &slope, &intcept, &sigma, &corre, ndists );
+      // Intercept is density value and vbar is its reciprocal
+      double vbari     = ( intcept > 0.0 ) ? ( 1.0 / intcept ) : 1.0;
+if(jj==0) {
+DbgLv(1) << "BldVc:  jj0: seds:" << v_seds;
+DbgLv(1) << "BldVc:  jj0: dens:" << v_dens;
+DbgLv(1) << "BldVc:  jj0:  intcept vbari" << intcept << vbari;
+}
+
+      v_vbars << vbari;
+   }
+DbgLv(1) << "BldVc: vb 0 1 k n" << v_vbars[0] << v_vbars[1]
+ << v_vbars[npoints-2] << v_vbars[npoints-1];
+
+   // Compute molar mass values and build the vector
+   v_mmass.clear();
+   v_mmass.reserve( npoints );
+   for ( int jj = 0; jj < npoints; jj++ )
+   {
+   }
+
+   // Compute hydrodynamic radius values and build the vector
+   v_hrads.clear();
+   v_hrads.reserve( npoints );
+   for ( int jj = 0; jj < npoints; jj++ )
+   {
+   }
+
+   // Compute frictional ratio values and build the vector
+   v_frats.clear();
+   v_frats.reserve( npoints );
+   for ( int jj = 0; jj < npoints; jj++ )
+   {
+   }
+
+#if 0
+   QVector< double >             v_bfracs;
+   QVector< double >             v_vbars;
+   QVector< double >             v_mmass;
+   QVector< double >             v_hrads;
+   QVector< double >             v_frats;
+   QVector< QVector< double > >  v_sedcs;
+   QVector< QVector< double > >  v_difcs;
+#endif
 }
 
 // Set annotation title for a plot index
@@ -1178,5 +1331,7 @@ QString US_Density_Match::anno_title( int pltndx )
 void US_Density_Match::update_divis( double dval )
 {
 DbgLv(1) << "UpdDiv:" << dval;
+   build_bf_dists();
+   build_bf_vects();
 }
 
