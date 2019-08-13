@@ -24,17 +24,16 @@ typedef struct distro_sys
    QList< S_Solute >   nm_distro;      // Normalized concentration distro
    QList< S_Solute >   bo_distro;      // Boundary distro w/ orig points
    QList< S_Solute >   bf_distro;      // Boundary fractions distro
-   QString             run_name;
-   QString             analys_name;
-   QString             method;
-   QString             editGUID;
-   QString             solutionGUID;
-   QString             label;
-   int                 distro_type;
-   int                 plot_x;
-   int                 solutionID;
-   double              d2opct;
-   double              bdensity;
+   QString             run_name;       // Distro run name
+   QString             analys_name;    // Distro analysis name
+   QString             method;         // Model method (e.g., "2DSA")
+   QString             editGUID;       // Associated edit GUID
+   QString             solutionGUID;   // Associated solution GUID
+   QString             label;          // Distro label (channel description)
+   int                 distro_type;    // Distro type flag
+   int                 solutionID;     // Associated solution db ID
+   double              d2opct;         // D2O percent for distro
+   double              bdensity;       // Distro buffer density
 } DisSys;
 
 //! \brief Less-than function for sorting distributions
@@ -67,16 +66,11 @@ class US_Density_Match : public US_Widgets
       US_Help       showHelp;
  
       QwtCounter*   ct_resolu;
-      QwtCounter*   ct_xreso;
-      QwtCounter*   ct_yreso;
-      QwtCounter*   ct_zfloor;
       QwtCounter*   ct_plt_kmin;     
       QwtCounter*   ct_plt_kmax;     
       QwtCounter*   ct_plt_smin;     
       QwtCounter*   ct_plt_smax;     
       QwtCounter*   ct_plt_dlay;     
-      QwtCounter*   ct_curr_distr;
-      QwtCounter*   ct_tolerance;
       QwtCounter*   ct_division;
       QwtCounter*   ct_smoothing;
       QwtCounter*   ct_boundaryPct;
@@ -88,8 +82,6 @@ class US_Density_Match : public US_Widgets
 
       US_Disk_DB_Controls* dkdb_cntrls;
 
-      QPushButton*  pb_pltall;
-      QPushButton*  pb_stopplt;
       QPushButton*  pb_refresh;
       QPushButton*  pb_reset;
       QPushButton*  pb_prefilt;
@@ -118,15 +110,15 @@ class US_Density_Match : public US_Widgets
 
       QButtonGroup* bg_x_axis;
 
-      QVector< DisSys >             alldis;
+      QVector< DisSys >             alldis;    // All distributions
 
-      QVector< double >             v_bfracs;
-      QVector< double >             v_vbars;
-      QVector< double >             v_mmass;
-      QVector< double >             v_hrads;
-      QVector< double >             v_frats;
-      QVector< QVector< double > >  v_sedcs;
-      QVector< QVector< double > >  v_difcs;
+      QVector< double >             v_bfracs;  // Boundary fraction vector
+      QVector< double >             v_vbars;   // Vector of vbars per fraction
+      QVector< double >             v_mmass;   // Vector of molar masses per fraction
+      QVector< double >             v_hrads;   // Vector of hydro radii per fraction
+      QVector< double >             v_frats;   // Vector of frict ratios per fraction
+      QVector< QVector< double > >  v_sedcs;   // Vector of sedi coeff vectors per distro
+      QVector< QVector< double > >  v_difcs;   // Vector of diff coeff vectors per distro
 
       double        resolu;
       double        plt_smin;

@@ -125,9 +125,9 @@ US_ModelParams::US_ModelParams( QVector< DisSys >& adistros,
             this,       SLOT(   compute_densities() ) );
    QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
    QFontMetrics fm( font );
-   int fhigh = fm.lineSpacing();
+//   int fhigh = fm.lineSpacing();
+//   int lhigh = fhigh * 10 + 12;
    int fwide = fm.width( QChar( '6' ) );
-   int lhigh = fhigh * 10 + 12;
    int lwide = fwide * ( maxdlen + 2 );
 
    adjustSize();
