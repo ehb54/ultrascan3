@@ -47,11 +47,11 @@ bool distro_lessthan( const S_Solute &solu1, const S_Solute &solu2 )
 // US_Density_Match class constructor
 US_Density_Match::US_Density_Match() : US_Widgets()
 {
-   // Set up the GUI
+   dbg_level = US_Settings::us_debug();
 
+   // Set up the GUI
    setWindowTitle( tr( "Density Matching" ) );
    setPalette( US_GuiSettings::frameColor() );
-
 
    // Primary layouts
    QHBoxLayout* main = new QHBoxLayout( this );
@@ -64,25 +64,20 @@ US_Density_Match::US_Density_Match() : US_Widgets()
    spec->setSpacing        ( 1 );
    spec->setContentsMargins( 0, 0, 0, 0 );
 
-   int s_row = 0;
-   dbg_level = US_Settings::us_debug();
-DbgLv(1) << "MD: main: AA";
-//   clean_etc_dir();
-
    // Top banner
    QLabel* lb_info1      = us_banner( tr( "Model Selection Controls" ) );
-
 
    us_checkbox( tr( "Save Plot(s)"    ), ck_savepl,  false );
    us_checkbox( tr( "Local Save Only" ), ck_locsave, true  );
 
+   // Distribution information text box
    te_distr_info = us_textedit();
-   te_distr_info->setText    ( tr( "Run:  runID.triple (method)\n" )
+   te_distr_info->setText( tr( "Run:  runID.triple (method)\n" )
             + tr( "    analysisID" ) );
    us_setReadOnly( te_distr_info, true );
 
+   // X axis radio buttons and button group
    plot_x      = 0;
-
    QLabel* lb_x_axis   = us_label( tr( "Plot X:" ) );
            bg_x_axis   = new QButtonGroup( this );
    QGridLayout*  gl_x_mass = us_radiobutton( tr( "m.mass"   ), rb_x_mass, true  );
@@ -97,13 +92,13 @@ DbgLv(1) << "MD: main: AA";
    bg_x_axis->addButton( rb_x_vbar, ATTR_V );
    bg_x_axis->addButton( rb_x_s,    ATTR_S );
    bg_x_axis->addButton( rb_x_d,    ATTR_D );
-   rb_x_mass->setChecked( true  );
    rb_x_mass->setToolTip( tr( "Set X axis to Molar Mass"                ) );
    rb_x_ff0 ->setToolTip( tr( "Set X axis to Frictional Ratio"          ) );
    rb_x_rh  ->setToolTip( tr( "Set X axis to Hydrodynamic Radius"       ) );
    rb_x_vbar->setToolTip( tr( "Set X axis to Partial Specific Volume"   ) );
    rb_x_s   ->setToolTip( tr( "Set X axis to Sedimentation Coefficient" ) );
    rb_x_d   ->setToolTip( tr( "Set X axis to Diffusion Coefficient"     ) );
+   rb_x_s   ->setChecked( true );
    connect( bg_x_axis,  SIGNAL( buttonReleased( int ) ),
             this,       SLOT  ( select_x_axis ( int ) ) );
 
@@ -159,6 +154,7 @@ DbgLv(1) << "MD: main: AA";
             this,       SLOT( close() ) );
 
    // Order plot components on the left side
+   int s_row = 0;
    spec->addWidget( lb_info1,      s_row++, 0, 1, 8 );
    spec->addLayout( dkdb_cntrls,   s_row++, 0, 1, 8 );
    spec->addWidget( le_prefilt,    s_row++, 0, 1, 8 );
@@ -257,6 +253,7 @@ DbgLv(1) << "MD: main: AA";
    reset();
 }
 
+// Reset information: clear prefilter and distributions
 void US_Density_Match::reset( void )
 {
 DbgLv(1) << "MD:   reset: AA";
@@ -274,6 +271,7 @@ DbgLv(1) << "MD:   reset: AA";
    le_prefilt->setText( tr( "(no prefilter)" ) );
 }
 
+// Save plots and CSV files
 void US_Density_Match::save( void )
 {
 #if 0
@@ -334,7 +332,7 @@ qDebug() << "DB-save: currdist" << curr_distr
 #endif
 }
 
-// plot the data
+// Plot the data
 void US_Density_Match::plot_data( void )
 {
    int syssiz = alldis.size();
@@ -344,7 +342,6 @@ void US_Density_Match::plot_data( void )
 
    DisSys* tsys   = (DisSys*)&alldis.at( 0 );
    plot_x         = ( plot_x < 0 ) ? plot_x_select() : plot_x;
-
 
 #if 0
 auto_sxy=true;
@@ -377,6 +374,7 @@ auto_sxy=true;
    double* yy     = v_bfracs.data();
    double* xx     = v_sedcs[ 0 ].data();
    QString curvtitl( "curve" );
+   // Plot title
    QString tstr   = QString( tsys->run_name ).section( ".", 0, -2 );
 DbgLv(1) << "DaPl: (1)tstr" << tstr;
 DbgLv(1) << "DaPl:    tstr len" << tstr.length();
@@ -389,6 +387,7 @@ DbgLv(1) << "DaPl:    tstr len" << tstr.length();
       tstr          += "\n";
 DbgLv(1) << "DaPl: (2)tstr" << tstr;
 
+   // X pointer, curve title, rest of plot title; based on plot type
    if      ( plot_x == ATTR_S )
    {
       xx             = v_sedcs[ 0 ].data();
@@ -407,7 +406,7 @@ DbgLv(1) << "DaPl: (2)tstr" << tstr;
       xx             = v_vbars.data();
 DbgLv(1) << "DaPl: v_vbars" << v_vbars;
       curvtitl       = tr( "Vbar_curve" );
-      tstr          += tr( "Specific Density" );
+      tstr          += tr( "Partial Specific Density" );
    }
    else if ( plot_x == ATTR_D )
    {
@@ -430,6 +429,7 @@ DbgLv(1) << "DaPl: v_vbars" << v_vbars;
    }
 DbgLv(1) << "DaPl: (3)tstr" << tstr;
 
+   // Initial plot settings
    dataPlotClear( data_plot );
    data_plot->replot();
    data_plot->setTitle( tstr );
@@ -451,8 +451,12 @@ DbgLv(1) << "DaPl: (3)tstr" << tstr;
    if ( ncurvs == 1 )
    {
       // Plot a single line
+      data_plot->detachItems( QwtPlotItem::Rtti_PlotLegend, true );
+      QwtLegend *legend = new QwtLegend;
+      data_plot->insertLegend( legend, QwtPlot::BottomLegend  );
       QColor colr1( Qt::blue );
       data_curv      = us_curve( data_plot, curvtitl );
+      data_curv->setItemAttribute( QwtPlotItem::Legend, true );
       data_curv->setPen  ( QPen( QBrush( colr1 ), 3.0, Qt::SolidLine ) );
       data_curv->setStyle( QwtPlotCurve::Lines );
 
@@ -495,6 +499,7 @@ DbgLv(1) << "DaPl: npoint" << npoint << "xx" << xx[0] << xx[npoint-1]
    data_plot->replot();
 }
 
+// Plot data based on current plot type index
 void US_Density_Match::plot_data( int cplx )
 {
    plot_x         = cplx;
@@ -563,6 +568,7 @@ void US_Density_Match::select_autoscz()
    set_limits();
 }
 
+// Load all the distributions (models)
 void US_Density_Match::load_distro()
 {
    // Get a model description or set of descriptions for distribution data
@@ -582,6 +588,9 @@ void US_Density_Match::load_distro()
 
    need_save  = false;
 
+   te_distr_info->setText(
+      QString( models[ 0 ].description ).section( ".", 0, -4 ) );
+
    for ( int jj = 0; jj < models.count(); jj++ )
    {  // Load each selected distribution model
       load_distro( models[ jj ], mdescs[ jj ] );
@@ -592,15 +601,19 @@ void US_Density_Match::load_distro()
    pb_rmvdist->setEnabled( models.count() > 0 );
 
    // Notify user of need to set D2O-percent, label, density model values
-   QString qmsg = tr( "%1 models are loaded. In the dialog to follow,\n"
+   QString qmsg = tr( "%1 models are loaded.\n\nIn the dialog to follow,\n"
                       "you must set D2O Percent values for each,\n"
                       "then review and set Label and Density values for them.\n"
-                      "Begin with the model(s) with 0% D2O." )
+                      "Begin with the model with 0% D2O." )
                       .arg( alldis.size() );
    QMessageBox::warning( this, tr( "Model Parameters" ), qmsg );
 
    // Set model distributions parameters
    set_mparms();
+
+   // Plot S lines for all models
+   rb_x_s->setChecked( true );
+   select_x_axis( ATTR_S );
 }
 
 // Create distributions from a loaded model
@@ -630,7 +643,6 @@ void US_Density_Match::load_distro( US_Model model, QString mdescr )
                                           .section( '_', 2, 2 );
    }
    tsys.editGUID     = model.editGUID;
-   tsys.plot_x       = plot_x;
 DbgLv(1) << "LD: method" << tsys.method << "mdesc" << mdesc;
 
    if ( tsys.method == "Manual"  ||  tsys.method == "CUSTOMGRID" )
@@ -702,8 +714,8 @@ DbgLv(1) << "LD:  solval: bdens soluID bdensity"
  << bdens << soluID << tsys.bdensity;
 
    
-   te_distr_info->setText( tr( "Run:  " ) + tsys.run_name
-      + " (" + tsys.method + ")\n    " + tsys.analys_name );
+//   te_distr_info->setText( tr( "Run:  " ) + tsys.run_name
+//      + " (" + tsys.method + ")\n    " + tsys.analys_name );
    int nsolmc  = model.components.size();
 
    // Read in and set distribution s,k,c,... values
@@ -737,9 +749,9 @@ if ( jj<3   ||  (jj+4)>nsolmc )
 DbgLv(1) << "LD: totconc" << tot_conc << "nsolin nsolnm" << nsolin << nsolnm;
    for ( int jj = 0; jj < nsolnm; jj++ )
    {
-      sol_nm      = wk_distro[ jj ];
-      sol_nm.c   /= tot_conc;
-      tsys.nm_distro << sol_nm;
+      sol_nm      = wk_distro[ jj ];  // Solute point
+      sol_nm.c   /= tot_conc;         // Normalized concentration
+      tsys.nm_distro << sol_nm;       // Saved to "normalized" distro
 if ( jj<3   ||  (jj+4)>nsolnm )
  DbgLv(1) << "LD:    jj" << jj << "soln s,d,c"
   << sol_nm.s << sol_nm.d << sol_nm.c;
@@ -748,16 +760,16 @@ DbgLv(1) << "LD: nsolin nsolnm" << nsolin << nsolnm << tsys.nm_distro.size();
 
    // Create version of distribution with boundary fraction
 
-   tsys.bo_distro.clear();
+   tsys.bo_distro.clear();                // Boundary distro
    double sum_co  = 0.0;
 
    for ( int jj = 0; jj < nsolnm; jj++ )
    {
-      sol_nm      = tsys.nm_distro[ jj ];
-      sum_co     += sol_nm.c;
-      sol_bf      = sol_nm;
-      sol_bf.f    = sum_co;
-      tsys.bo_distro << sol_bf;
+      sol_nm      = tsys.nm_distro[ jj ]; // Norm'd solute point
+      sum_co     += sol_nm.c;             // Concentration integration
+      sol_bf      = sol_nm;               // Boundary fraction solute point
+      sol_bf.f    = sum_co;               // With boundary fraction for "f"
+      tsys.bo_distro << sol_bf;           // Save to boundary distro
 if ( jj<3   ||  (jj+4)>nsolnm )
  DbgLv(1) << "LD:    jj" << jj << "solb s,d,c,f"
   << sol_bf.s << sol_bf.d << sol_bf.c << sol_bf.f;
@@ -786,6 +798,16 @@ DbgLv(1) << "LD:  auto_sxy call set_limits";
    else
       pb_pltall->setText( tr( "Plot All Distros" ) );
 #endif
+   pb_refresh->setEnabled( true );
+   pb_reset  ->setEnabled( true );
+
+   // Update status text box
+   QString distripl = QString( model.description ).section( ".", -3, -3 );
+DbgLv(1) << "LD:  model:" << model.description;
+   QString disdesc  = tsys.label;
+   QString disinfo  = te_distr_info->toPlainText() + "\n  "
+                      + distripl + "  " + disdesc + tr( "  loaded" );
+   te_distr_info->setText( disinfo );
 DbgLv(1) << "LD: RETURN";
 }
 
@@ -1029,21 +1051,19 @@ qDebug() << "rmvdis:DONE";
 void US_Density_Match::set_mparms( void )
 {
 qDebug() << "mdlpar:Set Model Parameters";
+   // Open Model Parameters dialog
    US_ModelParams mpdiag( alldis, this );
 
+   // Use parameters returned
    if ( mpdiag.exec() == QDialog::Accepted )
    {  // Redo text box summarizing models; calculate vectors
-      QString dinfo;
       QString mdesc     = mdescs[ 0 ].section( mdescs[ 0 ].left( 1 ), 1, 1 );
-//      int kk            = mdesc.indexOf( "-run" );
-//      mdesc             = ( kk > 0 ) ? QString( mdesc ).mid( ( kk + 1 ) )
-//                                     : mdesc;
       mdesc             = QString( mdesc ).left( 50 );
-      dinfo             = tr( "Run:\n  " ) + mdesc + "...\n\n"
+      QString dinfo     = tr( "Run:\n  " ) + mdesc + "...\n\n"
                         + tr( "  D2O Percent  Density  Label  MDescr.\n" );
 
       for ( int jj = 0; jj < alldis.size(); jj++ )
-      {
+      {  // Compose and display a distribution line for distro info box
          double d2opct     = alldis[ jj ].d2opct;
          double bdens      = alldis[ jj ].bdensity;
          QString mlab      = alldis[ jj ].label;
@@ -1066,6 +1086,8 @@ qDebug() << "mdlpar:Set Model Parameters";
 void US_Density_Match::select_x_axis( int ival )
 {
 DbgLv(1) << "sel_x:  ival" << ival;
+   plot_x     = ival;
+
 #if 0
    const QString xlabs[] = {   "mass", "f/f0",   "rh", "vbar",     "s" };
    const double  xvlos[] = {     2e+4,   1.0,    2e+4,  0.60,      1.0 };
@@ -1090,8 +1112,6 @@ DbgLv(1) << "sel_x:  ival" << ival;
    const double  xincs[] = {     0.01,  0.01, 1000.0,  0.01, 1e-9, 1e-9 };
 #endif
 
-   plot_x     = ival;
-
 #if 0
    lb_plt_smin->setText( tr( "Plot Limit " ) + xlabs[ plot_x ]
                        + tr( " Minimum:" ) );
@@ -1108,12 +1128,12 @@ DbgLv(1) << "sel_x:   lab vlos vhis xmin xmax xinc" << xlabs[plot_x]
  << xvlos[plot_x] << xvhis[plot_x] << xmins[plot_x] << xmaxs[plot_x]
  << xincs[plot_x];
 
-   build_bf_dists();
-   build_bf_vects();
+   build_bf_dists();    // Build the boundary fraction distributions
+   build_bf_vects();    // Build the boundary fraction vectors
 
 //   set_limits();
 
-   plot_data();
+   plot_data();         // Plot data
 }
 
 // Generate the BF version of the current distribution
@@ -1151,35 +1171,35 @@ DbgLv(1) << "BldBf: bfrac bfextn bfincr" << bfrac << bfextn << bfincr
       // Interpolate values for current output fraction
       j1               = j2 - 1;
       S_Solute sol_bf  = tsys->bo_distro[ j2 ];
-      sol_bf.f         = bfrac;
+      sol_bf.f         = bfrac;                   // Boundary fraction
       double x1        = tsys->bo_distro[ j1 ].f;
       double x2        = tsys->bo_distro[ j2 ].f;
       double xfrac     = ( bfrac - x1 ) / ( x2 - x1 );
       double y1        = tsys->bo_distro[ j1 ].s;
       double y2        = tsys->bo_distro[ j2 ].s;
-      sol_bf.s         = y1 + ( y2 - y1 ) * xfrac;
+      sol_bf.s         = y1 + ( y2 - y1 ) * xfrac; // Interpolated s
       y1               = tsys->bo_distro[ j1 ].k;
       y2               = tsys->bo_distro[ j2 ].k;
-      sol_bf.k         = y1 + ( y2 - y1 ) * xfrac;
+      sol_bf.k         = y1 + ( y2 - y1 ) * xfrac; // Interpolated f/f0
       y1               = tsys->bo_distro[ j1 ].c;
       y2               = tsys->bo_distro[ j2 ].c;
-      sol_bf.c         = y1 + ( y2 - y1 ) * xfrac;
+      sol_bf.c         = y1 + ( y2 - y1 ) * xfrac; // Interpolated concentration
       y1               = tsys->bo_distro[ j1 ].w;
       y2               = tsys->bo_distro[ j2 ].w;
-      sol_bf.w         = y1 + ( y2 - y1 ) * xfrac;
+      sol_bf.w         = y1 + ( y2 - y1 ) * xfrac; // Interpolated wt
       y1               = tsys->bo_distro[ j1 ].v;
       y2               = tsys->bo_distro[ j2 ].v;
-      sol_bf.v         = y1 + ( y2 - y1 ) * xfrac;
+      sol_bf.v         = y1 + ( y2 - y1 ) * xfrac; // Interpolated vbar
       y1               = tsys->bo_distro[ j1 ].d;
       y2               = tsys->bo_distro[ j2 ].d;
-      sol_bf.d         = y1 + ( y2 - y1 ) * xfrac;
+      sol_bf.d         = y1 + ( y2 - y1 ) * xfrac; // Interpolated D
 if (kk<3 || (kk+4)>nsolbf)
  DbgLv(1) << "BldBf:  kk bfrac" << kk << bfrac << "j1 j2" << j1 << j2
   << "x1 x2 y1 y2" << x1 << x2 << y1 << y2 << "d" << sol_bf.d;
  
 
-      tsys->bf_distro << sol_bf;
-      bfrac           += bfincr;
+      tsys->bf_distro << sol_bf;  // Solute point at boundary fraction
+      bfrac           += bfincr;  // Bump to next boundary fraction
    }
 
 DbgLv(1) << "BldBf: nsolbo nsolbf" << nsolbo << nsolbf;
@@ -1188,9 +1208,33 @@ DbgLv(1) << "BldBf: nsolbo nsolbf" << nsolbo << nsolbf;
 // Generate the BF version of all distributions
 void US_Density_Match::build_bf_dists()
 {
-   for ( int jj = 0; jj < alldis.size(); jj++ )
-   {
+   bool diff_avg    = true;
+   int ndists       = alldis.size();
+   for ( int jj = 0; jj < ndists; jj++ )
+   {  // Build bfrac distro for each model
       build_bf_distro( jj );
+   }
+
+   if ( diff_avg )
+   {  // Replace diffusion coefficients with weight averages
+      int npoints      = alldis[ 0 ].bf_distro.size();
+      for ( int jj = 0; jj < npoints; jj++ )
+      {
+         double dsum      = 0.0;
+         double wsum      = 0.0;
+         for ( int ii = 0; ii < ndists; ii++ )
+         {  // Accumulate (weighted) sum and sum of weights
+//            double dwt       = alldis[ ii ].bf_distro[ jj ].c;
+            double dwt       = 1.0;
+            dsum            += ( alldis[ ii ].bf_distro[ jj ].d * dwt );
+            wsum            += dwt;
+         }
+         double dval      = dsum / wsum;  // average diffusion coefficient
+         for ( int ii = 0; ii < ndists; ii++ )
+         {  // Propagate to all models
+            alldis[ ii ].bf_distro[ jj ].d = dval;
+         }
+      }
    }
 }
 
@@ -1210,7 +1254,7 @@ DbgLv(1) << "BldVc: nsmoo" << nsmoo;
    v_bfracs.clear();
    v_bfracs.reserve( npoints );
    for ( int jj = 0; jj < npoints; jj++ )
-   {
+   {  // Grab each fraction from 1st model's distro
       v_bfracs << alldis[ 0 ].bf_distro[ jj ].f;
    }
 DbgLv(1) << "BldVc: bf 0 1 k n" << v_bfracs[0] << v_bfracs[1]
@@ -1225,7 +1269,7 @@ DbgLv(1) << "BldVc: bf 0 1 k n" << v_bfracs[0] << v_bfracs[1]
    {
       // Save density for each model distribution
       double density   = alldis[ ii ].bdensity;
-      v_dens << density;
+      v_dens << density;                // Vector of densities
       v_sedcs[ ii ].clear();
       v_difcs[ ii ].clear();
       v_sedcs[ ii ].reserve( npoints );
@@ -1233,7 +1277,7 @@ DbgLv(1) << "BldVc: bf 0 1 k n" << v_bfracs[0] << v_bfracs[1]
 
       // Build vectors of s and D for this model
       for ( int jj = 0; jj < npoints; jj++ )
-      {
+      {  // Build s,D vectors for this model
          v_sedcs[ ii ] << alldis[ ii ].bf_distro[ jj ].s;
          v_difcs[ ii ] << alldis[ ii ].bf_distro[ jj ].d;
       }
@@ -1251,11 +1295,11 @@ DbgLv(1) << "BldVc: vdens" << v_dens;
    {
       v_seds.clear();
       for ( int ii = 0; ii < ndists; ii++ )
-      {
+      {  // Build sed coeffs vector across models
          v_seds << alldis[ ii ].bf_distro[ jj ].s;
       }
-      double* xx       = v_seds.data();
-      double* yy       = v_dens.data();
+      double* xx       = v_seds.data();  // X is sed coeffs
+      double* yy       = v_dens.data();  // Y is densities
       double slope, intcept, sigma, corre;
       US_Math2::linefit( &xx, &yy, &slope, &intcept, &sigma, &corre, ndists );
       // Intercept is density value and vbar is its reciprocal
@@ -1276,22 +1320,62 @@ DbgLv(1) << "BldVc: vb 0 1 k n" << v_vbars[0] << v_vbars[1]
    v_mmass.reserve( npoints );
    for ( int jj = 0; jj < npoints; jj++ )
    {
+      double sedco     = alldis[ 0 ].bf_distro[ jj ].s * 1.0e-13;
+      double difco     = alldis[ 0 ].bf_distro[ jj ].d * 1.0e-7;
+      double vbari     = v_vbars[ jj ];
+      double mmass     = sedco * R_GC * K20 / ( difco * ( 1.0 - vbari * DENS_20W ) );
+      mmass            = qAbs( mmass );
+      v_mmass << mmass;
    }
+DbgLv(1) << "BldVc: mm 0 1 k n" << v_mmass[0] << v_mmass[1]
+ << v_mmass[npoints-2] << v_mmass[npoints-1];
 
    // Compute hydrodynamic radius values and build the vector
    v_hrads.clear();
    v_hrads.reserve( npoints );
    for ( int jj = 0; jj < npoints; jj++ )
    {
+      double difco     = alldis[ 0 ].bf_distro[ jj ].d * 1.0e-7;
+      double frico     = R_GC * K20 / ( difco * AVOGADRO );
+      double hyrad     = frico / ( 6.0 * M_PI * VISC_20W );
+      v_hrads << hyrad;
    }
 
    // Compute frictional ratio values and build the vector
+   const double a_third = ( 1.0 / 3.0 );
    v_frats.clear();
    v_frats.reserve( npoints );
    for ( int jj = 0; jj < npoints; jj++ )
    {
+      double difco     = alldis[ 0 ].bf_distro[ jj ].d * 1.0e-7;
+      double vbari     = v_vbars[ jj ];
+      double rzero     = pow( ( ( 0.75 / M_PI ) * vbari ), a_third );
+      double frico     = R_GC * K20 / ( difco * AVOGADRO );
+      double fzero     = 6.0 * M_PI * VISC_20W * rzero;
+      double frrat     = frico / fzero;
+      v_frats << frrat;
    }
 
+#if 0
+
+*** Mi = si*R*T/(Di_avg*(1-vbari*rho))
+
+i = boundary fraction from 0 to 1
+
+Mi*vbari/N = Volume of moleculei
+
+V=4/3 * pi*r_0^3    (3/(4*pi) *v)^1/3 = r_0
+
+f_0i = 6 * pi * eta * r_0i
+
+fi = RT/(N*Di)
+
+*** fi/f_0i
+
+*** ri = fi/(6 * pi * eta)   <-- hydrodynamic radius
+
+*** --> distributions to plot, let user choose which
+#endif
 #if 0
    QVector< double >             v_bfracs;
    QVector< double >             v_vbars;
