@@ -244,7 +244,8 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
    in_reload_all_data  = false;
    in_reload_data_init = false;
    in_reload_check_sysdata  = false;
-
+   in_reload_end_processes  = false;
+   
    ElapsedTimeOffset = 0;
 
    //ALEXEY: new way
@@ -2141,6 +2142,14 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
     }
 }
 
+
+// Reset LIVE UPDATE panel && stop timers && quit threads
+void US_XpnDataViewer::reset_liveupdate_panel_public ( void )
+{
+  reset_liveupdate_panel();
+}
+
+
 // Reset LIVE UPDATE panel && stop timers && quit threads
 void US_XpnDataViewer::reset_liveupdate_panel ( void )
 {
@@ -2195,17 +2204,44 @@ void US_XpnDataViewer::reset_liveupdate_panel ( void )
   if ( !timer_data_reload->isActive() )
     qDebug() << "QTimer timer_data_reload STOPPED by clickig Manage Optima runs !!! ";
   /*************************************/
-  
-  reset_auto();
 
-  qDebug() << in_reload_auto << ", " << in_reload_all_data << ", " << in_reload_data_init << ", " << in_reload_check_sysdata;
+  qDebug() << "BEFORE: " << in_reload_auto << ", " << in_reload_all_data << ", " << in_reload_data_init << ", " << in_reload_check_sysdata;
   
-  in_reload_auto    = false;
-  in_reload_all_data  = false;
-  in_reload_data_init = false;
-  in_reload_check_sysdata  = false;
+  //ALEXEY: should wait for execution of all below variables to be false (end of all timer functions) BEFORE reset_all();
+  // Introduce QTimer which checks for all abpve vartibales to be false (check all related functions to always reset them to false on completion)
+  // Put reset_auto() into the timer && and stop/disconnect timer from within connected SLOT.
+  timer_end_processes = new QTimer;
+  connect(timer_end_processes, SIGNAL(timeout()), this, SLOT( end_processes ( ) ));
+  timer_end_processes->start(2000);     // 5 sec
   
-  qApp->processEvents();
+  //reset_auto();
+  //qApp->processEvents();
+}
+
+//to end all existing update processes
+void US_XpnDataViewer::end_processes( void )
+{
+  if ( in_reload_end_processes )            // If already doing a reload,
+    return;                              //  skip starting a new one
+  
+  in_reload_end_processes   = true;          // Flag in the midst of a reload
+  
+  if ( !in_reload_auto && !in_reload_all_data &&  !in_reload_data_init && !in_reload_check_sysdata ) 
+    {
+      
+      timer_end_processes->stop();
+      disconnect(timer_end_processes, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+      
+      reset_auto();
+      qDebug() << "LIVE UPDATE panel has been reset!";
+      qDebug() << "AFTER: " << in_reload_auto << ", " << in_reload_all_data << ", " << in_reload_data_init << ", " << in_reload_check_sysdata;
+      
+      qApp->processEvents();
+       
+      //in_reload_end_processes   = false; 
+    }
+  else
+    in_reload_end_processes   = false; 
 }
 
 
@@ -3928,6 +3964,8 @@ DbgLv(1) << "RLd:       NO CHANGE";
 
 	      updateautoflow_record_atLiveUpdate();
 	      reset_auto();
+
+	      in_reload_auto   = false;
 	      
 	      //emit experiment_complete_auto( currentDir, ProtocolName, invID_passed, correctRadii  );  // Updtade later: what should be passed with signal ??
 	      emit experiment_complete_auto( details_at_live_update );

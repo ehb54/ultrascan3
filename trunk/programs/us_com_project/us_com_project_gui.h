@@ -172,9 +172,11 @@ class US_ObservGui : public US_WidgetsDialog
       US_ObservGui( QWidget* );
       ~US_ObservGui() {};
 
+      US_XpnDataViewer*     sdiag;
+
  private:
       US_ComProjectMain*    mainw;      // Parent to all panels
-      US_XpnDataViewer*    sdiag;
+      //US_XpnDataViewer*     sdiag;
       int offset;
 
  protected:
