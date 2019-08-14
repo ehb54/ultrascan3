@@ -80,24 +80,24 @@ US_Density_Match::US_Density_Match() : US_Widgets()
    plot_x      = 0;
    QLabel* lb_x_axis   = us_label( tr( "Plot X:" ) );
            bg_x_axis   = new QButtonGroup( this );
+   QGridLayout*  gl_x_s    = us_radiobutton( tr( "s"   ), rb_x_s,    false );
+   QGridLayout*  gl_x_d    = us_radiobutton( tr( "D"   ), rb_x_d,    false );
+   QGridLayout*  gl_x_vbar = us_radiobutton( tr( "vbar"), rb_x_vbar, false );
    QGridLayout*  gl_x_mass = us_radiobutton( tr( "m.mass"   ), rb_x_mass, true  );
    QGridLayout*  gl_x_ff0  = us_radiobutton( tr( "ff0" ), rb_x_ff0,  false );
    QGridLayout*  gl_x_rh   = us_radiobutton( tr( "Rh"  ), rb_x_rh,   false );
-   QGridLayout*  gl_x_vbar = us_radiobutton( tr( "vbar"), rb_x_vbar, false );
-   QGridLayout*  gl_x_s    = us_radiobutton( tr( "s"   ), rb_x_s,    false );
-   QGridLayout*  gl_x_d    = us_radiobutton( tr( "D"   ), rb_x_d,    false );
+   bg_x_axis->addButton( rb_x_s,    ATTR_S );
+   bg_x_axis->addButton( rb_x_d,    ATTR_D );
+   bg_x_axis->addButton( rb_x_vbar, ATTR_V );
    bg_x_axis->addButton( rb_x_mass, ATTR_W );
    bg_x_axis->addButton( rb_x_ff0,  ATTR_K );
    bg_x_axis->addButton( rb_x_rh,   ATTR_R );
-   bg_x_axis->addButton( rb_x_vbar, ATTR_V );
-   bg_x_axis->addButton( rb_x_s,    ATTR_S );
-   bg_x_axis->addButton( rb_x_d,    ATTR_D );
+   rb_x_s   ->setToolTip( tr( "Set X axis to Sedimentation Coefficient" ) );
+   rb_x_d   ->setToolTip( tr( "Set X axis to Diffusion Coefficient"     ) );
+   rb_x_vbar->setToolTip( tr( "Set X axis to Partial Specific Volume"   ) );
    rb_x_mass->setToolTip( tr( "Set X axis to Molar Mass"                ) );
    rb_x_ff0 ->setToolTip( tr( "Set X axis to Frictional Ratio"          ) );
    rb_x_rh  ->setToolTip( tr( "Set X axis to Hydrodynamic Radius"       ) );
-   rb_x_vbar->setToolTip( tr( "Set X axis to Partial Specific Volume"   ) );
-   rb_x_s   ->setToolTip( tr( "Set X axis to Sedimentation Coefficient" ) );
-   rb_x_d   ->setToolTip( tr( "Set X axis to Diffusion Coefficient"     ) );
    rb_x_s   ->setChecked( true );
    connect( bg_x_axis,  SIGNAL( buttonReleased( int ) ),
             this,       SLOT  ( select_x_axis ( int ) ) );
@@ -166,12 +166,12 @@ US_Density_Match::US_Density_Match() : US_Widgets()
    spec->addWidget( pb_mdlpars,    s_row,   0, 1, 4 );
    spec->addWidget( pb_save,       s_row++, 4, 1, 4 );
    spec->addWidget( lb_x_axis,     s_row,   0, 1, 2 );
+   spec->addLayout( gl_x_s,        s_row,   2, 1, 2 );
+   spec->addLayout( gl_x_d,        s_row,   4, 1, 2 );
+   spec->addLayout( gl_x_vbar,     s_row++, 6, 1, 2 );
    spec->addLayout( gl_x_mass,     s_row,   2, 1, 2 );
    spec->addLayout( gl_x_ff0,      s_row,   4, 1, 2 );
    spec->addLayout( gl_x_rh,       s_row++, 6, 1, 2 );
-   spec->addLayout( gl_x_vbar,     s_row,   2, 1, 2 );
-   spec->addLayout( gl_x_s,        s_row,   4, 1, 2 );
-   spec->addLayout( gl_x_d,        s_row++, 6, 1, 2 );
    spec->addWidget( ck_savepl,     s_row,   0, 1, 4 );
    spec->addWidget( ck_locsave,    s_row++, 4, 1, 4 );
    spec->addWidget( te_distr_info, s_row,   0, 2, 8 ); s_row += 2;
@@ -205,6 +205,8 @@ US_Density_Match::US_Density_Match() : US_Widgets()
    connect( ct_boundaryPct, SIGNAL( valueChanged( double ) ),
             this,           SLOT(  update_divis(  double ) ) );
    connect( ct_boundaryPos, SIGNAL( valueChanged( double ) ),
+            this,           SLOT(  update_divis(  double ) ) );
+   connect( ct_smoothing,   SIGNAL( valueChanged( double ) ),
             this,           SLOT(  update_divis(  double ) ) );
 
    spec->addWidget( lb_analysis       , s_row++, 0, 1, 8 );
@@ -398,14 +400,14 @@ DbgLv(1) << "DaPl: (2)tstr" << tstr;
    else if ( plot_x == ATTR_W )
    {
       xx             = v_mmass.data();
-      curvtitl       = tr( "Mmass_curve" );
+      curvtitl       = tr( "mmass_curve" );
       tstr          += tr( "Molar Mass" );
    }
    else if ( plot_x == ATTR_V )
    {
       xx             = v_vbars.data();
 DbgLv(1) << "DaPl: v_vbars" << v_vbars;
-      curvtitl       = tr( "Vbar_curve" );
+      curvtitl       = tr( "vbar_curve" );
       tstr          += tr( "Partial Specific Density" );
    }
    else if ( plot_x == ATTR_D )
@@ -424,7 +426,7 @@ DbgLv(1) << "DaPl: v_vbars" << v_vbars;
    else if ( plot_x == ATTR_K )
    {
       xx             = v_frats.data();
-      curvtitl       = tr( "Ff0_curve" );
+      curvtitl       = tr( "ff0_curve" );
       tstr          += tr( "Frictional Ratio" );
    }
 DbgLv(1) << "DaPl: (3)tstr" << tstr;
@@ -1059,7 +1061,7 @@ qDebug() << "mdlpar:Set Model Parameters";
    {  // Redo text box summarizing models; calculate vectors
       QString mdesc     = mdescs[ 0 ].section( mdescs[ 0 ].left( 1 ), 1, 1 );
       mdesc             = QString( mdesc ).left( 50 );
-      QString dinfo     = tr( "Run:\n  " ) + mdesc + "...\n\n"
+      QString dinfo     = alldis[ 0 ].run_name.section( ".", 0, -2 ) + "\n\n"
                         + tr( "  D2O Percent  Density  Label  MDescr.\n" );
 
       for ( int jj = 0; jj < alldis.size(); jj++ )
@@ -1205,7 +1207,7 @@ if (kk<3 || (kk+4)>nsolbf)
 DbgLv(1) << "BldBf: nsolbo nsolbf" << nsolbo << nsolbf;
 }
 
-// Generate the BF version of all distributions
+// Generate the BoundaryFraction version of all distributions
 void US_Density_Match::build_bf_dists()
 {
    bool diff_avg    = true;
@@ -1238,7 +1240,7 @@ void US_Density_Match::build_bf_dists()
    }
 }
 
-// Generate the BF vectors
+// Generate the BoundaryFraction-associated vectors
 void US_Density_Match::build_bf_vects()
 {
    int    nsmoo     = (int)( ct_smoothing->value() );
@@ -1277,7 +1279,7 @@ DbgLv(1) << "BldVc: bf 0 1 k n" << v_bfracs[0] << v_bfracs[1]
 
       // Build vectors of s and D for this model
       for ( int jj = 0; jj < npoints; jj++ )
-      {  // Build s,D vectors for this model
+      {  // Append s,D values for each bf-point for this model
          v_sedcs[ ii ] << alldis[ ii ].bf_distro[ jj ].s;
          v_difcs[ ii ] << alldis[ ii ].bf_distro[ jj ].d;
       }
@@ -1285,6 +1287,12 @@ DbgLv(1) << "BldVc: ii" << ii << "se 0 1 k n" << v_sedcs[ii][0] << v_sedcs[ii][1
  << v_sedcs[ii][npoints-2] << v_sedcs[ii][npoints-1];
 DbgLv(1) << "BldVc:     di 0 1 k n" << v_difcs[ii][0] << v_difcs[ii][1]
  << v_difcs[ii][npoints-2] << v_difcs[ii][npoints-1];
+
+      if ( nsmoo > 1 )
+      {  // Apply gaussian smoothing to s and D vectors
+	 US_Math2::gaussian_smoothing( v_sedcs[ ii ], nsmoo );
+         US_Math2::gaussian_smoothing( v_difcs[ ii ], nsmoo );
+      }
    }
 DbgLv(1) << "BldVc: vdens" << v_dens;
 
@@ -1296,7 +1304,7 @@ DbgLv(1) << "BldVc: vdens" << v_dens;
       v_seds.clear();
       for ( int ii = 0; ii < ndists; ii++ )
       {  // Build sed coeffs vector across models
-         v_seds << alldis[ ii ].bf_distro[ jj ].s;
+         v_seds << v_sedcs[ ii ][ jj ];
       }
       double* xx       = v_seds.data();  // X is sed coeffs
       double* yy       = v_dens.data();  // Y is densities
@@ -1320,6 +1328,7 @@ DbgLv(1) << "BldVc: vb 0 1 k n" << v_vbars[0] << v_vbars[1]
    v_mmass.reserve( npoints );
    for ( int jj = 0; jj < npoints; jj++ )
    {
+      // *** Mi = si*R*T/(Di_avg*(1-vbari*rho))
       double sedco     = alldis[ 0 ].bf_distro[ jj ].s * 1.0e-13;
       double difco     = alldis[ 0 ].bf_distro[ jj ].d * 1.0e-7;
       double vbari     = v_vbars[ jj ];
@@ -1335,26 +1344,45 @@ DbgLv(1) << "BldVc: mm 0 1 k n" << v_mmass[0] << v_mmass[1]
    v_hrads.reserve( npoints );
    for ( int jj = 0; jj < npoints; jj++ )
    {
+      // Mi*vbari/N = Volume of moleculei
+      // V=4/3 * pi*r_0^3    (3/(4*pi) *v)^1/3 = r_0
+      // f_0i = 6 * pi * eta * r_0i
+      // fi = RT/(N*Di)
+      // *** fi/f_0i
+      // *** ri = fi/(6 * pi * eta)   <-- hydrodynamic radius
       double difco     = alldis[ 0 ].bf_distro[ jj ].d * 1.0e-7;
       double frico     = R_GC * K20 / ( difco * AVOGADRO );
       double hyrad     = frico / ( 6.0 * M_PI * VISC_20W );
       v_hrads << hyrad;
    }
+DbgLv(1) << "BldVc: hr 0 1 k n" << v_hrads[0] << v_hrads[1]
+ << v_hrads[npoints-2] << v_hrads[npoints-1];
 
    // Compute frictional ratio values and build the vector
    const double a_third = ( 1.0 / 3.0 );
+   double vol_fac       = ( 0.75 / M_PI );
    v_frats.clear();
    v_frats.reserve( npoints );
    for ( int jj = 0; jj < npoints; jj++ )
    {
+      // Mi*vbari/N = Volume of moleculei
+      // V=4/3 * pi*r_0^3    (3/(4*pi) *v)^1/3 = r_0
+      // f_0i = 6 * pi * eta * r_0i
+      // fi = RT/(N*Di)
+      // *** fi/f_0i
+      // *** ri = fi/(6 * pi * eta)   <-- hydrodynamic radius
       double difco     = alldis[ 0 ].bf_distro[ jj ].d * 1.0e-7;
       double vbari     = v_vbars[ jj ];
-      double rzero     = pow( ( ( 0.75 / M_PI ) * vbari ), a_third );
-      double frico     = R_GC * K20 / ( difco * AVOGADRO );
+//      double rzero     = pow( ( ( 0.75 / M_PI ) * vbari ), a_third );
+      double volum     = v_mmass[ jj ] * vbari / AVOGADRO;
+      double rzero     = pow( ( vol_fac * volum ), a_third );
+      double fcoef     = R_GC * K20 / ( difco * AVOGADRO );
       double fzero     = 6.0 * M_PI * VISC_20W * rzero;
-      double frrat     = frico / fzero;
-      v_frats << frrat;
+      double frati     = fcoef / fzero;
+      v_frats << frati;
    }
+DbgLv(1) << "BldVc: fr 0 1 k n" << v_frats[0] << v_frats[1]
+ << v_frats[npoints-2] << v_frats[npoints-1];
 
 #if 0
 
@@ -1411,11 +1439,35 @@ QString US_Density_Match::anno_title( int pltndx )
    return a_title;
 }
 
-// Update structures and plot after division change
+// Set plot-type text suffix for a plot index
+QString US_Density_Match::ptype_text( int pltndx )
+{
+   QString t_text;
+
+   if      ( pltndx == ATTR_S )
+      t_text  = "s";
+   else if ( pltndx == ATTR_K )
+      t_text  = "ff0";
+   else if ( pltndx == ATTR_W )
+      t_text  = "mmass";
+   else if ( pltndx == ATTR_V )
+      t_text  = "vbar";
+   else if ( pltndx == ATTR_D )
+      t_text  = "d";
+   else if ( pltndx == ATTR_R )
+      t_text  = "rh";
+   else if ( pltndx == ATTR_F )
+      t_text  = "bf";
+
+   return t_text;
+}
+
+// Update structures and plot after division/percent/position change
 void US_Density_Match::update_divis( double dval )
 {
 DbgLv(1) << "UpdDiv:" << dval;
-   build_bf_dists();
-   build_bf_vects();
+   build_bf_dists();    // (Re-)build boundary fraction distributions
+   build_bf_vects();    // (Re-)build boundary fraction vectors
+   plot_data();         // Plot data
 }
 

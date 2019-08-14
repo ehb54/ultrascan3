@@ -181,6 +181,7 @@ class US_Density_Match : public US_Widgets
       void build_bf_vects ( void );
       int  plot_x_select  ( void );
       QString anno_title  ( int );
+      QString ptype_text  ( int );
 
       void help       ( void )
       { showHelp.show_help( "dens_match.html" ); };

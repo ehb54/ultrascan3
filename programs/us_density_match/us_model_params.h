@@ -47,11 +47,12 @@ class US_ModelParams : public US_WidgetsDialog
 
    private slots:
 
-      void d2opctChanged    ( int );
-      void labelChanged     ( int );
       void canceled         ( void );
       void accepted         ( void );
       void compute_densities( void );
+      bool values_filled    ( void );
+      bool all_percents     ( void );
+      void lnedChanged      ( const QString& );
       void help             ( void )
       { showHelp.show_help( "dens_match_mparam.html" ); };
 };
