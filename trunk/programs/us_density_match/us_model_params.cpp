@@ -2,19 +2,21 @@
 
 #include "us_model_params.h"
 #include "us_gui_settings.h"
+#include "us_settings.h"
+#define DbgLv(a) if(dbg_level>=a)qDebug()
 
 // Constructor:  remove-distributions dialog widget
 US_ModelParams::US_ModelParams( QVector< DisSys >& adistros,
     QWidget* p ) : US_WidgetsDialog( p, 0 ), distros( adistros )
 {
+   dbg_level       = US_Settings::us_debug();
+   mainLayout      = new QGridLayout( this );
    setObjectName( "US_ModelParams" );
    setPalette( US_GuiSettings::frameColor() );
    setFont( QFont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() ) );
 
    // Lay out the GUI
    setWindowTitle( tr( "Distribution Parameters" ) );
-
-   mainLayout      = new QGridLayout( this );
 
    mainLayout->setSpacing        ( 2 );
    mainLayout->setContentsMargins( 2, 2, 2, 2 );
@@ -26,7 +28,8 @@ US_ModelParams::US_ModelParams( QVector< DisSys >& adistros,
    pb_cancel    = us_pushbutton( tr( "Cancel"  ) );
    pb_accept    = us_pushbutton( tr( "Accept"  ) );
    pb_compute   = us_pushbutton( tr( "Compute Densities" ) );
-
+   pb_accept ->setEnabled( false );
+   pb_compute->setEnabled( false );
 
    // Build lists of model parameters
    nd_orig      = distros.count();
@@ -98,7 +101,15 @@ US_ModelParams::US_ModelParams( QVector< DisSys >& adistros,
       mainLayout->addWidget( le_dens, row,   2, 1, 1 );
       mainLayout->addWidget( le_mlab, row,   3, 1, 2 );
       mainLayout->addWidget( le_mdsc, row++, 5, 1, 3 );
+
+      connect( le_d2op,    SIGNAL( textChanged( const QString& ) ),
+               this,       SLOT(   lnedChanged( const QString& ) ) );
+      connect( le_dens,    SIGNAL( textChanged( const QString& ) ),
+               this,       SLOT(   lnedChanged( const QString& ) ) );
+      connect( le_mlab,    SIGNAL( textChanged( const QString& ) ),
+               this,       SLOT(   lnedChanged( const QString& ) ) );
    }
+DbgLv(1) << "MP:main: model rows populated";
 
    mainLayout ->addWidget( pb_help,    row,   0, 1, 1 );
    mainLayout ->addWidget( pb_cancel,  row,   1, 1, 2 );
@@ -129,59 +140,20 @@ US_ModelParams::US_ModelParams( QVector< DisSys >& adistros,
 //   int lhigh = fhigh * 10 + 12;
    int fwide = fm.width( QChar( '6' ) );
    int lwide = fwide * ( maxdlen + 2 );
+DbgLv(1) << "MP:main: fwide lwide" << fwide << lwide;
 
    adjustSize();
    int wwide = qMax( 500, lwide );
    int whigh = size().height();
    resize( wwide, whigh );
    qApp->processEvents();
+DbgLv(1) << "MP:main: wwide whigh" << wwide << whigh;
 }
-
-// Private slot to react to a change in selections
-void US_ModelParams::d2opctChanged( int sel )
-{
-DbgLv(1) << "d2opctChanged:  sel" << sel;
-   bool can_accept = false;
-   // Enable buttons according to the present state of selection/removal
-   pb_accept ->setEnabled( can_accept );
-}
-
-// Private slot to react to a change in selections
-void US_ModelParams::labelChanged( int sel )
-{
-DbgLv(1) << "labelChanged:  sel" << sel;
-}
-
 
 // Private slot to do the actual removal of distributions and close
 void US_ModelParams::accepted()
 {
 DbgLv(1) << "accepted";
-#if 0
-   if ( nd_selected > 0 )
-   {  // Accept attempt with selections and no Remove clicked
-      if ( QMessageBox::Yes == QMessageBox::warning( this,
-              tr( "Outstanding Selections" ),
-              tr( "You have selected distributions,\n"
-                  "but did not click on the Remove button.\n"
-                  "Do you want to remove the selected distributions?" ),
-              QMessageBox::No | QMessageBox::Yes, QMessageBox::Yes ) )
-      {  // If "Yes" to above, add current selections to the remove list
-         remove();
-      }
-   }
-
-   for ( int jj = nd_orig - 1; jj >= 0; jj-- )
-   {  // Remove all entries in the original that are not in the current list
-      QString mdesc = mdesc_orig[ jj ];
-
-      if ( ! mdesc_list.contains( mdesc ) )
-      {  // This original list item is to be removed from the passed list
-         distros.removeAt( jj );
-      }
-   }
-#endif
-
    QList< QObject* > ochilds  = this->children();
 DbgLv(1) << " acc: ochilds size" << ochilds.size();
    for ( int jj = 0; jj < ochilds.size(); jj++ )
@@ -269,5 +241,143 @@ DbgLv(1) << " cdn: ochilds size" << ochilds.size();
       }
    }
 DbgLv(1) << " cdn: misspc" << misspc;
+}
+
+bool US_ModelParams::values_filled()
+{
+   QList< QObject* > ochilds  = this->children();
+   int nzd2pc     = 0;
+   int nad2pc     = 0;
+   int nadens     = 0;
+   int nalabs     = 0;
+   QList< double > allden;
+DbgLv(1) << " vlf: ochilds size" << ochilds.size();
+
+   for ( int jj = 0; jj < ochilds.size(); jj++ )
+   {
+      QObject* ochild = ochilds[ jj ];
+      QString cname   = ochild->objectName();
+      if ( cname.isEmpty() )  continue;
+
+      QLineEdit* lned = (QLineEdit*) ochild;
+      QString pname   = cname.section( ":", 0, 0 );
+      QString etext   = lned->text();
+DbgLv(1) << " vlf:  jj" << jj << "etext" << etext << "pname" << pname;
+
+      if      ( pname == "D2OP" )
+      {  // Count D2O percent values given
+         if ( !etext.isEmpty() )
+         {
+            int pctval      = etext.toInt();
+            if ( etext == "0" )
+            {  // Zero percent:  bump counts
+               nzd2pc++;
+               nad2pc++;
+DbgLv(1) << " vlf:    pctval" << pctval << "nzd2pc nad2pc" << nzd2pc << nad2pc;
+            }
+            else if ( pctval != 0 )
+            {  // Non-zero numeric: bump percent count
+               nad2pc++;
+DbgLv(1) << " vlf:    pctval" << pctval << "nad2pc" << nad2pc;
+            }
+         }
+      }
+      else if ( pname == "DENS" )
+      {  // Count densities given
+         if ( !etext.isEmpty() )
+         {
+            double density  = etext.toDouble();
+            if ( density > 0.0 )
+            {  // Bump if non-empty, numeric; save unique values
+               nadens++;
+               if ( !allden.contains( density ) )
+                  allden << density;
+DbgLv(1) << " vlf:    density" << density << "nadens" << nadens;
+            }
+         }
+      }
+      else if ( pname == "MLAB" )
+      {  // Count labels given
+         if ( !etext.isEmpty() )
+            nalabs++;
+DbgLv(1) << " vlf:    nalabs" << nalabs;
+      }
+   }
+DbgLv(1) << " vlf: nzd2pc nad2pc nadens nalabs" << nzd2pc << nad2pc << nadens << nalabs
+ << "allden size" << allden.size();
+
+   // All model parameters are given if
+   //  at least one zero-percent is given;
+   //  percent,density,label counts equal row count;
+   //  and number of unique densities equals row count.
+   bool filled    = ( ( nzd2pc > 0 )  &&
+                      ( nad2pc == nd_orig )  &&
+                      ( nadens == nd_orig )  &&
+                      ( nalabs == nd_orig )  &&
+                      ( allden.size() == nadens ) );
+DbgLv(1) << " vlf:   FILLED" << filled;
+   pb_accept ->setEnabled( filled );  // If all filled, enable Accept button
+
+   return filled;
+}
+
+// Return flag of whether all D2O percents have been given
+bool US_ModelParams::all_percents()
+{
+   QList< QObject* > ochilds  = this->children();
+   int nzd2pc     = 0;
+   int nad2pc     = 0;
+DbgLv(1) << " apc: ochilds size" << ochilds.size();
+
+   for ( int jj = 0; jj < ochilds.size(); jj++ )
+   {  // Examine any D2O percent texts
+      QObject* ochild = ochilds[ jj ];
+      QString cname   = ochild->objectName();
+      if ( cname.isEmpty() )  continue;
+
+      QString pname   = cname.section( ":", 0, 0 );
+      QLineEdit* lned = (QLineEdit*) ochild;
+      QString etext   = lned->text();
+
+      if      ( pname == "D2OP" )
+      {
+         if ( !etext.isEmpty() )
+         {
+            int pctval      = etext.toInt();
+            if ( etext == "0" )
+            {  // Count 0 percent and total percent
+               nzd2pc++;
+               nad2pc++;
+            }
+            else if ( pctval != 0 )
+            {  // Count total non-empty percent values given
+               nad2pc++;
+            }
+         }
+      }
+   }
+DbgLv(1) << " apc: nzd2pc nad2pc" << nzd2pc << nad2pc;
+
+   // We have all needed if 0-percent exists and all percents given
+   bool all_pc    = ( ( nzd2pc > 0 )  &&
+                      ( nad2pc == nd_orig ) );
+DbgLv(1) << " apc:   ALL-PC" << all_pc;
+
+   // If all percents given, enable Compute Densities button
+   pb_compute->setEnabled( all_pc );
+
+   return all_pc;
+}
+
+// Slot to handle change in lineEdit value in model rows
+void US_ModelParams::lnedChanged( const QString& /*text*/ )
+{
+DbgLv(1) << " lnedChanged IN";
+   // Determine if all boxes filled or all percents given
+   //  and possibly enable "Accept" or "Compute Densities"
+   bool filled    = values_filled();
+   bool all_pc    = all_percents();
+DbgLv(1) << " lnedChanged  filled all_pc" << filled << all_pc;
+   return;
 }
 
