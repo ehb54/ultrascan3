@@ -1329,8 +1329,10 @@ DbgLv(1) << "BldVc: vb 0 1 k n" << v_vbars[0] << v_vbars[1]
    for ( int jj = 0; jj < npoints; jj++ )
    {
       // *** Mi = si*R*T/(Di_avg*(1-vbari*rho))
-      double sedco     = alldis[ 0 ].bf_distro[ jj ].s * 1.0e-13;
-      double difco     = alldis[ 0 ].bf_distro[ jj ].d * 1.0e-7;
+//      double sedco     = alldis[ 0 ].bf_distro[ jj ].s * 1.0e-13;
+//      double difco     = alldis[ 0 ].bf_distro[ jj ].d * 1.0e-7;
+      double sedco     = v_sedcs[ 0 ][ jj ] * 1.0e-13;
+      double difco     = v_difcs[ 0 ][ jj ] * 1.0e-7;
       double vbari     = v_vbars[ jj ];
       double mmass     = sedco * R_GC * K20 / ( difco * ( 1.0 - vbari * DENS_20W ) );
       mmass            = qAbs( mmass );
@@ -1350,7 +1352,8 @@ DbgLv(1) << "BldVc: mm 0 1 k n" << v_mmass[0] << v_mmass[1]
       // fi = RT/(N*Di)
       // *** fi/f_0i
       // *** ri = fi/(6 * pi * eta)   <-- hydrodynamic radius
-      double difco     = alldis[ 0 ].bf_distro[ jj ].d * 1.0e-7;
+//      double difco     = alldis[ 0 ].bf_distro[ jj ].d * 1.0e-7;
+      double difco     = v_difcs[ 0 ][ jj ] * 1.0e-7;
       double frico     = R_GC * K20 / ( difco * AVOGADRO );
       double hyrad     = frico / ( 6.0 * M_PI * VISC_20W );
       v_hrads << hyrad;
@@ -1371,7 +1374,8 @@ DbgLv(1) << "BldVc: hr 0 1 k n" << v_hrads[0] << v_hrads[1]
       // fi = RT/(N*Di)
       // *** fi/f_0i
       // *** ri = fi/(6 * pi * eta)   <-- hydrodynamic radius
-      double difco     = alldis[ 0 ].bf_distro[ jj ].d * 1.0e-7;
+//      double difco     = alldis[ 0 ].bf_distro[ jj ].d * 1.0e-7;
+      double difco     = v_difcs[ 0 ][ jj ] * 1.0e-7;
       double vbari     = v_vbars[ jj ];
 //      double rzero     = pow( ( ( 0.75 / M_PI ) * vbari ), a_third );
       double volum     = v_mmass[ jj ] * vbari / AVOGADRO;
