@@ -182,6 +182,8 @@ class US_Density_Match : public US_Widgets
       int  plot_x_select  ( void );
       QString anno_title  ( int );
       QString ptype_text  ( int );
+      void write_csv( const QString, const QString, QVector< double >&,
+                                     const QString, QVector< double >& );
 
       void help       ( void )
       { showHelp.show_help( "dens_match.html" ); };
