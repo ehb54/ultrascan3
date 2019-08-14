@@ -276,6 +276,67 @@ DbgLv(1) << "MD:   reset: AA";
 // Save plots and CSV files
 void US_Density_Match::save( void )
 {
+   int ndists      = v_sedcs.size();
+   QString runid   = QString( alldis[ 0 ].run_name ).section( ".", 0, -2 );
+   QString reppath = US_Settings::reportDir() + "/" + runid + "/";
+   QStringList fnames;
+
+   // Save all distributions as CSV files in */ultrascan/reports/X
+
+   QString fpfix   = "dens_match_distrib_";
+   QString fname;
+   QString fpath;
+
+   // Write sedimentation coeff, bfrac CSV files
+   for ( int ii = 0; ii < ndists; ii++ )
+   {
+      fname           = fpfix + "sedc_" + QString::number( (ii+1) ) + ".csv";
+      fpath           = reppath + fname;
+      write_csv( fpath, "sedi_coeff", v_sedcs[ ii ],
+                        "boundary_fraction", v_bfracs );
+      fnames << fname;
+   }
+
+   // Write diffusion coeff, bfrac CSV files
+   for ( int ii = 0; ii < ndists; ii++ )
+   {
+      fname           = fpfix + "difc_" + QString::number( (ii+1) ) + ".csv";
+      fpath           = reppath + fname;
+      write_csv( fpath, "diff_coeff", v_difcs[ ii ],
+                        "boundary_fraction", v_bfracs );
+      fnames << fname;
+   }
+
+   // Write X,bfrac CSV files for vbars,mmass,hrads,frats
+   fname           = fpfix + "vbar.csv";
+   fpath           = reppath + fname;
+   write_csv( fpath, "vbar", v_vbars,
+                     "boundary_fraction", v_bfracs );
+   fnames << fname;
+   fname           = fpfix + "mass.csv";
+   fpath           = reppath + fname;
+   write_csv( fpath, "molar_mass", v_mmass,
+                     "boundary_fraction", v_bfracs );
+   fnames << fname;
+   fname           = fpfix + "hrad.csv";
+   fpath           = reppath + fname;
+   write_csv( fpath, "hydro_radius", v_hrads,
+                     "boundary_fraction", v_bfracs );
+   fnames << fname;
+   fname           = fpfix + "frat.csv";
+   fpath           = reppath + fname;
+   write_csv( fpath, "fric_ratio", v_frats,
+                     "boundary_fraction", v_bfracs );
+   fnames << fname;
+#if 0
+   QVector< double >             v_bfracs;
+   QVector< double >             v_vbars;
+   QVector< double >             v_mmass;
+   QVector< double >             v_hrads;
+   QVector< double >             v_frats;
+   QVector< QVector< double > >  v_sedcs;
+   QVector< QVector< double > >  v_difcs;
+#endif
 #if 0
    //QString dtext = te_distr_info->toPlainText().section( "\n", 0, 1 );
    QString dtext  = tr( "Run:  " ) + tsys->run_name
@@ -1485,5 +1546,34 @@ DbgLv(1) << "UpdDiv:" << dval;
    build_bf_dists();    // (Re-)build boundary fraction distributions
    build_bf_vects();    // (Re-)build boundary fraction vectors
    plot_data();         // Plot data
+}
+
+// Write a CSV file from given vectors
+void US_Density_Match::write_csv( const QString fpath,
+  const QString hdr1, QVector< double >& vals1,
+  const QString hdr2, QVector< double >& vals2 )
+{
+DbgLv(1) << "WrCsv: fpath" << fpath;
+   // Open file and textstream
+   QFile datf( fpath );
+   if ( ! datf.open( QIODevice::WriteOnly | QIODevice::Truncate ) )
+      return;
+   QTextStream ts( &datf );
+
+   // Write header line
+   ts << "\"" + hdr1 + "\",\"" + hdr2 + "\"\n";
+
+   // Write data lines
+   for ( int jj = 0; jj < vals1.size(); jj++ )
+   {
+      QString line  = QString().sprintf(
+         "\"%9.6e\",\"%6.4f\"\n", vals1[ jj ], vals2[ jj ] );
+      line.replace( " ","" );
+      ts << line;
+   }
+
+   // Close file
+   datf.close();
+   return;
 }
 
