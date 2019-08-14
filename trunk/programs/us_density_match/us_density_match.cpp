@@ -1027,7 +1027,7 @@ void US_Density_Match::select_prefilt( void )
 // Remove distribution(s) from the models list
 void US_Density_Match::remove_distro( void )
 {
-qDebug() << "rmvdis:Remove Distros";
+DbgLv(1) << "rmvdis:Remove Distros";
    US_RemoveModels rmvd( alldis );
 
    if ( rmvd.exec() == QDialog::Accepted )
@@ -1041,24 +1041,25 @@ qDebug() << "rmvdis:Remove Distros";
       }
 
       curr_distr = 0;
-qDebug() << "rmvdis:Accepted";
+DbgLv(1) << "rmvdis:Accepted";
    }
 
-qDebug() << "rmvdis:plot_data";
+DbgLv(1) << "rmvdis:plot_data";
    plot_data();
-qDebug() << "rmvdis:DONE";
+DbgLv(1) << "rmvdis:DONE";
 }
 
 // Set/modify model distribution parameters
 void US_Density_Match::set_mparms( void )
 {
-qDebug() << "mdlpar:Set Model Parameters";
+DbgLv(1) << "mdlpar:Set Model Parameters";
    // Open Model Parameters dialog
    US_ModelParams mpdiag( alldis, this );
 
    // Use parameters returned
    if ( mpdiag.exec() == QDialog::Accepted )
    {  // Redo text box summarizing models; calculate vectors
+DbgLv(1) << "mdlpar: Accepted";
       QString mdesc     = mdescs[ 0 ].section( mdescs[ 0 ].left( 1 ), 1, 1 );
       mdesc             = QString( mdesc ).left( 50 );
       QString dinfo     = alldis[ 0 ].run_name.section( ".", 0, -2 ) + "\n\n"
@@ -1322,6 +1323,17 @@ DbgLv(1) << "BldVc:  jj0:  intcept vbari" << intcept << vbari;
    }
 DbgLv(1) << "BldVc: vb 0 1 k n" << v_vbars[0] << v_vbars[1]
  << v_vbars[npoints-2] << v_vbars[npoints-1];
+   // Determine the distribution index of zero-percent-D2O
+   int zx           = 0;
+   for ( int ii = 0; ii < ndists; ii++ )
+   {
+      if ( alldis[ ii ].d2opct == 0.0 )
+      {
+         zx               = ii;
+         break;
+      }
+   }
+DbgLv(1) << "BldVc:   zx" << zx;
 
    // Compute molar mass values and build the vector
    v_mmass.clear();
@@ -1331,8 +1343,8 @@ DbgLv(1) << "BldVc: vb 0 1 k n" << v_vbars[0] << v_vbars[1]
       // *** Mi = si*R*T/(Di_avg*(1-vbari*rho))
 //      double sedco     = alldis[ 0 ].bf_distro[ jj ].s * 1.0e-13;
 //      double difco     = alldis[ 0 ].bf_distro[ jj ].d * 1.0e-7;
-      double sedco     = v_sedcs[ 0 ][ jj ] * 1.0e-13;
-      double difco     = v_difcs[ 0 ][ jj ] * 1.0e-7;
+      double sedco     = v_sedcs[ zx ][ jj ] * 1.0e-13;
+      double difco     = v_difcs[ zx ][ jj ] * 1.0e-7;
       double vbari     = v_vbars[ jj ];
       double mmass     = sedco * R_GC * K20 / ( difco * ( 1.0 - vbari * DENS_20W ) );
       mmass            = qAbs( mmass );
@@ -1353,7 +1365,7 @@ DbgLv(1) << "BldVc: mm 0 1 k n" << v_mmass[0] << v_mmass[1]
       // *** fi/f_0i
       // *** ri = fi/(6 * pi * eta)   <-- hydrodynamic radius
 //      double difco     = alldis[ 0 ].bf_distro[ jj ].d * 1.0e-7;
-      double difco     = v_difcs[ 0 ][ jj ] * 1.0e-7;
+      double difco     = v_difcs[ zx ][ jj ] * 1.0e-7;
       double frico     = R_GC * K20 / ( difco * AVOGADRO );
       double hyrad     = frico / ( 6.0 * M_PI * VISC_20W );
       v_hrads << hyrad;
@@ -1375,7 +1387,7 @@ DbgLv(1) << "BldVc: hr 0 1 k n" << v_hrads[0] << v_hrads[1]
       // *** fi/f_0i
       // *** ri = fi/(6 * pi * eta)   <-- hydrodynamic radius
 //      double difco     = alldis[ 0 ].bf_distro[ jj ].d * 1.0e-7;
-      double difco     = v_difcs[ 0 ][ jj ] * 1.0e-7;
+      double difco     = v_difcs[ zx ][ jj ] * 1.0e-7;
       double vbari     = v_vbars[ jj ];
 //      double rzero     = pow( ( ( 0.75 / M_PI ) * vbari ), a_third );
       double volum     = v_mmass[ jj ] * vbari / AVOGADRO;

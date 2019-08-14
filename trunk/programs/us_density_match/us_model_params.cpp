@@ -183,27 +183,37 @@ DbgLv(1) << " acc:  jj rowx" << jj << rowx << "pname value" << pname
       }
    }
 
+DbgLv(1) << " acc: ACCEPT";
    accept();
+DbgLv(1) << " acc: return";
 }
 
-// Private slot to do the actual removal of distributions and close
+// Private slot to do close/reject without returning parameters
 void US_ModelParams::canceled()
 {
 DbgLv(1) << "canceled";
    reject();
 }
 
+// Compute densities for all rows where D2O percent is not zero
 void US_ModelParams::compute_densities()
 {
    const double dnslope = 0.00108766;
    QList< QObject* > ochilds  = this->children();
    int nzd2pc     = 0;
    int npd2pc     = 0;
+   int kk         = -1;
    bool misspc    = false;
    double d2opct  = -1.0;
    double denszpc = 0.0;
    double density = 0.0;
+   QVector< double > m_dens;
+   QVector< double > m_d2op;
+   QVector< QLineEdit* > m_lned;
+   m_dens.fill( 0.0, nd_orig );
+   m_d2op.fill( 0.0, nd_orig );
 DbgLv(1) << " cdn: ochilds size" << ochilds.size();
+
    for ( int jj = 0; jj < ochilds.size(); jj++ )
    {
       QObject* ochild = ochilds[ jj ];
@@ -211,38 +221,65 @@ DbgLv(1) << " cdn: ochilds size" << ochilds.size();
       QString cname   = ochild->objectName();
       QString pname   = cname.section( ":", 0, 0 );
       if      ( pname == "D2OP" )
-      {
+      {  // Handle D2O percent text
          d2opct          = lned->text().toDouble();
          if ( d2opct == 0.0 )
-         {
+         {  // If zero, bump count and test if not 1st row
             nzd2pc++;
             if ( npd2pc > 0 )
                misspc         = true;
          }
          else
-         {
+         {  // For non-zero, bump count, test if follow zero row
             npd2pc++;
             if ( nzd2pc == 0 )
                misspc         = true;
          }
+         // Save the D2O percent in a work vector
+         kk++;
+         m_d2op[ kk ]   = d2opct;
       }
       else if ( pname == "DENS" )
-      {
+      {  // Handle Density text
          density         = lned->text().toDouble();
          if ( d2opct == 0.0 )
-         {
+         {  // Save density following percent=0
             denszpc        = density;
          }
-         else
-         {
+         else if ( nzd2pc > 0 )
+         {  // Compute density where percent!=0; update text box
             density        = denszpc + d2opct * dnslope;
             lned->setText( QString::number( density ) );
          }
+         else
+         {  // Flag percent>0 density when no z-density yet found
+            density        = 0.0;
+            misspc         = true;
+         }
+         // Save the density in a work vector; save pointer to textbox
+         m_dens[ kk ]   = density;
+         m_lned << lned;
       }
    }
 DbgLv(1) << " cdn: misspc" << misspc;
+
+   if ( misspc )
+   {  // Fill in computed densities before first pct=0
+      for ( int ii = 0; ii < nd_orig; ii++ )
+      {
+         density        = m_dens[ ii ];
+         if ( density == 0.0 )
+         {  // Compute density when unable to do so during 1st pass
+            d2opct         = m_d2op[ ii ];
+            density        = denszpc + d2opct * dnslope;
+            m_lned[ ii ]->setText( QString::number( density ) );
+DbgLv(1) << " cdn:   misspc ii" << ii << "density" << density;
+         }
+      }
+   }
 }
 
+// Test if all needed values have been filled in; set Accept accordingly
 bool US_ModelParams::values_filled()
 {
    QList< QObject* > ochilds  = this->children();
