@@ -268,14 +268,14 @@ DbgLv(1) << " vlf:  jj" << jj << "etext" << etext << "pname" << pname;
       {  // Count D2O percent values given
          if ( !etext.isEmpty() )
          {
-            int pctval      = etext.toInt();
-            if ( etext == "0" )
+            double pctval   = etext.toDouble();
+            if ( etext == "0"  ||  etext == "0.0" )
             {  // Zero percent:  bump counts
                nzd2pc++;
                nad2pc++;
 DbgLv(1) << " vlf:    pctval" << pctval << "nzd2pc nad2pc" << nzd2pc << nad2pc;
             }
-            else if ( pctval != 0 )
+            else if ( pctval > 0.0 )
             {  // Non-zero numeric: bump percent count
                nad2pc++;
 DbgLv(1) << " vlf:    pctval" << pctval << "nad2pc" << nad2pc;
@@ -343,13 +343,13 @@ DbgLv(1) << " apc: ochilds size" << ochilds.size();
       {
          if ( !etext.isEmpty() )
          {
-            int pctval      = etext.toInt();
-            if ( etext == "0" )
+            double pctval   = etext.toDouble();
+            if ( etext == "0"  ||  etext == "0.0" )
             {  // Count 0 percent and total percent
                nzd2pc++;
                nad2pc++;
             }
-            else if ( pctval != 0 )
+            else if ( pctval > 0.0 )
             {  // Count total non-empty percent values given
                nad2pc++;
             }
