@@ -71,6 +71,7 @@ US_ModelParams::US_ModelParams( QVector< DisSys >& adistros,
    mainLayout->addWidget( lb_hdr3, row,   2, 1, 1 );
    mainLayout->addWidget( lb_hdr4, row,   3, 1, 2 );
    mainLayout->addWidget( lb_hdr5, row++, 5, 1, 3 );
+   QList< QLineEdit* > lneds;
    for ( int jj = 0; jj < nd_orig; jj++ )
    {
       QString modelid    = modelids[ jj ];
@@ -90,6 +91,10 @@ US_ModelParams::US_ModelParams( QVector< DisSys >& adistros,
       QLineEdit* le_mlab = us_lineedit( mlabel );
       QLineEdit* le_mdsc = us_lineedit( mdesc  );
       us_setReadOnly( le_mdsc, true );
+      lneds << le_d2op;
+      lneds << le_dens;
+      lneds << le_mlab;
+      lneds << le_mdsc;
 
       QString rowx       = QString::number( jj );
       le_d2op->setObjectName( "D2OP:" + rowx );
@@ -110,6 +115,28 @@ US_ModelParams::US_ModelParams( QVector< DisSys >& adistros,
                this,       SLOT(   lnedChanged( const QString& ) ) );
    }
 DbgLv(1) << "MP:main: model rows populated";
+
+   // Reset tab order of line edits in model table
+   //  Tab down rows of each column, instead of
+   //  across columns of each row.
+   for ( int ii = 0; ii < 4; ii++ )
+   {  // Adjust each column
+      int kk       = ii;
+      int ll       = kk;
+      for ( int jj = 1; jj < nd_orig; jj++ )
+      {  // Each box connected to next row's box
+         kk           = ll;      // This box index
+         ll           = kk + 4;  // Next row index
+DbgLv(1) << "MP:main: sTO: kk ll" << kk << ll << "  jj" << jj;
+         QWidget::setTabOrder( lneds[ kk ], lneds[ ll ] );
+      }
+      if ( ii < 3 )
+      {  // Last row box connected to start of next column
+DbgLv(1) << "MP:main: sTO: ll i1" << ll << ii+1;
+        QWidget::setTabOrder( lneds[ ll ], lneds[ ii + 1 ] );
+      }
+   }
+     
 
    mainLayout ->addWidget( pb_help,    row,   0, 1, 1 );
    mainLayout ->addWidget( pb_cancel,  row,   1, 1, 2 );
