@@ -147,17 +147,17 @@ US_Density_Match::US_Density_Match() : US_Widgets()
             this,       SLOT( load_distro() ) );
 
    pb_rmvdist    = us_pushbutton( tr( "Remove Distribution(s)" ) );
-   pb_rmvdist->setEnabled( true );
+   pb_rmvdist->setEnabled( false );
    connect( pb_rmvdist, SIGNAL( clicked() ),
             this,       SLOT( remove_distro() ) );
 
    pb_mdlpars    = us_pushbutton( tr( "Set Model Parameters" ) );
-   pb_mdlpars->setEnabled( true );
+   pb_mdlpars->setEnabled( false );
    connect( pb_mdlpars, SIGNAL( clicked() ),
             this,       SLOT( set_mparms()   ) );
 
    pb_save       = us_pushbutton( tr( "Save" ) );
-   pb_save   ->setEnabled( true );
+   pb_save   ->setEnabled( false );
    connect( pb_save,    SIGNAL( clicked() ),
             this,       SLOT( save()         ) );
 
@@ -291,6 +291,8 @@ DbgLv(1) << "MD:   reset: AA";
    alldis.clear();
    pfilts.clear();
    pb_refresh->setEnabled( false );
+   pb_mdlpars->setEnabled( false );
+   pb_save   ->setEnabled( false );
    pb_rmvdist->setEnabled( false );
    le_prefilt->setText( tr( "(no prefilter)" ) );
 }
@@ -719,7 +721,10 @@ void US_Density_Match::load_distro()
 
    curr_distr = alldis.size() - 1;
 //   need_save  = ck_savepl->isChecked()  &&  !cont_loop;
-   pb_rmvdist->setEnabled( models.count() > 0 );
+   bool have_m  = ( models.count() > 0 );
+   pb_rmvdist->setEnabled( have_m );
+   pb_mdlpars->setEnabled( have_m );
+   pb_save   ->setEnabled( have_m );
 
    // Notify user of need to set D2O-percent, label, density model values
    QString qmsg = tr( "%1 models are loaded.\n\nIn the dialog to follow,\n"
