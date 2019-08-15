@@ -27,6 +27,8 @@
 #endif
 
 
+//ALEXEY: reverted, based on v2802
+
 //// Constructor:  ACADEMIC: 'Data Acquision' / us_comproject_academic programs
 US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
 {
@@ -384,16 +386,12 @@ void US_ComProjectMain::initPanels( int  panx )
 	  /* 
 	        1. Avaiting for run to be launched ("Back to Managing Optima Runs") -- SET
 		2. More complex: Back to Managing runs from active LIVE_UPDATE stage -- stop all timers and other processes...
-	  */
-
+	  */ 
 	  qDebug() << "Jumping from LIVE UPDATE.";
 	  
 	  //2. Stop all timers/threads, reset GUI - when stopping fully working LIVE UPDATE
 	  if ( !xpn_viewer_closed_soft )
-	    {
-	      //emit reset_live_update();
-	      epanObserv->sdiag->reset_liveupdate_panel_public();
-	    }
+	    emit reset_live_update();
 	}
 
       if ( curr_panx == 3 )
