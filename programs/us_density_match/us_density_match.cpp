@@ -318,16 +318,51 @@ void US_Density_Match::save( void )
    write_csv( fpath, "molar_mass", v_mmass,
                      "boundary_fraction", v_bfracs );
    fnames << fname;
-   fname           = fpfix + "hrad.csv";
-   fpath           = reppath + fname;
-   write_csv( fpath, "hydro_radius", v_hrads,
-                     "boundary_fraction", v_bfracs );
-   fnames << fname;
    fname           = fpfix + "frat.csv";
    fpath           = reppath + fname;
    write_csv( fpath, "fric_ratio", v_frats,
                      "boundary_fraction", v_bfracs );
    fnames << fname;
+   fname           = fpfix + "hrad.csv";
+   fpath           = reppath + fname;
+   write_csv( fpath, "hydro_radius", v_hrads,
+                     "boundary_fraction", v_bfracs );
+   fnames << fname;
+
+   // Cycle through possible plots and save PNG files
+   const int plxs[]   = { ATTR_S, ATTR_D, ATTR_V,
+                          ATTR_W, ATTR_K, ATTR_R };
+   const char* pltp[] = { "sedc", "difc", "vbar",
+                          "mass", "frat", "hrad" };
+   const int nplots  = sizeof( plxs ) / sizeof( plxs[ 0 ] );
+DbgLv(1) << "SV: nplots" << nplots;
+   for ( int ii = 0; ii < nplots; ii++ )
+   {
+      plot_x          = plxs[ ii ];
+DbgLv(1) << "SV:   plot_x" << plot_x << "ii" << ii;
+      plot_data();
+
+      QPixmap plotmap = ((QWidget*)data_plot)->grab();
+      fname           = fpfix + QString( pltp[ ii ] ) + ".png";
+      fpath           = reppath + fname;
+      plotmap.save( fpath );
+DbgLv(1) << "SV:     fpath" << fpath;
+      fnames << fname;
+   }
+
+   // Restore the plot indicated by x-axis radio buttons
+   plot_x          = -1;
+   plot_data();
+
+   // Report files created and saved
+   QString dtext   = tr( "In directory,\n" ) + reppath + ",\n"
+                     + tr( "   Files created and saved:\n" );
+   for ( int ii = 0; ii < fnames.size(); ii++ )
+   {
+      dtext          += fnames[ ii ] + "\n";
+   }
+   te_distr_info->setText( dtext );
+
 #if 0
    QVector< double >             v_bfracs;
    QVector< double >             v_vbars;
@@ -405,6 +440,7 @@ void US_Density_Match::plot_data( void )
 
    DisSys* tsys   = (DisSys*)&alldis.at( 0 );
    plot_x         = ( plot_x < 0 ) ? plot_x_select() : plot_x;
+DbgLv(1) << "DaPl: plot_x" << plot_x;
 
 #if 0
 auto_sxy=true;
@@ -523,7 +559,7 @@ DbgLv(1) << "DaPl: (3)tstr" << tstr;
       data_curv->setPen  ( QPen( QBrush( colr1 ), 3.0, Qt::SolidLine ) );
       data_curv->setStyle( QwtPlotCurve::Lines );
 
-DbgLv(1) << "DaPl: npoint" << npoint << "xx" << xx[0] << xx[npoint-1]
+DbgLv(1) << "DaPl:   npoint" << npoint << "xx" << xx[0] << xx[npoint-1]
  << "yy" << yy[0] << yy[npoint-1];
       data_curv->setSamples( xx, yy, npoint );
 
