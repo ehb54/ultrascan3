@@ -26,7 +26,7 @@ namespace US_WinData
     P_RPTGEN,       P_ROTORCAL,     P_LICENSE,
     P_VHWCOMB,      P_DDCOMB,       P_GLOMODL,
     P_VIEWCFA,      P_VIEWXPN,      P_VIEWTMST,
-    P_SPECFIT,      P_SPECDEC,
+    P_DENSMTCH,     P_SPECFIT,      P_SPECDEC,
 
     P_VIEWMWL,      P_VIEWMSS,      P_MWSPECF,  // MultiWavelength Menu
     P_MWFSIMU,
@@ -238,6 +238,11 @@ namespace US_WinData
     { P_VIEWTMST,  0, 0, "us_tmst_viewer",
       QObject::tr( "Loading View Time State" ),
       QObject::tr( "View Time State"         )
+    },
+
+    { P_DENSMTCH,  0, 0, "us_density_match",
+      QObject::tr( "Loading Density Matching" ),
+      QObject::tr( "Density Matching"         )
     },
 
     { P_SPECFIT,   0, 0, "us_extinction",
