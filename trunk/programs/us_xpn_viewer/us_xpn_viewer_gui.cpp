@@ -45,6 +45,8 @@
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
 
+//ALEXEY: reverted, based on v2802
+
 // DialBox 
 DialBox::DialBox( QWidget *parent ):
   QWidget( parent )
@@ -244,8 +246,7 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
    in_reload_all_data  = false;
    in_reload_data_init = false;
    in_reload_check_sysdata  = false;
-   in_reload_end_processes  = false;
-   
+
    ElapsedTimeOffset = 0;
 
    //ALEXEY: new way
@@ -1163,11 +1164,6 @@ void US_XpnDataViewer::reset_auto( void )
    le_runID   ->setText( runID );
    //le_dbhost  ->setText( xpnhost + ":" + xpnport + "   (" + xpndesc + ")" );       //New
 
-   //Also clear Wavelengths && Lambda ranges:
-   cb_pltrec ->clear();
-   le_lrange ->setText("");
-   
-   
    pb_loadXpn ->setEnabled( true );
    pb_loadAUC ->setEnabled( true );
    pb_details ->setEnabled( false );
@@ -1586,17 +1582,6 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
       msg_data_avail->accept();
       //msg_data_avail->close();
       //ok_msg_data->click();
-
-      //ALEXEY: make sure ExpID is coupled to the RunID which is already in the autoflow DB
-      if ( !runID_passed.isEmpty() || runID_passed != "NULL" )
-	{
-	  if ( runID_passed.toInt() != RunID_to_retrieve.toInt() )
-	    {
-	      RunID_to_retrieve = runID_passed;
-	      qDebug() << "Correcting RunID to : " << RunID_to_retrieve;
-	    }
-	}
-	
       
       //ALEXEY: need to update 'autoflow' table with the unique RunID_to_retrieve && Start Run Time fields !!!
       //Conditional:  Do it ONLY once !!! 
@@ -2000,7 +1985,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
 	      updateautoflow_record_atLiveUpdate();
 	      //emit experiment_complete_auto( currentDir, ProtocolName, invID_passed, correctRadii  );  // Updtade later: what should be passed with signal ??
 
-	      //reset_auto();
+	      reset_auto();
 	      emit experiment_complete_auto( details_at_live_update );
 	      
 	      return;
@@ -2094,9 +2079,6 @@ void US_XpnDataViewer::timeToList( int& sectime, QList< int >& dhms )
 //Query for Optima DB periodically, see if data available
 void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_details)
 {
-  //Also reset the panel before reattachement
-  reset_auto();
-  
   xpn_data->setEtimOffZero(); //ALEXEY: intialize etimoff to zero for the first time
 
   experimentAborted  = false;
@@ -2154,20 +2136,12 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
 	  timer_data_init->stop();
 	  disconnect(timer_data_init, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
 	  
-	  //reset_auto();
+	  reset_auto();
 
 	  emit close_program(); 
 	}
     }
 }
-
-
-// Reset LIVE UPDATE panel && stop timers && quit threads
-void US_XpnDataViewer::reset_liveupdate_panel_public ( void )
-{
-  reset_liveupdate_panel();
-}
-
 
 // Reset LIVE UPDATE panel && stop timers && quit threads
 void US_XpnDataViewer::reset_liveupdate_panel ( void )
@@ -2223,45 +2197,17 @@ void US_XpnDataViewer::reset_liveupdate_panel ( void )
   if ( !timer_data_reload->isActive() )
     qDebug() << "QTimer timer_data_reload STOPPED by clickig Manage Optima runs !!! ";
   /*************************************/
+  
+  reset_auto();
 
-  qDebug() << "BEFORE: " << in_reload_auto << ", " << in_reload_all_data << ", " << in_reload_data_init << ", " << in_reload_check_sysdata;
+  qDebug() << in_reload_auto << ", " << in_reload_all_data << ", " << in_reload_data_init << ", " << in_reload_check_sysdata;
   
-  //ALEXEY: should wait for execution of all below variables to be false (end of all timer functions) BEFORE reset_all();
-  // Introduce QTimer which checks for all abpve vartibales to be false (check all related functions to always reset them to false on completion)
-  // Put reset_auto() into the timer && and stop/disconnect timer from within connected SLOT.
-  timer_end_processes = new QTimer;
-  connect(timer_end_processes, SIGNAL(timeout()), this, SLOT( end_processes ( ) ));
-  timer_end_processes->start(2000);     // 5 sec
+  in_reload_auto    = false;
+  in_reload_all_data  = false;
+  in_reload_data_init = false;
+  in_reload_check_sysdata  = false;
   
-  //reset_auto();
-  //qApp->processEvents();
-}
-
-//to end all existing update processes
-void US_XpnDataViewer::end_processes( void )
-{
-  if ( in_reload_end_processes )            // If already doing a reload,
-    return;                              //  skip starting a new one
-  
-  in_reload_end_processes   = true;          // Flag in the midst of a reload
-  
-  if ( !in_reload_auto && !in_reload_all_data &&  !in_reload_data_init && !in_reload_check_sysdata ) 
-    {
-      
-      timer_end_processes->stop();
-      disconnect(timer_end_processes, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
-
-      //ALEXEY: may not be needed
-      //reset_auto(); 
-      qDebug() << "LIVE UPDATE panel has been reset!";
-      qDebug() << "AFTER: " << in_reload_auto << ", " << in_reload_all_data << ", " << in_reload_data_init << ", " << in_reload_check_sysdata;
-      
-      qApp->processEvents();
-       
-      //in_reload_end_processes   = false; 
-    }
-  else
-    in_reload_end_processes   = false; 
+  qApp->processEvents();
 }
 
 
@@ -2567,7 +2513,7 @@ DbgLv(1) << "RDr: allData size" << allData.size();
 	   export_auc_auto();
 	   updateautoflow_record_atLiveUpdate();
 
-	   //reset_auto();
+	   reset_auto();
 	   emit experiment_complete_auto( details_at_live_update  ); 
 	   return;
 	 }
@@ -3983,9 +3929,7 @@ DbgLv(1) << "RLd:       NO CHANGE";
 	      // QMessageBox::information( this, mtitle_complete, message_done );
 
 	      updateautoflow_record_atLiveUpdate();
-	      //reset_auto();
-
-	      in_reload_auto   = false;
+	      reset_auto();
 	      
 	      //emit experiment_complete_auto( currentDir, ProtocolName, invID_passed, correctRadii  );  // Updtade later: what should be passed with signal ??
 	      emit experiment_complete_auto( details_at_live_update );
