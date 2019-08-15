@@ -107,8 +107,12 @@ class US_Density_Match : public US_Widgets
       QRadioButton* rb_x_vbar;
       QRadioButton* rb_x_s;
       QRadioButton* rb_x_d;
+      QRadioButton* rb_da_n;
+      QRadioButton* rb_da_s;
+      QRadioButton* rb_da_w;
 
       QButtonGroup* bg_x_axis;
+      QButtonGroup* bg_di_avg;
 
       QVector< DisSys >             alldis;    // All distributions
 
@@ -135,6 +139,7 @@ class US_Density_Match : public US_Widgets
       int           curr_distr;
       int           dbg_level;
       int           plot_x;
+      int           diff_avg;
 
       bool          auto_sxy;
       bool          auto_scz;
@@ -176,6 +181,7 @@ class US_Density_Match : public US_Widgets
       void remove_distro  ( void );
       void set_mparms     ( void );
       void select_x_axis  ( int  );
+      void select_di_avg  ( int  );
       void build_bf_distro( int  );
       void build_bf_dists ( void );
       void build_bf_vects ( void );

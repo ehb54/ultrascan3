@@ -67,8 +67,8 @@ US_Density_Match::US_Density_Match() : US_Widgets()
    // Top banner
    QLabel* lb_info1      = us_banner( tr( "Model Selection Controls" ) );
 
-   us_checkbox( tr( "Save Plot(s)"    ), ck_savepl,  false );
-   us_checkbox( tr( "Local Save Only" ), ck_locsave, true  );
+//   us_checkbox( tr( "Save Plot(s)"    ), ck_savepl,  false );
+//   us_checkbox( tr( "Local Save Only" ), ck_locsave, true  );
 
    // Distribution information text box
    te_distr_info = us_textedit();
@@ -102,6 +102,24 @@ US_Density_Match::US_Density_Match() : US_Widgets()
    connect( bg_x_axis,  SIGNAL( buttonReleased( int ) ),
             this,       SLOT  ( select_x_axis ( int ) ) );
 
+   // Diffusion-averaging radio buttons and button group
+   diff_avg    = 1;
+   QLabel* lb_di_avg   = us_label( tr( "Diffusion Coefficient Averaging:" ) );
+           bg_di_avg   = new QButtonGroup( this );
+   QGridLayout*  gl_da_n   = us_radiobutton( tr( "none"     ), rb_da_n, false );
+   QGridLayout*  gl_da_s   = us_radiobutton( tr( "simple"   ), rb_da_s, true  );
+   QGridLayout*  gl_da_w   = us_radiobutton( tr( "weighted" ), rb_da_w, false );
+   bg_di_avg->addButton( rb_da_n, 0 );
+   bg_di_avg->addButton( rb_da_s, 1 );
+   bg_di_avg->addButton( rb_da_w, 2 );
+   rb_da_n  ->setToolTip( tr( "Perform NO Diffusion Coefficient Averaging" ) );
+   rb_da_s  ->setToolTip( tr( "Do a SIMPLE average of Diffusion Coefficients across distributions" ) );
+   rb_da_w  ->setToolTip( tr( "Do a WEIGHTED average of Diffusion Coefficients across distributions" ) );
+   rb_da_s  ->setChecked( true );
+   connect( bg_di_avg,  SIGNAL( buttonReleased( int ) ),
+            this,       SLOT  ( select_di_avg ( int ) ) );
+
+   // Various other GUI elements 
    pb_refresh    = us_pushbutton( tr( "Refresh Plot" ) );
    pb_refresh->setEnabled(  false );
    connect( pb_refresh, SIGNAL( clicked() ),
@@ -172,8 +190,12 @@ US_Density_Match::US_Density_Match() : US_Widgets()
    spec->addLayout( gl_x_mass,     s_row,   2, 1, 2 );
    spec->addLayout( gl_x_ff0,      s_row,   4, 1, 2 );
    spec->addLayout( gl_x_rh,       s_row++, 6, 1, 2 );
-   spec->addWidget( ck_savepl,     s_row,   0, 1, 4 );
-   spec->addWidget( ck_locsave,    s_row++, 4, 1, 4 );
+//   spec->addWidget( ck_savepl,     s_row,   0, 1, 4 );
+//   spec->addWidget( ck_locsave,    s_row++, 4, 1, 4 );
+   spec->addWidget( lb_di_avg,     s_row++, 0, 1, 8 );
+   spec->addLayout( gl_da_n,       s_row,   2, 1, 2 );
+   spec->addLayout( gl_da_s,       s_row,   4, 1, 2 );
+   spec->addLayout( gl_da_w,       s_row++, 6, 1, 2 );
    spec->addWidget( te_distr_info, s_row,   0, 2, 8 ); s_row += 2;
 
    // Set up analysis controls
@@ -696,14 +718,14 @@ void US_Density_Match::load_distro()
    }
 
    curr_distr = alldis.size() - 1;
-   need_save  = ck_savepl->isChecked()  &&  !cont_loop;
+//   need_save  = ck_savepl->isChecked()  &&  !cont_loop;
    pb_rmvdist->setEnabled( models.count() > 0 );
 
    // Notify user of need to set D2O-percent, label, density model values
    QString qmsg = tr( "%1 models are loaded.\n\nIn the dialog to follow,\n"
                       "you must set D2O Percent values for each,\n"
                       "then review and set Label and Density values for them.\n"
-                      "Begin with the model with 0% D2O." )
+                      "Insure there is a model with 0% D2O." )
                       .arg( alldis.size() );
    QMessageBox::warning( this, tr( "Model Parameters" ), qmsg );
 
@@ -1093,6 +1115,7 @@ void US_Density_Match::update_disk_db( bool isDB )
 void US_Density_Match::select_prefilt( void )
 {
    QString pfmsg;
+   QString dinfo;
    int nruns  = 0;
    pfilts.clear();
 
@@ -1107,17 +1130,31 @@ void US_Density_Match::select_prefilt( void )
       pfilts.clear();
 
    if ( nruns == 0 )
-      pfmsg = tr( "(no prefilter)" );
+   {
+      pfmsg  = tr( "(no prefilter)" );
+      dinfo  = pfmsg + "\n";
+   }
 
    else if ( nruns > 1 )
-      pfmsg = tr( "RunID prefilter - %1 runs: " ).arg( nruns )
-              + QString( pfilts[ 0 ] ).left( 20 ) + "*, ...";
+   {
+      pfmsg  = tr( "RunID prefilter - %1 runs: " ).arg( nruns )
+               + QString( pfilts[ 0 ] ).left( 20 ) + "*, ...";
+      dinfo  = tr( "RunID prefilter - %1 runs:\n" ).arg( nruns );
+      for ( int ii = 0; ii < nruns; ii++ )
+      {
+         dinfo += pfilts[ ii ] + "\n";
+      }
+   }
 
    else
-      pfmsg = tr( "RunID prefilter - 1 run: " )
-              + QString( pfilts[ 0 ] ).left( 20 ) + " ...";
+   {
+      pfmsg  = tr( "RunID prefilter - 1 run: " )
+               + QString( pfilts[ 0 ] ).left( 20 ) + " ...";
+      dinfo  = tr( "RunID prefilter - 1 run:\n" ) + pfilts[ 0 ];
+   }
 
-   le_prefilt->setText( pfmsg );
+   le_prefilt   ->setText( pfmsg );
+   te_distr_info->setText( dinfo );
 }
 
 
@@ -1236,6 +1273,16 @@ DbgLv(1) << "sel_x:   lab vlos vhis xmin xmax xinc" << xlabs[plot_x]
    plot_data();         // Plot data
 }
 
+// Select diffusion coefficient averaging flag
+void US_Density_Match::select_di_avg( int ival )
+{
+DbgLv(1) << "sel_da:  ival" << ival;
+   diff_avg   = ival;
+   build_bf_dists();    // Build the boundary fraction distributions
+   build_bf_vects();    // Build the boundary fraction vectors
+   plot_data();         // Plot data
+}
+
 // Generate the BF version of the current distribution
 void US_Density_Match::build_bf_distro( int modx )
 {
@@ -1308,15 +1355,14 @@ DbgLv(1) << "BldBf: nsolbo nsolbf" << nsolbo << nsolbf;
 // Generate the BoundaryFraction version of all distributions
 void US_Density_Match::build_bf_dists()
 {
-   bool diff_avg    = true;
    int ndists       = alldis.size();
    for ( int jj = 0; jj < ndists; jj++ )
    {  // Build bfrac distro for each model
       build_bf_distro( jj );
    }
 
-   if ( diff_avg )
-   {  // Replace diffusion coefficients with weight averages
+   if ( diff_avg > 0 )
+   {  // Replace diffusion coefficients with simple or weighted averages
       int npoints      = alldis[ 0 ].bf_distro.size();
       for ( int jj = 0; jj < npoints; jj++ )
       {
@@ -1325,7 +1371,8 @@ void US_Density_Match::build_bf_dists()
          for ( int ii = 0; ii < ndists; ii++ )
          {  // Accumulate (weighted) sum and sum of weights
 //            double dwt       = alldis[ ii ].bf_distro[ jj ].c;
-            double dwt       = 1.0;
+            double dwt       = ( diff_avg == 1 ) ? 1.0
+                                                 : alldis[ ii ].bf_distro[ jj ].c;
             dsum            += ( alldis[ ii ].bf_distro[ jj ].d * dwt );
             wsum            += dwt;
          }
@@ -1455,13 +1502,8 @@ DbgLv(1) << "BldVc: mm 0 1 k n" << v_mmass[0] << v_mmass[1]
    v_hrads.reserve( npoints );
    for ( int jj = 0; jj < npoints; jj++ )
    {
-      // Mi*vbari/N = Volume of moleculei
-      // V=4/3 * pi*r_0^3    (3/(4*pi) *v)^1/3 = r_0
-      // f_0i = 6 * pi * eta * r_0i
       // fi = RT/(N*Di)
-      // *** fi/f_0i
       // *** ri = fi/(6 * pi * eta)   <-- hydrodynamic radius
-//      double difco     = alldis[ 0 ].bf_distro[ jj ].d * 1.0e-7;
       double difco     = v_difcs[ zx ][ jj ] * 1.0e-7;
       double frico     = R_GC * K20 / ( difco * AVOGADRO );
       double hyrad     = frico / ( 6.0 * M_PI * VISC_20W );
@@ -1473,6 +1515,7 @@ DbgLv(1) << "BldVc: hr 0 1 k n" << v_hrads[0] << v_hrads[1]
    // Compute frictional ratio values and build the vector
    const double a_third = ( 1.0 / 3.0 );
    double vol_fac       = ( 0.75 / M_PI );
+   double spfac         = 0.06 * M_PI * VISC_20W;
    v_frats.clear();
    v_frats.reserve( npoints );
    for ( int jj = 0; jj < npoints; jj++ )
@@ -1484,14 +1527,27 @@ DbgLv(1) << "BldVc: hr 0 1 k n" << v_hrads[0] << v_hrads[1]
       // *** fi/f_0i
       // *** ri = fi/(6 * pi * eta)   <-- hydrodynamic radius
 //      double difco     = alldis[ 0 ].bf_distro[ jj ].d * 1.0e-7;
-      double difco     = v_difcs[ zx ][ jj ] * 1.0e-7;
       double vbari     = v_vbars[ jj ];
+      double mmass     = v_mmass[ jj ];
+#if 0
+      double difco     = v_difcs[ zx ][ jj ] * 1.0e-7;
 //      double rzero     = pow( ( ( 0.75 / M_PI ) * vbari ), a_third );
-      double volum     = v_mmass[ jj ] * vbari / AVOGADRO;
+      double volum     = mmass * vbari / AVOGADRO;
       double rzero     = pow( ( vol_fac * volum ), a_third );
       double fcoef     = R_GC * K20 / ( difco * AVOGADRO );
-      double fzero     = 6.0 * M_PI * VISC_20W * rzero;
-      double frati     = fcoef / fzero;
+//      double fzero     = 6.0 * M_PI * VISC_20W * rzero;
+      double fzero     = 0.06 * M_PI * VISC_20W * rzero;
+#endif
+#if 1
+      double sedco     = v_sedcs[ zx ][ jj ] * 1.0e-13;
+      double volum     = mmass * vbari / AVOGADRO;
+      double rzero     = pow( ( vol_fac * volum ), a_third );
+//   rsph_fac       = 0.06 * M_PI * VISC_20W;
+//   buoyancyb      = 1.0 - vbar * DENS_20W;
+      double fcoef     = mmass * ( 1.0 - vbari * DENS_20W ) / ( sedco * AVOGADRO );
+      double fzero     = spfac * rzero;
+#endif
+      double frati     = qAbs( fcoef / fzero );
       v_frats << frati;
    }
 DbgLv(1) << "BldVc: fr 0 1 k n" << v_frats[0] << v_frats[1]
