@@ -328,6 +328,8 @@ void US_Hydrodyn::get_atom_map(PDB_model *model)
                  lastResName != this_atom->resName )
             {
                if ( multi_residue_map.count(this_atom->resName) &&
+                    multi_residue_map[this_atom->resName].size() &&
+                    (int) residue_list.size() > multi_residue_map[this_atom->resName][0] &&
                     residue_list[multi_residue_map[this_atom->resName][0]].type == 0 )
                {
                   aa++;
