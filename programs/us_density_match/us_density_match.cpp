@@ -310,6 +310,9 @@ void US_Density_Match::save( void )
    QString fpfix   = "dens_match_distrib_";
    QString fname;
    QString fpath;
+   QDir diro( reppath );
+   if ( !diro.exists( ) )  // Make sure report directory exists
+      QDir( US_Settings::reportDir() ).mkdir( runid );
 
    // Write sedimentation coeff, bfrac CSV files
    for ( int ii = 0; ii < ndists; ii++ )
@@ -839,9 +842,6 @@ DbgLv(1) << "LD:  solvals CALL";
 DbgLv(1) << "LD:  solval: bdens soluID bdensity"
  << bdens << soluID << tsys.bdensity;
 
-   
-//   te_distr_info->setText( tr( "Run:  " ) + tsys.run_name
-//      + " (" + tsys.method + ")\n    " + tsys.analys_name );
    int nsolmc  = model.components.size();
 
    // Read in and set distribution s,k,c,... values
@@ -1183,6 +1183,12 @@ DbgLv(1) << "rmvdis:Remove Distros";
 DbgLv(1) << "rmvdis:Accepted";
    }
 
+   // Summarize new set of models in info box
+   models_summary();
+
+   // Build and plot updated data
+   build_bf_dists();    // (Re-)build boundary fraction distributions
+   build_bf_vects();    // (Re-)build boundary fraction vectors
 DbgLv(1) << "rmvdis:plot_data";
    plot_data();
 DbgLv(1) << "rmvdis:DONE";
@@ -1199,28 +1205,14 @@ DbgLv(1) << "mdlpar:Set Model Parameters";
    if ( mpdiag.exec() == QDialog::Accepted )
    {  // Redo text box summarizing models; calculate vectors
 DbgLv(1) << "mdlpar: Accepted";
-      QString mdesc     = mdescs[ 0 ].section( mdescs[ 0 ].left( 1 ), 1, 1 );
-      mdesc             = QString( mdesc ).left( 50 );
-      QString dinfo     = alldis[ 0 ].run_name.section( ".", 0, -2 ) + "\n\n"
-                        + tr( "  D2O Percent  Density  Label  MDescr.\n" );
+      // Summarize new set of models in info box
+      models_summary();
 
-      for ( int jj = 0; jj < alldis.size(); jj++ )
-      {  // Compose and display a distribution line for distro info box
-         double d2opct     = alldis[ jj ].d2opct;
-         double bdens      = alldis[ jj ].bdensity;
-         QString mlab      = alldis[ jj ].label;
-         mdesc             = mdescs[ jj ].section( mdescs[ jj ].left( 1 ), 1, 1 );
-         mdesc             = alldis[ jj ].run_name;
-         int kk            = mdesc.indexOf( "-run" );
-         mdesc             = ( kk > 0 ) 
-                            ? "..." + QString( mdesc ).mid( ( kk + 1 ), 20 )
-                              + "..."
-                            : mdesc;
-         dinfo            += QString().sprintf( "%.1f  %f  ", d2opct, bdens )
-                             + mlab + "  " + mdesc + "\n";
-      }
-
-      te_distr_info->setText( dinfo );
+      // Rebuild vectors and replot data
+DbgLv(1) << "mdlpar:   plot_data";
+      build_bf_dists();
+      build_bf_vects();
+      plot_data();
    }
 }
 
@@ -1239,12 +1231,12 @@ DbgLv(1) << "sel_x:  ival" << ival;
    const double  xincs[] = {   1000.0,  0.01,  1000.0,  0.01,     0.01 };
 #endif
 
-   const QString xlabs[] = {      "s", "f/f0", "mass","vbar", "D", "f",  "r"   };
-   const double  xvlos[] = {      1.0,   1.0,    2e+4,  0.60, 1e-8, 1e-8, 1e-8 };
-   const double  xvhis[] = {     10.0,   4.0,    1e+5,  0.80, 1e-7, 1e-7, 1e-7 };
-   const double  xmins[] = { -10000.0,   1.0,     0.0,  0.01, 1e-9, 1e-9, 1e-9 };
-   const double  xmaxs[] = {  10000.0,  50.0,   1e+10,  3.00, 1e-5, 1e-5, 1e-4 };
-   const double  xincs[] = {     0.01,  0.01,  1000.0,  0.01, 1e-9, 1e-9, 1e-9 };
+   const QString xlabs[] = {      "s", "f/f0", "mass","vbar", "D", "f",  "rh"  };
+   const double  xvlos[] = {      1.0,   1.0,    2e+4,  0.60, 1e-8, 1e-8, 0.1  };
+   const double  xvhis[] = {     10.0,   4.0,    1e+5,  0.80, 1e-7, 1e-7, 1000.};
+   const double  xmins[] = { -10000.0,   1.0,     0.0,  0.01, 1e-9, 1e-9, 1e-1 };
+   const double  xmaxs[] = {  10000.0,  50.0,   1e+10,  3.00, 1e-5, 1e-5, 1e+3 };
+   const double  xincs[] = {     0.01,  0.01,  1000.0,  0.01, 1e-9, 1e-9, 1e-2 };
 #if 0
    const QString xlabs[] = {      "s", "f/f0",  "MW", "vbar", "D", "f"  };
    const double  xvlos[] = {      1.0,   1.0,   2e+4,  0.60, 1e-8, 1e-8 };
@@ -1361,6 +1353,8 @@ DbgLv(1) << "BldBf: nsolbo nsolbf" << nsolbo << nsolbf;
 void US_Density_Match::build_bf_dists()
 {
    int ndists       = alldis.size();
+   if ( ndists < 1 )
+      return;
    for ( int jj = 0; jj < ndists; jj++ )
    {  // Build bfrac distro for each model
       build_bf_distro( jj );
@@ -1512,7 +1506,7 @@ DbgLv(1) << "BldVc: mm 0 1 k n" << v_mmass[0] << v_mmass[1]
       double difco     = v_difcs[ zx ][ jj ] * 1.0e-7;
       double frico     = R_GC * K20 / ( difco * AVOGADRO );
       double hyrad     = frico / ( 6.0 * M_PI * VISC_20W );
-      v_hrads << hyrad;
+      v_hrads << ( hyrad * 1.e+9 );
    }
 DbgLv(1) << "BldVc: hr 0 1 k n" << v_hrads[0] << v_hrads[1]
  << v_hrads[npoints-2] << v_hrads[npoints-1];
@@ -1606,7 +1600,7 @@ QString US_Density_Match::anno_title( int pltndx )
    else if ( pltndx == ATTR_D )
       a_title  = tr( "Diffusion Coefficient (1e-7)" );
    else if ( pltndx == ATTR_R )
-      a_title  = tr( "Hydrodynamic Radius" );
+      a_title  = tr( "Hydrodynamic Radius (nm)" );
    else if ( pltndx == ATTR_F )
       a_title  = tr( "Boundary Fraction" );
 
@@ -1643,6 +1637,19 @@ DbgLv(1) << "UpdDiv:" << dval;
    build_bf_dists();    // (Re-)build boundary fraction distributions
    build_bf_vects();    // (Re-)build boundary fraction vectors
    plot_data();         // Plot data
+
+   // Also limit percent so upper limit is 100.0
+   double mx_bpct    = 100.0 - ct_boundaryPos->value();
+   ct_boundaryPct->setMaximum( mx_bpct );
+DbgLv(1) << "UpdDiv:  mx_bpct" << mx_bpct;
+
+   // Limit smoothing so upper limit half of divisions and odd
+   double mx_smoo    = ct_division->value() * 0.5;
+   int nsmoo         = (int)mx_smoo;
+   nsmoo            += ( ( nsmoo & 1 ) == 0 ) ? 1 : 0;
+   mx_smoo           = nsmoo;
+DbgLv(1) << "UpdDiv:  mx_smoo" << mx_smoo;
+   ct_smoothing  ->setMaximum( mx_smoo );
 }
 
 // Write a CSV file from given vectors
@@ -1672,5 +1679,32 @@ DbgLv(1) << "WrCsv: fpath" << fpath;
    // Close file
    datf.close();
    return;
+}
+
+// Write summary of models to info box
+void US_Density_Match::models_summary( void )
+{
+   QString dinfo     = alldis[ 0 ].run_name.section( ".", 0, -2 ) + "\n\n"
+                     + tr( "  D2O_Percent  Density  Label  MDescr.\n" );
+DbgLv(1) << "mosmry: hdr" << dinfo;
+
+   for ( int jj = 0; jj < alldis.size(); jj++ )
+   {  // Compose and display a distribution line for distro info box
+      double d2opct     = alldis[ jj ].d2opct;
+      double bdens      = alldis[ jj ].bdensity;
+      QString mlab      = alldis[ jj ].label;
+DbgLv(1) << "mosmry:  jj" << jj << "d2opct bdens mlab" << d2opct << bdens << mlab;
+      QString mdesc     = alldis[ jj ].run_name;
+      int kk            = mdesc.indexOf( "-run" );
+      mdesc             = ( kk > 0 ) 
+                         ? "..." + QString( mdesc ).mid( ( kk + 1 ), 20 )
+                           + "..."
+                         : mdesc;
+DbgLv(1) << "mosmry:    mdesc" << mdesc;
+      dinfo            += QString().sprintf( "%.1f  %f  ", d2opct, bdens )
+                          + mlab + "  " + mdesc + "\n";
+   }
+
+   te_distr_info->setText( dinfo );
 }
 

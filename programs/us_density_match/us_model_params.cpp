@@ -326,29 +326,25 @@ DbgLv(1) << " vlf: ochilds size" << ochilds.size();
       QLineEdit* lned = (QLineEdit*) ochild;
       QString pname   = cname.section( ":", 0, 0 );
       QString etext   = lned->text();
+      bool nonempty   = !etext.isEmpty();
 DbgLv(1) << " vlf:  jj" << jj << "etext" << etext << "pname" << pname;
 
       if      ( pname == "D2OP" )
       {  // Count D2O percent values given
-         if ( !etext.isEmpty() )
+         if ( nonempty )
          {
+            nad2pc++;     // Bump count all D2Opc non-empty
             double pctval   = etext.toDouble();
-            if ( etext == "0"  ||  etext == "0.0" )
-            {  // Zero percent:  bump counts
-               nzd2pc++;
-               nad2pc++;
+            if ( pctval == 0.0 )
+            {
+               nzd2pc++;  // Bump count zero percent D2O
 DbgLv(1) << " vlf:    pctval" << pctval << "nzd2pc nad2pc" << nzd2pc << nad2pc;
-            }
-            else if ( pctval > 0.0 )
-            {  // Non-zero numeric: bump percent count
-               nad2pc++;
-DbgLv(1) << " vlf:    pctval" << pctval << "nad2pc" << nad2pc;
             }
          }
       }
       else if ( pname == "DENS" )
       {  // Count densities given
-         if ( !etext.isEmpty() )
+         if ( nonempty )
          {
             double density  = etext.toDouble();
             if ( density > 0.0 )
@@ -362,23 +358,23 @@ DbgLv(1) << " vlf:    density" << density << "nadens" << nadens;
       }
       else if ( pname == "MLAB" )
       {  // Count labels given
-         if ( !etext.isEmpty() )
+         if ( nonempty )
             nalabs++;
 DbgLv(1) << " vlf:    nalabs" << nalabs;
       }
    }
 DbgLv(1) << " vlf: nzd2pc nad2pc nadens nalabs" << nzd2pc << nad2pc << nadens << nalabs
- << "allden size" << allden.size();
+ << "allden size" << allden.size() << "nd_orig" << nd_orig;
 
    // All model parameters are given if
    //  at least one zero-percent is given;
    //  percent,density,label counts equal row count;
-   //  and number of unique densities equals row count.
+   //  and number of unique densities greater than one.
    bool filled    = ( ( nzd2pc > 0 )  &&
                       ( nad2pc == nd_orig )  &&
                       ( nadens == nd_orig )  &&
                       ( nalabs == nd_orig )  &&
-                      ( allden.size() == nadens ) );
+                      ( allden.size() > 1 )  );
 DbgLv(1) << " vlf:   FILLED" << filled;
    pb_accept ->setEnabled( filled );  // If all filled, enable Accept button
 
@@ -403,20 +399,13 @@ DbgLv(1) << " apc: ochilds size" << ochilds.size();
       QLineEdit* lned = (QLineEdit*) ochild;
       QString etext   = lned->text();
 
-      if      ( pname == "D2OP" )
+      if ( pname == "D2OP"  &&  !etext.isEmpty() )
       {
-         if ( !etext.isEmpty() )
+         nad2pc++;          // Bump total non-empty D2Opc count
+         double pctval   = etext.toDouble();
+         if ( pctval == 0.0 )
          {
-            double pctval   = etext.toDouble();
-            if ( etext == "0"  ||  etext == "0.0" )
-            {  // Count 0 percent and total percent
-               nzd2pc++;
-               nad2pc++;
-            }
-            else if ( pctval > 0.0 )
-            {  // Count total non-empty percent values given
-               nad2pc++;
-            }
+            nzd2pc++;       // Bump count of 0 percent D2O
          }
       }
    }
