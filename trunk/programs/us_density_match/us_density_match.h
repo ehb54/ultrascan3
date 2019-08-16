@@ -188,6 +188,7 @@ class US_Density_Match : public US_Widgets
       int  plot_x_select  ( void );
       QString anno_title  ( int );
       QString ptype_text  ( int );
+      void models_summary ( void );
       void write_csv( const QString, const QString, QVector< double >&,
                                      const QString, QVector< double >& );
 
