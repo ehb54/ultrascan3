@@ -878,7 +878,7 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
                         editor_msg( "blue", QString( "All\t%1\t%2\n" ).arg( resname_counts_wat_total ).arg(  (double) resname_counts_wat_total / (double) resname_counts_nonwat_total, 0, 'g', 2 ) );
                      }
                   }
-                  if ( mw_nonwat ) {
+                  if ( mw_nonwat && mw_wat ) {
                      editor_msg( "dark blue", QString( "\ngr WAT / gr nonWAT %1" ).arg( mw_wat / mw_nonwat, 0, 'g', 3 ) );
                   }
                }
@@ -1060,7 +1060,7 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
             for ( map < QString, int >::iterator it = resname_counts_nonwat.begin();
                   it != resname_counts_nonwat.end();
                   ++it ) {
-               editor_msg( "black", QString( "%1\t%2\t%3%%4\n" )
+               editor_msg( "black", QString( "%1\t%2\t%3%\t%4\n" )
                            .arg( it->first )
                            .arg( it->second )
                            .arg( 100.0 * (double) it->second / (double) resname_counts_nonwat_total, 0, 'g', 2 )
@@ -1086,9 +1086,9 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
                   editor_msg( "blue", QString( "All\t%1\t%2\n" ).arg( resname_counts_wat_total ).arg(  (double) resname_counts_wat_total / (double) resname_counts_nonwat_total, 0, 'g', 2 ) );
                }
             }
-            if ( mw_nonwat ) {
+            if ( mw_nonwat && mw_wat ) {
                editor_msg( "dark blue", QString( "\ngr WAT / gr nonWAT %1" ).arg( mw_wat / mw_nonwat, 0, 'g', 3 ) );
-            }
+           }
          }
          editor_msg( "black", "\n" );
 
