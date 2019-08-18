@@ -288,13 +288,22 @@ DbgLv(1) << "MD:   reset: AA";
 
    plot_x     = ATTR_V;
 
-   alldis.clear();
-   pfilts.clear();
+   alldis  .clear();
+   pfilts  .clear();
+   v_bfracs.clear();
+   v_vbars .clear();
+   v_mmass .clear();
+   v_hrads .clear();
+   v_frats .clear();
+   v_sedcs .clear();
+   v_difcs .clear();
+
    pb_refresh->setEnabled( false );
    pb_mdlpars->setEnabled( false );
    pb_save   ->setEnabled( false );
    pb_rmvdist->setEnabled( false );
-   le_prefilt->setText( tr( "(no prefilter)" ) );
+   le_prefilt   ->setText( tr( "(no prefilter)" ) );
+   te_distr_info->setText( tr( "(all data cleared)" ) );
 }
 
 // Save plots and CSV files
