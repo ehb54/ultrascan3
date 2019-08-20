@@ -1,0 +1,145 @@
+[% INCLUDE header.us3/
+   title = 'UltraScan III Density Matching'
+%]
+
+    <h2> <i>UltraScan</i> Density Matching:</h2>
+
+    <p>
+    Density Matching experiments are used to determine the partial specific
+    volume of colloidal particles by repeating the velocity experiment in a 
+    range of buffers with a different density, but identical chemical
+    properties. Here it is important that the ionic strength and pH stay
+    constant. This is most easily accomplished by using D2O (heavy water)
+    which has mostly the same chemical properties as light water. The change
+    in buoyancy incurred when changing the density of the solvent causes a
+    change in sedimentation speed, which can be measured. The change is 
+    proportional to the density of the analyte. Density matching experiments
+    exploit this difference.
+    </p> <p>
+    It is recommended that users of this technique measure sedimentation
+    velocity experiments in 4-6 different D2O concentrations, including one
+    buffer that does not have any D2O in it (just light water). Finite
+    element models from these experiments are imported into this program
+    to elucidate the partial specific volume distribution for the entire
+    solution mixture.
+    </p>
+
+    <h3> Main Window:</h3>
+    <p>
+    <img src="images/densmatch_main.png" alt="Density Matching Main Window"/>
+    </p>
+
+    <h3> Dialog Items:</h3>
+
+    <ul>
+       <li>
+          <b>Database</b>: Select to choose models from the database.
+       </li>
+
+       <li>
+          <b>Local Disk</b>: Select to choose models from files on the
+          local disk.
+       </li>
+
+       <li>
+          <b>(prefilter text)</b>: Brief information about PreFilter
+          selection(s) made.
+       </li>
+
+       <li>
+          <b>Select PreFilter</b>: Open a
+          <a href="select_runs.html">Models Pre-Filter dialog</a>
+          to select Run IDs on which to pre-filter lists of models
+          for loading.
+       </li>
+
+       <li>
+          <b>Load Distribution(s)</b>: Load model distribution data
+          to use in density matching, as specified through a
+          <a href="load_model_distrib.html">Model Loader dialog</a>
+       </li>
+
+       <li>
+          <b>Remove Distribution(s)</b>: Open a
+          <a href="dens_match_rmvmods.html">Remove Models dialog</a>
+          to pare down the list of selected models.
+       </li>
+
+       <li>
+          <b>Refresh Plot</b>: Force a re-plot of the currently selected
+          plot type.
+       </li>
+
+       <li>
+          <b>Reset</b>: Clear PreFilter and Distribution selection data.
+       </li>
+
+       <li>
+          <b>Set Model Parameters</b>: Open a
+          <a href="dens_match_mparam.html">Model Parameters dialog</a>
+          to associate D20_Percent, Density, Label values with each model.
+       </li>
+
+       <li>
+          <b>Save</b>: Generate CSV spreadsheet files and PNG plot files
+          for all plot types and save them locally to a runID subdirectory
+          of the */ultrascan/reports directory.
+       </li>
+
+       <li>
+          <b>Plot X:</b> Select the plot to currently be displayed by
+          selected its X axis:
+          <ul>
+             <li> <b>s</b> Sedimentation coefficient. </li>
+             <li> <b>D</b> Diffusion coefficient. </li>
+             <li> <b>vbar</b> Partial specific density. </li>
+             <li> <b>m.mass</b> Molar Mass. </li>
+             <li> <b>ff0</b> Frictional ratio. </li>
+             <li> <b>Rh</b> Hydrodynamic radius. </li>
+          </ul>
+       </li>
+
+       <li>
+          <b>Diffusion Coefficient Averaging:</b> Select the means of averaging
+          diffusion coefficients at each boundard fraction, across models:
+          <ul>
+             <li> <b>none</b> No averaging (use 0-percent model's value). </li>
+             <li> <b>simple</b> Simple averaging. </li>
+             <li> <b>weighted</b> Weighted averaging, using concentrations. </li>
+          </ul>
+       </li>
+
+       <li>
+          <b>(Distribution Information text box)</b> Information about Run and
+          Model Distributions currently being used.
+       </li>
+
+       <li>
+          <b>Divisions:</b> Set the number of boundary fraction divisions to use.
+       </li>
+
+       <li>
+          <b>% of Boundary:</b> Set the extent in boundary percent over which
+          plot values are computed and plotted.
+       </li>
+
+       <li>
+          <b>Boundary Position (%):</b> Set the starting boundary percent.
+       </li>
+
+       <li>
+          <b>Data Smoothing:</b> Set the number of smoothing points to use
+          in curves displayed.
+       </li>
+
+
+       <li>
+          <b>Help</b> Display this documentation.
+       </li>
+
+       <li>
+          <b>Close</b> Exit the application.
+       </li>
+    </ul>
+
+[% INCLUDE footer.us3 %]

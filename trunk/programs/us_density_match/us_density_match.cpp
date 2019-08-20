@@ -67,9 +67,6 @@ US_Density_Match::US_Density_Match() : US_Widgets()
    // Top banner
    QLabel* lb_info1      = us_banner( tr( "Model Selection Controls" ) );
 
-//   us_checkbox( tr( "Save Plot(s)"    ), ck_savepl,  false );
-//   us_checkbox( tr( "Local Save Only" ), ck_locsave, true  );
-
    // Distribution information text box
    te_distr_info = us_textedit();
    te_distr_info->setText( tr( "Run:  runID.triple (method)\n" )
@@ -190,8 +187,6 @@ US_Density_Match::US_Density_Match() : US_Widgets()
    spec->addLayout( gl_x_mass,     s_row,   2, 1, 2 );
    spec->addLayout( gl_x_ff0,      s_row,   4, 1, 2 );
    spec->addLayout( gl_x_rh,       s_row++, 6, 1, 2 );
-//   spec->addWidget( ck_savepl,     s_row,   0, 1, 4 );
-//   spec->addWidget( ck_locsave,    s_row++, 4, 1, 4 );
    spec->addWidget( lb_di_avg,     s_row++, 0, 1, 8 );
    spec->addLayout( gl_da_n,       s_row,   2, 1, 2 );
    spec->addLayout( gl_da_s,       s_row,   4, 1, 2 );
@@ -213,7 +208,6 @@ US_Density_Match::US_Density_Match() : US_Widgets()
    ct_smoothing    = us_counter( 2, 1, 100, 1 );
 
    ct_division   ->setSingleStep( 1 );
-//   ct_division->setEnabled( true );
    ct_boundaryPct->setSingleStep( 1 );
    ct_boundaryPos->setSingleStep( 1 );
    ct_smoothing  ->setSingleStep( 1 );
@@ -284,8 +278,6 @@ DbgLv(1) << "MD:   reset: AA";
    dataPlotClear( data_plot );
    data_plot->replot();
  
-   need_save  = false;
-
    plot_x     = ATTR_V;
 
    alldis  .clear();
@@ -408,62 +400,6 @@ DbgLv(1) << "SV:     fpath" << fpath;
    QVector< QVector< double > >  v_sedcs;
    QVector< QVector< double > >  v_difcs;
 #endif
-#if 0
-   //QString dtext = te_distr_info->toPlainText().section( "\n", 0, 1 );
-   QString dtext  = tr( "Run:  " ) + tsys->run_name
-         + " (" + tsys->method + ")\n    " + tsys->analys_name;
-
-   bool sv_plot = ck_savepl->isChecked();
-DbgLv(2) << "(1) sv_plot" << sv_plot;
-
-DbgLv(2) << "(3)   need_save sv_plot" << need_save << sv_plot;
-   //if ( need_save  &&  sv_plot )
-   if ( sv_plot )
-   {  // Automatically save plot image in a PNG file
-      const QString s_attrs[] = { "s", "ff0", "MW", "vbar", "D", "f" };
-      QPixmap plotmap = ((QWidget*)data_plot)->grab();
-
-      QString runid   = tsys->run_name.section( ".",  0, -2 );
-      QString triple  = tsys->run_name.section( ".", -1, -1 );
-      QString report  = QString( "pseudo3d_" ) + s_attrs[ plot_x ]
-         + "_" + s_attrs[ ATTR_F ];
-
-      QString ofdir   = US_Settings::reportDir() + "/" + runid;
-      QDir dirof( ofdir );
-      if ( !dirof.exists( ) )
-         QDir( US_Settings::reportDir() ).mkdir( runid );
-      QString ofname = tsys->method + "." + triple + "." + report + ".png";
-      QString ofpath = ofdir + "/" + ofname;
-
-      plotmap.save( ofpath );
-      dtext          = dtext + tr( "\nPLOT %1 SAVED to local" )
-         .arg( curr_distr + 1 );
-
-      if ( dkdb_cntrls->db()  &&  !ck_locsave->isChecked() )
-      {  // Save a copy to the database
-QDateTime time0=QDateTime::currentDateTime();
-         US_Passwd   pw;
-         US_DB2      db( pw.getPasswd() );
-         QStringList query;
-         query << "get_editID" << tsys->editGUID;
-         db.query( query );
-         db.next();
-         int         idEdit   = db.value( 0 ).toString().toInt();
-         US_Report   freport;
-         freport.runID        = runid;
-         freport.saveDocumentFromFile( ofdir, ofname, &db, idEdit );
-QDateTime time1=QDateTime::currentDateTime();
-qDebug() << "DB-save: currdist" << curr_distr
- << "svtime:" << time0.msecsTo(time1);
-         dtext          = dtext + tr( " and DB" );
-      }
-   }
-
-   else
-      dtext          = dtext + tr( "\n(no plot saved)" );
-
-   te_distr_info->setText( dtext );
-#endif
 }
 
 // Plot the data
@@ -477,23 +413,6 @@ void US_Density_Match::plot_data( void )
    DisSys* tsys   = (DisSys*)&alldis.at( 0 );
    plot_x         = ( plot_x < 0 ) ? plot_x_select() : plot_x;
 DbgLv(1) << "DaPl: plot_x" << plot_x;
-
-#if 0
-auto_sxy=true;
-   if ( auto_sxy )
-   { // Auto scale x and y
-      data_plot->setAxisAutoScale( QwtPlot::yLeft   );
-      data_plot->setAxisAutoScale( QwtPlot::xBottom );
-   }
-   else
-   { // Manual limits on x and y
-      double lStep = data_plot->axisStepSize( QwtPlot::yLeft   );
-      double bStep = data_plot->axisStepSize( QwtPlot::xBottom );
-      data_plot->setAxisScale( QwtPlot::xBottom, plt_smin, plt_smax, bStep );
-      data_plot->setAxisScale( QwtPlot::yLeft,   plt_kmin, plt_kmax, lStep );
-   }
-#endif
-
 
 #if 0
    QVector< double >             v_bfracs;
@@ -642,67 +561,6 @@ void US_Density_Match::plot_data( int cplx )
    plot_x         = plot_x_select();
 }
 
-void US_Density_Match::update_resolu( double dval )
-{
-   resolu = dval;
-}
-
-void US_Density_Match::update_xreso( double dval )
-{
-   xreso  = dval;
-}
-
-void US_Density_Match::update_yreso( double dval )
-{
-   yreso  = dval;
-}
-
-void US_Density_Match::update_curr_distr( double dval )
-{
-   curr_distr   = qRound( dval ) - 1;
-DbgLv(1) << "upd_curr_distr" << curr_distr;
-}
-
-void US_Density_Match::update_plot_smin( double dval )
-{
-   plt_smin = dval;
-DbgLv(1) << "plt_smin" << plt_smin;
-}
-
-void US_Density_Match::update_plot_smax( double dval )
-{
-   plt_smax = dval;
-DbgLv(1) << "plt_smax" << plt_smax;
-}
-
-void US_Density_Match::update_plot_kmin( double dval )
-{
-   plt_kmin = dval;
-}
-
-void US_Density_Match::update_plot_kmax( double dval )
-{
-   plt_kmax = dval;
-}
-
-void US_Density_Match::select_autosxy()
-{
-   auto_sxy   = ck_autosxy->isChecked();
-   ct_plt_kmin->setEnabled( !auto_sxy );
-   ct_plt_kmax->setEnabled( !auto_sxy );
-   ct_plt_smin->setEnabled( !auto_sxy );
-   ct_plt_smax->setEnabled( !auto_sxy );
-
-   set_limits();
-}
-
-void US_Density_Match::select_autoscz()
-{
-   auto_scz   = ck_autoscz->isChecked();
-
-   set_limits();
-}
-
 // Load all the distributions (models)
 void US_Density_Match::load_distro()
 {
@@ -721,8 +579,6 @@ void US_Density_Match::load_distro()
    if ( dialog.exec() != QDialog::Accepted )
       return;  // no selection made
 
-   need_save  = false;
-
    te_distr_info->setText(
       QString( models[ 0 ].description ).section( ".", 0, -4 ) );
 
@@ -731,8 +587,6 @@ void US_Density_Match::load_distro()
       load_distro( models[ jj ], mdescs[ jj ] );
    }
 
-   curr_distr = alldis.size() - 1;
-//   need_save  = ck_savepl->isChecked()  &&  !cont_loop;
    bool have_m  = ( models.count() > 0 );
    pb_rmvdist->setEnabled( have_m );
    pb_mdlpars->setEnabled( have_m );
@@ -915,24 +769,6 @@ DbgLv(1) << "LD:  call alldis.append";
    alldis.append( tsys );
 DbgLv(1) << "LD:   retn fr alldis.append";
 
-#if 0
-   if ( auto_sxy )
-   {
-DbgLv(1) << "LD:  auto_sxy call set_limits";
-      set_limits();
-   }
-   data_plot->setAxisScale( QwtPlot::xBottom, plt_smin, plt_smax );
-   data_plot->setAxisScale( QwtPlot::yLeft,   plt_kmin, plt_kmax );
-
-   pb_pltall ->setEnabled( true );
-   pb_refresh->setEnabled( true );
-   pb_reset  ->setEnabled( true );
-
-   if ( cont_loop )
-      pb_pltall->setText( tr( "Plot All Distros in a Loop" ) );
-   else
-      pb_pltall->setText( tr( "Plot All Distros" ) );
-#endif
    pb_refresh->setEnabled( true );
    pb_reset  ->setEnabled( true );
 
@@ -957,99 +793,6 @@ int US_Density_Match::plot_x_select()
    plotx       = rb_x_s   ->isChecked() ? ATTR_S : plotx;
    plotx       = rb_x_d   ->isChecked() ? ATTR_D : plotx;
    return plotx;
-}
-
-void US_Density_Match::set_limits()
-{
-   double smin = 1.0e30;
-   double smax = -1.0e30;
-   double kmin = 1.0e30;
-   double kmax = -1.0e30;
-   double sinc;
-   double kinc;
-   xa_title    = anno_title( plot_x );
-   ya_title    = anno_title( ATTR_F );
-
-   data_plot->setAxisTitle( QwtPlot::xBottom, xa_title );
-   data_plot->setAxisTitle( QwtPlot::yLeft,   ya_title );
-
-   if ( alldis.size() < 1 )
-      return;
-
-   // find min,max for X,Y distributions
-   for ( int ii = 0; ii < alldis.size(); ii++ )
-   {
-      DisSys* tsys = (DisSys*)&alldis.at( ii );
-
-      for ( int jj = 0; jj < tsys->nm_distro.size(); jj++ )
-      {
-         double sval = tsys->nm_distro.at( jj ).s;
-         double kval = tsys->nm_distro.at( jj ).k;
-         smin        = qMin( smin, sval );
-         smax        = qMax( smax, sval );
-         kmin        = qMin( kmin, kval );
-         kmax        = qMax( kmax, kval );
-      }
-   }
-
-   // adjust minima, maxima
-   sinc      = ( smax - smin ) / 10.0;
-   kinc      = ( kmax - kmin ) / 10.0;
-   sinc      = ( sinc <= 0.0 ) ? ( smin * 0.05 ) : sinc;
-   kinc      = ( kinc <= 0.0 ) ? ( kmin * 0.05 ) : kinc;
-DbgLv(1) << "SL: real smin smax kmin kmax" << smin << smax << kmin << kmax;
-   smin     -= sinc;
-   smax     += sinc;
-   kmin     -= kinc;
-   kmax     += kinc;
-DbgLv(1) << "SL: adjusted smin smax kmin kmax" << smin << smax << kmin << kmax;
-
-   if ( auto_sxy )
-   {  // Set auto limits on X and Y
-      sinc        = pow( 10.0, qFloor( log10( smax ) ) - 3.0 );
-      kinc        = pow( 10.0, qFloor( log10( kmax ) ) - 3.0 );
-      if ( qAbs( ( smax - smin ) / smax ) < 0.001 )
-      {  // Put padding around virtually constant value
-         smin     -= sinc;
-         smax     += sinc;
-      }
-      if ( qAbs( ( kmax - kmin ) / kmax ) < 0.001 )
-      {  // Put padding around virtually constant value
-         kmin     -= kinc;
-         kmax     += kinc;
-      }
-      // Make sure limits are nearest reasonable values
-      smin        = qFloor( smin / sinc ) * sinc;
-      smax        = qFloor( smax / sinc ) * sinc + sinc;
-      smin        = ( plot_x != ATTR_S ) ? qMax( smin, 0.0 ) : smin;
-      smin        = ( plot_x == ATTR_K ) ? qMax( smin, 0.5 ) : smin;
-      kmin        = qFloor( kmin / kinc ) * kinc;
-      kmax        = qFloor( kmax / kinc ) * kinc + kinc;
-
-DbgLv(1) << "SL: setVal kmin kmax" << kmin << kmax;
-#if 0
-      ct_plt_smin->setValue( smin );
-      ct_plt_smax->setValue( smax );
-      ct_plt_kmin->setValue( kmin );
-      ct_plt_kmax->setValue( kmax );
-#endif
-
-      plt_smin    = smin;
-      plt_smax    = smax;
-      plt_kmin    = kmin;
-      plt_kmax    = kmax;
-   }
-   else
-   {
-#if 0
-      plt_smin    = ct_plt_smin->value();
-      plt_smax    = ct_plt_smax->value();
-      plt_kmin    = ct_plt_kmin->value();
-      plt_kmax    = ct_plt_kmax->value();
-#endif
-   }
-DbgLv(1) << "SL: plt_smin _smax _kmin _kmax" << plt_smin << plt_smax
- << plt_kmin << plt_kmax;
 }
 
 // Sort distribution solute list by s,d values and optionally reduce
@@ -1183,17 +926,22 @@ DbgLv(1) << "rmvdis:Remove Distros";
       int jd     = alldis.size();
 
       if ( jd < 1 )
-      {
-         reset();
-         return;
+      {  // Handle case where ALL distributions removed
+         QString dinfo   = te_distr_info->toPlainText()
+                           .section( "\n", 0, 0 ) +
+                           tr( "\n(no models)\n" );
+         te_distr_info->setText( dinfo );
+         dataPlotClear( data_plot );
+         data_plot->replot();
       }
-
-      curr_distr = 0;
 DbgLv(1) << "rmvdis:Accepted";
    }
 
-   // Summarize new set of models in info box
-   models_summary();
+   if ( alldis.size() > 0 )
+   {
+      // Summarize new set of models in info box
+      models_summary();
+   }
 
    // Build and plot updated data
    build_bf_dists();    // (Re-)build boundary fraction distributions
@@ -1231,50 +979,8 @@ void US_Density_Match::select_x_axis( int ival )
 DbgLv(1) << "sel_x:  ival" << ival;
    plot_x     = ival;
 
-#if 0
-   const QString xlabs[] = {   "mass", "f/f0",   "rh", "vbar",     "s" };
-   const double  xvlos[] = {     2e+4,   1.0,    2e+4,  0.60,      1.0 };
-   const double  xvhis[] = {     1e+5,   4.0,    1e+5,  0.80,     10.0 };
-   const double  xmins[] = {      0.0,   1.0,     0.0,  0.01, -10000.0 };
-   const double  xmaxs[] = {    1e+10,  50.0,   1e+10,  3.00,  10000.0 };
-   const double  xincs[] = {   1000.0,  0.01,  1000.0,  0.01,     0.01 };
-#endif
-
-   const QString xlabs[] = {      "s", "f/f0", "mass","vbar", "D", "f",  "rh"  };
-   const double  xvlos[] = {      1.0,   1.0,    2e+4,  0.60, 1e-8, 1e-8, 0.1  };
-   const double  xvhis[] = {     10.0,   4.0,    1e+5,  0.80, 1e-7, 1e-7, 1000.};
-   const double  xmins[] = { -10000.0,   1.0,     0.0,  0.01, 1e-9, 1e-9, 1e-1 };
-   const double  xmaxs[] = {  10000.0,  50.0,   1e+10,  3.00, 1e-5, 1e-5, 1e+3 };
-   const double  xincs[] = {     0.01,  0.01,  1000.0,  0.01, 1e-9, 1e-9, 1e-2 };
-#if 0
-   const QString xlabs[] = {      "s", "f/f0",  "MW", "vbar", "D", "f"  };
-   const double  xvlos[] = {      1.0,   1.0,   2e+4,  0.60, 1e-8, 1e-8 };
-   const double  xvhis[] = {     10.0,   4.0,   1e+5,  0.80, 1e-7, 1e-7 };
-   const double  xmins[] = { -10000.0,   1.0,    0.0,  0.01, 1e-9, 1e-9 };
-   const double  xmaxs[] = {  10000.0,  50.0,  1e+10,  3.00, 1e-5, 1e-5 };
-   const double  xincs[] = {     0.01,  0.01, 1000.0,  0.01, 1e-9, 1e-9 };
-#endif
-
-#if 0
-   lb_plt_smin->setText( tr( "Plot Limit " ) + xlabs[ plot_x ]
-                       + tr( " Minimum:" ) );
-   lb_plt_smax->setText( tr( "Plot Limit " ) + xlabs[ plot_x ]
-                       + tr( " Maximum:" ) );
-   ct_plt_smin->setRange( xmins[ plot_x ], xmaxs[ plot_x ] );
-   ct_plt_smax->setRange( xmins[ plot_x ], xmaxs[ plot_x ] );
-   ct_plt_smin->setSingleStep( xincs[ plot_x ] );
-   ct_plt_smax->setSingleStep( xincs[ plot_x ] );
-   ct_plt_smin->setValue( xvlos[ plot_x ] );
-   ct_plt_smax->setValue( xvhis[ plot_x ] );
-#endif
-DbgLv(1) << "sel_x:   lab vlos vhis xmin xmax xinc" << xlabs[plot_x]
- << xvlos[plot_x] << xvhis[plot_x] << xmins[plot_x] << xmaxs[plot_x]
- << xincs[plot_x];
-
    build_bf_dists();    // Build the boundary fraction distributions
    build_bf_vects();    // Build the boundary fraction vectors
-
-//   set_limits();
 
    plot_data();         // Plot data
 }
@@ -1378,7 +1084,6 @@ void US_Density_Match::build_bf_dists()
          double wsum      = 0.0;
          for ( int ii = 0; ii < ndists; ii++ )
          {  // Accumulate (weighted) sum and sum of weights
-//            double dwt       = alldis[ ii ].bf_distro[ jj ].c;
             double dwt       = ( diff_avg == 1 ) ? 1.0
                                                  : alldis[ ii ].bf_distro[ jj ].c;
             dsum            += ( alldis[ ii ].bf_distro[ jj ].d * dwt );
@@ -1493,8 +1198,6 @@ DbgLv(1) << "BldVc:   zx" << zx;
    for ( int jj = 0; jj < npoints; jj++ )
    {
       // *** Mi = si*R*T/(Di_avg*(1-vbari*rho))
-//      double sedco     = alldis[ 0 ].bf_distro[ jj ].s * 1.0e-13;
-//      double difco     = alldis[ 0 ].bf_distro[ jj ].d * 1.0e-7;
       double sedco     = v_sedcs[ zx ][ jj ] * 1.0e-13;
       double difco     = v_difcs[ zx ][ jj ] * 1.0e-7;
       double vbari     = v_vbars[ jj ];
@@ -1712,6 +1415,11 @@ DbgLv(1) << "mosmry:  jj" << jj << "d2opct bdens mlab" << d2opct << bdens << mla
 DbgLv(1) << "mosmry:    mdesc" << mdesc;
       dinfo            += QString().sprintf( "%.1f  %f  ", d2opct, bdens )
                           + mlab + "  " + mdesc + "\n";
+   }
+
+   if ( alldis.size() < 1 )
+   {
+      dinfo            += tr( "(no models)\n" );
    }
 
    te_distr_info->setText( dinfo );
