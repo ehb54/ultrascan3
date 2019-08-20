@@ -52,11 +52,6 @@ class US_Density_Match : public US_Widgets
 
       enum attr_type { ATTR_S, ATTR_K, ATTR_W, ATTR_V, ATTR_D, ATTR_F, ATTR_R };
 
-      QLabel*       lb_plt_smin;
-      QLabel*       lb_plt_smax;
-      QLabel*       lb_plt_kmin;
-      QLabel*       lb_plt_kmax;
-      QLabel*       lb_tolerance;
       QLabel*       lb_division;
 
       QTextEdit*    te_distr_info;
@@ -65,12 +60,6 @@ class US_Density_Match : public US_Widgets
 
       US_Help       showHelp;
  
-      QwtCounter*   ct_resolu;
-      QwtCounter*   ct_plt_kmin;     
-      QwtCounter*   ct_plt_kmax;     
-      QwtCounter*   ct_plt_smin;     
-      QwtCounter*   ct_plt_smax;     
-      QwtCounter*   ct_plt_dlay;     
       QwtCounter*   ct_division;
       QwtCounter*   ct_smoothing;
       QwtCounter*   ct_boundaryPct;
@@ -91,15 +80,6 @@ class US_Density_Match : public US_Widgets
       QPushButton*  pb_rmvdist;
       QPushButton*  pb_mdlpars;
       QPushButton*  pb_save;
-
-      QCheckBox*    ck_autosxy;
-      QCheckBox*    ck_autoscz;
-      QCheckBox*    ck_plot_sk;
-      QCheckBox*    ck_plot_wk;
-      QCheckBox*    ck_plot_sv;
-      QCheckBox*    ck_plot_wv;
-      QCheckBox*    ck_savepl;
-      QCheckBox*    ck_locsave;
 
       QRadioButton* rb_x_mass;
       QRadioButton* rb_x_ff0;
@@ -124,29 +104,9 @@ class US_Density_Match : public US_Widgets
       QVector< QVector< double > >  v_sedcs;   // Vector of sedi coeff vectors per distro
       QVector< QVector< double > >  v_difcs;   // Vector of diff coeff vectors per distro
 
-      double        resolu;
-      double        plt_smin;
-      double        plt_smax;
-      double        plt_kmin;
-      double        plt_kmax;
-      double        plt_zmin;
-      double        plt_zmax;
-      double        s_range;
-      double        k_range;
-      double        xreso;
-      double        yreso;
-
-      int           curr_distr;
       int           dbg_level;
       int           plot_x;
       int           diff_avg;
-
-      bool          auto_sxy;
-      bool          auto_scz;
-      bool          cont_loop;
-      bool          need_save;
-      bool          runsel;
-      bool          latest;
 
       QString       xa_title;
       QString       ya_title;
@@ -157,18 +117,8 @@ class US_Density_Match : public US_Widgets
 
    private slots:
 
-      void update_resolu(     double );
-      void update_xreso(      double );
-      void update_yreso(      double );
-      void update_curr_distr( double );
-      void update_plot_smin(  double );
-      void update_plot_smax(  double );
-      void update_plot_kmin(  double );
-      void update_plot_kmax(  double );
       void plot_data(      int );
       void plot_data(      void );
-      void select_autosxy( void );
-      void select_autoscz( void );
       void update_disk_db( bool );
       void update_divis  ( double );
       void select_prefilt( void );
@@ -176,7 +126,6 @@ class US_Density_Match : public US_Widgets
       void load_distro(    US_Model, QString );
       void reset(   void );
       void save(    void );
-      void set_limits     (  void );
       void sort_distro    ( QList< S_Solute >&, bool );
       void remove_distro  ( void );
       void set_mparms     ( void );

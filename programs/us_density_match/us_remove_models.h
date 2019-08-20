@@ -53,7 +53,7 @@ class US_RemoveModels : public US_WidgetsDialog
       void restore          ( void );
       void accepted         ( void );
       void help             ( void )
-      { showHelp.show_help( "mass_distrib_rmv.html" ); };
+      { showHelp.show_help( "dens_match_rmvmods.html" ); };
 };
 #endif
 

@@ -1,0 +1,52 @@
+[% INCLUDE header.us3/
+   title = 'UltraScan III Density Matching Remove Models'
+%]
+
+    <h2> <i>UltraScan</i> Density Matching Remove Models:</h2>
+
+    <p> An option in <b><i>UltraScan III US_Density_Match</i></b>,
+    this dialog allows the removal of previously selected model
+    distributions.</p>
+
+    <p> The dialog presents a list of models to be used in density
+    matching. One or more items in the list may be selected and a
+    Remove button clicked to pare down the list.</p>
+
+    <h3> Main Window:</h3>
+
+    <img src="images/densmatch_rmvmodels.png" alt="Remove Models Dialog"/>
+
+    <h3> Dialog Items:</h3>
+
+    <ul>
+       <li>
+          <b>(List of Model Distributions)</b> Select one or more of the
+          items in the list.
+       </li>
+
+       <li>
+          <b>Remove</b> Click this button to remove selected models.
+       </li>
+
+       <li>
+          <b>Restore</b> Click this button to restore the models list
+          to its original contents.
+       </li>
+
+       <li>
+          <b>Help</b> Click this button to display this help dialog.
+       </li>
+
+       <li>
+          <b>Cancel</b> Click this button to cancel the dialog and
+          leave the list of models in the same state as it was upon
+          entry.
+       </li>
+
+       <li>
+          <b>Accept</b> Exit this dialog and return with a modified
+          list of models.
+       </li>
+    </ul>
+
+[% INCLUDE footer.us3 %]

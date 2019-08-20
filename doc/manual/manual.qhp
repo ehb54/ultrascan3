@@ -39,6 +39,7 @@
             <keyword id="c5" name="create-experiment" ref="experiment_general.html"/>
             <keyword id="d1" name="data-loader"      ref="data_loader.html"/>
             <keyword id="d2" name="ddist-combine"    ref="ddist_combine.html"/>
+            <keyword id="d3" name="density-match"    ref="dens_match.html"/>
             <keyword id="e1" name="edit"             ref="us_edit.html"/>
             <keyword id="e2" name="equiltime"        ref="us_equiltime.html"/>
             <keyword id="e3" name="experiment"       ref="convert-experiment.html"/>
@@ -262,17 +263,17 @@
             <file>images/astfem_sim.png</file>
             <file>images/simparams.png</file>
 
-				<file>grid_editor.html</file>
-				<file>images/grid_editor.png</file>
-				<file>images/grid_editor_mw_view.png</file>
-				<file>images/grid_editor_multi_grids.png</file>
-				<file>images/grid_editor_multi_grids_sed.png</file>
-				<file>images/grid_editor_subgrid1-good.png</file>
-				<file>images/grid_editor_subgrid1-bad.png</file>
-				<file>images/grid_editor_subgrid2-good.png</file>
-				<file>images/grid_editor_subgrid2-bad.png</file>
-				<file>images/grid_editor_subgrid3-good.png</file>
-				<file>images/grid_editor_subgrid3-bad.png</file>
+            <file>grid_editor.html</file>
+            <file>images/grid_editor.png</file>
+            <file>images/grid_editor_mw_view.png</file>
+            <file>images/grid_editor_multi_grids.png</file>
+            <file>images/grid_editor_multi_grids_sed.png</file>
+            <file>images/grid_editor_subgrid1-good.png</file>
+            <file>images/grid_editor_subgrid1-bad.png</file>
+            <file>images/grid_editor_subgrid2-good.png</file>
+            <file>images/grid_editor_subgrid2-bad.png</file>
+            <file>images/grid_editor_subgrid3-good.png</file>
+            <file>images/grid_editor_subgrid3-bad.png</file>
 
             <file>2dsa.html</file>
             <file>2dsa_analys.html</file>
@@ -398,6 +399,14 @@
             <file>images/cfa_view-statsauc.png</file>
             <file>images/cfa_view-loadraw.png</file>
             <file>images/cfa_view-loadauc.png</file>
+
+            <file>dens_match.html</file>
+            <file>dens_match_mparam.html</file>
+            <file>dens_match_rmvmods.html</file>
+            <file>images/densmatch_main.png</file>
+            <file>images/densmatch_mpars_empty.png</file>
+            <file>images/densmatch_mpars_completed.png</file>
+            <file>images/densmatch_rmvmodels.png</file>
 
             <file>2dsa_3dplot.img.html</file>
             <file>2dsa_resplot.img.html</file>
