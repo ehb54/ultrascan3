@@ -1,0 +1,55 @@
+[% INCLUDE header.us3/
+   title = 'UltraScan III CFA Viewer'
+%]
+
+    <h2> <i>UltraScan</i> CFA Viewer:</h2>
+
+    <p>
+    AUC data collected with the CFA analytical ultracentrifuge can be viewed
+    and exported to openAUC format for import to UltraScan with this
+    application.
+    </p> <p>
+    ( MANUAL ENTRY UNDER CONSTRUCTION )
+    </p>
+
+    <h3> Main Window:</h3>
+    <p>
+    <img src="images/cfa_view-main.png" alt="CFA Viewer Main Window"/>
+    </p>
+
+    <h3> Dialog Items:</h3>
+
+    <ul>
+       <li>
+          <b>(CFA data directory)</b>: Documentation of the local directory in
+          which CFA data resides.
+       </li>
+
+       <li>
+          <b>Load Raw CFA Data</b>: Open a
+          <a href="cfa_view-loadraw.img.html">Load Raw CFA dialog</a>
+       </li>
+
+       <li>
+          <b>Load US3 AUC Data</b>: Open a
+          <a href="cfa_view-loadauc.img.html">Load AUC-from-CFA dialog</a>
+       </li>
+
+       <li>
+          <b>Data Details</b>: Open a
+          <a href="cfa_view-statsraw.img.html">Raw CFA Statistics text dialog</a>
+          or a
+          <a href="cfa_view-statsauc.img.html">AUC-from-CFA Statistics text dialog</a>,
+          depending on the type of data loaded.
+       </li>
+
+       <li>
+          <b>Help</b> Display this documentation.
+       </li>
+
+       <li>
+          <b>Close</b> Exit the application.
+       </li>
+    </ul>
+
+[% INCLUDE footer.us3 %]
