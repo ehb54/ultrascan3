@@ -412,6 +412,10 @@
             <file>2dsa_resplot.img.html</file>
             <file>analyte_details.img.html</file>
             <file>buffer_info.img.html</file>
+            <file>cfa_view-loadraw.img.html</file>
+            <file>cfa_view-loadauc.img.html</file>
+            <file>cfa_view-statsraw.img.html</file>
+            <file>cfa_view-statsauc.img.html</file>
             <file>ddist_combine-selrun.img.html</file>
             <file>fit_men-editupd.img.html</file>
             <file>fit_men-load.img.html</file>
