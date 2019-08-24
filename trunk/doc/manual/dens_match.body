@@ -88,11 +88,11 @@
 
        <li>
           <b>Plot X:</b> Select the plot to currently be displayed by
-          selected its X axis:
+          selecting its X axis:
           <ul>
              <li> <b>s</b> Sedimentation coefficient. </li>
              <li> <b>D</b> Diffusion coefficient. </li>
-             <li> <b>vbar</b> Partial specific density. </li>
+             <li> <b>vbar</b> Partial specific volume. </li>
              <li> <b>m.mass</b> Molar Mass. </li>
              <li> <b>ff0</b> Frictional ratio. </li>
              <li> <b>Rh</b> Hydrodynamic radius. </li>
@@ -101,9 +101,9 @@
 
        <li>
           <b>Diffusion Coefficient Averaging:</b> Select the means of averaging
-          diffusion coefficients at each boundard fraction, across models:
+          diffusion coefficients at each boundary fraction, across models:
           <ul>
-             <li> <b>none</b> No averaging (use 0-percent model's value). </li>
+             <li> <b>none</b> No averaging (maintain individual model D values). </li>
              <li> <b>simple</b> Simple averaging. </li>
              <li> <b>weighted</b> Weighted averaging, using concentrations. </li>
           </ul>
