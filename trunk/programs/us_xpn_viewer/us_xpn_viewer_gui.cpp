@@ -45,8 +45,6 @@
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
 
-//ALEXEY: reverted, based on v2802
-
 // DialBox 
 DialBox::DialBox( QWidget *parent ):
   QWidget( parent )
@@ -243,10 +241,12 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
    rlt_id       = 0;
    currentDir   = "";
    in_reload_auto    = false;
+   finishing_live_update = false;
    in_reload_all_data  = false;
    in_reload_data_init = false;
    in_reload_check_sysdata  = false;
-
+   in_reload_end_processes  = false;
+   
    ElapsedTimeOffset = 0;
 
    //ALEXEY: new way
@@ -1164,6 +1164,12 @@ void US_XpnDataViewer::reset_auto( void )
    le_runID   ->setText( runID );
    //le_dbhost  ->setText( xpnhost + ":" + xpnport + "   (" + xpndesc + ")" );       //New
 
+   //Also clear Wavelengths && Lambda ranges:
+   cb_pltrec ->disconnect();
+   cb_pltrec ->clear();
+   le_lrange ->setText("");
+   
+   
    pb_loadXpn ->setEnabled( true );
    pb_loadAUC ->setEnabled( true );
    pb_details ->setEnabled( false );
@@ -1230,9 +1236,14 @@ void US_XpnDataViewer::reset_auto( void )
    le_elapsed  ->setText("00:00:00");
    le_remaining->setText("00:00:00");
    le_running  ->setText("00:00:00");
-   
+
    connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
-            this,         SLOT  ( changeCellCh(            ) ) );
+    	    this,         SLOT  ( changeCellCh(            ) ) );
+
+   connect( cb_pltrec,    SIGNAL( currentIndexChanged( int ) ),
+            this,         SLOT  ( changeRecord( )            ) );
+
+
 //   connect( plot, SIGNAL( zoomedCorners( QRectF ) ),
 //            this, SLOT  ( currentRectf ( QRectF ) ) );
 
@@ -1248,6 +1259,8 @@ void US_XpnDataViewer::reset_auto( void )
    xpn_data->clear();
    le_status->setText( tr( "(no data loaded)" ) );
 
+   runID           = "";
+   data_plot->setTitle( tr( "Intensity Data" ) );
 }
 
 // Slot to read all Optima machines <------------------------------- // New
@@ -1536,8 +1549,8 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
   int     dbport    = xpnport.toInt();
   if ( xpn_data->connect_data( dbhost, dbport, xpnname, xpnuser, xpnpasw ) )
     {
-      if ( dbg_level > 0 )
-	xpn_data->dump_tables();
+      // if ( dbg_level > 0 )
+      // 	xpn_data->dump_tables();
 
       // Implement: query ExperiementRun and based on ExpID build array of RunIDs, find the bigger (the latest) and call it RunID_to_retrieve
       RunID_to_retrieve = QString::number(xpn_data->get_runid( ExpID_to_use ));
@@ -1582,6 +1595,17 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
       msg_data_avail->accept();
       //msg_data_avail->close();
       //ok_msg_data->click();
+
+      //ALEXEY: make sure ExpID is coupled to the RunID which is already in the autoflow DB
+      if ( !runID_passed.isEmpty() || runID_passed != "NULL" )
+	{
+	  if ( runID_passed.toInt() != RunID_to_retrieve.toInt() )
+	    {
+	      RunID_to_retrieve = runID_passed;
+	      qDebug() << "Correcting RunID to : " << RunID_to_retrieve;
+	    }
+	}
+	
       
       //ALEXEY: need to update 'autoflow' table with the unique RunID_to_retrieve && Start Run Time fields !!!
       //Conditional:  Do it ONLY once !!! 
@@ -1618,7 +1642,7 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
       time_data.clear();
       
     // Check if all triple info is available
-      timer_all_data_avail = new QTimer;
+      //timer_all_data_avail = new QTimer;
       connect(timer_all_data_avail, SIGNAL(timeout()), this, SLOT( retrieve_xpn_raw_auto ( ) ));
       timer_all_data_avail->start(5000);     // 5 sec
 
@@ -1942,10 +1966,10 @@ void US_XpnDataViewer::check_for_sysdata( void )
   qApp->processEvents();
 
   qDebug() << "SYS_STAT: After replot(), BEFORE CheExpStat!! ";
-  
+
   int exp_status = CheckExpComplete_auto( RunID_to_retrieve  );
    
-  if ( exp_status == 5 || exp_status == 0 )
+  if ( exp_status == 55 || exp_status == 10 )
     {
       if ( exp_status == 0)
 	experimentAborted  = true;
@@ -1986,6 +2010,9 @@ void US_XpnDataViewer::check_for_sysdata( void )
 	      //emit experiment_complete_auto( currentDir, ProtocolName, invID_passed, correctRadii  );  // Updtade later: what should be passed with signal ??
 
 	      reset_auto();
+
+	      in_reload_check_sysdata   = false;
+	      
 	      emit experiment_complete_auto( details_at_live_update );
 	      
 	      return;
@@ -2079,6 +2106,9 @@ void US_XpnDataViewer::timeToList( int& sectime, QList< int >& dhms )
 //Query for Optima DB periodically, see if data available
 void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_details)
 {
+  //Also reset the panel before reattachement
+  //reset_auto();
+  
   xpn_data->setEtimOffZero(); //ALEXEY: intialize etimoff to zero for the first time
 
   experimentAborted  = false;
@@ -2102,7 +2132,13 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
   details_at_live_update = protocol_details;
 
   selectOptimaByName_auto( OptimaName );                         //New  
-  
+
+  //ALEXEY: just define all QTimers here for later safe stopping
+  timer_all_data_avail = new QTimer;
+  timer_data_reload = new QTimer;
+  timer_end_processes = new QTimer;
+
+
   timer_data_init = new QTimer;
   connect(timer_data_init, SIGNAL(timeout()), this, SLOT( load_xpn_raw_auto( ) ));
   timer_data_init->start(5000);     // 5 sec
@@ -2143,6 +2179,15 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
     }
 }
 
+
+// Reset LIVE UPDATE panel && stop timers && quit threads
+void US_XpnDataViewer::reset_liveupdate_panel_public ( void )
+{
+  finishing_live_update = true;
+  reset_liveupdate_panel();
+}
+
+
 // Reset LIVE UPDATE panel && stop timers && quit threads
 void US_XpnDataViewer::reset_liveupdate_panel ( void )
 {
@@ -2158,6 +2203,8 @@ void US_XpnDataViewer::reset_liveupdate_panel ( void )
     {
       timer_check_sysdata->stop();
       disconnect(timer_check_sysdata, SIGNAL(timeout()), 0, 0);
+
+      qDebug() << "Stopping timer_check_sysdata";
     }
   
   //Stop other timers if active
@@ -2165,18 +2212,24 @@ void US_XpnDataViewer::reset_liveupdate_panel ( void )
     {
       timer_all_data_avail->stop();
       disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);
+
+       qDebug() << "Stopping timer_all_data_avail";
     }
   
   if ( timer_data_reload->isActive() )
     {
       timer_data_reload->stop();
       disconnect(timer_data_reload, SIGNAL(timeout()), 0, 0);
+
+      qDebug() << "Stopping timer_data_reload";
     }
 
   if ( timer_data_init->isActive() )
     {
       timer_data_init->stop();
       disconnect(timer_data_init, SIGNAL(timeout()), 0, 0);
+
+      qDebug() << "Stopping timer_data_init";
     }
 
   qApp->processEvents();
@@ -2197,17 +2250,56 @@ void US_XpnDataViewer::reset_liveupdate_panel ( void )
   if ( !timer_data_reload->isActive() )
     qDebug() << "QTimer timer_data_reload STOPPED by clickig Manage Optima runs !!! ";
   /*************************************/
-  
-  reset_auto();
 
-  qDebug() << in_reload_auto << ", " << in_reload_all_data << ", " << in_reload_data_init << ", " << in_reload_check_sysdata;
+  qDebug() << "BEFORE: " << in_reload_auto << ", " << in_reload_all_data << ", " << in_reload_data_init << ", " << in_reload_check_sysdata;
   
-  in_reload_auto    = false;
-  in_reload_all_data  = false;
-  in_reload_data_init = false;
-  in_reload_check_sysdata  = false;
+  //ALEXEY: should wait for execution of all below variables to be false (end of all timer functions) BEFORE reset_all();
+  // Introduce QTimer which checks for all abpve vartibales to be false (check all related functions to always reset them to false on completion)
+  // Put reset_auto() into the timer && and stop/disconnect timer from within connected SLOT.
+  //timer_end_processes = new QTimer;
+  connect(timer_end_processes, SIGNAL(timeout()), this, SLOT( end_processes ( ) ));
+  timer_end_processes->start(1000);     // 5 sec
   
   qApp->processEvents();
+}
+
+//to end all existing update processes
+void US_XpnDataViewer::end_processes( void )
+{
+  qDebug() << "In the END process: in_reload_end_processes = " << in_reload_end_processes;
+  
+  if ( in_reload_end_processes )            // If already doing a reload,
+    return;                              //  skip starting a new one
+  
+  in_reload_end_processes   = true;          // Flag in the midst of a reload
+  
+  qDebug() << "Checking if processes STOPPED.";
+  qDebug() << "MIDDLE: " << in_reload_auto << ", " << in_reload_all_data << ", " << in_reload_data_init << ", " << in_reload_check_sysdata;
+      
+  if (  !in_reload_auto && !in_reload_all_data &&  !in_reload_data_init && !in_reload_check_sysdata ) 
+    {
+      
+      timer_end_processes->stop();
+      disconnect(timer_end_processes, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+
+      //ALEXEY: may not be needed
+      qDebug() << "LIVE UPDATE panel has been reset!";
+      qDebug() << "AFTER: " << in_reload_auto << ", " << in_reload_all_data << ", " << in_reload_data_init << ", " << in_reload_check_sysdata;
+      
+      reset_auto(); 
+      qApp->processEvents();
+      
+      in_reload_end_processes = false; 
+
+      emit liveupdate_processes_stopped();
+       
+      //in_reload_end_processes   = false; 
+    }
+  else
+    {
+      in_reload_end_processes   = false; 
+      qApp->processEvents();
+    }
 }
 
 
@@ -2499,7 +2591,7 @@ DbgLv(1) << "RDr: allData size" << allData.size();
    qDebug() << "TripleNumber, ntriple " << TripleNumber.toInt() << ", " << ntriple;
 
    //ALEXEY: Add Exp. Abortion Exception HERE... 
-   if ( CheckExpComplete_auto( RunID_to_retrieve ) == 0 ) //ALEXEY should be == 3 as per documentation
+   if ( CheckExpComplete_auto( RunID_to_retrieve ) == 10 ) //ALEXEY should be == 3 as per documentation
      {
        qDebug() << "ABORTION IN EARLY STAGE...";
        
@@ -2514,56 +2606,14 @@ DbgLv(1) << "RDr: allData size" << allData.size();
 	   updateautoflow_record_atLiveUpdate();
 
 	   reset_auto();
+	   
+	   in_reload_all_data   = false;  
+	   
 	   emit experiment_complete_auto( details_at_live_update  ); 
 	   return;
 	 }
      }
-   
-   // //ALEXEY: Add Exp. Abortion Exception HERE... 
-   // if ( CheckExpComplete_auto( RunID_to_retrieve ) == 0 ) //ALEXEY should be == 3 as per documentation
-   //   {
-   //     experimentAborted  = true;
-       
-   //     timer_all_data_avail->stop();
-   //     disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
-       
-   //     if ( !timer_check_sysdata->isActive()  ) // Check if sys_data Timer is stopped
-   // 	 {
-   // 	   // Ask if data retrived so far should be saved:
-	   
-   // 	   QMessageBox msgBox;
-   // 	   msgBox.setText(tr("Experiment was aborted!"));
-   // 	   msgBox.setInformativeText("The data retrieved so far can be saved or disregarded. If saved, the program will proceed to the next stage (Editing). Otherwise, it will return to the initial stage (Experiment), all data will be lost.");
-   // 	   msgBox.setWindowTitle(tr("Experiment Abortion"));
-   // 	   QPushButton *Save      = msgBox.addButton(tr("Save Data"), QMessageBox::YesRole);
-   // 	   QPushButton *Ignore    = msgBox.addButton(tr("Ignore Data"), QMessageBox::RejectRole);
-	   
-   // 	   msgBox.setIcon(QMessageBox::Question);
-   // 	   msgBox.exec();
-	   
-   // 	   if (msgBox.clickedButton() == Save)
-   // 	     {
-   // 	       export_auc_auto();
-	       
-   // 	       QString mtitle_complete  = tr( "Complete!" );
-   // 	       QString message_done     = tr( "Experiment was completed. Optima data saved..." );
-   // 	       QMessageBox::information( this, mtitle_complete, message_done );
-	       
-   // 	       updateautoflow_record_atLiveUpdate();
-   // 	       emit experiment_complete_auto( currentDir, ProtocolName, invID_passed, correctRadii  );  // Updtade later: what should be passed with signal ??
-   // 	       return;
-   // 	     }
-	   
-   // 	   else if (msgBox.clickedButton() == Ignore)
-   // 	     {
-   // 	       reset();
-   // 	       delete_autoflow_record();
-   // 	       emit return_to_experiment( ProtocolName  ); 
-   // 	       return;
-   // 	     }
-   // 	 }
-   //   }      
-   
+  
    
    
    if ( cellchans.count() == CellChNumber.toInt() && ntriple == TripleNumber.toInt() )                // <--- Change to the values from the protocol
@@ -2571,13 +2621,17 @@ DbgLv(1) << "RDr: allData size" << allData.size();
        //stop timer
        timer_all_data_avail->stop();
        disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
-       
-       // Auto-update hereafter
-       timer_data_reload = new QTimer;
-       connect(timer_data_reload, SIGNAL(timeout()), this, SLOT( reloadData_auto( ) ));
-       timer_data_reload->start(10000);     // 5 sec
 
        in_reload_all_data   = false;  
+       
+       // Auto-update hereafter
+       //timer_data_reload = new QTimer;
+
+       if ( !finishing_live_update )
+	 {
+	   connect(timer_data_reload, SIGNAL(timeout()), this, SLOT( reloadData_auto( ) ));
+	   timer_data_reload->start(10000);     // 5 sec
+	 }
      }
 
    in_reload_all_data   = false;  
@@ -3081,9 +3135,9 @@ void US_XpnDataViewer::plot_all( void )
    // Make sure ranges are set up, then build an averaged data vector
    compute_ranges();
 
-//DbgLv(1) << "PltA: kpoint" << kpoint << "datsize" << curr_adata.size();
-DbgLv(1) << "PltA: kpoint" << kpoint << "trpxs" << trpxs
- << "nscan" << nscan << allData[trpxs].scanCount();
+   //   DbgLv(1) << "PltA: kpoint" << kpoint << "datsize" << curr_adata.size();
+   DbgLv(1) << "PltA: kpoint" << kpoint << "trpxs" << trpxs;
+// << "nscan" << nscan << allData[trpxs].scanCount();
    // Build the X,Y vectors
    QVector< double > rvec( kpoint );
    QVector< double > vvec( kpoint );
@@ -3907,7 +3961,7 @@ DbgLv(1) << "RLd:       NO CHANGE";
       /*** Check Experiement Status: if completed, kill the timer, export the data into AUC format, return, signal to switch panels in US_comproject ***/
       int statusExp = CheckExpComplete_auto( RunID_to_retrieve  );
 
-      if ( statusExp == 5 || statusExp == 0 )
+      if ( statusExp == 55 || statusExp == 10 )
 	{
 	  if ( statusExp == 0 )
 	    experimentAborted  = true;
@@ -3929,8 +3983,11 @@ DbgLv(1) << "RLd:       NO CHANGE";
 	      // QMessageBox::information( this, mtitle_complete, message_done );
 
 	      updateautoflow_record_atLiveUpdate();
+
 	      reset_auto();
-	      
+
+	      in_reload_auto   = false;
+	      	      
 	      //emit experiment_complete_auto( currentDir, ProtocolName, invID_passed, correctRadii  );  // Updtade later: what should be passed with signal ??
 	      emit experiment_complete_auto( details_at_live_update );
 	      
@@ -3939,54 +3996,11 @@ DbgLv(1) << "RLd:       NO CHANGE";
 	}
 
       
-      // /** Experiment Aborted ***/
-      
-      // if ( statusExp == 0 ) //ALEXEY should be == 3 as per documentation
-      // 	{
-      // 	  experimentAborted  = true;
-
-      // 	  timer_data_reload->stop();
-      // 	  disconnect(timer_data_reload, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
-
-      // 	  if ( !timer_check_sysdata->isActive()  ) // Check if sys_data Timer is stopped
-      // 	    {
-      // 	      // Ask if data retrived so far should be saved:
-	      
-      // 	      QMessageBox msgBox;
-      // 	      msgBox.setText(tr("Experiment was aborted!"));
-      // 	      msgBox.setInformativeText("The data retrieved so far can be saved or disregarded. If saved, the program will proceed to the next stage (Editing). Otherwise, it will return to the initial stage (Experiment), all data will be lost.");
-      // 	      msgBox.setWindowTitle(tr("Experiment Abortion"));
-      // 	      QPushButton *Save      = msgBox.addButton(tr("Save Data"), QMessageBox::YesRole);
-      // 	      QPushButton *Ignore    = msgBox.addButton(tr("Ignore Data"), QMessageBox::RejectRole);
-	      
-      // 	      msgBox.setIcon(QMessageBox::Question);
-      // 	      msgBox.exec();
-	      
-      // 	      if (msgBox.clickedButton() == Save)
-      // 		{
-      // 		  export_auc_auto();
-
-      // 		  QString mtitle_complete  = tr( "Complete!" );
-      // 		  QString message_done     = tr( "Experiment was completed. Optima data saved..." );
-      // 		  QMessageBox::information( this, mtitle_complete, message_done );
-
-      // 		  updateautoflow_record_atLiveUpdate();
-      // 		  emit experiment_complete_auto( currentDir, ProtocolName, invID_passed, correctRadii );  // Updtade later: what should be passed with signal ??
-      // 		  return;
-      // 		}
-	      
-      // 	      else if (msgBox.clickedButton() == Ignore)
-      // 		{
-      // 		  reset();
-      // 		  delete_autoflow_record();
-      // 		  emit return_to_experiment( ProtocolName  ); 
-      // 		  return;
-      // 		}
-      // 	    }
-      // 	}      
-      
-      
+   
        in_reload_auto   = false;         // Flag no longer in the midst of reload
+       
+       qDebug() << "Exit from reloaData with no change!";
+       
        return;     // Return with no change in AUC data
    }
 double tm1=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
@@ -4014,7 +4028,10 @@ DbgLv(1) << "RLd:      build-raw done: tm1 tm2" << tm1 << tm2
 
    // Do resets and re-plot the current triple
    changeCellCh();
+
    in_reload_auto   = false;         // Flag no longer in the midst of reload
+   
+   qDebug() << "Exit from reloaData with SOME change!";
 }
 
 

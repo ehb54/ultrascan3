@@ -25,8 +25,6 @@
 #include "us_xpn_run_auc.h"
 
 
-//ALEXEY: reverted, based on v2802
-
 class SpeedoMeter: public QwtDial
 {
 
@@ -97,6 +95,8 @@ class US_XpnDataViewer : public US_Widgets
      // New constructor for automated read/upload/update
      US_XpnDataViewer(QString auto_mode);
 
+     void   reset_liveupdate_panel_public ( void );
+     
   private:
      bool auto_mode_bool;
      
@@ -250,11 +250,14 @@ class US_XpnDataViewer : public US_Widgets
      bool           haveData;
      bool           haveTmst;
      bool           in_reload;
+
      bool           in_reload_auto;
+     bool           finishing_live_update;
      
      bool           in_reload_data_init;
      bool           in_reload_all_data;
      bool           in_reload_check_sysdata;
+     bool           in_reload_end_processes;
 
      
      double         last_xmin;
@@ -268,6 +271,8 @@ class US_XpnDataViewer : public US_Widgets
      QTimer*        timer_data_reload;
      QTimer*        timer_all_data_avail;
      QTimer*        timer_check_sysdata;
+
+     QTimer*        timer_end_processes;
 
      QElapsedTimer*  elapsed_timer;
      
@@ -310,6 +315,7 @@ class US_XpnDataViewer : public US_Widgets
      
      //void   retrieve_xpn_raw_auto ( QString & );
      void   retrieve_xpn_raw_auto ( void );
+     void   end_processes ( void );
      void   reloadData_auto     ( void );
      int    CheckExpComplete_auto( QString & );
      void   update_autoflow_runId_timeStarted( void );
@@ -367,6 +373,7 @@ class US_XpnDataViewer : public US_Widgets
      
      void return_to_experiment( QString & );
      void close_program( void );
+     void liveupdate_processes_stopped( void );
 };
 #endif
 

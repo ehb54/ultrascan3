@@ -35,8 +35,6 @@
 #include "us_license.h"
 #include "us_select_item.h"
 
-//ALEXEY: reverted, based on v2802 
-
 class US_ComProjectMain;
 
 class VerticalTabStyle : public QProxyStyle {
@@ -155,6 +153,7 @@ class US_ExperGui : public US_WidgetsDialog
       void pass_used_instruments( QStringList & );
       void expsetup_msg_closed( void );
       
+      
    signals:
       void switch_to_live_update( QMap < QString, QString > & protocol_details );
       void set_auto_mode( void );
@@ -174,9 +173,11 @@ class US_ObservGui : public US_WidgetsDialog
       US_ObservGui( QWidget* );
       ~US_ObservGui() {};
 
+      US_XpnDataViewer*     sdiag;
+
  private:
       US_ComProjectMain*    mainw;      // Parent to all panels
-      US_XpnDataViewer*    sdiag;
+      //US_XpnDataViewer*     sdiag;
       int offset;
 
  protected:
@@ -188,12 +189,14 @@ class US_ObservGui : public US_WidgetsDialog
       void to_post_processing( QMap < QString, QString > & );
       void to_close_program( void );
       void reset_live_update( void );
+      void processes_stopped_passed( void ); 
  signals:
       void to_xpn_viewer( QMap < QString, QString > & protocol_details );
       //void switch_to_post_processing( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii  );
       void switch_to_post_processing( QMap < QString, QString > &  );
       void close_everything( void );
       void reset_live_update_passed( void );
+      void processes_stopped( void ); 
 };
 
 
@@ -330,6 +333,8 @@ class US_ComProjectMain : public US_Widgets
   bool us_mode_bool;
 
   QMessageBox * msg_expsetup;
+  QMessageBox * msg_liveupdate_finishing;
+  
   QDialog *     diag_expsetup;
   
   //QList< QStringList >  autoflowdata;
@@ -393,7 +398,10 @@ private slots:
   void define_new_experiment( QStringList & );
 
   void delete_psql_record( int );
-  //void update_autoflow_data( void );  
+  
+  void liveupdate_stopped( void );
+
+  void show_liveupdate_finishing_msg( void );
   
 signals:
   void pass_to_live_update( QMap < QString, QString > & protocol_details ); 
