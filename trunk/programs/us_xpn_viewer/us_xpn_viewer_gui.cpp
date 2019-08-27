@@ -1969,7 +1969,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
 
   int exp_status = CheckExpComplete_auto( RunID_to_retrieve  );
    
-  if ( exp_status == 55 || exp_status == 10 )
+  if ( exp_status == 5 || exp_status == 0 )
     {
       if ( exp_status == 0)
 	experimentAborted  = true;
@@ -2591,7 +2591,7 @@ DbgLv(1) << "RDr: allData size" << allData.size();
    qDebug() << "TripleNumber, ntriple " << TripleNumber.toInt() << ", " << ntriple;
 
    //ALEXEY: Add Exp. Abortion Exception HERE... 
-   if ( CheckExpComplete_auto( RunID_to_retrieve ) == 10 ) //ALEXEY should be == 3 as per documentation
+   if ( CheckExpComplete_auto( RunID_to_retrieve ) == 0 ) //ALEXEY should be == 3 as per documentation
      {
        qDebug() << "ABORTION IN EARLY STAGE...";
        
@@ -3961,7 +3961,7 @@ DbgLv(1) << "RLd:       NO CHANGE";
       /*** Check Experiement Status: if completed, kill the timer, export the data into AUC format, return, signal to switch panels in US_comproject ***/
       int statusExp = CheckExpComplete_auto( RunID_to_retrieve  );
 
-      if ( statusExp == 55 || statusExp == 10 )
+      if ( statusExp == 5 || statusExp == 0 )
 	{
 	  if ( statusExp == 0 )
 	    experimentAborted  = true;
