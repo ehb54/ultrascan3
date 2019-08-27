@@ -1655,8 +1655,8 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
       // OR
       //Alternativly: put it in separate thread:
       //QThread* sys_thread = new QThread(this);
-      sys_thread = new QThread(this);
-      timer_check_sysdata = new QTimer(0); // parent to 0 !
+      //sys_thread = new QThread(this);
+      //timer_check_sysdata = new QTimer(0); // parent to 0 !
       timer_check_sysdata->setInterval(2000);
       timer_check_sysdata->moveToThread(sys_thread);
       //connect( timer_check_sysdata, SIGNAL(timeout()), this, SLOT( check_for_sysdata( )  ), Qt::QueuedConnection ) ; //Qt::DirectConnection );
@@ -1971,9 +1971,6 @@ void US_XpnDataViewer::check_for_sysdata( void )
    
   if ( exp_status == 5 || exp_status == 0 )
     {
-      if ( exp_status == 0)
-	experimentAborted  = true;
-      
       //timer_check_sysdata->stop();
       //ALEXEY: This timer cannot be stopped from another thread, but can be dealt with signal/slot upon Qthread termination..
       //        disconnection maybe enough...
@@ -1993,13 +1990,22 @@ void US_XpnDataViewer::check_for_sysdata( void )
       rpm_box->setSpeed( 0 );
       le_remaining->setText( "00:00:00" );
       qApp->processEvents();
+
+      if ( finishing_live_update )
+	{
+	  in_reload_check_sysdata   = false;
+	  return;
+	}
+
+      if ( exp_status == 0)
+	experimentAborted  = true;
       
       if ( !timer_all_data_avail->isActive() ) // Check if reload_data Timer is stopped
 	{
 	  if ( !timer_data_reload->isActive() )
 	    {
 	      qDebug() << "TRY PROCEED INTO == 5/0 from check_for_sys_data()....";
-
+	      
 	      export_auc_auto();
 	      
 	      // QString mtitle_complete  = tr( "Complete!" );
@@ -2008,9 +2014,9 @@ void US_XpnDataViewer::check_for_sysdata( void )
 	      
 	      updateautoflow_record_atLiveUpdate();
 	      //emit experiment_complete_auto( currentDir, ProtocolName, invID_passed, correctRadii  );  // Updtade later: what should be passed with signal ??
-
+	      
 	      reset_auto();
-
+	      
 	      in_reload_check_sysdata   = false;
 	      
 	      emit experiment_complete_auto( details_at_live_update );
@@ -2137,6 +2143,8 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
   timer_all_data_avail = new QTimer;
   timer_data_reload = new QTimer;
   timer_end_processes = new QTimer;
+  timer_check_sysdata = new QTimer(0); // parent to 0 !
+  sys_thread = new QThread(this);
 
 
   timer_data_init = new QTimer;
@@ -2289,11 +2297,11 @@ void US_XpnDataViewer::end_processes( void )
       reset_auto(); 
       qApp->processEvents();
       
-      in_reload_end_processes = false; 
+      in_reload_end_processes = false;
+      finishing_live_update = false;
 
       emit liveupdate_processes_stopped();
-       
-      //in_reload_end_processes   = false; 
+     
     }
   else
     {
@@ -2593,6 +2601,14 @@ DbgLv(1) << "RDr: allData size" << allData.size();
    //ALEXEY: Add Exp. Abortion Exception HERE... 
    if ( CheckExpComplete_auto( RunID_to_retrieve ) == 0 ) //ALEXEY should be == 3 as per documentation
      {
+       if ( finishing_live_update )
+	 {
+	   timer_all_data_avail->stop();
+	   disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+	   in_reload_all_data   = false;  
+	   return;
+	 }
+       
        qDebug() << "ABORTION IN EARLY STAGE...";
        
        experimentAborted  = true;
@@ -3963,6 +3979,14 @@ DbgLv(1) << "RLd:       NO CHANGE";
 
       if ( statusExp == 5 || statusExp == 0 )
 	{
+	  if ( finishing_live_update )
+	    {
+	      timer_data_reload->stop();
+	      disconnect(timer_data_reload, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+	      in_reload_auto   = false; 
+	      return;
+	    }
+	  
 	  if ( statusExp == 0 )
 	    experimentAborted  = true;
 	  
