@@ -27,8 +27,6 @@
 #endif
 
 
-//ALEXEY: reverted, based on v2802
-
 //// Constructor:  ACADEMIC: 'Data Acquision' / us_comproject_academic programs
 US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
 {
@@ -344,6 +342,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( this, SIGNAL( import_data_us_convert( QMap < QString, QString > & ) ),  epanPostProd, SLOT( import_data_us_convert( QMap < QString, QString > & )  ) );
    connect( epanObserv, SIGNAL( close_everything() ), this, SLOT( close_all() ));
    connect( this, SIGNAL( reset_live_update() ),  epanObserv, SLOT( reset_live_update( )  ) );
+   connect( epanObserv, SIGNAL( processes_stopped() ), this, SLOT( liveupdate_stopped() ));
    
    connect( epanPostProd, SIGNAL( switch_to_editing( QString &, QString &) ),  this, SLOT( switch_to_editing( QString &, QString & )  ) );
    connect( this, SIGNAL( reset_lims_import() ),  epanPostProd, SLOT( reset_lims_import( )  ) );
@@ -386,12 +385,23 @@ void US_ComProjectMain::initPanels( int  panx )
 	  /* 
 	        1. Avaiting for run to be launched ("Back to Managing Optima Runs") -- SET
 		2. More complex: Back to Managing runs from active LIVE_UPDATE stage -- stop all timers and other processes...
-	  */ 
+	  */
+
 	  qDebug() << "Jumping from LIVE UPDATE.";
-	  
+
 	  //2. Stop all timers/threads, reset GUI - when stopping fully working LIVE UPDATE
 	  if ( !xpn_viewer_closed_soft )
-	    emit reset_live_update();
+	    {
+	      show_liveupdate_finishing_msg();
+	      
+	      epanObserv->sdiag->reset_liveupdate_panel_public();
+	      qApp->processEvents();
+
+	      xpn_viewer_closed_soft = false;
+	      //epanInit  ->initAutoflowPanel();
+
+	      return;
+	    }
 	}
 
       if ( curr_panx == 3 )
@@ -409,6 +419,43 @@ void US_ComProjectMain::initPanels( int  panx )
     }
 
   //curr_panx = panx;         // Set new current panel
+}
+
+
+// Slot to define new exp. (from initial dialog)
+void US_ComProjectMain::show_liveupdate_finishing_msg( void )
+{
+
+   msg_liveupdate_finishing = new QMessageBox(this);
+   msg_liveupdate_finishing->setIcon(QMessageBox::Information);
+  
+   msg_liveupdate_finishing->setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowStaysOnTopHint);
+   msg_liveupdate_finishing->setStandardButtons(0);
+   msg_liveupdate_finishing->setWindowTitle(tr("Updating..."));
+   msg_liveupdate_finishing->setText(tr( "Finishing LIVE UPDATE processes... Please wait...") );
+   msg_liveupdate_finishing->setStyleSheet("background-color: #36454f; color : #D3D9DF;");
+  
+  
+   int tab_width = this->tabWidget->tabBar()->width();
+   int upper_height = this->gen_banner->height() + //this->welcome->height()
+     + this->logWidget->height() + this->test_footer->height();
+
+   int pos_x = this->width()/2 - tab_width;
+   int pos_y = this->height()/2 - upper_height;     
+   msg_liveupdate_finishing->move(pos_x, pos_y);
+  
+   msg_liveupdate_finishing->show();
+  
+   qApp->processEvents();
+
+}
+
+void US_ComProjectMain::liveupdate_stopped( void  )
+{
+  //Close message on finishing LIVE_UPDATE processes...
+  msg_liveupdate_finishing->accept();
+  
+  epanInit  ->initAutoflowPanel();
 }
 
 void US_ComProjectMain::closeEvent( QCloseEvent* event )
@@ -563,7 +610,7 @@ void US_ComProjectMain::define_new_experiment( QStringList & occupied_instrument
    msg_expsetup->setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowStaysOnTopHint);
    msg_expsetup->setStandardButtons(0);
    msg_expsetup->setWindowTitle(tr("Updating..."));
-   msg_expsetup->setText(tr( "Setting up Experiment panel... Please wait...") );
+   msg_expsetup->setText(tr( "Setting up EXPERIMENT panel... Please wait...") );
    msg_expsetup->setStyleSheet("background-color: #36454f; color : #D3D9DF;");
   
   
@@ -1681,6 +1728,8 @@ US_ObservGui::US_ObservGui( QWidget* topw )
    
    //ALEXEY: close program, emitted from sdiag
    connect( sdiag, SIGNAL( close_program() ), this, SLOT( to_close_program()  ) );
+
+   connect( sdiag, SIGNAL( liveupdate_processes_stopped() ), this, SLOT( processes_stopped_passed()  ) );
    
    offset = 0;
    sdiag->move(offset, 2*offset);
@@ -1720,6 +1769,11 @@ void US_ObservGui::resizeEvent(QResizeEvent *event)
     }
      
     QWidget::resizeEvent(event);
+}
+
+void US_ObservGui::processes_stopped_passed( void )
+{
+  emit processes_stopped(); 
 }
 
 void US_ObservGui::reset_live_update( void )
