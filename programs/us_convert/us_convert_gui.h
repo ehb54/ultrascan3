@@ -246,6 +246,9 @@ class US_ConvertGui : public US_Widgets
       int           dbg_level;                 // Debug level
       int           impType;                   // Import type flag: 0,1,2 == Beck,MWL,AUC
 
+      QVector<int> slambdas_per_channel;
+      QVector<int> elambdas_per_channel;
+
       QString       currentDir;                // Current data file directory
       QString       saveDescription;           // Saved channel description
 
