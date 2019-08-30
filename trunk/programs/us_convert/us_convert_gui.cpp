@@ -4014,6 +4014,8 @@ DbgLv(1) << "chgTrp: trDx trLx" << tripDatax << tripListx
       if ( slambda != wvs[ 0 ]  ||  elambda != wvs[ nlambda - 1 ] )
       {  // A change in lambda range requires a general reset
          setTripleInfo();
+
+	 qDebug() << "Calling setTripleInfo()";
       }
    }
 
@@ -4079,7 +4081,7 @@ DbgLv(1) << " sTI: nch ntr" << nchans << ntrips << "trLSv" << trListSave;
 
          cb_lambplot->setCurrentIndex( nlambda / 2 );
 
-         show_mwl_control( true );
+	 show_mwl_control( true );
          mwl_connect( true );
       }
 
@@ -4113,19 +4115,41 @@ DbgLv(1) << " sTI: nch ntr" << nchans << ntrips << "trLSv" << trListSave;
       mwl_connect( false );
       cb_lambplot->clear();
 
+      // //ALEXEY: also clear cb_lambstrt && cb_lambstop
+      // cb_lambstrt->clear();
+      // cb_lambstop->clear();
+
       for ( int wvx = 0; wvx < nlambda; wvx++ )
       {  // Rebuild the plot lambda list
+	
          int ilamb      = exp_lambdas[ wvx ];
          cb_lambplot->addItem( QString::number( ilamb ) );
 
+	 // //ALEXEY: Also regenerate cb_lambstrt && cb_lambstop - for selected channel:
+	 // cb_lambstrt->addItem( QString::number( ilamb ) );
+	 // cb_lambstop->addItem( QString::number( ilamb ) );
+
+	 
          if ( ilamb == plambda )  pltx = wvx;
+
+	 qDebug() << "Lambda MWL " << wvx << ": " << exp_lambdas[ wvx ] << "; INDEX: " << pltx; 
       }
 
       // Re-do selections for lambda start,stop,plot
+
+      //ALEXEY: set lambstart/stop based on selected channel, not all wavelengths 
+      // cb_lambstrt->setCurrentIndex( 0 );
+      // cb_lambstop->setCurrentIndex( nlambda - 1 );
       cb_lambstrt->setCurrentIndex( all_lambdas.indexOf( slambda ) );
       cb_lambstop->setCurrentIndex( all_lambdas.indexOf( elambda ) );
+
+      
+      
+     
       cb_lambplot->setCurrentIndex( pltx );
       mwl_connect( true );
+
+      qDebug() << "Inside setTripleInfo(); cb_lambplot->currentIndex() = " << cb_lambplot->currentIndex();
    }
 
    else
@@ -6416,9 +6440,36 @@ void US_ConvertGui::db_error( const QString& error )
 void US_ConvertGui::lambdaStartChanged( int value )
 {
 DbgLv(1) << "lambdaStartChanged" << value;
+
+   //ALEXEY: compare slambda to the cb_lambplot->index(0).value: if <, setCurrentIndex() to index corresponding to this upper value
+   tripListx          = lw_triple->currentRow();
+   int slambda_lambplot = slambdas_per_channel[tripListx];
+   
    slambda       = cb_lambstrt->itemText( value ).toInt();
    elambda       = cb_lambstop->currentText()    .toInt();
-   tripListx     = lw_triple->currentRow();
+
+   qDebug() << "LAMBDA_STR_CHANGE: slambda_lambplot, slambda: " << slambda_lambplot << ", " << slambda;
+
+   if ( slambda < slambda_lambplot )
+   //if ( slambda < 280 )
+     {
+       int index_lambstrt = cb_lambstrt->findText( QString::number(slambda_lambplot) );
+
+       qDebug() << "LAMBDA_STR_CHANGE: index_lambstrt " << index_lambstrt;
+       slambda = slambda_lambplot;
+
+       cb_lambstrt->disconnect();
+       cb_lambstrt->setCurrentIndex( index_lambstrt );
+       connect( cb_lambstrt,  SIGNAL( currentIndexChanged( int    ) ),
+       		this,         SLOT  ( lambdaStartChanged ( int    ) ) );
+    
+     }
+
+   //slambda       = cb_lambstrt->itemText( value ).toInt();
+   //elambda       = cb_lambstop->currentText()    .toInt();
+   //tripListx     = lw_triple->currentRow();
+   /***************************************************************************************************/
+   
    int currChan  = out_chaninfo[ tripListx ].channelID;
 DbgLv(1) << "lambdaStartChanged" << value << "sl el tLx cCh"
  << slambda << elambda << tripListx << currChan;
@@ -6444,9 +6495,37 @@ DbgLv(1) << "lStChg: RsLambd RTN";
 void US_ConvertGui::lambdaEndChanged( int value )
 {
 DbgLv(1) << "lambdaEndChanged" << value;
-   slambda       = cb_lambstrt->currentText()    .toInt();
+
+     //ALEXEY: compare slambda to the cb_lambplot->index(0).value: if <, setCurrentIndex() to index corresponding to this upper value
+   tripListx            = lw_triple->currentRow();
+   int elambda_lambplot = elambdas_per_channel[tripListx];
+   
    elambda       = cb_lambstop->itemText( value ).toInt();
-   tripListx     = lw_triple->currentRow();
+   slambda       = cb_lambstrt->currentText()    .toInt();
+
+   qDebug() << "LAMBDA_STOP_CHANGE: elambda_lambplot, elambda: " << elambda_lambplot << ", " << elambda;
+
+   if ( elambda > elambda_lambplot )
+     {
+       int index_lambstop = cb_lambstop->findText( QString::number(elambda_lambplot) );
+
+       qDebug() << "LAMBDA_STOP_CHANGE: index_lambstrt " << index_lambstop;
+       elambda = elambda_lambplot;
+
+       cb_lambstop->disconnect();
+       cb_lambstop->setCurrentIndex( index_lambstop );
+       connect( cb_lambstop,  SIGNAL( currentIndexChanged( int    ) ),
+       		this,         SLOT  ( lambdaEndChanged ( int    ) ) );
+    
+     }
+
+   //slambda       = cb_lambstrt->itemText( value ).toInt();
+   //elambda       = cb_lambstop->currentText()    .toInt();
+   //tripListx     = lw_triple->currentRow();
+   /***************************************************************************************************/
+ 
+
+
    int currChan  = out_chaninfo[ tripListx ].channelID;
 DbgLv(1) << "lEnChg:  val" << value << "sl el tLx cCh"
  << slambda << elambda << tripListx << currChan;
@@ -6490,6 +6569,11 @@ void US_ConvertGui::lambdaNextClicked( )
    int wvxmax  = cb_lambplot->count() - 1;
    int wvx     = qMin( wvxmax, cb_lambplot->currentIndex() + 1 );
 
+
+   qDebug() << "LAMBDA_NEXT: wvxmax  = cb_lambplot->count() - 1: " <<  wvxmax
+	    << ", cb_lambplot->currentIndex() + 1: " << cb_lambplot->currentIndex() + 1
+	    << ", wvx     = qMin( wvxmax, cb_lambplot->currentIndex() + 1 ): " << wvx;
+
    cb_lambplot->setCurrentIndex( wvx );
 }
 
@@ -6526,13 +6610,31 @@ void US_ConvertGui::triple_index()
       int tripx2     = out_chandatx[ tripnext  ];
       tripDatax      = tripx1 + cb_lambplot->currentIndex();
 
+      qDebug() << "TRIPLE_Index(): "
+	       << "tripnext = " << tripnext
+	       << ", tripx1 = " << tripx1
+	       << ", tripx2 = " << tripx2
+	       << ", tripDatax = tripx1 + cb_lambplot->currentIndex(): " << tripx1 << " + " << cb_lambplot->currentIndex();
+
+
+      //ALEXEY: the following part is buggy: commented out for now - seems to help with plotting/selecting triples for non-first channel for MWL case
+      //Ask Gary (if this section in place, it causes incorrect placement of cb_lambplot indexes, so no plots generated...)
+      /*
       if ( tripDatax >= tripx2 )
       {  // Less wavelengths in this channel than in the previous one
          tripDatax      = ( tripx1 + tripx2 ) / 2;
          mwl_connect( false );
          cb_lambplot->setCurrentIndex( ( tripDatax - tripx1 ) );
+
+
+      	 qDebug() << "Inside triple_index(): cb_lambplot->currentIndex() = " << cb_lambplot->currentIndex(); 
+      
          mwl_connect( true  );
       }
+      */
+      
+      qDebug() << "Inside triple_index(): cb_lambplot->currentIndex() = " << cb_lambplot->currentIndex(); 
+      
    }
 
    else
@@ -6754,9 +6856,36 @@ void US_ConvertGui::mwl_setup()
    {
       QString clamb = QString::number( exp_lambdas[ ii ] );
       cb_lambplot->addItem( clamb );
+
+      qDebug() << "MWL_SETUP: exp_lambda " << ii << ", " << clamb;
    }
 
    cb_lambplot->setCurrentIndex( nlambda / 2 );
+
+   //ALEXEY: need initial (non-modified by changing start/end lambdas) lambda boundaries for each channel
+   int nchans_int     = out_channels.count();
+   slambdas_per_channel.clear();
+   elambdas_per_channel.clear();
+   
+   if ( slambdas_per_channel.size() != nchans_int )
+     slambdas_per_channel.resize( nchans_int);
+
+   if ( elambdas_per_channel.size() != nchans_int )
+     elambdas_per_channel.resize( nchans_int);
+
+   
+   for ( int ccx = 0; ccx < nchans_int; ccx++ )
+     {  
+       int nlambda_per_channel        = mwl_data.lambdas( exp_lambdas, ccx );
+       if ( nlambda_per_channel  < 1 )
+         {
+	   break;
+         }
+       slambdas_per_channel[ccx]    = exp_lambdas[ 0 ];
+       elambdas_per_channel[ccx]    = exp_lambdas[ nlambda_per_channel - 1 ];
+     }
+   /****************************************************************************************************/
+   
 
    show_mwl_control( true );
    mwl_connect( true );
