@@ -72,9 +72,6 @@ BEGIN
   SET @PROTOCOL_IN_USE   = 554;
   SET @NO_AUTOFLOW_RECORD = 555;  
  
-   -- Some user levels
-   SET @US3_USER       = 0;
-
   -- Some user levels
   SET @US3_USER       = 0;
   SET @US3_PRIV       = 1;
