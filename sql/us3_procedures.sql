@@ -71,6 +71,9 @@ BEGIN
   SET @INSTRUMENT_IN_USE = 553;
   SET @PROTOCOL_IN_USE   = 554;
   SET @NO_AUTOFLOW_RECORD = 555;  
+ 
+   -- Some user levels
+   SET @US3_USER       = 0;
 
   -- Some user levels
   SET @US3_USER       = 0;
@@ -533,5 +536,7 @@ SOURCE us3_report_procs.sql
 SOURCE us3_timestate_procs.sql
 SOURCE us3_eprofile_procs.sql
 SOURCE us3_protocol_procs.sql
+SOURCE us3_aprofile_procs.sql
+SOURCE us3_autoflow_procs.sql
 
 DELIMITER ;
