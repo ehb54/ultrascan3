@@ -36,13 +36,13 @@ void US_Hydrodyn_Results::setupGUI()
    int minHeight2 = 30;
    QString str;
 
-   lbl_info = new QLabel(us_tr(QString("SOMO Hydrodynamic Results\n"
-                                    "(%1 at %2ºC)\n(Density %3 cP, Viscosity %4 g/ml)")
-                            .arg(results->solvent_name)
-                            .arg(results->temperature)
-                            .arg(results->solvent_viscosity)
-                            .arg(results->solvent_density)
-                            ), this);
+   lbl_info = new QLabel(us_tr( QString("SOMO Hydrodynamic Results\n(%1 at %2%3C)\n(Density %4 g/ml, Viscosity %5 cP)" )
+                                .arg(results->solvent_name)
+                                .arg(results->temperature)
+                                .arg( QChar(0260) )
+                                .arg(results->solvent_density)
+                                .arg(results->solvent_viscosity)
+                                ), this);
    Q_CHECK_PTR(lbl_info);
    lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
