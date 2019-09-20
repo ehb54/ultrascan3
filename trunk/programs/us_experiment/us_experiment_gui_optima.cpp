@@ -5158,8 +5158,13 @@ void US_ExperGuiUpload::submitExperiment()
             for ( int ii = 0; ii < rpSolut->nschan; ii++ )
             {
                channel_cell = rpSolut->chsols[ ii ].channel;
-               QStringList sol_split = (rpSolut->chsols[ ii ].ch_comment).split(',');
-               if ( channel_cell.startsWith(QString::number(j+1)) )
+	       //QStringList sol_split = (rpSolut->chsols[ ii ].ch_comment).split(',');
+               
+	       QString solution = rpSolut->chsols[ ii ].ch_comment;
+	       solution.replace("'", "");
+	       QStringList sol_split = solution.split(',');
+	       
+	       if ( channel_cell.startsWith(QString::number(j+1)) )
                {
                   if ( channel_cell.contains("sample") )                                                     // <-- Channel A
                      solname += ": A: " + sol_split[0] + ", "        // <-- solution name
@@ -5183,6 +5188,8 @@ void US_ExperGuiUpload::submitExperiment()
                   .arg(qrytab_cell).arg(cell_pos)
                   .arg(cell_sector).arg(solname);
                comment = "Dummy stage";
+
+	       //qDebug() << "Dummy stage: QUERY: " << cell_query_str;  
             }
             // <-- Active stages
             else
@@ -5214,6 +5221,8 @@ void US_ExperGuiUpload::submitExperiment()
                // <-- Active Stage: BOTH AbsScan && InterferenceScan exist - RARE CASE
                else if ( AbsScanIds[i][j] && InterScanIds[i][j] )
                {
+		 //qDebug() << "Writing HERE: Abs & Interfrence  !!! ";
+		 //qDebug() << "solname: " << solname;
                   cell_query_str = QString("INSERT INTO %1 (\"CellPosition\",\"CellSectors\",\"AbsorbanceScan\",\"AbsorbanceScanId\",\"InterferenceScan\",\"InterferenceScanId\",\"SampleName\") VALUES (%2, %3, %4, %5, %6, %7, %8) RETURNING \"CellParamId\"")
                      .arg(qrytab_cell)
                      .arg(cell_pos)
@@ -5224,6 +5233,8 @@ void US_ExperGuiUpload::submitExperiment()
                      .arg(inter_scanid)
                      .arg(solname);
                   comment = "Active Stage --> AbsScan and InterferenceScan BOTH EXIST";
+
+		  // qDebug() << "Query: " << cell_query_str;
                }
                // <-- Active Stage: No Scans exist
                else
@@ -5239,7 +5250,7 @@ void US_ExperGuiUpload::submitExperiment()
 
             // Query
             if(! query_cell.prepare(cell_query_str ) )
-            qDebug() << query_cell.lastError().text();
+	      qDebug() << query_cell.lastError().text();
 
             if (query_cell.exec())
             {
