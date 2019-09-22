@@ -553,10 +553,10 @@ bool US_XpnData::import_data( const int runId, const int scanMask )
    bool iscnf    = scanMask & 4;
    bool wscnf    = scanMask & 8;
 
-   int arows     = 0;
-   int frows     = 0;
-   int irows     = 0;
-   int wrows     = 0;
+   arows         = 0;
+   frows         = 0;
+   irows         = 0;
+   wrows         = 0;
 
    // Scan and build data for System Status Data
    int srows     = scan_xpndata( runId, 'S' );
@@ -2306,6 +2306,10 @@ void US_XpnData::mapCounts( void )
    counts[ "elambda"   ]  = elambda;
    counts[ "scan_all"  ]  = ntscan;
    counts[ "scan_rows" ]  = ntsrow;
+   counts[ "ascn_rows" ]  = arows;
+   counts[ "fscn_rows" ]  = frows;
+   counts[ "iscn_rows" ]  = irows;
+   counts[ "wscn_rows" ]  = wrows;
 
    counts[ "last_rpm"  ]  = qRound( isyrec.speed );
    counts[ "etim_off"  ]  = etimoff;

@@ -434,6 +434,10 @@ class US_UTIL_EXTERN US_XpnData : public QObject
       int       mxscnn;              //!< Maximum scan number
       int       ntscan;              //!< Total scans for all triples
       int       ntsrow;              //!< Total (A+F+I+W) scan rows
+      int       arows;               //!< A scan rows
+      int       frows;               //!< F scan rows
+      int       irows;               //!< I scan rows
+      int       wrows;               //!< W scan rows
       
       int       etimoff;             //!< Experimental time offset
       int       fnzstx;              //!< First non-zero-speed time index

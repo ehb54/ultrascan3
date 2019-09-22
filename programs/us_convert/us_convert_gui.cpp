@@ -43,7 +43,7 @@
 #endif
 
 
-US_ConvertGui::US_ConvertGui(QString auto_mode) : US_Widgets()
+US_ConvertGui::US_ConvertGui( QString auto_mode ) : US_Widgets()
 {
    ExpData.invID = US_Settings::us_inv_ID();
 
@@ -1520,6 +1520,7 @@ DbgLv(1) << "CGui: import: RTN";
 void US_ConvertGui::import()
 {
    impType     = getImports();
+DbgLv(1) << "CGui:IMP: impType" << impType;
 
    if ( impType == 1 )
    {
@@ -1540,6 +1541,7 @@ DbgLv(1) << "CGui:IMP: IN";
    le_status->setText( tr( "Importing experimental data ..." ) );
 
    success = read();                // Read the legacy data
+DbgLv(1) << "CGui:IMP: read success" << success;
 
    if ( ! success ) return;
 
@@ -1551,11 +1553,13 @@ DbgLv(1) << "CGui:IMP: IN";
 
    // Figure out all the triple combinations and convert data
    success = convert();
+DbgLv(1) << "CGui:IMP: convert success" << success;
 
    if ( ! success ) return;
 
    // Initialize export data pointers vector
    success = init_output_data();
+DbgLv(1) << "CGui:IMP: initout success" << success;
 
    if ( ! success ) return;
 
@@ -1589,9 +1593,9 @@ DbgLv(1) << "CGui:IMP: enableControls CALL";
    {
       referenceDefined = false;
       pb_reference->setEnabled( true );
-DbgLv(1) << "CGui: (2)referDef=" << referenceDefined;
+DbgLv(1) << "CGui:IMP: (2)referDef=" << referenceDefined;
    }
-DbgLv(1) << "CGui: import: RTN";
+DbgLv(1) << "CGui:IMP: import: RTN";
    le_status->setText( tr( "Legacy data has been imported." ) );
 }
 
@@ -1782,7 +1786,7 @@ void US_ConvertGui::importAUC( void )
    QString importDir = currentDir;
    QDir readDir( importDir );
 
-   qDebug() << "CURRENT DIR_1: " << importDir;
+DbgLv(1) << "CGui:iA: CURRENT DIR_1: " << importDir;
 
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    le_status->setText( tr( "Loading AUC data ..." ) );
@@ -1805,7 +1809,7 @@ void US_ConvertGui::importAUC( void )
       // Give it a new unique GUID, since we are making a copy
       QString uuidst = US_Util::new_guid();
       US_Util::uuid_parse( uuidst, (unsigned char*)&rdata.rawGUID );
-DbgLv(1) << "rIA: trx" << trx << "uuid" << uuidst << importDir;
+DbgLv(1) << "CGui:iA:  trx" << trx << "uuid" << uuidst << importDir;
 
       // Save the raw data for this triple
       allData << rdata;
@@ -1832,8 +1836,8 @@ DbgLv(1) << "rIA: trx" << trx << "uuid" << uuidst << importDir;
 
    // //TEMP
    //runID += QString("-test");
-     
-   qDebug() << "RUNID from files[0]: files[0]" << fname << ", runID: " << runID;
+
+DbgLv(1) << "CGui:iA:  RUNID from files[0]: files[0]" << fname << ", runID: " << runID;
      
    le_runID2->setText( runID );
    le_runID ->setText( runID );
@@ -1931,7 +1935,7 @@ DbgLv(1) << "rIA: trx" << trx << "uuid" << uuidst << importDir;
 
    // Point to any existing time state file
    QDir ddir( currentDir );
-   qDebug() << "CURRENT DIR_2: " << currentDir;
+DbgLv(1) << "CGui:iA:  CURRENT DIR_2: " << currentDir;
    QStringList tmsfs = ddir.entryList( QStringList( "*.time_state.*" ),
          QDir::Files, QDir::Name );
    QString defs_fnamei;
@@ -1971,11 +1975,11 @@ DbgLv(1) << "rTS: NON_EXIST:" << tmst_fnamei;
       tmst_fnamei.clear();
    }
 
-   if (!us_convert_auto_mode)
-     {
-       //le_status->setText( tr( "AUC data import IS COMPLETE." ) );
-       le_status->setText( tr( "Loading Data from Disk Successful." ) );
-     }
+   if ( !us_convert_auto_mode )
+   {
+      //le_status->setText( tr( "AUC data import IS COMPLETE." ) );
+      le_status->setText( tr( "Loading Data from Disk Successful." ) );
+   }
      
    pb_showTmst->setEnabled( ! tmst_fnamei.isEmpty() );
 }
@@ -2766,24 +2770,22 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    int cellnumber;
    
    if ( isMwl )
-     {
-       qDebug() << "SOLUTION is READ in MWL mode !!! ";
-       for (int i = 0; i < nchans; ++i )
-	 {	   
-	   //Solution
-	   solutionID = ProtInfo.ProtSolutions.chsols[ i ].sol_id.toInt();
-	   solution_auto.readFromDB(solutionID, &db);
+   {
+      qDebug() << "SOLUTION is READ in MWL mode !!! ";
+      for (int i = 0; i < nchans; ++i )
+      {	   
+         //Solution
+	 solutionID = ProtInfo.ProtSolutions.chsols[ i ].sol_id.toInt();
+	 solution_auto.readFromDB(solutionID, &db);
 
 	   qDebug() << "SOLS 0";
-	   
+
 	   out_chaninfo[ i ].solution = solution_auto;
 
 	   qDebug() << "SOLS 0a";
-
 	   qDebug() << "out_chandatx[ i ] + cb_lambplot->currentIndex() " <<  out_chandatx[ i ] << " + " <<  cb_lambplot->currentIndex() << out_chandatx[ i ] + cb_lambplot->currentIndex();
 	   
 	   //out_tripinfo[ out_chandatx[ i ] + cb_lambplot->currentIndex() ].solution = solution_auto; // ALEXEY <-- BUG
-
 	   qDebug() << "SOLS 1";
 	   
 	   //DUPL
@@ -3376,10 +3378,12 @@ DbgLv(1) << "CGui:     chan trip" << ii << idax
  << "centp sol" << cCenterpiece << cSolution.solutionGUID;
    }
 
+DbgLv(1) << "CGui:ldDk:isMwl" << isMwl;
    if ( isMwl )
    {  // If need be, load MWL data object
       mwl_data.load_mwl( allData );
 
+DbgLv(1) << "CGui:ldDk: mwlsetup";
       mwl_setup();
    }
 
@@ -4085,6 +4089,9 @@ DbgLv(1) << " sTI: nch ntr" << nchans << ntrips << "trLSv" << trListSave;
          mwl_connect( true );
       }
 
+//      slambdas_per_channel.resize( nchans );
+//      elambdas_per_channel.resize( nchans );
+
       for ( int ccx = 0; ccx < nchans; ccx++ )
       {  // Reformat the triples entries
          nlambda        = mwl_data.lambdas( exp_lambdas, ccx );
@@ -4097,7 +4104,11 @@ DbgLv(1) << " sTI: nch ntr" << nchans << ntrips << "trLSv" << trListSave;
          lw_triple->addItem( out_channels[ ccx ]
                            + QString( " / %1-%2 (%3)" )
                            .arg( slambda ).arg( elambda ).arg( nlambda ) );
+//         slambdas_per_channel[ccx]  = slambda;
+//         elambdas_per_channel[ccx]  = elambda;
       }
+DbgLv(1) << " sTi: slams_ch:" << slambdas_per_channel;
+DbgLv(1) << " sTi: elams_ch:" << elambdas_per_channel;
 
       // Get wavelengths for the currently selected cell/channel
       tripListx      = qMax( 0, qMin( trListSave, ( nchans - 1 ) ) );
@@ -6439,23 +6450,27 @@ void US_ConvertGui::db_error( const QString& error )
 // User changed the Lambda Start value
 void US_ConvertGui::lambdaStartChanged( int value )
 {
+   int slambda_lambplot;
 DbgLv(1) << "lambdaStartChanged" << value;
 
    //ALEXEY: compare slambda to the cb_lambplot->index(0).value: if <, setCurrentIndex() to index corresponding to this upper value
-   tripListx          = lw_triple->currentRow();
-   int slambda_lambplot = slambdas_per_channel[tripListx];
-   
-   slambda       = cb_lambstrt->itemText( value ).toInt();
-   elambda       = cb_lambstop->currentText()    .toInt();
+   tripListx     = lw_triple->currentRow();
+   slambda       = cb_lambstrt->currentText().toInt();
+   elambda       = cb_lambstop->currentText().toInt();
+   tripListx     = lw_triple->currentRow();
+   if ( tripListx < slambdas_per_channel.size() )
+      slambda_lambplot  = slambdas_per_channel[ tripListx ];
+   else
+      slambda_lambplot  = slambda;
 
-   qDebug() << "LAMBDA_STR_CHANGE: slambda_lambplot, slambda: " << slambda_lambplot << ", " << slambda;
+DbgLv(1) << "lStChg: LAMBDA_STR_CHANGE: slambda_lambplot, slambda: " << slambda_lambplot << ", " << slambda;
 
    if ( slambda < slambda_lambplot )
    //if ( slambda < 280 )
-     {
+   {
        int index_lambstrt = cb_lambstrt->findText( QString::number(slambda_lambplot) );
 
-       qDebug() << "LAMBDA_STR_CHANGE: index_lambstrt " << index_lambstrt;
+DbgLv(1) << "lStChg: LAMBDA_STR_CHANGE: index_lambstrt " << index_lambstrt;
        slambda = slambda_lambplot;
 
        cb_lambstrt->disconnect();
@@ -6463,15 +6478,10 @@ DbgLv(1) << "lambdaStartChanged" << value;
        connect( cb_lambstrt,  SIGNAL( currentIndexChanged( int    ) ),
        		this,         SLOT  ( lambdaStartChanged ( int    ) ) );
     
-     }
-
-   //slambda       = cb_lambstrt->itemText( value ).toInt();
-   //elambda       = cb_lambstop->currentText()    .toInt();
-   //tripListx     = lw_triple->currentRow();
-   /***************************************************************************************************/
+   }
    
    int currChan  = out_chaninfo[ tripListx ].channelID;
-DbgLv(1) << "lambdaStartChanged" << value << "sl el tLx cCh"
+DbgLv(1) << "lStChg: lambdaStartChanged" << value << "sl el tLx cCh"
  << slambda << elambda << tripListx << currChan;
 
    for ( int trx = 0; trx < all_tripinfo.count(); trx++ )
@@ -6494,37 +6504,34 @@ DbgLv(1) << "lStChg: RsLambd RTN";
 // User changed the Lambda End value
 void US_ConvertGui::lambdaEndChanged( int value )
 {
-DbgLv(1) << "lambdaEndChanged" << value;
+   int elambda_lambplot;
+DbgLv(1) << "lEnChg:  lambdaEndChanged" << value;
 
      //ALEXEY: compare slambda to the cb_lambplot->index(0).value: if <, setCurrentIndex() to index corresponding to this upper value
-   tripListx            = lw_triple->currentRow();
-   int elambda_lambplot = elambdas_per_channel[tripListx];
-   
-   elambda       = cb_lambstop->itemText( value ).toInt();
-   slambda       = cb_lambstrt->currentText()    .toInt();
+   slambda       = cb_lambstrt->currentText().toInt();
+   elambda       = cb_lambstop->currentText().toInt();
+   tripListx     = lw_triple->currentRow();
+DbgLv(1) << "lEnChg:  trLx" << tripListx << "elch size" << elambdas_per_channel.size();
+DbgLv(1) << "lEnChg:   elams_ch:" << elambdas_per_channel;
+   if ( tripListx < elambdas_per_channel.size() )
+      elambda_lambplot  = elambdas_per_channel[ tripListx ];
+   else
+      elambda_lambplot  = elambda;
 
-   qDebug() << "LAMBDA_STOP_CHANGE: elambda_lambplot, elambda: " << elambda_lambplot << ", " << elambda;
+DbgLv(1) << "lEnChg: LAMBDA_STOP_CHANGE: elambda_lambplot, elambda: " << elambda_lambplot << ", " << elambda;
 
    if ( elambda > elambda_lambplot )
-     {
-       int index_lambstop = cb_lambstop->findText( QString::number(elambda_lambplot) );
+   {
+       int index_lambstop = cb_lambstop->findText( QString::number( elambda_lambplot ) );
 
-       qDebug() << "LAMBDA_STOP_CHANGE: index_lambstrt " << index_lambstop;
+DbgLv(1) << "lEnChg: LAMBDA_STOP_CHANGE:  index_lambstop " << index_lambstop;
        elambda = elambda_lambplot;
 
        cb_lambstop->disconnect();
        cb_lambstop->setCurrentIndex( index_lambstop );
        connect( cb_lambstop,  SIGNAL( currentIndexChanged( int    ) ),
        		this,         SLOT  ( lambdaEndChanged ( int    ) ) );
-    
-     }
-
-   //slambda       = cb_lambstrt->itemText( value ).toInt();
-   //elambda       = cb_lambstop->currentText()    .toInt();
-   //tripListx     = lw_triple->currentRow();
-   /***************************************************************************************************/
- 
-
+   }
 
    int currChan  = out_chaninfo[ tripListx ].channelID;
 DbgLv(1) << "lEnChg:  val" << value << "sl el tLx cCh"
@@ -6609,32 +6616,26 @@ void US_ConvertGui::triple_index()
       int tripx1     = out_chandatx[ tripListx ];
       int tripx2     = out_chandatx[ tripnext  ];
       tripDatax      = tripx1 + cb_lambplot->currentIndex();
-
-      qDebug() << "TRIPLE_Index(): "
-	       << "tripnext = " << tripnext
-	       << ", tripx1 = " << tripx1
-	       << ", tripx2 = " << tripx2
-	       << ", tripDatax = tripx1 + cb_lambplot->currentIndex(): " << tripx1 << " + " << cb_lambplot->currentIndex();
-
+DbgLv(1) << "TRIPLE_Index(): "
+ << "tripnext = " << tripnext
+ << ", tripx1 = " << tripx1
+ << ", tripx2 = " << tripx2
+ << ", tripDatax = tripx1 + cb_lambplot->currentIndex(): " << tripx1 << " + " << cb_lambplot->currentIndex();
 
       //ALEXEY: the following part is buggy: commented out for now - seems to help with plotting/selecting triples for non-first channel for MWL case
       //Ask Gary (if this section in place, it causes incorrect placement of cb_lambplot indexes, so no plots generated...)
-      /*
+#if 0
       if ( tripDatax >= tripx2 )
       {  // Less wavelengths in this channel than in the previous one
          tripDatax      = ( tripx1 + tripx2 ) / 2;
          mwl_connect( false );
+DbgLv(1) << "Inside triple_index(): cb_lambplot->currentIndex() = " << cb_lambplot->currentIndex(); 
          cb_lambplot->setCurrentIndex( ( tripDatax - tripx1 ) );
-
-
-      	 qDebug() << "Inside triple_index(): cb_lambplot->currentIndex() = " << cb_lambplot->currentIndex(); 
       
          mwl_connect( true  );
       }
-      */
-      
-      qDebug() << "Inside triple_index(): cb_lambplot->currentIndex() = " << cb_lambplot->currentIndex(); 
-      
+#endif
+DbgLv(1) << "Inside triple_index(): cb_lambplot->currentIndex() = " << cb_lambplot->currentIndex(); 
    }
 
    else
@@ -6851,13 +6852,13 @@ void US_ConvertGui::mwl_setup()
    cb_lambstop->setCurrentIndex( nlamb_i - 1 );
    nlambda         = mwl_data.lambdas( exp_lambdas );
    cb_lambplot->clear();
+DbgLv(1) << "MwlSet: nlambda nlamb_i" << nlambda << nlamb_i;
 
    for ( int ii = 0; ii < nlambda; ii++ )
    {
       QString clamb = QString::number( exp_lambdas[ ii ] );
       cb_lambplot->addItem( clamb );
-
-      qDebug() << "MWL_SETUP: exp_lambda " << ii << ", " << clamb;
+DbgLv(1) << "MwlSet: exp_lambda " << ii << ", " << clamb;
    }
 
    cb_lambplot->setCurrentIndex( nlambda / 2 );
@@ -6875,16 +6876,19 @@ void US_ConvertGui::mwl_setup()
 
    
    for ( int ccx = 0; ccx < nchans_int; ccx++ )
-     {  
-       int nlambda_per_channel        = mwl_data.lambdas( exp_lambdas, ccx );
-       if ( nlambda_per_channel  < 1 )
-         {
-	   break;
-         }
-       slambdas_per_channel[ccx]    = exp_lambdas[ 0 ];
-       elambdas_per_channel[ccx]    = exp_lambdas[ nlambda_per_channel - 1 ];
-     }
+   {
+      int nlambda_per_channel    = mwl_data.lambdas( exp_lambdas, ccx );
+DbgLv(1) << "MwlSet:   ccx" << ccx << "nlam/ch" << nlambda_per_channel;
+      if ( nlambda_per_channel  < 1 )
+      {
+         break;
+      }
+      slambdas_per_channel[ccx]  = exp_lambdas[ 0 ];
+      elambdas_per_channel[ccx]  = exp_lambdas[ nlambda_per_channel - 1 ];
+   }
    /****************************************************************************************************/
+DbgLv(1) << "MwlSet: slams_ch:" << slambdas_per_channel;
+DbgLv(1) << "MwlSet: elams_ch:" << elambdas_per_channel;
    
 
    show_mwl_control( true );
@@ -7123,7 +7127,11 @@ DbgLv(1) << "CGui: BOD: allsz" << allData.size() << "outsz" << outData.size();
    {
       US_Convert::TripleInfo* tripinfo = &all_tripinfo[ trx ];
 
-      if ( tripinfo->excluded )  continue;
+      if ( tripinfo->excluded )
+      {
+DbgLv(1) << "CGui: BOD:  trx" << trx << "EXCLUDED";
+         continue;
+      }
 
       outData      << &allData[ trx ];
 
