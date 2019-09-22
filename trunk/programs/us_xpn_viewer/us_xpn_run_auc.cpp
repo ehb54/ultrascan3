@@ -99,7 +99,10 @@ qDebug() << "LdDk:   ii" << ii << "run" << rdirs[ii]
 
       if ( ! dfile.exists()  ||
            ! dfile.open( QIODevice::ReadOnly ) )
+      {
+qDebug() << "LdDk:    dfname -- NOT exists/opened" << dpath;
          continue;  // Skip if TMST def file does not exist or can't be opened
+      }
 qDebug() << "LdDk:    dfname -- exists/opened";
 
       QTextStream fsi( &dfile );
@@ -111,7 +114,10 @@ qDebug() << "LdDk:     pmatch" << pmatch;
 
       if ( ! xmli.contains( pmatch )  &&
            ! xmli.contains( pmatch2 ) )
+      {
          continue;  // Skip if TMST def has no import_type="Optima"
+qDebug() << "LdDk:      *SKIP* non-Optima";
+      }
 
 
       // Add an eligible run directory to the list
@@ -120,8 +126,8 @@ qDebug() << "LdDk:     pmatch" << pmatch;
       rr.runID       = runID;
       rr.date        = date;
       rr.ntriple     = nfiles;
-//qDebug() << "LdDk:   ii" << ii << "     runID date count"
-// << rr.runID << rr.date << rr.nfiles;
+qDebug() << "LdDk:   ii" << ii << "     runID date count"
+ << rr.runID << rr.date << rr.ntriple;
 
       runInfo << rr;
    }

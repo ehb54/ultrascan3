@@ -378,6 +378,54 @@ qDebug() << "rDBE: call ExpData.saveToDisk";
    else if ( xmlStatus != US_Convert::OK )
       return( "Unspecified error writing xml file." );
 
+   // Download time state if need be
+   bool needTmst  = false;
+   int tmstID     = 0;
+   int expID      = ExpData.expID;
+   QString tfname = runID + ".time_state.tmst";
+   QString xdefs;
+   QString cksumd;
+   QDateTime datedt;
+   US_TimeState::dbExamine( db, &tmstID, &expID, &tfname,
+                            &xdefs, &cksumd, &datedt );
+qDebug() << "rDBE: expID tmstID tfname cksumd datedt"
+ << expID << tmstID << tfname << cksumd << datedt;
+   if ( tmstID > 0 )
+   {  // There is a time state in the database:  look at local disk
+      QString tfpath = dir + "/" + tfname;
+qDebug() << "rDBE:  HAVE tmst DB: tfpath" << tfpath;
+      if ( QFile( tfpath ).exists() )
+      {  // File exists, so check if it matches DB
+         QString cksumf   = US_Util::md5sum_file( tfpath );
+qDebug() << "rDBE:  HAVE tmst Loc: cksumf" << cksumf;
+         if ( cksumf != cksumd )
+         {  // DB/Local do not match, so overwrite local with download
+            needTmst       = true;
+         }
+      }
+      else
+      {  // No local tmst exists, do need to download it
+         needTmst       = true;
+      }
+
+qDebug() << "rDBE:  needTmst" << needTmst;
+      if ( needTmst )
+      {  // Download the .tmst file
+         US_TimeState::dbDownload( db, tmstID, tfpath );
+         // And write the xdefs sibling file
+         QString xfpath = QString( tfpath ).replace( ".tmst", ".xml" );
+qDebug() << "rDBE:   xfpath" << xfpath;
+         QFile fileo( xfpath );
+         if ( fileo.open( QIODevice::WriteOnly | QIODevice::Text ) )
+         {
+            QTextStream tso( &fileo );
+            tso << xdefs;
+            tso.flush();
+            fileo.close();
+qDebug() << "rDBE:    xdefs WRITTEN";
+         }
+      }
+   }
    return( QString( "" ) );
 }
 

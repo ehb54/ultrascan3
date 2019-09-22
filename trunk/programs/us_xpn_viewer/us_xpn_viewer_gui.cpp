@@ -2343,14 +2343,14 @@ void US_XpnDataViewer::retrieve_xpn_raw_auto( void )
 //   US_XpnRunRaw* lddiag = new US_XpnRunRaw( drDesc, runInfo );
 //    if ( lddiag->exec() == QDialog::Rejected )                    //ALEXEY need drDesc but do NOT need dialog
 //    {
-// DbgLv(1) << "RDr:  rtn fr XpnRunRaw dialog: CANCEL";
+// DbgLv(1) << "RDa:  rtn fr XpnRunRaw dialog: CANCEL";
 //       return;
 //    }
 
 //    // Restore area beneath dialog
 //    qApp->processEvents();
-// DbgLv(1) << "RDr:  rtn fr XpnRunRaw dialog";
-// DbgLv(1) << "RDr:   drDesc" << drDesc;
+// DbgLv(1) << "RDa:  rtn fr XpnRunRaw dialog";
+// DbgLv(1) << "RDa:   drDesc" << drDesc;
 
    // See if we need to fix the runID
 
@@ -2411,16 +2411,16 @@ QDateTime sttime=QDateTime::currentDateTime();
    scanmask          += QString( sMasks ).mid( 2, 1 ) == "1" ? 2 : 0;
    scanmask          += QString( sMasks ).mid( 4, 1 ) == "1" ? 4 : 0;
    scanmask          += QString( sMasks ).mid( 6, 1 ) == "1" ? 8 : 0;
-DbgLv(1) << "RDr:     iRId" << iRunId << "sMsks scnmask" << sMasks << scanmask;
-
- qDebug() << "RDr:     iRId" << iRunId << "sMsks scnmask" << sMasks << scanmask;
+DbgLv(1) << "RDa:     iRId" << iRunId << "sMsks scnmask" << sMasks << scanmask;
 
  //ALEXEY: maybe put in_reload_check_sysdata = true; and then false (after xpn_data->import_data( iRunId, scanmask ); )
  //in_reload_check_sysdata = true; //ALEXEY
- xpn_data->import_data( iRunId, scanmask );                               // ALEXEY <-- actual data retreiving
+
+   xpn_data->import_data( iRunId, scanmask );                               // ALEXEY <-- actual data retreiving
+
    int ntsrows        = xpn_data->countOf( "scan_rows" );
-DbgLv(1) << "RDr:     ntsrows" << ntsrows;
-DbgLv(1) << "RDr:      knt(triple)   " << xpn_data->countOf( "triple"    );
+DbgLv(1) << "RDa:     ntsrows" << ntsrows;
+DbgLv(1) << "RDa:      knt(triple)   " << xpn_data->countOf( "triple"    );
  qApp->processEvents();
 
    if ( ntsrows < 1 )
@@ -2474,53 +2474,69 @@ double tm1=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
       drtype2            = ( runType2 == "RI" ) ? "Absorbance"   : drtype2;
       drtype2            = ( runType2 == "FI" ) ? "Fluorescence" : drtype2;
       drtype2            = ( runType2 == "WI" ) ? "Wavelength"   : drtype2;
-      opsys << drtype1 << drtype2;
-
       QString msg        = tr( "Multiple scan data types are present:\n" )
                            +   "'" + drtype1 + "'\n or \n"
-                           +   "'" + drtype2 + "' .\n\n"
-                           + tr( "Choose one for initial display." );
-      QMessageBox mbox;
-      mbox.setWindowTitle( tr( "Scan Data Type to Process" ) );
-      mbox.setText( msg );
-      QPushButton* pb_opt1 = mbox.addButton( drtype1, QMessageBox::AcceptRole );
-      QPushButton* pb_opt2 = mbox.addButton( drtype2, QMessageBox::RejectRole );
-      mbox.setEscapeButton ( pb_opt2 );
-      mbox.setDefaultButton( pb_opt1 );
-
-      mbox.exec();
-      if ( mbox.clickedButton() == pb_opt2 )
+                           +   "'" + drtype2 + "' .\n";
+DbgLv(1) << "RDa:   runType2 scanmask" << runType2 << scanmask << "[ifw]scn_rows"
+ << xpn_data->countOf( "iscn_rows" )
+ << xpn_data->countOf( "fscn_rows" )
+ << xpn_data->countOf( "wscn_rows" );
+      if ( ( runType2 == "IP"  &&  xpn_data->countOf( "iscn_rows" ) == 0 )  ||
+           ( runType2 == "FI"  &&  xpn_data->countOf( "fscn_rows" ) == 0 )  ||
+           ( runType2 == "WI"  &&  xpn_data->countOf( "wscn_rows" ) == 0 ) )
       {
-         runType            = runType2;
-         optndx             = 1;
+         msg               += tr( "\nScans are missing so only " ) + drtype1
+                              + tr( " scans are processed." );
+         QMessageBox::warning( this,
+               tr( "Multiple Types with Missing Scans" ),
+               msg );
+      }
+
+      else
+      {
+         opsys << drtype1 << drtype2;
+         msg               += tr( "\nChoose one for initial display." );
+         QMessageBox mbox;
+         mbox.setWindowTitle( tr( "Scan Data Type to Process" ) );
+         mbox.setText( msg );
+         QPushButton* pb_opt1 = mbox.addButton( drtype1, QMessageBox::AcceptRole );
+         QPushButton* pb_opt2 = mbox.addButton( drtype2, QMessageBox::RejectRole );
+         mbox.setEscapeButton ( pb_opt2 );
+         mbox.setDefaultButton( pb_opt1 );
+
+         mbox.exec();
+         if ( mbox.clickedButton() == pb_opt2 )
+         {
+            runType            = runType2;
+            optndx             = 1;
+DbgLv(1) << "RDa:   runType2 scanmask" << runType2 << scanmask << "[ifw]scn_rows"
+ << xpn_data->countOf( "iscn_rows" )
+ << xpn_data->countOf( "fscn_rows" )
+ << xpn_data->countOf( "wscn_rows" );
+         }
       }
    }
 
    qApp->processEvents();  //ALEXEY: maybe this will help
-   
-   qDebug() << "1. Crashes HERE!!!!";
+DbgLv(1) << "RDa: 1. Crashes HERE!!!!";
      
    cb_optsys->disconnect();
    cb_optsys->clear();
-
-   qDebug() << "1a. Crashes HERE!!!!";
+DbgLv(1) << "RDa: 1a. Crashes HERE!!!!";
    
    cb_optsys->addItems( opsys );                                  // ALEXEY fill out Optics listbox
-
-   qDebug() << "1ab. Crashes HERE!!!! - BEFORE Setting index to cb_optsys";
+DbgLv(1) << "RDa: 1ab. Crashes HERE!!!! - BEFORE Setting index to cb_optsys";
    cb_optsys->setCurrentIndex( optndx );
-   qDebug() << "1ac. Crashes HERE!!!! - AFTER Setting index to cb_optsys";
+DbgLv(1) << "RDa: 1ac. Crashes HERE!!!! - AFTER Setting index to cb_optsys";
    
    connect( cb_optsys,    SIGNAL( currentIndexChanged( int ) ),
             this,         SLOT  ( changeOptics( )            ) );
-
-   qDebug() << "1b. Crashes HERE!!!!";
+DbgLv(1) << "RDa: 1b. Crashes HERE!!!!";
    
    runID         = new_runID;
-DbgLv(1) << "RDr:  runID" << runID << "runType" << runType;
+DbgLv(1) << "RDa:  runID" << runID << "runType" << runType;
    xpn_data->set_run_values( runID, runType );                    // ALEXEY
-
-   qDebug() << "2. Crashes HERE!!!! (after xpn_data->set_run_values( runID, runType ) )";
+DbgLv(1) << "RDa: 2. Crashes HERE!!!! (after xpn_data->set_run_values( runID, runType ) )";
 
    // Build the AUC equivalent
    //QApplication::setOverrideCursor( QCursor( Qt::WaitCursor) );
@@ -2528,11 +2544,10 @@ DbgLv(1) << "RDr:  runID" << runID << "runType" << runType;
    qApp->processEvents();
 
    xpn_data->build_rawData( allData );                            // ALEXEY Builds Raw Data
-
-   qDebug() << "3. Crashes HERE!!!! (after  xpn_data->build_rawData( allData ))";
+DbgLv(1) << "RDa: 3. Crashes HERE!!!! (after  xpn_data->build_rawData( allData ))";
    
 double tm2=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
-DbgLv(1) << "RDr:      build-raw done: tm1 tm2" << tm1 << tm2;
+DbgLv(1) << "RDa:      build-raw done: tm1 tm2" << tm1 << tm2;
 
    QApplication::restoreOverrideCursor();
    QApplication::restoreOverrideCursor();
@@ -2544,10 +2559,10 @@ DbgLv(1) << "RDr:      build-raw done: tm1 tm2" << tm1 << tm2;
    nscan         = allData[ 0 ].scanCount();
    npoint        = allData[ 0 ].pointCount();
 
-DbgLv(1) << "RDr: mwr ntriple" << ntriple;
-DbgLv(1) << "RDr: ncellch" << ncellch << cellchans.count();
-DbgLv(1) << "RDr: nscan" << nscan << "npoint" << npoint;
-DbgLv(1) << "RDr:   rvS rvE" << r_radii[0] << r_radii[npoint-1];
+DbgLv(1) << "RDa: mwr ntriple" << ntriple;
+DbgLv(1) << "RDa: ncellch" << ncellch << cellchans.count();
+DbgLv(1) << "RDa: nscan" << nscan << "npoint" << npoint;
+DbgLv(1) << "RDa:   rvS rvE" << r_radii[0] << r_radii[npoint-1];
    cb_cellchn->disconnect();                                      
    cb_cellchn->clear();
    cb_cellchn->addItems( cellchans );                             // ALEXEY fill out Cells/Channels listbox
@@ -2560,7 +2575,7 @@ DbgLv(1) << "RDr:   rvS rvE" << r_radii[0] << r_radii[npoint-1];
 #if 0
    ntriple      = nlambda * ncellch;  // Number triples
    ntpoint      = npoint  * nscan;    // Number radius points per triple
-DbgLv(1) << "RDr: nwl wvlo wvhi" << nlambda << wvlo << wvhi
+DbgLv(1) << "RDa: nwl wvlo wvhi" << nlambda << wvlo << wvhi
    << "ncellch" << ncellch << "nlambda" << nlambda << "ntriple" << ntriple;
    triples.clear();
 
@@ -2574,18 +2589,18 @@ DbgLv(1) << "RDr: nwl wvlo wvhi" << nlambda << wvlo << wvhi
 #endif
 #if 1
    ntriple      = xpn_data->data_triples( triples );              // ALEXEY triples
-DbgLv(1) << "RDr: nwl wvlo wvhi" << nlambda << wvlo << wvhi
+DbgLv(1) << "RDa: nwl wvlo wvhi" << nlambda << wvlo << wvhi
    << "ncellch" << ncellch << "nlambda" << nlambda << "ntriple" << ntriple
    << triples.count();
 
- qDebug() << "RDr: nwl wvlo wvhi" << nlambda << wvlo << wvhi
+ qDebug() << "RDa: nwl wvlo wvhi" << nlambda << wvlo << wvhi
    << "ncellch" << ncellch << "nlambda" << nlambda << "ntriple" << ntriple
    << triples.count();
 #endif
 
-DbgLv(1) << "RDr: allData size" << allData.size();
+DbgLv(1) << "RDa: allData size" << allData.size();
 
- qDebug() << "RDr: allData size" << allData.size();
+ qDebug() << "RDa: allData size" << allData.size();
 
  //QApplication::restoreOverrideCursor();
    QString tspath = currentDir + "/" + runID + ".time_state.tmst";
@@ -2749,11 +2764,11 @@ QDateTime sttime=QDateTime::currentDateTime();
    scanmask          += QString( sMasks ).mid( 6, 1 ) == "1" ? 8 : 0;
 DbgLv(1) << "RDr:     iRId" << iRunId << "sMsks scnmask" << sMasks << scanmask;
 
- xpn_data->import_data( iRunId, scanmask );                             
+   xpn_data->import_data( iRunId, scanmask );                             
+
    int ntsrows        = xpn_data->countOf( "scan_rows" );
 DbgLv(1) << "RDr:     ntsrows" << ntsrows;
 DbgLv(1) << "RDr:      knt(triple)   " << xpn_data->countOf( "triple"    );
-
 
    if ( ntsrows < 1 )
    {
@@ -2773,7 +2788,7 @@ double tm1=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
 
    if ( scanmask == 1  ||  scanmask == 2  ||
         scanmask == 4  ||  scanmask == 8 )
-   {
+   {  // Single type of data present
       runType            = ( scanmask == 2 ) ? "FI" : runType;
       runType            = ( scanmask == 4 ) ? "IP" : runType;
       runType            = ( scanmask == 8 ) ? "WI" : runType;
@@ -2788,7 +2803,7 @@ double tm1=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
    }
 
    else if ( ( scanmask & 1 ) != 0 )
-   {
+   {  // Multiple data types present
       QApplication::restoreOverrideCursor();
       QApplication::restoreOverrideCursor();
       QString runType2( "IP" );
@@ -2802,25 +2817,46 @@ double tm1=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
       drtype2            = ( runType2 == "RI" ) ? "Absorbance"   : drtype2;
       drtype2            = ( runType2 == "FI" ) ? "Fluorescence" : drtype2;
       drtype2            = ( runType2 == "WI" ) ? "Wavelength"   : drtype2;
-      opsys << drtype1 << drtype2;
-
       QString msg        = tr( "Multiple scan data types are present:\n" )
                            +   "'" + drtype1 + "'\n or \n"
-                           +   "'" + drtype2 + "' .\n\n"
-                           + tr( "Choose one for initial display." );
-      QMessageBox mbox;
-      mbox.setWindowTitle( tr( "Scan Data Type to Process" ) );
-      mbox.setText( msg );
-      QPushButton* pb_opt1 = mbox.addButton( drtype1, QMessageBox::AcceptRole );
-      QPushButton* pb_opt2 = mbox.addButton( drtype2, QMessageBox::RejectRole );
-      mbox.setEscapeButton ( pb_opt2 );
-      mbox.setDefaultButton( pb_opt1 );
-
-      mbox.exec();
-      if ( mbox.clickedButton() == pb_opt2 )
+                           +   "'" + drtype2 + "' .\n";
+DbgLv(1) << "RDr:   runType2 scanmask" << runType2 << scanmask << "[ifw]scn_rows"
+ << xpn_data->countOf( "iscn_rows" )
+ << xpn_data->countOf( "fscn_rows" )
+ << xpn_data->countOf( "wscn_rows" );
+      if ( ( runType2 == "IP"  &&  xpn_data->countOf( "iscn_rows" ) == 0 )  ||
+           ( runType2 == "FI"  &&  xpn_data->countOf( "fscn_rows" ) == 0 )  ||
+           ( runType2 == "WI"  &&  xpn_data->countOf( "wscn_rows" ) == 0 ) )
       {
-         runType            = runType2;
-         optndx             = 1;
+         msg               += tr( "\nScans are missing so only " ) + drtype1
+                              + tr( " scans are processed." );
+         QMessageBox::warning( this,
+               tr( "Multiple Types with Missing Scans" ),
+               msg );
+      }
+
+      else
+      {
+         opsys << drtype1 << drtype2;
+         msg               += tr( "\nChoose one for initial display." );
+         QMessageBox mbox;
+         mbox.setWindowTitle( tr( "Scan Data Type to Process" ) );
+         mbox.setText( msg );
+         QPushButton* pb_opt1 = mbox.addButton( drtype1, QMessageBox::AcceptRole );
+         QPushButton* pb_opt2 = mbox.addButton( drtype2, QMessageBox::RejectRole );
+         mbox.setEscapeButton ( pb_opt2 );
+         mbox.setDefaultButton( pb_opt1 );
+
+         mbox.exec();
+         if ( mbox.clickedButton() == pb_opt2 )
+         {
+            runType            = runType2;
+            optndx             = 1;
+DbgLv(1) << "RDr:   runType2 scanmask" << runType2 << scanmask << "[ifw]scn_rows"
+ << xpn_data->countOf( "iscn_rows" )
+ << xpn_data->countOf( "fscn_rows" )
+ << xpn_data->countOf( "wscn_rows" );
+         }
       }
    }
 
