@@ -1596,15 +1596,15 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
       //msg_data_avail->close();
       //ok_msg_data->click();
 
-      //ALEXEY: make sure ExpID is coupled to the RunID which is already in the autoflow DB
-      if ( runID_passed != "NULL" )
-	{
-	  if ( runID_passed.toInt() != RunID_to_retrieve.toInt() )
-	    {
-	      RunID_to_retrieve = runID_passed;
-	      qDebug() << "Correcting RunID to : " << RunID_to_retrieve;
-	    }
-	}
+      // //ALEXEY: make sure ExpID is coupled to the RunID which is already in the autoflow DB
+      // if ( runID_passed != "NULL" )
+      // 	{
+      // 	  if ( runID_passed.toInt() != RunID_to_retrieve.toInt() )
+      // 	    {
+      // 	      RunID_to_retrieve = runID_passed;
+      // 	      qDebug() << "Correcting RunID to : " << RunID_to_retrieve;
+      // 	    }
+      // 	}
             
       //ALEXEY: need to update 'autoflow' table with the unique RunID_to_retrieve && Start Run Time fields !!!
       //Conditional:  Do it ONLY once !!! 
