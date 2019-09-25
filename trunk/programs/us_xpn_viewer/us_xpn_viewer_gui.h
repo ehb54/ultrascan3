@@ -374,6 +374,7 @@ class US_XpnDataViewer : public US_Widgets
      void return_to_experiment( QString & );
      void close_program( void );
      void liveupdate_processes_stopped( void );
+     void aborted_back_to_initAutoflow( void );
 };
 #endif
 

@@ -189,14 +189,16 @@ class US_ObservGui : public US_WidgetsDialog
       void to_post_processing( QMap < QString, QString > & );
       void to_close_program( void );
       void reset_live_update( void );
-      void processes_stopped_passed( void ); 
+      void processes_stopped_passed( void );
+      void to_initAutoflow_xpnviewer ( void );
  signals:
       void to_xpn_viewer( QMap < QString, QString > & protocol_details );
       //void switch_to_post_processing( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii  );
       void switch_to_post_processing( QMap < QString, QString > &  );
       void close_everything( void );
       void reset_live_update_passed( void );
-      void processes_stopped( void ); 
+      void processes_stopped( void );
+      void stop_nodata( void );
 };
 
 
