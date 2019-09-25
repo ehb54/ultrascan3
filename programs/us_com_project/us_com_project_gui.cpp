@@ -175,6 +175,8 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    //connect( this, SIGNAL( clear_experiment( QString & ) ),  epanExp, SLOT( clear_experiment( QString & )  ) );
    connect( epanObserv, SIGNAL( close_everything() ), this, SLOT( close_all() ));
    connect( this, SIGNAL( reset_live_update() ),  epanObserv, SLOT( reset_live_update( )  ) );
+   connect( epanObserv, SIGNAL( processes_stopped() ), this, SLOT( liveupdate_stopped() ));
+   connect( epanObserv, SIGNAL( stop_nodata() ), this, SLOT( close_all() ));
    
    //connect( epanPostProd, SIGNAL( switch_to_analysis( QString &, QString &) ),  this, SLOT( switch_to_analysis( QString &, QString & )  ) );
    //connect( this, SIGNAL( pass_to_analysis( QString &, QString & ) ),   epanAnalysis, SLOT( do_analysis( QString &, QString & )  ) );
@@ -343,6 +345,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( epanObserv, SIGNAL( close_everything() ), this, SLOT( close_all() ));
    connect( this, SIGNAL( reset_live_update() ),  epanObserv, SLOT( reset_live_update( )  ) );
    connect( epanObserv, SIGNAL( processes_stopped() ), this, SLOT( liveupdate_stopped() ));
+   connect( epanObserv, SIGNAL( stop_nodata() ), this, SLOT( close_all() ));
    
    connect( epanPostProd, SIGNAL( switch_to_editing( QString &, QString &) ),  this, SLOT( switch_to_editing( QString &, QString & )  ) );
    connect( this, SIGNAL( reset_lims_import() ),  epanPostProd, SLOT( reset_lims_import( )  ) );
@@ -1730,6 +1733,9 @@ US_ObservGui::US_ObservGui( QWidget* topw )
    connect( sdiag, SIGNAL( close_program() ), this, SLOT( to_close_program()  ) );
 
    connect( sdiag, SIGNAL( liveupdate_processes_stopped() ), this, SLOT( processes_stopped_passed()  ) );
+
+   //ALEXEY: premature abortion with no data
+   connect( sdiag, SIGNAL( aborted_back_to_initAutoflow( ) ), this, SLOT( to_initAutoflow_xpnviewer ( ) ) );
    
    offset = 0;
    sdiag->move(offset, 2*offset);
@@ -1769,6 +1775,11 @@ void US_ObservGui::resizeEvent(QResizeEvent *event)
     }
      
     QWidget::resizeEvent(event);
+}
+
+void US_ObservGui::to_initAutoflow_xpnviewer ( void )
+{
+  emit stop_nodata();
 }
 
 void US_ObservGui::processes_stopped_passed( void )
