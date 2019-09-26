@@ -1085,7 +1085,11 @@ void US_InitDialogueGui::initRecordsDialogue( void )
 	return;
       
       if ( occupied_instruments.size() == 0 )
-	return;
+	{
+	  qDebug() << "No occuied instruments (No LIVE_UPDATE status)";
+	  emit define_new_experiment_init( occupied_instruments );
+	  return;
+	}
       else
 	{
 	  QString list_instruments_in_use = occupied_instruments.join(", ");
