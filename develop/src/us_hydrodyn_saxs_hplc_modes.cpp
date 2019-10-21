@@ -1814,6 +1814,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_plot_rg_toggle()
    {
       ShowHide::hide_widgets( guinier_rg_widgets );
    } else {
+      align_plot_extents( { guinier_plot_rg, guinier_plot_mw } );
       ShowHide::hide_widgets( guinier_rg_widgets, false );
    }
 }
@@ -1824,6 +1825,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_plot_mw_toggle()
    {
       ShowHide::hide_widgets( guinier_mw_widgets );
    } else {
+      align_plot_extents( { guinier_plot_rg, guinier_plot_mw } );
       ShowHide::hide_widgets( guinier_mw_widgets, false );
    }
 }

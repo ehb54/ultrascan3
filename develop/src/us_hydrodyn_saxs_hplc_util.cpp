@@ -3097,8 +3097,177 @@ double US_Hydrodyn_Saxs_Hplc::wyatt_errors( const vector < double > & q,
    return sqrt( sum2 / (double) (m-1) );
 }
 
+#include <qwt_plot_layout.h>
+#include <qwt_scale_widget.h>
+#include <qwt_scale_draw.h>
+
+void US_Hydrodyn_Saxs_Hplc::align_plot_extents( const vector < QwtPlot * > & plots, bool scale_x_to_first ) {
+   // QTextStream tso( stdout );
+   // tso << "align_plot_extents\n";
+
+   int size = (int) plots.size();
+   if ( size <= 1 ) {
+      return;
+   }
+
+   vector < double > extents( plots.size() );
+
+   double max_extent = extents[ 0 ] = plots[ 0 ]->axisWidget( QwtPlot::yLeft )->scaleDraw()->extent( plots[ 0 ]->axisWidget( QwtPlot::yLeft )->font() );
+
+   if ( scale_x_to_first ) {
+      // tso << "align_plot_extents also scale x\n";
+      const QwtScaleDiv scaleDiv = plots[ 0 ]->axisScaleDiv( QwtPlot::xBottom );
+      
+      // tso << QString( "scaleDiv->lowerBound %1 ->upperBound() %2\n" )
+      //    .arg( scaleDiv.lowerBound() )
+      //    .arg( scaleDiv.upperBound() )
+      //    ;
+
+      for ( int i = 1; i < size; ++i ) {
+         extents[ i ] = plots[ i ]->axisWidget( QwtPlot::yLeft )->scaleDraw()->extent( plots[ i ]->axisWidget( QwtPlot::yLeft )->font() );
+         if ( max_extent < extents[ i ] ) {
+            max_extent = extents[ i ];
+         }
+      }
+
+      for ( int i = 0; i < size; ++i ) {
+         plots[ i ]->axisWidget( QwtPlot::yLeft )->scaleDraw()->setMinimumExtent( max_extent );
+         plots[ i ]->setAxisScaleDiv( QwtPlot::xBottom, scaleDiv );
+         plots[ i ]->replot();
+      }
+   } else {
+      for ( int i = 1; i < size; ++i ) {
+         extents[ i ] = plots[ i ]->axisWidget( QwtPlot::yLeft )->scaleDraw()->extent( plots[ i ]->axisWidget( QwtPlot::yLeft )->font() );
+         if ( max_extent < extents[ i ] ) {
+            max_extent = extents[ i ];
+         }
+      }
+
+      for ( int i = 0; i < size; ++i ) {
+         if ( extents[ i ] < max_extent ) {
+            plots[ i ]->axisWidget( QwtPlot::yLeft )->scaleDraw()->setMinimumExtent( max_extent );
+            plots[ i ]->updateLayout();
+         }
+      }
+   }      
+}
+
+void US_Hydrodyn_Saxs_Hplc::plot_debug() {
+
+   QTextStream tso( stdout );
+   for ( map < QString, QwtPlot * >::iterator it = plot_info.begin();
+         it != plot_info.end();
+         ++it )
+   {
+      int curves   = 0;
+
+      QwtPlotItemList ilist = it->second->itemList();
+      for ( int ii = 0; ii < ilist.size(); ii++ )
+      {
+         QwtPlotItem* plitem = ilist[ ii ];
+         if ( plitem->rtti() != QwtPlotItem::Rtti_PlotCurve ) {
+            continue;
+         }
+
+         QwtPlotCurve* curve = (QwtPlotCurve*) plitem;
+
+         // qDebug() << curve->title().text();
+         
+         if ( curve->dataSize() )
+         {
+            curves++;
+            break;
+         }
+      }
+
+      if ( curves ) {
+         int yLeftStartDist = 0;
+         int yLeftEndDist   = 0;
+         int yRightStartDist = 0;
+         int yRightEndDist   = 0;
+
+         it->second->axisWidget( QwtPlot::yLeft )->getBorderDistHint( yLeftStartDist, yLeftEndDist );
+         it->second->axisWidget( QwtPlot::yRight )->getBorderDistHint( yRightStartDist, yRightEndDist );
+
+         tso << QString( "plot for %1\n" ).arg( it->first )
+             << QString().sprintf(
+                                  "plotLayout()->alignCanvasToScale( yLeft )          %s\n"
+                                  "plotLayout()->alignCanvasToScale( yRight )         %s\n"
+                                  
+                                  "plotLayout()->spacing()                            %d\n"
+
+                                  "plotLayout()->canvasRect()                         %g, %g\n"
+                                  "plotLayout()->titleRect()                          %g, %g\n"
+                                  "plotLayout()->footerRect()                         %g, %g\n"
+                                  "plotLayout()->legendRect()                         %g, %g\n"
+
+                                  "plotLayout()->scaleRect( yLeft )                   %g, %g\n"
+                                  "plotLayout()->scaleRect( yRight )                  %g, %g\n"
+
+                                  "plotLayout()->canvasMargin( yLeft )                %d\n"
+                                  "plotLayout()->canvasMargin( yRight )               %d\n"
+
+                                  "axisWidget( yLeft )->getBorderDistHint( yLeft )    %d, %d\n"
+                                  "axisWidget( yRight )->getBorderDistHint( yRight )  %d, %d\n"
+
+                                  "axisWidget( yLeft )->scaleDraw()->extent()         %g\n"
+                                  "axisWidget( yRight )->scaleDraw()->extent()        %g\n"
+
+                                  "width guess                                        %g\n"
+
+                                  ,( it->second->plotLayout()->alignCanvasToScale( QwtPlot::yLeft ) ? "True" : "False" )
+                                  ,( it->second->plotLayout()->alignCanvasToScale( QwtPlot::yRight ) ? "True" : "False" )
+
+                                  ,it->second->plotLayout()->spacing()
+
+                                  ,it->second->plotLayout()->canvasRect().x()
+                                  ,it->second->plotLayout()->canvasRect().y()
+
+                                  ,it->second->plotLayout()->titleRect().x()
+                                  ,it->second->plotLayout()->titleRect().y()
+
+                                  ,it->second->plotLayout()->footerRect().x()
+                                  ,it->second->plotLayout()->footerRect().y()
+
+                                  ,it->second->plotLayout()->legendRect().x()
+                                  ,it->second->plotLayout()->legendRect().y()
+
+                                  ,it->second->plotLayout()->scaleRect( QwtPlot::yLeft ).x()
+                                  ,it->second->plotLayout()->scaleRect( QwtPlot::yLeft ).y()
+
+                                  ,it->second->plotLayout()->scaleRect( QwtPlot::yRight ).x()
+                                  ,it->second->plotLayout()->scaleRect( QwtPlot::yRight ).y()
+
+                                  ,it->second->plotLayout()->canvasMargin( QwtPlot::yLeft )
+                                  ,it->second->plotLayout()->canvasMargin( QwtPlot::yRight )
+
+                                  ,yLeftStartDist
+                                  ,yLeftEndDist
+
+                                  ,yRightStartDist
+                                  ,yRightEndDist
+
+                                  ,it->second->axisWidget( QwtPlot::yLeft )->scaleDraw()->extent( it->second->axisWidget( QwtPlot::yLeft )->font() )
+                                  ,it->second->axisWidget( QwtPlot::yRight )->scaleDraw()->extent( it->second->axisWidget( QwtPlot::yRight )->font() )
+                                  , (
+                                     it->second->plotLayout()->canvasMargin( QwtPlot::yLeft ) +
+                                     it->second->plotLayout()->canvasMargin( QwtPlot::yRight ) +
+                                     it->second->plotLayout()->scaleRect( QwtPlot::yLeft ).x() +
+                                     it->second->plotLayout()->scaleRect( QwtPlot::yRight ).x() +
+                                     it->second->plotLayout()->canvasRect().x()
+                                     )
+                                  );
+      }
+   }
+
+   // align_plot_extents( { plot_dist, plot_errors } );
+}
+   
 void US_Hydrodyn_Saxs_Hplc::pp() 
 {
+      
+   //   return plot_debug();
+
    QString use_dir = QDir::currentPath();
    ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
    QString fn = 

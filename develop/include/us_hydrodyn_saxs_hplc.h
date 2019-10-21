@@ -997,6 +997,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       QwtPlot                           * ggqfit_plot;
       US_Plot                           * usp_ggqfit_plot;
+
+      void                                align_plot_extents( const vector < QwtPlot * > & plots, bool scale_x_to_first = false );
+      void                                plot_debug();
+
    private slots:
       void usp_config_ggqfit_plot( const QPoint & );
 

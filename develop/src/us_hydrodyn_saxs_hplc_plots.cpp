@@ -10,6 +10,9 @@
 #if QT_VERSION >= 0x040000
 #include <qwt_scale_engine.h>
 #endif
+#include <qwt_plot_layout.h>
+#include <qwt_scale_widget.h>
+#include <qwt_scale_draw.h>
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -575,6 +578,7 @@ void US_Hydrodyn_Saxs_Hplc::errors()
 {
    if ( current_mode == MODE_GUINIER )
    {
+      align_plot_extents( { guinier_plot, guinier_plot_errors } );
       ShowHide::hide_widgets( guinier_errors_widgets, guinier_plot_errors->isVisible() );
       return;
    }
@@ -583,6 +587,9 @@ void US_Hydrodyn_Saxs_Hplc::errors()
    {
       hide_widgets( plot_errors_widgets, true );
    } else {
+
+      align_plot_extents( { plot_dist, plot_errors }, true );
+      
       switch( current_mode )
       {
       case MODE_GGAUSSIAN:
