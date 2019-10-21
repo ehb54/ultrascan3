@@ -210,6 +210,8 @@ qDebug() << "Bld: single" << do_single << " manual" << do_manual
 
    // Trigger models list from db or disk source
    select_diskdb();
+
+   resize( 700, 500 );
 }
 
 // Load model data by index
@@ -354,10 +356,19 @@ QDateTime time2=QDateTime::currentDateTime();
    bool listedit = do_edit || do_run;        // edit filtered?
    bool listsing = do_single;                // show singles of MC groups?
    bool listall  = !listdesc;                // unfiltered by description?
-   QRegExp mpart = QRegExp( ".*" + mfilt + ".*", Qt::CaseInsensitive );
+   QString mflt1 = mfilt;
+   if ( ! mfilt.isEmpty() )
+   {
+      if ( !mfilt.startsWith( "*" ) )
+         mflt1         = "*" + mflt1;
+      if ( !mfilt.endsWith( "*" ) )
+         mflt1         = mflt1 + "*";
+   }
+
+   QRegExp mpart = QRegExp( mflt1, Qt::CaseInsensitive, QRegExp::WildcardUnix );
    model_descriptions.clear();               // clear model descriptions
 qDebug() << "LM: desc single edit" << listdesc << listsing << listedit
- << "editGUID" << editGUID << "nruns" << runIDs.size();
+ << "editGUID" << editGUID << "nruns" << runIDs.size() << "mflt1" << mflt1;
    int kmmnew    = 0;
    int kmmold    = 0;
    int kmmmod    = 0;
@@ -751,7 +762,9 @@ qDebug() << " (3)m_d_u size" << model_descrs_ufilt.size();
    {  // Filter by model description sub-string
       for ( int jj = 0; jj < model_descrs_ufilt.size(); jj++ )
       {
-         if ( model_descrs_ufilt[ jj ].description.contains( mpart ) )
+         mdesc     = model_descrs_ufilt[ jj ].description;
+         lmdesc    = alt_description( mdesc, true );
+         if ( lmdesc.contains( mpart ) )
          {  // description filter matches
             model_descriptions << model_descrs_ufilt[ jj ];
 //ModelDesc desc = model_descrs_recs[jj];
@@ -796,12 +809,12 @@ qDebug() << "Timing: Time6" << time0.msecsTo(time6) << time2.msecsTo(time6);
 
    singprev   = listsing;    // save list-singles flag
 
+#if 0
    // Resize the widget to show listed items well
    QFontMetrics fm = lw_models->fontMetrics();
    int olwid    = lw_models->width();
    int olhgt    = lw_models->height();
    int nlines   = qMin( model_descriptions.size(), 30 );
-#if 0
    int width    = qMin( 600, maxlch * fm.maxWidth()    );
    int height   = qMin( 800, nlines * fm.lineSpacing() );
 qDebug() << "LM: olwid olhgt" << olwid << olhgt << "width height" << width << height;
@@ -809,8 +822,6 @@ qDebug() << "LM: olwid olhgt" << olwid << olhgt << "width height" << width << he
    height       = ( height > olhgt ) ? height : ( ( olhgt + height ) / 2 );
    width        = this->width()  + width  - olwid;
    height       = this->height() + height - olhgt;
-#endif
-#if 1
    int width    = fm.width( strmx );
    int height   = nlines * fm.lineSpacing();
 qDebug() << "LM: olwid olhgt" << olwid << olhgt << "width height" << width << height;
@@ -819,12 +830,12 @@ qDebug() << "LM: olwid olhgt" << olwid << olhgt << "width height" << width << he
 qDebug() << "LM: nlines maxlch" << nlines << maxlch << "width height" << width << height;
    width        = qMin( width,  qApp->desktop()->width()  - 100 );
    height       = qMin( height, qApp->desktop()->height() - 100 );
-#endif
 qDebug() << "LM: width height" << width << height;
 
    resize( width, height );
 qDebug() << "LM:  sized:" << size();
    //adjustSize();
+#endif
 
    connect( le_mfilter,    SIGNAL( textChanged( const QString& ) ),
             this,          SLOT(   msearch(     const QString& ) ) );

@@ -314,7 +314,11 @@ DbgLv(1) << "XpDa:inforow: run exp 0 estart ename rname A F I W stat";
       // Skip any runs with no associated scan table entries
       if ( ! ( exprow.abscnf || exprow.flscnf ||
                exprow.inscnf || exprow.wlscnf ) )
+      {
+DbgLv(1) << "XpDa: NO AFIW:  run exp" << exprow.runId << exprow.expId
+ << "expname resname" << exprow.expname << exprow.resname;
          continue;
+      }
 
       // Save experiment row
       tExprun << exprow;
