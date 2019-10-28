@@ -2646,7 +2646,7 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
    ck_rp_diff ->setChecked( rps_differ );
 
    pb_submit  ->setEnabled( subm_enab  );                                  // <-- Temporary enabled for testing
-   pb_saverp  ->setEnabled( have_cells && have_solus && have_range );      // ALEXEY: add check here is rps_differ == true (protocols differ)
+   pb_saverp  ->setEnabled( have_cells && have_solus && have_range && rps_differ );      // ALEXEY: add check here is rps_differ == true (protocols differ)
 
    // Show/hide Submit and Save buttons based on RunId given
    if ( US_Settings::us_inv_level() > 2 )

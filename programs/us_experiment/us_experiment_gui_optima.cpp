@@ -4550,14 +4550,17 @@ void US_ExperGuiUpload::submitExperiment_confirm()
    QString dbhost      = mainw->currentInstrument[ "optimaHost" ];
    QString dbport      = mainw->currentInstrument[ "optimaPort" ];
 
-   if ( mainw->automode )
+   if ( mainw->automode && rps_differ )
      saveRunProtocol();
-   else if ( !mainw->automode && have_run )
+   else if ( !mainw->automode && have_run && rps_differ )
      saveRunProtocol();
    
    
    QMessageBox msgBox;
-   QString message_protocol = tr( "Protocol has been successfully saved to US-LIMS DB. \n\n");
+   QString message_protocol = tr( "");
+   if ( rps_differ )
+      message_protocol += tr( "A new protocol has been successfully saved to US-LIMS DB. \n\n");
+   
    QString message_submission = message_protocol + tr("Experiment will be submitted to the following Optima machine:");
    
    //msgBox.setText(tr("Experiment will be submitted to the following Optima machine:"));
