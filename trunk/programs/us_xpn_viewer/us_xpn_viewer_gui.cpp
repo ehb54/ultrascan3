@@ -2646,6 +2646,7 @@ DbgLv(1) << "RDa: allData size" << allData.size();
 
    qDebug() << "CellChNumber, cellchans.count() " << CellChNumber.toInt() << ", " << cellchans.count();
    qDebug() << "TripleNumber, ntriple " << TripleNumber.toInt() << ", " << ntriple;
+   qDebug() << "finishing_live_update " << finishing_live_update;
 
    //ALEXEY: Add Exp. Abortion Exception HERE... 
    if ( CheckExpComplete_auto( RunID_to_retrieve ) == 0 ) //ALEXEY should be == 3 as per documentation
@@ -2694,6 +2695,9 @@ DbgLv(1) << "RDa: allData size" << allData.size();
 
        if ( !finishing_live_update )
 	 {
+	   qDebug() << "Switch to update!";
+
+	   //update hereafter
 	   connect(timer_data_reload, SIGNAL(timeout()), this, SLOT( reloadData_auto( ) ));
 	   timer_data_reload->start(10000);     // 5 sec
 	 }
