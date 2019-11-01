@@ -885,6 +885,9 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 #endif
    connect( plot_errors_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_errors_zoomed( const QRectF & ) ) );
 
+   connect(((QObject*)plot_dist  ->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_plot_errors, SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
+   connect(((QObject*)plot_errors->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_plot_dist  , SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
+
    cb_plot_errors_rev = new QCheckBox(this);
    cb_plot_errors_rev->setText(us_tr("Reverse"));
    cb_plot_errors_rev->setEnabled( true );

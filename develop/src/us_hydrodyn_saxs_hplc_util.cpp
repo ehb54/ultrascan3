@@ -3101,57 +3101,6 @@ double US_Hydrodyn_Saxs_Hplc::wyatt_errors( const vector < double > & q,
 #include <qwt_scale_widget.h>
 #include <qwt_scale_draw.h>
 
-void US_Hydrodyn_Saxs_Hplc::align_plot_extents( const vector < QwtPlot * > & plots, bool scale_x_to_first ) {
-   // QTextStream tso( stdout );
-   // tso << "align_plot_extents\n";
-
-   int size = (int) plots.size();
-   if ( size <= 1 ) {
-      return;
-   }
-
-   vector < double > extents( plots.size() );
-
-   double max_extent = extents[ 0 ] = plots[ 0 ]->axisWidget( QwtPlot::yLeft )->scaleDraw()->extent( plots[ 0 ]->axisWidget( QwtPlot::yLeft )->font() );
-
-   if ( scale_x_to_first ) {
-      // tso << "align_plot_extents also scale x\n";
-      const QwtScaleDiv scaleDiv = plots[ 0 ]->axisScaleDiv( QwtPlot::xBottom );
-      
-      // tso << QString( "scaleDiv->lowerBound %1 ->upperBound() %2\n" )
-      //    .arg( scaleDiv.lowerBound() )
-      //    .arg( scaleDiv.upperBound() )
-      //    ;
-
-      for ( int i = 1; i < size; ++i ) {
-         extents[ i ] = plots[ i ]->axisWidget( QwtPlot::yLeft )->scaleDraw()->extent( plots[ i ]->axisWidget( QwtPlot::yLeft )->font() );
-         if ( max_extent < extents[ i ] ) {
-            max_extent = extents[ i ];
-         }
-      }
-
-      for ( int i = 0; i < size; ++i ) {
-         plots[ i ]->axisWidget( QwtPlot::yLeft )->scaleDraw()->setMinimumExtent( max_extent );
-         plots[ i ]->setAxisScaleDiv( QwtPlot::xBottom, scaleDiv );
-         plots[ i ]->replot();
-      }
-   } else {
-      for ( int i = 1; i < size; ++i ) {
-         extents[ i ] = plots[ i ]->axisWidget( QwtPlot::yLeft )->scaleDraw()->extent( plots[ i ]->axisWidget( QwtPlot::yLeft )->font() );
-         if ( max_extent < extents[ i ] ) {
-            max_extent = extents[ i ];
-         }
-      }
-
-      for ( int i = 0; i < size; ++i ) {
-         if ( extents[ i ] < max_extent ) {
-            plots[ i ]->axisWidget( QwtPlot::yLeft )->scaleDraw()->setMinimumExtent( max_extent );
-            plots[ i ]->updateLayout();
-         }
-      }
-   }      
-}
-
 void US_Hydrodyn_Saxs_Hplc::plot_debug() {
 
    QTextStream tso( stdout );
@@ -3259,8 +3208,6 @@ void US_Hydrodyn_Saxs_Hplc::plot_debug() {
                                   );
       }
    }
-
-   // align_plot_extents( { plot_dist, plot_errors } );
 }
    
 void US_Hydrodyn_Saxs_Hplc::pp() 

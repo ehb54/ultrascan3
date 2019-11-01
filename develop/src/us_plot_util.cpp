@@ -43,7 +43,7 @@ bool US_Plot_Util::printtofile( QString basename,
             vector < double > tmp_x;
             vector < double > tmp_y;
 
-            for ( int i = 0; i < curve->dataSize(); ++i )
+            for ( int i = 0; i < (int) curve->dataSize(); ++i )
             {
             // ts << QString( "%1 %2\n" )
             //    .arg( it->second->curve( ck )->x( i ) )
@@ -396,3 +396,53 @@ void US_Plot_Util::plotinfo(
 #endif
 }
 
+void US_Plot_Util::align_plot_extents( const vector < QwtPlot * > & plots, bool scale_x_to_first ) {
+   // QTextStream tso( stdout );
+   // tso << "align_plot_extents\n";
+
+   int size = (int) plots.size();
+   if ( size <= 1 ) {
+      return;
+   }
+
+   vector < double > extents( plots.size() );
+
+   double max_extent = extents[ 0 ] = plots[ 0 ]->axisWidget( QwtPlot::yLeft )->scaleDraw()->extent( plots[ 0 ]->axisWidget( QwtPlot::yLeft )->font() );
+
+   if ( scale_x_to_first ) {
+      // tso << "align_plot_extents also scale x\n";
+      const QwtScaleDiv scaleDiv = plots[ 0 ]->axisScaleDiv( QwtPlot::xBottom );
+      
+      // tso << QString( "scaleDiv->lowerBound %1 ->upperBound() %2\n" )
+      //    .arg( scaleDiv.lowerBound() )
+      //    .arg( scaleDiv.upperBound() )
+      //    ;
+
+      for ( int i = 1; i < size; ++i ) {
+         extents[ i ] = plots[ i ]->axisWidget( QwtPlot::yLeft )->scaleDraw()->extent( plots[ i ]->axisWidget( QwtPlot::yLeft )->font() );
+         if ( max_extent < extents[ i ] ) {
+            max_extent = extents[ i ];
+         }
+      }
+
+      for ( int i = 0; i < size; ++i ) {
+         plots[ i ]->axisWidget( QwtPlot::yLeft )->scaleDraw()->setMinimumExtent( max_extent );
+         plots[ i ]->setAxisScaleDiv( QwtPlot::xBottom, scaleDiv );
+         plots[ i ]->replot();
+      }
+   } else {
+      for ( int i = 1; i < size; ++i ) {
+         extents[ i ] = plots[ i ]->axisWidget( QwtPlot::yLeft )->scaleDraw()->extent( plots[ i ]->axisWidget( QwtPlot::yLeft )->font() );
+         if ( max_extent < extents[ i ] ) {
+            max_extent = extents[ i ];
+         }
+      }
+
+      for ( int i = 0; i < size; ++i ) {
+         if ( extents[ i ] < max_extent ) {
+            plots[ i ]->axisWidget( QwtPlot::yLeft )->scaleDraw()->setMinimumExtent( max_extent );
+            plots[ i ]->updateLayout();
+         }
+      }
+   }      
+}

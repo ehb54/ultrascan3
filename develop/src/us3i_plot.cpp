@@ -345,6 +345,39 @@ void US_Plot::quit( void )
 }
 */
 
+void US_Plot::scaleDivChangedXSlot()
+{
+   QwtPlot* plt = static_cast<QwtPlot*>((sender())->parent());
+   // qDebug() << "US_Plot::scaleDivChangedXSlot(): sender " << plt->objectName() << " receiver " << plot->objectName();
+   QwtInterval  intv = plt->axisInterval (QwtPlot::xBottom);
+   plot->setAxisScale(QwtPlot::xBottom, intv.minValue(), intv.maxValue());
+   // intv = plt->axisInterval (QwtPlot::yLeft);
+   // plot->setAxisScale(QwtPlot::yLeft, intv.minValue(), intv.maxValue());
+   plot->replot();
+}
+
+void US_Plot::scaleDivChangedYSlot()
+{
+   QwtPlot* plt = static_cast<QwtPlot*>((sender())->parent());
+   // qDebug() << "US_Plot::scaleDivChangedYSlot(): sender " << plt->objectName() << " receiver " << plot->objectName();
+   // QwtInterval  intv = plt->axisInterval (QwtPlot::xBottom);
+   // plot->setAxisScale(QwtPlot::xBottom, intv.minValue(), intv.maxValue());
+   QwtInterval intv = plt->axisInterval (QwtPlot::yLeft);
+   plot->setAxisScale(QwtPlot::yLeft, intv.minValue(), intv.maxValue());
+   plot->replot();
+}
+
+void US_Plot::scaleDivChangedSlot()
+{
+   QwtPlot* plt = static_cast<QwtPlot*>((sender())->parent());
+   // qDebug() << "US_Plot::scaleDivChangedSlot(): sender " << plt->objectName() << " receiver " << plot->objectName();
+   QwtInterval  intv = plt->axisInterval (QwtPlot::xBottom);
+   plot->setAxisScale(QwtPlot::xBottom, intv.minValue(), intv.maxValue());
+   intv = plt->axisInterval (QwtPlot::yLeft);
+   plot->setAxisScale(QwtPlot::yLeft, intv.minValue(), intv.maxValue());
+   plot->replot();
+}
+
 ////////////////////////////////////////
 
 US_PlotPushbutton::US_PlotPushbutton( const QString& labelString, 
@@ -2208,3 +2241,4 @@ void US_PlotChoices::config()
    usp->config();
    close();
 }
+

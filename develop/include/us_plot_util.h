@@ -8,9 +8,10 @@
 #include "us_vector.h"
 #include <qwt_plot.h>
 #include "us3i_plot.h"
-#if QT_VERSION >= 0x040000
-# include <qwt_plot_curve.h>
-#endif
+
+#include <qwt_plot_curve.h>
+#include <qwt_scale_widget.h>
+#include <qwt_scale_draw.h>
 
 using namespace std;
 #ifdef WIN32
@@ -32,6 +33,10 @@ class US_EXTERN US_Plot_Util
                         QString  name,
                         QwtPlot * plot
                         );
+   static void align_plot_extents(
+                                  const vector < QwtPlot * > & plots,
+                                  bool scale_x_to_first = false
+                                  );
 };
 
 #ifdef WIN32

@@ -578,7 +578,10 @@ void US_Hydrodyn_Saxs_Hplc::errors()
 {
    if ( current_mode == MODE_GUINIER )
    {
-      align_plot_extents( { guinier_plot, guinier_plot_errors } );
+      US_Plot_Util::align_plot_extents( { guinier_plot, guinier_plot_errors } );
+      connect(((QObject*)guinier_plot       ->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_guinier_plot_errors , SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
+      connect(((QObject*)guinier_plot_errors->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_guinier_plot        , SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
+
       ShowHide::hide_widgets( guinier_errors_widgets, guinier_plot_errors->isVisible() );
       return;
    }
@@ -588,7 +591,9 @@ void US_Hydrodyn_Saxs_Hplc::errors()
       hide_widgets( plot_errors_widgets, true );
    } else {
 
-      align_plot_extents( { plot_dist, plot_errors }, true );
+      US_Plot_Util::align_plot_extents( { plot_dist, plot_errors } );
+      connect(((QObject*)plot_dist  ->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_plot_errors, SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
+      connect(((QObject*)plot_errors->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_plot_dist  , SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
       
       switch( current_mode )
       {

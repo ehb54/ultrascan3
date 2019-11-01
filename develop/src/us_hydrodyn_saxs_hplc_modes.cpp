@@ -1814,7 +1814,10 @@ void US_Hydrodyn_Saxs_Hplc::guinier_plot_rg_toggle()
    {
       ShowHide::hide_widgets( guinier_rg_widgets );
    } else {
-      align_plot_extents( { guinier_plot_rg, guinier_plot_mw } );
+      US_Plot_Util::align_plot_extents( { guinier_plot_rg, guinier_plot_mw } );
+      connect(((QObject*)guinier_plot_rg->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_guinier_plot_mw, SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
+      connect(((QObject*)guinier_plot_mw->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_guinier_plot_rg, SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
+
       ShowHide::hide_widgets( guinier_rg_widgets, false );
    }
 }
@@ -1825,7 +1828,10 @@ void US_Hydrodyn_Saxs_Hplc::guinier_plot_mw_toggle()
    {
       ShowHide::hide_widgets( guinier_mw_widgets );
    } else {
-      align_plot_extents( { guinier_plot_rg, guinier_plot_mw } );
+      US_Plot_Util::align_plot_extents( { guinier_plot_rg, guinier_plot_mw } );
+      connect(((QObject*)guinier_plot_rg->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_guinier_plot_mw, SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
+      connect(((QObject*)guinier_plot_mw->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_guinier_plot_rg, SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
+
       ShowHide::hide_widgets( guinier_mw_widgets, false );
    }
 }

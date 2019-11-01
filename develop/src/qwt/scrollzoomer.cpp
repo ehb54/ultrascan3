@@ -6,6 +6,8 @@
 #include "../../include/qwt/scrollbar.h"
 #include "../../include/qwt/scrollzoomer.h"
 
+#define ZOOM_NO_SCROLLBARS
+
 class ScrollData
 {
 public:
@@ -38,6 +40,17 @@ ScrollZoomer::ScrollZoomer( QWidget *canvas ):
 
     if ( !canvas )
         return;
+
+    setTrackerMode( AlwaysOn );
+
+    setMousePattern( QwtEventPattern::MouseSelect2,
+        Qt::RightButton, Qt::ControlModifier );
+    setMousePattern( QwtEventPattern::MouseSelect3,
+        Qt::RightButton );
+
+    panner = new QwtPlotPanner( canvas );
+    panner->setAxisEnabled( QwtPlot::yRight, false );
+    panner->setMouseButton( Qt::MidButton );
 
     d_hScrollData = new ScrollData;
     d_vScrollData = new ScrollData;
@@ -250,6 +263,9 @@ bool ScrollZoomer::eventFilter( QObject *object, QEvent *event )
 
 bool ScrollZoomer::needScrollBar( Qt::Orientation orientation ) const
 {
+#if defined(ZOOM_NO_SCROLLBARS)
+   return false;
+#endif
     Qt::ScrollBarPolicy mode;
     double zoomMin, zoomMax, baseMin, baseMax;
 

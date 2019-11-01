@@ -1479,6 +1479,9 @@ void US_Hydrodyn_Saxs::set_resid_show()
 {
    if ( cb_resid_show->isChecked() )
    {
+      US_Plot_Util::align_plot_extents( { plot_saxs, plot_resid } );
+      connect(((QObject*)plot_saxs ->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_plot_resid, SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
+      connect(((QObject*)plot_resid->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_plot_saxs , SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
       hide_widgets( resid_widgets, false );
       if ( !started_in_expert_mode ||
            plotted_q.size() != 1 )

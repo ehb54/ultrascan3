@@ -3,6 +3,7 @@
 
 #include <qglobal.h>
 #include <qwt_plot_zoomer.h>
+#include <qwt_plot_panner.h>
 #include <qwt_plot.h>
 
 class ScrollData;
@@ -59,6 +60,8 @@ private:
 
     ScrollData *d_hScrollData;
     ScrollData *d_vScrollData;
+
+    QwtPlotPanner *panner;
 
     bool d_inZoom;
     bool d_alignCanvasToScales[ QwtPlot::axisCnt ];

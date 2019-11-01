@@ -82,6 +82,10 @@ class US_EXTERN US_Plot : public QHBoxLayout
       void svg   ( void );
       void png   ( void );
       void config( void );
+
+      void scaleDivChangedXSlot();
+      void scaleDivChangedYSlot();
+      void scaleDivChangedSlot();
 };
 
 //! \brief A specialized push button class for US_Plot to automatically
