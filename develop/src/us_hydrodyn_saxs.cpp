@@ -2088,10 +2088,8 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    QVBoxLayout * vbl = new QVBoxLayout(0); vbl->setContentsMargins( 0, 0, 0, 0 ); vbl->setSpacing( 0 );
    vbl->addWidget(plot_saxs);
-   // vbl->addSpacing(4);
-   vbl->addWidget(plot_pr);
-   // vbl->addSpacing(4);
    vbl->addLayout(l_plot_resid);
+   vbl->addWidget(plot_pr);
    vbl->addWidget(lbl_core_progress);
    background->addLayout( vbl , 0 , 2 , 1 + ( j ) - ( 0 ) , 1 + ( 2 ) - ( 2 ) );
 

@@ -2203,6 +2203,71 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    connect( guinier_plot->canvas(), SIGNAL( mouseReleased( const QMouseEvent & ) ), SLOT( plot_mouse(  const QMouseEvent & ) ) );
 #endif
 
+//   guinier_plot_errors = new QwtPlot( qs );
+   usp_guinier_plot_errors = new US_Plot( guinier_plot_errors, "", "", "", qs );
+   connect( (QWidget *)guinier_plot_errors->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_guinier_plot_errors( const QPoint & ) ) );
+   ((QWidget *)guinier_plot_errors->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)guinier_plot_errors->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_guinier_plot_errors( const QPoint & ) ) );
+   ((QWidget *)guinier_plot_errors->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)guinier_plot_errors->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_guinier_plot_errors( const QPoint & ) ) );
+   ((QWidget *)guinier_plot_errors->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   plot_info[ "HPLC SAXS Guinier Errors" ] = guinier_plot_errors;
+#if QT_VERSION < 0x040000
+   guinier_plot_errors->enableGridXMin();
+   guinier_plot_errors->enableGridYMin();
+#else
+   guinier_plot_errors_grid = new QwtPlotGrid;
+   guinier_plot_errors_grid->enableXMin( true );
+   guinier_plot_errors_grid->enableYMin( true );
+#endif
+   guinier_plot_errors->setPalette( PALET_NORMAL );
+   AUTFBACK( guinier_plot_errors );
+#if QT_VERSION < 0x040000
+   guinier_plot_errors->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
+   guinier_plot_errors->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
+#else
+   guinier_plot_errors_grid->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   guinier_plot_errors_grid->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   guinier_plot_errors_grid->attach( guinier_plot_errors );
+#endif
+   guinier_plot_errors->setAxisTitle(QwtPlot::xBottom, us_tr( "q^2 [1/Angstrom^2]" ) );
+   guinier_plot_errors->setAxisTitle(QwtPlot::yLeft, us_tr("Intensity [a.u.] (log scale)"));
+#if QT_VERSION < 0x040000
+   guinier_plot_errors->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
+   guinier_plot_errors->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+#endif
+   guinier_plot_errors->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+#if QT_VERSION < 0x040000
+   guinier_plot_errors->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+#endif
+   guinier_plot_errors->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+#if QT_VERSION < 0x040000
+   guinier_plot_errors->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+#endif
+   guinier_plot_errors->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+//    guinier_plot_errors->setMargin(USglobal->config_list.margin);
+   guinier_plot_errors->setTitle("");
+#if QT_VERSION < 0x040000
+   guinier_plot_errors->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
+#else
+   guinier_plot_errors->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
+#endif
+   guinier_plot_errors->setCanvasBackground(USglobal->global_colors.plot);
+
+#if QT_VERSION < 0x040000
+   guinier_plot_errors->setAutoLegend( false );
+   guinier_plot_errors->setLegendFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
+#else
+   // {
+   //    QwtLegend* legend_pd = new QwtLegend;
+   //    legend_pd->setFrameStyle( QFrame::Box | QFrame::Sunken );
+   //    guinier_plot_errors->insertLegend( legend_pd, QwtPlot::BottomLegend );
+   // }
+#endif
+#if QT_VERSION < 0x040000
+   connect( guinier_plot_errors->canvas(), SIGNAL( mouseReleased( const QMouseEvent & ) ), SLOT( plot_mouse(  const QMouseEvent & ) ) );
+#endif
+
 //   guinier_plot_rg = new QwtPlot( qs );
    usp_guinier_plot_rg = new US_Plot( guinier_plot_rg, "", "", "", qs );
    connect( (QWidget *)guinier_plot_rg->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_guinier_plot_rg( const QPoint & ) ) );
@@ -2485,70 +2550,6 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_guinier_mw_replot->setEnabled( true );
    connect(pb_guinier_mw_replot, SIGNAL(clicked()), SLOT(guinier_replot()));
 
-//   guinier_plot_errors = new QwtPlot( qs );
-   usp_guinier_plot_errors = new US_Plot( guinier_plot_errors, "", "", "", qs );
-   connect( (QWidget *)guinier_plot_errors->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_guinier_plot_errors( const QPoint & ) ) );
-   ((QWidget *)guinier_plot_errors->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
-   connect( (QWidget *)guinier_plot_errors->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_guinier_plot_errors( const QPoint & ) ) );
-   ((QWidget *)guinier_plot_errors->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
-   connect( (QWidget *)guinier_plot_errors->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_guinier_plot_errors( const QPoint & ) ) );
-   ((QWidget *)guinier_plot_errors->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
-   plot_info[ "HPLC SAXS Guinier Errors" ] = guinier_plot_errors;
-#if QT_VERSION < 0x040000
-   guinier_plot_errors->enableGridXMin();
-   guinier_plot_errors->enableGridYMin();
-#else
-   guinier_plot_errors_grid = new QwtPlotGrid;
-   guinier_plot_errors_grid->enableXMin( true );
-   guinier_plot_errors_grid->enableYMin( true );
-#endif
-   guinier_plot_errors->setPalette( PALET_NORMAL );
-   AUTFBACK( guinier_plot_errors );
-#if QT_VERSION < 0x040000
-   guinier_plot_errors->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
-   guinier_plot_errors->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
-#else
-   guinier_plot_errors_grid->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
-   guinier_plot_errors_grid->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
-   guinier_plot_errors_grid->attach( guinier_plot_errors );
-#endif
-   guinier_plot_errors->setAxisTitle(QwtPlot::xBottom, us_tr( "q^2 [1/Angstrom^2]" ) );
-   guinier_plot_errors->setAxisTitle(QwtPlot::yLeft, us_tr("Intensity [a.u.] (log scale)"));
-#if QT_VERSION < 0x040000
-   guinier_plot_errors->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
-   guinier_plot_errors->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
-   guinier_plot_errors->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#if QT_VERSION < 0x040000
-   guinier_plot_errors->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
-   guinier_plot_errors->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#if QT_VERSION < 0x040000
-   guinier_plot_errors->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
-   guinier_plot_errors->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-//    guinier_plot_errors->setMargin(USglobal->config_list.margin);
-   guinier_plot_errors->setTitle("");
-#if QT_VERSION < 0x040000
-   guinier_plot_errors->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
-#else
-   guinier_plot_errors->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
-#endif
-   guinier_plot_errors->setCanvasBackground(USglobal->global_colors.plot);
-
-#if QT_VERSION < 0x040000
-   guinier_plot_errors->setAutoLegend( false );
-   guinier_plot_errors->setLegendFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
-#else
-   // {
-   //    QwtLegend* legend_pd = new QwtLegend;
-   //    legend_pd->setFrameStyle( QFrame::Box | QFrame::Sunken );
-   //    guinier_plot_errors->insertLegend( legend_pd, QwtPlot::BottomLegend );
-   // }
-#endif
-#if QT_VERSION < 0x040000
-   connect( guinier_plot_errors->canvas(), SIGNAL( mouseReleased( const QMouseEvent & ) ), SLOT( plot_mouse(  const QMouseEvent & ) ) );
-#endif
 
    // rgc mode
 
@@ -3555,7 +3556,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       hbl->addWidget( pb_guinier_mw_replot );
       vbl_guinier->addLayout( hbl );
    }      
-      
+
    {
       QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
       hbl->addWidget( cb_guinier_scroll );

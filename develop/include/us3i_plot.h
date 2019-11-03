@@ -60,6 +60,13 @@ class US_EXTERN US_Plot : public QHBoxLayout
       //! Make access to the zoom button public
       QToolButton* btnZoom;
 
+      enum plot_rescale_mode {
+         MODE_NO_SCALE,
+         MODE_RESID,
+         MODE_IQ,
+         MODE_GAUSSIAN,
+      };
+
    signals:
       //! \brief A signal that provides the bounding rectangle of a zoomed area
 #if QT_VERSION < 0x050000
