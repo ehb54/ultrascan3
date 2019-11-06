@@ -37,18 +37,21 @@ QStringList US_Crypto::encrypt( const QString& plain_text, const QString& pw )
    QByteArray plain_ba   = plaintext.toLatin1();
    uchar*     plain_ptr  = (uchar*)plain_ba.data();
 
-   EVP_CIPHER_CTX ctx;
+  // EVP_CIPHER_CTX ctx;
+   EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
    uchar          out[ 100 ];   // Assume the plaintext is < 99 characters
    int            out_length;
    int            final_length;
 
-   EVP_EncryptInit  ( &ctx, EVP_aes_128_cbc(), key, iv_ptr );
-   EVP_EncryptUpdate( &ctx, out, &out_length, plain_ptr, plaintext.size() );
-   EVP_EncryptFinal ( &ctx, &out[ out_length ], &final_length );
+   EVP_EncryptInit  ( ctx, EVP_aes_128_cbc(), key, iv_ptr );
+   EVP_EncryptUpdate( ctx, out, &out_length, plain_ptr, plaintext.size() );
+   EVP_EncryptFinal ( ctx, &out[ out_length ], &final_length );
 
    int c_size = out_length + final_length;
 
    QByteArray cipher_ba = QByteArray( (const char*)out, c_size );
+
+   EVP_CIPHER_CTX_free(ctx); 
 
    result << cipher_ba.toHex() << iv_ba.toHex();
 
@@ -76,13 +79,15 @@ QString US_Crypto::decrypt( const QString& ciphertext, const QString& pw,
    uchar          final [ 100 ];
 
    int            ol;
-   EVP_CIPHER_CTX ctx;
+   //EVP_CIPHER_CTX ctx;
+   EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
 
-   EVP_DecryptInit  ( &ctx, EVP_aes_128_cbc(), key, iv_ptr );
-   EVP_DecryptUpdate( &ctx, out, &ol, cipher_ptr, cipher_ba.size() );
-   EVP_DecryptFinal ( &ctx, final, &ol );
+   EVP_DecryptInit  ( ctx, EVP_aes_128_cbc(), key, iv_ptr );
+   EVP_DecryptUpdate( ctx, out, &ol, cipher_ptr, cipher_ba.size() );
+   EVP_DecryptFinal ( ctx, final, &ol );
 
    QByteArray final_ba( (char*)final, ol );
+   EVP_CIPHER_CTX_free(ctx); 
 
    return final_ba;
 }
