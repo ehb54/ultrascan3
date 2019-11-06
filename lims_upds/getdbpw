@@ -1,0 +1,5 @@
+#!/bin/bash
+#	getdbpw
+ 
+read -s -p "Password: " PASSW
+export PASSW

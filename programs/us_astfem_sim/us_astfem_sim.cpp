@@ -415,8 +415,10 @@ DbgLv(1) << "==SimPar:MAIN:SetP";
    sim_data_all.channel     = 'S';
    sim_data_all.description = "Simulation";
 
-   int points    = qRound( ( simparams.bottom - simparams.meniscus ) /
-                             simparams.radial_resolution ) + 1;
+//   int points    = qRound( ( simparams.bottom - simparams.meniscus ) /
+//                             simparams.radial_resolution ) + 1;
+   int points    = qCeil( ( simparams.bottom - simparams.meniscus ) /
+                            simparams.radial_resolution ) + 1;
 
    sim_data_all.xvalues.resize( points ); // Sets the size of radial grid points array
 
@@ -428,9 +430,9 @@ DbgLv(1) << "==SimPar:MAIN:SetP";
 DbgLv(1) << "SimPar:MAIN:SetP:  points" << points << "rad0 radn"
  << sim_data_all.xvalues[0] << sim_data_all.xvalues[points-1];
 
-   sim_data_all.xvalues[ points - 1 ] = simparams.bottom;
-DbgLv(1) << "SimPar:MAIN:SetP:  points" << points << "rad0 radn"
- << sim_data_all.xvalues[0] << sim_data_all.xvalues[points-1];
+//   sim_data_all.xvalues[ points - 1 ] = simparams.bottom;
+//DbgLv(1) << "SimPar:MAIN:SetP:  points" << points << "rad0 radn"
+// << sim_data_all.xvalues[0] << sim_data_all.xvalues[points-1];
 
    // Fill in speed steps with scan times and omega^2t; build raw data
    double time0   = 0.0;
@@ -633,8 +635,10 @@ DbgLv(1) << "start_simulation is called" << af_params.current_meniscus << af_par
  << "step=" << jd << simparams.speed_step[jd].rotorspeed;
 
       // Number of radial grid points on the experimental grid; number of scans
-      int points = qRound( ( af_params.current_bottom - af_params.current_meniscus ) /
-                            simparams.radial_resolution ) + 1;
+//      int points = qRound( ( af_params.current_bottom - af_params.current_meniscus ) /
+//                            simparams.radial_resolution ) + 1;
+      int points = qCeil( ( af_params.current_bottom - af_params.current_meniscus ) /
+                          simparams.radial_resolution ) + 1;
       int nscans = simparams.speed_step[ jd ].scans;
 
       sim_datas[ jd ].xvalues.resize( points ); // Sets the size of radial grid points array
@@ -647,7 +651,7 @@ DbgLv(1) << "start_simulation is called" << af_params.current_meniscus << af_par
       }
 DbgLv(1) << "astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[jd].xvalues[points-1]
  << af_params.current_meniscus << af_params.current_bottom << jd;
-      sim_datas[ jd ].xvalues[ points - 1 ] = af_params.current_bottom;
+//      sim_datas[ jd ].xvalues[ points - 1 ] = af_params.current_bottom;
 
       // Set the total size of scans for simulation
       sim_datas[ jd ].scanData.resize( nscans );
@@ -858,8 +862,10 @@ DbgLv(1) << "first_last_data for the step" << sp->time_first << sp->time_last
          sim_data_all.scanData[ js ].rvalues.fill( 0.0, kpoint );
 
       // Set the radius values in data sets
-      int points          = qRound( ( simparams.bottom - simparams.meniscus ) /
-                                  simparams.radial_resolution ) + 1;
+//      int points          = qRound( ( simparams.bottom - simparams.meniscus ) /
+//                                  simparams.radial_resolution ) + 1;
+      int points          = qCeil( ( simparams.bottom - simparams.meniscus ) /
+                                   simparams.radial_resolution ) + 1;
       for ( int jd = 0; jd < nstep; jd++ )
       {  // Set radius values for current speed's dataset
          double stretch_fac  = stretch( simparams.rotorcoeffs,
