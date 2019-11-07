@@ -4,11 +4,11 @@
 . ~us3/lims/database/getdbpw
 echo ""
 LOGIN="-u root -p$PASSW"
-cd ~us3/lims/database
+cd ~us3/lims/database/lims_upds
 ##for db in `cat dblist.txt`
 ##for db in `cat dblist_upds.txt`
 
-for db in `cat dblist.txt`
+for db in `cat ../dblist.txt`
 do
  echo "Updating $db"
  mysql $LOGIN $db < ./update_lev4_people.sql
