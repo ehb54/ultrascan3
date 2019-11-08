@@ -1,3 +1,5 @@
+# Generic files we should probably ignore 
+
 local.pri
 .*
 !/.gitignore
@@ -5,7 +7,10 @@ local.pri
 tmp/
 moc/
 obj/
-Makefile
+Makefile*
+
+# primarily ultrscan stuff
+
 qwtplot3d/
 bin/
 lib/
@@ -13,3 +18,9 @@ build.log
 gui/qrc_images.cpp
 /programs/us/us_revision.h
 
+# primarily somo stuff 
+
+bin64/
+us_somo/develop/include/us_version.h
+us_somo/develop/us_saxs_cmds_t/moc_predefs.h
+us_somo/develop/us_saxs_cmds_t/moc_us_cmdline_app.cpp

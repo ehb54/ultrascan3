@@ -8,12 +8,6 @@
 # DEBUGORRELEASE = debug
 DEBUGORRELEASE = release
 
-# path of US3 source base
-US3PATH       = 
-
-# path of US3_SOMO source base
-US3SOMOPATH   = 
-
 # path of the QT 
 QTPATH        = 
 QWTPATH       = 
@@ -27,6 +21,12 @@ QWT3DPATH     = $$US3PATH/qwtplot3d
 QWT3DLIBNAME  = 
 
 # ---- probably should not be changed
+
+# path of US3 source base
+US3PATH       = $$PWD/../.. 
+
+# path of US3_SOMO source base
+US3SOMOPATH   = $$PWD/..
 
 count( QWT3DLIBNAME, 0 ) {
    QWT3DLIBNAME = qwtplot3d
