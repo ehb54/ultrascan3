@@ -1,0 +1,15 @@
+local.pri
+.*
+!/.gitignore
+*.o
+tmp/
+moc/
+obj/
+Makefile
+qwtplot3d/
+bin/
+lib/
+build.log
+gui/qrc_images.cpp
+/programs/us/us_revision.h
+
