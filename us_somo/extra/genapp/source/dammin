@@ -1,0 +1,32 @@
+prefix     US_SAS_
+name       dammin
+helpprefix somo_
+title      "US-SOMO: DAMMIN interface"
+credit     "Svergun et al."
+include    us_util.h
+include    us_hydrodyn.h
+input      US_Hydrodyn * us_hydrodyn
+input      double dmax
+input      map < QString, QString > parameters
+_variables
+input double .7f 0 1e7 dmax "Dmax" "Maximum expected particle diameter"
+map   double .7f 0 1e7 wild "wild" "Wild value"
+# input bool - - - forceprzero "ForcePrZero" "Force P(r) to be zero" 
+_end
+_elements
+variable    dmax
+row
+variable    wild
+row
+editor      edit
+row
+button      save
+button      load
+row
+button      start     "this is my crazy start lablel"
+progress    progress
+button      stop
+row
+_end
+template    standard.h
+template    standard.cpp

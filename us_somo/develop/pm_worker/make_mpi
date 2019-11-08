@@ -1,0 +1,35 @@
+CC      = mpicxx
+# vlinux:
+CFLAGS  = -O2 -ffast-math -ftree-vectorize
+# i7:
+# CFLAGS  = -O2 -march=native -ffast-math -ftree-vectorize
+LDFLAGS = 
+
+all: pm_worker
+
+pm_worker: pm_worker_main.o pm_worker.o pm_worker_objects.o pm_worker_fitness.o shs_use.o us_sh.o
+	$(CC) -o $@ $^ $(LDFLAGS) $(CFLAGS)
+
+pm_worker.o: pm_worker.cpp pm_worker.h ../include/us_pm_mpi.h 
+	$(CC) -c $(CFLAGS) $<
+
+pm_worker_main.o: pm_worker_main.cpp pm_worker.h ../include/us_pm_mpi.h 
+	$(CC) -c $(CFLAGS) $<
+
+pm_worker_objects.o: pm_worker_objects.cpp pm_worker.h
+	$(CC) -c $(CFLAGS) $<
+
+pm_worker_fitness.o: pm_worker_fitness.cpp pm_worker.h ../shd_mpi/shs_use.h
+	$(CC) -c $(CFLAGS) $<
+
+us_sh.o: ../src/us_sh.cpp ../include/us_sh.h ../shd_mpi/shs_use.h
+	$(CC) -c $(CFLAGS) $<
+
+shs_use.o: ../shd_mpi/shs_use.cpp ../shd_mpi/shs_use.h ../shd_mpi/shs_data.h
+	$(CC) -c $(CFLAGS) $<
+
+clean:
+	rm *.o
+
+cleanest: clean
+	rm pm_worker

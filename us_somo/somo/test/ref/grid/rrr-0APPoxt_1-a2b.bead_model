@@ -1,0 +1,66 @@
+10	0.753
+3.1494	7.0506	26.9125	3.0837	97.13	8	RES.SC.A.	165.5977
+7.2230	14.9945	12.2369	1.3216	16.02	8	RES.SC.A.	36.5019
+4.5064	10.5705	21.7362	3.3214	17.01	8	RES.SC.A.	247.3186
+7.9433	16.9187	13.1146	0.9126	28.06	8	RES.SC.A.	29.6291
+8.3562	15.6169	16.7671	1.9163	28.01	8	RES.SC.A.	109.4323
+16.2706	15.7083	36.3427	0.2621	14.01	8	RES.SC.A.	0.1828
+15.0004	15.1381	35.9987	1.0499	13.02	8	RES.SC.A.	31.3997
+14.0431	16.9799	36.4297	1.0701	28.01	8	RES.SC.A.	54.8646
+17.3098	15.6568	34.7495	0.7330	28.06	8	RES.SC.A.	36.9258
+16.9116	15.5216	36.6283	0.4641	14.03	8	RES.SC.A.	13.9372
+
+Bead Model Output:
+  Sequence:                   as in original PDB file
+
+Grid model built with the following options:
+ASA Calculation:
+  Perform ASA Calculation:    On
+  Recheck Bead ASA:           On
+  ASA Method:                 Rolling Sphere
+  ASA Probe Radius (A):       1.40
+  Probe Recheck Radius (A):   1.40
+  Grid ASA Threshold (A^2):   10.0
+  Grid Bead ASA Threshold %:  30.0
+  ASAB1 Step Size (A):        1.0
+
+Grid Functions (AtoB):
+  Computations Relative to:             Center of Cubelet
+  Cube Side (Angstrom):                 5.0
+  Apply Cubic Grid:                     On
+  Add theoretical hydration (PDB only): On
+  Expand Beads to Tangency:             Off
+  Enable ASA options:                   On
+
+Grid (AtoB) Overlap Reduction:
+  Bead Overlap Tolerance:     0.001000
+    Exposed beads:
+      Fuse Beads:                                 Off
+      Fuse Beads that overlap by more than:       0.0
+      Remove Overlaps:                            On
+      Remove Overlaps synchronously:              Off
+      Synchronous Overlap Reduction Step Size %:  1.0
+      Remove Overlaps hierarchically:             On
+      Hierarchical Overlap Reduction Step Size %: 1.0
+      Outward Translation:                        On
+
+    Buried beads:
+      Fuse Beads:                                 Off
+      Fuse Beads that overlap by more than:       0.0
+      Remove Overlaps:                            On
+      Remove Overlaps synchronously:              Off
+      Synchronous Overlap Reduction Step Size %:  1.0
+      Remove Overlaps hierarchically:             On
+      Hierarchical Overlap Reduction Step Size %: 1.0
+
+    Grid beads:
+      Fuse Beads:                                 Off
+      Fuse Beads that overlap by more than:       0.0
+      Remove Overlaps:                            On
+      Remove Overlaps synchronously:              Off
+      Synchronous Overlap Reduction Step Size %:  1.0
+      Remove Overlaps hierarchically:             On
+      Hierarchical Overlap Reduction Step Size %: 1.0
+
+Miscellaneous options:
+  Calculate vbar                 On

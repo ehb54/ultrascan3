@@ -1,0 +1,16 @@
+prefix     US_Hydrodyn_
+title      "US-SOMO: SAXS HPLC : Plot 3D"
+name       saxs_hplc_p3d
+include    us_hydrodyn_saxs_hplc.h
+input      void                     * us_hydrodyn_saxs_hplc
+input      map < QString, QString > * parameters
+_variables
+# notes:
+# we should add a processing section
+# checkboxes
+# readonly variables
+_end
+_elements
+_end
+template dialog.h
+template dialog.cpp

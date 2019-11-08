@@ -1,0 +1,65 @@
+cluster by backbone rmsd differences
+for each group determine pairwise rmsd distances of backbone of all atoms (resno's should be ok now).
+any pair within a threshold should be clustered
+then find lowest haddock score of group
+
+cluster:
+python /src/rmsd-master/calculate_rmsd.py try10_1-B.xyz try10_1-B.xyz 
+
+https://github.com/charnley/rmsd for calculate_rmsd.py
+
+to isolate chains:
+doublemods.pl 
+ -> calls splittochains.pl
+stripto1.pl 
+ -> finds closest tgfb
+cluster.pl
+ -> creates outputfile cluster_res.txt 
+
+
+batch run
+
+perl /haddock/bin/cluster.pl try10/1       2>&1 > /haddock/tmp/log10_1  &
+perl /haddock/bin/cluster.pl try10/1/water 2>&1 > /haddock/tmp/log10_1w &
+perl /haddock/bin/cluster.pl try11/1       2>&1 > /haddock/tmp/log11_1  &
+perl /haddock/bin/cluster.pl try11/1/water 2>&1 > /haddock/tmp/log11_1w &
+perl /haddock/bin/cluster.pl try12/1       2>&1 > /haddock/tmp/log12_1  &
+perl /haddock/bin/cluster.pl try12/1/water 2>&1 > /haddock/tmp/log12_1w &
+perl /haddock/bin/cluster.pl try13/1       2>&1 > /haddock/tmp/log13_1  &
+perl /haddock/bin/cluster.pl try13/1/water 2>&1 > /haddock/tmp/log13_1w &
+
+about 38/minute
+
+on tg457210@stampede $SCRATCH/testx
+
+
+find pairs of results in each group that are below a threshold ... cluster together
+
+structures within threshold distance gets joined to a cluster and
+
+clusterdo.pl
+
+bring in haddock score and report cluster statistics of haddock score
+e.g.:
+/haddock/bin/clusterdo.pl 2 try1?/1/{,water/}cluster_res.txt
+
+structures_haddock-sorted.stat 
+file.nam_haddock-score
+
+make haddock-score / cat all the file.nam_haddock-score files
+
+for each cluster: get the scores, get min & avg scores, rank the clusters by min haddock score
+
+/haddock/bin/clusterdom.pl 1 10 .5 try1?/1/{,water/}cluster_res.txt
+
+
+summary info
+
+basedir:threshold 
+threshold 
+
+number of clusters, number of pdb's clustered, avg cluster size
+
+
+|| run || RMSD threshold || total pdbs clustered || number of clusters ||avg cluster size || max cluster size || results in ||
+

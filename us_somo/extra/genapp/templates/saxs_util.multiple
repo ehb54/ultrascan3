@@ -1,0 +1,13 @@
+// --------- insert into us_saxs_util_iqq.cpp:
+
+// ----------------- rx_valid && rx_arg_1:
+
+___multiple_rx_insert___
+
+// ----------------- rx_file
+
+___multiple_rx_file_insert___
+
+// ----------------- in run loop:
+
+___multiple_run_insert___

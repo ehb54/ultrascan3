@@ -1,0 +1,17 @@
+from this directory $ULTRASCAN/extra/pdfmanual
+
+needs https://stackoverflow.com/questions/18758589/wkhtmltopdf-installation-error-on-ubuntu
+
+$ perl pdfmanual.pl
+will make the manual from $ULTRASCAN/doc/manual/somo into out/somo_hplc.pdf
+
+if you wish to add or change the order of the html files included, edit somo_hplc.txt
+
+
+note: the utility for making the PDF relies on the html H tags, e.g. <h1></h1>, <h2>...</h2> for making table of contents (toc) and their links
+I have programatically removed the <h1>Manual</h1> from the source html to avoid repeated "Manual" toc entries.
+The other one is the "last date" ... we could remove this also if you wish
+
+We can also easily add other groups of files (for example make a somo_hydrodynamics.txt file with the list and I can add this to the pdfmanual.pl code to be read
+
+

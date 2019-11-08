@@ -1,0 +1,25 @@
+mkdir -p /sdb1/tmp/tx
+cp /sdb1/scratch/00451/tg457210/haddock/try10/run1/structures/it0/try10_1419.pdb /sdb1/tmp/tx/try10_1419-0.pdb
+segidtochainid.pl /sdb1/tmp/tx/try10_1419-0.pdb
+cp /sdb1/scratch/00451/tg457210/haddock/try10/run1/structures/it1/try10_216.pdb /sdb1/tmp/tx/try10_216-1.pdb
+segidtochainid.pl /sdb1/tmp/tx/try10_216-1.pdb
+cp /sdb1/scratch/00451/tg457210/haddock/try10/run1/structures/it1/try10_64.pdb /sdb1/tmp/tx/try10_64-1.pdb
+segidtochainid.pl /sdb1/tmp/tx/try10_64-1.pdb
+cp /sdb1/scratch/00451/tg457210/haddock/try10/run1/structures/it1/water/try10_152w.pdb /sdb1/tmp/tx/try10_152w-1w.pdb
+segidtochainid.pl /sdb1/tmp/tx/try10_152w-1w.pdb
+cp /sdb1/scratch/00451/tg457210/haddock/try10/run1/structures/it1/water/try10_54w.pdb /sdb1/tmp/tx/try10_54w-1w.pdb
+segidtochainid.pl /sdb1/tmp/tx/try10_54w-1w.pdb
+cp /sdb1/scratch/00451/tg457210/haddock/try10/run1/structures/it1/water/try10_224w.pdb /sdb1/tmp/tx/try10_224w-1w.pdb
+segidtochainid.pl /sdb1/tmp/tx/try10_224w-1w.pdb
+cp /sdb1/scratch/00451/tg457210/haddock/try11/run1/structures/it0/try11_418.pdb /sdb1/tmp/tx/try11_418-0.pdb
+segidtochainid.pl /sdb1/tmp/tx/try11_418-0.pdb
+cp /sdb1/scratch/00451/tg457210/haddock/try11/run1/structures/it1/try11_199.pdb /sdb1/tmp/tx/try11_199-1.pdb
+segidtochainid.pl /sdb1/tmp/tx/try11_199-1.pdb
+cp /sdb1/scratch/00451/tg457210/haddock/try11/run1/structures/it1/try11_191.pdb /sdb1/tmp/tx/try11_191-1.pdb
+segidtochainid.pl /sdb1/tmp/tx/try11_191-1.pdb
+cp /sdb1/scratch/00451/tg457210/haddock/try11/run1/structures/it1/water/try11_135w.pdb /sdb1/tmp/tx/try11_135w-1w.pdb
+segidtochainid.pl /sdb1/tmp/tx/try11_135w-1w.pdb
+cp /sdb1/scratch/00451/tg457210/haddock/try11/run1/structures/it1/water/try11_87w.pdb /sdb1/tmp/tx/try11_87w-1w.pdb
+segidtochainid.pl /sdb1/tmp/tx/try11_87w-1w.pdb
+cp /sdb1/scratch/00451/tg457210/haddock/try11/run1/structures/it1/water/try11_138w.pdb /sdb1/tmp/tx/try11_138w-1w.pdb
+segidtochainid.pl /sdb1/tmp/tx/try11_138w-1w.pdb

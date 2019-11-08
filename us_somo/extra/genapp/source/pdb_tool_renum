@@ -1,0 +1,53 @@
+prefix     US_Hydrodyn_
+title      "US-SOMO: PDB Editor: Renumber"
+credit     "Cite: US-SOMO"
+name       pdb_tool_renum
+include    us_hydrodyn_pdb_tool.h
+input      void                     * us_hydrodyn
+input      map < QString, QString > * parameters
+_variables
+# notes:
+# we should add a processing section
+# checkboxes
+# readonly variables
+map     infile  s - - inputfile "inputfile" "Input file"
+map     string  s - - usechainlist "usechainlist" "Only apply to these chains\nleave blank for all chains\notherwise enter a list with no extra spaces"
+map     string  s - - reseqatom "reseqatom" "Resequence ATOM/HETATM numbers {y|n}?"
+map     string  s - - startatom "startatom" "Starting ATOM/HETATM number"
+map     string  s - - chainrestartatom "chainrestartatom" "Restart ATOM/HETATM numbers of each chain {y|n}?"
+map     string  s - - modelrestartatom "modelrestartatom" "Restart ATOM/HETATM numbers of each model {y|n}?"
+map     string  s - - reseqresidue "reseqresidue" "Resequence RESIDUE numbers {y|n}?"
+map     string  s - - startresidue "startresidue" "Starting RESIDUE number"
+map     string  s - - chainrestartresidue "chainrestartresidue" "Restart RESIDUE numbers of each chain {y|n}?"
+map     string  s - - modelrestartresidue "modelrestartresidue" "Restart RESIDUE numbers of each model {y|n}?"
+map     string  s - - striphydrogens "striphydrogens" "Remove Hydrogens {y|n}?"
+map     string  s - - itassertemplate "itassertemplate" "Make 3D format (I-TASSER) template {y|n}?"
+_end
+_elements
+variable inputfile
+row
+variable usechainlist
+row
+variable reseqatom
+row
+variable startatom
+row
+variable chainrestartatom
+row
+variable modelrestartatom
+row
+variable reseqresidue
+row
+variable startresidue
+row
+variable chainrestartresidue
+row
+variable modelrestartresidue
+row
+variable striphydrogens
+row
+variable itassertemplate
+row
+_end
+template dialog.h
+template dialog.cpp

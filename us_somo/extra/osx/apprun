@@ -1,0 +1,6 @@
+#!/bin/bash
+
+QWTPATH=/src/qwt-5.2.3
+US3=/Users/eb/us3
+US3SOMO=/Users/eb/us3_somo
+env DYLD_LIBRARY_PATH=${US3SOMO}/lib:${US3}/lib:${QWTPATH}/lib open -a ${US3SOMO}/bin/${1}.app

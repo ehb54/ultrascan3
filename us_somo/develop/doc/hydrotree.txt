@@ -1,0 +1,52 @@
+US-SOMO~(main window)
+ Batch mode operation
+  Cluster~(cluster submission functions)
+   Cluster DMD settings
+   Advanced options
+   Submit jobs for processing
+   Check job status/retrieve results
+   Extract results
+   Cluster configuration
+  SAXS/SANS options
+   SAXS computation options
+   SANS computation options
+   Curve generation options
+   Bead model options
+   Guinier options
+   Miscellaneous options
+ PDB editor
+  Cut/splice
+  Renumber
+ SAXS/SANS functions
+  Search
+  Data
+  HPLC
+   SVD
+   Concentration detector
+   Fit~(Gaussians and global Gaussians)
+  Guinier options
+ Model classifier
+ Select parameters to be saved
+ Pull down menu~Lookup tables
+  Add/Edit Hybridization
+  Add/Edit Atoms
+  Add/Edit Residue
+ Pull down menu~SOMO
+  ASA calculation
+  SoMo overlap reduction
+  AtoB (grid) overlap reduction
+  Hydrodynamic calculations
+  Hydrodynamic calculations Zeno
+  Miscellaneous options
+  Bead model output
+  Grid functions (AtoB)
+ Pull down menu~PDB
+  Parsing
+  Visualization
+ Pull down menu~Configuration
+  Load configuration
+  Save current configuration
+  Reset to default configuration
+  Advanced configuration
+  System configuration~(set default program paths, fonts, button and background colors)
+  Administrator~(set an administrator password)

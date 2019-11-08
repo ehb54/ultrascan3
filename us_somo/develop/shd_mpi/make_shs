@@ -1,0 +1,23 @@
+CC      = g++
+CFLAGS  = -O3
+LDFLAGS = 
+
+all: shs
+
+shs: shs_main.o shs.o shd_sh.o
+	$(CC) -o $@ $^ $(LDFLAGS) $(CFLAGS)
+
+shs_main.o: shs_main.cpp shs.h
+	$(CC) -c $(CFLAGS) $<
+
+shs.o: shs.cpp shs.h
+	$(CC) -c $(CFLAGS) $<
+
+shd_sh.o: shd_sh.cpp shd_sh.h
+	$(CC) -c $(CFLAGS) $<
+
+clean:
+	rm *.o
+
+cleanest: clean
+	rm shs
