@@ -1,0 +1,9 @@
+mesh2mainwindow.cpp
+remove: clearwstate 
+add 
+#include <Q3ComboBox>
+#include <QMenuItem>
+
+setAccel( QString::null ) -> setAccel( QKeySequence( "" ) );
+
+white->qt::white

@@ -1,0 +1,111 @@
+﻿<project version = 9 civer = 8.1.0 winver = "2.12/6.2.9200" >
+   <autorun >1</>
+   <autoclose >0</>
+   <compname >UTHSCSA</>
+   <produrl >http://somo.uthscsa.edu</>
+   <ver >3141a8</>
+   <supurl ></>
+   <updurl ></>
+   <dlgfont >verdana</>
+   <headlogo >default - 1</>
+   <dlgfontsize >s8</>
+   <output >c:\setups</>
+   <exename >us3somo-3141a8-win64-setup.exe</>
+   <beffile ></>
+   <aftfile ></>
+   <uninclude >1</>
+   <lang >english</>
+   <addlang ></>
+   <selfextr >1</>
+   <instpath ></>
+   <voltype >nolimit</>
+   <volsize ></>
+   <volpattern >disk%i.pak</>
+   <password ></>
+   <progname >USSOMO</>
+   <appname ></>
+   <bl ></>
+   <blurl ></>
+   <unpath >inst</>
+   <unexe >uninstall.exe</>
+   <unlog >uninstall.ini</>
+   <installroot ></>
+   <uninstallroot ></>
+   <icofile >default</>
+   <noadmin >0</>
+   <comptype >default</>
+   <ratio >r5</>
+   <solid >1</>
+   <desc ></>
+   <srclist >
+      <rows ></>
+   </>
+   <path >inst</>
+   <custpath ></>
+   <ifexist >over</>
+   <if ></>
+   <varlist >
+      <rows ></>
+   </>
+   <shpath >prog</>
+   <shfile ></>
+   <file ></>
+   <cmdline ></>
+   <comment ></>
+   <icon ></>
+   <work >inst</>
+   <defwork ></>
+   <runas >norm</>
+   <root >curuser</>
+   <subkey ></>
+   <reglist >
+      <rows ></>
+   </>
+   <shfolder ></>
+   <silentpar >-silent</>
+   <ignnotfound >0</>
+   <srcfolder >C:\dist</>
+   <exclude ></>
+   <licfile >C:\dist\LICENSE</>
+   <readfile ></>
+   <leftimg >install - 1</>
+   <caption ></>
+   <iswel >1</>
+   <isfin >1</>
+   <enforce >0</>
+   <savepath >0</>
+   <autoprog >1</>
+   <opengroup >0</>
+   <shlist >
+      <rows >
+         <_ >
+            <shpath >comdesk</>
+            <shfile >US-SOMO</>
+            <path >inst</>
+            <file >bin\us3_somo.exe</>
+            <cmdline ></>
+            <icon >#setuppath#\etc\somo3_icon_128x128.ico</>
+            <work >custom</>
+            <defwork >#setuppath#\bin</>
+         </>
+         <_ >
+            <shpath >comdesk</>
+            <shfile >US-SOMO Config</>
+            <path >inst</>
+            <file >bin\us3_config.exe</>
+            <cmdline ></>
+            <icon >#setuppath#\etc\somo3_config_128x128.ico</>
+            <work >custom</>
+            <defwork >#setuppath#\bin</>
+         </>
+      </>
+   </>
+   <unicon >uninstall</>
+   <unsh >1</>
+   <unaddrem >1</>
+   <unname ></>
+   <ifile ></>
+   <unleftimg >uninstall - 1</>
+   <uncaption ></>
+   <isunfin >1</>
+</>

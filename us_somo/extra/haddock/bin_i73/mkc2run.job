@@ -1,0 +1,53 @@
+# us_saxs_cmds_t iq controlfile
+# blank lines ok, format token <params>
+
+ResidueFile     somo.residue
+AtomFile        somo.atom
+HybridFile      somo.hybrid
+SaxsFile        somo.saxs_atoms
+FiveTermGaussian
+
+Saxs
+IqMethod        h3a
+FdBinSize       0.5
+FdModulation    0.23
+HyPoints        15
+CrysolHarm      15
+CrysolGrid      17
+CrysolChs       0.03
+WaterEDensity   0.334
+AsaHydrateThresh      10
+AsaThreshPct          50
+AsaHydrateProbeRadius 1.4
+AsaStep               1
+AsaCalculation        1
+StartQ          0.001
+EndQ            0.6
+DeltaQ          0.0146
+Output          ssaxs
+c2checkcaonly
+inputfile try10_1419-0.pdb
+c2check B C
+inputfile try10_216-1.pdb
+c2check B C
+inputfile try10_64-1.pdb
+c2check B C
+inputfile try10_152w-1w.pdb
+c2check B C
+inputfile try10_54w-1w.pdb
+c2check B C
+inputfile try10_224w-1w.pdb
+c2check B C
+inputfile try11_418-0.pdb
+c2check B C
+inputfile try11_199-1.pdb
+c2check B C
+inputfile try11_191-1.pdb
+c2check B C
+inputfile try11_135w-1w.pdb
+c2check B C
+inputfile try11_87w-1w.pdb
+c2check B C
+inputfile try11_138w-1w.pdb
+c2check B C
+TgzOutput       job_p1_out.tgz

@@ -1,0 +1,135 @@
+prefix     US_Hydrodyn_Cluster_
+title      "US-SOMO: BNFB cluster interface"
+credit     "Cite: Brookes, E. BFNB 2013"
+name       bfnb
+include    us_hydrodyn_cluster.h
+input      void                     * us_hydrodyn
+input      map < QString, QString > * parameters
+saveload   json cluster_bfnb *parameters 
+_variables
+map     string  s - - pmtypes "pmtypes" "Model type list\n(0=sphere,1=cylinder,2=spheroid,\n3=ellipsoid,4=torus)"
+map     string  s - - pmincrementally "pmincrementally" "Compute models for all lengths upto above"
+map     string  s - - pmallcombinations "pmallcombinations" "Compute models for all unique combinations"
+map     string  s - - pmrayleighdrho "pmrayleighdrho" "Sample electron density e/A^3\n(default: protenn average .425)\nProteins: .41-.44, DNA:.59, RNA:.6, Carbs:.49"
+map     string  s - - pmbufferedensity "pmbufferedensity" "Buffer electron density e/A^3\n(default: SAS Options->Water e density)\nH2O .334"
+map     string  s - - pmoutname "pmoutname" "Output name prefix (default: no prefix)"
+map     string  s - - pmgridsize "pmgridsize" "Grid size (A)"
+map     string  s - - pmapproxmaxdimension "pmapproxmaxdimension" "Automatically compute maximum dimension"
+map     string  s - - pmminq "pmminq" "Minimum q value (default: 0)"
+map     string  s - - pmmaxq "pmmaxq" "Maximum q value (default: .25)"
+map     string  s - - pmlogqbin "pmlogqbin" "Create log q bins"
+map     string  s - - pmqpoints "pmqpoints" "q points (default: all points)"
+map     string  s - - pmharmonics "pmharmonics" "Maximum harmonics (default: 15)"
+map     string  s - - pmseed "pmseed" "Random seed (default: use time)"
+map     string  s - - pmmemory "pmmemory" "Maximum memory per core in MB (default: 1024)"
+map     string  s - - pmbestfinestconversion "pmbestfinestconversion" "Finest grid size (default: same as Grid size)"
+map     string  s - - pmbestcoarseconversion "pmbestcoarseconversion" "Coarse grid size (default: 10)"
+map     string  s - - pmbestconversiondivisor "pmbestconversiondivisor" "Conversion divisor (default: 2.5)"
+map     string  s - - pmbestrefinementrangepct "pmbestrefinementrangepct" "Refinement percent (default: 2.5)"
+map     string  s - - pmmaxdimension "pmmaxdimension" "Maximum dimension (default & max: 32767 A)"
+map     string  s - - pmgapopulation "pmgapopulation" "GA population size (default: 100)"
+map     string  s - - pmgagenerations "pmgagenerations" "GA generations (default: 100)"
+map     string  s - - pmgamutate "pmgamutate" "GA mutate probability (default: .1)"
+map     string  s - - pmgasamutate "pmgasamutate" "GA simulated annealing probability (default: .5)"
+map     string  s - - pmgacrossover "pmgacrossover" "GA crossover (default: .4)"
+map     string  s - - pmgaelitism "pmgaelitism" "GA elitism (default: 1)"
+map     string  s - - pmgaearlytermination "pmgaearlytermination" "GA early termination (default: 5)"
+map     string  s - - pmgapointsmax "pmgapointsmax" "GA maximum points per parameter (default: 100)"
+map     string  s - - pmbestdeltastart "pmbestdeltastart" "Initial param delta start (default 1)"
+map     string  s - - pmbestdeltadivisor "pmbestdeltadivisor" "Initial param delta divisor (default 10)"
+map     string  s - - pmbestdeltamin "pmbestdeltamin" "Delta minimum (default .01)"
+map     string  s - - pmdebug "pmdebug" "Debug level 1,2 or 3 (default: 0)"
+map     string  s - - pmcsv "pmcsv" "Produce csv containing result curves"
+_end
+_elements
+showhidelabel main_label "Main model type controls"
+row
+variable pmtypes
+row
+checkbox pmincrementally
+checkbox pmallcombinations
+row
+variable pmrayleighdrho
+row
+variable pmbufferedensity
+row
+variable pmoutname
+row
+variable pmgridsize
+row
+checkbox pmapproxmaxdimension true
+row
+endshowhidelabel main_label
+showhidelabel q_label "q range editing controls"
+hide q_label
+row
+variable pmminq
+row
+variable pmmaxq
+row
+checkbox pmlogqbin
+row
+variable pmqpoints
+row
+endshowhidelabel q_label
+showhidelabel supp_label "Supplementary controls"
+hide supp_label
+row
+variable pmharmonics
+row
+variable pmseed
+row
+variable pmmemory
+row
+variable pmbestfinestconversion
+row
+variable pmbestcoarseconversion
+row
+variable pmbestconversiondivisor
+row
+variable pmbestrefinementrangepct
+row
+variable pmmaxdimension
+row
+endshowhidelabel supp_label
+showhidelabel ga_label "Genetic algorithm controls"
+hide ga_label
+row
+variable pmgapopulation
+row
+variable pmgagenerations
+row
+variable pmgamutate
+row
+variable pmgasamutate
+row
+variable pmgacrossover
+row
+variable pmgaelitism
+row
+variable pmgaearlytermination
+row
+variable pmgapointsmax
+row
+endshowhidelabel ga_label
+showhidelabel misc_label "Miscellenaous controls"
+hide misc_label
+row
+variable pmbestdeltastart
+row
+variable pmbestdeltadivisor
+row
+variable pmbestdeltamin
+row
+checkbox pmcsv true
+row
+variable pmdebug
+row
+endshowhidelabel misc_label
+button      save
+button      load
+row
+_end
+# template cluster.multiple
+template cluster.h
+template cluster.cpp

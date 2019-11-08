@@ -1,0 +1,51 @@
+4	0.638
+-3.8067	18.0411	5.8824	2.7691	58.06	1	GLY.MC.A.4	200.8921
+-13.0138	19.6777	20.0715	2.7691	57.06	1	GLY.MC.A.16	202.1916
+-4.4424	30.8044	31.0153	2.7691	57.06	1	GLY.MC.A.102	199.6003
+-11.9516	23.0376	0.9036	2.7691	57.06	1	GLY.MC.A.126	199.6001
+
+Bead Model Output:
+  Sequence:                   as in original PDB file
+
+Bead model built with the following options:
+ASA Calculation:
+  Perform ASA Calculation:    On
+  Recheck Bead ASA:           On
+  ASA Method:                 Rolling Sphere
+  ASA Probe Radius (A):       1.40
+  Probe Recheck Radius (A):   1.40
+  SOMO ASA Threshold (A^2):   20.0
+  SOMO Bead ASA Threshold %:  50.0
+  ASAB1 Step Size (A):        1.0
+
+Overlap Reduction:
+  Bead Overlap Tolerance:     0.001000
+    Exposed Side chain beads:
+      Fuse Beads:                                 On
+      Fuse Beads that overlap by more than:       70.0
+      Remove Overlaps:                            On
+      Remove Overlaps synchronously:              Off
+      Synchronous Overlap Reduction Step Size %:  1.0
+      Remove Overlaps hierarchically:             On
+      Hierarchical Overlap Reduction Step Size %: 1.0
+      Outward Translation:                        On
+    Exposed Main and side chain beads:
+      Fuse Beads:                                 On
+      Fuse Beads that overlap by more than:       70.0
+      Remove Overlaps:                            On
+      Remove Overlaps synchronously:              Off
+      Synchronous Overlap Reduction Step Size %:  1.0
+      Remove Overlaps hierarchically:             On
+      Hierarchical Overlap Reduction Step Size %: 1.0
+    Buried beads:
+      Fuse Beads:                                 Off
+      Fuse Beads that overlap by more than:       0.0
+      Remove Overlaps:                            On
+      Remove Overlaps synchronously:              Off
+      Synchronous Overlap Reduction Step Size %:  1.0
+      Remove Overlaps hierarchically:             On
+      Hierarchical Overlap Reduction Step Size %: 1.0
+
+Miscellaneous options:
+  Calculate vbar                 On
+  Enable Peptide Bond Rule       Off

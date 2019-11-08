@@ -1,0 +1,59 @@
+6	0.667
+-2.2290	16.2280	5.3930	2.0210	16.02	1	GLY.PB.A.4	50.8926
+-6.0129	17.3781	7.7399	2.5778	57.06	1	GLY.PB.A.4	161.5600
+-11.4772	18.1373	20.1315	2.7691	56.05	1	ARG_MA1.PB.A.5	203.5776
+-12.3022	9.1442	14.5583	3.4843	100.16	10	ARG_MA1.SC.A.5	299.1312
+-6.3418	29.1265	23.6207	2.7691	57.06	1	GLY.PB.A.6	200.4786
+-11.8813	23.6788	0.8884	2.5584	42.04	1	GLY.PB.A.7	161.5167
+
+Bead Model Output:
+  Sequence:                   as in original PDB file
+
+Bead model built with the following options:
+ASA Calculation:
+  Perform ASA Calculation:    On
+  Recheck Bead ASA:           On
+  ASA Method:                 Rolling Sphere
+  ASA Probe Radius (A):       1.40
+  Probe Recheck Radius (A):   1.40
+  SOMO ASA Threshold (A^2):   20.0
+  SOMO Bead ASA Threshold %:  50.0
+  ASAB1 Step Size (A):        1.0
+
+Overlap Reduction:
+  Bead Overlap Tolerance:     0.001000
+    Exposed Side chain beads:
+      Fuse Beads:                                 On
+      Fuse Beads that overlap by more than:       70.0
+      Remove Overlaps:                            On
+      Remove Overlaps synchronously:              Off
+      Synchronous Overlap Reduction Step Size %:  1.0
+      Remove Overlaps hierarchically:             On
+      Hierarchical Overlap Reduction Step Size %: 1.0
+      Outward Translation:                        On
+    Exposed Main and side chain beads:
+      Fuse Beads:                                 On
+      Fuse Beads that overlap by more than:       70.0
+      Remove Overlaps:                            On
+      Remove Overlaps synchronously:              Off
+      Synchronous Overlap Reduction Step Size %:  1.0
+      Remove Overlaps hierarchically:             On
+      Hierarchical Overlap Reduction Step Size %: 1.0
+    Buried beads:
+      Fuse Beads:                                 Off
+      Fuse Beads that overlap by more than:       0.0
+      Remove Overlaps:                            On
+      Remove Overlaps synchronously:              Off
+      Synchronous Overlap Reduction Step Size %:  1.0
+      Remove Overlaps hierarchically:             On
+      Hierarchical Overlap Reduction Step Size %: 1.0
+
+Miscellaneous options:
+  Calculate vbar                 On
+  Enable Peptide Bond Rule       On
+
+
+Automatic Bead Builder messages:
+  Chain A Molecule 1 Residue ARG 5 Missing atom residue copy ARG_MA1 created.
+
+

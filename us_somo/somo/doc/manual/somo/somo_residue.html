@@ -1,0 +1,328 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
+        <title>SOMO Residue Definition Module</title>
+        <link href="mainstyle3.css" rel="styleSheet" type="text/css">
+</head>
+<body>
+<table BORDER=0 CELLPADDING=5 >
+<tr>
+<td><img SRC="USSOMO-banner.png" BORDER="0" ALT="UltraScan Version"> </td>
+<td>
+<center>
+<h1>
+<i>Manual</i></h1></center>
+</td>
+</tr>
+</table>
+
+<hr>
+<center>
+<h2>
+SOMO - Residue Definition Module:</h2>
+<p>
+<h3><center>Last updated: October 2013 </center></h3><p>
+
+<img SRC="somo-residue.png" ALT="SOMO Screen">
+</center>
+<p>
+This module is used to define all residues that can be found in PDB files. 
+In this module, you can also define the rules which are used to convert them
+into beads. You can add new residues or modify the properties of the existing
+ones. Three panels are available:
+<p>
+<ol>
+<li> <b>Define Residue Properties</b>
+<li> <b>Define Residue Atoms</b>
+<li> <b>Define Residue Bead Properties</b>
+</ol>
+
+<p>
+<b>Panel 1: Define Residue Properties:</b>
+<p>
+<table BORDER CELLSPACING=5 CELLPADDING=5>
+<tr>
+<td align=center><img SRC="somo-residue-0.png" ALT="Define Residue Properties"></td>
+</tr>
+<tr>
+<td>
+
+<p>In this panel, you can add or modify the general properties of a residue.
+To add a new residue, you must first load the <a href="somo-2.png">atom table</a>
+containing the atomic groups, as defined in the PDB file (N, CA, CB, etc.),
+that make up the residue. <br>The residue name (ALA, GLY, PRO, etc.) is entered
+in the <i><b>Residue Name</b></i> field, with a description entered in the <i><b>Description</b></i>
+field (this will help in discriminating between entries having the same residue
+name in PDB files, but differing by the presence/absence of some atoms, like
+the PO<sub>2</sub> group in nucleosides/nucleotides). The <i><b>Number of Atoms in Residue</b></i>
+field is then completed (note that only non-hydrogen atoms have to be counted;
+for NMR-derived models, hydrogen atoms fields are discarded by the SOMO PDB
+parser). <br>The next field, <i><b>Number of Beads for Residue</b></i>, defines how many
+beads will be used to represent the residue. For amino acids or nucleic acid
+bases, we suggest to use a bead for the main-chain and another for the side-chain
+segments, plus one for the PO<sub>2</sub> group in nucleotides. For carbohydrates,
+a bead per residue will usually suffice. More complicated entries, like heme or NAD,
+must be assigned to a reasonable number of beads taking into account geometric and
+chemical considerations. Many entries are already defined in the <i>somo.residue</i>
+file distributed with the program.
+<br>The <i><b>Residue Type</b></i> field is then defined from the pull-down list,
+presently including:
+<p>
+<ul>
+<li>Amino Acid
+<li>Sugar Moiety
+<li>Nucleotide
+<li>Heme
+<li>Phosphate
+<li>Co-factor
+<li>Ion
+<li>Detergent
+<li>Other
+</ul>
+<p>
+The <i><b>Residue anhydrous mol. vol. (A^3)</b></i> field has to be filled with a 
+value usually derived from crystallography (see Tsai et al., J. Mol. Biol.
+290:253-266, 1999; Nadassy et al., Nucl. Acid Res. 29:3362-3376, 2001; Voss
+and Gerstein, J. Mol. Biol. 346:477-492, 2005; Perkins, Eur. J. Biochem. 
+157:169-180, 1986). This is the volume that defines the total anhydrous volume
+of the bead(s) that will be used to model the residue, and for non tabulated
+entries it can be computed using on-line programs such as the <sup>3</sup>V Contact Volume Calculator (<a href="http://www.molmovdb.org/cgi-bin/3v.cgi">http://www.molmovdb.org/cgi-bin/3v.cgi</a>; a 0
+Angstrom probe radius should be used). For ions, we used the values in Table I of
+Kiriukhin and Collins (Biophys. Chem. 99:155-168, 2002).
+<br>In contrast, the <i><b>Residue partial spec. vol. (cm^3/g)</b></i> field pertains to
+the solution partial specific volume (<i>vbar</i>) of the residue (in water @ 20&deg;C),
+and is used to compute the global <i>vbar</i> of the model, necessary to determine
+the sedimentation coefficient from the translational frictional coefficient (and to compute the molecular weight from SAXS data). 
+Tabulated values are available for amino acids and some carbohydrates (see Perkins,
+Eur. J. Biochem. 157:169-180, 1986), or can be computed using the Cohn and Edsall method
+(Cohn and Edsall, Proteins, amino acids and peptides as ions and dipolar ions, Reinhold
+Publ. Comp., 1965, pp. 370-381; see also Durchschlag and Zipper, Biophys. Chem. 93:
+141-157, 2001; Durchschlag and Zipper, J. Appl. Cryst. 30:803-807, 1997; Durchschlag
+and Zipper, Prog. Colloid Polym. Sci. 94:20-39, 1994).<br>
+For ions, they were mostly computed (<b>April 2012 revision!</b>) from the partial molar volumes (cm<sup>3</sup>/mol) at 25 &deg;C
+listed in Table 3 of Durchschlag and Zipper, Prog. Colloid Polym. Sci. 94:20-39, 1994, divided by the molecular weight, and corrected to 20 &deg;C.
+For Cd<sup>2+</sup>, which is not present in that table, we used the values derived by Call et al. (J. Chem. Thermodynamics 32:1525-1538, 2000) for 
+MgCl<sub>2</sub> and CdCl<sub>2</sub> at 0.35 MPa, after correction to 0.1 MPa by comparing the MgCl<sub>2</sub> value with that reported by
+Dunn (Trans. Faraday Soc. 62:2348-2354, 1966). Note that most of these vbar values for the cations are <b>negative</b>!<br> 
+Be aware, however, that there's <b>no guarantee</b> that a computed <i>vbar</i> will be correct: the
+use of an <b>experimental</b> <i>vbar</i> is <b>strongly</b> recommended!! (see also the
+<i>vbar</i> fields in the <a href="somo_misc.html"><i><b>Miscellaneous Options</b></i></a> editor.
+<br>Finally, the <i><b>Max. Accessible Surface Area (A^2)</b></i> field is entered. It is
+used for control purposes only, to calculate the percentage accessible surface
+area (ASA) of each residue with respect to this theoretical maximum value. For
+amino acids, it was taken from the tabulated values of Gly-XXX-Gly tripeptides
+(Miller et al., J. Mol. Biol. 196:641-656, 1987). For ions, it was computed
+from the radius (Table I of Kiriukhin and Collins, Biophys. Chem. 99:155-168, 2002).
+For the other entries currently present in the <i>somo.residue</i> file, it was computed
+on isolated moieties using the <sup>3</sup>V Contact Volume Calculator (see above) with
+a 1.4 A probe radius. 
+
+<p>When all fields have been filled, the residue is accepted by pressing the
+<b>Accept Residue and Continue</b> button, and the <i>Number of Residues in File
+</i> field is consequently updated.
+
+</td>
+</tr>
+</table>
+<p>
+<b>Panel 2: Define Residue Atoms:</b>
+<p>
+<table BORDER CELLSPACING=5 CELLPADDING=5>
+<tr>
+<td align=center><img SRC="somo-residue-1.png" ALT="Define Residue Atoms"></td>
+</tr>
+<tr>
+<td>
+
+<p>In this panel, the atoms making up the residue are chosen, using the
+<a href="somo-2.png">atom table</a> previously selected. The atoms are numbered
+sequentially up to the value entered in the <i><b>Number of Atoms in Residue</b></i>
+field in the previous panel, and can be chosen from the <i><b>Select Residue Atom to be defined</b></i>
+pull-down menu.
+<br>An atom type is then selected from the pull-down menu in the
+<i><b>Select Atom from Lookup Table</b></i> menu, and an available hybridization
+is then chosen from the <i><b>Select Hybridization for Atom</b></i> pull-down menu 
+below it. <br>If the current atom will contribute to the definition of the
+position of the bead to which it will be assigned (next panel), the
+<i><b>Atom determines Position</b></i> checkbox must be selected. Be aware that in
+the default mode operation, the <i><b>SOMO</b></i> method will place the amino acid
+main-chain bead using the "<i>peptide bond rule</i>", i.e., it will place the bead at 
+the center of gravity between the (CA-C-O)<sub>n</sub> and the (N)<sub>n+1</sub> atoms
+(special rules apply when PRO is the (n+1) residue). If the <i>peptide bond rule</i>
+is deselected in the <a href="somo_misc.html"><i><b>Miscellaneous Options</b></i></a>
+editor, then all the atom positioning rules defined in the <i>somo.residue</i> file
+will apply.
+<br>The <i><b>Hydration Number for Atom</b></i> field is used to assign an integer
+number of water molecules to the current atom. Currently,
+we have assigned directly to atoms only the amino acids hydration values, derived
+from the theoretical hydration numbers for entire residues of Kuntz and Kauzmann
+(Adv. Protein Chem. 28:239-345, 1974). The global hydration number for each bead in
+the residue is subsequently computed by summing up each atom's value. This calculated
+global value can be replaced with another value using the <i><b>Override Bead Hydration Value</b></i>
+button in the third panel of this editor (see below).
+<br>The <b>Assign Current Atom</b> button is then clicked, and the <i><b>Select 
+Residue Atom to be defined</b></i> field is then updated.
+<br>This operation is repeated until all atoms in the residue have been assigned,
+and the <b>Continue</b> button can then be pressed.
+</td>
+</tr>
+</table>
+<p>
+<b>Panel 3: Define Residue Bead Properties:</b>
+<p>
+<table BORDER CELLSPACING=5 CELLPADDING=5>
+<tr>
+<td align=center><img SRC="somo-residue-2.png" ALT="Define Residue Bead Properties"></td>
+</tr>
+<tr>
+<td>
+
+<p>In the last panel of this module, the atoms in each residue are assigned
+to bead(s), and each bead's properties are then defined.
+<br>According to the value entered in the <i><b>Number of Beads for Residue</b></i>
+field in Panel 1, the <i><b>Select Residue Bead to be defined</b></i> pull-down menu
+will allow to select a bead from the list. All subsequent operations will affect
+the selected bead only.
+<br>First a color is assigned to the bead using the <i><b>Select Bead Color</b></i>
+pull-down menu. <span style="color:#CC0000">Be aware that two colors are presently reserved to "label"
+the beads so that they can be automatically excluded from the hydrodynamic
+computations, colors "0" (black) and "6" (brown), so they should NOT be used</span>.
+To avoid they inadvertent selection, a Warning pop-up will appear if color "0" or
+"6" are chosen, with this message: "Black and brown are reserved colors, please
+chose a different color". In addition, we color-code "7" (white) exposed beads
+that are fused together, and "8" (grey) beads that were originally labeled as
+buried ("6") but are found to be above the exposure threshold upon re-check.
+In the <a href="somo-residue-3.png">residue table</a> (an excerpt of the current 
+<i>somo.residue</i> is shown) provided with the UltraScan distribution, the colors
+are assigned so to label the beads as:
+<p>
+<ol>
+0. - Black: RESERVED, automatically assigned to very small beads (always excluded from computations)
+<li>- Blue: protein main-chain
+<li>- Green: protein acidic side-chain (D,E)
+<li>- Cyan: protein hydrophobic side-chain (A,V,L,I,F,W)
+<li>- Red: protein polar side-chain (H,Y,S,T,N,Q)
+<li>- Magenta: protein non-polar side-chain (C,M,P)
+<li>- Brown: RESERVED for buried beads (automatically assigned during model generation)
+<li>- White: USED for fused beads
+<li>- Grey: USED for previously buried beads found to be exposed on re-check
+<li>- Light Blue: lipids tails, carbon monoxide
+<li>- Light Green: USED by the Automatic Bead Builder for non-coded residues (see <a
+href=somo_pdb_parsing.html>here</a>)
+<li>- Light Cyan: bases in DNA/RNA, oxygen, 13P
+<li>- Light Red: heme, NAD, other co-factors, some prosthetic groups and ions, PO<sub>2</sub>, lipids heads
+<li>- Light Magenta: carbohydrates (including sugar rings in nucleotides), some ions
+<li>- Yellow: protein basic side-chain (K,R)
+<li>- Bright White: unassigned
+</ol>
+<p> 
+
+<br>Next comes the <i><b>Select Positioning Method</b></i> field, offering three
+options:
+<p><i>Center of gravity</i>: between the atoms assigned to the bead and marked
+"yes" in the <i><b>Atom determines Position</b></i> checkbox in Panel 2;
+<br><i>Farthest atom</i>: from the center of gravity of the molecule, again
+between the atoms assigned to the bead and marked "yes" in the
+<i><b>Atom determines Position</b></i> checkbox in Panel 2;
+<br><i>No positioning</i>: to exclude the bead from the model.
+<br>Currently, only the <i>Center of gravity</i> option is being used.
+<p>Each bead needs then to be defined as belonging to the <i>backbone</i>
+or to the <i>sidechain</i> of the molecule by clicking the appropriate box
+in the <i><b>This Bead is part of the:</b></i> field. This determines at which sequential stage the bead
+will be processed during overlap removal in the <i>SoMo</i> method.
+<p>
+The next step is the assignment of atoms to the bead. In the <i><b>Select Atom
+for Bead (multi-selection OK)</b></i> window, you can see the list of all the atoms
+that belong to the residue, as defined previously in Panel 2. By clicking on
+an atom, it will be also displayed in the <i><b>Currently defined Atoms for Bead</b></i>
+window to the left. Once all atoms belonging to a bead have been selected, the
+bead is accepted by clicking on the <b>Accept Bead Definition</b> button.
+<p>
+The <i><b>Bead Volume</b></i> field defines the anhydrous volume (in A<sup>3</sup>) assigned
+to the bead. IMPORTANT: the sum of the volumes of the bead(s) defining a residue
+MUST match the <i><b>Residue anhydrous mol. vol.</b></i> entered in Panel 1. The
+program will NOT let you save the residue/bead definition if there is a
+discrepancy between these two values. The values present in the current
+definitions of the amino acid residues were derived from the crystallographic
+analysis (see above for references). When a molecule needs to be subdived in more
+than one bead, the volumes of the various parts can be determined using the
+<sup>3</sup>V Contact Volume Calculator (see above). However, the parts' volumes
+will NOT add up to the entire molecule volume, and MUST be then proportionally
+rescaled. The volume of all other entries in the current <i>somo.residue</i> table
+were determined in this way.
+<p>
+The next field, <i><b>Bead Mol. Weight</b></i> is for visualization only,
+and will display the bead molecular weight, calculated from the values (taken from the <a href=
+"somo-2.png">atom table</a>).
+<p>
+Likewise, the subsequent field, <i><b>Bead Hydration from Atoms' Values</b></i>, will show 
+the theoretical number of water of hydration molecules assigned to the bead, based on the
+sum of the atoms' values entered in <b>Panel 2</b>. However, since the atomic values
+are likely not defined for most residues, a global value for each bead can be entered in
+the next field, <i><b>Override Bead Hydration Value</b></i>. Most beads' values currently
+present in the <i>somo.residue</i> file were derived from literature. For carbohydrates,
+we used the values of  Shiio (J. Am. Chem. Soc. 80:70-73, 1958). For ions, we used the
+values in Table I of Kiriukhin and Collins (Biophys. Chem. 99:155-168, 2002).
+For the other residues, and for further information, see Brookes et al., Eur. Biophys. J.
+in press, 2009, and Rai et al., Structure 13:723-734, 2005. The volume of 
+these water molecule(s) (defined under the <b>Miscellaneous Options</b>;
+see <a href=somo_misc.html>here</a>) will be later automatically added to the
+anhydrous volume of the bead to define its hydrated volume and radius.
+<p>
+Finally, in the last field, <i><b> Bead hydrated Volume, Radius</b></i>, is again for
+visualization only, and will display the bead's hydrated molecular volume and hydrated radius
+(derived by summing to the anhydrous  <i><b>Bead Volume</b></i> the volume of the water of
+hydration molecules, see above).
+
+<p>If the residue is represented by more than one bead, the process is repeated
+until all beads have been processed.
+
+<p> The residue can then be added to the file by clicking on the <b>Add Residue to File</b> 
+button. If the beads' anhydrous volumes sum doesn't match the residue's anhydrous volume as entered
+in the first section, a pop-up window will appear warning of the problem and prompting to either accept
+the current bead volumes values, or for corrective action to be taken.<br>
+The process can be interrupted at any stage by pressing the <b>Reset</b> button.
+
+<p>To Edit an already defined residue, double-click on its name on the list
+(that can be scrolled) present in the window next to the <i><b>Number of residues in
+File</b></i> field in Panel 1. All the stored properties will then appear
+first in the Panel 1 fields, which can then be updated. By clicking on the
+<b>Accept Residue and Continue</b> button, the properties listed in Panel 2
+become then accessible, and can be likewise edited. Finally, the Panel 3
+options will become again available for editing by clicking on the
+<b>Continue</b> button in Panel 2. <b>Accept Bead Definition</b>
+and <b>Add Residue to File</b> buttoms will then allow to update the
+<a href="somo-residue-3.png">residue table</a> (<i>somo.residue</i>).
+<br>A selected residue/bead definition can be also removed from the file by
+clicking on the <b>Delete Residue</b> button.
+<br>Pressing <b>Close</b> will then exit from the <b>Modify Residue Lookup 
+Tables</b> menu and return the operator to the <b>Main menu</b>.
+
+</td>
+</tr>
+</table>
+
+<hr>
+<font face="helvetica" size="-1">
+www contact: <a href="mailto:brookes@uthscsa.edu">Emre Brookes</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+This document is part of the <i><b>UltraScan</b></i> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> The
+latest version of this document can always be found at:
+</font>
+<p>
+<font face="helvetica" size="-1">
+<a href="http://somo.aucsolutions.com">http://somo.aucsolutions.com</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+Last modified on October 10, 2013.
+</font>
+
+</body>
+</html>
+
