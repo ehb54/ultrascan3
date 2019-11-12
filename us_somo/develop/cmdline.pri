@@ -17,7 +17,7 @@
 
 # Messages -- sets UNAME
 include ( ../../local.pri )
-include (../../gui.pri )
+#include (../../gui.pri )
 include (../../somo.pri)
 
 TEMPLATE        = app
