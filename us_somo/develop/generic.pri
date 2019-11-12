@@ -4,7 +4,9 @@
 # It provides boilerplate for all the UltraScan main programs.
 
 # Messages
-include ( local.pri )
+include ( ../../local.pri )
+include (../../gui.pri)
+include (../../somo.pri)
 
 TEMPLATE        = app
 DEPENDPATH     += $$US3SOMOPATH/src $$US3SOMOPATH/include

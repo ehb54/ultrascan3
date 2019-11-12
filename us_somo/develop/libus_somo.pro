@@ -1,5 +1,7 @@
 # Messages
-include ( local.pri )
+include ( ../../local.pri )
+include ( ../../gui.pri )
+include (../../somo.pri)
 
 TEMPLATE       = lib
 TRANSLATIONS   = lib.ts
@@ -30,7 +32,7 @@ contains( DEFINES, "OSX" ) {
       CONFIG                 += qt thread warn
     
       contains(UNAME,x86_64) {
-        LIBS    += -L$$QWTPATH/lib/ -L$$QWTPATH/lib/ -lqwt 
+        LIBS    += -L$$QWTPATH/lib/ -L$$QWTPATH/src/ -lqwt 
         DEFINES += BIN64
         DESTDIR  = $$US3SOMOPATH/lib
       } else {
