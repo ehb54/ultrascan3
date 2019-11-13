@@ -141,11 +141,11 @@ if [ `uname -s|grep -ci "cygwin"` -ne 0 ]; then
 fi
 
 NBERR=0
-SOMO3=`(cd ${DIR}/us_somo;pwd)`
+SOMO3="${DIR}/somo"
 
 if [ $ISWIN -eq 2 ]; then
   # Run revision and qmake in Cygwin window
-  cd $SOMO3/develop
+  cd $SOMO3/
   pwd
   ./version.sh
   qmake us_somo.pro
@@ -164,7 +164,7 @@ fi
 
 if [ $ISWIN -eq 1 ]; then
   # Run makes for lib,all in MSYS window
-  cd $SOMO3/develop
+  cd $SOMO3/
   pwd
   cp Makefile-lib Makefile
   cp Makefile.R-lib Makefile.Release
@@ -182,11 +182,7 @@ if [ $ISWIN -eq 1 ]; then
   exit 0
 fi
 
-# Do makes for Linux,Mac
-echo "rsync -av --exclude .svn $SOMO3/etc $us3"
-rsync -av --exclude .svn $SOMO3/etc $us3
-
-cd $SOMO3/develop
+cd $SOMO3
 sh version.sh
 qmake us_somo.pro
 cp -p Makefile  Makefile-all
@@ -194,30 +190,11 @@ qmake libus_somo.pro
 cp -p Makefile  Makefile-lib
 make -j2 -f Makefile-lib
 make -j2 -f Makefile-all
-cd $SOMO3
 
 if [ $ISMAC -ne 0 ]; then
   echo "RUN libnames, appnames"
   ./somo_libnames.sh
   ./somo_appnames.sh
-fi
-
-if [ -e ./bin64 ]; then 
-	ls -lrt ./lib ./bin64
-else
-	ls -lrt ./lib ./bin
-fi
-	
-echo ""
-echo "rsync -av --exclude .svn $SOMO3/lib $us3"
-rsync -av --exclude .svn $SOMO3/lib $us3
-
-if [ -e ${SOMO3}/bin64 ]; then 
-	echo "rsync -av --exclude .svn $SOMO3/bin64 $us3/bin"
-	rsync -av --exclude .svn $SOMO3/bin64/ $us3/bin/
-else 
-	echo "rsync -av --exclude .svn $SOMO3/bin $us3"
-	rsync -av --exclude .svn $SOMO3/bin $us3
 fi
 
 
