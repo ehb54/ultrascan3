@@ -17,6 +17,5 @@ QT += svg
 QT += widgets
 QT += printsupport
 QT += multimedia
-LIBS *= -lz
 
 include ($$US3SOMOPATH/uname.pri)

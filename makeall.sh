@@ -169,11 +169,11 @@ if [ $ISWIN -eq 1 ]; then
   cp Makefile-lib Makefile
   cp Makefile.R-lib Makefile.Release
   cp Makefile.D-lib Makefile.Debug
-  make
+  ${MAKE}
   cp Makefile-all Makefile
   cp Makefile.R-all Makefile.Release
   cp Makefile.D-all Makefile.Debug
-  make
+  ${MAKE}
   echo "MAKE of somo complete"
   cd ../
   ls -l ./bin
@@ -188,8 +188,8 @@ qmake us_somo.pro
 cp -p Makefile  Makefile-all
 qmake libus_somo.pro
 cp -p Makefile  Makefile-lib
-make -j2 -f Makefile-lib
-make -j2 -f Makefile-all
+${MAKE} -f Makefile-lib
+${MAKE} -f Makefile-all
 
 if [ $ISMAC -ne 0 ]; then
   echo "RUN libnames, appnames"
