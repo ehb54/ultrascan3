@@ -1,6 +1,6 @@
 #!/bin/sh
 #  revision.sh  - update us_revision.h with latest svn REVISION value
-REV1="$(git rev-list --count master)"
+REV1="$(git log --oneline | wc -l)"
 REV2=`cut -d\" -f2 us_revision.h`
 if [ "$REV1" != "$REV2" ]
 then
