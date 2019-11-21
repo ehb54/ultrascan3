@@ -232,11 +232,17 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    AUTFBACK( cb_eb );
    connect( cb_eb, SIGNAL( clicked() ), SLOT( set_eb() ) );
 
-   pb_rescale = new QPushButton(us_tr("Rescale"), this);
+   pb_rescale = new QPushButton(us_tr("Rescale XY"), this);
    pb_rescale->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_rescale->setMinimumHeight(minHeight1);
    pb_rescale->setPalette( PALET_PUSHB );
    connect(pb_rescale, SIGNAL(clicked()), SLOT(rescale()));
+
+   pb_rescale_y = new QPushButton(us_tr("Rescale Y"), this);
+   pb_rescale_y->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_rescale_y->setMinimumHeight(minHeight1);
+   pb_rescale_y->setPalette( PALET_PUSHB );
+   connect(pb_rescale_y, SIGNAL(clicked()), SLOT(rescale_y()));
 
    pb_ag = new QPushButton(us_tr("AG"), this);
    pb_ag->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -1079,6 +1085,12 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_wheel_save->setPalette( PALET_PUSHB );
    pb_wheel_save->setEnabled(false);
    connect(pb_wheel_save, SIGNAL(clicked()), SLOT(wheel_save()));
+
+   pb_gauss_mode = new QPushButton(us_tr("Gaussian mode"), this);
+   pb_gauss_mode->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_gauss_mode->setMinimumHeight(minHeight1);
+   pb_gauss_mode->setPalette( PALET_PUSHB );
+   connect(pb_gauss_mode, SIGNAL(clicked()), SLOT(gauss_mode()));
 
    pb_gauss_start = new QPushButton(us_tr("Gaussians"), this);
    pb_gauss_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -3179,6 +3191,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       l_pbmode_main->setSpacing( 0 );
 
       l_pbmode_main->addWidget( pb_rescale );
+      l_pbmode_main->addWidget( pb_rescale_y );
       l_pbmode_main->addWidget( pb_axis_x );
       l_pbmode_main->addWidget( pb_axis_y );
       l_pbmode_main->addWidget( cb_eb );
@@ -3187,6 +3200,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       l_pbmode_main->addWidget( pb_legend );
 
       pbmode_main_widgets.push_back( pb_rescale );
+      pbmode_main_widgets.push_back( pb_rescale_y );
       pbmode_main_widgets.push_back( pb_axis_x );
       pbmode_main_widgets.push_back( pb_axis_y );
       pbmode_main_widgets.push_back( cb_eb );
@@ -3472,6 +3486,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    // hbl_mode0->addWidget( pb_wyatt_apply );
 
    QBoxLayout * hbl_mode = new QHBoxLayout(); hbl_mode->setContentsMargins( 0, 0, 0, 0 ); hbl_mode->setSpacing( 0 );
+   hbl_mode->addWidget( pb_gauss_mode );
    hbl_mode->addWidget( pb_gauss_start );
    hbl_mode->addWidget( pb_ggauss_start );
    hbl_mode->addWidget( pb_scale );
@@ -3840,6 +3855,7 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
 
    {
       vector < QWidget * > tmp_widgets;
+      tmp_widgets.push_back( pb_gauss_mode );
       tmp_widgets.push_back( pb_gauss_start );
       tmp_widgets.push_back( pb_ggauss_start );
       tmp_widgets.push_back( pb_scale );
@@ -4414,6 +4430,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    // pb_timeshift        ->setEnabled( files_selected_count > 0 && files_compatible && files_are_time );
    pb_timeshift          ->setEnabled( files_selected_count - conc_selected_count > 0 && files_compatible && files_are_time && conc_files.size() );
    pb_timescale          ->setEnabled( files_selected_count && files_are_time && conc_selected_count == files_selected_count );
+   pb_gauss_mode         ->setEnabled( files_selected_count == 1 && files_are_time );
    pb_gauss_start        ->setEnabled( files_selected_count == 1 && files_are_time );
    pb_ggauss_start       ->setEnabled( files_selected_count > 1 && files_are_time && gaussians.size() );
    cb_sd_weight          ->setEnabled( files_selected_count && files_are_time && gaussians.size() );
@@ -4482,6 +4499,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    pb_movie              ->setEnabled( files_selected_count > 1 );
    cb_eb                 ->setEnabled( files_selected_count > 0 && files_selected_count < 10 );
    pb_rescale            ->setEnabled( files_selected_count > 0 );
+   pb_rescale_y          ->setEnabled( files_selected_count > 0 );
    pb_ag                 ->setEnabled( files_selected_count == 1 && files_compatible && !files_are_time );
 
    pb_select_all_created ->setEnabled( lb_created_files->count() > 0 );
@@ -4703,6 +4721,7 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
    pb_ag                 ->setEnabled( false );
    cb_eb                 ->setEnabled( false );
    pb_rescale            ->setEnabled( false );
+   pb_rescale_y          ->setEnabled( false );
    pb_select_all_created ->setEnabled( false );
    pb_adjacent_created   ->setEnabled( false );
    pb_save_created_csv   ->setEnabled( false );
@@ -4731,6 +4750,7 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
    pb_timeshift          ->setEnabled( false );
    pb_timescale          ->setEnabled( false );
 
+   pb_gauss_mode         ->setEnabled( false );
    pb_gauss_start        ->setEnabled( false );
    pb_gauss_clear        ->setEnabled( false );
    pb_gauss_new          ->setEnabled( false );

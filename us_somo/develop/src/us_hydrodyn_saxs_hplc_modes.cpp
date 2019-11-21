@@ -78,6 +78,7 @@ void US_Hydrodyn_Saxs_Hplc::pm()
    disable_all();
    mode_select( MODE_PM );
    pb_rescale     ->setEnabled( true );
+   pb_rescale_y   ->setEnabled( true );
    pb_axis_x      ->setEnabled( true );
    pb_axis_y      ->setEnabled( true );
 
@@ -815,6 +816,7 @@ void US_Hydrodyn_Saxs_Hplc::testiq_enables()
       cb_testiq_from_gaussian->show();
    }
    pb_rescale     ->setEnabled( true );
+   pb_rescale_y   ->setEnabled( true );
    pb_axis_x      ->setEnabled( true );
    pb_axis_y      ->setEnabled( true );
 }
@@ -4629,6 +4631,7 @@ void US_Hydrodyn_Saxs_Hplc::wyatt_enables()
 #endif
                            );
    pb_rescale             ->setEnabled( true );
+   pb_rescale_y           ->setEnabled( true );
    pb_view                ->setEnabled( true );
    if ( cb_wyatt_2->isChecked() )
    {
@@ -5445,6 +5448,7 @@ void US_Hydrodyn_Saxs_Hplc::scale_enables()
    pb_scale_create       ->setEnabled( scale_applied );
    cb_scale_scroll       ->setEnabled( true );
    pb_rescale            ->setEnabled( true );
+   pb_rescale_y          ->setEnabled( true );
    pb_axis_x             ->setEnabled( true );
    pb_axis_y             ->setEnabled( true );
    pb_pp                 ->setEnabled( true );
@@ -6820,12 +6824,12 @@ void US_Hydrodyn_Saxs_Hplc::ggaussian_enables()
    pb_ggauss_start     ->setEnabled( false );
    pb_wheel_cancel     ->setEnabled( true );
    pb_rescale          ->setEnabled( true );
+   pb_rescale_y        ->setEnabled( true );
    pb_wheel_save       ->setEnabled( unified_ggaussian_gaussians_size );
    pb_errors           ->setEnabled( true );
    pb_ggqfit           ->setEnabled( true );
    cb_ggq_plot_chi2    ->setEnabled( true );
    cb_ggq_plot_P       ->setEnabled( true );
-   pb_rescale          ->setEnabled( true );
    pb_pp               ->setEnabled( true );
 }
 
@@ -6887,6 +6891,7 @@ void US_Hydrodyn_Saxs_Hplc::timeshift()
    plot_errors->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_errors->detachItems( QwtPlotItem::Rtti_PlotMarker );;
    
    pb_rescale            ->setEnabled( true );
+   pb_rescale_y          ->setEnabled( true );
    pb_timeshift          ->setEnabled( false );
    pb_wheel_cancel       ->setEnabled( true );
    wheel_enables();

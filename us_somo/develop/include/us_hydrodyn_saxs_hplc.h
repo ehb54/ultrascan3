@@ -137,6 +137,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       friend class US_Hydrodyn_Saxs_Hplc_Fit;
       friend class US_Hydrodyn_Saxs_Hplc_Fit_Global;
       friend class US_Hydrodyn_Saxs_Hplc_Options;
+      friend class US_Hydrodyn_Saxs_Hplc_Gauss_Mode;
       friend class US_Hydrodyn_Saxs_Hplc_Nth;
       friend class US_Hydrodyn_Saxs_Hplc_Svd;
       friend class US_Hydrodyn_Saxs_Hplc_Movie;
@@ -175,6 +176,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       // new:
       // main plot options:
       // pb_rescale
+      // pb_rescale_y
       // pb_axis_x
       // pb_axis_y
       // cb_eb
@@ -287,6 +289,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QPushButton   *pb_ag;
       QCheckBox     *cb_eb;
       QPushButton   *pb_rescale;
+      QPushButton   *pb_rescale_y;
 
       QPushButton   *pb_stack_push_all;
       QPushButton   *pb_stack_push_sel;
@@ -444,6 +447,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QPushButton   *pb_wheel_cancel;
       QPushButton   *pb_wheel_save;
 
+      QPushButton   *pb_gauss_mode;
       QPushButton   *pb_gauss_start;
       QPushButton   *pb_gauss_clear;
       QPushButton   *pb_gauss_new;
@@ -1521,6 +1525,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void movie();
       void set_eb();
       void rescale();
+      void rescale_y();
       void conc_avg();
       void normalize();
       void add();
@@ -1586,6 +1591,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       void adjust_wheel ( double );
 
+      void gauss_mode();
       void gauss_start();
       void gauss_clear( );
       void gauss_new();

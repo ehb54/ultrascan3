@@ -330,6 +330,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
       pbs.push_back( pb_stack_rot_down );
       pbs.push_back( pb_stack_swap );
 
+      pbs.push_back( pb_gauss_mode );
       pbs.push_back( pb_gauss_start );
       pbs.push_back( pb_p3d );
       pbs.push_back( pb_gauss_clear );
@@ -4153,93 +4154,6 @@ QString US_Hydrodyn_Saxs_Hplc::vector_double_to_csv( vector < double > vd )
    return result;
 }
 
-void US_Hydrodyn_Saxs_Hplc::rescale()
-{
-   //    hide_widgets( plot_errors_widgets, !plot_errors_widgets[ 0 ]->isVisible() );
-   //    hide_widgets( files_widgets, !files_widgets[ 0 ]->isVisible() );
-   //    hide_widgets( files_expert_widgets, !files_expert_widgets[ 0 ]->isVisible() );
-   //    hide_widgets( created_files_widgets, !created_files_widgets[ 0 ]->isVisible() );
-   //    hide_widgets( created_files_expert_widgets, !created_files_expert_widgets[ 0 ]->isVisible() );
-   //    hide_widgets( editor_widgets, !editor_widgets[ 0 ]->isVisible() );
-
-   //bool any_selected = false;
-   double minx = 0e0;
-   double maxx = 1e0;
-   double miny = 0e0;
-   double maxy = 1e0;
-
-   double file_minx;
-   double file_maxx;
-   double file_miny;
-   double file_maxy;
-   
-   bool first = true;
-   for ( int i = 0; i < lb_files->count(); i++ )
-   {
-      if ( lb_files->item( i )->isSelected() )
-      {
-         //any_selected = true;
-         if ( get_min_max( lb_files->item( i )->text(), file_minx, file_maxx, file_miny, file_maxy ) )
-         {
-            if ( first )
-            {
-               minx = file_minx;
-               maxx = file_maxx;
-               miny = file_miny;
-               maxy = file_maxy;
-               first = false;
-            } else {
-               if ( file_minx < minx )
-               {
-                  minx = file_minx;
-               }
-               if ( file_maxx > maxx )
-               {
-                  maxx = file_maxx;
-               }
-               if ( file_miny < miny )
-               {
-                  miny = file_miny;
-               }
-               if ( file_maxy > maxy )
-               {
-                  maxy = file_maxy;
-               }
-            }
-         }
-      }
-   }
-   
-   if ( plot_dist_zoomer )
-   {
-      plot_dist_zoomer->zoom ( 0 );
-      delete plot_dist_zoomer;
-   }
-
-   plot_dist->setAxisScale( QwtPlot::xBottom, minx, maxx );
-   plot_dist->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );
-   plot_dist_zoomer = new ScrollZoomer(plot_dist->canvas());
-   plot_dist_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-   plot_dist_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
-   connect( plot_dist_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
-   
-   legend_set();
-   if ( !suppress_replot )
-   {
-      plot_dist->replot();
-   }
-   if ( current_mode == MODE_NORMAL )
-   // if ( !gaussian_mode &&
-   //      !ggaussian_mode && 
-   //      !baseline_mode &&
-   //      !timeshift_mode )
-   {
-      update_enables();
-   }
-}
-
 void US_Hydrodyn_Saxs_Hplc::join()
 {
    vector < QString > selected;
@@ -5943,6 +5857,7 @@ void US_Hydrodyn_Saxs_Hplc::gaussian_enables()
 {
    unsigned int g_size = ( unsigned int )gaussians.size() / gaussian_type_size;
 
+   pb_gauss_mode       ->setEnabled( false );
    pb_gauss_start      ->setEnabled( false );
    pb_gauss_clear      ->setEnabled( g_size );
    pb_gauss_new        ->setEnabled( true );
@@ -5964,6 +5879,7 @@ void US_Hydrodyn_Saxs_Hplc::gaussian_enables()
    pb_gauss_as_curves  ->setEnabled( g_size );
    wheel_enables       ( g_size && gaussian_pos < g_size );
    pb_rescale          ->setEnabled( true );
+   pb_rescale_y        ->setEnabled( true );
    pb_view             ->setEnabled( true );
    pb_errors           ->setEnabled( true );
    pb_pp               ->setEnabled( true );
@@ -8756,4 +8672,3 @@ void US_Hydrodyn_Saxs_Hplc::update_gauss_mode()
    int percharwidth = 1 + ( 7 * ( USglobal->config_list.fontSize - 1 ) / 10 );
    // pb_gauss_start->setMaximumWidth( percharwidth * ( pb_gauss_start->text().length() + 3 ) );
 }
-

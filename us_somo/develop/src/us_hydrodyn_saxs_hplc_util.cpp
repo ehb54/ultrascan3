@@ -9,6 +9,7 @@
 #include "../include/us_hydrodyn_saxs_hplc_fit_global.h"
 #include "../include/us_hydrodyn_saxs_hplc_nth.h"
 #include "../include/us_hydrodyn_saxs_hplc_options.h"
+#include "../include/us_hydrodyn_saxs_hplc_gauss_mode.h"
 #include "../include/us_hydrodyn_saxs_hplc_svd.h"
 #include "../include/us_hydrodyn_saxs_hplc_movie.h"
 #include "../include/us_hydrodyn_saxs_hplc_simulate.h"
@@ -5280,3 +5281,41 @@ void US_Hydrodyn_Saxs_Hplc::simulate() {
                                                                                 );
    uhshs->show();
 }
+
+void US_Hydrodyn_Saxs_Hplc::gauss_mode()
+{
+   map < QString, QString > parameters;
+
+   if ( U_EXPT )
+   {
+      parameters[ "expert_mode" ] = "true";
+   }
+   
+   
+   parameters[ "gaussian_type" ] = QString( "%1" ).arg( gaussian_type );
+   US_Hydrodyn_Saxs_Hplc_Gauss_Mode *sho = 
+      new US_Hydrodyn_Saxs_Hplc_Gauss_Mode( & parameters, (US_Hydrodyn *) us_hydrodyn, this );
+   US_Hydrodyn::fixWinButtons( sho );
+   sho->exec();
+   delete sho;
+
+   if ( !parameters.count( "ok" ) )
+   {
+      return;
+   }
+
+   if ( gaussian_type != (gaussian_types)( parameters[ "gaussian_type" ].toInt() ) )
+   {
+      gaussian_type = (gaussian_types)( parameters[ "gaussian_type" ].toInt() );
+      unified_ggaussian_ok = false;
+      f_gaussians.clear( );
+      gaussians.clear( );
+      org_gaussians.clear( );
+      org_f_gaussians.clear( );
+      update_gauss_mode();
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gaussian_type" ] = QString( "%1" ).arg( gaussian_type );
+   }
+
+   update_enables();
+}
+
