@@ -931,7 +931,9 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    hbl_plot_errors_buttons->addWidget( cb_plot_errors_rev );
    hbl_plot_errors_buttons->addWidget( cb_plot_errors_sd );
    hbl_plot_errors_buttons->addWidget( cb_plot_errors_pct );
-   hbl_plot_errors_buttons->addWidget( cb_plot_errors_group );
+   // hbl_plot_errors_buttons->addWidget( cb_plot_errors_group );
+   cb_plot_errors_group->hide();
+   cb_plot_errors_group->setChecked( true );
 
    l_plot_errors = new QVBoxLayout( 0 );
    l_plot_errors->addWidget( plot_errors );
