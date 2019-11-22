@@ -14042,7 +14042,7 @@ bool US_Hydrodyn::calc_zeno()
                   this_data.results.used_beads_sd         = 0e0;
                   this_data.results.total_beads           = bead_models [ current_model ].size();
                   this_data.results.total_beads_sd        = 0e0;
-                  this_data.results.vbar                  = model_vector[ current_model ].vbar;
+                  this_data.results.vbar                  = misc.compute_vbar ? model_vector[ current_model ].vbar : misc.vbar;
                   // need to get rg
                   // this_data.results.rg            = model_vector[ current_model ].Rg;
 
