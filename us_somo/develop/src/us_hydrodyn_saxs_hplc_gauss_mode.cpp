@@ -20,7 +20,7 @@ US_Hydrodyn_Saxs_Hplc_Gauss_Mode::US_Hydrodyn_Saxs_Hplc_Gauss_Mode(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle( us_tr( "US-SOMO: SAXS HPLC : Gaussian Type" ) );
+   setWindowTitle( us_tr( "US-SOMO: SAXS HPLC : Gaussian Options" ) );
 
    setupGUI();
 
@@ -40,7 +40,7 @@ void US_Hydrodyn_Saxs_Hplc_Gauss_Mode::setupGUI()
 {
    int minHeight1  = 30;
 
-   lbl_gaussian_type = new QLabel ( us_tr( "Gaussian Type" ), this);
+   lbl_gaussian_type = new QLabel ( us_tr( "Gaussian Options" ), this);
    lbl_gaussian_type->setAlignment( Qt::AlignCenter | Qt::AlignVCenter);
    lbl_gaussian_type->setPalette  ( PALET_FRAME );
    AUTFBACK( lbl_gaussian_type );
