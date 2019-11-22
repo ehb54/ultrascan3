@@ -1086,7 +1086,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_wheel_save->setEnabled(false);
    connect(pb_wheel_save, SIGNAL(clicked()), SLOT(wheel_save()));
 
-   pb_gauss_mode = new QPushButton(us_tr("Gaussian mode"), this);
+   pb_gauss_mode = new QPushButton(us_tr("Gaussian type"), this);
    pb_gauss_mode->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_gauss_mode->setMinimumHeight(minHeight1);
    pb_gauss_mode->setPalette( PALET_PUSHB );
