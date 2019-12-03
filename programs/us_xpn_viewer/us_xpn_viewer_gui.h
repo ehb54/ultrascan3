@@ -19,8 +19,8 @@
 #include "us_help.h"
 #include "us_plot.h"
 #include "us_dataIO.h"
-#include "us_license_t.h"
-#include "us_license.h"
+//#include "us_license_t.h"
+//#include "us_license.h"
 #include "us_xpn_run_raw.h"
 #include "us_xpn_run_auc.h"
 

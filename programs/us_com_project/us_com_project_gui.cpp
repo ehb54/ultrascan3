@@ -296,6 +296,9 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    tabWidget->tabBar()->setStyleSheet( "QTabBar::tab {min-width: 70;} QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:first {background: blue; color: lightgray; min-width: 50;}  QTabBar::tab:first:hover {background: #4169E1; color: white}  QTabBar::tab:disabled { color: rgba(0, 0, 0, 70%)  } ");
 
    main->addWidget( tabWidget );
+
+
+   /* TEMPORARILY  - UNCOMMENT LATER !!!!
    
    for (int i=0; i < tabWidget->count(); ++i )
      {
@@ -306,10 +309,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
 	 tabWidget->tabBar()->setTabEnabled(i, false);
      }
 
-   //QPalette pal = tabWidget->tabBar()->palette();
-   //qDebug() << "Palette: color, group: " << pal.color(QPalette::Background) << ", " << pal.currentColorGroup();
-   //pal.setCurrentColorGroup(QPalette::Active);
-   //tabWidget->tabBar()->setPalette(pal);
+   */
 
    connect( tabWidget, SIGNAL( currentChanged( int ) ), this, SLOT( initPanels( int ) ) );
       
@@ -1974,28 +1974,75 @@ US_EditingGui::US_EditingGui( QWidget* topw )
       
    QGridLayout* genL   = new QGridLayout();
 
-   // //QPlainTextEdit* panel_desc = new QPlainTextEdit(this);
-   QTextEdit* panel_desc = new QTextEdit(this);
-   panel_desc->viewport()->setAutoFillBackground(false);
-   panel_desc->setFrameStyle(QFrame::NoFrame);
-   panel_desc->setPlainText(" Tab to Edit Experimental Data... ---UNDER CONSTRUCTION--- ");
-   panel_desc->setReadOnly(true);
-   //panel_desc->setMaximumHeight(30);
-   QFontMetrics m (panel_desc -> font()) ;
-   int RowHeight = m.lineSpacing() ;
-   panel_desc -> setFixedHeight  (2* RowHeight) ;
+   // // //QPlainTextEdit* panel_desc = new QPlainTextEdit(this);
+   // QTextEdit* panel_desc = new QTextEdit(this);
+   // panel_desc->viewport()->setAutoFillBackground(false);
+   // panel_desc->setFrameStyle(QFrame::NoFrame);
+   // panel_desc->setPlainText(" Tab to Edit Experimental Data... ---UNDER CONSTRUCTION--- ");
+   // panel_desc->setReadOnly(true);
+   // //panel_desc->setMaximumHeight(30);
+   // QFontMetrics m (panel_desc -> font()) ;
+   // int RowHeight = m.lineSpacing() ;
+   // panel_desc -> setFixedHeight  (2* RowHeight) ;
 
-   int row = 0;
-   genL->addWidget( panel_desc,  row++,   0, 1, 12);
+   // int row = 0;
+   // genL->addWidget( panel_desc,  row++,   0, 1, 12);
  
    // assemble main
    main->addLayout(genL);
    main->addStretch();
 
-   // //Later - do actual editing form sdiag - whatever it will be: (us_edit.cpp)
-   // connect( this, SIGNAL( start_editing( QString &, QString & ) ), sdiag, SLOT( edit_auto ( QString &, QString & )  ) );
+   // Open US_Edit ...  
+   sdiag = new US_Edit("AUTO");
+   sdiag->setParent(this, Qt::Widget);
+   
+   
+   // //Later - do actual editing form sdiag (load_auto() ) - whatever it will be: (us_edit.cpp)
+   connect( this, SIGNAL( start_editing( QString &, QString & ) ), sdiag, SLOT( load_auto ( QString &, QString & )  ) );
+
+   offset = 0;
+   sdiag->move(offset, 2*offset);
+   sdiag->setFrameShape( QFrame::Box);
+   sdiag->setLineWidth(2);
+
+   // if ( mainw->us_mode_bool )
+   //   sdiag->us_mode_passed();
+
+   sdiag->show();
    
 }
+
+void US_EditingGui::resizeEvent(QResizeEvent *event)
+{
+    int tab_width = mainw->tabWidget->tabBar()->width();
+    int upper_height = mainw->gen_banner->height() + //mainw->welcome->height()
+      + mainw->logWidget->height() + mainw->test_footer->height();
+     
+    int new_main_w = mainw->width() - 3*offset - tab_width;
+    int new_main_h = mainw->height() - 4*offset - upper_height;
+    
+    //if (mainw->width() - offset > sdiag->width() || mainw->height() - 2*offset > sdiag->height()) {
+    if ( new_main_w > sdiag->width() || new_main_h > sdiag->height()) {
+      int newWidth = qMax( new_main_w, sdiag->width());
+      int newHeight = qMax( new_main_h, sdiag->height());
+      sdiag->setMaximumSize( newWidth, newHeight );
+      sdiag->resize( QSize(newWidth, newHeight) );
+      update();
+    }
+
+    //if (mainw->width() < sdiag->width() || mainw->height() < sdiag->height()) {
+    if ( new_main_w < sdiag->width() ||  new_main_h < sdiag->height() ) {
+      int newWidth = qMin( new_main_w, sdiag->width());
+      int newHeight = qMin( new_main_h, sdiag->height());
+      sdiag->setMaximumSize( newWidth, newHeight );
+      sdiag->resize( QSize(newWidth, newHeight) );
+      update();
+    }
+     
+    QWidget::resizeEvent(event);
+}
+
+
 
 void US_EditingGui::do_editing( QString & currDir, QString & protocolName )
 {

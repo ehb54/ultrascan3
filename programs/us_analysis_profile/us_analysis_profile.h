@@ -16,8 +16,8 @@
 #include "us_passwd.h"
 #include "us_db2.h"
 #include "us_select_runs.h"
-#include "us_license_t.h"
-#include "us_license.h"
+//#include "us_license_t.h"
+//#include "us_license.h"
 
 class US_AnalysisProfileGui;
 

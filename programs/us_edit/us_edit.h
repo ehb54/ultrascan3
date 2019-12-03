@@ -1,6 +1,9 @@
 #ifndef US_EDIT_H
 #define US_EDIT_H
 
+#include <QApplication>
+#include <QDomDocument>
+
 #include "us_extern.h"
 #include "us_widgets.h"
 #include "us_help.h"
@@ -9,6 +12,9 @@
 #include "us_db2.h"
 #include "us_mwl_data.h"
 #include "qwt_plot_marker.h"
+//#include "us_license_t.h"
+//#include "us_license.h"
+
 
 class US_Edit : public US_Widgets
 {
@@ -16,6 +22,13 @@ class US_Edit : public US_Widgets
 
       public:
          US_Edit();
+	 
+	 // New constructor for automated read/upload/update
+	 US_Edit(QString auto_mode);
+
+	 //void us_mode_passed  ( void );
+	 //bool usmode;
+	  
 
       private:
 
@@ -224,6 +237,7 @@ class US_Edit : public US_Widgets
 
       QVector< QVector< double > >  rdata;
 
+      
       // Private slots
       void set_pbColors      ( QPushButton* );
       void draw_vline        ( double );

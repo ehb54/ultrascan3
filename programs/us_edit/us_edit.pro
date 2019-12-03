@@ -10,7 +10,8 @@ HEADERS       = us_edit.h            \
                 us_edit_scan.h       \
                 us_select_lambdas.h
 
-SOURCES       = us_edit.cpp            \
+SOURCES       = us_edit_main.cpp       \
+                us_edit.cpp            \
                 us_exclude_profile.cpp \
                 us_get_edit.cpp        \
                 us_ri_noise.cpp        \

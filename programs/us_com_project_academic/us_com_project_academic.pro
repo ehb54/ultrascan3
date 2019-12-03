@@ -18,7 +18,13 @@ HEADERS       = ../us_com_project/us_com_project_gui.h \
                 ../us_convert/us_experiment_gui.h \
                 ../us_convert/us_intensity.h \
                 ../us_convert/us_selectbox.h \
-                ../us_convert/us_select_triples.h
+                ../us_convert/us_select_triples.h \
+                ../us_edit/us_edit.h \
+                ../us_edit/us_edit_scan.h \
+                ../us_edit/us_exclude_profile.h \
+                ../us_edit/us_get_edit.h \
+                ../us_edit/us_ri_noise.h \
+                ../us_edit/us_select_lambdas.h                 
 
 SOURCES       = us_com_project_academic_main.cpp \
                 ../us_com_project/us_com_project_gui.cpp \
@@ -38,5 +44,12 @@ SOURCES       = us_com_project_academic_main.cpp \
                 ../us_convert/us_experiment_gui.cpp  \
                 ../us_convert/us_intensity.cpp       \
                 ../us_convert/us_selectbox.cpp       \
-                ../us_convert/us_select_triples.cpp
+                ../us_convert/us_select_triples.cpp  \
+                ../us_edit/us_edit.cpp \
+                ../us_edit/us_edit_scan.cpp \
+                ../us_edit/us_exclude_profile.cpp \
+                ../us_edit/us_get_edit.cpp \
+                ../us_edit/us_ri_noise.cpp \
+                ../us_edit/us_select_lambdas.cpp
+                
 

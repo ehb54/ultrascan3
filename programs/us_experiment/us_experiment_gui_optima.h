@@ -23,8 +23,8 @@
 #include "us_db2.h"
 #include "us_hardware.h"
 #include "us_select_runs.h"
-#include "us_license_t.h"
-#include "us_license.h"
+//#include "us_license_t.h"
+//#include "us_license.h"
 
 class US_ExperimentMain;
 
@@ -807,6 +807,9 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       void    submitExperiment_confirm( void );  // Submit the experiment
       void    submitExperiment( void );  // Submit the experiment
       void    saveRunProtocol ( void );  // Save the Run Protocol
+
+      void    saveAnalysisProfile ( void );  // Save the Analysis Profile
+
       QString buildJson       ( void );  // Build the JSON
       void    add_autoflow_record( QMap< QString, QString> &protocol_details );
       
@@ -843,6 +846,8 @@ class US_ExperGuiAProfile : public US_WidgetsDialog
 
       void reset_sdiag( void );
       
+      US_AnalysisProfileGui* sdiag;      // Analysis Profile in panel
+      
    private:
       US_ExperimentMain*    mainw;
       US_RunProtocol*       loadProto;  // Loaded RunProtocol controls pointer
@@ -856,7 +861,7 @@ class US_ExperGuiAProfile : public US_WidgetsDialog
       US_RunProtocol::RunProtoAProfile*   rpAprof;  //!< AProfile controls
       US_RunProtocol::RunProtoUpload*     rpSubmt;  //!< Submit controls
       US_Help  showHelp;
-      US_AnalysisProfileGui* sdiag;      // Analysis Profile in panel
+      //US_AnalysisProfileGui* sdiag;      // Analysis Profile in panel
 
       //QPushButton* pb_saverp;
       //QPushButton* pb_submit;
@@ -968,6 +973,9 @@ class US_ExperimentMain : public US_Widgets
       //void auto_mode_passed( void ); 
       void reset     ( void );
       void    exclude_used_instruments( QStringList &);
+
+      US_AnaProfile get_aprofile( void );
+	
     signals:
       void us_exp_is_closed( void );
       void to_live_update( QMap < QString, QString > &protocol_details );

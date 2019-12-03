@@ -1,7 +1,8 @@
 //! \file us_experiment_main.cpp
 
 #include "us_experiment_gui_optima.h"
-
+#include "us_license_t.h"
+#include "us_license.h"
 
 //! \brief Main program for US_ExperimentMain. Loads translators and starts
 //         the class US_ExperimentMain

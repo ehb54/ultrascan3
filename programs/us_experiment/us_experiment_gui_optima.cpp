@@ -187,6 +187,11 @@ void US_ExperimentMain::reset( void )
 
 }
 
+US_AnaProfile US_ExperimentMain::get_aprofile( )
+{
+  return epanAProfile->sdiag->currProf;
+}
+
 void US_ExperimentMain::exclude_used_instruments( QStringList & occupied_instruments )
 {
 
@@ -4392,8 +4397,25 @@ DbgLv(1) << "EGUp:  connected" << connected;
 }
 
 // Slot to save the current Run Protocol
+void US_ExperGuiUpload::saveAnalysisProfile()
+{
+   rpAprof->us_xml.clear();
+
+   QXmlStreamWriter xmlo_aprof( &rpAprof->us_xml ); // Compose XML representation
+   xmlo_aprof.setAutoFormatting( true );
+   //mainw->epanAProfile->sdiag->currProf.toXml( xmlo_aprof );
+
+   US_AnaProfile aprof = mainw->get_aprofile();
+
+   aprof.toXml( xmlo_aprof ); 
+   qDebug() << "XML AProfile: " << rpAprof->us_xml;
+}
+
+// Slot to save the current Run Protocol
 void US_ExperGuiUpload::saveRunProtocol()
 {
+
+  saveAnalysisProfile();
 
   if ( mainw->ScanCount_global > 1501 )
     {
@@ -4553,8 +4575,10 @@ void US_ExperGuiUpload::submitExperiment_confirm()
    if ( mainw->automode && rps_differ )
      saveRunProtocol();
    else if ( !mainw->automode && have_run && rps_differ )
-     saveRunProtocol();
-   
+     {
+       //saveAnalysisProfile();
+       saveRunProtocol();
+     }
    
    QMessageBox msgBox;
    QString message_protocol = tr( "");

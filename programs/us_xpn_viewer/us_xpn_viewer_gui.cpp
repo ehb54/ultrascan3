@@ -2381,15 +2381,15 @@ void US_XpnDataViewer::retrieve_xpn_raw_auto( void )
    }
 
    // Let the user know if the runID name has changed
-   if ( runID_changed )
-   {
-      QMessageBox::warning( this,
-            tr( "RunId Name Changed" ),
-            tr( "The runId name has been changed.\nIt may consist only "
-                "of alphanumeric characters,\nthe underscore, and the "
-                "hyphen;\nand may be at most 60 characters in length."
-                "\nNew runId:\n  " ) + new_runID );
-   }
+   // if ( runID_changed )
+   // {
+   //    QMessageBox::warning( this,
+   //          tr( "RunId Name Changed" ),
+   //          tr( "The runId name has been changed.\nIt may consist only "
+   //              "of alphanumeric characters,\nthe underscore, and the "
+   //              "hyphen;\nand may be at most 60 characters in length."
+   //              "\nNew runId:\n  " ) + new_runID );
+   // }
 
    // Set the runID and directory
    runID       = new_runID;

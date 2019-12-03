@@ -1,7 +1,8 @@
 //! \file us_xpn_viewer_main.cpp
 
 #include "us_xpn_viewer_gui.h"
-
+#include "us_license_t.h"
+#include "us_license.h"
 
 //! \brief Main program for US_XpnDataViewer.
 

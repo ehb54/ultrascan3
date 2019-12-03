@@ -1,6 +1,7 @@
-//! \file us_convert_main.cpp
+//! \brief Main program for US_Edit. Loads translators and starts
+//!        the class US_FitMeniscus.
 
-#include "us_convert_gui.h"
+#include "us_edit.h"
 #include "us_license_t.h"
 #include "us_license.h"
 
@@ -11,9 +12,10 @@ int main( int argc, char* argv[] )
    #include "main1.inc"
 
    // License is OK.  Start up.
-
-   //US_ConvertGui w("AUTO");
-   US_ConvertGui w;
+   
+   US_Edit w;
    w.show();                   //!< \memberof QWidget
    return application.exec();  //!< \memberof QApplication
 }
+
+

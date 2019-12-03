@@ -6,6 +6,7 @@
 #include <fstream>
 #include <QtSql>
 
+
 #include "../us_xpn_viewer/us_xpn_viewer_gui.h"
 #include "../us_experiment/us_experiment_gui_optima.h"
 #include "../us_convert/us_experiment.h"     
@@ -16,6 +17,13 @@
 #include "../us_convert/us_intensity.h"      
 #include "../us_convert/us_selectbox.h"      
 #include "../us_convert/us_select_triples.h"
+
+#include "../us_edit/us_edit.h"
+#include "../us_edit/us_edit_scan.h"
+#include "../us_edit/us_exclude_profile.h"
+#include "../us_edit/us_get_edit.h"
+#include "../us_edit/us_ri_noise.h"
+#include "../us_edit/us_select_lambdas.h" 
 
 #include "us_protocol_util.h"
 #include "us_project_gui.h"
@@ -30,10 +38,11 @@
 #include "us_db2.h"
 #include "us_hardware.h"
 #include "us_select_runs.h"
-#include "us_license_t.h"
 #include "us_plot.h"
-#include "us_license.h"
 #include "us_select_item.h"
+#include "us_license_t.h"
+#include "us_license.h"
+
 
 class US_ComProjectMain;
 
@@ -252,10 +261,11 @@ class US_EditingGui : public US_WidgetsDialog
          
   private:
     US_ComProjectMain*    mainw;      // Parent to all panels
+    US_Edit*              sdiag;
     int offset;
 
  protected:
-    //void resizeEvent(QResizeEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
       
  private slots:
    void do_editing( QString & currDir, QString & protocolName );

@@ -1,6 +1,9 @@
 //! \file us_anapro_main.cpp
 
 #include "us_analysis_profile.h"
+#include "us_license_t.h"
+#include "us_license.h"
+
 
 //! \brief Main program for US_AnalysisProfileGui. Loads translators and starts
 //         the class US_AnalysisProfileGui
