@@ -333,7 +333,8 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( epanInit, SIGNAL( define_new_experiment_init( QStringList & ) ), this, SLOT( define_new_experiment( QStringList &)  ) );
    connect( epanInit, SIGNAL( switch_to_live_update_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
    connect( epanInit, SIGNAL( switch_to_post_processing_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & )  ) );
-   
+   connect( epanInit, SIGNAL( switch_to_editing_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_editing( QMap < QString, QString > & )  ) );
+      
    connect( this, SIGNAL( pass_used_instruments( QStringList & ) ), epanExp, SLOT( pass_used_instruments( QStringList &)  ) );
    
    connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
@@ -347,10 +348,10 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( epanObserv, SIGNAL( processes_stopped() ), this, SLOT( liveupdate_stopped() ));
    connect( epanObserv, SIGNAL( stop_nodata() ), this, SLOT( close_all() ));
    
-   connect( epanPostProd, SIGNAL( switch_to_editing( QString &, QString &) ),  this, SLOT( switch_to_editing( QString &, QString & )  ) );
+   connect( epanPostProd, SIGNAL( switch_to_editing( QMap < QString, QString > & ) ),  this, SLOT( switch_to_editing ( QMap < QString, QString > & )  ) );
    connect( this, SIGNAL( reset_lims_import() ),  epanPostProd, SLOT( reset_lims_import( )  ) );
 
-   connect( this, SIGNAL( pass_to_editing( QString &, QString & ) ),   epanEditing, SLOT( do_editing( QString &, QString & )  ) );
+   connect( this, SIGNAL( pass_to_editing( QMap < QString, QString > & ) ),   epanEditing, SLOT( do_editing( QMap < QString, QString > & )  ) );
    connect( epanPostProd, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
    
    
@@ -752,21 +753,10 @@ void US_ComProjectMain::switch_to_post_processing( QMap < QString, QString > & p
   
   emit import_data_us_convert( protocol_details );
 }
-
-// Obsolete
-// // Slot to switch back from the Live Update to Experiment tab
-// void US_ComProjectMain::switch_to_experiment( QString & protocolName )
-// {
-//   tabWidget->setCurrentIndex( 1 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
-//   curr_panx = 1;
-//    //delete_autoflow_record( runID );
-   
-//    emit clear_experiment( protocolName );
-// }
    
 
 // Slot to switch from the Import to Editing tab
-void US_ComProjectMain::switch_to_editing( QString  & currDir, QString & protocolName)
+void US_ComProjectMain::switch_to_editing( QMap < QString, QString > & protocol_details )
 {
    tabWidget->setCurrentIndex( 4 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
    curr_panx = 4;
@@ -784,7 +774,7 @@ void US_ComProjectMain::switch_to_editing( QString  & currDir, QString & protoco
 
    // ALEXEY: Make a record to 'autoflow' table: stage# = 3; 
 
-   emit pass_to_editing( currDir, protocolName );
+   emit pass_to_editing( protocol_details );
 }
 
 // Function to Call initiation of the Autoflow Record Dialogue form _main.cpp
@@ -1121,12 +1111,15 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   QString currDir      = protocol_details[ "dataPath" ];
   QString invID_passed = protocol_details[ "invID_passed" ];
   QString ProtName     = protocol_details[ "protocolName" ];
+  QString expName      = protocol_details[ "experimentName" ];
   QString correctRadii = protocol_details[ "correctRadii" ];
   QString expAborted   = protocol_details[ "expAborted" ];
   QString runID        = protocol_details[ "runID" ];
   QString exp_label    = protocol_details[ "label" ];
 
   QString gmp_Run      = protocol_details[ "gmpRun" ];
+  QString filename     = protocol_details[ "filename" ];
+  QString aprofileguid = protocol_details[ "aprofileguid" ];
   
   QDir directory( currDir );
   
@@ -1166,6 +1159,10 @@ void US_InitDialogueGui::initRecordsDialogue( void )
       
      
       return;
+    }
+  if ( stage == "EDIT_DATA" )
+    {
+      emit switch_to_editing_init( protocol_details );
     }
   //and so on...
    
@@ -1430,7 +1427,10 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_record( int autoflowID
 	   protocol_details[ "expAborted" ]     = db->value( 14 ).toString();
 	   protocol_details[ "label" ]          = db->value( 15 ).toString();
 	   protocol_details[ "gmpRun" ]         = db->value( 16 ).toString();
-	   
+
+	   protocol_details[ "filename" ]       = db->value( 17 ).toString();
+	   protocol_details[ "aprofileguid" ]   = db->value( 18 ).toString();
+	   	   
 	 }
      }
 
@@ -1876,7 +1876,7 @@ US_PostProdGui::US_PostProdGui( QWidget* topw )
    connect( this, SIGNAL( reset_lims_import_passed( ) ), sdiag, SLOT( reset_limsimport_panel ( )  ) );
    
    //ALEXEY: switch to Editing
-   connect( sdiag, SIGNAL( saving_complete_auto( QString &, QString & ) ), this, SLOT( to_editing ( QString &, QString &) ) );
+   connect( sdiag, SIGNAL( saving_complete_auto(  QMap < QString, QString > & ) ), this, SLOT( to_editing (  QMap < QString, QString > &) ) );
    //ALEXEY: for academic ver. switch back to experiment
    connect( sdiag, SIGNAL( saving_complete_back_to_initAutoflow( ) ), this, SLOT( to_initAutoflow ( ) ) );
    
@@ -1907,9 +1907,9 @@ void US_PostProdGui::import_data_us_convert(  QMap < QString, QString > & protoc
   emit to_post_prod( protocol_details );
 }
 
-void US_PostProdGui::to_editing( QString & currDir, QString & protocolName )
+void US_PostProdGui::to_editing( QMap < QString, QString > & protocol_details )
 {
-  emit switch_to_editing( currDir, protocolName );
+  emit switch_to_editing( protocol_details );
 }
 
 // void US_PostProdGui::to_experiment( QString & protocolName )
@@ -1998,7 +1998,7 @@ US_EditingGui::US_EditingGui( QWidget* topw )
    
    
    // //Later - do actual editing form sdiag (load_auto() ) - whatever it will be: (us_edit.cpp)
-   connect( this, SIGNAL( start_editing( QString &, QString & ) ), sdiag, SLOT( load_auto ( QString &, QString & )  ) );
+   connect( this, SIGNAL( start_editing( QMap < QString, QString > & ) ), sdiag, SLOT( load_auto ( QMap < QString, QString > & )  ) );
 
    offset = 0;
    sdiag->move(offset, 2*offset);
@@ -2044,9 +2044,9 @@ void US_EditingGui::resizeEvent(QResizeEvent *event)
 
 
 
-void US_EditingGui::do_editing( QString & currDir, QString & protocolName )
+void US_EditingGui::do_editing( QMap < QString, QString > & protocol_details )
 {
-  emit start_editing( currDir, protocolName );
+  emit start_editing( protocol_details );
 }
 
 

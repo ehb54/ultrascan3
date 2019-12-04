@@ -126,6 +126,7 @@ class US_InitDialogueGui : public US_WidgetsDialog
      void define_new_experiment_init ( QStringList & );
      void switch_to_live_update_init(  QMap < QString, QString > & protocol_details );
      void switch_to_post_processing_init(  QMap < QString, QString > & protocol_details );
+     void switch_to_editing_init(  QMap < QString, QString > & protocol_details );
 };
 
 
@@ -233,7 +234,7 @@ class US_PostProdGui : public US_WidgetsDialog
     //void import_data_us_convert( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii  );
     void import_data_us_convert( QMap < QString, QString > &);
     
-    void to_editing( QString & currDir, QString & protocolName );
+    void to_editing(  QMap < QString, QString > & );
     //void to_experiment( QString & protocolName );
     void to_initAutoflow( void );
     void reset_lims_import( void );
@@ -242,7 +243,7 @@ class US_PostProdGui : public US_WidgetsDialog
     //void to_post_prod( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii  );
     void to_post_prod( QMap < QString, QString > & ); 
     
-    void switch_to_editing( QString & currDir, QString & protocolName );
+    void switch_to_editing(  QMap < QString, QString > & );
     //void switch_to_exp( QString & protocolName );
     void switch_to_initAutoflow( void);
     void reset_lims_import_passed( void );
@@ -268,10 +269,10 @@ class US_EditingGui : public US_WidgetsDialog
     void resizeEvent(QResizeEvent *event) override;
       
  private slots:
-   void do_editing( QString & currDir, QString & protocolName );
+   void do_editing( QMap < QString, QString > & );
 
  signals:
-   void start_editing( QString & currDir, QString & protocolName );
+   void start_editing(  QMap < QString, QString > & );
     
 };
 
@@ -399,7 +400,7 @@ private slots:
   //void switch_to_post_processing( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii );
   void switch_to_post_processing( QMap < QString, QString > & );
   
-  void switch_to_editing( QString & currDir, QString & protocolName );
+  void switch_to_editing( QMap < QString, QString > & protocol_details ); 
   //void switch_to_experiment( QString & protocolName );
   //void check_current_stage( void );
   void close_all( void );
@@ -420,7 +421,7 @@ signals:
   //void import_data_us_convert( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii );
   void import_data_us_convert(  QMap < QString, QString > & );
 
-  void pass_to_editing( QString & currDir, QString & protocolName );
+  void pass_to_editing( QMap < QString, QString > & protocol_details );
   //void clear_experiment( QString & protocolName);
   void us_comproject_closed( void );
   void pass_used_instruments( QStringList & );

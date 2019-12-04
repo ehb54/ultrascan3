@@ -53,7 +53,8 @@ CREATE PROCEDURE add_autoflow_record ( p_personGUID  CHAR(36),
 				     p_optimaname    VARCHAR(80),
 				     p_invID         INT,
 				     p_label         VARCHAR(80),
-				     p_gmprun        VARCHAR(80) )
+				     p_gmprun        VARCHAR(80),
+				     p_aprofileguid  VARCHAR(80) )
                                     
   MODIFIES SQL DATA
 
@@ -75,7 +76,8 @@ BEGIN
       invID             = p_invID,
       label		= p_label,
       created           = NOW(),
-      gmpRun            = p_gmprun;
+      gmpRun            = p_gmprun,
+      aprofileGUID      = p_aprofileguid;
 
     SET @LAST_INSERT_ID = LAST_INSERT_ID();
 
@@ -196,7 +198,7 @@ BEGIN
 
       SELECT   protName, cellChNum, tripleNum, duration, runName, expID, 
       	       runID, status, dataPath, optimaName, runStarted, invID, created, 
-	       corrRadii, expAborted, label, gmpRun  
+	       corrRadii, expAborted, label, gmpRun, filename, aprofileGUID  
       FROM     autoflow 
       WHERE    ID = p_autoflowID;
 
@@ -397,6 +399,46 @@ BEGIN
     ELSE
       UPDATE   autoflow
       SET      expAborted = 'YES'
+      WHERE    runID = p_runID;
+
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
+
+-- Update autoflow record with next stage && filename at EDITING (LIMS IMPORT)
+DROP PROCEDURE IF EXISTS update_autoflow_at_lims_import$$
+CREATE PROCEDURE update_autoflow_at_lims_import ( p_personGUID    CHAR(36),
+                                             	p_password      VARCHAR(80),
+                                       	     	p_runID    	INT,
+					  	p_filename      VARCHAR(80)  )
+  MODIFIES SQL DATA  
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflow
+  WHERE      runID = p_runID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    ELSE
+      UPDATE   autoflow
+      SET      filename = p_filename, status = 'EDIT_DATA'
       WHERE    runID = p_runID;
 
     END IF;

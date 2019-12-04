@@ -1307,6 +1307,8 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
   
   // qDebug() << "RunID_numeric from CurrentDir: " << runID_numeric;
 
+  details_at_editing = details_at_live_update;
+
   ExpData.invID     = details_at_live_update[ "invID_passed" ].toInt();
   ProtocolName_auto = details_at_live_update[ "protocolName" ];
   runID_numeric     = details_at_live_update[ "runID" ];
@@ -5166,8 +5168,11 @@ DbgLv(1) << "Writing to disk";
 					     "The program will switch to Editing stage." ) );
 	       
 	       // Either emit ONLY if not US_MODE, or do NOT connect with slot on us_comproject...
+
+	       update_autoflow_record_atLimsImport();
+	       
 	       resetAll_auto();
-	       emit saving_complete_auto( currentDir, ProtocolName_auto  );   
+	       emit saving_complete_auto( details_at_editing  );   
 	     }
 	 }
      }
@@ -5177,6 +5182,31 @@ DbgLv(1) << "Writing to disk";
 				 tr( "Save is Complete" ),
 				 tr( "The save of all data and reports is complete." ) );
      }
+}
+
+//Update autoflow record upon Editing compleation
+void US_ConvertGui::update_autoflow_record_atLimsImport( void )
+{
+   details_at_editing[ "filename" ] = runID;
+  
+   // Check DB connection
+   US_Passwd pw;
+   QString masterpw = pw.getPasswd();
+   US_DB2* db = new US_DB2( masterpw );
+
+   if ( db->lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+       return;
+     }
+
+   QStringList qry;
+   qry << "update_autoflow_at_lims_import"
+       << runID_numeric
+       << runID;
+
+   db->query( qry );
 }
 
 //Delete autoflow record upon Run abortion

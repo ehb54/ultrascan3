@@ -1253,6 +1253,15 @@ void US_Edit::gap_check( void )
 }
 
 // Load an AUC data set
+void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
+{
+ 
+  QString filename_runID = details_at_editing[ "filename" ];
+  
+  qDebug() << "AT EDIT_DATA: filename: " << filename_runID;
+}
+
+// Load an AUC data set
 void US_Edit::load( void )
 {
    bool isLocal = ! disk_controls->db();

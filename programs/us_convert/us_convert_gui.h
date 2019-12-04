@@ -50,7 +50,7 @@ class US_ConvertGui : public US_Widgets
       bool usmode;
 
   signals:
-      void saving_complete_auto( QString &, QString & );
+      void saving_complete_auto( QMap < QString, QString > &  );
       //void saving_complete_back_to_exp( QString & );
       void saving_complete_back_to_initAutoflow( void );
       
@@ -277,6 +277,8 @@ class US_ConvertGui : public US_Widgets
       void getLabInstrumentOperatorInfo_auto   ( void );
       void delete_autoflow_record ( void );
 
+      void update_autoflow_record_atLimsImport( void );
+
       
       void setTripleInfo   ( void );
       void checkTemperature( void );
@@ -304,6 +306,8 @@ class US_ConvertGui : public US_Widgets
       void triple_index    ( void );
 
       //US_Solution * solution_auto;
+
+      QMap < QString, QString > details_at_editing; 
 
   private slots:
       //! \brief Select the current investigator

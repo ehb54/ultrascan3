@@ -5485,7 +5485,9 @@ void US_ExperGuiUpload::submitExperiment()
 	 else
 	   gmpRun_str = "YES";
 
-	 protocol_details[ "gmpRun" ]         = gmpRun_str; 
+	 protocol_details[ "gmpRun" ]         = gmpRun_str;
+
+	 protocol_details[ "aprofileguid" ]   = currProto->protoGUID; 
 	 
          int nwavl_tot = 0;
          for ( int kk = 0; kk < rpRange->nranges; kk++ )
@@ -5565,7 +5567,8 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
 	    << protocol_details[ "OptimaName" ]
 	    << protocol_details[ "invID_passed" ]
 	    << protocol_details[ "label" ]
-	    << protocol_details[ "gmpRun" ];
+	    << protocol_details[ "gmpRun" ]
+	    << protocol_details[ "aprofileguid" ] ;
 
 	db->query( qry );
       }

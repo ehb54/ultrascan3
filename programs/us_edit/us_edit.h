@@ -257,8 +257,10 @@ class US_Edit : public US_Widgets
       void reset_excludes    ( void );
       void set_colors        ( const QList< int >& );
                           
-      private slots:         
+   private slots:         
       void load              ( void );
+      void load_auto         ( QMap < QString, QString > & );
+      
       void details           ( void );
       void new_triple        ( int  );
       void new_rpmval        ( int  );
