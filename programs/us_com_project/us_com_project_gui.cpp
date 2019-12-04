@@ -465,8 +465,11 @@ void US_ComProjectMain::liveupdate_stopped( void  )
 void US_ComProjectMain::closeEvent( QCloseEvent* event )
 {
     window_closed = true;
+
+    qDebug() << "initDialogue: true/false 1 : " << epanInit->initDialogueOpen ;
     emit us_comproject_closed();
     close_initDialogue();
+    qDebug() << "initDialogue: true/false 3 : " << epanInit->initDialogueOpen ;
     event->accept();
 }
 
@@ -478,7 +481,13 @@ void US_ComProjectMain::to_autoflow_records( void )
 
 void US_ComProjectMain::close_initDialogue( void )
 {
-  epanInit->pdiag_autoflow->close();
+  qDebug() << "initDialogue: true/false 2 : " << epanInit->initDialogueOpen ;
+
+  if ( epanInit-> initDialogueOpen)
+    epanInit->pdiag_autoflow->close();
+  if ( epanInit-> initMsgNorecOpen)
+    epanInit->msg_norec->reject();
+  //msg_norec->close();
 }
 
 
