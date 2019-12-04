@@ -1271,3 +1271,105 @@ bool US_Hydrodyn_Saxs_Hplc::plot_file( QString file,
    return true;
 }
 
+void US_Hydrodyn_Saxs_Hplc::rescale()
+{
+   //    hide_widgets( plot_errors_widgets, !plot_errors_widgets[ 0 ]->isVisible() );
+   //    hide_widgets( files_widgets, !files_widgets[ 0 ]->isVisible() );
+   //    hide_widgets( files_expert_widgets, !files_expert_widgets[ 0 ]->isVisible() );
+   //    hide_widgets( created_files_widgets, !created_files_widgets[ 0 ]->isVisible() );
+   //    hide_widgets( created_files_expert_widgets, !created_files_expert_widgets[ 0 ]->isVisible() );
+   //    hide_widgets( editor_widgets, !editor_widgets[ 0 ]->isVisible() );
+
+   //bool any_selected = false;
+   double minx = 0e0;
+   double maxx = 1e0;
+   double miny = 0e0;
+   double maxy = 1e0;
+
+   double file_minx;
+   double file_maxx;
+   double file_miny;
+   double file_maxy;
+   
+   bool first = true;
+   for ( int i = 0; i < lb_files->count(); i++ )
+   {
+      if ( lb_files->item( i )->isSelected() )
+      {
+         //any_selected = true;
+         if ( get_min_max( lb_files->item( i )->text(), file_minx, file_maxx, file_miny, file_maxy ) )
+         {
+            if ( first )
+            {
+               minx = file_minx;
+               maxx = file_maxx;
+               miny = file_miny;
+               maxy = file_maxy;
+               first = false;
+            } else {
+               if ( file_minx < minx )
+               {
+                  minx = file_minx;
+               }
+               if ( file_maxx > maxx )
+               {
+                  maxx = file_maxx;
+               }
+               if ( file_miny < miny )
+               {
+                  miny = file_miny;
+               }
+               if ( file_maxy > maxy )
+               {
+                  maxy = file_maxy;
+               }
+            }
+         }
+      }
+   }
+   
+   if ( plot_dist_zoomer )
+   {
+      plot_dist_zoomer->zoom ( 0 );
+      delete plot_dist_zoomer;
+   }
+
+   plot_dist->setAxisScale( QwtPlot::xBottom, minx, maxx );
+   plot_dist->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );
+   plot_dist_zoomer = new ScrollZoomer(plot_dist->canvas());
+   plot_dist_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+#if QT_VERSION < 0x040000
+   plot_dist_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+#endif
+   connect( plot_dist_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
+   
+   legend_set();
+   if ( !suppress_replot )
+   {
+      plot_dist->replot();
+   }
+   if ( current_mode == MODE_NORMAL )
+   // if ( !gaussian_mode &&
+   //      !ggaussian_mode && 
+   //      !baseline_mode &&
+   //      !timeshift_mode )
+   {
+      update_enables();
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc::rescale_y()
+{
+   // qDebug() << "rescale only visible y axis";
+   // can not init'd once in gui, as zoomers might be deleted/recreated
+   plot_to_zoomer.clear();
+   plot_to_zoomer[ plot_dist ]           = plot_dist_zoomer;
+   plot_to_zoomer[ plot_errors ]         = plot_errors_zoomer;
+   plot_to_zoomer[ guinier_plot    ]     = guinier_plot_zoomer;
+   plot_to_zoomer[ guinier_plot_errors ] = guinier_plot_errors_zoomer;
+   plot_to_zoomer[ guinier_plot_rg ]     = guinier_plot_rg_zoomer;
+   plot_to_zoomer[ guinier_plot_mw ]     = guinier_plot_mw_zoomer;
+   plot_to_zoomer[ ggqfit_plot ]         = ggqfit_plot_zoomer;
+
+   US_Plot_Util::rescale( plot_info, plot_to_zoomer );
+}

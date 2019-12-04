@@ -27,10 +27,8 @@
 # include "../3dplot/mesh2mainwindow.h"
 #endif
 
-#if QT_VERSION >= 0x040000
 #include "qwt_plot_marker.h"
 #include "qwt_symbol.h"
-#endif
 
 #include "us_util.h"
 #include "us_plot_util.h"
@@ -71,12 +69,6 @@ using namespace std;
 #endif
 #ifndef M_ONE_OVER_SQRT2
 # define M_ONE_OVER_SQRT2   7.07106781188e-1
-#endif
-
-#ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
 #endif
 
 class ga_individual
@@ -393,10 +385,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
    private:
       ScrollZoomer  *plot_dist_zoomer;
-#if QT_VERSION >= 0x040000
       QwtPlotGrid   *grid_saxs;
       bool          legend_vis;
-#endif
 
       QwtPlot       *plot_errors;
       US_Plot       *usp_plot_errors;
@@ -405,18 +395,14 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
    private:
       ScrollZoomer  *plot_errors_zoomer;
-#if QT_VERSION >= 0x040000
       QwtPlotGrid   *grid_errors;
-#endif
       QwtPlot       *plot_ref;
       US_Plot       *usp_plot_ref;
    private slots:
       void usp_config_plot_ref( const QPoint & );
 
    private:
-#if QT_VERSION >= 0x040000
       QwtPlotGrid   *grid_ref;
-#endif
 
       QCheckBox     *cb_plot_errors_rev;
       QCheckBox     *cb_plot_errors_sd;
@@ -547,11 +533,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QLabel       * lbl_scale_low_high;
       QRadioButton * rb_scale_low;
       QRadioButton * rb_scale_high;
-#if QT_VERSION < 0x040000
-      QGroupBox * bg_scale_low_high;
-#else
       QButtonGroup * bg_scale_low_high;
-#endif
       QCheckBox    * cb_scale_sd;
       QCheckBox    * cb_scale_save_intp;
       QCheckBox    * cb_scale_scroll;
@@ -576,11 +558,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QCheckBox    * cb_testiq_from_gaussian;
 
       QLabel                *    lbl_testiq_gaussians;
-#if QT_VERSION < 0x040000
-      QGroupBox          *    bg_testiq_gaussians;
-#else
       QButtonGroup         *    bg_testiq_gaussians;
-#endif
       QRadioButton          *    rb_testiq_from_i_t;
       QHBoxLayout           *    hbl_testiq_gaussians;
       vector < QRadioButton * >  rb_testiq_gaussians;
@@ -628,11 +606,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QRadioButton * rb_guinier_resid_diff;
       QRadioButton * rb_guinier_resid_sd;
       QRadioButton * rb_guinier_resid_pct;
-#if QT_VERSION < 0x040000
-      QGroupBox * bg_guinier_resid_type;
-#else
       QButtonGroup * bg_guinier_resid_type;
-#endif
 
       QPushButton  * pb_guinier_plot_rg;
       QPushButton  * pb_guinier_plot_mw;
@@ -670,9 +644,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
    private:
       ScrollZoomer * guinier_plot_zoomer;
-#if QT_VERSION >= 0x040000
       QwtPlotGrid  * guinier_plot_grid;
-#endif
 
       QwtPlot      * guinier_plot_errors;
       US_Plot      * usp_guinier_plot_errors;
@@ -681,9 +653,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
    private:
       ScrollZoomer * guinier_plot_errors_zoomer;
-#if QT_VERSION >= 0x040000
       QwtPlotGrid  * guinier_plot_errors_grid;
-#endif
 
       QwtPlot      * guinier_plot_rg;
       US_Plot      * usp_guinier_plot_rg;
@@ -692,9 +662,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
    private:
       ScrollZoomer * guinier_plot_rg_zoomer;
-#if QT_VERSION >= 0x040000
       QwtPlotGrid  * guinier_plot_rg_grid;
-#endif
 
       QwtPlot      * guinier_plot_mw;
       US_Plot      * usp_guinier_plot_mw;
@@ -703,9 +671,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
    private:
       ScrollZoomer * guinier_plot_mw_zoomer;
-#if QT_VERSION >= 0x040000
       QwtPlotGrid  * guinier_plot_mw_grid;
-#endif
 
       QwtPlot      * guinier_plot_summary;
       US_Plot      * usp_guinier_plot_summary;
@@ -736,7 +702,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       double                              guinier_it_Irange;
       map < QString, QString >            guinier_report;
 
-#if QT_VERSION >= 0x040000
       map < QString, QwtPlotCurve * >     guinier_curves;
       vector < QwtPlotMarker * >          guinier_markers;
       map < QString, QwtPlotCurve * >     guinier_fit_lines; 
@@ -746,17 +711,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       map < QString, QwtPlotCurve * >     guinier_mw_curves;
       map < QString, QwtPlotMarker * >    guinier_mwt_markers;
       map < QString, QwtPlotMarker * >    guinier_mwc_markers;
-#else
-      map < QString, long >               guinier_curves;
-      vector < long >                     guinier_markers;
-      map < QString, long >               guinier_fit_lines;
-      map < QString, long >               guinier_error_curves;
-      map < QString, vector < long > >    guinier_errorbar_curves;
-      map < QString, long >               guinier_rg_curves;
-      map < QString, long >               guinier_mw_curves;
-      map < QString, long >               guinier_mwt_markers;
-      map < QString, long >               guinier_mwc_markers;
-#endif
       map < QString, QColor >             guinier_colors;
 
       void           guinier_analysis     ();
@@ -774,13 +728,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
                                            double pos, 
                                            QColor color, 
                                            QString text, 
-#if QT_VERSION < 0x040000
-                                           int 
-#else
-                                           Qt::Alignment
-#endif
-                                           align
-                                           = Qt::AlignRight | Qt::AlignTop );
+                                           Qt::Alignment align = Qt::AlignRight | Qt::AlignTop
+                                           );
       void           guinier_delete_markers();
       vector < QWidget * > guinier_errors_widgets;
       vector < QWidget * > guinier_rg_widgets;
@@ -807,11 +756,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QRadioButton * rb_rgc_shape_oblate;
       QRadioButton * rb_rgc_shape_prolate;
       QRadioButton * rb_rgc_shape_ellipsoid;
-#if QT_VERSION < 0x040000
-      QGroupBox * bg_rgc_shape;
-#else
       QButtonGroup * bg_rgc_shape;
-#endif
 
       QLineEdit    * le_rgc_axis_b;
       QLineEdit    * le_rgc_axis_c;
@@ -835,11 +780,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QRadioButton * rb_pm_shape_ellipsoid;
       QRadioButton * rb_pm_shape_cylinder;
       QRadioButton * rb_pm_shape_torus;
-#if QT_VERSION < 0x040000
-      QGroupBox * bg_pm_shape;
-#else
       QButtonGroup * bg_pm_shape;
-#endif
+
       QCheckBox    * cb_pm_sd;
       QCheckBox    * cb_pm_q_logbin;
       QLabel       * lbl_pm_q_range;
@@ -920,7 +862,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       vector < double >                   union_q( QStringList files );
 
-#if QT_VERSION >= 0x040000
       map < QString, QwtPlotCurve * >     plotted_curves;
       vector < QwtPlotMarker * >          plotted_markers;
       vector < QwtPlotCurve * >           plotted_gaussians;
@@ -929,16 +870,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       vector < QwtPlotCurve * >           plotted_wyatt;
       vector < QwtPlotCurve * >           plotted_hlines;
       QwtPlotMarker *                     ref_marker;
-#else
-      map < QString, long >               plotted_curves;
-      vector < long >                     plotted_markers;
-      vector < long >                     plotted_gaussians;
-      vector < long >                     plotted_gaussian_sum;
-      vector < long >                     plotted_baseline;
-      vector < long >                     plotted_wyatt;
-      vector < long >                     plotted_hlines;
-      long                                ref_marker;
-#endif
       // always a multiple of 3 { a e^-[((x-b)/c)^2]/2 }, a, b, c
       // the b values are fixed by the user
       // a & c must be > 0
@@ -1009,9 +940,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
    private:
       ScrollZoomer                      * ggqfit_plot_zoomer;
-#if QT_VERSION >= 0x040000
       QwtPlotGrid                       * ggqfit_plot_grid;
-#endif
+
       QCheckBox                         * cb_ggq_plot_chi2;
       QCheckBox                         * cb_ggq_plot_P;
 
@@ -1074,17 +1004,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       vector < vector < double > >        ggaussian_last_I;
       vector < vector < double > >        ggaussian_last_e;
       map < QString, double >             ggaussian_last_pfit_map;
-#if QT_VERSION >= 0x040000
       vector < QwtPlotMarker * >          ggaussian_pts_chi2;
       vector < QwtPlotMarker * >          ggaussian_pts_pfit;
       set < QwtPlotMarker * >             ggaussian_pts_chi2_marked;
       set < QwtPlotMarker * >             ggaussian_pts_pfit_marked;
-#else
-      vector < long >                     ggaussian_pts_chi2;
-      vector < long >                     ggaussian_pts_pfit;
-      set < long >                        ggaussian_pts_chi2_marked;
-      set < long >                        ggaussian_pts_pfit_marked;
-#endif
 
       unsigned int                        gaussian_pos;
       void                                update_gauss_pos();
@@ -1180,11 +1103,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       bool                         get_peak( QString file, double &peak, double &pos );
 
       QString                      wheel_file;
-#if QT_VERSION >= 0x040000
       QwtPlotCurve *               wheel_curve;
-#else
-      long                         wheel_curve;
-#endif
       void                         disable_all();
 
       // bool                         gaussian_mode;
@@ -1220,11 +1139,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                         gauss_add_marker( double pos, 
                                                      QColor color, 
                                                      QString text, 
-#if QT_VERSION < 0x040000
-                                                     int 
-#else
                                                      Qt::Alignment
-#endif
                                                      align
                                                      = Qt::AlignRight | Qt::AlignTop );
       void                         gauss_init_markers();
@@ -1421,11 +1336,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       void                         scale_replot();
 
-#if QT_VERSION >= 0x040000
       map < QString, QwtPlotCurve * >     scale_plotted_errors;
-#else
-      map < QString, long >               scale_plotted_errors;
-#endif
 
       bool                         check_zi_window         ( QStringList & files, const QString & extra_text = "" );
       void                         check_discard_it_sd_mult( QStringList & files, bool optionally_discard = false );
@@ -1485,6 +1396,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                         timescale  ( const QStringList & files );
 
       map < QString, QwtPlot *>    plot_info;
+      map < QwtPlot *, ScrollZoomer * >    plot_to_zoomer;
 
       QStringList                  get_frames( QStringList files, QString head, QString tail );
       map < QString, QString >     ldata;
@@ -1808,12 +1720,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void closeEvent(QCloseEvent *);
    
 };
-
-#ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
-#endif
 
 #define UHSH_WHEEL_RES 10000000
 #define Q_VAL_TOL 5e-6

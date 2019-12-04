@@ -272,7 +272,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    global_Xpos += 30;
    global_Ypos += 30;
 
-   unsigned int csv_height = 40;
+   // unsigned int csv_height = 40;
    unsigned int csv_width =  1000;
 
    // cout << QString("csv size %1 %2\n").arg(csv_height).arg(csv_width);
@@ -287,7 +287,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    // editor          ->setMaximumWidth( csv_width / 3 );
    // le_created_dir    ->setMaximumWidth( csv_width / 3 );
 
-   int percharwidth = 1 + ( 7 * ( USglobal->config_list.fontSize - 1 ) / 10 );
+   // int percharwidth = 1 + ( 7 * ( USglobal->config_list.fontSize - 1 ) / 10 );
    {
       vector < QPushButton * > pbs;
       // pbs.push_back( pb_add_files );
@@ -8669,6 +8669,6 @@ void US_Hydrodyn_Saxs_Hplc::update_gauss_mode()
       break;
    }
 
-   int percharwidth = 1 + ( 7 * ( USglobal->config_list.fontSize - 1 ) / 10 );
+   // int percharwidth = 1 + ( 7 * ( USglobal->config_list.fontSize - 1 ) / 10 );
    // pb_gauss_start->setMaximumWidth( percharwidth * ( pb_gauss_start->text().length() + 3 ) );
 }

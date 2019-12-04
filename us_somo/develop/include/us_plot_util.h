@@ -8,18 +8,14 @@
 #include "us_vector.h"
 #include <qwt_plot.h>
 #include "us3i_plot.h"
+#include "qwt/scrollbar.h"
+#include "qwt/scrollzoomer.h"
 
 #include <qwt_plot_curve.h>
 #include <qwt_scale_widget.h>
 #include <qwt_scale_draw.h>
 
 using namespace std;
-#ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
-
 
 class US_EXTERN US_Plot_Util
 {
@@ -37,14 +33,23 @@ class US_EXTERN US_Plot_Util
                                   const vector < QwtPlot * > & plots,
                                   bool scale_x_to_first = false
                                   );
+   static void rescale(
+                       map < QString, QwtPlot *> plots,
+                       map < QwtPlot *, ScrollZoomer * > plot_to_zoomer,
+                       bool only_scale_y = true
+                       );
+
+   static void rescale(
+                       const vector < QwtPlot * > & plots,
+                       map < QwtPlot *, ScrollZoomer * > plot_to_zoomer,
+                       bool only_scale_y = true
+                       );
+
+   static void rescale(
+                       QwtPlot * plot,
+                       ScrollZoomer * zoomer,
+                       bool only_scale_y = true
+                       );
 };
-
-#ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
-#endif
-
-
 
 #endif
