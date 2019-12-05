@@ -1803,6 +1803,48 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
             this,      SLOT  ( od_radius_limit    ( double ) ) );
 
    show_mwl_controls( isMwl );
+
+
+   // /***************** TESTING ******************************************/
+
+   // qDebug() << "meniscus: "   << meniscus;
+   // qDebug() << "range_left:"  << range_left;
+   // qDebug() << "range_right:" << range_right;
+   // qDebug() << "plateau: "    << plateau;
+   // qDebug() << "baseline: "   << baseline;
+   
+   // // Meniscus & Ranges ////////
+
+   // meniscus = 6.2; 
+  
+   // range_left    = meniscus + _RNGLEFT_OFFSET_;
+   // le_meniscus ->setText( QString::number( meniscus,   'f', 8 ) );
+   // le_dataStart->setText( QString::number( range_left, 'f', 8 ) );
+   
+   // data_plot->replot();
+   
+   // //pb_meniscus->setIcon( check );
+
+   // range_right = 7.1;
+   // le_dataEnd  ->setText( QString::number( range_right, 'f', 8 ) );
+   // plateau      = range_right - _PLATEAU_OFFSET_;
+   // le_plateau  ->setText( QString::number( plateau,     'f', 8 ) );
+
+   // step = PLATEAU;
+   // plot_range();
+   // next_step();
+   
+   // if ( total_edits >= total_speeds )
+   //   {
+   //     qDebug() << "In RANGES: total_edits, total_speeds: " << total_edits << ", " << total_speeds;
+   //     all_edits = true;
+   //     pb_write   ->setEnabled( true );
+   //     ck_writemwl->setEnabled( true );
+   //     changes_made = all_edits;
+   //   }
+
+
+   // /************** END OF TESTING ****************************************/   
 }
 
 
@@ -2550,6 +2592,15 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
             this,      SLOT  ( od_radius_limit    ( double ) ) );
 
    show_mwl_controls( isMwl );
+
+
+   // DEBUG
+   qDebug() << "meniscus: "   << meniscus;
+   qDebug() << "meniscus_left: "   << meniscus_left;
+   qDebug() << "range_left:"  << range_left;
+   qDebug() << "range_right:" << range_right;
+   qDebug() << "plateau: "    << plateau;
+   qDebug() << "baseline: "   << baseline;
 }
 
 // Set pushbutton colors
@@ -2694,6 +2745,8 @@ void US_Edit::mouse( const QwtDoublePoint& p )
 
          else if ( expIsEquil || men_1click )
          {  // Equilibrium
+
+	   qDebug() << "Meniscus, expEquil OR men_1click ";
             meniscus_left = p.x();
             int ii        = data.xindex( meniscus_left );
             draw_vline( meniscus_left );
@@ -2901,6 +2954,7 @@ DbgLv(1) << "AGap:  plot_range()";
 
 
             step = PLATEAU;
+
             plot_range();
 
             qApp->processEvents();
@@ -2959,6 +3013,8 @@ DbgLv(1) << "AGap:  plot_range()";
 
             if ( ! expIsEquil )
             {  // non-Equilibrium
+
+	        qDebug() << "In RANGES, nonEquilibrium, enabling next_step()";
                next_step();
             }
 
@@ -3035,6 +3091,7 @@ DbgLv(1) << "AGap:  plot_range()";
 
             if ( total_edits >= total_speeds )
             {
+	      qDebug() << "In RANGES: total_edits, total_speeds: " << total_edits << ", " << total_speeds;
                all_edits = true;
                pb_write   ->setEnabled( true );
                ck_writemwl->setEnabled( true );
