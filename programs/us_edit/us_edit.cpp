@@ -453,6 +453,14 @@ pb_plateau->setVisible(false);
    top ->addLayout( main );
 
    reset();
+
+
+   // TESTING ...
+   QMap < QString, QString > details;
+   details[ "filename" ] = QString("BSA-demo");
+   details[ "invID_passed" ] = QString("2");
+      
+   load_auto( details );
 }
 
 
@@ -1255,11 +1263,746 @@ void US_Edit::gap_check( void )
 // Load an AUC data set
 void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
 {
- 
-  QString filename_runID = details_at_editing[ "filename" ];
   
-  qDebug() << "AT EDIT_DATA: filename: " << filename_runID;
+  QList< DataDesc_auto >  sdescs_auto;
+  datamap.clear();
+  filename_runID_auto = details_at_editing[ "filename" ];
+  idInv_auto          = details_at_editing[ "invID_passed" ];
+  qDebug() << "AT EDIT_DATA: filename, idInv: " << filename_runID_auto << ", " << idInv_auto;
+
+  scan_db_auto();
+  sdescs_auto    = datamap.values();
+  load_db_auto( sdescs_auto );
+
+  runID = workingDir.section( "/", -1, -1 );
+DbgLv(1) << "Ld: runID" << runID << "wdir" << workingDir;
+   sData     .clear();
+   sd_offs   .clear();
+   sd_knts   .clear();
+   cb_triple->clear();
+   files     .clear();
+   
+   if ( triples.size() == 0 )
+   {
+      QMessageBox::warning( this,
+            tr( "No Files Found" ),
+            tr( "There were no files of the form *.auc\n"  
+                "found in the specified directory." ) );
+      return;
+   }
+
+   cb_triple->addItems( triples );
+   connect( cb_triple, SIGNAL( currentIndexChanged( int ) ), 
+                       SLOT  ( new_triple         ( int ) ) );
+   triple_index = 0;
+   data_index   = 0;
+   
+   le_info->setText( runID );
+
+   data     = allData[ 0 ];
+   dataType = QString( QChar( data.type[ 0 ] ) ) 
+            + QString( QChar( data.type[ 1 ] ) );
+
+   if ( dataType == "IP" )
+   {
+      lb_gaps->setText( tr( "Fringe Tolerance" ) );
+
+      ct_gaps->setRange     ( 0.0, 20.0 );
+      ct_gaps->setSingleStep( 0.001 );
+      ct_gaps->setValue     ( 0.4 );
+      ct_gaps->setNumButtons( 3 );
+
+      connect( ct_gaps, SIGNAL( valueChanged        ( double ) ), 
+                        SLOT  ( set_fringe_tolerance( double ) ) );
+   }
+   else
+   {
+      lb_gaps->setText( tr( "Threshold for Scan Gaps" ) );
+      
+      ct_gaps->disconnect   ();
+      ct_gaps->setRange     ( 10.0, 100.0 );
+      ct_gaps->setSingleStep( 10.0 );
+      ct_gaps->setValue     ( 50.0 );
+      ct_gaps->setNumButtons( 1 );
+   }
+
+   QString runtype = runID + "." + dataType;
+DbgLv(1) << "Ld: runtype" << runtype;
+   nwaveln         = 0;
+   ncelchn         = 0;
+   outData.clear();
+
+   for ( int trx = 0; trx < triples.size(); trx++ )
+   {  // Generate file names
+      QString triple = QString( triples.at( trx ) ).replace( " / ", "." );
+      QString file   = runtype + "." + triple + ".auc";
+      files << file;
+
+      // Save pointers as initial output data vector
+      outData << &allData[ trx ];
+
+      QString scell  = triple.section( ".", 0, 0 ).simplified();
+      QString schan  = triple.section( ".", 1, 1 ).simplified();
+      QString swavl  = triple.section( ".", 2, 2 ).simplified();
+
+      if ( ! rawc_wvlns.contains( swavl ) )
+      {  // Accumulate wavelengths in case this is MWL
+         nwaveln++;
+         rawc_wvlns << swavl;
+      }
+
+      nwavelo         = nwaveln;
+      QString celchn  = scell + " / " + schan;
+
+      if ( ! celchns.contains( celchn ) )
+      {  // Accumulate cell/channel values in case this is MWL
+         ncelchn++;
+         celchns << celchn;
+      }
+   }
+DbgLv(1) << "rawc_wvlns size" << rawc_wvlns.size() << nwaveln;
+DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
+   rawc_wvlns.sort();
+   rawi_wvlns.clear();
+   toti_wvlns.clear();
+
+   for ( int wvx = 0; wvx < nwaveln; wvx++ )
+   {
+      int iwavl    = rawc_wvlns[ wvx ].toInt();
+      rawi_wvlns << iwavl;
+      toti_wvlns << iwavl;
+   }
+
+   workingDir   = workingDir + "/";
+   QString file = workingDir + runtype + ".xml";
+   expType      = "";
+   QFile xf( file );
+
+   if ( xf.open( QIODevice::ReadOnly | QIODevice::Text ) )
+   {
+      QXmlStreamReader xml( &xf );
+
+      while( ! xml.atEnd() )
+      {
+         xml.readNext();
+
+         if ( xml.isStartElement()  &&  xml.name() == "experiment" )
+         {
+            QXmlStreamAttributes xa = xml.attributes();
+            expType   = xa.value( "type" ).toString();
+            break;
+         }
+      }
+
+      xf.close();
+   }
+
+   if ( expType.isEmpty()  &&  disk_controls->db() )
+   {  // no experiment type yet and data read from DB:  try for DB exp type
+      if ( dbP == NULL )
+      {
+         US_Passwd pw;
+         dbP          = new US_DB2( pw.getPasswd() );
+
+         if ( dbP == NULL  ||  dbP->lastErrno() != US_DB2::OK )
+         {
+            QMessageBox::warning( this, tr( "Connection Problem" ),
+              tr( "Could not connect to database\n" )
+              + ( ( dbP != NULL ) ? dbP->lastError() : "" ) );
+            dbP          = NULL;
+            return;
+         }
+      }
+
+      QStringList query;
+      query << "get_experiment_info_by_runID" << runID 
+            << QString::number( US_Settings::us_inv_ID() );
+
+      dbP->query( query );
+      dbP->next();
+      expType    = dbP->value( 8 ).toString();
+   }
+
+   if ( expType.isEmpty() )  // if no experiment type, assume Velocity
+      expType    = "Velocity";
+
+   else                      // insure Ulll... form, e.g., "Equilibrium"
+      expType    = expType.left( 1 ).toUpper() +
+                   expType.mid(  1 ).toLower();
+
+
+   // Set booleans for experiment type
+   expIsVelo  = ( expType.compare( "Velocity",    Qt::CaseInsensitive ) == 0 );
+   expIsEquil = ( expType.compare( "Equilibrium", Qt::CaseInsensitive ) == 0 );
+   expIsDiff  = ( expType.compare( "Diffusion",   Qt::CaseInsensitive ) == 0 );
+   expIsOther = ( !expIsVelo  &&  !expIsEquil  &&  !expIsDiff );
+   expType    = expIsOther ? "Other" : expType;
+   odlimit    = 1.8;
+   init_includes();
+
+   if ( expIsEquil )
+   {  // Equilibrium
+      lb_rpms    ->setVisible( true  );
+      cb_rpms    ->setVisible( true  );
+      pb_plateau ->setVisible( false );
+      le_plateau ->setVisible( false ); 
+      lb_baseline->setVisible( false ); 
+      le_baseline->setVisible( false ); 
+      lb_edtrsp  ->setVisible( true  );
+      le_edtrsp  ->setVisible( true  );
+      pb_reviewep->setVisible( true  );
+      pb_nexteqtr->setVisible( true  );
+      pb_write   ->setText( tr( "Save Edit Profiles" ) );
+
+      sData.clear();
+      US_DataIO::SpeedData  ssDat;
+      int ksd    = 0;
+
+      for ( int jd = 0; jd < allData.size(); jd++ )
+      {
+         data  = allData[ jd ];
+         sd_offs << ksd;
+
+         if ( jd > 0 )
+            sd_knts << ( ksd - sd_offs[ jd - 1 ] );
+
+         trip_rpms.clear();
+
+         for ( int ii = 0; ii < data.scanData.size(); ii++ )
+         {
+            double  drpm = data.scanData[ ii ].rpm;
+            QString arpm = QString::number( drpm );
+            if ( ! trip_rpms.contains( arpm ) )
+            {
+               trip_rpms << arpm;
+               ssDat.first_scan = ii + 1;
+               ssDat.scan_count = 1;
+               ssDat.speed      = drpm;
+               ssDat.meniscus   = 0.0;
+               ssDat.dataLeft   = 0.0;
+               ssDat.dataRight  = 0.0;
+               sData << ssDat;
+               ksd++;
+            }
+
+            else
+            {
+               int jj = trip_rpms.indexOf( arpm );
+               ssDat  = sData[ jj ];
+               ssDat.scan_count++;
+               sData[ jj ].scan_count++;
+            }
+         }
+
+         if ( jd == 0 )
+            cb_rpms->addItems( trip_rpms );
+
+         total_speeds += trip_rpms.size();
+      }
+
+      sd_knts << ( ksd - sd_offs[ allData.size() - 1 ] );
+
+      if ( allData.size() > 1 )
+      {
+         data   = allData[ 0 ];
+         ksd    = sd_knts[ 0 ];
+         trip_rpms.clear();
+         cb_rpms ->clear();
+         for ( int ii = 0; ii < ksd; ii++ )
+         {
+            QString arpm = QString::number( sData[ ii ].speed );
+            trip_rpms << arpm;
+         }
+
+         cb_rpms->addItems( trip_rpms );
+      }
+
+      pick     ->disconnect();
+      connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
+                     SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
+
+      pb_priorEdits->disconnect();
+      connect( pb_priorEdits, SIGNAL( clicked() ), SLOT( prior_equil() ) );
+      plot_scan();
+
+      connect( cb_rpms,   SIGNAL( currentIndexChanged( int ) ), 
+                          SLOT  ( new_rpmval         ( int ) ) );
+   }
+
+   else
+   {  // non-Equilibrium
+      bool notMwl  = ( nwaveln < 3 );
+      lb_rpms    ->setVisible( false );
+      cb_rpms    ->setVisible( false );
+//      pb_plateau ->setVisible( true  );
+      le_plateau ->setVisible( true  ); 
+      lb_baseline->setVisible( notMwl );
+      le_baseline->setVisible( notMwl ); 
+      lb_edtrsp  ->setVisible( false );
+      le_edtrsp  ->setVisible( false );
+      pb_reviewep->setVisible( false );
+      pb_nexteqtr->setVisible( false );
+
+      pb_write   ->setText( tr( "Save Current Edit Profile" ) );
+
+      pb_priorEdits->disconnect();
+      connect( pb_priorEdits, SIGNAL( clicked() ), SLOT( apply_prior() ) );
+DbgLv(1) << "LD():  triples size" << triples.size();
+      if ( notMwl )
+         plot_current( 0 );
+   }
+
+   // Enable pushbuttons
+   pb_details   ->setEnabled( true );
+   pb_include   ->setEnabled( true );
+   pb_exclusion ->setEnabled( true );
+   pb_meniscus  ->setEnabled( true );
+   pb_airGap    ->setEnabled( false );
+//   pb_dataRange ->setEnabled( false );
+//   pb_plateau   ->setEnabled( false );
+   pb_noise     ->setEnabled( false );
+   pb_spikes    ->setEnabled( false );
+   pb_invert    ->setEnabled( true );
+   pb_priorEdits->setEnabled( true );
+   pb_float     ->setEnabled( true );
+   pb_undo      ->setEnabled( true );
+
+   connect( ct_from, SIGNAL( valueChanged ( double ) ),
+                     SLOT  ( focus_from   ( double ) ) );
+
+   connect( ct_to,   SIGNAL( valueChanged ( double ) ),
+                     SLOT  ( focus_to     ( double ) ) );
+
+   step = MENISCUS;
+   set_pbColors( pb_meniscus );
+
+   // Temperature check
+   double              dt = 0.0;
+   US_DataIO::RawData  triple;
+
+   foreach( triple, allData )
+   {
+       double temp_spread = triple.temperature_spread();
+       dt = ( temp_spread > dt ) ? temp_spread : dt;
+   }
+
+   if ( dt > US_Settings::tempTolerance() )
+   {
+      QMessageBox::warning( this,
+            tr( "Temperature Problem" ),
+            tr( "The temperature in this run varied over the course\n"
+                "of the run to a larger extent than allowed by the\n"
+                "current threshold (" )
+                + QString::number( US_Settings::tempTolerance(), 'f', 1 )
+                + " " + DEGC + tr( ". The accuracy of experimental\n"
+                "results may be affected significantly." ) );
+   }
+
+   ntriple      = triples.size();
+DbgLv(1) << " triples    size" << ntriple;
+   editGUIDs .fill( "",     ntriple );
+   editIDs   .fill( "",     ntriple );
+   editFnames.fill( "none", ntriple );
+
+   isMwl        = ( nwaveln > 2  &&  ntriple > 16 );
+   lrng_bycell  = false;         // Assume initially cell lambdas all the same
+DbgLv(1) << "LD(): isMwl" << isMwl << "nwaveln" << nwaveln << toti_wvlns.size();
+
+   if ( isMwl )
+   {  // Set values related to MultiWaveLength
+      connect_mwl_ctrls( false );
+
+      // Load the internal object that keeps track of MWL data
+DbgLv(1) << "IS-MWL:   load_mwl begun";
+      mwl_data.load_mwl( allData );
+DbgLv(1) << "IS-MWL:   load_mwl complete";
+
+      // Initial export lambdas are input lambdas: save the input lists
+      ncelchn      = mwl_data.countOf( "cellchann" );
+      maxwavl      = rawc_wvlns.size();
+DbgLv(1) << "IS-MWL: max wvlns size" << maxwavl;
+      wavelns_i.clear();
+
+      for ( int ccx = 0; ccx < ncelchn; ccx++ )
+      {  // Save lambdas for each cell; flag if any cell-to-cell differences
+         QVector< int > wvs;
+         nwavelo      = mwl_data.lambdas( wvs, ccx );
+         wavelns_i << wvs;
+
+         if ( nwavelo != maxwavl )
+         {
+            lrng_bycell  = true;           // Flag based on count difference
+         }
+
+         else
+         {
+            for ( int wvx = 0; wvx < nwaveln; wvx++ )
+            {
+               if ( wvs[ wvx ] != toti_wvlns[ wvx ] )
+               {
+                  lrng_bycell  = true;     // Flag based on value difference
+                  break;
+               }
+            }
+         }
+      } // END: cell scan loop
+
+      lambdas_by_cell( 0 );
+
+      nwavelo      = nwaveln;
+      slambda      = toti_wvlns[ 0 ];
+      elambda      = toti_wvlns[ nwaveln - 1 ];
+      dlambda      = 1;
+      le_ltrng ->setText( tr( "%1 raw: %2 %3 to %4" )
+         .arg( nwaveln ).arg( chlamb ).arg( slambda ).arg( elambda ) );
+      le_lxrng ->setText( tr( "%1 MWL exports: %2 %3 to %4,"
+                              " raw index increment %5" )
+         .arg( nwavelo ).arg( chlamb ).arg( slambda ).arg( elambda )
+         .arg( dlambda ) );
+
+      expd_radii .clear();
+      expc_wvlns .clear();
+      nwavelo      = mwl_data.lambdas( expi_wvlns, 0 );
+DbgLv(1) << "IS-MWL:    new nwavelo" << nwavelo << expi_wvlns.count();
+
+      // Initialize export wavelength lists for first channel
+      for ( int wvx = 0; wvx < nwavelo; wvx++ )
+      {
+         expc_wvlns << QString::number( expi_wvlns[ wvx ] );
+      }
+
+      // Update wavelength lists in GUI elements
+      cb_lstart->clear();
+      cb_lend  ->clear();
+      cb_lplot ->clear();
+      cb_lstart->addItems( expc_wvlns );
+      cb_lend  ->addItems( expc_wvlns );
+      cb_lplot ->addItems( expc_wvlns );
+      int lastx    = nwavelo - 1;
+      plotndx      = nwavelo / 2;
+      cb_lplot ->setCurrentIndex( plotndx );
+      cb_lstart->setCurrentIndex( 0 );
+      cb_lend  ->setCurrentIndex( lastx );
+DbgLv(1) << "IS-MWL:  expi_wvlns size" << expi_wvlns.size() << nwaveln;
+
+      edata         = &allData[ 0 ];
+      nrpoint       = edata->pointCount();
+      int nscan     = edata->scanCount();
+      for ( int trx = 0; trx < allData.size(); trx++ )
+         nscan         = qMax( nscan, allData[ trx ].scanCount() );
+      int ndset     = ncelchn * nrpoint;
+      int ndpoint   = nscan * maxwavl;
+DbgLv(1) << "IS-MWL:   nrpoint nscan ndset ndpoint" << nrpoint << nscan
+ << ndset << ndpoint;
+
+      for ( int ii = 0; ii < nrpoint; ii++ )
+      {  // Update the list of radii that may be plotted
+         expd_radii << data.xvalues[ ii ];
+         expc_radii << QString().sprintf( "%.3f", data.xvalues[ ii ] );
+      }
+DbgLv(1) << "IS-MWL:  expd_radii size" << expd_radii.size() << nrpoint;
+
+      QVector< double > wrdata;
+      wrdata.fill( 0.0, ndpoint );
+      rdata .clear();
+DbgLv(1) << "IS-MWL:  wrdata size" << wrdata.size() << ndpoint;
+
+      for ( int ii = 0; ii < ndset; ii++ )
+      {  // Initialize the data vector that has wavelength as the x-axis
+         rdata << wrdata;
+      }
+DbgLv(1) << "IS-MWL:  rdata size" << rdata.size() << ndset;
+
+      // Update wavelength-x-axis data vector with amplitude data points
+      // The input has (ncelchn * nwaveln) data sets, each of which
+      //   contains (nscan * nrpoint) data points.
+      // The output has (ncelchn * nrpoint) data sets, each of which
+      //   contains (nscan * nwaveln) data points.
+      int trx       = 0;
+
+      for ( int ccx = 0; ccx < ncelchn; ccx++ )
+      {  // Handle each triple of AUC data
+         lambdas_by_cell( ccx );                      // Lambdas in cell
+
+         for ( int jwx = 0; jwx < nwaveln; jwx++ )
+         {  // Each wavelength in the current cell
+            edata         = &allData[ trx ];               // Triple data
+            int iwavl     = rawi_wvlns[ jwx ];             // Wavelength value
+            int wvx       = toti_wvlns.indexOf( iwavl );   // Wavelength index
+DbgLv(1) << "IS-MWL:   trx ccx wvx" << trx << ccx << wvx;
+
+            for ( int scx = 0; scx < edata->scanCount(); scx++ )
+            {  // Each scan of a triple
+               US_DataIO::Scan* scan  = &edata->scanData[ scx ];
+               int odx       = ccx * nrpoint;         // Output dataset index
+               int opx       = scx * maxwavl + wvx;   // Output point index
+DbgLv(2) << "IS-MWL:    scx odx opx" << scx << odx << opx;
+               for ( int rax = 0; rax < nrpoint; rax++ )
+               {  // Store ea. radius data point as a wavelength point in a scan
+                  rdata[ odx++ ][ opx ]  = scan->rvalues[ rax ];
+               } // END: radius points loop
+            } // END: scans loop
+
+            trx++;
+         } // END: input triples loop
+      } // END: input celchn loop
+DbgLv(1) << "IS-MWL:    Triples loop complete";
+
+DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
+      lb_triple->setText( tr( "Cell / Channel" ) );
+      cb_triple->disconnect();
+      cb_triple->clear();
+      cb_triple->addItems( celchns );
+      connect( cb_triple, SIGNAL( currentIndexChanged( int ) ), 
+                          SLOT  ( new_triple         ( int ) ) );
+      pb_nextChan->setEnabled( celchns.size() > 1 );
+
+      odlimit   = 1.8;
+
+      connect_mwl_ctrls( true );
+
+      plot_mwl();
+   } // END: isMwl=true
+   else
+   {
+      new_triple( 0 );
+//*DEBUG* Print times,omega^ts
+ triple = allData[0];
+ double timel = triple.scanData[0].rpm / 400.0;
+ double rpmc  = 400.0;
+ int    nstep = (int)timel;
+ double w2ti  = 0.0;
+ for ( int ii=0; ii<nstep; ii++ )
+ {
+  w2ti += sq( rpmc * M_PI / 30.0 );
+  rpmc += 400.0;
+ }
+ for ( int ii=0; ii<triple.scanData.size(); ii++ )
+ {
+  US_DataIO::Scan* ds=&triple.scanData[ii];
+  double timec = ds->seconds;
+  double rpmc  = ds->rpm;
+  w2ti += ( timec - timel ) * sq( rpmc * M_PI / 30.0 );
+  qDebug() << "scan" << ii+1 << "delta-r rpm seconds" << ds->delta_r
+   << rpmc << timec << "omega2t w2t-integ" << ds->omega2t << w2ti;
+  if(ii==0)
+  {
+   double deltt = ds->omega2t / sq(rpmc*M_PI/30.0);
+   double time1 = timel + deltt;
+   qDebug() << "   scan 1 omega2t-implied time" << time1;
+  }
+  timel = timec;
+ }
+//*DEBUG* Print times,omega^ts
+   }
+
+   // Set up OD limit and any MWL controls
+   ct_odlim->disconnect();
+   ct_odlim->setValue( odlimit );
+   connect( ct_odlim,  SIGNAL( valueChanged       ( double ) ),
+            this,      SLOT  ( od_radius_limit    ( double ) ) );
+
+   show_mwl_controls( isMwl );
 }
+
+
+// Scan for AUC entries in the database
+int US_Edit::scan_db_auto( void )
+{
+   int  naucf        = 0;
+   QStringList runIDs;
+   QStringList infoDs;
+   
+   US_Passwd   pw;
+   US_DB2      db( pw.getPasswd() );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+        tr( "Could not connect to database\n" ) + db.lastError() );
+      return naucf;
+   }
+
+   QStringList query;
+   query << "get_raw_desc_by_runID" << idInv_auto << filename_runID_auto;
+   
+   db.query( query );
+
+   while ( db.next() )
+   {  // Accumulate data description objects from database information
+      QString rawDataID = db.value( 0 ).toString();
+      QString label     = db.value( 1 ).toString();
+      QString filename  = db.value( 2 ).toString();
+      QString date      = db.value( 5 ).toString() + " UTC";
+      QString rawPers   = db.value( 6 ).toString();
+      QString rawGUID   = db.value( 7 ).toString();
+      QString runID     = filename.section( ".",  0, -6 );
+
+      QString tripID    = filename.section( ".", -4, -2 );
+      QString lkey      = runID + "." + tripID;
+      QString idata     = label + "^" +
+                          runID + "^" +
+                          tripID + "^" +
+                          filename + "^" +
+                          rawGUID + "^" +
+                          rawDataID + "^" +
+                          date;
+
+      runIDs << runID;    // Save each run
+      infoDs << idata;    // Save concatenated description string
+      naucf++;
+   }
+
+   // Create the data descriptions map
+   create_descs_auto( runIDs, infoDs, naucf );
+
+   return naucf;
+}
+
+// Create the data descriptions map with indecies and counts
+void US_Edit::create_descs_auto( QStringList& runIDs, QStringList& infoDs, int naucf )
+{
+   datamap.clear();       // Clear label-descrip map
+   infoDs .sort();        // Sort concat strings by label
+
+   QString prunid  = "";
+   int     tripndx = 1;
+
+   for ( int ii = 0; ii < naucf; ii++ )
+   {
+      // Parse values in concatenation
+      QString idata     = infoDs.at( ii );
+      QString label     = idata.section( "^", 0, 0 );
+      QString runID     = idata.section( "^", 1, 1 );
+      QString tripID    = idata.section( "^", 2, 2 );
+      QString filename  = idata.section( "^", 3, 3 );
+      QString rawGUID   = idata.section( "^", 4, 4 );
+      QString rawDataID = idata.section( "^", 5, 5 );
+      QString date      = idata.section( "^", 6, 6 );
+      QString dcheck    = idata.section( "^", 7, 7 );
+      QString lkey      = runID + "." + tripID;
+      tripndx           = ( runID == prunid ) ? ( tripndx + 1 ) : 1;
+      prunid            = runID;
+
+      // Fill the description object and set count,index
+      DataDesc_auto ddesc;
+      ddesc.label       = label;
+      ddesc.runID       = runID;
+      ddesc.tripID      = tripID;
+      ddesc.filename    = filename;
+      ddesc.rawGUID     = rawGUID;
+      ddesc.date        = date;
+      ddesc.dcheck      = dcheck;
+      ddesc.DB_id       = rawDataID.toInt();
+      ddesc.tripknt     = runIDs.count( runID );
+      ddesc.tripndx     = tripndx;
+
+//qDebug() << "CrDe: ii tknt" << ii << ddesc.tripknt << "lkey" << lkey;
+      if ( datamap.contains( lkey ) )
+      {  // Handle the case where the lkey already exists
+         qDebug() << "*** DUPLICATE lkey" << lkey << "***";
+         lkey              = lkey + "(2)";
+
+         if ( datamap.contains( lkey ) )
+         {  // Handle two duplicates
+            lkey              = lkey.replace( "(2)", "(3)" );
+         }
+      }
+
+      datamap[ lkey ]   = ddesc;
+   }
+   return;
+}
+
+
+// Load the data from the database
+void US_Edit::load_db_auto( QList< DataDesc_auto >& sdescs )
+{
+   int     nerr  = 0;
+   QString emsg;
+   QString rdir  = US_Settings::resultDir();
+   QString runID = sdescs.count() > 0 ? sdescs.at( 0 ).runID : "";
+   workingDir    = rdir + "/" + runID;
+   allData.clear();
+   triples.clear();
+
+   QDir work( rdir );
+   work.mkdir( runID );
+
+   // Connect to DB
+   US_Passwd pw;
+   US_DB2 db( pw.getPasswd() );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+         tr( "Could not connect to database\n " ) + db.lastError() );
+      return;
+   }
+
+   for ( int ii = 0; ii < sdescs.count(); ii++ )
+   {  // Loop to load selected data from the database
+      US_DataIO::RawData rdata;
+      DataDesc_auto ddesc     = sdescs.at( ii );
+      int      idRaw     = ddesc.DB_id;
+      QString  filebase  = ddesc.filename;
+      QString  filename  = workingDir + "/" + filebase;
+      QString  triple    = ddesc.tripID.replace( ".", " / " );
+      QString  dcheck    = ddesc.dcheck;
+      bool     dload_auc = true;
+      int      stat      = 0;
+
+      if ( QFile( filename ).exists() )
+      {  // AUC file exists, do only download if checksum+size mismatch
+         QString  fcheck    = US_Util::md5sum_file( filename );
+
+         if ( dcheck.isEmpty() )
+         {
+            QStringList query;
+            query << "get_rawData" << QString::number( idRaw );
+            db.query( query );
+            db.next();
+            ddesc.dcheck       = db.value( 8 ).toString() + " " +
+                                 db.value( 9 ).toString();
+            dcheck             = ddesc.dcheck;
+         }
+
+         dload_auc          = ( fcheck != dcheck );
+      }
+
+      //emit progress( tr( "Loading triple " ) + triple );
+      qApp->processEvents();
+
+      // Download the DB record to a file (if need be)
+      if ( dload_auc )
+      {
+         db.readBlobFromDB( filename, "download_aucData", idRaw );
+         int stat           = db.lastErrno();
+
+         if ( stat != US_DB2::OK )
+         {
+            nerr++;
+            emsg += tr( "Error (%1) downloading to file %2\n" )
+                    .arg( stat ).arg( filebase );
+         }
+      }
+
+      // Read the raw record to memory
+      stat = US_DataIO::readRawData( filename, rdata );
+
+      if ( stat != US_DataIO::OK )
+      {
+         nerr++;
+         emsg += tr( "Error (%1) reading file %2\n" )
+                 .arg( stat ).arg( filebase );
+      }
+
+      // Accumulate lists of data and triples
+      allData << rdata;
+      triples << triple;
+   }
+}
+
 
 // Load an AUC data set
 void US_Edit::load( void )

@@ -237,6 +237,26 @@ class US_Edit : public US_Widgets
 
       QVector< QVector< double > >  rdata;
 
+      QString filename_runID_auto;
+      QString idInv_auto;
+
+      class DataDesc_auto   // Description of each data set in the list presented
+      {
+         public:
+            QString label;           // Item label string
+            QString runID;           // Run identifier string
+            QString tripID;          // Triple identifier string
+            QString filename;        // File name
+            QString rawGUID;         // Raw data global identifier string
+            QString date;            // Date/time last updated
+            QString dcheck;          // Data checksum+size
+            int     DB_id;           // Database ID number
+            int     tripknt;         // Count of triples per run
+            int     tripndx;         // Index of triple in run
+      };
+
+      QMap< QString, DataDesc_auto >    datamap;  // Map: labels,data-desc-objs
+      
       
       // Private slots
       void set_pbColors      ( QPushButton* );
@@ -256,6 +276,10 @@ class US_Edit : public US_Widgets
       
       void reset_excludes    ( void );
       void set_colors        ( const QList< int >& );
+
+      int  scan_db_auto      ( void );
+      void create_descs_auto ( QStringList&, QStringList&, int );
+      void load_db_auto      ( QList< DataDesc_auto >& );
                           
    private slots:         
       void load              ( void );
