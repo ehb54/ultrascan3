@@ -10,7 +10,7 @@ US_Hydrodyn_Pdb_Tool_Selres::US_Hydrodyn_Pdb_Tool_Selres(
                                                          void                     *              us_hydrodyn_pdb_tool,
                                                          map < QString, QString > *              parameters,
                                                          QWidget *                               p,
-                                                         const char *                            name
+                                                         const char *                            
                                                          ) : QDialog( p )
 {
    this->us_hydrodyn_pdb_tool                 = us_hydrodyn_pdb_tool;

@@ -75,7 +75,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 
 US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
                          QWidget *p, 
-                         const char *name) : QFrame( p )
+                         const char *) : QFrame( p )
 {
    // #define PROCESS_TEST
 #if defined( PROCESS_TEST )
@@ -1474,7 +1474,7 @@ void US_Hydrodyn::setupGUI()
 
    clear_display();
 
-   int rows=20, columns = 3, spacing = 2, j=0, margin=4;
+   int /* rows=20, columns = 3, */ spacing = 2, j=0, margin=4;
    QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
 
    background->addWidget( frame , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
@@ -6292,7 +6292,7 @@ int US_Hydrodyn::calc_vdw_beads()
    model_vector = model_vector_as_loaded;
    options_log = "";
    bool any_errors = false;
-   bool any_models = false;
+   //   bool any_models = false;
    pb_grid->setEnabled(false);
    pb_grid_pdb->setEnabled(false);
    pb_vdw_beads->setEnabled(false);
@@ -7411,7 +7411,7 @@ bool US_Hydrodyn::calc_fasta_vbar( QStringList & seq_chars, double & result, QSt
       
    double mw_vbar_sum = 0.0;
    double mw_sum = 0.0;
-   double mw;
+   // double mw;
 
    map < QString, int > replaced;
 

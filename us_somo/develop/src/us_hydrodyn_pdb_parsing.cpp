@@ -8,7 +8,7 @@
 #include <QLabel>
 
 US_Hydrodyn_PDB_Parsing::US_Hydrodyn_PDB_Parsing(struct pdb_parsing *pdb,
-                                                 bool *pdb_parsing_widget, void *us_hydrodyn, QWidget *p, const char *name) : QFrame( p )
+                                                 bool *pdb_parsing_widget, void *us_hydrodyn, QWidget *p, const char *) : QFrame( p )
 {
    this->pdb = pdb;
    this->pdb_parsing_widget = pdb_parsing_widget;

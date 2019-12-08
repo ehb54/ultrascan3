@@ -176,13 +176,13 @@ void US_Hydrodyn_AdvancedConfig::setupGUI()
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   int rows = 8
+   // int rows = 8
 #if defined(DEBUG_CTLS)   
       + 5
 #endif
       ;
 
-   int columns = 2;
+   // int columns = 2;
    int spacing = 2;
    int j=0;
    int margin=4;

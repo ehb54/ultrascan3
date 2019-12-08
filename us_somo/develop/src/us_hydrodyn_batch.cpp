@@ -60,7 +60,7 @@ US_Hydrodyn_Batch::US_Hydrodyn_Batch(
                                      bool *batch_widget, 
                                      void *us_hydrodyn, 
                                      QWidget *p, 
-                                     const char *name
+                                     const char *
                                      ) : QFrame( p )
 {
 
@@ -3570,21 +3570,21 @@ void US_Hydrodyn_Batch::make_movie()
          tc_start += tc_delta;
       }
       cout << "cmdlog [" << cmdlog << "]\n";
-      system(cmdlog.toLatin1().data());
+      if ( system(cmdlog.toLatin1().data()) ) {};
       cout << "cmd0 [" << cmd0 << "]\ncmd2 [" << cmd2 << "]\n";
-      system(cmd0.toLatin1().data());
+      if ( system(cmd0.toLatin1().data()) ) {};
       for ( unsigned int i = 0; i < cmd1.size(); i++ )
       {
          cout << QString("cmd1:%1 [%2]\n").arg(i).arg(cmd1[i]);
-         system(cmd1[i].toLatin1().data());
+         if ( system(cmd1[i].toLatin1().data()) ) {};
       }
-      system(cmd2.toLatin1().data());
+      if ( system(cmd2.toLatin1().data()) ) {};
       if ( clean_up ) 
       {
          for ( unsigned int i = 0; i < cmd3.size(); i++ )
          {
             cout << QString("cmd3:%1 [%2]\n").arg(i).arg(cmd3[i]);
-            system(cmd3[i].toLatin1().data());
+            if ( system(cmd3[i].toLatin1().data()) ) {};
          }
       }
       editor_msg( "dark blue", QString(us_tr("Created movie file %1")).arg( output_file + ".avi" ) );

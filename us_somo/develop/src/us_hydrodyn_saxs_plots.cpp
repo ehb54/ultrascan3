@@ -1482,6 +1482,8 @@ void US_Hydrodyn_Saxs::set_resid_show()
       US_Plot_Util::align_plot_extents( { plot_saxs, plot_resid } );
       connect(((QObject*)plot_saxs ->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_plot_resid, SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
       connect(((QObject*)plot_resid->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_plot_saxs , SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
+      plot_saxs->enableAxis( QwtPlot::xBottom, false );
+      // plot_resid->setAxisTitle( QwtPlot::xBottom, plot_saxs->axisTitle( QwtPlot::xBottom ) );
       hide_widgets( resid_widgets, false );
       if ( !started_in_expert_mode ||
            plotted_q.size() != 1 )
@@ -1489,6 +1491,7 @@ void US_Hydrodyn_Saxs::set_resid_show()
          cb_manual_guinier->hide();
       }
    } else {
+      plot_saxs->enableAxis( QwtPlot::xBottom, true );
       hide_widgets( resid_widgets );
       cb_resid_show->show();
       cb_resid_show_errorbars->show();
@@ -1728,3 +1731,6 @@ void US_Hydrodyn_Saxs::replot_pr()
    plot_pr->replot();
 }
 
+void US_Hydrodyn_Saxs::fix_xBottom() {
+   plot_saxs->enableAxis( QwtPlot::xBottom, !plot_resid->isVisible() );
+}

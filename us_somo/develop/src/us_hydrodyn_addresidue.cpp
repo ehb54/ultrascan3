@@ -37,7 +37,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 
 // #define DEBUG_RESIDUE
 
-US_AddResidue::US_AddResidue(bool *widget_flag, const double hydrovol, QWidget *p, const char *name) : QWidget( p )
+US_AddResidue::US_AddResidue(bool *widget_flag, const double hydrovol, QWidget *p, const char *) : QWidget( p )
 {
    this->widget_flag = widget_flag;
    this->hydrovol = hydrovol;
@@ -697,7 +697,7 @@ void US_AddResidue::setupGUI()
    pb_close->setPalette( PALET_PUSHB );
    connect(pb_close, SIGNAL(clicked()), SLOT(close()));
 
-   int rows=24, columns = 5, spacing = 2, j=0, margin=4, colspace=10;
+   int /* rows=24, columns = 5, */ spacing = 2, j=0, margin=4, colspace=10;
    QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
 
    background->setColumnMinimumWidth(2, colspace);
@@ -1303,14 +1303,14 @@ void US_AddResidue::select_beadatom()
    unsigned int i;
    QString str;
    lb_list_beadatom->clear( );
-   for (i=0; i<lb_select_beadatom->count(); i++)
+   for ( i = 0; i < (unsigned int) lb_select_beadatom->count(); i++)
    {
       if (new_residue.r_atom[i].bead_assignment == current_bead)
       {
          new_residue.r_atom[i].bead_assignment = 100000; // reset all atoms previously assigned to this bead to a different value
       }
    }
-   for (i=0; i<lb_select_beadatom->count(); i++)
+   for ( i = 0; i < (unsigned int) lb_select_beadatom->count(); i++)
    {
       if(lb_select_beadatom->item(i)->isSelected())
       {

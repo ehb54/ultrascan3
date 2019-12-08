@@ -12,7 +12,7 @@
 #include <QLabel>
 #include <QVBoxLayout>
 
-US_Config_GUI::US_Config_GUI(QWidget *parent, const char *name) : QFrame( parent )
+US_Config_GUI::US_Config_GUI(QWidget *parent, const char *) : QFrame( parent )
 {
    USglobal = new US_Config();
 

@@ -18,7 +18,7 @@ US_Hydrodyn_Cluster_Oned::US_Hydrodyn_Cluster_Oned(
                                                    void                     *              us_hydrodyn,
                                                    map < QString, QString > *              parameters,
                                                    QWidget *                               p,
-                                                   const char *                            name
+                                                   const char *                            
                                                    ) : QDialog( p )
 {
    this->us_hydrodyn                          = us_hydrodyn;

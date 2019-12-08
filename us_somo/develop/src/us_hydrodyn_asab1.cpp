@@ -428,7 +428,7 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
 
    {
       printf("\n\n- Insert the ASA threshold level in Angstroms^2 [usually 10] : ");
-      scanf("%f", &asalevel);
+      if ( scanf("%f", &asalevel) ) {};
       em("s1");
       initarray();
       em("s2");
@@ -452,7 +452,7 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
       while (min_asa < 0.0)
       {
          printf("\n\nASA RE-CHECK  - Insert the minimum ASA %% threshold level [0-99] : ");
-         scanf("%f", &min_asa);
+         if ( scanf("%f", &min_asa) ) {};
          if ((min_asa < 0.0) | (min_asa > 99.0))
             min_asa = (float) -1.0;
       }
@@ -1944,7 +1944,7 @@ initarray()
    em("i3_6");
    for (i = 0; i < 56; i++)
    {
-      fscanf(init3_pippa, "%d", &nat);
+      if ( fscanf(init3_pippa, "%d", &nat) ) {};
       arr1[i] = (float) nat;
    }
    fclose(init3_pippa);

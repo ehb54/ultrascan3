@@ -18,7 +18,7 @@ US_Hydrodyn_Overlap::US_Hydrodyn_Overlap(struct overlap_reduction *sidechain_ove
                                          double *overlap_tolerance,
                                          bool *overlap_widget, 
                                          void *us_hydrodyn,
-                                         QWidget *p, const char *name) : QFrame( p )
+                                         QWidget *p, const char *) : QFrame( p )
 {
    this->sidechain_overlap = sidechain_overlap;
    this->mainchain_overlap = mainchain_overlap;
@@ -187,7 +187,7 @@ void US_Hydrodyn_Overlap::setupGUI()
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   int rows=11, columns = 2, spacing = 2, j=0, margin=4;
+   int /* rows=11, columns = 2,*/ spacing = 2, j=0, margin=4;
    QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
 
    background->addWidget( lbl_info , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );

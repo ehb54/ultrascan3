@@ -18,7 +18,7 @@ US_Hydrodyn_Cluster_Best::US_Hydrodyn_Cluster_Best(
                                                    void                     *              us_hydrodyn,
                                                    map < QString, QString > *              parameters,
                                                    QWidget *                               p,
-                                                   const char *                            name
+                                                   const char *                            
                                                    ) : QDialog( p )
 {
    this->us_hydrodyn                          = us_hydrodyn;

@@ -71,7 +71,7 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
                                    bool                           create_native_saxs,
                                    void                           *us_hydrodyn,
                                    QWidget                        *p, 
-                                   const char                     *name
+                                   const char                     *
                                    ) : QFrame( p )
 {
    if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_mwt_k" ) )
@@ -1620,6 +1620,8 @@ void US_Hydrodyn_Saxs::setupGUI()
 #endif
    // plot_resid->setAxisTitle(QwtPlot::xBottom, /* cb_guinier->isChecked() ? us_tr("q^2 (1/Angstrom^2)") : */  us_tr("q (1/Angstrom) or Frame"));
    // plot_resid->setAxisTitle(QwtPlot::yLeft, us_tr("I(q) (log scale)"));
+   plot_resid->setAxisTitle( QwtPlot::xBottom, plot_saxs->axisTitle( QwtPlot::xBottom ) );
+
 #if QT_VERSION < 0x040000
    // plot_resid->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 2, QFont::Bold));
    plot_resid->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
@@ -1854,7 +1856,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    AUTFBACK( lbl_core_progress );
    lbl_core_progress->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
-   int rows=13, columns = 3, spacing = 2, j=0, margin=4;
+   int /* rows=13, columns = 3, */ spacing = 2, j=0, margin=4;
    QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
 
    background->addWidget(lbl_filename1, j, 0);
@@ -6396,16 +6398,10 @@ void US_Hydrodyn_Saxs::set_user_range()
                                      us_tr( "q^2*I(q) (log scale)" ) :
                                      us_tr( "I(q) (log scale)" ) ) )
                                  );
-#if QT_VERSION < 0x040000
-      plot_saxs->setAxisOptions( QwtPlot::yLeft, 
-                                 cb_kratky->isChecked()  ? 
-                                 QwtAutoScale::None         : QwtAutoScale::Logarithmic );
-#else
       plot_saxs->setAxisScaleEngine(QwtPlot::yLeft, 
                                     cb_kratky->isChecked() ?
                                     new QwtLogScaleEngine(10) :  // fix this
                                     new QwtLogScaleEngine(10));
-#endif
 
       rescale_plot();
    }

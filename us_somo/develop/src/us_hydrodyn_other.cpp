@@ -7737,7 +7737,7 @@ void US_Hydrodyn::play_sounds(int type)
 #if defined(USE_MPLAYER)
 	      QString cmd = QString("mplayer %1&").arg(sf).toLatin1().data();
 	      cout << cmd << endl;
-	      system( qPrintable( cmd ) );
+	      if ( system( qPrintable( cmd ) ) ) {};
 #else
 	      QSound::play(sf);
 #endif

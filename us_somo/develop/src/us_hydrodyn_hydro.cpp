@@ -9,7 +9,7 @@
 #include <QLabel>
 
 US_Hydrodyn_Hydro::US_Hydrodyn_Hydro(struct hydro_options *hydro,
-                                     bool *hydro_widget, void *us_hydrodyn, QWidget *p, const char *name) : QFrame( p )
+                                     bool *hydro_widget, void *us_hydrodyn, QWidget *p, const char *) : QFrame( p )
 {
    this->hydro = hydro;
    this->hydro_widget = hydro_widget;
@@ -801,7 +801,7 @@ void US_Hydrodyn_Hydro::setupGUI()
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   int rows=12, columns = 2, spacing = 2, j=0, margin=4;
+   int /* rows=12, columns = 2, */ spacing = 2, j=0, margin=4;
    QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
 
    background->addWidget( lbl_info , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );

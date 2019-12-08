@@ -829,6 +829,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       map < QString, QString >      ldata;
 
       bool                         wheel_is_pressed;
+      void           fix_xBottom();
 
    private slots:
 
