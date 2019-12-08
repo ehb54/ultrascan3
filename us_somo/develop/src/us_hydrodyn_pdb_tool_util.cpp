@@ -164,7 +164,7 @@ void US_Hydrodyn_Pdb_Tool::sel_nearest_residues( QTreeWidget *lv )
    }
 }
 
-set < QTreeWidgetItem * > US_Hydrodyn_Pdb_Tool::get_exposed_set_naccess( QTreeWidget * lv, 
+set < QTreeWidgetItem * > US_Hydrodyn_Pdb_Tool::get_exposed_set_naccess( QTreeWidget * /* lv */, 
                                                                          double /* max_asa */, 
                                                                          bool /* sc_or_mc */,
                                                                          bool /* only_selected */ )

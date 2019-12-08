@@ -9,7 +9,7 @@
 #include <QVBoxLayout>
 #include <QCloseEvent>
 
-US_Hydrodyn_Anaflex_Options::US_Hydrodyn_Anaflex_Options(Anaflex_Options *anaflex_options, bool *anaflex_widget, void *us_hydrodyn, QWidget *p, const char *name) : QFrame( p )
+US_Hydrodyn_Anaflex_Options::US_Hydrodyn_Anaflex_Options(Anaflex_Options *anaflex_options, bool *anaflex_widget, void *us_hydrodyn, QWidget *p, const char *) : QFrame( p )
 {
    this->anaflex_options = anaflex_options;
    this->anaflex_widget = anaflex_widget;

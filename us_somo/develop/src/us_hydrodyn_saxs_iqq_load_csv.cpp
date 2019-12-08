@@ -33,7 +33,7 @@ US_Hydrodyn_Saxs_Iqq_Load_Csv::US_Hydrodyn_Saxs_Iqq_Load_Csv(
                                                      bool expert_mode,
                                                      void *us_hydrodyn,
                                                      QWidget *p,
-                                                     const char *name
+                                                     const char *
                                                      ) : QDialog( p )
 {
    this->msg = msg;

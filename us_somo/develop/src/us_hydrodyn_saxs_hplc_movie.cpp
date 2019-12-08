@@ -17,7 +17,7 @@
 US_Hydrodyn_Saxs_Hplc_Movie::US_Hydrodyn_Saxs_Hplc_Movie(
                                                          US_Hydrodyn_Saxs_Hplc *hplc_win,
                                                          QWidget *p, 
-                                                         const char *name
+                                                         const char *
                                                          ) : QDialog ( p )
 {
    this->hplc_win                = hplc_win;

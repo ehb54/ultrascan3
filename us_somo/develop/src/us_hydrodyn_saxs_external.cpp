@@ -1179,7 +1179,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
          qApp->processEvents();
          QString savedir = QDir::currentPath();
          QDir::setCurrent( dir );
-         system( qPrintable( cmd ) );
+         if ( system( qPrintable( cmd ) ) ) {};
          QDir::setCurrent( savedir );
          {
             QFile f( dir + QDir::separator() + "output" );

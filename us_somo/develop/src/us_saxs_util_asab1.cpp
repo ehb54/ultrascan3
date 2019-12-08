@@ -557,7 +557,7 @@ us_saxs_util_asab1_main(vector <PDB_atom *> use_active_atoms,
       dd2 += (l - 1);
 
       /*   printf("\n%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",l,"dd1->descr, dd1->elm, azoto, carbonio0, carbonio1, carbonio2: ",dd1->descr,dd1->elm,azoto,carbonio0,carbonio1,carbonio2);
-           scanf("%s",pluto);
+           if ( scanf("%s",pluto) ) {};
            getchar(); */
 
       /*   if(strcmp(dd1->elm,azoto)!=0)
@@ -566,7 +566,7 @@ us_saxs_util_asab1_main(vector <PDB_atom *> use_active_atoms,
            {
 
            printf("\n%s\n","Ora passo");
-           scanf("%d",&topolino);    
+           if ( scanf("%d",&topolino);    ) {};
 
            if(dt[l-1].tab<.001)
            perc=100*asamin/((float) .001);
@@ -590,7 +590,7 @@ us_saxs_util_asab1_main(vector <PDB_atom *> use_active_atoms,
 
          /*      printf("\n%s\n","Ora passo");
                  printf("\n%d\t%s%d%s\t%f\t%s\t%f\n",l-1,"dt[",l-1,"].tab: ",dt[l-1].tab,"asamin: ",asamin);
-                 scanf("%d",&topolino);     
+                 if ( scanf("%d",&topolino);     ) {};
                  getchar(); */
 
          if (dt[l - 1].tab < .001)
@@ -637,7 +637,7 @@ us_saxs_util_asab1_main(vector <PDB_atom *> use_active_atoms,
       dd1 = dt;
       dd1 += l;
       /*    printf("\n%d\t%s\t%s\t%s\t%d\t%s\t%s\n",l,"dd1->elm: ",dd1->elm,"dd1->col: ",dd1->col,"dd1->descr: ",dd1->descr); 
-            scanf("%s",pluto);
+            if ( scanf("%s",pluto) ) {};
             getchar(); */
       if (strcmp(dd1->elm, "CA") == 0)
       {
@@ -645,7 +645,7 @@ us_saxs_util_asab1_main(vector <PDB_atom *> use_active_atoms,
          indCA = l;
          /*            printf("\n%s\n","Ora passo in asapep CA");
                        printf("\n%s\t%d\t%s\t%f\t%s\t%f\n","indCA= ",indCA,"asapep: ",asapep,"asa[l]",asa[l]);
-                       scanf("%d",&topolino);    
+                       if ( scanf("%d",&topolino);    ) {};
                        getchar(); */
       }
 
@@ -655,7 +655,7 @@ us_saxs_util_asab1_main(vector <PDB_atom *> use_active_atoms,
          indC = l;
          /*             printf("\n%s\n","Ora passo in asapep C");
                         printf("\n%s\t%d\t%s\t%f\t%s\t%f\n","indC= ",indC,"asapep: ",asapep,"asa[l]",asa[l]);
-                        scanf("%d",&topolino);    
+                        if ( scanf("%d",&topolino);    ) {};
                         getchar(); */
       }
       if (strcmp(dd1->elm, "O") == 0)
@@ -664,14 +664,14 @@ us_saxs_util_asab1_main(vector <PDB_atom *> use_active_atoms,
          indO = l;
          /*            printf("\n%s\n","Ora passo in asapep O");
                        printf("\n%s\t%d\t%s\t%f\t%s\t%f\n","indO= ",indO,"asapep: ",asapep,"asa[l]",asa[l]);
-                       scanf("%d",&topolino);    
+                       if ( scanf("%d",&topolino);    ) {};
                        getchar(); */
       }
 
       if (strcmp(dd1->elm, "N") == 0)
       {
          /*        printf("\n%s\n","Ora passo in N     ");
-                   scanf("%d",&topolino);    
+                   if ( scanf("%d",&topolino);    ) {};
                    getchar(); */
          dd2 = dt;
          if (strcmp(dd1->amin, "PRO") != 0)   /* IF NOT A PROLINE, COUNTING "N" FOR THE ASA */
@@ -680,7 +680,7 @@ us_saxs_util_asab1_main(vector <PDB_atom *> use_active_atoms,
             /*             printf("\n%s\n","Ora passo in N no PRO");
                            printf("\n%d\t%s\t%s\t%s\t%s\n",l,"dd1->amin, azoto, carbonio0: ",dd1->amin,azoto,carbonio0);
                            printf("\n%s\t%d\t%s\t%f\t%s\t%f\n","indO= ",indO,"asapep: ",asapep,"asa[l]",asa[l]);
-                           scanf("%d",&topolino);    
+                           if ( scanf("%d",&topolino);    ) {};
                            getchar(); */
             if (asapep <= asalevel)
             {
@@ -700,14 +700,14 @@ us_saxs_util_asab1_main(vector <PDB_atom *> use_active_atoms,
                /*     printf("\n%d\t%s\t%s\t%s\t%d\t%s\t%s\n",indO,"dd2->elm: ",dd2->elm,"dd2->col: ",dd2->col,"dd2->descr: ",dd2->descr); */
                dd1->col = 10;
                /*     printf("\n%d\t%s\t%s\t%s\t%d\t%s\t%s\n",indO,"dd1->elm: ",dd1->elm,"dd1->col: ",dd1->col,"dd1->descr: ",dd1->descr);  
-                      scanf("%s",pluto);
+                      if ( scanf("%s",pluto) ) {};
                       getchar(); */
             }
          }
          else
          {
             /*             printf("\n%s\n","Ora passo N PRO");
-                           scanf("%d",&topolino);    
+                           if ( scanf("%d",&topolino);    ) {};
                            getchar(); */
             if (asapep <= asalevel)
             {
@@ -811,7 +811,7 @@ us_saxs_util_asab1_main(vector <PDB_atom *> use_active_atoms,
                {
                   fprintf(mol1, "%d\n", 10);
                   /*   printf("\n%d\t%s\t%s\t%s\t%d\t%s\t%s\n",i,"Minni dd2->elm: ",dd2->elm,"dd2->col: ",dd2->col,"dd2->descr: ",dd2->descr);
-                       scanf("%s",pluto);
+                       if ( scanf("%s",pluto) ) {};
                        getchar();   */
                }
                else
@@ -830,7 +830,7 @@ us_saxs_util_asab1_main(vector <PDB_atom *> use_active_atoms,
                            {
                               fprintf(mol1, "%d\n", 10);
                               /*   printf("\n%d\t%s\t%s\t%s\t%d\t%s\t%s\n",i,"Pluto dd2->elm: ",dd2->elm,"dd2->col: ",dd2->col,"dd2->descr: ",dd2->descr);
-                                   scanf("%s",pluto);
+                                   if ( scanf("%s",pluto) ) {};
                                    getchar(); */
                            }
                            else
@@ -844,7 +844,7 @@ us_saxs_util_asab1_main(vector <PDB_atom *> use_active_atoms,
                         {
                            fprintf(mol1, "%d\n", 6);
                            /*   printf("\n%d\t%s\t%s\t%s\t%d\t%s\t%s\n",i,"Pippo dd2->elm: ",dd2->elm,"dd2->col: ",dd2->col,"dd2->descr: ",dd2->descr);
-                                scanf("%s",pluto);
+                                if ( scanf("%s",pluto) ) {};
                                 getchar(); */
                         }
                      }
@@ -1507,7 +1507,7 @@ init2()
    {
       /*   pulisci();  */
       printf("\n\n\t%s", "Insert the bead model filename: ");
-      scanf("%s", nome);
+      if ( scanf("%s", nome) ) {};
       init2_mol = us_fopen(nome, "r");
 
    }
@@ -1517,7 +1517,7 @@ init2()
    /*   pulisci(); */
  a50:
    printf("\n\n\t%s", "Insert the re-checked bead model filename: ");
-   scanf("%s", ridotto);
+   if ( scanf("%s", ridotto) ) {};
    init2_mol1 = us_fopen(ridotto, "r");
    if (init2_mol1 != NULL)
    {
@@ -1527,7 +1527,7 @@ init2()
       printf("\t 1) Overwrite existing file\n");
       printf("\t 2) Create new file\n\n");
       printf("\t** Select (1/2) :___ ");
-      scanf("%d", &fe);
+      if ( scanf("%d", &fe) ) {};
       getchar();
       fclose(init2_mol1);
       if (fe == 1)
@@ -1564,7 +1564,7 @@ init2()
       printf("\t 1) Overwrite existing .rmc file\n");
       printf("\t 2) Create new .rmc file\n\n");
       printf("\t** Select (1/2) :___ ");
-      scanf("%d", &fe1);
+      if ( scanf("%d", &fe1) ) {};
       getchar();
       fclose(init2_mol1);
       if (fe1 == 1)
@@ -1574,7 +1574,7 @@ init2()
       if (fe1 == 2)
       {
          printf("\n\n\t%s", "Insert the filename for the rmc file of the re-checked bead model: ");
-         scanf("%s", ridotto_rmc);
+         if ( scanf("%s", ridotto_rmc) ) {};
          goto a55;
       }
    }
@@ -1612,21 +1612,21 @@ init2()
 #if defined(NOT_USED)
    for (i = 0; i < nat; i++)
    {
-      fscanf(init2_mol, "%f", &(dt[i].x));
-      fscanf(init2_mol, "%f", &(dt[i].y));
-      fscanf(init2_mol, "%f", &(dt[i].z));
-      fscanf(init2_rmc, "%f", &(dt[i].r));
+      if ( fscanf(init2_mol, "%f", &(dt[i].x)) ) {};
+      if ( fscanf(init2_mol, "%f", &(dt[i].y)) ) {};
+      if ( fscanf(init2_mol, "%f", &(dt[i].z)) ) {};
+      if ( fscanf(init2_rmc, "%f", &(dt[i].r)) ) {};
       (dt[i].r) += rprobe;
-      fscanf(init2_rmc, "%d", &(dt[i].m));
-      fscanf(init2_rmc, "%d", &(dt[i].col));
+      if ( fscanf(init2_rmc, "%d", &(dt[i].m)) ) {};
+      if ( fscanf(init2_rmc, "%d", &(dt[i].col)) ) {};
       if (flag1 != 1)
       {
-         fscanf(init2_mol1, "%s", &(dt[i].elm));
-         fscanf(init2_mol1, "%s", &(dt[i].amin));
-         fscanf(init2_mol1, "%s", &(dt[i].descr));
+         if ( fscanf(init2_mol1, "%s", &(dt[i].elm)) ) {};
+         if ( fscanf(init2_mol1, "%s", &(dt[i].amin)) ) {};
+         if ( fscanf(init2_mol1, "%s", &(dt[i].descr)) ) {};
       }
       if ((raggio >= ((float) -4.1)) && (raggio <= ((float) -3.9)))
-         fscanf(init2_rmc, "%s", &(dt[i].descr));
+         if ( fscanf(init2_rmc, "%s", &(dt[i].descr)) ) {};
 
       if (maxz < (dd->z + dd->r))
          maxz = dd->z + dd->r;
@@ -2986,19 +2986,19 @@ ordcol()
    ordcol_ord = us_fopen("plotter", "rb");
    ord1 = us_fopen("plotter1", "ab");
 
-   fscanf(ordcol_ord, "%s", key);
+   if ( fscanf(ordcol_ord, "%s", key) ) {};
    fprintf(ord1, "%s%c", key, ' ');
 
    if (form1 == 0)
    {
-      fscanf(ordcol_ord, "%s", key);
+      if ( fscanf(ordcol_ord, "%s", key) ) {};
       fprintf(ord1, "%s\n", key);
    }
 
    for (i = 1; i < 9; i++)
    {
       rewind(ordcol_ord);
-      fscanf(ordcol_ord, "%s", key);
+      if ( fscanf(ordcol_ord, "%s", key) ) {};
       sp[0] = 'S';
       sp[1] = 'P';
 
@@ -3032,13 +3032,14 @@ ordcol()
 
       while (conf(key, fine, 3) == 0)
       {
-         while ((conf(key, sp, 3) == 0) && (conf(key, fine, 3) == 0))
-            fscanf(ordcol_ord, "%s", key);
+         while ((conf(key, sp, 3) == 0) && (conf(key, fine, 3) == 0)) {
+            if ( fscanf(ordcol_ord, "%s", key) ) {};
+         }
 
          if (conf(key, fine, 3) == 0)
          {
             fprintf(ord1, "%s\n", key);
-            fscanf(ordcol_ord, "%s", key);
+            if ( fscanf(ordcol_ord, "%s", key) ) {};
          }
       }
    }
@@ -3260,7 +3261,7 @@ formato()
          printf("\n");
          printf("Wrong number!\n");
          printf("Re-insert the step: ");
-         scanf("%f", &passo);
+         if ( scanf("%f", &passo) ) {};
       }
 
       printf("\n\n%s%.0f\n\n", "Number of resulting iterations: ", ceil(fabs(maxz - minz) / passo));

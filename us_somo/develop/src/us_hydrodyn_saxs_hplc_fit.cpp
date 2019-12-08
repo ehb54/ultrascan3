@@ -26,7 +26,7 @@ US_Hydrodyn_Saxs_Hplc_Fit::US_Hydrodyn_Saxs_Hplc_Fit(
                                                      US_Hydrodyn_Saxs_Hplc *hplc_win,
                                                      bool set_comm_dist,
                                                      QWidget *p, 
-                                                     const char *name
+                                                     const char *
                                                      ) : QDialog( p )
 {
    // us_qdebug( "hf0" );
@@ -681,7 +681,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    background->addSpacing( 4 );
    background->addLayout ( hbl_bottom );
 
-   void * us_hydrodyn = hplc_win->us_hydrodyn;
+   // void * us_hydrodyn = hplc_win->us_hydrodyn;
 
    if ( !U_EXPT )
    {

@@ -15,7 +15,7 @@
 #  define SLASH "\\"
 #endif
 
-US_Hydrodyn_SasOptionsGuinier::US_Hydrodyn_SasOptionsGuinier(struct saxs_options *saxs_options, bool *sas_options_guinier_widget, void *us_hydrodyn, QWidget *p, const char *name) : QFrame( p )
+US_Hydrodyn_SasOptionsGuinier::US_Hydrodyn_SasOptionsGuinier(struct saxs_options *saxs_options, bool *sas_options_guinier_widget, void *us_hydrodyn, QWidget *p, const char *) : QFrame( p )
 {
    this->sas_options_guinier_widget = sas_options_guinier_widget;
    this->saxs_options = saxs_options;
@@ -500,7 +500,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   int rows = 0, columns = 2, spacing = 2, margin=4;
+   int /* rows = 0, columns = 2,*/ spacing = 2, margin=4;
    QGridLayout * background = new QGridLayout( this );
    background->setContentsMargins( 0, 0, 0, 0 );
    background->setSpacing( spacing );

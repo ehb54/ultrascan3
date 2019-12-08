@@ -15,7 +15,7 @@ US_Hydrodyn_Saxs_Hplc_Scale_Trend::US_Hydrodyn_Saxs_Hplc_Scale_Trend(
                                                                        map < QString, QString >                parameters,
                                                                        map < QString, vector < vector < double > > > plots,
                                                                        QWidget *                               p,
-                                                                       const char *                            name
+                                                                       const char *                            
                                                                        ) : QFrame(  p )
 {
    this->us_hydrodyn                          = us_hydrodyn;

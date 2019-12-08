@@ -7,7 +7,7 @@
 #include <QFrame>
 #include <QLabel>
 
-US_Hydrodyn_ASA::US_Hydrodyn_ASA(struct asa_options *asa, bool *asa_widget, void *us_hydrodyn, QWidget *p, const char *name) : QFrame( p )
+US_Hydrodyn_ASA::US_Hydrodyn_ASA(struct asa_options *asa, bool *asa_widget, void *us_hydrodyn, QWidget *p, const char *) : QFrame( p )
 {
    this->asa = asa;
    this->asa_widget = asa_widget;

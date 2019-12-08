@@ -194,7 +194,7 @@ namespace bulatov {
 US_Hydrodyn_Saxs_2d::US_Hydrodyn_Saxs_2d(
                                          void *us_hydrodyn, 
                                          QWidget *p, 
-                                         const char *name
+                                         const char *
                                          ) : QFrame( p )
 {
    this->us_hydrodyn = us_hydrodyn;

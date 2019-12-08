@@ -1310,7 +1310,7 @@ namespace xsr {
 US_Hydrodyn_Xsr::US_Hydrodyn_Xsr( 
                                  US_Hydrodyn  * us_hydrodyn,
                                  QWidget *p, 
-                                 const char *name
+                                 const char *
                                  ) : QFrame(  p )
 {
    this->us_hydrodyn      = us_hydrodyn;

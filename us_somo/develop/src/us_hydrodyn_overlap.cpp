@@ -50,7 +50,7 @@ US_Hydrodyn_Overlap::US_Hydrodyn_Overlap(struct overlap_reduction *grid_exposed_
                                          bool *overlap_widget, 
                                          void *us_hydrodyn, 
                                          QWidget *p, 
-                                         const char *name) : QFrame( p )
+                                         const char *) : QFrame( p )
 {
    this->grid_exposed_overlap = grid_exposed_overlap;
    this->grid_buried_overlap = grid_buried_overlap;

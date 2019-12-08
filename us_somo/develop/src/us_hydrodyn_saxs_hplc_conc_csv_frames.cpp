@@ -16,7 +16,7 @@ US_Hydrodyn_Saxs_Hplc_Conc_Csv_Frames::US_Hydrodyn_Saxs_Hplc_Conc_Csv_Frames(
                                            void                     *              us_hydrodyn,
                                            map < QString, QString > *              parameters,
                                            QWidget *                               p,
-                                           const char *                            name
+                                           const char *                            
                                            ) : QDialog( p )
 {
    this->us_hydrodyn                          = us_hydrodyn;

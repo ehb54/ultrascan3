@@ -1632,24 +1632,24 @@ init()
    init1_mol = us_fopen("test", "r");
    init1_mol1 = us_fopen("provaly2", "r");
 
-   fscanf(init1_mol, "%d", &nat);
-   fscanf(init1_mol, "%f", &raggio);
-   fscanf(init1_mol, "%s", ragcol);
+   if ( fscanf(init1_mol, "%d", &nat) ) {};
+   if ( fscanf(init1_mol, "%f", &raggio) ) {};
+   if ( fscanf(init1_mol, "%s", ragcol) ) {};
 
    init1_rmc = us_fopen(ragcol, "r");   /* opening the file containing the radii, masses and colors */
 
    for (i = 0; i < nat; i++)
    {
-      fscanf(init1_mol, "%f", &(dt[i].x));
-      fscanf(init1_mol, "%f", &(dt[i].y));
-      fscanf(init1_mol, "%f", &(dt[i].z));
-      fscanf(init1_rmc, "%f", &(dt[i].r));
-      fscanf(init1_rmc, "%d", &(dt[i].m));
-      fscanf(init1_rmc, "%d", &(dt[i].col));
+      if ( fscanf(init1_mol, "%f", &(dt[i].x)) ) {};
+      if ( fscanf(init1_mol, "%f", &(dt[i].y)) ) {};
+      if ( fscanf(init1_mol, "%f", &(dt[i].z)) ) {};
+      if ( fscanf(init1_rmc, "%f", &(dt[i].r)) ) {};
+      if ( fscanf(init1_rmc, "%d", &(dt[i].m)) ) {};
+      if ( fscanf(init1_rmc, "%d", &(dt[i].col)) ) {};
       //fscanf(init1_mol1, "%s", &(dt[i].elm));
       //fscanf(init1_mol1, "%s", &(dt[i].amin));
-      fscanf(init1_mol1, "%4c", &(dt[i].elm[0]));
-      fscanf(init1_mol1, "%4c", &(dt[i].amin[0]));
+      if ( fscanf(init1_mol1, "%4c", &(dt[i].elm[0])) ) {};
+      if ( fscanf(init1_mol1, "%4c", &(dt[i].amin[0])) ) {};
    }
 
    fclose(init1_mol);
@@ -1967,13 +1967,13 @@ initarray()
    {
       pulisci();
       printf("\n\n\tInsert the PDB filename : ");
-      scanf("%s", nome);
+      if ( scanf("%s", nome) ) {};
       init3_brook = us_fopen(nome, "r");
    }
 
    printf("\n\n\t%s", "Output files: Enter '0' for default (provaly, provaly1, provaly2, asaris)");
    printf("\n\t%s", "                    '1' for new filenames\n\n\t\t\t-->");
-   scanf("%d", &fe2);
+   if ( scanf("%d", &fe2) ) {};
    getchar();
    if (fe2 == 0)
    {
@@ -2008,7 +2008,7 @@ initarray()
    {
    a10:
       printf("\n\t** Insert the root output filename :___ ");
-      scanf("%s", outfile);
+      if ( scanf("%s", outfile) ) {};
       getchar();
 
       strcpy(outris, outfile);
@@ -2051,7 +2051,7 @@ initarray()
          printf("\t 1) Overwrite existing file(s)\n");
          printf("\t 2) Create new files\n\n");
          printf("\t** Select (1/2) :___ ");
-         scanf("%d", &fe3);
+         if ( scanf("%d", &fe3) ) {};
          getchar();
          fclose(new_mol);
          fclose(new_mol1);
@@ -2072,12 +2072,12 @@ initarray()
    }
 
  a50:
-   fscanf(init3_brook, "%6s", arr_temp);
+   if ( fscanf(init3_brook, "%6s", arr_temp) ) {};
    if (strcmp(arr_temp, "END") == 0)
       goto a200;
 
    /* printf("\n%s\t%s\n","pluto arr_temp",arr_temp);
-      scanf("%s",pluto);
+      if ( scanf("%s",pluto) ) {};
       getchar(); */
 
    if ((strncmp(arr_temp, "ATOM", 6) == 0) || (strncmp(arr_temp, "HETATM", 6) == 0))
@@ -2088,7 +2088,7 @@ initarray()
 
  a150:
    /* printf("\n%s\t%s\n","pluto arr_temp",arr_temp);
-      scanf("%s",pluto);
+      if ( scanf("%s",pluto) ) {};
       getchar(); */
    if (strncmp(arr_temp, "ATOM", 6) == 0)
       flagr1 = 0;
@@ -2105,7 +2105,7 @@ initarray()
    }
 
    /*   printf("\n%s\n","qui arrivo");
-        scanf("%s",pluto);
+        if ( scanf("%s",pluto) ) {};
         getchar(); */
 
    if (strcmp(arr_temp, "END") == 0)
@@ -2133,23 +2133,24 @@ readline(int ind)
    dd = dt;
    dd += ind;
 
-   for (j = 0; j < 24; j++)
-      fscanf(init3_brook, "%c", &(stringa[j]));
+   for (j = 0; j < 24; j++) {
+      if ( fscanf(init3_brook, "%c", &(stringa[j])) ) {};
+   }
 
    nat++;
 
-   sscanf(stringa + 7, "%s", dd->elm);
+   if ( sscanf(stringa + 7, "%s", dd->elm) ) {};
    /*      printf("\n%s\t%s\n","dd->elm  ",dd->elm);
            printf("\n%s\t%d\n","flagr1 atom",flagr1);  
-           scanf("%s",pluto);
+           if ( scanf("%s",pluto) ) {};
            getchar(); */
 
    if (flagr1 != 1)
    {
 
-      sscanf(stringa + 12, "%s", dd->amin);
+      if ( sscanf(stringa + 12, "%s", dd->amin) ) {};
       /*   printf("\n%s\t%s\n","dd->amin  ",dd->amin); 
-           scanf("%s",pluto);
+           if ( scanf("%s",pluto) ) {};
            getchar(); */
 
       dd->descr[9] = 0;
@@ -2163,9 +2164,9 @@ readline(int ind)
 
    else
    {
-      sscanf(stringa + 11, "%s", dd->amin);
+      if ( sscanf(stringa + 11, "%s", dd->amin) ) {};
       /*   printf("\n%s\t%s\n","carb dd->amin  ",dd->amin);
-           scanf("%s",pluto);
+           if ( scanf("%s",pluto) ) {};
            getchar(); */
 
       dd->descr[9] = 0;
@@ -2176,14 +2177,14 @@ readline(int ind)
             stringa[11 + j] = '_';
          dd->descr[j] = stringa[11 + j];
          /*      printf("\n%s\t%s\n","carb dd->desc  ",dd->descr);
-                 scanf("%s",pluto);
+                 if ( scanf("%s",pluto) ) {};
                  getchar(); */
       }
    }
 
-   fscanf(init3_brook, "%f", &(dd->x));
-   fscanf(init3_brook, "%f", &(dd->y));
-   fscanf(init3_brook, "%f", &(dd->z));
+   if ( fscanf(init3_brook, "%f", &(dd->x)) ) {};
+   if ( fscanf(init3_brook, "%f", &(dd->y)) ) {};
+   if ( fscanf(init3_brook, "%f", &(dd->z)) ) {};
 
    /* printf("\n%s\t%f\n","dd->x  ",dd->x);
       printf("\n%s\t%f\n","dd->y  ",dd->y);
@@ -2198,22 +2199,22 @@ readline(int ind)
    /*  printf("\n%s\t%s\n","dd->elm  ",dd->elm);
        printf("\n%s\t%f\n","dd->r  ",dd->r);
        printf("\n%s\t%d\n","dd->m  ",dd->m);
-       scanf("%s",pluto);
+       if ( scanf("%s",pluto) ) {};
        getchar(); */
 
-   fscanf(init3_brook, "%[^\n]%*c", arr_temp);
+   if ( fscanf(init3_brook, "%[^\n]%*c", arr_temp) ) {};
 
    ind++;
    corr = ind;
 
    /* printf("\n%s\t%d\n","corr= ",corr);
-      scanf("%s",pluto);
+      if ( scanf("%s",pluto) ) {};
       getchar(); */
 
-   fscanf(init3_brook, "%6s", arr_temp);
+   if ( fscanf(init3_brook, "%6s", arr_temp) ) {};
 
    /* printf("\n%s\t%s\n","zeppo arr_temp",arr_temp);
-      scanf("%s",pluto);
+      if ( scanf("%s",pluto) ) {};
       getchar(); */
    /* if(strcmp(arr_temp,"ATOM")==0) */
    if ((strncmp(arr_temp, "ATOM", 6) == 0) || (strncmp(arr_temp, "HETATM", 6) == 0))
@@ -2239,18 +2240,19 @@ readline(int ind)
    dd=dt;
    dd+=ind;
 
-   for(j=0;j<26;j++)
-   fscanf(init3_brook,"%c",&(stringa[j]));
+   for(j=0;j<26;j++) {
+      if ( fscanf(init3_brook,"%c",&(stringa[j])) ) {};
+   }
 
    nat++;
 
-   sscanf(stringa+7,"%s",dd->elm);
+   if ( sscanf(stringa+7,"%s",dd->elm) ) {};
    printf("\n%s\t%s\n","carb dd->elm  ",dd->elm);
-   scanf("%s",pluto);
+   if ( scanf("%s",pluto) ) {};
    getchar(); 
-   sscanf(stringa+11,"%s",dd->amin);     
+   if ( sscanf(stringa+11,"%s",dd->amin);     ) {};
    printf("\n%s\t%s\n","carb dd->amin  ",dd->amin);
-   scanf("%s",pluto);
+   if ( scanf("%s",pluto) ) {};
    getchar(); 
 
    dd->descr[9]=0;
@@ -2261,13 +2263,13 @@ readline(int ind)
    stringa[11+j]='_';
    dd->descr[j]=stringa[11+j];
    printf("\n%s\t%s\n","carb dd->desc  ",dd->descr);
-   scanf("%s",pluto);
+   if ( scanf("%s",pluto) ) {};
    getchar(); 
    }
 
-   fscanf(init3_brook,"%f",&(dd->x)); 
-   fscanf(init3_brook,"%f",&(dd->y)); 
-   fscanf(init3_brook,"%f",&(dd->z)); 
+   if ( fscanf(init3_brook,"%f",&(dd->x)); ) {};
+   if ( fscanf(init3_brook,"%f",&(dd->y)); ) {};
+   if ( fscanf(init3_brook,"%f",&(dd->z)); ) {};
    printf("\n%s\t%f\n","carb dd->x  ",dd->x);
    printf("\n%s\t%f\n","carb dd->y  ",dd->y);
    printf("\n%s\t%f\n","carb dd->z  ",dd->z);
@@ -2280,12 +2282,12 @@ readline(int ind)
 
    printf("%s\t%f\n",dd->elm,flrad);
 
-   fscanf(init3_brook,"%[^\n]%*c",arr_temp);
+   if ( fscanf(init3_brook,"%[^\n]%*c",arr_temp) ) {};
 
    ind++;
    corr=ind;
 
-   fscanf(init3_brook,"%6s",arr_temp); 
+   if ( fscanf(init3_brook,"%6s",arr_temp); ) {};
 
    if(strncmp(arr_temp,"HETATM", 6)==0)
    sim=1;  
@@ -2978,12 +2980,12 @@ assignrad(int xx)
             else if (strcmp(dd->amin, "ARG") == 0)   /* N3H1 */
             {
                /* printf("qui arrivo arg");
-                  scanf("%s",pluto);
+                  if ( scanf("%s",pluto) ) {};
                   getchar(); */
                flrad = (float) 1.64;
                dd->m = 15;
                /* printf("qui arrivo arg flrad= %f\n",flrad);
-                  scanf("%s",pluto);
+                  if ( scanf("%s",pluto) ) {};
                   getchar(); */
             }
          }
@@ -3065,7 +3067,7 @@ assigntab(int xx)
    dd += xx;
 
    /* printf("rbulk= %d\trprobe= %f\n",rbulk,rprobe);
-      scanf("%s",pluto);
+      if ( scanf("%s",pluto) ) {};
       getchar(); */
 
    if (rbulk == 0)
@@ -3484,15 +3486,15 @@ assigntab(int xx)
       }
 
       /* printf("%s%s\t%s%f\n","dd->amin= ",dd->amin,"dd->tab= ",dd->tab);
-         scanf("%s",pluto);
+         if ( scanf("%s",pluto) ) {};
          getchar(); 
          break;
          printf("%s%s\t%s%f\n","dd->amin= ",dd->amin,"dd->tab= ",dd->tab);
-         scanf("%s",pluto);
+         if ( scanf("%s",pluto) ) {};
          getchar(); */
    }
    /* printf("%s%s\t%s%f\n","dd->amin= ",dd->amin,"dd->tab= ",dd->tab);
-      scanf("%s",pluto);
+      if ( scanf("%s",pluto) ) {};
       getchar(); */
 }
 
@@ -3575,19 +3577,19 @@ ordcol()
    ordcol_ord = us_fopen("plotter", "rb");
    ord1 = us_fopen("plotter1", "ab");
 
-   fscanf(ordcol_ord, "%s", key);
+   if ( fscanf(ordcol_ord, "%s", key) ) {};
    fprintf(ord1, "%s%c", key, ' ');
 
    if (form1 == 0)
    {
-      fscanf(ordcol_ord, "%s", key);
+      if ( fscanf(ordcol_ord, "%s", key) ) {};
       fprintf(ord1, "%s\n", key);
    }
 
    for (i = 1; i < 9; i++)
    {
       rewind(ordcol_ord);
-      fscanf(ordcol_ord, "%s", key);
+      if ( fscanf(ordcol_ord, "%s", key) ) {};
       sp[0] = 'S';
       sp[1] = 'P';
 
@@ -3621,13 +3623,14 @@ ordcol()
 
       while (conf(key, fine, 3) == 0)
       {
-         while ((conf(key, sp, 3) == 0) && (conf(key, fine, 3) == 0))
-            fscanf(ordcol_ord, "%s", key);
+         while ((conf(key, sp, 3) == 0) && (conf(key, fine, 3) == 0)) {
+            if ( fscanf(ordcol_ord, "%s", key) ) {};
+         }
 
          if (conf(key, fine, 3) == 0)
          {
             fprintf(ord1, "%s\n", key);
-            fscanf(ordcol_ord, "%s", key);
+            if ( fscanf(ordcol_ord, "%s", key) ) {};
          }
       }
    }
@@ -3849,7 +3852,7 @@ formato()
          printf("\n");
          printf("Wrong number!\n");
          printf("Re-insert the step: ");
-         scanf("%f", &passo);
+         if ( scanf("%f", &passo) ) {};
       }
 
       printf("\n\n%s%.0f\n\n", "Number of resulting iterations: ", ceil(fabs(maxz - minz) / passo));

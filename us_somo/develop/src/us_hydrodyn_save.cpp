@@ -20,7 +20,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
                                    void *us_hydrodyn, 
                                    bool *save_widget, 
                                    QWidget *p, 
-                                   const char *name
+                                   const char *
                                    ) : QFrame( p )
 {
    this->save = save;

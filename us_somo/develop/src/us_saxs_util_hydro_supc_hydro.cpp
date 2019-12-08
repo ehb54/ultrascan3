@@ -389,8 +389,8 @@ static float *a = 0;      // [3 * NMAX][3 * NMAX];
 
 static int nmax;
 // static QApplication *qApp;
-static QProgressBar *progress;
-static QTextEdit *editor;
+// static QProgressBar *progress;
+// static QTextEdit *editor;
 static int ppos;
 static int mppos;
 static double overlap_tolerance;
@@ -621,7 +621,7 @@ Gets_date(char *day, char *month, int *year, int *numday, char *hour)
    timer = time(NULL);
    tblock = localtime(&timer);
    strcpy(tempo, asctime(tblock));
-   sscanf(tempo, "%s %s %d %s %s\n", day, month, numday, hour, anno);
+   if ( sscanf(tempo, "%s %s %d %s %s\n", day, month, numday, hour, anno) ) {};
    /* annov=strtol(anno,NULL,0); */
    anno[0] = anno[2];
    anno[1] = anno[3];
@@ -909,7 +909,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       intestazione();
       //printf("\n\n** Compiled for %d beads **\n\n", nmax);
       //printf("\n\n\n** Insert number of models to analyze (max=100) :___ ");
-      scanf("%d", &num);
+      if ( scanf("%d", &num) ) {};
       getchar();
    }
 
@@ -918,14 +918,14 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       //printf("\n - Sequential files?\n");
       //printf(" 1) Yes\n 2) No\n\n");
       //printf(" Your choice ? (1/2) :__ ");
-      scanf("%d", &cdmolix);
+      if ( scanf("%d", &cdmolix) ) {};
       if (cdmolix == 1)
       {
          //printf("\n-Enter filename prefix  ");
-         scanf("%s", fil001);
+         if ( scanf("%s", fil001) ) {};
          getchar();
          //printf("\n-Enter first file number   ");
-         scanf("%d", &num001);
+         if ( scanf("%d", &num001) ) {};
          numor = 1;
       }
       r1 = 'y';
@@ -972,7 +972,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
          intestazione();
          //printf("\n\n\n** Number of models to analyze:___ %d", num);
          //printf("\n** Do you want the results printed to a file ? (y/n) :___ ");
-         scanf("%s", &r1);
+         if ( scanf("%s", &r1) ) {};
          getchar();
       }
    }
@@ -982,7 +982,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
    a50:
       flag_mem = 1;
       //printf("\n** Insert the name of results' file :___ ");
-      scanf("%s", risultati);
+      if ( scanf("%s", risultati) ) {};
       getchar();
    }
 
@@ -998,7 +998,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       //printf(" 2) Overwrite existing file\n");
       //printf(" 3) Create new file\n\n");
       //printf("** Select (1/2/3) :___ ");
-      scanf("%d", &fe);
+      if ( scanf("%d", &fe) ) {};
       getchar();
       fclose(new_mol);
       if (fe == 2)
@@ -1012,7 +1012,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       {
          goto a50;
          /*      printf("** Insert the name of results file :___ ");
-                 scanf("%s",risultati);
+                 if ( scanf("%s",risultati) ) {};
                  getchar();  */
       }
    }
@@ -1028,7 +1028,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
    //printf("- - )   angstroms   => nanometers [ Conversion factor = 0.1  ]\n\n");
    //printf("\n** Insert the conversion factor :___ ");
 
-   scanf("%f", &fconv);
+   if ( scanf("%f", &fconv) ) {};
    fconv1 = 1.0 / fconv;
 
    while ((cd != 1) && (cd != 2))
@@ -1037,7 +1037,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       //printf("\n- Reference System :\n\n");
       //printf(" 1) Cartesian Origin \n 2) Diffusion Center\n\n");
       //printf(" Select (1/2) :___ ");
-      scanf("%d", &cd);
+      if ( scanf("%d", &cd) ) {};
       getchar();
    }
 
@@ -1048,7 +1048,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       //printf(" 1) STICK boundary condition (6*M_PI*ETAo)\n");
       //printf(" 2) SLIP boundary condition (4*M_PI*ETAo)\n\n");
       //printf(" Select (1/2) :___ ");
-      scanf("%d", &cc);
+      if ( scanf("%d", &cc) ) {};
       getchar();
    }
 
@@ -1059,14 +1059,14 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       //printf(" 1) Automatic (Total volume of the beads)\n");
       //printf(" 2) Manual    (From keyboard)\n\n");
       //printf(" Select (1/2) :___ ");
-      scanf("%d", &volcor);
+      if ( scanf("%d", &volcor) ) {};
       getchar();
    }
 
    if (volcor == 2)
    {
       //printf("\n\n\n- Insert value of the volume : ");
-      scanf("%f", &volcor1);
+      if ( scanf("%f", &volcor1) ) {};
    }
 
    while ((mascor != 1) && (mascor != 2))
@@ -1076,14 +1076,14 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       //printf(" 1) Automatic (Masses from file) \n");
       //printf(" 2) Manual    (Total Mass from Keyboard)\n\n");
       //printf(" Select (1/2) :___ ");
-      scanf("%d", &mascor);
+      if ( scanf("%d", &mascor) ) {};
       getchar();
    }
 
    if (mascor == 2)
    {
       //printf("\n\n\n- Insert value of mass : ");
-      scanf("%f", &mascor1);
+      if ( scanf("%f", &mascor1) ) {};
    }
 
    while ((sfecalc != 1) && (sfecalc != 2))
@@ -1093,7 +1093,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       //printf(" 1) ALL beads\n");
       //printf(" 2) Color Code Selection (Beads Color Coded \"6\" will be excluded)\n\n");
       //printf(" Select (1/2) :___ ");
-      scanf("%d", &sfecalc);
+      if ( scanf("%d", &sfecalc) ) {};
       getchar();
       if ((sfecalc == 2) && (volcor == 1))
       {
@@ -1107,7 +1107,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
          //printf(" 2) The intrinsic viscosity correction only\n");
          //printf(" 3) Both corrections\n\n");
          //printf(" Select (0/1/2/3) :___ ");
-         scanf("%d", &colorsixf);
+         if ( scanf("%d", &colorsixf) ) {};
          getchar();
 
       }
@@ -1240,10 +1240,10 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
             //printf("\n");
             //printf("The Model(s) do not exist!!!\n");
             //printf("Insert the models' correct prefix :___");
-            scanf("%s", molecola);
+            if ( scanf("%s", molecola) ) {};
             mol = us_fopen(molecola, "r");
          }
-         fscanf(mol, "%d", &nat);
+         if ( fscanf(mol, "%d", &nat) ) {};
          fclose(mol);
          if (k == 0)
          {
@@ -1252,7 +1252,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
             while ((prima < 0) || (prima > (nat - 1)))
             {
                //printf("%s", "** Insert FIRST BEAD # to be included:___");
-               scanf("%d", &prima);
+               if ( scanf("%d", &prima) ) {};
                getchar();
                //printf("\n");
             }
@@ -1260,7 +1260,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
             while ((ultima < prima) || (ultima > nat))
             {
                //printf("%s", "** Insert LAST BEAD # to be included:___");
-               scanf("%d", &ultima);
+               if ( scanf("%d", &ultima) ) {};
                getchar();
                //printf("\n");
             }
@@ -1296,7 +1296,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
          {
             //printf("\n** Insert file name of the model to be analyzed :___ ");
          }
-         scanf("%s", molecola);
+         if ( scanf("%s", molecola) ) {};
          getchar();
 
          init_da_a();
@@ -1437,7 +1437,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       // }
 
 #if defined(CREATE_TOT_MOL)
-      fscanf(tot_mol, "%f", &raflag);
+      if ( fscanf(tot_mol, "%f", &raflag) ) {};
 #else
       raflag = raggio_v[k];
 #endif
@@ -2266,7 +2266,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
                //printf("  Select (0/1) : ");
             }
 
-            scanf("%d", &scelta);
+            if ( scanf("%d", &scelta) ) {};
             getchar();
 
             if (scelta == 1)
@@ -2440,7 +2440,7 @@ vedimatrici()
       printf("\n  0)  Back\n");
 
       printf("\n  Select(0/8) : ");
-      scanf("%d", &mtt);
+      if ( scanf("%d", &mtt) ) {};
       getchar();
 
       switch (mtt)
@@ -4214,15 +4214,15 @@ out_inter()
 
    interout = us_fopen("ofraxon", "r");
 
-   fscanf(interout, "%d", &n);
-   fscanf(interout, "%f", &raggio);
-   fscanf(interout, "%s", ramaco);
+   if ( fscanf(interout, "%d", &n) ) {};
+   if ( fscanf(interout, "%f", &raggio) ) {};
+   if ( fscanf(interout, "%s", ramaco) ) {};
 
    for (i = 0; i < n; i++)
    {
-      fscanf(interout, "%f", &dtn[i].x);
-      fscanf(interout, "%f", &dtn[i].y);
-      fscanf(interout, "%f", &dtn[i].z);
+      if ( fscanf(interout, "%f", &dtn[i].x) ) {};
+      if ( fscanf(interout, "%f", &dtn[i].y) ) {};
+      if ( fscanf(interout, "%f", &dtn[i].z) ) {};
    }
 
 #if defined(DEBUG_WW)
@@ -4251,7 +4251,7 @@ mem_mol()
    char risp1, risp2, risp3;
  a100:
    //   printf("\n\n** Insert file name for coordinates :___ ");
-   scanf("%s", nmolecola);
+   if ( scanf("%s", nmolecola) ) {};
    getchar();
 
    new_mol1 = us_fopen(nmolecola, "r");
@@ -4261,7 +4261,7 @@ mem_mol()
       // printf("\n");
       // printf("*** CAUTION : File already exists ! ***\n");
       // printf("** Do you want change the file name ? (y/n) :___ ");
-      scanf("%s", &risp2);
+      if ( scanf("%s", &risp2) ) {};
       getchar();
       fclose(new_mol1);
       if ((risp2 == 'y') || (risp2 == 'Y'))
@@ -4271,7 +4271,7 @@ mem_mol()
    if (nat == numero_sfere)
    {
      //printf("** Same File Name r_m_c ? (y/n) :___ ");
-      scanf("%s", &risp1);
+      if ( scanf("%s", &risp1) ) {};
       getchar();
    }
 
@@ -4282,7 +4282,7 @@ mem_mol()
    {
    a150:
      //printf("** Insert file name r_m_c :___ ");
-      scanf("%s", nragcol);
+      if ( scanf("%s", nragcol) ) {};
       getchar();
       new_mol1 = us_fopen(nragcol, "r");
 
@@ -4291,7 +4291,7 @@ mem_mol()
          // printf("\n");
          // printf("*** CAUTION : File already exists ! ***\n");
          // printf("** Do you want change the file name ? (y/n) :___ ");
-         scanf("%s", &risp3);
+         if ( scanf("%s", &risp3) ) {};
          getchar();
          fclose(new_mol1);
          if ((risp3 == 'y') || (risp3 == 'Y'))
@@ -4302,9 +4302,9 @@ mem_mol()
    else
    {
       mol = us_fopen(molecola, "r");
-      fscanf(mol, "%d", &n);
-      fscanf(mol, "%f", &raggio);
-      fscanf(mol, "%s", nragcol);
+      if ( fscanf(mol, "%d", &n) ) {};
+      if ( fscanf(mol, "%f", &raggio) ) {};
+      if ( fscanf(mol, "%s", nragcol) ) {};
       fclose(mol);
       raflag = raggio; // ?? ==
    }
@@ -4852,7 +4852,7 @@ relax_rigid_calc()
 // #endif
 
    /*      printf("\nValori ddr[0] ddr[1] ddr[2] : %Lf\t%Lf\t%Lf\n",ddr[0],ddr[1],ddr[2]);
-           scanf("%s",&pluto1);
+           if ( scanf("%s",&pluto1) ) {};
            getchar();    */
 
    for (a = 0; a < 3; a++)
@@ -4874,7 +4874,7 @@ relax_rigid_calc()
          a = (int) 2.0;
 
       /*      printf("\nCaso 1, valore a= %d\n",a);
-              scanf("%s",&pluto1);
+              if ( scanf("%s",&pluto1) ) {};
               getchar();    */
    }
 
@@ -4890,7 +4890,7 @@ relax_rigid_calc()
          a = (int) 2.0;
 
       /*            printf("\nCaso 2, valore a= %d\n",a);
-                    scanf("%s",&pluto1);
+                    if ( scanf("%s",&pluto1) ) {};
                     getchar();    */
    }
 
@@ -4906,7 +4906,7 @@ relax_rigid_calc()
          a = (int) 2.0;
 
       /*      printf("\nCaso 3, valore a= %d\n",a);
-              scanf("%s",&pluto1);
+              if ( scanf("%s",&pluto1) ) {};
               getchar();     */
    }
 
@@ -4948,7 +4948,7 @@ relax_rigid_calc()
 
    {
       /*      printf("\nCaso 4, valore a= %d\n",a);
-              scanf("%s",&pluto1);
+              if ( scanf("%s",&pluto1) ) {};
               getchar();      */
 
       ddd[0] = ddr[0];
@@ -5031,7 +5031,7 @@ relax_rigid_calc()
       /*      printf("\n%s%d%s%f\n","Tao[",a,"] = ",tao[a]);     */
       tao[a] = 1.0 / tao[a];
       /*      printf("\n%s%d%s%Lg\n","Tao[",a,"] = ",tao[a]);
-              scanf("%s",&pluto1);
+              if ( scanf("%s",&pluto1) ) {};
               getchar();       */
    }
 
@@ -5224,12 +5224,12 @@ init_da_a()
       // printf("\n");
       // printf("** The Model does NOT exist !!\n");
       // printf("** Insert the correct name :___");
-      scanf("%s", molecola);
+      if ( scanf("%s", molecola) ) {};
       mol = us_fopen(molecola, "r");
    }
 
-   fscanf(mol, "%d", &nat);
-   fscanf(mol, "%f", &raggio);
+   if ( fscanf(mol, "%d", &nat) ) {};
+   if ( fscanf(mol, "%f", &raggio) ) {};
 
    fclose(mol);
 #endif
@@ -5248,7 +5248,7 @@ init_da_a()
    while ((prima < 0) || (prima > (nat - 1)))
    {
      //    printf("%s", "** Insert FIRST BEAD # to be included  :___ ");
-      scanf("%d", &prima);
+      if ( scanf("%d", &prima) ) {};
       getchar();
       //   printf("\n");
    }
@@ -5257,7 +5257,7 @@ init_da_a()
    while ((ultima < prima) || (ultima > nat))
    {
      //   printf("%s", "** Insert LAST BEAD # to be included :___ ");
-      scanf("%d", &ultima);
+      if ( scanf("%d", &ultima) ) {};
       getchar();
       //   printf("\n");
    }
@@ -5292,11 +5292,11 @@ initarray(int k)
    memset(temp, 0, 34);
 
 #if defined(CREATE_TOT_MOL)
-   fscanf(tot_mol, "%s", molecola);
+   if ( fscanf(tot_mol, "%s", molecola) ) {};
    strcpy(ricorda, molecola);
-   fscanf(tot_mol, "%d", &nat);
-   fscanf(tot_mol, "%d", &prima);
-   fscanf(tot_mol, "%d", &ultima);
+   if ( fscanf(tot_mol, "%d", &nat) ) {};
+   if ( fscanf(tot_mol, "%d", &prima) ) {};
+   if ( fscanf(tot_mol, "%d", &ultima) ) {};
 #else
    strcpy(molecola, molecola_v[k].toLatin1().data());
    strcpy(ricorda, molecola);
@@ -5342,8 +5342,8 @@ initarray(int k)
 
 #if defined(DEBUG_FILES)
    mol = us_fopen(molecola, "r");
-   fscanf(mol, "%d", &nat);
-   fscanf(mol, "%f", &raggio);
+   if ( fscanf(mol, "%d", &nat) ) {};
+   if ( fscanf(mol, "%f", &raggio) ) {};
    printf("!! opening molecola == '%s' nat == %d raggio == %f\n",
           molecola, nat, raggio);
 #endif
@@ -5351,18 +5351,18 @@ initarray(int k)
 
    if (raggio == 0.0)      /* Variable hydrated radii only */
    {
-      fscanf(mol, "%s", ragcol);
+      if ( fscanf(mol, "%s", ragcol) ) {};
 
       rmc = us_fopen(ragcol, "r");
 
       for (i = 0; i < nat; i++)
       {
-         fscanf(mol, "%f", &dt[i].x);
-         fscanf(mol, "%f", &dt[i].y);
-         fscanf(mol, "%f", &dt[i].z);
-         fscanf(rmc, "%f", &dt[i].r);
-         fscanf(rmc, "%f", &dt[i].m);
-         fscanf(rmc, "%d", &dt[i].col);
+         if ( fscanf(mol, "%f", &dt[i].x) ) {};
+         if ( fscanf(mol, "%f", &dt[i].y) ) {};
+         if ( fscanf(mol, "%f", &dt[i].z) ) {};
+         if ( fscanf(rmc, "%f", &dt[i].r) ) {};
+         if ( fscanf(rmc, "%f", &dt[i].m) ) {};
+         if ( fscanf(rmc, "%d", &dt[i].col) ) {};
       }
 #if defined(DEBUG_WW)
       for (i = 0; i < nat; i++) {
@@ -5383,19 +5383,19 @@ initarray(int k)
    if (raggio == -1.0)      /* Variable hydrated and unhydrated radii */
    {
 
-      fscanf(mol, "%s", ragcol);
+      if ( fscanf(mol, "%s", ragcol) ) {};
 
       rmc = us_fopen(ragcol, "r");
 
       for (i = 0; i < nat; i++)
       {
-         fscanf(mol, "%f", &dt[i].x);
-         fscanf(mol, "%f", &dt[i].y);
-         fscanf(mol, "%f", &dt[i].z);
-         fscanf(rmc, "%f", &dt[i].r);
-         fscanf(rmc, "%f", &dt[i].ru);
-         fscanf(rmc, "%f", &dt[i].m);
-         fscanf(rmc, "%d", &dt[i].col);
+         if ( fscanf(mol, "%f", &dt[i].x) ) {};
+         if ( fscanf(mol, "%f", &dt[i].y) ) {};
+         if ( fscanf(mol, "%f", &dt[i].z) ) {};
+         if ( fscanf(rmc, "%f", &dt[i].r) ) {};
+         if ( fscanf(rmc, "%f", &dt[i].ru) ) {};
+         if ( fscanf(rmc, "%f", &dt[i].m) ) {};
+         if ( fscanf(rmc, "%d", &dt[i].col) ) {};
       }
       fclose(rmc);
       goto a1200;
@@ -5405,9 +5405,9 @@ initarray(int k)
    {
 
 #if defined(DEBUG_FILES)
-      fscanf(mol, "%s", ragcol);
+      if ( fscanf(mol, "%s", ragcol) ) {};
 
-      fscanf(mol, "%f", &partvol);
+      if ( fscanf(mol, "%f", &partvol) ) {};
       printf("!! partvol %f vbar %f %s %f\n", 
              partvol, (*model_vector)[model_idx[active_model]].vbar,
              misc_int.compute_vbar ? "computed-vbar" : "user vbar",
@@ -5460,11 +5460,11 @@ initarray(int k)
       int decpow = (int)pow(10.0, (decpts));
       // printf("!!rounding to %d digits (%d)\n", decpts, decpow);
 
-      int mw_c = 0;
-      float pre_mw = 0.0;
+      // int mw_c = 0;
+      // float pre_mw = 0.0;
       float post_mw = 0.0;
-      double dpre_mw = 0e0;
-      double dpost_mw = 0e0;
+      // double dpre_mw = 0e0;
+      // double dpost_mw = 0e0;
 
       for (i = 0; i < nat; i++)
       {
@@ -5494,12 +5494,12 @@ initarray(int k)
          {
             float fx, fy, fz, fr, fm;
             int fc;
-            fscanf(mol, "%f", &fx);
-            fscanf(mol, "%f", &fy);
-            fscanf(mol, "%f", &fz);
-            fscanf(rmc, "%f", &fr);
-            fscanf(rmc, "%f", &fm);
-            fscanf(rmc, "%d", &fc);
+            if ( fscanf(mol, "%f", &fx) ) {};
+            if ( fscanf(mol, "%f", &fy) ) {};
+            if ( fscanf(mol, "%f", &fz) ) {};
+            if ( fscanf(rmc, "%f", &fr) ) {};
+            if ( fscanf(rmc, "%f", &fm) ) {};
+            if ( fscanf(rmc, "%d", &fc) ) {};
             printf("!!(%f %f %f) %f %f %f %f %f %d\n",
                    (*bead_models)[model_idx[active_model]][active_idx[active_model][i]].bead_coordinate.axis[0],
                    dt[i].x, fx,
@@ -5527,21 +5527,21 @@ initarray(int k)
    if (raggio == -3.0)      /* Variable hydrated and unhydrated radii and psv */
    {
 
-      fscanf(mol, "%s", ragcol);
+      if ( fscanf(mol, "%s", ragcol) ) {};
 
-      fscanf(mol, "%f", &partvol);
+      if ( fscanf(mol, "%f", &partvol) ) {};
 
       rmc = us_fopen(ragcol, "r");
 
       for (i = 0; i < nat; i++)
       {
-         fscanf(mol, "%f", &dt[i].x);
-         fscanf(mol, "%f", &dt[i].y);
-         fscanf(mol, "%f", &dt[i].z);
-         fscanf(rmc, "%f", &dt[i].r);
-         fscanf(rmc, "%f", &dt[i].ru);
-         fscanf(rmc, "%f", &dt[i].m);
-         fscanf(rmc, "%d", &dt[i].col);
+         if ( fscanf(mol, "%f", &dt[i].x) ) {};
+         if ( fscanf(mol, "%f", &dt[i].y) ) {};
+         if ( fscanf(mol, "%f", &dt[i].z) ) {};
+         if ( fscanf(rmc, "%f", &dt[i].r) ) {};
+         if ( fscanf(rmc, "%f", &dt[i].ru) ) {};
+         if ( fscanf(rmc, "%f", &dt[i].m) ) {};
+         if ( fscanf(rmc, "%d", &dt[i].col) ) {};
       }
 
       fclose(rmc);
@@ -5551,20 +5551,20 @@ initarray(int k)
    if (raggio == -4.0)      /* Variable hydrated radii and bead-aminoacids correspondence */
    {
 
-      fscanf(mol, "%s", ragcol);
+      if ( fscanf(mol, "%s", ragcol) ) {};
 
       rmc = us_fopen(ragcol, "r");
 
       for (i = 0; i < nat; i++)
       {
-         fscanf(mol, "%f", &dt[i].x);
-         fscanf(mol, "%f", &dt[i].y);
-         fscanf(mol, "%f", &dt[i].z);
-         fscanf(rmc, "%f", &dt[i].r);
-         fscanf(rmc, "%f", &dt[i].m);
-         fscanf(rmc, "%d", &dt[i].col);
+         if ( fscanf(mol, "%f", &dt[i].x) ) {};
+         if ( fscanf(mol, "%f", &dt[i].y) ) {};
+         if ( fscanf(mol, "%f", &dt[i].z) ) {};
+         if ( fscanf(rmc, "%f", &dt[i].r) ) {};
+         if ( fscanf(rmc, "%f", &dt[i].m) ) {};
+         if ( fscanf(rmc, "%d", &dt[i].col) ) {};
          dt[i].cor = (char *) malloc(10 * sizeof(char));
-         fscanf(rmc, "%s", dt[i].cor);
+         if ( fscanf(rmc, "%s", dt[i].cor) ) {};
       }
 
       fclose(rmc);
@@ -5574,22 +5574,22 @@ initarray(int k)
    if (raggio == -5.0)      /* Variable hydrated radii, bead-aminoacids correspondence and psv */
    {
 
-      fscanf(mol, "%s", ragcol);
+      if ( fscanf(mol, "%s", ragcol) ) {};
 
-      fscanf(mol, "%f", &partvol);
+      if ( fscanf(mol, "%f", &partvol) ) {};
 
       rmc = us_fopen(ragcol, "r");
 
       for (i = 0; i < nat; i++)
       {
-         fscanf(mol, "%f", &dt[i].x);
-         fscanf(mol, "%f", &dt[i].y);
-         fscanf(mol, "%f", &dt[i].z);
-         fscanf(rmc, "%f", &dt[i].r);
-         fscanf(rmc, "%f", &dt[i].m);
-         fscanf(rmc, "%d", &dt[i].col);
+         if ( fscanf(mol, "%f", &dt[i].x) ) {};
+         if ( fscanf(mol, "%f", &dt[i].y) ) {};
+         if ( fscanf(mol, "%f", &dt[i].z) ) {};
+         if ( fscanf(rmc, "%f", &dt[i].r) ) {};
+         if ( fscanf(rmc, "%f", &dt[i].m) ) {};
+         if ( fscanf(rmc, "%d", &dt[i].col) ) {};
          dt[i].cor = (char *) malloc(10 * sizeof(char));
-         fscanf(rmc, "%s", dt[i].cor);
+         if ( fscanf(rmc, "%s", dt[i].cor) ) {};
       }
 
       fclose(rmc);
@@ -5601,9 +5601,9 @@ initarray(int k)
       vt = 1;
       for (i = 0; i < nat; i++)
       {
-         fscanf(mol, "%f", &dt[i].x);
-         fscanf(mol, "%f", &dt[i].y);
-         fscanf(mol, "%f", &dt[i].z);
+         if ( fscanf(mol, "%f", &dt[i].x) ) {};
+         if ( fscanf(mol, "%f", &dt[i].y) ) {};
+         if ( fscanf(mol, "%f", &dt[i].z) ) {};
          dt[i].r = raggio;
          dt[i].m = (float) 1.0;
          dt[i].col = 1;
@@ -6297,7 +6297,7 @@ sigmarRcalc1()
 
    interm = 0.0;
    /*      printf("%d%d\n\n volcor,colorsixf",volcor,"   ",colorsixf);
-           scanf("%d",&test);
+           if ( scanf("%d",&test) ) {};
            getchar();  */
    if ((volcor == 1) && ((colorsixf == 1) || (colorsixf == 3)))
       interm = interm1;   /* total vol. of beads, buried included */
@@ -6386,7 +6386,7 @@ overlap()
             //        (sqrt(dist) - (dt[i].r + dt[j].r)));
 #if defined(USE_MAIN)
             // printf("\n** Do you want to proceed anyway? (y/n) ");
-            scanf("%s", &r5);
+            if ( scanf("%s", &r5) ) {};
             getchar();
             if ((r5 == 'y') || (r5 == 'Y'))
             {
@@ -7170,7 +7170,7 @@ main()
    do
    {
      //  printf("\n\n\n** Insert number of beads to use? :  ");
-      scanf("%d", &use_nmax);
+      if ( scanf("%d", &use_nmax) ) {};
    }
    while (use_nmax < 1);
    us_hydro_supc_main(use_nmax);
