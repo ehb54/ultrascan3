@@ -4,7 +4,6 @@
 
 #include "us_integral.h"
 #include "us_remove_models.h"
-#include "us_model_params.h"
 #include "us_select_runs.h"
 #include "us_model.h"
 #include "us_license_t.h"
@@ -285,7 +284,7 @@ void US_Integral::save( void )
 
    // Save all distributions as CSV files in */ultrascan/reports/X
 
-   QString fpfix   = "dens_match_distrib_";
+   QString fpfix   = "integral_distrib_";
    QString fname;
    QString fpath;
    QDir diro( reppath );
