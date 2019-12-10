@@ -59,6 +59,8 @@ US_Edit::US_Edit( QString auto_mode ) : US_Widgets()
    bottom       = 0.0;
 DbgLv(1) << " 0)gap_fringe" << gap_fringe;
 
+
+  us_edit_auto_mode = true;
  
 //usmode = false;
  
@@ -106,6 +108,9 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
       pb_load      = us_pushbutton( tr( "Load Data" ) );
    pb_details      = us_pushbutton( tr( "Run Details" ), false );
       pb_report    = us_pushbutton( tr( "View Report" ), false );
+
+   // Triple controls 
+   QLabel* lb_cell = us_banner( tr( "Channel Controls" ) );
 
    // Triple and Speed Step
    lb_triple       = us_label( tr( "Cell / Channel / Wavelength" ), -1 );
@@ -257,12 +262,16 @@ pb_plateau->setVisible(false);
    le_dataStart   = us_lineedit( "", 1, true );
 //QPushButton* 
    pb_dataEnd     = us_pushbutton( tr( "Specify Range/End:" ), false );
+
+   lb_dataEnd     = us_label(      tr( "Data End:" ), -1 );
 //QLineEdit* 
    le_dataEnd     = us_lineedit( "", 1, false );
 //QLabel* 
    lb_plateau     = us_label(      tr( "Plateau:" ), -1 );
 //QPushButton* 
    pb_nextChan    = us_pushbutton( tr( "Next Triple" ), false );
+   pb_priorChan   = us_pushbutton( tr( "Previous Triple" ), false );
+   
 //*NEW STUFF
    // OD Limit
    lb_odlim       = us_label( tr( "OD Limit:" ), -1 );
@@ -318,7 +327,10 @@ pb_plateau->setVisible(false);
    connect( pb_undo,         SIGNAL( clicked() ), SLOT( undo()      ) );
    connect( pb_reviewep,     SIGNAL( clicked() ), SLOT( review_edits()  ) );
    connect( pb_nexteqtr,     SIGNAL( clicked() ), SLOT( next_triple()   ) );
+
    connect( pb_nextChan,     SIGNAL( clicked() ), SLOT( next_triple()   ) );
+   connect( pb_priorChan,    SIGNAL( clicked() ), SLOT( prior_triple()  ) );
+   
    connect( pb_float,        SIGNAL( clicked() ), SLOT( floating()  ) );
    connect( pb_write,        SIGNAL( clicked() ), SLOT( write()     ) );
 
@@ -326,15 +338,20 @@ pb_plateau->setVisible(false);
    int s_row = 0;
    specs->addWidget( pb_investigator, s_row,   0, 1, 2 );
    specs->addWidget( le_investigator, s_row++, 2, 1, 4 );
-   specs->addLayout( disk_controls,   s_row++, 0, 1, 6 );
+   //specs->addLayout( disk_controls,   s_row++, 0, 1, 6 );
    specs->addWidget( pb_load,         s_row,   0, 1, 2 );
    specs->addWidget( pb_details,      s_row,   2, 1, 2 );
    specs->addWidget( pb_report,       s_row++, 4, 1, 2 );
+
+   specs->addWidget( lb_cell,         s_row++, 0, 1, 6 );
    specs->addWidget( lb_triple,       s_row,   0, 1, 3 );
 //   specs->addWidget( cb_triple,       s_row++, 3, 1, 3 );
 //*NEW STUFF
-   specs->addWidget( cb_triple,       s_row,   3, 1, 2 );
-   specs->addWidget( pb_nextChan,     s_row++, 5, 1, 1 );
+   specs->addWidget( cb_triple,       s_row++, 3, 1, 3 );
+
+   specs->addWidget( pb_priorChan,     s_row,   0, 1, 3 );    //<--- ALEXEY
+   specs->addWidget( pb_nextChan,    s_row++, 3, 1, 3 );
+   
 //*NEW STUFF
    specs->addWidget( lb_rpms,         s_row,   0, 1, 3 );
    specs->addWidget( cb_rpms,         s_row++, 3, 1, 3 );
@@ -342,8 +359,8 @@ pb_plateau->setVisible(false);
    specs->addWidget( ct_gaps,         s_row++, 3, 1, 3 );
    specs->addWidget( le_lxrng,        s_row++, 0, 1, 6 );
    specs->addWidget( lb_mwlctl,       s_row++, 0, 1, 6 );
-   specs->addLayout( lo_lrange,       s_row,   0, 1, 3 );
-   specs->addLayout( lo_custom,       s_row++, 3, 1, 3 );
+   //specs->addLayout( lo_lrange,       s_row,   0, 1, 3 );   <-- ALEXEY 
+   //specs->addLayout( lo_custom,       s_row++, 3, 1, 3 );
    specs->addWidget( lb_ldelta,       s_row,   0, 1, 2 );
    specs->addWidget( ct_ldelta,       s_row,   2, 1, 1 );
    specs->addWidget( le_ltrng,        s_row++, 3, 1, 3 );
@@ -353,8 +370,8 @@ pb_plateau->setVisible(false);
    specs->addWidget( cb_lend,         s_row++, 5, 1, 1 );
    specs->addWidget( pb_custom,       s_row,   0, 1, 3 );
    specs->addWidget( pb_incall,       s_row++, 3, 1, 3 );
-   specs->addLayout( lo_radius,       s_row,   0, 1, 3 );
-   specs->addLayout( lo_waveln,       s_row++, 3, 1, 3 );
+   //specs->addLayout( lo_radius,       s_row,   0, 1, 3 );    <-- ALEXEY 
+   //specs->addLayout( lo_waveln,       s_row++, 3, 1, 3 );
    specs->addWidget( lb_lplot,        s_row,   0, 1, 2 );
    specs->addWidget( cb_lplot,        s_row,   2, 1, 1 );
    specs->addWidget( pb_larrow,       s_row,   3, 1, 2 );
@@ -373,8 +390,11 @@ pb_plateau->setVisible(false);
    specs->addWidget( le_edtrsp,       s_row++, 3, 1, 3 );
 //   specs->addWidget( pb_meniscus,     s_row,   0, 1, 3 );
 //   specs->addWidget( le_meniscus,     s_row++, 3, 1, 3 );
-   specs->addWidget( lb_meniscus,     s_row,   0, 1, 1 );
-   specs->addWidget( le_meniscus,     s_row,   1, 1, 2 );
+
+   // Meniscus
+   specs->addWidget( lb_meniscus,     s_row,   0, 1, 3 );
+   specs->addWidget( le_meniscus,     s_row++, 3, 1, 3 );
+   
    specs->addWidget( pb_meniscus,     s_row++, 3, 1, 3 );
    specs->addWidget( pb_airGap,       s_row,   0, 1, 3 );
    specs->addWidget( le_airGap,       s_row++, 3, 1, 3 );
@@ -385,17 +405,38 @@ pb_plateau->setVisible(false);
 //   specs->addWidget( lb_baseline,     s_row,   0, 1, 3 );
 //   specs->addWidget( le_baseline,     s_row++, 3, 1, 3 );
 //*NEW STUFF
-   specs->addWidget( lb_dataStart,    s_row,   0, 1, 1 );
-   specs->addWidget( le_dataStart,    s_row,   1, 1, 2 );
+
+   //Data Start
+   specs->addWidget( lb_dataStart,    s_row,   0, 1, 3 );
+   specs->addWidget( le_dataStart,    s_row++, 3, 1, 3 );
+
+   //Data End
+   specs->addWidget( lb_dataEnd,      s_row,   0, 1, 3 );
    specs->addWidget( pb_dataEnd,      s_row,   3, 1, 2 );
-   specs->addWidget( le_dataEnd,      s_row++, 5, 1, 1 );
-   specs->addWidget( lb_baseline,     s_row,   0, 1, 1 );
-   specs->addWidget( le_baseline,     s_row,   1, 1, 3 );
-   specs->addWidget( lb_plateau,      s_row,   4, 1, 1 );
-   specs->addWidget( le_plateau,      s_row++, 5, 1, 1 );
-//*NEW STUFF
+   specs->addWidget( le_dataEnd,      s_row++, 3, 1, 3 );
+
+   //Baseline
+   specs->addWidget( lb_baseline,     s_row,   0, 1, 3 );
+   specs->addWidget( le_baseline,     s_row++, 3, 1, 3 );
+
+   //Plateau
+   specs->addWidget( lb_plateau,      s_row,   0, 1, 3 );
+   specs->addWidget( le_plateau,      s_row++, 3, 1, 3 );
+
+   //OD limits
+   specs->addWidget( lb_odlim,        s_row,   0, 1, 3 );
+   specs->addWidget( ct_odlim,        s_row++, 3, 1, 3 );
+
+   //Noise/Undo/Save
+   specs->addWidget( pb_spikes,       s_row++, 0, 1, 6 );
+   specs->addWidget( pb_undo,         s_row++, 0, 1, 6 );
+   specs->addWidget( pb_write,        s_row++, 0, 1, 6 );
+   
+   //*NEW STUFF
 //   specs->addWidget( lb_odlim,        s_row,   0, 1, 3 );
 //   specs->addWidget( ct_odlim,        s_row++, 3, 1, 3 );
+
+/*
    specs->addWidget( lb_odlim,        s_row,   0, 1, 3 );
    specs->addWidget( ct_odlim,        s_row++, 3, 1, 3 );
    specs->addWidget( pb_noise,        s_row,   0, 1, 3 );
@@ -409,6 +450,7 @@ pb_plateau->setVisible(false);
    specs->addWidget( pb_float,        s_row,   0, 1, 3 );
    specs->addWidget( pb_write,        s_row++, 3, 1, 3 );
    specs->addLayout( lo_writemwl,     s_row++, 3, 1, 3 );
+*/
 
    // Button rows
    QBoxLayout*  buttons   = new QHBoxLayout;
@@ -424,6 +466,71 @@ pb_plateau->setVisible(false);
    buttons->addWidget( pb_reset );
    buttons->addWidget( pb_help );
    buttons->addWidget( pb_accept );
+
+   // Hide some buttons
+   if ( auto_mode.toStdString() == "AUTO")
+     {
+       
+       pb_investigator->hide();
+       le_investigator->hide();
+       pb_load        ->hide(); 
+       pb_details     ->hide();
+       pb_report      ->hide();
+       lb_gaps        ->hide();
+       ct_gaps        ->hide();
+
+       
+       lb_scan        ->hide();
+       lb_from        ->hide();
+       lb_to          ->hide();
+       ct_from        ->hide();
+       ct_to          ->hide();
+       pb_excludeRange->hide();
+       pb_exclusion   ->hide();
+       pb_edit1       ->hide();
+       pb_include     ->hide();
+
+       pb_meniscus    ->hide();
+       pb_dataRange   ->hide();
+
+       pb_noise       ->hide();
+       pb_residuals   ->hide();
+       pb_invert      ->hide();
+       pb_priorEdits  ->hide();
+       pb_float       ->hide();
+       
+       
+       pb_reset       ->hide();
+       pb_help        ->hide();
+       pb_accept      ->hide();
+
+       //MWL
+       lb_mwlctl      ->hide();
+       lb_ldelta      ->hide();
+       ct_ldelta      ->hide();
+       lb_lstart      ->hide();
+       lb_lend        ->hide();
+       lb_lplot       ->hide();
+       cb_lplot       ->hide();
+       cb_lstart      ->hide();
+       cb_lend        ->hide();
+       le_ltrng       ->hide();
+       le_lxrng       ->hide();
+       pb_custom      ->hide();
+       pb_incall      ->hide();
+       pb_larrow      ->hide();
+       pb_rarrow      ->hide();
+       //lo_writemwl    ->hide();
+       ck_writemwl    ->hide();
+	 
+       rb_lrange      ->hide();
+       rb_custom      ->hide();
+       rb_radius      ->hide();
+       rb_waveln      ->hide();
+       
+       
+     }
+   
 
    // Plot layout on right side of window
    plot = new US_Plot( data_plot, 
@@ -459,7 +566,10 @@ pb_plateau->setVisible(false);
    QMap < QString, QString > details;
    details[ "filename" ] = QString("BSA-demo");
    details[ "invID_passed" ] = QString("2");
-      
+
+   //details[ "filename" ] = QString("RxRPPARhet-PPRE-MWL_180419-run352-test");
+   //details[ "invID_passed" ] = QString("6");
+   
    load_auto( details );
 }
 
@@ -482,6 +592,8 @@ US_Edit::US_Edit() : US_Widgets()
    bottom       = 0.0;
 DbgLv(1) << " 0)gap_fringe" << gap_fringe;
 
+   us_edit_auto_mode = false;
+ 
  
 //usmode = false;
  
@@ -5560,6 +5672,13 @@ void US_Edit::next_triple( void )
    pb_nextChan ->setEnabled( false );
 }
 
+// Advance to next triple and plot edited curves
+void US_Edit::prior_triple( void )
+{
+  int row = cb_triple->currentIndex() + 1;
+  row     = ( row < cb_triple->count() ) ? row : 0;
+}
+
 // Evaluate whether all edits are complete
 bool US_Edit::all_edits_done( void )
 {
@@ -5630,35 +5749,41 @@ void US_Edit::progress_load( QString progress )
 // Show or hide MWL Controls
 void US_Edit::show_mwl_controls( bool show )
 {
-   lb_gaps    ->setVisible( !show );
-   ct_gaps    ->setVisible( !show );
-   le_lxrng   ->setVisible( show );
-   lb_mwlctl  ->setVisible( show );
-   lb_ldelta  ->setVisible( show );
-   ct_ldelta  ->setVisible( show );
-   le_ltrng   ->setVisible( show );
-   lb_lstart  ->setVisible( show );
-   cb_lstart  ->setVisible( show );
-   lb_lend    ->setVisible( show );
-   cb_lend    ->setVisible( show );
-   lb_lplot   ->setVisible( show );
-   cb_lplot   ->setVisible( show );
-   pb_larrow  ->setVisible( show );
-   pb_rarrow  ->setVisible( show );
-   pb_custom  ->setVisible( show );
-   pb_incall  ->setVisible( show );
+  if ( !us_edit_auto_mode )
+    {
+      lb_gaps    ->setVisible( !show );
+      ct_gaps    ->setVisible( !show );
+      
+      
+      le_lxrng   ->setVisible( show );
+      lb_mwlctl  ->setVisible( show );
+      lb_ldelta  ->setVisible( show );
+      ct_ldelta  ->setVisible( show );
+      le_ltrng   ->setVisible( show );
+      lb_lstart  ->setVisible( show );
+      cb_lstart  ->setVisible( show );
+      lb_lend    ->setVisible( show );
+      cb_lend    ->setVisible( show );
+      lb_lplot   ->setVisible( show );
+      cb_lplot   ->setVisible( show );
+      pb_larrow  ->setVisible( show );
+      pb_rarrow  ->setVisible( show );
+      pb_custom  ->setVisible( show );
+      pb_incall  ->setVisible( show );
+      
+      lo_lrange  ->itemAtPosition( 0, 0 )->widget()->setVisible( show );
+      lo_lrange  ->itemAtPosition( 0, 1 )->widget()->setVisible( show );
+      lo_custom  ->itemAtPosition( 0, 0 )->widget()->setVisible( show );
+      lo_custom  ->itemAtPosition( 0, 1 )->widget()->setVisible( show );
+      lo_radius  ->itemAtPosition( 0, 0 )->widget()->setVisible( show );
+      lo_radius  ->itemAtPosition( 0, 1 )->widget()->setVisible( show );
+      lo_waveln  ->itemAtPosition( 0, 0 )->widget()->setVisible( show );
+      lo_waveln  ->itemAtPosition( 0, 1 )->widget()->setVisible( show );
+      lo_writemwl->itemAtPosition( 0, 0 )->widget()->setVisible( show );
+      lo_writemwl->itemAtPosition( 0, 1 )->widget()->setVisible( show );
 
-   lo_lrange  ->itemAtPosition( 0, 0 )->widget()->setVisible( show );
-   lo_lrange  ->itemAtPosition( 0, 1 )->widget()->setVisible( show );
-   lo_custom  ->itemAtPosition( 0, 0 )->widget()->setVisible( show );
-   lo_custom  ->itemAtPosition( 0, 1 )->widget()->setVisible( show );
-   lo_radius  ->itemAtPosition( 0, 0 )->widget()->setVisible( show );
-   lo_radius  ->itemAtPosition( 0, 1 )->widget()->setVisible( show );
-   lo_waveln  ->itemAtPosition( 0, 0 )->widget()->setVisible( show );
-   lo_waveln  ->itemAtPosition( 0, 1 )->widget()->setVisible( show );
-   lo_writemwl->itemAtPosition( 0, 0 )->widget()->setVisible( show );
-   lo_writemwl->itemAtPosition( 0, 1 )->widget()->setVisible( show );
-
+    }
+  
    adjustSize();
 }
 

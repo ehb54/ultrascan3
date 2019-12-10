@@ -28,6 +28,8 @@ class US_Edit : public US_Widgets
 
 	 //void us_mode_passed  ( void );
 	 //bool usmode;
+
+	 bool us_edit_auto_mode;
 	  
 
       private:
@@ -124,6 +126,7 @@ class US_Edit : public US_Widgets
       QLabel*            lb_baseline;
       QLabel*            lb_plateau;
       QLabel*            lb_dataStart;
+      QLabel*            lb_dataEnd;
       QLabel*            lb_meniscus;
 
       QLineEdit*         le_investigator;
@@ -157,7 +160,10 @@ class US_Edit : public US_Widgets
       QPushButton*       pb_priorEdits;
       QPushButton*       pb_reviewep;
       QPushButton*       pb_nexteqtr;
+
       QPushButton*       pb_nextChan;
+      QPushButton*       pb_priorChan;
+
       QPushButton*       pb_float;
       QPushButton*       pb_undo;
 
@@ -322,7 +328,10 @@ class US_Edit : public US_Widgets
       void write_triple      ( void );
       void write_mwl         ( void );
       void review_edits      ( void );
+      
       void next_triple       ( void );
+      void prior_triple      ( void );
+
       bool all_edits_done    ( void );
       void update_disk_db    ( bool );
       void show_mwl_controls ( bool );
