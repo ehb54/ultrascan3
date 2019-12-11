@@ -30,6 +30,7 @@ class US_Edit : public US_Widgets
 	 //bool usmode;
 
 	 bool us_edit_auto_mode;
+	 bool all_loaded;
 	  
 
       private:
@@ -81,6 +82,9 @@ class US_Edit : public US_Widgets
       double             gap_fringe;
       double             gap_thresh;
       double             bottom;
+
+      QStringList        triple_info;
+      QMap< QString, QStringList> editProfile;
 
       QChar              chlamb;
 
@@ -292,7 +296,10 @@ class US_Edit : public US_Widgets
       void load_auto         ( QMap < QString, QString > & );
       
       void details           ( void );
+
       void new_triple        ( int  );
+      void new_triple_auto   ( int  );
+      
       void new_rpmval        ( int  );
 
       void focus_from        ( double );

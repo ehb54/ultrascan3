@@ -61,6 +61,7 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
 
 
   us_edit_auto_mode = true;
+  all_loaded = false;
  
 //usmode = false;
  
@@ -307,7 +308,7 @@ pb_plateau->setVisible(false);
                              SLOT  ( sel_investigator()         ) );
    connect( pb_load,         SIGNAL( clicked() ), SLOT( load()  ) );
    connect( cb_triple,       SIGNAL( currentIndexChanged( int ) ), 
-                             SLOT  ( new_triple         ( int ) ) );
+                             SLOT  ( new_triple_auto         ( int ) ) );
    connect( pb_exclusion,    SIGNAL( clicked() ), SLOT( exclusion()     ) );
    connect( pb_edit1,        SIGNAL( clicked() ), SLOT( edit_scan()     ) );
    connect( pb_include,      SIGNAL( clicked() ), SLOT( include()       ) );
@@ -350,7 +351,7 @@ pb_plateau->setVisible(false);
    specs->addWidget( cb_triple,       s_row++, 3, 1, 3 );
 
    specs->addWidget( pb_priorChan,     s_row,   0, 1, 3 );    //<--- ALEXEY
-   specs->addWidget( pb_nextChan,    s_row++, 3, 1, 3 );
+   specs->addWidget( pb_nextChan,     s_row++, 3, 1, 3 );
    
 //*NEW STUFF
    specs->addWidget( lb_rpms,         s_row,   0, 1, 3 );
@@ -564,11 +565,11 @@ pb_plateau->setVisible(false);
 
    // TESTING ...
    QMap < QString, QString > details;
-   details[ "filename" ] = QString("BSA-demo");
-   details[ "invID_passed" ] = QString("2");
+   //details[ "filename" ] = QString("BSA-demo");
+   //details[ "invID_passed" ] = QString("2");
 
-   //details[ "filename" ] = QString("RxRPPARhet-PPRE-MWL_180419-run352-test");
-   //details[ "invID_passed" ] = QString("6");
+   details[ "filename" ] = QString("RxRPPARhet-PPRE-MWL_180419-run352-test");
+   details[ "invID_passed" ] = QString("6");
    
    load_auto( details );
 }
@@ -593,7 +594,7 @@ US_Edit::US_Edit() : US_Widgets()
 DbgLv(1) << " 0)gap_fringe" << gap_fringe;
 
    us_edit_auto_mode = false;
- 
+   all_loaded = false;
  
 //usmode = false;
  
@@ -1405,7 +1406,7 @@ DbgLv(1) << "Ld: runID" << runID << "wdir" << workingDir;
 
    cb_triple->addItems( triples );
    connect( cb_triple, SIGNAL( currentIndexChanged( int ) ), 
-                       SLOT  ( new_triple         ( int ) ) );
+                       SLOT  ( new_triple_auto    ( int ) ) );
    triple_index = 0;
    data_index   = 0;
    
@@ -1866,7 +1867,7 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
       cb_triple->clear();
       cb_triple->addItems( celchns );
       connect( cb_triple, SIGNAL( currentIndexChanged( int ) ), 
-                          SLOT  ( new_triple         ( int ) ) );
+                          SLOT  ( new_triple_auto    ( int ) ) );
       pb_nextChan->setEnabled( celchns.size() > 1 );
 
       odlimit   = 1.8;
@@ -1877,7 +1878,11 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
    } // END: isMwl=true
    else
    {
-      new_triple( 0 );
+     qDebug() << "LOADING 1";
+     
+     new_triple_auto( 0 );                             //ALEXEY <--- new_triple_auto()
+
+     qDebug() << "LOADING 2";
 //*DEBUG* Print times,omega^ts
  triple = allData[0];
  double timel = triple.scanData[0].rpm / 400.0;
@@ -1919,6 +1924,61 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 
    // /***************** TESTING ******************************************/
 
+   all_loaded = true;
+   qDebug() << "DATA SIZE: " << outData.count(); 
+   
+   //for ( int trx = 0; trx < triples.size(); trx++ )
+   for ( int trx = 0; trx < cb_triple->count(); trx++ )
+     {
+       qDebug() << "Index: triple: " << trx;
+       int index = trx ; 
+
+       index_data();
+
+       edata          = outData[ data_index ];
+       data           = *edata;
+       
+       //plot_current( index );
+       
+       meniscus = 6.2; 
+       
+       range_left    = meniscus + _RNGLEFT_OFFSET_;
+       le_meniscus ->setText( QString::number( meniscus,   'f', 8 ) );
+       le_dataStart->setText( QString::number( range_left, 'f', 8 ) );
+       
+       //data_plot->replot();
+       
+       //pb_meniscus->setIcon( check );
+       
+       range_right = 7.1;
+       le_dataEnd  ->setText( QString::number( range_right, 'f', 8 ) );
+       plateau      = range_right - _PLATEAU_OFFSET_;
+       le_plateau  ->setText( QString::number( plateau,     'f', 8 ) );
+       
+       step = PLATEAU;
+       plot_range();
+       next_step();
+
+       //ALEXEY: here create a QMap to couple current triple AND meniscus, ranges, plateau and baseline;
+       // then, use this QMap when plotting plot_range() in new_triple()...
+
+       triple_info.clear();
+       triple_info <<  QString::number(meniscus)
+		   <<  QString::number(range_left)
+		   <<  QString::number(range_right)
+		   <<  QString::number(plateau)
+		   <<  QString::number(baseline);
+
+       //ALEXEY: get all cb_triple listbox items (texts)...
+       QString triple_name = cb_triple->itemText( trx );
+       
+       editProfile[ triple_name ] = triple_info;
+
+       qDebug() << triple_name  << ", " << triple_info;
+       
+     }
+
+   
    // qDebug() << "meniscus: "   << meniscus;
    // qDebug() << "range_left:"  << range_left;
    // qDebug() << "range_right:" << range_right;
@@ -4536,6 +4596,248 @@ void US_Edit::subtract_residuals( void )
 }
 
 // Select a new triple
+void US_Edit::new_triple_auto( int index )
+{
+  triple_index    = index;
+   double gap_val  = ct_gaps->value();
+DbgLv(1) << "EDT:NewTr: tripindex" << triple_index << "chgs" << changes_made << "gap_val" << gap_val;
+
+/*
+ if ( changes_made )
+   {
+      QMessageBox mb;
+      mb.setIcon( QMessageBox::Question );
+      mb.setText( tr( "Ignore Edits?" ) );
+      mb.setInformativeText( 
+            tr( "Edits have been made.  If you want to keep them,\n"
+                "cancel and write the outputs first." ) );
+      mb.addButton( tr( "Ignore Edits" ), QMessageBox::RejectRole );
+      mb.addButton( tr( "Return to previous selection" ), QMessageBox::NoRole );
+      int result = mb.exec();
+
+      if ( result == QMessageBox::RejectRole )
+      {
+         cb_triple->disconnect();
+         cb_triple->setCurrentIndex( triple_index );
+         connect( cb_triple, SIGNAL( currentIndexChanged( int ) ), 
+                             SLOT  ( new_triple         ( int ) ) );
+         return;
+      }
+   }
+
+*/
+   ct_gaps->disconnect();
+
+   // Set up data indexes
+   rb_radius->setChecked( true );
+   rb_waveln->setChecked( false );
+
+   index_data();
+DbgLv(1) << "EDT:NewTr: trip,data index" << triple_index << data_index;
+
+   if ( isMwl )
+   {  // MWL:  restore the wavelengths for the newly selected triple
+      if ( lrng_bycell )
+      {  // Restore raw lambdas for an individual cell
+         connect_mwl_ctrls( false );
+         lambdas_by_cell();
+         cb_lstart->clear();
+         cb_lend  ->clear();
+         cb_lstart->addItems( rawc_wvlns );
+         cb_lend  ->addItems( rawc_wvlns );
+         cb_lstart->setCurrentIndex( 0 );
+         cb_lend  ->setCurrentIndex( nwaveln - 1 );
+         slambda      = rawi_wvlns[ 0 ];
+         elambda      = rawi_wvlns[ nwaveln - 1 ];
+         dlambda      = 1;
+         le_ltrng ->setText( tr( "%1 raw: %2 %3 to %4" )
+            .arg( nwaveln ).arg( chlamb ).arg( slambda ).arg( elambda ) );
+         connect_mwl_ctrls( true );
+      }
+
+      QVector< int > wvs;
+      mwl_data.lambdas( wvs, triple_index );
+      lambda_new_list ( wvs );
+      le_lxrng ->setText( tr( "%1 MWL exports: %2 %3 to %4,"
+                              " raw index increment %5" )
+         .arg( nwavelo ).arg( chlamb ).arg( slambda ).arg( elambda )
+         .arg( dlambda ) );
+DbgLv(1) << "EDT:NewTr:  nwavelo" << nwavelo;
+   }
+
+   // Reset for new triple
+   reset_triple(); 
+
+   // Need to reconnect after reset
+   connect( cb_triple, SIGNAL( currentIndexChanged( int ) ), 
+                       SLOT  ( new_triple_auto    ( int ) ) );
+
+   QString otdt   = dataType;
+   edata          = outData[ data_index ];
+   data           = *edata;
+   QString swavl  = cb_lplot ->currentText();
+   QString triple = cb_triple->currentText() + ( isMwl ? " / " + swavl : "" );
+   int     idax   = triples.indexOf( triple );
+   dataType = QString( QChar( data.type[ 0 ] ) ) 
+            + QString( QChar( data.type[ 1 ] ) );
+DbgLv(1) << "EDT:NewTr:   sw tri dx" << swavl << triple << idax << "dataType" << dataType
+ << "gap_fringe gap_thresh" << gap_fringe << gap_thresh;
+   if ( otdt != dataType )
+   {  // Reset gap controls for new datatype
+      if ( dataType == "IP" )
+      {
+         gap_thresh   = gap_val;
+         ct_gaps->setValue     ( gap_fringe );
+         ct_gaps->setRange     ( 0.0, 20.0 );
+         ct_gaps->setSingleStep( 0.001 );
+         ct_gaps->setNumButtons( 3 );
+      }
+      else
+      {
+         gap_fringe   = gap_val;
+         ct_gaps->disconnect   ();
+         ct_gaps->setRange     ( 10.0, 100.0 );
+         ct_gaps->setSingleStep( 10.0 );
+         ct_gaps->setValue     ( gap_thresh );
+      }
+   }
+
+   // Enable pushbuttons
+   pb_details  ->setEnabled( true );
+   pb_report   ->setEnabled( all_edits );
+   pb_include  ->setEnabled( true );
+   pb_exclusion->setEnabled( true );
+   pb_meniscus ->setEnabled( true );
+   pb_airGap   ->setEnabled( true );
+   pb_noise    ->setEnabled( true );
+   pb_spikes   ->setEnabled( true );
+   pb_invert   ->setEnabled( true );
+   pb_undo     ->setEnabled( true );
+   pb_write    ->setEnabled( all_edits );
+   ck_writemwl ->setEnabled( all_edits && isMwl );
+   all_edits    = false;
+   changes_made = all_edits;
+
+   init_includes();
+
+   connect( ct_from, SIGNAL( valueChanged ( double ) ),
+                     SLOT  ( focus_from   ( double ) ) );
+   connect( ct_to,   SIGNAL( valueChanged ( double ) ),
+                     SLOT  ( focus_to     ( double ) ) );
+
+   connect( ct_gaps, SIGNAL( valueChanged        ( double ) ), 
+                     SLOT  ( set_fringe_tolerance( double ) ) );
+
+   if ( expIsEquil )
+   {  // Equilibrium
+      cb_rpms->clear();
+      trip_rpms.clear();
+
+      for ( int ii = 0; ii < data.scanData.size(); ii++ )
+      {  // build unique-rpm list for triple
+         QString arpm = QString::number( data.scanData[ ii ].rpm );
+
+         if ( ! trip_rpms.contains( arpm ) )
+         {
+            trip_rpms << arpm;
+         }
+      }
+      cb_rpms->addItems( trip_rpms );
+
+      le_edtrsp->setText( cb_triple->currentText() + " : " + trip_rpms[ 0 ] );
+   }
+
+   else
+   {  // non-Equilibrium:  possibly re-do/un-do edits
+      QString trbase   = cb_triple->currentText();
+      triple           = trbase;
+
+      if ( isMwl )
+      {
+         plotndx          = cb_lplot->currentIndex();
+         swavl            = cb_lplot->currentText();
+         triple          += " / " + swavl;
+         plotrec          = swavl.toInt();
+      }
+
+      QString fname    = editFnames[ idax ];
+      bool    app_edit = ( fname != "none" );
+DbgLv(1) << "EDT:NewTr:   app_edit" << app_edit << "fname" << fname;
+
+
+      if ( app_edit )
+      {  // If editing chosen, apply it
+         US_DataIO::EditValues parameters;
+
+         US_DataIO::readEdits( workingDir + fname, parameters );
+
+         apply_edits( parameters );
+      }
+
+      else
+      {  // If no editing, be sure to turn off edits
+         //set_meniscus();                                       // ALEXEY: we do not need to reset
+      }
+
+DbgLv(1) << "EDT:NewTr:   men" << meniscus << "dx" << idax;
+      plot_current( idax );
+   }
+
+   // Reset GAPS labels and values based on this triple's type
+   if ( dataType == "IP" )
+   {
+      lb_gaps->setText( tr( "Fringe Tolerance" ) );
+
+      ct_gaps->setValue     ( gap_fringe );
+      ct_gaps->setRange     ( 0.0, 20.0 );
+      ct_gaps->setSingleStep( 0.001 );
+      ct_gaps->setNumButtons( 3 );
+DbgLv(1) << " 2)gap_fringe" << gap_fringe << "idax" << idax;
+
+      connect( ct_gaps, SIGNAL( valueChanged        ( double ) ), 
+                        SLOT  ( set_fringe_tolerance( double ) ) );
+   }
+   else
+   {
+      lb_gaps->setText( tr( "Threshold for Scan Gaps" ) );
+      
+      ct_gaps->disconnect   ();
+      ct_gaps->setRange     ( 10.0, 100.0 );
+      ct_gaps->setSingleStep( 10.0 );
+      ct_gaps->setValue     ( gap_thresh );
+      ct_gaps->setNumButtons( 1 );
+   }
+
+   replot();
+DbgLv(1) << "EDT:NewTr: DONE";
+
+
+//QString triple = cb_triple->currentText() + ( isMwl ? " / " + swavl : "" );
+
+//qDebug() << "Triple: " << triple << ", cb_triple_text: " << cb_triple->currentText();
+//qDebug() << editProfile[ triple ] << ", " <<  editProfile[ cb_triple->currentText() ];
+
+ if ( all_loaded ) 
+   {
+     meniscus      = editProfile[ cb_triple->currentText() ][0].toDouble();
+     range_left    = editProfile[ cb_triple->currentText() ][1].toDouble();
+     range_right   = editProfile[ cb_triple->currentText() ][2].toDouble();
+     plateau       = editProfile[ cb_triple->currentText() ][3].toDouble();
+     baseline      = editProfile[ cb_triple->currentText() ][4].toDouble();
+     
+     le_meniscus ->setText( QString::number( meniscus,   'f', 8 ) );
+     le_dataStart->setText( QString::number( range_left, 'f', 8 ) );
+     le_dataEnd  ->setText( QString::number( range_right, 'f', 8 ) );
+     le_plateau  ->setText( QString::number( plateau,     'f', 8 ) );
+     le_baseline ->setText( QString::number( baseline,     'f', 8 ) );
+     //le_baseline->setText( str.sprintf( "%.3f (%.3e)", baseline, bl ) );   
+     
+     
+     plot_range();
+   }
+}
+
+// Select a new triple
 void US_Edit::new_triple( int index )
 {
    triple_index    = index;
@@ -4803,6 +5105,7 @@ DbgLv(1) << " 2)gap_fringe" << gap_fringe << "idax" << idax;
 
    replot();
 DbgLv(1) << "EDT:NewTr: DONE";
+
 }
 
 // Select a new speed within a triple
