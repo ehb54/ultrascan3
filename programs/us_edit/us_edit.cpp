@@ -329,8 +329,8 @@ pb_plateau->setVisible(false);
    connect( pb_reviewep,     SIGNAL( clicked() ), SLOT( review_edits()  ) );
    connect( pb_nexteqtr,     SIGNAL( clicked() ), SLOT( next_triple()   ) );
 
-   connect( pb_nextChan,     SIGNAL( clicked() ), SLOT( next_triple()   ) );
-   connect( pb_priorChan,    SIGNAL( clicked() ), SLOT( prior_triple()  ) );
+   connect( pb_nextChan,     SIGNAL( clicked() ), SLOT( next_triple_auto()   ) );
+   connect( pb_priorChan,    SIGNAL( clicked() ), SLOT( prior_triple_auto()  ) );
    
    connect( pb_float,        SIGNAL( clicked() ), SLOT( floating()  ) );
    connect( pb_write,        SIGNAL( clicked() ), SLOT( write()     ) );
@@ -565,11 +565,11 @@ pb_plateau->setVisible(false);
 
    // TESTING ...
    QMap < QString, QString > details;
-   //details[ "filename" ] = QString("BSA-demo");
-   //details[ "invID_passed" ] = QString("2");
+   details[ "filename" ] = QString("BSA-demo");
+   details[ "invID_passed" ] = QString("2");
 
-   details[ "filename" ] = QString("RxRPPARhet-PPRE-MWL_180419-run352-test");
-   details[ "invID_passed" ] = QString("6");
+   //details[ "filename" ] = QString("RxRPPARhet-PPRE-MWL_180419-run352-test");
+   //details[ "invID_passed" ] = QString("6");
    
    load_auto( details );
 }
@@ -1881,6 +1881,7 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
      qDebug() << "LOADING 1";
      
      new_triple_auto( 0 );                             //ALEXEY <--- new_triple_auto()
+     pb_nextChan->setEnabled( cb_triple->count() > 1 );
 
      qDebug() << "LOADING 2";
 //*DEBUG* Print times,omega^ts
@@ -1925,6 +1926,9 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
    // /***************** TESTING ******************************************/
 
    all_loaded = true;
+
+   editProfile.clear();
+   
    qDebug() << "DATA SIZE: " << outData.count(); 
    
    //for ( int trx = 0; trx < triples.size(); trx++ )
@@ -4599,6 +4603,19 @@ void US_Edit::subtract_residuals( void )
 void US_Edit::new_triple_auto( int index )
 {
   triple_index    = index;
+
+  if ( triple_index == 0 )
+    pb_priorChan->setEnabled( false );
+  else
+    pb_priorChan->setEnabled( true );
+
+  if ( (triple_index + 1) == cb_triple->count() )
+    pb_nextChan->setEnabled( false );
+  else
+    pb_nextChan->setEnabled( true );
+    
+  
+  
    double gap_val  = ct_gaps->value();
 DbgLv(1) << "EDT:NewTr: tripindex" << triple_index << "chgs" << changes_made << "gap_val" << gap_val;
 
@@ -5950,6 +5967,81 @@ void US_Edit::review_edits( void )
 }
 
 // Advance to next triple and plot edited curves
+void US_Edit::next_triple_auto( void )
+{
+   pb_priorChan ->setEnabled( true );
+   
+   int row = cb_triple->currentIndex() + 1;
+   //row     = ( row < cb_triple->count() ) ? row : 0;
+
+   if ( (row + 1 ) <= cb_triple->count() )
+     {
+
+       if ( (row +1) == cb_triple->count() )
+	 pb_nextChan ->setEnabled( false );
+       
+       cb_triple->disconnect();
+       cb_triple->setCurrentIndex( row );
+       connect( cb_triple, SIGNAL( currentIndexChanged( int ) ), 
+		SLOT  ( new_triple_auto    ( int ) ) );
+       
+       if ( le_edtrsp->isVisible() )
+	 {
+	   QString trsp = cb_triple->currentText() + " : " + trip_rpms[ 0 ];
+	   le_edtrsp->setText( trsp );
+	   cb_rpms  ->setCurrentIndex( 0 );
+	 }
+       
+       int dax = index_data();
+       data    = *outData[ dax ];
+       
+       new_triple_auto( dax );
+
+       qDebug() << "NEXT Triple: row " << row << ", cb_triple->count() " << cb_triple->count() ;
+     }
+   else
+     pb_nextChan ->setEnabled( false );
+}
+
+// Advance to next triple and plot edited curves
+void US_Edit::prior_triple_auto( void )
+{
+  pb_nextChan ->setEnabled( true );
+  
+  int row = cb_triple->currentIndex() - 1;
+  //row     = ( row < cb_triple->count() ) ? row : 0;
+
+  if ( row  >= 0 )
+    {
+      if ( row == 0 )
+	pb_priorChan ->setEnabled( false );
+	
+      cb_triple->disconnect();
+      cb_triple->setCurrentIndex( row );
+      connect( cb_triple, SIGNAL( currentIndexChanged( int ) ), 
+	       SLOT  ( new_triple_auto    ( int ) ) );
+      
+      // if ( le_edtrsp->isVisible() )
+      // 	 {
+      // 	   QString trsp = cb_triple->currentText() + " : " + trip_rpms[ 0 ];
+      // 	   le_edtrsp->setText( trsp );
+      // 	   cb_rpms  ->setCurrentIndex( 0 );
+      // 	 }
+      
+      int dax = index_data();
+      data    = *outData[ dax ];
+      
+      new_triple_auto( dax );
+      
+      qDebug() << "PRIOR Triple: row " << row << ", cb_triple->count() " << cb_triple->count() ;
+    }
+  else
+    pb_priorChan ->setEnabled( false );
+  
+}
+
+
+// Advance to next triple and plot edited curves
 void US_Edit::next_triple( void )
 {
    int row = cb_triple->currentIndex() + 1;
@@ -5975,12 +6067,6 @@ void US_Edit::next_triple( void )
    pb_nextChan ->setEnabled( false );
 }
 
-// Advance to next triple and plot edited curves
-void US_Edit::prior_triple( void )
-{
-  int row = cb_triple->currentIndex() + 1;
-  row     = ( row < cb_triple->count() ) ? row : 0;
-}
 
 // Evaluate whether all edits are complete
 bool US_Edit::all_edits_done( void )

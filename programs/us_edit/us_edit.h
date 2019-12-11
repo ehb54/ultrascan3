@@ -337,7 +337,9 @@ class US_Edit : public US_Widgets
       void review_edits      ( void );
       
       void next_triple       ( void );
-      void prior_triple      ( void );
+      
+      void next_triple_auto  ( void );
+      void prior_triple_auto ( void );
 
       bool all_edits_done    ( void );
       void update_disk_db    ( bool );
