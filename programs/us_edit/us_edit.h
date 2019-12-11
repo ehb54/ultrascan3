@@ -327,9 +327,15 @@ class US_Edit : public US_Widgets
 
       void noise             ( void );
       void subtract_residuals( void );
+      
       void remove_spikes     ( void );
+      void remove_spikes_auto( void );
+
       void invert_values     ( void );
+      
       void undo              ( void );
+      void undo_auto         ( void );
+
       void floating          ( void );
       void write             ( void );
       void write_triple      ( void );

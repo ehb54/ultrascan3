@@ -323,9 +323,9 @@ pb_plateau->setVisible(false);
    connect( pb_residuals,    SIGNAL( clicked() ),
                              SLOT  ( subtract_residuals() ) );
    connect( pb_invert,       SIGNAL( clicked() ), SLOT( invert_values() ) );
-   connect( pb_spikes,       SIGNAL( clicked() ), SLOT( remove_spikes() ) );
+   connect( pb_spikes,       SIGNAL( clicked() ), SLOT( remove_spikes_auto() ) );
    connect( pb_priorEdits,   SIGNAL( clicked() ), SLOT( apply_prior()   ) );
-   connect( pb_undo,         SIGNAL( clicked() ), SLOT( undo()      ) );
+   connect( pb_undo,         SIGNAL( clicked() ), SLOT( undo_auto()      ) );
    connect( pb_reviewep,     SIGNAL( clicked() ), SLOT( review_edits()  ) );
    connect( pb_nexteqtr,     SIGNAL( clicked() ), SLOT( next_triple()   ) );
 
@@ -1935,7 +1935,7 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
    for ( int trx = 0; trx < cb_triple->count(); trx++ )
      {
        qDebug() << "Index: triple: " << trx;
-       int index = trx ; 
+       // int index = trx ; 
 
        index_data();
 
@@ -4510,7 +4510,177 @@ void US_Edit::remove_spikes( void )
    pb_spikes->setEnabled( false );
    pb_write ->setEnabled( true );
    replot();
+
 }
+
+
+// Remove spikes
+void US_Edit::remove_spikes_auto( void )
+{
+   double smoothed_value;
+
+   // For each scan
+   for ( int i = 0; i < data.scanData.size(); i++ ) 
+   {
+      US_DataIO::Scan* s = &data.scanData [ i ];
+
+      int start  = data.xindex( range_left  );
+      int end    = data.xindex( range_right );
+
+      for ( int j = start; j < end; j++ )
+      {
+         if ( US_DataIO::spike_check( *s, data.xvalues, j, start, end, 
+                                      &smoothed_value ) )
+         {
+            s->rvalues[ j ]     = smoothed_value;
+
+            // If previous consecututive points are interpolated, then 
+            // redo them
+            int           index = j - 1;
+            unsigned char c     = s->interpolated[ index / 8 ];
+
+            while ( c & ( 1 << ( 7 - index % 8 ) ) )
+            {
+               if ( US_DataIO::spike_check( *s, data.xvalues,
+                                            index, start, end, &smoothed_value ) )
+                  s->rvalues[ index ] = smoothed_value;
+
+               index--;
+               c = s->interpolated[ index / 8 ];
+            }
+         }
+      }
+   }
+
+   pb_spikes->setIcon   ( check );
+   
+   // ALEXEY: resize up to (1) meniscus; (2) left_range; (3) right_range; (4) plateau; (5) baseline 
+   for (int i=0; i < editProfile[ cb_triple->currentText() ].count(); i++)
+     {
+       if (i > 4)
+	 editProfile[ cb_triple->currentText() ].removeAt(i);
+     }
+   
+   editProfile[ cb_triple->currentText() ] << QString("spike_true");
+
+   qDebug() << cb_triple->currentText()  << ", " << editProfile[ cb_triple->currentText() ];
+      
+   pb_spikes->setEnabled( false );
+   pb_write ->setEnabled( true );
+   replot();
+
+   if (us_edit_auto_mode  )
+     {
+       meniscus      = editProfile[ cb_triple->currentText() ][0].toDouble();
+       range_left    = editProfile[ cb_triple->currentText() ][1].toDouble();
+       range_right   = editProfile[ cb_triple->currentText() ][2].toDouble();
+       plateau       = editProfile[ cb_triple->currentText() ][3].toDouble();
+       baseline      = editProfile[ cb_triple->currentText() ][4].toDouble();
+     
+       le_meniscus ->setText( QString::number( meniscus,   'f', 8 ) );
+       le_dataStart->setText( QString::number( range_left, 'f', 8 ) );
+       le_dataEnd  ->setText( QString::number( range_right, 'f', 8 ) );
+       le_plateau  ->setText( QString::number( plateau,     'f', 8 ) );
+       le_baseline ->setText( QString::number( baseline,     'f', 8 ) );
+       //le_baseline->setText( str.sprintf( "%.3f (%.3e)", baseline, bl ) );   
+     
+       plot_range();
+     }
+
+   pb_undo -> setEnabled( true );
+}
+
+
+
+// Undo changes
+void US_Edit::undo_auto( void )
+{
+   // Copy from outData to data
+   if ( step < PLATEAU )
+      data      = *outData[ index_data() ];
+
+   // Redo some things depending on type
+   if ( dataType == "IP" )
+   {
+      US_DataIO::EditValues edits;
+      edits.airGapLeft  = airGap_left;
+      edits.airGapRight = airGap_right;
+
+      edits.rangeLeft    = range_left;
+      edits.rangeRight   = range_right;
+      edits.gapTolerance = ct_gaps->value();
+      
+      for ( int i = 0; i < data.scanData.size(); i++ )
+         if ( ! includes.contains( i ) ) edits.excludes << i;
+
+      if ( step > AIRGAP )
+            US_DataIO::adjust_interference( data, edits );
+
+      if ( step >  RANGE )
+         US_DataIO::calc_integral( data, edits );
+   }
+
+   replot();
+
+   if (us_edit_auto_mode  )
+     {
+       meniscus      = editProfile[ cb_triple->currentText() ][0].toDouble();
+       range_left    = editProfile[ cb_triple->currentText() ][1].toDouble();
+       range_right   = editProfile[ cb_triple->currentText() ][2].toDouble();
+       plateau       = editProfile[ cb_triple->currentText() ][3].toDouble();
+       baseline      = editProfile[ cb_triple->currentText() ][4].toDouble();
+     
+       le_meniscus ->setText( QString::number( meniscus,   'f', 8 ) );
+       le_dataStart->setText( QString::number( range_left, 'f', 8 ) );
+       le_dataEnd  ->setText( QString::number( range_right, 'f', 8 ) );
+       le_plateau  ->setText( QString::number( plateau,     'f', 8 ) );
+       le_baseline ->setText( QString::number( baseline,     'f', 8 ) );
+       //le_baseline->setText( str.sprintf( "%.3f (%.3e)", baseline, bl ) );   
+     
+       plot_range();
+     }
+   
+   /*      
+   // Reset buttons and structures
+   pb_residuals->setEnabled( false );
+
+   if ( step < PLATEAU )
+   {
+      pb_noise ->setEnabled( false );
+      pb_spikes->setEnabled( false );
+   }
+   else
+   {
+      pb_noise ->setEnabled( true );
+      pb_spikes->setEnabled( true );
+   }
+
+   */
+   
+   spikes      = false;
+   noise_order = 0;
+
+   // ALEXEY: resize up to (1) meniscus; (2) left_range; (3) right_range; (4) plateau; (5) baseline 
+   for (int i=0; i < editProfile[ cb_triple->currentText() ].count(); i++)
+     {
+       if (i > 4)
+	 editProfile[ cb_triple->currentText() ].removeAt(i);
+     }
+   
+   editProfile[ cb_triple->currentText() ] << QString("spike_false");
+
+   qDebug() << cb_triple->currentText()  << ", " << editProfile[ cb_triple->currentText() ];
+   
+
+   // Remove icons
+   pb_noise       ->setIcon( QIcon() );
+   pb_residuals   ->setIcon( QIcon() );
+   pb_spikes      ->setIcon( QIcon() );
+
+   pb_undo->setEnabled( false );
+   pb_spikes->setEnabled( true );
+}
+
 
 // Undo changes
 void US_Edit::undo( void )
@@ -4604,6 +4774,27 @@ void US_Edit::new_triple_auto( int index )
 {
   triple_index    = index;
 
+  // Remove Spike: Icon/Enable
+  if ( editProfile[ cb_triple->currentText() ].count() > 5 )
+    {
+      if ( editProfile[ cb_triple->currentText() ][5] == "spike_true")
+	{
+	  pb_spikes->setIcon( check );
+	  pb_spikes->setEnabled( false ); 
+	  
+	}
+      else if (editProfile[ cb_triple->currentText() ][5] == "spike_false")
+	{
+	  pb_spikes->setIcon(QIcon());
+	  pb_spikes->setEnabled( true ); 
+	}
+    }
+  else
+    {
+      pb_spikes->setIcon(QIcon());
+    }
+  
+      //Next/Proir triples
   if ( triple_index == 0 )
     pb_priorChan->setEnabled( false );
   else
@@ -4849,10 +5040,25 @@ DbgLv(1) << "EDT:NewTr: DONE";
      le_baseline ->setText( QString::number( baseline,     'f', 8 ) );
      //le_baseline->setText( str.sprintf( "%.3f (%.3e)", baseline, bl ) );   
      
+
+     if ( editProfile[ cb_triple->currentText() ].count() > 5 )
+       {
+     	 if ( editProfile[ cb_triple->currentText() ][5] == "spike_true")
+     	   {
+	     qDebug() << "Spike_true";
+	     remove_spikes_auto();
+	   }
+     	 else if (editProfile[ cb_triple->currentText() ][5] == "spike_false")
+     	   {
+	     qDebug() << "Spike_false";
+     	   //undo_auto();
+	   }
+       }
      
      plot_range();
    }
-}
+ 
+ }
 
 // Select a new triple
 void US_Edit::new_triple( int index )
