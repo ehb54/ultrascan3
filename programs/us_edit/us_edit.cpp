@@ -234,7 +234,7 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
 
    // Meniscus
    pb_meniscus    = us_pushbutton( tr( "Specify Meniscus" ), false );
-   le_meniscus    = us_lineedit( "", 1 );
+   le_meniscus    = us_lineedit( "", 1, true);
    lb_meniscus    = us_label(      tr( "Meniscus:" ), -1 );
 
    // Air Gap (hidden by default)
@@ -266,7 +266,7 @@ pb_plateau->setVisible(false);
 
    lb_dataEnd     = us_label(      tr( "Data End:" ), -1 );
 //QLineEdit* 
-   le_dataEnd     = us_lineedit( "", 1, false );
+   le_dataEnd     = us_lineedit( "", 1, true );
 //QLabel* 
    lb_plateau     = us_label(      tr( "Plateau:" ), -1 );
 //QPushButton* 
@@ -568,7 +568,10 @@ pb_plateau->setVisible(false);
    details[ "filename" ] = QString("BSA-demo");
    details[ "invID_passed" ] = QString("2");
 
-   //details[ "filename" ] = QString("RxRPPARhet-PPRE-MWL_180419-run352-test");
+   // details[ "filename" ] = QString("RxRPPARhet-PPRE-MWL_180419-run352-test");
+   // details[ "invID_passed" ] = QString("6");
+
+   //details[ "filename" ] = QString("MWL-test4_061419-run431");
    //details[ "invID_passed" ] = QString("6");
    
    load_auto( details );
@@ -1934,33 +1937,31 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
    //for ( int trx = 0; trx < triples.size(); trx++ )
    for ( int trx = 0; trx < cb_triple->count(); trx++ )
      {
-       qDebug() << "Index: triple: " << trx;
-       // int index = trx ; 
-
-       index_data();
+       index_data_auto( trx );
 
        edata          = outData[ data_index ];
        data           = *edata;
        
-       //plot_current( index );
+       QString rawGUID_test          = US_Util::uuid_unparse( (unsigned char*)data.rawGUID );
+       qDebug() << "Current rawData: rawGUID: " <<  rawGUID_test << ", filename: " << files[ trx ] << ", editGUID: " << editGUIDs[ trx ];
        
        meniscus = 6.2; 
        
        range_left    = meniscus + _RNGLEFT_OFFSET_;
-       le_meniscus ->setText( QString::number( meniscus,   'f', 8 ) );
-       le_dataStart->setText( QString::number( range_left, 'f', 8 ) );
+       le_meniscus ->setText( QString::number( meniscus,   'f', 3 ) );
+       le_dataStart->setText( QString::number( range_left, 'f', 3 ) );
        
        //data_plot->replot();
        
        //pb_meniscus->setIcon( check );
        
        range_right = 7.1;
-       le_dataEnd  ->setText( QString::number( range_right, 'f', 8 ) );
-       plateau      = range_right - _PLATEAU_OFFSET_;
-       le_plateau  ->setText( QString::number( plateau,     'f', 8 ) );
+       le_dataEnd  ->setText( QString::number( range_right, 'f', 3 ) );
+       // plateau      = range_right - _PLATEAU_OFFSET_;
+       // le_plateau  ->setText( QString::number( plateau,     'f', 3 ) );
        
        step = PLATEAU;
-       plot_range();
+       //plot_range();
        next_step();
 
        //ALEXEY: here create a QMap to couple current triple AND meniscus, ranges, plateau and baseline;
@@ -1982,43 +1983,14 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
        
      }
 
+   if ( isMwl )
+     {
+       plot_mwl();
+       pb_spikes   ->setEnabled( true );
+     }
+   else
+     new_triple_auto( 0 );
    
-   // qDebug() << "meniscus: "   << meniscus;
-   // qDebug() << "range_left:"  << range_left;
-   // qDebug() << "range_right:" << range_right;
-   // qDebug() << "plateau: "    << plateau;
-   // qDebug() << "baseline: "   << baseline;
-   
-   // // Meniscus & Ranges ////////
-
-   // meniscus = 6.2; 
-  
-   // range_left    = meniscus + _RNGLEFT_OFFSET_;
-   // le_meniscus ->setText( QString::number( meniscus,   'f', 8 ) );
-   // le_dataStart->setText( QString::number( range_left, 'f', 8 ) );
-   
-   // data_plot->replot();
-   
-   // //pb_meniscus->setIcon( check );
-
-   // range_right = 7.1;
-   // le_dataEnd  ->setText( QString::number( range_right, 'f', 8 ) );
-   // plateau      = range_right - _PLATEAU_OFFSET_;
-   // le_plateau  ->setText( QString::number( plateau,     'f', 8 ) );
-
-   // step = PLATEAU;
-   // plot_range();
-   // next_step();
-   
-   // if ( total_edits >= total_speeds )
-   //   {
-   //     qDebug() << "In RANGES: total_edits, total_speeds: " << total_edits << ", " << total_speeds;
-   //     all_edits = true;
-   //     pb_write   ->setEnabled( true );
-   //     ck_writemwl->setEnabled( true );
-   //     changes_made = all_edits;
-   //   }
-
 
    // /************** END OF TESTING ****************************************/   
 }
@@ -3422,7 +3394,7 @@ void US_Edit::next_step( void )
       baseline   = data.xvalues[ pt + 5 ];
       plateau    = ( plateau > 0.0 ) ? plateau 
                                      : ( range_right - _PLATEAU_OFFSET_ );
-
+      
       if ( !isMwl )
       {
          // Average the value for +/- 5 points
@@ -3434,8 +3406,19 @@ void US_Edit::next_step( void )
          QString str;
          le_baseline->setText( str.sprintf( "%.3f (%.3e)", baseline, bl ) );
 DbgLv(1) << "BL: BB : baseline bl" << baseline << bl;
+ 
+ qDebug() << "SETTING Baseline, Plateau : baseline bl" << baseline << bl;
          le_plateau ->setText( QString::number( plateau, 'f', 8 ) );
       }
+      else
+	{
+	  if ( us_edit_auto_mode )
+	    {
+	      plateau      = range_right - _PLATEAU_OFFSET_;
+	      le_plateau  ->setText( QString::number( plateau,     'f', 3 ) );
+	    }
+	}
+      
    }
 
    set_pbColors( pb );
@@ -4577,11 +4560,11 @@ void US_Edit::remove_spikes_auto( void )
        plateau       = editProfile[ cb_triple->currentText() ][3].toDouble();
        baseline      = editProfile[ cb_triple->currentText() ][4].toDouble();
      
-       le_meniscus ->setText( QString::number( meniscus,   'f', 8 ) );
-       le_dataStart->setText( QString::number( range_left, 'f', 8 ) );
-       le_dataEnd  ->setText( QString::number( range_right, 'f', 8 ) );
-       le_plateau  ->setText( QString::number( plateau,     'f', 8 ) );
-       le_baseline ->setText( QString::number( baseline,     'f', 8 ) );
+       le_meniscus ->setText( QString::number( meniscus,   'f', 3 ) );
+       le_dataStart->setText( QString::number( range_left, 'f', 3 ) );
+       le_dataEnd  ->setText( QString::number( range_right, 'f', 3 ) );
+       le_plateau  ->setText( QString::number( plateau,     'f', 3 ) );
+       le_baseline ->setText( QString::number( baseline,     'f', 3 ) );
        //le_baseline->setText( str.sprintf( "%.3f (%.3e)", baseline, bl ) );   
      
        plot_range();
@@ -4630,11 +4613,11 @@ void US_Edit::undo_auto( void )
        plateau       = editProfile[ cb_triple->currentText() ][3].toDouble();
        baseline      = editProfile[ cb_triple->currentText() ][4].toDouble();
      
-       le_meniscus ->setText( QString::number( meniscus,   'f', 8 ) );
-       le_dataStart->setText( QString::number( range_left, 'f', 8 ) );
-       le_dataEnd  ->setText( QString::number( range_right, 'f', 8 ) );
-       le_plateau  ->setText( QString::number( plateau,     'f', 8 ) );
-       le_baseline ->setText( QString::number( baseline,     'f', 8 ) );
+       le_meniscus ->setText( QString::number( meniscus,   'f', 3 ) );
+       le_dataStart->setText( QString::number( range_left, 'f', 3 ) );
+       le_dataEnd  ->setText( QString::number( range_right, 'f', 3 ) );
+       le_plateau  ->setText( QString::number( plateau,     'f', 3 ) );
+       le_baseline ->setText( QString::number( baseline,     'f', 3 ) );
        //le_baseline->setText( str.sprintf( "%.3f (%.3e)", baseline, bl ) );   
      
        plot_range();
@@ -4883,6 +4866,11 @@ DbgLv(1) << "EDT:NewTr:  nwavelo" << nwavelo;
    QString otdt   = dataType;
    edata          = outData[ data_index ];
    data           = *edata;
+
+   
+   QString rawGUID_test1          = US_Util::uuid_unparse( (unsigned char*)data.rawGUID );
+   qDebug() << "NEW TRIPLE: Current rawData: rawGUID: " <<  rawGUID_test1;
+   
    QString swavl  = cb_lplot ->currentText();
    QString triple = cb_triple->currentText() + ( isMwl ? " / " + swavl : "" );
    int     idax   = triples.indexOf( triple );
@@ -5033,11 +5021,11 @@ DbgLv(1) << "EDT:NewTr: DONE";
      plateau       = editProfile[ cb_triple->currentText() ][3].toDouble();
      baseline      = editProfile[ cb_triple->currentText() ][4].toDouble();
      
-     le_meniscus ->setText( QString::number( meniscus,   'f', 8 ) );
-     le_dataStart->setText( QString::number( range_left, 'f', 8 ) );
-     le_dataEnd  ->setText( QString::number( range_right, 'f', 8 ) );
-     le_plateau  ->setText( QString::number( plateau,     'f', 8 ) );
-     le_baseline ->setText( QString::number( baseline,     'f', 8 ) );
+     le_meniscus ->setText( QString::number( meniscus,   'f', 3 ) );
+     le_dataStart->setText( QString::number( range_left, 'f', 3 ) );
+     le_dataEnd  ->setText( QString::number( range_right, 'f', 3 ) );
+     le_plateau  ->setText( QString::number( plateau,     'f', 3 ) );
+     le_baseline ->setText( QString::number( baseline,     'f', 3 ) );
      //le_baseline->setText( str.sprintf( "%.3f (%.3e)", baseline, bl ) );   
      
 
@@ -6182,10 +6170,6 @@ void US_Edit::next_triple_auto( void )
 
    if ( (row + 1 ) <= cb_triple->count() )
      {
-
-       if ( (row +1) == cb_triple->count() )
-	 pb_nextChan ->setEnabled( false );
-       
        cb_triple->disconnect();
        cb_triple->setCurrentIndex( row );
        connect( cb_triple, SIGNAL( currentIndexChanged( int ) ), 
@@ -6198,11 +6182,15 @@ void US_Edit::next_triple_auto( void )
 	   cb_rpms  ->setCurrentIndex( 0 );
 	 }
        
+       //int dax = index_data_auto( cb_triple->currentIndex() );
        int dax = index_data();
        data    = *outData[ dax ];
        
        new_triple_auto( dax );
-
+       
+       if ( (row + 1 ) == cb_triple->count() )
+	 pb_nextChan ->setEnabled( false );
+       
        qDebug() << "NEXT Triple: row " << row << ", cb_triple->count() " << cb_triple->count() ;
      }
    else
@@ -6219,9 +6207,6 @@ void US_Edit::prior_triple_auto( void )
 
   if ( row  >= 0 )
     {
-      if ( row == 0 )
-	pb_priorChan ->setEnabled( false );
-	
       cb_triple->disconnect();
       cb_triple->setCurrentIndex( row );
       connect( cb_triple, SIGNAL( currentIndexChanged( int ) ), 
@@ -6234,10 +6219,14 @@ void US_Edit::prior_triple_auto( void )
       // 	   cb_rpms  ->setCurrentIndex( 0 );
       // 	 }
       
+      //int dax = index_data_auto( cb_triple->currentIndex() );
       int dax = index_data();
       data    = *outData[ dax ];
       
       new_triple_auto( dax );
+
+      if ( row == 0 )
+	pb_priorChan ->setEnabled( false );
       
       qDebug() << "PRIOR Triple: row " << row << ", cb_triple->count() " << cb_triple->count() ;
     }
@@ -7287,6 +7276,41 @@ int US_Edit::write_edit_db( US_DB2* dbP, QString& fname, QString& editGUID,
    }
 
    return 0;
+}
+
+// Return the index in the output data of the current or specified wavelength
+int US_Edit::index_data_auto( int trx, int wvx )
+{
+   triple_index = trx;  // Triple index
+   int odatx    = triple_index;               // Default output data index
+
+   if ( isMwl )
+   {  // For MWL, compute data index from wavelength and triple indexes
+      if ( wvx < 0 )
+      {  // For the default case, use the current wavelength index
+         plotndx      = cb_lplot->currentIndex();
+         int iwavl    = expi_wvlns[ plotndx ];              //ALEXEY: do we need to set data in the middle of the triple set ??
+
+	 //int iwavl    = expi_wvlns[ 0 ];                      // ALEXEY: OR beginning of the set? ??   
+	 data_index   = mwl_data.data_index( iwavl, triple_index );
+         odatx        = data_index;
+DbgLv(1) << "IxDa: dx" << data_index << "plx wavl trx"
+ << plotndx << iwavl << triple_index;
+      }
+
+      else
+      {  // Use a specified wavelength index (and do not set internal value)
+         int iwavl    = expi_wvlns[ wvx ];
+         odatx        = mwl_data.data_index( iwavl, triple_index );
+      }
+   }
+
+   else  // for non-MWL, set data index internal value to triple index
+      data_index   = triple_index;
+
+   qDebug() << "Triple index in INDEX_DATA: trx, wvx, data_index: " << triple_index << ", " << wvx << ", " << data_index;
+
+   return odatx;
 }
 
 // Return the index in the output data of the current or specified wavelength

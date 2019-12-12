@@ -371,6 +371,8 @@ class US_Edit : public US_Widgets
       int  write_edit_db     ( US_DB2*,
                                QString&, QString&, QString&, QString& );
       int  index_data        ( int = -1 );
+      int  index_data_auto   ( int, int = -1 );
+      
       int  like_edit_files   ( QString, QStringList&, US_DB2* );
       int  apply_edits       ( US_DataIO::EditValues parameters );
       int  lambdas_by_cell   ( int = -1 );
