@@ -1,0 +1,49 @@
+2	0.638
+-3.8067	18.0411	5.8824	1.7617	58.06	1	GLY.MC.A.4	79.5461
+-5.4394	18.4705	9.0891	1.8445	74.07	1	GLY.MC.A.126	92.9821
+
+Bead Model Output:
+  Sequence:                   as in original PDB file
+
+Bead model built with the following options:
+ASA Calculation:
+  Perform ASA Calculation:    On
+  Recheck Bead ASA:           On
+  ASA Method:                 Rolling Sphere
+  ASA Probe Radius (A):       1.40
+  Probe Recheck Radius (A):   1.40
+  SOMO ASA Threshold (A^2):   20.0
+  SOMO Bead ASA Threshold %:  50.0
+  ASAB1 Step Size (A):        1.0
+
+Overlap Reduction:
+  Bead Overlap Tolerance:     0.001000
+    Exposed Side chain beads:
+      Fuse Beads:                                 On
+      Fuse Beads that overlap by more than:       70.0
+      Remove Overlaps:                            On
+      Remove Overlaps synchronously:              On
+      Synchronous Overlap Reduction Step Size %:  1.0
+      Remove Overlaps hierarchically:             Off
+      Hierarchical Overlap Reduction Step Size %: 1.0
+      Outward Translation:                        On
+    Exposed Main and side chain beads:
+      Fuse Beads:                                 On
+      Fuse Beads that overlap by more than:       70.0
+      Remove Overlaps:                            On
+      Remove Overlaps synchronously:              On
+      Synchronous Overlap Reduction Step Size %:  1.0
+      Remove Overlaps hierarchically:             Off
+      Hierarchical Overlap Reduction Step Size %: 1.0
+    Buried beads:
+      Fuse Beads:                                 Off
+      Fuse Beads that overlap by more than:       0.0
+      Remove Overlaps:                            On
+      Remove Overlaps synchronously:              On
+      Synchronous Overlap Reduction Step Size %:  1.0
+      Remove Overlaps hierarchically:             Off
+      Hierarchical Overlap Reduction Step Size %: 1.0
+
+Miscellaneous options:
+  Calculate vbar                 On
+  Enable Peptide Bond Rule       Off

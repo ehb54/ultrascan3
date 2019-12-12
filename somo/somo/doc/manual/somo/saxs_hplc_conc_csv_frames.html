@@ -1,0 +1,140 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
+	<title>SOMO HPLC-SAXS Concentration CSV in Time to Frames conversion</title>
+	<link href="mainstyle1.css" rel="styleSheet" type="text/css">
+	<style type="text/css">
+		@page { margin: 0.79in }
+		p { margin-bottom: 0.1in; line-height: 120% }
+		p.sdfootnote { margin-left: 0.24in; text-indent: -0.24in; margin-bottom: 0in; font-size: 10pt; line-height: 100% }
+		a.sdfootnoteanc { font-size: 57% }
+                code { font-size: 150% }
+	</style>
+</head>
+<body>
+<table BORDER=0 CELLPADDING=5 >
+<tr>
+<td><img SRC="USSOMO-banner.png" BORDER="0" ALT="UltraScan Version"> </td>
+<td>
+<center>
+<h1>
+<i>Manual</i></h1></center>
+</td>
+</tr>
+</table>
+
+<hr>
+<center>
+<h2>HPLC-SAXS Concentration CSV in Time to Frames conversion</h2></center>
+<h3><center>Last updated: May 2018</center></h3><p>
+<h3><center>Synopsis</center></h3>
+
+<p class="iucr-body-text-western"><span lang="en-US">
+<div id="refs">
+  <a href=somo_saxs_hplc.html#conc_load><b><i>Concentration load</i></b></a> is used to upload any chromatographic data files containing a concentration-related elution profile, as described in the main <a href=somo_saxs_hplc.html#conc_load>HPLC-SAXS documentation</a>.
+  This window comes up when you load a CSV file in the expected format (see <b>Details</b> below).
+  The purpose of this window is to convert these time vs absorbance data into concentration curves of Frame number vs absorbance.
+    </Div>
+</p>
+    
+<h3><center>Details</center></h3>
+
+The format of the CSV file is currently based upon the data produced from the SWING beamline of the SOLEIL Synchrotron.
+(Please contact us if you encounter a different format you would like to use.)
+The file is in a white-space separated format with the first header row containing "# Time" and then a series of wavelengths.
+For example: "#	Time	280	260	214	290	305	410	530	550".
+Then subsequent rows contain the sequence number starting at 1, the Time in minutes, followed by the absorbance at the specified wavelengths.
+A sample 1st line could be: "1	0.005	-0.0353	-0.0289	-0.2063	-0.0615	-0.0572	-0.0410	-0.0379	-0.0381".
+To convert the data from Time to Frames, we need a position in minutes to identify the first Frame and also the Frame length.
+<p></p>
+The window will appear as follows:
+
+<center><img src=saxs_hplc_conc_csv1.png alt="Image of HPLC-SAXS: Concentration CSV Time -> Frame conversion window"></center>
+<ul>
+  <li>
+    <p>
+      <b><i>Data set starting time :</i></b>
+       The starting time of the first point in dataset. This is a display only field showing what was found in the CSV file.
+    </p>
+  </li>
+  <li>
+    <p>
+      <b><i>Data set ending time :</i></b>
+       The starting time of the last point in dataset. This is a display only field showing what was found in the CSV file.
+    </p>
+  </li>
+  <li>
+    <p>
+      <b><i>Data set point count :</i></b>
+       The number of points in dataset. This is a display only field showing what was found in the CSV file.
+    </p>
+  </li>
+  <li>
+    <p>
+      <b><i>Frame number 1 time [minutes] :</i></b>
+      In this field you must enter the Time of Frame number 1 in minutes.  This will be used during the conversion to identify the first Frame.
+    </p>
+  </li>
+  <li>
+    <p>
+      <b><i>Length of frame [seconds] :</i></b>
+      In this field you must enter the time length of a Frame in seconds.  This will be used to convert the Time to Frames.
+    </p>
+  </li>
+  <li>
+    <p>
+      <b><i>Specify starting frame number to extract :</i></b>
+       Optionally specify the starting Frame number to extract after conversion to Frames, default is Frame number 1 if not checked.  This can be used to limit the number of Frames extracted.  If you check the box, an additional field will apear where you can input the number.
+    </p>
+  </li>
+  <li>
+    <p>
+      <b><i>Specify ending frame number to extract :</i></b>
+       Optionally specify the ending Frame number to extract after conversion to Frames, default is to use the last Frame number available. This can be used to limit the number of Frames extracted.  If you check the box, an additional field will apear where you can input the number.
+    </p>
+  </li>
+  <li>
+    <p>
+      <b><i>Help :</i></b>
+      Displays this help page in a web browser window.
+    </p>
+  </li>
+  <li>
+    <p>
+      <b><i>Cancel :</i></b>
+      Stops processing and exits the window.
+    </p>
+  </li>
+  <li>
+    <p>
+      <b><i>Process :</i></b>
+      Process will begin the conversion and produce a collection of curves, one for each wavelength found, of Frame vs absorbance.
+      They will appear in the standard file lists of <a href=somo_saxs_hplc.html>main HPLC-SAXS window</a>, and thus can be used for concentration profiles or saved using the standard methods there.
+      Here is an example main window after processing and selecting all the concentration curves:
+      <center><img src=saxs_hplc_conc_csv2.png alt="Image of HPLC-SAXS window after CSV concentration load"></center>
+    </p>
+  </li>
+</ul>
+
+<hr>
+<hr>
+<font face="helvetica" size="-1">
+www contact: <a href="mailto:brookes@uthscsa.edu">Emre Brookes</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+This document is part of the <i><b>UltraScan</b></i> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> The latest version of this document can always be found at:
+</font>
+<p>
+<font face="helvetica" size="-1">
+<a href="http://somo.aucsolutions.com">http://somo.aucsolutions.com</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+Last modified on May 18, 2018.
+</font>
+</body>
+</html>

@@ -1,0 +1,37 @@
+mesh2e
+
+activating 'Solutes' off the pulldown
+reads in 'mesh2e.mod' from the current directory, this is a .mod file 
+in the standard format.  The first line in the .mod will be the title.
+Additionally there is a control file. 'mesh2e.ctl' 
+This controls how the graph looks.  
+
+These are the fields, they must be single space separated if there
+are multiple values in a row.
+
+Here is an example file 
+______cut_here________
+.55
+80 80
+0 20 0 6
+10 1
+2 .5
+______end_here________
+
+These are the meanings
+use_vbar		// the vbar for converting the D values to frictional ratios (k)
+meshx meshy      	// the number of grid points in the x & y directions (s & k)
+minx maxx miny maxy  	// min & max s*1e13 & k values 
+maxz zscaling		//
+alpha beta		// the sharpness of peaks is determined by these values
+			// i'm using a cosine function of the distance within M_PI/2
+			// the beta is this distance (note the distance is in scaled s values
+			// (i.e. *1e13) and k values between the requested plot point and each solute vector
+			// and alpha exponentiates the cos() function (i.e pow(cos(dist * M_PI/ (beta * 2)), alpha)
+			// see the operator() stub of class C_s_k in functions.h for more detail
+
+issues ...
+The title gets overwritten with the default if you rotate, but pulling down 'Solute' resets it.
+
+
+

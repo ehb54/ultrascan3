@@ -1,0 +1,54 @@
+7	0.651
+11.8940	17.8010	18.8080	0.7482	16.02	1	ASN.PB.A.44	14.5679
+13.2655	19.0322	20.2627	1.3163	56.05	1	ASN.PB.A.44	28.3343
+11.7703	20.2660	16.3701	2.7151	58.06	4	ASN.SC.A.44	161.5475
+15.2543	20.5307	22.2660	1.1667	56.05	1	ARG.PB.A.45	22.0274
+18.7499	15.1579	23.8071	3.4843	100.16	14	ARG.SC.A.45	219.5768
+16.3578	21.8233	24.7799	1.4572	41.03	1	ASN.PB.A.46	28.6266
+12.1352	22.3659	23.6720	2.7151	58.06	4	ASN.SC.A.46	165.5763
+
+Bead Model Output:
+  Sequence:                   as in original PDB file
+
+Bead model built with the following options:
+ASA Calculation:
+  Perform ASA Calculation:    On
+  Recheck Bead ASA:           On
+  ASA Method:                 Rolling Sphere
+  ASA Probe Radius (A):       1.40
+  Probe Recheck Radius (A):   1.40
+  SOMO ASA Threshold (A^2):   20.0
+  SOMO Bead ASA Threshold %:  50.0
+  ASAB1 Step Size (A):        1.0
+
+Overlap Reduction:
+  Bead Overlap Tolerance:     0.001000
+    Exposed Side chain beads:
+      Fuse Beads:                                 On
+      Fuse Beads that overlap by more than:       70.0
+      Remove Overlaps:                            On
+      Remove Overlaps synchronously:              On
+      Synchronous Overlap Reduction Step Size %:  1.0
+      Remove Overlaps hierarchically:             Off
+      Hierarchical Overlap Reduction Step Size %: 1.0
+      Outward Translation:                        On
+    Exposed Main and side chain beads:
+      Fuse Beads:                                 On
+      Fuse Beads that overlap by more than:       70.0
+      Remove Overlaps:                            On
+      Remove Overlaps synchronously:              On
+      Synchronous Overlap Reduction Step Size %:  1.0
+      Remove Overlaps hierarchically:             Off
+      Hierarchical Overlap Reduction Step Size %: 1.0
+    Buried beads:
+      Fuse Beads:                                 Off
+      Fuse Beads that overlap by more than:       0.0
+      Remove Overlaps:                            On
+      Remove Overlaps synchronously:              On
+      Synchronous Overlap Reduction Step Size %:  1.0
+      Remove Overlaps hierarchically:             Off
+      Hierarchical Overlap Reduction Step Size %: 1.0
+
+Miscellaneous options:
+  Calculate vbar                 On
+  Enable Peptide Bond Rule       On

@@ -1,0 +1,68 @@
+prefix     US_Hydrodyn_Cluster_
+title      "US-SOMO: 1d cluster interface"
+credit     "Brookes."
+name       oned
+include    us_hydrodyn_cluster.h
+input      void                     * us_hydrodyn
+input      map < QString, QString > * parameters
+saveload   json cluster_oned *parameters 
+_variables
+map     infile  s - - 1drotationfile "rotationfile" "Rotation file"
+map     string  s - - 1drotationsuserand "rotationsuserand" "Use drand48() for rotations"
+map     string  s - - 1dlambda "lambda" "Lambda"
+map     string  s - - 1ddetectordistance "detectordistance" "Detector distance (m)"
+map     string  s - - 1ddetectorwidth "detectorwidth" "Detector width (mm)"
+map     string  s - - 1ddetectorpixelswidth "detectorpixelswidth" "Detector pixels width"
+map     string  s - - 1drho0 "rho0" "Solvent electron density: rho0 (e-/A^3)"
+map     string  s - - 1ddeltar "deltar" "Excluded volume: delta R"
+map     string  s - - 1dproberadius "proberadius" "Excluded volume: probe radius"
+map     string  s - - 1dthreshold "threshold" "Excluded volume: threshold"
+map     string  s - - 1dsamplerotations "samplerotations" "Sample rotations"
+map     string  s - - 1daxisrotations "axisrotations" "Axis rotations"
+map     string  s - - 1dintermediatesaves "intermediatesaves" "Intermediate saves (comma separated)"
+_end
+required_variable 1drotationfile
+required_variable 1dlambda 1.54
+required_variable 1ddetectordistance 1.33
+required_variable 1ddetectorwidth    341
+required_variable 1ddetectorpixelswidth 50
+required_variable 1drho0 0
+required_variable 1ddeltar 1
+required_variable 1dproberadius 1.4
+required_variable 1dthreshold 1
+required_variable 1dsamplerotations 1
+required_variable 1daxisrotations   1
+_elements
+variable 1drotationfile
+row
+variable 1drotationsuserand
+row
+variable 1dlambda
+row
+variable 1ddetectordistance
+row
+variable 1ddetectorwidth
+row
+variable 1ddetectorpixelswidth
+row
+variable 1drho0
+row
+variable 1ddeltar
+row
+variable 1dproberadius
+row
+variable 1dthreshold
+row
+variable 1dsamplerotations
+row
+variable 1daxisrotations
+row
+variable 1dintermediatesaves
+row
+button      save
+button      load
+row
+_end
+# template cluster.multiple
+template cluster.h
+template cluster.cpp

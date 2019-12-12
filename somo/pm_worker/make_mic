@@ -1,0 +1,2 @@
+mpicxx -o pm_worker.mic -O3 -mmic pm_worker_main.cpp pm_worker.cpp pm_worker_objects.cpp pm_worker_fitness.cpp ../src/us_sh.cpp ../shd_mpi/shs_use.cpp
+

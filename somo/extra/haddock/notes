@@ -1,0 +1,18 @@
+# procedure
+
+0. pre run setup.
+a. make tbl: mkair.pl
+
+1. on i7, setup run (small count, maybe test)
+2. perl ~/andy/haddock/bin/relocate.pl orgdir rundir run cpu iter0 iter1 iter2 
+   e.g. perl ~/andy/haddock/bin/relocate.pl ~/andy/haddock/try3 /scratch/00451/tg457210/haddock/try5 1 8 8 8 8
+2b. copy over correct air file
+   
+   e.g. cd run1; perl ~/andy/haddock/bin/changeair.pl ~/tryx.tbl
+3. tar zcf s.gz try5
+4. scp to stampede
+5. mkhjob.pl ~/s.gz nodes queue time
+   e.g. mkhjob.pl ~/s.gz 1 development 01:00:00
+6. sbatch scratch/tag/run/job
+
+

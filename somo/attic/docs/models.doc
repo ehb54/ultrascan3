@@ -1,0 +1,14 @@
+case 0: lbl_model2->setText("Single Component"); 
+case 1: lbl_model2->setText("Monomer-Dimer"); 
+case 2: lbl_model2->setText("Monomer-Dimer and Incompetent Monomer"); 
+case 3: lbl_model2->setText("Monomer-Dimer-Trimer"); 
+case 4: lbl_model2->setText("Monomer-Dimer-Trimer and Incompetent Monomer"); 
+case 5: lbl_model2->setText("Monomer-Dimer-Trimer and Incompetent Dimer"); 
+case 6: lbl_model2->setText("Monomer-Dimer-Trimer and Incompetent Monomer and Dimer"); 
+case 7: lbl_model2->setText("Monomer-Dimer-Tetramer"); 
+case 8: lbl_model2->setText("Monomer-Dimer-Tetramer and Incompetent Monomer"); 
+case 9: lbl_model2->setText("Monomer-Dimer-Tetramer and Incompetent Dimer"); 
+case 10: lbl_model2->setText("Monomer-Dimer-Tetramer and Incompetent Monomer and Dimer"); 
+case 11: lbl_model2->setText("2 Components, Noninteracting"); 
+case 12: lbl_model2->setText("3 Components, Noninteracting"); 
+case 13: lbl_model2->setText("2-Component Equilibrium"); 
