@@ -287,6 +287,7 @@ class US_Edit : public US_Widgets
       void reset_excludes    ( void );
       void set_colors        ( const QList< int >& );
 
+      double find_meniscus_auto ( void );
       int  scan_db_auto      ( void );
       void create_descs_auto ( QStringList&, QStringList&, int );
       void load_db_auto      ( QList< DataDesc_auto >& );
