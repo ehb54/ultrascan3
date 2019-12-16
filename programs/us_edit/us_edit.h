@@ -287,6 +287,7 @@ class US_Edit : public US_Widgets
       void reset_excludes    ( void );
       void set_colors        ( const QList< int >& );
 
+      double find_meniscus_auto ( void );
       int  scan_db_auto      ( void );
       void create_descs_auto ( QStringList&, QStringList&, int );
       void load_db_auto      ( QList< DataDesc_auto >& );
@@ -371,6 +372,8 @@ class US_Edit : public US_Widgets
       int  write_edit_db     ( US_DB2*,
                                QString&, QString&, QString&, QString& );
       int  index_data        ( int = -1 );
+      int  index_data_auto   ( int, int = -1 );
+      
       int  like_edit_files   ( QString, QStringList&, US_DB2* );
       int  apply_edits       ( US_DataIO::EditValues parameters );
       int  lambdas_by_cell   ( int = -1 );
