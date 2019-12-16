@@ -97,9 +97,9 @@ TARGET = us_saxs_cmds_mpi
 
 unix {
  contains(UNAME,x86_64) {
-    DESTDIR = $$US3SOMOPATH/bin64
+    DESTDIR = $$US3PATH/bin
  } else {
-    DESTDIR = $$US3SOMOPATH/bin
+    DESTDIR = $$US3PATH/bin
  }
 }
 

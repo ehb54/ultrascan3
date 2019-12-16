@@ -33,7 +33,7 @@ contains( DEFINES, "OSX" ) {
     
       contains(UNAME,x86_64) {
         LIBS    += -L$$QWTPATH/lib/ -L$$QWTPATH/src/ -lqwt 
-        DEFINES += BIN64
+#        DEFINES += BIN64
         DESTDIR  = $$US3PATH/lib
       } else {
         LIBS += -L$$QWTPATH/lib -lqwt

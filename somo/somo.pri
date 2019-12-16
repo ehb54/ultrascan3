@@ -1,4 +1,4 @@
-US3PATH   = ../
+US3PATH   = $$PWD/../
 US3SOMOPATH = $$US3PATH/somo
 
 INCLUDEPATH += $$US3SOMOPATH/include
