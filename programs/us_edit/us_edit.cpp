@@ -568,8 +568,8 @@ pb_plateau->setVisible(false);
    details[ "filename" ] = QString("BSA-demo");
    details[ "invID_passed" ] = QString("2");
 
-   // details[ "filename" ] = QString("RxRPPARhet-PPRE-MWL_180419-run352-test");
-   // details[ "invID_passed" ] = QString("6");
+   //details[ "filename" ] = QString("RxRPPARhet-PPRE-MWL_180419-run352-test");
+   //details[ "invID_passed" ] = QString("6");
 
    //details[ "filename" ] = QString("MWL-test4_061419-run431");
    //details[ "invID_passed" ] = QString("6");
@@ -1931,6 +1931,15 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
    all_loaded = true;
 
    editProfile.clear();
+
+   //Read centerpiece names from protocol:
+   centerpiece_names.resize( cb_triple->count() );
+   read_centerpiece_names_from_protocol();
+
+   //AProfile detailes per channel
+   aprofile_data.resize( cb_triple->count() );
+   read_aprofile_data_from_aprofile();
+   
    
    qDebug() << "DATA SIZE: " << outData.count(); 
    
@@ -1942,20 +1951,20 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
        edata          = outData[ data_index ];
        data           = *edata;
        
-       QString rawGUID_test          = US_Util::uuid_unparse( (unsigned char*)data.rawGUID );
-       qDebug() << "Current rawData: rawGUID: " <<  rawGUID_test << ", filename: " << files[ trx ] << ", editGUID: " << editGUIDs[ trx ];
+       //QString rawGUID_test          = US_Util::uuid_unparse( (unsigned char*)data.rawGUID );
+       //qDebug() << "Current rawData: rawGUID: " <<  rawGUID_test << ", filename: " << files[ trx ] << ", editGUID: " << editGUIDs[ trx ];
 
-       //Meniscuc: to be a special procedure:
-
+       //Find menicsuc based on read parameters for centerpiece channel (trx)
+       read_centerpiece_params( trx );
        meniscus = find_meniscus_auto();
-       
-       //meniscus = 6.2; 
+
        le_meniscus ->setText( QString::number( meniscus,   'f', 3 ) );
 
        range_left    = meniscus + _RNGLEFT_OFFSET_;
        le_dataStart->setText( QString::number( range_left, 'f', 3 ) );
        
-       range_right = 7.1;
+       range_right = 7.0;
+       //range_right   = aprofile_data[ trx ][1].toDouble();
        le_dataEnd  ->setText( QString::number( range_right, 'f', 3 ) );
        // plateau      = range_right - _PLATEAU_OFFSET_;
        // le_plateau  ->setText( QString::number( plateau,     'f', 3 ) );
@@ -1995,24 +2004,110 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
    // /************** END OF TESTING ****************************************/   
 }
 
+
+void US_Edit::read_aprofile_data_from_aprofile()
+{
+  //aprofile_data.clear();
+  // Fill in centerpiece names from protocol (per channel)
+
+  QStringList aprofile_row;
+  //for( int ...)
+  //{
+  //    aprofile_rpw << volume << data_end; 
+  //}
+}
+
+void US_Edit::read_centerpiece_names_from_protocol()
+{
+  //centerpiece_names.clear();
+  // Fill in centerpiece names from protocol (per channel)
+
+  // DO  NOT FORGET TO populate centerpiece_names array by CHANNELS, NOT by Cells only !!!
+  // E.g. if cells 2 & 4, then centerpiece_names must be put for 2/A, 2/B, 4/A, 4/B
+  
+}
+
+void US_Edit::read_centerpiece_params( int trx )
+{
+   QStringList query;
+   QString centerpieceID_protocol;          // <-- from protocol, by centerpiece name
+   QString centerpieceID_read;
+   QString centerpieceName_read;
+
+   centerpiece_info.clear();
+
+
+   // Check DB connection
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
+   
+   if ( db.lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Read protocol: Could not connect to database \n" ) + db.lastError() );
+       return;
+     }
+   
+   //Establish correspondence btw centerpiece name & ID (centerpieceID)
+   query.clear();
+   query << "get_abstractCenterpiece_names";
+   db.query( query );
+
+   while ( db.next() )
+     {
+       QString id   =  db.value( 0 ).toString();
+       QString name =  db.value( 1 ).toString();
+
+       if ( centerpiece_names[ trx ] == name )
+	 {
+	   centerpieceID_read = id;
+	   break;
+	 }
+     }
+   
+   //Get Centerpiece info
+   query.clear();
+   query << "get_abstractCenterpiece_info" << centerpieceID_read;
+   db.query( query );
+   db.next();
+   
+   centerpiece_info[ "name" ]       = db.value( 1 ).toString();
+   centerpiece_info[ "bottom" ]     = db.value( 3 ).toString();
+   centerpiece_info[ "pathlen" ]    = db.value( 6 ).toString();
+   centerpiece_info[ "angle" ]      = db.value( 7 ).toString();
+
+}
+
+
 double US_Edit::find_meniscus_auto()
 {
+  // double bottom     = centerpiece_info[ "bottom" ].toDouble(); 
+  // double pathlength = centerpiece_info[ "pathlen" ].toDouble();
+  // double angle      = centerpiece_info[ "angle" ].toDouble();
+
+  //TEMP
+  double bottom = 7.2;
+  double pathlength = 1.2;
+  double angle = 2.5;
+  
+  //double aprofile_volume   = aprofile_data[ "volume" ].toDouble();
+  double aprofile_volume   = 460; // Just an example - to be read from AProfile
+  
+  double meniscus_init = sqrt( bottom*bottom - ( aprofile_volume*360/(1000*pathlength*angle*M_PI ) ) );     //Radians = Degrees * (M_PI/180.0)
+  
+  qDebug() << "Meniscus_init: " << meniscus_init << ", " << bottom << ", " << pathlength << ", " << angle << ", " << M_PI;
+    
   double meniscus_av = 0;
 
+  // Scan Data Processing...
   int size = data.pointCount();
-
-  //double aprofile_left = 6.1;        // <-- to be read from AProfile for channel ?
-  //double aprofile_right = aprofile_left + 0.15;
-
-  double aprofile_left;
-  double aprofile_right;
-
-  // OR: fine when scan y-value becomes negative, that is aprofile_left...
   
   // For each scan in the last ~20% of scans:
   int start_scan = int(0.8*data.scanData.size());
   int end_scan   = data.scanData.size();
-
+  
+   
   QVector< double > x_maxs;
 
   qDebug() << "Scans for meniscus: start_scan, end_scan: " << start_scan << ", " << end_scan; 
@@ -2022,25 +2117,14 @@ double US_Edit::find_meniscus_auto()
       US_DataIO::Scan*  s = &data.scanData[ i ];
 
       double y_max = -1.0e99;
-      double y_min =  1.0e99;
       double x_max;
-      double x_min;
+
+      int indexLeft   = data.xindex( meniscus_init  );
+      //int indexRight  = data.xindex( meniscus_init + 0.5 );   // <---- OR should it just be the end data from AProfile ?
+      int indexRight  = data.xindex( 7.0 );
       
-      //Find first minimum negative value index...
-      for ( int j = 0; j < size; j++ )
-	{
-	  double y_curr = s->rvalues[ j ] * invert;
-	  if ( y_curr < y_min  )
-	    {
-	      y_min = y_curr;
-	      x_min = data.xvalues[ j ];
-	    }
-	}
-      
-      //int indexLeft  = data.xindex( aprofile_left  );
-      int indexLeft   = data.xindex( x_min  );
-      int indexRight  = data.xindex( x_min + 0.15 );
-      
+      // qDebug() << "indexLeft = " << indexLeft << "; indexRight = " <<  indexRight; 
+	
       for ( int j = indexLeft; j <= indexRight; j++ )
       {
 	double y_curr = s->rvalues[ j ] * invert;
@@ -2049,9 +2133,11 @@ double US_Edit::find_meniscus_auto()
 	  {
 	    y_max = y_curr;
 	    x_max = data.xvalues[ j ];
+
+	    //qDebug() << "y_max: " << y_max << ", x_max: " << x_max;
 	  }
       }
-      //Array of maximum values indexes for the last ~20% of scans in the region [ aprofile_left -- aprofile_right ]
+      //Array of maximum values indexes for the last ~20% of scans in the region [ meniscus_left -- meniscus_left + 0.1 ]
       x_maxs.push_back( x_max ); 
     }
 
@@ -2059,7 +2145,7 @@ double US_Edit::find_meniscus_auto()
   for ( int i=0; i < x_maxs.size(); i++ )
     {
       meniscus_av += x_maxs[ i ];
-      qDebug() << "x_max: " << x_maxs[ i ];
+      //qDebug() << "x_max: " << x_maxs[ i ] ;
     }
   
   meniscus_av /= x_maxs.size();

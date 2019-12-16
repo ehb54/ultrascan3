@@ -85,7 +85,11 @@ class US_Edit : public US_Widgets
 
       QStringList        triple_info;
       QMap< QString, QStringList> editProfile;
+      QMap< QString, QString> centerpiece_info;
 
+      QVector<QString> centerpiece_names;
+      QVector<QStringList> aprofile_data;
+      
       QChar              chlamb;
 
       QList< int >       sd_offs;        // Speed data offsets, ea. triple
@@ -291,6 +295,10 @@ class US_Edit : public US_Widgets
       int  scan_db_auto      ( void );
       void create_descs_auto ( QStringList&, QStringList&, int );
       void load_db_auto      ( QList< DataDesc_auto >& );
+
+      void read_centerpiece_names_from_protocol( void );
+      void read_aprofile_data_from_aprofile( void );
+      void read_centerpiece_params( int );
                           
    private slots:         
       void load              ( void );
