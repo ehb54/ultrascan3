@@ -297,9 +297,6 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
 
    main->addWidget( tabWidget );
 
-
-   /* TEMPORARILY  - UNCOMMENT LATER !!!!
-   
    for (int i=0; i < tabWidget->count(); ++i )
      {
        //ALEXEY: OR enable all tabs ? (e.g. for demonstration, in a read-only mode or the like ?)
@@ -308,8 +305,6 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
        else
 	 tabWidget->tabBar()->setTabEnabled(i, false);
      }
-
-   */
 
    connect( tabWidget, SIGNAL( currentChanged( int ) ), this, SLOT( initPanels( int ) ) );
       
@@ -354,7 +349,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( this, SIGNAL( pass_to_editing( QMap < QString, QString > & ) ),   epanEditing, SLOT( do_editing( QMap < QString, QString > & )  ) );
    connect( epanPostProd, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
    
-   
+   connect( this, SIGNAL( reset_data_editing() ),  epanEditing, SLOT( reset_data_editing( )  ) );
    
    setMinimumSize( QSize( 1350, 800 ) );
    adjustSize();
@@ -381,6 +376,8 @@ void US_ComProjectMain::initPanels( int  panx )
 	{
 	  //Fully set: nothing needs to be done/reset:
 	  qDebug() << "Jumping from EXPERIMENT.";
+	  //Maybe reset Experiment panel ??
+	  
 	}
 
       if ( curr_panx == 2 )
@@ -416,8 +413,11 @@ void US_ComProjectMain::initPanels( int  panx )
 	}
       
       if ( curr_panx == 4 )
-	qDebug() << "Jumping from EDITING.";
-
+	{
+	  qDebug() << "Jumping from EDITING.";
+	  emit reset_data_editing();
+	}
+      
       xpn_viewer_closed_soft = false;
       epanInit  ->initAutoflowPanel();
     }
@@ -2008,7 +2008,9 @@ US_EditingGui::US_EditingGui( QWidget* topw )
    
    // //Later - do actual editing form sdiag (load_auto() ) - whatever it will be: (us_edit.cpp)
    connect( this, SIGNAL( start_editing( QMap < QString, QString > & ) ), sdiag, SLOT( load_auto ( QMap < QString, QString > & )  ) );
-
+   
+   connect( this, SIGNAL( reset_data_editing_passed( ) ), sdiag, SLOT(  reset_editdata_panel (  )  ) );
+   
    offset = 0;
    sdiag->move(offset, 2*offset);
    sdiag->setFrameShape( QFrame::Box);
@@ -2051,6 +2053,12 @@ void US_EditingGui::resizeEvent(QResizeEvent *event)
     QWidget::resizeEvent(event);
 }
 
+
+
+void US_EditingGui::reset_data_editing( void )
+{
+  emit reset_data_editing_passed();
+}
 
 
 void US_EditingGui::do_editing( QMap < QString, QString > & protocol_details )

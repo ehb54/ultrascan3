@@ -306,6 +306,8 @@ class US_Edit : public US_Widgets
    private slots:         
       void load              ( void );
       void load_auto         ( QMap < QString, QString > & );
+
+      void reset_editdata_panel ( void );
       
       void details           ( void );
 

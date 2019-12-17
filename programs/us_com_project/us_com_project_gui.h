@@ -238,7 +238,7 @@ class US_PostProdGui : public US_WidgetsDialog
     //void to_experiment( QString & protocolName );
     void to_initAutoflow( void );
     void reset_lims_import( void );
-    
+        
   signals:
     //void to_post_prod( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii  );
     void to_post_prod( QMap < QString, QString > & ); 
@@ -270,9 +270,11 @@ class US_EditingGui : public US_WidgetsDialog
       
  private slots:
    void do_editing( QMap < QString, QString > & );
+   void reset_data_editing( void );
 
  signals:
    void start_editing(  QMap < QString, QString > & );
+   void reset_data_editing_passed ( void );
     
 };
 
@@ -426,6 +428,7 @@ signals:
   void us_comproject_closed( void );
   void pass_used_instruments( QStringList & );
   void reset_lims_import( void );
+  void reset_data_editing( void );
   void reset_live_update( void );
 };
 

@@ -506,8 +506,19 @@ DbgLv(1) << "CGui: reset complete";
    // QString protname = "data-aquisition-test29";
    // QString invid = "6"; //Amy ID
 
+   // QMap < QString, QString > protocol_details;
+   // protocol_details[ "status" ];
+   // protocol_details[ "dataPath" ]       = curdir;
+   // protocol_details[ "invID_passed" ]   = invid;
+   // protocol_details[ "protocolName" ]   = protname;
+   // //protocol_details[ "experimentName" ];
+   // protocol_details[ "correctRadii" ]   = QString("YES");
+   // protocol_details[ "expAborted" ]     = QString("NO");
+   // //protocol_details[ "runID" ]          =  ;
+   // protocol_details[ "label" ]          = QString("Some label");
    
-   // import_data_auto(curdir, protname, invid);
+   
+   // import_data_auto( protocol_details ); 
 
    
    
@@ -5148,6 +5159,7 @@ DbgLv(1) << "Writing to disk";
 	   if ( !gmpRun_bool )    // us_comproject BUT the run is NOT GMP, so complete here 
 	     {
 	       qDebug() << " Saving COMPLETE: NO GMP RUN !!!";
+	       qDebug() << "RunID: " << runID;
 
 	       QMessageBox::information( this,
 					 tr( "Save is Complete" ),
@@ -5169,6 +5181,7 @@ DbgLv(1) << "Writing to disk";
 	       
 	       // Either emit ONLY if not US_MODE, or do NOT connect with slot on us_comproject...
 
+	       qDebug() << "RunID: " << runID;
 	       update_autoflow_record_atLimsImport();
 	       
 	       resetAll_auto();

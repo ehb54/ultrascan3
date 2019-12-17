@@ -576,10 +576,15 @@ pb_plateau->setVisible(false);
    //details[ "invID_passed" ] = QString("6");
    
    /******************* data with protocol *************************************************/
-   details[ "invID_passed" ] = QString("2");
-   details[ "filename" ]     = QString("GMP-Demo-101519-2-run589");
-   details[ "protocolName" ] = QString("GMP-Demo-101519-2");
-
+   // details[ "invID_passed" ] = QString("2");
+   // details[ "filename" ]     = QString("GMP-Demo-101519-2-run589");
+   // details[ "protocolName" ] = QString("GMP-Demo-101519-2");
+   /****************************************************************************************/
+   
+   details[ "invID_passed" ] = QString("6");
+   details[ "filename" ]     = QString("data-aquisition-test29-run364");
+   details[ "protocolName" ] = QString("data-aquisition-test29");
+   
    load_auto( details );
 }
 
@@ -2017,6 +2022,15 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
    // /************** END OF TESTING ****************************************/   
 }
 
+void US_Edit::reset_editdata_panel( void )
+{
+  qDebug() << "Resetting EDIT_DATA panel BEFORE going to Manage runs... ";
+  
+  reset( );
+  
+  qDebug() << "EDIT_DATA reset ..";
+}
+
 
 void US_Edit::read_aprofile_data_from_aprofile()
 {
@@ -2220,6 +2234,7 @@ double US_Edit::find_meniscus_auto()
       int indexLeft   = data.xindex( meniscus_init  );
       //int indexRight  = data.xindex( meniscus_init + 0.5 );   // <---- OR should it just be the end data from AProfile ?
       int indexRight  = data.xindex( 7.0 );
+      //ALEXEY: maybe to be on safer side, take indexRight = meniscus_init  + ( aprofile_right - meniscus_init )/2.0
       
       // qDebug() << "indexLeft = " << indexLeft << "; indexRight = " <<  indexRight; 
 	
