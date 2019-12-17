@@ -88,6 +88,7 @@ class US_Edit : public US_Widgets
       QMap< QString, QString> centerpiece_info;
 
       QVector<QString> centerpiece_names;
+      QMap <QString, QString>      cell_to_centerpiece;
       QVector<QStringList> aprofile_data;
       
       QChar              chlamb;
@@ -253,6 +254,7 @@ class US_Edit : public US_Widgets
 
       QString filename_runID_auto;
       QString idInv_auto;
+      QString ProtocolName_auto;
 
       class DataDesc_auto   // Description of each data set in the list presented
       {
@@ -299,6 +301,7 @@ class US_Edit : public US_Widgets
       void read_centerpiece_names_from_protocol( void );
       void read_aprofile_data_from_aprofile( void );
       void read_centerpiece_params( int );
+      bool readProtocolCells_auto ( QXmlStreamReader& );
                           
    private slots:         
       void load              ( void );

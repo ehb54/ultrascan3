@@ -23,6 +23,7 @@
 #include "us_images.h"
 #include "us_editor.h"
 #include "us_report.h"
+#include "us_protocol_util.h"
 
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c)  setData(a,b,c)
@@ -565,8 +566,8 @@ pb_plateau->setVisible(false);
 
    // TESTING ...
    QMap < QString, QString > details;
-   details[ "filename" ] = QString("BSA-demo");
-   details[ "invID_passed" ] = QString("2");
+   //details[ "filename" ] = QString("BSA-demo");
+   //details[ "invID_passed" ] = QString("2");
 
    //details[ "filename" ] = QString("RxRPPARhet-PPRE-MWL_180419-run352-test");
    //details[ "invID_passed" ] = QString("6");
@@ -574,6 +575,11 @@ pb_plateau->setVisible(false);
    //details[ "filename" ] = QString("MWL-test4_061419-run431");
    //details[ "invID_passed" ] = QString("6");
    
+   /******************* data with protocol *************************************************/
+   details[ "invID_passed" ] = QString("2");
+   details[ "filename" ]     = QString("GMP-Demo-101519-2-run589");
+   details[ "protocolName" ] = QString("GMP-Demo-101519-2");
+
    load_auto( details );
 }
 
@@ -1382,8 +1388,11 @@ void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
   
   QList< DataDesc_auto >  sdescs_auto;
   datamap.clear();
+  
   filename_runID_auto = details_at_editing[ "filename" ];
   idInv_auto          = details_at_editing[ "invID_passed" ];
+  ProtocolName_auto   = details_at_editing[ "protocolName" ];
+  
   qDebug() << "AT EDIT_DATA: filename, idInv: " << filename_runID_auto << ", " << idInv_auto;
 
   scan_db_auto();
@@ -1933,14 +1942,18 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
    editProfile.clear();
 
    //Read centerpiece names from protocol:
+   centerpiece_names.clear();
    centerpiece_names.resize( cb_triple->count() );
    read_centerpiece_names_from_protocol();
+
+   //Debug:
+   for (int i=0; i<centerpiece_names.size(); i++)
+     qDebug() << "Centerpeice name: " << centerpiece_names[i];
 
    //AProfile detailes per channel
    aprofile_data.resize( cb_triple->count() );
    read_aprofile_data_from_aprofile();
-   
-   
+      
    qDebug() << "DATA SIZE: " << outData.count(); 
    
    //for ( int trx = 0; trx < triples.size(); trx++ )
@@ -1954,7 +1967,7 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
        //QString rawGUID_test          = US_Util::uuid_unparse( (unsigned char*)data.rawGUID );
        //qDebug() << "Current rawData: rawGUID: " <<  rawGUID_test << ", filename: " << files[ trx ] << ", editGUID: " << editGUIDs[ trx ];
 
-       //Find menicsuc based on read parameters for centerpiece channel (trx)
+       //Find meniscus position based on the read parameters for centerpiece channel (trx) && aprofile for each channel 
        read_centerpiece_params( trx );
        meniscus = find_meniscus_auto();
 
@@ -2013,29 +2026,115 @@ void US_Edit::read_aprofile_data_from_aprofile()
   QStringList aprofile_row;
   //for( int ...)
   //{
-  //    aprofile_rpw << volume << data_end; 
+  //    aprofile_row << volume << data_end; 
   //}
 }
 
 void US_Edit::read_centerpiece_names_from_protocol()
 {
   //centerpiece_names.clear();
-  // Fill in centerpiece names from protocol (per channel)
+  cell_to_centerpiece.clear();
 
+  // Check DB connection
+  US_Passwd pw;
+  QString masterPW = pw.getPasswd();
+  US_DB2 db( masterPW );
+  
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Read protocol: Could not connect to database \n" ) + db.lastError() );
+      return;
+    }
+     
+  QString xmlstr( "" );
+
+  US_ProtocolUtil::read_record_auto( ProtocolName_auto, idInv_auto.toInt(),  &xmlstr, NULL, &db );
+
+  qDebug() << "Protocol READ !!! ";
+  
+  QXmlStreamReader xmli( xmlstr );
+
+  while( ! xmli.atEnd() )
+    {
+      xmli.readNext();
+      
+      if ( xmli.isStartElement() )
+	{
+	  QString ename   = xmli.name().toString();
+
+	  if ( ename == "cells" )
+	    readProtocolCells_auto( xmli );
+	}
+    }
+
+  qDebug() << "Protocol's Cell Section READ !!! ";
+
+  // Fill in centerpiece names from protocol (per channel)
   // DO  NOT FORGET TO populate centerpiece_names array by CHANNELS, NOT by Cells only !!!
   // E.g. if cells 2 & 4, then centerpiece_names must be put for 2/A, 2/B, 4/A, 4/B
+  // Some channles of the same cell may NOT be used!!! e.g 2/A, 4/A && 4/B
+
+  for ( int trx = 0; trx < cb_triple->count(); trx++ )
+    {
+      QStringList triple_name_list = cb_triple->itemText( trx ).split("/");
+      QString triple_name_cell = triple_name_list[0];
+
+      //iterate over cell_to_centerpeice QMap and check if cellID is a part of triple_name:
+      QMap<QString, QString>::const_iterator i = cell_to_centerpiece.constBegin();
+      while (i != cell_to_centerpiece.constEnd())
+	{
+	  if ( triple_name_cell.contains(i.key()) )
+	    {
+	      qDebug() << "triple_name_cell, cell, centerpiece: " << triple_name_cell << ", " << i.key() << ": " << i.value();
+	      //centerpiece_name = i.value();
+	      centerpiece_names[ trx ] = i.value();
+	      break;
+	    }
+	  ++i;
+	}
+      
+      //centerpiece_names[ trx ] = centerpiece_name;
+    }
   
 }
+
+bool US_Edit::readProtocolCells_auto( QXmlStreamReader& xmli )
+{
+  while( ! xmli.atEnd() )
+    {
+      QString ename   = xmli.name().toString();
+      
+      if ( xmli.isStartElement() )
+	{
+	  if ( ename == "cell" )
+	    {
+	      QXmlStreamAttributes attr = xmli.attributes();
+	      QString centerpiece = attr.value( "centerpiece" ).toString();
+	      QString cell_id     = attr.value( "id"          ).toString();
+
+	      cell_to_centerpiece [ cell_id ] =  centerpiece;
+	    }
+	}
+      
+      bool was_end    = xmli.isEndElement();  // Just read was End of element?
+      xmli.readNext();                        // Read the next element
+      
+      if ( was_end  &&  ename == "cells" )    // Break after "</cells>"
+	break;
+    }
+  
+  return ( ! xmli.hasError() );
+}
+
 
 void US_Edit::read_centerpiece_params( int trx )
 {
    QStringList query;
-   QString centerpieceID_protocol;          // <-- from protocol, by centerpiece name
    QString centerpieceID_read;
    QString centerpieceName_read;
 
    centerpiece_info.clear();
-
 
    // Check DB connection
    US_Passwd pw;
@@ -2079,17 +2178,16 @@ void US_Edit::read_centerpiece_params( int trx )
 
 }
 
-
 double US_Edit::find_meniscus_auto()
 {
-  // double bottom     = centerpiece_info[ "bottom" ].toDouble(); 
-  // double pathlength = centerpiece_info[ "pathlen" ].toDouble();
-  // double angle      = centerpiece_info[ "angle" ].toDouble();
+  double bottom     = centerpiece_info[ "bottom" ].toDouble(); 
+  double pathlength = centerpiece_info[ "pathlen" ].toDouble();
+  double angle      = centerpiece_info[ "angle" ].toDouble();
 
-  //TEMP
-  double bottom = 7.2;
-  double pathlength = 1.2;
-  double angle = 2.5;
+  // //TEMP
+  // double bottom = 7.2;
+  // double pathlength = 1.2;
+  // double angle = 2.5;
   
   //double aprofile_volume   = aprofile_data[ "volume" ].toDouble();
   double aprofile_volume   = 460; // Just an example - to be read from AProfile
