@@ -376,8 +376,6 @@ void US_ComProjectMain::initPanels( int  panx )
 	{
 	  //Fully set: nothing needs to be done/reset:
 	  qDebug() << "Jumping from EXPERIMENT.";
-	  //Maybe reset Experiment panel ??
-	  
 	}
 
       if ( curr_panx == 2 )

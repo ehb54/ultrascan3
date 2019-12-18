@@ -149,11 +149,14 @@ void US_ExperimentMain::reset( void )
   currProto = US_RunProtocol();
   loadProto = US_RunProtocol();
 
-  epanGeneral->resetPanel();
-  
   epanRotor->setFirstLab();  //need to reset Lab && savePanel() for Rotors
 
   epanAProfile->reset_sdiag(); //need to reset basic AProfile's protocol to defaults
+
+  tabWidget->setCurrentIndex( 0 );
+
+  epanGeneral->resetPanel();
+  
   
   /*
   // Reset General panel
@@ -431,6 +434,19 @@ void US_ExperGuiGeneral::resetPanel( void )
   le_protocol    ->setText ("");
   le_project     ->setText ("");
   le_label       ->setText ("");
+  
+  // Set up an approprate investigator text
+  if ( US_Settings::us_inv_level() < 1 )
+    pb_investigator->setEnabled( false );
+  
+  int id          = US_Settings::us_inv_ID();
+  QString invnbr  = ( id > 0 ) ?
+    QString::number( US_Settings::us_inv_ID() ) + ": "
+    : "";
+  QString invtxt  = invnbr + US_Settings::us_inv_name();
+  le_investigator->setText ( invtxt );
+
+  qDebug() << "Investigator After reset: " << invtxt;
   
 }
 
