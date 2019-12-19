@@ -5181,7 +5181,6 @@ DbgLv(1) << "Writing to disk";
 	       
 	       // Either emit ONLY if not US_MODE, or do NOT connect with slot on us_comproject...
 
-	       qDebug() << "RunID: " << runID;
 	       update_autoflow_record_atLimsImport();
 	       
 	       resetAll_auto();
@@ -5219,7 +5218,19 @@ void US_ConvertGui::update_autoflow_record_atLimsImport( void )
        << runID_numeric
        << runID;
 
-   db->query( qry );
+   //db->query( qry );
+
+   int status = db->statusQuery( qry );
+   
+   if ( status == US_DB2::NO_AUTOFLOW_RECORD )
+     {
+       QMessageBox::warning( this,
+			     tr( "Autoflow Record Not Updated" ),
+			     tr( "No autoflow record\n"
+				 "associated with this experiment." ) );
+       return;
+     }
+   
 }
 
 //Delete autoflow record upon Run abortion

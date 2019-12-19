@@ -63,6 +63,7 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
 
   us_edit_auto_mode = true;
   all_loaded = false;
+  is_spike_auto = false;
  
 //usmode = false;
  
@@ -298,7 +299,10 @@ pb_plateau->setVisible(false);
    pb_reviewep->setVisible( false );
    pb_nexteqtr->setVisible( false );
    pb_float       = us_pushbutton( tr( "Mark Data as Floating" ),     false );
-   pb_write       = us_pushbutton( tr( "Save Current Edit Profile" ), false );
+
+   //pb_write       = us_pushbutton( tr( "Save Current Edit Profile" ), false );
+   pb_write       = us_pushbutton( tr( "Save Edit Profiles" ), false );
+
    lo_writemwl    = us_checkbox  ( tr( "Save to all Wavelengths" ),
                                    ck_writemwl, true );
 
@@ -334,7 +338,7 @@ pb_plateau->setVisible(false);
    connect( pb_priorChan,    SIGNAL( clicked() ), SLOT( prior_triple_auto()  ) );
    
    connect( pb_float,        SIGNAL( clicked() ), SLOT( floating()  ) );
-   connect( pb_write,        SIGNAL( clicked() ), SLOT( write()     ) );
+   connect( pb_write,        SIGNAL( clicked() ), SLOT( write_auto()  ) );
 
    // Lay out specs widgets and layouts
    int s_row = 0;
@@ -555,6 +559,21 @@ pb_plateau->setVisible(false);
    left->addStretch();
    left->addLayout( buttons );
 
+   // Display status
+   QHBoxLayout* statInfo = new QHBoxLayout();
+
+   QLabel* lb_status = us_label(      tr( "Status:" ) );
+   le_status         = us_lineedit(   tr( "(no data loaded)" ), 1, true );
+   QPalette stpal;
+   stpal.setColor( QPalette::Text, Qt::white );
+   stpal.setColor( QPalette::Base, Qt::blue  );
+   le_status->setPalette( stpal );
+   
+   statInfo->addWidget( lb_status );
+   statInfo->addWidget( le_status );
+   left->addLayout( statInfo );
+
+   
    main->addLayout( left );
    main->addLayout( plot );
    main->setStretchFactor( left, 2 );
@@ -569,9 +588,6 @@ pb_plateau->setVisible(false);
    //details[ "filename" ] = QString("BSA-demo");
    //details[ "invID_passed" ] = QString("2");
 
-   //details[ "filename" ] = QString("RxRPPARhet-PPRE-MWL_180419-run352-test");
-   //details[ "invID_passed" ] = QString("6");
-
    //details[ "filename" ] = QString("MWL-test4_061419-run431");
    //details[ "invID_passed" ] = QString("6");
    
@@ -584,7 +600,13 @@ pb_plateau->setVisible(false);
    details[ "invID_passed" ] = QString("6");
    details[ "filename" ]     = QString("data-aquisition-test29-run364");
    details[ "protocolName" ] = QString("data-aquisition-test29");
+   /****************************************************************************************/
    
+   // details[ "filename" ]     = QString("RxRPPARhet-PPRE-MWL_180419-run352");
+   // details[ "invID_passed" ] = QString("41");
+   // details[ "protocolName" ] = QString("RxRPPARhet-PPRE-MWL_180419");
+   /****************************************************************************************/
+
    load_auto( details );
 }
 
@@ -609,6 +631,7 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
 
    us_edit_auto_mode = false;
    all_loaded = false;
+   is_spike_auto = false;
  
 //usmode = false;
  
@@ -1110,7 +1133,12 @@ void US_Edit::reset( void )
    
    pb_report      ->setEnabled( false );
    pb_float       ->setEnabled( false );
-   pb_write       ->setEnabled( false );
+
+   if ( us_edit_auto_mode )
+     pb_write       ->setEnabled( true );
+   else
+     pb_write       ->setEnabled( false );
+   
    ck_writemwl    ->setEnabled( false );
 
    // Remove icons
@@ -1390,6 +1418,9 @@ void US_Edit::gap_check( void )
 // Load an AUC data set
 void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
 {
+  details_at_editing_local = details_at_editing;
+  
+  le_status->setText( tr( "Loading data ..." ) );
   
   QList< DataDesc_auto >  sdescs_auto;
   datamap.clear();
@@ -1582,7 +1613,7 @@ DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
       le_edtrsp  ->setVisible( true  );
       pb_reviewep->setVisible( true  );
       pb_nexteqtr->setVisible( true  );
-      pb_write   ->setText( tr( "Save Edit Profiles" ) );
+      //pb_write   ->setText( tr( "Save Edit Profiles" ) );
 
       sData.clear();
       US_DataIO::SpeedData  ssDat;
@@ -1662,18 +1693,23 @@ DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
    else
    {  // non-Equilibrium
       bool notMwl  = ( nwaveln < 3 );
+
+      qDebug() << "notMWL, nwaveln: " << notMwl << ", " << nwaveln;
+	
       lb_rpms    ->setVisible( false );
       cb_rpms    ->setVisible( false );
 //      pb_plateau ->setVisible( true  );
       le_plateau ->setVisible( true  ); 
-      lb_baseline->setVisible( notMwl );
-      le_baseline->setVisible( notMwl ); 
+      // lb_baseline->setVisible( notMwl );
+      // le_baseline->setVisible( notMwl );
+      lb_baseline->setVisible( true );
+      le_baseline->setVisible( true );     
       lb_edtrsp  ->setVisible( false );
       le_edtrsp  ->setVisible( false );
       pb_reviewep->setVisible( false );
       pb_nexteqtr->setVisible( false );
 
-      pb_write   ->setText( tr( "Save Current Edit Profile" ) );
+      //pb_write   ->setText( tr( "Save Current Edit Profile" ) );
 
       pb_priorEdits->disconnect();
       connect( pb_priorEdits, SIGNAL( clicked() ), SLOT( apply_prior() ) );
@@ -1940,11 +1976,13 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
    show_mwl_controls( isMwl );
 
 
-   // /***************** TESTING ******************************************/
+   /***************** TESTING ******************************************/
 
    all_loaded = true;
+   le_status->setText( tr( "Data loaded..." ) );
 
    editProfile.clear();
+   centerpieceParameters.clear();
 
    //Read centerpiece names from protocol:
    centerpiece_names.clear();
@@ -1964,6 +2002,11 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
    //for ( int trx = 0; trx < triples.size(); trx++ )
    for ( int trx = 0; trx < cb_triple->count(); trx++ )
      {
+       QString triple_name = cb_triple->itemText( trx );
+
+       le_status->setText( tr( "Setting edit controls for channel %1" ).arg( triple_name ) );
+       qApp->processEvents();
+       
        index_data_auto( trx );
 
        edata          = outData[ data_index ];
@@ -2002,8 +2045,6 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 		   <<  QString::number(baseline);
 
        //ALEXEY: get all cb_triple listbox items (texts)...
-       QString triple_name = cb_triple->itemText( trx );
-       
        editProfile[ triple_name ] = triple_info;
 
        qDebug() << triple_name  << ", " << triple_info;
@@ -2017,8 +2058,11 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
      }
    else
      new_triple_auto( 0 );
-   
 
+   pb_write->setEnabled( true );
+
+   le_status->setText( tr( "Edit controls set" ) );
+   
    // /************** END OF TESTING ****************************************/   
 }
 
@@ -2184,31 +2228,40 @@ void US_Edit::read_centerpiece_params( int trx )
    query << "get_abstractCenterpiece_info" << centerpieceID_read;
    db.query( query );
    db.next();
-   
+
+   //Curent
    centerpiece_info[ "name" ]       = db.value( 1 ).toString();
    centerpiece_info[ "bottom" ]     = db.value( 3 ).toString();
    centerpiece_info[ "pathlen" ]    = db.value( 6 ).toString();
    centerpiece_info[ "angle" ]      = db.value( 7 ).toString();
 
+   //Global
+   centparms_info.clear();
+   centparms_info << centerpiece_info[ "name" ]
+		  << centerpiece_info[ "bottom" ]
+		  << centerpiece_info[ "pathlen" ]
+		  << centerpiece_info[ "angle" ];
+
+   centerpieceParameters[ trx ] = centparms_info;
 }
 
 double US_Edit::find_meniscus_auto()
 {
-  double bottom     = centerpiece_info[ "bottom" ].toDouble(); 
-  double pathlength = centerpiece_info[ "pathlen" ].toDouble();
-  double angle      = centerpiece_info[ "angle" ].toDouble();
+  double bottom_db     = centerpiece_info[ "bottom" ].toDouble(); 
+  double pathlength_db = centerpiece_info[ "pathlen" ].toDouble();
+  double angle_db      = centerpiece_info[ "angle" ].toDouble();
 
   // //TEMP
-  // double bottom = 7.2;
-  // double pathlength = 1.2;
-  // double angle = 2.5;
+  // double bottom_db = 7.2;
+  // double pathlength_db = 1.2;
+  // double angle_db = 2.5;
   
   //double aprofile_volume   = aprofile_data[ "volume" ].toDouble();
   double aprofile_volume   = 460; // Just an example - to be read from AProfile
   
-  double meniscus_init = sqrt( bottom*bottom - ( aprofile_volume*360/(1000*pathlength*angle*M_PI ) ) );     //Radians = Degrees * (M_PI/180.0)
+  double meniscus_init = sqrt( bottom_db*bottom_db - ( aprofile_volume*360/(1000*pathlength_db*angle_db*M_PI ) ) );     //Radians = Degrees * (M_PI/180.0)
   
-  qDebug() << "Meniscus_init: " << meniscus_init << ", " << bottom << ", " << pathlength << ", " << angle << ", " << M_PI;
+  qDebug() << "Meniscus_init: " << meniscus_init << ", " << bottom_db << ", " << pathlength_db << ", " << angle_db << ", " << M_PI;
     
   double meniscus_av = 0;
 
@@ -3687,6 +3740,8 @@ DbgLv(1) << "BL: BB : baseline bl" << baseline << bl;
 	    {
 	      plateau      = range_right - _PLATEAU_OFFSET_;
 	      le_plateau  ->setText( QString::number( plateau,     'f', 3 ) );
+
+	      le_baseline ->setText( QString::number( baseline,    'f', 3 ) );
 	    }
 	}
       
@@ -4823,7 +4878,7 @@ void US_Edit::remove_spikes_auto( void )
    pb_write ->setEnabled( true );
    replot();
 
-   if (us_edit_auto_mode  )
+   if ( us_edit_auto_mode )
      {
        meniscus      = editProfile[ cb_triple->currentText() ][0].toDouble();
        range_left    = editProfile[ cb_triple->currentText() ][1].toDouble();
@@ -5180,8 +5235,14 @@ DbgLv(1) << "EDT:NewTr:   sw tri dx" << swavl << triple << idax << "dataType" <<
    pb_spikes   ->setEnabled( true );
    pb_invert   ->setEnabled( true );
    pb_undo     ->setEnabled( true );
+
+
+   //qDebug() << "In new triple_auto: all_edits, isMw: " << all_edits << ", " << isMwl; 
+
+   all_edits = true;
    pb_write    ->setEnabled( all_edits );
    ck_writemwl ->setEnabled( all_edits && isMwl );
+
    all_edits    = false;
    changes_made = all_edits;
 
@@ -5672,6 +5733,308 @@ DbgLv(1) << "ED: Wr : bottom" << bottom;
    ck_writemwl ->setEnabled( false );
    pb_nextChan ->setEnabled( triples.size() > 1 && cb_triple->currentIndex() < triples.size()-1 );
 }
+
+
+// Save edit profile(s)
+void US_Edit::write_auto( void )
+{
+   // Determine if we are using the database
+   US_DB2* dbP    = NULL;
+
+   if ( disk_controls->db() )
+   {
+      US_Passwd pw;
+      dbP            = new US_DB2( pw.getPasswd() );
+
+      if ( dbP->lastErrno() != US_DB2::OK )
+      {
+         QMessageBox::warning( this, tr( "Connection Problem" ),
+           tr( "Could not connect to database: \n" ) + dbP->lastError() );
+         return;
+      }
+   }
+
+   qDebug() << "STARTING Saving"; 
+
+
+   /* TEMPORARY ***/
+   // // Compute and store the post-stream bottom value
+   // US_SimulationParameters simparams;
+   // simparams.initFromData( dbP, data, false, runID, dataType );
+   // bottom         = simparams.bottom;
+//*DEBUG*
+//bottom+=0.001;
+//*DEBUG*
+
+   qDebug() << " bottom" << bottom;
+
+   if ( !expIsEquil )
+   {  // non-Equilibrium:  write single current edit (if "all" unchecked)
+      if ( isMwl &&  ck_writemwl->isChecked() )
+      {  // Write edits for all triples in the current cell/channel
+	qDebug() << "Saving MWL";
+
+	for ( int trx = 0; trx < cb_triple->count(); trx++ )
+	  {
+	    qDebug() << "Writing MWL, channel: " << trx << ": " << cb_triple->itemText( trx );
+	    write_mwl_auto( trx );
+	  }
+      }
+
+      else
+      {  // Write single triple's edit
+
+	qDebug() << "Saving non-MWL";
+	for ( int trx = 0; trx < cb_triple->count(); trx++ )
+	  {
+	    qDebug() << "Writing non-MWL, channel: " << trx << ": " << cb_triple->itemText( trx );
+	    write_triple_auto( trx );
+	  }
+      }
+   }
+
+   else
+   {  // Equilibrium:  loop to write all edits
+      for ( int jr = 0; jr < triples.size(); jr++ )
+      {
+         triple_index = jr;
+         data         = *outData[ jr ];
+
+         write_triple();
+      }
+   }
+
+   le_status->setText( tr( "Saving COMPLETE " ) );
+   qApp->processEvents();
+
+
+   // Now we need to Update autoflow record, reset GUI && send signal to switch to Analysis stage:
+   update_autoflow_record_atEditData();
+   reset();
+   emit edit_complete_auto( details_at_editing_local  );   
+}
+
+// Save edits for a triple
+void US_Edit::update_autoflow_record_atEditData( void )
+{
+   QString runID_numeric     = details_at_editing_local[ "runID" ];
+
+   // Check DB connection
+   US_Passwd pw;
+   QString masterpw = pw.getPasswd();
+   US_DB2* db = new US_DB2( masterpw );
+   
+   if ( db->lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+       return;
+     }
+
+   QStringList qry;
+   qry << "update_autoflow_at_edit_data"
+       << runID_numeric;
+   
+   //db->query( qry );
+
+   int status = db->statusQuery( qry );
+   
+   if ( status == US_DB2::NO_AUTOFLOW_RECORD )
+     {
+       QMessageBox::warning( this,
+			     tr( "Autoflow Record Not Updated" ),
+			     tr( "No autoflow record\n"
+				 "associated with this experiment." ) );
+       return;
+     }
+   
+}
+
+// Save edits for a triple
+void US_Edit::write_triple_auto( int trx )
+{
+   triple_index = trx;
+  
+   index_data_auto( trx );
+  
+   edata          = outData[ data_index ];
+   data           = *edata;
+
+   QString editGUID;
+   QString editID;
+   QString rawGUID;
+   QString triple;
+   QString ss;
+   is_spike_auto = false;
+
+   int     odax   = trx;
+   int     idax   = odax;
+   
+   // Base parameters for triple:
+   QString triple_name = cb_triple->itemText( trx );
+
+   le_status->setText( tr( "Saving edit profile for channel %1" ).arg( triple_name ) );
+   qApp->processEvents();
+      
+   meniscus      = editProfile[ triple_name ][0].toDouble();
+   range_left    = editProfile[ triple_name ][1].toDouble();
+   range_right   = editProfile[ triple_name ][2].toDouble();
+   plateau       = editProfile[ triple_name ][3].toDouble();
+   baseline      = editProfile[ triple_name ][4].toDouble();
+   
+   if ( editProfile[ triple_name ].count() > 5 )
+     {
+       if ( editProfile[ triple_name ][5] == "spike_true")
+	 is_spike_auto = true;
+       else if (editProfile[ triple_name ][5] == "spike_false")
+	 is_spike_auto = false;
+     }
+
+   // ALEXEY: the bottom value affected by rotor stretch - time consuming !!! Do we need it ? 
+   //US_SimulationParameters simparams;
+   // simparams.initFromData( dbP, data, false, runID, dataType );
+   // bottom         = simparams.bottom;
+
+   bottom = centerpieceParameters[ trx ][1].toDouble();  //Should be from centerpiece info from protocol 
+   // End of base parameters
+   
+
+   if ( isMwl )
+   {  // For MultiWavelength, data index needs to be recomputed
+      int     wvx    = cb_lplot ->currentIndex();
+      QString swavl  = expc_wvlns[ wvx ];
+      triple         = cb_triple->itemText( trx ) + " / " + swavl;
+      idax           = triples.indexOf( triple );
+      odax           = index_data_auto( wvx );
+   }
+
+   // Do we need this ??
+   /*
+   if ( expIsEquil )
+   {  // Equilibrium:  set baseline,plateau as flag that those are "done"
+      int jsd     = sd_offs[ triple_index ];
+      meniscus    = sData[ jsd ].meniscus;
+      range_left  = sData[ jsd ].dataLeft;
+      range_right = sData[ jsd ].dataRight;
+      baseline    = range_left;
+      plateau     = range_right;
+   } 
+   */
+
+   // Check if complete
+   if ( meniscus == 0.0 )
+      ss = tr( "meniscus" );
+   else if ( dataType == "IP" && ( airGap_left == 0.0 || airGap_right == 9.0 ) )
+      ss = tr( "air gap" );
+   else if ( range_left == 0.0 || range_right == 9.0 )
+      ss = tr( "data range" );
+   else if ( plateau == 0.0 )
+      ss = tr( "plateau" );
+   else if ( baseline == 0.0 )
+      ss = tr( "baseline" );
+
+   if ( ! ss.isEmpty() )
+   {
+      QMessageBox::information( this,
+            tr( "Data missing" ),
+            tr( "You must define the " ) + ss
+            + tr( " before writing the edit profile." ) );
+      return;
+   }
+
+   // Check if meniscus and plateau are consistent with the data range
+   if ( meniscus >= range_left )
+   {
+      QMessageBox::critical( this,
+            tr( "Meniscus/Data_Left Inconsistent" ),
+            tr( "The specified Meniscus (%1) extends into the "
+                "Data Range (%2 to %3). Correct the Meniscus/Data_Left" )
+            .arg( meniscus ).arg( range_left ).arg( range_right ) );
+      return;
+   }
+
+   if ( plateau >= range_right )
+   {
+      QMessageBox::critical( this,
+            tr( "Plateau/Data_Right Inconsistent" ),
+            tr( "The specified Plateau (%1) is outside of the "
+                "Data Range (%2 to %3). Correct the Meniscus/Data_Right" )
+            .arg( plateau ).arg( range_left ).arg( range_right ) );
+      return;
+   }
+   //END check complete
+
+   // Ask for editLabel if not yet defined
+   editGUIDs[ idax ].clear();
+   QString now  =  QDateTime::currentDateTime()
+                   .toUTC().toString( "yyMMddhhmm" );
+
+   editLabel = now + QString::number( trx );
+
+   //Filename
+   QString filename = files[ idax ];
+   QString rpart    = filename.section( ".",  0, -6 );
+   QString tpart    = filename.section( ".", -5, -2 );
+   filename         = rpart + "." + editLabel + "." + tpart + ".xml";
+
+   if ( expType.isEmpty()  || expType.compare( "other", Qt::CaseInsensitive ) == 0 )
+     expType = "Velocity";
+   
+   editGUID         = editGUIDs[ idax ];
+
+   if ( editGUID.isEmpty() )
+   {
+      editGUID = US_Util::new_guid();
+      editGUIDs.replace( idax, editGUID );
+   }
+
+   rawGUID          = US_Util::uuid_unparse( (unsigned char*)data.rawGUID );
+   triple           = triples.at( idax );
+
+   // Output the edit XML file
+   int wrstat       = write_xml_file( filename, triple, editGUID, rawGUID );
+
+   if ( wrstat != 0 )
+     return;
+   else
+     editFnames[ idax ] = filename;
+
+   if ( disk_controls->db() )
+     {
+       if ( dbP == NULL )
+	 {
+	   US_Passwd pw;
+	   dbP          = new US_DB2( pw.getPasswd() );
+	   if ( dbP == NULL  ||  dbP->lastErrno() != US_DB2::OK )
+	     {
+	       QMessageBox::warning( this, tr( "Connection Problem" ),
+				     tr( "Could not connect to database \n" ) + dbP->lastError() );
+	       return;
+	     }
+	 }
+       
+       editID           = editIDs[ idax ];
+       
+       // Output the edit database record
+       wrstat     = write_edit_db( dbP, filename, editGUID, editID, rawGUID );
+       
+       if ( wrstat != 0 )
+         return;
+     }
+
+   // Output the Data Set Information report
+   QString rtext;
+   tpart            = filename.section( ".", -4, -2 ).replace( ".", "" );
+   QString rptfname = "dsinfo." + tpart + ".dataset_info.html";
+   QString rptfpath = QString( workingDir ).replace( "/results", "/reports" ) + rptfname;
+   int     idEdit   = editID.toInt();
+   
+   //create_report_auto( rtext, trx );
+   
+   //save_report_auto( rtext, rptfpath, idEdit, trx );
+  
+}
+
 
 // Save edits for a triple
 void US_Edit::write_triple( void )
@@ -7023,6 +7386,87 @@ DbgLv(1) << "od_radius_limit  value" << value;
    changes_made = true;
 }
 
+
+// Write edit to all wavelengths of the current cell/channel
+void US_Edit::write_mwl_auto( int trx )
+{
+
+  index_data_auto( trx );
+
+  edata          = outData[ data_index ];
+  data           = *edata;
+  
+  is_spike_auto = false;
+  QString str;
+  
+   if ( ! isMwl )
+     {
+       QMessageBox::warning( this,
+			     tr( "Invalid Selection" ),
+			     tr( "The \"Save to all Wavelengths\" button is only valid\n"
+				 "for MultiWavelength data. No Save will be performed." ) );
+       return;
+     }
+
+  
+   // Base parameters for triple:
+   QString triple_name = cb_triple->itemText( trx );
+   
+   meniscus      = editProfile[ triple_name ][0].toDouble();
+   range_left    = editProfile[ triple_name ][1].toDouble();
+   range_right   = editProfile[ triple_name ][2].toDouble();
+   plateau       = editProfile[ triple_name ][3].toDouble();
+   baseline      = editProfile[ triple_name ][4].toDouble();
+   
+   if ( editProfile[ triple_name ].count() > 5 )
+     {
+       if ( editProfile[ triple_name ][5] == "spike_true")
+	 is_spike_auto = true;
+       else if (editProfile[ triple_name ][5] == "spike_false")
+	 is_spike_auto = false;
+     }
+
+   //Is this needed ?
+   /*
+   if ( expIsEquil )
+   {  // Equilibrium:  set baseline,plateau as flag that those are "done"
+      int jsd     = sd_offs[ triple_index ];
+      meniscus    = sData[ jsd ].meniscus;
+      range_left  = sData[ jsd ].dataLeft;
+      range_right = sData[ jsd ].dataRight;
+      baseline    = range_left;
+      plateau     = range_right;
+   }
+   */
+
+   // Check if complete
+   if ( meniscus == 0.0 )
+      str = tr( "meniscus" );
+   else if ( dataType == "IP" && ( airGap_left == 0.0 || airGap_right == 9.0 ) )
+      str = tr( "air gap" );
+   else if ( range_left == 0.0 || range_right == 9.0 )
+      str = tr( "data range" );
+   else if ( plateau == 0.0 )
+      str = tr( "plateau" );
+   else if ( baseline == 0.0 )
+      str = tr( "baseline" );
+
+   if ( ! str.isEmpty() )
+   {
+      QMessageBox::information( this,
+            tr( "Data missing" ),
+            tr( "You must define the " ) + str +
+            tr( " before writing the edit profile." ) );
+      return;
+   }
+   //END check
+
+   
+   
+
+}
+
+
 // Write edit to all wavelengths of the current cell/channel
 void US_Edit::write_mwl()
 {
@@ -7419,7 +7863,8 @@ DbgLv(1) << "EDT:WrXml:  waveln" << waveln;
    if ( ! pb_residuals->icon().isNull()  ||
         ! pb_spikes->icon().isNull()     ||
         invert == -1.0                   ||
-        floatingData )
+        floatingData                     ||
+	is_spike_auto                     )
    {
       xml.writeStartElement( "operations" );
  
@@ -7432,11 +7877,22 @@ DbgLv(1) << "EDT:WrXml:  waveln" << waveln;
       }
 
       // Write Remove Spikes
-      if ( ! pb_spikes->icon().isNull() )
-      {
-         xml.writeStartElement( "remove_spikes" );
-         xml.writeEndElement  ();
-      }
+      if ( !us_edit_auto_mode )
+	{
+	  if ( ! pb_spikes->icon().isNull() )
+	    {
+	      xml.writeStartElement( "remove_spikes" );
+	      xml.writeEndElement  ();
+	    }
+	}
+      else
+	{
+	  if ( is_spike_auto )
+	    {
+	      xml.writeStartElement( "remove_spikes" );
+	      xml.writeEndElement  ();
+	    }
+	}
 
       // Write Invert
       if ( invert == -1.0 )
@@ -7896,6 +8352,28 @@ double US_Edit::radius_indexed( const double radi )
    return data.radius( data.xindex( radi ) );
 }
 
+
+// Create general data set information report file
+void US_Edit::create_report_auto( QString& ss, int trx )
+{
+//*DEBUG*
+US_DataIO::RawData* dd  = outData[ index_data_auto( trx ) ];
+for (int js=0; js<dd->scanData.size(); js++)
+{
+DbgLv(1) << "CR: js" << js << "secs" << dd->scanData[js].seconds
+ << "speed" << dd->scanData[js].rpm;
+}
+//*DEBUG*
+   QString title = "US_Edit";
+   QString head1 = tr( "General Data Set Information" );
+
+   ss  = html_header( title, head1 );
+   ss += run_details();
+   ss += scan_info();
+   ss += indent( 2 ) + "</body>\n</html>\n";
+}
+
+
 // Create general data set information report file
 void US_Edit::create_report( QString& ss )
 {
@@ -7934,6 +8412,50 @@ void US_Edit::view_report( void )
    tedit->e->setText( rtext );
    tedit->show();
 }
+
+// Save data set report
+void US_Edit::save_report_auto( const QString rtext, const QString rptfpath,
+				const int idEdit, const int trx )
+{
+
+   // Write report text to the report file
+   QFile f_rep( rptfpath );
+
+   bool is_ok = f_rep.open( QIODevice::WriteOnly | QIODevice::Truncate );
+
+   if ( ! is_ok )
+   {
+      qDebug() << "*ERROR* write open:" << rptfpath;
+      return;
+   }
+
+   QTextStream ts( &f_rep );
+   ts << rtext;
+   f_rep.close();
+
+   // Copy report to the database if required
+   if ( dbP != NULL )
+   {
+      QStringList rfiles;
+      QString pfdir    = QString( rptfpath ).section( "/",  0, -2 );
+      QString tripdesc = outData[ index_data_auto( trx ) ]->description;
+      rfiles << rptfpath;
+
+      // Set the runID for the report
+      US_Report freport;
+      freport.runID    = runID;
+
+      // Write the report record to the database
+      int st = freport.saveFileDocuments( pfdir,  rfiles, dbP,
+                                          idEdit, tripdesc );
+
+      if ( st != US_DB2::OK )
+      {
+         qDebug() << "*ERROR* saveFileDocuments, status" << st;
+      }
+   }
+}
+
 
 // Save data set report
 void US_Edit::save_report( const QString rtext, const QString rptfpath,
@@ -8059,8 +8581,8 @@ QString US_Edit::html_header( const QString title, const QString head1 )
 
 QString US_Edit::run_details( void )
 {
-  US_DataIO::RawData* dd = outData[ index_data() ];
-
+   US_DataIO::RawData* dd = outData[ index_data() ];
+  
    int scsize = dd->scanData.size();
    // Temperature and raw speed data
    double sumte   =  0.0;
