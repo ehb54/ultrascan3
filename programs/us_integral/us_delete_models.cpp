@@ -1,13 +1,13 @@
-//! \file us_remove_models.cpp
+//! \file us_delete_models.cpp
 
-#include "us_remove_models.h"
+#include "us_delete_models.h"
 #include "us_gui_settings.h"
 
 // Constructor:  remove-distributions dialog widget
-US_RemoveModels::US_RemoveModels( QVector< DisSys >& adistros,
+US_DeleteModels::US_DeleteModels( QVector< DisSys >& adistros,
     QWidget* p ) : US_WidgetsDialog( p, 0 ), distros( adistros )
 {
-   setObjectName( "US_RemoveModels" );
+   setObjectName( "US_DeleteModels" );
    setPalette( US_GuiSettings::frameColor() );
    setFont( QFont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() ) );
 
@@ -105,7 +105,7 @@ US_RemoveModels::US_RemoveModels( QVector< DisSys >& adistros,
 }
 
 // Private slot to react to a change in selections
-void US_RemoveModels::selectionsChanged()
+void US_DeleteModels::selectionsChanged()
 {
    // Get the list of selected items
    QList< QListWidgetItem* > selitems = lw_distrs->selectedItems();
@@ -172,7 +172,7 @@ void US_RemoveModels::selectionsChanged()
 }
 
 // Private slot to remove selected distributions from the displayed list
-void US_RemoveModels::remove()
+void US_DeleteModels::remove()
 {
    // Get the list-widget items currently selected
    QList< QListWidgetItem* > selitems = lw_distrs->selectedItems();
@@ -197,7 +197,7 @@ void US_RemoveModels::remove()
 }
 
 // Private slot to restore the original list of distributions
-void US_RemoveModels::restore()
+void US_DeleteModels::restore()
 {
    mdesc_list  = mdesc_orig;
    nd_orig     = mdesc_orig.count();
@@ -216,7 +216,7 @@ void US_RemoveModels::restore()
 }
 
 // Private slot to do the actual removal of distributions and close
-void US_RemoveModels::accepted()
+void US_DeleteModels::accepted()
 {
    if ( nd_selected > 0 )
    {  // Accept attempt with selections and no Remove clicked

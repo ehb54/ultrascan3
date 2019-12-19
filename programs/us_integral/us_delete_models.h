@@ -1,4 +1,4 @@
-//! \file us_remove_distros.h
+//! \file us_delete_models.h
 #ifndef US_DELMODEL_H
 #define US_DELMODEL_H
 
