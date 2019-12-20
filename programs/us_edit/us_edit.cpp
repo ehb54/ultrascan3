@@ -597,14 +597,14 @@ pb_plateau->setVisible(false);
    // details[ "protocolName" ] = QString("GMP-Demo-101519-2");
    /****************************************************************************************/
    
-   details[ "invID_passed" ] = QString("6");
-   details[ "filename" ]     = QString("data-aquisition-test29-run364");
-   details[ "protocolName" ] = QString("data-aquisition-test29");
+   // details[ "invID_passed" ] = QString("6");
+   // details[ "filename" ]     = QString("data-aquisition-test29-run364");
+   // details[ "protocolName" ] = QString("data-aquisition-test29");
    /****************************************************************************************/
    
-   // details[ "filename" ]     = QString("RxRPPARhet-PPRE-MWL_180419-run352");
-   // details[ "invID_passed" ] = QString("41");
-   // details[ "protocolName" ] = QString("RxRPPARhet-PPRE-MWL_180419");
+   details[ "filename" ]     = QString("RxRPPARhet-PPRE-MWL_180419-run352");
+   details[ "invID_passed" ] = QString("41");
+   details[ "protocolName" ] = QString("RxRPPARhet-PPRE-MWL_180419");
    /****************************************************************************************/
 
    load_auto( details );
@@ -2266,7 +2266,7 @@ double US_Edit::find_meniscus_auto()
   double meniscus_av = 0;
 
   // Scan Data Processing...
-  int size = data.pointCount();
+  //int size = data.pointCount();
   
   // For each scan in the last ~20% of scans:
   int start_scan = int(0.8*data.scanData.size());
@@ -7391,27 +7391,33 @@ DbgLv(1) << "od_radius_limit  value" << value;
 void US_Edit::write_mwl_auto( int trx )
 {
 
+  // triple_index = trx;
+
   index_data_auto( trx );
 
   edata          = outData[ data_index ];
   data           = *edata;
   
   is_spike_auto = false;
-  QString str;
-  
-   if ( ! isMwl )
-     {
-       QMessageBox::warning( this,
-			     tr( "Invalid Selection" ),
-			     tr( "The \"Save to all Wavelengths\" button is only valid\n"
-				 "for MultiWavelength data. No Save will be performed." ) );
-       return;
-     }
 
+  QString saved_info = le_info->text();
+  QString str;
+
+  if ( ! isMwl )
+    {
+      QMessageBox::warning( this,
+			    tr( "Invalid Selection" ),
+			    tr( "The \"Save to all Wavelengths\" button is only valid\n"
+				 "for MultiWavelength data. No Save will be performed." ) );
+      return;
+    }
   
-   // Base parameters for triple:
+  // Base parameters for triple:
    QString triple_name = cb_triple->itemText( trx );
-   
+
+   le_status->setText( tr( "Saving edit profile for channel %1" ).arg( triple_name ) );
+   qApp->processEvents();
+     
    meniscus      = editProfile[ triple_name ][0].toDouble();
    range_left    = editProfile[ triple_name ][1].toDouble();
    range_right   = editProfile[ triple_name ][2].toDouble();
@@ -7426,6 +7432,9 @@ void US_Edit::write_mwl_auto( int trx )
 	 is_spike_auto = false;
      }
 
+   bottom = centerpieceParameters[ trx ][1].toDouble();  //Should be from centerpiece info from protocol 
+   // End of base parameters
+   
    //Is this needed ?
    /*
    if ( expIsEquil )
@@ -7461,8 +7470,135 @@ void US_Edit::write_mwl_auto( int trx )
    }
    //END check
 
+   // Ask for editLabel if not yet defined
+   //editGUIDs[ idax ].clear();
+   QString now  =  QDateTime::currentDateTime()
+                   .toUTC().toString( "yyMMddhhmm" );
+
+   editLabel = now + QString::number( trx );
+
+   // Is it needed ?
+   /*
+   QVector< int > oldi_wvlns;
+   int     kwavelo  = mwl_data.lambdas( oldi_wvlns );      //ALEXEY: <-- current channel, needs to be looped over channels
+   int     nwavelo  = expi_wvlns.count();
+   int     wvx;
+   bool    chg_lamb = ( kwavelo != nwavelo );
+
+   if ( ! chg_lamb )
+   {  // If no change in number of wavelengths, check actual lists
+      for ( wvx = 0; wvx < nwavelo; wvx++ )
+      {
+         if ( oldi_wvlns[ wvx ] != expi_wvlns[ wvx ] )
+         {  // There is a difference in the lists:  mark as such
+            chg_lamb      = true;
+            break;
+         }
+      }
+   }
+
+   if ( chg_lamb )
+   {  // If wavelengths have changed, save new list and rebuild some vectors
+      mwl_data.set_lambdas( expi_wvlns );  // Save new lambdas for channel
+
+      reset_outData();
+   }
+
+   ***********/
+
+   //Set wavelengths for current triple:
+   QVector< int > current_wvlns;
+   QStringList current_wvlns_list;
+   int curr_wvls_count = mwl_data.lambdas( current_wvlns, trx );
+
+   //wvlns to list
+   for ( int wvx = 0; wvx < curr_wvls_count; wvx++ )
+     {
+       current_wvlns_list << QString::number( current_wvlns[ wvx ] );
+     }
    
-   
+   QString celchn   = celchns.at( triple_index );                // ALEXEY: <-- is it  lopped over triple indecies? 
+   QString scell    = celchn.section( "/", 0, 0 ).simplified();
+   QString schan    = celchn.section( "/", 1, 1 ).simplified();
+   QString tripbase = scell + " / " + schan + " / ";
+   int     idax     = triples.indexOf( tripbase + current_wvlns_list[ 0 ] ); 
+   int     odax     = index_data_auto( trx, 0 );                                
+
+   qDebug() << "Write_MWL:  triple_index, #wvlns, odax, celchn" << triple_index << "," << curr_wvls_count << ", " << odax << "," << celchn;
+
+   QString filebase = files[ idax ].section( ".",  0, -6 )
+                    + "." + editLabel + "."
+                    + files[ idax ].section( ".", -5, -5 )
+                    + "." + scell + "." + schan + ".";
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+
+   // Loop to output a file/db-record for each wavelength of the cell/channel
+
+   for ( int wvx = 0; wvx < current_wvlns_list.size(); wvx++ )           //ALEXEY: needs to be looped over channels, not only current channel
+   {
+      QString swavl    = current_wvlns_list[ wvx ];
+      QString triple   = tripbase + swavl;
+      QString filename = filebase + swavl + ".xml";
+      idax             = triples.indexOf( triple );
+      odax             = index_data_auto( trx, wvx );                             // Correct ?
+
+      qDebug()  << "EDT:WrMwl:  wvx triple" << wvx << triple << "filename" << filename;
+
+      QString editGUID = editGUIDs[ idax ];
+
+      if ( editGUID.isEmpty() )
+      {
+         editGUID      = US_Util::new_guid();
+         editGUIDs.replace( idax, editGUID );
+      }
+
+      QString rawGUID  = US_Util::uuid_unparse(
+            (unsigned char*)outData[ odax ]->rawGUID );
+
+
+      // Output the edit XML file
+      le_info   ->setText( tr( "Writing " ) + filename + " ..." );
+      le_status ->setText( tr( "Writing " ) + filename + " ..." );
+      qApp->processEvents();
+      int wrstat       = write_xml_file( filename, triple, editGUID, rawGUID );
+
+      if ( wrstat != 0 )
+         return;
+      else
+         editFnames[ idax ] = filename;
+
+      if ( disk_controls->db() )
+      {
+         if ( dbP == NULL )
+         {
+            US_Passwd pw;
+            dbP          = new US_DB2( pw.getPasswd() );
+            if ( dbP == NULL  ||  dbP->lastErrno() != US_DB2::OK )
+            {
+               QMessageBox::warning( this, tr( "Connection Problem" ),
+                 tr( "Could not connect to database \n" ) + dbP->lastError() );
+               return;
+            }
+         }
+
+         QString editID   = editIDs[ idax ];
+
+         // Output the edit database record
+         wrstat = write_edit_db( dbP, filename, editGUID, editID, rawGUID );
+DbgLv(1) << "EDT:WrMwl:  dax fname" << idax << filename << "wrstat" << wrstat;
+
+         if ( wrstat != 0 )
+            return;
+      }  // END:  DB output
+   }  // END:  wavelength-in-cellchannel loop
+
+   // QApplication::restoreOverrideCursor();
+   // changes_made = false;
+   // pb_report   ->setEnabled( false );
+   // pb_write    ->setEnabled( false );
+   // ck_writemwl ->setEnabled( false );
+   le_info->setText( saved_info );
+   qApp->processEvents();
 
 }
 
