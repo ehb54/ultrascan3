@@ -78,6 +78,9 @@ class US_Edit : public US_Widgets
       double             range_left;
       double             range_right;
       double             baseline;
+
+      double             baseline_od;
+      
       double             invert;
       double             plateau;
       double             gap_fringe;
@@ -406,9 +409,16 @@ class US_Edit : public US_Widgets
       double radius_indexed  ( const double );
                              
       QString      indent       ( int );
+
       QString      html_header  ( const QString, const QString );
+      QString      html_header_auto ( const QString, const QString, const int );
+            
       QString      run_details  ( void );
+      QString      run_details_auto  ( int );
+      
       QString      scan_info    ( void );
+      QString      scan_info_auto    ( int );
+      
       QString      table_row    ( const QString, const QString );
       QString      table_row    ( const QString, const QString,
                                   const QString );

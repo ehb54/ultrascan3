@@ -597,14 +597,14 @@ pb_plateau->setVisible(false);
    // details[ "protocolName" ] = QString("GMP-Demo-101519-2");
    /****************************************************************************************/
    
-   // details[ "invID_passed" ] = QString("6");
-   // details[ "filename" ]     = QString("data-aquisition-test29-run364");
-   // details[ "protocolName" ] = QString("data-aquisition-test29");
+   details[ "invID_passed" ] = QString("6");
+   details[ "filename" ]     = QString("data-aquisition-test29-run364");
+   details[ "protocolName" ] = QString("data-aquisition-test29");
    /****************************************************************************************/
    
-   details[ "filename" ]     = QString("RxRPPARhet-PPRE-MWL_180419-run352");
-   details[ "invID_passed" ] = QString("41");
-   details[ "protocolName" ] = QString("RxRPPARhet-PPRE-MWL_180419");
+   // details[ "filename" ]     = QString("RxRPPARhet-PPRE-MWL_180419-run352");
+   // details[ "invID_passed" ] = QString("41");
+   // details[ "protocolName" ] = QString("RxRPPARhet-PPRE-MWL_180419");
    /****************************************************************************************/
 
    load_auto( details );
@@ -1066,6 +1066,7 @@ void US_Edit::reset( void )
    range_right   = 9.0;
    plateau       = 0.0;
    baseline      = 0.0;
+   baseline_od   = 0.0;
    bottom        = 0.0;
    invert        = 1.0;  // Multiplier = 1.0 or -1.0
    noise_order   = 0;
@@ -2042,7 +2043,8 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 		   <<  QString::number(range_left)
 		   <<  QString::number(range_right)
 		   <<  QString::number(plateau)
-		   <<  QString::number(baseline);
+		   <<  QString::number(baseline)
+		   <<  QString::number(baseline_od);
 
        //ALEXEY: get all cb_triple listbox items (texts)...
        editProfile[ triple_name ] = triple_info;
@@ -3729,9 +3731,11 @@ void US_Edit::next_step( void )
 
          QString str;
          le_baseline->setText( str.sprintf( "%.3f (%.3e)", baseline, bl ) );
-DbgLv(1) << "BL: BB : baseline bl" << baseline << bl;
+	 DbgLv(1) << "BL: BB : baseline bl" << baseline << bl;
+
+	 baseline_od = bl;
  
- qDebug() << "SETTING Baseline, Plateau : baseline bl" << baseline << bl;
+	 qDebug() << "SETTING Baseline, Plateau : baseline bl" << baseline << bl;
          le_plateau ->setText( QString::number( plateau, 'f', 8 ) );
       }
       else
@@ -3742,6 +3746,8 @@ DbgLv(1) << "BL: BB : baseline bl" << baseline << bl;
 	      le_plateau  ->setText( QString::number( plateau,     'f', 3 ) );
 
 	      le_baseline ->setText( QString::number( baseline,    'f', 3 ) );
+
+	      baseline_od = 0;
 	    }
 	}
       
@@ -4863,10 +4869,10 @@ void US_Edit::remove_spikes_auto( void )
 
    pb_spikes->setIcon   ( check );
    
-   // ALEXEY: resize up to (1) meniscus; (2) left_range; (3) right_range; (4) plateau; (5) baseline 
+   // ALEXEY: resize up to (1) meniscus; (2) left_range; (3) right_range; (4) plateau; (5) baseline; (6) baseline_od
    for (int i=0; i < editProfile[ cb_triple->currentText() ].count(); i++)
      {
-       if (i > 4)
+       if (i > 5)
 	 editProfile[ cb_triple->currentText() ].removeAt(i);
      }
    
@@ -4885,14 +4891,21 @@ void US_Edit::remove_spikes_auto( void )
        range_right   = editProfile[ cb_triple->currentText() ][2].toDouble();
        plateau       = editProfile[ cb_triple->currentText() ][3].toDouble();
        baseline      = editProfile[ cb_triple->currentText() ][4].toDouble();
+       baseline_od   = editProfile[ cb_triple->currentText() ][5].toDouble();
      
        le_meniscus ->setText( QString::number( meniscus,   'f', 3 ) );
        le_dataStart->setText( QString::number( range_left, 'f', 3 ) );
        le_dataEnd  ->setText( QString::number( range_right, 'f', 3 ) );
        le_plateau  ->setText( QString::number( plateau,     'f', 3 ) );
-       le_baseline ->setText( QString::number( baseline,     'f', 3 ) );
-       //le_baseline->setText( str.sprintf( "%.3f (%.3e)", baseline, bl ) );   
-     
+
+       if ( isMwl ) 
+	 le_baseline ->setText( QString::number( baseline,     'f', 3 ) );
+       else
+	 {
+	   QString str;
+	   le_baseline->setText( str.sprintf( "%.3f (%.3e)", baseline, baseline_od ) );   
+	 }
+       
        plot_range();
      }
 
@@ -4938,14 +4951,21 @@ void US_Edit::undo_auto( void )
        range_right   = editProfile[ cb_triple->currentText() ][2].toDouble();
        plateau       = editProfile[ cb_triple->currentText() ][3].toDouble();
        baseline      = editProfile[ cb_triple->currentText() ][4].toDouble();
+       baseline_od   = editProfile[ cb_triple->currentText() ][5].toDouble();
      
        le_meniscus ->setText( QString::number( meniscus,   'f', 3 ) );
        le_dataStart->setText( QString::number( range_left, 'f', 3 ) );
        le_dataEnd  ->setText( QString::number( range_right, 'f', 3 ) );
        le_plateau  ->setText( QString::number( plateau,     'f', 3 ) );
-       le_baseline ->setText( QString::number( baseline,     'f', 3 ) );
-       //le_baseline->setText( str.sprintf( "%.3f (%.3e)", baseline, bl ) );   
-     
+
+       if ( isMwl ) 
+	 le_baseline ->setText( QString::number( baseline,     'f', 3 ) );
+       else
+	 {
+	   QString str;
+	   le_baseline->setText( str.sprintf( "%.3f (%.3e)", baseline, baseline_od ) );   
+	 }
+       
        plot_range();
      }
    
@@ -4969,10 +4989,10 @@ void US_Edit::undo_auto( void )
    spikes      = false;
    noise_order = 0;
 
-   // ALEXEY: resize up to (1) meniscus; (2) left_range; (3) right_range; (4) plateau; (5) baseline 
+   // ALEXEY: resize up to (1) meniscus; (2) left_range; (3) right_range; (4) plateau; (5) baseline; (6) baseline_od 
    for (int i=0; i < editProfile[ cb_triple->currentText() ].count(); i++)
      {
-       if (i > 4)
+       if (i > 5)
 	 editProfile[ cb_triple->currentText() ].removeAt(i);
      }
    
@@ -5084,15 +5104,15 @@ void US_Edit::new_triple_auto( int index )
   triple_index    = index;
 
   // Remove Spike: Icon/Enable
-  if ( editProfile[ cb_triple->currentText() ].count() > 5 )
+  if ( editProfile[ cb_triple->currentText() ].count() > 6 )
     {
-      if ( editProfile[ cb_triple->currentText() ][5] == "spike_true")
+      if ( editProfile[ cb_triple->currentText() ][6] == "spike_true")
 	{
 	  pb_spikes->setIcon( check );
 	  pb_spikes->setEnabled( false ); 
 	  
 	}
-      else if (editProfile[ cb_triple->currentText() ][5] == "spike_false")
+      else if (editProfile[ cb_triple->currentText() ][6] == "spike_false")
 	{
 	  pb_spikes->setIcon(QIcon());
 	  pb_spikes->setEnabled( true ); 
@@ -5352,23 +5372,29 @@ DbgLv(1) << "EDT:NewTr: DONE";
      range_right   = editProfile[ cb_triple->currentText() ][2].toDouble();
      plateau       = editProfile[ cb_triple->currentText() ][3].toDouble();
      baseline      = editProfile[ cb_triple->currentText() ][4].toDouble();
+     baseline_od   = editProfile[ cb_triple->currentText() ][5].toDouble();
      
      le_meniscus ->setText( QString::number( meniscus,   'f', 3 ) );
      le_dataStart->setText( QString::number( range_left, 'f', 3 ) );
      le_dataEnd  ->setText( QString::number( range_right, 'f', 3 ) );
      le_plateau  ->setText( QString::number( plateau,     'f', 3 ) );
-     le_baseline ->setText( QString::number( baseline,     'f', 3 ) );
-     //le_baseline->setText( str.sprintf( "%.3f (%.3e)", baseline, bl ) );   
-     
 
-     if ( editProfile[ cb_triple->currentText() ].count() > 5 )
+     if ( isMwl ) 
+       le_baseline ->setText( QString::number( baseline,     'f', 3 ) );
+     else
        {
-     	 if ( editProfile[ cb_triple->currentText() ][5] == "spike_true")
+	 QString str;
+	 le_baseline->setText( str.sprintf( "%.3f (%.3e)", baseline, baseline_od ) );   
+       }
+
+     if ( editProfile[ cb_triple->currentText() ].count() > 6 )
+       {
+     	 if ( editProfile[ cb_triple->currentText() ][6] == "spike_true")
      	   {
 	     qDebug() << "Spike_true";
 	     remove_spikes_auto();
 	   }
-     	 else if (editProfile[ cb_triple->currentText() ][5] == "spike_false")
+     	 else if (editProfile[ cb_triple->currentText() ][6] == "spike_false")
      	   {
 	     qDebug() << "Spike_false";
      	   //undo_auto();
@@ -5378,7 +5404,7 @@ DbgLv(1) << "EDT:NewTr: DONE";
      plot_range();
    }
  
- }
+}
 
 // Select a new triple
 void US_Edit::new_triple( int index )
@@ -5800,7 +5826,7 @@ void US_Edit::write_auto( void )
          triple_index = jr;
          data         = *outData[ jr ];
 
-         write_triple();
+         write_triple_auto( triple_index );
       }
    }
 
@@ -5809,6 +5835,11 @@ void US_Edit::write_auto( void )
 
 
    // Now we need to Update autoflow record, reset GUI && send signal to switch to Analysis stage:
+   QMessageBox::information( this,
+			     tr( "Saving of Edit Profiles is Complete." ),
+			     tr( "\n\n"
+				 "The program will switch to Analysis stage." ) );
+   
    update_autoflow_record_atEditData();
    reset();
    emit edit_complete_auto( details_at_editing_local  );   
@@ -5882,11 +5913,11 @@ void US_Edit::write_triple_auto( int trx )
    plateau       = editProfile[ triple_name ][3].toDouble();
    baseline      = editProfile[ triple_name ][4].toDouble();
    
-   if ( editProfile[ triple_name ].count() > 5 )
+   if ( editProfile[ triple_name ].count() > 6 )
      {
-       if ( editProfile[ triple_name ][5] == "spike_true")
+       if ( editProfile[ triple_name ][6] == "spike_true")
 	 is_spike_auto = true;
-       else if (editProfile[ triple_name ][5] == "spike_false")
+       else if (editProfile[ triple_name ][6] == "spike_false")
 	 is_spike_auto = false;
      }
 
@@ -6029,9 +6060,9 @@ void US_Edit::write_triple_auto( int trx )
    QString rptfpath = QString( workingDir ).replace( "/results", "/reports" ) + rptfname;
    int     idEdit   = editID.toInt();
    
-   //create_report_auto( rtext, trx );
+   create_report_auto( rtext, trx );
    
-   //save_report_auto( rtext, rptfpath, idEdit, trx );
+   save_report_auto( rtext, rptfpath, idEdit, trx );
   
 }
 
@@ -7424,11 +7455,11 @@ void US_Edit::write_mwl_auto( int trx )
    plateau       = editProfile[ triple_name ][3].toDouble();
    baseline      = editProfile[ triple_name ][4].toDouble();
    
-   if ( editProfile[ triple_name ].count() > 5 )
+   if ( editProfile[ triple_name ].count() > 6 )
      {
-       if ( editProfile[ triple_name ][5] == "spike_true")
+       if ( editProfile[ triple_name ][6] == "spike_true")
 	 is_spike_auto = true;
-       else if (editProfile[ triple_name ][5] == "spike_false")
+       else if (editProfile[ triple_name ][6] == "spike_false")
 	 is_spike_auto = false;
      }
 
@@ -8503,9 +8534,9 @@ DbgLv(1) << "CR: js" << js << "secs" << dd->scanData[js].seconds
    QString title = "US_Edit";
    QString head1 = tr( "General Data Set Information" );
 
-   ss  = html_header( title, head1 );
-   ss += run_details();
-   ss += scan_info();
+   ss  = html_header_auto( title, head1, trx );
+   ss += run_details_auto( trx );
+   ss += scan_info_auto( trx );
    ss += indent( 2 ) + "</body>\n</html>\n";
 }
 
@@ -8715,6 +8746,46 @@ QString US_Edit::html_header( const QString title, const QString head1 )
    return ss;
 }
 
+// Compose HTML header string
+QString US_Edit::html_header_auto( const QString title, const QString head1, const int trx_curr )
+{ 
+   int         trx     = index_data_auto( trx_curr );
+   QString     triple  = triples.at( trx );
+   QStringList parts   = triple.split( " / " );
+   QString     cell    = parts[ 0 ];
+   QString     channel = parts[ 1 ];
+   QString     wvlen   = parts[ 2 ];
+   QString     editID  = editIDs[ trx ];
+   QString     editLbl = editLabel.isEmpty() ?
+                         editFnames[ trx ].section( ".", -6, -6 ) : 
+                         editLabel;
+
+   QString ss = QString( "<?xml version=\"1.0\"?>\n" );
+   ss  += "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n";
+   ss  += "                      \"http://www.w3.org/TR/xhtml1/DTD"
+          "/xhtml1-strict.dtd\">\n";
+   ss  += "<html xmlns=\"http://www.w3.org/1999/xhtml\""
+          " xml:lang=\"en\" lang=\"en\">\n";
+   ss  += "  <head>\n";
+   ss  += "    <title> " + title + " </title>\n";
+   ss  += "    <meta http-equiv=\"Content-Type\" content="
+          "\"text/html; charset=iso-8859-1\"/>\n";
+   ss  += "    <style type=\"text/css\" >\n";
+   ss  += "      td { padding-right: 1em; }\n";
+   ss  += "      body { background-color: white; }\n";
+   ss  += "    </style>\n";
+   ss  += "  </head>\n  <body>\n";
+   ss  += "    <h1>" + head1 + "</h1>\n";
+   ss  += indent( 4 ) + tr( "<h2>Data Report for Run \"" ) + runID;
+   ss  += "\",<br/>\n" + indent( 4 ) + "&nbsp;" + tr( " Cell " ) + cell;
+   ss  += tr( ", Channel " ) + channel;
+   ss  += tr( ", Wavelength " ) + wvlen;
+   ss  += ",<br/>\n" + indent( 4 ) + "&nbsp;" + tr( " Edited Dataset " );
+   ss  += editLbl + "</h2>\n";
+ 
+   return ss;
+}
+
 QString US_Edit::run_details( void )
 {
    US_DataIO::RawData* dd = outData[ index_data() ];
@@ -8810,9 +8881,165 @@ QString US_Edit::run_details( void )
    return ss;
 }
 
+QString US_Edit::run_details_auto( int trx )
+{
+   US_DataIO::RawData* dd = outData[ index_data_auto( trx ) ];
+  
+   int scsize = dd->scanData.size();
+   // Temperature and raw speed data
+   double sumte   =  0.0;
+   double sumrs   =  0.0;
+   double maxTemp = -1.0e99;
+   double minTemp =  1.0e99;
+
+   for ( int ii = 0; ii < scsize; ii++ )
+   {
+      double tt = dd->scanData[ ii ].temperature;
+      sumte    += tt;
+      maxTemp   = qMax( maxTemp, tt );
+      minTemp   = qMin( minTemp, tt );
+      sumrs    += dd->scanData[ ii ].rpm;
+   }
+
+   QString avgrspd = QString::number( sumrs / scsize, 'f', 1 );
+   QString avgtemp = QString::number( sumte / scsize, 'f', 1 );
+   QString ss = "\n" + indent( 4 )
+        + tr( "<h3>Detailed Run Information:</h3>\n" )
+        + indent( 4 ) + "<table>\n"
+        + table_row( tr( "Cell Description:" ), dd->description )
+        + table_row( tr( "Data Directory:"   ), workingDir )
+        + table_row( tr( "Average Rotor Speed:" ), avgrspd + " rpm" )
+        + table_row( tr( "Average Temperature:" ), avgtemp + " " + MLDEGC );
+
+   if ( maxTemp - minTemp <= US_Settings::tempTolerance() )
+      ss += table_row( tr( "Temperature Variation:" ),
+                       tr( "Within tolerance" ) );
+   else 
+      ss += table_row( tr( "Temperature Variation:" ), 
+                       tr( "(!) OUTSIDE TOLERANCE (!)" ) );
+
+   // Time data
+   double time_correction = US_Math2::time_correction( allData );
+   int minutes = (int)time_correction / 60;
+   int seconds = (int)time_correction % 60;
+
+   QString mm  = ( minutes == 1 ) ? tr( " minute " ) : tr( " minutes " );
+   QString sec = ( seconds == 1 ) ? tr( " second"  ) : tr( " seconds"  );
+
+   ss += table_row( tr( "Time Correction:" ), 
+                    QString::number( minutes ) + mm +
+                    QString::number( seconds ) + sec );
+
+   double duration = allData.last().scanData.last().seconds;
+
+   int hours = (int) duration / 3600;
+   minutes   = (int) duration / 60 - hours * 60;
+   seconds   = (int) duration % 60;
+   QString ddType = QString( dd->type ).left( 2 );
+   QString                   dataType = tr( "Absorbance:" );
+   if ( ddType == "RI" )     dataType = tr( "Intensity:" );
+   if ( ddType == "WI" )     dataType = tr( "Intensity:" );
+   if ( ddType == "IP" )     dataType = tr( "Interference:" );
+   if ( ddType == "FI" )     dataType = tr( "Fluorescence:" );
+
+   QString hh;
+   hh  = ( hours   == 1 ) ? tr( " hour "   ) : tr( " hours " );
+   mm  = ( minutes == 1 ) ? tr( " minute " ) : tr( " minutes " );
+   sec = ( seconds == 1 ) ? tr( " second"  ) : tr( " seconds" );
+
+   ss += table_row( tr( "Run Duration:" ),
+                   QString::number( hours   ) + hh + 
+                   QString::number( minutes ) + mm + 
+                   QString::number( seconds ) + sec );
+
+   // Wavelength, baseline, meniscus, range
+   int    iwvln    = qRound( dd->scanData.last().wavelength );
+
+   // QString bln_od  = QString( le_baseline->text() ).section( "(", 1, 1 )
+   //                   .section( ")", 0, 0 ) + " OD";
+   // QString left    = le_dataStart->text();
+   // QString right   = le_dataEnd  ->text();
+   // QString plat    = le_plateau->text();
+
+   // Base parameters:
+   QString triple_name_r = cb_triple->itemText( trx );
+      
+   QString meniscus_r      = editProfile[ triple_name_r ][0];
+   QString range_left_r    = editProfile[ triple_name_r ][1];
+   QString range_right_r   = editProfile[ triple_name_r ][2];
+   QString plateau_r       = editProfile[ triple_name_r ][3];
+   QString baseline_r      = editProfile[ triple_name_r ][4];
+   QString baseline_od_r   = editProfile[ triple_name_r ][5];
+   
+   QString bln_od  = QString( baseline_od_r ) + " OD";
+   QString left    = range_left_r ;
+   QString right   = range_right_r;
+   QString plat    = plateau_r;
+   
+   
+   ss += table_row( tr( "Wavelength:" ),
+                    QString::number( iwvln ) + " nm" ) + 
+         table_row( tr( "Baseline " ) + dataType, bln_od ) +
+         table_row( tr( "Meniscus Position:" ),
+                    meniscus_r + " cm" );
+
+
+   ss += table_row( tr( "Edited Data starts at:"  ), left + " cm" ) +
+         table_row( tr( "Edited Data stops at:"   ), right + " cm " ) +
+         table_row( tr( "Plateau Position:"   ), plat + " cm" ); 
+
+   ss += indent( 4 ) + "</table>\n";
+
+   return ss;
+}
+
+
 QString US_Edit::scan_info( void )
 {
    US_DataIO::RawData* dd  = outData[ index_data() ];
+   double time_correction  = US_Math2::time_correction( allData );
+
+   QString ss = "\n" + indent( 4 ) + tr( "<h3>Scan Information:</h3>\n" )
+               + indent( 4 ) + "<table>\n"; 
+         
+   ss += table_row( tr( "Scan" ), tr( "Corrected Time" ), 
+                   tr( "Plateau Concentration" ),
+                   tr( "Seconds" ), tr( "Omega^2T" ), tr( "Raw Speed" ) );
+
+   for ( int ii = 0; ii < dd->scanData.size(); ii++ )
+   {
+      QString s1;
+      QString s2;
+      QString s3;
+      QString s4;
+      QString s5;
+      QString s6;
+
+      double time  = dd->scanData[ ii ].seconds;
+      double omg2t = dd->scanData[ ii ].omega2t;
+      double speed = dd->scanData[ ii ].rpm;
+      int    ctime = (int)( dd->scanData[ ii ].seconds - time_correction ); 
+      int    platx = US_DataIO::index( dd->xvalues, plateau );
+      double od    = dd->scanData[ ii ].rvalues[ platx ];
+
+      s1 = s1.sprintf( "%4d",             ii + 1 );
+      s2 = s2.sprintf( "%4d min %2d sec", ctime / 60, ctime % 60 );
+      s3 = s3.sprintf( "%.6f OD",         od ); 
+      s4 = s4.sprintf( "%5d",             (int)time );
+      s5 = s5.sprintf( "%.5e",            omg2t );
+      s6 = s6.sprintf( "%.1f",            speed );
+
+      ss += table_row( s1, s2, s3, s4, s5, s6 );
+   }
+
+   ss += indent( 4 ) + "</table>\n";
+   
+   return ss;
+}
+
+QString US_Edit::scan_info_auto( int trx )
+{
+   US_DataIO::RawData* dd  = outData[ index_data_auto( trx ) ];
    double time_correction  = US_Math2::time_correction( allData );
 
    QString ss = "\n" + indent( 4 ) + tr( "<h3>Scan Information:</h3>\n" )
