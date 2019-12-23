@@ -2062,6 +2062,7 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
      new_triple_auto( 0 );
 
    pb_write->setEnabled( true );
+   pb_undo ->setEnabled( false ); 
 
    le_status->setText( tr( "Edit controls set" ) );
    
@@ -5109,18 +5110,22 @@ void US_Edit::new_triple_auto( int index )
       if ( editProfile[ cb_triple->currentText() ][6] == "spike_true")
 	{
 	  pb_spikes->setIcon( check );
-	  pb_spikes->setEnabled( false ); 
+	  pb_spikes->setEnabled( false );
+	  pb_undo  ->setEnabled( true );
 	  
 	}
       else if (editProfile[ cb_triple->currentText() ][6] == "spike_false")
 	{
 	  pb_spikes->setIcon(QIcon());
-	  pb_spikes->setEnabled( true ); 
+	  pb_spikes->setEnabled( true );
+	  pb_undo  ->setEnabled( false );
 	}
     }
   else
     {
       pb_spikes->setIcon(QIcon());
+      pb_spikes->setEnabled( true );
+      pb_undo  ->setEnabled( false );
     }
   
       //Next/Proir triples
@@ -5254,7 +5259,7 @@ DbgLv(1) << "EDT:NewTr:   sw tri dx" << swavl << triple << idax << "dataType" <<
    pb_noise    ->setEnabled( true );
    pb_spikes   ->setEnabled( true );
    pb_invert   ->setEnabled( true );
-   pb_undo     ->setEnabled( true );
+   //pb_undo     ->setEnabled( true );
 
 
    //qDebug() << "In new triple_auto: all_edits, isMw: " << all_edits << ", " << isMwl; 
