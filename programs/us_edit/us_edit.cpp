@@ -597,9 +597,9 @@ pb_plateau->setVisible(false);
    // details[ "protocolName" ] = QString("GMP-Demo-101519-2");
    /****************************************************************************************/
    
-   details[ "invID_passed" ] = QString("6");
-   details[ "filename" ]     = QString("data-aquisition-test29-run364");
-   details[ "protocolName" ] = QString("data-aquisition-test29");
+   // details[ "invID_passed" ] = QString("6");
+   // details[ "filename" ]     = QString("data-aquisition-test29-run364");
+   // details[ "protocolName" ] = QString("data-aquisition-test29");
    /****************************************************************************************/
    
    // details[ "filename" ]     = QString("RxRPPARhet-PPRE-MWL_180419-run352");
@@ -607,7 +607,7 @@ pb_plateau->setVisible(false);
    // details[ "protocolName" ] = QString("RxRPPARhet-PPRE-MWL_180419");
    /****************************************************************************************/
 
-   load_auto( details );
+   //load_auto( details );
 }
 
 
