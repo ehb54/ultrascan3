@@ -4496,6 +4496,7 @@ DbgLv(1) << "EGUp:svRP:   prnames" << prnames;
    // QString rayleigh    = tr( "Rayleigh Interference" );
    // QStringList oprof   = sibLValue( "optical", "profiles" );
    
+    
   
    // Save the new name and compose the XML representing the protocol
    protoname           = newpname;
@@ -4710,6 +4711,7 @@ void US_ExperGuiUpload::submitExperiment()
 	  if ( oprof[ kk ].contains( rayleigh ) )
 	    ++ncells_interference;
 	}
+
       
       for (int i=0; i<nstages_size; i++)
       {
@@ -4726,7 +4728,7 @@ void US_ExperGuiUpload::submitExperiment()
                if ( channel.contains("sample") && channel.startsWith(QString::number(j+1)) )  // <-- Judge only by sample (channel A) for now
                {
                   Total_wvl[i]  += rpRange->chrngs[ ii ].wvlens.count();                     // <-- count wvl
-               }
+	       }
             }
             qDebug() << "#Wvl for cell: " << j << " is: " << Total_wvl[i];
          }
@@ -5487,7 +5489,13 @@ void US_ExperGuiUpload::submitExperiment()
          protocol_details[ "experimentId" ]   = QString::number(ExpDefId);        // this should be put into new table connceting protocol && experiment
          protocol_details[ "experimentName" ] = runname;
          protocol_details[ "protocolName" ]   = currProto->protoname;             // pass also to Live Update/PostProd protocol name
-         protocol_details[ "CellChNumber" ]   = QString::number(rpSolut->nschan); // this can be read from protocol in US-lims DB
+	 
+	 //ALEXEY: when interference ? (divide by 2!!! )
+	 if ( ncells_interference  )
+	   protocol_details[ "CellChNumber" ]   = QString::number( int(ncells_interference/2 )); 
+	 else //Absorbance ONLY
+	   protocol_details[ "CellChNumber" ]   = QString::number(rpSolut->nschan); // this can be read from protocol in US-lims DB
+
 	 protocol_details[ "duration" ]       = QString::number(Total_duration);
 	 protocol_details[ "invID_passed" ]   = QString::number(US_Settings::us_inv_ID());
 	 protocol_details[ "correctRadii" ]   = QString("YES");
@@ -5510,8 +5518,15 @@ void US_ExperGuiUpload::submitExperiment()
          {
             nwavl_tot  += rpRange->chrngs[ kk ].wvlens.count();
          }
-         protocol_details[ "TripleNumber" ] = QString::number(nwavl_tot);
-         protocol_details[ "OptimaName" ]   = rpRotor->instrname;
+	 
+	 //ALEXEY: when interference ? (always 1!!)
+	 if ( ncells_interference )
+	   protocol_details[ "TripleNumber" ] = QString::number(1 * int(ncells_interference/2 )); 
+	 else //Absorbance ONLY										  
+	   protocol_details[ "TripleNumber" ] = QString::number(nwavl_tot);
+
+
+	 protocol_details[ "OptimaName" ]   = rpRotor->instrname;
 	 //protocol_details[ "OptimaName" ]   = mainw->currentInstrument[ "name" ];
       }
       else
