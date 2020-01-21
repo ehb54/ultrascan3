@@ -63,7 +63,6 @@ QString US_AnalysisProfileGui::childSValue( const QString child, const QString t
    if      ( child == "general"  ) { value = apanGeneral->getSValue( type ); }
    else if ( child == "2dsa"     ) { value = apan2DSA   ->getSValue( type ); }
    else if ( child == "pcsa"     ) { value = apanPCSA   ->getSValue( type ); }
-//   else if ( child == "status"   ) { value = apanStatus ->getSValue( type ); }
    return value;
 }
 
@@ -74,7 +73,6 @@ int US_AnalysisProfileGui::childIValue( const QString child, const QString type 
    if      ( child == "general"  ) { value = apanGeneral->getIValue( type ); }
    else if ( child == "2dsa"     ) { value = apan2DSA   ->getIValue( type ); }
    else if ( child == "pcsa"     ) { value = apanPCSA   ->getIValue( type ); }
-//   else if ( child == "status"   ) { value = apanStatus ->getIValue( type ); }
    return value;
 }
 
@@ -85,7 +83,6 @@ double US_AnalysisProfileGui::childDValue( const QString child, const QString ty
    if      ( child == "general"  ) { value = apanGeneral->getDValue( type ); }
    else if ( child == "2dsa"     ) { value = apan2DSA   ->getDValue( type ); }
    else if ( child == "pcsa"     ) { value = apanPCSA   ->getDValue( type ); }
-//   else if ( child == "status"   ) { value = apanStatus ->getDValue( type ); }
    return value;
 }
 
@@ -97,7 +94,6 @@ QStringList US_AnalysisProfileGui::childLValue( const QString child, const QStri
    if      ( child == "general"  ) { value = apanGeneral->getLValue( type ); }
    else if ( child == "2dsa"     ) { value = apan2DSA   ->getLValue( type ); }
    else if ( child == "pcsa"     ) { value = apanPCSA   ->getLValue( type ); }
-//   else if ( child == "status"   ) { value = apanStatus ->getLValue( type ); }
 
    return value;
 }
@@ -112,21 +108,13 @@ DbgLv(1) << "newPanel panx=" << panx << "prev.panx=" << curr_panx;
    if      ( curr_panx == 0 ) apanGeneral->savePanel();
    else if ( curr_panx == 1 ) apan2DSA   ->savePanel();
    else if ( curr_panx == 2 ) apanPCSA   ->savePanel();
-DbgLv(1) << "newPanel   savePanel done";
+DbgLv(1) << "newPanel   savePanel done" << curr_panx;
 
    // Initialize the new current panel after possible changes
    if      ( panx == 0 )      apanGeneral->initPanel();
    else if ( panx == 1 )      apan2DSA   ->initPanel();
    else if ( panx == 2 )      apanPCSA   ->initPanel();
-   {
-      if ( panx - curr_panx > 1 )
-      {
-         apanPCSA    ->initPanel();
-         apanPCSA    ->savePanel();
-      }
-      apanGeneral->initPanel();
-   }
-DbgLv(1) << "newPanel   initPanel done";
+DbgLv(1) << "newPanel   initPanel done" << panx;
    
    curr_panx              = panx;         // Set new current panel
    
@@ -170,7 +158,6 @@ void US_AnalysisProfileGui::help( void )
    if      ( curr_panx == 0 ) apanGeneral ->help();
    else if ( curr_panx == 1 ) apan2DSA    ->help();
    else if ( curr_panx == 2 ) apanPCSA    ->help();
-//   else if ( curr_panx == 3 ) apanStatus  ->help();
 }
 
 //Slot to DISABLE tabs and Next/Prev buttons
@@ -278,8 +265,18 @@ DbgLv(1) << "AP:iP: pG return";
 DbgLv(1) << "AP:iP: p2 return";
    apanPCSA     ->initPanel();
 DbgLv(1) << "AP:iP: pP return";
-//   apanStatus   ->initPanel();
-//DbgLv(1) << "AP:iP: pP return";
+}
+
+// Save all panels in preparation for leaving an AProfile panel
+void US_AnalysisProfileGui::savePanels()
+{
+DbgLv(1) << "AP:iP: IN savePanels()";
+   apanGeneral  ->savePanel();
+DbgLv(1) << "AP:iP: pG return";
+   apan2DSA     ->savePanel();
+DbgLv(1) << "AP:iP: p2 return";
+   apanPCSA     ->savePanel();
+DbgLv(1) << "AP:iP: pP return";
 }
 
 //========================= End:   Main      section =========================
@@ -294,8 +291,8 @@ void US_AnaprofPanGen::initPanel()
 use_db=false;
 #endif
    // Populate GUI settings from protocol,analysis controls
-   le_protname   ->setText ( currProf->protoname );
-   le_aproname   ->setText ( currProf->aprofname );
+   le_protname   ->setText( currProf->protoname );
+   le_aproname   ->setText( currProf->aprofname );
 DbgLv(1) << "APGe: inP: aname pname" << currProf->aprofname << currProf->protoname;
 
 DbgLv(1) << "APGe: inP: CALL check_user_level()";
@@ -349,6 +346,17 @@ DbgLv(1) << "APGe: inP:   ox" << ii << "oName" << objname;
    // Build the General Layout
    build_general_layout( );
 
+   if ( currProf->lc_ratios.count() == nchan )
+   { // Reset General channel parameter gui elements
+      for ( int ii = 0; ii < nchan; ii++ )
+      {
+         le_lcrats[ ii ]->setText( QString::number( currProf->lc_ratios[ ii ] ) );
+         le_lctols[ ii ]->setText( QString::number( currProf->lc_tolers[ ii ] ) );
+         le_ldvols[ ii ]->setText( QString::number( currProf->l_volumes[ ii ] ) );
+         le_lvtols[ ii ]->setText( QString::number( currProf->lv_tolers[ ii ] ) );
+         le_daends[ ii ]->setText( QString::number( currProf->data_ends[ ii ] ) );
+      }
+   }
 }
 
 // Check the Run name
@@ -428,6 +436,24 @@ DbgLv(1) << "APge: svP: IN";
    currProf->protoname  = le_protname->text();
    currProf->aprofname  = le_aproname->text();
 DbgLv(1) << "APge: svP:  done";
+   int nchan       = le_lcrats.count();
+   if ( currProf->pchans.count() == nchan )
+   { // Reset General channel parameter gui elements
+      currProf->lc_ratios.clear( );
+      currProf->lc_tolers.clear( );
+      currProf->l_volumes.clear( );
+      currProf->lv_tolers.clear( );
+      currProf->data_ends.clear( );
+
+      for ( int ii = 0; ii < nchan; ii++ )
+      {
+         currProf->lc_ratios <<  le_lcrats[ ii ]->text().toDouble();
+         currProf->lc_tolers <<  le_lctols[ ii ]->text().toDouble();
+         currProf->l_volumes <<  le_ldvols[ ii ]->text().toDouble();
+         currProf->lv_tolers <<  le_lvtols[ ii ]->text().toDouble();
+         currProf->data_ends <<  le_daends[ ii ]->text().toDouble();
+      }
+   }
 }
 
 // Get a specific panel string value
@@ -550,24 +576,35 @@ int US_AnaprofPanGen::status()
 
 //========================= Start: 2DSA      section =========================
 
-// Initialize a Speeds panel, especially after clicking on its tab
+// Initialize a 2DSA sub-panel, especially after clicking on its tab
 void US_AnaprofPan2DSA::initPanel()
 {
    ap2DSA             = &(mainw->currProf.ap2DSA);
 DbgLv(1) << "AP2d:   iP: IN";
 
-#if 0
    // Populate GUI settings from protocol controls
-//   nchan                = ap2DSA ->nchan;
-#endif
+   int kparm          = ap2DSA->parms.size();
+   int kchan          = sl_chnsel.size();
+DbgLv(1) << "AP2d:   iP: kparm kchan" << kparm << kchan;
+   US_AnaProfile::AnaProf2DSA::Parm2DSA parm1;
+   if ( kparm > 0 )
+      parm1              = ap2DSA->parms[ 0 ];
+   for ( int ii = kparm; ii < kchan; ii++ )
+   {
+DbgLv(1) << "AP2d:   iP:   set-parm ii" << ii;
+      ap2DSA->parms << parm1;
+   }
 
    sl_chnsel       = sibLValue( "general", "channels" );
    cb_chnsel->clear();
    cb_chnsel->addItems( sl_chnsel );
-   bool was_changed     = changed;       // Save changed state
-   
-   changed              = was_changed;   // Restore changed state
 
+   cchx            = 0;
+   parms_to_gui( 0 );
+DbgLv(1) << "AP2d:   iP: parms_to_gui complete";
+
+   bool was_changed     = changed;       // Save changed state
+   changed              = was_changed;   // Restore changed state
 }
 
 // Save panel controls when about to leave the panel
@@ -575,13 +612,11 @@ void US_AnaprofPan2DSA::savePanel()
 {
 DbgLv(1) << "AP2d:svP: IN";
    // Populate protocol 2DSA controls from internal panel control
-#if 0
-   nspeed                = ssvals.count();
-   ap2DSA->nstep        = nspeed;
-   ap2DSA->spin_down    = ck_endoff->isChecked();
-   ap2DSA->radial_calib = ck_radcal->isChecked();
-DbgLv(1) << "AP2d:svP: nspeed" << nspeed;
-#endif
+   ap2DSA               = &(mainw->currProf.ap2DSA);
+   int nparm            = ap2DSA ->parms.count();
+DbgLv(1) << "AP2d:svP: nparm" << nparm << "cchx" << cchx;
+
+   gui_to_parms( cchx );
 }
 
 // Get a specific panel value
@@ -665,7 +700,7 @@ bool is_done=true;
 
 //========================= Start: PCSA      section =========================
 
-// Initialize a Cells panel, especially after clicking on its tab
+// Initialize a PCSA panel, especially after clicking on its tab
 void US_AnaprofPanPCSA::initPanel()
 {
    apPCSA             = &(mainw->currProf.apPCSA);
@@ -684,32 +719,33 @@ DbgLv(1) << "EGCe:inP: prb: nchan" << apPCSA->nchan;
    cb_chnsel->clear();
    cb_chnsel->addItems( sl_chnsel );
 
-   // Now build cell rows from protocol
-   int nchan           = apPCSA->nchan;
-   int kchan           = 0;
-DbgLv(1) << "EGCe:inP: nchan" << nchan;
+   // Populate GUI settings from protocol controls
+   int kparm          = apPCSA->parms.size();
+   int kchan          = sl_chnsel.size();
+DbgLv(1) << "APpc:   iP: kparm kchan" << kparm << kchan;
+   US_AnaProfile::AnaProfPCSA::ParmPCSA parm1;
+   if ( kparm > 0 )
+      parm1              = apPCSA->parms[ 0 ];
+   for ( int ii = kparm; ii < kchan; ii++ )
+   {
+      parm1.channel      = sl_chnsel[ ii ];
+DbgLv(1) << "APpc:   iP:   set-parm ii" << ii << "channel" << parm1.channel;
+      apPCSA->parms << parm1;
+   }
 
-
-   // Insure rows beyond nholes are totally invisible
-
-DbgLv(1) << "EGCe:inP: kchan" << kchan << "nchan" << nchan;
-   nchan               = kchan;
+   cchx               = 0;
+   parms_to_gui( 0 );
+DbgLv(1) << "APpc:   iP: parms_to_gui complete";
 }
 
-// Save Cells panel controls when about to leave the panel
+// Save PCSA panel controls when about to leave the panel
 void US_AnaprofPanPCSA::savePanel()
 {
-DbgLv(1) << "APPc:svP: IN";
-   // Recount cells used and fill vector based on GUI state
-//   int nholes          = sibIValue( "rotor", "nholes" );
-   int nchan           = 0;
-   QStringList ulabs;
-   QString txtempty    = tr( "empty" );
+   apPCSA               = &(mainw->currProf.apPCSA);
+   int nparm            = apPCSA ->parms.count();
+DbgLv(1) << "APpc:svP: nparm" << nparm << "cchx" << cchx;
 
-   // Now fill vector of used cell entries
-   apPCSA->nchan      = nchan;
-//   apPCSA->used.resize( nchan );
-
+   gui_to_parms( cchx );
 }
 
 // Get a specific panel value

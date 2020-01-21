@@ -48,7 +48,6 @@ DbgLv(1) << "MAIN:  apGE done";
 DbgLv(1) << "MAIN:  ap2D done";
    apanPCSA            = new US_AnaprofPanPCSA  ( this );
 DbgLv(1) << "MAIN:  apPC done";
-//   apanStatus          = new US_AnaprofPanStatus( this );
 //DbgLv(1) << "MAIN:  apUP done";
    statflag            = 0;
 
@@ -145,8 +144,10 @@ void US_AnalysisProfileGui::auto_name_passed( QString& p_protname, QString& p_ap
    if ( automode )
    {
       apanGeneral->disable_name_buttons();
-      apanGeneral->pass_names( p_protname, p_aproname );
+//      apanGeneral->pass_names( p_protname, p_aproname );
    }
+   apanGeneral->pass_names( p_protname, p_aproname );
+DbgLv(1) << "APG: pass_names" << p_protname << p_aproname;
 }
 
 // Update analysis profile based on inherited protocol
@@ -159,7 +160,7 @@ void US_AnalysisProfileGui::inherit_protocol( US_RunProtocol* iProto )
    int nchs        = iProto->rpSolut.chsols.count();
    int ncho        = iProto->rpOptic.chopts.count();
 
- DbgLv(1) << "APG00: ipro: kchn nchs ncho" << kchn << nchs << ncho;  
+DbgLv(1) << "APG00: ipro: kchn nchs ncho" << kchn << nchs << ncho;  
 
    if ( nchs < 1  ||  ncho < 1 )
      return;
@@ -577,6 +578,12 @@ void US_AnaprofPanGen::pass_names( QString& protname, QString& aproname )
 {
    le_protname->setText( protname );
    le_aproname->setText( aproname );
+DbgLv(1) << "APGe:  pn: passed:" << protname << aproname
+ << "McP names:" << mainw->currProf.protoname << mainw->currProf.aprofname
+ << "GcP names:" << currProf->protoname << currProf->aprofname;
+   currProf->protoname = protname;
+   currProf->aprofname = aproname;
+
    if ( mainw->automode )
    {
       us_setReadOnly( le_protname, true );
@@ -716,6 +723,7 @@ US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
 {
    mainw               = (US_AnalysisProfileGui*)topw;
    dbg_level           = US_Settings::us_debug();
+   cchx                = 0;
    QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
    panel->setContentsMargins( 2, 2, 2, 2 );
@@ -777,6 +785,7 @@ US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
    cb_chnsel       = new QComboBox( this );
    sl_chnsel       = sibLValue( "general", "channels" );
    cb_chnsel->addItems( sl_chnsel );
+   cb_chnsel->setCurrentIndex( cchx );
    ck_j1run        = new QCheckBox( tr( "Run" ), this );
    ck_j1run ->setPalette( US_GuiSettings::normalColor() );
    ck_j1run ->setChecked( true );
@@ -930,18 +939,91 @@ DbgLv(1) << "AP2d:  RTN initPanel()";
 // Channel Selected
 void US_AnaprofPan2DSA::channel_selected( int chnx )
 {
-DbgLv(1) << "2D:SL: CHAN_SEL" << chnx;
+   int prvx    = cchx;
+   cchx        = chnx;
+DbgLv(1) << "2D:SL: CHAN_SEL" << chnx << "prvx" << prvx;
+   // Save parameters from previous channel and load current
+   gui_to_parms( prvx );
+
+   parms_to_gui( chnx );
+
+   // Enable/disable Next based on last index
    int lndx    = sl_chnsel.count() - 1;
    pb_nextch->setEnabled( chnx < lndx );
 }
+
+// Transfer gui elements to parms vector row
+void US_AnaprofPan2DSA::gui_to_parms( int rowx )
+{
+   US_AnaProfile* currProf  = &mainw->currProf;
+   US_AnaProfile::AnaProf2DSA::Parm2DSA parm1;
+   int kchan       = currProf->pchans.count();
+   int kparm       = currProf->ap2DSA.parms.size();
+DbgLv(1) << "2D:SL-gp: rowx" << rowx << "kchan" << kchan << "kparm" << kparm;
+   if ( rowx >= kparm )
+   {
+DbgLv(1) << "2D:SL-gp: *ERROR* rowx>=kparm";
+      return;
+   }
+   parm1.s_min      = le_smin  ->text().toDouble();
+   parm1.s_max      = le_smax  ->text().toDouble();
+   parm1.k_min      = le_kmin  ->text().toDouble();
+   parm1.k_max      = le_kmax  ->text().toDouble();
+   parm1.ff0_const  = le_constk->text().toDouble();
+   parm1.s_grpts    = le_sgrpts->text().toDouble();
+   parm1.k_grpts    = le_kgrpts->text().toDouble();
+   parm1.gridreps   = le_grreps->text().toDouble();
+   parm1.varyvbar   = ck_varyvb->isChecked();
+   parm1.have_custg = ( le_custmg->text() != "(none)" );
+   parm1.channel    = sl_chnsel[ rowx ];
+   parm1.cust_grid  = le_custmg->text();
+   parm1.cgrid_name = le_custmg->text();
+
+   currProf->ap2DSA.parms.replace( rowx, parm1 );
+}
+
+// Transfer parms vector element to gui elements
+void US_AnaprofPan2DSA::parms_to_gui( int rowx )
+{
+   US_AnaProfile* currProf  = &mainw->currProf;
+   QVector< US_AnaProfile::AnaProf2DSA::Parm2DSA >*
+      parms        = &currProf->ap2DSA.parms;
+   int kchan       = currProf->pchans.count();
+   int kparm       = currProf->ap2DSA.parms.size();
+DbgLv(1) << "2D:SL-pg: rowx" << rowx << "kchan" << kchan << "kparm" << kparm;
+   if ( rowx >= kparm )
+   {
+DbgLv(1) << "2D:SL-pg: *ERROR* rowx>=kparm";
+      return;
+   }
+   US_AnaProfile::AnaProf2DSA::Parm2DSA
+      parm1        = parms->at( rowx );
+   le_smin  ->setText( QString::number( parm1.s_min     ) );
+   le_smax  ->setText( QString::number( parm1.s_max     ) );
+   le_kmin  ->setText( QString::number( parm1.k_min     ) );
+   le_kmax  ->setText( QString::number( parm1.k_max     ) );
+   le_constk->setText( QString::number( parm1.ff0_const ) );
+   le_sgrpts->setText( QString::number( parm1.s_grpts   ) );
+   le_kgrpts->setText( QString::number( parm1.k_grpts   ) );
+   le_grreps->setText( QString::number( parm1.gridreps  ) );
+   le_custmg->setText( parm1.cust_grid );
+
+   pb_nextch->setEnabled( rowx < ( sl_chnsel.count() - 1 ) );
+
+}
+
+// Next button clicked
 void US_AnaprofPan2DSA::next_channel( )
 {
 DbgLv(1) << "2D:SL: NEXT_CHAN";
-   int lndx    = sl_chnsel.count() - 1;
-   int chnx    = qMin( cb_chnsel->currentIndex() + 1, lndx );
+   int chnx    = qMin( cb_chnsel->currentIndex() + 1,
+                       sl_chnsel.count() - 1 );
    cb_chnsel->setCurrentIndex( chnx );
-   pb_nextch->setEnabled( chnx < lndx );
+
+   channel_selected( chnx );
 }
+
+// smin value changed
 void US_AnaprofPan2DSA::smin_changed( )
 {
 DbgLv(1) << "2D:SL: SMIN_CHG";
@@ -1039,6 +1121,7 @@ US_AnaprofPanPCSA::US_AnaprofPanPCSA( QWidget* topw )
 DbgLv(1) << "APpc: IN";
    mainw               = (US_AnalysisProfileGui*)topw;
    dbg_level           = US_Settings::us_debug();
+   cchx                = 0;
    QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
    panel->setContentsMargins( 2, 2, 2, 2 );
@@ -1086,6 +1169,7 @@ DbgLv(1) << "APpc: IN";
 
    cb_curvtype     = new QComboBox( this );
    cb_curvtype->addItems( sl_curvtype );
+   cb_curvtype->setCurrentIndex( 0 );
    cb_xaxistyp     = new QComboBox( this );
    cb_xaxistyp->addItems( sl_axistype );
    le_xmin         = us_lineedit( "1", 0, false );
@@ -1124,6 +1208,7 @@ DbgLv(1) << "APpc: IN";
    cb_chnsel       = new QComboBox( this );
    sl_chnsel       = sibLValue( "general", "channels" );
    cb_chnsel->addItems( sl_chnsel );
+   cb_chnsel->setCurrentIndex( cchx );
 //   int ihgt            = lb_curvtype->height();
 //   QSpacerItem* spacer1 = new QSpacerItem( 20, ihgt );
 
@@ -1220,7 +1305,9 @@ DbgLv(1) << "APpc: IN";
             this,         SLOT  ( mciters_changed  ( )      ) );
 
    // Do first pass at initializing the panel layout
+DbgLv(1) << "APpc: CALL initPanel()";
    initPanel();
+DbgLv(1) << "APpc:  RTN initPanel()";
 QString pval1 = sibSValue( "rotor", "rotor" );
 DbgLv(1) << "APpc: rotor+rotor=" << pval1;
 }
@@ -1232,13 +1319,26 @@ void US_AnaprofPanPCSA::nopcsa_checked( bool chkd )
 {
 DbgLv(1) << "PC:SL: NOPCSA_CKD" << chkd;
 }
+
 // Channel Selected
 void US_AnaprofPanPCSA::channel_selected( int chnx )
 {
 DbgLv(1) << "PC:SL: CHAN_SEL" << chnx;
+   int prvx    = cchx;
+   cchx        = chnx;
    int lndx    = sl_chnsel.count() - 1;
    pb_nextch->setEnabled( chnx < lndx );
+
+DbgLv(1) << "PC:SL: CHAN_SEL" << chnx << "prvx" << prvx;
+   // Save parameters from previous channel and load current
+   gui_to_parms( prvx );
+
+   parms_to_gui( chnx );
+
+   // Enable/disable Next based on last index
+   pb_nextch->setEnabled( chnx < lndx );
 }
+
 // Next Channel
 void US_AnaprofPanPCSA::next_channel( )
 {
@@ -1246,8 +1346,136 @@ DbgLv(1) << "PC:SL: NEXT_CHAN";
    int lndx    = sl_chnsel.count() - 1;
    int chnx    = qMin( cb_chnsel->currentIndex() + 1, lndx );
    cb_chnsel->setCurrentIndex( chnx );
-   pb_nextch->setEnabled( chnx < lndx );
+
+   channel_selected( chnx );
 }
+// Transfer gui elements to parms vector row
+void US_AnaprofPanPCSA::gui_to_parms( int rowx )
+{
+   US_AnaProfile* currProf  = &mainw->currProf;
+   US_AnaProfile::AnaProfPCSA::ParmPCSA parm1;
+   int kchan       = currProf->pchans.count();
+   int kparm       = currProf->apPCSA.parms.size();
+DbgLv(1) << "PC:SL-gp: rowx" << rowx << "kchan" << kchan << "kparm" << kparm;
+   if ( rowx >= kparm )
+   {
+DbgLv(1) << "PC:SL-gp: *ERROR* rowx>=kparm";
+      return;
+   }
+
+   parm1.x_min       = le_xmin    ->text().toDouble();
+   parm1.x_max       = le_xmax    ->text().toDouble();
+   parm1.y_min       = le_ymin    ->text().toDouble();
+   parm1.y_max       = le_ymax    ->text().toDouble();
+   parm1.z_value     = le_zvalue  ->text().toDouble();
+   parm1.tr_alpha    = le_regalpha->text().toDouble();
+   parm1.varcount    = le_varcount->text().toInt();
+   parm1.grf_iters   = le_grfiters->text().toInt();
+   parm1.creso_pts   = le_crpoints->text().toInt();
+   parm1.mc_iters    = le_mciters ->text().toInt();
+   parm1.job_run     = !ck_nopcsa  ->isChecked();
+   parm1.noise_flag  = 0;
+   parm1.noise_flag += ( ck_tinoise ->isChecked() ? 1 : 0 );
+   parm1.noise_flag += ( ck_rinoise ->isChecked() ? 2 : 0 );
+   parm1.treg_flag   = 0;
+   parm1.treg_flag   = ( ck_tregspec->isChecked() ? 1 : 0 );
+   parm1.treg_flag   = ( ck_tregauto->isChecked() ? 2 : 0 );
+   parm1.curv_type   = cb_curvtype->currentText();
+   parm1.x_type      = cb_xaxistyp->currentText();
+   parm1.y_type      = cb_yaxistyp->currentText();
+   parm1.z_type      = cb_zaxistyp->currentText();
+   parm1.channel     = sl_chnsel[ rowx ];
+DbgLv(1) << "PC:SL-gp:  curv_type" << parm1.curv_type << "channel" << parm1.channel;
+
+   currProf->apPCSA.parms.replace( rowx, parm1 );
+}
+
+// Transfer parms vector element to gui elements
+void US_AnaprofPanPCSA::parms_to_gui( int rowx )
+{
+   US_AnaProfile* currProf  = &mainw->currProf;
+   QVector< US_AnaProfile::AnaProfPCSA::ParmPCSA >*
+      parms        = &currProf->apPCSA.parms;
+   int kchan       = currProf->pchans.count();
+   int kparm       = currProf->apPCSA.parms.size();
+DbgLv(1) << "PC:SL-pg: rowx" << rowx << "kchan" << kchan << "kparm" << kparm;
+   if ( rowx >= kparm )
+   {
+DbgLv(1) << "PC:SL-pg: *ERROR* rowx>=kparm";
+      return;
+   }
+   US_AnaProfile::AnaProfPCSA::ParmPCSA
+      parm1        = parms->at( rowx );
+   QString chan    = parm1.channel;
+   QString chan_g  = cb_chnsel->itemText( rowx );
+   QString chan_l  = sl_chnsel[ rowx ];
+DbgLv(1) << "PC:SL-pg:  rowx" << rowx << "channel" << chan_g << chan << chan_l;
+
+   int ixcurv      = cb_curvtype->findText( parm1.curv_type );
+   if ( ixcurv < 0 )
+   {  // Curve type not found, so search for starting substring
+      for ( int ii = 0; ii < cb_curvtype->count(); ii++ )
+      {
+         if ( cb_curvtype->itemText( ii ).startsWith( parm1.curv_type ) )
+         {
+            ixcurv          = ii;
+DbgLv(1) << "PC:SL-pg:   ixcurv" << ixcurv << parm1.curv_type << cb_curvtype->itemText(ii);
+            break;
+         }
+      }
+   }
+
+   if ( chan != chan_g )
+   {  // Parms channel wrong, so replace with correct string
+      parm1.channel     = chan_g;
+      currProf->apPCSA.parms.replace( rowx, parm1 );
+DbgLv(1) << "PC:SL-pg:    chan replaced:" << parms->at( rowx ).channel;
+      chan              = chan_g;
+   }
+
+   int ixchns      = cb_chnsel->findText( chan );
+   if ( ixchns < 0 )
+   {  // Channel string not found, so search for starting substring
+      for ( int ii = 0; ii < cb_chnsel->count(); ii++ )
+      {
+         if ( cb_chnsel->itemText( ii ).startsWith( chan ) )
+         {
+            ixchns          = ii;
+DbgLv(1) << "PC:SL-pg:   ixchns(I)" << ixchns << chan << cb_chnsel->itemText(ii);
+            break;
+         }
+      }
+   }
+else
+ DbgLv(1) << "PC:SL-pg:   ixchns(X)" << ixchns << chan << cb_chnsel->itemText(ixchns);
+
+   le_xmin    ->setText( QString::number( parm1.x_min     ) );
+   le_xmax    ->setText( QString::number( parm1.x_max     ) );
+   le_ymin    ->setText( QString::number( parm1.y_min     ) );
+   le_ymax    ->setText( QString::number( parm1.y_max     ) );
+   le_zvalue  ->setText( QString::number( parm1.z_value   ) );
+   le_regalpha->setText( QString::number( parm1.tr_alpha  ) );
+   le_varcount->setText( QString::number( parm1.varcount  ) );
+   le_grfiters->setText( QString::number( parm1.grf_iters ) );
+   le_crpoints->setText( QString::number( parm1.creso_pts ) );
+   le_mciters ->setText( QString::number( parm1.mc_iters  ) );
+   ck_nopcsa  ->setChecked( !parm1.job_run );
+   ck_tinoise ->setChecked( ( parm1.noise_flag & 1 ) != 0 );
+   ck_rinoise ->setChecked( ( parm1.noise_flag & 2 ) != 0 );
+   ck_tregspec->setChecked( ( parm1.treg_flag  & 1 ) != 0 );
+   ck_tregauto->setChecked( ( parm1.treg_flag  & 2 ) != 0 );
+   cb_curvtype->setCurrentIndex( ixcurv );
+   cb_xaxistyp->setCurrentIndex( cb_xaxistyp->findText( parm1.x_type    ) );
+   cb_yaxistyp->setCurrentIndex( cb_yaxistyp->findText( parm1.y_type    ) );
+   cb_zaxistyp->setCurrentIndex( cb_zaxistyp->findText( parm1.z_type    ) );
+   cb_chnsel  ->setCurrentIndex( ixchns );
+DbgLv(1) << "PC:SL-pg:  curv_type" << parm1.curv_type << "channel" << chan;
+DbgLv(1) << "PC:SL-pg:   curvtype ndx" << cb_curvtype->currentIndex()
+ << "chnsel ndx" << cb_chnsel->currentIndex();
+
+   pb_nextch  ->setEnabled( rowx < ( sl_chnsel.count() - 1 ) );
+}
+
 void US_AnaprofPanPCSA::apply_all_clicked( )
 {
 DbgLv(1) << "PC:SL: APLALL_CLK";

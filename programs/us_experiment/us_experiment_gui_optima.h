@@ -908,6 +908,7 @@ class US_ExperimentMain : public US_Widgets
 
       US_RunProtocol  loadProto;   // Controls as loaded from an RP record
       US_RunProtocol  currProto;   // Current RunProtocol controls
+      US_AnaProfile   currAProf;   // Current AnaProfile controls
 
       QPushButton* pb_next;
       QPushButton* pb_prev;
@@ -974,7 +975,7 @@ class US_ExperimentMain : public US_Widgets
       void reset     ( void );
       void    exclude_used_instruments( QStringList &);
 
-      US_AnaProfile get_aprofile( void );
+      US_AnaProfile* get_aprofile( void );
 	
     signals:
       void us_exp_is_closed( void );

@@ -162,10 +162,13 @@ class US_AnaprofPan2DSA : public US_WidgetsDialog
 
       QStringList  sl_chnsel;
       int          dbg_level;     // Debug flag
+      int          cchx;          // Current 2DSA channel index
       bool         changed;       // Flag if any speed step changes
       
    private slots:
       void channel_selected ( int );
+      void parms_to_gui     ( int );
+      void gui_to_parms     ( int );
       void next_channel     ( );
       void smin_changed     ( );
       void smax_changed     ( );
@@ -247,12 +250,15 @@ class US_AnaprofPanPCSA : public US_WidgetsDialog
 
       bool         changed;
       int          dbg_level;
+      int          cchx;          // Current PCSA channel index
       QStringList  sl_chnsel;
 
    private slots:
       void nopcsa_checked   ( bool );
       void channel_selected ( int );
       void next_channel     ( );
+      void parms_to_gui     ( int );
+      void gui_to_parms     ( int );
       void curvtype_selected( int );
       void apply_all_clicked( );
       void xaxis_selected   ( int );
@@ -378,6 +384,8 @@ class US_AnalysisProfileGui : public US_Widgets
       QStringList childLValue ( const QString, const QString );
       // \brief Initialize all the panels
       void        initPanels  ( void );
+      // \brief Save all the panels
+      void        savePanels  ( void );
       // \brief Get the list of protocol names and summary-data strings
       int         getProfiles   ( QStringList&, QList< QStringList >& );
       // \brief Update the list of protocols with a newly named entry

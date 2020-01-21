@@ -190,9 +190,9 @@ void US_ExperimentMain::reset( void )
 
 }
 
-US_AnaProfile US_ExperimentMain::get_aprofile( )
+US_AnaProfile* US_ExperimentMain::get_aprofile( )
 {
-  return epanAProfile->sdiag->currProf;
+  return &(epanAProfile->sdiag->currProf);
 }
 
 void US_ExperimentMain::exclude_used_instruments( QStringList & occupied_instruments )
@@ -3024,11 +3024,12 @@ DbgLv(1) << "EGSo:rbS:  nschan nuniqs" << nschan << nuniqs
 // Slot to open a dialog for managing solutions
 void US_ExperGuiSolutions::manageSolutions()
 {
-   US_SolutionGui* sdiag = new US_SolutionGui;
+   US_SolutionGui* mdiag = new US_SolutionGui;
 
-   connect(sdiag, SIGNAL( newSolAdded() ), this, SLOT( regenSolList() ) ); //ALEXEY when solution added from US_Exp, update sotution list
+   connect( mdiag, SIGNAL( newSolAdded()  ),
+            this,  SLOT(   regenSolList() ) ); //ALEXEY when solution added from US_Exp, update sotution list
 
-   sdiag->show();
+   mdiag->show();
 }
 
 //Update Solution List
@@ -3878,8 +3879,9 @@ US_ExperGuiAProfile::US_ExperGuiAProfile( QWidget* topw )
    QString aprofname   = rpAprof->aprofname;
    if ( aprofname.isEmpty() )
       aprofname           = protoname;
-   sdiag->auto_name_passed( protoname, aprofname );
    sdiag->inherit_protocol( &mainw->currProto );
+   sdiag->auto_name_passed( protoname, aprofname );
+   mainw->currAProf    = sdiag->currProf;
    sdiag->show();
 }
 
@@ -4421,9 +4423,9 @@ void US_ExperGuiUpload::saveAnalysisProfile()
    xmlo_aprof.setAutoFormatting( true );
    //mainw->epanAProfile->sdiag->currProf.toXml( xmlo_aprof );
 
-   US_AnaProfile aprof = mainw->get_aprofile();
+   US_AnaProfile* aprof = mainw->get_aprofile();
 
-   aprof.toXml( xmlo_aprof ); 
+   aprof->toXml( xmlo_aprof ); 
    qDebug() << "XML AProfile: " << rpAprof->us_xml;
 }
 
