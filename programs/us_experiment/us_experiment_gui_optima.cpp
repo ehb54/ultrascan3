@@ -4427,6 +4427,8 @@ void US_ExperGuiUpload::saveAnalysisProfile()
 
    aprof->toXml( xmlo_aprof ); 
    qDebug() << "XML AProfile: " << rpAprof->us_xml;
+
+   //return;
 }
 
 // Slot to save the current Run Protocol

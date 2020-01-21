@@ -45,6 +45,9 @@
 
 US_ConvertGui::US_ConvertGui( QString auto_mode ) : US_Widgets()
 {
+
+  qDebug() << "US_CONVERT: SETTING 1";
+  
    ExpData.invID = US_Settings::us_inv_ID();
 
    usmode = false;
@@ -484,9 +487,14 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    main->setStretchFactor( left,  3 );
    main->setStretchFactor( right, 5 );
 
+
+    qDebug() << "US_CONVERT: SETTING 2";
+   
    DbgLv(1) << "CGui: GUI setup complete";
    reset();
 DbgLv(1) << "CGui: reset complete";
+
+ qDebug() << "US_CONVERT: SETTING 3"; 
   
    us_setReadOnly( le_runID2, true );  // ALEXEY Run ID alwys in read-only mode
    setMinimumSize( 950, 450 );
@@ -562,6 +570,8 @@ DbgLv(1) << "CGui: reset complete";
    // qDebug() << "ExpData.RI_nscans" <<  ExpData.RI_nscans;        
    // qDebug() << "ExpData.RI_nwvlns" <<  ExpData.RI_nwvlns;      
 
+
+   qDebug() << "US_CONVERT: SET !"; 
 }
 
 

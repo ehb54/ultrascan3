@@ -276,7 +276,7 @@ class US_EditingGui : public US_WidgetsDialog
  signals:
    void start_editing( QMap < QString, QString > & );
    void reset_data_editing_passed ( void );
-   void switch_to_analsyis( QMap < QString, QString > &  );
+   void switch_to_analysis( QMap < QString, QString > &  );
 };
 
 //! \brief Analysis panel
@@ -297,7 +297,7 @@ class US_AnalysisGui : public US_WidgetsDialog
     //void resizeEvent(QResizeEvent *event) override;
       
  private slots:
-    void do_analysis( QMap < QString, QString > & );
+   void do_analysis( QMap < QString, QString > & );
 
  signals:
    void start_analysis( QMap < QString, QString > & );

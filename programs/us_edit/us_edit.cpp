@@ -45,6 +45,10 @@
 // Alt. Constructor
 US_Edit::US_Edit( QString auto_mode ) : US_Widgets()
 {
+
+  qDebug () << "US_EDIT: SETTING 1";
+
+    
    check        = US_Images::getIcon( US_Images::CHECK );
    invert       = 1.0;
    all_edits    = false;
@@ -580,9 +584,12 @@ pb_plateau->setVisible(false);
    main->setStretchFactor( plot, 3 );
    top ->addLayout( main );
 
+   qDebug () << "US_EDIT: SETTING 2";
+   
    reset();
-
-
+   
+   qDebug () << "US_EDIT: SETTING 3";
+ 
    // TESTING ...
    QMap < QString, QString > details;
    //details[ "filename" ] = QString("BSA-demo");
@@ -608,6 +615,8 @@ pb_plateau->setVisible(false);
    /****************************************************************************************/
 
    //load_auto( details );
+
+   qDebug () << "US_EDIT: SET !";
 }
 
 

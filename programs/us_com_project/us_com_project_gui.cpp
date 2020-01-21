@@ -346,8 +346,8 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( epanPostProd, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
    connect( this, SIGNAL( reset_data_editing() ),  epanEditing, SLOT( reset_data_editing( )  ) );
 
-   connect( epanPostProd, SIGNAL( switch_to_analysis( QMap < QString, QString > & ) ), this, SLOT( switch_to_analysis( QMap < QString, QString > & )  ) );
-   connect( this, SIGNAL( pass_to_analysis( QString &, QString & ) ),   epanAnalysis, SLOT( do_analysis( QString &, QString & )  ) );
+   connect( epanEditing, SIGNAL( switch_to_analysis( QMap < QString, QString > & ) ), this, SLOT( switch_to_analysis( QMap < QString, QString > & )  ) );
+   connect( this, SIGNAL( pass_to_analysis( QMap < QString, QString > & ) ),   epanAnalysis, SLOT( do_analysis( QMap < QString, QString > & )  ) );
    
    setMinimumSize( QSize( 1350, 800 ) );
    adjustSize();
@@ -1183,6 +1183,12 @@ void US_InitDialogueGui::initRecordsDialogue( void )
     {
       emit switch_to_editing_init( protocol_details );
     }
+
+  if ( stage == "ANALYSIS" )
+    {
+      qDebug() << "To ANALYSIS SWITCH ";
+      
+    }
   //and so on...
    
 }
@@ -1361,7 +1367,7 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
 	{
 	  if ( status == "LIVE_UPDATE" )
 	    autoflowentry << QString( tr( "RUNNING" ) );
-	  if ( status == "EDITING" )
+	  if ( status == "EDITING" || status == "ANALYSIS" || status == "REPORT" )
 	    autoflowentry << QString( tr( "COMPLETED" ) );
 	    //autoflowentry << time_started.toString();
 	}
@@ -2062,7 +2068,7 @@ void US_EditingGui::resizeEvent(QResizeEvent *event)
 
 void US_EditingGui::to_analysis( QMap < QString, QString > & protocol_details )
 {
-  emit switch_to_analsyis( protocol_details );
+  emit switch_to_analysis( protocol_details );
 }
 
 

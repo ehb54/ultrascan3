@@ -255,6 +255,8 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
    if ( dbP != NULL )
      read_optima_machines( dbP );
 
+   qDebug() << "After opt. machines 1";
+
    // for ( int ii = 0; ii < instruments.count(); ii++ )
    //   sl_optimas << QString::number( instruments[ ii ].ID )
    //     + ": " + instruments[ ii ].name;
@@ -736,6 +738,9 @@ if(mcknt>0)
 
    // check_for_data( protocol_details );
    // End of test
+
+
+   qDebug() << "XPN viewer set " ;
    
 }
 
@@ -833,6 +838,8 @@ US_XpnDataViewer::US_XpnDataViewer() : US_Widgets()
    if ( dbP != NULL )
      read_optima_machines( dbP );
 
+   qDebug() << "After opt. machines 2";
+   
    for ( int ii = 0; ii < instruments.count(); ii++ )
      sl_optimas << instruments[ ii ][ "ID" ] 
        + ": " + instruments[ ii ][ "name" ];
@@ -1318,7 +1325,7 @@ void US_XpnDataViewer::read_optima_machines( US_DB2* db )
 	    this->instruments << instrument;
 	}
     }
-  qDebug() << "Reading Instrument: FINISH";
+  qDebug() << "Reading Instrument: FINISH in xpn_viewer";
 }
 
 // Slot to select in Optima in use        <----------------------- // New   
