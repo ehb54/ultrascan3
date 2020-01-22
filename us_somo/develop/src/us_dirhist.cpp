@@ -12,7 +12,7 @@ US_Dirhist::US_Dirhist(
                        QString                     & selected,
                        bool                        & is_ok,
                        QWidget                     * p,
-                       const char                  * name
+                       const char                  * 
                        ) : QDialog( p )
 {
    this->history       = & history;

@@ -16,7 +16,7 @@
   The menu uses a single slot to simplify the process of adding
   more items to the options menu.
 */
-US_ImageViewer::US_ImageViewer( QWidget *parent, const char *name, int wFlags )
+US_ImageViewer::US_ImageViewer( QWidget *parent, const char *, int wFlags )
    : QWidget( parent, name, wFlags ),
      conversion_flags( Qt::PreferDither ),
      helpmsg( 0 )

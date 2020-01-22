@@ -778,6 +778,9 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 #if QT_VERSION < 0x040000
    connect( plot_dist->canvas(), SIGNAL( mouseReleased( const QMouseEvent & ) ), SLOT( plot_mouse(  const QMouseEvent & ) ) );
 #endif
+   plot_dist_zoomer = new ScrollZoomer(plot_dist->canvas());
+   plot_dist_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+   connect( plot_dist_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
 
 //   plot_ref = new QwtPlot( qs );
    usp_plot_ref = new US_Plot( plot_ref, "", "", "", qs );
@@ -886,10 +889,8 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
    plot_errors_zoomer = new ScrollZoomer(plot_errors->canvas());
    plot_errors_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-   plot_errors_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
-   connect( plot_errors_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_errors_zoomed( const QRectF & ) ) );
+   plot_errors_zoomer->symmetric_rescale = true;
+   connect( plot_errors_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
 
    connect(((QObject*)plot_dist  ->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_plot_errors, SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
    connect(((QObject*)plot_errors->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_plot_dist  , SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
@@ -4512,6 +4513,68 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    pb_show_created       ->setEnabled( files_created_selected_not_shown_count > 0 );
    pb_show_only_created  ->setEnabled( files_created_selected_count > 0 &&
                                        files_selected_not_created > 0 );
+#define DEBUG_SCALING
+#if defined( DEBUG_SCALING )
+   {
+      QTextStream tso( stdout );
+
+      tso << "--------------------------------------------------------------------------------\n";
+      tso << "plot_dist" << "\n";
+      tso << "--------------------------------------------------------------------------------\n";
+      tso << QString().sprintf(
+                               "plot_dist->axisScaleDiv( QwtPlot::xBottom ).lower,upperBound()     %g\t%g\n"
+                               "plot_dist->axisScaleDiv( QwtPlot::yLeft ).lower,upperBound()       %g\t%g\n"
+
+                               ,plot_dist->axisScaleDiv( QwtPlot::xBottom ).lowerBound()
+                               ,plot_dist->axisScaleDiv( QwtPlot::xBottom ).upperBound()
+                               ,plot_dist->axisScaleDiv( QwtPlot::yLeft ).lowerBound()
+                               ,plot_dist->axisScaleDiv( QwtPlot::yLeft ).upperBound()
+                               );
+
+      tso << "zoomrect "
+          << plot_dist_zoomer->zoomRect().left() << " , "
+          << plot_dist_zoomer->zoomRect().right() << " : " 
+          << plot_dist_zoomer->zoomRect().bottom() << " , "
+          << plot_dist_zoomer->zoomRect().top()
+          << "\n"
+         ;
+      tso << "zoombase "
+          << plot_dist_zoomer->zoomBase().left() << " , "
+          << plot_dist_zoomer->zoomBase().right() << " : " 
+          << plot_dist_zoomer->zoomBase().bottom() << " , "
+          << plot_dist_zoomer->zoomBase().top()
+          << "\n"
+         ;
+      tso << "--------------------------------------------------------------------------------\n";
+      tso << "plot_errors" << "\n";
+      tso << "--------------------------------------------------------------------------------\n";
+      tso << QString().sprintf(
+                               "plot_errors->axisScaleDiv( QwtPlot::xBottom ).lower,upperBound()     %g\t%g\n"
+                               "plot_errors->axisScaleDiv( QwtPlot::yLeft ).lower,upperBound()       %g\t%g\n"
+
+                               ,plot_errors->axisScaleDiv( QwtPlot::xBottom ).lowerBound()
+                               ,plot_errors->axisScaleDiv( QwtPlot::xBottom ).upperBound()
+                               ,plot_errors->axisScaleDiv( QwtPlot::yLeft ).lowerBound()
+                               ,plot_errors->axisScaleDiv( QwtPlot::yLeft ).upperBound()
+                               );
+
+
+      tso << "zoomrect "
+          << plot_errors_zoomer->zoomRect().left() << " , "
+          << plot_errors_zoomer->zoomRect().right() << " : " 
+          << plot_errors_zoomer->zoomRect().bottom() << " , "
+          << plot_errors_zoomer->zoomRect().top()
+          << "\n"
+         ;
+      tso << "zoombase "
+          << plot_errors_zoomer->zoomBase().left() << " , "
+          << plot_errors_zoomer->zoomBase().right() << " : " 
+          << plot_errors_zoomer->zoomBase().bottom() << " , "
+          << plot_errors_zoomer->zoomBase().top()
+          << "\n"
+         ;
+   }   
+#endif
 
    pb_select_vis       ->setEnabled( 
                                     files_selected_count &&

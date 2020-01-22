@@ -975,12 +975,12 @@ void US_Hydrodyn_Saxs_Hplc::clear_files( QStringList files, bool quiet )
 
    disable_updates = false;
    plot_files();
-   if ( !lb_files->count() &&
-        plot_dist_zoomer )
-   {
-      delete plot_dist_zoomer;
-      plot_dist_zoomer = (ScrollZoomer *) 0;
-   }
+   // if ( !lb_files->count() &&
+   //      plot_dist_zoomer )
+   // {
+   //    delete plot_dist_zoomer;
+   //    plot_dist_zoomer = (ScrollZoomer *) 0;
+   // }
    update_csv_conc();
    if ( conc_widget )
    {
@@ -1274,9 +1274,9 @@ void US_Hydrodyn_Saxs_Hplc::add_files( bool load_conc, bool from_dir ) {
    if ( add_filenames.size() && plot_dist_zoomer )
    {
       // we should only do this if the ranges are changed
-      plot_dist_zoomer->zoom ( 0 );
-      delete plot_dist_zoomer;
-      plot_dist_zoomer = (ScrollZoomer *) 0;
+      // plot_dist_zoomer->zoom ( 0 );
+      // delete plot_dist_zoomer;
+      // plot_dist_zoomer = (ScrollZoomer *) 0;
       plot_files();
    }
    update_csv_conc();
@@ -1382,9 +1382,9 @@ void US_Hydrodyn_Saxs_Hplc::add_files( QStringList filenames )
    if ( add_filenames.size() && plot_dist_zoomer )
    {
       // we should only do this if the ranges are changed
-      plot_dist_zoomer->zoom ( 0 );
-      delete plot_dist_zoomer;
-      plot_dist_zoomer = (ScrollZoomer *) 0;
+      // plot_dist_zoomer->zoom ( 0 );
+      // delete plot_dist_zoomer;
+      // plot_dist_zoomer = (ScrollZoomer *) 0;
       plot_files();
    }
    update_csv_conc();
@@ -4343,6 +4343,7 @@ void US_Hydrodyn_Saxs_Hplc::join()
 
 void US_Hydrodyn_Saxs_Hplc::plot_zoomed( const QRectF & /* rect */ )
 {
+   // qDebug() << "plot_zoomed event";
    //   cout << QString( "zoomed: %1 %2 %3 %4\n" )
    // .arg( rect.x1() )
    // .arg( rect.x2() )
@@ -5734,10 +5735,10 @@ void US_Hydrodyn_Saxs_Hplc::add_plot( QString           name,
    
    // we could check if it has changed and then delete
    if ( plot_dist_zoomer )
-   {
-      delete plot_dist_zoomer;
-      plot_dist_zoomer = (ScrollZoomer *) 0;
-   }
+   // {
+   //    delete plot_dist_zoomer;
+   //    plot_dist_zoomer = (ScrollZoomer *) 0;
+   // }
    if ( replot )
    {
       plot_files();
@@ -5800,11 +5801,11 @@ void US_Hydrodyn_Saxs_Hplc::crop_zero()
    }
       
    // we could check if it has changed and then delete
-   if ( plot_dist_zoomer )
-   {
-      delete plot_dist_zoomer;
-      plot_dist_zoomer = (ScrollZoomer *) 0;
-   }
+   // if ( plot_dist_zoomer )
+   // {
+   //    delete plot_dist_zoomer;
+   //    plot_dist_zoomer = (ScrollZoomer *) 0;
+   // }
    plot_files();
 }
 
@@ -6085,11 +6086,11 @@ void US_Hydrodyn_Saxs_Hplc::update_gauss_pos()
 void US_Hydrodyn_Saxs_Hplc::gauss_start()
 {
    plot_errors->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_errors->detachItems( QwtPlotItem::Rtti_PlotMarker );;
-   if ( plot_errors_zoomer )
-   {
-      delete plot_errors_zoomer;
-      plot_errors_zoomer = (ScrollZoomer *) 0;
-   }
+   // if ( plot_errors_zoomer )
+   // {
+   //    delete plot_errors_zoomer;
+   //    plot_errors_zoomer = (ScrollZoomer *) 0;
+   // }
 
    le_last_focus = (mQLineEdit *) 0;
    pb_gauss_fit->setText( us_tr( "Fit" ) );

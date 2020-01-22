@@ -12,7 +12,7 @@
 
 #if QT_VERSION < 0x040000
 
-US_Editor::US_Editor( int flag, QWidget * parent, const char *name ) : QFrame(  parent )
+US_Editor::US_Editor( int flag, QWidget * parent, const char * ) : QFrame(  parent )
 {
 #if QT_VERSION < 0x040000
    if ( flag == 0 )
@@ -950,11 +950,11 @@ void TextEdit::editorChanged( QWidget * )
    alignmentChanged( currentEditor()->alignment() );
 }
 #else
-TextEdit::TextEdit( QWidget * p, const char *name ) : QFrame( p )
+TextEdit::TextEdit( QWidget * p, const char * ) : QFrame( p )
 {
 }
 
-TextEdit::TextEdit( int, QWidget * p, const char *name ) : QFrame( p )
+TextEdit::TextEdit( int, QWidget * p, const char * ) : QFrame( p )
 {
 }
 

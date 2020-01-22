@@ -1,6 +1,6 @@
 #include "../include/us_util.h"
 
-US_Help::US_Help(QWidget *parent, const char* name) : QWidget( parent )
+US_Help::US_Help(QWidget *parent, const char* ) : QWidget( parent )
 {
   USglobal = new US_Config();
 }

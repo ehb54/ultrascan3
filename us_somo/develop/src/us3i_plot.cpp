@@ -28,6 +28,7 @@
 #include "qwt_scale_widget.h"
 #include "qwt_symbol.h"
 
+#include "us_plot_util.h" 
 
 US_Zoomer::US_Zoomer( int xAxis, int yAxis, QwtPlotCanvas* canvas )
    : QwtPlotZoomer( xAxis, yAxis, canvas )
@@ -60,6 +61,7 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
                   QWidget * parent ) : QHBoxLayout()
 {
    zoomer = NULL;
+   scroll_zoomer = NULL;
    setSpacing( 0 );
 
    QFont buttonFont( US3i_GuiSettings::fontFamily(),
@@ -345,21 +347,36 @@ void US_Plot::quit( void )
 }
 */
 
+// #define DEBUG_SCALE_SLOTS
+
 void US_Plot::scaleDivChangedXSlot()
 {
    QwtPlot* plt = static_cast<QwtPlot*>((sender())->parent());
-   // qDebug() << "US_Plot::scaleDivChangedXSlot(): sender " << plt->objectName() << " receiver " << plot->objectName();
+#if defined( DEBUG_SCALE_SLOTS )
+   qDebug() << "US_Plot::scaleDivChangedXSlot(): sender " << plt->objectName() << " receiver " << plot->objectName();
+#endif
    QwtInterval  intv = plt->axisInterval (QwtPlot::xBottom);
    plot->setAxisScale(QwtPlot::xBottom, intv.minValue(), intv.maxValue());
    // intv = plt->axisInterval (QwtPlot::yLeft);
    // plot->setAxisScale(QwtPlot::yLeft, intv.minValue(), intv.maxValue());
+   if ( rescale_mode == MODE_RESID ) {
+      if ( scroll_zoomer ) {
+         qDebug() << "calling rescale";
+         US_Plot_Util::rescale( plot, scroll_zoomer );
+      } else {
+         qDebug() << "can't call rescale / no scroll zoomer";
+      }
+   }
+   
    plot->replot();
 }
 
 void US_Plot::scaleDivChangedYSlot()
 {
    QwtPlot* plt = static_cast<QwtPlot*>((sender())->parent());
-   // qDebug() << "US_Plot::scaleDivChangedYSlot(): sender " << plt->objectName() << " receiver " << plot->objectName();
+#if defined( DEBUG_SCALE_SLOTS )
+   qDebug() << "US_Plot::scaleDivChangedYSlot(): sender " << plt->objectName() << " receiver " << plot->objectName();
+#endif
    // QwtInterval  intv = plt->axisInterval (QwtPlot::xBottom);
    // plot->setAxisScale(QwtPlot::xBottom, intv.minValue(), intv.maxValue());
    QwtInterval intv = plt->axisInterval (QwtPlot::yLeft);
@@ -370,7 +387,9 @@ void US_Plot::scaleDivChangedYSlot()
 void US_Plot::scaleDivChangedSlot()
 {
    QwtPlot* plt = static_cast<QwtPlot*>((sender())->parent());
-   // qDebug() << "US_Plot::scaleDivChangedSlot(): sender " << plt->objectName() << " receiver " << plot->objectName();
+#if defined( DEBUG_SCALE_SLOTS )
+   qDebug() << "US_Plot::scaleDivChangedSlot(): sender " << plt->objectName() << " receiver " << plot->objectName();
+#endif
    QwtInterval  intv = plt->axisInterval (QwtPlot::xBottom);
    plot->setAxisScale(QwtPlot::xBottom, intv.minValue(), intv.maxValue());
    intv = plt->axisInterval (QwtPlot::yLeft);

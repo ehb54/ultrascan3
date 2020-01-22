@@ -8,7 +8,7 @@
 #include <QLabel>
 
 OneLiner::OneLiner(const QString &message, QWidget *parent, 
-                   const char *name) : QDialog( parent )
+                   const char *) : QDialog( parent )
 {
 
    this->setGeometry(200,200,370, 320);
@@ -47,7 +47,7 @@ void OneLiner::update(const QString &Textstr)
    string = Textstr;
 }
 
-US_FitParameter::US_FitParameter(QWidget *parent, const char *name) : QWidget( parent )
+US_FitParameter::US_FitParameter(QWidget *parent, const char *) : QWidget( parent )
 {
    USglobal = new US_Config();
    int buttonh = 26;
@@ -179,7 +179,7 @@ void US_FitParameter::setFloatDisabled()
    lbl_bounds->setPalette( USglobal->global_colors.cg_dk_green );
 }
 
-US_FitParameterLegend::US_FitParameterLegend(QWidget *parent, const char *name) : QWidget( parent )
+US_FitParameterLegend::US_FitParameterLegend(QWidget *parent, const char *) : QWidget( parent )
 {
    USglobal = new US_Config();
 
@@ -688,11 +688,11 @@ QTreeWidgetItem * US_Static::lv_lastItem( QTreeWidget *lv ) {
 // }
 
 
-double US_Static::getDouble(const QString & title, const QString & label, double value, double min, double max, int decimals, bool * ok, QWidget * parent, const char * name, Qt::WindowFlags flags) {
+double US_Static::getDouble(const QString & title, const QString & label, double value, double min, double max, int decimals, bool * ok, QWidget * parent, const char * , Qt::WindowFlags flags) {
     return QInputDialog::getDouble(parent, title, label, value, min, max, decimals, ok, flags);
 }
 
-int US_Static::getInteger(const QString & title, const QString & label, int value, int min, int max, int step, bool * ok, QWidget * parent, const char * name, Qt::WindowFlags flags) {
+int US_Static::getInteger(const QString & title, const QString & label, int value, int min, int max, int step, bool * ok, QWidget * parent, const char *, Qt::WindowFlags flags) {
 #if QT_VERSION >= 0x050000
    return QInputDialog::getInt(parent, title, label, value, min, max, step, ok, flags);
 #else
@@ -700,15 +700,15 @@ int US_Static::getInteger(const QString & title, const QString & label, int valu
 #endif
 }
 
-QString US_Static::getItem(const QString & title, const QString & label, const QStringList & list, int current, bool editable, bool * ok, QWidget * parent, const char * name, Qt::WindowFlags flags) {
+QString US_Static::getItem(const QString & title, const QString & label, const QStringList & list, int current, bool editable, bool * ok, QWidget * parent, const char *, Qt::WindowFlags flags) {
    return QInputDialog::getItem(parent, title, label, list, current, editable, ok, flags) ;
 }
 
-QString US_Static::getText(const QString & title, const QString & label, QLineEdit::EchoMode echo, const QString & text, bool * ok, QWidget * parent, const char * name, Qt::WindowFlags flags) {
+QString US_Static::getText(const QString & title, const QString & label, QLineEdit::EchoMode echo, const QString & text, bool * ok, QWidget * parent, const char *, Qt::WindowFlags flags) {
    return QInputDialog::getText(parent, title, label, echo, text, ok, flags);
 }
 
-int US_Static::us_message(const QString & title, const QString & text, const QString & buttonText, QWidget * parent, const char * name) {
+int US_Static::us_message(const QString & title, const QString & text, const QString & buttonText, QWidget * parent, const char *) {
    if ( !buttonText.isEmpty() ) {
       qDebug() << "us_message title: '" << title << "' text '" << text << "' has buttonText '" << buttonText << "'";
    }

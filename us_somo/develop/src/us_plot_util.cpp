@@ -215,8 +215,8 @@ void US_Plot_Util::plotinfo(
 }
 
 void US_Plot_Util::align_plot_extents( const vector < QwtPlot * > & plots, bool scale_x_to_first ) {
-   // QTextStream tso( stdout );
-   // tso << "align_plot_extents\n";
+   QTextStream tso( stdout );
+   tso << "align_plot_extents\n";
 
    int size = (int) plots.size();
    if ( size <= 1 ) {
@@ -265,21 +265,36 @@ void US_Plot_Util::align_plot_extents( const vector < QwtPlot * > & plots, bool 
    }      
 }
 
+// #define DEBUG_RESCALE
+// #define DEBUG_RESCALE_CURVES
+// #define DEBUG_RESCALE_INTERNAL
+
 void US_Plot_Util::rescale( map < QString, QwtPlot * > plots, map < QwtPlot *, ScrollZoomer * > plot_to_zoomer, bool only_scale_y ) {
+#if defined( DEBUG_RESCALE )
+   qDebug() << "US_Plot_Util::rescale type 1\n";
+#endif
    for ( map < QString, QwtPlot * >::iterator it = plots.begin();
          it != plots.end();
          ++it )
    {
       if ( !plot_to_zoomer.count( it->second ) ||
            !plot_to_zoomer[ it->second ] ) {
-         // qDebug() << "internal error: missing plot_to_zoomer for plot " << it->first << "\n";
+#if defined( DEBUG_RESCALE_INTERNAL )
+         qDebug() << "internal error: missing plot_to_zoomer for plot " << it->first << "\n";
+#endif
       } else {
+#if defined( DEBUG_RESCALE )
+         qDebug() << "rescaling for plot " << it->first << "\n";
+#endif
          rescale( it->second, plot_to_zoomer[ it->second ], only_scale_y );
       }
    }
 }
 
 void US_Plot_Util::rescale( const vector < QwtPlot * > & plots, map < QwtPlot *, ScrollZoomer * > plot_to_zoomer, bool only_scale_y ) {
+#if defined( DEBUG_RESCALE )
+   qDebug() << "US_Plot_Util::rescale type 2\n";
+#endif
    for ( int i = 0; i < (int) plots.size(); ++i ) {
       if ( !plot_to_zoomer.count( plots[ i ] ) ) {
          qDebug() << "internal error: missing plot_to_zoomer for plot\n";
@@ -290,27 +305,37 @@ void US_Plot_Util::rescale( const vector < QwtPlot * > & plots, map < QwtPlot *,
 }
 
 void US_Plot_Util::rescale( QwtPlot * plot, ScrollZoomer * zoomer, bool only_scale_y ) {
+#if defined( DEBUG_RESCALE )
+   qDebug() << "US_Plot_Util::rescale type 3\n";
+#endif
    if ( !only_scale_y ) {
+#if defined( DEBUG_RESCALE_INTERNAL )
       qDebug() << "Internal error: US_Plot_Util::rescale( *, false ) not supported";
+#endif
       return;
    }
    if ( !zoomer ) {
+#if defined( DEBUG_RESCALE_INTERNAL )
       qDebug() << "internal error: missing plot_to_zoomer for plot in rescale\n";
+#endif
       return;
    }
 
    QTextStream tso( stdout );
 
-   // tso << "US_Plot_Util::rescale( QwtPlot * plot, " << ( only_scale_y ? "true" : "false" ) << ")\n";
-   // tso << QString().sprintf(
-   //                          "plot->axisScaleDiv( QwtPlot::xBottom ).lower,upperBound()     %g\t%g\n"
-   //                          "plot->axisScaleDiv( QwtPlot::yLeft ).lower,upperBound()       %g\t%g\n"
+#if defined( DEBUG_RESCALE )
+   tso << "zoomer ptr " << zoomer << "\n";
+   tso << "US_Plot_Util::rescale( QwtPlot * plot, " << ( only_scale_y ? "true" : "false" ) << ")\n";
+   tso << QString().sprintf(
+                            "plot->axisScaleDiv( QwtPlot::xBottom ).lower,upperBound()     %g\t%g\n"
+                            "plot->axisScaleDiv( QwtPlot::yLeft ).lower,upperBound()       %g\t%g\n"
 
-   //                          ,plot->axisScaleDiv( QwtPlot::xBottom ).lowerBound()
-   //                          ,plot->axisScaleDiv( QwtPlot::xBottom ).upperBound()
-   //                          ,plot->axisScaleDiv( QwtPlot::yLeft ).lowerBound()
-   //                          ,plot->axisScaleDiv( QwtPlot::yLeft ).upperBound()
-   //                          );
+                            ,plot->axisScaleDiv( QwtPlot::xBottom ).lowerBound()
+                            ,plot->axisScaleDiv( QwtPlot::xBottom ).upperBound()
+                            ,plot->axisScaleDiv( QwtPlot::yLeft ).lowerBound()
+                            ,plot->axisScaleDiv( QwtPlot::yLeft ).upperBound()
+                            );
+#endif
    vector < double > x;
    vector < double > y;
 
@@ -318,13 +343,31 @@ void US_Plot_Util::rescale( QwtPlot * plot, ScrollZoomer * zoomer, bool only_sca
 
    double min_x = plot->axisScaleDiv( QwtPlot::xBottom ).lowerBound();
    double max_x = plot->axisScaleDiv( QwtPlot::xBottom ).upperBound();
+   double min_x_alt = zoomer->zoomRect().bottomLeft().x();
+   double max_x_alt = zoomer->zoomRect().bottomRight().x();
+   
+#if defined( DEBUG_RESCALE )
+   tso << QString().sprintf(
+                            "min_x, max_x                                                  %g\t%g\n"
+                            "min_x_alt, max_x_alt                                          %g\t%g\n"
 
+                            ,min_x
+                            ,max_x
+                            ,min_x_alt
+                            ,max_x_alt
+                            );
+#endif
+                            
    double min_y = numeric_limits<double>::max();
    double max_y = numeric_limits<double>::min();
 
    QwtPlotItemList ilist = plot->itemList();
    for ( int ii = 0; ii < ilist.size(); ii++ )
    {
+#if defined( DEBUG_RESCALE_CURVES )
+      tso << "curve " << ii << "\n";
+#endif
+
       QwtPlotItem* plitem = ilist[ ii ];
       if ( plitem->rtti() != QwtPlotItem::Rtti_PlotCurve ) {
          continue;
@@ -344,6 +387,9 @@ void US_Plot_Util::rescale( QwtPlot * plot, ScrollZoomer * zoomer, bool only_sca
             x = curve->sample( i ).x();
             if ( x >= min_x &&
                  x <= max_x ) {
+#if defined( DEBUG_RESCALE_CURVES )
+               tso << "point " << i << " x,y: " <<  curve->sample( i ).x() << " , " << curve->sample( i ).y() << "\n";
+#endif
                y = curve->sample( i ).y();
                if ( min_y > y ) {
                   min_y = y;
@@ -358,40 +404,58 @@ void US_Plot_Util::rescale( QwtPlot * plot, ScrollZoomer * zoomer, bool only_sca
    }
    
    if ( !curves ) {
-      // tso << "no curves found\n";
+#if defined( DEBUG_RESCALE )
+      tso << "no curves found\n";
+#endif
       return;
    }
-   // tso << QString().sprintf(
-   //                          "computed min_y, max_y                                         %g\t%g\n"
+#if defined( DEBUG_RESCALE )
+   tso << QString().sprintf(
+                            "computed min_y, max_y                                         %g\t%g\n"
 
-   //                          ,min_y
-   //                          ,max_y
-   //                          );
+                            ,min_y
+                            ,max_y
+                            );
 
    // check zoom stack
-   // tso << QString().sprintf(
-   //                          "zoomer->zoomRect().bottomLeft().x(),y()                       %g\t%g\n"
-   //                          "zoomer->zoomRect().bottomRight().x(),y()                      %g\t%g\n"
-   //                          "zoomer->zoomRect().topLeft().x(),y()                          %g\t%g\n"
-   //                          "zoomer->zoomRect().topRight().x(),y()                         %g\t%g\n"
+   tso << QString().sprintf(
+                            "zoomer->zoomRect().bottomLeft().x(),y()                       %g\t%g\n"
+                            "zoomer->zoomRect().bottomRight().x(),y()                      %g\t%g\n"
+                            "zoomer->zoomRect().topLeft().x(),y()                          %g\t%g\n"
+                            "zoomer->zoomRect().topRight().x(),y()                         %g\t%g\n"
 
-   //                          ,zoomer->zoomRect().bottomLeft().x()
-   //                          ,zoomer->zoomRect().bottomLeft().y()
-   //                          ,zoomer->zoomRect().bottomRight().x()
-   //                          ,zoomer->zoomRect().bottomRight().y()
-   //                          ,zoomer->zoomRect().topLeft().x()
-   //                          ,zoomer->zoomRect().topLeft().y()
-   //                          ,zoomer->zoomRect().topRight().x()
-   //                          ,zoomer->zoomRect().topRight().y()
-                            
-   //                          );
+                            ,zoomer->zoomRect().bottomLeft().x()
+                            ,zoomer->zoomRect().bottomLeft().y()
+                            ,zoomer->zoomRect().bottomRight().x()
+                            ,zoomer->zoomRect().bottomRight().y()
+                            ,zoomer->zoomRect().topLeft().x()
+                            ,zoomer->zoomRect().topLeft().y()
+                            ,zoomer->zoomRect().topRight().x()
+                            ,zoomer->zoomRect().topRight().y()
+                          
+                            );
+#endif
 
    // ok, construct QRectF an zoom
-   zoomer->zoom(
-                QRectF(
-                       QPointF( zoomer->zoomRect().topLeft().x(), max_y * 1.1e0 ),
-                       QPointF( zoomer->zoomRect().bottomRight().x(), min_y * 0.9e0 )
-                       )
-                );;
+   if ( zoomer->symmetric_rescale ) {
+#if defined( DEBUG_RESCALE )
+      tso << "symmetric rescale enabled\n";
+#endif
+      double smax_y = fabs( max_y ) > fabs( min_y ) ? fabs( max_y ) : fabs( min_y );
+      zoomer->zoom(
+                   QRectF(
+                          QPointF( zoomer->zoomRect().topLeft().x(), smax_y * 1.2e0 ),
+                          QPointF( zoomer->zoomRect().bottomRight().x(), -smax_y * 1.2e0 )
+                          )
+                   );
+      
+   } else {
+      zoomer->zoom(
+                   QRectF(
+                          QPointF( zoomer->zoomRect().topLeft().x(), max_y * 1.1e0 ),
+                          QPointF( zoomer->zoomRect().bottomRight().x(), min_y * 0.9e0 )
+                          )
+                   );
+   }
    
 }

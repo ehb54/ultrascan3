@@ -230,7 +230,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files, double t_min, d
       qs_zero_points = qsl_list_zero_points.join( "\n" );
    }
 
-   bool   normalize_by_conc = false;
+   // bool   normalize_by_conc = false;
    bool   conc_ok           = false;
 
    double conv = 0e0;
@@ -307,7 +307,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files, double t_min, d
             
          conc_ok = true;
          if ( parameters.count( "normalize" ) && parameters[ "normalize" ] == "true" ) {
-            normalize_by_conc = true;
+            // normalize_by_conc = true;
          }
 
          if ( parameters.count( "I0se" ) ) {

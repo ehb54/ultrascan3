@@ -7,12 +7,12 @@
 #include "../include/us_hydrodyn_saxs_hplc_fit.h"
 #include "../include/us_hydrodyn_saxs_hplc_fit_global.h"
 #include "../include/us_lm.h"
-#if QT_VERSION >= 0x040000
 #include <qwt_scale_engine.h>
-#endif
 #include <qwt_plot_layout.h>
 #include <qwt_scale_widget.h>
 #include <qwt_scale_draw.h>
+
+#define DEBUG_RESCALE
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -207,33 +207,45 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors_group()
 
    cout << QString( "upeg: maxy %1\n" ).arg( maxy );
 
-   if ( !plot_errors_zoomer )
-   {
-      cout << "upeg: recreating axis\n";
-      if ( current_mode == MODE_GGAUSSIAN ||
-           current_mode == MODE_GAUSSIAN ) {
-         plot_errors->setAxisTitle(QwtPlot::yLeft, us_tr( cb_plot_errors_pct->isChecked() ?
+   // if ( !plot_errors_zoomer )
+   // {
+   //    cout << "upeg: recreating axis\n";
+   if ( current_mode == MODE_GGAUSSIAN ||
+        current_mode == MODE_GAUSSIAN ) {
+      plot_errors->setAxisTitle(QwtPlot::yLeft, us_tr( cb_plot_errors_pct->isChecked() ?
                                                        "% difference" :
                                                        ( cb_plot_errors_sd->isChecked() ?
                                                          "delta I(t)/sd" : "delta I(t)" 
                                                          ) ) );
-      } else {
-         plot_errors->setAxisTitle(QwtPlot::yLeft, us_tr( cb_plot_errors_pct->isChecked() ?
+   } else {
+      plot_errors->setAxisTitle(QwtPlot::yLeft, us_tr( cb_plot_errors_pct->isChecked() ?
                                                        "% difference" :
                                                        ( cb_plot_errors_sd->isChecked() ?
                                                          "delta I(q)/sd" : "delta I(q)" 
                                                          ) ) );
-      }
-      plot_errors->setAxisScale( QwtPlot::xBottom, minx, maxx );
-      plot_errors->setAxisScale( QwtPlot::yLeft  , -maxy * 1.2e0 , maxy * 1.2e0 );
-
-      plot_errors_zoomer = new ScrollZoomer(plot_errors->canvas());
-      plot_errors_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-      plot_errors_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
-      connect( plot_errors_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
    }
+   plot_errors->setAxisScale( QwtPlot::xBottom, minx, maxx );
+   plot_errors->setAxisScale( QwtPlot::yLeft  , -maxy * 1.2e0 , maxy * 1.2e0 );
+   plot_errors_zoomer->setZoomBase();
+
+#if defined( DEBUG_RESCALE )
+   qDebug() <<
+      QString("").sprintf(
+                          "hplc_plots::update_plot_errors_group\n"
+                          "\tminx %e maxx %e\n"
+                          "\tminy %e maxy %e\n"
+                          , minx, maxx
+                          , -maxy, maxy
+                          );
+#endif
+
+   //       plot_errors_zoomer = new ScrollZoomer(plot_errors->canvas());
+   //       plot_errors_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+   // #if QT_VERSION < 0x040000
+   //       plot_errors_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+   // #endif
+      // connect( plot_errors_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
+   // }
 
    if ( !suppress_replot )
    {
@@ -416,7 +428,7 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors( vector < double > &grid,
 #endif
    }
 
-   if ( !plot_errors_zoomer )
+   // if ( !plot_errors_zoomer )
    {
       double maxy = e[ 0 ];
 
@@ -431,27 +443,59 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors( vector < double > &grid,
       if ( current_mode == MODE_GGAUSSIAN ||
            current_mode == MODE_GAUSSIAN ) {
          plot_errors->setAxisTitle(QwtPlot::yLeft, us_tr( cb_plot_errors_pct->isChecked() ?
-                                                       "% difference" :
-                                                       ( cb_plot_errors_sd->isChecked() ?
-                                                         "delta I(t)/sd" : "delta I(t)" 
-                                                         ) ) );
+                                                          "% difference" :
+                                                          ( cb_plot_errors_sd->isChecked() ?
+                                                            "delta I(t)/sd" : "delta I(t)" 
+                                                            ) ) );
       } else {
          plot_errors->setAxisTitle(QwtPlot::yLeft, us_tr( cb_plot_errors_pct->isChecked() ?
-                                                       "% difference" :
-                                                       ( cb_plot_errors_sd->isChecked() ?
-                                                         "delta I(q)/sd" : "delta I(q)" 
-                                                         ) ) );
+                                                          "% difference" :
+                                                          ( cb_plot_errors_sd->isChecked() ?
+                                                            "delta I(q)/sd" : "delta I(q)" 
+                                                            ) ) );
       }         
 
       plot_errors->setAxisScale( QwtPlot::xBottom, x[ 0 ], x.back() );
       plot_errors->setAxisScale( QwtPlot::yLeft  , -maxy * 1.2e0 , maxy * 1.2e0 );
+      plot_errors_zoomer->setZoomBase();
+      
+#if defined( DEBUG_RESCALE )
+      {
+         QTextStream tso(stdout);
+         tso << "---\n";
 
-      plot_errors_zoomer = new ScrollZoomer(plot_errors->canvas());
-      plot_errors_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-      plot_errors_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+         tso <<
+            QString("").sprintf(
+                                "hplc_plots::update_plot_errors\n"
+                                "\tminx %e maxx %e\n"
+                                "\tminy %e maxy %e\n"
+                                , x[0], x.back()
+                                , -maxy, maxy
+                                );
+         tso << "zoomrect "
+             << plot_errors_zoomer->zoomRect().left() << " , "
+             << plot_errors_zoomer->zoomRect().right() << " : " 
+             << plot_errors_zoomer->zoomRect().bottom() << " , "
+             << plot_errors_zoomer->zoomRect().top()
+             << "\n"
+            ;
+         tso << "zoombase "
+             << plot_errors_zoomer->zoomBase().left() << " , "
+             << plot_errors_zoomer->zoomBase().right() << " : " 
+             << plot_errors_zoomer->zoomBase().bottom() << " , "
+             << plot_errors_zoomer->zoomBase().top()
+             << "\n"
+            ;
+         tso << "---\n";
+      }
 #endif
-      connect( plot_errors_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
+
+      //       plot_errors_zoomer = new ScrollZoomer(plot_errors->canvas());
+      //       plot_errors_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+      // #if QT_VERSION < 0x040000
+      //       plot_errors_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+      // #endif
+      //       connect( plot_errors_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
    }
 
    if ( !suppress_replot )
@@ -477,11 +521,11 @@ void US_Hydrodyn_Saxs_Hplc::redo_plot_errors()
                                                       ) ) );
 
    }
-   if ( plot_errors_zoomer )
-   {
-      delete plot_errors_zoomer;
-      plot_errors_zoomer = (ScrollZoomer *) 0;
-   }
+   // if ( plot_errors_zoomer )
+   // {
+   //    delete plot_errors_zoomer;
+   //    plot_errors_zoomer = (ScrollZoomer *) 0;
+   // }
    vector < double > grid   = plot_errors_grid;
    vector < double > fit    = plot_errors_fit;
    vector < double > target = plot_errors_target;
@@ -583,6 +627,7 @@ void US_Hydrodyn_Saxs_Hplc::errors()
       connect(((QObject*)guinier_plot_errors->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_guinier_plot        , SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
 
       ShowHide::hide_widgets( guinier_errors_widgets, guinier_plot_errors->isVisible() );
+      update_enables();
       return;
    }
 
@@ -701,6 +746,7 @@ void US_Hydrodyn_Saxs_Hplc::errors()
          break;
       }
    }
+   update_enables();
 }
 
 bool US_Hydrodyn_Saxs_Hplc::compatible_grids( QStringList files )
@@ -772,7 +818,7 @@ void US_Hydrodyn_Saxs_Hplc::plot_files()
 {
    // puts( "plot_files" );
    plot_dist->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_dist->detachItems( QwtPlotItem::Rtti_PlotMarker );;
-   //bool any_selected = false;
+   bool any_selected = false;
    double minx = 0e0;
    double maxx = 1e0;
    double miny = 0e0;
@@ -798,11 +844,7 @@ void US_Hydrodyn_Saxs_Hplc::plot_files()
    if ( ( asfs > 20 ||
       cb_eb->isChecked() )
       &&
-#if QT_VERSION < 0x040000
-        plot_dist->autoLegend() 
-#else
         legend_vis
-#endif
         )
    {
       legend();
@@ -817,7 +859,7 @@ void US_Hydrodyn_Saxs_Hplc::plot_files()
    {
       if ( lb_files->item( i )->isSelected() )
       {
-         //any_selected = true;
+         any_selected = true;
          if ( plot_file( lb_files->item( i )->text(), file_minx, file_maxx, file_miny, file_maxy ) )
          {
             if ( first )
@@ -847,31 +889,33 @@ void US_Hydrodyn_Saxs_Hplc::plot_files()
             }
          }
       } else {
-         if ( get_min_max( lb_files->item( i )->text(), file_minx, file_maxx, file_miny, file_maxy ) )
-         {
-            if ( first )
+         if ( 0 ) {
+            if ( get_min_max( lb_files->item( i )->text(), file_minx, file_maxx, file_miny, file_maxy ) )
             {
-               minx = file_minx;
-               maxx = file_maxx;
-               miny = file_miny;
-               maxy = file_maxy;
-               first = false;
-            } else {
-               if ( file_minx < minx )
+               if ( first )
                {
                   minx = file_minx;
-               }
-               if ( file_maxx > maxx )
-               {
                   maxx = file_maxx;
-               }
-               if ( file_miny < miny )
-               {
                   miny = file_miny;
-               }
-               if ( file_maxy > maxy )
-               {
                   maxy = file_maxy;
+                  first = false;
+               } else {
+                  if ( file_minx < minx )
+                  {
+                     minx = file_minx;
+                  }
+                  if ( file_maxx > maxx )
+                  {
+                     maxx = file_maxx;
+                  }
+                  if ( file_miny < miny )
+                  {
+                     miny = file_miny;
+                  }
+                  if ( file_maxy > maxy )
+                  {
+                     maxy = file_maxy;
+                  }
                }
             }
          }
@@ -881,20 +925,46 @@ void US_Hydrodyn_Saxs_Hplc::plot_files()
    // cout << QString( "plot range x [%1:%2] y [%3:%4]\n" ).arg(minx).arg(maxx).arg(miny).arg(maxy);
 
    // enable zooming
-   
-   if ( !plot_dist_zoomer )
-   {
-      // puts( "redoing zoomer" );
+
+   if ( any_selected ) {
       plot_dist->setAxisScale( QwtPlot::xBottom, minx, maxx );
       plot_dist->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );
-      plot_dist_zoomer = new ScrollZoomer(plot_dist->canvas());
-      plot_dist_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-      plot_dist_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
-      connect( plot_dist_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
+      plot_dist_zoomer->setZoomBase();
+      plot_errors->setAxisScale( QwtPlot::xBottom, minx, maxx );
+      plot_errors_zoomer->setZoomBase();
    }
    
+#if defined( DEBUG_RESCALE )
+   {
+      QTextStream tso(stdout);
+      tso << "---\n";
+
+      tso <<
+         QString("").sprintf(
+                             "hplc_plots::plot_files\n"
+                             "\tminx %e maxx %e\n"
+                             "\tminy %e maxy %e\n"
+                             , minx, maxx
+                             , miny, maxy
+                             );
+      tso << "zoomrect "
+          << plot_dist_zoomer->zoomRect().left() << " , "
+          << plot_dist_zoomer->zoomRect().right() << " : " 
+          << plot_dist_zoomer->zoomRect().bottom() << " , "
+          << plot_dist_zoomer->zoomRect().top()
+          << "\n"
+         ;
+      tso << "zoombase "
+          << plot_dist_zoomer->zoomBase().left() << " , "
+          << plot_dist_zoomer->zoomBase().right() << " : " 
+          << plot_dist_zoomer->zoomBase().bottom() << " , "
+          << plot_dist_zoomer->zoomBase().top()
+          << "\n"
+         ;
+      tso << "---\n";
+   }
+#endif
+
    legend_set();
    if ( !suppress_replot )
    {
@@ -1273,6 +1343,7 @@ bool US_Hydrodyn_Saxs_Hplc::plot_file( QString file,
 
 void US_Hydrodyn_Saxs_Hplc::rescale()
 {
+   // qDebug() << "rescale XY event\n";
    //    hide_widgets( plot_errors_widgets, !plot_errors_widgets[ 0 ]->isVisible() );
    //    hide_widgets( files_widgets, !files_widgets[ 0 ]->isVisible() );
    //    hide_widgets( files_expert_widgets, !files_expert_widgets[ 0 ]->isVisible() );
@@ -1328,20 +1399,52 @@ void US_Hydrodyn_Saxs_Hplc::rescale()
       }
    }
    
-   if ( plot_dist_zoomer )
-   {
-      plot_dist_zoomer->zoom ( 0 );
-      delete plot_dist_zoomer;
-   }
+   // if ( plot_dist_zoomer )
+   // {
+   //    plot_dist_zoomer->zoom ( 0 );
+   //    delete plot_dist_zoomer;
+   // }
 
    plot_dist->setAxisScale( QwtPlot::xBottom, minx, maxx );
    plot_dist->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );
-   plot_dist_zoomer = new ScrollZoomer(plot_dist->canvas());
-   plot_dist_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-   plot_dist_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+   plot_dist_zoomer->setZoomBase();
+   plot_dist_zoomer->zoom(0);
+#if defined( DEBUG_RESCALE )
+   {
+      QTextStream tso(stdout);
+      tso << "---\n";
+
+      tso <<
+         QString("").sprintf(
+                             "hplc_plots::rescale\n"
+                             "\tminx %e maxx %e\n"
+                             "\tminy %e maxy %e\n"
+                             , minx, maxx
+                             , miny, maxy
+                             );
+      tso << "zoomrect "
+          << plot_dist_zoomer->zoomRect().left() << " , "
+          << plot_dist_zoomer->zoomRect().right() << " : " 
+          << plot_dist_zoomer->zoomRect().bottom() << " , "
+          << plot_dist_zoomer->zoomRect().top()
+          << "\n"
+         ;
+      tso << "zoombase "
+          << plot_dist_zoomer->zoomBase().left() << " , "
+          << plot_dist_zoomer->zoomBase().right() << " : " 
+          << plot_dist_zoomer->zoomBase().bottom() << " , "
+          << plot_dist_zoomer->zoomBase().top()
+          << "\n"
+         ;
+      tso << "---\n";
+   }
 #endif
-   connect( plot_dist_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
+
+   plot_errors_zoomer->zoom(0);
+
+   // plot_dist_zoomer = new ScrollZoomer(plot_dist->canvas());
+   // plot_dist_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+   // connect( plot_dist_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
    
    legend_set();
    if ( !suppress_replot )

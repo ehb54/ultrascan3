@@ -2203,12 +2203,12 @@ void US_Hydrodyn_Saxs_Hplc::axis_y( bool nochange, bool no_replot )
       plot_dist->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
 #endif
    }
-   if ( plot_dist_zoomer )
-   {
-      plot_dist_zoomer->zoom ( 0 );
-      delete plot_dist_zoomer;
-      plot_dist_zoomer = (ScrollZoomer *) 0;
-   }
+   // if ( plot_dist_zoomer )
+   // {
+   //    plot_dist_zoomer->zoom ( 0 );
+   //    delete plot_dist_zoomer;
+   //    plot_dist_zoomer = (ScrollZoomer *) 0;
+   // }
 
    switch( current_mode )
    {

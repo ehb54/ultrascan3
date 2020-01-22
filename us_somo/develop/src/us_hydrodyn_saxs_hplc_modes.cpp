@@ -3538,6 +3538,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_range(
       // puts( "redoing zoomer" );
       guinier_plot_errors_zoomer = new ScrollZoomer(guinier_plot_errors->canvas());
       guinier_plot_errors_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+      guinier_plot_errors_zoomer->symmetric_rescale = true;
 #if QT_VERSION < 0x040000
       guinier_plot_errors_zoomer->setCursorLabelPen(QPen(Qt::yellow));
 #endif
@@ -5174,11 +5175,11 @@ void US_Hydrodyn_Saxs_Hplc::scale()
    gauss_add_marker( le_scale_q_end    ->text().toDouble(), Qt::red, us_tr( "End"  ), Qt::AlignLeft | Qt::AlignTop );
    plot_dist->replot();
 
-   if ( plot_errors_zoomer )
-   {
-      delete plot_errors_zoomer;
-      plot_errors_zoomer = (ScrollZoomer *) 0;
-   }
+   // if ( plot_errors_zoomer )
+   // {
+   //    delete plot_errors_zoomer;
+   //    plot_errors_zoomer = (ScrollZoomer *) 0;
+   // }
 
    scale_plotted_errors.clear( );
    plot_errors->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_errors->detachItems( QwtPlotItem::Rtti_PlotMarker );;
@@ -5411,17 +5412,17 @@ void US_Hydrodyn_Saxs_Hplc::scale_update_plot_errors()
       plot_errors->setAxisScale( QwtPlot::xBottom, q_min, q_max );
    }
 
-   if ( plot_errors_zoomer )
-   {
-      delete plot_errors_zoomer;
-      plot_errors_zoomer = (ScrollZoomer *) 0;
-   }
+//    if ( plot_errors_zoomer )
+//    {
+//       delete plot_errors_zoomer;
+//       plot_errors_zoomer = (ScrollZoomer *) 0;
+//    }
 
-   plot_errors_zoomer = new ScrollZoomer(plot_errors->canvas());
-   plot_errors_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-   plot_errors_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+//    plot_errors_zoomer = new ScrollZoomer(plot_errors->canvas());
+//    plot_errors_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+// #if QT_VERSION < 0x040000
+//    plot_errors_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+// #endif
    // connect( plot_errors_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
 
    if ( hide )
@@ -6111,11 +6112,11 @@ void US_Hydrodyn_Saxs_Hplc::scale_q_end_focus( bool hasFocus )
 void US_Hydrodyn_Saxs_Hplc::ggauss_start()
 {
    plot_errors->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_errors->detachItems( QwtPlotItem::Rtti_PlotMarker );;
-   if ( plot_errors_zoomer )
-   {
-      delete plot_errors_zoomer;
-      plot_errors_zoomer = (ScrollZoomer *) 0;
-   }
+   // if ( plot_errors_zoomer )
+   // {
+   //    delete plot_errors_zoomer;
+   //    plot_errors_zoomer = (ScrollZoomer *) 0;
+   // }
 
    ggaussian_last_pfit_P    .clear( );
    ggaussian_last_pfit_N    .clear( );
@@ -6295,11 +6296,11 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_scroll()
       gauss_init_markers();
       plot_dist->replot();
 
-      if ( plot_errors_zoomer )
-      {
-         delete plot_errors_zoomer;
-         plot_errors_zoomer = (ScrollZoomer *) 0;
-      }
+      // if ( plot_errors_zoomer )
+      // {
+      //    delete plot_errors_zoomer;
+      //    plot_errors_zoomer = (ScrollZoomer *) 0;
+      // }
       if ( plot_errors->isVisible() ) {
          cb_plot_errors_group->show();
       }
@@ -6650,11 +6651,11 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_scroll_highlight( int pos )
          }
       }
          
-      if ( plot_errors_zoomer )
-      {
-         delete plot_errors_zoomer;
-         plot_errors_zoomer = (ScrollZoomer *) 0;
-      }
+      // if ( plot_errors_zoomer )
+      // {
+      //    delete plot_errors_zoomer;
+      //    plot_errors_zoomer = (ScrollZoomer *) 0;
+      // }
       
       update_plot_errors(
                          ggaussian_last_gg_t[ ggauss_scroll_set [ pos ] ],

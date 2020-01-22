@@ -18,7 +18,7 @@ US_Hydrodyn_BD_Load_Results_Opts::US_Hydrodyn_BD_Load_Results_Opts(
                                                                    double browflex_solvent_viscosity,
                                                                    bool *check_fix_overlaps,
                                                                    QWidget *p,
-                                                                   const char *name
+                                                                   const char *
                                                                    ) : QDialog( p )
 {
    this->msg = msg;
