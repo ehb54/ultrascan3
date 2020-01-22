@@ -16,6 +16,8 @@
 #include "qwt_plot_curve.h"
 #include "qwt_plot_canvas.h"
 #include "qwt_symbol.h"
+#include "qwt/scrollbar.h"
+#include "qwt/scrollzoomer.h"
 
 
 //! \brief A class to implement plot zooming
@@ -66,6 +68,9 @@ class US_EXTERN US_Plot : public QHBoxLayout
          MODE_IQ,
          MODE_GAUSSIAN,
       };
+
+      plot_rescale_mode rescale_mode;
+      ScrollZoomer * scroll_zoomer;
 
    signals:
       //! \brief A signal that provides the bounding rectangle of a zoomed area
