@@ -129,7 +129,7 @@ DROP PROCEDURE IF EXISTS new_report$$
 CREATE PROCEDURE new_report ( p_personGUID  CHAR(36),
                               p_password    VARCHAR(80),
                               p_reportGUID  CHAR(36),
-                              p_runID       VARCHAR(80),
+                              p_runID       VARCHAR(255),
                               p_title       VARCHAR(255),
                               p_html        LONGTEXT,
                               p_ownerID     INT )
@@ -309,7 +309,7 @@ DROP PROCEDURE IF EXISTS get_reportID_by_runID$$
 CREATE PROCEDURE get_reportID_by_runID ( p_personGUID  CHAR(36),
                                          p_password    VARCHAR(80),
                                          p_ID          INT,
-                                         p_runID       VARCHAR(80) )
+                                         p_runID       VARCHAR(255) )
   READS SQL DATA
 
 BEGIN

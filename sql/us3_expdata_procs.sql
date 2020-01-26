@@ -372,13 +372,13 @@ DROP PROCEDURE IF EXISTS get_raw_desc_by_runID$$
 CREATE PROCEDURE get_raw_desc_by_runID ( p_personGUID   CHAR(36),
                                          p_password     VARCHAR(80),
                                          p_ID           INT,
-                                         p_runID        VARCHAR(60) )
+                                         p_runID        VARCHAR(250) )
   READS SQL DATA
 
 BEGIN
 
   DECLARE count_rawData INT;
-  DECLARE run_pattern VARCHAR(64);
+  DECLARE run_pattern VARCHAR(254);
 
   CALL config();
   SET run_pattern = CONCAT( p_runID, '.%' );
@@ -1047,12 +1047,12 @@ DROP PROCEDURE IF EXISTS get_edit_desc_by_runID$$
 CREATE PROCEDURE get_edit_desc_by_runID ( p_personGUID   CHAR(36),
                                           p_password     VARCHAR(80),
                                           p_ID           INT,
-                                          p_runID        VARCHAR(60) )
+                                          p_runID        VARCHAR(250) )
   READS SQL DATA
 
 BEGIN
   DECLARE count_editData INT;
-  DECLARE run_pattern VARCHAR(64);
+  DECLARE run_pattern VARCHAR(254);
 
   CALL config();
   SET run_pattern = CONCAT( p_runID, '.%' );
