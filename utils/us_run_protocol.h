@@ -288,7 +288,7 @@ class US_UTIL_EXTERN US_RunProtocol
             //! Save controls to XML
             bool toXml  ( QXmlStreamWriter& );
 
-	    QString     us_xml;        //!< Analysis Profile XML
+	    QString     ap_xml;        //!< Analysis Profile XML
 
             QString     aprofname;     //!< Profile name/description
             QString     aprofGUID;     //!< Profile GUID

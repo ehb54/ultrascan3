@@ -12,6 +12,7 @@
 #include "us_sleep.h"
 #include "us_util.h"
 #include "us_crypto.h"
+#include "us_datafiles.h"
 #include "us_select_item.h"
 
 #if QT_VERSION < 0x050000
@@ -675,7 +676,7 @@ DbgLv(1) << "EGGe:ldPro: Disk-B: load_db" << load_db;
 
    if ( pdiag->exec() == QDialog::Accepted )
    {  // Accept in dialog:  get selected protocol name and its XML
-     DbgLv(1) << "EGGe:ldPro:  ACCEPT  prx" << prx << "sel proto" << protdata[prx][0] << "protID" << protdata[prx][2];
+DbgLv(1) << "EGGe:ldPro:  ACCEPT  prx" << prx << "sel proto" << protdata[prx][0] << "protID" << protdata[prx][2];
 
       QString pname         = protdata[ prx ][ 0 ];
 
@@ -701,7 +702,7 @@ DbgLv(1) << "EGGe:ldPro:  REJECT";
    ct_tempera->setValue( mainw->currProto.temperature );
    ct_tedelay->setValue( mainw->currProto.temeq_delay );
    //ALEXEY: set Project name
-   le_project->setText(mainw->currProto.project);
+   le_project->setText ( mainw->currProto.project );
 
 DbgLv(1) << "EGGe:ldPro:    dur0" << mainw->currProto.rpSpeed.ssteps[0].duration;
 DbgLv(1) << "EGGe:ldPro:    cPname" << mainw->currProto.protoname
@@ -711,11 +712,13 @@ DbgLv(1) << "EGGe:ldPro:    cOhost" << mainw->currProto.optimahost
 DbgLv(1) << "EGGe:ldPro:    cTempe" << mainw->currProto.temperature
  << "lTempe" << mainw->loadProto.temperature;
 
- QString rname     = le_runid->text();
- if ( !rname.isEmpty() )
-   mainw->currProto.runname = rname;
+   QString rname     = le_runid->text();
+   if ( !rname.isEmpty() )
+      mainw->currProto.runname = rname;
+   loaded_proto = 1;
 
- loaded_proto = 1;
+   // If there is a linked AnalysisProfile, add it
+
    // Initialize all other panels using the new protocol
    mainw->initPanels();
 
@@ -3926,7 +3929,7 @@ void US_ExperGuiAProfile::detailProfile()
                              US_GuiSettings::fontSize() - 1,
                              QFont::Bold ) );
 QFont ufont=ediag->e->font();
-DbgLv(1) << "EGUp:detE: ufont" << ufont.family();
+DbgLv(1) << "EGAp:detE: ufont" << ufont.family();
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 }
 
@@ -4321,10 +4324,187 @@ DbgLv(1) << "EGUp:dE: nsolut" << ssolut.count();
                .arg( lo_radi ).arg( hi_radi );
    }
 
-   dtext += tr( "\nUpload\n" );
+   US_AnaProfile* cAP  = &mainw->currAProf;
+   US_AnaProfile::AnaProf2DSA* cAP2 = &cAP->ap2DSA;
+   US_AnaProfile::AnaProfPCSA* cAPp = &cAP->apPCSA;
+   QString aprname     = cAP->aprofname;
+   QString proname     = cAP->protoname;
+   int nchna           = cAP->pchans.count();
+   QString scrat       = QString::number( cAP->lc_ratios[ 0 ] );
+   QString sctol       = QString::number( cAP->lc_tolers[ 0 ] );
+   QString slvol       = QString::number( cAP->l_volumes[ 0 ] );
+   QString svtol       = QString::number( cAP->lv_tolers[ 0 ] );
+   QString sdaen       = QString::number( cAP->data_ends[ 0 ] );
+   dtext += tr( "\nAnalysis Profile\n" );
+   dtext += tr( "  Profile Name:   " ) + cAP->aprofname  + "\n";
+   dtext += tr( "  Protocol Name:  " ) + cAP->protoname  + "\n";
+   dtext += tr( "  Profile GUID:   " ) + cAP->aprofGUID  + "\n";
+   dtext += tr( "  Protocol GUID:  " ) + cAP->protoGUID  + "\n";
+   dtext += tr( "  Profile db ID:  " ) +
+               QString::number( cAP->aprofID )  + "\n";
+   dtext += tr( "  Protocol db ID: " ) +
+               QString::number( cAP->protoID )  + "\n";
+   dtext += tr( "  Channel:        " ) + cAP->chndescs [ 0 ]  + "\n";
+   dtext += tr( "    Loading Ratio:            " ) + scrat + "\n";
+   dtext += tr( "    Ratio Tolerance percent:  " ) + sctol + "\n";
+   dtext += tr( "    Loading Volume:           " ) + slvol + "\n";
+   dtext += tr( "    Volume Tolerance percent: " ) + svtol + "\n";
+   dtext += tr( "    Data End (cm):            " ) + sdaen + "\n";
+   for ( int ii = 1; ii < nchna; ii++ )
+   {
+      dtext += tr( "  Channel:        " ) + cAP->chndescs [ ii ]  + "\n";
+      int nsame           = 0;
+
+      if ( cAP->lc_ratios[ ii ] == cAP->lc_ratios[ ii - 1 ] )
+         nsame++;
+      else
+         dtext += tr( "    Loading Ratio:            " ) +
+            QString::number( cAP->lc_ratios[ ii ] ) + "\n";
+
+      if ( cAP->lc_tolers[ ii ] == cAP->lc_tolers[ ii - 1 ] )
+         nsame++;
+      else
+         dtext += tr( "    Ratio Tolerance percent:  " ) +
+            QString::number( cAP->lc_tolers[ ii ] ) + "\n";
+
+      if ( cAP->l_volumes[ ii ] == cAP->l_volumes[ ii - 1 ] )
+         nsame++;
+      else
+         dtext += tr( "    Loading Volume:           " ) +
+            QString::number( cAP->l_volumes[ ii ] ) + "\n";
+
+      if ( cAP->lv_tolers[ ii ] == cAP->lv_tolers[ ii - 1 ] )
+         nsame++;
+      else
+         dtext += tr( "    Volume Tolerance percent: " ) +
+            QString::number( cAP->lv_tolers[ ii ] ) + "\n";
+
+      if ( cAP->data_ends[ ii ] == cAP->data_ends[ ii - 1 ] )
+         nsame++;
+      else
+         dtext += tr( "    Data End (cm):            " ) +
+            QString::number( cAP->data_ends[ ii ] ) + "\n";
+
+      if ( nsame == 5 )
+         dtext += tr( "      [ all values same as previous ]\n" );
+      else if ( nsame > 0 )
+         dtext += tr( "      [ other values same as previous ]\n" );
+   }
+   dtext += tr( "  2DSA Analysis Controls: \n" );
+   for ( int ii = 0; ii < nchna; ii++ )
+   {
+      dtext += tr( "    Channel:          " ) + cAP2->parms[ ii ].channel  + "\n";
+      dtext += tr( "      s Min, Max, Points:     " ) +
+               QString::number( cAP2->parms[ ii ].s_min ) + ", " +
+               QString::number( cAP2->parms[ ii ].s_max ) + ", " +
+               QString::number( cAP2->parms[ ii ].s_grpts ) + "\n";
+      dtext += tr( "      f/f0 Min, Max, Points:  " ) +
+               QString::number( cAP2->parms[ ii ].k_min ) + ", " +
+               QString::number( cAP2->parms[ ii ].k_max ) + ", " +
+               QString::number( cAP2->parms[ ii ].k_grpts ) + "\n";
+      dtext += tr( "      Grid Repetitions:       " ) +
+               QString::number( cAP2->parms[ ii ].gridreps ) + "\n";
+      dtext += tr( "      Custom Grid:            " ) +
+               cAP2->parms[ ii ].cgrid_name + "\n";
+      dtext += tr( "      Varying Vbar:           " ) +
+               ( cAP2->parms[ ii ].varyvbar ? tr( "YES" ) : tr( "no" ) ) + "\n";
+      dtext += tr( "      Constant f/f0:          " ) +
+               QString::number( cAP2->parms[ ii ].ff0_const ) + "\n";
+   }
+   dtext += tr( "    Flow Summary:\n" );
+   dtext += tr( "     \"2DSA  (TI Noise)\" --\n" );
+   dtext += tr( "      Run?                 :  " ) +
+            ( cAP2->job1run ? tr( "YES" ) : tr( "no" ) ) + "\n";
+   dtext += tr( "     \"2DSA-FM  (TI+RI Noise)\" --\n" );
+   dtext += tr( "      Run?                 :  " ) +
+            ( cAP2->job2run ? tr( "YES" ) : tr( "no" ) ) + "\n";
+   dtext += tr( "      Meniscus Fit Points:    " ) +
+            QString::number( cAP2->grpoints ) + "\n";
+   dtext += tr( "      Meniscus Fit Range:     " ) +
+            QString::number( cAP2->fitrng ) + "\n";
+   dtext += tr( "     \"FITMEN\" --\n" );
+   dtext += tr( "      Run?                 :  " ) +
+            ( cAP2->job3run ? tr( "YES" ) : tr( "no" ) ) + "\n";
+   dtext += tr( "      Auto-pick?           :  " ) +
+            ( cAP2->job3auto ? tr( "YES" ) : tr( "no" ) ) + "\n";
+   dtext += tr( "     \"2DSA-IT  (TI+RI Noise)\" --\n" );
+   dtext += tr( "      Run?                 :  " ) +
+            ( cAP2->job4run ? tr( "YES" ) : tr( "no" ) ) + "\n";
+   dtext += tr( "      Refinement Iterations:  " ) +
+            QString::number( cAP2->rfiters ) + "\n";
+   dtext += tr( "     \"2DSA-MC\" --\n" );
+   dtext += tr( "      Run?                 :  " ) +
+            ( cAP2->job5run ? tr( "YES" ) : tr( "no" ) ) + "\n";
+   dtext += tr( "      MonteCarlo Iterations:  " ) +
+            QString::number( cAP2->mciters ) + "\n";
+
+   dtext += tr( "  PCSA Analysis Controls: \n" );
+   if ( cAPp->job_run )
+   {
+      dtext += tr( "    Run PCSA job?            YES\n" );
+      for ( int ii = 0; ii < nchna; ii++ )
+      {
+         dtext += tr( "    Channel:          " ) + cAPp->parms[ ii ].channel  + "\n";
+         dtext += tr( "      Curve Type:              " ) +
+                  cAPp->parms[ ii ].curv_type + "\n";
+         dtext += tr( "      X Type, Min, Max:        " ) +
+                  cAPp->parms[ ii ].x_type + ", " +
+                  QString::number( cAPp->parms[ ii ].x_min ) + ", " +
+                  QString::number( cAPp->parms[ ii ].x_max ) + "\n";
+         dtext += tr( "      Y Type, Min, Max:        " ) +
+                  cAPp->parms[ ii ].y_type + ", " +
+                  QString::number( cAPp->parms[ ii ].y_min ) + ", " +
+                  QString::number( cAPp->parms[ ii ].y_max ) + "\n";
+         dtext += tr( "      Z Type, Value:           " ) +
+                  cAPp->parms[ ii ].z_type + ", " +
+                  QString::number( cAPp->parms[ ii ].z_value ) + "\n";
+         dtext += tr( "      Variations Count:        " ) +
+                  QString::number( cAPp->parms[ ii ].varcount ) + "\n";
+         dtext += tr( "      Grid Fit Iterations:     " ) +
+                  QString::number( cAPp->parms[ ii ].grf_iters ) + "\n";
+         dtext += tr( "      Curve Resolution Points: " ) +
+                  QString::number( cAPp->parms[ ii ].creso_pts ) + "\n";
+         dtext += tr( "      Noise Type:              " ) +
+                  cAPp->parms[ ii ].noise_type + "\n";
+         dtext += tr( "      Tikhonov Regularization: " ) +
+                  cAPp->parms[ ii ].treg_type + "\n";
+         dtext += tr( "      Tikhonov Alpha:          " ) +
+                  QString::number( cAPp->parms[ ii ].tr_alpha ) + "\n";
+         dtext += tr( "      MonteCarlo Iterations:   " ) +
+                  QString::number( cAPp->parms[ ii ].mc_iters ) + "\n";
+      }
+   }
+   else
+   {
+      dtext += tr( "    Run PCSA job?            no\n" );
+   }
+/**
+x               double       x_min;
+x                 double       x_max;
+x                 double       y_min;
+x                 double       y_max;
+x                 double       z_value;
+x                 double       tr_alpha;
+x                 int          varcount;
+x                 int          grf_iters;
+x                 int          creso_pts;
+x                 int          noise_flag;
+x                 int          treg_flag;
+x                 int          mc_iters;
+x                 bool         job_run;
+x                 QString      channel;
+x                 QString      curv_type;
+x                 QString      x_type;
+x                 QString      y_type;
+x                 QString      z_type;
+x                 QString      noise_type;
+x                 QString      treg_type;
+ **/
+
+   dtext += tr( "\nSubmit\n" );
    dtext += tr( "  CONNECTED:                  " ) + v_conok  + "\n";
-   dtext += tr( "  UPLOAD ENABLED:             " ) + v_uleok  + "\n";
-   dtext += tr( "  UPLOAD COMPLETED:           " ) + v_ulcok  + "\n";
+   dtext += tr( "  SUBMIT ENABLED:             " ) + v_uleok  + "\n";
+   dtext += tr( "  SUBMIT COMPLETED:           " ) + v_ulcok  + "\n";
 
 //    // Generate a JSON stream to be uploaded
 
@@ -4417,18 +4597,63 @@ DbgLv(1) << "EGUp:  connected" << connected;
 // Slot to save the current Run Protocol
 void US_ExperGuiUpload::saveAnalysisProfile()
 {
-   rpAprof->us_xml.clear();
+   rpAprof->ap_xml.clear();
 
-   QXmlStreamWriter xmlo_aprof( &rpAprof->us_xml ); // Compose XML representation
+   QXmlStreamWriter xmlo_aprof( &rpAprof->ap_xml ); // Compose XML representation
    xmlo_aprof.setAutoFormatting( true );
    //mainw->epanAProfile->sdiag->currProf.toXml( xmlo_aprof );
 
    US_AnaProfile* aprof = mainw->get_aprofile();
+   rpAprof->aprofname   = aprof->aprofname;
+   rpAprof->aprofGUID   = US_Util::new_guid();
+   aprof  ->aprofGUID   = rpAprof->aprofGUID;
 
    aprof->toXml( xmlo_aprof ); 
-   qDebug() << "XML AProfile: " << rpAprof->us_xml;
+DbgLv(1) << "XML AProfile: " << rpAprof->ap_xml;
 
-   //return;
+   QString xmlopath;
+   QString dapath;
+#if 0
+   xmlopath         = US_Settings::tmpDir() + "/aprofile_" + aprof->aprofname + ".xml";
+   QFile xofile( xmlopath );
+   if ( !xofile.open( QIODevice::WriteOnly | QIODevice::Text ) )
+      return;
+   QTextStream xotxto( &xofile );
+   xotxto << rpAprof->ap_xml;
+   xofile.close();
+
+#endif
+   // Find or compose an analysis profile local file name
+   bool new_file    = false;
+   dapath           = US_Settings::dataDir() + "/projects/";
+   xmlopath         = US_DataFiles::get_filename( dapath, aprof->aprofGUID,
+                         "A", "aprofile", "aprofileGUID", new_file );
+DbgLv(1) << "EGAp:svAP: new_file" << new_file << "xmlopath" <<  xmlopath;
+   if ( new_file )
+   {  // Write AProfile XML as a */ultrascan/data/projects/A*xml file
+      QFile xofile( xmlopath );
+      if ( xofile.open( QIODevice::WriteOnly | QIODevice::Text ) )
+      {
+         QTextStream xotxto( &xofile );
+         xotxto << rpAprof->ap_xml;
+         xofile.close();
+      }
+   }
+
+   // Write an analysis profile entry to the database
+   US_Passwd  pw;
+   US_DB2* dbP         = ( sibSValue( "general", "dbdisk" ) == "DB" )
+                         ? new US_DB2( pw.getPasswd() ) : NULL;
+   QStringList qry;
+   qry << "new_aprofile" << aprof->aprofGUID << aprof->aprofname
+       << rpAprof->ap_xml;
+   dbP->statusQuery( qry );
+   aprof->aprofID      = dbP->lastInsertID();
+DbgLv(1) << "EGAp:svAP:  qry" << qry;
+DbgLv(1) << "EGAp:svAP:  new DB:  ID" << aprof->aprofID
+ << dbP->lastError();
+
+   return;
 }
 
 // Slot to save the current Run Protocol

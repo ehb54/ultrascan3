@@ -71,6 +71,7 @@ QString US_ExperimentMain::childSValue( const QString child, const QString type 
    else if ( child == "solutions") { value = epanSolutions->getSValue( type ); }
    else if ( child == "optical"  ) { value = epanOptical  ->getSValue( type ); }
    else if ( child == "ranges"   ) { value = epanRanges   ->getSValue( type ); }
+   else if ( child == "aprofile" ) { value = epanAProfile ->getSValue( type ); }
    else if ( child == "submit"   ) { value = epanUpload   ->getSValue( type ); }
    return value;
 }
@@ -86,6 +87,7 @@ int US_ExperimentMain::childIValue( const QString child, const QString type )
    else if ( child == "solutions") { value = epanSolutions->getIValue( type ); }
    else if ( child == "optical"  ) { value = epanOptical  ->getIValue( type ); }
    else if ( child == "ranges"   ) { value = epanRanges   ->getIValue( type ); }
+   else if ( child == "aprofile" ) { value = epanAProfile ->getIValue( type ); }
    else if ( child == "submit"   ) { value = epanUpload   ->getIValue( type ); }
    return value;
 }
@@ -101,6 +103,7 @@ double US_ExperimentMain::childDValue( const QString child, const QString type )
    else if ( child == "solutions") { value = epanSolutions->getDValue( type ); }
    else if ( child == "optical"  ) { value = epanOptical  ->getDValue( type ); }
    else if ( child == "ranges"   ) { value = epanRanges   ->getDValue( type ); }
+   else if ( child == "aprofile" ) { value = epanAProfile ->getDValue( type ); }
    else if ( child == "submit"   ) { value = epanUpload   ->getDValue( type ); }
    return value;
 }
@@ -117,6 +120,7 @@ QStringList US_ExperimentMain::childLValue( const QString child, const QString t
    else if ( child == "solutions") { value = epanSolutions->getLValue( type ); }
    else if ( child == "optical"  ) { value = epanOptical  ->getLValue( type ); }
    else if ( child == "ranges"   ) { value = epanRanges   ->getLValue( type ); }
+   else if ( child == "aprofile" ) { value = epanAProfile ->getLValue( type ); }
    else if ( child == "submit"   ) { value = epanUpload   ->getLValue( type ); }
 
    return value;
@@ -125,7 +129,7 @@ QStringList US_ExperimentMain::childLValue( const QString child, const QString t
 // Slot to handle a new panel selected
 void US_ExperimentMain::newPanel( int panx )
 {
-DbgLv(1) << "newPanel panx=" << panx << "prev.panx=" << curr_panx;
+DbgLv(1) << "newPanel panx=" << panx << "prev.panx=" << curr_panx << "usmode" << usmode;
    // Save any changes in the old current panel
    if      ( curr_panx == panx )  return;  // No change in panel
 
@@ -136,16 +140,24 @@ DbgLv(1) << "newPanel panx=" << panx << "prev.panx=" << curr_panx;
    else if ( curr_panx == 4 ) epanSolutions->savePanel();
    else if ( curr_panx == 5 ) epanOptical  ->savePanel();
    else if ( curr_panx == 6 ) epanRanges   ->savePanel();
-   else if ( curr_panx == 7 ) epanAProfile ->savePanel();
+   else if ( curr_panx == 7 )
+   {
+      if ( !usmode )
+                              epanAProfile ->savePanel();
+      else
+                              epanUpload   ->savePanel();
+   }
+   else if ( curr_panx == 8 ) epanUpload   ->savePanel();
 
    // Initialize the new current panel after possible changes
+   int pandiff      = panx - curr_panx;
    if      ( panx == 0 )      epanGeneral  ->initPanel();
    else if ( panx == 1 )      epanRotor    ->initPanel();
    else if ( panx == 2 )      epanSpeeds   ->initPanel();
    else if ( panx == 3 )      epanCells    ->initPanel();
    else if ( panx == 4 )                                    // Solutions
    {
-      if ( panx - curr_panx > 1 )
+      if ( pandiff > 1 )
       {
          epanCells    ->initPanel();
          epanCells    ->savePanel();
@@ -154,7 +166,7 @@ DbgLv(1) << "newPanel panx=" << panx << "prev.panx=" << curr_panx;
    }
    else if ( panx == 5 )                                    // Optics
    {
-      if ( panx - curr_panx > 1 )
+      if ( pandiff > 1 )
       {
          epanCells    ->initPanel();
          epanCells    ->savePanel();
@@ -163,9 +175,9 @@ DbgLv(1) << "newPanel panx=" << panx << "prev.panx=" << curr_panx;
       }
       epanOptical  ->initPanel();
    }
-   else if ( panx == 6 )
+   else if ( panx == 6 )                                    // Ranges
    {
-      if ( panx - curr_panx > 1 )                          // Ranges
+      if ( pandiff > 1 )
       {
          epanCells    ->initPanel();
          epanCells    ->savePanel();
@@ -176,11 +188,10 @@ DbgLv(1) << "newPanel panx=" << panx << "prev.panx=" << curr_panx;
       }
       epanRanges   ->initPanel();
    }
-   else if ( panx == 7 )
+   else if ( panx == 7 )                                    // AProfile OR Upload
    {
-     
-     if ( panx - curr_panx > 1 )                          // AProfile OR Upload
-       {
+      if ( pandiff > 1 )
+      {
 	 epanCells    ->initPanel();
 	 epanCells    ->savePanel();
 	 epanSolutions->initPanel();
@@ -189,15 +200,15 @@ DbgLv(1) << "newPanel panx=" << panx << "prev.panx=" << curr_panx;
 	 epanOptical  ->savePanel();
 	 epanRanges   ->initPanel();
 	 epanRanges   ->savePanel();
-       }
-     if ( !usmode )                                         // Active AProfile panel => 7 AProfile
-       epanAProfile ->initPanel();
-     else                                                   //No active AProfile panel => 7 Upload
-       epanUpload   ->initPanel();
+      }
+      if ( !usmode )                                        // Active AProfile panel => 7 AProfile
+         epanAProfile ->initPanel();
+      else                                                  // No active AProfile panel => 7 Upload
+         epanUpload   ->initPanel();
    }
-   else if ( panx == 8 )
+   else if ( panx == 8 )                                    // Upload OR NONE
    {
-      if ( panx - curr_panx > 1 )                          // Upload OR NONE
+      if ( pandiff > 1 )
       {
          epanCells    ->initPanel();
          epanCells    ->savePanel();
@@ -2547,7 +2558,7 @@ DbgLv(1) << "EGAp:inP:  sdiag" << sdiag;
 
    mainw->currAProf.aprofname = aprofname;
    mainw->currAProf.protoname = protoname;
-   sdiag->currProf = mainw->currAProf;
+   sdiag->currProf            = mainw->currAProf;
    sdiag->inherit_protocol( currProto );
 DbgLv(1) << "EGAp:inP:  sdiag names passed";
    sdiag->initPanels();
@@ -2561,6 +2572,7 @@ void US_ExperGuiAProfile::reset_sdiag( void )
 
 void US_ExperGuiAProfile::savePanel()
 {
+DbgLv(1) << "EGAp:svP:  sdiag savePanels()";
    sdiag->savePanels();
    mainw->currAProf = sdiag->currProf;
 }
@@ -2569,6 +2581,48 @@ int  US_ExperGuiAProfile::status()
 {
 bool is_done=true;
    return ( is_done ? 128 : 0 );
+}
+
+QString US_ExperGuiAProfile::getSValue( const QString type )
+{
+   QString value( "" );
+
+   if      ( type == "alldone"  ||
+             type == "status" )
+      value  = QString::number( getIValue( type ) );
+
+   return value;
+}
+
+// Get a specific panel integer value
+int US_ExperGuiAProfile::getIValue( const QString type )
+{
+   int value   = 0;
+   if      ( type == "alldone" )  { value = ( status() > 0 ) ? 1 : 0; }
+   else if ( type == "status"  )  { value = status(); }
+   return value;
+}
+
+// Get a specific panel double value
+double US_ExperGuiAProfile::getDValue( const QString type )
+{
+   double value   = 0.;
+   if ( type == "dbdisk" ) { value = 1; }
+
+   return value;
+}
+
+// Get specific panel list values
+QStringList US_ExperGuiAProfile::getLValue( const QString type )
+{
+   QStringList value( "" );
+
+   if ( type == "uploaded" )
+   {
+      //value << le_runid->text();
+   }
+
+   return value;
 }
 
 //========================= End:   Aprofile  section =========================

@@ -3,6 +3,7 @@
 #include "us_analysis_profile.h"
 #include "us_table.h"
 #include "us_license.h"
+#include "us_datafiles.h"
 #include "us_sleep.h"
 #include "us_util.h"
 
@@ -123,9 +124,9 @@ DbgLv(1) << "MAIN:  CALL reset()";
 // Reset parameters to their defaults
 void US_AnalysisProfileGui::reset( void )
 {
-  qDebug() << "Resetting internal protocol...";
-  currProf = US_AnaProfile();
-  initPanels();
+DbgLv(1) << "MAIN:  Resetting internal protocol...";
+   currProf = US_AnaProfile();
+   initPanels();
   
 }
 
@@ -229,6 +230,23 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
          {  // Replace channel and channel description
             currProf.pchans  [ nchn ] = chname;
             currProf.chndescs[ nchn ] = chentr;
+            chx             = currProf.lc_ratios.count() - 1;
+            if ( chx < nchn )
+               currProf.lc_ratios << currProf.lc_ratios[ chx ];
+            chx             = currProf.lc_tolers.count() - 1;
+            if ( chx < nchn )
+               currProf.lc_tolers << currProf.lc_tolers[ chx ];
+            chx             = currProf.l_volumes.count() - 1;
+            if ( chx < nchn )
+               currProf.l_volumes << currProf.l_volumes[ chx ];
+            chx             = currProf.lv_tolers.count() - 1;
+            if ( chx < nchn )
+               currProf.lv_tolers << currProf.lv_tolers[ chx ];
+DbgLv(1) << "APG: ipro:     chx nchn lvt" << chx << nchn;
+            chx             = currProf.data_ends.count() - 1;
+            if ( chx < nchn )
+               currProf.data_ends << currProf.data_ends[ chx ];
+DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn;
          }
          else
          {  // Append channel and channel description
@@ -240,6 +258,9 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
             currProf.lc_tolers << currProf.lc_tolers[ lch ];
             currProf.l_volumes << currProf.l_volumes[ lch ];
             currProf.lv_tolers << currProf.lv_tolers[ lch ];
+            currProf.data_ends << currProf.data_ends[ lch ];
+DbgLv(1) << "APG: ipro:     lch" << lch << "lv_tol da_end"
+ << currProf.lv_tolers[ lch ] << currProf.data_ends[ lch ];
          }
          nchn++;
       }
@@ -257,11 +278,104 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
          currProf.lc_tolers.removeLast();
          currProf.l_volumes.removeLast();
          currProf.lv_tolers.removeLast();
+         currProf.data_ends.removeLast();
       }
    }
 
 DbgLv(1) << "APG: ipro: nchn" << nchn << "call pGen iP";
    apanGeneral->initPanel();
+DbgLv(1) << "APG: ipro: name" << iProto->protoname
+ << "cPname" << currProf.aprofname << "xml len" << ap_xml.length()
+ << "GUID" << currProf.aprofGUID << iProto->rpAprof.aprofGUID;
+
+   if ( currProf.aprofGUID.isEmpty()  ||
+        currProf.aprofGUID.startsWith( "0000" ) )
+   {
+      currProf.aprofGUID   = iProto->rpAprof.aprofGUID;
+   }
+
+QString aprsrc( "currProf" );
+   bool need_rec        = ap_xml.isEmpty();
+   need_rec             = ( currProf.aprofname == iProto->rpAprof.aprofname )
+                          ? need_rec : true;
+   // Load Analysis Profile from database or local file
+//   if ( currProf.aprofname != iProto->protoname  ||
+//        ap_xml.isEmpty() )a
+   if ( need_rec )
+   {
+      bool use_db          = ( US_Settings::default_data_location() < 2 );
+      bool fromdisk        = US_Settings::debug_match( "protocolFromDisk" );
+      bool load_db         = fromdisk ? false : use_db;
+      US_Passwd  pw;
+      US_DB2* dbP          = load_db ? new US_DB2( pw.getPasswd() ) : NULL;
+      load_db              = ( dbP != NULL );
+
+      if ( load_db )
+      {  // Get AProfile XML from the database
+//load_db=false;
+         int status           = US_DB2::OK;
+         QStringList qry;
+         qry << "get_aprofile_info" << currProf.aprofGUID;
+         dbP->query( qry );
+         status               = dbP->lastErrno();
+         int numrow           = dbP->numRows();
+DbgLv(1) << "APG: ipro:  db stat nrow" << status << numrow << "lerr" << dbP->lastError();
+         if ( status != US_DB2::OK  ||  numrow < 1 )
+         {
+            load_db              = false;
+DbgLv(1) << "APG: ipro:   load_db" << load_db;
+         }
+         else
+         {
+            currProf.aprofID     = dbP->value( 0 ).toInt();
+            currProf.aprofname   = dbP->value( 1 ).toString();
+            ap_xml               = dbP->value( 2 ).toString();
+DbgLv(1) << "APG: ipro:  ap ID,name,lnxml" << currProf.aprofID
+ << currProf.aprofname << ap_xml.length();
+aprsrc=QString("readDB");
+         }
+      }
+
+DbgLv(1) << "APG: ipro:  load_db" << load_db;
+      if ( !load_db )
+      {  // Get AProfile XML from local disk
+         bool new_file        = false;
+         QString dapath       = US_Settings::dataDir() + "/projects";
+         QString xmlipath     = US_DataFiles::get_filename( dapath, currProf.aprofGUID,
+                                   "A", "analysis_profile", "guid", new_file );
+
+DbgLv(1) << "APG: ipro:   new_file" << new_file << "xmlipath" << xmlipath
+ << "guid" << currProf.aprofGUID;
+         if ( new_file )
+         {  // No local file, so clear XML
+            ap_xml.clear();
+         }
+         else
+         {  // Read XML from local file
+            QFile xifile( xmlipath );
+            if ( xifile.open( QIODevice::ReadOnly | QIODevice::Text ) )
+            {
+               QTextStream xitext( &xifile );
+               ap_xml            = xitext.readAll();
+               xifile.close();
+aprsrc=QString("readLocf");
+            }
+         }
+      }
+
+      // Get AnalysisProfile from XML
+DbgLv(1) << "APG: ipro:  ap_xml isEmpty" << ap_xml.isEmpty();
+      if ( !ap_xml.isEmpty() )
+      {
+DbgLv(1) << "APG: ipro:  ap_xml length" << ap_xml.length();
+         QXmlStreamReader xmli( ap_xml );
+         currProf.fromXml( xmli );
+DbgLv(1) << "APG: ipro:   2kparm pkparm" << currProf.ap2DSA.parms.count() << currProf.apPCSA.parms.count();
+         initPanels();
+      }
+   }
+DbgLv(1) << "APG: ipro: Aprof source: " << aprsrc;
+   
 }
 
 // Reset parameters to their defaults
@@ -340,6 +454,35 @@ DbgLv(1) << "APGe:  RTN initPanel()";
 void US_AnaprofPanGen::build_general_layout()
 {
    bool have_genl  = true;
+   int nchn        = sl_chnsel.count();
+DbgLv(1) << "APGe: bgL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
+
+   int kchnl       = nchn;
+   int kchnh       = nchn;
+   if ( nchn > 0  &&  genL != NULL )
+   {
+      kchnl           = le_lcrats.count();
+      kchnl           = kchnl;
+      kchnl           = qMin( kchnl, le_lctols.count() );
+      kchnh           = qMax( kchnh, le_lctols.count() );
+      kchnl           = qMin( kchnl, le_ldvols.count() );
+      kchnh           = qMax( kchnh, le_ldvols.count() );
+      kchnl           = qMin( kchnl, le_lvtols.count() );
+      kchnh           = qMax( kchnh, le_lvtols.count() );
+      kchnl           = qMin( kchnl, le_daends.count() );
+      kchnh           = qMax( kchnh, le_daends.count() );
+   }
+   else if ( nchn == 0 )
+   {
+      kchnh           = 1;
+   }
+
+   if (  nchn == kchnl  &&  nchn == kchnh )
+   {  // Channel elements all have the same count
+DbgLv(1) << "APGe: bgL: REBUILD skipped";
+      return;
+   }
+
    if ( genL != NULL )
    {
 /*
@@ -439,7 +582,6 @@ DbgLv(1) << "APGe: bgL:    scrollArea children count ZERO";
             this,        SLOT(   prot_text_changed( void ) ) );
 
    // Build channel lists and rows
-   int nchn          = sl_chnsel.count();
 DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
    QLabel* lb_chann  = us_label( tr( "CellChannel:\n"
                                      "Optics: Solution" ) );
@@ -944,7 +1086,6 @@ void US_AnaprofPan2DSA::channel_selected( int chnx )
 DbgLv(1) << "2D:SL: CHAN_SEL" << chnx << "prvx" << prvx;
    // Save parameters from previous channel and load current
    gui_to_parms( prvx );
-
    parms_to_gui( chnx );
 
    // Enable/disable Next based on last index
@@ -974,7 +1115,8 @@ DbgLv(1) << "2D:SL-gp: *ERROR* rowx>=kparm";
    parm1.k_grpts    = le_kgrpts->text().toDouble();
    parm1.gridreps   = le_grreps->text().toDouble();
    parm1.varyvbar   = ck_varyvb->isChecked();
-   parm1.have_custg = ( le_custmg->text() != "(none)" );
+   parm1.have_custg = ( !le_custmg->text().isEmpty()  &&
+                       le_custmg->text() != "(none)" );
    parm1.channel    = sl_chnsel[ rowx ];
    parm1.cust_grid  = le_custmg->text();
    parm1.cgrid_name = le_custmg->text();
@@ -1332,7 +1474,6 @@ DbgLv(1) << "PC:SL: CHAN_SEL" << chnx;
 DbgLv(1) << "PC:SL: CHAN_SEL" << chnx << "prvx" << prvx;
    // Save parameters from previous channel and load current
    gui_to_parms( prvx );
-
    parms_to_gui( chnx );
 
    // Enable/disable Next based on last index
@@ -1373,7 +1514,6 @@ DbgLv(1) << "PC:SL-gp: *ERROR* rowx>=kparm";
    parm1.grf_iters   = le_grfiters->text().toInt();
    parm1.creso_pts   = le_crpoints->text().toInt();
    parm1.mc_iters    = le_mciters ->text().toInt();
-   parm1.job_run     = !ck_nopcsa  ->isChecked();
    parm1.noise_flag  = 0;
    parm1.noise_flag += ( ck_tinoise ->isChecked() ? 1 : 0 );
    parm1.noise_flag += ( ck_rinoise ->isChecked() ? 2 : 0 );
@@ -1459,7 +1599,6 @@ else
    le_grfiters->setText( QString::number( parm1.grf_iters ) );
    le_crpoints->setText( QString::number( parm1.creso_pts ) );
    le_mciters ->setText( QString::number( parm1.mc_iters  ) );
-   ck_nopcsa  ->setChecked( !parm1.job_run );
    ck_tinoise ->setChecked( ( parm1.noise_flag & 1 ) != 0 );
    ck_rinoise ->setChecked( ( parm1.noise_flag & 2 ) != 0 );
    ck_tregspec->setChecked( ( parm1.treg_flag  & 1 ) != 0 );

@@ -101,26 +101,26 @@ QStringList US_AnalysisProfileGui::childLValue( const QString child, const QStri
 // Slot to handle a new panel selected
 void US_AnalysisProfileGui::newPanel( int panx )
 {
-DbgLv(1) << "newPanel panx=" << panx << "prev.panx=" << curr_panx;
+DbgLv(1) << "APG:newPanel panx=" << panx << "prev.panx=" << curr_panx;
    // Save any changes in the old current panel
    if      ( curr_panx == panx )  return;  // No change in panel
 
    if      ( curr_panx == 0 ) apanGeneral->savePanel();
    else if ( curr_panx == 1 ) apan2DSA   ->savePanel();
    else if ( curr_panx == 2 ) apanPCSA   ->savePanel();
-DbgLv(1) << "newPanel   savePanel done" << curr_panx;
+DbgLv(1) << "APG:newPanel   savePanel done" << curr_panx;
 
    // Initialize the new current panel after possible changes
    if      ( panx == 0 )      apanGeneral->initPanel();
    else if ( panx == 1 )      apan2DSA   ->initPanel();
    else if ( panx == 2 )      apanPCSA   ->initPanel();
-DbgLv(1) << "newPanel   initPanel done" << panx;
+DbgLv(1) << "APG:newPanel   initPanel done" << panx;
    
    curr_panx              = panx;         // Set new current panel
    
    // Update status flag for all panels
    statUpdate();
-DbgLv(1) << "newPanel   statUpdate done";
+DbgLv(1) << "APG:newPanel   statUpdate done";
 }
 
 // Slot to update status flag for all panels
@@ -270,13 +270,13 @@ DbgLv(1) << "AP:iP: pP return";
 // Save all panels in preparation for leaving an AProfile panel
 void US_AnalysisProfileGui::savePanels()
 {
-DbgLv(1) << "AP:iP: IN savePanels()";
+DbgLv(1) << "AP:sP: IN savePanels()";
    apanGeneral  ->savePanel();
-DbgLv(1) << "AP:iP: pG return";
+DbgLv(1) << "AP:sP: pG return";
    apan2DSA     ->savePanel();
-DbgLv(1) << "AP:iP: p2 return";
+DbgLv(1) << "AP:sP: p2 return";
    apanPCSA     ->savePanel();
-DbgLv(1) << "AP:iP: pP return";
+DbgLv(1) << "AP:sP: pP return";
 }
 
 //========================= End:   Main      section =========================
@@ -345,16 +345,24 @@ DbgLv(1) << "APGe: inP:   ox" << ii << "oName" << objname;
 
    // Build the General Layout
    build_general_layout( );
+DbgLv(1) << "APGe: inP: tol,dae size" << currProf->lv_tolers.count() << currProf->data_ends.count();
 
    if ( currProf->lc_ratios.count() == nchan )
    { // Reset General channel parameter gui elements
       for ( int ii = 0; ii < nchan; ii++ )
       {
-         le_lcrats[ ii ]->setText( QString::number( currProf->lc_ratios[ ii ] ) );
-         le_lctols[ ii ]->setText( QString::number( currProf->lc_tolers[ ii ] ) );
-         le_ldvols[ ii ]->setText( QString::number( currProf->l_volumes[ ii ] ) );
-         le_lvtols[ ii ]->setText( QString::number( currProf->lv_tolers[ ii ] ) );
-         le_daends[ ii ]->setText( QString::number( currProf->data_ends[ ii ] ) );
+         int kk          = qMin( ii, currProf->lc_ratios.count() - 1 );
+         le_lcrats[ ii ]->setText( QString::number( currProf->lc_ratios[ kk ] ) );
+         kk              = qMin( ii, currProf->lc_tolers.count() - 1 );
+         le_lctols[ ii ]->setText( QString::number( currProf->lc_tolers[ kk ] ) );
+         kk              = qMin( ii, currProf->l_volumes.count() - 1 );
+         le_ldvols[ ii ]->setText( QString::number( currProf->l_volumes[ kk ] ) );
+         kk              = qMin( ii, currProf->lv_tolers.count() - 1 );
+         le_lvtols[ ii ]->setText( QString::number( currProf->lv_tolers[ kk ] ) );
+         kk              = qMin( ii, currProf->data_ends.count() - 1 );
+         le_daends[ ii ]->setText( QString::number( currProf->data_ends[ kk ] ) );
+DbgLv(1) << "APGe: inP:    ii kk" << ii << kk << "lvtol daend dae[kk]"
+ << currProf->lv_tolers[ii] << currProf->data_ends[ii] << currProf->data_ends[kk];
       }
    }
 }
@@ -431,12 +439,18 @@ DbgLv(1) << "SIGNAL!!!!" ;
 // Save panel controls when about to leave the panel
 void US_AnaprofPanGen::savePanel()
 {
-DbgLv(1) << "APge: svP: IN";
+DbgLv(1) << "APGe: svP: IN";
    // Populate protocol controls from GUI settings
    currProf->protoname  = le_protname->text();
    currProf->aprofname  = le_aproname->text();
-DbgLv(1) << "APge: svP:  done";
    int nchan       = le_lcrats.count();
+   nchan           = qMin( nchan, le_lctols.count() );
+   nchan           = qMin( nchan, le_ldvols.count() );
+   nchan           = qMin( nchan, le_lvtols.count() );
+   nchan           = qMin( nchan, le_daends.count() );
+DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
+ << le_lcrats.count() << le_lctols.count() << le_ldvols.count()
+ << le_lvtols.count() << le_daends.count() << "nchan" << nchan;
    if ( currProf->pchans.count() == nchan )
    { // Reset General channel parameter gui elements
       currProf->lc_ratios.clear( );
@@ -447,13 +461,14 @@ DbgLv(1) << "APge: svP:  done";
 
       for ( int ii = 0; ii < nchan; ii++ )
       {
-         currProf->lc_ratios <<  le_lcrats[ ii ]->text().toDouble();
-         currProf->lc_tolers <<  le_lctols[ ii ]->text().toDouble();
-         currProf->l_volumes <<  le_ldvols[ ii ]->text().toDouble();
-         currProf->lv_tolers <<  le_lvtols[ ii ]->text().toDouble();
-         currProf->data_ends <<  le_daends[ ii ]->text().toDouble();
+         currProf->lc_ratios << le_lcrats[ ii ]->text().toDouble();
+         currProf->lc_tolers << le_lctols[ ii ]->text().toDouble();
+         currProf->l_volumes << le_ldvols[ ii ]->text().toDouble();
+         currProf->lv_tolers << le_lvtols[ ii ]->text().toDouble();
+         currProf->data_ends << le_daends[ ii ]->text().toDouble();
       }
    }
+DbgLv(1) << "APGe: svP:  done";
 }
 
 // Get a specific panel string value
@@ -484,7 +499,7 @@ int US_AnaprofPanGen::getIValue( const QString type )
 double US_AnaprofPanGen::getDValue( const QString type )
 {
    double value   = 0.0;
-   int nchan      = sl_chnsel.count();
+   int nchan      = currProf->lc_ratios.count();
    int kk         = nchan - 1;
 
    if      ( type == "none"    )    { value = 0.0; }
@@ -504,6 +519,10 @@ double US_AnaprofPanGen::getDValue( const QString type )
    {  value = ( nchan > 0 ) ? currProf->lv_tolers[  0 ] : 0.0; }
    else if ( type == "l_lvtol"   )
    {  value = ( nchan > 0 ) ? currProf->lv_tolers[ kk ] : 0.0; }
+   else if ( type == "f_daend"   )
+   {  value = ( nchan > 0 ) ? currProf->data_ends[  0 ] : 0.0; }
+   else if ( type == "l_daend"   )
+   {  value = ( nchan > 0 ) ? currProf->data_ends[ kk ] : 0.0; }
 
    return value;
 }
@@ -512,7 +531,7 @@ double US_AnaprofPanGen::getDValue( const QString type )
 QStringList US_AnaprofPanGen::getLValue( const QString type )
 {
    QStringList value( "" );
-   int nchan      = sl_chnsel.count();
+   int nchan      = currProf->lc_ratios.count();
 
    if      ( type == "channels" )       { value = sl_chnsel; }
    else if ( type == "lcratios" )
@@ -541,6 +560,13 @@ QStringList US_AnaprofPanGen::getLValue( const QString type )
       for ( int ii = 0; ii < nchan; ii++ )
       {
          value << QString::number( currProf->lv_tolers[ ii ] );
+      }
+   }
+   else if ( type == "dataends" )
+   {
+      for ( int ii = 0; ii < nchan; ii++ )
+      {
+         value << QString::number( currProf->data_ends[ ii ] );
       }
    }
 
@@ -580,18 +606,18 @@ int US_AnaprofPanGen::status()
 void US_AnaprofPan2DSA::initPanel()
 {
    ap2DSA             = &(mainw->currProf.ap2DSA);
-DbgLv(1) << "AP2d:   iP: IN";
+DbgLv(1) << "AP2d:inP:  IN";
 
    // Populate GUI settings from protocol controls
    int kparm          = ap2DSA->parms.size();
    int kchan          = sl_chnsel.size();
-DbgLv(1) << "AP2d:   iP: kparm kchan" << kparm << kchan;
+DbgLv(1) << "AP2d:inP:  kparm kchan" << kparm << kchan;
    US_AnaProfile::AnaProf2DSA::Parm2DSA parm1;
    if ( kparm > 0 )
       parm1              = ap2DSA->parms[ 0 ];
    for ( int ii = kparm; ii < kchan; ii++ )
    {
-DbgLv(1) << "AP2d:   iP:   set-parm ii" << ii;
+DbgLv(1) << "AP2d:inP:    set-parm ii" << ii;
       ap2DSA->parms << parm1;
    }
 
@@ -601,7 +627,18 @@ DbgLv(1) << "AP2d:   iP:   set-parm ii" << ii;
 
    cchx            = 0;
    parms_to_gui( 0 );
-DbgLv(1) << "AP2d:   iP: parms_to_gui complete";
+DbgLv(1) << "AP2d:inP:  parms_to_gui complete";
+
+   le_j2gpts->setText( QString::number( ap2DSA->grpoints ) );
+   le_j2mrng->setText( QString::number( ap2DSA->fitrng ) );
+   le_j4iter->setText( QString::number( ap2DSA->rfiters ) );
+   le_j5iter->setText( QString::number( ap2DSA->mciters ) );
+   ck_j1run ->setChecked( ap2DSA->job1run );
+   ck_j2run ->setChecked( ap2DSA->job2run );
+   ck_j3run ->setChecked( ap2DSA->job3run );
+   ck_j4run ->setChecked( ap2DSA->job4run );
+   ck_j5run ->setChecked( ap2DSA->job5run );
+   ck_j3auto->setChecked( ap2DSA->job3auto );
 
    bool was_changed     = changed;       // Save changed state
    changed              = was_changed;   // Restore changed state
@@ -617,6 +654,24 @@ DbgLv(1) << "AP2d:svP: IN";
 DbgLv(1) << "AP2d:svP: nparm" << nparm << "cchx" << cchx;
 
    gui_to_parms( cchx );
+
+   ap2DSA->nchan        = nparm;
+   ap2DSA->fitrng       = le_j2mrng->text().toDouble();
+   ap2DSA->grpoints     = le_j2gpts->text().toInt();
+   ap2DSA->rfiters      = le_j4iter->text().toInt();
+   ap2DSA->mciters      = le_j5iter->text().toInt();
+   ap2DSA->job1run      = ck_j1run ->isChecked();
+   ap2DSA->job2run      = ck_j2run ->isChecked();
+   ap2DSA->job3run      = ck_j3run ->isChecked();
+   ap2DSA->job4run      = ck_j4run ->isChecked();
+   ap2DSA->job5run      = ck_j5run ->isChecked();
+   ap2DSA->job3auto     = ck_j3auto->isChecked();
+   ap2DSA->job1nois     = tr( "(TI Noise)" );
+   ap2DSA->job2nois     = tr( "(TI+RI Noise)" );
+   ap2DSA->job4nois     = tr( "(TI+RI Noise)" );
+DbgLv(1) << "AP2d:svP:   runs:"
+ << ap2DSA->job1run << ap2DSA->job2run << ap2DSA->job3run
+ << ap2DSA->job4run << ap2DSA->job5run;
 }
 
 // Get a specific panel value
@@ -712,7 +767,6 @@ void US_AnaprofPanPCSA::initPanel()
            << tr( "Fluorescence 5-channel counterbalance" );
 
    // Possibly rebuild Cells protocol if there was a rotor change
-DbgLv(1) << "EGCe:inP: prb: nchan" << apPCSA->nchan;
 //   rebuild_Cells();
 
    sl_chnsel       = sibLValue( "general", "channels" );
@@ -720,38 +774,47 @@ DbgLv(1) << "EGCe:inP: prb: nchan" << apPCSA->nchan;
    cb_chnsel->addItems( sl_chnsel );
 
    // Populate GUI settings from protocol controls
+DbgLv(1) << "APpc:inP: prb: nchan" << apPCSA->nchan << "job_run" << apPCSA->job_run;
+   ck_nopcsa->setChecked( ! apPCSA->job_run );
+
    int kparm          = apPCSA->parms.size();
    int kchan          = sl_chnsel.size();
-DbgLv(1) << "APpc:   iP: kparm kchan" << kparm << kchan;
+DbgLv(1) << "APpc:inP:   kparm kchan" << kparm << kchan
+ << "  job_run" << apPCSA->job_run;
    US_AnaProfile::AnaProfPCSA::ParmPCSA parm1;
    if ( kparm > 0 )
       parm1              = apPCSA->parms[ 0 ];
    for ( int ii = kparm; ii < kchan; ii++ )
    {
       parm1.channel      = sl_chnsel[ ii ];
-DbgLv(1) << "APpc:   iP:   set-parm ii" << ii << "channel" << parm1.channel;
+DbgLv(1) << "APpc:inP:     set-parm ii" << ii << "channel" << parm1.channel;
       apPCSA->parms << parm1;
    }
 
    cchx               = 0;
    parms_to_gui( 0 );
-DbgLv(1) << "APpc:   iP: parms_to_gui complete";
+DbgLv(1) << "APpc:inP:   parms_to_gui complete";
 }
 
 // Save PCSA panel controls when about to leave the panel
 void US_AnaprofPanPCSA::savePanel()
 {
-   apPCSA               = &(mainw->currProf.apPCSA);
-   int nparm            = apPCSA ->parms.count();
-DbgLv(1) << "APpc:svP: nparm" << nparm << "cchx" << cchx;
+   apPCSA             = &(mainw->currProf.apPCSA);
+   int nparm          = apPCSA ->parms.count();
+   apPCSA->job_run    = !ck_nopcsa->isChecked();
+   apPCSA->nchan      = nparm;
+DbgLv(1) << "APpc:svP: nparm" << nparm << "cchx" << cchx
+ << "  job_run" << apPCSA->job_run;
 
    gui_to_parms( cchx );
+DbgLv(1) << "APpc:svP:   gui_to_parms complete   cchx" << cchx;
+
 }
 
 // Get a specific panel value
 QString US_AnaprofPanPCSA::getSValue( const QString type )
 {
-DbgLv(1) << "EGCe:getSV: type" << type;
+DbgLv(1) << "APpc:getSV: type" << type;
    QString txtempty = tr( "empty" );
    QString value( "" );
    int nchan    = apPCSA->nchan;
@@ -764,7 +827,7 @@ DbgLv(1) << "EGCe:getSV: type" << type;
    {
       value        = ( nchan > 0 ) ? "1" : "0";
    }
-DbgLv(1) << "EGCe:getSV: type" << type << "value" << value;
+DbgLv(1) << "APpc:getSV: type" << type << "value" << value;
 
    return value;
 }
