@@ -298,9 +298,9 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
      {
        //ALEXEY: OR enable all tabs ? (e.g. for demonstration, in a read-only mode or the like ?)
        if ( i == 0 ) 
-	 tabWidget->tabBar()->setTabEnabled(i, true);
+   	 tabWidget->tabBar()->setTabEnabled(i, true);
        else
-	 tabWidget->tabBar()->setTabEnabled(i, false);
+   	 tabWidget->tabBar()->setTabEnabled(i, false);
      }
 
    connect( tabWidget, SIGNAL( currentChanged( int ) ), this, SLOT( initPanels( int ) ) );
@@ -1367,7 +1367,7 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
 	{
 	  if ( status == "LIVE_UPDATE" )
 	    autoflowentry << QString( tr( "RUNNING" ) );
-	  if ( status == "EDITING" || status == "ANALYSIS" || status == "REPORT" )
+	  if ( status == "EDITING" || status == "EDIT_DATA" || status == "ANALYSIS" || status == "REPORT" )
 	    autoflowentry << QString( tr( "COMPLETED" ) );
 	    //autoflowentry << time_started.toString();
 	}
