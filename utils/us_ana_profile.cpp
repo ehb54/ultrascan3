@@ -96,10 +96,13 @@ bool US_AnaProfile::fromXml( QXmlStreamReader& xmli )
    while( ! xmli.atEnd() )
    {
       xmli.readNext();
+//qDebug() << "AP:fX: next hasErr Err" << xmli.hasError() << xmli.errorString()
+// << xmli.tokenString();
 
       if ( xmli.isStartElement() )
       {
          QString ename   = xmli.name().toString();
+//qDebug() << "AP:fX: ename" << ename;
 
          if ( ename == "analysis_profile" )
          {
@@ -120,11 +123,14 @@ bool US_AnaProfile::fromXml( QXmlStreamReader& xmli )
             data_ends << attr.value( "data_end" ).toString().toDouble();
 //3-------------------------------------------------------------------------->80
             chx++;
+//qDebug() << "AP:fX:  chx" << chx << pchans.count();
          }
 
-         else if ( ename == "2DSA" )      { ap2DSA.fromXml( xmli ); }
-         else if ( ename == "PCSA" )      { apPCSA.fromXml( xmli ); }
+         else if ( ename == "p_2dsa" )      { ap2DSA.fromXml( xmli ); }
+         else if ( ename == "p_pcsa" )      { apPCSA.fromXml( xmli ); }
       }
+//else
+ //qDebug() << "AP:fX: non-start ename" << xmli.name().toString();
    }
 
    return ( ! xmli.hasError() );
@@ -137,13 +143,13 @@ US_AnaProfile::AnaProf2DSA::AnaProf2DSA()
    fitrng      = 0.3;
    nchan       = 1;
    grpoints    = 64;
-   rfiters     = 0;
-   mciters     = 0;
-   job1run     = false;
-   job2run     = false;
-   job3run     = false;
-   job4run     = false;
-   job5run     = false;
+   rfiters     = 5;
+   mciters     = 100;
+   job1run     = true;
+   job2run     = true;
+   job3run     = true;
+   job4run     = true;
+   job5run     = true;
    job3auto    = true;
    job1nois    = "ti";
    job2nois    = "both";
@@ -169,14 +175,15 @@ bool US_AnaProfile::AnaProf2DSA::fromXml( QXmlStreamReader& xmli )
    nchan           = 0;
    parms.clear();
    Parm2DSA parm1;
+//qDebug() << "AP:2fX: IN" << xmli.name().toString();
 
    while( ! xmli.atEnd() )
    {
       QString ename   = xmli.name().toString();
+//qDebug() << "AP:2fX: ename" << ename;
 
       if ( xmli.isStartElement() )
       {
-
          if ( ename == "channel_parms" )
          {
             QXmlStreamAttributes attr = xmli.attributes();
@@ -202,10 +209,11 @@ bool US_AnaProfile::AnaProf2DSA::fromXml( QXmlStreamReader& xmli )
             parm1.cgrid_name = "";
             parm1.varyvbar   = US_Util::bool_flag( vvflag );
             parm1.have_custg = ( ! cgrid.isEmpty()  &&
-                                          cgrid.length() != 36 );
+                                 cgrid.length() == 36 );
 
             parms << parm1;
             nchan++;
+//qDebug() << "AP:2fX:  nchan" << nchan << parms.count();
          }
          else if ( ename == "job_2dsa" )
          {
@@ -245,7 +253,7 @@ bool US_AnaProfile::AnaProf2DSA::fromXml( QXmlStreamReader& xmli )
       bool was_end    = xmli.isEndElement();  // Just read was End of element?
       xmli.readNext();                        // Read the next element
 
-      if ( was_end  &&  ename == "2dsa" )     // Break after "</2dsa>"
+      if ( was_end  &&  ename == "p_2dsa" )   // Break after "</p_2dsa>"
          break;
    }
 
@@ -255,7 +263,8 @@ bool US_AnaProfile::AnaProf2DSA::fromXml( QXmlStreamReader& xmli )
 // Write the current 2DSA portion of controls to an XML stream
 bool US_AnaProfile::AnaProf2DSA::toXml( QXmlStreamWriter& xmlo )
 {
-   xmlo.writeStartElement( "2dsa" );
+   xmlo.writeStartElement( "p_2dsa" );
+   nchan           = parms.count();
   
    for ( int ii = 0; ii < nchan; ii++ )
    {
@@ -319,9 +328,9 @@ bool US_AnaProfile::AnaProf2DSA::toXml( QXmlStreamWriter& xmlo )
    xmlo.writeEndElement  (); // job_2dsa_mc
 //3-------------------------------------------------------------------------->80
 
-   xmlo.writeEndElement(); // 2dsa
+   xmlo.writeEndElement(); // p_2dsa
 /*
-        <2dsa>
+        <p_2dsa>
             <channel_parms channel="1A" s_min="1" s_max="10" s_gridpoints="64"
                 k_min="1" k_max="4" k_gridpoints="64"
                 vary_vbar="false" constant_ff0="2" grid_repetitions="8"
@@ -335,7 +344,7 @@ bool US_AnaProfile::AnaProf2DSA::toXml( QXmlStreamWriter& xmlo )
             <job_fitmen run="1" interactive="true" />
             <job_2dsa_it run="1" noise="both" max_iterations="3" />
             <job_2dsa_mc run="1" mc_iterations="100" />
-        </2dsa>
+        </p_2dsa>
  */
 
    return ( ! xmlo.hasError() );
@@ -372,7 +381,8 @@ bool US_AnaProfile::AnaProf2DSA::Parm2DSA::operator==
 // AnaProfPCSA subclass constructor
 US_AnaProfile::AnaProfPCSA::AnaProfPCSA()
 {
-   nchan                = 0;
+   nchan          = 0;
+   job_run        = true;
    parms.clear();
 }
 
@@ -398,8 +408,14 @@ bool US_AnaProfile::AnaProfPCSA::fromXml( QXmlStreamReader& xmli )
 
       if ( xmli.isStartElement() )
       {
+         if ( ename == "p_pcsa" )
+         {
+            QXmlStreamAttributes attr = xmli.attributes();
+            QString jobrun = attr.value( "job_run" ).toString();
+            job_run        = US_Util::bool_flag( jobrun );
+         }
 
-         if ( ename == "channel_parms" )
+         else if ( ename == "channel_parms" )
          {
             QXmlStreamAttributes attr = xmli.attributes();
             QString chan   = attr.value( "channel" ).toString();
@@ -409,7 +425,6 @@ bool US_AnaProfile::AnaProfPCSA::fromXml( QXmlStreamReader& xmli )
             QString ztype  = attr.value( "z_type" ).toString();
             QString ntype  = attr.value( "noise" ).toString();
             QString ttype  = attr.value( "regularization" ).toString();
-            QString jobrun = attr.value( "job_run" ).toString();
             double xmin    = attr.value( "x_min" ).toString().toDouble();
             double xmax    = attr.value( "x_max" ).toString().toDouble();
             double ymin    = attr.value( "y_min" ).toString().toDouble();
@@ -427,7 +442,6 @@ bool US_AnaProfile::AnaProfPCSA::fromXml( QXmlStreamReader& xmli )
             int tregflg    = 0;
             tregflg        = ( ttype == "spec" ) ? 1 : tregflg;
             tregflg        = ( ttype == "auto" ) ? 2 : tregflg;
-            bool jobrunf   = US_Util::bool_flag( jobrun );
 
             parm1.channel    = chan;
             parm1.curv_type  = ctype;
@@ -449,17 +463,17 @@ bool US_AnaProfile::AnaProfPCSA::fromXml( QXmlStreamReader& xmli )
             parm1.noise_flag = noisflg;
             parm1.treg_flag  = tregflg;
             parm1.mc_iters   = mciter;
-            parm1.job_run    = jobrunf;
 
             parms << parm1;
             nchan++;
+//qDebug() << "AP:pfX: nchan" << nchan << parms.count();
          }
       }
 
       bool was_end    = xmli.isEndElement();  // Just read was End of element?
       xmli.readNext();                        // Read the next element
 
-      if ( was_end  &&  ename == "pcsa" )     // Break after "</pcsa>"
+      if ( was_end  &&  ename == "p_pcsa" )   // Break after "</pcsa>"
          break;
    }
 
@@ -469,7 +483,9 @@ bool US_AnaProfile::AnaProfPCSA::fromXml( QXmlStreamReader& xmli )
 // Write the current PCSA portion of controls to an XML stream
 bool US_AnaProfile::AnaProfPCSA::toXml( QXmlStreamWriter& xmlo )
 {
-   xmlo.writeStartElement( "pcsa" );
+   xmlo.writeStartElement( "p_pcsa" );
+   xmlo.writeAttribute   ( "job_run", US_Util::bool_string( job_run ) );
+   nchan           = parms.count();
   
    for ( int ii = 0; ii < nchan; ii++ )
    {
@@ -501,13 +517,11 @@ bool US_AnaProfile::AnaProfPCSA::toXml( QXmlStreamWriter& xmlo )
                                                     parms[ ii ].tr_alpha ) );
       xmlo.writeAttribute   ( "mc_iterations",      QString::number(
                                                     parms[ ii ].mc_iters ) );
-      xmlo.writeAttribute   ( "job_run",            US_Util::bool_string(
-                                                    parms[ ii ].job_run ) );
       xmlo.writeEndElement(); // channel_parms
    }
 //3-------------------------------------------------------------------------->80
 
-   xmlo.writeEndElement(); // pcsa
+   xmlo.writeEndElement(); // p_pcsa
 
    return ( ! xmlo.hasError() );
 }
@@ -527,7 +541,6 @@ US_AnaProfile::AnaProfPCSA::ParmPCSA::ParmPCSA()
    noise_flag = 0;
    treg_flag  = 0;
    mc_iters   = 0;
-   job_run    = false;
    channel    = "1A";
    curv_type  = "All";
    x_type     = "s";

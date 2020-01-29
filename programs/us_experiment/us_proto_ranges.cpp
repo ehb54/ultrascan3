@@ -350,8 +350,6 @@ DbgLv(1) << "EGRn: rbR:     spx" << spx;
       swvlens.resize( nrnchan );
 DbgLv(1) << "EGRn: rbR:  nrnchan" << nrnchan << "nrnchan_sv" << nrnchan_sv;
 
- qDebug() << "Bug after this line: "; 
-
    // Rebuild panel parameters
    if ( nrnchan_sv > 0 )
    {  // Use previous panel parameters

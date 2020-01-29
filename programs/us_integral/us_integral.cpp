@@ -3,7 +3,7 @@
 #include <QApplication>
 
 #include "us_integral.h"
-#include "us_remove_models.h"
+#include "us_delete_models.h"
 #include "us_select_runs.h"
 #include "us_model.h"
 #include "us_license_t.h"
@@ -36,22 +36,25 @@ int main( int argc, char* argv[] )
    return application.exec();  //!< \memberof QApplication
 }
 
-// qSort LessThan method for S_Solute sort
+// qSort LessThan method for S_Solute sed
 bool distro_lessthan_s(const S_Solute &solu1, const S_Solute &solu2)
 {  // TRUE iff  (s1<s2) || (s1==s2 && d1<d2)
    return ( solu1.s < solu2.s );
 }
 
+// qSort LessThan method for S_Solute m.mass
 bool distro_lessthan_w(const S_Solute &solu1, const S_Solute &solu2)
 {
     return (solu1.w < solu2.w );
 }
 
+// qSort LessThan method for S_Solute frac
 bool distro_lessthan_k(const S_Solute &solu1, const S_Solute &solu2)
 {
     return (solu1.k < solu2.k );
 }
 
+// qSort LessThan method for S_Solute diff
 bool distro_lessthan_d(const S_Solute &solu1, const S_Solute &solu2)
 {
     return (solu1.d < solu2.d );
@@ -730,38 +733,36 @@ DbgLv(1) << "LD: RETURN";
 void US_Integral::resort_sol(QVector< DisSys>& list_dist)
 {
 
+   // Go through all dsitributions
    for (int jj = 0; jj < list_dist.size(); jj++)
    {
-       S_Solute     sol_nm;
-       S_Solute     sol_bf;
-       QList < S_Solute >       wk_distro = list_dist[jj].in_distro;
+      S_Solute     sol_nm;
+      S_Solute     sol_bf;
+      QList < S_Solute >       wk_distro = list_dist[jj].in_distro;
+      // Sort the distribution again
+      sort_distro( wk_distro, true);
 
-       sort_distro( wk_distro, true);
+      list_dist[jj].nm_distro.clear();
+      int nsolnm = wk_distro.size();
 
-       list_dist[jj].nm_distro.clear();
-       int nsolnm = wk_distro.size();
-
-       // Redo Normalization
-       for ( int ii = 0; ii < nsolnm; ii++ )
-       {
-           sol_nm   = wk_distro[ii];
-           sol_nm.c /=list_dist[jj].tot_conc;
-           list_dist[jj].nm_distro << sol_nm;
-       }
-
-       //Create version of distribution with boundary fraction
-       list_dist[jj].bo_distro.clear();
-       double sum_co = 0.0;
-
+      // Redo Normalization
+      for ( int ii = 0; ii < nsolnm; ii++ )
+      {
+          sol_nm   = wk_distro[ii];
+          sol_nm.c /=list_dist[jj].tot_conc;
+          list_dist[jj].nm_distro << sol_nm;
+      }
+      // Create version of distribution with boundary fraction
+      list_dist[jj].bo_distro.clear();
+      double sum_co = 0.0;
        for (int ii=0; ii < nsolnm; ii++ )
-       {
-           sol_nm   = list_dist[jj].nm_distro[ii];
-           sum_co   += sol_nm.c;
-           sol_bf   = sol_nm;
-           sol_bf.f = sum_co;
-           list_dist[jj].bo_distro << sol_bf;
-       }
-
+      {
+          sol_nm   = list_dist[jj].nm_distro[ii]; //norm'd solute point
+          sum_co   += sol_nm.c; // concentration integral
+          sol_bf   = sol_nm; // boundary fraction solute point
+          sol_bf.f = sum_co; // with boundary fraction for "f"
+          list_dist[jj].bo_distro << sol_bf; // save to boundary distros
+      }
    }
 }
 
@@ -785,8 +786,7 @@ void US_Integral::sort_distro( QList< S_Solute >& listsols,
    if ( sizi < 2 )
       return;        // nothing need be done for 1-element list
 
-   // sort distro solute list by values
-
+   // sort distro solute list depending on selected plot
    switch (this->plot_x)
    {
       case ATTR_D: qSort ( listsols.begin(), listsols.end(), distro_lessthan_d);
@@ -834,7 +834,7 @@ void US_Integral::sort_distro( QList< S_Solute >& listsols,
              kdup    = max( kdup, ++jdup );
           }
 
-          sol1    = sol2;        // save entry for next iteratio*/
+          sol1    = sol2;        // save entry for next iteration
       }
 
       if ( kdup > 0 )
@@ -913,7 +913,7 @@ void US_Integral::select_prefilt( void )
 void US_Integral::remove_distro( void )
 {
 DbgLv(1) << "rmvdis:Remove Distros";
-   US_RemoveModels rmvd( alldis );
+   US_DeleteModels rmvd( alldis );
 
    if ( rmvd.exec() == QDialog::Accepted )
    {

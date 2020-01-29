@@ -170,7 +170,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    connect( epanExp, SIGNAL( to_autoflow_records( ) ), this, SLOT( to_autoflow_records( ) ) );
    
    connect( epanObserv, SIGNAL( switch_to_post_processing( QMap < QString, QString > & ) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & ) ) );
-   connect( this, SIGNAL( import_data_us_convert( QMap < QString, QString > & ) ),  epanPostProd, SLOT( import_data_us_convert( QMap < QString, QString > & )  ) );
+   connect( this, SIGNAL( pass_to_post_processing( QMap < QString, QString > & ) ),  epanPostProd, SLOT( import_data_us_convert( QMap < QString, QString > & )  ) );
    
    //connect( this, SIGNAL( clear_experiment( QString & ) ),  epanExp, SLOT( clear_experiment( QString & )  ) );
    connect( epanObserv, SIGNAL( close_everything() ), this, SLOT( close_all() ));
@@ -178,9 +178,6 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    connect( epanObserv, SIGNAL( processes_stopped() ), this, SLOT( liveupdate_stopped() ));
    connect( epanObserv, SIGNAL( stop_nodata() ), this, SLOT( close_all() ));
    
-   //connect( epanPostProd, SIGNAL( switch_to_analysis( QString &, QString &) ),  this, SLOT( switch_to_analysis( QString &, QString & )  ) );
-   //connect( this, SIGNAL( pass_to_analysis( QString &, QString & ) ),   epanAnalysis, SLOT( do_analysis( QString &, QString & )  ) );
-   //connect( epanPostProd, SIGNAL( switch_to_exp( QString & ) ), this, SLOT( switch_to_experiment( QString & )  ) );
    connect( epanPostProd, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
    connect( this, SIGNAL( reset_lims_import() ),  epanPostProd, SLOT( reset_lims_import( )  ) );
    
@@ -297,9 +294,6 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
 
    main->addWidget( tabWidget );
 
-
-   /* TEMPORARILY  - UNCOMMENT LATER !!!!
-   
    for (int i=0; i < tabWidget->count(); ++i )
      {
        //ALEXEY: OR enable all tabs ? (e.g. for demonstration, in a read-only mode or the like ?)
@@ -308,8 +302,6 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
        else
 	 tabWidget->tabBar()->setTabEnabled(i, false);
      }
-
-   */
 
    connect( tabWidget, SIGNAL( currentChanged( int ) ), this, SLOT( initPanels( int ) ) );
       
@@ -342,19 +334,20 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( epanExp, SIGNAL( to_autoflow_records( ) ), this, SLOT( to_autoflow_records( ) ) );
    
    connect( epanObserv, SIGNAL( switch_to_post_processing( QMap < QString, QString > & ) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & ) ) );
-   connect( this, SIGNAL( import_data_us_convert( QMap < QString, QString > & ) ),  epanPostProd, SLOT( import_data_us_convert( QMap < QString, QString > & )  ) );
+   connect( this, SIGNAL(  pass_to_post_processing( QMap < QString, QString > & ) ),  epanPostProd, SLOT( import_data_us_convert( QMap < QString, QString > & )  ) );
    connect( epanObserv, SIGNAL( close_everything() ), this, SLOT( close_all() ));
    connect( this, SIGNAL( reset_live_update() ),  epanObserv, SLOT( reset_live_update( )  ) );
    connect( epanObserv, SIGNAL( processes_stopped() ), this, SLOT( liveupdate_stopped() ));
    connect( epanObserv, SIGNAL( stop_nodata() ), this, SLOT( close_all() ));
    
    connect( epanPostProd, SIGNAL( switch_to_editing( QMap < QString, QString > & ) ),  this, SLOT( switch_to_editing ( QMap < QString, QString > & )  ) );
-   connect( this, SIGNAL( reset_lims_import() ),  epanPostProd, SLOT( reset_lims_import( )  ) );
-
    connect( this, SIGNAL( pass_to_editing( QMap < QString, QString > & ) ),   epanEditing, SLOT( do_editing( QMap < QString, QString > & )  ) );
+   connect( this, SIGNAL( reset_lims_import() ),  epanPostProd, SLOT( reset_lims_import( )  ) );
    connect( epanPostProd, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
-   
-   
+   connect( this, SIGNAL( reset_data_editing() ),  epanEditing, SLOT( reset_data_editing( )  ) );
+
+   connect( epanEditing, SIGNAL( switch_to_analysis( QMap < QString, QString > & ) ), this, SLOT( switch_to_analysis( QMap < QString, QString > & )  ) );
+   connect( this, SIGNAL( pass_to_analysis( QMap < QString, QString > & ) ),   epanAnalysis, SLOT( do_analysis( QMap < QString, QString > & )  ) );
    
    setMinimumSize( QSize( 1350, 800 ) );
    adjustSize();
@@ -416,8 +409,11 @@ void US_ComProjectMain::initPanels( int  panx )
 	}
       
       if ( curr_panx == 4 )
-	qDebug() << "Jumping from EDITING.";
-
+	{
+	  qDebug() << "Jumping from EDITING.";
+	  emit reset_data_editing();
+	}
+      
       xpn_viewer_closed_soft = false;
       epanInit  ->initAutoflowPanel();
     }
@@ -667,33 +663,6 @@ void US_ComProjectMain::define_new_experiment( QStringList & occupied_instrument
 
 
 
-// Slot to pass submitted to Optima run info to the Live Update tab
-void US_ComProjectMain::switch_to_live_update( QMap < QString, QString > & protocol_details)
-{
-  tabWidget->setCurrentIndex( 2 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()->setEnabled(false) ?? 
-  curr_panx = 2;
-
- 
-  for (int i = 1; i < tabWidget->count(); ++i )
-    {
-      if ( i == 2 )
-	tabWidget->tabBar()->setTabEnabled(i, true);
-      else
-	tabWidget->tabBar()->setTabEnabled(i, false);
-    }
-
-  // QPalette pal = tabWidget->currentWidget()->palette();
-  // pal.setCurrentColorGroup(QPalette::Disabled);
-  // tabWidget->currentWidget()->setPalette(pal);
-
-  // qDebug() << "LIVE UPDATE palette: " << tabWidget->currentWidget()->palette().currentColorGroup();
-  
-  // ALEXEY:
-   // (1) Make a record to 'autoflow' table - stage# = 1;
-   // (2) inside us_xpn_viewer - update 'curDirr' field with generated directory where .auc data saved 
-   
-   emit pass_to_live_update( protocol_details );
-}
 
 
 // Slot to pass submitted to Optima run info to the Live Update tab
@@ -738,6 +707,25 @@ void US_ComProjectMain::close_all( void )
 }
 
 
+// Slot to pass submitted to Optima run info to the Live Update tab
+void US_ComProjectMain::switch_to_live_update( QMap < QString, QString > & protocol_details)
+{
+  tabWidget->setCurrentIndex( 2 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()->setEnabled(false) ?? 
+  curr_panx = 2;
+
+ 
+  for (int i = 1; i < tabWidget->count(); ++i )
+    {
+      if ( i == 2 )
+	tabWidget->tabBar()->setTabEnabled(i, true);
+      else
+	tabWidget->tabBar()->setTabEnabled(i, false);
+    }
+
+  emit pass_to_live_update( protocol_details );
+}
+
+
 // Slot to switch from the Live Update to Editing tab
 void US_ComProjectMain::switch_to_post_processing( QMap < QString, QString > & protocol_details )
 {
@@ -760,7 +748,7 @@ void US_ComProjectMain::switch_to_post_processing( QMap < QString, QString > & p
   
   // ALEXEY: Make a record to 'autoflow' table: stage# = 2; 
   
-  emit import_data_us_convert( protocol_details );
+  emit pass_to_post_processing( protocol_details );
 }
    
 
@@ -771,7 +759,7 @@ void US_ComProjectMain::switch_to_editing( QMap < QString, QString > & protocol_
    curr_panx = 4;
 
    // ALEXEY: Temporariy NOT lock here... Will need later
-   /*  
+   
    for (int i = 1; i < tabWidget->count(); ++i )
      {
        if ( i == 4 )
@@ -779,11 +767,33 @@ void US_ComProjectMain::switch_to_editing( QMap < QString, QString > & protocol_
       else
 	tabWidget->tabBar()->setTabEnabled(i, false);
      }
-   */
+   
 
    // ALEXEY: Make a record to 'autoflow' table: stage# = 3; 
 
    emit pass_to_editing( protocol_details );
+}
+
+// Slot to switch from the Import to Editing tab
+void US_ComProjectMain::switch_to_analysis( QMap < QString, QString > & protocol_details )
+{
+   tabWidget->setCurrentIndex( 5 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
+   curr_panx = 5;
+
+   // ALEXEY: Temporariy NOT lock here... Will need later
+   
+   for (int i = 1; i < tabWidget->count(); ++i )
+     {
+       if ( i == 5 )
+	 tabWidget->tabBar()->setTabEnabled(i, true);
+      else
+	tabWidget->tabBar()->setTabEnabled(i, false);
+     }
+   
+
+   // ALEXEY: Make a record to 'autoflow' table: stage# = 4; 
+
+   emit pass_to_analysis( protocol_details );
 }
 
 // Function to Call initiation of the Autoflow Record Dialogue form _main.cpp
@@ -1173,6 +1183,12 @@ void US_InitDialogueGui::initRecordsDialogue( void )
     {
       emit switch_to_editing_init( protocol_details );
     }
+
+  if ( stage == "ANALYSIS" )
+    {
+      qDebug() << "To ANALYSIS SWITCH ";
+      
+    }
   //and so on...
    
 }
@@ -1351,7 +1367,7 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
 	{
 	  if ( status == "LIVE_UPDATE" )
 	    autoflowentry << QString( tr( "RUNNING" ) );
-	  if ( status == "EDITING" )
+	  if ( status == "EDITING" || status == "ANALYSIS" || status == "REPORT" )
 	    autoflowentry << QString( tr( "COMPLETED" ) );
 	    //autoflowentry << time_started.toString();
 	}
@@ -1879,9 +1895,7 @@ US_PostProdGui::US_PostProdGui( QWidget* topw )
    sdiag = new US_ConvertGui("AUTO");
    sdiag->setParent(this, Qt::Widget);
 
-   //connect( this, SIGNAL( to_post_prod( QString &, QString &, QString &, QString & ) ), sdiag, SLOT( import_data_auto ( QString &, QString &, QString &, QString & )  ) );
    connect( this, SIGNAL( to_post_prod( QMap < QString, QString > & ) ), sdiag, SLOT( import_data_auto ( QMap < QString, QString > & )  ) );
-   
    connect( this, SIGNAL( reset_lims_import_passed( ) ), sdiag, SLOT( reset_limsimport_panel ( )  ) );
    
    //ALEXEY: switch to Editing
@@ -1900,11 +1914,6 @@ US_PostProdGui::US_PostProdGui( QWidget* topw )
    sdiag->show();
 
 }
-
-// void US_PostProdGui::import_data_us_convert( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii )
-// {
-//   emit to_post_prod( currDir, protocolName, invID_passed, correctRadii );
-// }
 
 void US_PostProdGui::reset_lims_import( void )
 {
@@ -2008,7 +2017,12 @@ US_EditingGui::US_EditingGui( QWidget* topw )
    
    // //Later - do actual editing form sdiag (load_auto() ) - whatever it will be: (us_edit.cpp)
    connect( this, SIGNAL( start_editing( QMap < QString, QString > & ) ), sdiag, SLOT( load_auto ( QMap < QString, QString > & )  ) );
+   connect( this, SIGNAL( reset_data_editing_passed( ) ), sdiag, SLOT(  reset_editdata_panel (  )  ) );
 
+   //ALEXEY: switch to Analysis
+   connect( sdiag, SIGNAL( edit_complete_auto(  QMap < QString, QString > & ) ), this, SLOT( to_analysis (  QMap < QString, QString > &) ) );
+
+   
    offset = 0;
    sdiag->move(offset, 2*offset);
    sdiag->setFrameShape( QFrame::Box);
@@ -2051,6 +2065,17 @@ void US_EditingGui::resizeEvent(QResizeEvent *event)
     QWidget::resizeEvent(event);
 }
 
+
+void US_EditingGui::to_analysis( QMap < QString, QString > & protocol_details )
+{
+  emit switch_to_analysis( protocol_details );
+}
+
+
+void US_EditingGui::reset_data_editing( void )
+{
+  emit reset_data_editing_passed();
+}
 
 
 void US_EditingGui::do_editing( QMap < QString, QString > & protocol_details )
@@ -2099,13 +2124,13 @@ US_AnalysisGui::US_AnalysisGui( QWidget* topw )
 
 
    // //Later - do actual analysis form sdiag - whatever it will be:
-   // connect( this, SIGNAL( start_analysis( QString &, QString & ) ), sdiag, SLOT( analyze_auto ( QString &, QString & )  ) );
+   // connect( this, SIGNAL( start_analysis( QMap < QString, QString > & ) ), sdiag, SLOT( analyse_auto ( QMap < QString, QString > & )  ) );
    
 }
 
-void US_AnalysisGui::do_analysis( QString & currDir, QString & protocolName )
+void US_AnalysisGui::do_analysis( QMap < QString, QString > & protocol_details )
 {
-  emit start_analysis( currDir, protocolName );
+  emit start_analysis( protocol_details );
 }
 
 

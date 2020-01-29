@@ -245,6 +245,9 @@ void US_SelectItem::search( const QString& search_string )
 // List data choices (possibly filtered)
 void US_SelectItem::list_data()
 {
+
+   qDebug() << "Starting list DATA";
+  
    QFont tw_font( US_Widgets::fixedFont().family(),
                   US_GuiSettings::fontSize() );
    QFontMetrics* fm = new QFontMetrics( tw_font );
@@ -255,12 +258,15 @@ void US_SelectItem::list_data()
    nitems              = items.count();
    itemlist.clear();
 
+   qDebug() << "LIST DATA 1";
+
    for ( int ii = 0; ii < nitems; ii++ )
    {  // Save column0 description in a separate list
       itemlist << items[ ii ][ 0 ];
    }
    //////////////////
 
+   qDebug() << "LIST DATA 2";
    
    int mxrows       = itemlist.size();      // Count of total items
    int nrows        = 0;                    // Initial displayed items count
@@ -275,6 +281,8 @@ void US_SelectItem::list_data()
       return;
    }
 
+   qDebug() << "LIST DATA 3";
+   
    tw_data->setSortingEnabled( false );     // Temporarily turn off sorting
 
    // Determine how many rows will be displayed
@@ -295,11 +303,19 @@ void US_SelectItem::list_data()
 
    tw_data->setRowCount( nrows );
 
+
+   qDebug() << "LIST DATA 4";
+   
    // Populate the rows with (filtered) items
    int kk           = 0;
    for ( int ii = 0; ii < mxrows; ii++ )
    {  // Propagate list widget with labels
       QString iname    = itemlist.at( ii );
+
+      qDebug() << "LIST DATA 4a";
+      qDebug() << "4a: autoflow_da, items[ ii ][ ncols -1 ]: " << autoflow_da << "," <<  items[ ii ][ ncols -1 ];
+      qDebug() << "LIST DATA 4ab";
+      
       // Skip where name does not match the filter
       if ( have_search  &&
            ! iname.contains( dsearch, Qt::CaseInsensitive ) )
@@ -308,14 +324,22 @@ void US_SelectItem::list_data()
       // Set the column 0 name field
       tw_data->setItem( kk, 0, new QTableWidgetItem( iname ) );
 
+      //qDebug() << "4a: autoflow_da, items[ ii ][ ncols -1 ]: " << autoflow_da << "," <<  items[ ii ][ ncols -1 ];
       
       //ALEXEY: if GMP run ("YES") & open with DA software (autoflow_da == true), make item unselectable:
       if ( autoflow_da && items[ ii ][ ncols -1 ] == "YES" ) 
 	{
+	  //qDebug() << "4a: autoflow_da, items[ ii ][ ncols -1 ]: " << autoflow_da << "," <<  items[ ii ][ ncols -1 ];
 	  tw_data->item( kk, 0)->setFlags(Qt::NoItemFlags);
+
+	  qDebug() << "4a:";
 	  // //tw_data->item( kk, 0)->setForeground(QBrush(QColor(250,0,0)));
 	  tw_data->item( kk, 0)->setForeground(QBrush(Qt::gray));
+	  qDebug() << "4a:";
+	  	 
 	}
+
+      qDebug() << "LIST DATA 4b";
       
       for ( int jj = 1; jj < ncols; jj++ )
       {  // Set fields for remaining columns of the present row
@@ -332,8 +356,12 @@ void US_SelectItem::list_data()
 	   }
       }
 
+      qDebug() << "LIST DATA 4c";
+
       tw_data->setRowHeight( kk++, rowhgt );
    }
+
+    qDebug() << "LIST DATA 5";
 
    // Complete specification of the table widget
    tw_data->setSortingEnabled( true );                // Turn on sorting

@@ -451,6 +451,47 @@ END$$
 
 
 
+
+-- Update autoflow record with next stage at EDIT DATA (EDIT DATA to ANALYSIS)
+DROP PROCEDURE IF EXISTS update_autoflow_at_edit_data$$
+CREATE PROCEDURE update_autoflow_at_edit_data ( p_personGUID    CHAR(36),
+                                             	p_password      VARCHAR(80),
+                                       	     	p_runID    	INT  )
+					 
+  MODIFIES SQL DATA  
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflow
+  WHERE      runID = p_runID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    ELSE
+      UPDATE   autoflow
+      SET      status = 'ANALYSIS'
+      WHERE    runID = p_runID;
+
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
+
 ----  get initial elapsed time upon reattachment ----------------------------- 
 DROP FUNCTION IF EXISTS read_autoflow_times$$
 CREATE FUNCTION read_autoflow_times ( p_personGUID CHAR(36),

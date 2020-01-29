@@ -110,7 +110,6 @@ class US_UTIL_EXTERN US_AnaProfile
                   int          noise_flag;
                   int          treg_flag;
                   int          mc_iters;
-                  bool         job_run;
                   QString      channel;
                   QString      curv_type;
                   QString      x_type;
@@ -150,6 +149,7 @@ class US_UTIL_EXTERN US_AnaProfile
             bool toXml  ( QXmlStreamWriter& );
 
             int         nchan;           //!< Number of channels
+            bool        job_run;         //!< run-pcsa-job flag
 
             QVector< ParmPCSA >  parms;  //!< Channel PCSA parameter values
 

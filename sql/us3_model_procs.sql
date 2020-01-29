@@ -184,14 +184,14 @@ DROP FUNCTION IF EXISTS count_models_by_runID$$
 CREATE FUNCTION count_models_by_runID( p_personGUID CHAR(36),
                                         p_password   VARCHAR(80),
                                         p_ID         INT,
-                                        p_runID      VARCHAR(60) )
+                                        p_runID      VARCHAR(250) )
   RETURNS INT
   READS SQL DATA
 
 BEGIN
   
   DECLARE count_models INT;
-  DECLARE run_pattern VARCHAR(80);
+  DECLARE run_pattern VARCHAR(254);
 
   CALL config();
   SET count_models = 0;
@@ -617,12 +617,12 @@ DROP PROCEDURE IF EXISTS get_model_desc_by_runID$$
 CREATE PROCEDURE get_model_desc_by_runID ( p_personGUID CHAR(36),
                                            p_password   VARCHAR(80),
                                            p_ID         INT,
-                                           p_runID      VARCHAR(60) )
+                                           p_runID      VARCHAR(250) )
   READS SQL DATA
 
 BEGIN
 
-  DECLARE run_pattern VARCHAR(80);
+  DECLARE run_pattern VARCHAR(254);
 
   CALL config();
   SET run_pattern = CONCAT( p_runID, '.%' );

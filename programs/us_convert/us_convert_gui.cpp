@@ -45,6 +45,9 @@
 
 US_ConvertGui::US_ConvertGui( QString auto_mode ) : US_Widgets()
 {
+
+  qDebug() << "US_CONVERT: SETTING 1";
+  
    ExpData.invID = US_Settings::us_inv_ID();
 
    usmode = false;
@@ -484,9 +487,14 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    main->setStretchFactor( left,  3 );
    main->setStretchFactor( right, 5 );
 
+
+    qDebug() << "US_CONVERT: SETTING 2";
+   
    DbgLv(1) << "CGui: GUI setup complete";
    reset();
 DbgLv(1) << "CGui: reset complete";
+
+ qDebug() << "US_CONVERT: SETTING 3"; 
   
    us_setReadOnly( le_runID2, true );  // ALEXEY Run ID alwys in read-only mode
    setMinimumSize( 950, 450 );
@@ -506,8 +514,19 @@ DbgLv(1) << "CGui: reset complete";
    // QString protname = "data-aquisition-test29";
    // QString invid = "6"; //Amy ID
 
+   // QMap < QString, QString > protocol_details;
+   // protocol_details[ "status" ];
+   // protocol_details[ "dataPath" ]       = curdir;
+   // protocol_details[ "invID_passed" ]   = invid;
+   // protocol_details[ "protocolName" ]   = protname;
+   // //protocol_details[ "experimentName" ];
+   // protocol_details[ "correctRadii" ]   = QString("YES");
+   // protocol_details[ "expAborted" ]     = QString("NO");
+   // //protocol_details[ "runID" ]          =  ;
+   // protocol_details[ "label" ]          = QString("Some label");
    
-   // import_data_auto(curdir, protname, invid);
+   
+   // import_data_auto( protocol_details ); 
 
    
    
@@ -551,6 +570,8 @@ DbgLv(1) << "CGui: reset complete";
    // qDebug() << "ExpData.RI_nscans" <<  ExpData.RI_nscans;        
    // qDebug() << "ExpData.RI_nwvlns" <<  ExpData.RI_nwvlns;      
 
+
+   qDebug() << "US_CONVERT: SET !"; 
 }
 
 
@@ -5148,6 +5169,7 @@ DbgLv(1) << "Writing to disk";
 	   if ( !gmpRun_bool )    // us_comproject BUT the run is NOT GMP, so complete here 
 	     {
 	       qDebug() << " Saving COMPLETE: NO GMP RUN !!!";
+	       qDebug() << "RunID: " << runID;
 
 	       QMessageBox::information( this,
 					 tr( "Save is Complete" ),
@@ -5206,7 +5228,19 @@ void US_ConvertGui::update_autoflow_record_atLimsImport( void )
        << runID_numeric
        << runID;
 
-   db->query( qry );
+   //db->query( qry );
+
+   int status = db->statusQuery( qry );
+   
+   if ( status == US_DB2::NO_AUTOFLOW_RECORD )
+     {
+       QMessageBox::warning( this,
+			     tr( "Autoflow Record Not Updated" ),
+			     tr( "No autoflow record\n"
+				 "associated with this experiment." ) );
+       return;
+     }
+   
 }
 
 //Delete autoflow record upon Run abortion

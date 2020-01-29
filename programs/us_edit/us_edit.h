@@ -31,6 +31,7 @@ class US_Edit : public US_Widgets
 
 	 bool us_edit_auto_mode;
 	 bool all_loaded;
+	 bool is_spike_auto;
 	  
 
       private:
@@ -77,6 +78,9 @@ class US_Edit : public US_Widgets
       double             range_left;
       double             range_right;
       double             baseline;
+
+      double             baseline_od;
+      
       double             invert;
       double             plateau;
       double             gap_fringe;
@@ -85,7 +89,16 @@ class US_Edit : public US_Widgets
 
       QStringList        triple_info;
       QMap< QString, QStringList> editProfile;
+      QStringList        centparms_info;
+      QMap< int, QStringList> centerpieceParameters;
+      QMap< QString, QString> centerpiece_info;
 
+      QVector<QString> centerpiece_names;
+      QMap <QString, QString>      cell_to_centerpiece;
+      QVector<QStringList> aprofile_data;
+
+      QMap < QString, QString > details_at_editing_local; 
+      
       QChar              chlamb;
 
       QList< int >       sd_offs;        // Speed data offsets, ea. triple
@@ -133,6 +146,7 @@ class US_Edit : public US_Widgets
       QLabel*            lb_dataEnd;
       QLabel*            lb_meniscus;
 
+      QLineEdit*         le_status;
       QLineEdit*         le_investigator;
       QLineEdit*         le_info;
       QLineEdit*         le_meniscus;
@@ -249,6 +263,7 @@ class US_Edit : public US_Widgets
 
       QString filename_runID_auto;
       QString idInv_auto;
+      QString ProtocolName_auto;
 
       class DataDesc_auto   // Description of each data set in the list presented
       {
@@ -291,10 +306,19 @@ class US_Edit : public US_Widgets
       int  scan_db_auto      ( void );
       void create_descs_auto ( QStringList&, QStringList&, int );
       void load_db_auto      ( QList< DataDesc_auto >& );
-                          
+
+      void read_centerpiece_names_from_protocol( void );
+      void read_aprofile_data_from_aprofile( void );
+      void read_centerpiece_params( int );
+      bool readProtocolCells_auto ( QXmlStreamReader& );
+
+      void update_autoflow_record_atEditData( void );
+      
    private slots:         
       void load              ( void );
       void load_auto         ( QMap < QString, QString > & );
+
+      void reset_editdata_panel ( void );
       
       void details           ( void );
 
@@ -341,6 +365,11 @@ class US_Edit : public US_Widgets
       void write             ( void );
       void write_triple      ( void );
       void write_mwl         ( void );
+
+      void write_auto        ( void );
+      void write_triple_auto ( int );
+      void write_mwl_auto    ( int );
+      
       void review_edits      ( void );
       
       void next_triple       ( void );
@@ -380,9 +409,16 @@ class US_Edit : public US_Widgets
       double radius_indexed  ( const double );
                              
       QString      indent       ( int );
+
       QString      html_header  ( const QString, const QString );
+      QString      html_header_auto ( const QString, const QString, const int );
+            
       QString      run_details  ( void );
+      QString      run_details_auto  ( int );
+      
       QString      scan_info    ( void );
+      QString      scan_info_auto    ( int );
+      
       QString      table_row    ( const QString, const QString );
       QString      table_row    ( const QString, const QString,
                                   const QString );
@@ -394,14 +430,22 @@ class US_Edit : public US_Widgets
                                   const QString, const QString );
 
       void create_report     ( QString& );
+      void create_report_auto( QString&, int );
+      
       void view_report       ( void );
+
       void save_report       ( const QString, const QString, const int );
+      void save_report_auto  ( const QString, const QString, const int, const int );
+      
       void reset             ( void );
       void reset_triple      ( void );
       void reset_outData     ( void );
       void close_edit        ( void );
       void help              ( void )
       { showHelp.show_help( "manual/us_edit.html" ); };
+ 
+ signals:
+      void edit_complete_auto( QMap< QString, QString> & );
 };
 #endif
 

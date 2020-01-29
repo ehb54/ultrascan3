@@ -238,7 +238,7 @@ class US_PostProdGui : public US_WidgetsDialog
     //void to_experiment( QString & protocolName );
     void to_initAutoflow( void );
     void reset_lims_import( void );
-    
+        
   signals:
     //void to_post_prod( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii  );
     void to_post_prod( QMap < QString, QString > & ); 
@@ -270,10 +270,13 @@ class US_EditingGui : public US_WidgetsDialog
       
  private slots:
    void do_editing( QMap < QString, QString > & );
+   void reset_data_editing( void );
+   void to_analysis( QMap < QString, QString > & );
 
  signals:
-   void start_editing(  QMap < QString, QString > & );
-    
+   void start_editing( QMap < QString, QString > & );
+   void reset_data_editing_passed ( void );
+   void switch_to_analysis( QMap < QString, QString > &  );
 };
 
 //! \brief Analysis panel
@@ -294,10 +297,10 @@ class US_AnalysisGui : public US_WidgetsDialog
     //void resizeEvent(QResizeEvent *event) override;
       
  private slots:
-    void do_analysis( QString & currDir, QString & protocolName );
+   void do_analysis( QMap < QString, QString > & );
 
  signals:
-    void start_analysis( QString & currDir, QString & protocolName );
+   void start_analysis( QMap < QString, QString > & );
     
 };
 
@@ -396,11 +399,12 @@ private slots:
    
   //void unable_tabs_buttons( void);  // Slot to unable Tabs and Buttons when user level is low
   //void enable_tabs_buttons( void);  // Slot to enable Tabs and Buttons after protocol is loaded
+
   void switch_to_live_update( QMap < QString, QString > & protocol_details );
-  //void switch_to_post_processing( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii );
   void switch_to_post_processing( QMap < QString, QString > & );
-  
-  void switch_to_editing( QMap < QString, QString > & protocol_details ); 
+  void switch_to_editing( QMap < QString, QString > & protocol_details );
+  void switch_to_analysis( QMap < QString, QString > & protocol_details );
+    
   //void switch_to_experiment( QString & protocolName );
   //void check_current_stage( void );
   void close_all( void );
@@ -417,15 +421,17 @@ private slots:
   void show_liveupdate_finishing_msg( void );
   
 signals:
-  void pass_to_live_update( QMap < QString, QString > & protocol_details ); 
-  //void import_data_us_convert( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii );
-  void import_data_us_convert(  QMap < QString, QString > & );
-
+  void pass_to_live_update( QMap < QString, QString > & protocol_details );
+  void pass_to_post_processing(  QMap < QString, QString > & );
   void pass_to_editing( QMap < QString, QString > & protocol_details );
+  void pass_to_analysis( QMap < QString, QString > & protocol_details );
+  
+
   //void clear_experiment( QString & protocolName);
   void us_comproject_closed( void );
   void pass_used_instruments( QStringList & );
   void reset_lims_import( void );
+  void reset_data_editing( void );
   void reset_live_update( void );
 };
 

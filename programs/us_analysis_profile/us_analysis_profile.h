@@ -162,10 +162,13 @@ class US_AnaprofPan2DSA : public US_WidgetsDialog
 
       QStringList  sl_chnsel;
       int          dbg_level;     // Debug flag
+      int          cchx;          // Current 2DSA channel index
       bool         changed;       // Flag if any speed step changes
       
    private slots:
       void channel_selected ( int );
+      void parms_to_gui     ( int );
+      void gui_to_parms     ( int );
       void next_channel     ( );
       void smin_changed     ( );
       void smax_changed     ( );
@@ -247,12 +250,15 @@ class US_AnaprofPanPCSA : public US_WidgetsDialog
 
       bool         changed;
       int          dbg_level;
+      int          cchx;          // Current PCSA channel index
       QStringList  sl_chnsel;
 
    private slots:
       void nopcsa_checked   ( bool );
       void channel_selected ( int );
       void next_channel     ( );
+      void parms_to_gui     ( int );
+      void gui_to_parms     ( int );
       void curvtype_selected( int );
       void apply_all_clicked( );
       void xaxis_selected   ( int );
@@ -275,94 +281,6 @@ class US_AnaprofPanPCSA : public US_WidgetsDialog
 };
 
 
-#if 0
-//! \brief AnalysisProfileGui Status panel
-class US_AnaprofPanStatus : public US_WidgetsDialog 
-{
-   Q_OBJECT
-
-   public:
-      US_AnaprofPanStatus( QWidget* );
-      ~US_AnaprofPanStatus() {};
-
-      void        initPanel( void );    // Standard panel utilities
-      void        savePanel( void );
-      QString     getSValue( const QString );
-      int         getIValue( const QString );
-      double      getDValue( const QString );
-      QStringList getLValue( const QString );
-      QString     sibSValue( const QString, const QString );
-      int         sibIValue( const QString, const QString );
-      double      sibDValue( const QString, const QString );
-      QStringList sibLValue( const QString, const QString );
-      int         status   ( void );
-      void        help     ( void )
-         { showHelp.show_help( "manual/experiment_submit.html" ); };
-
-      QPushButton* pb_saverp;
-      QPushButton* pb_connect;      
-      QPushButton* pb_submit;
-      QPushButton* pb_details;
-
-      QGridLayout* genL;
-      
-   private:
-      US_AnalysisProfileGui*  mainw;
-      US_AnaProfile*     loadProf;   // Prof params as loaded from AP record
-      US_AnaProfile*     currProf;   // Current AnaProfile controls
-      US_AnaProfile::AnaProf2DSA*   ap2DSA;    // 2DSA controls
-      US_AnaProfile::AnaProfPCSA*   apPCSA;    // PCSA controls
-      US_Help  showHelp;
-
-      //QPushButton* pb_saverp;
-      //QPushButton* pb_submit;
-
-      QCheckBox*   ck_run;
-      QCheckBox*   ck_project;
-      QCheckBox*   ck_rotor;
-      QCheckBox*   ck_rotor_ok;
-      QCheckBox*   ck_speed;
-      QCheckBox*   ck_speed_ok;
-      QCheckBox*   ck_centerp;
-      QCheckBox*   ck_solution;
-      QCheckBox*   ck_optical;
-      QCheckBox*   ck_ranges;
-      QCheckBox*   ck_connect;
-      QCheckBox*   ck_rp_diff;
-      QCheckBox*   ck_prot_ena;
-      QCheckBox*   ck_prot_svd;
-      QCheckBox*   ck_sub_enab;
-      QCheckBox*   ck_sub_done;
-
-      int          dbg_level;
-      bool         have_run;    // Have Run specified
-      bool         have_proj;   // Have Project specified
-      bool         have_speed;  // Have Speed parameters specified
-      bool         chgd_speed;  // User Changed Speed parameters
-      bool         have_cells;  // Have Cell parameters specified
-      bool         have_solus;  // Have Solutions parameters specified
-      bool         have_optic;  // Have Optics parameters specified
-      bool         have_range;  // Have Ranges parameters specified
-      bool         have_sol;    // Have Solution parameters specified
-      bool         rps_differ;  // Run Protocols differ loaded/current
-      bool         subm_enab;   // Submit of Run controls is Enabled
-      bool         submitted;   // Run controls have been Submitted
-      bool         connected;   // We are Connected to the Optima
-      bool         changed;
-
-      QSqlDatabase dbxpn;
-      
-
-   private slots:
-      void    detailExperiment( void );  // Dialog to detail experiment
-      void    testConnection  ( void );  // Test Optima connection
-      void    submitExperiment_confirm( void );  // Submit the experiment
-      void    submitExperiment( void );  // Submit the experiment
-
-   signals:
-};
-#endif
-
 //! \brief Analysis Profile GUI Main Window
 class US_AnalysisProfileGui : public US_Widgets
 {
@@ -378,6 +296,8 @@ class US_AnalysisProfileGui : public US_Widgets
       QStringList childLValue ( const QString, const QString );
       // \brief Initialize all the panels
       void        initPanels  ( void );
+      // \brief Save all the panels
+      void        savePanels  ( void );
       // \brief Get the list of protocol names and summary-data strings
       int         getProfiles   ( QStringList&, QList< QStringList >& );
       // \brief Update the list of protocols with a newly named entry
@@ -396,6 +316,7 @@ class US_AnalysisProfileGui : public US_Widgets
 
       bool    connection_status;
       QString xpnhost;
+      QString ap_xml;
       int     xpnport;
       
       bool    automode;
@@ -410,7 +331,6 @@ class US_AnalysisProfileGui : public US_Widgets
       US_AnaprofPanGen*     apanGeneral;    // General panel
       US_AnaprofPan2DSA*    apan2DSA;       // 2DSA panel
       US_AnaprofPanPCSA*    apanPCSA;       // PCSA panel
-//      US_AnaprofPanStatus*  apanStatus;     // Status panel
 
       int         statflag;        // Composite panels status flag
       int         dbg_level;       // Debug print flag

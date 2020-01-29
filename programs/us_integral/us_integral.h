@@ -145,6 +145,6 @@ class US_Integral : public US_Widgets
                                      const QString, QVector< double >& );
 
       void help       ( void )
-      { showHelp.show_help( "dens_match.html" ); }
+      { showHelp.show_help( "integral.html" ); }
 };
 #endif

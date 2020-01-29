@@ -187,7 +187,7 @@ CREATE PROCEDURE new_experiment ( p_personGUID   CHAR(36),
                                   p_password     VARCHAR(80),
                                   p_expGUID      CHAR(36),
                                   p_projectID    INT,
-                                  p_runID        VARCHAR(80),
+                                  p_runID        VARCHAR(255),
                                   p_labID        INT,
                                   p_instrumentID INT,
                                   p_operatorID   INT,
@@ -284,7 +284,7 @@ CREATE PROCEDURE update_experiment ( p_personGUID   CHAR(36),
                                      p_experimentID INT,
                                      p_expGUID      CHAR(36),
                                      p_projectID    INT,
-                                     p_runID        VARCHAR(80),
+                                     p_runID        VARCHAR(255),
                                      p_labID        INT,
                                      p_instrumentID INT,
                                      p_operatorID   INT,
@@ -522,7 +522,7 @@ END$$
 DROP PROCEDURE IF EXISTS get_experiment_info_by_runID$$
 CREATE PROCEDURE get_experiment_info_by_runID ( p_personGUID CHAR(36),
                                                 p_password   VARCHAR(80),
-                                                p_runID      VARCHAR(80),
+                                                p_runID      VARCHAR(255),
                                                 p_ID         INT )
   READS SQL DATA
 

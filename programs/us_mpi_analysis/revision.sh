@@ -8,10 +8,14 @@ else
   LNCMD="sed -n 1p"
 fi
 MVERS=`grep US_Version ../../utils/us_defines.h|${LNCMD}|cut -d'"' -f2`
-REV1=`svn info|grep 'Changed Rev'|cut -f4 -d' '`
-REV2=`(cd ../../utils;svn info|grep 'Changed Rev'|cut -f4 -d' ')`
-DATE1=`svn info|grep 'Changed Date'|cut -f4 -d' '`
-DATE2=`(cd ../../utils;svn info|grep 'Changed Date'|cut -f4 -d' ')`
+COMM1=`git log --oneline -n 1 .|cut -d' ' -f1`
+COMM2=`(cd ../../utils; git log --oneline -n 1 .|cut -d' ' -f1)`
+REV1=`git log --oneline|sed -n "/^$COMM1 /,99999p"|wc -l`
+REV2=`git log --oneline|sed -n "/^$COMM2 /,99999p"|wc -l`
+DATE1=`git log -n 1 .|grep Date:|awk '{print $2" "$3" "$4" "$6}'`
+DATE2=`(cd ../../utils;git log -n 1 .|grep Date:|awk '{print $2" "$3" "$4" "$6}')`
+DATE1=`date -d "$DATE1" "+%Y-%m-%d"`
+DATE2=`date -d "$DATE2" "+%Y-%m-%d"`
 # Compare revisions of programs/us_mpi_analysis and utils
 NREV1=`expr $REV1 + 0`
 NREV2=`expr $REV2 + 0`

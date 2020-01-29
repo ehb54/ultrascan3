@@ -1,6 +1,6 @@
-//! \file us_remove_distros.h
-#ifndef US_RMVMODEL_H
-#define US_RMVMODEL_H
+//! \file us_delete_models.h
+#ifndef US_DELMODEL_H
+#define US_DELMODEL_H
 
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
@@ -11,7 +11,7 @@
 
 //! \brief A class to provide a window for remove_distros analysis controls
 
-class US_RemoveModels : public US_WidgetsDialog
+class US_DeleteModels : public US_WidgetsDialog
 {
    Q_OBJECT
 
@@ -19,7 +19,7 @@ class US_RemoveModels : public US_WidgetsDialog
       //! \brief US_RemoveModels constructor
       //! \param adistros Pointer to model distributions list
       //! \param p        Pointer to the parent of this widget
-      US_RemoveModels( QVector< DisSys >&, QWidget* p = 0 );
+      US_DeleteModels( QVector< DisSys >&, QWidget* p = 0 );
 
    private:
       QVector< DisSys >&  distros; // Reference to model distributions vector
@@ -53,7 +53,7 @@ class US_RemoveModels : public US_WidgetsDialog
       void restore          ( void );
       void accepted         ( void );
       void help             ( void )
-      { showHelp.show_help( "dens_match_rmvmods.html" ); };
+      { showHelp.show_help( "integral_delmods.html" ); };
 };
 #endif
 
