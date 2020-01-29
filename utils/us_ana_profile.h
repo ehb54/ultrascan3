@@ -13,11 +13,11 @@ class US_UTIL_EXTERN US_AnaProfile
    public:
 
       //! \brief Profile 2DSA controls class
-      class AnaProf2DSA
+      class US_UTIL_EXTERN AnaProf2DSA
       {
          public:
 
-            class Parm2DSA
+            class US_UTIL_EXTERN Parm2DSA
             {
                public:
                   double       s_min;
@@ -92,10 +92,10 @@ class US_UTIL_EXTERN US_AnaProfile
       };
 
       //! \brief Analysis Profile PCSA controls class
-      class AnaProfPCSA
+      class US_UTIL_EXTERN AnaProfPCSA
       {
          public:
-            class ParmPCSA
+            class US_UTIL_EXTERN ParmPCSA
             {
                public:
                   double       x_min;

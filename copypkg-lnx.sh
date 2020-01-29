@@ -4,7 +4,7 @@
 SRCDIR=$us3
 HOMEQ=`cd $SRCDIR/../;pwd`
 DSTDIR=$HOMEQ/us3pkg
-SOMOBASE=$HOMEQ/us3_somo
+SOMOBASE=$HOMEQ/ultrascan3/us_somo
 SOMORHDR=${SOMOBASE}/develop/include/us_revision.h
 ME=`whoami`
 SYSTYPE=`uname -s`
@@ -22,9 +22,10 @@ else
   LNCMD="sed -n 1p"
 fi
 SURL="//svn.aucsolutions.com/ultrascan3/trunk"
-REV=`svn info svn:${SURL}|grep Revision|awk '{print $2}'`
+##REV=`svn info svn:${SURL}|grep Revision|awk '{print $2}'`
+REV=`git log --oneline | wc -l`
 RSYNC="rsync -av --exclude=.svn"
-REVL=`svn info ${SRCDIR}|grep Revision|awk '{print $2}'`
+##REVL=`svn info ${SRCDIR}|grep Revision|awk '{print $2}'`
 MVERS=`grep US_Version ${SRCDIR}/utils/us_defines.h|${LNCMD}|cut -d'"' -f2`
 SREV=`grep Revision ${SOMORHDR}|cut -d \" -f2|awk '{print $2}'`
 
@@ -104,8 +105,8 @@ if [ ${QTVER} = "4" ];then
   SREV="-s${SREV}"
 else
   QTLIBS=${QTLIBS5}
-  ##SREV=""
-  SREV="-s${SREV}"
+  SREV=""
+  ##SREV="-s${SREV}"
 fi
 ##         echo "QTLIBS=${QTLIBS}"
 ##         exit 1
