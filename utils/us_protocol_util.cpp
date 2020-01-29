@@ -262,11 +262,12 @@ qDebug() << "PU:wrrec:    newpx" << newpx;
 
    else
    {  // Write a record to local disk
-      QString datdir      = US_Settings::dataDir() + "/projects/";
+      QString datdir      = US_Settings::dataDir() + "/projects";
       datdir.replace( "\\", "/" );        // Possible Windows fix
       QString filename    = US_DataFiles::get_filename( datdir, protguid, "R",
                                                         "protocol", "guid" );
       QFile pfile( filename );
+qDebug() << "PU:wrrec:    filename" << filename;
 
       if ( ! pfile.open( QIODevice::WriteOnly | QIODevice::Text ) )
          return newpx;
@@ -277,7 +278,8 @@ qDebug() << "PU:wrrec:    newpx" << newpx;
       pfile.close();
 
       // Returned protocol index is numeric part of output file name
-      newpx               = QString( filename ).section( ".", 0, 0 ).mid( 1 ).toInt();
+      newpx               = QString( filename ).section( "/", -1, -1 )
+                                               .section( ".", 0, 0 ).mid( 1 ).toInt();
    }
 
 qDebug() << "PU:wrrec:    rtn newpx" << newpx;

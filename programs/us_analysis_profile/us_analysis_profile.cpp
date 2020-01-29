@@ -370,8 +370,9 @@ DbgLv(1) << "APG: ipro:  ap_xml isEmpty" << ap_xml.isEmpty();
 DbgLv(1) << "APG: ipro:  ap_xml length" << ap_xml.length();
          QXmlStreamReader xmli( ap_xml );
          currProf.fromXml( xmli );
-DbgLv(1) << "APG: ipro:   2kparm pkparm" << currProf.ap2DSA.parms.count() << currProf.apPCSA.parms.count();
-         initPanels();
+DbgLv(1) << "APG: ipro:   2kparm pkparm" << currProf.ap2DSA.parms.count() << currProf.apPCSA.parms.count()
+ << "kpchan" << currProf.pchans.count();
+//         initPanels();
       }
    }
 DbgLv(1) << "APG: ipro: Aprof source: " << aprsrc;
@@ -1149,6 +1150,32 @@ DbgLv(1) << "2D:SL-pg: *ERROR* rowx>=kparm";
    le_kgrpts->setText( QString::number( parm1.k_grpts   ) );
    le_grreps->setText( QString::number( parm1.gridreps  ) );
    le_custmg->setText( parm1.cust_grid );
+   QString chan    = parm1.channel;
+   QString chan_l  = sl_chnsel[ rowx ];
+DbgLv(1) << "2D:SL-pg:  rowx" << rowx << "channel" << chan << chan_l;
+   if ( chan != chan_l )
+   {  // Parms channel wrong, so replace with correct string
+      parm1.channel     = chan_l;
+      currProf->ap2DSA.parms.replace( rowx, parm1 );
+DbgLv(1) << "2D:SL-pg:    chan replaced:" << parms->at( rowx ).channel;
+      chan              = chan_l;
+   }
+   int ixchns      = cb_chnsel->findText( chan );
+   if ( ixchns < 0 )
+   {  // Channel string not found, so search for starting substring
+      for ( int ii = 0; ii < cb_chnsel->count(); ii++ )
+      {
+         if ( cb_chnsel->itemText( ii ).startsWith( chan ) )
+         {
+            ixchns          = ii;
+DbgLv(1) << "2D:SL-pg:   ixchns(I)" << ixchns << chan << cb_chnsel->itemText(ii);
+            break;
+         }
+      }
+   }
+else
+ DbgLv(1) << "2D:SL-pg:   ixchns(X)" << ixchns << chan << cb_chnsel->itemText(ixchns);
+   cb_chnsel->setCurrentIndex( ixchns );
 
    pb_nextch->setEnabled( rowx < ( sl_chnsel.count() - 1 ) );
 

@@ -2556,13 +2556,13 @@ DbgLv(1) << "EGAp:inP:  sdiag" << sdiag;
    
    //sdiag->reset();
 
-   mainw->currAProf.aprofname = aprofname;
-   mainw->currAProf.protoname = protoname;
-   sdiag->currProf            = mainw->currAProf;
+   mainw->currAProf           = sdiag->currProf;
+   sdiag->currProf.aprofname  = aprofname;
+   sdiag->currProf.protoname  = protoname;
    sdiag->inherit_protocol( currProto );
-DbgLv(1) << "EGAp:inP:  sdiag names passed";
-   sdiag->initPanels();
 DbgLv(1) << "EGAp:inP:  sdiag initPanels()";
+   sdiag->initPanels();
+   mainw->currAProf           = sdiag->currProf;
 }
 
 void US_ExperGuiAProfile::reset_sdiag( void )

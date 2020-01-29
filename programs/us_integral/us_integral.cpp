@@ -1,4 +1,4 @@
-﻿//! \file us_Integral.cpp
+﻿//! \file us_integral.cpp
 
 #include <QApplication>
 

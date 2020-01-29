@@ -2932,14 +2932,14 @@ DbgLv(1) << "EGSo: rbS:  nchant" << nchant;
    QStringList sv_sids;
    QStringList sv_chcms;
    int nchan_s         = rpSolut->nschan;
-   qDebug() << "rpSolut->nschan: !!!!!!!!!!!!!! " << rpSolut->nschan;
+DbgLv(1) << "EGSo: rbS: rpSolut->nschan: !!!!!!!!!!!!!! " << rpSolut->nschan;
    int nuniq_s         = rpSolut->nuniqs;
 DbgLv(1) << "EGSo: rbS: nchan_s nuniq_s" << nchan_s << nuniq_s;
 
    for ( int ii = 0; ii < nchan_s; ii++ )
    {
       sv_chans  << rpSolut->chsols[ ii ].channel;
-      qDebug() << "SV_CHANS[sxx] !!!!!!!!!!!!!!!!: " << rpSolut->chsols[ ii ].channel;
+DbgLv(1) << "EGSo: rbS: SV_CHANS[sxx] !!!!!!!!!!!!!!!!: " << rpSolut->chsols[ ii ].channel;
       sv_sols   << rpSolut->chsols[ ii ].solution;
       sv_sids   << rpSolut->chsols[ ii ].sol_id;
       sv_chcms  << rpSolut->chsols[ ii ].ch_comment;
@@ -4217,6 +4217,8 @@ DbgLv(1) << "EGUp:dE: solus solus" << ssolut;
    QString v_solok   = chk_solution ? s_Yes : s_no;
    QString v_phook   = chk_ranges   ? s_Yes : s_no;
    QString v_conok   = connected    ? s_Yes : s_no;
+   QString v_sveok   = proto_ena    ? s_Yes : s_no;
+   QString v_svcok   = proto_svd    ? s_Yes : s_no;
    QString v_uleok   = chk_sub_enab ? s_Yes : s_no;
    QString v_ulcok   = chk_sub_done ? s_Yes : s_no;
 
@@ -4502,9 +4504,11 @@ x                 QString      treg_type;
  **/
 
    dtext += tr( "\nSubmit\n" );
-   dtext += tr( "  CONNECTED:                  " ) + v_conok  + "\n";
-   dtext += tr( "  SUBMIT ENABLED:             " ) + v_uleok  + "\n";
-   dtext += tr( "  SUBMIT COMPLETED:           " ) + v_ulcok  + "\n";
+   dtext += tr( "  CONNECTED:                  " ) + v_conok + "\n";
+   dtext += tr( "  PROTOCOL CAN BE SAVED:      " ) + v_sveok + "\n";
+   dtext += tr( "  PROTOCOL SAVED:             " ) + v_svcok + "\n";
+   dtext += tr( "  SUBMIT ENABLED:             " ) + v_uleok + "\n";
+   dtext += tr( "  SUBMIT COMPLETED:           " ) + v_ulcok + "\n";
 
 //    // Generate a JSON stream to be uploaded
 
@@ -4604,25 +4608,19 @@ void US_ExperGuiUpload::saveAnalysisProfile()
    //mainw->epanAProfile->sdiag->currProf.toXml( xmlo_aprof );
 
    US_AnaProfile* aprof = mainw->get_aprofile();
+   aprof->aprofname     = aprof->aprofname.isEmpty()
+                          ? mainw->currProto.protoname
+                          : aprof->aprofname;
    rpAprof->aprofname   = aprof->aprofname;
-   rpAprof->aprofGUID   = US_Util::new_guid();
+   rpAprof->aprofGUID   = mainw->currProto.protoGUID;
    aprof  ->aprofGUID   = rpAprof->aprofGUID;
 
    aprof->toXml( xmlo_aprof ); 
-DbgLv(1) << "XML AProfile: " << rpAprof->ap_xml;
+//DbgLv(1) << "XML AProfile: " << rpAprof->ap_xml;
 
    QString xmlopath;
    QString dapath;
-#if 0
-   xmlopath         = US_Settings::tmpDir() + "/aprofile_" + aprof->aprofname + ".xml";
-   QFile xofile( xmlopath );
-   if ( !xofile.open( QIODevice::WriteOnly | QIODevice::Text ) )
-      return;
-   QTextStream xotxto( &xofile );
-   xotxto << rpAprof->ap_xml;
-   xofile.close();
 
-#endif
    // Find or compose an analysis profile local file name
    bool new_file    = false;
    dapath           = US_Settings::dataDir() + "/projects/";
@@ -4644,14 +4642,19 @@ DbgLv(1) << "EGAp:svAP: new_file" << new_file << "xmlopath" <<  xmlopath;
    US_Passwd  pw;
    US_DB2* dbP         = ( sibSValue( "general", "dbdisk" ) == "DB" )
                          ? new US_DB2( pw.getPasswd() ) : NULL;
-   QStringList qry;
-   qry << "new_aprofile" << aprof->aprofGUID << aprof->aprofname
-       << rpAprof->ap_xml;
-   dbP->statusQuery( qry );
-   aprof->aprofID      = dbP->lastInsertID();
+   bool fromdisk       = US_Settings::debug_match( "protocolFromDisk" );
+   dbP                 = fromdisk ? NULL : dbP;
+   if ( dbP != NULL )
+   {
+      QStringList qry;
+      qry << "new_aprofile" << aprof->aprofGUID << aprof->aprofname
+          << rpAprof->ap_xml;
+      dbP->statusQuery( qry );
+      aprof->aprofID      = dbP->lastInsertID();
 DbgLv(1) << "EGAp:svAP:  qry" << qry;
 DbgLv(1) << "EGAp:svAP:  new DB:  ID" << aprof->aprofID
  << dbP->lastError();
+   }
 
    return;
 }
@@ -4659,8 +4662,6 @@ DbgLv(1) << "EGAp:svAP:  new DB:  ID" << aprof->aprofID
 // Slot to save the current Run Protocol
 void US_ExperGuiUpload::saveRunProtocol()
 {
-
-  saveAnalysisProfile();
 
   if ( mainw->ScanCount_global > 1501 )
     {
@@ -4738,7 +4739,11 @@ DbgLv(1) << "EGUp:svRP:   currProto previous protoname" << currProto->protoname;
 DbgLv(1) << "EGUp:svRP:   currProto updated  guid" << currProto->protoGUID;
 DbgLv(1) << "EGUp:svRP:   currProto updated  protoname" << currProto->protoname;
 
-//ALEXEY: bug - us_xml string has to be cleared each time Protocol is saved
+
+   // Now that we have protocol name,guid; save the Analysis Profile
+   saveAnalysisProfile();
+
+   // us_xml string has to be cleared each time Protocol is saved
    rpSubmt->us_xml.clear();
 
    QXmlStreamWriter xmlo( &rpSubmt->us_xml ); // Compose XML representation
@@ -4752,10 +4757,12 @@ int xe=rpSubmt->us_xml.length()-101;
 DbgLv(1) << "EGUp:svRP:    xml(e)" << QString(rpSubmt->us_xml).mid(xe);
 
 
-   // Save the new protocol to database or disk
+   // Save the new protocol to database and/or disk
    US_Passwd  pw;
    US_DB2* dbP         = ( sibSValue( "general", "dbdisk" ) == "DB" )
                          ? new US_DB2( pw.getPasswd() ) : NULL;
+   bool fromdisk       = US_Settings::debug_match( "protocolFromDisk" );
+   dbP                 = fromdisk ? NULL : dbP;
 
 DbgLv(1) << "EGUp:svRP:   dbP" << dbP;
    // Always save the protocol to a local file
@@ -4765,7 +4772,7 @@ DbgLv(1) << "EGUp:svRP:   dbP" << dbP;
    if ( dbP != NULL )
       idProt              = US_ProtocolUtil::write_record( rpSubmt->us_xml, dbP );
 
-   if ( idProt < 1 )
+   if ( idProt < 0 )
    {
       QString errmsg   = ( dbP != NULL ) ? dbP->lastError() : "???";
       QMessageBox::critical( this,

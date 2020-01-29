@@ -608,6 +608,10 @@ void US_AnaprofPan2DSA::initPanel()
    ap2DSA             = &(mainw->currProf.ap2DSA);
 DbgLv(1) << "AP2d:inP:  IN";
 
+   sl_chnsel          = sibLValue( "general", "channels" );
+   cb_chnsel->clear();
+   cb_chnsel->addItems( sl_chnsel );
+
    // Populate GUI settings from protocol controls
    int kparm          = ap2DSA->parms.size();
    int kchan          = sl_chnsel.size();
@@ -617,13 +621,10 @@ DbgLv(1) << "AP2d:inP:  kparm kchan" << kparm << kchan;
       parm1              = ap2DSA->parms[ 0 ];
    for ( int ii = kparm; ii < kchan; ii++ )
    {
-DbgLv(1) << "AP2d:inP:    set-parm ii" << ii;
+      parm1.channel      = sl_chnsel[ ii ];
+DbgLv(1) << "AP2d:inP:    set-parm ii" << ii << "channel" << parm1.channel;
       ap2DSA->parms << parm1;
    }
-
-   sl_chnsel       = sibLValue( "general", "channels" );
-   cb_chnsel->clear();
-   cb_chnsel->addItems( sl_chnsel );
 
    cchx            = 0;
    parms_to_gui( 0 );
