@@ -282,25 +282,19 @@ DbgLv(1) << "APG: ipro:     lch" << lch << "lv_tol da_end"
       }
    }
 
-DbgLv(1) << "APG: ipro: nchn" << nchn << "call pGen iP";
-   apanGeneral->initPanel();
 DbgLv(1) << "APG: ipro: name" << iProto->protoname
  << "cPname" << currProf.aprofname << "xml len" << ap_xml.length()
  << "GUID" << currProf.aprofGUID << iProto->rpAprof.aprofGUID;
 
-   if ( currProf.aprofGUID.isEmpty()  ||
-        currProf.aprofGUID.startsWith( "0000" ) )
-   {
-      currProf.aprofGUID   = iProto->rpAprof.aprofGUID;
-   }
-
-QString aprsrc( "currProf" );
+   QString aprsrc( "currProf" );
    bool need_rec        = ap_xml.isEmpty();
    need_rec             = ( currProf.aprofname == iProto->rpAprof.aprofname )
                           ? need_rec : true;
+   currProf.aprofGUID   = iProto->rpAprof.aprofGUID = iProto->protoGUID;
+   currProf.aprofname   = iProto->rpAprof.aprofname = iProto->protoname;
+DbgLv(1) << "APG: ipro: name GUID" << currProf.aprofname << currProf.aprofGUID;
+
    // Load Analysis Profile from database or local file
-//   if ( currProf.aprofname != iProto->protoname  ||
-//        ap_xml.isEmpty() )a
    if ( need_rec )
    {
       bool use_db          = ( US_Settings::default_data_location() < 2 );
@@ -330,9 +324,9 @@ DbgLv(1) << "APG: ipro:   load_db" << load_db;
             currProf.aprofID     = dbP->value( 0 ).toInt();
             currProf.aprofname   = dbP->value( 1 ).toString();
             ap_xml               = dbP->value( 2 ).toString();
+            aprsrc               = QString( "readDB" );
 DbgLv(1) << "APG: ipro:  ap ID,name,lnxml" << currProf.aprofID
  << currProf.aprofname << ap_xml.length();
-aprsrc=QString("readDB");
          }
       }
 
@@ -349,6 +343,7 @@ DbgLv(1) << "APG: ipro:   new_file" << new_file << "xmlipath" << xmlipath
          if ( new_file )
          {  // No local file, so clear XML
             ap_xml.clear();
+            currProf.aprofID     = 0;
          }
          else
          {  // Read XML from local file
@@ -356,9 +351,13 @@ DbgLv(1) << "APG: ipro:   new_file" << new_file << "xmlipath" << xmlipath
             if ( xifile.open( QIODevice::ReadOnly | QIODevice::Text ) )
             {
                QTextStream xitext( &xifile );
-               ap_xml            = xitext.readAll();
+               ap_xml               = xitext.readAll();
                xifile.close();
-aprsrc=QString("readLocf");
+               aprsrc               = QString( "readLocf" );
+               currProf.aprofID     = -( QString( xmlipath ).section( "/", -1, -1 )
+                                                            .section( ".", -2, -2 )
+                                                            .mid( 1 ).toInt() );
+DbgLv(1) << "APG: ipro:    aprofID" << currProf.aprofID;
             }
          }
       }
@@ -375,8 +374,116 @@ DbgLv(1) << "APG: ipro:   2kparm pkparm" << currProf.ap2DSA.parms.count() << cur
 //         initPanels();
       }
    }
+
+   apanGeneral->initPanel();
+
+   // If currProf purely from upstream profile, insure proper channel descriptions
+   if ( aprsrc == "currProf" )
+   {
+      QStringList sl_chnsel_g = childLValue( "general", "channels" );
+      QStringList sl_chnsel_2 = childLValue( "2dsa",    "channels" );
+      QStringList sl_chnsel_p = childLValue( "pcsa",    "channels" );
+      QStringList pa_chnsel_p;
+      QStringList pa_chnsel_2;
+      int nchan_g     = sl_chnsel_g.count();
+      int nchan_2     = sl_chnsel_2.count();
+      int nchan_p     = sl_chnsel_p.count();
+      int nchan_p2    = currProf.ap2DSA.parms.count();
+      int nchan_pp    = currProf.apPCSA.parms.count();
+      bool need_reset = false;
+      if ( nchan_g == nchan_2  &&  nchan_g == nchan_p )
+      {  // Channels same size, so check contents
+         for ( int ii = 0; ii < nchan_g; ii++ )
+         {
+            if ( sl_chnsel_g[ ii ] != sl_chnsel_2[ ii ]  ||
+                 sl_chnsel_g[ ii ] != sl_chnsel_p[ ii ] )
+               need_reset      = true;
+         }
+      }
+      else
+      {  // Channels size difference, so mark need to reset
+         need_reset      = true;
+         //   and effectively resize the string lists
+         if ( nchan_2 < nchan_g )
+         {
+            QString chann_2 = sl_chnsel_2[ nchan_2 - 1];
+            for ( int ii = nchan_2; ii < nchan_g; ii++ )
+               sl_chnsel_2 << chann_2;
+         }
+         else if ( nchan_2 > nchan_g )
+         {
+            for ( int ii = nchan_g; ii < nchan_2; ii++ )
+               sl_chnsel_2.removeLast();
+         }
+         if ( nchan_p < nchan_g )
+         {
+            QString chann_p = sl_chnsel_p[ nchan_p - 1];
+            for ( int ii = nchan_p; ii < nchan_g; ii++ )
+               sl_chnsel_p << chann_p;
+         }
+         else if ( nchan_p > nchan_g )
+         {
+            for ( int ii = nchan_g; ii < nchan_p; ii++ )
+               sl_chnsel_p.removeLast();
+         }
+      }
+
+      if ( need_reset )
+      {  // Reset channel descriptions for 2DSA,PCSA
+         for ( int ii = 0; ii < nchan_g; ii++ )
+         {
+            sl_chnsel_2[ ii ] = sl_chnsel_g[ ii ];
+            sl_chnsel_p[ ii ] = sl_chnsel_g[ ii ];
+         }
+
+         apan2DSA->sl_chnsel  = sl_chnsel_2;
+         apanPCSA->sl_chnsel  = sl_chnsel_p;
+         nchan_2         = nchan_g;
+         nchan_p         = nchan_g;
+      }
+
+      // Test need to reset 2DSA,PCSA parms channels
+      need_reset      = false;
+      if ( nchan_p2 == nchan_2  &&  nchan_pp == nchan_p )
+      {  // Channels same size, so check contents
+         for ( int ii = 0; ii < nchan_g; ii++ )
+         {
+            if ( currProf.ap2DSA.parms[ ii ].channel != sl_chnsel_2[ ii ]  ||
+                 currProf.ap2DSA.parms[ ii ].channel != sl_chnsel_p[ ii ] )
+               need_reset      = true;
+         }
+      }
+      else
+      {  // Channels size difference, so mark need to reset
+         need_reset      = true;
+      }
+      if ( need_reset )
+      {  // Reset channel descriptions for 2DSA,PCSA parms
+         currProf.ap2DSA.parms.resize( nchan_2 );
+         currProf.apPCSA.parms.resize( nchan_p );
+         int lch_p2      = nchan_p2 - 1;
+         int lch_pp      = nchan_pp - 1;
+
+         for ( int ii = 0; ii < nchan_g; ii++ )
+         {
+            if ( ii >= nchan_p2 )
+            {
+               currProf.ap2DSA.parms[ ii ] = currProf.ap2DSA.parms[ lch_p2 ];
+            }
+            if ( ii >= nchan_pp )
+            {
+               currProf.apPCSA.parms[ ii ] = currProf.apPCSA.parms[ lch_pp ];
+            }
+            currProf.ap2DSA.parms[ ii ].channel = sl_chnsel_g[ ii ];
+            currProf.apPCSA.parms[ ii ].channel = sl_chnsel_g[ ii ];
+         }
+
+         nchan_p2        = nchan_g;
+         nchan_pp        = nchan_g;
+      }
+   } // END: aprsrc == "currProf"
 DbgLv(1) << "APG: ipro: Aprof source: " << aprsrc;
-   
+DbgLv(1) << "APG: ipro: nchn" << nchn << "call pGen iP";
 }
 
 // Reset parameters to their defaults
@@ -454,7 +561,7 @@ DbgLv(1) << "APGe:  RTN initPanel()";
 
 void US_AnaprofPanGen::build_general_layout()
 {
-   bool have_genl  = true;
+   bool have_genl  = true;      // Flag if a general layout exists
    int nchn        = sl_chnsel.count();
 DbgLv(1) << "APGe: bgL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
 
@@ -495,6 +602,7 @@ for ( int ii=0; ii<allObjects.count(); ii++ )
 DbgLv(1) << "APGe: inP:   ox" << ii << "oName" << objname;
 }
  */
+      have_genl       = false;
       QObject* pwidg  = le_aproname->parent();
       QList< QObject* > allObjects = pwidg->children();
       for ( int ii = 0; ii < allObjects.count(); ii++ )
@@ -629,13 +737,13 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
       QLineEdit* le_lvtol = us_lineedit( "10",  0, false );
       QLineEdit* le_daend = us_lineedit( "7.0", 0, false );
 
-      QString stchan      = QString::number( ii );
-      le_chann->setObjectName( stchan + ": channel" );
-      le_lcrat->setObjectName( stchan + ": loadconc_ratio" );
-      le_lctol->setObjectName( stchan + ": loadconc_tolerance" );
-      le_ldvol->setObjectName( stchan + ": load_volume" );
-      le_lvtol->setObjectName( stchan + ": loadvol_tolerance" );
-      le_daend->setObjectName( stchan + ": dataend" );
+      QString stchan      = QString::number( ii ) + ": ";
+      le_chann->setObjectName( stchan + "channel" );
+      le_lcrat->setObjectName( stchan + "loadconc_ratio" );
+      le_lctol->setObjectName( stchan + "loadconc_tolerance" );
+      le_ldvol->setObjectName( stchan + "load_volume" );
+      le_lvtol->setObjectName( stchan + "loadvol_tolerance" );
+      le_daend->setObjectName( stchan + "dataend" );
 
       le_lcrats << le_lcrat;
       le_lctols << le_lctol;

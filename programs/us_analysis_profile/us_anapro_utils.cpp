@@ -343,7 +343,7 @@ DbgLv(1) << "APGe: inP:   ox" << ii << "oName" << objname;
    genL            = new QGridLayout();
    genL->setObjectName( "GeneralLayout" );
 
-   // Build the General Layout
+   // Build the General Layout if need be
    build_general_layout( );
 DbgLv(1) << "APGe: inP: tol,dae size" << currProf->lv_tolers.count() << currProf->data_ends.count();
 
@@ -716,6 +716,7 @@ QStringList US_AnaprofPan2DSA::getLValue( const QString type )
    QStringList value( "" );
 
 DbgLv(1) << "AP2d:getLV: type" << type;
+   if      ( type == "channels" )       { value = sl_chnsel; }
 #if 0
    if ( type == "profiles" )
    {  // Compose list of all speed-step values (4 lines per step)
@@ -884,7 +885,8 @@ QStringList US_AnaprofPanPCSA::getLValue( const QString type )
    QStringList value;
 DbgLv(1) << "EGCe:getSL: type" << type;
 
-   if ( type == "centerpieces" )
+   if      ( type == "channels" )       { value = sl_chnsel; }
+   else if ( type == "centerpieces" )
    {  // Return row strings where a centerpiece is selected
    }
 

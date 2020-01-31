@@ -395,9 +395,10 @@ class US_UTIL_EXTERN US_RunProtocol
       QString      project;        //!< Project description
       QString      optimahost;     //!< Optima host (numeric IP address)
 
-      QString      exp_label;      // Exp. label, not presetn in standalone us_experiment
+      QString      exp_label;      //!< Experiment label, not present in sa us_experiment
 
-      int          projectID; 
+      int          projectID;      //!< Project DB ID
+      int          protoID;        //!< Protocol DB ID
       double       temperature;    //!< Run temperature in degrees centigrade
       double       temeq_delay;    //!< Temperature-equilibration delay minutes
 

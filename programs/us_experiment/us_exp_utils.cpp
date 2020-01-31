@@ -2556,11 +2556,15 @@ DbgLv(1) << "EGAp:inP:  sdiag" << sdiag;
    
    //sdiag->reset();
 
-   mainw->currAProf           = sdiag->currProf;
    sdiag->currProf.aprofname  = aprofname;
    sdiag->currProf.protoname  = protoname;
+   sdiag->currProf.protoGUID  = mainw->currProto.protoGUID;
+   sdiag->currProf.protoID    = mainw->currProto.protoID;
+DbgLv(1) << "EGAp:inP:  sdiag inherit" << "proto GUID ID"
+ << mainw->currProto.protoGUID << mainw->currProto.protoID;
    sdiag->inherit_protocol( currProto );
 DbgLv(1) << "EGAp:inP:  sdiag initPanels()";
+   mainw->currAProf           = sdiag->currProf;
    sdiag->initPanels();
    mainw->currAProf           = sdiag->currProf;
 }

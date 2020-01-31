@@ -81,13 +81,10 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
 
 
    // Add bottom buttons
-   //QPushButton* pb_close  = us_pushbutton( tr( "Close" ) );
-   pb_close = us_pushbutton( tr( "Close" ) );;
    QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
-   // QPushButton* pb_next   = us_pushbutton( tr( "Next Panel" ) );
-   // QPushButton* pb_prev   = us_pushbutton( tr( "Previous Panel" ) );
-   pb_next   = us_pushbutton( tr( "Next Panel" ) );
    pb_prev   = us_pushbutton( tr( "Previous Panel" ) );
+   pb_next   = us_pushbutton( tr( "Next Panel" ) );
+   pb_close  = us_pushbutton( tr( "Close" ) );;
    buttL->addWidget( pb_help  );
    buttL->addWidget( pb_prev  );
    buttL->addWidget( pb_next  );
@@ -103,8 +100,6 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
             this,      SLOT  ( panelUp()    ) );
    connect( pb_prev,   SIGNAL( clicked()    ),
             this,      SLOT  ( panelDown()  ) );
-   //connect( pb_close,  SIGNAL( clicked()    ),
-   //         this,      SLOT  ( close      ) );
    connect( pb_close,  SIGNAL( clicked()    ),
             this,      SLOT  ( close_program()      ) );
    connect( pb_help,   SIGNAL( clicked()    ),
@@ -353,6 +348,7 @@ for (int jj=0;jj<gxentrs.count();jj++)
    currProto->investigator = invtxt;
    currProto->runname      = "";
    currProto->protoname    = "";
+   currProto->protoID      = 0;
    currProto->project      = "";
    currProto->temperature  = 20.0;
    currProto->temeq_delay  = 10.0;
@@ -600,15 +596,16 @@ DbgLv(1) << "EGGe:main: prnames,prdata counts" << pr_names.count() << protdata.c
       // Reset and Initialize
       currProto->runname      = "";
       currProto->protoname    = "";
+      currProto->protoID      = 0;
       currProto->project      = "";
       currProto->temperature  = 20.0;
       currProto->temeq_delay  = 10.0;
       initPanel();
       le_protocol->setText( "" );
       le_project ->setText( "" );
-      le_label ->setText( "" );
+      le_label   ->setText( "" );
 
-      currProto->exp_label    = "";
+      currProto  ->exp_label  = "";
 
       /////mainw->reset();  //testing
    }
@@ -661,6 +658,7 @@ QMessageBox::information( this, mtitle, message );
 DbgLv(1) << "EGGe:ldPro: Disk-B: load_db" << load_db;
    // Get database connection pointer (or NULL as disk flag)
    US_DB2* dbP           = load_db ? new US_DB2( pw.getPasswd() ) : NULL;
+   int protoID           = 0;
 
    // Build dialog table widget headers
    hdrs << "Protocol Name"
@@ -681,10 +679,13 @@ DbgLv(1) << "EGGe:ldPro:  ACCEPT  prx" << prx << "sel proto" << protdata[prx][0]
       QString pname         = protdata[ prx ][ 0 ];
 
       // Get the protocol XML that matches the selected protocol name
-      US_ProtocolUtil::read_record( pname, &xmlstr, NULL, dbP );
-DbgLv(1) << "EGGe:ldPro:  ACCEPT   read_record return len(xml)" << xmlstr.length();
+      protoID               = US_ProtocolUtil::read_record( pname, &xmlstr, NULL, dbP );
+DbgLv(1) << "EGGe:ldPro:  ACCEPT   read_record return len(xml)" << xmlstr.length()
+ << "protoID" << protoID;
 
       le_protocol->setText( pname );
+      mainw->currProto.protoID = protoID;
+      mainw->loadProto.protoID = protoID;
    }
 
    else
@@ -696,6 +697,7 @@ DbgLv(1) << "EGGe:ldPro:  REJECT";
    // Now that we have a protocol XML, convert it to internal controls
    QXmlStreamReader xmli( xmlstr );
    mainw->loadProto.fromXml( xmli );
+   mainw->loadProto.protoID = protoID;
 
    // Initialize the current protocol from the loaded one; set temperature
    mainw->currProto      = mainw->loadProto;
@@ -706,7 +708,7 @@ DbgLv(1) << "EGGe:ldPro:  REJECT";
 
 DbgLv(1) << "EGGe:ldPro:    dur0" << mainw->currProto.rpSpeed.ssteps[0].duration;
 DbgLv(1) << "EGGe:ldPro:    cPname" << mainw->currProto.protoname
- << "lPname" << mainw->loadProto.protoname;
+ << "lPname" << mainw->loadProto.protoname << "pdbID" << mainw->loadProto.protoID;
 DbgLv(1) << "EGGe:ldPro:    cOhost" << mainw->currProto.optimahost
  << "lOhost" << mainw->loadProto.optimahost;
 DbgLv(1) << "EGGe:ldPro:    cTempe" << mainw->currProto.temperature
@@ -747,7 +749,7 @@ void US_ExperGuiGeneral::changed_protocol( void )
 {
    QString protoname    = le_protocol->text();
 
-   if ( pr_names.contains( protoname ) or protoname.trimmed() == "" )
+   if ( pr_names.contains( protoname )  ||  protoname.trimmed() == "" )
    {
       QString msg          =
          tr( "The protocol name given<br/>" )
@@ -762,7 +764,10 @@ void US_ExperGuiGeneral::changed_protocol( void )
                                 msg );
    }
    else
+   {
       currProto->protoname = protoname;
+      currProto->protoGUID = US_Util::new_guid(); // Get a new GUID
+   }
 
 }
 
@@ -3884,6 +3889,10 @@ US_ExperGuiAProfile::US_ExperGuiAProfile( QWidget* topw )
       aprofname           = protoname;
    sdiag->inherit_protocol( &mainw->currProto );
    sdiag->auto_name_passed( protoname, aprofname );
+   sdiag->currProf.protoGUID
+                       = mainw->currProto.protoGUID;
+   sdiag->currProf.protoID
+                       = mainw->currProto.protoID;
    mainw->currAProf    = sdiag->currProf;
    sdiag->show();
 }
@@ -4608,14 +4617,12 @@ void US_ExperGuiUpload::saveAnalysisProfile()
    //mainw->epanAProfile->sdiag->currProf.toXml( xmlo_aprof );
 
    US_AnaProfile* aprof = mainw->get_aprofile();
-   aprof->aprofname     = aprof->aprofname.isEmpty()
-                          ? mainw->currProto.protoname
-                          : aprof->aprofname;
-   rpAprof->aprofname   = aprof->aprofname;
+   rpAprof->aprofname   = mainw->currProto.protoname;
    rpAprof->aprofGUID   = mainw->currProto.protoGUID;
+   aprof  ->aprofname   = rpAprof->aprofname;
    aprof  ->aprofGUID   = rpAprof->aprofGUID;
 
-   aprof->toXml( xmlo_aprof ); 
+   aprof  ->toXml( xmlo_aprof ); 
 //DbgLv(1) << "XML AProfile: " << rpAprof->ap_xml;
 
    QString xmlopath;
@@ -4685,7 +4692,7 @@ DbgLv(1) << "EGUp:svRP:   prnames" << prnames;
    QString protoname   = sibSValue( "general", "protocol" );
 //DbgLv(1) << "EGUp:svRP:  protoname" << protoname << "prdats0" << prdats[0];  //ALEXEY: important: this statement caused bug when no protocols existed in the DB
 
-   if ( prnames.contains( protoname ) or protoname.trimmed().isEmpty() )
+   if ( prnames.contains( protoname ) ||  protoname.trimmed().isEmpty() )
    {  // Cannot save until a new protocol name is given
       QString mtitle  = tr( "Protocol Name not New" );
       QString message = tr( "The current Run Protocol cannot be saved until\n"
@@ -4705,7 +4712,7 @@ DbgLv(1) << "EGUp:svRP:   prnames" << prnames;
           "or on <b>Cancel</b> to abort the Run Protocol save.<br/>" );
 
    // Keep displaying the dialog text until a unique name is given
-   while( prnames.contains( newpname ) or newpname.trimmed().isEmpty() )
+   while( prnames.contains( newpname )  ||  newpname.trimmed().isEmpty() )
    {
       newpname            = QInputDialog::getText( this,
                                tr( "Enter New Run Protocol Name/Description" ),
@@ -4734,8 +4741,10 @@ DbgLv(1) << "EGUp:svRP:   NEW protoname" << protoname;
 DbgLv(1) << "EGUp:svRP:   currProto previous guid" << currProto->protoGUID;
 DbgLv(1) << "EGUp:svRP:   currProto previous protoname" << currProto->protoname;
 
-   currProto->protoname = protoname;            // Update current protocol
-   currProto->protoGUID = US_Util::new_guid(); // Get a new GUID
+   currProto->protoname = protoname;              // Update current protocol
+   if ( currProto->protoGUID.isEmpty()  ||
+        currProto->protoGUID.startsWith( "0000" ) )
+      currProto->protoGUID = US_Util::new_guid(); // Get a new GUID
 DbgLv(1) << "EGUp:svRP:   currProto updated  guid" << currProto->protoGUID;
 DbgLv(1) << "EGUp:svRP:   currProto updated  protoname" << currProto->protoname;
 

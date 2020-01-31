@@ -30,6 +30,8 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       US_AnaprofPanGen( QWidget* );
       ~US_AnaprofPanGen() {};
 
+      QStringList  sl_chnsel;
+
       void        initPanel( void );    // Standard panel utilities
       void        savePanel( void );
       QString     getSValue( const QString );
@@ -79,8 +81,6 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       QList< QLineEdit* >    le_lvtols;
       QList< QLineEdit* >    le_daends;
       
-      QStringList  sl_chnsel;
-
       int          dbg_level;
       bool         use_db;              // Using the LIMS database?
 
@@ -112,6 +112,8 @@ class US_AnaprofPan2DSA : public US_WidgetsDialog
    public:
       US_AnaprofPan2DSA( QWidget* );
       ~US_AnaprofPan2DSA() {};
+
+      QStringList  sl_chnsel;
 
       void        initPanel( void );    // Standard panel utilities
       void        savePanel( void );
@@ -160,7 +162,6 @@ class US_AnaprofPan2DSA : public US_WidgetsDialog
 
       QComboBox*   cb_chnsel; 
 
-      QStringList  sl_chnsel;
       int          dbg_level;     // Debug flag
       int          cchx;          // Current 2DSA channel index
       bool         changed;       // Flag if any speed step changes
@@ -202,6 +203,8 @@ class US_AnaprofPanPCSA : public US_WidgetsDialog
    public:
       US_AnaprofPanPCSA( QWidget* );
       ~US_AnaprofPanPCSA() {};
+
+      QStringList  sl_chnsel;
 
       void        initPanel( void );    // Standard panel utilities
       void        savePanel( void );
@@ -251,7 +254,6 @@ class US_AnaprofPanPCSA : public US_WidgetsDialog
       bool         changed;
       int          dbg_level;
       int          cchx;          // Current PCSA channel index
-      QStringList  sl_chnsel;
 
    private slots:
       void nopcsa_checked   ( bool );

@@ -305,7 +305,6 @@ class US_ExperGuiSpeeds : public US_WidgetsDialog
       //! \brief Compose a speed step description
       QString speedp_description( const int );
       //! \brief Slot for SS change in number of steps
-//      void    ssChangeCount ( double );
       void    ssChangeCount ( int    );
       //! \brief Slot for SS change in profile index
       void    ssChangeProfx ( int    );
@@ -756,9 +755,6 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       US_RunProtocol::RunProtoUpload*     rpSubmt;  //!< Submit controls
       US_Help  showHelp;
 
-      //QPushButton* pb_saverp;
-      //QPushButton* pb_submit;
-
       QCheckBox*   ck_run;
       QCheckBox*   ck_project;
       QCheckBox*   ck_rotor;
@@ -861,12 +857,6 @@ class US_ExperGuiAProfile : public US_WidgetsDialog
       US_RunProtocol::RunProtoAProfile*   rpAprof;  //!< AProfile controls
       US_RunProtocol::RunProtoUpload*     rpSubmt;  //!< Submit controls
       US_Help  showHelp;
-      //US_AnalysisProfileGui* sdiag;      // Analysis Profile in panel
-
-      //QPushButton* pb_saverp;
-      //QPushButton* pb_submit;
-
-      //QCheckBox*   ck_sub_done;
 
       int          dbg_level;
       bool         have_prof;   // Have Analysis Profile specified
@@ -878,7 +868,6 @@ class US_ExperGuiAProfile : public US_WidgetsDialog
 
    private slots:
       void    detailProfile   ( void );  // Dialog to detail profile
-//      void    saveRunProtocol ( void );  // Save the Run Protocol
 
    signals:
       void expdef_submitted( QMap < QString, QString > &protocol_details );

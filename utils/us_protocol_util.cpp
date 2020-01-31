@@ -385,13 +385,13 @@ int US_ProtocolUtil::read_record( const QString protname, QString* xml,
                                   .toString( Qt::ISODate ), true )
                                   .section( " ", 0, 0 ).simplified();
 
-            // Return entry, xml, and protocol ID (filename numeric)
+            // Return entry, xml, and protocol ID (negative of filename numeric)
             if ( protentry != NULL )
                *protentry << pname << fdate << pfname << pguid;
             if ( xml != NULL )
                *xml             = xmlstr;
 
-            idprot           = QString( pfname ).section( ".", 0, 0 ).mid( 1 ).toInt();
+            idprot           = -( QString( pfname ).section( ".", 0, 0 ).mid( 1 ).toInt() );
             break;
          }
       }  // END: file loop
@@ -445,7 +445,7 @@ int US_ProtocolUtil::read_record_auto( const QString protname, int invID_passed,
       }  // END: db records
    }  // END: from database
 
-   else
+   if ( idprot < 0 )
    {  // Find the record in a local file with a matching name
       QString datdir      = US_Settings::dataDir() + "/projects/";
       datdir.replace( "\\", "/" );        // Possible Windows fix
@@ -490,13 +490,13 @@ int US_ProtocolUtil::read_record_auto( const QString protname, int invID_passed,
                                   .toString( Qt::ISODate ), true )
                                   .section( " ", 0, 0 ).simplified();
 
-            // Return entry, xml, and protocol ID (filename numeric)
+            // Return entry, xml, and protocol ID (negative of filename numeric)
             if ( protentry != NULL )
                *protentry << pname << fdate << pfname << pguid;
             if ( xml != NULL )
                *xml             = xmlstr;
 
-            idprot           = QString( pfname ).section( ".", 0, 0 ).mid( 1 ).toInt();
+            idprot           = -( QString( pfname ).section( ".", 0, 0 ).mid( 1 ).toInt() );
             break;
          }
       }  // END: file loop
