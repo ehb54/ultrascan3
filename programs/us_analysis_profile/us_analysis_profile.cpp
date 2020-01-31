@@ -321,9 +321,12 @@ DbgLv(1) << "APG: ipro:   load_db" << load_db;
          }
          else
          {
-            currProf.aprofID     = dbP->value( 0 ).toInt();
-            currProf.aprofname   = dbP->value( 1 ).toString();
-            ap_xml               = dbP->value( 2 ).toString();
+	   while ( dbP->next() )
+	     {
+	       currProf.aprofID     = dbP->value( 0 ).toInt();
+	       currProf.aprofname   = dbP->value( 1 ).toString();
+	       ap_xml               = dbP->value( 2 ).toString();
+	     }
             aprsrc               = QString( "readDB" );
 DbgLv(1) << "APG: ipro:  ap ID,name,lnxml" << currProf.aprofID
  << currProf.aprofname << ap_xml.length();
