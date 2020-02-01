@@ -48,7 +48,7 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    global_reset = false;
    instruments_in_use.clear();
    ScanCount_global = 0;
-   
+
    // Create tab and panel widgets
    tabWidget           = us_tabwidget();
 
@@ -140,7 +140,7 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
 void US_ExperimentMain::reset( void )
 {
   global_reset = true;
-  
+
   //Clean Reset
   currProto = US_RunProtocol();
   loadProto = US_RunProtocol();
@@ -152,8 +152,8 @@ void US_ExperimentMain::reset( void )
   tabWidget->setCurrentIndex( 0 );
 
   epanGeneral->resetPanel();
-  
-  
+
+
   /*
   // Reset General panel
   currProto.runname      = "";
@@ -172,13 +172,13 @@ void US_ExperimentMain::reset( void )
   epanSolutions->initPanel();
 
   //Optics
-  currProto.rpOptic.nochan = 0; 
+  currProto.rpOptic.nochan = 0;
   epanOptical->initPanel();
 
   //Ranges
   currProto.rpRange.nranges = 0;
   epanRanges->initPanel();
-  
+
   //AProfile
   //if ( !usmode )
   epanAProfile->initPanel();
@@ -207,7 +207,7 @@ void US_ExperimentMain::exclude_used_instruments( QStringList & occupied_instrum
   // qApp->processEvents();
 
   reset();
-  
+
   instruments_in_use.clear();
   qDebug() << "OCCUPIED IINSTRUMENTS: " << occupied_instruments;
 
@@ -242,7 +242,7 @@ void US_ExperimentMain::auto_mode_passed( void )
 
   epanGeneral->lb_label->setVisible(true);
   epanGeneral->le_label->setVisible(true);
-  
+
   this->pb_close->hide();
 
 }
@@ -262,7 +262,7 @@ void US_ExperimentMain::us_exp_clear( QString &protocolName )
 
   // ALEXEY: do proper reset of everything
   reset();
-  
+
   emit exp_cleared();
 }
 
@@ -363,7 +363,7 @@ for (int jj=0;jj<gxentrs.count();jj++)
 
    genL->addWidget( lb_label,        row,   0, 1, 2 );
    genL->addWidget( le_label,        row++, 2, 1, 6 );
-   
+
    genL->addWidget( pb_protocol,     row,   0, 1, 2 );
    genL->addWidget( le_protocol,     row++, 2, 1, 6 );
    genL->addWidget( pb_project,      row,   0, 1, 2 );
@@ -382,7 +382,7 @@ for (int jj=0;jj<gxentrs.count();jj++)
 
    //ALEXEY: hide in regular us_experiment, show in auto_mode (later)
    lb_label->hide();
-   le_label->hide();  
+   le_label->hide();
 
    // Set up signal and slot connections
    connect( le_runid,        SIGNAL( textEdited(const QString &)  ),
@@ -431,11 +431,11 @@ void US_ExperGuiGeneral::resetPanel( void )
   le_protocol    ->setText ("");
   le_project     ->setText ("");
   le_label       ->setText ("");
-  
+
   // Set up an approprate investigator text
   if ( US_Settings::us_inv_level() < 1 )
     pb_investigator->setEnabled( false );
-  
+
   int id          = US_Settings::us_inv_ID();
   QString invnbr  = ( id > 0 ) ?
     QString::number( US_Settings::us_inv_ID() ) + ": "
@@ -444,7 +444,7 @@ void US_ExperGuiGeneral::resetPanel( void )
   le_investigator->setText ( invtxt );
 
   qDebug() << "Investigator After reset: " << invtxt;
-  
+
 }
 
 // Return detail information for a specific centerpiece as named
@@ -980,44 +980,44 @@ DbgLv(1) << "EGR: chgLab   rot_ent" << rot_ent << "rndx" << rndx;
    foreach ( US_Rotor::Instrument instrument, instruments )
    {
       if(instrument.name.contains("Optima"))
-	{
-	  if ( !mainw->automode )
-	    {
-	      // Regular us_experiment: populate ALL instruments
-	      sl_optimas << QString::number( instrument.ID ) + ": " + instrument.name;
+      {
+         if ( !mainw->automode )
+         {
+            // Regular us_experiment: populate ALL instruments
+            sl_optimas << QString::number( instrument.ID ) + ": " + instrument.name;
 
-	      qDebug() << "ASSIGNING INSTRUMENTS: " << instrument.name;
-	    }
-	  else
-	    {
-	      //ALEXEY: passed from autoflow: Exclude instruments in USE
-	      bool optima_in_use = false;
-	      for (int ll = 0; ll < mainw->instruments_in_use.size(); ll++)
-	       	{
-	       	  if ( instrument.name == mainw->instruments_in_use[ll] )
-	       	    {
-	       	      optima_in_use = true;
-	       	      break;
-	       	    }
-	       	}
-	      
-	      if ( !optima_in_use)
-		{
-		  sl_optimas << QString::number( instrument.ID ) + ": " + instrument.name;
-		  qDebug() << "ASSIGNING FREE INSTRUMENTS: " << instrument.name;
-		}
-	    }
-	}
+qDebug() << "ASSIGNING INSTRUMENTS: " << instrument.name;
+         }
+         else
+         {
+            //ALEXEY: passed from autoflow: Exclude instruments in USE
+            bool optima_in_use = false;
+            for (int ll = 0; ll < mainw->instruments_in_use.size(); ll++)
+            {
+               if ( instrument.name == mainw->instruments_in_use[ll] )
+               {
+                  optima_in_use = true;
+                  break;
+               }
+            }
+
+            if ( !optima_in_use)
+            {
+               sl_optimas << QString::number( instrument.ID ) + ": " + instrument.name;
+               qDebug() << "ASSIGNING FREE INSTRUMENTS: " << instrument.name;
+            }
+         }
+      }
    }
-   
+
    cb_optima->clear();
    cb_optima->addItems( sl_optimas );
 
    connect( cb_optima,    SIGNAL( activated      ( int ) ),
             this,         SLOT  ( changeOptima   ( int ) ) );
-   
+
    changeOptima(0);
-   
+
    //ExpType
    experimentTypes.clear();
    cb_exptype->clear();
@@ -1055,10 +1055,9 @@ void US_ExperGuiRotor::changeOptima( int ndx )
          mainw->currentInstrument[ "optimaDBname" ]    = instruments[ii].optimaDBname;
          mainw->currentInstrument[ "optimaDBusername" ] = instruments[ii].optimaDBusername;
          mainw->currentInstrument[ "optimaDBpassw" ]    = instruments[ii].optimaDBpassw;
-	 mainw->currentInstrument[ "opsys1" ]          = instruments[ii].os1;
+         mainw->currentInstrument[ "opsys1" ]          = instruments[ii].os1;
          mainw->currentInstrument[ "opsys2" ]          = instruments[ii].os2;
          mainw->currentInstrument[ "opsys3" ]          = instruments[ii].os3;
-	 
       }
    }
    //Operators
@@ -1075,7 +1074,7 @@ void US_ExperGuiRotor::changeOptima( int ndx )
 
    changeOperator(0);
 
-   // if ( !mainw->connection_for_instrument.contains( mainw->currentInstrument[ "name" ] ) ) 
+   // if ( !mainw->connection_for_instrument.contains( mainw->currentInstrument[ "name" ] ) )
    //   test_optima_connection();
 
    test_optima_connection();
@@ -1277,7 +1276,7 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    // QLabel*  lb_delay   = us_label( tr( "Delay to First Scan (days[D] hh[H] mm[M] ss[S]):" ) );
    //QLabel*  lb_durat   = us_label( tr( "Duration of Experiment (hh[H] mm[M]):" ) );
    QLabel*  lb_durat   = us_label( tr( "Active Scanning Time (hh[H] mm[M]):" ) );
-   
+
    QLabel*  lb_delay       = us_label( tr( "Delay to First Scan (hh[H] mm[M]):" ) );
    QLabel*  lb_delay_int   = us_label( tr( "Delay to First Scan (hh[H] mm[M]):" ) );
 
@@ -1314,11 +1313,11 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
     //                       = us_timeedit( tm_scnint, 0, &sb_scnint );
 
 
-   
+
    QHBoxLayout* lo_duratlay        = us_ddhhmmsslay( 0, 0,0,0,1, &sb_durat_dd, &sb_durat_hh, &sb_durat_mm,  &sb_durat_ss ); // ALEXEY 0 - visible, 1 - hidden
    QHBoxLayout* lo_delaylay_stage  = us_ddhhmmsslay( 0, 0,0,0,1, &sb_delay_st_dd, &sb_delay_st_hh, &sb_delay_st_mm,  &sb_delay_st_ss );
    sb_delay_st_dd->setEnabled(false);
-   
+
    //UV_vis
    QHBoxLayout* lo_delaylay        = us_ddhhmmsslay( 0, 0,0,0,1, &sb_delay_dd, &sb_delay_hh, &sb_delay_mm,  &sb_delay_ss );
    sb_delay_dd->setEnabled(false);
@@ -1331,15 +1330,15 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    sb_delay_int_hh->setEnabled(false);
    sb_delay_int_mm->setEnabled(false);
 
-   
+
    //UV-vis
    QHBoxLayout* lo_scnintlay               = us_ddhhmmsslay( 0, 0,0,0,0, &sb_scnint_dd, &sb_scnint_hh, &sb_scnint_mm,  &sb_scnint_ss );
    sb_scnint_dd->setEnabled(false);
-   
+
    //Interference
    QHBoxLayout* lo_scnintlay_int           = us_ddhhmmsslay( 0, 0,0,0,0, &sb_scnint_int_dd, &sb_scnint_int_hh, &sb_scnint_int_mm,  &sb_scnint_int_ss );
    sb_scnint_int_dd->setEnabled(false);
-   
+
    le_maxrpm           = us_lineedit( tr( "Maximum speed for AN50 rotor:"
                                           "  50000 rpm" ), 0, true );
 
@@ -1350,7 +1349,7 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    double df_accel     = rpSpeed->ssteps[ 0 ].accel;
    double df_duratm    = rpSpeed->ssteps[ 0 ].duration;
    double df_delatm_stage    = rpSpeed->ssteps[ 0 ].delay_stage;
-   
+
    //interference
    double df_delatm_int    = rpSpeed->ssteps[ 0 ].delay_int;
    double df_scint_int     = rpSpeed->ssteps[ 0 ].scanintv_int;
@@ -1359,8 +1358,8 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    double df_delatm    = rpSpeed->ssteps[ 0 ].delay;
    double df_scint     = rpSpeed->ssteps[ 0 ].scanintv; //ALEXEY read default scanint in secs corresponding to default RPM
    double df_scint_min = rpSpeed->ssteps[ 0 ].scanintv_min;
-   
-   
+
+
    QList< int > dhms_dur;
    QList< int > dhms_dly_stage;
    //Uv-vis
@@ -1404,7 +1403,7 @@ DbgLv(1) << "EGSp:   def  d h m s " << dhms_dly;
    ssvals[ 0 ][ "delay" ]    = df_delatm; // Delay to 1st scan in seconds default (2m 30s) DUE to acceleration
    //interference
    ssvals[ 0 ][ "delay_int" ]    = df_delatm_int;
-   
+
    ssvals[ 0 ][ "delay_stage" ]  = df_delatm_stage; // Delay of the stage in seconds
 
    //Uv-vis
@@ -1412,9 +1411,9 @@ DbgLv(1) << "EGSp:   def  d h m s " << dhms_dly;
    ssvals[ 0 ][ "scanintv_min" ] = df_scint_min;  //ALEXEY
    //interference
    ssvals[ 0 ][ "scanintv_int" ]     = df_scint_int;  //ALEXEY
-   ssvals[ 0 ][ "scanintv_min_int" ] = df_scint_int_min;  //ALEXEY  
-   
-   
+   ssvals[ 0 ][ "scanintv_min_int" ] = df_scint_int_min;  //ALEXEY
+
+
    // Set up counters and profile description
    ct_speed ->setSingleStep( 100 );
    ct_accel ->setSingleStep(  50 );
@@ -1448,8 +1447,8 @@ DbgLv(1) << "EGSp: init sb/de components";
    sb_delay_int_hh ->setValue( (int)dhms_dly_int[ 1 ] );
    sb_delay_int_mm ->setValue( (int)dhms_dly_int[ 2 ] );
    sb_delay_int_ss ->setValue( (int)dhms_dly_int[ 3 ] );
-   
-   
+
+
    sb_delay_st_dd ->setValue( (int)dhms_dly_stage[ 0 ] );
    sb_delay_st_hh ->setValue( (int)dhms_dly_stage[ 1 ] );
    sb_delay_st_mm ->setValue( (int)dhms_dly_stage[ 2 ] );
@@ -1521,7 +1520,7 @@ DbgLv(1) << "EGSp: addWidg/Layo BB";
   genL->addWidget( lb_delay_stage,    row,    0, 1,  5 );
   genL->addLayout( lo_delaylay_stage, row++,  5, 1,  1 );
   genL->addLayout( lo_delay_stage_sync, row++,0, 1,  5 );
- 
+
 
   //UV-vis.
   QLabel* lb_uvvis    = us_banner( tr( "UV-Visible::" ) );
@@ -1538,9 +1537,9 @@ DbgLv(1) << "EGSp: addWidg/Layo BB";
   genL->addWidget( lb_delay_int,   row,    0, 1,  5 );
   genL->addLayout( lo_delaylay_int,   row++,  5, 1,  1 );
   genL->addWidget( lb_scnint_int,     row,    0, 1,  5 );
-  genL->addLayout( lo_scnintlay_int,  row++,  5, 1,  3 ); 
+  genL->addLayout( lo_scnintlay_int,  row++,  5, 1,  3 );
 
-  
+
 DbgLv(1) << "EGSp: addWidg/Layo GG";
    genL->addWidget( le_maxrpm,  row++,  0, 1,  4 );
 DbgLv(1) << "EGSp: addWidg/Layo HH";
@@ -1660,16 +1659,16 @@ QString US_ExperGuiSpeeds::speedp_description( int ssx )
    double scaninterval =  ssvals[ ssx ][ "scanintv" ];  //ALEXEY: ssval[]["scanintv"] is set (in secs)  according to table: RPM vs scanint
    int escans = qRound( durtim / scaninterval );
    //interference
-   double scaninterval_int =  ssvals[ ssx ][ "scanintv_int" ]; 
-   int escans_int = qRound( durtim / scaninterval_int );  
+   double scaninterval_int =  ssvals[ ssx ][ "scanintv_int" ];
+   int escans_int = qRound( durtim / scaninterval_int );
 
-   
+
    int tscans  = 0;
    int tscans_int  = 0;
    for ( int ii = 0; ii < ssvals.size(); ii++ )
      {
        tscans        += qRound( ssvals[ ii ][ "duration" ] / ssvals[ ii ][ "scanintv" ] );  //ALEXEY bug fixed
-       tscans_int    += qRound( ssvals[ ii ][ "duration" ] / ssvals[ ii ][ "scanintv_int" ] ); 
+       tscans_int    += qRound( ssvals[ ii ][ "duration" ] / ssvals[ ii ][ "scanintv_int" ] );
      }
    qDebug() << "SCAN INT: " << scaninterval << ", # Scans: " << tscans;
 
@@ -1682,7 +1681,7 @@ QString US_ExperGuiSpeeds::speedp_description( int ssx )
    return tr( "Speed Profile %1 :    %2 rpm for %3 hr %4 min"
               "  Estimated # of scans: %5 (UV-vis), %6 (Interference)" )
           .arg( ssx + 1 ).arg( ssvals[ ssx ][ "speed" ] )
-      .arg( durhr ).arg( durmin ).arg( escans ).arg( escans_int );  
+      .arg( durhr ).arg( durmin ).arg( escans ).arg( escans_int );
 }
 
 // Slot for change in speed-step count
@@ -1707,7 +1706,7 @@ DbgLv(1) << "EGSp: chgKnt: nsp nnsp" << nspeed << new_nsp;
       scanint_ss_int_min.resize( new_nsp );
       scanint_mm_int_min.resize( new_nsp );
       scanint_hh_int_min.resize( new_nsp );
-      delay_mm_int_min  .resize( new_nsp );     
+      delay_mm_int_min  .resize( new_nsp );
 
       int kk           = nspeed - 1;
       double ssspeed   = ssvals[ kk ][ "speed" ];
@@ -1736,7 +1735,7 @@ DbgLv(1) << "EGSp: chgKnt: nsp nnsp" << nspeed << new_nsp;
       double ssdlyhr_int   = qFloor( ssdlymin_int / 60.0 );
       ssdlymin_int        -= ( ssdlyhr_int * 60.0 );
       double ssdlysec_int  = ssdlytim_int - ( ssdlyhr_int * 3600.0 )
-                                  - ( ssdlymin_int * 60.0 );      
+                                  - ( ssdlymin_int * 60.0 );
 
       //ssdurtim         = ( ssdurhr * 60.0 ) + ssdurmin;                        //ALEXEY in minutes [duration]
       ssdurtim         = ( ssdurhr * 3600.0 ) + ( ssdurmin * 60.0 ) + ssdursec;  //ALEXEY in seconds [duration]
@@ -1751,16 +1750,16 @@ DbgLv(1) << "EGSp: chgKnt: nsp nnsp" << nspeed << new_nsp;
       for ( int kkk = nspeed; kkk < new_nsp; kkk++ )
       {  // Fill in new speed step description and values
          ssspeed         += 1000.0;
-         if (ssspeed > speedmax)                    //ALEXEY
-            ssspeed = speedmax;
-         ssvals[ kkk ][ "speed"    ] = ssspeed;   // Speed
-         ssvals[ kkk ][ "accel"    ] = ssaccel;   // Acceleration
-         ssvals[ kkk ][ "duration" ] = ssdurtim;  // Duration in minutes  // No, in seconds
-	 //Uv-vis
-         ssvals[ kkk ][ "delay"    ] = ssdlytim;  // Delay in seconds
-	 //interference
-         ssvals[ kkk ][ "delay_int"    ] = ssdlytim_int;  // Delay in seconds (interference)
-	 
+         if ( ssspeed > speedmax )
+            ssspeed          = speedmax;
+         ssvals[ kkk ][ "speed"     ] = ssspeed;   // Speed
+         ssvals[ kkk ][ "accel"     ] = ssaccel;   // Acceleration
+         ssvals[ kkk ][ "duration"  ] = ssdurtim;  // Duration in minutes  // No, in seconds
+         // Uv-vis
+         ssvals[ kkk ][ "delay"     ] = ssdlytim;  // Delay in seconds
+         // Interference
+         ssvals[ kkk ][ "delay_int" ] = ssdlytim_int;  // Delay in seconds (interference)
+
          if ( ck_sync_delay->isChecked() )
          {
             qDebug() << "Syncing stage delays...";
@@ -1803,7 +1802,7 @@ DbgLv(1) << "EGSp: chgKnt:    kkk" << kkk << "pdesc" << profdesc[kkk];
       scanint_ss_int_min.resize( new_nsp );
       scanint_mm_int_min.resize( new_nsp );
       scanint_hh_int_min.resize( new_nsp );
-      delay_mm_int_min  .resize( new_nsp );      
+      delay_mm_int_min  .resize( new_nsp );
 
       cb_prof->clear();
       for ( int ii = 0; ii < new_nsp; ii++ )
@@ -1840,9 +1839,9 @@ DbgLv(1) << "EGSp: chgPfx:  speed-c speed-p"
    double scinttim  = ssvals[ curssx ][ "scanintv" ]; // ALEXEY added scaninterval
    //interference
    double ssdlytim_int  = ssvals[ curssx ][ "delay_int" ];
-   double scinttim_int  = ssvals[ curssx ][ "scanintv_int" ]; 
-      
-      
+   double scinttim_int  = ssvals[ curssx ][ "scanintv_int" ];
+
+
    QList< int > dhms_dur;
    QList< int > dhms_dly_stage;
    //Uv-vis
@@ -1851,7 +1850,7 @@ DbgLv(1) << "EGSp: chgPfx:  speed-c speed-p"
    //interference
    QList< int > dhms_dly_int;
    QList< int > dhms_scint_int;
-   
+
    US_RunProtocol::timeToList( ssdurtim, dhms_dur );
    US_RunProtocol::timeToList( ssdlystagetim, dhms_dly_stage );
    //Uv-vis
@@ -1859,7 +1858,7 @@ DbgLv(1) << "EGSp: chgPfx:  speed-c speed-p"
    US_RunProtocol::timeToList( scinttim, dhms_scint );
    //interference
    US_RunProtocol::timeToList( ssdlytim_int, dhms_dly_int );
-   US_RunProtocol::timeToList( scinttim_int, dhms_scint_int );   
+   US_RunProtocol::timeToList( scinttim_int, dhms_scint_int );
 DbgLv(1) << "EGSp: chgPfx:   durtim" << ssdurtim << "dhms_dur" << dhms_dur;
 DbgLv(1) << "EGSp: chgPfx:    speedmax" << speedmax;
    ct_speed ->setMaximum( speedmax );      // Set speed max based on rotor max
@@ -1913,7 +1912,7 @@ DbgLv(1) << "EGSp: chgPfx:    speedmax" << speedmax;
 
    sb_scnint_int_hh ->setValue( (int)dhms_scint_int[ 1 ] );
    sb_scnint_int_mm ->setValue( (int)dhms_scint_int[ 2 ] );
-   sb_scnint_int_ss ->setValue( (int)dhms_scint_int[ 3 ] );   
+   sb_scnint_int_ss ->setValue( (int)dhms_scint_int[ 3 ] );
 
    //adjustDelay();        // Important: not needed here as it re-writes delay to default min.
 }
@@ -1924,7 +1923,7 @@ void US_ExperGuiSpeeds::ssChangeSpeed( double val )
 DbgLv(1) << "EGSp: chgSpe: val" << val << "ssx" << curssx;
    ssvals  [ curssx ][ "speed" ] = val;  // Set Speed in step vals vector
 
-   ssChangeScInt(val, curssx); 
+   ssChangeScInt(val, curssx);
 
    //Uv-vis
    sb_scnint_hh ->setMinimum( scanint_hh_min[curssx] );
@@ -1942,8 +1941,8 @@ DbgLv(1) << "EGSp: chgSpe: val" << val << "ssx" << curssx;
 
    sb_scnint_int_hh ->setValue( scanint_hh_int_min[curssx] );
    sb_scnint_int_mm ->setValue( scanint_mm_int_min[curssx] );
-   sb_scnint_int_ss ->setValue( scanint_ss_int_min[curssx] );  
-   
+   sb_scnint_int_ss ->setValue( scanint_ss_int_min[curssx] );
+
    profdesc[ curssx ] = speedp_description( curssx );
    cb_prof->setItemText( curssx, profdesc[ curssx ] );
 
@@ -2518,7 +2517,7 @@ void US_ExperGuiSpeeds::adjustDelay( void )
       sb_delay_int_mm ->setValue( (int)dhms_int[ 2 ] );
    }
    delay_mm_int_min[ curssx ] = sb_delay_int_mm->value();
-   
+
 }
 
 // Panel for Cells parameters
@@ -2880,40 +2879,40 @@ DbgLv(1) << "EGSo: rbS: nchans nchant" << nchans << nchant
  //       int ncused_check          = centps_check.count();
 
  //       for ( int ii = 0; ii < ncused_check; ii++ )
- // 	 {
- // 	   QString centry_check      = centps_check[ ii ];
- // 	   int chx_check             = centry_check.indexOf( "-channel" );
- // 	   if ( chx_check > 0 )
- // 	     {
- // 	       QString scell_check       = centry_check.section( ":", 0, 0 )
- // 		 .section( " ", 1, 1 );
- // 	       QString schans_check( "ABCDEF" );
- // 	       int nchan_check           = centry_check.left( chx_check ).section( " ", -1, -1 )
- // 		 .simplified().toInt();
- // 	       for ( int jj = 0; jj < nchan_check; jj++ )
- // 		 {
- // 		   QString channel_check     = scell_check + " / " + QString( schans_check ).mid( jj, 1 );
- // 		   if ( (QString( schans_check ).mid( jj, 1 )).contains( "A" ) )                   //ALEXEY: channel lables
- // 		     srchans_check << channel_check + ", sample [right]";
- // 		   else if ( (QString( schans_check ).mid( jj, 1 )).contains( "B" ) )
- // 		     srchans_check << channel_check + ", reference [left]";
- // 		   else
- // 		     srchans_check << channel_check;
- // 		 }
- // 	     }
- // 	 }
+ //       {
+ //          QString centry_check      = centps_check[ ii ];
+ //          int chx_check             = centry_check.indexOf( "-channel" );
+ //          if ( chx_check > 0 )
+ //          {
+ //             QString scell_check       = centry_check.section( ":", 0, 0 )
+ //                                                     .section( " ", 1, 1 );
+ //             QString schans_check( "ABCDEF" );
+ //             int nchan_check           = centry_check.left( chx_check ).section( " ", -1, -1 )
+ //       .simplified().toInt();
+ //             for ( int jj = 0; jj < nchan_check; jj++ )
+ //             {
+ //                QString channel_check     = scell_check + " / " + QString( schans_check ).mid( jj, 1 );
+ //                if ( (QString( schans_check ).mid( jj, 1 )).contains( "A" ) ) //ALEXEY: channel lables
+ //                   srchans_check << channel_check + ", sample [right]";
+ //                else if ( (QString( schans_check ).mid( jj, 1 )).contains( "B" ) )
+ //                   srchans_check << channel_check + ", reference [left]";
+ //                else
+ //                   srchans_check << channel_check;
+ //             }
+ //          }
+ //       }
 
  //       DbgLv(1) << "SRCHANS from (Solutions):         " << srchans;
  //       DbgLv(1) << "SRCHANS (from actual Cells):      " << srchans_check;
 
  //       if (srchans_check == srchans )
- // 	 return;                                         //ALEXEY: only now we can return
+ //          return;                   //ALEXEY: only now we can return
 
  //       // if (srchans_check == srchans && !mainw->solutions_change )
- //       // 	 {
- //       // 	   qDebug()<< "Exiting Rebulding Solutions ";
- //       // 	   return;                                 //ALEXEY: only now we can return
- //       // 	 }
+ //       // {
+ //       //    qDebug()<< "Exiting Rebulding Solutions ";
+ //       //    return;                                 //ALEXEY: only now we can return
+ //       // }
  //     }
 
 
@@ -4622,7 +4621,7 @@ void US_ExperGuiUpload::saveAnalysisProfile()
    aprof  ->aprofname   = rpAprof->aprofname;
    aprof  ->aprofGUID   = rpAprof->aprofGUID;
 
-   aprof  ->toXml( xmlo_aprof ); 
+   aprof  ->toXml( xmlo_aprof );
 //DbgLv(1) << "XML AProfile: " << rpAprof->ap_xml;
 
    QString xmlopath;
@@ -4673,14 +4672,15 @@ void US_ExperGuiUpload::saveRunProtocol()
   if ( mainw->ScanCount_global > 1501 )
     {
       QMessageBox::critical( this,
-			     tr( "*ERROR* in Saving Protocol" ),
-			     tr( "Protocol cannot be saved: \n"
-				 "Number of scans per cell per wavelengths is %1. \n" 
-				 "It must not exceed 1501. \n\n"
-				 "Please revise experiment parameters accordingly." ).arg( mainw->ScanCount_global ) );
+                             tr( "*ERROR* in Saving Protocol" ),
+                             tr( "Protocol cannot be saved: \n"
+                                 "Number of scans per cell per wavelengths is %1. \n"
+                                 "It must not exceed 1501. \n\n"
+                                 "Please revise experiment parameters accordingly." )
+                                .arg( mainw->ScanCount_global ) );
       return;
     }
-  
+
 DbgLv(1) << "EGUp:svRP: IN";
    // Test that the current protocol name is new
    QStringList           prnames;
@@ -4732,9 +4732,9 @@ DbgLv(1) << "EGUp:svRP:   prnames" << prnames;
    // QString uvvis       = tr( "UV/visible" );
    // QString rayleigh    = tr( "Rayleigh Interference" );
    // QStringList oprof   = sibLValue( "optical", "profiles" );
-   
-    
-  
+
+
+
    // Save the new name and compose the XML representing the protocol
    protoname           = newpname;
 DbgLv(1) << "EGUp:svRP:   NEW protoname" << protoname;
@@ -4804,7 +4804,7 @@ DbgLv(1) << "EGUp:svRP:   dbP" << dbP;
    mainw->updateProtos( prentry );            // Update existing protocols list
    proto_svd           = true;
    ck_prot_svd->setChecked( true );
-   
+
 
    if ( mainw->automode && !have_run)
      {
@@ -4841,14 +4841,14 @@ void US_ExperGuiUpload::submitExperiment_confirm()
        //saveAnalysisProfile();
        saveRunProtocol();
      }
-   
+
    QMessageBox msgBox;
    QString message_protocol = tr( "");
    if ( rps_differ )
       message_protocol += tr( "A new protocol has been successfully saved to US-LIMS DB. \n\n");
-   
+
    QString message_submission = message_protocol + tr("Experiment will be submitted to the following Optima machine:");
-   
+
    //msgBox.setText(tr("Experiment will be submitted to the following Optima machine:"));
    msgBox.setText( message_submission );
    msgBox.setInformativeText( QString( tr(    "Name: %1 <br>  Host:  %2 <br> Port:  %3" ))
@@ -4923,7 +4923,7 @@ void US_ExperGuiUpload::submitExperiment()
       int nstages_size;
       nstages_size = tem_delay_sec ? nstages + 1 : nstages;               // Total # stages
       int ncells  = sibIValue( "rotor",   "nholes" );
-      
+
       qDebug() << "#Stages: " << nstages;
       qDebug() << "#Cells: " << ncells;
 
@@ -4952,12 +4952,11 @@ void US_ExperGuiUpload::submitExperiment()
       //get # cells with interference channels
       int ncells_interference = 0;
       for ( int kk = 0; kk < oprof.count(); kk++ )
-	{
-	  if ( oprof[ kk ].contains( rayleigh ) )
-	    ++ncells_interference;
-	}
+      {
+         if ( oprof[ kk ].contains( rayleigh ) )
+            ++ncells_interference;
+      }
 
-      
       for (int i=0; i<nstages_size; i++)
       {
          for (int j=0; j<ncells; j++)
@@ -4973,7 +4972,7 @@ void US_ExperGuiUpload::submitExperiment()
                if ( channel.contains("sample") && channel.startsWith(QString::number(j+1)) )  // <-- Judge only by sample (channel A) for now
                {
                   Total_wvl[i]  += rpRange->chrngs[ ii ].wvlens.count();                     // <-- count wvl
-	       }
+               }
             }
             qDebug() << "#Wvl for cell: " << j << " is: " << Total_wvl[i];
          }
@@ -4984,27 +4983,27 @@ void US_ExperGuiUpload::submitExperiment()
       int curr_stage_dur;
       int Total_duration = tem_delay_sec;
       for (int i=0; i<nstages_size; i++)
-	{
-	  if (i==0 && tem_delay_sec)
-	    {
-	      is_dummy_dur = true;
-	      continue;                     // skip dummy stage for AbsScanParams
-	    }
-	  
-	  if (is_dummy_dur)
+      {
+         if (i==0 && tem_delay_sec)
+         {
+            is_dummy_dur = true;
+            continue;                // skip dummy stage for AbsScanParams
+         }
+
+         if (is_dummy_dur)
             curr_stage_dur = i - 1;
-	  else
+         else
             curr_stage_dur = i;
-	  
-	  qDebug() << "index i: " << i << ", curr_stage_DUR: " << curr_stage_dur;
-	  
-	  Total_duration += rpSpeed->ssteps[ curr_stage_dur ].duration;
-	  Total_duration += rpSpeed->ssteps[ curr_stage_dur ].delay_stage;
-	  Total_duration += rpSpeed->ssteps[ curr_stage_dur ].delay;
-	  //ALEXEY: do we need also delays to first scans for abs/interference into total duration? 
-	}
-      
-	 
+
+         qDebug() << "index i: " << i << ", curr_stage_DUR: " << curr_stage_dur;
+
+         Total_duration += rpSpeed->ssteps[ curr_stage_dur ].duration;
+         Total_duration += rpSpeed->ssteps[ curr_stage_dur ].delay_stage;
+         Total_duration += rpSpeed->ssteps[ curr_stage_dur ].delay;
+         //ALEXEY: do we need also delays to first scans for abs/interference into total duration?
+      }
+
+
       // Absorbance INSERT ////////////////////////////////////////////////////////////////////////
       QString tabname_abs( "AbsorbanceScanParameters" );
       QString schname( "AUC_schema" );
@@ -5031,7 +5030,7 @@ void US_ExperGuiUpload::submitExperiment()
        2       [0,1,2,3,4,5,6,7]
 
       */
-         
+
 
       qDebug() << "Begin AbsInsert";
       bool is_dummy = false;
@@ -5100,21 +5099,22 @@ void US_ExperGuiUpload::submitExperiment()
                }
             }
 
+//34123123123123123123
             if ( has_absorbance )
             {
+               //Stop if ScanCount > 1501
+               if ( ScanCount > 1501 )
+               {
+                  QMessageBox::critical( this,
+                  tr( "*ERROR* in Submitting Protocol" ),
+                  tr( "Protocol cannot be submitted: \n"
+                      "Number of scans per cell per wavelengths is %1. \n"
+                      "It must not exceed 1501. \n\n"
+                      "Please revise experiment parameters accordingly." )
+                     .arg( ScanCount ) );
+                  return;
+               }
 
-	      //Stop if ScanCount > 1501
-	      if ( ScanCount > 1501 )
-		{
-		  QMessageBox::critical( this,
-					 tr( "*ERROR* in Submitting Protocol" ),
-					 tr( "Protocol cannot be submitted: \n"
-					     "Number of scans per cell per wavelengths is %1. \n" 
-					     "It must not exceed 1501. \n\n"
-					     "Please revise experiment parameters accordingly." ).arg( ScanCount ) );
-		  return;
-		}
-	      
                for ( int ii = 0; ii < rpRange->nranges; ii++ )
                {
                   channel  = rpRange->chrngs[ ii ].channel;
@@ -5251,16 +5251,16 @@ void US_ExperGuiUpload::submitExperiment()
 
       /* WHAT TO INSERT: fields
 
-	  "ModulePosition": " ",      >> default '2'
-	  "ReplicateCount": " ",      >> should be '1' & this is default
-	  "ScanStageDelay": " ",      >> not currently used
-	  "ScanStart": " ",           >> defaults to '0' to allow control by by scan interval
-	  "ScanTypeFlag": " ",        >> default 'P'
-	  "ScanTypeName": " ",        >> default 'Interference'
-	  "Wavelength": " ",          >> default 660 nm  - laser wvl
+          "ModulePosition": " ",      >> default '2'
+          "ReplicateCount": " ",      >> should be '1' & this is default
+          "ScanStageDelay": " ",      >> not currently used
+          "ScanStart": " ",           >> defaults to '0' to allow control by by scan interval
+          "ScanTypeFlag": " ",        >> default 'P'
+          "ScanTypeName": " ",        >> default 'Interference'
+          "Wavelength": " ",          >> default 660 nm  - laser wvl
 
-	  "ScanCount": " ",           >> computation  Same as AbsScan ?
-	  "ScanInterval": " ",        >> computation  Sama as AbsScan ?
+          "ScanCount": " ",           >> computation  Same as AbsScan ?
+          "ScanInterval": " ",        >> computation  Sama as AbsScan ?
        */
 
        /* Define 2D array "InterScanIDs[number_of_stages + 1][number_of_cells]"
@@ -5273,7 +5273,7 @@ void US_ExperGuiUpload::submitExperiment()
 
        */
 
-      
+
       //QStringList oprof   = sibLValue( "optical", "profiles" );
 
 
@@ -5313,8 +5313,8 @@ void US_ExperGuiUpload::submitExperiment()
 
          int ScanCount;
          int ScanInt;
-	 ScanCount = int( duration_sec / (scanint_sec * ncells_interference ));
-	 ScanInt   = scanint_sec;
+         ScanCount = int( duration_sec / (scanint_sec * ncells_interference ));
+         ScanInt   = scanint_sec;
 
          qDebug() << "Duration_sec: " << duration_sec << ", delay_sec_int: " << delay_sec << ", scanint_sec_int: " << scanint_sec;
 
@@ -5336,19 +5336,20 @@ void US_ExperGuiUpload::submitExperiment()
             }
             if ( has_interference )
             {
-	      //ALEXEY: For interference as well ?
-	      if ( ScanCount > 1501 )
-		{
-		  QMessageBox::critical( this,
-					 tr( "*ERROR* in Submitting Protocol" ),
-					 tr( "Protocol cannot be submitted: \n"
-					     "Number of scans per cell per wavelengths is %1. \n" 
-					     "It must not exceed 1501. \n\n"
-					     "Please revise experiment parameters accordingly." ).arg( ScanCount ) );
+               //ALEXEY: For interference as well ?
+               if ( ScanCount > 1501 )
+               {
+                  QMessageBox::critical( this,
+                  tr( "*ERROR* in Submitting Protocol" ),
+                  tr( "Protocol cannot be submitted: \n"
+                      "Number of scans per cell per wavelengths is %1. \n"
+                      "It must not exceed 1501. \n\n"
+                      "Please revise experiment parameters accordingly." )
+                     .arg( ScanCount ) );
 
-		  return;
-		}
-	      
+                  return;
+               }
+
                QString scan_count        = QString::number( ScanCount );               // <-- ScanInterval
                QString scan_interval     = QString::number( int(ScanInt) );            // <-- ScanCount
 
@@ -5448,13 +5449,13 @@ void US_ExperGuiUpload::submitExperiment()
             for ( int ii = 0; ii < rpSolut->nschan; ii++ )
             {
                channel_cell = rpSolut->chsols[ ii ].channel;
-	       //QStringList sol_split = (rpSolut->chsols[ ii ].ch_comment).split(',');
-               
-	       QString solution = rpSolut->chsols[ ii ].ch_comment;
-	       solution.replace("'", "");
-	       QStringList sol_split = solution.split(',');
-	       
-	       if ( channel_cell.startsWith(QString::number(j+1)) )
+               //QStringList sol_split = (rpSolut->chsols[ ii ].ch_comment).split(',');
+
+               QString solution = rpSolut->chsols[ ii ].ch_comment;
+               solution.replace("'", "");
+               QStringList sol_split = solution.split(',');
+
+               if ( channel_cell.startsWith(QString::number(j+1)) )
                {
                   if ( channel_cell.contains("sample") )                                                     // <-- Channel A
                      solname += ": A: " + sol_split[0] + ", "        // <-- solution name
@@ -5479,7 +5480,7 @@ void US_ExperGuiUpload::submitExperiment()
                   .arg(cell_sector).arg(solname);
                comment = "Dummy stage";
 
-	       //qDebug() << "Dummy stage: QUERY: " << cell_query_str;  
+               //qDebug() << "Dummy stage: QUERY: " << cell_query_str;
             }
             // <-- Active stages
             else
@@ -5511,8 +5512,8 @@ void US_ExperGuiUpload::submitExperiment()
                // <-- Active Stage: BOTH AbsScan && InterferenceScan exist - RARE CASE
                else if ( AbsScanIds[i][j] && InterScanIds[i][j] )
                {
-		 //qDebug() << "Writing HERE: Abs & Interfrence  !!! ";
-		 //qDebug() << "solname: " << solname;
+                  //qDebug() << "Writing HERE: Abs & Interfrence  !!! ";
+                  //qDebug() << "solname: " << solname;
                   cell_query_str = QString("INSERT INTO %1 (\"CellPosition\",\"CellSectors\",\"AbsorbanceScan\",\"AbsorbanceScanId\",\"InterferenceScan\",\"InterferenceScanId\",\"SampleName\") VALUES (%2, %3, %4, %5, %6, %7, %8) RETURNING \"CellParamId\"")
                      .arg(qrytab_cell)
                      .arg(cell_pos)
@@ -5524,7 +5525,7 @@ void US_ExperGuiUpload::submitExperiment()
                      .arg(solname);
                   comment = "Active Stage --> AbsScan and InterferenceScan BOTH EXIST";
 
-		  // qDebug() << "Query: " << cell_query_str;
+                  // qDebug() << "Query: " << cell_query_str;
                }
                // <-- Active Stage: No Scans exist
                else
@@ -5539,8 +5540,8 @@ void US_ExperGuiUpload::submitExperiment()
             }
 
             // Query
-            if(! query_cell.prepare(cell_query_str ) )
-	      qDebug() << query_cell.lastError().text();
+            if ( ! query_cell.prepare( cell_query_str ) )
+               qDebug() << query_cell.lastError().text();
 
             if (query_cell.exec())
             {
@@ -5568,16 +5569,16 @@ void US_ExperGuiUpload::submitExperiment()
 
       /* WHAT TO INSERT: fields
 
-	  "StageCellParameterIds":  [
-	                              [ ... ], [ ... ]   <-- CellParams Ids for each stage
-				    ],
-	  "StageDuration"        : [0,0,0,..]            <-- alway zeroth -exact amount of time required for completion of all stage science
-	  "StageStart"           : [1-3h, 0, 0, ..]      <-- Delay (in seconds) for stage science start after target RPM attainment
-	                                                     ONLY for dummy stage
-	  "StageRPM"             : []
-	  "Stages"               : " ",                  <-- # of stages
-	  "Temperature"          : " ",
-	  "SystemStatusInterval" : " "                   <--  interval in seconds [1s] between system status record insertions
+          "StageCellParameterIds":  [
+                                      [ ... ], [ ... ]   <-- CellParams Ids for each stage
+                                    ],
+          "StageDuration"        : [0,0,0,..]            <-- alway zeroth -exact amount of time required for completion of all stage science
+          "StageStart"           : [1-3h, 0, 0, ..]      <-- Delay (in seconds) for stage science start after target RPM attainment
+                                                      ONLY for dummy stage
+          "StageRPM"             : []
+          "Stages"               : " ",                  <-- # of stages
+          "Temperature"          : " ",
+          "SystemStatusInterval" : " "                   <--  interval in seconds [1s] between system status record insertions
       */
 
        /* Create string of cellParams IDs from 2D CellIds[i][j] array
@@ -5689,12 +5690,12 @@ void US_ExperGuiUpload::submitExperiment()
       QSqlQuery query_expdef(dbxpn);
 
        /* WHAT TO INSERT: fields
-	  "CellCount": " ",
-	  "Comments": " ",            >> Some defualt comment should be inserted
-	  "FugeRunProfileId": " ",    >> reference to the profile used; must be in the database when this object is added
-	  "Name": " ",
-	  "Project": " ",
-	  "Researcher": " ",
+          "CellCount": " ",
+          "Comments": " ",            >> Some defualt comment should be inserted
+          "FugeRunProfileId": " ",    >> reference to the profile used; must be in the database when this object is added
+          "Name": " ",
+          "Project": " ",
+          "Researcher": " ",
        */
 
       QString cellcount            = QString::number(ncells);
@@ -5734,45 +5735,45 @@ void US_ExperGuiUpload::submitExperiment()
          protocol_details[ "experimentId" ]   = QString::number(ExpDefId);        // this should be put into new table connceting protocol && experiment
          protocol_details[ "experimentName" ] = runname;
          protocol_details[ "protocolName" ]   = currProto->protoname;             // pass also to Live Update/PostProd protocol name
-	 
-	 //ALEXEY: when interference ? (divide by 2!!! )
-	 if ( ncells_interference  )
-	   protocol_details[ "CellChNumber" ]   = QString::number( int(ncells_interference/2 )); 
-	 else //Absorbance ONLY
-	   protocol_details[ "CellChNumber" ]   = QString::number(rpSolut->nschan); // this can be read from protocol in US-lims DB
 
-	 protocol_details[ "duration" ]       = QString::number(Total_duration);
-	 protocol_details[ "invID_passed" ]   = QString::number(US_Settings::us_inv_ID());
-	 protocol_details[ "correctRadii" ]   = QString("YES");
-	 protocol_details[ "expAborted" ]     = QString("NO");
+         //ALEXEY: when interference ? (divide by 2!!! )
+         if ( ncells_interference  )
+            protocol_details[ "CellChNumber" ]   = QString::number( int(ncells_interference/2 ));
+         else //Absorbance ONLY
+            protocol_details[ "CellChNumber" ]   = QString::number(rpSolut->nschan); // this can be read from protocol in US-lims DB
 
-	 protocol_details[ "label" ]          = currProto->exp_label;
+         protocol_details[ "duration" ]       = QString::number(Total_duration);
+         protocol_details[ "invID_passed" ]   = QString::number(US_Settings::us_inv_ID());
+         protocol_details[ "correctRadii" ]   = QString("YES");
+         protocol_details[ "expAborted" ]     = QString("NO");
 
-	 QString gmpRun_str;
-	 if ( mainw->usmode )
-	   gmpRun_str = "NO";
-	 else
-	   gmpRun_str = "YES";
+         protocol_details[ "label" ]          = currProto->exp_label;
 
-	 protocol_details[ "gmpRun" ]         = gmpRun_str;
+         QString gmpRun_str;
+         if ( mainw->usmode )
+         gmpRun_str = "NO";
+         else
+         gmpRun_str = "YES";
 
-	 protocol_details[ "aprofileguid" ]   = currProto->protoGUID; 
-	 
+         protocol_details[ "gmpRun" ]         = gmpRun_str;
+
+         protocol_details[ "aprofileguid" ]   = currProto->protoGUID;
+
          int nwavl_tot = 0;
          for ( int kk = 0; kk < rpRange->nranges; kk++ )
          {
             nwavl_tot  += rpRange->chrngs[ kk ].wvlens.count();
          }
-	 
-	 //ALEXEY: when interference ? (always 1!!)
-	 if ( ncells_interference )
-	   protocol_details[ "TripleNumber" ] = QString::number(1 * int(ncells_interference/2 )); 
-	 else //Absorbance ONLY										  
-	   protocol_details[ "TripleNumber" ] = QString::number(nwavl_tot);
+
+         //ALEXEY: when interference ? (always 1!!)
+         if ( ncells_interference )
+            protocol_details[ "TripleNumber" ] = QString::number(1 * int(ncells_interference/2 ));
+         else //Absorbance ONLY
+            protocol_details[ "TripleNumber" ] = QString::number(nwavl_tot);
 
 
-	 protocol_details[ "OptimaName" ]   = rpRotor->instrname;
-	 //protocol_details[ "OptimaName" ]   = mainw->currentInstrument[ "name" ];
+         protocol_details[ "OptimaName" ]   = rpRotor->instrname;
+         //protocol_details[ "OptimaName" ]   = mainw->currentInstrument[ "name" ];
       }
       else
       {
@@ -5809,7 +5810,7 @@ void US_ExperGuiUpload::submitExperiment()
    //Make 'autoflow' table record:
    if ( mainw->automode )
      add_autoflow_record( protocol_details );
-   
+
    emit expdef_submitted( protocol_details );
 }
 
@@ -5817,37 +5818,38 @@ void US_ExperGuiUpload::submitExperiment()
 void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_details )
 {
   qDebug() << "GMPRUN FIELD: " << protocol_details[ "gmpRun" ];
-    
+
   // Check DB connection
    US_Passwd pw;
    QString masterpw = pw.getPasswd();
    US_DB2* db = new US_DB2( masterpw );
-   
+
    if ( db->lastErrno() != US_DB2::OK )
-     {
-       QMessageBox::warning( this, tr( "Connection Problem" ),
-			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
-       return;
-     }
+   {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+                                  tr( "Read protocol: Could not connect to database \n" )
+                                     + db->lastError() );
+      return;
+   }
 
-    if ( db != NULL )
-      {
-	QStringList qry;
-	qry << "add_autoflow_record"
-	    << protocol_details[ "protocolName" ]
-	    << protocol_details[ "CellChNumber" ]
-	    << protocol_details[ "TripleNumber" ]
-	    << protocol_details[ "duration" ]
-	    << protocol_details[ "experimentName" ]
-	    << protocol_details[ "experimentId" ]
-	    << protocol_details[ "OptimaName" ]
-	    << protocol_details[ "invID_passed" ]
-	    << protocol_details[ "label" ]
-	    << protocol_details[ "gmpRun" ]
-	    << protocol_details[ "aprofileguid" ] ;
+   if ( db != NULL )
+   {
+      QStringList qry;
+      qry << "add_autoflow_record"
+          << protocol_details[ "protocolName" ]
+          << protocol_details[ "CellChNumber" ]
+          << protocol_details[ "TripleNumber" ]
+          << protocol_details[ "duration" ]
+          << protocol_details[ "experimentName" ]
+          << protocol_details[ "experimentId" ]
+          << protocol_details[ "OptimaName" ]
+          << protocol_details[ "invID_passed" ]
+          << protocol_details[ "label" ]
+          << protocol_details[ "gmpRun" ]
+          << protocol_details[ "aprofileguid" ] ;
 
-	db->query( qry );
-      }
+      db->query( qry );
+   }
 }
 
 // Function to build a Json object and document holding experiment controls
@@ -5900,7 +5902,7 @@ DbgLv(1) << "EGUp:bj: ck: run proj cent solu epro"
    bool chk_sub_enab = ( chk_vars_set  &&  connected );
 
    if ( ! chk_sub_enab )
-     return js_exper; 		// Parameterization incomplete: empty return
+      return js_exper;       // Parameterization incomplete: empty return
 
    // Start building Json of experiment controls
    QJsonObject   jo_exper;

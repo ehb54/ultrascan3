@@ -115,9 +115,9 @@ DbgLv(1) << "APG:newPanel   savePanel done" << curr_panx;
    else if ( panx == 1 )      apan2DSA   ->initPanel();
    else if ( panx == 2 )      apanPCSA   ->initPanel();
 DbgLv(1) << "APG:newPanel   initPanel done" << panx;
-   
+
    curr_panx              = panx;         // Set new current panel
-   
+
    // Update status flag for all panels
    statUpdate();
 DbgLv(1) << "APG:newPanel   statUpdate done";
@@ -166,7 +166,7 @@ void US_AnalysisProfileGui::disable_tabs_buttons( void )
 DbgLv(1) << "DISBLING Tabs...";
    pb_next   ->setEnabled( false );
    pb_prev   ->setEnabled( false );
-  
+
    for ( int ii = 1; ii < tabWidget->count(); ii++ )
    {
       tabWidget ->setTabEnabled( ii, false );
@@ -174,7 +174,7 @@ DbgLv(1) << "DISBLING Tabs...";
    }
 
    qApp->processEvents();
-  
+
 }
 
 //Slot to ENABLE tabs and Next/Prev buttons
@@ -198,17 +198,17 @@ void US_AnalysisProfileGui::enable_tabs_buttons_readonly( void )
 DbgLv(1) << "ENABLING!!!";
    pb_next   ->setEnabled( true );
    pb_prev   ->setEnabled( true );
-  
- 
+
+
    for ( int ii = 1; ii < tabWidget->count(); ii++ )
    {
       tabWidget ->setTabEnabled( ii, true );
       QPalette pal = tabWidget ->tabBar()->palette();
 //DbgLv(1) << "PALETTE: " << pal.color(QPalette::WindowText);
       tabWidget ->tabBar()->setTabTextColor( ii, pal.color( QPalette::WindowText ) ); // Qt::black
-      
+
       QWidget* pWidget= tabWidget->widget( ii );
-      
+
       //Find all children of each Tab in QTabWidget [children of all types...]
       QList< QPushButton* > allPButtons = pWidget->findChildren< QPushButton* >();
       QList< QComboBox* >   allCBoxes   = pWidget->findChildren< QComboBox* >();
@@ -217,10 +217,10 @@ DbgLv(1) << "ENABLING!!!";
       QList< QCheckBox* >   allChBoxes  = pWidget->findChildren< QCheckBox* >();
 
       // and so on ..
-      
+
       for ( int jj = 0; jj < allPButtons.count(); jj++ )
       {
-         if ( ( allPButtons[ jj ]->text()).contains( "View Solution Details" ) || 
+         if ( ( allPButtons[ jj ]->text()).contains( "View Solution Details" ) ||
               ( allPButtons[ jj ]->text()).contains( "View Current Range Settings" ) ||
               ( allPButtons[ jj ]->text()).contains( "View Experiment Details" ) ||
               ( allPButtons[ jj ]->text()).contains( "Test Connection" ) )
@@ -228,7 +228,7 @@ DbgLv(1) << "ENABLING!!!";
          else
             allPButtons[ jj ]->setEnabled( false );
       }
-      
+
       for ( int jj = 0; jj < allCBoxes.count(); jj++ )
       {
          if ( (allCBoxes[jj]->currentText()).contains("Speed Profile") )
@@ -239,11 +239,11 @@ DbgLv(1) << "ENABLING!!!";
       for (int jj = 0; jj < allSBoxes.count(); jj++ )
          allSBoxes[jj]  ->setEnabled(false);
       for (int jj = 0; jj < allCounters.count(); jj++ )
-         allCounters[jj]->setEnabled(false); 
+         allCounters[jj]->setEnabled(false);
       for (int jj = 0; jj < allChBoxes.count(); jj++ )
          allChBoxes[jj] ->setEnabled(false);
       // and so on ..
-      
+
    }
 
 }
@@ -298,7 +298,7 @@ DbgLv(1) << "APGe: inP: aname pname" << currProf->aprofname << currProf->protona
 DbgLv(1) << "APGe: inP: CALL check_user_level()";
    check_user_level();
 DbgLv(1) << "APGe: inP:  RTN check_user_level()";
- 
+
    int nchan      = currProf->pchans.count();
 DbgLv(1) << "APGe: inP: nchan" << nchan;
    sl_chnsel.clear();
@@ -426,13 +426,13 @@ DbgLv(1) << "APGe:ckul: level" << US_Settings::us_inv_level();
    {
       pb_aproname->setEnabled( false );
       pb_protname->setEnabled( false );
-   
+
 //      if ( !loaded_prof )
 //         emit set_tabs_buttons_inactive();
 //      else
 //         emit set_tabs_buttons_active_readonly();
-   
-DbgLv(1) << "SIGNAL!!!!" ; 
+
+DbgLv(1) << "SIGNAL!!!!" ;
    }
 }
 

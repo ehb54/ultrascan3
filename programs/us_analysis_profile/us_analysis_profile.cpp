@@ -127,7 +127,7 @@ void US_AnalysisProfileGui::reset( void )
 DbgLv(1) << "MAIN:  Resetting internal protocol...";
    currProf = US_AnaProfile();
    initPanels();
-  
+
 }
 
 // Set auto mode (comes from ComProject or Experiment)
@@ -161,11 +161,11 @@ void US_AnalysisProfileGui::inherit_protocol( US_RunProtocol* iProto )
    int nchs        = iProto->rpSolut.chsols.count();
    int ncho        = iProto->rpOptic.chopts.count();
 
-DbgLv(1) << "APG00: ipro: kchn nchs ncho" << kchn << nchs << ncho;  
+DbgLv(1) << "APG00: ipro: kchn nchs ncho" << kchn << nchs << ncho;
 
    if ( nchs < 1  ||  ncho < 1 )
      return;
-   
+
    int nchn        = 0;
 DbgLv(1) << "APG: ipro: kchn nchs ncho" << kchn << nchs << ncho;
 if(iProto->rpOptic.chopts.count()>0)
@@ -173,7 +173,7 @@ DbgLv(1) << "APG: ipro: 0)ch s1 s2 s3"
  << iProto->rpOptic.chopts[0].channel
  << iProto->rpOptic.chopts[0].scan1
  << iProto->rpOptic.chopts[0].scan2
- << iProto->rpOptic.chopts[0].scan3; 
+ << iProto->rpOptic.chopts[0].scan3;
 if(iProto->rpOptic.chopts.count()>1)
 DbgLv(1) << "APG: ipro: 1)ch s1 s2 s3"
  << iProto->rpOptic.chopts[1].channel
@@ -321,12 +321,12 @@ DbgLv(1) << "APG: ipro:   load_db" << load_db;
          }
          else
          {
-	   while ( dbP->next() )
-	     {
-	       currProf.aprofID     = dbP->value( 0 ).toInt();
-	       currProf.aprofname   = dbP->value( 1 ).toString();
-	       ap_xml               = dbP->value( 2 ).toString();
-	     }
+            while ( dbP->next() )
+            {
+               currProf.aprofID     = dbP->value( 0 ).toInt();
+               currProf.aprofname   = dbP->value( 1 ).toString();
+               ap_xml               = dbP->value( 2 ).toString();
+            }
             aprsrc               = QString( "readDB" );
 DbgLv(1) << "APG: ipro:  ap ID,name,lnxml" << currProf.aprofID
  << currProf.aprofname << ap_xml.length();

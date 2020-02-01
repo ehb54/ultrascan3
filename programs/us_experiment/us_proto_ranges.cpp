@@ -35,7 +35,7 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
    panel->setContentsMargins( 2, 2, 2, 2 );
    QLabel* lb_panel    = us_banner( tr( "7: Specify wavelength and radius ranges" ) );
    panel->addWidget( lb_panel );
- 
+
    QPushButton* pb_details  = us_pushbutton( tr( "View Current Range Settings" ) );
    connect( pb_details,   SIGNAL( clicked()       ),
             this,         SLOT  ( detailRanges()  ) );
@@ -45,8 +45,8 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
    rpSpeed = &(mainw->currProto.rpSpeed);
 
    //cb_scancount->addItem( tr( "Stage %1. Number of Scans: %2 " ).arg(1).arg( 0 ) );
-   
-     
+
+
    QLabel* lb_hdr1     = us_banner( tr( "Cell / Channel" ) );
    QLabel* lb_hdr2     = us_banner( tr( "Wavelengths" ) );
    QLabel* lb_hdr3     = us_banner( tr( "Radius Ranges" ) );
@@ -68,7 +68,7 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
    QGridLayout* genL   = new QGridLayout();
    genL->setSpacing        ( 2 );
    genL->setContentsMargins( 2, 2, 2, 2 );
-   
+
    row             = 0;
 
    QLabel*      cclabl;
@@ -105,7 +105,7 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
       ctradfr->setObjectName( strow + ": ct_radfr" );
       lablto ->setObjectName( strow + ": lb_to"    );
       ctradto->setObjectName( strow + ": ct_radto" );
-            
+
       bool is_vis      = ( ii < 4 );
 
       genL->addWidget( cclabl,  row,    0, 1, 3 );
@@ -126,7 +126,7 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
       //          this,    SLOT  ( selectWavelengths() ) );
 
       connect( pbwavln, SIGNAL( clicked()           ),           //ALEXEY
-	       this,    SLOT  ( Wavelengths_class() ) );      
+               this,    SLOT  ( Wavelengths_class() ) );
       connect( ctradfr, SIGNAL( valueChanged     ( double ) ),
                this,    SLOT  ( changedLowRadius ( double ) ) );
       connect( ctradto, SIGNAL( valueChanged     ( double ) ),
@@ -155,9 +155,9 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
    lmbd << 280.0;
    QList< double > valu;
    valu << 0.0;
-   pwvlens << lmbd << lmbd << lmbd << lmbd; 
+   pwvlens << lmbd << lmbd << lmbd << lmbd;
    pvalues << valu << valu << valu << valu;
-   swvlens << lmbd << lmbd << lmbd << lmbd; 
+   swvlens << lmbd << lmbd << lmbd << lmbd;
 #endif
    chrow            = 0;
 
@@ -170,8 +170,8 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
    scrollArea->setWidgetResizable(true);
    scrollArea->setWidget(containerWidget);
    scrollArea->verticalScrollBar()->setFixedWidth(50);
-   
-   panel->addWidget(scrollArea);  
+
+   panel->addWidget(scrollArea);
 
    //panel->addStretch();
 
@@ -185,7 +185,7 @@ void US_ExperGuiRanges::rebuild_Ranges( void )
    int nrange_sv       = rpRange->nranges;
    nrnchan             = rchans.count();
 DbgLv(1) << "EGRn: rbR: nuvvis" << nuvvis << "nrange_sv" << nrange_sv
-	 << "nrnchan" << nrnchan << " rpRanges->nranges " << rpRange->nranges;
+ << "nrnchan" << nrnchan << " rpRanges->nranges " << rpRange->nranges;
 
 //   if ( nrange_sv == nuvvis  &&  nuvvis != 0 )
 //      return;                           // No optical change means no rebuild
@@ -200,7 +200,7 @@ DbgLv(1) << "EGRn: rbR:  nrnchan" << nrnchan;
       QStringList oprof   = sibLValue( "optical", "profiles" );
       int kuv             = 0;
 
-      //ALEXEY BUG fixed missed resizing/filling out following arrays: rchans, swvlens, locrads, hicrads 
+      //ALEXEY BUG fixed missed resizing/filling out following arrays: rchans, swvlens, locrads, hicrads
       rchans .resize( nrnchan );
       swvlens.resize( nrnchan );
       locrads.resize( nrnchan );
@@ -208,30 +208,30 @@ DbgLv(1) << "EGRn: rbR:  nrnchan" << nrnchan;
 
       for ( int ii = 0; ii < oprof.count(); ii++ )
       {
-DbgLv(1) << "Rn:CONTENT " << oprof[ ii ];	
+DbgLv(1) << "Rn:CONTENT " << oprof[ ii ];
          if ( oprof[ ii ].contains( uvvis ) )
          {
-	    rpRange->chrngs[ kuv ].channel  = oprof[ ii ].section( ":", 0, 0 );
+            rpRange->chrngs[ kuv ].channel  = oprof[ ii ].section( ":", 0, 0 );
             rpRange->chrngs[ kuv ].wvlens.clear();
             rpRange->chrngs[ kuv ].wvlens <<  280.0;
-DbgLv(1) << "Rn:CONTENT 11 inside: channel, wavelength: " << rpRange->chrngs[ kuv ].channel << rpRange->chrngs[ kuv ].wvlens ;	   
+DbgLv(1) << "Rn:CONTENT 11 inside: channel, wavelength: " << rpRange->chrngs[ kuv ].channel << rpRange->chrngs[ kuv ].wvlens ;
 
-           //ALEXEY wokr with rchans, swvlens, locrads, hicrads 
-           rchans [ kuv ]       = rpRange->chrngs[ kuv ].channel;
-	   int nwavl           = rpRange->chrngs[ kuv ].wvlens.count();
-	   swvlens[ kuv ].clear();
-	   
-	   for ( int jj = 0; jj < nwavl; jj++ )
-	     {
-	       double wavelen      = rpRange->chrngs[ kuv ].wvlens[ jj ];
-	       swvlens[ kuv ] << wavelen;
-	       DbgLv(1) << "EGRn: rbR:   kuv jj " << kuv << jj << "wavelen" << wavelen;
-	     }
-	   
-	   locrads[ kuv ]       = rpRange->chrngs[ kuv ].lo_rad;
-	   hicrads[ kuv ]       = rpRange->chrngs[ kuv ].hi_rad;
-	   
-	   if ( ++kuv >= nuvvis )  break;
+            //ALEXEY wokr with rchans, swvlens, locrads, hicrads
+            rchans [ kuv ]       = rpRange->chrngs[ kuv ].channel;
+            int nwavl           = rpRange->chrngs[ kuv ].wvlens.count();
+            swvlens[ kuv ].clear();
+
+            for ( int jj = 0; jj < nwavl; jj++ )
+            {
+               double wavelen      = rpRange->chrngs[ kuv ].wvlens[ jj ];
+               swvlens[ kuv ] << wavelen;
+DbgLv(1) << "EGRn: rbR:   kuv jj " << kuv << jj << "wavelen" << wavelen;
+            }
+
+            locrads[ kuv ]       = rpRange->chrngs[ kuv ].lo_rad;
+            hicrads[ kuv ]       = rpRange->chrngs[ kuv ].hi_rad;
+
+            if ( ++kuv >= nuvvis )  break;
          }
       }
  DbgLv(1) << "EGRn: rbR:  dummy proto  oprof count" << oprof.count() << "nuvvis" << nuvvis << " rpRanges->nranges " << rpRange->nranges;
@@ -239,7 +239,7 @@ DbgLv(1) << "Rn:CONTENT 11 inside: channel, wavelength: " << rpRange->chrngs[ ku
    }
 
 DbgLv(1) << "RANGE_1";
-   
+
    QString cur_pname   = sibSValue( "general", "protocol" );
 DbgLv(1) << "EGRn: rbR:  pprotoname" << protoname << "cur_pname" << cur_pname;
 
@@ -379,22 +379,22 @@ DbgLv(1) << "EGRn: rbR:     sizes: rch swv lor hir"
    else
    {  // Create first shot at panel parameters
      //ALEXEY these must be resized here
-     rchans .resize( nrnchan );   
+     rchans .resize( nrnchan );
      swvlens.resize( nrnchan );
      locrads.resize( nrnchan );
      hicrads.resize( nrnchan );
-     
+
      for ( int ii = 0; ii < nrnchan; ii++ )
       {
-	// DbgLv(1) << "EGRn: rbR:    ii" << ii << "channel" << rpRange->chrngs[ii].channel;  //ALEXEY potential bug here: causes crash when protocol Re-loaded
-	qDebug() << "Test ";
-	qDebug() << "rchans_size: " << rchans.size() ;
-	qDebug() << "rpRange->chrngs_size: " << rpRange->chrngs.size();
+         // DbgLv(1) << "EGRn: rbR:    ii" << ii << "channel" << rpRange->chrngs[ii].channel;  //ALEXEY potential bug here: causes crash when protocol Re-loaded
+         qDebug() << "Test ";
+         qDebug() << "rchans_size: " << rchans.size() ;
+         qDebug() << "rpRange->chrngs_size: " << rpRange->chrngs.size();
          rchans [ ii ]       = rpRange->chrngs[ ii ].channel;
          swvlens[ ii ]       = rpRange->chrngs[ ii ].wvlens;
          locrads[ ii ]       = rpRange->chrngs[ ii ].lo_rad;
          hicrads[ ii ]       = rpRange->chrngs[ ii ].hi_rad;
-	 qDebug() << "Test 1";
+         qDebug() << "Test 1";
       }
    }
 
@@ -477,16 +477,16 @@ void US_ExperGuiRanges::detailRanges()
 
       int counter = 0;
       for (int  jj =0; jj < swvlens[ ii ].size(); jj++)
-	{
-	  ++counter;
-	  dtext += tr("%1").arg(swvlens[ii][jj]);
-	  if( jj != swvlens[ ii ].size() -1 )
-	    dtext += tr(", ");
-	  if(counter % 8 == 0)
-	    dtext += tr("\n                                  ");
-	}
+      {
+         ++counter;
+         dtext += tr("%1").arg(swvlens[ii][jj]);
+         if( jj != swvlens[ ii ].size() -1 )
+            dtext += tr(", ");
+         if(counter % 8 == 0)
+            dtext += tr("\n                                  ");
+      }
       dtext += tr("\n");
-      
+
       dtext += tr( "    Radius range                : %1 to %2\n" )
                .arg( locrads[ ii ] ).arg( hicrads[ ii ] );
    }
@@ -509,13 +509,13 @@ void US_ExperGuiRanges::Wavelengths_class()
     QPushButton *Manual    = msgBox.addButton(tr("Manually"),   QMessageBox::YesRole);
     QPushButton *Selector  = msgBox.addButton(tr("Use Selector"), QMessageBox::YesRole);
     QPushButton *Cancel    = msgBox.addButton(tr("Cancel"), QMessageBox::RejectRole);
-    
+
     msgBox.setIcon(QMessageBox::Question);
     msgBox.exec();
-    
+
     if (msgBox.clickedButton() == Manual) {
       selectWavelengths_manual();
-    } 
+    }
     else if (msgBox.clickedButton() == Selector) {
       selectWavelengths();
     }
@@ -612,7 +612,7 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 
       swvlens[ ccrow ].clear();
       for ( int ii = 0; ii < kswavl; ii++ )
-	swvlens[ ccrow ] << wlselec[ ii ].toDouble();
+         swvlens[ ccrow ] << wlselec[ ii ].toDouble();
    }
 
    // Update ScanCount info per stage, per wavelength
@@ -621,26 +621,26 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
      tot_wvl += swvlens[ ii ].size();
 
    tot_wvl /= 2; // per all cells, not channels (for now)
-   
+
    cb_scancount->clear();
    int nsp = sibIValue( "speeds",  "nspeeds" );
    for ( int i = 0; i < nsp; i++ )
-     {
-       double duration_sec    = rpSpeed->ssteps[ i ].duration;
-       double scanint_sec     = rpSpeed->ssteps[ i ].scanintv;
-       double scanint_sec_min = rpSpeed->ssteps[ i ].scanintv_min;
+   {
+      double duration_sec    = rpSpeed->ssteps[ i ].duration;
+      double scanint_sec     = rpSpeed->ssteps[ i ].scanintv;
+      double scanint_sec_min = rpSpeed->ssteps[ i ].scanintv_min;
 
-       int scancount = 0;
-       if ( scanint_sec > scanint_sec_min*tot_wvl )
-	 scancount = int( duration_sec / scanint_sec );
-       else
-	 scancount = int( duration_sec / (scanint_sec_min * tot_wvl) );
+      int scancount = 0;
+      if ( scanint_sec > scanint_sec_min*tot_wvl )
+         scancount = int( duration_sec / scanint_sec );
+      else
+         scancount = int( duration_sec / (scanint_sec_min * tot_wvl) );
 
-       mainw->ScanCount_global = scancount;
-       QString scancount_stage = tr( "Stage %1. Number of Scans per Wavelength: %2 " ).arg(i+1).arg(scancount);
-       cb_scancount->addItem( scancount_stage );
-     }
-   
+      mainw->ScanCount_global = scancount;
+      QString scancount_stage = tr( "Stage %1. Number of Scans per Wavelength: %2 " ).arg(i+1).arg(scancount);
+      cb_scancount->addItem( scancount_stage );
+   }
+
 }
 
 // Slot to select wavelengths using a dialog
@@ -719,7 +719,7 @@ DbgLv(1) << "EGRn: sW: wlselec" << wlselec;
 
    cc_lrngs[ chrow ]->setText( labwlr );
 DbgLv(1) << "EGRn: sW: labwlr" << labwlr << "swvlens" << swvlens;
- 
+
    //ALEXEY
    // get a list of same-cell rows; disconnect
    QString clabl       = cc_labls[ chrow ]->text();
@@ -753,7 +753,7 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 
       swvlens[ ccrow ].clear();
       for ( int ii = 0; ii < kswavl; ii++ )
-	swvlens[ ccrow ] << wlselec[ ii ].toDouble();
+         swvlens[ ccrow ] << wlselec[ ii ].toDouble();
    }
 
    // Update ScanCount info per stage, per wavelength
@@ -762,28 +762,28 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
      tot_wvl += swvlens[ ii ].size();
 
    tot_wvl /= 2; // per all cells, not channels (for now)
-   
+
    cb_scancount->clear();
    int nsp = sibIValue( "speeds",  "nspeeds" );
    for ( int i = 0; i < nsp; i++ )
-     {
-       double duration_sec = rpSpeed->ssteps[ i ].duration;
-       double scanint_sec  = rpSpeed->ssteps[ i ].scanintv;
-       double scanint_sec_min = rpSpeed->ssteps[ i ].scanintv_min;
+   {
+      double duration_sec = rpSpeed->ssteps[ i ].duration;
+      double scanint_sec  = rpSpeed->ssteps[ i ].scanintv;
+      double scanint_sec_min = rpSpeed->ssteps[ i ].scanintv_min;
 
-       int scancount = 0;
-       if ( scanint_sec > scanint_sec_min*tot_wvl )
-	 scancount = int( duration_sec / scanint_sec );
-       else
-	 scancount = int( duration_sec / (scanint_sec_min * tot_wvl) );
+      int scancount = 0;
+      if ( scanint_sec > scanint_sec_min*tot_wvl )
+         scancount = int( duration_sec / scanint_sec );
+      else
+         scancount = int( duration_sec / (scanint_sec_min * tot_wvl) );
 
-       mainw->ScanCount_global = scancount;
-       
-       QString scancount_stage = tr( "Stage %1. Number of Scans per Wavelength: %2 " ).arg(i+1).arg(scancount);
-       cb_scancount->addItem( scancount_stage );
-     }
-   
- 
+      mainw->ScanCount_global = scancount;
+
+      QString scancount_stage = tr( "Stage %1. Number of Scans per Wavelength: %2 " ).arg(i+1).arg(scancount);
+      cb_scancount->addItem( scancount_stage );
+   }
+
+
 }
 
 #if 0
@@ -922,7 +922,7 @@ void US_ExperGuiRanges::changedHighRadius( double val )
    chrow               = sname.section( ":", 0, 0 ).toInt();
 DbgLv(1) << "chgHiRad: val" << val << "row" << chrow;
    hicrads[ chrow ]    = val;
-   
+
    //ALEXEY
       //ALEXEY - simulate the same counters coupling for same cell as for the (Interference) checkboxes in Optics
    // get a list of same-cell rows; disconnect
@@ -1147,14 +1147,14 @@ DbgLv(1) << "SelWl: IN k_ori k_sel" << nbr_poten << nbr_selec;
    buttons->addWidget( pb_help   );
    buttons->addWidget( pb_cancel );
    buttons->addWidget( pb_accept );
-   
+
    int row     = 0;
    genL->addWidget( le_info,   row++,   0, 1, 8 );
    genL->addWidget( bn_range,  row++,   0, 1, 8 );
    genL->addWidget( lb_wrange, row,     0, 1, 3 );
    genL->addWidget( le_wrange, row++,   3, 1, 5 );
    genL->addLayout( buttons,   row,     0, 1, 8 );
-   
+
   // Connections
    connect( pb_reset,  SIGNAL( clicked() ), SLOT( reset()  ) );
    connect( pb_help,   SIGNAL( clicked() ), SLOT( help()   ) );
@@ -1219,127 +1219,136 @@ bool US_SelectWavelengths_manual::wln_entered( void )
   //QRegExp rx9("[(\\d{3}-\\d{3}:\\d+),]+");
   //QRegExp rx_new("[\\d{3},]*[\\d{3}-\\d{3}]*[(:\\d+)]*[,(\\d{3})]*"); //working partially
 
-  QRegExp rx_new("[\\d{3},]*[\\d{3}-\\d{3},]*[\\d{3}-\\d{3}:\\d+,]*"); 
+  QRegExp rx_new("[\\d{3},]*[\\d{3}-\\d{3},]*[\\d{3}-\\d{3}:\\d+,]*");
 
-  if ( rx_new.exactMatch(text)
+   if ( rx_new.exactMatch(text)
        //|| rx1.exactMatch(text)
-       //||  rx2.exactMatch(text) || rx3.exactMatch(text) 
+       //||  rx2.exactMatch(text) || rx3.exactMatch(text)
        //|| rx4.exactMatch(text) || rx5.exactMatch(text) || rx6.exactMatch(text) ||  rx7.exactMatch(text)
        //|| rx8.exactMatch(text)
        //|| rx9.exactMatch(text)
        )
-    {
-    //pb_accept->setEnabled( true );
+   {
+   //pb_accept->setEnabled( true );
 
-    if ( text_to_numbers() )
-      return true;
-    else
+      if ( text_to_numbers() )
+         return true;
+      else
       {
-	QPalette *palette = new QPalette();
-	palette->setColor(QPalette::Text,Qt::red);
-	palette->setColor(QPalette::Base,Qt::white);
-	le_wrange->setPalette(*palette);
-	return false;
+         QPalette *palette = new QPalette();
+         palette->setColor(QPalette::Text,Qt::red);
+         palette->setColor(QPalette::Base,Qt::white);
+         le_wrange->setPalette(*palette);
+         return false;
       }
-  }    
-  else {
-    QString mtitle_error    = tr( "Error" );
-    QString message_error   = tr( "Syntax error!" );
-    QMessageBox::critical( this, mtitle_error, message_error );
-    
-    QPalette *palette = new QPalette();
-    palette->setColor(QPalette::Text,Qt::red);
-    palette->setColor(QPalette::Base,Qt::white);
-    le_wrange->setPalette(*palette);
+   }
+   else
+   {
+      QString mtitle_error    = tr( "Error" );
+      QString message_error   = tr( "Syntax error!" );
+      QMessageBox::critical( this, mtitle_error, message_error );
 
-    return false;
-  }
+      QPalette *palette = new QPalette();
+      palette->setColor(QPalette::Text,Qt::red);
+      palette->setColor(QPalette::Base,Qt::white);
+      le_wrange->setPalette(*palette);
+
+      return false;
+   }
 }
 
 // Transform text to numbers
 bool US_SelectWavelengths_manual::text_to_numbers( void )
 {
-  // TRANSFORM numbers to arrays
-  QString  waveln_raw  = le_wrange->text();
-  DbgLv(1) << "WAVELENGTHS: " << waveln_raw;  
-  
-  if ( waveln_raw.contains(",") ){
-    
-    QStringList wvllist = waveln_raw.split( "," );
-    for (QStringList::iterator it = wvllist.begin(); it != wvllist.end(); ++it){            
-      QString current = *it; 
-      
-      if ( current == "" )
-	continue;
-      
-      if ( current.contains(":") ){
-	QStringList wvllist_semicolon      = current.split( ":" );
-	QStringList wvllist_semicolon_dash = wvllist_semicolon[0].split( "-" );
-	
-	int wvl_iter = wvllist_semicolon[1].toInt();
-	int wvl_min  = wvllist_semicolon_dash[0].toInt();
-	int wvl_max  = wvllist_semicolon_dash[1].toInt();
+   // TRANSFORM numbers to arrays
+   QString  waveln_raw  = le_wrange->text();
+   DbgLv(1) << "WAVELENGTHS: " << waveln_raw;
 
-	if ( wvl_min > wvl_max )
-	  {
-	    selected.clear();
-	    return false;
-	  }
-	
-	for (int i = wvl_min; i <= wvl_max; i += wvl_iter){
-	  selected << QString::number(i);
-	}
-      }
-      else if ( current.contains("-") && !current.contains(":") ){
-	QStringList wvllist_dash = current.split( "-" );
-	int wvl_min_dash  = wvllist_dash[0].toInt();
-	int wvl_max_dash  = wvllist_dash[1].toInt();
+   if ( waveln_raw.contains(",") )
+   {
 
-	if ( wvl_min_dash > wvl_max_dash )
-	  {
-	    selected.clear();
-	    return false;
-	  }
-	
-	for (int i = wvl_min_dash; i <= wvl_max_dash; i++){
-	  selected << QString::number(i);
-	}
-      }
-      else {
-	selected << current;
-      }
-    }
-  }
-  else if ( waveln_raw.contains(":") && !waveln_raw.contains(",") ){
-    
-    QStringList wvllist_semicolon_nocoma      = waveln_raw.split( ":" );
-    QStringList wvllist_semicolon_nocoma_dash = wvllist_semicolon_nocoma[0].split( "-" );
-    
-    int wvl_iter = wvllist_semicolon_nocoma[1].toInt(); 
-    int wvl_min  = wvllist_semicolon_nocoma_dash[0].toInt();
-    int wvl_max  = wvllist_semicolon_nocoma_dash[1].toInt();
-
-    if ( wvl_min > wvl_max )
+      QStringList wvllist = waveln_raw.split( "," );
+      for (QStringList::iterator it = wvllist.begin(); it != wvllist.end(); ++it)
       {
-	selected.clear();
-	return false;
-      }
-    
-    for (int i = wvl_min; i <= wvl_max; i += wvl_iter){
-      selected << QString::number(i);
-    }
-  }
-  else if ( waveln_raw.contains("-") && !waveln_raw.contains(":") ){
-    QStringList wvllist_nocoma_dash = waveln_raw.split( "-" );
-    int wvl_min_nocoma_dash  = wvllist_nocoma_dash[0].toInt();
-    int wvl_max_nocoma_dash  = wvllist_nocoma_dash[1].toInt();
+         QString current = *it;
 
-    if ( wvl_min_nocoma_dash > wvl_max_nocoma_dash )
-      {
-	selected.clear();
-	return false;
+         if ( current == "" )
+            continue;
+
+         if ( current.contains(":") )
+         {
+            QStringList wvllist_semicolon      = current.split( ":" );
+            QStringList wvllist_semicolon_dash = wvllist_semicolon[0].split( "-" );
+
+            int wvl_iter = wvllist_semicolon[1].toInt();
+            int wvl_min  = wvllist_semicolon_dash[0].toInt();
+            int wvl_max  = wvllist_semicolon_dash[1].toInt();
+
+            if ( wvl_min > wvl_max )
+            {
+               selected.clear();
+               return false;
+            }
+
+            for (int i = wvl_min; i <= wvl_max; i += wvl_iter){
+               selected << QString::number(i);
+            }
+         }
+         else if ( current.contains("-") && !current.contains(":") )
+         {
+            QStringList wvllist_dash = current.split( "-" );
+            int wvl_min_dash  = wvllist_dash[0].toInt();
+            int wvl_max_dash  = wvllist_dash[1].toInt();
+
+            if ( wvl_min_dash > wvl_max_dash )
+            {
+               selected.clear();
+               return false;
+            }
+
+            for (int i = wvl_min_dash; i <= wvl_max_dash; i++)
+            {
+               selected << QString::number(i);
+            }
+         }
+         else
+         {
+            selected << current;
+         }
       }
-	
+   }
+   else if ( waveln_raw.contains(":") && !waveln_raw.contains(",") )
+   {
+      QStringList wvllist_semicolon_nocoma      = waveln_raw.split( ":" );
+      QStringList wvllist_semicolon_nocoma_dash = wvllist_semicolon_nocoma[0].split( "-" );
+
+      int wvl_iter = wvllist_semicolon_nocoma[1].toInt();
+      int wvl_min  = wvllist_semicolon_nocoma_dash[0].toInt();
+      int wvl_max  = wvllist_semicolon_nocoma_dash[1].toInt();
+
+      if ( wvl_min > wvl_max )
+      {
+         selected.clear();
+         return false;
+      }
+
+      for (int i = wvl_min; i <= wvl_max; i += wvl_iter)
+      {
+         selected << QString::number(i);
+      }
+   }
+   else if ( waveln_raw.contains("-") && !waveln_raw.contains(":") )
+   {
+      QStringList wvllist_nocoma_dash = waveln_raw.split( "-" );
+      int wvl_min_nocoma_dash  = wvllist_nocoma_dash[0].toInt();
+      int wvl_max_nocoma_dash  = wvllist_nocoma_dash[1].toInt();
+
+      if ( wvl_min_nocoma_dash > wvl_max_nocoma_dash )
+      {
+         selected.clear();
+         return false;
+      }
+
     for (int i = wvl_min_nocoma_dash; i <= wvl_max_nocoma_dash; i++){
       selected << QString::number(i);
     }
@@ -1347,34 +1356,34 @@ bool US_SelectWavelengths_manual::text_to_numbers( void )
   else if ( !waveln_raw.contains("-") && !waveln_raw.contains(":") && !waveln_raw.contains(".") ){
     selected << waveln_raw;
   }
-  
+
   selected.removeDuplicates();
   selected.sort();
 
   qDebug() << "First and Last element: " << selected[0].toDouble() << ", " << selected[ selected.size() -1 ].toDouble();
-  
+
   if ( selected[0].toDouble() < 180.0 || selected[ selected.size() -1 ].toDouble() > 800.0  )   // Boundaries [100-800] nm
     {
       QPalette *palette = new QPalette();
       palette->setColor(QPalette::Text,Qt::red);
       palette->setColor(QPalette::Base,Qt::white);
       le_wrange->setPalette(*palette);
-      
+
       QString mtitle_error    = tr( "Error" );
       QString message_error   = tr( "Selected wavelengths are outside of accepted range of [180-800] nm!" );
       QMessageBox::critical( this, mtitle_error, message_error );
-      
+
       selected.clear();
       return false;
     }
-  
+
   if ( selected.size() > 100 )
     {
       QPalette *palette = new QPalette();
       palette->setColor(QPalette::Text,Qt::red);
       palette->setColor(QPalette::Base,Qt::white);
       le_wrange->setPalette(*palette);
-      
+
       QString mtitle_error    = tr( "Error" );
       QString message_error   = tr( "Number of wavelengths is %1. <br> The number of selected wavelengths is more than 100! <br> Make wavelength count less than or equal to 100." );
       QMessageBox::critical( this, mtitle_error, message_error.arg(selected.size()) );
@@ -1382,13 +1391,13 @@ bool US_SelectWavelengths_manual::text_to_numbers( void )
       selected.clear();
       return false;
     }
-  
-  DbgLv(1) << "WVL_ARRAY " << selected;  
+
+  DbgLv(1) << "WVL_ARRAY " << selected;
   //selected << waveln;
   select_wavls = selected;
 
   return true;
-  
+
 }
 
 
@@ -1518,7 +1527,7 @@ DbgLv(0) << "RemoveAllSelections";
    for ( int rwvl = rws; rwvl < rwe; rwvl += rwi )
       rng_wavls << QString::number( rwvl );
 
-   // Move selected to potential 
+   // Move selected to potential
    for ( int ii = 0; ii < nbr_selec; ii++ )
    {
       // Move to potential list if in range and not already there
@@ -1597,12 +1606,12 @@ void US_SelectWavelengths::done( void )
       QString mtitle_error    = tr( "Error" );
       QString message_error   = tr( "Number of wavelengths is %1. <br> The number of selected wavelengths is more than 100! <br> Make wavelength count less than or equal to 100." );
       QMessageBox::critical( this, mtitle_error, message_error.arg(selected.size()) );
-      
+
       //selected.clear();
 
       return;
     }
-  
+
   select_wavls = selected;
   DbgLv(1) << "SelWl: done: nbr_sel" << select_wavls.count();
 

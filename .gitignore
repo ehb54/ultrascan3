@@ -5,7 +5,7 @@ local.pri
 tmp/
 moc/
 obj/
-Makefile
+Makefile*
 qwtplot3d/
 bin/
 lib/
@@ -14,3 +14,4 @@ gui/qrc_images.cpp
 /programs/us/us_revision.h
 *~
 *.pro.user
+*object_script*
