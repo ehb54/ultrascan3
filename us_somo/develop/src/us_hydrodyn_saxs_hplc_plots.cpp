@@ -124,23 +124,9 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors_group()
 
       if ( !j ) 
       {
-#if QT_VERSION < 0x040000
-         long curve;
-         curve = plot_errors->insertCurve( "base" );
-         plot_errors->setCurveStyle( curve, QwtCurve::Lines );
-#else
          QwtPlotCurve *curve = new QwtPlotCurve( "base" );
          curve->setStyle( QwtPlotCurve::Lines );
-#endif
 
-#if QT_VERSION < 0x040000
-         plot_errors->setCurvePen( curve, QPen( Qt::green, use_line_width, Qt::SolidLine ) );
-         plot_errors->setCurveData( curve,
-                                    (double *)&x[ 0 ],
-                                    (double *)&y[ 0 ],
-                                    x.size()
-                                    );
-#else
          curve->setPen( QPen( Qt::green, use_line_width, Qt::SolidLine ) );
          curve->setSamples(
                         (double *)&x[ 0 ],
@@ -148,28 +134,12 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors_group()
                         x.size()
                         );
          curve->attach( plot_errors );
-#endif
       }
 
       {
-#if QT_VERSION < 0x040000
-         long curve;
-         curve = plot_errors->insertCurve( "errors" );
-         plot_errors->setCurveStyle( curve, QwtCurve::Lines );
-#else
          QwtPlotCurve *curve = new QwtPlotCurve( "errors" );
          curve->setStyle( QwtPlotCurve::Lines );
-#endif
 
-#if QT_VERSION < 0x040000
-         plot_errors->setCurvePen( curve, QPen( plot_colors[ f_pos[ unified_ggaussian_files[ j ] ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
-         plot_errors->setCurveData( curve,
-                                    (double *)&x[ 0 ],
-                                    (double *)&e[ 0 ],
-                                    x.size()
-                                    );
-         plot_errors->curve( curve )->setStyle( QwtCurve::Sticks );
-#else
          curve->setPen( QPen( plot_colors[ f_pos[ unified_ggaussian_files[ j ] ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
          curve->setSamples(
                         (double *)&x[ 0 ],
@@ -178,7 +148,6 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors_group()
                         );
          curve->setStyle( QwtPlotCurve::Sticks );
          curve->attach( plot_errors );
-#endif
       }
 
       if ( !j )
@@ -620,13 +589,17 @@ void US_Hydrodyn_Saxs_Hplc::plot_errors_jump_markers()
 
 void US_Hydrodyn_Saxs_Hplc::errors()
 {
+   // qDebug() << "::errors()";
    if ( current_mode == MODE_GUINIER )
    {
+      // qDebug() << "::errors() MODE_GUINIER";
       US_Plot_Util::align_plot_extents( { guinier_plot, guinier_plot_errors } );
       connect(((QObject*)guinier_plot       ->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_guinier_plot_errors , SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
       connect(((QObject*)guinier_plot_errors->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_guinier_plot        , SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
 
       ShowHide::hide_widgets( guinier_errors_widgets, guinier_plot_errors->isVisible() );
+      guinier_plot->enableAxis( QwtPlot::xBottom, !guinier_plot_errors->isVisible() );
+      
       update_enables();
       return;
    }
@@ -634,6 +607,11 @@ void US_Hydrodyn_Saxs_Hplc::errors()
    if ( plot_errors->isVisible() )
    {
       hide_widgets( plot_errors_widgets, true );
+      if ( current_mode == MODE_SCALE ) {
+         // "running" so normal update enables doesn't handle this
+         plot_dist->enableAxis( QwtPlot::xBottom, !plot_errors->isVisible() );
+      }
+      // qDebug() << "::errors() plot_errors isVisible(), no further mode checking";
    } else {
 
       US_Plot_Util::align_plot_extents( { plot_dist, plot_errors } );
@@ -644,6 +622,7 @@ void US_Hydrodyn_Saxs_Hplc::errors()
       {
       case MODE_GGAUSSIAN:
          {
+            // qDebug() << "::errors() MODE_GGAUSSIAN";
             hide_widgets( plot_errors_widgets, false );
             if ( !unified_ggaussian_use_errors )
             {
@@ -657,6 +636,7 @@ void US_Hydrodyn_Saxs_Hplc::errors()
 
       case MODE_SCALE :
          {
+            // qDebug() << "::errors() MODE_SCALE";
             hide_widgets( plot_errors_widgets, false );
             cb_plot_errors_group  ->hide();
             cb_plot_errors_pct    ->hide();
@@ -684,12 +664,15 @@ void US_Hydrodyn_Saxs_Hplc::errors()
             //    connect( cb_plot_errors_sd, SIGNAL( clicked() ), SLOT( set_plot_errors_sd() ) );
             //    cb_plot_errors_sd->hide();
             // }
-               
+
+            // "running" so normal update enables doesn't handle this
+            plot_dist->enableAxis( QwtPlot::xBottom, !plot_errors->isVisible() );
          }
          break;
 
       case MODE_GAUSSIAN :
          {
+            // qDebug() << "::errors() MODE_GAUSSIAN";
             hide_widgets( plot_errors_widgets, false );
             cb_plot_errors_group->hide();
             if ( !f_errors.count( wheel_file ) ||
@@ -706,6 +689,7 @@ void US_Hydrodyn_Saxs_Hplc::errors()
       default :
          {
             // compare 2 files
+            // qDebug() << "::errors() default";
             QStringList files = all_selected_files();
             if ( files.size() > 2 )
             {
@@ -746,6 +730,7 @@ void US_Hydrodyn_Saxs_Hplc::errors()
          break;
       }
    }
+   // qDebug() << "::errors() call update_enables()";
    update_enables();
 }
 
@@ -816,7 +801,7 @@ void US_Hydrodyn_Saxs_Hplc::set_eb()
 
 void US_Hydrodyn_Saxs_Hplc::plot_files()
 {
-   // puts( "plot_files" );
+   // qDebug() << "plot files";
    plot_dist->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_dist->detachItems( QwtPlotItem::Rtti_PlotMarker );;
    bool any_selected = false;
    double minx = 0e0;
@@ -1351,7 +1336,7 @@ void US_Hydrodyn_Saxs_Hplc::rescale()
    //    hide_widgets( created_files_expert_widgets, !created_files_expert_widgets[ 0 ]->isVisible() );
    //    hide_widgets( editor_widgets, !editor_widgets[ 0 ]->isVisible() );
 
-   //bool any_selected = false;
+   bool any_selected = false;
    double minx = 0e0;
    double maxx = 1e0;
    double miny = 0e0;
@@ -1367,7 +1352,7 @@ void US_Hydrodyn_Saxs_Hplc::rescale()
    {
       if ( lb_files->item( i )->isSelected() )
       {
-         //any_selected = true;
+         any_selected = true;
          if ( get_min_max( lb_files->item( i )->text(), file_minx, file_maxx, file_miny, file_maxy ) )
          {
             if ( first )
@@ -1405,10 +1390,14 @@ void US_Hydrodyn_Saxs_Hplc::rescale()
    //    delete plot_dist_zoomer;
    // }
 
-   plot_dist->setAxisScale( QwtPlot::xBottom, minx, maxx );
-   plot_dist->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );
-   plot_dist_zoomer->setZoomBase();
-   plot_dist_zoomer->zoom(0);
+
+   if ( any_selected ) {
+      plot_dist->setAxisScale( QwtPlot::xBottom, minx, maxx );
+      plot_dist->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );
+      plot_dist_zoomer->setZoomBase();
+      plot_errors->setAxisScale( QwtPlot::xBottom, minx, maxx );
+      plot_errors_zoomer->setZoomBase();
+   }
 #if defined( DEBUG_RESCALE )
    {
       QTextStream tso(stdout);
@@ -1439,8 +1428,6 @@ void US_Hydrodyn_Saxs_Hplc::rescale()
       tso << "---\n";
    }
 #endif
-
-   plot_errors_zoomer->zoom(0);
 
    // plot_dist_zoomer = new ScrollZoomer(plot_dist->canvas());
    // plot_dist_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));

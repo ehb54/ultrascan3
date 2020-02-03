@@ -4312,8 +4312,10 @@ void US_Hydrodyn_Saxs_Hplc::mode_title( QString title )
 
 void US_Hydrodyn_Saxs_Hplc::update_enables()
 {
+   // qDebug() << "::update_enables()";
    if ( running )
    {
+      // qDebug() << "::update_enables() running, early exit";
       if ( current_mode == MODE_PM )
       {
          model_enables();
@@ -4676,10 +4678,15 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
       }
       if ( axis_x_log )
       {
-         plot_dist->setAxisTitle(QwtPlot::xBottom,  title + us_tr(" (log scale)") );
+         plot_dist  ->setAxisTitle(QwtPlot::xBottom,  title + us_tr(" (log scale)") );
+         plot_errors->setAxisTitle(QwtPlot::xBottom,  title + us_tr(" (log scale)") );
+
       } else {
-         plot_dist->setAxisTitle(QwtPlot::xBottom,  title );
+         plot_dist  ->setAxisTitle(QwtPlot::xBottom,  title );
+         plot_errors->setAxisTitle(QwtPlot::xBottom,  title );
       }
+      plot_dist->enableAxis( QwtPlot::xBottom, !plot_errors->isVisible() );
+      // qDebug() << "::update_enables() plot_errors is " << ( plot_errors->isVisible() ? "visible" : "not visible" );
    }
    {
       QString title;

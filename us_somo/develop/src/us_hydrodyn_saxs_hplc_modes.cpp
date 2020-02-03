@@ -1002,6 +1002,8 @@ void US_Hydrodyn_Saxs_Hplc::guinier()
    guinier_mwt_markers  .clear( );
    guinier_mwc_markers  .clear( );
 
+   guinier_plot->enableAxis( QwtPlot::xBottom, !guinier_plot_errors->isVisible() );
+
    if ( current_mode == MODE_TESTIQ )
    {
       if ( !testiq_make() )
@@ -1821,6 +1823,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_plot_rg_toggle()
       connect(((QObject*)guinier_plot_mw->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_guinier_plot_rg, SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
 
       ShowHide::hide_widgets( guinier_rg_widgets, false );
+      guinier_plot_rg->enableAxis( QwtPlot::xBottom, !guinier_plot_mw->isVisible() );
    }
 }
 
@@ -1836,6 +1839,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_plot_mw_toggle()
 
       ShowHide::hide_widgets( guinier_mw_widgets, false );
    }
+   guinier_plot_rg->enableAxis( QwtPlot::xBottom, !guinier_plot_mw->isVisible() );
 }
 
 void US_Hydrodyn_Saxs_Hplc::guinier_residuals( bool reset )

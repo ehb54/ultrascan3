@@ -2189,19 +2189,11 @@ void US_Hydrodyn_Saxs_Hplc::axis_y( bool nochange, bool no_replot )
    if ( axis_y_log )
    {
       plot_dist->setAxisTitle(QwtPlot::yLeft, title + us_tr( " (log scale)") );
-#if QT_VERSION < 0x040000
-      plot_dist->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::Logarithmic);
-#else
       plot_dist->setAxisScaleEngine(QwtPlot::yLeft, new QwtLogScaleEngine(10));
-#endif
    } else {
       plot_dist->setAxisTitle(QwtPlot::yLeft, title );
-#if QT_VERSION < 0x040000
-      plot_dist->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
-#else
       // actually need to test this, not sure what the correct version is
       plot_dist->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
-#endif
    }
    // if ( plot_dist_zoomer )
    // {
@@ -2301,23 +2293,15 @@ void US_Hydrodyn_Saxs_Hplc::axis_x( bool nochange, bool no_replot )
 
    if ( axis_x_log )
    {
-      plot_dist->setAxisTitle(QwtPlot::xBottom,  title + us_tr(" (log scale)") );
-#if QT_VERSION < 0x040000
-      plot_dist  ->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::Logarithmic);
-      plot_errors->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::Logarithmic);
-#else
+      plot_dist  ->setAxisTitle(QwtPlot::xBottom,  title + us_tr(" (log scale)") );
       plot_dist  ->setAxisScaleEngine(QwtPlot::xBottom, new QwtLogScaleEngine(10));
+      plot_errors->setAxisTitle(QwtPlot::xBottom,  title + us_tr(" (log scale)") );
       plot_errors->setAxisScaleEngine(QwtPlot::xBottom, new QwtLogScaleEngine(10));
-#endif
    } else {
-      plot_dist->setAxisTitle(QwtPlot::xBottom,  title );
-#if QT_VERSION < 0x040000
-      plot_dist  ->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::None);
-      plot_errors->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::None);
-#else
+      plot_dist  ->setAxisTitle(QwtPlot::xBottom,  title );
       plot_dist  ->setAxisScaleEngine(QwtPlot::xBottom, new QwtLinearScaleEngine );
+      plot_errors->setAxisTitle(QwtPlot::xBottom,  title );
       plot_errors->setAxisScaleEngine(QwtPlot::xBottom, new QwtLinearScaleEngine );
-#endif
    }
    if ( !suppress_replot && !no_replot )
    {
