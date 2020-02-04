@@ -89,13 +89,18 @@ class US_Edit : public US_Widgets
 
       QStringList        triple_info;
       QMap< QString, QStringList> editProfile;
-      QStringList        centparms_info;
-      QMap< int, QStringList> centerpieceParameters;
-      QMap< QString, QString> centerpiece_info;
 
-      QVector<QString> centerpiece_names;
-      QMap <QString, QString>      cell_to_centerpiece;
-      QVector<QStringList> aprofile_data;
+      QStringList        centparms_info;
+      QMap< int, QStringList>  centerpieceParameters;
+      QMap< QString, QString>  centerpiece_info;
+      QVector<QString>         centerpiece_names;
+      QMap <QString, QString>  cell_to_centerpiece;
+
+      QString    AProfileGUID;
+      double     aprofile_volume;
+      QMap <QString, QStringList>  aprof_channel_to_parms;
+      QMap <int, QStringList>      aprofileParameters;
+      
 
       QMap < QString, QString > details_at_editing_local; 
       
@@ -310,8 +315,11 @@ class US_Edit : public US_Widgets
       void read_centerpiece_names_from_protocol( void );
       void read_aprofile_data_from_aprofile( void );
       void read_centerpiece_params( int );
-      bool readProtocolCells_auto ( QXmlStreamReader& );
 
+      bool readProtocolCells_auto ( QXmlStreamReader& );
+      bool readProtocolAProfile_auto ( QXmlStreamReader& );
+      bool readAProfileBasicParms_auto ( QXmlStreamReader& );
+      
       void update_autoflow_record_atEditData( void );
       
    private slots:         

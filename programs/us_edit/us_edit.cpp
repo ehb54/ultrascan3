@@ -45,9 +45,6 @@
 // Alt. Constructor
 US_Edit::US_Edit( QString auto_mode ) : US_Widgets()
 {
-
-  qDebug () << "US_EDIT: SETTING 1";
-
     
    check        = US_Images::getIcon( US_Images::CHECK );
    invert       = 1.0;
@@ -583,12 +580,11 @@ pb_plateau->setVisible(false);
    main->setStretchFactor( left, 2 );
    main->setStretchFactor( plot, 3 );
    top ->addLayout( main );
-
-   qDebug () << "US_EDIT: SETTING 2";
    
    reset();
-   
-   qDebug () << "US_EDIT: SETTING 3";
+
+   setMinimumSize( 950, 450 );
+   adjustSize();
  
    // TESTING ...
    QMap < QString, QString > details;
@@ -612,11 +608,18 @@ pb_plateau->setVisible(false);
    // details[ "filename" ]     = QString("RxRPPARhet-PPRE-MWL_180419-run352");
    // details[ "invID_passed" ] = QString("41");
    // details[ "protocolName" ] = QString("RxRPPARhet-PPRE-MWL_180419");
-   /****************************************************************************************/
+   // /****************************************************************************************/
 
-   //load_auto( details );
+   // Data WITH existing Aprofile corresponding to existing protocol!!!
+   // details[ "invID_passed" ] = QString("77");
+   // details[ "filename" ]     = QString("JohnsonC_DNA-control_013020-run680");
+   // details[ "protocolName" ] = QString("JohnsonC_DNA-control_013020");
+   // /****************************************************************************************/
+   
+   // load_auto( details );
 
-   qDebug () << "US_EDIT: SET !";
+   
+
 }
 
 
@@ -1993,20 +1996,26 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 
    editProfile.clear();
    centerpieceParameters.clear();
+   aprofileParameters.clear();
 
    //Read centerpiece names from protocol:
    centerpiece_names.clear();
    centerpiece_names.resize( cb_triple->count() );
+
    read_centerpiece_names_from_protocol();
 
    //Debug:
    for (int i=0; i<centerpiece_names.size(); i++)
      qDebug() << "Centerpeice name: " << centerpiece_names[i];
 
-   //AProfile detailes per channel
-   aprofile_data.resize( cb_triple->count() );
+   //AProfile details per channel
    read_aprofile_data_from_aprofile();
-      
+
+   //Debug
+   for (int i=0; i<cb_triple->count(); i++)
+     qDebug() << "Triple, AprofParms: " << cb_triple->itemText( i )  << ", " << aprofileParameters[i];
+
+   
    qDebug() << "DATA SIZE: " << outData.count(); 
    
    //for ( int trx = 0; trx < triples.size(); trx++ )
@@ -2027,6 +2036,13 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 
        //Find meniscus position based on the read parameters for centerpiece channel (trx) && aprofile for each channel 
        read_centerpiece_params( trx );
+
+       //range_right = 7.0;
+       aprofile_volume = aprofileParameters[ trx ][0].toDouble();        //<-- From Aprofile
+       range_right   = aprofileParameters[ trx ][1].toDouble();           //<-- From Aprofile
+       qDebug() << "Range_right && Loading volume FROM AProfile: " << triple_name << ", " << range_right << ", " << aprofile_volume;
+
+       //Find meniscus
        meniscus = find_meniscus_auto();
 
        le_meniscus ->setText( QString::number( meniscus,   'f', 3 ) );
@@ -2034,8 +2050,7 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
        range_left    = meniscus + _RNGLEFT_OFFSET_;
        le_dataStart->setText( QString::number( range_left, 'f', 3 ) );
        
-       range_right = 7.0;
-       //range_right   = aprofile_data[ trx ][1].toDouble();
+       
        le_dataEnd  ->setText( QString::number( range_right, 'f', 3 ) );
        // plateau      = range_right - _PLATEAU_OFFSET_;
        // le_plateau  ->setText( QString::number( plateau,     'f', 3 ) );
@@ -2090,14 +2105,71 @@ void US_Edit::reset_editdata_panel( void )
 
 void US_Edit::read_aprofile_data_from_aprofile()
 {
-  //aprofile_data.clear();
-  // Fill in centerpiece names from protocol (per channel)
+  aprof_channel_to_parms.clear();
 
-  QStringList aprofile_row;
-  //for( int ...)
-  //{
-  //    aprofile_row << volume << data_end; 
-  //}
+  QString aprofile_xml;
+  
+  // Check DB connection
+  US_Passwd pw;
+  QString masterPW = pw.getPasswd();
+  US_DB2 db( masterPW );
+  
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Read protocol: Could not connect to database \n" ) + db.lastError() );
+      return;
+    }
+
+  // qDebug() << "AProfGUID: " << AProfileGUID;
+
+    
+  QStringList qry;
+  qry << "get_aprofile_info" << AProfileGUID;
+  db.query( qry );
+  
+  while ( db.next() )
+    {
+      //currProf.aprofID     = db.value( 0 ).toInt();
+      //currProf.aprofname   = db.value( 1 ).toString();
+      aprofile_xml         = db.value( 2 ).toString();
+    }
+
+  //qDebug() << "aprofile_xml: " <<  aprofile_xml;
+  
+  if ( !aprofile_xml.isEmpty() )
+    {
+      QXmlStreamReader xmli( aprofile_xml );
+      readAProfileBasicParms_auto( xmli );
+    }
+
+
+  //qDebug() << "read_aprofile: 1" ;
+  //
+  for ( int trx = 0; trx < cb_triple->count(); trx++ )
+    {
+      QStringList triple_name_list = cb_triple->itemText( trx ).split("/");
+      QString triple_cell_number = triple_name_list[0].trimmed();
+      QString triple_channel     = triple_name_list[1].trimmed();
+
+      QString channelname        = triple_cell_number + triple_channel;
+
+      qDebug() << "channelname: " << channelname ;
+      
+      //iterate over aprofile_channel_to_parms QMap and check if channel name is a part of triple_name:
+      QMap<QString, QStringList>::const_iterator i = aprof_channel_to_parms.constBegin();
+      while (i != aprof_channel_to_parms.constEnd())
+	{
+	  if ( channelname.contains(i.key()) )
+	    {
+	      qDebug() << "Channel, AProfile PARMS: " << channelname << ", " << i.key() << ": " << i.value();
+	      aprofileParameters[ trx ] = i.value();
+	      break;
+	    }
+	  ++i;
+	}
+    }
+
 }
 
 void US_Edit::read_centerpiece_names_from_protocol()
@@ -2135,6 +2207,9 @@ void US_Edit::read_centerpiece_names_from_protocol()
 
 	  if ( ename == "cells" )
 	    readProtocolCells_auto( xmli );
+
+	  if ( ename == "aprofile" )
+	    readProtocolAProfile_auto( xmli );
 	}
     }
 
@@ -2196,6 +2271,71 @@ bool US_Edit::readProtocolCells_auto( QXmlStreamReader& xmli )
   
   return ( ! xmli.hasError() );
 }
+
+
+bool US_Edit::readProtocolAProfile_auto( QXmlStreamReader& xmli )
+{
+  while( ! xmli.atEnd() )
+    {
+      QString ename   = xmli.name().toString();
+      
+      if ( xmli.isStartElement() )
+	{
+	  if ( ename == "aprofile" )
+	    {
+	      QXmlStreamAttributes attr = xmli.attributes();
+	      //AProfileName   = attr.value( "name"  ).toString();
+	      AProfileGUID   = attr.value( "guid"  ).toString();
+	    }
+	  
+	  else
+            break;
+	}
+      
+      else if ( xmli.isEndElement()  &&  ename == "aprofile" )
+	break;
+      
+      xmli.readNext();
+    }
+  
+  return ( ! xmli.hasError() );
+}
+
+
+bool US_Edit::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
+{
+  while( ! xmli.atEnd() )
+    {
+      xmli.readNext();
+      
+      if ( xmli.isStartElement() )
+      {
+	QString ename   = xmli.name().toString();
+	
+	if ( ename == "channel_parms" )
+	  {
+            QXmlStreamAttributes attr = xmli.attributes();
+
+	    QString channel_name = attr.value( "channel" ).toString();
+	    
+	    QStringList aprof_parms;
+	    aprof_parms << attr.value( "load_volume" ).toString()
+			<< attr.value( "data_end" ).toString();
+
+	    qDebug() << "READING aprof XML: " << channel_name << ", " << aprof_parms;
+	    
+	    aprof_channel_to_parms[ channel_name ] = aprof_parms;
+	  }
+	
+	else if ( ename == "p_2dsa" )       //Stop reading AProfile when 2DSA section reached 
+	  break;
+	
+      }
+   }
+
+   return ( ! xmli.hasError() );
+}
+
 
 
 void US_Edit::read_centerpiece_params( int trx )
@@ -2263,13 +2403,7 @@ double US_Edit::find_meniscus_auto()
   double pathlength_db = centerpiece_info[ "pathlen" ].toDouble();
   double angle_db      = centerpiece_info[ "angle" ].toDouble();
 
-  // //TEMP
-  // double bottom_db = 7.2;
-  // double pathlength_db = 1.2;
-  // double angle_db = 2.5;
-  
-  //double aprofile_volume   = aprofile_data[ "volume" ].toDouble();
-  double aprofile_volume   = 460; // Just an example - to be read from AProfile
+  //double aprofile_volume   = 460; // Just an example - to be read from AProfile, will be global
   
   double meniscus_init = sqrt( bottom_db*bottom_db - ( aprofile_volume*360/(1000*pathlength_db*angle_db*M_PI ) ) );     //Radians = Degrees * (M_PI/180.0)
   
@@ -5936,7 +6070,7 @@ void US_Edit::write_triple_auto( int trx )
      }
 
    // ALEXEY: the bottom value affected by rotor stretch - time consuming !!! Do we need it ? 
-   //US_SimulationParameters simparams;
+   // US_SimulationParameters simparams;
    // simparams.initFromData( dbP, data, false, runID, dataType );
    // bottom         = simparams.bottom;
 
