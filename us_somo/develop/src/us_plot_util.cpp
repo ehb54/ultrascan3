@@ -215,8 +215,8 @@ void US_Plot_Util::plotinfo(
 }
 
 void US_Plot_Util::align_plot_extents( const vector < QwtPlot * > & plots, bool scale_x_to_first ) {
-   QTextStream tso( stdout );
-   tso << "align_plot_extents\n";
+   // QTextStream tso( stdout );
+   // tso << "align_plot_extents\n";
 
    int size = (int) plots.size();
    if ( size <= 1 ) {
@@ -343,10 +343,11 @@ void US_Plot_Util::rescale( QwtPlot * plot, ScrollZoomer * zoomer, bool only_sca
 
    double min_x = plot->axisScaleDiv( QwtPlot::xBottom ).lowerBound();
    double max_x = plot->axisScaleDiv( QwtPlot::xBottom ).upperBound();
+
+#if defined( DEBUG_RESCALE )
    double min_x_alt = zoomer->zoomRect().bottomLeft().x();
    double max_x_alt = zoomer->zoomRect().bottomRight().x();
    
-#if defined( DEBUG_RESCALE )
    tso << QString().sprintf(
                             "min_x, max_x                                                  %g\t%g\n"
                             "min_x_alt, max_x_alt                                          %g\t%g\n"

@@ -3,6 +3,7 @@
 
 // QT defs:
 
+#include <qsplitter.h>
 #include <qlabel.h>
 #include <qstring.h>
 #include <qlayout.h>
@@ -378,6 +379,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QPushButton   *pb_options;
       QPushButton   *pb_cancel;
 
+      QSplitter     *qs_plots;
+      QBoxLayout    *vbl_plot_group;
       QwtPlot       *plot_dist;
       US_Plot       *usp_plot_dist;
    private slots:

@@ -1,7 +1,7 @@
 #include "../include/us3_defines.h"
 #include "../include/us_hydrodyn.h"
 #include "../include/us_hydrodyn_saxs_hplc.h"
-#include <qsplitter.h>
+// #include <qsplitter.h>
 //Added by qt3to4:
 #include <QBoxLayout>
 #include <QLabel>
@@ -42,11 +42,8 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    QPalette cg_red = cg_magenta;
    cg_red.setBrush( QPalette::Base, QBrush( QColor( "red" ), Qt::SolidPattern ) );
 
-#if QT_VERSION < 0x050000
-   lbl_title = new QLabel("Developed by Emre Brookes, Javier Pérez, Patrice Vachette and Mattia Rocco (see J. App. Cryst. 46:1823-1833, 2013; J. App. Cryst. 49:1827-1841, 2016 )", this);
-#else
    lbl_title = new QLabel("Developed by Emre Brookes, Javier P\u00e9rez, Patrice Vachette and Mattia Rocco (see J. App. Cryst. 46:1823-1833, 2013; J. App. Cryst. 49:1827-1841, 2016 )", this);
-#endif
+
    lbl_title->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_title->setMinimumHeight(minHeight1);
    lbl_title->setPalette( PALET_LABEL );
@@ -709,10 +706,10 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    editor->setMinimumHeight( minHeight1 * 3 );
    editor_widgets.push_back( editor );
 
-   QSplitter *qs = new QSplitter( Qt::Vertical, this );
+   qs_plots = new QSplitter( Qt::Vertical, this );
 
-//   plot_dist = new QwtPlot( qs );
-   usp_plot_dist = new US_Plot( plot_dist, "", "", "", qs );
+//   plot_dist = new QwtPlot( qs_plots );
+   usp_plot_dist = new US_Plot( plot_dist, "", "", "", qs_plots );
    connect( (QWidget *)plot_dist->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_dist( const QPoint & ) ) );
    ((QWidget *)plot_dist->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
    connect( (QWidget *)plot_dist->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_dist( const QPoint & ) ) );
@@ -775,15 +772,12 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       plot_dist->insertLegend( legend_pd, QwtPlot::BottomLegend );
    }
 #endif
-#if QT_VERSION < 0x040000
-   connect( plot_dist->canvas(), SIGNAL( mouseReleased( const QMouseEvent & ) ), SLOT( plot_mouse(  const QMouseEvent & ) ) );
-#endif
    plot_dist_zoomer = new ScrollZoomer(plot_dist->canvas());
    plot_dist_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
    connect( plot_dist_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
 
-//   plot_ref = new QwtPlot( qs );
-   usp_plot_ref = new US_Plot( plot_ref, "", "", "", qs );
+//   plot_ref = new QwtPlot( qs_plots );
+   usp_plot_ref = new US_Plot( plot_ref, "", "", "", qs_plots );
    connect( (QWidget *)plot_ref->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_ref( const QPoint & ) ) );
    ((QWidget *)plot_ref->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
    connect( (QWidget *)plot_ref->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_ref( const QPoint & ) ) );
@@ -1998,6 +1992,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    lbl_guinier_q_range->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_guinier_q_range );
    lbl_guinier_q_range->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   lbl_guinier_q_range->hide();
 
    le_guinier_q_start = new mQLineEdit( this );    le_guinier_q_start->setObjectName( "le_guinier_q_start Line Edit" );
    le_guinier_q_start->setText( "" );
@@ -2008,6 +2003,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    le_guinier_q_start->setValidator( new QDoubleValidator( le_guinier_q_start ) );
    connect( le_guinier_q_start, SIGNAL( textChanged( const QString & ) ), SLOT( guinier_q_start_text( const QString & ) ) );
    connect( le_guinier_q_start, SIGNAL( focussed ( bool ) )             , SLOT( guinier_q_start_focus( bool ) ) );
+   le_guinier_q_start->hide();
 
    le_guinier_q_end = new mQLineEdit( this );    le_guinier_q_end->setObjectName( "le_guinier_q_end Line Edit" );
    le_guinier_q_end->setText( "" );
@@ -2018,6 +2014,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    le_guinier_q_end->setValidator( new QDoubleValidator( le_guinier_q_end ) );
    connect( le_guinier_q_end, SIGNAL( textChanged( const QString & ) ), SLOT( guinier_q_end_text( const QString & ) ) );
    connect( le_guinier_q_end, SIGNAL( focussed ( bool ) )             , SLOT( guinier_q_end_focus( bool ) ) );
+   le_guinier_q_end->hide();
 
    lbl_guinier_q2_range = new QLabel( us_tr( "q^2 range: " ), this );
    lbl_guinier_q2_range->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
@@ -2153,8 +2150,8 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    // lbl_guinier_stats->setPalette( PALET_LABEL );
    lbl_guinier_stats->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
 
-//   guinier_plot = new QwtPlot( qs );
-   usp_guinier_plot = new US_Plot( guinier_plot, "", "", "", qs );
+//   guinier_plot = new QwtPlot( qs_plots );
+   usp_guinier_plot = new US_Plot( guinier_plot, "", "", "", qs_plots );
    connect( (QWidget *)guinier_plot->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_guinier_plot( const QPoint & ) ) );
    ((QWidget *)guinier_plot->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
    connect( (QWidget *)guinier_plot->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_guinier_plot( const QPoint & ) ) );
@@ -2218,8 +2215,8 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    connect( guinier_plot->canvas(), SIGNAL( mouseReleased( const QMouseEvent & ) ), SLOT( plot_mouse(  const QMouseEvent & ) ) );
 #endif
 
-//   guinier_plot_errors = new QwtPlot( qs );
-   usp_guinier_plot_errors = new US_Plot( guinier_plot_errors, "", "", "", qs );
+//   guinier_plot_errors = new QwtPlot( qs_plots );
+   usp_guinier_plot_errors = new US_Plot( guinier_plot_errors, "", "", "", qs_plots );
    connect( (QWidget *)guinier_plot_errors->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_guinier_plot_errors( const QPoint & ) ) );
    ((QWidget *)guinier_plot_errors->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
    connect( (QWidget *)guinier_plot_errors->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_guinier_plot_errors( const QPoint & ) ) );
@@ -2283,8 +2280,8 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    connect( guinier_plot_errors->canvas(), SIGNAL( mouseReleased( const QMouseEvent & ) ), SLOT( plot_mouse(  const QMouseEvent & ) ) );
 #endif
 
-//   guinier_plot_rg = new QwtPlot( qs );
-   usp_guinier_plot_rg = new US_Plot( guinier_plot_rg, "", "", "", qs );
+//   guinier_plot_rg = new QwtPlot( qs_plots );
+   usp_guinier_plot_rg = new US_Plot( guinier_plot_rg, "", "", "", qs_plots );
    connect( (QWidget *)guinier_plot_rg->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_guinier_plot_rg( const QPoint & ) ) );
    ((QWidget *)guinier_plot_rg->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
    connect( (QWidget *)guinier_plot_rg->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_guinier_plot_rg( const QPoint & ) ) );
@@ -2349,8 +2346,8 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 #endif
 
 
-//   guinier_plot_mw = new QwtPlot( qs );
-   usp_guinier_plot_mw = new US_Plot( guinier_plot_mw, "", "", "", qs );
+//   guinier_plot_mw = new QwtPlot( qs_plots );
+   usp_guinier_plot_mw = new US_Plot( guinier_plot_mw, "", "", "", qs_plots );
    connect( (QWidget *)guinier_plot_mw->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_guinier_plot_mw( const QPoint & ) ) );
    ((QWidget *)guinier_plot_mw->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
    connect( (QWidget *)guinier_plot_mw->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_guinier_plot_mw( const QPoint & ) ) );
@@ -3744,7 +3741,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    hbl_ggqfit_plot_ctls->addWidget( cb_ggq_plot_chi2 );
    hbl_ggqfit_plot_ctls->addWidget( cb_ggq_plot_P );
 
-   QBoxLayout * vbl_plot_group = new QVBoxLayout(0); vbl_plot_group->setContentsMargins( 0, 0, 0, 0 ); vbl_plot_group->setSpacing( 0 );
+   vbl_plot_group = new QVBoxLayout(0); vbl_plot_group->setContentsMargins( 0, 0, 0, 0 ); vbl_plot_group->setSpacing( 0 );
    // vbl_plot_group->addWidget ( plot_dist );
    // vbl_plot_group->addWidget ( plot_ref );
    // vbl_plot_group->addLayout ( vbl_guinier_plots );
@@ -3755,7 +3752,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    vbl_plot_group->addLayout ( l_pbmode_conc );
    vbl_plot_group->addLayout ( l_pbmode_sd );
    vbl_plot_group->addLayout ( l_pbmode_fasta );
-   vbl_plot_group->addWidget ( qs );
+   vbl_plot_group->addWidget ( qs_plots );
    vbl_plot_group->addLayout ( l_plot_errors );
    vbl_plot_group->addWidget ( ggqfit_plot );
    vbl_plot_group->addLayout ( hbl_ggqfit_plot_ctls );
@@ -4087,12 +4084,12 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    // guinier_widgets;
 
    guinier_widgets.push_back( cb_guinier_scroll );
-   guinier_widgets.push_back( lbl_guinier_q_range );
-   guinier_widgets.push_back( le_guinier_q_start );
-   guinier_widgets.push_back( le_guinier_q_end );
-   // guinier_widgets.push_back( lbl_guinier_q2_range );
-   // guinier_widgets.push_back( le_guinier_q2_start );
-   // guinier_widgets.push_back( le_guinier_q2_end );
+   // guinier_widgets.push_back( lbl_guinier_q_range );
+   // guinier_widgets.push_back( le_guinier_q_start );
+   // guinier_widgets.push_back( le_guinier_q_end );
+   guinier_widgets.push_back( lbl_guinier_q2_range );
+   guinier_widgets.push_back( le_guinier_q2_start );
+   guinier_widgets.push_back( le_guinier_q2_end );
    guinier_widgets.push_back( lbl_guinier_delta_range );
    guinier_widgets.push_back( le_guinier_delta_start );
    guinier_widgets.push_back( le_guinier_delta_end );
@@ -4313,9 +4310,18 @@ void US_Hydrodyn_Saxs_Hplc::mode_title( QString title )
 void US_Hydrodyn_Saxs_Hplc::update_enables()
 {
    // qDebug() << "::update_enables()";
-   if ( running )
-   {
+   if ( plot_errors->isVisible() ) {
+      vbl_plot_group->setStretchFactor( qs_plots, 80 );
+      vbl_plot_group->setStretchFactor( l_plot_errors, 20 );
+   } else {
+      vbl_plot_group->setStretchFactor( qs_plots, 0 );
+      vbl_plot_group->setStretchFactor( l_plot_errors, 0 );
+   }
+
+   if ( running ) {
       // qDebug() << "::update_enables() running, early exit";
+      plot_dist->enableAxis( QwtPlot::xBottom, !plot_errors->isVisible() );
+
       if ( current_mode == MODE_PM )
       {
          model_enables();
@@ -4326,6 +4332,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
       }
       return;
    }
+
    // cout << "update_enables\n";
 
    // cout << "US_Hydrodyn_Saxs_Hplc::update_enables()\n";
@@ -4515,7 +4522,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    pb_show_created       ->setEnabled( files_created_selected_not_shown_count > 0 );
    pb_show_only_created  ->setEnabled( files_created_selected_count > 0 &&
                                        files_selected_not_created > 0 );
-#define DEBUG_SCALING
+   // #define DEBUG_SCALING
 #if defined( DEBUG_SCALING )
    {
       QTextStream tso( stdout );

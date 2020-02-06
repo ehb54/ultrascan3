@@ -12,7 +12,7 @@
 #include <qwt_scale_widget.h>
 #include <qwt_scale_draw.h>
 
-#define DEBUG_RESCALE
+// #define DEBUG_RESCALE
 
 // note: this program uses cout and/or cerr and this should be replaced
 

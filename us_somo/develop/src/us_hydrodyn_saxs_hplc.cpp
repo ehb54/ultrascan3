@@ -6211,7 +6211,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_start()
          cb_plot_errors_sd->hide();
       }
    }
-   cb_gauss_match_amplitude->setChecked( false );
+   cb_gauss_match_amplitude->setChecked( true );
    height_natural_spline_x = f_qs[ wheel_file ];
    height_natural_spline_y = f_Is[ wheel_file ];
    height_natural_spline_y2.clear( );

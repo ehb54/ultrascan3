@@ -1865,16 +1865,9 @@ void US_Hydrodyn_Saxs_Hplc::guinier_residuals( bool reset )
       x[ 0 ] = guinier_minq2;
       x[ 1 ] = guinier_maxq2;
 
-#if QT_VERSION >= 0x040000
       QwtPlotCurve *curve = new QwtPlotCurve( "base" );
       curve->setStyle( QwtPlotCurve::Lines );
-#else
-      long curve;
-      curve = guinier_plot_errors->insertCurve( "base" );
-      guinier_plot_errors->setCurveStyle( curve, QwtCurve::Lines );
-#endif
 
-#if QT_VERSION >= 0x040000
       curve->setPen( QPen( Qt::red, use_line_width, Qt::SolidLine ) );
       curve->setSamples(
                      (double *)&x[ 0 ],
@@ -1882,24 +1875,12 @@ void US_Hydrodyn_Saxs_Hplc::guinier_residuals( bool reset )
                      2
                      );
       curve->attach( guinier_plot_errors );
-#else
-      guinier_plot_errors->setCurvePen( curve, QPen( Qt::darkRed, use_line_width, Qt::SolidLine ) );
-      guinier_plot_errors->setCurveData( curve,
-                                         (double *)&x[ 0 ],
-                                         (double *)&y[ 0 ],
-                                         2
-                                         );
-#endif
    }
    
    double tmp;
    double ltmp;
 
-#if QT_VERSION >= 0x040000
    QwtPlotCurve * curve;
-#else
-   long           curve;
-#endif
 
    double emin = 1e99;
    double emax = 0e0;
@@ -3786,6 +3767,8 @@ void US_Hydrodyn_Saxs_Hplc::guinier_enables()
       pb_testiq->setEnabled( true );
    }
    pb_pp                  -> setEnabled( true );
+   pb_rescale             -> setEnabled( true );
+   pb_rescale_y           -> setEnabled( true );
 
    ShowHide::hide_widgets( wheel_below_widgets, !cb_guinier_scroll->isChecked() );
 }
@@ -3912,13 +3895,9 @@ void US_Hydrodyn_Saxs_Hplc::guinier_q_start_text( const QString & text )
       editor_msg( "red", QString( "internal error: guinier_q_start_text markers issue size %1" ).arg( guinier_markers.size() ) );
       return;
    }
-#if QT_VERSION < 0x040000
-   guinier_plot       ->setMarkerPos( guinier_markers[ 0 ], text.toDouble() * text.toDouble(), 0e0 );
-   guinier_plot_errors->setMarkerPos( guinier_markers[ 2 ], text.toDouble() * text.toDouble(), 0e0 );
-#else
    guinier_markers[ 0 ]->setXValue( text.toDouble() * text.toDouble() );
    guinier_markers[ 2 ]->setXValue( text.toDouble() * text.toDouble() );
-#endif
+
    if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
@@ -3952,13 +3931,9 @@ void US_Hydrodyn_Saxs_Hplc::guinier_q_end_text( const QString & text )
       editor_msg( "red", QString( "internal error: guinier_q_end_text markers issue size %1" ).arg( guinier_markers.size() ) );
       return;
    }
-#if QT_VERSION < 0x040000
-   guinier_plot       ->setMarkerPos( guinier_markers[ 1 ], text.toDouble() * text.toDouble(), 0e0 );
-   guinier_plot_errors->setMarkerPos( guinier_markers[ 3 ], text.toDouble() * text.toDouble(), 0e0 );
-#else
    guinier_markers[ 1 ]->setXValue( text.toDouble() * text.toDouble() );
    guinier_markers[ 3 ]->setXValue( text.toDouble() * text.toDouble() );
-#endif
+
    if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
@@ -4024,13 +3999,9 @@ void US_Hydrodyn_Saxs_Hplc::guinier_q2_start_text( const QString & text )
       editor_msg( "red", QString( "internal error: guinier_q2_start_text markers issue size %1" ).arg( guinier_markers.size() ) );
       return;
    }
-#if QT_VERSION < 0x040000
-   guinier_plot       ->setMarkerPos( guinier_markers[ 0 ], text.toDouble(), 0e0 );
-   guinier_plot_errors->setMarkerPos( guinier_markers[ 2 ], text.toDouble(), 0e0 );
-#else
    guinier_markers[ 0 ]->setXValue( text.toDouble() );
    guinier_markers[ 2 ]->setXValue( text.toDouble() );
-#endif
+
    if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
@@ -4039,11 +4010,16 @@ void US_Hydrodyn_Saxs_Hplc::guinier_q2_start_text( const QString & text )
       connect   ( le_guinier_q_start, SIGNAL( textChanged( const QString & ) ), SLOT( guinier_q_start_text( const QString & ) ) );
    }
 
-   guinier_residuals();
-   guinier_range();
-   guinier_plot->replot();
-   guinier_plot_errors->replot();
-   guinier_enables();
+   if ( text.toDouble() > le_guinier_q2_end->text().toDouble() )
+   {
+      le_guinier_q2_end->setText( text );
+   } else {
+      guinier_residuals();
+      guinier_range();
+      guinier_plot->replot();
+      guinier_plot_errors->replot();
+      guinier_enables();
+   }
 }
 
 void US_Hydrodyn_Saxs_Hplc::guinier_q2_end_text( const QString & text )
@@ -4057,13 +4033,8 @@ void US_Hydrodyn_Saxs_Hplc::guinier_q2_end_text( const QString & text )
       editor_msg( "red", QString( "internal error: guinier_q2_end_text markers issue size %1" ).arg( guinier_markers.size() ) );
       return;
    }
-#if QT_VERSION < 0x040000
-   guinier_plot       ->setMarkerPos( guinier_markers[ 1 ], text.toDouble(), 0e0 );
-   guinier_plot_errors->setMarkerPos( guinier_markers[ 3 ], text.toDouble(), 0e0 );
-#else
    guinier_markers[ 1 ]->setXValue( text.toDouble() );
    guinier_markers[ 3 ]->setXValue( text.toDouble() );
-#endif
    if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
@@ -4072,11 +4043,16 @@ void US_Hydrodyn_Saxs_Hplc::guinier_q2_end_text( const QString & text )
       connect   ( le_guinier_q_end, SIGNAL( textChanged( const QString & ) ), SLOT( guinier_q_end_text( const QString & ) ) );
    }
 
-   guinier_residuals();
-   guinier_range();
-   guinier_plot->replot();
-   guinier_plot_errors->replot();
-   guinier_enables();
+   if ( text.toDouble() < le_guinier_q2_start->text().toDouble() )
+   {
+      le_guinier_q2_start->setText( text );
+   } else {
+      guinier_residuals();
+      guinier_range();
+      guinier_plot->replot();
+      guinier_plot_errors->replot();
+      guinier_enables();
+   }
 }
 
 void US_Hydrodyn_Saxs_Hplc::guinier_q2_start_focus( bool hasFocus )
