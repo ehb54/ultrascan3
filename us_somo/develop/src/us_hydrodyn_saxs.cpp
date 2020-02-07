@@ -2083,17 +2083,17 @@ void US_Hydrodyn_Saxs::setupGUI()
    gl_manual_guinier->setColumnStretch( 2, 2 );
    gl_manual_guinier->setColumnStretch( 3, 0 );
 
-   QBoxLayout * l_plot_resid = new QVBoxLayout( 0 ); l_plot_resid->setContentsMargins( 0, 0, 0, 0 ); l_plot_resid->setSpacing( 0 );
-   l_plot_resid->addWidget( plot_resid );
-   l_plot_resid->addLayout( hbl_plot_resid_buttons );
-   l_plot_resid->addLayout( gl_manual_guinier );
+   QBoxLayout * qbl_resid = new QVBoxLayout( 0 ); qbl_resid->setContentsMargins( 0, 0, 0, 0 ); qbl_resid->setSpacing( 0 );
+   qbl_resid->addWidget( plot_resid );
+   qbl_resid->addLayout( hbl_plot_resid_buttons );
+   qbl_resid->addLayout( gl_manual_guinier );
 
-   QVBoxLayout * vbl = new QVBoxLayout(0); vbl->setContentsMargins( 0, 0, 0, 0 ); vbl->setSpacing( 0 );
-   vbl->addWidget(plot_saxs);
-   vbl->addLayout(l_plot_resid);
-   vbl->addWidget(plot_pr);
-   vbl->addWidget(lbl_core_progress);
-   background->addLayout( vbl , 0 , 2 , 1 + ( j ) - ( 0 ) , 1 + ( 2 ) - ( 2 ) );
+   qbl_plots = new QVBoxLayout(0); qbl_plots->setContentsMargins( 0, 0, 0, 0 ); qbl_plots->setSpacing( 0 );
+   qbl_plots->addWidget( plot_saxs );
+   qbl_plots->addLayout( qbl_resid );
+   qbl_plots->addWidget( plot_pr );
+   qbl_plots->addWidget( lbl_core_progress );
+   background->addLayout( qbl_plots , 0 , 2 , 1 + ( j ) - ( 0 ) , 1 + ( 2 ) - ( 2 ) );
 
    background->setColumnMinimumWidth(2, 600);
    //   for ( int j = 0; j < 15; j++ )

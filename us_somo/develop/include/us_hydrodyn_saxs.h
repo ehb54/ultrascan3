@@ -487,6 +487,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void update_iqq_suffix();
 
    private:
+      QBoxLayout * qbl_plots;
+      QBoxLayout * qbl_resid;
 
       void replot_pr();
 #if QT_VERSION >= 0x040000

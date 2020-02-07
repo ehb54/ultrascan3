@@ -1299,7 +1299,7 @@ void US_Hydrodyn_Saxs::do_plot_resid()
                                us_tr(
                                   cb_cs_guinier->isChecked() ?
                                   (  cb_resid_pct->isChecked() ?
-                                     "% difference [100*(ln(q*I(q)) - Guinier)/ln(q*I(q))]" :
+                                     "% diff [100*(ln(q*I(q)) - Guin.)/ln(q*I(q))]" :
                                      ( cb_resid_sd->isChecked() ?
                                        "(ln(q*I(q)) - Guinier line) / S.D." : 
                                        "ln(q*I(q)) - Guinier line" 
@@ -1308,7 +1308,7 @@ void US_Hydrodyn_Saxs::do_plot_resid()
                                   :
                                   ( cb_Rt_guinier->isChecked() ?
                                     (  cb_resid_pct->isChecked() ?
-                                       "% difference [100*(ln(q^2*I(q)) - Guinier)/ln(q^2*I(q))]" :
+                                       "% diff [100*(ln(q^2*I(q)) - Guin.)/ln(q^2*I(q))]" :
                                        ( cb_resid_sd->isChecked() ?
                                          "(ln(q^2*I(q)) - Guinier line) / S.D." : 
                                          "ln(q^2*I(q)) - Guinier line" 
@@ -1316,7 +1316,7 @@ void US_Hydrodyn_Saxs::do_plot_resid()
                                        ) 
                                     :
                                     (  cb_resid_pct->isChecked() ?
-                                       "% difference [100*(ln(I(q)) - Guinier)/ln(I(q))]" :
+                                       "% diff [100*(ln(I(q)) - Guin.)/ln(I(q))]" :
                                        ( cb_resid_sd->isChecked() ?
                                          "(ln(I(q)) - Guinier line) / S.D." :
                                          "ln(I(q)) - Guinier line" 
@@ -1325,6 +1325,8 @@ void US_Hydrodyn_Saxs::do_plot_resid()
                                     )
                                   )
                                  );
+
+      US_Plot_Util::align_plot_extents( { plot_saxs, plot_resid } );
 
       if ( cb_resid_pct->isChecked() )
       {
@@ -1429,6 +1431,8 @@ void US_Hydrodyn_Saxs::set_resid_show()
       connect(((QObject*)plot_saxs ->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_plot_resid, SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
       connect(((QObject*)plot_resid->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_plot_saxs , SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
       plot_saxs->enableAxis( QwtPlot::xBottom, false );
+      qbl_plots->setStretchFactor( plot_saxs, 80 );
+      qbl_plots->setStretchFactor( qbl_resid, 20 );
       // not having much luck with this early attempt to make residuals plot 1/4 the size of the main plot
       // plot_saxs->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
       // plot_resid->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
@@ -1443,6 +1447,8 @@ void US_Hydrodyn_Saxs::set_resid_show()
       }
    } else {
       plot_saxs->enableAxis( QwtPlot::xBottom, true );
+      qbl_plots->setStretchFactor( plot_saxs, 0 );
+      qbl_plots->setStretchFactor( qbl_resid, 0 );
       hide_widgets( resid_widgets );
       cb_resid_show->show();
       cb_resid_show_errorbars->show();
