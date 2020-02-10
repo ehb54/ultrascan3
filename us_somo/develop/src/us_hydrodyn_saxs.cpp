@@ -106,10 +106,8 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    plot_saxs_zoomer  = (ScrollZoomer *)0;
    plot_resid_zoomer = (ScrollZoomer *)0;
 
-#if QT_VERSION >= 0x040000
    saxs_legend_vis   = false;
    pr_legend_vis     = false;
-#endif
 
    saxs_residuals_widget = false;
 
@@ -972,6 +970,21 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect(pb_width, SIGNAL(clicked()), SLOT(set_width()));
    iq_widgets.push_back( pb_width );
 
+   pb_rescale = new QPushButton(us_tr("Rescale XY"), this);
+   pb_rescale->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   pb_rescale->setMinimumHeight(minHeight1);
+   pb_rescale->setPalette( PALET_PUSHB );
+   connect(pb_rescale, SIGNAL(clicked()), SLOT(do_rescale()));
+   pb_rescale->hide();
+
+   pb_rescale_y = new QPushButton(us_tr("Rescale Y"), this);
+   pb_rescale_y->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   pb_rescale_y->setMinimumHeight(minHeight1);
+   pb_rescale_y->setPalette( PALET_PUSHB );
+   connect(pb_rescale_y, SIGNAL(clicked()), SLOT(do_rescale_y()));
+   pb_rescale_y->hide();
+   resid_widgets.push_back( pb_rescale_y );
+
    cb_eb = new QCheckBox(this);
    cb_eb->setText(us_tr("Err "));
    cb_eb->setMaximumWidth ( minHeight1 * 2 );
@@ -1532,6 +1545,9 @@ void US_Hydrodyn_Saxs::setupGUI()
 #endif
    plot_saxs->setAxisScale( QwtPlot::xBottom, 0e0, 1e0 );
 
+   plot_saxs_zoomer = new ScrollZoomer(plot_saxs->canvas());
+   plot_saxs_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+   
 //   plot_pr = new QwtPlot(this);
    usp_plot_pr = new US_Plot( plot_pr, "", "", "", this );
    connect( (QWidget *)plot_pr->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_pr( const QPoint & ) ) );
@@ -1622,18 +1638,8 @@ void US_Hydrodyn_Saxs::setupGUI()
    // plot_resid->setAxisTitle(QwtPlot::yLeft, us_tr("I(q) (log scale)"));
    plot_resid->setAxisTitle( QwtPlot::xBottom, plot_saxs->axisTitle( QwtPlot::xBottom ) );
 
-#if QT_VERSION < 0x040000
-   // plot_resid->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 2, QFont::Bold));
-   plot_resid->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-#endif
    plot_resid->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#if QT_VERSION < 0x040000
-   plot_resid->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-#endif
    plot_resid->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#if QT_VERSION < 0x040000
-   plot_resid->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-#endif
    plot_resid->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 //    plot_resid->setMargin(USglobal->config_list.margin);
    plot_resid->setTitle("");
@@ -1641,10 +1647,8 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    plot_resid_zoomer = new ScrollZoomer(plot_resid->canvas());
    plot_resid_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-   plot_resid_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
    plot_resid->hide();
+   plot_resid_zoomer->symmetric_rescale = true;
    resid_widgets.push_back( plot_resid );
 
    cb_resid_show = new QCheckBox(this);
@@ -1888,6 +1892,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    hbl_load_saxs->addWidget(pb_clear_plot_saxs);
    hbl_load_saxs->addWidget(pb_width);
    hbl_load_saxs->addWidget(cb_eb);
+   hbl_load_saxs->addWidget(pb_rescale);
    background->addLayout( hbl_load_saxs , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 
@@ -2072,6 +2077,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    hbl_plot_resid_buttons->addWidget( cb_resid_show_errorbars );
    hbl_plot_resid_buttons->addWidget( cb_resid_sd );
    hbl_plot_resid_buttons->addWidget( cb_resid_pct );
+   hbl_plot_resid_buttons->addWidget( pb_rescale_y );
 
    QGridLayout * gl_manual_guinier = new QGridLayout( 0 ); gl_manual_guinier->setContentsMargins( 0, 0, 0, 0 ); gl_manual_guinier->setSpacing( 0 );
    gl_manual_guinier->addWidget( le_manual_guinier_fit_start, 0, 0 );
@@ -3370,13 +3376,8 @@ void US_Hydrodyn_Saxs::show_plot_pr()
    plot_pr->setAxisScale( QwtPlot::yLeft  , miny, maxy );
 
    plot_pr_zoomer = new ScrollZoomer(plot_pr->canvas());
-#if QT_VERSION < 0x040000
-   plot_pr_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-   plot_pr_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#else
    plot_pr_zoomer->setRubberBandPen( QPen(Qt::red, 1, Qt::DotLine ) );
    plot_pr_zoomer->setTrackerPen( QPen( Qt::red ) );
-#endif
 
    plot_pr->replot();
 
@@ -6300,6 +6301,7 @@ QString US_Hydrodyn_Saxs::curve_type_string(int curve)
 
 void US_Hydrodyn_Saxs::rescale_plot()
 {
+   // qDebug() << "_Saxs::rescale_plot()";
    double lowq;
    double highq;
    double lowI;
@@ -6316,18 +6318,17 @@ void US_Hydrodyn_Saxs::rescale_plot()
    plot_saxs->setAxisScale( QwtPlot::xBottom, lowq, highq );
    plot_saxs->setAxisScale( QwtPlot::yLeft,   lowI, highI );
 
-   if ( plot_saxs_zoomer )
-   {
-      delete plot_saxs_zoomer;
-   }
-   plot_saxs_zoomer = new ScrollZoomer(plot_saxs->canvas());
-#if QT_VERSION < 0x040000
-   plot_saxs_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-   plot_saxs_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#else
-   plot_saxs_zoomer->setRubberBandPen( QPen( Qt::red, 1, Qt::DotLine ) );
-   plot_saxs_zoomer->setTrackerPen( QPen( Qt::red ) );
-#endif
+   // if ( plot_saxs_zoomer )
+   // {
+   //    delete plot_saxs_zoomer;
+   // }
+   // plot_saxs_zoomer = new ScrollZoomer(plot_saxs->canvas());
+   // plot_saxs_zoomer->setRubberBandPen( QPen( Qt::red, 1, Qt::DotLine ) );
+   // plot_saxs_zoomer->setTrackerPen( QPen( Qt::red ) );
+
+   plot_saxs_zoomer->setZoomBase();
+   plot_resid->setAxisScale( QwtPlot::xBottom, lowq, highq );
+   plot_resid_zoomer->setZoomBase();
 
    plot_saxs->replot();
 }

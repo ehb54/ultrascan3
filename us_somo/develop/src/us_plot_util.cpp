@@ -325,6 +325,7 @@ void US_Plot_Util::rescale( QwtPlot * plot, ScrollZoomer * zoomer, bool only_sca
 
 #if defined( DEBUG_RESCALE )
    tso << "zoomer ptr " << zoomer << "\n";
+   tso << "object name " << plot->objectName() << "\n";
    tso << "US_Plot_Util::rescale( QwtPlot * plot, " << ( only_scale_y ? "true" : "false" ) << ")\n";
    tso << QString().sprintf(
                             "plot->axisScaleDiv( QwtPlot::xBottom ).lower,upperBound()     %g\t%g\n"

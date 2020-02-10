@@ -29,12 +29,11 @@
 #include "us3i_plot.h"
 //Added by qt3to4:
 #include <QCloseEvent>
-#if QT_VERSION >= 0x040000
 # include "qwt_legend.h"
 # include "qwt_plot_grid.h"
 # include "qwt_plot_curve.h"
 # include "qwt_scale_engine.h"
-#endif
+
 
 #include "us_util.h"
 #include "us_hydrodyn_pdbdefs.h"
@@ -95,12 +94,6 @@ struct shd_data
 };
 
 #include "us_mqt.h"
-
-#ifdef WIN32
-# if QT_VERSION < 0x040000
-     #pragma warning ( disable: 4251 )
-# endif
-#endif      
 
 struct crop_undo_data
 {
@@ -207,19 +200,12 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       QPrinter printer;
 
-#if QT_VERSION < 0x040000
-      QGroupBox *bg_saxs_sans;
-#else
       QButtonGroup *bg_saxs_sans;
-#endif
       QRadioButton *rb_saxs;
       QRadioButton *rb_sans;
 
-#if QT_VERSION < 0x040000
-      QGroupBox *bg_saxs_iq;
-#else
       QButtonGroup *bg_saxs_iq;
-#endif
+
       QRadioButton *rb_saxs_iq_native_debye;
       QRadioButton *rb_saxs_iq_native_sh;
       QRadioButton *rb_saxs_iq_native_hybrid;
@@ -230,11 +216,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QRadioButton *rb_saxs_iq_sastbx;
       QRadioButton *rb_saxs_iq_crysol;
 
-#if QT_VERSION < 0x040000
-      QGroupBox *bg_sans_iq;
-#else
       QButtonGroup *bg_sans_iq;
-#endif
+
       QRadioButton *rb_sans_iq_native_debye;
       QRadioButton *rb_sans_iq_native_sh;
       QRadioButton *rb_sans_iq_native_hybrid;
@@ -280,6 +263,9 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QPushButton *pb_width;
       QPushButton *pb_width2;
 
+      QPushButton *pb_rescale;
+      QPushButton *pb_rescale_y;
+
       QwtCounter *cnt_bin_size;
       QwtCounter *cnt_smooth;
 
@@ -301,11 +287,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QLineEdit *le_user_lowI;
       QLineEdit *le_user_highI;
 
-#if QT_VERSION < 0x040000
-      QGroupBox *bg_curve;
-#else
       QButtonGroup *bg_curve;
-#endif
+
       QRadioButton *rb_curve_raw;
       QRadioButton *rb_curve_saxs_dry;
       QRadioButton *rb_curve_saxs;
@@ -342,14 +325,15 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       US_Plot       *usp_plot_resid;
    private slots:
       void usp_config_plot_resid( const QPoint & );
+      void           resid_zoomed( const QRect & );
 
    public:
       ScrollZoomer  *plot_resid_zoomer;
-#if QT_VERSION >= 0x040000
+
       QwtPlotGrid  *grid_pr;
       QwtPlotGrid  *grid_saxs;
       QwtPlotGrid  *grid_resid;
-#endif
+
       QCheckBox   *cb_resid_pct;
       QCheckBox   *cb_manual_guinier;
       QCheckBox   *cb_resid_sd;
@@ -382,27 +366,14 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       vector < vector <PDB_atom> >                    bead_models;
       vector < unsigned int >                         selected_models;
       vector < QColor >                               plot_colors;
-#if QT_VERSION < 0x040000
-      vector < long >                                 plotted_Iq;  // curve keys
-#else
       vector < QwtPlotCurve * >                       plotted_Iq;
-#endif
+
       vector < double >                               exact_q;
       vector < vector < double > >                    plotted_q;
       vector < vector < double > >                    plotted_q2;  // q^2 for guinier plots
       vector < vector < double > >                    plotted_I;
       vector < vector < double > >                    plotted_I_error; 
 
-#if QT_VERSION < 0x040000
-      map    < unsigned int, long >                   plotted_Gp;  // guinier points
-      map    < unsigned int, long >                   plotted_cs_Gp;  // cs guinier points
-      map    < unsigned int, long >                   plotted_Rt_Gp;  // Rt guinier points
-      map    < unsigned int, long >                   plotted_Gp_full;  // guinier points
-      map    < unsigned int, long >                   plotted_cs_Gp_full;  // cs guinier points
-      map    < unsigned int, long >                   plotted_Rt_Gp_full;  // Rt guinier points
-      vector < long >                                 plotted_manual_guinier_fit;
-      vector < long >                                 plotted_guinier_error_bars;
-#else
       map    < unsigned int, QwtPlotCurve * >         plotted_Gp_curves;  // guinier points
       map    < unsigned int, QwtPlotCurve * >         plotted_cs_Gp_curves;  // cs guinier points
       map    < unsigned int, QwtPlotCurve * >         plotted_Rt_Gp_curves;  // Rt guinier points
@@ -411,7 +382,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       map    < unsigned int, QwtPlotCurve * >         plotted_Rt_Gp_curves_full;  // Rt guinier points
       vector < QwtPlotCurve * >                       plotted_manual_guinier_fit;
       vector < QwtPlotCurve * >                       plotted_guinier_error_bars; 
-#endif
+
       map    < unsigned int, bool >                   plotted_guinier_valid;
       map    < unsigned int, bool >                   plotted_guinier_plotted;
       map    < unsigned int, double >                 plotted_guinier_lowq2;
@@ -491,10 +462,9 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QBoxLayout * qbl_resid;
 
       void replot_pr();
-#if QT_VERSION >= 0x040000
+
       bool saxs_legend_vis;
       bool pr_legend_vis;
-#endif
 
       void  create_shd( vector < saxs_atom > & atoms,
                         vector < double >    & q,
@@ -835,6 +805,9 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
    private slots:
 
+      void do_rescale();
+      void do_rescale_y();
+
       void manual_guinier_process();
       void set_manual_guinier();
       void adjust_wheel( double );
@@ -1103,11 +1076,5 @@ class saxs_pr_thr_t : public QThread
   int work_to_do_waiters;
   int work_done_waiters;
 };
-
-#ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
-#endif
 
 #endif

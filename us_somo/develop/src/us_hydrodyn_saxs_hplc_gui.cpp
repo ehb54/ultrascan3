@@ -233,13 +233,13 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_rescale->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_rescale->setMinimumHeight(minHeight1);
    pb_rescale->setPalette( PALET_PUSHB );
-   connect(pb_rescale, SIGNAL(clicked()), SLOT(rescale()));
+   connect(pb_rescale, SIGNAL(clicked()), SLOT(do_rescale()));
 
    pb_rescale_y = new QPushButton(us_tr("Rescale Y"), this);
    pb_rescale_y->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_rescale_y->setMinimumHeight(minHeight1);
    pb_rescale_y->setPalette( PALET_PUSHB );
-   connect(pb_rescale_y, SIGNAL(clicked()), SLOT(rescale_y()));
+   connect(pb_rescale_y, SIGNAL(clicked()), SLOT(do_rescale_y()));
 
    pb_ag = new QPushButton(us_tr("AG"), this);
    pb_ag->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));

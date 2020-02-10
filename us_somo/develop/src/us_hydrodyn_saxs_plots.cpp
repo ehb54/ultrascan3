@@ -671,14 +671,14 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
       curve->attach( plot_saxs );
    }
 
-   if ( plot_saxs_zoomer )
-   {
-      delete plot_saxs_zoomer;
-   }
-   plot_saxs_zoomer = new ScrollZoomer(plot_saxs->canvas());
-   plot_saxs_zoomer->setRubberBandPen( QPen( Qt::red, 1, Qt::DotLine ) );
-   plot_saxs_zoomer->setTrackerPen( QPen( Qt::red ) );
-
+   // if ( plot_saxs_zoomer )
+   // {
+   //    delete plot_saxs_zoomer;
+   // }
+   // plot_saxs_zoomer = new ScrollZoomer(plot_saxs->canvas());
+   // plot_saxs_zoomer->setRubberBandPen( QPen( Qt::red, 1, Qt::DotLine ) );
+   // plot_saxs_zoomer->setTrackerPen( QPen( Qt::red ) );
+   plot_saxs_zoomer->setZoomBase();
    plot_saxs->replot();
 
    if ( !plotted )
@@ -798,11 +798,11 @@ void US_Hydrodyn_Saxs::do_plot_resid()
    }
 
    plot_resid->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_resid->detachItems( QwtPlotItem::Rtti_PlotMarker );;
-   if ( plot_resid_zoomer )
-   {
-      delete plot_resid_zoomer;
-      plot_resid_zoomer = (ScrollZoomer *) 0;
-   }
+   // if ( plot_resid_zoomer )
+   // {
+   //    delete plot_resid_zoomer;
+   //    plot_resid_zoomer = (ScrollZoomer *) 0;
+   // }
 
    int niqsize = (int)plotted_Iq.size();
 
@@ -1362,13 +1362,17 @@ void US_Hydrodyn_Saxs::do_plot_resid()
          curve->attach( plot_resid );
       }
 
+      plot_saxs->setAxisScale( QwtPlot::xBottom, minq2, maxq2 );
+      plot_saxs_zoomer->setZoomBase();
       plot_resid->setAxisScale( QwtPlot::xBottom, minq2, maxq2 );
       plot_resid->setAxisScale( QwtPlot::yLeft  , -maxabse * 1.2e0 , maxabse * 1.2e0 );
+      plot_resid_zoomer->setZoomBase();
       
-      plot_resid_zoomer = new ScrollZoomer(plot_resid->canvas());
-      plot_resid_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-         // connect( plot_resid_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
+      // plot_resid_zoomer = new ScrollZoomer(plot_resid->canvas());
+      // plot_resid_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+      // connect( plot_resid_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( resid_zoomed( const QRectF & ) ) );
 
+      plot_saxs->replot();
       plot_resid->replot();
       set_resid_show();
       if ( started_in_expert_mode &&
@@ -1384,6 +1388,10 @@ void US_Hydrodyn_Saxs::do_plot_resid()
       hide_widgets( resid_widgets );
       hide_widgets( manual_guinier_widgets );
    }
+}
+
+void US_Hydrodyn_Saxs::resid_zoomed( const QRect & ) {
+   // qDebug() << "_Saxs::resid_zoomed()";
 }
 
 void US_Hydrodyn_Saxs::set_resid_pct()
@@ -1426,19 +1434,22 @@ void US_Hydrodyn_Saxs::set_resid_show()
    if ( cb_resid_show->isChecked() )
    {
       US_Plot_Util::align_plot_extents( { plot_saxs, plot_resid } );
-      usp_plot_resid->rescale_mode = US_Plot::MODE_RESID;
+      usp_plot_saxs->rescale_mode = US_Plot::MODE_NO_SCALE;
+      usp_plot_saxs->scroll_zoomer = plot_saxs_zoomer;
+      usp_plot_resid->rescale_mode = US_Plot::MODE_NO_SCALE;
+      // usp_plot_resid->rescale_mode = US_Plot::MODE_RESID;
       usp_plot_resid->scroll_zoomer = plot_resid_zoomer;
+
+      plot_saxs->setObjectName( "plot_saxs" );
+      usp_plot_saxs->setObjectName( "usp_plot_saxs" );
+      plot_resid->setObjectName( "plot_resid" );
+      usp_plot_resid->setObjectName( "usp_plot_resid" );
+
       connect(((QObject*)plot_saxs ->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_plot_resid, SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
       connect(((QObject*)plot_resid->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_plot_saxs , SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
       plot_saxs->enableAxis( QwtPlot::xBottom, false );
       qbl_plots->setStretchFactor( plot_saxs, 80 );
       qbl_plots->setStretchFactor( qbl_resid, 20 );
-      // not having much luck with this early attempt to make residuals plot 1/4 the size of the main plot
-      // plot_saxs->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
-      // plot_resid->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
-      // plot_resid->resize( plot_resid->size().width(), plot_saxs->height() / 4 );
-      // updateGeometry();
-      // plot_resid->setAxisTitle( QwtPlot::xBottom, plot_saxs->axisTitle( QwtPlot::xBottom ) );
       hide_widgets( resid_widgets, false );
       if ( !started_in_expert_mode ||
            plotted_q.size() != 1 )
@@ -1627,4 +1638,22 @@ void US_Hydrodyn_Saxs::replot_pr()
 
 void US_Hydrodyn_Saxs::fix_xBottom() {
    plot_saxs->enableAxis( QwtPlot::xBottom, !plot_resid->isVisible() );
+}
+
+void US_Hydrodyn_Saxs::do_rescale() {
+   // qDebug() << "do_rescale";
+}
+
+void US_Hydrodyn_Saxs::do_rescale_y() {
+   // qDebug() << "do_rescale_y";
+   map < QString, QwtPlot *>            plot_info;
+   map < QwtPlot *, ScrollZoomer * >    plot_to_zoomer;
+
+   plot_info[ "plot_saxs" ]  = plot_saxs;
+   plot_info[ "plot_resid" ] = plot_resid;
+   
+   plot_to_zoomer[ plot_saxs ]           = plot_saxs_zoomer;
+   plot_to_zoomer[ plot_resid ]          = plot_resid_zoomer;
+
+   US_Plot_Util::rescale( plot_info, plot_to_zoomer );
 }
