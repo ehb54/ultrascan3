@@ -97,6 +97,24 @@ US_RotorCalibration::US_RotorCalibration() : US_Widgets()
    cb_wavelengths = us_comboBox();
    top->addWidget(cb_wavelengths, row++, 0);
 
+   QLabel* lb_minrpm = us_label(tr("Ignore speeds below:"), -1);
+   lb_minrpm->setMaximumHeight(height);
+   top->addWidget(lb_minrpm, row++, 0);
+
+   cb_minrpm= us_comboBox();
+   top->addWidget(cb_minrpm, row++, 0);
+	QString str;
+	QStringList sl;
+	for (int i=1000; i<21000; i+=1000)
+	{
+		str.setNum(i,10);
+		sl << str;
+	}
+	minrpm=10000;
+	cb_minrpm->insertItems(0, sl);
+   connect( cb_minrpm,    SIGNAL(highlighted(QString)),
+            this, SLOT(changeminrpm (QString)));
+
    QGridLayout* lo_6channel = us_checkbox(tr("Use 7-Slot Cal. Mask"), cb_6channel, false);
    connect (cb_6channel, SIGNAL (clicked()), this, SLOT (use_6channel()));
    top->addLayout(lo_6channel, row++, 0);
@@ -1344,7 +1362,7 @@ void US_RotorCalibration::calc_6channel(void)
    {
       for (j=0; j<allData[i].scanData.size(); j++) //all scans in each triple
       {
-         if (!speeds.contains((int) allData[i].scanData[j].rpm))
+         if (!speeds.contains((int) allData[i].scanData[j].rpm) && allData[i].scanData[j].rpm >= minrpm)
          {
             speeds << (int) allData[i].scanData[j].rpm;
          }
@@ -1502,20 +1520,20 @@ void US_RotorCalibration::calc_6channel(void)
    QVector <double> edge_measured;
    QVector <double> edge_known;
    QVector <double> edge_sigma;
-   edge_known.push_back(5.850);
-   edge_known.push_back(5.956);
-   edge_known.push_back(6.053);
-   edge_known.push_back(6.157);
-   edge_known.push_back(6.253);
-   edge_known.push_back(6.358);
-   edge_known.push_back(6.453);
-   edge_known.push_back(6.558);
-   edge_known.push_back(6.654);
-   edge_known.push_back(6.760);
-   edge_known.push_back(6.854);
-   edge_known.push_back(6.959);
-   edge_known.push_back(7.054);
-   edge_known.push_back(7.160);
+   edge_known.push_back(5.711);
+   edge_known.push_back(5.929);
+   edge_known.push_back(6.025);
+   edge_known.push_back(6.097);
+   edge_known.push_back(6.237);
+   edge_known.push_back(6.308);
+   edge_known.push_back(6.425);
+   edge_known.push_back(6.550);
+   edge_known.push_back(6.658);
+   edge_known.push_back(6.728);
+   edge_known.push_back(6.868);
+   edge_known.push_back(6.939);
+   edge_known.push_back(7.077);
+   edge_known.push_back(7.146);
    for (k=0; k<bounds.size(); k++) // bounds equals the number of edges
    {
       sum=0.0;
@@ -1615,8 +1633,8 @@ void US_RotorCalibration::calc_6channel(void)
       fileText += QString( "%1").arg(i+1, 3)                      + "   "
                 + QString( "%1").arg(edge_measured[i], 0, 'f', 5 ) + "   "
                 + QString( "%1").arg(edge_sigma[i], 0, 'e', 5 )    + "   "
-                + QString( "%1").arg(edge_known[i], 0, 'f', 3 )    + "    "
-                + QString( "%1").arg(edge_known[i] - edge_measured[i], 0, 'e', 5 )    + "\n";
+                + QString( "%1").arg(edge_known[i+1], 0, 'f', 3 )    + "    "
+                + QString( "%1").arg(edge_known[i+1] - edge_measured[i], 0, 'e', 5 )    + "\n"; //first known edge should be ignored because it is mostly shaded by screwring
    }
 
    fileText += "\n\nBelow is a listing of the stretching values as a function of speed:\n\n";
@@ -1833,4 +1851,9 @@ void US_RotorCalibration::changeLambda(int l)
 //   use_6channel();
    le_instructions->setText(tr("Please zoom all useful vertical regions..."));
    update_plot();
+}
+
+void US_RotorCalibration::changeminrpm(QString str)
+{
+	minrpm = str.toInt();
 }
