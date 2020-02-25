@@ -77,6 +77,7 @@ class US_RotorCalibration : public US_Widgets
       int                maxchannel;
       int                current_triple;
       int                current_cell;
+		int                minrpm;
       bool               top_of_cell;
       bool               newlimit;
       bool               zoomed;
@@ -123,6 +124,7 @@ class US_RotorCalibration : public US_Widgets
       QCheckBox*         cb_assigned;
       QCheckBox*         cb_6channel;
       QComboBox*         cb_wavelengths;
+      QComboBox*         cb_minrpm;
 
       US_DataIO::RawData             data;
       QVector< US_DataIO::RawData >  allData;
@@ -141,6 +143,7 @@ class US_RotorCalibration : public US_Widgets
    private slots:
       void       reset          ( void );
       void       changeLambda   ( int  );
+      void       changeminrpm   ( QString );
       void       source_changed ( bool );
       void       update_disk_db ( bool );
       void       load           ( void );
