@@ -5709,9 +5709,17 @@ void US_ExperGuiUpload::submitExperiment()
 
 
       QString name                 = "\'" + runname + "\'";
+      QString project_name         = mainw->currProto.project;
+      QRegExp rx1( "[^A-Za-z0-9_-]" );
+      project_name.replace( rx1,  "_" );
+      
+      
       QString exp_comments         = "\'Run by " + researcher_trimmed + ": "
                                      + mainw->currProto.runname + " based on project "
-                                     + mainw->currProto.project + "\'";
+                                     + project_name + "\'";
+
+      qDebug() << "EXP_COMMENT: " << exp_comments;
+      //return;
 
       // Query
       if(! query_expdef.prepare(QString("INSERT INTO %1 (\"CellCount\",\"Comments\",\"FugeRunProfileId\",\"Name\",\"Researcher\") VALUES (%2, %3, %4, %5, %6) RETURNING \"ExperimentId\"")
