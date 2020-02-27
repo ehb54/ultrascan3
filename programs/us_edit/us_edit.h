@@ -453,6 +453,7 @@ class US_Edit : public US_Widgets
       { showHelp.show_help( "manual/us_edit.html" ); };
  
  signals:
+      void data_loaded( void );
       void edit_complete_auto( QMap< QString, QString> & );
 };
 #endif

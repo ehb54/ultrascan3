@@ -224,7 +224,8 @@ bool US_AnaProfile::AnaProf2DSA::fromXml( QXmlStreamReader& xmli )
          else if ( ename == "job_2dsa_fm" )
          {
             QXmlStreamAttributes attr = xmli.attributes();
-            job1run        = US_Util::bool_flag( attr.value( "run" ).toString() );
+            //job1run        = US_Util::bool_flag( attr.value( "run" ).toString() );
+	    job2run        = US_Util::bool_flag( attr.value( "run" ).toString() );      // ALEXEY; shouldn't it be job2run ?
             job2nois       = attr.value( "noise" ).toString();
             fitrng         = attr.value( "fit_range" ).toString().toDouble();
             grpoints       = attr.value( "grid_points" ).toString().toInt();

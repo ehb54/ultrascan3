@@ -610,11 +610,11 @@ pb_plateau->setVisible(false);
    // details[ "protocolName" ] = QString("RxRPPARhet-PPRE-MWL_180419");
    // /****************************************************************************************/
 
-   // Data WITH existing Aprofile corresponding to existing protocol!!!
+   // // Data WITH existing Aprofile corresponding to existing protocol!!!
    // details[ "invID_passed" ] = QString("77");
    // details[ "filename" ]     = QString("JohnsonC_DNA-control_013020-run680");
    // details[ "protocolName" ] = QString("JohnsonC_DNA-control_013020");
-   // /****************************************************************************************/
+   //  /****************************************************************************************/
    
    // load_auto( details );
 
@@ -1993,6 +1993,8 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 
    all_loaded = true;
    le_status->setText( tr( "Data loaded..." ) );
+
+   emit data_loaded();
 
    editProfile.clear();
    centerpieceParameters.clear();

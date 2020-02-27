@@ -23,7 +23,9 @@
 #include "../us_edit/us_exclude_profile.h"
 #include "../us_edit/us_get_edit.h"
 #include "../us_edit/us_ri_noise.h"
-#include "../us_edit/us_select_lambdas.h" 
+#include "../us_edit/us_select_lambdas.h"
+
+#include "us_analysis_auto.h"
 
 #include "us_protocol_util.h"
 #include "us_project_gui.h"
@@ -127,6 +129,7 @@ class US_InitDialogueGui : public US_WidgetsDialog
      void switch_to_live_update_init(  QMap < QString, QString > & protocol_details );
      void switch_to_post_processing_init(  QMap < QString, QString > & protocol_details );
      void switch_to_editing_init(  QMap < QString, QString > & protocol_details );
+     void switch_to_analysis_init(  QMap < QString, QString > & protocol_details );
 };
 
 
@@ -272,6 +275,7 @@ class US_EditingGui : public US_WidgetsDialog
    void do_editing( QMap < QString, QString > & );
    void reset_data_editing( void );
    void to_analysis( QMap < QString, QString > & );
+   void resize_main( void );
 
  signals:
    void start_editing( QMap < QString, QString > & );
@@ -291,10 +295,11 @@ class US_AnalysisGui : public US_WidgetsDialog
          
   private:
     US_ComProjectMain*    mainw;      // Parent to all panels
+    US_Analysis_auto*     sdiag;
     int offset;
 
  protected:
-    //void resizeEvent(QResizeEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
       
  private slots:
    void do_analysis( QMap < QString, QString > & );

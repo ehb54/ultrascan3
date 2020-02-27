@@ -326,7 +326,8 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( epanInit, SIGNAL( switch_to_live_update_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
    connect( epanInit, SIGNAL( switch_to_post_processing_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & )  ) );
    connect( epanInit, SIGNAL( switch_to_editing_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_editing( QMap < QString, QString > & )  ) );
-      
+   connect( epanInit, SIGNAL( switch_to_analysis_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_analysis( QMap < QString, QString > & )  ) );
+         
    connect( this, SIGNAL( pass_used_instruments( QStringList & ) ), epanExp, SLOT( pass_used_instruments( QStringList &)  ) );
    
    connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
@@ -418,6 +419,7 @@ void US_ComProjectMain::initPanels( int  panx )
       epanInit  ->initAutoflowPanel();
     }
 
+  
   //curr_panx = panx;         // Set new current panel
 }
 
@@ -758,7 +760,11 @@ void US_ComProjectMain::switch_to_editing( QMap < QString, QString > & protocol_
    tabWidget->setCurrentIndex( 4 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
    curr_panx = 4;
 
-   // ALEXEY: Temporariy NOT lock here... Will need later
+   // Trigger resize to update size of the Edit_data
+  int curr_h = this->height() - 1;
+  int curr_w = this->width() - 1;
+
+  this->resize( QSize(curr_w, curr_h) );
    
    for (int i = 1; i < tabWidget->count(); ++i )
      {
@@ -1187,6 +1193,7 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   if ( stage == "ANALYSIS" )
     {
       qDebug() << "To ANALYSIS SWITCH ";
+      emit switch_to_analysis_init( protocol_details );
       
     }
   //and so on...
@@ -2017,6 +2024,9 @@ US_EditingGui::US_EditingGui( QWidget* topw )
    
    // //Later - do actual editing form sdiag (load_auto() ) - whatever it will be: (us_edit.cpp)
    connect( this, SIGNAL( start_editing( QMap < QString, QString > & ) ), sdiag, SLOT( load_auto ( QMap < QString, QString > & )  ) );
+   //emit signal after data loaded
+   connect( sdiag, SIGNAL( data_loaded(  ) ), this, SLOT( resize_main ( ) ) );
+   
    connect( this, SIGNAL( reset_data_editing_passed( ) ), sdiag, SLOT(  reset_editdata_panel (  )  ) );
 
    //ALEXEY: switch to Analysis
@@ -2033,6 +2043,15 @@ US_EditingGui::US_EditingGui( QWidget* topw )
 
    sdiag->show();
    
+}
+
+void US_EditingGui::resize_main( void )
+{
+  // Trigger resize to update size of the Edit_Data
+  int curr_h = mainw->height() + 1;
+  int curr_w = mainw->width() + 1;
+
+  mainw->resize( QSize(curr_w, curr_h) );
 }
 
 void US_EditingGui::resizeEvent(QResizeEvent *event)
@@ -2104,29 +2123,71 @@ US_AnalysisGui::US_AnalysisGui( QWidget* topw )
       
    QGridLayout* genL   = new QGridLayout();
 
-   // //QPlainTextEdit* panel_desc = new QPlainTextEdit(this);
-   QTextEdit* panel_desc = new QTextEdit(this);
-   panel_desc->viewport()->setAutoFillBackground(false);
-   panel_desc->setFrameStyle(QFrame::NoFrame);
-   panel_desc->setPlainText(" Tab to Analyse Experimental Data... ---UNDER CONSTRUCTION--- ");
-   panel_desc->setReadOnly(true);
-   //panel_desc->setMaximumHeight(30);
-   QFontMetrics m (panel_desc -> font()) ;
-   int RowHeight = m.lineSpacing() ;
-   panel_desc -> setFixedHeight  (2* RowHeight) ;
+   // // //QPlainTextEdit* panel_desc = new QPlainTextEdit(this);
+   // QTextEdit* panel_desc = new QTextEdit(this);
+   // panel_desc->viewport()->setAutoFillBackground(false);
+   // panel_desc->setFrameStyle(QFrame::NoFrame);
+   // panel_desc->setPlainText(" Tab to Analyse Experimental Data... ---UNDER CONSTRUCTION--- ");
+   // panel_desc->setReadOnly(true);
+   // //panel_desc->setMaximumHeight(30);
+   // QFontMetrics m (panel_desc -> font()) ;
+   // int RowHeight = m.lineSpacing() ;
+   // panel_desc -> setFixedHeight  (2* RowHeight) ;
 
-   int row = 0;
-   genL->addWidget( panel_desc,  row++,   0, 1, 12);
+   // int row = 0;
+   // genL->addWidget( panel_desc,  row++,   0, 1, 12);
  
    // assemble main
    main->addLayout(genL);
    main->addStretch();
 
-
-   // //Later - do actual analysis form sdiag - whatever it will be:
-   // connect( this, SIGNAL( start_analysis( QMap < QString, QString > & ) ), sdiag, SLOT( analyse_auto ( QMap < QString, QString > & )  ) );
+   // Open US_Analysis_auto ...  
+   sdiag = new US_Analysis_auto();
+   sdiag->setParent(this, Qt::Widget);
    
+   //Later - do actual analysis form sdiag - whatever it will be:
+   connect( this, SIGNAL( start_analysis( QMap < QString, QString > & ) ), sdiag, SLOT( initPanel ( QMap < QString, QString > & )  ) );
+   // In initPanel() - re-generate GUI based on # of rows corresponding to # stages in AProfile...
+
+   offset = 0;
+   sdiag->move(offset, 2*offset);
+   sdiag->setFrameShape( QFrame::Box);
+   sdiag->setLineWidth(2);
+
+   sdiag->show();
+
 }
+
+void US_AnalysisGui::resizeEvent(QResizeEvent *event)
+{
+    int tab_width = mainw->tabWidget->tabBar()->width();
+    int upper_height = mainw->gen_banner->height() + //mainw->welcome->height()
+      + mainw->logWidget->height() + mainw->test_footer->height();
+     
+    int new_main_w = mainw->width() - 3*offset - tab_width;
+    int new_main_h = mainw->height() - 4*offset - upper_height;
+    
+    //if (mainw->width() - offset > sdiag->width() || mainw->height() - 2*offset > sdiag->height()) {
+    if ( new_main_w > sdiag->width() || new_main_h > sdiag->height()) {
+      int newWidth = qMax( new_main_w, sdiag->width());
+      int newHeight = qMax( new_main_h, sdiag->height());
+      sdiag->setMaximumSize( newWidth, newHeight );
+      sdiag->resize( QSize(newWidth, newHeight) );
+      update();
+    }
+
+    //if (mainw->width() < sdiag->width() || mainw->height() < sdiag->height()) {
+    if ( new_main_w < sdiag->width() ||  new_main_h < sdiag->height() ) {
+      int newWidth = qMin( new_main_w, sdiag->width());
+      int newHeight = qMin( new_main_h, sdiag->height());
+      sdiag->setMaximumSize( newWidth, newHeight );
+      sdiag->resize( QSize(newWidth, newHeight) );
+      update();
+    }
+     
+    QWidget::resizeEvent(event);
+}
+
 
 void US_AnalysisGui::do_analysis( QMap < QString, QString > & protocol_details )
 {
