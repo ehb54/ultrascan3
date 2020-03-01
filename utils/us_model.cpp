@@ -147,6 +147,9 @@ bool US_Model::update_coefficients()
 // Calculate any missing coefficient values in a model component
 bool US_Model::calc_coefficients( SimulationComponent& component )
 {
+   // For documentation for the derivation of the coefficient calculations 
+   // please see: calc_coefficient_documentation.pdf in this directory
+
    bool   ok = true;
    double vbar;             // component vbar
    double volume;           // e.g., vbar * mw / AVOGADRO
@@ -155,7 +158,6 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
    double rsph_fac;         // radius_sphere factor; e.g., 0.06 * PI * VISC
    double onethird;         // one third ( 1.0 / 3.0 )
    double c;                // concentration
-   double t;                // temperature in kelvin
    double s;                // sedimentation coefficient
    double D;                // diffusion coefficient
    double mw;               // molecular weight
@@ -165,6 +167,8 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
    double f0;               // f-zero
    double s20w;
    double buoyancyb;
+// Ideal gas constant times 20 degrees C in Kelvin
+#define RT (R_GC*K20)
 
    // Ensure that we have a vbar we can use
    vbar           = component.vbar20;
@@ -175,11 +179,9 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
       component.vbar20 = vbar;
    }
 
-   t              = K20;                // temperature kelvin of 20 degr. C
    vol_fac        = 0.75 / M_PI;        // various factors used in calcs below
    onethird       = 1.0 / 3.0;
    rsph_fac       = 0.06 * M_PI * VISC_20W;
-   buoyancyb      = 1.0 - vbar * DENS_20W;
 
    s              = component.s;        // component coefficient values
    D              = component.D;
@@ -189,36 +191,44 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
    c              = component.signal_concentration;
    fv             = f;
 
+   // Adjust buoyancy to be consistent with s-value. Negative s-values require negative buoyancy.
+   // Unless custom grid is used, we set the vbar to the reciprocal of the positive s-value vbar.
+
+   buoyancyb      = 1.0 - ( vbar * DENS_20W );
+   if ( ( s < 0.0  &&  buoyancyb > 0.0 )  ||
+        ( s > 0.0  &&  buoyancyb < 0.0 ) )
+   {
+      buoyancyb      = 1.0 - ( DENS_20W / vbar );
+      vbar           = 1.0 / vbar;
+   }
+
    // Start with already calculated s if possible
    if ( s != 0.0 )
    {
       s20w           = s;
-      double ssgn    = ( s < 0.0 ) ? -1.0 : 1.0;
 
       // First check s and k (f_f0)
                                                  ///////////////
       if ( f_f0 != 0.0 )                         // s and f_f0
       {                                          ///////////////
-         double numer   = 0.02 * s * f_f0 * vbar * VISC_20W;
-         numer         *= ssgn;
+         // Please see calc_coefficient_documentation.pdf in this directory,
+         // equation 14, with adjustments for units in poise.
+         double numer   = 0.02 * vbar * s * VISC_20W * f_f0;
          f0             = 0.09 * VISC_20W * M_PI * sqrt( numer / buoyancyb );
          fv             = f_f0 * f0;
-         D              = R_GC * t / ( AVOGADRO * fv );
-         mw             = s * R_GC * t / ( D * buoyancyb );
-         mw            *= ssgn;
+         D              = RT / ( AVOGADRO * fv );
+         mw             = s * RT / ( D * buoyancyb );
       }
 
       // Next check s and D
                                                  ///////////////
       else if ( D != 0.0 )                       // s and D
       {                                          ///////////////
-         mw             = s * R_GC * t / ( D * buoyancyb );
-         mw            *= ssgn;
+         mw             = s * RT / ( D * buoyancyb );
          volume         = vbar * mw / AVOGADRO;
          radius_sphere  = pow( volume * vol_fac, onethird );
          f0             = radius_sphere * rsph_fac;
          fv             = mw * buoyancyb / ( s20w * AVOGADRO );
-         fv            *= ssgn;
          double ff0sv   = f_f0;
          f_f0           = fv / f0;
          double ffdif   = qAbs( ff0sv - f_f0 );
@@ -229,10 +239,8 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
                                                  ///////////////
       else if ( mw != 0.0 )                      // s and mw
       {                                          ///////////////
-         D              = s * R_GC * t / ( buoyancyb * mw );
-         D             *= ssgn;
+         D              = s * RT / ( buoyancyb * mw );
          fv             = mw * buoyancyb / ( s20w * AVOGADRO );
-         fv            *= ssgn;
          volume         = vbar * mw / AVOGADRO;
          radius_sphere  = pow( volume * vol_fac, onethird );
          f0             = radius_sphere * rsph_fac;
@@ -241,9 +249,8 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
                                                  ///////////////
       else if ( f != 0.0 )                       // s and f
       {                                          ///////////////
-         D              = R_GC * t / ( AVOGADRO * fv );
-         mw             = s * R_GC * t / ( D * buoyancyb );
-         mw            *= ssgn;
+         D              = RT / ( AVOGADRO * fv );
+         mw             = s * RT / ( D * buoyancyb );
          volume         = vbar * mw / AVOGADRO;
          radius_sphere  = pow( volume * vol_fac, onethird );
          f0             = radius_sphere * rsph_fac;
@@ -262,7 +269,7 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
                                                  ///////////////
       if ( D != 0.0 )                            // mw and D
       {                                          ///////////////
-         s              = D * buoyancyb * mw / ( R_GC * t );
+         s              = D * buoyancyb * mw / RT;
          fv             = mw * buoyancyb / ( s * AVOGADRO );
          f_f0           = fv / f0;
       }
@@ -271,14 +278,14 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
       {                                          ///////////////
          fv             = f_f0 * f0;
          s              = mw * buoyancyb / ( AVOGADRO * fv );
-         D              = s * R_GC * t / ( buoyancyb * mw );
+         D              = s * RT / ( buoyancyb * mw );
       }
                                                  ///////////////
       else if ( f != 0.0 )                       // mw and f
       {                                          ///////////////
          f_f0           = fv / f0;
          s              = mw * buoyancyb / ( AVOGADRO * fv );
-         D              = s * R_GC * t / ( buoyancyb * mw );
+         D              = s * RT / ( buoyancyb * mw );
       }
                                                  //****************************
       else                                       // do not have 2 valid coeffs
@@ -289,7 +296,7 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
    {                                             ///////////////
       if ( f_f0 >= 1.0 )                         // D and f_f0
       {                                          ///////////////
-         fv             = R_GC * t / ( AVOGADRO * D );
+         fv             = RT / ( AVOGADRO * D );
          f0             = fv / f_f0;
          radius_sphere  = f0 / ( 0.06 * M_PI * VISC_20W );
          double volume  = ( 4.0 / 3.0 ) * M_PI * pow( radius_sphere, 3.0 );
@@ -306,7 +313,7 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
    else if ( fv > 0.0  &&  f_f0 >= 1.0 )         // f and f_f0
    {                                             ///////////////
       f0             = fv / f_f0;
-      D              = R_GC * t / ( AVOGADRO * fv );
+      D              = RT / ( AVOGADRO * fv );
       radius_sphere  = f0 / ( 0.06 * M_PI * VISC_20W );
       double volume  = ( 4.0 / 3.0 ) * M_PI * pow( radius_sphere, 3.0 );
       mw             = volume * AVOGADRO / vbar;
@@ -332,6 +339,7 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
    component.mw   = mw;
    component.f_f0 = f_f0;
    component.f    = f;
+   component.vbar20 = vbar;
 
    return ok;
 }
