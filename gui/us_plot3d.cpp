@@ -661,7 +661,7 @@ if ((ii&63)==1&&(jj&63)==1) DbgLv(2) << "P3D:    rp: col" << jj
 
 //dataWidget->coordinates()->setAutoScale( true );
    QString annopad( "    " );
-   x_scale  = ymax / xmax;
+   x_scale  = qAbs( ymax / xmax );
    y_scale  = 1.0;
    z_scale  = zscale;
    xatitle  = xyAxisTitle( typex, x_norm );

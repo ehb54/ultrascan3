@@ -1313,16 +1313,14 @@ DbgLv(1) << "Plt3D";
       }
    }
 
-   // Open a 3D plot or reference an opened one, then send data
+   // Open a 3D plot control window or reference an opened one, then send data
    if ( p3d_ctld == NULL )
    {
       p3d_pltw     = NULL;
       p3d_ctld     = new US_MwlSPlotControl( this, &p3dxyz );
       p3d_ctld->show();
-      // Position near the upper right of the desktop
-      int cx       = qApp->desktop()->width() - p3d_ctld->width() - 40;
-      int cy       = 40;
-      p3d_ctld->move( cx, cy );
+      // Position inside the main window relative to its upper left
+      p3d_ctld->move( x() + 500, y() + 100 );
       connect( p3d_ctld, SIGNAL( has_closed()     ),
                this,     SLOT  ( p3dctrl_closed() ) );
    }

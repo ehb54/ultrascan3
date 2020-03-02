@@ -90,6 +90,7 @@ qDebug() << "PCtrl: xyzdat count" << xyzdat->count();
 
    ct_zscalefac->setMinimumWidth( lb_zscalefac->width() );
    adjustSize();
+   resize( 400, height() );
 qDebug() << "PCtrl:  w size" << size();
 }
 

@@ -859,7 +859,7 @@ DbgLv(1) << "P3D:ld:  xmin xmax ycmin ycmax" << xmin << xmax
 //dataWidget->coordinates()->setAutoScale( true );
    //QString annopad( "    " );
    QString annopad( "          " );
-   x_scale  = ymax / xmax;
+   x_scale  = qAbs( ymax / xmax );
    y_scale  = 1.0;
    z_scale  = zscale * ( x_scale * 0.40 );
    if ( x_norm != 1.0 )
