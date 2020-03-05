@@ -2,8 +2,7 @@
 #   copypkg-win   - copy files for packaging - Windows-64
 
 SRCDIR=/cygdrive/c/Users/demelerlab/ultrascan3
-##SOMOBASE=/cygdrive/c/Users/demelerlab/us3_somo
-QTBIN=/cygdrive/c/Qt/5.6.0/bin
+QTBIN=${QTDIR}/bin
 DESTDIR=/cygdrive/c/dist
 SYSTYPE=`uname -o`
 if [ "${SYSTYPE}" != "Cygwin" ]; then
