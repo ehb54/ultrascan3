@@ -3806,8 +3806,9 @@ DbgLv(1) << "EGOp: oCk:  oname" << oname << "irow" << irow << "ibtn" << ibtn;
    // Ignore if not Interference
    QString optype      = cc_osyss[ irow ]->button( ibtn )->text();
 DbgLv(1) << "EGOp: oCk:   optype" << optype;
-   if ( optype != tr( "Rayleigh Interference" ) )
-      return;
+
+   // if ( optype != tr( "Rayleigh Interference" ) )  //ALEXEY: couple checkboxes for all optics
+   //     return;
 
    // If Interference, get a list of same-cell rows; disconnect
    QString clabl       = cc_labls[ irow ]->text();
