@@ -231,20 +231,20 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
             currProf.pchans  [ nchn ] = chname;
             currProf.chndescs[ nchn ] = chentr;
             chx             = currProf.lc_ratios.count() - 1;
-            if ( chx < nchn )
+            if ( chx <= nchn )
                currProf.lc_ratios << currProf.lc_ratios[ chx ];
             chx             = currProf.lc_tolers.count() - 1;
-            if ( chx < nchn )
+            if ( chx <= nchn )
                currProf.lc_tolers << currProf.lc_tolers[ chx ];
             chx             = currProf.l_volumes.count() - 1;
-            if ( chx < nchn )
+            if ( chx <= nchn )
                currProf.l_volumes << currProf.l_volumes[ chx ];
             chx             = currProf.lv_tolers.count() - 1;
-            if ( chx < nchn )
+            if ( chx <= nchn )
                currProf.lv_tolers << currProf.lv_tolers[ chx ];
 DbgLv(1) << "APG: ipro:     chx nchn lvt" << chx << nchn;
             chx             = currProf.data_ends.count() - 1;
-            if ( chx < nchn )
+            if ( chx <= nchn )
                currProf.data_ends << currProf.data_ends[ chx ];
 DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn;
          }
@@ -733,6 +733,7 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
    for ( int ii = 0; ii < nchn; ii++ )
    {
       QString schan( sl_chnsel[ ii ] );
+DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       QLineEdit* le_chann = us_lineedit( schan, 0, true  );
       QLineEdit* le_lcrat = us_lineedit( "1.0", 0, false );
       QLineEdit* le_lctol = us_lineedit( "5",   0, false );
@@ -782,6 +783,7 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
       connect( le_daend,    SIGNAL( editingFinished   ( void ) ),
                this,        SLOT(   daend_text_changed( void ) ) );
    }
+DbgLv(1) << "Ge:SL: nchn" << nchn << "lcrat size" << le_lcrats.count();
 
    int ihgt        = pb_aproname->height();
    QSpacerItem* spacer1 = new QSpacerItem( 20, ihgt );

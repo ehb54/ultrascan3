@@ -1,7 +1,9 @@
 #!/usr/bin/bash
 #   copypkg-win   - copy files for packaging - Windows-64
 
-SRCDIR=/cygdrive/c/Users/demelerlab/ultrascan3
+SRCDIR=/cygdrive/c/Users/gegorbet/us3_git/ultrascan3
+##SOMOBASE=/cygdrive/c/Users/gegorbet/us3_git/us3_somo
+SOMOBASE=${SRCDIR}
 QTBIN=${QTDIR}/bin
 DESTDIR=/cygdrive/c/dist
 SYSTYPE=`uname -o`
@@ -21,7 +23,7 @@ QTDLLS=" \
  Qt53DQuickInput.dll Qt53DQuickRender.dll Qt53DRender.dll \
  Qt5Bluetooth.dll Qt5CLucene.dll Qt5Concurrent.dll \
  Qt5Core.dll Qt5DBus.dll \
- Qt5Gui.dll Qt5Help.dll Qt5LabsTemplates.dll Qt5Location.dll \
+ Qt5Gui.dll Qt5Help.dll Qt5Location.dll \
  Qt5Network.dll Qt5Nfc.dll Qt5OpenGL.dll Qt5Positioning.dll \
  Qt5PrintSupport.dll Qt5Qml.dll \
  Qt5Quick.dll Qt5QuickParticles.dll Qt5QuickTest.dll Qt5QuickWidgets.dll \
