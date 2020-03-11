@@ -231,22 +231,16 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
             currProf.pchans  [ nchn ] = chname;
             currProf.chndescs[ nchn ] = chentr;
             chx             = currProf.lc_ratios.count() - 1;
-            if ( chx <= nchn )
+            if ( chx < nchn )
+            {
                currProf.lc_ratios << currProf.lc_ratios[ chx ];
-            chx             = currProf.lc_tolers.count() - 1;
-            if ( chx <= nchn )
                currProf.lc_tolers << currProf.lc_tolers[ chx ];
-            chx             = currProf.l_volumes.count() - 1;
-            if ( chx <= nchn )
                currProf.l_volumes << currProf.l_volumes[ chx ];
-            chx             = currProf.lv_tolers.count() - 1;
-            if ( chx <= nchn )
                currProf.lv_tolers << currProf.lv_tolers[ chx ];
-DbgLv(1) << "APG: ipro:     chx nchn lvt" << chx << nchn;
-            chx             = currProf.data_ends.count() - 1;
-            if ( chx <= nchn )
                currProf.data_ends << currProf.data_ends[ chx ];
-DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn;
+            }
+DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
+ << "dae size" << currProf.data_ends.count() << "chentr" << chentr;
          }
          else
          {  // Append channel and channel description
@@ -260,7 +254,8 @@ DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn;
             currProf.lv_tolers << currProf.lv_tolers[ lch ];
             currProf.data_ends << currProf.data_ends[ lch ];
 DbgLv(1) << "APG: ipro:     lch" << lch << "lv_tol da_end"
- << currProf.lv_tolers[ lch ] << currProf.data_ends[ lch ];
+ << currProf.lv_tolers[ lch ] << currProf.data_ends[ lch ]
+ << "dae size" << currProf.data_ends.count();
          }
          nchn++;
       }
@@ -670,6 +665,7 @@ DbgLv(1) << "APGe: bgL:    scrollArea children count ZERO";
 
    genL            = new QGridLayout();
    genL->setObjectName( "GeneralLayout" );
+   le_channs.clear();
    le_lcrats.clear();
    le_lctols.clear();
    le_ldvols.clear();
@@ -749,6 +745,7 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       le_lvtol->setObjectName( stchan + "loadvol_tolerance" );
       le_daend->setObjectName( stchan + "dataend" );
 
+      le_channs << le_chann;
       le_lcrats << le_lcrat;
       le_lctols << le_lctol;
       le_ldvols << le_ldvol;

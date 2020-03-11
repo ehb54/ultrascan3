@@ -75,6 +75,7 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       QLineEdit*   le_aproname;
       QLineEdit*   le_protname;
 
+      QList< QLineEdit* >    le_channs;
       QList< QLineEdit* >    le_lcrats;
       QList< QLineEdit* >    le_lctols;
       QList< QLineEdit* >    le_ldvols;

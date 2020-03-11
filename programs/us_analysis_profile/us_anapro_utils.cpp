@@ -344,14 +344,21 @@ DbgLv(1) << "APGe: inP:   ox" << ii << "oName" << objname;
    genL->setObjectName( "GeneralLayout" );
 
    // Build the General Layout if need be
+DbgLv(1) << "APGe: inP: 0)tol,dae size" << currProf->lv_tolers.count() << currProf->data_ends.count();
+DbgLv(1) << "APGe: inP: 0)le_chn,lcr size" << le_channs.count() << le_lcrats.count();
    build_general_layout( );
-DbgLv(1) << "APGe: inP: tol,dae size" << currProf->lv_tolers.count() << currProf->data_ends.count();
+   nchan          = le_channs.count();
+DbgLv(1) << "APGe: inP: 1)tol,dae size" << currProf->lv_tolers.count() << currProf->data_ends.count();
+DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.count()
+ << "nchan_gui" << nchan;
 
-   if ( currProf->lc_ratios.count() == nchan )
+   if ( le_lcrats.count() == nchan )
    { // Reset General channel parameter gui elements
       for ( int ii = 0; ii < nchan; ii++ )
       {
-         int kk          = qMin( ii, currProf->lc_ratios.count() - 1 );
+         int kk          = qMin( ii, sl_chnsel.count() - 1 );
+         le_channs[ ii ]->setText( sl_chnsel[ kk ] );
+         kk              = qMin( ii, currProf->lc_ratios.count() - 1 );
          le_lcrats[ ii ]->setText( QString::number( currProf->lc_ratios[ kk ] ) );
          kk              = qMin( ii, currProf->lc_tolers.count() - 1 );
          le_lctols[ ii ]->setText( QString::number( currProf->lc_tolers[ kk ] ) );
@@ -361,10 +368,13 @@ DbgLv(1) << "APGe: inP: tol,dae size" << currProf->lv_tolers.count() << currProf
          le_lvtols[ ii ]->setText( QString::number( currProf->lv_tolers[ kk ] ) );
          kk              = qMin( ii, currProf->data_ends.count() - 1 );
          le_daends[ ii ]->setText( QString::number( currProf->data_ends[ kk ] ) );
-DbgLv(1) << "APGe: inP:    ii kk" << ii << kk << "lvtol daend dae[kk]"
+DbgLv(1) << "APGe: inP:    ii kk" << ii << kk << "chann" << sl_chnsel[kk] << "lvtol daend dae[kk]"
  << currProf->lv_tolers[ii] << currProf->data_ends[ii] << currProf->data_ends[kk];
       }
    }
+else
+ DbgLv(1) << "APGe: inP:  lcrats count, nchan" << le_lcrats.count() << nchan;
+
 }
 
 // Check the Run name
