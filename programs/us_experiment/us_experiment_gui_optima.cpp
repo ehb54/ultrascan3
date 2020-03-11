@@ -147,8 +147,28 @@ void US_ExperimentMain::reset( void )
 
   epanRotor->setFirstLab();  //need to reset Lab && savePanel() for Rotors
 
-  epanAProfile->reset_sdiag(); //need to reset basic AProfile's protocol to defaults
+  /**************** */
+  //Cells
+  currProto.rpCells.ncell = 0;
+  epanCells->initPanel();
 
+  //Solutions
+  currProto.rpSolut.nschan = 0;
+  epanSolutions->initPanel();
+
+  //Optics
+  currProto.rpOptic.nochan = 0;
+  epanOptical->initPanel();
+
+  //Ranges
+  currProto.rpRange.nranges = 0;
+  epanRanges->initPanel();
+  
+  //AProfile
+  epanAProfile->reset_sdiag(); //need to reset basic AProfile's protocol to defaults
+  /****************************/
+  
+  
   tabWidget->setCurrentIndex( 0 );
 
   epanGeneral->resetPanel();

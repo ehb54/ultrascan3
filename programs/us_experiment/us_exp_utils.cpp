@@ -2032,7 +2032,16 @@ DbgLv(1) << "EGOp:inP:  ii" << ii << "channel" << channel
       QString ckscan1     = ckbox1->text();
       QString ckscan2     = ckbox2->text();
       QString ckscan3     = ckbox3->text();
-      ckbox1->setChecked( prscans.contains( ckscan1 ) );
+
+      //ALEXEY: set checkboxes checked based on the protocol loaded, rather than by default
+      if ( !scan1.isEmpty() )
+	ckbox1->setChecked(true);
+      if ( !scan2.isEmpty() )
+	ckbox2->setChecked(true);
+      else
+	ckbox2->setChecked(false);
+      
+      //ckbox1->setChecked( prscans.contains( ckscan1 ) );
       //ckbox2->setChecked( prscans.contains( ckscan2 ) );   //ALEXEY do not check Interference by default
 
       //ALEXEY: if last cell is used as centerpiece, disable Rayleigh Interference (ckbox2)
