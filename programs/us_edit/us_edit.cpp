@@ -610,16 +610,16 @@ pb_plateau->setVisible(false);
    // details[ "protocolName" ] = QString("RxRPPARhet-PPRE-MWL_180419");
    // // /****************************************************************************************/
 
-    // Data WITH existing Aprofile corresponding to existing protocol!!!
-    details[ "invID_passed" ] = QString("77");
-    details[ "filename" ]     = QString("JohnsonC_DNA-control_013020-run680");
-    details[ "protocolName" ] = QString("JohnsonC_DNA-control_013020");
-     /****************************************************************************************/
+    // // Data WITH existing Aprofile corresponding to existing protocol!!!
+    // details[ "invID_passed" ] = QString("77");
+    // details[ "filename" ]     = QString("JohnsonC_DNA-control_013020-run680");
+    // details[ "protocolName" ] = QString("JohnsonC_DNA-control_013020");
+    //  /****************************************************************************************/
 
-     // // Interference Data WITH existing Aprofile corresponding to existing protocol!!!
-     // details[ "invID_passed" ] = QString("6");
-     // details[ "filename" ]     = QString("Comproject-itf-031220-run1176");
-     // details[ "protocolName" ] = QString("Comproject-itf-031220");
+   // Interference Data WITH existing Aprofile corresponding to existing protocol!!!
+   details[ "invID_passed" ] = QString("6");
+   details[ "filename" ]     = QString("Comproject-itf-031220-run1176");
+   details[ "protocolName" ] = QString("Comproject-itf-031220");
      //  /****************************************************************************************/
    
    load_auto( details );
@@ -4995,6 +4995,7 @@ void US_Edit::remove_spikes( void )
    pb_write ->setEnabled( true );
    replot();
 
+   
 }
 
 
@@ -5079,6 +5080,8 @@ void US_Edit::remove_spikes_auto( void )
      }
 
    pb_undo -> setEnabled( true );
+
+   qDebug() << "pb_spikes->icon() IS NULL ? " << pb_spikes->icon().isNull();
 }
 
 
@@ -5986,18 +5989,23 @@ void US_Edit::write_auto( void )
       {  // Write single triple's edit
 
 	qDebug() << "Saving non-MWL";
-	for ( int trx = 0; trx < cb_triple->count(); trx++ )
+	
+	if ( dataType != "IP" )
 	  {
-	    qDebug() << "Writing non-MWL, channel: " << trx << ": " << cb_triple->itemText( trx );
-	    if ( dataType != "IP" ) 
-	      write_triple_auto( trx );
-	    else
+	    for ( int trx = 0; trx < cb_triple->count(); trx++ )
 	      {
-		// <---- For now: for Interference data, do editing && save manually
-		bottom = centerpieceParameters[ trx ][1].toDouble();  //Should be from centerpiece info from protocol 
-		write_triple();           
+		qDebug() << "Writing non-MWL, channel: " << trx << ": " << cb_triple->itemText( trx );
+		write_triple_auto( trx );
 	      }
 	  }
+	else
+	  {
+	    // <---- For now: for Interference data, do editing && save manually
+	    triple_index = cb_triple->currentIndex();
+	    bottom = centerpieceParameters[ triple_index ][1].toDouble();  //Should be from centerpiece info from protocol 
+	    write_triple();           
+	  }
+	  
       }
    }
 
@@ -8236,7 +8244,8 @@ DbgLv(1) << "EDT:WrXml:  waveln" << waveln;
 	}
       else
 	{
-	  if ( is_spike_auto )
+	  //if ( is_spike_auto )
+	  if ( is_spike_auto || dataType == "IP" ) //ALEXEY: for now, for interference data which are processed manually....
 	    {
 	      xml.writeStartElement( "remove_spikes" );
 	      xml.writeEndElement  ();
