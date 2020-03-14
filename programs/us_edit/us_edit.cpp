@@ -608,15 +608,21 @@ pb_plateau->setVisible(false);
    // details[ "filename" ]     = QString("RxRPPARhet-PPRE-MWL_180419-run352");
    // details[ "invID_passed" ] = QString("41");
    // details[ "protocolName" ] = QString("RxRPPARhet-PPRE-MWL_180419");
-   // /****************************************************************************************/
+   // // /****************************************************************************************/
 
-   // // Data WITH existing Aprofile corresponding to existing protocol!!!
-   // details[ "invID_passed" ] = QString("77");
-   // details[ "filename" ]     = QString("JohnsonC_DNA-control_013020-run680");
-   // details[ "protocolName" ] = QString("JohnsonC_DNA-control_013020");
-   //  /****************************************************************************************/
+    // Data WITH existing Aprofile corresponding to existing protocol!!!
+    details[ "invID_passed" ] = QString("77");
+    details[ "filename" ]     = QString("JohnsonC_DNA-control_013020-run680");
+    details[ "protocolName" ] = QString("JohnsonC_DNA-control_013020");
+     /****************************************************************************************/
+
+     // // Interference Data WITH existing Aprofile corresponding to existing protocol!!!
+     // details[ "invID_passed" ] = QString("6");
+     // details[ "filename" ]     = QString("Comproject-itf-031220-run1176");
+     // details[ "protocolName" ] = QString("Comproject-itf-031220");
+     //  /****************************************************************************************/
    
-   // load_auto( details );
+   load_auto( details );
 
    
 
@@ -1991,7 +1997,7 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 
    /***************** TESTING ******************************************/
 
-   all_loaded = true;
+   //all_loaded = true;
    le_status->setText( tr( "Data loaded..." ) );
 
    emit data_loaded();
@@ -2045,39 +2051,55 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
        qDebug() << "Range_right && Loading volume FROM AProfile: " << triple_name << ", " << range_right << ", " << aprofile_volume;
 
        //Find meniscus
-       meniscus = find_meniscus_auto();
-
-       le_meniscus ->setText( QString::number( meniscus,   'f', 3 ) );
-
-       range_left    = meniscus + _RNGLEFT_OFFSET_;
-       le_dataStart->setText( QString::number( range_left, 'f', 3 ) );
+       if ( dataType != "IP" )
+	 {
+	   meniscus = find_meniscus_auto();
+      
        
-       
-       le_dataEnd  ->setText( QString::number( range_right, 'f', 3 ) );
-       // plateau      = range_right - _PLATEAU_OFFSET_;
-       // le_plateau  ->setText( QString::number( plateau,     'f', 3 ) );
-       
-       step = PLATEAU;
-       //plot_range();
-       next_step();
-
-       //ALEXEY: here create a QMap to couple current triple AND meniscus, ranges, plateau and baseline;
-       // then, use this QMap when plotting plot_range() in new_triple_auto()...
-
-       triple_info.clear();
-       triple_info <<  QString::number(meniscus)
-		   <<  QString::number(range_left)
-		   <<  QString::number(range_right)
-		   <<  QString::number(plateau)
-		   <<  QString::number(baseline)
-		   <<  QString::number(baseline_od);
-
-       //ALEXEY: get all cb_triple listbox items (texts)...
-       editProfile[ triple_name ] = triple_info;
-
-       qDebug() << triple_name  << ", " << triple_info;
-       
+	   le_meniscus ->setText( QString::number( meniscus,   'f', 3 ) );
+	   
+	   range_left    = meniscus + _RNGLEFT_OFFSET_;
+	   le_dataStart->setText( QString::number( range_left, 'f', 3 ) );
+	   
+	   
+	   le_dataEnd  ->setText( QString::number( range_right, 'f', 3 ) );
+	   // plateau      = range_right - _PLATEAU_OFFSET_;
+	   // le_plateau  ->setText( QString::number( plateau,     'f', 3 ) );
+	   
+	   step = PLATEAU;
+	   //plot_range();
+	   next_step();
+	   
+	   //ALEXEY: here create a QMap to couple current triple AND meniscus, ranges, plateau and baseline;
+	   // then, use this QMap when plotting plot_range() in new_triple_auto()...
+	   
+	   triple_info.clear();
+	   triple_info <<  QString::number(meniscus)
+		       <<  QString::number(range_left)
+		       <<  QString::number(range_right)
+		       <<  QString::number(plateau)
+		       <<  QString::number(baseline)
+		       <<  QString::number(baseline_od);
+	   
+	   //ALEXEY: get all cb_triple listbox items (texts)...
+	   editProfile[ triple_name ] = triple_info;
+	   
+	   qDebug() << triple_name  << ", " << triple_info;
+	   
+	 }
+       else
+	 {
+	   // <---- For now: for Interference data, do editing && save manually
+	   pb_meniscus->setHidden( false );
+	   pb_airGap->setHidden( false );
+	   le_airGap->setHidden( false );
+	 }
      }
+
+   if ( editProfile.count() == cb_triple->count() )
+     all_loaded = true;
+
+   qDebug() << "ALL_LOADED: " << all_loaded;
 
    if ( isMwl )
      {
@@ -2085,6 +2107,7 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
        pb_spikes   ->setEnabled( true );
      }
    else
+     //if (  dataType != "IP" )
      new_triple_auto( 0 );
 
    pb_write->setEnabled( true );
@@ -5030,7 +5053,7 @@ void US_Edit::remove_spikes_auto( void )
    pb_write ->setEnabled( true );
    replot();
 
-   if ( us_edit_auto_mode )
+   if ( us_edit_auto_mode && all_loaded )
      {
        meniscus      = editProfile[ cb_triple->currentText() ][0].toDouble();
        range_left    = editProfile[ cb_triple->currentText() ][1].toDouble();
@@ -5090,7 +5113,7 @@ void US_Edit::undo_auto( void )
 
    replot();
 
-   if (us_edit_auto_mode  )
+   if (us_edit_auto_mode  && all_loaded )
      {
        meniscus      = editProfile[ cb_triple->currentText() ][0].toDouble();
        range_left    = editProfile[ cb_triple->currentText() ][1].toDouble();
@@ -5135,17 +5158,19 @@ void US_Edit::undo_auto( void )
    spikes      = false;
    noise_order = 0;
 
-   // ALEXEY: resize up to (1) meniscus; (2) left_range; (3) right_range; (4) plateau; (5) baseline; (6) baseline_od 
-   for (int i=0; i < editProfile[ cb_triple->currentText() ].count(); i++)
+   if ( all_loaded )
      {
-       if (i > 5)
-	 editProfile[ cb_triple->currentText() ].removeAt(i);
+       // ALEXEY: resize up to (1) meniscus; (2) left_range; (3) right_range; (4) plateau; (5) baseline; (6) baseline_od 
+       for (int i=0; i < editProfile[ cb_triple->currentText() ].count(); i++)
+	 {
+	   if (i > 5)
+	     editProfile[ cb_triple->currentText() ].removeAt(i);
+	 }
+       
+       editProfile[ cb_triple->currentText() ] << QString("spike_false");
+       
+       qDebug() << cb_triple->currentText()  << ", " << editProfile[ cb_triple->currentText() ];
      }
-   
-   editProfile[ cb_triple->currentText() ] << QString("spike_false");
-
-   qDebug() << cb_triple->currentText()  << ", " << editProfile[ cb_triple->currentText() ];
-   
 
    // Remove icons
    pb_noise       ->setIcon( QIcon() );
@@ -5964,7 +5989,14 @@ void US_Edit::write_auto( void )
 	for ( int trx = 0; trx < cb_triple->count(); trx++ )
 	  {
 	    qDebug() << "Writing non-MWL, channel: " << trx << ": " << cb_triple->itemText( trx );
-	    write_triple_auto( trx );
+	    if ( dataType != "IP" ) 
+	      write_triple_auto( trx );
+	    else
+	      {
+		// <---- For now: for Interference data, do editing && save manually
+		bottom = centerpieceParameters[ trx ][1].toDouble();  //Should be from centerpiece info from protocol 
+		write_triple();           
+	      }
 	  }
       }
    }
