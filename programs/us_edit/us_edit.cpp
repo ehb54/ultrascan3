@@ -616,13 +616,13 @@ pb_plateau->setVisible(false);
     // details[ "protocolName" ] = QString("JohnsonC_DNA-control_013020");
     //  /****************************************************************************************/
 
-   // Interference Data WITH existing Aprofile corresponding to existing protocol!!!
-   details[ "invID_passed" ] = QString("6");
-   details[ "filename" ]     = QString("Comproject-itf-031220-run1176");
-   details[ "protocolName" ] = QString("Comproject-itf-031220");
-     //  /****************************************************************************************/
+   // // Interference Data WITH existing Aprofile corresponding to existing protocol!!!
+   // details[ "invID_passed" ] = QString("6");
+   // details[ "filename" ]     = QString("Comproject-itf-031220-run1176");
+   // details[ "protocolName" ] = QString("Comproject-itf-031220");
+   //   //  /****************************************************************************************/
    
-   load_auto( details );
+   // load_auto( details );
 
    
 
