@@ -150,6 +150,7 @@ class US_Edit : public US_Widgets
       QLabel*            lb_dataStart;
       QLabel*            lb_dataEnd;
       QLabel*            lb_meniscus;
+      QLabel*            lb_airGap;
 
       QLineEdit*         le_status;
       QLineEdit*         le_investigator;
@@ -308,6 +309,10 @@ class US_Edit : public US_Widgets
       void set_colors        ( const QList< int >& );
 
       double find_meniscus_auto ( void );
+      double find_meniscus_interference_auto ( void );
+      QVector<double> find_airGap_interference_auto ( void );
+      QVector<double> airGap_values;
+      
       int  scan_db_auto      ( void );
       void create_descs_auto ( QStringList&, QStringList&, int );
       void load_db_auto      ( QList< DataDesc_auto >& );

@@ -242,6 +242,7 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
 
    // Air Gap (hidden by default)
    pb_airGap = us_pushbutton( tr( "Specify Air Gap" ), false );
+   lb_airGap = us_label(      tr( "Air Gap:" ), -1 );
    le_airGap = us_lineedit( "", 1, true );
    pb_airGap->setHidden( true );
    le_airGap->setHidden( true );
@@ -403,7 +404,10 @@ pb_plateau->setVisible(false);
    specs->addWidget( le_meniscus,     s_row++, 3, 1, 3 );
    
    specs->addWidget( pb_meniscus,     s_row++, 3, 1, 3 );
+
+   // ALEXEY: for auto Interference
    specs->addWidget( pb_airGap,       s_row,   0, 1, 3 );
+   specs->addWidget( lb_airGap,       s_row,   0, 1, 3 );
    specs->addWidget( le_airGap,       s_row++, 3, 1, 3 );
 //   specs->addWidget( pb_dataRange,    s_row,   0, 1, 3 );
 //   specs->addWidget( le_dataRange,    s_row++, 3, 1, 3 );
@@ -499,6 +503,8 @@ pb_plateau->setVisible(false);
 
        pb_meniscus    ->hide();
        pb_dataRange   ->hide();
+
+       pb_airGap      ->hide();  
 
        pb_noise       ->hide();
        pb_residuals   ->hide();
@@ -610,17 +616,17 @@ pb_plateau->setVisible(false);
    // details[ "protocolName" ] = QString("RxRPPARhet-PPRE-MWL_180419");
    // // /****************************************************************************************/
 
-    // // Data WITH existing Aprofile corresponding to existing protocol!!!
-    // details[ "invID_passed" ] = QString("77");
-    // details[ "filename" ]     = QString("JohnsonC_DNA-control_013020-run680");
-    // details[ "protocolName" ] = QString("JohnsonC_DNA-control_013020");
-    //  /****************************************************************************************/
+     // // Data WITH existing Aprofile corresponding to existing protocol!!!
+     // details[ "invID_passed" ] = QString("77");
+     // details[ "filename" ]     = QString("JohnsonC_DNA-control_013020-run680");
+     // details[ "protocolName" ] = QString("JohnsonC_DNA-control_013020");
+     //  /****************************************************************************************/
 
-   // // Interference Data WITH existing Aprofile corresponding to existing protocol!!!
-   // details[ "invID_passed" ] = QString("6");
-   // details[ "filename" ]     = QString("Comproject-itf-031220-run1176");
-   // details[ "protocolName" ] = QString("Comproject-itf-031220");
-   //   //  /****************************************************************************************/
+   //  // Interference Data WITH existing Aprofile corresponding to existing protocol!!!
+   //  details[ "invID_passed" ] = QString("6");
+   //  details[ "filename" ]     = QString("Comproject-itf-031220-run1176");
+   //  details[ "protocolName" ] = QString("Comproject-itf-031220");
+   //    //  /****************************************************************************************/
    
    // load_auto( details );
 
@@ -2054,8 +2060,7 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
        if ( dataType != "IP" )
 	 {
 	   meniscus = find_meniscus_auto();
-      
-       
+             
 	   le_meniscus ->setText( QString::number( meniscus,   'f', 3 ) );
 	   
 	   range_left    = meniscus + _RNGLEFT_OFFSET_;
@@ -2079,7 +2084,8 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 		       <<  QString::number(range_right)
 		       <<  QString::number(plateau)
 		       <<  QString::number(baseline)
-		       <<  QString::number(baseline_od);
+		       <<  QString::number(baseline_od)
+		       <<  QString("spike_false");
 	   
 	   //ALEXEY: get all cb_triple listbox items (texts)...
 	   editProfile[ triple_name ] = triple_info;
@@ -2090,9 +2096,82 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
        else
 	 {
 	   // <---- For now: for Interference data, do editing && save manually
-	   pb_meniscus->setHidden( false );
-	   pb_airGap->setHidden( false );
-	   le_airGap->setHidden( false );
+	   //pb_meniscus->setHidden( false );
+	   //pb_airGap->setHidden( false );
+	   //le_airGap->setHidden( false );
+
+
+	   //find meniscus
+	   meniscus = find_meniscus_interference_auto();
+	   
+	   //find airGap && adjust interference_data
+	   airGap_values = find_airGap_interference_auto();
+
+	   airGap_left  = airGap_values[0];
+	   airGap_right = airGap_values[1];
+	   
+	   US_DataIO::EditValues  edits;
+	   edits.airGapLeft  = airGap_left;
+	   edits.airGapRight = airGap_right;
+	   
+	   QList< int > excludes;
+           
+	   for ( int i = 0; i < data.scanData.size(); i++ )
+	     if ( ! includes.contains( i ) ) edits.excludes << i;
+	   
+	   DbgLv(1) << "AGap: L R" << airGap_left << airGap_right << " AdjIntf";
+	   US_DataIO::adjust_interference( data, edits );
+	   
+	   // Un-zoom
+	   if ( plot->btnZoom->isChecked() )
+	     plot->btnZoom->setChecked( false );
+	   
+	   // Display the data
+	   QString wkstr;
+	   le_airGap->setText( wkstr.sprintf( "%.3f - %.3f", 
+					      airGap_left, airGap_right ) );
+	   
+	   step          = RANGE;
+	   range_left    = meniscus + _RNGLEFT_OFFSET_;
+
+	   le_meniscus ->setText( QString::number( meniscus,   'f', 3 ) );
+	   le_dataStart->setText( QString::number( range_left, 'f', 8 ) );
+	   le_dataEnd  ->setText( QString::number( range_right, 'f', 3 ) );
+
+	   // RANGES
+	   edits.rangeLeft    = range_left;
+	   edits.rangeRight   = range_right;
+	   edits.gapTolerance = ct_gaps->value();
+
+	   qDebug() << "RANGE: edits.gapTolerance: " << edits.gapTolerance;
+	   
+	   US_DataIO::calc_integral( data, edits );
+	   
+	   
+	   step = PLATEAU;
+	   //plot_range();              //ALEXEY <--- here applies the gap removal
+	   next_step();
+	  	  	   
+	   //qApp->processEvents();
+	   
+	   //ALEXEY: here create a QMap to couple current triple AND meniscus, ranges, plateau and baseline;
+	   // then, use this QMap when plotting plot_range() in new_triple_auto()...
+	   
+	   triple_info.clear();
+	   triple_info <<  QString::number(meniscus)
+		       <<  QString::number(range_left)
+		       <<  QString::number(range_right)
+		       <<  QString::number(plateau)
+		       <<  QString::number(baseline)
+		       <<  QString::number(baseline_od)
+		       <<  QString("spike_false")
+		       <<  QString::number(airGap_left)
+		       <<  QString::number(airGap_right);
+	   
+	   //ALEXEY: get all cb_triple listbox items (texts)...
+	   editProfile[ triple_name ] = triple_info;
+	   
+	   qDebug() << triple_name  << ", " << triple_info;
 	 }
      }
 
@@ -2108,7 +2187,7 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
      }
    else
      //if (  dataType != "IP" )
-     new_triple_auto( 0 );
+     new_triple_auto( 0 );                  //ALEXEY <--- here does NOT applies the gap removal
 
    pb_write->setEnabled( true );
    pb_undo ->setEnabled( false ); 
@@ -2420,6 +2499,24 @@ void US_Edit::read_centerpiece_params( int trx )
 		  << centerpiece_info[ "angle" ];
 
    centerpieceParameters[ trx ] = centparms_info;
+}
+
+
+QVector<double> US_Edit::find_airGap_interference_auto()
+{
+  QVector<double> airGap_vals;
+
+  airGap_vals.push_back(5.85);
+  airGap_vals.push_back(5.9);
+  
+  
+  return airGap_vals;
+}
+
+double US_Edit::find_meniscus_interference_auto()
+{
+  double meniscus_av = 5.95;
+  return meniscus_av;
 }
 
 double US_Edit::find_meniscus_auto()
@@ -3730,7 +3827,7 @@ DbgLv(1) << "AGap:  plot_range()";
 
                   set_meniscus();
                }
-            }
+	    }
 
             if ( total_edits >= total_speeds )
             {
@@ -5002,7 +5099,33 @@ void US_Edit::remove_spikes( void )
 // Remove spikes
 void US_Edit::remove_spikes_auto( void )
 {
-   double smoothed_value;
+
+  //ALEXEY: Apply data modifications like adjust_interference && calc_integral for IP data
+  if ( dataType == "IP" )
+    {
+      airGap_left   = editProfile[ cb_triple->currentText() ][7].toDouble();
+      airGap_right  = editProfile[ cb_triple->currentText() ][8].toDouble();
+      
+      US_DataIO::EditValues  edits;
+      edits.airGapLeft  = airGap_left;
+      edits.airGapRight = airGap_right;
+      
+      QList< int > excludes;
+      
+      for ( int i = 0; i < data.scanData.size(); i++ )
+	if ( ! includes.contains( i ) ) edits.excludes << i;
+      
+      US_DataIO::adjust_interference( data, edits );
+      
+      edits.rangeLeft    = range_left;
+      edits.rangeRight   = range_right;
+      edits.gapTolerance = ct_gaps->value();
+      
+      US_DataIO::calc_integral( data, edits );
+    }
+  /**************************************************************************************/
+  
+  double smoothed_value;
 
    // For each scan
    for ( int i = 0; i < data.scanData.size(); i++ ) 
@@ -5039,14 +5162,16 @@ void US_Edit::remove_spikes_auto( void )
 
    pb_spikes->setIcon   ( check );
    
-   // ALEXEY: resize up to (1) meniscus; (2) left_range; (3) right_range; (4) plateau; (5) baseline; (6) baseline_od
-   for (int i=0; i < editProfile[ cb_triple->currentText() ].count(); i++)
-     {
-       if (i > 5)
-	 editProfile[ cb_triple->currentText() ].removeAt(i);
-     }
+   // // ALEXEY: resize up to (1) meniscus; (2) left_range; (3) right_range; (4) plateau; (5) baseline; (6) baseline_od
+   // for (int i=0; i < editProfile[ cb_triple->currentText() ].count(); i++)
+   //   {
+   //     if (i > 5)
+   // 	 editProfile[ cb_triple->currentText() ].removeAt(i);
+   //   }
    
-   editProfile[ cb_triple->currentText() ] << QString("spike_true");
+   // editProfile[ cb_triple->currentText() ] << QString("spike_true");
+
+   editProfile[ cb_triple->currentText() ][6] = QString("spike_true");
 
    qDebug() << cb_triple->currentText()  << ", " << editProfile[ cb_triple->currentText() ];
       
@@ -5062,11 +5187,22 @@ void US_Edit::remove_spikes_auto( void )
        plateau       = editProfile[ cb_triple->currentText() ][3].toDouble();
        baseline      = editProfile[ cb_triple->currentText() ][4].toDouble();
        baseline_od   = editProfile[ cb_triple->currentText() ][5].toDouble();
-     
+
        le_meniscus ->setText( QString::number( meniscus,   'f', 3 ) );
        le_dataStart->setText( QString::number( range_left, 'f', 3 ) );
        le_dataEnd  ->setText( QString::number( range_right, 'f', 3 ) );
        le_plateau  ->setText( QString::number( plateau,     'f', 3 ) );
+
+
+       if ( dataType == "IP" )
+	 {
+	   airGap_left   = editProfile[ cb_triple->currentText() ][7].toDouble();
+	   airGap_right  = editProfile[ cb_triple->currentText() ][8].toDouble();
+	   
+	   QString wkstr;
+	   le_airGap->setText( wkstr.sprintf( "%.3f - %.3f", 
+					      airGap_left, airGap_right ) );
+	 }
 
        if ( isMwl ) 
 	 le_baseline ->setText( QString::number( baseline,     'f', 3 ) );
@@ -5075,7 +5211,7 @@ void US_Edit::remove_spikes_auto( void )
 	   QString str;
 	   le_baseline->setText( str.sprintf( "%.3f (%.3e)", baseline, baseline_od ) );   
 	 }
-       
+
        plot_range();
      }
 
@@ -5096,6 +5232,9 @@ void US_Edit::undo_auto( void )
    // Redo some things depending on type
    if ( dataType == "IP" )
    {
+     airGap_left   = editProfile[ cb_triple->currentText() ][7].toDouble();
+     airGap_right  = editProfile[ cb_triple->currentText() ][8].toDouble();
+     
       US_DataIO::EditValues edits;
       edits.airGapLeft  = airGap_left;
       edits.airGapRight = airGap_right;
@@ -5107,11 +5246,9 @@ void US_Edit::undo_auto( void )
       for ( int i = 0; i < data.scanData.size(); i++ )
          if ( ! includes.contains( i ) ) edits.excludes << i;
 
-      if ( step > AIRGAP )
-            US_DataIO::adjust_interference( data, edits );
+      US_DataIO::adjust_interference( data, edits );
 
-      if ( step >  RANGE )
-         US_DataIO::calc_integral( data, edits );
+      US_DataIO::calc_integral( data, edits );
    }
 
    replot();
@@ -5124,12 +5261,24 @@ void US_Edit::undo_auto( void )
        plateau       = editProfile[ cb_triple->currentText() ][3].toDouble();
        baseline      = editProfile[ cb_triple->currentText() ][4].toDouble();
        baseline_od   = editProfile[ cb_triple->currentText() ][5].toDouble();
-     
+
        le_meniscus ->setText( QString::number( meniscus,   'f', 3 ) );
        le_dataStart->setText( QString::number( range_left, 'f', 3 ) );
        le_dataEnd  ->setText( QString::number( range_right, 'f', 3 ) );
        le_plateau  ->setText( QString::number( plateau,     'f', 3 ) );
 
+       
+       if ( dataType == "IP" )
+	 {
+	   airGap_left   = editProfile[ cb_triple->currentText() ][7].toDouble();
+	   airGap_right  = editProfile[ cb_triple->currentText() ][8].toDouble();
+	   
+	   QString wkstr;
+	   le_airGap->setText( wkstr.sprintf( "%.3f - %.3f", 
+					      airGap_left, airGap_right ) );
+	 }
+       
+       
        if ( isMwl ) 
 	 le_baseline ->setText( QString::number( baseline,     'f', 3 ) );
        else
@@ -5163,14 +5312,16 @@ void US_Edit::undo_auto( void )
 
    if ( all_loaded )
      {
-       // ALEXEY: resize up to (1) meniscus; (2) left_range; (3) right_range; (4) plateau; (5) baseline; (6) baseline_od 
-       for (int i=0; i < editProfile[ cb_triple->currentText() ].count(); i++)
-	 {
-	   if (i > 5)
-	     editProfile[ cb_triple->currentText() ].removeAt(i);
-	 }
+       // // ALEXEY: resize up to (1) meniscus; (2) left_range; (3) right_range; (4) plateau; (5) baseline; (6) baseline_od 
+       // for (int i=0; i < editProfile[ cb_triple->currentText() ].count(); i++)
+       // 	 {
+       // 	   if (i > 5)
+       // 	     editProfile[ cb_triple->currentText() ].removeAt(i);
+       // 	 }
        
-       editProfile[ cb_triple->currentText() ] << QString("spike_false");
+       // editProfile[ cb_triple->currentText() ] << QString("spike_false");
+
+       editProfile[ cb_triple->currentText() ][6] = QString("spike_false");
        
        qDebug() << cb_triple->currentText()  << ", " << editProfile[ cb_triple->currentText() ];
      }
@@ -5551,12 +5702,13 @@ DbgLv(1) << "EDT:NewTr: DONE";
      plateau       = editProfile[ cb_triple->currentText() ][3].toDouble();
      baseline      = editProfile[ cb_triple->currentText() ][4].toDouble();
      baseline_od   = editProfile[ cb_triple->currentText() ][5].toDouble();
-     
+
      le_meniscus ->setText( QString::number( meniscus,   'f', 3 ) );
      le_dataStart->setText( QString::number( range_left, 'f', 3 ) );
      le_dataEnd  ->setText( QString::number( range_right, 'f', 3 ) );
      le_plateau  ->setText( QString::number( plateau,     'f', 3 ) );
 
+ 
      if ( isMwl ) 
        le_baseline ->setText( QString::number( baseline,     'f', 3 ) );
      else
@@ -5577,6 +5729,34 @@ DbgLv(1) << "EDT:NewTr: DONE";
 	     qDebug() << "Spike_false";
      	   //undo_auto();
 	   }
+       }
+
+     //ALEXEY: Apply data modifications like adjust_interference && calc_integral for IP data
+     if ( dataType == "IP" )
+       {
+	 airGap_left   = editProfile[ cb_triple->currentText() ][7].toDouble();
+	 airGap_right  = editProfile[ cb_triple->currentText() ][8].toDouble();
+
+	 QString wkstr;
+	 le_airGap->setText( wkstr.sprintf( "%.3f - %.3f", 
+					    airGap_left, airGap_right ) );
+	 
+	 US_DataIO::EditValues  edits;
+	 edits.airGapLeft  = airGap_left;
+	 edits.airGapRight = airGap_right;
+	 
+	 QList< int > excludes;
+         
+	 for ( int i = 0; i < data.scanData.size(); i++ )
+	   if ( ! includes.contains( i ) ) edits.excludes << i;
+	   
+	 US_DataIO::adjust_interference( data, edits );
+	 
+	 edits.rangeLeft    = range_left;
+	 edits.rangeRight   = range_right;
+	 edits.gapTolerance = ct_gaps->value();
+
+	 US_DataIO::calc_integral( data, edits );
        }
      
      plot_range();
@@ -5990,21 +6170,21 @@ void US_Edit::write_auto( void )
 
 	qDebug() << "Saving non-MWL";
 	
-	if ( dataType != "IP" )
-	  {
+	// if ( dataType != "IP" )
+	//   {
 	    for ( int trx = 0; trx < cb_triple->count(); trx++ )
 	      {
 		qDebug() << "Writing non-MWL, channel: " << trx << ": " << cb_triple->itemText( trx );
 		write_triple_auto( trx );
 	      }
-	  }
-	else
-	  {
-	    // <---- For now: for Interference data, do editing && save manually
-	    triple_index = cb_triple->currentIndex();
-	    bottom = centerpieceParameters[ triple_index ][1].toDouble();  //Should be from centerpiece info from protocol 
-	    write_triple();           
-	  }
+	//   }
+	// else
+	//   {
+	//     // <---- For now: for Interference data, do editing && save manually
+	//     triple_index = cb_triple->currentIndex();
+	//     bottom = centerpieceParameters[ triple_index ][1].toDouble();  //Should be from centerpiece info from protocol 
+	//     write_triple();           
+	//   }
 	  
       }
    }
@@ -6102,6 +6282,12 @@ void US_Edit::write_triple_auto( int trx )
    range_right   = editProfile[ triple_name ][2].toDouble();
    plateau       = editProfile[ triple_name ][3].toDouble();
    baseline      = editProfile[ triple_name ][4].toDouble();
+
+   if ( dataType == "IP" )
+     {
+       airGap_left      = editProfile[ triple_name ][7].toDouble();
+       airGap_right     = editProfile[ triple_name ][8].toDouble(); 
+     }
    
    if ( editProfile[ triple_name ].count() > 6 )
      {
@@ -8244,8 +8430,8 @@ DbgLv(1) << "EDT:WrXml:  waveln" << waveln;
 	}
       else
 	{
-	  //if ( is_spike_auto )
-	  if ( is_spike_auto || dataType == "IP" ) //ALEXEY: for now, for interference data which are processed manually....
+	  if ( is_spike_auto )
+	    //if ( is_spike_auto || dataType == "IP" ) //ALEXEY: for now, for interference data which are processed manually....
 	    {
 	      xml.writeStartElement( "remove_spikes" );
 	      xml.writeEndElement  ();
