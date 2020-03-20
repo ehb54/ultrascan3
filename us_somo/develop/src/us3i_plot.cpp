@@ -56,7 +56,7 @@ US_Zoomer::US_Zoomer( int xAxis, int yAxis, QwtPlotCanvas* canvas )
 /*********************       US_Plot Class      *************************/
 
 // A new plot returns a QBoxLayout
-US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
+US_Plot::US_Plot( mQwtPlot*& parent_plot, const QString& title,
                   const QString& x_axis, const QString& y_axis,
                   QWidget * parent ) : QHBoxLayout()
 {
@@ -128,9 +128,9 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    addWidget( spacer );
 
    if ( parent ) {
-      plot = new QwtPlot( parent );
+      plot = new mQwtPlot( parent );
    } else {
-      plot        = new QwtPlot;
+      plot        = new mQwtPlot;
    }
    parent_plot = plot;
 

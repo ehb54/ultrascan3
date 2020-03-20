@@ -233,13 +233,13 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_rescale->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_rescale->setMinimumHeight(minHeight1);
    pb_rescale->setPalette( PALET_PUSHB );
-   connect(pb_rescale, SIGNAL(clicked()), SLOT(do_rescale()));
+   connect(pb_rescale, SIGNAL(clicked()), SLOT(rescale()));
 
    pb_rescale_y = new QPushButton(us_tr("Rescale Y"), this);
    pb_rescale_y->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_rescale_y->setMinimumHeight(minHeight1);
    pb_rescale_y->setPalette( PALET_PUSHB );
-   connect(pb_rescale_y, SIGNAL(clicked()), SLOT(do_rescale_y()));
+   connect(pb_rescale_y, SIGNAL(clicked()), SLOT(rescale_y()));
 
    pb_ag = new QPushButton(us_tr("AG"), this);
    pb_ag->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -1307,6 +1307,33 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_gauss_save->setPalette( PALET_PUSHB );
    pb_gauss_save->setEnabled( false );
    connect(pb_gauss_save, SIGNAL(clicked()), SLOT(gauss_save()));
+
+   le_gauss_local_pts = new mQLineEdit( this );    le_gauss_local_pts->setObjectName( "le_gauss_local_pts Line Edit" );
+   le_gauss_local_pts->setText( "" );
+   le_gauss_local_pts->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_gauss_local_pts->setPalette( PALET_NORMAL );
+   AUTFBACK( le_gauss_local_pts );
+   le_gauss_local_pts->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_gauss_local_pts->setEnabled( false );
+   {
+      QValidator *qiv = new QIntValidator( 3, 100, this );
+      le_gauss_local_pts->setValidator( qiv );
+   }
+   le_gauss_local_pts->setToolTip( us_tr( "Number of points for Gaussian peak fit" ) );
+   
+   pb_gauss_local_caruanas = new QPushButton(us_tr("Caruanas"), this);
+   pb_gauss_local_caruanas->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_gauss_local_caruanas->setMinimumHeight(minHeight1);
+   pb_gauss_local_caruanas->setPalette( PALET_PUSHB );
+   pb_gauss_local_caruanas->setToolTip( us_tr( "Gaussian peak fit by Caruanas method" ) );
+   connect(pb_gauss_local_caruanas, SIGNAL(clicked()), SLOT(gauss_local_caruanas()));
+
+   pb_gauss_local_guos = new QPushButton(us_tr("Guos"), this);
+   pb_gauss_local_guos->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_gauss_local_guos->setMinimumHeight(minHeight1);
+   pb_gauss_local_guos->setPalette( PALET_PUSHB );
+   pb_gauss_local_guos->setToolTip( us_tr( "Gaussian peak fit by Guos method" ) );
+   connect(pb_gauss_local_guos, SIGNAL(clicked()), SLOT(gauss_local_guos()));
 
    pb_ggauss_start = new QPushButton(us_tr("Global Gaussians"), this);
    pb_ggauss_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -3049,6 +3076,10 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_cancel->setPalette( PALET_PUSHB );
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
+   // extra signals
+   connect( this, SIGNAL( do_resize_plots() ),         SLOT( resize_plots() ) );
+   connect( this, SIGNAL( do_resize_guinier_plots() ), SLOT( resize_guinier_plots() ) );
+
    // build layout
    QBoxLayout * hbl_file_buttons_0 = new QHBoxLayout();
    {
@@ -3702,16 +3733,21 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    QGridLayout * gl_gauss2 = new QGridLayout(0); gl_gauss2->setContentsMargins( 0, 0, 0, 0 ); gl_gauss2->setSpacing( 0 );
    { 
       int ofs = 1;
-      gl_gauss2->addWidget         ( cb_sd_weight        , 0, ofs++ );
-      gl_gauss2->addWidget         ( cb_fix_width        , 0, ofs++ );
-      gl_gauss2->addWidget         ( cb_fix_dist1        , 0, ofs++ );
-      gl_gauss2->addWidget         ( cb_fix_dist2        , 0, ofs++ );
-      gl_gauss2->addWidget         ( pb_gauss_fit        , 0, ofs++ );
-      gl_gauss2->addWidget         ( pb_ggauss_rmsd      , 0, ofs++ );
-      gl_gauss2->addWidget         ( lbl_gauss_fit       , 0, ofs++ );
-      gl_gauss2->addWidget         ( le_gauss_fit_start  , 0, ofs++ );
-      gl_gauss2->addWidget         ( le_gauss_fit_end    , 0, ofs++ );
-      gl_gauss2->addWidget         ( pb_gauss_as_curves  , 0, ofs++ );
+      gl_gauss2->addWidget         ( cb_sd_weight            , 0, ofs++ );
+      gl_gauss2->addWidget         ( cb_fix_width            , 0, ofs++ );
+      gl_gauss2->addWidget         ( cb_fix_dist1            , 0, ofs++ );
+      gl_gauss2->addWidget         ( cb_fix_dist2            , 0, ofs++ );
+      gl_gauss2->addWidget         ( pb_gauss_fit            , 0, ofs++ );
+      gl_gauss2->addWidget         ( pb_ggauss_rmsd          , 0, ofs++ );
+      gl_gauss2->addWidget         ( lbl_gauss_fit           , 0, ofs++ );
+      gl_gauss2->addWidget         ( le_gauss_fit_start      , 0, ofs++ );
+      gl_gauss2->addWidget         ( le_gauss_fit_end        , 0, ofs++ );
+
+      gl_gauss2->addWidget         ( le_gauss_local_pts      , 0, ofs++ );
+      gl_gauss2->addWidget         ( pb_gauss_local_caruanas , 0, ofs++ );
+      gl_gauss2->addWidget         ( pb_gauss_local_guos     , 0, ofs++ );
+
+      gl_gauss2->addWidget         ( pb_gauss_as_curves      , 0, ofs++ );
    }
 
    QHBoxLayout * hbl_baseline = new QHBoxLayout(); hbl_baseline->setContentsMargins( 0, 0, 0, 0 ); hbl_baseline->setSpacing( 0 );
@@ -3901,6 +3937,11 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    gaussian_widgets.push_back( le_gauss_fit_start );
    gaussian_widgets.push_back( le_gauss_fit_end );
    gaussian_widgets.push_back( pb_gauss_save );
+
+   gaussian_widgets.push_back( le_gauss_local_pts );
+   gaussian_widgets.push_back( pb_gauss_local_caruanas );
+   gaussian_widgets.push_back( pb_gauss_local_guos );
+   
    gaussian_widgets.push_back( pb_gauss_as_curves );
    gaussian_widgets.push_back( lbl_blank1 );
    gaussian_widgets.push_back( pb_wheel_dec );
@@ -3926,8 +3967,8 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    ggaussian_widgets.push_back( pb_gauss_fit );
    ggaussian_widgets.push_back( le_gauss_pos );
    ggaussian_widgets.push_back( le_gauss_pos_width );
-   ggaussian_widgets.push_back( le_gauss_fit_start );
-   ggaussian_widgets.push_back( le_gauss_fit_end );
+   // ggaussian_widgets.push_back( le_gauss_fit_start );
+   // ggaussian_widgets.push_back( le_gauss_fit_end );
    ggaussian_widgets.push_back( pb_ggauss_rmsd );
    ggaussian_widgets.push_back( lbl_gauss_fit );
    ggaussian_widgets.push_back( pb_ggauss_results );
@@ -4310,13 +4351,7 @@ void US_Hydrodyn_Saxs_Hplc::mode_title( QString title )
 void US_Hydrodyn_Saxs_Hplc::update_enables()
 {
    // qDebug() << "::update_enables()";
-   if ( plot_errors->isVisible() ) {
-      vbl_plot_group->setStretchFactor( qs_plots, 80 );
-      vbl_plot_group->setStretchFactor( l_plot_errors, 20 );
-   } else {
-      vbl_plot_group->setStretchFactor( qs_plots, 0 );
-      vbl_plot_group->setStretchFactor( l_plot_errors, 0 );
-   }
+   resize_plots();
 
    if ( running ) {
       // qDebug() << "::update_enables() running, early exit";
@@ -4655,6 +4690,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    } else {
       pb_errors           ->setEnabled( false );
       hide_widgets( plot_errors_widgets, true );
+      resize_plots();
    }
 
    if ( files_selected_count > 1 && files_compatible )
@@ -4836,6 +4872,11 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
    pb_gauss_next         ->setEnabled( false );
    pb_gauss_fit          ->setEnabled( false );
    pb_gauss_save         ->setEnabled( false );
+
+   le_gauss_local_pts      ->setEnabled( false );
+   pb_gauss_local_caruanas ->setEnabled( false );
+   pb_gauss_local_guos     ->setEnabled( false );
+
    pb_wheel_cancel       ->setEnabled( false );
 
    le_gauss_pos          ->clearFocus();

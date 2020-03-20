@@ -307,25 +307,26 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       QMenuBar *m;
 
-      QwtPlot       *plot_pr;
+      mQwtPlot       *plot_pr;
       US_Plot       *usp_plot_pr;
    private slots:
       void usp_config_plot_pr( const QPoint & );
 
    public:
       ScrollZoomer  *plot_pr_zoomer;
-      QwtPlot       *plot_saxs;
+      mQwtPlot       *plot_saxs;
       US_Plot       *usp_plot_saxs;
    private slots:
       void usp_config_plot_saxs( const QPoint & );
 
    public:
       ScrollZoomer  *plot_saxs_zoomer;
-      QwtPlot       *plot_resid;
+      mQwtPlot      *plot_resid;
       US_Plot       *usp_plot_resid;
    private slots:
       void usp_config_plot_resid( const QPoint & );
       void           resid_zoomed( const QRect & );
+      void           resid_resized();
 
    public:
       ScrollZoomer  *plot_resid_zoomer;

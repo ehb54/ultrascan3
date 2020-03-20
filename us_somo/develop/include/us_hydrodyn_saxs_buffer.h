@@ -186,7 +186,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QPushButton   *pb_join_fit_linear;
       QLabel        *lbl_join_rmsd;
 
-      QwtPlot       *plot_dist;
+      mQwtPlot      *plot_dist;
       US_Plot       *usp_plot_dist;
    private slots:
       void usp_config_plot_dist( const QPoint & );

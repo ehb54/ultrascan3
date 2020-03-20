@@ -85,7 +85,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Baseline_Best : public QFrame
       void                                    setupGUI();
       void                                    displayData();
 
-      QwtPlot       *plot;
+      mQwtPlot      *plot;
       US_Plot       *usp_plot;
    private slots:
       void usp_config_plot( const QPoint & );
@@ -96,7 +96,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Baseline_Best : public QFrame
       QwtPlotGrid   *plot_grid;
 #endif
 
-      QwtPlot       *hb_plot;
+      mQwtPlot      *hb_plot;
       US_Plot       *usp_hb_plot;
    private slots:
       void usp_config_hb_plot( const QPoint & );

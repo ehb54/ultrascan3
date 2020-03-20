@@ -218,6 +218,7 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors_group()
 
    if ( !suppress_replot )
    {
+      rescale_y_plot_errors();
       plot_errors->replot();
    }
 }
@@ -469,6 +470,7 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors( vector < double > &grid,
 
    if ( !suppress_replot )
    {
+      rescale_y_plot_errors();
       plot_errors->replot();
    }
 }
@@ -587,6 +589,53 @@ void US_Hydrodyn_Saxs_Hplc::plot_errors_jump_markers()
    }
 }
 
+void US_Hydrodyn_Saxs_Hplc::resize_plots() {
+   qDebug() << "hplc::resize_plots()";
+   plot_dist->enableAxis( QwtPlot::xBottom, !plot_errors->isVisible() );
+   if ( plot_errors->isVisible() ) {
+      vbl_plot_group->setStretchFactor( qs_plots, 80 );
+      vbl_plot_group->setStretchFactor( l_plot_errors, 20 );
+   } else {
+      vbl_plot_group->setStretchFactor( qs_plots, 0 );
+      vbl_plot_group->setStretchFactor( l_plot_errors, 0 );
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc::resize_guinier_plots() {
+   // setup qs_spliter to handle smaller residuals
+   // qDebug() << "QSplitter qs_plots sizes:" << qs_plots->sizes();
+   QList<int> qs_sizes = qs_plots->sizes();
+   if ( guinier_plot_errors->isVisible() ) {
+      int gp_size  = qs_sizes[qs_plots->indexOf( guinier_plot        )];
+      int gpe_size = qs_sizes[qs_plots->indexOf( guinier_plot_errors )];
+      int gpt_size = gp_size + gpe_size;
+      int new_gp_size  = (int)( 0.8 * gpt_size );
+      int new_gpe_size = gpt_size - new_gp_size;
+      qs_sizes[ qs_plots->indexOf( guinier_plot        ) ] = new_gp_size;
+      qs_sizes[ qs_plots->indexOf( guinier_plot_errors ) ] = new_gpe_size;
+      for ( QList<int>::iterator it = qs_sizes.begin();
+            it != qs_sizes.end();
+            ++it ) {
+         if ( !*it ) {
+            *it = 1;
+         }
+      }
+
+   } else {
+      for ( QList<int>::iterator it = qs_sizes.begin();
+            it != qs_sizes.end();
+            ++it ) {
+         *it = 1;
+      }
+   }
+   qs_plots->setSizes( qs_sizes );
+   // qDebug() << "QSplitter qs_plots sizes after:" << qs_plots->sizes();
+
+   guinier_plot       ->replot();
+   guinier_plot_errors->replot();
+}   
+
+
 void US_Hydrodyn_Saxs_Hplc::errors()
 {
    // qDebug() << "::errors()";
@@ -599,7 +648,9 @@ void US_Hydrodyn_Saxs_Hplc::errors()
 
       ShowHide::hide_widgets( guinier_errors_widgets, guinier_plot_errors->isVisible() );
       guinier_plot->enableAxis( QwtPlot::xBottom, !guinier_plot_errors->isVisible() );
-      
+
+      resize_guinier_plots();
+         
       update_enables();
       return;
    }
@@ -1453,6 +1504,10 @@ void US_Hydrodyn_Saxs_Hplc::rescale_y()
    // qDebug() << "rescale only visible y axis";
    // can not init'd once in gui, as zoomers might be deleted/recreated
    plot_to_zoomer.clear();
+
+   plot_limit_x_range_min.clear();
+   plot_limit_x_range_max.clear();
+   
    plot_to_zoomer[ plot_dist ]           = plot_dist_zoomer;
    plot_to_zoomer[ plot_errors ]         = plot_errors_zoomer;
    plot_to_zoomer[ guinier_plot    ]     = guinier_plot_zoomer;
@@ -1461,5 +1516,33 @@ void US_Hydrodyn_Saxs_Hplc::rescale_y()
    plot_to_zoomer[ guinier_plot_mw ]     = guinier_plot_mw_zoomer;
    plot_to_zoomer[ ggqfit_plot ]         = ggqfit_plot_zoomer;
 
-   US_Plot_Util::rescale( plot_info, plot_to_zoomer );
+   if ( current_mode == MODE_GAUSSIAN ||
+        current_mode == MODE_GGAUSSIAN ) {
+      plot_limit_x_range_min[ plot_errors ] = le_gauss_fit_start->text().toDouble();
+      plot_limit_x_range_max[ plot_errors ] = le_gauss_fit_end  ->text().toDouble();
+      qDebug() << "gaussian mode replot, limit x range "
+               << plot_limit_x_range_min[ plot_errors ] << " , "
+               << plot_limit_x_range_max[ plot_errors ] << "\n";
+   }      
+
+   US_Plot_Util::rescale(
+                         plot_info,
+                         plot_to_zoomer,
+                         plot_limit_x_range_min,
+                         plot_limit_x_range_max
+                         );
+}
+
+void US_Hydrodyn_Saxs_Hplc::rescale_y_plot_errors()
+{
+   // qDebug() << "rescale_y_plot_errors";
+   if ( current_mode == MODE_GAUSSIAN ||
+        current_mode == MODE_GGAUSSIAN ) {
+      US_Plot_Util::rescale(
+                            plot_errors,
+                            plot_errors_zoomer,
+                            le_gauss_fit_start->text().toDouble(),
+                            le_gauss_fit_end->text().toDouble()
+                            );
+   }
 }

@@ -3443,12 +3443,41 @@ bool US_Hydrodyn_Saxs_Hplc::get_peak( QString file, double &peak, double &pos )
       
    peak = f_Is[ file ][ 0 ];
    pos = f_qs[ file ][ 0 ];
-   for ( unsigned int i = 1; i < ( unsigned int ) f_Is[ file ].size(); i++ )
-   {
-      if ( peak < f_Is[ file ][ i ] )
-      {
+
+   double start_pos = le_gauss_fit_start->text().toDouble();
+   double end_pos   = le_gauss_fit_end  ->text().toDouble();
+   
+   if ( end_pos <= start_pos ) {
+      return false;
+   }
+
+   // get 1st
+   bool found_first = false;
+   unsigned int i = 0;
+   for ( ; i < ( unsigned int ) f_Is[ file ].size(); ++i ) {
+      double this_pos = f_qs[ file ][ i ];
+      if ( this_pos >= start_pos &&
+           this_pos <= end_pos ) {
+         found_first = true;
          peak = f_Is[ file ][ i ];
-         pos = f_qs[ file ][ i ];
+         pos  = this_pos;
+         break;
+      }
+   }
+
+   if ( !found_first ) {
+      editor_msg( "red", QString( us_tr( "Warning: get_peak: file %1 has no points between the fitting start and end range" ) ).arg( file ) );
+      return false;
+   }
+
+   for ( ; i < ( unsigned int ) f_Is[ file ].size(); i++ )
+   {
+      double this_pos = f_qs[ file ][ i ];
+      if ( this_pos <= end_pos ) {
+         if ( peak < f_Is[ file ][ i ] ) {
+            peak = f_Is[ file ][ i ];
+            pos  = this_pos;
+         }
       }
    }
    return true;
@@ -5884,6 +5913,10 @@ void US_Hydrodyn_Saxs_Hplc::gaussian_enables()
    pb_view             ->setEnabled( true );
    pb_errors           ->setEnabled( true );
    pb_pp               ->setEnabled( true );
+
+   le_gauss_local_pts      ->setEnabled( g_size && gaussian_pos < g_size );
+   pb_gauss_local_caruanas ->setEnabled( g_size && gaussian_pos < g_size );
+   pb_gauss_local_guos     ->setEnabled( g_size && gaussian_pos < g_size );
 }
 
 void US_Hydrodyn_Saxs_Hplc::update_gauss_pos()
@@ -6168,6 +6201,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_start()
 
    running               = true;
 
+   // this must be wrong:!! ***************, units do not make sense
    double max_range = gauss_max_height > f_qs[ wheel_file ].back() ? gauss_max_height : f_qs[ wheel_file ].back();
 
    qwtw_wheel->setRange( 0,  max_range); qwtw_wheel->setSingleStep( max_range / UHSH_WHEEL_RES );
@@ -6199,8 +6233,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_start()
    gauss_init_markers();
    gauss_init_gaussians();
    update_gauss_pos();
-   if ( errors_were_on )
-   {
+   if ( errors_were_on ) {
       hide_widgets( plot_errors_widgets, false );
       cb_plot_errors_group->hide();
       if ( !f_errors.count( wheel_file ) ||
@@ -6210,6 +6243,8 @@ void US_Hydrodyn_Saxs_Hplc::gauss_start()
          cb_plot_errors_sd->setChecked( false );
          cb_plot_errors_sd->hide();
       }
+      qDebug() << "saxs_hplc::gauss_start() emit do resize_plots()";
+      emit do_resize_plots();
    }
    cb_gauss_match_amplitude->setChecked( true );
    height_natural_spline_x = f_qs[ wheel_file ];
@@ -6807,6 +6842,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_fit_start_text( const QString & text )
 
    if ( !suppress_replot )
    {
+      // rescale_y_plot_errors();
       plot_dist->replot();
    }
 }
@@ -6835,6 +6871,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_fit_end_text( const QString & text )
 
    if ( !suppress_replot )
    {
+      // rescale_y_plot_errors();
       plot_dist->replot();
    }
 }
@@ -7492,6 +7529,15 @@ void US_Hydrodyn_Saxs_Hplc::gauss_fit()
       return;
    }
 
+   {
+      get_peak( wheel_file, gauss_max_height );
+      gauss_max_height *= 1.2;
+      if ( gaussian_type != GAUSS ) {
+         gauss_max_height *= 20e0;
+      }
+      // qDebug() << "hplc::gauss_fit gauss_max_height " << gauss_max_height;
+   }
+
    wheel_enables( false );
    disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
    US_Hydrodyn_Saxs_Hplc_Fit *shf = 
@@ -7887,12 +7933,34 @@ double US_Hydrodyn_Saxs_Hplc::compute_gaussian_peak( QString file, vector < doub
 {
    // cout << QString( "gaussian peak file %1 current type %2\n" ).arg( file ).arg( gaussian_type );
    vector < double > gs = compute_gaussian_sum( f_qs[ file ], g );
+
+   double start_pos = le_gauss_fit_start->text().toDouble();
+   double end_pos   = le_gauss_fit_end  ->text().toDouble();
+
    double gmax = gs[ 0 ];
-   for ( unsigned int i = 1; i < ( unsigned int ) gs.size(); i++ )
-   {
-      if ( gmax < gs[ i ] )
-      {
+
+   // get 1st
+   // bool found_first = false;
+   unsigned int i = 0;
+
+   for ( ; i < ( unsigned int ) gs.size(); i++ ) {
+      double this_pos = f_qs[ file ][ i ];
+      if ( this_pos >= start_pos &&
+           this_pos <= end_pos ) {
+         // found_first = true;
          gmax = gs[ i ];
+         break;
+      }
+   }
+
+
+   for (; i < ( unsigned int ) gs.size(); i++ )
+   {
+      double this_pos = f_qs[ file ][ i ];
+      if ( this_pos <= end_pos ) {
+         if ( gmax < gs[ i ] ) {
+            gmax = gs[ i ];
+         }
       }
    }
    return gmax;

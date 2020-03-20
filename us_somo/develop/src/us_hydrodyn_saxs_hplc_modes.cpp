@@ -6232,6 +6232,7 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_start()
          cb_plot_errors_sd->setChecked( false );
          cb_plot_errors_sd->hide();
       }
+      emit do_resize_plots();
    }
 
    ggaussian_enables();

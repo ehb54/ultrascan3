@@ -268,8 +268,24 @@ void US_Plot_Util::align_plot_extents( const vector < QwtPlot * > & plots, bool 
 // #define DEBUG_RESCALE
 // #define DEBUG_RESCALE_CURVES
 // #define DEBUG_RESCALE_INTERNAL
+// #define DEBUG_RESCALE_ROUNDING
+// #define DEBUG_RESCALE_X
 
-void US_Plot_Util::rescale( map < QString, QwtPlot * > plots, map < QwtPlot *, ScrollZoomer * > plot_to_zoomer, bool only_scale_y ) {
+void US_Plot_Util::rescale( map < QString, QwtPlot * > plots,
+                            map < QwtPlot *, ScrollZoomer * > plot_to_zoomer,
+                            bool only_scale_y,
+                            bool rescale_rounding ) {
+   map < QwtPlot *, double > plot_limit_x_range_min;
+   map < QwtPlot *, double > plot_limit_x_range_max;
+   rescale( plots, plot_to_zoomer, plot_limit_x_range_min, plot_limit_x_range_max, only_scale_y, rescale_rounding );
+}
+   
+void US_Plot_Util::rescale( map < QString, QwtPlot * > plots,
+                            map < QwtPlot *, ScrollZoomer * > plot_to_zoomer,
+                            map < QwtPlot *, double >         plot_limit_x_range_min,
+                            map < QwtPlot *, double >         plot_limit_x_range_max,
+                            bool only_scale_y,
+                            bool rescale_rounding ) {
 #if defined( DEBUG_RESCALE )
    qDebug() << "US_Plot_Util::rescale type 1\n";
 #endif
@@ -286,12 +302,52 @@ void US_Plot_Util::rescale( map < QString, QwtPlot * > plots, map < QwtPlot *, S
 #if defined( DEBUG_RESCALE )
          qDebug() << "rescaling for plot " << it->first << "\n";
 #endif
-         rescale( it->second, plot_to_zoomer[ it->second ], only_scale_y );
+         if ( plot_limit_x_range_min.count( it->second ) &&
+              plot_limit_x_range_max.count( it->second ) ) {
+            rescale( it->second,
+                     plot_to_zoomer[ it->second ],
+                     plot_limit_x_range_min[ it->second ],
+                     plot_limit_x_range_max[ it->second ],
+                     only_scale_y,
+                     rescale_rounding );
+         } else {
+            rescale( it->second,
+                     plot_to_zoomer[ it->second ],
+                     only_scale_y,
+                     rescale_rounding );
+         }
       }
    }
 }
 
-void US_Plot_Util::rescale( const vector < QwtPlot * > & plots, map < QwtPlot *, ScrollZoomer * > plot_to_zoomer, bool only_scale_y ) {
+double US_Plot_Util::round_digits( double value, int digits ) {
+   if (value == 0.0) // otherwise it will return 'nan' due to the log10() of zero
+      return 0.0;
+
+   double factor = pow(10.0, digits - ceil(log10(fabs(value))));
+   return round(value * factor) / factor;
+}
+
+void US_Plot_Util::rescale( const vector < QwtPlot * > & plots,
+                            map < QwtPlot *, ScrollZoomer * > plot_to_zoomer,
+                            bool only_scale_y,
+                            bool rescale_rounding ) {
+   map < QwtPlot *, double > plot_limit_x_range_min;
+   map < QwtPlot *, double > plot_limit_x_range_max;
+   rescale( plots,
+            plot_to_zoomer,
+            plot_limit_x_range_min,
+            plot_limit_x_range_max,
+            only_scale_y,
+            rescale_rounding );
+}
+
+void US_Plot_Util::rescale( const vector < QwtPlot * > & plots,
+                            map < QwtPlot *, ScrollZoomer * > plot_to_zoomer,
+                            map < QwtPlot *, double >         plot_limit_x_range_min,
+                            map < QwtPlot *, double >         plot_limit_x_range_max,
+                            bool only_scale_y,
+                            bool rescale_rounding ) {
 #if defined( DEBUG_RESCALE )
    qDebug() << "US_Plot_Util::rescale type 2\n";
 #endif
@@ -299,12 +355,35 @@ void US_Plot_Util::rescale( const vector < QwtPlot * > & plots, map < QwtPlot *,
       if ( !plot_to_zoomer.count( plots[ i ] ) ) {
          qDebug() << "internal error: missing plot_to_zoomer for plot\n";
       } else {
-         rescale( plots[ i ], plot_to_zoomer[ plots[ i ] ], only_scale_y );
+         if ( plot_limit_x_range_min.count( plots[ i ] ) &&
+              plot_limit_x_range_max.count( plots[ i ] ) ) {
+            rescale( plots[ i ],
+                     plot_to_zoomer[ plots[ i ] ],
+                     plot_limit_x_range_min[ plots[ i ] ],
+                     plot_limit_x_range_max[ plots[ i ] ],
+                     only_scale_y,
+                     rescale_rounding );
+         } else {
+            rescale( plots[ i ], plot_to_zoomer[ plots[ i ] ], only_scale_y, rescale_rounding );
+         }
       }
    }
 }
+ 
+void US_Plot_Util::rescale( QwtPlot * plot, ScrollZoomer * zoomer, bool only_scale_y, bool rescale_rounding ) {
+   rescale( plot, zoomer,
+            numeric_limits<double>::min(),
+            numeric_limits<double>::max(),
+            only_scale_y,
+            rescale_rounding );
+}
 
-void US_Plot_Util::rescale( QwtPlot * plot, ScrollZoomer * zoomer, bool only_scale_y ) {
+void US_Plot_Util::rescale( QwtPlot * plot,
+                            ScrollZoomer * zoomer,
+                            double limit_x_range_min,
+                            double limit_x_range_max,
+                            bool only_scale_y,
+                            bool rescale_rounding ) {
 #if defined( DEBUG_RESCALE )
    qDebug() << "US_Plot_Util::rescale type 3\n";
 #endif
@@ -326,7 +405,10 @@ void US_Plot_Util::rescale( QwtPlot * plot, ScrollZoomer * zoomer, bool only_sca
 #if defined( DEBUG_RESCALE )
    tso << "zoomer ptr " << zoomer << "\n";
    tso << "object name " << plot->objectName() << "\n";
-   tso << "US_Plot_Util::rescale( QwtPlot * plot, " << ( only_scale_y ? "true" : "false" ) << ")\n";
+   tso << "US_Plot_Util::rescale( QwtPlot * plot, "
+       << ( only_scale_y ? "true" : "false" )
+       << ( rescale_rounding ? "true" : "false" )
+       << ")\n";
    tso << QString().sprintf(
                             "plot->axisScaleDiv( QwtPlot::xBottom ).lower,upperBound()     %g\t%g\n"
                             "plot->axisScaleDiv( QwtPlot::yLeft ).lower,upperBound()       %g\t%g\n"
@@ -344,6 +426,16 @@ void US_Plot_Util::rescale( QwtPlot * plot, ScrollZoomer * zoomer, bool only_sca
 
    double min_x = plot->axisScaleDiv( QwtPlot::xBottom ).lowerBound();
    double max_x = plot->axisScaleDiv( QwtPlot::xBottom ).upperBound();
+
+#if defined( DEBUG_LIMIT_X )
+   qDebug() << "rescale: x limits: [ " << limit_x_range_min << " , " << limit_x_range_max << " ]";
+#endif
+   if ( min_x < limit_x_range_min ) {
+      min_x = limit_x_range_min;
+   }
+   if ( max_x > limit_x_range_max ) {
+      max_x = limit_x_range_max;
+   }
 
 #if defined( DEBUG_RESCALE )
    double min_x_alt = zoomer->zoomRect().bottomLeft().x();
@@ -444,20 +536,53 @@ void US_Plot_Util::rescale( QwtPlot * plot, ScrollZoomer * zoomer, bool only_sca
       tso << "symmetric rescale enabled\n";
 #endif
       double smax_y = fabs( max_y ) > fabs( min_y ) ? fabs( max_y ) : fabs( min_y );
-      zoomer->zoom(
-                   QRectF(
-                          QPointF( zoomer->zoomRect().topLeft().x(), smax_y * 1.2e0 ),
-                          QPointF( zoomer->zoomRect().bottomRight().x(), -smax_y * 1.2e0 )
-                          )
-                   );
-      
+
+      if ( rescale_rounding ) {
+         double new_smax_y = round_digits( smax_y * 1.2e0 );
+#if defined( DEBUG_RESCALE_ROUNDING )
+         tso << "rescale rounding\n";
+         tso << "was " << smax_y * 1.2e0 << " now " << new_smax_y << "\n";
+#endif
+         smax_y = new_smax_y;
+         zoomer->zoom(
+                      QRectF(
+                             QPointF( zoomer->zoomRect().topLeft().x(), smax_y),
+                             QPointF( zoomer->zoomRect().bottomRight().x(), -smax_y )
+                             )
+                      );
+      } else {
+         zoomer->zoom(
+                      QRectF(
+                             QPointF( zoomer->zoomRect().topLeft().x(), smax_y * 1.2e0 ),
+                             QPointF( zoomer->zoomRect().bottomRight().x(), -smax_y * 1.2e0 )
+                             )
+                      );
+      }
    } else {
-      zoomer->zoom(
-                   QRectF(
-                          QPointF( zoomer->zoomRect().topLeft().x(), max_y * 1.1e0 ),
-                          QPointF( zoomer->zoomRect().bottomRight().x(), min_y * 0.9e0 )
-                          )
-                   );
+      if ( rescale_rounding ) {
+         double new_max_y = round_digits( max_y * 1.1e0 );
+         double new_min_y = round_digits( min_y * 0.9e0 );
+#if defined( DEBUG_RESCALE_ROUNDING )
+         tso << "rescale rounding\n";
+         tso << "min was " << min_y * 0.9e0 << " now " << new_min_y << "\n";
+         tso << "max was " << max_y * 1.1e0 << " now " << new_max_y << "\n";
+#endif
+         max_y = new_max_y;
+         min_y = new_min_y;
+         zoomer->zoom(
+                      QRectF(
+                             QPointF( zoomer->zoomRect().topLeft().x(), max_y ),
+                             QPointF( zoomer->zoomRect().bottomRight().x(), min_y )
+                             )
+                      );
+      } else {
+         zoomer->zoom(
+                      QRectF(
+                             QPointF( zoomer->zoomRect().topLeft().x(), max_y * 1.1e0 ),
+                             QPointF( zoomer->zoomRect().bottomRight().x(), min_y * 0.9e0 )
+                             )
+                      );
+      }
    }
    
 }

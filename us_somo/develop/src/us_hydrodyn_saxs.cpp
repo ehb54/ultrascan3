@@ -983,7 +983,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_rescale_y->setPalette( PALET_PUSHB );
    connect(pb_rescale_y, SIGNAL(clicked()), SLOT(do_rescale_y()));
    pb_rescale_y->hide();
-   resid_widgets.push_back( pb_rescale_y );
+   // resid_widgets.push_back( pb_rescale_y );
 
    cb_eb = new QCheckBox(this);
    cb_eb->setText(us_tr("Err "));
@@ -1612,6 +1612,11 @@ void US_Hydrodyn_Saxs::setupGUI()
    ((QWidget *)plot_resid->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
    connect( (QWidget *)plot_resid->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_resid( const QPoint & ) ) );
    ((QWidget *)plot_resid->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( plot_resid, SIGNAL( resized() ), SLOT( resid_resized() ) );
+   connect( plot_saxs,  SIGNAL( resized() ), SLOT( resid_resized() ) );
+
+   // doesn't seem useful
+   // plot_resid->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
    plot_info[ "US-SOMO SAXS resid" ] = plot_resid;
 #if QT_VERSION < 0x040000
    // plot_resid->enableOutline(true);
@@ -6314,6 +6319,9 @@ void US_Hydrodyn_Saxs::rescale_plot()
            << lowq << ":" << highq << "  "
            << lowI << ":" << highI << endl;
    */
+
+   lowI = US_Plot_Util::round_digits( lowI );
+   highI = US_Plot_Util::round_digits( highI );
 
    plot_saxs->setAxisScale( QwtPlot::xBottom, lowq, highq );
    plot_saxs->setAxisScale( QwtPlot::yLeft,   lowI, highI );

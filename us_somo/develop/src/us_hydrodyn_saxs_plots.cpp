@@ -3,6 +3,7 @@
 #include "../include/us_lm.h"
 //Added by qt3to4:
 #include <QTextStream>
+#include <qwt_plot_layout.h>
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -1295,36 +1296,49 @@ void US_Hydrodyn_Saxs::do_plot_resid()
 
    if ( any_plotted )
    {
+#if defined( OLD_WAY )
       plot_resid->setAxisTitle(QwtPlot::yLeft,
                                us_tr(
                                   cb_cs_guinier->isChecked() ?
                                   (  cb_resid_pct->isChecked() ?
-                                     "% diff [100*(ln(q*I(q)) - Guin.)/ln(q*I(q))]" :
+                                     // "% diff [100*(ln(q*I(q)) - Guin.)/ln(q*I(q))]" :
+                                     "Residual %" :
                                      ( cb_resid_sd->isChecked() ?
-                                       "(ln(q*I(q)) - Guinier line) / S.D." : 
-                                       "ln(q*I(q)) - Guinier line" 
+                                       // "(ln(q*I(q)) - Guinier line) / S.D." : 
+                                       "Residual / SD" : 
+                                       // "ln(q*I(q)) - Guinier line" 
+                                       "Residual" 
                                        ) 
                                      ) 
                                   :
                                   ( cb_Rt_guinier->isChecked() ?
                                     (  cb_resid_pct->isChecked() ?
-                                       "% diff [100*(ln(q^2*I(q)) - Guin.)/ln(q^2*I(q))]" :
+                                       // "% diff [100*(ln(q^2*I(q)) - Guin.)/ln(q^2*I(q))]" :
+                                       "Residual %" :
                                        ( cb_resid_sd->isChecked() ?
-                                         "(ln(q^2*I(q)) - Guinier line) / S.D." : 
-                                         "ln(q^2*I(q)) - Guinier line" 
+                                         // "(ln(q^2*I(q)) - Guinier line) / S.D." : 
+                                         "Residual / SD" : 
+                                         // "ln(q^2*I(q)) - Guinier line" 
+                                         "Residual" 
                                          ) 
                                        ) 
                                     :
                                     (  cb_resid_pct->isChecked() ?
-                                       "% diff [100*(ln(I(q)) - Guin.)/ln(I(q))]" :
+                                       // "% diff [100*(ln(I(q)) - Guin.)/ln(I(q))]" :
+                                       "Residual %" :
                                        ( cb_resid_sd->isChecked() ?
-                                         "(ln(I(q)) - Guinier line) / S.D." :
-                                         "ln(I(q)) - Guinier line" 
-                                         ) 
+                                         // "(ln(I(q)) - Guinier line) / S.D." :
+                                         "Residual / SD" :
+                                         // "ln(I(q)) - Guinier line"
+                                         "Residual"
+                                         )
                                        ) 
                                     )
                                   )
                                  );
+
+#endif
+      plot_resid->setAxisTitle(QwtPlot::yLeft, us_tr( "Residual" ) );
 
       US_Plot_Util::align_plot_extents( { plot_saxs, plot_resid } );
 
@@ -1360,6 +1374,18 @@ void US_Hydrodyn_Saxs::do_plot_resid()
                         2
                         );
          curve->attach( plot_resid );
+      }
+
+      if ( cb_guinier->isChecked() ) {
+         minq2 =
+            le_guinier_lowq2->text().toDouble() ?
+            le_guinier_lowq2->text().toDouble() :
+            minq2;
+
+         maxq2 = 
+            le_guinier_highq2->text().toDouble() ?
+            le_guinier_highq2->text().toDouble() :
+            maxq2;
       }
 
       plot_saxs->setAxisScale( QwtPlot::xBottom, minq2, maxq2 );
@@ -1402,8 +1428,12 @@ void US_Hydrodyn_Saxs::set_resid_pct()
       cb_resid_sd->setChecked( false );
       connect(cb_resid_sd, SIGNAL(clicked()), SLOT(set_resid_sd()));
    }
-   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_cb_resid_pct" ] = cb_resid_pct->isChecked() ? "1" : "0"; 
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_cb_resid_pct" ] = cb_resid_pct->isChecked() ? "1" : "0";
+
+   // plot_resid->plotLayout()->setAlignCanvasToScale( QwtPlot::xTop,    !plot_resid->plotLayout()->alignCanvasToScale( QwtPlot::xTop    ) );
+   // plot_saxs ->plotLayout()->setAlignCanvasToScale( QwtPlot::xBottom, !plot_saxs ->plotLayout() ->alignCanvasToScale( QwtPlot::xBottom ) );
    do_plot_resid();
+   emit pb_rescale_y->clicked();
 }
 
 void US_Hydrodyn_Saxs::set_resid_sd()
@@ -1416,6 +1446,7 @@ void US_Hydrodyn_Saxs::set_resid_sd()
    }
    do_plot_resid();
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_cb_resid_sd" ] = cb_resid_sd->isChecked() ? "1" : "0"; 
+   emit pb_rescale_y->clicked();
 }
 
 void US_Hydrodyn_Saxs::set_manual_guinier()
@@ -1437,7 +1468,7 @@ void US_Hydrodyn_Saxs::set_resid_show()
       usp_plot_saxs->rescale_mode = US_Plot::MODE_NO_SCALE;
       usp_plot_saxs->scroll_zoomer = plot_saxs_zoomer;
       usp_plot_resid->rescale_mode = US_Plot::MODE_NO_SCALE;
-      // usp_plot_resid->rescale_mode = US_Plot::MODE_RESID;
+
       usp_plot_resid->scroll_zoomer = plot_resid_zoomer;
 
       plot_saxs->setObjectName( "plot_saxs" );
@@ -1448,8 +1479,9 @@ void US_Hydrodyn_Saxs::set_resid_show()
       connect(((QObject*)plot_saxs ->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_plot_resid, SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
       connect(((QObject*)plot_resid->axisWidget(QwtPlot::xBottom)) , SIGNAL(scaleDivChanged () ), usp_plot_saxs , SLOT(scaleDivChangedXSlot () ), Qt::UniqueConnection );
       plot_saxs->enableAxis( QwtPlot::xBottom, false );
-      qbl_plots->setStretchFactor( plot_saxs, 80 );
-      qbl_plots->setStretchFactor( qbl_resid, 20 );
+      // gets in the was of manual settings
+      // qbl_plots->setStretchFactor( plot_saxs, 80 );
+      // qbl_plots->setStretchFactor( qbl_resid, 20 );
       hide_widgets( resid_widgets, false );
       if ( !started_in_expert_mode ||
            plotted_q.size() != 1 )
@@ -1458,8 +1490,8 @@ void US_Hydrodyn_Saxs::set_resid_show()
       }
    } else {
       plot_saxs->enableAxis( QwtPlot::xBottom, true );
-      qbl_plots->setStretchFactor( plot_saxs, 0 );
-      qbl_plots->setStretchFactor( qbl_resid, 0 );
+      // qbl_plots->setStretchFactor( plot_saxs, 0 );
+      // qbl_plots->setStretchFactor( qbl_resid, 0 );
       hide_widgets( resid_widgets );
       cb_resid_show->show();
       cb_resid_show_errorbars->show();
@@ -1476,6 +1508,7 @@ void US_Hydrodyn_Saxs::set_resid_show_errorbars()
 {
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_cb_resid_show_errorbars" ] = cb_resid_show_errorbars->isChecked() ? "1" : "0";
    set_guinier();
+   emit pb_rescale_y->clicked();
 }
 
 
@@ -1645,7 +1678,7 @@ void US_Hydrodyn_Saxs::do_rescale() {
 }
 
 void US_Hydrodyn_Saxs::do_rescale_y() {
-   // qDebug() << "do_rescale_y";
+   qDebug() << "do_rescale_y";
    map < QString, QwtPlot *>            plot_info;
    map < QwtPlot *, ScrollZoomer * >    plot_to_zoomer;
 
@@ -1655,5 +1688,41 @@ void US_Hydrodyn_Saxs::do_rescale_y() {
    plot_to_zoomer[ plot_saxs ]           = plot_saxs_zoomer;
    plot_to_zoomer[ plot_resid ]          = plot_resid_zoomer;
 
-   US_Plot_Util::rescale( plot_info, plot_to_zoomer );
+   US_Plot_Util::rescale( plot_info, plot_to_zoomer, true, true );
+
+   // try maxHeight ? - this works but rescaling is an issue
+
+   plot_resid->setMaximumHeight( (int) ( 0.2 * ( plot_resid->height() + plot_saxs->height() ) ) );
+   // plot_resid->replot();
+   emit plot_resid->resized();
+
+   // try setting autoscale?
+
+   // static int autoscale_cnt = 0;
+   // static bool autoscale = false;
+   
+   // autoscale_cnt++;
+   // if ( !(autoscale_cnt % 3 ) ) {
+   //    autoscale = !autoscale;
+   // }
+   // qDebug() << "autoscale: " << ( autoscale ? "true" : "false" );
+   // plot_resid->setAxisAutoScale( QwtPlot::yLeft, autoscale );
+   // plot_resid->replot();
+
+
+   // try set align to scale?
+   // static bool align = false;
+
+   // align = !align;
+   // qDebug() << "set resid pct align toggle: " << ( align ? "true" : "false" );
+   // plot_resid->plotLayout()->setAlignCanvasToScales( align );
+   // plot_saxs ->plotLayout()->setAlignCanvasToScales( align );
+   // plot_resid->replot();
+   // plot_saxs->replot();
+}
+
+void US_Hydrodyn_Saxs::resid_resized() {
+   qDebug() << "resid_resized";
+   plot_resid->setMaximumHeight( (int) ( 0.2 * ( plot_resid->height() + plot_saxs->height() ) ) );
+   plot_resid->replot();
 }

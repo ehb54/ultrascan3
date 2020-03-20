@@ -65,7 +65,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Scale_Trend : public QFrame
       map < QString, QString >                parameters;
       map < QString, vector < vector < double > > > plots;
 
-      QwtPlot *                               plot;
+      mQwtPlot *                              plot;
       US_Plot *                               usp_plot;
    private slots:
       void usp_config_plot( const QPoint & );

@@ -122,7 +122,7 @@ class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
       QTextEdit     *editor;
       QMenuBar      *m;
 
-      QwtPlot       *plot_saxs;
+      mQwtPlot      *plot_saxs;
       US_Plot       *usp_plot_saxs;
    private slots:
       void usp_config_plot_saxs( const QPoint & );

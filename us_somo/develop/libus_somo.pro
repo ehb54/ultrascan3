@@ -336,6 +336,7 @@ SOURCES *= \
         src/us_mqt.cpp \
         src/us_license.cpp \
         src/us_lm.cpp \
+        src/us_lud.cpp \
 #  us_lncr2.cpp \
         src/us_math.cpp \
         src/us_matrix.cpp \
@@ -680,6 +681,7 @@ HEADERS *= \
         include/us_mqt.h \
         include/us_license.h \
         include/us_lm.h \
+        include/us_lud.h \
 #  us_lncr2.h \
         include/us_math.h \
         include/us_matrix.h \

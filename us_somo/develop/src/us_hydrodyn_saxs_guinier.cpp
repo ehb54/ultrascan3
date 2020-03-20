@@ -2974,7 +2974,8 @@ void US_Hydrodyn_Saxs::set_guinier()
    plot_saxs_zoomer->setRubberBandPen( QPen( Qt::red, 1, Qt::DotLine ) );
    plot_saxs_zoomer->setTrackerPen( QPen( Qt::red ) );
 
-   plot_saxs->replot();
+   // plot_saxs->replot();
+   do_plot_resid();
    fix_xBottom();
 }
 
@@ -3473,7 +3474,8 @@ void US_Hydrodyn_Saxs::set_guinier_eb()
    plot_saxs_zoomer->setRubberBandPen( QPen( Qt::red, 1, Qt::DotLine ) );
    plot_saxs_zoomer->setTrackerPen( QPen( Qt::red ) );
 
-   plot_saxs->replot();
+   // plot_saxs->replot();
+   do_plot_resid();
    fix_xBottom();
 }
 

@@ -159,7 +159,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Cormap : public QFrame
       QImage                   *              qi_hb;
 
 
-      QwtPlot       *plot;
+      mQwtPlot      *plot;
       US_Plot       *usp_plot;
    private slots:
       void usp_config_plot( const QPoint & );
@@ -170,7 +170,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Cormap : public QFrame
       QwtPlotGrid   *plot_grid;
 #endif
 
-      QwtPlot       *plot_cluster;
+      mQwtPlot      *plot_cluster;
       US_Plot       *usp_plot_cluster;
    private slots:
       void usp_config_plot_cluster( const QPoint & );

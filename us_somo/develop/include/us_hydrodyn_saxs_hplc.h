@@ -48,6 +48,7 @@
 #include "qwt/scrollbar.h"
 #include "qwt/scrollzoomer.h"
 #include "us_saxs_util.h"
+#include "us_lud.h"
 
 using namespace std;
 
@@ -381,7 +382,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       QSplitter     *qs_plots;
       QBoxLayout    *vbl_plot_group;
-      QwtPlot       *plot_dist;
+      mQwtPlot      *plot_dist;
       US_Plot       *usp_plot_dist;
    private slots:
       void usp_config_plot_dist( const QPoint & );
@@ -391,7 +392,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QwtPlotGrid   *grid_saxs;
       bool          legend_vis;
 
-      QwtPlot       *plot_errors;
+      mQwtPlot      *plot_errors;
       US_Plot       *usp_plot_errors;
    private slots:
       void usp_config_plot_errors( const QPoint & );
@@ -399,7 +400,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
    private:
       ScrollZoomer  *plot_errors_zoomer;
       QwtPlotGrid   *grid_errors;
-      QwtPlot       *plot_ref;
+      mQwtPlot      *plot_ref;
       US_Plot       *usp_plot_ref;
    private slots:
       void usp_config_plot_ref( const QPoint & );
@@ -458,6 +459,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       mQLineEdit    *le_gauss_fit_start;
       mQLineEdit    *le_gauss_fit_end;
       QPushButton   *pb_gauss_save;
+
+      QPushButton   *pb_gauss_local_caruanas;
+      QPushButton   *pb_gauss_local_guos;
+      QLineEdit     *le_gauss_local_pts;
+      bool          data_point_window( vector < double > &q, vector < double > &I );
 
       QCheckBox     *cb_gauss_match_amplitude;
 
@@ -640,7 +646,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       // QLineEdit    * le_guinier_repeat_sd_limit;
       // QCheckBox    * cb_guinier_search;
 
-      QwtPlot      * guinier_plot;
+      mQwtPlot     * guinier_plot;
       US_Plot      * usp_guinier_plot;
    private slots:
       void usp_config_guinier_plot( const QPoint & );
@@ -649,7 +655,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       ScrollZoomer * guinier_plot_zoomer;
       QwtPlotGrid  * guinier_plot_grid;
 
-      QwtPlot      * guinier_plot_errors;
+      mQwtPlot     * guinier_plot_errors;
       US_Plot      * usp_guinier_plot_errors;
    private slots:
       void usp_config_guinier_plot_errors( const QPoint & );
@@ -658,7 +664,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       ScrollZoomer * guinier_plot_errors_zoomer;
       QwtPlotGrid  * guinier_plot_errors_grid;
 
-      QwtPlot      * guinier_plot_rg;
+      mQwtPlot     * guinier_plot_rg;
       US_Plot      * usp_guinier_plot_rg;
    private slots:
       void usp_config_guinier_plot_rg( const QPoint & );
@@ -667,7 +673,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       ScrollZoomer * guinier_plot_rg_zoomer;
       QwtPlotGrid  * guinier_plot_rg_grid;
 
-      QwtPlot      * guinier_plot_mw;
+      mQwtPlot     * guinier_plot_mw;
       US_Plot      * usp_guinier_plot_mw;
    private slots:
       void usp_config_guinier_plot_mw( const QPoint & );
@@ -676,7 +682,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       ScrollZoomer * guinier_plot_mw_zoomer;
       QwtPlotGrid  * guinier_plot_mw_grid;
 
-      QwtPlot      * guinier_plot_summary;
+      mQwtPlot     * guinier_plot_summary;
       US_Plot      * usp_guinier_plot_summary;
    private slots:
       void usp_config_guinier_plot_summary( const QPoint & );
@@ -933,7 +939,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       vector < QWidget * >                editor_widgets;
       vector < QWidget * >                model_widgets;
 
-      QwtPlot                           * ggqfit_plot;
+      mQwtPlot                          * ggqfit_plot;
       US_Plot                           * usp_ggqfit_plot;
 
       void                                plot_debug();
@@ -1400,6 +1406,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       map < QString, QwtPlot *>    plot_info;
       map < QwtPlot *, ScrollZoomer * >    plot_to_zoomer;
+      map < QwtPlot *, double >    plot_limit_x_range_min;
+      map < QwtPlot *, double >    plot_limit_x_range_max;
 
       QStringList                  get_frames( QStringList files, QString head, QString tail );
       map < QString, QString >     ldata;
@@ -1408,9 +1416,17 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       void                         cormap( map < QString, QString > & parameters );
 
+
+   signals:
+      void do_resize_plots();
+      void do_resize_guinier_plots();
+
    private slots:
 
       void setupGUI();
+
+      void resize_plots();
+      void resize_guinier_plots();
 
       void color_rotate();
       void line_width();
@@ -1441,6 +1457,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void set_eb();
       void rescale();
       void rescale_y();
+      void rescale_y_plot_errors();
       void conc_avg();
       void normalize();
       void add();
@@ -1515,6 +1532,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void gauss_next();
       void gauss_fit();
       void gauss_save();
+      void gauss_local_caruanas();
+      void gauss_local_guos();
       void gauss_pos_text              ( const QString & );
       void gauss_pos_width_text        ( const QString & );
       void gauss_pos_height_text       ( const QString & );

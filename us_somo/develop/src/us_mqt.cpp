@@ -5,6 +5,15 @@
 #include <QLabel>
 #include <QFocusEvent>
 
+mQwtPlot::mQwtPlot( QWidget *parent ) : QwtPlot( parent ) {}
+mQwtPlot::~mQwtPlot() {}
+
+void mQwtPlot::resizeEvent ( QResizeEvent *e )
+{
+   QwtPlot::resizeEvent( e );
+   emit( resized() );
+}
+
 mQLineEdit::mQLineEdit( QWidget *parent ) : QLineEdit( parent ) {}
 
 mQLineEdit::~mQLineEdit() {}

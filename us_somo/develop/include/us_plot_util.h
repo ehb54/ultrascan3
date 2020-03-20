@@ -36,20 +36,56 @@ class US_EXTERN US_Plot_Util
    static void rescale(
                        map < QString, QwtPlot *> plots,
                        map < QwtPlot *, ScrollZoomer * > plot_to_zoomer,
-                       bool only_scale_y = true
+                       bool only_scale_y = true,
+                       bool rescale_rounding = false
+                       );
+
+   static void rescale(
+                       map < QString, QwtPlot *> plots,
+                       map < QwtPlot *, ScrollZoomer * > plot_to_zoomer,
+                       map < QwtPlot *, double >         plot_limit_x_range_min,
+                       map < QwtPlot *, double >         plot_limit_x_range_max,
+                       bool only_scale_y = true,
+                       bool rescale_rounding = false
                        );
 
    static void rescale(
                        const vector < QwtPlot * > & plots,
                        map < QwtPlot *, ScrollZoomer * > plot_to_zoomer,
-                       bool only_scale_y = true
+                       bool only_scale_y = true,
+                       bool rescale_rounding = false
+                       );
+
+   static void rescale(
+                       const vector < QwtPlot * > & plots,
+                       map < QwtPlot *, ScrollZoomer * > plot_to_zoomer,
+                       map < QwtPlot *, double >         plot_limit_x_range_min,
+                       map < QwtPlot *, double >         plot_limit_x_range_max,
+                       bool only_scale_y = true,
+                       bool rescale_rounding = false
                        );
 
    static void rescale(
                        QwtPlot * plot,
                        ScrollZoomer * zoomer,
-                       bool only_scale_y = true
+                       bool only_scale_y = true,
+                       bool rescale_rounding = false
                        );
+
+   static void rescale(
+                       QwtPlot * plot,
+                       ScrollZoomer * zoomer,
+                       double limit_x_range_min,
+                       double limit_x_range_max,
+                       bool only_scale_y = true,
+                       bool rescale_rounding = false
+                       );
+
+   static double round_digits(
+                              double value,
+                              int digits = 2
+                              );
+                             
 };
 
 #endif
