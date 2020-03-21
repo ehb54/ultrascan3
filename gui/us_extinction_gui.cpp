@@ -175,9 +175,9 @@ US_Extinction::US_Extinction(QString buffer, const QString& text, const QString&
    gl2 = new QGridLayout();
    gl2->addWidget(lbl_gaussians, 0, 0);
    gl2->addWidget(ct_gaussian, 0, 1);
-        gl2->addWidget(lbl_cutoff, 1, 0);
-        gl2->addWidget(le_odCutoff, 1, 1);
-        gl2->addWidget(lbl_lambda1, 2, 0);
+   gl2->addWidget(lbl_cutoff, 1, 0);
+   gl2->addWidget(le_odCutoff, 1, 1);
+   gl2->addWidget(lbl_lambda1, 2, 0);
    gl2->addWidget(ct_gaussian, 0, 1);
    gl2->addWidget(lbl_cutoff, 1, 0);
    gl2->addWidget(le_odCutoff, 1, 1);
@@ -197,7 +197,7 @@ US_Extinction::US_Extinction(QString buffer, const QString& text, const QString&
 
    QGridLayout* submain;
    submain = new QGridLayout();
-   submain-> setColumnStretch(0,1);
+   //submain-> setColumnStretch(0,1);
    submain->addWidget(lbl_wvinfo, 0,0);
    submain->addWidget(pb_addWavelength, 1, 0);
    submain->addWidget(lw_file_names, 2, 0);
@@ -227,6 +227,8 @@ US_Extinction::US_Extinction(QString buffer, const QString& text, const QString&
    main->setContentsMargins(2,2,2,2);
    main->addLayout(submain, 0, 0);
    main->addLayout(plotLayout, 0, 1);
+   main->setColumnStretch(0, 2);
+   main->setColumnStretch(1, 5);
 
 
 
@@ -380,7 +382,7 @@ US_Extinction::US_Extinction() : US_Widgets()
 
    QGridLayout* submain;
    submain = new QGridLayout();
-   submain-> setColumnStretch(0,1);
+   //submain-> setColumnStretch(0,1);
    submain->addWidget(lbl_wvinfo, 0,0);
    submain->addWidget(pb_addWavelength, 1, 0);
    submain->addWidget(lw_file_names, 2, 0);
@@ -408,6 +410,8 @@ US_Extinction::US_Extinction() : US_Widgets()
    main->setContentsMargins(2,2,2,2);
    main->addLayout(submain, 0, 0);
    main->addLayout(plotLayout, 0, 1);
+   main->setColumnStretch(0, 2);
+   main->setColumnStretch(1, 5);
 }
 
 void US_Extinction::add_wavelength(void)

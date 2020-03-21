@@ -205,6 +205,8 @@ US_Spectrum::US_Spectrum() : US_Widgets()
    mainLayout->setContentsMargins(2,2,2,2);
    mainLayout->addLayout(gl1, 0, 0);
    mainLayout->addLayout(plotGrid, 0, 1);
+   mainLayout->setColumnStretch(0,2);
+   mainLayout->setColumnStretch(1,5);
 }
 
 //loads basis spectra according to user specification
