@@ -622,11 +622,11 @@ pb_plateau->setVisible(false);
      // details[ "protocolName" ] = QString("JohnsonC_DNA-control_013020");
      //  /****************************************************************************************/
 
-   //  // Interference Data WITH existing Aprofile corresponding to existing protocol!!!
-   //  details[ "invID_passed" ] = QString("6");
-   //  details[ "filename" ]     = QString("Comproject-itf-031220-run1176");
-   //  details[ "protocolName" ] = QString("Comproject-itf-031220");
-   //    //  /****************************************************************************************/
+   // Interference Data WITH existing Aprofile corresponding to existing protocol!!!
+   // details[ "invID_passed" ] = QString("6");
+   // details[ "filename" ]     = QString("Comproject-itf-031220-run1176");
+   // details[ "protocolName" ] = QString("Comproject-itf-031220");
+   //   //  /****************************************************************************************/
    
    // load_auto( details );
 
@@ -2506,8 +2506,8 @@ QVector<double> US_Edit::find_airGap_interference_auto()
 {
   QVector<double> airGap_vals;
 
-  airGap_vals.push_back(5.85);
-  airGap_vals.push_back(5.9);
+  airGap_vals.push_back(5.825);
+  airGap_vals.push_back(5.830);
   
   
   return airGap_vals;
@@ -2515,9 +2515,116 @@ QVector<double> US_Edit::find_airGap_interference_auto()
 
 double US_Edit::find_meniscus_interference_auto()
 {
-  double meniscus_av = 5.95;
+  double bottom_db     = centerpiece_info[ "bottom" ].toDouble(); 
+  double pathlength_db = centerpiece_info[ "pathlen" ].toDouble();
+  double angle_db      = centerpiece_info[ "angle" ].toDouble();
+
+  //double aprofile_volume   = 460; // Just an example - to be read from AProfile, will be global
+  
+  double meniscus_init = sqrt( bottom_db*bottom_db - ( aprofile_volume*360/(1000*pathlength_db*angle_db*M_PI ) ) );     //Radians = Degrees * (M_PI/180.0)
+  
+  qDebug() << "Meniscus_init: INTERFERENCE " << meniscus_init << ", " << bottom_db << ", " << pathlength_db << ", " << angle_db << ", " << M_PI;
+    
+  double meniscus_av = 0;
+  QVector< double > x_meniscuses;
+  
+  // For each scan in the last ~20% of scans:
+  int start_scan = int(0.8*data.scanData.size());
+  int end_scan   = data.scanData.size();
+
+  qDebug() << "Scans for meniscus: start_scan, end_scan: " << start_scan << ", " << end_scan; 
+  
+  for ( int i = start_scan; i < end_scan; i++ )
+    {
+      US_DataIO::Scan*  s = &data.scanData[ i ];
+      
+      double y_max_deviation = -1.0e99;
+      double x_meniscus;
+     
+      double left_fit = meniscus_init + 0.1;
+      
+      int indexLeft_fit   = data.xindex( left_fit );
+      int indexRight      = data.xindex( range_right );
+           
+      //qDebug() << "indexLeft_fit = " << indexLeft_fit << "; indexRight = " <<  indexRight; 
+      
+      //Find a fit to straight line
+      double sumX  = 0;
+      double sumY  = 0;
+      double sumXY = 0;
+      double sumX2 = 0;
+      int countPoints = 0;
+      
+      for ( int j = indexLeft_fit; j <= indexRight; j++ )
+      {
+	double y_curr = s->rvalues[ j ] * invert;
+	double x_curr = data.xvalues[ j ];
+
+	sumX  += x_curr;
+	sumY  += y_curr;
+	sumXY += x_curr*y_curr;
+	sumX2 += x_curr*x_curr;
+
+	++countPoints;
+      }
+
+      //Slope && mean: y(x) = Slope * X + YInt;
+      double xMean = sumX / countPoints;
+      double yMean = sumY / countPoints;
+      double Slope = (sumXY - sumX * yMean) / (sumX2 - sumX * xMean);
+      double YInt  = yMean - Slope * xMean;
+
+      //qDebug() << "y(x) = Slope * X + YInt: " << Slope << "*X + " <<  YInt;
+
+      //Find the biggest y-deviation from a line fit
+      for ( int j = indexLeft_fit; j <= indexRight; j++ )
+      {
+	double y_curr = s->rvalues[ j ] * invert;
+	double x_curr = data.xvalues[ j ];
+
+	double y_fit  = Slope * x_curr + YInt;
+ 	double y_diff_abs = fabs( y_curr - y_fit );
+
+	//qDebug() << "y_curr, x_curr, (Slope * x_curr + YInt), y_diff_abs: " << y_curr << ", " << x_curr << ", " << y_fit << ", " << y_diff_abs;
+
+	if( y_diff_abs > y_max_deviation )
+	  y_max_deviation = y_diff_abs;
+      }
+
+      //qDebug() << " y_max_deviation: " <<  y_max_deviation;
+
+      //reverse order: search for a y-deviation (much) bigger than from a straight line fit based on selected points
+      int indexLeft   = data.xindex( meniscus_init  );
+      for ( int j = indexRight; j >= indexLeft; --j )
+      	{
+	  double y_curr = s->rvalues[ j ] * invert;
+	  double x_curr = data.xvalues[ j ];
+
+	  double y_diff_abs = fabs( y_curr - (Slope * x_curr + YInt) );
+
+	  if( y_diff_abs > y_max_deviation * 1.5 )
+	    {
+	      x_meniscus = x_curr;
+	      break; 
+	    }
+	}
+      x_meniscuses.push_back( x_meniscus ); 
+      
+    }
+
+  //Find simple average position of the meniscus
+  for ( int i=0; i < x_meniscuses.size(); i++ )
+    {
+      meniscus_av += x_meniscuses[ i ];
+      //qDebug() << "x_max: " << x_maxs[ i ] ;
+    }
+  
+  meniscus_av /= x_meniscuses.size();
+   
+  //double meniscus_av = 5.95;
   return meniscus_av;
 }
+
 
 double US_Edit::find_meniscus_auto()
 {
@@ -2554,7 +2661,7 @@ double US_Edit::find_meniscus_auto()
 
       int indexLeft   = data.xindex( meniscus_init  );
       //int indexRight  = data.xindex( meniscus_init + 0.5 );   // <---- OR should it just be the end data from AProfile ?
-      int indexRight  = data.xindex( 7.0 );
+      int indexRight  = data.xindex( range_right );
       //ALEXEY: maybe to be on safer side, take indexRight = meniscus_init  + ( aprofile_right - meniscus_init )/2.0
       
       // qDebug() << "indexLeft = " << indexLeft << "; indexRight = " <<  indexRight; 
