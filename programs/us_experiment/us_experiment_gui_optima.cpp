@@ -4711,6 +4711,8 @@ DbgLv(1) << "EGUp:svRP:  call getProtos()";
 DbgLv(1) << "EGUp:svRP:   prnames" << prnames;
 
    QString protoname   = sibSValue( "general", "protocol" );
+
+   QString old_protoname = protoname;
 //DbgLv(1) << "EGUp:svRP:  protoname" << protoname << "prdats0" << prdats[0];  //ALEXEY: important: this statement caused bug when no protocols existed in the DB
 
    if ( prnames.contains( protoname ) ||  protoname.trimmed().isEmpty() )
@@ -4766,6 +4768,9 @@ DbgLv(1) << "EGUp:svRP:   currProto previous protoname" << currProto->protoname;
    if ( currProto->protoGUID.isEmpty()  ||
         currProto->protoGUID.startsWith( "0000" ) )
       currProto->protoGUID = US_Util::new_guid(); // Get a new GUID
+   else if ( old_protoname != protoname  )
+     currProto->protoGUID = US_Util::new_guid(); // Get a new GUID
+   
 DbgLv(1) << "EGUp:svRP:   currProto updated  guid" << currProto->protoGUID;
 DbgLv(1) << "EGUp:svRP:   currProto updated  protoname" << currProto->protoname;
 
