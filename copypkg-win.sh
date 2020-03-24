@@ -24,6 +24,7 @@ QTDLLS=" \
  Qt5Bluetooth.dll Qt5CLucene.dll Qt5Concurrent.dll \
  Qt5Core.dll Qt5DBus.dll \
  Qt5Gui.dll Qt5Help.dll Qt5Location.dll \
+ Qt5Multimedia.dll Qt5MultimediaQuick_p.dll Qt5MultimediaWidgets.dll \
  Qt5Network.dll Qt5Nfc.dll Qt5OpenGL.dll Qt5Positioning.dll \
  Qt5PrintSupport.dll Qt5Qml.dll \
  Qt5Quick.dll Qt5QuickParticles.dll Qt5QuickTest.dll Qt5QuickWidgets.dll \

@@ -201,13 +201,16 @@ DbgLv(1) << "APG: ipro:  s:ii" << ii << "chname" << chname << "sodesc" << sodesc
       QString scan3   = iProto->rpOptic.chopts[ ii ].scan3;
 DbgLv(1) << "APG: ipro:  o.ii" << ii << "chname" << chname
  << "scan1 scan2 scan3" << scan1 << scan2 << scan3;
-      if ( scan1.isEmpty() )  continue;
+      if ( scan1.isEmpty()  &&
+           scan2.isEmpty()  &&
+           scan3.isEmpty() )  continue;
 
       QStringList ods;       // Optics descriptions, this channel
       chname          = QString( chname ).section( ":", 0, 0 )
                                          .section( ",", 0, 0 )
                                          .replace( " / ", "" );
-      ods << scan1;          // First optics
+      if ( ! scan1.isEmpty() )
+         ods << scan1;       // First optics
       if ( ! scan2.isEmpty() )
          ods << scan2;       // Additional optics
       if ( ! scan3.isEmpty() )

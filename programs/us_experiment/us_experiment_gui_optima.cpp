@@ -3550,7 +3550,7 @@ US_ExperGuiOptical::US_ExperGuiOptical( QWidget* topw )
 
 
    QLabel* lb_hdr1     = us_banner( tr( "Cell / Channel" ) );
-   QLabel* lb_hdr2     = us_banner( tr( "Optical System Scans to Perform" ) );
+   QLabel* lb_hdr2     = us_banner( tr( "Optical System Scan Types" ) );
 
    QGridLayout* banners = new QGridLayout();
    int row             = 1;

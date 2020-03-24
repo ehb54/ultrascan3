@@ -1995,7 +1995,7 @@ DbgLv(1) << "EGOp:inP:  call rbO";
    QString slabl_n( "none" );
 DbgLv(1) << "EGOp:inP: nochan" << nochan;
 
-   //ALEXEY: if last cell is used as centerpiece, disable Rayleigh Interference (ckbox2)
+   //ALEXEY: if last cell is used as centerpiece, disable Rayleigh Interference (ckbox2/ckbox3)
    int nholes                 = sibIValue( "rotor",   "nholes" );
    bool ctrbal_is_centerpiece = false;
    for ( int ii = 0; ii < nochan; ii++ )
@@ -2003,7 +2003,7 @@ DbgLv(1) << "EGOp:inP: nochan" << nochan;
        QString channel     = rpOptic->chopts[ ii ].channel;
 
        int cell_number = ((channel.split(QRegExp("\\s+"), QString::SkipEmptyParts))[0]).toInt();
-       qDebug() << "CELL ####: " << cell_number;
+DbgLv(1) << "EGOp:inP: CELL #" << cell_number;
        if ( nholes == cell_number )
          ctrbal_is_centerpiece = true;
      }
@@ -2035,19 +2035,29 @@ DbgLv(1) << "EGOp:inP:  ii" << ii << "channel" << channel
 
       //ALEXEY: set checkboxes checked based on the protocol loaded, rather than by default
       if ( !scan1.isEmpty() )
-	ckbox1->setChecked(true);
-      if ( !scan2.isEmpty() )
-	ckbox2->setChecked(true);
+	ckbox1->setChecked( true);
       else
-	ckbox2->setChecked(false);
+	ckbox1->setChecked( false );
+      if ( !scan2.isEmpty() )
+	ckbox2->setChecked( true  );
+      else
+	ckbox2->setChecked( false );
+      if ( !scan3.isEmpty()  &&  !ckscan3.contains( notinst ) )
+	ckbox3->setChecked( true  );
+      else
+	ckbox3->setChecked( false );
       
       //ckbox1->setChecked( prscans.contains( ckscan1 ) );
       //ckbox2->setChecked( prscans.contains( ckscan2 ) );   //ALEXEY do not check Interference by default
 
-      //ALEXEY: if last cell is used as centerpiece, disable Rayleigh Interference (ckbox2)
-      ckbox2->setEnabled(true);
+      //ALEXEY: if last cell is used as centerpiece, disable Rayleigh Interference (ckbox2|ckbox3]
       if ( ctrbal_is_centerpiece )
-        ckbox2->setEnabled(false);
+      {
+        if ( ! ckscan3.contains( notinst ) )
+           ckbox2->setEnabled( false );
+        else
+           ckbox3->setEnabled( false );
+      }
 
       ckbox3->setChecked( prscans.contains( ckscan3 ) );
       ckbox1->setVisible( ! ckscan1.contains( notinst ) );
@@ -2094,25 +2104,19 @@ DbgLv(1) << "EGOp:svP:   ii" << ii << "olabl" << cc_labls[ii]->text();
 
       if ( ckbox1->isChecked() )
       {
-         if      ( kchkd == 0 )  rpOptic->chopts[ ii ].scan1 = ckbox1->text();
-         else if ( kchkd == 1 )  rpOptic->chopts[ ii ].scan2 = ckbox1->text();
-         else if ( kchkd == 2 )  rpOptic->chopts[ ii ].scan3 = ckbox1->text();
+         rpOptic->chopts[ ii ].scan1 = ckbox1->text();
          kchkd++;
       }
 
       if ( ckbox2->isChecked() )
       {
-         if      ( kchkd == 0 )  rpOptic->chopts[ ii ].scan1 = ckbox2->text();
-         else if ( kchkd == 1 )  rpOptic->chopts[ ii ].scan2 = ckbox2->text();
-         else if ( kchkd == 2 )  rpOptic->chopts[ ii ].scan3 = ckbox2->text();
+         rpOptic->chopts[ ii ].scan2 = ckbox2->text();
          kchkd++;
       }
 
       if ( ckbox3->isChecked() )
       {
-         if      ( kchkd == 0 )  rpOptic->chopts[ ii ].scan1 = ckbox3->text();
-         else if ( kchkd == 1 )  rpOptic->chopts[ ii ].scan2 = ckbox3->text();
-         else if ( kchkd == 2 )  rpOptic->chopts[ ii ].scan3 = ckbox3->text();
+         rpOptic->chopts[ ii ].scan3 = ckbox3->text();
          kchkd++;
       }
 DbgLv(1) << "EGOp:svP:     kchkd" << kchkd << "scans:"
