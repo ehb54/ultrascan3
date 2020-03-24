@@ -622,11 +622,18 @@ pb_plateau->setVisible(false);
      // details[ "protocolName" ] = QString("JohnsonC_DNA-control_013020");
      //  /****************************************************************************************/
 
-   // Interference Data WITH existing Aprofile corresponding to existing protocol!!!
+   // // Interference Data WITH existing Aprofile corresponding to existing protocol!!!
    // details[ "invID_passed" ] = QString("6");
    // details[ "filename" ]     = QString("Comproject-itf-031220-run1176");
    // details[ "protocolName" ] = QString("Comproject-itf-031220");
    //   //  /****************************************************************************************/
+
+   // // Interference Data WITH existing Aprofile corresponding to existing protocol!!!
+   // details[ "invID_passed" ] = QString("6");
+   // details[ "filename" ]     = QString("5-itf-test-run1179");
+   // details[ "protocolName" ] = QString("5-itf-test");
+   //   //  /****************************************************************************************/
+   
    
    // load_auto( details );
 
@@ -2506,8 +2513,8 @@ QVector<double> US_Edit::find_airGap_interference_auto()
 {
   QVector<double> airGap_vals;
 
-  airGap_vals.push_back(5.825);
   airGap_vals.push_back(5.830);
+  airGap_vals.push_back(5.835);
   
   
   return airGap_vals;
@@ -2541,7 +2548,8 @@ double US_Edit::find_meniscus_interference_auto()
       double y_max_deviation = -1.0e99;
       double x_meniscus;
      
-      double left_fit = meniscus_init + 0.1;
+      //double left_fit = meniscus_init + 0.1;
+      double left_fit = meniscus_init + (range_right - meniscus_init)*0.5 ;
       
       int indexLeft_fit   = data.xindex( left_fit );
       int indexRight      = data.xindex( range_right );

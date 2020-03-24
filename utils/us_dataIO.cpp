@@ -1389,6 +1389,8 @@ void US_DataIO::calc_integral( RawData& data, const EditValues& ee )
          }
       }
    }
+
+   qDebug() << "Calc INTEGRAL DONE;";
 }
 
 // Copy a range of readings values from one data set to another
