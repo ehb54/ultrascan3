@@ -633,9 +633,15 @@ pb_plateau->setVisible(false);
    // details[ "filename" ]     = QString("5-itf-test-run1179");
    // details[ "protocolName" ] = QString("5-itf-test");
    //   //  /****************************************************************************************/
+
+   // Interference Data WITH existing Aprofile corresponding to existing protocol!!!
+   details[ "invID_passed" ] = QString("6");
+   details[ "filename" ]     = QString("6-itf-test-run720");
+   details[ "protocolName" ] = QString("6-itf-test");
+   //  /****************************************************************************************/
    
    
-   // load_auto( details );
+   load_auto( details );
 
    
 
@@ -2512,11 +2518,132 @@ void US_Edit::read_centerpiece_params( int trx )
 QVector<double> US_Edit::find_airGap_interference_auto()
 {
   QVector<double> airGap_vals;
+  QVector< double > x_airGap_lefts;
+  QVector< double > x_airGap_rights;
+  double airGap_left_av  = 0;
+  double airGap_right_av = 0;
+  
+  // starting from meniscus position, go backwards and fit several points into staight line..
+  // then, look at max deviation from it and find the onset of the airGap (in reverse order)
+  // basically, repeat finding meniscus algorithm...
 
-  airGap_vals.push_back(5.830);
-  airGap_vals.push_back(5.835);
+  // For each scan in the last ~20% of scans:
+  int start_scan = int(0.8*data.scanData.size());
+  int end_scan   = data.scanData.size();
+
+  for ( int i = start_scan; i < end_scan; i++ )
+    {
+      US_DataIO::Scan*  s = &data.scanData[ i ];
+      
+      double y_max_deviation = -1.0e99;
+      double x_airGap_left;
+      double x_airGap_right;
+     
+      double right_fit    = meniscus - 0.02;
+      int indexRight_fit  = data.xindex( right_fit );
+      double left_fit     = right_fit - 0.02;
+      int indexLeft_fit   = data.xindex( left_fit );
+
+      //qDebug() << "INTERFERENCE: left_fit, right_fit: " << left_fit << ", " << right_fit;
+
+      /**********************
+      //Find a fit to straight line
+      double sumX  = 0;
+      double sumY  = 0;
+      double sumXY = 0;
+      double sumX2 = 0;
+      int countPoints = 0;
+      
+      for ( int j = indexLeft_fit; j <= indexRight_fit; j++ )
+      {
+	double y_curr = s->rvalues[ j ] * invert;
+	double x_curr = data.xvalues[ j ];
+
+	sumX  += x_curr;
+	sumY  += y_curr;
+	sumXY += x_curr*y_curr;
+	sumX2 += x_curr*x_curr;
+
+	++countPoints;
+      }
+
+      //Slope && mean: y(x) = Slope * X + YInt;
+      double xMean = sumX / countPoints;
+      double yMean = sumY / countPoints;
+      double Slope = (sumXY - sumX * yMean) / (sumX2 - sumX * xMean);
+      double YInt  = yMean - Slope * xMean;
+
+      ***************/
+      
+      /********** TESTITNG *******************************************************/
+      //Alternative: derive a curve passing through Left/Right indecies
+      double Slope = (s->rvalues[ indexRight_fit ] * invert - s->rvalues[ indexLeft_fit ] * invert ) / ( data.xvalues[ indexRight_fit ] - data.xvalues[ indexLeft_fit ] );
+      double YInt  = s->rvalues[ indexRight_fit ] * invert - Slope *  data.xvalues[ indexRight_fit ];
+      /****************************************************************************/
+      
+      //qDebug() << "y(x) = Slope * X + YInt: " << Slope << "*X + " <<  YInt;
+
+      //Find the biggest y-deviation from a line fit
+      for ( int j = indexLeft_fit; j <= indexRight_fit; j++ )
+      {
+	double y_curr = s->rvalues[ j ] * invert;
+	double x_curr = data.xvalues[ j ];
+
+	double y_fit  = Slope * x_curr + YInt;
+ 	double y_diff_abs = fabs( y_curr - y_fit );
+
+	//qDebug() << "y_curr, x_curr, (Slope * x_curr + YInt), y_diff_abs: " << y_curr << ", " << x_curr << ", " << y_fit << ", " << y_diff_abs;
+
+	if( y_diff_abs > y_max_deviation )
+	  y_max_deviation = y_diff_abs;
+      }
+
+      //qDebug() << " y_max_deviation: " <<  y_max_deviation;
+
+      //reverse order: search for a y-deviation (much) bigger than from a straight line fit based on selected points
+      int indexLeft   = data.xindex( 5.85 );  //Begiinning of the cell?
+      //right_fit -= 0.02;
+      //indexRight_fit  = data.xindex( right_fit );
+      for ( int j = indexRight_fit; j >= indexLeft; --j )
+      	{
+	  double y_curr = s->rvalues[ j ] * invert;
+	  double x_curr = data.xvalues[ j ];
+
+	  double y_diff_abs = fabs( y_curr - (Slope * x_curr + YInt) );
+
+	  if( y_diff_abs > y_max_deviation * 1.5 )
+	    {
+	      x_airGap_right = x_curr - 0.02;
+	      x_airGap_left  = x_airGap_right - 0.02;
+	      break; 
+	    }
+	}
+      x_airGap_lefts.push_back( x_airGap_left );
+      x_airGap_rights.push_back( x_airGap_right );
+
+      //qDebug() << "x_airGap_left, x_airGap_right: " << x_airGap_left << ", " << x_airGap_right;
+    }
+
+  //Find simple average position of the left/right airGap values
+  for ( int i=0; i < x_airGap_lefts.size(); i++ )
+    {
+      airGap_left_av  += x_airGap_lefts[ i ];
+      airGap_right_av += x_airGap_rights[ i ];
+    }
   
+  airGap_left_av  /= x_airGap_lefts.size();
+  airGap_right_av /= x_airGap_rights.size();
   
+  airGap_vals.push_back(airGap_left_av);
+  airGap_vals.push_back(airGap_right_av);
+
+  //TEMP
+  //airGap_vals.push_back(5.89);
+  //airGap_vals.push_back(5.92);
+
+  
+  qDebug() << "INTERFERENCE: airGaps: " << airGap_left_av << " -- " << airGap_right_av;
+    
   return airGap_vals;
 }
 
@@ -2548,14 +2675,16 @@ double US_Edit::find_meniscus_interference_auto()
       double y_max_deviation = -1.0e99;
       double x_meniscus;
      
-      //double left_fit = meniscus_init + 0.1;
-      double left_fit = meniscus_init + (range_right - meniscus_init)*0.5 ;
+      //double left_fit = 6.5;
+      double left_fit = meniscus_init + (range_right - meniscus_init)*0.5;
       
       int indexLeft_fit   = data.xindex( left_fit );
       int indexRight      = data.xindex( range_right );
            
       //qDebug() << "indexLeft_fit = " << indexLeft_fit << "; indexRight = " <<  indexRight; 
-      
+
+
+      /**********************************
       //Find a fit to straight line
       double sumX  = 0;
       double sumY  = 0;
@@ -2581,7 +2710,14 @@ double US_Edit::find_meniscus_interference_auto()
       double yMean = sumY / countPoints;
       double Slope = (sumXY - sumX * yMean) / (sumX2 - sumX * xMean);
       double YInt  = yMean - Slope * xMean;
+      **********************************************/
 
+      /********** TESTITNG *******************************************************/
+      //Alternative: derive a curve passing through Left/Right indecies
+      double Slope = (s->rvalues[ indexRight ] * invert - s->rvalues[ indexLeft_fit ] * invert ) / ( data.xvalues[ indexRight ] - data.xvalues[ indexLeft_fit ] );
+      double YInt  = s->rvalues[ indexRight ] * invert - Slope *  data.xvalues[ indexRight ];
+      /****************************************************************************/
+      
       //qDebug() << "y(x) = Slope * X + YInt: " << Slope << "*X + " <<  YInt;
 
       //Find the biggest y-deviation from a line fit
