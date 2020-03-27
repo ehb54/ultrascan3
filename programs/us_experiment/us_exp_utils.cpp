@@ -2424,9 +2424,33 @@ DbgLv(1) << "EGRn:inP:  #Wvl for cell: " << j << " is: " << Total_wvl[i];
       mainw->ScanCount_global = scancount;
 
 DbgLv(1) << "EGRn:inP:  speed" << i << "scancount" << scancount;
-      QString scancount_stage = tr( "Stage %1. Number of Scans per Wavelength: %2 " ).arg(i+1).arg(scancount);
+      QString scancount_stage = tr( "Stage %1. Number of Scans per Wavelength (UV/vis): %2 " ).arg(i+1).arg(scancount);
       cb_scancount->addItem( scancount_stage );
+
+      //ALEXEY: add interference info:
+      double scanint_sec_int  = rpSpeed->ssteps[ i ].scanintv_int;
+      int scancount_int = 0;
+      //ALEXEY: check if there is interference
+      QStringList oprof   = sibLValue( "optical", "profiles" );
+      //QString uvvis       = tr( "UV/visible" );
+      QString rayleigh    = tr( "Rayleigh Interference" );
+      
+      bool has_interference = false;
+      for ( int ii = 0; ii < oprof.count(); ii++ )
+	{
+	  if ( oprof[ ii ].contains( rayleigh ) )
+	    {
+	      has_interference = true;
+	      break;
+	    }
+	}
+      if ( has_interference )
+	scancount_int = int( duration_sec / scanint_sec_int ); 
+      
+      QString scancount_stage_int = tr( "Stage %1. Number of Scans per Cell (Interference): %2 " ).arg(i+1).arg(scancount_int);
+      cb_scancount->addItem( scancount_stage_int );      
    }
+   
    // End of ScanCount listbox
 
 }

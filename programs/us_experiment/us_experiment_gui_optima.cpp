@@ -1543,7 +1543,7 @@ DbgLv(1) << "EGSp: addWidg/Layo BB";
 
 
   //UV-vis.
-  QLabel* lb_uvvis    = us_banner( tr( "UV-Visible::" ) );
+  QLabel* lb_uvvis    = us_banner( tr( "UV-Visible (total):" ) );
   genL->addWidget( lb_uvvis,     row++,    0, 1,  8 );
   genL->addWidget( lb_delay,   row,    0, 1,  5 );
   genL->addLayout( lo_delaylay,   row++,  5, 1,  1 );
@@ -1552,7 +1552,7 @@ DbgLv(1) << "EGSp: addWidg/Layo BB";
 
 
   // Interference
-  QLabel* lb_int    = us_banner( tr( "Interference:" ) );
+  QLabel* lb_int    = us_banner( tr( "Interference (per cell):" ) );
   genL->addWidget( lb_int,     row++,    0, 1,  8 );
   genL->addWidget( lb_delay_int,   row,    0, 1,  5 );
   genL->addLayout( lo_delaylay_int,   row++,  5, 1,  1 );
@@ -1699,7 +1699,7 @@ QString US_ExperGuiSpeeds::speedp_description( int ssx )
    //        .arg( durhr ).arg( durmin ).arg( escans ).arg( tscans );
 
    return tr( "Speed Profile %1 :    %2 rpm for %3 hr %4 min"
-              "  Estimated # of scans: %5 (UV-vis), %6 (Interference)" )
+              "  Estimated # of scans: %5 (UV-vis, total), %6 (Interference, per cell)" )
           .arg( ssx + 1 ).arg( ssvals[ ssx ][ "speed" ] )
       .arg( durhr ).arg( durmin ).arg( escans ).arg( escans_int );
 }
@@ -4974,7 +4974,7 @@ void US_ExperGuiUpload::submitExperiment()
       QStringList oprof   = sibLValue( "optical", "profiles" );
       QString uvvis       = tr( "UV/visible" );
       QString rayleigh    = tr( "Rayleigh Interference" );
-
+      
       //get # cells with interference channels
       int ncells_interference = 0;
       for ( int kk = 0; kk < oprof.count(); kk++ )
@@ -5339,7 +5339,7 @@ void US_ExperGuiUpload::submitExperiment()
 
          int ScanCount;
          int ScanInt;
-         ScanCount = int( duration_sec / (scanint_sec * ncells_interference ));
+         ScanCount = int( duration_sec / (scanint_sec * ncells_interference ));  //ALEXEY: do NOT divide by #cells ?
          ScanInt   = scanint_sec;
 
          qDebug() << "Duration_sec: " << duration_sec << ", delay_sec_int: " << delay_sec << ", scanint_sec_int: " << scanint_sec;
