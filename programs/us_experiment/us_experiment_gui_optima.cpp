@@ -5339,8 +5339,9 @@ void US_ExperGuiUpload::submitExperiment()
 
          int ScanCount;
          int ScanInt;
-         ScanCount = int( duration_sec / (scanint_sec * ncells_interference ));  //ALEXEY: do NOT divide by #cells ?
-         ScanInt   = scanint_sec;
+         //ScanCount = int( duration_sec / (scanint_sec * ncells_interference ));  //ALEXEY: do NOT divide by #cells ?
+	 ScanCount = int( duration_sec / (scanint_sec  ));
+	 ScanInt   = scanint_sec;
 
          qDebug() << "Duration_sec: " << duration_sec << ", delay_sec_int: " << delay_sec << ", scanint_sec_int: " << scanint_sec;
 
