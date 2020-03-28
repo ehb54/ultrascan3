@@ -25,7 +25,7 @@
 #include "../us_edit/us_ri_noise.h"
 #include "../us_edit/us_select_lambdas.h"
 
-#include "us_analysis_auto.h"
+#include "../us_autoflow_analysis/us_autoflow_analysis.h"
 
 #include "us_protocol_util.h"
 #include "us_project_gui.h"
