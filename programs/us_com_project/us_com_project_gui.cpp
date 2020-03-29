@@ -2109,7 +2109,7 @@ US_AnalysisGui::US_AnalysisGui( QWidget* topw )
 {
    mainw               = (US_ComProjectMain*)topw;
 
-   setPalette( US_GuiSettings::frameColor() );
+   //setPalette( US_GuiSettings::frameColor() );
    QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
    QFontMetrics fmet( sfont );
    //int fwid     = fmet.maxWidth();

@@ -7,6 +7,10 @@
 // Constructor
 US_Analysis_auto::US_Analysis_auto() : US_Widgets()
 {
+  setWindowTitle( tr( "Autoflow Analysis Monitor"));
+                       
+  //setPalette( US_GuiSettings::frameColor() );
+  
   QVBoxLayout* panel  = new QVBoxLayout( this );
   panel->setSpacing        ( 2 );
   panel->setContentsMargins( 2, 2, 2, 2 );
@@ -16,34 +20,40 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
 
   QHBoxLayout* buttons     = new QHBoxLayout();
   int row              = 1;
-  pb_show_all   = us_pushbutton( tr( "Show Information for All Triples" ) );
-  pb_hide_all   = us_pushbutton( tr( "Hide Information for All Triples" ) );
+  pb_show_all   = us_pushbutton( tr( "Expand All Triples" ) );
+  pb_hide_all   = us_pushbutton( tr( "Collapse All Triples" ) );
   buttons->addWidget( pb_show_all );
   buttons->addWidget( pb_hide_all );
+
+  connect( pb_show_all,   SIGNAL( clicked()    ),
+	   this,          SLOT  ( show_all() ) );
+  
+  connect( pb_hide_all,   SIGNAL( clicked()    ),
+	   this,          SLOT  ( hide_all() ) );
   
   panel->addLayout(buttons);
   
   // TreeWidget
   treeWidget = new QTreeWidget();
   treeWidget->setColumnCount(2);
-  treeWidget->setHeaderLabel(tr("Triples"));
-  
+  treeWidget->headerItem()->setText(0, "Tripels");
+  treeWidget->headerItem()->setText(1, "Analysis Stages");
 
   panel->addWidget(treeWidget);
 
   setMinimumSize( 950, 450 );
   adjustSize();
   
-  // ---- Testing ----
-  QMap < QString, QString > protocol_details;
-  protocol_details[ "aprofileguid" ] = QString("d13ffad0-6f27-4fd8-8aa0-df8eef87a6ea");
-  protocol_details[ "protocolName" ] = QString("alexey-abs-itf-test1");
-  protocol_details[ "invID_passed" ] = QString("12");
+  // // ---- Testing ----
+  // QMap < QString, QString > protocol_details;
+  // protocol_details[ "aprofileguid" ] = QString("d13ffad0-6f27-4fd8-8aa0-df8eef87a6ea");
+  // protocol_details[ "protocolName" ] = QString("alexey-abs-itf-test1");
+  // protocol_details[ "invID_passed" ] = QString("12");
   
   
-  initPanel( protocol_details );
+  // initPanel( protocol_details );
 
-  // -----------------
+  // // -----------------
 
 }
 
@@ -70,12 +80,21 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   read_protocol_data_triples();
    
   //Generate GUI
+  QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
+  QFontMetrics fmet( sfont );
 
+  int triple_name_width;
+  int max_width = 0;
+  
   for ( int i=0; i<Array_of_triples.size(); ++i )
     {
       QString triple_curr = Array_of_triples[i];
+      triple_name_width = fmet.width( triple_curr );
 
-      qDebug() << "Triple " << i << ": " << triple_curr;
+      qDebug() << "Triple " << i << ": width:  " << triple_curr << ", " << triple_name_width;
+
+      if ( triple_name_width > max_width )
+	max_width =  triple_name_width; 
 
       topItem_2DSA [ triple_curr ] = new QTreeWidgetItem();
       topItem_2DSA [ triple_curr ] -> setText( 0, triple_curr );
@@ -83,8 +102,9 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       
       if ( job1run )  //2DSA
 	{
-	  QString stage_name( tr("Stage: 2DSA") );
-	  groupbox_2DSA[ triple_curr ] = createGroup( stage_name  );
+	  QString stage_name( tr("2DSA") );
+	  QString child_name = stage_name + " (" + triple_curr + ")";
+	  groupbox_2DSA[ triple_curr ] = createGroup( child_name  );
 
 	  childItem_2DSA [ triple_curr ] = new QTreeWidgetItem();
 	  topItem_2DSA [ triple_curr ] -> addChild( childItem_2DSA [ triple_curr ] );
@@ -94,29 +114,55 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       
       if ( job2run )  //2DSA-FM
 	{
-	  QString stage_name( tr("Stage: 2DSA-FM") );
-	  groupbox_2DSA[ triple_curr ] = createGroup( stage_name  );
+	  QString stage_name( tr("2DSA-FM") );
+	  QString child_name = stage_name + " (" + triple_curr + ")";
+	  groupbox_2DSA[ triple_curr ] = createGroup( child_name  );
+
+	  childItem_2DSA [ triple_curr ] = new QTreeWidgetItem();
+	  topItem_2DSA [ triple_curr ] -> addChild( childItem_2DSA [ triple_curr ] );
+	  treeWidget->setItemWidget( childItem_2DSA [ triple_curr ] , 1, groupbox_2DSA[ triple_curr ] );
+	}
+
+      if ( job3run )  //FITMEN
+	{
+	  
+	}
+      
+      if ( job4run )  //2DSA-IT
+	{
+	  QString stage_name( tr("2DSA-IT") );
+	  QString child_name = stage_name + " (" + triple_curr + ")";
+	  groupbox_2DSA[ triple_curr ] = createGroup( child_name  );
+
+	  childItem_2DSA [ triple_curr ] = new QTreeWidgetItem();
+	  topItem_2DSA [ triple_curr ] -> addChild( childItem_2DSA [ triple_curr ] );
+	  treeWidget->setItemWidget( childItem_2DSA [ triple_curr ] , 1, groupbox_2DSA[ triple_curr ] );
+	}
+      
+      if ( job5run )  //2DSA-MC
+	{
+	  QString stage_name( tr("2DSA-MC") );
+	  QString child_name = stage_name + " (" + triple_curr + ")";
+	  groupbox_2DSA[ triple_curr ] = createGroup( child_name  );
 
 	  childItem_2DSA [ triple_curr ] = new QTreeWidgetItem();
 	  topItem_2DSA [ triple_curr ] -> addChild( childItem_2DSA [ triple_curr ] );
 	  treeWidget->setItemWidget( childItem_2DSA [ triple_curr ] , 1, groupbox_2DSA[ triple_curr ] );
 	}
     }
+  
+  qDebug() << "Triple Max Size: " << int(max_width);
 
-  if ( job3run )  //FITMEN
-    {
+  max_width *= 2;
 
-    }
+  //treeWidget->setColumnWidth(0, 200);
+  treeWidget->header()->resizeSection(0, max_width );
 
-  if ( job4run )  //2DSA-IT
-    {
+  // treeWidget->headerItem()->setText(0, "Tripels");
+  // treeWidget->headerItem()->setText(1, "Analysis Stages");
 
-    }
-
-  if ( job5run )  //2DSA-MC
-    {
-
-    }  
+  treeWidget->setStyleSheet( "QTreeWidget { font: bold; font-size: 15px;} QTreeView { alternate-background-color: yellow;} QTreeView::item:hover { border: black;  border-radius:1px;  background-color: rgba(0,128,255,95);}");
+  
 }
 
 //create groupBox
@@ -128,8 +174,10 @@ QGroupBox * US_Analysis_auto::createGroup( QString & triple_name )
   p.setColor(QPalette::Dark, Qt::white);
   groupBox->setPalette(p);
 
-  groupBox-> setStyleSheet( "QGroupBox { background-color: blue; border-radius: 15px; margin-top: 1ex; } QGroupBox::title { padding: 0 3px;  background-color: white; }");
+  groupBox-> setStyleSheet( "QGroupBox { font: bold;  background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #E0E0E0, stop: 1 #FFFFFF); border: 2px solid gray; border-radius: 10px; margin-top: 20px; margin-bottom: 10px; padding-top: 5px; } QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; left: 10px; margin: 0 5px; background-color: black; color: white; padding: 0 3px;}  QGroupBox::indicator { width: 13px; height: 13px; border: 1px solid grey; background-color: rgba(204, 204, 204, 255);} QGroupBox::indicator:hover {background-color: rgba(235, 235, 235, 255);}");
 
+
+  
   groupBox->setFlat(true);
 
   
@@ -409,4 +457,16 @@ bool US_Analysis_auto::readAProfile_2DSA( QXmlStreamReader& xmli )
 bool US_Analysis_auto::bool_flag( const QString xmlattr )
 {
    return ( !xmlattr.isEmpty()  &&  ( xmlattr == "1"  ||  xmlattr == "T" ) );
+}
+
+//Unfold tree
+void US_Analysis_auto::show_all( )
+{
+  treeWidget->expandAll();
+}
+
+//collapse tree
+void US_Analysis_auto::hide_all( )
+{
+  treeWidget->collapseAll();
 }

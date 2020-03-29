@@ -87,6 +87,8 @@ class US_Analysis_auto : public US_Widgets
 
       private slots:
 	void initPanel( QMap < QString, QString > & );
+	void show_all( void );
+	void hide_all( void );
      
       signals:
    
