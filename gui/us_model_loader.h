@@ -111,6 +111,7 @@ class US_GUI_EXTERN US_ModelLoader : public US_WidgetsDialog
       QCheckBox*           ck_single;
       QCheckBox*           ck_edit;
       QCheckBox*           ck_unasgn;
+      QCheckBox*           ck_edlast;
 
       US_Disk_DB_Controls* dkdb_cntrls;
 
@@ -126,6 +127,7 @@ class US_GUI_EXTERN US_ModelLoader : public US_WidgetsDialog
       bool                 do_edit;
       bool                 do_unasgn;
       bool                 do_manual;
+      bool                 do_edlast;
       bool                 can_run;
       bool                 can_edit;
 
@@ -169,6 +171,8 @@ class US_GUI_EXTERN US_ModelLoader : public US_WidgetsDialog
       void change_single( bool );
       void change_edit  ( bool );
       void change_unasgn( bool );
+      void change_edlast( bool );
+      void select_edlast( void );
       QString alt_description( QString&, const bool );
 
       void help  (        void )
