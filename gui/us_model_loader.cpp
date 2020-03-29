@@ -118,6 +118,8 @@ qDebug() << "ML:BD: runIDs empty" << runIDs.isEmpty();
    do_run          = can_run;
    do_manual       = false;
    do_unasgn       = false;
+   do_edlast       = !can_edit;
+qDebug() << "Bld: do_edit" << do_edit << " do_edlast" << do_edlast << "edGUID" << edGUID;
 
    if ( ! dsearch.isEmpty() )
    {  // If an input search string is given, look for special flags
@@ -173,11 +175,16 @@ qDebug() << "Bld: single" << do_single << " manual" << do_manual
                                           ck_edit,    do_edit || do_run );
    QGridLayout* lo_unasgn  = us_checkbox( tr( "Edit-Unassigned Only" ),
                                           ck_unasgn,  do_unasgn || do_manual );
+   QGridLayout* lo_edlast  = us_checkbox( tr( "Last Edits Only" ),
+                                          ck_edlast,  false );
+   ck_edlast->setEnabled( do_edlast );
+
    int arow   = 0;
-   advtypes->addWidget( lb_advopts, arow++, 0, 1, 3 );
+   advtypes->addWidget( lb_advopts, arow++, 0, 1, 4 );
    advtypes->addLayout( lo_single,  arow,   0, 1, 1 );
    advtypes->addLayout( lo_edit,    arow,   1, 1, 1 );
-   advtypes->addLayout( lo_unasgn,  arow++, 2, 1, 1 );
+   advtypes->addLayout( lo_unasgn,  arow,   2, 1, 1 );
+   advtypes->addLayout( lo_edlast,  arow++, 3, 1, 1 );
 
    connect( ck_single, SIGNAL( toggled      ( bool ) ),
                        SLOT  ( change_single( bool ) ) );
@@ -185,6 +192,8 @@ qDebug() << "Bld: single" << do_single << " manual" << do_manual
                        SLOT  ( change_edit  ( bool ) ) );
    connect( ck_unasgn, SIGNAL( toggled      ( bool ) ),
                        SLOT  ( change_unasgn( bool ) ) );
+   connect( ck_edlast, SIGNAL( toggled      ( bool ) ),
+                       SLOT  ( change_edlast( bool ) ) );
 
    main->addLayout( advtypes );
 
@@ -775,6 +784,11 @@ qDebug() << " (3)m_d_u size" << model_descrs_ufilt.size();
    }
 qDebug() << " (4)m_d size" << model_descriptions.size();
 
+   if ( do_edlast )
+   { // Pare down models list to only the last edit of each run triple
+      select_edlast();
+   }
+
    lw_models->disconnect( SIGNAL( currentRowChanged( int ) ) );
    lw_models->clear();
    int maxlch   = 0;
@@ -1294,6 +1308,85 @@ void US_ModelLoader::change_unasgn( bool ckunasgn )
    list_models();
 }
 
+// Slot to re-list models after change in Last Edit checkbox
+void US_ModelLoader::change_edlast( bool ckedla )
+{
+   do_edlast = ckedla;
+qDebug() << "ch_edlast: " << do_edlast;
+   db_id1    = -2;  // flag re-list when list-edit flag changes
+   db_id2    = -2;
+
+   list_models();
+}
+
+// Slot to pare down the models list to only last edits
+void US_ModelLoader::select_edlast( )
+{
+qDebug() << "select_edlast";
+   QVector< QString >  rtrips;   // Run-triple strings vector
+   QVector< QString >  edtims;   // Edit-times strings vector
+   QVector< int >      lendxs;   // Last-edit indexes
+   QString rtrip;                // Record run-triple
+   QString mtrip;                // Match run-triple
+
+   for ( int jj = 0; jj < model_descriptions.size(); jj++ )
+   {  // Accumulate last-edit triples and edit-times for list
+      QString mdesc    = model_descriptions[ jj ].description;
+      QString runid    = mdesc.section( ".", -1, -1 );  // Run ID
+      QString mtype    = mdesc.section( ".",  0,  0 );  // Model type
+      QString tripl    = mdesc.section( ".",  1,  1 );  // Triple
+      QString edstr    = mdesc.section( ".",  2,  2 )
+                              .section( "_",  0,  0 );  // Edit timestamp
+      QString rtrip    = runid + "." + mtype + "." + tripl;
+      QString edtim    = edstr.mid( 1, 10 );            // Edit numeric time value
+      int prx          = rtrips.indexOf( rtrip );
+      if ( prx >= 0 )
+      {  // A previous match to run-triple exists -- compare times
+         int etiml        = edtims[ prx ].toInt();
+         int etimd        = edtim.toInt();
+         if ( etimd > etiml )
+         {  // Current desc time later, so replace list triple and time
+            rtrips.removeAt( prx );
+            edtims.removeAt( prx );
+            lendxs.removeAt( prx );
+            rtrips << rtrip;
+            edtims << edtim;
+            lendxs << jj;
+         }
+         else if ( etimd == etiml )
+         {  // Matching edit time, so assume different analysis and save
+            rtrips << rtrip;
+            edtims << edtim;
+            lendxs << jj;
+         }
+         // Otherwise (current<list), just skip adding the model's triple,time
+      }
+      else
+      {  // No match to run-triple, so add it to "latest" list
+         rtrips << rtrip;
+         edtims << edtim;
+         lendxs << jj;
+      }
+   }
+
+   if ( rtrips.count() < model_descriptions.count() )
+   {  // Some earlier edits were removed, so re-do models list
+      QList< ModelDesc >  mdescrs_work;
+      mdescrs_work = model_descriptions;
+      model_descriptions.clear();
+
+      for ( int jj = 0; jj < mdescrs_work.count(); jj++ )
+      {
+         if ( lendxs.contains( jj ) )
+         {  // Copy a latest-edit to the model list
+            model_descriptions << mdescrs_work[ jj ];
+         }
+      }
+qDebug() << "select_edlast -- full,pared counts"
+ << mdescrs_work.count() << model_descriptions.count();
+   }
+}
+
 // Local function to create an alternate form of a model description
 QString US_ModelLoader::alt_description( QString& descr, const bool from_mdesc )
 {
@@ -1320,7 +1413,7 @@ QString US_ModelLoader::alt_description( QString& descr, const bool from_mdesc )
    int atimx      = ( ndsec < 4 ) ? -1 : dsects[ asecx ].indexOf( "_a" );
 //qDebug() << "ALT_DESC:  ndsec" << ndsec << "anstx" << anstx << descr;
 
-   if ( atimx != 11 )
+   if ( atimx < 11  ||  atimx > 21 )
    {  // Not standard analysis form, so input and output are the same
       adescr         = descr;
    }
