@@ -634,14 +634,14 @@ pb_plateau->setVisible(false);
    // details[ "protocolName" ] = QString("5-itf-test");
    //   //  /****************************************************************************************/
 
-   // Interference Data WITH existing Aprofile corresponding to existing protocol!!!
-   details[ "invID_passed" ] = QString("6");
-   details[ "filename" ]     = QString("6-itf-test-run720");
-   details[ "protocolName" ] = QString("6-itf-test");
-   //  /****************************************************************************************/
+   // // Interference Data WITH existing Aprofile corresponding to existing protocol!!!
+   // details[ "invID_passed" ] = QString("6");
+   // details[ "filename" ]     = QString("6-itf-test-run720");
+   // details[ "protocolName" ] = QString("6-itf-test");
+   // //  /****************************************************************************************/
    
    
-   load_auto( details );
+   // load_auto( details );
 
    
 
@@ -5678,6 +5678,8 @@ void US_Edit::subtract_residuals( void )
 void US_Edit::new_triple_auto( int index )
 {
   triple_index    = index;
+
+  qDebug() << "NEW_TRIPLE_AUTO: triple_index: " << triple_index;
 
   // Remove Spike: Icon/Enable
   if ( editProfile[ cb_triple->currentText() ].count() > 6 )

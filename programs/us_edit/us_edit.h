@@ -310,6 +310,7 @@ class US_Edit : public US_Widgets
 
       double find_meniscus_auto ( void );
       double find_meniscus_interference_auto ( void );
+            
       QVector<double> find_airGap_interference_auto ( void );
       QVector<double> airGap_values;
       
