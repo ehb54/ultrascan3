@@ -4021,7 +4021,7 @@ int US_XpnDataViewer::CheckExpComplete_auto( QString & runid )
 void US_XpnDataViewer::reloadData_auto()
 {
    if ( in_reload_auto )            // If already doing a reload,
-     return;                   //  skip starting a new one
+     return;                        //  skip starting a new one
 
    in_reload_auto   = true;          // Flag in the midst of a reload
 
@@ -4047,10 +4047,17 @@ QDateTime sttime=QDateTime::currentDateTime();
    {  // No change in data scans:  report inability to update
       nscan       = allData[ trpxs ].scanCount();
 
+      //ALEXEY: also compute total # of collected scans so far
+      int nscan_total = 0;
+      for ( int i=0; i < allData.count(); i++ )
+	nscan_total += allData[ trpxs ].scanCount();
+
       if ( ! smsg.endsWith( tr( " scans)" ) ) )
       {  // If need be, add scan count to the status message
-         smsg        = smsg + tr( "  (%1 scans)" ).arg( nscan );
-         le_status->setText( smsg );
+         //smsg        = smsg + tr( "  (%1 scans)" ).arg( nscan );
+
+	smsg        = smsg + tr( "  (%1 total)" ).arg( nscan_total );
+	le_status->setText( smsg );
         qApp->processEvents();
       }
 DbgLv(1) << "RLd:       NO CHANGE";
