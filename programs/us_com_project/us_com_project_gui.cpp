@@ -1128,9 +1128,11 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   // -------------------------------------------------------------------------------------------------
   // Get detailed info on the autoflow record
   QMap < QString, QString > protocol_details;
+  
   int autoflowID = autoflow_id_selected.toInt();
-
   protocol_details = read_autoflow_record( autoflowID );
+  
+  protocol_details[ "autoflowID" ] = QString::number(autoflowID);
 
   QString stage        = protocol_details[ "status" ];
   QString currDir      = protocol_details[ "dataPath" ];

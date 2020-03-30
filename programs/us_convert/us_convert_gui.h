@@ -269,9 +269,11 @@ class US_ConvertGui : public US_Widgets
       bool readProtocolCells_auto ( QXmlStreamReader& );
       bool readProtocolSolutions_auto ( QXmlStreamReader& );
 
+      int autoflowID_passed;
       QString ProtocolName_auto;
       QString Exp_label;
       bool    gmpRun_bool;
+      bool dataSavedOtherwise;
       
       void getExpInfo_auto ( void );
       void getLabInstrumentOperatorInfo_auto   ( void );
@@ -320,6 +322,9 @@ class US_ConvertGui : public US_Widgets
 
       //void import_data_auto  (QString &, QString &, QString &, QString &);
       void import_data_auto  ( QMap < QString, QString > & ) ;
+      QMap < QString, QString > read_autoflow_record( int );
+      bool isSaved_auto( void );
+      
       
       void import            ( void );
       void reimport          ( void );

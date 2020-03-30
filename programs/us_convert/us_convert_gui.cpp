@@ -1307,6 +1307,8 @@ void US_ConvertGui::us_mode_passed( void )
 //void US_ConvertGui::import_data_auto( QString &currDir, QString &protocolName, QString &invID_passed, QString &correctRadii )
 void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_live_update )
 {
+  dataSavedOtherwise = false;
+  
   // ALEXEY TO BE ADDED...
   /* 
      assign investigator HERE passed in (QString &currDir, QString &protocolName, QString &invID_passed) as 3rd parameter; saved in 'autoflow' table
@@ -1328,6 +1330,10 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
   
   // qDebug() << "RunID_numeric from CurrentDir: " << runID_numeric;
 
+  autoflowID_passed = details_at_live_update[ "autoflowID" ].toInt();
+
+  qDebug() << "autoflowID: " << autoflowID_passed;
+
   details_at_editing = details_at_live_update;
 
   ExpData.invID     = details_at_live_update[ "invID_passed" ].toInt();
@@ -1337,7 +1343,7 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
   Exp_label         = details_at_live_update[ "label" ];
 
   qDebug() << "Exp_label: " << Exp_label;
-  
+
   gmpRun_bool = false;
   
   if ( details_at_live_update[ "gmpRun" ] == "YES" )
@@ -1452,6 +1458,10 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
 	}
       
       editRuninfo_auto();
+
+      if( dataSavedOtherwise )
+	return;
+      
       readProtocol_auto();
       getLabInstrumentOperatorInfo_auto();
       
@@ -1473,6 +1483,10 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
 	}
       
       editRuninfo_auto();
+
+      if( dataSavedOtherwise )
+	return;
+      
       readProtocol_auto();
       getLabInstrumentOperatorInfo_auto();
 
@@ -3600,12 +3614,28 @@ DbgLv(1) << "CGui: gExpInf: IN";
       // if saveStatus == BOTH, then we are editing the record from the database
       if ( ( recStatus == US_DB2::OK ) && ( saveStatus != BOTH ) )
       {
-         QMessageBox::information( this,
-                tr( "Error" ),
-                tr( "The current runID already exists in the database.\n"
-                    "To edit that information, load it from the database\n"
-                    "to start with." ) );
-         return;
+	dataSavedOtherwise = true; 
+	QMessageBox::information( this,
+				  tr( "The Program State Updated / Data already saved:" ),
+				  tr( "The program advanced or is advancing to the next stage!\n\n"
+				      "This happend because you or different user "
+				      "has already saved the data into DB using different program "
+				      "session and proceeded to the next stage. \n\n"
+				      "The program will return to the autoflow runs dialogue where "
+				      "you can re-attach to the actual current stage of the run. "
+				      "Please allow some time for the status to be updated.") );
+	
+	resetAll_auto();
+	emit saving_complete_back_to_initAutoflow();
+	return;
+	
+	// QMessageBox::information( this,
+	// 			  tr( "Error" ),
+	// 			  tr( "The current runID already exists in the database.\n"
+	// 			      "To edit that information, load it from the database\n"
+	// 			      "to start with." ) );
+	// return;
+	
       }
    }
 
@@ -4982,11 +5012,129 @@ DbgLv(1) << "DelChan:  EXCLUDED cc trx" << celchn << trx;
    plot_all();
 }
 
+
+// Query autoflow record
+QMap< QString, QString> US_ConvertGui::read_autoflow_record( int autoflowID  )
+{
+   // Check DB connection
+   US_Passwd pw;
+   QString masterpw = pw.getPasswd();
+   US_DB2* db = new US_DB2( masterpw );
+
+   QMap <QString, QString> protocol_details;
+   
+   if ( db->lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+       return protocol_details;
+     }
+
+   QStringList qry;
+   qry << "read_autoflow_record"
+       << QString::number( autoflowID );
+   
+   db->query( qry );
+
+   if ( db->lastErrno() == US_DB2::OK )      // Autoflow record exists
+     {
+       while ( db->next() )
+	 {
+	   protocol_details[ "protocolName" ]   = db->value( 0 ).toString();
+	   protocol_details[ "CellChNumber" ]   = db->value( 1 ).toString();
+	   protocol_details[ "TripleNumber" ]   = db->value( 2 ).toString();
+	   protocol_details[ "duration" ]       = db->value( 3 ).toString();
+	   protocol_details[ "experimentName" ] = db->value( 4 ).toString();
+	   protocol_details[ "experimentId" ]   = db->value( 5 ).toString();
+	   protocol_details[ "runID" ]          = db->value( 6 ).toString();
+	   protocol_details[ "status" ]         = db->value( 7 ).toString();
+           protocol_details[ "dataPath" ]       = db->value( 8 ).toString();   
+	   protocol_details[ "OptimaName" ]     = db->value( 9 ).toString();
+	   protocol_details[ "runStarted" ]     = db->value( 10 ).toString();
+	   protocol_details[ "invID_passed" ]   = db->value( 11 ).toString();
+
+	   protocol_details[ "correctRadii" ]   = db->value( 13 ).toString();
+	   protocol_details[ "expAborted" ]     = db->value( 14 ).toString();
+	   protocol_details[ "label" ]          = db->value( 15 ).toString();
+	   protocol_details[ "gmpRun" ]         = db->value( 16 ).toString();
+
+	   protocol_details[ "filename" ]       = db->value( 17 ).toString();
+	   protocol_details[ "aprofileguid" ]   = db->value( 18 ).toString();
+	   	   
+	 }
+     }
+
+   return protocol_details;
+}
+
+
+//Check if runID already saved into DB
+bool US_ConvertGui::isSaved_auto( void )
+{
+   bool isDataSaved = false;
+
+   ExpData.runID = le_runID -> text();
+
+   if ( disk_controls->db() )
+   {
+      // Then we're working in DB, so verify connectivity
+      US_Passwd pw;
+      QString masterPW = pw.getPasswd();
+      US_DB2 db( masterPW );
+
+      if ( db.lastErrno() != US_DB2::OK )
+      {
+         QMessageBox::information( this,
+                tr( "Error" ),
+                tr( "Error making the DB connection.\n" ) );
+         return isDataSaved;
+      }
+
+      // Check if the run ID already exists in the DB
+      int recStatus = ExpData.checkRunID_auto( ExpData.invID, &db );
+      
+      //if saveStatus == BOTH, then we are editing the record from the database
+      if ( ( recStatus == US_DB2::OK ) && ( saveStatus != BOTH ) )
+      	isDataSaved = true;
+
+      // if ( recStatus == US_DB2::OK )  // Check ONLY if the record exists
+      // 	isDataSaved = true;
+   }
+
+   return isDataSaved;
+}
+
 // Function to save US3 data
 void US_ConvertGui::saveUS3( void )
 {
 
   qDebug() << "Save INIT 1: ";
+
+  //ALEXEY: If autoflow stage already proceeded (e.g. to EDIT_DATA, ANALYSIS ), and/or data already saved to DB
+  //display dialoge suggesting to re-attach, and return user to Manage Optima Runs
+  dataSavedOtherwise = false;
+
+  QMap < QString, QString > autoflow_details;
+  autoflow_details = read_autoflow_record( autoflowID_passed );
+
+  qDebug() << "autoflowID_passed, autoflow status, isSaved_auto(): " <<  autoflowID_passed << ", " << autoflow_details[ "status" ] << ", " << isSaved_auto();
+
+  if ( autoflow_details[ "status" ]  != "EDITING" || isSaved_auto() )
+    {
+      QMessageBox::information( this,
+				tr( "The Program State Updated / being Updated" ),
+				tr( "The program advanced or is advancing to the next stage!\n\n"
+				    "This happend because you or different user "
+				    "has already saved the data into DB using different program "
+				    "session and is proceeding to the next stage. \n\n"
+				    "The program will return to the autoflow runs dialogue where "
+				    "you can re-attach to the actual current stage of the run. "
+				    "Please allow some time for the status to be updated.") );
+      
+      resetAll_auto();
+      emit saving_complete_back_to_initAutoflow();
+      return;
+    }
 
   // qDebug() << "ExpData: ";
 
@@ -5184,17 +5332,21 @@ DbgLv(1) << "Writing to disk";
 	     }
 	   else                   // us_comproject BUT the run IS GMP, so procced                    
 	     {
-	       QMessageBox::information( this,
-					 tr( "Save is Complete" ),
-					 tr( "The save of all data and reports is complete.\n\n"
-					     "The program will switch to Editing stage." ) );
-	       
-	       // Either emit ONLY if not US_MODE, or do NOT connect with slot on us_comproject...
-
-	       update_autoflow_record_atLimsImport();
-	       
-	       resetAll_auto();
-	       emit saving_complete_auto( details_at_editing  );   
+	       if ( !dataSavedOtherwise )
+		 {
+		   update_autoflow_record_atLimsImport();
+		   
+		   QMessageBox::information( this,
+					     tr( "Save is Complete" ),
+					     tr( "The save of all data and reports is complete.\n\n"
+						 "The program will switch to Editing stage." ) );
+		   
+		   // Either emit ONLY if not US_MODE, or do NOT connect with slot on us_comproject...
+		   //update_autoflow_record_atLimsImport();
+		   
+		   resetAll_auto();
+		   emit saving_complete_auto( details_at_editing  );   
+		 }
 	     }
 	 }
      }
@@ -5287,15 +5439,18 @@ int US_ConvertGui::saveUS3Disk( void )
    QDir     writeDir( US_Settings::resultDir() );
    QString  dirname = writeDir.absolutePath() + "/" + runID + "/";
 
-   if ( saveStatus == NOT_SAVED  &&
-        writeDir.exists( runID ) )
-   {
-        QMessageBox::information( this,
-           tr( "Error" ),
-           tr( "The write directory,  " ) + dirname +
-           tr( " already exists. Please change run ID to a unique value." ) );
-        return US_Convert::DUP_RUNID;
-   }
+   if ( !us_convert_auto_mode )
+     {
+       if ( saveStatus == NOT_SAVED  &&
+	    writeDir.exists( runID ) )
+	 {
+	   QMessageBox::information( this,
+				     tr( "Error" ),
+				     tr( "The write directory,  " ) + dirname +
+				     tr( " already exists. Please change run ID to a unique value." ) );
+	   return US_Convert::DUP_RUNID;
+	 }
+     }
 
    if ( ! writeDir.exists( runID ) )
    {
@@ -5694,12 +5849,32 @@ DbgLv(1) << "DBSv:  files count" << files.size();
 
    if ( ExpData.checkRunID( &db ) == US_DB2::OK && ( saveStatus != BOTH ) )
    {
-      // Then the user is trying to overwrite a runID that is already in the DB
-      QMessageBox::warning( this,
-            tr( "Duplicate runID" ),
-            tr( "This runID already exists in the database. To edit that "
-                "run information, load it from there to begin with.\n" ) );
-      return;
+     if ( us_convert_auto_mode ) //When in autoflow, return to Manage Optima Runs
+       {
+	 QMessageBox::information( this,
+				   tr( "The Program State Updated / Data already saved:" ),
+				   tr( "The program advanced or is advancing to the next stage!\n\n"
+				       "This happend because you or different user "
+				       "has already saved the data into DB using different program "
+				       "session and proceeded to the next stage. \n\n"
+				       "The program will return to the autoflow runs dialogue where "
+				       "you can re-attach to the actual current stage of the run. " 
+				       "Please allow some time for the status to be updated.") );
+	 
+	 dataSavedOtherwise = true;
+	 resetAll_auto();
+	 emit saving_complete_back_to_initAutoflow();
+	 return;
+       }
+     else
+       {
+	 // Then the user is trying to overwrite a runID that is already in the DB
+	 QMessageBox::warning( this,
+			       tr( "Duplicate runID" ),
+			       tr( "This runID already exists in the database. To edit that "
+				   "run information, load it from there to begin with.\n" ) );
+	 return;
+       }
    }
 
    // If saveStatus == BOTH already, then it came from the db to begin with
