@@ -525,6 +525,33 @@ DbgLv(1) << "CGui: reset complete";
    // //protocol_details[ "runID" ]          =  ;
    // protocol_details[ "label" ]          = QString("Some label");
    
+   /*********************************************************************************/
+   // QString curdir   = QString("/home/alexey/ultrascan/imports/7-itf-test-run1180");
+   // QString protname = QString("7-itf-test");
+   // QString invid    = QString("6"); //Amy ID
+
+   //QString curdir   = QString("/home/alexey/ultrascan/imports/KulkarniJ_LNP-pDNA-50-90D2O-12K_032820-run721");
+   //QString protname = QString("KulkarniJ_LNP-pDNA-50-90D2O-12K_032820");
+   //QString invid    = QString("40");
+   
+   // QString curdir   = QString("/home/alexey/ultrascan/imports/JohnsonC_DNA-control_013020-run680");
+   // QString protname = QString("JohnsonC_DNA-control_013020");
+   // QString invid    = QString("77");
+
+   // QMap < QString, QString > protocol_details;
+   // //protocol_details[ "status" ];
+   // protocol_details[ "dataPath" ]       = curdir;
+   // protocol_details[ "invID_passed" ]   = invid;
+   // protocol_details[ "protocolName" ]   = protname;
+   // //protocol_details[ "experimentName" ];
+   // protocol_details[ "correctRadii" ]   = QString("YES");
+   // protocol_details[ "expAborted" ]     = QString("NO");
+   // //protocol_details[ "runID" ]          =  ;
+   // protocol_details[ "label" ]          = QString("Some label");
+
+   
+   // /*********************************************************************************/
+
    
    // import_data_auto( protocol_details ); 
 
@@ -2935,26 +2962,39 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
        qDebug() << "SIZE of out_chaninfo.size(): " << out_chaninfo.size() ;
        qDebug() << "SIZE of out_tripinfo.size(): " << out_tripinfo.size() ;
        qDebug() << "nchans, ntrips: " << nchans << ", " << ntrips;
+       qDebug() << "runType: " << runType;
+       qDebug() << "# Solutions: " << ProtInfo.ProtSolutions.chsols.count();
 
        if (ntrips ==  nchans)
 	 {
 	   for (int i = 0; i < ntrips; ++i )
 	     {
+	       int index_curr;
+	       
+	       if ( runType == "IP" )
+		 index_curr = 2 * i;
+	       else
+		 index_curr = i;
+		 
 	       //Solution
-	       solutionID = ProtInfo.ProtSolutions.chsols[ i ].sol_id.toInt();
+	       solutionID = ProtInfo.ProtSolutions.chsols[ index_curr ].sol_id.toInt();
 	       solution_auto.readFromDB(solutionID, &db);
 	       out_chaninfo[ i ].solution = solution_auto;
 	       out_tripinfo[ i ].solution = solution_auto;
 
+	       
 	       //DUPL
 	       all_tripinfo[ i ].solution = solution_auto;  
 	       
 	       //Description
-	       triple_desc = ProtInfo.ProtSolutions.chsols[ i ].ch_comment;  //channel's comment from protocol
+	       triple_desc = ProtInfo.ProtSolutions.chsols[ index_curr ].ch_comment;  //channel's comment from protocol
 	       outData[ i ]->description = triple_desc;
 
 	       //DUPL
 	       allData[ i ].description = triple_desc;
+
+	       qDebug() << "Triple_desc: " << triple_desc << ", Solution_desc: " <<  out_chaninfo[ i ].solution.solutionDesc;
+
 	       
 	       //Centerpiece
 	       // if ( i < ntrips-1 && i%2 == 0 ) //every second channel
@@ -2986,6 +3026,8 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 	       //DUPL
 	       all_tripinfo[ i ].centerpiece     = cpID;
 	       all_tripinfo[ i ].centerpieceName = cpName;
+
+	       
 	     }
 	 }
        else
