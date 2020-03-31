@@ -245,6 +245,7 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    lb_airGap = us_label(      tr( "Air Gap:" ), -1 );
    le_airGap = us_lineedit( "", 1, true );
    pb_airGap->setHidden( true );
+   lb_airGap->setHidden( true );
    le_airGap->setHidden( true );
 
    // Data range
@@ -616,11 +617,11 @@ pb_plateau->setVisible(false);
    // details[ "protocolName" ] = QString("RxRPPARhet-PPRE-MWL_180419");
    // // /****************************************************************************************/
 
-     // // Data WITH existing Aprofile corresponding to existing protocol!!!
-     // details[ "invID_passed" ] = QString("77");
-     // details[ "filename" ]     = QString("JohnsonC_DNA-control_013020-run680");
-     // details[ "protocolName" ] = QString("JohnsonC_DNA-control_013020");
-     //  /****************************************************************************************/
+      // // Data WITH existing Aprofile corresponding to existing protocol!!!
+      // details[ "invID_passed" ] = QString("77");
+      // details[ "filename" ]     = QString("JohnsonC_DNA-control_013020-run680");
+      // details[ "protocolName" ] = QString("JohnsonC_DNA-control_013020");
+      //  /****************************************************************************************/
 
    // // Interference Data WITH existing Aprofile corresponding to existing protocol!!!
    // details[ "invID_passed" ] = QString("6");
@@ -640,6 +641,10 @@ pb_plateau->setVisible(false);
    // details[ "protocolName" ] = QString("6-itf-test");
    // //  /****************************************************************************************/
    
+
+   // details[ "invID_passed" ] = QString("40");
+   // details[ "filename" ]     = QString("KulkarniJ_LNP-pDNA-50-90D2O-12K_032820-run721");
+   // details[ "protocolName" ] = QString("KulkarniJ_LNP-pDNA-50-90D2O-12K_032820");
    
    // load_auto( details );
 
@@ -2113,6 +2118,9 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 	   //pb_airGap->setHidden( false );
 	   //le_airGap->setHidden( false );
 
+	   lb_airGap->setHidden( false );
+	   le_airGap->setHidden( false );
+
 
 	   //find meniscus
 	   meniscus = find_meniscus_interference_auto();
@@ -2195,7 +2203,8 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 
    if ( isMwl )
      {
-       plot_mwl();
+       new_triple_auto( 0 );     //ALEXEY: is it right ? 
+       //plot_mwl();
        pb_spikes   ->setEnabled( true );
      }
    else
