@@ -635,11 +635,11 @@ pb_plateau->setVisible(false);
    // details[ "protocolName" ] = QString("5-itf-test");
    //   //  /****************************************************************************************/
 
-   // // Interference Data WITH existing Aprofile corresponding to existing protocol!!!
-   // details[ "invID_passed" ] = QString("6");
-   // details[ "filename" ]     = QString("6-itf-test-run720");
-   // details[ "protocolName" ] = QString("6-itf-test");
-   // //  /****************************************************************************************/
+    // // Interference Data WITH existing Aprofile corresponding to existing protocol!!!
+    // details[ "invID_passed" ] = QString("6");
+    // details[ "filename" ]     = QString("6-itf-test-run720");
+    // details[ "protocolName" ] = QString("6-itf-test");
+    // //  /****************************************************************************************/
    
 
    // details[ "invID_passed" ] = QString("40");
@@ -4564,10 +4564,13 @@ DbgLv(1) << " PlRng:  nmcols" << nmcols;
 
    if ( isMwl )
    {
-      int ccx     = indext;
-      int wvx     = cb_lplot->currentIndex();
-      indext      = ccx * nwaveln + wvx;
-DbgLv(1) << "plot_range(): ccx wvx indext" << ccx << wvx << indext;
+     //if ( !us_edit_auto_mode )
+     //{
+     int ccx     = indext;
+     int wvx     = cb_lplot->currentIndex();
+     indext      = ccx * nwaveln + wvx;
+     DbgLv(1) << "plot_range(): ccx wvx indext" << ccx << wvx << indext;
+	 //}
    }
 
    // For each scan
@@ -5437,7 +5440,8 @@ void US_Edit::remove_spikes_auto( void )
       
    pb_spikes->setEnabled( false );
    pb_write ->setEnabled( true );
-   replot();
+
+   //replot();  //ALEXEY - do we need to replot here ?
 
    if ( us_edit_auto_mode && all_loaded )
      {
@@ -5803,6 +5807,8 @@ DbgLv(1) << "EDT:NewTr:  nwavelo" << nwavelo;
    QString otdt   = dataType;
    edata          = outData[ data_index ];
    data           = *edata;
+
+   qDebug() << "NEW_TRIPLE_AUTO: data_index: " << data_index;
 
    
    QString rawGUID_test1          = US_Util::uuid_unparse( (unsigned char*)data.rawGUID );
