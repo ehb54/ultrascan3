@@ -6602,6 +6602,7 @@ void US_Edit::write_auto( void )
    QMessageBox::information( this,
 			     tr( "Saving of Edit Profiles is Complete." ),
 			     tr( "\n\n"
+				 "Edit profiles were saved successfully. \n"
 				 "The program will switch to Analysis stage." ) );
    reset();
    emit edit_complete_auto( details_at_editing_local  );   

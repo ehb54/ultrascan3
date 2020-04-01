@@ -4052,7 +4052,7 @@ QDateTime sttime=QDateTime::currentDateTime();
       for ( int i=0; i < allData.count(); i++ )
 	nscan_total += allData[ trpxs ].scanCount();
 
-      if ( ! smsg.endsWith( tr( " scans)" ) ) )
+      if ( ! smsg.endsWith( tr( " total)" ) ) )
       {  // If need be, add scan count to the status message
          //smsg        = smsg + tr( "  (%1 scans)" ).arg( nscan );
 
