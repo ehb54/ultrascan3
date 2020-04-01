@@ -40,6 +40,40 @@ BEGIN
 
 END$$
 
+
+-- Returns the count of editedData profiles for a givel label ---
+DROP FUNCTION IF EXISTS count_editprofiles$$
+CREATE FUNCTION count_editprofiles ( p_personGUID CHAR(36),
+                                     p_password   VARCHAR(80),
+				     p_label      VARCHAR(80) )
+                                       
+  RETURNS INT
+  READS SQL DATA
+
+BEGIN
+
+  DECLARE count_records INT;
+
+  CALL config();
+  SET count_records = 0;
+
+       
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    SELECT    COUNT(*)
+    INTO      count_records
+    FROM      editedData
+    WHERE     label = p_label;
+    
+  END IF;
+
+  RETURN( count_records );
+
+END$$
+
+
+
+
+
 -- adds autoflow record
 DROP PROCEDURE IF EXISTS add_autoflow_record$$
 CREATE PROCEDURE add_autoflow_record ( p_personGUID  CHAR(36),
@@ -614,3 +648,4 @@ BEGIN
   RETURN( l_sec_difference );
 
 END$$
+

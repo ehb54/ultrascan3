@@ -1467,11 +1467,14 @@ void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
   
   QList< DataDesc_auto >  sdescs_auto;
   datamap.clear();
-  
+
+  autoflowID_passed   = details_at_editing[ "autoflowID" ].toInt();
   filename_runID_auto = details_at_editing[ "filename" ];
   idInv_auto          = details_at_editing[ "invID_passed" ];
   ProtocolName_auto   = details_at_editing[ "protocolName" ];
+
   
+  qDebug() << "autoflowID: " << autoflowID_passed;
   qDebug() << "AT EDIT_DATA: filename, idInv: " << filename_runID_auto << ", " << idInv_auto;
 
   scan_db_auto();
@@ -6387,9 +6390,128 @@ DbgLv(1) << "ED: Wr : bottom" << bottom;
 }
 
 
+//Check if EditedProfiles already saved/started to be saved into DB
+bool US_Edit::isSaved_auto( void )
+{
+   bool isDataSaved = false;
+
+   // Then we're working in DB, so verify connectivity
+   US_Passwd pw;
+   QString masterpw = pw.getPasswd();
+   US_DB2* db = new US_DB2( masterpw );
+   
+   if ( db->lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::information( this,
+				 tr( "Error" ),
+				 tr( "Error making the DB connection.\n" ) );
+       return isDataSaved;
+     }
+
+    int editProfile_count = 0;
+
+    // Check if the edit profiles corresponding top filename/label already exist in the DB
+    QStringList qry("count_editprofiles");
+    qry << filename_runID_auto;
+    editProfile_count = db->functionQuery( qry );
+
+    qDebug() << "Query: " << qry;
+    qDebug() << "# Saved Edit Profiles: " << editProfile_count;
+    
+    if ( editProfile_count  )
+      isDataSaved = true;
+
+    return isDataSaved;
+}
+
+
+// Query autoflow record
+QMap< QString, QString> US_Edit::read_autoflow_record( int autoflowID  )
+{
+   // Check DB connection
+   US_Passwd pw;
+   QString masterpw = pw.getPasswd();
+   US_DB2* db = new US_DB2( masterpw );
+
+   QMap <QString, QString> protocol_details;
+   
+   if ( db->lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+       return protocol_details;
+     }
+
+   QStringList qry;
+   qry << "read_autoflow_record"
+       << QString::number( autoflowID );
+   
+   db->query( qry );
+
+   if ( db->lastErrno() == US_DB2::OK )      // Autoflow record exists
+     {
+       while ( db->next() )
+	 {
+	   protocol_details[ "protocolName" ]   = db->value( 0 ).toString();
+	   protocol_details[ "CellChNumber" ]   = db->value( 1 ).toString();
+	   protocol_details[ "TripleNumber" ]   = db->value( 2 ).toString();
+	   protocol_details[ "duration" ]       = db->value( 3 ).toString();
+	   protocol_details[ "experimentName" ] = db->value( 4 ).toString();
+	   protocol_details[ "experimentId" ]   = db->value( 5 ).toString();
+	   protocol_details[ "runID" ]          = db->value( 6 ).toString();
+	   protocol_details[ "status" ]         = db->value( 7 ).toString();
+           protocol_details[ "dataPath" ]       = db->value( 8 ).toString();   
+	   protocol_details[ "OptimaName" ]     = db->value( 9 ).toString();
+	   protocol_details[ "runStarted" ]     = db->value( 10 ).toString();
+	   protocol_details[ "invID_passed" ]   = db->value( 11 ).toString();
+
+	   protocol_details[ "correctRadii" ]   = db->value( 13 ).toString();
+	   protocol_details[ "expAborted" ]     = db->value( 14 ).toString();
+	   protocol_details[ "label" ]          = db->value( 15 ).toString();
+	   protocol_details[ "gmpRun" ]         = db->value( 16 ).toString();
+
+	   protocol_details[ "filename" ]       = db->value( 17 ).toString();
+	   protocol_details[ "aprofileguid" ]   = db->value( 18 ).toString();
+	   	   
+	 }
+     }
+
+   return protocol_details;
+}
+
+
+
 // Save edit profile(s)
 void US_Edit::write_auto( void )
 {
+
+  /** Check if stahe is being or has already changed ***/
+
+  QMap < QString, QString > autoflow_details;
+  autoflow_details = read_autoflow_record( autoflowID_passed );
+  
+  qDebug() << "autoflowID_passed, autoflow status, isSaved_auto(): " <<  autoflowID_passed << ", " << autoflow_details[ "status" ]; // << ", " << isSaved_auto();
+  
+  if ( autoflow_details[ "status" ]  != "EDIT_DATA"  || isSaved_auto() )
+    {
+      QMessageBox::information( this,
+				tr( "The Program State Updated / being Updated" ),
+				tr( "The program advanced or is advancing to the next stage!\n\n"
+				    "This happend because you or different user "
+				    "has already saved the data into DB using different program "
+				    "session and is proceeding to the next stage. \n\n"
+				    "The program will return to the autoflow runs dialogue where "
+				    "you can re-attach to the actual current stage of the run. "
+				    "Please allow some time for the status to be updated.") );
+
+      
+      reset();
+      emit back_to_initAutoflow( );
+      return;
+    }
+  
+  /*******************************************************/
+  
    // Determine if we are using the database
    US_DB2* dbP    = NULL;
 
@@ -6406,6 +6528,8 @@ void US_Edit::write_auto( void )
       }
    }
 
+
+   
    qDebug() << "STARTING Saving"; 
 
 
@@ -6473,17 +6597,18 @@ void US_Edit::write_auto( void )
 
 
    // Now we need to Update autoflow record, reset GUI && send signal to switch to Analysis stage:
+   update_autoflow_record_atEditData();
+   //ALEXEY: here major actions on setting analysis tables etc. !!!!
    QMessageBox::information( this,
 			     tr( "Saving of Edit Profiles is Complete." ),
 			     tr( "\n\n"
 				 "The program will switch to Analysis stage." ) );
-   
-   update_autoflow_record_atEditData();
    reset();
    emit edit_complete_auto( details_at_editing_local  );   
 }
 
-// Save edits for a triple
+
+// Set Autoflow record to ANALSYIS && set analysises ID(s)
 void US_Edit::update_autoflow_record_atEditData( void )
 {
    QString runID_numeric     = details_at_editing_local[ "runID" ];

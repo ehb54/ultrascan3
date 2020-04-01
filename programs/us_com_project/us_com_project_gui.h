@@ -276,11 +276,13 @@ class US_EditingGui : public US_WidgetsDialog
    void reset_data_editing( void );
    void to_analysis( QMap < QString, QString > & );
    void resize_main( void );
+   void to_initAutoflow( void );
 
  signals:
    void start_editing( QMap < QString, QString > & );
    void reset_data_editing_passed ( void );
    void switch_to_analysis( QMap < QString, QString > &  );
+   void switch_to_initAutoflow( void);
 };
 
 //! \brief Analysis panel

@@ -349,6 +349,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
 
    connect( epanEditing, SIGNAL( switch_to_analysis( QMap < QString, QString > & ) ), this, SLOT( switch_to_analysis( QMap < QString, QString > & )  ) );
    connect( this, SIGNAL( pass_to_analysis( QMap < QString, QString > & ) ),   epanAnalysis, SLOT( do_analysis( QMap < QString, QString > & )  ) );
+   connect( epanEditing, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
    
    setMinimumSize( QSize( 1350, 800 ) );
    adjustSize();
@@ -2034,7 +2035,9 @@ US_EditingGui::US_EditingGui( QWidget* topw )
    //ALEXEY: switch to Analysis
    connect( sdiag, SIGNAL( edit_complete_auto(  QMap < QString, QString > & ) ), this, SLOT( to_analysis (  QMap < QString, QString > &) ) );
 
-   
+   //ALEXEY: back to initAutoflow 
+   connect( sdiag, SIGNAL( back_to_initAutoflow( ) ), this, SLOT( to_initAutoflow ( ) ) );
+
    offset = 0;
    sdiag->move(offset, 2*offset);
    sdiag->setFrameShape( QFrame::Box);
@@ -2090,6 +2093,11 @@ void US_EditingGui::resizeEvent(QResizeEvent *event)
 void US_EditingGui::to_analysis( QMap < QString, QString > & protocol_details )
 {
   emit switch_to_analysis( protocol_details );
+}
+
+void US_EditingGui::to_initAutoflow( void )
+{
+  emit switch_to_initAutoflow();
 }
 
 

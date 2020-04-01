@@ -270,6 +270,7 @@ class US_Edit : public US_Widgets
       QString filename_runID_auto;
       QString idInv_auto;
       QString ProtocolName_auto;
+      int     autoflowID_passed;
 
       class DataDesc_auto   // Description of each data set in the list presented
       {
@@ -332,6 +333,9 @@ class US_Edit : public US_Widgets
       void load              ( void );
       void load_auto         ( QMap < QString, QString > & );
 
+      QMap< QString, QString> read_autoflow_record( int );
+      bool isSaved_auto( void );
+      
       void reset_editdata_panel ( void );
       
       void details           ( void );
@@ -461,6 +465,7 @@ class US_Edit : public US_Widgets
  signals:
       void data_loaded( void );
       void edit_complete_auto( QMap< QString, QString> & );
+      void back_to_initAutoflow( void );
 };
 #endif
 
