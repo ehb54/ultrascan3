@@ -5845,7 +5845,7 @@ void US_ExperGuiUpload::submitExperiment()
    //Make 'autoflow' table record:
    if ( mainw->automode )
      add_autoflow_record( protocol_details );
-
+   
    emit expdef_submitted( protocol_details );
 }
 
@@ -5883,8 +5883,12 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
           << protocol_details[ "gmpRun" ]
           << protocol_details[ "aprofileguid" ] ;
 
-      db->query( qry );
+      db->statusQuery( qry );
+      //db->query( qry );
+      protocol_details[ "autoflowID" ] = QString::number( db->lastInsertID() );
    }
+
+   qDebug() << "Generated AUTOFLOW ID : " <<  protocol_details[ "autoflowID" ];
 }
 
 // Function to build a Json object and document holding experiment controls

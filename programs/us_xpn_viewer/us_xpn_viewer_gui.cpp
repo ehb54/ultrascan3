@@ -2139,7 +2139,7 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
   expAborted   = protocol_details[ "expAborted" ];
   runID_passed = protocol_details[ "runID" ];
   
-  qDebug() << "RUNID_PASSED !!! " << runID_passed;
+  qDebug() << "RUNID_PASSED !!! AutoflowID " << runID_passed << " !!! " << protocol_details[ "autoflowID" ];
 
   details_at_live_update = protocol_details;
 
