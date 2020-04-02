@@ -2,6 +2,10 @@
 2dsa_resplot
 analyte_details
 buffer_info
+cfa_view-loadraw
+cfa_view-loadauc
+cfa_view-statsraw
+cfa_view-statsauc
 ddist_combine-selrun
 fit_men-editupd
 fit_men-load

@@ -13,6 +13,9 @@ fi
 MKARGS="$@"
 if [ $# -eq 0 ]; then
   MKARGS="-j 7"
+  if [ `uname -s|grep -ci "mingw"` -ne 0 ]; then
+    MKARGS="-j 2"
+  fi
 fi
 export MAKE="make ${MKARGS}"
 

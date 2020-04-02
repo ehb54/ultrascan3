@@ -18,6 +18,7 @@ void US_MPI_Analysis::parse( const QString& xmlfile )
       qApp->exit();
    }
 
+   QString tmst_fn;
    QXmlStreamReader xml( &file );
 
    while ( ! xml.atEnd() )
@@ -38,8 +39,9 @@ void US_MPI_Analysis::parse( const QString& xmlfile )
          if ( xml.name() == "dataset" )
          {
             US_SolveSim::DataSet* d = new US_SolveSim::DataSet;
-            d->tmst_file   = QString("");
+            d->tmst_file   = tmst_fn;       // Initialize to blank or previous
             parse_dataset( xml, d );
+            tmst_fn        = d->tmst_file;  // Init for subsequent dataset
 
             if ( parameters.contains( "CG_model" ) )
             {  // Flag Custom Grid model input
