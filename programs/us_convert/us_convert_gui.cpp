@@ -4636,6 +4636,8 @@ DbgLv(1) << "CGui: (6)referDef=" << referenceDefined;
    enableRunIDControl( false );
    le_status->setText( tr( "The reference scans have been defined." ) );
    qApp->processEvents();
+
+   qDebug() << "After Reference Defined: count of outData, out_chaninfo: " <<  outData.count() << ", " << out_chaninfo.count();
 }
 
 // Process a control-click on the plot window
@@ -5156,26 +5158,29 @@ void US_ConvertGui::saveUS3( void )
   //display dialoge suggesting to re-attach, and return user to Manage Optima Runs
   dataSavedOtherwise = false;
 
-  QMap < QString, QString > autoflow_details;
-  autoflow_details = read_autoflow_record( autoflowID_passed );
-
-  qDebug() << "autoflowID_passed, autoflow status, isSaved_auto(): " <<  autoflowID_passed << ", " << autoflow_details[ "status" ] << ", " << isSaved_auto();
-
-  if ( autoflow_details[ "status" ]  != "EDITING" || isSaved_auto() )
+  if ( us_convert_auto_mode )
     {
-      QMessageBox::information( this,
-				tr( "The Program State Updated / being Updated" ),
-				tr( "The program advanced or is advancing to the next stage!\n\n"
-				    "This happend because you or different user "
-				    "has already saved the data into DB using different program "
-				    "session and is proceeding to the next stage. \n\n"
-				    "The program will return to the autoflow runs dialogue where "
-				    "you can re-attach to the actual current stage of the run. "
-				    "Please allow some time for the status to be updated.") );
+      QMap < QString, QString > autoflow_details;
+      autoflow_details = read_autoflow_record( autoflowID_passed );
       
-      resetAll_auto();
-      emit saving_complete_back_to_initAutoflow();
-      return;
+      qDebug() << "autoflowID_passed, autoflow status, isSaved_auto(): " <<  autoflowID_passed << ", " << autoflow_details[ "status" ] << ", " << isSaved_auto();
+      
+      if ( autoflow_details[ "status" ]  != "EDITING" || isSaved_auto() )
+	{
+	  QMessageBox::information( this,
+				    tr( "The Program State Updated / being Updated" ),
+				    tr( "The program advanced or is advancing to the next stage!\n\n"
+					"This happend because you or different user "
+					"has already saved the data into DB using different program "
+					"session and is proceeding to the next stage. \n\n"
+					"The program will return to the autoflow runs dialogue where "
+					"you can re-attach to the actual current stage of the run. "
+					"Please allow some time for the status to be updated.") );
+	  
+	  resetAll_auto();
+	  emit saving_complete_back_to_initAutoflow();
+	  return;
+	}
     }
 
   // qDebug() << "ExpData: ";
@@ -5632,6 +5637,8 @@ DbgLv(1) << "SV:   NO saveRIDisk : runType" << runType;
    le_status->setText( tr( "Writing Time State to disk..." ) );
    if ( writeTimeStateDisk() == 0 )
    {  // Abort if unable to open TimeState file
+
+     qDebug() << "IN saveUS3Disk(): QUITING HERE !!!!";
       return US_Convert::CANTOPEN;
    }
    fileCount   += 2;
@@ -5855,7 +5862,10 @@ DbgLv(1) << "DBSv: Status after saveUS3Disk()" << status;
  qDebug() << "AFTER saveUS3Disk(): ExpData.invID = " << ExpData.invID;
  
    if ( status != US_Convert::OK )
-      return;
+     {
+       qDebug() << "Status : " << status;
+       return;
+     }
 DbgLv(1) << "DBSv:  local files saved";
 
    QString error = QString( "" );
