@@ -31,6 +31,7 @@ QTDLLS=" \
  Qt5Sensors.dll  Qt5SerialBus.dll Qt5SerialPort.dll \
  Qt5Sql.dll Qt5Svg.dll Qt5WebChannel.dll Qt5WebSockets.dll \
  Qt5Widgets.dll Qt5WinExtras.dll Qt5Xml.dll Qt5XmlPatterns.dll \
+ assistant.exe \
 "
 
 echo "Copy lib DLLs to bin"
