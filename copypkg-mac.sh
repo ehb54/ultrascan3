@@ -4,7 +4,7 @@
 ME=`whoami`
 RSYNC="rsync -av --exclude=.svn"
 SRCDIR=$us3
-SOMOBASE=~/us3/us3_somo
+SOMOBASE=$us3/us_somo
 PKGDIR=`(cd $us3/../pkg;pwd)`
 PDIRS=""
 SYSTYPE=`uname -s`

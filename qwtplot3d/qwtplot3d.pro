@@ -24,6 +24,7 @@ unix:VERSION = 0.2.7
 
 mac:CONFIG += x86_64
 mac:INCLUDEPATH += /usr/X11R6/include
+mac:INCLUDEPATH += /usr/local/include
 
 # Input
 SOURCES += src/qwt3d_axis.cpp \

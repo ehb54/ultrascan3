@@ -26,7 +26,7 @@ for FILE in ${FILES} ; do
   SHORTF=`echo "${FILE}" | sed -e "s/[0-9]\.[0-9]\.dylib/dylib/"`
 #		get list of names that need fixing
   LIBL=`otool -L ${FILE} \
-    | egrep '_utils|_gui|qwt|qwtplot3d|mysql|framework' \
+    | egrep '_utils|_gui|qwt|qwtplot3d|mysql|crypto|openssl|framework' \
     | grep -v executable \
     | grep -v ${FILE} \
     | grep -v ${SHORTF} \
@@ -38,8 +38,9 @@ for FILE in ${FILES} ; do
     
     if [ `echo ${NAMI} | grep -ci qca` -eq 0 ]; then
       #		give relative path to library
-      if [ `echo ${NAMI} | grep -ci mysql` -ne 0 ]; then
-        NAMO=@executable_path/../../../../lib/libmysqlclient.18.dylib
+      if [ `echo ${NAMI} | egrep -ci 'mysql|crypto|openssl'` -ne 0 ]; then
+        BASF=`basename ${NAMI}`
+        NAMO=@executable_path/../../../../lib/${BASF}
       else
         if [ `echo ${NAMI} | grep -ci framework` -eq 0 ]; then
           #		use relative path to lib

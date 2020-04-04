@@ -19,7 +19,7 @@ for BUND in `ls -d *.app|grep -v 'us3_'`;do
 
 #		get list of library names to change
   LIBL=`otool -L ${APPP} \
-    | egrep '_utils|us_gui|qwt|qca|mysql|framework' \
+    | egrep '_utils|us_gui|qwt|qca|mysql|crypto|openssl|framework' \
     | grep -v executable \
     | grep -v Library \
     | awk '{print $1}'`
@@ -27,8 +27,9 @@ for BUND in `ls -d *.app|grep -v 'us3_'`;do
 #		change each of the library names
   for NAMI in ${LIBL}; do
     
-    if [ `echo ${NAMI} | grep -ci mysql` -ne 0 ]; then
-      NAMO=@executable_path/../../../../lib/libmysqlclient.18.dylib
+    if [ `echo ${NAMI} | egrep -ci 'mysql|crypto|openssl'` -ne 0 ]; then
+      BASF=`basename ${NAMI}`
+      NAMO=@executable_path/../../../../lib/${BASF}
     else
       if [ `echo ${NAMI} | grep -ci framework` -eq 0 ]; then
         #		use relative path to library
