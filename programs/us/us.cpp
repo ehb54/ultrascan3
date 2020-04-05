@@ -205,13 +205,14 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu(  P_RPTGEN   , tr( "&Report Generator"                 ), utilities );
   addMenu(  P_ROTORCAL , tr( "Rotor &Calibration"                ), utilities );
   addMenu(  P_LICENSE  , tr( "&License Manager"                  ), utilities );
-  addMenu(  P_VHWCOMB ,  tr( "Combine Distribution &Plots (vHW)" ), utilities );
-  addMenu(  P_DDCOMB   , tr( "Combine &Discrete Distributions"   ), utilities );
-  addMenu(  P_GLOMODL ,  tr( "Create Global &Model"              ), utilities );
-  addMenu(  P_VIEWCFA ,  tr( "View Raw C&FA Data"                ), utilities );
-  addMenu(  P_VIEWXPN ,  tr( "View Raw &Optima Data"             ), utilities );
-  addMenu(  P_VIEWTMST,  tr( "View &TimeState"                   ), utilities );
-  addMenu(  P_DENSMTCH,  tr( "&Density Matching"                 ), utilities );
+  addMenu(  P_VHWCOMB  , tr( "Combine Distribution &Plots (vHW)" ), utilities );
+  addMenu(  P_DDCOMB   , tr( "Combine Discrete Distrib&utions"   ), utilities );
+  addMenu(  P_INTCOMB  , tr( "Combine I&ntegral Distributions"   ), utilities );
+  addMenu(  P_GLOMODL  , tr( "Create Glo&bal Model"              ), utilities );
+  addMenu(  P_VIEWCFA  , tr( "View Ra&w CFA Data"                ), utilities );
+  addMenu(  P_VIEWXPN  , tr( "View Raw &Optima Data"             ), utilities );
+  addMenu(  P_VIEWTMST , tr( "View &TimeState"                   ), utilities );
+  addMenu(  P_DENSMTCH , tr( "Density Matc&hing"                 ), utilities );
 
   addMenu(  P_VIEWMWL ,  tr( "&View Multiwavelength Data"        ), multiwave );
   addMenu(  P_VIEWMSS ,  tr( "View MWL &S-Spectra"               ), multiwave );
@@ -618,14 +619,14 @@ void US_Win::help( int index )
       QMessageBox::information( this,
         tr( "UltraScan Credits" ),
         tr( "The UltraScan-III and LIMS-III software were developed by:\n\n"
-            "Emre Brookes, Weiming Cao, Bruce Dubbs, Gary Gorbet, " 
-            "Jeremy Mann, Suresh Marru, Shabhaz Memon, Marlon Pierce, \n"
-	    "Raminder Singh and Dan Zollars.\n\n"
+            "Emre Brookes, Weiming Cao, Bruce Dubbs, Gary Gorbet,\n" 
+            "Kip Jay, Jeremy Mann, Suresh Marru, Shabhaz Memon, Marlon Pierce,\n"
+			   "Alexey Savelyev, Raminder Singh and Dan Zollars.\n\n"
             "Project Director: Borries Demeler\n\n"
-            "This development was funded by NIH Grant RR022200 "
-	    "and NSF grants ACI-1339649 and TG-MCB070039.\n\n"
+            "This development was funded by NIH Grants RR022200 and GM120600\n"
+	         "and NSF grants ACI-1339649 and TG-MCB070039.\n\n"
 
-            "We thank the following individuals for contributions "
+            "We thank the following individuals for their contributions\n"
             "to the UltraScan project:\n\n"
 
             " * Nikolay Dokholyan\n"
@@ -641,7 +642,9 @@ void US_Win::help( int index )
             " * Mattia Rocco\n"
             " * Virgil Schirf\n"
             " * Bruno Spotorno\n"
+				" * Todd Stone\n"
             " * Giovanni Tassara\n"
+				" * James Trbovich\n"
             " * Oleg Tsodikov\n"
             " * Johannes Walter\n"
             " * Nikola Wenta\n"

@@ -24,7 +24,7 @@ namespace US_WinData
     P_GETDATA,      P_CONVERT,      P_EXPORT,       P_CEXPERI,  // Utilities Menu
     P_FDSMAN,       P_FITMEN,       P_COLORGRAD,
     P_RPTGEN,       P_ROTORCAL,     P_LICENSE,
-    P_VHWCOMB,      P_DDCOMB,       P_GLOMODL,
+    P_VHWCOMB,      P_DDCOMB,       P_INTCOMB,      P_GLOMODL,
     P_VIEWCFA,      P_VIEWXPN,      P_VIEWTMST,
     P_DENSMTCH,     P_SPECFIT,      P_SPECDEC,
 
@@ -218,6 +218,11 @@ namespace US_WinData
     { P_DDCOMB,    0, 0, "us_ddist_combine",
       QObject::tr( "Loading Discrete Distribution Combine" ),
       QObject::tr( "Discrete Distribution Combine Program" )
+    },
+
+    { P_INTCOMB,    0, 0, "us_integral",
+      QObject::tr( "Loading Integral Distribution Combine" ),
+      QObject::tr( "Integral Distribution Combine Program" )
     },
 
     { P_GLOMODL,   0, 0, "us_combine_models",
