@@ -1079,6 +1079,8 @@ void US_DataModel::scan_local( )
    QStringList edtfilt;
    QStringList edtIDs;
    QStringList mdlIDs;
+   QStringList mdlfns;
+   QStringList noifns;
    QStringList modfilt( "M*xml" );
    QStringList noifilt( "N*xml" );
    QStringList modfils = QDir( dirm )
@@ -1115,16 +1117,21 @@ void US_DataModel::scan_local( )
                                 filt_run + ".*.auc";
       }
 
+DbgLv(1) << "BrLoc:  modf size" << modfils.size() << "filt_run" << filt_run;
       for ( int ii = 0; ii < modfils.size(); ii++ )
       {
          US_Model  model;
          QString   modfil     = dirm + "/" + modfils.at( ii );
          model.load( modfil );
          QString   mdesc      = model.description;
+DbgLv(2) << "BrLoc:     ii" << ii << "mdesc" << mdesc;
          if ( ! mdesc.startsWith( filt_run ) )              continue;
          if ( tfilt  &&  ! mdesc.contains( filt_triple ) )  continue;
          nmodf++;
+         mdlfns << modfil;
+DbgLv(2) << "BrLoc:       nmodf" << nmodf << "*MATCH*";
       }
+DbgLv(1) << "BrLoc:    nmodf" << nmodf;
 
       for ( int ii = 0; ii < noifils.size(); ii++ )
       {
@@ -1135,6 +1142,7 @@ void US_DataModel::scan_local( )
          if ( ! ndesc.startsWith( filt_run ) )              continue;
          if ( tfilt  &&  ! ndesc.contains( filt_triple ) )  continue;
          nnoif++;
+         noifns << noifil;
       }
    }
 
@@ -1218,7 +1226,7 @@ DbgLv(2) << "BrLoc:  edtfilt" << edtfilt;
             QString editid   = efname.section( ".", 1, 3 );
             QString edtfile  = subdir + "/" + efname;
                     contents = "";
-//DbgLv(2) << "BrLoc:    kk file" << kk << edtfile;
+DbgLv(2) << "BrLoc:    kk file" << kk << edtfile;
 
             // read EditValues for the edit data and build description record
             US_DataIO::readEdits( edtfile, edval );
@@ -1263,10 +1271,13 @@ DbgLv(2) << "BrLoc:  edtfilt" << edtfilt;
    progress->setValue( ++ktask );
    qApp->processEvents();
 
+DbgLv(2) << "BrLoc: edtIDs" << edtIDs;
    for ( int ii = 0; ii < nmodf; ii++ )
    {  // loop thru potential model files
       US_Model    model;
-      QString     modfil   = dirm + "/" + modfils.at( ii );
+      QString     modfil   = rfilt ? 
+                             mdlfns.at( ii ) :
+                             ( dirm + "/" + modfils.at( ii ) );
                   contents = "";
 
       model.load( modfil );
@@ -1279,8 +1290,11 @@ DbgLv(2) << "BrLoc:  edtfilt" << edtfilt;
       cdesc.recState    = REC_LO;
       cdesc.dataGUID    = model.modelGUID.simplified();
       cdesc.parentGUID  = model.editGUID.simplified();
+DbgLv(2) << "BrLoc:   mdl ii" << ii << "modfil" << modfil << "pGUID" << cdesc.parentGUID;
 
       if ( rfilt  &&  ! edtIDs.contains( cdesc.parentGUID ) )  continue;
+else if (rfilt)
+ DbgLv(2) << "BrLoc:       mdl GUID *MATCH*";
 
       cdesc.parentID    = -1;
       cdesc.filename    = modfil;
@@ -1305,11 +1319,14 @@ DbgLv(2) << "BrLoc:  edtfilt" << edtfilt;
       progress->setValue( ++ktask );
       qApp->processEvents();
    }
+DbgLv(2) << "BrLoc: ldesc size" << ldescs.count();
 
    for ( int ii = 0; ii < nnoif; ii++ )
    {  // loop thru potential noise files
       US_Noise    noise;
-      QString     noifil   = dirn + "/" + noifils.at( ii );
+      QString     noifil   = rfilt ? 
+                             noifns.at( ii ) :
+                             ( dirn + "/" + noifils.at( ii ) );
 
       noise.load( noifil );
 
