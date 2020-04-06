@@ -538,22 +538,26 @@ DbgLv(1) << "CGui: reset complete";
    // QString protname = QString("JohnsonC_DNA-control_013020");
    // QString invid    = QString("77");
 
-   // QMap < QString, QString > protocol_details;
-   // //protocol_details[ "status" ];
-   // protocol_details[ "dataPath" ]       = curdir;
-   // protocol_details[ "invID_passed" ]   = invid;
-   // protocol_details[ "protocolName" ]   = protname;
-   // //protocol_details[ "experimentName" ];
-   // protocol_details[ "correctRadii" ]   = QString("YES");
-   // protocol_details[ "expAborted" ]     = QString("NO");
-   // //protocol_details[ "runID" ]          =  ;
-   // protocol_details[ "label" ]          = QString("Some label");
+   QString curdir   = QString("/home/alexey/ultrascan/imports/2-itf-abs-test-run1182");
+   QString protname = QString("1-itf-abs-test");
+   QString invid    = QString("6");
+
+   QMap < QString, QString > protocol_details;
+   //protocol_details[ "status" ];
+   protocol_details[ "dataPath" ]       = curdir;
+   protocol_details[ "invID_passed" ]   = invid;
+   protocol_details[ "protocolName" ]   = protname;
+   //protocol_details[ "experimentName" ];
+   protocol_details[ "correctRadii" ]   = QString("YES");
+   protocol_details[ "expAborted" ]     = QString("NO");
+   //protocol_details[ "runID" ]          =  ;
+   protocol_details[ "label" ]          = QString("Some label");
 
    
    // /*********************************************************************************/
 
    
-   // import_data_auto( protocol_details ); 
+   import_data_auto( protocol_details ); 
 
    
    
@@ -1897,11 +1901,31 @@ DbgLv(1) << "CGui:iA:  trx" << trx << "uuid" << uuidst << importDir;
    runType       = QString( fname ).section( ".", -5, -5 );
    runID         = QString( fname ).section( ".",  0, -6 );
 
+   //ALEXEY
+   // Interate over file names to see if there is a combined case: IP+RI
+   runType_combined_IP_RI = false;
+   QStringList types;
+   for ( int i=0; i < files.count(); ++i )
+     {
+       QString type = QString( files[i] ).section( ".", -5, -5 );
+       types << type;
+     }
+   types.removeDuplicates();
 
+   if ( types.count() > 1 )
+     if ( types.contains("IP") &&  types.contains("RI") )
+       runType_combined_IP_RI = true;
+
+   qDebug() << "runType_combined_IP_RI: " << runType_combined_IP_RI;
+   /**************************************************************************/
+
+   
    // //TEMP
    //runID += QString("-test");
 
 DbgLv(1) << "CGui:iA:  RUNID from files[0]: files[0]" << fname << ", runID: " << runID;
+
+  
      
    le_runID2->setText( runID );
    le_runID ->setText( runID );
@@ -2815,7 +2839,7 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 
    
    //Solutions / Triple / Centerpiece Descriptions
-   int solutionID = 32;  // ALEXEY change to protocol's solution IDs
+   int solutionID;  // ALEXEY change to protocol's solution IDs
    US_Solution solution_auto;
 
    int nchans     = out_channels.count();

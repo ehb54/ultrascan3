@@ -138,6 +138,7 @@ class US_ConvertGui : public US_Widgets
       US_PlotPicker* picker;
       US_Plot*       usplot;
 
+      bool          runType_combined_IP_RI;
       QString       runType;
       QString       oldRunType;
       QString       runID;

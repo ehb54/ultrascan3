@@ -6485,8 +6485,7 @@ QMap< QString, QString> US_Edit::read_autoflow_record( int autoflowID  )
 void US_Edit::write_auto( void )
 {
 
-  /** Check if stahe is being or has already changed ***/
-
+  /** Check if stage is being or has already changed ***/
   QMap < QString, QString > autoflow_details;
   autoflow_details = read_autoflow_record( autoflowID_passed );
   
@@ -6503,13 +6502,13 @@ void US_Edit::write_auto( void )
 				    "The program will return to the autoflow runs dialogue where "
 				    "you can re-attach to the actual current stage of the run. "
 				    "Please allow some time for the status to be updated.") );
-
+      
       
       reset();
       emit back_to_initAutoflow( );
       return;
     }
-  
+
   /*******************************************************/
   
    // Determine if we are using the database

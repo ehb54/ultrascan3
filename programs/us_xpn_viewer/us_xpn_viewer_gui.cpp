@@ -2518,12 +2518,37 @@ double tm1=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
       QString msg        = tr( "Multiple scan data types are present:\n" )
                            +   "'" + drtype1 + "'\n or \n"
                            +   "'" + drtype2 + "' .\n";
-DbgLv(1) << "RDa:   runType2 scanmask" << runType2 << scanmask << "[ifw]scn_rows"
- << xpn_data->countOf( "iscn_rows" )
- << xpn_data->countOf( "fscn_rows" )
- << xpn_data->countOf( "wscn_rows" );
-      if ( ( runType2 == "IP"  &&  xpn_data->countOf( "iscn_rows" ) == 0 )  ||
-           ( runType2 == "FI"  &&  xpn_data->countOf( "fscn_rows" ) == 0 )  ||
+      DbgLv(1) << "RDa:   runType2 scanmask" << runType2 << scanmask << "[ifw]scn_rows"
+	       << xpn_data->countOf( "iscn_rows" )
+	       << xpn_data->countOf( "fscn_rows" )
+	       << xpn_data->countOf( "wscn_rows" );
+      
+      // ALEXEY: here DOES NOT check if Absorbance scan # is 0 !!!
+      //opsys << drtype1 << drtype2;
+      
+      if ( xpn_data->countOf( "iscn_rows" ) == 0 )
+	{
+	  //runType            = runType1;
+	  optndx             = 0;
+	  opsys << drtype1;
+	}
+      else if ( xpn_data->countOf( "ascn_rows" ) == 0 )
+	{
+	  runType            = runType2;
+	  optndx             = 1;
+	  opsys << drtype2;
+	}
+      else
+	{
+	  //runType            = runType1;
+	  optndx             = 0;
+	  opsys << drtype1 << drtype2;
+	}
+   
+ 
+/***
+      if ( ( runType2 == "IP"  &&  xpn_data->countOf( "iscn_rows" ) == 0 )  ||   
+           ( runType2 == "FI"  &&  xpn_data->countOf( "fscn_rows" ) == 0 )  || 
            ( runType2 == "WI"  &&  xpn_data->countOf( "wscn_rows" ) == 0 ) )
       {
          msg               += tr( "\nScans are missing so only " ) + drtype1
@@ -2556,6 +2581,8 @@ DbgLv(1) << "RDa:   runType2 scanmask" << runType2 << scanmask << "[ifw]scn_rows
  << xpn_data->countOf( "wscn_rows" );
          }
       }
+
+      ***/
    }
 
    qApp->processEvents();  //ALEXEY: maybe this will help
@@ -2566,7 +2593,7 @@ DbgLv(1) << "RDa: 1. Crashes HERE!!!!";
 DbgLv(1) << "RDa: 1a. Crashes HERE!!!!";
    
    cb_optsys->addItems( opsys );                                  // ALEXEY fill out Optics listbox
-DbgLv(1) << "RDa: 1ab. Crashes HERE!!!! - BEFORE Setting index to cb_optsys";
+DbgLv(1) << "RDa: 1ab. Crashes HERE!!!! - BEFORE Setting index to cb_optsys: optndx = " << optndx;
    cb_optsys->setCurrentIndex( optndx );
 DbgLv(1) << "RDa: 1ac. Crashes HERE!!!! - AFTER Setting index to cb_optsys";
    
