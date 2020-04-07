@@ -1079,7 +1079,7 @@ void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files )
    select_files[ peak_target ] = true;
 
    double peak;
-   if ( !get_peak( peak_target, peak ) )
+   if ( !get_peak( peak_target, peak, true ) )
    {
       return;
    }
@@ -1159,7 +1159,7 @@ void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files )
       }
 
       double this_peak;
-      if ( !get_peak( files[ i ], this_peak ) )
+      if ( !get_peak( files[ i ], this_peak, true ) )
       {
          return;
       }

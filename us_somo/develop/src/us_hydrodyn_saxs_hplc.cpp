@@ -3400,10 +3400,10 @@ void US_Hydrodyn_Saxs_Hplc::smooth()
    smooth( files );
 }
 
-bool US_Hydrodyn_Saxs_Hplc::get_peak( QString file, double &peak )
+bool US_Hydrodyn_Saxs_Hplc::get_peak( QString file, double &peak, bool full )
 {
    double pos;
-   return get_peak( file, peak, pos );
+   return get_peak( file, peak, pos, full );
    // if ( !f_Is.count( file ) )
    // {
    //    editor_msg( "red", QString( us_tr( "Internal error: get_peak requested on %1 but no data available" ) ).arg( file ) );
@@ -3427,7 +3427,7 @@ bool US_Hydrodyn_Saxs_Hplc::get_peak( QString file, double &peak )
    // return true;
 }
 
-bool US_Hydrodyn_Saxs_Hplc::get_peak( QString file, double &peak, double &pos )
+bool US_Hydrodyn_Saxs_Hplc::get_peak( QString file, double &peak, double &pos, bool full )
 {
    if ( !f_Is.count( file ) )
    {
@@ -3447,6 +3447,11 @@ bool US_Hydrodyn_Saxs_Hplc::get_peak( QString file, double &peak, double &pos )
    double start_pos = le_gauss_fit_start->text().toDouble();
    double end_pos   = le_gauss_fit_end  ->text().toDouble();
    
+   if ( full ) {
+      start_pos = f_qs[ file ][ 0 ];
+      end_pos   = f_qs[ file ].back();
+   }
+
    if ( end_pos <= start_pos ) {
       return false;
    }

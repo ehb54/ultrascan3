@@ -1108,8 +1108,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       bool                         axis_y_log;
       bool                         compatible_files( QStringList files );
       bool                         type_files( QStringList files );
-      bool                         get_peak( QString file, double &peak );
-      bool                         get_peak( QString file, double &peak, double &pos );
+      bool                         get_peak( QString file, double &peak, bool full = false );
+      bool                         get_peak( QString file, double &peak, double &pos, bool full = false );
 
       QString                      wheel_file;
       QwtPlotCurve *               wheel_curve;
