@@ -53,7 +53,7 @@ US_ProjectGui::US_ProjectGui(
    tabWidget -> addTab( purityTab,           tr( "4: Purity"            ) );
    tabWidget -> addTab( expenseTab,          tr( "5: Expense"           ) );
    tabWidget -> addTab( bufferComponentsTab, tr( "6: Buffer Components" ) );
-   tabWidget -> addTab( saltInformationTab,  tr( "7: Salt Information"  ) );
+   tabWidget -> addTab( saltInformationTab,  tr( "7: Sample Handling"   ) );
    tabWidget -> addTab( auc_questionsTab,    tr( "8: AUC Questions"     ) );
    tabWidget -> addTab( expDesignTab,        tr( "9: Experiment Design" ) );
    tabWidget -> addTab( notesTab,            tr( "10: Notes"             ) );
@@ -848,8 +848,12 @@ US_ProjectGuiGoals::US_ProjectGuiGoals( void ) : US_Widgets()
    QVBoxLayout* goals = new QVBoxLayout;
 
    QLabel* lb_goals = 
-      us_label( tr( "Please provide a detailed description of your research, \n"
-                    "including an introduction and goals:" ) );
+      us_label( tr( "Please provide a detailed description"
+                    " of your research.\n"
+                    "Include an abstract and explain"
+                    " the goals of your research.\n"
+                    "We will use this information to optimally"
+                    " design your experiment:" ) ); 
 
    goals->addWidget( lb_goals );
 
@@ -876,7 +880,14 @@ US_ProjectGuiMolecules::US_ProjectGuiMolecules( void ) : US_Widgets()
    QVBoxLayout* molecules = new QVBoxLayout;
 
    QLabel* lb_molecules = 
-      us_label( tr( "What proteins/DNA molecules are involved in the research?" ) );
+      us_label( tr( "For each analyte to be measured,"
+                    " please provide a name,\n"
+                    "appropriate molar mass, partial specific volume"
+                    " (if it was measured),\n"
+                    "and, for proteins, the sequence in single-letter code.\n"
+                    "For each submitted sample, please enter a detailed"
+                    " sample description\n"
+                    "key for the label used on each tube:" ) );
 
    molecules->addWidget( lb_molecules );
 
@@ -903,7 +914,8 @@ US_ProjectGuiPurity::US_ProjectGuiPurity( void ) : US_Widgets()
    QVBoxLayout* purity = new QVBoxLayout;
 
    QLabel* lb_purity = 
-      us_label( tr( "Please indicate the approximate purity of your sample(s)." ) );
+      us_label( tr( "Please indicate the approximate purity of your sample(s).\n"
+                    "You can express it in percent:" ) );
 
    purity->addWidget( lb_purity );
 
@@ -930,7 +942,14 @@ US_ProjectGuiExpense::US_ProjectGuiExpense( void ) : US_Widgets()
    QVBoxLayout* expense = new QVBoxLayout;
 
    QLabel* lb_expense = 
-      us_label( tr( "Please rate the expense of providing 5 ml at 1 OD 280 concentration:" ) );
+      us_label( tr( "How much material (volume, concentration) is"
+                    " available for your research?\n"
+                    "Please identify concentration in absorbance units,"
+                    " wavelength, or\n"
+                    "type of fluorescense label and its molar concentration.\n"
+                    "For samples to be measured with UV/visible"
+                    " absorbance optics,\n"
+                    "provide an absorbance scan against buffer from 215-700 nm for each sample:" ) );
 
    expense->addWidget( lb_expense );
 
@@ -957,7 +976,17 @@ US_ProjectGuiBufferComponents::US_ProjectGuiBufferComponents( void ) : US_Widget
    QVBoxLayout* bufferComponents = new QVBoxLayout;
 
    QLabel* lb_bufferComponents = 
-      us_label( tr( "What buffers do you plan to use?" ) );
+      us_label( tr( "Please list the molar concentrations of each component"
+                    " in your buffer,\n"
+                    "including reductants and nucleotides.\n"
+                    "Provide a buffer scan against ddH2O from 215-700 nm.\n"
+                    "To minimize absorbance, we prefer to use phosphate or optically"
+                    " pure TRIS.\n"
+                    "To avoid hydrodynamic non-ideality, a minimum salt concentration"
+                    " of 20 mM is desired.\n"
+                    "Please explain if this is not possible. If reductants are required,"
+                    " please use TCEP\n"
+                    "which can be measured at wavelengths > 260 nm:" ) );
 
    bufferComponents->addWidget( lb_bufferComponents );
 
@@ -984,7 +1013,20 @@ US_ProjectGuiSaltInformation::US_ProjectGuiSaltInformation( void ) : US_Widgets(
    QVBoxLayout* saltInformation = new QVBoxLayout;
 
    QLabel* lb_saltInformation = 
-      us_label( tr( "Is a salt concentration between 20-50 mM for your experiment acceptable?" ) );
+      us_label( tr( "Please indicate the ideal storage conditions"
+                    " (room temperature,\n"
+                    "4, -20, and/or -80 degrees Celcius), the shelf"
+                    " life of your sample,\n"
+                    "any health/safety concerns (is it toxic if ingested or"
+                    " injected, etc.)\n"
+                    "and, if so, proper care to be taken when working with and\n"
+                    "disposing of sample.\n"
+                    "State if you would like to have the remaining used or unused"
+                    " sample returned\n"
+                    "to you (you will need to pay for return shipment)"
+                    " and indicate how to\n"
+                    "properly dispose of the sample:" ) );
+
    saltInformation->addWidget( lb_saltInformation );
 
    te_saltInformation = us_textedit();
@@ -1010,7 +1052,9 @@ US_ProjectGuiAUC_questions::US_ProjectGuiAUC_questions( void ) : US_Widgets()
    QVBoxLayout* auc_questions = new QVBoxLayout;
 
    QLabel* lb_auc_questions = 
-      us_label( tr( "What questions are you trying to answer with AUC?" ) );
+      us_label( tr( "What questions are you trying to answer with AUC?\n"
+                    "How do you propose to approach the research"
+                    " with AUC experiments?" ) );
    auc_questions->addWidget( lb_auc_questions );
 
    te_auc_questions = us_textedit();
@@ -1036,7 +1080,7 @@ US_ProjectGuiExpDesign::US_ProjectGuiExpDesign( void ) : US_Widgets()
    QVBoxLayout* exp_design = new QVBoxLayout;
 
    QLabel* lb_exp_design = 
-      us_label( tr( "Do you have any notes about the design of the experiment?" ) );
+      us_label( tr( "The AUC experimental design:" ) );
    exp_design->addWidget( lb_exp_design );
 
    te_exp_design = us_textedit();
@@ -1062,7 +1106,7 @@ US_ProjectGuiNotes::US_ProjectGuiNotes( void ) : US_Widgets()
 {
    QVBoxLayout* notes = new QVBoxLayout;
 
-   QLabel* lb_notes = us_label( tr( "Notes:" ) );
+   QLabel* lb_notes = us_label( tr( "Special instructions, questions, and notes (optional):" ) );
    notes->addWidget( lb_notes );
 
    te_notes = us_textedit();

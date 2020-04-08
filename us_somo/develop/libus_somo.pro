@@ -20,6 +20,11 @@ DEFINES += NO_EDITOR_PRINT
 
 TARGET  = us_somo
 
+revision.target           = include/us_revision.h
+revision.commands         = sh revision.sh
+revision.depends          = FORCE
+unix:QMAKE_EXTRA_TARGETS += revision
+
 # OSX also reports UNIX
 contains( DEFINES, "OSX" ) {
    QT += network
@@ -458,6 +463,7 @@ SOURCES *= \
         src/us3i_util.cpp \
         src/us3i_gzip.cpp \
         src/us3i_plot.cpp \
+        include/us_revision.h \
         shd_mpi/shs_use.cpp
 #  us_db_rst_channel.cpp \
 #  us_db_rst_equil.cpp \

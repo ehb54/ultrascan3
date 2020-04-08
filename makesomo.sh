@@ -20,7 +20,8 @@ fi
 
 DIR=$(pwd)
 NBERR=0
-SOMO3=`(cd $us3/../us3_somo;pwd)`
+##SOMO3=`(cd $us3/../us3_somo;pwd)`
+SOMO3=`(cd $us3/us_somo;pwd)`
 
 if [ $ISWIN -eq 2 ]; then
   # Run revision and qmake in Cygwin window
