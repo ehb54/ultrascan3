@@ -2610,10 +2610,10 @@ int mi=rads.count()/2;
 int mo=rrads.count()/2;
 int ni=rads.count()-1;
 int no=rads.count()-1;
-DbgLv(0) << "XpDa:i_r:  rai0 rao0 raim raom rain raon"
- << rads[0] << rrads[0] << rads[mi] << rrads[mo] << rads[ni] << rrads[no];
-DbgLv(0) << "XpDa:i_r:   vli0 vlo0 vlim vlom vlin vlon"
- << vals[0] << rvals[0] << vals[mi] << rvals[mo] << vals[ni] << rvals[no];
+//DbgLv(0) << "XpDa:i_r:  rai0 rao0 raim raom rain raon"
+// << rads[0] << rrads[0] << rads[mi] << rrads[mo] << rads[ni] << rrads[no];
+//DbgLv(0) << "XpDa:i_r:   vli0 vlo0 vlim vlom vlin vlon"
+// << vals[0] << rvals[0] << vals[mi] << rvals[mo] << vals[ni] << rvals[no];
 }
 
 // Compose text with detailed information about the data

@@ -99,9 +99,13 @@ class US_XpnDataViewer : public US_Widgets
      
   private:
      bool auto_mode_bool;
+     bool inExport;
      
      QVector< US_DataIO::RawData >   allData;    //!< All AUC raw data
 
+     QStringList opsys_auto;
+     int optndx_auto;
+     
      QVector< double > r_radii;     //!< Loaded radii
      QVector< int >    lambdas;     //!< Loaded wavelengths
 
@@ -258,7 +262,7 @@ class US_XpnDataViewer : public US_Widgets
      bool           in_reload_all_data;
      bool           in_reload_check_sysdata;
      bool           in_reload_end_processes;
-
+     bool           in_reload_end_process_all_data_avail;
      
      double         last_xmin;
      double         last_xmax;
@@ -273,6 +277,7 @@ class US_XpnDataViewer : public US_Widgets
      QTimer*        timer_check_sysdata;
 
      QTimer*        timer_end_processes;
+     QTimer*        timer_end_process_all_data_avail;
 
      QElapsedTimer*  elapsed_timer;
      
@@ -284,8 +289,15 @@ class US_XpnDataViewer : public US_Widgets
      QString        ExpID_to_use;
      QString        ProtocolName;
      QString        RunName;
+     
      QString        CellChNumber;
      QString        TripleNumber;
+
+     QMap< QString, QString > CellChNumber_map;
+     QMap< QString, QString > TripleNumber_map;
+
+     bool           combinedOptics;
+     
      QString        OptimaName;          //New
      QString        TotalDuration;       //New
      QString        invID_passed;
@@ -315,7 +327,10 @@ class US_XpnDataViewer : public US_Widgets
      
      //void   retrieve_xpn_raw_auto ( QString & );
      void   retrieve_xpn_raw_auto ( void );
+
      void   end_processes ( void );
+     void   end_process_all_data_avail ( void );
+     
      void   reloadData_auto     ( void );
      int    CheckExpComplete_auto( QString & );
      void   update_autoflow_runId_timeStarted( void );
@@ -339,7 +354,11 @@ class US_XpnDataViewer : public US_Widgets
      void   changeRadius   ( void );
      void   changeCellCh   ( void );
      void   changeRecord   ( void );
+
      void   changeOptics   ( void );
+     void   changeOptics_auto   ( void );
+     
+     
      void   changeReload   ( void );
      void   changeInterval ( void );
      void   resetAll       ( void );

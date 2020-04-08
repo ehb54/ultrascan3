@@ -223,6 +223,8 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
 
    auto_mode_bool     = true;
    experimentAborted  = false;
+   inExport           = false;
+   combinedOptics     = false;
    
    navgrec      = 10;
    dbg_level    = US_Settings::us_debug();
@@ -246,7 +248,8 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
    in_reload_data_init = false;
    in_reload_check_sysdata  = false;
    in_reload_end_processes  = false;
-   
+   in_reload_end_process_all_data_avail  = false;
+    
    ElapsedTimeOffset = 0;
 
    //ALEXEY: new way
@@ -735,12 +738,30 @@ if(mcknt>0)
    // protocol_details[ "OptimaName" ] = QString("Optima 2"); 
    // protocol_details[ "duration" ]   = QString("43200");
       
+   // // /**** Combined *****/
+   // QMap < QString, QString > protocol_details;
+   // protocol_details[ "experimentId"] = QString("686"); 
+   // protocol_details[ "protocolName"] = QString("alexey-1h-3itf-6abs-uv-7wvl-bd5");
+   // protocol_details[ "experimentName" ] = QString("some_name");
+   // protocol_details[ "CellChNumber" ] = QString("IP:3,RI:6");
+   // protocol_details[ "TripleNumber" ] = QString("IP:3,RI:42");
+   // protocol_details[ "OptimaName" ] = QString("Optima 1"); 
+   // protocol_details[ "duration" ]   = QString("43200");
 
+   // // ITF
+   // QMap < QString, QString > protocol_details;
+   // protocol_details[ "experimentId"] = QString("680"); 
+   // protocol_details[ "protocolName"] = QString("6-itf-test-h");
+   // protocol_details[ "experimentName" ] = QString("some_name");
+   // protocol_details[ "CellChNumber" ] = QString("3");
+   // protocol_details[ "TripleNumber" ] = QString("3");
+   // protocol_details[ "OptimaName" ] = QString("Optima 1"); 
+   // protocol_details[ "duration" ]   = QString("43200");
+
+   
    // check_for_data( protocol_details );
    // End of test
 
-
-   qDebug() << "XPN viewer set " ;
    
 }
 
@@ -1650,7 +1671,7 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
     // Check if all triple info is available
       //timer_all_data_avail = new QTimer;
       connect(timer_all_data_avail, SIGNAL(timeout()), this, SLOT( retrieve_xpn_raw_auto ( ) ));
-      timer_all_data_avail->start(5000);     // 5 sec
+      timer_all_data_avail->start(40000);     // 40 sec
 
 
 
@@ -1663,7 +1684,7 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
       //QThread* sys_thread = new QThread(this);
       //sys_thread = new QThread(this);
       //timer_check_sysdata = new QTimer(0); // parent to 0 !
-      timer_check_sysdata->setInterval(2000);
+      timer_check_sysdata->setInterval(3000);
       timer_check_sysdata->moveToThread(sys_thread);
       //connect( timer_check_sysdata, SIGNAL(timeout()), this, SLOT( check_for_sysdata( )  ), Qt::QueuedConnection ) ; //Qt::DirectConnection );
       connect( timer_check_sysdata, SIGNAL(timeout()), this, SLOT( check_for_sysdata( )  ) );//, Qt::QueuedConnection );
@@ -2120,6 +2141,9 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
 {
   //Also reset the panel before reattachement
   //reset_auto();
+
+  opsys_auto.clear();
+  combinedOptics = false;
   
   xpn_data->setEtimOffZero(); //ALEXEY: intialize etimoff to zero for the first time
 
@@ -2130,9 +2154,45 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
   ExpID_to_use = protocol_details["experimentId"];   
   ProtocolName = protocol_details["protocolName"];
   RunName      = protocol_details[ "experimentName" ];
-  CellChNumber = protocol_details[ "CellChNumber" ];
-  TripleNumber = protocol_details[ "TripleNumber" ];
-  OptimaName   = protocol_details[ "OptimaName" ];               //New
+  
+  //CellChNumber = protocol_details[ "CellChNumber" ];            //ALEXEY: in autoflow, these should be QStringLists - #chanels && #triples for each OS
+  //TripleNumber = protocol_details[ "TripleNumber" ];            // otherwise: if one OS, singke numbers, as currently
+
+  QString CellChNumber_str = protocol_details[ "CellChNumber" ];         
+  QString TripleNumber_str = protocol_details[ "TripleNumber" ];
+
+  if ( CellChNumber_str.contains("IP") && CellChNumber_str.contains("RI")
+       && TripleNumber_str.contains("IP") && TripleNumber_str.contains("RI") )
+    {
+      combinedOptics = true;
+      QStringList CellChNumber_list = CellChNumber_str.split(",");
+      QStringList TripleNumber_list = TripleNumber_str.split(",");
+      
+      for (int i = 0; i < CellChNumber_list.count(); ++i )
+	{
+	  if ( CellChNumber_list[i].split(":")[0] == "IP" )
+	    CellChNumber_map["IP"] = CellChNumber_list[i].split(":")[1];
+	  if ( CellChNumber_list[i].split(":")[0] == "RI" )
+	    CellChNumber_map["RI"] = CellChNumber_list[i].split(":")[1];
+
+	  if ( TripleNumber_list[i].split(":")[0] == "IP" )
+	    TripleNumber_map["IP"] = TripleNumber_list[i].split(":")[1];
+	  if ( TripleNumber_list[i].split(":")[0] == "RI" )
+	    TripleNumber_map["RI"] = TripleNumber_list[i].split(":")[1];
+	}
+
+      qDebug() << "Multiple OS: IP: CellChNumber, TripleNumber: " << CellChNumber_map["IP"] << TripleNumber_map["IP"];
+      qDebug() << "Multiple OS: RI: CellChNumber, TripleNumber: " << CellChNumber_map["RI"] << TripleNumber_map["RI"];
+    }
+  else  //Regular single Optics run
+    {
+      CellChNumber = protocol_details[ "CellChNumber" ];         
+      TripleNumber = protocol_details[ "TripleNumber" ];
+
+      qDebug() << "Single OS: CellChNumber, TripleNumber: " << CellChNumber << TripleNumber;
+    }
+  
+  OptimaName   = protocol_details[ "OptimaName" ];          
   TotalDuration = protocol_details[ "duration" ];
   invID_passed = protocol_details[ "invID_passed" ];
   correctRadii = protocol_details[ "correctRadii" ];
@@ -2149,6 +2209,7 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
   timer_all_data_avail = new QTimer;
   timer_data_reload = new QTimer;
   timer_end_processes = new QTimer;
+  timer_end_process_all_data_avail = new QTimer;
   timer_check_sysdata = new QTimer(0); // parent to 0 !
   sys_thread = new QThread(this);
 
@@ -2317,6 +2378,35 @@ void US_XpnDataViewer::end_processes( void )
 }
 
 
+//to end all existing update processes
+void US_XpnDataViewer::end_process_all_data_avail( void )
+{
+  qDebug() << "In the END process: in_reload_end_processes = " << in_reload_end_process_all_data_avail;
+  
+  if ( in_reload_end_process_all_data_avail )            // If already doing a reload,
+    return;                              //  skip starting a new one
+  
+  in_reload_end_process_all_data_avail   = true;          // Flag in the midst of a reload
+  
+  qDebug() << "Checking if process All Data Avail  STOPPED.";
+       
+  if (  !in_reload_all_data && !in_reload_auto ) 
+    {
+      
+      timer_end_process_all_data_avail->stop();
+      disconnect(timer_end_process_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+
+      qDebug() << "All Data Avail: " <<  in_reload_all_data ;
+      
+      in_reload_end_process_all_data_avail = false;
+
+      changeOptics();
+    }
+  else
+    in_reload_end_process_all_data_avail   = false; 
+}
+
+
 //void US_XpnDataViewer::retrieve_xpn_raw_auto( QString & RunID )
 void US_XpnDataViewer::retrieve_xpn_raw_auto( void )
 {
@@ -2478,11 +2568,11 @@ DbgLv(1) << "RDa:      knt(triple)   " << xpn_data->countOf( "triple"    );
    //in_reload_check_sysdata = false; //ALEXEY
    
 double tm1=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
-   QStringList opsys;
+//QStringList opsys;
 
    // Infer and report on type of data to eventually export
-   runType            = "RI";
-   int optndx         = 0;
+   runType             = "RI";
+   //optndx_auto         = 0;
 
    if ( scanmask == 1  ||  scanmask == 2  ||
         scanmask == 4  ||  scanmask == 8 )
@@ -2490,14 +2580,35 @@ double tm1=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
       runType            = ( scanmask == 2 ) ? "FI" : runType;
       runType            = ( scanmask == 4 ) ? "IP" : runType;
       runType            = ( scanmask == 8 ) ? "WI" : runType;
-      if ( scanmask == 1 )
-         opsys << "Absorbance";
-      else if ( scanmask == 2 )
-         opsys << "Fluorescence";
-      else if ( scanmask == 4 )
-         opsys << "Interference";
-      else if ( scanmask == 8 )
-         opsys << "Wavelength";
+      if ( scanmask == 1 &&  opsys_auto.count() == 0  )
+	{
+	  opsys_auto << "Absorbance";
+	  optndx_auto         = 0;
+	}
+      else if ( scanmask == 2 &&  opsys_auto.count() == 0 )
+	{
+	  opsys_auto << "Fluorescence";
+	  optndx_auto         = 0;
+	}
+      else if ( scanmask == 4 &&  opsys_auto.count() == 0 )
+	{
+	  opsys_auto << "Interference";
+	  optndx_auto         = 0;
+	}
+      else if ( scanmask == 8 &&  opsys_auto.count() == 0 )
+	{
+	  opsys_auto << "Wavelength";
+	  optndx_auto         = 0;
+	}
+      
+      // if ( scanmask == 1 )
+      //    opsys << "Absorbance";
+      // else if ( scanmask == 2 )
+      //    opsys << "Fluorescence";
+      // else if ( scanmask == 4 )
+      //    opsys << "Interference";
+      // else if ( scanmask == 8 )
+      //    opsys << "Wavelength";
    }
 
    else if ( ( scanmask & 1 ) != 0 )
@@ -2528,22 +2639,63 @@ double tm1=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
       
       if ( xpn_data->countOf( "iscn_rows" ) == 0 )
 	{
-	  //runType            = runType1;
-	  optndx             = 0;
-	  opsys << drtype1;
+	  if ( opsys_auto.count() == 0 )
+	    {
+	      opsys_auto << drtype1;
+	      optndx_auto         = 0;
+	    }
 	}
       else if ( xpn_data->countOf( "ascn_rows" ) == 0 )
 	{
-	  runType            = runType2;
-	  optndx             = 1;
-	  opsys << drtype2;
+	  if ( opsys_auto.count() == 0 )
+	    {
+	      opsys_auto << drtype2;
+	      optndx_auto         = 0;
+	    }
 	}
       else
 	{
-	  //runType            = runType1;
-	  optndx             = 0;
-	  opsys << drtype1 << drtype2;
+	  if ( opsys_auto.count() == 1 )
+	    {
+	      if ( opsys_auto[0] == drtype1 )
+		{
+		  opsys_auto << drtype2;
+		  optndx_auto         = 0;
+		}
+	      if ( opsys_auto[0] == drtype2 )
+		{
+		  opsys_auto << drtype1;
+		  optndx_auto         = 0;
+		}
+	    }
+	  else
+	    {
+	      if ( opsys_auto.count() == 0 )
+		{
+		  opsys_auto << drtype1 << drtype2;
+		  optndx_auto         = 0;
+		}
+	    }
 	}
+
+      // if ( xpn_data->countOf( "iscn_rows" ) == 0 )
+      // 	{
+      // 	  //runType            = runType1;
+      // 	  //optndx             = 0;
+      // 	  opsys << drtype1;
+      // 	}
+      // else if ( xpn_data->countOf( "ascn_rows" ) == 0 )
+      // 	{
+      // 	  runType            = runType2;
+      // 	  //optndx             = 1;
+      // 	  opsys << drtype2;
+      // 	}
+      // else
+      // 	{
+      // 	  //runType            = runType1;
+      // 	  //optndx             = 0;
+      // 	  opsys << drtype1 << drtype2;
+      // 	}
    
  
 /***
@@ -2586,25 +2738,35 @@ DbgLv(1) << "RDa:   runType2 scanmask" << runType2 << scanmask << "[ifw]scn_rows
    }
 
    qApp->processEvents();  //ALEXEY: maybe this will help
-DbgLv(1) << "RDa: 1. Crashes HERE!!!!";
-     
+   DbgLv(1) << "RDa: 1. Crashes HERE!!!!";
+   
    cb_optsys->disconnect();
    cb_optsys->clear();
-DbgLv(1) << "RDa: 1a. Crashes HERE!!!!";
+   DbgLv(1) << "RDa: 1a. Crashes HERE!!!!";
    
-   cb_optsys->addItems( opsys );                                  // ALEXEY fill out Optics listbox
-DbgLv(1) << "RDa: 1ab. Crashes HERE!!!! - BEFORE Setting index to cb_optsys: optndx = " << optndx;
-   cb_optsys->setCurrentIndex( optndx );
-DbgLv(1) << "RDa: 1ac. Crashes HERE!!!! - AFTER Setting index to cb_optsys";
+   cb_optsys->addItems( opsys_auto );                                  // ALEXEY fill out Optics listbox
+   DbgLv(1) << "RDa: 1ab. Crashes HERE!!!! - BEFORE Setting index to cb_optsys: optndx_auto = " << optndx_auto;
+   cb_optsys->setCurrentIndex( optndx_auto );
+   DbgLv(1) << "RDa: 1ac. Crashes HERE!!!! - AFTER Setting index to cb_optsys";
    
+   // connect( cb_optsys,    SIGNAL( currentIndexChanged( int ) ),
+   //          this,         SLOT  ( changeOptics( )            ) );
+
    connect( cb_optsys,    SIGNAL( currentIndexChanged( int ) ),
-            this,         SLOT  ( changeOptics( )            ) );
-DbgLv(1) << "RDa: 1b. Crashes HERE!!!!";
+            this,         SLOT  ( changeOptics_auto(  )       ));
    
+   DbgLv(1) << "RDa: 1b. Crashes HERE!!!!";
+
    runID         = new_runID;
-DbgLv(1) << "RDa:  runID" << runID << "runType" << runType;
+   
+   if ( opsys_auto[ optndx_auto ] == "Absorbance" )
+     runType = "RI";
+   if ( opsys_auto[ optndx_auto ] == "Interference" )
+     runType = "IP";   
+   
+   DbgLv(1) << "RDa:  runID" << runID << "runType" << runType;
    xpn_data->set_run_values( runID, runType );                    // ALEXEY
-DbgLv(1) << "RDa: 2. Crashes HERE!!!! (after xpn_data->set_run_values( runID, runType ) )";
+   DbgLv(1) << "RDa: 2. Crashes HERE!!!! (after xpn_data->set_run_values( runID, runType ) )";
 
    // Build the AUC equivalent
    //QApplication::setOverrideCursor( QCursor( Qt::WaitCursor) );
@@ -2640,21 +2802,21 @@ DbgLv(1) << "RDa:   rvS rvE" << r_radii[0] << r_radii[npoint-1];
    nlambda      = xpn_data->lambdas_raw( lambdas );               // ALEXEY  lambdas
    int wvlo     = lambdas[ 0 ];
    int wvhi     = lambdas[ nlambda - 1 ];
-#if 0
-   ntriple      = nlambda * ncellch;  // Number triples
-   ntpoint      = npoint  * nscan;    // Number radius points per triple
-DbgLv(1) << "RDa: nwl wvlo wvhi" << nlambda << wvlo << wvhi
-   << "ncellch" << ncellch << "nlambda" << nlambda << "ntriple" << ntriple;
-   triples.clear();
+// #if 0
+//    ntriple      = nlambda * ncellch;  // Number triples
+//    ntpoint      = npoint  * nscan;    // Number radius points per triple
+// DbgLv(1) << "RDa: nwl wvlo wvhi" << nlambda << wvlo << wvhi
+//    << "ncellch" << ncellch << "nlambda" << nlambda << "ntriple" << ntriple;
+//    triples.clear();
 
-   for ( int jj = 0; jj < ncellch; jj++ )
-   {
-      QString celchn  = cellchans[ jj ];
+//    for ( int jj = 0; jj < ncellch; jj++ )
+//    {
+//       QString celchn  = cellchans[ jj ];
 
-      for ( int kk = 0; kk < nlambda; kk++ )
-         triples << celchn + " / " + QString::number( lambdas[ kk] );
-   }
-#endif
+//       for ( int kk = 0; kk < nlambda; kk++ )
+//          triples << celchn + " / " + QString::number( lambdas[ kk] );
+//    }
+// #endif
 #if 1
    ntriple      = xpn_data->data_triples( triples );              // ALEXEY triples
 DbgLv(1) << "RDa: nwl wvlo wvhi" << nlambda << wvlo << wvhi
@@ -2678,8 +2840,18 @@ DbgLv(1) << "RDa: allData size" << allData.size();
    // Ok to enable some buttons now
    enableControls();                                    //ALEXEY ...and actual plotting data
 
-   qDebug() << "CellChNumber, cellchans.count() " << CellChNumber.toInt() << ", " << cellchans.count();
-   qDebug() << "TripleNumber, ntriple " << TripleNumber.toInt() << ", " << ntriple;
+   if ( combinedOptics )
+     {
+       qDebug() << "CellChNumber, cellchans.count() for runType " <<  runType << ": " << CellChNumber_map[ runType ].toInt() << ", " << cellchans.count();
+       qDebug() << "TripleNumber, ntriple for runType " << runType << ": " << TripleNumber_map[ runType ].toInt() << ", " << ntriple;
+     }
+   else
+     {
+       qDebug() << "CellChNumber, cellchans.count() for runType " <<  runType << ": " << CellChNumber.toInt() << ", " << cellchans.count();
+       qDebug() << "TripleNumber, ntriple for runType " << runType << ": " << TripleNumber.toInt() << ", " << ntriple;
+     }
+
+   
    qDebug() << "finishing_live_update " << finishing_live_update;
 
    //ALEXEY: Add Exp. Abortion Exception HERE... 
@@ -2714,28 +2886,55 @@ DbgLv(1) << "RDa: allData size" << allData.size();
 	 }
      }
   
-   
-   
-   if ( cellchans.count() == CellChNumber.toInt() && ntriple == TripleNumber.toInt() )                // <--- Change to the values from the protocol
+
+   //Check if # expected Triples for given optics type satisfied..
+   if ( !combinedOptics )
      {
-       //stop timer
-       timer_all_data_avail->stop();
-       disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
-
-       in_reload_all_data   = false;  
-       
-       // Auto-update hereafter
-       //timer_data_reload = new QTimer;
-
-       if ( !finishing_live_update )
+       if ( cellchans.count() == CellChNumber.toInt() && ntriple == TripleNumber.toInt() )                // <--- Change to the values from the protocol
 	 {
-	   qDebug() << "Switch to update!";
-
-	   //update hereafter
-	   connect(timer_data_reload, SIGNAL(timeout()), this, SLOT( reloadData_auto( ) ));
-	   timer_data_reload->start(10000);     // 5 sec
+	   //stop timer
+	   timer_all_data_avail->stop();
+	   disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+	   
+	   in_reload_all_data   = false;  
+	   
+	   // Auto-update hereafter
+	   //timer_data_reload = new QTimer;
+	   
+	   if ( !finishing_live_update )
+	     {
+	       qDebug() << "Switch to update!";
+	       
+	       //update hereafter
+	       connect(timer_data_reload, SIGNAL(timeout()), this, SLOT( reloadData_auto( ) ));
+	       timer_data_reload->start(10000);     // 10 sec
+	     }
 	 }
      }
+   else
+     {
+       if ( cellchans.count() == CellChNumber_map[ runType ].toInt() && ntriple == TripleNumber_map[ runType ].toInt() )    
+	 {
+	   //stop timer
+	   timer_all_data_avail->stop();
+	   disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+	   
+	   in_reload_all_data   = false;  
+	   
+	   // Auto-update hereafter
+	   //timer_data_reload = new QTimer;
+	   
+	   if ( !finishing_live_update )
+	     {
+	       qDebug() << "Switch to update!";
+	       
+	       //update hereafter
+	       connect(timer_data_reload, SIGNAL(timeout()), this, SLOT( reloadData_auto( ) ));
+	       timer_data_reload->start(10000);     // 10 sec
+	     }
+	 }
+     }
+
 
    in_reload_all_data   = false;  
 }
@@ -3505,10 +3704,45 @@ DbgLv(1) << "chgRec: recx" << recx;
 }
 
 // Slot to handle a change in the optical system
+void US_XpnDataViewer::changeOptics_auto( void )
+{
+  qDebug() << "In changeOptics_auto: ";  
+   //Stop other timers if active
+   if ( timer_all_data_avail->isActive() ) 
+     {
+       timer_all_data_avail->stop();
+       disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);
+
+       qDebug() << "Stopping timer_all_data_avail";
+    }
+
+   if ( timer_data_reload->isActive() )
+     {
+       timer_data_reload->stop();
+       disconnect(timer_data_reload, SIGNAL(timeout()), 0, 0);
+       
+       qDebug() << "Stopping timer_data_reload";
+     }
+
+
+   if ( !inExport )
+     {
+       connect(timer_end_process_all_data_avail, SIGNAL(timeout()), this, SLOT( end_process_all_data_avail ( ) ));
+       timer_end_process_all_data_avail->start(1000);     // 5 sec
+     }
+   else
+     changeOptics();
+}
+
+// Slot to handle a change in the optical system
 void US_XpnDataViewer::changeOptics( void )
 {
    // Determine the new run type
    int optrx      = cb_optsys->currentIndex();
+   optndx_auto    = optrx;
+
+   qDebug() << "Inside changeOptics(),  optndx_auto= " << optndx_auto; 
+   
    QString ostyp  = cb_optsys ->currentText();
    QString rtype( "RI" );
    if ( ostyp == "Interference" )
@@ -3519,6 +3753,9 @@ void US_XpnDataViewer::changeOptics( void )
       rtype          = "WI";
 DbgLv(1) << "chgOpt: optrx" << optrx << "ostyp" << ostyp
  << "rtype" << rtype << "nopts" << cb_optsys->children().count();
+
+ qDebug()  << "chgOpt: optrx" << optrx << "ostyp" << ostyp
+	   << "rtype" << rtype << "runType" << runType << "nopts" << cb_optsys->children().count();
 
   // If simply re-choosing the same optics, bale out now
    if ( rtype == runType )
@@ -3538,7 +3775,10 @@ QDateTime sttime=QDateTime::currentDateTime();
    }
 
    // Set up for a new run type
-   xpn_data->set_run_values( runID, runType );
+   if ( auto_mode_bool ) 
+     xpn_data->set_run_values( runID, rtype );
+   else
+     xpn_data->set_run_values( runID, runType );
 
    // For new optics, rebuild internal arrays and all AUC
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor) );
@@ -3586,6 +3826,13 @@ DbgLv(1) << "chgOpt: allData size" << allData.size();
 
    // Ok to reenable some buttons now
    enableControls();
+
+   //ALEXEY: restart timer to update newly selected Optics
+   if ( auto_mode_bool &&  !timer_all_data_avail->isActive() && !inExport )
+     {
+       connect(timer_all_data_avail, SIGNAL(timeout()), this, SLOT( retrieve_xpn_raw_auto ( ) ));
+       timer_all_data_avail->start(40000);     // 60 sec
+     }
 }
 
 // Slot to handle a click to go to the previous record
@@ -3695,12 +3942,15 @@ void US_XpnDataViewer::connect_ranges( bool conn )
 // export_auc data in us_com_project
 void US_XpnDataViewer::export_auc_auto()
 {
+
+   inExport = true;
    correct_radii();      // Perform chromatic aberration radius corrections
 
    int nfiles     = xpn_data->export_auc( allData );
 //   int noptsy     = cb_optsys->children().count();
    int noptsy     = cb_optsys->count();
 DbgLv(1) << "ExpAucA: noptsy koptsy" << noptsy << cb_optsys->children().count();
+ qDebug() << "ExpAucA: noptsy koptsy" << noptsy << cb_optsys->children().count();
 
    if ( noptsy > 1 )
    {  // Export data from Optical Systems other than currently selected one
@@ -3710,6 +3960,8 @@ DbgLv(1) << "ExpAucA: noptsy koptsy" << noptsy << cb_optsys->children().count();
       {
          if ( osx == currsx )  continue;   // Skip already-handled opt sys
 
+	 qDebug() << "Current index: " << osx;
+	 
          cb_optsys->setCurrentIndex( osx );
          correct_radii();                  // Chromatic aberration correction if needed
          int kfiles     = xpn_data->export_auc( allData ) - 2;  // Export data
