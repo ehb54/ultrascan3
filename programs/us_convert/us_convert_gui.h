@@ -53,6 +53,7 @@ class US_ConvertGui : public US_Widgets
       void saving_complete_auto( QMap < QString, QString > &  );
       //void saving_complete_back_to_exp( QString & );
       void saving_complete_back_to_initAutoflow( void );
+      void data_loaded( void );
       
   public slots:
 

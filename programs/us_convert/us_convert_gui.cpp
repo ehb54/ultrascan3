@@ -538,26 +538,26 @@ DbgLv(1) << "CGui: reset complete";
    // QString protname = QString("JohnsonC_DNA-control_013020");
    // QString invid    = QString("77");
 
-   QString curdir   = QString("/home/alexey/ultrascan/imports/2-itf-abs-test-run1182");
-   QString protname = QString("1-itf-abs-test");
-   QString invid    = QString("6");
+   // QString curdir   = QString("/home/alexey/ultrascan/imports/2-itf-abs-test-run1182");
+   // QString protname = QString("1-itf-abs-test");
+   // QString invid    = QString("6");
 
-   QMap < QString, QString > protocol_details;
-   //protocol_details[ "status" ];
-   protocol_details[ "dataPath" ]       = curdir;
-   protocol_details[ "invID_passed" ]   = invid;
-   protocol_details[ "protocolName" ]   = protname;
-   //protocol_details[ "experimentName" ];
-   protocol_details[ "correctRadii" ]   = QString("YES");
-   protocol_details[ "expAborted" ]     = QString("NO");
-   //protocol_details[ "runID" ]          =  ;
-   protocol_details[ "label" ]          = QString("Some label");
+   // QMap < QString, QString > protocol_details;
+   // //protocol_details[ "status" ];
+   // protocol_details[ "dataPath" ]       = curdir;
+   // protocol_details[ "invID_passed" ]   = invid;
+   // protocol_details[ "protocolName" ]   = protname;
+   // //protocol_details[ "experimentName" ];
+   // protocol_details[ "correctRadii" ]   = QString("YES");
+   // protocol_details[ "expAborted" ]     = QString("NO");
+   // //protocol_details[ "runID" ]          =  ;
+   // protocol_details[ "label" ]          = QString("Some label");
 
    
    // /*********************************************************************************/
 
    
-   import_data_auto( protocol_details ); 
+   //import_data_auto( protocol_details ); 
 
    
    
@@ -1487,6 +1487,8 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
 	  le_description  ->setText( "" );
 	  le_centerpieceDesc -> setText( "");
 	}
+
+      emit data_loaded();
       
       editRuninfo_auto();
 
@@ -1512,6 +1514,8 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
 	  le_description  ->setText( "" );
 	  le_centerpieceDesc -> setText( "");
 	}
+
+      emit data_loaded();
       
       editRuninfo_auto();
 

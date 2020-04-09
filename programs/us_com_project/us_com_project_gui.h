@@ -241,6 +241,7 @@ class US_PostProdGui : public US_WidgetsDialog
     //void to_experiment( QString & protocolName );
     void to_initAutoflow( void );
     void reset_lims_import( void );
+    void resize_main( void );
         
   signals:
     //void to_post_prod( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii  );

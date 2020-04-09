@@ -1907,6 +1907,9 @@ US_PostProdGui::US_PostProdGui( QWidget* topw )
 
    connect( this, SIGNAL( to_post_prod( QMap < QString, QString > & ) ), sdiag, SLOT( import_data_auto ( QMap < QString, QString > & )  ) );
    connect( this, SIGNAL( reset_lims_import_passed( ) ), sdiag, SLOT( reset_limsimport_panel ( )  ) );
+
+   //emit signal after data loaded
+   connect( sdiag, SIGNAL( data_loaded(  ) ), this, SLOT( resize_main ( ) ) );
    
    //ALEXEY: switch to Editing
    connect( sdiag, SIGNAL( saving_complete_auto(  QMap < QString, QString > & ) ), this, SLOT( to_editing (  QMap < QString, QString > &) ) );
@@ -1923,6 +1926,15 @@ US_PostProdGui::US_PostProdGui( QWidget* topw )
 
    sdiag->show();
 
+}
+
+void US_PostProdGui::resize_main( void )
+{
+  // Trigger resize to update size of the Edit_Data
+  int curr_h = mainw->height() + 1;
+  int curr_w = mainw->width() + 1;
+
+  mainw->resize( QSize(curr_w, curr_h) );
 }
 
 void US_PostProdGui::reset_lims_import( void )
