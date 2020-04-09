@@ -154,7 +154,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
             this,        SLOT( update_plxmin( double ) ) );
 
    lb_plxmax     = us_label( tr( "Plot Limit s Max:" ) );
-   ct_plxmax     = us_counter( 3, 0.0, 10000.0, 0.0 );
+   ct_plxmax     = us_counter( 3, -100.0, 10000.0, 0.0 );
    ct_plxmax->setSingleStep( 1 );
    connect( ct_plxmax, SIGNAL( valueChanged( double ) ),
             this,        SLOT( update_plxmax( double ) ) );
@@ -519,7 +519,7 @@ void US_GA_Initialize::reset( void )
 
    plxmin     = 1.0;
    plxmax     = 10.0;
-   ct_plxmin->setRange( -10.0, 10000.0 );
+   ct_plxmin->setRange( -10000.0, 10000.0 );
    ct_plxmin->setSingleStep( 0.01 );
    ct_plxmin->setValue( plxmin );
    ct_plxmin->setEnabled( false );
@@ -891,8 +891,8 @@ void US_GA_Initialize::plot_1dim( void )
 
    if ( dsize == 1 )
    {
-      smin       *= 0.95;
-      smax       *= 1.05;
+      smin       *= ( ( smin < 0 ) ? 1.05 : 0.95 );
+      smax       *= ( ( smin < 0 ) ? 0.95 : 1.05 );
       cmin       *= 0.95;
       cmax       *= 1.05;
    }
@@ -903,7 +903,6 @@ void US_GA_Initialize::plot_1dim( void )
    rdif        = ( cmax - cmin ) / 20.0;
    cmin       -= rdif;
    cmax       += rdif;
-   smin        = ( smin > 0.0 ) ? smin : 0.0;
    cmin        = ( cmin > 0.0 ) ? cmin : 0.0;
 
    QwtPlotGrid* data_grid = us_grid( data_plot );
@@ -978,7 +977,6 @@ void US_GA_Initialize::plot_2dim( void )
    rdif        = ( kmax - kmin ) / 20.0;
    kmin       -= rdif;
    kmax       += rdif;
-   smin        = ( smin > 0.0 ) ? smin : 0.0;
    kmin        = ( kmin > 0.0 ) ? kmin : 0.0;
 
    QwtPlotGrid* data_grid = us_grid( data_plot );
@@ -1655,6 +1653,7 @@ DbgLv(1) << "SL: aut min,inc" << smax << sinc << kmax << kinc;
          kmax       += kinc;
       }
       smin        = qFloor( smin / sinc ) * sinc;
+      smin        = ( smin < 0.0 ) ? ( smin - sinc ) : smin;
       smax        = qFloor( smax / sinc ) * sinc + sinc;
       smin        = ( attr_x != ATTR_S ) ?  qMax( smin, 0.0 ) : smin;
       smin        = ( attr_x == ATTR_K ) ?  qMax( smin, 0.8 ) : smin;
