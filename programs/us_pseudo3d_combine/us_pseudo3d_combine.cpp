@@ -142,7 +142,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    lb_plt_smin   = us_label( tr( "Plot Limit s Minimum:" ) );
    lb_plt_smin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
-   ct_plt_smin   = us_counter( 3, -10.0, 10000.0, 1.0 );
+   ct_plt_smin   = us_counter( 3, -10000.0, 10000.0, 1.0 );
    ct_plt_smin->setSingleStep( 1 );
    connect( ct_plt_smin, SIGNAL( valueChanged( double ) ),
             this,        SLOT( update_plot_smin( double ) ) );
@@ -150,7 +150,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    lb_plt_smax   = us_label( tr( "Plot Limit s Maximum:" ) );
    lb_plt_smax->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
-   ct_plt_smax   = us_counter( 3, 0.0, 10000.0, 10.0 );
+   ct_plt_smax   = us_counter( 3, -100.0, 10000.0, 10.0 );
    ct_plt_smax->setSingleStep( 1 );
    connect( ct_plt_smax, SIGNAL( valueChanged( double ) ),
             this,        SLOT( update_plot_smax( double ) ) );
@@ -443,11 +443,11 @@ void US_Pseudo3D_Combine::reset( void )
 
    plt_smin   = 1.0;
    plt_smax   = 10.0;
-   ct_plt_smin->setRange( -10.0, 10000.0 );
+   ct_plt_smin->setRange( -1000.0, 10000.0 );
    ct_plt_smin->setSingleStep( 0.01 );
    ct_plt_smin->setValue( plt_smin );
    ct_plt_smin->setEnabled( false );
-   ct_plt_smax->setRange(   0.0, 10000.0 );
+   ct_plt_smax->setRange(   -100.0, 10000.0 );
    ct_plt_smax->setSingleStep( 0.01 );
    ct_plt_smax->setValue( plt_smax );
    ct_plt_smax->setEnabled( false );
