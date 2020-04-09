@@ -89,8 +89,8 @@ DROP TABLE IF EXISTS autoflow;
 CREATE  TABLE IF NOT EXISTS autoflow (
   ID int(11) NOT NULL AUTO_INCREMENT ,
   protName varchar(80) NULL,
-  cellChNum int(10) NULL,
-  tripleNum int(10) NULL,
+  cellChNum varchar(80) NULL,
+  tripleNum varchar(80) NULL,
   duration int(10)  NULL,
   runName varchar(300) NULL,
   expID  int(10) NULL,

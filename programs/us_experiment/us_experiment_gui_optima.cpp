@@ -5804,13 +5804,23 @@ void US_ExperGuiUpload::submitExperiment()
 	 
          //ALEXEY: when interference ? (divide by 2!!! )
          if ( ncells_interference && !nwavl_tot )       //Interference ONLY
-            protocol_details[ "CellChNumber" ]   = QString::number( int(ncells_interference/2 ));
-         else if ( !ncells_interference && nwavl_tot )  //Absorbance ONLY
-            protocol_details[ "CellChNumber" ]   = QString::number(rpSolut->nschan); // this can be read from protocol in US-lims DB
+	   {
+	     protocol_details[ "CellChNumber" ]   = QString::number( int(ncells_interference/2 ));
+	     qDebug() << "ITF: CellChNumber: " << protocol_details[ "CellChNumber" ];
+	   }
+	 else if ( !ncells_interference && nwavl_tot )  //Absorbance ONLY
+	   {
+	     protocol_details[ "CellChNumber" ]   = QString::number(rpSolut->nschan); // this can be read from protocol in US-lims DB
+	     qDebug() << "UV: CellChNumber: " << protocol_details[ "CellChNumber" ];
+	   }
 	 else if ( ncells_interference && nwavl_tot )   // BOTH
 	   {
-	     protocol_details[ "CellChNumber" ]   = QString("IP:") + QString::number( int(ncells_interference/2 ) )
-	                                          + QString(",RI:")  + QString::number(rpSolut->nschan);
+	     QString cellnumber =  QString("IP:") + QString::number( int(ncells_interference/2 ) ) + QString(",RI:")  + QString::number(rpSolut->nschan);
+	     protocol_details[ "CellChNumber" ] = cellnumber;
+
+	     qDebug() << "UV & ITF: cellnumber: " << cellnumber;
+	     qDebug() << "UV & ITF: CellChNumber: " << protocol_details[ "CellChNumber" ];
+	                                          
     	   }
 	   
          protocol_details[ "duration" ]       = QString::number(Total_duration);
@@ -5822,10 +5832,10 @@ void US_ExperGuiUpload::submitExperiment()
 
          QString gmpRun_str;
          if ( mainw->usmode )
-         gmpRun_str = "NO";
+	   gmpRun_str = "NO";
          else
-         gmpRun_str = "YES";
-
+	   gmpRun_str = "YES";
+	 
          protocol_details[ "gmpRun" ]         = gmpRun_str;
 
          protocol_details[ "aprofileguid" ]   = currProto->protoGUID;
@@ -5834,16 +5844,26 @@ void US_ExperGuiUpload::submitExperiment()
 
          //ALEXEY: when interference ? (always 1!!)
          if ( ncells_interference && !nwavl_tot  )    // Interference ONLY
-	   protocol_details[ "TripleNumber" ] = QString::number(1 * int(ncells_interference/2 ));
-         else if ( !ncells_interference && nwavl_tot ) //Absorbance ONLY
-	   protocol_details[ "TripleNumber" ] = QString::number(nwavl_tot);
+	   {
+	     protocol_details[ "TripleNumber" ] = QString::number(1 * int(ncells_interference/2 ));
+	     qDebug() << "ITF: TripleNumber: " << protocol_details[ "TripleNumber" ];
+	   }
+	 else if ( !ncells_interference && nwavl_tot ) //Absorbance ONLY
+	   {
+	     protocol_details[ "TripleNumber" ] = QString::number(nwavl_tot);
+	     qDebug() << "UV: TripleNumber: " << protocol_details[ "TripleNumber" ];	     
+	   }
 	 else if ( ncells_interference && nwavl_tot )  // BOTH
 	   {
 	     //int triples_num = int(ncells_interference/2 ) + nwavl_tot;
 	     //protocol_details[ "TripleNumber" ] = QString::number(triples_num);
-
-	     protocol_details[ "TripleNumber" ] =  QString("IP:") + QString::number(1 * int(ncells_interference/2 )) 
-	                                         + QString(",RI:")  + QString::number(nwavl_tot);   
+	     
+	     QString triplenumber = QString("IP:") + QString::number(1 * int(ncells_interference/2 )) + QString(",RI:")  + QString::number(nwavl_tot);    
+	     protocol_details[ "TripleNumber" ] = triplenumber;
+	     
+	     qDebug() << "UV + ITF: triplenumber: " << triplenumber;
+	     qDebug() << "UV + ITF: TripleNumber: " << protocol_details[ "TripleNumber" ];
+	                                         
 	   }
 
          protocol_details[ "OptimaName" ]   = rpRotor->instrname;
