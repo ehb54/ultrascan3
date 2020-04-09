@@ -2915,22 +2915,30 @@ DbgLv(1) << "RDa: allData size" << allData.size();
      {
        if ( cellchans.count() == CellChNumber_map[ runType ].toInt() && ntriple == TripleNumber_map[ runType ].toInt() )    
 	 {
-	   //stop timer
-	   timer_all_data_avail->stop();
-	   disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
-	   
-	   in_reload_all_data   = false;  
-	   
-	   // Auto-update hereafter
-	   //timer_data_reload = new QTimer;
-	   
-	   if ( !finishing_live_update )
+
+	   //ALEXEY: here - either check that
+	   // 1. xpn_data->countOf( "ascn_rows" ) != 0 && xpn_data->countOf( "iscn_rows" ) != 0 OR opsys_auto.count() > 1
+	   // 2. all triples for ALL optics systems are populated
+	   if ( opsys_auto.count() > 1 )
 	     {
-	       qDebug() << "Switch to update!";
+	       	       
+	       //stop timer
+	       timer_all_data_avail->stop();
+	       disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
 	       
-	       //update hereafter
-	       connect(timer_data_reload, SIGNAL(timeout()), this, SLOT( reloadData_auto( ) ));
-	       timer_data_reload->start(10000);     // 10 sec
+	       in_reload_all_data   = false;  
+	       
+	       // Auto-update hereafter
+	       //timer_data_reload = new QTimer;
+	       
+	       if ( !finishing_live_update )
+		 {
+		   qDebug() << "Switch to update!";
+		   
+		   //update hereafter
+		   connect(timer_data_reload, SIGNAL(timeout()), this, SLOT( reloadData_auto( ) ));
+		   timer_data_reload->start(10000);     // 10 sec
+		 }
 	     }
 	 }
      }
