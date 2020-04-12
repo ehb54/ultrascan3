@@ -2650,8 +2650,8 @@ QVector<double> US_Edit::find_airGap_interference_auto()
   airGap_vals.push_back(airGap_right_av);
 
   //TEMP
-  //airGap_vals.push_back(5.89);
-  //airGap_vals.push_back(5.92);
+  // airGap_vals.push_back(5.9);
+  // airGap_vals.push_back(5.95);
 
   
   qDebug() << "INTERFERENCE: airGaps: " << airGap_left_av << " -- " << airGap_right_av;

@@ -54,6 +54,8 @@ class US_ConvertGui : public US_Widgets
       //void saving_complete_back_to_exp( QString & );
       void saving_complete_back_to_initAutoflow( void );
       void data_loaded( void );
+
+      void process_next_optics( void );
       
   public slots:
 
@@ -140,6 +142,11 @@ class US_ConvertGui : public US_Widgets
       US_Plot*       usplot;
 
       bool          runType_combined_IP_RI;
+      QMap < QString, int > runTypes_map;
+      QString       type_to_process;
+      QStringList   runTypeList;
+      
+      
       QString       runType;
       QString       oldRunType;
       QString       runID;
@@ -326,6 +333,8 @@ class US_ConvertGui : public US_Widgets
       void import_data_auto  ( QMap < QString, QString > & ) ;
       QMap < QString, QString > read_autoflow_record( int );
       bool isSaved_auto( void );
+
+      void process_optics( void );  
       
       
       void import            ( void );

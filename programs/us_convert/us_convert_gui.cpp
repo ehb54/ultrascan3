@@ -72,7 +72,8 @@ US_ConvertGui::US_ConvertGui( QString auto_mode ) : US_Widgets()
    dbg_level    = US_Settings::us_debug();
 DbgLv(0) << "CGui: dbg_level" << dbg_level;
 
-   us_convert_auto_mode = true;
+   us_convert_auto_mode   = true;
+   runType_combined_IP_RI = false;
  
    QGridLayout* settings = new QGridLayout;
 
@@ -426,6 +427,8 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    connect( pb_close,       SIGNAL( clicked()  ),
                             SLOT(   close() )  );
 
+   connect ( this, SIGNAL( process_next_optics () ), SLOT ( process_optics () )  );
+
 
    // Hide scan Control
    if ( auto_mode.toStdString() == "AUTO")
@@ -542,6 +545,10 @@ DbgLv(1) << "CGui: reset complete";
    // QString protname = QString("1-itf-abs-test");
    // QString invid    = QString("6");
 
+   // QString curdir   = QString("/home/alexey/ultrascan/imports/0bo-abs-itf-try2-run1195");
+   // QString protname = QString("alexey-1h-3itf-6abs-uv-7wvl-bd1");
+   // QString invid    = QString("6");
+   
    // QMap < QString, QString > protocol_details;
    // //protocol_details[ "status" ];
    // protocol_details[ "dataPath" ]       = curdir;
@@ -554,10 +561,10 @@ DbgLv(1) << "CGui: reset complete";
    // protocol_details[ "label" ]          = QString("Some label");
 
    
-   // /*********************************************************************************/
+   // // // /*********************************************************************************/
 
    
-   //import_data_auto( protocol_details ); 
+   // import_data_auto( protocol_details ); 
 
    
    
@@ -632,8 +639,9 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    dbg_level    = US_Settings::us_debug();
 DbgLv(0) << "CGui: dbg_level" << dbg_level;
 
-   us_convert_auto_mode = false;
- 
+   us_convert_auto_mode   = false;
+   runType_combined_IP_RI = false;
+   
    QGridLayout* settings = new QGridLayout;
 
    int  row     = 0;
@@ -1338,7 +1346,11 @@ void US_ConvertGui::us_mode_passed( void )
 //void US_ConvertGui::import_data_auto( QString &currDir, QString &protocolName, QString &invID_passed, QString &correctRadii )
 void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_live_update )
 {
-  dataSavedOtherwise = false;
+  dataSavedOtherwise     = false;
+  runType_combined_IP_RI = false;
+
+  runTypes_map.clear();
+  runTypeList.clear();
   
   // ALEXEY TO BE ADDED...
   /* 
@@ -1382,7 +1394,26 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
  
   
   impType     = getImports_auto( details_at_live_update[ "dataPath" ] );
+  
+  //Check if combined RI+IP run
+  QString CellChNumber_str = details_at_live_update[ "CellChNumber" ];         
+  //QString TripleNumber_str = details_at_live_update[ "TripleNumber" ];
 
+  if ( CellChNumber_str.contains("IP") && CellChNumber_str.contains("RI") ) 
+    {
+      runTypes_map.insert("IP", 1);
+      runTypes_map.insert("RI", 1);
+      
+      runType_combined_IP_RI = true;
+    }
+  qDebug() << "runType_combined_IP_RI: " << runType_combined_IP_RI;
+
+  // //************************ TEMP - Reverse after test ************************************** //
+  // runTypes_map.insert("IP", 1);
+  // runTypes_map.insert("RI", 1);
+  // runType_combined_IP_RI = true;
+  // //************************ TEMP - Reverse after test ************************************** //
+  
 
   /* -------------------------------------------------------------------------------------------------------------------*/
   //ALEXEY: Case when Run was manually aborted from Optima panel:
@@ -1504,30 +1535,30 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
    else if ( impType == 2 )
    {
      qDebug() << "IMPORT AUC auto...";
-      importAUC();
-
-      //ALEXEY: For autoflow: Reset to-do list && maybe solutions, triple desc.
-      if ( us_convert_auto_mode ) 
-	{
-	  lw_todoinfo->clear();
-	  le_solutionDesc ->setText( "" );
-	  le_description  ->setText( "" );
-	  le_centerpieceDesc -> setText( "");
-	}
-
-      emit data_loaded();
-      
-      editRuninfo_auto();
-
-      if( dataSavedOtherwise )
-	return;
-      
-      readProtocol_auto();
-      getLabInstrumentOperatorInfo_auto();
-
-      return;
+     importAUC();
+     
+     //ALEXEY: For autoflow: Reset to-do list && maybe solutions, triple desc.
+     if ( us_convert_auto_mode ) 
+       {
+	 lw_todoinfo->clear();
+	 le_solutionDesc ->setText( "" );
+	 le_description  ->setText( "" );
+	 le_centerpieceDesc -> setText( "");
+       }
+     
+     emit data_loaded();
+	 
+     editRuninfo_auto();
+     
+     if( dataSavedOtherwise )
+       return;
+     
+     readProtocol_auto();
+     getLabInstrumentOperatorInfo_auto();
+     
+     return;
    }
-
+  
 DbgLv(1) << "CGui:IMP: IN";
    bool success = false;
    le_status->setText( tr( "Importing experimental data ..." ) );
@@ -1587,6 +1618,38 @@ DbgLv(1) << "CGui: (2)referDef=" << referenceDefined;
 DbgLv(1) << "CGui: import: RTN";
    le_status->setText( tr( "Legacy data has been imported." ) );
 }
+
+//Slot to process next optics type
+void US_ConvertGui::process_optics()
+{
+  if ( impType == 2 )
+   {
+     qDebug() << "IMPORT AUC auto...";
+     importAUC();
+     
+     //ALEXEY: For autoflow: Reset to-do list && maybe solutions, triple desc.
+     if ( us_convert_auto_mode ) 
+       {
+	 lw_todoinfo->clear();
+	 le_solutionDesc ->setText( "" );
+	 le_description  ->setText( "" );
+	 le_centerpieceDesc -> setText( "");
+       }
+     
+     emit data_loaded();
+	 
+     editRuninfo_auto();
+     
+     if( dataSavedOtherwise )
+       return;
+     
+     readProtocol_auto();
+     getLabInstrumentOperatorInfo_auto();
+     
+     return;
+   }
+} 
+
 
 // User pressed the import data button
 void US_ConvertGui::import()
@@ -1868,10 +1931,38 @@ DbgLv(1) << "CGui:iA: CURRENT DIR_1: " << importDir;
    allData     .clear();
    all_tripinfo.clear();
 
+   // *** Determine 1st runType to process *************//
+   if ( runType_combined_IP_RI )
+     {
+       QMap<QString, int>::iterator jj;
+       for ( jj = runTypes_map.begin(); jj != runTypes_map.end(); ++jj )
+	 {
+	   if ( jj.value() )
+	     {
+	       type_to_process = jj.key();
+	       break;
+	     }
+	 }
+     }
+   //*****************************************************//
+   
+   
    for ( int trx = 0; trx < files.size(); trx++ )
    {
       QString fname  = files[ trx ];
       QString fpath  = importDir + fname;
+
+      //*** ALEXEY: in case of combined runs, start with the 1st OS (ITF) ****//
+      if ( runType_combined_IP_RI )
+	{
+	  QString typerun  = QString( fname ).section( ".", -5, -5 );
+		  
+	  if ( typerun != type_to_process )
+	    continue;
+	}
+
+      //********************************************************************//
+      
       US_DataIO::RawData     rdata;
       US_Convert::TripleInfo tripinfo;
 
@@ -1896,8 +1987,26 @@ DbgLv(1) << "CGui:iA:  trx" << trx << "uuid" << uuidst << importDir;
       tripinfo.channelID   = trx + 1;
       tripinfo.excluded    = false;
 
+      // if ( us_convert_auto_mode )
+      // 	{
+      // 	  if ( runType_combined_IP_RI )
+      // 	    {
+      // 	      all_tripinfo << tripinfo;
+      // 	    }
+      // 	  else
+      // 	    all_tripinfo << tripinfo;
+      // 	}
+      // else
+      // 	all_tripinfo << tripinfo;
+
       all_tripinfo << tripinfo;
    }
+
+   // *** set key/value in the type_map for processed type to 0 && reset type_to_process ****//
+   if ( runType_combined_IP_RI )
+     runTypes_map[ type_to_process ] = 0;
+
+   
    qApp->processEvents();
    QApplication::restoreOverrideCursor();
 
@@ -1905,114 +2014,24 @@ DbgLv(1) << "CGui:iA:  trx" << trx << "uuid" << uuidst << importDir;
    runType       = QString( fname ).section( ".", -5, -5 );
    runID         = QString( fname ).section( ".",  0, -6 );
 
-   //ALEXEY
-   // Interate over file names to see if there is a combined case: IP+RI
-   runType_combined_IP_RI = false;
-   QStringList types;
-   for ( int i=0; i < files.count(); ++i )
+   if ( runType_combined_IP_RI )
      {
-       QString type = QString( files[i] ).section( ".", -5, -5 );
-       types << type;
+       runID += QString("-") + QString( type_to_process );
+
+       runTypeList << runID;
      }
-   types.removeDuplicates();
-
-   if ( types.count() > 1 )
-     if ( types.contains("IP") &&  types.contains("RI") )
-       runType_combined_IP_RI = true;
-
-   qDebug() << "runType_combined_IP_RI: " << runType_combined_IP_RI;
-   /**************************************************************************/
-
    
    // //TEMP
    //runID += QString("-test");
 
 DbgLv(1) << "CGui:iA:  RUNID from files[0]: files[0]" << fname << ", runID: " << runID;
 
-  
-     
+       
    le_runID2->setText( runID );
    le_runID ->setText( runID );
    scanTolerance = 5.0;
 
-   // //ALEXEY: Remove Duplicates in Channel's description: Simpler solution
-   //  for (int i = 0; i < allData.size(); i++)
-   //    {
-   // 	qDebug() << "Description BEFORE: " << i << ", " << allData[ i ].description;
-	
-   // 	QString desc   = allData[ i ].description;
-   // 	desc.replace(",", "");
-   // 	desc.replace(";", "");
-
-   // 	QStringList desc_list = desc.split(QRegExp("\\s+"));
-   // 	desc_list.removeDuplicates();
-	
-   // 	QString final_desc("");
-   // 	for ( int i=0; i<desc_list.size(); i++ )
-   // 	  {
-   // 	    if ( desc_list[i].isEmpty() )
-   // 	      continue;
-   // 	    final_desc +=  desc_list[i];
-
-   // 	    if ( i != desc_list.size() - 1)
-   // 	      final_desc += QString(" ");
-   // 	  }
-
-   // 	allData[ i ].description = final_desc;
-   // 	qDebug() << "Description AFTER:  " << i << ", " << allData[ i ].description;
-   //    }
      
-
-    
-     // //ALEXEY: Remove Duplicates in Channel's description
-     // for (int i = 0; i < allData.size(); i++)
-     //   {
-     //     qDebug() << "Description BEFORE: " << i << ", " << allData[ i ].description;
-
-     //     QString desc   = allData[ i ].description;
-     //     desc.replace(",", "");
-     //     QString desc_a = desc.split(QRegExp(";"))[0];
-     //     QString desc_b = desc.split(QRegExp(";"))[1];
-
-     //     //list of channel A desc
-     //     QStringList desc_list_a = desc_a.split(QRegExp("\\s+"));
-     //     desc_list_a.removeDuplicates();
-
-     //     //list of channel B desc
-     //     QStringList desc_list_b = desc_b.split(QRegExp("\\s+"));
-     //     desc_list_b.removeDuplicates();
-
-     //     QString final_desc("");
-    
-     //     for ( int i=0; i<desc_list_a.size(); i++ )
-     // 	 {
-     // 	   if ( desc_list_a[i].isEmpty() )
-     // 	     continue;
-     // 	   final_desc +=  desc_list_a[i];
-
-     // 	   if ( i != desc_list_a.size() - 1)
-     // 	     final_desc += QString(" ");
-     // 	   else
-     // 	     final_desc += QString("; ");
-
-     // 	 }
-     //     for ( int i=0; i<desc_list_b.size(); i++ )
-     // 	 {
-     // 	   if ( desc_list_b[i].isEmpty() )
-     // 	     continue;
-     // 	   final_desc +=  desc_list_b[i];
-
-     // 	   if ( i != desc_list_b.size() - 1)
-     // 	     final_desc += QString(" ");
-     // 	   // else
-     // 	   //   final_desc += QString("; ");
-    	   
-     // 	 }
-    
-     //     allData[ i ].description = final_desc;
-     //     qDebug() << "Description AFTER:  " << i << ", " << allData[ i ].description;
-     //   }
-       
    if ( ! init_output_data() )
       return;
 
@@ -2104,8 +2123,12 @@ DbgLv(1) << "CGui: enabCtl: have-data" << allData.size() << all_tripinfo.size();
       pb_dropChan    ->setEnabled( drops && isMwl );
 
       if ( runType == "RI" )
-         pb_reference->setEnabled( ! referenceDefined );
+	pb_reference->setEnabled( ! referenceDefined );
 
+      if ( us_convert_auto_mode && type_to_process == "RI" )
+	pb_reference->setEnabled( ! referenceDefined );
+	
+      
       if ( subsets.size() < 1 )
       {
          // Allow user to define subsets, if he hasn't already
@@ -3680,7 +3703,8 @@ DbgLv(1) << "CGui: gExpInf: IN";
       // Check if the run ID already exists in the DB
       //int recStatus = ExpData.checkRunID( &db );
       int recStatus = ExpData.checkRunID_auto( ExpData.invID, &db );
-      
+
+      qDebug() << "IN getExpInfo_auto( void ) !";
       // if saveStatus == BOTH, then we are editing the record from the database
       if ( ( recStatus == US_DB2::OK ) && ( saveStatus != BOTH ) )
       {
@@ -5370,21 +5394,43 @@ DbgLv(1) << "Writing to disk";
       } // End of 'spx' for loop (counts for each speed step)
    } // End of 'else' loop for multispeed case
 
-// x  x  x  x  x
+
+   bool all_processed = true;
+   // *** CHECK if all Optics types processed **** //
+   QMap<QString, int>::iterator os;
+   for ( os = runTypes_map.begin(); os != runTypes_map.end(); ++os )
+     {
+       if ( os.value() )
+	 {
+	   all_processed = false;
+	   break;
+	 }
+     }
+   
+// x  x  x  x  x x  x  x  x  x x  x  x  x  x x  x  x  x  x x  x  x  x  x x  x  x  x  x 
    if ( us_convert_auto_mode )   // if us_comproject OR us_comproject_academic
      {
        if ( usmode )             // us_comproject_academic / DA
 	 {
-	   QMessageBox::information( this,
+	   
+	   if ( !all_processed )
+	     {
+	       emit process_next_optics( );
+	       return;
+	     }
+	   else
+	     {
+	       QMessageBox::information( this,
 				     tr( "Save is Complete" ),
 				     tr( "The save of all data and reports is complete." ) );
-	   
-	   //ALEXY: need to delete autoflow record here
-	   delete_autoflow_record();
-	   resetAll_auto();
-	   //emit saving_complete_back_to_exp( ProtocolName_auto );
-	   emit saving_complete_back_to_initAutoflow( );
-	   return;
+	       
+	       //ALEXY: need to delete autoflow record here
+	       delete_autoflow_record();
+	       resetAll_auto();
+	       //emit saving_complete_back_to_exp( ProtocolName_auto );
+	       emit saving_complete_back_to_initAutoflow( );
+	       return;
+	     }
 	 }
        else                             // us_comproject
 	 {
@@ -5394,33 +5440,54 @@ DbgLv(1) << "Writing to disk";
 	       qDebug() << " Saving COMPLETE: NO GMP RUN !!!";
 	       qDebug() << "RunID: " << runID;
 
-	       QMessageBox::information( this,
-					 tr( "Save is Complete" ),
-					 tr( "The save of all data and reports is complete." ) );
-	       
-	       //ALEXY: need to delete autoflow record here
-	       delete_autoflow_record();
-	       resetAll_auto();
-	       //emit saving_complete_back_to_exp( ProtocolName_auto );
-	       emit saving_complete_back_to_initAutoflow();
-	       return;
+	      
+	       if ( !all_processed )
+		 {
+		   emit process_next_optics( );
+		   return;
+		 }
+	       else
+		 {
+		   QMessageBox::information( this,
+					     tr( "Save is Complete" ),
+					     tr( "The save of all data and reports is complete." ) );
+
+		   //ALEXY: need to delete autoflow record here
+		   delete_autoflow_record();
+		   resetAll_auto();
+		   //emit saving_complete_back_to_exp( ProtocolName_auto );
+		   emit saving_complete_back_to_initAutoflow();
+		   return;
+		 }
 	     }
 	   else                   // us_comproject BUT the run IS GMP, so procced                    
 	     {
 	       if ( !dataSavedOtherwise )
 		 {
-		   update_autoflow_record_atLimsImport();
+
+		   qDebug() << "SAVING: Optics Type, all_processed:  " << type_to_process << all_processed; 
 		   
-		   QMessageBox::information( this,
-					     tr( "Save is Complete" ),
-					     tr( "The save of all data and reports is complete.\n\n"
-						 "The program will switch to Editing stage." ) );
-		   
-		   // Either emit ONLY if not US_MODE, or do NOT connect with slot on us_comproject...
-		   //update_autoflow_record_atLimsImport();
-		   
-		   resetAll_auto();
-		   emit saving_complete_auto( details_at_editing  );   
+		   if ( !all_processed )
+		     {
+		       emit process_next_optics( );
+		       return;
+		     }
+		   else
+		     {
+		       
+		       update_autoflow_record_atLimsImport();
+		       
+		       QMessageBox::information( this,
+						 tr( "Save is Complete" ),
+						 tr( "The save of all data and reports is complete.\n\n"
+						     "The program will switch to Editing stage." ) );
+		       
+		       // Either emit ONLY if not US_MODE, or do NOT connect with slot on us_comproject...
+		       //update_autoflow_record_atLimsImport();
+		       
+		       resetAll_auto();
+		       emit saving_complete_auto( details_at_editing  );   
+		     }
 		 }
 	     }
 	 }
@@ -5436,7 +5503,15 @@ DbgLv(1) << "Writing to disk";
 //Update autoflow record upon Editing compleation
 void US_ConvertGui::update_autoflow_record_atLimsImport( void )
 {
-   details_at_editing[ "filename" ] = runID;
+  QString filename_toDB;
+  //If runType_combined - create a list of runIDs and pass to autoflow...
+  if ( runType_combined_IP_RI )
+    filename_toDB = runTypeList.join(",");
+  else
+    filename_toDB = runID;
+    
+  
+   details_at_editing[ "filename" ] = filename_toDB;
   
    // Check DB connection
    US_Passwd pw;
@@ -5453,7 +5528,7 @@ void US_ConvertGui::update_autoflow_record_atLimsImport( void )
    QStringList qry;
    qry << "update_autoflow_at_lims_import"
        << runID_numeric
-       << runID;
+       << filename_toDB;
 
    //db->query( qry );
 
