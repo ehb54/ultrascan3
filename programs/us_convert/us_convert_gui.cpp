@@ -548,6 +548,11 @@ DbgLv(1) << "CGui: reset complete";
    // QString curdir   = QString("/home/alexey/ultrascan/imports/0bo-abs-itf-try2-run1195");
    // QString protname = QString("alexey-1h-3itf-6abs-uv-7wvl-bd1");
    // QString invid    = QString("6");
+
+   // QString curdir   = QString("/home/alexey/ultrascan/imports/2-itf-abs-test-run1182");
+   // QString protname = QString("1-itf-abs-test");
+   // QString invid    = QString("6");
+   
    
    // QMap < QString, QString > protocol_details;
    // //protocol_details[ "status" ];
@@ -561,12 +566,10 @@ DbgLv(1) << "CGui: reset complete";
    // protocol_details[ "label" ]          = QString("Some label");
 
    
-   // // // /*********************************************************************************/
+   // // // // /*********************************************************************************/
 
    
    // import_data_auto( protocol_details ); 
-
-   
    
 
    // qDebug() << "ExpData: ";
@@ -2478,7 +2481,7 @@ DbgLv(1) << " enabCtl: tLx infsz" << tripListx << out_chaninfo.count();
    }
 
    // This can go on the todo list, but should not prevent user from saving
-   if ( ( runType == "RI" ) && ( ! referenceDefined ) )
+   if ( ( runType == "RI" || type_to_process == "RI" ) && ( ! referenceDefined ) )
    {
       count++;
       lw_todoinfo->addItem( QString::number( count ) +
@@ -5210,6 +5213,7 @@ void US_ConvertGui::saveUS3( void )
   //display dialoge suggesting to re-attach, and return user to Manage Optima Runs
   dataSavedOtherwise = false;
 
+  
   if ( us_convert_auto_mode )
     {
       QMap < QString, QString > autoflow_details;
@@ -5234,7 +5238,7 @@ void US_ConvertGui::saveUS3( void )
 	  return;
 	}
     }
-
+  
   // qDebug() << "ExpData: ";
 
   qDebug() << "ExpData.invID " << ExpData.invID;             
