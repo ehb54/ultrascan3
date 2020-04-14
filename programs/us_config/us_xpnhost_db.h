@@ -38,7 +38,9 @@ class US_XpnHostDB : public US_Widgets
       QString   os3;
 
       QString   radcalwvl;
-      QString   chromoab; 
+      QString   chromoab;
+
+      int       msgPort;
       
       //Instrument();
       
@@ -63,6 +65,7 @@ class US_XpnHostDB : public US_Widgets
 
     QLabel* host;
     QLabel* port;
+    QLabel* msgPort;
     QLabel* name;
     QLabel* user;
     QLabel* pasw;
@@ -74,7 +77,8 @@ class US_XpnHostDB : public US_Widgets
     QLineEdit*   le_serial;
     QLineEdit*   le_dbname; 
     QLineEdit*   le_host;  
-    QLineEdit*   le_port;  
+    QLineEdit*   le_port;
+    QLineEdit*   le_msgPort;
     QLineEdit*   le_name;  
     QLineEdit*   le_user;  
     QLineEdit*   le_pasw;

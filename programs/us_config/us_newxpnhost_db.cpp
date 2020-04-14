@@ -14,6 +14,7 @@
 #define def_desc QString("place-holder")
 #define def_host QString("192.168.1.1")
 #define def_port QString("")
+#define def_msgPort QString("")
 #define def_name QString("AUC_DATA_DB")
 #define def_user QString("")
 #define def_pasw QString("")
@@ -97,6 +98,12 @@ US_NewXpnHostDB::US_NewXpnHostDB() : US_Widgets()
    le_port             = us_lineedit( def_port, 0 );
    details->addWidget( port,           row,   0, 1, 2 );
    details->addWidget( le_port,        row++, 2, 1, 2 );
+
+   // Row 3a
+   msgPort        = us_label( tr( "Instrument Status Msg Port:" ) );
+   le_msgPort        = us_lineedit( def_msgPort, 0 );
+   details->addWidget( msgPort,           row,   0, 1, 2 );
+   details->addWidget( le_msgPort,        row++, 2, 1, 2 );
 
    // Row 4
    name        = us_label( tr( "Instrument DB Name:" ) );
@@ -256,6 +263,12 @@ US_NewXpnHostDB::US_NewXpnHostDB( QMap <QString,QString> currentInstrument ) : U
    le_port             = us_lineedit( def_port, 0 );
    details->addWidget( port,           row,   0, 1, 2 );
    details->addWidget( le_port,        row++, 2, 1, 2 );
+
+   // Row 3a
+   msgPort        = us_label( tr( "Instrument Status Msg Port:" ) );
+   le_msgPort        = us_lineedit( def_msgPort, 0 );
+   details->addWidget( msgPort,           row,   0, 1, 2 );
+   details->addWidget( le_msgPort,        row++, 2, 1, 2 );
 
    // Row 4
    name        = us_label( tr( "Instrument DB Name:" ) );
@@ -421,6 +434,10 @@ void US_NewXpnHostDB::changeType( int ndx )
        le_host->setVisible( false );
        port   ->setVisible( false );
        le_port->setVisible( false );
+
+       msgPort->setVisible( false );
+       le_msgPort->setVisible( false );
+       
        name->setVisible( false );
        le_name->setVisible( false );
        user   ->setVisible( false );
@@ -446,6 +463,10 @@ void US_NewXpnHostDB::changeType( int ndx )
        le_host->setVisible( true );
        port   ->setVisible( true );
        le_port->setVisible( true );
+       
+       msgPort   ->setVisible( true );
+       le_msgPort->setVisible( true );
+       
        name->setVisible( true );
        le_name->setVisible( true );
        user   ->setVisible( true );
@@ -616,6 +637,9 @@ void US_NewXpnHostDB::fillGui( void )
   if ( !instrumentedit["port"].isEmpty()  )
     le_port->setText( instrumentedit["port"] );
 
+  if ( !instrumentedit["msgPort"].isEmpty()  )
+    le_msgPort->setText( instrumentedit["msgPort"] );
+
   if ( !instrumentedit["dbusername"].isEmpty()  )
     le_user->setText( instrumentedit["dbusername"] );
 
@@ -647,6 +671,10 @@ void US_NewXpnHostDB::fillGui( void )
       le_host->setVisible( false );
       port   ->setVisible( false );
       le_port->setVisible( false );
+
+      msgPort   ->setVisible( false );
+      le_msgPort->setVisible( false );
+      
       name->setVisible( false );
       le_name->setVisible( false );
       user   ->setVisible( false );
@@ -681,6 +709,7 @@ void US_NewXpnHostDB::save_new( void )
     {
       if ( le_name->text().isEmpty() || le_description->text().isEmpty()
 	   || le_host->text().isEmpty() || le_port->text().isEmpty()
+	   || le_msgPort->text().isEmpty()
 	   || le_user->text().isEmpty() || le_pasw->text().isEmpty()
 	   || le_serialNumber->text().isEmpty() ) //|| le_chromofile->text().isEmpty() )
 	{
@@ -700,6 +729,8 @@ void US_NewXpnHostDB::save_new( void )
     }
   
 
+  qDebug() << "Optima Msg Port : " <<  le_msgPort->text();
+  
   //RegEx for Optima name:
   QRegExp rx_desc("^(Optima)\\s[1-9]\\d*$");  // e.g. 'Optima 9'
   
@@ -821,6 +852,8 @@ void US_NewXpnHostDB::save_new( void )
   newInstrument[ "os1" ] = cb_os1->currentText();
   newInstrument[ "os2" ] = cb_os2->currentText();
   newInstrument[ "os3" ] = cb_os3->currentText();
+
+  newInstrument[ "msgPort" ] = le_msgPort->text();
   
   emit accepted( newInstrument );
 

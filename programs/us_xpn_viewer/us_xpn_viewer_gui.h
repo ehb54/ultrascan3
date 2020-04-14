@@ -205,6 +205,9 @@ class US_XpnDataViewer : public US_Widgets
      QString        ptype_tr;
      QString        xpnhost;
      QString        xpnport;
+
+     QString        xpnmsgPort;
+     
      QString        xpndesc;
      QString        xpnname;
      QString        xpnuser;

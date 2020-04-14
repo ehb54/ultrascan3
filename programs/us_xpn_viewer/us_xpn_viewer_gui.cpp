@@ -1341,6 +1341,7 @@ void US_XpnDataViewer::read_optima_machines( US_DB2* db )
 	  instrument[ "radcalwvl" ]  =  db->value( 14 ).toString();
 	  instrument[ "chromoab" ]   =  db->value( 15 ).toString();
 
+	  instrument[ "msgPort" ]    =  db->value( 16 ).toString();
 	  
 	  if ( instrument[ "name" ].contains("Optima") || instrument[ "optimaHost" ].contains("AUC_DATA_DB") )
 	    this->instruments << instrument;
@@ -1435,6 +1436,8 @@ void US_XpnDataViewer::selectOptimaByName_auto( QString OptimaName )
   xpnname     = currentInstrument[ "optimaDBname" ];
   xpnuser     = currentInstrument[ "optimaDBusername" ];
   xpnpasw     = currentInstrument[ "optimaDBpassw" ];
+
+  xpnmsgPort  = currentInstrument[ "msgPort" ];
 }
 
 
@@ -2203,7 +2206,8 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
 
   details_at_live_update = protocol_details;
 
-  selectOptimaByName_auto( OptimaName );                         //New  
+  selectOptimaByName_auto( OptimaName );                         //New
+  //Also gives System Msg port: "xmpmsgPort" !!!
 
   //ALEXEY: just define all QTimers here for later safe stopping
   timer_all_data_avail = new QTimer;

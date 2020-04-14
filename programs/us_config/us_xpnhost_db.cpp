@@ -97,6 +97,13 @@ US_XpnHostDB::US_XpnHostDB( QWidget* w, Qt::WindowFlags flags )
    details->addWidget( port,           row,   0, 1, 2 );
    details->addWidget( le_port,        row++, 2, 1, 2 );
 
+   // Row 3a
+   msgPort        = us_label( tr( "Instrument Status Msg Port:" ) );
+   //le_port             = us_lineedit( def_port, 0, true );
+   le_msgPort             = us_lineedit( "", 0, true );
+   details->addWidget( msgPort,           row,   0, 1, 2 );
+   details->addWidget( le_msgPort,        row++, 2, 1, 2 );
+
    // Row 4
    name        = us_label( tr( "Instrument DB Name:" ) );
    //le_name             = us_lineedit( def_name, 0, true );
@@ -343,8 +350,11 @@ void US_XpnHostDB::readInstruments( US_DB2* db )
 	  instrument.radcalwvl        = db->value( 14 ).toString();
 	  instrument.chromoab         = db->value( 15 ).toString();
 
+	  instrument.msgPort          = db->value( 16 ).toString().toInt();
+
 	  qDebug() << "Ist.ID:  " << instrument.ID;
 	  qDebug() << "Ist.name: " << instrument.name;
+	  qDebug() << "msgPort: " << instrument.msgPort;
 	  
 	  // if ( instrument.name.contains("Optima") || instrument.optimaHost.contains("AUC_DATA_DB") )
 	    this->instruments << instrument;
@@ -430,6 +440,8 @@ void US_XpnHostDB::optima_selected( )
 	 le_os2        ->setText( instruments[ii].os2 );
 	 le_os3        ->setText( instruments[ii].os3 );
 
+	 le_msgPort    ->setText( QString::number( instruments[ii].msgPort ) );
+
 	 if ( instruments[ii].radcalwvl.isEmpty() || instruments[ii].chromoab.isEmpty() )
 	   le_radcalwvl  ->setText( "N/A" );
 	 else
@@ -450,6 +462,10 @@ void US_XpnHostDB::optima_selected( )
       le_host       ->setVisible( false );
       port	    ->setVisible( false );
       le_port       ->setVisible( false );
+
+      msgPort	    ->setVisible( false );
+      le_msgPort    ->setVisible( false );
+      
       name	    ->setVisible( false );
       le_name       ->setVisible( false );
       user	    ->setVisible( false );
@@ -472,6 +488,10 @@ void US_XpnHostDB::optima_selected( )
       le_host       ->setVisible( true );
       port	    ->setVisible( true );
       le_port       ->setVisible( true );
+
+      msgPort	    ->setVisible( true );
+      le_msgPort    ->setVisible( true );
+      
       name	    ->setVisible( true );
       le_name       ->setVisible( true );
       user	    ->setVisible( true );
@@ -521,6 +541,8 @@ void US_XpnHostDB::optima_selected( QListWidgetItem *tmp_item )
 	 le_os2        ->setText( instruments[ii].os2 );
 	 le_os3        ->setText( instruments[ii].os3 );
 
+	 le_msgPort    ->setText( QString::number( instruments[ii].msgPort ) );
+
 	 if ( instruments[ii].radcalwvl.isEmpty() || instruments[ii].chromoab.isEmpty() )
 	   le_radcalwvl  ->setText( "N/A" );
 	 else
@@ -541,6 +563,10 @@ void US_XpnHostDB::optima_selected( QListWidgetItem *tmp_item )
       le_host       ->setVisible( false );
       port	    ->setVisible( false );
       le_port       ->setVisible( false );
+
+      msgPort	    ->setVisible( false );
+      le_msgPort    ->setVisible( false );
+      
       name	    ->setVisible( false );
       le_name       ->setVisible( false );
       user	    ->setVisible( false );
@@ -563,6 +589,10 @@ void US_XpnHostDB::optima_selected( QListWidgetItem *tmp_item )
       le_host       ->setVisible( true );
       port	    ->setVisible( true );
       le_port       ->setVisible( true );
+
+      msgPort	    ->setVisible( true );
+      le_msgPort    ->setVisible( true );
+      
       name	    ->setVisible( true );
       le_name       ->setVisible( true );
       user	    ->setVisible( true );
@@ -624,6 +654,8 @@ void US_XpnHostDB::select_db( QListWidgetItem* entry, const bool showmsg )
 	le_os1        ->setText( instruments[ii].os1 );
 	le_os2        ->setText( instruments[ii].os2 );
 	le_os3        ->setText( instruments[ii].os3 );
+
+	le_msgPort    ->setText( QString::number( instruments[ii].msgPort ) );
 	
 	// // Set the default DB and user for that DB
 	// US_Settings::set_def_xpn_host( dblist.at( ii ) );
@@ -688,6 +720,7 @@ void US_XpnHostDB::Instrument::reset( void )
    radialCalID = -1;
    optimaHost  = ""; 
    optimaPort  = -1;
+   msgPort  = -1;
    optimaDBname = "";
    optimaDBusername = "";
    optimaDBpassw = "";
@@ -772,6 +805,8 @@ void US_XpnHostDB::editDB( void )
 
 	   currentInstrument[ "radcalwvl" ]  = instruments[ii].radcalwvl;
 	   currentInstrument[ "chromoab" ]   = instruments[ii].chromoab;
+
+	   currentInstrument[ "msgPort" ]    = QString::number( instruments[ii].msgPort );
 	   
 	   break;
 	 }
@@ -829,7 +864,8 @@ void US_XpnHostDB::editHost( QMap < QString, QString > & newInstrument  )
      << newInstrument[ "os2" ]
      << newInstrument[ "os3" ]
      << newInstrument[ "radCalWvl" ]
-     << newInstrument[ "chromoArray" ];
+     << newInstrument[ "chromoArray" ]
+     << newInstrument[ "msgPort" ];
 
   db->query( q );
 
@@ -875,6 +911,9 @@ void US_XpnHostDB::fillGui( QMap<QString, QString> & instrument )
   if ( !instrument["optimaPort"].isEmpty()  )
     le_port->setText( instrument["optimaPort"] );
 
+  if ( !instrument["msgPort"].isEmpty()  )
+    le_msgPort->setText( instrument["msgPort"] );
+  
   if ( !instrument["optimaDBusername"].isEmpty()  )
     le_user->setText( instrument["optimaDBusername"] );
 
@@ -932,7 +971,8 @@ void US_XpnHostDB::newHost( QMap < QString, QString > & newInstrument  )
      << newInstrument[ "os2" ]
      << newInstrument[ "os3" ]
      << newInstrument[ "radCalWvl" ]
-     << newInstrument[ "chromoArray" ];
+     << newInstrument[ "chromoArray" ]
+     << newInstrument[ "msgPort" ];
 	
     //<< encpw;
 	
@@ -1156,6 +1196,9 @@ void US_XpnHostDB::reset( void )
    le_description->setText( "" );
    le_host       ->setText( "" );
    le_port       ->setText( "" );
+
+   le_msgPort    ->setText( "" );
+   
    le_name       ->setText( "" );
    le_user       ->setText( "" );
    le_pasw       ->setText( "" );

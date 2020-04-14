@@ -1331,6 +1331,8 @@ void US_InitDialogueGui::read_optima_machines( US_DB2* db )
 	  instrument[ "radcalwvl" ]  =  db->value( 14 ).toString();
 	  instrument[ "chromoab" ]   =  db->value( 15 ).toString();
 
+	  instrument[ "msgPort" ]   =  db->value( 16 ).toString();
+
 	  
 	  if ( instrument[ "name" ].contains("Optima") || instrument[ "optimaHost" ].contains("AUC_DATA_DB") )
 	    this->instruments << instrument;
