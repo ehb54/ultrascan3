@@ -5213,6 +5213,7 @@ void US_ConvertGui::saveUS3( void )
   //display dialoge suggesting to re-attach, and return user to Manage Optima Runs
   dataSavedOtherwise = false;
 
+  pb_saveUS3 -> setEnabled( false );
   
   if ( us_convert_auto_mode )
     {
@@ -5238,7 +5239,7 @@ void US_ConvertGui::saveUS3( void )
 	  return;
 	}
     }
-  
+
   // qDebug() << "ExpData: ";
 
   qDebug() << "ExpData.invID " << ExpData.invID;             
