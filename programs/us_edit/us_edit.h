@@ -267,6 +267,7 @@ class US_Edit : public US_Widgets
 
       QVector< QVector< double > >  rdata;
 
+      QString filename_runID_passed;
       QString filename_runID_auto;
       QString idInv_auto;
       QString ProtocolName_auto;
@@ -288,7 +289,11 @@ class US_Edit : public US_Widgets
       };
 
       QMap< QString, DataDesc_auto >    datamap;  // Map: labels,data-desc-objs
-      
+
+      bool          runType_combined_IP_RI;
+      QMap < QString, int > runTypes_map;
+      QString       type_to_process;
+            
       
       // Private slots
       void set_pbColors      ( QPushButton* );
@@ -333,6 +338,8 @@ class US_Edit : public US_Widgets
       void load              ( void );
       void load_auto         ( QMap < QString, QString > & );
 
+      void process_optics_auto ( void );
+      
       QMap< QString, QString> read_autoflow_record( int );
       bool isSaved_auto( void );
       
@@ -466,6 +473,8 @@ class US_Edit : public US_Widgets
       void data_loaded( void );
       void edit_complete_auto( QMap< QString, QString> & );
       void back_to_initAutoflow( void );
+
+      void process_next_optics( void );
 };
 #endif
 

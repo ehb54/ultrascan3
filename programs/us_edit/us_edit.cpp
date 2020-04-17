@@ -244,7 +244,7 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    pb_airGap = us_pushbutton( tr( "Specify Air Gap" ), false );
    lb_airGap = us_label(      tr( "Air Gap:" ), -1 );
    le_airGap = us_lineedit( "", 1, true );
-   pb_airGap->setHidden( true );
+   pb_airGap->setVisible( false );
    lb_airGap->setHidden( true );
    le_airGap->setHidden( true );
 
@@ -343,6 +343,8 @@ pb_plateau->setVisible(false);
    connect( pb_float,        SIGNAL( clicked() ), SLOT( floating()  ) );
    connect( pb_write,        SIGNAL( clicked() ), SLOT( write_auto()  ) );
 
+   connect ( this, SIGNAL( process_next_optics () ), SLOT ( process_optics_auto () )  );
+   
    // Lay out specs widgets and layouts
    int s_row = 0;
    specs->addWidget( pb_investigator, s_row,   0, 1, 2 );
@@ -407,9 +409,11 @@ pb_plateau->setVisible(false);
    specs->addWidget( pb_meniscus,     s_row++, 3, 1, 3 );
 
    // ALEXEY: for auto Interference
-   specs->addWidget( pb_airGap,       s_row,   0, 1, 3 );
+  
    specs->addWidget( lb_airGap,       s_row,   0, 1, 3 );
    specs->addWidget( le_airGap,       s_row++, 3, 1, 3 );
+   specs->addWidget( pb_airGap,       s_row,   0, 1, 3 );
+
 //   specs->addWidget( pb_dataRange,    s_row,   0, 1, 3 );
 //   specs->addWidget( le_dataRange,    s_row++, 3, 1, 3 );
 //   specs->addWidget( pb_plateau,      s_row,   0, 1, 3 );
@@ -1465,20 +1469,59 @@ void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
   
   le_status->setText( tr( "Loading data ..." ) );
   
-  QList< DataDesc_auto >  sdescs_auto;
-  datamap.clear();
+  // QList< DataDesc_auto >  sdescs_auto;
+  // datamap.clear();
 
   autoflowID_passed   = details_at_editing[ "autoflowID" ].toInt();
-  filename_runID_auto = details_at_editing[ "filename" ];
   idInv_auto          = details_at_editing[ "invID_passed" ];
   ProtocolName_auto   = details_at_editing[ "protocolName" ];
 
+  // Deal with different filenames if any.... //////////////////////////
+  filename_runID_passed = details_at_editing[ "filename" ];
+  runType_combined_IP_RI = false;
+
+  runTypes_map.clear();
+  
+  if ( filename_runID_passed.contains(",") && filename_runID_passed.contains("IP") && filename_runID_passed.contains("RI") )
+    {
+      for ( int i = 0 ; i < filename_runID_passed.split(",").count(); ++i )
+	{
+	  runTypes_map.insert( filename_runID_passed.split(",")[i], 1 );
+
+	  qDebug() << "Filename: " << filename_runID_passed.split(",")[i];
+	}
+      
+      runType_combined_IP_RI = true;
+    }
+  else
+    filename_runID_auto = filename_runID_passed;
+    
+  qDebug() << "runType_combined_IP_RI: " << runType_combined_IP_RI;
+  ///////////////////////////////////////////////////////////////////////
   
   qDebug() << "autoflowID: " << autoflowID_passed;
-  qDebug() << "AT EDIT_DATA: filename, idInv: " << filename_runID_auto << ", " << idInv_auto;
+  qDebug() << "AT EDIT_DATA: filename, idInv: " << filename_runID_passed << ", " << idInv_auto;
 
+  process_optics_auto();
+
+}
+
+//Slot to process optics type...
+void US_Edit::process_optics_auto( )
+{
+  all_loaded = false;
+  editProfile.clear();
+  centerpieceParameters.clear();
+  aprofileParameters.clear();
+  
+  //Read centerpiece names from protocol:
+  centerpiece_names.clear();
+  
+  QList< DataDesc_auto >  sdescs_auto;
+  datamap.clear();
+  
   scan_db_auto();
-  sdescs_auto    = datamap.values();
+  sdescs_auto  = datamap.values();
   load_db_auto( sdescs_auto );
 
   runID = workingDir.section( "/", -1, -1 );
@@ -1498,7 +1541,14 @@ DbgLv(1) << "Ld: runID" << runID << "wdir" << workingDir;
       return;
    }
 
+   qDebug() << "IN PROCESS OPTICS: triples_size() " << triples.size();
+     
    cb_triple->addItems( triples );
+
+   // Debug
+   for (int index = 0; index < cb_triple->count(); index++)
+     qDebug() << cb_triple->itemText(index);
+   
    connect( cb_triple, SIGNAL( currentIndexChanged( int ) ), 
                        SLOT  ( new_triple_auto    ( int ) ) );
    triple_index = 0;
@@ -2029,12 +2079,12 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 
    emit data_loaded();
 
-   editProfile.clear();
-   centerpieceParameters.clear();
-   aprofileParameters.clear();
+   // editProfile.clear();
+   // centerpieceParameters.clear();
+   // aprofileParameters.clear();
 
-   //Read centerpiece names from protocol:
-   centerpiece_names.clear();
+   // //Read centerpiece names from protocol:
+   // centerpiece_names.clear();
    centerpiece_names.resize( cb_triple->count() );
 
    read_centerpiece_names_from_protocol();
@@ -2080,6 +2130,10 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
        //Find meniscus
        if ( dataType != "IP" )
 	 {
+	   lb_airGap->setHidden( true );
+	   le_airGap->setHidden( true );
+	   pb_airGap->setHidden( true );
+	   
 	   meniscus = find_meniscus_auto();
              
 	   le_meniscus ->setText( QString::number( meniscus,   'f', 3 ) );
@@ -2868,8 +2922,26 @@ int US_Edit::scan_db_auto( void )
       return naucf;
    }
 
+   // *** Determine 1st runType to process *************//
+   if ( runType_combined_IP_RI )
+     {
+       QMap<QString, int>::iterator jj;
+       for ( jj = runTypes_map.begin(); jj != runTypes_map.end(); ++jj )
+	 {
+	   if ( jj.value() )
+	     {
+	       filename_runID_auto = jj.key();
+	       break;
+	     }
+	 }
+     }
+   //*****************************************************//
+
    QStringList query;
    query << "get_raw_desc_by_runID" << idInv_auto << filename_runID_auto;
+
+   qDebug() << "IN scan_db_auto: query: " << query;
+     
    
    db.query( query );
 
@@ -2901,6 +2973,11 @@ int US_Edit::scan_db_auto( void )
    // Create the data descriptions map
    create_descs_auto( runIDs, infoDs, naucf );
 
+   // *** set key/value in the type_map for processed type to 0 && reset type_to_process ****//
+   if ( runType_combined_IP_RI )
+     runTypes_map[ filename_runID_auto ] = 0;
+   
+   
    return naucf;
 }
 
@@ -5967,6 +6044,16 @@ DbgLv(1) << "EDT:NewTr: DONE";
 
  if ( all_loaded ) 
    {
+     qDebug() << "NEW_TRIPLE_AUTO: all_loaded: " << all_loaded;
+
+     qDebug() << "NEW_TRIPLE_AUTO: editProfile.count(): " << editProfile.count();
+     
+     // Debug
+     for (int index = 0; index < cb_triple->count(); index++)
+       qDebug() << cb_triple->itemText(index);
+
+     qDebug() << "Current Triple: " << cb_triple->currentText();
+     
      meniscus      = editProfile[ cb_triple->currentText() ][0].toDouble();
      range_left    = editProfile[ cb_triple->currentText() ][1].toDouble();
      range_right   = editProfile[ cb_triple->currentText() ][2].toDouble();
@@ -5979,7 +6066,8 @@ DbgLv(1) << "EDT:NewTr: DONE";
      le_dataEnd  ->setText( QString::number( range_right, 'f', 3 ) );
      le_plateau  ->setText( QString::number( plateau,     'f', 3 ) );
 
- 
+     qDebug() << "NEW_TRIPLE_AUTO: 2";
+     
      if ( isMwl ) 
        le_baseline ->setText( QString::number( baseline,     'f', 3 ) );
      else
@@ -5988,6 +6076,8 @@ DbgLv(1) << "EDT:NewTr: DONE";
 	 le_baseline->setText( str.sprintf( "%.3f (%.3e)", baseline, baseline_od ) );   
        }
 
+     qDebug() << "NEW_TRIPLE_AUTO: 3";
+     
      if ( editProfile[ cb_triple->currentText() ].count() > 6 )
        {
      	 if ( editProfile[ cb_triple->currentText() ][6] == "spike_true")
@@ -6002,9 +6092,13 @@ DbgLv(1) << "EDT:NewTr: DONE";
 	   }
        }
 
+     qDebug() << "NEW_TRIPLE_AUTO: 4";
+
      //ALEXEY: Apply data modifications like adjust_interference && calc_integral for IP data
      if ( dataType == "IP" )
        {
+	 qDebug() << "NEW_TRIPLE_AUTO: 4a - IN IP";
+	 
 	 airGap_left   = editProfile[ cb_triple->currentText() ][7].toDouble();
 	 airGap_right  = editProfile[ cb_triple->currentText() ][8].toDouble();
 
@@ -6029,6 +6123,8 @@ DbgLv(1) << "EDT:NewTr: DONE";
 
 	 US_DataIO::calc_integral( data, edits );
        }
+
+     qDebug() << "NEW_TRIPLE_AUTO: 5";
      
      plot_range();
    }
@@ -6485,34 +6581,85 @@ QMap< QString, QString> US_Edit::read_autoflow_record( int autoflowID  )
 void US_Edit::write_auto( void )
 {
 
+  pb_write       ->setEnabled( false );
+  
   /** Check if stage is being or has already changed ***/
   QMap < QString, QString > autoflow_details;
   autoflow_details = read_autoflow_record( autoflowID_passed );
   
   qDebug() << "autoflowID_passed, autoflow status, isSaved_auto(): " <<  autoflowID_passed << ", " << autoflow_details[ "status" ]; // << ", " << isSaved_auto();
+
+  // Check if all optics systems were processed //
+  bool all_processed = true;
+  QMap<QString, int>::iterator os;
+  for ( os = runTypes_map.begin(); os != runTypes_map.end(); ++os )
+    {
+      if ( os.value() )
+	{
+	  all_processed = false;
+	  break;
+	}
+    }
+  //////////////////////////////////////////////////////////
   
   if ( autoflow_details[ "status" ]  != "EDIT_DATA"  || isSaved_auto() )
     {
-      QMessageBox::information( this,
-				tr( "The Program State Updated / being Updated" ),
-				tr( "The program advanced or is advancing to the next stage!\n\n"
-				    "This happend because you or different user "
-				    "has already saved the data into DB using different program "
-				    "session and is proceeding to the next stage. \n\n"
-				    "The program will return to the autoflow runs dialogue where "
-				    "you can re-attach to the actual current stage of the run. "
-				    "Please allow some time for the status to be updated.") );
-      
-      
-      reset();
-      emit back_to_initAutoflow( );
-      return;
+      if ( runType_combined_IP_RI )
+	{
+	  if ( !all_processed )
+	    {
+	      QMessageBox::information( this,
+					tr( "Edit Profiles for Current Optical System Already Saved" ),
+					tr( "It appears that edit profiles for the current optical system are already saved!\n\n"
+					    "The program switch to processing next optical system... " ));
+
+	      cb_triple->disconnect();
+
+	      reset();
+	      emit process_next_optics( );
+	      return;
+	    }
+	  else
+	    {
+	      QMessageBox::information( this,
+					tr( "The Program State Updated / being Updated" ),
+					tr( "The program advanced or is advancing to the next stage!\n\n"
+					    "This happend because you or different user "
+					    "has already saved the data into DB using different program "
+					    "session and is proceeding to the next stage. \n\n"
+					    "The program will return to the autoflow runs dialogue where "
+					    "you can re-attach to the actual current stage of the run. "
+					    "Please allow some time for the status to be updated.") );
+	      
+	      
+	      reset();
+	      emit back_to_initAutoflow( );
+	      return;
+	    }
+	}
+      else
+	{
+	  QMessageBox::information( this,
+				    tr( "The Program State Updated / being Updated" ),
+				    tr( "The program advanced or is advancing to the next stage!\n\n"
+					"This happend because you or different user "
+					"has already saved the data into DB using different program "
+					"session and is proceeding to the next stage. \n\n"
+					"The program will return to the autoflow runs dialogue where "
+					"you can re-attach to the actual current stage of the run. "
+					"Please allow some time for the status to be updated.") );
+	  
+	  
+	  reset();
+	  emit back_to_initAutoflow( );
+	  return;
+	}
     }
 
   /*******************************************************/
   
    // Determine if we are using the database
-   US_DB2* dbP    = NULL;
+   US_DB2* dbP  = NULL;
 
    if ( disk_controls->db() )
    {
@@ -6591,6 +6738,19 @@ void US_Edit::write_auto( void )
       }
    }
 
+   // Check If all Optical Systems processed:::::::::::::::::::::::::::::
+
+      
+   qDebug() << "SAVING: Optics Type, all_processed:  " << filename_runID_auto << all_processed; 
+   
+   if ( !all_processed )
+     {
+       reset();
+       emit process_next_optics( );
+       return;
+     }
+   ////////////////////////////////////////////////////////////////////
+   
    le_status->setText( tr( "Saving COMPLETE " ) );
    qApp->processEvents();
 
@@ -6600,8 +6760,7 @@ void US_Edit::write_auto( void )
    //ALEXEY: here major actions on setting analysis tables etc. !!!!
    QMessageBox::information( this,
 			     tr( "Saving of Edit Profiles is Complete." ),
-			     tr( "\n\n"
-				 "Edit profiles were saved successfully. \n"
+			     tr( "Edit profiles were saved successfully. \n\n"
 				 "The program will switch to Analysis stage." ) );
    reset();
    emit edit_complete_auto( details_at_editing_local  );   
@@ -6832,6 +6991,11 @@ void US_Edit::write_triple_auto( int trx )
    create_report_auto( rtext, trx );
    
    save_report_auto( rtext, rptfpath, idEdit, trx );
+
+
+   //Disconnect cb_triple if runType_combined_IP_RI == true;
+   if ( runType_combined_IP_RI )
+     cb_triple->disconnect();
   
 }
 
@@ -8400,6 +8564,8 @@ DbgLv(1) << "EDT:WrMwl:  dax fname" << idax << filename << "wrstat" << wrstat;
    le_info->setText( saved_info );
    qApp->processEvents();
 
+   if ( runType_combined_IP_RI ) 
+     cb_triple->disconnect();
 }
 
 
