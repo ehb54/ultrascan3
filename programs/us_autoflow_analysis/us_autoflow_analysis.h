@@ -34,11 +34,12 @@ class US_Analysis_auto : public US_Widgets
 
 	 
 	 QTreeWidget     *treeWidget;
-	 QMap<QString, QTreeWidgetItem *> topItem_2DSA;
-	 QMap<QString, QTreeWidgetItem *> topItem_2DSA_FM;
-	 QMap<QString, QTreeWidgetItem *> topItem_2DSA_FITMEN;
-	 QMap<QString, QTreeWidgetItem *> topItem_2DSA_IT;
-	 QMap<QString, QTreeWidgetItem *> topItem_2DSA_MC;
+	 QMap<QString, QTreeWidgetItem *> topItem;
+	 /* QMap<QString, QTreeWidgetItem *> topItem_2DSA; */
+	 /* QMap<QString, QTreeWidgetItem *> topItem_2DSA_FM; */
+	 /* QMap<QString, QTreeWidgetItem *> topItem_2DSA_FITMEN; */
+	 /* QMap<QString, QTreeWidgetItem *> topItem_2DSA_IT; */
+	 /* QMap<QString, QTreeWidgetItem *> topItem_2DSA_MC; */
 
 	 QMap<QString, QTreeWidgetItem *> childItem_2DSA;
 	 QMap<QString, QTreeWidgetItem *> childItem_2DSA_FM;
@@ -52,6 +53,13 @@ class US_Analysis_auto : public US_Widgets
 	 QMap<QString, QGroupBox *> groupbox_2DSA_IT;
 	 QMap<QString, QGroupBox *> groupbox_2DSA_MC;
 
+	 QTimer * timer_update;
+	 QTimer * timer_end_process;
+
+	 bool in_gui_update;
+	 bool in_reload_end_process;
+
+	 void   reset_analysis_panel_public ( void );
 	 	 
       private:
 	 QPushButton*  pb_show_all;
@@ -89,8 +97,14 @@ class US_Analysis_auto : public US_Widgets
 	void initPanel( QMap < QString, QString > & );
 	void show_all( void );
 	void hide_all( void );
+	void gui_update ( void );
+
+	void reset_analysis_panel ( void );
+	void end_process( void );
+	void reset_auto     ( void );
      
       signals:
+	void analysis_update_process_stopped( void );
    
 };
 #endif

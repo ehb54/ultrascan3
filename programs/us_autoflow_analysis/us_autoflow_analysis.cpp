@@ -43,6 +43,9 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
 
   setMinimumSize( 950, 450 );
   adjustSize();
+
+  in_gui_update = false;
+  in_reload_end_process = false;
   
   // // ---- Testing ----
   // QMap < QString, QString > protocol_details;
@@ -60,6 +63,10 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
 //init correct # of us_labels rows based on passed # stages from AProfile
 void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 {
+  //Clear TreeWidget
+  treeWidget->clear();
+  Array_of_triples.clear();
+  
   AProfileGUID       = protocol_details[ "aprofileguid" ];
   ProtocolName_auto  = protocol_details[ "protocolName" ];
   invID              = protocol_details[ "invID_passed" ].toInt();
@@ -96,9 +103,9 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       if ( triple_name_width > max_width )
 	max_width =  triple_name_width; 
 
-      topItem_2DSA [ triple_curr ] = new QTreeWidgetItem();
-      topItem_2DSA [ triple_curr ] -> setText( 0, triple_curr );
-      treeWidget -> addTopLevelItem( topItem_2DSA [ triple_curr ] );
+      topItem [ triple_curr ] = new QTreeWidgetItem();
+      topItem [ triple_curr ] -> setText( 0, triple_curr );
+      treeWidget -> addTopLevelItem( topItem [ triple_curr ] );
       
       if ( job1run )  //2DSA
 	{
@@ -107,7 +114,7 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 	  groupbox_2DSA[ triple_curr ] = createGroup( child_name  );
 
 	  childItem_2DSA [ triple_curr ] = new QTreeWidgetItem();
-	  topItem_2DSA [ triple_curr ] -> addChild( childItem_2DSA [ triple_curr ] );
+	  topItem [ triple_curr ] -> addChild( childItem_2DSA [ triple_curr ] );
 	  treeWidget->setItemWidget( childItem_2DSA [ triple_curr ] , 1, groupbox_2DSA[ triple_curr ] );
 	}
     
@@ -116,11 +123,11 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 	{
 	  QString stage_name( tr("2DSA-FM") );
 	  QString child_name = stage_name + " (" + triple_curr + ")";
-	  groupbox_2DSA[ triple_curr ] = createGroup( child_name  );
+	  groupbox_2DSA_FM[ triple_curr ] = createGroup( child_name  );
 
-	  childItem_2DSA [ triple_curr ] = new QTreeWidgetItem();
-	  topItem_2DSA [ triple_curr ] -> addChild( childItem_2DSA [ triple_curr ] );
-	  treeWidget->setItemWidget( childItem_2DSA [ triple_curr ] , 1, groupbox_2DSA[ triple_curr ] );
+	  childItem_2DSA_FM [ triple_curr ] = new QTreeWidgetItem();
+	  topItem [ triple_curr ] -> addChild( childItem_2DSA_FM [ triple_curr ] );
+	  treeWidget->setItemWidget( childItem_2DSA_FM [ triple_curr ] , 1, groupbox_2DSA_FM[ triple_curr ] );
 	}
 
       if ( job3run )  //FITMEN
@@ -132,22 +139,22 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 	{
 	  QString stage_name( tr("2DSA-IT") );
 	  QString child_name = stage_name + " (" + triple_curr + ")";
-	  groupbox_2DSA[ triple_curr ] = createGroup( child_name  );
+	  groupbox_2DSA_IT[ triple_curr ] = createGroup( child_name  );
 
-	  childItem_2DSA [ triple_curr ] = new QTreeWidgetItem();
-	  topItem_2DSA [ triple_curr ] -> addChild( childItem_2DSA [ triple_curr ] );
-	  treeWidget->setItemWidget( childItem_2DSA [ triple_curr ] , 1, groupbox_2DSA[ triple_curr ] );
+	  childItem_2DSA_IT [ triple_curr ] = new QTreeWidgetItem();
+	  topItem [ triple_curr ] -> addChild( childItem_2DSA_IT [ triple_curr ] );
+	  treeWidget->setItemWidget( childItem_2DSA_IT [ triple_curr ] , 1, groupbox_2DSA_IT [ triple_curr ] );
 	}
       
       if ( job5run )  //2DSA-MC
 	{
 	  QString stage_name( tr("2DSA-MC") );
 	  QString child_name = stage_name + " (" + triple_curr + ")";
-	  groupbox_2DSA[ triple_curr ] = createGroup( child_name  );
+	  groupbox_2DSA_MC[ triple_curr ] = createGroup( child_name  );
 
-	  childItem_2DSA [ triple_curr ] = new QTreeWidgetItem();
-	  topItem_2DSA [ triple_curr ] -> addChild( childItem_2DSA [ triple_curr ] );
-	  treeWidget->setItemWidget( childItem_2DSA [ triple_curr ] , 1, groupbox_2DSA[ triple_curr ] );
+	  childItem_2DSA_MC [ triple_curr ] = new QTreeWidgetItem();
+	  topItem [ triple_curr ] -> addChild( childItem_2DSA_MC [ triple_curr ] );
+	  treeWidget->setItemWidget( childItem_2DSA_MC [ triple_curr ] , 1, groupbox_2DSA_MC [ triple_curr ] );
 	}
     }
   
@@ -162,7 +169,131 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   // treeWidget->headerItem()->setText(1, "Analysis Stages");
 
   treeWidget->setStyleSheet( "QTreeWidget { font: bold; font-size: 15px;} QTreeView { alternate-background-color: yellow;} QTreeView::item:hover { border: black;  border-radius:1px;  background-color: rgba(0,128,255,95);}");
+
+  //TEST: QTimer for GroupBoxes' GUI update
+  timer_end_process = new QTimer;
+  timer_update      = new QTimer;
+  connect(timer_update, SIGNAL(timeout()), this, SLOT( gui_update ( ) ));
+  timer_update->start(1000);     // 5 sec
+ 
+}
+
+//Gui update: timer's slot
+void US_Analysis_auto::gui_update( )
+{
+  if ( in_gui_update )            // If already doing a reload,
+    return;                            //  skip starting a new one
   
+  in_gui_update  = true;          // Flag in the midst of a reload
+
+  QStringList radiobuttons;
+  radiobuttons << "radio1" << "radio2" << "radio3";
+
+
+  int curr_index = rand() % radiobuttons.size(); // pick a random index
+  QString radio_name = radiobuttons[ curr_index ]; // 
+  
+  //TEST access to certain groupboxes' children... Mocup
+  for ( int i=0; i<Array_of_triples.size(); ++i )
+    {
+      QString triple_curr = Array_of_triples[i];
+
+      if( triple_curr.contains("Interference")) 
+	{
+	  QRadioButton * button_2dsa    = groupbox_2DSA    [ triple_curr ]->findChild<QRadioButton *>(radio_name, Qt::FindDirectChildrenOnly);
+	  QRadioButton * button_2dsa_fm = groupbox_2DSA_FM [ triple_curr ]->findChild<QRadioButton *>(radio_name, Qt::FindDirectChildrenOnly);
+	  QRadioButton * button_2dsa_it = groupbox_2DSA_IT [ triple_curr ]->findChild<QRadioButton *>(radio_name, Qt::FindDirectChildrenOnly);
+	  QRadioButton * button_2dsa_mc = groupbox_2DSA_MC [ triple_curr ]->findChild<QRadioButton *>(radio_name, Qt::FindDirectChildrenOnly);
+
+	  button_2dsa    ->setChecked( true );
+	  button_2dsa_fm ->setChecked( true );
+	  button_2dsa_it ->setChecked( true );
+	  button_2dsa_mc ->setChecked( true );
+
+	  button_2dsa    ->setStyleSheet("QRadioButton { color: red;}");
+	  button_2dsa_fm ->setStyleSheet("QRadioButton { color: red;}");
+	  button_2dsa_it ->setStyleSheet("QRadioButton { color: red;}");
+	  button_2dsa_mc ->setStyleSheet("QRadioButton { color: red;}");
+
+	  for ( int i=0; i<radiobuttons.size(); ++i )
+	    {
+	      if ( i != curr_index )
+		{
+		  groupbox_2DSA    [ triple_curr ]->findChild<QRadioButton*>(radiobuttons[i], Qt::FindDirectChildrenOnly)->setStyleSheet("QRadioButton { color: black;}");
+		  groupbox_2DSA_FM [ triple_curr ]->findChild<QRadioButton*>(radiobuttons[i], Qt::FindDirectChildrenOnly)->setStyleSheet("QRadioButton { color: black;}");
+		  groupbox_2DSA_IT [ triple_curr ]->findChild<QRadioButton*>(radiobuttons[i], Qt::FindDirectChildrenOnly)->setStyleSheet("QRadioButton { color: black;}");
+		  groupbox_2DSA_MC [ triple_curr ]->findChild<QRadioButton*>(radiobuttons[i], Qt::FindDirectChildrenOnly)->setStyleSheet("QRadioButton { color: black;}");
+		}
+	    }
+	}
+    }
+
+  in_gui_update  = false; 
+}
+
+//reset Analysis GUI: stopping all update processes
+void US_Analysis_auto::reset_analysis_panel_public( )
+{
+  reset_analysis_panel( );
+}
+
+//reset Analysis GUI: stopping all update processes
+void US_Analysis_auto::reset_analysis_panel( )
+{
+  //Stop  timer if active
+  if ( timer_update -> isActive() ) 
+    {
+      timer_update -> stop();
+      disconnect(timer_update, SIGNAL(timeout()), 0, 0);
+
+      qDebug() << "Stopping timer_update !!!!";
+    }
+
+  //ALEXEY: now we should wait for completion of the last timer_update shot...
+  connect(timer_end_process, SIGNAL(timeout()), this, SLOT( end_process ( ) ));
+  timer_end_process->start(1000);     // 5 sec
+}
+
+//Periodically check for ended processes
+void US_Analysis_auto::end_process( )
+{
+  qDebug() << "In the END process: in_reload_end_processes = " << in_reload_end_process;
+  
+  if ( in_reload_end_process )               // If already doing a reload,
+    return;                                  //  skip starting a new one
+  
+  in_reload_end_process   = true;          // Flag in the midst of a reload
+
+  if (  !in_gui_update )
+    {
+      
+      timer_end_process->stop();
+      disconnect(timer_end_process, SIGNAL( timeout() ), 0, 0);   //Disconnect timer from anything
+      
+      qDebug() << "ANALYSIS UPDATE panel has been reset!";
+      qDebug() << "AFTER: in_gui_update: " << in_gui_update;
+      
+      reset_auto(); 
+      qApp->processEvents();
+      
+      in_reload_end_process = false;
+
+      emit analysis_update_process_stopped();
+    }
+  else
+    {
+      in_reload_end_process   = false; 
+      qApp->processEvents();
+    }
+}
+
+//reset
+void US_Analysis_auto::reset_auto( )
+{
+  treeWidget->clear();
+  Array_of_triples.clear();
+
+  //TO DO MORE later - DB stopp etc..
 }
 
 //create groupBox
@@ -176,14 +307,16 @@ QGroupBox * US_Analysis_auto::createGroup( QString & triple_name )
 
   groupBox-> setStyleSheet( "QGroupBox { font: bold;  background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #E0E0E0, stop: 1 #FFFFFF); border: 2px solid gray; border-radius: 10px; margin-top: 20px; margin-bottom: 10px; padding-top: 5px; } QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; left: 10px; margin: 0 5px; background-color: black; color: white; padding: 0 3px;}  QGroupBox::indicator { width: 13px; height: 13px; border: 1px solid grey; background-color: rgba(204, 204, 204, 255);} QGroupBox::indicator:hover {background-color: rgba(235, 235, 235, 255);}");
 
-
   
   groupBox->setFlat(true);
 
-  
+  //Moc-up GUI
   QRadioButton *radio1 = new QRadioButton(tr("&Radio button 1"));
+  radio1->setObjectName("radio1");
   QRadioButton *radio2 = new QRadioButton(tr("R&adio button 2"));
+  radio2->setObjectName("radio2");
   QRadioButton *radio3 = new QRadioButton(tr("Ra&dio button 3"));
+  radio3->setObjectName("radio3");
   
   radio1->setChecked(true);
   

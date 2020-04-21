@@ -350,6 +350,8 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( epanEditing, SIGNAL( switch_to_analysis( QMap < QString, QString > & ) ), this, SLOT( switch_to_analysis( QMap < QString, QString > & )  ) );
    connect( this, SIGNAL( pass_to_analysis( QMap < QString, QString > & ) ),   epanAnalysis, SLOT( do_analysis( QMap < QString, QString > & )  ) );
    connect( epanEditing, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
+
+   connect( epanAnalysis, SIGNAL( processes_stopped() ), this, SLOT( analysis_update_stopped() ));
    
    setMinimumSize( QSize( 1350, 800 ) );
    adjustSize();
@@ -415,6 +417,18 @@ void US_ComProjectMain::initPanels( int  panx )
 	  qDebug() << "Jumping from EDITING.";
 	  emit reset_data_editing();
 	}
+
+            
+      if ( curr_panx == 5 )
+	{
+	  qDebug() << "Jumping from ANALYSIS.";
+	  show_analysis_update_finishing_msg();
+	  
+	  epanAnalysis->sdiag->reset_analysis_panel_public();
+	  qApp->processEvents();
+
+	  return;
+	}
       
       xpn_viewer_closed_soft = false;
       epanInit  ->initAutoflowPanel();
@@ -453,10 +467,46 @@ void US_ComProjectMain::show_liveupdate_finishing_msg( void )
 
 }
 
+// 
+void US_ComProjectMain::show_analysis_update_finishing_msg( void )
+{
+  
+   msg_analysis_update_finishing = new QMessageBox(this);
+   msg_analysis_update_finishing->setIcon(QMessageBox::Information);
+  
+   msg_analysis_update_finishing->setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowStaysOnTopHint);
+   msg_analysis_update_finishing->setStandardButtons(0);
+   msg_analysis_update_finishing->setWindowTitle(tr("Updating..."));
+   msg_analysis_update_finishing->setText(tr( "Finishing ANALYSIS UPDATE processes... Please wait...") );
+   msg_analysis_update_finishing->setStyleSheet("background-color: #36454f; color : #D3D9DF;");
+  
+  
+   int tab_width = this->tabWidget->tabBar()->width();
+   int upper_height = this->gen_banner->height() + //this->welcome->height()
+     + this->logWidget->height() + this->test_footer->height();
+
+   int pos_x = this->width()/2 - tab_width;
+   int pos_y = this->height()/2 - upper_height;     
+   msg_analysis_update_finishing->move(pos_x, pos_y);
+  
+   msg_analysis_update_finishing->show();
+  
+   qApp->processEvents();
+
+}
+
 void US_ComProjectMain::liveupdate_stopped( void  )
 {
   //Close message on finishing LIVE_UPDATE processes...
   msg_liveupdate_finishing->accept();
+  
+  epanInit  ->initAutoflowPanel();
+}
+
+void US_ComProjectMain::analysis_update_stopped( void  )
+{
+  //Close message on finishing ANALYSIS_UPDATE processes...
+  msg_analysis_update_finishing->accept();
   
   epanInit  ->initAutoflowPanel();
 }
@@ -2104,6 +2154,7 @@ void US_EditingGui::resizeEvent(QResizeEvent *event)
 }
 
 
+
 void US_EditingGui::to_analysis( QMap < QString, QString > & protocol_details )
 {
   emit switch_to_analysis( protocol_details );
@@ -2173,6 +2224,9 @@ US_AnalysisGui::US_AnalysisGui( QWidget* topw )
    connect( this, SIGNAL( start_analysis( QMap < QString, QString > & ) ), sdiag, SLOT( initPanel ( QMap < QString, QString > & )  ) );
    // In initPanel() - re-generate GUI based on # of rows corresponding to # stages in AProfile...
 
+   // When coming back to Manage Optima Runs
+   connect( sdiag, SIGNAL( analysis_update_process_stopped() ), this, SLOT( processes_stopped_passed()  ) );
+
    offset = 0;
    sdiag->move(offset, 2*offset);
    sdiag->setFrameShape( QFrame::Box);
@@ -2218,6 +2272,10 @@ void US_AnalysisGui::do_analysis( QMap < QString, QString > & protocol_details )
   emit start_analysis( protocol_details );
 }
 
+void US_AnalysisGui::processes_stopped_passed( void )
+{
+  emit processes_stopped(); 
+}
 
 
 

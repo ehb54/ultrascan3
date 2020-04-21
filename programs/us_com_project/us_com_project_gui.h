@@ -294,11 +294,12 @@ class US_AnalysisGui : public US_WidgetsDialog
   public:
     US_AnalysisGui( QWidget* );
     ~US_AnalysisGui() {};
-  
+
+    US_Analysis_auto*     sdiag;
          
   private:
     US_ComProjectMain*    mainw;      // Parent to all panels
-    US_Analysis_auto*     sdiag;
+    //US_Analysis_auto*     sdiag;
     int offset;
 
  protected:
@@ -306,9 +307,11 @@ class US_AnalysisGui : public US_WidgetsDialog
       
  private slots:
    void do_analysis( QMap < QString, QString > & );
+   void processes_stopped_passed( void );
 
  signals:
    void start_analysis( QMap < QString, QString > & );
+   void processes_stopped( void );
     
 };
 
@@ -358,6 +361,7 @@ class US_ComProjectMain : public US_Widgets
 
   QMessageBox * msg_expsetup;
   QMessageBox * msg_liveupdate_finishing;
+  QMessageBox * msg_analysis_update_finishing;
   
   QDialog *     diag_expsetup;
   
@@ -427,6 +431,10 @@ private slots:
   void liveupdate_stopped( void );
 
   void show_liveupdate_finishing_msg( void );
+
+  void analysis_update_stopped( void );
+
+  void show_analysis_update_finishing_msg( void );
   
 signals:
   void pass_to_live_update( QMap < QString, QString > & protocol_details );
