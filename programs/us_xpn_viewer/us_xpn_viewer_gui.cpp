@@ -2000,7 +2000,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
 
   int exp_status = CheckExpComplete_auto( RunID_to_retrieve  );
    
-  if ( exp_status == 55 || exp_status == 0 )
+  if ( exp_status == 5 || exp_status == 0 )
     {
       //timer_check_sysdata->stop();
       //ALEXEY: This timer cannot be stopped from another thread, but can be dealt with signal/slot upon Qthread termination..
