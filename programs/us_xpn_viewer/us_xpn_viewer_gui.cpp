@@ -23,6 +23,7 @@
 #include "us_colorgradIO.h"
 #include "qwt_legend.h"
 
+
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c)  setData(a,b,c)
 #define setMinimum(a)      setMinValue(a)
@@ -759,9 +760,11 @@ if(mcknt>0)
    // protocol_details[ "duration" ]   = QString("43200");
 
    
-   // check_for_data( protocol_details );
+   //  check_for_data( protocol_details );
    // End of test
 
+   //Connect to syste data server 
+   //link.connectToServer( );
    
 }
 
@@ -1676,17 +1679,9 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
       connect(timer_all_data_avail, SIGNAL(timeout()), this, SLOT( retrieve_xpn_raw_auto ( ) ));
       timer_all_data_avail->start(40000);     // 40 sec
 
-
-
-      // timer_check_sysdata = new QTimer(this);
-      // connect(timer_check_sysdata, SIGNAL(timeout()), this, SLOT(  check_for_sysdata( )  ));
-      // timer_check_sysdata->start(2000);     //
-
-      // OR
-      //Alternativly: put it in separate thread:
-      //QThread* sys_thread = new QThread(this);
-      //sys_thread = new QThread(this);
-      //timer_check_sysdata = new QTimer(0); // parent to 0 !
+      //Somewhere here start sys_server (instead of timer_check_sysdata - BUT move to sys_thread) 
+      link.connectToServer( xpnhost, xpnmsgPort.toInt() );
+      
       timer_check_sysdata->setInterval(3000);
       timer_check_sysdata->moveToThread(sys_thread);
       //connect( timer_check_sysdata, SIGNAL(timeout()), this, SLOT( check_for_sysdata( )  ), Qt::QueuedConnection ) ; //Qt::DirectConnection );
@@ -1695,9 +1690,9 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
       connect( sys_thread, SIGNAL( started() ), timer_check_sysdata, SLOT( start() ));
       connect( sys_thread, SIGNAL( finished() ), timer_check_sysdata, SLOT( stop() ));
       sys_thread->start();
+
       // How to stop sys_thread?
-      
-            
+                  
       // // Check if all triple info is available
       // timer_all_data_avail = new QTimer;
       // connect(timer_all_data_avail, SIGNAL(timeout()), this, SLOT( retrieve_xpn_raw_auto ( ) ));
@@ -1884,27 +1879,33 @@ void US_XpnDataViewer::check_for_sysdata( void )
   int exp_time = 0;
   double temperature=0;
   int rpm;
-  //int etimoff;
-  //int stage_number;
-  while ( temperature == 0 ) // what if the temperature is actually set to zero degrees?
-  {
-    xpn_data->update_isysrec( idrun );
-    exp_time       = xpn_data->countOf_sysdata( "exp_time"  ).toInt();     //time form the start
-  //stage_number   = xpn_data->countOf_sysdata( "stage_number" ).toInt();  //stage number
-    temperature    = xpn_data->countOf_sysdata( "tempera" ).toDouble();    //temperature 
-    rpm            = xpn_data->countOf_sysdata( "last_rpm"  ).toInt();     //revolutions per minute !
-    //etimoff        = xpn_data->countOf_sysdata( "etim_off"  ).toInt();     //experimental time offset 
-  }
+  int omega2T;
+
+  // while ( temperature == 0 ) // what if the temperature is actually set to zero degrees?
+  // {
+  //   xpn_data->update_isysrec( idrun );
+  //   exp_time       = xpn_data->countOf_sysdata( "exp_time"  ).toInt();     //time form the start
+  // //stage_number   = xpn_data->countOf_sysdata( "stage_number" ).toInt();  //stage number
+  //   temperature    = xpn_data->countOf_sysdata( "tempera" ).toDouble();    //temperature 
+  //   rpm            = xpn_data->countOf_sysdata( "last_rpm"  ).toInt();     //revolutions per minute !
+  //   //etimoff        = xpn_data->countOf_sysdata( "etim_off"  ).toInt();     //experimental time offset 
+  // }
+
+  
+  exp_time    = link.elapsedTime.toInt(); 
+  temperature = link.temperature.toDouble(); 
+  rpm         = link.rpm.toInt();
+  omega2T     = link.omega2T.toInt();
 
   // Update rmp, temperature GUI icons...
   //RPM speed
   double rpm_for_meter = double(rpm/1000.0);
   rpm_box->setSpeed(rpm_for_meter);
-  qApp->processEvents();
+  //qApp->processEvents();
   
   //Temperature
   temperature_box->setTemp(temperature);
-  qApp->processEvents();
+  //qApp->processEvents();
   
   //Running Time
   QList< int > dhms_r;
@@ -1920,7 +1921,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
   
   running_time_text = QString::number(dhms_r[1]) + ":" + QString::number(dhms_r[2]) + ":" + QString::number(dhms_r[3]);
   le_running->setText( running_time_text );
-  qApp->processEvents();
+  //qApp->processEvents();
 
   //Elapsed Time
   qDebug() << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Elapsed Time Offset as read form autoflow table DB:" << ElapsedTimeOffset;
@@ -1937,7 +1938,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
   
   elapsed_time_text = QString::number(dhms_e[1]) + ":" + QString::number(dhms_e[2]) + ":" + QString::number(dhms_e[3]);
   le_elapsed->setText( elapsed_time_text );
-  qApp->processEvents();
+  //qApp->processEvents();
   
   //Remaining Time
   QList< int > dhms_remain;
@@ -1951,7 +1952,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
     
   remaining_time_text = QString::number(dhms_remain[1]) + ":" + QString::number(dhms_remain[2]) + ":" + QString::number(dhms_remain[3]);
   le_remaining->setText( remaining_time_text );
-  qApp->processEvents();
+  //qApp->processEvents();
 
   //RPM/Temp. Plots:
 
@@ -1999,7 +2000,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
 
   int exp_status = CheckExpComplete_auto( RunID_to_retrieve  );
    
-  if ( exp_status == 5 || exp_status == 0 )
+  if ( exp_status == 55 || exp_status == 0 )
     {
       //timer_check_sysdata->stop();
       //ALEXEY: This timer cannot be stopped from another thread, but can be dealt with signal/slot upon Qthread termination..
@@ -2056,58 +2057,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
 	}
     }
   
-  
-  // if ( exp_status == 0 ) //ALEXEY should be == 3 as per documentation
-  //   {
-  //     experimentAborted  = true;
-  //     //timer_check_sysdata->stop();
-  //     disconnect(timer_check_sysdata, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
-  //     sys_thread->quit(); // ALEXEY: does this emit Qthread's finished() signal??
-  //     qDebug() << "ExpStat: 3  - sys_timer STOPPED here: ";
-      
-  //     rpm_box->setSpeed( 0 );
-  //     le_remaining->setText( "00:00:00" );
-      
-  //     if ( !timer_all_data_avail->isActive() ) // Check if reload_data Timer is stopped
-  // 	{
-  // 	  if ( !timer_data_reload->isActive() )
-  // 	    {
-  // 	      // Ask if data retrived so far should be saved:
-	      
-  // 	      QMessageBox msgBox;
-  // 	      msgBox.setText(tr("Experiment was aborted!"));
-  // 	      msgBox.setInformativeText("The data retrieved so far can be saved or disregarded. If saved, the program will proceed to the next stage (Editing). Otherwise, it will return to the initial stage (Experiment), all data will be lost.");
-  // 	      msgBox.setWindowTitle(tr("Experiment Abortion"));
-  // 	      QPushButton *Save      = msgBox.addButton(tr("Save Data"), QMessageBox::YesRole);
-  // 	      QPushButton *Ignore    = msgBox.addButton(tr("Ignore Data"), QMessageBox::RejectRole);
-	      
-  // 	      msgBox.setIcon(QMessageBox::Question);
-  // 	      msgBox.exec();
-	      
-  // 	      if (msgBox.clickedButton() == Save)
-  // 		{
-  // 		  export_auc_auto();
-		  
-  // 		  QString mtitle_complete  = tr( "Complete!" );
-  // 		  QString message_done     = tr( "Experiment was completed. Optima data saved..." );
-  // 		  QMessageBox::information( this, mtitle_complete, message_done );
-		  
-  // 		  updateautoflow_record_atLiveUpdate();
-  // 		  emit experiment_complete_auto( currentDir, ProtocolName, invID_passed, correctRadii  );  // Updtade later: what should be passed with signal ??
-  // 		  return;
-  // 		}
-	      
-  // 	      else if (msgBox.clickedButton() == Ignore)
-  // 		{
-  // 		  reset();
-  // 		  delete_autoflow_record();
-  // 		  emit return_to_experiment( ProtocolName  ); 
-  // 		  return;
-  // 		}
-  // 	    }  
-  // 	}
-  //   }
-  
+ 
 
    qDebug() << "sys_timer RAN here: ";
    in_reload_check_sysdata   = false;
@@ -2208,6 +2158,9 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
 
   selectOptimaByName_auto( OptimaName );                         //New
   //Also gives System Msg port: "xmpmsgPort" !!!
+
+  //link.connectToServer( xpnhost, xpnmsgPort.toInt() );
+  
 
   //ALEXEY: just define all QTimers here for later safe stopping
   timer_all_data_avail = new QTimer;

@@ -24,6 +24,7 @@
 #include "us_xpn_run_raw.h"
 #include "us_xpn_run_auc.h"
 
+#include "us_link.h"
 
 class SpeedoMeter: public QwtDial
 {
@@ -116,6 +117,8 @@ class US_XpnDataViewer : public US_Widgets
      QVector<double> rpm_data;
      QVector<double> temp_data;
      QVector<double> time_data;
+
+     Link           link;
      
      SpeedoMeter*   rpm_speed;
      DialBox*       rpm_box;

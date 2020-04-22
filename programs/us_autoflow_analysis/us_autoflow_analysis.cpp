@@ -56,7 +56,7 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   
   // initPanel( protocol_details );
 
-  // // -----------------
+  // -----------------
 
 }
 
