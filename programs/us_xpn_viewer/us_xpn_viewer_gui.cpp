@@ -764,7 +764,7 @@ if(mcknt>0)
    // End of test
 
    //Connect to syste data server 
-   //link.connectToServer( );
+   //link->connectToServer( );
    
 }
 
@@ -1187,6 +1187,8 @@ void US_XpnDataViewer::reset( void )
 
 void US_XpnDataViewer::reset_auto( void )
 {
+  link->disconnectFromServer();
+  
    runID         = "";
    currentDir    = US_Settings::importDir() + "/" + runID;
    cb_cellchn ->disconnect();
@@ -1679,8 +1681,8 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
       connect(timer_all_data_avail, SIGNAL(timeout()), this, SLOT( retrieve_xpn_raw_auto ( ) ));
       timer_all_data_avail->start(40000);     // 40 sec
 
-      //Somewhere here start sys_server (instead of timer_check_sysdata - BUT move to sys_thread) 
-      link.connectToServer( xpnhost, xpnmsgPort.toInt() );
+      //Somewhere here start sys_server (instead of timer_check_sysdata - BUT move to sys_thread)
+      link->connectToServer( xpnhost, xpnmsgPort.toInt() );
       
       timer_check_sysdata->setInterval(3000);
       timer_check_sysdata->moveToThread(sys_thread);
@@ -1892,10 +1894,10 @@ void US_XpnDataViewer::check_for_sysdata( void )
   // }
 
   
-  exp_time    = link.elapsedTime.toInt(); 
-  temperature = link.temperature.toDouble(); 
-  rpm         = link.rpm.toInt();
-  omega2T     = link.omega2T.toInt();
+  exp_time    = link->elapsedTime.toInt(); 
+  temperature = link->temperature.toDouble(); 
+  rpm         = link->rpm.toInt();
+  omega2T     = link->omega2T.toInt();
 
   // Update rmp, temperature GUI icons...
   //RPM speed
@@ -2159,9 +2161,10 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
   selectOptimaByName_auto( OptimaName );                         //New
   //Also gives System Msg port: "xmpmsgPort" !!!
 
-  //link.connectToServer( xpnhost, xpnmsgPort.toInt() );
+  //link->connectToServer( xpnhost, xpnmsgPort.toInt() );
+  link = new Link;
   
-
+  
   //ALEXEY: just define all QTimers here for later safe stopping
   timer_all_data_avail = new QTimer;
   timer_data_reload = new QTimer;

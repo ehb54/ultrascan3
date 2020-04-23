@@ -37,6 +37,12 @@ void Link::connectToServer( const QString& host, const int port )
   }
 }
 
+void Link::disconnectFromServer( void  )
+{
+  server.disconnectFromHost();
+  qDebug() << "Closing Connection";
+}
+
 void Link::sslErrors(const QList<QSslError> &errors)
 {
   foreach (const QSslError &error, errors)
@@ -46,7 +52,7 @@ void Link::sslErrors(const QList<QSslError> &errors)
 void Link::serverDisconnect(void)
 {
   qDebug("Server disconnected");
-  exit(0);
+  //exit(0);
 }
 
 void Link::rx(void)

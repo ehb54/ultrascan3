@@ -10,6 +10,7 @@ class Link : public QObject
 public:
 	Link();
 	void connectToServer(const QString&, const int);
+	void disconnectFromServer( void );
 
 	QString elapsedTime;
 	QString temperature;
