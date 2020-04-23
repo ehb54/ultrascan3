@@ -47,14 +47,14 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   in_gui_update = false;
   in_reload_end_process = false;
   
-  // ---- Testing ----
-  QMap < QString, QString > protocol_details;
-  protocol_details[ "aprofileguid" ] = QString("d13ffad0-6f27-4fd8-8aa0-df8eef87a6ea");
-  protocol_details[ "protocolName" ] = QString("alexey-abs-itf-test1");
-  protocol_details[ "invID_passed" ] = QString("12");
+  // // ---- Testing ----
+  // QMap < QString, QString > protocol_details;
+  // protocol_details[ "aprofileguid" ] = QString("d13ffad0-6f27-4fd8-8aa0-df8eef87a6ea");
+  // protocol_details[ "protocolName" ] = QString("alexey-abs-itf-test1");
+  // protocol_details[ "invID_passed" ] = QString("12");
   
   
-  initPanel( protocol_details );
+  // initPanel( protocol_details );
 
   // -----------------
 
