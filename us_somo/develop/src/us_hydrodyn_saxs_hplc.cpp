@@ -1226,9 +1226,17 @@ void US_Hydrodyn_Saxs_Hplc::add_files( bool load_conc, bool from_dir ) {
             found_times[ it->name ] = it->x;
          }
       }
+   } else {
+      if ( filenames.size() ) {
+         QRegExp rx_time( "_t(\\d+)" );
+         if ( rx_time.indexIn( filenames[ 0 ] ) != -1 ) {
+            found_times[ filenames[ 0 ] ] = rx_time.cap( 1 ).toDouble();
+         }
+      }
    }
 
    QString errors;
+   QString warnings;
 
    for ( int i = 0; i < (int)filenames.size(); i++ )
    {
@@ -1243,7 +1251,18 @@ void US_Hydrodyn_Saxs_Hplc::add_files( bool load_conc, bool from_dir ) {
          } else {
             editor_msg( "black", QString( us_tr( "%1" ) ).arg( basename ) );
             add_filenames << basename;
-            f_time[ basename ] = found_times[ filenames[ i ] ];
+            if ( found_times.count( filenames[ i ] ) ) {
+               if ( f_time.count( basename ) &&
+                    f_time[ basename ] != found_times[ filenames[ i ] ] ) {
+                  warnings += QString( "File %1 has a conflicting stored time %2 vs the time extracted from the name %3, using the stored time\n" )
+                     .arg( basename )
+                     .arg( f_time[ basename ] )
+                     .arg( found_times[ filenames[ i ] ] )
+                     ;
+               } else {
+                  f_time[ basename ] = found_times[ filenames[ i ] ];
+               }
+            }
             if ( load_conc )
             {
                f_is_time[ basename ] = true;
@@ -1261,6 +1280,10 @@ void US_Hydrodyn_Saxs_Hplc::add_files( bool load_conc, bool from_dir ) {
       editor_msg( "blue", us_tr( "Files loaded ok" ) );
    } else {
       editor_msg( "red", errors );
+   }
+
+   if ( !warnings.isEmpty() ) {
+      editor_msg( "dark red", warnings );
    }
 
    lb_files->addItems( add_filenames );
@@ -1555,11 +1578,16 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
 
    bool is_time = false;
 
+   bool   has_conc  = false;
    double this_conc = 0e0;
+   bool   has_psv   = false;
    double this_psv  = 0e0;
+   bool   has_I0se  = false;
    double this_I0se = 0e0;
-   bool   has_time = false;
+   bool   has_time  = false;
    double this_time = 0e0;
+   bool   has_extc  = false;
+   double this_extc = 0e0;
 
    double use_units = ( ( US_Hydrodyn * ) us_hydrodyn )->saxs_options.iq_scale_angstrom ? 1.0 : 0.1;
 
@@ -1570,6 +1598,7 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
       QRegExp rx_I0se      ( "I0se:\\s*(\\S+)(\\s|$)" );
       QRegExp rx_time      ( "Time:\\s*(\\S+)(\\s|$)" );
       QRegExp rx_unit      ( "Units:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_extc      ( "ExtC_or_DRIinc:\\s*(\\S+)(\\s|$)" );
       if ( rx_unit.indexIn( qv[ 0 ] ) != -1 )
       {
          QString unitstr = rx_unit.cap( 1 ).toLower();
@@ -1588,21 +1617,29 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
       }
       if ( rx_conc.indexIn( qv[ 0 ] ) != -1 )
       {
-        this_conc = rx_conc.cap( 1 ).toDouble();
+         has_conc  = true;
+         this_conc = rx_conc.cap( 1 ).toDouble();
          // cout << QString( "found conc %1\n" ).arg( this_conc );
       }
       if ( rx_psv.indexIn( qv[ 0 ] ) != -1 )
       {
+         has_psv  = true;
          this_psv = rx_psv.cap( 1 ).toDouble();
       }
       if ( rx_I0se.indexIn( qv[ 0 ] ) != -1 )
       {
+         has_I0se  = true;
          this_I0se = rx_I0se.cap( 1 ).toDouble();
       }
       if ( rx_time.indexIn( qv[ 0 ] ) != -1 )
       {
-         has_time = true;
+         has_time  = true;
          this_time = rx_time.cap( 1 ).toDouble();
+      }
+      if ( rx_extc.indexIn( qv[ 0 ] ) != -1 )
+      {
+         has_extc  = true;
+         this_extc = rx_extc.cap( 1 ).toDouble();
       }
    }
 
@@ -2501,13 +2538,21 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
       vector < double > tmp;
       f_gaussians  [ basename ] = tmp;
    }
-   f_conc       [ basename ] = this_conc;
-   f_psv        [ basename ] = this_psv;
-   f_I0se       [ basename ] = this_I0se;
-   if ( has_time )
-   {
-      f_time       [ basename ] = this_time;
+   if ( has_conc ) {
+      f_conc       [ basename ] = this_conc;
    }
+   if ( has_psv ) {
+      f_psv        [ basename ] = this_psv;
+   }
+   if ( has_I0se ) {
+      f_I0se       [ basename ] = this_I0se;
+   }
+   if ( has_time ) {
+      f_time       [ basename ] = this_time;
+   }      
+   if ( has_extc ) {
+      f_extc       [ basename ] = this_extc;
+   }      
    return true;
 }
 
@@ -5101,15 +5146,69 @@ void US_Hydrodyn_Saxs_Hplc::view()
 {
    int dsp_count = 0;
 
+   if ( all_selected_files().count() > 5 ) {
+         switch ( QMessageBox::question(this, 
+                                        this->windowTitle() + us_tr(": View selected" ),
+                                        QString( us_tr( "There are %1 files selected\n"
+                                                        "Do you really want to open up %2 windows to view them all?" ) )
+                                        .arg( all_selected_files().count() ),
+                                        us_tr( "&Yes, view them all" ), 
+                                        us_tr( "&Cancel" ),
+                                        QString::null,
+                                        1, // Stop == button 0
+                                        1 // Escape == button 0
+                                        ) )
+         {
+         case 0 : // Yes
+            break;
+         case 1 : // no
+         default : // no
+            return;
+            break;
+         }  
+   }
+
    for ( int i = 0; i < lb_files->count(); i++ )
    {
       if ( lb_files->item( i )->isSelected() )
       {
          QString file = lb_files->item( i )->text();
 
+         // if ( created_files_not_saved.count( file ) ) {
+         //    QTextStream( stdout ) << QString( "::view %1 created_not_saved true\n").arg( file );
+         // } else {
+         //    QTextStream( stdout ) << QString( "::view %1 created_not_saved false\n").arg( file );
+         // }
+            
          QString text;
 
-         text += QString( us_tr( "US-SOMO Hplc output: %1\n" ) ).arg( file );
+         {
+            update_csv_conc();
+            map < QString, double > concs = current_concs();
+
+            QString use_conc;
+            if ( concs.count( file ) && concs[ file ] != 0e0 )
+            {
+               use_conc = QString( " Conc:%1" ).arg( concs[ file ] );
+            } else {
+               if ( f_conc.count( file ) && f_conc[ file ] != 0e0 ) 
+               {
+                  use_conc = QString( " Conc:%1" ).arg( f_conc[ file ] );
+               }
+            }
+
+            text += QString( windowTitle() + us_tr( " %1data: %2 Units:1/a%3%4%5%6%7%8\n" ) )
+               .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
+               .arg( file )
+               .arg( f_psv .count( file ) ? QString( " PSV:%1"  ).arg( f_psv [ file ] ) : QString( "" ) )
+               .arg( f_I0se.count( file ) ? QString( " I0se:%1" ).arg( f_I0se[ file ] ) : QString( "" ) )
+               .arg( use_conc ) // f_conc.count( file ) ? QString( " Conc:%1" ).arg( f_conc[ file ] ) : QString( "" ) )
+               .arg( f_extc.count( file ) ? QString( " ExtC_or_DRIinc:%1" ).arg( f_extc[ file ] ) : QString( "" ) )
+               .arg( f_time.count( file ) ? QString( " Time:%1" ).arg( f_time[ file ] ) : QString( "" ) )
+               .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
+               ;
+         }            
+         // text += QString( us_tr( "US-SOMO Hplc output: %1\n" ) ).arg( file );
 
          bool use_errors = ( f_errors.count( file ) && 
                              f_errors[ file ].size() > 0 );
@@ -5137,23 +5236,6 @@ void US_Hydrodyn_Saxs_Hplc::view()
             }
          }
 
-#if QT_VERSION < 0x040000
-         TextEdit *edit;
-         edit = new TextEdit( this, qPrintable( file ) );
-         edit->setFont    ( QFont( "Courier" ) );
-         edit->setPalette ( PALET_NORMAL );
-         AUTFBACK( edit );
-         edit->setGeometry( global_Xpos + 30, global_Ypos + 30, 685, 600 );
-         // edit->setTitle( file );
-         if ( QFile::exists( file + ".dat" ) )
-         {
-            edit->load( file + ".dat", file );
-         } else {
-            edit->load_text( text );
-         }
-         //   edit->setTextFormat( PlainText );
-         edit->show();
-#else
          US3i_Editor * edit = new US3i_Editor( US3i_Editor::DEFAULT, true, QString(), this );
          edit->setWindowTitle( file );
          edit->resize( 685, 700 );
@@ -5165,7 +5247,6 @@ void US_Hydrodyn_Saxs_Hplc::view()
                                   US3i_GuiSettings::fontSize() ) );
          edit->e->setText( text );
          edit->show();
-#endif
       }
    }
 }

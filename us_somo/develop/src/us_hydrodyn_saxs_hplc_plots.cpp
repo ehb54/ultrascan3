@@ -590,7 +590,7 @@ void US_Hydrodyn_Saxs_Hplc::plot_errors_jump_markers()
 }
 
 void US_Hydrodyn_Saxs_Hplc::resize_plots() {
-   qDebug() << "hplc::resize_plots()";
+   // qDebug() << "hplc::resize_plots()";
    plot_dist->enableAxis( QwtPlot::xBottom, !plot_errors->isVisible() );
    if ( plot_errors->isVisible() ) {
       vbl_plot_group->setStretchFactor( qs_plots, 80 );

@@ -1722,7 +1722,7 @@ void US_Hydrodyn_Saxs::do_rescale_y() {
 }
 
 void US_Hydrodyn_Saxs::resid_resized() {
-   qDebug() << "resid_resized";
+   // qDebug() << "resid_resized";
    plot_resid->setMaximumHeight( (int) ( 0.2 * ( plot_resid->height() + plot_saxs->height() ) ) );
    plot_resid->replot();
 }

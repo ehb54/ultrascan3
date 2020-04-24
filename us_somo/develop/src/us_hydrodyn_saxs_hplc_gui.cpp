@@ -4815,7 +4815,7 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
    pb_svd                ->setEnabled( false );
    pb_create_i_of_t      ->setEnabled( false );
    pb_create_i_of_q      ->setEnabled( false );
-   pb_load_conc          ->setEnabled( true );
+   pb_load_conc          ->setEnabled( false );
    pb_conc_file          ->setEnabled( false );
    // pb_detector           ->setEnabled( false );
    //    pb_set_hplc           ->setEnabled( false );
