@@ -439,12 +439,14 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    cb_guinier_use_standards->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_guinier_use_standards->setPalette( PALET_NORMAL );
    AUTFBACK( cb_guinier_use_standards );
+   cb_guinier_use_standards->setToolTip( us_tr( "<html><head/><body><p>If checked, the 'I0 standard theoretical' below and the 'I0 standard experimental' values (using the Curve specific data or, if not set or zero, from default below) will be used to compute the MW. Otherwise, the curve is already assumed to be properly normalized and no I0 standard or experimental values will be used in computing the MW.</p></body></html>" ) );
 
    lbl_I0_exp = new QLabel(us_tr(" Default I0 standard experimental (a.u.) : "), this);
    lbl_I0_exp->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_I0_exp->setPalette( PALET_LABEL );
    AUTFBACK( lbl_I0_exp );
    lbl_I0_exp->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+   lbl_I0_exp->setToolTip( us_tr( "<html><head/><body><p>Note: Only used if the curve specific I0 standard experimental value is not set or is zero *and* the 'Use I0 standards for normalization' checkbox above is set.</p></body></html>" ) );
 
    le_I0_exp = new QLineEdit(this);
    le_I0_exp->setValidator( new QDoubleValidator( le_I0_exp ) );
@@ -454,12 +456,14 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    le_I0_exp->setPalette( PALET_NORMAL );
    AUTFBACK( le_I0_exp );
    connect(le_I0_exp, SIGNAL( textChanged( const QString & )), SLOT(update_I0_exp( const QString &)));
+   le_I0_exp->setToolTip( us_tr( "<html><head/><body><p>Note: Only used if the curve specific I0 standard experimental value is not set or is zero *and* the 'Use I0 standards for normalization' checkbox above is set.</p></body></html>" ) );
 
    lbl_I0_theo = new QLabel(us_tr(" I0 standard theoretical (cm^-1) : "), this);
    lbl_I0_theo->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_I0_theo->setPalette( PALET_LABEL );
    AUTFBACK( lbl_I0_theo );
    lbl_I0_theo->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+   lbl_I0_theo->setToolTip( us_tr( "<html><head/><body><p>Note: Only used if 'Use I0 standards for normalization' checkbox above is set.</p></body></html>" ) );
 
    le_I0_theo = new QLineEdit(this);
    le_I0_theo->setValidator( new QDoubleValidator( le_I0_theo ) );
@@ -469,6 +473,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    le_I0_theo->setPalette( PALET_NORMAL );
    AUTFBACK( le_I0_theo );
    connect(le_I0_theo, SIGNAL( textChanged( const QString & )), SLOT(update_I0_theo( const QString &)));
+   le_I0_theo->setToolTip( us_tr( "<html><head/><body><p>Note: Only used if 'Use I0 standards for normalization' checkbox above is set.</p></body></html>" ) );
 
    pb_guinier = new QPushButton(us_tr("Process Guinier"), this);
    pb_guinier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
