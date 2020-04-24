@@ -290,6 +290,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    lbl_conc->setPalette( PALET_LABEL );
    AUTFBACK( lbl_conc );
    lbl_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+   lbl_conc->setToolTip( us_tr( "<html><head/><body><p>Note: This value is used when the SAS curve does not have stored values.</p><p>You can change them by using the 'Set Curve concentration, PSV, I0 standard experimental' button above.</body></html>" ) );
 
    le_conc = new QLineEdit(this);
    le_conc->setValidator( new QDoubleValidator( le_conc ) );
@@ -299,12 +300,14 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    le_conc->setPalette( PALET_NORMAL );
    AUTFBACK( le_conc );
    connect(le_conc, SIGNAL( textChanged( const QString & )), SLOT(update_conc( const QString &)));
+   le_conc->setToolTip( us_tr( "<html><head/><body><p>Note: This value is used when the SAS curve does not have stored values.</p><p>You can change them by using the 'Set Curve concentration, PSV, I0 standard experimental' button above.</body></html>" ) );
 
    lbl_psv = new QLabel( us_tr(" Default partial specific volume (ml/g): "), this);
    lbl_psv->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_psv->setPalette( PALET_LABEL );
    AUTFBACK( lbl_psv );
    lbl_psv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+   lbl_psv->setToolTip( us_tr( "<html><head/><body><p>Note: This value is used when the SAS curve does not have stored values.</p><p>You can change them by using the 'Set Curve concentration, PSV, I0 standard experimental' button above.</body></html>" ) );
 
    le_psv = new QLineEdit(this);
    le_psv->setValidator( new QDoubleValidator( le_psv ) );
@@ -314,6 +317,24 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    le_psv->setPalette( PALET_NORMAL );
    AUTFBACK( le_psv );
    connect(le_psv, SIGNAL( textChanged( const QString & )), SLOT(update_psv( const QString &)));
+   le_psv->setToolTip( us_tr( "<html><head/><body><p>Note: This value is used when the SAS curve does not have stored values.</p><p>You can change them by using the 'Set Curve concentration, PSV, I0 standard experimental' button above.</body></html>" ) );
+
+   lbl_I0_exp = new QLabel(us_tr(" Default I0 standard experimental (a.u.) : "), this);
+   lbl_I0_exp->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_I0_exp->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_I0_exp );
+   lbl_I0_exp->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+   lbl_I0_exp->setToolTip( us_tr( "<html><head/><body><p>Note: This value is used when the SAS curve does not have stored values.</p><p>You can change them by using the 'Set Curve concentration, PSV, I0 standard experimental' button above.</body></html>" ) );
+
+   le_I0_exp = new QLineEdit(this);
+   le_I0_exp->setValidator( new QDoubleValidator( le_I0_exp ) );
+   le_I0_exp->setText( QString( "%1" ).arg( (*saxs_options).I0_exp ) );
+   le_I0_exp->setEnabled(true);
+   le_I0_exp->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_I0_exp->setPalette( PALET_NORMAL );
+   AUTFBACK( le_I0_exp );
+   connect(le_I0_exp, SIGNAL( textChanged( const QString & )), SLOT(update_I0_exp( const QString &)));
+   le_I0_exp->setToolTip( us_tr( "<html><head/><body><p>Note: This value is used when the SAS curve does not have stored values.</p><p>You can change them by using the 'Set Curve concentration, PSV, I0 standard experimental' button above.</body></html>" ) );
 
    cb_use_cs_psv = new QCheckBox(this);
    cb_use_cs_psv->setText( us_tr(" Partial specific volume override for CS (ml/g): ") );
@@ -439,24 +460,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    cb_guinier_use_standards->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_guinier_use_standards->setPalette( PALET_NORMAL );
    AUTFBACK( cb_guinier_use_standards );
-   cb_guinier_use_standards->setToolTip( us_tr( "<html><head/><body><p>If checked, the 'I0 standard theoretical' below and the 'I0 standard experimental' values (using the Curve specific data or, if not set or zero, from default below) will be used to compute the MW. Otherwise, the curve is already assumed to be properly normalized and no I0 standard or experimental values will be used in computing the MW.</p></body></html>" ) );
-
-   lbl_I0_exp = new QLabel(us_tr(" Default I0 standard experimental (a.u.) : "), this);
-   lbl_I0_exp->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_I0_exp->setPalette( PALET_LABEL );
-   AUTFBACK( lbl_I0_exp );
-   lbl_I0_exp->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
-   lbl_I0_exp->setToolTip( us_tr( "<html><head/><body><p>Note: Only used if the curve specific I0 standard experimental value is not set or is zero *and* the 'Use I0 standards for normalization' checkbox above is set.</p></body></html>" ) );
-
-   le_I0_exp = new QLineEdit(this);
-   le_I0_exp->setValidator( new QDoubleValidator( le_I0_exp ) );
-   le_I0_exp->setText( QString( "%1" ).arg( (*saxs_options).I0_exp ) );
-   le_I0_exp->setEnabled(true);
-   le_I0_exp->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   le_I0_exp->setPalette( PALET_NORMAL );
-   AUTFBACK( le_I0_exp );
-   connect(le_I0_exp, SIGNAL( textChanged( const QString & )), SLOT(update_I0_exp( const QString &)));
-   le_I0_exp->setToolTip( us_tr( "<html><head/><body><p>Note: Only used if the curve specific I0 standard experimental value is not set or is zero *and* the 'Use I0 standards for normalization' checkbox above is set.</p></body></html>" ) );
+   cb_guinier_use_standards->setToolTip( us_tr( "<html><head/><body><p>If checked, the 'I0 standard theoretical' below and the curve's 'I0 standard experimental' values will be used to compute the MW. Otherwise, the curve is already assumed to be properly normalized.</p></body></html>" ) );
 
    lbl_I0_theo = new QLabel(us_tr(" I0 standard theoretical (cm^-1) : "), this);
    lbl_I0_theo->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -595,6 +599,10 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
       rightside->addWidget(le_psv, j, 1);
       j++;
 
+      rightside->addWidget(lbl_I0_exp, j, 0);
+      rightside->addWidget(le_I0_exp, j, 1);
+      j++;
+
       rightside->addWidget(cb_use_cs_psv, j, 0);
       rightside->addWidget(le_cs_psv, j, 1);
       j++;
@@ -612,10 +620,6 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
       j++;
 
       rightside->addWidget( cb_guinier_use_standards , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
-      j++;
-
-      rightside->addWidget(lbl_I0_exp, j, 0);
-      rightside->addWidget(le_I0_exp, j, 1);
       j++;
 
       rightside->addWidget(lbl_I0_theo, j, 0);
