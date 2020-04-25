@@ -55,7 +55,7 @@ DialBox::DialBox( QWidget *parent ):
     d_label->setAlignment( Qt::AlignCenter );
     d_label->setStyleSheet("font: bold;color: black;");
     
-    QVBoxLayout *layout = new QVBoxLayout( this );;
+    QVBoxLayout *layout = new QVBoxLayout( this );
     layout->setSpacing( 0 );
     layout->addWidget( d_dial, 15 );
     layout->addWidget( d_label );
@@ -147,9 +147,9 @@ void SpeedoMeter::drawScaleContents( QPainter *painter,
 // END of Speedometer calss
 
 // WheelBox
-WheelBox::WheelBox( Qt::Orientation orientation, QWidget *parent ): QWidget( parent )
+WheelBox::WheelBox( Qt::Orientation orientation, double minv, double maxv, QString label, QWidget *parent ): QWidget( parent )
 {
-    QWidget *box = createBox( orientation );
+    QWidget *box = createBox( orientation, minv, maxv );
     d_label = new QLabel( this );
     d_label->setAlignment( Qt::AlignHCenter | Qt::AlignTop );
     d_label->setStyleSheet("font: bold;color: black;");
@@ -160,10 +160,10 @@ WheelBox::WheelBox( Qt::Orientation orientation, QWidget *parent ): QWidget( par
 
     //connect( d_thermo, SIGNAL( valueChanged( double ) ), this, SLOT( setNum( double ) ) );
     
-    setNum( d_thermo->value() );
+    setNum( d_thermo->value(), label );
 }
 
-QWidget *WheelBox::createBox( Qt::Orientation orientation ) 
+QWidget *WheelBox::createBox( Qt::Orientation orientation, double minv, double maxv ) 
 {
     d_thermo = new QwtThermo();
     d_thermo->setOrientation( orientation );
@@ -174,8 +174,8 @@ QWidget *WheelBox::createBox( Qt::Orientation orientation )
     colorMap->setColorInterval( Qt::blue, Qt::red );
     d_thermo->setColorMap( colorMap );
 
-    double min = 0;
-    double max = 40;
+    double min = minv;
+    double max = maxv;
 
     d_thermo->setScale( min, max );
     d_thermo->setValue( min );
@@ -189,21 +189,26 @@ QWidget *WheelBox::createBox( Qt::Orientation orientation )
     return box;
 }
 
-void WheelBox::setTemp( double v )
+void WheelBox::setTemp( double v, QString label )
 {
   qDebug() << "Setting Temperature!!! Value: " << v ;
   d_thermo->setValue( v );
 
-  setNum( v );
+  setNum( v, label );
 }
 
-void WheelBox::setNum( double v )
+void WheelBox::setNum( double v, QString label )
 {
-  
+    //text = "Temp.: " + QString::number( v, 'f', 1 ) + QChar(0x2103);
+    QStringList labellist = label.split(",");
+   
     QString text;
-    //text.setNum( v, 'f', 2 );
-
-    text = "Temp.: " + QString::number( v, 'f', 1 ) + QChar(0x2103);
+    text = labellist[0] + " ";
+    if ( labellist[0].contains("Temp") )
+      text += QString::number( v, 'f', 1 ) + labellist[1];
+    else
+      text += QString::number( static_cast<int>(v) );
+    
     d_label->setText( text );
 }
 
@@ -214,6 +219,7 @@ void WheelBox::setNum( double v )
 US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
 {
    const QChar chlamb( 955 );
+   const QChar chomega( 969 );
 
    setWindowTitle( tr( "Beckman Optima Data Viewer" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -361,16 +367,28 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
 
 
    // Status and standard pushbuttons
-   QLabel*      lb_status   = us_banner( tr( "Status" ) );
-   lb_status->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
-                le_status   = us_lineedit( tr( "(no data loaded)" ), -1, true );
+   //QLabel*      lb_status   = us_banner( tr( "Status" ) );
+   //lb_status->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+   le_status   = us_lineedit( tr( "(no data loaded)" ), -1, true );
+
    QPalette stpal;
    stpal.setColor( QPalette::Text, Qt::white );
    stpal.setColor( QPalette::Base, Qt::blue  );
    le_status->setPalette( stpal );
 
+   QLabel* lb_stage = us_label( tr( "Current Stage:" ), -1 );
+   le_stage = us_lineedit( tr( "" ), -1, true  );
+
+   QLabel* lb_totscans = us_label( tr( "Total #scans:" ), -1 );
+   le_totscans = us_lineedit( tr( "" ), -1, true  );
+
+   QLabel* lb_omega2T = us_label( tr( "%1<sup>2</sup> T:"   ).arg( chomega ), -1 );
+   le_omega2T = us_lineedit( tr( "" ), -1, true  );   
+   
    QPushButton* pb_help     = us_pushbutton( tr( "Help" ) );
    QPushButton* pb_close    = us_pushbutton( tr( "Close" ) );
+
+   pb_skip_stage = us_pushbutton( tr( "Skip Stage" ) );
 
    pb_stop =  us_pushbutton( tr( "STOP" ) );
    pb_stop->setStyleSheet("font: bold;color: red;");
@@ -381,6 +399,7 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
    if ( auto_mode.toStdString() == "AUTO")
      {
        pb_close->hide();
+       pb_help->hide();
        
        // Hide Load controls 
        lb_run     ->hide();
@@ -483,6 +502,12 @@ if(mcknt>0)
    connect( pb_close,     SIGNAL( clicked()  ),
             this,         SLOT  ( close()    ) );
 
+   // STOP && Skip stage: sys_server commands 
+   connect( pb_stop,      SIGNAL( clicked()  ),
+	    this,         SLOT  ( stop_optima()  ) );
+   connect( pb_skip_stage,SIGNAL( clicked()  ),
+	    this,         SLOT  ( skip_optima_stage()  ) );
+
    // Do the left-side layout
    int row = 0;
    settings->addWidget( lb_run,        row++, 0, 1, 8 );
@@ -518,9 +543,18 @@ if(mcknt>0)
    settings->addWidget( pb_prev,       row,   4, 1, 2 );
    settings->addWidget( pb_next,       row++, 6, 1, 2 );
 
-   settings->addWidget( lb_status,     row,   0, 1, 4 );
-   settings->addWidget( pb_stop,       row,   4, 1, 2 );
-   settings->addWidget( pb_help,       row++, 6, 1, 2 );
+   //settings->addWidget( lb_status,     row,   0, 1, 4 );
+   settings->addWidget( lb_stage,      row,   0, 1, 2 );
+   settings->addWidget( le_stage,      row,   2, 1, 2 );
+   settings->addWidget( pb_skip_stage, row,   4, 1, 2 );
+   settings->addWidget( pb_stop,       row++, 6, 1, 2 );
+   //settings->addWidget( pb_help,       row++, 6, 1, 2 );
+
+   settings->addWidget( lb_totscans,   row,   0, 1, 2 );
+   settings->addWidget( le_totscans,   row,   2, 1, 2 );
+   settings->addWidget( lb_omega2T,    row,   4, 1, 2 );
+   settings->addWidget( le_omega2T,    row++, 6, 1, 2 );  
+   
    
    settings->addWidget( ck_autoscy,    row,   0, 1, 4 );
    settings->addWidget( pb_showtmst,   row++, 4, 1, 4 );
@@ -568,9 +602,14 @@ if(mcknt>0)
    rpm_box = new DialBox( this );
    live_params->addWidget( rpm_box, row_params, 0, 1, 6 );
 
-   temperature_box = new WheelBox( Qt::Vertical  );  // Blue/Red box
-   live_params->addWidget( temperature_box, row_params++, 6, 1, 2 );
+   temp_label = QString("Temp.:,") + QChar(0x2103);
+   temperature_box = new WheelBox( Qt::Vertical, 0, 40, temp_label );  // Blue/Red box
+   live_params->addWidget( temperature_box, row_params, 6, 1, 3 );
 
+   vacuum_label = QString("Vacuum:,");
+   vacuum_box = new WheelBox( Qt::Vertical, 0, 5000, vacuum_label  );  // Blue/Red box
+   live_params->addWidget( vacuum_box, row_params++, 9, 1, 3 );
+   
    QLabel*      lb_elapsed     = us_label( tr( "Elapsed Time:" ), -1 );
                 le_elapsed     = us_lineedit( "00:00:00", -1, true );
    QLabel*      lb_running     = us_label( tr( "Running Time:" ), -1 );
@@ -606,8 +645,8 @@ if(mcknt>0)
    main->addLayout( left );
    main->addLayout( right );
 
-   main->setStretch( 0, 3 );
-   main->setStretch( 1, 7 );
+   main->setStretch( 0, 4 );
+   main->setStretch( 1, 6 );
      
    // //Plots for Temp.
    // plot_temp             = new US_Plot( data_plot_temp, "", "", QString("Degrees, ")+QChar(0x2103));
@@ -760,7 +799,7 @@ if(mcknt>0)
    // protocol_details[ "duration" ]   = QString("43200");
 
    
-   //  check_for_data( protocol_details );
+   // check_for_data( protocol_details );
    // End of test
 
    //Connect to syste data server 
@@ -1264,7 +1303,9 @@ void US_XpnDataViewer::reset_auto( void )
    
    //RPM/Temp.
    rpm_box->setSpeed(0);
-   temperature_box->setTemp(0);
+   temperature_box->setTemp(0, temp_label);
+   vacuum_box->setTemp(0, vacuum_label);
+   
    //times
    le_elapsed  ->setText("00:00:00");
    le_remaining->setText("00:00:00");
@@ -1682,7 +1723,9 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
       timer_all_data_avail->start(40000);     // 40 sec
 
       //Somewhere here start sys_server (instead of timer_check_sysdata - BUT move to sys_thread)
+      qDebug() << "CONNECTING TO SERVER: " << xpnhost << xpnmsgPort.toInt() ;
       link->connectToServer( xpnhost, xpnmsgPort.toInt() );
+      
       
       timer_check_sysdata->setInterval(3000);
       timer_check_sysdata->moveToThread(sys_thread);
@@ -1862,6 +1905,60 @@ void US_XpnDataViewer::updateautoflow_record_atLiveUpdate( void )
    //   }
 }
    
+//Stop machine
+void US_XpnDataViewer::stop_optima( void )
+{
+  QMessageBox msgBox;
+  msgBox.setText(tr("\nYou are about to STOP Optima machine! \n\n")
+		 + tr("Do you want to proceed ?\n") );
+  msgBox.setInformativeText("<font color='red'><b>NOTE:</b> if stopped, ongoing experiment will be abortded! </font>");
+  
+  msgBox.setWindowTitle(tr("Confirm Optima Experiment Aboriton"));
+
+  QPushButton *Accept    = msgBox.addButton(tr("YES"), QMessageBox::YesRole);
+  QPushButton *Cancel    = msgBox.addButton(tr("Canlel"), QMessageBox::RejectRole);
+
+  msgBox.setIcon(QMessageBox::Question);
+  msgBox.exec();
+  
+  if (msgBox.clickedButton() == Accept) {
+    qDebug() << "STOPPING Optima...";
+    link->stopOptima();
+
+    // And switch
+    // Do we need to do anything ??
+    // IF status "0", it will switch to IMPORT and will ask what to do with data
+    // IF status "0" && no data collected yet - what then ? Needs testing...
+    // **************  if ( link->tot_scans.toInt() == 0 ) ??? 
+    
+  }
+  else if (msgBox.clickedButton() == Cancel){
+    return;
+  }
+}
+
+//skip stage
+void US_XpnDataViewer::skip_optima_stage( void )
+{
+    QMessageBox msgBox;
+    msgBox.setText(tr("You are about to SKIP the current experiment stage."));
+    msgBox.setInformativeText( tr( "Do you want to proceed ?" ));
+    msgBox.setWindowTitle(tr("Confirm Stage Skipping"));
+    
+    QPushButton *Accept    = msgBox.addButton(tr("YES"), QMessageBox::YesRole);
+    QPushButton *Cancel    = msgBox.addButton(tr("Canlel"), QMessageBox::RejectRole);
+
+    msgBox.setIcon(QMessageBox::Question);
+    msgBox.exec();
+    
+    if (msgBox.clickedButton() == Accept) {
+      qDebug() << "SKIPPING EXP. STAGE...";
+      link->skipOptimaStage();
+    }
+    else if (msgBox.clickedButton() == Cancel){
+      return;
+    }
+}
 
 // Check periodically for SysData
 void US_XpnDataViewer::check_for_sysdata( void )
@@ -1879,9 +1976,13 @@ void US_XpnDataViewer::check_for_sysdata( void )
   //xpn_data->update_isysrec( idrun );
 
   int exp_time = 0;
-  double temperature=0;
-  int rpm;
-  int omega2T;
+  double temperature = 0;
+  int rpm = 0;
+  QString omega2T = 0;
+  int vacuum = 0;
+  int totscans = 0;
+  int runningscans = 0;
+  int current_stage = 0;
 
   // while ( temperature == 0 ) // what if the temperature is actually set to zero degrees?
   // {
@@ -1897,16 +1998,33 @@ void US_XpnDataViewer::check_for_sysdata( void )
   exp_time    = link->elapsedTime.toInt(); 
   temperature = link->temperature.toDouble(); 
   rpm         = link->rpm.toInt();
-  omega2T     = link->omega2T.toInt();
+  omega2T     = link->omega2T;
+  vacuum      = link->vacuum.toInt();
+  totscans    = link->tot_scans.toInt();
+  runningscans= link->running_scans.toInt();
+  current_stage = link->current_stage.toInt();
 
   // Update rmp, temperature GUI icons...
   //RPM speed
   double rpm_for_meter = double(rpm/1000.0);
   rpm_box->setSpeed(rpm_for_meter);
-  //qApp->processEvents();
-  
+   
   //Temperature
-  temperature_box->setTemp(temperature);
+  temperature_box->setTemp(temperature, temp_label);
+
+  //Vaccum
+  vacuum_box->setTemp(vacuum, vacuum_label);
+  
+  //Total Scans
+  QString scans_msg = QString::number( runningscans )  + " (of " +  QString::number( totscans ) + ")";
+  le_totscans->setText( scans_msg );
+
+  //Cerrent Stage
+  le_stage -> setText( QString::number( current_stage ));
+
+  //Omega2T
+  le_omega2T -> setText( omega2T );
+  
   //qApp->processEvents();
   
   //Running Time
@@ -2163,7 +2281,6 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
 
   //link->connectToServer( xpnhost, xpnmsgPort.toInt() );
   link = new Link;
-  
   
   //ALEXEY: just define all QTimers here for later safe stopping
   timer_all_data_avail = new QTimer;

@@ -12,10 +12,17 @@ public:
 	void connectToServer(const QString&, const int);
 	void disconnectFromServer( void );
 
+	void stopOptima( void );
+	void skipOptimaStage( void );
+
 	QString elapsedTime;
 	QString temperature;
 	QString rpm;
 	QString omega2T;
+	QString vacuum;
+	QString current_stage;
+	QString tot_scans;
+	QString running_scans;
 
 private:
 	QSslSocket server;

@@ -37,6 +37,28 @@ void Link::connectToServer( const QString& host, const int port )
   }
 }
 
+void Link::stopOptima( void )
+{
+  if (server.waitForEncrypted(3000)) {
+    server.write("9\n");
+  }
+  else {
+    qDebug("Unable to connect to server");
+    exit(0);
+  }
+}
+
+void Link::skipOptimaStage( void )
+{
+  if (server.waitForEncrypted(3000)) {
+    server.write("6\n");
+  }
+  else {
+    qDebug("Unable to connect to server");
+    exit(0);
+  }
+}
+
 void Link::disconnectFromServer( void  )
 {
   server.disconnectFromHost();
@@ -66,6 +88,11 @@ void Link::rx(void)
   omega2T     = rootObj["omega2T"].toString();
   rpm         = rootObj["speed"].toString();
   temperature = rootObj["temperature"].toString();
+  vacuum      = rootObj["vacuum"].toString();
+  current_stage = rootObj["stage"].toString().split("/")[0];
+  running_scans   = rootObj["Running scan"].toString();
+  tot_scans   = rootObj["Total scans"].toString();
+  
   
   //qDebug() << rootObj["elapsedTime"].toString() << rootObj["omega2T"].toString() << rootObj["speed"].toString() << rootObj["temperature"].toString();
 	

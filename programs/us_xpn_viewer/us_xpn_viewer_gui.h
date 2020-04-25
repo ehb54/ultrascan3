@@ -70,14 +70,14 @@ class WheelBox: public QWidget
 {
     Q_OBJECT
 public:
-    WheelBox( Qt::Orientation, QWidget *parent = NULL );
-    void setTemp( double );
+    WheelBox( Qt::Orientation, double, double, QString, QWidget *parent = NULL );
+    void setTemp( double, QString);
     
 private Q_SLOTS:
-    void setNum( double v );
+  void setNum( double, QString );
 
 private:
-    QWidget *createBox( Qt::Orientation  );
+    QWidget *createBox( Qt::Orientation, double minv, double maxv );
 private:
     QwtThermo *d_thermo;
     QLabel *d_label;
@@ -123,7 +123,11 @@ class US_XpnDataViewer : public US_Widgets
      SpeedoMeter*   rpm_speed;
      DialBox*       rpm_box;
      WheelBox*      temperature_box;
+     WheelBox*      vacuum_box;
 
+     QString        temp_label;
+     QString        vacuum_label;
+     
      US_XpnData*    xpn_data;       //!< Raw XPN (.postres) data loaded
 
      QStringList    runInfo;        //!< List of run information strings
@@ -183,7 +187,12 @@ class US_XpnDataViewer : public US_Widgets
      QPushButton*   pb_reload;
      QPushButton*   pb_colmap;
 
+     QLineEdit*     le_stage;
+     QPushButton*   pb_skip_stage;
      QPushButton*   pb_stop;
+
+     QLineEdit*     le_totscans;
+     QLineEdit*     le_omega2T;
 
      QwtPlot*       data_plot;
      QwtPlotGrid*   grid;
@@ -323,6 +332,10 @@ class US_XpnDataViewer : public US_Widgets
      void   reset          ( void );
      void   reset_auto     ( void );
      void   load_xpn_raw   ( void );
+
+     //Sys_server
+     void   stop_optima( void );
+     void   skip_optima_stage( void );
 
      //QMap <QString, QString> returnSelectedInstrument( US_DB2* = 0 );
      bool   load_xpn_raw_auto   ( void );
