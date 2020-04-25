@@ -1227,6 +1227,10 @@ void US_XpnDataViewer::reset( void )
 void US_XpnDataViewer::reset_auto( void )
 {
   link->disconnectFromServer();
+
+   le_stage   ->setText("");
+   le_omega2T ->setText("");
+   le_totscans ->setText("");
   
    runID         = "";
    currentDir    = US_Settings::importDir() + "/" + runID;
