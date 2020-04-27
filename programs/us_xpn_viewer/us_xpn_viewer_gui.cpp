@@ -379,7 +379,7 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
    QLabel* lb_stage = us_label( tr( "Current Stage:" ), -1 );
    le_stage = us_lineedit( tr( "" ), -1, true  );
 
-   QLabel* lb_totscans = us_label( tr( "Total #scans:" ), -1 );
+   QLabel* lb_totscans = us_label( tr( "Collected #scans:" ), -1 );
    le_totscans = us_lineedit( tr( "" ), -1, true  );
 
    QLabel* lb_omega2T = us_label( tr( "%1<sup>2</sup> T:"   ).arg( chomega ), -1 );
@@ -1987,6 +1987,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
   int totscans = 0;
   int runningscans = 0;
   int current_stage = 0;
+  int totstage = 0;
 
   // while ( temperature == 0 ) // what if the temperature is actually set to zero degrees?
   // {
@@ -2007,6 +2008,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
   totscans    = link->tot_scans.toInt();
   runningscans= link->running_scans.toInt();
   current_stage = link->current_stage.toInt();
+  totstage    = link->tot_stages.toInt();
 
   // Update rmp, temperature GUI icons...
   //RPM speed
@@ -2024,7 +2026,8 @@ void US_XpnDataViewer::check_for_sysdata( void )
   le_totscans->setText( scans_msg );
 
   //Cerrent Stage
-  le_stage -> setText( QString::number( current_stage ));
+  QString stage_msg = QString::number( current_stage )  + " (of " +  QString::number( totstage ) + ")";
+  le_stage -> setText( stage_msg );
 
   //Omega2T
   le_omega2T -> setText( omega2T );

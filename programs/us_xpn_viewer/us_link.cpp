@@ -90,8 +90,10 @@ void Link::rx(void)
   temperature = rootObj["temperature"].toString();
   vacuum      = rootObj["vacuum"].toString();
   current_stage = rootObj["stage"].toString().split("/")[0];
+  tot_stages  = rootObj["stage"].toString().split("/")[1];
   running_scans   = rootObj["Running scan"].toString();
   tot_scans   = rootObj["Total scans"].toString();
+  
   
   
   //qDebug() << rootObj["elapsedTime"].toString() << rootObj["omega2T"].toString() << rootObj["speed"].toString() << rootObj["temperature"].toString();

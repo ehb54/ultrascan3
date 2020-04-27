@@ -21,6 +21,7 @@ public:
 	QString omega2T;
 	QString vacuum;
 	QString current_stage;
+	QString tot_stages;
 	QString tot_scans;
 	QString running_scans;
 
