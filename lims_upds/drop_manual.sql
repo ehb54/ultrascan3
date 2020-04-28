@@ -1,1 +1,0 @@
-ALTER TABLE buffer DROP COLUMN manual;

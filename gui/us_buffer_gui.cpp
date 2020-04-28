@@ -428,11 +428,12 @@ void US_BufferGuiSelect::info_buffer( void )
                         QString::number( bcomp.visc_coeff[ 4 ] ) + " " +
                         QString::number( bcomp.visc_coeff[ 5 ] );
       QString sgradf  = bcomp.grad_form ? tr( "YES" ) : tr( "no" );
+      QString concen  = QString::number( buffer->concentration[ ii ] );
 
       lines << "  " + tr( "Component index:          " ) + compx;
       lines << "  " + tr( "Component ID:             " ) + bcomp.componentID;
       lines << "  " + tr( "Name:                     " ) + bcomp.name;
-      lines << "  " + tr( "Unit:                     " ) + bcomp.unit;
+      lines << "  " + tr( "Concentration:            " ) + concen + " " + bcomp.unit;
       lines << "  " + tr( "Density Coefficients:     " ) + dcoeffs;
       lines << "  " + tr( "Viscosity Coefficients:   " ) + vcoeffs;
       lines << "  " + tr( "Range:                    " ) + bcomp.range;

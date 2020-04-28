@@ -405,6 +405,7 @@ bool US_Buffer::readFromDB( US_DB2* db, const QString& bufID )
    pH              = db->value( 3 ).toString().toDouble();
    viscosity       = db->value( 4 ).toString().toDouble();
    density         = db->value( 5 ).toString().toDouble();
+   person          = db->value( 7 ).toString();
    int manx        = description.indexOf( "  [M]" );
    if ( manx > 0 )
    {

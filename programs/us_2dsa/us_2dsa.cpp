@@ -564,7 +564,7 @@ void US_2dsa::save( void )
                           .toString( "yyMMddhhmm" );
    QString reqGUID      = US_Util::new_guid();
    QString runID        = edata->runID;
-   QString editID       = edata->editID.startsWith( "20" ) ?
+   QString editID       = ( edata->editID.length() == 12 ) ?
                           edata->editID.mid( 2 ) :
                           edata->editID;
    QString dates        = "e" + editID + "_a" + analysisDate;

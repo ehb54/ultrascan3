@@ -82,12 +82,12 @@ if [ $ISMAC -ne 0 ]; then
   ./somo_appnames.sh
 fi
 
-ls -lrt ./lib ./bin
+ls -lrt ./lib ./bin64
 echo ""
-echo "rsync -av --exclude .svn $SOMO3/lib $us3"
-rsync -av --exclude .svn $SOMO3/lib $us3
-echo "rsync -av --exclude .svn $SOMO3/bin $us3"
-rsync -av --exclude .svn $SOMO3/bin $us3
+echo "rsync -av --exclude .svn $SOMO3/lib/ $us3/lib"
+rsync -av --exclude .svn $SOMO3/lib/ $us3/lib
+echo "rsync -av --exclude .svn $SOMO3/bin64/ $us3/bin"
+rsync -av --exclude .svn $SOMO3/bin64/ $us3/bin
 echo ""
 echo "MAKE of somo complete"
 

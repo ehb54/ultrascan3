@@ -1,3 +1,0 @@
-ALTER TABLE experiment
-  ADD COLUMN RIProfile LONGTEXT NULL
-  AFTER comment;
