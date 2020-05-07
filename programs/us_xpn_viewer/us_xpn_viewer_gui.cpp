@@ -607,7 +607,7 @@ if(mcknt>0)
    live_params->addWidget( temperature_box, row_params, 6, 1, 3 );
 
    vacuum_label = QString("Vacuum:,");
-   vacuum_box = new WheelBox( Qt::Vertical, 0, 5000, vacuum_label  );  // Blue/Red box
+   vacuum_box = new WheelBox( Qt::Vertical, 0, 1500, vacuum_label  );  // Blue/Red box
    live_params->addWidget( vacuum_box, row_params++, 9, 1, 3 );
    
    QLabel*      lb_elapsed     = us_label( tr( "Elapsed Time:" ), -1 );
@@ -1920,7 +1920,7 @@ void US_XpnDataViewer::stop_optima( void )
   msgBox.setWindowTitle(tr("Confirm Optima Experiment Aboriton"));
 
   QPushButton *Accept    = msgBox.addButton(tr("YES"), QMessageBox::YesRole);
-  QPushButton *Cancel    = msgBox.addButton(tr("Canlel"), QMessageBox::RejectRole);
+  QPushButton *Cancel    = msgBox.addButton(tr("Cancel"), QMessageBox::RejectRole);
 
   msgBox.setIcon(QMessageBox::Question);
   msgBox.exec();
@@ -1950,7 +1950,7 @@ void US_XpnDataViewer::skip_optima_stage( void )
     msgBox.setWindowTitle(tr("Confirm Stage Skipping"));
     
     QPushButton *Accept    = msgBox.addButton(tr("YES"), QMessageBox::YesRole);
-    QPushButton *Cancel    = msgBox.addButton(tr("Canlel"), QMessageBox::RejectRole);
+    QPushButton *Cancel    = msgBox.addButton(tr("Cancel"), QMessageBox::RejectRole);
 
     msgBox.setIcon(QMessageBox::Question);
     msgBox.exec();
