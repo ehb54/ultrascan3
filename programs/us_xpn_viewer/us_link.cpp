@@ -13,7 +13,7 @@ Link::Link()
   connect(&server, &QSslSocket::disconnected, this, &Link::serverDisconnect);
   connect(&server, SIGNAL(sslErrors(QList<QSslError>)), this, SLOT(sslErrors(QList<QSslError>)));
 
-  QString certPath = US_Settings::appBaseDir() + QString( "/etc/sys_server/" );
+  QString certPath = US_Settings::etcDir() + QString("/optima/"); //US_Settings::appBaseDir() + QString( "/etc/sys_server/" );
   QString keyFile  = certPath + QString( "client.key" );
   QString pemFile  = certPath + QString( "client.pem" );
   server.setPrivateKey(keyFile, QSsl::Ec );
@@ -28,7 +28,7 @@ void Link::connectToServer( const QString& host, const int port )
 {
   //server.connectToHostEncrypted("142.66.17.6", 8821);
   server.connectToHostEncrypted(host, port);
-  if (server.waitForEncrypted(5000)) {
+  if (server.waitForEncrypted(15000)) {
     server.write("***qsslsocket_client_example sent this nothing command***\n");
   }
   else {
@@ -39,24 +39,26 @@ void Link::connectToServer( const QString& host, const int port )
 
 void Link::stopOptima( void )
 {
-  if (server.waitForEncrypted(3000)) {
-    server.write("9\n");
-  }
-  else {
-    qDebug("Unable to connect to server");
-    exit(0);
-  }
+  server.write("9\n");
+  // if (server.waitForEncrypted(10000)) {
+  //   server.write("9\n");
+  // }
+  // else {
+  //   qDebug("Unable to connect to server");
+  //   //exit(0);
+  // }
 }
 
 void Link::skipOptimaStage( void )
 {
-  if (server.waitForEncrypted(3000)) {
-    server.write("6\n");
-  }
-  else {
-    qDebug("Unable to connect to server");
-    exit(0);
-  }
+  server.write("6\n");
+  // if (server.waitForEncrypted(10000)) {
+  //   server.write("6\n");
+  // }
+  // else {
+  //   qDebug("Unable to connect to server");
+  //   //exit(0);
+  // }
 }
 
 void Link::disconnectFromServer( void  )

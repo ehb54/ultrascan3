@@ -103,7 +103,7 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       qDebug() << "Triple " << i << ": width:  " << triple_curr << ", " << triple_name_width;
 
       if ( triple_name_width > max_width )
-	max_width =  triple_name_width; 
+       	max_width =  triple_name_width; 
 
       topItem [ triple_curr ] = new QTreeWidgetItem();
       topItem [ triple_curr ] -> setText( 0, triple_curr );
