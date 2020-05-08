@@ -70,14 +70,14 @@ class WheelBox: public QWidget
 {
     Q_OBJECT
 public:
-    WheelBox( Qt::Orientation, double, double, QString, QWidget *parent = NULL );
+    WheelBox( Qt::Orientation, double, double, QString, bool, QWidget *parent = NULL );
     void setTemp( double, QString);
     
 private Q_SLOTS:
   void setNum( double, QString );
 
 private:
-    QWidget *createBox( Qt::Orientation, double minv, double maxv );
+  QWidget *createBox( Qt::Orientation, double minv, double maxv, bool log );
 private:
     QwtThermo *d_thermo;
     QLabel *d_label;

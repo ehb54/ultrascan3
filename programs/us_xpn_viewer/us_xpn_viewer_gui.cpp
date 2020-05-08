@@ -147,9 +147,9 @@ void SpeedoMeter::drawScaleContents( QPainter *painter,
 // END of Speedometer calss
 
 // WheelBox
-WheelBox::WheelBox( Qt::Orientation orientation, double minv, double maxv, QString label, QWidget *parent ): QWidget( parent )
+WheelBox::WheelBox( Qt::Orientation orientation, double minv, double maxv, QString label, bool log, QWidget *parent ): QWidget( parent )
 {
-    QWidget *box = createBox( orientation, minv, maxv );
+  QWidget *box = createBox( orientation, minv, maxv, log );
     d_label = new QLabel( this );
     d_label->setAlignment( Qt::AlignHCenter | Qt::AlignTop );
     d_label->setStyleSheet("font: bold;color: black;");
@@ -163,7 +163,7 @@ WheelBox::WheelBox( Qt::Orientation orientation, double minv, double maxv, QStri
     setNum( d_thermo->value(), label );
 }
 
-QWidget *WheelBox::createBox( Qt::Orientation orientation, double minv, double maxv ) 
+QWidget *WheelBox::createBox( Qt::Orientation orientation, double minv, double maxv, bool log ) 
 {
     d_thermo = new QwtThermo();
     d_thermo->setOrientation( orientation );
@@ -177,8 +177,24 @@ QWidget *WheelBox::createBox( Qt::Orientation orientation, double minv, double m
     double min = minv;
     double max = maxv;
 
-    d_thermo->setScale( min, max );
-    d_thermo->setValue( min );
+    if ( log )
+      {
+	QwtLogScaleEngine* scaleengine = new QwtLogScaleEngine;
+	scaleengine->setAttribute(QwtScaleEngine::Floating,true);
+	
+	d_thermo->setScaleMaxMajor( 10 );
+	d_thermo->setScaleMaxMinor( 10 );
+	d_thermo->setScaleEngine( scaleengine );
+	
+	d_thermo->setScale( min + 0.5, max );
+	d_thermo->setValue( min );
+	
+      }
+    else
+      {
+	d_thermo->setScale( min, max );
+	d_thermo->setValue( min );
+      }
 
     QWidget *box = new QWidget();
     QBoxLayout *layout;
@@ -207,7 +223,7 @@ void WheelBox::setNum( double v, QString label )
     if ( labellist[0].contains("Temp") )
       text += QString::number( v, 'f', 1 ) + labellist[1];
     else
-      text += QString::number( static_cast<int>(v) );
+      text += QString::number( static_cast<int>(v) ) + labellist[1];;
     
     d_label->setText( text );
 }
@@ -603,11 +619,11 @@ if(mcknt>0)
    live_params->addWidget( rpm_box, row_params, 0, 1, 6 );
 
    temp_label = QString("Temp.:,") + QChar(0x2103);
-   temperature_box = new WheelBox( Qt::Vertical, 0, 40, temp_label );  // Blue/Red box
+   temperature_box = new WheelBox( Qt::Vertical, 0, 40, temp_label, false );  // Blue/Red box
    live_params->addWidget( temperature_box, row_params, 6, 1, 3 );
 
-   vacuum_label = QString("Vacuum:,");
-   vacuum_box = new WheelBox( Qt::Vertical, 0, 1500, vacuum_label  );  // Blue/Red box
+   vacuum_label = QString("Vacuum:,") + QChar(0x00b5) + QString("m");
+   vacuum_box = new WheelBox( Qt::Vertical, 0, 1500, vacuum_label, true  );  // Blue/Red box
    live_params->addWidget( vacuum_box, row_params++, 9, 1, 3 );
    
    QLabel*      lb_elapsed     = us_label( tr( "Elapsed Time:" ), -1 );
