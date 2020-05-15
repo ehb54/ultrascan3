@@ -26,6 +26,7 @@
 #include "../us_edit/us_select_lambdas.h"
 
 #include "../us_autoflow_analysis/us_autoflow_analysis.h"
+#include "../us_autoflow_reports/us_autoflow_reports.h"
 
 #include "us_protocol_util.h"
 #include "us_project_gui.h"
@@ -130,6 +131,8 @@ class US_InitDialogueGui : public US_WidgetsDialog
      void switch_to_post_processing_init(  QMap < QString, QString > & protocol_details );
      void switch_to_editing_init(  QMap < QString, QString > & protocol_details );
      void switch_to_analysis_init(  QMap < QString, QString > & protocol_details );
+     void switch_to_report_init(  QMap < QString, QString > & protocol_details );
+
 };
 
 
@@ -325,18 +328,20 @@ class US_ReportGui : public US_WidgetsDialog
     US_ReportGui( QWidget* );
     ~US_ReportGui() {};
   
-         
+     US_Reports_auto*     sdiag;
+     
   private:
     US_ComProjectMain*    mainw;      // Parent to all panels
     int offset;
 
  protected:
-    //void resizeEvent(QResizeEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
       
   private slots:
-    
+    void do_report( QMap < QString, QString > & );
 
   signals:
+    void start_report( QMap < QString, QString > & );
 };
 
 
@@ -416,6 +421,8 @@ private slots:
   void switch_to_post_processing( QMap < QString, QString > & );
   void switch_to_editing( QMap < QString, QString > & protocol_details );
   void switch_to_analysis( QMap < QString, QString > & protocol_details );
+  void switch_to_report( QMap < QString, QString > & protocol_details );
+  
     
   //void switch_to_experiment( QString & protocolName );
   //void check_current_stage( void );
@@ -441,6 +448,7 @@ signals:
   void pass_to_post_processing(  QMap < QString, QString > & );
   void pass_to_editing( QMap < QString, QString > & protocol_details );
   void pass_to_analysis( QMap < QString, QString > & protocol_details );
+  void pass_to_report( QMap < QString, QString > & protocol_details );
   
 
   //void clear_experiment( QString & protocolName);

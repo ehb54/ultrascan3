@@ -298,11 +298,11 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
      {
        //ALEXEY: OR enable all tabs ? (e.g. for demonstration, in a read-only mode or the like ?)
        if ( i == 0 ) 
-   	 tabWidget->tabBar()->setTabEnabled(i, true);
+    	 tabWidget->tabBar()->setTabEnabled(i, true);
        else
-   	 tabWidget->tabBar()->setTabEnabled(i, false);
+    	 tabWidget->tabBar()->setTabEnabled(i, false);
      }
-
+   
    connect( tabWidget, SIGNAL( currentChanged( int ) ), this, SLOT( initPanels( int ) ) );
       
    logWidget = us_textedit();
@@ -327,6 +327,8 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( epanInit, SIGNAL( switch_to_post_processing_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & )  ) );
    connect( epanInit, SIGNAL( switch_to_editing_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_editing( QMap < QString, QString > & )  ) );
    connect( epanInit, SIGNAL( switch_to_analysis_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_analysis( QMap < QString, QString > & )  ) );
+   connect( epanInit, SIGNAL( switch_to_report_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_report( QMap < QString, QString > & )  ) );
+   
          
    connect( this, SIGNAL( pass_used_instruments( QStringList & ) ), epanExp, SLOT( pass_used_instruments( QStringList &)  ) );
    
@@ -352,6 +354,9 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( epanEditing, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
 
    connect( epanAnalysis, SIGNAL( processes_stopped() ), this, SLOT( analysis_update_stopped() ));
+
+
+   connect( this, SIGNAL( pass_to_report( QMap < QString, QString > & ) ),   epanReport, SLOT( do_report( QMap < QString, QString > & )  ) );
    
    setMinimumSize( QSize( 1350, 800 ) );
    adjustSize();
@@ -429,6 +434,12 @@ void US_ComProjectMain::initPanels( int  panx )
 
 	  return;
 	}
+
+      if ( curr_panx == 6 )
+	{
+	  qDebug() << "Jumping from Report.";
+	  //emit reset_data_editing();
+	}      
       
       xpn_viewer_closed_soft = false;
       epanInit  ->initAutoflowPanel();
@@ -853,6 +864,30 @@ void US_ComProjectMain::switch_to_analysis( QMap < QString, QString > & protocol
    emit pass_to_analysis( protocol_details );
 }
 
+
+// Slot to switch to Report tab
+void US_ComProjectMain::switch_to_report( QMap < QString, QString > & protocol_details )
+{
+   tabWidget->setCurrentIndex( 6 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
+   curr_panx = 6;
+
+   // ALEXEY: Temporariy NOT lock here... Will need later
+   
+   for (int i = 1; i < tabWidget->count(); ++i )
+     {
+       if ( i == 6 )
+	 tabWidget->tabBar()->setTabEnabled(i, true);
+      else
+	tabWidget->tabBar()->setTabEnabled(i, false);
+     }
+   
+
+   // ALEXEY: Make a record to 'autoflow' table: stage# = 4; 
+
+   emit pass_to_report( protocol_details );
+}
+
+
 // Function to Call initiation of the Autoflow Record Dialogue form _main.cpp
 void US_ComProjectMain::call_AutoflowDialogue( void )
 {
@@ -1249,6 +1284,14 @@ void US_InitDialogueGui::initRecordsDialogue( void )
       emit switch_to_analysis_init( protocol_details );
       
     }
+
+  if ( stage == "REPORT" )
+    {
+      qDebug() << "To REPORT SWITCH ";
+      emit switch_to_report_init( protocol_details );
+      
+    }  
+  
   //and so on...
    
 }
@@ -2299,23 +2342,75 @@ US_ReportGui::US_ReportGui( QWidget* topw )
       
    QGridLayout* genL   = new QGridLayout();
 
-   // //QPlainTextEdit* panel_desc = new QPlainTextEdit(this);
-   QTextEdit* panel_desc = new QTextEdit(this);
-   panel_desc->viewport()->setAutoFillBackground(false);
-   panel_desc->setFrameStyle(QFrame::NoFrame);
-   panel_desc->setPlainText(" Tab to Generate Report...  ---UNDER CONSTRUCTION--- ");
-   panel_desc->setReadOnly(true);
-   //panel_desc->setMaximumHeight(30);
-   QFontMetrics m (panel_desc -> font()) ;
-   int RowHeight = m.lineSpacing() ;
-   panel_desc -> setFixedHeight  (2* RowHeight) ;
+   // // //QPlainTextEdit* panel_desc = new QPlainTextEdit(this);
+   // QTextEdit* panel_desc = new QTextEdit(this);
+   // panel_desc->viewport()->setAutoFillBackground(false);
+   // panel_desc->setFrameStyle(QFrame::NoFrame);
+   // panel_desc->setPlainText(" Tab to Generate Report...  ---UNDER CONSTRUCTION--- ");
+   // panel_desc->setReadOnly(true);
+   // //panel_desc->setMaximumHeight(30);
+   // QFontMetrics m (panel_desc -> font()) ;
+   // int RowHeight = m.lineSpacing() ;
+   // panel_desc -> setFixedHeight  (2* RowHeight) ;
 
-   int row = 0;
-   genL->addWidget( panel_desc,  row++,   0, 1, 12);
+   // int row = 0;
+   // genL->addWidget( panel_desc,  row++,   0, 1, 12);
  
    // assemble main
    main->addLayout(genL);
    main->addStretch();
 
+   // Open US_Analysis_auto ...  
+   sdiag = new US_Reports_auto();
+   sdiag->setParent(this, Qt::Widget);
+   
+   connect( this, SIGNAL( start_report( QMap < QString, QString > & ) ), sdiag, SLOT( initPanel ( QMap < QString, QString > & )  ) );
+   // // In initPanel() - re-generate GUI based on # of rows corresponding to # stages in AProfile...
+
+   // // When coming back to Manage Optima Runs
+   // connect( sdiag, SIGNAL( analysis_update_process_stopped() ), this, SLOT( processes_stopped_passed()  ) );
+
+   offset = 0;
+   sdiag->move(offset, 2*offset);
+   sdiag->setFrameShape( QFrame::Box);
+   sdiag->setLineWidth(2);
+
+   sdiag->show();
+   
+
 }
 
+void US_ReportGui::resizeEvent(QResizeEvent *event)
+{
+    int tab_width = mainw->tabWidget->tabBar()->width();
+    int upper_height = mainw->gen_banner->height() + //mainw->welcome->height()
+      + mainw->logWidget->height() + mainw->test_footer->height();
+     
+    int new_main_w = mainw->width() - 3*offset - tab_width;
+    int new_main_h = mainw->height() - 4*offset - upper_height;
+    
+    //if (mainw->width() - offset > sdiag->width() || mainw->height() - 2*offset > sdiag->height()) {
+    if ( new_main_w > sdiag->width() || new_main_h > sdiag->height()) {
+      int newWidth = qMax( new_main_w, sdiag->width());
+      int newHeight = qMax( new_main_h, sdiag->height());
+      sdiag->setMaximumSize( newWidth, newHeight );
+      sdiag->resize( QSize(newWidth, newHeight) );
+      update();
+    }
+
+    //if (mainw->width() < sdiag->width() || mainw->height() < sdiag->height()) {
+    if ( new_main_w < sdiag->width() ||  new_main_h < sdiag->height() ) {
+      int newWidth = qMin( new_main_w, sdiag->width());
+      int newHeight = qMin( new_main_h, sdiag->height());
+      sdiag->setMaximumSize( newWidth, newHeight );
+      sdiag->resize( QSize(newWidth, newHeight) );
+      update();
+    }
+     
+    QWidget::resizeEvent(event);
+}
+
+void US_ReportGui::do_report( QMap < QString, QString > & protocol_details )
+{
+  emit start_report( protocol_details );
+}

@@ -99,6 +99,8 @@ class US_Analysis_auto : public US_Widgets
 	void hide_all( void );
 	void gui_update ( void );
 
+	void gui_update_temp ( void );
+
 	void reset_analysis_panel ( void );
 	void end_process( void );
 	void reset_auto     ( void );
