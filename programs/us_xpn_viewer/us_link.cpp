@@ -18,7 +18,8 @@ Link::Link()
   QString pemFile  = certPath + QString( "client.pem" );
   server.setPrivateKey(keyFile, QSsl::Ec );
   server.setLocalCertificate(pemFile);
- 
+
+  qDebug() << "Client's certs directory: " << keyFile << pemFile;
   // server.setPrivateKey("client.key", QSsl::Ec );
   // server.setLocalCertificate("client.pem");
   server.setPeerVerifyMode(QSslSocket::VerifyNone);

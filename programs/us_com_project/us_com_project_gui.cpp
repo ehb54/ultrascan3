@@ -1476,6 +1476,9 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
 	    autoflowentry << QString( tr( "COMPLETED" ) );
 	    //autoflowentry << time_started.toString();
 	}
+
+      if ( status == "EDITING" )
+	status = "LIMS_IMPORT";
       
       autoflowentry << status << gmpRun;
       

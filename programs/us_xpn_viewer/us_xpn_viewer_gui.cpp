@@ -816,7 +816,7 @@ if(mcknt>0)
 
    
    // check_for_data( protocol_details );
-   // End of test
+   // // End of test
 
    //Connect to syste data server 
    //link->connectToServer( );
