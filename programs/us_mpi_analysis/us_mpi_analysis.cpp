@@ -14,8 +14,37 @@
 
 #define ELAPSED_SECS (startTime.msecsTo(QDateTime::currentDateTime())/1000.0)
 
+// Message handler possibly needed for qDebug()
+void myMessageOutput( QtMsgType type, const QMessageLogContext& /*context*/, const QString &msg )
+{
+   QByteArray localMsg = msg.toLocal8Bit();
+   switch ( type ) {
+   case QtDebugMsg:
+      fprintf( stderr, "%s\n", localMsg.constData() );
+      break;
+   case QtInfoMsg:
+      fprintf( stderr, "Info: %s\n", localMsg.constData() );
+      break;
+   case QtWarningMsg:
+      fprintf( stderr, "Warning: %s\n", localMsg.constData() );
+      break;
+   case QtCriticalMsg:
+      fprintf( stderr, "Critical: %s\n", localMsg.constData() );
+      break;
+   case QtFatalMsg:
+      fprintf( stderr, "Fatal: %s\n", localMsg.constData() );
+      abort();
+   }
+}
+
+
 int main( int argc, char* argv[] )
 {
+#ifdef NEED_MSG_HANDLER
+   // On some systems we need to install a message handler for qDebug()
+   qInstallMessageHandler( myMessageOutput );
+#endif
+
    MPI_Init( &argc, &argv );
    QCoreApplication application( argc, argv );
 
@@ -30,6 +59,7 @@ int main( int argc, char* argv[] )
 // Constructor
 US_MPI_Analysis::US_MPI_Analysis( int nargs, QStringList& cmdargs ) : QObject()
 {
+//printf( "QT_LOGGING_RULES=\"%s\"\n", (char*)getenv("QT_LOGGING_RULES") );
    // Command line special parameter keys
    const QString wallkey ( "-walltime" );
    const QString pmgckey ( "-mgroupcount" );
