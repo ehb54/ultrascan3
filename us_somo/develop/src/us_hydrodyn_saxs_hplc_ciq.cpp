@@ -275,11 +275,12 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    cb_I0se->setText( us_tr( "I0 standard experimental value (a.u.) : " ) );
    cb_I0se->setEnabled( true );
    connect( cb_I0se, SIGNAL( clicked() ), SLOT( set_I0se() ) );
-   cb_I0se->setChecked( false );
+   cb_I0se->setChecked( true );
    cb_I0se->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_I0se->setPalette( PALET_NORMAL );
    AUTFBACK( cb_I0se );
    cb_I0se-> setMinimumHeight( minHeight2 );
+   cb_I0se->setToolTip( us_tr( "<html><head/><body><p>Note: This value will be stored in the produced files and used in SOMO-SAS MW computations.</p><p>If your data is already properly normalized, you should leave this checked with a value of 1.</p></body></html>" ) );
 
    le_I0se = new QLineEdit( this );    le_I0se->setObjectName( "le_I0se Line Edit" );
    le_I0se->setText( "1" );
@@ -295,7 +296,8 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    connect( le_I0se, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
    le_I0se->setMinimumWidth( 60 );
    le_I0se->setMinimumHeight( minHeight2 );
-
+   le_I0se->setToolTip( us_tr( "<html><head/><body><p>Note: This value will be stored in the produced files and used in SOMO-SAS MW computations.</p><p>If your data is already properly normalized, you should leave this checked with a value of 1.</p></body></html>" ) );
+   
    lbl_error = new QLabel( parameters->count( "error" ) ? (*parameters)[ "error" ] : "", this );
    lbl_error->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_error->setPalette( PALET_NORMAL );

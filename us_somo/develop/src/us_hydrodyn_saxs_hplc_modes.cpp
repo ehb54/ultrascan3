@@ -6286,6 +6286,7 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_scroll()
          cb_plot_errors_group->show();
       }
       cb_plot_errors_group->setChecked( ggauss_scroll_save_group );
+      cb_plot_errors_group->setChecked( true );
       ggaussian_rmsd();
    }
    ggaussian_enables();
