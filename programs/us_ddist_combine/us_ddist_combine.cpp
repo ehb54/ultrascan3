@@ -86,14 +86,16 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
 
    QLayout* lo_2dsa     = us_checkbox( tr( "2DSA" ),       ck_2dsa,     true  );
    QLayout* lo_2dsait   = us_checkbox( tr( "2DSA-IT" ),    ck_2dsait,   false );
+   QLayout* lo_2dsafm   = us_checkbox( tr( "2DSA-FM" ),    ck_2dsafm,   false );
    QLayout* lo_2dsamc   = us_checkbox( tr( "2DSA-MC" ),    ck_2dsamc,   false );
    QLayout* lo_2dsamw   = us_checkbox( tr( "2DSA-MW" ),    ck_2dsamw,   false );
    QLayout* lo_2dsamcmw = us_checkbox( tr( "2DSA-MC-MW" ), ck_2dsamcmw, false );
    QLayout* lo_2dsagl   = us_checkbox( tr( "2DSA-GL" ),    ck_2dsagl,   false );
    QLayout* lo_2dsaglmc = us_checkbox( tr( "2DSA-GL-MC" ), ck_2dsaglmc, false );
    QLayout* lo_2dsacg   = us_checkbox( tr( "2DSA-CG" ),    ck_2dsacg,   false );
+   QLayout* lo_2dsacgit = us_checkbox( tr( "2DSA-CG-IT" ), ck_2dsacgit, false );
+   QLayout* lo_2dsacgfm = us_checkbox( tr( "2DSA-CG-FM" ), ck_2dsacgfm, false );
    QLayout* lo_2dsacgmc = us_checkbox( tr( "2DSA-CG-MC" ), ck_2dsacgmc, false );
-   QLayout* lo_2dsafm   = us_checkbox( tr( "2DSA-FM" ),    ck_2dsafm,   false );
    QLayout* lo_ga       = us_checkbox( tr( "GA" ),         ck_ga,       false );
    QLayout* lo_gamc     = us_checkbox( tr( "GA-MC" ),      ck_gamc,     false );
    QLayout* lo_gamw     = us_checkbox( tr( "GA-MW" ),      ck_gamw,     false );
@@ -132,6 +134,8 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    ck_2dsagl  ->setFont( cfont );
    ck_2dsaglmc->setFont( cfont );
    ck_2dsacg  ->setFont( cfont );
+   ck_2dsacgit->setFont( cfont );
+   ck_2dsacgfm->setFont( cfont );
    ck_2dsacgmc->setFont( cfont );
    ck_2dsafm  ->setFont( cfont );
    ck_ga      ->setFont( cfont );
@@ -235,11 +239,13 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    leftLayout->addLayout( lo_dmgara,    row,   4, 1, 2 );
    leftLayout->addLayout( lo_dmgaramc,  row++, 6, 1, 2 );
    leftLayout->addLayout( lo_2dsacg,    row,   0, 1, 2 );
-   leftLayout->addLayout( lo_2dsacgmc,  row,   2, 1, 2 );
-   leftLayout->addLayout( lo_2dsamw,    row,   4, 1, 2 );
-   leftLayout->addLayout( lo_2dsamcmw,  row++, 6, 1, 4 );
+   leftLayout->addLayout( lo_2dsacgit,  row,   2, 1, 2 );
+   leftLayout->addLayout( lo_2dsacgfm,  row,   4, 1, 2 );
+   leftLayout->addLayout( lo_2dsacgmc,  row++, 6, 1, 2 );
    leftLayout->addLayout( lo_2dsagl,    row,   0, 1, 2 );
-   leftLayout->addLayout( lo_2dsaglmc,  row++, 2, 1, 6 );
+   leftLayout->addLayout( lo_2dsaglmc,  row,   2, 1, 2 );
+   leftLayout->addLayout( lo_2dsamw,    row,   4, 1, 2 );
+   leftLayout->addLayout( lo_2dsamcmw,  row++, 6, 1, 2 );
    leftLayout->addLayout( lo_gamw,      row,   0, 1, 2 );
    leftLayout->addLayout( lo_gamcmw,    row,   2, 1, 2 );
    leftLayout->addLayout( lo_gagl,      row,   4, 1, 2 );
@@ -321,6 +327,10 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    connect( ck_2dsaglmc, SIGNAL( stateChanged    ( int ) ),
             this,        SLOT(   methodChanged   ( int ) ) );
    connect( ck_2dsacg,   SIGNAL( stateChanged    ( int ) ),
+            this,        SLOT(   methodChanged   ( int ) ) );
+   connect( ck_2dsacgit, SIGNAL( stateChanged    ( int ) ),
+            this,        SLOT(   methodChanged   ( int ) ) );
+   connect( ck_2dsacgfm, SIGNAL( stateChanged    ( int ) ),
             this,        SLOT(   methodChanged   ( int ) ) );
    connect( ck_2dsacgmc, SIGNAL( stateChanged    ( int ) ),
             this,        SLOT(   methodChanged   ( int ) ) );
@@ -524,6 +534,7 @@ DbgLv(1) << "ii method" << ii << method << "mdes" << distros[ii].mdescr;
 
    bool hv_2dsa     = methods.contains( "2DSA"       );
    bool hv_2dsait   = methods.contains( "2DSA-IT"    );
+   bool hv_2dsafm   = methods.contains( "2DSA-FM"    );
    bool hv_2dsamc   = methods.contains( "2DSA-MC"    );
    bool hv_2dsamw   = methods.contains( "2DSA-MW"    );
    bool hv_2dsamcmw = methods.contains( "2DSA-MC-MW" );
@@ -540,10 +551,10 @@ DbgLv(1) << "ii method" << ii << method << "mdes" << distros[ii].mdescr;
                   ||  methods.contains( "2DSA-GL-SC-MC" )
                   ||  methods.contains( "2DSA-GL-VR-MC" );
 
-   bool hv_2dsacg   = methods.contains( "2DSA-CG"    ) 
-                  ||  methods.contains( "2DSA-CG-IT" );
+   bool hv_2dsacg   = methods.contains( "2DSA-CG"    );
+   bool hv_2dsacgit = methods.contains( "2DSA-CG-IT" );
+   bool hv_2dsacgfm = methods.contains( "2DSA-CG-FM" );
    bool hv_2dsacgmc = methods.contains( "2DSA-CG-MC" );
-   bool hv_2dsafm   = methods.contains( "2DSA-FM"    );
    bool hv_ga       = methods.contains( "GA"         );
    bool hv_gamc     = methods.contains( "GA-MC"      );
    bool hv_gamw     = methods.contains( "GA-MW"      );
@@ -632,14 +643,16 @@ DbgLv(1) << "ii method" << ii << method << "mdes" << distros[ii].mdescr;
 
    ck_2dsa    ->setEnabled( hv_2dsa     );
    ck_2dsait  ->setEnabled( hv_2dsait   );
+   ck_2dsafm  ->setEnabled( hv_2dsafm   );
    ck_2dsamc  ->setEnabled( hv_2dsamc   );
    ck_2dsamw  ->setEnabled( hv_2dsamw   );
    ck_2dsamcmw->setEnabled( hv_2dsamcmw );
    ck_2dsagl  ->setEnabled( hv_2dsagl   );
    ck_2dsaglmc->setEnabled( hv_2dsaglmc );
    ck_2dsacg  ->setEnabled( hv_2dsacg   );
+   ck_2dsacgit->setEnabled( hv_2dsacgit );
+   ck_2dsacgfm->setEnabled( hv_2dsacgfm );
    ck_2dsacgmc->setEnabled( hv_2dsacgmc );
-   ck_2dsafm  ->setEnabled( hv_2dsafm   );
    ck_ga      ->setEnabled( hv_ga       );
    ck_gamc    ->setEnabled( hv_gamc     );
    ck_gamw    ->setEnabled( hv_gamw     );
@@ -677,6 +690,8 @@ DbgLv(1) << "ii method" << ii << method << "mdes" << distros[ii].mdescr;
    ck_2dsagl  ->setChecked( hv_2dsagl   );
    ck_2dsaglmc->setChecked( hv_2dsaglmc );
    ck_2dsacg  ->setChecked( hv_2dsacg   );
+   ck_2dsacgit->setChecked( hv_2dsacgit );
+   ck_2dsacgfm->setChecked( hv_2dsacgfm );
    ck_2dsacgmc->setChecked( hv_2dsacgmc );
    ck_2dsafm  ->setChecked( hv_2dsafm   );
    ck_ga      ->setChecked( hv_ga       );
@@ -1183,8 +1198,9 @@ DbgLv(1) << "RunIDSel:runID" << runID << "distrsize" << distros.size();
                                                << "2DSA-GL-SG-MC"
                                                << "2DSA-GL-SC-MC"
                                                << "2DSA-GL-VR-MC";
-      if ( ck_2dsacg  ->isChecked() )  methods << "2DSA-CG"
-                                               << "2DSA-CG-IT";
+      if ( ck_2dsacg  ->isChecked() )  methods << "2DSA-CG";
+      if ( ck_2dsacgit->isChecked() )  methods << "2DSA-CG-IT";
+      if ( ck_2dsacgfm->isChecked() )  methods << "2DSA-CG-FM";
       if ( ck_2dsacgmc->isChecked() )  methods << "2DSA-CG-MC";
       if ( ck_2dsafm  ->isChecked() )  methods << "2DSA-FM";
       if ( ck_ga      ->isChecked() )  methods << "GA";
@@ -1886,14 +1902,16 @@ void US_DDistr_Combine::allMethodChanged( int state )
    {
       ck_2dsa    ->setChecked( ck_2dsa    ->isEnabled() );
       ck_2dsait  ->setChecked( ck_2dsait  ->isEnabled() );
+      ck_2dsafm  ->setChecked( ck_2dsafm  ->isEnabled() );
       ck_2dsamc  ->setChecked( ck_2dsamc  ->isEnabled() );
       ck_2dsamw  ->setChecked( ck_2dsamw  ->isEnabled() );
       ck_2dsamcmw->setChecked( ck_2dsamcmw->isEnabled() );
       ck_2dsagl  ->setChecked( ck_2dsagl  ->isEnabled() );
       ck_2dsaglmc->setChecked( ck_2dsaglmc->isEnabled() );
       ck_2dsacg  ->setChecked( ck_2dsacg  ->isEnabled() );
+      ck_2dsacgit->setChecked( ck_2dsacgit->isEnabled() );
+      ck_2dsacgfm->setChecked( ck_2dsacgfm->isEnabled() );
       ck_2dsacgmc->setChecked( ck_2dsacgmc->isEnabled() );
-      ck_2dsafm  ->setChecked( ck_2dsafm  ->isEnabled() );
       ck_ga      ->setChecked( ck_ga      ->isEnabled() );
       ck_gamc    ->setChecked( ck_gamc    ->isEnabled() );
       ck_gamw    ->setChecked( ck_gamw    ->isEnabled() );

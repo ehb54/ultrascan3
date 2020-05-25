@@ -113,6 +113,8 @@ class US_ManageData : public US_Widgets
       QStringList   triples;
       QStringList   runIDs;
 
+      QList< QStringList >  runid_data;
+
    private slots:
 
       void toggle_edits (  void );
@@ -129,6 +131,7 @@ class US_ManageData : public US_Widgets
       void reset_hsbuttons( bool, bool, bool, bool );
       void reportDataStatus( void    );
       void selected_runID  ( QString );
+      void selected_runID  ( int );
 
       void help     ( void )
       { showHelp.show_help( "manage_data.html" ); };

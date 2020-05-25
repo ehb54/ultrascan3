@@ -172,6 +172,15 @@ DbgLv(1) << "Main: BB";
    pb_scandb->setToolTip(
          tr( "Scan fit-meniscus models in DB; create local table files" ) );
 
+   QPushButton*
+   pb_invest    = us_pushbutton( tr( "Select Investigator" ) );
+   connect( pb_invest, SIGNAL( clicked() ),
+            this,      SLOT(   sel_investigator() ) );
+   QString
+      inv_name  = QString::number( US_Settings::us_inv_ID() )
+                  + ": " + US_Settings::us_inv_name();
+   le_invest    = us_lineedit( inv_name, -1, true );
+
    us_checkbox( tr( "Confirm Each Update Step" ), ck_confirm,  true );
    us_checkbox( tr( "Apply to All Wavelengths" ), ck_applymwl, true );
 //   ck_applymwl->setVisible( false );
@@ -230,6 +239,8 @@ DbgLv(1) << "Main: BB";
    cntrlsLayout->addLayout( dkdb_cntrls,  row,    0, 1,  6 );
    cntrlsLayout->addWidget( pb_update,    row,    6, 1,  5 );
    cntrlsLayout->addWidget( pb_scandb,    row++, 11, 1,  5 );
+   cntrlsLayout->addWidget( pb_invest,    row,    0, 1,  3 );
+   cntrlsLayout->addWidget( le_invest,    row++,  3, 1,  5 );
    cntrlsLayout->addWidget( ck_confirm,   row,    0, 1,  8 );
    cntrlsLayout->addWidget( ck_applymwl,  row++,  8, 1,  8 );
    cntrlsLayout->addWidget( pb_plot,      row,    0, 1,  4 );
@@ -2727,5 +2738,27 @@ DbgLv(1) << "IMS:    ii" << ii << "lowxd" << lowxd << "v_meni-ii" << v_meni[ii];
 DbgLv(1) << "IMS: ix_setfit" << ix_setfit;
 
    return;
+}
+
+// Open the dialog to select a new investigator
+void US_FitMeniscus::sel_investigator( void )
+{
+   if ( !dkdb_cntrls->db() )  return;   // Ignore if Disk selected
+
+   int personID  = US_Settings::us_inv_ID();
+   US_Investigator* inv_dialog = new US_Investigator( true, personID );
+
+   connect( inv_dialog, SIGNAL( investigator_accepted( int ) ),
+            this,       SLOT  ( assign_investigator  ( int ) ) );
+
+   inv_dialog->exec();
+}
+
+// Assign this dialog's investigator text
+void US_FitMeniscus::assign_investigator( int invID )
+{
+   QString number = ( invID > 0 ) ? QString::number( invID ) + ": " : "";
+
+   le_invest->setText( number + US_Settings::us_inv_name() );
 }
 

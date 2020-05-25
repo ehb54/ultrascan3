@@ -6,6 +6,7 @@
 #include "us_data_model.h"
 #include "us_data_tree.h"
 #include "us_data_process.h"
+#include "us_select_item.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_matrix.h"
@@ -131,11 +132,12 @@ DbgLv(1) << "GUI setup begun";
 
    QLabel* lb_runid  = us_label( tr( "RunID:" ) );
    cb_runid      = us_comboBox();
-   cb_runid  ->addItem( "ALL" );
+   cb_runid  ->addItem( tr( "ALL" ) );
+   cb_runid  ->addItem( tr( "Select individual run" ) );
    dctlLayout->addWidget( lb_runid,  row,   0, 1, 2 );
    dctlLayout->addWidget( cb_runid,  row++, 2, 1, 6 );
-   connect( cb_runid,   SIGNAL( currentIndexChanged( QString ) ),
-            this,       SLOT(   selected_runID     ( QString ) ) );
+   connect( cb_runid,   SIGNAL( activated     ( int ) ),
+            this,       SLOT(   selected_runID( int ) ) );
 
    QLabel* lb_triple = us_label( tr( "Triple:" ) );
    cb_triple     = us_comboBox();
@@ -334,10 +336,11 @@ void US_ManageData::reset( void )
    da_model->getRunIDs( runIDs, src_flg );
 
    cb_runid ->clear();
-   cb_runid ->addItem ( "ALL" );
-   cb_runid ->addItems( runIDs );
+   cb_runid ->addItem ( tr( "ALL" ) );
+   cb_runid ->addItem ( tr( "Select individual run" ) );
+   //cb_runid ->addItems( runIDs );
    cb_triple->clear();
-   cb_triple->addItem ( "ALL" );
+   cb_triple->addItem ( tr( "ALL" ) );
 
 }
 
@@ -681,11 +684,41 @@ void US_ManageData::reportDataStatus()
 void US_ManageData::selected_runID( QString selrunID )
 {
 DbgLv(0) << "selected_runID: selrunID" << selrunID;
-   if ( selrunID.isEmpty()  ||  selrunID == "ALL" )
+   if ( selrunID.isEmpty()  ||  selrunID == tr("ALL") )
    {
       cb_triple->clear();
-      cb_triple->addItem( "ALL" );
+      cb_triple->addItem( tr( "ALL" ) );
       return;
+   }
+
+   if ( selrunID.startsWith( tr( "Select individual" ) ) )
+   {  // Combo box select is "Select individual run" so present list dialog
+      int selx     = -1;
+      QStringList hdrs;
+      QString dtitl = tr( "Select Run ID" );
+      hdrs << "Run ID";
+      runid_data.clear();
+
+      for ( int ii = 0; ii < runIDs.count(); ii++ )
+      {  // Build data consisting of a single Run ID column
+         runid_data << QStringList( runIDs[ ii ] );
+      }
+
+      US_SelectItem* srdiag = new US_SelectItem( runid_data, hdrs, dtitl,
+                                                 &selx, 1 );
+      if ( srdiag->exec() == QDialog::Accepted  &&
+           selx >= 0 )
+      {  // Add selected run to comboBox and set Run ID variable
+         QString srunID = runid_data[ selx ][ 0 ];
+         cb_runid->disconnect();
+         cb_runid->clear();
+         cb_runid->addItem( tr( "ALL" ) );
+         cb_runid->addItem( tr( "Select individual run" ) );
+         cb_runid->addItem( srunID );
+         cb_runid->setCurrentIndex( 2 );
+         connect( cb_runid,   SIGNAL( activated     ( int ) ),
+                  this,       SLOT(   selected_runID( int ) ) );
+      }
    }
 
    lb_status->setText( tr( "Scanning triples for a run..." ) );
@@ -704,5 +737,11 @@ DbgLv(0) << "selected_runID: da_m getTriples size" << triples.size();
          ( ntriple == 1 ) ? tr( "The run has a single triple" )
          : tr( "%1 triples are available to select" ).arg( ntriple ) );
 
+}
+
+// Slot to handle a newly select runID filter
+void US_ManageData::selected_runID( int index )
+{
+   selected_runID( cb_runid->itemText( index ) );
 }
 

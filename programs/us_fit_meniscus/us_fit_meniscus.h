@@ -86,6 +86,7 @@ class US_FitMeniscus : public US_Widgets
       QLineEdit*           le_status;
       QLineEdit*           le_men_sel;
       QLineEdit*           le_rms_error;
+      QLineEdit*           le_invest;
 
       US_Help              showHelp;
       
@@ -153,6 +154,8 @@ class US_FitMeniscus : public US_Widgets
       void index_model_setfit( void );
       QwtLinearColorMap* ColorMapCopy( QwtLinearColorMap* );
       void change_plot_type( void );
+      void sel_investigator( void );
+      void assign_investigator( int );
 
       void help     ( void )
       { showHelp.show_help( "manual/fit_meniscus.html" ); };
