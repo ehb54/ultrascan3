@@ -69,6 +69,8 @@ class US_AnalyteMgrSelect: public US_Widgets
       US_Analyte*   tmp_analyte;
       US_Analyte    orig_analyte;
 
+      QList< US_Analyte >  ms_analytes;  // Multi-select analytes
+
       int*          personID;
       int*          db_or_disk;
       bool          from_db;
@@ -77,6 +79,7 @@ class US_AnalyteMgrSelect: public US_Widgets
       //! Currently selected analyte is accepted by User
       void analyteAccepted( void );
       void selectionCanceled( void );
+      void analytesAccepted( QList< US_Analyte >& );
 
    private:
 
@@ -552,6 +555,7 @@ class US_GUI_EXTERN US_AnalyteGui : public US_WidgetsDialog
       void newAnaCanceled     ( void );
       void analyteAccepted    ( void );
       void analyteRejected    ( void );
+      void analytesAccepted   ( QList< US_Analyte >& );
 };
 #endif
 

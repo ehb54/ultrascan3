@@ -134,6 +134,7 @@ US_AnalyteMgrSelect::US_AnalyteMgrSelect( int *invID, int *select_db_disk,
    le_calcium           = us_lineedit( "0.00", -1, true );
 
    lw_analyte_list      = us_listwidget();
+   lw_analyte_list->setSelectionMode( QAbstractItemView::ExtendedSelection );
    te_analyte_smry      = us_textedit();
    te_analyte_smry->setTextColor( Qt::blue );
    te_analyte_smry->setFont( QFont( US_Widgets::fixedFont().family(),
@@ -230,9 +231,30 @@ DbgLv(1) << "AnaS:  selana: ROW<0";
    }
 
 DbgLv(1) << "AnaS:  selana: ROW" << lw_analyte_list->currentRow();
-   QListWidgetItem *item = lw_analyte_list->currentItem();
+   QList< QListWidgetItem* > selItems  = lw_analyte_list->selectedItems();
+   int nsel  = selItems.count();
+   ms_analytes.clear();
+DbgLv(1) << "AnaS:  aAcc : nsel" << nsel;
 
-   select_analyte( item );
+   if ( nsel == 1 )
+   {
+      QListWidgetItem *item = lw_analyte_list->currentItem();
+
+      select_analyte( item );
+   }
+   else if ( nsel > 1 )
+   {
+
+      for ( int ii = 0; ii < nsel; ii++ )
+      {
+DbgLv(1) << "AnaS:  aAcc :   ii" << ii;
+         QListWidgetItem* item = selItems[ ii ];
+
+         select_analyte( item );
+
+         ms_analytes << *analyte;
+      }
+   }
 }
 
 // Select the analyte for the currently selected list item
@@ -350,7 +372,16 @@ DbgLv(1) << "AnaS-rddb-anid  anaGUID" << analyGUID;
 // Accept the currently selected analyte
 void US_AnalyteMgrSelect::accept_analyte( void )
 {
-   emit analyteAccepted();
+   int nsel   = ms_analytes.count();
+DbgLv(1) << "AnaS: aa:  nsel" << nsel;
+   if ( nsel == 1 )
+   {
+      emit analyteAccepted();
+   }
+   else if ( nsel > 1 )
+   {
+      emit analytesAccepted( ms_analytes );
+   }
 }
 
 // Initialize analyte information, often after re-entry to the Select tab
@@ -533,7 +564,7 @@ void US_AnalyteMgrSelect::sequence( void )
 // Display detailed information on selected analyte
 void US_AnalyteMgrSelect::info_analyte( void )
 {
-   qDebug() << "AnalyteID for INFO: " << analyte->analyteGUID;
+DbgLv(1) << "AnalyteID for INFO: " << analyte->analyteGUID;
 
    US_Math2::Peptide p;
    US_Math2::calc_vbar( p, analyte->sequence, 20.0 );
@@ -541,7 +572,7 @@ void US_AnalyteMgrSelect::info_analyte( void )
        
       // Absorbing residues
    
-   qDebug() << "W: " << p.w;
+DbgLv(1) << "W: " << p.w;
    int cys = int(p.c);
    int hao = int(p.j);
    int orn = int(p.o);
@@ -549,7 +580,7 @@ void US_AnalyteMgrSelect::info_analyte( void )
    int tyr = int(p.y);
    int all_abs = 0;
    all_abs = cys + hao + orn + trp + tyr;
-   qDebug() << "Tot AAs: " << all_abs;
+DbgLv(1) << "Tot AAs: " << all_abs;
    QString absorbing_residues = tr( "(empty)" );
    if (all_abs > 0)
      {
@@ -701,7 +732,7 @@ void US_AnalyteMgrSelect::info_analyte( void )
 // Display a spectrum dialog for list/manage
 void US_AnalyteMgrSelect::spectrum( void )
 {
-  qDebug() << analyte->extinction;
+DbgLv(1) << "AnaS: spectrum : extinc" << analyte->extinction;
   
   if (analyte->extinction.isEmpty())
     {
@@ -1153,7 +1184,7 @@ DbgLv(1) << "agN: aInfo" << ana->description;
 // Message string for analyte summary
 QString US_AnalyteMgrSelect::analyte_smry( US_Analyte* ana )
 {
-  qDebug() << "AnalyteID for SMRY: " << analyte->analyteGUID;
+DbgLv(1) << "AnalyteID for SMRY: " << analyte->analyteGUID;
 
 DbgLv(1) << "agN: aInfo   descr" << ana->description << "type" << ana->type;
    // Get base analyte value strings
@@ -1170,7 +1201,7 @@ DbgLv(1) << "agN: aInfo   descr" << ana->description << "type" << ana->type;
 
    // Absorbing residues
    
-   qDebug() << "W: " << pp.w;
+DbgLv(1) << "W: " << pp.w;
    int cys = int(pp.c);
    int hao = int(pp.j);
    int orn = int(pp.o);
@@ -1178,7 +1209,7 @@ DbgLv(1) << "agN: aInfo   descr" << ana->description << "type" << ana->type;
    int tyr = int(pp.y);
    int all_abs = 0;
    all_abs = cys + hao + orn + trp + tyr;
-   qDebug() << "Tot AAs: " << all_abs;
+DbgLv(1) << "Tot AAs: " << all_abs;
    QString absorbing_residues = tr( "(empty)" );
    if (all_abs > 0)
      {
@@ -1197,7 +1228,7 @@ DbgLv(1) << "agN: aInfo   descr" << ana->description << "type" << ana->type;
        absorbing_residues += QString().sprintf( "%d", all_abs ) + " tot";
      }
    
-   qDebug() << "AA absorbibg String: " << absorbing_residues;
+DbgLv(1) << "AA absorbibg String: " << absorbing_residues;
    
    // Compose the sequence summary string
    int total       = 0;
@@ -1357,8 +1388,8 @@ DbgLv(1) << "agN: id dbdk ana" << invID << select_db_disk << tmp_analyte;
     protein_info->addWidget( le_protein_vbar20, prow++, 3 );
 
     signal_tmp = signal;
-    qDebug() << "Temp. in New: " << temperature;
-    qDebug() << "Signal in New: " << signal_tmp;
+DbgLv(1) << "Temp. in New: " << temperature;
+DbgLv(1) << "Signal in New: " << signal_tmp;
    
     QLabel* lb_protein_temp = us_label( 
           tr( "Temperature <small>(" ) + DEGC + ")</small>:" );
@@ -1775,7 +1806,7 @@ void US_AnalyteMgrNew::value_changed_e280( const QString& )
 {
   double val_vbar20 =  le_protein_e280->text().toDouble();
   analyte->extinction[280.0] = val_vbar20;
-  qDebug() << "New e280: " << analyte->extinction[280.0];
+DbgLv(1) << "New e280: " << analyte->extinction[280.0];
 } 
 
 void US_AnalyteMgrNew::value_changed( const QString& )
@@ -2096,7 +2127,6 @@ DbgLv(1) << "agN: sAtype" << type;
    bool visCarb         = true;
 DbgLv(1) << "agS: sAtype: type" << type;
 
- qDebug() << "Type: " << type;
  anatype = type;
  
  reset();
@@ -2150,8 +2180,7 @@ void US_AnalyteMgrNew::new_description()
 DbgLv(1) << "AnaN:SL: new_description()";
    analyte->description = le_descrip->text();
 DbgLv(1) << "AnaN:SL: new_desc:" << analyte->description;
-
-qDebug() << "AnaType: " << anatype;
+DbgLv(1) << "AnaN:SL: anatype"  << anatype;
 
  bool can_accept = false;
  
@@ -2436,8 +2465,8 @@ void US_AnalyteMgrNew::newAccepted()
 {
 DbgLv(1) << "AnaN:SL: newAccepted()";
    analyte->analyteGUID   = US_Util::new_guid();
-   
-   qDebug() << "Analyte Type: " << analyte->type;
+
+DbgLv(1) << "AnaN: Analyte Type: " << analyte->type;
 
    if ( ! data_ok() ) return;
 
@@ -2950,8 +2979,8 @@ US_AnalyteGui::US_AnalyteGui( bool           signal,
                   : accessf;
    dbg_level    = US_Settings::us_debug();
 
-   qDebug() << "Temperature: " << temperature;
-   qDebug() << "Signal: " << signal;
+DbgLv(1) << "Temperature: " << temperature;
+DbgLv(1) << "Signal: " << signal;
 
    setWindowTitle( tr( "Analyte Management" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -2979,6 +3008,8 @@ US_AnalyteGui::US_AnalyteGui( bool           signal,
             this,        SLOT (  analyteAccepted(      void ) ) );
    connect( selectTab,   SIGNAL( selectionCanceled(    void ) ),
             this,        SLOT (  analyteRejected(      void ) ) );
+   connect( selectTab,   SIGNAL( analytesAccepted( QList< US_Analyte >& ) ),
+            this,        SLOT (  analytesAccepted( QList< US_Analyte >& ) ) );
    connect( newTab,      SIGNAL( newAnaAccepted(       void ) ),
             this,        SLOT (  newAnaAccepted(       void ) ) );
    connect( newTab,      SIGNAL( newAnaCanceled(       void ) ),
@@ -3071,8 +3102,23 @@ void US_AnalyteGui::analyteAccepted( void )
 #if 0
    valueChanged      ( analyte.density, analyte.viscosity );
 #endif
+DbgLv(1) << "AnaM: aAcc:";
+#if 1
    emit valueChanged  ( analyte );
    emit valueAnalyteID( analyte.analyteID );
+#endif
+
+   accept();
+}
+
+// Exit and signal caller that changes and selected were accepted
+void US_AnalyteGui::analytesAccepted( QList< US_Analyte >& analytes )
+{
+DbgLv(1) << "AnaM: aaAcc:";
+   for ( int ii = 0; ii < analytes.count(); ii++ )
+   {
+      emit valueChanged( analytes[ ii ] );
+   }
 
    accept();
 }
