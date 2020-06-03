@@ -241,6 +241,8 @@ DbgLv(1) << "AnaS:  aAcc : nsel" << nsel;
       QListWidgetItem *item = lw_analyte_list->currentItem();
 
       select_analyte( item );
+
+      ms_analytes << *analyte;
    }
    else if ( nsel > 1 )
    {

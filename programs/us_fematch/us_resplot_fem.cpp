@@ -101,8 +101,6 @@ US_ResidPlotFem::US_ResidPlotFem( QWidget* parent )
          tr( "Radius (cm)" ),
          tr( "OD Difference" ) );
 
-   data_plot1->setCanvasBackground( Qt::black );
-   data_plot2->setCanvasBackground( Qt::black );
    data_plot1->setMinimumSize( p1size );
    data_plot2->setMinimumSize( p2size );
 

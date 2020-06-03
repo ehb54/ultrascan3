@@ -303,8 +303,6 @@ US_FeMatch::US_FeMatch() : US_Widgets()
             tr( "Absorbance" ),
             true, ".*in range", "rainbow" );
 
-   data_plot1->setCanvasBackground( Qt::black );
-   data_plot2->setCanvasBackground( Qt::black );
    data_plot1->setMinimumSize( 560, 240 );
    data_plot2->setMinimumSize( 560, 240 );
 

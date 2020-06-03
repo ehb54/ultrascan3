@@ -447,7 +447,8 @@ void US_GuiSettings::set_plotCurve( const QColor& color )
 QColor US_GuiSettings::plotCanvasBG( void )
 {
   QSettings settings( US3, "UltraScan" );
-  return settings.value( "palettes/normalColor", c_darkBlue ).value<QColor>();
+  //return settings.value( "palettes/normalColor", c_darkBlue ).value<QColor>();
+  return settings.value( "palettes/plotCanvasBG", c_darkBlue ).value<QColor>();
 }
 
 void US_GuiSettings::set_plotCanvasBG( const QColor& color )
