@@ -207,14 +207,13 @@ DbgLv(1) << "vhw: mxht p1ht p2ht" << mxht << p1ht << p2ht;
    pb_dstrpl->setEnabled( true );
    pb_replot->setEnabled( true );
    haveZone    = false;
+   last_plot   = -1;         // No plot yet done
 
-   // Set saved flags; initialize simulations lists
-   saved    .clear();
+   // Initialize simulations lists
    have_sims.clear();
    dsimList .clear();
    for ( int ii = 0; ii < triples.size(); ii++ )
    {
-      saved << false;
       have_sims << false;
       US_DataIO::RawData     simraw;
       US_DataIO::EditedData  simdat;
@@ -268,7 +267,7 @@ void US_vHW_Enhanced::distr_plot(  void )
    dialog->exec();
    delete dialog;
    row          = lw_triples->currentRow();
-   saved[ row ] = true;
+   last_plot    = row;       // Save the row of the last plot displayed
 }
 
 // data plot
@@ -694,8 +693,8 @@ QDateTime time0=QDateTime::currentDateTime();
       bfracs[ jj ] = bfrac;
    }
 
-   if ( saved[ row ] == false )
-   {  // If no plot dialog was opened for this triple, get files now
+   if ( last_plot != row )
+   {  // If plot dialog last opened not for this triple, get files now
       US_DistribPlot* dialog = new US_DistribPlot( bfracs, dseds, total_conc );
 DbgLv(1) << "(P)PLOT ENV save: plot3File" << plot3File;
       dialog->save_plots( plot3File, plot4File );

@@ -96,6 +96,7 @@ class US_vHW_Enhanced : public US_AnalysisBase2
       int           valueCount;
       int           dbg_level;
       int           lscnCount;
+      int           last_plot;                 // Last plot's triple row index
 
       bool          haveZone;
       bool          groupSel;
@@ -124,7 +125,6 @@ class US_vHW_Enhanced : public US_AnalysisBase2
 
       QVector< double >            scPlats;    // Scan plateaus current triple
       QVector< int >               liveScans;  // Vector of live-scan indexes
-      QVector< bool >              saved;      // List by triple of saved flags
       QVector< QVector< double > > CPijs;      // CPij vecs, divs in scans
       QVector< QVector< double > > mconcs;     // Mid-div concs, divs in scans
       QVector< double >            bdrads;     // Back-diffusion radii
