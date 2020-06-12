@@ -1354,11 +1354,20 @@ DbgLv(1) << "FL: IN:  fn" << fn;
    QString runID    = filedir.section( "/", -1, -1 );
    QString anType   = fname_load.section( ".", -2, -2 );
    QString tripnode = fname_load.section( ".", -3, -3 );
+   QString edtLabel = fname_load.section( ".", -4, -4 ).mid( 1 );
    QString tripl    = tripnode.left( 1 ) + "." +
                       tripnode.mid( 1, 1 ) + "." +
                       tripnode.mid( 2 );
    QStringList edtfilt;
-   edtfilt << runID + ".*.*." + tripl + ".xml";
+DbgLv(1) << "edtLabel" << edtLabel;
+   if ( !edtLabel.contains( "DSA-F" ) )
+   {  // fitmen file name has edit label
+      edtfilt << runID + "." + edtLabel + ".*." + tripl + ".xml";
+   }
+   else
+   {  // fitmen file name has NO edit label (older form)
+      edtfilt << runID + ".*.*." + tripl + ".xml";
+   }
 
    fname_edit = "";
    edtfiles   = QDir( filedir ).entryList( edtfilt, QDir::Files, QDir::Name );
@@ -1515,7 +1524,8 @@ DbgLv(1) << "DbSc:     fittype" << fittype << "fextn" << fextn;
          QString tripleID   = descript.section( '.', -3, -3 );
          QString editLabel  = ansysID .section( '_',  0, -5 );
          QString anType     = ansysID .section( '_',  2, -3 );
-         QString ftfname    = runID + "/" + anType + "."
+DbgLv(1) << "DbSc:       anType" << anType << "editLabel" << editLabel << "ansysID" << ansysID;
+         QString ftfname    = runID + "/" + anType + "." + editLabel + "."
                               + tripleID + fextn;
          mdescr.description = descript;
          mdescr.baseDescr   = runID + "." + tripleID + "."
@@ -1599,7 +1609,7 @@ DbgLv(1) << "DbSc:    *FIT* " << descript;
          }
 
          QString anType     = ansysID .section( '_',  2, -3 );
-         QString ftfname    = runID + "/" + anType + "."
+         QString ftfname    = runID + "/" + anType + "." + editLabel + "."
                               + tripleID + fextn;
          mdescr.description = descript;
          mdescr.baseDescr   = runID + "." + tripleID + "."

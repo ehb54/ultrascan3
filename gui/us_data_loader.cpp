@@ -1439,15 +1439,11 @@ void US_DataLoader::pare_to_latest( void )
          }
 
          // This record's label differs from next only by edit code: remove it
-         QString   cdtxt = vals.at( ii ).date;
-         QString   fdtxt = vals.at( jj ).date;
-         QDateTime cdate = QDateTime::fromString( cdtxt, Qt::ISODate );
-         QDateTime fdate = QDateTime::fromString( fdtxt, Qt::ISODate );
-//qDebug() << "PARE ii" << ii << "C,F date" << cdtxt << fdtxt;
-//qDebug() << "  C,F lab" << clabel << flabel;
-//qDebug() << "   (C<=F)" << (cdate<=fdate) << " C,F dt" << cdate << fdate;
-
-         if ( cdate <= fdate )         // Remove the earlier of the two
+         int       cdetm = vals.at( ii ).editID.left( 10 ).toInt();
+         int       fdetm = vals.at( jj ).editID.left( 10 ).toInt();
+qDebug() << "PARE ii" << ii << "C,F edtm" << cdetm << fdetm;
+qDebug() << "  C,F lab" << clabel << flabel;
+         if ( cdetm <= fdetm )         // Remove the earlier of the two
          {
             datamap.remove( clabel );  //  Earlier is earlier in list
          }
