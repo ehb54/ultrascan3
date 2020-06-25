@@ -521,7 +521,7 @@ void US_Hydrodyn::calc_vbar(struct PDB_model *model)
             if ( !model->residue[ i ].pKa ) {
                bf = 1.0;
             } else {
-               if ( model->residue[ i ].acid_residue ) {
+               if ( !model->residue[ i ].acid_residue ) {
                   bf = 1.0 - bf;
                }
             }
