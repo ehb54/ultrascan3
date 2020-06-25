@@ -71,6 +71,8 @@ class US_AddResidue : public QWidget
       QLabel *lbl_type;
       QLabel *lbl_molvol;
       QLabel *lbl_vbar;
+      QLabel *lbl_vbar2;
+      QLabel *lbl_pKa;
       QLabel *lbl_asa;
       QLabel *lbl_beadchain;
       QLabel *lbl_bead_volume;
@@ -120,6 +122,8 @@ class US_AddResidue : public QWidget
 
       QLineEdit *le_molvol;
       QLineEdit *le_vbar;
+      QLineEdit *le_vbar2;
+      QLineEdit *le_pKa;
       QLineEdit *le_asa;
       QLineEdit *le_residue_name;
       QLineEdit *le_residue_comment;
@@ -160,6 +164,8 @@ class US_AddResidue : public QWidget
       void update_comment(const QString &);
       void update_molvol(const QString &);
       void update_vbar(const QString &);
+      void update_vbar2(const QString &);
+      void update_pKa(const QString &);
       void update_asa(const QString &);
       void update_bead_volume(const QString &);
       void update_atom_hydration(double);

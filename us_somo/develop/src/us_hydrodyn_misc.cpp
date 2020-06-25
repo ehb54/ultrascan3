@@ -336,6 +336,90 @@ void US_Hydrodyn_Misc::setupGUI()
    // cb_hydro_zeno->setPalette( PALET_NORMAL );
    // connect(cb_hydro_zeno, SIGNAL(clicked()), SLOT(set_hydro_zeno()));
 
+   lbl_threshold = new QLabel(us_tr("Additonal computed vbar controls:"), this);
+   lbl_threshold->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
+   lbl_threshold->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_threshold->setMinimumHeight(minHeight1);
+   lbl_threshold->setPalette( PALET_FRAME );
+   AUTFBACK( lbl_threshold );
+   lbl_threshold->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+
+   lbl_covolume = new QLabel(us_tr(" Covolume [cm^3/mol]: "), this);
+   lbl_covolume->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_covolume->setMinimumWidth(220);
+   lbl_covolume->setMinimumHeight(minHeight1);
+   lbl_covolume->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_covolume );
+   lbl_covolume->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_covolume = new QLineEdit( this );    le_covolume->setObjectName( "covolume Line Edit" );
+   le_covolume->setMinimumHeight(minHeight1);
+   le_covolume->setEnabled(true);
+   le_covolume->setText(QString("%1").arg( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "covolume" ) ?
+                                              ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "covolume" ] : "12.4" ) );
+   le_covolume->setPalette( PALET_NORMAL );
+   AUTFBACK( le_covolume );
+   le_covolume->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_covolume, SIGNAL(textChanged(const QString &)), SLOT(update_covolume(const QString &)));
+
+   // lbl_thresh_SS = new QLabel(us_tr(" Disulfide distance threshold [A]: "), this);
+   // lbl_thresh_SS->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   // lbl_thresh_SS->setMinimumWidth(220);
+   // lbl_thresh_SS->setMinimumHeight(minHeight1);
+   // lbl_thresh_SS->setPalette( PALET_LABEL );
+   // AUTFBACK( lbl_thresh_SS );
+   // lbl_thresh_SS->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   // le_thresh_SS = new QLineEdit( this );    le_thresh_SS->setObjectName( "thresh_SS Line Edit" );
+   // le_thresh_SS->setMinimumHeight(minHeight1);
+   // le_thresh_SS->setEnabled(true);
+   // le_thresh_SS->setText(QString("%1").arg( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "thresh_SS" ) ?
+   //                                            ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "thresh_SS" ] : "2.3" ) );
+   // le_thresh_SS->setPalette( PALET_NORMAL );
+   // AUTFBACK( le_thresh_SS );
+   // le_thresh_SS->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   // connect(le_thresh_SS, SIGNAL(textChanged(const QString &)), SLOT(update_thresh_SS(const QString &)));
+
+   lbl_thresh_carb_O = new QLabel(us_tr(" Carbohydrate O distance threshold [A]:"), this);
+   lbl_thresh_carb_O->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_thresh_carb_O->setMinimumWidth(220);
+   lbl_thresh_carb_O->setMinimumHeight(minHeight1);
+   lbl_thresh_carb_O->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_thresh_carb_O );
+   lbl_thresh_carb_O->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+   lbl_thresh_carb_O->hide();
+
+   le_thresh_carb_O = new QLineEdit( this );    le_thresh_carb_O->setObjectName( "thresh_carb_O Line Edit" );
+   le_thresh_carb_O->setMinimumHeight(minHeight1);
+   le_thresh_carb_O->setEnabled(true);
+   le_thresh_carb_O->setText(QString("%1").arg( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "thresh_carb_O" ) ?
+                                              ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "thresh_carb_O" ] : "2" ) );
+   le_thresh_carb_O->setPalette( PALET_NORMAL );
+   AUTFBACK( le_thresh_carb_O );
+   le_thresh_carb_O->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_thresh_carb_O, SIGNAL(textChanged(const QString &)), SLOT(update_thresh_carb_O(const QString &)));
+   le_thresh_carb_O->hide();
+
+   lbl_thresh_carb_N = new QLabel(us_tr(" Carbohydrate N distance threshold [A]:"), this);
+   lbl_thresh_carb_N->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_thresh_carb_N->setMinimumWidth(220);
+   lbl_thresh_carb_N->setMinimumHeight(minHeight1);
+   lbl_thresh_carb_N->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_thresh_carb_N );
+   lbl_thresh_carb_N->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+   lbl_thresh_carb_N->hide();
+
+   le_thresh_carb_N = new QLineEdit( this );    le_thresh_carb_N->setObjectName( "thresh_carb_N Line Edit" );
+   le_thresh_carb_N->setMinimumHeight(minHeight1);
+   le_thresh_carb_N->setEnabled(true);
+   le_thresh_carb_N->setText(QString("%1").arg( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "thresh_carb_N" ) ?
+                                              ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "thresh_carb_N" ] : "2" ) );
+   le_thresh_carb_N->setPalette( PALET_NORMAL );
+   AUTFBACK( le_thresh_carb_N );
+   le_thresh_carb_N->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_thresh_carb_N, SIGNAL(textChanged(const QString &)), SLOT(update_thresh_carb_N(const QString &)));
+   le_thresh_carb_N->hide();
+
    lbl_other = new QLabel(us_tr("Other options:"), this);
    lbl_other->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_other->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -405,69 +489,97 @@ void US_Hydrodyn_Misc::setupGUI()
    int /* rows=8, columns = 2, */ spacing = 2, j=0, margin=4;
    QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
 
-   background->addWidget( lbl_info , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
-   j++;
-   background->addWidget(cb_vbar, j, 0);
-   background->addWidget(pb_vbar, j, 1);
-   j++;
-   background->addWidget(lbl_vbar, j, 0);
-   background->addWidget(le_vbar, j, 1);
-   j++;
-   background->addWidget(lbl_vbar_temperature, j, 0);
-   background->addWidget(le_vbar_temperature, j, 1);
-   j++;
-   background->addWidget(lbl_hydrovol, j, 0);
-   background->addWidget(cnt_hydrovol, j, 1);
-   j++;
-   background->addWidget( cb_pb_rule_on , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
-   j++;
-   background->addWidget( lbl_avg_banner , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
-   j++;
-   background->addWidget(lbl_avg_radius, j, 0);
-   background->addWidget(cnt_avg_radius, j, 1);
-   j++;
-   background->addWidget(lbl_avg_mass, j, 0);
-   background->addWidget(cnt_avg_mass, j, 1);
-   j++;
-   background->addWidget(lbl_avg_hydration, j, 0);
-   background->addWidget(cnt_avg_hydration, j, 1);
-   j++;
-   background->addWidget(lbl_avg_volume, j, 0);
-   background->addWidget(cnt_avg_volume, j, 1);
-   j++;
-   background->addWidget(lbl_avg_vbar, j, 0);
-   background->addWidget(cnt_avg_vbar, j, 1);
-   j++;
+   QGridLayout * leftside = new QGridLayout(); leftside->setContentsMargins( 0, 0, 0, 0 ); leftside->setSpacing( 0 ); leftside->setSpacing( spacing ); leftside->setContentsMargins( margin, margin, margin, margin );
+   {
+      int j = 0;
+      leftside->addWidget( lbl_info , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
+      j++;
+      leftside->addWidget(cb_vbar, j, 0);
+      leftside->addWidget(pb_vbar, j, 1);
+      j++;
+      leftside->addWidget(lbl_vbar, j, 0);
+      leftside->addWidget(le_vbar, j, 1);
+      j++;
+      leftside->addWidget(lbl_vbar_temperature, j, 0);
+      leftside->addWidget(le_vbar_temperature, j, 1);
+      j++;
+      leftside->addWidget(lbl_hydrovol, j, 0);
+      leftside->addWidget(cnt_hydrovol, j, 1);
+      j++;
+      leftside->addWidget( cb_pb_rule_on , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
+      j++;
+      leftside->addWidget( lbl_avg_banner , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
+      j++;
+      leftside->addWidget(lbl_avg_radius, j, 0);
+      leftside->addWidget(cnt_avg_radius, j, 1);
+      j++;
+      leftside->addWidget(lbl_avg_mass, j, 0);
+      leftside->addWidget(cnt_avg_mass, j, 1);
+      j++;
+      leftside->addWidget(lbl_avg_hydration, j, 0);
+      leftside->addWidget(cnt_avg_hydration, j, 1);
+      j++;
+      leftside->addWidget(lbl_avg_volume, j, 0);
+      leftside->addWidget(cnt_avg_volume, j, 1);
+      j++;
+      leftside->addWidget(lbl_avg_vbar, j, 0);
+      leftside->addWidget(cnt_avg_vbar, j, 1);
+      j++;
 
-   background->addWidget( lbl_bead_model_controls , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
-   j++;
-   background->addWidget(lbl_target_e_density, j, 0);
-   background->addWidget(le_target_e_density, j, 1);
-   j++;
-   background->addWidget(lbl_target_volume, j, 0);
-   background->addWidget(le_target_volume, j, 1);
-   j++;
-   background->addWidget(cb_set_target_on_load_pdb, j, 0);
-   background->addWidget(cb_equalize_radii, j, 1);
-   j++;
+      leftside->addWidget( lbl_bead_model_controls , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
+      j++;
+      leftside->addWidget(lbl_target_e_density, j, 0);
+      leftside->addWidget(le_target_e_density, j, 1);
+      j++;
+      leftside->addWidget(lbl_target_volume, j, 0);
+      leftside->addWidget(le_target_volume, j, 1);
+      j++;
+      leftside->addWidget(cb_set_target_on_load_pdb, j, 0);
+      leftside->addWidget(cb_equalize_radii, j, 1);
+      j++;
+   }
 
-   // background->addWidget( lbl_hydro_method , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
-   // j++;
-   // background->addWidget(cb_hydro_supc, j, 0);
-   // background->addWidget(cb_hydro_zeno, j, 1);
-   // j++;
+   QGridLayout * rightside = new QGridLayout(); rightside->setContentsMargins( 0, 0, 0, 0 ); rightside->setSpacing( 0 ); rightside->setSpacing( spacing ); rightside->setContentsMargins( margin, margin, margin, margin );
+   {
+      int j = 0;
 
-   background->addWidget( lbl_other , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
-   j++;
-   background->addWidget( cb_export_msroll , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
-   j++;
+      // rightside->addWidget( lbl_hydro_method , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
+      // j++;
+      // rightside->addWidget(cb_hydro_supc, j, 0);
+      // rightside->addWidget(cb_hydro_zeno, j, 1);
+      // j++;
+      rightside->addWidget( lbl_threshold , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
+      j++;
+      rightside->addWidget(lbl_covolume, j, 0);
+      rightside->addWidget(le_covolume, j, 1);
+      j++;
+      // rightside->addWidget(lbl_thresh_SS, j, 0);
+      // rightside->addWidget(le_thresh_SS, j, 1);
+      // j++;
+      rightside->addWidget(lbl_thresh_carb_O, j, 0);
+      rightside->addWidget(le_thresh_carb_O, j, 1);
+      j++;
+      rightside->addWidget(lbl_thresh_carb_N, j, 0);
+      rightside->addWidget(le_thresh_carb_N, j, 1);
+      j++;
 
-   background->addWidget(lbl_vdw_ot_mult, j, 0);
-   background->addWidget(le_vdw_ot_mult, j, 1);
-   j++;
 
-   background->addWidget(lbl_vdw_ot_dpct, j, 0);
-   background->addWidget(le_vdw_ot_dpct, j, 1);
+      rightside->addWidget( lbl_other , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
+      j++;
+      rightside->addWidget( cb_export_msroll , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
+      j++;
+
+      rightside->addWidget(lbl_vdw_ot_mult, j, 0);
+      rightside->addWidget(le_vdw_ot_mult, j, 1);
+      j++;
+
+      rightside->addWidget(lbl_vdw_ot_dpct, j, 0);
+      rightside->addWidget(le_vdw_ot_dpct, j, 1);
+      j++;
+      rightside->setRowStretch(j, 1);
+   }
+   background->addLayout(leftside , j, 0);
+   background->addLayout(rightside, j, 1);
    j++;
 
    background->addWidget(pb_help, j, 0);
@@ -554,6 +666,30 @@ void US_Hydrodyn_Misc::update_target_volume(const QString &str)
    } else {
       ((US_Hydrodyn *)us_hydrodyn)->pb_bead_saxs->setEnabled(false);
    }
+}
+
+void US_Hydrodyn_Misc::update_covolume(const QString &str)
+{
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "covolume" ] = str;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+// void US_Hydrodyn_Misc::update_thresh_SS(const QString &str)
+// {
+//    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "thresh_SS" ] = str;
+//    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+// }
+
+void US_Hydrodyn_Misc::update_thresh_carb_O(const QString &str)
+{
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "thresh_carb_O" ] = str;
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Misc::update_thresh_carb_N(const QString &str)
+{
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "thresh_carb_N" ] = str;
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Misc::update_vdw_ot_mult(const QString &str)

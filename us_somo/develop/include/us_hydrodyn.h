@@ -24,9 +24,7 @@
 #include <qtreewidget.h>
 //Added by qt3to4:
 #include <QCloseEvent>
-#if QT_VERSION >= 0x040000
-# include <QHeaderView>
-#endif
+#include <QHeaderView>
 
 #include "us.h"
 #include "us_timer.h"
@@ -82,10 +80,8 @@
 #include "us_hydrodyn_cluster.h"
 #include "us_saxs_util.h"
 
-#if QT_VERSION >= 0x040000
 #include "us3i_gui_settings.h"
 #include "us3i_editor.h"
-#endif
 
 //standard C and C++ defs:
 
@@ -102,12 +98,6 @@
 #define START_RASMOL
 using namespace std;
 
-#ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
-
 struct _vdwf {
    double mw;
    double r;
@@ -123,6 +113,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       friend class US_Hydrodyn_Batch;
       friend class US_Hydrodyn_Cluster;
       friend class US_Hydrodyn_Saxs;
+      friend class US_Hydrodyn_Hydro;
       friend class US_Hydrodyn_Saxs_Screen;
       friend class US_Hydrodyn_Saxs_Search;
       friend class US_Hydrodyn_Saxs_Buffer;
@@ -257,10 +248,41 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
    private:
 
-      map < QString, double > res_vbar;
-      map < QString, double > res_mw;
-      map < QString, double > fasta_vbar;
-      map < QString, double > fasta_mw;
+      // distance threshold check support
+      void SS_setup();                              // called once to setup any persistant distance threshold structures
+      void SS_init();                               // called during load pdb to setup any processing structures
+      void SS_apply( struct PDB_model & model );    // called during load pdb to process any adjustments (CYS->CYH etc) *** per model! ***
+      void SS_change_residue(                       // change the residue of an entry to target_residue
+                             struct PDB_model & model
+                             ,const QString & line
+                             ,const QString target_residue
+                                                );  
+      
+      set < QString >                                           cystine_residues;
+      set < QString >                                           sulfur_atoms;
+
+      vector < QString >                                        sulfur_pdb_line;
+      vector < point   >                                        sulfur_coordinates;
+
+      map < QString, map < QString, vector < unsigned int > > > sulfur_pdb_chain_atom_idx;
+      map < QString, vector < unsigned int > >                  sulfur_pdb_chain_idx;
+
+      map < int, int >                                          sulfur_paired;
+      
+      // end distance threshold check support
+      // info routines (in us_hydrodyn_info.cpp
+
+      void info_model_vector( const QString & msg, const vector <struct PDB_model> & models, const set < QString > only_atoms = {} );
+
+      // end info routines
+
+      map < QString, double >  res_vbar;
+      map < QString, double >  res_vbar2;
+      map < QString, double >  res_pKa;
+      map < QString, double >  res_mw;
+      map < QString, double >  res_ionization_mass_change;
+      map < QString, double >  fasta_vbar;
+      map < QString, double >  fasta_mw;
       void create_fasta_vbar_mw();
       bool calc_fasta_vbar( QStringList & seq_chars, double &result, QString &msgs );
 
@@ -401,6 +423,11 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QPushButton *pb_grid;
       QPushButton *pb_view_asa;
       QPushButton *pb_view_bead_model;
+
+      QLabel      *lbl_temperature;
+      QLineEdit   *le_temperature;
+      QCheckBox   *cb_pH;
+      QLineEdit   *le_pH;
 
       QPushButton *pb_dmd_run;
 
@@ -850,6 +877,12 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       QString get_somo_dir();
 
+      double basic_fraction( float pH, float pKa );
+      double ionized_residue_vbar( float bf, struct residue *res );
+      double ionized_atom_mw( float bf, struct atom *atom );
+      double ionized_num_elect( float bf, struct atom *atom );
+      double ionized_hydrogens( float bf, struct atom *atom );
+
    private slots:
       void hullrad_readFromStdout();
       void hullrad_readFromStderr();
@@ -1003,6 +1036,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void write_config(const QString &);
       void reset();
       void set_default();
+      void set_pH();
+      void update_temperature( const QString &, bool update_hydro = true );
+      void update_pH( const QString & );
       void update_bead_model_file(const QString &);
       void update_bead_model_prefix(const QString &);
       void radial_reduction( bool from_grid = false );
@@ -1024,6 +1060,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void append_options_log_atob(); // append atob options to options_log
       void append_options_log_atob_ovlp(); // append atob options to options_log
       void list_model_vector(vector < PDB_model > *);
+      QString default_differences_main();
       QString default_differences_load_pdb();
       QString default_differences_somo();
       QString default_differences_grid();
@@ -1150,12 +1187,5 @@ class radial_reduction_thr_t : public QThread
   int work_to_do_waiters;
   int work_done_waiters;
 };
-
-
-#ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
-#endif
 
 #endif

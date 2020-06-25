@@ -70,6 +70,9 @@ class US_EXTERN US_Hydrodyn_PDB_Parsing : public QFrame
       QCheckBox *cb_skip_water;
       QCheckBox *cb_alternate;
       QCheckBox *cb_find_sh;
+      QLabel    *lbl_thresh_SS;
+      QLineEdit *le_thresh_SS;
+
       QCheckBox *cb_save_csv_on_load;
       QCheckBox *cb_residue_stop;
       QCheckBox *cb_residue_skip;
@@ -89,6 +92,7 @@ class US_EXTERN US_Hydrodyn_PDB_Parsing : public QFrame
    private slots:
       
       void setupGUI();
+      void update_thresh_SS(const QString &);
       void skip_hydrogen();
       void skip_water();
       void alternate();

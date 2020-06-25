@@ -439,15 +439,16 @@ struct hybridization
 
 struct atom
 {
-   QString name;                 // for example, CA
-   hybridization hybrid;         // hybridization of atom
-   unsigned int bead_assignment; // which bead this atom belongs to
-   bool         positioner;      // does this atom control position? (yes=1, no=0)
-   unsigned int serial_number;   // the serial number the atom occupies in the residue
-   bool         tmp_flag;        // used for finding missing residues
-   bool         tmp_used;        // used for avoiding duplicate usage
-   float        saxs_excl_vol;   // SAXS excluded volume value
-   float        hydration;       // atomic hydration / needed float for ABB
+   QString name;                        // for example, CA
+   hybridization hybrid;                // hybridization of atom
+   unsigned int bead_assignment;        // which bead this atom belongs to
+   bool         positioner;             // does this atom control position? (yes=1, no=0)
+   unsigned int serial_number;          // the serial number the atom occupies in the residue
+   bool         tmp_flag;               // used for finding missing residues
+   bool         tmp_used;               // used for avoiding duplicate usage
+   float        saxs_excl_vol;          // SAXS excluded volume value
+   float        hydration;              // atomic hydration / needed float for ABB
+   float        ionization_mass_change; // pH dependent change, sign matters
 };
 
 struct residue
@@ -463,10 +464,13 @@ struct residue
                                  // 4: detergent
                                  // 5: other
    float molvol;                 // the molecular volume of the residue
-   float vbar;                   // the partial specific volume of the residue
+   float vbar;                   // the partial specific volume of the residue unprotonated
+   float vbar2;                  // the partial specific volume of the residue protonated
+   float pKa;                    // the partial specific volume of the residue protonated
    float asa;                    // maximum accessible surface area (A^2)
    vector <struct atom> r_atom;  // the atoms in the residue
    vector <struct bead> r_bead;  // the beads used to describe the residue
+   bool acid_residue;            // used for vbar calculations
 };
 
 class sortable_float {

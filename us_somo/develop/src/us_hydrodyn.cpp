@@ -4,6 +4,9 @@
 // us_hydrodyn_anaflex_core.cpp contains the main computational routines for brownian dynamic (anaflex) computations
 // us_hydrodyn_dmd_core.cpp contains the main computational routines for molecular dynamic (dmd) computations
 // us_hydrodyn_other.cpp contains other routines such as file i/o
+// us_hydrodyn_info.cpp contains code to report structures for debugging
+// us_hydrodyn_util.cpp contains other various code, such as disulfide code
+// us_hydrodyn_load.cpp contains code to load files 
 
 // includes and defines need cleanup
  
@@ -252,6 +255,8 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    last_pdb_title.clear( );
    last_pdb_header.clear( );
    last_no_model_selected = false;
+
+   SS_setup();
 
    // no_rr = false;
 
@@ -996,6 +1001,43 @@ void US_Hydrodyn::setupGUI()
    pb_view_bead_model->setPalette( PALET_PUSHB );
    connect(pb_view_bead_model, SIGNAL(clicked()), SLOT(view_bead_model()));
 
+   lbl_temperature = new QLabel(us_tr(" Temp. (ºC):"), this);
+   Q_CHECK_PTR(lbl_temperature);
+   lbl_temperature->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_temperature->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_temperature );
+   lbl_temperature->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_temperature = new QLineEdit( this );    le_temperature->setObjectName( "Temperature Line Edit" );
+   le_temperature->setText(QString("").sprintf("%4.2f",hydro.temperature));
+   le_temperature->setAlignment(Qt::AlignVCenter);
+   le_temperature->setPalette( PALET_NORMAL );
+   AUTFBACK( le_temperature );
+   le_temperature->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_temperature->setValidator( new QDoubleValidator( -273.15, 200, 2, le_temperature ) );
+   le_temperature->setEnabled(true);
+   connect(le_temperature, SIGNAL(textChanged(const QString &)), SLOT(update_temperature(const QString &)));
+
+   cb_pH = new QCheckBox(this);
+   cb_pH->setText(us_tr(" pH "));
+   cb_pH->setChecked( gparams.count( "use_pH" ) && gparams[ "use_pH" ] == "true" );
+   cb_pH->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_pH->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_pH );
+   connect(cb_pH, SIGNAL(clicked()), this, SLOT(set_pH()));
+   cb_pH->setToolTip( us_tr( "<html><body>check to enable pH dependent ionization and psv.</body></html>" ) );
+
+   le_pH = new QLineEdit( this );    le_pH->setObjectName( "PH Line Edit" );
+   le_pH->setText(QString("").sprintf("%4.2f",hydro.pH));
+   le_pH->setAlignment(Qt::AlignVCenter);
+   le_pH->setPalette( PALET_NORMAL );
+   AUTFBACK( le_pH );
+   le_pH->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_pH->setValidator( new QDoubleValidator( 0.01, 14, 2, le_pH ) );
+   le_pH->setEnabled( cb_pH->isChecked() );
+   connect(le_pH, SIGNAL(textChanged(const QString &)), SLOT(update_pH(const QString &)));
+   cb_pH->setToolTip( us_tr( "<html><body>enter the pH for ionization and psv calculations.</body></html>" ) );
+
    pb_load_pdb = new QPushButton(us_tr("Load Single PDB File"), this);
    Q_CHECK_PTR(pb_load_pdb);
    pb_load_pdb->setMinimumHeight(minHeight1);
@@ -1486,6 +1528,14 @@ void US_Hydrodyn::setupGUI()
    background->addWidget(lbl_table, j, 1);
    j++;
    background->addWidget(pb_batch, j, 0);
+   {
+      QHBoxLayout *hbl = new QHBoxLayout();
+      hbl->addWidget( lbl_temperature );
+      hbl->addWidget( le_temperature );
+      hbl->addWidget( cb_pH );
+      hbl->addWidget( le_pH );
+      background->addLayout( hbl, j, 1 );
+   }
    j++;
    background->addWidget(pb_load_pdb, j, 0);
    background->addWidget(le_pdb_file, j, 1);
@@ -2158,6 +2208,10 @@ void US_Hydrodyn::do_reset()
    anaflex_options = default_anaflex_options;
    gparams = default_gparams;
    //  save = default_save;
+   le_temperature->setText(QString("").sprintf("%4.2f",hydro.temperature));
+   le_pH->setText(QString("").sprintf("%4.2f",hydro.pH));
+   cb_pH->setChecked( gparams.count( "use_pH" ) && gparams[ "use_pH" ] == "true" );
+   le_pH->setEnabled( cb_pH->isChecked() );
 }
 
 void US_Hydrodyn::reset()
@@ -3256,6 +3310,32 @@ void US_Hydrodyn::update_bead_model_file(const QString &str)
 void US_Hydrodyn::update_bead_model_prefix(const QString &str)
 {
    bead_model_prefix = str;
+}
+
+void US_Hydrodyn::update_temperature(const QString &str, bool update_hydro )
+{
+   hydro.temperature = str.toDouble();
+   display_default_differences();
+   if ( update_hydro ) {
+      if ( hydro_widget ) {
+         hydro_window->update_temperature( str, false );
+      }
+   } else {
+      le_temperature->setText( str );
+   }
+}
+
+void US_Hydrodyn::update_pH(const QString &str)
+{
+   hydro.pH = str.toDouble();
+   display_default_differences();
+}
+
+void US_Hydrodyn::set_pH()
+{
+   gparams[ "use_pH" ] = cb_pH->isChecked() ? "true" : "false";
+   le_pH->setEnabled( cb_pH->isChecked() );
+   display_default_differences();
 }
 
 int US_Hydrodyn::calc_somo( bool no_ovlp_removal )

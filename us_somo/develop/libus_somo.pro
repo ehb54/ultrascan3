@@ -248,6 +248,8 @@ SOURCES *= \
         src/us_hydrodyn_hydrate_align.cpp \
         src/us_hydrodyn_hydro.cpp \
         src/us_hydrodyn_hydro_zeno.cpp \
+        src/us_hydrodyn_info.cpp \
+        src/us_hydrodyn_load.cpp \
         src/us_hydrodyn_misc.cpp \
         src/us_hydrodyn_other.cpp \
         src/us_hydrodyn_overlap.cpp \
@@ -328,6 +330,7 @@ SOURCES *= \
         src/us_hydrodyn_saxs_1d.cpp \
         src/us_hydrodyn_saxs_2d.cpp \
         src/us_hydrodyn_supc.cpp \
+        src/us_hydrodyn_util.cpp \
         src/us_hydrodyn_xsr.cpp \
         src/us_hydrodyn_zeno.cpp \
 #  us_imgviewer.cpp \

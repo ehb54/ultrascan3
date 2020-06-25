@@ -109,6 +109,17 @@ class US_EXTERN US_Hydrodyn_Misc : public QFrame
       // QLabel    *lbl_hydro_method;
       // QCheckBox *cb_hydro_supc;
       // QCheckBox *cb_hydro_zeno;
+
+      QLabel    *lbl_threshold;
+      QLabel    *lbl_covolume;
+      QLineEdit *le_covolume;
+      // QLabel    *lbl_thresh_SS;
+      // QLineEdit *le_thresh_SS;
+      QLabel    *lbl_thresh_carb_O;
+      QLineEdit *le_thresh_carb_O;
+      QLabel    *lbl_thresh_carb_N;
+      QLineEdit *le_thresh_carb_N;
+
       QLabel    *lbl_other;
       QCheckBox *cb_export_msroll;
       QLabel    *lbl_vdw_ot_mult;
@@ -134,6 +145,12 @@ class US_EXTERN US_Hydrodyn_Misc : public QFrame
       
       void update_target_e_density(const QString &);
       void update_target_volume(const QString &);
+
+      void update_covolume(const QString &);
+      // void update_thresh_SS(const QString &);
+      void update_thresh_carb_O(const QString &);
+      void update_thresh_carb_N(const QString &);
+
       void update_vdw_ot_mult(const QString &);
       void update_vdw_ot_dpct(const QString &);
       void set_set_target_on_load_pdb();

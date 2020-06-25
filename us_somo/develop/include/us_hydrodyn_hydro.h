@@ -47,6 +47,7 @@ struct hydro_options
    bool viscosity;            // false: include beads in volume correction for intrinsic viscosity, true: exclude
    bool overlap_cutoff;         // false: same as in model building, true: enter manually
    double overlap;            // overlap cut off value if entered manually
+   double pH;        
 
    // zeno options
 
@@ -64,6 +65,8 @@ struct hydro_options
 
 class US_EXTERN US_Hydrodyn_Hydro : public QFrame
 {
+   friend class US_Hydrodyn;
+
    Q_OBJECT
 
    public:
@@ -151,7 +154,7 @@ class US_EXTERN US_Hydrodyn_Hydro : public QFrame
 
       void update_solvent_name(const QString &str);
       void update_solvent_acronym(const QString &str);
-      void update_temperature(const QString &str);
+      void update_temperature(const QString &str, bool update_main = true );
       void update_solvent_viscosity(const QString &str);
       void update_solvent_density(const QString &str);
 

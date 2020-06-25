@@ -107,7 +107,7 @@ w		# solvent acronym
 1		# skip hydrogen atoms?
 1		# skip water molecules?
 1		# skip alternate conformations?
-0		# find SH groups?
+1		# find SH groups?
 2		# how to handle missing residues
 2		# how to handle missing atoms
 0.334		# Water electron density
