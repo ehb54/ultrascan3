@@ -281,8 +281,6 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
    if ( dbP != NULL )
      read_optima_machines( dbP );
 
-   qDebug() << "After opt. machines 1";
-
    // for ( int ii = 0; ii < instruments.count(); ii++ )
    //   sl_optimas << QString::number( instruments[ ii ].ID )
    //     + ": " + instruments[ ii ].name;
@@ -1986,14 +1984,10 @@ void US_XpnDataViewer::check_for_sysdata( void )
   qDebug() << "sys_timer IS RUNNING here: ";
   qDebug() << "sys_timer IS RUNNING here: in_reload_check_sysdata " << in_reload_check_sysdata;
   
-  if ( in_reload_check_sysdata )            // If already doing a reload,
+  if ( in_reload_check_sysdata )           // If already doing a reload,
     return;                                //  skip starting a new one
   
-  in_reload_check_sysdata   = true;          // Flag in the midst of a reload
-
-  int idrun = RunID_to_retrieve.toInt();
-    
-  //xpn_data->update_isysrec( idrun );
+  in_reload_check_sysdata   = true;        // Flag in the midst of a reload
 
   int exp_time = 0;
   double temperature = 0;
@@ -2118,8 +2112,8 @@ void US_XpnDataViewer::check_for_sysdata( void )
   double rpm_min = 0;
   double rpm_max = rpm + 5000;
   double temp_min = temperature - 1;
-  if(temp_min < 0)
-    temp_min = 0;
+  if ( temp_min < 0 )
+     temp_min = 0;
   double temp_max = temperature + 1;
 
   //if (temp_data.size() != 0 )
@@ -2562,19 +2556,19 @@ void US_XpnDataViewer::retrieve_xpn_raw_auto( void )
    QRegExp rx( "[^A-Za-z0-9_-]" );
 
    int pos            = 0;
-   bool runID_changed = false;
+   //bool runID_changed = false;
 
    if ( new_runID.length() > 60 )
    {
       int kchar         = 60 - 4 - fRunId.length();
       new_runID         = fExpNm.left( kchar ) + "-run" + fRunId;
-      runID_changed     = true;
+      //runID_changed     = true;
    }
 
    while ( ( pos = rx.indexIn( new_runID ) ) != -1 )
    {
       new_runID.replace( pos, 1, "_" );         // Replace 1 char at pos
-      runID_changed     = true;
+      //runID_changed     = true;
    }
 
    // Let the user know if the runID name has changed
@@ -4870,7 +4864,7 @@ DbgLv(1) << "c_r:  ri0 ro0" << r_radii[0] << allData[jd].xvalues[0]
 
 
 
-// Capture X range of latest Zoom
+// Capture X range of latest Zoom and output meniscus profile
 void US_XpnDataViewer::currentRectf( QRectF rectf )
 {
    QVector< double >  ascdat;
@@ -4930,23 +4924,28 @@ DbgLv(1) << "cRect" << msg;
       int nscan         = rdata->scanCount();
       double afact      = 1.0 / (double)nscan;
       ascdat.fill( 0.0, kpoint );
+      int prrpm         = 0;   // Previous speed
+      int nspeed        = 0;
+      int ssx           = 0;
 
       for ( int js = 0; js < nscan; js++ )
       {
          US_DataIO::Scan* dscan = &rdata->scanData[ js ];
 
-         // Save unique speeds and each one's scan start,end indecies
+         // Save changed speed and each one's scan start,end indecies
          int ssrpm         = (int)qRound( dscan->rpm * 0.01 ) * 100;
-         int ssx           = srpms.indexOf( ssrpm );
-         if ( ssx >= 0 )
-         {
-            sslscs[ ssx ]     = js;
-         }
-         else
-         {
+         if ( ssrpm != prrpm )
+         {  // Speed changes from previous: add to speed list
             srpms  << ssrpm;
             ssfscs << js;
             sslscs << js;
+            ssx           = nspeed;
+            prrpm         = ssrpm;
+            nspeed++;
+         }
+         else
+         {  // Same speed as previous scan: update last index
+            sslscs[ ssx ] = js;
          }
 
          // Accumulate average scan for the current channel
@@ -4970,7 +4969,7 @@ DbgLv(1) << "cRect" << msg;
       }
 
       // Meniscus radius value for the wavelength
-      double radiusw    = rdata->xvalues[ irpos + irx1 ];
+      int radiusw       = (int)qRound( rdata->xvalues[ irpos + irx1 ] );
 DbgLv(1) << "  wavelen/radpos:  " << wavelen << " / " << radiusw;
 
       // Output a wavelength,radial-position line
@@ -4984,18 +4983,21 @@ DbgLv(1) << "  wavelen/radpos:  " << wavelen << " / " << radiusw;
 
    if ( nspeed > 1 )
    {  // If multi-speed, add search/output as "wavelen/speed/radpos"
+      QVector< int >    wvlns;
+      QVector< double > menrads;
       QString dapath    = impath + "/" + cech + ".wavelen.speeds-meniscus.dat";
       QFile dafile( dapath );
       dafile.open( QIODevice::WriteOnly | QIODevice::Text );
       QTextStream datxto( &dafile );
       QString outline   = tr( "Wavelength" );
+
       for ( int jq = 0; jq < nspeed; jq++ )
       {  // Add speeds to header line
-         int irpm          = srpms[ jq ];
-         outline          += "," + QString::number( irpm );
+         outline          += "," + QString::number( srpms[ jq ] );
       }
       outline          += "\n";
       datxto << outline;
+
       for ( int jd = 0; jd < allData.count(); jd++ )
       {  // Get information for each dataset
          US_DataIO::RawData *rdata = &allData[ jd ];
@@ -5012,7 +5014,9 @@ DbgLv(1) << "  wavelen/radpos:  " << wavelen << " / " << radiusw;
             kpoint           = irx2 - irx1 + 1;
          }
 
-         double wavelen    = rdata->scanData[ 0 ].wavelength; // Wavelength
+         int wavelen       = (int)rdata->scanData[ 0 ].wavelength; // Wavelength
+         wvlns << wavelen;
+
          // Start data line with wavelength value
          outline           = QString::number( wavelen );
 
@@ -5024,6 +5028,7 @@ DbgLv(1) << "  wavelen/radpos:  " << wavelen << " / " << radiusw;
             int jsl           = sslscs[ jq ] + 1;
             int nscan         = jsl - jsf;
             double afact      = 1.0 / (double)nscan;
+DbgLv(1) << " MSPD: jq" << jq << "speed" << irpm << "jsf,jsl,nsc" << jsf << jsl << nscan;
             ascdat.fill( 0.0, kpoint );
             for ( int js = jsf; js < jsl; js++ )
             {  // Average scans in the current speed step
@@ -5049,8 +5054,9 @@ DbgLv(1) << "  wavelen/radpos:  " << wavelen << " / " << radiusw;
             }
 
             double radiusw    = rdata->xvalues[ irpos + irx1 ];
+            menrads << radiusw;
 DbgLv(1) << "  wavelen/speed/radpos:  " << wavelen
-   << " / " << irpm << " / " << radiusw;
+   << " / " << irpm << " / " << radiusw << "  irpos" << irpos;
 
             outline          += "," + QString::number( radiusw );
          }  // END: speed loop
@@ -5059,6 +5065,38 @@ DbgLv(1) << "  wavelen/speed/radpos:  " << wavelen
       }  // END: dataset loop
 
       dafile.close();
+
+      // Now output a transformed data file (speed in rows instead of columns)
+      dapath            = impath + "/" + cech + ".speed.wavelens-meniscus.dat";
+      QFile dafile2( dapath );
+      dafile2.open( QIODevice::WriteOnly | QIODevice::Text );
+      QTextStream datxto2( &dafile2 );
+      outline        = tr( "Speed" );
+      int nwvlen     = wvlns.count();
+
+      for ( int jw = 0; jw < nwvlen; jw++ )
+      {  // Add wavelengths to header line
+         outline       += "," + QString::number( wvlns[ jw ] );
+      }
+      outline       += "\n";
+      datxto2 << outline;
+
+      for ( int js = 0; js < nspeed; js++ )
+      {  // Compose speed,meniscus,meniscus... rows
+         // Start data line with speed value
+         outline        = QString::number( srpms[ js ] );
+         int jv         = js;
+
+         for ( int jq = 0; jq < nwvlen; jq++, jv += nspeed )
+         {  // append meniscus values for each column
+            outline       += "," + QString().sprintf( "%.3f", menrads[ jv ] );
+         }
+         outline       += "\n";
+         datxto2 << outline;
+      }  // END: speed loop
+
+      dafile2.close();
+
    }  // END: multi-speed
 
    le_status->setText( tr( "%1  Radial adjustment scan complete." )
