@@ -905,7 +905,8 @@ US_SolutionMgrNew::US_SolutionMgrNew( int *invID, int *select_db_disk,
    db_or_disk   = select_db_disk;
    from_db      = ( (*db_or_disk) == 1 );
    dbg_level    = US_Settings::us_debug();
-   experimentID = tmp_experimentID;
+//   experimentID = tmp_experimentID;
+   experimentID = 1;
    channelID    = tmp_channelID;
 
    setPalette( US_GuiSettings::frameColor() );
@@ -1080,28 +1081,32 @@ DbgLv(1) << "Inside newAccepted(): " << "ExpID: " << experimentID << ", cID: " <
       // if ( status != US_DB2::OK && ! display_status )  // then we return but no status msg
       //    return;
 
-      if ( status != US_DB2::OK )
+      if ( status == US_DB2::NO_BUFFER )
       {
-         QMessageBox::information( this,
-               tr( "Attention" ) ,
-               db.lastError() );
-         return;
-      }
-
-      else if ( status == US_DB2::NO_BUFFER )
-      {
-         QMessageBox::information( this,
-               tr( "Attention" ),
+         QMessageBox::warning( this,
+               tr( "Solution DB Save Error" ),
                tr( "There was a problem saving the buffer to the database.\n" ) );
          return;
       }
 
       else if ( status == US_DB2::NOROWS )
       {
-         QMessageBox::information( this,
-               tr( "Attention" ) ,
+         QMessageBox::warning( this,
+               tr( "Solution DB Save Error" ),
                tr( "A solution component is missing from the database, "
                    "and the attempt to save it failed.\n") );
+         return;
+      }
+
+      else if ( status != US_DB2::OK )
+      {
+QString emsg = "solSv2DB: status=" + QString::number(status) + " " + QString::number(db.lastErrno())
+ + " LErr=\"" + db.lastError() + "\"\n"
+ + "expID,chnID " + QString::number(experimentID) + " " + QString::number(channelID);
+         QMessageBox::warning( this,
+               tr( "Solution DB Save Error" ),
+//               db.lastError() );
+               emsg );
          return;
       }
    }

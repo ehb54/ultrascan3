@@ -324,6 +324,7 @@ int US_Solution::saveToDB( int expID, int channelID, US_DB2* db )
 
    // Save to disk too
    saveToDisk();
+qDebug() << "SolSvDB: ToDisk complete" << "expID,chnID" << expID << channelID;
 
    if ( ! buffer.GUID.isEmpty() )
    {
@@ -333,6 +334,8 @@ int US_Solution::saveToDB( int expID, int channelID, US_DB2* db )
       db->query( q );
 
       status = db->lastErrno();
+qDebug() << "SolSvDB: bufID stat" << status;
+
       if ( status == US_DB2::NOROWS )
          buffer.saveToDB( db, QString::number( 1 ) );      // 1 = private
 
@@ -349,6 +352,7 @@ int US_Solution::saveToDB( int expID, int channelID, US_DB2* db )
       db->query( q );
 
       status = db->lastErrno();
+qDebug() << "SolSvDB: anaID stat" << status;
       if ( status == US_DB2::NOROWS )
          newInfo.analyte.write( true, "", db );
 
@@ -367,12 +371,13 @@ int US_Solution::saveToDB( int expID, int channelID, US_DB2* db )
    q  << "get_solutionID_from_GUID"
       << solutionGUID;
    db->query( q );
+   db->next();
 
    status = db->lastErrno();
+qDebug() << "SolSvDB: soGID stat" << status;
    if ( status == US_DB2::OK )
    {
       // Edit existing solution entry
-      db->next();
       solutionID = db->value( 0 ).toInt();
       q.clear();
       q  << "update_solution"
@@ -384,6 +389,7 @@ int US_Solution::saveToDB( int expID, int channelID, US_DB2* db )
          << notes;
 
       db->statusQuery( q );
+qDebug() << "SolSvDB: updSO solID" << solutionID << "lastErr" << db->lastError() << db->lastErrno();
    }
 
    else if ( status == US_DB2::NOROWS  &&
@@ -404,6 +410,9 @@ int US_Solution::saveToDB( int expID, int channelID, US_DB2* db )
 
       db->statusQuery( q );
       solutionID = db->lastInsertID();
+qDebug() << "SolSvDB: newSO newID" << solutionID << "lastErr" << db->lastError()
+ << db->lastErrno() << "expID" << expID << "chnID" << channelID;
+qDebug() << "SolSvDB: newSO q" << q;
    }
 
    else   // unspecified error
@@ -422,14 +431,17 @@ int US_Solution::saveToDB( int expID, int channelID, US_DB2* db )
       q.clear();
       q  << "new_solutionBuffer"
          << QString::number( solutionID )
-         << QString( "" )           // skip bufferID and use GUID instead
+         << QString( "0" )        // skip bufferID and use GUID instead
          << buffer.GUID;
 
       status = db->statusQuery( q );
+qDebug() << "SolSvDB: soBuf stat" << status << db->lastError() << "bGID" << buffer.GUID
+ << "solID" << solutionID;
+qDebug() << "SolSvDB: soBuf q=" << q;
       if ( status != US_DB2::OK )
       {
          qDebug() << "MySQL error associating buffer with solution in database:"
-                  << db->lastError();
+                  << db->lastError() << status;
          return status;
       }
    }
@@ -451,11 +463,12 @@ int US_Solution::saveToDB( int expID, int channelID, US_DB2* db )
       q.clear();
       q  << "new_solutionAnalyte"
          << QString::number( solutionID )
-         << QString( "" )          // skip analyteID and use GUID instead
+         << QString( "0" )          // skip analyteID and use GUID instead
          << newInfo.analyte.analyteGUID
          << QString::number( newInfo.amount );
    
       status = db->statusQuery( q );
+qDebug() << "SolSvDB: soAna stat" << status << db->lastError();
       if ( status != US_DB2::OK )
       {
          qDebug() << "MySQL error associating analyte "
@@ -500,6 +513,7 @@ int US_Solution::saveToDB( int expID, int channelID, US_DB2* db )
 
 
    saveStatus = BOTH;
+qDebug() << "SolSvDB: END: svstat" << saveStatus;
 
    return US_DB2::OK;
 }
