@@ -4097,6 +4097,7 @@ void US_Hydrodyn::hard_coded_defaults()
    hydro.pH = 7;
    hydro.solvent_viscosity = VISC_20W * 100;
    hydro.solvent_density = DENS_20W;
+   hydro.manual_solvent_conditions = false;
 
    hydro.reference_system = false;   // false: diffusion center, true: cartesian origin (default false)
    hydro.boundary_cond = false;      // false: stick, true: slip (default false)
@@ -4499,7 +4500,7 @@ void US_Hydrodyn::hard_coded_defaults()
 
    gparams[ "covolume"                   ]         = "12.4";
    gparams[ "use_pH"                     ]         = "true";
-   gparams[ "thresh_SS"                  ]         = "2.3";
+   gparams[ "thresh_SS"                  ]         = "2.5";
    gparams[ "thresh_carb_O"              ]         = "2";
    gparams[ "thresh_carb_N"              ]         = "2";
 }

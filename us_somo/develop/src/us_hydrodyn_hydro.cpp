@@ -65,106 +65,6 @@ void US_Hydrodyn_Hydro::setupGUI()
    AUTFBACK( cnt_unit );
    connect(cnt_unit, SIGNAL(valueChanged(double)), SLOT(update_unit(double)));
 
-#if  QT_VERSION < 0x040000
-   bg_solvent_conditions = new QGroupBox(4, Qt::Horizontal, "Solvent type and conditions:", this);
-
-   lbl_solvent_name = new QLabel(us_tr(" Solvent:"), bg_solvent_conditions);
-   Q_CHECK_PTR(lbl_solvent_name);
-   lbl_solvent_name->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_solvent_name->setPalette( PALET_LABEL );
-   AUTFBACK( lbl_solvent_name );
-   lbl_solvent_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
-
-   le_solvent_name = new QLineEdit( bg_solvent_conditions );    le_solvent_name->setObjectName( "Solvent_Name Line Edit" );
-   le_solvent_name->setText((*hydro).solvent_name);
-   le_solvent_name->setAlignment(Qt::AlignVCenter);
-   le_solvent_name->setPalette( PALET_NORMAL );
-   AUTFBACK( le_solvent_name );
-   le_solvent_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   le_solvent_name->setEnabled(true);
-   connect(le_solvent_name, SIGNAL(textChanged(const QString &)), SLOT(update_solvent_name(const QString &)));
-
-   //   lbl_solvent_defaults = new QLabel(us_tr(" Set defaults:"), bg_solvent_conditions);
-   //   Q_CHECK_PTR(lbl_solvent_defaults);
-   //   lbl_solvent_defaults->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   //   lbl_solvent_defaults->setPalette( PALET_LABEL );
-   //   lbl_solvent_defaults->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
-   bg_solvent_conditions->addSpace(0);
-
-   cb_solvent_defaults = new QCheckBox(bg_solvent_conditions);
-   cb_solvent_defaults->setText("Set defaults");
-   cb_solvent_defaults->setEnabled(true);
-   check_solvent_defaults();
-   cb_solvent_defaults->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_solvent_defaults->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_solvent_defaults );
-   connect(cb_solvent_defaults, SIGNAL(clicked()), this, SLOT(set_solvent_defaults()));
-
-   lbl_solvent_acronym = new QLabel(us_tr(" Solvent acronym:"), bg_solvent_conditions);
-   //   lbl_solvent_acronym = new QLabel(us_tr(" Solvent acronym (max 5 characters):"), bg_solvent_conditions);
-   Q_CHECK_PTR(lbl_solvent_acronym);
-   lbl_solvent_acronym->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_solvent_acronym->setPalette( PALET_LABEL );
-   AUTFBACK( lbl_solvent_acronym );
-   lbl_solvent_acronym->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
-
-   le_solvent_acronym = new QLineEdit( bg_solvent_conditions );    le_solvent_acronym->setObjectName( "Solvent_Acronym Line Edit" );
-   le_solvent_acronym->setText((*hydro).solvent_acronym.left(5));
-   le_solvent_acronym->setAlignment(Qt::AlignVCenter);
-   le_solvent_acronym->setPalette( PALET_NORMAL );
-   AUTFBACK( le_solvent_acronym );
-   le_solvent_acronym->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   le_solvent_acronym->setEnabled(true);
-   connect(le_solvent_acronym, SIGNAL(textChanged(const QString &)), SLOT(update_solvent_acronym(const QString &)));
-
-   lbl_temperature = new QLabel(us_tr(" Temperature (ºC):"), bg_solvent_conditions);
-   Q_CHECK_PTR(lbl_temperature);
-   lbl_temperature->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_temperature->setPalette( PALET_LABEL );
-   AUTFBACK( lbl_temperature );
-   lbl_temperature->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
-
-   le_temperature = new QLineEdit( bg_solvent_conditions );    le_temperature->setObjectName( "Temperature Line Edit" );
-   le_temperature->setText(str.sprintf("%4.2f",(*hydro).temperature));
-   le_temperature->setAlignment(Qt::AlignVCenter);
-   le_temperature->setPalette( PALET_NORMAL );
-   AUTFBACK( le_temperature );
-   le_temperature->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   le_temperature->setEnabled(true);
-   connect(le_temperature, SIGNAL(textChanged(const QString &)), SLOT(update_temperature(const QString &)));
-
-   lbl_solvent_viscosity = new QLabel(us_tr(" Solvent viscosity (cP):"), bg_solvent_conditions);
-   Q_CHECK_PTR(lbl_solvent_viscosity);
-   lbl_solvent_viscosity->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_solvent_viscosity->setPalette( PALET_LABEL );
-   AUTFBACK( lbl_solvent_viscosity );
-   lbl_solvent_viscosity->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
-
-   le_solvent_viscosity = new QLineEdit( bg_solvent_conditions );    le_solvent_viscosity->setObjectName( "Solvent_Viscosity Line Edit" );
-   le_solvent_viscosity->setText(str.sprintf("%f",(*hydro).solvent_viscosity));
-   le_solvent_viscosity->setAlignment(Qt::AlignVCenter);
-   le_solvent_viscosity->setPalette( PALET_NORMAL );
-   AUTFBACK( le_solvent_viscosity );
-   le_solvent_viscosity->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   le_solvent_viscosity->setEnabled(true);
-   connect(le_solvent_viscosity, SIGNAL(textChanged(const QString &)), SLOT(update_solvent_viscosity(const QString &)));
-
-   lbl_solvent_density = new QLabel(us_tr(" Solvent density (g/ml):"), bg_solvent_conditions);
-   Q_CHECK_PTR(lbl_solvent_density);
-   lbl_solvent_density->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_solvent_density->setPalette( PALET_LABEL );
-   AUTFBACK( lbl_solvent_density );
-   lbl_solvent_density->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
-
-   le_solvent_density = new QLineEdit( bg_solvent_conditions );    le_solvent_density->setObjectName( "Solvent_Density Line Edit" );
-   le_solvent_density->setText(str.sprintf("%f",(*hydro).solvent_density));
-   le_solvent_density->setAlignment(Qt::AlignVCenter);
-   le_solvent_density->setPalette( PALET_NORMAL );
-   AUTFBACK( le_solvent_density );
-   le_solvent_density->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   le_solvent_density->setEnabled(true);
-   connect(le_solvent_density, SIGNAL(textChanged(const QString &)), SLOT(update_solvent_density(const QString &)));
-#else
    bg_solvent_conditions = new QGroupBox( "Solvent type and conditions:" );
 
    lbl_solvent_name = new QLabel(us_tr(" Solvent:"));
@@ -182,13 +82,6 @@ void US_Hydrodyn_Hydro::setupGUI()
    le_solvent_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_solvent_name->setEnabled(true);
    connect(le_solvent_name, SIGNAL(textChanged(const QString &)), SLOT(update_solvent_name(const QString &)));
-
-   //   lbl_solvent_defaults = new QLabel(us_tr(" Set defaults:"), bg_solvent_conditions);
-   //   Q_CHECK_PTR(lbl_solvent_defaults);
-   //   lbl_solvent_defaults->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   //   lbl_solvent_defaults->setPalette( PALET_LABEL );
-   //   lbl_solvent_defaults->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
-   //   bg_solvent_conditions->addSpace(0);
 
    cb_solvent_defaults = new QCheckBox();
    cb_solvent_defaults->setText("Set defaults");
@@ -232,7 +125,7 @@ void US_Hydrodyn_Hydro::setupGUI()
    le_temperature->setEnabled(true);
    connect(le_temperature, SIGNAL(textChanged(const QString &)), SLOT(update_temperature(const QString &)));
 
-   lbl_solvent_viscosity = new QLabel(us_tr(" Solvent viscosity (cP):"));
+   lbl_solvent_viscosity = new QLabel(us_tr(" Solvent viscosity [cP]:"));
    Q_CHECK_PTR(lbl_solvent_viscosity);
    lbl_solvent_viscosity->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_solvent_viscosity->setPalette( PALET_LABEL );
@@ -248,7 +141,7 @@ void US_Hydrodyn_Hydro::setupGUI()
    le_solvent_viscosity->setEnabled(true);
    connect(le_solvent_viscosity, SIGNAL(textChanged(const QString &)), SLOT(update_solvent_viscosity(const QString &)));
 
-   lbl_solvent_density = new QLabel(us_tr(" Solvent density (g/ml):"));
+   lbl_solvent_density = new QLabel(us_tr(" Solvent density [g/ml]:"));
    Q_CHECK_PTR(lbl_solvent_density);
    lbl_solvent_density->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_solvent_density->setPalette( PALET_LABEL );
@@ -264,6 +157,49 @@ void US_Hydrodyn_Hydro::setupGUI()
    le_solvent_density->setEnabled(true);
    connect(le_solvent_density, SIGNAL(textChanged(const QString &)), SLOT(update_solvent_density(const QString &)));
 
+   cb_manual_solvent_conditions = new QCheckBox();
+   cb_manual_solvent_conditions->setText(us_tr("Use manually entered solvent conditions regardless of temperature."));
+   cb_manual_solvent_conditions->setEnabled(true);
+   cb_manual_solvent_conditions->setChecked( hydro->manual_solvent_conditions );
+   cb_manual_solvent_conditions->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_manual_solvent_conditions->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_manual_solvent_conditions );
+   connect(cb_manual_solvent_conditions, SIGNAL(clicked()), this, SLOT(set_manual_solvent_conditions()));
+
+   lbl_tc_solvent_viscosity = new QLabel(us_tr(" T.C. Solvent viscosity [cP]:"));
+   Q_CHECK_PTR(lbl_tc_solvent_viscosity);
+   lbl_tc_solvent_viscosity->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_tc_solvent_viscosity->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_tc_solvent_viscosity );
+   lbl_tc_solvent_viscosity->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_tc_solvent_viscosity = new QLineEdit();
+   le_tc_solvent_viscosity->setText(str.sprintf("%f", ((US_Hydrodyn *)us_hydrodyn)->tc_solvent_visc()));
+   le_tc_solvent_viscosity->setAlignment(Qt::AlignVCenter);
+   le_tc_solvent_viscosity->setPalette( PALET_NORMAL );
+   AUTFBACK( le_tc_solvent_viscosity );
+   le_tc_solvent_viscosity->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_tc_solvent_viscosity->setEnabled(true);
+   le_tc_solvent_viscosity->setReadOnly(true);
+
+   lbl_tc_solvent_density = new QLabel(us_tr(" T.C. Solvent density [g/ml]:"));
+   Q_CHECK_PTR(lbl_tc_solvent_density);
+   lbl_tc_solvent_density->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_tc_solvent_density->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_tc_solvent_density );
+   lbl_tc_solvent_density->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_tc_solvent_density = new QLineEdit();
+   le_tc_solvent_density->setText(str.sprintf("%f",((US_Hydrodyn *)us_hydrodyn)->tc_solvent_dens()));
+   le_tc_solvent_density->setAlignment(Qt::AlignVCenter);
+   le_tc_solvent_density->setPalette( PALET_NORMAL );
+   AUTFBACK( le_tc_solvent_density );
+   le_tc_solvent_density->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_tc_solvent_density->setEnabled(true);
+   le_tc_solvent_density->setReadOnly(true);
+   
+   set_manual_solvent_conditions();
+   
    {
       QGridLayout * gl = new QGridLayout; gl->setContentsMargins( 0, 0, 0, 0 ); gl->setSpacing( 0 );
       int row = 0;
@@ -283,32 +219,18 @@ void US_Hydrodyn_Hydro::setupGUI()
       gl->addWidget( lbl_solvent_density, row, 2 );
       gl->addWidget( le_solvent_density, row, 3 );
 
+      row++;
+      gl->addWidget( cb_manual_solvent_conditions, row, 0, 1, 4 );
+
+      row++;
+      gl->addWidget( lbl_tc_solvent_viscosity, row, 0 );
+      gl->addWidget( le_tc_solvent_viscosity, row, 1 );
+      gl->addWidget( lbl_tc_solvent_density, row, 2 );
+      gl->addWidget( le_tc_solvent_density, row, 3 );
+
       bg_solvent_conditions->setLayout( gl );
    }
       
-#endif
-
-#if QT_VERSION < 0x040000
-   bg_reference_system = new QGroupBox(2, Qt::Horizontal, "Computations Relative to:", this);
-   bg_reference_system->setExclusive(true);
-   connect(bg_reference_system, SIGNAL(clicked(int)), this, SLOT(select_reference_system(int)));
-
-   cb_diffusion_center = new QCheckBox(bg_reference_system);
-   cb_diffusion_center->setText(us_tr(" Diffusion Center "));
-   cb_diffusion_center->setEnabled(true);
-   cb_diffusion_center->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_diffusion_center->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_diffusion_center );
-
-   cb_cartesian_origin = new QCheckBox(bg_reference_system);
-   cb_cartesian_origin->setText(us_tr(" Cartesian Origin "));
-   cb_cartesian_origin->setEnabled(true);
-   cb_cartesian_origin->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_cartesian_origin->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_cartesian_origin );
-
-   bg_reference_system->setButton((*hydro).reference_system);
-#else
    bg_reference_system = new QGroupBox( "Computations Relative to:" );
 
    rb_diffusion_center = new QRadioButton();
@@ -339,29 +261,7 @@ void US_Hydrodyn_Hydro::setupGUI()
    } else {
       rb_cartesian_origin->setChecked(true);
    }
-#endif
 
-#if QT_VERSION < 0x040000
-   bg_boundary_cond = new QGroupBox(2, Qt::Horizontal, "Boundary Conditions:", this);
-   bg_boundary_cond->setExclusive(true);
-   connect(bg_boundary_cond, SIGNAL(clicked(int)), this, SLOT(select_boundary_cond(int)));
-
-   cb_stick = new QCheckBox(bg_boundary_cond);
-   cb_stick->setText(us_tr(" Stick "));
-   cb_stick->setEnabled(true);
-   cb_stick->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_stick->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_stick );
-
-   cb_slip = new QCheckBox(bg_boundary_cond);
-   cb_slip->setText(us_tr(" Slip "));
-   cb_slip->setEnabled(true);
-   cb_slip->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_slip->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_slip );
-
-   bg_boundary_cond->setButton((*hydro).boundary_cond);
-#else
    bg_boundary_cond = new QGroupBox( "Boundary Conditions:" );
 
    rb_stick = new QRadioButton();
@@ -393,44 +293,6 @@ void US_Hydrodyn_Hydro::setupGUI()
       rb_slip->setChecked(true);
    }
 
-#endif
-#if QT_VERSION < 0x040000
-   bg_mass_correction = new QGroupBox(4, Qt::Horizontal, "Total Mass of Model:", this);
-   bg_mass_correction->setExclusive(true);
-   connect(bg_mass_correction, SIGNAL(clicked(int)), this, SLOT(select_mass_correction(int)));
-
-   cb_auto_mass = new QCheckBox(bg_mass_correction);
-   cb_auto_mass->setText(us_tr(" Automatic (Sum of Bead Masses)"));
-   cb_auto_mass->setEnabled(true);
-   cb_auto_mass->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_auto_mass->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_auto_mass );
-
-   cb_manual_mass = new QCheckBox(bg_mass_correction);
-   cb_manual_mass->setText(us_tr(" Manual "));
-   cb_manual_mass->setEnabled(true);
-   cb_manual_mass->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_manual_mass->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_manual_mass );
-
-   bg_mass_correction->setButton((*hydro).mass_correction);
-
-   lbl_mass = new QLabel(us_tr(" Enter mass:    "), bg_mass_correction);
-   Q_CHECK_PTR(lbl_mass);
-   lbl_mass->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_mass->setPalette( PALET_LABEL );
-   AUTFBACK( lbl_mass );
-   lbl_mass->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
-
-   le_mass = new QLineEdit( bg_mass_correction );    le_mass->setObjectName( "Mass Line Edit" );
-   le_mass->setText(str.sprintf("%5.3e", (*hydro).mass));
-   le_mass->setAlignment(Qt::AlignVCenter);
-   le_mass->setPalette( PALET_NORMAL );
-   AUTFBACK( le_mass );
-   le_mass->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   le_mass->setEnabled((*hydro).mass_correction);
-   connect(le_mass, SIGNAL(textChanged(const QString &)), SLOT(update_mass(const QString &)));
-#else
    bg_mass_correction = new QGroupBox( "Total Mass of Model:" );
 
    rb_auto_mass = new QRadioButton();
@@ -480,44 +342,6 @@ void US_Hydrodyn_Hydro::setupGUI()
       rb_manual_mass->setChecked(true);
    }
 
-#endif
-#if  QT_VERSION < 0x040000
-   bg_volume_correction = new QGroupBox(4, Qt::Horizontal, "Total Volume of Model: (for Rotational Diff. and Intrinsic Visc. Volume Corr.)", this);
-   bg_volume_correction->setExclusive(true);
-   connect(bg_volume_correction, SIGNAL(clicked(int)), this, SLOT(select_volume_correction(int)));
-
-   cb_auto_volume = new QCheckBox(bg_volume_correction);
-   cb_auto_volume->setText(us_tr(" Automatic (Sum of Bead Volumes)"));
-   cb_auto_volume->setEnabled(true);
-   cb_auto_volume->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_auto_volume->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_auto_volume );
-
-   cb_manual_volume = new QCheckBox(bg_volume_correction);
-   cb_manual_volume->setText(us_tr(" Manual "));
-   cb_manual_volume->setEnabled(true);
-   cb_manual_volume->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_manual_volume->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_manual_volume );
-
-   bg_volume_correction->setButton((*hydro).volume_correction);
-
-   lbl_volume = new QLabel(us_tr(" Enter volume: "), bg_volume_correction);
-   Q_CHECK_PTR(lbl_volume);
-   lbl_volume->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_volume->setPalette( PALET_LABEL );
-   AUTFBACK( lbl_volume );
-   lbl_volume->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
-
-   le_volume = new QLineEdit( bg_volume_correction );    le_volume->setObjectName( "Volume Line Edit" );
-   le_volume->setText(str.sprintf("%5.3e", (*hydro).volume));
-   le_volume->setAlignment(Qt::AlignVCenter);
-   le_volume->setPalette( PALET_NORMAL );
-   AUTFBACK( le_volume );
-   le_volume->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   le_volume->setEnabled((*hydro).volume_correction);
-   connect(le_volume, SIGNAL(textChanged(const QString &)), SLOT(update_volume(const QString &)));
-#else
    bg_volume_correction = new QGroupBox( "Total Volume of Model: (for Rotational Diff. and Intrinsic Visc. Volume Corr.)" );
 
    rb_auto_volume = new QRadioButton();
@@ -567,29 +391,6 @@ void US_Hydrodyn_Hydro::setupGUI()
       rb_manual_volume->setChecked(true);
    }
 
-#endif
-
-#if QT_VERSION < 0x040000
-   bg_bead_inclusion = new QGroupBox(2, Qt::Horizontal, "Inclusion of Buried Beads in Hydrodynamic Calculations:", this);
-   bg_bead_inclusion->setExclusive(true);
-   connect(bg_bead_inclusion, SIGNAL(clicked(int)), this, SLOT(select_bead_inclusion(int)));
-
-   cb_exclusion = new QCheckBox(bg_bead_inclusion);
-   cb_exclusion->setText(us_tr(" Exclude "));
-   cb_exclusion->setEnabled(true);
-   cb_exclusion->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_exclusion->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_exclusion );
-
-   cb_inclusion = new QCheckBox(bg_bead_inclusion);
-   cb_inclusion->setText(us_tr(" Include "));
-   cb_inclusion->setEnabled(true);
-   cb_inclusion->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_inclusion->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_inclusion );
-
-   bg_bead_inclusion->setButton((*hydro).bead_inclusion);
-#else
    bg_bead_inclusion = new QGroupBox( "Inclusion of Buried Beads in Hydrodynamic Calculations:" );
 
    rb_exclusion = new QRadioButton();
@@ -620,43 +421,6 @@ void US_Hydrodyn_Hydro::setupGUI()
    } else {
       rb_inclusion->setChecked(true);
    }
-#endif
-
-#if QT_VERSION < 0x040000
-   bg_buried = new QGroupBox(2, Qt::Horizontal, "Include Buried Beads in Volume Correction for Calculation of:", this);
-
-   cb_rotational = new QCheckBox(bg_buried);
-   cb_rotational->setText(us_tr(" Rotational Diffusion "));
-   if ((*hydro).volume_correction)
-   {
-      cb_rotational->setEnabled(false);
-   }
-   else
-   {
-      cb_rotational->setEnabled(!(*hydro).bead_inclusion);
-   }
-   cb_rotational->setChecked((*hydro).rotational);
-   cb_rotational->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_rotational->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_rotational );
-   connect(cb_rotational, SIGNAL(clicked()), this, SLOT(set_rotational()));
-
-   cb_viscosity = new QCheckBox(bg_buried);
-   cb_viscosity->setText(us_tr(" Intrinsic Viscosity "));
-   if ((*hydro).volume_correction)
-   {
-      cb_viscosity->setEnabled(false);
-   }
-   else
-   {
-      cb_viscosity->setEnabled(!(*hydro).bead_inclusion);
-   }
-   cb_viscosity->setChecked((*hydro).viscosity);
-   cb_viscosity->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_viscosity->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_viscosity );
-   connect(cb_viscosity, SIGNAL(clicked()), this, SLOT(set_viscosity()));
-#else
    bg_buried = new QGroupBox( "Include Buried Beads in Volume Correction for Calculation of:" );
 
    cb_rotational = new QCheckBox();
@@ -697,45 +461,7 @@ void US_Hydrodyn_Hydro::setupGUI()
       bl->addWidget( cb_viscosity);
       bg_buried->setLayout( bl );
    }
-#endif
 
-#if QT_VERSION < 0x040000
-   bg_overlap = new QGroupBox(4, Qt::Horizontal, "Overlap cut-off:", this);
-   bg_overlap->setExclusive(true);
-   connect(bg_overlap, SIGNAL(clicked(int)), this, SLOT(select_overlap(int)));
-
-   cb_auto_overlap = new QCheckBox(bg_overlap);
-   cb_auto_overlap->setText(us_tr(" From Bead Model "));
-   cb_auto_overlap->setEnabled(true);
-   cb_auto_overlap->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_auto_overlap->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_auto_overlap );
-
-   cb_manual_overlap = new QCheckBox(bg_overlap);
-   cb_manual_overlap->setText(us_tr(" Manual "));
-   cb_manual_overlap->setEnabled(true);
-   cb_manual_overlap->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_manual_overlap->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_manual_overlap );
-
-   bg_overlap->setButton((*hydro).overlap_cutoff);
-
-   lbl_overlap = new QLabel(us_tr(" Enter cut-off: "), bg_overlap);
-   Q_CHECK_PTR(lbl_overlap);
-   lbl_overlap->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_overlap->setPalette( PALET_LABEL );
-   AUTFBACK( lbl_overlap );
-   lbl_overlap->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
-
-   le_overlap = new QLineEdit( bg_overlap );    le_overlap->setObjectName( "Mass Line Edit" );
-   le_overlap->setText(str.sprintf("%5.3e", (*hydro).overlap));
-   le_overlap->setAlignment(Qt::AlignVCenter);
-   le_overlap->setPalette( PALET_NORMAL );
-   AUTFBACK( le_overlap );
-   le_overlap->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   le_overlap->setEnabled((*hydro).overlap_cutoff);
-   connect(le_overlap, SIGNAL(textChanged(const QString &)), SLOT(update_overlap(const QString &)));
-#else
    bg_overlap = new QGroupBox( "Overlap cut-off:" );
 
    rb_auto_overlap = new QRadioButton();
@@ -784,8 +510,6 @@ void US_Hydrodyn_Hydro::setupGUI()
    } else {
       rb_manual_overlap->setChecked(true);
    }
-
-#endif
 
    pb_cancel = new QPushButton(us_tr("Close"), this);
    Q_CHECK_PTR(pb_cancel);
@@ -861,6 +585,9 @@ void US_Hydrodyn_Hydro::update_temperature(const QString &str, bool update_main 
    } else {
       le_temperature->setText( str );
    }
+   
+   le_tc_solvent_viscosity->setText(QString("").sprintf("%f", ((US_Hydrodyn *)us_hydrodyn)->tc_solvent_visc()));
+   le_tc_solvent_density->setText(QString("").sprintf("%f",((US_Hydrodyn *)us_hydrodyn)->tc_solvent_dens()));
 }
 
 void US_Hydrodyn_Hydro::update_solvent_viscosity(const QString &str)
@@ -1019,6 +746,14 @@ void US_Hydrodyn_Hydro::set_rotational()
 void US_Hydrodyn_Hydro::set_viscosity()
 {
    (*hydro).viscosity = cb_viscosity->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Hydro::set_manual_solvent_conditions()
+{
+   hydro->manual_solvent_conditions = cb_manual_solvent_conditions->isChecked();
+   le_tc_solvent_viscosity->setEnabled( !cb_manual_solvent_conditions->isChecked() );
+   le_tc_solvent_density->setEnabled( !cb_manual_solvent_conditions->isChecked() );
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

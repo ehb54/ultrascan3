@@ -49,6 +49,8 @@ struct hydro_options
    double overlap;            // overlap cut off value if entered manually
    double pH;        
 
+   bool manual_solvent_conditions;     // manual viscosity & density
+
    // zeno options
 
    bool zeno_zeno;
@@ -93,6 +95,8 @@ class US_EXTERN US_Hydrodyn_Hydro : public QFrame
       QLabel *lbl_temperature;
       QLabel *lbl_solvent_viscosity;
       QLabel *lbl_solvent_density;
+      QLabel *lbl_tc_solvent_viscosity;
+      QLabel *lbl_tc_solvent_density;
       
       QGroupBox *bg_solvent_conditions;
       QGroupBox *bg_reference_system;
@@ -119,6 +123,7 @@ class US_EXTERN US_Hydrodyn_Hydro : public QFrame
       QCheckBox *cb_inclusion;
       QCheckBox *cb_rotational;
       QCheckBox *cb_viscosity;
+      QCheckBox *cb_manual_solvent_conditions;
       
       QRadioButton *rb_diffusion_center;
       QRadioButton *rb_cartesian_origin;
@@ -140,6 +145,8 @@ class US_EXTERN US_Hydrodyn_Hydro : public QFrame
       QLineEdit *le_temperature;
       QLineEdit *le_solvent_viscosity;
       QLineEdit *le_solvent_density;
+      QLineEdit *le_tc_solvent_viscosity;
+      QLineEdit *le_tc_solvent_density;
 
       QLineEdit *le_volume;
       QLineEdit *le_mass;
@@ -178,6 +185,7 @@ class US_EXTERN US_Hydrodyn_Hydro : public QFrame
       void set_solvent_defaults();
       void set_rotational();
       void set_viscosity();
+      void set_manual_solvent_conditions();
       void check_solvent_defaults();
       void cancel();
       void help();

@@ -7290,10 +7290,19 @@ void US_Hydrodyn::calc_mw()
 
    for (unsigned int i = 0; i < model_vector.size(); i++)
    {
-      editor->append( QString(us_tr("\nModel: %1 vbar %2 cm^3/g\n") )
-                      .arg( model_vector[i].model_id )
-                      .arg( QString("").sprintf("%.3f", model_vector[i].vbar) ) );
-      editor_msg( "dark blue", vbar_msg( model_vector[i].vbar ) );
+      // editor->append( QString(us_tr("\nModel: %1 vbar %2 cm^3/g\n") )
+      //                 .arg( model_vector[i].model_id )
+      //                 .arg( QString("").sprintf("%.3f", model_vector[i].vbar) ) );
+      {
+         QFont save_font = editor->currentFont();
+         QFont new_font = QFont("Courier");
+         editor->setCurrentFont(new_font);
+         editor_msg( "dark blue", QString( us_tr("\nModel: %1\n") ).arg( model_vector[i].model_id ) );
+         editor_msg( "dark blue", vbar_msg( model_vector[i].vbar ) );
+         editor_msg( "dark blue", visc_dens_msg() );
+         
+         editor->setCurrentFont(save_font);
+      }
 
       current_model = i;
 

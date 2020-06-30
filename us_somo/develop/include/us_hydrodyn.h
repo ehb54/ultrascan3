@@ -250,6 +250,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       double tc_vbar( double vbar );                // temperature corrected vbar
       QString vbar_msg( double vbar );              // vbar message
+      double tc_solvent_visc();                     // temperature solvent viscosity
+      double tc_solvent_dens();                     // temperature solvent density
+      QString visc_dens_msg();                      // return density and viscosity message
 
    // distance threshold check support
       void SS_setup();                              // called once to setup any persistant distance threshold structures

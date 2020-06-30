@@ -1444,12 +1444,17 @@ QString US_Hydrodyn::vbar_msg( double vbar ) {
    if (!misc.compute_vbar) {
       return
          QString(
-                 "Measured  vbar: %1 @ temperature %2 [C]\n"
-                 "Simulated vbar: %3 @ temperature %4 [C]\n"
+                 us_tr(
+                       "Calculated vbar: %1 [cm^3/g] @ %2 [°C]\n"
+                       "Measured   vbar: %3 [cm^3/g] @ %4 [°C]\n"
+                       "Used       vbar: %5 [cm^3/g] @ %6 [°C]\n"
+                       )
                  )
-         .arg( misc.vbar )
+         .arg( vbar, 5, 'f', 3, '0' )
+         .arg( 20 )
+         .arg( misc.vbar, 5, 'f', 3, '0' )
          .arg( misc.vbar_temperature )
-         .arg( partvol )
+         .arg( partvol, 5, 'f', 3, '0' )
          .arg( hydro.temperature )
          ;
    }
@@ -1457,14 +1462,65 @@ QString US_Hydrodyn::vbar_msg( double vbar ) {
       
    return
       QString(
-              "Computed  vbar: %1 @ temperature %2 [C]\n"
-              "Simulated vbar: %3 @ temperature %4 [C]\n"
+              us_tr(
+                    "Calculated vbar: %1 [cm^3/g] @ %2 [°C]\n"
+                    "Used       vbar: %3 [cm^3/g] @ %4 [°C]\n"
+                    )
               )
-      .arg( vbar )
+      .arg( vbar, 5, 'f', 3, '0' )
       .arg( 20 )
-      .arg( partvol )
+      .arg( partvol, 5, 'f', 3, '0' )
       .arg( hydro.temperature )
       ;
 }
 
 
+double US_Hydrodyn::tc_solvent_visc() {
+   static const double a = 0.586537098;
+   static const double b = -0.0436148;
+   // y = exp( a + bx^(0.5) ln x )
+      
+   return exp( a + b * sqrt( hydro.temperature) * log( hydro.temperature ) );
+}
+
+double US_Hydrodyn::tc_solvent_dens() {
+   static const double a = 0.000151523;
+   static const double b = -0.00000491;
+   // y = exp( a + b x^2 )
+      
+   return exp( a + b * hydro.temperature * hydro.temperature );
+}
+
+QString US_Hydrodyn::visc_dens_msg() {
+   if ( hydro.manual_solvent_conditions ) {
+      return
+         QString(
+                 us_tr(
+                       "Manual flag set\n"
+                       "Stored solvent viscosity %1 [cP]\n"
+                       "Stored solvent density   %2 [cP] @ %3 [°C]\n"
+                       )
+                 )
+         .arg( hydro.solvent_viscosity, 9, 'f', 7, '0' ) 
+         .arg( hydro.solvent_density, 9, 'f', 7, '0' ) 
+         .arg( hydro.temperature )
+         ;
+   } else {
+      return
+         QString(
+                 us_tr(
+                       "Stored solvent viscosity %1 [cP]\n"
+                       "Used   solvent viscosity %2 [cP] @ %3 [°C]\n"
+                       "Stored solvent density   %4 [cP]\n"
+                       "Used   solvent density   %5 [cP] @ %6 [°C]\n"
+                       )
+                 )
+         .arg( hydro.solvent_viscosity, 9, 'f', 7, '0' ) 
+         .arg( tc_solvent_visc(), 9, 'f', 7, '0' )
+         .arg( hydro.temperature )
+         .arg( hydro.solvent_density, 9, 'f', 7, '0' ) 
+         .arg( tc_solvent_dens(), 9, 'f', 7, '0' )
+         .arg( hydro.temperature )
+         ;
+   }
+}
