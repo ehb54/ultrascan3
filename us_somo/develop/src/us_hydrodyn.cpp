@@ -1046,6 +1046,14 @@ void US_Hydrodyn::setupGUI()
    pb_load_pdb->setPalette( PALET_PUSHB );
    connect(pb_load_pdb, SIGNAL(clicked()), SLOT(load_pdb()));
 
+   pb_reload_pdb = new QPushButton(us_tr("Reload"), this);
+   Q_CHECK_PTR(pb_reload_pdb);
+   pb_reload_pdb->setMinimumHeight(minHeight1);
+   pb_reload_pdb->setEnabled(true);
+   pb_reload_pdb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_reload_pdb->setPalette( PALET_PUSHB );
+   connect(pb_reload_pdb, SIGNAL(clicked()), SLOT(reload_pdb()));
+
    le_pdb_file = new mQLineEdit( this );
    le_pdb_file->setText( us_tr( "not selected" ) );
 #if QT_VERSION < 0x040000
@@ -1537,7 +1545,12 @@ void US_Hydrodyn::setupGUI()
       background->addLayout( hbl, j, 1 );
    }
    j++;
-   background->addWidget(pb_load_pdb, j, 0);
+   {
+      QHBoxLayout *hbl = new QHBoxLayout();
+      hbl->addWidget( pb_load_pdb );
+      hbl->addWidget( pb_reload_pdb );
+      background->addLayout( hbl, j, 0);
+   }
    background->addWidget(le_pdb_file, j, 1);
    j++;
    background->addWidget(lbl_model, j, 0);

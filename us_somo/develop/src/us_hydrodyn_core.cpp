@@ -7293,7 +7293,8 @@ void US_Hydrodyn::calc_mw()
       editor->append( QString(us_tr("\nModel: %1 vbar %2 cm^3/g\n") )
                       .arg( model_vector[i].model_id )
                       .arg( QString("").sprintf("%.3f", model_vector[i].vbar) ) );
-                     
+      editor_msg( "dark blue", vbar_msg( model_vector[i].vbar ) );
+
       current_model = i;
 
       model_vector[i].mw         = 0.0;
@@ -7454,6 +7455,7 @@ void US_Hydrodyn::calc_mw()
                                 ""
                                 )
                           );
+               // qs += "\n" + vbar_msg( model_vector[i].vbar );
                editor->append( qs );
                last_pdb_load_calc_mw_msg << qs.replace( "\n", "\nREMARK " ) + QString("\n");
             }
@@ -7568,7 +7570,7 @@ void US_Hydrodyn::calc_mw()
                ;
          }
 #endif
-
+         // qs += "\n" + vbar_msg( model_vector[i].vbar );
          editor->append( qs );
          last_pdb_load_calc_mw_msg << qs;
       }

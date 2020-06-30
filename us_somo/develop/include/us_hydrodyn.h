@@ -248,7 +248,10 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
    private:
 
-      // distance threshold check support
+      double tc_vbar( double vbar );                // temperature corrected vbar
+      QString vbar_msg( double vbar );              // vbar message
+
+   // distance threshold check support
       void SS_setup();                              // called once to setup any persistant distance threshold structures
       void SS_init();                               // called during load pdb to setup any processing structures
       void SS_apply( struct PDB_model & model );    // called during load pdb to process any adjustments (CYS->CYH etc) *** per model! ***
@@ -398,6 +401,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QPushButton *pb_save;
       QPushButton *pb_select_residue_file;
       QPushButton *pb_load_pdb;
+      QPushButton *pb_reload_pdb;
       QPushButton *pb_pdb_hydrate_for_saxs;
       QPushButton *pb_pdb_saxs;
       QPushButton *pb_bead_saxs;

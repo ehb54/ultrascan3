@@ -1414,3 +1414,57 @@ void US_Hydrodyn::reset_chain_residues( PDB_model *model )
    }
    calc_vbar( model );
 }
+
+double US_Hydrodyn::tc_vbar( double vbar ) {
+   double TE = K0 + hydro.temperature;
+   double partvol = (int)((
+                           (
+                            vbar +
+                            (4.25e-4 * (TE - K20))
+                            )
+                           * 1000) + 0.5) / 1000.0;
+
+   if (!misc.compute_vbar) {
+      partvol = (int)((
+                       (
+                        misc.vbar -
+                        (4.25e-4 * (K0 + misc.vbar_temperature - K20)) +
+                        (4.25e-4 * (TE - K20))
+                        )
+                       * 1000) + 0.5) / 1000.0;
+      }
+
+   return partvol;
+}
+
+
+QString US_Hydrodyn::vbar_msg( double vbar ) {
+   double partvol = tc_vbar( vbar );
+
+   if (!misc.compute_vbar) {
+      return
+         QString(
+                 "Measured  vbar: %1 @ temperature %2 [C]\n"
+                 "Simulated vbar: %3 @ temperature %4 [C]\n"
+                 )
+         .arg( misc.vbar )
+         .arg( misc.vbar_temperature )
+         .arg( partvol )
+         .arg( hydro.temperature )
+         ;
+   }
+   
+      
+   return
+      QString(
+              "Computed  vbar: %1 @ temperature %2 [C]\n"
+              "Simulated vbar: %3 @ temperature %4 [C]\n"
+              )
+      .arg( vbar )
+      .arg( 20 )
+      .arg( partvol )
+      .arg( hydro.temperature )
+      ;
+}
+
+
