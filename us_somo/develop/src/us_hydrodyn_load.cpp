@@ -1476,18 +1476,37 @@ QString US_Hydrodyn::vbar_msg( double vbar ) {
 
 
 double US_Hydrodyn::tc_solvent_visc() {
-   static const double a = 0.586537098;
-   static const double b = -0.0436148;
-   // y = exp( a + bx^(0.5) ln x )
-      
-   return exp( a + b * sqrt( hydro.temperature) * log( hydro.temperature ) );
+   // // y = exp( a + bx^(0.5) ln x )
+   // static const double a = 0.586537098;
+   // static const double b = -0.0436148;
+   // return exp( a + b * sqrt( hydro.temperature) * log( hydro.temperature ) );
+
+   // updated 2020-07-01
+   // y = a + b * exp(-x/c)
+   static const double a = 0.386918359;
+   static const double b = 1.375011475;
+   static const double mcinv = -1.0 / 24.86121945;
+
+   if ( hydro.temperature == 20.0 ) {
+      return default_hydro.solvent_viscosity;
+   }
+   return a + b * exp( hydro.temperature * mcinv );
 }
 
 double US_Hydrodyn::tc_solvent_dens() {
-   static const double a = 0.000151523;
-   static const double b = -0.00000491;
+   // // y = exp( a + b x^2 )
+   // static const double a = 0.000151523;
+   // static const double b = -0.00000491;
+   // return exp( a + b * hydro.temperature * hydro.temperature );
+
+   // updated 2020-07-01
    // y = exp( a + b x^2 )
-      
+   static const double a = 0.000233816;
+   static const double b = -0.0000050385;
+   
+   if ( hydro.temperature == 20.0 ) {
+      return default_hydro.solvent_density;
+   }
    return exp( a + b * hydro.temperature * hydro.temperature );
 }
 
