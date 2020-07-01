@@ -596,6 +596,8 @@ void US_Hydrodyn_Hydro::update_solvent_viscosity(const QString &str)
    // le_solvent_viscosity->setText(QString("").sprintf("%f",(*hydro).solvent_viscosity));
    check_solvent_defaults();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   le_tc_solvent_viscosity->setText(QString("").sprintf("%f", ((US_Hydrodyn *)us_hydrodyn)->tc_solvent_visc()));
+   
 }
 
 void US_Hydrodyn_Hydro::update_solvent_density(const QString &str)
@@ -604,6 +606,7 @@ void US_Hydrodyn_Hydro::update_solvent_density(const QString &str)
    // le_solvent_density->setText(QString("").sprintf("%f",(*hydro).solvent_density));
    check_solvent_defaults();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   le_tc_solvent_density->setText(QString("").sprintf("%f",((US_Hydrodyn *)us_hydrodyn)->tc_solvent_dens()));
 }
 
 void US_Hydrodyn_Hydro::update_volume(const QString &str)

@@ -1488,9 +1488,9 @@ double US_Hydrodyn::tc_solvent_visc() {
    static const double mcinv = -1.0 / 24.86121945;
 
    if ( hydro.temperature == 20.0 ) {
-      return default_hydro.solvent_viscosity;
+      return hydro.solvent_viscosity;
    }
-   return a + b * exp( hydro.temperature * mcinv );
+   return hydro.solvent_viscosity - default_hydro.solvent_viscosity + a + b * exp( hydro.temperature * mcinv );
 }
 
 double US_Hydrodyn::tc_solvent_dens() {
@@ -1505,9 +1505,9 @@ double US_Hydrodyn::tc_solvent_dens() {
    static const double b = -0.0000050385;
    
    if ( hydro.temperature == 20.0 ) {
-      return default_hydro.solvent_density;
+      return hydro.solvent_density;
    }
-   return exp( a + b * hydro.temperature * hydro.temperature );
+   return hydro.solvent_density - default_hydro.solvent_density + exp( a + b * hydro.temperature * hydro.temperature );
 }
 
 QString US_Hydrodyn::visc_dens_msg() {
