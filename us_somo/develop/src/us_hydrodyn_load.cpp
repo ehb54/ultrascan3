@@ -1516,10 +1516,12 @@ QString US_Hydrodyn::visc_dens_msg() {
          QString(
                  us_tr(
                        "Manual flag set\n"
-                       "Stored solvent viscosity %1 [cP]\n"
-                       "Stored solvent density   %2 [cP] @ %3 [°C]\n"
+                       "Stored solvent name      %1\n"
+                       "Stored solvent viscosity %2 [cP]\n"
+                       "Stored solvent density   %3 [cP] @ %4 [°C]\n"
                        )
                  )
+         .arg( hydro.solvent_name )
          .arg( hydro.solvent_viscosity, 9, 'f', 7, '0' ) 
          .arg( hydro.solvent_density, 9, 'f', 7, '0' ) 
          .arg( hydro.temperature )
@@ -1528,12 +1530,14 @@ QString US_Hydrodyn::visc_dens_msg() {
       return
          QString(
                  us_tr(
-                       "Stored solvent viscosity %1 [cP]\n"
-                       "Used   solvent viscosity %2 [cP] @ %3 [°C]\n"
-                       "Stored solvent density   %4 [cP]\n"
-                       "Used   solvent density   %5 [cP] @ %6 [°C]\n"
+                       "Stored solvent name      %1\n"
+                       "Stored solvent viscosity %2 [cP]\n"
+                       "Used   solvent viscosity %3 [cP] @ %4 [°C]\n"
+                       "Stored solvent density   %5 [cP]\n"
+                       "Used   solvent density   %6 [cP] @ %7 [°C]\n"
                        )
                  )
+         .arg( hydro.solvent_name )
          .arg( hydro.solvent_viscosity, 9, 'f', 7, '0' ) 
          .arg( tc_solvent_visc(), 9, 'f', 7, '0' )
          .arg( hydro.temperature )
