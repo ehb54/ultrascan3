@@ -253,6 +253,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
    private:
 
       double tc_vbar( double vbar );                           // temperature corrected vbar
+      QString pH_msg();                                        // vbar message
       QString vbar_msg( double vbar, bool only_used = false ); // vbar message
       double tc_solvent_visc();                                // temperature solvent viscosity
       double tc_solvent_dens();                                // temperature solvent density

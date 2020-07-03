@@ -1541,6 +1541,11 @@ double US_Hydrodyn::tc_solvent_dens() {
    return hydro.solvent_density - default_hydro.solvent_density + exp( a + b * hydro.temperature * hydro.temperature );
 }
 
+QString US_Hydrodyn::pH_msg() {
+   return
+      QString( "pH %1\n" ).arg( hydro.pH );
+}
+
 QString US_Hydrodyn::visc_dens_msg( bool only_used ) {
       
 

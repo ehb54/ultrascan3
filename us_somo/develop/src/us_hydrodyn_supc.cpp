@@ -2786,6 +2786,11 @@ mem_ris(int model)
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
 
+   // pH
+   hydro_res.sprintf("pH                      %.2f\n", this_data.hydro.pH );
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
+   this_data.hydro_res += hydro_res;
+
    hydro_res.sprintf("Solvent viscosity (cP): %f\n", supc_results->solvent_viscosity);
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
@@ -2797,6 +2802,7 @@ mem_ris(int model)
    hydro_res.sprintf("\n");
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
+
 
    // temporary vbar area
    hydro_res.sprintf("Original vbar:          %5.3f %s\t[cm^3/g]\n", 

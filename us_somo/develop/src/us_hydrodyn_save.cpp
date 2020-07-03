@@ -314,6 +314,10 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Solvent density [g/ml]", 
             "solvent_density [g/ml]",
 
+            "hydro.pH", 
+            "pH", 
+            "pH",
+
             "__SECTION__",
             "ASA results:",
 
@@ -957,6 +961,15 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
          field_to_save_data[field[i]] = (void *)&(save->data.hydro.solvent_density);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
          field_to_precision[field[i]] = 6;
+         field_to_format[field[i]] = 'g';
+         continue;
+      }
+
+      if ( field[i] == "hydro.pH" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.hydro.pH);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 3;
          field_to_format[field[i]] = 'g';
          continue;
       }

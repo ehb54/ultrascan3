@@ -629,6 +629,13 @@ void US_Hydrodyn_Batch::setupGUI()
    cb_zeno->setPalette( qp_cb ); AUTFBACK( cb_zeno );
    connect(cb_zeno, SIGNAL(clicked()), this, SLOT(set_zeno()));
 
+   cb_grpy = new QCheckBox(this);
+   cb_grpy->setText( " Calculate RB Hydrodynamics GRPY" );
+   cb_grpy->setChecked(batch->zeno);
+   cb_grpy->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_grpy->setPalette( qp_cb ); AUTFBACK( cb_grpy );
+   connect(cb_grpy, SIGNAL(clicked()), this, SLOT(set_grpy()));
+
    cb_hullrad = new QCheckBox(this);
    cb_hullrad->setText( " Hullrad" );
    cb_hullrad->setChecked(batch->zeno);
@@ -893,6 +900,7 @@ void US_Hydrodyn_Batch::setupGUI()
    QHBoxLayout * hbl_hydro_zeno = new QHBoxLayout; hbl_hydro_zeno->setContentsMargins( 0, 0, 0, 0 ); hbl_hydro_zeno->setSpacing( 0 );
    hbl_hydro_zeno->addWidget( cb_hydro );
    hbl_hydro_zeno->addWidget( cb_zeno );
+   hbl_hydro_zeno->addWidget( cb_grpy );
    hbl_hydro_zeno->addWidget( cb_hullrad );
 
    QVBoxLayout * leftside = new QVBoxLayout(); leftside->setContentsMargins( 0, 0, 0, 0 ); leftside->setSpacing( 0 );
@@ -1328,6 +1336,7 @@ void US_Hydrodyn_Batch::update_enables()
       cb_equi_grid             ->setChecked( false );
       cb_hydro                 ->setChecked( false );
       cb_zeno                  ->setChecked( false );
+      cb_grpy                  ->setChecked( false );
       cb_hullrad               ->setChecked( false );
       cb_dmd                   ->setChecked( false );
       cb_prr                   ->setChecked( false ); 
@@ -1350,6 +1359,7 @@ void US_Hydrodyn_Batch::update_enables()
       cb_equi_grid             ->setEnabled( false );
       cb_hydro                 ->setEnabled( false );
       cb_zeno                  ->setEnabled( false );
+      cb_grpy                  ->setEnabled( false );
       cb_hullrad               ->setEnabled( false );
       cb_dmd                   ->setEnabled( false );
       cb_prr                   ->setEnabled( false ); 
@@ -1375,6 +1385,7 @@ void US_Hydrodyn_Batch::update_enables()
       batch->equi_grid             = false;
       batch->hydro                 = false;
       batch->zeno                  = false;
+      batch->grpy                  = false;
       batch->hullrad               = false;
       batch->dmd                   = false;
       batch->prr                   = false;
@@ -1399,6 +1410,7 @@ void US_Hydrodyn_Batch::update_enables()
          cb_somo_o   ->setEnabled( true );
          cb_grid     ->setEnabled( true );
          cb_vdw_beads->setEnabled( true );
+         cb_grpy     ->setEnabled( true );
          cb_hullrad  ->setEnabled( true );
 
          if ( !any_bead_model_selected ) {
@@ -1602,6 +1614,7 @@ void US_Hydrodyn_Batch::update_enables()
       cb_prr               ->isChecked() || 
       cb_hydro             ->isChecked() || 
       cb_zeno              ->isChecked() ||
+      cb_grpy              ->isChecked() ||
       cb_hullrad           ->isChecked() ||
       cb_dmd               ->isChecked() || 
       0;
@@ -1615,6 +1628,7 @@ void US_Hydrodyn_Batch::update_enables()
        !cb_iqq               ->isChecked() &&
        !cb_prr               ->isChecked() &&
        !cb_hydro             ->isChecked() &&
+       !cb_grpy              ->isChecked() &&
        !cb_hullrad           ->isChecked() &&
        !cb_dmd               ->isChecked() 
        ) {
@@ -2043,11 +2057,12 @@ void US_Hydrodyn_Batch::set_hydro()
    {
       cb_zeno->setChecked( false );
       batch->zeno = cb_zeno->isChecked();
-   }
-   if ( cb_hullrad->isChecked() ) {
+      cb_grpy->setChecked( false );
+      batch->grpy = cb_grpy->isChecked();
       cb_hullrad->setChecked( false );
       batch->hullrad = cb_hullrad->isChecked();
    }
+
    update_enables();
 }
 
@@ -2058,8 +2073,8 @@ void US_Hydrodyn_Batch::set_zeno()
    {
       cb_hydro->setChecked( false );
       batch->hydro = cb_hydro->isChecked();
-   }
-   if ( cb_hullrad->isChecked() ) {
+      cb_grpy->setChecked( false );
+      batch->grpy = cb_grpy->isChecked();
       cb_hullrad->setChecked( false );
       batch->hullrad = cb_hullrad->isChecked();
    }
@@ -2070,12 +2085,32 @@ void US_Hydrodyn_Batch::set_zeno()
 void US_Hydrodyn_Batch::set_hullrad()
 {
    batch->hullrad = cb_hullrad->isChecked();
-   if ( batch->hullrad )
-   {
+   if ( batch->hullrad ) {
       cb_hydro->setChecked( false );
       batch->hydro = cb_hydro->isChecked();
+      cb_zeno->setChecked( false );
+      batch->zeno = cb_zeno->isChecked();
+      cb_grpy->setChecked( false );
+      batch->grpy = cb_grpy->isChecked();
    }
-   if ( cb_zeno->isChecked() ) {
+
+   update_enables();
+}
+
+void US_Hydrodyn_Batch::set_grpy()
+{
+   batch->grpy = cb_grpy->isChecked();
+   if ( batch->grpy ) {
+      QMessageBox::warning( this, windowTitle() + ": Calculate RB Hydrodynamics: GRPY", "GRPY not yet integrated" );
+      cb_grpy->setChecked( false );
+      batch->grpy = cb_grpy->isChecked();
+      return;
+   }
+   if ( batch->grpy ) {
+      cb_hullrad->setChecked( false );
+      batch->hullrad = cb_hullrad->isChecked();
+      cb_hydro->setChecked( false );
+      batch->hydro = cb_hydro->isChecked();
       cb_zeno->setChecked( false );
       batch->zeno = cb_zeno->isChecked();
    }
@@ -2146,6 +2181,7 @@ void US_Hydrodyn_Batch::disable_after_start()
    cb_hydro->setEnabled(false);
    cb_zeno->setEnabled(false);
    cb_hullrad->setEnabled(false);
+   cb_grpy->setEnabled(false);
    cb_avg_hydro->setEnabled(false);
    le_avg_hydro_name->setEnabled(false);
    cb_results_dir->setEnabled(false);
@@ -2179,6 +2215,7 @@ void US_Hydrodyn_Batch::enable_after_stop()
    cb_hydro->setEnabled(true);
    cb_zeno->setEnabled(true);
    cb_hullrad->setEnabled(true);
+   cb_grpy->setEnabled(true);
    pb_select_save_params->setEnabled(true);
    cb_saveParams->setEnabled(true);
    cb_dmd->setEnabled( true );
@@ -2284,7 +2321,8 @@ void US_Hydrodyn_Batch::start( bool quiet )
       !batch->vdw_beads &&
       !batch->hydro &&
       !batch->zeno &&
-      !batch->hullrad
+      !batch->hullrad &&
+      !batch->grpy
       ;
 
    set_issue_info();

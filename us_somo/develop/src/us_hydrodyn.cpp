@@ -1026,7 +1026,7 @@ void US_Hydrodyn::setupGUI()
    cb_pH->setPalette( PALET_NORMAL );
    AUTFBACK( cb_pH );
    connect(cb_pH, SIGNAL(clicked()), this, SLOT(set_pH()));
-   cb_pH->setToolTip( us_tr( "<html><body>check to enable pH dependent ionization and psv.</body></html>" ) );
+   cb_pH->setToolTip( us_tr( "<html><body>check to enable pH dependent ionization and psv. You will need to reload the PDB if the pH is adjusted.</body></html>" ) );
 
    le_pH = new QLineEdit( this );    le_pH->setObjectName( "PH Line Edit" );
    le_pH->setText(QString("").sprintf("%4.2f",hydro.pH));
@@ -1037,7 +1037,7 @@ void US_Hydrodyn::setupGUI()
    le_pH->setValidator( new QDoubleValidator( 0.01, 14, 2, le_pH ) );
    le_pH->setEnabled( cb_pH->isChecked() );
    connect(le_pH, SIGNAL(textChanged(const QString &)), SLOT(update_pH(const QString &)));
-   cb_pH->setToolTip( us_tr( "<html><body>enter the pH for ionization and psv calculations.</body></html>" ) );
+   le_pH->setToolTip( us_tr( "<html><body>enter the pH for ionization and psv calculations. You will need to reload the PDB if the pH is adjusted.</body></html>" ) );
 
    pb_load_pdb = new QPushButton(us_tr("Load Single PDB File"), this);
    Q_CHECK_PTR(pb_load_pdb);
@@ -1054,6 +1054,7 @@ void US_Hydrodyn::setupGUI()
    pb_reload_pdb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_reload_pdb->setPalette( PALET_PUSHB );
    connect(pb_reload_pdb, SIGNAL(clicked()), SLOT(reload_pdb()));
+   pb_reload_pdb->setToolTip( us_tr( "<html><body>Use this to reload the PDB, primarily useful when the pH has been adjusted.</body></html>" ) );
 
    le_pdb_file = new mQLineEdit( this );
    le_pdb_file->setText( us_tr( "not selected" ) );
@@ -3382,6 +3383,11 @@ void US_Hydrodyn::update_temperature(const QString &str, bool update_hydro )
 
 void US_Hydrodyn::update_pH(const QString &str)
 {
+   if ( hydro.pH == str.toDouble() ) {
+      return;
+   }
+   set_disabled();
+   
    hydro.pH = str.toDouble();
    display_default_differences();
 }
@@ -3390,6 +3396,9 @@ void US_Hydrodyn::set_pH()
 {
    gparams[ "use_pH" ] = cb_pH->isChecked() ? "true" : "false";
    le_pH->setEnabled( cb_pH->isChecked() );
+   if ( !cb_pH->isChecked() ) {
+      le_pH->setText( "7" );
+   }
    display_default_differences();
 }
 
@@ -5569,6 +5578,7 @@ QString US_Hydrodyn::getExtendedSuffix(bool prerun, bool somo, bool no_ovlp_remo
    // hy = hydration on in grid models,
    // G4 grid setting in grid models & 
    // -so for somo models
+   // pH for ph value
 
    QString result = le_bead_model_prefix->text();
 
@@ -5586,7 +5596,7 @@ QString US_Hydrodyn::getExtendedSuffix(bool prerun, bool somo, bool no_ovlp_remo
       {
          result += QString("R%1").arg(somo ? asa.threshold_percent : asa.grid_threshold_percent);
       }
-      
+
       if ( somo ) 
       {
          if ( !no_ovlp_removal ) 
@@ -5649,6 +5659,7 @@ QString US_Hydrodyn::getExtendedSuffix(bool prerun, bool somo, bool no_ovlp_remo
             result += QString("G%1").arg(grid.cube_side);
          }
       }
+      result += QString( "pH%1").arg( hydro.pH );
    }
    if ( !prerun )
    { 

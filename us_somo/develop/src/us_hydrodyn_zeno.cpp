@@ -14064,6 +14064,7 @@ bool US_Hydrodyn::calc_zeno()
                   this_data.dimless_eta                   = 0e0;
                   this_data.dimless_eta_sd                = 0e0;
 
+
                   QFile f( last_hydro_res );
                   if ( !f.exists() || !f.open( QIODevice::ReadOnly ) )
                   {
@@ -14537,6 +14538,7 @@ bool US_Hydrodyn::calc_zeno()
                      add_to_zeno += QString( "\nZENO computed on %1 Model %2%3\n" ).arg( project ).arg( current_model + 1 ).arg( bead_model_suffix.length() ? (" Bead model suffix: " + bead_model_suffix) : "" );
                      add_to_zeno += QString( "Number of beads used: %1\n" ).arg( bead_model.size() );
                      add_to_zeno += QString( "MW: %1 [Da]\n" ).arg( sum_mass );
+                     add_to_zeno += pH_msg();
                      add_to_zeno += vbar_msg( model_vector[ current_model ].vbar, true );
                      add_to_zeno += visc_dens_msg( true );
                      
