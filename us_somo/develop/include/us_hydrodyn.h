@@ -246,13 +246,17 @@ class US_EXTERN US_Hydrodyn : public QFrame
                          QString prefix = "",
                          bool nodisplay = false );  
 
+      double use_solvent_visc();                     // temperature solvent viscosity - checks manual flag
+      double use_solvent_dens();                     // temperature solvent density   - checks manual flag
+      double use_vbar( double vbar );                // temperature vbar
+      
    private:
 
-      double tc_vbar( double vbar );                // temperature corrected vbar
-      QString vbar_msg( double vbar );              // vbar message
-      double tc_solvent_visc();                     // temperature solvent viscosity
-      double tc_solvent_dens();                     // temperature solvent density
-      QString visc_dens_msg();                      // return density and viscosity message
+      double tc_vbar( double vbar );                           // temperature corrected vbar
+      QString vbar_msg( double vbar, bool only_used = false ); // vbar message
+      double tc_solvent_visc();                                // temperature solvent viscosity
+      double tc_solvent_dens();                                // temperature solvent density
+      QString visc_dens_msg( bool only_used = false );         // return density and viscosity message
 
    // distance threshold check support
       void SS_setup();                              // called once to setup any persistant distance threshold structures

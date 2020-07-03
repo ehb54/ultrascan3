@@ -7,11 +7,11 @@ QProgressBar * zeno_progress;
 bool * zeno_stop_flag;
 static US_Udp_Msg  * zeno_us_udp_msg;
 
-// note: this program uses cout and/or cerr and this should be replaced
+// // note: this program uses cout and/or cerr and this should be replaced
 
-static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const QString& str) { 
-   return os << qPrintable(str);
-}
+// static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const QString& str) { 
+//    return os << qPrintable(str);
+// }
 
 namespace zeno {
    /*
@@ -13539,7 +13539,7 @@ bool US_Hydrodyn_Zeno::run(
 
    tso << QString( "temp      %1 C\n"  ).arg( options->temperature       );
    // tso << QString( "solvent   %1\n"    ).arg( options->solvent_name      );
-   tso << QString( "viscosity %1 cp\n"    ).arg( options->solvent_viscosity );
+   tso << QString( "viscosity %1 cp\n"    ).arg( us_hydrodyn->use_solvent_visc() );
    tso << QString( "mass      %1 Da\n" ).arg( options->mass_correction ?
                                               options->mass : sum_mass );
    tso << QString( "units     %1\n"    ).arg( options->unit == -9 ?
@@ -13806,8 +13806,8 @@ bool US_Hydrodyn::calc_zeno()
 
    zeno_results.solvent_name          = hydro.solvent_name;
    zeno_results.solvent_acronym       = hydro.solvent_acronym;
-   zeno_results.solvent_viscosity     = hydro.solvent_viscosity;
-   zeno_results.solvent_density       = hydro.solvent_density;
+   zeno_results.solvent_viscosity     = use_solvent_visc();
+   zeno_results.solvent_density       = use_solvent_dens();
    zeno_results.temperature           = hydro.temperature;
    zeno_results.name                  = project;
    zeno_results.used_beads            = 0;
@@ -14029,12 +14029,14 @@ bool US_Hydrodyn::calc_zeno()
                   this_data.results.ff0_sd                = 0e0;
                   this_data.results.solvent_name          = "";
                   this_data.results.solvent_acronym       = "";
-                  this_data.results.solvent_viscosity     = 0e0;
-                  this_data.results.solvent_density       = 0e0;
+                  this_data.results.solvent_viscosity     = use_solvent_visc();
+                  this_data.results.solvent_density       = use_solvent_dens();
                   this_data.zeno_mep                      = 0e0;
                   this_data.zeno_eta_prefactor            = 0e0;
 
                   this_data.hydro                         = hydro;
+                  this_data.hydro.solvent_density         = use_solvent_dens();
+                  this_data.hydro.solvent_viscosity       = use_solvent_visc();
                   this_data.model_idx                     = model_vector[ current_model ].model_id;
                   this_data.results.num_models            = 1;
                   this_data.results.name                  = QFileInfo( last_hydro_res ).completeBaseName();
@@ -14042,7 +14044,7 @@ bool US_Hydrodyn::calc_zeno()
                   this_data.results.used_beads_sd         = 0e0;
                   this_data.results.total_beads           = bead_models [ current_model ].size();
                   this_data.results.total_beads_sd        = 0e0;
-                  this_data.results.vbar                  = misc.compute_vbar ? model_vector[ current_model ].vbar : misc.vbar;
+                  this_data.results.vbar                  = use_vbar( model_vector[ current_model ].vbar );
                   // need to get rg
                   // this_data.results.rg            = model_vector[ current_model ].Rg;
 
@@ -14338,7 +14340,7 @@ bool US_Hydrodyn::calc_zeno()
                         this_data.results.viscosity = 0e0;
                      }
 
-                     this_data.tra_fric_coef = 6e0 * M_PI * hydro.solvent_viscosity * this_data.results.rs * 1e-1;
+                     this_data.tra_fric_coef = 6e0 * M_PI * use_solvent_visc() * this_data.results.rs * 1e-1;
                      
                      if ( this_data.tra_fric_coef ) {
                         // 1.3864852e-8 is  boltzman's constant with a conversion, probably needs fconv
@@ -14377,7 +14379,7 @@ bool US_Hydrodyn::calc_zeno()
                         // us_qdebug( 
                         //        QString( "f is %1 ETAo %2 partvol %3 fconv %4 mass %5" )
                         //        .arg( this_data.tra_fric_coef )
-                        //        .arg( this_data.hydro.solvent_viscosity * 1e-2 )
+                        //        .arg( use_solvent_visc() * 1e-2 )
                         //        .arg( this_data.results.vbar )
                         //        .arg( 1 )
                         //        .arg( this_data.results.mass )
@@ -14385,7 +14387,7 @@ bool US_Hydrodyn::calc_zeno()
 
                         this_data.results.ff0 = 
                            this_data.tra_fric_coef * 10 / 
-                           ( fconv * 6e0 * M_PI *  this_data.hydro.solvent_viscosity * 
+                           ( fconv * 6e0 * M_PI *  use_solvent_visc() * 
                              pow( 3.0 * this_data.results.mass * this_data.results.vbar / (4.0 * M_PI * AVOGADRO), 1.0/3.0 ) );
 
                         this_data.results.ff0_sd = this_data.results.ff0 * this_data.tra_fric_coef_sd / this_data.tra_fric_coef;
@@ -14400,19 +14402,19 @@ bool US_Hydrodyn::calc_zeno()
                         //        QString( "s20w mass is %1 partvol %2 DENS %3 f %4 d20w %5" )
                         //        .arg( this_data.results.mass )
                         //        .arg( this_data.results.vbar )
-                        //        .arg( this_data.hydro.solvent_density )
+                        //        .arg( use_solvent_dens() )
                         //        .arg( this_data.tra_fric_coef ) 
                         //        .arg( this_data.results.D20w ) 
                         //         );
                         this_data.results.s20w = 
                            // previous way
                            //    ( this_data.results.mass * 1e20 * 
-                           //      ( 1e0 - this_data.results.vbar * this_data.hydro.solvent_density ) / 
+                           //      ( 1e0 - this_data.results.vbar * use_solvent_dens() ) / 
                            //      ( this_data.tra_fric_coef * fconv * AVOGADRO ) );
                         
                            this_data.results.mass * 1e22 *
-                           ( 1e0 - ( this_data.results.vbar * this_data.hydro.solvent_density ) ) /
-                           ( 6e0 * M_PI * hydro.solvent_viscosity * this_data.results.rs * AVOGADRO );
+                           ( 1e0 - ( this_data.results.vbar * use_solvent_dens() ) ) /
+                           ( 6e0 * M_PI * use_solvent_visc() * this_data.results.rs * AVOGADRO );
 
                         this_data.results.s20w_sd =
                            this_data.results.s20w * this_data.results.rs_sd / this_data.results.rs;
@@ -14420,7 +14422,7 @@ bool US_Hydrodyn::calc_zeno()
                         // alternate way via Dt
                         // double alt_s20w = 
                         //    1e13 * ( this_data.results.mass * this_data.results.D20w * 
-                        //             ( 1e0 - ( this_data.results.vbar * this_data.hydro.solvent_density ) ) ) /
+                        //             ( 1e0 - ( this_data.results.vbar * use_solvent_dens() ) ) ) /
                         //    ( R * ( this_data.hydro.temperature + K0 ) );
                         // us_qdebug( QString( "s20w old way %1, dt way %2\n" ).arg( this_data.results.s20w ).arg( alt_s20w ) );
                      }
@@ -14525,6 +14527,9 @@ bool US_Hydrodyn::calc_zeno()
                      add_to_zeno += QString( "\nZENO computed on %1 Model %2%3\n" ).arg( project ).arg( current_model + 1 ).arg( bead_model_suffix.length() ? (" Bead model suffix: " + bead_model_suffix) : "" );
                      add_to_zeno += QString( "Number of beads used: %1\n" ).arg( bead_model.size() );
                      add_to_zeno += QString( "MW: %1 [Da]\n" ).arg( sum_mass );
+                     add_to_zeno += vbar_msg( model_vector[ current_model ].vbar, true );
+                     add_to_zeno += visc_dens_msg( true );
+                     
                      if ( hydro.mass_correction ) {
                         add_to_zeno += QString( "Manually corrected MW: %1 [Da]\n" ).arg( hydro.mass );
                      }
