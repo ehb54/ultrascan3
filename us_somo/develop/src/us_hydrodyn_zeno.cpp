@@ -13813,6 +13813,7 @@ bool US_Hydrodyn::calc_zeno()
    zeno_results.solvent_viscosity     = use_solvent_visc();
    zeno_results.solvent_density       = use_solvent_dens();
    zeno_results.temperature           = hydro.temperature;
+   zeno_results.pH                    = hydro.pH;
    zeno_results.name                  = project;
    zeno_results.used_beads            = 0;
    zeno_results.used_beads_sd         = 0e0;
@@ -14039,6 +14040,7 @@ bool US_Hydrodyn::calc_zeno()
                   this_data.results.solvent_acronym       = "";
                   this_data.results.solvent_viscosity     = use_solvent_visc();
                   this_data.results.solvent_density       = use_solvent_dens();
+                  this_data.results.pH                    = hydro.pH;
                   this_data.zeno_mep                      = 0e0;
                   this_data.zeno_eta_prefactor            = 0e0;
 

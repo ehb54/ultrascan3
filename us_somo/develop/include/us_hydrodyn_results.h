@@ -62,6 +62,7 @@ struct hydro_results
    double temperature;
    double solvent_viscosity;
    double solvent_density;
+   double pH;
 };
 
 class US_EXTERN US_Hydrodyn_Results : public QFrame

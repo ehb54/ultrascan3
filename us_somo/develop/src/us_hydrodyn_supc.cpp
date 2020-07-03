@@ -774,6 +774,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    supc_results->total_beads = nmax;
    supc_results->solvent_density   = us_hydrodyn->use_solvent_dens();
    supc_results->solvent_viscosity = us_hydrodyn->use_solvent_visc();
+   supc_results->pH                = us_hydrodyn->hydro.pH;
     
    supc_results->name = use_filename;
    supc_results->name.replace(QRegExp("\\.beams$"),"");
