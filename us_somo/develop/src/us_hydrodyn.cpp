@@ -7,6 +7,7 @@
 // us_hydrodyn_info.cpp contains code to report structures for debugging
 // us_hydrodyn_util.cpp contains other various code, such as disulfide code
 // us_hydrodyn_load.cpp contains code to load files 
+// us_hydrodyn_grpy.cpp contains code for grpy interface
 
 // includes and defines need cleanup
  
@@ -1273,7 +1274,16 @@ void US_Hydrodyn::setupGUI()
    pb_batch2->setPalette( PALET_PUSHB );
    connect(pb_batch2, SIGNAL(clicked()), SLOT(show_batch()));
 
-   pb_calc_hydro = new QPushButton(us_tr("Calculate RB Hydrodynamics SMI"), this);
+   lbl_rbh = new QLabel(us_tr(" Calculate RB Hydrodynamics:"), this);
+   Q_CHECK_PTR(lbl_rbh);
+   lbl_rbh->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_rbh->setMinimumHeight(minHeight1);
+   lbl_rbh->setMargin( 2 );
+   lbl_rbh->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_rbh );
+   lbl_rbh->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   pb_calc_hydro = new QPushButton(us_tr("SMI"), this);
    Q_CHECK_PTR(pb_calc_hydro);
    pb_calc_hydro->setEnabled(false);
    pb_calc_hydro->setMinimumHeight(minHeight1);
@@ -1281,13 +1291,21 @@ void US_Hydrodyn::setupGUI()
    pb_calc_hydro->setPalette( PALET_PUSHB );
    connect(pb_calc_hydro, SIGNAL(clicked()), SLOT(calc_hydro()));
 
-   pb_calc_zeno = new QPushButton(us_tr("Calculate RB Hydrodynamics ZENO"), this);
+   pb_calc_zeno = new QPushButton(us_tr("ZENO"), this);
    Q_CHECK_PTR(pb_calc_zeno);
    pb_calc_zeno->setEnabled(false);
    pb_calc_zeno->setMinimumHeight(minHeight1);
    pb_calc_zeno->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_calc_zeno->setPalette( PALET_PUSHB );
    connect(pb_calc_zeno, SIGNAL(clicked()), SLOT(calc_zeno_hydro()));
+
+   pb_calc_grpy = new QPushButton(us_tr("GRPY"), this);
+   Q_CHECK_PTR(pb_calc_grpy);
+   pb_calc_grpy->setEnabled(false);
+   pb_calc_grpy->setMinimumHeight(minHeight1);
+   pb_calc_grpy->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_calc_grpy->setPalette( PALET_PUSHB );
+   connect(pb_calc_grpy, SIGNAL(clicked()), SLOT(calc_grpy_hydro()));
 
    pb_calc_hullrad = new QPushButton(us_tr("Hullrad"), this);
    Q_CHECK_PTR(pb_calc_hullrad);
@@ -1636,10 +1654,12 @@ void US_Hydrodyn::setupGUI()
    background->addWidget( lbl_info3 , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 
-   background->addWidget(pb_calc_hydro, j, 0);
+   background->addWidget(lbl_rbh, j, 0);
    {
       QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
+      hbl->addWidget( pb_calc_hydro);
       hbl->addWidget( pb_calc_zeno);
+      hbl->addWidget( pb_calc_grpy);
       hbl->addWidget( pb_calc_hullrad );
       background->addLayout(hbl, j, 1);
    }
@@ -1702,6 +1722,8 @@ void US_Hydrodyn::set_disabled()
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
    pb_calc_zeno->setEnabled(false);
+   pb_calc_grpy->setEnabled(false);
+   pb_calc_hullrad->setEnabled(false);
    pb_visualize->setEnabled(false);
    //   pb_pdb_saxs->setEnabled(false);
 
@@ -2328,6 +2350,8 @@ void US_Hydrodyn::reload_pdb()
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
    pb_calc_zeno->setEnabled(false);
+   pb_calc_grpy->setEnabled(false);
+   pb_calc_hullrad->setEnabled(false);
    pb_bead_saxs->setEnabled(false);
    pb_rescale_bead_model->setEnabled(false);
    pb_pdb_saxs->setEnabled(true);
@@ -2843,6 +2867,8 @@ void US_Hydrodyn::load_pdb()
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
    pb_calc_zeno->setEnabled(false);
+   pb_calc_grpy->setEnabled(false);
+   pb_calc_hullrad->setEnabled(false);
    pb_pdb_saxs->setEnabled(true);
    pb_bead_saxs->setEnabled(false);
    pb_rescale_bead_model->setEnabled(false);
@@ -2996,6 +3022,8 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb, bool skipcleari
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
    pb_calc_zeno->setEnabled(false);
+   pb_calc_grpy->setEnabled(false);
+   pb_calc_hullrad->setEnabled(false);
    pb_bead_saxs->setEnabled(false);
    pb_rescale_bead_model->setEnabled(false);
    pb_visualize->setEnabled(false);
@@ -3024,6 +3052,8 @@ bool US_Hydrodyn::screen_bead_model( QString filename )
    pb_equi_grid_bead_model->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
    pb_calc_zeno->setEnabled(false);
+   pb_calc_grpy->setEnabled(false);
+   pb_calc_hullrad->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
    pb_grid_pdb->setEnabled(false);
    pb_vdw_beads->setEnabled(false);
@@ -3052,6 +3082,8 @@ bool US_Hydrodyn::screen_bead_model( QString filename )
       pb_equi_grid_bead_model->setEnabled(true);
       pb_calc_hydro->setEnabled( !so_ovlp );
       pb_calc_zeno->setEnabled( true );
+      pb_calc_grpy->setEnabled( true );
+      pb_calc_hullrad->setEnabled( true );
       pb_grid->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
@@ -3068,6 +3100,8 @@ bool US_Hydrodyn::screen_bead_model( QString filename )
          pb_equi_grid_bead_model->setEnabled(true);
          pb_calc_hydro->setEnabled( false );
          pb_calc_zeno->setEnabled( true );
+         pb_calc_grpy->setEnabled( true );
+         pb_calc_hullrad->setEnabled( true );
          pb_grid->setEnabled(true);
          pb_bead_saxs->setEnabled(true);
          pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
@@ -3166,6 +3200,8 @@ void US_Hydrodyn::select_model( int )
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
    pb_calc_zeno->setEnabled(false);
+   pb_calc_grpy->setEnabled( false);
+   pb_calc_hullrad->setEnabled( false );
    pb_visualize->setEnabled(false);
    pb_equi_grid_bead_model->setEnabled(false);
    //   pb_pdb_saxs->setEnabled(true);
@@ -3247,6 +3283,8 @@ void US_Hydrodyn::load_bead_model()
       pb_equi_grid_bead_model->setEnabled(false);
       pb_calc_hydro->setEnabled(false);
       pb_calc_zeno->setEnabled(false);
+      pb_calc_grpy->setEnabled( false);
+      pb_calc_hullrad->setEnabled( false );
       pb_show_hydro_results->setEnabled(false);
       pb_grid_pdb->setEnabled(false);
       pb_vdw_beads->setEnabled(false);
@@ -3283,6 +3321,8 @@ void US_Hydrodyn::load_bead_model()
          pb_equi_grid_bead_model->setEnabled(true);
          pb_calc_hydro->setEnabled( !so_ovlp );
          pb_calc_zeno->setEnabled(true);
+         pb_calc_grpy->setEnabled( true );
+         pb_calc_hullrad->setEnabled( true );
          pb_grid->setEnabled(true);
          pb_bead_saxs->setEnabled(true);
          pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
@@ -3298,6 +3338,8 @@ void US_Hydrodyn::load_bead_model()
             pb_equi_grid_bead_model->setEnabled(true);
             pb_calc_hydro->setEnabled( false );
             pb_calc_zeno->setEnabled( true );
+            pb_calc_grpy->setEnabled( true );
+            pb_calc_hullrad->setEnabled( true );
             pb_grid->setEnabled(true);
             pb_bead_saxs->setEnabled(true);
             pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
@@ -3438,6 +3480,8 @@ int US_Hydrodyn::calc_somo( bool no_ovlp_removal )
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
    pb_calc_zeno->setEnabled(false);
+   pb_calc_grpy->setEnabled( false );
+   pb_calc_hullrad->setEnabled( false );
    if (results_widget)
    {
       results_window->close();
@@ -3514,6 +3558,8 @@ int US_Hydrodyn::calc_somo( bool no_ovlp_removal )
       pb_equi_grid_bead_model->setEnabled(true);
       pb_calc_hydro->setEnabled( !no_ovlp_removal );
       pb_calc_zeno->setEnabled(true);
+      pb_calc_grpy->setEnabled( true );
+      pb_calc_hullrad->setEnabled( true );
       pb_bead_saxs->setEnabled(true);
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
    }
@@ -3637,6 +3683,8 @@ int US_Hydrodyn::calc_grid_pdb( bool no_ovlp_removal )
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
    pb_calc_zeno->setEnabled(false);
+   pb_calc_grpy->setEnabled( false );
+   pb_calc_hullrad->setEnabled( false );
 
    if (results_widget)
    {
@@ -4204,6 +4252,8 @@ int US_Hydrodyn::calc_grid_pdb( bool no_ovlp_removal )
       pb_equi_grid_bead_model->setEnabled(true);
       pb_calc_hydro->setEnabled( !no_ovlp_removal );
       pb_calc_zeno->setEnabled(true);
+      pb_calc_grpy->setEnabled( true );
+      pb_calc_hullrad->setEnabled( true );
       pb_bead_saxs->setEnabled(true);
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
    }
@@ -4264,6 +4314,8 @@ int US_Hydrodyn::calc_grid()
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
    pb_calc_zeno->setEnabled(false);
+   pb_calc_grpy->setEnabled( false );
+   pb_calc_hullrad->setEnabled( false );
    if (results_widget)
    {
       results_window->close();
@@ -4547,6 +4599,8 @@ int US_Hydrodyn::calc_grid()
       pb_calc_hydro->setEnabled(true);
       pb_calc_zeno->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
+      pb_calc_grpy->setEnabled( true );
+      pb_calc_hullrad->setEnabled( true );
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
    }
    else
@@ -4781,6 +4835,8 @@ int US_Hydrodyn::do_calc_hydro()
    pb_stop_calc->setEnabled(true);
    pb_calc_hydro->setEnabled(false);
    pb_calc_zeno->setEnabled(false);
+   pb_calc_grpy->setEnabled( false );
+   pb_calc_hullrad->setEnabled( false );
    //   puts("calc hydro (supc)");
    display_default_differences();
    editor->append("\nBegin hydrodynamic calculations\n\n");
@@ -4832,6 +4888,8 @@ int US_Hydrodyn::do_calc_hydro()
       pb_calc_hydro->setEnabled(true);
       pb_calc_zeno->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
+      pb_calc_grpy->setEnabled( true );
+      pb_calc_hullrad->setEnabled( true );
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
       pb_show_hydro_results->setEnabled(false);
       progress->reset();
@@ -4865,6 +4923,8 @@ int US_Hydrodyn::do_calc_hydro()
       editor->append("Stopped by user\n\n");
       pb_calc_hydro->setEnabled(true);
       pb_calc_zeno->setEnabled(true);
+      pb_calc_grpy->setEnabled( true );
+      pb_calc_hullrad->setEnabled( true );
       pb_bead_saxs->setEnabled(true);
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
       pb_show_hydro_results->setEnabled(false);
@@ -4877,6 +4937,8 @@ int US_Hydrodyn::do_calc_hydro()
    pb_calc_hydro->setEnabled(true);
    pb_calc_zeno->setEnabled(true);
    pb_bead_saxs->setEnabled(true);
+   pb_calc_grpy->setEnabled( true );
+   pb_calc_hullrad->setEnabled( true );
    pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
    if ( retval )
    {
@@ -6157,6 +6219,8 @@ bool US_Hydrodyn::equi_grid_bead_model( double dR )
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
    pb_calc_zeno->setEnabled(false);
+   pb_calc_grpy->setEnabled( false);
+   pb_calc_hullrad->setEnabled( false );
    if (results_widget)
    {
       results_window->close();
@@ -6288,6 +6352,8 @@ bool US_Hydrodyn::equi_grid_bead_model( double dR )
       pb_equi_grid_bead_model->setEnabled(true);
       pb_calc_hydro->setEnabled(true);
       pb_calc_zeno->setEnabled(true);
+      pb_calc_grpy->setEnabled( true );
+      pb_calc_hullrad->setEnabled( true );
       pb_bead_saxs->setEnabled(true);
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
    }
@@ -6396,6 +6462,8 @@ int US_Hydrodyn::calc_vdw_beads()
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
    pb_calc_zeno->setEnabled(false);
+   pb_calc_grpy->setEnabled( false);
+   pb_calc_hullrad->setEnabled( false );
    if (results_widget)
    {
       results_window->close();
@@ -6472,6 +6540,8 @@ int US_Hydrodyn::calc_vdw_beads()
       pb_calc_hydro->setEnabled( false );
       pb_calc_zeno->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
+      pb_calc_grpy->setEnabled( true );
+      pb_calc_hullrad->setEnabled( true );
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
    } else {
       editor_msg( "red", "Errors encountered\n" );

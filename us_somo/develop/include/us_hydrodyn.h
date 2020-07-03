@@ -386,6 +386,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QLabel *lbl_info3;
       mQLineEdit *le_pdb_file;
       QLabel *lbl_model;
+      QLabel *lbl_rbh;
       QLabel *lbl_somo;
       QLabel *lbl_bead_model_prefix;
 
@@ -425,6 +426,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QPushButton *pb_load_bead_model;
       QPushButton *pb_calc_hydro;
       QPushButton *pb_calc_zeno;
+      QPushButton *pb_calc_grpy;
       QPushButton *pb_calc_hullrad;
       QPushButton *pb_show_hydro_results;
       QPushButton *pb_open_hydro_results;
@@ -940,6 +942,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       int  calc_grid();     // compute grid model from bead model
       int  calc_hydro();
       bool calc_zeno_hydro();
+      bool calc_grpy_hydro();
 
       int calc_iqq( bool bead_model, bool create_native_saxs = true, bool do_raise = true );      // bring up saxs window if needed and compute iqq curve
       int calc_prr( bool bead_model, bool create_native_saxs = true, bool do_raise = true );      // bring up saxs window if needed and compute prr curve

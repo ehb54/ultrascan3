@@ -13743,6 +13743,8 @@ bool US_Hydrodyn::calc_zeno()
    pb_stop_calc->setEnabled(true);
    pb_calc_hydro->setEnabled(false);
    pb_calc_zeno->setEnabled(false);
+   pb_calc_grpy->setEnabled(false);
+   pb_calc_hullrad->setEnabled(false);
    display_default_differences();
    editor->append("\nBegin hydrodynamic calculations (Zeno) \n\n");
    qApp->processEvents();
@@ -13774,6 +13776,8 @@ bool US_Hydrodyn::calc_zeno()
       editor->append("Stopped by user\n\n");
       pb_calc_hydro->setEnabled( was_hydro_enabled );
       pb_calc_zeno->setEnabled(true);
+      pb_calc_grpy->setEnabled(true);
+      pb_calc_hullrad->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
       pb_show_hydro_results->setEnabled(false);
@@ -13936,6 +13940,8 @@ bool US_Hydrodyn::calc_zeno()
                   pb_calc_hydro->setEnabled( was_hydro_enabled );
                   pb_calc_zeno->setEnabled(true);
                   pb_bead_saxs->setEnabled(true);
+                  pb_calc_grpy->setEnabled(true);
+                  pb_calc_hullrad->setEnabled(true);
                   pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
                   pb_show_hydro_results->setEnabled(false);
                   progress->reset();
@@ -13948,6 +13954,8 @@ bool US_Hydrodyn::calc_zeno()
                   pb_calc_hydro->setEnabled( was_hydro_enabled );
                   pb_calc_zeno->setEnabled(true);
                   pb_bead_saxs->setEnabled(true);
+                  pb_calc_grpy->setEnabled(true);
+                  pb_calc_hullrad->setEnabled(true);
                   pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
                   pb_show_hydro_results->setEnabled(false);
                   progress->reset();
@@ -14064,6 +14072,8 @@ bool US_Hydrodyn::calc_zeno()
                      pb_calc_hydro->setEnabled( was_hydro_enabled );
                      pb_calc_zeno->setEnabled(true);
                      pb_bead_saxs->setEnabled(true);
+                     pb_calc_grpy->setEnabled(true);
+                     pb_calc_hullrad->setEnabled(true);
                      pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
                      pb_show_hydro_results->setEnabled(false);
                      progress->reset();
@@ -14741,6 +14751,8 @@ bool US_Hydrodyn::calc_zeno()
    pb_show_hydro_results->setEnabled( true );
    pb_calc_hydro->setEnabled( was_hydro_enabled );
    pb_calc_zeno->setEnabled(true);
+   pb_calc_grpy->setEnabled(true);
+   pb_calc_hullrad->setEnabled(true);
    pb_bead_saxs->setEnabled(true);
    pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
 

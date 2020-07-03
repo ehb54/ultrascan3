@@ -244,6 +244,7 @@ SOURCES *= \
         src/us_hydrodyn_file2.cpp \
         src/us_hydrodyn_grid.cpp \
         src/us_hydrodyn_grid_atob.cpp \
+        src/us_hydrodyn_grpy.cpp \
         src/us_hydrodyn_hydrate.cpp \
         src/us_hydrodyn_hydrate_align.cpp \
         src/us_hydrodyn_hydro.cpp \
