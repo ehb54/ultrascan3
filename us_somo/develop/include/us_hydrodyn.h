@@ -500,7 +500,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       US_Hydrodyn_Save *save_window;
       QProcess *rasmol;
 
-      QString getExtendedSuffix(bool prerun = true, bool somo = true, bool no_ovlp_removal = false ); 
+      QString getExtendedSuffix(bool prerun = true, bool somo = true, bool no_ovlp_removal = false, bool vdw = false ); 
       
       vector < QString >              batch_file;
       vector < PDB_atom >             bead_model;

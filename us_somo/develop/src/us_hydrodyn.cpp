@@ -5567,7 +5567,7 @@ void US_Hydrodyn::bead_saxs( bool create_native_saxs, bool do_raise )
    }
 }
 
-QString US_Hydrodyn::getExtendedSuffix(bool prerun, bool somo, bool no_ovlp_removal )
+QString US_Hydrodyn::getExtendedSuffix(bool prerun, bool somo, bool no_ovlp_removal, bool vdw )
 {
    // produce a suffix based upon settings
    // e.g.
@@ -5581,6 +5581,25 @@ QString US_Hydrodyn::getExtendedSuffix(bool prerun, bool somo, bool no_ovlp_remo
    // pH for ph value
 
    QString result = le_bead_model_prefix->text();
+
+   if ( vdw ) {
+      result += result.length() ? "-" : "";
+      {
+         double vdw_ot_mult = gparams.count( "vdw_ot_mult" ) ? gparams[ "vdw_ot_mult" ].toDouble() : 0;
+         double vdw_ot_dpct = gparams.count( "vdw_ot_dpct" ) ? gparams[ "vdw_ot_dpct" ].toDouble() : 0;
+         if ( vdw_ot_mult ) {
+            if ( vdw_ot_dpct ) {
+               result += QString( "OT%1DP%2-vdw").arg( vdw_ot_mult ).arg( vdw_ot_dpct );
+            } else {
+               result += QString( "OT%1-vdw").arg( vdw_ot_mult );
+            }
+         } else {
+            result += bead_model_suffix = "vdw";
+         }
+      }
+      result += QString( "pH%1").arg( hydro.pH );
+      return result;
+   }
 
    if ( setSuffix )
    {
@@ -6483,19 +6502,20 @@ int US_Hydrodyn::calc_vdw_beads()
    }
 
 
-   {
-      double vdw_ot_mult = gparams.count( "vdw_ot_mult" ) ? gparams[ "vdw_ot_mult" ].toDouble() : 0;
-      double vdw_ot_dpct = gparams.count( "vdw_ot_dpct" ) ? gparams[ "vdw_ot_dpct" ].toDouble() : 0;
-      if ( vdw_ot_mult ) {
-         if ( vdw_ot_dpct ) {
-            bead_model_suffix = QString( "OT%1DP%2-vdw").arg( vdw_ot_mult ).arg( vdw_ot_dpct );
-         } else {
-            bead_model_suffix = QString( "OT%1-vdw").arg( vdw_ot_mult );
-         }
-      } else {
-         bead_model_suffix = "vdw";
-      }
-   }
+   // {
+   //    double vdw_ot_mult = gparams.count( "vdw_ot_mult" ) ? gparams[ "vdw_ot_mult" ].toDouble() : 0;
+   //    double vdw_ot_dpct = gparams.count( "vdw_ot_dpct" ) ? gparams[ "vdw_ot_dpct" ].toDouble() : 0;
+   //    if ( vdw_ot_mult ) {
+   //       if ( vdw_ot_dpct ) {
+   //          bead_model_suffix = QString( "OT%1DP%2-vdw").arg( vdw_ot_mult ).arg( vdw_ot_dpct );
+   //       } else {
+   //          bead_model_suffix = QString( "OT%1-vdw").arg( vdw_ot_mult );
+   //       }
+   //    } else {
+   //       bead_model_suffix = "vdw";
+   //    }
+   // }
+   bead_model_suffix = getExtendedSuffix( false, false, true, true );
    le_bead_model_suffix->setText( bead_model_suffix );
 
    if ( !overwrite )
