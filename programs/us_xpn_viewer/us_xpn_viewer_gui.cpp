@@ -2621,7 +2621,7 @@ DbgLv(1) << "RDa:      knt(triple)   " << xpn_data->countOf( "triple"    );
       in_reload_all_data   = false;
 
       //ALEXEY: rare case when no data but exp. aborted !!!! 
-      if ( CheckExpComplete_auto( RunID_to_retrieve ) == 0 ) //ALEXEY should be == 3 as per documentation
+      if ( CheckExpComplete_auto( RunID_to_retrieve ) == 0  ) //ALEXEY should be == 3 as per documentation
 	{
 	  if ( finishing_live_update )
 	    {
@@ -2644,6 +2644,38 @@ DbgLv(1) << "RDa:      knt(triple)   " << xpn_data->countOf( "triple"    );
 	      QMessageBox::warning( this,
 				    tr( "Run Was Aborted" ),
 				    tr( "No data were produced. The current run will be erased. The program will return to the list of Optima runs..." ));
+	      
+	      delete_autoflow_record(); 
+	      reset_auto();
+	      
+	      in_reload_all_data   = false;  
+	      emit aborted_back_to_initAutoflow( );
+	      return;
+	    }
+	}
+
+      //ALEXEY: rare case when no data but experiment "finished" !!!! 
+      if ( CheckExpComplete_auto( RunID_to_retrieve ) == 5  ) 
+	{
+	  if ( finishing_live_update )
+	    {
+	      timer_all_data_avail->stop();
+	      disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+	      in_reload_all_data   = false;  
+	      return;
+	    }
+	  
+	  qDebug() << "FINISHED IN EARLY STAGE WITH NO DATA...";
+	  	  
+	  timer_all_data_avail->stop();
+	  disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+	  
+	  if ( !timer_check_sysdata->isActive()  ) // Check if sys_data Timer is stopped
+	    {
+	      //message on aborted run with no data
+	      QMessageBox::warning( this,
+				    tr( "Run Finished with No Data" ),
+				    tr( "While run is finished, no data were produced. The current run will be erased. The program will return to the list of Optima runs..." ));
 	      
 	      delete_autoflow_record(); 
 	      reset_auto();
