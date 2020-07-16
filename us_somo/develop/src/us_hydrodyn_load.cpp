@@ -9,6 +9,7 @@
 // (this) us_hydrodyn_load.cpp contains code to load files 
 
 #include "../include/us_hydrodyn.h"
+#include "../include/us_vvv.h"
 
 void US_Hydrodyn::read_residue_file()
 {
@@ -74,6 +75,9 @@ void US_Hydrodyn::read_residue_file()
             numbeads           = qsl.front().toUInt();   qsl.pop_front();
             new_residue.vbar   = qsl.front().toDouble(); qsl.pop_front();
             res_vbar[ new_residue.name ] = new_residue.vbar;
+            new_residue.pH               = -1;
+            new_residue.vbar_at_pH       = -1;
+            new_residue.ionized_mw_delta = 0;
 
             if ( qsl.size() ) {
                new_residue.vbar2 = qsl.front().toDouble();  qsl.pop_front();
@@ -116,12 +120,13 @@ void US_Hydrodyn::read_residue_file()
                return;
             }
 
-            new_atom.name               = qsl.front();            qsl.pop_front();
-            new_atom.hybrid.name        = qsl.front();            qsl.pop_front();
-            new_atom.hybrid.mw          = qsl.front().toFloat();  qsl.pop_front();
-            new_atom.hybrid.radius      = qsl.front().toFloat();  qsl.pop_front();
-            new_atom.bead_assignment    = qsl.front().toUInt();   qsl.pop_front();
+            new_atom.name                     = qsl.front();            qsl.pop_front();
+            new_atom.hybrid.name              = qsl.front();            qsl.pop_front();
+            new_atom.hybrid.mw                = qsl.front().toFloat();  qsl.pop_front();
+            new_atom.hybrid.radius            = qsl.front().toFloat();  qsl.pop_front();
+            new_atom.bead_assignment          = qsl.front().toUInt();   qsl.pop_front();
             
+            new_atom.hybrid.ionized_mw_delta  = 0e0;
             // OLD WAY
             // ts >> new_atom.name;
             // ts >> new_atom.hybrid.name;
@@ -220,10 +225,13 @@ void US_Hydrodyn::read_residue_file()
 
             {
                _vdwf this_vdwf;
-               this_vdwf.mw = new_atom.hybrid.mw;
-               this_vdwf.r  = new_atom.hybrid.radius;
-               this_vdwf.w  = new_atom.hydration;
-               QString name = QString( "%1|%2" ).arg( new_residue.name ).arg( new_atom.name );
+               this_vdwf.mw               = new_atom.hybrid.mw;
+               this_vdwf.ionized_mw_delta = 0;
+               this_vdwf.r                = new_atom.hybrid.radius;
+               this_vdwf.w                = new_atom.hydration;
+               QString name = QString( "%1|%2" )
+                  .arg( new_atom.name != "OXT" ? new_residue.name : "OXT" )
+                  .arg( new_atom.name );
                if ( !vdwf.count( name ) ) {
                   vdwf[ name ] = this_vdwf;
                   bead_assignment_to_vdwf[ new_atom.bead_assignment ].insert( name );
@@ -485,7 +493,13 @@ double US_Hydrodyn::ionized_residue_vbar( float bf, struct residue *res ) {
 
 double US_Hydrodyn::ionized_atom_mw( float bf, struct atom *atom ) {
    // might need some sign logic here
-   return atom->hybrid.mw + (1.0 - bf) * atom->ionization_mass_change;
+   // return atom->hybrid.mw + (1.0 - bf) * atom->ionization_mass_change;
+   atom->hybrid.ionized_mw_delta = (1.0 - bf) * atom->ionization_mass_change;
+   return atom->hybrid.mw + atom->hybrid.ionized_mw_delta;
+}
+
+double US_Hydrodyn::ionized_residue_atom_mw( float bf, struct atom *atom ) {
+   return (1.0 - bf) * atom->ionization_mass_change;
 }
 
 double US_Hydrodyn::ionized_num_elect( float bf, struct atom *atom ) {
@@ -499,72 +513,46 @@ double US_Hydrodyn::ionized_hydrogens( float bf, struct atom *atom ) {
 }
 
 // #define DEBUG_VBAR
-
-void US_Hydrodyn::calc_vbar(struct PDB_model *model)
-{
+void US_Hydrodyn::calc_vbar( struct PDB_model *model, bool use_p_atom ) {
    float mw_vbar_sum = 0.0;
    float mw_sum = 0.0;
    float mw;
-   float pH = le_pH->text().toFloat();
-#if defined( DEBUG_VBAR )
-   qDebug() << "calc_vbar(): pH = " << pH;
-#endif
    
-   bool use_pH = gparams.count( "use_pH" ) && gparams[ "use_pH" ] == "true";
+   // in attic: info_model_p_residue( "::calc_vbar() start", *model, false );
 
-   if ( use_pH ) {
-      for (unsigned int i=0; i<(*model).residue.size(); i++) {
-         if ( model->residue[ i ].name != "WAT" ) {
-            mw = 0.0;
-         
-            float bf = basic_fraction( pH, model->residue[ i ].pKa );
-            if ( !model->residue[ i ].pKa ) {
-               bf = 1.0;
-            } else {
-               if ( !model->residue[ i ].acid_residue ) {
-                  bf = 1.0 - bf;
-               }
-            }
-#if defined( DEBUG_VBAR )
-            qDebug() << "calc_vbar(): residue.name = " << model->residue[ i ].name;
-            qDebug() << "calc_vbar(): pKa = " << model->residue[ i ].pKa;
-            qDebug() << "calc_vbar(): acid_residue = " << ( model->residue[ i ].acid_residue ? "true" : "false" );
-            qDebug() << "calc_vbar(): fraction = " << bf;
-#endif
-            for (unsigned int j=0; j<(*model).residue[i].r_atom.size(); j++) {
-               // mw += (*model).residue[i].r_atom[j].hybrid.mw;
-               mw += ionized_atom_mw( bf, &((*model).residue[i].r_atom[j] ) );
-#if defined( DEBUG_VBAR )
-               qDebug() << "calc_vbar(): ionized_atom_mw = " << ionized_atom_mw( bf, &((*model).residue[i].r_atom[j]) );
-#endif
-            }
-            mw_sum += mw;
-            // mw_vbar_sum += mw * (*model).residue[i].vbar;
-            mw_vbar_sum += mw * ionized_residue_vbar( bf, &((*model).residue[i]) );
-#if defined( DEBUG_VBAR )
-            qDebug() << "calc_vbar(): mw = " << mw;
-            qDebug() << "calc_vbar(): ionized_residue_vbar = " << ionized_residue_vbar( bf, &((*model).residue[i]) );
-#endif
+   // redo for p_residue instead ? set < struct residue * > ?
+   // do we have any duplicate residues at all?
+
+   if ( use_p_atom ) {
+      int chains = (int) model->molecule.size();
+      for ( int j = 0; j < chains; ++j ) {
+         int atoms = (int) model->molecule[ j ].atom.size();
+         for ( int k = 0; k < atoms; ++k ) {
+            // might need special handling for N1
+            double this_mw =
+               model->molecule[ j ].atom[ k ].p_atom->hybrid.mw +
+               model->molecule[ j ].atom[ k ].p_atom->hybrid.ionized_mw_delta;
+            mw_sum      += this_mw;
+            mw_vbar_sum += this_mw * model->molecule[ j ].atom[ k ].p_residue->vbar_at_pH;
          }
-      }
+      }               
    } else {
-      for (unsigned int i=0; i<(*model).residue.size(); i++) {
+      int residues = (int) model->residue.size();
+      for ( int i = 0; i < residues; ++i ) {
          if ( model->residue[ i ].name != "WAT" ) {
             mw = 0.0;
-         
-            for (unsigned int j=0; j<(*model).residue[i].r_atom.size(); j++) {
-               mw += (*model).residue[i].r_atom[j].hybrid.mw;
+
+            int atoms = (int) model->residue[i].r_atom.size();
+            for ( int j = 0; j < atoms; ++j ) {
+               mw += model->residue[i].r_atom[j].hybrid.mw + model->residue[i].r_atom[j].hybrid.ionized_mw_delta;
             }
-            mw_sum += mw;
-            mw_vbar_sum += mw * (*model).residue[i].vbar;
+            mw_sum      += mw;
+            mw_vbar_sum += mw * model->residue[i].vbar_at_pH;
          }
       }
    }
    double covolume = gparams.count( "covolume" ) ? gparams[ "covolume" ].toDouble() : 0e0;
-   (*model).vbar = (double)floor(0.5 + ( ( ( mw_vbar_sum + covolume ) / mw_sum ) * 1000e0 ) ) / 1000e0; //  - 0.002125;
-#if defined( DEBUG_VBAR )
-   qDebug() << "calc VBAR: " << (*model).vbar << endl;
-#endif
+   model->vbar = (double)floor(0.5 + ( ( ( mw_vbar_sum + covolume ) / mw_sum ) * 1000e0 ) ) / 1000e0; //  - 0.002125;
 }
 
 void US_Hydrodyn::calc_bead_mw(struct residue *res)
@@ -628,8 +616,10 @@ bool US_Hydrodyn::assign_atom(const QString &str1, struct PDB_chain *temp_chain,
    QString str2;
    bool flag;
    struct PDB_atom temp_atom;
+   temp_atom.ionized_mw_delta = 0e0;
    temp_atom.si = 0e0;
    temp_atom.model_residue_pos = -1;
+   temp_atom.model_residue_atom_pos = -1;
    str2 = str1.mid(6, 5);
    temp_atom.serial = str2.toUInt();
 
@@ -744,6 +734,10 @@ bool US_Hydrodyn::assign_atom(const QString &str1, struct PDB_chain *temp_chain,
 }
 
 int US_Hydrodyn::read_pdb( const QString &filename ) {
+   // info_residue_vector( "read_pdb():: begin", residue_list );
+   set_ionized_residue_vector( residue_list );
+   // info_residue_vector( "read_pdb():: after set_ionized_residue_vector", residue_list );
+
    lb_model->clear( );
    QString str, str1, str2, temp;
    model_vector.clear( );
@@ -905,8 +899,8 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
             }
             temp_model.molecule.push_back(temp_chain); // add the last chain of this model
             SS_apply( temp_model );
-            editor->append("\nResidue sequence from " + project +".pdb model " +
-                           QString("%1").arg( temp_model.model_id ) + ": \n");
+            editor_msg( "black", "\nResidue sequence from " + project +".pdb model " +
+                           QString("%1").arg( temp_model.model_id ) + ":");
             str = "";
             QString sstr = "";
             int sstr_pos = 0;
@@ -974,19 +968,16 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
             // }
             editor->append(str);
             {
-               QFont save_font = editor->currentFont();
-               QFont new_font = QFont("Courier");
-               editor->append(us_tr("\nSequence in one letter code:\n"));
-               editor->setCurrentFont(new_font);
-               editor->append(sstr + "\n\n");
-
-               editor_msg( "black", "Residue\t count\tpercent\t Theoretical waters\n" );
+               QFont courier = QFont( "Courier", USglobal->config_list.fontSize - 1 );
+               editor_msg( "black", us_tr("\nSequence in one letter code:"));
+               editor_msg( "black", courier, sstr + "\n");
+               editor_msg( "black", courier, "Residue\t count\tpercent\t Theoretical waters\n" );
 
                if ( resname_counts_nonwat_total ) {
                   for ( map < QString, int >::iterator it = resname_counts_nonwat.begin();
                         it != resname_counts_nonwat.end();
                         ++it ) {
-                     editor_msg( "black", QString( "%1\t%2\t%3%\t%4\n" )
+                     editor_msg( "black", courier, QString( "%1\t%2\t%3%\t%4\n" )
                                  .arg( it->first )
                                  .arg( it->second )
                                  .arg( 100.0 * (double) it->second / (double) resname_counts_nonwat_total, 0, 'g', 2 )
@@ -994,7 +985,7 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
                                  );
                   }
                   if ( resname_counts_nonwat_total && resname_counts_nonwat.size() > 1 ) {
-                     editor_msg( "black", QString( "All\t%1\t%2%\t%3\n" )
+                     editor_msg( "black", courier, QString( "All\t%1\t%2%\t%3\n" )
                                  .arg( resname_counts_nonwat_total )
                                  .arg( 100 )
                                  .arg( tot_theo_wat )
@@ -1002,23 +993,21 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
                   }
 
                   if ( resname_counts_wat_total ) {
-                     editor_msg( "blue", "\nWater\t count\tAvg. Waters\n" );
+                     editor_msg( "blue", courier, "\nWater\t count\tAvg. Waters\n" );
                      for ( map < QString, int >::iterator it = resname_counts_wat.begin();
                            it != resname_counts_wat.end();
                            ++it ) {
-                        editor_msg( "blue", QString( "%1\t%2\t%3\n" ).arg( it->first ).arg( it->second ).arg(  (double) it->second / (double) resname_counts_nonwat_total, 0, 'g', 2 ) );
+                        editor_msg( "blue", courier, QString( "%1\t%2\t%3\n" ).arg( it->first ).arg( it->second ).arg(  (double) it->second / (double) resname_counts_nonwat_total, 0, 'g', 2 ) );
                      }
                      if ( resname_counts_wat_total && resname_counts_wat.size() > 1 ) {
-                        editor_msg( "blue", QString( "All\t%1\t%2\n" ).arg( resname_counts_wat_total ).arg(  (double) resname_counts_wat_total / (double) resname_counts_nonwat_total, 0, 'g', 2 ) );
+                        editor_msg( "blue", courier, QString( "All\t%1\t%2\n" ).arg( resname_counts_wat_total ).arg(  (double) resname_counts_wat_total / (double) resname_counts_nonwat_total, 0, 'g', 2 ) );
                      }
                   }
                   if ( mw_nonwat && mw_wat ) {
-                     editor_msg( "dark blue", QString( "\ngr WAT / gr nonWAT %1" ).arg( mw_wat / mw_nonwat, 0, 'g', 3 ) );
+                     editor_msg( "dark blue", courier, QString( "\ngr WAT / gr nonWAT %1" ).arg( mw_wat / mw_nonwat, 0, 'g', 3 ) );
                   }
                }
                editor_msg( "black", "\n" );
-
-               editor->setCurrentFont(save_font);
             }
             qApp->processEvents();
             
@@ -1251,7 +1240,8 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
    current_model = 0;
    dna_rna_resolve();
 
-   info_model_vector( QString( "source: model_vector" ), model_vector, { "CYS", "CYH" } );
+   // info_model_vector( QString( "source: model_vector" ), model_vector, { "CYS", "CYH" } );
+   // info_model_vector_mw( QString( "read_pdb() : model_vector" ), model_vector, true );
 
    model_vector_as_loaded = model_vector;
    if ( advanced_config.debug_2 )
@@ -1449,7 +1439,7 @@ QString US_Hydrodyn::vbar_msg( double vbar, bool only_used ) {
       return
          QString(
                  us_tr(
-                       "Used       vbar: %1 [cm^3/g] @ %2 [°C]\n"
+                       "Vbar used                          : %1 [cm^3/g] @ %2 [°C]\n"
                        )
                  )
          .arg( partvol, 5, 'f', 3, '0' )
@@ -1461,9 +1451,9 @@ QString US_Hydrodyn::vbar_msg( double vbar, bool only_used ) {
       return
          QString(
                  us_tr(
-                       "Calculated vbar: %1 [cm^3/g] @ %2 [°C]\n"
-                       "Measured   vbar: %3 [cm^3/g] @ %4 [°C]\n"
-                       "Used       vbar: %5 [cm^3/g] @ %6 [°C]\n"
+                       "Vbar calculated                    : %1 [cm^3/g] @ %2 [°C]\n"
+                       "Vbar measured                      : %3 [cm^3/g] @ %4 [°C]\n"
+                       "Vbar used                          : %5 [cm^3/g] @ %6 [°C]\n"
                        )
                  )
          .arg( vbar, 5, 'f', 3, '0' )
@@ -1479,8 +1469,8 @@ QString US_Hydrodyn::vbar_msg( double vbar, bool only_used ) {
    return
       QString(
               us_tr(
-                    "Calculated vbar: %1 [cm^3/g] @ %2 [°C]\n"
-                    "Used       vbar: %3 [cm^3/g] @ %4 [°C]\n"
+                    "Vbar calculated                    : %1 [cm^3/g] @ %2 [°C]\n"
+                    "Vbar used                          : %3 [cm^3/g] @ %4 [°C]\n"
                     )
               )
       .arg( vbar, 5, 'f', 3, '0' )
@@ -1547,7 +1537,6 @@ QString US_Hydrodyn::pH_msg() {
 }
 
 QString US_Hydrodyn::visc_dens_msg( bool only_used ) {
-      
 
    if ( hydro.manual_solvent_conditions ) {
       return
@@ -1600,4 +1589,637 @@ QString US_Hydrodyn::visc_dens_msg( bool only_used ) {
          .arg( hydro.temperature )
          ;
    }
+}
+
+QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *model ) {
+
+   QString qs;
+
+   qs += "\n";
+
+   if ( msg.length() ) {
+      qs += msg + "\n";
+   } else {
+      qs +=  us_tr( "Model summary information:\n" );
+   }
+
+   qs +=
+      QString(
+              us_tr(
+                    "Molecular weight                   : %1 [Da]\n"
+                    )
+              )
+            .arg( model->mw + model->ionized_mw_delta )
+      ;
+
+   qs += vbar_msg( model->vbar );
+
+   qs +=
+      QString(
+              us_tr(
+                    "Molecular volume (from vbar)       : %1 [A^3]\n"
+                    "Molecular volume (from excl. vol.) : %2 [A^3]\n"
+                    "Radius of gyration                 : %3 [A]\n"
+                    "Number of electrons                : %4\n"
+                    )
+              )
+      .arg( mw_to_volume( model->mw + model->ionized_mw_delta, tc_vbar( model->vbar ) ) )
+      .arg( model->volume )
+      .arg( model->Rg, 0, 'f', 2 )
+      .arg( model->num_elect )
+      ;
+
+   if ( model->volume ) {
+      qs +=
+         QString(
+                 us_tr(
+                       "Average electron density           : %1 [A^-3]\n"
+                       )
+                 )
+      .arg( model->num_elect / model->volume )
+      ;
+   }
+
+   if ( pdb_parse.find_sh ) {
+      qs +=
+         QString(
+                 us_tr(
+                       "Number of disulfide bonds          : %1\n"
+                       "Number of free SH                  : %2\n"
+                       )
+                 )
+         .arg( model->num_SS_bonds )
+         .arg( model->num_SH_free )
+         ;
+   }
+
+   qs +=
+      QString(
+              us_tr(
+                    "pH                                 : %1\n"
+                    )
+              )
+      .arg( le_pH->text() )
+      ;
+
+   return qs;
+}
+
+float US_Hydrodyn::mw_to_volume( float mw , float vbar )
+{
+   return 
+      mw * vbar * 1e24 / AVOGADRO;
+      ;
+}
+
+void US_Hydrodyn::calc_mw() 
+{
+   // cout << "calc_mw chains:\n";
+   // cout << list_chainIDs(model_vector);
+   // info_model_vector_mw( QString( "before calc_mw() : model_vector" ), model_vector, true );
+
+   saxs_util->setup_saxs_options();
+
+   unsigned int save_current_model = current_model;
+   QString error_string;
+
+   last_pdb_load_calc_mw_msg.clear( );
+
+   US_Saxs_Util usu;
+   bool do_excl_vol = true;
+   //    if ( !usu.setup_saxs_maps( 
+   //                              saxs_options.default_atom_filename ,
+   //                              saxs_options.default_hybrid_filename ,
+   //                              saxs_options.default_saxs_filename 
+   //                              ) )
+   //    {
+   //       editor_msg( "red", 
+   //                   QString( us_tr("error: could not open %1, %2 or %3, no atomic excluded volume calc") )
+   //                   .arg( saxs_options.default_atom_filename )
+   //                   .arg( saxs_options.default_hybrid_filename )
+   //                   .arg( saxs_options.default_saxs_filename ) );
+   //       do_excl_vol = false;
+   //    }
+
+   bool do_vvv = asa.vvv;
+   QFile       vvv_file;
+   QTextStream vvv_ts;
+
+   bool do_scol = ( gparams.count( "save_csv_on_load_pdb" ) &&
+                    gparams[ "save_csv_on_load_pdb" ] == "true" );
+
+   QFile       scol_file;
+   QTextStream scol_ts;
+
+   for (unsigned int i = 0; i < model_vector.size(); i++)
+   {
+      // editor->append( QString(us_tr("\nModel: %1 vbar %2 cm^3/g\n") )
+      //                 .arg( model_vector[i].model_id )
+      //                 .arg( QString("").sprintf("%.3f", model_vector[i].vbar) ) );
+      // {
+      //    QFont courier = QFont( "Courier", USglobal->config_list.fontSize );
+      //    editor_msg( "dark blue", courier, QString( us_tr("\nModel: %1\n") ).arg( model_vector[i].model_id ) );
+      //    editor_msg( "dark blue", courier, vbar_msg( model_vector[i].vbar ) );
+      //    editor_msg( "dark blue", courier, visc_dens_msg() );
+      // }
+
+      current_model = i;
+
+      model_vector[i].mw                = 0.0;
+      model_vector[i].ionized_mw_delta  = 0.0;
+      model_vector[i].volume            = 0.0;
+      double tot_excl_vol               = 0.0;
+      double tot_scaled_excl_vol        = 0.0;
+      unsigned int total_e              = 0;
+      // unsigned int total_e_noh   = 0;
+      point cm;
+      cm.axis[ 0 ] = 0.0;
+      cm.axis[ 1 ] = 0.0;
+      cm.axis[ 2 ] = 0.0;
+      double total_cm_mw = 0e0;
+
+      // info_model_vector_mw( QString( "before create_beads calc_mw() : model_vector" ), model_vector, true );
+      create_beads(&error_string, true);
+      // info_model_vector_mw( QString( "after create_beads calc_mw() : model_vector" ), model_vector, true );
+      // info_mw( QString( "after create_beads in calc_mw() : model_vector[ %1 ]" ).arg( i ), model_vector[ i ], true );
+      calc_vbar( & model_vector[ i ], true );
+      // info_mw( QString( "after calc_vbar in calc_mw() : model_vector[ %1 ]" ).arg( i ), model_vector[ i ], true );
+
+      double model_mw               = 0e0;
+      double model_ionized_mw_delta = 0e0;
+
+      if( !error_string.length() ) {
+
+         if ( do_vvv ) {
+            vvv_file.setFileName( somo_dir + "/" + "tmp" + "/" + project + QString( "_%1.xyzr" ).arg( model_vector[i].model_id ) );
+            if ( !vvv_file.open( QIODevice::WriteOnly ) ) {
+               editor_msg( "red", QString( us_tr( "Error: VVV requested but can not open %1 for writing" ) ).arg( vvv_file.fileName() ) );
+               do_vvv = false;
+            } else {
+               vvv_ts.setDevice( &vvv_file );
+            }
+         }
+
+         if ( do_scol ) {
+            scol_file.setFileName( somo_dir + "/" + "tmp" + "/" + project + QString( "_%1.csv" ).arg( model_vector[i].model_id ) );
+            if ( !scol_file.open( QIODevice::WriteOnly ) ) {
+               editor_msg( "red", QString( us_tr( "Error: save as CSV on load PDB requested but can not open %1 for writing" ) ).arg( scol_file.fileName() ) );
+               do_scol = false;
+            } else {
+               scol_ts.setDevice( &scol_file );
+               scol_ts << "\"Atom number\",\"Atom name\",\"Residue number\",\"Residue name\",\"Radius\",\"Mass [Da]\",\"x\",\"y\",\"z\"\n";
+            }
+         }
+
+         for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
+            double chain_excl_vol          = 0.0;
+            double chain_scaled_excl_vol   = 0.0;
+            model_vector[i].molecule[j].mw = 0.0;
+            unsigned int chain_total_e     = 0;
+            unsigned int chain_total_e_noh = 0;
+            double molecule_mw             = 0e0;
+
+            for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
+               PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+               if( this_atom->active) {
+                  
+                  if ( do_vvv ) {
+                     vvv_ts << QString( "%1\t%2\t%3\t%4\n" )
+                        .arg( this_atom->coordinate.axis[ 0 ] )
+                        .arg( this_atom->coordinate.axis[ 1 ] )
+                        .arg( this_atom->coordinate.axis[ 2 ] )
+                        .arg( this_atom->radius );
+                  }
+
+                  if ( do_scol ) {
+                     scol_ts << QString( "%1,%2,%3,%4,%5,%6,%7,%8,%9\n" )
+                        .arg( this_atom->serial )
+                        .arg( this_atom->name )
+                        .arg( this_atom->resSeq )
+                        .arg( this_atom->resName )
+                        .arg( this_atom->radius )
+                        .arg( this_atom->mw + this_atom->ionized_mw_delta )
+                        .arg( this_atom->coordinate.axis[ 0 ] )
+                        .arg( this_atom->coordinate.axis[ 1 ] )
+                        .arg( this_atom->coordinate.axis[ 2 ] )
+                        ;
+                  }
+
+                  // printf("model %u chain %u atom %u mw %g\n",
+                  //       i, j, k, this_atom->mw);
+                  if ( this_atom->resName != "WAT" ) {
+                     double atom_mw_w_delta = this_atom->mw + this_atom->ionized_mw_delta;
+
+                     model_vector[i].mw               += this_atom->mw;
+                     model_vector[i].ionized_mw_delta += this_atom->ionized_mw_delta;
+                     molecule_mw                      += this_atom->mw;
+                     model_mw                         += this_atom->mw;
+                     model_ionized_mw_delta           += this_atom->ionized_mw_delta;
+
+                     cm.axis[ 0 ] += atom_mw_w_delta * this_atom->coordinate.axis[ 0 ];
+                     cm.axis[ 1 ] += atom_mw_w_delta * this_atom->coordinate.axis[ 1 ];
+                     cm.axis[ 2 ] += atom_mw_w_delta * this_atom->coordinate.axis[ 2 ];
+                     total_cm_mw                                  += atom_mw_w_delta;
+                     model_vector[i].molecule[j].mw               += this_atom->mw;
+                     model_vector[i].molecule[j].ionized_mw_delta += this_atom->ionized_mw_delta;
+                  }
+
+                  if ( do_excl_vol ) {
+                     double excl_vol;
+                     double scaled_excl_vol;
+                     unsigned int this_e;
+                     unsigned int this_e_noh;
+                     double si = 0e0;
+                     if ( !saxs_util->set_excluded_volume( *this_atom, 
+                                                           excl_vol, 
+                                                           scaled_excl_vol, 
+                                                           saxs_options, 
+                                                           residue_atom_hybrid_map,
+                                                           this_e,
+                                                           this_e_noh,
+                                                           si) ) {
+                        editor_msg( "dark red", saxs_util->errormsg );
+                     } else {
+                        chain_excl_vol        += excl_vol;
+                        chain_scaled_excl_vol += scaled_excl_vol;
+                        chain_total_e         += this_e;
+                        chain_total_e_noh     += this_e_noh;
+                        this_atom->si          = si;
+                        model_vector_as_loaded[ i ].molecule[ j ].atom[ k ].si = si;
+                        if ( this_atom->resName != "WAT" )
+                        {
+                           tot_excl_vol          += excl_vol;
+                           tot_scaled_excl_vol   += scaled_excl_vol;
+                           total_e               += this_e;
+                        }
+                        model_vector[i].volume += excl_vol;
+                     }
+                  }
+               }
+            }
+            
+            model_vector[i].molecule[j].mw = molecule_mw;
+
+            // printf("model %u chain %u mw %g\n",
+            //i, j, model_vector[i].molecule[j].mw);
+            // if (model_vector[i].molecule[j].mw != 0.0 ) {
+            //    QString qs = 
+            //       QString(us_tr("\nModel: %1 Chain: %2 Molecular weight %3 Daltons, Volume (from vbar) %4 A^3%5")
+            //               .arg(model_vector[i].model_id)
+            //               .arg(model_vector[i].molecule[j].chainID)
+            //               .arg(model_vector[i].molecule[j].mw)
+            //               .arg( mw_to_volume( model_vector[i].molecule[j].mw, model_vector[i].vbar ) )
+            //               .arg( do_excl_vol ?
+            //                     QString(", atomic volume %1 A^3%2 average electron density %3 A^-3")
+            //                     .arg( chain_excl_vol )
+            //                     .arg( chain_excl_vol != chain_scaled_excl_vol ?
+            //                           QString(", scaled atomic volume %1 A^2")
+            //                           .arg( chain_scaled_excl_vol )
+            //                           :
+            //                           ""
+            //                           )
+            //                     .arg( chain_total_e / chain_excl_vol )
+            //                     :
+            //                     ""
+            //                     )
+            //               );
+            //    // qs += "\n" + vbar_msg( model_vector[i].vbar );
+            //    editor->append( qs );
+            //    last_pdb_load_calc_mw_msg << qs.replace( "\n", "\nREMARK " ) + QString("\n");
+            // }
+         }
+         
+         cm.axis[ 0 ] /= total_cm_mw;
+         cm.axis[ 1 ] /= total_cm_mw;
+         cm.axis[ 2 ] /= total_cm_mw;
+
+         // now compute Rg
+         double Rg2 = 0e0;
+         
+         for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
+            for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
+               PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+               if( this_atom->active )  {
+                  //       i, j, k, this_atom->mw);
+                  if ( this_atom->resName != "WAT" ) {
+                     Rg2 += ( this_atom->mw + this_atom->ionized_mw_delta ) * 
+                        ( 
+                         ( this_atom->coordinate.axis[ 0 ] - cm.axis[ 0 ] ) *
+                         ( this_atom->coordinate.axis[ 0 ] - cm.axis[ 0 ] ) +
+                         ( this_atom->coordinate.axis[ 1 ] - cm.axis[ 1 ] ) *
+                         ( this_atom->coordinate.axis[ 1 ] - cm.axis[ 1 ] ) +
+                         ( this_atom->coordinate.axis[ 2 ] - cm.axis[ 2 ] ) *
+                         ( this_atom->coordinate.axis[ 2 ] - cm.axis[ 2 ] ) 
+                         );
+                  }
+               }
+            }
+         }
+
+         double Rg = sqrt( Rg2 / total_cm_mw );
+         // QString qs =  QString( "\nModel %1 Rg: %2 nm" )
+         //    .arg( model_vector[ i ].model_id )
+         //    .arg( Rg / 10.0, 0, 'f', 2 );
+
+         model_vector[i].Rg = Rg;
+
+         // editor->append( qs );
+         // last_pdb_load_calc_mw_msg << qs;
+         if ( do_vvv ) {
+            vvv_file.close();
+            double volume;
+            double surf;
+            
+            vvv::compute_vol_surf( vvv_file.fileName().toLatin1().data(),
+                                   asa.vvv_probe_radius,
+                                   asa.vvv_grid_dR,
+                                   volume,
+                                   surf );
+            editor_msg( "black",
+                        QString( "VVV: probe %1 (A) grid side %2 (A) volume %3 (A^3) surface area %4 (A^2)" )
+                        .arg( asa.vvv_probe_radius )
+                        .arg( asa.vvv_grid_dR )
+                        .arg( volume )
+                        .arg( surf )
+                        );
+         }
+         if ( do_scol ) {
+            scol_file.close();
+            editor_msg( "blue",
+                        QString( "Created CSV atomic file: %1" ).arg( scol_file.fileName() )
+                        );
+         }
+      }
+
+      model_vector[ i ].mw               = model_mw;
+      model_vector[ i ].ionized_mw_delta = model_ionized_mw_delta;
+      model_vector[ i ].num_elect        = total_e;
+
+      {
+         dammix_remember_mw_source[ QString( "%1 Model %2" ).arg( project ).arg( i + 1 ) ] = "computed from pdb";
+         dammix_remember_mw[ QString( "%1 Model %2" ).arg( project ).arg( i + 1 ) ] = model_vector[i].mw + model_vector[ i ].ionized_mw_delta;
+         // QString qs = 
+         //    QString( us_tr( "\nModel: %1 Molecular weight %2 Daltons, Volume (from vbar) %3 A^3%4" ) )
+         //    .arg(model_vector[i].model_id)
+         //    .arg(model_vector[i].mw )
+         //    .arg( mw_to_volume( model_vector[i].mw, model_vector[i].vbar ) )
+         //    .arg( do_excl_vol ?
+         //          QString(", atomic volume %1 A^3%2 average electron density %3 A^-3")
+         //          .arg( tot_excl_vol )
+         //          .arg( tot_excl_vol != tot_scaled_excl_vol ?
+         //                QString(", scaled atomic volume %1 A^2")
+         //                .arg( tot_scaled_excl_vol )
+         //                :
+         //                ""
+         //                )
+         //          .arg( total_e / tot_excl_vol )
+         //          :
+         //          ""
+         //          );
+#if defined(U_EXPT)
+         { 
+            // for Javier's attempt at Rg
+            // double Rg = model_vector[i].Rg;
+            // qs += QString( "\n%1 model %2 %3 kD, Rg %4 A,  (Rg/6.5)^3: %5 %6 %" )
+            //    .arg( project )
+            //    .arg( model_vector[i].model_id )
+            //    .arg( model_vector[i].mw / 1000e0, 0, 'f', 2 )
+            //    .arg( Rg, 0, 'f', 2 )
+            //    .arg( pow( Rg / 6.5e0, 3e0 ), 0, 'f', 2 )
+            //    .arg( 100.0 * ( ( model_vector[i].mw / 1000e0 ) - pow( Rg / 6.5e0, 3e0 ) ) / ( model_vector[i].mw / 1000e0 ), 0, 'f', 1 )
+            //    ;
+         }
+#endif
+         // // qs += "\n" + vbar_msg( model_vector[i].vbar );
+         // editor->append( qs );
+
+         update_model_chain_ionization( model_vector[ i ], true );
+         editor_msg( "black", QFont( "Courier", USglobal->config_list.fontSize ),
+                     model_summary_msg( QString( "Summary information for model %1:" ).arg( i + 1 ), &model_vector[i] ) );
+         last_pdb_load_calc_mw_msg << model_summary_msg( QString( "Summary information for model %1:" ).arg( i + 1 ), &model_vector[i] );
+      }
+
+      if ( do_excl_vol && misc.set_target_on_load_pdb ) {
+         misc.target_e_density = total_e / tot_excl_vol;
+         misc.target_volume = tot_excl_vol;
+         editor_msg("blue", us_tr("Target excluded volume and electron density set"));
+      }
+
+      // printf("model %u  mw %g\n",
+      //        i, model_vector[i].mw);
+
+      // {
+      //    double tmp_mw = 0e0;
+      //    for ( int j = 0; j < (int) model_vector[ i ].molecule.size(); ++j )
+      //    {
+      //       tmp_mw += model_vector[ i ].molecule[ j ].mw;
+      //       us_qdebug( QString( "model %1 molecule %2 mw %3" ).arg( i ).arg( j ).arg( model_vector[ i ].molecule[ j ].mw ) );
+      //    }
+      //    us_qdebug( QString( "" ).sprintf( 
+      //                                  "model %d total from molecules mw %.2f as model mw %.2f cm mw %.2f model_mw  %.2f", 
+      //                                  i,
+      //                                  tmp_mw, 
+      //                                  model_vector[ i ].mw,
+      //                                  total_cm_mw,
+      //                                  model_mw
+      //                                   ) );
+      // }
+
+      update_model_chain_ionization( model_vector[ i ], true );
+
+      if ( model_vector_as_loaded.size() > i ) {
+         model_vector_as_loaded[ i ].mw               = model_vector[i].mw;
+         model_vector_as_loaded[ i ].ionized_mw_delta = model_vector[i].ionized_mw_delta;
+         model_vector_as_loaded[ i ].volume           = model_vector[i].volume;
+         model_vector_as_loaded[ i ].num_elect        = model_vector[i].num_elect;
+         model_vector_as_loaded[ i ].num_SS_bonds     = model_vector[i].num_SS_bonds;
+         model_vector_as_loaded[ i ].num_SH_free      = model_vector[i].num_SH_free;
+      }
+   }
+   editor_msg( "black", "" );
+   current_model = save_current_model;
+   // info_model_vector_mw( QString( "after calc_mw() : model_vector" ), model_vector, true );
+   // info_model_vector( QString( "after calc_mw() : model_vector" ), model_vector );
+   info_mw( QString( "after calc_mw() : model_vector" ), model_vector, false );
+}
+
+void US_Hydrodyn::update_model_chain_ionization( struct PDB_model & model, bool quiet ) {
+   if ( !quiet ) {
+      QTextStream( stdout )
+         << "========================================================================================" << endl
+         << "US_Hydrodyn::update_model_chain_ionization()" << endl
+         << "========================================================================================" << endl
+         ;
+   }
+
+   int chains   = (int) model.molecule.size();
+   int residues = (int) model.residue.size();
+
+   model.ionized_mw_delta = 0e0;
+   
+   for ( int j = 0; j < chains; ++j ) {
+      int atoms = (int) model.molecule[ j ].atom.size();
+      model.molecule[ j ].ionized_mw_delta = 0e0;
+      for ( int k = 0; k < atoms; ++k ) {
+         
+         // add to chain & model
+         model.ionized_mw_delta += model.molecule[ j ].atom[ k ].ionized_mw_delta ;
+         model.molecule[ j ].ionized_mw_delta += model.molecule[ j ].atom[ k ].ionized_mw_delta ;
+
+         if ( quiet ) {
+            continue;
+         }
+         
+         if ( !model.molecule[ j ].atom[ k ].p_residue ) {
+            QTextStream( stdout ) << "******** p_residue not set" << endl;
+            continue;
+         }
+         
+         QTextStream( stdout )
+            << "----------------------------------------------------------------------------------------" << endl
+            << " model.molecule[ " << j << " ].atom[ " << k << " ].name              = " << model.molecule[ j ].atom[ k ].name              << endl
+            // not useful << " model.molecule[ " << j << " ].atom[ " << k << " ].bead_number      = " << model.molecule[ j ].atom[ k ].bead_number      << endl
+            << " model.molecule[ " << j << " ].atom[ " << k << " ].model_residue_pos = " << model.molecule[ j ].atom[ k ].model_residue_pos << endl
+            << " model.molecule[ " << j << " ].atom[ " << k << " ].bead_assignment   = " << model.molecule[ j ].atom[ k ].bead_assignment   << endl
+            << " model.molecule[ " << j << " ].atom[ " << k << " ].atom_assignment   = " << model.molecule[ j ].atom[ k ].atom_assignment   << endl
+            << " model.molecule[ " << j << " ].atom[ " << k << " ].mw                = " << model.molecule[ j ].atom[ k ].mw                << endl
+            << " model.molecule[ " << j << " ].atom[ " << k << " ].ionized_mw_delta  = " << model.molecule[ j ].atom[ k ].ionized_mw_delta  << endl
+            ;
+
+
+         if ( (int) model.molecule[ j ].atom[ k ].p_residue->r_atom.size() <= model.molecule[ j ].atom[ k ].atom_assignment ) {
+            QTextStream( stdout ) << "******** p_residue->r_atom too small for atom_assignment" << endl;
+            continue;
+         }
+            
+         QTextStream( stdout )
+            << " model.molecule[ " << j << " ].atom[ " << k << " ].p_residue->r_atom[ " << model.molecule[ j ].atom[ k ].atom_assignment
+            << " ].hybrid.mw               = " << model.molecule[ j ].atom[ k ].p_residue->r_atom[ model.molecule[ j ].atom[ k ].atom_assignment ].hybrid.mw
+            << endl
+            << " model.molecule[ " << j << " ].atom[ " << k << " ].p_residue->r_atom[ " << model.molecule[ j ].atom[ k ].atom_assignment
+            << " ].hybrid.ionized_mw_delta = " << model.molecule[ j ].atom[ k ].p_residue->r_atom[ model.molecule[ j ].atom[ k ].atom_assignment ].hybrid.ionized_mw_delta
+            << endl
+            ;
+            
+         if ( (int) model.molecule[ j ].atom[ k ].p_residue->r_bead.size() <= model.molecule[ j ].atom[ k ].bead_assignment ) {
+            QTextStream( stdout ) << "******** p_residue->r_bead too small for bead_assignment" << endl;
+            continue;
+         }
+
+         QTextStream( stdout )
+            << " model.molecule[ " << j << " ].atom[ " << k << " ].p_residue->r_bead[ " << model.molecule[ j ].atom[ k ].bead_assignment
+            << " ].mw                      = " << model.molecule[ j ].atom[ k ].p_residue->r_bead[ model.molecule[ j ].atom[ k ].bead_assignment ].mw
+            << endl
+            << " model.molecule[ " << j << " ].atom[ " << k << " ].p_residue->r_bead[ " << model.molecule[ j ].atom[ k ].bead_assignment
+            << " ].ionized_mw_delta        = " << model.molecule[ j ].atom[ k ].p_residue->r_bead[ model.molecule[ j ].atom[ k ].bead_assignment ].ionized_mw_delta
+            << endl
+            ;
+
+         if ( residues <= model.molecule[ j ].atom[ k ].model_residue_pos ) {
+            continue;
+         }
+
+         QTextStream( stdout )
+            << " model.molecule[ " << j << " ].residue[ " << model.molecule[ j ].atom[ k ].model_residue_pos << " ].r_atom[ " << model.molecule[ j ].atom[ k ].atom_assignment
+            << " ].hybrid.mw               = " << model.residue[ model.molecule[ j ].atom[ k ].model_residue_pos ].r_atom[ model.molecule[ j ].atom[ k ].atom_assignment ].hybrid.mw
+            << endl
+            << " model.molecule[ " << j << " ].residue[ " << model.molecule[ j ].atom[ k ].model_residue_pos << " ].r_atom[ " << model.molecule[ j ].atom[ k ].atom_assignment
+            << " ].hybrid.ionized_mw_delta = " << model.residue[ model.molecule[ j ].atom[ k ].model_residue_pos ].r_atom[ model.molecule[ j ].atom[ k ].atom_assignment ].hybrid.ionized_mw_delta
+            << endl
+            ;
+      }
+   }
+   if ( !quiet ) {
+      QTextStream( stdout )
+         << "========================================================================================" << endl;
+   }
+}
+
+void US_Hydrodyn::set_ionized_residue_vector( vector < struct residue > & residue_v ) {
+   // this will have to be changed later to true, as we are changing the format of residue
+   QTextStream( stdout )
+      << "========================================================================================" << endl
+      << "US_Hydrodyn::set_ionized_residue_vector_apply()" << endl
+      << "========================================================================================" << endl
+      ;
+
+   // force use_pH
+   gparams[ "use_pH" ] == "true";
+
+   bool use_pH = gparams.count( "use_pH" ) && gparams[ "use_pH" ] == "true";
+
+   if ( !use_pH ) {
+      return;
+   }
+
+   float pH = le_pH->text().toFloat();
+   int residues = (int) residue_v.size();
+   
+   for ( int j = 0; j < residues; ++j ) {
+      float bf = basic_fraction( pH, residue_v[ j ].pKa );
+      if ( !residue_v[ j ].pKa ) {
+         bf = 1.0;
+      } else {
+         if ( !residue_v[ j ].acid_residue ) {
+            bf = 1.0 - bf;
+         }
+      }
+
+      int atoms = (int) residue_v[ j ].r_atom.size();
+      int beads = (int) residue_v[ j ].r_bead.size();
+      
+      map < int, double > bead_ionized_mw;
+
+      residue_v[ j ].pH               = pH;
+      residue_v[ j ].vbar_at_pH       = ionized_residue_vbar( bf, &residue_v[ j ] );
+      residue_v[ j ].ionized_mw_delta = 0e0;
+
+      for ( int k = 0; k < atoms; ++k ) {
+         double ionized_mw_for_atom                                    = ionized_residue_atom_mw( bf, &residue_v[ j ].r_atom[ k ] );
+         residue_v[ j ].r_atom[ k ].hybrid.ionized_mw_delta            = ionized_mw_for_atom;
+         residue_v[ j ].ionized_mw_delta                               += ionized_mw_for_atom;
+         bead_ionized_mw[ residue_v[ j ].r_atom[ k ].bead_assignment ] += ionized_mw_for_atom;
+
+         // vdwf
+         {
+            QString name = QString( "%1|%2" )
+               .arg( residue_v[ j ].r_atom[ k ].name != "OXT" ?  residue_v[ j ].name : "OXT" )
+               .arg( residue_v[ j ].r_atom[ k ].name );
+            if ( vdwf.count( name ) ) {
+               vdwf[ name ].ionized_mw_delta = ionized_mw_for_atom;
+            } else {
+               _vdwf this_vdwf;
+               this_vdwf.mw               = residue_v[ j ].r_atom[ k ].hybrid.mw;
+               this_vdwf.ionized_mw_delta = ionized_mw_for_atom;
+               this_vdwf.r                = residue_v[ j ].r_atom[ k ].hybrid.radius;
+               this_vdwf.w                = residue_v[ j ].r_atom[ k ].hydration;
+               vdwf[ name ] = this_vdwf;
+            }
+         }
+      }
+
+      for ( int k = 0; k < beads; ++k ) {
+         if ( bead_ionized_mw.count( k ) ) {
+            residue_v[ j ].r_bead[ k ].ionized_mw_delta = bead_ionized_mw[ k ];
+            bead_ionized_mw.erase( k );
+         } else {
+            residue_v[ j ].r_bead[ k ].ionized_mw_delta = 0e0;
+         }
+      }
+      if ( bead_ionized_mw.size() ) {
+         QTextStream( stdout )
+            << "**** US_Hydrodyn::set_ionized_residue_vector_apply(): unassigned bead_ionized_mw! ****" << endl
+            ;
+      }
+   }
+
+   // QTextStream( stdout ) << "******** begin vdwf map ********" << endl;
+   // for ( auto it = vdwf.begin();
+   //       it != vdwf.end();
+   //       ++it ) {
+   //    if ( it->second.ionized_mw_delta ) {
+   //       QTextStream( stdout ) << it->first << " mw " << it->second.mw << " ionized_mw_delta " << it->second.ionized_mw_delta << endl;
+   //    }
+   // }
+   // QTextStream( stdout ) << "******** end vdwf map ********" << endl;
 }

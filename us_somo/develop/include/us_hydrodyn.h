@@ -100,6 +100,7 @@ using namespace std;
 
 struct _vdwf {
    double mw;
+   double ionized_mw_delta;
    double r;
    double w;
    int color;
@@ -252,6 +253,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       
    private:
 
+      QString model_summary_msg( const QString &msg, struct PDB_model *model );    // summary info about model
       double tc_vbar( double vbar );                           // temperature corrected vbar
       QString pH_msg();                                        // vbar message
       QString vbar_msg( double vbar, bool only_used = false ); // vbar message
@@ -269,6 +271,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
                              ,const QString target_residue
                                                 );  
       
+      void update_model_chain_ionization( struct PDB_model & model, bool quiet = true ); // progagate ionization
+      
       set < QString >                                           cystine_residues;
       set < QString >                                           sulfur_atoms;
 
@@ -284,6 +288,17 @@ class US_EXTERN US_Hydrodyn : public QFrame
       // info routines (in us_hydrodyn_info.cpp
 
       void info_model_vector( const QString & msg, const vector <struct PDB_model> & models, const set < QString > only_atoms = {} );
+      void info_model_vector_mw( const QString & msg, const vector <struct PDB_model> & models, bool detail = false );
+      void info_residue_p_residue( struct PDB_model & model ); // consistency report
+      void info_compare_residues( struct residue * res1, struct residue * res2 ); // compare residues
+      void info_residue_vector( const QString & msg, vector < struct residue > & residue_v, bool only_pKa_dependent = true );
+      void info_model_p_residue( const QString & msg, const struct PDB_model & model, bool only_pKa_dependent );
+      void info_mw( const QString & msg, const vector < struct PDB_model > & models, bool detail = false );
+      void info_mw( const QString & msg, const struct PDB_model & model, bool detail = false );
+
+      void set_ionized_residue_vector( vector < struct residue > & residue_v ); // apply ionization to complete residue vector
+
+      // in attic: vector < struct residue * > model_residue_v( const struct PDB_model & model ); // returns a residue * vector based upon PDB_atoms's p_residue
 
       // end info routines
 
@@ -855,6 +870,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QStringList  last_pdb_load_calc_mw_msg;
       QStringList  last_steric_clash_log;
 
+      QString      last_bead_model;
+
       void show_zeno();
       bool calc_zeno();
       int do_calc_hydro();
@@ -896,6 +913,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       double ionized_atom_mw( float bf, struct atom *atom );
       double ionized_num_elect( float bf, struct atom *atom );
       double ionized_hydrogens( float bf, struct atom *atom );
+      double ionized_residue_atom_mw( float bf, struct atom *atom );
 
    private slots:
       void hullrad_readFromStdout();
@@ -922,6 +940,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool compute_structure_factors( QString filename, QString &error_msg );
 
       void editor_msg( QString color, QString msg );
+      void editor_msg( QString color, const QFont &font, QString msg );
 
       saxs sf_factors;
       vector < saxs > sf_bead_factors;
@@ -977,6 +996,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void pdb_saxs( bool create_native_saxs = true, bool do_raise = true );
       void bead_saxs( bool create_native_saxs = true, bool do_raise = true );
       int pdb_hydrate_for_saxs( bool quiet = false );
+      void open_hydro_results();
       
    private slots:
       bool calc_hullrad_hydro( QString filename = "" );
@@ -1058,7 +1078,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void update_bead_model_prefix(const QString &);
       void radial_reduction( bool from_grid = false );
       void show_hydro_results();
-      void open_hydro_results();
       void write_bead_asa(QString, vector <PDB_atom> *);
       void write_bead_tsv(QString, vector <PDB_atom> *);
       void write_bead_ebf(QString, vector <PDB_atom> *);
@@ -1068,12 +1087,13 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool read_corr(QString, vector <PDB_atom> *);
       void printError(const QString &);
       void closeAttnt(QProcess *, QString);
-      void calc_vbar(struct PDB_model *);
+      void calc_vbar(struct PDB_model *, bool use_p_atom = false );
       void update_vbar(); // update the results.vbar everytime something changes the vbar in options or calculation
       void append_options_log_somo(); // append somo options to options_log
       void append_options_log_somo_ovlp(); // append somo options to options_log
       void append_options_log_atob(); // append atob options to options_log
       void append_options_log_atob_ovlp(); // append atob options to options_log
+      void append_options_log_misc(); // append misc vbar info
       void list_model_vector(vector < PDB_model > *);
       QString default_differences_main();
       QString default_differences_load_pdb();

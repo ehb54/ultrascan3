@@ -1,5 +1,7 @@
 #include "../include/us3_defines.h"
 #include "../include/us_hydrodyn_results.h"
+#include "../include/us_hydrodyn.h"
+
 //Added by qt3to4:
 #include <QTextStream>
 #include <QCloseEvent>
@@ -10,7 +12,9 @@
 #define DOTSOMOCAP   ""
 
 US_Hydrodyn_Results::US_Hydrodyn_Results(struct hydro_results *results,
-                                         bool *result_widget, QWidget *p, const char *) : QFrame( p )
+                                         bool *result_widget,
+                                         void *us_hydrodyn,
+                                         QWidget *p, const char *) : QFrame( p )
 {
    this->results = results;
    this->result_widget = result_widget;
@@ -23,6 +27,7 @@ US_Hydrodyn_Results::US_Hydrodyn_Results(struct hydro_results *results,
    global_Ypos += 30;
    setGeometry(global_Xpos, global_Ypos, 0, 0);
    somo_dir = USglobal->config_list.root_dir + "/somo";
+   this->us_hydrodyn = us_hydrodyn;
 }
 
 US_Hydrodyn_Results::~US_Hydrodyn_Results()
@@ -426,11 +431,13 @@ void US_Hydrodyn_Results::help()
 
 void US_Hydrodyn_Results::load_results()
 {
-   QString filename = QFileDialog::getOpenFileName( this , windowTitle() , somo_dir , le_method->text() == "Zeno" ? "*.zno *.ZNO" : "*.hydro_res *.HYDRO_RES" );
-   if (!filename.isEmpty())
-   {
-      view_file(filename);
-   }
+   emit ((US_Hydrodyn *)us_hydrodyn)->open_hydro_results();
+   
+   // QString filename = QFileDialog::getOpenFileName( this , windowTitle() , somo_dir , le_method->text() == "Zeno" ? "*.zno *.ZNO" : "*.hydro_res *.HYDRO_RES" );
+   // if (!filename.isEmpty())
+   // {
+   //    view_file(filename);
+   // }
 }
 
 void US_Hydrodyn_Results::load_beadmodel()

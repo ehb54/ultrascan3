@@ -37,6 +37,10 @@ void US_Hydrodyn::SS_init() {
 
 void US_Hydrodyn::SS_apply( struct PDB_model & model ) {
    int sulfurs = (int) sulfur_pdb_line.size();
+
+   model.num_SS_bonds = 0;
+   model.num_SH_free  = 0;
+
    if ( !sulfurs ) {
       return;
    }
@@ -74,6 +78,7 @@ void US_Hydrodyn::SS_apply( struct PDB_model & model ) {
             if ( !sulfur_paired.count( j ) ) {
                double this_distance =  dist( sulfur_coordinates[ i ], sulfur_coordinates[ j ] );
                if ( this_distance <= thresh_SS ) {
+                  ++model.num_SS_bonds;
                   pair_distance[ j ] = pair_distance[ i ] = this_distance;
                   sulfur_paired[ i ] = j;
                   sulfur_paired[ j ] = i;
@@ -112,6 +117,7 @@ void US_Hydrodyn::SS_apply( struct PDB_model & model ) {
             ;
 #endif
          SS_change_residue( model, sulfur_pdb_line[ i ], "CYH" );
+         model.num_SH_free++;
          editor_msg( "dark blue", QString( "SH found, CYS converted to CYH %1" )
                      .arg( sulfur_pdb_line[ i ].left( 26 ) )
                      );
@@ -122,7 +128,9 @@ void US_Hydrodyn::SS_apply( struct PDB_model & model ) {
 }
 
 void US_Hydrodyn::SS_change_residue( struct PDB_model & model, const QString & line, const QString target_residue ) {
+#if defined( DEBUG_SS )
    QTextStream( stdout ) << "SS_change_residue()" << endl;
+#endif
    QString source_residue   = line.mid( 17, 3 ).trimmed();
    QString residue_sequence = line.mid( 22, 5 ).trimmed();
    QString chain_id         = line.mid( 20, 2 ).trimmed();
@@ -149,7 +157,9 @@ void US_Hydrodyn::SS_change_residue( struct PDB_model & model, const QString & l
 
    if ( source_residue == target_residue ) {
       // nothing to do
+#if defined( DEBUG_SS )
       QTextStream( stdout ) << "SS_change_residue(): nothing to do" << endl;
+#endif
       return;
    }
 
@@ -250,3 +260,4 @@ void US_Hydrodyn::SS_change_residue( struct PDB_model & model, const QString & l
    // search through the model and replace those that match the chain, source_residue & residue sequence
    // once for the residue replace model_vector residue[ model_vector molecule(chain) model_residue_pos ] with new_residue 
 }
+

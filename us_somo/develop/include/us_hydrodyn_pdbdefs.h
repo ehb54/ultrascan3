@@ -114,7 +114,8 @@ struct PDB_atom
    bool active;
    float asa;           // maximum accessible surface area (A^2)
    struct residue *p_residue;        // NULL if not found
-   int    model_residue_pos;
+   int    model_residue_pos;         // to entry in residue (not p_residue)
+   int    model_residue_atom_pos;    // to atom of residue
    struct atom *p_atom;              // NULL if not found
    float radius;
 
@@ -132,7 +133,9 @@ struct PDB_atom
    int exposed_code;                 // 1 exposed, 6 side chain buried, 10 main chain buried
    bool bead_positioner;             // true if an atom had a bead positioner
    float mw;
+   float ionized_mw_delta;           // mw delta based upon ionization state
    float bead_mw;
+   float bead_ionized_mw_delta;
    float bead_recheck_asa;
    float bead_cog_mw;                // mw of those atoms contributing to the bead_cog
    point bead_position_coordinate;
@@ -145,6 +148,7 @@ struct PDB_atom
    float bead_ref_volume;            // this is taken from the bead structure+hydration
    float bead_ref_volume_unhydrated; // this is taken from the bead structure
    float bead_ref_mw;                // ditto
+   float bead_ref_ionized_mw_delta;  // ditto
    float bead_computed_radius;       // from ref_volume
    float bead_actual_radius;         // used for radial reduction % computation, does not get reduced
    int placing_method;             // baric method (see struct bead->placing method, -1 undefined
@@ -169,6 +173,7 @@ struct PDB_chain   // chain in PDB file
    QString chainID;
    QString segID;
    float mw;                                // mw of chain
+   float ionized_mw_delta;     
 };
 
 struct PDB_model
@@ -177,7 +182,12 @@ struct PDB_model
    vector <struct residue> residue;         // keep track of amino acid sequence in molecule for vbar calculation
    float vbar;
    float mw;                                // mw of model
+   float ionized_mw_delta;     
    float volume;
+   int   num_elect;                         // number of electrons
+   int   num_SS_bonds;                      // number of SS bonds
+   int   num_SH_free;                       // number of free SH
+   
    double Rg;
    QString  model_id;
 };
@@ -197,6 +207,7 @@ struct bead
                                  // 1 = side chain
    float        volume;          // anhydrous bead volume
    float        mw;              // bead mw
+   float        ionized_mw_delta;     
    bool         hydration_flag;  // false = use sum of atom's hydrations, true = bead hydration overrides
    float        atom_hydration;  // number of waters bound based upon sum of atoms' hydrations
 };
@@ -429,6 +440,7 @@ struct hybridization
 {
    QString name;                 // for example, N4H3
    float   mw;                   // molecular weight of hybridization
+   float   ionized_mw_delta;     // mw delta based upon ionization state
    float   radius;               // radius of hybridization
    QString saxs_name;            // name for SAXS coefficients
    float   scat_len;             // Scattering length in H20 (*10^-12 cm)
@@ -464,13 +476,26 @@ struct residue
                                  // 4: detergent
                                  // 5: other
    float molvol;                 // the molecular volume of the residue
-   float vbar;                   // the partial specific volume of the residue unprotonated
-   float vbar2;                  // the partial specific volume of the residue protonated
-   float pKa;                    // the partial specific volume of the residue protonated
    float asa;                    // maximum accessible surface area (A^2)
    vector <struct atom> r_atom;  // the atoms in the residue
    vector <struct bead> r_bead;  // the beads used to describe the residue
+
+   
+   float vbar;                   // the partial specific volume of the residue unprotonated
+   float vbar_at_pH;             // computed vbar for pH
+   float ionized_mw_delta;       // computed ionized_mw_delta ... sum of those in the atoms which equals sum in the beads
+
+   vector < float > vbars;       // for general multi-pKa/vbar
+   vector < float > pKas;        // for general multi-pKa/vbar
+
+   float pH;                     // computed pH for vbar_at_pH (for sanity)   
+
+   // deprecated fields, still currently used for simple max 2 vbar/pKa
+   float vbar2;                  // current way, will be changed
+   float pKa;                    // the pKa
    bool acid_residue;            // used for vbar calculations
+
+
 };
 
 class sortable_float {

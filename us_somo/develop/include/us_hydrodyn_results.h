@@ -70,10 +70,10 @@ class US_EXTERN US_Hydrodyn_Results : public QFrame
    Q_OBJECT
 
    public:
-      US_Hydrodyn_Results(struct hydro_results *, bool *, QWidget *p = 0, const char *name = 0);
+   US_Hydrodyn_Results(struct hydro_results *, bool *, void *us_hydrodyn, QWidget *p = 0, const char *name = 0);
       ~US_Hydrodyn_Results();
 
-   public:
+   private:
 
       struct hydro_results *results;
       bool *result_widget;
@@ -116,6 +116,8 @@ class US_EXTERN US_Hydrodyn_Results : public QFrame
       QPushButton *pb_load_beadmodel;
 
       QString somo_dir;
+
+      void *us_hydrodyn;
 
    public slots:
 

@@ -215,6 +215,8 @@ SOURCES *= \
         src/us_hydrodyn_batch.cpp \
         src/us_hydrodyn_batch_movie_opts.cpp \
         src/us_hydrodyn_bead_output.cpp \
+        src/us_hydrodyn_beads.cpp \
+        src/us_hydrodyn_beads_load.cpp \
         src/us_hydrodyn_best.cpp \
         src/us_hydrodyn_bd.cpp \
         src/us_hydrodyn_bd_core.cpp \
@@ -330,9 +332,11 @@ SOURCES *= \
         src/us_hydrodyn_saxs_hplc_svd.cpp \
         src/us_hydrodyn_saxs_1d.cpp \
         src/us_hydrodyn_saxs_2d.cpp \
+        src/us_hydrodyn_settings.cpp \
         src/us_hydrodyn_supc.cpp \
         src/us_hydrodyn_util.cpp \
         src/us_hydrodyn_xsr.cpp \
+        src/us_hydrodyn_write.cpp \
         src/us_hydrodyn_zeno.cpp \
 #  us_imgviewer.cpp \
 #  us_infopanel.cpp \
