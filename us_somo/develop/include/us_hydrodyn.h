@@ -297,16 +297,17 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void info_mw( const QString & msg, const struct PDB_model & model, bool detail = false );
 
       void set_ionized_residue_vector( vector < struct residue > & residue_v ); // apply ionization to complete residue vector
+      void reset_ionized_residue_vectors(); // for saxs hplc options
 
       // in attic: vector < struct residue * > model_residue_v( const struct PDB_model & model ); // returns a residue * vector based upon PDB_atoms's p_residue
 
       // end info routines
 
-      map < QString, double >  res_vbar;
-      map < QString, double >  res_vbar2;
-      map < QString, double >  res_pKa;
+      map < QString, double >  res_vbar; // for fasta 
+      // map < QString, double >  res_vbar2; 
+      // map < QString, double >  res_pKa;
       map < QString, double >  res_mw;
-      map < QString, double >  res_ionization_mass_change;
+      // map < QString, double >  res_ionization_mass_change;
       map < QString, double >  fasta_vbar;
       map < QString, double >  fasta_mw;
       void create_fasta_vbar_mw();

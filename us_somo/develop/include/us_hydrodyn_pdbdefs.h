@@ -484,6 +484,7 @@ struct residue
    float vbar;                   // the partial specific volume of the residue unprotonated
    float vbar_at_pH;             // computed vbar for pH
    float ionized_mw_delta;       // computed ionized_mw_delta ... sum of those in the atoms which equals sum in the beads
+   float mw;                     
 
    vector < float > vbars;       // for general multi-pKa/vbar
    vector < float > pKas;        // for general multi-pKa/vbar

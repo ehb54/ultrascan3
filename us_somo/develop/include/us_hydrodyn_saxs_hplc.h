@@ -125,6 +125,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 {
    Q_OBJECT
 
+      friend class US_Hydrodyn;
       friend class US_Hydrodyn_Batch;
       friend class US_Hydrodyn_Saxs;
       friend class US_Hydrodyn_Saxs_Hplc_Conc;
@@ -164,6 +165,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       Mesh2MainWindow *plot3d_window;
 #endif
       bool             plot3d_flag;
+
+      void * saxs_hplc_options_widget;
 
       // "main plot options ", "plot selections", "plot properties",  "cropping", "",
 

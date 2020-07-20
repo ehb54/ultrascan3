@@ -2023,7 +2023,7 @@ void US_Hydrodyn::create_fasta_vbar_mw() {
 #endif
 
    fasta_vbar.clear();
-   fasta_mw.clear();
+   fasta_mw  .clear();
    
    for ( map < QString, QChar >::iterator it = residue_short_names.begin();
          it != residue_short_names.end();

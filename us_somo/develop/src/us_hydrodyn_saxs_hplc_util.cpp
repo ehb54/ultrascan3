@@ -2358,11 +2358,12 @@ void US_Hydrodyn_Saxs_Hplc::options()
       (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_csv_transposed" ] : "false";
    
    parameters[ "gaussian_type" ] = QString( "%1" ).arg( gaussian_type );
-   US_Hydrodyn_Saxs_Hplc_Options *sho = 
+   saxs_hplc_options_widget = 
       new US_Hydrodyn_Saxs_Hplc_Options( & parameters, (US_Hydrodyn *) us_hydrodyn, this );
-   US_Hydrodyn::fixWinButtons( sho );
-   sho->exec();
-   delete sho;
+   US_Hydrodyn::fixWinButtons( (US_Hydrodyn_Saxs_Hplc_Options*) saxs_hplc_options_widget );
+   ((US_Hydrodyn_Saxs_Hplc_Options *)saxs_hplc_options_widget)->exec();
+   delete (US_Hydrodyn_Saxs_Hplc_Options *)saxs_hplc_options_widget;
+   saxs_hplc_options_widget = 0;
 
    if ( !parameters.count( "ok" ) )
    {

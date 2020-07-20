@@ -57,6 +57,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    this->csv1 = csv1;
    this->us_hydrodyn = us_hydrodyn;
    started_in_expert_mode = ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode;
+   saxs_hplc_options_widget = 0;
 
    gaussian_param_text
       << "amplitude"

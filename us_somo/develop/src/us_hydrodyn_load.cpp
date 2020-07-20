@@ -43,10 +43,7 @@ void US_Hydrodyn::read_residue_file()
    vdwf.clear();
 
    res_vbar.clear();
-   res_vbar2.clear();
-   res_pKa.clear();
    res_mw.clear();
-   res_ionization_mass_change.clear();
 
    QRegExp rx_spaces = QRegExp( "\\s+" ); 
    // i=1;
@@ -78,12 +75,11 @@ void US_Hydrodyn::read_residue_file()
             new_residue.pH               = -1;
             new_residue.vbar_at_pH       = -1;
             new_residue.ionized_mw_delta = 0;
+            new_residue.mw               = 0;
 
             if ( qsl.size() ) {
                new_residue.vbar2 = qsl.front().toDouble();  qsl.pop_front();
                new_residue.pKa   = qsl.front().toDouble();  qsl.pop_front();
-               res_vbar2[ new_residue.name ] = new_residue.vbar2;
-               res_pKa  [ new_residue.name ] = new_residue.pKa;
             } else {
                new_residue.vbar2 = 0;
                new_residue.pKa   = 0;
@@ -134,6 +130,7 @@ void US_Hydrodyn::read_residue_file()
             // ts >> new_atom.hybrid.radius;
             // ts >> new_atom.bead_assignment;
             res_mw  [ new_residue.name ] += new_atom.hybrid.mw;
+            new_residue.mw += new_atom.hybrid.mw;
             
             if ( /* misc.export_msroll && */
                  new_residue.name.length() < 4 )
@@ -241,14 +238,15 @@ void US_Hydrodyn::read_residue_file()
 
             if ( qsl.size() ) {
                new_atom.ionization_mass_change = qsl.front().toFloat();  qsl.pop_front();
-               if ( res_ionization_mass_change.count( new_residue.name ) ) {
-                  QMessageBox::critical(this, us_tr( windowTitle() ),
-                                        us_tr("Please note:\n\nThere was an error reading\nthe selected Residue File!\nLine contains ionization information,\nbut there is atom in this residue already defining ionization information:\n" ) +
-                                        linein,
-                                        QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
-                  return;
-               }
-               res_ionization_mass_change[ new_residue.name ] = new_atom.ionization_mass_change;
+               // kept for now as reference
+               // if ( res_ionization_mass_change.count( new_residue.name ) ) {
+               //    QMessageBox::critical(this, us_tr( windowTitle() ),
+               //                          us_tr("Please note:\n\nThere was an error reading\nthe selected Residue File!\nLine contains ionization information,\nbut there is atom in this residue already defining ionization information:\n" ) +
+               //                          linein,
+               //                          QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+               //    return;
+               // }
+               // res_ionization_mass_change[ new_residue.name ] = new_atom.ionization_mass_change;
                new_residue.acid_residue = ( new_atom.ionization_mass_change < 0 );
                qDebug() << "found ionization mass change for " << new_residue.name << " value " << new_atom.ionization_mass_change;
             } else {
@@ -1439,7 +1437,7 @@ QString US_Hydrodyn::vbar_msg( double vbar, bool only_used ) {
       return
          QString(
                  us_tr(
-                       "Vbar used                          : %1 [cm^3/g] @ %2 [°C]\n"
+                       "Vbar used                   : %1 [cm^3/g] @ %2 [°C]\n"
                        )
                  )
          .arg( partvol, 5, 'f', 3, '0' )
@@ -1451,9 +1449,9 @@ QString US_Hydrodyn::vbar_msg( double vbar, bool only_used ) {
       return
          QString(
                  us_tr(
-                       "Vbar calculated                    : %1 [cm^3/g] @ %2 [°C]\n"
-                       "Vbar measured                      : %3 [cm^3/g] @ %4 [°C]\n"
-                       "Vbar used                          : %5 [cm^3/g] @ %6 [°C]\n"
+                       "Vbar calculated             : %1 [cm^3/g] @ %2 [°C]\n"
+                       "Vbar measured               : %3 [cm^3/g] @ %4 [°C]\n"
+                       "Vbar used                   : %5 [cm^3/g] @ %6 [°C]\n"
                        )
                  )
          .arg( vbar, 5, 'f', 3, '0' )
@@ -1469,8 +1467,8 @@ QString US_Hydrodyn::vbar_msg( double vbar, bool only_used ) {
    return
       QString(
               us_tr(
-                    "Vbar calculated                    : %1 [cm^3/g] @ %2 [°C]\n"
-                    "Vbar used                          : %3 [cm^3/g] @ %4 [°C]\n"
+                    "Vbar calculated             : %1 [cm^3/g] @ %2 [°C]\n"
+                    "Vbar used                   : %3 [cm^3/g] @ %4 [°C]\n"
                     )
               )
       .arg( vbar, 5, 'f', 3, '0' )
@@ -1606,7 +1604,16 @@ QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *m
    qs +=
       QString(
               us_tr(
-                    "Molecular weight                   : %1 [Da]\n"
+                    "Calculatoin done at pH      : %1\n"
+                    )
+              )
+      .arg( le_pH->text() )
+      ;
+
+   qs +=
+      QString(
+              us_tr(
+                    "Molecular weight            : %1 [Da]\n"
                     )
               )
             .arg( model->mw + model->ionized_mw_delta )
@@ -1614,16 +1621,29 @@ QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *m
 
    qs += vbar_msg( model->vbar );
 
+   if ( hydro.temperature != 20 ) {
+      qs +=
+         QString(
+                 us_tr(
+                       "Mol. vol. (from vbar)       : %1 [A^3] @ %2 [°C]\n"
+                       )
+                 )
+         .arg( mw_to_volume( model->mw + model->ionized_mw_delta, model->vbar ) )
+         .arg( 20 )
+         ;
+   }
+
    qs +=
       QString(
               us_tr(
-                    "Molecular volume (from vbar)       : %1 [A^3]\n"
-                    "Molecular volume (from excl. vol.) : %2 [A^3]\n"
-                    "Radius of gyration                 : %3 [A]\n"
-                    "Number of electrons                : %4\n"
+                    "Mol. vol. (from vbar)       : %1 [A^3] @ %2 [°C]\n"
+                    "Mol. vol. (SAXS excl. vol.) : %3 [A^3]\n"
+                    "Radius of gyration          : %4 [A]\n"
+                    "Number of electrons         : %5\n"
                     )
               )
       .arg( mw_to_volume( model->mw + model->ionized_mw_delta, tc_vbar( model->vbar ) ) )
+      .arg( hydro.temperature )
       .arg( model->volume )
       .arg( model->Rg, 0, 'f', 2 )
       .arg( model->num_elect )
@@ -1633,7 +1653,7 @@ QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *m
       qs +=
          QString(
                  us_tr(
-                       "Average electron density           : %1 [A^-3]\n"
+                       "Average electron density    : %1 [A^-3]\n"
                        )
                  )
       .arg( model->num_elect / model->volume )
@@ -1644,8 +1664,8 @@ QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *m
       qs +=
          QString(
                  us_tr(
-                       "Number of disulfide bonds          : %1\n"
-                       "Number of free SH                  : %2\n"
+                       "Number of disulfide bonds   : %1\n"
+                       "Number of free SH           : %2\n"
                        )
                  )
          .arg( model->num_SS_bonds )
@@ -1653,14 +1673,6 @@ QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *m
          ;
    }
 
-   qs +=
-      QString(
-              us_tr(
-                    "pH                                 : %1\n"
-                    )
-              )
-      .arg( le_pH->text() )
-      ;
 
    return qs;
 }
@@ -1679,6 +1691,11 @@ void US_Hydrodyn::calc_mw()
    // info_model_vector_mw( QString( "before calc_mw() : model_vector" ), model_vector, true );
 
    saxs_util->setup_saxs_options();
+
+   {
+       QFont courier = QFont( "Courier", USglobal->config_list.fontSize );
+       editor_msg( "dark blue", courier, visc_dens_msg() );
+   }
 
    unsigned int save_current_model = current_model;
    QString error_string;
@@ -2135,6 +2152,10 @@ void US_Hydrodyn::update_model_chain_ionization( struct PDB_model & model, bool 
    }
 }
 
+void US_Hydrodyn::reset_ionized_residue_vectors() {
+   set_ionized_residue_vector( residue_list );
+}
+
 void US_Hydrodyn::set_ionized_residue_vector( vector < struct residue > & residue_v ) {
    // this will have to be changed later to true, as we are changing the format of residue
    QTextStream( stdout )
@@ -2211,6 +2232,33 @@ void US_Hydrodyn::set_ionized_residue_vector( vector < struct residue > & residu
             << "**** US_Hydrodyn::set_ionized_residue_vector_apply(): unassigned bead_ionized_mw! ****" << endl
             ;
       }
+   }
+
+   // reset for fasta cache maps
+
+   res_vbar.clear();
+   res_mw  .clear();
+
+   for ( int j = 0; j < residues; ++j ) {
+      res_vbar[ residue_v[j].name ] = residue_v[j].vbar_at_pH;
+      res_mw  [ residue_v[j].name ] = residue_v[j].mw + residue_v[j].ionized_mw_delta;
+   }
+      
+   create_fasta_vbar_mw();
+
+   {
+      set < QString > only_res = { "LYS", "GLU" };
+      
+      QTextStream( stdout ) << "******** begin res_vbar, mw map ********" << endl;
+
+      for ( auto it = res_vbar.begin();
+            it != res_vbar.end();
+            ++it ) {
+         if ( only_res.count( it->first ) ) {
+            QTextStream( stdout ) << it->first << " vbar " << it->second << " mw " << res_mw[ it->first ] << endl;
+         }
+      }
+      QTextStream( stdout ) << "******** end res_vbar, mw map ********" << endl;
    }
 
    // QTextStream( stdout ) << "******** begin vdwf map ********" << endl;

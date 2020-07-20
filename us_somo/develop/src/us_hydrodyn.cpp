@@ -23,6 +23,7 @@
 #include "../include/us_revision.h"
 #include "../include/us3_defines.h"
 #include "../include/us_hydrodyn_best.h"
+// #include "../include/us_hydrodyn_saxs_hplc_options.h"
 #include <qregexp.h>
 #include <qfont.h>
 //Added by qt3to4:
@@ -105,6 +106,8 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
       exit(-1);
    }
       
+   gparams[ "use_pH" ] == "true";
+   
    qDebug() << "rasmol no display WAIT****************";
    process->waitForFinished();
    qDebug() << "rasmol no display FINISHED****************";
@@ -1030,7 +1033,8 @@ void US_Hydrodyn::setupGUI()
    cb_pH->setPalette( PALET_NORMAL );
    AUTFBACK( cb_pH );
    connect(cb_pH, SIGNAL(clicked()), this, SLOT(set_pH()));
-   cb_pH->setToolTip( us_tr( "<html><body>check to enable pH dependent ionization and psv. You will need to reload the PDB if the pH is adjusted.</body></html>" ) );
+   cb_pH->setToolTip( us_tr( "<html><body> enable pH dependent ionization and psv. You will need to reload the PDB if the pH is adjusted.</body></html>" ) );
+   // eventually cb_pH->hide();
 
    le_pH = new QLineEdit( this );    le_pH->setObjectName( "PH Line Edit" );
    le_pH->setText(QString("").sprintf("%4.2f",hydro.pH));
@@ -3394,15 +3398,27 @@ void US_Hydrodyn::update_pH(const QString &str)
    
    hydro.pH = str.toDouble();
    display_default_differences();
+
+   // not needed since no entry allowed when the options widget is up
+   // if ( saxs_hplc_widget &&
+   //      saxs_hplc_window &&
+   //      saxs_hplc_window->saxs_hplc_options_widget ) {
+   //    ((US_Hydrodyn_Saxs_Hplc_Options*)saxs_hplc_window->saxs_hplc_options_widget)->le_fasta_pH->setText( QString( "" ).sprintf( "%4.2f", hydro.pH ) );
+   // }
 }
 
 void US_Hydrodyn::set_pH()
 {
+   // force on
+   cb_pH->setChecked( true );
+   le_pH->setText( "7" );
+
    gparams[ "use_pH" ] = cb_pH->isChecked() ? "true" : "false";
    le_pH->setEnabled( cb_pH->isChecked() );
-   if ( !cb_pH->isChecked() ) {
-      le_pH->setText( "7" );
-   }
+   // not needed now
+   // if ( !cb_pH->isChecked() ) {
+   //    le_pH->setText( "7" );
+   // }
    display_default_differences();
 }
 
