@@ -1693,7 +1693,7 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
 
       //ALEXEY: make sure ExpID is coupled to the RunID which is already in the autoflow DB
       qDebug() << "runID_passed: " <<  runID_passed << "; " << "RunID_to_retrieve: " << RunID_to_retrieve;
-      if ( runID_passed != "NULL" )
+      if ( !runID_passed.isEmpty() )
       	{
       	  if ( runID_passed.toInt() != RunID_to_retrieve.toInt() )
       	    {
