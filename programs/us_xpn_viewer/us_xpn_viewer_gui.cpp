@@ -1691,15 +1691,41 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
       //msg_data_avail->close();
       //ok_msg_data->click();
 
-      // //ALEXEY: make sure ExpID is coupled to the RunID which is already in the autoflow DB
-      // if ( runID_passed != "NULL" )
-      // 	{
-      // 	  if ( runID_passed.toInt() != RunID_to_retrieve.toInt() )
-      // 	    {
-      // 	      RunID_to_retrieve = runID_passed;
-      // 	      qDebug() << "Correcting RunID to : " << RunID_to_retrieve;
-      // 	    }
-      // 	}
+      //ALEXEY: make sure ExpID is coupled to the RunID which is already in the autoflow DB
+      qDebug() << "runID_passed: " <<  runID_passed << "; " << "RunID_to_retrieve: " << RunID_to_retrieve;
+      if ( runID_passed != "NULL" )
+      	{
+      	  if ( runID_passed.toInt() != RunID_to_retrieve.toInt() )
+      	    {
+	      qDebug() << "RunID MISMATCH!!!";
+
+	      if ( finishing_live_update )
+		{
+		  timer_data_init->stop();
+		  disconnect(timer_data_init, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+		  in_reload_data_init  = false;  
+		  return status_ok;
+		}
+	      
+
+	      //reset the program, delete autoflow record
+	      timer_data_init->stop();
+	      disconnect(timer_data_init, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+	      
+	      //message on aborted run with no data
+	      QMessageBox::warning( this,
+				    tr( "RunID Mismatch!" ),
+				    tr( "It appears the scheduled run can no longer be accessed, and was probably terminated prematurely. The GMP record will be deleted. Please resubmit the protocol from Ultrascan GMP." ));
+
+	      RunID_to_retrieve = runID_passed;
+	      delete_autoflow_record(); 
+	      reset_auto();
+	      
+	      in_reload_data_init = false;
+	      emit aborted_back_to_initAutoflow( );
+	      return status_ok;
+	    }
+      	}
             
       //ALEXEY: need to update 'autoflow' table with the unique RunID_to_retrieve && Start Run Time fields !!!
       //Conditional:  Do it ONLY once !!! 

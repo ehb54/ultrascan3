@@ -1390,6 +1390,10 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
 
   qDebug() << "Exp_label: " << Exp_label;
 
+  // qDebug() << "Filename: " << details_at_live_update[ "filename" ];
+  // qDebug() << "Filename_INT: " << details_at_live_update[ "filename" ].toInt();
+  
+
   gmpRun_bool = false;
   
   if ( details_at_live_update[ "gmpRun" ] == "YES" )

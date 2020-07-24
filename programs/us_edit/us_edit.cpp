@@ -1476,6 +1476,8 @@ void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
   idInv_auto          = details_at_editing[ "invID_passed" ];
   ProtocolName_auto   = details_at_editing[ "protocolName" ];
 
+  
+  
   // Deal with different filenames if any.... //////////////////////////
   filename_runID_passed = details_at_editing[ "filename" ];
   runType_combined_IP_RI = false;

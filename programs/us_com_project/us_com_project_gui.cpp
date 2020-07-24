@@ -1233,6 +1233,8 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   QString gmp_Run      = protocol_details[ "gmpRun" ];
   QString filename     = protocol_details[ "filename" ];
   QString aprofileguid = protocol_details[ "aprofileguid" ];
+  //QString analysisID   = protocol_details[ "analysisID" ];
+  
   
   QDir directory( currDir );
   
