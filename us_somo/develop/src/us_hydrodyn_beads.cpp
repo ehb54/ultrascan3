@@ -2052,6 +2052,11 @@ void US_Hydrodyn::create_fasta_vbar_mw() {
 }
 
 bool US_Hydrodyn::calc_hullrad_hydro( QString filename ) {
+   {
+      QFont courier = QFont( "Courier", USglobal->config_list.fontSize );
+      editor_msg( "dark blue", courier, visc_dens_msg() );
+   }
+
    hullrad_filename = filename.isEmpty() ? last_pdb_filename : filename;
    
    editor_msg( "black", QString( "Hullrad %1" ).arg( hullrad_filename ) );

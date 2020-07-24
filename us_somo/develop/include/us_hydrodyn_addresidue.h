@@ -164,8 +164,8 @@ class US_AddResidue : public QWidget
       void update_comment(const QString &);
       void update_molvol(const QString &);
       void update_vbar(const QString &);
-      void update_vbar2(const QString &);
-      void update_pKa(const QString &);
+      // void update_vbar2(const QString &);
+      // void update_pKa(const QString &);
       void update_asa(const QString &);
       void update_bead_volume(const QString &);
       void update_atom_hydration(double);

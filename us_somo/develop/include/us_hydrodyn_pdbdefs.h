@@ -453,6 +453,8 @@ struct atom
 {
    QString name;                        // for example, CA
    hybridization hybrid;                // hybridization of atom
+   
+   int          ionization_index;       // map into the pKa sequence number for ionizaztion changes
    unsigned int bead_assignment;        // which bead this atom belongs to
    bool         positioner;             // does this atom control position? (yes=1, no=0)
    unsigned int serial_number;          // the serial number the atom occupies in the residue
@@ -460,7 +462,8 @@ struct atom
    bool         tmp_used;               // used for avoiding duplicate usage
    float        saxs_excl_vol;          // SAXS excluded volume value
    float        hydration;              // atomic hydration / needed float for ABB
-   float        ionization_mass_change; // pH dependent change, sign matters
+   // deprecated fields
+   // float        ionization_mass_change; // pH dependent change, sign matters
 };
 
 struct residue
@@ -479,7 +482,8 @@ struct residue
    float asa;                    // maximum accessible surface area (A^2)
    vector <struct atom> r_atom;  // the atoms in the residue
    vector <struct bead> r_bead;  // the beads used to describe the residue
-
+   map < int, struct atom > r_atom_0; // protonated values for multi-pKa, mapping atom position in r_atom
+   map < int, struct atom > r_atom_1; // non-protonated values for multi-pKa
    
    float vbar;                   // the partial specific volume of the residue unprotonated
    float vbar_at_pH;             // computed vbar for pH
@@ -491,10 +495,10 @@ struct residue
 
    float pH;                     // computed pH for vbar_at_pH (for sanity)   
 
-   // deprecated fields, still currently used for simple max 2 vbar/pKa
-   float vbar2;                  // current way, will be changed
-   float pKa;                    // the pKa
-   bool acid_residue;            // used for vbar calculations
+   // deprecated fields
+   // float vbar2;                  // current way, will be changed
+   // float pKa;                    // the pKa
+   // bool acid_residue;            // used for vbar calculations
 
 
 };

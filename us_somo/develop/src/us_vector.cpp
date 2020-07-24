@@ -215,6 +215,26 @@ QString US_Vector::qs_vector( QString qs, vector < int > x )
    return result;
 }
 
+QString US_Vector::qs_vector( vector < double > x, int digits )
+{
+   QString result;
+   result += QString( "size %1:" ).arg( x.size() );
+   for ( unsigned int i = 0; i < x.size(); i++ ) {
+      result += QString( " %1" ).arg( x[ i ], 0, 'g', digits );
+   }
+   return result;
+}
+
+QString US_Vector::qs_vector( vector < float > x, int digits )
+{
+   QString result;
+   result += QString( "size %1:" ).arg( x.size() );
+   for ( unsigned int i = 0; i < x.size(); i++ ) {
+      result += QString( " %1" ).arg( x[ i ], 0, 'g', digits );
+   }
+   return result;
+}
+
 QString US_Vector::qs_vector( QString qs, vector < double > x, int digits, int newline )
 {
    QString result;

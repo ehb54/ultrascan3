@@ -14,6 +14,11 @@
 #include "../include/us_hydrodyn.h"
 
 bool US_Hydrodyn::calc_grpy_hydro() {
+   {
+      QFont courier = QFont( "Courier", USglobal->config_list.fontSize );
+      editor_msg( "dark blue", courier, visc_dens_msg() );
+   }
+
    QMessageBox::warning( this, windowTitle() + ": Calculate RB Hydrodynamics: GRPY", "GRPY not yet integrated" );
    return false;
 }

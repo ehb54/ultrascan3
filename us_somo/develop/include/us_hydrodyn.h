@@ -909,13 +909,19 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       QString get_somo_dir();
 
-      double basic_fraction( float pH, float pKa );
-      double ionized_residue_vbar( float bf, struct residue *res );
-      double ionized_atom_mw( float bf, struct atom *atom );
-      double ionized_num_elect( float bf, struct atom *atom );
-      double ionized_hydrogens( float bf, struct atom *atom );
-      double ionized_residue_atom_mw( float bf, struct atom *atom );
-
+      // deprecated
+      // double basic_fraction( float pH, float pKa );
+      // double ionized_atom_mw( float bf, struct atom *atom );
+      // double ionized_num_elect( float bf, struct atom *atom );
+      // double ionized_hydrogens( float bf, struct atom *atom );
+      // double ionized_residue_vbar( float bf, struct residue *res );
+      // double ionized_residue_atom_mw( float bf, struct atom *atom );
+      
+      vector < double > basic_fractions( float pH, struct residue * res );
+      double ionized_residue_vbar( vector < double > & fractions, struct residue * res );
+      double ionized_residue_atom_mw( vector < double > & fractions, struct residue *res, struct atom *atom );
+                                                                                                             
+                            
    private slots:
       void hullrad_readFromStdout();
       void hullrad_readFromStderr();

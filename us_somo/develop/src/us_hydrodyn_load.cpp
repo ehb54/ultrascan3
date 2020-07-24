@@ -56,34 +56,62 @@ void US_Hydrodyn::read_residue_file()
          line_count++;
          {
             QStringList qsl = ( ts.readLine() ).split( rx_spaces , QString::SkipEmptyParts );
-            if ( qsl.size() != 7 && qsl.size() != 9 ) {
+            if ( ( qsl.size() - 7 ) % 2 ) {
+               // intermediate way
+               // if ( qsl.size() != 7 && qsl.size() != 9 ) {
                QMessageBox::critical(this, us_tr( windowTitle() ),
-                                    us_tr("Please note:\n\nThere was an error reading\nthe selected Residue File!\nLine contains the wrong number of elements:\n" ) +
+                                    us_tr("Please note:\n\nThere was an error reading the selected Residue File!\n"
+                                          "Line contains the wrong number of elements:\n" ) +
                                     qsl.join( " " ),
                                     QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
                return;
             }
                
-            new_residue.name   = qsl.front();            qsl.pop_front();
-            new_residue.type   = qsl.front().toUInt();   qsl.pop_front();
-            new_residue.molvol = qsl.front().toDouble(); qsl.pop_front();
-            new_residue.asa    = qsl.front().toDouble(); qsl.pop_front();
-            numatoms           = qsl.front().toUInt();   qsl.pop_front();
-            numbeads           = qsl.front().toUInt();   qsl.pop_front();
-            new_residue.vbar   = qsl.front().toDouble(); qsl.pop_front();
+            new_residue.name             = qsl.front();            qsl.pop_front();
+            new_residue.type             = qsl.front().toUInt();   qsl.pop_front();
+            new_residue.molvol           = qsl.front().toDouble(); qsl.pop_front();
+            new_residue.asa              = qsl.front().toDouble(); qsl.pop_front();
+            numatoms                     = qsl.front().toUInt();   qsl.pop_front();
+            numbeads                     = qsl.front().toUInt();   qsl.pop_front();
+            new_residue.vbar             = qsl.front().toDouble(); qsl.pop_front();
             res_vbar[ new_residue.name ] = new_residue.vbar;
             new_residue.pH               = -1;
             new_residue.vbar_at_pH       = -1;
             new_residue.ionized_mw_delta = 0;
             new_residue.mw               = 0;
+            new_residue.vbars            .clear();
+            new_residue.pKas             .clear();
+            new_residue.r_atom_0         .clear();
+            new_residue.r_atom_1         .clear();
 
-            if ( qsl.size() ) {
-               new_residue.vbar2 = qsl.front().toDouble();  qsl.pop_front();
-               new_residue.pKa   = qsl.front().toDouble();  qsl.pop_front();
-            } else {
-               new_residue.vbar2 = 0;
-               new_residue.pKa   = 0;
+            while ( qsl.size() ) {
+               new_residue.vbars.push_back( qsl.front().toDouble() );  qsl.pop_front();
+               new_residue.pKas .push_back( qsl.front().toDouble() );  qsl.pop_front();
             }
+
+            if ( new_residue.pKas.size() > 2 ) {
+               QMessageBox::critical(this, us_tr( windowTitle() ),
+                                     us_tr("Please note:\n\nThere was an error reading the selected Residue File!\n"
+                                           "Line contains too many pKa/vbar paris, currently only 2 are supported:\n"
+                                           "Please contact the developers to enable 3 pKas/vbars for a residue.\n"
+                                           ) +
+                                     QString( us_tr( "Residue name %1 on line %2" ) )
+                                     .arg( new_residue.name )
+                                     .arg( line_count )
+                                     ,
+                                     QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+               return;
+            }
+
+            // intermediate way
+            
+            // if ( qsl.size() ) {
+            //    new_residue.vbar2 = qsl.front().toDouble();  qsl.pop_front();
+            //    new_residue.pKa   = qsl.front().toDouble();  qsl.pop_front();
+            // } else {
+            //    new_residue.vbar2 = 0;
+            //    new_residue.pKa   = 0;
+            // }
                
             // OLD WAY
             // ts >> new_residue.name;
@@ -105,12 +133,25 @@ void US_Hydrodyn::read_residue_file()
          
          map < int, set < QString > > bead_assignment_to_vdwf;
 
-         for ( j=0; j<numatoms; j++ ) {
+         set < int > pKas_to_match;
+         for ( int m = 0; m < (int) new_residue.vbars.size(); ++m ) {
+            pKas_to_match.insert( m + 1 );
+         }
+
+         set < unsigned int > atom_serial_to_match;
+         for ( unsigned int m = 0; m < numatoms; ++m ) {
+            atom_serial_to_match.insert( m );
+         }
+
+         for ( j = 0; j < numatoms; ++j ) {
             QString linein = ts.readLine();
             QStringList qsl = linein.split( rx_spaces , QString::SkipEmptyParts );
-            if ( qsl.size() != 8 && qsl.size() != 9 ) {
+            // intermediate way
+            // if ( qsl.size() != 8 && qsl.size() != 9 ) {
+            if ( qsl.size() != 8 && qsl.size() != 16 ) {
                QMessageBox::critical(this, us_tr( windowTitle() ),
-                                    us_tr("Please note:\n\nThere was an error reading\nthe selected Residue File!\nLine contains the wrong number of elements:\n" ) +
+                                    us_tr("Please note:\n\nThere was an error reading the selected Residue File!\n"
+                                          "Line contains the wrong number of elements:\n" ) +
                                     linein,
                                     QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
                return;
@@ -121,6 +162,7 @@ void US_Hydrodyn::read_residue_file()
             new_atom.hybrid.mw                = qsl.front().toFloat();  qsl.pop_front();
             new_atom.hybrid.radius            = qsl.front().toFloat();  qsl.pop_front();
             new_atom.bead_assignment          = qsl.front().toUInt();   qsl.pop_front();
+            new_atom.ionization_index         = 0;
             
             new_atom.hybrid.ionized_mw_delta  = 0e0;
             // OLD WAY
@@ -178,35 +220,41 @@ void US_Hydrodyn::read_residue_file()
                                        );
             }
 
-            if (new_atom.bead_assignment >= numbeads)
-            {
-               error_count++;
-               QString tmp_msg =
-                  us_tr(QString(
-                             "\nThe atom's bead assignment has exceeded the number of beads.\n"
-                             "For residue: %1 and Atom: %2 "
-                             "on line %3 of the residue file.\n")
-                     .arg(new_residue.comment)
-                     .arg(new_atom.name)
-                     .arg(line_count)
-                     );
-               error_text += tmp_msg;
-               if (error_count < 5)
-               {
-                  error_msg += tmp_msg;
-               }
-               else
-               {
-                  if (error_count == 5)
-                  {
-                     error_msg += "Further errors not listed\n";
-                  }
-               }
+            if ( new_atom.bead_assignment >= numbeads ) {
+               QMessageBox::critical(this, us_tr( windowTitle() ),
+                                     QString( us_tr( 
+                                                    "\nThe atom's bead assignment has exceeded the number of beads.\n"
+                                                    "For residue: %1 and Atom: %2 "
+                                                    "on line %3 of the residue file.\n"
+                                                     ) )
+                                     .arg(new_residue.comment)
+                                     .arg(new_atom.name)
+                                     .arg(line_count)
+                                     , QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton
+                                     );
+               return;
             }
+
             new_atom.positioner       = (bool) qsl.front().toInt();    qsl.pop_front();
             new_atom.serial_number    = qsl.front().toUInt();          qsl.pop_front();
             new_atom.hydration        = qsl.front().toFloat();         qsl.pop_front();
 
+            if ( !atom_serial_to_match.count( new_atom.serial_number ) ) {
+               QMessageBox::critical(this, us_tr( windowTitle() ),
+                                     QString( us_tr( 
+                                                    "\nThe atom's serial number is out of range or duplicated.\n"
+                                                    "For residue: %1 and Atom: %2 "
+                                                    "on line %3 of the residue file.\n"
+                                                     ) )
+                                     .arg(new_residue.comment)
+                                     .arg(new_atom.name)
+                                     .arg(line_count)
+                                     , QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton
+                                     );
+               return;
+            }
+            atom_serial_to_match.erase( new_atom.serial_number );
+            
             // OLD WAY
             // ts >> positioner;
             // if(positioner == 0)
@@ -237,24 +285,75 @@ void US_Hydrodyn::read_residue_file()
             }
 
             if ( qsl.size() ) {
-               new_atom.ionization_mass_change = qsl.front().toFloat();  qsl.pop_front();
-               // kept for now as reference
-               // if ( res_ionization_mass_change.count( new_residue.name ) ) {
-               //    QMessageBox::critical(this, us_tr( windowTitle() ),
-               //                          us_tr("Please note:\n\nThere was an error reading\nthe selected Residue File!\nLine contains ionization information,\nbut there is atom in this residue already defining ionization information:\n" ) +
-               //                          linein,
-               //                          QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
-               //    return;
-               // }
-               // res_ionization_mass_change[ new_residue.name ] = new_atom.ionization_mass_change;
-               new_residue.acid_residue = ( new_atom.ionization_mass_change < 0 );
-               qDebug() << "found ionization mass change for " << new_residue.name << " value " << new_atom.ionization_mass_change;
-            } else {
-               new_atom.ionization_mass_change = 0;
+               struct atom new_atom_1;
+
+               int index                           = qsl.front().toInt();        qsl.pop_front();
+               new_atom_1.name                     = new_atom.name;
+               new_atom_1.hybrid.name              = qsl.front();                qsl.pop_front();
+               new_atom_1.hybrid.mw                = qsl.front().toFloat();      qsl.pop_front();
+               new_atom_1.hybrid.radius            = qsl.front().toFloat();      qsl.pop_front();
+               new_atom_1.bead_assignment          = qsl.front().toUInt();       qsl.pop_front();
+               new_atom_1.hybrid.ionized_mw_delta  = 0e0;
+               new_atom_1.positioner               = (bool) qsl.front().toInt(); qsl.pop_front();
+               new_atom_1.serial_number            = qsl.front().toUInt();       qsl.pop_front();
+               new_atom_1.hydration                = qsl.front().toFloat();      qsl.pop_front();
+               
+               if ( new_residue.r_atom_0.count( index ) ||
+                    new_residue.r_atom_1.count( index ) ) {
+                  QMessageBox::critical(this, us_tr( windowTitle() ),
+                                        us_tr("Please note:\n\nThere was an error reading the selected Residue File!\n"
+                                              "Duplicate ionization5~ index:\n" ) +
+                                        linein,
+                                        QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+                  return;
+               }
+               if ( !pKas_to_match.count( index ) ) {
+                  QMessageBox::critical(this, us_tr( windowTitle() ),
+                                        us_tr("Please note:\n\nThere was an error reading the selected Residue File!\n"
+                                              "pKa match index invalid:\n" ) +
+                                        linein,
+                                        QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+                  return;
+               }
+               if ( new_atom_1.bead_assignment != new_atom.bead_assignment ||
+                    new_atom_1.positioner      != new_atom.positioner ||
+                    new_atom_1.serial_number   != new_atom.serial_number ) {
+                  QMessageBox::critical(this, us_tr( windowTitle() ),
+                                        us_tr("Please note:\n\nThere was an error reading the selected Residue File!\n"
+                                              "mismatch in ionized bead assignment, positioner and/or serial number:\n" ) +
+                                        linein,
+                                        QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+                  return;
+               }                  
+
+               pKas_to_match.erase( index );
+                  
+               new_residue.r_atom_0[ index ] = new_atom;
+               new_residue.r_atom_1[ index ] = new_atom_1;
+               new_atom.ionization_index     = index;
             }
+
+            // intermediate way
+            // if ( qsl.size() ) {
+            //    new_atom.ionization_mass_change = qsl.front().toFloat();  qsl.pop_front();
+            //    // kept for now as reference
+            //    // if ( res_ionization_mass_change.count( new_residue.name ) ) {
+            //    //    QMessageBox::critical(this, us_tr( windowTitle() ),
+            //    //                          us_tr("Please note:\n\nThere was an error reading\nthe selected Residue File!\nLine contains ionization information,\nbut there is atom in this residue already defining ionization information:\n" ) +
+            //    //                          linein,
+            //    //                          QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+            //    //    return;
+            //    // }
+            //    // res_ionization_mass_change[ new_residue.name ] = new_atom.ionization_mass_change;
+            //    new_residue.acid_residue = ( new_atom.ionization_mass_change < 0 );
+            //    qDebug() << "found ionization mass change for " << new_residue.name << " value " << new_atom.ionization_mass_change;
+            // } else {
+            //    new_atom.ionization_mass_change = 0;
+            // }
 
             // OLD WAY
             // str2 = ts.readLine(); // read rest of line
+
             line_count++;
             if (!new_atom.name.isEmpty() && new_atom.hybrid.radius > 0.0 && new_atom.hybrid.mw > 0.0)
             {
@@ -277,10 +376,31 @@ void US_Hydrodyn::read_residue_file()
             else
             {
                QMessageBox::warning(this, us_tr("UltraScan Warning"),
-                                    us_tr("Please note:\n\nThere was an error reading\nthe selected Residue File!\n\nAtom "
+                                    us_tr("Please note:\n\nThere was an error reading the selected Residue File!\n"
+                                          "\nAtom "
                                        + new_atom.name + " cannot be read and will be deleted from List."),
                                     QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
             }
+         }
+
+         if ( atom_serial_to_match.size() ) {
+            QMessageBox::critical(this, us_tr( windowTitle() ),
+                                  us_tr("Please note:\n\n"
+                                        "There was an error reading the selected Residue File!\n"
+                                        "The are missing atom entries for this residue\n"
+                                        "Residue name : " + new_residue.name )
+                                  , QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+            return;
+         }
+
+         if ( pKas_to_match.size() ) {
+            QMessageBox::critical(this, us_tr( windowTitle() ),
+                                  us_tr("Please note:\n\n"
+                                        "There was an error reading the selected Residue File!\n"
+                                        "The are missing atom entries for the given number of pKa/vbars\n"
+                                        "Residue name : " + new_residue.name )
+                                  , QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+            return;
          }
          {
             unsigned int serial = 0;
@@ -474,43 +594,7 @@ void US_Hydrodyn::read_residue_file()
    }
 }
 
-double US_Hydrodyn::basic_fraction( float pH, float pKa ) {
-   if ( !pKa ) {
-      return 1.0;
-   }
-   double ten2phmpka = pow( 10, pH - pKa );
-   return ten2phmpka / ( 1.0 + ten2phmpka );
-}
-
-double US_Hydrodyn::ionized_residue_vbar( float bf, struct residue *res ) {
-   if ( !res->vbar2 ) {
-      return res->vbar;
-   }
-   return bf * res->vbar + ( 1.0 - bf ) * res->vbar2;
-}
-
-double US_Hydrodyn::ionized_atom_mw( float bf, struct atom *atom ) {
-   // might need some sign logic here
-   // return atom->hybrid.mw + (1.0 - bf) * atom->ionization_mass_change;
-   atom->hybrid.ionized_mw_delta = (1.0 - bf) * atom->ionization_mass_change;
-   return atom->hybrid.mw + atom->hybrid.ionized_mw_delta;
-}
-
-double US_Hydrodyn::ionized_residue_atom_mw( float bf, struct atom *atom ) {
-   return (1.0 - bf) * atom->ionization_mass_change;
-}
-
-double US_Hydrodyn::ionized_num_elect( float bf, struct atom *atom ) {
-   // might need some sign logic here
-   return atom->hybrid.num_elect + bf;
-}
-
-double US_Hydrodyn::ionized_hydrogens( float bf, struct atom *atom ) {
-   // might need some sign logic here
-   return atom->hybrid.hydrogens + (1.0 - bf);
-}
-
-// #define DEBUG_VBAR
+#define DEBUG_VBAR
 void US_Hydrodyn::calc_vbar( struct PDB_model *model, bool use_p_atom ) {
    float mw_vbar_sum = 0.0;
    float mw_sum = 0.0;
@@ -520,6 +604,22 @@ void US_Hydrodyn::calc_vbar( struct PDB_model *model, bool use_p_atom ) {
 
    // redo for p_residue instead ? set < struct residue * > ?
    // do we have any duplicate residues at all?
+#if defined( DEBUG_VBAR )
+   QString lname = QString( "/tmp/vbar-%1-pH%2.csv" ).arg( QFileInfo( le_pdb_file->text() ).fileName() ).arg( le_pH->text() );
+   qDebug() <<  "log active : '" << lname << "'"; 
+   US_Log *usl = new US_Log( lname );
+   QStringList qsl;
+   qsl
+      << "residue name"
+      << "atom name" 
+      << "used residue name" 
+      << "vbar at pH" 
+      << "mw"
+      << "vbar_at_pH * mw "
+      ;
+   usl->log( qsl.join( "," ) );
+   qsl.clear();
+#endif
 
    if ( use_p_atom ) {
       int chains = (int) model->molecule.size();
@@ -532,6 +632,22 @@ void US_Hydrodyn::calc_vbar( struct PDB_model *model, bool use_p_atom ) {
                model->molecule[ j ].atom[ k ].p_atom->hybrid.ionized_mw_delta;
             mw_sum      += this_mw;
             mw_vbar_sum += this_mw * model->molecule[ j ].atom[ k ].p_residue->vbar_at_pH;
+#if defined( DEBUG_VBAR )
+            qsl
+               << model->molecule[ j ].atom[ k ].resName
+               << model->molecule[ j ].atom[ k ].name
+               << model->molecule[ j ].atom[ k ].p_residue->name
+               << QString( "%1" ).arg( model->molecule[ j ].atom[ k ].p_residue->vbar_at_pH )
+               << QString( "%1" ).arg( model->molecule[ j ].atom[ k ].p_atom->hybrid.mw +
+                    model->molecule[ j ].atom[ k ].p_atom->hybrid.ionized_mw_delta )
+               << QString( "%1" ).arg( model->molecule[ j ].atom[ k ].p_residue->vbar_at_pH * 
+                    ( model->molecule[ j ].atom[ k ].p_atom->hybrid.mw +
+                      model->molecule[ j ].atom[ k ].p_atom->hybrid.ionized_mw_delta ) )
+               ;
+               
+            usl->log( qsl.join( "," ) );
+            qsl.clear();
+#endif
          }
       }               
    } else {
@@ -551,6 +667,18 @@ void US_Hydrodyn::calc_vbar( struct PDB_model *model, bool use_p_atom ) {
    }
    double covolume = gparams.count( "covolume" ) ? gparams[ "covolume" ].toDouble() : 0e0;
    model->vbar = (double)floor(0.5 + ( ( ( mw_vbar_sum + covolume ) / mw_sum ) * 1000e0 ) ) / 1000e0; //  - 0.002125;
+
+#if defined( DEBUG_VBAR )
+   qsl
+      << "pH :"
+      << le_pH->text()
+      << "covolume :"
+      << QString( "%1" ).arg( covolume )
+      ;
+   usl->log( qsl.join( "," ) );
+   qsl.clear();
+   delete usl;
+#endif
 }
 
 void US_Hydrodyn::calc_bead_mw(struct residue *res)
@@ -732,9 +860,9 @@ bool US_Hydrodyn::assign_atom(const QString &str1, struct PDB_chain *temp_chain,
 }
 
 int US_Hydrodyn::read_pdb( const QString &filename ) {
-   // info_residue_vector( "read_pdb():: begin", residue_list );
+   info_residue_vector( "read_pdb():: begin", residue_list );
    set_ionized_residue_vector( residue_list );
-   // info_residue_vector( "read_pdb():: after set_ionized_residue_vector", residue_list );
+   info_residue_vector( "read_pdb():: after set_ionized_residue_vector", residue_list );
 
    lb_model->clear( );
    QString str, str1, str2, temp;
@@ -1692,10 +1820,11 @@ void US_Hydrodyn::calc_mw()
 
    saxs_util->setup_saxs_options();
 
-   {
-       QFont courier = QFont( "Courier", USglobal->config_list.fontSize );
-       editor_msg( "dark blue", courier, visc_dens_msg() );
-   }
+   // relevant when running hydronamic calcs
+   // {
+   //     QFont courier = QFont( "Courier", USglobal->config_list.fontSize );
+   //     editor_msg( "dark blue", courier, visc_dens_msg() );
+   // }
 
    unsigned int save_current_model = current_model;
    QString error_string;
@@ -2152,8 +2281,135 @@ void US_Hydrodyn::update_model_chain_ionization( struct PDB_model & model, bool 
    }
 }
 
+// ionization notes
+// for 0 pKa  -> nothing to do
+// for 1 pKa  -> [A]<->[B]
+//  ep1 = pow( 10, pH - pKa1 )
+//  frac A =  1 / (ep1 + 1 )
+//  frac B = 1 - frac A
+// for 2 pKas -> [A]<->[B]<->[C]
+//  ep1 = pow( 10, pH - pKa1 )
+//  ep2 = pow( 10, pH - pKa2 )
+//  frac C = ep1 * ep2 / ( ep1 * ( ep2 + 1 ) + 1 )
+//  frac A = ( ( 1 - c ) * ep2 - c ) / ep2
+//  or frac A = ( 1 - c ) / ( ep1 + 1 )
+//  frac B = 1 - frac A - frac C
+
+#define DEBUG_PKAS
+
 void US_Hydrodyn::reset_ionized_residue_vectors() {
    set_ionized_residue_vector( residue_list );
+}
+
+vector < double > US_Hydrodyn::basic_fractions( float pH, struct residue * res ) {
+   int pKas = (int) res->pKas.size();
+   vector < double > fractions;
+   if ( !pKas ) {
+      fractions.push_back( 1e0 );
+      return fractions;
+   }
+   double ep1 = pow( 10, pH - res->pKas[ 0 ] );
+   if ( pKas == 1 ) {
+      fractions.push_back( 1e0 / ( ep1 + 1e0 ) );
+      fractions.push_back( 1e0 - fractions[ 0 ] );
+      return fractions;
+   }
+   double ep2 = pow( 10, pH - res->pKas[ 1 ] );
+   if ( pKas == 2 ) {
+      double c = ep1 * ep2 / ( ep1 * ( ep2 + 1e0 ) + 1e0 );
+      double a = ( ( 1e0 - c ) * ep2 - c ) / ep2;
+      double b = 1e0 - a - c;
+#if defined( DEBUG_PKAS )
+      double a_debug = ( 1e0 - c ) / ( ep1 + 1e0 );
+      if ( fabs( a_debug - a ) > 1e-10 ) {
+         qDebug() <<
+            QString( "US_Hydrodyn::basic_fractions(): Internal error - frac a varies %1 %2 " )
+            .arg( a_debug )
+            .arg( a )
+            ;
+      }         
+      if ( fabs( a + b + c - 1 ) > 1e-10 ) {
+         qDebug() <<
+            QString( "US_Hydrodyn::basic_fractions(): Internal error - frac total != 1:  %1 + %2 + %3 = %4 " )
+            .arg( a )
+            .arg( b )
+            .arg( c )
+            .arg( a + b + c )
+            ;
+      }         
+      if ( a < 0 || b < 0 || c < 0 ) {
+         qDebug() <<
+            QString( "US_Hydrodyn::basic_fractions(): Internal error - negative fraction != 1:  %1  %2  %3 " )
+            .arg( a )
+            .arg( b )
+            .arg( c )
+            ;
+      }         
+#endif
+      
+      fractions.push_back( a );
+      fractions.push_back( b );
+      fractions.push_back( c );
+      return fractions;
+   }
+   QString msg = "US_Hydrodyn::basic_fractions(): Internal error - too many pKas - unsupported";
+   qDebug() << msg;
+   editor_msg( "red", msg );
+   return fractions;
+}
+
+double US_Hydrodyn::ionized_residue_vbar( vector < double > & fractions, struct residue * res ) {
+   int size = (int) fractions.size();
+   if ( size == 1 ) {
+      return res->vbar;
+   }
+   if ( size == 2 ) {
+      return fractions[ 0 ] * res->vbar + fractions[ 1 ] * res->vbars[ 0 ];
+   }
+   if ( size == 3 ) {
+      return fractions[ 0 ] * res->vbar + fractions[ 1 ] * res->vbars[ 0 ] + fractions[ 2 ] * res->vbars[ 1 ];
+   }
+   QString msg = "US_Hydrodyn::ionized_residue_vbar(): Internal error - too many fractions - unsupported";
+   qDebug() << msg;
+   editor_msg( "red", msg );
+   return 0e0;
+}
+
+double US_Hydrodyn::ionized_residue_atom_mw( vector < double > & fractions, struct residue *res, struct atom *atom ) {
+   int size = (int) fractions.size();
+   if ( size == 1 || !atom->ionization_index ) {
+      return 0e0;
+   }
+
+#if defined( DEBUG_PKAS )
+   if ( !res->r_atom_0.count( atom->ionization_index ) ||
+        !res->r_atom_1.count( atom->ionization_index ) ) {
+      QString msg = "US_Hydrodyn::ionized_residue_atom_mw(): Internal error - r_atom maps missing";
+      qDebug() << msg;
+      editor_msg( "red", msg );
+      return 0e0;
+   }
+
+   if ( atom->ionization_index > size ) {
+      QString msg = "US_Hydrodyn::ionized_residue_atom_mw(): Internal error - atom's ionization index is out of bounds";
+      qDebug() << msg;
+      editor_msg( "red", msg );
+      return 0e0;
+   }
+      
+#endif
+
+   if ( size == 2 ) {
+      return
+         fractions[ 1 ] * 
+         ( res->r_atom_1[ atom->ionization_index ].hybrid.mw - res->r_atom_0[ atom->ionization_index ].hybrid.mw )
+         ;
+   }
+
+   return
+      ( fractions[ atom->ionization_index ] / ( fractions[ atom->ionization_index ] + fractions[ atom->ionization_index - 1 ] ) ) *
+      ( res->r_atom_1[ atom->ionization_index ].hybrid.mw - res->r_atom_0[ atom->ionization_index ].hybrid.mw )
+      ;
 }
 
 void US_Hydrodyn::set_ionized_residue_vector( vector < struct residue > & residue_v ) {
@@ -2177,14 +2433,7 @@ void US_Hydrodyn::set_ionized_residue_vector( vector < struct residue > & residu
    int residues = (int) residue_v.size();
    
    for ( int j = 0; j < residues; ++j ) {
-      float bf = basic_fraction( pH, residue_v[ j ].pKa );
-      if ( !residue_v[ j ].pKa ) {
-         bf = 1.0;
-      } else {
-         if ( !residue_v[ j ].acid_residue ) {
-            bf = 1.0 - bf;
-         }
-      }
+      vector < double > fractions = basic_fractions( pH, & residue_v[ j ] );
 
       int atoms = (int) residue_v[ j ].r_atom.size();
       int beads = (int) residue_v[ j ].r_bead.size();
@@ -2192,11 +2441,11 @@ void US_Hydrodyn::set_ionized_residue_vector( vector < struct residue > & residu
       map < int, double > bead_ionized_mw;
 
       residue_v[ j ].pH               = pH;
-      residue_v[ j ].vbar_at_pH       = ionized_residue_vbar( bf, &residue_v[ j ] );
+      residue_v[ j ].vbar_at_pH       = ionized_residue_vbar( fractions, & residue_v[ j ] );
       residue_v[ j ].ionized_mw_delta = 0e0;
 
       for ( int k = 0; k < atoms; ++k ) {
-         double ionized_mw_for_atom                                    = ionized_residue_atom_mw( bf, &residue_v[ j ].r_atom[ k ] );
+         double ionized_mw_for_atom                                    = ionized_residue_atom_mw( fractions, & residue_v[ j ], & residue_v[ j ].r_atom[ k ] );
          residue_v[ j ].r_atom[ k ].hybrid.ionized_mw_delta            = ionized_mw_for_atom;
          residue_v[ j ].ionized_mw_delta                               += ionized_mw_for_atom;
          bead_ionized_mw[ residue_v[ j ].r_atom[ k ].bead_assignment ] += ionized_mw_for_atom;

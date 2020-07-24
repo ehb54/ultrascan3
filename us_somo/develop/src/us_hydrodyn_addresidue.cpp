@@ -263,37 +263,37 @@ void US_AddResidue::setupGUI()
    le_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_vbar, SIGNAL(textChanged(const QString &)), SLOT(update_vbar(const QString &)));
 
-   lbl_vbar2 = new QLabel(us_tr(" Residue partial spec. vol. ionized [cm^3/g]:"), this);
-   Q_CHECK_PTR(lbl_vbar2);
-   lbl_vbar2->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_vbar2->setMinimumHeight(minHeight1);
-   lbl_vbar2->setPalette( PALET_LABEL );
-   AUTFBACK( lbl_vbar2 );
-   lbl_vbar2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+   // lbl_vbar2 = new QLabel(us_tr(" Residue partial spec. vol. ionized [cm^3/g]:"), this);
+   // Q_CHECK_PTR(lbl_vbar2);
+   // lbl_vbar2->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   // lbl_vbar2->setMinimumHeight(minHeight1);
+   // lbl_vbar2->setPalette( PALET_LABEL );
+   // AUTFBACK( lbl_vbar2 );
+   // lbl_vbar2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_vbar2 = new QLineEdit( this );    le_vbar2->setObjectName( "Residue vbar2 Line Edit" );
-   le_vbar2->setPalette( PALET_NORMAL );
-   AUTFBACK( le_vbar2 );
-   le_vbar2->setMinimumHeight(minHeight1);
-   le_vbar2->setEnabled(false);
-   le_vbar2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   connect(le_vbar2, SIGNAL(textChanged(const QString &)), SLOT(update_vbar2(const QString &)));
+   // le_vbar2 = new QLineEdit( this );    le_vbar2->setObjectName( "Residue vbar2 Line Edit" );
+   // le_vbar2->setPalette( PALET_NORMAL );
+   // AUTFBACK( le_vbar2 );
+   // le_vbar2->setMinimumHeight(minHeight1);
+   // le_vbar2->setEnabled(false);
+   // le_vbar2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   // connect(le_vbar2, SIGNAL(textChanged(const QString &)), SLOT(update_vbar2(const QString &)));
 
-   lbl_pKa = new QLabel(us_tr(" pKa:"), this);
-   Q_CHECK_PTR(lbl_pKa);
-   lbl_pKa->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_pKa->setMinimumHeight(minHeight1);
-   lbl_pKa->setPalette( PALET_LABEL );
-   AUTFBACK( lbl_pKa );
-   lbl_pKa->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+   // lbl_pKa = new QLabel(us_tr(" pKa:"), this);
+   // Q_CHECK_PTR(lbl_pKa);
+   // lbl_pKa->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   // lbl_pKa->setMinimumHeight(minHeight1);
+   // lbl_pKa->setPalette( PALET_LABEL );
+   // AUTFBACK( lbl_pKa );
+   // lbl_pKa->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_pKa = new QLineEdit( this );    le_pKa->setObjectName( "Residue pKa Line Edit" );
-   le_pKa->setPalette( PALET_NORMAL );
-   AUTFBACK( le_pKa );
-   le_pKa->setMinimumHeight(minHeight1);
-   le_pKa->setEnabled(false);
-   le_pKa->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   connect(le_pKa, SIGNAL(textChanged(const QString &)), SLOT(update_pKa(const QString &)));
+   // le_pKa = new QLineEdit( this );    le_pKa->setObjectName( "Residue pKa Line Edit" );
+   // le_pKa->setPalette( PALET_NORMAL );
+   // AUTFBACK( le_pKa );
+   // le_pKa->setMinimumHeight(minHeight1);
+   // le_pKa->setEnabled(false);
+   // le_pKa->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   // connect(le_pKa, SIGNAL(textChanged(const QString &)), SLOT(update_pKa(const QString &)));
 
    lbl_asa = new QLabel(us_tr(" Max. Accessible Surface Area [A^2]:"), this);
    Q_CHECK_PTR(lbl_asa);
@@ -763,12 +763,12 @@ void US_AddResidue::setupGUI()
    background->addWidget(lbl_vbar, j, 0);
    background->addWidget(le_vbar, j, 1);
    j++;
-   background->addWidget(lbl_vbar2, j, 0);
-   background->addWidget(le_vbar2, j, 1);
-   j++;
-   background->addWidget(lbl_pKa, j, 0);
-   background->addWidget(le_pKa, j, 1);
-   j++;
+   // background->addWidget(lbl_vbar2, j, 0);
+   // background->addWidget(le_vbar2, j, 1);
+   // j++;
+   // background->addWidget(lbl_pKa, j, 0);
+   // background->addWidget(le_pKa, j, 1);
+   // j++;
    background->addWidget(lbl_asa, j, 0);
    background->addWidget(le_asa, j, 1);
    j++;
@@ -857,8 +857,8 @@ void US_AddResidue::enable_area_1(bool state)
    le_asa->setEnabled(state);
    le_molvol->setEnabled(state);
    le_vbar->setEnabled(state);
-   le_vbar2->setEnabled(state);
-   le_pKa->setEnabled(state);
+   // le_vbar2->setEnabled(state);
+   // le_pKa->setEnabled(state);
    cmb_type->setEnabled(state);
    le_residue_name->setEnabled(state);
    le_residue_comment->setEnabled(state);
@@ -940,8 +940,8 @@ void US_AddResidue::add()
          residue_list[i].type = new_residue.type;
          residue_list[i].molvol = new_residue.molvol;
          residue_list[i].vbar = new_residue.vbar;
-         residue_list[i].vbar2 = new_residue.vbar;
-         residue_list[i].pKa = new_residue.vbar2;
+         // residue_list[i].vbar2 = new_residue.vbar;
+         // residue_list[i].pKa = new_residue.vbar2;
          residue_list[i].asa = new_residue.asa;
          residue_list[i].r_atom.clear( );
          residue_list[i].r_bead.clear( );
@@ -1001,13 +1001,13 @@ void US_AddResidue::read_residue_file(const QString & filename)
             numbeads           = qsl.front().toUInt();   qsl.pop_front();
             new_residue.vbar   = qsl.front().toDouble(); qsl.pop_front();
             
-            if ( qsl.size() ) {
-               new_residue.vbar2 = qsl.front().toDouble();  qsl.pop_front();
-               new_residue.pKa   = qsl.front().toDouble();  qsl.pop_front();
-            } else {
-               new_residue.vbar2 = 0;
-               new_residue.pKa   = 0;
-            }
+            // if ( qsl.size() ) {
+            //    new_residue.vbar2 = qsl.front().toDouble();  qsl.pop_front();
+            //    new_residue.pKa   = qsl.front().toDouble();  qsl.pop_front();
+            // } else {
+            //    new_residue.vbar2 = 0;
+            //    new_residue.pKa   = 0;
+            // }
          }
 
          // old way
@@ -1340,15 +1340,15 @@ void US_AddResidue::update_vbar(const QString &str)
    new_residue.vbar = str.toFloat();
 }
 
-void US_AddResidue::update_vbar2(const QString &str)
-{
-   new_residue.vbar2 = str.toFloat();
-}
+// void US_AddResidue::update_vbar2(const QString &str)
+// {
+//    new_residue.vbar2 = str.toFloat();
+// }
 
-void US_AddResidue::update_pKa(const QString &str)
-{
-   new_residue.pKa = str.toFloat();
-}
+// void US_AddResidue::update_pKa(const QString &str)
+// {
+//    new_residue.pKa = str.toFloat();
+// }
 
 void US_AddResidue::update_asa(const QString &str)
 {
@@ -1560,8 +1560,8 @@ void US_AddResidue::select_residue(int val)
    cmb_type->setCurrentIndex(residue_list[val].type);
    le_molvol->setText(str.sprintf("%7.2f", residue_list[val].molvol));
    le_vbar->setText(str.sprintf("%5.3f", residue_list[val].vbar));
-   le_vbar2->setText( residue_list[val].vbar2 != 0 ? str.sprintf("%5.3f", residue_list[val].vbar2 ) : QString( "" ) );
-   le_pKa->setText( residue_list[val].pKa != 0 ? str.sprintf("%5.3f", residue_list[val].pKa) : QString( "" ) );
+   // le_vbar2->setText( residue_list[val].vbar2 != 0 ? str.sprintf("%5.3f", residue_list[val].vbar2 ) : QString( "" ) );
+   // le_pKa->setText( residue_list[val].pKa != 0 ? str.sprintf("%5.3f", residue_list[val].pKa) : QString( "" ) );
    le_asa->setText(str.sprintf("%7.2f", residue_list[val].asa));
    new_residue = residue_list[val];
 #if defined(DEBUG_RESIDUE)
@@ -1578,8 +1578,8 @@ void US_AddResidue::print_residue(struct residue res)
    cout << "Residue type: " << res.type << endl;
    cout << "Residue molvol: " << res.molvol << endl;
    cout << "Residue vbar: " << res.vbar << endl;
-   cout << "Residue vbar2: " << res.vbar2 << endl;
-   cout << "Residue pKa: " << res.pKa << endl;
+   // cout << "Residue vbar2: " << res.vbar2 << endl;
+   // cout << "Residue pKa: " << res.pKa << endl;
    cout << "Residue asa: " << res.asa << endl;
    cout << "Number of atoms: " << res.r_atom.size() << endl;
    for (i=0; i<res.r_atom.size(); i++)
@@ -1637,10 +1637,10 @@ void US_AddResidue::reset()
    le_molvol->setText("");
    le_vbar->setEnabled(true);
    le_vbar->setText("");
-   le_vbar2->setEnabled(true);
-   le_vbar2->setText("");
-   le_pKa->setEnabled(true);
-   le_pKa->setText("");
+   // le_vbar2->setEnabled(true);
+   // le_vbar2->setText("");
+   // le_pKa->setEnabled(true);
+   // le_pKa->setText("");
    le_asa->setEnabled(true);
    le_asa->setText("");
 
@@ -1707,8 +1707,8 @@ void US_AddResidue::accept_residue()
       le_residue_comment->setEnabled(false);
       le_molvol->setEnabled(false);
       le_vbar->setEnabled(false);
-      le_vbar2->setEnabled(false);
-      le_pKa->setEnabled(false);
+      // le_vbar2->setEnabled(false);
+      // le_pKa->setEnabled(false);
       le_asa->setEnabled(false);
       cmb_type->setEnabled(false);
       cmb_r_atoms->setEnabled(true);
@@ -2108,14 +2108,14 @@ void US_AddResidue::write_residue_file()
             << "\t" << residue_list[i].r_atom.size()
             << "\t" << residue_list[i].r_bead.size()
             << "\t" << residue_list[i].vbar;
-         if ( residue_list[i].vbar2 > 0 ) {
-            qDebug() << "wrote additional vbar";
-            qDebug() << "wrote additional vbar info vbar2:" << residue_list[i].vbar2;
-            qDebug() << "wrote additional vbar info pKa:" << residue_list[i].pKa;
-            ts << "\t" << residue_list[i].vbar2
-               << "\t" << residue_list[i].pKa
-               ;
-         }
+         // if ( residue_list[i].vbar2 > 0 ) {
+         //    qDebug() << "wrote additional vbar";
+         //    qDebug() << "wrote additional vbar info vbar2:" << residue_list[i].vbar2;
+         //    qDebug() << "wrote additional vbar info pKa:" << residue_list[i].pKa;
+         //    ts << "\t" << residue_list[i].vbar2
+         //       << "\t" << residue_list[i].pKa
+         //       ;
+         // }
          ts << endl;
             
          for (unsigned int j=0; j<residue_list[i].r_atom.size(); j++)

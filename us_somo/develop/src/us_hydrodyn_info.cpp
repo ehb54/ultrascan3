@@ -413,10 +413,14 @@ void US_Hydrodyn::info_residue_vector( const QString & msg, vector < struct resi
       ;
 
    int residues = (int) residue_v.size();
+   TSO
+      << LBD
+      << " residues                     : " << residues << endl
+      ;
 
    for ( int j = 0; j < residues; ++j ) {
       // struct residue
-      if ( !only_pKa_dependent || residue_v[ j ].pKa ) {
+      if ( !only_pKa_dependent || residue_v[ j ].pKas.size() ) {
 
          int atoms = (int) residue_v[ j ].r_atom.size();
          int beads = (int) residue_v[ j ].r_bead.size();
@@ -428,9 +432,10 @@ void US_Hydrodyn::info_residue_vector( const QString & msg, vector < struct resi
             << " residue r_atom.size()       : " << atoms << endl
             << " residue r_bead.size()       : " << beads << endl
             << " residue vbar                : " << residue_v[ j ].vbar << endl
+            << " residue vbars               : " << US_Vector::qs_vector( residue_v[ j ].vbars ) << endl
+            << " residue pKas                : " << US_Vector::qs_vector( residue_v[ j ].pKas ) << endl
             << " residue vbar_at_pH          : " << residue_v[ j ].vbar_at_pH << endl
             << " residue ionized_mw_delta    : " << residue_v[ j ].ionized_mw_delta << endl
-            
             ;
          for ( int k = 0; k < atoms; ++k ) {
             if ( !only_pKa_dependent || residue_v[ j ].r_atom[ k ].hybrid.ionized_mw_delta ) {
@@ -459,6 +464,9 @@ void US_Hydrodyn::info_residue_vector( const QString & msg, vector < struct resi
          }
       }
    }
+   TSO
+      << LBE
+      ;
 }
 
 void US_Hydrodyn::info_mw( const QString & msg, const vector < struct PDB_model > & models, bool detail ) {
