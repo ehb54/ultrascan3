@@ -917,11 +917,12 @@ class US_EXTERN US_Hydrodyn : public QFrame
       // double ionized_residue_vbar( float bf, struct residue *res );
       // double ionized_residue_atom_mw( float bf, struct atom *atom );
       
-      vector < double > basic_fractions( float pH, struct residue * res );
-      double ionized_residue_vbar( vector < double > & fractions, struct residue * res );
-      double ionized_residue_atom_mw( vector < double > & fractions, struct residue *res, struct atom *atom );
+      vector < double > basic_fractions    ( float pH, struct residue * res );
+      double ionized_residue_vbar          ( vector < double > & fractions, struct residue * res );
+      double ionized_residue_atom_mw       ( vector < double > & fractions, struct residue *res, struct atom *atom );
+      double ionized_residue_atom_radius   ( vector < double > & fractions, struct residue *res, struct atom *atom );
+      double ionized_residue_atom_hydration( vector < double > & fractions, struct residue *res, struct atom *atom );
                                                                                                              
-                            
    private slots:
       void hullrad_readFromStdout();
       void hullrad_readFromStderr();

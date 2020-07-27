@@ -1729,6 +1729,19 @@ QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *m
       qs +=  us_tr( "Model summary information:\n" );
    }
 
+   if ( pdb_parse.find_sh ) {
+      qs +=
+         QString(
+                 us_tr(
+                       "Number of disulfide bonds   : %1\n"
+                       "Number of free SH           : %2\n"
+                       )
+                 )
+         .arg( model->num_SS_bonds )
+         .arg( model->num_SH_free )
+         ;
+   }
+
    qs +=
       QString(
               us_tr(
@@ -1788,18 +1801,6 @@ QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *m
       ;
    }
 
-   if ( pdb_parse.find_sh ) {
-      qs +=
-         QString(
-                 us_tr(
-                       "Number of disulfide bonds   : %1\n"
-                       "Number of free SH           : %2\n"
-                       )
-                 )
-         .arg( model->num_SS_bonds )
-         .arg( model->num_SH_free )
-         ;
-   }
 
 
    return qs;
@@ -2412,6 +2413,141 @@ double US_Hydrodyn::ionized_residue_atom_mw( vector < double > & fractions, stru
       ;
 }
 
+// #define DEBUG_RADIUS
+
+double US_Hydrodyn::ionized_residue_atom_radius( vector < double > & fractions, struct residue *res, struct atom *atom ) {
+   int size = (int) fractions.size();
+   if ( size == 1 || !atom->ionization_index ) {
+      return atom->hybrid.radius;
+   }
+
+   double r0_3 =
+      res->r_atom_0[ atom->ionization_index ].hybrid.radius *
+      res->r_atom_0[ atom->ionization_index ].hybrid.radius *
+      res->r_atom_0[ atom->ionization_index ].hybrid.radius;
+      
+   double r1_3 =
+      res->r_atom_1[ atom->ionization_index ].hybrid.radius *
+      res->r_atom_1[ atom->ionization_index ].hybrid.radius *
+      res->r_atom_1[ atom->ionization_index ].hybrid.radius;
+
+   if ( size == 2 ) {
+#if defined( DEBUG_RADIUS )
+      QTextStream( stdout )
+         << res->name << ","
+         << atom->name << ","
+         <<  res->r_atom_0[ atom->ionization_index ].hybrid.radius << ","
+         <<  res->r_atom_1[ atom->ionization_index ].hybrid.radius << ","
+         << fractions[ atom->ionization_index - 1 ] << ","
+         << fractions[ atom->ionization_index ] << ","
+         << pow( 
+                fractions[ atom->ionization_index - 1 ] * r0_3 +
+                fractions[ atom->ionization_index     ] * r1_3,
+                1/3e0
+                 ) << ","
+         << endl
+         ;
+#endif
+      return
+         pow( 
+             fractions[ atom->ionization_index - 1 ] * r0_3 +
+             fractions[ atom->ionization_index     ] * r1_3,
+             1/3e0
+              );
+   }
+
+#if defined( DEBUG_RADIUS )
+   QTextStream( stdout )
+      << res->name << ","
+      << atom->name << ","
+      << res->r_atom_0[ atom->ionization_index ].hybrid.radius << ","
+      << res->r_atom_1[ atom->ionization_index ].hybrid.radius << ","
+      << fractions[ atom->ionization_index - 1 ] << ","
+      << fractions[ atom->ionization_index ] << ","
+      << pow( 
+             (
+              fractions[ atom->ionization_index - 1 ] * r0_3 +
+              fractions[ atom->ionization_index     ] * r1_3
+              ) /
+             ( fractions[ atom->ionization_index - 1 ] + fractions[ atom->ionization_index ] )
+             ,
+             1/3e0
+              ) << ","
+      << endl
+      ;
+#endif
+
+   return
+      pow( 
+          (
+           fractions[ atom->ionization_index - 1 ] * r0_3 +
+           fractions[ atom->ionization_index     ] * r1_3
+           ) /
+          ( fractions[ atom->ionization_index - 1 ] + fractions[ atom->ionization_index ] )
+          ,
+          1/3e0
+           );
+
+}   
+
+// #define DEBUG_HYDRATION
+
+double US_Hydrodyn::ionized_residue_atom_hydration( vector < double > & fractions, struct residue *res, struct atom *atom ) {
+   int size = (int) fractions.size();
+   if ( size == 1 || !atom->ionization_index ) {
+      return atom->hydration;
+   }
+
+   if ( size == 2 ) {
+#if defined( DEBUG_HYDRATION )
+      QTextStream( stdout )
+         << res->name << ","
+         << atom->name << ","
+         <<  res->r_atom_0[ atom->ionization_index ].hydration << ","
+         <<  res->r_atom_1[ atom->ionization_index ].hydration << ","
+         << fractions[ atom->ionization_index - 1 ] << ","
+         << fractions[ atom->ionization_index ] << ","
+         << (
+             fractions[ atom->ionization_index - 1 ] * res->r_atom_0[ atom->ionization_index ].hydration +
+             fractions[ atom->ionization_index     ] * res->r_atom_1[ atom->ionization_index ].hydration
+             ) << ","
+         << endl
+         ;
+#endif
+      return
+         fractions[ atom->ionization_index - 1 ] * res->r_atom_0[ atom->ionization_index ].hydration +
+         fractions[ atom->ionization_index     ] * res->r_atom_1[ atom->ionization_index ].hydration
+         ;
+   }
+
+#if defined( DEBUG_HYDRATION )
+   QTextStream( stdout )
+      << res->name << ","
+      << atom->name << ","
+      << res->r_atom_0[ atom->ionization_index ].hydration << ","
+      << res->r_atom_1[ atom->ionization_index ].hydration << ","
+      << fractions[ atom->ionization_index - 1 ] << ","
+      << fractions[ atom->ionization_index ] << ","
+      << ( 
+          ( fractions[ atom->ionization_index - 1 ] * res->r_atom_0[ atom->ionization_index ].hydration +
+            fractions[ atom->ionization_index     ] * res->r_atom_1[ atom->ionization_index ].hydration
+            ) /
+          ( fractions[ atom->ionization_index - 1 ] + fractions[ atom->ionization_index ] )
+           )
+      << ","
+      << endl
+      ;
+#endif
+
+   return
+      ( fractions[ atom->ionization_index - 1 ] * res->r_atom_0[ atom->ionization_index ].hydration +
+        fractions[ atom->ionization_index     ] * res->r_atom_1[ atom->ionization_index ].hydration
+        ) /
+      ( fractions[ atom->ionization_index - 1 ] + fractions[ atom->ionization_index ] )
+      ;
+
+}   
+
 void US_Hydrodyn::set_ionized_residue_vector( vector < struct residue > & residue_v ) {
    // this will have to be changed later to true, as we are changing the format of residue
    QTextStream( stdout )
@@ -2431,6 +2567,29 @@ void US_Hydrodyn::set_ionized_residue_vector( vector < struct residue > & residu
 
    float pH = le_pH->text().toFloat();
    int residues = (int) residue_v.size();
+#if defined( DEBUG_RADIUS )
+   QTextStream( stdout )
+      << "pH" << "," << pH << endl
+      << "resname" << ","
+      << "atomname" << ","
+      << "r_0 radius" << ","
+      << "r_1 radius" << ","
+      << "fraction prior" << ","
+      << "fraction this" << ","
+      << "computed radius" << endl;
+#endif
+#if defined( DEBUG_HYDRATION )
+   QTextStream( stdout )
+      << "pH" << "," << pH << endl
+      << "resname" << ","
+      << "atomname" << ","
+      << "r_0 hydration" << ","
+      << "r_1 hydration" << ","
+      << "fraction prior" << ","
+      << "fraction this" << ","
+      << "computed hydration" << endl;
+#endif
+
    
    for ( int j = 0; j < residues; ++j ) {
       vector < double > fractions = basic_fractions( pH, & residue_v[ j ] );
@@ -2445,8 +2604,11 @@ void US_Hydrodyn::set_ionized_residue_vector( vector < struct residue > & residu
       residue_v[ j ].ionized_mw_delta = 0e0;
 
       for ( int k = 0; k < atoms; ++k ) {
-         double ionized_mw_for_atom                                    = ionized_residue_atom_mw( fractions, & residue_v[ j ], & residue_v[ j ].r_atom[ k ] );
+         double ionized_mw_for_atom                                    = ionized_residue_atom_mw       ( fractions, & residue_v[ j ], & residue_v[ j ].r_atom[ k ] );
+
          residue_v[ j ].r_atom[ k ].hybrid.ionized_mw_delta            = ionized_mw_for_atom;
+         residue_v[ j ].r_atom[ k ].hybrid.radius                      = ionized_residue_atom_radius   ( fractions, & residue_v[ j ], & residue_v[ j ].r_atom[ k ] );
+         residue_v[ j ].r_atom[ k ].hydration                          = ionized_residue_atom_hydration( fractions, & residue_v[ j ], & residue_v[ j ].r_atom[ k ] );
          residue_v[ j ].ionized_mw_delta                               += ionized_mw_for_atom;
          bead_ionized_mw[ residue_v[ j ].r_atom[ k ].bead_assignment ] += ionized_mw_for_atom;
 
@@ -2457,6 +2619,8 @@ void US_Hydrodyn::set_ionized_residue_vector( vector < struct residue > & residu
                .arg( residue_v[ j ].r_atom[ k ].name );
             if ( vdwf.count( name ) ) {
                vdwf[ name ].ionized_mw_delta = ionized_mw_for_atom;
+               vdwf[ name ].r                = residue_v[ j ].r_atom[ k ].hybrid.radius;
+               vdwf[ name ].w                = residue_v[ j ].r_atom[ k ].hydration;
             } else {
                _vdwf this_vdwf;
                this_vdwf.mw               = residue_v[ j ].r_atom[ k ].hybrid.mw;

@@ -96,6 +96,8 @@ void US_Hydrodyn::info_model_vector( const QString & msg, const vector <struct P
                   << "  models residue r_atom bead assignment    : " << models[ i ].residue[ j ].r_atom[ k ].bead_assignment << endl
                   << "  models residue r_atom serial number      : " << models[ i ].residue[ j ].r_atom[ k ].serial_number << endl
                   << "  models residue r_atom hybrid name        : " << models[ i ].residue[ j ].r_atom[ k ].hybrid.name << endl
+                  << "  models residue r_atom hybrid radius      : " << models[ i ].residue[ j ].r_atom[ k ].hybrid.radius << endl
+                  << "  models residue r_atom hydration          : " << models[ i ].residue[ j ].r_atom[ k ].hydration << endl
                   ;
             }
             for ( int k = 0; k < beads; ++k ) {
@@ -448,6 +450,8 @@ void US_Hydrodyn::info_residue_vector( const QString & msg, vector < struct resi
                   << "  residue r_atom hybrid name             : " << residue_v[ j ].r_atom[ k ].hybrid.name << endl
                   << "  residue r_atom hybrid mw               : " << residue_v[ j ].r_atom[ k ].hybrid.mw << endl
                   << "  residue r_atom hybrid ionized_mw_delta : " << residue_v[ j ].r_atom[ k ].hybrid.ionized_mw_delta << endl
+                  << "  residue r_atom hybrid radius           : " << residue_v[ j ].r_atom[ k ].hybrid.radius << endl
+                  << "  residue r_atom hydration               : " << residue_v[ j ].r_atom[ k ].hydration << endl
                   ;
             }
          }
@@ -556,6 +560,8 @@ void US_Hydrodyn::info_mw( const QString & msg, const struct PDB_model & model, 
                << "  model chain atom p_atom name                    : " << model.molecule[ j ].atom[ k ].p_atom->name << endl
                << "  model chain atom p_atom mw                      : " << model.molecule[ j ].atom[ k ].p_atom->hybrid.mw << endl
                << "  model chain atom p_atom hybrid ionized_mw_delta : " << model.molecule[ j ].atom[ k ].p_atom->hybrid.ionized_mw_delta << endl
+               << "  model chain atom p_atom hybrid radius           : " << model.molecule[ j ].atom[ k ].p_atom->hybrid.radius << endl
+               << "  model chain atom p_atom hydration               : " << model.molecule[ j ].atom[ k ].p_atom->hydration << endl
                ;
          }
       }
