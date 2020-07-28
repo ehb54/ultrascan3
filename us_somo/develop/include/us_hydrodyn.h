@@ -288,7 +288,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       // info routines (in us_hydrodyn_info.cpp
 
       void info_model_vector( const QString & msg, const vector <struct PDB_model> & models, const set < QString > only_atoms = {} );
-      void info_model_vector_mw( const QString & msg, const vector <struct PDB_model> & models, bool detail = false );
+      void info_model_vector_mw  ( const QString & msg, const vector <struct PDB_model> & models, bool detail = false );
+      void info_model_vector_vbar( const QString & msg, const vector <struct PDB_model> & models );
       void info_residue_p_residue( struct PDB_model & model ); // consistency report
       void info_compare_residues( struct residue * res1, struct residue * res2 ); // compare residues
       void info_residue_vector( const QString & msg, vector < struct residue > & residue_v, bool only_pKa_dependent = true );

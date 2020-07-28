@@ -2181,6 +2181,7 @@ void US_Hydrodyn::calc_mw()
          model_vector_as_loaded[ i ].num_elect        = model_vector[i].num_elect;
          model_vector_as_loaded[ i ].num_SS_bonds     = model_vector[i].num_SS_bonds;
          model_vector_as_loaded[ i ].num_SH_free      = model_vector[i].num_SH_free;
+         model_vector_as_loaded[ i ].vbar             = model_vector[i].vbar;
       }
    }
    editor_msg( "black", "" );

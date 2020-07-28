@@ -5102,6 +5102,7 @@ initarray(int k)
          dt[i].z = (*bead_models)[model_idx[active_model]][active_idx[active_model][i]].bead_coordinate.axis[2];
          dt[i].r = (*bead_models)[model_idx[active_model]][active_idx[active_model][i]].bead_computed_radius;
          dt[i].m = (*bead_models)[model_idx[active_model]][active_idx[active_model][i]].bead_ref_mw;
+         dt[i].m += (*bead_models)[model_idx[active_model]][active_idx[active_model][i]].bead_ref_ionized_mw_delta;
          dt[i].col = us_hydrodyn->get_color(&((*bead_models)[model_idx[active_model]][active_idx[active_model][i]]));
          dt[i].x = ((int)((dt[i].x * decpow) + (dt[i].x > 0 ? 0.5 : -0.5))) / (float)decpow;
          dt[i].y = ((int)((dt[i].y * decpow) + (dt[i].y > 0 ? 0.5 : -0.5))) / (float)decpow;

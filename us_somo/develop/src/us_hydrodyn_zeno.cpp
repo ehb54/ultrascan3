@@ -13531,7 +13531,7 @@ bool US_Hydrodyn_Zeno::run(
          .arg( (*bead_model)[ i ].bead_coordinate.axis[ 2 ] )
          .arg( (*bead_model)[ i ].bead_computed_radius )
          ;
-      sum_mass   += (*bead_model)[ i ].bead_ref_mw;
+      sum_mass   += (*bead_model)[ i ].bead_ref_mw + (*bead_model)[ i ].bead_ref_ionized_mw_delta;
       sum_volume += (4e0 / 3e0 ) * M_PI * pow( (*bead_model)[ i ].bead_computed_radius, 3 );
    }
 
@@ -13702,7 +13702,7 @@ bool US_Hydrodyn_Zeno::run(
 
 bool US_Hydrodyn::calc_zeno()
 {
-   cout << "calc zeno\n";
+   // cout << "calc zeno\n";
 
    if ( !hydro.zeno_zeno &&
         !hydro.zeno_interior &&
@@ -14453,10 +14453,11 @@ bool US_Hydrodyn::calc_zeno()
                         for ( unsigned int i = 0; i < bead_model.size(); ++i )
                         {
                            PDB_atom *this_atom = &(bead_model[i]);
-                           cm.axis[ 0 ] += this_atom->bead_mw * this_atom->bead_coordinate.axis[ 0 ];
-                           cm.axis[ 1 ] += this_atom->bead_mw * this_atom->bead_coordinate.axis[ 1 ];
-                           cm.axis[ 2 ] += this_atom->bead_mw * this_atom->bead_coordinate.axis[ 2 ];
-                           total_cm_mw += this_atom->bead_mw;
+                           double bead_tot_mw = this_atom->bead_mw + this_atom->bead_ionized_mw_delta;
+                           cm.axis[ 0 ] += bead_tot_mw * this_atom->bead_coordinate.axis[ 0 ];
+                           cm.axis[ 1 ] += bead_tot_mw * this_atom->bead_coordinate.axis[ 1 ];
+                           cm.axis[ 2 ] += bead_tot_mw * this_atom->bead_coordinate.axis[ 2 ];
+                           total_cm_mw += bead_tot_mw;
                         }
 
                         cm.axis[ 0 ] /= total_cm_mw;
@@ -14469,7 +14470,7 @@ bool US_Hydrodyn::calc_zeno()
                         for ( unsigned int i = 0; i < bead_model.size(); ++i )
                         {
                            PDB_atom *this_atom = &(bead_model[i]);
-                           Rg2 += this_atom->bead_mw * 
+                           Rg2 += ( this_atom->bead_mw + this_atom->bead_ionized_mw_delta ) * 
                               ( 
                                ( this_atom->bead_coordinate.axis[ 0 ] - cm.axis[ 0 ] ) *
                                ( this_atom->bead_coordinate.axis[ 0 ] - cm.axis[ 0 ] ) +

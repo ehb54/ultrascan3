@@ -502,6 +502,7 @@ void US_Hydrodyn::info_mw( const QString & msg, const struct PDB_model & model, 
       << "model ionized_mw_delta          : " << model.ionized_mw_delta << endl
       << "model mw w/delta                : " << model_mw_w_delta << endl
       << "model vbar                      : " << model.vbar << endl
+      << "use_vbar( model vbar )          : " << use_vbar( model.vbar ) << endl
       ;
 
    for ( int j = 0; j < chains; ++j ) {
@@ -568,7 +569,23 @@ void US_Hydrodyn::info_mw( const QString & msg, const struct PDB_model & model, 
    }
 }
 
+void US_Hydrodyn::info_model_vector_vbar( const QString & msg, const vector <struct PDB_model> & models ) {
+   // print out model vector info
 
+   int model_count = (int) models.size();
+
+   TSO
+      << "US_Hydrodyn::info_model_vector_vbars()" << endl
+      << msg << endl
+      << "models.size()             : " << model_count << endl
+      ;
+
+   for ( int i = 0; i < model_count; ++i ) {
+      // struct PDB_model
+      TSO
+         << " model " << ( i + 1 ) << " vbar " << models[ i ].vbar << " use_vbar " << use_vbar( models[ i ].vbar ) << endl;
+   }
+}
 
 #undef TSO
 #undef LBE
