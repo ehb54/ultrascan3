@@ -253,6 +253,10 @@ class US_EXTERN US_Hydrodyn : public QFrame
       
    private:
 
+      // protons at pH
+      double protons_at_pH( double pH, const struct PDB_model & model );
+      double compute_isoelectric_point( const struct PDB_model & model );
+
       QString model_summary_msg( const QString &msg, struct PDB_model *model );    // summary info about model
       double tc_vbar( double vbar );                           // temperature corrected vbar
       QString pH_msg();                                        // vbar message

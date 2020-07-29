@@ -261,3 +261,101 @@ void US_Hydrodyn::SS_change_residue( struct PDB_model & model, const QString & l
    // once for the residue replace model_vector residue[ model_vector molecule(chain) model_residue_pos ] with new_residue 
 }
 
+double US_Hydrodyn::protons_at_pH( double pH, const struct PDB_model & model ) {
+   // qDebug() << "US_Hydrodyn::protons_at_pH() start";
+   int chains   = (int) model.molecule.size();
+   double protons = 0;
+
+   for ( int j = 0; j < chains; ++j ) {
+      // struct PDB_chain
+      int atoms = (int) model.molecule[ j ].atom.size();
+      for ( int k = 0; k < atoms; ++k ) {
+         if ( !model.molecule[ j ].atom[ k ].p_residue ) {
+            qDebug() << "**** US_Hydrodyn::protons_at_pH(): p_residue not set!";
+            continue;
+         }
+         if ( !model.molecule[ j ].atom[ k ].p_atom ) {
+            qDebug() << "**** US_Hydrodyn::protons_at_pH(): p_atom not set!";
+            continue;
+         }
+         vector < double > fractions = basic_fractions( pH, model.molecule[ j ].atom[ k ].p_residue );
+         protons += ionized_residue_atom_protons( fractions,
+                                                  model.molecule[ j ].atom[ k ].p_residue,
+                                                  model.molecule[ j ].atom[ k ].p_atom );
+      }
+   }
+   // qDebug() << "US_Hydrodyn::protons_at_pH() returns " << protons;
+   return protons;
+}
+         
+double US_Hydrodyn::compute_isoelectric_point( const struct PDB_model & model ) {
+   QTextStream( stdout ) << "US_Hydrodyn::compute_isoelectric_point() start" << endl;
+   // later for better performance  would could skip residues/atom with 1 fraction and count up residue/atom pairs to multiply
+
+   // bisection scan
+
+   {
+      double start  = 1;
+      double end    = 14;
+      double middle = 0.5 * ( start + end );
+      int iter      = 0;
+      int max_iter  = 10000;
+   
+      double tolerance = 1e-3;
+      bool root_found = false;
+      do {
+         middle          = 0.5 * ( start + end );
+         double start_p  = protons_at_pH( start , model ) - model.num_elect;
+         double middle_p = protons_at_pH( middle, model ) - model.num_elect;
+         double end_p    = protons_at_pH( end   , model ) - model.num_elect;
+         // if ( !(iter % 50) ) {
+         //    QTextStream( stdout )
+         //       << QString("").sprintf(
+         //                              "iter %d: net charge (start,middle,end) %g %g %g pos (start,middle,end) %g %g %g\n"
+         //                              ,iter
+         //                              ,start_p
+         //                              ,middle_p
+         //                              ,end_p
+         //                              ,start
+         //                              ,middle
+         //                              ,end );
+         // }
+
+         if ( middle_p == 0 ||
+              fabs( middle_p ) < tolerance ) {
+            start = middle;
+            end   = middle;
+            root_found = true;
+            break;
+         }
+         if ( start_p * middle_p < 0 ) {
+            end   = middle;
+         } else {
+            start = middle;
+         }
+      } while ( ++iter < max_iter );
+      if ( !root_found ) {
+         editor_msg( "red",
+                     QString( us_tr( "Isoelectric point could not be found in the pH range of %1 to %2" ) )
+                     .arg( start )
+                     .arg( end ) );
+
+      }
+      return middle;
+   }
+
+   // // grid scan
+   // {
+   // double best_pH  = 0;
+   // double min_diff = 1e99;
+   // for ( double pH = 1; pH < 14; pH += 0.01 ) {
+   //    double this_diff = fabs( protons_at_pH( pH, model ) - model.num_elect );
+   //    if ( min_diff > this_diff ) {
+   //       min_diff = this_diff;
+   //       best_pH  = pH;
+   //    }
+   //    // QTextStream( stdout ) << protons_at_pH( pH, model ) << " protons at pH " << pH << endl;
+   // }
+   // return best_pH;
+   // }
+}

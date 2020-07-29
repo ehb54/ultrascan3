@@ -190,6 +190,7 @@ struct PDB_model
    
    double Rg;
    double protons;                          // number of protons
+   double isoelectric_point;                // pH of zero net charge
    QString  model_id;
 };
 

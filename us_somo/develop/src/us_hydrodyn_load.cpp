@@ -651,7 +651,7 @@ void US_Hydrodyn::read_residue_file() {
    }
 }
 
-#define DEBUG_VBAR
+// #define DEBUG_VBAR
 void US_Hydrodyn::calc_vbar( struct PDB_model *model, bool use_p_atom ) {
    float mw_vbar_sum = 0.0;
    float mw_sum = 0.0;
@@ -1840,6 +1840,7 @@ QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *m
                     "Number of electrons         : %5\n"
                     "Number of protons           : %6\n"
                     "Net charge                  : %7\n"
+                    "Isoelectric point           : %8\n"
                     )
               )
       .arg( mw_to_volume( model->mw + model->ionized_mw_delta, tc_vbar( model->vbar ) ) )
@@ -1849,6 +1850,7 @@ QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *m
       .arg( model->num_elect )
       .arg( model->protons )
       .arg( model->protons - model->num_elect )
+      .arg( model->isoelectric_point )
       ;
 
    if ( model->volume ) {
@@ -2161,9 +2163,10 @@ void US_Hydrodyn::calc_mw()
          }
       }
 
-      model_vector[ i ].mw               = model_mw;
-      model_vector[ i ].ionized_mw_delta = model_ionized_mw_delta;
-      model_vector[ i ].num_elect        = total_e;
+      model_vector[ i ].mw                = model_mw;
+      model_vector[ i ].ionized_mw_delta  = model_ionized_mw_delta;
+      model_vector[ i ].num_elect         = total_e;
+      model_vector[ i ].isoelectric_point = compute_isoelectric_point( model_vector[ i ] );
 
       {
          dammix_remember_mw_source[ QString( "%1 Model %2" ).arg( project ).arg( i + 1 ) ] = "computed from pdb";
