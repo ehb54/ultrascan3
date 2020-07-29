@@ -294,9 +294,12 @@ double US_Hydrodyn::compute_isoelectric_point( const struct PDB_model & model ) 
 
    // bisection scan
 
+#define PH_START 1
+#define PH_END   14
+   
    {
-      double start  = 1;
-      double end    = 14;
+      double start  = PH_START;
+      double end    = PH_END;
       double middle = 0.5 * ( start + end );
       int iter      = 0;
       int max_iter  = 10000;
@@ -337,8 +340,8 @@ double US_Hydrodyn::compute_isoelectric_point( const struct PDB_model & model ) 
       if ( !root_found ) {
          editor_msg( "red",
                      QString( us_tr( "Isoelectric point could not be found in the pH range of %1 to %2" ) )
-                     .arg( start )
-                     .arg( end ) );
+                     .arg( PH_START )
+                     .arg( PH_END ) );
 
       }
       return middle;

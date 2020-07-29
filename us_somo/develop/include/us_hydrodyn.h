@@ -290,7 +290,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       
       // end distance threshold check support
 
-      map < QString, double >                                   hybrid_to_protons; // for calculating net charge
+      map < QString, double >                                   hybrid_to_protons;   // for calculating net charge
+      map < QString, double >                                   hybrid_to_electrons; // for calculating net charge
       void read_hybrid_file( QString filename );
 
       // info routines (in us_hydrodyn_info.cpp
@@ -304,6 +305,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void info_model_p_residue( const QString & msg, const struct PDB_model & model, bool only_pKa_dependent );
       void info_mw( const QString & msg, const vector < struct PDB_model > & models, bool detail = false );
       void info_mw( const QString & msg, const struct PDB_model & model, bool detail = false );
+      void info_residue_protons_electrons_at_pH( double pH, const struct PDB_model & model );
 
       void set_ionized_residue_vector( vector < struct residue > & residue_v ); // apply ionization to complete residue vector
       void reset_ionized_residue_vectors(); // for saxs hplc options

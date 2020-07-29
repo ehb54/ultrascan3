@@ -18,7 +18,8 @@ void US_Hydrodyn::read_hybrid_file( QString filename ) {
    }
 
    QFile f(filename);
-   hybrid_to_protons.clear( );
+   hybrid_to_protons  .clear( );
+   hybrid_to_electrons.clear( );
 
    QRegExp count_hydrogens("H(\\d)");
    QRegExp net_charge("((?:\\+|-)\\d*)$");
@@ -49,8 +50,9 @@ void US_Hydrodyn::read_hybrid_file( QString filename ) {
             // } else {
             // QTextStream( stdout ) << "saxs_name " << current_hybrid.saxs_name << " delta 0" << endl;
          }
-         hybrid_to_protons[ current_hybrid.name ] = protons;
-         // QTextStream( stdout ) << "hybrid.name " << current_hybrid.name << " protons " << protons << endl;
+         hybrid_to_electrons[ current_hybrid.name ] = current_hybrid.num_elect;
+         hybrid_to_protons  [ current_hybrid.name ] = protons;
+         // QTextStream( stdout ) << "hybrid.name " << current_hybrid.name << " protons " << protons << " electrons " << current_hybrid.num_elect << endl;
       }
       f.close();
    } else {
@@ -210,10 +212,12 @@ void US_Hydrodyn::read_residue_file() {
             new_atom.hybrid.radius            = qsl.front().toFloat();  qsl.pop_front();
             new_atom.bead_assignment          = qsl.front().toUInt();   qsl.pop_front();
             new_atom.ionization_index         = 0;
-            if ( !hybrid_to_protons.count( new_atom.hybrid.name ) ) {
+            if ( !hybrid_to_protons  .count( new_atom.hybrid.name ) ||
+                 !hybrid_to_electrons.count( new_atom.hybrid.name ) ) {
                editor_msg( "red", QString( us_tr( "Hybridization information missing for %1, net charge, proton count and isoelectric point will be incorrect!" ) ).arg( new_atom.hybrid.name ) );
             } else {
-               new_atom.hybrid.protons           = hybrid_to_protons[ new_atom.hybrid.name ];
+               new_atom.hybrid.protons           = hybrid_to_protons [ new_atom.hybrid.name ];
+               new_atom.hybrid.num_elect         = hybrid_to_electrons[ new_atom.hybrid.name ];
             }
             
             new_atom.hybrid.ionized_mw_delta  = 0e0;
@@ -2255,6 +2259,7 @@ void US_Hydrodyn::calc_mw()
    // info_model_vector_mw( QString( "after calc_mw() : model_vector" ), model_vector, true );
    // info_model_vector( QString( "after calc_mw() : model_vector" ), model_vector );
    info_mw( QString( "after calc_mw() : model_vector" ), model_vector, false );
+   // info_residue_protons_electrons_at_pH( le_pH->text().toDouble(),  model_vector[ 0 ] );
 }
 
 void US_Hydrodyn::update_model_chain_ionization( struct PDB_model & model, bool quiet ) {

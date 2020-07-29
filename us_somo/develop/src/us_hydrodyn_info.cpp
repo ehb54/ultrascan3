@@ -98,6 +98,7 @@ void US_Hydrodyn::info_model_vector( const QString & msg, const vector <struct P
                   << "  models residue r_atom hybrid name        : " << models[ i ].residue[ j ].r_atom[ k ].hybrid.name << endl
                   << "  models residue r_atom hybrid radius      : " << models[ i ].residue[ j ].r_atom[ k ].hybrid.radius << endl
                   << "  models residue r_atom hybrid protons     : " << models[ i ].residue[ j ].r_atom[ k ].hybrid.protons << endl
+                  << "  models residue r_atom hybrid num_elect   : " << models[ i ].residue[ j ].r_atom[ k ].hybrid.num_elect << endl
                   << "  models residue r_atom hydration          : " << models[ i ].residue[ j ].r_atom[ k ].hydration << endl
                   ;
             }
@@ -591,6 +592,97 @@ void US_Hydrodyn::info_model_vector_vbar( const QString & msg, const vector <str
          << " model " << ( i + 1 ) << " vbar " << models[ i ].vbar << " use_vbar " << use_vbar( models[ i ].vbar ) << endl;
    }
 }
+
+void US_Hydrodyn::info_residue_protons_electrons_at_pH( double pH, const struct PDB_model & model ) {
+   // qDebug() << "US_Hydrodyn::protons_at_pH() start";
+   int chains   = (int) model.molecule.size();
+   double protons   = 0;
+   double electrons = 0;
+
+   TSO
+      << "pH" << "," << pH << endl
+      << "resname" << ","
+      << "atomname" << ","
+      << "r_0 protons" << ","
+      << "r_0 hybrid name" << ","
+      << "r_1 protons" << ","
+      << "r_1 hybrid name" << ","
+      << "fraction prior" << ","
+      << "fraction this" << ","
+      << "protons" << ","
+      << "electrons" << ","
+      << "net charge" << ","
+      << endl
+      ;
+
+   for ( int j = 0; j < chains; ++j ) {
+      // struct PDB_chain
+      int atoms = (int) model.molecule[ j ].atom.size();
+      for ( int k = 0; k < atoms; ++k ) {
+         if ( !model.molecule[ j ].atom[ k ].p_residue ) {
+            qDebug() << "**** US_Hydrodyn::protons_at_pH(): p_residue not set!";
+            continue;
+         }
+         if ( !model.molecule[ j ].atom[ k ].p_atom ) {
+            qDebug() << "**** US_Hydrodyn::protons_at_pH(): p_atom not set!";
+            continue;
+         }
+         struct residue * res  = model.molecule[ j ].atom[ k ].p_residue;
+         struct atom    * atom = model.molecule[ j ].atom[ k ].p_atom;
+         vector < double > fractions = basic_fractions( pH, res );
+         double this_protons   = ionized_residue_atom_protons( fractions, res, atom );
+         double this_electrons = atom->hybrid.num_elect;
+
+         if ( fractions.size() > 1 && atom->ionization_index ) {
+            TSO 
+               << res->name << ","
+               << atom->name << ","
+               << res->r_atom_0[ atom->ionization_index ].hybrid.protons << ","
+               << res->r_atom_0[ atom->ionization_index ].hybrid.name << ","
+               << res->r_atom_1[ atom->ionization_index ].hybrid.protons << ","
+               << res->r_atom_1[ atom->ionization_index ].hybrid.name << ","
+               << fractions[ atom->ionization_index - 1 ] << ","
+               << fractions[ atom->ionization_index ] << ","
+               << this_protons << ","
+               << this_electrons << ","
+               << ( this_protons - this_electrons ) << ","
+               << endl;
+         } else {
+            TSO
+               << res->name << ","
+               << atom->name << ","
+               << atom->hybrid.protons << ","
+               << atom->hybrid.name << ","
+               << "" << ","
+               << "" << ","
+               << "1" << ","
+               << "" << ","
+               << this_protons << ","
+               << this_electrons << ","
+               << ( this_protons - this_electrons ) << ","
+               << endl;
+         }            
+                     
+         protons   += this_protons;
+         electrons += this_electrons;
+      }
+   }
+   TSO
+      << "Total" << ","
+      << "" << ","
+      << "" << ","
+      << "" << ","
+      << "" << ","
+      << "" << ","
+      << "" << ","
+      << "" << ","
+      << protons << ","
+      << electrons << ","
+      << ( protons - electrons ) << ","
+      << endl;
+
+}
+
 
 #undef TSO
 #undef LBE
