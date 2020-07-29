@@ -411,6 +411,10 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
 
    misc.restore_pb_rule = false;
 
+   if ( saxs_options.default_hybrid_filename.isEmpty() ) {
+      saxs_options.default_hybrid_filename = US_Config::get_home_dir() + "etc" + SLASH + "somo.hybrid";
+   }
+   read_hybrid_file( "" );
    read_residue_file();
 
    bd_ready_to_run = false;
@@ -608,10 +612,6 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    if ( saxs_options.default_atom_filename.isEmpty() )
    {
       saxs_options.default_atom_filename = US_Config::get_home_dir() + "etc" + SLASH + "somo.atom";
-   }
-   if ( saxs_options.default_hybrid_filename.isEmpty() )
-   {
-      saxs_options.default_hybrid_filename = US_Config::get_home_dir() + "etc" + SLASH + "somo.hybrid";
    }
    if ( saxs_options.default_saxs_filename.isEmpty() )
    {

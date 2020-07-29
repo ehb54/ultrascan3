@@ -11,8 +11,55 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_vvv.h"
 
-void US_Hydrodyn::read_residue_file()
-{
+void US_Hydrodyn::read_hybrid_file( QString filename ) {
+   
+   if ( filename.isEmpty() ) {
+      filename = saxs_options.default_hybrid_filename;
+   }
+
+   QFile f(filename);
+   hybrid_to_protons.clear( );
+
+   QRegExp count_hydrogens("H(\\d)");
+   QRegExp net_charge("((?:\\+|-)\\d*)$");
+
+   if ( f.open(QIODevice::ReadOnly|QIODevice::Text ) ) {
+      struct hybridization current_hybrid;
+      QTextStream ts( &f );
+      while (!ts.atEnd()) {
+         ts >> current_hybrid.saxs_name;
+         ts >> current_hybrid.name;
+         ts >> current_hybrid.mw;
+         ts >> current_hybrid.radius;
+         ts >> current_hybrid.scat_len;
+         ts >> current_hybrid.exch_prot;
+         ts >> current_hybrid.num_elect;
+         current_hybrid.hydrogens = 0;
+         if ( count_hydrogens.indexIn( current_hybrid.name ) != -1 )
+         {
+            current_hybrid.hydrogens = count_hydrogens.cap(1).toUInt();
+         }
+         ts.readLine(); // read rest of line
+
+         double protons = current_hybrid.num_elect;
+         if ( net_charge.indexIn( current_hybrid.saxs_name ) != -1 ) {
+            double delta = net_charge.cap( 1 ).toDouble();
+            protons += delta;
+            // QTextStream( stdout ) << "saxs_name " << current_hybrid.saxs_name << " delta " << delta << endl;
+            // } else {
+            // QTextStream( stdout ) << "saxs_name " << current_hybrid.saxs_name << " delta 0" << endl;
+         }
+         hybrid_to_protons[ current_hybrid.name ] = protons;
+         // QTextStream( stdout ) << "hybrid.name " << current_hybrid.name << " protons " << protons << endl;
+      }
+      f.close();
+   } else {
+      editor_msg( "red", QString( us_tr( "Could not read default hybridization file %1" ) ).arg( filename ) );
+   }
+}
+
+void US_Hydrodyn::read_residue_file() {
+
    QString str1, str2;
    unsigned int numatoms, numbeads, /* i, */ j;
    // unsigned int positioner;
@@ -163,6 +210,11 @@ void US_Hydrodyn::read_residue_file()
             new_atom.hybrid.radius            = qsl.front().toFloat();  qsl.pop_front();
             new_atom.bead_assignment          = qsl.front().toUInt();   qsl.pop_front();
             new_atom.ionization_index         = 0;
+            if ( !hybrid_to_protons.count( new_atom.hybrid.name ) ) {
+               editor_msg( "red", QString( us_tr( "Hybridization information missing for %1, net charge, proton count and isoelectric point will be incorrect!" ) ).arg( new_atom.hybrid.name ) );
+            } else {
+               new_atom.hybrid.protons           = hybrid_to_protons[ new_atom.hybrid.name ];
+            }
             
             new_atom.hybrid.ionized_mw_delta  = 0e0;
             // OLD WAY
@@ -297,6 +349,11 @@ void US_Hydrodyn::read_residue_file()
                new_atom_1.positioner               = (bool) qsl.front().toInt(); qsl.pop_front();
                new_atom_1.serial_number            = qsl.front().toUInt();       qsl.pop_front();
                new_atom_1.hydration                = qsl.front().toFloat();      qsl.pop_front();
+               if ( !hybrid_to_protons.count( new_atom_1.hybrid.name ) ) {
+                  editor_msg( "red", QString( us_tr( "Hybridization information missing for %1, net charge, proton count and isoelectric point will be incorrect!" ) ).arg( new_atom_1.hybrid.name ) );
+               } else {
+                  new_atom_1.hybrid.protons           = hybrid_to_protons[ new_atom_1.hybrid.name ];
+               }
                
                if ( new_residue.r_atom_0.count( index ) ||
                     new_residue.r_atom_1.count( index ) ) {
@@ -1745,7 +1802,7 @@ QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *m
    qs +=
       QString(
               us_tr(
-                    "Calculatoin done at pH      : %1\n"
+                    "Calculation done at pH      : %1\n"
                     )
               )
       .arg( le_pH->text() )
@@ -1781,6 +1838,8 @@ QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *m
                     "Mol. vol. (SAXS excl. vol.) : %3 [A^3]\n"
                     "Radius of gyration          : %4 [A]\n"
                     "Number of electrons         : %5\n"
+                    "Number of protons           : %6\n"
+                    "Net charge                  : %7\n"
                     )
               )
       .arg( mw_to_volume( model->mw + model->ionized_mw_delta, tc_vbar( model->vbar ) ) )
@@ -1788,6 +1847,8 @@ QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *m
       .arg( model->volume )
       .arg( model->Rg, 0, 'f', 2 )
       .arg( model->num_elect )
+      .arg( model->protons )
+      .arg( model->protons - model->num_elect )
       ;
 
    if ( model->volume ) {
@@ -1858,8 +1919,7 @@ void US_Hydrodyn::calc_mw()
    QFile       scol_file;
    QTextStream scol_ts;
 
-   for (unsigned int i = 0; i < model_vector.size(); i++)
-   {
+   for (unsigned int i = 0; i < model_vector.size(); i++) {
       // editor->append( QString(us_tr("\nModel: %1 vbar %2 cm^3/g\n") )
       //                 .arg( model_vector[i].model_id )
       //                 .arg( QString("").sprintf("%.3f", model_vector[i].vbar) ) );
@@ -1872,6 +1932,7 @@ void US_Hydrodyn::calc_mw()
 
       current_model = i;
 
+      double protons                    = 0.0;
       model_vector[i].mw                = 0.0;
       model_vector[i].ionized_mw_delta  = 0.0;
       model_vector[i].volume            = 0.0;
@@ -1969,6 +2030,7 @@ void US_Hydrodyn::calc_mw()
                      total_cm_mw                                  += atom_mw_w_delta;
                      model_vector[i].molecule[j].mw               += this_atom->mw;
                      model_vector[i].molecule[j].ionized_mw_delta += this_atom->ionized_mw_delta;
+                     protons += this_atom->p_atom->hybrid.protons;
                   }
 
                   if ( do_excl_vol ) {
@@ -2068,7 +2130,8 @@ void US_Hydrodyn::calc_mw()
          //    .arg( model_vector[ i ].model_id )
          //    .arg( Rg / 10.0, 0, 'f', 2 );
 
-         model_vector[i].Rg = Rg;
+         model_vector[i].Rg      = Rg;
+         model_vector[i].protons = protons;
 
          // editor->append( qs );
          // last_pdb_load_calc_mw_msg << qs;
@@ -2549,6 +2612,68 @@ double US_Hydrodyn::ionized_residue_atom_hydration( vector < double > & fraction
 
 }   
 
+// #define DEBUG_PROTONS
+
+double US_Hydrodyn::ionized_residue_atom_protons( vector < double > & fractions, struct residue *res, struct atom *atom ) {
+   int size = (int) fractions.size();
+   if ( size == 1 || !atom->ionization_index ) {
+      return atom->hybrid.protons;
+   }
+
+   if ( size == 2 ) {
+#if defined( DEBUG_PROTONS )
+      QTextStream( stdout )
+         << res->name << ","
+         << atom->name << ","
+         << res->r_atom_0[ atom->ionization_index ].hybrid.protons << ","
+         << res->r_atom_0[ atom->ionization_index ].hybrid.name << ","
+         << res->r_atom_1[ atom->ionization_index ].hybrid.protons << ","
+         << res->r_atom_1[ atom->ionization_index ].hybrid.name << ","
+         << fractions[ atom->ionization_index - 1 ] << ","
+         << fractions[ atom->ionization_index ] << ","
+         << (
+             fractions[ atom->ionization_index - 1 ] * res->r_atom_0[ atom->ionization_index ].hybrid.protons +
+             fractions[ atom->ionization_index     ] * res->r_atom_1[ atom->ionization_index ].hybrid.protons
+             ) << ","
+         << endl
+         ;
+#endif
+      return
+         fractions[ atom->ionization_index - 1 ] * res->r_atom_0[ atom->ionization_index ].hybrid.protons +
+         fractions[ atom->ionization_index     ] * res->r_atom_1[ atom->ionization_index ].hybrid.protons
+         ;
+   }
+
+#if defined( DEBUG_PROTONS )
+   QTextStream( stdout )
+      << res->name << ","
+      << atom->name << ","
+      << res->r_atom_0[ atom->ionization_index ].hybrid.protons << ","
+      << res->r_atom_0[ atom->ionization_index ].hybrid.name << ","
+      << res->r_atom_1[ atom->ionization_index ].hybrid.protons << ","
+      << res->r_atom_1[ atom->ionization_index ].hybrid.name << ","
+      << fractions[ atom->ionization_index - 1 ] << ","
+      << fractions[ atom->ionization_index ] << ","
+      << ( 
+          ( fractions[ atom->ionization_index - 1 ] * res->r_atom_0[ atom->ionization_index ].hybrid.protons +
+            fractions[ atom->ionization_index     ] * res->r_atom_1[ atom->ionization_index ].hybrid.protons
+            ) /
+          ( fractions[ atom->ionization_index - 1 ] + fractions[ atom->ionization_index ] )
+           )
+      << ","
+      << endl
+      ;
+#endif
+
+   return
+      ( fractions[ atom->ionization_index - 1 ] * res->r_atom_0[ atom->ionization_index ].hybrid.protons +
+        fractions[ atom->ionization_index     ] * res->r_atom_1[ atom->ionization_index ].hybrid.protons
+        ) /
+      ( fractions[ atom->ionization_index - 1 ] + fractions[ atom->ionization_index ] )
+      ;
+
+}   
+
 void US_Hydrodyn::set_ionized_residue_vector( vector < struct residue > & residue_v ) {
    // this will have to be changed later to true, as we are changing the format of residue
    QTextStream( stdout )
@@ -2590,6 +2715,19 @@ void US_Hydrodyn::set_ionized_residue_vector( vector < struct residue > & residu
       << "fraction this" << ","
       << "computed hydration" << endl;
 #endif
+#if defined( DEBUG_PROTONS )
+   QTextStream( stdout )
+      << "pH" << "," << pH << endl
+      << "resname" << ","
+      << "atomname" << ","
+      << "r_0 protons" << ","
+      << "r_0 hybrid name" << ","
+      << "r_1 protons" << ","
+      << "r_1 hybrid name" << ","
+      << "fraction prior" << ","
+      << "fraction this" << ","
+      << "computed protons" << endl;
+#endif
 
    
    for ( int j = 0; j < residues; ++j ) {
@@ -2610,6 +2748,7 @@ void US_Hydrodyn::set_ionized_residue_vector( vector < struct residue > & residu
          residue_v[ j ].r_atom[ k ].hybrid.ionized_mw_delta            = ionized_mw_for_atom;
          residue_v[ j ].r_atom[ k ].hybrid.radius                      = ionized_residue_atom_radius   ( fractions, & residue_v[ j ], & residue_v[ j ].r_atom[ k ] );
          residue_v[ j ].r_atom[ k ].hydration                          = ionized_residue_atom_hydration( fractions, & residue_v[ j ], & residue_v[ j ].r_atom[ k ] );
+         residue_v[ j ].r_atom[ k ].hybrid.protons                     = ionized_residue_atom_protons  ( fractions, & residue_v[ j ], & residue_v[ j ].r_atom[ k ] );
          residue_v[ j ].ionized_mw_delta                               += ionized_mw_for_atom;
          bead_ionized_mw[ residue_v[ j ].r_atom[ k ].bead_assignment ] += ionized_mw_for_atom;
 

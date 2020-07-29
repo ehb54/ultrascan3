@@ -97,6 +97,7 @@ void US_Hydrodyn::info_model_vector( const QString & msg, const vector <struct P
                   << "  models residue r_atom serial number      : " << models[ i ].residue[ j ].r_atom[ k ].serial_number << endl
                   << "  models residue r_atom hybrid name        : " << models[ i ].residue[ j ].r_atom[ k ].hybrid.name << endl
                   << "  models residue r_atom hybrid radius      : " << models[ i ].residue[ j ].r_atom[ k ].hybrid.radius << endl
+                  << "  models residue r_atom hybrid protons     : " << models[ i ].residue[ j ].r_atom[ k ].hybrid.protons << endl
                   << "  models residue r_atom hydration          : " << models[ i ].residue[ j ].r_atom[ k ].hydration << endl
                   ;
             }
@@ -451,6 +452,7 @@ void US_Hydrodyn::info_residue_vector( const QString & msg, vector < struct resi
                   << "  residue r_atom hybrid mw               : " << residue_v[ j ].r_atom[ k ].hybrid.mw << endl
                   << "  residue r_atom hybrid ionized_mw_delta : " << residue_v[ j ].r_atom[ k ].hybrid.ionized_mw_delta << endl
                   << "  residue r_atom hybrid radius           : " << residue_v[ j ].r_atom[ k ].hybrid.radius << endl
+                  << "  residue r_atom hybrid protons          : " << residue_v[ j ].r_atom[ k ].hybrid.protons << endl
                   << "  residue r_atom hydration               : " << residue_v[ j ].r_atom[ k ].hydration << endl
                   ;
             }
@@ -502,6 +504,8 @@ void US_Hydrodyn::info_mw( const QString & msg, const struct PDB_model & model, 
       << "model ionized_mw_delta          : " << model.ionized_mw_delta << endl
       << "model mw w/delta                : " << model_mw_w_delta << endl
       << "model vbar                      : " << model.vbar << endl
+      << "model protons                   : " << model.protons << endl
+      << "model electrons                 : " << model.num_elect << endl
       << "use_vbar( model vbar )          : " << use_vbar( model.vbar ) << endl
       ;
 
@@ -562,6 +566,7 @@ void US_Hydrodyn::info_mw( const QString & msg, const struct PDB_model & model, 
                << "  model chain atom p_atom mw                      : " << model.molecule[ j ].atom[ k ].p_atom->hybrid.mw << endl
                << "  model chain atom p_atom hybrid ionized_mw_delta : " << model.molecule[ j ].atom[ k ].p_atom->hybrid.ionized_mw_delta << endl
                << "  model chain atom p_atom hybrid radius           : " << model.molecule[ j ].atom[ k ].p_atom->hybrid.radius << endl
+               << "  model chain atom p_atom hybrid protons          : " << model.molecule[ j ].atom[ k ].p_atom->hybrid.protons << endl
                << "  model chain atom p_atom hydration               : " << model.molecule[ j ].atom[ k ].p_atom->hydration << endl
                ;
          }

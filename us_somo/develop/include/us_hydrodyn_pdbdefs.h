@@ -189,6 +189,7 @@ struct PDB_model
    int   num_SH_free;                       // number of free SH
    
    double Rg;
+   double protons;                          // number of protons
    QString  model_id;
 };
 
@@ -447,6 +448,7 @@ struct hybridization
    int     exch_prot;            // Number of exchangable protons
    int     num_elect;            // Number of electrons
    int     hydrogens;            // Number of hydrogens
+   float   protons;              // Total # of protons
 };
 
 struct atom

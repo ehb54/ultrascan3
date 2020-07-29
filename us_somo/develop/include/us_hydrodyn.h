@@ -285,6 +285,10 @@ class US_EXTERN US_Hydrodyn : public QFrame
       map < int, int >                                          sulfur_paired;
       
       // end distance threshold check support
+
+      map < QString, double >                                   hybrid_to_protons; // for calculating net charge
+      void read_hybrid_file( QString filename );
+
       // info routines (in us_hydrodyn_info.cpp
 
       void info_model_vector( const QString & msg, const vector <struct PDB_model> & models, const set < QString > only_atoms = {} );
@@ -923,6 +927,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       double ionized_residue_atom_mw       ( vector < double > & fractions, struct residue *res, struct atom *atom );
       double ionized_residue_atom_radius   ( vector < double > & fractions, struct residue *res, struct atom *atom );
       double ionized_residue_atom_hydration( vector < double > & fractions, struct residue *res, struct atom *atom );
+      double ionized_residue_atom_protons  ( vector < double > & fractions, struct residue *res, struct atom *atom );
                                                                                                              
    private slots:
       void hullrad_readFromStdout();
