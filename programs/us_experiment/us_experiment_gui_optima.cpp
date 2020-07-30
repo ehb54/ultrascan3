@@ -1,5 +1,7 @@
 //! \file us_experiment/us_experiment_gui_optima.cpp
 
+#include <QSslKey>
+
 #include "us_experiment_gui_optima.h"
 #include "../us_analysis_profile/us_analysis_profile.h"
 #include "us_rotor_gui.h"
@@ -25,6 +27,64 @@
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
+
+//Link class
+LinkSys::LinkSys()
+{
+  //connect(&server, &QSslSocket::readyRead, this, &LinkSys::rx);
+  connect(&server, &QSslSocket::disconnected, this, &LinkSys::serverDisconnect);
+  connect(&server, SIGNAL(sslErrors(QList<QSslError>)), this, SLOT(sslErrors(QList<QSslError>)));
+
+  QString certPath = US_Settings::etcDir() + QString("/optima/"); //US_Settings::appBaseDir() + QString( "/etc/sys_server/" );
+  QString keyFile  = certPath + QString( "client.key" );
+  QString pemFile  = certPath + QString( "client.pem" );
+  server.setPrivateKey(keyFile, QSsl::Ec );
+  server.setLocalCertificate(pemFile);
+
+  qDebug() << "Client's certs directory: " << keyFile << pemFile;
+  // server.setPrivateKey("client.key", QSsl::Ec );
+  // server.setLocalCertificate("client.pem");
+  server.setPeerVerifyMode(QSslSocket::VerifyNone);
+}
+
+bool LinkSys::connectToServer( const QString& host, const int port )
+{
+  bool status_ok = false;
+  //server.connectToHostEncrypted("142.66.17.6", 8821);
+  server.connectToHostEncrypted(host, port);
+  if (server.waitForEncrypted(15000))
+    {
+      server.write("***qsslsocket_client_example sent this nothing command***\n");
+      status_ok = true;
+    }
+  else
+    {
+      qDebug("Unable to connect to server");
+      //exit(0);
+    }
+
+  return status_ok;
+}
+
+void LinkSys::disconnectFromServer( void  )
+{
+  server.disconnectFromHost();
+  qDebug() << "Closing Connection";
+}
+
+void LinkSys::sslErrors(const QList<QSslError> &errors)
+{
+  foreach (const QSslError &error, errors)
+    qDebug() << error.errorString();
+}
+
+void LinkSys::serverDisconnect(void)
+{
+  qDebug("Server disconnected");
+  //exit(0);
+}
+
+// End of link class//////////////////////////////////////////////////////////////////////
 
 
 // Constructor:  build the main layout with tab widget panels
@@ -4846,6 +4906,69 @@ DbgLv(1) << "EGUp:svRP:   dbP" << dbP;
      }
 }
 
+// Slot to read all Optima machines <------------------------------- // 
+void US_ExperGuiUpload::read_optima_machines( US_DB2* db )
+{
+
+  all_instruments.clear();
+  
+  QStringList q( "" );
+  q.clear();
+  q  << QString( "get_instrument_names" )
+     << QString::number( 1 );
+  db->query( q );
+  
+  if ( db->lastErrno() == US_DB2::OK )      // If not, no instruments defined
+    {
+      QList< int > instrumentIDs;
+      
+      // Grab all the IDs so we can reuse the db connection
+      while ( db->next() )
+	{
+	  int ID = db->value( 0 ).toString().toInt();
+	  instrumentIDs << ID;
+	  
+	  qDebug() << "InstID: " << ID;
+	}
+      
+      // Instrument information
+      foreach ( int ID, instrumentIDs )
+	{
+	  QMap<QString,QString> instrument;
+	  
+	  q.clear();
+	  q  << QString( "get_instrument_info_new" )
+	     << QString::number( ID );
+	  db->query( q );
+	  db->next();
+
+	  instrument[ "ID" ]              =   QString::number( ID );
+	  instrument[ "name" ]            =   db->value( 0 ).toString();
+	  instrument[ "serial" ]          =   db->value( 1 ).toString();
+	  instrument[ "optimaHost" ]      =   db->value( 5 ).toString();	   
+	  instrument[ "optimaPort" ]      =   db->value( 6 ).toString(); 
+	  instrument[ "optimaDBname" ]    =   db->value( 7 ).toString();	   
+	  instrument[ "optimaDBusername" ] =  db->value( 8 ).toString();	   
+	  instrument[ "optimaDBpassw" ]    =  db->value( 9 ).toString();	   
+	  instrument[ "selected" ]        =   db->value( 10 ).toString();
+	    
+	  instrument[ "opsys1" ]  = db->value( 11 ).toString();
+	  instrument[ "opsys2" ]  = db->value( 12 ).toString();
+	  instrument[ "opsys3" ]  = db->value( 13 ).toString();
+
+	  instrument[ "radcalwvl" ]  =  db->value( 14 ).toString();
+	  instrument[ "chromoab" ]   =  db->value( 15 ).toString();
+
+	  instrument[ "msgPort" ]    =  db->value( 16 ).toString();
+	  
+	  if ( instrument[ "name" ].contains("Optima") || instrument[ "optimaHost" ].contains("AUC_DATA_DB") )
+	    this->all_instruments << instrument;
+	}
+    }
+  qDebug() << "Reading Instrument: FINISH in us_experiment: Upload";
+}
+
+
 //Confirm the Optima machine an experiemnt is submitted to.
 void US_ExperGuiUpload::submitExperiment_confirm()
 {
@@ -4856,9 +4979,77 @@ void US_ExperGuiUpload::submitExperiment_confirm()
   // int     dbport      = dblist[ 2 ].toInt();
 
   //ALEXEY: new way
-   QString alias       = mainw->currentInstrument[ "name" ];
-   QString dbhost      = mainw->currentInstrument[ "optimaHost" ];
-   QString dbport      = mainw->currentInstrument[ "optimaPort" ];
+  QString alias       = mainw->currentInstrument[ "name" ];
+  QString dbhost      = mainw->currentInstrument[ "optimaHost" ];
+  QString dbport      = mainw->currentInstrument[ "optimaPort" ];
+  QString optima_msgPort;
+  
+  //ALEXEY: here - check for connection to sys_data server and put error msg if no connection, with suggesting to saveRunProtocol() into LIMS
+  US_Passwd pw;
+  US_DB2*   dbP = new US_DB2( pw.getPasswd() );
+  if ( dbP != NULL )
+    read_optima_machines( dbP );
+
+  for ( int ii = 0; ii < all_instruments.size(); ii++ )
+    {
+      QString name = all_instruments[ii][ "name" ].trimmed();
+      if ( name == alias )
+	optima_msgPort = all_instruments[ii][ "msgPort" ];
+    }
+
+  qDebug() << "Optima_msgPort: " << optima_msgPort;
+
+  LinkSys *link = new LinkSys;
+  bool status_sys_data = link->connectToServer( dbhost, optima_msgPort.toInt() );
+
+  if ( !status_sys_data )
+    {
+      QMessageBox msgBox_sys_data;
+      msgBox_sys_data.setIcon(QMessageBox::Critical);
+      msgBox_sys_data.setWindowTitle(tr("Optima System Data Server Connection Problem!"));
+      msgBox_sys_data.setText( QString( tr("Attention! UltraScan is not able to communicate with the data acquisition server on the %1. Please check the following:"))
+			       .arg(alias));
+      
+      msgBox_sys_data.setInformativeText( QString( tr( "1. %1 is turned on \n2. the data acquisition server on %1 is running \n3. your license key is stored in $HOME/ultrascan/etc/optima and is not expired \n\nSubmission of the experimental protocol is suspended until this condition is resolved. \n\nFor now, you may choose to save the protocol into LIMS database." ))
+					  .arg(alias));
+      
+      QPushButton *Accept_sys    = msgBox_sys_data.addButton(tr("Save Protocol"), QMessageBox::YesRole);
+      QPushButton *Cancel_sys    = msgBox_sys_data.addButton(tr("Cancel"), QMessageBox::RejectRole);
+
+      msgBox_sys_data.exec();
+      
+      if (msgBox_sys_data.clickedButton() == Accept_sys) {
+	qDebug() << "Saving protocol...";
+
+	if ( mainw->automode && rps_differ )
+	  {
+	    saveRunProtocol();
+	    return;
+	  }
+	    
+	else if ( !mainw->automode && have_run && rps_differ )
+	  {
+	    saveRunProtocol();
+	    return;
+	  }
+	else
+	  {
+	    QMessageBox::warning( this,
+				  tr( "No Changes in the Protocol" ),
+				  tr( "The protocol was not saved because there were no changes made to it.") );
+	    
+	    return;
+	  }
+      }
+      else if (msgBox_sys_data.clickedButton() == Cancel_sys){
+	return;
+      }
+    }
+  else
+    link->disconnectFromServer();
+  
+  //  End of checkig for conneciton to Optima sys_data server ///////////////////////////////////////////////
+ 
 
    if ( mainw->automode && rps_differ )
      saveRunProtocol();
@@ -4885,17 +5076,17 @@ void US_ExperGuiUpload::submitExperiment_confirm()
    QPushButton *Accept    = msgBox.addButton(tr("OK"), QMessageBox::YesRole);
    QPushButton *Cancel    = msgBox.addButton(tr("Cancel"), QMessageBox::RejectRole);
 
-    msgBox.setIcon(QMessageBox::Question);
-    msgBox.exec();
+   msgBox.setIcon(QMessageBox::Question);
+   msgBox.exec();
 
-    if (msgBox.clickedButton() == Accept) {
-      qDebug() << "Submitting...";
-      submitExperiment();
-    }
-    else if (msgBox.clickedButton() == Cancel){
-      return;
-    }
-
+   if (msgBox.clickedButton() == Accept) {
+     qDebug() << "Submitting...";
+     submitExperiment();
+   }
+   else if (msgBox.clickedButton() == Cancel){
+     return;
+   }
+   
 }
 
 // Slot to submit the experiment to the Optima DB

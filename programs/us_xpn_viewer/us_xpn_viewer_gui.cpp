@@ -1769,7 +1769,13 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
       //Somewhere here start sys_server (instead of timer_check_sysdata - BUT move to sys_thread)
       qDebug() << "CONNECTING TO SERVER: " << xpnhost << xpnmsgPort.toInt() ;
       link->connectToServer( xpnhost, xpnmsgPort.toInt() );
+
       
+      // bool sys_data_linked = link->connectToServer( xpnhost, xpnmsgPort.toInt() );
+      // int exp_status = CheckExpComplete_auto( RunID_to_retrieve  );
+      // ALEXEY: here, if not sys_data_linked && if run NOT finished || NOT aborted (exp_status != 0 || exp_status != 5),pop a dialogue suggesting to fix the error, return to the main screen
+      //                                     && if run IS  finished || IS  aborted, proceed to the IMPORT stage.   
+
       
       timer_check_sysdata->setInterval(3000);
       timer_check_sysdata->moveToThread(sys_thread);

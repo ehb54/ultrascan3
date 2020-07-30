@@ -3,6 +3,7 @@ include( ../../gui.pri )
 TARGET        = us_experiment
 QT           += xml
 QT           += sql
+QT           += network
 
 HEADERS       = us_experiment_gui_optima.h \
                 ../us_analysis_profile/us_analysis_profile.h

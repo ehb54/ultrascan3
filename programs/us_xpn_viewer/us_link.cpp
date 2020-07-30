@@ -34,7 +34,8 @@ void Link::connectToServer( const QString& host, const int port )
   }
   else {
     qDebug("Unable to connect to server");
-    exit(0);
+       
+    //exit(0);
   }
 }
 
