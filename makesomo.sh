@@ -1,5 +1,14 @@
 #!/bin/bash
 
+MKARGS="$@"
+if [ $# -eq 0 ]; then
+  MKARGS="-j 7"
+  if [ `uname -s|grep -ci "mingw"` -ne 0 ]; then
+    MKARGS="-j 2"
+  fi
+fi
+export MAKE="make ${MKARGS}"
+
 ISMAC=0
 FIXMAC=""
 if [ "`uname -s`" = "Darwin" ]; then
@@ -72,8 +81,8 @@ qmake us_somo.pro
 cp -p Makefile  Makefile-all
 qmake libus_somo.pro
 cp -p Makefile  Makefile-lib
-make -j2 -f Makefile-lib
-make -j2 -f Makefile-all
+${MAKE} -f Makefile-lib
+${MAKE} -f Makefile-all
 cd $SOMO3
 
 if [ $ISMAC -ne 0 ]; then
