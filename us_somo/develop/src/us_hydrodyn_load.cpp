@@ -1852,9 +1852,9 @@ QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *m
       .arg( model->volume )
       .arg( model->Rg, 0, 'f', 2 )
       .arg( model->num_elect )
-      .arg( model->protons )
-      .arg( model->protons - model->num_elect )
-      .arg( model->isoelectric_point )
+      .arg( model->protons, 0, 'f', 1 )
+      .arg( model->protons - model->num_elect, 0, 'f', 1 )
+      .arg( model->isoelectric_point, 0, 'f', 2 )
       ;
 
    if ( model->volume ) {
@@ -1864,7 +1864,7 @@ QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *m
                        "Average electron density    : %1 [A^-3]\n"
                        )
                  )
-      .arg( model->num_elect / model->volume )
+         .arg( model->num_elect / model->volume, 0, 'f', 3 )
       ;
    }
 
@@ -1939,6 +1939,7 @@ void US_Hydrodyn::calc_mw()
       current_model = i;
 
       double protons                    = 0.0;
+      double electrons                  = 0.0;
       model_vector[i].mw                = 0.0;
       model_vector[i].ionized_mw_delta  = 0.0;
       model_vector[i].volume            = 0.0;
@@ -2036,7 +2037,8 @@ void US_Hydrodyn::calc_mw()
                      total_cm_mw                                  += atom_mw_w_delta;
                      model_vector[i].molecule[j].mw               += this_atom->mw;
                      model_vector[i].molecule[j].ionized_mw_delta += this_atom->ionized_mw_delta;
-                     protons += this_atom->p_atom->hybrid.protons;
+                     protons   += this_atom->p_atom->hybrid.protons;
+                     electrons += this_atom->p_atom->hybrid.num_elect;
                   }
 
                   if ( do_excl_vol ) {
@@ -2169,7 +2171,7 @@ void US_Hydrodyn::calc_mw()
 
       model_vector[ i ].mw                = model_mw;
       model_vector[ i ].ionized_mw_delta  = model_ionized_mw_delta;
-      model_vector[ i ].num_elect         = total_e;
+      model_vector[ i ].num_elect         = electrons; // electrons; // total_e;
       model_vector[ i ].isoelectric_point = compute_isoelectric_point( model_vector[ i ] );
 
       {
