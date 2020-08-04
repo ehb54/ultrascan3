@@ -653,6 +653,7 @@ void US_Hydrodyn::read_residue_file() {
          editor_msg( "blue", QString( us_tr( "Notice: created MSROLL names file: %1" ) ).arg( f_names.fileName() ) );
       }
    }
+   qDebug() << "residues " << residue_list.size();
 }
 
 // #define DEBUG_VBAR

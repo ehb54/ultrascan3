@@ -906,6 +906,18 @@ class US_EXTERN US_Hydrodyn : public QFrame
       map < QString, map < QString, vector < QString > > > data_csv;
       QStringList                                          data_csv_headers;
 
+      QProcess *grpy;
+      void grpy_process_next();
+      void grpy_finalize();
+      QString grpy_prog;
+      QStringList grpy_to_process;
+      QStringList grpy_processed;
+      QString grpy_last_processed;
+      QString grpy_stdout;
+      bool grpy_running;
+      QString grpy_filename;
+      map < QString, vector < double > > grpy_captures;
+
       QProcess *hullrad;
       void hullrad_process_next();
       void hullrad_finalize();
@@ -940,6 +952,10 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void hullrad_readFromStderr();
       void hullrad_started();
       void hullrad_finished( int, QProcess::ExitStatus );
+      void grpy_readFromStdout();
+      void grpy_readFromStderr();
+      void grpy_started();
+      void grpy_finished( int, QProcess::ExitStatus );
       
    public:
 
