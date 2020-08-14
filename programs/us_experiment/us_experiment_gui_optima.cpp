@@ -5052,6 +5052,7 @@ void US_ExperGuiUpload::submitExperiment_confirm()
       QString keyFile  = certPath + QString( "client.key" );
       QString pemFile  = certPath + QString( "client.pem" );
 
+      /************* Old way - calls shell openssl command - will NOT work for Windows !!
       QProcess process_end;
       QString cmd_cert_end = QString("openssl x509 -enddate  -noout  -in ") + pemFile;
       //qDebug() << "cmd_cert_end: " << cmd_cert_end;
@@ -5072,10 +5073,27 @@ void US_ExperGuiUpload::submitExperiment_confirm()
       
       // Certs expiration QDate 
       QDate dEndCerts =  QDate::fromString(enddate_new, fmt);
+      *************************************************************************************/
+
+      // Native Qt's method to read cert. pem file
+      QFile certfile( pemFile );
+      certfile.open(QIODevice::ReadOnly);
+      QSslCertificate cert(&certfile,QSsl::Pem);
       
+      QDateTime expdate = cert.expiryDate();
+            
+      QString fmt = "yyyy-MM-dd";
+      QString expdate_str = expdate.toString(fmt);
+
+      qDebug() << "Qt's way of showing expiraiton date: " << cert.expiryDate() << expdate_str; 
+            
       // get current QDate
       QDate dNow(QDate::currentDate());
-      
+
+      // Certs expiration QDate 
+      QDate dEndCerts =  QDate::fromString(expdate_str, fmt);
+
+      // Difference
       int daysToExpiration = dNow.daysTo(dEndCerts);
       
       qDebug() << "Now, End, expiration in days:  " << dNow << dEndCerts << daysToExpiration;
