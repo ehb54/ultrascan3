@@ -5046,8 +5046,53 @@ void US_ExperGuiUpload::submitExperiment_confirm()
       }
     }
   else
-    link->disconnectFromServer();
-  
+    {
+      //Check certificate expiration:
+      QString certPath = US_Settings::etcDir() + QString("/optima/"); 
+      QString keyFile  = certPath + QString( "client.key" );
+      QString pemFile  = certPath + QString( "client.pem" );
+
+      QProcess process_end;
+      QString cmd_cert_end = QString("openssl x509 -enddate  -noout  -in ") + pemFile;
+      //qDebug() << "cmd_cert_end: " << cmd_cert_end;
+      
+      process_end.start( cmd_cert_end );
+      process_end.waitForFinished(-1); // will wait until finished
+      QString certs_end_stdout = process_end.readAllStandardOutput();
+      process_end.close();
+      
+      QString enddate = certs_end_stdout.split("=")[1];
+      enddate.remove(QRegExp("[\\n\\t\\r]"));
+      
+      QStringList enddate_list = enddate.split(" ");
+      QString enddate_new = enddate_list[0] + enddate_list[1] + enddate_list[3];
+      
+      qDebug() << "enddate_new: " << enddate_new;
+      QString fmt = "MMMddyyyy";
+      
+      // Certs expiration QDate 
+      QDate dEndCerts =  QDate::fromString(enddate_new, fmt);
+      
+      // get current QDate
+      QDate dNow(QDate::currentDate());
+      
+      int daysToExpiration = dNow.daysTo(dEndCerts);
+      
+      qDebug() << "Now, End, expiration in days:  " << dNow << dEndCerts << daysToExpiration;
+
+      if ( daysToExpiration <= 30 )
+	{
+	  qDebug() << "Certs nearing expiration!! ";
+	  
+	  QMessageBox::warning( this,
+				tr( "License Key Nearing Expiraiton" ),
+				QString(tr( "Your license key will expire within %1 days. \n\n This program will not function without it.") ).arg(daysToExpiration));
+	  
+	}
+
+      //Disconnect link
+      link->disconnectFromServer();
+    }
   //  End of checkig for conneciton to Optima sys_data server ///////////////////////////////////////////////
  
 
