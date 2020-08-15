@@ -5002,16 +5002,61 @@ void US_ExperGuiUpload::submitExperiment_confirm()
   LinkSys *link = new LinkSys;
   bool status_sys_data = link->connectToServer( dbhost, optima_msgPort.toInt() );
 
-  if ( !status_sys_data )
+  // Ceritificate location && check for nearing or actual expiration date ////////////////////
+  QString certPath = US_Settings::etcDir() + QString("/optima/"); 
+  QString keyFile  = certPath + QString( "client.key" );
+  QString pemFile  = certPath + QString( "client.pem" );
+
+  QFile certfile( pemFile );
+  certfile.open(QIODevice::ReadOnly);
+  QSslCertificate cert(&certfile,QSsl::Pem);
+
+  QDateTime expdate = cert.expiryDate();
+            
+  QString fmt = "yyyy-MM-dd";
+  QString expdate_str = expdate.toString(fmt);
+  
+  qDebug() << "Qt's way of showing expiraiton date: " << cert.expiryDate() << expdate_str; 
+  
+  // get current QDate
+  QDate dNow(QDate::currentDate());
+  
+  // Certs expiration QDate 
+  QDate dEndCerts =  QDate::fromString(expdate_str, fmt);
+  
+  // Difference
+  int daysToExpiration = dNow.daysTo(dEndCerts);
+  
+  qDebug() << "Now, End, expiration in days:  " << dNow << dEndCerts << daysToExpiration;
+  
+  // End of checking expiraiton date ////////////////////////////////////////////////////////////
+  
+  
+  if ( !status_sys_data || daysToExpiration <= 0 )
     {
       QMessageBox msgBox_sys_data;
       msgBox_sys_data.setIcon(QMessageBox::Critical);
       msgBox_sys_data.setWindowTitle(tr("Optima System Data Server Connection Problem!"));
-      msgBox_sys_data.setText( QString( tr("Attention! UltraScan is not able to communicate with the data acquisition server on the %1. Please check the following:"))
-			       .arg(alias));
       
-      msgBox_sys_data.setInformativeText( QString( tr( "1. %1 is turned on \n2. the data acquisition server on %1 is running \n3. your license key is stored in $HOME/ultrascan/etc/optima and is not expired \n\nSubmission of the experimental protocol is suspended until this condition is resolved. \n\nFor now, you may choose to save the protocol into LIMS database." ))
-					  .arg(alias));
+      QString msg_sys_text = QString("Attention! UltraScan is not able to communicate with the data acquisition server on the %1.").arg(alias);
+      QString msg_sys_text_info = QString("");
+      
+      if ( daysToExpiration > 0 )
+	{
+	  msg_sys_text += QString(tr("Please check the following:"));
+	  msg_sys_text_info += QString( tr("1. %1 is turned on \n2. the data acquisition server on %1 is running \n3. your license key is stored in $HOME/ultrascan/etc/optima and is not expired \n\nSubmission of the experimental protocol is suspended until this condition is resolved." ))
+	    .arg(alias);
+	}
+      else
+	{
+	  msg_sys_text_info += QString( tr("Your license key is expired! Submission of the experimental protocol is suspended. \nPlease renew the key and try to submit again."));
+	}
+
+      msg_sys_text_info += QString( tr ("\n\nFor now, you may choose to save the protocol into LIMS database.") );
+      
+      msgBox_sys_data.setText( msg_sys_text );
+      
+      msgBox_sys_data.setInformativeText( msg_sys_text_info );
       
       QPushButton *Accept_sys    = msgBox_sys_data.addButton(tr("Save Protocol"), QMessageBox::YesRole);
       QPushButton *Cancel_sys    = msgBox_sys_data.addButton(tr("Cancel"), QMessageBox::RejectRole);
@@ -5047,57 +5092,6 @@ void US_ExperGuiUpload::submitExperiment_confirm()
     }
   else
     {
-      //Check certificate expiration:
-      QString certPath = US_Settings::etcDir() + QString("/optima/"); 
-      QString keyFile  = certPath + QString( "client.key" );
-      QString pemFile  = certPath + QString( "client.pem" );
-
-      /************* Old way - calls shell openssl command - will NOT work for Windows !!
-      QProcess process_end;
-      QString cmd_cert_end = QString("openssl x509 -enddate  -noout  -in ") + pemFile;
-      //qDebug() << "cmd_cert_end: " << cmd_cert_end;
-      
-      process_end.start( cmd_cert_end );
-      process_end.waitForFinished(-1); // will wait until finished
-      QString certs_end_stdout = process_end.readAllStandardOutput();
-      process_end.close();
-      
-      QString enddate = certs_end_stdout.split("=")[1];
-      enddate.remove(QRegExp("[\\n\\t\\r]"));
-      
-      QStringList enddate_list = enddate.split(" ");
-      QString enddate_new = enddate_list[0] + enddate_list[1] + enddate_list[3];
-      
-      qDebug() << "enddate_new: " << enddate_new;
-      QString fmt = "MMMddyyyy";
-      
-      // Certs expiration QDate 
-      QDate dEndCerts =  QDate::fromString(enddate_new, fmt);
-      *************************************************************************************/
-
-      // Native Qt's method to read cert. pem file
-      QFile certfile( pemFile );
-      certfile.open(QIODevice::ReadOnly);
-      QSslCertificate cert(&certfile,QSsl::Pem);
-      
-      QDateTime expdate = cert.expiryDate();
-            
-      QString fmt = "yyyy-MM-dd";
-      QString expdate_str = expdate.toString(fmt);
-
-      qDebug() << "Qt's way of showing expiraiton date: " << cert.expiryDate() << expdate_str; 
-            
-      // get current QDate
-      QDate dNow(QDate::currentDate());
-
-      // Certs expiration QDate 
-      QDate dEndCerts =  QDate::fromString(expdate_str, fmt);
-
-      // Difference
-      int daysToExpiration = dNow.daysTo(dEndCerts);
-      
-      qDebug() << "Now, End, expiration in days:  " << dNow << dEndCerts << daysToExpiration;
-
       if ( daysToExpiration <= 30 )
 	{
 	  qDebug() << "Certs nearing expiration!! ";
