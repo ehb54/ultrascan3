@@ -125,6 +125,8 @@ class US_Edit : public US_Widgets
       QString            expType;
       QStringList        files;
       QStringList        triples;
+      QStringList        triples_all_optics;
+      
       QStringList        trip_rpms;
       QStringList        celchns;
       QStringList        rawc_wvlns;
@@ -332,7 +334,8 @@ class US_Edit : public US_Widgets
       bool readProtocolAProfile_auto ( QXmlStreamReader& );
       bool readAProfileBasicParms_auto ( QXmlStreamReader& );
       
-      void update_autoflow_record_atEditData( void );
+      void update_autoflow_record_atEditData( QString& );
+      int  create_autoflowAnalysis_record( QString&, QString& );
       
    private slots:         
       void load              ( void );

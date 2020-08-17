@@ -65,6 +65,8 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
   us_edit_auto_mode = true;
   all_loaded = false;
   is_spike_auto = false;
+
+  triples_all_optics.clear();
  
 //usmode = false;
  
@@ -1475,9 +1477,7 @@ void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
   autoflowID_passed   = details_at_editing[ "autoflowID" ].toInt();
   idInv_auto          = details_at_editing[ "invID_passed" ];
   ProtocolName_auto   = details_at_editing[ "protocolName" ];
-
-  
-  
+      
   // Deal with different filenames if any.... //////////////////////////
   filename_runID_passed = details_at_editing[ "filename" ];
   runType_combined_IP_RI = false;
@@ -6584,7 +6584,34 @@ void US_Edit::write_auto( void )
 {
 
   pb_write       ->setEnabled( false );
+
+  /*
+  //Test 
+  for ( int i = 0; i < triples.size(); ++i )
+    {
+      //qDebug() << "Triple name: " << triples[i];
+	  
+      QString current_triple_name = triples[i];
+      current_triple_name.replace(" / ",".");
+      
+      
+      if ( dataType == "IP" )
+	{
+	  QStringList triple_parts = current_triple_name.split(".");
+	  current_triple_name = QString( triple_parts[0] ) + QString(  triple_parts[1] ) + QString("Interference");
+	}
+      
+      triples_all_optics << current_triple_name;
+      
+    }
+  for ( int i = 0; i < triples_all_optics.size(); ++i )
+    qDebug() << "Triple name: " << triples_all_optics[i];
   
+  return;
+  // Test
+  */
+  
+      
   /** Check if stage is being or has already changed ***/
   QMap < QString, QString > autoflow_details;
   autoflow_details = read_autoflow_record( autoflowID_passed );
@@ -6603,6 +6630,7 @@ void US_Edit::write_auto( void )
 	}
     }
   //////////////////////////////////////////////////////////
+
   
   if ( autoflow_details[ "status" ]  != "EDIT_DATA"  || isSaved_auto() )
     {
@@ -6657,7 +6685,8 @@ void US_Edit::write_auto( void )
 	  return;
 	}
     }
-
+  
+  
   /*******************************************************/
   
    // Determine if we are using the database
@@ -6676,8 +6705,6 @@ void US_Edit::write_auto( void )
       }
    }
 
-
-   
    qDebug() << "STARTING Saving"; 
 
 
@@ -6740,10 +6767,31 @@ void US_Edit::write_auto( void )
       }
    }
 
-   // Check If all Optical Systems processed:::::::::::::::::::::::::::::
 
-      
-   qDebug() << "SAVING: Optics Type, all_processed:  " << filename_runID_auto << all_processed; 
+
+   // ALEXEY: before processing next opics system (if multiple), push truple names to the general triple array:
+  
+   for ( int i = 0; i < triples.size(); ++i )
+     {
+       //qDebug() << "Triple name: " << triples[i];
+
+       QString current_triple_name = triples[i];
+       current_triple_name.replace(" / ",".");
+       
+       
+       if ( dataType == "IP" )
+	 {
+	   QStringList triple_parts = current_triple_name.split(".");
+	   current_triple_name = QString( triple_parts[0] ) + QString(  triple_parts[1] ) + QString("Interference");
+	 }
+       
+       triples_all_optics << current_triple_name;
+     }
+
+   
+   
+   // Check If all Optical Systems processed:::::::::::::::::::::::::::::
+   qDebug() << "SAVING: Optics Type, all_processed:  " << filename_runID_auto << all_processed;
    
    if ( !all_processed )
      {
@@ -6753,12 +6801,37 @@ void US_Edit::write_auto( void )
      }
    ////////////////////////////////////////////////////////////////////
    
+   // le_status->setText( tr( "Saving COMPLETE " ) );
+   // qApp->processEvents();
+
+   //Get status json from aprofile (stages)
+   QString status_json("{\"to_process\":[\"FITMEN\",\"2DSA_IT\",\"2DSA_MC\"],\"processed\":[\"2DSA\"],\"submitted\":\"2DSA_FM\"}"); // sample
+   
+   //Create AutoflowAnalysis record:
+   QStringList AnalysisIDs;
+   for ( int i=0; i < triples_all_optics.size(); ++i )
+     {
+       qDebug() << "Triple name: " << triples_all_optics[i];
+       
+       int ID = create_autoflowAnalysis_record( triples_all_optics[i], status_json  );
+
+       if ( ID )
+	 AnalysisIDs << QString::number( ID );
+       else
+	 {
+	   qDebug() << "AnalysisID was not saved !";
+	   return;
+	 }
+     }
+
+      
+   // Now we need to Update autoflow record, reset GUI && send signal to switch to Analysis stage:
+   QString AnalysisIDsString = AnalysisIDs.join(",");
+   update_autoflow_record_atEditData( AnalysisIDsString );
+
    le_status->setText( tr( "Saving COMPLETE " ) );
    qApp->processEvents();
 
-
-   // Now we need to Update autoflow record, reset GUI && send signal to switch to Analysis stage:
-   update_autoflow_record_atEditData();
    //ALEXEY: here major actions on setting analysis tables etc. !!!!
    QMessageBox::information( this,
 			     tr( "Saving of Edit Profiles is Complete." ),
@@ -6770,10 +6843,10 @@ void US_Edit::write_auto( void )
 
 
 // Set Autoflow record to ANALSYIS && set analysises ID(s)
-void US_Edit::update_autoflow_record_atEditData( void )
+void US_Edit::update_autoflow_record_atEditData( QString& AnalysisIDsString )
 {
    QString runID_numeric     = details_at_editing_local[ "runID" ];
-
+   
    // Check DB connection
    US_Passwd pw;
    QString masterpw = pw.getPasswd();
@@ -6788,7 +6861,11 @@ void US_Edit::update_autoflow_record_atEditData( void )
 
    QStringList qry;
    qry << "update_autoflow_at_edit_data"
-       << runID_numeric;
+       << runID_numeric
+       << AnalysisIDsString;
+
+   qDebug() << "Updating Autoflow tables with analysisIDs!!!";
+   qDebug() << "query: " << qry;
    
    //db->query( qry );
 
@@ -6804,6 +6881,49 @@ void US_Edit::update_autoflow_record_atEditData( void )
      }
    
 }
+
+
+// Function to create a single autoflowAnalysis record: Pass some fields from autoflow table (set analysises IDs, filename etc.)
+int US_Edit::create_autoflowAnalysis_record( QString& tripleName, QString& status_json ) 
+{
+  //create single record in autoflowAnalysis: return ID (auto-incremented), && update/push 
+
+  int autoflowAnalysisID = 0;
+  QString final_stage("2DSA_MC");       // sample
+  
+  // Check DB connection
+   US_Passwd pw;
+   QString masterpw = pw.getPasswd();
+   US_DB2* db = new US_DB2( masterpw );
+   
+   if ( db->lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+       return autoflowAnalysisID;
+     }
+
+   QString status =  QString("Saving AutoflowAnalysis Profile for Triple %1").arg( tripleName );
+   le_status->setText( status );
+   qApp->processEvents();
+   
+   QStringList qry;
+   qry << "new_autoflow_analysis_record"
+       << tripleName
+       << filename_runID_auto
+       << AProfileGUID
+       << status_json
+       << final_stage;
+
+   qDebug() << "AutoflowAnalysis Record for triple: " << tripleName;
+   qDebug() << "Query: " << qry;
+   
+   autoflowAnalysisID = db->functionQuery( qry );
+
+   return autoflowAnalysisID;
+   
+}
+
 
 // Save edits for a triple
 void US_Edit::write_triple_auto( int trx )
