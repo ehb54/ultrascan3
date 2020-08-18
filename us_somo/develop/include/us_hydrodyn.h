@@ -916,6 +916,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QString grpy_stdout;
       bool grpy_running;
       QString grpy_filename;
+      QVector < int > grpy_model_numbers;
+      int grpy_last_model_number;
       map < QString, vector < double > > grpy_captures;
 
       QProcess *hullrad;
@@ -1114,13 +1116,14 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void update_bead_model_prefix(const QString &);
       void radial_reduction( bool from_grid = false );
       void show_hydro_results();
-      void write_bead_asa(QString, vector <PDB_atom> *);
-      void write_bead_tsv(QString, vector <PDB_atom> *);
-      void write_bead_ebf(QString, vector <PDB_atom> *);
-      void write_bead_spt(QString, vector <PDB_atom> *, bool movie_frame = false, float scale = 1, bool black_background = false);
-      void write_bead_model(QString, vector <PDB_atom> *, QString extra_text = "" );
-      void write_corr(QString, vector <PDB_atom> *);
-      bool read_corr(QString, vector <PDB_atom> *);
+      void write_bead_asa( QString, vector <PDB_atom> * );
+      void write_bead_tsv( QString, vector <PDB_atom> * );
+      void write_bead_ebf( QString, vector <PDB_atom> * );
+      void write_bead_spt( QString, vector <PDB_atom> *, bool movie_frame = false, float scale = 1, bool black_background = false );
+      void write_bead_model( QString, vector <PDB_atom> *, QString extra_text = "" );
+      void write_bead_model( QString, vector <PDB_atom> *, int bead_model_output, QString extra_text = "" );
+      void write_corr( QString, vector <PDB_atom> * );
+      bool read_corr( QString, vector <PDB_atom> * );
       void printError(const QString &);
       void closeAttnt(QProcess *, QString);
       void calc_vbar(struct PDB_model *, bool use_p_atom = false );

@@ -71,7 +71,11 @@ bool US_Hydrodyn::calc_grpy_hydro() {
    int models_to_proc = 0;
    int first_model_no = 0;
    QStringList model_names;
-   grpy_to_process.clear();
+   grpy_to_process   .clear();
+   grpy_model_numbers.clear();
+   grpy_processed    .clear();
+
+   QDir::setCurrent(somo_dir);
 
    for (current_model = 0; current_model < (unsigned int)lb_model->count(); current_model++) {
       if (lb_model->item(current_model)->isSelected()) {
@@ -80,25 +84,35 @@ bool US_Hydrodyn::calc_grpy_hydro() {
                first_model_no = current_model + 1;
             }
             models_to_proc++;
+            results.vbar = use_vbar( model_vector[ current_model ].vbar );
+
             editor->append( QString( "Model %1 will be included\n").arg( model_name( current_model ) ) );
             model_names.push_back( model_name( current_model ) );
             bead_model = bead_models[current_model];
 
-            grpy_to_process <<
+            QString fname = 
                somo_dir + SLASH +
                project +
                ( bead_model_from_file ? "" : QString( "_%1" ).arg( model_name( current_model ) ) ) +
                QString( bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
-               + ".bead_model"
+               ;
+
+            QTextStream( stdout ) << "grpy file is '" << fname << "'" << endl
+                                  << "grpy file.fileName() is '" << QFileInfo( fname ).baseName() << "'" << endl
+                                  << "bead model size is " << bead_model.size() << endl
                ;
             
+            write_bead_model( QFileInfo( fname ).fileName(),
+                              & bead_model,
+                              US_HYDRODYN_OUTPUT_GRPY );
+
+            grpy_to_process    << QFileInfo( fname ).fileName() + ".grpy";
+            grpy_model_numbers.push_back( current_model );
          } else {
             editor->append(QString("Model %1 - selected but bead model not built\n").arg( model_name( current_model ) ) );
          }
       }
    }
-
-   QDir::setCurrent(somo_dir);
 
    qApp->processEvents();
    if (stopFlag)
@@ -118,9 +132,12 @@ bool US_Hydrodyn::calc_grpy_hydro() {
    editor_msg( "dark blue", grpy_to_process.join( "\n" ) );
 
    grpy_running = true;
+   progress->setMaximum( grpy_to_process.size() + 1 );
+   progress->setValue( 0 );
+   
    grpy_process_next();
 
-   return false;
+   return true;
 }
 
 void US_Hydrodyn::grpy_process_next() {
@@ -132,20 +149,22 @@ void US_Hydrodyn::grpy_process_next() {
       return;
    }
 
-   grpy_last_processed = grpy_to_process[ 0 ];
-   grpy_to_process.pop_front();
-   grpy_processed.push_back( grpy_last_processed ); 
+   grpy_last_processed    = grpy_to_process   [ 0 ];
+   grpy_last_model_number = grpy_model_numbers[ 0 ];
+   grpy_to_process        .pop_front();
+   grpy_model_numbers     .pop_front();
+   grpy_processed         .push_back( grpy_last_processed ); 
 
    grpy_stdout = "";
+   progress->setValue( progress->value() + 1 );
 
    grpy = new QProcess( this );
-   //   grpy->setWorkingDirectory( dir );
+   grpy->setWorkingDirectory( somo_dir );
    // us_qdebug( "prog is " + grpy_prog );
    // us_qdebug( "grpy_last_processed " + grpy_last_processed );
    {
       QStringList args;
       args
-         << "-u"
          << grpy_last_processed;
 
       connect( grpy, SIGNAL(readyReadStandardOutput()), this, SLOT(grpy_readFromStdout()) );
@@ -188,11 +207,23 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
    disconnect( grpy, SIGNAL(readyReadStandardOutput()), 0, 0);
    disconnect( grpy, SIGNAL(readyReadStandardError()), 0, 0);
    disconnect( grpy, SIGNAL(finished( int, QProcess::ExitStatus )), 0, 0);
+   if (stopFlag) {
+      editor_msg( "red", us_tr( "Stopped by user\n" ) );
+      pb_calc_hydro->setEnabled(true);
+      pb_calc_zeno->setEnabled(true);
+      pb_bead_saxs->setEnabled(true);
+      pb_calc_grpy->setEnabled( true );
+      pb_calc_hullrad->setEnabled( true );
+      pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
+      pb_show_hydro_results->setEnabled(false);
+      progress->reset();
+      return;
+   }
+
    editor->append("GRPY finished.\n");
 
    // post process the files
-#if defined( GRPY_POST_PROCESS )
-
+   
    QStringList caps;
    caps
       // M               :        14315     g/mol
@@ -207,39 +238,120 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
       // Dr              :       1.99e+07   s^-1
       // R(Rotation)     :        20.06     Angstroms
 
-      << "M"
-      << "v_bar"
-      << "R\\(Anhydrous\\)"
-      << "Axial Ratio"
-      << "f/fo"
-      << "Dt"
-      << "R\\(Translation\\)"
-      << "s"
-      << "\\[eta\\]"
+      << "Rotational diffusion coefficient"
+      << "1"
       << "Dr"
-      << "R\\(Rotation\\)"
+
+      << "Sedimentation coefficient \\(Mw Dlt \\(1\\. - \\(vbar\\*rho\\)\\)/\\(nA kB T\\)\\)"
+      << "1"
+      << "s"
+
+      << "Translational diffusion coefficient"
+      << "2"
+      << "Dt"
+
+      << "Zero frequency intrinsic viscosity eta 0"
+      << "1"
+      << "\\[eta\\]"
+
+      << "Relaxation time \\(1\\)"
+      << "2"
+      << "tau1"
+
+      << "Relaxation time \\(2\\)"
+      << "2"
+      << "tau2"
+
+      << "Relaxation time \\(3\\)"
+      << "2"
+      << "tau3"
+
+      << "Relaxation time \\(4\\)"
+      << "1"
+      << "tau4"
+
+      << "Relaxation time \\(5\\)"
+      << "1"
+      << "tau5"
+
+      << "Harmonic mean \\(correlation\\) time"
+      << "1"
+      << "tauh"
+
+      // << "M"
+      // << "v_bar"
+      // << "R\\(Anhydrous\\)"
+      // << "Axial Ratio"
+      // << "f/fo"
+      // << "Dt"
+      // << "R\\(Translation\\)"
+      // << "s"
+      // << "\\[eta\\]"
+      // << "Dr"
+      // << "R\\(Rotation\\)"
       ;
 
    map < QString, double > captures;
 
-   for ( int i = 0; i < (int) caps.size(); ++i ) {
-      QRegExp rx( caps[ i ] + "\\s+:\\s*(\\S+)" );
-
-      if ( rx.indexIn( grpy_stdout ) == -1 ) {
-         editor_msg( "red", QString( us_tr( "Could not find %1 file in GRPY output" ) ).arg( caps[ i ].replace( "\\", "" ) ) );
-         grpy_captures[ caps[ i ] ].push_back( -9e99 );
-      } else {
-         grpy_captures[ caps[ i ] ].push_back( rx.cap( 1 ).toDouble() );
-         us_qdebug( QString( "%1 : '%2'\n" ).arg( caps[ i ] ).arg( grpy_captures[ caps[ i ] ].back() ) );
+   for ( int i = 0; i < (int) caps.size(); i += 3 ) {
+      QRegExp rx = QRegExp( caps[ i ] + "\\s*:\\s*(\\S+)" );
+      int pos = 0;
+      bool found = false;
+      int cappos = caps[ i + 1 ].toInt();
+      int count  = 1;
+      while ( ( pos = rx.indexIn( grpy_stdout,pos ) ) != -1 ) {
+         if ( cappos == count ) {
+            grpy_captures[ caps[ i + 2 ] ].push_back( rx.cap( 1 ).toDouble() );
+            us_qdebug( QString( "%1 : '%2'\n" ).arg( caps[ i + 2 ] ).arg( grpy_captures[ caps[ i + 2 ] ].back() ) );
+            found = true;
+            break;
+         }
+         pos += rx.matchedLength();
+         ++count;
+      }         
+      if ( !found ) {
+         qDebug() << "grpy caps not found " << i << "'" << caps[ i ] << "'";
+         editor_msg( "red", QString( us_tr( "Could not find '%1' in GRPY output" ) ).arg( caps[ i ].replace( "\\", "" ) ) );
+         grpy_captures[ caps[ i + 2 ] ].push_back( -9e99 );
       }
+
+
+      // failed attempt with the new QRegularExpression class :(
+
+      // QString thisre = caps[ i ] + "\\s*:\\s*(\\S+)";
+      // QRegularExpression re( caps[ i ] + "\\s*:\\s*(\\S+)", QRegularExpression::MultilineOption );
+      // QRegularExpressionMatchIterator remi = re.globalMatch( grpy_stdout );
+      
+      // bool found = true;
+      // QRegularExpressionMatch rem;
+      // for ( int j = 0; j < caps[ i + 2 ].toInt(); ++j ) {
+      //    if ( remi.hasNext() ) {
+      //       rem = remi.next();
+      //       qDebug() << "captured match " << i << " full stringlist " << rem.capturedTexts().join( " : " );
+      //    } else {
+      //       found = false;
+      //       break;
+      //    }
+      // }
+      // if ( found ) {
+      //    qDebug() << "grpy caps FOUND " << i << "'" << thisre << "'";
+      //    qDebug() << "rem captured " << rem.captured( 0 );
+         
+      //    grpy_captures[ caps[ i + 2 ] ].push_back( rem.captured( 0 ).toDouble() );
+      //    us_qdebug( QString( "%1 : '%2'\n" ).arg( caps[ i + 2 ] ).arg( grpy_captures[ caps[ i + 2 ] ].back() ) );
+      // } else {
+      //    qDebug() << "grpy caps not found " << i << "'" << caps[ i ] << "'";
+      //    editor_msg( "red", QString( us_tr( "Could not find '%1' in GRPY output" ) ).arg( caps[ i ].replace( "\\", "" ) ) );
+      //    grpy_captures[ caps[ i + 2 ] ].push_back( -9e99 );
+      // }
+
    }
 
    // accumulate data as in zeno (e.g. push values to data structures )
-#endif
 
    // save stdout
    {
-      QString grpy_out_name = grpy_last_processed.replace( QRegExp( ".bead_model$" ), ".grpy_res" );
+      QString grpy_out_name = grpy_last_processed.replace( QRegExp( ".grpy$" ), ".grpy_res" );
       QFile f( grpy_out_name );
       if ( !f.open( QIODevice::WriteOnly ) ) {
          editor_msg( "red", QString( us_tr( "Error: could not open output file %1 for writing" ) ).arg( grpy_out_name ) );
@@ -248,6 +360,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
          t << grpy_stdout;
          editor_msg( "dark blue", QString( us_tr( "Wrote %1" ) ).arg( grpy_out_name ) );
          f.close();
+         last_hydro_res = grpy_out_name;
       }
    }
    
@@ -264,17 +377,17 @@ void US_Hydrodyn::grpy_started()
 void US_Hydrodyn::grpy_finalize() {
    // us_qdebug( QString( "grpy_finalize %1" ).arg( grpy_filename ) );
    editor_msg( "black", "Finalizing GRPY results" );
-   for ( map < QString, vector < double > >::iterator it = grpy_captures.begin();
-         it != grpy_captures.end();
-         ++it ) {
-      editor_msg( "dark red",  US_Vector::qs_vector( it->first, it->second ) );
-   }
+   // for ( map < QString, vector < double > >::iterator it = grpy_captures.begin();
+   //       it != grpy_captures.end();
+   //       ++it ) {
+   //    editor_msg( "dark red",  US_Vector::qs_vector( it->first, it->second ) );
+   // }
 
    hydro_results grpy_results;
    hydro_results grpy_results2;
 
-   grpy_results.method                = "Grpy";
-   grpy_results.mass                  = 0e0;
+   grpy_results.method                = "GRPY";
+   grpy_results.mass                  = model_vector[ grpy_last_model_number ].mw + model_vector[ grpy_last_model_number ].ionized_mw_delta;
    grpy_results.s20w                  = 0e0;
    grpy_results.s20w_sd               = 0e0;
    grpy_results.D20w                  = 0e0;
@@ -287,7 +400,6 @@ void US_Hydrodyn::grpy_finalize() {
    grpy_results.rg_sd                 = 0e0;
    grpy_results.tau                   = 0e0;
    grpy_results.tau_sd                = 0e0;
-   grpy_results.vbar                  = 0e0;
    grpy_results.asa_rg_pos            = 0e0;
    grpy_results.asa_rg_neg            = 0e0;
    grpy_results.ff0                   = 0e0;
@@ -295,15 +407,19 @@ void US_Hydrodyn::grpy_finalize() {
 
    grpy_results.solvent_name          = hydro.solvent_name;
    grpy_results.solvent_acronym       = hydro.solvent_acronym;
-   grpy_results.solvent_viscosity     = hydro.solvent_viscosity;
-   grpy_results.solvent_density       = hydro.solvent_density;
+   grpy_results.solvent_viscosity     = use_solvent_visc();
+   grpy_results.solvent_density       = use_solvent_dens();
    grpy_results.temperature           = hydro.temperature;
-   grpy_results.name                  = project;
-   grpy_results.used_beads            = 0;
+   grpy_results.name                  = QFileInfo( grpy_last_processed ).baseName();
+   grpy_results.used_beads            = bead_models[ grpy_last_model_number ].size();
    grpy_results.used_beads_sd         = 0e0;
-   grpy_results.total_beads           = 0;
+   grpy_results.total_beads           = bead_models[ grpy_last_model_number ].size();
    grpy_results.total_beads_sd        = 0e0;
-   grpy_results.vbar                  = 0;
+   grpy_results.vbar                  = use_vbar( model_vector[ grpy_last_model_number ].vbar );
+   qDebug() << "finalize results.vbar " <<  use_vbar( model_vector[ grpy_last_model_number ].vbar );
+   qDebug() << "finalize current model" <<  grpy_last_model_number;
+   
+   grpy_results.pH                    = hydro.pH;
 
    grpy_results.num_models            = grpy_processed.size();
 
@@ -356,8 +472,8 @@ void US_Hydrodyn::grpy_finalize() {
          }
 
          if ( it->first == "s" ) {
-            grpy_results.s20w += it->second[ i ] * 1e13;
-            grpy_results2.s20w += it->second[ i ] * it->second[ i ] * 1e26;
+            grpy_results.s20w += it->second[ i ];
+            grpy_results2.s20w += it->second[ i ] * it->second[ i ];
          }
 
          if ( it->first == "\\[eta\\]" ) {
@@ -365,13 +481,13 @@ void US_Hydrodyn::grpy_finalize() {
             grpy_results2.viscosity += it->second[ i ] * it->second[ i ];
          }
 
-         if ( it->first == "Dr" ) {
-            //    grpy_results.mass += it->second[ i ];
-            //    grpy_results2.mass += it->second[ i ] * it->second[ i ];
-         }
-         if ( it->first == "R\\(Rotation\\)" ) {
-            //    grpy_results.mass += it->second[ i ];
-            //    grpy_results2.mass += it->second[ i ] * it->second[ i ];
+         // if ( it->first == "Dr" ) {
+         //    grpy_results.rot_diff_coef  += it->second[ i ];
+         //    grpy_results2.rot_diff_coef += it->second[ i ] * it->second[ i ];
+         // }
+         if ( it->first == "tauh" ) {
+            grpy_results.tau += it->second[ i ] * 1e9;
+            grpy_results2.tau += it->second[ i ] * it->second[ i ] * 1e18;
          }
       }
    }
@@ -430,7 +546,7 @@ void US_Hydrodyn::grpy_finalize() {
       this_data.axi_ratios_xy                 = 0e0;
       this_data.axi_ratios_yz                 = 0e0;
       this_data.results.method                = "Grpy";
-      this_data.results.mass                  = 0e0;
+      this_data.results.mass                  = model_vector[ grpy_last_model_number ].mw + model_vector[ grpy_last_model_number ].ionized_mw_delta;
       this_data.results.s20w                  = 0e0;
       this_data.results.s20w_sd               = 0e0;
       this_data.results.D20w                  = 0e0;
@@ -499,13 +615,143 @@ void US_Hydrodyn::grpy_finalize() {
       }
 
       if ( it->second.count( "Dr" ) ) {
-         // this_data.results.mass = it->second[ "Dr" ];
+         this_data.rot_diff_coef = it->second[ "Dr" ];
+      }
+      if ( it->second.count( "tau1" ) ) {
+         this_data.rel_times_tau_1 = it->second[ "tau1" ];
+      }
+      if ( it->second.count( "tau2" ) ) {
+         this_data.rel_times_tau_2 = it->second[ "tau2" ];
+      }
+      if ( it->second.count( "tau3" ) ) {
+         this_data.rel_times_tau_3 = it->second[ "tau3" ];
+      }
+      if ( it->second.count( "tau4" ) ) {
+         this_data.rel_times_tau_4 = it->second[ "tau4" ];
+      }
+      if ( it->second.count( "tau5" ) ) {
+         this_data.rel_times_tau_5 = it->second[ "tau5" ];
+      }
+      if ( it->second.count( "tauh" ) ) {
+         this_data.rel_times_tau_h = it->second[ "tauh" ];
+         this_data.rel_times_tau_m =
+            (
+             this_data.rel_times_tau_1 +
+             this_data.rel_times_tau_2 +
+             this_data.rel_times_tau_3 +
+             this_data.rel_times_tau_4 +
+             this_data.rel_times_tau_5
+             ) / 5.0;
+         this_data.results.tau = this_data.rel_times_tau_h;
       }
 
       if ( it->second.count( "R\\(Rotation\\)" ) ) {
          // this_data.results.mass = it->second[ "R\\(Rotation\\)" ];
       }
       
+      // calculated params
+
+      {
+         double fconv = pow(10.0, this_data.hydro.unit + 9);
+         // bead model rg
+
+         if ( this_data.results.mass ) {
+            // compute center of mass
+            bead_model = bead_models[ grpy_last_model_number ];
+            point cm;
+            cm.axis[ 0 ] = 0.0;
+            cm.axis[ 1 ] = 0.0;
+            cm.axis[ 2 ] = 0.0;
+            double total_cm_mw = 0e0;
+
+            for ( unsigned int i = 0; i < bead_model.size(); ++i )
+            {
+               PDB_atom *this_atom = &(bead_model[i]);
+               double bead_tot_mw = this_atom->bead_mw + this_atom->bead_ionized_mw_delta;
+               cm.axis[ 0 ] += bead_tot_mw * this_atom->bead_coordinate.axis[ 0 ];
+               cm.axis[ 1 ] += bead_tot_mw * this_atom->bead_coordinate.axis[ 1 ];
+               cm.axis[ 2 ] += bead_tot_mw * this_atom->bead_coordinate.axis[ 2 ];
+               total_cm_mw += bead_tot_mw;
+            }
+
+            cm.axis[ 0 ] /= total_cm_mw;
+            cm.axis[ 1 ] /= total_cm_mw;
+            cm.axis[ 2 ] /= total_cm_mw;
+
+            // now compute Rg
+            double Rg2 = 0e0;
+
+            for ( unsigned int i = 0; i < bead_model.size(); ++i )
+            {
+               PDB_atom *this_atom = &(bead_model[i]);
+               Rg2 += ( this_atom->bead_mw + this_atom->bead_ionized_mw_delta ) * 
+                  ( 
+                   ( this_atom->bead_coordinate.axis[ 0 ] - cm.axis[ 0 ] ) *
+                   ( this_atom->bead_coordinate.axis[ 0 ] - cm.axis[ 0 ] ) +
+                   ( this_atom->bead_coordinate.axis[ 1 ] - cm.axis[ 1 ] ) *
+                   ( this_atom->bead_coordinate.axis[ 1 ] - cm.axis[ 1 ] ) +
+                   ( this_atom->bead_coordinate.axis[ 2 ] - cm.axis[ 2 ] ) *
+                   ( this_atom->bead_coordinate.axis[ 2 ] - cm.axis[ 2 ] ) 
+                    );
+            }
+
+            double Rg = sqrt( Rg2 / total_cm_mw );
+
+            this_data.results.rg = Rg * fconv;
+            grpy_results.rg = Rg * fconv;
+            us_qdebug( QString( "rg %1 fconv %2 rg2 %3 total_cm_mw %4" ).arg( Rg ).arg( fconv ).arg( Rg2 ).arg( total_cm_mw ) );
+         }
+
+         // tra_fric_coef
+
+         {
+            if ( this_data.results.D20w ) {
+               this_data.tra_fric_coef =
+                  R * ( K0 + hydro.temperature ) / ( AVOGADRO * this_data.results.D20w );
+
+               QTextStream( stdout )
+                  << "tfc " << this_data.tra_fric_coef << " = " << endl
+                  << "R * ( K0 + hydro.temperature )" << ( R * ( K0 + hydro.temperature ) ) << " / " << endl
+                  << "AVOGADRO * this_data.results.D20w" << ( AVOGADRO * this_data.results.D20w ) << endl
+                  ;
+               
+            }
+         }
+
+         // stokes radius
+         {
+            if ( this_data.results.D20w ) {
+               this_data.results.rs = 1e1 * ( 1e7 / fconv ) * 
+                  R * ( K0 + hydro.temperature ) / ( AVOGADRO * 6.0 * M_PI * use_solvent_visc() * this_data.results.D20w );
+               grpy_results.rs = this_data.results.rs;
+            }
+         }
+
+         // need ff0 & stokes radius
+
+         {
+            QTextStream(stdout)
+               << "f    = " << this_data.tra_fric_coef << endl
+               << "Rs   = " << this_data.results.rs << endl
+               << "f0   = " << ( this_data.results.rs * 6.0 * M_PI * use_solvent_visc() ) << endl
+               << "f/f0 = " << ( this_data.tra_fric_coef / ( this_data.results.rs * 6.0 * M_PI * use_solvent_visc() ) ) << endl
+               ;
+            
+            this_data.results.ff0 = 
+               this_data.tra_fric_coef * 10 / 
+               ( fconv * 6e0 * M_PI *  use_solvent_visc() * 
+                 pow( 3.0 * this_data.results.mass * grpy_results.vbar / (4.0 * M_PI * AVOGADRO), 1.0/3.0 ) );
+
+            QTextStream( stdout )
+               << "ff0 " << this_data.results.ff0 << " = " << endl
+               ;
+
+            // this_data.results.ff0_sd = this_data.results.ff0 * this_data.tra_fric_coef_sd / this_data.tra_fric_coef;
+            grpy_results.ff0 = this_data.results.ff0;
+         }
+      }
+
+
       if ( batch_widget &&
            batch_window->save_batch_active )
       {
@@ -538,7 +784,7 @@ void US_Hydrodyn::grpy_finalize() {
       if ( num <= 1 ) {
          results = grpy_results;
       } else {
-         grpy_results.name = QFileInfo( grpy_filename ).baseName();
+         grpy_results.name = grpy_filename;
          double numinv = 1e0 / num;
          grpy_results.mass          *= numinv;
          grpy_results.s20w          *= numinv;
@@ -569,6 +815,8 @@ void US_Hydrodyn::grpy_finalize() {
       }
    }
 
+   qDebug() << "hydro_results enabled";
+   
    pb_show_hydro_results->setEnabled( true );
    grpy_running = false;
    pb_calc_hydro->setEnabled(true);
@@ -577,7 +825,6 @@ void US_Hydrodyn::grpy_finalize() {
    pb_calc_grpy->setEnabled( true );
    pb_calc_hullrad->setEnabled( true );
    pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
-   pb_show_hydro_results->setEnabled(false);
    progress->reset();
    editor_msg( "black", "GRPY finished" );
 

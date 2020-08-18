@@ -433,6 +433,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    anaflex = NULL;
    anaflex_return_to_bd_load_results = false;
    bd_anaflex_enables(false);
+   grpy = NULL;
 
    last_read_bead_model = "";
    last_hydro_res = "";
@@ -3922,7 +3923,7 @@ void US_Hydrodyn::open_hydro_results()
             
             select_from_directory_history( use_dir, this );
 
-            filename = QFileDialog::getOpenFileName( this , windowTitle() , use_dir , "*.hydro_res *.HYDRO_RES *.zno *.ZNO" );
+            filename = QFileDialog::getOpenFileName( this , windowTitle() , use_dir , "*.hydro_res *.HYDRO_RES *.zno *.ZNO *.grpy_res *.GRPY_RES" );
 
             if ( !filename.isEmpty() )
             {
@@ -3943,7 +3944,7 @@ void US_Hydrodyn::open_hydro_results()
 
       select_from_directory_history( use_dir, this );
 
-      filename = QFileDialog::getOpenFileName( this , windowTitle() , use_dir , "*.hydro_res *.HYDRO_RES *.zno *.ZNO" );
+      filename = QFileDialog::getOpenFileName( this , windowTitle() , use_dir , "*.hydro_res *.HYDRO_RES *.zno *.ZNO *.grpy_res *.GRPY_RES" );
 
       if ( !filename.isEmpty() )
       {
@@ -4042,6 +4043,11 @@ void US_Hydrodyn::stop_calc()
    {
       anaflex->terminate();
       QTimer::singleShot( 1000, anaflex, SLOT( kill() ) );
+   }
+   if ( grpy_running && grpy && grpy->state() == QProcess::Running )
+   {
+      grpy->terminate();
+      QTimer::singleShot( 1000, grpy, SLOT( kill() ) );
    }
    pb_stop_calc->setEnabled(false);
 }

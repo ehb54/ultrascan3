@@ -122,7 +122,8 @@ void US_Hydrodyn::write_bead_spt(QString fname,
                   );
       movie_text.push_back(fname);
    }
-   fprintf(fspt, ( last_spt_text.isNull() ? "" : last_spt_text.toLatin1().data() ) );
+   // fprintf(fspt, ( last_spt_text.isNull() ? "" : last_spt_text.toLatin1().data() ) );
+   fputs( ( last_spt_text.isNull() ? "" : last_spt_text.toLatin1().data() ), fspt );
    fclose(fspt);
    fclose(fbms);
 }
@@ -229,7 +230,7 @@ void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
          total_ref_asa += (*model)[i].ref_asa;
          total_mass += (*model)[i].bead_ref_mw + (*model)[i].bead_ref_ionized_mw_delta;
          printf("write_bead_asa model[%d].bead_ref_mw %g\n",
-                i, (*model)[i].bead_ref_mw) + (*model)[i].bead_ref_ionized_mw_delta;
+                i, ((*model)[i].bead_ref_mw) + (*model)[i].bead_ref_ionized_mw_delta);
          total_vol += (*model)[i].bead_ref_volume_unhydrated;
 
          QString residue =
@@ -277,6 +278,18 @@ void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
 
    fclose(f);
    editor_msg("dark blue", QString("").sprintf("Anhydrous volume %.2f A^3", total_vol));
+}
+
+void US_Hydrodyn::write_bead_model(
+                                   QString fname,
+                                   vector < PDB_atom > *model,
+                                   int bead_model_output = US_HYDRODYN_OUTPUT_SOMO,
+                                   QString extra_text
+                                   ) {
+   int save_output = bead_output.output;
+   bead_output.output = bead_model_output;
+   write_bead_model( fname, model, extra_text );
+   bead_output.output = save_output;
 }
 
 void US_Hydrodyn::write_bead_model( QString fname, 
@@ -453,7 +466,7 @@ void US_Hydrodyn::write_bead_model( QString fname,
       fprintf(fgrpy,
               "%-30s\tTitle\n"
               "%-30g\tTemperature\n"
-              "%-30g\tpH\n"
+              // "%-30g\tpH\n"
               "%-30g\tSolvent viscosity\n"
               "%-30g\tMolecular weight\n"
               "%-30g\tSpecific volume of macromolecule\n"
@@ -463,11 +476,11 @@ void US_Hydrodyn::write_bead_model( QString fname,
 
               ,QFileInfo(fname).fileName().toLatin1().data()
               ,hydro.temperature
-              ,hydro.pH
-              ,hydro.solvent_viscosity * 0.01
+              // ,hydro.pH
+              ,use_solvent_visc() * 0.01
               ,tot_mw
               ,results.vbar
-              ,hydro.solvent_density
+              ,use_solvent_dens()
               ,hydro.unit + 2
               ,beads
               
@@ -588,12 +601,15 @@ void US_Hydrodyn::write_bead_model( QString fname,
               "as in original PDB file"
               ,-hydro.unit
               );
-      fprintf(fsomo, ( options_log.isNull() ? "" : options_log.toLatin1().data() ) );
-      fprintf(fsomo, ( last_abb_msgs.isNull() ? "" : last_abb_msgs.toLatin1().data() ) );
+      // fprintf(fsomo, ( options_log.isNull() ? "" : options_log.toLatin1().data() ) );
+      // fprintf(fsomo, ( last_abb_msgs.isNull() ? "" : last_abb_msgs.toLatin1().data() ) );
+      fputs(( options_log.isNull() ? "" : options_log.toLatin1().data() ), fsomo );
+      fputs(( last_abb_msgs.isNull() ? "" : last_abb_msgs.toLatin1().data() ), fsomo );
       fprintf(fsomo, "\nMolecular weight total: %.2f [Da]\n", summary_mw );
       if ( !extra_text.isEmpty() )
       {
-         fprintf(fsomo, extra_text.toLatin1().data() );
+         // fprintf(fsomo, extra_text.toLatin1().data() );
+         fputs(extra_text.toLatin1().data(), fsomo );
       }
 
       fclose(fsomo);

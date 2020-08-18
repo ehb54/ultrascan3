@@ -392,7 +392,8 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::transpose()
                // cout <<  QString("array2d_to_save[%1].size() == %2\n")
                // .arg(j)
                // .arg(array2d_to_save[j].size());
-               fprintf(of, comma.toLatin1().data());
+               // fprintf(of, comma.toLatin1().data());
+               fputs( comma.toLatin1().data(), of );
             } else {
                fprintf(of, "%s%s", comma.toLatin1().data(), array2d_to_save[j][i].toLatin1().data());
             }
@@ -734,7 +735,8 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::save_as_dat()
                // cout <<  QString("array2d_to_save[%1].size() == %2\n")
                // .arg(j)
                // .arg(array2d_to_save[j].size());
-               fprintf(of, tab.toLatin1().data());
+               // fprintf(of, tab.toLatin1().data());
+               fputs( tab.toLatin1().data(), of );
             } else {
                fprintf(of, "%s%s", tab.toLatin1().data(), QString( "%1" ).arg( array2d_to_save[j][i] ).replace( "\"", "'" ).toLatin1().data() );
             }
