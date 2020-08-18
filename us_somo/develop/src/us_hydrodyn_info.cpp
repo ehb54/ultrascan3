@@ -683,6 +683,40 @@ void US_Hydrodyn::info_residue_protons_electrons_at_pH( double pH, const struct 
 
 }
 
+QString US_Hydrodyn::info_cite( const QString & package ) {
+   static map < QString, QString > citations =
+      {
+         {
+          "zeno",
+          "Kang EH, Mansfield ML, Douglas JF (2004) Numerical path integration technique for the calculation of transport properties of proteins. Phys Rev E Stat Nonlinear Soft Matter Phys 69:031918.\n"
+          "Mansfield ML, Douglas JF (2008) Improved path integration method for estimating the intrinsic viscosity of arbitrarily shaped particles. Phys Rev E Stat Nonlinear Soft Matter Phys 78:046712.\n"
+          "Juba D, Audus DJ, Mascagni M, Douglas JF, Keyrouz W (2017) ZENO: Software for calculating hydrodynamic, electrical, and shape properties of polymer and particle suspensions. J Res Natl Inst Stand Technol 122:1-2.\n"
+         }
+         ,{
+           "somo",
+           "Brookes, EH and Rocco, M., Recent advances in the UltraScan SOlution MOdeller (US-SOMO) hydrodynamic and small-angle scattering data analysis and simulation suite. Eur. Biophys. J. 47(7) 855-64 (2018) doi: 10.1007/s00249-018-1296-0\n"
+           "Rai, N, Nollmann, M, Spotorno, B, Tassara, G, Byron, O, and Rocco, M. SOMO (SOlution MOdeler): Differences between X-Ray and NMR-Derived Bead Models Suggest a Role for Side Chain Flexibility in Protein Hydrodynamics. Structure 13, 723-734, 2005\n"
+         }
+         ,{
+           "grpy",
+           "Zuk, P.J., Cichocki, B. and Szymczak, P., 2018. GRPY: an accurate bead method for calculation of hydrodynamic properties of rigid biomacromolecules. Biophysical journal, 115(5), pp.782-800.\n"
+         }
+         ,{
+           "smi",
+           "Brookes, EH and Rocco, M., Recent advances in the UltraScan SOlution MOdeller (US-SOMO) hydrodynamic and small-angle scattering data analysis and simulation suite. Eur. Biophys. J. 47(7) 855-64 (2018) doi: 10.1007/s00249-018-1296-0\n"
+         }
+         ,{
+           "atob",
+           "Byron, O. Construction of hydrodynamic bead models from high-resolution X-ray crystallographic or nuclear magnetic resonance data. Biophys. J. 72, 408-415, 1997."
+         }
+      }
+   ;
+
+   if ( !citations.count( package ) ) {
+      return QString( "No citation information stored for package '%1'" ).arg( package );
+   }
+   return "\nFor usage of these results in publications, please cite:\n" + citations[ package ] + "\n";
+}
 
 #undef TSO
 #undef LBE

@@ -14762,7 +14762,9 @@ bool US_Hydrodyn::calc_zeno()
    pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
 
    pb_stop_calc->setEnabled(false);
-   editor->append("Calculate hydrodynamics (Zeno) completed\n");
+   editor_msg( "black", "Calculate RB hydrodynamics ZENO completed\n");
+   editor_msg( "dark blue", info_cite( "zeno" ) );
+
    if ( advanced_config.auto_show_hydro ) 
    {
       show_zeno();

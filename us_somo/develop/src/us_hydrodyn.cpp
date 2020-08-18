@@ -3810,7 +3810,9 @@ int US_Hydrodyn::do_calc_hydro()
    }
 
    pb_stop_calc->setEnabled(false);
-   editor->append("Calculate hydrodynamics completed\n");
+   editor_msg( "black", "Calculate RB hydrodynamics SMI completed\n");
+   editor_msg( "dark blue", info_cite( "smi" ) );
+   
    if ( advanced_config.auto_show_hydro ) 
    {
       show_hydro_results();

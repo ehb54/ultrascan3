@@ -135,6 +135,10 @@ bool US_Hydrodyn::calc_grpy_hydro() {
    progress->setMaximum( grpy_to_process.size() + 1 );
    progress->setValue( 0 );
    
+   timers.clear_timers();
+   timers.init_timer( "compute grpy" );
+   timers.start_timer( "compute grpy" );
+
    grpy_process_next();
 
    return true;
@@ -172,7 +176,10 @@ void US_Hydrodyn::grpy_process_next() {
       connect( grpy, SIGNAL(finished( int, QProcess::ExitStatus )), this, SLOT(grpy_finished( int, QProcess::ExitStatus )) );
       connect( grpy, SIGNAL(started()), this, SLOT(grpy_started()) );
 
-      editor_msg( "black", QString( "\nStarting Grpy on %1\n" ).arg( QFileInfo( grpy_last_processed ).baseName() ) );
+      editor_msg( "black", QString( "\nStarting GRPY on %1 with %2 beads\n" )
+                  .arg( QFileInfo( grpy_last_processed ).baseName() )
+                  .arg( bead_models[ grpy_last_model_number ].size() )
+                  );
       grpy->start( grpy_prog, args, QIODevice::ReadOnly );
    }
    
@@ -184,7 +191,7 @@ void US_Hydrodyn::grpy_readFromStdout()
    // us_qdebug( QString( "grpy_readFromStdout %1" ).arg( grpy_filename ) );
    QString qs = QString( grpy->readAllStandardOutput() );
    grpy_stdout += qs;
-   editor_msg( "brown", qs );
+   // editor_msg( "brown", qs );
    //  qApp->processEvents();
 }
    
@@ -220,7 +227,8 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
       return;
    }
 
-   editor->append("GRPY finished.\n");
+   editor_msg( "black", "GRPY finished.\n");
+   editor_msg( "blue", info_cite( "grpy" ) );
 
    // post process the files
    
@@ -545,7 +553,7 @@ void US_Hydrodyn::grpy_finalize() {
       this_data.axi_ratios_xz                 = 0e0;
       this_data.axi_ratios_xy                 = 0e0;
       this_data.axi_ratios_yz                 = 0e0;
-      this_data.results.method                = "Grpy";
+      this_data.results.method                = "GRPY";
       this_data.results.mass                  = model_vector[ grpy_last_model_number ].mw + model_vector[ grpy_last_model_number ].ionized_mw_delta;
       this_data.results.s20w                  = 0e0;
       this_data.results.s20w_sd               = 0e0;
@@ -827,6 +835,9 @@ void US_Hydrodyn::grpy_finalize() {
    pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
    progress->reset();
    editor_msg( "black", "GRPY finished" );
+   timers.end_timer( "compute grpy" );
+   editor_msg( "black", QString( "Time to process %1").arg( timers.time_min_sec( "compute grpy" ) ) );
+   editor_msg( "dark blue", info_cite( "grpy" ) );
 
    // us_qdebug( QString( "grpy_finalize %1 end" ).arg( grpy_filename ) );
 }

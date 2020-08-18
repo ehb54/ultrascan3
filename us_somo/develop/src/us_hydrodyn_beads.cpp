@@ -1341,7 +1341,7 @@ int US_Hydrodyn::calc_vdw_beads()
          {
             QString error_string;
             // create bead model from atoms
-            editor->append( QString( "Building VdW beads for model %1\n" ).arg( current_model + 1 ) );
+            editor_msg( "black", QString( "Building VdW beads for model %1\n" ).arg( current_model + 1 ) );
             qApp->processEvents();
             // somo_processed[current_model] = 0;
             if (stopFlag)
@@ -1367,6 +1367,11 @@ int US_Hydrodyn::calc_vdw_beads()
                editor_msg( "red", "Errors found during the initial creation of beads\n" );
                qApp->processEvents();
                any_errors = true;
+            } else {
+               editor_msg( "black", QString( "VdW model %1 contains %2 beads\n" )
+                           .arg( current_model + 1 )
+                           .arg( bead_models[ current_model ].size() )
+                           );
             }
          }
       }
