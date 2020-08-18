@@ -48,7 +48,7 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   in_reload_end_process = false;
   
   // // ---- Testing ----
-  // QMap < QString, QString > protocol_details;
+  //QMap < QString, QString > protocol_details;
   // protocol_details[ "aprofileguid" ] = QString("d13ffad0-6f27-4fd8-8aa0-df8eef87a6ea");
   // protocol_details[ "protocolName" ] = QString("alexey-abs-itf-test1");
   // protocol_details[ "invID_passed" ] = QString("12");
@@ -241,12 +241,20 @@ void US_Analysis_auto::gui_update_temp( )
 {
   
   //TEST access to certain groupboxes' children... Mocup
-  for ( int i=0; i<Array_of_triples.size(); ++i )
+  // for ( int i=0; i<Array_of_triples.size(); ++i )
+  //   {
+  //     QString triple_curr = Array_of_triples[i];
+
+  QMap<QString, QMap <QString, QString> >::iterator jj;
+  for ( jj = Array_of_analysis.begin(); jj != Array_of_analysis.end(); ++jj )
     {
-      QString triple_curr = Array_of_triples[i];
+      QString triple_curr = jj.key();
+      triple_curr.replace("."," / ");
       
-      if( triple_curr.contains("Interference")) 
-   	{
+      QMap <QString, QString > ana_details = jj.value();
+      
+      // if( triple_curr.contains("Interference")) 
+      // 	{
 	  //2DSA
 	  QLineEdit * lineedit_2dsa_runID    = groupbox_2DSA    [ triple_curr ]->findChild<QLineEdit *>("runID", Qt::FindDirectChildrenOnly);
    	  QLineEdit * lineedit_2dsa_owner    = groupbox_2DSA    [ triple_curr ]->findChild<QLineEdit *>("owner", Qt::FindDirectChildrenOnly);
@@ -328,7 +336,7 @@ void US_Analysis_auto::gui_update_temp( )
 	  lineedit_2dsa_mc_lastupd  ->setText( "N/A" );
 	  lineedit_2dsa_mc_cluster  ->setText( "ls5.tacc.utexas.edu" );
 
-	}
+	  //}
     }
 }
 
@@ -346,13 +354,22 @@ void US_Analysis_auto::gui_update( )
   int curr_index = rand() % fields.size(); // pick a random index
   QString field_name = fields[ curr_index ]; // 
   
-  //TEST access to certain groupboxes' children... Mocup
-  for ( int i=0; i<Array_of_triples.size(); ++i )
+  //TEST access to certain groupboxes' children... Mock-up
+  // for ( int i=0; i<Array_of_triples.size(); ++i )
+  //   {
+  //     QString triple_curr = Array_of_triples[i];
+  
+  QMap<QString, QMap <QString, QString> >::iterator jj;
+  for ( jj = Array_of_analysis.begin(); jj != Array_of_analysis.end(); ++jj )
     {
-      QString triple_curr = Array_of_triples[i];
+      QString triple_curr = jj.key();
+      triple_curr.replace("."," / ");
       
-      if( triple_curr.contains("Interference")) 
-   	{
+      QMap <QString, QString > ana_details = jj.value();
+ 
+      
+      //if( triple_curr.contains("Interference")) 
+      //{
    	  QLineEdit * lineedit_2dsa    = groupbox_2DSA    [ triple_curr ]->findChild<QLineEdit *>(field_name, Qt::FindDirectChildrenOnly);
    	  QLineEdit * lineedit_2dsa_fm = groupbox_2DSA_FM [ triple_curr ]->findChild<QLineEdit *>(field_name, Qt::FindDirectChildrenOnly);
    	  QLineEdit * lineedit_2dsa_it = groupbox_2DSA_IT [ triple_curr ]->findChild<QLineEdit *>(field_name, Qt::FindDirectChildrenOnly);
@@ -385,7 +402,7 @@ void US_Analysis_auto::gui_update( )
    		}
    	    }
    	}
-     }
+  //}
   
   in_gui_update  = false; 
 }
@@ -845,8 +862,8 @@ QMap< QString, QString> US_Analysis_auto::read_autoflowAnalysis_record( QString 
       << requestID;
   
   db->query( qry );
-  
-  if ( db->lastErrno() == US_DB2::OK )      // AutoflowAnalysis record exists
+
+  if ( db->lastErrno() == US_DB2::OK )    
     {
       while ( db->next() )
 	{

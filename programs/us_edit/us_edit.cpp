@@ -25,6 +25,8 @@
 #include "us_report.h"
 #include "us_protocol_util.h"
 
+//#include "json.hpp"
+
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c)  setData(a,b,c)
 #define setMinimum(a)      setMinValue(a)
@@ -653,7 +655,6 @@ pb_plateau->setVisible(false);
    // details[ "protocolName" ] = QString("KulkarniJ_LNP-pDNA-50-90D2O-12K_032820");
    
    // load_auto( details );
-
    
 
 }
@@ -6892,8 +6893,7 @@ int US_Edit::create_autoflowAnalysis_record( QString& tripleName, QString& statu
   //create single record in autoflowAnalysis: return ID (auto-incremented), && update/push 
 
   int autoflowAnalysisID = 0;
-  QString final_stage("2DSA_MC");       // sample
-  
+   
   // Check DB connection
    US_Passwd pw;
    QString masterpw = pw.getPasswd();
@@ -6915,9 +6915,8 @@ int US_Edit::create_autoflowAnalysis_record( QString& tripleName, QString& statu
        << tripleName
        << filename_runID_auto
        << AProfileGUID
-       << status_json
-       << final_stage;
-
+       << status_json;
+ 
    qDebug() << "AutoflowAnalysis Record for triple: " << tripleName;
    qDebug() << "Query: " << qry;
    
