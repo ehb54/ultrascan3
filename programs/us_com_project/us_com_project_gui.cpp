@@ -1015,7 +1015,7 @@ void US_InitDialogueGui::initAutoflowPanel( void )
 
 
 // Init Autoflow records
-void US_InitDialogueGui::initRecords( void )
+void US_InitDialogueGui::initRecords( void )               // <-- 1st entry point !!
 {
   for (int i=0; i < mainw->tabWidget->count(); ++i )
     {
@@ -1233,7 +1233,7 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   QString gmp_Run      = protocol_details[ "gmpRun" ];
   QString filename     = protocol_details[ "filename" ];
   QString aprofileguid = protocol_details[ "aprofileguid" ];
-  //QString analysisID   = protocol_details[ "analysisID" ];
+  QString analysisIDs  = protocol_details[ "analysisIDs" ];
   
   
   QDir directory( currDir );
@@ -1244,6 +1244,8 @@ void US_InitDialogueGui::initRecordsDialogue( void )
 
   qDebug() << "Exp. Label: "    << protocol_details[ "label" ];
   qDebug() << "GMP Run ? "      << protocol_details[ "gmpRun" ];
+
+  qDebug() << "AnalysisIDs: "   << protocol_details[ "analysisIDs" ];
   
     
   if ( stage == "LIVE_UPDATE" )
@@ -1565,6 +1567,8 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_record( int autoflowID
 
 	   protocol_details[ "filename" ]       = db->value( 17 ).toString();
 	   protocol_details[ "aprofileguid" ]   = db->value( 18 ).toString();
+
+	   protocol_details[ "analysisIDs" ]   = db->value( 19 ).toString();
 	   	   
 	 }
      }

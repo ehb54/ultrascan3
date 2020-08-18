@@ -59,7 +59,7 @@ class US_Analysis_auto : public US_Widgets
 	 bool in_gui_update;
 	 bool in_reload_end_process;
 
-	 void   reset_analysis_panel_public ( void );
+	 void reset_analysis_panel_public ( void );
 	 	 
       private:
 	 QPushButton*  pb_show_all;
@@ -69,7 +69,13 @@ class US_Analysis_auto : public US_Widgets
 	 QString    ProtocolName_auto;
 	 int        invID;
 
+	 QString    analysisIDs;
+
 	 QVector< QString >  Array_of_triples;
+
+	 QMap < QString, QMap< QString, QString > > Array_of_analysis;
+
+	 QMap < QString, QString > read_autoflowAnalysis_record( QString );
 	 
 	 void  read_protocol_data_triples( void );
 	 bool  read_protoOptics( QXmlStreamReader&  );

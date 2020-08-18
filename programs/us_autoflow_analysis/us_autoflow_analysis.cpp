@@ -52,6 +52,7 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   // protocol_details[ "aprofileguid" ] = QString("d13ffad0-6f27-4fd8-8aa0-df8eef87a6ea");
   // protocol_details[ "protocolName" ] = QString("alexey-abs-itf-test1");
   // protocol_details[ "invID_passed" ] = QString("12");
+  // protocol_details[ "analysisIDs"  ] = QString("252,253,254,255,256");
   
   
   // initPanel( protocol_details );
@@ -66,27 +67,46 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   //Clear TreeWidget
   treeWidget->clear();
   Array_of_triples.clear();
+  Array_of_analysis.clear();
   
   AProfileGUID       = protocol_details[ "aprofileguid" ];
   ProtocolName_auto  = protocol_details[ "protocolName" ];
   invID              = protocol_details[ "invID_passed" ].toInt();
 
+  analysisIDs        = protocol_details[ "analysisIDs" ];
+
+  QStringList analysisIDs_list = analysisIDs.split(",");
+
+  //retrieve AutoflowAnalysis records, build autoflowAnalysis objects:
+  for( int i=0; i < analysisIDs_list.size(); ++i )
+    {
+      QMap <QString, QString> analysis_details;
+      QString requestID = analysisIDs_list[i];
+
+      qDebug() << "RequestID: " << requestID;
+      
+      analysis_details = read_autoflowAnalysis_record( requestID );
+
+      QString triple_name = analysis_details["triple_name"];
+      Array_of_analysis[ triple_name ] = analysis_details;
+    }
+
   //qDebug() << "ANALYSIS INIT: AProfileGUID, ProtocolName_auto, invID: " <<  AProfileGUID << ", " <<  ProtocolName_auto << ", " <<  invID;
 
-  job1run     = false;
-  job2run     = false;
-  job3run     = false;
-  job4run     = false;
-  job5run     = false;
-  job3auto    = false;
+  // job1run     = false;
+  // job2run     = false;
+  // job3run     = false;
+  // job4run     = false;
+  // job5run     = false;
+  // job3auto    = false;
 
-  qDebug() << "Reading Aprofile data: ";
-  read_aprofile_data_from_aprofile();
+  //qDebug() << "Reading Aprofile data: ";
+  //read_aprofile_data_from_aprofile();
 
   //qDebug() << "job1run, job2run, job3run, job4run, job5run: " << job1run << ", " <<  job2run << ", " <<  job3run << ", " << job4run << ", " <<  job5run ;
 
-  qDebug() << "Reading protocol's triple data: ";
-  read_protocol_data_triples();
+  // qDebug() << "Reading protocol's triple data: ";
+  //read_protocol_data_triples();
    
   //Generate GUI
   QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
@@ -95,12 +115,46 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   int triple_name_width;
   int max_width = 0;
   
-  for ( int i=0; i<Array_of_triples.size(); ++i )
+  // for ( int i=0; i<Array_of_triples.size(); ++i )
+  //   {
+
+  QMap<QString, QMap <QString, QString> >::iterator jj;
+  for ( jj = Array_of_analysis.begin(); jj != Array_of_analysis.end(); ++jj )
     {
-      QString triple_curr = Array_of_triples[i];
+      QString triple_curr = jj.key();
+      triple_curr.replace("."," / ");
+      
+      QMap <QString, QString > ana_details = jj.value();
+
+      job1run     = false;
+      job2run     = false;
+      job3run     = false;
+      job4run     = false;
+      job5run     = false;
+      job3auto    = false;
+
+      QString json = ana_details["status_json"];
+      qDebug() << "triple: " << triple_curr << ", status_json: " << json;
+      
+      //TEST
+      //json = "{\"to_process\":[\"FITMEN\",\"2DSA_IT\",\"2DSA_MC\"],\"processed\":[\"2DSA\"],\"submitted\":\"2DSA_FM\"}" ;
+
+      if ( json.contains("2DSA") )
+	job1run = true;
+      if ( json.contains("2DSA_FM") )
+	job2run = true;
+      if ( json.contains("FITMEN") )
+	job3run = true;
+      if ( json.contains("2DSA_IT") )
+	job4run = true;	  
+      if ( json.contains("2DSA_MC") )
+	job5run = true;
+    
+      
+      
       triple_name_width = fmet.width( triple_curr );
 
-      qDebug() << "Triple " << i << ": width:  " << triple_curr << ", " << triple_name_width;
+      qDebug() << "Triple,  width:  " << triple_curr << ", " << triple_name_width;
 
       if ( triple_name_width > max_width )
        	max_width =  triple_name_width; 
@@ -397,6 +451,8 @@ void US_Analysis_auto::reset_auto( )
 {
   treeWidget->clear();
   Array_of_triples.clear();
+
+  Array_of_analysis.clear();
 
   //TO DO MORE later - DB stopp etc..
 }
@@ -764,4 +820,54 @@ void US_Analysis_auto::show_all( )
 void US_Analysis_auto::hide_all( )
 {
   treeWidget->collapseAll();
+}
+
+
+// Read AutoflowAnalysisRecord
+QMap< QString, QString> US_Analysis_auto::read_autoflowAnalysis_record( QString requestID )
+{
+  // Check DB connection
+  US_Passwd pw;
+  QString masterpw = pw.getPasswd();
+  US_DB2* db = new US_DB2( masterpw );
+  
+  QMap <QString, QString> analysis_details;
+  
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+      return analysis_details;
+    }
+
+  QStringList qry;
+  qry << "read_autoflowAnalysis_record"
+      << requestID;
+  
+  db->query( qry );
+  
+  if ( db->lastErrno() == US_DB2::OK )      // AutoflowAnalysis record exists
+    {
+      while ( db->next() )
+	{
+	  analysis_details[ "requestID" ]      = db->value( 0 ).toString();
+	  analysis_details[ "triple_name" ]    = db->value( 1 ).toString();
+	  analysis_details[ "cluster" ]        = db->value( 2 ).toString();
+	  analysis_details[ "filename" ]       = db->value( 3 ).toString();
+	  analysis_details[ "aprofileGUID" ]   = db->value( 4 ).toString();
+	  analysis_details[ "CurrentGfacID" ]  = db->value( 5 ).toString();
+	  analysis_details[ "status_json" ]    = db->value( 6 ).toString();
+	  analysis_details[ "status" ]         = db->value( 7 ).toString();
+	  analysis_details[ "status_msg" ]     = db->value( 8 ).toString();
+	  analysis_details[ "create_time" ]    = db->value( 9 ).toString();   
+	  analysis_details[ "update_time" ]    = db->value( 10 ).toString();
+	  analysis_details[ "create_userd" ]   = db->value( 11 ).toString();
+	  analysis_details[ "update_user" ]    = db->value( 12 ).toString();
+
+	}
+    }
+
+  //qDebug() << "In reading autoflwoAnalysis record: json: " << analysis_details[ "status_json" ] ;
+  
+  return analysis_details;
 }

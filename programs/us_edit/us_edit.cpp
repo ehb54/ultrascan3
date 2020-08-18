@@ -6832,6 +6832,9 @@ void US_Edit::write_auto( void )
    le_status->setText( tr( "Saving COMPLETE " ) );
    qApp->processEvents();
 
+   //Pass analsyisIDs generated to details_at_editing_local
+   details_at_editing_local[ "analysisIDs" ] = AnalysisIDsString;
+   
    //ALEXEY: here major actions on setting analysis tables etc. !!!!
    QMessageBox::information( this,
 			     tr( "Saving of Edit Profiles is Complete." ),
