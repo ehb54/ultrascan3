@@ -102,7 +102,19 @@ class US_Edit : public US_Widgets
       QMap <int, QStringList>      aprofileParameters;
       
 
-      QMap < QString, QString > details_at_editing_local; 
+      QMap < QString, QString > details_at_editing_local;
+
+      //2DSA
+      bool        job1run;         //!< Run 1 (2dsa) run flag
+      bool        job2run;         //!< Run 2 (2dsa_fm) run flag
+      bool        job3run;         //!< Run 3 (fitmen) run flag
+      bool        job4run;         //!< Run 4 (2dsa_it) run flag
+      bool        job5run;         //!< Run 5 (2dsa_mc) run flag
+      bool        job3auto;        //!< Fit-Meniscus auto-run flag
+      QString     job1nois;        //!< 2DSA noise type
+      QString     job2nois;        //!< 2DSA-FM noise type
+      QString     job4nois;        //!< 2DSA-IT noise type
+
       
       QChar              chlamb;
 
@@ -333,9 +345,12 @@ class US_Edit : public US_Widgets
       bool readProtocolCells_auto ( QXmlStreamReader& );
       bool readProtocolAProfile_auto ( QXmlStreamReader& );
       bool readAProfileBasicParms_auto ( QXmlStreamReader& );
+
+      static bool bool_flag( const QString );
       
       void update_autoflow_record_atEditData( QString& );
       int  create_autoflowAnalysis_record( QString&, QString& );
+      QString compose_json( void );
       
    private slots:         
       void load              ( void );

@@ -1468,6 +1468,15 @@ void US_Edit::gap_check( void )
 // Load an AUC data set
 void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
 {
+  // analysis stages
+  job1run     = false;
+  job2run     = false;
+  job3run     = false;
+  job4run     = false;
+  job5run     = false;
+  job3auto    = false;
+  /////////////////////////
+  
   details_at_editing_local = details_at_editing;
   
   le_status->setText( tr( "Loading data ..." ) );
@@ -2098,7 +2107,8 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 
    //AProfile details per channel
    read_aprofile_data_from_aprofile();
-
+   qDebug() << "job1run, job2run, job3run, job4run, job5run: " << job1run << ", " <<  job2run << ", " <<  job3run << ", " << job4run << ", " <<  job5run ;
+   
    //Debug
    for (int i=0; i<cb_triple->count(); i++)
      qDebug() << "Triple, AprofParms: " << cb_triple->itemText( i )  << ", " << aprofileParameters[i];
@@ -2129,7 +2139,7 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
        aprofile_volume = aprofileParameters[ trx ][0].toDouble();        //<-- From Aprofile
        range_right   = aprofileParameters[ trx ][1].toDouble();           //<-- From Aprofile
        qDebug() << "Range_right && Loading volume FROM AProfile: " << triple_name << ", " << range_right << ", " << aprofile_volume;
-
+       
        //Find meniscus
        if ( dataType != "IP" )
 	 {
@@ -2490,13 +2500,17 @@ bool US_Edit::readProtocolAProfile_auto( QXmlStreamReader& xmli )
 
 bool US_Edit::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
 {
+  // while( ! xmli.atEnd() )
+  //   {
+  //     xmli.readNext();
+
   while( ! xmli.atEnd() )
     {
-      xmli.readNext();
+      QString ename   = xmli.name().toString();
       
       if ( xmli.isStartElement() )
       {
-	QString ename   = xmli.name().toString();
+	//QString ename   = xmli.name().toString();
 	
 	if ( ename == "channel_parms" )
 	  {
@@ -2513,15 +2527,64 @@ bool US_Edit::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
 	    aprof_channel_to_parms[ channel_name ] = aprof_parms;
 	  }
 	
-	else if ( ename == "p_2dsa" )       //Stop reading AProfile when 2DSA section reached 
-	  break;
-	
-      }
-   }
+	else if ( ename == "job_2dsa" )
+	  {
+            QXmlStreamAttributes attr = xmli.attributes();
+            job1run        = bool_flag( attr.value( "run" ).toString() );
+            //job1nois       = attr.value( "noise" ).toString();
 
-   return ( ! xmli.hasError() );
+	    qDebug() << "job1run: " << job1run;
+	  }
+	else if ( ename == "job_2dsa_fm" )
+         {
+	   QXmlStreamAttributes attr = xmli.attributes();
+	   job2run        = bool_flag( attr.value( "run" ).toString() );
+	   //job2nois       = attr.value( "noise" ).toString();
+	   //fitrng         = attr.value( "fit_range" ).toString().toDouble();
+	   //grpoints       = attr.value( "grid_points" ).toString().toInt();
+         }
+	else if ( ename == "job_fitmen" )
+	  {
+            QXmlStreamAttributes attr = xmli.attributes();
+            job3run        = bool_flag( attr.value( "run" ).toString() );
+            job3auto       = attr.value( "interactive" ).toString().toInt() == 0;
+	  }
+	else if ( ename == "job_2dsa_it" )
+	  {
+            QXmlStreamAttributes attr = xmli.attributes();
+            job4run        = bool_flag( attr.value( "run" ).toString() );
+            job4nois       = attr.value( "noise" ).toString();
+            //rfiters        = attr.value( "max_iterations" ).toString().toInt();
+	  }
+	else if ( ename == "job_2dsa_mc" )
+	  {
+            QXmlStreamAttributes attr = xmli.attributes();
+            job5run        = bool_flag( attr.value( "run" ).toString() );
+            //mciters        = attr.value( "mc_iterations" ).toString().toInt();
+	  }
+      }
+      
+      bool was_end    = xmli.isEndElement();  // Just read was End of element?
+      xmli.readNext();                        // Read the next element
+
+      if ( was_end  &&  ename == "p_2dsa" )   // Break after "</p_2dsa>"
+         break;
+      
+      // else if ( ename == "p_2dsa" )       //Stop reading AProfile when 2DSA section reached 
+      //  break;
+	
+      //}
+    }
+  
+  return ( ! xmli.hasError() );
 }
 
+
+// Return a flag if an XML attribute string represents true or false.
+bool US_Edit::bool_flag( const QString xmlattr )
+{
+   return ( !xmlattr.isEmpty()  &&  ( xmlattr == "1"  ||  xmlattr == "T" ) );
+}
 
 
 void US_Edit::read_centerpiece_params( int trx )
@@ -6806,7 +6869,11 @@ void US_Edit::write_auto( void )
    // qApp->processEvents();
 
    //Get status json from aprofile (stages)
-   QString status_json("{\"to_process\":[\"FITMEN\",\"2DSA_IT\",\"2DSA_MC\"],\"processed\":[\"2DSA\"],\"submitted\":\"2DSA_FM\"}"); // sample
+   qDebug() << "job1run, job2run, job3run, job4run, job5run: " << job1run << ", " <<  job2run << ", " <<  job3run << ", " << job4run << ", " <<  job5run ;
+
+   QString status_json = compose_json();
+   
+   //QString status_json("{\"to_process\":[\"FITMEN\",\"2DSA_IT\",\"2DSA_MC\"],\"processed\":[\"2DSA\"],\"submitted\":\"2DSA_FM\"}"); // sample
    
    //Create AutoflowAnalysis record:
    QStringList AnalysisIDs;
@@ -6845,6 +6912,31 @@ void US_Edit::write_auto( void )
    emit edit_complete_auto( details_at_editing_local  );   
 }
 
+// Create JSON to be put into AutoflowAnalysis table
+QString US_Edit::compose_json( void )
+{
+  QString json;
+
+  json = QString("{\"to_process\":[");
+
+  if (job1run )
+    json += QString("\"2DSA\",");
+  if (job2run )
+    json += QString("\"2DSA_FM\",");
+  if (job3run )
+    json += QString("\"FITMEN\",");
+  if (job4run )
+    json += QString("\"2DSA_IT\",");
+  if (job5run )
+    json += QString("\"2DSA_MC\",");
+
+  //remove last coma
+  json.chop(1);
+
+  json += QString("]}");
+  
+  return json;
+}
 
 // Set Autoflow record to ANALSYIS && set analysises ID(s)
 void US_Edit::update_autoflow_record_atEditData( QString& AnalysisIDsString )
