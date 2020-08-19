@@ -25,19 +25,25 @@ Link::Link()
   server.setPeerVerifyMode(QSslSocket::VerifyNone);
 }
 
-void Link::connectToServer( const QString& host, const int port )
+bool Link::connectToServer( const QString& host, const int port )
 {
-  //server.connectToHostEncrypted("142.66.17.6", 8821);
+  bool status_ok = false;
+  
   server.connectToHostEncrypted(host, port);
-  if (server.waitForEncrypted(15000)) {
-    server.write("***qsslsocket_client_example sent this nothing command***\n");
-  }
-  else {
-    qDebug("Unable to connect to server");
-       
-    //exit(0);
-  }
+  if (server.waitForEncrypted(15000))
+    {
+      server.write("***qsslsocket_client_example sent this nothing command***\n");
+      status_ok = true;
+    }
+  else
+    {
+      qDebug("Unable to connect to server");
+      //exit(0);
+    }
+
+  return status_ok;
 }
+
 
 void Link::stopOptima( void )
 {

@@ -9,7 +9,7 @@ class Link : public QObject
 
 public:
 	Link();
-	void connectToServer(const QString&, const int);
+	bool connectToServer(const QString&, const int);
 	void disconnectFromServer( void );
 
 	void stopOptima( void );

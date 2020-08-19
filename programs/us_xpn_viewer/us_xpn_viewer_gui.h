@@ -404,6 +404,7 @@ class US_XpnDataViewer : public US_Widgets
      void changeOptima ( int );                        //New
      void selectOptimaByName_auto( QString );          //New
      void test_optima_connection( void );              //New
+     bool check_sysdata_connection( void );            //New
      
    signals:
      //void experiment_complete_auto( QString &, QString &, QString &, QString & );

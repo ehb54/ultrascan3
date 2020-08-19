@@ -853,6 +853,9 @@ US_XpnDataViewer::US_XpnDataViewer() : US_Widgets()
    currentDir   = "";
    in_reload    = false;
 
+
+   
+
    //ALEXEY: old way, from .conf file
    // QStringList xpnentr = US_Settings::defaultXpnHost();
    // DbgLv(1) << "xpnentr count" << xpnentr.count();
@@ -1162,10 +1165,12 @@ if(mcknt>0)
    reset();
    adjustSize();
 
+   
+   //check_sysdata_connection();
 }
 
 
-
+  
 void US_XpnDataViewer::reset( void )
 {
    runID         = "";
@@ -1435,7 +1440,51 @@ void US_XpnDataViewer::changeOptima( int ndx )
    xpnuser     = currentInstrument[ "optimaDBusername" ];
    xpnpasw     = currentInstrument[ "optimaDBpassw" ];
 
+   xpnmsgPort  = currentInstrument[ "msgPort" ];
+   
    test_optima_connection();
+
+   //check_sysdata_connection();
+}
+
+// sysserver conneciton
+bool US_XpnDataViewer::check_sysdata_connection( void )
+{
+  Link *link1 = new Link;
+  bool status_sys_data = link1->connectToServer( xpnhost, xpnmsgPort.toInt() );
+
+  qDebug() << "status_sys_data: " << status_sys_data;
+
+  link1->disconnectFromServer();
+
+  if ( !status_sys_data )
+    {
+      QMessageBox msgBox_sys_data;
+      msgBox_sys_data.setIcon(QMessageBox::Critical);
+      msgBox_sys_data.setWindowTitle(tr("Optima System Data Server Connection Problem!"));
+      
+      QString msg_sys_text = QString("Attention! UltraScan is not able to communicate with the data acquisition server on the %1. Please check the following: ").arg(xpndesc);
+      QString msg_sys_text_info = QString("1. %1 is turned on \n2. the data acquisition server on %1 is running \n3. your license key is stored in $HOME/ultrascan/etc/optima and is not expired \n\nUse of the Optima Data Viewer is suspended until this condition is resolved. \n\nYou may check other Optima machines for proper conneciton.").arg(xpndesc);
+
+      QPushButton *Accept_sys  = msgBox_sys_data.addButton(tr("OK"), QMessageBox::YesRole);
+
+      msgBox_sys_data.setText( msg_sys_text );
+      
+      msgBox_sys_data.setInformativeText( msg_sys_text_info );
+      
+      msgBox_sys_data.exec();
+      
+      if (msgBox_sys_data.clickedButton() == Accept_sys)
+	{
+	  qDebug() << "Closing Program...";
+
+	  //this->close();
+	}
+
+    }
+
+  return status_sys_data;
+  
 }
 
 //Slot to test Optima connection when Optima selection changed <------------- //New
@@ -3109,7 +3158,11 @@ DbgLv(1) << "RDa: allData size" << allData.size();
 // Load Optima raw (.postgres) data
 void US_XpnDataViewer::load_xpn_raw( )
 {
-
+  //Disable if no connection to sys_data server 
+  if ( !check_sysdata_connection() )
+    return;
+  /////////////////////////////////////////////
+  
    // Ask for data directory
    QString dbhost    = xpnhost;
    int     dbport    = xpnport.toInt();
@@ -3376,6 +3429,11 @@ DbgLv(1) << "RDr: allData size" << allData.size();
 // Load US3 AUC Optima-derived data
 void US_XpnDataViewer::load_auc_xpn( )
 {
+  //Disable if no connection to sys_data server
+  if ( !check_sysdata_connection() )
+    return;
+  ///////////////////////////////////////////
+  
    int status        = 0;
    QStringList ifpaths;
 
