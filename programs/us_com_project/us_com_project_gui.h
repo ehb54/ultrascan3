@@ -311,6 +311,7 @@ class US_AnalysisGui : public US_WidgetsDialog
  private slots:
    void do_analysis( QMap < QString, QString > & );
    void processes_stopped_passed( void );
+   void analysissetup_msg_closed( void );
 
  signals:
    void start_analysis( QMap < QString, QString > & );
@@ -367,6 +368,8 @@ class US_ComProjectMain : public US_Widgets
   QMessageBox * msg_expsetup;
   QMessageBox * msg_liveupdate_finishing;
   QMessageBox * msg_analysis_update_finishing;
+  QMessageBox * msg_analysissetup;
+
   
   QDialog *     diag_expsetup;
   

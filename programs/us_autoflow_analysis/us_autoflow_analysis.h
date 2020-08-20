@@ -113,6 +113,7 @@ class US_Analysis_auto : public US_Widgets
      
       signals:
 	void analysis_update_process_stopped( void );
+	void close_analysissetup_msg( void ); 
    
 };
 #endif

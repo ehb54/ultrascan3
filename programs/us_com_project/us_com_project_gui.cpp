@@ -294,6 +294,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
 
    main->addWidget( tabWidget );
 
+   
    for (int i=0; i < tabWidget->count(); ++i )
      {
        //ALEXEY: OR enable all tabs ? (e.g. for demonstration, in a read-only mode or the like ?)
@@ -354,7 +355,6 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( epanEditing, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
 
    connect( epanAnalysis, SIGNAL( processes_stopped() ), this, SLOT( analysis_update_stopped() ));
-
 
    connect( this, SIGNAL( pass_to_report( QMap < QString, QString > & ) ),   epanReport, SLOT( do_report( QMap < QString, QString > & )  ) );
    
@@ -664,22 +664,7 @@ void US_ComProjectMain::define_new_experiment( QStringList & occupied_instrument
    msg_expsetup = new QMessageBox(this);
    msg_expsetup->setIcon(QMessageBox::Information);
 
-   // QLabel m_label;
-   // QMovie * movie_diag = new QMovie(path_gif);
-   // m_label.setMovie(movie_diag);
-   // movie_diag->start();
-
-   // msg_expsetup->layout()->addWidget(&m_label);
-  
-   // msg_expsetup->setIconPixmap(QPixmap(path_gif).scaledToWidth(50));
-   // QLabel icon_label;
-   // msg_expsetup->layout()->addWidget(&icon_label);
-   // QLabel *icon_label1 = msg_expsetup->findChild<QLabel*>("qt_msgboxex_icon_label");
-   // QMovie *movie = new QMovie(path_gif);
-   // icon_label1->setMovie(movie);
-   // movie->start();
-   // //icon_label1->show();
-  
+   
    msg_expsetup->setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowStaysOnTopHint);
    msg_expsetup->setStandardButtons(0);
    msg_expsetup->setWindowTitle(tr("Updating..."));
@@ -845,8 +830,31 @@ void US_ComProjectMain::switch_to_editing( QMap < QString, QString > & protocol_
 // Slot to switch from the Import to Editing tab
 void US_ComProjectMain::switch_to_analysis( QMap < QString, QString > & protocol_details )
 {
-   tabWidget->setCurrentIndex( 5 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
-   curr_panx = 5;
+  msg_analysissetup = new QMessageBox(this);
+  msg_analysissetup->setIcon(QMessageBox::Information);
+
+  
+  msg_analysissetup->setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowStaysOnTopHint);
+  msg_analysissetup->setStandardButtons(0);
+  msg_analysissetup->setWindowTitle(tr("Updating..."));
+  msg_analysissetup->setText(tr( "Generating triple list for ANALYSIS... Please wait...") );
+  msg_analysissetup->setStyleSheet("background-color: #36454f; color : #D3D9DF;");
+  
+  
+  int tab_width = this->tabWidget->tabBar()->width();
+  int upper_height = this->gen_banner->height() + //this->welcome->height()
+    + this->logWidget->height() + this->test_footer->height();
+  
+  int pos_x = this->width()/2 - tab_width;
+  int pos_y = this->height()/2 - upper_height;     
+  msg_analysissetup->move(pos_x, pos_y);
+  
+  msg_analysissetup->show();
+  qApp->processEvents();
+  
+  
+  tabWidget->setCurrentIndex( 5 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
+  curr_panx = 5;
 
    // ALEXEY: Temporariy NOT lock here... Will need later
    
@@ -2279,6 +2287,8 @@ US_AnalysisGui::US_AnalysisGui( QWidget* topw )
    // When coming back to Manage Optima Runs
    connect( sdiag, SIGNAL( analysis_update_process_stopped() ), this, SLOT( processes_stopped_passed()  ) );
 
+   connect( sdiag, SIGNAL( close_analysissetup_msg() ), this, SLOT ( analysissetup_msg_closed() ) ); 
+
    offset = 0;
    sdiag->move(offset, 2*offset);
    sdiag->setFrameShape( QFrame::Box);
@@ -2328,6 +2338,14 @@ void US_AnalysisGui::processes_stopped_passed( void )
 {
   emit processes_stopped(); 
 }
+
+//Close msg on setting up new EXP
+void US_AnalysisGui::analysissetup_msg_closed( void )
+{
+  mainw->msg_analysissetup->accept();
+  //mainw->diag_expsetup->close();
+}
+
 
 
 

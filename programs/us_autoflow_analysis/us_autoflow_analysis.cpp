@@ -48,14 +48,14 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   in_reload_end_process = false;
   
   // // ---- Testing ----
-  //QMap < QString, QString > protocol_details;
+  // QMap < QString, QString > protocol_details;
   // protocol_details[ "aprofileguid" ] = QString("d13ffad0-6f27-4fd8-8aa0-df8eef87a6ea");
   // protocol_details[ "protocolName" ] = QString("alexey-abs-itf-test1");
   // protocol_details[ "invID_passed" ] = QString("12");
-  // protocol_details[ "analysisIDs"  ] = QString("252,253,254,255,256");
+  //protocol_details[ "analysisIDs"  ] = QString("4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65");
   
   
-  // initPanel( protocol_details );
+  //initPanel( protocol_details );
 
   // -----------------
 
@@ -68,13 +68,14 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   treeWidget->clear();
   Array_of_triples.clear();
   Array_of_analysis.clear();
-  
+
   AProfileGUID       = protocol_details[ "aprofileguid" ];
   ProtocolName_auto  = protocol_details[ "protocolName" ];
   invID              = protocol_details[ "invID_passed" ].toInt();
 
   analysisIDs        = protocol_details[ "analysisIDs" ];
 
+ 
   QStringList analysisIDs_list = analysisIDs.split(",");
 
   //retrieve AutoflowAnalysis records, build autoflowAnalysis objects:
@@ -90,6 +91,10 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       QString triple_name = analysis_details["triple_name"];
       Array_of_analysis[ triple_name ] = analysis_details;
     }
+  
+  // Close msg on setting up triple list from main program
+  emit close_analysissetup_msg();
+  
 
   //qDebug() << "ANALYSIS INIT: AProfileGUID, ProtocolName_auto, invID: " <<  AProfileGUID << ", " <<  ProtocolName_auto << ", " <<  invID;
 
