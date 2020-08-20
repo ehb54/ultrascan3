@@ -1,4 +1,4 @@
-//! \file us_edit.cpp
+//! \FILE us_edit.cpp
 
 //#include <QApplication>
 //#include <QDomDocument>
@@ -6769,7 +6769,7 @@ void US_Edit::write_auto( void )
       }
    }
 
-   qDebug() << "STARTING Saving"; 
+   qDebug() << "START Saving"; 
 
 
    /* TEMPORARY ***/
@@ -7007,6 +7007,7 @@ int US_Edit::create_autoflowAnalysis_record( QString& tripleName, QString& statu
        << tripleName
        << filename_runID_auto
        << AProfileGUID
+       << idInv_auto
        << status_json;
  
    qDebug() << "AutoflowAnalysis Record for triple: " << tripleName;

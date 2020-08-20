@@ -872,14 +872,15 @@ QMap< QString, QString> US_Analysis_auto::read_autoflowAnalysis_record( QString 
 	  analysis_details[ "cluster" ]        = db->value( 2 ).toString();
 	  analysis_details[ "filename" ]       = db->value( 3 ).toString();
 	  analysis_details[ "aprofileGUID" ]   = db->value( 4 ).toString();
-	  analysis_details[ "CurrentGfacID" ]  = db->value( 5 ).toString();
-	  analysis_details[ "status_json" ]    = db->value( 6 ).toString();
-	  analysis_details[ "status" ]         = db->value( 7 ).toString();
-	  analysis_details[ "status_msg" ]     = db->value( 8 ).toString();
-	  analysis_details[ "create_time" ]    = db->value( 9 ).toString();   
-	  analysis_details[ "update_time" ]    = db->value( 10 ).toString();
-	  analysis_details[ "create_userd" ]   = db->value( 11 ).toString();
-	  analysis_details[ "update_user" ]    = db->value( 12 ).toString();
+	  analysis_details[ "invID" ]          = db->value( 5 ).toString();
+	  analysis_details[ "CurrentGfacID" ]  = db->value( 6 ).toString();
+	  analysis_details[ "status_json" ]    = db->value( 7 ).toString();
+	  analysis_details[ "status" ]         = db->value( 8 ).toString();
+	  analysis_details[ "status_msg" ]     = db->value( 9 ).toString();
+	  analysis_details[ "create_time" ]    = db->value( 10 ).toString();   
+	  analysis_details[ "update_time" ]    = db->value( 11 ).toString();
+	  analysis_details[ "create_userd" ]   = db->value( 12 ).toString();
+	  analysis_details[ "update_user" ]    = db->value( 13 ).toString();
 
 	}
     }
