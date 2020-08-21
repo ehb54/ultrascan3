@@ -130,6 +130,8 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 
   int triple_name_width;
   int max_width = 0;
+
+  treeWidget->setStyleSheet( "QTreeWidget { font: bold; font-size: " + QString::number(sfont.pointSize()) + "pt;} QTreeView { alternate-background-color: yellow;} QTreeView::item:hover { border: black;  border-radius:1px;  background-color: rgba(0,128,255,95);}");
   
   // for ( int i=0; i<Array_of_triples.size(); ++i )
   //   {
@@ -236,7 +238,7 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 
   treeWidget->header()->resizeSection(0, max_width );
 
-  treeWidget->setStyleSheet( "QTreeWidget { font: bold; font-size: " + QString::number(sfont.pointSize()) + "pt;} QTreeView { alternate-background-color: yellow;} QTreeView::item:hover { border: black;  border-radius:1px;  background-color: rgba(0,128,255,95);}");
+  // treeWidget->setStyleSheet( "QTreeWidget { font: bold; font-size: " + QString::number(sfont.pointSize()) + "pt;} QTreeView { alternate-background-color: yellow;} QTreeView::item:hover { border: black;  border-radius:1px;  background-color: rgba(0,128,255,95);}");
   
   //TEST: QTimer for GroupBoxes' GUI update
   timer_end_process = new QTimer;
