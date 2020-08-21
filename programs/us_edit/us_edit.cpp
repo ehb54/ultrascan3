@@ -6694,7 +6694,7 @@ void US_Edit::write_auto( void )
 	}
     }
   //////////////////////////////////////////////////////////
-
+  
   
   if ( autoflow_details[ "status" ]  != "EDIT_DATA"  || isSaved_auto() )
     {
@@ -6909,6 +6909,9 @@ void US_Edit::write_auto( void )
 			     tr( "Edit profiles were saved successfully. \n\n"
 				 "The program will switch to Analysis stage." ) );
    reset();
+   this->close();
+   qApp->processEvents();
+   
    emit edit_complete_auto( details_at_editing_local  );   
 }
 

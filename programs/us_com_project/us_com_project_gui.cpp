@@ -830,6 +830,10 @@ void US_ComProjectMain::switch_to_editing( QMap < QString, QString > & protocol_
 // Slot to switch from the Import to Editing tab
 void US_ComProjectMain::switch_to_analysis( QMap < QString, QString > & protocol_details )
 {
+  // tabWidget->setCurrentIndex( 5 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
+  // curr_panx = 5;
+
+  // Show msg while triple list is generated
   msg_analysissetup = new QMessageBox(this);
   msg_analysissetup->setIcon(QMessageBox::Information);
 
