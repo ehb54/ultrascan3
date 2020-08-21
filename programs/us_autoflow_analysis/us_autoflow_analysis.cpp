@@ -52,7 +52,7 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   // protocol_details[ "aprofileguid" ] = QString("d13ffad0-6f27-4fd8-8aa0-df8eef87a6ea");
   // protocol_details[ "protocolName" ] = QString("alexey-abs-itf-test1");
   // protocol_details[ "invID_passed" ] = QString("12");
-  // protocol_details[ "analysisIDs"  ] = QString("4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65");
+  // protocol_details[ "analysisIDs"  ] = QString("190,191,192,193,194,195,196,197,198,199,200,201,202,203,204,205,206,207,208,209,210,211,212,213,214,215,216,217,218,219,220,221,222,223,224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245,246,247,248,249,250,251");
   
   
   // initPanel( protocol_details );
@@ -234,14 +234,10 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 
   max_width *= 2;
 
-  //treeWidget->setColumnWidth(0, 200);
   treeWidget->header()->resizeSection(0, max_width );
 
-  // treeWidget->headerItem()->setText(0, "Tripels");
-  // treeWidget->headerItem()->setText(1, "Analysis Stages");
-
-  treeWidget->setStyleSheet( "QTreeWidget { font: bold; font-size: 15px;} QTreeView { alternate-background-color: yellow;} QTreeView::item:hover { border: black;  border-radius:1px;  background-color: rgba(0,128,255,95);}");
-
+  treeWidget->setStyleSheet( "QTreeWidget { font: bold; font-size: " + QString::number(sfont.pointSize()) + "pt;} QTreeView { alternate-background-color: yellow;} QTreeView::item:hover { border: black;  border-radius:1px;  background-color: rgba(0,128,255,95);}");
+  
   //TEST: QTimer for GroupBoxes' GUI update
   timer_end_process = new QTimer;
   timer_update      = new QTimer;

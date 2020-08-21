@@ -349,7 +349,7 @@ class US_Edit : public US_Widgets
       static bool bool_flag( const QString );
       
       void update_autoflow_record_atEditData( QString& );
-      int  create_autoflowAnalysis_record( QString&, QString& );
+      int  create_autoflowAnalysis_record( QString&,  QString& );
       QString compose_json( void );
       
    private slots:         
