@@ -52,10 +52,10 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   // protocol_details[ "aprofileguid" ] = QString("d13ffad0-6f27-4fd8-8aa0-df8eef87a6ea");
   // protocol_details[ "protocolName" ] = QString("alexey-abs-itf-test1");
   // protocol_details[ "invID_passed" ] = QString("12");
-  //protocol_details[ "analysisIDs"  ] = QString("4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65");
+  // protocol_details[ "analysisIDs"  ] = QString("4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65");
   
   
-  //initPanel( protocol_details );
+  // initPanel( protocol_details );
 
   // -----------------
 
@@ -78,6 +78,17 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
  
   QStringList analysisIDs_list = analysisIDs.split(",");
 
+  US_Passwd pw;
+  US_DB2    db( pw.getPasswd() );
+
+  // Get the buffer data from the database
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Could not connect to database \n" ) +  db.lastError() );
+      return;
+    }
+  
   //retrieve AutoflowAnalysis records, build autoflowAnalysis objects:
   for( int i=0; i < analysisIDs_list.size(); ++i )
     {
@@ -85,8 +96,8 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       QString requestID = analysisIDs_list[i];
 
       qDebug() << "RequestID: " << requestID;
-      
-      analysis_details = read_autoflowAnalysis_record( requestID );
+
+      analysis_details = read_autoflowAnalysis_record( &db, requestID );
 
       QString triple_name = analysis_details["triple_name"];
       Array_of_analysis[ triple_name ] = analysis_details;
@@ -846,21 +857,16 @@ void US_Analysis_auto::hide_all( )
 
 
 // Read AutoflowAnalysisRecord
-QMap< QString, QString> US_Analysis_auto::read_autoflowAnalysis_record( QString requestID )
+QMap< QString, QString> US_Analysis_auto::read_autoflowAnalysis_record( US_DB2* db, const QString& requestID )
 {
-  // Check DB connection
-  US_Passwd pw;
-  QString masterpw = pw.getPasswd();
-  US_DB2* db = new US_DB2( masterpw );
-  
   QMap <QString, QString> analysis_details;
   
-  if ( db->lastErrno() != US_DB2::OK )
-    {
-      QMessageBox::warning( this, tr( "Connection Problem" ),
-			    tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
-      return analysis_details;
-    }
+  // if ( db->lastErrno() != US_DB2::OK )
+  //   {
+  //     QMessageBox::warning( this, tr( "Connection Problem" ),
+  // 			    tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+  //     return analysis_details;
+  //   }
 
   QStringList qry;
   qry << "read_autoflowAnalysis_record"

@@ -75,7 +75,7 @@ class US_Analysis_auto : public US_Widgets
 
 	 QMap < QString, QMap< QString, QString > > Array_of_analysis;
 
-	 QMap < QString, QString > read_autoflowAnalysis_record( QString );
+	 QMap < QString, QString > read_autoflowAnalysis_record( US_DB2*, const QString& );
 	 
 	 void  read_protocol_data_triples( void );
 	 bool  read_protoOptics( QXmlStreamReader&  );
