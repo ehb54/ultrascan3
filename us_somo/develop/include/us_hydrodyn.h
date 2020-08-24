@@ -162,6 +162,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool guiFlag;
       QLabel *lbl_core_progress;
       void set_disabled();
+      void set_enabled();
       QTextEdit *editor;
       void play_sounds(int);
       struct pdb_parsing pdb_parse;
@@ -921,6 +922,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       int grpy_last_model_number;
       map < QString, vector < double > > grpy_captures;
       US_Timer timers;
+      hydro_results grpy_results;
+      hydro_results grpy_results2;
 
       QProcess *hullrad;
       void hullrad_process_next();

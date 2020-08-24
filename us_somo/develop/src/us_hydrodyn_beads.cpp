@@ -1895,7 +1895,7 @@ void US_Hydrodyn::hullrad_finalize() {
 
       this_data.hydro                         = hydro;
       this_data.results.num_models            = 1;
-      this_data.results.name                  = QString( "%1-%1" ).arg( QFileInfo( hullrad_filename ).completeBaseName() ).arg( it->first + 1 );
+      this_data.results.name                  = QString( "%1-%2" ).arg( QFileInfo( hullrad_filename ).completeBaseName() ).arg( it->first + 1 );
       this_data.results.used_beads            = 0;
       this_data.results.used_beads_sd         = 0e0;
       this_data.results.total_beads           = 0;

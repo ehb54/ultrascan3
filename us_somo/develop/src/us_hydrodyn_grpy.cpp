@@ -75,6 +75,42 @@ bool US_Hydrodyn::calc_grpy_hydro() {
    grpy_model_numbers.clear();
    grpy_processed    .clear();
 
+   grpy_results.method                = "GRPY";
+   grpy_results.mass                  = 0e0;
+   grpy_results.s20w                  = 0e0;
+   grpy_results.s20w_sd               = 0e0;
+   grpy_results.D20w                  = 0e0;
+   grpy_results.D20w_sd               = 0e0;
+   grpy_results.viscosity             = 0e0;
+   grpy_results.viscosity_sd          = 0e0;
+   grpy_results.rs                    = 0e0;
+   grpy_results.rs_sd                 = 0e0;
+   grpy_results.rg                    = 0e0;
+   grpy_results.rg_sd                 = 0e0;
+   grpy_results.tau                   = 0e0;
+   grpy_results.tau_sd                = 0e0;
+   grpy_results.asa_rg_pos            = 0e0;
+   grpy_results.asa_rg_neg            = 0e0;
+   grpy_results.ff0                   = 0e0;
+   grpy_results.ff0_sd                = 0e0;
+
+   grpy_results.solvent_name          = hydro.solvent_name;
+   grpy_results.solvent_acronym       = hydro.solvent_acronym;
+   grpy_results.solvent_viscosity     = use_solvent_visc();
+   grpy_results.solvent_density       = use_solvent_dens();
+   grpy_results.temperature           = hydro.temperature;
+   grpy_results.pH                    = hydro.pH;
+   grpy_results.name                  = "";
+   grpy_results.used_beads            = 0;
+   grpy_results.used_beads_sd         = 0e0;
+   grpy_results.total_beads           = 0;
+   grpy_results.total_beads_sd        = 0e0;
+   grpy_results.vbar                  = 0;
+   
+   grpy_results.num_models            = 0;
+
+   grpy_results2                      = grpy_results;
+
    QDir::setCurrent(somo_dir);
 
    for (current_model = 0; current_model < (unsigned int)lb_model->count(); current_model++) {
@@ -118,6 +154,7 @@ bool US_Hydrodyn::calc_grpy_hydro() {
    if (stopFlag)
    {
       editor->append("Stopped by user\n\n");
+      set_enabled();
       pb_calc_hydro->setEnabled(true);
       pb_calc_zeno->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
@@ -145,9 +182,7 @@ bool US_Hydrodyn::calc_grpy_hydro() {
 }
 
 void US_Hydrodyn::grpy_process_next() {
-   
-   // us_qdebug( QString( "grpy_process_next %1" ).arg( grpy_filename ) );
-
+   // qDebug() << "grpy_process_next()";
    if ( !grpy_to_process.size() ) {
       grpy_finalize();
       return;
@@ -188,7 +223,7 @@ void US_Hydrodyn::grpy_process_next() {
 
 void US_Hydrodyn::grpy_readFromStdout()
 {
-   // us_qdebug( QString( "grpy_readFromStdout %1" ).arg( grpy_filename ) );
+   // us_qdebug( QString( "grpy_readFromStdout %1" ).arg( grpy_last_processed ) );
    QString qs = QString( grpy->readAllStandardOutput() );
    grpy_stdout += qs;
    // editor_msg( "brown", qs );
@@ -197,7 +232,7 @@ void US_Hydrodyn::grpy_readFromStdout()
    
 void US_Hydrodyn::grpy_readFromStderr()
 {
-   // us_qdebug( QString( "grpy_readFromStderr %1" ).arg( grpy_filename ) );
+   // us_qdebug( QString( "grpy_readFromStderr %1" ).arg( grpy_last_processed ) );
 
    editor_msg( "red", QString( grpy->readAllStandardError() ) );
    //  qApp->processEvents();
@@ -205,7 +240,8 @@ void US_Hydrodyn::grpy_readFromStderr()
 
 void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
 {
-   // us_qdebug( QString( "grpy_processExited %1" ).arg( grpy_filename ) );
+   // qDebug() << "grpy_finished():" << grpy_last_processed;
+   // us_qdebug( QString( "grpy_processExited %1" ).arg( grpy_last_processed) );
    //   for ( int i = 0; i < 10000; i++ )
    //   {
    grpy_readFromStderr();
@@ -216,6 +252,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
    disconnect( grpy, SIGNAL(finished( int, QProcess::ExitStatus )), 0, 0);
    if (stopFlag) {
       editor_msg( "red", us_tr( "Stopped by user\n" ) );
+      set_enabled();
       pb_calc_hydro->setEnabled(true);
       pb_calc_zeno->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
@@ -228,24 +265,11 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
    }
 
    editor_msg( "black", "GRPY finished.\n");
-   editor_msg( "blue", info_cite( "grpy" ) );
 
    // post process the files
    
    QStringList caps;
    caps
-      // M               :        14315     g/mol
-      // v_bar           :        0.718     mL/g
-      // R(Anhydrous)    :        15.98     Angstroms
-      // Axial Ratio     :         1.49
-      // f/fo            :         1.16
-      // Dt              :       1.16e-06   cm^2/s
-      // R(Translation)  :        18.48     Angstroms
-      // s               :       1.93e-13   sec
-      // [eta]           :         2.78     cm^3/g
-      // Dr              :       1.99e+07   s^-1
-      // R(Rotation)     :        20.06     Angstroms
-
       << "Rotational diffusion coefficient"
       << "1"
       << "Dr"
@@ -286,20 +310,10 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
       << "1"
       << "tauh"
 
-      // << "M"
-      // << "v_bar"
-      // << "R\\(Anhydrous\\)"
-      // << "Axial Ratio"
-      // << "f/fo"
-      // << "Dt"
-      // << "R\\(Translation\\)"
-      // << "s"
-      // << "\\[eta\\]"
-      // << "Dr"
-      // << "R\\(Rotation\\)"
       ;
 
    map < QString, double > captures;
+   grpy_captures     .clear();
 
    for ( int i = 0; i < (int) caps.size(); i += 3 ) {
       QRegExp rx = QRegExp( caps[ i ] + "\\s*:\\s*(\\S+)" );
@@ -355,8 +369,6 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
 
    }
 
-   // accumulate data as in zeno (e.g. push values to data structures )
-
    // save stdout
    {
       QString grpy_out_name = grpy_last_processed.replace( QRegExp( ".grpy$" ), ".grpy_res" );
@@ -371,68 +383,9 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
          last_hydro_res = grpy_out_name;
       }
    }
-   
-   grpy_process_next();
-}
-   
-void US_Hydrodyn::grpy_started()
-{
-   // us_qdebug( QString( "grpy_started %1" ).arg( grpy_filename ) );
-   // editor_msg("brown", "GRPY launch exited\n");
-   disconnect( grpy, SIGNAL(started()), 0, 0);
-}
 
-void US_Hydrodyn::grpy_finalize() {
-   // us_qdebug( QString( "grpy_finalize %1" ).arg( grpy_filename ) );
-   editor_msg( "black", "Finalizing GRPY results" );
-   // for ( map < QString, vector < double > >::iterator it = grpy_captures.begin();
-   //       it != grpy_captures.end();
-   //       ++it ) {
-   //    editor_msg( "dark red",  US_Vector::qs_vector( it->first, it->second ) );
-   // }
-
-   hydro_results grpy_results;
-   hydro_results grpy_results2;
-
-   grpy_results.method                = "GRPY";
-   grpy_results.mass                  = model_vector[ grpy_last_model_number ].mw + model_vector[ grpy_last_model_number ].ionized_mw_delta;
-   grpy_results.s20w                  = 0e0;
-   grpy_results.s20w_sd               = 0e0;
-   grpy_results.D20w                  = 0e0;
-   grpy_results.D20w_sd               = 0e0;
-   grpy_results.viscosity             = 0e0;
-   grpy_results.viscosity_sd          = 0e0;
-   grpy_results.rs                    = 0e0;
-   grpy_results.rs_sd                 = 0e0;
-   grpy_results.rg                    = 0e0;
-   grpy_results.rg_sd                 = 0e0;
-   grpy_results.tau                   = 0e0;
-   grpy_results.tau_sd                = 0e0;
-   grpy_results.asa_rg_pos            = 0e0;
-   grpy_results.asa_rg_neg            = 0e0;
-   grpy_results.ff0                   = 0e0;
-   grpy_results.ff0_sd                = 0e0;
-
-   grpy_results.solvent_name          = hydro.solvent_name;
-   grpy_results.solvent_acronym       = hydro.solvent_acronym;
-   grpy_results.solvent_viscosity     = use_solvent_visc();
-   grpy_results.solvent_density       = use_solvent_dens();
-   grpy_results.temperature           = hydro.temperature;
-   grpy_results.name                  = QFileInfo( grpy_last_processed ).baseName();
-   grpy_results.used_beads            = bead_models[ grpy_last_model_number ].size();
-   grpy_results.used_beads_sd         = 0e0;
-   grpy_results.total_beads           = bead_models[ grpy_last_model_number ].size();
-   grpy_results.total_beads_sd        = 0e0;
-   grpy_results.vbar                  = use_vbar( model_vector[ grpy_last_model_number ].vbar );
-   qDebug() << "finalize results.vbar " <<  use_vbar( model_vector[ grpy_last_model_number ].vbar );
-   qDebug() << "finalize current model" <<  grpy_last_model_number;
-   
-   grpy_results.pH                    = hydro.pH;
-
-   grpy_results.num_models            = grpy_processed.size();
-
-   grpy_results2 = grpy_results;
-
+   // accumulate data as in zeno (e.g. push values to data structures )
+      
    map < int, map < QString, double > > data_to_save;
    
    for ( map < QString, vector < double > >::iterator it = grpy_captures.begin();
@@ -442,26 +395,9 @@ void US_Hydrodyn::grpy_finalize() {
       for ( int i = 0; i < (int) it->second.size(); ++i ) {
          data_to_save[ i ][ it->first ] = it->second[ i ];
 
-         if ( it->first  == "M" ) {
-            {
-               grpy_results.mass += it->second[ i ];
-               // grpy_results2.mass += it->second[ i ] * it->second[ i ];
-            }
-            break;
-         }               
-         if ( it->first == "v_bar" ) {
-            grpy_results.vbar += it->second[ i ];
-            // grpy_results2.vbar += it->second[ i ] * it->second[ i ];
-         }
-
          if ( it->first == "R\\(Anhydrous\\)" ) {
             grpy_results.rs += it->second[ i ];
             grpy_results2.rs += it->second[ i ] * it->second[ i ];
-         }
-
-         if ( it->first == "Axial Ratio" ) {
-            //    grpy_results.mass += it->second[ i ];
-            //    grpy_results2.mass += it->second[ i ] * it->second[ i ];
          }
 
          if ( it->first == "f/fo" ) {
@@ -474,11 +410,6 @@ void US_Hydrodyn::grpy_finalize() {
             grpy_results2.D20w += it->second[ i ] * it->second[ i ];
          }
 
-         if ( it->first == "R\\(Translation\\)" ) {
-            //    grpy_results.mass += it->second[ i ];
-            //    grpy_results2.mass += it->second[ i ] * it->second[ i ];
-         }
-
          if ( it->first == "s" ) {
             grpy_results.s20w += it->second[ i ];
             grpy_results2.s20w += it->second[ i ] * it->second[ i ];
@@ -489,10 +420,6 @@ void US_Hydrodyn::grpy_finalize() {
             grpy_results2.viscosity += it->second[ i ] * it->second[ i ];
          }
 
-         // if ( it->first == "Dr" ) {
-         //    grpy_results.rot_diff_coef  += it->second[ i ];
-         //    grpy_results2.rot_diff_coef += it->second[ i ] * it->second[ i ];
-         // }
          if ( it->first == "tauh" ) {
             grpy_results.tau += it->second[ i ] * 1e9;
             grpy_results2.tau += it->second[ i ] * it->second[ i ] * 1e18;
@@ -579,51 +506,27 @@ void US_Hydrodyn::grpy_finalize() {
 
       this_data.hydro                         = hydro;
       this_data.results.num_models            = 1;
-      this_data.results.name                  = QString( "%1-%1" ).arg( QFileInfo( grpy_filename ).completeBaseName() ).arg( it->first + 1 );
-      this_data.results.used_beads            = 0;
+      this_data.results.name                  =
+         // QString( "%1-%2" ).arg( QFileInfo( grpy_last_processed ).completeBaseName().replace( QRegExp( ".grpy$" ), "" ) ).arg( it->first + 1 )
+         QFileInfo( grpy_last_processed ).completeBaseName().replace( QRegExp( ".grpy$" ), "" )
+         ;
+      this_data.results.used_beads            = bead_models[ grpy_last_model_number ].size();
       this_data.results.used_beads_sd         = 0e0;
-      this_data.results.total_beads           = 0;
+      this_data.results.total_beads           = bead_models[ grpy_last_model_number ].size();
       this_data.results.total_beads_sd        = 0e0;
-      this_data.results.vbar                  = 0;
-
-      if ( it->second.count( "M" ) ) {
-         this_data.results.mass = it->second[ "M" ];
-      }
-
-      if ( it->second.count( "v_bar" ) ) {
-         this_data.results.vbar = it->second[ "v_bar" ];
-      }
-
-      if ( it->second.count( "R\\(Anhydrous\\)" ) ) {
-         this_data.results.rs = it->second[ "R\\(Anhydrous\\)" ];
-      }
-
-      if ( it->second.count( "Axial Ratio" ) ) {
-         // this_data.results.mass = it->second[ "Axial Ratio" ];
-      }
-
-      if ( it->second.count( "f/fo" ) ) {
-         this_data.results.ff0 = it->second[ "f/fo" ];
-      }
-
-      if ( it->second.count( "Dt" ) ) {
-         this_data.results.D20w = it->second[ "Dt" ];
-      }
-
-      if ( it->second.count( "R\\(Translation\\)" ) ) {
-         // this_data.results.mass = it->second[ "R\\(Translation\\)" ];
-      }
-
-      if ( it->second.count( "s" ) ) {
-         this_data.results.s20w = it->second[ "s" ] * 1e13;
-      }
-
-      if ( it->second.count( "\\[eta\\]" ) ) {
-         this_data.results.viscosity = it->second[ "\\[eta\\]" ];
-      }
+      this_data.results.vbar                  = use_vbar( model_vector[ grpy_last_model_number ].vbar );
 
       if ( it->second.count( "Dr" ) ) {
          this_data.rot_diff_coef = it->second[ "Dr" ];
+      }
+      if ( it->second.count( "s" ) ) {
+         this_data.results.s20w = it->second[ "s" ] * 1e13;
+      }
+      if ( it->second.count( "Dt" ) ) {
+         this_data.results.D20w = it->second[ "Dt" ];
+      }
+      if ( it->second.count( "\\[eta\\]" ) ) {
+         this_data.results.viscosity = it->second[ "\\[eta\\]" ];
       }
       if ( it->second.count( "tau1" ) ) {
          this_data.rel_times_tau_1 = it->second[ "tau1" ];
@@ -642,15 +545,6 @@ void US_Hydrodyn::grpy_finalize() {
       }
       if ( it->second.count( "tauh" ) ) {
          this_data.rel_times_tau_h = it->second[ "tauh" ];
-         this_data.rel_times_tau_m =
-            (
-             this_data.rel_times_tau_1 +
-             this_data.rel_times_tau_2 +
-             this_data.rel_times_tau_3 +
-             this_data.rel_times_tau_4 +
-             this_data.rel_times_tau_5
-             ) / 5.0;
-         this_data.results.tau = this_data.rel_times_tau_h;
       }
 
       if ( it->second.count( "R\\(Rotation\\)" ) ) {
@@ -706,7 +600,8 @@ void US_Hydrodyn::grpy_finalize() {
             double Rg = sqrt( Rg2 / total_cm_mw );
 
             this_data.results.rg = Rg * fconv;
-            grpy_results.rg = Rg * fconv;
+            grpy_results.rg  += this_data.results.rg;
+            grpy_results2.rg += this_data.results.rg * this_data.results.rg;
             us_qdebug( QString( "rg %1 fconv %2 rg2 %3 total_cm_mw %4" ).arg( Rg ).arg( fconv ).arg( Rg2 ).arg( total_cm_mw ) );
          }
 
@@ -731,7 +626,8 @@ void US_Hydrodyn::grpy_finalize() {
             if ( this_data.results.D20w ) {
                this_data.results.rs = 1e1 * ( 1e7 / fconv ) * 
                   R * ( K0 + hydro.temperature ) / ( AVOGADRO * 6.0 * M_PI * use_solvent_visc() * this_data.results.D20w );
-               grpy_results.rs = this_data.results.rs;
+               grpy_results.rs  += this_data.results.rs;
+               grpy_results2.rs += this_data.results.rs * this_data.results.rs;
             }
          }
 
@@ -748,17 +644,44 @@ void US_Hydrodyn::grpy_finalize() {
             this_data.results.ff0 = 
                this_data.tra_fric_coef * 10 / 
                ( fconv * 6e0 * M_PI *  use_solvent_visc() * 
-                 pow( 3.0 * this_data.results.mass * grpy_results.vbar / (4.0 * M_PI * AVOGADRO), 1.0/3.0 ) );
+                 pow( 3.0 * this_data.results.mass * this_data.results.vbar / (4.0 * M_PI * AVOGADRO), 1.0/3.0 ) );
 
             QTextStream( stdout )
                << "ff0 " << this_data.results.ff0 << " = " << endl
                ;
 
             // this_data.results.ff0_sd = this_data.results.ff0 * this_data.tra_fric_coef_sd / this_data.tra_fric_coef;
-            grpy_results.ff0 = this_data.results.ff0;
+            grpy_results.ff0  += this_data.results.ff0;
+            grpy_results2.ff0 += this_data.results.ff0 * this_data.results.ff0;
          }
       }
 
+      this_data.rel_times_tau_m =
+         (
+          this_data.rel_times_tau_1 +
+          this_data.rel_times_tau_2 +
+          this_data.rel_times_tau_3 +
+          this_data.rel_times_tau_4 +
+          this_data.rel_times_tau_5
+          ) / 5.0;
+
+      this_data.results.tau = this_data.rel_times_tau_h;
+                                                                        
+      // qDebug() << "GRPY accumulating data for " << this_data.results.name;
+
+      grpy_results .name                 +=
+         // ( grpy_results.name.isEmpty() ? QString( this_data.results.name + " " ) : QString( ",-%1" ).arg( grpy_last_model_number + 1 ) )
+         this_data.results.name + " "
+         ;
+      grpy_results .mass                 += this_data.results.mass;
+      grpy_results2.mass                 += this_data.results.mass        * this_data.results.mass;
+      grpy_results .used_beads           += this_data.results.used_beads;
+      grpy_results2.used_beads           += this_data.results.used_beads  * this_data.results.used_beads;
+      grpy_results .total_beads          += this_data.results.total_beads;
+      grpy_results2.total_beads          += this_data.results.total_beads * this_data.results.total_beads;
+      grpy_results .vbar                 += this_data.results.vbar;
+      grpy_results2.vbar                 += this_data.results.vbar        * this_data.results.vbar;
+      grpy_results .num_models           ++ ;
 
       if ( batch_widget &&
            batch_window->save_batch_active )
@@ -787,17 +710,38 @@ void US_Hydrodyn::grpy_finalize() {
       save_util->dataString(&this_data);
    }
 
+   
+   grpy_process_next();
+}
+   
+void US_Hydrodyn::grpy_started()
+{
+   // us_qdebug( QString( "grpy_started %1" ).arg( grpy_last_processed ) );
+   // editor_msg("brown", "GRPY launch exited\n");
+   disconnect( grpy, SIGNAL(started()), 0, 0);
+}
+
+void US_Hydrodyn::grpy_finalize() {
+   // qDebug() << "grpy_finalize():" << grpy_last_processed;
+   // us_qdebug( QString( "grpy_finalize %1" ).arg( grpy_last_processed ) );
+   editor_msg( "black", "Finalizing GRPY results" );
+   // for ( map < QString, vector < double > >::iterator it = grpy_captures.begin();
+   //       it != grpy_captures.end();
+   //       ++it ) {
+   //    editor_msg( "dark red",  US_Vector::qs_vector( it->first, it->second ) );
+   // }
+
    {
       double num = (double) grpy_results.num_models;
       if ( num <= 1 ) {
          results = grpy_results;
       } else {
-         grpy_results.name = grpy_filename;
          double numinv = 1e0 / num;
          grpy_results.mass          *= numinv;
          grpy_results.s20w          *= numinv;
          grpy_results.D20w          *= numinv;
          grpy_results.viscosity     *= numinv;
+         grpy_results.tau           *= numinv;
          grpy_results.rs            *= numinv;
          grpy_results.rg            *= numinv;
          grpy_results.vbar          *= numinv;
@@ -812,6 +756,7 @@ void US_Hydrodyn::grpy_finalize() {
             grpy_results.s20w_sd           = sqrt( fabs( ( grpy_results2.s20w        - grpy_results.s20w        * grpy_results.s20w        * num ) * numdecinv ) );
             grpy_results.D20w_sd           = sqrt( fabs( ( grpy_results2.D20w        - grpy_results.D20w        * grpy_results.D20w        * num ) * numdecinv ) );
             grpy_results.viscosity_sd      = sqrt( fabs( ( grpy_results2.viscosity   - grpy_results.viscosity   * grpy_results.viscosity   * num ) * numdecinv ) );
+            grpy_results.tau_sd            = sqrt( fabs( ( grpy_results2.tau         - grpy_results.tau         * grpy_results.tau         * num ) * numdecinv ) );
             grpy_results.rs_sd             = sqrt( fabs( ( grpy_results2.rs          - grpy_results.rs          * grpy_results.rs          * num ) * numdecinv ) );
             grpy_results.rg_sd             = sqrt( fabs( ( grpy_results2.rg          - grpy_results.rg          * grpy_results.rg          * num ) * numdecinv ) );
             grpy_results.ff0_sd            = sqrt( fabs( ( grpy_results2.ff0         - grpy_results.ff0         * grpy_results.ff0         * num ) * numdecinv ) );
@@ -827,6 +772,7 @@ void US_Hydrodyn::grpy_finalize() {
    
    pb_show_hydro_results->setEnabled( true );
    grpy_running = false;
+   set_enabled();
    pb_calc_hydro->setEnabled(true);
    pb_calc_zeno->setEnabled(true);
    pb_bead_saxs->setEnabled(true);
@@ -839,5 +785,5 @@ void US_Hydrodyn::grpy_finalize() {
    editor_msg( "black", QString( "Time to process %1").arg( timers.time_min_sec( "compute grpy" ) ) );
    editor_msg( "dark blue", info_cite( "grpy" ) );
 
-   // us_qdebug( QString( "grpy_finalize %1 end" ).arg( grpy_filename ) );
+   // us_qdebug( QString( "grpy_finalize %1 end" ).arg( grpy_last_processed ) );
 }

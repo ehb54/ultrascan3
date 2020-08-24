@@ -1745,6 +1745,33 @@ void US_Hydrodyn::set_disabled()
    pb_equi_grid_bead_model->setEnabled(false);
 }
 
+void US_Hydrodyn::set_enabled()
+{
+   qDebug() << "set_enabled() bead model from file : " << ( bead_model_from_file ? "true" : "false" );
+
+   pb_somo->setEnabled( !bead_model_from_file );
+   pb_somo_o->setEnabled( !bead_model_from_file );
+   pb_grid_pdb->setEnabled( !bead_model_from_file );
+   pb_vdw_beads->setEnabled( !bead_model_from_file );
+   pb_grid->setEnabled( true );
+
+   // needs more work
+   // pb_show_hydro_results->setEnabled( false);
+   // pb_calc_hydro->setEnabled(false);
+   // pb_calc_zeno->setEnabled(false);
+   // pb_calc_grpy->setEnabled(false);
+   // pb_calc_hullrad->setEnabled(false);
+   // pb_visualize->setEnabled(false);
+   // //   pb_pdb_saxs->setEnabled(false);
+
+   // bd_anaflex_enables(false);
+
+   // pb_bead_saxs->setEnabled(false);
+   // le_bead_model_file->setText(" not selected ");
+   // pb_rescale_bead_model->setEnabled(false);
+   // pb_equi_grid_bead_model->setEnabled(false);
+}
+
 void US_Hydrodyn::hybrid()
 {
    if (hybrid_widget)
