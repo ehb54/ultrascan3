@@ -14,6 +14,42 @@
 #include "../include/us_hydrodyn.h"
 #define SLASH QDir::separator()
 
+int US_Hydrodyn::used_beads_count( const vector < PDB_atom *> use_model ) {
+   int used_beads = 0;
+   for (unsigned int i = 0; i < use_model.size(); i++) {
+      if ( use_model[i]->active ) {
+         int color = get_color( use_model[ i ] );
+         if ( hydro.bead_inclusion || color != 6 ) {
+            used_beads++;
+         }
+      }
+   }
+   return used_beads;
+}
+
+int US_Hydrodyn::used_beads_count( const vector < PDB_atom > & use_model ) {
+   int used_beads = 0;
+   for (unsigned int i = 0; i < use_model.size(); i++) {
+      if ( use_model[i].active ) {
+         int color = get_color( & use_model[ i ] );
+         if ( hydro.bead_inclusion || color != 6 ) {
+            used_beads++;
+         }
+      }
+   }
+   return used_beads;
+}
+
+int US_Hydrodyn::total_beads_count( const vector < PDB_atom > & use_model ) {
+   int total_beads = 0;
+   for (unsigned int i = 0; i < use_model.size(); i++) {
+      if ( use_model[i].active ) {
+         total_beads++;
+      }
+   }
+   return total_beads;
+}
+
 bool US_Hydrodyn::calc_grpy_hydro() {
    {
       QFont courier = QFont( "Courier", USglobal->config_list.fontSize );
@@ -213,7 +249,7 @@ void US_Hydrodyn::grpy_process_next() {
 
       editor_msg( "black", QString( "\nStarting GRPY on %1 with %2 beads\n" )
                   .arg( QFileInfo( grpy_last_processed ).baseName() )
-                  .arg( bead_models[ grpy_last_model_number ].size() )
+                  .arg( used_beads_count( bead_models[ grpy_last_model_number ] ) )
                   );
       grpy->start( grpy_prog, args, QIODevice::ReadOnly );
    }
@@ -510,9 +546,9 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
          // QString( "%1-%2" ).arg( QFileInfo( grpy_last_processed ).completeBaseName().replace( QRegExp( ".grpy$" ), "" ) ).arg( it->first + 1 )
          QFileInfo( grpy_last_processed ).completeBaseName().replace( QRegExp( ".grpy$" ), "" )
          ;
-      this_data.results.used_beads            = bead_models[ grpy_last_model_number ].size();
+      this_data.results.used_beads            = used_beads_count( bead_models[ grpy_last_model_number ] );
       this_data.results.used_beads_sd         = 0e0;
-      this_data.results.total_beads           = bead_models[ grpy_last_model_number ].size();
+      this_data.results.total_beads           = total_beads_count( bead_models[ grpy_last_model_number ] );
       this_data.results.total_beads_sd        = 0e0;
       this_data.results.vbar                  = use_vbar( model_vector[ grpy_last_model_number ].vbar );
 

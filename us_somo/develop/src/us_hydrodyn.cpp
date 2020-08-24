@@ -1754,6 +1754,7 @@ void US_Hydrodyn::set_enabled()
    pb_grid_pdb->setEnabled( !bead_model_from_file );
    pb_vdw_beads->setEnabled( !bead_model_from_file );
    pb_grid->setEnabled( true );
+   pb_visualize->setEnabled( true );
 
    // needs more work
    // pb_show_hydro_results->setEnabled( false);
@@ -3514,8 +3515,9 @@ void US_Hydrodyn::view_bead_model()
          filename = last_bead_model;
          break;
       case QMessageBox::Cancel :
-      default :
          return;
+         break;
+      default :
          break;
       }
    }

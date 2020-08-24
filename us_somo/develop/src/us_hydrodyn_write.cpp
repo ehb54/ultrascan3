@@ -482,7 +482,7 @@ void US_Hydrodyn::write_bead_model( QString fname,
               ,results.vbar
               ,use_solvent_dens()
               ,hydro.unit + 2
-              ,beads
+              ,used_beads_count( use_model )
               
               );
    }
@@ -571,12 +571,15 @@ void US_Hydrodyn::write_bead_model( QString fname,
                     use_model[i]->bead_computed_radius);
          }
          if (fgrpy) {
-            fprintf(fgrpy,
-                    fstring_hydro.toLatin1().data(),
-                    use_model[i]->bead_coordinate.axis[0],
-                    use_model[i]->bead_coordinate.axis[1],
-                    use_model[i]->bead_coordinate.axis[2],
-                    use_model[i]->bead_computed_radius);
+            int color = get_color( use_model[ i ] );
+            if ( hydro.bead_inclusion || color != 6 ) {
+               fprintf(fgrpy,
+                       fstring_hydro.toLatin1().data(),
+                       use_model[i]->bead_coordinate.axis[0],
+                       use_model[i]->bead_coordinate.axis[1],
+                       use_model[i]->bead_coordinate.axis[2],
+                       use_model[i]->bead_computed_radius);
+            }
          }
       }
    }

@@ -141,7 +141,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
                   QWidget *p = 0, 
                   const char *name = 0);
       ~US_Hydrodyn();
-      int get_color(PDB_atom *);
+      int get_color(const PDB_atom *);
       BD_Options bd_options;
       BD_Options default_bd_options;
       Anaflex_Options anaflex_options;
@@ -254,6 +254,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
       
    private:
 
+      int used_beads_count( const vector < PDB_atom > & use_model );
+      int used_beads_count( const vector < PDB_atom * > use_model );
+      int total_beads_count( const vector < PDB_atom > & use_model );
       // protons at pH
       double protons_at_pH( double pH, const struct PDB_model & model );
       double compute_isoelectric_point( const struct PDB_model & model );

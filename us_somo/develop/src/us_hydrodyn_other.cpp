@@ -154,7 +154,7 @@ void US_Hydrodyn::closeAttnt(QProcess *proc, QString message)
 
 // #define DEBUG_COLOR
 
-int US_Hydrodyn::get_color(PDB_atom *a) {
+int US_Hydrodyn::get_color(const PDB_atom *a) {
    int color = a->bead_color;
    if (a->all_beads.size()) {
       color = 7;
