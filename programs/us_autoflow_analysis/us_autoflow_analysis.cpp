@@ -52,7 +52,7 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   // protocol_details[ "aprofileguid" ] = QString("d13ffad0-6f27-4fd8-8aa0-df8eef87a6ea");
   // protocol_details[ "protocolName" ] = QString("alexey-abs-itf-test1");
   // protocol_details[ "invID_passed" ] = QString("12");
-  // protocol_details[ "analysisIDs"  ] = QString("190,191,192,193,194,195,196,197,198,199,200,201,202,203,204,205,206,207,208,209,210,211,212,213,214,215,216,217,218,219,220,221,222,223,224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245,246,247,248,249,250,251");
+  // protocol_details[ "analysisIDs"  ] = QString( "252,253,254,255,256,257,258,259,260,261,262,263,264,265,266,267,268,269,270,271,272,273,274,275,276,277,278,279,280,281,282,283,284,285,286,287,288,289,290,291,292,293");
   
   
   // initPanel( protocol_details );
@@ -125,13 +125,15 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   //read_protocol_data_triples();
    
   //Generate GUI
-  QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
+  QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
   QFontMetrics fmet( sfont );
 
   int triple_name_width;
   int max_width = 0;
 
-  treeWidget->setStyleSheet( "QTreeWidget { font: bold; font-size: " + QString::number(sfont.pointSize()) + "pt;} QTreeView { alternate-background-color: yellow;} QTreeView::item:hover { border: black;  border-radius:1px;  background-color: rgba(0,128,255,95);}");
+  qDebug() << "Font size: " <<  QString::number(sfont.pointSize());
+  
+  treeWidget->setStyleSheet( "QTreeWidget { font: bold; font-size: " + QString::number(sfont.pointSize()) + "pt;}  QTreeView { alternate-background-color: yellow;} QTreeView::item:hover { border: black;  border-radius:1px;  background-color: rgba(0,128,255,95);}");
   
   // for ( int i=0; i<Array_of_triples.size(); ++i )
   //   {
@@ -179,6 +181,7 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 
       topItem [ triple_curr ] = new QTreeWidgetItem();
       topItem [ triple_curr ] -> setText( 0, triple_curr );
+      topItem [ triple_curr ] -> setFont(0, sfont);
       treeWidget -> addTopLevelItem( topItem [ triple_curr ] );
       
       if ( job1run )  //2DSA
