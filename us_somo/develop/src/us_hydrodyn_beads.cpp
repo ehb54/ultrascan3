@@ -142,7 +142,7 @@ int US_Hydrodyn::calc_somo( bool no_ovlp_removal )
          if(!compute_asa( false, no_ovlp_removal ))
          {
             somo_processed[current_model] = 1;
-            if ( asa.recheck_beads && !no_ovlp_removal )
+            if ( asa.recheck_beads ) // && !no_ovlp_removal )
             {
                // puts("recheck beads disabled");
                editor->append("Rechecking beads\n");
