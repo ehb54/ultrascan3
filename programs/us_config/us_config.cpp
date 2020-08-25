@@ -158,6 +158,10 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   pb_db = us_pushbutton( tr( "Change" ) );
   otherSettings->addWidget( pb_db, row++, 1 );
   connect( pb_db, SIGNAL( clicked() ), this, SLOT( update_db() ) );
+  /* For DB change - check autoflow records & disable with message if there are any records */
+  
+  /******************************************************************************************/
+  
 
   // Master Password
   QLabel* password = us_label( "Master Password:" );

@@ -42,6 +42,7 @@ class US_Database : public US_Widgets
     
   private slots:
     void help        ( void );
+    int  get_autoflow_records( void );
     void select_db   ( QListWidgetItem* );
     void check_add   ( void );
     void reset       ( void );

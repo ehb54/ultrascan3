@@ -28,6 +28,22 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
      close();
   }
 
+  
+  /* For DB change - check autoflow records & disable with message if there are any records */
+  int autoflow_records = 0;
+  autoflow_records = get_autoflow_records();
+  qDebug() << "Autoflow record #: " << autoflow_records;
+  
+  if ( autoflow_records  )
+    {
+      QMessageBox::information( this,
+				tr( "Default Database Cannot be Cahnged!" ),
+				tr( "Database preferences cannot be currently changed since there are Data Acquisition related processes ongoing. Please try again later." ) );
+      close();
+    }
+  
+  /******************************************************************************************/
+  
   QBoxLayout* topbox = new QVBoxLayout( this );
   topbox->setSpacing( 2 );
 
@@ -155,6 +171,31 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
 
   topbox->addLayout( buttons );
   topbox->addLayout( std_buttons );
+}
+
+// Query autoflow for # records
+int US_Database::get_autoflow_records( void )
+{
+   // Check DB connection
+   US_Passwd pw;
+   QString masterpw = pw.getPasswd();
+   US_DB2* db = new US_DB2( masterpw );
+
+   int record_number = 0;
+   
+   if ( db->lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+       return record_number;
+     }
+
+   QStringList qry;
+   qry << "count_autoflow_records";
+   
+   record_number = db->functionQuery( qry );
+
+   return record_number;
 }
 
 void US_Database::select_db( QListWidgetItem* entry )
