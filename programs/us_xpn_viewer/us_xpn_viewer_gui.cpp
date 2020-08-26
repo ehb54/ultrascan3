@@ -396,7 +396,7 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
    QLabel* lb_totscans = us_label( tr( "Collected #scans:" ), -1 );
    le_totscans = us_lineedit( tr( "" ), -1, true  );
 
-   QLabel* lb_omega2T = us_label( tr( "%1<sup>2</sup> T:"   ).arg( chomega ), -1 );
+   QLabel* lb_omega2T = us_label( tr( "%1<sup>2</sup> t:"   ).arg( chomega ), -1 );
    le_omega2T = us_lineedit( tr( "" ), -1, true  );   
    
    QPushButton* pb_help     = us_pushbutton( tr( "Help" ) );
