@@ -174,12 +174,25 @@ bool US_Hydrodyn::calc_grpy_hydro() {
                                   << "bead model size is " << bead_model.size() << endl
                ;
             
+            if ( !hydro.bead_inclusion && fname.contains( "-vdwpH" ) ) {
+               // bury_all
+               editor_msg( "black", us_tr( "VdW model exposed beads check" ) );
+               for ( int i = 0; i < (int) bead_model.size(); ++i ) {
+                  bead_model[ i ].exposed_code = 0;
+               }
+               bead_check( false, true, true );
+            }
+               
             write_bead_model( QFileInfo( fname ).fileName(),
                               & bead_model,
                               US_HYDRODYN_OUTPUT_GRPY );
 
+            write_bead_model( QFileInfo( fname ).fileName() + "-grpy", 
+                              & bead_model );
+
             grpy_to_process    << QFileInfo( fname ).fileName() + ".grpy";
             grpy_model_numbers.push_back( current_model );
+            grpy_used_beads   .push_back( used_beads_count( bead_model ) );
          } else {
             editor->append(QString("Model %1 - selected but bead model not built\n").arg( model_name( current_model ) ) );
          }
@@ -226,9 +239,11 @@ void US_Hydrodyn::grpy_process_next() {
 
    grpy_last_processed    = grpy_to_process   [ 0 ];
    grpy_last_model_number = grpy_model_numbers[ 0 ];
+   grpy_last_used_beads   = grpy_used_beads   [ 0 ];
    grpy_to_process        .pop_front();
    grpy_model_numbers     .pop_front();
-   grpy_processed         .push_back( grpy_last_processed ); 
+   grpy_used_beads        .pop_front();
+   grpy_processed         .push_back( grpy_last_processed );
 
    grpy_stdout = "";
    progress->setValue( progress->value() + 1 );
@@ -249,7 +264,7 @@ void US_Hydrodyn::grpy_process_next() {
 
       editor_msg( "black", QString( "\nStarting GRPY on %1 with %2 beads\n" )
                   .arg( QFileInfo( grpy_last_processed ).baseName() )
-                  .arg( used_beads_count( bead_models[ grpy_last_model_number ] ) )
+                  .arg( grpy_last_used_beads )
                   );
       grpy->start( grpy_prog, args, QIODevice::ReadOnly );
    }
@@ -517,7 +532,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
       this_data.axi_ratios_xy                 = 0e0;
       this_data.axi_ratios_yz                 = 0e0;
       this_data.results.method                = "GRPY";
-      this_data.results.mass                  = model_vector[ grpy_last_model_number ].mw + model_vector[ grpy_last_model_number ].ionized_mw_delta;
+      this_data.results.mass                  = hydro.mass_correction ? hydro.mass : ( model_vector[ grpy_last_model_number ].mw + model_vector[ grpy_last_model_number ].ionized_mw_delta );
       this_data.results.s20w                  = 0e0;
       this_data.results.s20w_sd               = 0e0;
       this_data.results.D20w                  = 0e0;
@@ -546,7 +561,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
          // QString( "%1-%2" ).arg( QFileInfo( grpy_last_processed ).completeBaseName().replace( QRegExp( ".grpy$" ), "" ) ).arg( it->first + 1 )
          QFileInfo( grpy_last_processed ).completeBaseName().replace( QRegExp( ".grpy$" ), "" )
          ;
-      this_data.results.used_beads            = used_beads_count( bead_models[ grpy_last_model_number ] );
+      this_data.results.used_beads            = grpy_last_used_beads;
       this_data.results.used_beads_sd         = 0e0;
       this_data.results.total_beads           = total_beads_count( bead_models[ grpy_last_model_number ] );
       this_data.results.total_beads_sd        = 0e0;

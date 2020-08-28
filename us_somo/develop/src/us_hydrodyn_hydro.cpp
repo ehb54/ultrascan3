@@ -231,7 +231,7 @@ void US_Hydrodyn_Hydro::setupGUI()
       bg_solvent_conditions->setLayout( gl );
    }
       
-   bg_reference_system = new QGroupBox( "Computations Relative to:" );
+   bg_reference_system = new QGroupBox( "Computations Relative to (for SMI): " );
 
    rb_diffusion_center = new QRadioButton();
    rb_diffusion_center->setText(us_tr(" Diffusion Center "));
@@ -262,7 +262,7 @@ void US_Hydrodyn_Hydro::setupGUI()
       rb_cartesian_origin->setChecked(true);
    }
 
-   bg_boundary_cond = new QGroupBox( "Boundary Conditions:" );
+   bg_boundary_cond = new QGroupBox( "Boundary Conditions (for SMI):" );
 
    rb_stick = new QRadioButton();
    rb_stick->setText(us_tr(" Stick "));
@@ -293,7 +293,7 @@ void US_Hydrodyn_Hydro::setupGUI()
       rb_slip->setChecked(true);
    }
 
-   bg_mass_correction = new QGroupBox( "Total Mass of Model:" );
+   bg_mass_correction = new QGroupBox( "Total Mass of Model (for GRPY, SMI, ZENO):" );
 
    rb_auto_mass = new QRadioButton();
    rb_auto_mass->setText(us_tr(" Automatic (Sum of Bead Masses)"));
@@ -342,7 +342,7 @@ void US_Hydrodyn_Hydro::setupGUI()
       rb_manual_mass->setChecked(true);
    }
 
-   bg_volume_correction = new QGroupBox( "Total Volume of Model: (for Rotational Diff. and Intrinsic Visc. Volume Corr.)" );
+   bg_volume_correction = new QGroupBox( "Total Volume of Model: (for Rotational Diff. and Intrinsic Visc. Volume Corr.) (for SMI)" );
 
    rb_auto_volume = new QRadioButton();
    rb_auto_volume->setText(us_tr(" Automatic (Sum of Bead Volumes)"));
@@ -391,7 +391,7 @@ void US_Hydrodyn_Hydro::setupGUI()
       rb_manual_volume->setChecked(true);
    }
 
-   bg_bead_inclusion = new QGroupBox( "Inclusion of Buried Beads in Hydrodynamic Calculations:" );
+   bg_bead_inclusion = new QGroupBox( "Inclusion of Buried Beads in Hydrodynamic Calculations (for GRPY, SMI):" );
 
    rb_exclusion = new QRadioButton();
    rb_exclusion->setText(us_tr(" Exclude "));
@@ -421,7 +421,7 @@ void US_Hydrodyn_Hydro::setupGUI()
    } else {
       rb_inclusion->setChecked(true);
    }
-   bg_buried = new QGroupBox( "Include Buried Beads in Volume Correction for Calculation of:" );
+   bg_buried = new QGroupBox( "Include Buried Beads in Volume Correction for Calculation of (for SMI):" );
 
    cb_rotational = new QCheckBox();
    cb_rotational->setText(us_tr(" Rotational Diffusion "));
@@ -462,7 +462,7 @@ void US_Hydrodyn_Hydro::setupGUI()
       bg_buried->setLayout( bl );
    }
 
-   bg_overlap = new QGroupBox( "Overlap cut-off:" );
+   bg_overlap = new QGroupBox( "Overlap cut-off (for SMI):" );
 
    rb_auto_overlap = new QRadioButton();
    rb_auto_overlap->setText(us_tr(" From Bead Model "));

@@ -923,6 +923,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QString grpy_filename;
       QVector < int > grpy_model_numbers;
       int grpy_last_model_number;
+      QVector < int > grpy_used_beads;
+      int grpy_last_used_beads;
       map < QString, vector < double > > grpy_captures;
       US_Timer timers;
       hydro_results grpy_results;
@@ -1111,7 +1113,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void view_asa(); // show asa file in editor
       void view_bead_model(); // show bead model file in editor
       void view_file(const QString &, QString title = "SOMO editor"); // call editor to view a file
-      void bead_check( bool use_threshold = false, bool message_type = false ); // recheck beads
+      void bead_check( bool use_threshold = false, bool message_type = false, bool vdw = false ); // recheck beads
       void load_config();
       void write_config();
       void write_config(const QString &);

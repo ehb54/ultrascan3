@@ -1550,6 +1550,7 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
                }
             }
             // us_qdebug( QString( "bead model radius for %1 = %2" ).arg( res_idx ).arg(  tmp_atom.bead_computed_radius ) );
+            tmp_atom.radius                    = tmp_atom.bead_computed_radius;
             tmp_atom.bead_ref_mw               = this_vdwf.mw;
             tmp_atom.bead_ref_ionized_mw_delta = this_vdwf.ionized_mw_delta;
             tmp_atom.mw                        = this_vdwf.mw;
@@ -1584,6 +1585,18 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
    if ( WAT_Tf_used ) {
       editor_msg( "dark blue", QString( us_tr( "Notice: %1 WATs using PDB's Tf radius recognized\n" ) ).arg( WAT_Tf_used ) );
    }
+
+
+   // if we wanted to compute asa at bead model generation
+   // if ( !hydro.bead_inclusion ) {
+   //    // bury_all
+   //    qDebug() << "name is $fname";
+   //    for ( int i = 0; i < (int) bead_model.size(); ++i ) {
+   //       bead_model[ i ].exposed_code = 0;
+   //       bead_model[ i ].radius = bead_model[ i ].bead_computed_radius;
+   //    }
+   //    bead_check( false, true, true );
+   // }
 
    bead_models[ current_model ] = bead_model;
    somo_processed[ current_model ] = 1;

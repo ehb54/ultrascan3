@@ -30,6 +30,7 @@
 // #define DEBUG1
 // #define AUTO_BB_DEBUG
 // #define BUILD_MAPS_DEBUG
+#define DEBUG_BEAD_CHECK
 
 #define USE_THREADS
 
@@ -7159,7 +7160,7 @@ int US_Hydrodyn::compute_asa( bool bd_mode, bool no_ovlp_removal )
    return 0;
 }
 
-void US_Hydrodyn::bead_check( bool use_threshold, bool message_type )
+void US_Hydrodyn::bead_check( bool use_threshold, bool message_type, bool vdw )
 {
    // recheck beads here
 
@@ -7210,58 +7211,74 @@ void US_Hydrodyn::bead_check( bool use_threshold, bool message_type )
    //  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg( model_name( current_model ) ) + "_pre_recheck" + DOTSOMO, &bead_model);
    //  write_bead_model(somo_dir + SLASH + project + QString("_%1").arg( model_name( current_model ) ) + "_pre_recheck" + DOTSOMO, &bead_model );
 
-   for (unsigned int i = 0; i < bead_model.size(); i++)
-   {
-      float surface_area =
-         (asa.probe_radius + bead_model[i].bead_computed_radius) *
-         (asa.probe_radius + bead_model[i].bead_computed_radius) * 4 * M_PI;
-      QString msg = "";
-      if( use_threshold ?
-          ( bead_model[i].bead_recheck_asa > asa.threshold )        
-          :
-          ( bead_model[i].bead_recheck_asa > (asa.threshold_percent / 100.0) * surface_area )
-          )
-      {
-         // now exposed
-         if(bead_model[i].exposed_code != 1) {
-            // was buried
-            msg = "buried->exposed";
-            b2e++;
-            bead_model[i].exposed_code = 1;
-            bead_model[i].bead_color = 8;
+   if ( vdw ) {
+      for (unsigned int i = 0; i < bead_model.size(); i++) {
+         QString msg = "";
+         if( bead_model[i].bead_recheck_asa > 0 ) {
+            // now exposed
+            if(bead_model[i].exposed_code != 1) {
+               // was buried
+               msg = "buried->exposed";
+               b2e++;
+               bead_model[i].exposed_code = 1;
+               bead_model[i].bead_color = 8;
+            }
          }
       }
+   } else {
+
+      for (unsigned int i = 0; i < bead_model.size(); i++) {
+         float surface_area =
+            (asa.probe_radius + bead_model[i].bead_computed_radius) *
+            (asa.probe_radius + bead_model[i].bead_computed_radius) * 4 * M_PI;
+         QString msg = "";
+         if( use_threshold ?
+             ( bead_model[i].bead_recheck_asa > asa.threshold )        
+             :
+             ( bead_model[i].bead_recheck_asa > (asa.threshold_percent / 100.0) * surface_area )
+             )
+         {
+            // now exposed
+            if(bead_model[i].exposed_code != 1) {
+               // was buried
+               msg = "buried->exposed";
+               b2e++;
+               bead_model[i].exposed_code = 1;
+               bead_model[i].bead_color = 8;
+            }
+         }
 #if defined(EXPOSED_TO_BURIED)
-      else {
-         // now buried
-         if(bead_model[i].exposed_code == 1) {
-            // was exposed
-            msg = "exposed->buried";
-            e2b++;
-            bead_model[i].exposed_code = 6;
-            bead_model[i].bead_color = 6;
+         else {
+            // now buried
+            if(bead_model[i].exposed_code == 1) {
+               // was exposed
+               msg = "exposed->buried";
+               e2b++;
+               bead_model[i].exposed_code = 6;
+               bead_model[i].bead_color = 6;
+            }
          }
-      }
 #endif
 
-#if defined(DEBUG)
-      printf("bead %d %.2f %.2f %.2f %s %s bead mw %.2f bead ref mw %.2f\n",
-             i,
-             bead_model[i].bead_computed_radius,
-             surface_area,
-             bead_model[i].bead_recheck_asa,
-             (
-              use_threshold ?
-              ( bead_model[i].bead_recheck_asa > asa.threshold )        
-              :
-              ( bead_model[i].bead_recheck_asa > (asa.threshold_percent / 100.0) * surface_area )
-              ) ?
-             "exposed" : "buried",
-             msg.toLatin1().data(),
-             bead_model[i].bead_mw,
-             bead_model[i].bead_ref_mw
-             );
+#if defined(DEBUG_BEAD_CHECK)
+         printf("bead %d %.2f %.2f %.2f %s %s bead mw %.2f bead ref mw %.2f\n",
+                i,
+                bead_model[i].bead_computed_radius,
+                surface_area,
+                bead_model[i].bead_recheck_asa,
+                (
+                 use_threshold ?
+                 ( bead_model[i].bead_recheck_asa > asa.threshold )        
+                 :
+                 ( bead_model[i].bead_recheck_asa > (asa.threshold_percent / 100.0) * surface_area )
+                 ) ?
+                "exposed" : "buried",
+                msg.toLatin1().data(),
+                bead_model[i].bead_mw,
+                bead_model[i].bead_ref_mw
+                );
 #endif
+      }
    }
    //  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg( model_name( current_model ) ) +
    //         QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
