@@ -148,6 +148,42 @@ bool US_Hydrodyn::calc_grpy_hydro() {
    grpy_results2                      = grpy_results;
 
    QDir::setCurrent(somo_dir);
+   
+   bool use_threshold = false;
+   QString extension;
+
+   if ( !hydro.bead_inclusion && bead_model_suffix.contains( "vdwpH" ) ) {
+
+      switch ( QMessageBox::question(this, 
+                                     this->windowTitle() + us_tr(": GRPY ASA" ),
+                                     us_tr( "Choose the ASA method for GRPY bead inclusion"),
+                                     us_tr( "&Use SOMO ASA Threshold [A^2]" ), 
+                                     us_tr( "Use SOMO Bead ASA Threshold %" ), 
+                                     QString::null,
+                                     1, // Stop == button 0
+                                     1 // Escape == button 0
+                                     ) )
+      {
+      case 0 : //
+         use_threshold = true;
+         break;
+      case 1 : // keep
+         use_threshold = false;
+         break;
+      }
+
+      qDebug() << "use_threshold is " << ( use_threshold ? "true" : "false" );
+
+      extension =
+         QString( "_%1%2PRR%3SS%4" )
+         .arg( use_threshold ? "A" : "R" )
+         .arg( use_threshold ? asa.threshold : asa.threshold_percent )
+         // .arg( asa.probe_radius )
+         .arg( asa.probe_recheck_radius )
+         .arg( asa.asab1_step )
+         ;
+   }
+
 
    for (current_model = 0; current_model < (unsigned int)lb_model->count(); current_model++) {
       if (lb_model->item(current_model)->isSelected()) {
@@ -166,7 +202,8 @@ bool US_Hydrodyn::calc_grpy_hydro() {
                somo_dir + SLASH +
                project +
                ( bead_model_from_file ? "" : QString( "_%1" ).arg( model_name( current_model ) ) ) +
-               QString( bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
+               QString( bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
+               extension
                ;
 
             QTextStream( stdout ) << "grpy file is '" << fname << "'" << endl
@@ -180,7 +217,7 @@ bool US_Hydrodyn::calc_grpy_hydro() {
                for ( int i = 0; i < (int) bead_model.size(); ++i ) {
                   bead_model[ i ].exposed_code = 0;
                }
-               bead_check( false, true, true );
+               bead_check( use_threshold, true, true );
             }
                
             write_bead_model( QFileInfo( fname ).fileName(),

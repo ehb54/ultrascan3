@@ -7211,7 +7211,7 @@ void US_Hydrodyn::bead_check( bool use_threshold, bool message_type, bool vdw )
    //  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg( model_name( current_model ) ) + "_pre_recheck" + DOTSOMO, &bead_model);
    //  write_bead_model(somo_dir + SLASH + project + QString("_%1").arg( model_name( current_model ) ) + "_pre_recheck" + DOTSOMO, &bead_model );
 
-   if ( vdw ) {
+   if ( 0 && vdw ) {
       for (unsigned int i = 0; i < bead_model.size(); i++) {
          QString msg = "";
          if( bead_model[i].bead_recheck_asa > 0 ) {
