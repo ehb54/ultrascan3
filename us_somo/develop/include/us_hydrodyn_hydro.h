@@ -43,6 +43,7 @@ struct hydro_options
    bool mass_correction;      // false: Automatic, true: manual (provide value)
    double mass;               // mass correction
    bool bead_inclusion;         // false: exclude hidden beads; true: use all beads
+   bool grpy_bead_inclusion;    // false: exclude hidden beads; true: use all beads
    bool rotational;            // false: include beads in volume correction for rotational diffusion, true: exclude
    bool viscosity;            // false: include beads in volume correction for intrinsic viscosity, true: exclude
    bool overlap_cutoff;         // false: same as in model building, true: enter manually
@@ -97,6 +98,8 @@ class US_EXTERN US_Hydrodyn_Hydro : public QFrame
       QLabel *lbl_solvent_density;
       QLabel *lbl_tc_solvent_viscosity;
       QLabel *lbl_tc_solvent_density;
+      QLabel *lbl_smi;
+      QLabel *lbl_grpy;
       
       QGroupBox *bg_solvent_conditions;
       QGroupBox *bg_reference_system;
@@ -105,6 +108,7 @@ class US_EXTERN US_Hydrodyn_Hydro : public QFrame
       QGroupBox *bg_mass_correction;
       QGroupBox *bg_overlap;
       QGroupBox *bg_bead_inclusion;
+      QGroupBox *bg_grpy_bead_inclusion;
       
       QGroupBox *bg_buried;
 
@@ -135,6 +139,8 @@ class US_EXTERN US_Hydrodyn_Hydro : public QFrame
       QRadioButton *rb_manual_volume;
       QRadioButton *rb_exclusion;
       QRadioButton *rb_inclusion;
+      QRadioButton *rb_grpy_exclusion;
+      QRadioButton *rb_grpy_inclusion;
       QRadioButton *rb_auto_overlap;
       QRadioButton *rb_manual_overlap;
 
@@ -182,6 +188,8 @@ class US_EXTERN US_Hydrodyn_Hydro : public QFrame
       void select_overlap(int);
       void select_bead_inclusion();
       void select_bead_inclusion(int);
+      void select_grpy_bead_inclusion();
+      void select_grpy_bead_inclusion(int);
       void set_solvent_defaults();
       void set_rotational();
       void set_viscosity();

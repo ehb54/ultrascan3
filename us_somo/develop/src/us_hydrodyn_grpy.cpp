@@ -14,12 +14,12 @@
 #include "../include/us_hydrodyn.h"
 #define SLASH QDir::separator()
 
-int US_Hydrodyn::used_beads_count( const vector < PDB_atom *> use_model ) {
+int US_Hydrodyn::grpy_used_beads_count( const vector < PDB_atom *> use_model ) {
    int used_beads = 0;
    for (unsigned int i = 0; i < use_model.size(); i++) {
       if ( use_model[i]->active ) {
          int color = get_color( use_model[ i ] );
-         if ( hydro.bead_inclusion || color != 6 ) {
+         if ( hydro.grpy_bead_inclusion || color != 6 ) {
             used_beads++;
          }
       }
@@ -27,12 +27,12 @@ int US_Hydrodyn::used_beads_count( const vector < PDB_atom *> use_model ) {
    return used_beads;
 }
 
-int US_Hydrodyn::used_beads_count( const vector < PDB_atom > & use_model ) {
+int US_Hydrodyn::grpy_used_beads_count( const vector < PDB_atom > & use_model ) {
    int used_beads = 0;
    for (unsigned int i = 0; i < use_model.size(); i++) {
       if ( use_model[i].active ) {
          int color = get_color( & use_model[ i ] );
-         if ( hydro.bead_inclusion || color != 6 ) {
+         if ( hydro.grpy_bead_inclusion || color != 6 ) {
             used_beads++;
          }
       }
@@ -178,12 +178,11 @@ bool US_Hydrodyn::calc_grpy_hydro() {
    }
 #endif
 
-   if ( !hydro.bead_inclusion && bead_model_suffix.contains( "vdwpH" ) ) {
+   if ( !hydro.grpy_bead_inclusion && bead_model_suffix.contains( "vdwpH" ) ) {
       extension =
-         QString( "_A%1PR%2SS%3" )
+         QString( "_R%1PR%2" )
          .arg( asa.vdw_grpy_threshold_percent )
          .arg( asa.vdw_grpy_probe_radius )
-         .arg( asa.asab1_step )
          ;
    }
 
@@ -213,7 +212,7 @@ bool US_Hydrodyn::calc_grpy_hydro() {
                                   << "bead model size is " << bead_model.size() << endl
                ;
             
-            if ( !hydro.bead_inclusion && fname.contains( "-vdwpH" ) ) {
+            if ( !hydro.grpy_bead_inclusion && fname.contains( "-vdwpH" ) ) {
                // expose all
                editor_msg( "black", us_tr( "vdW model exposed beads check" ) );
                for ( int i = 0; i < (int) bead_model.size(); ++i ) {
@@ -231,7 +230,7 @@ bool US_Hydrodyn::calc_grpy_hydro() {
 
             grpy_to_process    << QFileInfo( fname ).fileName() + ".grpy";
             grpy_model_numbers.push_back( current_model );
-            grpy_used_beads   .push_back( used_beads_count( bead_model ) );
+            grpy_used_beads   .push_back( grpy_used_beads_count( bead_model ) );
          } else {
             editor->append(QString("Model %1 - selected but bead model not built\n").arg( model_name( current_model ) ) );
          }

@@ -296,6 +296,13 @@ void US_Hydrodyn_ASA::setupGUI()
    AUTFBACK( cnt_hydrate_threshold );
    connect(cnt_hydrate_threshold, SIGNAL(valueChanged(double)), SLOT(update_hydrate_threshold(double)));
 
+   if ( !((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode ) {
+      lbl_hydrate_probe_radius->hide();
+      cnt_hydrate_probe_radius->hide();
+      lbl_hydrate_threshold->hide();
+      cnt_hydrate_threshold->hide();
+   }
+
    lbl_asab1_step = new QLabel(us_tr(" ASAB1 Step Size (A): "), this);
    Q_CHECK_PTR(lbl_asab1_step);
    lbl_asab1_step->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);

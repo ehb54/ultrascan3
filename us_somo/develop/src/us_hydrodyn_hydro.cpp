@@ -391,7 +391,7 @@ void US_Hydrodyn_Hydro::setupGUI()
       rb_manual_volume->setChecked(true);
    }
 
-   bg_bead_inclusion = new QGroupBox( "Inclusion of Buried Beads in Hydrodynamic Calculations (for GRPY, SMI):" );
+   bg_bead_inclusion = new QGroupBox( "Inclusion of Buried Beads in Hydrodynamic Calculations (for SMI):" );
 
    rb_exclusion = new QRadioButton();
    rb_exclusion->setText(us_tr(" Exclude "));
@@ -421,6 +421,39 @@ void US_Hydrodyn_Hydro::setupGUI()
    } else {
       rb_inclusion->setChecked(true);
    }
+
+   bg_grpy_bead_inclusion = new QGroupBox( "Inclusion of Buried Beads in Hydrodynamic Calculations (for GRPY):" );
+
+   rb_grpy_exclusion = new QRadioButton();
+   rb_grpy_exclusion->setText(us_tr(" Exclude "));
+   rb_grpy_exclusion->setEnabled(true);
+   rb_grpy_exclusion->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_grpy_exclusion->setPalette( PALET_NORMAL );
+   AUTFBACK( rb_grpy_exclusion );
+   connect(rb_grpy_exclusion, SIGNAL(clicked()), this, SLOT(select_grpy_bead_inclusion()));
+
+   rb_grpy_inclusion = new QRadioButton();
+   rb_grpy_inclusion->setText(us_tr(" Include "));
+   rb_grpy_inclusion->setEnabled(true);
+   rb_grpy_inclusion->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_grpy_inclusion->setPalette( PALET_NORMAL );
+   AUTFBACK( rb_grpy_inclusion );
+   connect(rb_grpy_inclusion, SIGNAL(clicked()), this, SLOT(select_grpy_bead_inclusion()));
+
+   {
+      QHBoxLayout * bl = new QHBoxLayout; bl->setContentsMargins( 0, 0, 0, 0 ); bl->setSpacing( 0 );
+      bl->addWidget( rb_grpy_exclusion );
+      bl->addWidget( rb_grpy_inclusion );
+      bg_grpy_bead_inclusion->setLayout( bl );
+   }
+
+   if ( !(*hydro).grpy_bead_inclusion ) {
+      rb_grpy_exclusion->setChecked(true);
+   } else {
+      rb_grpy_inclusion->setChecked(true);
+   }
+   
+
    bg_buried = new QGroupBox( "Include Buried Beads in Volume Correction for Calculation of (for SMI):" );
 
    cb_rotational = new QCheckBox();
@@ -544,6 +577,8 @@ void US_Hydrodyn_Hydro::setupGUI()
    background->addWidget( bg_volume_correction , j , 0 , 1 + ( j+2 ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j+=3;
    background->addWidget( bg_bead_inclusion , j , 0 , 1 + ( j+2 ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
+   j+=3;
+   background->addWidget( bg_grpy_bead_inclusion , j , 0 , 1 + ( j+2 ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j+=3;
    background->addWidget( bg_buried , j , 0 , 1 + ( j+2 ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j+=3;
@@ -679,6 +714,21 @@ void US_Hydrodyn_Hydro::select_bead_inclusion(int val)
       cb_viscosity->setEnabled(!(*hydro).bead_inclusion);
       cb_rotational->setEnabled(!(*hydro).bead_inclusion);
    }
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Hydro::select_grpy_bead_inclusion() {
+   if ( rb_grpy_exclusion->isChecked() ) {
+      return select_grpy_bead_inclusion( 0 );
+   }
+   if ( rb_grpy_inclusion->isChecked() ) {
+      return select_grpy_bead_inclusion( 1 );
+   }
+}
+
+void US_Hydrodyn_Hydro::select_grpy_bead_inclusion(int val)
+{
+   (*hydro).grpy_bead_inclusion = val;
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

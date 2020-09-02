@@ -482,7 +482,7 @@ void US_Hydrodyn::write_bead_model( QString fname,
               ,results.vbar
               ,use_solvent_dens()
               ,hydro.unit + 2
-              ,used_beads_count( use_model )
+              ,grpy_used_beads_count( use_model )
               
               );
    }
@@ -572,7 +572,7 @@ void US_Hydrodyn::write_bead_model( QString fname,
          }
          if (fgrpy) {
             int color = get_color( use_model[ i ] );
-            if ( hydro.bead_inclusion || color != 6 ) {
+            if ( hydro.grpy_bead_inclusion || color != 6 ) {
                fprintf(fgrpy,
                        fstring_hydro.toLatin1().data(),
                        use_model[i]->bead_coordinate.axis[0],

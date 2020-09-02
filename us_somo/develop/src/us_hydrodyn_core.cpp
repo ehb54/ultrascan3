@@ -7228,7 +7228,7 @@ void US_Hydrodyn::bead_check( bool use_threshold, bool message_type, bool vdw )
          }
       }
       if ( e2b > 0 ) {
-         editor_msg( "black", QString("%1 exposed beads became buried\n").arg(e2b) );
+         editor_msg( "black", QString("%1 beads are buried\n").arg(e2b) );
       }
       if ( b2e > 0 ) {
          editor_msg( "black", QString("%1 buried beads became exposed\n").arg(b2e) );
