@@ -1341,7 +1341,7 @@ int US_Hydrodyn::calc_vdw_beads()
          {
             QString error_string;
             // create bead model from atoms
-            editor_msg( "black", QString( "Building VdW beads for model %1\n" ).arg( current_model + 1 ) );
+            editor_msg( "black", QString( "Building vdW beads for model %1\n" ).arg( current_model + 1 ) );
             qApp->processEvents();
             // somo_processed[current_model] = 0;
             if (stopFlag)
@@ -1368,7 +1368,7 @@ int US_Hydrodyn::calc_vdw_beads()
                qApp->processEvents();
                any_errors = true;
             } else {
-               editor_msg( "black", QString( "VdW model %1 contains %2 beads\n" )
+               editor_msg( "black", QString( "vdW model %1 contains %2 beads\n" )
                            .arg( current_model + 1 )
                            .arg( bead_models[ current_model ].size() )
                            );
@@ -1378,7 +1378,7 @@ int US_Hydrodyn::calc_vdw_beads()
    }
    if ( !any_errors )
    {
-      editor_msg( "blue", "Build VdW bead model completed\n" );
+      editor_msg( "blue", "Build vdW bead model completed\n" );
       qApp->processEvents();
       pb_visualize->setEnabled(true);
       pb_equi_grid_bead_model->setEnabled(true);
@@ -1448,7 +1448,7 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
 
    if ( !quiet ) 
    {
-      editor->append("Creating VdW beads from atomic model\n");
+      editor->append("Creating vdW beads from atomic model\n");
       qApp->processEvents();
    }
 

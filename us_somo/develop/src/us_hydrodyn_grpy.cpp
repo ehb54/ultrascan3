@@ -149,9 +149,10 @@ bool US_Hydrodyn::calc_grpy_hydro() {
 
    QDir::setCurrent(somo_dir);
    
-   bool use_threshold = false;
    QString extension;
 
+#if defined( TEST_VDW_GRPY_ASA )
+   bool use_threshold = false;
    if ( !hydro.bead_inclusion && bead_model_suffix.contains( "vdwpH" ) ) {
 
       switch ( QMessageBox::question(this, 
@@ -174,16 +175,17 @@ bool US_Hydrodyn::calc_grpy_hydro() {
 
       qDebug() << "use_threshold is " << ( use_threshold ? "true" : "false" );
 
+   }
+#endif
+
+   if ( !hydro.bead_inclusion && bead_model_suffix.contains( "vdwpH" ) ) {
       extension =
-         QString( "_%1%2PRR%3SS%4" )
-         .arg( use_threshold ? "A" : "R" )
-         .arg( use_threshold ? asa.threshold : asa.threshold_percent )
-         // .arg( asa.probe_radius )
-         .arg( asa.probe_recheck_radius )
+         QString( "_A%1PR%2SS%3" )
+         .arg( asa.vdw_grpy_threshold_percent )
+         .arg( asa.vdw_grpy_probe_radius )
          .arg( asa.asab1_step )
          ;
    }
-
 
    for (current_model = 0; current_model < (unsigned int)lb_model->count(); current_model++) {
       if (lb_model->item(current_model)->isSelected()) {
@@ -212,12 +214,12 @@ bool US_Hydrodyn::calc_grpy_hydro() {
                ;
             
             if ( !hydro.bead_inclusion && fname.contains( "-vdwpH" ) ) {
-               // bury_all
-               editor_msg( "black", us_tr( "VdW model exposed beads check" ) );
+               // expose all
+               editor_msg( "black", us_tr( "vdW model exposed beads check" ) );
                for ( int i = 0; i < (int) bead_model.size(); ++i ) {
-                  bead_model[ i ].exposed_code = 0;
+                  bead_model[ i ].exposed_code = 1;
                }
-               bead_check( use_threshold, true, true );
+               bead_check( false, true, true );
             }
                
             write_bead_model( QFileInfo( fname ).fileName(),

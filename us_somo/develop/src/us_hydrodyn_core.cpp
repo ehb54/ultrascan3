@@ -7204,27 +7204,37 @@ void US_Hydrodyn::bead_check( bool use_threshold, bool message_type, bool vdw )
    }
 
    int b2e = 0;
-#if defined(EXPOSED_TO_BURIED)
    int e2b = 0;
-#endif
 
    //  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg( model_name( current_model ) ) + "_pre_recheck" + DOTSOMO, &bead_model);
    //  write_bead_model(somo_dir + SLASH + project + QString("_%1").arg( model_name( current_model ) ) + "_pre_recheck" + DOTSOMO, &bead_model );
 
-   if ( 0 && vdw ) {
+   if ( vdw ) {
       for (unsigned int i = 0; i < bead_model.size(); i++) {
          QString msg = "";
-         if( bead_model[i].bead_recheck_asa > 0 ) {
-            // now exposed
-            if(bead_model[i].exposed_code != 1) {
-               // was buried
-               msg = "buried->exposed";
-               b2e++;
-               bead_model[i].exposed_code = 1;
-               bead_model[i].bead_color = 8;
+         float surface_area =
+            (asa.probe_radius + bead_model[i].bead_computed_radius) *
+            (asa.probe_radius + bead_model[i].bead_computed_radius) * 4 * M_PI;
+         if( bead_model[i].bead_recheck_asa < (asa.vdw_grpy_threshold_percent / 100.0) * surface_area ) {
+            // now buried
+            if(bead_model[i].exposed_code == 1) {
+               // now buried
+               // was exposed
+               msg = "exposed->buried";
+               e2b++;
+               bead_model[i].exposed_code = 6;
+               bead_model[i].bead_color = 6;
             }
          }
       }
+      if ( e2b > 0 ) {
+         editor_msg( "black", QString("%1 exposed beads became buried\n").arg(e2b) );
+      }
+      if ( b2e > 0 ) {
+         editor_msg( "black", QString("%1 buried beads became exposed\n").arg(b2e) );
+      }
+      
+      return;
    } else {
 
       for (unsigned int i = 0; i < bead_model.size(); i++) {

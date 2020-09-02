@@ -1371,6 +1371,8 @@ void US_Hydrodyn::write_config(const QString& fname)
       parameters[ "asa.probe_recheck_radius" ] = QString( "%1" ).arg( asa.probe_recheck_radius );
       parameters[ "asa.threshold" ] = QString( "%1" ).arg( asa.threshold );
       parameters[ "asa.threshold_percent" ] = QString( "%1" ).arg( asa.threshold_percent );
+      parameters[ "asa.vdw_grpy_probe_radius" ] = QString( "%1" ).arg( asa.vdw_grpy_probe_radius );
+      parameters[ "asa.vdw_grpy_threshold_percent" ] = QString( "%1" ).arg( asa.vdw_grpy_threshold_percent );
       parameters[ "asa.grid_threshold" ] = QString( "%1" ).arg( asa.grid_threshold );
       parameters[ "asa.grid_threshold_percent" ] = QString( "%1" ).arg( asa.grid_threshold_percent );
       parameters[ "asa.calculation" ] = QString( "%1" ).arg( asa.calculation );
@@ -1859,6 +1861,8 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    if ( parameters.count( "asa.probe_recheck_radius" ) ) asa.probe_recheck_radius = parameters[ "asa.probe_recheck_radius" ].toFloat();
    if ( parameters.count( "asa.threshold" ) ) asa.threshold = parameters[ "asa.threshold" ].toFloat();
    if ( parameters.count( "asa.threshold_percent" ) ) asa.threshold_percent = parameters[ "asa.threshold_percent" ].toFloat();
+   if ( parameters.count( "asa.vdw_grpy_probe_radius" ) ) asa.vdw_grpy_probe_radius = parameters[ "asa.vdw_grpy_probe_radius" ].toFloat();
+   if ( parameters.count( "asa.vdw_grpy_threshold_percent" ) ) asa.vdw_grpy_threshold_percent = parameters[ "asa.vdw_grpy_threshold_percent" ].toFloat();
    if ( parameters.count( "asa.grid_threshold" ) ) asa.grid_threshold = parameters[ "asa.grid_threshold" ].toFloat();
    if ( parameters.count( "asa.grid_threshold_percent" ) ) asa.grid_threshold_percent = parameters[ "asa.grid_threshold_percent" ].toFloat();
    if ( parameters.count( "asa.calculation" ) ) asa.calculation = parameters[ "asa.calculation" ] == "1";
@@ -2817,6 +2821,8 @@ void US_Hydrodyn::hard_coded_defaults()
    asa.probe_recheck_radius = (float) 1.4;
    asa.threshold = 20.0;
    asa.threshold_percent = 50.0;
+   asa.vdw_grpy_probe_radius = (float) 1.4;
+   asa.vdw_grpy_threshold_percent = 5.0;
    asa.grid_threshold = 10.0;
    asa.grid_threshold_percent = 30.0;
    asa.calculation = true;
