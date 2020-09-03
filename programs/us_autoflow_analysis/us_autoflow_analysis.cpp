@@ -100,10 +100,10 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   QStringList DB = US_Settings::defaultDB();
   if ( DB.size() > 0 )
     {
-      defaultDB = US_Settings::defaultDB().at( 0 );
+      defaultDB = US_Settings::defaultDB().at( 2 );
       qDebug() << "defaultDB -- " << defaultDB;
     }
-  
+
   //retrieve AutoflowAnalysis records, build autoflowAnalysis objects:
   for( int i=0; i < analysisIDs_list.size(); ++i )
     {
@@ -116,6 +116,8 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 
       QString triple_name = analysis_details["triple_name"];
       Array_of_analysis[ triple_name ] = analysis_details;
+
+      Manual_update[ triple_name ] = false;
     }
   
   // Close msg on setting up triple list from main program
@@ -284,12 +286,11 @@ void US_Analysis_auto::gui_update( )
   /*
   
     {
-     "to_process":["2DSA_MC"],
+     "to_process":["2DSA_MC",".."],
      "processed" :[ 
                     {"2DSA"   :{"gfacID":"17","status":"COMPLETE","statusMsg":"Finished:  maxrss 441 MB,  total run seconds 48"}},
 		    {"2DSA_FM":{"gfacID":"18","status":"COMPLETE","statusMsg":"Finished:  maxrss 462 MB,  total run seconds 32"}},
-		    "FITMEN"  ,
-		    {""       :{"gfacID":null,"status":"COMPLETE","statusMsg":"Waiting for manual stage FITMEN to complete."}}   
+		    {"FITMEN" :{"gfacID":null,"status":"COMPLETE","statusMsg":"Waiting for manual stage FITMEN to complete."}}   
 		  ],
      "submitted":"2DSA_IT"
      }
@@ -355,7 +356,7 @@ void US_Analysis_auto::gui_update( )
 	    {
 	      qDebug() << "To process stage - " << to_process_array[i].toString();
 
-	      QGroupBox * to_process_stage_groupbox;
+	      QGroupBox * to_process_stage_groupbox = NULL;
 	      QString stage_to_process = to_process_array[i].toString();
 
 	      if ( stage_to_process == "FITMEN" )
@@ -371,45 +372,45 @@ void US_Analysis_auto::gui_update( )
 	      if ( stage_to_process == "2DSA_MC" )
 		to_process_stage_groupbox = groupbox_2DSA_MC [ triple_curr ];
 
-	      // update GUI
-	      QLineEdit * lineedit_runid    = to_process_stage_groupbox->findChild<QLineEdit *>("runID", Qt::FindDirectChildrenOnly);
-	      QLineEdit * lineedit_owner    = to_process_stage_groupbox->findChild<QLineEdit *>("owner", Qt::FindDirectChildrenOnly);
-	      QLineEdit * lineedit_lastmsg  = to_process_stage_groupbox->findChild<QLineEdit *>("lastmsg", Qt::FindDirectChildrenOnly);
-	      QLineEdit * lineedit_status   = to_process_stage_groupbox->findChild<QLineEdit *>("status", Qt::FindDirectChildrenOnly);
-	      QLineEdit * lineedit_anatype  = to_process_stage_groupbox->findChild<QLineEdit *>("anatype", Qt::FindDirectChildrenOnly);
-	      QLineEdit * lineedit_submit   = to_process_stage_groupbox->findChild<QLineEdit *>("submit", Qt::FindDirectChildrenOnly);
-	      QLineEdit * lineedit_cluster  = to_process_stage_groupbox->findChild<QLineEdit *>("cluster", Qt::FindDirectChildrenOnly);
-	      QLineEdit * lineedit_lastupd  = to_process_stage_groupbox->findChild<QLineEdit *>("lastupd", Qt::FindDirectChildrenOnly);
-	      
-	      //runID
-	      QString runid_text = filename + " ( " + triple_curr + " )  " + defaultDB + " (ID: N/A)";
-	      lineedit_runid -> setText(runid_text);
-	      
-	      //owner
-	      QString investigator_text = investigator_details["email"] + " (" + investigator_details["fname"] + " " + investigator_details["lname"] +  ")";
-	      lineedit_owner -> setText( investigator_text );
-	      
-	      //lastMsg
-	      lineedit_lastmsg -> setText( "N/A" );
-	      
-	      //status
-	      lineedit_status   ->setText( "Waiting for prior stage(s) to complete" );
-	      lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(255, 255, 102); }");
-	      
-	      //analysis type
-	      lineedit_anatype -> setText( stage_to_process );
-	      
-	      //submit
-	      lineedit_submit -> setText( "N/A" );
-	      
-	      //updated
-	      lineedit_lastupd -> setText( "N/A" );
-	      
-	      //cluster
-	      lineedit_cluster -> setText( "N/A" );
-	      
-	      
-	      
+	      if ( to_process_stage_groupbox != NULL ) 
+		{
+		  // update GUI
+		  QLineEdit * lineedit_runid    = to_process_stage_groupbox->findChild<QLineEdit *>("runID", Qt::FindDirectChildrenOnly);
+		  QLineEdit * lineedit_owner    = to_process_stage_groupbox->findChild<QLineEdit *>("owner", Qt::FindDirectChildrenOnly);
+		  QLineEdit * lineedit_lastmsg  = to_process_stage_groupbox->findChild<QLineEdit *>("lastmsg", Qt::FindDirectChildrenOnly);
+		  QLineEdit * lineedit_status   = to_process_stage_groupbox->findChild<QLineEdit *>("status", Qt::FindDirectChildrenOnly);
+		  QLineEdit * lineedit_anatype  = to_process_stage_groupbox->findChild<QLineEdit *>("anatype", Qt::FindDirectChildrenOnly);
+		  QLineEdit * lineedit_submit   = to_process_stage_groupbox->findChild<QLineEdit *>("submit", Qt::FindDirectChildrenOnly);
+		  QLineEdit * lineedit_cluster  = to_process_stage_groupbox->findChild<QLineEdit *>("cluster", Qt::FindDirectChildrenOnly);
+		  QLineEdit * lineedit_lastupd  = to_process_stage_groupbox->findChild<QLineEdit *>("lastupd", Qt::FindDirectChildrenOnly);
+		  
+		  //runID
+		  QString runid_text = filename + " ( " + triple_curr + " )  " + defaultDB + " (ID: N/A)";
+		  lineedit_runid -> setText(runid_text);
+		  
+		  //owner
+		  QString investigator_text = investigator_details["email"] + " (" + investigator_details["fname"] + " " + investigator_details["lname"] +  ")";
+		  lineedit_owner -> setText( investigator_text );
+		  
+		  //lastMsg
+		  lineedit_lastmsg -> setText( "N/A" );
+		  
+		  //status
+		  lineedit_status   ->setText( "Waiting for prior stage(s) to complete" );
+		  lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(255, 255, 102); }");
+		  
+		  //analysis type
+		  lineedit_anatype -> setText( stage_to_process );
+		  
+		  //submit
+		  lineedit_submit -> setText( "N/A" );
+		  
+		  //updated
+		  lineedit_lastupd -> setText( "N/A" );
+		  
+		  //cluster
+		  lineedit_cluster -> setText( "N/A" );
+		}
 	    }
 	}
 
@@ -420,8 +421,8 @@ void US_Analysis_auto::gui_update( )
 	{
 	  for (int i=0; i < processed_array.size(); ++i )
 	    {
-	      QGroupBox * processed_stage_groupbox;
-	      QString stage_name, stage_gfacID, stage_status, stage_statusMsg, stage_updateTime;
+	      QGroupBox * processed_stage_groupbox = NULL;
+	      QString stage_name, stage_gfacID, stage_status, stage_statusMsg, stage_createTime, stage_updateTime;
 	      
 	      foreach(const QString& key, processed_array[i].toObject().keys())
 		{
@@ -431,12 +432,14 @@ void US_Analysis_auto::gui_update( )
 			   << newObj["gfacID"]   .toString()
 			   << newObj["status"]   .toString()
 			   << newObj["statusMsg"].toString()
+			   << newObj["createTime"].toString()
 			   << newObj["updateTime"].toString();
 
 		  stage_name   = key;
 		  stage_gfacID = newObj["gfacID"]   .toString();
 		  stage_status = newObj["status"]   .toString();
 		  stage_statusMsg = newObj["statusMsg"].toString();
+		  stage_createTime = newObj["createTime"].toString();
 		  stage_updateTime = newObj["updateTime"].toString();
 		}
 	      
@@ -452,44 +455,46 @@ void US_Analysis_auto::gui_update( )
 	      if ( stage_name == "2DSA_MC" )
 		processed_stage_groupbox = groupbox_2DSA_MC [ triple_curr ];
 
-	      // update GUI
-	      QLineEdit * lineedit_runid    = processed_stage_groupbox->findChild<QLineEdit *>("runID", Qt::FindDirectChildrenOnly);
-	      QLineEdit * lineedit_owner    = processed_stage_groupbox->findChild<QLineEdit *>("owner", Qt::FindDirectChildrenOnly);
-	      QLineEdit * lineedit_lastmsg  = processed_stage_groupbox->findChild<QLineEdit *>("lastmsg", Qt::FindDirectChildrenOnly);
-	      QLineEdit * lineedit_status   = processed_stage_groupbox->findChild<QLineEdit *>("status", Qt::FindDirectChildrenOnly);
-	      QLineEdit * lineedit_anatype  = processed_stage_groupbox->findChild<QLineEdit *>("anatype", Qt::FindDirectChildrenOnly);
-	      QLineEdit * lineedit_submit   = processed_stage_groupbox->findChild<QLineEdit *>("submit", Qt::FindDirectChildrenOnly);
-	      QLineEdit * lineedit_cluster  = processed_stage_groupbox->findChild<QLineEdit *>("cluster", Qt::FindDirectChildrenOnly);
-	      QLineEdit * lineedit_lastupd  = processed_stage_groupbox->findChild<QLineEdit *>("lastupd", Qt::FindDirectChildrenOnly);
+	      if ( processed_stage_groupbox != NULL )
+		{
+		  // update GUI
+		  QLineEdit * lineedit_runid    = processed_stage_groupbox->findChild<QLineEdit *>("runID", Qt::FindDirectChildrenOnly);
+		  QLineEdit * lineedit_owner    = processed_stage_groupbox->findChild<QLineEdit *>("owner", Qt::FindDirectChildrenOnly);
+		  QLineEdit * lineedit_lastmsg  = processed_stage_groupbox->findChild<QLineEdit *>("lastmsg", Qt::FindDirectChildrenOnly);
+		  QLineEdit * lineedit_status   = processed_stage_groupbox->findChild<QLineEdit *>("status", Qt::FindDirectChildrenOnly);
+		  QLineEdit * lineedit_anatype  = processed_stage_groupbox->findChild<QLineEdit *>("anatype", Qt::FindDirectChildrenOnly);
+		  QLineEdit * lineedit_submit   = processed_stage_groupbox->findChild<QLineEdit *>("submit", Qt::FindDirectChildrenOnly);
+		  QLineEdit * lineedit_cluster  = processed_stage_groupbox->findChild<QLineEdit *>("cluster", Qt::FindDirectChildrenOnly);
+		  QLineEdit * lineedit_lastupd  = processed_stage_groupbox->findChild<QLineEdit *>("lastupd", Qt::FindDirectChildrenOnly);
+		  
+		  //runID
+		  QString runid_text = filename + " ( " + triple_curr + " )  " + defaultDB + " (ID: " + stage_gfacID + ")";
+		  lineedit_runid -> setText(runid_text);
+		  
+		  //owner
+		  QString investigator_text = investigator_details["email"] + " (" + investigator_details["fname"] + " " + investigator_details["lname"] +  ")";
+		  lineedit_owner -> setText( investigator_text );
+		  
+		  //lastMsg
+		  lineedit_lastmsg -> setText( stage_statusMsg );
+		  
+		  //status
+		  lineedit_status -> setText( stage_status );
+		  lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(2, 88, 57); color : white; }");
+		  
+		  //analysis type
+		  lineedit_anatype -> setText( stage_name );
+		  
+		  //submit
+		  lineedit_submit -> setText( stage_createTime );
+		  
+		  //updated
+		  lineedit_lastupd -> setText( stage_updateTime );
+		  
+		  //cluster
+		  lineedit_cluster -> setText( cluster );
 	      
-	      //runID
-	      QString runid_text = filename + " ( " + triple_curr + " )  " + defaultDB + " (ID: " + stage_gfacID + ")";
-	      lineedit_runid -> setText(runid_text);
-	      
-	      //owner
-	      QString investigator_text = investigator_details["email"] + " (" + investigator_details["fname"] + " " + investigator_details["lname"] +  ")";
-	      lineedit_owner -> setText( investigator_text );
-	      
-	      //lastMsg
-	      lineedit_lastmsg -> setText( stage_statusMsg );
-	      
-	      //status
-	      lineedit_status -> setText( stage_status );
-	      lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(2, 88, 57); color : white; }");
-	      
-	      //analysis type
-	      lineedit_anatype -> setText( stage_name );
-	      
-	      //submit
-	      lineedit_submit -> setText( "N/A" );
-	      
-	      //updated
-	      lineedit_lastupd -> setText( stage_updateTime );
-	      
-	      //cluster
-	      lineedit_cluster -> setText( cluster );
-	      
-	      
+		}
 	    }
 	}
 
@@ -499,19 +504,19 @@ void US_Analysis_auto::gui_update( )
 	qDebug() << "Nothing submitted yet !!";
       else
 	{
-	  QGroupBox * current_stage_groupbox;
+	  QGroupBox * current_stage_groupbox = NULL;
 	  qDebug() << "Submitted stage - " << submitted.toString() << ", for triple " << triple_curr;
 
-	  if ( submitted.toString() == "FITMEN" )
+	  if ( submitted.toString() == "FITMEN" && !Manual_update[ triple_curr ] )
 	    {
 	      QMessageBox::information( this,
 					tr( "TEMPORARY: FITMEN stage reached" ),
-					tr( "FITMET stage will be processed manually." ) );
-	      
-	      //in_gui_update  = false; 
+					tr( "FITMET stage for triple %1 will be processed manually." ).arg( triple_curr ) );
+	      update_autoflowAnalysis_status_at_fitmen( &db, requestID );
 
-	      continue; 
+	      Manual_update[ triple_curr ] = true;
 	      
+	      //continue; 
 	    }
 	      
 	  //QGroupBox * current_stage_groupbox;
@@ -524,44 +529,46 @@ void US_Analysis_auto::gui_update( )
 	    current_stage_groupbox = groupbox_2DSA_IT [ triple_curr ];
 	  if ( submitted.toString() == "2DSA_MC" )
 	    current_stage_groupbox = groupbox_2DSA_MC [ triple_curr ];
-	 
-	  
-	  QLineEdit * lineedit_runid    = current_stage_groupbox->findChild<QLineEdit *>("runID", Qt::FindDirectChildrenOnly);
-	  QLineEdit * lineedit_owner    = current_stage_groupbox->findChild<QLineEdit *>("owner", Qt::FindDirectChildrenOnly);
-	  QLineEdit * lineedit_lastmsg  = current_stage_groupbox->findChild<QLineEdit *>("lastmsg", Qt::FindDirectChildrenOnly);
-	  QLineEdit * lineedit_status   = current_stage_groupbox->findChild<QLineEdit *>("status", Qt::FindDirectChildrenOnly);
-	  QLineEdit * lineedit_anatype  = current_stage_groupbox->findChild<QLineEdit *>("anatype", Qt::FindDirectChildrenOnly);
-	  QLineEdit * lineedit_submit   = current_stage_groupbox->findChild<QLineEdit *>("submit", Qt::FindDirectChildrenOnly);
-	  QLineEdit * lineedit_cluster  = current_stage_groupbox->findChild<QLineEdit *>("cluster", Qt::FindDirectChildrenOnly);
-	  QLineEdit * lineedit_lastupd  = current_stage_groupbox->findChild<QLineEdit *>("lastupd", Qt::FindDirectChildrenOnly);
-	  
-	  //runID
-	  QString runid_text = filename + " ( " + triple_curr + " )  " + defaultDB + " (ID: " + curr_gfacID + ")";
-	  lineedit_runid -> setText(runid_text);
-	  
-	  //owner
-	  QString investigator_text = investigator_details["email"] + " (" + investigator_details["fname"] + " " + investigator_details["lname"] +  ")";
-	  lineedit_owner -> setText( investigator_text );
-	  
-	  //lastMsg
-	  lineedit_lastmsg -> setText( status_msg );
-	  
-	  //status
-	  lineedit_status -> setText( status );
-	  lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(50, 205, 50); }");
-	  
-	  //analysis type
-	  lineedit_anatype -> setText( submitted.toString() );
-	  
-	  //submit
-	  lineedit_submit -> setText( create_time );
 
-	  //updated
-	  lineedit_lastupd -> setText( update_time );
+	  if ( current_stage_groupbox != NULL )
+	    {
+	      
+	      QLineEdit * lineedit_runid    = current_stage_groupbox->findChild<QLineEdit *>("runID", Qt::FindDirectChildrenOnly);
+	      QLineEdit * lineedit_owner    = current_stage_groupbox->findChild<QLineEdit *>("owner", Qt::FindDirectChildrenOnly);
+	      QLineEdit * lineedit_lastmsg  = current_stage_groupbox->findChild<QLineEdit *>("lastmsg", Qt::FindDirectChildrenOnly);
+	      QLineEdit * lineedit_status   = current_stage_groupbox->findChild<QLineEdit *>("status", Qt::FindDirectChildrenOnly);
+	      QLineEdit * lineedit_anatype  = current_stage_groupbox->findChild<QLineEdit *>("anatype", Qt::FindDirectChildrenOnly);
+	      QLineEdit * lineedit_submit   = current_stage_groupbox->findChild<QLineEdit *>("submit", Qt::FindDirectChildrenOnly);
+	      QLineEdit * lineedit_cluster  = current_stage_groupbox->findChild<QLineEdit *>("cluster", Qt::FindDirectChildrenOnly);
+	      QLineEdit * lineedit_lastupd  = current_stage_groupbox->findChild<QLineEdit *>("lastupd", Qt::FindDirectChildrenOnly);
+	      
+	      //runID
+	      QString runid_text = filename + " ( " + triple_curr + " )  " + defaultDB + " (ID: " + curr_gfacID + ")";
+	      lineedit_runid -> setText(runid_text);
+	      
+	      //owner
+	      QString investigator_text = investigator_details["email"] + " (" + investigator_details["fname"] + " " + investigator_details["lname"] +  ")";
+	      lineedit_owner -> setText( investigator_text );
+	      
+	      //lastMsg
+	      lineedit_lastmsg -> setText( status_msg );
 	  
-	  //cluster
-	  lineedit_cluster -> setText( cluster );
-	  
+	      //status
+	      lineedit_status -> setText( status );
+	      lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(50, 205, 50); }");
+	      
+	      //analysis type
+	      lineedit_anatype -> setText( submitted.toString() );
+	      
+	      //submit
+	      lineedit_submit -> setText( create_time );
+	      
+	      //updated
+	      lineedit_lastupd -> setText( update_time );
+	      
+	      //cluster
+	      lineedit_cluster -> setText( cluster );
+	    }
 	}
     }
   
@@ -1069,6 +1076,18 @@ QMap< QString, QString> US_Analysis_auto::get_investigator_info( US_DB2* db, con
     }
 
   return inv_details;
+}
+
+// set status to COMPLETE && msg text
+void US_Analysis_auto::update_autoflowAnalysis_status_at_fitmen( US_DB2* db, const QString& requestID )
+{
+  QStringList qry;
+  qry << "update_autoflow_analysis_record_at_fitmen"
+      << requestID;
+  
+  db->query( qry );
+  
+  return;
 }
 
 //Gui update temp: for paper
