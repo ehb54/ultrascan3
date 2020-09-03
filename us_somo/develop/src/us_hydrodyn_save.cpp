@@ -90,6 +90,10 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Stokes radius [nm]", 
             "Stokes radius [nm]", 
 
+            "tra_fric_coef", 
+            "Translational frictional coefficient [g/s]",
+            "Translational frictional coefficient",
+
             "__BREAK__",
 
             "results.ff0", 
@@ -121,6 +125,38 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "results.viscosity", 
             "Intrinsic viscosity [cm^3/g]", 
             "Intrinsic viscosity [cm^3/g]", 
+
+            "use_beads_vol",
+            "Used beads volume [nm^3]",
+            "Used beads volume [nm^3]",
+
+            "use_beads_surf",
+            "Used beads surface area [nm^2]",
+            "Used beads surface area [nm^2]",
+
+            "use_bead_mass",
+            "Used bead mass [Da]",
+            "Used bead mass [Da]",
+
+            "tot_surf_area",
+            "Total surface area of beads in the model [nm^2]",
+            "Total surface area of beads in the model [nm^2]",
+
+            "tot_volume_of",
+            "Total volume of beads in the model [nm^3]",
+            "Total volume of beads in the model [nm^3]",
+
+            "num_of_unused",
+            "Number of unused beads",
+            "Number of unused beads",
+
+            "con_factor",
+            "Conversion Factor",
+            "Conversion Factor",
+
+            "proc_time",
+            "Processing time [s] ",
+            "Processing time [s] ",
 
             "__SECTION__",
             "Additional SMI results:",
@@ -181,6 +217,10 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Stokes radius s.d.", 
             "Stokes radius s.d.", 
 
+            "tra_fric_coef_sd", 
+            "Translational frictional coefficient s.d.",
+            "Translational frictional coefficient s.d.",
+
             "results.ff0_sd", 
             "Frictional ratio s.d.", 
             "Frictional ratio s.d.", 
@@ -205,45 +245,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Dimensionless intrinsic viscosity s.d.",
             "Dimensionless intrinsic viscosity s.d.",
 
-
             "__SECTION__",
-            "Additional hydro results:",
-
-            "tot_surf_area",
-            "Total surface area of beads in the model [nm^2]",
-            "Total surface area of beads in the model [nm^2]",
-
-            "tot_volume_of",
-            "Total volume of beads in the model [nm^3]",
-            "Total volume of beads in the model [nm^3]",
-
-            "num_of_unused",
-            "Number of unused beads",
-            "Number of unused beads",
-
-            "use_beads_vol",
-            "Used beads volume [nm^3]",
-            "Used beads volume [nm^3]",
-
-            "use_beads_surf",
-            "Used beads surface area [nm^2]",
-            "Used beads surface area [nm^2]",
-
-            "use_bead_mass",
-            "Used bead mass [Da]",
-            "Used bead mass [Da]",
-
-            "con_factor",
-            "Conversion Factor",
-            "Conversion Factor",
-
-            "tra_fric_coef", 
-            "Translational frictional coefficient [g/s]",
-            "Translational frictional coefficient",
-
-            "tra_fric_coef_sd", 
-            "Translational frictional coefficient s.d.",
-            "Translational frictional coefficient s.d.",
+            "Additional SMI/GRPY results:",
 
             "rot_fric_coef",
             "Rotational frictional coefficient [g*cm^2/s]",
@@ -292,11 +295,6 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "rel_times_tau_h",
             "Relaxation times, tau(h) [ns]",
             "Relaxation times, tau(h) [ns]",
-
-            "proc_time",
-            "Processing time [s] ",
-            "Processing time [s] ",
-
 
             "__SECTION__",
             "Solvent conditions:",
@@ -1048,7 +1046,7 @@ void US_Hydrodyn_Save::setupGUI()
 {
 
    int minHeight1 = 30;
-   int minWidth1 = 150;
+   int minWidth1 = 450;
 
    lbl_possible = new QLabel(us_tr("Parameters available"), this);
    Q_CHECK_PTR(lbl_possible);
@@ -1096,7 +1094,7 @@ void US_Hydrodyn_Save::setupGUI()
    // }
    tw_possible->setPalette( PALET_NORMAL );
    AUTFBACK( tw_possible );
-   connect(tw_possible, SIGNAL(currentChanged(QWidget *)), SLOT(tab_changed(QWidget *)));
+   connect(tw_possible, SIGNAL(currentChanged(int)), SLOT(tab_changed(int)));
 
    lbl_selected = new QLabel(us_tr("Parameters selected"), this);
    Q_CHECK_PTR(lbl_selected);
@@ -1126,16 +1124,18 @@ void US_Hydrodyn_Save::setupGUI()
    lb_selected->setSelectionMode(QAbstractItemView::MultiSelection);
    connect(lb_selected, SIGNAL(itemSelectionChanged()), SLOT(update_enables_selected()));
 
-   pb_add = new QPushButton("-->", this);
+   QString arrowss = "font: bold;font-size: 38px;";
+
+   pb_add = new QPushButton( u8"\u2192", this);
    Q_CHECK_PTR(pb_add);
-   pb_add->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3));
+   pb_add->setStyleSheet( arrowss );
    pb_add->setMinimumHeight(minHeight1);
    pb_add->setPalette( PALET_PUSHB );
    connect(pb_add, SIGNAL(clicked()), SLOT(add()));
 
-   pb_remove = new QPushButton("<--", this);
+   pb_remove = new QPushButton( u8"\u2190", this);
    Q_CHECK_PTR(pb_remove);
-   pb_remove->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3));
+   pb_remove->setStyleSheet( arrowss );
    pb_remove->setMinimumHeight(minHeight1);
    pb_remove->setPalette( PALET_PUSHB );
    connect(pb_remove, SIGNAL(clicked()), SLOT(remove()));
@@ -1342,7 +1342,7 @@ void US_Hydrodyn_Save::rebuild()
    header();
 }
 
-void US_Hydrodyn_Save::tab_changed(QWidget *)
+void US_Hydrodyn_Save::tab_changed(int)
 {
    update_enables_possible();
 }

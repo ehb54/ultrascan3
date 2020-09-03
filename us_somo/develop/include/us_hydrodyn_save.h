@@ -193,7 +193,7 @@ class US_EXTERN US_Hydrodyn_Save : public QFrame
 
       void rebuild();
 
-      void tab_changed(QWidget *);
+      void tab_changed(int);
 
       void update_enables_selected();
       void update_enables_possible();
