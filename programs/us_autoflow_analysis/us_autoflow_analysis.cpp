@@ -386,7 +386,7 @@ void US_Analysis_auto::gui_update( )
 	      lineedit_runid -> setText(runid_text);
 	      
 	      //owner
-	      QString investigator_text = investigator_details["email"] + " ( " + investigator_details["fname"] + " " + investigator_details["lname"] +  " )";
+	      QString investigator_text = investigator_details["email"] + " (" + investigator_details["fname"] + " " + investigator_details["lname"] +  ")";
 	      lineedit_owner -> setText( investigator_text );
 	      
 	      //lastMsg
@@ -421,7 +421,7 @@ void US_Analysis_auto::gui_update( )
 	  for (int i=0; i < processed_array.size(); ++i )
 	    {
 	      QGroupBox * processed_stage_groupbox;
-	      QString stage_name, stage_gfacID, stage_status, stage_statusMsg;
+	      QString stage_name, stage_gfacID, stage_status, stage_statusMsg, stage_updateTime;
 	      
 	      foreach(const QString& key, processed_array[i].toObject().keys())
 		{
@@ -430,12 +430,14 @@ void US_Analysis_auto::gui_update( )
 		  qDebug() << "Processed stage - " << key << ": gfacID, status, statusMsg -- "
 			   << newObj["gfacID"]   .toString()
 			   << newObj["status"]   .toString()
-			   << newObj["statusMsg"].toString();
+			   << newObj["statusMsg"].toString()
+			   << newObj["updateTime"].toString();
 
 		  stage_name   = key;
 		  stage_gfacID = newObj["gfacID"]   .toString();
 		  stage_status = newObj["status"]   .toString();
 		  stage_statusMsg = newObj["statusMsg"].toString();
+		  stage_updateTime = newObj["updateTime"].toString();
 		}
 	      
 	      if ( stage_name == "FITMEN" ||  stage_name.isEmpty() )
@@ -465,7 +467,7 @@ void US_Analysis_auto::gui_update( )
 	      lineedit_runid -> setText(runid_text);
 	      
 	      //owner
-	      QString investigator_text = investigator_details["email"] + " ( " + investigator_details["fname"] + " " + investigator_details["lname"] +  " )";
+	      QString investigator_text = investigator_details["email"] + " (" + investigator_details["fname"] + " " + investigator_details["lname"] +  ")";
 	      lineedit_owner -> setText( investigator_text );
 	      
 	      //lastMsg
@@ -482,7 +484,7 @@ void US_Analysis_auto::gui_update( )
 	      lineedit_submit -> setText( "N/A" );
 	      
 	      //updated
-	      lineedit_lastupd -> setText( "N/A" );
+	      lineedit_lastupd -> setText( stage_updateTime );
 	      
 	      //cluster
 	      lineedit_cluster -> setText( cluster );
@@ -506,7 +508,7 @@ void US_Analysis_auto::gui_update( )
 					tr( "TEMPORARY: FITMEN stage reached" ),
 					tr( "FITMET stage will be processed manually." ) );
 	      
-	      in_gui_update  = false; 
+	      //in_gui_update  = false; 
 
 	      continue; 
 	      
@@ -538,7 +540,7 @@ void US_Analysis_auto::gui_update( )
 	  lineedit_runid -> setText(runid_text);
 	  
 	  //owner
-	  QString investigator_text = investigator_details["email"] + " ( " + investigator_details["fname"] + " " + investigator_details["lname"] +  " )";
+	  QString investigator_text = investigator_details["email"] + " (" + investigator_details["fname"] + " " + investigator_details["lname"] +  ")";
 	  lineedit_owner -> setText( investigator_text );
 	  
 	  //lastMsg
