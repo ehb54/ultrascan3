@@ -2,7 +2,10 @@
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_protocol_util.h"
-
+#include <QJsonDocument>
+#include <QJsonValue>
+#include <QJsonArray>
+#include <QJsonObject>
 
 // Constructor
 US_Analysis_auto::US_Analysis_auto() : US_Widgets()
@@ -75,7 +78,6 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 
   analysisIDs        = protocol_details[ "analysisIDs" ];
 
- 
   QStringList analysisIDs_list = analysisIDs.split(",");
 
   US_Passwd pw;
@@ -87,6 +89,19 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       QMessageBox::warning( this, tr( "Connection Problem" ),
 			    tr( "Could not connect to database \n" ) +  db.lastError() );
       return;
+    }
+
+  
+  //get investigator e-mail:
+  investigator_details.clear();
+  investigator_details = get_investigator_info( &db, QString::number( invID ));
+
+  //DB name
+  QStringList DB = US_Settings::defaultDB();
+  if ( DB.size() > 0 )
+    {
+      defaultDB = US_Settings::defaultDB().at( 0 );
+      qDebug() << "defaultDB -- " << defaultDB;
     }
   
   //retrieve AutoflowAnalysis records, build autoflowAnalysis objects:
@@ -247,135 +262,54 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   timer_end_process = new QTimer;
   timer_update      = new QTimer;
   connect(timer_update, SIGNAL(timeout()), this, SLOT( gui_update ( ) ));
-  //timer_update->start(1000);     // 5 sec
+  timer_update->start(5000);     // 5 sec
 
-  gui_update_temp();
+  //gui_update_temp();
  
 }
 
-//Gui update temp: for paper
-void US_Analysis_auto::gui_update_temp( )
-{
-  
-  //TEST access to certain groupboxes' children... Mocup
-  // for ( int i=0; i<Array_of_triples.size(); ++i )
-  //   {
-  //     QString triple_curr = Array_of_triples[i];
 
-  QMap<QString, QMap <QString, QString> >::iterator jj;
-  for ( jj = Array_of_analysis.begin(); jj != Array_of_analysis.end(); ++jj )
-    {
-      QString triple_curr = jj.key();
-      triple_curr.replace("."," / ");
-      
-      QMap <QString, QString > ana_details = jj.value();
-      
-      // if( triple_curr.contains("Interference")) 
-      // 	{
-	  //2DSA
-	  QLineEdit * lineedit_2dsa_runID    = groupbox_2DSA    [ triple_curr ]->findChild<QLineEdit *>("runID", Qt::FindDirectChildrenOnly);
-   	  QLineEdit * lineedit_2dsa_owner    = groupbox_2DSA    [ triple_curr ]->findChild<QLineEdit *>("owner", Qt::FindDirectChildrenOnly);
-   	  QLineEdit * lineedit_2dsa_lastmsg  = groupbox_2DSA    [ triple_curr ]->findChild<QLineEdit *>("lastmsg", Qt::FindDirectChildrenOnly);
-	  QLineEdit * lineedit_2dsa_status   = groupbox_2DSA    [ triple_curr ]->findChild<QLineEdit *>("status", Qt::FindDirectChildrenOnly);
-	  QLineEdit * lineedit_2dsa_anatype  = groupbox_2DSA    [ triple_curr ]->findChild<QLineEdit *>("anatype", Qt::FindDirectChildrenOnly);
-	  QLineEdit * lineedit_2dsa_submit   = groupbox_2DSA    [ triple_curr ]->findChild<QLineEdit *>("submit", Qt::FindDirectChildrenOnly);
-	  QLineEdit * lineedit_2dsa_lastupd  = groupbox_2DSA    [ triple_curr ]->findChild<QLineEdit *>("lastupd", Qt::FindDirectChildrenOnly);
-	  QLineEdit * lineedit_2dsa_cluster  = groupbox_2DSA    [ triple_curr ]->findChild<QLineEdit *>("cluster", Qt::FindDirectChildrenOnly);
-	  
-	  lineedit_2dsa_runID    ->setText( "demo1_interference (2/A/660) uslims3_CAUMA (ID: 8837)" );
-	  lineedit_2dsa_owner    ->setText( "alexsav.science@gmail.com" );
-	  lineedit_2dsa_lastmsg  ->setText( "Starting -- 2.0.1642 2020-05-10" );
-	  lineedit_2dsa_status   ->setText( "Running" );
-	  lineedit_2dsa_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(50, 205, 50); }");
-	  lineedit_2dsa_anatype  ->setText( "2DSA" );
-	  lineedit_2dsa_submit   ->setText( "2020-05-10 08:53:10" );
-	  lineedit_2dsa_lastupd  ->setText( "2020-05-10 08:53:47" );
-	  lineedit_2dsa_cluster  ->setText( "ls5.tacc.utexas.edu" );
-
-	  
-	  //2DSA-FM
-	  QLineEdit * lineedit_2dsa_fm_runID    = groupbox_2DSA_FM    [ triple_curr ]->findChild<QLineEdit *>("runID", Qt::FindDirectChildrenOnly);
-   	  QLineEdit * lineedit_2dsa_fm_owner    = groupbox_2DSA_FM    [ triple_curr ]->findChild<QLineEdit *>("owner", Qt::FindDirectChildrenOnly);
-   	  QLineEdit * lineedit_2dsa_fm_lastmsg  = groupbox_2DSA_FM    [ triple_curr ]->findChild<QLineEdit *>("lastmsg", Qt::FindDirectChildrenOnly);
-	  QLineEdit * lineedit_2dsa_fm_status   = groupbox_2DSA_FM    [ triple_curr ]->findChild<QLineEdit *>("status", Qt::FindDirectChildrenOnly);
-	  QLineEdit * lineedit_2dsa_fm_anatype  = groupbox_2DSA_FM    [ triple_curr ]->findChild<QLineEdit *>("anatype", Qt::FindDirectChildrenOnly);
-	  QLineEdit * lineedit_2dsa_fm_submit   = groupbox_2DSA_FM    [ triple_curr ]->findChild<QLineEdit *>("submit", Qt::FindDirectChildrenOnly);
-	  QLineEdit * lineedit_2dsa_fm_lastupd  = groupbox_2DSA_FM    [ triple_curr ]->findChild<QLineEdit *>("lastupd", Qt::FindDirectChildrenOnly);
-	  QLineEdit * lineedit_2dsa_fm_cluster  = groupbox_2DSA_FM    [ triple_curr ]->findChild<QLineEdit *>("cluster", Qt::FindDirectChildrenOnly);
-	  
-	  lineedit_2dsa_fm_runID    ->setText( "demo1_interference (2/A/660) uslims3_CAUMA (ID: N/A)" );
-	  lineedit_2dsa_fm_owner    ->setText( "alexsav.science@gmail.com" );
-	  lineedit_2dsa_fm_lastmsg  ->setText( "N/A" );
-	  lineedit_2dsa_fm_status   ->setText( "Waiting for 2DSA stage to complete" );
-	  lineedit_2dsa_fm_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(255, 255, 102); }");
-	  lineedit_2dsa_fm_anatype  ->setText( "2DSA-FM" );
-	  lineedit_2dsa_fm_submit   ->setText( "N/A" );
-	  lineedit_2dsa_fm_lastupd  ->setText( "N/A" );
-	  lineedit_2dsa_fm_cluster  ->setText( "ls5.tacc.utexas.edu" );
-
-	  //2DSA-IT
-	  QLineEdit * lineedit_2dsa_it_runID    = groupbox_2DSA_IT    [ triple_curr ]->findChild<QLineEdit *>("runID", Qt::FindDirectChildrenOnly);
-   	  QLineEdit * lineedit_2dsa_it_owner    = groupbox_2DSA_IT    [ triple_curr ]->findChild<QLineEdit *>("owner", Qt::FindDirectChildrenOnly);
-   	  QLineEdit * lineedit_2dsa_it_lastmsg  = groupbox_2DSA_IT    [ triple_curr ]->findChild<QLineEdit *>("lastmsg", Qt::FindDirectChildrenOnly);
-	  QLineEdit * lineedit_2dsa_it_status   = groupbox_2DSA_IT    [ triple_curr ]->findChild<QLineEdit *>("status", Qt::FindDirectChildrenOnly);
-	  QLineEdit * lineedit_2dsa_it_anatype  = groupbox_2DSA_IT    [ triple_curr ]->findChild<QLineEdit *>("anatype", Qt::FindDirectChildrenOnly);
-	  QLineEdit * lineedit_2dsa_it_submit   = groupbox_2DSA_IT    [ triple_curr ]->findChild<QLineEdit *>("submit", Qt::FindDirectChildrenOnly);
-	  QLineEdit * lineedit_2dsa_it_lastupd  = groupbox_2DSA_IT    [ triple_curr ]->findChild<QLineEdit *>("lastupd", Qt::FindDirectChildrenOnly);
-	  QLineEdit * lineedit_2dsa_it_cluster  = groupbox_2DSA_IT    [ triple_curr ]->findChild<QLineEdit *>("cluster", Qt::FindDirectChildrenOnly);
-	  
-	  lineedit_2dsa_it_runID    ->setText( "demo1_interference (2/A/660) uslims3_CAUMA (ID: N/A)" );
-	  lineedit_2dsa_it_owner    ->setText( "alexsav.science@gmail.com" );
-	  lineedit_2dsa_it_lastmsg  ->setText( "N/A" );
-	  lineedit_2dsa_it_status   ->setText( "Waiting for 2DSA-FM stage to complete" );
-	  lineedit_2dsa_it_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(255, 255, 102); }");
-	  lineedit_2dsa_it_anatype  ->setText( "2DSA-IT" );
-	  lineedit_2dsa_it_submit   ->setText( "N/A" );
-	  lineedit_2dsa_it_lastupd  ->setText( "N/A" );
-	  lineedit_2dsa_it_cluster  ->setText( "ls5.tacc.utexas.edu" );
-
-	  //2DSA-MC
-	  QLineEdit * lineedit_2dsa_mc_runID    = groupbox_2DSA_MC    [ triple_curr ]->findChild<QLineEdit *>("runID", Qt::FindDirectChildrenOnly);
-   	  QLineEdit * lineedit_2dsa_mc_owner    = groupbox_2DSA_MC    [ triple_curr ]->findChild<QLineEdit *>("owner", Qt::FindDirectChildrenOnly);
-   	  QLineEdit * lineedit_2dsa_mc_lastmsg  = groupbox_2DSA_MC    [ triple_curr ]->findChild<QLineEdit *>("lastmsg", Qt::FindDirectChildrenOnly);
-	  QLineEdit * lineedit_2dsa_mc_status   = groupbox_2DSA_MC    [ triple_curr ]->findChild<QLineEdit *>("status", Qt::FindDirectChildrenOnly);
-	  QLineEdit * lineedit_2dsa_mc_anatype  = groupbox_2DSA_MC    [ triple_curr ]->findChild<QLineEdit *>("anatype", Qt::FindDirectChildrenOnly);
-	  QLineEdit * lineedit_2dsa_mc_submit   = groupbox_2DSA_MC    [ triple_curr ]->findChild<QLineEdit *>("submit", Qt::FindDirectChildrenOnly);
-	  QLineEdit * lineedit_2dsa_mc_lastupd  = groupbox_2DSA_MC    [ triple_curr ]->findChild<QLineEdit *>("lastupd", Qt::FindDirectChildrenOnly);
-	  QLineEdit * lineedit_2dsa_mc_cluster  = groupbox_2DSA_MC    [ triple_curr ]->findChild<QLineEdit *>("cluster", Qt::FindDirectChildrenOnly);
-	  
-	  lineedit_2dsa_mc_runID    ->setText( "demo1_interference (2/A/660) uslims3_CAUMA (ID: N/A)" );
-	  lineedit_2dsa_mc_owner    ->setText( "alexsav.science@gmail.com" );
-	  lineedit_2dsa_mc_lastmsg  ->setText( "N/A" );
-	  lineedit_2dsa_mc_status   ->setText( "Waiting for 2DSA-IT stage to complete" );
-	  lineedit_2dsa_mc_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(255, 255, 102); }");
-	  lineedit_2dsa_mc_anatype  ->setText( "2DSA-MC" );
-	  lineedit_2dsa_mc_submit   ->setText( "N/A" );
-	  lineedit_2dsa_mc_lastupd  ->setText( "N/A" );
-	  lineedit_2dsa_mc_cluster  ->setText( "ls5.tacc.utexas.edu" );
-
-	  //}
-    }
-}
 
 //Gui update: timer's slot
 void US_Analysis_auto::gui_update( )
 {
+  //qDebug() << "in_gui_update: " << in_gui_update;
+    
   if ( in_gui_update )            // If already doing a reload,
     return;                            //  skip starting a new one
   
   in_gui_update  = true;          // Flag in the midst of a reload
 
-  /*************** DEBUG *************************************************************/ 
-  QStringList fields;
-  fields << "runID" << "owner" << "lastmsg" << "anatype" << "submit" << "cluster" << "lastupd";
-  int curr_index = rand() % fields.size(); // pick a random index
-  QString field_name = fields[ curr_index ]; // 
+  /**** JSON structure ****************************************************************/
+  /*
   
-  //TEST access to certain groupboxes' children... Mock-up
-  // for ( int i=0; i<Array_of_triples.size(); ++i )
-  //   {
-  //     QString triple_curr = Array_of_triples[i];
+    {
+     "to_process":["2DSA_MC"],
+     "processed" :[ 
+                    {"2DSA"   :{"gfacID":"17","status":"COMPLETE","statusMsg":"Finished:  maxrss 441 MB,  total run seconds 48"}},
+		    {"2DSA_FM":{"gfacID":"18","status":"COMPLETE","statusMsg":"Finished:  maxrss 462 MB,  total run seconds 32"}},
+		    "FITMEN"  ,
+		    {""       :{"gfacID":null,"status":"COMPLETE","statusMsg":"Waiting for manual stage FITMEN to complete."}}   
+		  ],
+     "submitted":"2DSA_IT"
+     }
   
+  */
+
+  US_Passwd pw;
+  US_DB2    db( pw.getPasswd() );
+
+  // Get the buffer data from the database
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Could not connect to database \n" ) +  db.lastError() );
+      return;
+    }
+  
+
+      
+  /*************** GUI UPDATE *************************************************************/ 
   QMap<QString, QMap <QString, QString> >::iterator jj;
   for ( jj = Array_of_analysis.begin(); jj != Array_of_analysis.end(); ++jj )
     {
@@ -383,46 +317,246 @@ void US_Analysis_auto::gui_update( )
       triple_curr.replace("."," / ");
       
       QMap <QString, QString > ana_details = jj.value();
- 
-      
-      //if( triple_curr.contains("Interference")) 
-      //{
-   	  QLineEdit * lineedit_2dsa    = groupbox_2DSA    [ triple_curr ]->findChild<QLineEdit *>(field_name, Qt::FindDirectChildrenOnly);
-   	  QLineEdit * lineedit_2dsa_fm = groupbox_2DSA_FM [ triple_curr ]->findChild<QLineEdit *>(field_name, Qt::FindDirectChildrenOnly);
-   	  QLineEdit * lineedit_2dsa_it = groupbox_2DSA_IT [ triple_curr ]->findChild<QLineEdit *>(field_name, Qt::FindDirectChildrenOnly);
-   	  QLineEdit * lineedit_2dsa_mc = groupbox_2DSA_MC [ triple_curr ]->findChild<QLineEdit *>(field_name, Qt::FindDirectChildrenOnly);
-	  
-   	  lineedit_2dsa    ->setText( "Some Message" );
-   	  lineedit_2dsa_fm ->setText( "Some Message" );
-   	  lineedit_2dsa_it ->setText( "Some Message" );
-   	  lineedit_2dsa_mc ->setText( "Some Message" );
 
-   	  lineedit_2dsa    ->setStyleSheet("QLineEdit { color: red;}");
-   	  lineedit_2dsa_fm ->setStyleSheet("QLineEdit { color: red;}");
-   	  lineedit_2dsa_it ->setStyleSheet("QLineEdit { color: red;}");
-   	  lineedit_2dsa_mc ->setStyleSheet("QLineEdit { color: red;}");
+      QString requestID = ana_details["requestID"];
+      
+      QMap <QString, QString > current_analysis_details = read_autoflowAnalysis_record( &db, requestID );
+
+      QString cluster       = current_analysis_details[ "cluster" ]      ;
+      QString filename      = current_analysis_details[ "filename" ]     ;
+      QString curr_gfacID   = current_analysis_details[ "CurrentGfacID" ];
+      QString status_json   = current_analysis_details[ "status_json" ]  ;
+      QString status        = current_analysis_details[ "status" ]       ;
+      QString status_msg    = current_analysis_details[ "status_msg" ]   ;
+      QString create_time   = current_analysis_details[ "create_time" ]  ;   
+      QString update_time   = current_analysis_details[ "update_time" ]  ;
+            
+      /********************* deal with JSON *****************************************/
+      
+      //qDebug() << "JSON: " << status_json;
+      
+      QJsonDocument jsonDoc = QJsonDocument::fromJson( status_json.toUtf8() );
+      if (!jsonDoc.isObject())
+	qDebug() << "NOT a JSON Doc !!";
+      
+      const QJsonValue &to_process = jsonDoc["to_process"];
+      const QJsonValue &processed  = jsonDoc["processed"];
+      const QJsonValue &submitted  = jsonDoc["submitted"];
+
+      QJsonArray to_process_array  = to_process.toArray();
+      QJsonArray processed_array   = processed.toArray();
+      
+      //to_process
+      if ( to_process.isUndefined())
+	qDebug() << "All stages have been processed !!";
+      else
+	{
+	  for (int i=0; i < to_process_array.size(); ++i )
+	    {
+	      qDebug() << "To process stage - " << to_process_array[i].toString();
+
+	      QGroupBox * to_process_stage_groupbox;
+	      QString stage_to_process = to_process_array[i].toString();
+	      
+	      if ( stage_to_process == "2DSA" )
+		to_process_stage_groupbox = groupbox_2DSA[ triple_curr ];
+	      if ( stage_to_process == "2DSA_FM" )
+		to_process_stage_groupbox = groupbox_2DSA_FM [ triple_curr ];
+	      if ( stage_to_process == "2DSA_IT" )
+		to_process_stage_groupbox = groupbox_2DSA_IT [ triple_curr ];
+	      if ( stage_to_process == "2DSA_MC" )
+		to_process_stage_groupbox = groupbox_2DSA_MC [ triple_curr ];
+
+	      // update GUI
+	      QLineEdit * lineedit_runid    = to_process_stage_groupbox->findChild<QLineEdit *>("runID", Qt::FindDirectChildrenOnly);
+	      QLineEdit * lineedit_owner    = to_process_stage_groupbox->findChild<QLineEdit *>("owner", Qt::FindDirectChildrenOnly);
+	      QLineEdit * lineedit_lastmsg  = to_process_stage_groupbox->findChild<QLineEdit *>("lastmsg", Qt::FindDirectChildrenOnly);
+	      QLineEdit * lineedit_status   = to_process_stage_groupbox->findChild<QLineEdit *>("status", Qt::FindDirectChildrenOnly);
+	      QLineEdit * lineedit_anatype  = to_process_stage_groupbox->findChild<QLineEdit *>("anatype", Qt::FindDirectChildrenOnly);
+	      QLineEdit * lineedit_submit   = to_process_stage_groupbox->findChild<QLineEdit *>("submit", Qt::FindDirectChildrenOnly);
+	      QLineEdit * lineedit_cluster  = to_process_stage_groupbox->findChild<QLineEdit *>("cluster", Qt::FindDirectChildrenOnly);
+	      QLineEdit * lineedit_lastupd  = to_process_stage_groupbox->findChild<QLineEdit *>("lastupd", Qt::FindDirectChildrenOnly);
+	      
+	      //runID
+	      QString runid_text = filename + " ( " + triple_curr + " )  " + defaultDB + " (ID: N/A)";
+	      lineedit_runid -> setText(runid_text);
+	      
+	      //owner
+	      QString investigator_text = investigator_details["email"] + " ( " + investigator_details["fname"] + " " + investigator_details["lname"] +  " )";
+	      lineedit_owner -> setText( investigator_text );
+	      
+	      //lastMsg
+	      lineedit_lastmsg -> setText( "N/A" );
+	      
+	      //status
+	      lineedit_status   ->setText( "Waiting for prior stage(s) to complete" );
+	      lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(255, 255, 102); }");
+	      
+	      //analysis type
+	      lineedit_anatype -> setText( stage_to_process );
+	      
+	      //submit
+	      lineedit_submit -> setText( "N/A" );
+	      
+	      //updated
+	      lineedit_lastupd -> setText( "N/A" );
+	      
+	      //cluster
+	      lineedit_cluster -> setText( "N/A" );
+	      
+	      
+	      
+	    }
+	}
+
+      //processed
+      if ( processed.isUndefined())
+	qDebug() << "Nothing has been processed yet !!";
+      else
+	{
+	  for (int i=0; i < processed_array.size(); ++i )
+	    {
+	      QGroupBox * processed_stage_groupbox;
+	      QString stage_name, stage_gfacID, stage_status, stage_statusMsg;
+	      
+	      foreach(const QString& key, processed_array[i].toObject().keys())
+		{
+		  QJsonObject newObj = processed_array[i].toObject().value(key).toObject();
+		  
+		  qDebug() << "Processed stage - " << key << ": gfacID, status, statusMsg -- "
+			   << newObj["gfacID"]   .toString()
+			   << newObj["status"]   .toString()
+			   << newObj["statusMsg"].toString();
+
+		  stage_name   = key;
+		  stage_gfacID = newObj["gfacID"]   .toString();
+		  stage_status = newObj["status"]   .toString();
+		  stage_statusMsg = newObj["statusMsg"].toString();
+		}
+
+	      if ( stage_name == "2DSA" )
+		processed_stage_groupbox = groupbox_2DSA[ triple_curr ];
+	      if ( stage_name == "2DSA_FM" )
+		processed_stage_groupbox = groupbox_2DSA_FM [ triple_curr ];
+	      if ( stage_name == "2DSA_IT" )
+		processed_stage_groupbox = groupbox_2DSA_IT [ triple_curr ];
+	      if ( stage_name == "2DSA_MC" )
+		processed_stage_groupbox = groupbox_2DSA_MC [ triple_curr ];
+
+	      // update GUI
+	      QLineEdit * lineedit_runid    = processed_stage_groupbox->findChild<QLineEdit *>("runID", Qt::FindDirectChildrenOnly);
+	      QLineEdit * lineedit_owner    = processed_stage_groupbox->findChild<QLineEdit *>("owner", Qt::FindDirectChildrenOnly);
+	      QLineEdit * lineedit_lastmsg  = processed_stage_groupbox->findChild<QLineEdit *>("lastmsg", Qt::FindDirectChildrenOnly);
+	      QLineEdit * lineedit_status   = processed_stage_groupbox->findChild<QLineEdit *>("status", Qt::FindDirectChildrenOnly);
+	      QLineEdit * lineedit_anatype  = processed_stage_groupbox->findChild<QLineEdit *>("anatype", Qt::FindDirectChildrenOnly);
+	      QLineEdit * lineedit_submit   = processed_stage_groupbox->findChild<QLineEdit *>("submit", Qt::FindDirectChildrenOnly);
+	      QLineEdit * lineedit_cluster  = processed_stage_groupbox->findChild<QLineEdit *>("cluster", Qt::FindDirectChildrenOnly);
+	      QLineEdit * lineedit_lastupd  = processed_stage_groupbox->findChild<QLineEdit *>("lastupd", Qt::FindDirectChildrenOnly);
+	      
+	      //runID
+	      QString runid_text = filename + " ( " + triple_curr + " )  " + defaultDB + " (ID: " + stage_gfacID + ")";
+	      lineedit_runid -> setText(runid_text);
+	      
+	      //owner
+	      QString investigator_text = investigator_details["email"] + " ( " + investigator_details["fname"] + " " + investigator_details["lname"] +  " )";
+	      lineedit_owner -> setText( investigator_text );
+	      
+	      //lastMsg
+	      lineedit_lastmsg -> setText( stage_statusMsg );
+	      
+	      //status
+	      lineedit_status -> setText( stage_status );
+	      lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(2, 88, 57); color : white; }");
+	      
+	      //analysis type
+	      lineedit_anatype -> setText( stage_name );
+	      
+	      //submit
+	      lineedit_submit -> setText( "N/A" );
+	      
+	      //updated
+	      lineedit_lastupd -> setText( "N/A" );
+	      
+	      //cluster
+	      lineedit_cluster -> setText( cluster );
+	      
+	      
+	    }
+	}
+
+      //submitted -- current active stage
+      QGroupBox * current_stage_groupbox;
+      if ( submitted.isUndefined())
+	qDebug() << "Nothing submitted yet !!";
+      else
+	{
+	  qDebug() << "Submitted stage - " << submitted.toString() << ", for triple " << triple_curr;
+
+	  if ( submitted.toString() == "FITMEN" )
+	    {
+	      QMessageBox::information( this,
+					tr( "TEMPORARY: FITMEN stage reached" ),
+					tr( "FITMET stage will be processed manually." ) );
+	      
+	      in_gui_update  = false; 
+
+	      continue; 
+	      
+	    }
+	      
+	  //QGroupBox * current_stage_groupbox;
 	  
-   	  for ( int i=0; i < fields.size(); ++i )
-   	    {
-   	      if ( i != curr_index )
-   		{
-		  groupbox_2DSA    [ triple_curr ]->findChild<QLineEdit*>(fields[i], Qt::FindDirectChildrenOnly)->setText( "" );
-   		  groupbox_2DSA_FM [ triple_curr ]->findChild<QLineEdit*>(fields[i], Qt::FindDirectChildrenOnly)->setText( "" );
-   		  groupbox_2DSA_IT [ triple_curr ]->findChild<QLineEdit*>(fields[i], Qt::FindDirectChildrenOnly)->setText( "" );
-   		  groupbox_2DSA_MC [ triple_curr ]->findChild<QLineEdit*>(fields[i], Qt::FindDirectChildrenOnly)->setText( "" );
-		  
-   		  groupbox_2DSA    [ triple_curr ]->findChild<QLineEdit*>(fields[i], Qt::FindDirectChildrenOnly)->setStyleSheet("QLineEdit { color: black;}");
-   		  groupbox_2DSA_FM [ triple_curr ]->findChild<QLineEdit*>(fields[i], Qt::FindDirectChildrenOnly)->setStyleSheet("QLineEdit { color: black;}");
-   		  groupbox_2DSA_IT [ triple_curr ]->findChild<QLineEdit*>(fields[i], Qt::FindDirectChildrenOnly)->setStyleSheet("QLineEdit { color: black;}");
-   		  groupbox_2DSA_MC [ triple_curr ]->findChild<QLineEdit*>(fields[i], Qt::FindDirectChildrenOnly)->setStyleSheet("QLineEdit { color: black;}");
-		  
-   		}
-   	    }
-   	}
-  //}
+	  if ( submitted.toString() == "2DSA" )
+	    current_stage_groupbox = groupbox_2DSA[ triple_curr ];
+	  if ( submitted.toString() == "2DSA_FM" )
+	    current_stage_groupbox = groupbox_2DSA_FM [ triple_curr ];
+	  if ( submitted.toString() == "2DSA_IT" )
+	    current_stage_groupbox = groupbox_2DSA_IT [ triple_curr ];
+	  if ( submitted.toString() == "2DSA_MC" )
+	    current_stage_groupbox = groupbox_2DSA_MC [ triple_curr ];
+	} 
+
+      QLineEdit * lineedit_runid    = current_stage_groupbox->findChild<QLineEdit *>("runID", Qt::FindDirectChildrenOnly);
+      QLineEdit * lineedit_owner    = current_stage_groupbox->findChild<QLineEdit *>("owner", Qt::FindDirectChildrenOnly);
+      QLineEdit * lineedit_lastmsg  = current_stage_groupbox->findChild<QLineEdit *>("lastmsg", Qt::FindDirectChildrenOnly);
+      QLineEdit * lineedit_status   = current_stage_groupbox->findChild<QLineEdit *>("status", Qt::FindDirectChildrenOnly);
+      QLineEdit * lineedit_anatype  = current_stage_groupbox->findChild<QLineEdit *>("anatype", Qt::FindDirectChildrenOnly);
+      QLineEdit * lineedit_submit   = current_stage_groupbox->findChild<QLineEdit *>("submit", Qt::FindDirectChildrenOnly);
+      QLineEdit * lineedit_cluster  = current_stage_groupbox->findChild<QLineEdit *>("cluster", Qt::FindDirectChildrenOnly);
+      QLineEdit * lineedit_lastupd  = current_stage_groupbox->findChild<QLineEdit *>("lastupd", Qt::FindDirectChildrenOnly);
+
+      //runID
+      QString runid_text = filename + " ( " + triple_curr + " )  " + defaultDB + " (ID: " + curr_gfacID + ")";
+      lineedit_runid -> setText(runid_text);
+
+      //owner
+      QString investigator_text = investigator_details["email"] + " ( " + investigator_details["fname"] + " " + investigator_details["lname"] +  " )";
+      lineedit_owner -> setText( investigator_text );
+
+      //lastMsg
+      lineedit_lastmsg -> setText( status_msg );
+
+      //status
+      lineedit_status -> setText( status );
+      lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(50, 205, 50); }");
+
+      //analysis type
+      lineedit_anatype -> setText( submitted.toString() );
+
+      //submit
+      lineedit_submit -> setText( create_time );
+
+      //updated
+      lineedit_lastupd -> setText( update_time );
+
+      //cluster
+      lineedit_cluster -> setText( cluster );
+      
+    }
   
   in_gui_update  = false; 
 }
+  
 
 //reset Analysis GUI: stopping all update processes
 void US_Analysis_auto::reset_analysis_panel_public( )
@@ -900,4 +1034,132 @@ QMap< QString, QString> US_Analysis_auto::read_autoflowAnalysis_record( US_DB2* 
   //qDebug() << "In reading autoflwoAnalysis record: json: " << analysis_details[ "status_json" ] ;
   
   return analysis_details;
+}
+
+
+QMap< QString, QString> US_Analysis_auto::get_investigator_info( US_DB2* db, const QString& ID )
+{
+  QMap<QString, QString> inv_details;
+  
+  QStringList qry;
+  qry << "get_person_info"
+      << ID;
+  
+  db->query( qry );
+
+  if ( db->lastErrno() == US_DB2::OK )    
+    {
+      while ( db->next() )
+	{
+	  inv_details["fname"] = db->value( 0 ).toString();
+	  inv_details["lname"] = db->value( 1 ).toString();
+	  inv_details["email"] = db->value( 8 ).toString();
+	}
+    }
+
+  return inv_details;
+}
+
+//Gui update temp: for paper
+void US_Analysis_auto::gui_update_temp( )
+{
+  
+  //TEST access to certain groupboxes' children... Mocup
+  // for ( int i=0; i<Array_of_triples.size(); ++i )
+  //   {
+  //     QString triple_curr = Array_of_triples[i];
+
+  QMap<QString, QMap <QString, QString> >::iterator jj;
+  for ( jj = Array_of_analysis.begin(); jj != Array_of_analysis.end(); ++jj )
+    {
+      QString triple_curr = jj.key();
+      triple_curr.replace("."," / ");
+      
+      QMap <QString, QString > ana_details = jj.value();
+      
+      // if( triple_curr.contains("Interference")) 
+      // 	{
+	  //2DSA
+	  QLineEdit * lineedit_2dsa_runID    = groupbox_2DSA    [ triple_curr ]->findChild<QLineEdit *>("runID", Qt::FindDirectChildrenOnly);
+   	  QLineEdit * lineedit_2dsa_owner    = groupbox_2DSA    [ triple_curr ]->findChild<QLineEdit *>("owner", Qt::FindDirectChildrenOnly);
+   	  QLineEdit * lineedit_2dsa_lastmsg  = groupbox_2DSA    [ triple_curr ]->findChild<QLineEdit *>("lastmsg", Qt::FindDirectChildrenOnly);
+	  QLineEdit * lineedit_2dsa_status   = groupbox_2DSA    [ triple_curr ]->findChild<QLineEdit *>("status", Qt::FindDirectChildrenOnly);
+	  QLineEdit * lineedit_2dsa_anatype  = groupbox_2DSA    [ triple_curr ]->findChild<QLineEdit *>("anatype", Qt::FindDirectChildrenOnly);
+	  QLineEdit * lineedit_2dsa_submit   = groupbox_2DSA    [ triple_curr ]->findChild<QLineEdit *>("submit", Qt::FindDirectChildrenOnly);
+	  QLineEdit * lineedit_2dsa_lastupd  = groupbox_2DSA    [ triple_curr ]->findChild<QLineEdit *>("lastupd", Qt::FindDirectChildrenOnly);
+	  QLineEdit * lineedit_2dsa_cluster  = groupbox_2DSA    [ triple_curr ]->findChild<QLineEdit *>("cluster", Qt::FindDirectChildrenOnly);
+	  
+	  lineedit_2dsa_runID    ->setText( "demo1_interference (2/A/660) uslims3_CAUMA (ID: 8837)" );
+	  lineedit_2dsa_owner    ->setText( "alexsav.science@gmail.com" );
+	  lineedit_2dsa_lastmsg  ->setText( "Starting -- 2.0.1642 2020-05-10" );
+	  lineedit_2dsa_status   ->setText( "Running" );
+	  lineedit_2dsa_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(50, 205, 50); }");
+	  lineedit_2dsa_anatype  ->setText( "2DSA" );
+	  lineedit_2dsa_submit   ->setText( "2020-05-10 08:53:10" );
+	  lineedit_2dsa_lastupd  ->setText( "2020-05-10 08:53:47" );
+	  lineedit_2dsa_cluster  ->setText( "ls5.tacc.utexas.edu" );
+
+	  
+	  //2DSA-FM
+	  QLineEdit * lineedit_2dsa_fm_runID    = groupbox_2DSA_FM    [ triple_curr ]->findChild<QLineEdit *>("runID", Qt::FindDirectChildrenOnly);
+   	  QLineEdit * lineedit_2dsa_fm_owner    = groupbox_2DSA_FM    [ triple_curr ]->findChild<QLineEdit *>("owner", Qt::FindDirectChildrenOnly);
+   	  QLineEdit * lineedit_2dsa_fm_lastmsg  = groupbox_2DSA_FM    [ triple_curr ]->findChild<QLineEdit *>("lastmsg", Qt::FindDirectChildrenOnly);
+	  QLineEdit * lineedit_2dsa_fm_status   = groupbox_2DSA_FM    [ triple_curr ]->findChild<QLineEdit *>("status", Qt::FindDirectChildrenOnly);
+	  QLineEdit * lineedit_2dsa_fm_anatype  = groupbox_2DSA_FM    [ triple_curr ]->findChild<QLineEdit *>("anatype", Qt::FindDirectChildrenOnly);
+	  QLineEdit * lineedit_2dsa_fm_submit   = groupbox_2DSA_FM    [ triple_curr ]->findChild<QLineEdit *>("submit", Qt::FindDirectChildrenOnly);
+	  QLineEdit * lineedit_2dsa_fm_lastupd  = groupbox_2DSA_FM    [ triple_curr ]->findChild<QLineEdit *>("lastupd", Qt::FindDirectChildrenOnly);
+	  QLineEdit * lineedit_2dsa_fm_cluster  = groupbox_2DSA_FM    [ triple_curr ]->findChild<QLineEdit *>("cluster", Qt::FindDirectChildrenOnly);
+	  
+	  lineedit_2dsa_fm_runID    ->setText( "demo1_interference (2/A/660) uslims3_CAUMA (ID: N/A)" );
+	  lineedit_2dsa_fm_owner    ->setText( "alexsav.science@gmail.com" );
+	  lineedit_2dsa_fm_lastmsg  ->setText( "N/A" );
+	  lineedit_2dsa_fm_status   ->setText( "Waiting for 2DSA stage to complete" );
+	  lineedit_2dsa_fm_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(255, 255, 102); }");
+	  lineedit_2dsa_fm_anatype  ->setText( "2DSA-FM" );
+	  lineedit_2dsa_fm_submit   ->setText( "N/A" );
+	  lineedit_2dsa_fm_lastupd  ->setText( "N/A" );
+	  lineedit_2dsa_fm_cluster  ->setText( "ls5.tacc.utexas.edu" );
+
+	  //2DSA-IT
+	  QLineEdit * lineedit_2dsa_it_runID    = groupbox_2DSA_IT    [ triple_curr ]->findChild<QLineEdit *>("runID", Qt::FindDirectChildrenOnly);
+   	  QLineEdit * lineedit_2dsa_it_owner    = groupbox_2DSA_IT    [ triple_curr ]->findChild<QLineEdit *>("owner", Qt::FindDirectChildrenOnly);
+   	  QLineEdit * lineedit_2dsa_it_lastmsg  = groupbox_2DSA_IT    [ triple_curr ]->findChild<QLineEdit *>("lastmsg", Qt::FindDirectChildrenOnly);
+	  QLineEdit * lineedit_2dsa_it_status   = groupbox_2DSA_IT    [ triple_curr ]->findChild<QLineEdit *>("status", Qt::FindDirectChildrenOnly);
+	  QLineEdit * lineedit_2dsa_it_anatype  = groupbox_2DSA_IT    [ triple_curr ]->findChild<QLineEdit *>("anatype", Qt::FindDirectChildrenOnly);
+	  QLineEdit * lineedit_2dsa_it_submit   = groupbox_2DSA_IT    [ triple_curr ]->findChild<QLineEdit *>("submit", Qt::FindDirectChildrenOnly);
+	  QLineEdit * lineedit_2dsa_it_lastupd  = groupbox_2DSA_IT    [ triple_curr ]->findChild<QLineEdit *>("lastupd", Qt::FindDirectChildrenOnly);
+	  QLineEdit * lineedit_2dsa_it_cluster  = groupbox_2DSA_IT    [ triple_curr ]->findChild<QLineEdit *>("cluster", Qt::FindDirectChildrenOnly);
+	  
+	  lineedit_2dsa_it_runID    ->setText( "demo1_interference (2/A/660) uslims3_CAUMA (ID: N/A)" );
+	  lineedit_2dsa_it_owner    ->setText( "alexsav.science@gmail.com" );
+	  lineedit_2dsa_it_lastmsg  ->setText( "N/A" );
+	  lineedit_2dsa_it_status   ->setText( "Waiting for 2DSA-FM stage to complete" );
+	  lineedit_2dsa_it_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(255, 255, 102); }");
+	  lineedit_2dsa_it_anatype  ->setText( "2DSA-IT" );
+	  lineedit_2dsa_it_submit   ->setText( "N/A" );
+	  lineedit_2dsa_it_lastupd  ->setText( "N/A" );
+	  lineedit_2dsa_it_cluster  ->setText( "ls5.tacc.utexas.edu" );
+
+	  //2DSA-MC
+	  QLineEdit * lineedit_2dsa_mc_runID    = groupbox_2DSA_MC    [ triple_curr ]->findChild<QLineEdit *>("runID", Qt::FindDirectChildrenOnly);
+   	  QLineEdit * lineedit_2dsa_mc_owner    = groupbox_2DSA_MC    [ triple_curr ]->findChild<QLineEdit *>("owner", Qt::FindDirectChildrenOnly);
+   	  QLineEdit * lineedit_2dsa_mc_lastmsg  = groupbox_2DSA_MC    [ triple_curr ]->findChild<QLineEdit *>("lastmsg", Qt::FindDirectChildrenOnly);
+	  QLineEdit * lineedit_2dsa_mc_status   = groupbox_2DSA_MC    [ triple_curr ]->findChild<QLineEdit *>("status", Qt::FindDirectChildrenOnly);
+	  QLineEdit * lineedit_2dsa_mc_anatype  = groupbox_2DSA_MC    [ triple_curr ]->findChild<QLineEdit *>("anatype", Qt::FindDirectChildrenOnly);
+	  QLineEdit * lineedit_2dsa_mc_submit   = groupbox_2DSA_MC    [ triple_curr ]->findChild<QLineEdit *>("submit", Qt::FindDirectChildrenOnly);
+	  QLineEdit * lineedit_2dsa_mc_lastupd  = groupbox_2DSA_MC    [ triple_curr ]->findChild<QLineEdit *>("lastupd", Qt::FindDirectChildrenOnly);
+	  QLineEdit * lineedit_2dsa_mc_cluster  = groupbox_2DSA_MC    [ triple_curr ]->findChild<QLineEdit *>("cluster", Qt::FindDirectChildrenOnly);
+	  
+	  lineedit_2dsa_mc_runID    ->setText( "demo1_interference (2/A/660) uslims3_CAUMA (ID: N/A)" );
+	  lineedit_2dsa_mc_owner    ->setText( "alexsav.science@gmail.com" );
+	  lineedit_2dsa_mc_lastmsg  ->setText( "N/A" );
+	  lineedit_2dsa_mc_status   ->setText( "Waiting for 2DSA-IT stage to complete" );
+	  lineedit_2dsa_mc_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(255, 255, 102); }");
+	  lineedit_2dsa_mc_anatype  ->setText( "2DSA-MC" );
+	  lineedit_2dsa_mc_submit   ->setText( "N/A" );
+	  lineedit_2dsa_mc_lastupd  ->setText( "N/A" );
+	  lineedit_2dsa_mc_cluster  ->setText( "ls5.tacc.utexas.edu" );
+
+	  //}
+    }
 }

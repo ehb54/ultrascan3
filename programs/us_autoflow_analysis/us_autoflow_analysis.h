@@ -68,14 +68,17 @@ class US_Analysis_auto : public US_Widgets
 	 QString    AProfileGUID;
 	 QString    ProtocolName_auto;
 	 int        invID;
-
 	 QString    analysisIDs;
-
+	 QMap <QString, QString >    investigator_details;
+	 QString     defaultDB;
+	 
 	 QVector< QString >  Array_of_triples;
 
 	 QMap < QString, QMap< QString, QString > > Array_of_analysis;
 
 	 QMap < QString, QString > read_autoflowAnalysis_record( US_DB2*, const QString& );
+
+	 QMap < QString, QString > get_investigator_info ( US_DB2*, const QString& );
 	 
 	 void  read_protocol_data_triples( void );
 	 bool  read_protoOptics( QXmlStreamReader&  );
