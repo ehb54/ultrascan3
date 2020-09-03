@@ -78,19 +78,11 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Sedimentation coefficient s [S]",
             "Sedimentation coefficient s [S]",
 
-            "results.s20w_sd", 
-            "Sedimentation coefficient s.d.",
-            "Sedimentation coefficient s.d.",
 
             "__BREAK__",
             "results.D20w", 
             "Translational diffusion coefficient D [cm/sec^2]",
             "Translational diffusion coefficient D [cm/sec^2]",
-
-            "results.D20w_sd", 
-            "Translational diffusion coefficient D s.d.",
-            "Translational diffusion coefficient D s.d.",
-
 
             "__BREAK__",
 
@@ -98,19 +90,11 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Stokes radius [nm]", 
             "Stokes radius [nm]", 
 
-            "results.rs_sd", 
-            "Stokes radius s.d.", 
-            "Stokes radius s.d.", 
-
             "__BREAK__",
 
             "results.ff0", 
             "Frictional ratio", 
             "Frictional ratio", 
-
-            "results.ff0_sd", 
-            "Frictional ratio s.d.", 
-            "Frictional ratio s.d.", 
 
             "__BREAK__",
 
@@ -138,9 +122,89 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Intrinsic viscosity [cm^3/g]", 
             "Intrinsic viscosity [cm^3/g]", 
 
+            "__SECTION__",
+            "Additional SMI results:",
+
+            "cen_of_res_x",
+            "Centre of resistance [ X, Y, Z ] [nm]",
+            "Centre of resistance [ X, Y, Z ] [nm]",
+
+            "cen_of_mass_x",
+            "Centre of mass [ X, Y, Z ] [nm]",
+            "Centre of mass [ X, Y, Z ] [nm]",
+
+            "cen_of_diff_x",
+            "Centre of diffusion [ X, Y, Z ] [nm]",
+            "Centre of diffusion [ X, Y, Z ] [nm]",
+
+            "cen_of_visc_x",
+            "Centre of viscosity [ X, Y, Z ] [nm]",
+            "Centre of viscosity [ X, Y, Z ] [nm]",
+
+            "unc_int_visc",
+            "Uncorrected intrinsic viscosity [cm^3/g]",
+            "Uncorrected intrinsic viscosity [cm^3/g]",
+
+            "unc_einst_rad",
+            "Uncorrected Einstein's radius [nm]",
+            "Uncorrected Einstein's radius [nm]",
+
+            "cor_int_visc",
+            "Corrected intrinsic viscosity [cm^3/g]",
+            "Corrected intrinsic viscosity [cm^3/g]",
+
+            "cor_einst_rad",
+            "Corrected Einstein's radius [nm]",
+            "Corrected Einstein's radius [nm]",
+
+            "max_ext_x",
+            "Maximum extensions [ X, Y, Z ] [nm]",
+            "Maximum extensions [ X, Y, Z ] [nm]",
+
+            "axi_ratios_xz",
+            "Axial ratios [ X:Z, X:Y, Y:Z ] ",
+            "Axial ratios [ X:Z, X:Y, Y:Z ] ",
+
+
+            "__SECTION__",
+            "Additional ZENO results:",
+
+            "results.s20w_sd", 
+            "Sedimentation coefficient s.d.",
+            "Sedimentation coefficient s.d.",
+
+            "results.D20w_sd", 
+            "Translational diffusion coefficient D s.d.",
+            "Translational diffusion coefficient D s.d.",
+
+            "results.rs_sd", 
+            "Stokes radius s.d.", 
+            "Stokes radius s.d.", 
+
+            "results.ff0_sd", 
+            "Frictional ratio s.d.", 
+            "Frictional ratio s.d.", 
+
             "results.viscosity_sd", 
             "Intrisic viscosity s.d.", 
             "Intrisic viscosity s.d.", 
+
+            "dt_d0",
+            "Dt/d0",
+            "Dt/d0",
+
+            "dt_d0_sd",
+            "Dt/d0 s.d.",
+            "Dt/d0 s.d.",
+
+            "dimless_eta",
+            "Dimensionless intrinsic viscosity [eta]",
+            "Dimensionless intrinsic viscosity [eta]",
+
+            "dimless_eta_sd",
+            "Dimensionless intrinsic viscosity s.d.",
+            "Dimensionless intrinsic viscosity s.d.",
+
 
             "__SECTION__",
             "Additional hydro results:",
@@ -201,38 +265,6 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Rotational Stokes' radius [ X, Y, Z ] [nm]",
             "Rotational Stokes' radius [ X, Y, Z ] [nm]",
 
-            "cen_of_res_x",
-            "Centre of resistance [ X, Y, Z ] [nm]",
-            "Centre of resistance [ X, Y, Z ] [nm]",
-
-            "cen_of_mass_x",
-            "Centre of mass [ X, Y, Z ] [nm]",
-            "Centre of mass [ X, Y, Z ] [nm]",
-
-            "cen_of_diff_x",
-            "Centre of diffusion [ X, Y, Z ] [nm]",
-            "Centre of diffusion [ X, Y, Z ] [nm]",
-
-            "cen_of_visc_x",
-            "Centre of viscosity [ X, Y, Z ] [nm]",
-            "Centre of viscosity [ X, Y, Z ] [nm]",
-
-            "unc_int_visc",
-            "Uncorrected intrinsic viscosity [cm^3/g]",
-            "Uncorrected intrinsic viscosity [cm^3/g]",
-
-            "unc_einst_rad",
-            "Uncorrected Einstein's radius [nm]",
-            "Uncorrected Einstein's radius [nm]",
-
-            "cor_int_visc",
-            "Corrected intrinsic viscosity [cm^3/g]",
-            "Corrected intrinsic viscosity [cm^3/g]",
-
-            "cor_einst_rad",
-            "Corrected Einstein's radius [nm]",
-            "Corrected Einstein's radius [nm]",
-
             "rel_times_tau_1",
             "Relaxation times, tau(1) [ns]",
             "Relaxation times, tau(1) [ns]",
@@ -261,33 +293,10 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Relaxation times, tau(h) [ns]",
             "Relaxation times, tau(h) [ns]",
 
-            "max_ext_x",
-            "Maximum extensions [ X, Y, Z ] [nm]",
-            "Maximum extensions [ X, Y, Z ] [nm]",
-
-            "axi_ratios_xz",
-            "Axial ratios [ X:Z, X:Y, Y:Z ] ",
-            "Axial ratios [ X:Z, X:Y, Y:Z ] ",
-
             "proc_time",
             "Processing time [s] ",
             "Processing time [s] ",
 
-            "dt_d0",
-            "Dt/d0",
-            "Dt/d0",
-
-            "dt_d0_sd",
-            "Dt/d0 s.d.",
-            "Dt/d0 s.d.",
-
-            "dimless_eta",
-            "Dimensionless intrinsic viscosity [eta]",
-            "Dimensionless intrinsic viscosity [eta]",
-
-            "dimless_eta_sd",
-            "Dimensionless intrinsic viscosity s.d.",
-            "Dimensionless intrinsic viscosity s.d.",
 
             "__SECTION__",
             "Solvent conditions:",

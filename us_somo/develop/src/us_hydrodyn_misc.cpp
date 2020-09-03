@@ -473,6 +473,13 @@ void US_Hydrodyn_Misc::setupGUI()
    le_vdw_ot_dpct->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_vdw_ot_dpct, SIGNAL(textChanged(const QString &)), SLOT(update_vdw_ot_dpct(const QString &)));
 
+   if ( !((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode ) {
+      lbl_vdw_ot_mult->hide();
+      le_vdw_ot_mult ->hide();
+      lbl_vdw_ot_dpct->hide();
+      le_vdw_ot_dpct ->hide();
+   }
+
    pb_cancel = new QPushButton(us_tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
