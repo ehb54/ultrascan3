@@ -34,13 +34,13 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
   autoflow_records = get_autoflow_records();
   qDebug() << "Autoflow record #: " << autoflow_records;
   
-  if ( autoflow_records  )
-    {
-      QMessageBox::information( this,
-				tr( "Default Database Cannot be Cahnged!" ),
-				tr( "Database preferences cannot be currently changed since there are Data Acquisition related processes ongoing. Please try again later." ) );
-      close();
-    }
+  // if ( autoflow_records  )
+  //   {
+  //     QMessageBox::information( this,
+  // 				tr( "Default Database Cannot be Cahnged!" ),
+  // 				tr( "Database preferences cannot be currently changed since there are Data Acquisition related processes ongoing. Please try again later." ) );
+  //     close();
+  //   }
   
   /******************************************************************************************/
   
