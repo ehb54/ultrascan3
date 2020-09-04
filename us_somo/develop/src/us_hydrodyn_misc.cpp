@@ -343,6 +343,7 @@ void US_Hydrodyn_Misc::setupGUI()
    lbl_threshold->setPalette( PALET_FRAME );
    AUTFBACK( lbl_threshold );
    lbl_threshold->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+   lbl_threshold->hide();
 
    lbl_covolume = new QLabel(us_tr(" Covolume [cm^3/mol]: "), this);
    lbl_covolume->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -479,7 +480,7 @@ void US_Hydrodyn_Misc::setupGUI()
       lbl_vdw_ot_dpct->hide();
       le_vdw_ot_dpct ->hide();
    }
-
+   
    pb_cancel = new QPushButton(us_tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
@@ -503,6 +504,9 @@ void US_Hydrodyn_Misc::setupGUI()
       j++;
       leftside->addWidget(cb_vbar, j, 0);
       leftside->addWidget(pb_vbar, j, 1);
+      j++;
+      leftside->addWidget(lbl_covolume, j, 0);
+      leftside->addWidget(le_covolume, j, 1);
       j++;
       leftside->addWidget(lbl_vbar, j, 0);
       leftside->addWidget(le_vbar, j, 1);
@@ -544,8 +548,25 @@ void US_Hydrodyn_Misc::setupGUI()
       leftside->addWidget(cb_set_target_on_load_pdb, j, 0);
       leftside->addWidget(cb_equalize_radii, j, 1);
       j++;
+      leftside->addWidget( lbl_other , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
+      j++;
+      leftside->addWidget( cb_export_msroll , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
+      j++;
+
+      leftside->addWidget(lbl_vdw_ot_mult, j, 0);
+      leftside->addWidget(le_vdw_ot_mult, j, 1);
+      j++;
+
+      leftside->addWidget(lbl_vdw_ot_dpct, j, 0);
+      leftside->addWidget(le_vdw_ot_dpct, j, 1);
+      j++;
+#if !defined( USE_RIGHTSIDE )
+      leftside->addWidget(pb_help, j, 0);
+      leftside->addWidget(pb_cancel, j, 1);
+#endif
    }
 
+#if defined( USE_RIGHTSIDE )
    QGridLayout * rightside = new QGridLayout(); rightside->setContentsMargins( 0, 0, 0, 0 ); rightside->setSpacing( 0 ); rightside->setSpacing( spacing ); rightside->setContentsMargins( margin, margin, margin, margin );
    {
       int j = 0;
@@ -555,42 +576,32 @@ void US_Hydrodyn_Misc::setupGUI()
       // rightside->addWidget(cb_hydro_supc, j, 0);
       // rightside->addWidget(cb_hydro_zeno, j, 1);
       // j++;
-      rightside->addWidget( lbl_threshold , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
-      j++;
-      rightside->addWidget(lbl_covolume, j, 0);
-      rightside->addWidget(le_covolume, j, 1);
-      j++;
+      // rightside->addWidget( lbl_threshold , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
+      // j++;
+      // rightside->addWidget(lbl_covolume, j, 0);
+      // rightside->addWidget(le_covolume, j, 1);
+      // j++;
       // rightside->addWidget(lbl_thresh_SS, j, 0);
       // rightside->addWidget(le_thresh_SS, j, 1);
       // j++;
-      rightside->addWidget(lbl_thresh_carb_O, j, 0);
-      rightside->addWidget(le_thresh_carb_O, j, 1);
-      j++;
-      rightside->addWidget(lbl_thresh_carb_N, j, 0);
-      rightside->addWidget(le_thresh_carb_N, j, 1);
-      j++;
-
-
-      rightside->addWidget( lbl_other , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
-      j++;
-      rightside->addWidget( cb_export_msroll , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
-      j++;
-
-      rightside->addWidget(lbl_vdw_ot_mult, j, 0);
-      rightside->addWidget(le_vdw_ot_mult, j, 1);
-      j++;
-
-      rightside->addWidget(lbl_vdw_ot_dpct, j, 0);
-      rightside->addWidget(le_vdw_ot_dpct, j, 1);
-      j++;
-      rightside->setRowStretch(j, 1);
+      // rightside->addWidget(lbl_thresh_carb_O, j, 0);
+      // rightside->addWidget(le_thresh_carb_O, j, 1);
+      // j++;
+      // rightside->addWidget(lbl_thresh_carb_N, j, 0);
+      // rightside->addWidget(le_thresh_carb_N, j, 1);
+      // j++;
+      // rightside->setRowStretch(j, 1);
    }
-   background->addLayout(leftside , j, 0);
    background->addLayout(rightside, j, 1);
+#endif
+   background->addLayout(leftside , j, 0);
    j++;
 
+
+#if defined( USE_RIGHTSIDE )
    background->addWidget(pb_help, j, 0);
    background->addWidget(pb_cancel, j, 1);
+#endif
 }
 
 void US_Hydrodyn_Misc::update_vbar(const QString &str)

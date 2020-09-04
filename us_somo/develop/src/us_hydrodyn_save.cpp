@@ -102,16 +102,6 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
 
             "__BREAK__",
 
-            "results.rg", 
-            "Radius of gyration [nm] (from bead model)", 
-            "Radius of gyration [nm] (from bead model)", 
-
-            // "results.rg_sd", 
-            // "Radius of gyration s.d.", 
-            // "Radius of gyration s.d.", 
-
-            "__BREAK__",
-
             "results.tau", 
             "Relaxation Time, tau(h) [ns]", 
             "Relaxation Time, tau(h) [ns]", 
@@ -125,6 +115,14 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "results.viscosity", 
             "Intrinsic viscosity [cm^3/g]", 
             "Intrinsic viscosity [cm^3/g]", 
+
+            "results.rg", 
+            "Radius of gyration [nm] (from bead model)", 
+            "Radius of gyration [nm] (from bead model)", 
+
+            // "results.rg_sd", 
+            // "Radius of gyration s.d.", 
+            // "Radius of gyration s.d.", 
 
             "use_beads_vol",
             "Used beads volume [nm^3]",
@@ -176,6 +174,18 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "cen_of_visc_x",
             "Centre of viscosity [ X, Y, Z ] [nm]",
             "Centre of viscosity [ X, Y, Z ] [nm]",
+
+            "rot_fric_coef_x",
+            "Rotational frictional coefficient [ X, Y, Z ] [g*cm^2/s]",
+            "Rotational frictional coefficient [ X, Y, Z ] [g*cm^2/s]",
+
+            "rot_diff_coef_x",
+            "Rotational diffusion coefficient [ X, Y, Z ] [1/s]",
+            "Rotational diffusion coefficient [ X, Y, Z ] [1/s]",
+
+            "rot_stokes_rad_x",
+            "Rotational Stokes' radius [ X, Y, Z ] [nm]",
+            "Rotational Stokes' radius [ X, Y, Z ] [nm]",
 
             "unc_int_visc",
             "Uncorrected intrinsic viscosity [cm^3/g]",
@@ -256,18 +266,6 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Rotational diffusion coefficient [1/s]",
             "Rotational diffusion coefficient [1/s]",
 
-            "rot_fric_coef_x",
-            "Rotational frictional coefficient [ X, Y, Z ] [g*cm^2/s]",
-            "Rotational frictional coefficient [ X, Y, Z ] [g*cm^2/s]",
-
-            "rot_diff_coef_x",
-            "Rotational diffusion coefficient [ X, Y, Z ] [1/s]",
-            "Rotational diffusion coefficient [ X, Y, Z ] [1/s]",
-
-            "rot_stokes_rad_x",
-            "Rotational Stokes' radius [ X, Y, Z ] [nm]",
-            "Rotational Stokes' radius [ X, Y, Z ] [nm]",
-
             "rel_times_tau_1",
             "Relaxation times, tau(1) [ns]",
             "Relaxation times, tau(1) [ns]",
@@ -296,6 +294,10 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Relaxation times, tau(h) [ns]",
             "Relaxation times, tau(h) [ns]",
 
+            "grpy_einstein_radius",
+            "GRPY Einstein's radius [nm]",
+            "GRPY Einstein's radius [nm]",
+            
             "__SECTION__",
             "Solvent conditions:",
 
