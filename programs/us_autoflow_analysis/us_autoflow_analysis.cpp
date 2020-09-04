@@ -22,7 +22,7 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   panel->addWidget(lb_hdr1);
 
   QHBoxLayout* buttons     = new QHBoxLayout();
-  int row              = 1;
+
   pb_show_all   = us_pushbutton( tr( "Expand All Triples" ) );
   pb_hide_all   = us_pushbutton( tr( "Collapse All Triples" ) );
   buttons->addWidget( pb_show_all );
@@ -72,6 +72,9 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   Array_of_triples.clear();
   Array_of_analysis.clear();
 
+  Completed_triples.clear();
+  Manual_update.clear();
+
   AProfileGUID       = protocol_details[ "aprofileguid" ];
   ProtocolName_auto  = protocol_details[ "protocolName" ];
   invID              = protocol_details[ "invID_passed" ].toInt();
@@ -117,7 +120,8 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       QString triple_name = analysis_details["triple_name"];
       Array_of_analysis[ triple_name ] = analysis_details;
 
-      Manual_update[ triple_name ] = false;
+      Manual_update[ triple_name ]     = false;
+      Completed_triples[ triple_name ] = false;
     }
   
   // Close msg on setting up triple list from main program
@@ -189,8 +193,9 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
     
       
       
-      triple_name_width = fmet.width( triple_curr );
-
+      //triple_name_width = fmet.width( triple_curr );
+      triple_name_width = fmet.horizontalAdvance( triple_curr );
+      
       qDebug() << "Triple,  width:  " << triple_curr << ", " << triple_name_width;
 
       if ( triple_name_width > max_width )
@@ -314,8 +319,11 @@ void US_Analysis_auto::gui_update( )
   QMap<QString, QMap <QString, QString> >::iterator jj;
   for ( jj = Array_of_analysis.begin(); jj != Array_of_analysis.end(); ++jj )
     {
-      QString triple_curr = jj.key();
-      triple_curr.replace("."," / ");
+      QString triple_current = jj.key();
+      QString triple_curr_key = jj.key();
+      QString triple_curr = triple_current.replace("."," / ");
+
+      qDebug() << "triple_curr_key, triple_curr: " << triple_curr_key << ", " << triple_curr;
       
       QMap <QString, QString > ana_details = jj.value();
 
@@ -507,14 +515,14 @@ void US_Analysis_auto::gui_update( )
 	  QGroupBox * current_stage_groupbox = NULL;
 	  qDebug() << "Submitted stage - " << submitted.toString() << ", for triple " << triple_curr;
 
-	  if ( submitted.toString() == "FITMEN" && !Manual_update[ triple_curr ] )
+	  if ( submitted.toString() == "FITMEN" && !Manual_update[ triple_curr_key ] )
 	    {
 	      QMessageBox::information( this,
 					tr( "TEMPORARY: FITMEN stage reached" ),
 					tr( "FITMET stage for triple %1 will be processed manually." ).arg( triple_curr ) );
 	      update_autoflowAnalysis_status_at_fitmen( &db, requestID );
 
-	      Manual_update[ triple_curr ] = true;
+	      Manual_update[ triple_curr_key ] = true;
 	      
 	      //continue; 
 	    }
@@ -556,7 +564,7 @@ void US_Analysis_auto::gui_update( )
 	      //status
 	      lineedit_status -> setText( status );
 	      lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(50, 205, 50); }");
-	      
+	      			      
 	      //analysis type
 	      lineedit_anatype -> setText( submitted.toString() );
 	      
@@ -568,9 +576,64 @@ void US_Analysis_auto::gui_update( )
 	      
 	      //cluster
 	      lineedit_cluster -> setText( cluster );
+
+
+	      //check if final stage && it's complete 
+	      if ( !to_process_array.size() && status == "COMPLETE" )
+		{
+		  lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(2, 88, 57); color : white; }");
+
+		  /****
+		  ALEXEY: maybe update QMap < triple_curr , bool > Completed_triples with TRUE (defined as all FALSES at the beginning):
+		  Completed_triples[ triple_curr ] = true;
+		  At the end of update cycle over triples, check if there is at least one FALSE value in the  Completed_triple QMap.
+		  If NO - stop timer, show Msg that everything completed.
+		  **/
+		  Completed_triples[ triple_curr_key ] = true;
+		  qDebug() << "set Completed_triples[ " << triple_curr_key << " ] to " << Completed_triples[ triple_curr_key ];
+		  
+		}
 	    }
 	}
     }
+
+  // Check if all triples completed //
+  bool all_processed = true;
+  QMap<QString, bool>::iterator td;
+  for ( td = Completed_triples.begin(); td != Completed_triples.end(); ++td )
+    {
+      qDebug() << "Key/Value of Completed_triples: " << td.key() << "/" << td.value();
+      if ( !td.value() )
+	{
+	  all_processed = false;
+	  break;
+	}
+    }
+
+  qDebug() << "all_processed: " << all_processed;
+  
+  //If all triples processed, show msg && Stop update timer
+  if ( all_processed )
+    {
+      //stop timer
+      if ( timer_update -> isActive() ) 
+	{
+	  timer_update -> stop();
+	  disconnect(timer_update, SIGNAL(timeout()), 0, 0);
+	  
+	  qDebug() << "Update stopped upon final completion...";
+	}
+      
+      in_gui_update  = false; 
+      
+      QMessageBox::information( this,
+				tr( "All Stages Completed!" ),
+				tr( "All stages have been completed." ) );
+
+      //ALEXEY: Switch to next stage (Report) ?
+    }
+
+  
   
   in_gui_update  = false; 
 }

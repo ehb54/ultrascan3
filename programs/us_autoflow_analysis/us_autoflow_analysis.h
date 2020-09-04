@@ -77,6 +77,7 @@ class US_Analysis_auto : public US_Widgets
 	 QMap < QString, QMap< QString, QString > > Array_of_analysis;
 
 	 QMap < QString, bool > Manual_update;
+	 QMap < QString, bool > Completed_triples;
 
 	 QMap < QString, QString > read_autoflowAnalysis_record( US_DB2*, const QString& );
 
