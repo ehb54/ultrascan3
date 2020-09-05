@@ -193,8 +193,8 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
     
       
       
-      //triple_name_width = fmet.width( triple_curr );
-      triple_name_width = fmet.horizontalAdvance( triple_curr );
+      triple_name_width = fmet.width( triple_curr );
+      //triple_name_width = fmet.horizontalAdvance( triple_curr );
       
       qDebug() << "Triple,  width:  " << triple_curr << ", " << triple_name_width;
 
@@ -348,9 +348,13 @@ void US_Analysis_auto::gui_update( )
       if (!jsonDoc.isObject())
 	qDebug() << "NOT a JSON Doc !!";
       
-      const QJsonValue &to_process = jsonDoc["to_process"];
-      const QJsonValue &processed  = jsonDoc["processed"];
-      const QJsonValue &submitted  = jsonDoc["submitted"];
+      // const QJsonValue &to_process = jsonDoc["to_process"];
+      // const QJsonValue &processed  = jsonDoc["processed"];
+      // const QJsonValue &submitted  = jsonDoc["submitted"];
+
+      const QJsonValue &to_process = jsonDoc.object().value("to_process");
+      const QJsonValue &processed  = jsonDoc.object().value("processed");
+      const QJsonValue &submitted  = jsonDoc.object().value("submitted");          
 
       QJsonArray to_process_array  = to_process.toArray();
       QJsonArray processed_array   = processed.toArray();
@@ -702,6 +706,9 @@ void US_Analysis_auto::reset_auto( )
   Array_of_triples.clear();
 
   Array_of_analysis.clear();
+
+  Completed_triples.clear();
+  Manual_update.clear();
 
   //TO DO MORE later - DB stopp etc..
 }
