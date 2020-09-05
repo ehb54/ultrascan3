@@ -1096,7 +1096,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void get_atom_map(PDB_model *);
       int check_for_missing_atoms(QString *error_string, PDB_model *);
       void build_molecule_maps(PDB_model *model); // sets up maps for molecule
-      int overlap_check(bool sc, bool mc, bool buried, double tolerance, int limit = 0); // check for overlaps
+      int overlap_check(bool sc, bool mc, bool buried, double tolerance, int limit = 0, bool from_overlap_hydro = false ); // check for overlaps
       int compute_asa(bool bd_mode = false, bool no_ovlp_removal = false); // calculate maximum accessible surface area
       void show_asa();
       void show_bd();

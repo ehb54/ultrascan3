@@ -13877,7 +13877,7 @@ bool US_Hydrodyn::calc_zeno()
    }
 
    bool has_overlap = overlap_check( true, true, true,
-                                     hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance, 1 ) > 0;
+                                     hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance, 1, true ) > 0;
 
    if ( has_overlap ) {
       editor_msg( "dark red", QString( us_tr( "Bead models have overlap, dimensionless intrinsic viscosity not computed.\n" ) ) );

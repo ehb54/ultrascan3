@@ -294,7 +294,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Relaxation times, tau(h) [ns]",
             "Relaxation times, tau(h) [ns]",
 
-            "grpy_einstein_radius",
+            "grpy_einst_rad",
             "GRPY Einstein's radius [nm]",
             "GRPY Einstein's radius [nm]",
             
@@ -864,6 +864,15 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       if ( field[i] == "rel_times_tau_h" )
       {
          field_to_save_data[field[i]] = (void *)&(save->data.rel_times_tau_h);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 6;
+         field_to_format[field[i]] = 'g';
+         continue;
+      }
+
+      if ( field[i] == "grpy_einst_rad" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.grpy_einst_rad);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
          field_to_precision[field[i]] = 6;
          field_to_format[field[i]] = 'g';

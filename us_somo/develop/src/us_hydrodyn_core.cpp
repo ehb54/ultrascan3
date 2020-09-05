@@ -2130,7 +2130,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 // # define TOLERANCE 0.001       // this is used to place a limit on the allowed radial overlap
 #define TOLERANCE overlap_tolerance
 
-int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried, double tolerance, int limit )
+int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried, double tolerance, int limit, bool from_overlap_hydro )
 {
    int retval = 0;
 #if defined(DEBUG_OVERLAP)
@@ -2229,20 +2229,20 @@ int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried, double tolerance, 
                continue;
             }
             if ( bead_model[i].bead_computed_radius > tolerance * 1.001 &&
-                 bead_model[j].bead_computed_radius > tolerance * 1.001 )
-            {
+                 bead_model[j].bead_computed_radius > tolerance * 1.001 ) {
                retval++;
                if ( limit && retval > limit ) {
-                  editor_msg( "red", us_tr( "There are more than %1 overlaps greater than tolerance of %2\nWe suggest you use ZENO to calculate hydrodynamics for this model" ).arg( limit ).arg( tolerance ) );
+                  if ( !from_overlap_hydro ) {
+                     editor_msg( "red", us_tr( "There are more than %1 overlaps greater than tolerance of %2\nWe suggest you use ZENO or GRPY to calculate hydrodynamics for this model" ).arg( limit ).arg( tolerance ) );
+                  }
                   return retval;
                }
-               QColor save_color = editor->textColor();
-               editor->setTextColor("red");
-               editor->append(QString(us_tr("WARNING: Bead model has an overlap violation on beads %1 %2 overlap %3 A\n"))
-                              .arg(i + 1)
-                              .arg(j + 1)
-                              .arg(separation));
-               editor->setTextColor(save_color);
+               if ( !from_overlap_hydro ) {
+                  editor_msg( "red", QString(us_tr("WARNING: Bead model has an overlap violation on beads %1 %2 overlap %3 A\n"))
+                                 .arg(i + 1)
+                                 .arg(j + 1)
+                                 .arg(separation));
+               }
 #if defined(DEBUG_OVERLAP)
             printf("overlap check  beads %d %d on chains %d %d exposed code %d %d active %s %s : radii %f(%s) %f(%s) with coordinates [%f,%f,%f] [%f,%f,%f] sep of %f - needs reduction\n",
                    i + 1, j + 1,

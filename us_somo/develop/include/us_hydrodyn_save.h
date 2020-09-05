@@ -85,6 +85,7 @@ struct save_data
    double        unc_einst_rad;     // "Uncorrected Einstein's radius [nm]"
    double        cor_int_visc;      // "Corrected intrinsic viscosity [cm^3/g]"
    double        cor_einst_rad;     // "Corrected Einstein's radius [nm]"
+   double        grpy_einst_rad;    // "GRPY Einstein's radius[nm]"
    double        rel_times_tau_1;   // "Relaxation times, tau(1) [ns]"
    double        rel_times_tau_2;   // "Relaxation times, tau(2) [ns]"
    double        rel_times_tau_3;   // "Relaxation times, tau(3) [ns]"

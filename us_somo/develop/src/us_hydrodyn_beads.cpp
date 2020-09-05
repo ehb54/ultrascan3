@@ -1401,7 +1401,7 @@ int US_Hydrodyn::calc_vdw_beads()
    pb_stop_calc->setEnabled(false);
    if ( calcAutoHydro )
    {
-      calc_hydro();
+      calc_zeno_hydro();
    } else {
       play_sounds(1);
    }

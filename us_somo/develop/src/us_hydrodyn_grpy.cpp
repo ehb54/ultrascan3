@@ -399,6 +399,14 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
       << "1"
       << "tauh"
 
+      << "Translational diffusion coefficient"
+      << "3"
+      << "rs"
+
+      << "Zero frequency intrinsic viscosity eta 0"
+      << "2"
+      << "grpy_einst_rad"
+
       ;
 
    map < QString, double > captures;
@@ -513,6 +521,11 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
             grpy_results.tau += it->second[ i ] * 1e9;
             grpy_results2.tau += it->second[ i ] * it->second[ i ] * 1e18;
          }
+
+         if ( it->first == "rs" ) {
+            grpy_results.rs += it->second[ i ] * 1e7;
+            grpy_results2.rs += it->second[ i ] * it->second[ i ] * 1e14;
+         }
       }
    }
    
@@ -593,6 +606,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
       this_data.results.solvent_viscosity     = 0e0;
       this_data.results.solvent_density       = 0e0;
 
+      this_data.grpy_einst_rad                = 0e0;
       this_data.hydro                         = hydro;
       this_data.results.num_models            = 1;
       this_data.results.name                  =
@@ -618,26 +632,32 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
          this_data.results.viscosity = it->second[ "\\[eta\\]" ];
       }
       if ( it->second.count( "tau1" ) ) {
-         this_data.rel_times_tau_1 = it->second[ "tau1" ];
+         this_data.rel_times_tau_1 = it->second[ "tau1" ] * 1e9;
       }
       if ( it->second.count( "tau2" ) ) {
-         this_data.rel_times_tau_2 = it->second[ "tau2" ];
+         this_data.rel_times_tau_2 = it->second[ "tau2" ] * 1e9;
       }
       if ( it->second.count( "tau3" ) ) {
-         this_data.rel_times_tau_3 = it->second[ "tau3" ];
+         this_data.rel_times_tau_3 = it->second[ "tau3" ] * 1e9;
       }
       if ( it->second.count( "tau4" ) ) {
-         this_data.rel_times_tau_4 = it->second[ "tau4" ];
+         this_data.rel_times_tau_4 = it->second[ "tau4" ] * 1e9;
       }
       if ( it->second.count( "tau5" ) ) {
-         this_data.rel_times_tau_5 = it->second[ "tau5" ];
+         this_data.rel_times_tau_5 = it->second[ "tau5" ] * 1e9;
       }
       if ( it->second.count( "tauh" ) ) {
-         this_data.rel_times_tau_h = it->second[ "tauh" ];
+         this_data.rel_times_tau_h = it->second[ "tauh" ] * 1e9;
       }
 
       if ( it->second.count( "R\\(Rotation\\)" ) ) {
          // this_data.results.mass = it->second[ "R\\(Rotation\\)" ];
+      }
+      if ( it->second.count( "rs" ) ) {
+         this_data.results.rs = it->second[ "rs" ] * 1e7;
+      }
+      if ( it->second.count( "grpy_einst_rad" ) ) {
+         this_data.grpy_einst_rad = it->second[ "grpy_einst_rad" ] * 1e7;
       }
       
       // calculated params
@@ -710,15 +730,16 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
             }
          }
 
-         // stokes radius
-         {
-            if ( this_data.results.D20w ) {
-               this_data.results.rs = 1e1 * ( 1e7 / fconv ) * 
-                  R * ( K0 + hydro.temperature ) / ( AVOGADRO * 6.0 * M_PI * use_solvent_visc() * this_data.results.D20w );
-               grpy_results.rs  += this_data.results.rs;
-               grpy_results2.rs += this_data.results.rs * this_data.results.rs;
-            }
-         }
+         // already computed
+         // // stokes radius
+         // {
+         //    if ( this_data.results.D20w ) {
+         //       this_data.results.rs = 1e1 * ( 1e7 / fconv ) * 
+         //          R * ( K0 + hydro.temperature ) / ( AVOGADRO * 6.0 * M_PI * use_solvent_visc() * this_data.results.D20w );
+         //       grpy_results.rs  += this_data.results.rs;
+         //       grpy_results2.rs += this_data.results.rs * this_data.results.rs;
+         //    }
+         // }
 
          // need ff0 & stokes radius
 
@@ -826,31 +847,31 @@ void US_Hydrodyn::grpy_finalize() {
          results = grpy_results;
       } else {
          double numinv = 1e0 / num;
-         grpy_results.mass          *= numinv;
-         grpy_results.s20w          *= numinv;
-         grpy_results.D20w          *= numinv;
-         grpy_results.viscosity     *= numinv;
-         grpy_results.tau           *= numinv;
-         grpy_results.rs            *= numinv;
-         grpy_results.rg            *= numinv;
-         grpy_results.vbar          *= numinv;
-         grpy_results.ff0           *= numinv;
-         grpy_results.used_beads    *= numinv;
-         grpy_results.total_beads   *= numinv;
+         grpy_results.mass              *= numinv;
+         grpy_results.s20w              *= numinv;
+         grpy_results.D20w              *= numinv;
+         grpy_results.viscosity         *= numinv;
+         grpy_results.tau               *= numinv;
+         grpy_results.rs                *= numinv;
+         grpy_results.rg                *= numinv;
+         grpy_results.vbar              *= numinv;
+         grpy_results.ff0               *= numinv;
+         grpy_results.used_beads        *= numinv;
+         grpy_results.total_beads       *= numinv;
          if ( num <= 1 ) {
             results = grpy_results;
          } else {
             double numdecinv = 1e0 / ( num - 1e0 );
          
-            grpy_results.s20w_sd           = sqrt( fabs( ( grpy_results2.s20w        - grpy_results.s20w        * grpy_results.s20w        * num ) * numdecinv ) );
-            grpy_results.D20w_sd           = sqrt( fabs( ( grpy_results2.D20w        - grpy_results.D20w        * grpy_results.D20w        * num ) * numdecinv ) );
-            grpy_results.viscosity_sd      = sqrt( fabs( ( grpy_results2.viscosity   - grpy_results.viscosity   * grpy_results.viscosity   * num ) * numdecinv ) );
-            grpy_results.tau_sd            = sqrt( fabs( ( grpy_results2.tau         - grpy_results.tau         * grpy_results.tau         * num ) * numdecinv ) );
-            grpy_results.rs_sd             = sqrt( fabs( ( grpy_results2.rs          - grpy_results.rs          * grpy_results.rs          * num ) * numdecinv ) );
-            grpy_results.rg_sd             = sqrt( fabs( ( grpy_results2.rg          - grpy_results.rg          * grpy_results.rg          * num ) * numdecinv ) );
-            grpy_results.ff0_sd            = sqrt( fabs( ( grpy_results2.ff0         - grpy_results.ff0         * grpy_results.ff0         * num ) * numdecinv ) );
-            grpy_results.used_beads_sd     = sqrt( fabs( ( grpy_results2.used_beads  - grpy_results.used_beads  * grpy_results.used_beads  * num ) * numdecinv ) );
-            grpy_results.total_beads_sd    = sqrt( fabs( ( grpy_results2.total_beads - grpy_results.total_beads * grpy_results.total_beads * num ) * numdecinv ) );
+            grpy_results.s20w_sd              = sqrt( fabs( ( grpy_results2.s20w              - grpy_results.s20w              * grpy_results.s20w              * num ) * numdecinv ) );
+            grpy_results.D20w_sd              = sqrt( fabs( ( grpy_results2.D20w              - grpy_results.D20w              * grpy_results.D20w              * num ) * numdecinv ) );
+            grpy_results.viscosity_sd         = sqrt( fabs( ( grpy_results2.viscosity         - grpy_results.viscosity         * grpy_results.viscosity         * num ) * numdecinv ) );
+            grpy_results.tau_sd               = sqrt( fabs( ( grpy_results2.tau               - grpy_results.tau               * grpy_results.tau               * num ) * numdecinv ) );
+            grpy_results.rs_sd                = sqrt( fabs( ( grpy_results2.rs                - grpy_results.rs                * grpy_results.rs                * num ) * numdecinv ) );
+            grpy_results.rg_sd                = sqrt( fabs( ( grpy_results2.rg                - grpy_results.rg                * grpy_results.rg                * num ) * numdecinv ) );
+            grpy_results.ff0_sd               = sqrt( fabs( ( grpy_results2.ff0               - grpy_results.ff0               * grpy_results.ff0               * num ) * numdecinv ) );
+            grpy_results.used_beads_sd        = sqrt( fabs( ( grpy_results2.used_beads        - grpy_results.used_beads        * grpy_results.used_beads        * num ) * numdecinv ) );
+            grpy_results.total_beads_sd       = sqrt( fabs( ( grpy_results2.total_beads       - grpy_results.total_beads       * grpy_results.total_beads       * num ) * numdecinv ) );
             
             results = grpy_results;
          }
