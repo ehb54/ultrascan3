@@ -254,8 +254,12 @@ class US_EXTERN US_Hydrodyn : public QFrame
       
    private:
 
+      double model_mw( const vector < PDB_atom > & use_model );
+      double model_mw( const vector < PDB_atom * > use_model );
+
       int grpy_used_beads_count( const vector < PDB_atom > & use_model );
       int grpy_used_beads_count( const vector < PDB_atom * > use_model );
+
       int total_beads_count( const vector < PDB_atom > & use_model );
       // protons at pH
       double protons_at_pH( double pH, const struct PDB_model & model );

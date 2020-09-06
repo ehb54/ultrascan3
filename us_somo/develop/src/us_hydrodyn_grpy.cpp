@@ -14,6 +14,26 @@
 #include "../include/us_hydrodyn.h"
 #define SLASH QDir::separator()
 
+double US_Hydrodyn::model_mw( const vector < PDB_atom *> use_model ) {
+   double mw = 0e0;
+   for (unsigned int i = 0; i < use_model.size(); i++) {
+      if ( use_model[i]->active ) {
+         mw += use_model[i]->bead_ref_mw + use_model[i]->bead_ref_ionized_mw_delta;
+      }
+   }
+   return mw;
+}
+
+double US_Hydrodyn::model_mw( const vector < PDB_atom > & use_model ) {
+   double mw = 0e0;
+   for (unsigned int i = 0; i < use_model.size(); i++) {
+      if ( use_model[i].active ) {
+         mw += use_model[i].bead_ref_mw + use_model[i].bead_ref_ionized_mw_delta;
+      }
+   }
+   return mw;
+}
+
 int US_Hydrodyn::grpy_used_beads_count( const vector < PDB_atom *> use_model ) {
    int used_beads = 0;
    for (unsigned int i = 0; i < use_model.size(); i++) {
@@ -583,7 +603,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
       this_data.axi_ratios_xy                 = 0e0;
       this_data.axi_ratios_yz                 = 0e0;
       this_data.results.method                = "GRPY";
-      this_data.results.mass                  = hydro.mass_correction ? hydro.mass : ( model_vector[ grpy_last_model_number ].mw + model_vector[ grpy_last_model_number ].ionized_mw_delta );
+      this_data.results.mass                  = hydro.mass_correction ? hydro.mass : model_mw( bead_models[ grpy_last_model_number ] ); // ( model_vector[ grpy_last_model_number ].mw + model_vector[ grpy_last_model_number ].ionized_mw_delta );
       this_data.results.s20w                  = 0e0;
       this_data.results.s20w_sd               = 0e0;
       this_data.results.D20w                  = 0e0;

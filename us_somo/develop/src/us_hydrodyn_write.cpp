@@ -454,14 +454,7 @@ void US_Hydrodyn::write_bead_model( QString fname,
    }
 
    if (fgrpy) {
-      double tot_mw = 0e0;
-
-      for (unsigned int i = 0; i < use_model.size(); i++) {
-         if (use_model[i]->active ) {
-            tot_mw += use_model[i]->bead_ref_mw + use_model[i]->bead_ref_ionized_mw_delta;
-         }
-      }
-
+      double tot_mw = model_mw( use_model );
 
       fprintf(fgrpy,
               "%-30s\tTitle\n"
