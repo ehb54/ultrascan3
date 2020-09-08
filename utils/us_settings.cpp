@@ -479,3 +479,35 @@ void US_Settings::set_def_xpn_host( const QStringList& defXpnHost )
     settings.setValue( "defXpnHost", defXpnHost );
 }
 
+
+/***************** DA status related **************************/
+void US_Settings::set_DA_status( const QString& status )
+{
+  QSettings settings( US3, "UltraScan" );
+
+  QStringList status_list = status.split(":");
+  
+  if ( status_list[0] == "COM" ) 
+    settings.setValue( "daComOpened", status_list[1] );
+  if ( status_list[0] == "ACAD" ) 
+    settings.setValue( "daAcadOpened", status_list[1] );
+}
+
+bool US_Settings::get_DA_status( const QString& da_type )
+{
+  QSettings settings( US3, "UltraScan" );
+
+  int status; 
+  if ( da_type == "COM" )
+    status = settings.value( "daComOpened", QString() ).toInt();
+
+  if ( da_type == "ACAD" )
+    status = settings.value( "daAcadOpened", QString() ).toInt();
+
+  if ( status )
+    return true;
+  else
+    return false;
+      
+}
+/*****************************************************************/

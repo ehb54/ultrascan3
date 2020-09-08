@@ -21,7 +21,10 @@ int main( int argc, char* argv[] )
    w->call_AutoflowDialogue();
    
    if ( w->window_closed )
-     return 0;
+     {
+       qDebug() << "Closing --- ";
+       return 0;
+     }
      
    return application.exec();  //!< \memberof QApplication
 }

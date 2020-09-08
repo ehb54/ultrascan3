@@ -180,7 +180,7 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       //TEST
       //json = "{\"to_process\":[\"FITMEN\",\"2DSA_IT\",\"2DSA_MC\"],\"processed\":[\"2DSA\"],\"submitted\":\"2DSA_FM\"}" ;
 
-      if ( json.contains("2DSA") )
+      if ( json.contains("2DSA") )    //ALEXeY: maybe more strict condition here? (as 2DSA is in other stages...)
 	job1run = true;
       if ( json.contains("2DSA_FM") )
 	job2run = true;

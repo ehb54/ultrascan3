@@ -156,5 +156,9 @@ class US_UTIL_EXTERN US_Settings
     static QStringList defaultXpnHost( void );
     //! \brief Set the current stored database connection description
     static void        set_def_xpn_host( const QStringList& );
+
+    // DA status
+    static void set_DA_status( const QString& );
+    static bool get_DA_status( const QString& );
 };
 #endif

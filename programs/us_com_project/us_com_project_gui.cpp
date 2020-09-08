@@ -187,6 +187,8 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    /* Check for current stage & redirect to specific tab */
    //check_current_stage();
 
+   //set opened state in the .config file
+   US_Settings::set_DA_status( "ACAD:1" );
 }
 
 
@@ -357,13 +359,19 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( epanAnalysis, SIGNAL( processes_stopped() ), this, SLOT( analysis_update_stopped() ));
 
    connect( this, SIGNAL( pass_to_report( QMap < QString, QString > & ) ),   epanReport, SLOT( do_report( QMap < QString, QString > & )  ) );
+
+   
    
    setMinimumSize( QSize( 1350, 800 ) );
    adjustSize();
 
    /* Check for current stage & redirect to specific tab */
    //check_current_stage();
+
+   //set opened state in the .config file
+   US_Settings::set_DA_status( "COM:1" );
 }
+
 
 // Slot to init some panels (mainly Manage Opima Runs)
 void US_ComProjectMain::initPanels( int  panx )
@@ -530,6 +538,12 @@ void US_ComProjectMain::closeEvent( QCloseEvent* event )
     emit us_comproject_closed();
     close_initDialogue();
     qDebug() << "initDialogue: true/false 3 : " << epanInit->initDialogueOpen ;
+
+    if ( us_mode_bool  ) 
+      US_Settings::set_DA_status( "ACAD:0" );
+    else
+      US_Settings::set_DA_status( "COM:0" );
+    
     event->accept();
 }
 
