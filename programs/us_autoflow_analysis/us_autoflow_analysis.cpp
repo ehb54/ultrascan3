@@ -351,6 +351,7 @@ void US_Analysis_auto::gui_update( )
       QString cluster       = current_analysis_details[ "cluster" ]      ;
       QString filename      = current_analysis_details[ "filename" ]     ;
       QString curr_gfacID   = current_analysis_details[ "CurrentGfacID" ];
+      QString curr_HPCAnalysisRequestID   = current_analysis_details[ "currentHPCARID"];
       QString status_json   = current_analysis_details[ "status_json" ]  ;
       QString status        = current_analysis_details[ "status" ]       ;
       QString status_msg    = current_analysis_details[ "status_msg" ]   ;
@@ -451,7 +452,8 @@ void US_Analysis_auto::gui_update( )
 	  for (int i=0; i < processed_array.size(); ++i )
 	    {
 	      QGroupBox * processed_stage_groupbox = NULL;
-	      QString stage_name, stage_gfacID, stage_status, stage_statusMsg, stage_createTime, stage_updateTime;
+	      QString stage_name, stage_gfacID, stage_status, stage_statusMsg,
+		stage_createTime, stage_updateTime, stage_HPCAnalysisRequestID;
 	      
 	      foreach(const QString& key, processed_array[i].toObject().keys())
 		{
@@ -459,6 +461,7 @@ void US_Analysis_auto::gui_update( )
 		  
 		  qDebug() << "Processed stage - " << key << ": gfacID, status, statusMsg -- "
 			   << newObj["gfacID"]   .toString()
+			   << newObj["HPCAnalysisRequestID"]. toString()
 			   << newObj["status"]   .toString()
 			   << newObj["statusMsg"].toString()
 			   << newObj["createTime"].toString()
@@ -466,6 +469,7 @@ void US_Analysis_auto::gui_update( )
 
 		  stage_name   = key;
 		  stage_gfacID = newObj["gfacID"]   .toString();
+		  stage_HPCAnalysisRequestID = newObj["HPCAnalysisRequestID"]   .toString();
 		  stage_status = newObj["status"]   .toString();
 		  stage_statusMsg = newObj["statusMsg"].toString();
 		  stage_createTime = newObj["createTime"].toString();
@@ -497,7 +501,7 @@ void US_Analysis_auto::gui_update( )
 		  QLineEdit * lineedit_lastupd  = processed_stage_groupbox->findChild<QLineEdit *>("lastupd", Qt::FindDirectChildrenOnly);
 		  
 		  //runID
-		  QString runid_text = filename + " ( " + triple_curr + " )  " + defaultDB + " (ID: " + stage_gfacID + ")";
+		  QString runid_text = filename + " ( " + triple_curr + " )  " + defaultDB + " (ID: " + stage_HPCAnalysisRequestID + ")";
 		  lineedit_runid -> setText(runid_text);
 		  
 		  //owner
@@ -572,7 +576,7 @@ void US_Analysis_auto::gui_update( )
 	      QLineEdit * lineedit_lastupd  = current_stage_groupbox->findChild<QLineEdit *>("lastupd", Qt::FindDirectChildrenOnly);
 	      
 	      //runID
-	      QString runid_text = filename + " ( " + triple_curr + " )  " + defaultDB + " (ID: " + curr_gfacID + ")";
+	      QString runid_text = filename + " ( " + triple_curr + " )  " + defaultDB + " (ID: " + curr_HPCAnalysisRequestID + ")";
 	      lineedit_runid -> setText(runid_text);
 	      
 	      //owner
@@ -1125,14 +1129,14 @@ QMap< QString, QString> US_Analysis_auto::read_autoflowAnalysis_record( US_DB2* 
 	  analysis_details[ "aprofileGUID" ]   = db->value( 4 ).toString();
 	  analysis_details[ "invID" ]          = db->value( 5 ).toString();
 	  analysis_details[ "CurrentGfacID" ]  = db->value( 6 ).toString();
-	  analysis_details[ "status_json" ]    = db->value( 7 ).toString();
-	  analysis_details[ "status" ]         = db->value( 8 ).toString();
-	  analysis_details[ "status_msg" ]     = db->value( 9 ).toString();
-	  analysis_details[ "create_time" ]    = db->value( 10 ).toString();   
-	  analysis_details[ "update_time" ]    = db->value( 11 ).toString();
-	  analysis_details[ "create_userd" ]   = db->value( 12 ).toString();
-	  analysis_details[ "update_user" ]    = db->value( 13 ).toString();
-
+	  analysis_details[ "currentHPCARID" ] = db->value( 7 ).toString();
+	  analysis_details[ "status_json" ]    = db->value( 8 ).toString();
+	  analysis_details[ "status" ]         = db->value( 9 ).toString();
+	  analysis_details[ "status_msg" ]     = db->value( 10 ).toString();
+	  analysis_details[ "create_time" ]    = db->value( 11 ).toString();   
+	  analysis_details[ "update_time" ]    = db->value( 12 ).toString();
+	  analysis_details[ "create_userd" ]   = db->value( 13 ).toString();
+	  analysis_details[ "update_user" ]    = db->value( 14 ).toString();
 	}
     }
 
@@ -1170,13 +1174,14 @@ QMap< QString, QString> US_Analysis_auto::read_autoflowAnalysisHistory_record( U
 	  analysis_details[ "aprofileGUID" ]   = db->value( 4 ).toString();
 	  analysis_details[ "invID" ]          = db->value( 5 ).toString();
 	  analysis_details[ "CurrentGfacID" ]  = db->value( 6 ).toString();
-	  analysis_details[ "status_json" ]    = db->value( 7 ).toString();
-	  analysis_details[ "status" ]         = db->value( 8 ).toString();
-	  analysis_details[ "status_msg" ]     = db->value( 9 ).toString();
-	  analysis_details[ "create_time" ]    = db->value( 10 ).toString();   
-	  analysis_details[ "update_time" ]    = db->value( 11 ).toString();
-	  analysis_details[ "create_userd" ]   = db->value( 12 ).toString();
-	  analysis_details[ "update_user" ]    = db->value( 13 ).toString();
+	  analysis_details[ "currentHPCARID" ] = db->value( 7 ).toString();
+	  analysis_details[ "status_json" ]    = db->value( 8 ).toString();
+	  analysis_details[ "status" ]         = db->value( 9 ).toString();
+	  analysis_details[ "status_msg" ]     = db->value( 10 ).toString();
+	  analysis_details[ "create_time" ]    = db->value( 11 ).toString();   
+	  analysis_details[ "update_time" ]    = db->value( 12 ).toString();
+	  analysis_details[ "create_userd" ]   = db->value( 13 ).toString();
+	  analysis_details[ "update_user" ]    = db->value( 14 ).toString();
 
 	}
     }
