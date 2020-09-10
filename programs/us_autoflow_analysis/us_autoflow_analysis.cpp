@@ -117,6 +117,13 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 
       analysis_details = read_autoflowAnalysis_record( &db, requestID );
 
+      qDebug() << "analysis_details.size() FROM autoflowAnalysis -- " << analysis_details.size();
+
+      if ( !analysis_details.size() )
+	analysis_details = read_autoflowAnalysisHistory_record( &db, requestID );
+
+      qDebug() << "analysis_details.size() FROM autoflowAnalysisHistory -- " << analysis_details.size();
+
       QString triple_name = analysis_details["triple_name"];
       Array_of_analysis[ triple_name ] = analysis_details;
 
@@ -329,8 +336,18 @@ void US_Analysis_auto::gui_update( )
 
       QString requestID = ana_details["requestID"];
       
-      QMap <QString, QString > current_analysis_details = read_autoflowAnalysis_record( &db, requestID );
+      QMap <QString, QString > current_analysis_details;
+      current_analysis_details = read_autoflowAnalysis_record( &db, requestID );
 
+      if ( !current_analysis_details.size() )
+	{
+	  current_analysis_details = read_autoflowAnalysisHistory_record( &db, requestID );
+	  //set this triple as completed
+	  Completed_triples[ triple_curr_key ] = true;
+	  qDebug() << "FORM HISTORY: set Completed_triples[ " << triple_curr_key << " ] to " << Completed_triples[ triple_curr_key ];
+	}
+
+      
       QString cluster       = current_analysis_details[ "cluster" ]      ;
       QString filename      = current_analysis_details[ "filename" ]     ;
       QString curr_gfacID   = current_analysis_details[ "CurrentGfacID" ];
@@ -1123,6 +1140,52 @@ QMap< QString, QString> US_Analysis_auto::read_autoflowAnalysis_record( US_DB2* 
   
   return analysis_details;
 }
+
+// Read AutoflowAnalysisHistory Record
+QMap< QString, QString> US_Analysis_auto::read_autoflowAnalysisHistory_record( US_DB2* db, const QString& requestID )
+{
+  QMap <QString, QString> analysis_details;
+  
+  // if ( db->lastErrno() != US_DB2::OK )
+  //   {
+  //     QMessageBox::warning( this, tr( "Connection Problem" ),
+  // 			    tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+  //     return analysis_details;
+  //   }
+
+  QStringList qry;
+  qry << "read_autoflowAnalysisHistory_record"
+      << requestID;
+  
+  db->query( qry );
+
+  if ( db->lastErrno() == US_DB2::OK )    
+    {
+      while ( db->next() )
+	{
+	  analysis_details[ "requestID" ]      = db->value( 0 ).toString();
+	  analysis_details[ "triple_name" ]    = db->value( 1 ).toString();
+	  analysis_details[ "cluster" ]        = db->value( 2 ).toString();
+	  analysis_details[ "filename" ]       = db->value( 3 ).toString();
+	  analysis_details[ "aprofileGUID" ]   = db->value( 4 ).toString();
+	  analysis_details[ "invID" ]          = db->value( 5 ).toString();
+	  analysis_details[ "CurrentGfacID" ]  = db->value( 6 ).toString();
+	  analysis_details[ "status_json" ]    = db->value( 7 ).toString();
+	  analysis_details[ "status" ]         = db->value( 8 ).toString();
+	  analysis_details[ "status_msg" ]     = db->value( 9 ).toString();
+	  analysis_details[ "create_time" ]    = db->value( 10 ).toString();   
+	  analysis_details[ "update_time" ]    = db->value( 11 ).toString();
+	  analysis_details[ "create_userd" ]   = db->value( 12 ).toString();
+	  analysis_details[ "update_user" ]    = db->value( 13 ).toString();
+
+	}
+    }
+
+  //qDebug() << "In reading autoflwoAnalysis record: json: " << analysis_details[ "status_json" ] ;
+  
+  return analysis_details;
+}
+
 
 
 QMap< QString, QString> US_Analysis_auto::get_investigator_info( US_DB2* db, const QString& ID )

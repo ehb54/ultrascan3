@@ -80,6 +80,7 @@ class US_Analysis_auto : public US_Widgets
 	 QMap < QString, bool > Completed_triples;
 
 	 QMap < QString, QString > read_autoflowAnalysis_record( US_DB2*, const QString& );
+	 QMap < QString, QString > read_autoflowAnalysisHistory_record( US_DB2*, const QString& );
 
 	 QMap < QString, QString > get_investigator_info ( US_DB2*, const QString& );
 
