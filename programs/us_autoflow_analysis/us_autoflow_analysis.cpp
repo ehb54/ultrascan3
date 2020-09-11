@@ -7,6 +7,12 @@
 #include <QJsonArray>
 #include <QJsonObject>
 
+
+const QColor colorRed       ( 210, 0, 0 );
+const QColor colorDarkGreen ( 2, 88, 57 );
+const QColor colorGreen     ( 50, 205, 50 );
+const QColor colorYellow    ( 255, 255, 102 ); 
+
 // Constructor
 US_Analysis_auto::US_Analysis_auto() : US_Widgets()
 {
@@ -73,6 +79,7 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   Array_of_analysis.clear();
 
   Completed_triples.clear();
+  Failed_triples.clear();
   Manual_update.clear();
 
   AProfileGUID       = protocol_details[ "aprofileguid" ];
@@ -129,6 +136,7 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 
       Manual_update[ triple_name ]     = false;
       Completed_triples[ triple_name ] = false;
+      Failed_triples[ triple_name ] = false;
     }
   
   // Close msg on setting up triple list from main program
@@ -427,7 +435,7 @@ void US_Analysis_auto::gui_update( )
 		  
 		  //status
 		  lineedit_status   ->setText( "Waiting for prior stage(s) to complete" );
-		  lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(255, 255, 102); }");
+		  lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb( 255, 255, 102 ); }");
 		  
 		  //analysis type
 		  lineedit_anatype -> setText( stage_to_process );
@@ -513,7 +521,7 @@ void US_Analysis_auto::gui_update( )
 		  
 		  //status
 		  lineedit_status -> setText( stage_status );
-		  lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(2, 88, 57); color : white; }");
+		  lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb( 2, 88, 57 ); color : white; }");
 		  
 		  //analysis type
 		  lineedit_anatype -> setText( stage_name );
@@ -529,6 +537,9 @@ void US_Analysis_auto::gui_update( )
 	      
 		}
 	    }
+	  //when re-attaching by reading history record for triple
+	  if ( !to_process_array.size() )
+	    topItem [ triple_curr ]  -> setForeground( 0,  QBrush( colorDarkGreen ) );
 	}
 
       //submitted -- current active stage
@@ -589,7 +600,7 @@ void US_Analysis_auto::gui_update( )
 	      //status
 	      lineedit_status -> setText( status );
 	      lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(50, 205, 50); }");
-	      			      
+	      
 	      //analysis type
 	      lineedit_anatype -> setText( submitted.toString() );
 	      
@@ -606,7 +617,8 @@ void US_Analysis_auto::gui_update( )
 	      //check if final stage && it's complete 
 	      if ( !to_process_array.size() && status == "COMPLETE" )
 		{
-		  lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(2, 88, 57); color : white; }");
+		  lineedit_status          -> setStyleSheet( "QLineEdit { background-color:  rgb(2, 88, 57); color : white; }");
+		  topItem [ triple_curr ]  -> setForeground( 0,  QBrush( colorDarkGreen ) );
 
 		  /****
 		  ALEXEY: maybe update QMap < triple_curr , bool > Completed_triples with TRUE (defined as all FALSES at the beginning):
@@ -617,6 +629,17 @@ void US_Analysis_auto::gui_update( )
 		  Completed_triples[ triple_curr_key ] = true;
 		  qDebug() << "set Completed_triples[ " << triple_curr_key << " ] to " << Completed_triples[ triple_curr_key ];
 		  
+		}
+
+	      //check if failed -- due to the abortion/deletion of the job
+	      if ( status == "FAILED" )
+		{
+		  lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(210, 0, 0); color : white; }");
+		  topItem [ triple_curr ]  -> setForeground( 0,  QBrush( colorRed ));
+		  
+		  Completed_triples[ triple_curr_key ] = true;
+		  Failed_triples   [ triple_curr_key ] = true;
+		  qDebug() << "FAILED status for triple/stage -- " << triple_curr_key << "/" << submitted.toString();
 		}
 	    }
 	}
@@ -636,6 +659,23 @@ void US_Analysis_auto::gui_update( )
     }
 
   qDebug() << "all_processed: " << all_processed;
+
+  //check if there are failed triples
+  bool failed_triples = false;
+  QStringList Failed_triples_list;
+  
+  QMap<QString, bool>::iterator tdf;
+  for ( tdf = Failed_triples.begin(); tdf != Failed_triples.end(); ++tdf )
+    {
+      qDebug() << "Key/Value of Failed_triples: " << tdf.key() << "/" << tdf.value();
+      if ( tdf.value() )
+	{
+	  Failed_triples_list << tdf.key();
+	  failed_triples = true;
+	}
+    }
+
+  qDebug() << "Failed_triples exist ? Name(s): " << failed_triples << Failed_triples_list;
   
   //If all triples processed, show msg && Stop update timer
   if ( all_processed )
@@ -650,10 +690,15 @@ void US_Analysis_auto::gui_update( )
 	}
       
       in_gui_update  = false; 
+
+      QString msg_text = "All triples have been processed.";
+      
+      if ( failed_triples )
+	msg_text += QString("\n\n NOTE: analysises for the following triples failed: \n %1").arg( Failed_triples_list.join(", ") );
       
       QMessageBox::information( this,
-				tr( "All Stages Completed!" ),
-				tr( "All stages have been completed." ) );
+				tr( "All Triples Processed !" ),
+				msg_text  );
 
       //ALEXEY: Switch to next stage (Report) ?
     }
