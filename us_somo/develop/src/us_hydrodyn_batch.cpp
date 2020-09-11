@@ -1574,7 +1574,8 @@ void US_Hydrodyn_Batch::update_enables()
                batch->hydro         = false;
             }
             cb_zeno              ->setEnabled( true );
-            if ( batch->hydro || batch->zeno ) {
+            cb_grpy              ->setEnabled( true );
+            if ( batch->hydro || batch->zeno || batch->grpy ) {
                cb_avg_hydro         ->setEnabled( true );
             } else {
                cb_avg_hydro         ->setEnabled( false );
@@ -2100,12 +2101,12 @@ void US_Hydrodyn_Batch::set_hullrad()
 void US_Hydrodyn_Batch::set_grpy()
 {
    batch->grpy = cb_grpy->isChecked();
-   if ( batch->grpy ) {
-      QMessageBox::warning( this, windowTitle() + ": Calculate RB Hydrodynamics: GRPY", "GRPY not yet integrated" );
-      cb_grpy->setChecked( false );
-      batch->grpy = cb_grpy->isChecked();
-      return;
-   }
+   // if ( batch->grpy ) {
+   //    QMessageBox::warning( this, windowTitle() + ": Calculate RB Hydrodynamics: GRPY", "GRPY not yet integrated" );
+   //    cb_grpy->setChecked( false );
+   //    batch->grpy = cb_grpy->isChecked();
+   //    return;
+   // }
    if ( batch->grpy ) {
       cb_hullrad->setChecked( false );
       batch->hullrad = cb_hullrad->isChecked();
@@ -2979,7 +2980,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
                }
                return;
             }
-            if ( result && ( batch->hydro || batch->zeno ) &&
+            if ( result && ( batch->hydro || batch->zeno || batch->grpy ) &&
                  ( !pdb_mode || batch->somo || batch->grid || batch->somo_o || batch->vdw_beads ) )
             {
                save_us_hydrodyn_settings();
@@ -2994,6 +2995,17 @@ void US_Hydrodyn_Batch::start( bool quiet )
                }
                if ( batch->zeno ) {
                   result = ((US_Hydrodyn *)us_hydrodyn)->calc_zeno_hydro() ? false : true;
+               }
+               if ( batch->grpy ) {
+                  result = ((US_Hydrodyn *)us_hydrodyn)->calc_grpy_hydro();
+                  if ( result ) {
+                     qDebug() << "waiting for grpy result";
+                     while( ((US_Hydrodyn *)us_hydrodyn)->grpy_running ) {
+                        qApp->processEvents();
+                        mQThread::msleep( 333 );
+                     }
+                     qDebug() << "grpy finished";
+                  }
                }
                job_timer.end_timer   ( QString( "%1 hydrodynamics" ).arg( get_file_name( i ) ) );
                restore_us_hydrodyn_settings();

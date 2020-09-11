@@ -562,6 +562,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
       this_data.use_bead_mass                 = 0e0;
       this_data.con_factor                    = 0e0;
       this_data.tra_fric_coef                 = 0e0;
+      this_data.tra_fric_coef_sd              = 0e0;
       this_data.rot_fric_coef                 = 0e0;
       this_data.rot_diff_coef                 = 0e0;
       this_data.rot_fric_coef_x               = 0e0;
@@ -643,7 +644,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
          this_data.rot_diff_coef = it->second[ "Dr" ];
       }
       if ( it->second.count( "s" ) ) {
-         this_data.results.s20w = it->second[ "s" ] * 1e13;
+         this_data.results.s20w = it->second[ "s" ];
       }
       if ( it->second.count( "Dt" ) ) {
          this_data.results.D20w = it->second[ "Dt" ];
@@ -813,6 +814,60 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
       grpy_results2.vbar                 += this_data.results.vbar        * this_data.results.vbar;
       grpy_results .num_models           ++ ;
 
+
+      
+      {
+         QString add_to_grpy;
+
+         add_to_grpy +=
+            "\n---------------------------------------------------------\n"
+            + us_tr(
+                    "Summary information\n"
+                    "The Translational Frictional Coefficient and Frictional Ratio are\n"
+                    "derived from the GRPY results.\n"
+                    )
+            + "---------------------------------------------------------\n"
+            ;
+       
+
+         add_to_grpy += QString( "\nGRPY computed on %1 Model %2%3\n" ).arg( project ).arg( current_model + 1 ).arg( bead_model_suffix.length() ? (" Bead model suffix: " + bead_model_suffix) : "" );
+         add_to_grpy += QString( "Number of beads used: %1\n" ).arg( this_data.results.used_beads );
+         add_to_grpy += QString( "MW: %1 [Da]\n" ).arg( this_data.results.mass );
+         add_to_grpy += pH_msg();
+         add_to_grpy += vbar_msg( this_data.results.vbar, true );
+         add_to_grpy += visc_dens_msg( true );
+                     
+         if ( hydro.mass_correction ) {
+            add_to_grpy += QString( "Manually corrected MW: %1 [Da]\n" ).arg( hydro.mass );
+         }
+
+         add_to_grpy += 
+            QString( 
+                    us_tr( 
+                          "\n"
+                          "US-SOMO Derived Parameters:\n"
+                          "\n"
+                          " Frictional Ratio                   f/f0 : %1\n"
+                          " Tr. Frictional coefficient            f : %2\n"
+                          " Radius of Gyration                   Rg : %3\n"
+                           ) )
+            .arg( QString( "" ).sprintf( "%3.2f"     , this_data.results.ff0   ) )
+            .arg( QString( "" ).sprintf( "%4.2e g/s" , this_data.tra_fric_coef ) )
+            .arg( QString( "" ).sprintf( "%4.2e nm"  , this_data.results.rg    ) )
+            ;
+
+         QFile f( last_hydro_res );
+         if ( f.exists() && f.open( QIODevice::WriteOnly | QIODevice::Append ) )
+         {
+            QTextStream ts( &f );
+            ts << add_to_grpy;
+            f.close();
+         }
+
+         this_data.hydro_res = grpy_stdout + add_to_grpy;
+
+      }
+
       if ( batch_widget &&
            batch_window->save_batch_active )
       {
@@ -835,9 +890,9 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
             editor_msg( "dark blue", QString( "created %1\n" ).arg( fname ) );
          }
       }
-      // print out results:
-      save_util->header();
-      save_util->dataString(&this_data);
+      // // print out results ?
+      // save_util->header();
+      // save_util->dataString(&this_data);
    }
 
    

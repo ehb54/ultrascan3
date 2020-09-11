@@ -1910,7 +1910,7 @@ QString US_Hydrodyn_Save::hydroFormatStats(vector < save_data > stats)
                                  stats[1].rot_stokes_rad_z);
 
    if ( stats[ 0 ].results.viscosity ) {
-      result += QString("").sprintf("\n- ZENO INTRINSIC VISC.     \t%.2f\t\t%.2f\t\t[cm^3/g]\n",
+      result += QString("").sprintf("\n- ZENO/GRPY INTRINSIC VISC.\t%.2f\t\t%.2f\t\t[cm^3/g]\n",
                                     stats[0].results.viscosity,
                                     stats[1].results.viscosity);
    }

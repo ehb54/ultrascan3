@@ -14619,6 +14619,7 @@ bool US_Hydrodyn::calc_zeno()
                         ts << add_to_zeno;
                         f.close();
                      }
+                     this_data.hydro_res += add_to_zeno;
                   }
 
                   // nsa physical stats
@@ -14706,9 +14707,9 @@ bool US_Hydrodyn::calc_zeno()
                         fclose(of);
                      }
                   }
-                  // print out results:
-                  save_util->header();
-                  save_util->dataString(&this_data);
+                  // // print out results ?
+                  // save_util->header();
+                  // save_util->dataString(&this_data);
                }
             } // repeats
          }
