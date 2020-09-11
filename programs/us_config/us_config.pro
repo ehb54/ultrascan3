@@ -2,6 +2,7 @@ include( ../../gui.pri )
 
 QT           += svg
 QT           += sql
+QT           += network
 TARGET        = us_config
 TRANSLATIONS += $${TARGET}_de_DE.ts
 

@@ -13,9 +13,14 @@ int main( int argc, char* argv[] )
    // License is OK.  Start up.
 
    US_ComProjectMain * w = new US_ComProjectMain;
-   //w.setFrameShape( QFrame::Box);
-   //w.setLineWidth(1);
-   w->show();                   //!< \memberof QWidget
+   w->show(); 
+
+   // Create local "server" to register applicaiton
+   QInstances instances;
+   bool instance_created = instances.create();
+   qDebug() << "instance create returned " << is_true( instance_created );
+   if ( !instance_created ) 
+     exit(-1);
 
    //w->check_current_stage();
    w->call_AutoflowDialogue();
@@ -25,7 +30,7 @@ int main( int argc, char* argv[] )
        qDebug() << "Closing --- ";
        return 0;
      }
-     
+   
    return application.exec();  //!< \memberof QApplication
 }
 

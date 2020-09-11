@@ -44,6 +44,7 @@ HEADERS      = us_ana_profile.h   \
                us_lamm_astfvm.h   \
                us_license_t.h     \
                us_lm.h            \
+               us_local_server.h  \
                us_math2.h         \
                us_matrix.h        \
                us_memory.h        \
@@ -91,6 +92,7 @@ SOURCES      = us_ana_profile.cpp   \
                us_lamm_astfvm.cpp   \
                us_license_t.cpp     \
                us_lm.cpp            \
+               us_local_server.cpp  \
                us_math2.cpp         \
                us_matrix.cpp        \
                us_memory.cpp        \

@@ -26,7 +26,6 @@
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
 
-
 //// Constructor:  ACADEMIC: 'Data Acquision' / us_comproject_academic programs
 US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
 {
@@ -184,11 +183,6 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    setMinimumSize( QSize( 1350, 800 ) );
    adjustSize();
 
-   /* Check for current stage & redirect to specific tab */
-   //check_current_stage();
-
-   //set opened state in the .config file
-   US_Settings::set_DA_status( "ACAD:1" );
 }
 
 
@@ -365,12 +359,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    setMinimumSize( QSize( 1350, 800 ) );
    adjustSize();
 
-   /* Check for current stage & redirect to specific tab */
-   //check_current_stage();
-
-   //set opened state in the .config file
-   US_Settings::set_DA_status( "COM:1" );
-}
+ }
 
 
 // Slot to init some panels (mainly Manage Opima Runs)
@@ -539,11 +528,6 @@ void US_ComProjectMain::closeEvent( QCloseEvent* event )
     close_initDialogue();
     qDebug() << "initDialogue: true/false 3 : " << epanInit->initDialogueOpen ;
 
-    if ( us_mode_bool  ) 
-      US_Settings::set_DA_status( "ACAD:0" );
-    else
-      US_Settings::set_DA_status( "COM:0" );
-    
     event->accept();
 }
 

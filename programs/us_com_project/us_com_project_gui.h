@@ -45,6 +45,8 @@
 #include "us_select_item.h"
 #include "us_license_t.h"
 #include "us_license.h"
+#include "us_local_server.h"
+
 
 
 class US_ComProjectMain;

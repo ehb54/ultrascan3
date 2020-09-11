@@ -6,6 +6,8 @@
 #include "us_help.h"
 #include "us_crypto.h"
 #include "us_db2.h"
+#include "us_local_server.h"
+
 
 US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
   : US_Widgets( true, w, flags )
@@ -28,46 +30,18 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
      close();
   }
 
-  
-  /* For DB change - check autoflow records & disable with message if there are any records */
-  // int autoflow_records = 0;
-  // autoflow_records = get_autoflow_records();
-  // qDebug() << "Autoflow record #: " << autoflow_records;
-  
-  // if ( autoflow_records  )
-  //   {
-  //     QMessageBox::information( this,
-  // 				tr( "Default Database Cannot be Cahnged!" ),
-  // 				tr( "Database preferences cannot be currently changed since there are Data Acquisition related processes ongoing. Please try again later." ) );
-  //     close();
-  //   }
-
-  /***************** .config file based  **/
-  bool da_com_status = US_Settings::get_DA_status( "COM" );
-  bool da_acad_status = US_Settings::get_DA_status( "ACAD" );    
-
-  qDebug() << "DA_com_status, DA_acad_status: -- " << da_com_status << ", " << da_acad_status;
-
-  QString da_programs("");
-
-  if ( da_com_status )
-    da_programs += "us_comproject, ";
-  if ( da_acad_status )
-    da_programs += "us_comproject_academic, ";
-  
-  da_programs.chop(2);
-  
-  if ( da_com_status || da_acad_status )
+  // check if DA (com/acad) opened
+  QInstances instances;
+  qDebug() << "Active instances: " << instances.count(); 
+  if ( instances.count() )
     {
       QMessageBox::information( this,
-  				tr( "Default Database Cannot be Changed!" ),
-				tr( "Database preferences cannot be currently changed since Data Acquisition program(s) %1 is(are) used. Please close the program(s) and try again." ).arg( da_programs ) );
+				tr( "Default Database Cannot be Changed!" ),
+				tr( "Database preferences cannot be currently changed since there are Data Acquisition related processes ongoing. \n\nTo change DB preferences, Data Acquisiiton programs must be closed." ) );
       close();
     }
   
-  
-  /******************************************************************************************/
-  
+    
   QBoxLayout* topbox = new QVBoxLayout( this );
   topbox->setSpacing( 2 );
 
