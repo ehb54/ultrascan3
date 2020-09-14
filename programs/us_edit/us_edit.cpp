@@ -651,8 +651,8 @@ pb_plateau->setVisible(false);
    
 
    // details[ "invID_passed" ] = QString("40");
-   // details[ "filename" ]     = QString("KulkarniJ_LNP-pDNA-50-90D2O-12K_032820-run721");
-   // details[ "protocolName" ] = QString("KulkarniJ_LNP-pDNA-50-90D2O-12K_032820");
+   // details[ "filename" ]     = QString("KulkarniJ_NP025-D2O-0-20-17K_091220-run1285");
+   // details[ "protocolName" ] = QString("KulkarniJ_NP025-D2O-0-20-17K_091220");
    
    // load_auto( details );
    
@@ -2937,8 +2937,10 @@ double US_Edit::find_meniscus_auto()
 
       int indexLeft   = data.xindex( meniscus_init  );
       //int indexRight  = data.xindex( meniscus_init + 0.5 );   // <---- OR should it just be the end data from AProfile ?
-      int indexRight  = data.xindex( range_right );
+
+      //int indexRight  = data.xindex( range_right );
       //ALEXEY: maybe to be on safer side, take indexRight = meniscus_init  + ( aprofile_right - meniscus_init )/2.0
+      int indexRight = meniscus_init  + ( data.xindex( range_right ) - meniscus_init )/2.0;
       
       // qDebug() << "indexLeft = " << indexLeft << "; indexRight = " <<  indexRight; 
 	
