@@ -17,6 +17,7 @@
 #include "us_datafiles.h"
 #include "us_select_item.h"
 
+
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c)  setData(a,b,c)
 #define setMinimum(a)      setMinValue(a)
@@ -27,64 +28,6 @@
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
-
-//Link class
-LinkSys::LinkSys()
-{
-  //connect(&server, &QSslSocket::readyRead, this, &LinkSys::rx);
-  connect(&server, &QSslSocket::disconnected, this, &LinkSys::serverDisconnect);
-  connect(&server, SIGNAL(sslErrors(QList<QSslError>)), this, SLOT(sslErrors(QList<QSslError>)));
-
-  QString certPath = US_Settings::etcDir() + QString("/optima/"); //US_Settings::appBaseDir() + QString( "/etc/sys_server/" );
-  QString keyFile  = certPath + QString( "client.key" );
-  QString pemFile  = certPath + QString( "client.pem" );
-  server.setPrivateKey(keyFile, QSsl::Ec );
-  server.setLocalCertificate(pemFile);
-
-  qDebug() << "Client's certs directory: " << keyFile << pemFile;
-  // server.setPrivateKey("client.key", QSsl::Ec );
-  // server.setLocalCertificate("client.pem");
-  server.setPeerVerifyMode(QSslSocket::VerifyNone);
-}
-
-bool LinkSys::connectToServer( const QString& host, const int port )
-{
-  bool status_ok = false;
-  //server.connectToHostEncrypted("142.66.17.6", 8821);
-  server.connectToHostEncrypted(host, port);
-  if (server.waitForEncrypted(15000))
-    {
-      server.write("***qsslsocket_client_example sent this nothing command***\n");
-      status_ok = true;
-    }
-  else
-    {
-      qDebug("Unable to connect to server");
-      //exit(0);
-    }
-
-  return status_ok;
-}
-
-void LinkSys::disconnectFromServer( void  )
-{
-  server.disconnectFromHost();
-  qDebug() << "Closing Connection";
-}
-
-void LinkSys::sslErrors(const QList<QSslError> &errors)
-{
-  foreach (const QSslError &error, errors)
-    qDebug() << error.errorString();
-}
-
-void LinkSys::serverDisconnect(void)
-{
-  qDebug("Server disconnected");
-  //exit(0);
-}
-
-// End of link class//////////////////////////////////////////////////////////////////////
 
 
 // Constructor:  build the main layout with tab widget panels
@@ -4999,7 +4942,7 @@ void US_ExperGuiUpload::submitExperiment_confirm()
 
   qDebug() << "Optima_msgPort: " << optima_msgPort;
 
-  LinkSys *link = new LinkSys;
+  Link *link = new Link;
   bool status_sys_data = link->connectToServer( dbhost, optima_msgPort.toInt() );
 
   // Ceritificate location && check for nearing or actual expiration date ////////////////////

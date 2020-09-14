@@ -24,7 +24,7 @@
 #include "us_xpn_run_raw.h"
 #include "us_xpn_run_auc.h"
 
-#include "us_link.h"
+#include "us_link_ssl.h"
 
 class SpeedoMeter: public QwtDial
 {

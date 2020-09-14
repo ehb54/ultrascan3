@@ -12,7 +12,6 @@ HEADERS       = us_com_project_gui.h \
                 ../us_xpn_viewer/us_xpn_viewer_gui.h \
                 ../us_xpn_viewer/us_xpn_run_raw.h \
                 ../us_xpn_viewer/us_xpn_run_auc.h \
-                ../us_xpn_viewer/us_link.h \
                 ../us_convert/us_convert_gui.h \
                 ../us_convert/us_convertio.h \
                 ../us_convert/us_get_run.h \
@@ -41,7 +40,6 @@ SOURCES       = us_com_project_main.cpp \
                 ../us_xpn_viewer/us_xpn_viewer_gui.cpp \
                 ../us_xpn_viewer/us_xpn_run_raw.cpp \
                 ../us_xpn_viewer/us_xpn_run_auc.cpp \
-                ../us_xpn_viewer/us_link.cpp \
                 ../us_convert/us_convert.cpp         \
                 ../us_convert/us_convert_gui.cpp     \
                 ../us_convert/us_convertio.cpp       \

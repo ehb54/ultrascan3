@@ -43,6 +43,7 @@ HEADERS      = us_ana_profile.h   \
                us_http_post.h     \
                us_lamm_astfvm.h   \
                us_license_t.h     \
+               us_link_ssl.h      \
                us_lm.h            \
                us_local_server.h  \
                us_math2.h         \
@@ -91,6 +92,7 @@ SOURCES      = us_ana_profile.cpp   \
                us_hydrosim.cpp      \
                us_lamm_astfvm.cpp   \
                us_license_t.cpp     \
+               us_link_ssl.cpp      \
                us_lm.cpp            \
                us_local_server.cpp  \
                us_math2.cpp         \

@@ -24,31 +24,11 @@
 #include "us_db2.h"
 #include "us_hardware.h"
 #include "us_select_runs.h"
+#include "us_link_ssl.h"
+
 //#include "us_license_t.h"
 //#include "us_license.h"
 
-
-// Link class to check conneciton to sys_data server
-class LinkSys : public QObject
-{
-	Q_OBJECT
-
-public:
-	LinkSys();
-	bool connectToServer(const QString&, const int);
-	void disconnectFromServer( void );
-
-private:
-	QSslSocket server;
-
-Q_SIGNALS:
-	void disconnected(void);
-
-private slots:
-	void sslErrors(const QList<QSslError> &errors);
-	void serverDisconnect(void);
-};
-// End of link class /////////////
 
 
 class US_ExperimentMain;

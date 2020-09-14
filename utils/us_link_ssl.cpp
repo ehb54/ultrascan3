@@ -4,7 +4,7 @@
 #include <QJsonValue>
 #include <QJsonArray>
 #include <QJsonObject>
-#include "us_link.h"
+#include "us_link_ssl.h"
 #include "us_settings.h"
 
 Link::Link()
@@ -12,7 +12,7 @@ Link::Link()
   connect(&server, &QSslSocket::readyRead, this, &Link::rx);
   connect(&server, &QSslSocket::disconnected, this, &Link::serverDisconnect);
   connect(&server, SIGNAL(sslErrors(QList<QSslError>)), this, SLOT(sslErrors(QList<QSslError>)));
-
+ 
   QString certPath = US_Settings::etcDir() + QString("/optima/"); //US_Settings::appBaseDir() + QString( "/etc/sys_server/" );
   QString keyFile  = certPath + QString( "client.key" );
   QString pemFile  = certPath + QString( "client.pem" );
