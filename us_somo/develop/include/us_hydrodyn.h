@@ -929,6 +929,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       int grpy_last_model_number;
       QVector < int > grpy_used_beads;
       int grpy_last_used_beads;
+      bool grpy_success;  // only valid if !grpy_running
       map < QString, vector < double > > grpy_captures;
       US_Timer timers;
       hydro_results grpy_results;

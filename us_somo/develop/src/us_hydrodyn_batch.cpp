@@ -3004,6 +3004,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
                         qApp->processEvents();
                         mQThread::msleep( 333 );
                      }
+                     result = ((US_Hydrodyn *)us_hydrodyn)->grpy_success;
                      qDebug() << "grpy finished";
                   }
                }

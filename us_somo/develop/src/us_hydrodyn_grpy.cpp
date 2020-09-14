@@ -270,12 +270,14 @@ bool US_Hydrodyn::calc_grpy_hydro() {
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
       pb_show_hydro_results->setEnabled(false);
       progress->reset();
+      grpy_success = false;
       return false;
    }
 
    editor_msg( "dark blue", grpy_to_process.join( "\n" ) );
 
    grpy_running = true;
+   grpy_success = true;
    progress->setMaximum( grpy_to_process.size() + 1 );
    progress->setValue( 0 );
    
@@ -370,6 +372,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
       pb_show_hydro_results->setEnabled(false);
       progress->reset();
+      grpy_success = false;
       return;
    }
 
@@ -451,6 +454,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
       if ( !found ) {
          qDebug() << "grpy caps not found " << i << "'" << caps[ i ] << "'";
          editor_msg( "red", QString( us_tr( "Could not find '%1' in GRPY output" ) ).arg( caps[ i ].replace( "\\", "" ) ) );
+         grpy_success = false;
          grpy_captures[ caps[ i + 2 ] ].push_back( -9e99 );
       }
 
@@ -492,6 +496,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
       QFile f( grpy_out_name );
       if ( !f.open( QIODevice::WriteOnly ) ) {
          editor_msg( "red", QString( us_tr( "Error: could not open output file %1 for writing" ) ).arg( grpy_out_name ) );
+         grpy_success = false;
       } else {
          QTextStream t( &f );
          t << grpy_stdout;
