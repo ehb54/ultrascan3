@@ -4065,6 +4065,10 @@ void US_Hydrodyn::stop_calc()
 {
    stopFlag = true;
    anaflex_return_to_bd_load_results = false;
+   if ( batch_widget &&
+        batch_window->pb_stop->isEnabled() ) {
+      emit batch_window->stop();
+   }
    if ( browflex && browflex->state() == QProcess::Running )
    {
       browflex->terminate();
