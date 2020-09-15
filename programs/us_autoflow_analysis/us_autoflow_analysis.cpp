@@ -82,7 +82,8 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   Completed_triples.clear();
   Failed_triples.clear();
   Manual_update.clear();
-
+  History_read.clear();
+  
   AProfileGUID       = protocol_details[ "aprofileguid" ];
   ProtocolName_auto  = protocol_details[ "protocolName" ];
   invID              = protocol_details[ "invID_passed" ].toInt();
@@ -137,7 +138,8 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 
       Manual_update[ triple_name ]     = false;
       Completed_triples[ triple_name ] = false;
-      Failed_triples[ triple_name ] = false;
+      Failed_triples[ triple_name ]    = false;
+      History_read[ triple_name ]      = false;
     }
   
   // Close msg on setting up triple list from main program
@@ -353,6 +355,7 @@ void US_Analysis_auto::gui_update( )
 	  current_analysis_details = read_autoflowAnalysisHistory_record( &db, requestID );
 	  //set this triple as completed
 	  Completed_triples[ triple_curr_key ] = true;
+	  History_read[ triple_curr_key ]      = true;
 	  qDebug() << "FORM HISTORY: set Completed_triples[ " << triple_curr_key << " ] to " << Completed_triples[ triple_curr_key ];
 	}
 
@@ -539,7 +542,7 @@ void US_Analysis_auto::gui_update( )
 		}
 	    }
 	  //when re-attaching by reading history record for triple
-	  if ( !to_process_array.size()  )
+	  if ( !to_process_array.size()  && History_read[ triple_curr_key ] )
 	    topItem [ triple_curr ]  -> setForeground( 0,  QBrush( colorDarkGreen ) );
 	}
 
