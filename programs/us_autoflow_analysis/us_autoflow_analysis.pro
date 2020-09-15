@@ -4,8 +4,10 @@ TARGET        = us_autoflow_analysis
 QT           += xml
 QT           += sql
 
-HEADERS       = us_autoflow_analysis.h
+HEADERS       = us_autoflow_analysis.h \
+                ../us_fit_meniscus/us_fit_meniscus.h  
 
 SOURCES       = us_autoflow_analysis_main.cpp       \
-                us_autoflow_analysis.cpp  
+                us_autoflow_analysis.cpp         \
+                ../us_fit_meniscus/us_fit_meniscus.cpp
                

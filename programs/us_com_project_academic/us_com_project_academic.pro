@@ -27,7 +27,8 @@ HEADERS       = ../us_com_project/us_com_project_gui.h \
                 ../us_edit/us_ri_noise.h \
                 ../us_edit/us_select_lambdas.h \
                 ../us_autoflow_analysis/us_autoflow_analysis.h \
-                ../us_autoflow_reports/us_autoflow_reports.h
+                ../us_autoflow_reports/us_autoflow_reports.h  \
+                ../us_fit_meniscus/us_fit_meniscus.h
                 
 
 SOURCES       = us_com_project_academic_main.cpp \
@@ -56,6 +57,7 @@ SOURCES       = us_com_project_academic_main.cpp \
                 ../us_edit/us_ri_noise.cpp \
                 ../us_edit/us_select_lambdas.cpp \
                 ../us_autoflow_analysis/us_autoflow_analysis.cpp \
-                ../us_autoflow_reports/us_autoflow_reports.cpp
+                ../us_autoflow_reports/us_autoflow_reports.cpp   \
+                ../us_fit_meniscus/us_fit_meniscus.cpp
                 
 

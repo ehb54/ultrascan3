@@ -1,11 +1,12 @@
-#include "us_autoflow_analysis.h"
-#include "us_settings.h"
-#include "us_gui_settings.h"
-#include "us_protocol_util.h"
 #include <QJsonDocument>
 #include <QJsonValue>
 #include <QJsonArray>
 #include <QJsonObject>
+
+#include "us_autoflow_analysis.h"
+#include "us_settings.h"
+#include "us_gui_settings.h"
+#include "us_protocol_util.h"
 
 
 const QColor colorRed       ( 210, 0, 0 );
@@ -538,7 +539,7 @@ void US_Analysis_auto::gui_update( )
 		}
 	    }
 	  //when re-attaching by reading history record for triple
-	  if ( !to_process_array.size() )
+	  if ( !to_process_array.size()  )
 	    topItem [ triple_curr ]  -> setForeground( 0,  QBrush( colorDarkGreen ) );
 	}
 
@@ -556,11 +557,25 @@ void US_Analysis_auto::gui_update( )
 	      QMessageBox::information( this,
 					tr( "TEMPORARY: FITMEN stage reached" ),
 					tr( "FITMET stage for triple %1 will be processed manually." ).arg( triple_curr ) );
-	      update_autoflowAnalysis_status_at_fitmen( &db, requestID );
 
+
+	      /** To FitMeniscus class -- pass:
+		  1. Name of the triple to title && and possibly to pass to scan_db() method
+		  2. Filename
+	      ****/
+	      FitMen = new US_FitMeniscus;
+	      
+	      /** The following will block parent windows from closing BUT not from continuing timer execution ***/
+	      FitMen->setWindowFlags( Qt::Dialog );
+	      FitMen->setWindowModality(Qt::ApplicationModal);
+	      /***************************************************************************************************/
+
+	      FitMen->show();
+
+	      //ALEXEY: the folowing operations must be sent from US_FitMeniscus instance
+	      update_autoflowAnalysis_status_at_fitmen( &db, requestID );
 	      Manual_update[ triple_curr_key ] = true;
 	      
-	      //continue; 
 	    }
 	      
 	  //QGroupBox * current_stage_groupbox;

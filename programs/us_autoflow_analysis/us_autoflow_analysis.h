@@ -4,6 +4,7 @@
 #include "us_widgets.h"
 #include "us_db2.h"
 #include "us_passwd.h"
+#include "../us_fit_meniscus/us_fit_meniscus.h"
 
 class US_Analysis_auto : public US_Widgets
 {
@@ -11,36 +12,9 @@ class US_Analysis_auto : public US_Widgets
 
       public:
          US_Analysis_auto();
-
-	 /* QLabel* stage_2dsa; */
-	 /* QLabel* stage_2dsa_fm; */
-	 /* QLabel* stage_fitmen; */
-	 /* QLabel* stage_2dsa_it; */
-	 /* QLabel* stage_2dsa_mc; */
-
-	 /* QLineEdit* queue_msg_2dsa; */
-	 /* QLineEdit* queue_msg_2dsa_fm; */
-	 /* QLineEdit* queue_msg_fitmen; */
-	 /* QLineEdit* queue_msg_2dsa_it; */
-	 /* QLineEdit* queue_msg_2dsa_mc; */
-
-	 /* QLineEdit* status_2dsa; */
-	 /* QLineEdit* status_2dsa_fm; */
-	 /* QLineEdit* status_fitmen; */
-	 /* QLineEdit* status_2dsa_it; */
-	 /* QLineEdit* status_2dsa_mc; */
-
-	 /* QGridLayout* genL; */
-
 	 
 	 QTreeWidget     *treeWidget;
 	 QMap<QString, QTreeWidgetItem *> topItem;
-	 /* QMap<QString, QTreeWidgetItem *> topItem_2DSA; */
-	 /* QMap<QString, QTreeWidgetItem *> topItem_2DSA_FM; */
-	 /* QMap<QString, QTreeWidgetItem *> topItem_2DSA_FITMEN; */
-	 /* QMap<QString, QTreeWidgetItem *> topItem_2DSA_IT; */
-	 /* QMap<QString, QTreeWidgetItem *> topItem_2DSA_MC; */
-
 	 QMap<QString, QTreeWidgetItem *> childItem_2DSA;
 	 QMap<QString, QTreeWidgetItem *> childItem_2DSA_FM;
 	 QMap<QString, QTreeWidgetItem *> childItem_2DSA_FITMEN;
@@ -60,7 +34,9 @@ class US_Analysis_auto : public US_Widgets
 	 bool in_reload_end_process;
 
 	 void reset_analysis_panel_public ( void );
-	 	 
+
+	 US_FitMeniscus* FitMen; 
+	 
       private:
 	 QPushButton*  pb_show_all;
 	 QPushButton*  pb_hide_all;

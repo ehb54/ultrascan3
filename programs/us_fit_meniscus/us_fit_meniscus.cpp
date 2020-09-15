@@ -1,5 +1,5 @@
 //! \file us_fit_meniscus.cpp
-#include <QApplication>
+//#include <QApplication>
 
 #include "us_fit_meniscus.h"
 #include "us_license_t.h"
@@ -20,22 +20,6 @@
 #define setSamples(a,b,c)  setData(a,b,c)
 #define setSymbol(a)       setSymbol(*a)
 #endif
-
-//! \brief Main program for US_FitMeniscus. Loads translators and starts
-//         the class US_FitMeniscus.
-
-int main( int argc, char* argv[] )
-{
-   QApplication application( argc, argv );
-
-   #include "main1.inc"
-
-   // License is OK.  Start up.
-   
-   US_FitMeniscus w;
-   w.show();                   //!< \memberof QWidget
-   return application.exec();  //!< \memberof QApplication
-}
 
 US_FitMeniscus::US_FitMeniscus() : US_Widgets()
 {

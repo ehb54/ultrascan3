@@ -1,6 +1,8 @@
 #ifndef US_FIT_MENISCUS_H
 #define US_FIT_MENISCUS_H
 
+#include <QApplication>
+
 #include "us_extern.h"
 #include "us_widgets.h"
 #include "us_help.h"
