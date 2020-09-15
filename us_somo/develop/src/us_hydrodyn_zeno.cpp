@@ -13964,85 +13964,12 @@ bool US_Hydrodyn::calc_zeno()
                } else {
                   // setup save data
                   // add text output also
-                  save_data this_data;
-                  // should be put in (static?) save_data.clear( )
-                  // initialize unset (as of yet) values
+                  save_data this_data = US_Hydrodyn_Save::save_data_initialized();
 
                   us_timers.start_timer( "compute zeno" );
-                  this_data.tot_surf_area                 = 0e0;
-                  this_data.tot_volume_of                 = 0e0;
-                  this_data.num_of_unused                 = 0e0;
-                  this_data.use_beads_vol                 = 0e0;
-                  this_data.use_beads_surf                = 0e0;
-                  this_data.use_bead_mass                 = 0e0;
-                  this_data.con_factor                    = 0e0;
-                  this_data.tra_fric_coef                 = 0e0;
-                  this_data.tra_fric_coef_sd              = 0e0;
-                  this_data.rot_fric_coef                 = 0e0;
-                  this_data.rot_diff_coef                 = 0e0;
-                  this_data.rot_fric_coef_x               = 0e0;
-                  this_data.rot_fric_coef_y               = 0e0;
-                  this_data.rot_fric_coef_z               = 0e0;
-                  this_data.rot_diff_coef_x               = 0e0;
-                  this_data.rot_diff_coef_y               = 0e0;
-                  this_data.rot_diff_coef_z               = 0e0;
-                  this_data.rot_stokes_rad_x              = 0e0;
-                  this_data.rot_stokes_rad_y              = 0e0;
-                  this_data.rot_stokes_rad_z              = 0e0;
-                  this_data.cen_of_res_x                  = 0e0;
-                  this_data.cen_of_res_y                  = 0e0;
-                  this_data.cen_of_res_z                  = 0e0;
-                  this_data.cen_of_mass_x                 = 0e0;
-                  this_data.cen_of_mass_y                 = 0e0;
-                  this_data.cen_of_mass_z                 = 0e0;
-                  this_data.cen_of_diff_x                 = 0e0;
-                  this_data.cen_of_diff_y                 = 0e0;
-                  this_data.cen_of_diff_z                 = 0e0;
-                  this_data.cen_of_visc_x                 = 0e0;
-                  this_data.cen_of_visc_y                 = 0e0;
-                  this_data.cen_of_visc_z                 = 0e0;
-                  this_data.unc_int_visc                  = 0e0;
-                  this_data.unc_einst_rad                 = 0e0;
-                  this_data.cor_int_visc                  = 0e0;
-                  this_data.cor_einst_rad                 = 0e0;
-                  this_data.rel_times_tau_1               = 0e0;
-                  this_data.rel_times_tau_2               = 0e0;
-                  this_data.rel_times_tau_3               = 0e0;
-                  this_data.rel_times_tau_4               = 0e0;
-                  this_data.rel_times_tau_5               = 0e0;
-                  this_data.rel_times_tau_m               = 0e0;
-                  this_data.rel_times_tau_h               = 0e0;
-                  this_data.max_ext_x                     = 0e0;
-                  this_data.max_ext_y                     = 0e0;
-                  this_data.max_ext_z                     = 0e0;
-                  this_data.axi_ratios_xz                 = 0e0;
-                  this_data.axi_ratios_xy                 = 0e0;
-                  this_data.axi_ratios_yz                 = 0e0;
-                  this_data.results.mass                  = 0e0;
-                  this_data.results.s20w                  = 0e0;
-                  this_data.results.s20w_sd               = 0e0;
-                  this_data.results.D20w                  = 0e0;
-                  this_data.results.D20w_sd               = 0e0;
-                  this_data.results.viscosity             = 0e0;
-                  this_data.results.viscosity_sd          = 0e0;
-                  this_data.results.rs                    = 0e0;
-                  this_data.results.rs_sd                 = 0e0;
-                  this_data.results.rg                    = 0e0;
-                  this_data.results.rg_sd                 = 0e0;
-                  this_data.results.tau                   = 0e0;
-                  this_data.results.tau_sd                = 0e0;
-                  this_data.results.vbar                  = 0e0;
-                  this_data.results.asa_rg_pos            = 0e0;
-                  this_data.results.asa_rg_neg            = 0e0;
-                  this_data.results.ff0                   = 0e0;
-                  this_data.results.ff0_sd                = 0e0;
-                  this_data.results.solvent_name          = "";
-                  this_data.results.solvent_acronym       = "";
                   this_data.results.solvent_viscosity     = use_solvent_visc();
                   this_data.results.solvent_density       = use_solvent_dens();
                   this_data.results.pH                    = hydro.pH;
-                  this_data.zeno_mep                      = 0e0;
-                  this_data.zeno_eta_prefactor            = 0e0;
 
                   this_data.hydro                         = hydro;
                   this_data.hydro.solvent_density         = use_solvent_dens();
@@ -14051,21 +13978,12 @@ bool US_Hydrodyn::calc_zeno()
                   this_data.results.num_models            = 1;
                   this_data.results.name                  = QFileInfo( last_hydro_res ).completeBaseName();
                   this_data.results.used_beads            = bead_models [ current_model ].size();
-                  this_data.results.used_beads_sd         = 0e0;
                   this_data.results.total_beads           = bead_models [ current_model ].size();
-                  this_data.results.total_beads_sd        = 0e0;
                   this_data.results.vbar                  = use_vbar( model_vector[ current_model ].vbar );
                   // need to get rg
                   // this_data.results.rg            = model_vector[ current_model ].Rg;
 
-                  // this_data.proc_time                     = 0e0;
                   this_data.proc_time                     = (double)(us_timers.times[ "compute zeno" ]) / 1e3;
-                  
-                  this_data.dt_d0                         = 0e0;
-                  this_data.dt_d0_sd                      = 0e0;
-                  this_data.dimless_eta                   = 0e0;
-                  this_data.dimless_eta_sd                = 0e0;
-
 
                   QFile f( last_hydro_res );
                   if ( !f.exists() || !f.open( QIODevice::ReadOnly ) )

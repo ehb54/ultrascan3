@@ -4063,6 +4063,7 @@ void US_Hydrodyn::help()
 
 void US_Hydrodyn::stop_calc()
 {
+   // qDebug() << "US_Hydrodyn::stop_calc()";
    stopFlag = true;
    anaflex_return_to_bd_load_results = false;
    if ( batch_widget &&

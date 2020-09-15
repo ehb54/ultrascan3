@@ -44,6 +44,8 @@ using namespace std;
 
 struct save_data
 {
+   // update US_Hydrodyn_Save::save_data_initialized() if fields added
+
    hydro_options hydro;
    hydro_results results;
    QString       hydro_res;         // copy of what is written to hydro_res file (model specific)
@@ -121,11 +123,19 @@ struct save_info
    save_data             data;
 };
 
+
 class US_EXTERN US_Hydrodyn_Save : public QFrame
 {
    Q_OBJECT
 
    public:
+      enum HydroTypes {
+         HYDRO_UNKNOWN,
+         HYDRO_SMI,
+         HYDRO_ZENO,
+         HYDRO_GRPY
+      };
+
       US_Hydrodyn_Save(save_info *save,      
                        void *us_hydrodyn, 
                        bool *save_widget = 0,  // no save widget implies non-gui
@@ -133,9 +143,11 @@ class US_EXTERN US_Hydrodyn_Save : public QFrame
                        const char *name = 0);
       ~US_Hydrodyn_Save();
 
+      static save_data save_data_initialized();       // returns initialized save_data
+
       QString header();                        // returns a csv format header
       QString dataString(save_data *);         // returns a csv format data line
-      QString hydroFormatStats(vector < save_data >);      // returns a 'hydro_res' format data string of the avg, st.dev.
+      QString hydroFormatStats(vector < save_data >, enum HydroTypes hydrotype = HYDRO_UNKNOWN );      // returns a 'hydro_res' format data string of the avg, st.dev.
       vector < save_data > stats(vector < save_data > *);  // returns a 2 vector containing avg, st.dev.
 
    private:

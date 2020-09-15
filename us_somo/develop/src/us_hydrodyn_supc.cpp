@@ -2701,7 +2701,7 @@ mem_ris(int model)
    else
       bc = 4.0;
 
-   save_data this_data;
+   save_data this_data = US_Hydrodyn_Save::save_data_initialized();
    // may have to zero this
    this_data.hydro = us_hydrodyn->hydro;
    this_data.model_idx = QString("%1").arg(model);

@@ -497,3 +497,41 @@ void US_Hydrodyn_Results::closeEvent(QCloseEvent *e)
    e->accept();
 }
 
+hydro_results US_Hydrodyn_Results::hydro_results_initialized() {
+   hydro_results data;
+
+   data.name               = "unknown";
+   data.method             = "unknown";
+
+   data.num_models         = 0;
+   data.total_beads        = 0e0;
+   data.total_beads_sd     = 0e0;
+   data.used_beads         = 0e0;
+   data.used_beads_sd      = 0e0;
+   data.mass               = 0e0;
+   data.s20w               = 0e0;
+   data.s20w_sd            = 0e0;
+   data.D20w               = 0e0;
+   data.D20w_sd            = 0e0;
+   data.viscosity          = 0e0;
+   data.viscosity_sd       = 0e0;
+   data.rs                 = 0e0;
+   data.rs_sd              = 0e0;
+   data.rg                 = 0e0;
+   data.rg_sd              = 0e0;
+   data.tau                = 0e0;
+   data.tau_sd             = 0e0;
+   data.vbar               = 0e0;
+   data.asa_rg_pos         = 0e0;
+   data.asa_rg_neg         = 0e0;
+   data.ff0                = 0e0;
+   data.ff0_sd             = 0e0;
+   data.solvent_name       = "unknown";
+   data.solvent_acronym    = "unknown";
+   data.temperature        = 0e0;
+   data.solvent_viscosity  = 0e0;
+   data.solvent_density    = 0e0;
+   data.pH                 = 0e0;
+
+   return data;
+}

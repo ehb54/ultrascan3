@@ -70,8 +70,10 @@ class US_EXTERN US_Hydrodyn_Results : public QFrame
    Q_OBJECT
 
    public:
-   US_Hydrodyn_Results(struct hydro_results *, bool *, void *us_hydrodyn, QWidget *p = 0, const char *name = 0);
+      US_Hydrodyn_Results(struct hydro_results *, bool *, void *us_hydrodyn, QWidget *p = 0, const char *name = 0);
       ~US_Hydrodyn_Results();
+
+      static hydro_results hydro_results_initialized(); // returns initialized hydro_results
 
    private:
 

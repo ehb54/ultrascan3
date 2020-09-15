@@ -1815,7 +1815,7 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
    return result;
 }
 
-QString US_Hydrodyn_Save::hydroFormatStats(vector < save_data > stats)
+QString US_Hydrodyn_Save::hydroFormatStats(vector < save_data > stats, enum HydroTypes hydrotype )
 {
    QString result;
    
@@ -1867,30 +1867,35 @@ QString US_Hydrodyn_Save::hydroFormatStats(vector < save_data > stats)
                                  stats[0].results.ff0,
                                  stats[1].results.ff0);
    
-   result += QString("").sprintf("- ROT. FRICT. COEFF.          \t%.3e\t%.3e\t[g*cm^2/s]\n",
-                                 stats[0].rot_fric_coef,
-                                 stats[1].rot_fric_coef);
+   if ( hydrotype == HYDRO_UNKNOWN || hydrotype == HYDRO_SMI ) {
+      result += QString("").sprintf("- ROT. FRICT. COEFF.          \t%.3e\t%.3e\t[g*cm^2/s]\n",
+                                    stats[0].rot_fric_coef,
+                                    stats[1].rot_fric_coef);
+   }
+
    result += QString("").sprintf("- ROT. DIFF. COEFF.           \t%.0f\t\t%.0f\t[1/s]\n",
                                  stats[0].rot_diff_coef,
                                  stats[1].rot_diff_coef);
-   result += QString("").sprintf("- ROT. FRICT. COEFF. [ X ]    \t%.3e\t%.3e\t[g*cm^2/s]\n",
-                                 stats[0].rot_fric_coef_x,
-                                 stats[1].rot_fric_coef_x);
-   result += QString("").sprintf("- ROT. FRICT. COEFF. [ Y ]    \t%.3e\t%.3e\t[g*cm^2/s]\n",
-                                 stats[0].rot_fric_coef_y,
-                                 stats[1].rot_fric_coef_y);
-   result += QString("").sprintf("- ROT. FRICT. COEFF. [ Z ]    \t%.3e\t%.3e\t[g*cm^2/s]\n",
-                                 stats[0].rot_fric_coef_z,
-                                 stats[1].rot_fric_coef_z);
-   result += QString("").sprintf("- ROT. DIFF. COEFF. [ X ]     \t%.0f\t\t%.0f\t[1/s]\n",
-                                 stats[0].rot_diff_coef_x,
-                                 stats[1].rot_diff_coef_x);
-   result += QString("").sprintf("- ROT. DIFF. COEFF. [ Y ]     \t%.0f\t\t%.0f\t[1/s]\n",
-                                 stats[0].rot_diff_coef_y,
-                                 stats[1].rot_diff_coef_y);
-   result += QString("").sprintf("- ROT. DIFF. COEFF. [ Z ]     \t%.0f\t\t%.0f\t[1/s]\n",
-                                 stats[0].rot_diff_coef_z,
-                                 stats[1].rot_diff_coef_z);
+   if ( hydrotype == HYDRO_UNKNOWN || hydrotype == HYDRO_SMI ) {
+      result += QString("").sprintf("- ROT. FRICT. COEFF. [ X ]    \t%.3e\t%.3e\t[g*cm^2/s]\n",
+                                    stats[0].rot_fric_coef_x,
+                                    stats[1].rot_fric_coef_x);
+      result += QString("").sprintf("- ROT. FRICT. COEFF. [ Y ]    \t%.3e\t%.3e\t[g*cm^2/s]\n",
+                                    stats[0].rot_fric_coef_y,
+                                    stats[1].rot_fric_coef_y);
+      result += QString("").sprintf("- ROT. FRICT. COEFF. [ Z ]    \t%.3e\t%.3e\t[g*cm^2/s]\n",
+                                    stats[0].rot_fric_coef_z,
+                                    stats[1].rot_fric_coef_z);
+      result += QString("").sprintf("- ROT. DIFF. COEFF. [ X ]     \t%.0f\t\t%.0f\t[1/s]\n",
+                                    stats[0].rot_diff_coef_x,
+                                    stats[1].rot_diff_coef_x);
+      result += QString("").sprintf("- ROT. DIFF. COEFF. [ Y ]     \t%.0f\t\t%.0f\t[1/s]\n",
+                                    stats[0].rot_diff_coef_y,
+                                    stats[1].rot_diff_coef_y);
+      result += QString("").sprintf("- ROT. DIFF. COEFF. [ Z ]     \t%.0f\t\t%.0f\t[1/s]\n",
+                                    stats[0].rot_diff_coef_z,
+                                    stats[1].rot_diff_coef_z);
+   }
    
    result += QString("").sprintf("\n- RADIUS OF GYRATION          \t%.2f\t\t%.2f\t\t[nm]\n", 
                                  stats[0].results.rg,
@@ -1899,34 +1904,39 @@ QString US_Hydrodyn_Save::hydroFormatStats(vector < save_data > stats)
    result += QString("").sprintf("- TRANS. STOKES' RADIUS       \t%.2f\t\t%.2f\t\t[nm]\n",
                                  stats[0].results.rs,
                                  stats[1].results.rs);
-   result += QString("").sprintf("- ROTAT. STOKES' RADIUS [ X ] \t%.2f\t\t%.2f\t\t[nm]\n",
-                                 stats[0].rot_stokes_rad_x,
-                                 stats[1].rot_stokes_rad_x);
-   result += QString("").sprintf("- ROTAT. STOKES' RADIUS [ Y ] \t%.2f\t\t%.2f\t\t[nm]\n",
-                                 stats[0].rot_stokes_rad_y,
-                                 stats[1].rot_stokes_rad_y);
-   result += QString("").sprintf("- ROTAT. STOKES' RADIUS [ Z ] \t%.2f\t\t%.2f\t\t[nm]\n",
-                                 stats[0].rot_stokes_rad_z,
-                                 stats[1].rot_stokes_rad_z);
+
+   if ( hydrotype == HYDRO_UNKNOWN || hydrotype == HYDRO_SMI ) {
+      result += QString("").sprintf("- ROTAT. STOKES' RADIUS [ X ] \t%.2f\t\t%.2f\t\t[nm]\n",
+                                    stats[0].rot_stokes_rad_x,
+                                    stats[1].rot_stokes_rad_x);
+      result += QString("").sprintf("- ROTAT. STOKES' RADIUS [ Y ] \t%.2f\t\t%.2f\t\t[nm]\n",
+                                    stats[0].rot_stokes_rad_y,
+                                    stats[1].rot_stokes_rad_y);
+      result += QString("").sprintf("- ROTAT. STOKES' RADIUS [ Z ] \t%.2f\t\t%.2f\t\t[nm]\n",
+                                    stats[0].rot_stokes_rad_z,
+                                    stats[1].rot_stokes_rad_z);
+   }
 
    if ( stats[ 0 ].results.viscosity ) {
-      result += QString("").sprintf("\n- ZENO/GRPY INTRINSIC VISC.\t%.2f\t\t%.2f\t\t[cm^3/g]\n",
+      result += QString("").sprintf("\n- INTRINSIC VISC.\t%.2f\t\t%.2f\t\t[cm^3/g]\n",
                                     stats[0].results.viscosity,
                                     stats[1].results.viscosity);
    }
    
-   result += QString("").sprintf("\n- UNCORRECTED INTRINSIC VISC. \t%.2f\t\t%.2f\t\t[cm^3/g]\n",
-                                 stats[0].unc_int_visc,
-                                 stats[1].unc_int_visc);
-   result += QString("").sprintf("- UNCORRECTED EINSTEIN'S RADIUS\t%.2f\t\t%.2f\t\t[nm]\n",
-                                 stats[0].unc_einst_rad,
-                                 stats[1].unc_einst_rad);
-   result += QString("").sprintf("- CORRECTED INTRINSIC VISCOSITY\t%.2f\t\t%.2f\t\t[cm^3/g]\n",
-                                 stats[0].cor_int_visc,
-                                 stats[1].cor_int_visc);
-   result += QString("").sprintf("- CORRECTED EINSTEIN'S RADIUS\t%.2f\t\t%.2f\t\t[nm]\n",
-                                 stats[0].cor_einst_rad,
-                                 stats[1].cor_einst_rad);
+   if ( hydrotype == HYDRO_UNKNOWN || hydrotype == HYDRO_SMI ) {
+      result += QString("").sprintf("\n- UNCORRECTED INTRINSIC VISC. \t%.2f\t\t%.2f\t\t[cm^3/g]\n",
+                                    stats[0].unc_int_visc,
+                                    stats[1].unc_int_visc);
+      result += QString("").sprintf("- UNCORRECTED EINSTEIN'S RADIUS\t%.2f\t\t%.2f\t\t[nm]\n",
+                                    stats[0].unc_einst_rad,
+                                    stats[1].unc_einst_rad);
+      result += QString("").sprintf("- CORRECTED INTRINSIC VISCOSITY\t%.2f\t\t%.2f\t\t[cm^3/g]\n",
+                                    stats[0].cor_int_visc,
+                                    stats[1].cor_int_visc);
+      result += QString("").sprintf("- CORRECTED EINSTEIN'S RADIUS\t%.2f\t\t%.2f\t\t[nm]\n",
+                                    stats[0].cor_einst_rad,
+                                    stats[1].cor_einst_rad);
+   }
    
 #if defined(TSUDA_DOUBLESUM)
    result += QString("").sprintf("- INTRINSIC VISC. (Double Sum)\t%.2f\t\t%.2f\t\t[cm^3/g]\n",
@@ -2107,4 +2117,79 @@ QString US_Hydrodyn_Save::hydroFormatStats(vector < save_data > stats)
    result += QString("").sprintf("\n****************************************************************\n");
 
    return result;
+}
+
+save_data US_Hydrodyn_Save::save_data_initialized() {
+   save_data data;
+
+   // hydro_options hydro; these should always be initialized from current hydro_options
+
+   data.results               = US_Hydrodyn_Results::hydro_results_initialized();
+
+   data.hydro_res             = "unknown";
+   data.model_idx             = "unknown";
+
+   data.tot_surf_area         = 0e0;
+   data.tot_volume_of         = 0e0;
+   data.num_of_unused         = 0e0;
+   data.use_beads_vol         = 0e0;
+   data.use_beads_surf        = 0e0;
+   data.use_bead_mass         = 0e0;
+   data.con_factor            = 0e0;
+   data.tra_fric_coef         = 0e0;
+   data.tra_fric_coef_sd      = 0e0;
+   data.rot_fric_coef         = 0e0;
+   data.rot_diff_coef         = 0e0;
+   data.rot_fric_coef_x       = 0e0;
+   data.rot_fric_coef_y       = 0e0;
+   data.rot_fric_coef_z       = 0e0;
+   data.rot_diff_coef_x       = 0e0;
+   data.rot_diff_coef_y       = 0e0;
+   data.rot_diff_coef_z       = 0e0;
+   data.rot_stokes_rad_x      = 0e0;
+   data.rot_stokes_rad_y      = 0e0;
+   data.rot_stokes_rad_z      = 0e0;
+   data.cen_of_res_x          = 0e0;
+   data.cen_of_res_y          = 0e0;
+   data.cen_of_res_z          = 0e0;
+   data.cen_of_mass_x         = 0e0;
+   data.cen_of_mass_y         = 0e0;
+   data.cen_of_mass_z         = 0e0;
+   data.cen_of_diff_x         = 0e0;
+   data.cen_of_diff_y         = 0e0;
+   data.cen_of_diff_z         = 0e0;
+   data.cen_of_visc_x         = 0e0;
+   data.cen_of_visc_y         = 0e0;
+   data.cen_of_visc_z         = 0e0;
+   data.unc_int_visc          = 0e0;
+   data.unc_einst_rad         = 0e0;
+   data.cor_int_visc          = 0e0;
+   data.cor_einst_rad         = 0e0;
+   data.grpy_einst_rad        = 0e0;
+   data.rel_times_tau_1       = 0e0;
+   data.rel_times_tau_2       = 0e0;
+   data.rel_times_tau_3       = 0e0;
+   data.rel_times_tau_4       = 0e0;
+   data.rel_times_tau_5       = 0e0;
+   data.rel_times_tau_m       = 0e0;
+   data.rel_times_tau_h       = 0e0;
+   data.max_ext_x             = 0e0;
+   data.max_ext_y             = 0e0;
+   data.max_ext_z             = 0e0;
+   data.axi_ratios_xz         = 0e0;
+   data.axi_ratios_xy         = 0e0;
+   data.axi_ratios_yz         = 0e0;
+   data.proc_time             = 0e0;
+
+   data.dt_d0                 = 0e0;
+   data.dt_d0_sd              = 0e0;
+   data.dimless_eta           = 0e0;
+   data.dimless_eta_sd        = 0e0;
+
+   data.zeno_eta_prefactor    = 0e0;
+   data.zeno_eta_prefactor_sd = 0e0;
+   data.zeno_mep              = 0e0;
+   data.zeno_mep_sd           = 0e0;
+
+   return data;
 }

@@ -1590,15 +1590,13 @@ void US_Hydrodyn_Batch::update_enables()
          } else {
             cb_hydro             ->setEnabled( false );
             cb_zeno              ->setEnabled( false );
+            cb_grpy              ->setEnabled( false );
             cb_avg_hydro         ->setEnabled( false );
             le_avg_hydro_name    ->setEnabled( false );
 
-            cb_hydro             ->setChecked( false );
-            cb_zeno              ->setChecked( false );
-            cb_avg_hydro         ->setChecked( false );
-
             batch->hydro                 = false;
             batch->zeno                  = false;
+            batch->grpy                  = false;
             batch->avg_hydro             = false;
          }
       }
@@ -2999,13 +2997,13 @@ void US_Hydrodyn_Batch::start( bool quiet )
                if ( batch->grpy ) {
                   result = ((US_Hydrodyn *)us_hydrodyn)->calc_grpy_hydro();
                   if ( result ) {
-                     qDebug() << "waiting for grpy result";
+                     // qDebug() << "waiting for grpy result";
                      while( ((US_Hydrodyn *)us_hydrodyn)->grpy_running ) {
                         qApp->processEvents();
                         mQThread::msleep( 333 );
                      }
                      result = ((US_Hydrodyn *)us_hydrodyn)->grpy_success;
-                     qDebug() << "grpy finished";
+                     // qDebug() << "grpy finished";
                   }
                }
                job_timer.end_timer   ( QString( "%1 hydrodynamics" ).arg( get_file_name( i ) ) );
@@ -3032,6 +3030,23 @@ void US_Hydrodyn_Batch::start( bool quiet )
                   result = false;
                }
             }                  
+
+            if ( stopFlag )
+            {
+               editor->setTextColor("dark red");
+               editor->append("Stopped by user");
+               enable_after_stop();
+               editor->setTextColor(save_color);
+               disable_updates = false;
+               save_batch_active = false;
+               ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear( );
+               if ( overwriteForcedOn )
+               {
+                  ((US_Hydrodyn *)us_hydrodyn)->overwrite = false;
+                  ((US_Hydrodyn *)us_hydrodyn)->cb_overwrite->setChecked(false);
+               }
+               return;
+            }
 
             if ( result ) 
             {
@@ -3096,7 +3111,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
             fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname, 0, this);
          }         
 
-         us_qdebug( "save batch 1" );
+         // us_qdebug( "save batch 1" );
          FILE *of = us_fopen(fname, "wb");
          if ( of )
          {
@@ -3107,22 +3122,33 @@ void US_Hydrodyn_Batch::start( bool quiet )
             }
             if ( stats.size() == 2 )
             {
-               us_qdebug( "save batch 3" );
-               fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_util->hydroFormatStats(stats).toLatin1().data());
+               // us_qdebug( "save batch 3" );
+               US_Hydrodyn_Save::HydroTypes hydrotype = US_Hydrodyn_Save::HydroTypes::HYDRO_UNKNOWN;
+               if ( batch->hydro ) {
+                  hydrotype = US_Hydrodyn_Save::HydroTypes::HYDRO_SMI;
+               }
+               if ( batch->grpy ) {
+                  hydrotype = US_Hydrodyn_Save::HydroTypes::HYDRO_GRPY;
+               }
+               if ( batch->zeno ) {
+                  hydrotype = US_Hydrodyn_Save::HydroTypes::HYDRO_ZENO;
+               }
+               
+               fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_util->hydroFormatStats( stats, hydrotype ).toLatin1().data() );
             }
             fclose(of);
          }
-         us_qdebug( "save batch 4" );
+         // us_qdebug( "save batch 4" );
       }
       if ( ((US_Hydrodyn *)us_hydrodyn)->saveParams )
       {
-         us_qdebug( "save batch 5" );
+         // us_qdebug( "save batch 5" );
          QString fname = batch->avg_hydro_name + ".csv";
          if ( QFile::exists(fname) )
          {
             fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname, 0, this);
          }         
-         us_qdebug( "save batch 6" );
+         // us_qdebug( "save batch 6" );
          FILE *of = us_fopen(fname, "wb");
          if ( of )
          {
@@ -3138,7 +3164,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
             }
             fclose(of);
          }
-         us_qdebug( "save batch 7" );
+         // us_qdebug( "save batch 7" );
       }  
    }
    ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear( );
@@ -3156,6 +3182,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
 
 void US_Hydrodyn_Batch::stop()
 {
+   // qDebug() << "US_Hydrodyn_Batch::stop()";
    stopFlag = true;
    ((US_Hydrodyn *)us_hydrodyn)->stopFlag = true;
    ((US_Hydrodyn *)us_hydrodyn)->pb_stop_calc->setEnabled(false);
