@@ -31,7 +31,8 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
   }
 
   // check if DA (com/acad) opened
-  QInstances instances;
+  QString instance_socket = US_Settings::etcDir() + "/usinstance_";
+  QInstances instances( instance_socket );
   qDebug() << "Active instances: " << instances.count(); 
   if ( instances.count() )
     {

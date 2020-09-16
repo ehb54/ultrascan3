@@ -8,13 +8,15 @@
 
 // *********** end user defines *************
 
-QInstances::QInstances() {
+QInstances::QInstances( const QString & name_prefix ) {
+   this->name_prefix = name_prefix;
    server = new QLocalServer;
 }
 
 QInstances::~QInstances() {
    delete server;
 }
+
 
 bool QInstances::create() {
    if ( server->isListening() ) {
@@ -75,5 +77,6 @@ bool QInstances::try_create( int n ) {
 }
 
 QString QInstances::instance_name( int n ) {
-   return QString( INSTANCE_NAME_PREFIX ) + QString( "%1" ).arg( n );
+   return name_prefix + QString( "%1" ).arg( n );
 }
+

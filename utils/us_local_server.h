@@ -13,7 +13,7 @@ static QString is_true( bool b ) {
 
 class QInstances {
 public:
-   QInstances();
+   QInstances( const QString & name_prefix );
    ~QInstances();
 
    bool           create();    // create a unique instance
@@ -22,12 +22,11 @@ public:
    bool           close();     // close the instance
 
 private:
+   QString        name_prefix;
    QString        instance_name( int n );
    bool           try_create( int n );
    bool           is_running( int n );
    QLocalServer * server;
 };
-
-
 
 #endif

@@ -16,7 +16,8 @@ int main( int argc, char* argv[] )
    w->show(); 
 
    // Create local "server" to register applicaiton
-   QInstances instances;
+   QString instance_socket = US_Settings::etcDir() + "/usinstance_";
+   QInstances instances( instance_socket );
    bool instance_created = instances.create();
    qDebug() << "instance create returned " << is_true( instance_created );
    if ( !instance_created ) 
