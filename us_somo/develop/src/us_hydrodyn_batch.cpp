@@ -3183,10 +3183,13 @@ void US_Hydrodyn_Batch::start( bool quiet )
 void US_Hydrodyn_Batch::stop()
 {
    // qDebug() << "US_Hydrodyn_Batch::stop()";
-   stopFlag = true;
-   ((US_Hydrodyn *)us_hydrodyn)->stopFlag = true;
-   ((US_Hydrodyn *)us_hydrodyn)->pb_stop_calc->setEnabled(false);
    pb_stop->setEnabled(false);
+   stopFlag = true;
+   emit ((US_Hydrodyn *)us_hydrodyn)->stop_calc();
+   progress->reset();
+   disable_updates = false;
+   set_counts();
+   update_enables();
    qApp->processEvents();
 }
 
