@@ -171,6 +171,8 @@ class US_FitMeniscus : public US_Widgets
       void sel_investigator( void );
       void assign_investigator( int );
 
+      void mouse             ( const QwtDoublePoint& );
+      
       void help     ( void )
       { showHelp.show_help( "manual/fit_meniscus.html" ); };
 

@@ -80,6 +80,12 @@ DbgLv(1) << "Main: BB";
    pick->setRubberBand( QwtPicker::VLineRubberBand );
    //connect( pick, SIGNAL( moved    ( const QwtDoublePoint& ) ),
    //         this, SLOT(   new_value( const QwtDoublePoint& ) ) );
+
+   //Mouse controls
+   pick->setMousePattern( QwtEventPattern::MouseSelect1,
+                          Qt::LeftButton, Qt::ControlModifier );
+   connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
+                     SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
    grid->attach( meniscus_plot );
    
    meniscus_plot->setMinimumSize( 400, 400 );
@@ -134,9 +140,13 @@ DbgLv(1) << "Main: BB";
    le_mprads ->setToolTip(
          tr( "Meniscus,Bottom current radii (midpoint of ranges)" ) );
 
-   le_men_sel   = us_lineedit( "", -1, false );
+   // le_men_sel   = us_lineedit( "", -1, false );
+   // le_men_sel->setToolTip(
+   //       tr( "Selected/Editable meniscus radius value" ) );
+
+   le_men_sel   = us_lineedit( "", -1, true );
    le_men_sel->setToolTip(
-         tr( "Selected/Editable meniscus radius value" ) );
+         tr( "Selected meniscus radius value" ) );
    
    le_rms_error = us_lineedit( "", -1, true );
    le_rms_error->setToolTip(
@@ -300,6 +310,7 @@ DbgLv(1) << "Main: BB";
    file_loaded_auto( triple_information );
 }
 
+//Regular constructor
 US_FitMeniscus::US_FitMeniscus() : US_Widgets()
 {
   auto_mode = false;
@@ -353,6 +364,14 @@ DbgLv(1) << "Main: BB";
    pick->setRubberBand( QwtPicker::VLineRubberBand );
    //connect( pick, SIGNAL( moved    ( const QwtDoublePoint& ) ),
    //         this, SLOT(   new_value( const QwtDoublePoint& ) ) );
+
+   //Mouse controls
+   pick->setMousePattern( QwtEventPattern::MouseSelect1,
+                          Qt::LeftButton, Qt::ControlModifier );
+   connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
+                     SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
+   
+   
    grid->attach( meniscus_plot );
    
    meniscus_plot->setMinimumSize( 400, 400 );
@@ -407,9 +426,13 @@ DbgLv(1) << "Main: BB";
    le_mprads ->setToolTip(
          tr( "Meniscus,Bottom current radii (midpoint of ranges)" ) );
 
-   le_men_sel   = us_lineedit( "", -1, false );
+   // le_men_sel   = us_lineedit( "", -1, false );
+   // le_men_sel->setToolTip(
+   //       tr( "Selected/Editable meniscus radius value" ) );
+
+   le_men_sel   = us_lineedit( "", -1, true );
    le_men_sel->setToolTip(
-         tr( "Selected/Editable meniscus radius value" ) );
+         tr( "Selected meniscus radius value" ) );
    
    le_rms_error = us_lineedit( "", -1, true );
    le_rms_error->setToolTip(
@@ -654,6 +677,12 @@ DbgLv(1) << "LD:  was3val have3val" << was3val << have3val
    if ( ( have3val && !was3val )  || 
         ( !have3val && was3val ) )
       change_plot_type();
+}
+
+// Handle a mouse click according to the current pick step
+void US_FitMeniscus::mouse( const QwtDoublePoint& p )
+{
+  le_men_sel->setText( QString::number( p.x(), 'f', 5 ) );
 }
 
 // Plot the data
