@@ -28,6 +28,11 @@ class US_FitMeniscus : public US_Widgets
    public:
       US_FitMeniscus();
 
+      //US_FitMeniscus( QString auto_mode );
+      US_FitMeniscus( QMap<QString, QString> triple_info_map );
+
+      bool auto_mode;
+      
       // Class to hold model descriptions
       class ModelDesc
       {
@@ -138,6 +143,8 @@ class US_FitMeniscus : public US_Widgets
       bool                 have3val;
       bool                 bott_fit;
 
+      QMap < QString, QString > triple_information;
+
    private slots:
       void reset    (      void );
       void load_data(      void );
@@ -147,7 +154,12 @@ class US_FitMeniscus : public US_Widgets
       void plot_3d  (      void );
       void edit_update(    void );
       void scan_dbase(     void );
+      void scan_dbase_auto( QMap <QString, QString> & );
+      
       void file_loaded(    QString );
+      void file_loaded_auto( QMap < QString, QString >& );
+      void get_editProfile_copy( QMap < QString, QString >& );
+      
       void update_disk_db( bool );
       void update_db_edit( QString, QString, QString& );
       void remove_models(  void );
@@ -161,5 +173,8 @@ class US_FitMeniscus : public US_Widgets
 
       void help     ( void )
       { showHelp.show_help( "manual/fit_meniscus.html" ); };
+
+   signals:
+      void editProfiles_updated( QMap < QString, QString > &);
 };
 #endif

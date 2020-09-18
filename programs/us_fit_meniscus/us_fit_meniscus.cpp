@@ -21,8 +21,289 @@
 #define setSymbol(a)       setSymbol(*a)
 #endif
 
+//US_FitMeniscus::US_FitMeniscus( QString auto_mode ) : US_Widgets()
+US_FitMeniscus::US_FitMeniscus( QMap<QString, QString> triple_info_map ) : US_Widgets()
+{
+  this->triple_information = triple_info_map;
+  auto_mode = true;
+  
+  setWindowTitle( tr( "Fit Meniscus from 2DSA Data: ") + triple_information[ "triple_name" ] );
+  setPalette( US_GuiSettings::frameColor() );
+   dbg_level    = US_Settings::us_debug();
+   have3val     = true;
+
+   // Main layout
+   QBoxLayout*  mainLayout   = new QVBoxLayout( this );
+   mainLayout->setSpacing         ( 2 );
+   mainLayout->setContentsMargins ( 2, 2, 2, 2 );
+
+   // Component layouts
+   QHBoxLayout* topLayout    = new QHBoxLayout;
+   QHBoxLayout* bottomLayout = new QHBoxLayout;
+   QGridLayout* leftLayout   = new QGridLayout;
+   QGridLayout* rightLayout  = new QGridLayout;
+   QGridLayout* cntrlsLayout = new QGridLayout;
+DbgLv(1) << "Main: AA";
+
+   // Lay out the meniscus,rmsd text box
+//   te_data = new US_Editor( US_Editor::LOAD, false,
+//         "results/*-fm*.fit*dat;;*.dat;;*.*" );
+
+ 
+   te_data = new US_Editor( US_Editor::LOAD, false,
+         "results/*.dat;;*.fitmen.dat;;*.fitbot.dat;;*.*" );
+   connect( te_data, SIGNAL( US_EditorLoadComplete( QString ) ), 
+                     SLOT  ( file_loaded(           QString ) ) );
+
+   te_data->edMenuBar->hide();
+   
+   QFontMetrics fm( te_data->e->font() ); 
+
+   te_data->setMinimumHeight( fm.height() * 20 );
+   te_data->setMinimumWidth ( fm.width( "123 :  6.34567, 7.34567, 0.00567890  0.012345" ) );
+   te_data->e->setToolTip( tr( "Loaded, editable meniscus,rmsd table" ) );
+
+   leftLayout->addWidget( te_data, 0, 0, 20, 1 );
+
+   // Lay out the plot
+//   QBoxLayout* plot = new US_Plot( meniscus_plot, 
+//         tr( "Meniscus Fit" ),
+//         tr( "Radius" ), tr( "2DSA Meniscus RMSD Value" ) );
+   QBoxLayout* plot = new US_Plot( meniscus_plot, 
+         tr( "Meniscus,Bottom Fit" ),
+         tr( "Distance from Base Radii" ),
+         tr( "2DSA Meniscus,Bottom RMSD" ) );
+   
+DbgLv(1) << "Main: BB";
+   QwtPlotPicker* pick = new US_PlotPicker( meniscus_plot );
+   QwtPlotGrid*   grid = us_grid( meniscus_plot );
+   pick->setRubberBand( QwtPicker::VLineRubberBand );
+   //connect( pick, SIGNAL( moved    ( const QwtDoublePoint& ) ),
+   //         this, SLOT(   new_value( const QwtDoublePoint& ) ) );
+   grid->attach( meniscus_plot );
+   
+   meniscus_plot->setMinimumSize( 400, 400 );
+   meniscus_plot->setAxisScale( QwtPlot::xBottom, 5.7, 6.8 );
+   meniscus_plot->setToolTip( tr( "Fitted meniscus,rmsd plot" ) );
+
+   rightLayout->addLayout( plot, 0, 1, 20, 1 );
+
+   // Lay out the controls
+   QLabel* lb_status    = us_label( tr( "Status:"    ) );
+   
+   le_status    = us_lineedit( tr( "No data loaded" ), -1, true );
+   le_status->setToolTip(
+         tr( "Results of the last action performed" ) );
+
+   lb_zfloor     = us_label( tr( "Z Visibility Percent:" ) );
+   ct_zfloor     = us_counter( 1, 50.0, 150.0, 1.0 );
+   ct_zfloor->setSingleStep( 1 );
+   ct_zfloor->setValue( 100.0 );
+   connect( ct_zfloor, SIGNAL( valueChanged( double ) ),
+            this,      SLOT  ( plot_data()            ) );
+
+
+   lb_order     = us_label( tr( "Fit Order:" ) );
+   lb_men_sel   = us_label( tr( "Meniscus selected:" ) );
+   lb_rms_error = us_label( tr( "RMS Error:" ) );
+   lb_men_lor   = us_label( tr( "Low-RMSD Meniscus:" ) );
+   lb_bot_lor   = us_label( tr( "Low-RMSD Bottom:" ) );
+   lb_men_fit   = us_label( tr( "Fit Meniscus:" ) );
+   lb_bot_fit   = us_label( tr( "Fit Bottom:" ) );
+   lb_mprads    = us_label( tr( "Mid-Point Radii:" ) );
+
+   sb_order = new QSpinBox();
+   sb_order->setRange( 2, 9 );
+   sb_order->setValue( 2 );
+   sb_order->setPalette( US_GuiSettings::editColor() );
+   sb_order->setToolTip( tr( "Order of fitting curve" ) );
+
+   le_men_lor   = us_lineedit( "", -1, false );
+   le_men_lor->setToolTip(
+         tr( "Selected-minimum meniscus radius value" ) );
+   le_bot_lor   = us_lineedit( "", -1, false );
+   le_bot_lor->setToolTip(
+         tr( "Selected-minimum bottom radius value" ) );
+   le_men_fit   = us_lineedit( "", -1, false );
+   le_men_fit->setToolTip(
+         tr( "Fit/Editable meniscus radius value" ) );
+   le_bot_fit   = us_lineedit( "", -1, false );
+   le_bot_fit->setToolTip(
+         tr( "Fit/Editable bottom radius value" ) );
+   le_mprads    = us_lineedit( "", -1, false );
+   le_mprads ->setToolTip(
+         tr( "Meniscus,Bottom current radii (midpoint of ranges)" ) );
+
+   le_men_sel   = us_lineedit( "", -1, false );
+   le_men_sel->setToolTip(
+         tr( "Selected/Editable meniscus radius value" ) );
+   
+   le_rms_error = us_lineedit( "", -1, true );
+   le_rms_error->setToolTip(
+         tr( "RMS error of curve to meniscus,rmsd points" ) );
+
+   connect( sb_order, SIGNAL( valueChanged( int ) ),
+            this,     SLOT( plot_data( int ) ) );
+
+   dkdb_cntrls            = new US_Disk_DB_Controls(
+         US_Settings::default_data_location() );
+   connect( dkdb_cntrls, SIGNAL( changed( bool )        ),
+            this,        SLOT(   update_disk_db( bool ) ) );
+
+   pb_update = us_pushbutton( tr( "Update Edit" ) );
+   connect( pb_update, SIGNAL( clicked() ),
+            this,      SLOT( edit_update() ) );
+   pb_update->setEnabled( false );
+   pb_update->setToolTip(
+         tr( "Update edit record with meniscus; remove non-chosen models" ) );
+
+   pb_scandb = us_pushbutton( tr( "Scan Database" ) );
+   connect( pb_scandb, SIGNAL( clicked() ),
+            this,      SLOT( scan_dbase() ) );
+   pb_scandb->setEnabled( dkdb_cntrls->db() );
+   pb_scandb->setToolTip(
+         tr( "Scan fit-meniscus models in DB; create local table files" ) );
+
+   QPushButton*
+   pb_invest    = us_pushbutton( tr( "Select Investigator" ) );
+   connect( pb_invest, SIGNAL( clicked() ),
+            this,      SLOT(   sel_investigator() ) );
+   QString
+      inv_name  = QString::number( US_Settings::us_inv_ID() )
+                  + ": " + US_Settings::us_inv_name();
+   le_invest    = us_lineedit( inv_name, -1, true );
+
+   us_checkbox( tr( "Confirm Each Update Step" ), ck_confirm,  true );
+   us_checkbox( tr( "Apply to All Wavelengths" ), ck_applymwl, true );
+//   ck_applymwl->setVisible( false );
+   ck_confirm ->setToolTip(
+         tr( "Pop up confirmation dialogs at each update step" ) );
+   ck_applymwl->setToolTip(
+         tr( "Apply the meniscus update to all wavelengths of"
+             " the current cell/channel" ) );
+
+   pb_plot   = us_pushbutton( tr( "Plot" ) );
+   connect( pb_plot, SIGNAL( clicked() ),
+            this,    SLOT( plot_data() ) );
+   pb_plot->setToolTip(
+         tr( "Plot,analyze meniscus,rmsd from current text" ) );
+
+   pb_reset  = us_pushbutton( tr( "Reset" ) );
+   connect( pb_reset, SIGNAL( clicked() ),
+            this,     SLOT( reset() ) );
+   pb_reset->setToolTip(
+         tr( "Clear text,plot and various other controls" ) );
+
+   QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
+   connect( pb_help, SIGNAL( clicked() ),
+            this,    SLOT( help() ) );
+   pb_help->setToolTip(
+         tr( "Open a dialog with detailed documentation" ) );
+
+   QPushButton* pb_accept = us_pushbutton( tr( "Close" ) );
+   connect( pb_accept, SIGNAL( clicked() ),
+            this,      SLOT( close() ) );
+   pb_accept->setToolTip(
+         tr( "Close this dialog and exit the program" ) );
+
+   // Do detailed layout of the controls
+   int row = 0;
+   cntrlsLayout->addWidget( lb_status,    row,    0, 1,  1 );
+   cntrlsLayout->addWidget( le_status,    row++,  1, 1, 15 );
+   cntrlsLayout->addWidget( lb_men_sel,   row,    0, 1,  5 );
+   cntrlsLayout->addWidget( le_men_sel,   row,    5, 1,  3 );
+   cntrlsLayout->addWidget( lb_rms_error, row,    8, 1,  2 );
+   cntrlsLayout->addWidget( le_rms_error, row,   10, 1,  2 );
+   cntrlsLayout->addWidget( lb_order,     row,   12, 1,  2 );
+   cntrlsLayout->addWidget( sb_order,     row++, 14, 1,  2 );
+
+   /* to hide **/
+   cntrlsLayout->addWidget( lb_men_lor,   row,    0, 1,  3 );
+   cntrlsLayout->addWidget( le_men_lor,   row,    3, 1,  3 );
+   cntrlsLayout->addWidget( lb_men_fit,   row,    6, 1,  3 );
+   cntrlsLayout->addWidget( le_men_fit,   row,    9, 1,  2 );
+   cntrlsLayout->addWidget( lb_zfloor,    row,   11, 1,  3 );
+   cntrlsLayout->addWidget( ct_zfloor,    row++, 14, 1,  2 );
+   cntrlsLayout->addWidget( lb_bot_lor,   row,    0, 1,  3 );
+   cntrlsLayout->addWidget( le_bot_lor,   row,    3, 1,  3 );
+   cntrlsLayout->addWidget( lb_bot_fit,   row,    6, 1,  3 );
+   cntrlsLayout->addWidget( le_bot_fit,   row,    9, 1,  2 );
+   cntrlsLayout->addWidget( lb_mprads,    row,   11, 1,  3 );
+   cntrlsLayout->addWidget( le_mprads,    row++, 14, 1,  3 );
+   //cntrlsLayout->addLayout( dkdb_cntrls,  row,    0, 1,  6 );
+
+   cntrlsLayout->addWidget( pb_update,    row,    6, 1,  5 );
+
+   /* to hide **/
+   cntrlsLayout->addWidget( pb_scandb,    row++, 11, 1,  5 );
+   cntrlsLayout->addWidget( pb_invest,    row,    0, 1,  3 );
+   cntrlsLayout->addWidget( le_invest,    row++,  3, 1,  5 );
+   cntrlsLayout->addWidget( ck_confirm,   row,    0, 1,  8 );
+   cntrlsLayout->addWidget( ck_applymwl,  row++,  8, 1,  8 );
+   cntrlsLayout->addWidget( pb_plot,      row,    0, 1,  4 );
+   cntrlsLayout->addWidget( pb_reset,     row,    4, 1,  4 );
+   cntrlsLayout->addWidget( pb_help,      row,    8, 1,  4 );
+   cntrlsLayout->addWidget( pb_accept,    row,   12, 1,  4 );
+
+
+   for ( int ii = 0; ii < 16; ii++ )
+      cntrlsLayout->setColumnStretch( ii, 1 );
+
+   change_plot_type();
+
+   // Define final layout
+   topLayout   ->addLayout( leftLayout   );
+   topLayout   ->addLayout( rightLayout  );
+   topLayout   ->setStretchFactor( leftLayout,  1 );
+   topLayout   ->setStretchFactor( rightLayout, 2 );
+   bottomLayout->addLayout( cntrlsLayout );
+
+   mainLayout  ->addLayout( topLayout    );
+   mainLayout  ->addLayout( bottomLayout );
+   mainLayout  ->setStretchFactor( topLayout,    2 );
+   mainLayout  ->setStretchFactor( bottomLayout, 2 );
+
+   te_data->e->setPlainText( "123 :  6.34567, 7.34567, 0.00567890" );
+   te_data->adjustSize();
+   adjustSize();
+
+//   te_data->e->setPlainText( "" );
+   reset();
+   
+   // Hide /////
+   lb_men_lor ->hide();
+   le_men_lor ->hide();
+   lb_men_fit ->hide();
+   le_men_fit ->hide();
+   lb_zfloor  ->hide();
+   ct_zfloor  ->hide();
+   lb_bot_lor ->hide();
+   le_bot_lor ->hide();
+   lb_bot_fit ->hide();
+   le_bot_fit ->hide();
+   lb_mprads  ->hide();
+   le_mprads  ->hide();
+   
+   pb_scandb  ->hide();   
+   pb_invest  ->hide();  
+   le_invest  ->hide();  
+   ck_confirm ->hide();  
+   ck_applymwl->hide();  
+   pb_plot    ->hide();  
+   pb_reset   ->hide();  
+   pb_help    ->hide();  
+   pb_accept  ->hide();
+
+   // DEBUG: ScanDB, local EditProfile loaded, data_loaded
+   scan_dbase_auto( triple_information );
+   get_editProfile_copy( triple_information );
+   file_loaded_auto( triple_information );
+}
+
 US_FitMeniscus::US_FitMeniscus() : US_Widgets()
 {
+  auto_mode = false;
+   
    setWindowTitle( tr( "Fit Meniscus from 2DSA Data" ) );
    setPalette( US_GuiSettings::frameColor() );
    dbg_level    = US_Settings::us_debug();
@@ -611,14 +892,22 @@ void US_FitMeniscus::plot_2d( void )
 {
    if ( ! bott_fit )
    {
-      meniscus_plot->setTitle    ( tr( "Meniscus Fit" ) );
+     if ( auto_mode )
+      meniscus_plot->setTitle    ( tr( "Meniscus Fit" )  + ": " + triple_information[ "triple_name" ] );
+     else
+       meniscus_plot->setTitle    ( tr( "Meniscus Fit" ) );
+				    
       meniscus_plot->setAxisTitle( QwtPlot::yLeft,   tr( "2DSA Meniscus RMSD" ) );
       meniscus_plot->setAxisTitle( QwtPlot::xBottom, tr( "Meniscus Radius" ) );
       lb_men_sel->setText( tr( "Meniscus selected:" ) );
    }
    else
    {
-      meniscus_plot->setTitle    ( tr( "Bottom Fit" ) );
+     if ( auto_mode )
+       meniscus_plot->setTitle    ( tr( "Bottom Fit" ) + ": " + triple_information[ "triple_name" ] );
+     else
+       meniscus_plot->setTitle    ( tr( "Bottom Fit" ) );
+      
       meniscus_plot->setAxisTitle( QwtPlot::yLeft,   tr( "2DSA Bottom RMSD" ) );
       meniscus_plot->setAxisTitle( QwtPlot::xBottom, tr( "Bottom Radius" ) );
       lb_men_sel->setText( tr( "Bottom selected:" ) );
@@ -1323,6 +1612,13 @@ DbgLv(1) << " call Remove Models";
 
       QMessageBox::information( this, tr( "Edit File Updated" ), mmsg );
    }
+
+   //For autoflow Analysis
+   if ( auto_mode )
+     {
+       emit editProfiles_updated( triple_information );
+       close();
+     }
 }
 
 // Slot for handling a loaded file:  set the name of loaded,edit files
@@ -1418,9 +1714,192 @@ DbgLv(1) << "FL: aplmwl: nedtfs" << nedtfs << "edtfilt" << edtfilt;
    }
 
    plot_data();
-
+   
    le_status->setText( tr( "Data loaded:  " ) + runID + "/" + fname_load );
 }
+
+void US_FitMeniscus::get_editProfile_copy( QMap < QString, QString > & triple_information  )
+{
+  qDebug() << "In get_edit COPY: ";
+  /* ALEXEY: we can use only triple_information[ "filename" ] (the editedData table's 'label' filed) 
+     to extract all editProfiles for this runID (which is triple_information[ "filename" ] )
+   */
+  
+  US_Passwd pw;
+  QString masterpw = pw.getPasswd();
+  US_DB2* db = new US_DB2( masterpw );
+  
+  int stat = 0;
+  //to be extracted from editedData table ('filename' field)
+  // QMap below - establish correspondence btw EditProfile filename && EditDataID
+  // select filename, editedDataID from editedData where label='ISSF-KulkarniJ_NP1-pDNA-D2O-0_091020-run822-2A';
+  QMap <QString, int> EProfs_to_IDs;
+  
+  QStringList query;
+  query << "get_editedDataFilenamesIDs" << triple_information["filename"];
+  db->query( query );
+
+  qDebug() << "Query: " << query;
+  
+  while ( db->next() )
+    {
+      QString  filename  = db->value( 0 ).toString();
+      int      ID        = db->value( 1 ).toInt();
+
+      EProfs_to_IDs[ filename ] = ID;
+    }
+  
+  QMap<QString, int>::iterator fn;
+  for ( fn = EProfs_to_IDs.begin(); fn != EProfs_to_IDs.end(); ++fn )
+    {
+      qDebug() << "EditProfile filename / EditDataID: " << fn.key() << "/" << fn.value();
+      QString filename = fn.key();
+      int editedDataID = fn.value();
+      
+      QString filepath = US_Settings::resultDir() + "/" + triple_information[ "filename" ] + "/" + filename;
+      // Can check here if such filename exists
+      
+      stat   = db->readBlobFromDB( filepath, "download_editData", editedDataID );
+    }
+}
+
+// Slot for handling a loaded file:  set the name of loaded,edit files
+void US_FitMeniscus::file_loaded_auto( QMap < QString, QString > & triple_information  )
+{
+  qDebug() << "In file_loaded_auto: ";
+  QString file_directory = US_Settings::resultDir() + QString("/") + triple_information[ "filename" ];
+  QString triple_name_cut = triple_information[ "triple_name" ];
+  triple_name_cut.simplified();
+  triple_name_cut.replace("/","");
+  triple_name_cut.replace(" ","");
+
+  qDebug() << "In file_loaded_auto: 11: " << triple_name_cut;
+  qDebug() << "Triple filename: " << triple_information[ "filename" ];
+  
+  QDir directory (file_directory);
+  QStringList fm_files = directory.entryList( QStringList() << "2DSA-FM*" + triple_name_cut + "*.fitmen.dat", QDir::Files | QDir::NoSymLinks);
+
+  qDebug() << "In file_loaded_auto: 22";
+  
+  QString fn = directory.absoluteFilePath( fm_files[0] );  //ALEXEY: *should be* the only one fitmen.dat file 
+
+  qDebug() << "In file_loaded_auto: 33";
+  
+  qDebug() << "File to open: " << fn;
+  
+  QString text;
+  QFile f( fn );
+
+  if ( f.open( QIODevice::ReadOnly | QIODevice::Text ) )
+  {
+     QTextStream t( &f );
+
+     text = t.readAll();
+     f.close(  );
+
+     te_data->e->setPlainText( text );
+  }
+  else
+     QMessageBox::information( this,
+           tr( "Error" ),
+           tr( "Could not open\n\n" ) + fn + tr( "\n\n for reading." ) );
+  
+  
+DbgLv(1) << "FL: IN:  fn" << fn;
+   filedir    = fn.section( "/",  0, -2 );
+   fname_load = fn.section( "/", -1, -1 );
+   v_meni.clear();
+   v_bott.clear();
+   v_rmsd.clear();
+
+   QString runID    = filedir.section( "/", -1, -1 );
+   QString anType   = fname_load.section( ".", -2, -2 );
+   QString tripnode = fname_load.section( ".", -3, -3 );
+   QString edtLabel = fname_load.section( ".", -4, -4 ).mid( 1 );
+   QString tripl    = tripnode.left( 1 ) + "." +
+                      tripnode.mid( 1, 1 ) + "." +
+                      tripnode.mid( 2 );
+   QStringList edtfilt;
+DbgLv(1) << "edtLabel" << edtLabel;
+   if ( !edtLabel.contains( "DSA-F" ) )
+   {  // fitmen file name has edit label
+      edtfilt << runID + "." + edtLabel + ".*." + tripl + ".xml";
+   }
+   else
+   {  // fitmen file name has NO edit label (older form)
+      edtfilt << runID + ".*.*." + tripl + ".xml";
+   }
+
+   fname_edit = "";
+   edtfiles   = QDir( filedir ).entryList( edtfilt, QDir::Files, QDir::Name );
+   nedtfs     = edtfiles.size();
+DbgLv(1) << "EDITFILT" << edtfilt << "nedtfs" << nedtfs;
+
+   if ( nedtfs == 1 )
+   {  // Choose the single corresponding edit
+      fname_edit       = edtfiles.at( 0 );
+      pb_update->setEnabled( true );
+   }
+
+   else if ( nedtfs > 0 )
+   {  // Choose the latest edit
+      int min_ms       = 999999;
+      QString fname    = edtfiles.at( 0 );
+      QString fpath    = filedir + "/" + fname;
+      QDateTime cdate  = QFileInfo( QFile( fpath ) )
+                         .lastModified().toUTC();
+
+      for ( int jj = 0; jj < nedtfs; jj++ )
+      {
+         fname            = edtfiles.at( jj );
+         fpath            = filedir + "/" + fname;
+         QDateTime fdate  = QFileInfo( QFile( fpath ) )
+                            .lastModified().toUTC();
+         int file_ms      = fdate.msecsTo( cdate );
+DbgLv(1) << "     jj" << jj << "fdate" << fdate << "file_ms" << file_ms;
+         if ( file_ms < min_ms )
+         {
+            min_ms           = file_ms;
+            fname_edit       = fname;
+         }
+      }
+DbgLv(1) << " nedtfs" << nedtfs << "fname_edit" << fname_edit;
+DbgLv(1) << "   f0" << edtfiles.at(0);
+if(nedtfs>1) DbgLv(1) << "   f1" << edtfiles.at(1);
+
+      pb_update->setEnabled( true );
+   }
+
+   else
+   {  // Could not find edit file, so inform the user
+      pb_update->setEnabled( false );
+
+      QMessageBox::warning( this,
+            tr( "Missing Local Edit" ),
+            tr( "Update Edit is not possible\n"
+                "without a local copy of the Edit file\n"
+                "corresponding to the FM models.\n"
+                "Use\n     Convert Legacy Data\nand\n     Manage Data\n"
+                "to create a local copy of an Edit file for\n     " )
+            + fname_load + tr( "\nof run\n     " ) + runID );
+   }
+
+   // If apply-to-all-wavelengths, get list with all wavelengths
+   if ( ck_applymwl->isChecked() )
+   {
+      edtfilt.clear();
+      edtfilt << fname_edit.section( ".", 0, -3 ) + ".*.xml";
+      edtfiles   = QDir( filedir ).entryList( edtfilt, QDir::Files, QDir::Name );
+      nedtfs     = edtfiles.size();
+DbgLv(1) << "FL: aplmwl: nedtfs" << nedtfs << "edtfilt" << edtfilt;
+   }
+
+   plot_data();
+   
+   le_status->setText( tr( "Data loaded:  " ) + runID + "/" + fname_load );
+}
+
+
 
 // Scan the database for models to use to write local fit table files
 void US_FitMeniscus::scan_dbase()
@@ -1443,7 +1922,8 @@ void US_FitMeniscus::scan_dbase()
    int         nfadds = 0;         // Number of fit file additions
    int         nfexss = 0;         // Number of fit files left as they existed
 
-   QString invID   = QString::number( US_Settings::us_inv_ID() );
+   QString invID = QString::number( US_Settings::us_inv_ID() );
+
    QRegExp fmIter  = QRegExp( "i\?\?-[mb]*",
          Qt::CaseSensitive, QRegExp::Wildcard );
 
@@ -1820,6 +2300,413 @@ DbgLv(1) << "Number of FM EXISTING sets: " << nfexss;
    QApplication::restoreOverrideCursor();
    QApplication::restoreOverrideCursor();
 }
+
+
+// Scan the database for models to use to write local fit table files
+void US_FitMeniscus::scan_dbase_auto( QMap <QString, QString> & triple_information )
+{
+   QVector< ModelDesc > mDescrs;   // Vector of model description objects
+   US_Passwd pw;                   // DB password
+   US_DB2 db( pw.getPasswd() );    // DB control
+   QStringList query;              // DB query string list
+   QStringList mfnams;             // List of FM model fit file names
+   QStringList ufnams;             // List of unique model fit file names
+   QStringList uantms;             // List of unique model fit analysis times
+   QStringList tmodels;            // List: IDs of models with truncated descrs
+   QStringList tedGIDs;            // List: edit GUIDs of models w/ trunc descrs
+   QStringList tedIDs;             // List: edit IDs of models w/ trunc descrs
+   QList< int > botredo;           // List: bottom-redo Mdescr vector
+
+   int         nfmods = 0;         // Number of fit-meniscus models
+   int         nfsets = 0;         // Number of fit-meniscus analysis sets
+   int         nfrpls = 0;         // Number of fit file replacements
+   int         nfadds = 0;         // Number of fit file additions
+   int         nfexss = 0;         // Number of fit files left as they existed
+
+   QString invID = triple_information[ "invID" ];
+
+   QRegExp fmIter  = QRegExp( "i\?\?-[mb]*",
+         Qt::CaseSensitive, QRegExp::Wildcard );
+
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+
+   // Scan the database and find fit-meniscus models
+
+   le_status->setText(
+         tr( "Scanning DB fit-meniscus models ..." ) );
+   
+   query << "get_model_desc_auto" << invID << triple_information[ "filename" ];
+   // Make use of the description && '2DSA-FM'
+   //query << "get_model_desc" << invID;
+   db.query( query );
+
+   while( db.next() )
+   {
+      ModelDesc mdescr;
+      QString modelID    = db.value( 0 ).toString();
+      QString modelGUID  = db.value( 1 ).toString();
+      QString descript   = db.value( 2 ).toString();
+      QString editGUID   = db.value( 5 ).toString();
+      QString editID     = db.value( 6 ).toString();
+
+      if ( descript.length() == 80 )
+      {  // Truncated description:  save ID and skip update for now
+DbgLv(1) << "DbSc:     TRUNC: modelID" << modelID << "descr" << descript;
+         tmodels << modelID;
+         tedGIDs << editGUID;
+         tedIDs  << editID;
+         continue;
+      }
+
+      double  variance   = db.value( 3 ).toString().toDouble();
+      double  meniscus   = db.value( 4 ).toString().toDouble();
+      double  bottom     = 0.0;
+      QDateTime lmtime   = db.value( 7 ).toDateTime();
+      lmtime.setTimeSpec( Qt::UTC );
+      QString ansysID    = descript.section( '.', -2, -2 );
+      QString iterID     = ansysID .section( '_', -1, -1 );
+DbgLv(1) << "DbSc:   modelID vari meni" << modelID << variance << meniscus
+ << "ansysID" << ansysID << "iterID" << iterID;
+
+      if ( ansysID.contains( "2DSA-F" )  ||  iterID.contains( fmIter ) )
+      {  // Model from meniscus fit, so save information
+
+         // Format and save the potential fit table file name
+         QString fitVals    = iterID  .section( '-',  1,  1 );
+DbgLv(1) << "DbSc:    *FIT* " << descript << "fitVals" << fitVals;
+         int fittype        = 0;         // no fit
+         if ( fitVals.length() > 6 )
+            fittype            = 3;      // meniscus+bottom fit
+         else if ( fitVals.startsWith( "b" ) )
+            fittype            = 2;      // bottom fit
+         else if ( fitVals.startsWith( "m" ) )
+            fittype            = 1;      // meniscus fit
+         QString fextn      = ( fittype != 2 ) ?
+                              ".fitmen.dat" : ".fitbot.dat";
+DbgLv(1) << "DbSc:     fittype" << fittype << "fextn" << fextn;
+         if ( fittype == 2  ||  fittype == 3 )
+         {  // Bottom or Meniscus+Bottom:  add to list of bottom redo's
+            botredo << mDescrs.count();
+         }
+         QString runID      = descript.section( '.',  0, -4 );
+         QString tripleID   = descript.section( '.', -3, -3 );
+         QString editLabel  = ansysID .section( '_',  0, -5 );
+         QString anType     = ansysID .section( '_',  2, -3 );
+DbgLv(1) << "DbSc:       anType" << anType << "editLabel" << editLabel << "ansysID" << ansysID;
+         QString ftfname    = runID + "/" + anType + "." + editLabel + "."
+                              + tripleID + fextn;
+         mdescr.description = descript;
+         mdescr.baseDescr   = runID + "." + tripleID + "."
+                              + ansysID.section( "-", 0, 3 );
+         mdescr.fitfname    = ftfname;
+         mdescr.modelID     = modelID;
+         mdescr.modelGUID   = modelGUID;
+         mdescr.editID      = editID;
+         mdescr.editGUID    = editGUID;
+         mdescr.variance    = variance;
+         mdescr.meniscus    = meniscus;
+         mdescr.bottom      = bottom;
+         mdescr.antime      = descript.section( '.', -2, -2 )
+                              .section( '_',  1,  1 ).mid( 1 );
+         mdescr.lmtime      = lmtime;
+
+         mDescrs << mdescr;
+      } // END: model is fit type
+   } // END: database model record reads
+DbgLv(1) << "DbSc: tmodels size" << tmodels.size() << "ted sizes"
+ << tedGIDs.size() << tedIDs.size();
+
+   // Review models with truncated descriptions
+   for ( int ii = 0; ii < tmodels.size(); ii++ )
+   {
+      QString modelID    = tmodels[ ii ];
+      query.clear();
+      query << "get_model_info" << modelID;
+      db.query( query );
+
+      if ( db.lastErrno() != US_DB2::OK )  continue;
+
+      db.next();
+
+      QString modelGUID  = db.value( 0 ).toString();
+      QString descript1  = db.value( 1 ).toString();
+      QString contents   = db.value( 2 ).toString();
+      int     jdx        = contents.indexOf( "description=" );
+//DbgLv(1) << "DbSc:    ii jdtx" << ii << jdtx << "modelID" << modelID
+//   << "  dsc1" << descript1 << " cont" << contents.left( 20 );
+
+      if ( jdx < 1 )  continue;
+
+//DbgLv(1) << "DbSc:      jdx lend" << jdx << lend;
+      QString descript   = contents.mid( jdx ).section( '"', 1, 1 );
+      double  variance   = db.value( 3 ).toString().toDouble();
+      double  meniscus   = db.value( 4 ).toString().toDouble();
+      QString editGUID   = tedGIDs[ ii ];
+      QString editID     = tedIDs [ ii ];
+
+      QDateTime lmtime   = db.value( 6 ).toDateTime();
+      lmtime.setTimeSpec( Qt::UTC );
+      QString ansysID    = descript.section( '.', -2, -2 );
+      QString iterID     = ansysID .section( '_', -1, -1 );
+//DbgLv(1) << "DbSc:   dscr1" << descript1 << "dcs" << descript;
+
+      if ( ansysID.contains( "2DSA-F" )  ||  iterID.contains( fmIter ) )
+      {  // Model from meniscus fit, so save information
+DbgLv(1) << "DbSc:    *FIT* " << descript;
+         ModelDesc mdescr;
+         double  bottom     = 0.0;
+
+         // Format and save the potential fit table file name
+         QString runID      = descript.section( '.',  0, -4 );
+         QString tripleID   = descript.section( '.', -3, -3 );
+         QString editLabel  = ansysID .section( '_',  0, -5 );
+         QString fitVals    = iterID  .section( '-',  1,  1 );
+         int fittype        = 0;
+         if ( fitVals.length() > 6 )
+            fittype            = 3;
+         else if ( fitVals.startsWith( "b" ) )
+            fittype            = 2;
+         else if ( fitVals.startsWith( "f" ) )
+            fittype            = 1;
+         QString fextn      = ( fittype != 2 ) ?
+                              ".fitmen.dat" : ".fitbot.dat";
+
+         if ( fittype != 1 )
+         {  // Bottom or Meniscus+Bottom:  add to list of bottom redo's
+            botredo << mDescrs.count();
+         }
+
+         QString anType     = ansysID .section( '_',  2, -3 );
+         QString ftfname    = runID + "/" + anType + "." + editLabel + "."
+                              + tripleID + fextn;
+         mdescr.description = descript;
+         mdescr.baseDescr   = runID + "." + tripleID + "."
+                              + ansysID.section( "-", 0, 3 );
+         mdescr.fitfname    = ftfname;
+         mdescr.modelID     = modelID;
+         mdescr.modelGUID   = modelGUID;
+         mdescr.editID      = editID;
+         mdescr.editGUID    = editGUID;
+         mdescr.variance    = variance;
+         mdescr.meniscus    = meniscus;
+         mdescr.bottom      = bottom;
+         mdescr.antime      = descript.section( '.', -2, -2 )
+                              .section( '_',  1,  1 ).mid( 1 );
+         mdescr.lmtime      = lmtime;
+
+         mDescrs << mdescr;
+      }
+   }
+
+   // Redo any model descriptions that need a bottom value
+   for ( int ii = 0; ii < botredo.count(); ii++ )
+   {
+      int jj             = botredo[ ii ];
+      ModelDesc mdescr   = mDescrs[ jj ];
+      QString modelID    = mdescr.modelID;
+      US_Model wmodel;
+      wmodel.load( modelID, &db );
+      double bottom      = wmodel.bottom;
+
+      if ( bottom < 1.0 )
+      {  // Bottom not reliable in model, get from model description
+         QString descript   = mdescr.description;
+         QString ansysID    = descript.section( '.', -2, -2 );
+         QString iterID     = ansysID .section( '_', -1, -1 );
+         QString fitVals    = iterID  .section( '-',  1,  1 );
+         int fittype        = 0;         // no fit
+         if ( fitVals.length() > 6 )
+            fittype            = 3;      // meniscus+bottom fit
+         else if ( fitVals.startsWith( "b" ) )
+            fittype            = 2;      // bottom fit
+         else if ( fitVals.startsWith( "m" ) )
+            fittype            = 1;      // meniscus fit
+         bottom             = ( fittype == 2 ) ?
+                              ( fitVals.mid( 1, 5 ).toDouble() / 10000.0 ) :
+                              ( fitVals.mid( 6, 5 ).toDouble() / 10000.0 );
+      }
+
+      mdescr.bottom      = bottom;
+      mDescrs[ jj ]      = mdescr;
+   }
+
+   nfmods     = mDescrs.count();
+DbgLv(1) << "Number of FM models found: " << nfmods;
+if(nfmods>0) {
+DbgLv(1) << " pre:D0" <<  mDescrs[0].description;
+DbgLv(1) << " pre:Dn" <<  mDescrs[nfmods-1].description; }
+   qSort( mDescrs );
+if(nfmods>0) {
+DbgLv(1) << " sorted:D0" <<  mDescrs[0].description;
+DbgLv(1) << " sorted:Dn" <<  mDescrs[nfmods-1].description; }
+
+   // Scan local files to see what fit table files already exist
+
+   le_status->setText(
+         tr( "Comparing to existing local meniscus,rmsd table files ..." ) );
+   mfnams.clear();
+   ufnams.clear();
+   uantms.clear();
+
+   for ( int ii = 0; ii < nfmods; ii++ )
+   {  // Find unique file names in order to create sets
+      QString ftfname    = mDescrs[ ii ].fitfname;
+      QString antime     = mDescrs[ ii ].antime;
+
+      if ( ! ufnams.contains( ftfname ) )
+      {  // This is a new fit-file name, so new analysis set
+         ufnams << ftfname;
+         uantms << antime;
+      }
+
+      else if ( ! uantms.contains( antime ) )
+      {  // Already seen fit-file, but new analysis time, so duplicate
+         uantms << antime;
+      }
+
+      mfnams << mDescrs[ ii ].fitfname;
+   }
+
+   nfsets     = ufnams.size();
+   int nantm  = uantms.size();
+   int ndupl  = nantm - nfsets;
+DbgLv(1) << "Number of FM analysis sets: " << nfsets;
+DbgLv(1) << "Number of FM analysis set duplicates: " << ndupl;
+   int kfsets = nfsets;
+   QString rdir = US_Settings::resultDir().replace( "\\", "/" ) + "/";
+   QString fnamesv;
+
+   for ( int ii = 0; ii < kfsets; ii++ )
+   {  // Find out for each set whether a corresponding fit file exists
+      QString ftfname    = ufnams.at( ii );
+
+      if ( mfnams.count( ftfname ) == 1 )
+      {  // Not really a set; single fit model after previous fm run
+         nfsets--;
+DbgLv(1) << "ScDB: SINGLE:" << ftfname;
+         continue;
+      }
+
+      QString ftfpath    = rdir + ftfname;
+      QFile   ftfile( ftfpath );
+
+      if ( ftfile.exists() )
+      {  // File exists, so we must check the need to replace it
+         QString ftfpath    = rdir + ftfname;
+         QDateTime fdate    = QFileInfo( ftfile ).lastModified().toUTC();
+         int       jj       = mfnams.lastIndexOf( ftfname );
+         QDateTime rdate    = mDescrs[ jj ].lmtime;
+DbgLv(1) << " ii rdate fdate" << ii << rdate << fdate << "   ftfname"
+   << ftfname << "  fdate.msecsTo(rdate)" << fdate.msecsTo(rdate);
+DbgLv(1) << "   jj desc" << jj << mDescrs[jj].description
+ << "antime meniscus" << mDescrs[jj].antime << mDescrs[jj].meniscus;
+
+         if ( fdate.msecsTo( rdate ) > 0 )
+         {  // DB record date is later than file date, so must replace file
+            nfrpls++;
+            ftfile.remove();
+         }
+
+         else
+         {  // DB record date is not later than file date, so leave file as is
+            nfexss++;
+            continue;
+         }
+      }
+
+      else
+      {  // File does not exist, so we definitely need to create it
+         nfadds++;
+         QString ftfpath    = QString( rdir + ftfname ).section( "/", 0, -2 );
+DbgLv(1) << "ScDB: NOT-EXIST local:  nfadds" << nfadds;
+         QDir().mkpath( ftfpath );
+      }
+
+      if ( ! ftfile.open( QIODevice::WriteOnly | QIODevice::Text ) )
+      {  // Problem!!!
+         qDebug() << "*ERROR* Unable to open file" << ftfname;
+         continue;
+      }
+
+      // Creating a new or replacement file:  build list of meniscus,rmsd pairs
+      int       jfirst   = mfnams.indexOf( ftfname );
+      int       jlast    = mfnams.lastIndexOf( ftfname ) + 1;
+      QString   antiml   = mDescrs[ jlast - 1 ].antime;
+      QStringList mrpairs;
+
+DbgLv(1) << " Creating" << ftfname << "jf,jl" << jfirst << jlast;
+      for ( int jj = jfirst; jj < jlast; jj++ )
+      {  // First build the pairs (or triples) list
+         double bottom   = mDescrs[ jj ].bottom;
+         double meniscus = mDescrs[ jj ].meniscus;
+         double variance = mDescrs[ jj ].variance;
+         double rmsd     = sqrt( variance );
+         QString antime  = mDescrs[ jj ].antime;
+         QString mrpair  = QString::number( meniscus, 'f', 6 ) + " "
+                         + QString::number( rmsd,     'e', 6 ); 
+
+         if ( bottom > 1.0 )
+         {  // Either Bottom or Meniscus+Bottom
+            if ( ftfname.contains( "FB" ) )
+            {  // Bottom only
+               mrpair          = QString::number( bottom,   'f', 6 ) + " "
+                               + QString::number( rmsd,     'e', 6 ); 
+            }
+            else
+            {  // Meniscus and Bottom
+               mrpair          = QString::number( meniscus, 'f', 6 ) + " "
+                               + QString::number( bottom,   'f', 6 ) + " "
+                               + QString::number( rmsd,     'e', 6 ); 
+            }
+         }
+DbgLv(1) << "  jj desc" << jj << mDescrs[jj].description;
+
+         if ( antime == antiml )
+            mrpairs << mrpair;
+      }
+
+      mrpairs.sort();
+      QTextStream ts( &ftfile );
+
+      // Output the pairs to the file
+      for ( int jj = 0; jj < mrpairs.size(); jj++ )
+         ts << mrpairs.at( jj ) + "\n";
+
+      ftfile.close();
+
+      fnamesv = fnamesv.isEmpty() ? ftfname : fnamesv;
+   }
+
+DbgLv(1) << "Number of FM REPLACE  sets: " << nfrpls;
+DbgLv(1) << "Number of FM ADD      sets: " << nfadds;
+DbgLv(1) << "Number of FM EXISTING sets: " << nfexss;
+
+   // Report
+   QString msg = tr( "File" );
+   int nftota  = nfadds + nfrpls;
+
+   if      ( nfadds == 1  &&  nfrpls == 0 )
+      msg += tr( " added: " );
+
+   else if ( nfadds == 0  &&  nfrpls == 1 )
+      msg += tr( " updated: " );
+
+   else if ( nfadds == 0  &&  nfrpls == 0 )
+      msg  = tr( "No new fit files were created." );
+
+   else
+      msg  = tr( "Last of %1 added/updated: " ).arg( nftota );
+
+   if ( nftota > 0 )
+      msg += fnamesv;
+
+   le_status->setText( msg );
+   QApplication::restoreOverrideCursor();
+   QApplication::restoreOverrideCursor();
+
+   qDebug() << "End of scan auto:";
+}
+
 
 // Reset state of database scan button based on DB/Disk choice
 void US_FitMeniscus::update_disk_db( bool isDB )
@@ -2646,8 +3533,18 @@ void US_FitMeniscus::change_plot_type( )
 
    if ( have3val )
    {  // Set up 3-D plot
-      setWindowTitle( tr( "Fit Meniscus,Bottom from 2DSA Data" ) );
-      meniscus_plot->setTitle    ( tr( "Meniscus,Bottom Fit" ) );
+
+     if ( auto_mode )
+       {
+	 setWindowTitle( tr( "Fit Meniscus,Bottom from 2DSA Data" ) + ": " + triple_information[ "triple_name" ]  );
+	 meniscus_plot->setTitle    ( tr( "Meniscus,Bottom Fit" ) + ": " + triple_information[ "triple_name" ]  );
+       }
+     else
+       {
+	 setWindowTitle( tr( "Fit Meniscus,Bottom from 2DSA Data" ) );
+	 meniscus_plot->setTitle    ( tr( "Meniscus,Bottom Fit" ) );
+       }
+     
       meniscus_plot->setAxisTitle( QwtPlot::yLeft,   tr( "2DSA Meniscus,Bottom RMSD" ) );
       meniscus_plot->setAxisTitle( QwtPlot::xBottom, tr( "Meniscus Radius" ) );
       meniscus_plot->enableAxis  ( QwtPlot::yRight,  true );
@@ -2655,8 +3552,19 @@ void US_FitMeniscus::change_plot_type( )
 
    else
    {  // Set up 2-D plot
-      setWindowTitle( tr( "Fit Meniscus from 2DSA Data" ) );
-      meniscus_plot->setTitle    ( tr( "Meniscus Fit" ) );
+
+     if ( auto_mode )
+       {
+	 setWindowTitle( tr( "Fit Meniscus from 2DSA Data" ) + ": " + triple_information[ "triple_name" ] );
+	 meniscus_plot->setTitle    ( tr( "Meniscus Fit" ) + ": " + triple_information[ "triple_name" ] );
+       }
+     else
+       {
+	 setWindowTitle( tr( "Fit Meniscus from 2DSA Data" ) );
+	 meniscus_plot->setTitle    ( tr( "Meniscus Fit" ) );
+       }
+     
+     
       meniscus_plot->setAxisTitle( QwtPlot::yLeft,   tr( "2DSA Meniscus,Bottom RMSD" ) );
       meniscus_plot->setAxisTitle( QwtPlot::xBottom, tr( "Meniscus Radius" ) );
       meniscus_plot->enableAxis  ( QwtPlot::yRight, false );

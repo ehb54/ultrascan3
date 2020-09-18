@@ -88,6 +88,7 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   ProtocolName_auto  = protocol_details[ "protocolName" ];
   invID              = protocol_details[ "invID_passed" ].toInt();
 
+  FileName           = protocol_details[ "filename" ];
   analysisIDs        = protocol_details[ "analysisIDs" ];
 
   QStringList analysisIDs_list = analysisIDs.split(",");
@@ -341,6 +342,7 @@ void US_Analysis_auto::gui_update( )
       QString triple_curr_key = jj.key();
       QString triple_curr = triple_current.replace("."," / ");
 
+      
       qDebug() << "triple_curr_key, triple_curr: " << triple_curr_key << ", " << triple_curr;
       
       QMap <QString, QString > ana_details = jj.value();
@@ -564,21 +566,26 @@ void US_Analysis_auto::gui_update( )
 
 	      /** To FitMeniscus class -- pass:
 		  1. Name of the triple to title && and possibly to pass to scan_db() method
-		  2. Filename
+		  2. Filename, triple_name
 	      ****/
-	      FitMen = new US_FitMeniscus;
+	      QMap< QString, QString > triple_info_map;
+	      triple_info_map[ "triple_name" ] = triple_curr;
+	      triple_info_map[ "requestID" ]   = requestID;
+	      triple_info_map[ "invID" ]       = QString::number(invID);
+	      triple_info_map[ "filename" ]    = FileName;
 	      
+	      FitMen = new US_FitMeniscus( triple_info_map );
+	      	      
 	      /** The following will block parent windows from closing BUT not from continuing timer execution ***/
-	      FitMen->setWindowFlags( Qt::Dialog );
+	      FitMen->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
 	      FitMen->setWindowModality(Qt::ApplicationModal);
 	      /***************************************************************************************************/
-
+	      connect( FitMen, SIGNAL( editProfiles_updated(  QMap < QString, QString > & ) ),
+		       this, SLOT( update_autoflowAnalysis_statuses (  QMap < QString, QString > &) ) );
+	      
 	      FitMen->show();
 
-	      //ALEXEY: the folowing operations must be sent from US_FitMeniscus instance
-	      update_autoflowAnalysis_status_at_fitmen( &db, requestID );
 	      Manual_update[ triple_curr_key ] = true;
-	      
 	    }
 	      
 	  //QGroupBox * current_stage_groupbox;
@@ -725,7 +732,16 @@ void US_Analysis_auto::gui_update( )
   
   in_gui_update  = false; 
 }
+
+// slot to update autoflowAnalysis record at fitmen stage && regiter manually updated triple
+void US_Analysis_auto::update_autoflowAnalysis_statuses (  QMap < QString, QString > & triple_info )
+{
+  QString triple_curr_key = triple_info[ "triple_name" ];
+  QString requestID       = triple_info[ "requestID" ];
   
+  update_autoflowAnalysis_status_at_fitmen( requestID );
+  //Manual_update[ triple_curr_key ] = true;
+}
 
 //reset Analysis GUI: stopping all update processes
 void US_Analysis_auto::reset_analysis_panel_public( )
@@ -1280,8 +1296,20 @@ QMap< QString, QString> US_Analysis_auto::get_investigator_info( US_DB2* db, con
 }
 
 // set status to COMPLETE && msg text
-void US_Analysis_auto::update_autoflowAnalysis_status_at_fitmen( US_DB2* db, const QString& requestID )
+void US_Analysis_auto::update_autoflowAnalysis_status_at_fitmen( const QString& requestID )
 {
+  // Check DB connection
+  US_Passwd pw;
+  QString masterpw = pw.getPasswd();
+  US_DB2* db = new US_DB2( masterpw );
+
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+      return;
+     }
+
   QStringList qry;
   qry << "update_autoflow_analysis_record_at_fitmen"
       << requestID;

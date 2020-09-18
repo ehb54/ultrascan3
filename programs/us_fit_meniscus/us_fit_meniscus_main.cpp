@@ -14,6 +14,21 @@ int main( int argc, char* argv[] )
    // License is OK.  Start up.
    
    US_FitMeniscus w;
+
+   // AutoFlow DEBUG
+   /*
+   QMap < QString, QString > triple_info_map;
+   triple_info_map[ "triple_name" ]     = QString("2 / A / 259");
+   triple_info_map[ "invID" ]           = QString("3");
+   triple_info_map[ "filename" ]        = QString("demo1_veloc");
+
+   triple_info_map[ "triple_name" ]     = QString("2 / A / 260");
+   triple_info_map[ "invID" ]           = QString("40");
+   triple_info_map[ "filename" ]        = QString("KulkarniJ_NP1-MWL-new-vs-old_120219-run622");
+   
+   US_FitMeniscus w( triple_info_map );
+   */
+
    w.show();                   //!< \memberof QWidget
    return application.exec();  //!< \memberof QApplication
 }

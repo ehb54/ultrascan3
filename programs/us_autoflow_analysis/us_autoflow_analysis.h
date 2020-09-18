@@ -47,6 +47,7 @@ class US_Analysis_auto : public US_Widgets
 	 QString    analysisIDs;
 	 QMap <QString, QString >    investigator_details;
 	 QString     defaultDB;
+	 QString    FileName;
 	 
 	 QVector< QString >  Array_of_triples;
 
@@ -62,7 +63,7 @@ class US_Analysis_auto : public US_Widgets
 
 	 QMap < QString, QString > get_investigator_info ( US_DB2*, const QString& );
 
-	 void update_autoflowAnalysis_status_at_fitmen ( US_DB2*, const QString& );
+	 void update_autoflowAnalysis_status_at_fitmen ( const QString& );
 	 
 	 void  read_protocol_data_triples( void );
 	 bool  read_protoOptics( QXmlStreamReader&  );
@@ -97,6 +98,8 @@ class US_Analysis_auto : public US_Widgets
 	void reset_analysis_panel ( void );
 	void end_process( void );
 	void reset_auto     ( void );
+
+	void update_autoflowAnalysis_statuses( QMap < QString, QString > & );
      
       signals:
 	void analysis_update_process_stopped( void );
