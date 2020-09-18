@@ -33,7 +33,8 @@ class US_GUI_EXTERN US_Editor : public QMainWindow
       enum { LOAD, DEFAULT };
 
       QTextEdit* e;      //!< class's text editor component
-   
+
+      QMenuBar*  edMenuBar;
    signals:
       //! Signal that file load is complete (passes name of file loaded).
       void US_EditorLoadComplete( QString );
@@ -44,7 +45,7 @@ class US_GUI_EXTERN US_Editor : public QMainWindow
       QString    filename;
       QString    file_extension;
       QString    file_directory;
-      QMenuBar*  edMenuBar;
+      //QMenuBar*  edMenuBar;
    
       void saveFile   ( void );
 
