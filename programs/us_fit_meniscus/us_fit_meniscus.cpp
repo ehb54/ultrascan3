@@ -25,6 +25,8 @@
 US_FitMeniscus::US_FitMeniscus( QMap<QString, QString> triple_info_map ) : US_Widgets()
 {
   this->triple_information = triple_info_map;
+  qDebug() << "triple_information: filename, triple_name: " <<  triple_information["filename"] << triple_information["triple_name"];
+  
   auto_mode = true;
   
   setWindowTitle( tr( "Fit Meniscus from 2DSA Data: ") + triple_information[ "triple_name" ] );
@@ -183,7 +185,9 @@ DbgLv(1) << "Main: BB";
                   + ": " + US_Settings::us_inv_name();
    le_invest    = us_lineedit( inv_name, -1, true );
 
-   us_checkbox( tr( "Confirm Each Update Step" ), ck_confirm,  true );
+   //us_checkbox( tr( "Confirm Each Update Step" ), ck_confirm,  true );
+   us_checkbox( tr( "Confirm Each Update Step" ), ck_confirm,  false );
+   
    us_checkbox( tr( "Apply to All Wavelengths" ), ck_applymwl, true );
 //   ck_applymwl->setVisible( false );
    ck_confirm ->setToolTip(

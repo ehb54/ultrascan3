@@ -18,9 +18,9 @@ int main( int argc, char* argv[] )
    // AutoFlow DEBUG
    /*
    QMap < QString, QString > triple_info_map;
-   triple_info_map[ "triple_name" ]     = QString("2 / A / 259");
-   triple_info_map[ "invID" ]           = QString("3");
-   triple_info_map[ "filename" ]        = QString("demo1_veloc");
+   //triple_info_map[ "triple_name" ]     = QString("2 / A / 259");
+   //triple_info_map[ "invID" ]           = QString("3");
+   //triple_info_map[ "filename" ]        = QString("demo1_veloc");
 
    triple_info_map[ "triple_name" ]     = QString("2 / A / 260");
    triple_info_map[ "invID" ]           = QString("40");
