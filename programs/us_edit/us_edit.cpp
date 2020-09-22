@@ -69,6 +69,8 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
   is_spike_auto = false;
 
   triples_all_optics.clear();
+  channels_all.clear();
+  isSet_ref_wvl.clear();
  
 //usmode = false;
  
@@ -603,33 +605,12 @@ pb_plateau->setVisible(false);
  
    // TESTING ...
    QMap < QString, QString > details;
-   //details[ "filename" ] = QString("BSA-demo");
-   //details[ "invID_passed" ] = QString("2");
-
-   //details[ "filename" ] = QString("MWL-test4_061419-run431");
-   //details[ "invID_passed" ] = QString("6");
    
-   /******************* data with protocol *************************************************/
-   // details[ "invID_passed" ] = QString("2");
-   // details[ "filename" ]     = QString("GMP-Demo-101519-2-run589");
-   // details[ "protocolName" ] = QString("GMP-Demo-101519-2");
-   /****************************************************************************************/
-   
-   // details[ "invID_passed" ] = QString("6");
-   // details[ "filename" ]     = QString("data-aquisition-test29-run364");
-   // details[ "protocolName" ] = QString("data-aquisition-test29");
-   /****************************************************************************************/
-   
-   // details[ "filename" ]     = QString("RxRPPARhet-PPRE-MWL_180419-run352");
-   // details[ "invID_passed" ] = QString("41");
-   // details[ "protocolName" ] = QString("RxRPPARhet-PPRE-MWL_180419");
-   // // /****************************************************************************************/
-
-      // // Data WITH existing Aprofile corresponding to existing protocol!!!
-      // details[ "invID_passed" ] = QString("77");
-      // details[ "filename" ]     = QString("JohnsonC_DNA-control_013020-run680");
-      // details[ "protocolName" ] = QString("JohnsonC_DNA-control_013020");
-      //  /****************************************************************************************/
+   // // Data WITH existing Aprofile corresponding to existing protocol!!!
+   // details[ "invID_passed" ] = QString("77");
+   // details[ "filename" ]     = QString("JohnsonC_DNA-control_013020-run680");
+   // details[ "protocolName" ] = QString("JohnsonC_DNA-control_013020");
+   //  /****************************************************************************************/
 
    // // Interference Data WITH existing Aprofile corresponding to existing protocol!!!
    // details[ "invID_passed" ] = QString("6");
@@ -645,14 +626,19 @@ pb_plateau->setVisible(false);
 
     // // Interference Data WITH existing Aprofile corresponding to existing protocol!!!
     // details[ "invID_passed" ] = QString("6");
-    // details[ "filename" ]     = QString("6-itf-test-run720");
-    // details[ "protocolName" ] = QString("6-itf-test");
+    // details[ "filename" ]     = QString("001-Amy-MWL-if-test-3-run794-RI");
+    // details[ "protocolName" ] = QString("001-Amy-MWL-if-test-3");
     // //  /****************************************************************************************/
    
 
    // details[ "invID_passed" ] = QString("40");
    // details[ "filename" ]     = QString("KulkarniJ_NP025-D2O-0-20-17K_091220-run1285");
    // details[ "protocolName" ] = QString("KulkarniJ_NP025-D2O-0-20-17K_091220");
+
+   // /* A.S.: 2A/B[245,270,280]; */
+   // details[ "invID_passed" ] = QString("12");
+   // details[ "filename" ]     = QString("SavelyevA_BSA_082520-run1276");
+   // details[ "protocolName" ] = QString("SavelyevA_BSA_082520");
    
    // load_auto( details );
    
@@ -1469,6 +1455,9 @@ void US_Edit::gap_check( void )
 void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
 {
   triples_all_optics.clear();
+  channels_all.clear();
+  isSet_ref_wvl.clear();
+  
   // analysis stages
   job1run     = false;
   job2run     = false;
@@ -6653,7 +6642,7 @@ void US_Edit::write_auto( void )
   pb_write       ->setEnabled( false );
 
   /*
-  //Test 
+  //TEST : this cannot be at the beginning as all optics need to be processed!
   for ( int i = 0; i < triples.size(); ++i )
     {
       //qDebug() << "Triple name: " << triples[i];
@@ -6661,18 +6650,44 @@ void US_Edit::write_auto( void )
       QString current_triple_name = triples[i];
       current_triple_name.replace(" / ",".");
       
+      QStringList triple_parts = current_triple_name.split(".");
       
       if ( dataType == "IP" )
-	{
-	  QStringList triple_parts = current_triple_name.split(".");
-	  current_triple_name = QString( triple_parts[0] ) + QString(  triple_parts[1] ) + QString("Interference");
-	}
+	current_triple_name = triple_parts[0] + "." + triple_parts[1] + "." + QString("Interference");
       
       triples_all_optics << current_triple_name;
-      
+      channels_all << triple_parts[0] + "." + triple_parts[1];
     }
-  for ( int i = 0; i < triples_all_optics.size(); ++i )
-    qDebug() << "Triple name: " << triples_all_optics[i];
+  channels_all.removeDuplicates();
+
+  for ( int i = 0; i < channels_all.size(); ++i  )
+    {
+      qDebug() << channels_all[i];
+      isSet_ref_wvl[ channels_all[i] ] = false;
+    }
+  
+  // Process by channel
+  for ( int i = 0; i < channels_all.size(); ++i  )
+    {
+      for ( int j = 0; j < triples_all_optics.size(); ++j )
+	{
+	  if ( triples_all_optics[j].contains( channels_all[i] ) )
+	    {
+	      if ( triples_all_optics[j].contains( "Interference" ) )
+		qDebug() << triples_all_optics[j] << compose_json( true );
+	      else
+		{
+		  if ( !isSet_ref_wvl[ channels_all[i] ] )
+		    {
+		      qDebug() << triples_all_optics[j] << compose_json( true );
+		      isSet_ref_wvl[ channels_all[i] ] = true;
+		    }
+		  else
+		    qDebug() << triples_all_optics[j] << compose_json( false );
+		}
+	    }
+	}
+    }
   
   return;
   // Test
@@ -6837,26 +6852,23 @@ void US_Edit::write_auto( void )
 
 
    // ALEXEY: before processing next optics system (if multiple), push triple names to the general triple array:
-  
+   // Also, push channel names into general channel array
    for ( int i = 0; i < triples.size(); ++i )
      {
        //qDebug() << "Triple name: " << triples[i];
-
+       
        QString current_triple_name = triples[i];
        current_triple_name.replace(" / ",".");
-       
+      
+       QStringList triple_parts = current_triple_name.split(".");
        
        if ( dataType == "IP" )
-	 {
-	   QStringList triple_parts = current_triple_name.split(".");
-	   current_triple_name = QString( triple_parts[0] ) + "." + QString(  triple_parts[1] ) + "." + QString("Interference");
-	 }
+	 current_triple_name = triple_parts[0] + "." + triple_parts[1] + "." + QString("Interference");
        
        triples_all_optics << current_triple_name;
+       channels_all << triple_parts[0] + "." + triple_parts[1];
      }
 
-   
-   
    // Check If all Optical Systems processed:::::::::::::::::::::::::::::
    qDebug() << "SAVING: Optics Type, all_processed:  " << filename_runID_auto << all_processed;
    
@@ -6867,35 +6879,69 @@ void US_Edit::write_auto( void )
        return;
      }
    ////////////////////////////////////////////////////////////////////
-   
-   // le_status->setText( tr( "Saving COMPLETE " ) );
-   // qApp->processEvents();
 
-   //Get status json from aprofile (stages)
-   qDebug() << "job1run, job2run, job3run, job4run, job5run: " << job1run << ", " <<  job2run << ", " <<  job3run << ", " << job4run << ", " <<  job5run ;
+   // Now, remove duplicates from channels array, fill QMap keeping track on if reference wavelength set for each channel (if MWL) 
+   channels_all.removeDuplicates();
 
-   QString status_json = compose_json();
-   
-   //QString status_json("{\"to_process\":[\"FITMEN\",\"2DSA_IT\",\"2DSA_MC\"],\"processed\":[\"2DSA\"],\"submitted\":\"2DSA_FM\"}"); // sample
-   
-   //Create AutoflowAnalysis record:
-   QStringList AnalysisIDs;
-   for ( int i=0; i < triples_all_optics.size(); ++i )
+   for ( int i = 0; i < channels_all.size(); ++i  )
      {
-       qDebug() << "Triple name: " << triples_all_optics[i];
-       
-       int ID = create_autoflowAnalysis_record( dbP, triples_all_optics[i], status_json  );
+       qDebug() << channels_all[i];
+       isSet_ref_wvl[ channels_all[i] ] = false;
+     }
+   
+   // Process triples by channel, generate appropriate JSON (with or without 2DSA_FM stage) for autoflowAnalysis record && create those records
+   QStringList AnalysisIDs;
 
-       if ( ID )
-	 AnalysisIDs << QString::number( ID );
-       else
+   for ( int i = 0; i < channels_all.size(); ++i  )
+     {
+       for ( int j = 0; j < triples_all_optics.size(); ++j )
 	 {
-	   qDebug() << "AnalysisID was not saved !";
-	   return;
+	   if ( triples_all_optics[j].contains( channels_all[i] ) )
+	     {
+	       int ID = 0;
+	       QString json_status;
+	       
+	       //Interference
+	       if ( triples_all_optics[j].contains( "Interference" ) )
+		 {
+		   json_status = compose_json( true );
+		   qDebug() << triples_all_optics[j] << json_status;
+
+		   ID = create_autoflowAnalysis_record( dbP, triples_all_optics[j], json_status );
+		 }
+	       //UV.vis
+	       else		 
+		 {
+		   if ( !isSet_ref_wvl[ channels_all[i] ] )
+		     {
+		       json_status = compose_json( true );
+		       qDebug() << triples_all_optics[j] << json_status;
+		       
+		       ID = create_autoflowAnalysis_record( dbP, triples_all_optics[j], json_status );
+
+		       //So, reference wvl is defiend as the 1st one in the channel domain
+		       isSet_ref_wvl[ channels_all[i] ] = true;
+		     }
+		   else
+		     {
+		       json_status = compose_json( false );
+		       qDebug() << triples_all_optics[j] << json_status;
+		       
+		       ID = create_autoflowAnalysis_record( dbP, triples_all_optics[j], json_status );
+		     }
+		 }
+
+	       if ( ID )
+		 AnalysisIDs << QString::number( ID );
+	       else
+		 {
+		   qDebug() << "AnalysisID was not saved !";
+		   return;
+		 }
+	     }
 	 }
      }
-
-      
+       
    // Now we need to Update autoflow record, reset GUI && send signal to switch to Analysis stage:
    QString AnalysisIDsString = AnalysisIDs.join(",");
    update_autoflow_record_atEditData( dbP, AnalysisIDsString );
@@ -6919,7 +6965,7 @@ void US_Edit::write_auto( void )
 }
 
 // Create JSON to be put into AutoflowAnalysis table
-QString US_Edit::compose_json( void )
+QString US_Edit::compose_json( bool fm_stage )
 {
   QString json;
 
@@ -6927,7 +6973,7 @@ QString US_Edit::compose_json( void )
 
   if (job1run )
     json += QString("\"2DSA\",");
-  if (job2run )
+  if (job2run && fm_stage )
     json += QString("\"2DSA_FM\",");
   if (job3run )
     json += QString("\"FITMEN\",");

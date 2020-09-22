@@ -137,7 +137,10 @@ class US_Edit : public US_Widgets
       QString            expType;
       QStringList        files;
       QStringList        triples;
+      
       QStringList        triples_all_optics;
+      QStringList        channels_all;
+      QMap < QString, bool > isSet_ref_wvl;
       
       QStringList        trip_rpms;
       QStringList        celchns;
@@ -350,7 +353,7 @@ class US_Edit : public US_Widgets
       
       void update_autoflow_record_atEditData( US_DB2*, QString& );
       int  create_autoflowAnalysis_record( US_DB2*, QString&,  QString& );
-      QString compose_json( void );
+      QString compose_json( bool );
       
    private slots:         
       void load              ( void );
