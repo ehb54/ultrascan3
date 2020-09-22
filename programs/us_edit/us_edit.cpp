@@ -626,7 +626,7 @@ pb_plateau->setVisible(false);
 
     // // Interference Data WITH existing Aprofile corresponding to existing protocol!!!
     // details[ "invID_passed" ] = QString("6");
-    // details[ "filename" ]     = QString("001-Amy-MWL-if-test-3-run794-RI");
+    // details[ "filename" ]     = QString("001-Amy-MWL-if-test-3-run794-IP");
     // details[ "protocolName" ] = QString("001-Amy-MWL-if-test-3");
     // //  /****************************************************************************************/
    

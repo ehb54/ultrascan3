@@ -59,15 +59,12 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   
   // // ---- Testing ----
   // QMap < QString, QString > protocol_details;
-  // protocol_details[ "aprofileguid" ] = QString("d13ffad0-6f27-4fd8-8aa0-df8eef87a6ea");
-  // protocol_details[ "protocolName" ] = QString("alexey-abs-itf-test1");
   // protocol_details[ "invID_passed" ] = QString("12");
-  // protocol_details[ "analysisIDs"  ] = QString( "252,253,254,255,256,257,258,259,260,261,262,263,264,265,266,267,268,269,270,271,272,273,274,275,276,277,278,279,280,281,282,283,284,285,286,287,288,289,290,291,292,293");
-  
+  // protocol_details[ "analysisIDs"  ] = QString( "61,62,63,64,65,66" );
   
   // initPanel( protocol_details );
 
-  // -----------------
+  // // -----------------
 
 }
 
@@ -78,6 +75,8 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   treeWidget->clear();
   Array_of_triples.clear();
   Array_of_analysis.clear();
+  Channel_to_requestIDs.clear();
+  channels_all.clear();
 
   Completed_triples.clear();
   Failed_triples.clear();
@@ -141,11 +140,40 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       Completed_triples[ triple_name ] = false;
       Failed_triples[ triple_name ]    = false;
       History_read[ triple_name ]      = false;
+
+      //Define triple's channels
+      QStringList triple_name_parts = triple_name.split(".");
+      channels_all << triple_name_parts[0] + "." + triple_name_parts[1];
+    }
+  
+  //Group requestIDs by channel, exclude "Intereference" runs
+  channels_all.removeDuplicates();
+  QMap<QString, QMap <QString, QString> >::iterator ti;
+  
+  for ( int i = 0; i < channels_all.size(); ++i  )
+    {
+      for ( ti = Array_of_analysis.begin(); ti != Array_of_analysis.end(); ++ti )
+	{
+	  QString triple_name = ti.key();
+	  if ( triple_name.contains( channels_all[i] ) && !triple_name.contains("Interference") )
+	    {
+	      QMap <QString, QString > ana_details = ti.value();
+	      Channel_to_requestIDs[ channels_all[i] ] << ana_details[ "requestID" ];
+	    }
+	}
     }
   
   // Close msg on setting up triple list from main program
   emit close_analysissetup_msg();
-  
+
+  // /* DEBUG: check requestIDs per channel *****************/
+  // QMap<QString, QStringList >::iterator chanreq;
+  // for ( chanreq = Channel_to_requestIDs.begin(); chanreq != Channel_to_requestIDs.end(); ++chanreq )
+  //   qDebug() << "channel-to-requestIDs " << chanreq.key() << ": " << chanreq.value();
+
+  // return;
+  // /*** END OF DEBUG *************************************/
+
 
   //qDebug() << "ANALYSIS INIT: AProfileGUID, ProtocolName_auto, invID: " <<  AProfileGUID << ", " <<  ProtocolName_auto << ", " <<  invID;
 
@@ -355,7 +383,7 @@ void US_Analysis_auto::gui_update( )
       if ( !current_analysis_details.size() )
 	{
 	  current_analysis_details = read_autoflowAnalysisHistory_record( &db, requestID );
-	  //set this triple as completed
+	  //set this triple as completed && history-read
 	  Completed_triples[ triple_curr_key ] = true;
 	  History_read[ triple_curr_key ]      = true;
 	  qDebug() << "FORM HISTORY: set Completed_triples[ " << triple_curr_key << " ] to " << Completed_triples[ triple_curr_key ];
@@ -378,8 +406,10 @@ void US_Analysis_auto::gui_update( )
       
       QJsonDocument jsonDoc = QJsonDocument::fromJson( status_json.toUtf8() );
       if (!jsonDoc.isObject())
-	qDebug() << "NOT a JSON Doc !!";
-      
+	{
+	  qDebug() << "NOT a JSON Doc !!";
+	  return;
+	}
       // const QJsonValue &to_process = jsonDoc["to_process"];
       // const QJsonValue &processed  = jsonDoc["processed"];
       // const QJsonValue &submitted  = jsonDoc["submitted"];
@@ -549,7 +579,6 @@ void US_Analysis_auto::gui_update( )
 	}
 
       //submitted -- current active stage
-     
       if ( submitted.isUndefined())
 	qDebug() << "Nothing submitted yet !!";
       else
@@ -560,7 +589,7 @@ void US_Analysis_auto::gui_update( )
 	  if ( submitted.toString() == "FITMEN" && !Manual_update[ triple_curr_key ] )
 	    {
 	      QMessageBox::information( this,
-					tr( "TEMPORARY: FITMEN stage reached" ),
+					tr( "ATTENTION: FITMEN stage reached" ),
 					tr( "FITMET stage for triple %1 will be processed manually." ).arg( triple_curr ) );
 
 
@@ -639,7 +668,7 @@ void US_Analysis_auto::gui_update( )
 	      lineedit_cluster -> setText( cluster );
 
 
-	      //check if final stage && it's complete 
+	      //check if final stage && if complete 
 	      if ( !to_process_array.size() && status == "COMPLETE" )
 		{
 		  lineedit_status          -> setStyleSheet( "QLineEdit { background-color:  rgb(2, 88, 57); color : white; }");
@@ -719,7 +748,7 @@ void US_Analysis_auto::gui_update( )
       QString msg_text = "All triples have been processed.";
       
       if ( failed_triples )
-	msg_text += QString("\n\n NOTE: analysises for the following triples failed: \n %1").arg( Failed_triples_list.join(", ") );
+	msg_text += QString("\n\n NOTE: analyses for the following triples failed: \n %1").arg( Failed_triples_list.join(", ") );
       
       QMessageBox::information( this,
 				tr( "All Triples Processed !" ),
@@ -728,19 +757,30 @@ void US_Analysis_auto::gui_update( )
       //ALEXEY: Switch to next stage (Report) ?
     }
 
-  
-  
   in_gui_update  = false; 
 }
 
-// slot to update autoflowAnalysis record at fitmen stage && regiter manually updated triple
+
+// slot to update autoflowAnalysis record at fitmen stage && register manually updated triple
 void US_Analysis_auto::update_autoflowAnalysis_statuses (  QMap < QString, QString > & triple_info )
 {
   QString triple_curr_key = triple_info[ "triple_name" ];
   QString requestID       = triple_info[ "requestID" ];
+
+  //Identify list of requestIDs needed to be updated at FITMEN (especcially for MWL cases):
+  QStringList triple_name_parts = triple_curr_key.split(".");
+  QString channel_name = triple_name_parts[0] + "." + triple_name_parts[1];
+
+  QStringList requestID_list = Channel_to_requestIDs[ channel_name ];
   
-  update_autoflowAnalysis_status_at_fitmen( requestID );
-  //Manual_update[ triple_curr_key ] = true;
+  //Update
+  US_Passwd pw;
+  US_DB2* dbP = new US_DB2( pw.getPasswd() );
+
+  // --- Before updating autoflowAnalysis records ---
+  // --- MAKE sure that ALL original 2DSA stages for other wavelength in a channel (besides representative wvl) are completed
+  // --- i.e. are in WAIT status
+  update_autoflowAnalysis_status_at_fitmen( dbP, requestID_list );
 }
 
 //reset Analysis GUI: stopping all update processes
@@ -806,11 +846,15 @@ void US_Analysis_auto::reset_auto( )
   Array_of_triples.clear();
 
   Array_of_analysis.clear();
+  Channel_to_requestIDs.clear();
+  channels_all.clear();
 
-  Completed_triples.clear();
+  Failed_triples.clear();
   Manual_update.clear();
-
-  //TO DO MORE later - DB stopp etc..
+  History_read.clear();
+  Completed_triples.clear();
+  
+  //TO DO MORE later - DB stop etc..
 }
 
 //create groupBox
@@ -1296,25 +1340,32 @@ QMap< QString, QString> US_Analysis_auto::get_investigator_info( US_DB2* db, con
 }
 
 // set status to COMPLETE && msg text
-void US_Analysis_auto::update_autoflowAnalysis_status_at_fitmen( const QString& requestID )
+void US_Analysis_auto::update_autoflowAnalysis_status_at_fitmen( US_DB2* db, const QStringList& requestID_list )
 {
-  // Check DB connection
-  US_Passwd pw;
-  QString masterpw = pw.getPasswd();
-  US_DB2* db = new US_DB2( masterpw );
-
+  // // Check DB connection
+  // US_Passwd pw;
+  // QString masterpw = pw.getPasswd();
+  // US_DB2* db = new US_DB2( masterpw );
+  
   if ( db->lastErrno() != US_DB2::OK )
     {
       QMessageBox::warning( this, tr( "Connection Problem" ),
-			    tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+  			    tr( "Updating autoflowAnalysis at FITMEN: Could not connect to database \n" ) + db->lastError() );
       return;
      }
-
-  QStringList qry;
-  qry << "update_autoflow_analysis_record_at_fitmen"
-      << requestID;
   
-  db->query( qry );
+  QStringList qry;
+
+  for (int i=0; i<requestID_list.size(); ++i )
+    {
+      qry.clear();
+      qry << "update_autoflow_analysis_record_at_fitmen"
+	  << requestID_list[i];
+
+      //checks is status is WAIT: what if not???
+      
+      db->query( qry );
+    }
   
   return;
 }

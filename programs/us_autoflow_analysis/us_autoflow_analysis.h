@@ -52,6 +52,9 @@ class US_Analysis_auto : public US_Widgets
 	 QVector< QString >  Array_of_triples;
 
 	 QMap < QString, QMap< QString, QString > > Array_of_analysis;
+	 QMap < QString, QStringList > Channel_to_requestIDs;
+
+	 QStringList channels_all;
 
 	 QMap < QString, bool > Manual_update;
 	 QMap < QString, bool > History_read;
@@ -63,7 +66,7 @@ class US_Analysis_auto : public US_Widgets
 
 	 QMap < QString, QString > get_investigator_info ( US_DB2*, const QString& );
 
-	 void update_autoflowAnalysis_status_at_fitmen ( const QString& );
+	 void update_autoflowAnalysis_status_at_fitmen ( US_DB2*, const QStringList& );
 	 
 	 void  read_protocol_data_triples( void );
 	 bool  read_protoOptics( QXmlStreamReader&  );
