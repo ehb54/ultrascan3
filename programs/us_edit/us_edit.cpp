@@ -1468,6 +1468,7 @@ void US_Edit::gap_check( void )
 // Load an AUC data set
 void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
 {
+  triples_all_optics.clear();
   // analysis stages
   job1run     = false;
   job2run     = false;
@@ -6835,7 +6836,7 @@ void US_Edit::write_auto( void )
 
 
 
-   // ALEXEY: before processing next opics system (if multiple), push truple names to the general triple array:
+   // ALEXEY: before processing next optics system (if multiple), push triple names to the general triple array:
   
    for ( int i = 0; i < triples.size(); ++i )
      {
@@ -6848,7 +6849,7 @@ void US_Edit::write_auto( void )
        if ( dataType == "IP" )
 	 {
 	   QStringList triple_parts = current_triple_name.split(".");
-	   current_triple_name = QString( triple_parts[0] ) + QString(  triple_parts[1] ) + QString("Interference");
+	   current_triple_name = QString( triple_parts[0] ) + "." + QString(  triple_parts[1] ) + "." + QString("Interference");
 	 }
        
        triples_all_optics << current_triple_name;
@@ -6883,7 +6884,7 @@ void US_Edit::write_auto( void )
      {
        qDebug() << "Triple name: " << triples_all_optics[i];
        
-       int ID = create_autoflowAnalysis_record( triples_all_optics[i], status_json  );
+       int ID = create_autoflowAnalysis_record( dbP, triples_all_optics[i], status_json  );
 
        if ( ID )
 	 AnalysisIDs << QString::number( ID );
@@ -6897,7 +6898,7 @@ void US_Edit::write_auto( void )
       
    // Now we need to Update autoflow record, reset GUI && send signal to switch to Analysis stage:
    QString AnalysisIDsString = AnalysisIDs.join(",");
-   update_autoflow_record_atEditData( AnalysisIDsString );
+   update_autoflow_record_atEditData( dbP, AnalysisIDsString );
 
    le_status->setText( tr( "Saving COMPLETE " ) );
    qApp->processEvents();
@@ -6944,21 +6945,21 @@ QString US_Edit::compose_json( void )
 }
 
 // Set Autoflow record to ANALSYIS && set analysises ID(s)
-void US_Edit::update_autoflow_record_atEditData( QString& AnalysisIDsString )
+void US_Edit::update_autoflow_record_atEditData( US_DB2* db,  QString& AnalysisIDsString )
 {
    QString runID_numeric     = details_at_editing_local[ "runID" ];
    
-   // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+   // // Check DB connection
+   // US_Passwd pw;
+   // QString masterpw = pw.getPasswd();
+   // US_DB2* db = new US_DB2( masterpw );
    
-   if ( db->lastErrno() != US_DB2::OK )
-     {
-       QMessageBox::warning( this, tr( "Connection Problem" ),
-			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
-       return;
-     }
+   // if ( db->lastErrno() != US_DB2::OK )
+   //   {
+   //     QMessageBox::warning( this, tr( "Connection Problem" ),
+   // 			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+   //     return;
+   //   }
 
    QStringList qry;
    qry << "update_autoflow_at_edit_data"
@@ -6985,23 +6986,23 @@ void US_Edit::update_autoflow_record_atEditData( QString& AnalysisIDsString )
 
 
 // Function to create a single autoflowAnalysis record: Pass some fields from autoflow table (set analysises IDs, filename etc.)
-int US_Edit::create_autoflowAnalysis_record( QString& tripleName, QString& status_json ) 
+int US_Edit::create_autoflowAnalysis_record( US_DB2* db, QString& tripleName, QString& status_json ) 
 {
   //create single record in autoflowAnalysis: return ID (auto-incremented), && update/push 
 
   int autoflowAnalysisID = 0;
    
-  // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+  // // Check DB connection
+  //  US_Passwd pw;
+  //  QString masterpw = pw.getPasswd();
+  //  US_DB2* db = new US_DB2( masterpw );
    
-   if ( db->lastErrno() != US_DB2::OK )
-     {
-       QMessageBox::warning( this, tr( "Connection Problem" ),
-			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
-       return autoflowAnalysisID;
-     }
+  //  if ( db->lastErrno() != US_DB2::OK )
+  //    {
+  //      QMessageBox::warning( this, tr( "Connection Problem" ),
+  // 			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+  //      return autoflowAnalysisID;
+  //    }
 
    QString status =  QString("Saving AutoflowAnalysis Profile for Triple %1").arg( tripleName );
    le_status->setText( status );
