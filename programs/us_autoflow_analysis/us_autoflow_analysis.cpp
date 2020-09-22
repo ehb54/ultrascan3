@@ -166,10 +166,10 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   // Close msg on setting up triple list from main program
   emit close_analysissetup_msg();
 
-  // /* DEBUG: check requestIDs per channel *****************/
-  // QMap<QString, QStringList >::iterator chanreq;
-  // for ( chanreq = Channel_to_requestIDs.begin(); chanreq != Channel_to_requestIDs.end(); ++chanreq )
-  //   qDebug() << "channel-to-requestIDs " << chanreq.key() << ": " << chanreq.value();
+  /* DEBUG: check requestIDs per channel *****************/
+  QMap<QString, QStringList >::iterator chanreq;
+  for ( chanreq = Channel_to_requestIDs.begin(); chanreq != Channel_to_requestIDs.end(); ++chanreq )
+    qDebug() << "channel-to-requestIDs " << chanreq.key() << ": " << chanreq.value();
 
   // return;
   // /*** END OF DEBUG *************************************/
@@ -598,10 +598,11 @@ void US_Analysis_auto::gui_update( )
 		  2. Filename, triple_name
 	      ****/
 	      QMap< QString, QString > triple_info_map;
-	      triple_info_map[ "triple_name" ] = triple_curr;
-	      triple_info_map[ "requestID" ]   = requestID;
-	      triple_info_map[ "invID" ]       = QString::number(invID);
-	      triple_info_map[ "filename" ]    = FileName;
+	      triple_info_map[ "triple_name" ]     = triple_curr;
+	      triple_info_map[ "triple_name_key" ] = triple_curr_key;
+	      triple_info_map[ "requestID" ]       = requestID;
+	      triple_info_map[ "invID" ]           = QString::number(invID);
+	      triple_info_map[ "filename" ]        = FileName;
 	      
 	      FitMen = new US_FitMeniscus( triple_info_map );
 	      	      
@@ -764,14 +765,18 @@ void US_Analysis_auto::gui_update( )
 // slot to update autoflowAnalysis record at fitmen stage && register manually updated triple
 void US_Analysis_auto::update_autoflowAnalysis_statuses (  QMap < QString, QString > & triple_info )
 {
-  QString triple_curr_key = triple_info[ "triple_name" ];
+  QString triple_curr_key = triple_info[ "triple_name_key" ];
   QString requestID       = triple_info[ "requestID" ];
 
   //Identify list of requestIDs needed to be updated at FITMEN (especcially for MWL cases):
   QStringList triple_name_parts = triple_curr_key.split(".");
   QString channel_name = triple_name_parts[0] + "." + triple_name_parts[1];
 
+  qDebug() << "In update_statuses: triple_name_parts: " << triple_name_parts;
+  
   QStringList requestID_list = Channel_to_requestIDs[ channel_name ];
+
+  qDebug() << "Channel_name, requestIDs to update: " << channel_name << requestID_list;
   
   //Update
   US_Passwd pw;
@@ -1356,12 +1361,14 @@ void US_Analysis_auto::update_autoflowAnalysis_status_at_fitmen( US_DB2* db, con
   
   QStringList qry;
 
-  for (int i=0; i<requestID_list.size(); ++i )
+  for (int i=0; i < requestID_list.size(); ++i )
     {
       qry.clear();
       qry << "update_autoflow_analysis_record_at_fitmen"
 	  << requestID_list[i];
 
+      qDebug() << "Updating triple's record: " << requestID_list[i];
+      qDebug() << "Query: " << qry;
       //checks is status is WAIT: what if not???
       
       db->query( qry );
