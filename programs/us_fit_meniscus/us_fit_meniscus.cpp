@@ -1391,6 +1391,9 @@ DbgLv(1) << " eupd:   ixmlin ixblin" << ixmlin << ixblin << "ncmlin ncblin" << n
          }
       }
 
+      if ( auto_mode )
+	le_status->setText( "Updating edit profile: " + fname_edit ); 
+      
       // Write out the modified Edit XML text
       QFile fileo( fn );
 
@@ -1462,6 +1465,10 @@ DbgLv(1) << " eupd: AppWvl: nedtfs" << nedtfs;
       {  // Modify each Edit file corresponding to a wavelength
          QString fn = filedir + "/" + edtfiles.at( jj );
 DbgLv(1) << " eupd:     jj" << jj << "fn" << fn;
+
+         if ( auto_mode )
+	   le_status->setText( "Updating edit profile: " + edtfiles.at( jj )  ); 
+ 
          QFile filei( fn );
 
          if ( ! filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
