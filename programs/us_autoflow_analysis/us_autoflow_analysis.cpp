@@ -82,6 +82,7 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   Failed_triples.clear();
   Manual_update.clear();
   History_read.clear();
+  Process_2dsafm.clear();
   
   AProfileGUID       = protocol_details[ "aprofileguid" ];
   ProtocolName_auto  = protocol_details[ "protocolName" ];
@@ -134,6 +135,8 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       qDebug() << "analysis_details.size() FROM autoflowAnalysisHistory -- " << analysis_details.size();
 
       QString triple_name = analysis_details["triple_name"];
+      QString status_json = analysis_details["status_json"];
+      
       Array_of_analysis[ triple_name ] = analysis_details;
 
       Manual_update[ triple_name ]     = false;
@@ -141,6 +144,11 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       Failed_triples[ triple_name ]    = false;
       History_read[ triple_name ]      = false;
 
+      if ( status_json.contains("2DSA_FM") ) 
+	Process_2dsafm[ triple_name ] = true;
+      else
+	Process_2dsafm[ triple_name ] = false;
+	
       //Define triple's channels
       QStringList triple_name_parts = triple_name.split(".");
       channels_all << triple_name_parts[0] + "." + triple_name_parts[1];
@@ -575,7 +583,7 @@ void US_Analysis_auto::gui_update( )
 	    }
 	  //when re-attaching by reading history record for triple
 	  if ( !to_process_array.size()  && History_read[ triple_curr_key ] )
-	    topItem [ triple_curr ]  -> setForeground( 0,  QBrush( colorDarkGreen ) );
+	    topItem [ triple_curr ]  -> setForeground( 0,  QBrush( colorGreen ) );
 	}
 
       //submitted -- current active stage
@@ -585,8 +593,9 @@ void US_Analysis_auto::gui_update( )
 	{
 	  QGroupBox * current_stage_groupbox = NULL;
 	  qDebug() << "Submitted stage - " << submitted.toString() << ", for triple " << triple_curr;
+	  qDebug() << "Process_2dsafm[] = " <<  Process_2dsafm[ triple_curr_key ];
 
-	  if ( submitted.toString() == "FITMEN" && !Manual_update[ triple_curr_key ] )
+	  if ( submitted.toString() == "FITMEN" && !Manual_update[ triple_curr_key ] && Process_2dsafm[ triple_curr_key ] )
 	    {
 	      QMessageBox::information( this,
 					tr( "ATTENTION: FITMEN stage reached" ),
@@ -673,7 +682,7 @@ void US_Analysis_auto::gui_update( )
 	      if ( !to_process_array.size() && status == "COMPLETE" )
 		{
 		  lineedit_status          -> setStyleSheet( "QLineEdit { background-color:  rgb(2, 88, 57); color : white; }");
-		  topItem [ triple_curr ]  -> setForeground( 0,  QBrush( colorDarkGreen ) );
+		  topItem [ triple_curr ]  -> setForeground( 0,  QBrush( colorGreen ) );
 
 		  /****
 		  ALEXEY: maybe update QMap < triple_curr , bool > Completed_triples with TRUE (defined as all FALSES at the beginning):
@@ -858,7 +867,7 @@ void US_Analysis_auto::reset_auto( )
   Manual_update.clear();
   History_read.clear();
   Completed_triples.clear();
-  
+  Process_2dsafm.clear();
   //TO DO MORE later - DB stop etc..
 }
 
