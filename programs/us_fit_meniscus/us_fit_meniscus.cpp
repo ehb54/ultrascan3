@@ -1770,7 +1770,7 @@ void US_FitMeniscus::get_editProfile_copy( QMap < QString, QString > & triple_in
   US_DB2* db = new US_DB2( masterpw );
   
   int stat = 0;
-  //to be extracted from editedData table ('filename' field)
+  // to be extracted from editedData table ('filename' field)
   // QMap below - establish correspondence btw EditProfile filename && EditDataID
   // select filename, editedDataID from editedData where label='ISSF-KulkarniJ_NP1-pDNA-D2O-0_091020-run822-2A';
   QMap <QString, int> EProfs_to_IDs;
@@ -1797,9 +1797,13 @@ void US_FitMeniscus::get_editProfile_copy( QMap < QString, QString > & triple_in
       int editedDataID = fn.value();
       
       QString filepath = US_Settings::resultDir() + "/" + triple_information[ "filename" ] + "/" + filename;
+
       // Can check here if such filename exists
-      
-      stat   = db->readBlobFromDB( filepath, "download_editData", editedDataID );
+      QFileInfo check_file( filepath );
+      if ( check_file.exists() && check_file.isFile() )
+	qDebug() << "EditProfile file: " << filepath << " exists";
+      else
+	stat   = db->readBlobFromDB( filepath, "download_editData", editedDataID );
     }
 }
 
