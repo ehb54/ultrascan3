@@ -88,6 +88,7 @@ DbgLv(1) << "Main: BB";
                           Qt::LeftButton, Qt::ControlModifier );
    connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
                      SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
+   
    grid->attach( meniscus_plot );
    
    meniscus_plot->setMinimumSize( 400, 400 );
@@ -686,7 +687,22 @@ DbgLv(1) << "LD:  was3val have3val" << was3val << have3val
 // Handle a mouse click according to the current pick step
 void US_FitMeniscus::mouse( const QwtDoublePoint& p )
 {
+  double radius_min[ 2 ];
+  double rmsd_min  [ 2 ];
+ 
+  // Plot the minimum selected by user
+     
+  radius_min[ 0 ] = p.x();
+  radius_min[ 1 ] = p.x();
+  
+  rmsd_min  [ 0 ] = miny_global - 1.0 * dy_global;
+  rmsd_min  [ 1 ] = miny_global + 2.0 * dy_global;
+  
+  minimum_curve_sel->setSamples( radius_min, rmsd_min, 2 );
+  
   le_men_sel->setText( QString::number( p.x(), 'f', 5 ) );
+
+  meniscus_plot->replot();
 }
 
 // Plot the data
@@ -997,7 +1013,8 @@ void US_FitMeniscus::plot_2d( void )
     
    // Adjust y axis to scale all the data
    double dy = fabs( maxy - miny ) / 10.0;
-
+   dy_global = dy;
+   
    meniscus_plot->setAxisScale( QwtPlot::yLeft, miny - dy, maxy + dy );
 
    raw_curve = us_curve( meniscus_plot, tr( "Raw Data" ) ); 
@@ -1115,6 +1132,10 @@ void US_FitMeniscus::plot_2d( void )
    fit_curve = us_curve( meniscus_plot, tr( "Fitted Data" ) ); 
    fit_curve->setPen    ( QPen( Qt::red ) );
    fit_curve->setSamples( fit_x, fit_y, fit_count );
+
+
+   // copy miny to global variables
+   miny_global = miny;
    
    // Plot the minimum
 
@@ -1756,6 +1777,10 @@ DbgLv(1) << "FL: aplmwl: nedtfs" << nedtfs << "edtfilt" << edtfilt;
    plot_data();
    
    le_status->setText( tr( "Data loaded:  " ) + runID + "/" + fname_load );
+
+   //Meniscus position, user specified curve
+   minimum_curve_sel = us_curve( meniscus_plot, tr( "Minimum Pointer" ) ); 
+   minimum_curve_sel->setPen( QPen( QBrush( Qt::red ), 3.0 ) );
 }
 
 void US_FitMeniscus::get_editProfile_copy( QMap < QString, QString > & triple_information  )
@@ -1941,6 +1966,10 @@ DbgLv(1) << "FL: aplmwl: nedtfs" << nedtfs << "edtfilt" << edtfilt;
    plot_data();
    
    le_status->setText( tr( "Data loaded:  " ) + runID + "/" + fname_load );
+
+   //Meniscus position, user specified curve
+   minimum_curve_sel = us_curve( meniscus_plot, tr( "Minimum Pointer" ) ); 
+   minimum_curve_sel->setPen( QPen( QBrush( Qt::red ), 3.0 ) );
 }
 
 

@@ -116,7 +116,10 @@ class US_FitMeniscus : public US_Widgets
       QwtPlot*             menibott_plot;
       QwtPlotCurve*        raw_curve;
       QwtPlotCurve*        fit_curve;
+
       QwtPlotCurve*        minimum_curve;
+      QwtPlotCurve*        minimum_curve_sel;
+      
       QwtPlotSpectrogram*  d_spectrogram;
       US_SpectrogramData*  spec_dat;
       QwtLinearColorMap*   colormap;
@@ -142,6 +145,9 @@ class US_FitMeniscus : public US_Widgets
 
       bool                 have3val;
       bool                 bott_fit;
+
+      double               dy_global;
+      double               miny_global;
 
       QMap < QString, QString > triple_information;
 

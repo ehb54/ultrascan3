@@ -465,6 +465,11 @@ void US_Analysis_auto::gui_update( )
 		  QLineEdit * lineedit_submit   = to_process_stage_groupbox->findChild<QLineEdit *>("submit", Qt::FindDirectChildrenOnly);
 		  QLineEdit * lineedit_cluster  = to_process_stage_groupbox->findChild<QLineEdit *>("cluster", Qt::FindDirectChildrenOnly);
 		  QLineEdit * lineedit_lastupd  = to_process_stage_groupbox->findChild<QLineEdit *>("lastupd", Qt::FindDirectChildrenOnly);
+
+		  QPushButton * pb_delete       = to_process_stage_groupbox->findChild<QPushButton *>("delete", Qt::FindDirectChildrenOnly);
+
+		  //delete button
+		  pb_delete -> setEnabled( false );
 		  
 		  //runID
 		  QString runid_text = filename + " ( " + triple_curr + " )  " + defaultDB + " (ID: N/A)";
@@ -551,11 +556,16 @@ void US_Analysis_auto::gui_update( )
 		  QLineEdit * lineedit_submit   = processed_stage_groupbox->findChild<QLineEdit *>("submit", Qt::FindDirectChildrenOnly);
 		  QLineEdit * lineedit_cluster  = processed_stage_groupbox->findChild<QLineEdit *>("cluster", Qt::FindDirectChildrenOnly);
 		  QLineEdit * lineedit_lastupd  = processed_stage_groupbox->findChild<QLineEdit *>("lastupd", Qt::FindDirectChildrenOnly);
-		  
+
+		  QPushButton * pb_delete       = processed_stage_groupbox->findChild<QPushButton *>("delete", Qt::FindDirectChildrenOnly);
+
+		  //delete
+		  pb_delete->setEnabled( false );
+
 		  //runID
 		  QString runid_text = filename + " ( " + triple_curr + " )  " + defaultDB + " (ID: " + stage_HPCAnalysisRequestID + ")";
 		  lineedit_runid -> setText(runid_text);
-		  
+
 		  //owner
 		  QString investigator_text = investigator_details["email"] + " (" + investigator_details["fname"] + " " + investigator_details["lname"] +  ")";
 		  lineedit_owner -> setText( investigator_text );
@@ -582,7 +592,7 @@ void US_Analysis_auto::gui_update( )
 		}
 	    }
 	  //when re-attaching by reading history record for triple
-	  if ( !to_process_array.size()  && History_read[ triple_curr_key ] )
+	  if ( !to_process_array.size() && History_read[ triple_curr_key ] )
 	    topItem [ triple_curr ]  -> setForeground( 0,  QBrush( colorGreen ) );
 	}
 
@@ -659,7 +669,19 @@ void US_Analysis_auto::gui_update( )
 	      QLineEdit * lineedit_submit   = current_stage_groupbox->findChild<QLineEdit *>("submit", Qt::FindDirectChildrenOnly);
 	      QLineEdit * lineedit_cluster  = current_stage_groupbox->findChild<QLineEdit *>("cluster", Qt::FindDirectChildrenOnly);
 	      QLineEdit * lineedit_lastupd  = current_stage_groupbox->findChild<QLineEdit *>("lastupd", Qt::FindDirectChildrenOnly);
-	      
+
+	      QPushButton * pb_delete       = current_stage_groupbox->findChild<QPushButton *>("delete", Qt::FindDirectChildrenOnly);
+
+	      //QString triple_stage = triple_curr_key + ":" + submitted.toString();
+	      //delete button: if running && admin_user || user_owner, enable; otherwise, disable (should be disabled earlier)
+	      if ( US_Settings::us_inv_level() > 3 || US_Settings::us_inv_ID() == invID )
+		if ( !pb_delete->isEnabled() )
+		  {
+		    pb_delete->setEnabled( true );
+		    
+		    //signalMapper->setMapping ( pb_delete, triple_stage );
+		  }
+	      	          
 	      //runID
 	      QString runid_text = filename + " ( " + triple_curr + " )  " + defaultDB + " (ID: " + curr_HPCAnalysisRequestID + ")";
 	      lineedit_runid -> setText(runid_text);
@@ -694,6 +716,8 @@ void US_Analysis_auto::gui_update( )
 		  lineedit_status          -> setStyleSheet( "QLineEdit { background-color:  rgb(2, 88, 57); color : white; }");
 		  topItem [ triple_curr ]  -> setForeground( 0,  QBrush( colorGreen ) );
 
+		  pb_delete->setEnabled( false );
+
 		  /****
 		  ALEXEY: maybe update QMap < triple_curr , bool > Completed_triples with TRUE (defined as all FALSES at the beginning):
 		  Completed_triples[ triple_curr ] = true;
@@ -710,6 +734,8 @@ void US_Analysis_auto::gui_update( )
 		{
 		  lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(210, 0, 0); color : white; }");
 		  topItem [ triple_curr ]  -> setForeground( 0,  QBrush( colorRed ));
+
+		  pb_delete->setEnabled( false );
 		  
 		  Completed_triples[ triple_curr_key ] = true;
 		  Failed_triples   [ triple_curr_key ] = true;
@@ -780,6 +806,50 @@ void US_Analysis_auto::gui_update( )
   in_gui_update  = false; 
 }
 
+
+//Slot to delete Job
+void US_Analysis_auto::delete_job( QString triple_stage )
+{
+  QString tr_st = triple_stage.simplified();
+  tr_st.replace( " ", "" );
+    
+  QStringList triple_stage_parts = tr_st.split("(");
+
+  // qDebug() << "In DELETE: triple_stage: " << triple_stage;
+  // qDebug() << "Parts: " << triple_stage_parts;
+
+  QString stage_n = triple_stage_parts[0];
+  QString triple_n  = triple_stage_parts[1];
+  triple_n.chop(1);
+  triple_n.replace("/",".");
+
+  QMessageBox msg_delete;
+  msg_delete.setIcon(QMessageBox::Critical);
+  msg_delete.setWindowTitle(tr("Job Deletion!"));
+  
+  QString msg_sys_text = QString("ATTENTION! You have chosen to delete an ongoing job for triple %1, stage %2!" )
+    .arg( triple_n )
+    .arg( stage_n  );
+  
+  QString msg_sys_text_info = QString("Do you want to proceed?");
+  msg_delete.setText( msg_sys_text );
+  
+  msg_delete.setInformativeText( msg_sys_text_info );
+  
+  QPushButton *Accept_sys    = msg_delete.addButton(tr("YES"), QMessageBox::YesRole);
+  QPushButton *Cancel_sys    = msg_delete.addButton(tr("Cancel"), QMessageBox::RejectRole);
+  
+  msg_delete.exec();
+
+  if (msg_delete.clickedButton() == Accept_sys)
+    {
+      //Send signal to autoflowAnalysis record ? 
+      qDebug() << "DELETION chosen !!";
+    }
+  else if (msg_delete.clickedButton() == Cancel_sys)
+    return;
+    
+}
 
 // slot to update autoflowAnalysis record at fitmen stage && register manually updated triple
 void US_Analysis_auto::update_autoflowAnalysis_statuses (  QMap < QString, QString > & triple_info )
@@ -913,6 +983,11 @@ QGroupBox * US_Analysis_auto::createGroup( QString & triple_name )
   QLineEdit*  le_runID   = us_lineedit( "", 0, true );
   le_runID -> setObjectName("runID");
 
+  //Delete button
+  //QPushButton* pb_delete = us_pushbutton( tr( "Delete" ) );
+  QPushButton* pb_delete = new QPushButton( tr( "Delete" ) );
+  pb_delete-> setObjectName("delete");
+  
   //Owner
   QLabel*     lb_owner   = us_label( tr( "Owner:" ) );
   QLineEdit*  le_owner   = us_lineedit( "", 0, true );
@@ -951,7 +1026,9 @@ QGroupBox * US_Analysis_auto::createGroup( QString & triple_name )
   
   
   genL->addWidget( lb_runID,   row,    0, 1, 2 );
-  genL->addWidget( le_runID,   row++,  2, 1, 8 );
+  genL->addWidget( le_runID,   row,    2, 1, 8 );
+
+  genL->addWidget( pb_delete,  row++,  10, 6, 1);
 
   genL->addWidget( lb_owner,   row,    0, 1, 2 );
   genL->addWidget( le_owner,   row++,  2, 1, 8 );  
@@ -973,7 +1050,14 @@ QGroupBox * US_Analysis_auto::createGroup( QString & triple_name )
   genL->addWidget( le_lastupd, row,    2, 1, 3 );
   
   groupBox->setLayout(genL);
-  
+
+  // Disable delete btn by default
+  pb_delete->setEnabled( false );
+
+  signalMapper = new QSignalMapper(this);
+  connect(signalMapper, SIGNAL( mapped( QString ) ), this, SLOT( delete_job( QString ) ) );
+  connect( pb_delete, SIGNAL( clicked() ), signalMapper, SLOT(map()));
+  signalMapper->setMapping ( pb_delete, triple_name );
   
   return groupBox;
 }

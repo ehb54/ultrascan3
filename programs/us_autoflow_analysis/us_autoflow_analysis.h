@@ -80,6 +80,8 @@ class US_Analysis_auto : public US_Widgets
 
 	 QGroupBox *createGroup( QString &);
 
+	 QSignalMapper  *signalMapper;
+	 
 	 //2DSA
 	 bool        job1run;         //!< Run 1 (2dsa) run flag
 	 bool        job2run;         //!< Run 2 (2dsa_fm) run flag
@@ -104,7 +106,9 @@ class US_Analysis_auto : public US_Widgets
 	void reset_auto     ( void );
 
 	void update_autoflowAnalysis_statuses( QMap < QString, QString > & );
-     
+
+	void delete_job( QString );
+		
       signals:
 	void analysis_update_process_stopped( void );
 	void close_analysissetup_msg( void ); 
