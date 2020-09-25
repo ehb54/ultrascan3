@@ -1,4 +1,4 @@
-//! \FILE us_edit.cpp
+//! \file us_edit.cpp
 
 //#include <QApplication>
 //#include <QDomDocument>

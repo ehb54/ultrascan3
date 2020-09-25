@@ -1148,7 +1148,7 @@ DbgLv(1) << "BldVc:     di 0 1 k n" << v_difcs[ii][0] << v_difcs[ii][1]
 
       if ( nsmoo > 1 )
       {  // Apply gaussian smoothing to s and D vectors
-	 US_Math2::gaussian_smoothing( v_sedcs[ ii ], nsmoo );
+         US_Math2::gaussian_smoothing( v_sedcs[ ii ], nsmoo );
          US_Math2::gaussian_smoothing( v_difcs[ ii ], nsmoo );
       }
    }
