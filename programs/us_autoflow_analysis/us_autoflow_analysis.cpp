@@ -625,6 +625,16 @@ void US_Analysis_auto::gui_update( )
 	      FitMen->show();
 
 	      Manual_update[ triple_curr_key ] = true;
+
+	      //Stop timer here, and restart with the editProfile_updated signal ??
+	      timer_update -> stop();
+	      disconnect(timer_update, SIGNAL(timeout()), 0, 0);
+	      
+	      qDebug() << "Update stopped at FITMEN for triple -- " << triple_curr_key;
+	      
+	      in_gui_update  = false; 
+
+	      return;
 	    }
 	      
 	  //QGroupBox * current_stage_groupbox;
@@ -795,6 +805,12 @@ void US_Analysis_auto::update_autoflowAnalysis_statuses (  QMap < QString, QStri
   // --- MAKE sure that ALL original 2DSA stages for other wavelength in a channel (besides representative wvl) are completed
   // --- i.e. are in WAIT status
   update_autoflowAnalysis_status_at_fitmen( dbP, requestID_list );
+
+  //Restart timer:
+  connect(timer_update, SIGNAL(timeout()), this, SLOT( gui_update ( ) ));
+  timer_update->start(5000);
+
+  qDebug() << "Timer restarted after updating EditProfiles for channel -- " << channel_name;
 }
 
 //reset Analysis GUI: stopping all update processes
