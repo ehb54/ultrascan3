@@ -69,15 +69,6 @@ class US_Analysis_auto : public US_Widgets
 
 	 void update_autoflowAnalysis_status_at_fitmen ( US_DB2*, const QStringList& );
 	 
-	 void  read_protocol_data_triples( void );
-	 bool  read_protoOptics( QXmlStreamReader&  );
-	 bool  read_protoRanges( QXmlStreamReader&  );
-	 
-	 void  read_aprofile_data_from_aprofile( void );
-	 bool  readAProfile ( QXmlStreamReader& );
-	 bool  readAProfile_2DSA ( QXmlStreamReader& );
-	 static bool bool_flag( const QString );
-
 	 QGroupBox *createGroup( QString &);
 
 	 QSignalMapper  *signalMapper;
