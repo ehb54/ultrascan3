@@ -68,6 +68,8 @@ class US_Analysis_auto : public US_Widgets
 	 QMap < QString, QString > get_investigator_info ( US_DB2*, const QString& );
 
 	 void update_autoflowAnalysis_status_at_fitmen ( US_DB2*, const QStringList& );
+
+	 void update_autoflowAnalysis_uponDeletion ( US_DB2*, const QString& );
 	 
 	 QGroupBox *createGroup( QString &);
 

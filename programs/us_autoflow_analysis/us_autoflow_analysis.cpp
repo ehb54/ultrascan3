@@ -706,7 +706,7 @@ void US_Analysis_auto::gui_update( )
 		}
 
 	      //check if failed -- due to the abortion/deletion of the job
-	      if ( status == "FAILED" )
+	      if ( status == "FAILED" || status == "CANCELED" )
 		{
 		  lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(210, 0, 0); color : white; }");
 		  topItem [ triple_curr ]  -> setForeground( 0,  QBrush( colorRed ));
@@ -842,12 +842,41 @@ void US_Analysis_auto::delete_job( QString triple_stage )
       QMap <QString, QString > current_analysis;
       current_analysis = read_autoflowAnalysis_record( &db, requestID );
       
-      qDebug() << "GUID to DETETE! -- " << current_analysis[ "CurrentGfacID" ];  
+      qDebug() << "GUID to DETETE! -- " << current_analysis[ "CurrentGfacID" ];
+      qDebug() << "Status && statusMsg to DETETE! -- " << current_analysis[ "status" ] << current_analysis[ "status_msg" ];
+
+      update_autoflowAnalysis_uponDeletion( &db, requestID );
       
     }
   else if (msg_delete.clickedButton() == Cancel_sys)
     return;
     
+}
+
+// slot to update autoflowAnalysis record when DELETE pressed
+void US_Analysis_auto::update_autoflowAnalysis_uponDeletion ( US_DB2* db, const QString& requestID )
+{
+  // //Update
+  // US_Passwd pw;
+  // US_DB2* db = new US_DB2( pw.getPasswd() );
+
+  // if ( db->lastErrno() != US_DB2::OK )
+  //   {
+  //     QMessageBox::warning( this, tr( "Connection Problem" ),
+  // 			    tr( "Updating autoflowAnalysis at FITMEN: Could not connect to database \n" ) + db->lastError() );
+  //     return;
+  //   }
+
+  
+  QStringList qry;
+
+  qry << "update_autoflow_analysis_record_at_deletion"
+      << requestID;
+
+  qDebug() << "DELETION: Query -- " << qry;
+  db->query( qry );
+    
+  return;
 }
 
 // slot to update autoflowAnalysis record at fitmen stage && register manually updated triple
