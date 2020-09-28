@@ -8,7 +8,6 @@
 #include "us_gui_settings.h"
 #include "us_protocol_util.h"
 
-
 const QColor colorRed       ( 210, 0, 0 );
 const QColor colorDarkGreen ( 2, 88, 57 );
 const QColor colorGreen     ( 50, 205, 50 );
@@ -836,7 +835,7 @@ void US_Analysis_auto::delete_job( QString triple_stage )
   
   msg_delete.setInformativeText( msg_sys_text_info );
   
-  QPushButton *Accept_sys    = msg_delete.addButton(tr("YES"), QMessageBox::YesRole);
+  QPushButton *Accept_sys    = msg_delete.addButton(tr("YES"),    QMessageBox::YesRole);
   QPushButton *Cancel_sys    = msg_delete.addButton(tr("Cancel"), QMessageBox::RejectRole);
   
   msg_delete.exec();
@@ -845,6 +844,29 @@ void US_Analysis_auto::delete_job( QString triple_stage )
     {
       //Send signal to autoflowAnalysis record ? 
       qDebug() << "DELETION chosen !!";
+
+      QMap <QString, QString > ana_details = Array_of_analysis[ triple_n ];
+      QString requestID = ana_details["requestID"];
+
+      qDebug() << "RequestID -- " << requestID;
+
+      
+      US_Passwd pw;
+      US_DB2    db( pw.getPasswd() );
+      
+      // Get the buffer data from the database
+      if ( db.lastErrno() != US_DB2::OK )
+	{
+	  QMessageBox::warning( this, tr( "Connection Problem" ),
+				tr( "Could not connect to database \n" ) +  db.lastError() );
+	  return;
+	}
+      
+      QMap <QString, QString > current_analysis;
+      current_analysis = read_autoflowAnalysis_record( &db, requestID );
+      
+      qDebug() << "GUID to DETETE! -- " << current_analysis[ "CurrentGfacID" ];  
+      
     }
   else if (msg_delete.clickedButton() == Cancel_sys)
     return;
