@@ -71,6 +71,7 @@ US_Hydrodyn_Batch::US_Hydrodyn_Batch(
    this->us_hydrodyn = us_hydrodyn;
 
    started_in_expert_mode = ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode;
+   overwriteForcedOn = false;
 
    this->lb_model = ((US_Hydrodyn *)us_hydrodyn)->lb_model;
    cb_hydrate = (QCheckBox *)0;
@@ -1769,6 +1770,21 @@ void US_Hydrodyn_Batch::set_issue_info( bool as_batch )
    }
 }
 
+void US_Hydrodyn_Batch::stop_processing() {
+   editor_msg( "dark red", "Stopped by user" );
+   editor_msg( "dark red", "Files selected may have changed, please verify before rerunning Start." );
+   enable_after_stop();
+   disable_updates = false;
+   save_batch_active = false;
+   ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear( );
+   if ( overwriteForcedOn )
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->overwrite = false;
+      ((US_Hydrodyn *)us_hydrodyn)->cb_overwrite->setChecked(false);
+   }
+
+}   
+
 void US_Hydrodyn_Batch::screen()
 {
    disable_updates = true;
@@ -1782,6 +1798,8 @@ void US_Hydrodyn_Batch::screen()
 
    set_issue_info( false );
 
+   overwriteForcedOn = false;
+
    for ( int i = 0; i < lb_files->count(); i++ )
    {
       progress->setValue( i );
@@ -1792,11 +1810,7 @@ void US_Hydrodyn_Batch::screen()
          // editor->append(QString(us_tr("Screening: %1").arg(file)));
          if ( stopFlag )
          {
-            editor->setTextColor("dark red");
-            editor->append("Stopped by user");
-            enable_after_stop();
-            editor->setTextColor(save_color);
-            disable_updates = false;
+            stop_processing();
             return;
          }
          status[file] = 2; // screening now
@@ -2253,7 +2267,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
    }
 
    US_Timer job_timer;
-   bool overwriteForcedOn = false;
+   overwriteForcedOn = false;
    if ( !quiet && !((US_Hydrodyn *)us_hydrodyn)->overwrite )
    {
       switch ( QMessageBox::warning(this, 
@@ -2381,18 +2395,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
                
             if ( stopFlag )
             {
-               editor->setTextColor("dark red");
-               editor->append("Stopped by user");
-               enable_after_stop();
-               editor->setTextColor(save_color);
-               disable_updates = false;
-               save_batch_active = false;
-               ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear( );
-               if ( overwriteForcedOn )
-               {
-                  ((US_Hydrodyn *)us_hydrodyn)->overwrite = false;
-                  ((US_Hydrodyn *)us_hydrodyn)->cb_overwrite->setChecked(false);
-               }
+               stop_processing();
                return;
             }
             bool pdb_mode =
@@ -2437,18 +2440,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
             } 
             if ( stopFlag )
             {
-               editor->setTextColor("dark red");
-               editor->append("Stopped by user");
-               enable_after_stop();
-               editor->setTextColor(save_color);
-               disable_updates = false;
-               save_batch_active = false;
-               ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear( );
-               if ( overwriteForcedOn )
-               {
-                  ((US_Hydrodyn *)us_hydrodyn)->overwrite = false;
-                  ((US_Hydrodyn *)us_hydrodyn)->cb_overwrite->setChecked(false);
-               }
+               stop_processing();
                return;
             }
             if ( result && batch->iqq )
@@ -2742,18 +2734,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
             } 
             if ( stopFlag )
             {
-               editor->setTextColor("dark red");
-               editor->append("Stopped by user");
-               enable_after_stop();
-               editor->setTextColor(save_color);
-               disable_updates = false;
-               save_batch_active = false;
-               ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear( );
-               if ( overwriteForcedOn )
-               {
-                  ((US_Hydrodyn *)us_hydrodyn)->overwrite = false;
-                  ((US_Hydrodyn *)us_hydrodyn)->cb_overwrite->setChecked(false);
-               }
+               stop_processing();
                return;
             }
             if ( result && batch->prr )
@@ -2964,18 +2945,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
             progress->setValue( 1 + i * 2 );
             if ( stopFlag )
             {
-               editor->setTextColor("dark red");
-               editor->append("Stopped by user");
-               enable_after_stop();
-               editor->setTextColor(save_color);
-               disable_updates = false;
-               save_batch_active = false;
-               ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear( );
-               if ( overwriteForcedOn )
-               {
-                  ((US_Hydrodyn *)us_hydrodyn)->overwrite = false;
-                  ((US_Hydrodyn *)us_hydrodyn)->cb_overwrite->setChecked(false);
-               }
+               stop_processing();
                return;
             }
             if ( result && ( batch->hydro || batch->zeno || batch->grpy ) &&
@@ -3033,18 +3003,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
 
             if ( stopFlag )
             {
-               editor->setTextColor("dark red");
-               editor->append("Stopped by user");
-               enable_after_stop();
-               editor->setTextColor(save_color);
-               disable_updates = false;
-               save_batch_active = false;
-               ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear( );
-               if ( overwriteForcedOn )
-               {
-                  ((US_Hydrodyn *)us_hydrodyn)->overwrite = false;
-                  ((US_Hydrodyn *)us_hydrodyn)->cb_overwrite->setChecked(false);
-               }
+               stop_processing();
                return;
             }
 

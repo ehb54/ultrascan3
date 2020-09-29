@@ -13588,15 +13588,25 @@ bool US_Hydrodyn_Zeno::run(
       zeno_progress->setValue( 0 ); zeno_progress->setMaximum( progress_steps );
       us_qdebug( QString( "zeno run start zeno_cxx_main\n" ) );
 #if !defined(USE_OLD_ZENO) && __cplusplus >= 201103L
-      zeno_cxx_main( argc, argv, QString( "%1.zno" ).arg( filename ).toLatin1().data(), false, zeno_us_udp_msg );
+      zeno_cxx_main(
+                    argc
+                    ,argv
+                    ,QString( "%1.zno%2" ).arg( filename ).arg( us_hydrodyn->batch_avg_hydro_active() ? "_Tmp_Remove" : "" ).toLatin1().data()
+                    ,false
+                    ,zeno_us_udp_msg
+                    );
 #endif
       us_qdebug( QString( "zeno run return zeno_cxx_main\n" ) );
       zeno_progress->reset();
 
       if ( !us_hydrodyn->stopFlag )
       {
-         us_hydrodyn->last_hydro_res = QFileInfo( filename + ".zno" ).fileName();
-         us_hydrodyn->editor_msg( "black", QString( "Created %1\n" ).arg( filename + ".zno" ) );
+         if ( !us_hydrodyn->batch_avg_hydro_active() ) {
+            us_hydrodyn->last_hydro_res = QFileInfo( filename + ".zno" ).fileName();
+            us_hydrodyn->editor_msg( "black", QString( "Created %1\n" ).arg( filename + ".zno" ) );
+         } else {
+            us_hydrodyn->last_hydro_res = QFileInfo( filename + ".zno_Tmp_Remove" ).fileName();
+         }            
       }
    } else {
 
@@ -13689,10 +13699,14 @@ bool US_Hydrodyn_Zeno::run(
       }
 #endif
 
-      if ( !us_hydrodyn->stopFlag )
+      if ( !us_hydrodyn->stopFlag && !us_hydrodyn->batch_avg_hydro_active() )
       {
-         us_hydrodyn->last_hydro_res = QFileInfo( filename + ".zno" ).fileName();
-         us_hydrodyn->editor_msg( "black", QString( "Created %1\n" ).arg( filename + ".zno" ) );
+         if ( !us_hydrodyn->batch_avg_hydro_active() ) {
+            us_hydrodyn->last_hydro_res = QFileInfo( filename + ".zno" ).fileName();
+            us_hydrodyn->editor_msg( "black", QString( "Created %1\n" ).arg( filename + ".zno" ) );
+         } else {
+            us_hydrodyn->last_hydro_res = QFileInfo( filename + ".zno_Tmp_Remove" ).fileName();
+         }            
       }
    }
 
@@ -14011,6 +14025,10 @@ bool US_Hydrodyn::calc_zeno()
                   
                   }
                   f.close();
+                  if ( batch_avg_hydro_active() ) {
+                     QFile::remove( last_hydro_res );
+                     last_hydro_res = "";
+                  }
 
                   // editor_msg( "dark blue", 
                   //             QString( "ZENO computation output file %1 opened %2 lines" )
@@ -14530,12 +14548,14 @@ bool US_Hydrodyn::calc_zeno()
                         }
                      }
 
-                     QFile f( last_hydro_res );
-                     if ( f.exists() && f.open( QIODevice::WriteOnly | QIODevice::Append ) )
-                     {
-                        QTextStream ts( &f );
-                        ts << add_to_zeno;
-                        f.close();
+                     if ( !batch_avg_hydro_active() ) {
+                        QFile f( last_hydro_res );
+                        if ( f.exists() && f.open( QIODevice::WriteOnly | QIODevice::Append ) )
+                        {
+                           QTextStream ts( &f );
+                           ts << add_to_zeno;
+                           f.close();
+                        }
                      }
                      this_data.hydro_res += add_to_zeno;
                   }

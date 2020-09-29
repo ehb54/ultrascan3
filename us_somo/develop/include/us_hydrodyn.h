@@ -254,6 +254,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       
    private:
 
+      bool batch_avg_hydro_active();
       double model_mw( const vector < PDB_atom > & use_model );
       double model_mw( const vector < PDB_atom * > use_model );
 

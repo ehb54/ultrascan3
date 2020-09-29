@@ -1873,9 +1873,12 @@ QString US_Hydrodyn_Save::hydroFormatStats(vector < save_data > stats, enum Hydr
                                     stats[1].rot_fric_coef);
    }
 
-   result += QString("").sprintf("- ROT. DIFF. COEFF.           \t%.0f\t\t%.0f\t[1/s]\n",
-                                 stats[0].rot_diff_coef,
-                                 stats[1].rot_diff_coef);
+   if ( hydrotype != HYDRO_ZENO ) {
+      result += QString("").sprintf("- ROT. DIFF. COEFF.           \t%.0f\t\t%.0f\t[1/s]\n",
+                                    stats[0].rot_diff_coef,
+                                    stats[1].rot_diff_coef);
+   }
+
    if ( hydrotype == HYDRO_UNKNOWN || hydrotype == HYDRO_SMI ) {
       result += QString("").sprintf("- ROT. FRICT. COEFF. [ X ]    \t%.3e\t%.3e\t[g*cm^2/s]\n",
                                     stats[0].rot_fric_coef_x,
@@ -1959,24 +1962,26 @@ QString US_Hydrodyn_Save::hydroFormatStats(vector < save_data > stats, enum Hydr
                                  stats[1].);
 #endif
    
-   result += QString("").sprintf("\nRELAXATION TIMES\n\n");
+   if ( hydrotype != HYDRO_ZENO ) {
+      result += QString("").sprintf("\nRELAXATION TIMES\n\n");
    
-   result += QString("").sprintf(" Tau(1)                       \t%.2f\t\t%.2f\t\t[ns]\n",
-                                 stats[0].rel_times_tau_1,
-                                 stats[1].rel_times_tau_1);
-   result += QString("").sprintf(" Tau(2)                       \t%.2f\t\t%.2f\t\t[ns]\n",
-                                 stats[0].rel_times_tau_2,
-                                 stats[1].rel_times_tau_2);
-   result += QString("").sprintf(" Tau(3)                       \t%.2f\t\t%.2f\t\t[ns]\n",
-                                 stats[0].rel_times_tau_3,
-                                 stats[1].rel_times_tau_3);
-   result += QString("").sprintf(" Tau(4)                       \t%.2f\t\t%.2f\t\t[ns]\n",
-                                 stats[0].rel_times_tau_4,
-                                 stats[1].rel_times_tau_4);
-   result += QString("").sprintf(" Tau(5)                       \t%.2f\t\t%.2f\t\t[ns]\n",
-                                 stats[0].rel_times_tau_5,
-                                 stats[1].rel_times_tau_5);
+      result += QString("").sprintf(" Tau(1)                       \t%.2f\t\t%.2f\t\t[ns]\n",
+                                    stats[0].rel_times_tau_1,
+                                    stats[1].rel_times_tau_1);
+      result += QString("").sprintf(" Tau(2)                       \t%.2f\t\t%.2f\t\t[ns]\n",
+                                    stats[0].rel_times_tau_2,
+                                    stats[1].rel_times_tau_2);
+      result += QString("").sprintf(" Tau(3)                       \t%.2f\t\t%.2f\t\t[ns]\n",
+                                    stats[0].rel_times_tau_3,
+                                    stats[1].rel_times_tau_3);
+      result += QString("").sprintf(" Tau(4)                       \t%.2f\t\t%.2f\t\t[ns]\n",
+                                    stats[0].rel_times_tau_4,
+                                    stats[1].rel_times_tau_4);
+      result += QString("").sprintf(" Tau(5)                       \t%.2f\t\t%.2f\t\t[ns]\n",
+                                    stats[0].rel_times_tau_5,
+                                    stats[1].rel_times_tau_5);
 
+   }
    // compute weighted mean average tau(m)
    
    // compute weighted means & V2
@@ -2107,12 +2112,14 @@ QString US_Hydrodyn_Save::hydroFormatStats(vector < save_data > stats, enum Hydr
    //   result += QString("").sprintf(" Tau(h) (Weighted average)    \t%.2f\t\t\t\t[ns]\n",
    //                                 1.0 / avgrv);
    
-   result += QString("").sprintf("\n Tau(m) (Unweighted average)  \t%.2f\t\t%.2f\t\t[ns]\n",
-                                 stats[0].rel_times_tau_m,
-                                 stats[1].rel_times_tau_m);
-   result += QString("").sprintf(" Tau(h) (Unweighted average)  \t%.2f\t\t%.2f\t\t[ns]\n",
-                                 stats[0].rel_times_tau_h,
-                                 stats[1].rel_times_tau_h);
+   if ( hydrotype != HYDRO_ZENO ) {
+      result += QString("").sprintf("\n Tau(m) (Unweighted average)  \t%.2f\t\t%.2f\t\t[ns]\n",
+                                    stats[0].rel_times_tau_m,
+                                    stats[1].rel_times_tau_m);
+      result += QString("").sprintf(" Tau(h) (Unweighted average)  \t%.2f\t\t%.2f\t\t[ns]\n",
+                                    stats[0].rel_times_tau_h,
+                                    stats[1].rel_times_tau_h);
+   }
    
    result += QString("").sprintf("\n****************************************************************\n");
 

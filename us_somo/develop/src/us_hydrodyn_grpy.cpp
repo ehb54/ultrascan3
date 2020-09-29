@@ -349,7 +349,7 @@ void US_Hydrodyn::grpy_readFromStdout()
    // editor_msg( "brown", qs );
    //  qApp->processEvents();
 }
-   
+
 void US_Hydrodyn::grpy_readFromStderr()
 {
    // us_qdebug( QString( "grpy_readFromStderr %1" ).arg( grpy_last_processed ) );
@@ -505,7 +505,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
    }
 
    // save stdout
-   {
+   if ( !batch_avg_hydro_active() ) {
       QString grpy_out_name = grpy_last_processed.replace( QRegExp( ".grpy$" ), ".grpy_res" );
       QFile f( grpy_out_name );
       if ( !f.open( QIODevice::WriteOnly ) ) {
@@ -806,12 +806,14 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
             .arg( QString( "" ).sprintf( "%4.2e nm"  , this_data.results.rg    ) )
             ;
 
-         QFile f( last_hydro_res );
-         if ( f.exists() && f.open( QIODevice::WriteOnly | QIODevice::Append ) )
-         {
-            QTextStream ts( &f );
-            ts << add_to_grpy;
-            f.close();
+         if ( !batch_avg_hydro_active() ) {
+            QFile f( last_hydro_res );
+            if ( f.exists() && f.open( QIODevice::WriteOnly | QIODevice::Append ) )
+            {
+               QTextStream ts( &f );
+               ts << add_to_grpy;
+               f.close();
+            }
          }
 
          this_data.hydro_res = grpy_stdout + add_to_grpy;

@@ -5325,3 +5325,7 @@ QString US_Hydrodyn::get_somo_dir() {
                              );
    return somo_dir;
 }
+
+bool US_Hydrodyn::batch_avg_hydro_active() {
+   return batch_widget && batch_window->batch_job_running && batch.avg_hydro;
+}
