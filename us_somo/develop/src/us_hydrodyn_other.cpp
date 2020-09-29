@@ -54,22 +54,33 @@
 
 void US_Hydrodyn::view_file(const QString &filename, QString title)
 {
-   {
-      QFile f( filename );
-      if ( f.open( QIODevice::ReadOnly ) ) {
-         QString text;
-         QTextStream ts( &f );
-         text = ts.readAll();
-         f.close();
-         US3i_Editor * edit = new US3i_Editor( US3i_Editor::DEFAULT, true, QString(), this );
-         edit->setWindowTitle( title );
-         edit->resize( 685, 700 );
-         edit->move( this->pos().x() + 30, this->pos().y() + 30 );
-         edit->e->setFont( QFont( "monospace",
-                                  US3i_GuiSettings::fontSize() ) );
-         edit->e->setText( text );
-         edit->show();
+   QFile f( filename );
+   if ( f.open( QIODevice::ReadOnly ) ) {
+      QString text;
+      QTextStream ts( &f );
+      text = ts.readAll();
+      f.close();
+      US3i_Editor * edit = new US3i_Editor( US3i_Editor::DEFAULT, true, QString(), this );
+      if ( title.isEmpty() ) {
+         title = filename;
+         if ( title.size() > 74 ) {
+            title = "..." + title.right( 70 );
+         }
+      } else {
+         QString fnamecut = filename;
+         if ( fnamecut.size() > 74 - title.size() - 4 )  {
+            fnamecut = "..." + fnamecut.right( 70 - title.size() - 4 );
+         }
+         title += " : " + fnamecut;
       }
+            
+      edit->setWindowTitle( title );
+      edit->resize( 685, 700 );
+      edit->move( this->pos().x() + 30, this->pos().y() + 30 );
+      edit->e->setFont( QFont( "monospace",
+                               US3i_GuiSettings::fontSize() ) );
+      edit->e->setText( text );
+      edit->show();
    }
 }
 
