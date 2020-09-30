@@ -45,7 +45,7 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   // TreeWidget
   treeWidget = new QTreeWidget();
   treeWidget->setColumnCount(2);
-  treeWidget->headerItem()->setText(0, "Tripels");
+  treeWidget->headerItem()->setText(0, "Triples");
   treeWidget->headerItem()->setText(1, "Analysis Stages");
 
   panel->addWidget(treeWidget);
@@ -74,6 +74,7 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   treeWidget->clear();
   Array_of_triples.clear();
   Array_of_analysis.clear();
+  Array_of_analysis_by_requestID.clear();
   Channel_to_requestIDs.clear();
   channels_all.clear();
 
@@ -138,7 +139,8 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       QString triple_name = analysis_details["triple_name"];
       QString status_json = analysis_details["status_json"];
       
-      Array_of_analysis[ triple_name ] = analysis_details;
+      Array_of_analysis[ triple_name ]  = analysis_details;
+      Array_of_analysis_by_requestID[ requestID ] = analysis_details;
 
       Manual_update[ triple_name ]     = false;
       Completed_triples[ triple_name ] = false;
@@ -377,15 +379,17 @@ void US_Analysis_auto::gui_update( )
 	}
 
       
-      QString cluster       = current_analysis_details[ "cluster" ]      ;
-      QString filename      = current_analysis_details[ "filename" ]     ;
-      QString curr_gfacID   = current_analysis_details[ "CurrentGfacID" ];
+      QString cluster        = current_analysis_details[ "cluster" ]      ;
+      QString filename       = current_analysis_details[ "filename" ]     ;
+      QString curr_gfacID    = current_analysis_details[ "CurrentGfacID" ];
       QString curr_HPCAnalysisRequestID   = current_analysis_details[ "currentHPCARID"];
-      QString status_json   = current_analysis_details[ "status_json" ]  ;
-      QString status        = current_analysis_details[ "status" ]       ;
-      QString status_msg    = current_analysis_details[ "status_msg" ]   ;
-      QString create_time   = current_analysis_details[ "create_time" ]  ;   
-      QString update_time   = current_analysis_details[ "update_time" ]  ;
+      QString status_json    = current_analysis_details[ "status_json" ]  ;
+      QString status         = current_analysis_details[ "status" ]       ;
+      QString status_msg     = current_analysis_details[ "status_msg" ]   ;
+      QString create_time    = current_analysis_details[ "create_time" ]  ;   
+      QString update_time    = current_analysis_details[ "update_time" ]  ;
+      QString nextWaitStatus = current_analysis_details[ "nextWaitStatus" ] ;
+      QString nextWaitStatusMsg = current_analysis_details[ "nextWaitStatusMsg" ] ;
             
       /********************* deal with JSON *****************************************/
       
@@ -511,9 +515,20 @@ void US_Analysis_auto::gui_update( )
 		  stage_createTime = newObj["createTime"].toString();
 		  stage_updateTime = newObj["updateTime"].toString();
 		}
-	      
-	      if ( stage_name == "FITMEN" ||  stage_name.isEmpty() )
-		continue;
+
+	      //IF Canceled by user:
+	      if ( stage_name == "FITMEN" && ( stage_status == "CANCELED" || stage_status == "canceled" ) )
+		{
+		  processed_stage_groupbox = groupbox_2DSA_IT [ triple_curr ];
+		  qDebug() << "CANCELED status for triple/stage (FITMEN) -- " << triple_curr_key << "/" << submitted.toString();
+
+		  stage_HPCAnalysisRequestID = "N/A";
+		  stage_name = "2DSA-IT";
+		  stage_createTime = "N/A";
+		  stage_updateTime = "N/A";
+		  stage_status = "CANCELED";
+		  
+		}
 	      
 	      if ( stage_name == "2DSA" )
 		processed_stage_groupbox = groupbox_2DSA[ triple_curr ];
@@ -570,7 +585,7 @@ void US_Analysis_auto::gui_update( )
 	      
 		
 		  //IF Canceled by user:
-		  if ( stage_status == "CANCELED" )
+		  if ( stage_status == "CANCELED" || stage_status == "canceled" )
 		    {
 		      lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(210, 0, 0); color : white; }");
 		      topItem [ triple_curr ]  -> setForeground( 0,  QBrush( colorRed ));
@@ -579,14 +594,17 @@ void US_Analysis_auto::gui_update( )
 		      
 		      Completed_triples[ triple_curr_key ] = true;
 		      Canceled_triples [ triple_curr_key ] = true;
-		      qDebug() << "FAILED status for triple/stage -- " << triple_curr_key << "/" << submitted.toString();
+		      qDebug() << "CANCELED status for triple/stage -- " << triple_curr_key << "/" << submitted.toString();
 		    }
 		}
 	    }
 	      
 	  //when re-attaching by reading history record for triple
-	  if ( !to_process_array.size() && History_read[ triple_curr_key ] )
-	    topItem [ triple_curr ]  -> setForeground( 0,  QBrush( colorGreen ) );
+	  if ( !to_process_array.size() && History_read[ triple_curr_key ] && !status.contains("CANCELED") && !status.contains("canceled") )
+	    {
+	      qDebug() << "Setting triple to complete - read from History, status = " << status;
+	      topItem [ triple_curr ]  -> setForeground( 0,  QBrush( colorGreen ) );
+	    }
 	}
       
       //submitted -- current active stage
@@ -598,6 +616,8 @@ void US_Analysis_auto::gui_update( )
 	  qDebug() << "Submitted stage - " << submitted.toString() << ", for triple " << triple_curr;
 	  qDebug() << "Process_2dsafm[] = " <<  Process_2dsafm[ triple_curr_key ];
 
+	  QString stage_name = submitted.toString();
+	    
 	  if ( submitted.toString() == "FITMEN" && !Manual_update[ triple_curr_key ] && Process_2dsafm[ triple_curr_key ] )
 	    {
 	      QMessageBox::information( this,
@@ -651,9 +671,21 @@ void US_Analysis_auto::gui_update( )
 	  if ( submitted.toString() == "2DSA_MC" )
 	    current_stage_groupbox = groupbox_2DSA_MC [ triple_curr ];
 
+	  //Special case: children triple of the channel, while parent triple (selected wvl) is CANCELED
+	  if ( submitted.toString() == "FITMEN" && ( nextWaitStatus == "CANCELED" || nextWaitStatus == "canceled") )
+	    {
+	       current_stage_groupbox = groupbox_2DSA_IT [ triple_curr ];
+
+	       curr_HPCAnalysisRequestID = "N/A";
+	       status_msg = "Job has been scheduled for deletion";
+	       status = "CANCELED";
+	       stage_name = "2DSA-IT";
+	       create_time = "N/A";
+	       update_time = "N/A";
+	    }
+
 	  if ( current_stage_groupbox != NULL )
 	    {
-	      
 	      QLineEdit * lineedit_runid    = current_stage_groupbox->findChild<QLineEdit *>("runID", Qt::FindDirectChildrenOnly);
 	      QLineEdit * lineedit_owner    = current_stage_groupbox->findChild<QLineEdit *>("owner", Qt::FindDirectChildrenOnly);
 	      QLineEdit * lineedit_lastmsg  = current_stage_groupbox->findChild<QLineEdit *>("lastmsg", Qt::FindDirectChildrenOnly);
@@ -691,7 +723,7 @@ void US_Analysis_auto::gui_update( )
 	      lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(50, 205, 50); }");
 	      
 	      //analysis type
-	      lineedit_anatype -> setText( submitted.toString() );
+	      lineedit_anatype -> setText( stage_name );
 	      
 	      //submit
 	      lineedit_submit -> setText( create_time );
@@ -726,7 +758,7 @@ void US_Analysis_auto::gui_update( )
 		}
 
 	      //check if failed -- due to the abortion/deletion of the job
-	      if ( status == "FAILED" || status == "CANCELED" )
+	      if ( status == "FAILED" || status == "CANCELED" || status == "canceled")
 		{
 		  pb_delete->setEnabled( false );
 		  lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(210, 0, 0); color : white; }");
@@ -739,7 +771,7 @@ void US_Analysis_auto::gui_update( )
 		      Failed_triples   [ triple_curr_key ] = true;
 		      qDebug() << "FAILED status for triple/stage -- " << triple_curr_key << "/" << submitted.toString();
 		    }
-		  if ( status == "CANCELED" )
+		  if ( status == "CANCELED" || status == "canceled")
 		    {
 		      Canceled_triples   [ triple_curr_key ] = true;
 		      qDebug() << "CANCELED status for triple/stage -- " << triple_curr_key << "/" << submitted.toString();
@@ -846,13 +878,47 @@ void US_Analysis_auto::delete_job( QString triple_stage )
   triple_n.chop(1);
   triple_n.replace("/",".");
 
+  QString triple_n_copy = triple_n;
+  QStringList triple_n_parts = triple_n_copy.split(".");
+  QString channel_n = triple_n_parts[0] + "." + triple_n_parts[1];
+
+  QStringList requestID_list = Channel_to_requestIDs[ channel_n ];
+  qDebug() << "In delete other WVLs: channel info -- " <<  requestID_list;
+
+  QMap <QString, QString > ana_details = Array_of_analysis[ triple_n ];
+  QString requestID = ana_details["requestID"];
+  qDebug() << "RequestID -- " << requestID;
+
+  bool mwl_channel = false;
+  QStringList triple_list_affected;
+  
+  if ( requestID_list.size() > 1 ) 
+    {
+      mwl_channel = true;
+      //remove currently selected requestID -- for primary wvl
+      requestID_list.removeOne( requestID );
+      qDebug() << "In delete other WVLs: MODIFIED channel info -- " <<  requestID_list;
+      
+      for ( int i=0; i<requestID_list.size(); ++i )
+	{
+	  //extract triple information for the rest of wvl
+	  QString requestID_affected = requestID_list[i];
+	  QMap< QString, QString > ana_details_affected = Array_of_analysis_by_requestID[ requestID_affected ];
+	  triple_list_affected << ana_details_affected[ "triple_name" ];
+	}
+    }
+  
   QMessageBox msg_delete;
   msg_delete.setIcon(QMessageBox::Critical);
   msg_delete.setWindowTitle(tr("Job Deletion!"));
   
-  QString msg_sys_text = QString("ATTENTION! You have chosen to delete an ongoing job for triple %1, stage %2!" )
+  QString msg_sys_text = QString("ATTENTION!\nYou have chosen to abort an ongoing job for: \n triple %1, stage %2!" )
     .arg( triple_n )
     .arg( stage_n  );
+
+  if ( mwl_channel )
+    msg_sys_text += QString("\n\nSince this is a multi-wavelength analysis, ongoing jobs for the following same-channel triples will be canceled as well: \n %1")
+      .arg( triple_list_affected.join(",") );
   
   QString msg_sys_text_info = QString("Do you want to proceed?");
   msg_delete.setText( msg_sys_text );
@@ -869,12 +935,6 @@ void US_Analysis_auto::delete_job( QString triple_stage )
       //Send signal to autoflowAnalysis record ? 
       qDebug() << "DELETION chosen !!";
 
-      QMap <QString, QString > ana_details = Array_of_analysis[ triple_n ];
-      QString requestID = ana_details["requestID"];
-
-      qDebug() << "RequestID -- " << requestID;
-
-      
       US_Passwd pw;
       US_DB2    db( pw.getPasswd() );
       
@@ -893,9 +953,13 @@ void US_Analysis_auto::delete_job( QString triple_stage )
       qDebug() << "Status && statusMsg to DETETE! -- " << current_analysis[ "status" ] << current_analysis[ "status_msg" ];
 
       update_autoflowAnalysis_uponDeletion( &db, requestID );
+
+      // Now, if 2DSA or 2DSA-FM of the representative wvl in the MWL case: DELETE jobs for all other triples in a channel:
+      if ( Process_2dsafm [ triple_n ] && ( stage_n == "2DSA" || stage_n == "2DSA-FM" ) && mwl_channel ) 
+	update_autoflowAnalysis_uponDeletion_other_wvl( &db, requestID_list );
       
     }
-  else if (msg_delete.clickedButton() == Cancel_sys)
+  else if ( msg_delete.clickedButton() == Cancel_sys )
     return;
     
 }
@@ -906,13 +970,13 @@ void US_Analysis_auto::update_autoflowAnalysis_uponDeletion ( US_DB2* db, const 
   // //Update
   // US_Passwd pw;
   // US_DB2* db = new US_DB2( pw.getPasswd() );
-
-  // if ( db->lastErrno() != US_DB2::OK )
-  //   {
-  //     QMessageBox::warning( this, tr( "Connection Problem" ),
-  // 			    tr( "Updating autoflowAnalysis at FITMEN: Could not connect to database \n" ) + db->lastError() );
-  //     return;
-  //   }
+  
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+  			    tr( "Updating autoflowAnalysis at DELETEe (primary wvl): Could not connect to database \n" ) + db->lastError() );
+      return;
+    }
 
   
   QStringList qry;
@@ -923,6 +987,34 @@ void US_Analysis_auto::update_autoflowAnalysis_uponDeletion ( US_DB2* db, const 
   qDebug() << "DELETION: Query -- " << qry;
   db->query( qry );
     
+  return;
+}
+
+// slot to update autoflowAnalysis records when DELETE pressed for all other wvl in a channel
+void US_Analysis_auto::update_autoflowAnalysis_uponDeletion_other_wvl ( US_DB2* db, const QStringList& requestID_list )
+{
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+  			    tr( "Updating autoflowAnalysis at DELETE (other wvl): Could not connect to database \n" ) + db->lastError() );
+      return;
+    }
+  
+  QStringList qry;
+  
+  for (int i=0; i < requestID_list.size(); ++i )
+    {
+      qry.clear();
+      qry << "update_autoflow_analysis_record_at_deletion_other_wvl"
+	  << requestID_list[i];
+
+      qDebug() << "Updating triple's record: " << requestID_list[i];
+      qDebug() << "Query: " << qry;
+      //checks is status is WAIT: what if not???
+      
+      db->query( qry );
+    }
+  
   return;
 }
 
@@ -1021,6 +1113,7 @@ void US_Analysis_auto::reset_auto( )
   Array_of_triples.clear();
 
   Array_of_analysis.clear();
+  Array_of_analysis_by_requestID.clear();
   Channel_to_requestIDs.clear();
   channels_all.clear();
 
@@ -1189,6 +1282,8 @@ QMap< QString, QString> US_Analysis_auto::read_autoflowAnalysis_record( US_DB2* 
 	  analysis_details[ "update_time" ]    = db->value( 12 ).toString();
 	  analysis_details[ "create_userd" ]   = db->value( 13 ).toString();
 	  analysis_details[ "update_user" ]    = db->value( 14 ).toString();
+	  analysis_details[ "nextWaitStatus" ] = db->value( 15 ).toString();
+	  analysis_details[ "nextWaitStatusMsg" ] = db->value( 16 ).toString();
 	}
     }
 
@@ -1234,6 +1329,8 @@ QMap< QString, QString> US_Analysis_auto::read_autoflowAnalysisHistory_record( U
 	  analysis_details[ "update_time" ]    = db->value( 12 ).toString();
 	  analysis_details[ "create_userd" ]   = db->value( 13 ).toString();
 	  analysis_details[ "update_user" ]    = db->value( 14 ).toString();
+	  analysis_details[ "nextWaitStatus" ] = db->value( 15 ).toString();
+	  analysis_details[ "nextWaitStatusMsg" ] = db->value( 16 ).toString();
 
 	}
     }
