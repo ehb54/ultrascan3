@@ -79,6 +79,7 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 
   Completed_triples.clear();
   Failed_triples.clear();
+  Canceled_triples.clear();
   Manual_update.clear();
   History_read.clear();
   Process_2dsafm.clear();
@@ -126,13 +127,14 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 
       analysis_details = read_autoflowAnalysis_record( &db, requestID );
 
-      qDebug() << "analysis_details.size() FROM autoflowAnalysis -- " << analysis_details.size();
-
       if ( !analysis_details.size() )
-	analysis_details = read_autoflowAnalysisHistory_record( &db, requestID );
-
-      qDebug() << "analysis_details.size() FROM autoflowAnalysisHistory -- " << analysis_details.size();
-
+	{
+	  analysis_details = read_autoflowAnalysisHistory_record( &db, requestID );
+	  qDebug() << "analysis_details.size() FROM autoflowAnalysisHistory -- " << analysis_details.size();
+	}
+      else
+	qDebug() << "analysis_details.size() FROM autoflowAnalysis -- " << analysis_details.size();
+      
       QString triple_name = analysis_details["triple_name"];
       QString status_json = analysis_details["status_json"];
       
@@ -141,6 +143,7 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       Manual_update[ triple_name ]     = false;
       Completed_triples[ triple_name ] = false;
       Failed_triples[ triple_name ]    = false;
+      Canceled_triples[ triple_name ]  = false;
       History_read[ triple_name ]      = false;
 
       if ( status_json.contains("2DSA_FM") ) 
@@ -565,13 +568,27 @@ void US_Analysis_auto::gui_update( )
 		  //cluster
 		  lineedit_cluster -> setText( cluster );
 	      
+		
+		  //IF Canceled by user:
+		  if ( stage_status == "CANCELED" )
+		    {
+		      lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(210, 0, 0); color : white; }");
+		      topItem [ triple_curr ]  -> setForeground( 0,  QBrush( colorRed ));
+		      
+		      pb_delete->setEnabled( false );
+		      
+		      Completed_triples[ triple_curr_key ] = true;
+		      Canceled_triples [ triple_curr_key ] = true;
+		      qDebug() << "FAILED status for triple/stage -- " << triple_curr_key << "/" << submitted.toString();
+		    }
 		}
 	    }
+	      
 	  //when re-attaching by reading history record for triple
 	  if ( !to_process_array.size() && History_read[ triple_curr_key ] )
 	    topItem [ triple_curr ]  -> setForeground( 0,  QBrush( colorGreen ) );
 	}
-
+      
       //submitted -- current active stage
       if ( submitted.isUndefined())
 	qDebug() << "Nothing submitted yet !!";
@@ -686,36 +703,47 @@ void US_Analysis_auto::gui_update( )
 	      lineedit_cluster -> setText( cluster );
 
 
-	      //check if final stage && if complete 
-	      if ( !to_process_array.size() && status == "COMPLETE" )
+	      //if complete 
+	      if ( status == "COMPLETE" )
 		{
-		  lineedit_status          -> setStyleSheet( "QLineEdit { background-color:  rgb(2, 88, 57); color : white; }");
-		  topItem [ triple_curr ]  -> setForeground( 0,  QBrush( colorGreen ) );
-
 		  pb_delete->setEnabled( false );
-
-		  /****
-		  ALEXEY: maybe update QMap < triple_curr , bool > Completed_triples with TRUE (defined as all FALSES at the beginning):
-		  Completed_triples[ triple_curr ] = true;
-		  At the end of update cycle over triples, check if there is at least one FALSE value in the  Completed_triple QMap.
-		  If NO - stop timer, show Msg that everything completed.
-		  **/
-		  Completed_triples[ triple_curr_key ] = true;
-		  qDebug() << "set Completed_triples[ " << triple_curr_key << " ] to " << Completed_triples[ triple_curr_key ];
-		  
+		  lineedit_status          -> setStyleSheet( "QLineEdit { background-color:  rgb(2, 88, 57); color : white; }");
+		  		  
+		  // && if final stage
+		  if ( !to_process_array.size() )
+		    {
+		      topItem [ triple_curr ]  -> setForeground( 0,  QBrush( colorGreen ) );
+		      /****
+			   ALEXEY: maybe update QMap < triple_curr , bool > Completed_triples with TRUE (defined as all FALSES at the beginning):
+			   Completed_triples[ triple_curr ] = true;
+			   At the end of update cycle over triples, check if there is at least one FALSE value in the  Completed_triple QMap.
+			   If NO - stop timer, show Msg that everything completed.
+		      **/
+		      Completed_triples[ triple_curr_key ] = true;
+		      qDebug() << "set Completed_triples[ " << triple_curr_key << " ] to " << Completed_triples[ triple_curr_key ];
+		      
+		    }
 		}
 
 	      //check if failed -- due to the abortion/deletion of the job
 	      if ( status == "FAILED" || status == "CANCELED" )
 		{
+		  pb_delete->setEnabled( false );
 		  lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(210, 0, 0); color : white; }");
 		  topItem [ triple_curr ]  -> setForeground( 0,  QBrush( colorRed ));
 
-		  pb_delete->setEnabled( false );
-		  
 		  Completed_triples[ triple_curr_key ] = true;
-		  Failed_triples   [ triple_curr_key ] = true;
-		  qDebug() << "FAILED status for triple/stage -- " << triple_curr_key << "/" << submitted.toString();
+
+		  if ( status == "FAILED" )
+		    {
+		      Failed_triples   [ triple_curr_key ] = true;
+		      qDebug() << "FAILED status for triple/stage -- " << triple_curr_key << "/" << submitted.toString();
+		    }
+		  if ( status == "CANCELED" )
+		    {
+		      Canceled_triples   [ triple_curr_key ] = true;
+		      qDebug() << "CANCELED status for triple/stage -- " << triple_curr_key << "/" << submitted.toString();
+		    }
 		}
 	    }
 	}
@@ -733,13 +761,12 @@ void US_Analysis_auto::gui_update( )
 	  break;
 	}
     }
-
   qDebug() << "all_processed: " << all_processed;
 
   //check if there are failed triples
   bool failed_triples = false;
   QStringList Failed_triples_list;
-  
+    
   QMap<QString, bool>::iterator tdf;
   for ( tdf = Failed_triples.begin(); tdf != Failed_triples.end(); ++tdf )
     {
@@ -750,8 +777,24 @@ void US_Analysis_auto::gui_update( )
 	  failed_triples = true;
 	}
     }
-
   qDebug() << "Failed_triples exist ? Name(s): " << failed_triples << Failed_triples_list;
+  
+  //check if there are canceled triples
+  bool canceled_triples = false;
+  QStringList Canceled_triples_list;
+  
+  QMap<QString, bool>::iterator tdc;
+  for ( tdc = Canceled_triples.begin(); tdc != Canceled_triples.end(); ++tdc )
+    {
+      qDebug() << "Key/Value of Canceled_triples: " << tdc.key() << "/" << tdc.value();
+      if ( tdc.value() )
+	{
+	  Canceled_triples_list << tdc.key();
+	  canceled_triples = true;
+	}
+    }
+  qDebug() << "Canceled_triples exist ? Name(s): " << canceled_triples << Canceled_triples_list;
+  
   
   //If all triples processed, show msg && Stop update timer
   if ( all_processed )
@@ -771,6 +814,10 @@ void US_Analysis_auto::gui_update( )
       
       if ( failed_triples )
 	msg_text += QString("\n\n NOTE: analyses for the following triples failed: \n %1").arg( Failed_triples_list.join(", ") );
+
+      if ( canceled_triples )
+	msg_text += QString("\n\n NOTE: analyses for the following triples have been canceled: \n %1").arg( Canceled_triples_list.join(", ") );
+ 
       
       QMessageBox::information( this,
 				tr( "All Triples Processed !" ),
@@ -978,6 +1025,7 @@ void US_Analysis_auto::reset_auto( )
   channels_all.clear();
 
   Failed_triples.clear();
+  Canceled_triples.clear();
   Manual_update.clear();
   History_read.clear();
   Completed_triples.clear();

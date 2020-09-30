@@ -60,6 +60,7 @@ class US_Analysis_auto : public US_Widgets
 	 QMap < QString, bool > History_read;
 	 QMap < QString, bool > Completed_triples;
 	 QMap < QString, bool > Failed_triples;
+	 QMap < QString, bool > Canceled_triples;
 	 QMap < QString, bool > Process_2dsafm;
 
 	 QMap < QString, QString > read_autoflowAnalysis_record( US_DB2*, const QString& );
