@@ -1,9 +1,10 @@
 #ifndef LINK_H_
 #define LINK_H_
 
+#include "us_extern.h"
 #include <QSslSocket>
 
-class Link : public QObject
+class US_UTIL_EXTERN Link : public QObject
 {
 	Q_OBJECT
 
