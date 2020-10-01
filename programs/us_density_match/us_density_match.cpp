@@ -1013,8 +1013,7 @@ DbgLv(1) << "BldBf: modx" << modx;
    double bfincr    = bfextn / (double)ksolbf;
 DbgLv(1) << "BldBf: bfrac bfextn bfincr" << bfrac << bfextn << bfincr
  << "nsolbo nsolbf" << nsolbo << nsolbf << (bfextn/bfincr) << ksolbf;
-   int    j2        = 1;
-   int    j1        = 0;
+   int    j2        = 0;
 
    // Create solute points with specified boundary fraction extent
    for ( int kk = 0; kk < nsolbf; kk++ )
@@ -1028,19 +1027,11 @@ DbgLv(1) << "BldBf: bfrac bfextn bfincr" << bfrac << bfextn << bfincr
       }
 
       // Set values for current output fraction
-      j1               = qMax( 0, j2 - 1 );
-      if ( bfrac >= tsys->bo_distro[ j2 ].f )
-         j1               = j2;
-      S_Solute sol_bf  = tsys->bo_distro[ j1 ];
+      S_Solute sol_bf  = tsys->bo_distro[ j2 ];
       sol_bf.f         = bfrac;                   // Boundary fraction
-      sol_bf.s         = tsys->bo_distro[ j1 ].s;
-      sol_bf.k         = tsys->bo_distro[ j1 ].k;
-      sol_bf.c         = tsys->bo_distro[ j1 ].c;
-      sol_bf.w         = tsys->bo_distro[ j1 ].w;
-      sol_bf.v         = tsys->bo_distro[ j1 ].v;
-      sol_bf.d         = tsys->bo_distro[ j1 ].d;
-if (kk<3 || (kk+4)>nsolbf)
- DbgLv(1) << "BldBf:  kk bfrac" << kk << bfrac << "j1 j2" << j1 << j2
+int kk2=kk*2;
+if (kk<3 || (kk+4)>nsolbf || ( (kk2>(nsolbf-4))&&(kk2<nsolbf+4) ) )
+ DbgLv(1) << "BldBf:  kk bfrac" << kk << bfrac << "j2" << j2
   << "f s d" << sol_bf.f << sol_bf.s << sol_bf.d;
  
 
