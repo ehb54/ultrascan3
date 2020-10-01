@@ -1027,34 +1027,21 @@ DbgLv(1) << "BldBf: bfrac bfextn bfincr" << bfrac << bfextn << bfincr
          j2++;
       }
 
-      // Interpolate values for current output fraction
-      j1               = j2 - 1;
-      S_Solute sol_bf  = tsys->bo_distro[ j2 ];
+      // Set values for current output fraction
+      j1               = qMax( 0, j2 - 1 );
+      if ( bfrac >= tsys->bo_distro[ j2 ].f )
+         j1               = j2;
+      S_Solute sol_bf  = tsys->bo_distro[ j1 ];
       sol_bf.f         = bfrac;                   // Boundary fraction
-      double x1        = tsys->bo_distro[ j1 ].f;
-      double x2        = tsys->bo_distro[ j2 ].f;
-      double xfrac     = ( bfrac - x1 ) / ( x2 - x1 );
-      double y1        = tsys->bo_distro[ j1 ].s;
-      double y2        = tsys->bo_distro[ j2 ].s;
-      sol_bf.s         = y1 + ( y2 - y1 ) * xfrac; // Interpolated s
-      y1               = tsys->bo_distro[ j1 ].k;
-      y2               = tsys->bo_distro[ j2 ].k;
-      sol_bf.k         = y1 + ( y2 - y1 ) * xfrac; // Interpolated f/f0
-      y1               = tsys->bo_distro[ j1 ].c;
-      y2               = tsys->bo_distro[ j2 ].c;
-      sol_bf.c         = y1 + ( y2 - y1 ) * xfrac; // Interpolated concentration
-      y1               = tsys->bo_distro[ j1 ].w;
-      y2               = tsys->bo_distro[ j2 ].w;
-      sol_bf.w         = y1 + ( y2 - y1 ) * xfrac; // Interpolated wt
-      y1               = tsys->bo_distro[ j1 ].v;
-      y2               = tsys->bo_distro[ j2 ].v;
-      sol_bf.v         = y1 + ( y2 - y1 ) * xfrac; // Interpolated vbar
-      y1               = tsys->bo_distro[ j1 ].d;
-      y2               = tsys->bo_distro[ j2 ].d;
-      sol_bf.d         = y1 + ( y2 - y1 ) * xfrac; // Interpolated D
+      sol_bf.s         = tsys->bo_distro[ j1 ].s;
+      sol_bf.k         = tsys->bo_distro[ j1 ].k;
+      sol_bf.c         = tsys->bo_distro[ j1 ].c;
+      sol_bf.w         = tsys->bo_distro[ j1 ].w;
+      sol_bf.v         = tsys->bo_distro[ j1 ].v;
+      sol_bf.d         = tsys->bo_distro[ j1 ].d;
 if (kk<3 || (kk+4)>nsolbf)
  DbgLv(1) << "BldBf:  kk bfrac" << kk << bfrac << "j1 j2" << j1 << j2
-  << "x1 x2 y1 y2" << x1 << x2 << y1 << y2 << "d" << sol_bf.d;
+  << "f s d" << sol_bf.f << sol_bf.s << sol_bf.d;
  
 
       tsys->bf_distro << sol_bf;  // Solute point at boundary fraction
