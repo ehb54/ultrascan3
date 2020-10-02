@@ -600,7 +600,9 @@ void US_Analysis_auto::gui_update( )
 	    }
 	      
 	  //when re-attaching by reading history record for triple
-	  if ( !to_process_array.size() && History_read[ triple_curr_key ] && !status.contains("CANCELED") && !status.contains("canceled") )
+	  if ( !to_process_array.size() && History_read[ triple_curr_key ] &&
+	       !status.contains("CANCELED") && !status.contains("canceled") &&
+	       !status.contains("FAILED") && !status.contains("failed") )
 	    {
 	      qDebug() << "Setting triple to complete - read from History, status = " << status;
 	      topItem [ triple_curr ]  -> setForeground( 0,  QBrush( colorGreen ) );
@@ -840,8 +842,6 @@ void US_Analysis_auto::gui_update( )
 	  qDebug() << "Update stopped upon final completion...";
 	}
       
-      in_gui_update  = false; 
-
       QString msg_text = "All triples have been processed.";
       
       if ( failed_triples )
@@ -855,6 +855,8 @@ void US_Analysis_auto::gui_update( )
 				tr( "All Triples Processed !" ),
 				msg_text  );
 
+      in_gui_update  = false; 
+      
       //ALEXEY: Switch to next stage (Report) ?
     }
 
