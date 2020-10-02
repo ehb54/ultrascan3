@@ -2,6 +2,7 @@
 #ifndef US_LSERVER_H
 #define US_LSERVER_H
 
+#include "us_extern.h"
 #include <QLocalSocket>
 #include <QLocalServer>
 
@@ -11,7 +12,7 @@ static QString is_true( bool b ) {
   return b ? "true" : "false";
 }
 
-class QInstances {
+class US_UTIL_EXTERN QInstances {
 public:
    QInstances( const QString & name_prefix );
    ~QInstances();
