@@ -594,7 +594,18 @@ void US_Analysis_auto::gui_update( )
 		      
 		      Completed_triples[ triple_curr_key ] = true;
 		      Canceled_triples [ triple_curr_key ] = true;
-		      qDebug() << "CANCELED status for triple/stage -- " << triple_curr_key << "/" << submitted.toString();
+		      qDebug() << "CANCELED status( Processed ) for triple/stage -- " << triple_curr_key << "/" << submitted.toString();
+		    }
+		  if ( stage_status == "FAILED" || stage_status == "failed" )
+		    {
+		      lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(210, 0, 0); color : white; }");
+		      topItem [ triple_curr ]  -> setForeground( 0,  QBrush( colorRed ));
+
+		      pb_delete->setEnabled( false );
+		      
+		      Completed_triples[ triple_curr_key ] = true;
+		      Failed_triples [ triple_curr_key ] = true;
+		      qDebug() << "FAILED status( Processed ) for triple/stage -- " << triple_curr_key << "/" << submitted.toString();
 		    }
 		}
 	    }
@@ -760,7 +771,7 @@ void US_Analysis_auto::gui_update( )
 		}
 
 	      //check if failed -- due to the abortion/deletion of the job
-	      if ( status == "FAILED" || status == "CANCELED" || status == "canceled")
+	      if ( status == "FAILED" || status == "failed" || status == "CANCELED" || status == "canceled")
 		{
 		  pb_delete->setEnabled( false );
 		  lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(210, 0, 0); color : white; }");
@@ -768,7 +779,7 @@ void US_Analysis_auto::gui_update( )
 
 		  Completed_triples[ triple_curr_key ] = true;
 
-		  if ( status == "FAILED" )
+		  if ( status == "FAILED" || status == "failed" )
 		    {
 		      Failed_triples   [ triple_curr_key ] = true;
 		      qDebug() << "FAILED status for triple/stage -- " << triple_curr_key << "/" << submitted.toString();
