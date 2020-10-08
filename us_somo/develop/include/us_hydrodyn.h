@@ -254,6 +254,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       
    private:
 
+      void set_bead_colors( vector < PDB_atom * > use_model );
+      void set_bead_colors( vector < PDB_atom > & use_model );
       bool batch_avg_hydro_active();
       double model_mw( const vector < PDB_atom > & use_model );
       double model_mw( const vector < PDB_atom * > use_model );
@@ -929,6 +931,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QVector < int > grpy_model_numbers;
       int grpy_last_model_number;
       QVector < int > grpy_used_beads;
+      QVector < QMap < QString, double > > grpy_addl_params;
+      QMap < QString, double >             grpy_addl_param;
       int grpy_last_used_beads;
       bool grpy_success;  // only valid if !grpy_running
       map < QString, vector < double > > grpy_captures;

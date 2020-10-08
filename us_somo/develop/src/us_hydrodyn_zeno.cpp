@@ -13978,7 +13978,7 @@ bool US_Hydrodyn::calc_zeno()
                } else {
                   // setup save data
                   // add text output also
-                  save_data this_data = US_Hydrodyn_Save::save_data_initialized();
+                  save_data this_data = US_Hydrodyn_Save::save_data_initialized_from_bead_model( bead_models[ current_model ], false );
 
                   us_timers.start_timer( "compute zeno" );
                   this_data.results.solvent_viscosity     = use_solvent_visc();
@@ -13994,6 +13994,13 @@ bool US_Hydrodyn::calc_zeno()
                   this_data.results.used_beads            = bead_models [ current_model ].size();
                   this_data.results.total_beads           = bead_models [ current_model ].size();
                   this_data.results.vbar                  = use_vbar( model_vector[ current_model ].vbar );
+                  this_data.con_factor                    = pow(10.0, this_data.hydro.unit + 9);
+                  
+                  bead_model = bead_models[ current_model ];
+                  bead_check( false, true, true );
+                  this_data.results.asa_rg_pos            = results.asa_rg_pos;
+                  this_data.results.asa_rg_neg            = results.asa_rg_neg;
+
                   // need to get rg
                   // this_data.results.rg            = model_vector[ current_model ].Rg;
 

@@ -703,7 +703,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.rot_diff_coef);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
-         field_to_precision[field[i]] = 0;
+         field_to_precision[field[i]] = 4;
          field_to_format[field[i]] = 'g';
          continue;
       }
@@ -2200,3 +2200,71 @@ save_data US_Hydrodyn_Save::save_data_initialized() {
 
    return data;
 }
+
+save_data US_Hydrodyn_Save::save_data_initialized_from_bead_model( const vector < PDB_atom * > model, bool bead_exclusion ) {
+   save_data data = save_data_initialized();
+
+   static double fourpi      = 4.0 * M_PI;
+   static double fourpiover3 = fourpi / 3.0;
+   
+   for ( int i = 0; i < (int) model.size(); i++) {
+      if ( model[ i ]->active ) {
+         double radius         = model[ i ]->bead_computed_radius;
+         double radius2        = radius * radius;
+
+         double this_surf_area = fourpi * radius2;
+         double this_vol       = fourpiover3 * radius2 * radius;
+
+         double this_mw        = model[ i ]->bead_ref_mw + model[ i ]->bead_ref_ionized_mw_delta;
+
+         if ( bead_exclusion && model[ i ]->bead_color == 6 ) {
+            // excluded
+         } else {
+            // included
+            data.use_beads_vol  += this_vol;
+            data.use_beads_surf += this_surf_area;
+            data.use_bead_mass  += this_mw;
+         }
+
+         data.tot_volume_of += this_vol;
+         data.tot_surf_area += this_surf_area;
+      }
+   }
+   return data;
+}
+   
+save_data US_Hydrodyn_Save::save_data_initialized_from_bead_model( const vector < PDB_atom > & model, bool bead_exclusion ) {
+   save_data data = save_data_initialized();
+
+   static double fourpi      = 4.0 * M_PI;
+   static double fourpiover3 = fourpi / 3.0;
+
+   int excluded_count = 0;
+
+   for ( int i = 0; i < (int) model.size(); i++) {
+      if ( model[ i ].active ) {
+         double radius         = model[ i ].bead_computed_radius;
+         double radius2        = radius * radius;
+
+         double this_surf_area = fourpi * radius2;
+         double this_vol       = fourpiover3 * radius2 * radius;
+
+         double this_mw        = model[ i ].bead_ref_mw + model[ i ].bead_ref_ionized_mw_delta;
+
+         if ( bead_exclusion && model[ i ].bead_color == 6 ) {
+            // excluded
+            excluded_count++;
+         } else {
+            // included
+            data.use_beads_vol  += this_vol;
+            data.use_beads_surf += this_surf_area;
+            data.use_bead_mass  += this_mw;
+         }
+
+         data.tot_volume_of += this_vol;
+         data.tot_surf_area += this_surf_area;
+      }
+   }
+   return data;
+}
+   

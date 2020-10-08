@@ -3806,7 +3806,7 @@ int US_Hydrodyn::do_calc_hydro()
          }
       case US_HYDRODYN_SUPC_OVERLAPS_EXIST:
          {
-            printError("Calculate RB Hydrodynamics SMI encountered overlaps in the bead model\nPerhaps you should Calculate RB Hydrodynamics ZENO which supports bead models with overlaps");
+            printError("Calculate RB Hydrodynamics SMI encountered overlaps in the bead model\nPerhaps you should Calculate RB Hydrodynamics ZENO or GRPY which support bead models with overlaps");
             return retval;
             break;
          }

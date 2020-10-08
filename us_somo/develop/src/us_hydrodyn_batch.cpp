@@ -1303,7 +1303,8 @@ void US_Hydrodyn_Batch::update_enables()
          } else {
             any_bead_model_selected = true;
          }
-         if ( get_file_name(i).contains( "so_ovlp" ) )
+         if ( get_file_name(i).contains( "-so_ovlp" ) ||
+              get_file_name(i).contains( "-vdw" ) ) 
          {
             any_so_ovlp_selected    = true;
          }

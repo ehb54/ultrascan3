@@ -1644,3 +1644,15 @@ void US_Hydrodyn::model_viewer( QString file,
    }
 }
 
+void US_Hydrodyn::set_bead_colors( vector < PDB_atom * > use_model ) {
+   for ( int i = 0; i < (int) use_model.size(); i++) {
+      use_model[ i ]->bead_color = get_color( use_model[ i ] );
+   }
+}
+
+void US_Hydrodyn::set_bead_colors( vector < PDB_atom > & use_model ) {
+   for ( int i = 0; i < (int) use_model.size(); i++) {
+      use_model[ i ].bead_color = get_color( & use_model[ i ] );
+   }
+}
+   

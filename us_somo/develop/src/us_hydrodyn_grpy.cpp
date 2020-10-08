@@ -14,6 +14,8 @@
 #include "../include/us_hydrodyn.h"
 #define SLASH QDir::separator()
 
+
+
 double US_Hydrodyn::model_mw( const vector < PDB_atom *> use_model ) {
    double mw = 0e0;
    for (unsigned int i = 0; i < use_model.size(); i++) {
@@ -136,6 +138,7 @@ bool US_Hydrodyn::calc_grpy_hydro() {
    grpy_to_process   .clear();
    grpy_model_numbers.clear();
    grpy_processed    .clear();
+   grpy_addl_params  .clear();
 
    grpy_results.method                = "GRPY";
    grpy_results.mass                  = 0e0;
@@ -223,6 +226,8 @@ bool US_Hydrodyn::calc_grpy_hydro() {
 
             editor->append( QString( "Model %1 will be included\n").arg( model_name( current_model ) ) );
             model_names.push_back( model_name( current_model ) );
+            set_bead_colors( bead_models[ current_model ] );
+
             bead_model = bead_models[current_model];
 
             QString fname = 
@@ -238,14 +243,20 @@ bool US_Hydrodyn::calc_grpy_hydro() {
                                   << "bead model size is " << bead_model.size() << endl
                ;
             
-            if ( !hydro.grpy_bead_inclusion && fname.contains( "-vdwpH" ) ) {
-               // expose all
-               editor_msg( "black", us_tr( "vdW model exposed beads check" ) );
-               for ( int i = 0; i < (int) bead_model.size(); ++i ) {
-                  bead_model[ i ].exposed_code = 1;
-               }
-               bead_check( false, true, true );
+            // always run asa
+            // if ( !hydro.grpy_bead_inclusion && fname.contains( "-vdwpH" ) ) {
+            // expose all
+            editor_msg( "black", us_tr( "vdW model exposed beads check" ) );
+            for ( int i = 0; i < (int) bead_model.size(); ++i ) {
+               bead_model[ i ].exposed_code = 1;
             }
+            bead_check( false, true, true );
+            // }
+            
+            grpy_addl_param[ "asa_rg_pos" ] = results.asa_rg_pos;
+            grpy_addl_param[ "asa_rg_neg" ] = results.asa_rg_neg;
+            grpy_addl_params.push_back( grpy_addl_param );
+            // qDebug() << "US_Hydrodyn::calc_grpy_hydro() asa rg pos " << results.asa_rg_pos << " neg " << results.asa_rg_neg;
                
             write_bead_model( QFileInfo( fname ).fileName(),
                               & bead_model,
@@ -306,9 +317,11 @@ void US_Hydrodyn::grpy_process_next() {
    grpy_last_processed    = grpy_to_process   [ 0 ];
    grpy_last_model_number = grpy_model_numbers[ 0 ];
    grpy_last_used_beads   = grpy_used_beads   [ 0 ];
+   grpy_addl_param        = grpy_addl_params  [ 0 ];
    grpy_to_process        .pop_front();
    grpy_model_numbers     .pop_front();
    grpy_used_beads        .pop_front();
+   grpy_addl_params       .pop_front();
    grpy_processed         .push_back( grpy_last_processed );
 
    grpy_stdout = "";
@@ -575,7 +588,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
    for ( map < int, map < QString, double > >::iterator it = data_to_save.begin();
          it != data_to_save.end();
          ++it ) {
-      save_data this_data = US_Hydrodyn_Save::save_data_initialized();
+      save_data this_data = US_Hydrodyn_Save::save_data_initialized_from_bead_model( bead_models[ grpy_last_model_number ], !hydro.grpy_bead_inclusion );
 
       this_data.results.method                = "GRPY";
       this_data.results.mass                  = hydro.mass_correction ? hydro.mass : model_mw( bead_models[ grpy_last_model_number ] ); // ( model_vector[ grpy_last_model_number ].mw + model_vector[ grpy_last_model_number ].ionized_mw_delta );
@@ -589,9 +602,13 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
       this_data.results.total_beads           = total_beads_count( bead_models[ grpy_last_model_number ] );
       this_data.results.vbar                  = use_vbar( model_vector[ grpy_last_model_number ].vbar );
       this_data.proc_time                     = (double)(timers.times[ "compute grpy this model" ]) / 1e3;
-
+      this_data.results.asa_rg_pos            = grpy_addl_param[ "asa_rg_pos" ];
+      this_data.results.asa_rg_neg            = grpy_addl_param[ "asa_rg_neg" ];
+      // qDebug() << "US_Hydrodyn::grpy_finished() asa rg pos " << this_data.results.asa_rg_pos << " neg " << this_data.results.asa_rg_neg;
+      
       if ( it->second.count( "Dr" ) ) {
          this_data.rot_diff_coef = it->second[ "Dr" ];
+         // qDebug() << "this_data.rot_diff_coef : " << this_data.rot_diff_coef;
       }
       if ( it->second.count( "s" ) ) {
          this_data.results.s20w = it->second[ "s" ];
@@ -635,6 +652,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
 
       {
          double fconv = pow(10.0, this_data.hydro.unit + 9);
+         this_data.con_factor = fconv;
          // bead model rg
 
          if ( this_data.results.mass ) {
@@ -697,6 +715,20 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
                   << "R * ( K0 + hydro.temperature )" << ( R * ( K0 + hydro.temperature ) ) << " / " << endl
                   << "AVOGADRO * this_data.results.D20w" << ( AVOGADRO * this_data.results.D20w ) << endl
                   ;
+               
+            }
+         }
+
+         {
+            if ( this_data.rot_diff_coef ) {
+               this_data.rot_fric_coef =
+                  R * ( K0 + hydro.temperature ) / ( AVOGADRO * this_data.rot_diff_coef );
+
+               // QTextStream( stdout )
+               //    << "rfc " << this_data.rot_fric_coef << " = " << endl
+               //    << "R * ( K0 + hydro.temperature )" << ( R * ( K0 + hydro.temperature ) ) << " / " << endl
+               //    << "AVOGADRO * this_data.rot_diff_coef" << ( AVOGADRO * this_data.rot_diff_coef ) << endl
+               //    ;
                
             }
          }
@@ -918,8 +950,8 @@ void US_Hydrodyn::grpy_finalize() {
    pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
    progress->reset();
    editor_msg( "black", "GRPY finished" );
-   timers.end_timer( "compute grpy" );
-   editor_msg( "black", QString( "Time to process %1").arg( timers.time_min_sec( "compute grpy" ) ) );
+   timers.end_timer( "compute grpy all models" );
+   editor_msg( "black", QString( "Time to process %1").arg( timers.time_min_sec( "compute grpy all models" ) ) );
    editor_msg( "dark blue", info_cite( "grpy" ) );
 
    // us_qdebug( QString( "grpy_finalize %1 end" ).arg( grpy_last_processed ) );

@@ -33,6 +33,7 @@
 #include <iostream>
 #include "../include/us_hydrodyn_results.h"
 #include "../include/us_hydrodyn_hydro.h"
+#include "../include/us_hydrodyn_pdbdefs.h"
 
 #ifdef WIN32
 # if QT_VERSION < 0x040000
@@ -144,6 +145,8 @@ class US_EXTERN US_Hydrodyn_Save : public QFrame
       ~US_Hydrodyn_Save();
 
       static save_data save_data_initialized();       // returns initialized save_data
+      static save_data save_data_initialized_from_bead_model( const vector < PDB_atom * > model, bool bead_exclusion = true );       // returns initialized save_data from model info
+      static save_data save_data_initialized_from_bead_model( const vector < PDB_atom > & model, bool bead_exclusion = true );       // returns initialized save_data from model info
 
       QString header();                        // returns a csv format header
       QString dataString(save_data *);         // returns a csv format data line
