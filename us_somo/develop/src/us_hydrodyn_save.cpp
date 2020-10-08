@@ -1412,13 +1412,17 @@ QString US_Hydrodyn_Save::dataString(save_data *data)
       case DT_FLOAT         :
          result += QString("%1%2")
             .arg(i ? "," : "")
-            .FARG((*(float *)(field_to_save_data[save->field[i]])));
+            .FARG((*(float *)(field_to_save_data[save->field[i]])))
+            .replace( "e+", "e" )
+            ;
          // DBFARG((*(float *)(field_to_save_data[save->field[i]])));
          break;
       case DT_DOUBLE        :
          result += QString("%1%2")
             .arg(i ? "," : "")
-            .FARG(*((double *)(field_to_save_data[save->field[i]])));
+            .FARG(*((double *)(field_to_save_data[save->field[i]])))
+            .replace( "e+", "e" )
+            ;
          // DBFARG((*(double *)(field_to_save_data[save->field[i]])));
          break;
       case DT_INT           :

@@ -246,7 +246,7 @@ bool US_Hydrodyn::calc_grpy_hydro() {
             // always run asa
             // if ( !hydro.grpy_bead_inclusion && fname.contains( "-vdwpH" ) ) {
             // expose all
-            editor_msg( "black", us_tr( "vdW model exposed beads check" ) );
+            editor_msg( "black", us_tr( "running ASA check on bead model" ) );
             for ( int i = 0; i < (int) bead_model.size(); ++i ) {
                bead_model[ i ].exposed_code = 1;
             }
@@ -600,6 +600,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
          ;
       this_data.results.used_beads            = grpy_last_used_beads;
       this_data.results.total_beads           = total_beads_count( bead_models[ grpy_last_model_number ] );
+      this_data.num_of_unused                 = this_data.results.total_beads - this_data.results.used_beads;
       this_data.results.vbar                  = use_vbar( model_vector[ grpy_last_model_number ].vbar );
       this_data.proc_time                     = (double)(timers.times[ "compute grpy this model" ]) / 1e3;
       this_data.results.asa_rg_pos            = grpy_addl_param[ "asa_rg_pos" ];
