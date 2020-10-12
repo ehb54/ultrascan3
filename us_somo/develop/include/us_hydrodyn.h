@@ -254,7 +254,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       
    private:
 
-      bool compute_asa_rgs_from_bead_model( const vector < PDB_atom > & model );
+      bool compute_asa_rgs( const vector < PDB_atom > & model );
 
       void set_bead_colors( vector < PDB_atom * > use_model );
       void set_bead_colors( vector < PDB_atom > & use_model );

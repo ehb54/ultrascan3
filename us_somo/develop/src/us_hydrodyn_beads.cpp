@@ -1609,7 +1609,7 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
             }
          }
       }
-      compute_asa_rgs_from_bead_model( active_atoms, asa.probe_radius );
+      compute_asa_rgs( active_atoms );
    }
    
    // qDebug() << "US_Hydrodyn::create_vdw_beads() asa rg pos " << results.asa_rg_pos << " neg " << results.asa_rg_neg;
@@ -1625,7 +1625,7 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
    return 0;
 }
 
-bool US_Hydrodyn::compute_asa_rgs_from_bead_model( const vector < PDB_atom > & model ) {
+bool US_Hydrodyn::compute_asa_rgs( const vector < PDB_atom > & model ) {
    results.asa_rg_neg = 0e0;
    results.asa_rg_pos = 0e0;
 
