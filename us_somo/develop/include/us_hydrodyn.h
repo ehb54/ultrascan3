@@ -254,6 +254,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       
    private:
 
+      bool compute_asa_rgs_from_bead_model( const vector < PDB_atom > & model, double probe_radius );
+
       void set_bead_colors( vector < PDB_atom * > use_model );
       void set_bead_colors( vector < PDB_atom > & use_model );
       bool batch_avg_hydro_active();

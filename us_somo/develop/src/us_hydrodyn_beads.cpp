@@ -1550,6 +1550,8 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
                }
             }
             // us_qdebug( QString( "bead model radius for %1 = %2" ).arg( res_idx ).arg(  tmp_atom.bead_computed_radius ) );
+            // us_qdebug( QString( "bead model mw for %1 = %2" ).arg( res_idx ).arg( this_vdwf.mw ) );
+            
             tmp_atom.radius                    = tmp_atom.bead_computed_radius;
             tmp_atom.bead_ref_mw               = this_vdwf.mw;
             tmp_atom.bead_ref_ionized_mw_delta = this_vdwf.ionized_mw_delta;
@@ -1591,12 +1593,15 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
    // if ( !hydro.bead_inclusion ) {
    //    // bury_all
    //    qDebug() << "name is $fname";
-   //    for ( int i = 0; i < (int) bead_model.size(); ++i ) {
-   //       bead_model[ i ].exposed_code = 0;
-   //       bead_model[ i ].radius = bead_model[ i ].bead_computed_radius;
-   //    }
-   //    bead_check( false, true, true );
+   // for ( int i = 0; i < (int) bead_model.size(); ++i ) {
+   //    bead_model[ i ].radius = bead_model[ i ].bead_computed_radius;
    // }
+   // results.asa_rg_pos = 0.0;
+   // results.asa_rg_neg = 0.0;
+   // bead_check( false, true, true, false );
+   compute_asa_rgs_from_bead_model( bead_model, asa.probe_radius );
+   
+   // qDebug() << "US_Hydrodyn::create_vdw_beads() asa rg pos " << results.asa_rg_pos << " neg " << results.asa_rg_neg;
 
    bead_models[ current_model ] = bead_model;
    somo_processed[ current_model ] = 1;
@@ -1607,6 +1612,66 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
    
    editor->append( QString( "Volume of bead model %1\n" ).arg( total_volume_of_bead_model( bead_model ) ) );
    return 0;
+}
+
+bool US_Hydrodyn::compute_asa_rgs_from_bead_model( const vector < PDB_atom > & model, double probe_radius ) {
+   results.asa_rg_neg = 0e0;
+   results.asa_rg_pos = 0e0;
+
+   int n = (int) model.size();
+   if ( !n ) {
+      editor_msg( "red", "No atoms found in model!" );
+      return false;
+   }
+
+   double xm = 0e0;
+   double ym = 0e0;
+   double zm = 0e0;
+   double mt = 0e0;
+
+   for ( int i = 0; i < n; ++i ) {
+      double m  = model[ i ].bead_mw + model[ i ].bead_ionized_mw_delta;
+      double x = model[ i ].bead_coordinate.axis[ 0 ];
+      double y = model[ i ].bead_coordinate.axis[ 1 ];
+      double z = model[ i ].bead_coordinate.axis[ 2 ];
+
+      mt += m;
+      xm += x * m;
+      ym += y * m;
+      zm += z * m;
+   }
+
+   if ( !mt ) {
+      editor_msg( "red", "Atoms in model have no molecular weight!" );
+      return false;
+   }
+
+   xm /= mt;
+   ym /= mt;
+   zm /= mt;
+
+   double rg_pos = 0e0;
+   double rg_neg = 0e0;
+
+   for ( int i = 0; i < n; ++i ) {
+      double m  = model[ i ].bead_mw + model[ i ].bead_ionized_mw_delta;
+      double dx = model[ i ].bead_coordinate.axis[ 0 ] - xm;
+      double dy = model[ i ].bead_coordinate.axis[ 1 ] - ym;
+      double dz = model[ i ].bead_coordinate.axis[ 2 ] - zm;
+      double dr = model[ i ].bead_computed_radius - probe_radius;
+
+      double rg = 0.6 * dr * dr;
+      double this_contrib = m * ( dx * dx + dy * dy + dz * dz );
+      rg_neg += this_contrib;
+      rg_pos += this_contrib + rg;
+   }
+
+   rg_neg /= mt;
+   rg_pos /= mt;
+
+   results.asa_rg_neg = sqrt( rg_neg );
+   results.asa_rg_pos = sqrt( rg_pos );
+   return true;
 }
 
 bool US_Hydrodyn::load_vdwf_json( QString filename ) {
