@@ -1555,6 +1555,7 @@ cordis(int s)
 static void
 ragir()
 {
+   // qDebug() << "US_Hydrodyn_ASAB1::ragir() nat " << nat;
    int i;
    float ro2, ro3, mt, rg, xm, ym, zm;
 

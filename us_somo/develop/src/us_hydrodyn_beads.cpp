@@ -1599,7 +1599,18 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
    // results.asa_rg_pos = 0.0;
    // results.asa_rg_neg = 0.0;
    // bead_check( false, true, true, false );
-   compute_asa_rgs_from_bead_model( bead_model, asa.probe_radius );
+   {
+      vector < PDB_atom > active_atoms;
+      for (unsigned int j = 0; j < model_vector[ current_model ].molecule.size (); j++) {
+         for (unsigned int k = 0; k < model_vector[ current_model ].molecule[j].atom.size (); k++) {
+            PDB_atom *this_atom = &(model_vector[ current_model ].molecule[j].atom[k]);
+            if(this_atom->active) {
+               active_atoms.push_back( *this_atom );
+            }
+         }
+      }
+      compute_asa_rgs_from_bead_model( active_atoms, asa.probe_radius );
+   }
    
    // qDebug() << "US_Hydrodyn::create_vdw_beads() asa rg pos " << results.asa_rg_pos << " neg " << results.asa_rg_neg;
 
@@ -1614,7 +1625,7 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
    return 0;
 }
 
-bool US_Hydrodyn::compute_asa_rgs_from_bead_model( const vector < PDB_atom > & model, double probe_radius ) {
+bool US_Hydrodyn::compute_asa_rgs_from_bead_model( const vector < PDB_atom > & model ) {
    results.asa_rg_neg = 0e0;
    results.asa_rg_pos = 0e0;
 
@@ -1630,10 +1641,10 @@ bool US_Hydrodyn::compute_asa_rgs_from_bead_model( const vector < PDB_atom > & m
    double mt = 0e0;
 
    for ( int i = 0; i < n; ++i ) {
-      double m  = model[ i ].bead_mw + model[ i ].bead_ionized_mw_delta;
-      double x = model[ i ].bead_coordinate.axis[ 0 ];
-      double y = model[ i ].bead_coordinate.axis[ 1 ];
-      double z = model[ i ].bead_coordinate.axis[ 2 ];
+      double m = model[ i ].mw + model[ i ].ionized_mw_delta;
+      double x = model[ i ].coordinate.axis[ 0 ];
+      double y = model[ i ].coordinate.axis[ 1 ];
+      double z = model[ i ].coordinate.axis[ 2 ];
 
       mt += m;
       xm += x * m;
@@ -1654,16 +1665,16 @@ bool US_Hydrodyn::compute_asa_rgs_from_bead_model( const vector < PDB_atom > & m
    double rg_neg = 0e0;
 
    for ( int i = 0; i < n; ++i ) {
-      double m  = model[ i ].bead_mw + model[ i ].bead_ionized_mw_delta;
-      double dx = model[ i ].bead_coordinate.axis[ 0 ] - xm;
-      double dy = model[ i ].bead_coordinate.axis[ 1 ] - ym;
-      double dz = model[ i ].bead_coordinate.axis[ 2 ] - zm;
-      double dr = model[ i ].bead_computed_radius - probe_radius;
+      double m  = model[ i ].mw + model[ i ].ionized_mw_delta;
+      double dx = model[ i ].coordinate.axis[ 0 ] - xm;
+      double dy = model[ i ].coordinate.axis[ 1 ] - ym;
+      double dz = model[ i ].coordinate.axis[ 2 ] - zm;
+      double dr = model[ i ].radius;
 
       double rg = 0.6 * dr * dr;
-      double this_contrib = m * ( dx * dx + dy * dy + dz * dz );
-      rg_neg += this_contrib;
-      rg_pos += this_contrib + rg;
+      double this_contrib = dx * dx + dy * dy + dz * dz;
+      rg_neg += m * this_contrib;
+      rg_pos += m * ( this_contrib + rg );
    }
 
    rg_neg /= mt;
