@@ -13,6 +13,7 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_surfracer.h"
 #include "../include/us_hydrodyn_grid_atob.h"
+#include "../include/us_hydrodyn_pat.h"
 
 #define SLASH        "/"
 #define DOTSOMO      ""
@@ -2568,3 +2569,67 @@ bool US_Hydrodyn::calc_fasta_vbar( QStringList & seq_chars, double & result, QSt
    // qDebug() << "calc_fasta_vbar result for seq of " << seq_chars.size() << " elements computed as " << result;
    return true;
 }
+
+bool US_Hydrodyn::pat_model( vector < PDB_atom > & model ) {
+   vector < dati1_supc > in_dt;
+   int nat = (int) model.size();
+   {
+      int dt_pos = 0;
+      for ( int j = 0; j < nat; ++j )  {
+         PDB_atom *this_atom = &( model[ j ] );
+            
+         dati1_supc dt;
+               
+         dt.x  = this_atom->bead_coordinate.axis[ 0 ];
+         dt.y  = this_atom->bead_coordinate.axis[ 1 ];
+         dt.z  = this_atom->bead_coordinate.axis[ 2 ];
+         dt.r  = this_atom->bead_computed_radius;
+         dt.ru = this_atom->bead_computed_radius;
+         dt.m  = this_atom->bead_mw + this_atom->bead_ionized_mw_delta;
+            
+         in_dt.push_back( dt );
+
+         // us_qdebug( QString( "atom %1 coords %2 %3 %4 radius %5 mw %6" )
+         //         .arg( dt_pos )
+         //         .arg( dt.x )
+         //         .arg( dt.y )
+         //         .arg( dt.z )
+         //         .arg( dt.r )
+         //         .arg( dt.m )
+         //         );
+         ++dt_pos;
+      }
+   }
+
+   int out_nat;
+   vector < dati1_pat > out_dt( in_dt.size() + 1 );
+   
+   if ( !us_hydrodyn_pat_main( ( int ) in_dt.size(),
+                               ( int ) in_dt.size(),
+                               &( in_dt[ 0 ] ),
+                               &out_nat,
+                               &( out_dt[ 0 ] ) )
+        ) {
+      // cout << QString( "pat ok, out_nat %1\n" ).arg( out_nat );
+      int dt_pos = 0;
+
+      for ( int j = 0; j < nat; ++j )  {
+         PDB_atom *this_atom = &( model[ j ] );
+            
+         this_atom->bead_coordinate.axis[ 0 ] = out_dt[ dt_pos ].x;
+         this_atom->bead_coordinate.axis[ 1 ] = out_dt[ dt_pos ].y;
+         this_atom->bead_coordinate.axis[ 2 ] = out_dt[ dt_pos ].z;
+         // us_qdebug( QString( "results atom %1 coords %2 %3 %4" )
+         //         .arg( dt_pos )
+         //         .arg( out_dt[ dt_pos ].x )
+         //         .arg( out_dt[ dt_pos ].y )
+         //         .arg( out_dt[ dt_pos ].z )
+         //         );
+
+         ++dt_pos;
+      }
+   } else {
+      return false;
+   }
+   return true;
+}   

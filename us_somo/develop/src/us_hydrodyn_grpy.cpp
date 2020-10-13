@@ -215,6 +215,32 @@ bool US_Hydrodyn::calc_grpy_hydro() {
          ;
    }
 
+#define TEST_RUN_PAT
+#if defined( TEST_RUN_PAT )
+   bool run_pat = false;
+
+   switch ( QMessageBox::question(this, 
+                                  this->windowTitle() + us_tr(": vdW" ),
+                                  us_tr( "Run PAT?" ),
+                                  us_tr( "&Yes" ), 
+                                  us_tr( "&No" ), 
+                                  QString::null,
+                                  1, // Stop == button 0
+                                  1 // Escape == button 0
+                                  ) )
+   {
+   case 0 : //
+      run_pat = true;
+      break;
+   case 1 : //
+      run_pat = false;
+      break;
+   }
+
+   qDebug() << "run_pat is " << ( run_pat ? "true" : "false" );
+#endif
+   
+
    for (current_model = 0; current_model < (unsigned int)lb_model->count(); current_model++) {
       if (lb_model->item(current_model)->isSelected()) {
          if (somo_processed[current_model]) {
@@ -224,7 +250,7 @@ bool US_Hydrodyn::calc_grpy_hydro() {
             models_to_proc++;
             results.vbar = use_vbar( model_vector[ current_model ].vbar );
 
-            editor->append( QString( "Model %1 will be included\n").arg( model_name( current_model ) ) );
+            editor_msg( "black", QString( "Model %1 will be included\n").arg( model_name( current_model ) ) );
             model_names.push_back( model_name( current_model ) );
             set_bead_colors( bead_models[ current_model ] );
 
@@ -252,6 +278,12 @@ bool US_Hydrodyn::calc_grpy_hydro() {
             }
             bead_check( false, true, true );
             // }
+#if defined( TEST_RUN_PAT )
+            if ( run_pat ) {
+               editor_msg( "black", us_tr( "Running PAT" ) );
+               pat_model( bead_model );
+            }
+#endif
             
             grpy_addl_param[ "asa_rg_pos" ] = results.asa_rg_pos;
             grpy_addl_param[ "asa_rg_neg" ] = results.asa_rg_neg;

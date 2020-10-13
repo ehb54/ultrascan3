@@ -253,7 +253,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       double use_vbar( double vbar );                // temperature vbar
       
    private:
-
+      bool pat_model( vector < PDB_atom > & model );
       bool compute_asa_rgs( const vector < PDB_atom > & model );
 
       void set_bead_colors( vector < PDB_atom * > use_model );
