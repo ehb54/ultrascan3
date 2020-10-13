@@ -270,14 +270,20 @@ bool US_Hydrodyn::calc_grpy_hydro() {
                ;
             
             // always run asa
-            // if ( !hydro.grpy_bead_inclusion && fname.contains( "-vdwpH" ) ) {
-            // expose all
-            editor_msg( "black", us_tr( "running ASA check on bead model" ) );
-            for ( int i = 0; i < (int) bead_model.size(); ++i ) {
-               bead_model[ i ].exposed_code = 1;
+
+            if ( !hydro.grpy_bead_inclusion && fname.contains( "-vdwpH" ) ) {
+               // expose all
+               for ( int i = 0; i < (int) bead_model.size(); ++i ) {
+                  bead_model[ i ].exposed_code = 1;
+               }
+               editor_msg( "black",
+                           QString( us_tr( "Running ASA check on vdW bead model: Probe radius %1 [A], Threshold %2%." ) )
+                           .arg( asa.vdw_grpy_probe_radius )
+                           .arg( asa.vdw_grpy_threshold_percent )
+                           );
+               bead_check( false, true, true );
             }
-            bead_check( false, true, true );
-            // }
+
 #if defined( TEST_RUN_PAT )
             if ( run_pat ) {
                editor_msg( "black", us_tr( "Running PAT" ) );
@@ -800,6 +806,29 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
             grpy_results.ff0  += this_data.results.ff0;
             grpy_results2.ff0 += this_data.results.ff0 * this_data.results.ff0;
          }
+
+         // nsa physical stats
+
+         {
+            vector < vector < PDB_atom > >  save_bead_models = bead_models;
+            saxs_util->bead_models.resize( 1 );
+            saxs_util->bead_models[ 0 ] = bead_model;
+            if ( "empty model" != saxs_util->nsa_physical_stats() )
+            {
+               this_data.tot_volume_of = saxs_util->nsa_physical_stats_map[ "result excluded volume" ].toDouble();
+                  
+               this_data.max_ext_x = saxs_util->nsa_physical_stats_map[ "result radial extent bounding box size x" ].toDouble() * fconv;
+               this_data.max_ext_y = saxs_util->nsa_physical_stats_map[ "result radial extent bounding box size y" ].toDouble() * fconv;
+               this_data.max_ext_z = saxs_util->nsa_physical_stats_map[ "result radial extent bounding box size z" ].toDouble() * fconv;
+
+               this_data.axi_ratios_xz = saxs_util->nsa_physical_stats_map[ "result radial extent axial ratios x:z" ].toDouble();
+               this_data.axi_ratios_xy = saxs_util->nsa_physical_stats_map[ "result radial extent axial ratios x:y" ].toDouble();
+               this_data.axi_ratios_yz = saxs_util->nsa_physical_stats_map[ "result radial extent axial ratios y:z" ].toDouble();
+            } else {
+               editor_msg( "red", QString( "Internal error: Bead model is empty?" ) );
+            }
+         }
+         
       }
 
       this_data.rel_times_tau_m =

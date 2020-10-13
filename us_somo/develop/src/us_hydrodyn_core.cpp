@@ -7171,6 +7171,11 @@ void US_Hydrodyn::bead_check( bool use_threshold, bool message_type, bool vdw )
    }
 
    QString error_string = "";
+   double save_prr = asa.probe_recheck_radius;
+   if ( vdw ) {
+      asa.probe_recheck_radius = asa.vdw_grpy_probe_radius;
+   }
+
    int retval = us_hydrodyn_asab1_main(active_atoms,
                                        &asa,
                                        &results,
@@ -7179,6 +7184,9 @@ void US_Hydrodyn::bead_check( bool use_threshold, bool message_type, bool vdw )
                                        editor,
                                        this
                                        );
+
+   asa.probe_recheck_radius = save_prr;
+
    if (stopFlag)
    {
       return;
@@ -7213,8 +7221,8 @@ void US_Hydrodyn::bead_check( bool use_threshold, bool message_type, bool vdw )
       for (unsigned int i = 0; i < bead_model.size(); i++) {
          QString msg = "";
          float surface_area =
-            (asa.probe_radius + bead_model[i].bead_computed_radius) *
-            (asa.probe_radius + bead_model[i].bead_computed_radius) * 4 * M_PI;
+            (asa.vdw_grpy_probe_radius + bead_model[i].bead_computed_radius) *
+            (asa.vdw_grpy_probe_radius + bead_model[i].bead_computed_radius) * 4 * M_PI;
          if( bead_model[i].bead_recheck_asa < (asa.vdw_grpy_threshold_percent / 100.0) * surface_area ) {
             // now buried
             if(bead_model[i].exposed_code == 1) {

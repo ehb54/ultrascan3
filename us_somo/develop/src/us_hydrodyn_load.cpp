@@ -1733,7 +1733,7 @@ QString US_Hydrodyn::visc_dens_msg( bool only_used ) {
                        "Manual flag set\n"
                        "Stored solvent name      %1\n"
                        "Stored solvent viscosity %2 [cP]\n"
-                       "Stored solvent density   %3 [cP] @ %4 [°C]\n"
+                       "Stored solvent density   %3 [g/ml] @ %4 [°C]\n"
                        )
                  )
          .arg( hydro.solvent_name )
@@ -1748,7 +1748,7 @@ QString US_Hydrodyn::visc_dens_msg( bool only_used ) {
                     us_tr(
                           "Stored solvent name      %1\n"
                           "Used   solvent viscosity %2 [cP] @ %3 [°C]\n"
-                          "Used   solvent density   %4 [cP] @ %5 [°C]\n"
+                          "Used   solvent density   %4 [g/ml] @ %5 [°C]\n"
                           )
                     )
             .arg( hydro.solvent_name )
@@ -1764,8 +1764,8 @@ QString US_Hydrodyn::visc_dens_msg( bool only_used ) {
                        "Stored solvent name      %1\n"
                        "Stored solvent viscosity %2 [cP]\n"
                        "Used   solvent viscosity %3 [cP] @ %4 [°C]\n"
-                       "Stored solvent density   %5 [cP]\n"
-                       "Used   solvent density   %6 [cP] @ %7 [°C]\n"
+                       "Stored solvent density   %5 [g/ml]\n"
+                       "Used   solvent density   %6 [g/ml] @ %7 [°C]\n"
                        )
                  )
          .arg( hydro.solvent_name )
