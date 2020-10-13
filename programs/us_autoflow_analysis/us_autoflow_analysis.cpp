@@ -958,12 +958,14 @@ void US_Analysis_auto::delete_job( QString triple_stage )
 				tr( "Could not connect to database \n" ) +  db.lastError() );
 	  return;
 	}
+
+      /** DEBUG **/
+      // QMap <QString, QString > current_analysis;
+      // current_analysis = read_autoflowAnalysis_record( &db, requestID );
       
-      QMap <QString, QString > current_analysis;
-      current_analysis = read_autoflowAnalysis_record( &db, requestID );
-      
-      qDebug() << "GUID to DETETE! -- " << current_analysis[ "CurrentGfacID" ];
-      qDebug() << "Status && statusMsg to DETETE! -- " << current_analysis[ "status" ] << current_analysis[ "status_msg" ];
+      // qDebug() << "GUID to DETETE! -- " << current_analysis[ "CurrentGfacID" ];
+      // qDebug() << "Status && statusMsg to DETETE! -- " << current_analysis[ "status" ] << current_analysis[ "status_msg" ];
+      /* **********/
 
       update_autoflowAnalysis_uponDeletion( &db, requestID );
 
