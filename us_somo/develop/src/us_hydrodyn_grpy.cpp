@@ -14,8 +14,6 @@
 #include "../include/us_hydrodyn.h"
 #define SLASH QDir::separator()
 
-
-
 double US_Hydrodyn::model_mw( const vector < PDB_atom *> use_model ) {
    double mw = 0e0;
    for (unsigned int i = 0; i < use_model.size(); i++) {
@@ -264,6 +262,10 @@ bool US_Hydrodyn::calc_grpy_hydro() {
                extension
                ;
 
+            if ( !overwrite ) {
+               fname = fileNameCheck( fname, 0, this );
+            }
+
             QTextStream( stdout ) << "grpy file is '" << fname << "'" << endl
                                   << "grpy file.fileName() is '" << QFileInfo( fname ).baseName() << "'" << endl
                                   << "bead model size is " << bead_model.size() << endl
@@ -331,8 +333,18 @@ bool US_Hydrodyn::calc_grpy_hydro() {
 
    editor_msg( "dark blue", grpy_to_process.join( "\n" ) );
 
-   grpy_running = true;
-   grpy_success = true;
+   grpy_mm_save_params.data_vector.clear();
+   grpy_mm         = grpy_to_process.size() > 1;
+   grpy_mm_results = "";
+   grpy_mm_name    =
+      somo_dir + SLASH +
+      project +
+      QString( bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
+      extension
+      ;
+
+   grpy_running    = true;
+   grpy_success    = true;
    progress->setMaximum( grpy_to_process.size() + 1 );
    progress->setValue( 0 );
    
@@ -556,8 +568,11 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
    }
 
    // save stdout
-   if ( !batch_avg_hydro_active() ) {
+   if ( !batch_avg_hydro_active() && !grpy_mm ) {
       QString grpy_out_name = grpy_last_processed.replace( QRegExp( ".grpy$" ), ".grpy_res" );
+      if ( !overwrite ) {
+         grpy_out_name = fileNameCheck( grpy_out_name, 0, this );
+      }
       QFile f( grpy_out_name );
       if ( !f.open( QIODevice::WriteOnly ) ) {
          editor_msg( "red", QString( us_tr( "Error: could not open output file %1 for writing" ) ).arg( grpy_out_name ) );
@@ -900,7 +915,25 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
             .arg( QString( "" ).sprintf( "%4.2e nm"  , this_data.results.rg    ) )
             ;
 
-         if ( !batch_avg_hydro_active() ) {
+         add_to_grpy +=
+            QString(
+                    us_tr( 
+                          " Maximum extension                     X : %1\n"
+                          " Maximum extension                     Y : %2\n"
+                          " Maximum extension                     Z : %3\n"
+                          " Axial ratio                         X:Z : %4\n"
+                          " Axial ratio                         X:Y : %5\n"
+                          " Axial ratio                         Y:Z : %6\n"
+                           ) )
+            .arg( QString( "%1 nm" ).arg( this_data.max_ext_x, 0, 'g', 4 ) )
+            .arg( QString( "%1 nm" ).arg( this_data.max_ext_y, 0, 'g', 4 ) )
+            .arg( QString( "%1 nm" ).arg( this_data.max_ext_z, 0, 'g', 4 ) )
+            .arg( this_data.axi_ratios_xz, 0, 'g', 3 )
+            .arg( this_data.axi_ratios_xy, 0, 'g', 3 )
+            .arg( this_data.axi_ratios_yz, 0, 'g', 3 )
+            ;
+
+         if ( !batch_avg_hydro_active() && !grpy_mm ) {
             QFile f( last_hydro_res );
             if ( f.exists() && f.open( QIODevice::WriteOnly | QIODevice::Append ) )
             {
@@ -911,7 +944,12 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
          }
 
          this_data.hydro_res = grpy_stdout + add_to_grpy;
-
+         if ( grpy_mm ) {
+            grpy_mm_results += this_data.hydro_res;
+         }
+      }
+      if ( grpy_mm ) {
+         grpy_mm_save_params.data_vector.push_back( this_data );
       }
 
       if ( batch_widget &&
@@ -926,6 +964,10 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
       if ( saveParams && create_hydro_res )
       {
          QString fname = somo_dir + "/" + this_data.results.name + ".grpy.csv";
+         if ( !overwrite ) {
+            fname = fileNameCheck( fname, 0, this );
+         }
+
          FILE *of = us_fopen(fname, "wb");
          if ( of )
          {
@@ -996,6 +1038,26 @@ void US_Hydrodyn::grpy_finalize() {
             
             results = grpy_results;
          }
+      }
+   }
+
+   if ( grpy_mm ) {
+      QString grpy_out_name = grpy_mm_name + ".grpy_res";
+      if ( !overwrite ) {
+         grpy_out_name = fileNameCheck( grpy_out_name, 0, this );
+      }
+      
+      QFile f( grpy_out_name );
+      if ( !f.open( QIODevice::WriteOnly ) ) {
+         editor_msg( "red", QString( us_tr( "Error: could not open output file %1 for writing" ) ).arg( grpy_out_name ) );
+      } else {
+         vector < save_data > stats = save_util->stats( & grpy_mm_save_params.data_vector );
+         QTextStream t( &f );
+         t << grpy_mm_results;
+         t << save_util->hydroFormatStats( stats, US_Hydrodyn_Save::HYDRO_GRPY );
+         editor_msg( "dark blue", QString( us_tr( "Wrote %1" ) ).arg( grpy_out_name ) );
+         f.close();
+         last_hydro_res = grpy_out_name;
       }
    }
 

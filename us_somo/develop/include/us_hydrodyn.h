@@ -920,25 +920,40 @@ class US_EXTERN US_Hydrodyn : public QFrame
       map < QString, map < QString, vector < QString > > > data_csv;
       QStringList                                          data_csv_headers;
 
-      QProcess *grpy;
-      void grpy_process_next();
-      void grpy_finalize();
-      QString grpy_prog;
-      QStringList grpy_to_process;
-      QStringList grpy_processed;
-      QString grpy_last_processed;
-      QString grpy_stdout;
-      bool grpy_running;
-      QString grpy_filename;
-      QVector < int > grpy_model_numbers;
-      int grpy_last_model_number;
-      QVector < int > grpy_used_beads;
-      QVector < QMap < QString, double > > grpy_addl_params;
-      QMap < QString, double >             grpy_addl_param;
-      int grpy_last_used_beads;
-      bool grpy_success;  // only valid if !grpy_running
-      map < QString, vector < double > > grpy_captures;
-      US_Timer timers;
+      // grpy data & methods
+      QProcess                            * grpy;
+      void                                  grpy_process_next();
+      void                                  grpy_finalize();
+      QString                               grpy_prog;
+      QStringList                           grpy_to_process;
+      QStringList                           grpy_processed;
+      QString                               grpy_last_processed;
+      QString                               grpy_stdout;
+      bool                                  grpy_running;
+      QString                               grpy_filename;
+      QVector < int >                       grpy_model_numbers;
+      int                                   grpy_last_model_number;
+      QVector < int >                       grpy_used_beads;
+      QVector < QMap < QString, double > >  grpy_addl_params;
+      QMap < QString, double >              grpy_addl_param;
+      int                                   grpy_last_used_beads;
+      bool                                  grpy_success;  // only valid if !grpy_running
+      map < QString, vector < double > >    grpy_captures;
+
+      bool                                  grpy_mm;
+      QString                               grpy_mm_results;
+      QString                               grpy_mm_name;
+      save_info                             grpy_mm_save_params;
+
+      // zeno mm data
+      bool                                  zeno_mm;
+      QString                               zeno_mm_results;
+      QString                               zeno_mm_name;
+      save_info                             zeno_mm_save_params;
+      
+
+      US_Timer                              timers;
+
       hydro_results grpy_results;
       hydro_results grpy_results2;
 

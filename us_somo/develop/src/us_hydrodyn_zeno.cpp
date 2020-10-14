@@ -13591,7 +13591,7 @@ bool US_Hydrodyn_Zeno::run(
       zeno_cxx_main(
                     argc
                     ,argv
-                    ,QString( "%1.zno%2" ).arg( filename ).arg( us_hydrodyn->batch_avg_hydro_active() ? "_Tmp_Remove" : "" ).toLatin1().data()
+                    ,QString( "%1.zno%2" ).arg( filename ).arg( us_hydrodyn->batch_avg_hydro_active() || us_hydrodyn->zeno_mm ? "_Tmp_Remove" : "" ).toLatin1().data()
                     ,false
                     ,zeno_us_udp_msg
                     );
@@ -13601,7 +13601,7 @@ bool US_Hydrodyn_Zeno::run(
 
       if ( !us_hydrodyn->stopFlag )
       {
-         if ( !us_hydrodyn->batch_avg_hydro_active() ) {
+         if ( !us_hydrodyn->batch_avg_hydro_active() && !us_hydrodyn->zeno_mm ) {
             us_hydrodyn->last_hydro_res = QFileInfo( filename + ".zno" ).fileName();
             us_hydrodyn->editor_msg( "black", QString( "Created %1\n" ).arg( filename + ".zno" ) );
          } else {
@@ -13699,9 +13699,9 @@ bool US_Hydrodyn_Zeno::run(
       }
 #endif
 
-      if ( !us_hydrodyn->stopFlag && !us_hydrodyn->batch_avg_hydro_active() )
+      if ( !us_hydrodyn->stopFlag && !us_hydrodyn->batch_avg_hydro_active() && !us_hydrodyn->zeno_mm )
       {
-         if ( !us_hydrodyn->batch_avg_hydro_active() ) {
+         if ( !us_hydrodyn->batch_avg_hydro_active() && !us_hydrodyn->zeno_mm ) {
             us_hydrodyn->last_hydro_res = QFileInfo( filename + ".zno" ).fileName();
             us_hydrodyn->editor_msg( "black", QString( "Created %1\n" ).arg( filename + ".zno" ) );
          } else {
@@ -13897,6 +13897,35 @@ bool US_Hydrodyn::calc_zeno()
       editor_msg( "dark red", QString( us_tr( "Bead models have overlap, dimensionless intrinsic viscosity not computed.\n" ) ) );
    }      
 
+   {
+      int models_to_process = 0;
+      for (current_model = 0; current_model < (unsigned int)lb_model->count(); current_model++) {
+         if (lb_model->item(current_model)->isSelected()) {
+            if (somo_processed[current_model]) {
+               ++models_to_process;
+            }
+         }
+      }
+      zeno_mm = models_to_process > 1;
+   }
+
+   QString mc =
+      gparams[ "zeno_max_cap" ] == "true" ?
+      QString( "_MSDP%1" ).arg( gparams[ "zeno_max_cap_pct" ]  )
+      :
+      QString( "_MC%1" ).arg( hydro.zeno_zeno_steps );
+   ;
+
+   zeno_mm_save_params.data_vector.clear();
+   zeno_mm_results = "";
+   zeno_mm_name   = 
+      get_somo_dir() 
+      + QDir::separator() 
+      + project 
+      + mc
+      + QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "" )
+      ;
+   
    for (current_model = 0; current_model < (unsigned int)lb_model->count(); current_model++) {
       if (lb_model->item(current_model)->isSelected()) {
          if (somo_processed[current_model]) {
@@ -13907,12 +13936,12 @@ bool US_Hydrodyn::calc_zeno()
                bead_model = bead_models[current_model];
                // t_pe->start( 1000 );
 
-               QString mc =
-                  gparams[ "zeno_max_cap" ] == "true" ?
-                  QString( "_MSDP%1" ).arg( gparams[ "zeno_max_cap_pct" ]  )
-                  :
-                  QString( "_MC%1" ).arg( hydro.zeno_zeno_steps );
-               ;
+               // QString mc =
+               //    gparams[ "zeno_max_cap" ] == "true" ?
+               //    QString( "_MSDP%1" ).arg( gparams[ "zeno_max_cap_pct" ]  )
+               //    :
+               //    QString( "_MC%1" ).arg( hydro.zeno_zeno_steps );
+               // ;
 
                QString fname =
                   QString( get_somo_dir() 
@@ -14032,7 +14061,7 @@ bool US_Hydrodyn::calc_zeno()
                   
                   }
                   f.close();
-                  if ( batch_avg_hydro_active() ) {
+                  if ( batch_avg_hydro_active() || zeno_mm ) {
                      QFile::remove( last_hydro_res );
                      last_hydro_res = "";
                   }
@@ -14457,6 +14486,31 @@ bool US_Hydrodyn::calc_zeno()
                      }
                   }
 
+                  // nsa physical stats
+
+                  {
+                     vector < vector < PDB_atom > >  save_bead_models = bead_models;
+                     saxs_util->bead_models.resize( 1 );
+                     saxs_util->bead_models[ 0 ] = bead_model;
+                     if ( "empty model" != saxs_util->nsa_physical_stats() )
+                     {
+                        this_data.tot_volume_of = saxs_util->nsa_physical_stats_map[ "result excluded volume" ].toDouble();
+
+                        double fconv = pow(10.0, this_data.hydro.unit + 9);
+                  
+                        this_data.max_ext_x = saxs_util->nsa_physical_stats_map[ "result radial extent bounding box size x" ].toDouble() * fconv;
+                        this_data.max_ext_y = saxs_util->nsa_physical_stats_map[ "result radial extent bounding box size y" ].toDouble() * fconv;
+                        this_data.max_ext_z = saxs_util->nsa_physical_stats_map[ "result radial extent bounding box size z" ].toDouble() * fconv;
+
+                        this_data.axi_ratios_xz = saxs_util->nsa_physical_stats_map[ "result radial extent axial ratios x:z" ].toDouble();
+                        this_data.axi_ratios_xy = saxs_util->nsa_physical_stats_map[ "result radial extent axial ratios x:y" ].toDouble();
+                        this_data.axi_ratios_yz = saxs_util->nsa_physical_stats_map[ "result radial extent axial ratios y:z" ].toDouble();
+                     } else {
+                        editor_msg( "red", QString( "Internal error: Bead model is empty?" ) );
+                     }
+                  }
+
+
                   // append to zno file
                   {
                      QString add_to_zeno;
@@ -14555,7 +14609,26 @@ bool US_Hydrodyn::calc_zeno()
                         }
                      }
 
-                     if ( !batch_avg_hydro_active() ) {
+                     add_to_zeno +=
+                        QString(
+                                us_tr( 
+                                      " Maximum extension                     X : %1\n"
+                                      " Maximum extension                     Y : %2\n"
+                                      " Maximum extension                     Z : %3\n"
+                                      " Axial ratio                         X:Z : %4\n"
+                                      " Axial ratio                         X:Y : %5\n"
+                                      " Axial ratio                         Y:Z : %6\n"
+                                       ) )
+                        .arg( QString( "%1 nm" ).arg( this_data.max_ext_x, 0, 'g', 4 ) )
+                        .arg( QString( "%1 nm" ).arg( this_data.max_ext_y, 0, 'g', 4 ) )
+                        .arg( QString( "%1 nm" ).arg( this_data.max_ext_z, 0, 'g', 4 ) )
+                        .arg( this_data.axi_ratios_xz, 0, 'g', 3 )
+                        .arg( this_data.axi_ratios_xy, 0, 'g', 3 )
+                        .arg( this_data.axi_ratios_yz, 0, 'g', 3 )
+                        ;
+
+
+                     if ( !batch_avg_hydro_active() && !zeno_mm ) {
                         QFile f( last_hydro_res );
                         if ( f.exists() && f.open( QIODevice::WriteOnly | QIODevice::Append ) )
                         {
@@ -14565,30 +14638,13 @@ bool US_Hydrodyn::calc_zeno()
                         }
                      }
                      this_data.hydro_res += add_to_zeno;
+                     if ( zeno_mm ) {
+                        zeno_mm_results += this_data.hydro_res;
+                     }
                   }
 
-                  // nsa physical stats
-
-                  {
-                     vector < vector < PDB_atom > >  save_bead_models = bead_models;
-                     saxs_util->bead_models.resize( 1 );
-                     saxs_util->bead_models[ 0 ] = bead_model;
-                     if ( "empty model" != saxs_util->nsa_physical_stats() )
-                     {
-                        this_data.tot_volume_of = saxs_util->nsa_physical_stats_map[ "result excluded volume" ].toDouble();
-
-                        double fconv = pow(10.0, this_data.hydro.unit + 9);
-                  
-                        this_data.max_ext_x = saxs_util->nsa_physical_stats_map[ "result radial extent bounding box size x" ].toDouble() * fconv;
-                        this_data.max_ext_y = saxs_util->nsa_physical_stats_map[ "result radial extent bounding box size y" ].toDouble() * fconv;
-                        this_data.max_ext_z = saxs_util->nsa_physical_stats_map[ "result radial extent bounding box size z" ].toDouble() * fconv;
-
-                        this_data.axi_ratios_xz = saxs_util->nsa_physical_stats_map[ "result radial extent axial ratios x:z" ].toDouble();
-                        this_data.axi_ratios_xy = saxs_util->nsa_physical_stats_map[ "result radial extent axial ratios x:y" ].toDouble();
-                        this_data.axi_ratios_yz = saxs_util->nsa_physical_stats_map[ "result radial extent axial ratios y:z" ].toDouble();
-                     } else {
-                        editor_msg( "red", QString( "Internal error: Bead model is empty?" ) );
-                     }
+                  if ( zeno_mm ) {
+                     zeno_mm_save_params.data_vector.push_back( this_data );
                   }
 
                   if ( batch_widget &&
@@ -14698,6 +14754,25 @@ bool US_Hydrodyn::calc_zeno()
          }
       }
    }      
+
+   if ( zeno_mm ) {
+      QString zeno_out_name = zeno_mm_name + ".zno";
+      if ( !overwrite ) {
+         zeno_out_name = fileNameCheck( zeno_out_name, 0, this );
+      }
+      QFile f( zeno_out_name );
+      if ( !f.open( QIODevice::WriteOnly ) ) {
+         editor_msg( "red", QString( us_tr( "Error: could not open output file %1 for writing" ) ).arg( zeno_out_name ) );
+      } else {
+         vector < save_data > stats = save_util->stats( & zeno_mm_save_params.data_vector );
+         QTextStream t( &f );
+         t << zeno_mm_results;
+         t << save_util->hydroFormatStats( stats, US_Hydrodyn_Save::HYDRO_ZENO );
+         editor_msg( "dark blue", QString( us_tr( "Wrote %1" ) ).arg( zeno_out_name ) );
+         f.close();
+         last_hydro_res = zeno_out_name;
+      }
+   }
 
    QDir::setCurrent(somo_tmp_dir);
 
