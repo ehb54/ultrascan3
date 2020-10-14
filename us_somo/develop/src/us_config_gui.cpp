@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include "../include/us3i_color.h"
 #include "../include/us_config_gui.h"
 #include "../include/us_hydrodyn.h"
 #include <qfontmetrics.h>
@@ -462,8 +463,8 @@ void US_Config_GUI::update_on_button()
 
 void US_Config_GUI::update_color()
 {
-   US_Color *uscol;
-   uscol = new US_Color();
+   US3i_Color *uscol;
+   uscol = new US3i_Color();
    US_Config::connect(uscol, SIGNAL(marginChanged(int)), this, SLOT(update_margin(int)));
    uscol->show();
 }

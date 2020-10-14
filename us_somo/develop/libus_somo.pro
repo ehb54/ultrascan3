@@ -456,6 +456,7 @@ SOURCES *= \
         src/us_hydrodyn_saxs_guinier_frames.cpp \
         src/us_hydrodyn_saxs_hplc_scale_trend.cpp \
         src/us_plot_util.cpp \
+        src/us3i_color.cpp \
         src/us3i_editor.cpp \
         src/us3i_editor_gui.cpp \
         src/us3i_gui_settings.cpp \
@@ -772,6 +773,7 @@ HEADERS *= \
         include/us_hydrodyn_saxs_hplc_baseline_best.h \
         include/us_hydrodyn_saxs_hplc_simulate.h \
         include/us_plot_util.h \
+        include/us3i_color.h \
         include/us3i_extern.h \
         include/us3i_editor.h \
         include/us3i_editor_gui.h \

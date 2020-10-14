@@ -253,6 +253,13 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
 #endif
 
    USglobal = new US_Config();
+   // // test color override
+   // {
+   //    QPalette p = PALET_PUSHB;
+   //    p.setColor( QPalette::Disabled, QPalette::ButtonText, Qt::red    ); // windowText/foreground
+   //    US_GuiSettings::set_pushbColor( p );
+   // }
+
    this->batch_file = batch_file;
    numThreads = USglobal->config_list.numThreads;
    extra_saxs_coefficients.clear( );
