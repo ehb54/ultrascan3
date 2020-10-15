@@ -9,6 +9,16 @@ if [ $# -eq 0 ]; then
 fi
 export MAKE="make ${MKARGS}"
 
+if [ -z "$ULTRASCAN" ]; then
+    ULTRASCAN="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+    echo "Notice: the ULTRASCAN environment variable was not set, so using $ULTRASCAN"
+fi
+
+if [ ! -d "$ULTRASCAN/us_somo" ]; then
+    echo "Error: $ULTRASCAN/us_somo is not a directory"
+    exit -1;
+fi
+
 ISMAC=0
 FIXMAC=""
 if [ "`uname -s`" = "Darwin" ]; then
@@ -29,8 +39,8 @@ fi
 
 DIR=$(pwd)
 NBERR=0
-##SOMO3=`(cd $us3/../us3_somo;pwd)`
-SOMO3=`(cd $us3/us_somo;pwd)`
+##SOMO3=`(cd $ULTRASCAN/../ULTRASCAN_somo;pwd)`
+SOMO3=`(cd $ULTRASCAN/us_somo;pwd)`
 
 if [ $ISWIN -eq 2 ]; then
   # Run revision and qmake in Cygwin window
@@ -72,8 +82,8 @@ if [ $ISWIN -eq 1 ]; then
 fi
 
 # Do makes for Linux,Mac
-echo "rsync -av --exclude .svn $SOMO3/etc $us3"
-rsync -av --exclude .svn $SOMO3/etc $us3
+echo "rsync -av --exclude .svn $SOMO3/etc $ULTRASCAN"
+rsync -av --exclude .svn $SOMO3/etc $ULTRASCAN
 
 cd $SOMO3/develop
 sh version.sh
@@ -93,10 +103,10 @@ fi
 
 ls -lrt ./lib ./bin64
 echo ""
-echo "rsync -av --exclude .svn $SOMO3/lib/ $us3/lib"
-rsync -av --exclude .svn $SOMO3/lib/ $us3/lib
-echo "rsync -av --exclude .svn $SOMO3/bin64/ $us3/bin"
-rsync -av --exclude .svn $SOMO3/bin64/ $us3/bin
+echo "rsync -av --exclude .svn $SOMO3/lib/ $ULTRASCAN/lib"
+rsync -av --exclude .svn $SOMO3/lib/ $ULTRASCAN/lib
+echo "rsync -av --exclude .svn $SOMO3/bin64/ $ULTRASCAN/bin"
+rsync -av --exclude .svn $SOMO3/bin64/ $ULTRASCAN/bin
 echo ""
 echo "MAKE of somo complete"
 
