@@ -28,11 +28,13 @@ void US_Convert::readLegacyData(
    if ( dir.right( 1 ) != "/" ) dir += "/"; // Ensure trailing /
 
    QStringList files = d.entryList( QDir::Files );
+qDebug() << "CVT:rdLegD: dir" << dir << "f sz" << files.size();
 
    // Maybe dir had only directories ( i.e., not empty )
    if ( files.size() < 1 ) return;
 
    runType = files[ 0 ].right( 3 ).left( 2 ).toUpper(); // 1st 2 chars of extention
+qDebug() << "CVT:rdLegD: runType" << runType;
    QStringList fileList;
    QStringList channels;
    QString f;
@@ -57,6 +59,7 @@ void US_Convert::readLegacyData(
 
          // Test to see if the directory holds mixed types
          QString frunType = f.right( 3 ).left( 2 ).toUpper();
+qDebug() << "CVT:rdLegD:    f" << f << "frunType" << frunType << "c" << c;
          if ( frunType != runType )
          {
             mixed_type     = true;
@@ -65,6 +68,7 @@ void US_Convert::readLegacyData(
          }
       }
    }
+qDebug() << "CVT:rdLegD: mixed" << mixed_type;
 
    if ( mixed_type )
    {  // If mixed type, have user select one type and rebuild appropriate lists
@@ -90,10 +94,10 @@ void US_Convert::readLegacyData(
             QObject::tr( "The Import directory holds multiple data types.\n"
                          "Choose the type to import in this session." ),
             prType, arType, 0, 0, 1 );
-qDebug() << "CVT: runType chosen: " << status;
 
       if ( status != 0 )
          runType        = arunType;
+qDebug() << "CVT:rdLegD:  runTypes chosen" << prType << arType << runType << "status" << status;
 
       fileList.clear();
       channels.clear();

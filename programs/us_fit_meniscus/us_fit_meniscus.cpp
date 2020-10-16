@@ -87,7 +87,7 @@ DbgLv(1) << "Main: BB";
    pick->setMousePattern( QwtEventPattern::MouseSelect1,
                           Qt::LeftButton, Qt::ControlModifier );
    connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
-                     SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
+                  SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
    
    grid->attach( meniscus_plot );
    
@@ -143,13 +143,19 @@ DbgLv(1) << "Main: BB";
    le_mprads ->setToolTip(
          tr( "Meniscus,Bottom current radii (midpoint of ranges)" ) );
 
-   // le_men_sel   = us_lineedit( "", -1, false );
-   // le_men_sel->setToolTip(
-   //       tr( "Selected/Editable meniscus radius value" ) );
 
-   le_men_sel   = us_lineedit( "", -1, true );
-   le_men_sel->setToolTip(
-         tr( "Selected meniscus radius value" ) );
+   if ( auto_mode )
+   {
+      le_men_sel   = us_lineedit( "", -1, true );
+      le_men_sel->setToolTip(
+            tr( "Selected meniscus radius value" ) );
+   }
+   else
+   {
+      le_men_sel   = us_lineedit( "", -1, false );
+      le_men_sel->setToolTip(
+            tr( "Selected/Editable meniscus radius value" ) );
+   }
    
    le_rms_error = us_lineedit( "", -1, true );
    le_rms_error->setToolTip(
@@ -374,7 +380,7 @@ DbgLv(1) << "Main: BB";
    pick->setMousePattern( QwtEventPattern::MouseSelect1,
                           Qt::LeftButton, Qt::ControlModifier );
    connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
-                     SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
+                  SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
    
    
    grid->attach( meniscus_plot );
@@ -431,13 +437,18 @@ DbgLv(1) << "Main: BB";
    le_mprads ->setToolTip(
          tr( "Meniscus,Bottom current radii (midpoint of ranges)" ) );
 
-   // le_men_sel   = us_lineedit( "", -1, false );
-   // le_men_sel->setToolTip(
-   //       tr( "Selected/Editable meniscus radius value" ) );
-
-   le_men_sel   = us_lineedit( "", -1, true );
-   le_men_sel->setToolTip(
-         tr( "Selected meniscus radius value" ) );
+   if ( auto_mode )
+   {
+      le_men_sel   = us_lineedit( "", -1, true );
+      le_men_sel->setToolTip(
+            tr( "Selected meniscus radius value" ) );
+   }
+   else
+   {
+      le_men_sel   = us_lineedit( "", -1, false );
+      le_men_sel->setToolTip(
+            tr( "Selected/Editable meniscus radius value" ) );
+   }
    
    le_rms_error = us_lineedit( "", -1, true );
    le_rms_error->setToolTip(
@@ -697,6 +708,7 @@ void US_FitMeniscus::mouse( const QwtDoublePoint& p )
   
   rmsd_min  [ 0 ] = miny_global - 1.0 * dy_global;
   rmsd_min  [ 1 ] = miny_global + 2.0 * dy_global;
+DbgLv(1) << "MOUSE: p.x" << p.x() << "rmsd_min" << rmsd_min;
   
   minimum_curve_sel->setSamples( radius_min, rmsd_min, 2 );
   
@@ -945,7 +957,7 @@ void US_FitMeniscus::plot_2d( void )
       meniscus_plot->setTitle    ( tr( "Meniscus Fit" )  + ": " + triple_information[ "triple_name" ] );
      else
        meniscus_plot->setTitle    ( tr( "Meniscus Fit" ) );
-				    
+
       meniscus_plot->setAxisTitle( QwtPlot::yLeft,   tr( "2DSA Meniscus RMSD" ) );
       meniscus_plot->setAxisTitle( QwtPlot::xBottom, tr( "Meniscus Radius" ) );
       lb_men_sel->setText( tr( "Meniscus selected:" ) );
@@ -1413,7 +1425,7 @@ DbgLv(1) << " eupd:   ixmlin ixblin" << ixmlin << ixblin << "ncmlin ncblin" << n
       }
 
       if ( auto_mode )
-	le_status->setText( "Updating edit profile: " + fname_edit ); 
+         le_status->setText( "Updating edit profile: " + fname_edit ); 
       
       // Write out the modified Edit XML text
       QFile fileo( fn );
@@ -1488,7 +1500,7 @@ DbgLv(1) << " eupd: AppWvl: nedtfs" << nedtfs;
 DbgLv(1) << " eupd:     jj" << jj << "fn" << fn;
 
          if ( auto_mode )
-	   le_status->setText( "Updating edit profile: " + edtfiles.at( jj )  ); 
+            le_status->setText( "Updating edit profile: " + edtfiles.at( jj )  ); 
  
          QFile filei( fn );
 
@@ -1794,8 +1806,7 @@ void US_FitMeniscus::get_editProfile_copy( QMap < QString, QString > & triple_in
   QString masterpw = pw.getPasswd();
   US_DB2* db = new US_DB2( masterpw );
   
-  int stat = 0;
-  // to be extracted from editedData table ('filename' field)
+  // To be extracted from editedData table ('filename' field)
   // QMap below - establish correspondence btw EditProfile filename && EditDataID
   // select filename, editedDataID from editedData where label='ISSF-KulkarniJ_NP1-pDNA-D2O-0_091020-run822-2A';
   QMap <QString, int> EProfs_to_IDs;
@@ -1814,10 +1825,10 @@ void US_FitMeniscus::get_editProfile_copy( QMap < QString, QString > & triple_in
       EProfs_to_IDs[ filename ] = ID;
     }
   
-  QMap<QString, int>::iterator fn;
-  for ( fn = EProfs_to_IDs.begin(); fn != EProfs_to_IDs.end(); ++fn )
-    {
-      qDebug() << "EditProfile filename / EditDataID: " << fn.key() << "/" << fn.value();
+   QMap<QString, int>::iterator fn;
+   for ( fn = EProfs_to_IDs.begin(); fn != EProfs_to_IDs.end(); ++fn )
+   {
+qDebug() << "EditProfile filename / EditDataID: " << fn.key() << "/" << fn.value();
       QString filename = fn.key();
       int editedDataID = fn.value();
       
@@ -1826,10 +1837,10 @@ void US_FitMeniscus::get_editProfile_copy( QMap < QString, QString > & triple_in
       // Can check here if such filename exists
       QFileInfo check_file( filepath );
       if ( check_file.exists() && check_file.isFile() )
-	qDebug() << "EditProfile file: " << filepath << " exists";
+qDebug() << "EditProfile file: " << filepath << " exists";
       else
-	stat   = db->readBlobFromDB( filepath, "download_editData", editedDataID );
-    }
+      db->readBlobFromDB( filepath, "download_editData", editedDataID );
+   }
 }
 
 // Slot for handling a loaded file:  set the name of loaded,edit files
@@ -3609,13 +3620,13 @@ void US_FitMeniscus::change_plot_type( )
 
      if ( auto_mode )
        {
-	 setWindowTitle( tr( "Fit Meniscus,Bottom from 2DSA Data" ) + ": " + triple_information[ "triple_name" ]  );
-	 meniscus_plot->setTitle    ( tr( "Meniscus,Bottom Fit" ) + ": " + triple_information[ "triple_name" ]  );
+         setWindowTitle( tr( "Fit Meniscus,Bottom from 2DSA Data" ) + ": " + triple_information[ "triple_name" ]  );
+         meniscus_plot->setTitle    ( tr( "Meniscus,Bottom Fit" ) + ": " + triple_information[ "triple_name" ]  );
        }
      else
        {
-	 setWindowTitle( tr( "Fit Meniscus,Bottom from 2DSA Data" ) );
-	 meniscus_plot->setTitle    ( tr( "Meniscus,Bottom Fit" ) );
+         setWindowTitle( tr( "Fit Meniscus,Bottom from 2DSA Data" ) );
+         meniscus_plot->setTitle    ( tr( "Meniscus,Bottom Fit" ) );
        }
      
       meniscus_plot->setAxisTitle( QwtPlot::yLeft,   tr( "2DSA Meniscus,Bottom RMSD" ) );
@@ -3628,13 +3639,13 @@ void US_FitMeniscus::change_plot_type( )
 
      if ( auto_mode )
        {
-	 setWindowTitle( tr( "Fit Meniscus from 2DSA Data" ) + ": " + triple_information[ "triple_name" ] );
-	 meniscus_plot->setTitle    ( tr( "Meniscus Fit" ) + ": " + triple_information[ "triple_name" ] );
+         setWindowTitle( tr( "Fit Meniscus from 2DSA Data" ) + ": " + triple_information[ "triple_name" ] );
+         meniscus_plot->setTitle    ( tr( "Meniscus Fit" ) + ": " + triple_information[ "triple_name" ] );
        }
      else
        {
-	 setWindowTitle( tr( "Fit Meniscus from 2DSA Data" ) );
-	 meniscus_plot->setTitle    ( tr( "Meniscus Fit" ) );
+         setWindowTitle( tr( "Fit Meniscus from 2DSA Data" ) );
+         meniscus_plot->setTitle    ( tr( "Meniscus Fit" ) );
        }
      
      
