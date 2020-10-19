@@ -482,7 +482,7 @@ DbgLv(1) << "DaPl:   npoint" << npoint << "xx" << xx[0] << xx[npoint-1]
    legend->setFont( sfont );
    data_plot->insertLegend( legend, QwtPlot::BottomLegend  );
 
-   QColor lncolrs[] = { QColor( Qt::blue ),
+   QColor lncolr1[] = { QColor( Qt::blue ),
                         QColor( Qt::red ),
                         QColor( Qt::green ),
                         QColor( Qt::magenta ),
@@ -491,6 +491,32 @@ DbgLv(1) << "DaPl:   npoint" << npoint << "xx" << xx[0] << xx[npoint-1]
                         QColor( Qt::gray ),
                         QColor( Qt::black )
                     };
+   QList< QColor > lncolrs;
+   if ( ncurvs < 9 )
+   {  // for 8 or less curves, use set color array
+      for ( int ii = 0; ii < ncurvs; ii++ )
+         lncolrs << lncolr1[ ii ];
+   }
+   else
+   {  // for 9 or more curves, build color array from rainbow colors
+      QwtInterval colorinterv( 0.0, 1.0 );
+      QwtLinearColorMap* colormap;
+      colormap  = new QwtLinearColorMap( Qt::magenta, Qt::red );
+      colormap->addColorStop( 0.2000, Qt::blue   );
+      colormap->addColorStop( 0.4000, Qt::cyan   );
+      colormap->addColorStop( 0.6000, Qt::green  );
+      colormap->addColorStop( 0.8000, Qt::yellow );
+      double posi   = 1.0 / (double)( ncurvs - 1 );
+      double pos    = 0.0;
+DbgLv(1) << "pC: ncurvs" << ncurvs << "posi" << posi;
+      for ( int ii = 0; ii < ncurvs; ii++ )
+      {
+DbgLv(1) << "pC:  pos" << pos << "color" << QColor(colormap->rgb(colorinterv,pos)) << "ii" << ii;
+         lncolrs << QColor( colormap->rgb( colorinterv, pos ) );
+         pos          += posi;
+         pos           = qMin( pos, 1.0 );
+      }
+   }
 
    for ( int ii = 0; ii < ncurvs; ii++ )
    {  // Draw each model line
