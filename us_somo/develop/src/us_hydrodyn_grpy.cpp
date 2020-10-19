@@ -345,7 +345,8 @@ bool US_Hydrodyn::calc_grpy_hydro() {
 
    grpy_running    = true;
    grpy_success    = true;
-   progress->setMaximum( grpy_to_process.size() + 1 );
+   progress->setMaximum( 101 * ( grpy_to_process.size() ) + 1 );
+   // qDebug() << "progress max " <<  101 * ( grpy_to_process.size() ) + 1;
    progress->setValue( 0 );
    
    timers.clear_timers();
@@ -364,6 +365,9 @@ void US_Hydrodyn::grpy_process_next() {
       return;
    }
 
+   progress->setValue( 101 * grpy_processed.size() + 1 );
+   // qDebug() << "progress value " << 101 * grpy_processed.size() + 1;
+
    grpy_last_processed    = grpy_to_process   [ 0 ];
    grpy_last_model_number = grpy_model_numbers[ 0 ];
    grpy_last_used_beads   = grpy_used_beads   [ 0 ];
@@ -375,7 +379,6 @@ void US_Hydrodyn::grpy_process_next() {
    grpy_processed         .push_back( grpy_last_processed );
 
    grpy_stdout = "";
-   progress->setValue( progress->value() + 1 );
 
    timers.init_timer( "compute grpy this model" );
    timers.start_timer( "compute grpy this model" );
@@ -387,6 +390,7 @@ void US_Hydrodyn::grpy_process_next() {
    {
       QStringList args;
       args
+         << "-e"
          << grpy_last_processed;
 
       connect( grpy, SIGNAL(readyReadStandardOutput()), this, SLOT(grpy_readFromStdout()) );
@@ -407,10 +411,30 @@ void US_Hydrodyn::grpy_process_next() {
 void US_Hydrodyn::grpy_readFromStdout()
 {
    // us_qdebug( QString( "grpy_readFromStdout %1" ).arg( grpy_last_processed ) );
+   static QRegularExpression re = QRegularExpression( "^\\s*(\\d+)%\\s*TASK:\\s*(.*)$" );
    QString qs = QString( grpy->readAllStandardOutput() );
-   grpy_stdout += qs;
-   // editor_msg( "brown", qs );
-   //  qApp->processEvents();
+   // only needed for windows
+   qs = qs.replace( "\r\n", "\n" );
+   QStringList qsl = qs.split( "\r" );
+   int size = (int) qsl.size();
+   for ( int i = 0; i < size; ++i ) {
+      qs = qsl[ i ];
+      if ( qs.contains( "% TASK:" ) ) {
+         qs = qs.split( "\r" ).takeLast();
+         QRegularExpressionMatch match = re.match( qs );
+         if ( match.hasMatch() ) {
+            // qDebug() << "capture 1:" << match.captured( 1 );
+            // qDebug() << "capture 2:" << match.captured( 2 );
+            progress->setValue( 101 * ( grpy_processed.size() - 1 ) + match.captured( 1 ).toDouble() );
+            // qDebug() << "progress value " <<  101 * ( grpy_processed.size() - 1 ) + match.captured( 1 ).toDouble() + 1;
+            lbl_core_progress->setText( QString( "Model %1 : %2 " ).arg( grpy_last_model_number + 1 ).arg( match.captured( 2 ) ) );
+            qApp->processEvents();
+         }
+      } else {
+         grpy_stdout += qs;
+         editor_msg( "brown", qs );
+      }
+   }
 }
 
 void US_Hydrodyn::grpy_readFromStderr()
@@ -444,6 +468,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
       pb_show_hydro_results->setEnabled(false);
       progress->reset();
+      lbl_core_progress->setText( "" );
       grpy_success = false;
       grpy_running = false;
       return;
@@ -1073,6 +1098,7 @@ void US_Hydrodyn::grpy_finalize() {
    pb_calc_hullrad->setEnabled( true );
    pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
    progress->reset();
+   lbl_core_progress->setText( "" );
    editor_msg( "black", "GRPY finished" );
    timers.end_timer( "compute grpy all models" );
    editor_msg( "black", QString( "Time to process %1").arg( timers.time_min_sec( "compute grpy all models" ) ) );

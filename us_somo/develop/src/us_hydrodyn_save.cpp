@@ -156,6 +156,14 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Processing time [s] ",
             "Processing time [s] ",
 
+            "max_ext_x",
+            "Maximum extensions [ X, Y, Z ] [nm]",
+            "Maximum extensions [ X, Y, Z ] [nm]",
+
+            "axi_ratios_xz",
+            "Axial ratios [ X:Z, X:Y, Y:Z ] ",
+            "Axial ratios [ X:Z, X:Y, Y:Z ] ",
+
             "__SECTION__",
             "Additional SMI results:",
 
@@ -202,14 +210,6 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "cor_einst_rad",
             "Corrected Einstein's radius [nm]",
             "Corrected Einstein's radius [nm]",
-
-            "max_ext_x",
-            "Maximum extensions [ X, Y, Z ] [nm]",
-            "Maximum extensions [ X, Y, Z ] [nm]",
-
-            "axi_ratios_xz",
-            "Axial ratios [ X:Z, X:Y, Y:Z ] ",
-            "Axial ratios [ X:Z, X:Y, Y:Z ] ",
 
 
             "__SECTION__",
