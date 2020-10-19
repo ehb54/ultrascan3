@@ -929,7 +929,7 @@ void US_Analysis_auto::delete_job( QString triple_stage )
     .arg( triple_n )
     .arg( stage_n  );
 
-  if ( mwl_channel )
+  if ( mwl_channel && ( stage_n == "2DSA" || stage_n == "2DSA-FM" ) )
     msg_sys_text += QString("\n\nSince this is a multi-wavelength analysis, ongoing jobs for the following same-channel triples will be canceled as well: \n %1")
       .arg( triple_list_affected.join(",") );
   
