@@ -428,13 +428,13 @@ void US_Hydrodyn::grpy_readFromStdout()
             progress->setValue( 101 * ( grpy_processed.size() - 1 ) + match.captured( 1 ).toDouble() );
             // qDebug() << "progress value " <<  101 * ( grpy_processed.size() - 1 ) + match.captured( 1 ).toDouble() + 1;
             lbl_core_progress->setText( QString( "Model %1 : %2 " ).arg( grpy_last_model_number + 1 ).arg( match.captured( 2 ) ) );
-            qApp->processEvents();
          }
       } else {
          grpy_stdout += qs;
-         editor_msg( "brown", qs );
+         // editor_msg( "brown", qs );
       }
    }
+   qApp->processEvents();
 }
 
 void US_Hydrodyn::grpy_readFromStderr()
