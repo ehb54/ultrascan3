@@ -6,7 +6,6 @@
 #include "us_passwd.h"
 #include "../us_fit_meniscus/us_fit_meniscus.h"
 #include "../us_fematch/us_fematch.h"
-#include "../us_fematch/us_resplot_fem.h"
 
 
 class US_Analysis_auto : public US_Widgets
@@ -41,8 +40,30 @@ class US_Analysis_auto : public US_Widgets
 	 US_FitMeniscus* FitMen;
 
 	 QPointer< US_ResidPlotFem >    resplotd;
+
+
+	 US_DataIO::EditedData*      fem_editdata();
+	 US_DataIO::RawData*         fem_simdata();
+	 QList< int >*               fem_excllist();
+	 US_Model*                   fem_model();
+	 US_Noise*                   fem_ti_noise();
+	 US_Noise*                   fem_ri_noise();
+	 QPointer< US_ResidsBitmap > fem_resbmap();
 	 
       private:
+	 US_DataIO::EditedData*      edata;
+	 US_DataIO::RawData*         rdata;
+	 US_DataIO::RawData*         sdata;
+	 
+	 QPointer< US_ResidsBitmap >    rbmapd;
+	 
+	 US_Model                    model;
+	 US_Noise                    ri_noise;
+	 US_Noise                    ti_noise;
+	 QList< int >                excludedScans;
+
+	 
+	 
 	 QPushButton*  pb_show_all;
 	 QPushButton*  pb_hide_all;
 	 

@@ -7,6 +7,7 @@
 #include "us_gui_util.h"
 #include "us_math2.h"
 #include "us_constants.h"
+#include "../us_autoflow_analysis/us_autoflow_analysis.h"
 
 #include <qwt_legend.h>
 #if QT_VERSION < 0x050000
@@ -174,6 +175,24 @@ US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, bool auto_mode )
      else
        {
 	 qDebug() << "THIS will be pointer to autoflow_analsyis---";
+	 //Autoflow_analysis
+	 US_Analysis_auto* fem = (US_Analysis_auto*)parent;
+	 edata           = fem->fem_editdata();
+	 sdata           = fem->fem_simdata();
+	 excllist        = fem->fem_excllist();
+	 ti_noise        = fem->fem_ti_noise();
+	 ri_noise        = fem->fem_ri_noise();
+	 resbmap         = fem->fem_resbmap();
+	 have_ed         = ( edata != 0 );
+	 have_sd         = ( sdata != 0 );
+	 have_ti         = ( ti_noise != 0  &&  ti_noise->count > 0 );
+	 have_ri         = ( ri_noise != 0  &&  ri_noise->count > 0 );
+	 have_bm         = ( resbmap != 0 );
+	 DbgLv(1) << "RP:edata  " << have_ed;
+	 DbgLv(1) << "RP:sdata  " << have_sd;
+	 DbgLv(1) << "RP:ti_noise count" << (have_ti ? ti_noise->count : 0);
+	 DbgLv(1) << "RP:ri_noise count" << (have_ri ? ri_noise->count : 0);
+	 DbgLv(1) << "RP:resbmap" << have_bm;
        }
    }
    
@@ -197,7 +216,14 @@ US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, bool auto_mode )
    data_plot1->resize( p1size );
    data_plot2->resize( p2size );
 
+   qDebug() << "RESPLOT_FEM: before plot--";
+   //TEMPORARY !!!!
+   if( auto_mode )
+     skip_plot = true;
+
    plot_data();
+
+   qDebug() << "RESPLOT_FEM: after plot--";
 
    setVisible( true );
    resize( p2size );
