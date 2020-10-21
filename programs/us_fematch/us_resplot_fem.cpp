@@ -18,6 +18,8 @@
 US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, bool auto_mode )
    : US_WidgetsDialog( 0, 0 )
 {
+   this->auto_mode = auto_mode;
+  
    // lay out the GUI
    setWindowTitle( tr( "Finite Element Data/Residuals Viewer" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -218,8 +220,8 @@ US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, bool auto_mode )
 
    qDebug() << "RESPLOT_FEM: before plot--";
    //TEMPORARY !!!!
-   if( auto_mode )
-     skip_plot = true;
+   // if( auto_mode )
+   //   skip_plot = true;
 
    plot_data();
 
@@ -430,7 +432,9 @@ void US_ResidPlotFem::plot_data()
 
    plot_edata();     // plot experimental
 
-   plot_rdata();     // plot residuals
+   //TEMPORARY
+   if( !auto_mode )
+     plot_rdata();     // plot residuals
 }
 
 // plot the experimental data

@@ -33,6 +33,8 @@ class US_ResidPlotFem : public US_WidgetsDialog
       //! \brief Return a QwtPlot pointer for the lower plot
       QwtPlot* rp_data_plot2();
 
+      bool auto_mode;
+
    private:
       QHBoxLayout*  mainLayout;
       QVBoxLayout*  leftLayout;

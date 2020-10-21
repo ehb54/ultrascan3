@@ -914,9 +914,91 @@ US_Noise*                   US_Analysis_auto::fem_ri_noise() { return &ri_noise;
 // public function to get pointer to resid bitmap diag
 QPointer< US_ResidsBitmap > US_Analysis_auto::fem_resbmap()  { return rbmapd;    }
 
+//Load rawData/editedData
+bool US_Analysis_auto::loadData( QMap < QString, QString > & triple_information )
+{
+  rawData.clear();
+  editedData.clear();
+  
+  US_Passwd   pw;
+  US_DB2* db = new US_DB2( pw.getPasswd() );
+    
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QApplication::restoreOverrideCursor();
+      QMessageBox::information( this,
+				tr( "DB Connection Problem" ),
+				tr( "There was an error connecting to the database:\n" )
+				+ db->lastError() );
+      
+      return false;
+    }
+
+  int rID=0;
+  QString rfilename;
+  int eID=0;
+  QString efilename;
+  
+  //get EditedData filename && editedDataID for current triple, then infer rawDataID 
+  QStringList query;
+  query << "get_editedDataFilenamesIDs" << triple_information["filename"];
+  db->query( query );
+
+  qDebug() << "Query: " << query;
+  
+  while ( db->next() )
+    {
+      QString  filename            = db->value( 0 ).toString();
+      int      editedDataID        = db->value( 1 ).toInt();
+      int      rawDataID           = db->value( 2 ).toInt();
+
+      if ( filename.contains( triple_information[ "triple_name" ] ) ) 
+	{
+	  rID       = rawDataID;
+	  eID       = editedDataID;
+	  efilename = filename;
+
+	  break;
+	}
+    }
+
+  QString efilepath = US_Settings::resultDir() + "/" + triple_information[ "filename" ] + "/" + efilename;
+  
+  // Can check here if such filename exists
+  QFileInfo check_file( efilepath );
+  if ( check_file.exists() && check_file.isFile() )
+    qDebug() << "EditProfile file: " << efilepath << " exists";
+  else
+    db->readBlobFromDB( efilepath, "download_editData", eID );
+
+
+  //Now download rawData corresponding to rID:
+  QString efilename_copy = efilename;
+  QStringList efilename_copy_list = efilename_copy.split(".");
+
+  rfilename = triple_information[ "filename" ] + "." + efilename_copy_list[2] + "." + efilename_copy_list[3] + "." + efilename_copy_list[4] + "." + efilename_copy_list[5] + ".auc";
+  
+  QString rfilepath = US_Settings::resultDir() + "/" + triple_information[ "filename" ] + "/" + rfilename;
+  //do we need to check for existance ?
+  db->readBlobFromDB( rfilepath, "download_aucData", rID );
+
+  qApp->processEvents();
+
+  qDebug() << "Loading eData, rawData: efilepath, rfilepath, eID, rID --- " << efilepath << rfilepath << eID << rID;
+
+  //Put downloaded data in memory:
+  QString uresdir = US_Settings::resultDir() + "/" + triple_information[ "filename" ] + "/"; 
+  US_DataIO::loadData( uresdir, efilename, editedData, rawData );
+
+  return true;
+}
+
+
 //Slot to delete Job
 void US_Analysis_auto::show_overlay( QString triple_stage )
 {
+  speed_steps  .clear();
+  
   QString tr_st = triple_stage.simplified();
   tr_st.replace( " ", "" );
     
@@ -928,6 +1010,45 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
 
   qDebug() << "In SHOW OVERLAY: triple_stage / triple_name: " << stage_n << " / " << triple_n;
 
+  //LoadData
+  QMap< QString, QString > triple_info_map;
+  triple_info_map[ "triple_name" ]     = triple_n;
+  triple_info_map[ "stage_name" ]      = stage_n;
+  triple_info_map[ "invID" ]           = QString::number(invID);
+  triple_info_map[ "filename" ]        = FileName;
+  
+  loadData( triple_info_map );
+
+  // Assign edata && rdata
+  edata     = &editedData[ 0 ];
+  rdata     = &rawData[ 0 ];
+
+  
+  // Get speed steps from DB experiment (and maybe timestate)
+  QString tmst_fpath = US_Settings::resultDir() + "/" + FileName + "/"
+    + FileName + ".time_state.tmst";
+
+  US_Passwd   pw;
+  US_DB2*     dbP    = new US_DB2( pw.getPasswd() );
+  QStringList query;
+  QString     expID;
+  int         idExp  = 0;
+  query << "get_experiment_info_by_runID"
+	<< FileName
+	<< QString::number(invID);
+  dbP->query( query );
+  
+  if ( dbP->lastErrno() == US_DB2::OK )
+    {
+      dbP->next();
+      idExp              = dbP->value( 1 ).toInt();
+      US_SimulationParameters::speedstepsFromDB( dbP, idExp, speed_steps );
+    }
+  
+  // Check out whether we need to read TimeState from the DB
+  bool newfile       = US_TimeState::dbSyncToLF( dbP, tmst_fpath, idExp );
+
+  
   // Show plot
   resplotd = new US_ResidPlotFem( this, true );
   resplotd->show();

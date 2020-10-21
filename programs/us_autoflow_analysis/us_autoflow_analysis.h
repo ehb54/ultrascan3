@@ -51,6 +51,11 @@ class US_Analysis_auto : public US_Widgets
 	 QPointer< US_ResidsBitmap > fem_resbmap();
 	 
       private:
+	 QVector< US_DataIO::RawData    > rawData;
+	 QVector< US_DataIO::EditedData > editedData;
+
+	 QVector< SP_SPEEDPROFILE >     speed_steps;
+	 
 	 US_DataIO::EditedData*      edata;
 	 US_DataIO::RawData*         rdata;
 	 US_DataIO::RawData*         sdata;
@@ -99,6 +104,8 @@ class US_Analysis_auto : public US_Widgets
 
 	 void update_autoflowAnalysis_uponDeletion ( US_DB2*, const QString& );
 	 void update_autoflowAnalysis_uponDeletion_other_wvl ( US_DB2*, const QStringList& );
+
+	 bool loadData( QMap < QString, QString > & );
 	 
 	 QGroupBox *createGroup( QString &);
 
