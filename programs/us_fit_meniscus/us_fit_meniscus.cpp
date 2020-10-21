@@ -1677,7 +1677,7 @@ DbgLv(1) << " call Remove Models";
       remove_models();
    }
 
-   if ( ! confirm )
+   if ( ! confirm && !auto_mode )
    {
       mmsg    += tr( "\n\nAll fit-meniscus models (and associated noises),"
                      " except for the one set associated with the best"

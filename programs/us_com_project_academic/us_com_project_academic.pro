@@ -5,6 +5,7 @@ QT           += opengl
 QT           += sql
 QT           += xml
 QT           += network
+QT           += svg
 
 HEADERS       = ../us_com_project/us_com_project_gui.h \
                 ../us_experiment/us_experiment_gui_optima.h  \
@@ -28,7 +29,14 @@ HEADERS       = ../us_com_project/us_com_project_gui.h \
                 ../us_edit/us_select_lambdas.h \
                 ../us_autoflow_analysis/us_autoflow_analysis.h \
                 ../us_autoflow_reports/us_autoflow_reports.h  \
-                ../us_fit_meniscus/us_fit_meniscus.h
+                ../us_fit_meniscus/us_fit_meniscus.h  \
+                ../us_fematch/us_fematch.h  \
+                ../us_fematch/us_plot_control_fem.h \
+                ../us_fematch/us_resplot_fem.h \
+                ../us_fematch/us_advanced_fem.h     \
+                ../us_fematch/us_adv_dmgamc.h       \
+                ../us_fematch/us_dmga_mc_stats.h    \
+                ../us_fematch/us_thread_worker.h               
                 
 
 SOURCES       = us_com_project_academic_main.cpp \
@@ -58,6 +66,13 @@ SOURCES       = us_com_project_academic_main.cpp \
                 ../us_edit/us_select_lambdas.cpp \
                 ../us_autoflow_analysis/us_autoflow_analysis.cpp \
                 ../us_autoflow_reports/us_autoflow_reports.cpp   \
-                ../us_fit_meniscus/us_fit_meniscus.cpp
+                ../us_fit_meniscus/us_fit_meniscus.cpp  \
+                ../us_fematch/us_fematch.cpp  \
+                ../us_fematch/us_plot_control_fem.cpp \
+                ../us_fematch/us_resplot_fem.cpp      \
+                ../us_fematch/us_advanced_fem.cpp     \
+                ../us_fematch/us_adv_dmgamc.cpp       \
+                ../us_fematch/us_dmga_mc_stats.cpp    \
+                ../us_fematch/us_thread_worker.cpp                
                 
 

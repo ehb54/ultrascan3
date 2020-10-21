@@ -465,11 +465,17 @@ qDebug() << "LdEd: dnld_edt DONE";
 
          qApp->processEvents();
 
+	 qDebug() << "In LOAD auc/edited data in fematch: uresdir, filename, afn, efn: " << uresdir << filename << afn <<  efn;
+	 qDebug() << "In LOAD auc/edited data in fematch: idRec(editID), idAUC(rawData): " << idRec << idAUC;
+
 qDebug() << "LdEd: loadData uresdir filename" << uresdir << filename;
          US_DataIO::loadData( uresdir, filename, editedData, rawData );
 qDebug() << "LdEd: loadData DONE";
       }  // END: edits loop
 qDebug() << "LdEd:TM:11: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
+
+ 
+ 
    }  // END: Load from DB
 
    QApplication::restoreOverrideCursor();

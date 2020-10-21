@@ -11,7 +11,8 @@
 const QColor colorRed       ( 210, 0, 0 );
 const QColor colorDarkGreen ( 2, 88, 57 );
 const QColor colorGreen     ( 50, 205, 50 );
-const QColor colorYellow    ( 255, 255, 102 ); 
+const QColor colorYellow    ( 255, 255, 102 );
+const QColor colorBlue      ( 95, 152, 238 );
 
 // Constructor
 US_Analysis_auto::US_Analysis_auto() : US_Widgets()
@@ -552,6 +553,7 @@ void US_Analysis_auto::gui_update( )
 		  QLineEdit * lineedit_lastupd  = processed_stage_groupbox->findChild<QLineEdit *>("lastupd", Qt::FindDirectChildrenOnly);
 
 		  QPushButton * pb_delete       = processed_stage_groupbox->findChild<QPushButton *>("delete", Qt::FindDirectChildrenOnly);
+		  QPushButton * pb_overlay      = processed_stage_groupbox->findChild<QPushButton *>("overlay", Qt::FindDirectChildrenOnly);
 
 		  //delete
 		  pb_delete->setEnabled( false );
@@ -582,8 +584,11 @@ void US_Analysis_auto::gui_update( )
 		  
 		  //cluster
 		  lineedit_cluster -> setText( cluster );
-	      
-		
+
+		  
+		  if ( stage_status == "COMPLETE" || stage_status == "complete" )
+		    pb_overlay->setEnabled( true ); 
+		  
 		  //IF Canceled by user:
 		  if ( stage_status == "CANCELED" || stage_status == "canceled" )
 		    {
@@ -591,6 +596,7 @@ void US_Analysis_auto::gui_update( )
 		      topItem [ triple_curr ]  -> setForeground( 0,  QBrush( colorRed ));
 		      
 		      pb_delete->setEnabled( false );
+		      pb_overlay->setEnabled( false );
 		      
 		      Completed_triples[ triple_curr_key ] = true;
 		      Canceled_triples [ triple_curr_key ] = true;
@@ -602,6 +608,7 @@ void US_Analysis_auto::gui_update( )
 		      topItem [ triple_curr ]  -> setForeground( 0,  QBrush( colorRed ));
 
 		      pb_delete->setEnabled( false );
+		      pb_overlay->setEnabled( false );
 		      
 		      Completed_triples[ triple_curr_key ] = true;
 		      Failed_triples [ triple_curr_key ] = true;
@@ -709,6 +716,7 @@ void US_Analysis_auto::gui_update( )
 	      QLineEdit * lineedit_lastupd  = current_stage_groupbox->findChild<QLineEdit *>("lastupd", Qt::FindDirectChildrenOnly);
 
 	      QPushButton * pb_delete       = current_stage_groupbox->findChild<QPushButton *>("delete", Qt::FindDirectChildrenOnly);
+	      QPushButton * pb_overlay      = current_stage_groupbox->findChild<QPushButton *>("overlay", Qt::FindDirectChildrenOnly);
 
 	      //QString triple_stage = triple_curr_key + ":" + submitted.toString();
 	      //delete button: if running && admin_user || user_owner, enable; otherwise, disable (should be disabled earlier)
@@ -732,8 +740,16 @@ void US_Analysis_auto::gui_update( )
 	      lineedit_lastmsg -> setText( status_msg );
 	  
 	      //status
-	      lineedit_status -> setText( status );
-	      lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(50, 205, 50); }");
+	      if ( status == "READY" || status == "SUBMITTED" )
+		{
+		  lineedit_status -> setText( "QUEUED" );
+		  lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(95, 152, 238); }");
+		}
+	      else
+		{
+		  lineedit_status -> setText( status );
+		  lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(50, 205, 50); }");
+		}
 	      
 	      //analysis type
 	      lineedit_anatype -> setText( stage_name );
@@ -751,6 +767,7 @@ void US_Analysis_auto::gui_update( )
 	      //if complete 
 	      if ( status == "COMPLETE" )
 		{
+		  pb_overlay->setEnabled( true );
 		  pb_delete->setEnabled( false );
 		  lineedit_status          -> setStyleSheet( "QLineEdit { background-color:  rgb(2, 88, 57); color : white; }");
 		  		  
@@ -773,6 +790,7 @@ void US_Analysis_auto::gui_update( )
 	      //check if failed -- due to the abortion/deletion of the job
 	      if ( status == "FAILED" || status == "failed" || status == "CANCELED" || status == "canceled")
 		{
+		  pb_overlay->setEnabled( false );
 		  pb_delete->setEnabled( false );
 		  lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(210, 0, 0); color : white; }");
 		  topItem [ triple_curr ]  -> setForeground( 0,  QBrush( colorRed ));
@@ -874,6 +892,25 @@ void US_Analysis_auto::gui_update( )
   in_gui_update  = false; 
 }
 
+
+//Slot to delete Job
+void US_Analysis_auto::show_overlay( QString triple_stage )
+{
+  QString tr_st = triple_stage.simplified();
+  tr_st.replace( " ", "" );
+    
+  QStringList triple_stage_parts = tr_st.split("(");
+  QString stage_n = triple_stage_parts[0];
+  QString triple_n  = triple_stage_parts[1];
+  triple_n.chop(1);
+  triple_n.replace("/",".");
+
+  qDebug() << "In SHOW OVERLAY: triple_stage / triple_name: " << stage_n << " / " << triple_n;
+
+  // Show plot
+  resplotd = new US_ResidPlotFem( this, true );
+  resplotd->show();
+}
 
 //Slot to delete Job
 void US_Analysis_auto::delete_job( QString triple_stage )
@@ -1168,9 +1205,13 @@ QGroupBox * US_Analysis_auto::createGroup( QString & triple_name )
   le_runID -> setObjectName("runID");
 
   //Delete button
-  //QPushButton* pb_delete = us_pushbutton( tr( "Delete" ) );
   QPushButton* pb_delete = new QPushButton( tr( "Delete" ) );
   pb_delete-> setObjectName("delete");
+
+  //Overlay button
+  QPushButton* pb_overlay = new QPushButton( tr( "Veiw Fit" ) );
+  pb_overlay-> setObjectName("overlay");
+  
   
   //Owner
   QLabel*     lb_owner   = us_label( tr( "Owner:" ) );
@@ -1212,7 +1253,7 @@ QGroupBox * US_Analysis_auto::createGroup( QString & triple_name )
   genL->addWidget( lb_runID,   row,    0, 1, 2 );
   genL->addWidget( le_runID,   row,    2, 1, 8 );
 
-  genL->addWidget( pb_delete,  row++,  10, 6, 1);
+  genL->addWidget( pb_delete,  row++,  10, 3, 1);
 
   genL->addWidget( lb_owner,   row,    0, 1, 2 );
   genL->addWidget( le_owner,   row++,  2, 1, 8 );  
@@ -1224,6 +1265,8 @@ QGroupBox * US_Analysis_auto::createGroup( QString & triple_name )
   genL->addWidget( le_status,  row,    2, 1, 3 );
   genL->addWidget( lb_anatype, row,    5, 1, 2 );
   genL->addWidget( le_anatype, row++,  7, 1, 3 );
+
+  genL->addWidget( pb_overlay,  row++,  10, 3, 1);
 
   genL->addWidget( lb_submit,  row,    0, 1, 2 );
   genL->addWidget( le_submit,  row,    2, 1, 3 );
@@ -1242,6 +1285,15 @@ QGroupBox * US_Analysis_auto::createGroup( QString & triple_name )
   connect(signalMapper, SIGNAL( mapped( QString ) ), this, SLOT( delete_job( QString ) ) );
   connect( pb_delete, SIGNAL( clicked() ), signalMapper, SLOT(map()));
   signalMapper->setMapping ( pb_delete, triple_name );
+
+
+  // Disable overlay btn by default
+  pb_overlay->setEnabled( false );
+
+  signalMapper_overlay = new QSignalMapper(this);
+  connect(signalMapper_overlay, SIGNAL( mapped( QString ) ), this, SLOT( show_overlay( QString ) ) );
+  connect( pb_overlay, SIGNAL( clicked() ), signalMapper_overlay, SLOT(map()));
+  signalMapper_overlay->setMapping ( pb_overlay, triple_name );
   
   return groupBox;
 }

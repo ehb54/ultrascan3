@@ -1,6 +1,9 @@
 #ifndef US_FEMATCH_H
 #define US_FEMATCH_H
 
+#include <QApplication>
+#include <QtSvg>
+
 #include "us_resids_bitmap.h"
 #include "us_plot_control_fem.h"
 #include "us_advanced_fem.h"

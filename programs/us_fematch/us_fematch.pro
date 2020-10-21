@@ -12,7 +12,8 @@ HEADERS       = us_fematch.h          \
                 us_dmga_mc_stats.h    \
                 us_thread_worker.h
 
-SOURCES       = us_fematch.cpp          \
+SOURCES       = us_fematch_main.cpp     \
+                us_fematch.cpp          \
                 us_plot_control_fem.cpp \
                 us_resplot_fem.cpp      \
                 us_advanced_fem.cpp     \

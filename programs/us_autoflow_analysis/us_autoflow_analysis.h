@@ -5,6 +5,9 @@
 #include "us_db2.h"
 #include "us_passwd.h"
 #include "../us_fit_meniscus/us_fit_meniscus.h"
+#include "../us_fematch/us_fematch.h"
+#include "../us_fematch/us_resplot_fem.h"
+
 
 class US_Analysis_auto : public US_Widgets
 {
@@ -35,7 +38,9 @@ class US_Analysis_auto : public US_Widgets
 
 	 void reset_analysis_panel_public ( void );
 
-	 US_FitMeniscus* FitMen; 
+	 US_FitMeniscus* FitMen;
+
+	 QPointer< US_ResidPlotFem >    resplotd;
 	 
       private:
 	 QPushButton*  pb_show_all;
@@ -77,6 +82,7 @@ class US_Analysis_auto : public US_Widgets
 	 QGroupBox *createGroup( QString &);
 
 	 QSignalMapper  *signalMapper;
+	 QSignalMapper  *signalMapper_overlay;
 	 
 	 //2DSA
 	 bool        job1run;         //!< Run 1 (2dsa) run flag
@@ -103,7 +109,8 @@ class US_Analysis_auto : public US_Widgets
 
 	void update_autoflowAnalysis_statuses( QMap < QString, QString > & );
 
-	void delete_job( QString );
+	void delete_job  ( QString );
+	void show_overlay( QString );
 		
       signals:
 	void analysis_update_process_stopped( void );

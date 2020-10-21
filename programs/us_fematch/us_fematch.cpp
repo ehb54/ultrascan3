@@ -1,7 +1,7 @@
 //! \file us_fematch.cpp
 
-#include <QApplication>
-#include <QtSvg>
+//#include <QApplication>
+//#include <QtSvg>
 
 #include "us_fematch.h"
 #include "us_adv_dmgamc.h"
@@ -36,19 +36,7 @@
 
 #define MIN_NTC   25
 
-// main program
-int main( int argc, char* argv[] )
-{
-   QApplication application( argc, argv );
 
-   #include "main1.inc"
-
-   // License is OK.  Start up.
-
-   US_FeMatch w;
-   w.show();                   //!< \memberof QWidget
-   return application.exec();  //!< \memberof QApplication
-}
 
 // US_FeMatch class constructor
 US_FeMatch::US_FeMatch() : US_Widgets()
@@ -481,6 +469,8 @@ DbgLv(1) << "LD: exec dialog";
    QString tmst_fpath = US_Settings::resultDir() + "/" + runID + "/"
                            + runID + ".time_state.tmst";
 
+
+   qDebug() << "RUNID --- " << runID;
    // Get speed steps from disk or DB experiment (and maybe timestate)
 
    if ( local == US_Disk_DB_Controls::DB )
