@@ -131,6 +131,7 @@ class US_Analysis_auto : public US_Widgets
 
 	 bool loadData( QMap < QString, QString > & );
 	 bool loadModel( QMap < QString, QString > & );
+	 bool loadNoises( QMap < QString, QString > & );
 	 
 	 QGroupBox *createGroup( QString &);
 

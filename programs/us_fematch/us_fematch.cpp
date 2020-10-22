@@ -1816,8 +1816,11 @@ DbgLv(1) << "post-Load mC" << model.monteCarlo << "is_dmga_mc" << is_dmga_mc
 
    // see if there are any noise files to load
    if ( ! model_used.editGUID.isEmpty() )
-      load_noise();
-
+     {
+       qDebug() << "Loading noises";
+       load_noise();
+     }
+   
    pb_advanced ->setEnabled( true );
    pb_adv_dmga ->setEnabled( is_dmga_mc );
    pb_simumodel->setEnabled( true );
@@ -1933,11 +1936,16 @@ void US_FeMatch::load_noise( )
          QString mdlx1 = descn.section( ":", 2, 2 );
 
          if ( typen == "ti" )
-            ti_noise.load( loadDB, noiID, dbP );
-
+	   {
+	     ti_noise.load( loadDB, noiID, dbP );
+	     qDebug() << "Noise 1: noiID, loaded ti--" << noiID;
+	   }
          else
-            ri_noise.load( loadDB, noiID, dbP );
-
+	   {
+	     ri_noise.load( loadDB, noiID, dbP );
+	     qDebug() << "Noise 1: noiID, loaded ri--" << noiID;
+	   }
+	 
          descn         = nieGUIDs.at( 1 );
          QString mdlx2 = descn.section( ":", 2, 2 );
          int kenois    = ( mdlx1 == mdlx2 ) ? 2 : 1;
@@ -1946,11 +1954,16 @@ void US_FeMatch::load_noise( )
             noiID         = descn.section( ":", 0, 0 );
             typen         = descn.section( ":", 1, 1 );
             if ( typen == "ti" )
-               ti_noise.load( loadDB, noiID, dbP );
-
+	      {
+		ti_noise.load( loadDB, noiID, dbP );
+		qDebug() << "Noise 2: noiID, loaded ti--" << noiID;
+	      }
             else
-               ri_noise.load( loadDB, noiID, dbP );
-         }
+	      {
+		ri_noise.load( loadDB, noiID, dbP );
+		qDebug() << "Noise 2: noiID, loaded ri--" << noiID;
+	      }
+	 }
 
       }
 
