@@ -61,8 +61,13 @@ class US_Analysis_auto : public US_Widgets
 	 US_DataIO::RawData*         sdata;
 	 
 	 QPointer< US_ResidsBitmap >    rbmapd;
+
+	 int eID_global;
 	 
 	 US_Model                    model;
+	 US_Model                    model_loaded;
+	 US_Model                    model_used;
+	 
 	 US_Noise                    ri_noise;
 	 US_Noise                    ti_noise;
 	 QList< int >                excludedScans;
@@ -125,6 +130,7 @@ class US_Analysis_auto : public US_Widgets
 	 void update_autoflowAnalysis_uponDeletion_other_wvl ( US_DB2*, const QStringList& );
 
 	 bool loadData( QMap < QString, QString > & );
+	 bool loadModel( QMap < QString, QString > & );
 	 
 	 QGroupBox *createGroup( QString &);
 

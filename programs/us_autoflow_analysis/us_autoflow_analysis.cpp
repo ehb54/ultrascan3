@@ -956,15 +956,13 @@ bool US_Analysis_auto::loadData( QMap < QString, QString > & triple_information 
       int      editedDataID        = db->value( 1 ).toInt();
       int      rawDataID           = db->value( 2 ).toInt();
       //QString  date                = US_Util::toUTCDatetimeText( db->value( 3 ).toDateTime().toString( "yyyy/MM/dd HH:mm" ), true );
+      QDateTime date               = db->value( 3 ).toDateTime();
 
-      QDateTime date = db->value( 3 ).toDateTime();
       QDateTime now = QDateTime::currentDateTime();
-      
-         
+               
       if ( filename.contains( triple_information[ "triple_name" ] ) ) 
 	{
 	  int time_to_now = date.secsTo(now);
-
 	  if ( time_to_now < latest_update_time )
 	    {
 	      latest_update_time = time_to_now;
@@ -984,14 +982,16 @@ bool US_Analysis_auto::loadData( QMap < QString, QString > & triple_information 
   // if ( check_file.exists() && check_file.isFile() )
   //   qDebug() << "EditProfile file: " << efilepath << " exists";
   // else
-    db->readBlobFromDB( efilepath, "download_editData", eID );
-
+  db->readBlobFromDB( efilepath, "download_editData", eID );
 
   //Now download rawData corresponding to rID:
   QString efilename_copy = efilename;
   QStringList efilename_copy_list = efilename_copy.split(".");
 
-  rfilename = triple_information[ "filename" ] + "." + efilename_copy_list[2] + "." + efilename_copy_list[3] + "." + efilename_copy_list[4] + "." + efilename_copy_list[5] + ".auc";
+  rfilename = triple_information[ "filename" ] + "." + efilename_copy_list[2] + "."
+                                               + efilename_copy_list[3] + "."
+                                               + efilename_copy_list[4] + "."
+                                               + efilename_copy_list[5] + ".auc";
   
   QString rfilepath = US_Settings::resultDir() + "/" + triple_information[ "filename" ] + "/" + rfilename;
   //do we need to check for existance ?
@@ -1005,10 +1005,112 @@ bool US_Analysis_auto::loadData( QMap < QString, QString > & triple_information 
   QString uresdir = US_Settings::resultDir() + "/" + triple_information[ "filename" ] + "/"; 
   US_DataIO::loadData( uresdir, efilename, editedData, rawData );
 
+  eID_global = eID;
+
   return true;
 }
 
+//Load rawData/editedData
+bool US_Analysis_auto::loadModel( QMap < QString, QString > & triple_information )
+{
+  US_Passwd   pw;
+  US_DB2* db = new US_DB2( pw.getPasswd() );
+    
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QApplication::restoreOverrideCursor();
+      QMessageBox::information( this,
+				tr( "DB Connection Problem" ),
+				tr( "There was an error connecting to the database:\n" )
+				+ db->lastError() );
+      
+      return false;
+    }
 
+  //first, get ModelIDs corresponding to editedDataID AND triple_stage && select latest one
+  QStringList query;
+  query << "get_modelDescsIDs" << triple_information[ "eID" ];
+  db->query( query );
+  
+  qDebug() << "Query: " << query;
+  
+  int latest_update_time = 1e100;
+  int mID=0;
+  
+  while ( db->next() )
+    {
+      QString  description         = db->value( 0 ).toString();
+      int      modelID             = db->value( 1 ).toInt();
+      //QString  date                = US_Util::toUTCDatetimeText( db->value( 3 ).toDateTime().toString( "yyyy/MM/dd HH:mm" ), true );
+      QDateTime date               = db->value( 2 ).toDateTime();
+
+      QDateTime now = QDateTime::currentDateTime();
+      
+      if ( description.contains( triple_information[ "stage_name" ] ) ) 
+	{
+	  if ( triple_information[ "stage_name" ] == "2DSA" )
+	    {
+	      if ( !description.contains("-FM_") && !description.contains("-IT_") && !description.contains("-MC_") && !description.contains("_mcN") )
+		{
+		  int time_to_now = date.secsTo(now);
+		  if ( time_to_now < latest_update_time )
+		    {
+		      latest_update_time = time_to_now;
+		      //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
+
+		      qDebug() << "Model 2DSA: ID, desc, timetonow -- " << modelID << description << time_to_now;
+		  		      
+		      mID       = modelID;
+		    }
+		}
+	    }
+	  else
+	    {
+	      int time_to_now = date.secsTo(now);
+	      if ( time_to_now < latest_update_time )
+		{
+		  latest_update_time = time_to_now;
+		  //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
+		  
+		  qDebug() << "Model NON-2DSA: ID, desc, timetonow -- " << modelID << description << time_to_now;
+		  
+		  mID       = modelID;
+		}
+	    }
+	}
+    }
+  
+  int  rc      = 0;
+  qDebug() << "ModelID to retrieve: -- " << mID;
+  rc   = model.load( QString::number( mID ), db );
+  qDebug() << "LdM:  model load rc" << rc;
+  qApp->processEvents();
+
+  model_loaded = model;   // Save model exactly as loaded
+  model_used   = model;   // Make that the working model
+  is_dmga_mc   = ( model.monteCarlo  &&
+		   model.description.contains( "DMGA" )  &&
+		   model.description.contains( "_mcN" ) );
+  qDebug() << "post-Load mC" << model.monteCarlo << "is_dmga_mc" << is_dmga_mc
+	   << "description" << model.description;
+  
+  if ( model.components.size() == 0 )
+    {
+      QMessageBox::critical( this, tr( "Empty Model" ),
+			     tr( "Loaded model has ZERO components!" ) );
+      return false;
+    }
+  
+  ti_noise.count = 0;
+  ri_noise.count = 0;
+  ti_noise.values.clear();
+  ri_noise.values.clear();
+
+  //Load noise files
+  
+  return true;
+}
+  
 //Slot to delete Job
 void US_Analysis_auto::show_overlay( QString triple_stage )
 {
@@ -1016,7 +1118,7 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
   edata = NULL;
   rdata = NULL;
   sdata = NULL;
-  
+  eID_global = 0;
   
   QString tr_st = triple_stage.simplified();
   tr_st.replace( " ", "" );
@@ -1041,7 +1143,8 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
   haveSim    = false;
   
   loadData( triple_info_map );
-
+  
+  triple_info_map[ "eID" ]        = QString::number( eID_global );
   // Assign edata && rdata
   edata     = &editedData[ 0 ];
   rdata     = &rawData[ 0 ];
@@ -1127,7 +1230,7 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
   dataLoaded = true;
   haveSim    = false;
   
-  //Read Solution/Buffer (see in us_Fematch... ::update( int ))
+  //Read Solution/Buffer
   density      = DENS_20W;
   viscosity    = VISC_20W;
   compress     = 0.0;
@@ -1188,6 +1291,10 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
   
   ti_noise.count = 0;
   ri_noise.count = 0;
+
+
+  //Load Model (latest ?)
+  loadModel( triple_info_map  );
   
   // Show plot
   resplotd = new US_ResidPlotFem( this, true );
