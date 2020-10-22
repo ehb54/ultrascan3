@@ -434,7 +434,7 @@ void US_Hydrodyn::grpy_readFromStdout()
          // editor_msg( "brown", qs );
       }
    }
-   qApp->processEvents();
+   //   qApp->processEvents();
 }
 
 void US_Hydrodyn::grpy_readFromStderr()
@@ -1082,7 +1082,7 @@ void US_Hydrodyn::grpy_finalize() {
          t << save_util->hydroFormatStats( stats, US_Hydrodyn_Save::HYDRO_GRPY );
          editor_msg( "dark blue", QString( us_tr( "Wrote %1" ) ).arg( grpy_out_name ) );
          f.close();
-         last_hydro_res = grpy_out_name;
+         last_hydro_res = QFileInfo( grpy_out_name ).fileName();
       }
    }
 

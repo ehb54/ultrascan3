@@ -3936,8 +3936,7 @@ void US_Hydrodyn::best_analysis()
 void US_Hydrodyn::open_hydro_results()
 {
    QString filename = "";
-   if ( last_hydro_res != "" )
-   {
+   if ( last_hydro_res != "" && QFile( somo_dir + SLASH + last_hydro_res ).exists() ) {
       QFileInfo fi(last_hydro_res);
       switch (
               QMessageBox::question(
