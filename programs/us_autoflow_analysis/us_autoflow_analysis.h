@@ -70,6 +70,24 @@ class US_Analysis_auto : public US_Widgets
 	 
 	 US_SimulationParameters       simparams;
 
+	 double       density;
+	 double       viscosity;
+	 double       vbar;
+	 double       compress;
+	 
+	 bool         manual;
+	 bool          dataLoaded;
+	 bool          haveSim;
+	 bool          dataLatest;
+	 bool          buffLoaded;
+	 bool          cnstvb;
+	 bool          cnstff;
+	 bool          exp_steps;
+	 bool          dat_steps;
+	 bool          is_dmga_mc;
+
+	 
+
 	 QPushButton*  pb_show_all;
 	 QPushButton*  pb_hide_all;
 	 

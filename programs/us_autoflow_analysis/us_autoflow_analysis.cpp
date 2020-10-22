@@ -7,6 +7,8 @@
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_protocol_util.h"
+#include "us_constants.h"
+#include "us_solution_vals.h"
 
 const QColor colorRed       ( 210, 0, 0 );
 const QColor colorDarkGreen ( 2, 88, 57 );
@@ -1033,6 +1035,10 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
   triple_info_map[ "stage_name" ]      = stage_n;
   triple_info_map[ "invID" ]           = QString::number(invID);
   triple_info_map[ "filename" ]        = FileName;
+
+  dataLoaded = false;
+  buffLoaded = false;
+  haveSim    = false;
   
   loadData( triple_info_map );
 
@@ -1118,8 +1124,71 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
 
   qApp->processEvents();
 
+  dataLoaded = true;
+  haveSim    = false;
+  
   //Read Solution/Buffer (see in us_Fematch... ::update( int ))
-    
+  density      = DENS_20W;
+  viscosity    = VISC_20W;
+  compress     = 0.0;
+  manual       = false;
+  QString solID;
+  QString bufid;
+  QString bguid;
+  QString bdesc;
+  QString bdens = QString::number( density );
+  QString bvisc = QString::number( viscosity );
+  QString bcomp = QString::number( compress );
+  QString bmanu = manual ? "1" : "0";
+  QString svbar = QString::number( 0.7200 );
+  bool    bufvl = false;
+  QString errmsg;
+  qDebug() << "Fem:Upd: (0)svbar" << svbar;
+  
+  bufvl = US_SolutionVals::values( dbP, edata, solID, svbar, bdens,
+				   bvisc, bcomp, bmanu, errmsg );
+
+
+  //Hardwire compressibility to zero, for now
+  bcomp="0.0";
+  if ( bufvl )
+    {
+      buffLoaded  = false;
+      bcomp       = QString::number( bcomp.toDouble() );
+      buffLoaded  = true;
+      density     = bdens.toDouble();
+      viscosity   = bvisc.toDouble();
+      compress    = bcomp.toDouble();
+      manual      = ( !bmanu.isEmpty()  &&  bmanu == "1" );
+      if ( solID.isEmpty() )
+	{
+	  QMessageBox::warning( this, tr( "Solution/Buffer Fetch" ),
+				tr( "Empty solution ID value!" ) );
+	}
+      
+      else if ( solID.length() < 36  &&  dbP != NULL )
+	{
+	  solution_rec.readFromDB( solID.toInt(), dbP );
+	}
+      
+      else
+	{
+	  solution_rec.readFromDisk( solID );
+	}
+      
+      vbar          = solution_rec.commonVbar20;
+      svbar         = QString::number( vbar );
+    }
+  else
+    {
+      QMessageBox::warning( this, tr( "Solution/Buffer Fetch" ),
+			    errmsg );
+      solution_rec.commonVbar20 = vbar;
+    }
+  
+  ti_noise.count = 0;
+  ri_noise.count = 0;
+  
   // Show plot
   resplotd = new US_ResidPlotFem( this, true );
   resplotd->show();
