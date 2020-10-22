@@ -945,30 +945,43 @@ bool US_Analysis_auto::loadData( QMap < QString, QString > & triple_information 
   db->query( query );
 
   qDebug() << "Query: " << query;
+
+  int latest_update_time = 1e100;
   
   while ( db->next() )
     {
       QString  filename            = db->value( 0 ).toString();
       int      editedDataID        = db->value( 1 ).toInt();
       int      rawDataID           = db->value( 2 ).toInt();
+      //QString  date                = US_Util::toUTCDatetimeText( db->value( 3 ).toDateTime().toString( "yyyy/MM/dd HH:mm" ), true );
 
+      QDateTime date = db->value( 3 ).toDateTime();
+      QDateTime now = QDateTime::currentDateTime();
+      
+         
       if ( filename.contains( triple_information[ "triple_name" ] ) ) 
 	{
-	  rID       = rawDataID;
-	  eID       = editedDataID;
-	  efilename = filename;
+	  int time_to_now = date.secsTo(now);
 
-	  break;
+	  if ( time_to_now < latest_update_time )
+	    {
+	      latest_update_time = time_to_now;
+	      //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
+
+	      rID       = rawDataID;
+	      eID       = editedDataID;
+	      efilename = filename;
+	    }
 	}
     }
 
   QString efilepath = US_Settings::resultDir() + "/" + triple_information[ "filename" ] + "/" + efilename;
   
   // Can check here if such filename exists
-  QFileInfo check_file( efilepath );
-  if ( check_file.exists() && check_file.isFile() )
-    qDebug() << "EditProfile file: " << efilepath << " exists";
-  else
+  // QFileInfo check_file( efilepath );
+  // if ( check_file.exists() && check_file.isFile() )
+  //   qDebug() << "EditProfile file: " << efilepath << " exists";
+  // else
     db->readBlobFromDB( efilepath, "download_editData", eID );
 
 
@@ -998,6 +1011,10 @@ bool US_Analysis_auto::loadData( QMap < QString, QString > & triple_information 
 void US_Analysis_auto::show_overlay( QString triple_stage )
 {
   speed_steps  .clear();
+  edata = NULL;
+  rdata = NULL;
+  sdata = NULL;
+  
   
   QString tr_st = triple_stage.simplified();
   tr_st.replace( " ", "" );
@@ -1048,7 +1065,61 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
   // Check out whether we need to read TimeState from the DB
   bool newfile       = US_TimeState::dbSyncToLF( dbP, tmst_fpath, idExp );
 
-  
+  //Get speed info
+  QFileInfo check_file( tmst_fpath );
+  if ( check_file.exists()  &&  check_file.isFile() )
+    {  // Get speed_steps from an existing timestate file
+      simparams.simSpeedsFromTimeState( tmst_fpath );
+      simparams.speedstepsFromSSprof();
+
+      //*DEBUG*
+      int essknt=speed_steps.count();
+      int tssknt=simparams.speed_step.count();
+      qDebug() << "LD: (e)ss knt" << essknt << "(t)ss knt" << tssknt;
+      for ( int jj = 0; jj < qMin( essknt, tssknt ); jj++ )
+	{
+	  qDebug() << "LD:  jj" << jj << "(e) tf tl wf wl scns"
+		   << speed_steps[jj].time_first
+		   << speed_steps[jj].time_last
+		   << speed_steps[jj].w2t_first
+		   << speed_steps[jj].w2t_last
+		   << speed_steps[jj].scans;
+	  qDebug() << "LD:    (t) tf tl wf wl scns"
+		   << simparams.speed_step[jj].time_first
+		   << simparams.speed_step[jj].time_last
+		   << simparams.speed_step[jj].w2t_first
+		   << simparams.speed_step[jj].w2t_last
+		   << simparams.speed_step[jj].scans;
+	}
+      //*DEBUG*
+
+      int kstep      = speed_steps.count();
+      int kscan      = speed_steps[ 0 ].scans;
+      for ( int jj = 0; jj < simparams.speed_step.count(); jj++ )
+	{
+	  if ( jj < kstep )
+	    {
+	      kscan          = speed_steps[ jj ].scans;
+	      speed_steps[ jj ] = simparams.speed_step[ jj ];
+	    }
+	  else
+            speed_steps << simparams.speed_step[ jj ];
+	  
+	  speed_steps[ jj ].scans = kscan;
+	  simparams.speed_step[ jj ].scans = kscan;
+	  qDebug() << "LD:    (s) tf tl wf wl scns"
+		   << speed_steps[jj].time_first
+		   << speed_steps[jj].time_last
+		   << speed_steps[jj].w2t_first
+		   << speed_steps[jj].w2t_last
+		   << speed_steps[jj].scans;
+	}
+    }
+
+  qApp->processEvents();
+
+  //Read Solution/Buffer (see in us_Fematch... ::update( int ))
+    
   // Show plot
   resplotd = new US_ResidPlotFem( this, true );
   resplotd->show();

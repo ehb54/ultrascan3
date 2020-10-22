@@ -446,6 +446,8 @@ void US_ResidPlotFem::plot_edata()
    // Clear the upper plot for re-do
    dataPlotClear( data_plot1 );
 
+   qDebug() << "PLOT edata 1 ";
+
    bool   do_plteda = have_ed  &&  ck_plteda->isChecked();
    bool   do_pltsda = have_sd  &&  ck_pltsda->isChecked();
    bool   do_addtin = have_ti  &&  ck_addtin->isChecked();
@@ -461,6 +463,8 @@ void US_ResidPlotFem::plot_edata()
    double vh        = 9999.0;
    double sval;
 
+   qDebug() << "PLOT edata 2 ";
+   
    if ( have_ed )
    {
       points   = edata->pointCount();
@@ -472,6 +476,8 @@ void US_ResidPlotFem::plot_edata()
       data_plot1->replot();
       return;
    }
+
+   qDebug() << "PLOT edata 3 ";
 
    if      ( do_plteda  &&  !do_pltsda )
       data_plot1->setTitle( tr( "Experimental Data" ) );
@@ -491,6 +497,8 @@ void US_ResidPlotFem::plot_edata()
       points   = edata->pointCount();
    }
 
+   qDebug() << "PLOT edata 4 ";
+   
    if ( do_pltsda )
    {  // set title and values count for simulation data
       if ( have_ed )
@@ -504,6 +512,8 @@ void US_ResidPlotFem::plot_edata()
 
    count    = ( points > count ) ? points : count;  // maximum array count
 
+   qDebug() << "PLOT edata 5 ";
+   
    QVector< double > rvec( count, 0.0 );
    QVector< double > vvec( count, 0.0 );
    double* rr  = rvec.data();
@@ -513,6 +523,8 @@ void US_ResidPlotFem::plot_edata()
    QwtPlotCurve* curv;
    QPen          pen_red(  Qt::red );
    QPen          pen_plot( US_GuiSettings::plotCurve() );
+
+   qDebug() << "PLOT edata 6 ";
 
    if ( do_plteda )
    {  // plot experimental curves
@@ -558,6 +570,9 @@ void US_ResidPlotFem::plot_edata()
       }
    }
 
+   qDebug() << "PLOT edata 7 ";
+
+
    if ( do_pltsda )
    {  // plot simulation curves
       points   = sdata->pointCount();
@@ -602,7 +617,11 @@ void US_ResidPlotFem::plot_edata()
       }
    }
 
+   qDebug() << "PLOT edata 8 ";
+   
    data_plot1->replot();
+
+   qDebug() << "PLOT edata 9";
 }
 
 // plot the residual data

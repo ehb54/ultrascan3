@@ -541,19 +541,19 @@ int tssknt=simparams.speed_step.count();
 DbgLv(1) << "LD: (e)ss knt" << essknt << "(t)ss knt" << tssknt;
 for ( int jj = 0; jj < qMin( essknt, tssknt ); jj++ )
 {
- DbgLv(1) << "LD:  jj" << jj << "(e) tf tl wf wl scns"
-  << speed_steps[jj].time_first
-  << speed_steps[jj].time_last
-  << speed_steps[jj].w2t_first
-  << speed_steps[jj].w2t_last
-  << speed_steps[jj].scans;
- DbgLv(1) << "LD:    (t) tf tl wf wl scns"
-  << simparams.speed_step[jj].time_first
-  << simparams.speed_step[jj].time_last
-  << simparams.speed_step[jj].w2t_first
-  << simparams.speed_step[jj].w2t_last
-  << simparams.speed_step[jj].scans;
-}
+  DbgLv(1) << "LD:  jj" << jj << "(e) tf tl wf wl scns"
+	   << speed_steps[jj].time_first
+	   << speed_steps[jj].time_last
+	   << speed_steps[jj].w2t_first
+	   << speed_steps[jj].w2t_last
+	   << speed_steps[jj].scans;
+  DbgLv(1) << "LD:    (t) tf tl wf wl scns"
+	   << simparams.speed_step[jj].time_first
+	   << simparams.speed_step[jj].time_last
+	   << simparams.speed_step[jj].w2t_first
+	   << simparams.speed_step[jj].w2t_last
+	   << simparams.speed_step[jj].scans;
+ }
 //*DEBUG*
       int kstep      = speed_steps.count();
       int kscan      = speed_steps[ 0 ].scans;
@@ -569,21 +569,21 @@ for ( int jj = 0; jj < qMin( essknt, tssknt ); jj++ )
          
          speed_steps[ jj ].scans = kscan;
          simparams.speed_step[ jj ].scans = kscan;
-DbgLv(1) << "LD:    (s) tf tl wf wl scns"
- << speed_steps[jj].time_first
- << speed_steps[jj].time_last
- << speed_steps[jj].w2t_first
- << speed_steps[jj].w2t_last
- << speed_steps[jj].scans;
+	 DbgLv(1) << "LD:    (s) tf tl wf wl scns"
+		  << speed_steps[jj].time_first
+		  << speed_steps[jj].time_last
+		  << speed_steps[jj].w2t_first
+		  << speed_steps[jj].w2t_last
+		  << speed_steps[jj].scans;
       }
    }
-
+   
    int nssp       = speed_steps.count();
    int ntriples   = triples.size();
-DbgLv(1) << "LD: Load: no of speed steps" << nssp;
-
+   DbgLv(1) << "LD: Load: no of speed steps" << nssp;
+   
    if ( nssp > 0 )
-   {
+     {
       for ( int ii = 0; ii < nssp; ii++ )
       {
          int stm1   = speed_steps[ ii ].time_first;

@@ -66,9 +66,10 @@ class US_Analysis_auto : public US_Widgets
 	 US_Noise                    ri_noise;
 	 US_Noise                    ti_noise;
 	 QList< int >                excludedScans;
+	 US_Solution                 solution_rec;
+	 
+	 US_SimulationParameters       simparams;
 
-	 
-	 
 	 QPushButton*  pb_show_all;
 	 QPushButton*  pb_hide_all;
 	 
