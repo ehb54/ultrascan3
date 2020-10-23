@@ -42,13 +42,13 @@ class US_Analysis_auto : public US_Widgets
 	 QPointer< US_ResidPlotFem >    resplotd;
 
 
-	 US_DataIO::EditedData*      fem_editdata();
-	 US_DataIO::RawData*         fem_simdata();
-	 QList< int >*               fem_excllist();
-	 US_Model*                   fem_model();
-	 US_Noise*                   fem_ti_noise();
-	 US_Noise*                   fem_ri_noise();
-	 QPointer< US_ResidsBitmap > fem_resbmap();
+	 US_DataIO::EditedData*      aa_editdata();
+	 US_DataIO::RawData*         aa_simdata();
+	 QList< int >*               aa_excllist();
+	 US_Model*                   aa_model();
+	 US_Noise*                   aa_ti_noise();
+	 US_Noise*                   aa_ri_noise();
+	 QPointer< US_ResidsBitmap > aa_resbmap();
 	 
       private:
 	 QVector< US_DataIO::RawData    > rawData;
@@ -59,6 +59,7 @@ class US_Analysis_auto : public US_Widgets
 	 US_DataIO::EditedData*      edata;
 	 US_DataIO::RawData*         rdata;
 	 US_DataIO::RawData*         sdata;
+	 US_DataIO::RawData          wsdata;
 	 
 	 QPointer< US_ResidsBitmap >    rbmapd;
 
@@ -72,13 +73,17 @@ class US_Analysis_auto : public US_Widgets
 	 US_Noise                    ti_noise;
 	 QList< int >                excludedScans;
 	 US_Solution                 solution_rec;
+
+	 US_Math2::SolutionData      solution;
 	 
-	 US_SimulationParameters       simparams;
+	 US_SimulationParameters     simparams;
 
 	 double       density;
 	 double       viscosity;
 	 double       vbar;
 	 double       compress;
+
+	 QString      svbar_global;
 	 
 	 bool         manual;
 	 bool          dataLoaded;
@@ -91,7 +96,10 @@ class US_Analysis_auto : public US_Widgets
 	 bool          dat_steps;
 	 bool          is_dmga_mc;
 
-	 
+	 QMap< QString, QString >    adv_vals;
+
+	 int           dbg_level;
+	 int           nthread;
 
 	 QPushButton*  pb_show_all;
 	 QPushButton*  pb_hide_all;
@@ -132,6 +140,9 @@ class US_Analysis_auto : public US_Widgets
 	 bool loadData( QMap < QString, QString > & );
 	 bool loadModel( QMap < QString, QString > & );
 	 bool loadNoises( QMap < QString, QString > & );
+
+	 void simulateModel( void );
+	 void adjustModel( void );
 	 
 	 QGroupBox *createGroup( QString &);
 

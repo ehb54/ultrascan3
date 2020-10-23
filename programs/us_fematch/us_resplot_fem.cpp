@@ -15,10 +15,10 @@
 #endif
 
 // constructor:  residuals plot widget
-US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, bool auto_mode )
+US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const bool auto_mode )
    : US_WidgetsDialog( 0, 0 )
 {
-   this->auto_mode = auto_mode;
+   this->a_mode = auto_mode;
   
    // lay out the GUI
    setWindowTitle( tr( "Finite Element Data/Residuals Viewer" ) );
@@ -153,9 +153,11 @@ US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, bool auto_mode )
 
    if ( parent )
    {
-     if ( !auto_mode )
+     if ( !a_mode )
        {
 	 // Get data pointers from parent of parent
+	 qDebug() << "THIS will be pointer to us_fematch---";
+
 	 US_FeMatch* fem = (US_FeMatch*)parent;
 	 edata           = fem->fem_editdata();
 	 sdata           = fem->fem_simdata();
@@ -175,27 +177,27 @@ US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, bool auto_mode )
 	 DbgLv(1) << "RP:resbmap" << have_bm;
        }
      else
-       {
-	 qDebug() << "THIS will be pointer to autoflow_analsyis---";
-	 //Autoflow_analysis
-	 US_Analysis_auto* fem = (US_Analysis_auto*)parent;
-	 edata           = fem->fem_editdata();
-	 sdata           = fem->fem_simdata();
-	 excllist        = fem->fem_excllist();
-	 ti_noise        = fem->fem_ti_noise();
-	 ri_noise        = fem->fem_ri_noise();
-	 resbmap         = fem->fem_resbmap();
-	 have_ed         = ( edata != 0 );
-	 have_sd         = ( sdata != 0 );
-	 have_ti         = ( ti_noise != 0  &&  ti_noise->count > 0 );
-	 have_ri         = ( ri_noise != 0  &&  ri_noise->count > 0 );
-	 have_bm         = ( resbmap != 0 );
-	 DbgLv(1) << "RP:edata  " << have_ed;
-	 DbgLv(1) << "RP:sdata  " << have_sd;
-	 DbgLv(1) << "RP:ti_noise count" << (have_ti ? ti_noise->count : 0);
-	 DbgLv(1) << "RP:ri_noise count" << (have_ri ? ri_noise->count : 0);
-	 DbgLv(1) << "RP:resbmap" << have_bm;
-       }
+        {
+      	 qDebug() << "THIS will be pointer to autoflow_analsyis---";
+      	 //Autoflow_analysis
+      	 US_Analysis_auto* aa = (US_Analysis_auto*)parent;
+      	 edata           = aa->aa_editdata();
+      	 sdata           = aa->aa_simdata();
+      	 excllist        = aa->aa_excllist();
+      	 ti_noise        = aa->aa_ti_noise();
+      	 ri_noise        = aa->aa_ri_noise();
+      	 resbmap         = aa->aa_resbmap();
+      	 have_ed         = ( edata != 0 );
+      	 have_sd         = ( sdata != 0 );
+      	 have_ti         = ( ti_noise != 0  &&  ti_noise->count > 0 );
+      	 have_ri         = ( ri_noise != 0  &&  ri_noise->count > 0 );
+      	 have_bm         = ( resbmap != 0 );
+      	 DbgLv(1) << "RP:edata  " << have_ed;
+      	 DbgLv(1) << "RP:sdata  " << have_sd;
+      	 DbgLv(1) << "RP:ti_noise count" << (have_ti ? ti_noise->count : 0);
+      	 DbgLv(1) << "RP:ri_noise count" << (have_ri ? ri_noise->count : 0);
+      	 DbgLv(1) << "RP:resbmap" << have_bm;
+        }
    }
    
    else
@@ -218,14 +220,11 @@ US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, bool auto_mode )
    data_plot1->resize( p1size );
    data_plot2->resize( p2size );
 
-   qDebug() << "RESPLOT_FEM: before plot--";
-   //TEMPORARY !!!!
-   // if( auto_mode )
-   //   skip_plot = true;
+   //qDebug() << "RESPLOT_FEM: before plot--";
 
    plot_data();
 
-   qDebug() << "RESPLOT_FEM: after plot--";
+   //qDebug() << "RESPLOT_FEM: after plot--";
 
    setVisible( true );
    resize( p2size );
@@ -432,9 +431,7 @@ void US_ResidPlotFem::plot_data()
 
    plot_edata();     // plot experimental
 
-   //TEMPORARY
-   if( !auto_mode )
-     plot_rdata();     // plot residuals
+   plot_rdata();     // plot residuals
 }
 
 // plot the experimental data
@@ -446,7 +443,7 @@ void US_ResidPlotFem::plot_edata()
    // Clear the upper plot for re-do
    dataPlotClear( data_plot1 );
 
-   qDebug() << "PLOT edata 1 ";
+   //qDebug() << "PLOT edata 1 ";
 
    bool   do_plteda = have_ed  &&  ck_plteda->isChecked();
    bool   do_pltsda = have_sd  &&  ck_pltsda->isChecked();
@@ -463,7 +460,7 @@ void US_ResidPlotFem::plot_edata()
    double vh        = 9999.0;
    double sval;
 
-   qDebug() << "PLOT edata 2 ";
+   // qDebug() << "PLOT edata 2 ";
    
    if ( have_ed )
    {
@@ -477,7 +474,7 @@ void US_ResidPlotFem::plot_edata()
       return;
    }
 
-   qDebug() << "PLOT edata 3 ";
+   //   qDebug() << "PLOT edata 3 ";
 
    if      ( do_plteda  &&  !do_pltsda )
       data_plot1->setTitle( tr( "Experimental Data" ) );
@@ -497,7 +494,7 @@ void US_ResidPlotFem::plot_edata()
       points   = edata->pointCount();
    }
 
-   qDebug() << "PLOT edata 4 ";
+   //qDebug() << "PLOT edata 4 ";
    
    if ( do_pltsda )
    {  // set title and values count for simulation data
@@ -512,7 +509,7 @@ void US_ResidPlotFem::plot_edata()
 
    count    = ( points > count ) ? points : count;  // maximum array count
 
-   qDebug() << "PLOT edata 5 ";
+   //qDebug() << "PLOT edata 5 ";
    
    QVector< double > rvec( count, 0.0 );
    QVector< double > vvec( count, 0.0 );
@@ -524,7 +521,7 @@ void US_ResidPlotFem::plot_edata()
    QPen          pen_red(  Qt::red );
    QPen          pen_plot( US_GuiSettings::plotCurve() );
 
-   qDebug() << "PLOT edata 6 ";
+   //qDebug() << "PLOT edata 6 ";
 
    if ( do_plteda )
    {  // plot experimental curves
@@ -570,7 +567,7 @@ void US_ResidPlotFem::plot_edata()
       }
    }
 
-   qDebug() << "PLOT edata 7 ";
+   //qDebug() << "PLOT edata 7 ";
 
 
    if ( do_pltsda )
@@ -617,11 +614,11 @@ void US_ResidPlotFem::plot_edata()
       }
    }
 
-   qDebug() << "PLOT edata 8 ";
+   //qDebug() << "PLOT edata 8 ";
    
    data_plot1->replot();
 
-   qDebug() << "PLOT edata 9";
+   //qDebug() << "PLOT edata 9";
 }
 
 // plot the residual data

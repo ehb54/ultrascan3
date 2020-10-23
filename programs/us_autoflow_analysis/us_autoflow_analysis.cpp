@@ -9,6 +9,9 @@
 #include "us_protocol_util.h"
 #include "us_constants.h"
 #include "us_solution_vals.h"
+#include "us_lamm_astfvm.h"
+
+#define MIN_NTC   25
 
 const QColor colorRed       ( 210, 0, 0 );
 const QColor colorDarkGreen ( 2, 88, 57 );
@@ -896,25 +899,25 @@ void US_Analysis_auto::gui_update( )
 
 
 // public function to get pointer to edit data
-US_DataIO::EditedData*      US_Analysis_auto::fem_editdata() { return edata;     }
+US_DataIO::EditedData*      US_Analysis_auto::aa_editdata() { return edata;     }
 
 // public function to get pointer to list of excluded scans
-QList< int >*               US_Analysis_auto::fem_excllist() { return &excludedScans;}
+QList< int >*               US_Analysis_auto::aa_excllist() { return &excludedScans;}
 
 // public function to get pointer to sim data
-US_DataIO::RawData*         US_Analysis_auto::fem_simdata()  { return sdata;     }
+US_DataIO::RawData*         US_Analysis_auto::aa_simdata()  { return sdata;     }
 
 // public function to get pointer to load model
-US_Model*                   US_Analysis_auto::fem_model()    { return &model;    }
+US_Model*                   US_Analysis_auto::aa_model()    { return &model;    }
 
 // public function to get pointer to TI noise
-US_Noise*                   US_Analysis_auto::fem_ti_noise() { return &ti_noise; }
+US_Noise*                   US_Analysis_auto::aa_ti_noise() { return &ti_noise; }
 
 // public function to get pointer to RI noise
-US_Noise*                   US_Analysis_auto::fem_ri_noise() { return &ri_noise; }
+US_Noise*                   US_Analysis_auto::aa_ri_noise() { return &ri_noise; }
 
 // public function to get pointer to resid bitmap diag
-QPointer< US_ResidsBitmap > US_Analysis_auto::fem_resbmap()  { return rbmapd;    }
+QPointer< US_ResidsBitmap > US_Analysis_auto::aa_resbmap()  { return rbmapd;    }
 
 //Load rawData/editedData
 bool US_Analysis_auto::loadData( QMap < QString, QString > & triple_information )
@@ -1229,6 +1232,403 @@ bool US_Analysis_auto::loadNoises( QMap < QString, QString > & triple_informatio
   return true;
 }
 
+//Simulate Model
+void US_Analysis_auto::simulateModel( )
+{
+  int    nconc   = edata->pointCount();
+  double radlo   = edata->radius( 0 );
+  double radhi   = edata->radius( nconc - 1 );
+
+  int lc=model_used.components.size()-1;
+  qDebug() << "SimMdl: 0) s D c"
+	   << model_used.components[ 0].s << model_used.components[ 0].D
+	   << model_used.components[ 0].signal_concentration << "  n" << lc;
+  qDebug() << "SimMdl: n) s D c"
+	   << model_used.components[lc].s << model_used.components[lc].D
+	   << model_used.components[lc].signal_concentration;
+
+  adjustModel();
+
+  qDebug() << "SimMdl: 0) s D c"
+	   << model.components[ 0].s << model.components[ 0].D
+	   << model.components[ 0].signal_concentration;
+  qDebug() << "SimMdl: n) s D c"
+	   << model.components[lc].s << model.components[lc].D
+	   << model.components[lc].signal_concentration;
+   
+  // Initialize simulation parameters using edited data information
+  US_Passwd pw;
+  US_DB2* dbP = new US_DB2( pw.getPasswd() );
+  
+  simparams.initFromData( dbP, *edata, dat_steps );
+  simparams.simpoints         = adv_vals[ "simpoints" ].toInt();
+  simparams.meshType          = US_SimulationParameters::ASTFEM;
+  simparams.gridType          = US_SimulationParameters::MOVING;
+  simparams.radial_resolution = (double)( radhi - radlo ) / ( nconc - 1 );
+  //   simparams.bottom            = simparams.bottom_position;
+  qDebug() << "SimMdl: simpoints" << simparams.simpoints
+	   << "rreso" << simparams.radial_resolution
+	   << "bottom_sim" << simparams.bottom << "bottom_dat" << edata->bottom;
+  //simparams.meniscus          = 5.8;
+  
+  //sdata.scanData.resize( total_scans );
+  //int terpsize    = ( points + 7 ) / 8;
+  
+  if ( exp_steps )
+    simparams.speed_step        = speed_steps;
+  
+  qDebug() << "SimMdl: speed_steps:" << simparams.speed_step.size();
+  
+  QString mtyp = adv_vals[ "meshtype"  ];
+  QString gtyp = adv_vals[ "gridtype"  ];
+  QString bvol = adv_vals[ "bndvolume" ];
+  
+  
+  if ( gtyp.contains( "Constant" ) )
+    simparams.gridType = US_SimulationParameters::FIXED;
+  
+  if ( model.components[ 0 ].sigma == 0.0  &&
+       model.components[ 0 ].delta == 0.0)
+    simparams.meshType = US_SimulationParameters::ASTFEM;
+  else
+    simparams.meshType = US_SimulationParameters::ASTFVM;
+  
+  simparams.firstScanIsConcentration = false;
+  
+  double concval1      = 0.0;
+  
+  if ( simparams.band_forming )
+    {
+      simparams.band_volume = bvol.toDouble();
+      //concval1              = 1.0;
+      //simparams.firstScanIsConcentration = true;
+    }
+  else
+    simparams.band_volume = 0.0;
+  
+  // Make a simulation copy of the experimental data without actual readings
+
+  qDebug() << "SimulateModel: --- 1";
+  
+  US_AstfemMath::initSimData( *sdata, *edata, concval1 );// Gets experimental time grid set
+
+  qDebug() << "SimulateModel: --- 2";
+  
+  
+  QString tmst_fpath = US_Settings::resultDir() + "/" + FileName + "/"
+    + FileName + ".time_state.tmst";
+  QFileInfo check_file( tmst_fpath );
+  simparams.sim      = ( edata->channel == "S" );
+  
+  if ( ( check_file.exists() ) && ( check_file.isFile() ) )
+    {
+      if ( US_AstfemMath::timestate_onesec( tmst_fpath, *sdata ) )
+	{  // Load timestate that is already at 1-second-intervals
+	  simparams.simSpeedsFromTimeState( tmst_fpath );
+	  qDebug() << "SimMdl: timestate file exists" << tmst_fpath << " timestateobject,count = "
+		   << simparams.tsobj << simparams.sim_speed_prof.count();
+	  simparams.speedstepsFromSSprof();
+	}
+      
+      else
+	{  // Replace timestate with a new one that is at 1-second-intervals
+	  // if ( drow == 0 )
+	  //   {
+	  QString tmst_fdefs = QString( tmst_fpath ).replace( ".tmst", ".xml" );
+	  QString tmst_fpsav = tmst_fpath + "-orig";
+	  QString tmst_fdsav = tmst_fdefs + "-orig";
+	  simparams.sim      = ( edata->channel == "S" );
+	  
+	  // Rename existing (non-1sec-intv) files
+	  QFile::rename( tmst_fpath, tmst_fpsav );
+	  QFile::rename( tmst_fdefs, tmst_fdsav );
+	  // Create a new 1-second-interval file set
+	  US_AstfemMath::writetimestate( tmst_fpath, simparams, *sdata );
+	  qDebug() << "SimMdl: 1-sec-intv file created";
+	  // }
+	  
+	  simparams.simSpeedsFromTimeState( tmst_fpath );
+	  simparams.speedstepsFromSSprof();
+	}
+    }
+  else
+    {
+      qDebug() << "SimMdl: timestate file does not exist";
+      if ( ! simparams.sim )
+	{  // Compute acceleration rate for non-astfem_sim data
+	  const double tfac = ( 4.0 / 3.0 );
+	  double t2   = simparams.speed_step[ 0 ].time_first;
+	  double w2t  = simparams.speed_step[ 0 ].w2t_first;
+	  double om1t = simparams.speed_step[ 0 ].rotorspeed * M_PI / 30.0;
+	  double w2   = sq( om1t );
+	  double t1   = tfac * ( t2 - ( w2t / w2 ) );
+	  int t_acc   = (int)qRound( t1 );
+	  double rate = (double)( simparams.speed_step[ 0 ].rotorspeed )
+	    / (double)t_acc;
+	  qDebug() << "SimMdl:  accel-calc:  t1 t2 w2t t_acc speed rate"
+		   << t1 << t2 << w2t << t_acc << simparams.speed_step[0].rotorspeed << rate;
+	  simparams.speed_step[ 0 ].acceleration = (int)qRound( rate );
+	}
+    }
+  
+  // Do a quick test of the speed step implied by TimeState
+  int tf_scan   = simparams.speed_step[ 0 ].time_first;
+  int accel1    = simparams.speed_step[ 0 ].acceleration;
+  QString svalu = US_Settings::debug_value( "SetSpeedLowA" );
+  int lo_ss_acc = svalu.isEmpty() ? 250 : svalu.toInt();
+  int rspeed    = simparams.speed_step[ 0 ].rotorspeed;
+  int tf_aend   = ( rspeed + accel1 - 1 ) / accel1;
+  
+  qDebug() << "SimMdl: ssck: rspeed accel1 lo_ss_acc"
+	   << rspeed << accel1 << lo_ss_acc << "tf_aend tf_scan"
+	   << tf_aend << tf_scan;
+  //x0  1  2  3  4  5
+  if ( accel1 < lo_ss_acc  ||  tf_aend > ( tf_scan - 3 ) )
+    {
+      QString wmsg = tr( "The TimeState computed/used is likely bad:<br/>"
+			 "The acceleration implied is %1 rpm/sec.<br/>"
+			 "The acceleration zone ends at %2 seconds,<br/>"
+			 "with a first scan time of %3 seconds.<br/><br/>"
+			 "<b>You should rerun the experiment without<br/>"
+			 "any interim constant speed, and then<br/>"
+			 "you should reimport the data.</b>" )
+	.arg( accel1 ).arg( tf_aend ).arg( tf_scan );
+      
+      QMessageBox msgBox( this );
+      msgBox.setWindowTitle( tr( "Bad TimeState Implied!" ) );
+      msgBox.setTextFormat( Qt::RichText );
+      msgBox.setText( wmsg );
+      msgBox.addButton( tr( "Continue" ), QMessageBox::RejectRole );
+      QPushButton* bAbort = msgBox.addButton( tr( "Abort" ),
+					      QMessageBox::YesRole    );
+      msgBox.setDefaultButton( bAbort );
+      msgBox.exec();
+      if ( msgBox.clickedButton() == bAbort )
+	{
+	  QApplication::restoreOverrideCursor();
+	  qApp->processEvents();
+	  return;
+	}
+    }
+  sdata->cell        = rdata->cell;
+  sdata->channel     = rdata->channel;
+  sdata->description = rdata->description;
+  
+  if ( dbg_level > 0 )
+    simparams.save_simparms( US_Settings::etcDir() + "/sp_fematch.xml" );
+  
+  //start_time = QDateTime::currentDateTime();
+  int ncomp  = model.components.size();
+  //compress   = le_compress->text().toDouble();
+  //progress->setRange( 1, ncomp );
+  //progress->reset();
+  
+  nthread    = US_Settings::threads();
+  int ntc    = ( ncomp + nthread - 1 ) / nthread;
+  nthread    = ( ntc > MIN_NTC ) ? nthread : 1;
+  
+  qDebug() << "SimMdl: nthread" << nthread << "ncomp" << ncomp
+	   << "ntc" << ntc << "meshtype" << simparams.meshType;
+  
+  // Do simulation by several possible ways: 1-/Multi-thread, ASTFEM/ASTFVM
+  if ( nthread < 2 )
+    {
+      if ( model.components[ 0 ].sigma == 0.0  &&
+	   model.components[ 0 ].delta == 0.0  &&
+	   model.coSedSolute           <  0.0  &&
+	   compress                    == 0.0 )
+	{
+	  qDebug() << "SimMdl: (fematch:)Finite Element Solver is called";
+	  //*DEBUG*
+	  for(int ii=0; ii<model.components.size(); ii++ )
+	    {
+	      qDebug() << "SimMdl:   comp" << ii << "s D v"
+		       << model.components[ii].s
+		       << model.components[ii].D
+		       << model.components[ii].vbar20 << "  c"
+		       << model.components[ii].signal_concentration;
+	    }
+	  qDebug() << "SimMdl: (fematch:)Sim Pars--";
+	  simparams.debug();
+	  //*DEBUG*
+	  US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparams );
+	  
+	  // connect( astfem_rsa, SIGNAL( current_component( int ) ),
+	  // 	   this,       SLOT  ( update_progress  ( int ) ) );
+	  astfem_rsa->set_debug_flag( dbg_level );
+	  solution_rec.buffer.compressibility = compress;
+	  solution_rec.buffer.manual          = manual;
+	  //astfem_rsa->set_buffer( solution_rec.buffer );
+	  
+	  astfem_rsa->calculate( *sdata );
+	  //*DEBUG*
+	  int kpts=0;
+	  double trmsd=0.0;
+	  double tnoi=0.0;
+	  double rnoi=0.0;
+	  bool ftin=ti_noise.count > 0;
+	  bool frin=ri_noise.count > 0;
+	  for(int ss=0; ss<sdata->scanCount(); ss++)
+	    {
+	      rnoi = frin ? ri_noise.values[ss] : 0.0;
+	      for (int rr=0; rr<sdata->pointCount(); rr++)
+		{
+		  tnoi = ftin ? ti_noise.values[rr] : 0.0;
+		  double rval=edata->value(ss,rr) - sdata->value(ss,rr) - rnoi - tnoi;
+		  trmsd += sq( rval );
+		  kpts++;
+		}
+	    }
+	  trmsd = sqrt( trmsd / (float)kpts );
+	  qDebug() << "SimMdl: (1)trmsd" << trmsd;
+	  //*DEBUG*
+	}
+      else
+	{
+	  qDebug() << "SimMdl: (fematch:)Finite Volume Solver is called";
+	  US_LammAstfvm *astfvm     = new US_LammAstfvm( model, simparams );
+	  //connect( astfvm,  SIGNAL( comp_progress( int ) ), this,  SLOT(   update_progress(   int ) ) );
+	  //solution_rec.buffer.compressibility = compress;
+	  //solution_rec.buffer.manual          = manual;
+	  //astfvm->set_buffer( solution_rec.buffer );
+	  astfvm->calculate(     *sdata );
+	}
+      //-----------------------
+      //Simulation part is over
+      //-----------------------
+      
+      //show_results();
+    }
+  /* 
+  else
+    {  // Do multi-thread calculations
+      solution_rec.buffer.compressibility = compress;
+      solution_rec.buffer.manual          = manual;
+      tsimdats.clear();
+      tmodels .clear();
+      kcomps  .clear();
+      QList< ThreadWorker* >         tworkers;
+      QList< QThreadEx* >            wthreads;
+      
+      // Build models for each thread
+      for ( int ii = 0; ii < ncomp; ii++ )
+	{
+	  if ( ii < nthread )
+	    {  // First time through per thread:  get initial model and sim data
+	      tmodels << model;
+	      tmodels[ ii ].components.clear();
+	      US_DataIO::RawData sdat = *sdata;
+	      tsimdats << sdat;
+	      kcomps   << 0;
+	    }
+	  
+	  // Partition thread models from round-robin fetch of components
+	  int jj = ii % nthread;
+	  tmodels[ jj ].components << model.components[ ii ];
+	}
+      
+      thrdone   = 0;
+      solution_rec.buffer.manual = manual;
+      
+      // Build worker threads and begin running
+      for ( int ii = 0; ii < nthread; ii++ )
+	{
+	  ThreadWorker* tworker = new ThreadWorker( tmodels[ ii ], simparams,
+						    tsimdats[ ii ], solution_rec.buffer, ii );
+	  QThreadEx*    wthread = new QThreadEx();
+	  
+	  tworker->moveToThread( wthread );
+	  
+	  tworkers << tworker;
+	  wthreads << wthread;
+	  
+	  connect( wthread, SIGNAL( started()         ),
+		   tworker, SLOT  ( calc_simulation() ) );
+	  
+	  connect( tworker, SIGNAL( work_progress  ( int, int ) ),
+		   this,    SLOT(   thread_progress( int, int ) ) );
+	  connect( tworker, SIGNAL( work_complete  ( int )      ),
+		   this,    SLOT(   thread_complete( int )      ) );
+	  
+	  wthread->start();
+	}
+    }
+  */
+}
+
+// Adjust model components based on buffer, vbar, and temperature
+void US_Analysis_auto::adjustModel( )
+{
+   model              = model_used;
+
+   // build model component correction factors
+   double avgTemp     = edata->average_temperature();
+   double vbar20      = svbar_global.toDouble();
+
+   solution.density   = density;
+   solution.viscosity = viscosity;
+   solution.manual    = manual;
+   solution.vbar20    = vbar20;
+   solution.vbar      = US_Math2::calcCommonVbar( solution_rec, avgTemp );
+//   solution.vbar      = US_Math2::adjust_vbar20( solution.vbar20, avgTemp );
+
+   US_Math2::data_correction( avgTemp, solution );
+
+   double scorrec  = solution.s20w_correction;
+   double dcorrec  = solution.D20w_correction;
+   double mc_vbar  = model.components[ 0 ].vbar20;
+   // Set constant-vbar and constant-ff0 flags
+   cnstvb          = model.constant_vbar();
+   cnstff          = model.constant_ff0();
+
+   US_Math2::SolutionData sd;
+   sd.density      = solution.density;
+   sd.viscosity    = solution.viscosity;
+   sd.vbar20       = solution.vbar20;
+   sd.vbar         = solution.vbar;
+   sd.manual       = solution.manual;
+   qDebug() << "Fem:Adj:  avgT" << avgTemp << "scorr dcorr" << scorrec << dcorrec;
+
+   if ( cnstvb  &&  mc_vbar != sd.vbar20  &&  mc_vbar != 0.0 )
+   {  // Use vbar from the model component, instead of from the solution
+      sd.vbar20    = mc_vbar;
+      sd.vbar      = US_Math2::adjust_vbar20( sd.vbar20, avgTemp );
+      US_Math2::data_correction( avgTemp, sd );
+      scorrec      = sd.s20w_correction;
+      dcorrec      = sd.D20w_correction;
+      qDebug() << "Fem:Adj:   cnstvb" << cnstvb << "  scorr dcorr" << scorrec << dcorrec;
+   }
+   qDebug() << "Fem:Adj:  avgT" << avgTemp << "vb20 vb" << sd.vbar20 << sd.vbar;
+
+   // Convert to experiment space: adjust s,D based on solution,temperature
+
+   for ( int jj = 0; jj < model.components.size(); jj++ )
+   {
+      US_Model::SimulationComponent* sc = &model.components[ jj ];
+
+      sc->vbar20  = ( sc->vbar20 == 0.0 ) ? vbar20 : sc->vbar20;
+
+      if ( ! cnstvb )
+      {  // Set s,D corrections based on component vbar
+         sd.vbar20   = sc->vbar20;
+         sd.vbar     = US_Math2::adjust_vbar20( sd.vbar20, avgTemp );
+         US_Math2::data_correction( avgTemp, sd );
+         scorrec     = sd.s20w_correction;
+         dcorrec     = sd.D20w_correction;
+      }
+
+double s20w=sc->s;
+double d20w=sc->D;
+      sc->s      /= scorrec;
+      sc->D      /= dcorrec;
+      qDebug() << "Fem:Adj:  s20w D20w" << s20w << d20w
+	       << "s D" << sc->s << sc->D << "  jj" << jj << "vb20 vb" << sc->vbar20 << sd.vbar;
+
+      if ( sc->extinction > 0.0 )
+         sc->molar_concentration = sc->signal_concentration / sc->extinction;
+   }
+
+}
 
 //Slot to delete Job
 void US_Analysis_auto::show_overlay( QString triple_stage )
@@ -1236,8 +1636,19 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
   speed_steps  .clear();
   edata = NULL;
   rdata = NULL;
-  sdata = NULL;
+  //sdata = NULL;
   eID_global = 0;
+  sdata          = &wsdata;
+  
+  dbg_level  = US_Settings::us_debug();
+
+  adv_vals[ "simpoints" ] = "500";
+  adv_vals[ "bndvolume" ] = "0.015";
+  adv_vals[ "parameter" ] = "0";
+  adv_vals[ "modelnbr"  ] = "0";
+  adv_vals[ "meshtype"  ] = "ASTFEM";
+  adv_vals[ "gridtype"  ] = "Moving";
+  adv_vals[ "modelsim"  ] = "mean";
   
   QString tr_st = triple_stage.simplified();
   tr_st.replace( " ", "" );
@@ -1348,7 +1759,10 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
 
   dataLoaded = true;
   haveSim    = false;
+
+
   
+
   //Read Solution/Buffer
   density      = DENS_20W;
   viscosity    = VISC_20W;
@@ -1376,7 +1790,6 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
   if ( bufvl )
     {
       buffLoaded  = false;
-      bcomp       = QString::number( bcomp.toDouble() );
       buffLoaded  = true;
       density     = bdens.toDouble();
       viscosity   = bvisc.toDouble();
@@ -1400,6 +1813,7 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
       
       vbar          = solution_rec.commonVbar20;
       svbar         = QString::number( vbar );
+      
     }
   else
     {
@@ -1411,12 +1825,28 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
   ti_noise.count = 0;
   ri_noise.count = 0;
 
+  // Calculate basic parameters for other functions [ from us_fematch's ::update()-> data_plot() ]
+  double avgTemp     = edata->average_temperature();
+  solution.density   = density;
+  solution.viscosity = viscosity;
+  solution.manual    = manual;
+  solution.vbar20    = svbar.toDouble();
+  svbar_global       = svbar; 
+  solution.vbar      = US_Math2::calcCommonVbar( solution_rec, avgTemp );
+  
+  US_Math2::data_correction( avgTemp, solution );
+  
 
-  //Load Model (latest ?)
+  //Load Model (latest ) && noise(s)
   loadModel( triple_info_map  );
+
+  //Simulate Model
+  simulateModel();
   
   // Show plot
   resplotd = new US_ResidPlotFem( this, true );
+  //resplotd->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
+  resplotd->setWindowModality(Qt::ApplicationModal);
   resplotd->show();
 }
 
