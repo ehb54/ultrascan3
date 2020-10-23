@@ -75,9 +75,15 @@ class US_Analysis_auto : public US_Widgets
 	 US_Solution                 solution_rec;
 
 	 US_Math2::SolutionData      solution;
+	 QVector< QVector< double > > resids;
 	 
 	 US_SimulationParameters     simparams;
+	 QList< US_DataIO::RawData >   tsimdats;
+	 QList< US_Model >             tmodels;
+	 QVector< int >                kcomps;
 
+	 int           thrdone;
+	 
 	 double       density;
 	 double       viscosity;
 	 double       vbar;
@@ -100,6 +106,9 @@ class US_Analysis_auto : public US_Widgets
 
 	 int           dbg_level;
 	 int           nthread;
+	 int           scanCount;
+
+	 QPoint        rpd_pos;
 
 	 QPushButton*  pb_show_all;
 	 QPushButton*  pb_hide_all;
@@ -160,6 +169,10 @@ class US_Analysis_auto : public US_Widgets
 	 QString     job2nois;        //!< 2DSA-FM noise type
 	 QString     job4nois;        //!< 2DSA-IT noise type
 
+      public slots:
+	void    thread_complete( int );
+	void    resplot_done( void );
+	
       private slots:
 	void initPanel( QMap < QString, QString > & );
 	void show_all( void );
@@ -176,7 +189,12 @@ class US_Analysis_auto : public US_Widgets
 
 	void delete_job  ( QString );
 	void show_overlay( QString );
-		
+
+	void show_results   ( void );
+	void calc_residuals( void );
+	double  interp_sval( double, double*, double*,  int );
+	void plotres(   void );
+	
       signals:
 	void analysis_update_process_stopped( void );
 	void close_analysissetup_msg( void ); 

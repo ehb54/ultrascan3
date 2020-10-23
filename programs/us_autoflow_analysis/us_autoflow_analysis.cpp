@@ -10,6 +10,7 @@
 #include "us_constants.h"
 #include "us_solution_vals.h"
 #include "us_lamm_astfvm.h"
+#include "../us_fematch/us_thread_worker.h"
 
 #define MIN_NTC   25
 
@@ -1426,6 +1427,11 @@ void US_Analysis_auto::simulateModel( )
   nthread    = US_Settings::threads();
   int ntc    = ( ncomp + nthread - 1 ) / nthread;
   nthread    = ( ntc > MIN_NTC ) ? nthread : 1;
+
+  /*
+  //TEST
+  nthread = 10;
+  */
   
   qDebug() << "SimMdl: nthread" << nthread << "ncomp" << ncomp
 	   << "ntc" << ntc << "meshtype" << simparams.meshType;
@@ -1497,11 +1503,14 @@ void US_Analysis_auto::simulateModel( )
       //Simulation part is over
       //-----------------------
       
-      //show_results();
+      show_results();
     }
-  /* 
+  
   else
     {  // Do multi-thread calculations
+
+      qDebug() << "Simulate Model: Multi-thread -- ";
+      
       solution_rec.buffer.compressibility = compress;
       solution_rec.buffer.manual          = manual;
       tsimdats.clear();
@@ -1545,15 +1554,207 @@ void US_Analysis_auto::simulateModel( )
 	  connect( wthread, SIGNAL( started()         ),
 		   tworker, SLOT  ( calc_simulation() ) );
 	  
-	  connect( tworker, SIGNAL( work_progress  ( int, int ) ),
-		   this,    SLOT(   thread_progress( int, int ) ) );
+	  // connect( tworker, SIGNAL( work_progress  ( int, int ) ),
+	  // 	   this,    SLOT(   thread_progress( int, int ) ) );
 	  connect( tworker, SIGNAL( work_complete  ( int )      ),
 		   this,    SLOT(   thread_complete( int )      ) );
 	  
 	  wthread->start();
 	}
     }
-  */
+ 
+}
+
+// Show simulation and residual when the simulation is complete
+void US_Analysis_auto::show_results( )
+{
+  //progress->setValue( progress->maximum() );
+
+   haveSim     = true;
+   // pb_distrib->setEnabled( true );
+   // pb_view   ->setEnabled( true );
+   // pb_save   ->setEnabled( true );
+   // pb_plot3d ->setEnabled( true );
+   // pb_plotres->setEnabled( true );
+
+   calc_residuals();             // calculate residuals
+
+   //distrib_plot_resids();        // plot residuals
+
+   // data_plot();                  // re-plot data+simulation
+
+   // if ( rbmapd != 0 )
+   // {
+   //    bmd_pos  = rbmapd->pos();
+   //    rbmapd->close();
+   // }
+
+   rbmapd = new US_ResidsBitmap( resids );
+   // rbmapd->move( bmd_pos );
+   // rbmapd->show();
+
+   // plot3d();
+
+   plotres();
+   QApplication::restoreOverrideCursor();
+}
+
+// Calculate residual absorbance values (data - sim - noise)
+void US_Analysis_auto::calc_residuals()
+{
+   int     dsize  = edata->pointCount();
+   int     ssize  = sdata->pointCount();
+   QVector< double > vecxx( dsize );
+   QVector< double > vecsx( ssize );
+   QVector< double > vecsy( ssize );
+   double* xx     = vecxx.data();
+   double* sx     = vecsx.data();
+   double* sy     = vecsy.data();
+   double  yval;
+   double  sval;
+   double  rmsd   = 0.0;
+   double  tnoi   = 0.0;
+   double  rnoi   = 0.0;
+   bool    ftin   = ti_noise.count > 0;
+   bool    frin   = ri_noise.count > 0;
+   bool    matchd = ( dsize == ssize );
+   int     kpts   = 0;
+   qDebug() << "CALC_RESID: matchd" << matchd << "dsize ssize" << dsize << ssize;
+   int kexcls=0;
+ 
+   QVector< double > resscan;
+
+   resids .clear();
+   resscan.resize( dsize );
+
+   for ( int jj = 0; jj < dsize; jj++ )
+   {
+      xx[ jj ] = edata->radius( jj );
+   }
+
+   for ( int jj = 0; jj < ssize; jj++ )
+   {
+      sx[ jj ] = sdata->radius( jj );
+      if ( sx[ jj ] != xx[ jj ] )  matchd = false;
+   }
+
+   for ( int ii = 0; ii < scanCount; ii++ )
+   {
+      bool usescan = !excludedScans.contains( ii );
+if(!usescan) kexcls++;
+
+      rnoi     = frin ? ri_noise.values[ ii ] : 0.0;
+
+      for ( int jj = 0; jj < ssize; jj++ )
+      {
+         sy[ jj ] = sdata->value( ii, jj );
+      }
+
+      for ( int jj = 0; jj < dsize; jj++ )
+      { // Calculate the residuals and the RMSD
+         tnoi          = ftin ? ti_noise.values[ jj ] : 0.0;
+
+         if ( matchd )
+            sval          = sy[ jj ];
+         else
+            sval          = interp_sval( xx[ jj ], sx, sy, ssize );
+
+         yval          = edata->value( ii, jj ) - sval - rnoi - tnoi;
+
+         if ( usescan )
+         {
+            rmsd         += sq( yval );
+            kpts++;
+         }
+
+         resscan[ jj ] = yval;
+      }
+
+      resids << resscan;
+   }
+
+   rmsd  /= (double)( kpts );
+   //le_variance->setText( QString::number( rmsd ) );
+   rmsd   = sqrt( rmsd );
+   //le_rmsd    ->setText( QString::number( rmsd ) );
+   qDebug() << "CALC_RESID: matchd" << matchd << "kexcls" << kexcls << "rmsd" << rmsd;
+}
+
+// Interpolate an sdata y (readings) value for a given x (radius)
+double US_Analysis_auto::interp_sval( double xv, double* sx, double* sy, int ssize )
+{
+   for ( int jj = 1; jj < ssize; jj++ )
+   {
+      if ( xv == sx[ jj ] )
+      {
+         return sy[ jj ];
+      }
+
+      if ( xv < sx[ jj ] )
+      {  // given x lower than array x: interpolate between point and previous
+         int    ii = jj - 1;
+         double dx = sx[ jj ] - sx[ ii ];
+         double dy = sy[ jj ] - sy[ ii ];
+         return ( sy[ ii ] + ( xv - sx[ ii ] ) * dy / dx );
+      }
+   }
+
+   // given x position not found:  interpolate using last two points
+   int    jj = ssize - 1;
+   int    ii = jj - 1;
+   double dx = sx[ jj ] - sx[ ii ];
+   double dy = sy[ jj ] - sy[ ii ];
+   return ( sy[ ii ] + ( xv - sx[ ii ] ) * dy / dx );
+}
+
+// Open a residual plot dialog
+void US_Analysis_auto::plotres( )
+{
+   // if ( resplotd != 0 )
+   // {
+   //    rpd_pos  = resplotd->pos();
+   //    resplotd->close();
+   // }
+
+   resplotd = new US_ResidPlotFem( this, true );
+   //resplotd->move( rpd_pos );
+   resplotd->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
+   resplotd->setWindowModality(Qt::ApplicationModal);
+   resplotd->show();
+   connect( resplotd, SIGNAL( destroyed() ), this, SLOT( resplot_done() ) );
+}
+
+// Public slot to mark residuals plot dialog closed
+void US_Analysis_auto::resplot_done()
+{
+  resplotd   = 0;
+}
+
+// Update count of threads completed and colate simulations when all are done
+void US_Analysis_auto::thread_complete( int thr )
+{
+   thrdone++;
+DbgLv(1) << "THR COMPL thr" << thr << "thrdone" << thrdone;
+
+   if ( thrdone >= nthread )
+   {  // All threads are done, so sum thread simulation data
+      for ( int ii = 0; ii < sdata->scanData.size(); ii++ )
+      {
+         for ( int jj = 0; jj < sdata->xvalues.size(); jj++ )
+         {
+            //double conc = 0.0;
+            double conc = sdata->value( ii, jj );
+
+            for ( int kk = 0; kk < nthread; kk++ )
+               conc += tsimdats[ kk ].value( ii, jj );
+
+            sdata->setValue( ii, jj, conc );
+         }
+      }
+
+      // Then show the results
+      show_results();
+   }
 }
 
 // Adjust model components based on buffer, vbar, and temperature
@@ -1649,6 +1850,14 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
   adv_vals[ "meshtype"  ] = "ASTFEM";
   adv_vals[ "gridtype"  ] = "Moving";
   adv_vals[ "modelsim"  ] = "mean";
+
+  resids.clear();
+  dataLoaded = false;
+  buffLoaded = false;
+  haveSim    = false;
+  resplotd   = 0;
+  ti_noise.count = 0;
+  ri_noise.count = 0;
   
   QString tr_st = triple_stage.simplified();
   tr_st.replace( " ", "" );
@@ -1759,7 +1968,7 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
 
   dataLoaded = true;
   haveSim    = false;
-
+  scanCount  = edata->scanData.size();
 
   
 
@@ -1842,12 +2051,14 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
 
   //Simulate Model
   simulateModel();
-  
+
+  /*
   // Show plot
   resplotd = new US_ResidPlotFem( this, true );
   //resplotd->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
   resplotd->setWindowModality(Qt::ApplicationModal);
   resplotd->show();
+  */
 }
 
 //Slot to delete Job
