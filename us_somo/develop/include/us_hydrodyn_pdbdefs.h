@@ -187,6 +187,9 @@ struct PDB_model
    int   num_elect;                         // number of electrons
    int   num_SS_bonds;                      // number of SS bonds
    int   num_SH_free;                       // number of free SH
+
+   double asa_rg_pos;
+   double asa_rg_neg;
    
    double Rg;
    double protons;                          // number of protons

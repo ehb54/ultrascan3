@@ -213,32 +213,6 @@ bool US_Hydrodyn::calc_grpy_hydro() {
          ;
    }
 
-#define TEST_RUN_PAT
-#if defined( TEST_RUN_PAT )
-   bool run_pat = false;
-
-   switch ( QMessageBox::question(this, 
-                                  this->windowTitle() + us_tr(": vdW" ),
-                                  us_tr( "Run PAT?" ),
-                                  us_tr( "&Yes" ), 
-                                  us_tr( "&No" ), 
-                                  QString::null,
-                                  1, // Stop == button 0
-                                  1 // Escape == button 0
-                                  ) )
-   {
-   case 0 : //
-      run_pat = true;
-      break;
-   case 1 : //
-      run_pat = false;
-      break;
-   }
-
-   qDebug() << "run_pat is " << ( run_pat ? "true" : "false" );
-#endif
-   
-
    for (current_model = 0; current_model < (unsigned int)lb_model->count(); current_model++) {
       if (lb_model->item(current_model)->isSelected()) {
          if (somo_processed[current_model]) {
@@ -286,17 +260,15 @@ bool US_Hydrodyn::calc_grpy_hydro() {
                bead_check( false, true, true );
             }
 
-#if defined( TEST_RUN_PAT )
-            if ( run_pat ) {
-               editor_msg( "black", us_tr( "Running PAT" ) );
-               pat_model( bead_model );
-            }
-#endif
+            editor_msg( "black", us_tr( "Running PAT" ) );
+            pat_model( bead_model );
             
-            grpy_addl_param[ "asa_rg_pos" ] = results.asa_rg_pos;
-            grpy_addl_param[ "asa_rg_neg" ] = results.asa_rg_neg;
+            // qDebug() << "calc_grpy_hydro() asa rg +/- " << results.asa_rg_pos << " " << results.asa_rg_neg;
+
+            grpy_addl_param.clear();
+            // grpy_addl_param[ "asa_rg_pos" ] = model_vector[ current_model ].asa_rg_pos;
+            // grpy_addl_param[ "asa_rg_neg" ] = model_vector[ current_model ].asa_rg_neg;
             grpy_addl_params.push_back( grpy_addl_param );
-            // qDebug() << "US_Hydrodyn::calc_grpy_hydro() asa rg pos " << results.asa_rg_pos << " neg " << results.asa_rg_neg;
                
             write_bead_model( QFileInfo( fname ).fileName(),
                               & bead_model,
@@ -681,8 +653,8 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
       this_data.num_of_unused                 = this_data.results.total_beads - this_data.results.used_beads;
       this_data.results.vbar                  = use_vbar( model_vector[ grpy_last_model_number ].vbar );
       this_data.proc_time                     = (double)(timers.times[ "compute grpy this model" ]) / 1e3;
-      this_data.results.asa_rg_pos            = grpy_addl_param[ "asa_rg_pos" ];
-      this_data.results.asa_rg_neg            = grpy_addl_param[ "asa_rg_neg" ];
+      this_data.results.asa_rg_pos            = model_vector[ grpy_last_model_number ].asa_rg_pos;
+      this_data.results.asa_rg_neg            = model_vector[ grpy_last_model_number ].asa_rg_neg;
       // qDebug() << "US_Hydrodyn::grpy_finished() asa rg pos " << this_data.results.asa_rg_pos << " neg " << this_data.results.asa_rg_neg;
       
       if ( it->second.count( "Dr" ) ) {

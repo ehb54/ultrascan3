@@ -2706,8 +2706,10 @@ mem_ris(int model)
    this_data.hydro = us_hydrodyn->hydro;
    this_data.model_idx = QString("%1").arg(model);
    this_data.results.num_models = 1;
-   this_data.results.asa_rg_pos = supc_results->asa_rg_pos;
-   this_data.results.asa_rg_neg = supc_results->asa_rg_neg;
+
+   this_data.results.asa_rg_pos = (*model_vector)[ model ].asa_rg_pos;
+   this_data.results.asa_rg_neg = (*model_vector)[ model ].asa_rg_neg;
+   // qDebug() << "us_hydrodyn_supc::mem_ris(" << model << ") asa_rg +/- " << this_data.results.asa_rg_pos << " " << this_data.results.asa_rg_neg;
    this_data.hydro_res = "";
    this_data.proc_time = (double)(supc_timers.times[ "compute smi" ]) / 1e3;
 

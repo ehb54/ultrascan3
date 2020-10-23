@@ -142,6 +142,10 @@ int US_Hydrodyn::calc_somo( bool no_ovlp_removal )
          any_models = true;
          if(!compute_asa( false, no_ovlp_removal ))
          {
+            model_vector[ current_model ].asa_rg_pos = results.asa_rg_pos;
+            model_vector[ current_model ].asa_rg_neg = results.asa_rg_neg;
+            // qDebug() << "us_hydrodyn::calc_somo() current_model " << current_model << " asa_rg +/- " << results.asa_rg_pos << " " << results.asa_rg_neg;
+            
             somo_processed[current_model] = 1;
             if ( asa.recheck_beads ) // && !no_ovlp_removal )
             {
@@ -162,6 +166,8 @@ int US_Hydrodyn::calc_somo( bool no_ovlp_removal )
          }
          else
          {
+            model_vector[ current_model ].asa_rg_pos = 0;
+            model_vector[ current_model ].asa_rg_neg = 0;
             any_errors = true;
          }
       }
@@ -1611,6 +1617,8 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
          }
       }
       compute_asa_rgs( active_atoms );
+      model_vector[ current_model ].asa_rg_pos = results.asa_rg_pos;
+      model_vector[ current_model ].asa_rg_neg = results.asa_rg_neg;
    }
    
    // qDebug() << "US_Hydrodyn::create_vdw_beads() asa rg pos " << results.asa_rg_pos << " neg " << results.asa_rg_neg;

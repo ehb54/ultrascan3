@@ -3755,6 +3755,8 @@ int US_Hydrodyn::do_calc_hydro()
       return -1;
    }
    le_bead_model_suffix->setText(bead_model_suffix);
+   // qDebug() << "us_hydrodyn::do_calc_hydro()_rg +/- " << results.asa_rg_pos << " " << results.asa_rg_neg;
+
    int retval = us_hydrodyn_supc_main(&results,
                                       &hydro,
                                       hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance,
