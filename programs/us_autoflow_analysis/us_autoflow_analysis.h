@@ -49,6 +49,7 @@ class US_Analysis_auto : public US_Widgets
 	 US_Noise*                   aa_ti_noise();
 	 US_Noise*                   aa_ri_noise();
 	 QPointer< US_ResidsBitmap > aa_resbmap();
+	 QString                     aa_tripleInfo();
 	 
       private:
 	 QVector< US_DataIO::RawData    > rawData;
@@ -63,6 +64,8 @@ class US_Analysis_auto : public US_Widgets
 	 
 	 QPointer< US_ResidsBitmap >    rbmapd;
 
+	 QString tripleInfo;
+	 
 	 int eID_global;
 	 
 	 US_Model                    model;

@@ -27,6 +27,9 @@ US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const bool auto_mode )
    QSize p1size( 560, 360 );
    QSize p2size( 560, 240 );
 
+   QSize p11size( 670, 360);
+   QSize p21size( 670, 240);
+
    dbg_level       = US_Settings::us_debug();
 
    mainLayout      = new QHBoxLayout( this );
@@ -106,6 +109,12 @@ US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const bool auto_mode )
 
    data_plot1->setMinimumSize( p1size );
    data_plot2->setMinimumSize( p2size );
+
+   if ( a_mode )
+     {
+       data_plot1->setMinimumSize( p11size );
+       data_plot2->setMinimumSize( p21size );
+     }
 
    rightLayout->addLayout( plotLayout1    );
    rightLayout->addLayout( plotLayout2    );
@@ -197,7 +206,9 @@ US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const bool auto_mode )
       	 DbgLv(1) << "RP:ti_noise count" << (have_ti ? ti_noise->count : 0);
       	 DbgLv(1) << "RP:ri_noise count" << (have_ri ? ri_noise->count : 0);
       	 DbgLv(1) << "RP:resbmap" << have_bm;
-        }
+
+	 tripleInfo = aa->aa_tripleInfo();
+	}
    }
    
    else
@@ -228,6 +239,8 @@ US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const bool auto_mode )
 
    setVisible( true );
    resize( p2size );
+
+ 
 }
 
 // externally force a specific plot for lower plot
@@ -476,14 +489,37 @@ void US_ResidPlotFem::plot_edata()
 
    //   qDebug() << "PLOT edata 3 ";
 
-   if      ( do_plteda  &&  !do_pltsda )
-      data_plot1->setTitle( tr( "Experimental Data" ) );
-
-   else if ( do_plteda  &&  do_pltsda  )
-      data_plot1->setTitle( tr( "Experimental and Simulated Data" ) );
-
-   else if ( do_pltsda )
-      data_plot1->setTitle( tr( "Simulated Data" ) );
+   if ( !a_mode )
+     {
+       if      ( do_plteda  &&  !do_pltsda )
+	 data_plot1->setTitle( tr( "Experimental Data" ) );
+       
+       else if ( do_plteda  &&  do_pltsda  )
+	 data_plot1->setTitle( tr( "Experimental and Simulated Data" ) );
+       
+       else if ( do_pltsda )
+	 data_plot1->setTitle( tr( "Simulated Data" ) );
+     }
+   else
+     {
+       // For autoflow Analysis
+       if      ( do_plteda  &&  !do_pltsda )
+	 {
+	   QString exp_data = QString( tr( "Experimental Data " ) ) + tripleInfo;
+	   data_plot1->setTitle( exp_data  );
+	 }
+       else if ( do_plteda  &&  do_pltsda  )
+	 {
+	   QString expsim_data = QString( tr( "Experimental and Simulated Data " ) ) + tripleInfo;
+	   data_plot1->setTitle( expsim_data ); 
+	 }
+       else if ( do_pltsda )
+	 {
+	   QString sim_data = QString( tr( "Simulated Data " ) ) + tripleInfo;
+	   data_plot1->setTitle( sim_data );
+	 }
+     }
+   
 
    us_grid( data_plot1 );
 

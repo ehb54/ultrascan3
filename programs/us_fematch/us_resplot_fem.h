@@ -67,6 +67,8 @@ class US_ResidPlotFem : public US_WidgetsDialog
       US_Noise*                   ti_noise;
       QPointer< US_ResidsBitmap > resbmap;
 
+      QString     tripleInfo;
+
       QCheckBox*  ck_plteda;
       QCheckBox*  ck_subtin;
       QCheckBox*  ck_subrin;

@@ -920,6 +920,8 @@ US_Noise*                   US_Analysis_auto::aa_ri_noise() { return &ri_noise; 
 // public function to get pointer to resid bitmap diag
 QPointer< US_ResidsBitmap > US_Analysis_auto::aa_resbmap()  { return rbmapd;    }
 
+QString  US_Analysis_auto::aa_tripleInfo()  { return tripleInfo;    }
+
 //Load rawData/editedData
 bool US_Analysis_auto::loadData( QMap < QString, QString > & triple_information )
 {
@@ -1718,7 +1720,7 @@ void US_Analysis_auto::plotres( )
 
    resplotd = new US_ResidPlotFem( this, true );
    //resplotd->move( rpd_pos );
-   resplotd->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
+   //resplotd->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
    resplotd->setWindowModality(Qt::ApplicationModal);
    resplotd->show();
    connect( resplotd, SIGNAL( destroyed() ), this, SLOT( resplot_done() ) );
@@ -1869,6 +1871,8 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
   triple_n.replace("/",".");
 
   qDebug() << "In SHOW OVERLAY: triple_stage / triple_name: " << stage_n << " / " << triple_n;
+
+  tripleInfo = ": " + triple_n + " (" + stage_n + ")";
 
   //LoadData
   QMap< QString, QString > triple_info_map;
