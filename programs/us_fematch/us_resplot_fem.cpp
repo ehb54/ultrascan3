@@ -976,3 +976,10 @@ void US_ResidPlotFem::connect_pboxes( bool conn )
    }
 }
 
+void US_ResidPlotFem::closeEvent( QCloseEvent* event )
+{
+  qDebug() << "US_ResidPlotFem CLOSED -- ";
+  
+  emit on_close();
+  event->accept();
+}

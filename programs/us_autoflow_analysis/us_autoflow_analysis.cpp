@@ -62,6 +62,7 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
 
   in_gui_update = false;
   in_reload_end_process = false;
+  all_processed = true;
   
   // // ---- Testing ----
   // QMap < QString, QString > protocol_details;
@@ -819,7 +820,7 @@ void US_Analysis_auto::gui_update( )
     }
 
   // Check if all triples completed //
-  bool all_processed = true;
+  all_processed = true;
   QMap<QString, bool>::iterator td;
   for ( td = Completed_triples.begin(); td != Completed_triples.end(); ++td )
     {
@@ -1721,16 +1722,30 @@ void US_Analysis_auto::plotres( )
    resplotd = new US_ResidPlotFem( this, true );
    //resplotd->move( rpd_pos );
    //resplotd->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
+   resplotd->setWindowFlags( Qt::Dialog );
    resplotd->setWindowModality(Qt::ApplicationModal);
    resplotd->show();
-   connect( resplotd, SIGNAL( destroyed() ), this, SLOT( resplot_done() ) );
+   //connect( resplotd, SIGNAL( destroyed() ), this, SLOT( resplot_done() ) );
+
+   connect( resplotd, SIGNAL( on_close() ), this, SLOT( resplot_done() ) );
 }
 
 // Public slot to mark residuals plot dialog closed
 void US_Analysis_auto::resplot_done()
 {
+  qDebug() << "RESPLOT being closed -- ";
   resplotd   = 0;
+
+  //Restart timer (if not Active):
+  if ( !timer_update -> isActive() && !all_processed ) 
+    {
+      connect(timer_update, SIGNAL(timeout()), this, SLOT( gui_update ( ) ));
+      timer_update->start(5000);
+      
+      qDebug() << "Timer restarted after RESPLOT closed -- ";
+    }
 }
+
 
 // Update count of threads completed and colate simulations when all are done
 void US_Analysis_auto::thread_complete( int thr )
@@ -1836,6 +1851,18 @@ double d20w=sc->D;
 //Slot to delete Job
 void US_Analysis_auto::show_overlay( QString triple_stage )
 {
+  /** Stop update timer for now? ***/
+  if ( timer_update -> isActive() ) 
+    {
+      timer_update -> stop();
+      disconnect(timer_update, SIGNAL(timeout()), 0, 0);
+    
+      qDebug() << "Update stopped at View Fit for triple -- " << triple_stage;
+    
+      in_gui_update  = false;
+    }
+  /********************************/
+  
   speed_steps  .clear();
   edata = NULL;
   rdata = NULL;

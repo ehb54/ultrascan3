@@ -115,6 +115,8 @@ class US_Analysis_auto : public US_Widgets
 
 	 QPushButton*  pb_show_all;
 	 QPushButton*  pb_hide_all;
+
+	 bool         all_processed;
 	 
 	 QString    AProfileGUID;
 	 QString    ProtocolName_auto;

@@ -102,6 +102,11 @@ class US_ResidPlotFem : public US_WidgetsDialog
       void plot_rdata(  void );
       void resids_closed(  void );
       void connect_pboxes( bool );
+
+      void closeEvent      ( QCloseEvent* );
+
+   signals:
+      void on_close( void );
 };
 #endif
 
