@@ -14026,7 +14026,7 @@ bool US_Hydrodyn::calc_zeno()
                   this_data.con_factor                    = pow(10.0, this_data.hydro.unit + 9);
                   
                   bead_model = bead_models[ current_model ];
-                  bead_check( false, true, true );
+                  // bead_check( false, true, true );
                   this_data.results.asa_rg_pos            = model_vector[ current_model ].asa_rg_pos;
                   this_data.results.asa_rg_neg            = model_vector[ current_model ].asa_rg_neg;
                   // qDebug() << "calc_zeno() asa rg +/- " << this_data.results.asa_rg_pos << " " << this_data.results.asa_rg_neg;

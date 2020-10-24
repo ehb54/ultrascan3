@@ -721,7 +721,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.rot_diff_coef_x);
          field_to_save_data_type[field[i]] = DT_TRIPLE_DOUBLE;
-         field_to_precision[field[i]] = 0;
+         field_to_precision[field[i]] = 4;
          field_to_format[field[i]] = 'g';
          continue;
       }

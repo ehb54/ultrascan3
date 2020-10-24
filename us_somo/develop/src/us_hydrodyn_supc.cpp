@@ -2850,7 +2850,7 @@ mem_ris(int model)
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
    }
-   this_data.num_of_unused = colorzero;
+   this_data.num_of_unused = this_data.results.total_beads - this_data.results.used_beads;
 
    if (flag_norm == 1)
    {

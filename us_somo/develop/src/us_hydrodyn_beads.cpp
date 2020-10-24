@@ -381,7 +381,24 @@ int US_Hydrodyn::calc_grid_pdb( bool no_ovlp_removal )
             progress->reset();
             progress->setMaximum(mpos);
             progress->setValue(progress->value() + 1);
+
             int retval = create_beads(&error_string);
+
+            {
+               vector < PDB_atom > active_atoms;
+               for (unsigned int j = 0; j < model_vector[ current_model ].molecule.size (); j++) {
+                  for (unsigned int k = 0; k < model_vector[ current_model ].molecule[j].atom.size (); k++) {
+                     PDB_atom *this_atom = &(model_vector[ current_model ].molecule[j].atom[k]);
+                     if ( this_atom->active ) {
+                        active_atoms.push_back( *this_atom );
+                     }
+                  }
+               }
+               compute_asa_rgs( active_atoms );
+               model_vector[ current_model ].asa_rg_pos = results.asa_rg_pos;
+               model_vector[ current_model ].asa_rg_neg = results.asa_rg_neg;
+            }
+               
             progress->setValue(progress->value() + 1);
             if (stopFlag)
             {
