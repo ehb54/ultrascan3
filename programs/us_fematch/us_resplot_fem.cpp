@@ -208,6 +208,7 @@ US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const bool auto_mode )
       	 DbgLv(1) << "RP:resbmap" << have_bm;
 
 	 tripleInfo = aa->aa_tripleInfo();
+	 
 	}
    }
    
@@ -240,7 +241,7 @@ US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const bool auto_mode )
    setVisible( true );
    resize( p2size );
 
- 
+   
 }
 
 // externally force a specific plot for lower plot
@@ -439,7 +440,7 @@ void US_ResidPlotFem::close_all()
 // plot the data
 void US_ResidPlotFem::plot_data()
 {
-   if ( skip_plot )  // avoid redundant successive calls
+  if ( skip_plot )  // avoid redundant successive calls
       return;
 
    plot_edata();     // plot experimental

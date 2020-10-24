@@ -835,7 +835,6 @@ void US_ComProjectMain::switch_to_analysis( QMap < QString, QString > & protocol
   msg_analysissetup = new QMessageBox(this);
   msg_analysissetup->setIcon(QMessageBox::Information);
 
-  
   msg_analysissetup->setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowStaysOnTopHint);
   msg_analysissetup->setStandardButtons(0);
   msg_analysissetup->setWindowTitle(tr("Updating..."));
@@ -853,7 +852,12 @@ void US_ComProjectMain::switch_to_analysis( QMap < QString, QString > & protocol
   
   msg_analysissetup->show();
   qApp->processEvents();
-  
+
+  // Pass msg posisitons
+  int pos_x_n = pos_x - tab_width;
+  int pos_y_n = pos_y - upper_height;
+  protocol_details[ "sim_msg_pos_x" ] = QString::number( pos_x );
+  protocol_details[ "sim_msg_pos_y" ] = QString::number( pos_y );
   
   tabWidget->setCurrentIndex( 5 );   // Maybe lock this panel from now on? i.e. tabWidget->tabBar()-setEnabled(false) ??
   curr_panx = 5;

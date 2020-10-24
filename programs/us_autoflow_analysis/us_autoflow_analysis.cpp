@@ -100,6 +100,9 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   FileName           = protocol_details[ "filename" ];
   analysisIDs        = protocol_details[ "analysisIDs" ];
 
+  sim_msg_pos_x      = protocol_details[ "sim_msg_pos_x" ].toInt();
+  sim_msg_pos_y      = protocol_details[ "sim_msg_pos_y" ].toInt();
+
   QStringList analysisIDs_list = analysisIDs.split(",");
 
   US_Passwd pw;
@@ -1725,10 +1728,10 @@ void US_Analysis_auto::plotres( )
    resplotd->setWindowFlags( Qt::Dialog );
    resplotd->setWindowModality(Qt::ApplicationModal);
    resplotd->show();
-   //connect( resplotd, SIGNAL( destroyed() ), this, SLOT( resplot_done() ) );
-
+   
    connect( resplotd, SIGNAL( on_close() ), this, SLOT( resplot_done() ) );
 }
+
 
 // Public slot to mark residuals plot dialog closed
 void US_Analysis_auto::resplot_done()
@@ -1848,6 +1851,8 @@ double d20w=sc->D;
 
 }
 
+
+
 //Slot to delete Job
 void US_Analysis_auto::show_overlay( QString triple_stage )
 {
@@ -1862,6 +1867,25 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
       in_gui_update  = false;
     }
   /********************************/
+
+  // Show msg while data downloaded and simulated
+  msg_sim = new QMessageBox(this);
+  msg_sim->setIcon(QMessageBox::Information);
+  
+  msg_sim->setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowStaysOnTopHint);
+  //msg_sim->setWindowModality(Qt::ApplicationModal);
+  msg_sim->setStandardButtons(0);
+  msg_sim->setWindowTitle(tr("Overlay Generation..."));
+  msg_sim->setText(tr( "Downloading data and model and simulating... Please wait...") );
+  msg_sim->setStyleSheet("background-color: #36454f; color : #D3D9DF;");
+
+  qDebug() << "Msg POSITION: -- " << sim_msg_pos_x << sim_msg_pos_y;
+  
+  msg_sim->move( sim_msg_pos_x, sim_msg_pos_y );
+  
+  msg_sim->show();
+  qApp->processEvents();
+  /******************************************************/
   
   speed_steps  .clear();
   edata = NULL;
@@ -2000,8 +2024,7 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
   dataLoaded = true;
   haveSim    = false;
   scanCount  = edata->scanData.size();
-
-  
+ 
 
   //Read Solution/Buffer
   density      = DENS_20W;
@@ -2083,6 +2106,9 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
   //Simulate Model
   simulateModel();
 
+  
+  qDebug() << "Closing sim_msg-- ";
+  msg_sim->accept();
   /*
   // Show plot
   resplotd = new US_ResidPlotFem( this, true );

@@ -50,6 +50,8 @@ class US_Analysis_auto : public US_Widgets
 	 US_Noise*                   aa_ri_noise();
 	 QPointer< US_ResidsBitmap > aa_resbmap();
 	 QString                     aa_tripleInfo();
+
+	 QMessageBox * msg_sim;
 	 
       private:
 	 QVector< US_DataIO::RawData    > rawData;
@@ -125,6 +127,9 @@ class US_Analysis_auto : public US_Widgets
 	 QMap <QString, QString >    investigator_details;
 	 QString     defaultDB;
 	 QString    FileName;
+
+	 int        sim_msg_pos_x;
+	 int        sim_msg_pos_y;
 	 
 	 QVector< QString >  Array_of_triples;
 
@@ -199,6 +204,8 @@ class US_Analysis_auto : public US_Widgets
 	void calc_residuals( void );
 	double  interp_sval( double, double*, double*,  int );
 	void plotres(   void );
+
+	
 	
       signals:
 	void analysis_update_process_stopped( void );
