@@ -1242,6 +1242,9 @@ bool US_Analysis_auto::loadNoises( QMap < QString, QString > & triple_informatio
 //Simulate Model
 void US_Analysis_auto::simulateModel( )
 {
+  progress_msg->setLabelText( "Simulating model..." );
+  progress_msg->setValue( 0 );
+  
   int    nconc   = edata->pointCount();
   double radlo   = edata->radius( 0 );
   double radhi   = edata->radius( nconc - 1 );
@@ -1887,11 +1890,11 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
   /********************************/
 
   // Show msg while data downloaded and simulated
-  progress_msg = new QProgressDialog ("Downloading and simulating data...", QString(), 0, 10, this);
+  progress_msg = new QProgressDialog ("Downloading data and models...", QString(), 0, 4, this);
   progress_msg->setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
   progress_msg->setWindowModality(Qt::WindowModal);
   progress_msg->setWindowTitle(tr("Overlay Plot Generation"));
-  //progress_msg->setWindowModality(Qt::ApplicationModal);
+  progress_msg->setAutoClose( false );
   progress_msg->setValue( 0 );
   progress_msg->show();
   
@@ -1963,6 +1966,7 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
   haveSim    = false;
   
   loadData( triple_info_map );
+  progress_msg->setValue( 1 );
   
   triple_info_map[ "eID" ]        = QString::number( eID_global );
   // Assign edata && rdata
@@ -2044,7 +2048,7 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
 		   << speed_steps[jj].scans;
 	}
     }
-
+  progress_msg->setValue( 2 );
   qApp->processEvents();
 
   dataLoaded = true;
@@ -2072,7 +2076,7 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
   
   bufvl = US_SolutionVals::values( dbP, edata, solID, svbar, bdens,
 				   bvisc, bcomp, bmanu, errmsg );
-
+  progress_msg->setValue( 3 );
 
   //Hardwire compressibility to zero, for now
   bcomp="0.0";
@@ -2128,6 +2132,8 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
 
   //Load Model (latest ) && noise(s)
   loadModel( triple_info_map  );
+  progress_msg->setValue( 4 );
+  qApp->processEvents();
 
   //Simulate Model
   simulateModel();
@@ -2135,7 +2141,7 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
   
   qDebug() << "Closing sim_msg-- ";
   //msg_sim->accept();
-  //progress_msg->close();
+  progress_msg->close();
 
   /*
   // Show plot
