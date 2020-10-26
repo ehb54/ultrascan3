@@ -3655,6 +3655,7 @@ void US_FeMatch::updateSolution( US_Solution solution_sel )
 // Update progress bar as each component is completed
 void US_FeMatch::update_progress( int icomp )
 {
+   qDebug () << "Updating progress single thread, icomp  -- " << icomp;
    progress->setValue( icomp );
 }
 

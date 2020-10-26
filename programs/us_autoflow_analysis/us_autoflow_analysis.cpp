@@ -1427,8 +1427,8 @@ void US_Analysis_auto::simulateModel( )
   //start_time = QDateTime::currentDateTime();
   int ncomp  = model.components.size();
   //compress   = le_compress->text().toDouble();
-  //progress->setRange( 1, ncomp );
-  //progress->reset();
+  progress_msg->setRange( 1, ncomp );
+  // progress_msg->reset();
   
   nthread    = US_Settings::threads();
   int ntc    = ( ncomp + nthread - 1 ) / nthread;
@@ -1465,8 +1465,8 @@ void US_Analysis_auto::simulateModel( )
 	  //*DEBUG*
 	  US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparams );
 	  
-	  // connect( astfem_rsa, SIGNAL( current_component( int ) ),
-	  // 	   this,       SLOT  ( update_progress  ( int ) ) );
+	  connect( astfem_rsa, SIGNAL( current_component( int ) ),
+	   	   this,       SLOT  ( update_progress  ( int ) ) );
 	  astfem_rsa->set_debug_flag( dbg_level );
 	  solution_rec.buffer.compressibility = compress;
 	  solution_rec.buffer.manual          = manual;
@@ -1499,10 +1499,6 @@ void US_Analysis_auto::simulateModel( )
 	{
 	  qDebug() << "SimMdl: (fematch:)Finite Volume Solver is called";
 	  US_LammAstfvm *astfvm     = new US_LammAstfvm( model, simparams );
-	  //connect( astfvm,  SIGNAL( comp_progress( int ) ), this,  SLOT(   update_progress(   int ) ) );
-	  //solution_rec.buffer.compressibility = compress;
-	  //solution_rec.buffer.manual          = manual;
-	  //astfvm->set_buffer( solution_rec.buffer );
 	  astfvm->calculate(     *sdata );
 	}
       //-----------------------
@@ -1560,8 +1556,8 @@ void US_Analysis_auto::simulateModel( )
 	  connect( wthread, SIGNAL( started()         ),
 		   tworker, SLOT  ( calc_simulation() ) );
 	  
-	  // connect( tworker, SIGNAL( work_progress  ( int, int ) ),
-	  // 	   this,    SLOT(   thread_progress( int, int ) ) );
+	  connect( tworker, SIGNAL( work_progress  ( int, int ) ),
+	   	   this,    SLOT(   thread_progress( int, int ) ) );
 	  connect( tworker, SIGNAL( work_complete  ( int )      ),
 		   this,    SLOT(   thread_complete( int )      ) );
 	  
@@ -1571,11 +1567,20 @@ void US_Analysis_auto::simulateModel( )
  
 }
 
+// Update progress bar as each component is completed
+void US_Analysis_auto::update_progress( int icomp )
+{
+  qDebug () << "Updating progress single thread, icomp  -- " << icomp;
+  
+  progress_msg->setValue( icomp );
+}
+
+
 // Show simulation and residual when the simulation is complete
 void US_Analysis_auto::show_results( )
 {
-  //progress->setValue( progress->maximum() );
-
+   progress_msg->setValue( progress_msg->maximum() );
+  
    haveSim     = true;
    // pb_distrib->setEnabled( true );
    // pb_view   ->setEnabled( true );
@@ -1750,11 +1755,24 @@ void US_Analysis_auto::resplot_done()
 }
 
 
+// Update progress when thread reports
+void US_Analysis_auto::thread_progress( int thr, int icomp )
+{
+  qDebug() <<  "Updating progress multiple threads, thr, icomp -- " << thr << icomp;
+   int kcomp     = 0;
+   kcomps[ thr ] = icomp;
+   for ( int ii = 0; ii < nthread; ii++ )
+      kcomp += kcomps[ ii ];
+   progress_msg->setValue( kcomp );
+   qDebug() << "THR PROGR thr icomp" << thr << icomp << "kcomp" << kcomp;
+}
+
+
 // Update count of threads completed and colate simulations when all are done
 void US_Analysis_auto::thread_complete( int thr )
 {
    thrdone++;
-DbgLv(1) << "THR COMPL thr" << thr << "thrdone" << thrdone;
+   qDebug() << "THR COMPL thr" << thr << "thrdone" << thrdone;
 
    if ( thrdone >= nthread )
    {  // All threads are done, so sum thread simulation data
@@ -1869,21 +1887,29 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
   /********************************/
 
   // Show msg while data downloaded and simulated
-  msg_sim = new QMessageBox(this);
-  msg_sim->setIcon(QMessageBox::Information);
+  progress_msg = new QProgressDialog ("Downloading and simulating data...", QString(), 0, 10, this);
+  progress_msg->setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
+  progress_msg->setWindowModality(Qt::WindowModal);
+  progress_msg->setWindowTitle(tr("Overlay Plot Generation"));
+  //progress_msg->setWindowModality(Qt::ApplicationModal);
+  progress_msg->setValue( 0 );
+  progress_msg->show();
   
-  msg_sim->setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowStaysOnTopHint);
-  //msg_sim->setWindowModality(Qt::ApplicationModal);
-  msg_sim->setStandardButtons(0);
-  msg_sim->setWindowTitle(tr("Overlay Generation..."));
-  msg_sim->setText(tr( "Downloading data and model and simulating... Please wait...") );
-  msg_sim->setStyleSheet("background-color: #36454f; color : #D3D9DF;");
+  // msg_sim = new QMessageBox(this);
+  // msg_sim->setIcon(QMessageBox::Information);
+  
+  // msg_sim->setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowStaysOnTopHint);
+  // //msg_sim->setWindowModality(Qt::ApplicationModal);
+  // msg_sim->setStandardButtons(0);
+  // msg_sim->setWindowTitle(tr("Overlay Generation..."));
+  // msg_sim->setText( QString( tr( "Downloading data and model and simulating... \nPlease wait...") ) );
+  // msg_sim->setStyleSheet("background-color: #36454f; color : #D3D9DF;");
 
-  qDebug() << "Msg POSITION: -- " << sim_msg_pos_x << sim_msg_pos_y;
+  // qDebug() << "Msg POSITION: -- " << sim_msg_pos_x << sim_msg_pos_y;
   
-  msg_sim->move( sim_msg_pos_x, sim_msg_pos_y );
+  // msg_sim->move( sim_msg_pos_x, sim_msg_pos_y );
   
-  msg_sim->show();
+  // msg_sim->show();
   qApp->processEvents();
   /******************************************************/
   
@@ -2108,7 +2134,9 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
 
   
   qDebug() << "Closing sim_msg-- ";
-  msg_sim->accept();
+  //msg_sim->accept();
+  //progress_msg->close();
+
   /*
   // Show plot
   resplotd = new US_ResidPlotFem( this, true );

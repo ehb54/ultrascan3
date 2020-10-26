@@ -52,6 +52,7 @@ class US_Analysis_auto : public US_Widgets
 	 QString                     aa_tripleInfo();
 
 	 QMessageBox * msg_sim;
+	 QProgressDialog * progress_msg;
 	 
       private:
 	 QVector< US_DataIO::RawData    > rawData;
@@ -180,8 +181,10 @@ class US_Analysis_auto : public US_Widgets
 	 QString     job4nois;        //!< 2DSA-IT noise type
 
       public slots:
+	void    thread_progress( int, int );
 	void    thread_complete( int );
 	void    resplot_done( void );
+	void    update_progress( int );
 	
       private slots:
 	void initPanel( QMap < QString, QString > & );
