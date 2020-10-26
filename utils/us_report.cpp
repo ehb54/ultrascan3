@@ -1087,11 +1087,14 @@ US_Report::Status US_Report::saveFileDocuments( const QString& dir,
 {
    // Get the runID by parsing the directory
    QString new_runID  = QString( dir ).section( "/", -1, -1 );
+qDebug() << "rpt:svFD: dir" << dir << "idEdit" << idEdit << "datDsc" << dataDescription
+ << "new_runID" << new_runID;
    if ( new_runID.isEmpty() )
       return US_Report::MISC_ERROR;
 
    // Parse the triple string from the first filename
    int     nfiles     = filepaths.count();
+qDebug() << "rpt:svFD:  nfiles" << nfiles << "fpath0" << filepaths[0];
 
    if ( nfiles < 1 )
       return US_Report::MISC_ERROR;
@@ -1103,11 +1106,13 @@ US_Report::Status US_Report::saveFileDocuments( const QString& dir,
    QString filename   = filenames[ 0 ];
    QString newTriple  = filename.section( '.', -3, -3 );
    newTriple          = US_Util::expanded_triple( newTriple, false );
+qDebug() << "rpt:svFD:  filename" << filename << "newTriple" << newTriple;
 
    // Get any existing report for this run
    // Start by reading any DB info we have, or create new report
    QString now        = QDateTime::currentDateTime().toString();
    US_Report::Status status = this->readDB( new_runID, db, newTriple );     //ALEXEY <-- pass invID if autoflow; will be needed for us_edit
+qDebug() << "rpt:svFD:  rdDB stat" << status;
 
    if ( status == US_Report::NOT_FOUND )
    {  // For a new report, save what we have
@@ -1123,6 +1128,7 @@ US_Report::Status US_Report::saveFileDocuments( const QString& dir,
 
    // Read an existing triple, or create a new one
    int     tripNdx    = this->findTriple( newTriple );
+qDebug() << "rpt:svFD:  tripNdx" << tripNdx;
    if ( tripNdx < 0 )
    {
       // Not found, so create one
@@ -1136,12 +1142,14 @@ US_Report::Status US_Report::saveFileDocuments( const QString& dir,
       }
       // Refresh tripNdx
       tripNdx            = this->findTriple( newTriple );
+qDebug() << "rpt:svFD:  2)tripNdx" << tripNdx;
    }
    
    else if ( this->triples[ tripNdx ].dataDescription != dataDescription )
    {  // The data description field has changed and needs to be updated
       this->triples[ tripNdx ].dataDescription = dataDescription;
       this->triples[ tripNdx ].saveDB( this->ID, db );
+qDebug() << "rpt:svFD:  *triples UPDATE";
    }
 
    US_Report::ReportTriple* trip = &this->triples[ tripNdx ];
@@ -1153,6 +1161,7 @@ US_Report::Status US_Report::saveFileDocuments( const QString& dir,
    QString dirfile    = dir.endsWith( "/" ) ? dir : ( dir + "/" );
    int     ntdocs     = trip->docs.count();
    int     idTrip     = trip->tripleID;
+qDebug() << "rpt:svFD:  dirfile" << dirfile << "ntdocs" << ntdocs << "idTrip" << idTrip;
 
    for ( int ii = 0; ii < ntdocs; ii++ )
    {
@@ -1163,13 +1172,13 @@ US_Report::Status US_Report::saveFileDocuments( const QString& dir,
       {
          tdnames << filename;
          tdNdxs  << ii;
-//qDebug() << "RPT: trip docs filename" << filename << "ii" << ii;
+qDebug() << "rpt:svFD: trip docs filename" << filename << "ii" << ii;
       }
-//else
-//qDebug() << "RPT:  MISS: trip docs filename" << filename << "ii" << ii
-// << "tidEdit" << tidEdit << "idEdit" << idEdit;
+else
+qDebug() << "rpt:svFD:  MISS: trip docs filename" << filename << "ii" << ii
+ << "tidEdit" << tidEdit << "idEdit" << idEdit;
    }
-//qDebug() << "RPT: tdNdxs.count()" << tdNdxs.count() << "nfiles" << nfiles;
+qDebug() << "rpt:svFD: tdNdxs.count()" << tdNdxs.count() << "nfiles" << nfiles;
 
    // Add any new documents to the triple's list
    //if ( tdNdxs.count() < nfiles )
@@ -1177,11 +1186,11 @@ US_Report::Status US_Report::saveFileDocuments( const QString& dir,
       for ( int ii = 0; ii < nfiles; ii++ )
       {  // Examine each specified file name
          filename           = filenames[ ii ];
-//qDebug() << "RPT:  fnames filename" << filename << "ii" << ii;
+qDebug() << "rpt:svFD:  fnames filename" << filename << "ii" << ii;
 
          if ( !tdnames.contains( filename ) )
          {  // This document is new and needs to be added to the triple's list
-//qDebug() << "RPT:    NEW to triple doc";
+qDebug() << "rpt:svFD:    NEW to triple doc";
             US_Report::ReportDocument rdoc;
             QString newAnal    = filename.section( ".", -4, -4 );
             QString newSubanal = filename.section( ".", -2, -2 );
@@ -1221,7 +1230,7 @@ US_Report::Status US_Report::saveFileDocuments( const QString& dir,
             rdoc.documentID    = db->lastInsertID();  // Save doc DB Id
 
             trip->docs << rdoc;                       // Add to triple's docs
-//qDebug() << "RPT:    new_reportDoc (no error) docID" << rdoc.documentID;
+qDebug() << "rpt:svFD:    new_reportDoc (no error) docID" << rdoc.documentID;
 
             tdnames << filename;                      // Save doc file name
             tdNdxs  << ntdocs;                        // Save index in doc list
@@ -1239,6 +1248,7 @@ US_Report::Status US_Report::saveFileDocuments( const QString& dir,
 
       if ( tdnamx < 0 )
       {
+qDebug() << "rpt:svFD:    *TDNAMX err* filename" << filename;
          qDebug() << "upload_reportContents TDNAMX error"
                   << filename;
          return US_Report::MISC_ERROR;
@@ -1249,9 +1259,12 @@ US_Report::Status US_Report::saveFileDocuments( const QString& dir,
 
       int wrstat         = db->writeBlobToDB( filepath,
                               QString( "upload_reportContents" ), idDoc );
+qDebug() << "rpt:svFD:    upld contents size" << QFileInfo(filepath).size()
+ << "filepath" << filepath << "idDoc" << idDoc;
 
       if ( wrstat != US_DB2::OK )
       {
+qDebug() << "rpt:svFD:    *wrBlob err* wrstat" << wrstat << db->lastError();
          qDebug() << "upload_reportContents error"
                   << wrstat << db->lastError();
          return US_Report::DB_ERROR;

@@ -662,6 +662,9 @@ QDateTime time0=QDateTime::currentDateTime();
    QString plot4File = basename + "s-c-histo.svgz";
    QString dsinfFile = QString( basename ).replace( "/vHW.", "/dsinfo." )
                                 + "dataset_info.html";
+   QString drpt0File = basename + "extrap.csv";
+   QString drpt1File = basename + "s-c-distrib.csv";
+   QString drpt2File = basename + "s-c-envelope.csv";
 
    // Write a general dataset information file
    write_dset_report( dsinfFile );
@@ -708,6 +711,11 @@ DbgLv(1) << "(T)PLOT ENV save: plot3File" << plot3File;
       copy_data_files( plot3File, plot4File, data2File );
    }
 
+   // Copy csv files from results to reports directory
+   QFile( data0File ).copy( drpt0File );
+   QFile( data1File ).copy( drpt1File );
+   QFile( data2File ).copy( drpt2File );
+   // Build results,reports output files lists
    files << " ";
    files << htmlFile;
    files << plot1File;
@@ -721,9 +729,9 @@ DbgLv(1) << "(T)PLOT ENV save: plot3File" << plot3File;
    update_filelist( repfiles, plot3File );
    update_filelist( repfiles, plot4File );
    update_filelist( repfiles, dsinfFile );
-   update_filelist( repfiles, data0File );
-   update_filelist( repfiles, data1File );
-   update_filelist( repfiles, data2File );
+   update_filelist( repfiles, drpt0File );
+   update_filelist( repfiles, drpt1File );
+   update_filelist( repfiles, drpt2File );
 
    // Report files created to the user
    QString wmsg = tr( "In directories\n%1,\n%2;\nwrote:\n\n" )

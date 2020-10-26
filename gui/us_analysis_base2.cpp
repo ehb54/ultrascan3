@@ -1581,6 +1581,7 @@ void US_AnalysisBase2::reportFilesToDB( QStringList& files )
    // Set the runID for the report
    US_Report freport;
    freport.runID  = runID;
+qDebug() << "base2:rptFtoDB: idEdit" << idEdit << "runID" << runID;
 
    // Write all report records to the database
    int st = freport.saveFileDocuments( pfdir, files, dbP,
