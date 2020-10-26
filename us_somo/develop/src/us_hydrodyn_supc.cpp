@@ -407,6 +407,10 @@ static vector < float > used_s_a;
 static vector < float > total_vol;
 static vector < float > used_vol;
 
+static bool      smi_mm;
+static QString   smi_mm_name;
+static save_info smi_mm_save_params;
+
 static US_Timer           supc_timers;
 
 static void
@@ -661,6 +665,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 #endif
    us_hydrodyn = use_us_hydrodyn;
 
+   smi_mm_save_params.data_vector.clear();
+   
    ETAo = us_hydrodyn->use_solvent_visc() / 100e0; // hydro->solvent_viscosity / 100;
    DENS = us_hydrodyn->use_solvent_dens();         // hydro->solvent_density;
    TE = K0 + hydro->temperature;
@@ -769,6 +775,9 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       return US_HYDRODYN_SUPC_NO_SEL_MODELS;
    }
     
+   smi_mm      = models_to_proc > 1;
+   smi_mm_name = filename;
+   smi_mm_name = smi_mm_name.replace( QRegExp( ".beams$" ), "" ).replace( "_%1", "" );
       
    supc_results = hydro_results;
    supc_results->total_beads = nmax;
@@ -2707,8 +2716,8 @@ mem_ris(int model)
    this_data.model_idx = QString("%1").arg(model);
    this_data.results.num_models = 1;
 
-   this_data.results.asa_rg_pos = (*model_vector)[ model ].asa_rg_pos;
-   this_data.results.asa_rg_neg = (*model_vector)[ model ].asa_rg_neg;
+   this_data.results.asa_rg_pos = (*model_vector)[ model_idx[ model ] ].asa_rg_pos;
+   this_data.results.asa_rg_neg = (*model_vector)[ model_idx[ model ] ].asa_rg_neg;
    // qDebug() << "us_hydrodyn_supc::mem_ris(" << model << ") asa_rg +/- " << this_data.results.asa_rg_pos << " " << this_data.results.asa_rg_neg;
    this_data.hydro_res = "";
    this_data.proc_time = (double)(supc_timers.times[ "compute smi" ]) / 1e3;
@@ -3560,11 +3569,15 @@ mem_ris(int model)
       us_hydrodyn->save_params.data_vector.push_back(this_data);
       printf("batch save on, push back info into save_params!\n");
    }
+   if ( smi_mm ) {
+     smi_mm_save_params.data_vector.push_back( this_data );
+   }
+
 
    if ( us_hydrodyn->saveParams &&
-        create_hydro_res )
+        create_hydro_res && !smi_mm )
    {
-      QString fname = this_data.results.name + ".csv";
+      QString fname = this_data.results.name + ".smi.csv";
       FILE *of = us_fopen(fname, "wb");
       if ( of )
       {
@@ -3872,6 +3885,38 @@ val_med()
 
    fprintf(ris, "\n****************************************************************\n");
    fclose(ris);
+
+   if ( smi_mm ) {
+      bool create_hydro_res = !(us_hydrodyn->batch_widget &&
+                                us_hydrodyn->batch_window->save_batch_active);
+
+      if ( us_hydrodyn->saveParams && create_hydro_res ) {
+         vector < save_data > stats = us_hydrodyn->save_util->stats( & smi_mm_save_params.data_vector );
+
+         QString smi_out_name = smi_mm_name + ".smi.csv";
+         if ( !us_hydrodyn->overwrite ) {
+            smi_out_name = us_hydrodyn->fileNameCheck( smi_out_name, 0, us_hydrodyn );
+         }
+         QFile f( smi_out_name );
+         if ( !f.open( QIODevice::WriteOnly ) ) {
+            us_hydrodyn->editor_msg( "red", QString( us_tr( "Error: could not open output file %1 for writing" ) ).arg( smi_out_name ) );
+         } else {
+            QTextStream t( &f );
+            t << us_hydrodyn->save_util->header().toLatin1().data();
+
+            for ( int i = 0; i < (int) smi_mm_save_params.data_vector.size(); ++i ) {
+               t << us_hydrodyn->save_util->dataString( & smi_mm_save_params.data_vector[ i ] ).toLatin1().data();
+            }
+            for ( int i = 0; i < (int) stats.size(); ++i ) {
+               t << us_hydrodyn->save_util->dataString( & stats[ i ] ).toLatin1().data();
+            }
+               
+            us_hydrodyn->editor_msg( "dark blue", QString( us_tr( "Wrote %1" ) ).arg( smi_out_name ) );
+            f.close();
+         }
+
+      }
+   }
 }
 
 /**************************************************************************/

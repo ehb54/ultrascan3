@@ -14699,7 +14699,7 @@ bool US_Hydrodyn::calc_zeno()
 
                   bool create_hydro_res = !(batch_widget &&
                                             batch_window->save_batch_active);
-                  if ( saveParams && create_hydro_res )
+                  if ( saveParams && create_hydro_res & !zeno_mm )
                   {
                      QString fname = this_data.results.name + ".zeno.csv";
                      FILE *of = us_fopen(fname, "wb");
@@ -14757,21 +14757,52 @@ bool US_Hydrodyn::calc_zeno()
    }      
 
    if ( zeno_mm ) {
-      QString zeno_out_name = zeno_mm_name + ".zno";
-      if ( !overwrite ) {
-         zeno_out_name = fileNameCheck( zeno_out_name, 0, this );
+      vector < save_data > stats = save_util->stats( & zeno_mm_save_params.data_vector );
+
+      {
+         QString zeno_out_name = zeno_mm_name + ".zno";
+         if ( !overwrite ) {
+            zeno_out_name = fileNameCheck( zeno_out_name, 0, this );
+         }
+         QFile f( zeno_out_name );
+         if ( !f.open( QIODevice::WriteOnly ) ) {
+            editor_msg( "red", QString( us_tr( "Error: could not open output file %1 for writing" ) ).arg( zeno_out_name ) );
+         } else {
+            QTextStream t( &f );
+            t << zeno_mm_results;
+            t << save_util->hydroFormatStats( stats, US_Hydrodyn_Save::HYDRO_ZENO );
+            editor_msg( "dark blue", QString( us_tr( "Wrote %1" ) ).arg( zeno_out_name ) );
+            f.close();
+            last_hydro_res = zeno_out_name;
+         }
       }
-      QFile f( zeno_out_name );
-      if ( !f.open( QIODevice::WriteOnly ) ) {
-         editor_msg( "red", QString( us_tr( "Error: could not open output file %1 for writing" ) ).arg( zeno_out_name ) );
-      } else {
-         vector < save_data > stats = save_util->stats( & zeno_mm_save_params.data_vector );
-         QTextStream t( &f );
-         t << zeno_mm_results;
-         t << save_util->hydroFormatStats( stats, US_Hydrodyn_Save::HYDRO_ZENO );
-         editor_msg( "dark blue", QString( us_tr( "Wrote %1" ) ).arg( zeno_out_name ) );
-         f.close();
-         last_hydro_res = zeno_out_name;
+
+      bool create_hydro_res = !(batch_widget &&
+                                batch_window->save_batch_active);
+
+      if ( saveParams && create_hydro_res ) {
+         QString zeno_out_name = zeno_mm_name + ".zeno.csv";
+         if ( !overwrite ) {
+            zeno_out_name = fileNameCheck( zeno_out_name, 0, this );
+         }
+         QFile f( zeno_out_name );
+         if ( !f.open( QIODevice::WriteOnly ) ) {
+            editor_msg( "red", QString( us_tr( "Error: could not open output file %1 for writing" ) ).arg( zeno_out_name ) );
+         } else {
+            QTextStream t( &f );
+            t << save_util->header().toLatin1().data();
+
+            for ( int i = 0; i < (int) zeno_mm_save_params.data_vector.size(); ++i ) {
+               t << save_util->dataString( & zeno_mm_save_params.data_vector[ i ] ).toLatin1().data();
+            }
+            for ( int i = 0; i < (int) stats.size(); ++i ) {
+               t << save_util->dataString( & stats[ i ] ).toLatin1().data();
+            }
+               
+            editor_msg( "dark blue", QString( us_tr( "Wrote %1" ) ).arg( zeno_out_name ) );
+            f.close();
+         }
+
       }
    }
 

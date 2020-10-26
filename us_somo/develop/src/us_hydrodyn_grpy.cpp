@@ -958,7 +958,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
       bool create_hydro_res = !(batch_widget &&
                                 batch_window->save_batch_active);
 
-      if ( saveParams && create_hydro_res )
+      if ( saveParams && create_hydro_res && !grpy_mm )
       {
          QString fname = somo_dir + "/" + this_data.results.name + ".grpy.csv";
          if ( !overwrite ) {
@@ -1039,22 +1039,53 @@ void US_Hydrodyn::grpy_finalize() {
    }
 
    if ( grpy_mm ) {
-      QString grpy_out_name = grpy_mm_name + ".grpy_res";
-      if ( !overwrite ) {
-         grpy_out_name = fileNameCheck( grpy_out_name, 0, this );
-      }
+      vector < save_data > stats = save_util->stats( & grpy_mm_save_params.data_vector );
+
+      {
+         QString grpy_out_name = grpy_mm_name + ".grpy_res";
+         if ( !overwrite ) {
+            grpy_out_name = fileNameCheck( grpy_out_name, 0, this );
+         }
       
-      QFile f( grpy_out_name );
-      if ( !f.open( QIODevice::WriteOnly ) ) {
-         editor_msg( "red", QString( us_tr( "Error: could not open output file %1 for writing" ) ).arg( grpy_out_name ) );
-      } else {
-         vector < save_data > stats = save_util->stats( & grpy_mm_save_params.data_vector );
-         QTextStream t( &f );
-         t << grpy_mm_results;
-         t << save_util->hydroFormatStats( stats, US_Hydrodyn_Save::HYDRO_GRPY );
-         editor_msg( "dark blue", QString( us_tr( "Wrote %1" ) ).arg( grpy_out_name ) );
-         f.close();
-         last_hydro_res = QFileInfo( grpy_out_name ).fileName();
+         QFile f( grpy_out_name );
+         if ( !f.open( QIODevice::WriteOnly ) ) {
+            editor_msg( "red", QString( us_tr( "Error: could not open output file %1 for writing" ) ).arg( grpy_out_name ) );
+         } else {
+            vector < save_data > stats = save_util->stats( & grpy_mm_save_params.data_vector );
+            QTextStream t( &f );
+            t << grpy_mm_results;
+            t << save_util->hydroFormatStats( stats, US_Hydrodyn_Save::HYDRO_GRPY );
+            editor_msg( "dark blue", QString( us_tr( "Wrote %1" ) ).arg( grpy_out_name ) );
+            f.close();
+            last_hydro_res = QFileInfo( grpy_out_name ).fileName();
+         }
+      }
+
+      bool create_hydro_res = !(batch_widget &&
+                                batch_window->save_batch_active);
+
+      if ( saveParams && create_hydro_res ) {
+         QString grpy_out_name = grpy_mm_name + ".grpy.csv";
+         if ( !overwrite ) {
+            grpy_out_name = fileNameCheck( grpy_out_name, 0, this );
+         }
+         QFile f( grpy_out_name );
+         if ( !f.open( QIODevice::WriteOnly ) ) {
+            editor_msg( "red", QString( us_tr( "Error: could not open output file %1 for writing" ) ).arg( grpy_out_name ) );
+         } else {
+            QTextStream t( &f );
+            t << save_util->header().toLatin1().data();
+
+            for ( int i = 0; i < (int) grpy_mm_save_params.data_vector.size(); ++i ) {
+               t << save_util->dataString( & grpy_mm_save_params.data_vector[ i ] ).toLatin1().data();
+            }
+            for ( int i = 0; i < (int) stats.size(); ++i ) {
+               t << save_util->dataString( & stats[ i ] ).toLatin1().data();
+            }
+               
+            editor_msg( "dark blue", QString( us_tr( "Wrote %1" ) ).arg( grpy_out_name ) );
+            f.close();
+         }
       }
    }
 

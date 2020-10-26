@@ -1669,10 +1669,12 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
 
             break;
          case DT_DOUBLE_NA     :
+            save->data = (*data)[j];
             tmp_double = *((double *)(field_to_save_data[field[i]]));
 
             if ( tmp_double >= 0 )
             {
+
                save->data = sum;
                *((double *)(field_to_save_data[field[i]])) += tmp_double;
                sum = save->data;
