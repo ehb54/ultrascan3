@@ -504,6 +504,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QPushButton *pb_best;
 
       QProgressBar *progress;
+      QProgressBar *mprogress;
       // TextEdit *e;
 
       US_AddAtom *addAtom;

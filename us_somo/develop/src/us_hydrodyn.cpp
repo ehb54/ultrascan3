@@ -1504,6 +1504,12 @@ void US_Hydrodyn::setupGUI()
    AUTFBACK( progress );
    progress->reset();
 
+   mprogress = new QProgressBar( this );
+   mprogress->setPalette( PALET_NORMAL );
+   AUTFBACK( mprogress );
+   mprogress->reset();
+   mprogress->hide();
+
    editor = new QTextEdit(this);
    editor->setPalette( PALET_NORMAL );
    editor->setReadOnly(true);
@@ -1708,7 +1714,13 @@ void US_Hydrodyn::setupGUI()
    bl_help_config->addWidget( pb_config );
 
    background->addLayout( bl_help_config, j, 0);
-   background->addWidget(progress, j, 1);
+   {
+      QBoxLayout * bl_progress = new QHBoxLayout; bl_progress->setContentsMargins( 0, 0, 0, 0 ); bl_progress->setSpacing( 0 );
+      bl_progress->addWidget( progress );
+      bl_progress->addWidget( mprogress );
+      background->addLayout( bl_progress, j, 1 );
+   }
+   //   background->addWidget(progress, j, 1);
    background->addWidget(lbl_core_progress, j, 2);
 
    fixWinButtons( this );

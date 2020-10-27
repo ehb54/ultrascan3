@@ -1599,6 +1599,10 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
                .arg( this_atom->chainID )
                .arg( this_atom->resSeq )
                ;
+
+            this_atom->mw               = tmp_atom.mw;
+            this_atom->ionized_mw_delta = tmp_atom.ionized_mw_delta;
+            this_atom->radius           = tmp_atom.radius;
             
             bead_model.push_back(tmp_atom);
          } else {

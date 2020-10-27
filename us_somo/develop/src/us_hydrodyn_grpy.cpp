@@ -320,6 +320,12 @@ bool US_Hydrodyn::calc_grpy_hydro() {
    progress->setMaximum( 101 * ( grpy_to_process.size() ) + 1 );
    // qDebug() << "progress max " <<  101 * ( grpy_to_process.size() ) + 1;
    progress->setValue( 0 );
+   mprogress->setValue( 0 );
+   mprogress->setMaximum( 100 );
+   mprogress->setFormat( "Model %p%" );
+   if ( grpy_mm ) {
+      mprogress->show();
+   }
    
    timers.clear_timers();
    timers.init_timer( "compute grpy all models" );
@@ -338,6 +344,7 @@ void US_Hydrodyn::grpy_process_next() {
    }
 
    progress->setValue( 101 * grpy_processed.size() + 1 );
+   mprogress->setValue( 1 );
    // qDebug() << "progress value " << 101 * grpy_processed.size() + 1;
 
    grpy_last_processed    = grpy_to_process   [ 0 ];
@@ -399,7 +406,11 @@ void US_Hydrodyn::grpy_readFromStdout()
             // qDebug() << "capture 2:" << match.captured( 2 );
             progress->setValue( 101 * ( grpy_processed.size() - 1 ) + match.captured( 1 ).toDouble() );
             // qDebug() << "progress value " <<  101 * ( grpy_processed.size() - 1 ) + match.captured( 1 ).toDouble() + 1;
-            lbl_core_progress->setText( QString( "Model %1 : %2 " ).arg( grpy_last_model_number + 1 ).arg( match.captured( 2 ) ) );
+            mprogress->setValue( match.captured( 1 ).toDouble() );
+            lbl_core_progress->setText( QString( "Model %1 : %2" )
+                                        .arg( grpy_last_model_number + 1 )
+                                        .arg( match.captured( 2 ) )
+                                        );
          }
       } else {
          grpy_stdout += qs;
@@ -440,6 +451,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
       pb_show_hydro_results->setEnabled(false);
       progress->reset();
+      mprogress->hide();
       lbl_core_progress->setText( "" );
       grpy_success = false;
       grpy_running = false;
@@ -1101,6 +1113,7 @@ void US_Hydrodyn::grpy_finalize() {
    pb_calc_hullrad->setEnabled( true );
    pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
    progress->reset();
+   mprogress->hide();
    lbl_core_progress->setText( "" );
    editor_msg( "black", "GRPY finished" );
    timers.end_timer( "compute grpy all models" );
