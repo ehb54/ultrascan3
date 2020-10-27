@@ -444,7 +444,7 @@ void US_Hydrodyn::append_options_log_atob()
              "      Hierarchical Overlap Reduction Step Size %%: %.1f\n"
              "\n"
 
-             ,grid.center ? "Center of Mass" : ( grid.center == 2 ? "Center of Scattering Intensity" : "Center of Cubelet" )
+             ,( grid.center == 0 ) ? "Center of Mass" : ( grid.center == 2 ? "Center of Scattering Intensity" : "Center of Cubelet" )
              ,grid.cube_side
              ,grid.cubic ? "On" : "Off"
              ,grid.hydrate ? "On" : "Off"
@@ -531,7 +531,7 @@ void US_Hydrodyn::append_options_log_atob_ovlp()
              "  Enable ASA options:                   %s\n"
              "\n"
 
-             ,grid.center ? "Center of Mass" : ( grid.center == 2 ? "Center of Scattering Intensity" : "Center of Cubelet" )
+             ,( grid.center == 0 ) ? "Center of Mass" : ( grid.center == 2 ? "Center of Scattering Intensity" : "Center of Cubelet" )
              ,grid.cube_side
              ,grid.cubic ? "On" : "Off"
              ,grid.hydrate ? "On" : "Off"
