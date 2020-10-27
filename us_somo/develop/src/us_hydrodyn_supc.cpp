@@ -3578,6 +3578,9 @@ mem_ris(int model)
         create_hydro_res && !smi_mm )
    {
       QString fname = this_data.results.name + ".smi.csv";
+      if ( !us_hydrodyn->overwrite ) {
+         fname = us_hydrodyn->fileNameCheck( fname, 0, us_hydrodyn );
+      }
       FILE *of = us_fopen(fname, "wb");
       if ( of )
       {

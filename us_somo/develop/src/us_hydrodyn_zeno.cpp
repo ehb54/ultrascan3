@@ -14702,6 +14702,9 @@ bool US_Hydrodyn::calc_zeno()
                   if ( saveParams && create_hydro_res & !zeno_mm )
                   {
                      QString fname = this_data.results.name + ".zeno.csv";
+                     if ( !overwrite ) {
+                        fname = fileNameCheck( fname, 0, this );
+                     }
                      FILE *of = us_fopen(fname, "wb");
                      if ( of )
                      {
