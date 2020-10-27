@@ -4926,6 +4926,7 @@ void US_ExperGuiUpload::submitExperiment_confirm()
   QString dbhost      = mainw->currentInstrument[ "optimaHost" ];
   QString dbport      = mainw->currentInstrument[ "optimaPort" ];
   QString optima_msgPort;
+  QString optima_chromoAB;
   
   //ALEXEY: here - check for connection to sys_data server and put error msg if no connection, with suggesting to saveRunProtocol() into LIMS
   US_Passwd pw;
@@ -4937,11 +4938,67 @@ void US_ExperGuiUpload::submitExperiment_confirm()
     {
       QString name = all_instruments[ii][ "name" ].trimmed();
       if ( name == alias )
-	optima_msgPort = all_instruments[ii][ "msgPort" ];
+	{
+	  optima_msgPort  = all_instruments[ii][ "msgPort" ];
+	  optima_chromoAB = all_instruments[ii][ "chromoab" ];
+	}
     }
 
-  qDebug() << "Optima_msgPort: " << optima_msgPort;
+  qDebug() << "Optima_msgPort: "  << optima_msgPort;
+  qDebug() << "Optima_chromoAB: " << optima_chromoAB;
+  
+  // Check for chromatic aberration file for intrument
+  if ( optima_chromoAB.isEmpty()  )
+    {
+      QMessageBox msgBox_chromo;
+      msgBox_chromo.setIcon(QMessageBox::Critical);
+      msgBox_chromo.setWindowTitle(tr("Missing Optima's Chromatic Aberration File!"));
+      
+      QString msg_chromo_text      = QString("Attention! Currently used instrument, %1, is missing chromatic aberration file.").arg(alias);
+      QString msg_chromo_text_info = QString("To proceed with the job submission, the file must be uploaded using instrument configuraiton utility:");
+      msg_chromo_text_info += QString("\n Edit -> Preferences -> Instrument Preferences");
+      msg_chromo_text_info += QString( tr ("\n\nIn the meantime, you may choose to save the protocol into LIMS database.") );
+      
+      msgBox_chromo.setText( msg_chromo_text );
+      msgBox_chromo.setInformativeText( msg_chromo_text_info );
+      
+      QPushButton *Accept_chromo    = msgBox_chromo.addButton(tr("Save Protocol"), QMessageBox::YesRole);
+      QPushButton *Cancel_chromo    = msgBox_chromo.addButton(tr("Cancel"), QMessageBox::RejectRole);
 
+      msgBox_chromo.exec();
+      
+      if (msgBox_chromo.clickedButton() == Accept_chromo) {
+	qDebug() << "Chromo -- Saving protocol...";
+
+	if ( mainw->automode && rps_differ )
+	  {
+	    saveRunProtocol();
+	    return;
+	  }
+	    
+	else if ( !mainw->automode && have_run && rps_differ )
+	  {
+	    saveRunProtocol();
+	    return;
+	  }
+	else
+	  {
+	    QMessageBox::warning( this,
+				  tr( "No Changes in the Protocol" ),
+				  tr( "The protocol was not saved because there were no changes made to it.") );
+	    
+	    return;
+	  }
+      }
+      else if (msgBox_chromo.clickedButton() == Cancel_chromo){
+	return;
+      }
+      
+      return;
+    }  
+  // End checking chromatic aberration
+  
+  // Check for certificate license key and its expiraiton
   Link *link = new Link;
   bool status_sys_data = link->connectToServer( dbhost, optima_msgPort.toInt() );
 
@@ -4995,7 +5052,7 @@ void US_ExperGuiUpload::submitExperiment_confirm()
 	  msg_sys_text_info += QString( tr("Your license key is expired! Submission of the experimental protocol is suspended. \nPlease renew the key and try to submit again."));
 	}
 
-      msg_sys_text_info += QString( tr ("\n\nFor now, you may choose to save the protocol into LIMS database.") );
+      msg_sys_text_info += QString( tr ("\n\nYou may choose to save the protocol into LIMS database.") );
       
       msgBox_sys_data.setText( msg_sys_text );
       
