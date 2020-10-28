@@ -3385,6 +3385,11 @@ void US_Hydrodyn::load_bead_model()
          pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
          pb_pdb_saxs->setEnabled(false);
          bd_anaflex_enables(false);
+         pb_somo     ->setEnabled( false );
+         pb_somo_o   ->setEnabled( false );
+         pb_somo     ->setEnabled( false );
+         pb_grid_pdb ->setEnabled( false );
+         pb_vdw_beads->setEnabled( false );
       }
       else
       {
@@ -3402,6 +3407,12 @@ void US_Hydrodyn::load_bead_model()
             pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
             pb_pdb_saxs->setEnabled(false);
             bd_anaflex_enables(false);
+            pb_somo     ->setEnabled( false );
+            pb_somo_o   ->setEnabled( false );
+            pb_somo     ->setEnabled( false );
+            pb_grid_pdb ->setEnabled( false );
+            pb_vdw_beads->setEnabled( false );
+
          } else {            
             pb_visualize->setEnabled(true);
             pb_equi_grid_bead_model->setEnabled(true);
@@ -3555,7 +3566,7 @@ void US_Hydrodyn::view_bead_model()
                                        ) )
          {
          case QMessageBox::Yes : 
-            filename = last_bead_model;
+            filename = last_read_bead_model;
             break;
          case QMessageBox::No : 
             {
