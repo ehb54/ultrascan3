@@ -1050,21 +1050,27 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
 
    if ( use_grid_options->equalize_radii_constant_volume )
    {
-      double tot_vol = 0e0;
-      for ( unsigned int i = 0; i < ( unsigned int ) result_bead_model.size(); i++ )
-      {
-         tot_vol += ( 4e0 / 3e0 ) * M_PI * result_bead_model[ i ].radius * result_bead_model[ i ].radius * result_bead_model[ i ].radius;
-      }
-      us_hydrodyn->editor_msg( "dark blue", QString( "Equalizing bead model, total volume %1\n" ).arg( tot_vol ) );
-      double pi43           = M_PI * 4e0 / 3e0;
-      float radius = (float)pow( tot_vol / ( ( double ) result_bead_model.size() * pi43 ), 1e0 / 3e0 );
-      for ( unsigned int i = 0; i < ( unsigned int ) result_bead_model.size(); i++ )
-      {
-         result_bead_model[ i ].radius               = radius;
-         result_bead_model[ i ].bead_computed_radius = radius;
-         result_bead_model[ i ].bead_actual_radius   = radius;
-      }
+      us_hydrodyn->editor_msg( "red", QString( "Equalizing bead model radii requested, but it is currently DISABLED" ) );
    }
+      
+   // disabled!
+   // if ( use_grid_options->equalize_radii_constant_volume )
+   // {
+   //    double tot_vol = 0e0;
+   //    for ( unsigned int i = 0; i < ( unsigned int ) result_bead_model.size(); i++ )
+   //    {
+   //       tot_vol += ( 4e0 / 3e0 ) * M_PI * result_bead_model[ i ].radius * result_bead_model[ i ].radius * result_bead_model[ i ].radius;
+   //    }
+   //    us_hydrodyn->editor_msg( "dark blue", QString( "Equalizing bead model, total volume %1\n" ).arg( tot_vol ) );
+   //    double pi43           = M_PI * 4e0 / 3e0;
+   //    float radius = (float)pow( tot_vol / ( ( double ) result_bead_model.size() * pi43 ), 1e0 / 3e0 );
+   //    for ( unsigned int i = 0; i < ( unsigned int ) result_bead_model.size(); i++ )
+   //    {
+   //       result_bead_model[ i ].radius               = radius;
+   //       result_bead_model[ i ].bead_computed_radius = radius;
+   //       result_bead_model[ i ].bead_actual_radius   = radius;
+   //    }
+   // }
 
    return result_bead_model;
 }
