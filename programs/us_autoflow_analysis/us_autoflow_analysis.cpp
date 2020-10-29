@@ -1118,6 +1118,10 @@ bool US_Analysis_auto::loadModel( QMap < QString, QString > & triple_information
 
   //Load noise files
   triple_information[ "mID" ] = QString::number( mID );
+
+  progress_msg->setValue( 4 );
+  qApp->processEvents();
+
   loadNoises( triple_information );
   
   return true;
@@ -1890,7 +1894,7 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
   /********************************/
 
   // Show msg while data downloaded and simulated
-  progress_msg = new QProgressDialog ("Downloading data and models...", QString(), 0, 4, this);
+  progress_msg = new QProgressDialog ("Downloading data and models...", QString(), 0, 5, this);
   progress_msg->setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
   progress_msg->setWindowModality(Qt::WindowModal);
   progress_msg->setWindowTitle(tr("Overlay Plot Generation"));
@@ -2132,7 +2136,7 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
 
   //Load Model (latest ) && noise(s)
   loadModel( triple_info_map  );
-  progress_msg->setValue( 4 );
+  progress_msg->setValue( 5 );
   qApp->processEvents();
 
   //Simulate Model
@@ -2449,7 +2453,7 @@ QGroupBox * US_Analysis_auto::createGroup( QString & triple_name )
   pb_delete-> setObjectName("delete");
 
   //Overlay button
-  QPushButton* pb_overlay = new QPushButton( tr( "Veiw Fit" ) );
+  QPushButton* pb_overlay = new QPushButton( tr( "View Fit" ) );
   pb_overlay-> setObjectName("overlay");
   
   
