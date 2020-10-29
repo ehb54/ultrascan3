@@ -120,6 +120,7 @@ static FILE *ris;
 static char molecola[SMAX];
 static char ragcol[SMAX];
 static char risultati[SMAX];
+static QString qs_risultati;
 static char molecola_nb[SMAX];
 static char fil001[SMAX];
 // static char corresp[SMAX];
@@ -413,6 +414,8 @@ static save_info smi_mm_save_params;
 
 static US_Timer           supc_timers;
 
+static bool      hydro_use_avg_for_volume;
+
 static void
 supc_free_alloced()
 {
@@ -654,6 +657,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    a = 0;   
    tot_partvol = 0.0;
 
+   hydro_use_avg_for_volume = hydro->use_avg_for_volume;
+
    cout << "supc:filename    : " << filename << endl;
    cout << "supc:res_filename: " << res_filename << endl;
 #if !defined(CREATE_TOT_MOL)
@@ -732,6 +737,9 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
             float this_used_s_a = 0.0f;
             float this_total_vol = 0.0f;
             float this_used_vol = 0.0f;
+            // float this_exposed_vol   = 0.0f;
+            // int this_exposed_beads = 0;
+
             for(int i = 0; i < (int)(*bead_models)[current_model].size(); i++) {
                if((*bead_models)[current_model][i].active) {
                   tmp_active_idx.push_back(i);
@@ -762,6 +770,32 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
             total_vol.push_back(this_total_vol);
             used_vol.push_back(this_used_vol);
             models_to_proc++;
+
+            QTextStream( stdout ) <<
+               QString("").sprintf(
+                                   "model                  %d\n"
+
+                                   " total beads           %d\n"
+                                   " total volume          %g\n"
+                                   " avg volume from total %g\n"
+
+                                   " used beads            %d\n"
+                                   " used volume           %g\n"
+                                   " avg volume            %g\n"
+                                   "\n"
+
+                                   ,current_model
+
+                                   ,(int) (*bead_models)[current_model].size()
+                                   ,this_total_vol
+                                   ,this_total_vol / (double) (*bead_models)[current_model].size()
+                                   
+                                   ,tmp_count
+                                   ,this_used_vol
+                                   ,this_used_vol / (double) tmp_count
+                                   )
+               ;
+
             if (nmax < (int) (*bead_models)[current_model].size()) {
                nmax = (int) (*bead_models)[current_model].size();
             }
@@ -1132,7 +1166,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    strncat(risultati, "hydro_res", SMAX - strlen(risultati));
    risultati[SMAX-1] = 0;
    printf("risultati: %s\n", risultati);
-   QFile::remove(risultati);
+   // QFile::remove(risultati);
    flag_mem = 1;
     
    strncpy(molecola, use_filename.contains( "%1" ) ? 
@@ -1160,7 +1194,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    volcor = hydro->volume_correction ? 2 : 1;
    if (volcor == 2) 
    {
-      volcor1 = (int)hydro->volume;
+      volcor1 = (float)hydro->volume;
    }
    mascor = hydro->mass_correction ? 2 : 1;
    if (mascor == 2) 
@@ -1183,7 +1217,12 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
        !(us_hydrodyn->batch_widget &&
          us_hydrodyn->batch_window->save_batch_active))
    {
-      ris = us_fopen(risultati, "wb");
+      qs_risultati = risultati;
+      if ( !us_hydrodyn->overwrite_hydro ) {
+         qs_risultati = us_hydrodyn->fileNameCheck( qs_risultati, 0, us_hydrodyn );
+      }
+
+      ris = us_fopen(qs_risultati, "wb");
       fprintf(ris, "\n%s", "BEAMS -           IST. CBA                - COEFF/SUPCW v. 5.0\n");
       fprintf(ris, "\n%s", "**************************************************************");
       fprintf(ris, "\n%s\n", "***** Computational Method : Supermatrix Inversion ***********");
@@ -1287,7 +1326,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
          }
          active_model = k;
 
-         init_da_a();       
+         init_da_a();
       }
    }
 
@@ -1360,6 +1399,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       inp_inter();
 #endif
       {
+         // qDebug() << "supc::main() b4pat nmax nat " << nmax << " " << nat;
+         
          struct dati1_pat *out_dt = 0;
 
          out_dt = (struct dati1_pat *) malloc(nmax * sizeof(struct dati1_pat));
@@ -1807,19 +1848,22 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       totsup = 0.0;
       totvolb = 0.0;
 
-      if ((volcor == 1) && (sfecalc == 2))
+      if ((volcor == 1) && (sfecalc == 2)) {
          totvolb = interm1 / (6.0 * ETAo);
-
-      if ((volcor == 1) && ((colorsixf == 2) || (colorsixf == 3)))
+      }
+      
+      if ((volcor == 1) && ((colorsixf == 2) || (colorsixf == 3))) {
          totvol = interm1 / (6.0 * ETAo);
-      else
-      {
-         for (i = 0; i < nat; i++)
+      } else {
+         for (i = 0; i < nat; i++) {
             totvol += (4.0 / 3.0 * M_PI * dt[i].r * dt[i].r * dt[i].r);
+         }
          totvolb = totvol;
       }
-      for (i = 0; i < nat; i++)
+
+      for (i = 0; i < nat; i++) {
          totsup += M_PI * dt[i].r * dt[i].r * 4.0;
+      }
 
       if (num != 1)      /* average values of parameters */
       {
@@ -2730,10 +2774,9 @@ mem_ris(int model)
 
    // printf("create hydrores %s\n", create_hydro_res ? "true" : "false");
 
-   create_hydro_res && (ris = us_fopen(risultati, "ab"));
-   if ( create_hydro_res )
-   {
-      us_hydrodyn->last_hydro_res = QString("%1").arg(risultati);
+   if ( create_hydro_res ) {
+      ris = us_fopen(qs_risultati, "ab");
+      us_hydrodyn->last_hydro_res = QString("%1").arg( qs_risultati );
       cout << "last_hydro_res " << us_hydrodyn->last_hydro_res << endl;
    }
 
@@ -3578,7 +3621,7 @@ mem_ris(int model)
         create_hydro_res && !smi_mm )
    {
       QString fname = this_data.results.name + ".smi.csv";
-      if ( !us_hydrodyn->overwrite ) {
+      if ( !us_hydrodyn->overwrite_hydro ) {
          fname = us_hydrodyn->fileNameCheck( fname, 0, us_hydrodyn );
       }
       FILE *of = us_fopen(fname, "wb");
@@ -3605,8 +3648,13 @@ val_med()
 
    float temp;
 
-   ris = us_fopen(risultati, "ab");
-   us_hydrodyn->last_hydro_res = QString("%1").arg(risultati);
+   QString out_name = smi_mm_name + ".hydro_res";
+   if ( !us_hydrodyn->overwrite_hydro ) {
+      out_name = us_hydrodyn->fileNameCheck( out_name, 0, us_hydrodyn );
+   }
+
+   ris = us_fopen( out_name, "ab" );
+   us_hydrodyn->last_hydro_res = QString("%1").arg( out_name );
    cout << "last_hydro_res " << us_hydrodyn->last_hydro_res << endl;
 
    fprintf(ris, "\n\t AVERAGE PARAMETERS \n");
@@ -3897,7 +3945,7 @@ val_med()
          vector < save_data > stats = us_hydrodyn->save_util->stats( & smi_mm_save_params.data_vector );
 
          QString smi_out_name = smi_mm_name + ".smi.csv";
-         if ( !us_hydrodyn->overwrite ) {
+         if ( !us_hydrodyn->overwrite_hydro ) {
             smi_out_name = us_hydrodyn->fileNameCheck( smi_out_name, 0, us_hydrodyn );
          }
          QFile f( smi_out_name );
@@ -5426,6 +5474,8 @@ initarray(int k)
    }
    dww("initarray 3");
 #endif
+   // qDebug() << QString("supc::initarray() end: %1 beads of %2\n").arg(nat).arg( numero_sfere );
+
 }
 
 /*******************************************************************/
@@ -5914,23 +5964,41 @@ sigmarRcalc1()
       }
    }
 
+   QString hydro_msg = "";
    interm = 0.0;
    /*      printf("%d%d\n\n volcor,colorsixf",volcor,"   ",colorsixf);
            if ( scanf("%d",&test) ) {};
            getchar();  */
-   if ((volcor == 1) && ((colorsixf == 1) || (colorsixf == 3)))
+   if ((volcor == 1) && ((colorsixf == 1) || (colorsixf == 3))) {
       interm = interm1;   /* total vol. of beads, buried included */
-   else
-   {
+      hydro_msg = "Using total volume of all beads including buried for eq 11. ";
+   } else {
       if (volcor == 1)
       {
+         hydro_msg = "Using total volume of all exposed beads for eq 11. ";
          for (i = 0; i < nat; i++)
             interm += pow(dt[i].r, 3) * M_PI * 8.0 * ETAo;
-      }
-      else
+      } else {
+         hydro_msg = "Using manual volume for eq 11. ";
          interm = volcor1 * 6.0 * ETAo;   /* manual volume correction */
+      }
    }
 
+
+   if ( hydro_use_avg_for_volume ) {
+      if ((volcor == 1) && ((colorsixf == 1) || (colorsixf == 3))) {
+         hydro_msg = "Using average volume of all beads including buried for eq 11. ";
+         interm /= numero_sfere;
+      } else {
+         if (volcor == 1) {
+            hydro_msg = "Using total volume of all exposed beads for eq 11. ";
+            interm /= nat;
+         } else {
+            // do nothing?
+         }
+      }
+   }
+   
    for (i = 0; i < 3; i++)
    {
       if (cc == 1)
@@ -5944,6 +6012,10 @@ sigmarRcalc1()
    else
       volcor1 = 0.0;
 
+   hydro_msg += QString( "\nCorrection volume value %1 [A^3]." ).arg( volcor1 );
+   us_hydrodyn->editor_msg( "dark blue", hydro_msg );
+   // qDebug() << "supc::sigmarRcalc1() volcor1 interm  " << volcor1 << " " << interm;
+   // qDebug() << "supc::sigmarRcalc1() nat numero_sfere" << nat << " " << numero_sfere;
 }
 
 /*************************************************************************/

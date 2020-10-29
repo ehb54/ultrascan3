@@ -39,6 +39,7 @@ struct hydro_options
    bool reference_system;      // false: diffusion center, true: cartesian origin (default false)
    bool boundary_cond;         // false: stick, true: slip (default false)
    bool volume_correction;      // false: Automatic, true: manual (provide value)
+   bool use_avg_for_volume;     // true: if volume_correction true, will replace volumes with averages
    double volume;               // volume correction
    bool mass_correction;      // false: Automatic, true: manual (provide value)
    double mass;               // mass correction
@@ -136,6 +137,7 @@ class US_EXTERN US_Hydrodyn_Hydro : public QFrame
       QRadioButton *rb_auto_mass;
       QRadioButton *rb_manual_mass;
       QRadioButton *rb_auto_volume;
+      QRadioButton *rb_auto_volume_avg;
       QRadioButton *rb_manual_volume;
       QRadioButton *rb_exclusion;
       QRadioButton *rb_inclusion;

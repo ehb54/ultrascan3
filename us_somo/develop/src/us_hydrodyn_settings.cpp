@@ -1405,6 +1405,7 @@ void US_Hydrodyn::write_config(const QString& fname)
       parameters[ "hydro.reference_system" ] = QString( "%1" ).arg( hydro.reference_system );
       parameters[ "hydro.boundary_cond" ] = QString( "%1" ).arg( hydro.boundary_cond );
       parameters[ "hydro.volume_correction" ] = QString( "%1" ).arg( hydro.volume_correction );
+      parameters[ "hydro.use_avg_for_volume" ] = QString( "%1" ).arg( hydro.use_avg_for_volume );
       parameters[ "hydro.volume" ] = QString( "%1" ).arg( hydro.volume );
       parameters[ "hydro.mass_correction" ] = QString( "%1" ).arg( hydro.mass_correction );
       parameters[ "hydro.mass" ] = QString( "%1" ).arg( hydro.mass );
@@ -1896,6 +1897,7 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    if ( parameters.count( "hydro.reference_system" ) ) hydro.reference_system = parameters[ "hydro.reference_system" ] == "1";
    if ( parameters.count( "hydro.boundary_cond" ) ) hydro.boundary_cond = parameters[ "hydro.boundary_cond" ] == "1";
    if ( parameters.count( "hydro.volume_correction" ) ) hydro.volume_correction = parameters[ "hydro.volume_correction" ] == "1";
+   if ( parameters.count( "hydro.use_avg_for_volume" ) ) hydro.volume_correction = parameters[ "hydro.use_avg_for_volume" ] == "1";
    if ( parameters.count( "hydro.volume" ) ) hydro.volume = parameters[ "hydro.volume" ].toDouble();
    if ( parameters.count( "hydro.mass_correction" ) ) hydro.mass_correction = parameters[ "hydro.mass_correction" ] == "1";
    if ( parameters.count( "hydro.mass" ) ) hydro.mass = parameters[ "hydro.mass" ].toDouble();
@@ -2838,6 +2840,7 @@ void US_Hydrodyn::hard_coded_defaults()
    grid.tangency = false;   // true: Expand beads to tangency
    grid.cube_side = 5.0;
    grid.enable_asa = true;   // true: enable asa
+   grid.equalize_radii_constant_volume = false;
 
    misc.hydrovol = 24.041;
    misc.compute_vbar = true;
@@ -2864,6 +2867,7 @@ void US_Hydrodyn::hard_coded_defaults()
    hydro.reference_system = false;   // false: diffusion center, true: cartesian origin (default false)
    hydro.boundary_cond = false;      // false: stick, true: slip (default false)
    hydro.volume_correction = false;   // false: Automatic, true: manual (provide value)
+   hydro.use_avg_for_volume = false;   // only active if hydro.volume_correction is false
    hydro.volume = 0.0;               // volume correction
    hydro.mass_correction = false;      // false: Automatic, true: manual (provide value)
    hydro.mass = 0.0;                  // mass correction
@@ -3839,6 +3843,11 @@ QString US_Hydrodyn::default_differences_hydro()
    {
       str += QString(base + "Total Volume of Model: %1\n")
          .arg(hydro.volume_correction ? "Manual" : "Automatic");
+   }
+   if ( hydro.use_avg_for_volume != default_hydro.use_avg_for_volume )
+   {
+      str += QString(base + "Use average for volume: %1\n")
+         .arg(hydro.use_avg_for_volume ? "On" : "Off");
    }
    if ( hydro.volume != default_hydro.volume &&
         hydro.volume_correction )

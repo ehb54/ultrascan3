@@ -158,6 +158,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool calcAutoHydro;
       bool setSuffix;
       bool overwrite;
+      bool overwrite_hydro;
       bool saveParams;
       bool guiFlag;
       QLabel *lbl_core_progress;

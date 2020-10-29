@@ -1781,9 +1781,9 @@ void US_Hydrodyn_Batch::stop_processing() {
    if ( overwriteForcedOn )
    {
       ((US_Hydrodyn *)us_hydrodyn)->overwrite = false;
+      ((US_Hydrodyn *)us_hydrodyn)->overwrite_hydro = false;
       ((US_Hydrodyn *)us_hydrodyn)->cb_overwrite->setChecked(false);
    }
-
 }   
 
 void US_Hydrodyn_Batch::screen()
@@ -2269,31 +2269,37 @@ void US_Hydrodyn_Batch::start( bool quiet )
 
    US_Timer job_timer;
    overwriteForcedOn = false;
-   if ( !quiet && !((US_Hydrodyn *)us_hydrodyn)->overwrite )
-   {
-      switch ( QMessageBox::warning(this, 
-                                    windowTitle() + us_tr( ": Warning" ),
-                                    QString(us_tr("Please note:\n\n"
-                                               "Overwriting of existing files currently off.\n"
-                                               "This could cause Batch mode to block during processing.\n"
-                                               "What would you like to do?\n")),
-                                    us_tr("&Stop"), 
-                                    us_tr("&Turn on overwrite now"),
-                                    us_tr("C&ontinue anyway"),
-                                    0, // Stop == button 0
-                                    0 // Escape == button 0
-                                    ) )
+   if ( ((US_Hydrodyn *)us_hydrodyn)->overwrite ) {
+      ((US_Hydrodyn *)us_hydrodyn)->overwrite_hydro = true;
+      overwriteForcedOn = true;
+   } else {
+      if ( !quiet && !((US_Hydrodyn *)us_hydrodyn)->overwrite )
       {
-      case 0 : // stop
-         return;
-         break;
-      case 1 :
-         ((US_Hydrodyn *)us_hydrodyn)->overwrite = true;
-         ((US_Hydrodyn *)us_hydrodyn)->cb_overwrite->setChecked(true);
-         overwriteForcedOn = true;
-         break;
-      case 2 : // continue
-         break;
+         switch ( QMessageBox::warning(this, 
+                                       windowTitle() + us_tr( ": Warning" ),
+                                       QString(us_tr("Please note:\n\n"
+                                                     "Overwriting of existing files currently off.\n"
+                                                     "This could cause Batch mode to block during processing.\n"
+                                                     "What would you like to do?\n")),
+                                       us_tr("&Stop"), 
+                                       us_tr("&Turn on overwrite now"),
+                                       us_tr("C&ontinue anyway"),
+                                       0, // Stop == button 0
+                                       0 // Escape == button 0
+                                       ) )
+         {
+         case 0 : // stop
+            return;
+            break;
+         case 1 :
+            ((US_Hydrodyn *)us_hydrodyn)->overwrite = true;
+            ((US_Hydrodyn *)us_hydrodyn)->overwrite_hydro = true;
+            ((US_Hydrodyn *)us_hydrodyn)->cb_overwrite->setChecked(true);
+            overwriteForcedOn = true;
+            break;
+         case 2 : // continue
+            break;
+         }
       }
    }
 
@@ -2364,6 +2370,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
             if ( overwriteForcedOn )
             {
                ((US_Hydrodyn *)us_hydrodyn)->overwrite = false;
+               ((US_Hydrodyn *)us_hydrodyn)->overwrite_hydro = false;
                ((US_Hydrodyn *)us_hydrodyn)->cb_overwrite->setChecked(false);
             }
             return;
@@ -3135,6 +3142,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
    if ( overwriteForcedOn )
    {
       ((US_Hydrodyn *)us_hydrodyn)->overwrite = false;
+      ((US_Hydrodyn *)us_hydrodyn)->overwrite_hydro = false;
       ((US_Hydrodyn *)us_hydrodyn)->cb_overwrite->setChecked(false);
    }
    cout << job_timer.list_times();

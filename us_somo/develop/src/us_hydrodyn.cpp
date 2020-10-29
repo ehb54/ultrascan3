@@ -400,6 +400,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    read_config(""); // specify default configuration by leaving argument empty
    calcAutoHydro = false;
    overwrite = false;
+   overwrite_hydro = false;
    saveParams = false;
    setSuffix = true;
    guiFlag = true;
@@ -2304,6 +2305,9 @@ void US_Hydrodyn::do_reset()
    le_pH->setText(QString("").sprintf("%4.2f",hydro.pH));
    cb_pH->setChecked( gparams.count( "use_pH" ) && gparams[ "use_pH" ] == "true" );
    le_pH->setEnabled( cb_pH->isChecked() );
+   if ( batch_widget ) {
+      batch_window->close();
+   }
 }
 
 void US_Hydrodyn::reset()

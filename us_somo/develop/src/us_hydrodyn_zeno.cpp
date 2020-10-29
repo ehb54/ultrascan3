@@ -13954,7 +13954,7 @@ bool US_Hydrodyn::calc_zeno()
                            + ".zno" )
                   ;
 
-               if ( !overwrite ) {
+               if ( !overwrite_hydro ) {
                   fname = fileNameCheck( fname, 0, this );
                }
 
@@ -14702,7 +14702,7 @@ bool US_Hydrodyn::calc_zeno()
                   if ( saveParams && create_hydro_res & !zeno_mm )
                   {
                      QString fname = this_data.results.name + ".zeno.csv";
-                     if ( !overwrite ) {
+                     if ( !overwrite_hydro ) {
                         fname = fileNameCheck( fname, 0, this );
                      }
                      FILE *of = us_fopen(fname, "wb");
@@ -14764,7 +14764,7 @@ bool US_Hydrodyn::calc_zeno()
 
       {
          QString zeno_out_name = zeno_mm_name + ".zno";
-         if ( !overwrite ) {
+         if ( !overwrite_hydro ) {
             zeno_out_name = fileNameCheck( zeno_out_name, 0, this );
          }
          QFile f( zeno_out_name );
@@ -14785,7 +14785,7 @@ bool US_Hydrodyn::calc_zeno()
 
       if ( saveParams && create_hydro_res ) {
          QString zeno_out_name = zeno_mm_name + ".zeno.csv";
-         if ( !overwrite ) {
+         if ( !overwrite_hydro ) {
             zeno_out_name = fileNameCheck( zeno_out_name, 0, this );
          }
          QFile f( zeno_out_name );

@@ -345,13 +345,21 @@ void US_Hydrodyn_Hydro::setupGUI()
    bg_volume_correction = new QGroupBox( "Total Volume of Model: (for Rotational Diff. and Intrinsic Visc. Volume Corr.) (for SMI)" );
 
    rb_auto_volume = new QRadioButton();
-   rb_auto_volume->setText(us_tr(" Automatic (Sum of Bead Volumes)"));
+   rb_auto_volume->setText(us_tr(" Auto. (Sum of Bead Vol.)"));
    rb_auto_volume->setEnabled(true);
    rb_auto_volume->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    rb_auto_volume->setPalette( PALET_NORMAL );
    AUTFBACK( rb_auto_volume );
    connect(rb_auto_volume, SIGNAL(clicked()), this, SLOT(select_volume_correction()));
 
+   rb_auto_volume_avg = new QRadioButton();
+   rb_auto_volume_avg->setText(us_tr(" Auto. (Avg. of Bead Vol.)"));
+   rb_auto_volume_avg->setEnabled(true);
+   rb_auto_volume_avg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_auto_volume_avg->setPalette( PALET_NORMAL );
+   AUTFBACK( rb_auto_volume_avg );
+   connect(rb_auto_volume_avg, SIGNAL(clicked()), this, SLOT(select_volume_correction()));
+   
    rb_manual_volume = new QRadioButton();
    rb_manual_volume->setText(us_tr(" Manual "));
    rb_manual_volume->setEnabled(true);
@@ -379,6 +387,7 @@ void US_Hydrodyn_Hydro::setupGUI()
    {
       QHBoxLayout * bl = new QHBoxLayout; bl->setContentsMargins( 0, 0, 0, 0 ); bl->setSpacing( 0 );
       bl->addWidget( rb_auto_volume );
+      bl->addWidget( rb_auto_volume_avg );
       bl->addWidget( rb_manual_volume );
       bl->addWidget( lbl_volume );
       bl->addWidget( le_volume );
@@ -734,9 +743,15 @@ void US_Hydrodyn_Hydro::select_grpy_bead_inclusion(int val)
 
 void US_Hydrodyn_Hydro::select_volume_correction() {
    if ( rb_auto_volume->isChecked() ) {
+      (*hydro).use_avg_for_volume = false;
+      return select_volume_correction( 0 );
+   }
+   if ( rb_auto_volume_avg->isChecked() ) {
+      (*hydro).use_avg_for_volume = true;
       return select_volume_correction( 0 );
    }
    if ( rb_manual_volume->isChecked() ) {
+      (*hydro).use_avg_for_volume = false;
       return select_volume_correction( 1 );
    }
 }

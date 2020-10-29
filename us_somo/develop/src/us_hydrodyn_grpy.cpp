@@ -108,10 +108,10 @@ bool US_Hydrodyn::calc_grpy_hydro() {
       return false;
    }
 
-   if ( !overwrite )
-   {
-      setHydroFile();
-   }
+   // if ( !overwrite_hydro )
+   // {
+   //    setHydroFile();
+   // }
 
    stopFlag = false;
    pb_stop_calc->setEnabled(true);
@@ -236,7 +236,7 @@ bool US_Hydrodyn::calc_grpy_hydro() {
                extension
                ;
 
-            if ( !overwrite ) {
+            if ( !overwrite_hydro ) {
                fname = fileNameCheck( fname, 0, this );
             }
 
@@ -579,7 +579,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
    // save stdout
    if ( !batch_avg_hydro_active() && !grpy_mm ) {
       QString grpy_out_name = grpy_last_processed.replace( QRegExp( ".grpy$" ), ".grpy_res" );
-      if ( !overwrite ) {
+      if ( !overwrite_hydro ) {
          grpy_out_name = fileNameCheck( grpy_out_name, 0, this );
       }
       QFile f( grpy_out_name );
@@ -973,7 +973,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
       if ( saveParams && create_hydro_res && !grpy_mm )
       {
          QString fname = somo_dir + "/" + this_data.results.name + ".grpy.csv";
-         if ( !overwrite ) {
+         if ( !overwrite_hydro ) {
             fname = fileNameCheck( fname, 0, this );
          }
 
@@ -1055,7 +1055,7 @@ void US_Hydrodyn::grpy_finalize() {
 
       {
          QString grpy_out_name = grpy_mm_name + ".grpy_res";
-         if ( !overwrite ) {
+         if ( !overwrite_hydro ) {
             grpy_out_name = fileNameCheck( grpy_out_name, 0, this );
          }
       
@@ -1078,7 +1078,7 @@ void US_Hydrodyn::grpy_finalize() {
 
       if ( saveParams && create_hydro_res ) {
          QString grpy_out_name = grpy_mm_name + ".grpy.csv";
-         if ( !overwrite ) {
+         if ( !overwrite_hydro ) {
             grpy_out_name = fileNameCheck( grpy_out_name, 0, this );
          }
          QFile f( grpy_out_name );
