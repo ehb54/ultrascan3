@@ -557,6 +557,78 @@ US_Report::Status US_Report::readDB( QString new_runID, US_DB2* db,
    return REPORT_OK;
 }
 
+// COPY for autoflow: Reads all the report information from DB, except document content
+US_Report::Status US_Report::readDB_auto( int invID_passed, QString new_runID, US_DB2* db,
+                                          QString new_triple )
+{
+   // Find out if the runID is in the DB already
+   QString invID = QString::number( invID_passed );
+
+   QStringList q( "get_report_info_by_runID" );
+   q << invID
+     << new_runID;
+   db->query( q );
+
+   int status = db->lastErrno();
+
+   if ( status == US_DB2::NOROWS )
+      return NOT_FOUND;
+
+   else if ( status != US_DB2::OK )
+      return DB_ERROR;
+
+   this->reset();
+   db->next();
+
+   this->ID     = db->value(0).toInt();
+   GUID         = db->value(1).toString();
+   experimentID = db->value(2).toInt();
+   this->runID  = db->value(3).toString();
+   title        = db->value(4).toString();
+   html         = db->value(5).toString();
+   bool edittr  = ! new_triple.isEmpty();
+
+   // Now lets get all the report triple records
+   triples.clear();
+   q.clear();
+   q << "get_reportTriple_desc"
+     << QString::number( ID );
+   db->query( q );
+
+   status = db->lastErrno();
+   if ( status == US_DB2::OK )
+   {
+      while ( db->next() )
+      {
+         US_Report::ReportTriple t;
+
+         t.tripleID        = db->value(0).toInt();
+         t.tripleGUID      = db->value(1).toString();
+         t.resultID        = db->value(2).toInt();
+         t.triple          = db->value(3).toString();
+         t.dataDescription = db->value(4).toString();
+
+         if ( edittr  &&  t.triple != new_triple )
+            continue;
+
+         triples << t;
+      }
+   }
+
+   else if ( status != US_DB2::NOROWS )
+      return DB_ERROR;
+
+   // Now cycle through and load all the document metadata
+   for ( int i = 0; i < triples.size(); i++ )
+   {
+      US_Report::Status writeStatus = triples[i].readDocsDB( db );
+      if ( writeStatus != REPORT_OK )
+         return writeStatus;
+   }
+
+   return REPORT_OK;
+}
+
 
 
 
@@ -981,7 +1053,7 @@ US_Report::Status US_Report::saveDocumentFromFile_auto( int invID, const QString
 
    // Start by reading any DB info we have, or create new report
    QString now = QDateTime::currentDateTime().toString();
-   US_Report::Status status = this->readDB( new_runID, db );
+   US_Report::Status status = this->readDB_auto( invID, new_runID, db );
 
    if ( status == US_Report::NOT_FOUND )
    {

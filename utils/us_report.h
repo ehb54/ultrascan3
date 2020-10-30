@@ -218,6 +218,7 @@ class US_UTIL_EXTERN US_Report
       //! \param    new_triple The triple string for associated documents
       //! \return   One of the US_Report error codes
       Status        readDB( QString, US_DB2* = 0, QString = "" );
+      Status        readDB_auto( int, QString, US_DB2* = 0, QString = "" );
       
       //! \brief    Function to save the global report information to db
       //  \param    db For database access, an open database connection
