@@ -2702,7 +2702,7 @@ DbgLv(1) << "   jj desc" << jj << mDescrs[jj].description
       {  // File does not exist, so we definitely need to create it
          nfadds++;
          QString ftfpath    = QString( rdir + ftfname ).section( "/", 0, -2 );
-DbgLv(1) << "ScDB: NOT-EXIST local:  nfadds" << nfadds;
+	 DbgLv(1) << "ScDB: NOT-EXIST local:  nfadds" << nfadds << "ftfpath: " << ftfpath;
          QDir().mkpath( ftfpath );
       }
 

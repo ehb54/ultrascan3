@@ -985,6 +985,11 @@ bool US_Analysis_auto::loadData( QMap < QString, QString > & triple_information 
 	}
     }
 
+  QString edirpath  = US_Settings::resultDir() + "/" + triple_information[ "filename" ];
+  QDir edir( edirpath );
+  if (!edir.exists())
+    edir.mkpath( edirpath );
+  
   QString efilepath = US_Settings::resultDir() + "/" + triple_information[ "filename" ] + "/" + efilename;
   
   // Can check here if such filename exists
