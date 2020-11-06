@@ -9,6 +9,7 @@
 /* composed of non-overlapping beads of different radii.      */
 
 // #define DEBUG_FILES
+// #define DEBUG_EV
 #include "../include/us_math.h"
 #include <qregexp.h>
 
@@ -80,6 +81,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 
 #undef R // it's defined as a us #define above & we use R as a local variable
 
+static void ev3( vector < vector < long double > > & );
 static double ETAo;
 static double DENS;
 static double TE;
@@ -4241,6 +4243,17 @@ autovalori()
    // if (cc == 2)
    //    slip = 1.5;
 
+#if defined( DEBUG_EV )
+   {
+      QTextStream( stdout ) <<
+         "autovalori() Dr ";
+      for ( int i = 0; i < 9; ++i ) {
+         QTextStream( stdout ) << QString().sprintf( "%Le ", Dr[i] );
+      }
+      QTextStream( stdout ) << "\n";
+   }
+#endif
+   
    for (a1 = 0; a1 < 3; a1++)
       for (a2 = 0; a2 < 3; a2++)
       {
@@ -4250,8 +4263,25 @@ autovalori()
             a[a1][a2] = Dr[a1 * 3 + a2] * KB * TE / 1.0E-21;
       }
 
+#if defined( DEBUG_EV )
+   {
+      QTextStream( stdout ) <<
+         "autovalori()\n\ta = [ ";
+      for ( int i = 0; i < 3; ++i ) {
+         for ( int j = 0; j < 3; ++j ) {
+            QTextStream( stdout ) << QString().sprintf( "%Le ", a[i][j] );
+         }
+         QTextStream( stdout ) << ";\n";
+      }
+      QTextStream( stdout ) << "\n";
+   }
+#endif
+   
    if ((a[0][1] == 0.0) && (a[1][2] == 0.0) && (a[0][2] == 0.0))
    {
+#if defined( DEBUG_EV )
+      qDebug() << "zeros";
+#endif
       dl1 = a[0][0];
       dl2 = a[1][1];
       dl3 = a[2][2];
@@ -4259,6 +4289,9 @@ autovalori()
 
    else if ((a[0][2] == 0.0) && (a[1][2] == 0.0))
    {
+#if defined( DEBUG_EV )
+      qDebug() << "secondo() 1";
+#endif
       dl1 = a[2][2];
       b = (-a[0][0] - a[1][1]);
       c = a[0][0] * a[1][1] - a[0][1] * a[1][0];
@@ -4267,6 +4300,9 @@ autovalori()
 
    else if ((a[0][2] == 0.0) && (a[0][1] == 0.0))
    {
+#if defined( DEBUG_EV )
+      qDebug() << "secondo() 2";
+#endif
       dl1 = a[0][0];
       b = (-a[2][2] - a[1][1]);
       c = a[2][2] * a[1][1] - a[2][1] * a[1][2];
@@ -4275,18 +4311,37 @@ autovalori()
 
    else
    {
+#if defined( DEBUG_EV )
+      qDebug() << "terzo()";
       b = (-(a[0][0] + a[1][1] + a[2][2]));
       c = a[0][0] * a[1][1] + a[0][0] * a[2][2] + a[1][1] * a[2][2] - a[0][2] * a[2][0] - a[1][2] * a[2][1] -
          a[0][1] * a[1][0];
       d = (-a[0][0] * a[1][1] * a[2][2] - 2.0 * a[0][1] * a[0][2] * a[1][2] + a[0][2] * a[0][2] * a[1][1] +
            a[1][2] * a[1][2] * a[0][0] + a[0][1] * a[0][1] * a[2][2]);
       terzo(b, c, d);
+      printf("EIGENVALUES II in autva from terzo:\t ");
+      printf("%Le%s%Le%s%Le\n\n\n",dl1,",",dl2,",",dl3);
+      
+      qDebug() << "terzo->ev";
+#endif
+      vector < vector < long double > > A(3);
+      for ( int i = 0; i < 3; ++i ) {
+         for ( int j = 0; j < 3; ++j ) {
+            A[i].push_back( a[i][j] );
+         }
+      }
+      ev3( A );
+#if defined( DEBUG_EV )
+      printf("EIGENVALUES II in autva from ev3:\t ");
+      printf("%Le%s%Le%s%Le\n\n\n",dl1,",",dl2,",",dl3);
+#endif
+
    }
 
-   /* 
-      printf("EIGENVALUES II in autva :\t ");
-      printf("%f%s%f%s%f\n\n\n",dl1,",",dl2,",",dl3);
-   */
+#if defined( DEBUG_EV )
+   printf("EIGENVALUES II in autva :\t ");
+   printf("%Le%s%Le%s%Le\n\n\n",dl1,",",dl2,",",dl3);
+#endif
 
 }
 
@@ -4575,29 +4630,31 @@ relax_rigid_calc()
    autovalori();
 
    {
-
-      // us_qdebug( QString( "supc compute_tau: input ev's: %1 %2 %3 fconv %4" )
-      //         .arg( (double)dl1 )
-      //         .arg( (double)dl2 )
-      //         .arg( (double)dl3 )
-      //         .arg( fconv ) );
+      us_qdebug( QString( "supc compute_tau: input ev's: %1 %2 %3 fconv %4" )
+              .arg( (double)dl1 )
+              .arg( (double)dl2 )
+              .arg( (double)dl3 )
+              .arg( fconv ) );
       vector < double > results;
       double x1 = dl1;
       double x2 = dl2;
       double x3 = dl3;
       US_Saxs_Util::compute_tau( x1, x2, x3, fconv, results );
+      us_qdebug( US_Vector::qs_vector( "supc compute_tau results", results ) );
    }
 
    ddr[0] = dl1;
    ddr[1] = dl2;
    ddr[2] = dl3;
 
-#if !defined( MINGW )
+#if defined( DEBUG_EV )
+# if !defined( MINGW )
    printf("\nsupc compute_tau: ddr[0] ddr[1] ddr[2] : %Lf\t%Lf\t%Lf\n",dl1,dl2,dl3);
    printf("\nsupc compute_tau: ddr[0] ddr[1] ddr[2] : %Lf\t%Lf\t%Lf\n",ddr[0],ddr[1],ddr[2]);
-#else
+# else
    printf("\nsupc compute_tau: ddr[0] ddr[1] ddr[2] : %f\t%f\t%f\n",(double)dl1,(double)dl2,(double)dl3);
    printf("\nsupc compute_tau: ddr[0] ddr[1] ddr[2] : %f\t%f\t%f\n",(double)ddr[0],(double)ddr[1],(double)ddr[2]);
+# endif
 #endif
 
    /*      printf("\nValori ddr[0] ddr[1] ddr[2] : %Lf\t%Lf\t%Lf\n",ddr[0],ddr[1],ddr[2]);
@@ -4827,8 +4884,38 @@ diffcalc()
       }
    }
 
+#if defined( DEBUG_EV )
+   {
+      QTextStream( stdout ) <<
+         "diffcalc() ro:\n";
+      for ( int i = 0; i < 6; ++i ) {
+         QTextStream( stdout ) << "\t";
+         for ( int j = 0; j < 6; ++j ) {
+            QTextStream( stdout ) << QString().sprintf( "%e ", ro[i][j] );
+         }
+         QTextStream( stdout ) << "\n";
+      }
+      QTextStream( stdout ) << "\n";
+   }
+#endif   
+
    inv6x6(ro);
 
+#if defined( DEBUG_EV )
+   {
+      QTextStream( stdout ) <<
+         "diffcalc() inver:\n";
+      for ( int i = 0; i < 6; ++i ) {
+         QTextStream( stdout ) << "\t";
+         for ( int j = 0; j < 6; ++j ) {
+            QTextStream( stdout ) << QString().sprintf( "%e ", inver[i][j] );
+         }
+         QTextStream( stdout ) << "\n";
+      }
+      QTextStream( stdout ) << "\n";
+   }
+#endif
+   
    for (i = 0; i < 6; i++)
       for (j = 0; j < 6; j++)
          ro[i][j] = inver[i][j];   /* WITHOUT CONSTANTS         */
@@ -6334,6 +6421,10 @@ terzo(long double b, long double c, long double d)
    float unterzo, beta, bet1, rad, pfraz, pin;
    // int coco;
 
+#if defined( DEBUG_EV )
+   qDebug() << QString().sprintf( "terzo b %Lf c %Lf d %Lf", b, c, d );
+#endif
+
    if ((c == 0.0) && (d == 0.0))
    {
       dl1 = 0.0;
@@ -6359,7 +6450,11 @@ terzo(long double b, long double c, long double d)
    pfraz = pfraz - pin;
 
    if ((s > 0.0) && ((pin != 0) || ((pin == 0) && (pfraz > 0.01))))
-   {}
+   {
+#if defined( DEBUG_EV )
+      qDebug() << "two complex conjugated eigenvalues?";
+#endif
+   }
    //      coco = 1;      /* TWO COMPLEX CONJUGATED EIGENVALUES */
 
    else if ((s < 0.0) && ((pin != 0) || ((pin == 0) && (pfraz > 0.01))))
@@ -7017,3 +7112,95 @@ void supc_thr_t::run()
 
 //--------- end thread for supc --------------
 
+void ev3( vector < vector < long double > > & A ) {
+   // Given a real symmetric 3x3 matrix A, compute the eigenvalues
+   // Note that acos and cos operate on angles in radians
+
+   long double p1 =
+      A[0][1] *  A[0][1] +
+      A[0][2] *  A[0][2] +
+      A[1][2] *  A[1][2]
+      ;
+
+   dl1 = 0;
+   dl2 = 0;
+   dl3 = 0;
+   // long double eig1 = 0;
+   // long double eig2 = 0;
+   // long double eig3 = 0;
+   
+   if ( p1 == 0 ) {
+      dl1 = A[0][0];
+      dl2 = A[1][1];
+      dl3 = A[2][2];
+   } else {
+      long double q = ( A[0][0] + A[1][1] + A[2][2] ) / 3e0;
+
+      long double p2 =
+         (A[0][0] - q) * (A[0][0] - q) +
+         (A[1][1] - q) * (A[1][1] - q) +
+         (A[2][2] - q) * (A[2][2] - q) +
+         2e0 * p1
+         ;
+      long double p = sqrt(p2 / 6e0);
+      long double one_over_p = 1e0 / p;
+      vector < vector < long double > > B = A;
+      // B = (1 / p) * (A - q * I)    % I is the identity matrix
+
+      for ( int i = 0; i < 3; ++i ) {
+         for ( int j = 0; j < 3; ++j ) {
+            if ( i == j ) {
+               B[ i ][ j ] = one_over_p * ( A[ i ][ j ] - q );
+            } else {
+               B[ i ][ j ] = one_over_p * A[ i ][ j ];
+            }
+         }
+      }
+            
+#define A_ B[0][0]
+#define B_ B[0][1]
+#define C_ B[0][2]
+#define D_ B[1][0]
+#define E_ B[1][1]
+#define F_ B[1][2]
+#define G_ B[2][0]
+#define H_ B[2][1]
+#define I_ B[2][2]
+
+      // r = det(B) / 2
+
+      long double r =
+         ( A_ * ( E_ * I_ - F_ * H_ ) -
+           B_ * ( D_ * I_ - F_ * G_ ) +
+           C_ * ( D_ * H_ - E_ * G_ ) ) / 2e0
+         ;
+         
+         // B[0][0] * (B[1][1] * B[2][2] - B[1][2] * B[2][1] ) -
+         // B[0][1] * (B[1][1] * B[2][2] - B[1][2] * B[2][0] ) +
+         // B[0][2] * (B[1][1] * B[2][1] - B[1][1] * B[2][0] )
+      ;
+
+      // In exact arithmetic for a symmetric matrix  -1 <= r <= 1
+      // but computation error can leave it slightly outside this range.
+      long double phi;
+      if (r <= -1e0) {
+         phi = M_PI / 3e0;
+      } else if ( r >= 1e0 ) {
+         phi = 0;
+      } else {
+         phi = acos( r ) / 3e0;
+      }
+
+      // % the eigenvalues satisfy eig3 <= eig2 <= eig1
+      dl1 = q + 2e0 * p * cos(phi);
+      dl3 = q + 2e0 * p * cos(phi + (2e0 * M_PI / 3e0));
+      dl2 = 3e0 * q - dl1 - dl3;
+   }
+
+   // swap 1 & 2 for consistency with terzo
+   long double dlx = dl1;
+   dl1 = dl2;
+   dl2 = dlx;
+   
+   printf( "eigenvalues %Lf, %Lf, %Lf\n", dl1, dl2, dl3 );
+}

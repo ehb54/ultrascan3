@@ -394,10 +394,14 @@ void US_Hydrodyn_Hydro::setupGUI()
       bg_volume_correction->setLayout( bl );
    }
 
-   if ( !(*hydro).volume_correction ) {
-      rb_auto_volume->setChecked(true);
+   if ( hydro->use_avg_for_volume ) {
+      rb_auto_volume_avg->setChecked(true);
    } else {
-      rb_manual_volume->setChecked(true);
+      if ( !(*hydro).volume_correction ) {
+         rb_auto_volume->setChecked(true);
+      } else {
+         rb_manual_volume->setChecked(true);
+      }
    }
 
    bg_bead_inclusion = new QGroupBox( "Inclusion of Buried Beads in Hydrodynamic Calculations (for SMI):" );

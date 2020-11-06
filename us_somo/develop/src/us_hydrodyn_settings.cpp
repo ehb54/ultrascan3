@@ -3968,10 +3968,10 @@ QString US_Hydrodyn::default_differences_misc()
    {
       str += QString(base + sub + "Residue vbar: %1\n").arg(misc.avg_vbar);
    }
-   if ( misc.hydro_zeno )
-   {
-      str += QString(base + "Hydrodynamic method Zeno\n" );
-   }
+   // if ( misc.hydro_zeno )
+   // {
+   //    str += QString(base + "Hydrodynamic method Zeno\n" );
+   // }
    return str;
 }
 
