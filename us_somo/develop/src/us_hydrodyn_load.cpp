@@ -1176,7 +1176,7 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
                      editor_msg( "black", courier, QString( "All\t%1\t%2%\t%3\n" )
                                  .arg( resname_counts_nonwat_total )
                                  .arg( 100 )
-                                 .arg( tot_theo_wat )
+                                 .arg( round( tot_theo_wat ) )
                                  );
                   }
 
@@ -1390,7 +1390,7 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
                editor_msg( "black", QString( "All\t%1\t%2%\t%3\n" )
                            .arg( resname_counts_nonwat_total )
                            .arg( 100 )
-                           .arg( tot_theo_wat )
+                           .arg( round( tot_theo_wat ) )
                            );
             }
 

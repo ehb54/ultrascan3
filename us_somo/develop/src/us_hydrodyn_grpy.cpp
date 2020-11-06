@@ -120,7 +120,7 @@ bool US_Hydrodyn::calc_grpy_hydro() {
    pb_calc_grpy->setEnabled( false );
    pb_calc_hullrad->setEnabled( false );
    //   puts("calc hydro (supc)");
-   set_disabled();
+   set_disabled( false );
    display_default_differences();
    editor->append("\nBegin hydrodynamic calculations\n\n");
    results.s20w_sd = 0.0;

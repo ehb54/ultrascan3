@@ -81,6 +81,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 
 #undef R // it's defined as a us #define above & we use R as a local variable
 
+static QProgressBar * smi_progress;
 static void ev3( vector < vector < long double > > & );
 static double ETAo;
 static double DENS;
@@ -814,6 +815,14 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    smi_mm      = models_to_proc > 1;
    smi_mm_name = filename;
    smi_mm_name = smi_mm_name.replace( QRegExp( ".beams$" ), "" ).replace( "_%1", "" );
+   if ( smi_mm ) {
+      smi_progress = us_hydrodyn->mprogress;
+      smi_progress->setValue( 0 );
+      smi_progress->setFormat( "Model %p%" );
+      smi_progress->show();
+   } else {
+      smi_progress = us_hydrodyn->progress;
+   }
       
    supc_results = hydro_results;
    supc_results->total_beads = nmax;
@@ -1236,9 +1245,16 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       fclose(ris);
    }
 
+   if ( smi_mm ) {
+      us_hydrodyn->progress->setMaximum( num  );
+   }
+
    for (k = 0; k < num; k++)
    {
       //      current_model = model_idx[k];
+      if ( smi_mm ) {
+         us_hydrodyn->progress->setValue( k );
+      }
 
       /* Check for file existence and selects whole or part of the models for sequential files only   */
       if (cdmolix == 1) // never true in our case, cdmolix == 2
@@ -1379,8 +1395,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    
       ppos = 1;
       mppos = (1 + 3 + 3) * nat + 17;
-      progress->setMaximum(mppos);
-      progress->setValue(ppos++); // 1
+      smi_progress->setMaximum(mppos);
+      smi_progress->setValue(ppos++); // 1
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
@@ -1435,7 +1451,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
             }
          }
          printf("\n\n- End of PAT ...\n\n");
-         progress->setValue(ppos++); // 2
+         smi_progress->setValue(ppos++); // 2
          qApp->processEvents();
          if (us_hydrodyn->stopFlag)
          {
@@ -1518,7 +1534,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 # endif
          printf("overlaps detected\n");
          supc_free_alloced();
-         progress->setValue(mppos); 
+         smi_progress->setValue(mppos); 
          qApp->processEvents();
          if (us_hydrodyn->stopFlag)
          {
@@ -1534,7 +1550,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
               ragir(); 
               printf("\n End of function: ragir()\n"); */
 
-      progress->setValue(ppos++); //3
+      smi_progress->setValue(ppos++); //3
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
@@ -1567,7 +1583,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       tsuda();
       printf("\n End of function: tsuda()\n");
 #endif
-      progress->setValue(ppos++); // 4
+      smi_progress->setValue(ppos++); // 4
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
@@ -1579,7 +1595,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       doublesum();
       printf("\n End of function: doublesum()\n");
 #endif
-      progress->setValue(ppos++); // 5
+      smi_progress->setValue(ppos++); // 5
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
@@ -1590,7 +1606,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       printf("\n Starting function: calcqij()\n");
       calcqij();
       printf("\n\n End of function: calcqij()\n");
-      progress->setValue(ppos++); // 6
+      smi_progress->setValue(ppos++); // 6
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
@@ -1623,7 +1639,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 #endif
 
       primo = time(NULL);   /* Gets system time */
-      progress->setValue(ppos++); // 7
+      smi_progress->setValue(ppos++); // 7
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
@@ -1665,7 +1681,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
          
       riempimatrice();
 
-      progress->setValue(ppos++); // 8
+      smi_progress->setValue(ppos++); // 8
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
@@ -1736,7 +1752,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 #if defined(TSUDA_DOUBLESUM)
       tsuda1();
 #endif
-      progress->setValue(ppos++); // 9
+      smi_progress->setValue(ppos++); // 9
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
@@ -1748,7 +1764,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       sigmatcalc2();
       printf("calculated\n");
 
-      progress->setValue(ppos++); // 10
+      smi_progress->setValue(ppos++); // 10
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
@@ -1759,7 +1775,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       printf("- Matrix KSI_OC : ");
       sigmaocalc1();
       printf("calculated\n");
-      progress->setValue(ppos++); // 11
+      smi_progress->setValue(ppos++); // 11
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
@@ -1769,7 +1785,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 
       calcR();
 
-      progress->setValue(ppos++); // 12
+      smi_progress->setValue(ppos++); // 12
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
@@ -1780,7 +1796,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       sigmarRcalc1();
       printf("calculated\n");
 
-      progress->setValue(ppos++); // 13
+      smi_progress->setValue(ppos++); // 13
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
@@ -1790,7 +1806,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       printf("- Matrix KSI_OR: ");
       sigmaoRcalc();
       printf("calculated\n");
-      progress->setValue(ppos++); // 14
+      smi_progress->setValue(ppos++); // 14
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
@@ -1800,7 +1816,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 
       diffcalc();
 
-      progress->setValue(ppos++); // 15
+      smi_progress->setValue(ppos++); // 15
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
@@ -1810,7 +1826,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 
       relax_rigid_calc();
 
-      progress->setValue(ppos++); // 16
+      smi_progress->setValue(ppos++); // 16
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
@@ -2116,7 +2132,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 #endif
 
    supc_free_alloced();
-   progress->setValue(mppos); 
+   smi_progress->setValue(mppos); 
    qApp->processEvents();
    if (us_hydrodyn->stopFlag)
    {
@@ -4365,7 +4381,7 @@ riempimatrice()
    for (i = 0; i < nat; i++)
    {
 
-      progress->setValue(ppos++);
+      smi_progress->setValue(ppos++);
       qApp->processEvents();
       us_hydrodyn->lbl_core_progress->setText(QString("Iteration %1 of %2")
                                               .arg(i+1)
@@ -4418,7 +4434,7 @@ choldc(int N)
    for (i = 0; i < 3 * N; i++)
    {
 
-      progress->setValue(ppos++);
+      smi_progress->setValue(ppos++);
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
@@ -5730,7 +5746,7 @@ inverti(int N)
       
    for (j = 1; j <= 3 * N; j++)
    {
-      progress->setValue(ppos++);
+      smi_progress->setValue(ppos++);
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {

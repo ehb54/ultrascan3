@@ -3,7 +3,7 @@
 #include <QTextStream>
 
 US_Hydrodyn  * zeno_us_hydrodyn;
-QProgressBar * zeno_progress;
+static QProgressBar * zeno_progress;
 bool * zeno_stop_flag;
 static US_Udp_Msg  * zeno_us_udp_msg;
 
@@ -13429,6 +13429,7 @@ zeno_main(
 US_Hydrodyn_Zeno::US_Hydrodyn_Zeno( 
                                    hydro_options *         options,
                                    hydro_results *         results,
+                                   QProgressBar *          use_progress,
                                    US_Hydrodyn *           us_hydrodyn
                                    )
 {
@@ -13436,7 +13437,7 @@ US_Hydrodyn_Zeno::US_Hydrodyn_Zeno(
    this->results     = results;
    this->us_hydrodyn = us_hydrodyn;
    zeno_us_hydrodyn  = us_hydrodyn;
-   zeno_progress     = us_hydrodyn->progress;
+   zeno_progress     = use_progress;
    zeno_stop_flag    = & us_hydrodyn->stopFlag;
 }
 
@@ -13468,6 +13469,7 @@ bool US_Hydrodyn_Zeno::run(
                            vector < PDB_atom > *   bead_model,
                            double              &   sum_mass,
                            double              &   sum_volume,
+                           QProgressBar        *   use_progress,
                            bool                    keep_files,
                            bool                    zeno_cxx,
                            int                     threads
@@ -13477,6 +13479,7 @@ bool US_Hydrodyn_Zeno::run(
    this->filename    = filename;
    this->bead_model  = bead_model;
    this->keep_files  = keep_files;
+   zeno_progress     = use_progress;
 
    error_msg = "";
 
@@ -13750,7 +13753,6 @@ bool US_Hydrodyn::calc_zeno()
                   .arg( hydro.zeno_surface_steps ) );
    }
 
-   US_Hydrodyn_Zeno uhz( &hydro, &results, this );
 
    stopFlag = false;
    bool was_hydro_enabled = pb_calc_hydro->isEnabled();
@@ -13781,7 +13783,10 @@ bool US_Hydrodyn::calc_zeno()
          }
       }
    }
-
+   zeno_mm = models_to_proc > 1;
+   mm_mode = zeno_mm;
+   US_Hydrodyn_Zeno uhz( &hydro, &results, ( zeno_mm ? mprogress : progress ), this );
+      
    QDir::setCurrent( get_somo_dir() );
 
    qApp->processEvents();
@@ -13796,6 +13801,7 @@ bool US_Hydrodyn::calc_zeno()
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
       pb_show_hydro_results->setEnabled(false);
       progress->reset();
+      mprogress->hide();
       return false;
    }
    le_bead_model_suffix->setText(bead_model_suffix);
@@ -13897,17 +13903,6 @@ bool US_Hydrodyn::calc_zeno()
       editor_msg( "dark red", QString( us_tr( "Bead models have overlap, dimensionless intrinsic viscosity not computed.\n" ) ) );
    }      
 
-   {
-      int models_to_process = 0;
-      for (current_model = 0; current_model < (unsigned int)lb_model->count(); current_model++) {
-         if (lb_model->item(current_model)->isSelected()) {
-            if (somo_processed[current_model]) {
-               ++models_to_process;
-            }
-         }
-      }
-      zeno_mm = models_to_process > 1;
-   }
 
    QString mc =
       gparams[ "zeno_max_cap" ] == "true" ?
@@ -13926,9 +13921,22 @@ bool US_Hydrodyn::calc_zeno()
       + QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "" )
       ;
    
+   if ( zeno_mm ) {
+      progress->setValue( 0 );
+      progress->setMaximum( models_to_proc );
+      mprogress->setValue( 0 );
+      mprogress->setFormat( "Model %p%" );
+      mprogress->show();
+   }
+
+   int models_procd = 0;
+
    for (current_model = 0; current_model < (unsigned int)lb_model->count(); current_model++) {
       if (lb_model->item(current_model)->isSelected()) {
          if (somo_processed[current_model]) {
+            if ( zeno_mm ) {
+               progress->setValue( models_procd++ );
+            }
             for ( int this_repeat = 0; this_repeat < repeats; ++this_repeat ) {
                if (!first_model_no) {
                   first_model_no = current_model + 1;
@@ -13972,6 +13980,7 @@ bool US_Hydrodyn::calc_zeno()
                           &bead_models[ current_model ], 
                           sum_mass,
                           sum_volume,
+                          zeno_mm ? mprogress : progress,
                           true,
                           zeno_cxx,
                           USglobal->config_list.numThreads
@@ -13989,6 +13998,7 @@ bool US_Hydrodyn::calc_zeno()
                   pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
                   pb_show_hydro_results->setEnabled(false);
                   progress->reset();
+                  mprogress->hide();
                   return false;
                }
                if ( !result )
@@ -14003,6 +14013,7 @@ bool US_Hydrodyn::calc_zeno()
                   pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
                   pb_show_hydro_results->setEnabled(false);
                   progress->reset();
+                  mprogress->hide();
                   return false;
                } else {
                   // setup save data
@@ -14049,6 +14060,7 @@ bool US_Hydrodyn::calc_zeno()
                      pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
                      pb_show_hydro_results->setEnabled(false);
                      progress->reset();
+                     mprogress->hide();
                      return false;
                   }
                   QTextStream ts( &f );
@@ -14829,6 +14841,7 @@ bool US_Hydrodyn::calc_zeno()
    }
    play_sounds(1);
    progress->reset();
+   mprogress->hide();
    qApp->processEvents();
    return true;
 }

@@ -162,7 +162,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool saveParams;
       bool guiFlag;
       QLabel *lbl_core_progress;
-      void set_disabled();
+      void set_disabled( bool clear_bead_model_file = true );
       void set_enabled();
       QTextEdit *editor;
       void play_sounds(int);
@@ -254,6 +254,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       double use_vbar( double vbar );                // temperature vbar
       
    private:
+      bool mm_mode;
       bool pat_model( vector < PDB_atom > & model );
       bool compute_asa_rgs( const vector < PDB_atom > & model );
 
@@ -504,8 +505,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QPushButton *pb_comparative;
       QPushButton *pb_best;
 
-      QProgressBar *progress;
-      QProgressBar *mprogress;
       // TextEdit *e;
 
       US_AddAtom *addAtom;
@@ -999,6 +998,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void grpy_finished( int, QProcess::ExitStatus );
       
    public:
+      QProgressBar *progress;
+      QProgressBar *mprogress;
 
       void set_expert( bool );
 

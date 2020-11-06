@@ -1742,7 +1742,7 @@ void US_Hydrodyn::set_expert( bool expert )
    expert ? pb_rescale_bead_model->show() : pb_rescale_bead_model->hide();
 }
 
-void US_Hydrodyn::set_disabled()
+void US_Hydrodyn::set_disabled( bool clear_bead_model_file )
 {
    pb_somo->setEnabled(false);
    pb_somo_o->setEnabled(false);
@@ -1760,7 +1760,9 @@ void US_Hydrodyn::set_disabled()
    bd_anaflex_enables(false);
 
    pb_bead_saxs->setEnabled(false);
-   le_bead_model_file->setText(" not selected ");
+   if ( clear_bead_model_file ) {
+      le_bead_model_file->setText(" not selected ");
+   }
    pb_rescale_bead_model->setEnabled(false);
    pb_equi_grid_bead_model->setEnabled(false);
 }
@@ -3805,6 +3807,11 @@ int US_Hydrodyn::do_calc_hydro()
                                       progress,
                                       editor,
                                       this);
+
+   progress->reset();
+   mprogress->reset();
+   mprogress->hide();
+   
    QDir::setCurrent(somo_tmp_dir);
    if (stopFlag)
    {
@@ -3816,7 +3823,6 @@ int US_Hydrodyn::do_calc_hydro()
       pb_bead_saxs->setEnabled(true);
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
       pb_show_hydro_results->setEnabled(false);
-      progress->reset();
       return -1;
    }
 
@@ -5321,7 +5327,11 @@ void US_Hydrodyn::le_pdb_file_changed( const QString & )
 void US_Hydrodyn::update_progress( int pos, int total )
 {
    // us_qdebug( QString( "update progress %1 %2" ).arg( pos ).arg( total ) );
-   progress->setValue( pos ); progress->setMaximum( total );
+   if ( mm_mode ) {
+      mprogress->setValue( pos ); mprogress->setMaximum( total );
+   } else {
+      progress->setValue( pos ); progress->setMaximum( total );
+   }
 }
 
 void US_Hydrodyn::do_update_progress( int pos, int total ) {
