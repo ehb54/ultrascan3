@@ -410,6 +410,7 @@ static vector < float > total_s_a;
 static vector < float > used_s_a;
 static vector < float > total_vol;
 static vector < float > used_vol;
+static vector < float > asa_vol;
 
 static bool      smi_mm;
 static QString   smi_mm_name;
@@ -660,7 +661,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    a = 0;   
    tot_partvol = 0.0;
 
-   hydro_use_avg_for_volume = hydro->use_avg_for_volume;
+   hydro_use_avg_for_volume = !hydro->volume_correction && hydro->use_avg_for_volume;
+   // qDebug() << "hydro_use_avg_for_volume is " << ( hydro_use_avg_for_volume ? "true" : "false" );
 
    cout << "supc:filename    : " << filename << endl;
    cout << "supc:res_filename: " << res_filename << endl;
@@ -713,12 +715,14 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    nmax = 0;
    int models_to_proc = 0;
    QString use_filename = filename;
-   total_asa.clear( );
-   used_asa.clear( );
-   total_s_a.clear( );
-   used_s_a.clear( );
-   total_vol.clear( );
-   used_vol.clear( );
+   total_asa  .clear();
+   used_asa   .clear();
+   total_s_a  .clear();
+   used_s_a   .clear();
+   total_vol  .clear();
+   used_vol   .clear();
+   asa_vol    .clear();
+   
    float lconv = pow(10.0,9 + hydro->unit);
    float lconv2 = lconv * lconv;
    float lconv3 = lconv2 * lconv;
@@ -727,19 +731,23 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
           lconv2,
           lconv3);
 
+   double this_pr = us_hydrodyn->asa.probe_recheck_radius * lconv;
 
    for (int current_model = 0; current_model < (int)lb_model->count(); current_model++) {
       if (lb_model->item(current_model)->isSelected()) {
          if ((*somo_processed)[current_model]) {
             model_idx.push_back(current_model);
             vector < int > tmp_active_idx;
-            int tmp_count = 0;
-            float this_total_asa = 0.0f;
-            float this_used_asa = 0.0f;
-            float this_total_s_a = 0.0f;
-            float this_used_s_a = 0.0f;
-            float this_total_vol = 0.0f;
-            float this_used_vol = 0.0f;
+            int tmp_count                  = 0;
+            float this_total_asa           = 0.0f;
+            float this_used_asa            = 0.0f;
+            float this_total_s_a           = 0.0f;
+            float this_used_s_a            = 0.0f;
+            float this_total_vol           = 0.0f;
+            float this_used_vol            = 0.0f;
+            float this_asa_vol             = 0.0f;
+            double this_total_vol_from_asa = 0;
+            double this_used_vol_from_asa  = 0;
             // float this_exposed_vol   = 0.0f;
             // int this_exposed_beads = 0;
 
@@ -747,7 +755,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
                if((*bead_models)[current_model][i].active) {
                   tmp_active_idx.push_back(i);
                   tmp_count++;
-                  this_total_asa += (*bead_models)[current_model][i].bead_recheck_asa * lconv2;
+                  double this_asa = (*bead_models)[current_model][i].bead_recheck_asa * lconv2; // * 1.25;
+                  this_total_asa += this_asa;
                   float bead_total_s_a = 4.0f * M_PI * lconv2 *
                      (*bead_models)[current_model][i].bead_computed_radius *
                      (*bead_models)[current_model][i].bead_computed_radius;
@@ -757,21 +766,53 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
                      (*bead_models)[current_model][i].bead_computed_radius *
                      (*bead_models)[current_model][i].bead_computed_radius;
                   this_total_vol += bead_total_vol;
+                  double this_r = sqrt( this_asa / ( 4 * M_PI ) );
+                  double this_sa = 4.0f * M_PI *
+                     ( (*bead_models)[current_model][i].bead_computed_radius * lconv + this_pr ) *
+                     ( (*bead_models)[current_model][i].bead_computed_radius * lconv + this_pr );
+                  double this_frac = this_asa / this_sa;
+                  if ( this_frac > 1 ) {
+                     this_frac = 1;
+                  }
+                  QTextStream(stdout) << QString().sprintf(
+                                                           "~ bead radius %f asa %f sa %f pct asa %f asa_r %f pr %f \n"
+                                                           ,(*bead_models)[current_model][i].bead_computed_radius
+                                                           ,this_asa
+                                                           ,this_sa
+                                                           ,100.0 * ( this_asa / this_sa )
+                                                           ,this_r
+                                                           ,this_pr
+                                                           );
+                  this_total_vol_from_asa += this_frac * bead_total_vol;
+
                   if ( us_hydrodyn->get_color(&(*bead_models)[current_model][i]) != 6 ) {
                      this_used_asa += (*bead_models)[current_model][i].bead_recheck_asa * lconv2;
                      this_used_s_a += bead_total_s_a;
                      this_used_vol += bead_total_vol;
+                     this_used_vol_from_asa += this_frac * bead_total_vol;
                   }
                }
             }
-            bead_count.push_back(tmp_count);
-            active_idx.push_back(tmp_active_idx);
-            total_asa.push_back(this_total_asa);
-            used_asa.push_back(this_used_asa);
-            total_s_a.push_back(this_total_s_a);
-            used_s_a.push_back(this_used_s_a);
-            total_vol.push_back(this_total_vol);
-            used_vol.push_back(this_used_vol);
+            if (nmax < (int) (*bead_models)[current_model].size()) {
+               nmax = (int) (*bead_models)[current_model].size();
+            }
+
+            this_asa_vol = this_used_vol_from_asa;
+            // // cap logically (asa_vol not greater than used vol)
+            // if ( this_asa_vol > this_used_vol ) {
+            //    this_asa_vol = this_used_vol;
+            // }
+            this_asa_vol /= lconv3;
+
+            bead_count     .push_back( tmp_count );
+            active_idx     .push_back( tmp_active_idx );
+            total_asa      .push_back( this_total_asa );
+            used_asa       .push_back( this_used_asa );
+            total_s_a      .push_back( this_total_s_a );
+            used_s_a       .push_back( this_used_s_a );
+            total_vol      .push_back( this_total_vol );
+            used_vol       .push_back( this_used_vol );
+            asa_vol        .push_back( this_asa_vol );
             models_to_proc++;
 
             QTextStream( stdout ) <<
@@ -799,9 +840,30 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
                                    )
                ;
 
-            if (nmax < (int) (*bead_models)[current_model].size()) {
-               nmax = (int) (*bead_models)[current_model].size();
-            }
+
+            QTextStream( stdout ) << QString().sprintf(
+                                          "model %d\n"
+                                          "total_asa          %f\n"
+                                          "total_s_a          %f\n"
+                                          "total_vol_from_asa %f\n"
+                                          "total_vol          %f\n"
+                                          "used_asa           %f\n"
+                                          "used_s_a           %f\n"
+                                          "used_vol_from_asa  %f\n"
+                                          "used_vol           %f\n"
+                                          "asa_vol            %f\n"
+                                          ,current_model
+                                          ,this_total_asa
+                                          ,this_total_s_a
+                                          ,this_total_vol_from_asa
+                                          ,this_total_vol
+                                          ,this_used_asa
+                                          ,this_used_s_a
+                                          ,this_used_vol_from_asa
+                                          ,this_used_vol
+                                          ,this_asa_vol
+                                          );
+                                          
          }
       }
    }
@@ -6092,17 +6154,17 @@ sigmarRcalc1()
 
 
    if ( hydro_use_avg_for_volume ) {
-      if ((volcor == 1) && ((colorsixf == 1) || (colorsixf == 3))) {
-         hydro_msg = "Using average volume of all beads including buried for eq 11. ";
-         interm /= numero_sfere;
-      } else {
-         if (volcor == 1) {
-            hydro_msg = "Using total volume of all exposed beads for eq 11. ";
-            interm /= nat;
-         } else {
-            // do nothing?
-         }
-      }
+   // when we tested average
+   // hydro_msg = "Using average volume of all beads including buried for eq 11. ";
+   // interm /= numero_sfere;
+      hydro_msg = "Using the minimum of ASA volume and total volume of used beads for eq 11. ";
+      QTextStream( stdout ) << QString().sprintf(
+                                                 "active model : %d\n"
+                                                 "model_idx    : %d\n"
+                                                 ,active_model
+                                                 ,model_idx[active_model]
+                                                 );
+      interm = asa_vol[ active_model ] * 6.0 * ETAo;
    }
    
    for (i = 0; i < 3; i++)

@@ -1897,7 +1897,7 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    if ( parameters.count( "hydro.reference_system" ) ) hydro.reference_system = parameters[ "hydro.reference_system" ] == "1";
    if ( parameters.count( "hydro.boundary_cond" ) ) hydro.boundary_cond = parameters[ "hydro.boundary_cond" ] == "1";
    if ( parameters.count( "hydro.volume_correction" ) ) hydro.volume_correction = parameters[ "hydro.volume_correction" ] == "1";
-   if ( parameters.count( "hydro.use_avg_for_volume" ) ) hydro.volume_correction = parameters[ "hydro.use_avg_for_volume" ] == "1";
+   if ( parameters.count( "hydro.use_avg_for_volume" ) ) hydro.use_avg_for_volume = parameters[ "hydro.use_avg_for_volume" ] == "1";
    if ( parameters.count( "hydro.volume" ) ) hydro.volume = parameters[ "hydro.volume" ].toDouble();
    if ( parameters.count( "hydro.mass_correction" ) ) hydro.mass_correction = parameters[ "hydro.mass_correction" ] == "1";
    if ( parameters.count( "hydro.mass" ) ) hydro.mass = parameters[ "hydro.mass" ].toDouble();
@@ -3846,7 +3846,7 @@ QString US_Hydrodyn::default_differences_hydro()
    }
    if ( hydro.use_avg_for_volume != default_hydro.use_avg_for_volume )
    {
-      str += QString(base + "Use average for volume: %1\n")
+      str += QString(base + "Use ASA for volume: %1\n")
          .arg(hydro.use_avg_for_volume ? "On" : "Off");
    }
    if ( hydro.volume != default_hydro.volume &&

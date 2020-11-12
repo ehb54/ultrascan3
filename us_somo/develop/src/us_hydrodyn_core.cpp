@@ -7160,7 +7160,7 @@ int US_Hydrodyn::compute_asa( bool bd_mode, bool no_ovlp_removal )
    return 0;
 }
 
-void US_Hydrodyn::bead_check( bool use_threshold, bool message_type, bool vdw )
+void US_Hydrodyn::bead_check( bool use_threshold, bool message_type, bool vdw, bool only_asa )
 {
    // recheck beads here
 
@@ -7216,6 +7216,31 @@ void US_Hydrodyn::bead_check( bool use_threshold, bool message_type, bool vdw )
 
    //  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg( model_name( current_model ) ) + "_pre_recheck" + DOTSOMO, &bead_model);
    //  write_bead_model(somo_dir + SLASH + project + QString("_%1").arg( model_name( current_model ) ) + "_pre_recheck" + DOTSOMO, &bead_model );
+
+   if ( only_asa ) {
+      double total_asa = 0e0;
+      double used_asa  = 0e0;
+      double lconv = pow(10.0,9 + hydro.unit);
+      double lconv2 = lconv * lconv;
+
+      for ( int i = 0; i < (int) bead_model.size(); ++i ) {
+         total_asa += bead_model[i].bead_recheck_asa * lconv2;
+         if ( get_color( &bead_model[i] ) != 6 ) {
+            used_asa += bead_model[i].bead_recheck_asa * lconv2;
+         }
+      }
+      editor_msg( "dark blue",
+                  QString().sprintf(
+                                    "Recomputed ASA of beads:\n"
+                                    "Total ASA: %f\n"
+                                    "Used ASA: %f\n"
+                                    ,total_asa
+                                    ,used_asa
+                                    )
+                  );
+      return;
+   }
+                                    
 
    if ( vdw ) {
       for (unsigned int i = 0; i < bead_model.size(); i++) {

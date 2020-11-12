@@ -253,6 +253,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       double use_solvent_dens();                     // temperature solvent density   - checks manual flag
       double use_vbar( double vbar );                // temperature vbar
       
+      struct asa_options asa;
+
    private:
       bool mm_mode;
       bool pat_model( vector < PDB_atom > & model );
@@ -387,7 +389,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool alt_method; // true = new bead method, false = original bead method
       QString bead_model_file;
       struct residue current_residue;
-      struct asa_options asa;
       struct asa_options default_asa;
       struct pdb_visualization pdb_vis;
       struct pdb_visualization default_pdb_vis;
@@ -1143,7 +1144,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void view_asa(); // show asa file in editor
       void view_bead_model(); // show bead model file in editor
       void view_file(const QString &, QString title = "SOMO editor"); // call editor to view a file
-      void bead_check( bool use_threshold = false, bool message_type = false, bool vdw = false ); // recheck beads
+      void bead_check( bool use_threshold = false, bool message_type = false, bool vdw = false, bool only_asa = false ); // recheck beads
       void load_config();
       void write_config();
       void write_config(const QString &);

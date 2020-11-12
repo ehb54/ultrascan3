@@ -436,6 +436,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          somo_processed.resize(lb_model->count());
          bead_models.resize(lb_model->count());
          current_model = 0;
+         bead_check( false, false, false, true );
          bead_models[0] = bead_model;
          somo_processed[0] = 1;
          bead_models_as_loaded = bead_models;

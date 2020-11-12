@@ -353,7 +353,7 @@ void US_Hydrodyn_Hydro::setupGUI()
    connect(rb_auto_volume, SIGNAL(clicked()), this, SLOT(select_volume_correction()));
 
    rb_auto_volume_avg = new QRadioButton();
-   rb_auto_volume_avg->setText(us_tr(" Auto. (Avg. of Bead Vol.)"));
+   rb_auto_volume_avg->setText(us_tr(" Auto. (ASA vol.)"));
    rb_auto_volume_avg->setEnabled(true);
    rb_auto_volume_avg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    rb_auto_volume_avg->setPalette( PALET_NORMAL );
