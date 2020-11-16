@@ -545,9 +545,18 @@ void US_Analysis_auto::gui_update( )
 	      //IF Canceled by user:
 	      if ( stage_name == "FITMEN" && ( stage_status == "CANCELED" || stage_status == "canceled" ) )
 		{
-		  processed_stage_groupbox = groupbox_2DSA_IT [ triple_curr ];
-		  stage_name = "2DSA-IT";
-		  		  
+		  if ( groupbox_2DSA_IT.contains( triple_curr ) )
+		    {
+		      processed_stage_groupbox = groupbox_2DSA_IT [ triple_curr ];
+		      stage_name = "2DSA-IT";
+		    }
+		  
+		  else if ( groupbox_2DSA_MC.contains( triple_curr ) )
+		    {
+		      processed_stage_groupbox = groupbox_2DSA_MC [ triple_curr ];
+		      stage_name = "2DSA-MC";
+		    }
+		  
 		  qDebug() << "CANCELED status for triple/stage (FITMEN) -- " << triple_curr_key << "/" << submitted.toString();
 
 		  stage_HPCAnalysisRequestID = "N/A";
@@ -724,14 +733,27 @@ void US_Analysis_auto::gui_update( )
 	  //Special case: children triple of the channel, while parent triple (selected wvl) is CANCELED
 	  if ( submitted.toString() == "FITMEN" && ( nextWaitStatus == "CANCELED" || nextWaitStatus == "canceled") )
 	    {
-	       current_stage_groupbox = groupbox_2DSA_IT [ triple_curr ];
-
-	       curr_HPCAnalysisRequestID = "N/A";
-	       status_msg = "Job has been scheduled for deletion";
-	       status = "CANCELED";
-	       stage_name = "2DSA-IT";
-	       create_time = "N/A";
-	       update_time = "N/A";
+	      if ( groupbox_2DSA_IT.contains( triple_curr ) )
+		{
+		  current_stage_groupbox = groupbox_2DSA_IT [ triple_curr ];
+		  stage_name = "2DSA-IT";
+		}
+	      
+	      else if ( groupbox_2DSA_MC.contains( triple_curr ) )
+		{
+		  current_stage_groupbox = groupbox_2DSA_MC [ triple_curr ];
+		  stage_name = "2DSA-MC";
+		}
+	      
+	      //current_stage_groupbox = groupbox_2DSA_IT [ triple_curr ];
+	      //stage_name = "2DSA-IT";
+	      
+	      curr_HPCAnalysisRequestID = "N/A";
+	      status_msg = "Job has been scheduled for deletion";
+	      status = "CANCELED";
+	      
+	      create_time = "N/A";
+	      update_time = "N/A";
 	    }
 
 	  if ( current_stage_groupbox != NULL )
