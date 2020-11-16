@@ -111,6 +111,7 @@ class US_Edit : public US_Widgets
       bool        job4run;         //!< Run 4 (2dsa_it) run flag
       bool        job5run;         //!< Run 5 (2dsa_mc) run flag
       bool        job3auto;        //!< Fit-Meniscus auto-run flag
+      bool        job6run_pcsa;
       QString     job1nois;        //!< 2DSA noise type
       QString     job2nois;        //!< 2DSA-FM noise type
       QString     job4nois;        //!< 2DSA-IT noise type

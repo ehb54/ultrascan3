@@ -639,6 +639,11 @@ pb_plateau->setVisible(false);
    // details[ "invID_passed" ] = QString("12");
    // details[ "filename" ]     = QString("SavelyevA_BSA_082520-run1276");
    // details[ "protocolName" ] = QString("SavelyevA_BSA_082520");
+
+   // /* Yu: */
+   // details[ "invID_passed" ] = QString("86");
+   // details[ "filename" ]     = QString("Yu_ABC-ala-indivdual_111320-run869");
+   // details[ "protocolName" ] = QString("Yu_ABC-ala-indivdual_111320");  
    
    // load_auto( details );
    
@@ -1465,6 +1470,7 @@ void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
   job4run     = false;
   job5run     = false;
   job3auto    = false;
+  job6run_pcsa= false;
   /////////////////////////
   
   details_at_editing_local = details_at_editing;
@@ -2097,7 +2103,13 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 
    //AProfile details per channel
    read_aprofile_data_from_aprofile();
-   qDebug() << "job1run, job2run, job3run, job4run, job5run: " << job1run << ", " <<  job2run << ", " <<  job3run << ", " << job4run << ", " <<  job5run ;
+   qDebug() << "job1run, job2run, job3run, job4run, job5run, job6run_pcsa: "
+	    <<  job1run << ", "
+	    <<  job2run << ", "
+	    <<  job3run << ", "
+	    <<  job4run << ", "
+	    <<  job5run << ", "
+	    <<  job6run_pcsa;
    
    //Debug
    for (int i=0; i<cb_triple->count(); i++)
@@ -2500,21 +2512,26 @@ bool US_Edit::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
       
       if ( xmli.isStartElement() )
       {
-	//QString ename   = xmli.name().toString();
 	
+	//QString ename   = xmli.name().toString();
+
 	if ( ename == "channel_parms" )
 	  {
             QXmlStreamAttributes attr = xmli.attributes();
 
-	    QString channel_name = attr.value( "channel" ).toString();
-	    
-	    QStringList aprof_parms;
-	    aprof_parms << attr.value( "load_volume" ).toString()
-			<< attr.value( "data_end" ).toString();
-
-	    qDebug() << "READING aprof XML: " << channel_name << ", " << aprof_parms;
-	    
-	    aprof_channel_to_parms[ channel_name ] = aprof_parms;
+	    if ( attr.hasAttribute("load_volume") )
+	      {
+		
+		QString channel_name = attr.value( "channel" ).toString();
+		
+		QStringList aprof_parms;
+		aprof_parms << attr.value( "load_volume" ).toString()
+			    << attr.value( "data_end" ).toString();
+		
+		qDebug() << "READING aprof XML: " << channel_name << ", " << aprof_parms;
+		
+		aprof_channel_to_parms[ channel_name ] = aprof_parms;
+	      }
 	  }
 	
 	else if ( ename == "job_2dsa" )
@@ -2532,12 +2549,16 @@ bool US_Edit::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
 	   //job2nois       = attr.value( "noise" ).toString();
 	   //fitrng         = attr.value( "fit_range" ).toString().toDouble();
 	   //grpoints       = attr.value( "grid_points" ).toString().toInt();
+
+	   qDebug() << "job2run: " << job2run;
          }
 	else if ( ename == "job_fitmen" )
 	  {
             QXmlStreamAttributes attr = xmli.attributes();
             job3run        = bool_flag( attr.value( "run" ).toString() );
             job3auto       = attr.value( "interactive" ).toString().toInt() == 0;
+
+	    qDebug() << "job3run: " << job3run;
 	  }
 	else if ( ename == "job_2dsa_it" )
 	  {
@@ -2545,19 +2566,30 @@ bool US_Edit::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
             job4run        = bool_flag( attr.value( "run" ).toString() );
             job4nois       = attr.value( "noise" ).toString();
             //rfiters        = attr.value( "max_iterations" ).toString().toInt();
+
+	    qDebug() << "job4run: " << job4run;
 	  }
 	else if ( ename == "job_2dsa_mc" )
 	  {
             QXmlStreamAttributes attr = xmli.attributes();
             job5run        = bool_flag( attr.value( "run" ).toString() );
             //mciters        = attr.value( "mc_iterations" ).toString().toInt();
+
+	    qDebug() << "job5run: " << job5run;
+	  }
+	else if ( ename == "p_pcsa" )
+	  {
+	    QXmlStreamAttributes attr = xmli.attributes();
+            job6run_pcsa   = bool_flag( attr.value( "job_run" ).toString() );
+
+	    qDebug() << "job6run_pcsa: " << job6run_pcsa;
 	  }
       }
       
       bool was_end    = xmli.isEndElement();  // Just read was End of element?
       xmli.readNext();                        // Read the next element
 
-      if ( was_end  &&  ename == "p_2dsa" )   // Break after "</p_2dsa>"
+      if ( was_end  &&  ename == "p_pcsa" )   // Break after "</p_pcsa>"
          break;
       
       // else if ( ename == "p_2dsa" )       //Stop reading AProfile when 2DSA section reached 
@@ -6981,7 +7013,9 @@ QString US_Edit::compose_json( bool fm_stage )
     json += QString("\"2DSA_IT\",");
   if (job5run )
     json += QString("\"2DSA_MC\",");
-
+  if (job6run_pcsa )
+    json += QString("\"PCSA\",");
+  
   //remove last coma
   json.chop(1);
 
