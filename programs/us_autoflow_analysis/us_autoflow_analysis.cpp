@@ -66,12 +66,12 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   
   // // ---- Testing ----
   // QMap < QString, QString > protocol_details;
-  // protocol_details[ "invID_passed" ] = QString("12");
-  // protocol_details[ "analysisIDs"  ] = QString( "61,62,63,64,65,66" );
+  // protocol_details[ "invID_passed" ] = QString("3");
+  // protocol_details[ "analysisIDs"  ] = QString( "125" );
   
   // initPanel( protocol_details );
 
-  // // -----------------
+  // -----------------
 
 }
 
@@ -229,7 +229,7 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       //TEST
       //json = "{\"to_process\":[\"FITMEN\",\"2DSA_IT\",\"2DSA_MC\"],\"processed\":[\"2DSA\"],\"submitted\":\"2DSA_FM\"}" ;
 
-      if ( json.contains("2DSA") )    //ALEXeY: maybe more strict condition here? (as 2DSA is in other stages...)
+      if ( json.contains("2DSA") )    //ALEXEY: maybe more strict condition here? (as 2DSA is in other stages...)
 	job1run = true;
       if ( json.contains("2DSA_FM") )
 	job2run = true;
@@ -239,6 +239,8 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 	job4run = true;	  
       if ( json.contains("2DSA_MC") )
 	job5run = true;
+      if ( json.contains("PCSA") )
+	job6run_pcsa = true;
     
       
       
@@ -303,6 +305,17 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 	  childItem_2DSA_MC [ triple_curr ] = new QTreeWidgetItem();
 	  topItem [ triple_curr ] -> addChild( childItem_2DSA_MC [ triple_curr ] );
 	  treeWidget->setItemWidget( childItem_2DSA_MC [ triple_curr ] , 1, groupbox_2DSA_MC [ triple_curr ] );
+	}
+
+      if ( job6run_pcsa )  //PCSA
+	{
+	  QString stage_name( tr("PCSA") );
+	  QString child_name = stage_name + " (" + triple_curr + ")";
+	  groupbox_PCSA[ triple_curr ] = createGroup( child_name  );
+
+	  childItem_PCSA [ triple_curr ] = new QTreeWidgetItem();
+	  topItem [ triple_curr ] -> addChild( childItem_PCSA [ triple_curr ] );
+	  treeWidget->setItemWidget( childItem_PCSA [ triple_curr ] , 1, groupbox_PCSA [ triple_curr ] );
 	}
     }
   
@@ -447,6 +460,8 @@ void US_Analysis_auto::gui_update( )
 		to_process_stage_groupbox = groupbox_2DSA_IT [ triple_curr ];
 	      if ( stage_to_process == "2DSA_MC" )
 		to_process_stage_groupbox = groupbox_2DSA_MC [ triple_curr ];
+	      if ( stage_to_process == "PCSA" )
+		to_process_stage_groupbox = groupbox_PCSA [ triple_curr ];
 
 	      if ( to_process_stage_groupbox != NULL ) 
 		{
@@ -531,10 +546,11 @@ void US_Analysis_auto::gui_update( )
 	      if ( stage_name == "FITMEN" && ( stage_status == "CANCELED" || stage_status == "canceled" ) )
 		{
 		  processed_stage_groupbox = groupbox_2DSA_IT [ triple_curr ];
+		  stage_name = "2DSA-IT";
+		  		  
 		  qDebug() << "CANCELED status for triple/stage (FITMEN) -- " << triple_curr_key << "/" << submitted.toString();
 
 		  stage_HPCAnalysisRequestID = "N/A";
-		  stage_name = "2DSA-IT";
 		  stage_createTime = "N/A";
 		  stage_updateTime = "N/A";
 		  stage_status = "CANCELED";
@@ -549,6 +565,8 @@ void US_Analysis_auto::gui_update( )
 		processed_stage_groupbox = groupbox_2DSA_IT [ triple_curr ];
 	      if ( stage_name == "2DSA_MC" )
 		processed_stage_groupbox = groupbox_2DSA_MC [ triple_curr ];
+	      if ( stage_name == "PCSA" )
+		processed_stage_groupbox = groupbox_PCSA [ triple_curr ];
 
 	      if ( processed_stage_groupbox != NULL )
 		{
@@ -700,6 +718,8 @@ void US_Analysis_auto::gui_update( )
 	    current_stage_groupbox = groupbox_2DSA_IT [ triple_curr ];
 	  if ( submitted.toString() == "2DSA_MC" )
 	    current_stage_groupbox = groupbox_2DSA_MC [ triple_curr ];
+	  if ( submitted.toString() == "PCSA" )
+	    current_stage_groupbox = groupbox_PCSA [ triple_curr ];
 
 	  //Special case: children triple of the channel, while parent triple (selected wvl) is CANCELED
 	  if ( submitted.toString() == "FITMEN" && ( nextWaitStatus == "CANCELED" || nextWaitStatus == "canceled") )
@@ -1883,7 +1903,7 @@ double d20w=sc->D;
 
 
 
-//Slot to delete Job
+//Slot to show overlay plot
 void US_Analysis_auto::show_overlay( QString triple_stage )
 {
   /** Stop update timer for now? ***/

@@ -22,12 +22,14 @@ class US_Analysis_auto : public US_Widgets
 	 QMap<QString, QTreeWidgetItem *> childItem_2DSA_FITMEN;
 	 QMap<QString, QTreeWidgetItem *> childItem_2DSA_IT;
 	 QMap<QString, QTreeWidgetItem *> childItem_2DSA_MC;
+	 QMap<QString, QTreeWidgetItem *> childItem_PCSA;
 
 	 QMap<QString, QGroupBox *> groupbox_2DSA;
 	 QMap<QString, QGroupBox *> groupbox_2DSA_FM;
 	 QMap<QString, QGroupBox *> groupbox_2DSA_FITMEN;
 	 QMap<QString, QGroupBox *> groupbox_2DSA_IT;
 	 QMap<QString, QGroupBox *> groupbox_2DSA_MC;
+	 QMap<QString, QGroupBox *> groupbox_PCSA;
 
 	 QTimer * timer_update;
 	 QTimer * timer_end_process;
@@ -176,6 +178,7 @@ class US_Analysis_auto : public US_Widgets
 	 bool        job4run;         //!< Run 4 (2dsa_it) run flag
 	 bool        job5run;         //!< Run 5 (2dsa_mc) run flag
 	 bool        job3auto;        //!< Fit-Meniscus auto-run flag
+	 bool        job6run_pcsa;
 	 QString     job1nois;        //!< 2DSA noise type
 	 QString     job2nois;        //!< 2DSA-FM noise type
 	 QString     job4nois;        //!< 2DSA-IT noise type
