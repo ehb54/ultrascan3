@@ -82,7 +82,8 @@ class US_MPI_Analysis : public QObject
     double              alpha;
 
     long int            maxrss;
-    static const int    min_experiment_size      = 100;
+    int                 min_experiment_size;
+    static const int    def_experiment_size      = 100;
 #if QT_VERSION > 0x050000
     const double        min_variance_improvement = 1.0e-100;
 #else

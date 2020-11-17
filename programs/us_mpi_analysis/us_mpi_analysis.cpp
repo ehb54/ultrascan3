@@ -63,11 +63,14 @@ US_MPI_Analysis::US_MPI_Analysis( int nargs, QStringList& cmdargs ) : QObject()
    // Command line special parameter keys
    const QString wallkey ( "-walltime" );
    const QString pmgckey ( "-mgroupcount" );
+   const QString sgszkey ( "-sgsize" );
    // Alternate versions of those keys
    const QString wallkey2( "-WallTimeLimit" );
    const QString pmgckey2( "-MGroupCount" );
+   const QString sgszkey2( "-SubGridSize" );
    const QString wallkey3( "-wallTimeLimit" );
    const QString pmgckey3( "-pmgc" );
+   const QString sgszkey3( "-subgridsize" );
 
    MPI_Comm_size( MPI_COMM_WORLD, &proc_count );
    MPI_Comm_rank( MPI_COMM_WORLD, &my_rank );
@@ -77,10 +80,12 @@ US_MPI_Analysis::US_MPI_Analysis( int nargs, QStringList& cmdargs ) : QObject()
    maxrss       = 0L;
    minimize_opt = 2;
    in_gsm       = false;
+   min_experiment_size = def_experiment_size;
    QString tarfile;
    QString jxmlfili;
    task_params[ "walltime"    ] = "1440";
    task_params[ "mgroupcount" ] = "1";
+   task_params[ "subgridsize" ] = "100";
 
    // Get some task parameters from the command line
    for ( int jj = 1; jj < nargs; jj++ )
@@ -117,6 +122,14 @@ DbgLv(0) << "CmdArg: jj" << jj << "cmdarg" << cmdarg;
          {  // Get number of parallel masters groups
             task_params[ "mgroupcount" ] = cmdval;
          }
+         else if ( cmdarg.contains( sgszkey )   ||
+                   cmdarg.contains( sgszkey2 )  ||
+                   cmdarg.contains( sgszkey3 ) )
+         {  // Get minimum subgrid size in solute points
+            task_params[ "subgridsize" ] = cmdval;
+         }
+else
+DbgLv(0) << "CmdArg -- unknown cmdarg " << cmdarg << "cmdval" << cmdval;
 if(my_rank==0)
 DbgLv(0) << "CmdArg:   valx" << valx << "cmdval" << cmdval;
       }
@@ -134,6 +147,7 @@ DbgLv(0) << "CmdArg:   valx" << valx << "cmdval" << cmdval;
 if(my_rank==0) {
 DbgLv(0) << "CmdArg: walltime" << task_params["walltime"];
 DbgLv(0) << "CmdArg: mgroupcount" << task_params["mgroupcount"];
+DbgLv(0) << "CmdArg: minexpsize" << task_params["subgridsize"];
 DbgLv(0) << "CmdArg: tarfile" << tarfile;
 DbgLv(0) << "CmdArg: jxmlfili" << jxmlfili;
 }
@@ -1001,6 +1015,7 @@ if (my_rank==0) DbgLv(0) << "ckGrSz: ssp count"
    // Determine masters-group count and related controls
    mgroup_count = task_params[ "mgroupcount" ].toInt();
    max_walltime = task_params[ "walltime"    ].toInt();
+   min_experiment_size = task_params[ "subgridsize" ].toInt();
 
    if ( is_composite_job )
    {
