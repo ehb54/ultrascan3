@@ -7,7 +7,7 @@ INCLUDEPATH    += ../../include
 DEPENDPATH	= $$INCLUDEPATH
 DESTDIR = ../bin
 
-unix:LIBS += -lqwtplot3d -L../../lib
+unix:LIBS += -lqwtplot3d -L../../../lib -lGLU
 linux-g++:QMAKE_CXXFLAGS += -fno-exceptions
 
 win32{
