@@ -64,20 +64,24 @@ fi
 if [ $ISWIN -eq 1 ]; then
   # Run makes for lib,all in MSYS window
   cd $SOMO3/develop
-  pwd
-  cp Makefile-lib Makefile
-  cp Makefile.R-lib Makefile.Release
-  cp Makefile.D-lib Makefile.Debug
+  echo current path for somo compiling is `pwd`
+  qmake libus_somo.pro
+  # cp Makefile-lib Makefile
+  # cp Makefile.R-lib Makefile.Release
+  # cp Makefile.D-lib Makefile.Debug
   make
-  cp Makefile-all Makefile
-  cp Makefile.R-all Makefile.Release
-  cp Makefile.D-all Makefile.Debug
+  # cp Makefile-all Makefile
+  # cp Makefile.R-all Makefile.Release
+  # cp Makefile.D-all Makefile.Debug
+  qmake us_somo.pro
   make
   echo "MAKE of somo complete"
   cd ../
   ls -l ./bin
-  cp -p bin/* ../ultrascan3/bin/
-  cp -rp etc ../ultrascan3/
+  echo cp -p bin/* $ULTRASCAN/bin/
+  cp -p bin/* $ULTRASCAN/bin/
+  echo cp -rp etc $ULTRASCAN/ultrascan3/
+  cp -rp etc $ULTRASCAN/ultrascan3/
   exit 0
 fi
 
