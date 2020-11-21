@@ -50,8 +50,8 @@ US_ConvertGui::US_ConvertGui( QString auto_mode ) : US_Widgets()
   
    ExpData.invID = US_Settings::us_inv_ID();
 
-   usmode = false;
-
+   usmode    = false;
+   
    // Ensure data directories are there
    QDir dir;
    dir.mkpath( US_Settings::workBaseDir() );
@@ -566,51 +566,11 @@ DbgLv(1) << "CGui: reset complete";
    // protocol_details[ "label" ]          = QString("Some label");
 
    
-   // // // // /*********************************************************************************/
+   // /*********************************************************************************/
 
    
    // import_data_auto( protocol_details ); 
    
-
-   // qDebug() << "ExpData: ";
-
-   // qDebug() << "ExpData.invID " << ExpData.invID;             
-   // qDebug() << "ExpData.invGUI" << ExpData.invGUID;           
-   
-   // qDebug() << "ExpData.name" <<    ExpData.name;              
-   // qDebug() << "ExpData.expID" <<   ExpData.expID;             
-   // qDebug() << "ExpData.expGUID" << ExpData.expGUID;           
-   // //qDebug() << ExpData.project;
-   // qDebug() << "ExpData.project.projectGUID" << ExpData.project.projectGUID;
-   // qDebug() << "ExpData.runID" <<              ExpData.runID;             
-   // qDebug() << "ExpData.labID" <<              ExpData.labID;             
-   // qDebug() << "ExpData.instrumentID" <<       ExpData.instrumentID;        
-   // qDebug() << "ExpData.instrumentSerial" <<   ExpData.instrumentSerial;  
-   // qDebug() << "ExpData.operatorID" <<         ExpData.operatorID;        
-   // qDebug() << "ExpData.operatorGUID" <<       ExpData.operatorGUID;      
-   // qDebug() << "ExpData.rotorID" <<            ExpData.rotorID;           
-   // qDebug() << "ExpData.rotorGUID" <<          ExpData.rotorGUID;         
-   // qDebug() << "ExpData.rotorSerial" <<        ExpData.rotorSerial;       
-   // qDebug() << "ExpData.rotorName" <<          ExpData.rotorName;         
-   // qDebug() << "ExpData.calibrationID" <<      ExpData.calibrationID;     
-   // qDebug() << "ExpData.rotorCoeff1" <<        ExpData.rotorCoeff1;       
-   // qDebug() << "ExpData.rotorCoeff2" <<        ExpData.rotorCoeff2;       
-   // qDebug() << "ExpData.rotorUpdated" <<       ExpData.rotorUpdated;      
-   // qDebug() << "ExpData.expType" <<            ExpData.expType;           
-   // qDebug() << "ExpData.opticalSystem" <<      ExpData.opticalSystem;        
-   // //qDebug() << ExpData.rpms;              
-   // qDebug() << "ExpData.runTemp" <<            ExpData.runTemp;           
-   // qDebug() << "ExpData.label" <<              ExpData.label;             
-   // qDebug() << "ExpData.comments" <<           ExpData.comments;          
-   // qDebug() << "ExpData.centrifugeProtocol" << ExpData.centrifugeProtocol;
-   // qDebug() << "ExpData.date" <<               ExpData.date;              
-   // qDebug() << "ExpData.syncOK" <<             ExpData.syncOK;                
-   // qDebug() << "ExpData.experimentTypes" <<    ExpData.experimentTypes;    
-   // //qDebug() << ExpData.RIProfile;        
-   // //qDebug() << ExpData.RIwvlns;          
-   // qDebug() << "ExpData.RI_nscans" <<  ExpData.RI_nscans;        
-   // qDebug() << "ExpData.RI_nwvlns" <<  ExpData.RI_nwvlns;      
-
 
    qDebug() << "US_CONVERT: SET !"; 
 }
@@ -620,8 +580,8 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
 {
    ExpData.invID = US_Settings::us_inv_ID();
 
-   usmode = false;
-
+   usmode    = false;
+   
    // Ensure data directories are there
    QDir dir;
    dir.mkpath( US_Settings::workBaseDir() );
@@ -2043,9 +2003,13 @@ DbgLv(1) << "CGui:iA:  RUNID from files[0]: files[0]" << fname << ", runID: " <<
       return;
 
    setTripleInfo();
-   le_description -> setText( allData[ 0 ].description );
- 
-   
+
+   //DESC SET 1
+   if ( !us_convert_auto_mode )
+     le_description -> setText( correct_description( allData[ 0 ].description ) );
+   else
+     le_description -> setText( allData[ 0 ].description );
+    
    init_excludes();
    plot_current();
    saveStatus    = NOT_SAVED;
@@ -2102,6 +2066,28 @@ DbgLv(1) << "rTS: NON_EXIST:" << tmst_fnamei;
    pb_showTmst->setEnabled( ! tmst_fnamei.isEmpty() );
 }
 
+
+//Correct description for double solution names
+QString US_ConvertGui::correct_description( QString & description )
+{
+  QStringList desc_from_allData_A = (description.split(";")[0]).split(":");
+  QStringList desc_from_allData_B = (description.split(";")[1]).split(":");
+  
+  QString desc_chan_A = desc_from_allData_A[2].simplified().split(",")[0];
+  QString desc_chan_B = desc_from_allData_B[1].simplified().split(" ")[0];
+  QString desc_corrected = desc_from_allData_A[0] + ":"  +
+                           desc_from_allData_A[1] + ": " +
+                           desc_chan_A + ";"             +
+                           desc_from_allData_B[0] + ": " +
+                           desc_chan_B;
+  
+  // qDebug() << "DESC A: " << desc_chan_A;
+  // qDebug() << "DESC B: " << desc_chan_B;
+  // qDebug() << "DECS_CORRECTED: " << desc_corrected;
+
+  return desc_corrected;
+}
+  
 // Enable the common dialog controls when there is data
 void US_ConvertGui::enableControls( void )
 {
@@ -3158,6 +3144,9 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    triple_index();
    le_solutionDesc->setText( out_chaninfo[ tripListx ].solution.solutionDesc );
    le_description ->setText( outData[ tripDatax ]->description );
+   //DESC SET 2
+   qDebug() << "DES SET 2: " << outData[ tripDatax ]->description;
+   
    //le_centerpieceDesc ->setText( QString::number(out_chaninfo[ tripListx ].centerpiece) );
    le_centerpieceDesc ->setText( out_chaninfo[ tripListx ].centerpieceName );
 
@@ -4180,7 +4169,11 @@ DbgLv(1) << "chgTrp: trDx trLx" << tripDatax << tripListx
    // Reset maximum scan control values
    enableScanControls();
 
-   le_description ->setText( outData[ tripDatax ]->description );
+   if ( !us_convert_auto_mode )
+     le_description ->setText( correct_description ( outData[ tripDatax ]->description ) );
+   else
+     le_description ->setText( outData[ tripDatax ]->description );
+
    le_solutionDesc->setText( out_chaninfo[ tripListx ].solution.solutionDesc );
    le_centerpieceDesc ->setText( out_chaninfo[ tripListx ].centerpieceName );
 
@@ -7027,17 +7020,21 @@ DbgLv(1) << "TRIPLE_Index(): "
 
       //ALEXEY: the following part is buggy: commented out for now - seems to help with plotting/selecting triples for non-first channel for MWL case
       //Ask Gary (if this section in place, it causes incorrect placement of cb_lambplot indexes, so no plots generated...)
-#if 0
-      if ( tripDatax >= tripx2 )
-      {  // Less wavelengths in this channel than in the previous one
+//#if 0
+
+// if ( !us_convert_auto_mode )
+   {
+     if ( tripDatax >= tripx2 )
+       {  // Less wavelengths in this channel than in the previous one
          tripDatax      = ( tripx1 + tripx2 ) / 2;
          mwl_connect( false );
-DbgLv(1) << "Inside triple_index(): cb_lambplot->currentIndex() = " << cb_lambplot->currentIndex(); 
+	 DbgLv(1) << "Inside triple_index(): cb_lambplot->currentIndex() = " << cb_lambplot->currentIndex(); 
          cb_lambplot->setCurrentIndex( ( tripDatax - tripx1 ) );
-      
+	 
          mwl_connect( true  );
-      }
-#endif
+       }
+   }
+      //#endif
 DbgLv(1) << "Inside triple_index(): cb_lambplot->currentIndex() = " << cb_lambplot->currentIndex(); 
    }
 
