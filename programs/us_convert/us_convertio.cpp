@@ -165,7 +165,7 @@ qDebug() << "cvio:WrRDB: trx" << trx << "soluGUID"
                            QString( "upload_aucData" ), rawDataID );
 //qDebug() << "cvio:WrRDB:   wrStat" << writeStatus;
 
-         if ( writeStatus == US_DB2::ERROR )
+         if ( writeStatus == US_DB2::DBERROR )
          {
             error += "Error processing file:\n" + 
                      dir + triple->tripleFilename + "\n" +
@@ -312,7 +312,7 @@ else
    if ( readStatus == US_DB2::NO_EXPERIMENT )
       return( "The current run ID is not found in the database." );
 
-   else if ( readStatus == US_DB2::ERROR )
+   else if ( readStatus == US_DB2::DBERROR )
       ; // Didn't find any RI Profile data
 
    else if ( readStatus != US_DB2::OK )
@@ -468,7 +468,7 @@ qDebug() << " rRDD: read BlobFromDB (loop)";
       int readStatus = db->readBlobFromDB( f, QString( "download_aucData" ),
                                            rawDataIDs[ i ].toInt() );
 
-      if ( readStatus == US_DB2::ERROR )
+      if ( readStatus == US_DB2::DBERROR )
       {
          error += "Error processing file: " + f + "\n" +
                   "Could not open file or no data \n";

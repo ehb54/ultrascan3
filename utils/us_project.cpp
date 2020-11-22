@@ -62,7 +62,7 @@ int US_Project::readFromDisk( QString& guid )
    {
       qDebug() << "Error: xml error: \n"
                << xml.errorString();
-      return US_DB2::ERROR;
+      return US_DB2::DBERROR;
    }
 
    saveStatus = HD_ONLY;

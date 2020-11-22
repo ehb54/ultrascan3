@@ -6071,7 +6071,7 @@ DbgLv(1) << "DBSv:  files count" << files.size();
       return;
    }
 
-   else if ( status == US_DB2::ERROR )
+   else if ( status == US_DB2::DBERROR )
    {
       // This is what happens in the case of RI data, and the xml is bad
       QMessageBox::warning( this,

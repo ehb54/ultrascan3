@@ -68,7 +68,7 @@ int US_Solution::readFromDisk( QString& guid )
    {
       qDebug() << "Error: xml error: \n"
                << xml.errorString();
-      return US_DB2::ERROR;
+      return US_DB2::DBERROR;
    }
 
    // Load actual buffer and analyte files if we can find them

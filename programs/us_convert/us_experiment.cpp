@@ -438,7 +438,7 @@ qDebug() << "Exp:rdDB: importRIxml status" << status;
          // This isn't exactly an error; data is read but we don't have an
          // intensity profile
          RIProfile.clear();
-         return US_DB2::ERROR;
+         return US_DB2::DBERROR;
       }
 
    }

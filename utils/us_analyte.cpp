@@ -253,7 +253,7 @@ int US_Analyte::read_analyte( const QString& filename )
    {
       qDebug() << "Cannot open file " << filename;
       message = QObject::tr( "Could not open analyte file for reading" );
-      return US_DB2::ERROR;
+      return US_DB2::DBERROR;
    }
 
    double               freq;
@@ -507,7 +507,7 @@ int US_Analyte::write_disk( const QString& filename )
    {
       qDebug() << "Cannot open file for writing: " << filename;
       message = QObject::tr( "Cannot open file for writing" );
-      return US_DB2::ERROR;
+      return US_DB2::DBERROR;
    }
 
    QXmlStreamWriter xml( &file );
