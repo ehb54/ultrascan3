@@ -43,7 +43,7 @@ class US_UTIL_EXTERN US_DB2
     enum dbStatus
     {
       OK             = 0,       //!< Query ok; no error
-      ERROR          = -1,      //!< Unspecified error
+      DBERROR        = -1,      //!< Unspecified error
 
       NOT_CONNECTED  = 1,       //!< Database system is not connected
      

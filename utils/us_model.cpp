@@ -556,7 +556,7 @@ int US_Model::load( bool db_access, const QString& guid, US_DB2* db )
 // Load model from local disk
 int US_Model::load_disk( const QString& guid )
 {
-   int error = US_DB2::ERROR;  // Error by default
+   int error = US_DB2::DBERROR;  // Error by default
 
    QString path;
 
@@ -613,7 +613,7 @@ int US_Model::load( const QString& filename )
    QFile file( filename );
 
    if ( ! file.open( QIODevice::ReadOnly | QIODevice::Text) )
-      return US_DB2::ERROR;
+      return US_DB2::DBERROR;
 
    QXmlStreamReader xml( &file );
    
@@ -1093,7 +1093,7 @@ int US_Model::write( const QString& filename )
    QFile file( filename );
 
    if ( ! file.open( QIODevice::WriteOnly | QIODevice::Text) )
-      return US_DB2::ERROR;
+      return US_DB2::DBERROR;
 
    if ( ! monteCarlo  ||  nmcixs < 1 )
    {

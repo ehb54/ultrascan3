@@ -362,7 +362,7 @@ int US_DB2::statusQuery( const QString& ){ return 0; }
 #else
 int US_DB2::statusQuery( const QString& sqlQuery )
 {
-   db_errno = ERROR;
+   db_errno = DBERROR;
 
    this->rawQuery( sqlQuery );
    if ( result )
@@ -542,8 +542,8 @@ int US_DB2::writeBlobToDB( const QString& filename,
    if ( ! fin.open( QIODevice::ReadOnly ) )
    {
       error = QString( "writeBlob: cannot open file " ) + filename;
-      db_errno = ERROR;
-      return ERROR;
+      db_errno = DBERROR;
+      return DBERROR;
    }
 
    QByteArray blobData = fin.readAll();
@@ -552,15 +552,15 @@ int US_DB2::writeBlobToDB( const QString& filename,
    if ( blobData.size() < 1 )
    {
       error = QString( "writeBlob: no data in file " ) + filename;
-      db_errno = ERROR;
-      return ERROR;
+      db_errno = DBERROR;
+      return DBERROR;
    }
 
    if ( tableID == 0 )
    {
       error = QString( "writeBlob: don't know which record data belongs to in " ) + filename;
-      db_errno = ERROR;
-      return ERROR;
+      db_errno = DBERROR;
+      return DBERROR;
    }
 
    // Create an escaped version of the data
@@ -619,8 +619,8 @@ int US_DB2::writeBlobToDB( const QString& filename,
    {
       error = QString( "MySQL error: " ) + mysql_error( db );
   
-      db_errno = ERROR;
-      return ERROR;
+      db_errno = DBERROR;
+      return DBERROR;
    }
 
    result   = mysql_store_result( db );
@@ -680,8 +680,8 @@ int US_DB2::readBlobFromDB( const QString& filename,
    if ( mysql_query( db, sqlQuery.toLatin1() ) != OK )
    {
       error = QString( "MySQL error: " ) + mysql_error( db );
-      db_errno = ERROR;
-      return ERROR;
+      db_errno = DBERROR;
+      return DBERROR;
    }
 
    // First result set is status
@@ -723,7 +723,7 @@ int US_DB2::readBlobFromDB( const QString& filename,
       {
          error = QString( "readBlob: could not write file " ) + filename;
 
-         db_errno = ERROR;
+         db_errno = DBERROR;
       }
 
       else

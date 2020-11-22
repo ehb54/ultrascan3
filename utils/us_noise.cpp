@@ -208,7 +208,7 @@ int US_Noise::write( const QString& filename )
    QFile file( filename );
 
    if ( ! file.open( QIODevice::WriteOnly | QIODevice::Text) )
-      return US_DB2::ERROR;
+      return US_DB2::DBERROR;
 
    QXmlStreamWriter xml( &file );
    write_stream( xml );
@@ -312,7 +312,7 @@ bool US_Noise::noise_path( QString& path )
 // load noise that matches guid from disk
 int US_Noise::load_disk( const QString& guid )
 {
-   int error = US_DB2::ERROR;  // Error by default
+   int error = US_DB2::DBERROR;  // Error by default
 
    QString path;
 
