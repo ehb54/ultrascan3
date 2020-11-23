@@ -5,6 +5,8 @@
 #include "us_gzip.h"
 #include "us_util.h"
 
+#define CIPHER "AES256-GCM-SHA384:AES256-SHA:AES256-SHA256:AES256-CCM:AES256-GCM-SHA384:AES128-SHA"
+
 US_DB2::US_DB2()
 {
 #ifndef NO_DB
@@ -124,7 +126,7 @@ bool US_DB2::test_secure_connection(
                   certFile.toLatin1(),
                   caFile  .toLatin1(),
                   NULL,
-                  "AES128-SHA" );
+                  CIPHER );
 
    QString uhost  = host.section( ":", 0, 0 ).simplified();
    int     uport  = host.section( ":", 1, 1 ).simplified().toInt();
@@ -195,7 +197,7 @@ bool US_DB2::connect( const QString& masterPW, QString& err )
                      certFile.toLatin1(),
                      caFile  .toLatin1(),
                      NULL,
-                     "AES128-SHA" );
+                     CIPHER );
 
       // The CLIENT_MULTI_STATEMENTS flag allows for multiple queries and
       //   multiple result sets from a single stored procedure. It is required
@@ -298,7 +300,7 @@ bool US_DB2::connect(
                      certFile.toLatin1(),
                      caFile  .toLatin1(),
                      NULL,
-                     "AES128-SHA" );
+                     CIPHER );
 
       // The CLIENT_MULTI_STATEMENTS flag allows for multiple queries and
       //   multiple result sets from a single stored procedure. It is required
