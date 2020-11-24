@@ -3751,11 +3751,13 @@ DbgLv(1) << "EGOp rbO: rp.nochan" << rpOptic->nochan;
                                        : notinst;
 #endif
 #if 1
-         rpOptic->chopts[ ii ].scan1   = ii > 3
-                                       ? notinst
-                                       : ( cc_osyss[ ii ]->button( 1 )->isChecked()
-                                         ? cc_osyss[ ii ]->button( 1 )->text()
-                                         : "" );
+         // rpOptic->chopts[ ii ].scan1   = ii > 3
+         //                               ? notinst
+         //                               : ( cc_osyss[ ii ]->button( 1 )->isChecked()
+         //                                 ? cc_osyss[ ii ]->button( 1 )->text()
+         //                                 : "" );
+	 //ALEXEY: set checked by default for UV/vis
+	 rpOptic->chopts[ ii ].scan1   = cc_osyss[ ii ]->button( 1 )->text();
          rpOptic->chopts[ ii ].scan2   = ii > 3
                                        ? notinst
                                        : ( cc_osyss[ ii ]->button( 2 )->isChecked()
@@ -3787,6 +3789,9 @@ DbgLv(1) << "EGOp rbO:  nochan" << nochan << "nochan_sv" << nochan_sv;
 DbgLv(1) << "EGOp rbO:   solentrs count" << solentrs << kechan;
 
    rpOptic->chopts.resize( kechan );   //ALEXEY bug fixed
+   nochan_sv = kechan;                 //ALEXEY bug fixed
+
+   qDebug() << "#channels AFTER solutions changed : Solutions, channels: " << kechan << nochan_sv;
 
    for ( int ii = 0; ii < kechan; ii++ )
    {
@@ -3812,9 +3817,11 @@ DbgLv(1) << "EGOp rbO:    ii" << ii << "jj" << jj
             rpOptic->chopts[ ii ].scan3   = cc_osyss[ ii ]->button( 3 )->text();
 #endif
 #if 1
-            rpOptic->chopts[ ii ].scan1   = cc_osyss[ ii ]->button( 1 )->isChecked()
-                                          ? cc_osyss[ ii ]->button( 1 )->text()
-                                          : "";
+            // rpOptic->chopts[ ii ].scan1   = cc_osyss[ ii ]->button( 1 )->isChecked()
+            //                               ? cc_osyss[ ii ]->button( 1 )->text()
+            //                               : "";
+	    //ALEXEY: set checked by default for UV/vis
+	    rpOptic->chopts[ ii ].scan1   = cc_osyss[ ii ]->button( 1 )->text();
             rpOptic->chopts[ ii ].scan2   = cc_osyss[ ii ]->button( 2 )->isChecked()
                                           ? cc_osyss[ ii ]->button( 2 )->text()
                                           : "";

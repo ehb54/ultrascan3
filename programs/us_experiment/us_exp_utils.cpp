@@ -2035,17 +2035,17 @@ DbgLv(1) << "EGOp:inP:  ii" << ii << "channel" << channel
 
       //ALEXEY: set checkboxes checked based on the protocol loaded, rather than by default
       if ( !scan1.isEmpty() )
-	ckbox1->setChecked( true);
+      	ckbox1->setChecked( true);
       else
-	ckbox1->setChecked( false );
+      	ckbox1->setChecked( false );
       if ( !scan2.isEmpty() )
-	ckbox2->setChecked( true  );
+      	ckbox2->setChecked( true  );
       else
-	ckbox2->setChecked( false );
+      	ckbox2->setChecked( false );
       if ( !scan3.isEmpty()  &&  !ckscan3.contains( notinst ) )
-	ckbox3->setChecked( true  );
+      	ckbox3->setChecked( true  );
       else
-	ckbox3->setChecked( false );
+      	ckbox3->setChecked( false );
       
       //ckbox1->setChecked( prscans.contains( ckscan1 ) );
       //ckbox2->setChecked( prscans.contains( ckscan2 ) );   //ALEXEY do not check Interference by default
