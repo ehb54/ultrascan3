@@ -930,6 +930,7 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    initPanel();
 
    first_time_init = false;
+   //currentOperator_index = 0;
 }
 
 // Slot for change in Lab selection
@@ -1084,6 +1085,9 @@ void US_ExperGuiRotor::changeOptima( int ndx )
       }
    }
    //Operators
+   sl_operators_copy = sl_operators;
+   currentOperator = cb_operator->currentText();
+   
    sl_operators.clear();
    QList< US_Rotor::Operator > operators = currentInstrument.operators;
    foreach ( US_Rotor::Operator oper, operators )
@@ -1095,8 +1099,16 @@ void US_ExperGuiRotor::changeOptima( int ndx )
    cb_operator->clear();
    cb_operator->addItems( sl_operators );
 
-   changeOperator(0);
-
+   //compare old and new operator lists
+   if ( sl_operators.contains( currentOperator ) )
+     {
+       qDebug() << "New operator list contains: " <<  currentOperator;
+       int currentOperator_index = cb_operator->findText( currentOperator );
+       changeOperator( currentOperator_index );
+     }
+   else
+     changeOperator(0);
+      
    // if ( !mainw->connection_for_instrument.contains( mainw->currentInstrument[ "name" ] ) )
    //   test_optima_connection();
 
@@ -1115,6 +1127,10 @@ void US_ExperGuiRotor::changeOperator( int ndx )
 {
   //changed             = true;
   cb_operator->setCurrentIndex( ndx );
+
+  //currentOperator_index = ndx;
+
+  //qDebug() << "Current Operator index: " << currentOperator_index;
 }
 
 // Slot for change in Rotor selection
