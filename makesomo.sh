@@ -82,8 +82,8 @@ if [ $ISWIN -eq 1 ]; then
   cp -p bin/* $ULTRASCAN/bin/
   echo cp -p add_to_bin/* $ULTRASCAN/bin/
   cp -p add_to_bin/* $ULTRASCAN/bin/
-  echo cp -rp etc $ULTRASCAN/ultrascan3/
-  cp -rp etc $ULTRASCAN/ultrascan3/
+  echo cp -rp etc $ULTRASCAN
+  cp -rp etc $ULTRASCAN
   exit 0
 fi
 
