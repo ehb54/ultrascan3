@@ -89,8 +89,6 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
       QwtCounter*  ct_tempera;          // Temperature counter
       QwtCounter*  ct_tedelay;          // Temp-equil-delay counter
 
-
-
       int          dbg_level;
       bool         use_db;              // Using the LIMS database?
       bool         usr_enab;            // Overrideable user level
@@ -173,6 +171,7 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       QStringList sl_calibs;       // Calibration combo choices
 
       QStringList sl_operators;    // Operator combo choices
+      QStringList sl_operators_copy;    // Operator combo choices
       QLineEdit *  le_instrument;
       QLineEdit*   le_optima_connected;
       
@@ -183,8 +182,10 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       int         curr_rotor;
       //int         currentInstrumentID;
 
-      QStringList            experimentTypes;
-
+      QStringList  experimentTypes;
+      //int          currentOperator_index;
+      QString      currentOperator;
+      
    private slots:
       void changeLab  ( int );     // Slot for change in lab
       void changeRotor( int );     // Slot for change in rotor

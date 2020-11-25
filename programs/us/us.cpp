@@ -1,5 +1,6 @@
 //! \file us.cpp
 #include <QtCore>
+#include <QTcpSocket>
 #if QT_VERSION < 0x050000
 #include <QtSingleApplication>
 #else
@@ -751,6 +752,24 @@ bool US_Win::notice_check()
    QString   passwd( "us3_notice" );
    QString   errmsg;
 
+   // First do a quick connection test
+   QTcpSocket tsock;
+   tsock.connectToHost( host, 3306 );
+   tsock.waitForConnected( 2000 );  // Give it two seconds
+qDebug() << "US:NOTE: socket state" << tsock.state();
+   if ( ! tsock.isValid()  ||
+        tsock.state() == QAbstractSocket::UnconnectedState )
+   {  // Abort immediately if connection not possible (host? port?)
+qDebug() << "US:NOTE: Quick test host connect FAILED";
+      return do_abort;
+   }
+   else
+   {  // Disconnect if connection possible
+   tsock.disconnectFromHost();
+qDebug() << "US:NOTE: Quick test host connect WORKED";
+   }
+
+   // Then, do the full connection
    if ( ! db.connect( host, dbname, user, passwd, errmsg  ) )
    {
 qDebug() << "US:NOTE: Unable to connect" << errmsg;

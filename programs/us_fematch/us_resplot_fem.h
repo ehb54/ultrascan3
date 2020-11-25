@@ -21,6 +21,7 @@ class US_ResidPlotFem : public US_WidgetsDialog
 
    public:
       //! \param parent A pointer to the parent widget of this one
+      //! \param auto_mode Auto mode flag
       US_ResidPlotFem( QWidget* = NULL, bool auto_mode = false );
 
       //! \brief Force a specific plot in the lower plot
