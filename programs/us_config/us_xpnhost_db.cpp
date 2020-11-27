@@ -975,6 +975,8 @@ void US_XpnHostDB::newHost( QMap < QString, QString > & newInstrument  )
      << newInstrument[ "msgPort" ];
 	
     //<< encpw;
+
+  qDebug() << "New Instrument Query : " << q; 
 	
   db->query( q );
 
