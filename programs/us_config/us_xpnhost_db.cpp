@@ -976,7 +976,7 @@ void US_XpnHostDB::newHost( QMap < QString, QString > & newInstrument  )
 	
     //<< encpw;
 
-  qDebug() << "New Instrument Query : " << q; 
+  qDebug() << "New Instrument Query TEST: " << q; 
 	
   db->query( q );
 
