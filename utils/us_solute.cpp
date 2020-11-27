@@ -68,7 +68,7 @@ QVector< US_Solute > US_Solute::create_solutes(
       for ( double svl = s_min; svl <= s_max; svl += s_step )
       {
          // Omit s values close to zero.
-         if ( svl >= -1.0e-14  &&  svl <= 1.0e-14 ) continue;
+         if ( svl >= -5.0e-15  &&  svl <= 5.0e-15 ) continue;
 
          solute_vector << US_Solute( svl, off0, 0.0, ovbar );
       }
