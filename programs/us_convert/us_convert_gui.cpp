@@ -2005,9 +2005,9 @@ DbgLv(1) << "CGui:iA:  RUNID from files[0]: files[0]" << fname << ", runID: " <<
    setTripleInfo();
 
    //DESC SET 1
-   if ( !us_convert_auto_mode )
-     le_description -> setText( correct_description( allData[ 0 ].description ) );
-   else
+   // if ( !us_convert_auto_mode )
+   //   le_description -> setText( correct_description( allData[ 0 ].description ) );
+   // else
      le_description -> setText( allData[ 0 ].description );
     
    init_excludes();
@@ -4169,9 +4169,9 @@ DbgLv(1) << "chgTrp: trDx trLx" << tripDatax << tripListx
    // Reset maximum scan control values
    enableScanControls();
 
-   if ( !us_convert_auto_mode )
-     le_description ->setText( correct_description ( outData[ tripDatax ]->description ) );
-   else
+   // if ( !us_convert_auto_mode )
+   //   le_description ->setText( correct_description ( outData[ tripDatax ]->description ) );
+   // else
      le_description ->setText( outData[ tripDatax ]->description );
 
    le_solutionDesc->setText( out_chaninfo[ tripListx ].solution.solutionDesc );
