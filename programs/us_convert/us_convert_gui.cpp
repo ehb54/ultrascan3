@@ -2877,6 +2877,8 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    qDebug() << "Size ProtInfo.ProtSolutions.chsols: " << ProtInfo.ProtSolutions.chsols.size();
 
    int num_cent_holes = int(ProtInfo.ProtSolutions.chsols.size()/ProtInfo.ProtCells.cells_used.size());
+   qDebug() << " num_cent_holes:: ProtInfo.ProtSolutions.chsols.size()/ProtInfo.ProtCells.cells_used.size() -- " << num_cent_holes << ProtInfo.ProtSolutions.chsols.size() << "/" << ProtInfo.ProtCells.cells_used.size();
+   
    int cellnumber;
    
    if ( isMwl )
@@ -3054,7 +3056,12 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 	       // 	       }
 	       // 	 }
 
+	       //ALEXEY: HERE BUG - crashed on Hexal
+	       qDebug() << " Test HEXAL 1" ;
+	       
 	       cellnumber = i / num_cent_holes;
+
+	       qDebug() << " Test HEXAL 2" ;
 	       for ( int aa = 0; aa < cent_options.size(); ++aa )
 		 {
 		   if (ProtInfo.ProtCells.cells_used[ cellnumber ].centerpiece == cent_options[aa].text)
@@ -3063,17 +3070,19 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 		       cpName = cent_options[aa].text;
 		     }
 		 }
-
+	       qDebug() << " Test HEXAL 3" ;
 	       
 	       out_chaninfo[ i ].centerpiece     = cpID;    //ALEXEY abstractCenterpieceIDs passed from protocol
 	       out_tripinfo[ i ].centerpiece     = cpID;    //ALEXEY abstractCenterpieceIDs passed from protocol
 	       out_chaninfo[ i ].centerpieceName = cpName;
 
+	       qDebug() << " Test HEXAL 4" ;
+
 	       //DUPL
 	       all_tripinfo[ i ].centerpiece     = cpID;
 	       all_tripinfo[ i ].centerpieceName = cpName;
 
-	       
+	       qDebug() << " Test HEXAL 5" ;
 	     }
 	 }
        else
