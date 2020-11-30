@@ -15,7 +15,6 @@ US_PlotControlPc::US_PlotControlPc( QWidget* p, US_Model* amodel )
    model          = amodel;
 
    setObjectName( "US_PlotControlPc" );
-   setAttribute( Qt::WA_DeleteOnClose, true );
    setPalette( US_GuiSettings::frameColor() );
    setFont( QFont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() ) );
 
@@ -388,6 +387,8 @@ void US_PlotControlPc::plot3_btn()
          return;
 
       plot3d_w = new US_Plot3D( this, model );
+      connect( plot3d_w, SIGNAL( has_closed() ),
+               this,     SLOT(   plot_close() ) );
    }
 
    plot3d_w->setTypes     ( typex, typey, typez );
@@ -401,6 +402,12 @@ void US_PlotControlPc::plot3_btn()
 void US_PlotControlPc::close_all()
 {
    close();
+}
+
+// 3d plot closed
+void US_PlotControlPc::plot_close()
+{
+   plot3d_w = 0;
 }
 
 int US_PlotControlPc::dimensionType( QVector< QCheckBox* >& xycheck )

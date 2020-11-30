@@ -62,8 +62,9 @@ class US_PlotControl2D : public US_WidgetsDialog
       void gridr_value( double );
       void peaks_value( double );
       void peakw_value( double );
-      void plot3_btn( void );
-      void close_all( void );
+      void plot3_btn  ( void );
+      void close_all  ( void );
+      void plot_close ( void );
       int  dimensionType( QVector< QCheckBox* >& );
 
       void help     ( void )

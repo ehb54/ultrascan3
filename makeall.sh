@@ -13,9 +13,13 @@ fi
 MKARGS="$@"
 if [ $# -eq 0 ]; then
   MKARGS="-j 7"
+  if [ `uname -s|grep -ci "msys"` -ne 0 ]; then
+    MKARGS="-j 2"
+  fi
   if [ `uname -s|grep -ci "mingw"` -ne 0 ]; then
     MKARGS="-j 2"
   fi
+  echo "MKARGS=$MKARGS"
 fi
 export MAKE="make ${MKARGS}"
 
