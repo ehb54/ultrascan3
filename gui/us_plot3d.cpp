@@ -21,9 +21,6 @@ US_Plot3D::US_Plot3D( QWidget* p, US_Model* m )
    // lay out the GUI
    setWindowTitle( tr( "Model Solute 3-Dimensional Viewer" ) );
    setPalette( US_GuiSettings::frameColor() );
-#ifndef Q_OS_MAC
-   setAttribute( Qt::WA_DeleteOnClose, true );
-#endif
 
    QSize p1size( 960, 720 );
 
@@ -1380,6 +1377,7 @@ DbgLv(2) << "close_all";
       zdata.clear();
    }
 
+   emit has_closed();
    close();
 }
 
@@ -1616,5 +1614,12 @@ DbgLv(2) << " imagetype" << imagetype;
       statusBar()->showMessage( tr( "*ERROR* Unable to create " )
          + ofname );
    }
+}
+
+// Handle close event from X button on dialog
+void US_Plot3D::closeEvent( QCloseEvent* e )
+{
+   emit has_closed();
+   e->accept();
 }
 
