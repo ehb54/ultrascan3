@@ -1913,6 +1913,10 @@ DbgLv(1) << "CGui:iA: CURRENT DIR_1: " << importDir;
 	     }
 	 }
      }
+
+  
+
+   qDebug() << "DEBUG for HEXAL: type_to_process: " << type_to_process;
    //*****************************************************//
    
    
@@ -1988,6 +1992,9 @@ DbgLv(1) << "CGui:iA:  trx" << trx << "uuid" << uuidst << importDir;
        runID += QString("-") + QString( type_to_process );
 
        runTypeList << runID;
+
+       //ALEXEY: <- bug fixed
+       runType = type_to_process;
      }
    
    // //TEMP
