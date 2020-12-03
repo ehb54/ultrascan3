@@ -1666,6 +1666,7 @@ DbgLv(1) << "EGSp: addWidg/Layo II";
             this,         SLOT  ( ssChgScIntTime_int_ss ( int ) ) );
 
 
+      
 DbgLv(1) << "EGSp: addWidg/Layo II";
 
    // Complete overall layout

@@ -243,6 +243,8 @@ DbgLv(1) << "RANGE_1";
    QString cur_pname   = sibSValue( "general", "protocol" );
 DbgLv(1) << "EGRn: rbR:  pprotoname" << protoname << "cur_pname" << cur_pname;
 
+//ALEXEY: Do we need the part below - when protocol name changed ?
+#if 0 
    if ( protoname != cur_pname )
    {  // Protocol has changed:  rebuild internals
       protoname           = cur_pname;
@@ -276,7 +278,9 @@ DbgLv(1) << "EGRn: rbR:  ii lorad hirad" << locrads[ii] << hicrads[ii];
       }
       return;
    }
-
+#endif
+//ALEXEY: end of manipulations when protcol name changed in the General tab
+   
    // Save info from any previous protocol
    QVector< US_RunProtocol::RunProtoRanges::Ranges > chrngs_sv;
    chrngs_sv           = rpRange->chrngs;
