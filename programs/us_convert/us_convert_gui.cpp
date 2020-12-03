@@ -1624,6 +1624,8 @@ void US_ConvertGui::import()
    impType     = getImports();
 DbgLv(1) << "CGui:IMP: impType" << impType;
 
+ description_changed.clear();
+
    if ( impType == 1 )
    {
       qDebug() << "IMPORT MWL not auto...";
@@ -1911,6 +1913,10 @@ DbgLv(1) << "CGui:iA: CURRENT DIR_1: " << importDir;
 	     }
 	 }
      }
+
+  
+
+   qDebug() << "DEBUG for HEXAL: type_to_process: " << type_to_process;
    //*****************************************************//
    
    
@@ -1986,6 +1992,9 @@ DbgLv(1) << "CGui:iA:  trx" << trx << "uuid" << uuidst << importDir;
        runID += QString("-") + QString( type_to_process );
 
        runTypeList << runID;
+
+       //ALEXEY: <- bug fixed
+       runType = type_to_process;
      }
    
    // //TEMP
@@ -2005,9 +2014,9 @@ DbgLv(1) << "CGui:iA:  RUNID from files[0]: files[0]" << fname << ", runID: " <<
    setTripleInfo();
 
    //DESC SET 1
-   if ( !us_convert_auto_mode )
-     le_description -> setText( correct_description( allData[ 0 ].description ) );
-   else
+   // if ( !us_convert_auto_mode )
+   //   le_description -> setText( correct_description( allData[ 0 ].description ) );
+   // else
      le_description -> setText( allData[ 0 ].description );
     
    init_excludes();
@@ -2875,6 +2884,8 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    qDebug() << "Size ProtInfo.ProtSolutions.chsols: " << ProtInfo.ProtSolutions.chsols.size();
 
    int num_cent_holes = int(ProtInfo.ProtSolutions.chsols.size()/ProtInfo.ProtCells.cells_used.size());
+   qDebug() << " num_cent_holes:: ProtInfo.ProtSolutions.chsols.size()/ProtInfo.ProtCells.cells_used.size() -- " << num_cent_holes << ProtInfo.ProtSolutions.chsols.size() << "/" << ProtInfo.ProtCells.cells_used.size();
+   
    int cellnumber;
    
    if ( isMwl )
@@ -3052,7 +3063,12 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 	       // 	       }
 	       // 	 }
 
+	       //ALEXEY: HERE BUG - crashed on Hexal
+	       qDebug() << " Test HEXAL 1" ;
+	       
 	       cellnumber = i / num_cent_holes;
+
+	       qDebug() << " Test HEXAL 2" ;
 	       for ( int aa = 0; aa < cent_options.size(); ++aa )
 		 {
 		   if (ProtInfo.ProtCells.cells_used[ cellnumber ].centerpiece == cent_options[aa].text)
@@ -3061,17 +3077,19 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 		       cpName = cent_options[aa].text;
 		     }
 		 }
-
+	       qDebug() << " Test HEXAL 3" ;
 	       
 	       out_chaninfo[ i ].centerpiece     = cpID;    //ALEXEY abstractCenterpieceIDs passed from protocol
 	       out_tripinfo[ i ].centerpiece     = cpID;    //ALEXEY abstractCenterpieceIDs passed from protocol
 	       out_chaninfo[ i ].centerpieceName = cpName;
 
+	       qDebug() << " Test HEXAL 4" ;
+
 	       //DUPL
 	       all_tripinfo[ i ].centerpiece     = cpID;
 	       all_tripinfo[ i ].centerpieceName = cpName;
 
-	       
+	       qDebug() << " Test HEXAL 5" ;
 	     }
 	 }
        else
@@ -4127,6 +4145,10 @@ void US_ConvertGui::changeDescription( void )
          for ( int trx = trxs; trx < trxe; trx++ )
             outData[ trx ]->description = chdesc;
       }
+      
+      //ALEXEY: designate triple as edited
+      description_changed[ tripDatax ] = true;
+      //qDebug() << "EDITED DESCRIPTION: tripDatax: " << tripDatax; 
    }
 }
 
@@ -4169,9 +4191,19 @@ DbgLv(1) << "chgTrp: trDx trLx" << tripDatax << tripListx
    // Reset maximum scan control values
    enableScanControls();
 
-   if ( !us_convert_auto_mode )
-     le_description ->setText( correct_description ( outData[ tripDatax ]->description ) );
-   else
+   // if ( !us_convert_auto_mode )
+   //   {
+   //     if ( !description_changed.contains( tripDatax ) )
+   // 	 {
+   // 	   if ( disk_controls->db() )
+   // 	     le_description ->setText( outData[ tripDatax ]->description );
+   // 	   else
+   // 	     le_description ->setText( correct_description ( outData[ tripDatax ]->description ) );
+   // 	 }
+   //     else
+   // 	 le_description ->setText( outData[ tripDatax ]->description );
+   //   }
+   // else
      le_description ->setText( outData[ tripDatax ]->description );
 
    le_solutionDesc->setText( out_chaninfo[ tripListx ].solution.solutionDesc );
@@ -7020,9 +7052,9 @@ DbgLv(1) << "TRIPLE_Index(): "
 
       //ALEXEY: the following part is buggy: commented out for now - seems to help with plotting/selecting triples for non-first channel for MWL case
       //Ask Gary (if this section in place, it causes incorrect placement of cb_lambplot indexes, so no plots generated...)
-//#if 0
 
-// if ( !us_convert_auto_mode )
+#if 0
+ if ( !us_convert_auto_mode )
    {
      if ( tripDatax >= tripx2 )
        {  // Less wavelengths in this channel than in the previous one
@@ -7034,8 +7066,9 @@ DbgLv(1) << "TRIPLE_Index(): "
          mwl_connect( true  );
        }
    }
-      //#endif
-DbgLv(1) << "Inside triple_index(): cb_lambplot->currentIndex() = " << cb_lambplot->currentIndex(); 
+ #endif
+ 
+ DbgLv(1) << "Inside triple_index(): cb_lambplot->currentIndex() = " << cb_lambplot->currentIndex(); 
    }
 
    else

@@ -76,11 +76,12 @@ class US_PlotControlFem : public US_WidgetsDialog
       void gridr_value( double );
       void peaks_value( double );
       void peakw_value( double );
-      void plot3_btn( void );
-      void close_all( void );
+      void plot3_btn(  void );
+      void close_all(  void );
+      void plot_close( void );
       int  dimensionType( QVector< QCheckBox* >& );
 
-      void help     ( void )
+      void help      ( void )
       { showHelp.show_help( "fe_match_controls.html" ); };
 };
 #endif

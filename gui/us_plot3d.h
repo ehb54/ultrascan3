@@ -182,6 +182,12 @@ class US_GUI_EXTERN US_Plot3D : public QMainWindow
    protected:
       US_Model*     model;     //!< model to plot in 3 dimensions
 
+   signals:
+      void    has_closed( void );
+
+   protected slots:
+      void    closeEvent( QCloseEvent* );
+
    private slots:
 
       void    std_button(   void );

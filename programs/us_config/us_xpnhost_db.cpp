@@ -955,6 +955,14 @@ void US_XpnHostDB::newHost( QMap < QString, QString > & newInstrument  )
   // QString encpw    = pwl[ 0 ] + "^" + pwl[ 1 ];  // Encrypted password
 
   // qDebug() << "Passw.: decrypted, encrypted: " << decpw << ", " << encpw;
+
+
+  // IF Non-Beckman: these are int(11) fields, so must be defined
+  if ( newInstrument[ "optimaPort" ].isEmpty()  )
+    newInstrument[ "optimaPort" ] = QString::number(0);
+  if ( newInstrument[ "msgPort" ].isEmpty()  )
+    newInstrument[ "msgPort" ] = QString::number(0);
+  ///////////////////////////////////////////////////////////////
   
   QStringList q( "" );
   q.clear();
@@ -975,6 +983,8 @@ void US_XpnHostDB::newHost( QMap < QString, QString > & newInstrument  )
      << newInstrument[ "msgPort" ];
 	
     //<< encpw;
+
+  qDebug() << "New Instrument Query TEST: " << q; 
 	
   db->query( q );
 

@@ -741,6 +741,8 @@ bool US_Win::notice_check()
    if ( US_Settings::default_data_location() == 2 )
       return do_abort;      // If default data location is Disk, do not bother
 
+   
+
 //do_abort=true;
 //level=2;
    // Query notice table in the us3_notice database
