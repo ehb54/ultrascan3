@@ -279,7 +279,9 @@ DbgLv(1) << "EGRn: rbR:  ii lorad hirad" << locrads[ii] << hicrads[ii];
       return;
    }
 #endif
-//ALEXEY: end of manipulations when protcol name changed in the General tab
+//ALEXEY: end of manipulations when protcol name changed in the General tab:
+//Causes incorrect protocol saving (Ranges)
+//SKIP this part as all scenarious already properly addressed
    
    // Save info from any previous protocol
    QVector< US_RunProtocol::RunProtoRanges::Ranges > chrngs_sv;
