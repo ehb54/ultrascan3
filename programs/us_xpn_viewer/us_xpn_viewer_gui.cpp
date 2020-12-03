@@ -5091,12 +5091,12 @@ DbgLv(1) << "cRect" << msg;
       }
 
       // Meniscus radius value for the wavelength
-      int radiusw       = (int)qRound( rdata->xvalues[ irpos + irx1 ] );
+      double radiusw    = rdata->xvalues[ irpos + irx1 ];
 DbgLv(1) << "  wavelen/radpos:  " << wavelen << " / " << radiusw;
 
       // Output a wavelength,radial-position line
       QString outline   = QString::number( wavelen ) + ","
-                        + QString::number( radiusw ) + "\n";
+                        + QString().asprintf( "%.3f", radiusw ) + "\n";
       datxto << outline;
    }  // END: datasets loop
    dafile.close();
