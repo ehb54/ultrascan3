@@ -42,14 +42,15 @@ chdir $dd;
 
 @rsync =
     (
-     "$us/bin"        , "bin"
-     ,"$us/etc"       , "etc"
-     ,"$us/lib"       , "lib"
-     ,"$us/somo/doc"  , "somo/doc"
-     ,"$us/somo/demo" , "somo/demo"
-     ,"$qt/lib"       , "lib"
-     ,"$qwt/lib"      , "lib"
-     ,"$qt/plugins"   , "plugins"
+     "$us/bin"                  , "bin"
+     ,"$us/etc"                 , "etc"
+     ,"$us/lib"                 , "lib"
+     ,"$us/somo/doc"            , "somo/doc"
+     ,"$us/somo/demo"           , "somo/demo"
+     ,"$qt/lib"                 , "lib"
+     ,"$qwt/lib"                , "lib"
+     ,"$qt/plugins"             , "plugins"
+     ,"$us/us_somo/add_to_bin"  , "bin"
     );
 
 @lddfind =
