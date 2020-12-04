@@ -6920,6 +6920,13 @@ void US_Edit::write_auto( void )
        qDebug() << channels_all[i];
        isSet_ref_wvl[ channels_all[i] ] = false;
      }
+
+   //ALEXEY: Edit triple list to define triples to be analysed... Simple GUI with the triples and checkboxes, all checkboxes pre-checked.
+   //pass in triples_all_optics array;
+   //generate GUI
+   //define QMap< triple_name, bool > (bool = [selected, unselected])
+   //return QMap
+   //in below cycle over channels, compare triple name with returned QMap before creating autoflowAnalysis record..
    
    // Process triples by channel, generate appropriate JSON (with or without 2DSA_FM stage) for autoflowAnalysis record && create those records
    QStringList AnalysisIDs;
