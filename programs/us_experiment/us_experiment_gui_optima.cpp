@@ -1326,11 +1326,12 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
 
    connect( ck_sync_delay, SIGNAL( toggled     ( bool ) ),
                this,       SLOT  ( syncdelayChecked( bool ) ) );
-
-   QLayout* lo_endoff  = us_checkbox( tr( "Spin down centrifuge at job end" ),
-                                      ck_endoff, true );
-   QLayout* lo_radcal  = us_checkbox( tr( "Perform radial calibration" ),
-                                      ck_radcal, false );
+   
+   //ALEXEY: do not create these checkboxes for now
+   // QLayout* lo_endoff  = us_checkbox( tr( "Spin down centrifuge at job end" ),
+   //                                    ck_endoff, true );
+   // QLayout* lo_radcal  = us_checkbox( tr( "Perform radial calibration" ),
+   //                                    ck_radcal, false );
 
    // QLabel*  lb_scnint  = us_label( tr( "Scan Interval (days[D] hh[H] mm[M] ss[S];"
    //                                     " 0 => fast-as-possible)" ) );
@@ -1582,10 +1583,12 @@ DbgLv(1) << "EGSp: addWidg/Layo BB";
 DbgLv(1) << "EGSp: addWidg/Layo GG";
    genL->addWidget( le_maxrpm,  row++,  0, 1,  4 );
 DbgLv(1) << "EGSp: addWidg/Layo HH";
-   genL->addLayout( lo_endoff,  row,    0, 1,  4 );
+// genL->addLayout( lo_endoff,  row,    0, 1,  4 );
 DbgLv(1) << "EGSp: addWidg/Layo II";
-   genL->addLayout( lo_radcal,  row++,  4, 1,  4 );
+// genL->addLayout( lo_radcal,  row++,  4, 1,  4 );
 
+   
+   
    genL->setColumnStretch(  0, 4 );
    genL->setColumnStretch(  1, 4 );
    genL->setColumnStretch(  2, 4 );

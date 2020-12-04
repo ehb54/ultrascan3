@@ -1087,8 +1087,11 @@ void US_ExperGuiSpeeds::initPanel()
    sb_scnint_int_mm ->setValue( (int)dhms5[ 2 ] );
    sb_scnint_int_ss ->setValue( (int)dhms5[ 3 ] );
 
-   ck_endoff->setChecked( rpSpeed->spin_down );
-   ck_radcal->setChecked( rpSpeed->radial_calib );
+   //ALEXEY: ignore radial calibraion && spin down for now
+   // ck_endoff->setChecked( rpSpeed->spin_down );
+   // ck_radcal->setChecked( rpSpeed->radial_calib );
+
+   
    changed              = was_changed;   // Restore changed state
 
    QString arotor       = sibSValue( "rotor", "arotor" );
@@ -1129,9 +1132,12 @@ void US_ExperGuiSpeeds::savePanel()
    // Populate protocol speed controls from internal panel control
    nspeed                = ssvals.count();
    rpSpeed->nstep        = nspeed;
-   rpSpeed->spin_down    = ck_endoff->isChecked();
-   rpSpeed->radial_calib = ck_radcal->isChecked();
-DbgLv(1) << "EGSp:svP: nspeed" << nspeed;
+
+   //ALEXEY: ignore radial calibration && spinn off for now
+   // rpSpeed->spin_down    = ck_endoff->isChecked();
+   // rpSpeed->radial_calib = ck_radcal->isChecked();
+
+   DbgLv(1) << "EGSp:svP: nspeed" << nspeed;
 
    rpSpeed->ssteps.resize( nspeed );  //ALEXEY BUG FIX
    for ( int ii = 0; ii < nspeed; ii++ )
