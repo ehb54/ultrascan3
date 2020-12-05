@@ -38,7 +38,7 @@ contains( DEFINES, "OSX" ) {
 
 win32 {
   VER = 10
-  LIBS += $$US3SOMOPATH/bin/libus_somo$${VER}.a
+  LIBS += $$US3SOMOPATH/bin/libus_somo$${VER}.dll.a
 }
 
 macx {
