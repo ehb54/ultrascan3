@@ -111,6 +111,7 @@ static void pulisci();
 static void raggio_probe();
 static float ang(float, float);
 static float dist(float, float, float, float);
+static float unit_conv;
 
 static FILE *mol;
 static FILE *mol1;
@@ -345,6 +346,9 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
    {
       return retval;
    }
+   unit_conv = pow(10.0,9 + use_us_hydrodyn->hydro.unit);
+   // qDebug() << "unit_conv " << unit_conv;
+
 
    int i, ii, l, j, s, kk, kkk, ini, contatom, contatom1, indCA, indC, indO;
    int posiz, massa = 0, check_asa = 0;
@@ -1114,8 +1118,15 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
       for (l = 0; l < nat; l++)
       {
          printf("%d %.2f\n", l, asa[l]);
-         float sa = 4.0f * M_PI * active_atoms[l]->radius * active_atoms[l]->radius;
-         float sapp = 4.0f * M_PI * (rprobe + active_atoms[l]->radius) * (rprobe + active_atoms[l]->radius);
+         float sa;
+         float sapp;
+         if ( recheck ) {
+            sa = 4.0f * M_PI * active_atoms[l]->bead_computed_radius * active_atoms[l]->bead_computed_radius;
+            sapp = 4.0f * M_PI * (rprobe + active_atoms[l]->bead_computed_radius) * (rprobe + active_atoms[l]->bead_computed_radius);
+         } else {
+            sa = 4.0f * M_PI * active_atoms[l]->radius * active_atoms[l]->radius;
+            sapp = 4.0f * M_PI * (rprobe + active_atoms[l]->radius) * (rprobe + active_atoms[l]->radius);
+         }
 
          if ( us_isnan(asa[l]) )
          {
@@ -4023,8 +4034,12 @@ raggio_probe()
     
    rbulk = 1;
 
+   rprobe /= 10 * unit_conv;
+
    if (rprobe <= 0.001)
       rbulk = 0;
+
+   // qDebug() << "probe radius " << rprobe;
 }
 
 // ----------------------------------- val.c -------------------------------------

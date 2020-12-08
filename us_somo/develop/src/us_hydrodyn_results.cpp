@@ -18,6 +18,7 @@ US_Hydrodyn_Results::US_Hydrodyn_Results(struct hydro_results *results,
 {
    this->results = results;
    this->result_widget = result_widget;
+   this->us_hydrodyn = us_hydrodyn;
    *result_widget = true;
    USglobal=new US_Config();
    setPalette( PALET_FRAME );
@@ -27,7 +28,6 @@ US_Hydrodyn_Results::US_Hydrodyn_Results(struct hydro_results *results,
    global_Ypos += 30;
    setGeometry(global_Xpos, global_Ypos, 0, 0);
    somo_dir = USglobal->config_list.root_dir + "/somo";
-   this->us_hydrodyn = us_hydrodyn;
 }
 
 US_Hydrodyn_Results::~US_Hydrodyn_Results()
@@ -225,7 +225,9 @@ void US_Hydrodyn_Results::setupGUI()
    lbl_tau->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_tau = new QLineEdit( this );    le_tau->setObjectName( "tau Line Edit" );
-   if ( le_method->text() == "Zeno" ) {
+   if ( le_method->text() == "Zeno" ||
+        (le_method->text() == "SMI" && !((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
+        ) {
       le_tau->setText( "n/a" ); 
    } else {
       if (fabs((*results).tau_sd) <= 1e-100)
@@ -262,6 +264,9 @@ void US_Hydrodyn_Results::setupGUI()
    le_viscosity->setPalette( PALET_NORMAL );
    AUTFBACK( le_viscosity );
    le_viscosity->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   if ( le_method->text() == "SMI" && !((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode ) {
+      le_viscosity->setText( "n/a" );
+   }
 
    lbl_rs = new QLabel(us_tr(" Stokes Radius: "), this);
    Q_CHECK_PTR(lbl_rs);

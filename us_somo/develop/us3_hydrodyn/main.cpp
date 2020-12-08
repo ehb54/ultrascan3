@@ -15,6 +15,7 @@ void process_script(QString, US_Hydrodyn *);
 int main (int argc, char **argv)
 {
    QDir *dir = new QDir(QDir::currentPath());
+   QLocale::setDefault( QLocale::c() );
    QApplication a(argc, argv);
 
    bool expert = false;

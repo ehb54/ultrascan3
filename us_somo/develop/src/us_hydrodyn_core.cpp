@@ -7176,14 +7176,29 @@ void US_Hydrodyn::bead_check( bool use_threshold, bool message_type, bool vdw, b
       asa.probe_recheck_radius = asa.vdw_grpy_probe_radius;
    }
 
-   int retval = us_hydrodyn_asab1_main(active_atoms,
-                                       &asa,
-                                       &results,
-                                       true,
-                                       progress,
-                                       editor,
-                                       this
-                                       );
+   int retval;
+   if ( asa.method == 1 ){
+      // rolling sphere
+      retval = us_hydrodyn_asab1_main(active_atoms,
+                                          &asa,
+                                          &results,
+                                          true,
+                                          progress,
+                                          editor,
+                                          this
+                                          );
+
+
+   } else {
+      // surfracer
+      editor_msg( "black", "Computing ASA via SurfRacer\n" );
+      retval = surfracer_main(asa.probe_radius,
+                              active_atoms,
+                              true,
+                              progress,
+                              editor
+                              );
+   }
 
    asa.probe_recheck_radius = save_prr;
 

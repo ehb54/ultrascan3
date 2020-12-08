@@ -3899,26 +3899,21 @@ void US_Hydrodyn::show_hydro_results()
    {
       if (results_widget)
       {
-         if (results_window->isVisible())
-         {
-            results_window->raise();
-         }
-         else
-         {
-            results_window->show();
-         }
-         return;
+         results_window->close();
+         delete results_window;
+         results_widget = false;
       }
-      else
       {
          results_window = new US_Hydrodyn_Results(&results, &results_widget, this );
          fixWinButtons( results_window );
          results_window->show();
       }
+      return;
    }
    if ( misc.hydro_zeno )
    {
       show_zeno();
+      return;
    }
 }
 

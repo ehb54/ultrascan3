@@ -987,6 +987,28 @@ void US_Hydrodyn_Batch::help()
 
 void US_Hydrodyn_Batch::closeEvent(QCloseEvent *e)
 {
+   if ( batch_job_running ) {
+      QMessageBox mb( this->windowTitle(), 
+                      us_tr("Attention:\nThere is a batch job running, do you really want to stop it?"),
+                      QMessageBox::Warning,
+                      QMessageBox::Yes | QMessageBox::Default,
+                      QMessageBox::Cancel | QMessageBox::Escape,
+                      QMessageBox::NoButton);
+      mb.setButtonText(QMessageBox::Yes, us_tr("Yes"));
+      mb.setButtonText(QMessageBox::Cancel, us_tr("Cancel"));
+      switch(mb.exec())
+      {
+      case QMessageBox::Cancel:
+         {
+            e->ignore();
+            return;
+         }
+      }
+      stop();
+      stop_processing();
+      qApp->processEvents();
+   }
+
    *batch_widget = false;
    global_Xpos -= 30;
    global_Ypos -= 30;

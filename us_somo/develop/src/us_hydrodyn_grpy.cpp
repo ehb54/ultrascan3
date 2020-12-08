@@ -523,7 +523,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
       bool found = false;
       int cappos = caps[ i + 1 ].toInt();
       int count  = 1;
-      while ( ( pos = rx.indexIn( grpy_stdout,pos ) ) != -1 ) {
+      while ( ( pos = rx.indexIn( grpy_stdout, pos ) ) != -1 ) {
          if ( cappos == count ) {
             grpy_captures[ caps[ i + 2 ] ].push_back( rx.cap( 1 ).toDouble() );
             us_qdebug( QString( "%1 : '%2'\n" ).arg( caps[ i + 2 ] ).arg( grpy_captures[ caps[ i + 2 ] ].back() ) );
@@ -539,38 +539,45 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
          grpy_success = false;
          grpy_captures[ caps[ i + 2 ] ].push_back( -9e99 );
       }
-
-
-      // failed attempt with the new QRegularExpression class :(
-
-      // QString thisre = caps[ i ] + "\\s*:\\s*(\\S+)";
-      // QRegularExpression re( caps[ i ] + "\\s*:\\s*(\\S+)", QRegularExpression::MultilineOption );
-      // QRegularExpressionMatchIterator remi = re.globalMatch( grpy_stdout );
-      
-      // bool found = true;
-      // QRegularExpressionMatch rem;
-      // for ( int j = 0; j < caps[ i + 2 ].toInt(); ++j ) {
-      //    if ( remi.hasNext() ) {
-      //       rem = remi.next();
-      //       qDebug() << "captured match " << i << " full stringlist " << rem.capturedTexts().join( " : " );
-      //    } else {
-      //       found = false;
-      //       break;
-      //    }
-      // }
-      // if ( found ) {
-      //    qDebug() << "grpy caps FOUND " << i << "'" << thisre << "'";
-      //    qDebug() << "rem captured " << rem.captured( 0 );
-         
-      //    grpy_captures[ caps[ i + 2 ] ].push_back( rem.captured( 0 ).toDouble() );
-      //    us_qdebug( QString( "%1 : '%2'\n" ).arg( caps[ i + 2 ] ).arg( grpy_captures[ caps[ i + 2 ] ].back() ) );
-      // } else {
-      //    qDebug() << "grpy caps not found " << i << "'" << caps[ i ] << "'";
-      //    editor_msg( "red", QString( us_tr( "Could not find '%1' in GRPY output" ) ).arg( caps[ i ].replace( "\\", "" ) ) );
-      //    grpy_captures[ caps[ i + 2 ] ].push_back( -9e99 );
-      // }
-
    }
+
+   // extra matrix captures for D1, D2, D3
+
+   {
+      QStringList qsl = grpy_stdout.split( "\n" );
+      vector < QString > toXYZ = { "x", "y", "z" };
+      bool ok = false;
+      int i = 0;
+      for ( ; i < (int) qsl.size(); ++i ) {
+         if ( qsl[i].contains( "calculated using the mobility center:" ) ) {
+            ok = true;
+            break;
+         }
+      }
+      if (!ok ) {
+         editor_msg( "red", us_tr( "Could not find rotational diffusion coefficients" ) );
+         grpy_success = false;
+      } else {
+         i += 19;
+         int j = 4;
+         QString Dr[3];
+         for ( int k = 0; k < 3; ++k, ++i, ++j ) {
+            if ( qsl.size() <= i ) {
+               grpy_success = false;
+               break;
+            }
+            QStringList qsld = qsl[ i ].split( QRegExp( "\\s+" ) );
+            if ( qsld.size() <= j ) {
+               grpy_success = false;
+               break;
+            }
+            Dr[k] = qsld[ j ];
+            grpy_captures[ "rot_diff_coef_" + toXYZ[ k ] ].push_back( Dr[k].toDouble() );
+            QTextStream( stdout ) << "Dr[" << k << "]" << Dr[k] << endl;
+         }
+      }
+   }
+
    if ( !grpy_success ) {
       grpy_process_next();
       return;
@@ -667,6 +674,10 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
       this_data.proc_time                     = (double)(timers.times[ "compute grpy this model" ]) / 1e3;
       this_data.results.asa_rg_pos            = model_vector[ grpy_last_model_number ].asa_rg_pos;
       this_data.results.asa_rg_neg            = model_vector[ grpy_last_model_number ].asa_rg_neg;
+      this_data.rot_diff_coef_x               = grpy_captures[ "rot_diff_coef_x" ][0];
+      this_data.rot_diff_coef_y               = grpy_captures[ "rot_diff_coef_y" ][0];
+      this_data.rot_diff_coef_z               = grpy_captures[ "rot_diff_coef_z" ][0];
+      
       // qDebug() << "US_Hydrodyn::grpy_finished() asa rg pos " << this_data.results.asa_rg_pos << " neg " << this_data.results.asa_rg_neg;
       
       if ( it->second.count( "Dr" ) ) {

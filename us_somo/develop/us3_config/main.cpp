@@ -53,7 +53,8 @@ int main ( int argc, char **argv )
    // These are *not* gloabal
    int global_Xpos = 50;
    int global_Ypos = 50;
-
+   QLocale::setDefault( QLocale::c() );
+   
 	QApplication a( argc, argv );
    // Check to see if we are configured
 	QString etcdir = US_Config::get_home_dir() + "/etc";
