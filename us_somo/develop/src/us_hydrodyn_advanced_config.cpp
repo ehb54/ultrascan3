@@ -297,6 +297,11 @@ void US_Hydrodyn_AdvancedConfig::set_expert_mode()
       // cb_scroll_editor->setChecked(true);
       // set_scroll_editor();
    }
+   if ( ((US_Hydrodyn *)us_hydrodyn)->save_widget ) {
+      emit ((US_Hydrodyn *)us_hydrodyn)->save_window->close();
+   }
+   ((US_Hydrodyn *)us_hydrodyn)->save_params.field.clear();
+   ((US_Hydrodyn *)us_hydrodyn)->save_params.field_flag.clear();
 
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }

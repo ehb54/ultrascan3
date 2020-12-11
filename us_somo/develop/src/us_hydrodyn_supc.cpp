@@ -3332,23 +3332,26 @@ mem_ris(int model)
    this_data.hydro_res += hydro_res;
    this_data.results.rs =  f * fconv / (bc * M_PI * ETAo);
 
-   hydro_res.sprintf("%s%.2f\t%s\n", "- ROTATIONAL STOKES' RADIUS [ X ] = ",
-           (double)( pow((3.0 / Dr[0] / bc / 4.0 / M_PI / ETAo), (long double)(0.33333)) * fconv ), "[nm]");
-   create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
-   this_data.hydro_res += hydro_res;
-   this_data.rot_stokes_rad_x = pow((3.0 / Dr[0] / bc / 4.0 / M_PI / ETAo), (long double)(0.33333)) * fconv;
 
-   hydro_res.sprintf("%s%.2f\t%s\n", "- ROTATIONAL STOKES' RADIUS [ Y ] = ",
-                     ( double )( pow((3.0 / Dr[4] / bc / 4.0 / M_PI / ETAo), (long double)(0.33333)) * fconv ), "[nm]");
-   create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
-   this_data.hydro_res += hydro_res;
-   this_data.rot_stokes_rad_y = pow((3.0 / Dr[4] / bc / 4.0 / M_PI / ETAo), (long double)(0.33333)) * fconv;
+   if ( us_hydrodyn->advanced_config.expert_mode ) {
+      hydro_res.sprintf("%s%.2f\t%s\n", "- ROTATIONAL STOKES' RADIUS [ X ] = ",
+                        (double)( pow((3.0 / Dr[0] / bc / 4.0 / M_PI / ETAo), (long double)(0.33333)) * fconv ), "[nm]");
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
+      this_data.hydro_res += hydro_res;
+      this_data.rot_stokes_rad_x = pow((3.0 / Dr[0] / bc / 4.0 / M_PI / ETAo), (long double)(0.33333)) * fconv;
 
-   hydro_res.sprintf("%s%.2f\t%s\n\n", "- ROTATIONAL STOKES' RADIUS [ Z ] = ",
-                     ( double )( pow((3.0 / Dr[8] / bc / 4.0 / M_PI / ETAo),(long double) (0.33333)) * fconv ), "[nm]");
-   create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
-   this_data.hydro_res += hydro_res;
-   this_data.rot_stokes_rad_z = pow((3.0 / Dr[8] / bc / 4.0 / M_PI / ETAo), (long double)(0.33333)) * fconv;
+      hydro_res.sprintf("%s%.2f\t%s\n", "- ROTATIONAL STOKES' RADIUS [ Y ] = ",
+                        ( double )( pow((3.0 / Dr[4] / bc / 4.0 / M_PI / ETAo), (long double)(0.33333)) * fconv ), "[nm]");
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
+      this_data.hydro_res += hydro_res;
+      this_data.rot_stokes_rad_y = pow((3.0 / Dr[4] / bc / 4.0 / M_PI / ETAo), (long double)(0.33333)) * fconv;
+
+      hydro_res.sprintf("%s%.2f\t%s\n\n", "- ROTATIONAL STOKES' RADIUS [ Z ] = ",
+                        ( double )( pow((3.0 / Dr[8] / bc / 4.0 / M_PI / ETAo),(long double) (0.33333)) * fconv ), "[nm]");
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
+      this_data.hydro_res += hydro_res;
+      this_data.rot_stokes_rad_z = pow((3.0 / Dr[8] / bc / 4.0 / M_PI / ETAo), (long double)(0.33333)) * fconv;
+   }
 
    hydro_res.sprintf("%s%5.2f\t%5.2f\t%5.2f\t%s\n", "- CENTRE OF RESISTANCE   :  ", roR[0] * fconv, roR[1] * fconv, roR[2] * fconv,
            "[nm]");

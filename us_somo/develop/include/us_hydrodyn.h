@@ -136,6 +136,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       friend class US_Hydrodyn_Hplc;
       friend class US_Hydrodyn_Saxs_Cormap;
       friend class US_Hydrodyn_Saxs_Hplc_Baseline_Best;
+      friend class US_Hydrodyn_AdvancedConfig;
 
       US_Hydrodyn(vector < QString >,
                   QWidget *p = 0, 
