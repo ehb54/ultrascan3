@@ -198,6 +198,8 @@ class US_UTIL_EXTERN US_AnaProfile
       QList< double> l_volumes;    //!< Loading volumes
       QList< double> lv_tolers;    //!< Load volume tolerances
       QList< double> data_ends;    //!< Load volume tolerances
+
+      QList< int  > analysis_run; 
    private:
 };
 #endif

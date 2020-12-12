@@ -61,6 +61,7 @@ class US_AnaprofPanGen : public US_WidgetsDialog
    private:
       US_AnalysisProfileGui* mainw;   // Parent to all panels
       US_AnaProfile*    currProf;     // Current AnaProfile controls
+      
       US_Help  showHelp;
 
       QGridLayout* genL;
@@ -81,6 +82,8 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       QList< QLineEdit* >    le_ldvols;
       QList< QLineEdit* >    le_lvtols;
       QList< QLineEdit* >    le_daends;
+
+      QList< QCheckBox* >    ck_runs;
       
       int          dbg_level;
       bool         use_db;              // Using the LIMS database?
@@ -88,6 +91,8 @@ class US_AnaprofPanGen : public US_WidgetsDialog
 
    private slots:
       void  build_general_layout( void );
+
+      void  runChecked( bool );
 
       void  apro_button_clicked( void );
       void  prot_button_clicked( void );
@@ -134,6 +139,8 @@ class US_AnaprofPan2DSA : public US_WidgetsDialog
       US_AnalysisProfileGui*  mainw;
       US_AnaProfile::AnaProf2DSA*   ap2DSA;    // 2DSA controls
       US_Help      showHelp;
+
+      QVector<int> active_items_2dsa;
 
       QPushButton* pb_custmg; 
       QPushButton* pb_applya; 
@@ -226,6 +233,8 @@ class US_AnaprofPanPCSA : public US_WidgetsDialog
       US_AnaProfile::AnaProfPCSA*   apPCSA;    // PCSA controls
       US_Help  showHelp;
 
+      QVector<int> active_items_pcsa;
+
       QPushButton* pb_applya; 
       QPushButton* pb_nextch; 
 
@@ -310,6 +319,7 @@ class US_AnalysisProfileGui : public US_Widgets
 
       US_AnaProfile  loadProf;   // Prof params as loaded from AP record
       US_AnaProfile  currProf;   // Current AnaProfile controls
+      US_AnaProfile  currProf_copy;
 
       QPushButton* pb_help;
       QPushButton* pb_next;

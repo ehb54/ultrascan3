@@ -241,9 +241,12 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
                currProf.l_volumes << currProf.l_volumes[ chx ];
                currProf.lv_tolers << currProf.lv_tolers[ chx ];
                currProf.data_ends << currProf.data_ends[ chx ];
+
+	       currProf.analysis_run << currProf.analysis_run[ chx ];
             }
 DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
- << "dae size" << currProf.data_ends.count() << "chentr" << chentr;
+	 << "dae size" << currProf.data_ends.count() << "chentr" << chentr
+	 << "currProf.analysis_run[ chx ]" << currProf.analysis_run[ chx ];
          }
          else
          {  // Append channel and channel description
@@ -256,9 +259,13 @@ DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
             currProf.l_volumes << currProf.l_volumes[ lch ];
             currProf.lv_tolers << currProf.lv_tolers[ lch ];
             currProf.data_ends << currProf.data_ends[ lch ];
+
+	    currProf.analysis_run << currProf.analysis_run[ lch ];
+	    
 DbgLv(1) << "APG: ipro:     lch" << lch << "lv_tol da_end"
  << currProf.lv_tolers[ lch ] << currProf.data_ends[ lch ]
- << "dae size" << currProf.data_ends.count();
+ << "dae size" << currProf.data_ends.count()
+	 << "currProf.analysis_run[ chx ]" << currProf.analysis_run[ chx ];;
          }
          nchn++;
       }
@@ -277,6 +284,8 @@ DbgLv(1) << "APG: ipro:     lch" << lch << "lv_tol da_end"
          currProf.l_volumes.removeLast();
          currProf.lv_tolers.removeLast();
          currProf.data_ends.removeLast();
+
+	 currProf.analysis_run.removeLast();
       }
    }
 
@@ -485,6 +494,13 @@ DbgLv(1) << "APG: ipro:   2kparm pkparm" << currProf.ap2DSA.parms.count() << cur
    } // END: aprsrc == "currProf"
 DbgLv(1) << "APG: ipro: Aprof source: " << aprsrc;
 DbgLv(1) << "APG: ipro: nchn" << nchn << "call pGen iP";
+
+    // //ALEXEY: make copies of original currProf.ap2DSA && currProf.apPCSA objects for further editing (analysis -- o run or not to run)
+    // qDebug() << "Inherit: BEFORE copying..";
+    // currProf_copy.ap2DSA = currProf.ap2DSA;
+    // currProf_copy.apPCSA = currProf.apPCSA;
+
+    // qDebug() << "Inherit: AFTER copying..";
 }
 
 // Reset parameters to their defaults
@@ -580,17 +596,21 @@ DbgLv(1) << "APGe: bgL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
       kchnh           = qMax( kchnh, le_lvtols.count() );
       kchnl           = qMin( kchnl, le_daends.count() );
       kchnh           = qMax( kchnh, le_daends.count() );
+
+      kchnl           = qMin( kchnl, ck_runs.count() );
+      kchnh           = qMax( kchnh, ck_runs.count() );
+
    }
    else if ( nchn == 0 )
    {
       kchnh           = 1;
    }
 
-   if (  nchn == kchnl  &&  nchn == kchnh )
-   {  // Channel elements all have the same count
-DbgLv(1) << "APGe: bgL: REBUILD skipped";
-      return;
-   }
+    if (  nchn == kchnl  &&  nchn == kchnh )
+    {  // Channel elements all have the same count
+ DbgLv(1) << "APGe: bgL: REBUILD skipped";
+       return;
+    }
 
    if ( genL != NULL )
    {
@@ -675,6 +695,8 @@ DbgLv(1) << "APGe: bgL:    scrollArea children count ZERO";
    le_lvtols.clear();
    le_daends.clear();
 
+   ck_runs  .clear();
+
    // Start building main layout
    int row         = 0;
 
@@ -729,6 +751,9 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
    genL->setRowStretch( 0, 0 );
    genL->setRowStretch( 1, 0 );
 
+   
+   QCheckBox*     ck_analysisrun;
+
    for ( int ii = 0; ii < nchn; ii++ )
    {
       QString schan( sl_chnsel[ ii ] );
@@ -740,6 +765,8 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       QLineEdit* le_lvtol = us_lineedit( "10",  0, false );
       QLineEdit* le_daend = us_lineedit( "7.0", 0, false );
 
+      
+      
       QString stchan      = QString::number( ii ) + ": ";
       le_chann->setObjectName( stchan + "channel" );
       le_lcrat->setObjectName( stchan + "loadconc_ratio" );
@@ -761,9 +788,23 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       genL->addWidget( le_ldvol,  row,    7, 1, 1 );
       genL->addWidget( le_lvtol,  row,    8, 1, 1 );
       genL->addWidget( le_daend,  row,    9, 1, 1 );
+
+      //ALEXEY: add checkbox to define analysis
+      ck_analysisrun = new QCheckBox( tr("Run"), this );
+      ck_analysisrun ->setAutoFillBackground( true );
+      ck_analysisrun ->setChecked( true );
+      QString strow  = QString::number( ii );
+      ck_analysisrun ->setObjectName( strow + ": Run" );
+      genL->addWidget( ck_analysisrun,  row,  10, 1, 1 );
+      connect( ck_analysisrun, SIGNAL( toggled     ( bool ) ),
+               this,           SLOT  ( runChecked( bool ) ) );
+
+      ck_runs << ck_analysisrun;
+      //END of run checkbox seciton
+      
       if ( ii == 0 )
       {
-         genL->addWidget( pb_applya, row++, 10, 1, 2 );
+         genL->addWidget( pb_applya, row++, 11, 1, 2 );
          connect( pb_applya, SIGNAL( clicked       ( ) ),
                   this,      SLOT(   applied_to_all( ) ) );
       }
@@ -806,6 +847,35 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "lcrat size" << le_lcrats.count();
    panel          ->addWidget( scrollArea );
    adjustSize();
 }
+
+//Togle Analysis Run checkbox
+void US_AnaprofPanGen::runChecked( bool checked )
+{
+   QObject* sobj       = sender();      // Sender object
+   QString oname       = sobj->objectName();
+   int irow            = oname.section( ":", 0, 0 ).toInt();
+
+   QString channel_name = sl_chnsel[ irow ];
+
+   qDebug() << "Channel name to RUN: Checked: " << channel_name << " : " << checked;
+
+   //ALEXEY: check what's unselected -- if all triples then disable 2DSA && PCSA tabs
+   int run_sum = 0;
+   for ( int ii = 0; ii < sl_chnsel.size(); ii++ )
+     {
+       run_sum += int(ck_runs[ ii ]->isChecked()); 
+     }
+
+   if ( run_sum )
+     {
+       emit set_tabs_buttons_active();
+     }
+   else
+     {
+       emit set_tabs_buttons_inactive();
+     }
+}
+
 
 int US_AnaprofPanGen::getProfiles( QStringList& prnames,
       QList< QStringList >& prentries )
@@ -1192,7 +1262,22 @@ DbgLv(1) << "AP2d:  RTN initPanel()";
 
 // 2DSA Panel Slots
 
-// Channel Selected
+// // Channel Selected
+// void US_AnaprofPan2DSA::channel_selected( int chnx )
+// {
+//    int prvx    = cchx;
+//    cchx        = chnx;
+// DbgLv(1) << "2D:SL: CHAN_SEL" << chnx << "prvx" << prvx;
+//    // Save parameters from previous channel and load current
+//    gui_to_parms( prvx );
+//    parms_to_gui( chnx );
+
+//    // Enable/disable Next based on last index
+//    int lndx    = sl_chnsel.count() - 1;
+//    pb_nextch->setEnabled( chnx < lndx );
+// }
+
+// ALEXEY: Channel Selected modified to account for arbitrary channel selection
 void US_AnaprofPan2DSA::channel_selected( int chnx )
 {
    int prvx    = cchx;
@@ -1203,7 +1288,11 @@ DbgLv(1) << "2D:SL: CHAN_SEL" << chnx << "prvx" << prvx;
    parms_to_gui( chnx );
 
    // Enable/disable Next based on last index
-   int lndx    = sl_chnsel.count() - 1;
+   int lndx = 0;
+   if ( active_items_2dsa.size() )
+     lndx = active_items_2dsa.last();
+   
+   //int lndx    = sl_chnsel.count() - 1;
    pb_nextch->setEnabled( chnx < lndx );
 }
 
@@ -1294,16 +1383,42 @@ else
 
 }
 
-// Next button clicked
+// // Next button clicked
+// void US_AnaprofPan2DSA::next_channel( )
+// {
+// DbgLv(1) << "2D:SL: NEXT_CHAN";
+//    int chnx    = qMin( cb_chnsel->currentIndex() + 1,
+//                        sl_chnsel.count() - 1 );
+//    cb_chnsel->setCurrentIndex( chnx );
+
+//    channel_selected( chnx );
+// }
+
+// ALEXEY: Next Channel taking into account arbitrary selection of channels in Gen tab
 void US_AnaprofPan2DSA::next_channel( )
 {
 DbgLv(1) << "2D:SL: NEXT_CHAN";
-   int chnx    = qMin( cb_chnsel->currentIndex() + 1,
-                       sl_chnsel.count() - 1 );
-   cb_chnsel->setCurrentIndex( chnx );
+  int lndx = 0;
+  if ( active_items_2dsa.size() )
+    lndx = active_items_2dsa.last();
 
-   channel_selected( chnx );
+  for (int i=0; i<active_items_2dsa.size(); i++)
+    qDebug() << "Active_Items: ii, value " << i << active_items_2dsa[i];
+
+  qDebug() << "Last 2dsa index: " << lndx;
+  qDebug() << "cb_chnsel->currentIndex(): " << cb_chnsel->currentIndex();
+
+  int active_curr_ind = active_items_2dsa.indexOf( cb_chnsel->currentIndex() );
+
+  qDebug() << "Active curr Ind (2DSA): " << active_curr_ind;
+  int chnx    = qMin( active_items_2dsa[ active_curr_ind +1 ], lndx );
+  cb_chnsel->setCurrentIndex( chnx );
+
+  channel_selected( chnx );
 }
+
+
+
 
 // smin value changed
 void US_AnaprofPan2DSA::smin_changed( )
@@ -1602,13 +1717,35 @@ void US_AnaprofPanPCSA::nopcsa_checked( bool chkd )
 DbgLv(1) << "PC:SL: NOPCSA_CKD" << chkd;
 }
 
-// Channel Selected
+// // Channel Selected
+// void US_AnaprofPanPCSA::channel_selected( int chnx )
+// {
+// DbgLv(1) << "PC:SL: CHAN_SEL" << chnx;
+//    int prvx    = cchx;
+//    cchx        = chnx;
+//    int lndx    = sl_chnsel.count() - 1;
+//    pb_nextch->setEnabled( chnx < lndx );
+
+// DbgLv(1) << "PC:SL: CHAN_SEL" << chnx << "prvx" << prvx;
+//    // Save parameters from previous channel and load current
+//    gui_to_parms( prvx );
+//    parms_to_gui( chnx );
+
+//    // Enable/disable Next based on last index
+//    pb_nextch->setEnabled( chnx < lndx );
+// }
+
+// ALEXEY: Channel Selected modified to account for arbitrary chennle selection
 void US_AnaprofPanPCSA::channel_selected( int chnx )
 {
 DbgLv(1) << "PC:SL: CHAN_SEL" << chnx;
    int prvx    = cchx;
    cchx        = chnx;
-   int lndx    = sl_chnsel.count() - 1;
+   //int lndx    = sl_chnsel.count() - 1;
+   int lndx = 0;
+   if ( active_items_pcsa.size() )
+     lndx = active_items_pcsa.last();
+   
    pb_nextch->setEnabled( chnx < lndx );
 
 DbgLv(1) << "PC:SL: CHAN_SEL" << chnx << "prvx" << prvx;
@@ -1620,16 +1757,41 @@ DbgLv(1) << "PC:SL: CHAN_SEL" << chnx << "prvx" << prvx;
    pb_nextch->setEnabled( chnx < lndx );
 }
 
-// Next Channel
+// // Next Channel
+// void US_AnaprofPanPCSA::next_channel( )
+// {
+// DbgLv(1) << "PC:SL: NEXT_CHAN";
+//    int lndx    = sl_chnsel.count() - 1;
+//    int chnx    = qMin( cb_chnsel->currentIndex() + 1, lndx );
+//    cb_chnsel->setCurrentIndex( chnx );
+
+//    channel_selected( chnx );
+// }
+
+// ALEXEY: Next Channel taking into account arbitrary selection of channels in Gen tab
 void US_AnaprofPanPCSA::next_channel( )
 {
 DbgLv(1) << "PC:SL: NEXT_CHAN";
-   int lndx    = sl_chnsel.count() - 1;
-   int chnx    = qMin( cb_chnsel->currentIndex() + 1, lndx );
-   cb_chnsel->setCurrentIndex( chnx );
+  int lndx = 0;
+  if ( active_items_pcsa.size() )
+    lndx = active_items_pcsa.last();
 
-   channel_selected( chnx );
+  for (int i=0; i<active_items_pcsa.size(); i++)
+    qDebug() << "Active_Items: ii, value " << i << active_items_pcsa[i];
+
+  qDebug() << "Last 2dsa index: " << lndx;
+  qDebug() << "cb_chnsel->currentIndex(): " << cb_chnsel->currentIndex();
+
+  int active_curr_ind = active_items_pcsa.indexOf( cb_chnsel->currentIndex() );
+
+  qDebug() << "Active curr Ind (PCSA): " << active_curr_ind;
+  int chnx    = qMin( active_items_pcsa[ active_curr_ind +1 ], lndx );
+  cb_chnsel->setCurrentIndex( chnx );
+
+  channel_selected( chnx );
 }
+
+
 // Transfer gui elements to parms vector row
 void US_AnaprofPanPCSA::gui_to_parms( int rowx )
 {

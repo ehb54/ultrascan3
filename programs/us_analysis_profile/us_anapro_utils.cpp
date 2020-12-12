@@ -163,6 +163,12 @@ void US_AnalysisProfileGui::help( void )
 //Slot to DISABLE tabs and Next/Prev buttons
 void US_AnalysisProfileGui::disable_tabs_buttons( void )
 {
+  // apan2DSA     ->initPanel();
+  // apan2DSA     ->savePanel();
+
+  // apanPCSA     ->initPanel();
+  // apanPCSA     ->savePanel();
+  
 DbgLv(1) << "DISBLING Tabs...";
    pb_next   ->setEnabled( false );
    pb_prev   ->setEnabled( false );
@@ -184,12 +190,18 @@ DbgLv(1) << "ENABLING!!!";
    pb_next   ->setEnabled(true);
    pb_prev   ->setEnabled(true);
 
+   qDebug() << "In ENABLING 1";
+
    for ( int ii = 1; ii < tabWidget->count(); ii++ )
    {
+      qDebug() << "In ENABLING 2";
       tabWidget ->setTabEnabled( ii, true );
       QPalette pal = tabWidget ->tabBar()->palette();
       tabWidget ->tabBar()->setTabTextColor( ii, pal.color(QPalette::WindowText) ); // Qt::black
+      qDebug() << "In ENABLING 2a";
    }
+
+   qDebug() << "In ENABLING 3";
 }
 
 //Slot to ENABLE tabs and Next/Prev buttons, but make all Widgets read-only
@@ -273,8 +285,12 @@ void US_AnalysisProfileGui::savePanels()
 DbgLv(1) << "AP:sP: IN savePanels()";
    apanGeneral  ->savePanel();
 DbgLv(1) << "AP:sP: pG return";
+
+//ALEXEY: need to also re-initiate 2DSA && PCSA (if General tab was changed)
+//apan2DSA     ->initPanel();
    apan2DSA     ->savePanel();
 DbgLv(1) << "AP:sP: p2 return";
+//apanPCSA     ->initPanel();
    apanPCSA     ->savePanel();
 DbgLv(1) << "AP:sP: pP return";
 }
@@ -290,6 +306,8 @@ void US_AnaprofPanGen::initPanel()
 #if 0
 use_db=false;
 #endif
+
+ 
    // Populate GUI settings from protocol,analysis controls
    le_protname   ->setText( currProf->protoname );
    le_aproname   ->setText( currProf->aprofname );
@@ -356,6 +374,9 @@ DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.cou
    { // Reset General channel parameter gui elements
       for ( int ii = 0; ii < nchan; ii++ )
       {
+	qDebug() <<  "currProf->analysis_run.size(): " << currProf->analysis_run.count();
+	qDebug() <<  "nchan, sl_chnsel.size(): " << nchan << sl_chnsel.count();
+	
          int kk          = qMin( ii, sl_chnsel.count() - 1 );
          le_channs[ ii ]->setText( sl_chnsel[ kk ] );
          kk              = qMin( ii, currProf->lc_ratios.count() - 1 );
@@ -368,8 +389,20 @@ DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.cou
          le_lvtols[ ii ]->setText( QString::number( currProf->lv_tolers[ kk ] ) );
          kk              = qMin( ii, currProf->data_ends.count() - 1 );
          le_daends[ ii ]->setText( QString::number( currProf->data_ends[ kk ] ) );
+
+	 kk              = qMin( ii, currProf->analysis_run.count() - 1 );
+
+	 qDebug() << "kk out of currProf->analysis_run: " << kk;
+	 
+	 if ( currProf->analysis_run[ kk ] )
+	   ck_runs[ ii ] ->setChecked( true  );
+	 else
+	   ck_runs[ ii ] ->setChecked( false  );
+	 
 DbgLv(1) << "APGe: inP:    ii kk" << ii << kk << "chann" << sl_chnsel[kk] << "lvtol daend dae[kk]"
- << currProf->lv_tolers[ii] << currProf->data_ends[ii] << currProf->data_ends[kk];
+	 << currProf->lv_tolers[ii] << currProf->data_ends[ii] << currProf->data_ends[kk]
+	 << "currProf->analysis_run[ ii] currProf->analysis_run[ kk ]" << currProf->analysis_run[ ii ] << currProf->analysis_run[ kk ];
+ 
       }
    }
 else
@@ -458,16 +491,23 @@ DbgLv(1) << "APGe: svP: IN";
    nchan           = qMin( nchan, le_ldvols.count() );
    nchan           = qMin( nchan, le_lvtols.count() );
    nchan           = qMin( nchan, le_daends.count() );
+
+   nchan           = qMin( nchan, ck_runs.count() );
+   
 DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
  << le_lcrats.count() << le_lctols.count() << le_ldvols.count()
  << le_lvtols.count() << le_daends.count() << "nchan" << nchan;
-   if ( currProf->pchans.count() == nchan )
-   { // Reset General channel parameter gui elements
+
+ 
+// if ( currProf->pchans.count() == nchan )       <--- ALEXEY: BUG commented: very important to re-generate GUI (e.g. when Optics chenged by adding/removing Interfrence)
+// Otherwise, with Interfence, no changes are saved from the Geb tab GUI && no changes written to Aprofile DB !!
+    { // Reset General channel parameter gui elements
       currProf->lc_ratios.clear( );
       currProf->lc_tolers.clear( );
       currProf->l_volumes.clear( );
       currProf->lv_tolers.clear( );
       currProf->data_ends.clear( );
+      currProf->analysis_run.clear( );
 
       for ( int ii = 0; ii < nchan; ii++ )
       {
@@ -476,6 +516,14 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
          currProf->l_volumes << le_ldvols[ ii ]->text().toDouble();
          currProf->lv_tolers << le_lvtols[ ii ]->text().toDouble();
          currProf->data_ends << le_daends[ ii ]->text().toDouble();
+
+	 //ALEXEY: add additional field for channels to be or not to be analysed
+	 if ( ck_runs[ ii ]->isChecked() ) 
+	   currProf->analysis_run << 1;
+	 else
+	   currProf->analysis_run << 0;
+
+	 qDebug() << "APGR: SAVE: channel -- " << ii << int(ck_runs[ ii ]->isChecked());
       }
    }
 DbgLv(1) << "APGe: svP:  done";
@@ -544,6 +592,17 @@ QStringList US_AnaprofPanGen::getLValue( const QString type )
    int nchan      = currProf->lc_ratios.count();
 
    if      ( type == "channels" )       { value = sl_chnsel; }
+   else if ( type == "analysisrun" )
+   {
+     value.clear();
+     //for ( int ii = 0; ii < nchan; ii++ )
+       for ( int ii = 0; ii < sl_chnsel.count(); ii++ )
+       {
+	 qDebug() << "Ana RUN for channel " << ii << " is: "  << currProf->analysis_run[ ii ];
+	 value << QString::number (currProf->analysis_run[ ii ]) ;
+	 qDebug() << "Ana RUN for channel " << ii << " value: " << value;
+       }
+   }
    else if ( type == "lcratios" )
    {
       for ( int ii = 0; ii < nchan; ii++ )
@@ -615,20 +674,97 @@ int US_AnaprofPanGen::status()
 // Initialize a 2DSA sub-panel, especially after clicking on its tab
 void US_AnaprofPan2DSA::initPanel()
 {
-   ap2DSA             = &(mainw->currProf.ap2DSA);
-DbgLv(1) << "AP2d:inP:  IN";
+  ap2DSA             = &(mainw->currProf.ap2DSA);
+  //ap2DSA             = &(mainw->currProf_copy.ap2DSA);
+  qDebug() << "INIT 2DSA-begin: ap2DSA.parm SIZE -- " << ap2DSA->parms.size();
+
+  //Debug
+  for ( int j = 0; j < ap2DSA->parms.size(); j++ )
+    qDebug() << "Channels in COPY 2DCA parms vector --  " <<  ap2DSA->parms[ j ].channel;
+  
+  DbgLv(1) << "AP2d:inP:  IN";
 
    sl_chnsel          = sibLValue( "general", "channels" );
+   qDebug() << "2DSA: sl_chnsel --- " << sl_chnsel;
+   QStringList chnls_to_run  = sibLValue( "general", "analysisrun" );
+   qDebug() << "2DSA: QStringList chnls_to_run: " << chnls_to_run;
+
+   //chnls_to_run.clear();
+   /*
+   // //ALEXEY: remove those channels that are not selected for RUN
+   // qobject_cast<QListView *>(cb_chnsel->view())->setRowHidden(0, true);
+   QStringList chnls_to_run  = sibLValue( "general", "analysisrun" );
+   qDebug() << "Size of chnls_to_run: " <<  chnls_to_run.size();
+   qDebug() << "QStringList chnls_to_run: " << chnls_to_run;
+
+   QStringList chnls_to_remove;
+   for ( int i = 0; i < chnls_to_run.size(); i++ )
+     {
+       if ( ! chnls_to_run[ i ].toInt() )
+	 chnls_to_remove << sl_chnsel[ i ];
+     }
+   
+   for ( int i = 0; i < chnls_to_remove.size(); i++ )
+     sl_chnsel.removeOne( chnls_to_remove[i] );
+   
+   qDebug() << "New size of sl_chnsel is: " << sl_chnsel.size();
+   // End of channels removal
+   */
    cb_chnsel->clear();
    cb_chnsel->addItems( sl_chnsel );
 
+   active_items_2dsa.clear();
+   qDebug() << "SIZE OF active_items_2dsa: " << active_items_2dsa.size();
+   QStandardItemModel * model = qobject_cast<QStandardItemModel*>(cb_chnsel->model());
+   for ( int i = 0; i < chnls_to_run.size(); i++ )
+     {
+       QStandardItem * item = model->item( i );
+       if ( ! chnls_to_run[ i ].toInt() )  //deactivate item
+	 item->setEnabled( false );
+       else                                //activate item
+	 {
+	   item->setEnabled( true );
+	   active_items_2dsa.push_back( i );
+	 }
+     }
+
+   int first_avail = 0;
+   if ( active_items_2dsa.size() )
+     first_avail = active_items_2dsa[ 0 ];
+   
+
+   /*
    // Populate GUI settings from protocol controls
+   //int kparm          = ap2DSA->parms.size();
+   qDebug() << "2DSA params: OLD size/content: " << ap2DSA->parms.size();
+
+   //ALEXEY: now we need to remove 2DSA params for removed channels:
+   for ( int i = 0; i < chnls_to_remove.size(); i++ )
+     {
+       for ( int j = 0; j < ap2DSA->parms.size(); j++ )
+	 {
+	   if ( ap2DSA->parms[ j ].channel == chnls_to_remove[ i ] )
+	     {
+	       qDebug() << "2DSA parms for channel -- " << ap2DSA->parms[ j ].channel << " will be removed!";
+	       ap2DSA->parms.remove( j );
+	       break;
+	     }
+	 }
+     }
+   
+   qDebug() << "2DSA params: NEW size/content: " << ap2DSA->parms.size();
+   //End of 2DSA parm removal
+   */
+
    int kparm          = ap2DSA->parms.size();
+   
    int kchan          = sl_chnsel.size();
 DbgLv(1) << "AP2d:inP:  kparm kchan" << kparm << kchan;
    US_AnaProfile::AnaProf2DSA::Parm2DSA parm1;
    if ( kparm > 0 )
-      parm1              = ap2DSA->parms[ 0 ];
+     //parm1              = ap2DSA->parms[ 0 ];
+     parm1              = ap2DSA->parms[ first_avail ];
+   
    for ( int ii = kparm; ii < kchan; ii++ )
    {
       parm1.channel      = sl_chnsel[ ii ];
@@ -636,8 +772,11 @@ DbgLv(1) << "AP2d:inP:    set-parm ii" << ii << "channel" << parm1.channel;
       ap2DSA->parms << parm1;
    }
 
-   cchx            = 0;
-   parms_to_gui( 0 );
+   // cchx            = 0;
+   // parms_to_gui( 0 );
+   cchx            = first_avail;
+   parms_to_gui( first_avail );
+   
 DbgLv(1) << "AP2d:inP:  parms_to_gui complete";
 
    le_j2gpts->setText( QString::number( ap2DSA->grpoints ) );
@@ -770,8 +909,14 @@ bool is_done=true;
 // Initialize a PCSA panel, especially after clicking on its tab
 void US_AnaprofPanPCSA::initPanel()
 {
-   apPCSA             = &(mainw->currProf.apPCSA);
-
+  apPCSA             = &(mainw->currProf.apPCSA);
+  //apPCSA             = &(mainw->currProf_copy.apPCSA);
+  qDebug() << "INIT PCSA-begin: apPCSA.parm SIZE -- " << apPCSA->parms.size();
+  //Debug
+  for ( int j = 0; j < apPCSA->parms.size(); j++ )
+    qDebug() << "Channels in COPY PSCA parms vector --  " <<  apPCSA->parms[ j ].channel;
+  
+  
    QStringList sl_bals;                         // Counterbalance choices
    sl_bals << tr( "empty (counterbalance)" )
            << tr( "Beckman counterbalance" )
@@ -782,20 +927,103 @@ void US_AnaprofPanPCSA::initPanel()
 //   rebuild_Cells();
 
    sl_chnsel       = sibLValue( "general", "channels" );
+   QStringList chnls_to_run  = sibLValue( "general", "analysisrun" );
+   qDebug() << "PCSA: QStringList chnls_to_run: " << chnls_to_run;
+
+   //chnls_to_run.clear();
+   
+   
+   /*
+   // //ALEXEY: remove those channels that are not selected for RUN
+   // qobject_cast<QListView *>(cb_chnsel->view())->setRowHidden(0, true);
+   QStringList chnls_to_run  = sibLValue( "general", "analysisrun" );
+   qDebug() << "Size of chnls_to_run: " <<  chnls_to_run.size();
+   qDebug() << "QStringList chnls_to_run: " << chnls_to_run;
+
+   QStringList chnls_to_remove;
+   for ( int i = 0; i < chnls_to_run.size(); i++ )
+   {
+     if ( ! chnls_to_run[ i ].toInt() )
+       {
+	 chnls_to_remove << sl_chnsel[ i ];
+	 qDebug() << "Chnls_to_remove -- " << chnls_to_remove;
+       }
+   }
+
+   
+   for ( int i = 0; i < chnls_to_remove.size(); i++ )
+     sl_chnsel.removeOne( chnls_to_remove[i] );
+   
+
+   qDebug() << "New size of sl_chnsel is: " << sl_chnsel.size();
+   // End of channels removal
+   */
+   
    cb_chnsel->clear();
    cb_chnsel->addItems( sl_chnsel );
 
+   active_items_pcsa.clear();
+   QStandardItemModel * model = qobject_cast<QStandardItemModel*>(cb_chnsel->model());
+   for ( int i = 0; i < chnls_to_run.size(); i++ )
+     {
+       QStandardItem * item = model->item( i );
+       if ( ! chnls_to_run[ i ].toInt() )  //deactivate item
+	 item->setEnabled( false );
+       else                                //activate item
+	 {
+	   item->setEnabled( true );
+	   active_items_pcsa.push_back( i );
+	 }
+     }
+
+   int first_avail = 0;
+   if ( active_items_pcsa.size() )
+     first_avail = active_items_pcsa[ 0 ];
+   
+   
+
    // Populate GUI settings from protocol controls
-DbgLv(1) << "APpc:inP: prb: nchan" << apPCSA->nchan << "job_run" << apPCSA->job_run;
+   DbgLv(1) << "APpc:inP: prb: nchan" << apPCSA->nchan << "job_run" << apPCSA->job_run;
    ck_nopcsa->setChecked( ! apPCSA->job_run );
 
+   /*
+   //int kparm          = apPCSA->parms.size();
+   qDebug() << "PCSA params: OLD size/content: " << apPCSA->parms.size();
+
+   //ALEXEY: now we need to remove PCSA params for removed channels:
+   for ( int i = 0; i < chnls_to_remove.size(); i++ )
+     {
+       for ( int j = 0; j < apPCSA->parms.size(); j++ )
+	 {
+	   if ( apPCSA->parms[ j ].channel == chnls_to_remove[ i ] )
+	     {
+	       qDebug() << "PCSA parms for channel -- " << apPCSA->parms[ j ].channel << " will be removed!";
+	       apPCSA->parms.remove( j );
+	        break;
+	     }
+	 }
+     }
+
+   //Debug
+   for ( int j = 0; j < apPCSA->parms.size(); j++ )
+     {
+       qDebug() << "Channels in NEW PSCA parms vector --  " <<  apPCSA->parms[ j ].channel;
+     }
+   //End Debug
+
+   qDebug() << "PCSA params: NEW size/content: " << apPCSA->parms.size();
+   //End of PCSA parm removal
+   */
+   
    int kparm          = apPCSA->parms.size();
+   
    int kchan          = sl_chnsel.size();
 DbgLv(1) << "APpc:inP:   kparm kchan" << kparm << kchan
  << "  job_run" << apPCSA->job_run;
    US_AnaProfile::AnaProfPCSA::ParmPCSA parm1;
    if ( kparm > 0 )
-      parm1              = apPCSA->parms[ 0 ];
+     //parm1              = apPCSA->parms[ 0 ];
+     parm1              = apPCSA->parms[ first_avail ];
    for ( int ii = kparm; ii < kchan; ii++ )
    {
       parm1.channel      = sl_chnsel[ ii ];
@@ -803,8 +1031,11 @@ DbgLv(1) << "APpc:inP:     set-parm ii" << ii << "channel" << parm1.channel;
       apPCSA->parms << parm1;
    }
 
-   cchx               = 0;
-   parms_to_gui( 0 );
+   // cchx               = 0;
+   // parms_to_gui( 0 );
+
+   cchx               = first_avail;
+   parms_to_gui( first_avail );   
 DbgLv(1) << "APpc:inP:   parms_to_gui complete";
 }
 

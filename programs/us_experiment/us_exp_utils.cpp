@@ -1133,7 +1133,7 @@ void US_ExperGuiSpeeds::savePanel()
    nspeed                = ssvals.count();
    rpSpeed->nstep        = nspeed;
 
-   //ALEXEY: ignore radial calibration && spinn off for now
+   //ALEXEY: ignore radial calibration && spinn down for now
    // rpSpeed->spin_down    = ck_endoff->isChecked();
    // rpSpeed->radial_calib = ck_radcal->isChecked();
 

@@ -24,6 +24,8 @@ US_AnaProfile::US_AnaProfile()
    l_volumes << 460.0;
    lv_tolers << 10.0;
    data_ends << 7.0;
+
+   analysis_run << 1;
 }
 
 // AnaProfile Equality operator
@@ -52,23 +54,82 @@ bool US_AnaProfile::toXml( QXmlStreamWriter& xmlo )
    xmlo.writeAttribute    ( "name", aprofname );
    xmlo.writeAttribute    ( "guid", aprofGUID );
 
+   /** //OLD -- incorrect
    for ( int ii = 0; ii < pchans.count(); ii++ )
    {
-      xmlo.writeStartElement ( "channel_parms" );
-      xmlo.writeAttribute    ( "channel",  pchans  [ ii ] );
-      xmlo.writeAttribute    ( "chandesc", chndescs[ ii ] );
-      xmlo.writeAttribute    ( "load_concen_ratio",
-                               QString::number( lc_ratios[ ii ] ) );
-      xmlo.writeAttribute    ( "lcr_tolerance",
-                               QString::number( lc_tolers[ ii ] ) );
-      xmlo.writeAttribute    ( "load_volume",
-                               QString::number( l_volumes[ ii ] ) );
-      xmlo.writeAttribute    ( "lv_tolerance",
-                               QString::number( lv_tolers[ ii ] ) );
-      xmlo.writeAttribute    ( "data_end",
-                               QString::number( data_ends[ ii ] ) );
-      xmlo.writeEndElement();    // channel_parms
+      
+     xmlo.writeStartElement ( "channel_parms" );
+     xmlo.writeAttribute    ( "channel",  pchans  [ ii ] );
+     xmlo.writeAttribute    ( "chandesc", chndescs[ ii ] );
+     xmlo.writeAttribute    ( "load_concen_ratio",
+   			QString::number( lc_ratios[ ii ] ) );
+     xmlo.writeAttribute    ( "lcr_tolerance",
+   			QString::number( lc_tolers[ ii ] ) );
+     xmlo.writeAttribute    ( "load_volume",
+   			QString::number( l_volumes[ ii ] ) );
+     xmlo.writeAttribute    ( "lv_tolerance",
+   			QString::number( lv_tolers[ ii ] ) );
+     xmlo.writeAttribute    ( "data_end",
+   			QString::number( data_ends[ ii ] ) );
+     //ALEXEY
+     xmlo.writeAttribute    ( "run",
+   			QString::number( analysis_run[ ii ] ) );
+     xmlo.writeEndElement();    // channel_parms
+    
    }
+   */
+
+   //DEBUG
+   qDebug() << "Size: pchans() -- " << pchans.count();
+   qDebug() << "Sizes of lc_ratios, lc_tolers, l_volumes, lv_tolers, data_ends, analysis_run -- "
+	    << lc_ratios.count() << lc_tolers.count() << l_volumes.count() <<  lv_tolers.count() <<  data_ends.count() <<  analysis_run.count();
+
+   // for (int i=0; i<data_ends.count(); i++)
+   //   {
+   //     qDebug() << "lc_ratios: " << i << lc_ratios[ i ];
+   //     qDebug() << "lc_tolers: " << i << lc_tolers[ i ];
+   //     qDebug() << "lc_volumes: " << i << l_volumes[ i ];
+   //     qDebug() << "lv_tolers: " << i << lv_tolers[ i ];
+   //     qDebug() << "data_ends: " << i << data_ends[ i ];
+   //     qDebug() << "analysis_run: " << i << analysis_run[ i ];
+   //   }
+   //END of DEBUG
+
+   int kk = 0;
+   for ( int ii = 0; ii < pchans.count(); ii++ )
+   {
+     //ALEXEY: do not write Interference B
+     if (  chndescs[ii].contains( "B:Interf" ) )
+       continue;
+       
+     qDebug() << "WRITE: Ch description: " << chndescs[ ii ];
+
+     qDebug() << "Index of affected PARMS: " << kk;
+     xmlo.writeStartElement ( "channel_parms" );
+     xmlo.writeAttribute    ( "channel",  pchans  [ ii ] );
+     xmlo.writeAttribute    ( "chandesc", chndescs[ ii ] );
+
+     //Affected parms
+     xmlo.writeAttribute    ( "load_concen_ratio",
+   			QString::number( lc_ratios[ kk ] ) );
+     xmlo.writeAttribute    ( "lcr_tolerance",
+   			QString::number( lc_tolers[ kk ] ) );
+     xmlo.writeAttribute    ( "load_volume",
+   			QString::number( l_volumes[ kk ] ) );
+     xmlo.writeAttribute    ( "lv_tolerance",
+   			QString::number( lv_tolers[ kk ] ) );
+     xmlo.writeAttribute    ( "data_end",
+   			QString::number( data_ends[ kk ] ) );
+     //ALEXEY
+     xmlo.writeAttribute    ( "run",
+   			QString::number( analysis_run[ kk ] ) );
+     xmlo.writeEndElement();    // channel_parms
+
+     kk++;
+
+   }
+
+
 
    ap2DSA.toXml( xmlo );
    apPCSA.toXml( xmlo );
@@ -93,6 +154,8 @@ bool US_AnaProfile::fromXml( QXmlStreamReader& xmli )
    lv_tolers.clear();
    data_ends.clear();
 
+   analysis_run.clear();
+   
    while( ! xmli.atEnd() )
    {
       xmli.readNext();
@@ -121,6 +184,9 @@ bool US_AnaProfile::fromXml( QXmlStreamReader& xmli )
             l_volumes << attr.value( "load_volume" ).toString().toDouble();
             lv_tolers << attr.value( "lv_tolerance" ).toString().toDouble();
             data_ends << attr.value( "data_end" ).toString().toDouble();
+	    //ALEXEY: for now -- put all checked; later will be 'run="1"' OR 'run="0"' field
+	    //analysis_run << 1;
+	    analysis_run << attr.value( "run" ).toString().toInt();
 //3-------------------------------------------------------------------------->80
             chx++;
 //qDebug() << "AP:fX:  chx" << chx << pchans.count();
