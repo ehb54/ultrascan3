@@ -142,6 +142,8 @@ class US_Edit : public US_Widgets
       QStringList        triples_all_optics;
       QStringList        channels_all;
       QMap < QString, bool > isSet_ref_wvl;
+
+      QMap < QString, bool > channels_to_analyse;
       
       QStringList        trip_rpms;
       QStringList        celchns;
@@ -355,6 +357,10 @@ class US_Edit : public US_Widgets
       void update_autoflow_record_atEditData( US_DB2*, QString& );
       int  create_autoflowAnalysis_record( US_DB2*, QString&,  QString& );
       QString compose_json( bool );
+
+      void delete_autoflow_record ( void );
+      
+      bool isSet_to_analyse( QString, QString  );
       
    private slots:         
       void load              ( void );

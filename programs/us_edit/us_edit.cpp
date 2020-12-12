@@ -1462,6 +1462,8 @@ void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
   triples_all_optics.clear();
   channels_all.clear();
   isSet_ref_wvl.clear();
+
+  channels_to_analyse.clear();
   
   // analysis stages
   job1run     = false;
@@ -2523,7 +2525,7 @@ bool US_Edit::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
 	      {
 		
 		QString channel_name = attr.value( "channel" ).toString();
-		
+				
 		QStringList aprof_parms;
 		aprof_parms << attr.value( "load_volume" ).toString()
 			    << attr.value( "data_end" ).toString();
@@ -2531,6 +2533,13 @@ bool US_Edit::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
 		qDebug() << "READING aprof XML: " << channel_name << ", " << aprof_parms;
 		
 		aprof_channel_to_parms[ channel_name ] = aprof_parms;
+	       
+		//Read what triples to analyse:
+		if ( attr.hasAttribute("run") )
+		  {
+		    QString channel_desc = attr.value( "chandesc" ).toString();
+		    channels_to_analyse[ channel_desc ] = bool_flag( attr.value( "run" ).toString() );
+		  }
 	      }
 	  }
 	
@@ -6921,13 +6930,6 @@ void US_Edit::write_auto( void )
        isSet_ref_wvl[ channels_all[i] ] = false;
      }
 
-   //ALEXEY: Edit triple list to define triples to be analysed... Simple GUI with the triples and checkboxes, all checkboxes pre-checked.
-   //pass in triples_all_optics array;
-   //generate GUI
-   //define QMap< triple_name, bool > (bool = [selected, unselected])
-   //return QMap
-   //in below cycle over channels, compare triple name with returned QMap before creating autoflowAnalysis record..
-   
    // Process triples by channel, generate appropriate JSON (with or without 2DSA_FM stage) for autoflowAnalysis record && create those records
    QStringList AnalysisIDs;
 
@@ -6943,50 +6945,67 @@ void US_Edit::write_auto( void )
 	       //Interference
 	       if ( triples_all_optics[j].contains( "Interference" ) )
 		 {
-		   json_status = compose_json( true );
-		   qDebug() << triples_all_optics[j] << json_status;
-
-		   ID = create_autoflowAnalysis_record( dbP, triples_all_optics[j], json_status );
-		 }
-	       //UV.vis
-	       else		 
-		 {
-		   if ( !isSet_ref_wvl[ channels_all[i] ] )
+		   if ( isSet_to_analyse( triples_all_optics[ j ] , QString("Interf") ) )
 		     {
 		       json_status = compose_json( true );
 		       qDebug() << triples_all_optics[j] << json_status;
 		       
 		       ID = create_autoflowAnalysis_record( dbP, triples_all_optics[j], json_status );
-
-		       //So, reference wvl is defiend as the 1st one in the channel domain
-		       isSet_ref_wvl[ channels_all[i] ] = true;
 		     }
-		   else
+		 }
+	       //UV.vis
+	       else		 
+		 {
+		   if ( isSet_to_analyse( triples_all_optics[ j ],  QString("UV/vis") ) )
 		     {
-		       json_status = compose_json( false );
-		       qDebug() << triples_all_optics[j] << json_status;
-		       
-		       ID = create_autoflowAnalysis_record( dbP, triples_all_optics[j], json_status );
+		       if ( !isSet_ref_wvl[ channels_all[i] ] )
+			 {
+			   json_status = compose_json( true );
+			   qDebug() << triples_all_optics[j] << json_status;
+			   
+			   ID = create_autoflowAnalysis_record( dbP, triples_all_optics[j], json_status );
+			   
+			   //So, reference wvl is defiend as the 1st one in the channel domain
+			   isSet_ref_wvl[ channels_all[i] ] = true;
+			 }
+		       else
+			 {
+			   json_status = compose_json( false );
+			   qDebug() << triples_all_optics[j] << json_status;
+			   
+			   ID = create_autoflowAnalysis_record( dbP, triples_all_optics[j], json_status );
+			 }
 		     }
 		 }
 
 	       if ( ID )
 		 AnalysisIDs << QString::number( ID );
-	       else
-		 {
-		   qDebug() << "AnalysisID was not saved !";
-		   return;
-		 }
+	       
 	     }
 	 }
      }
-       
-   // Now we need to Update autoflow record, reset GUI && send signal to switch to Analysis stage:
-   QString AnalysisIDsString = AnalysisIDs.join(",");
-   update_autoflow_record_atEditData( dbP, AnalysisIDsString );
 
+   
    le_status->setText( tr( "Saving COMPLETE " ) );
    qApp->processEvents();
+
+   //If AnalysisIDs empty, STOP here and return: Nothing to process further; emit signal to reset
+   if ( AnalysisIDs.isEmpty() )
+     {
+       qDebug() << "Nothing to Analyse!!!";
+       QMessageBox::information( this,
+			     tr( "Saving of Edit Profiles is Complete." ),
+			     tr( "Edit profiles were saved successfully. \n\n"
+				 "No triples were set for analysis. Program will be reset." ) );
+       reset();
+       //delete_autoflow_record();
+       emit back_to_initAutoflow( );
+       return;
+     }
+   
+   // Otherwise, proceed to analysis: Now we need to Update autoflow record, reset GUI && send signal to switch to Analysis stage:
+   QString AnalysisIDsString = AnalysisIDs.join(",");
+   update_autoflow_record_atEditData( dbP, AnalysisIDsString );
 
    //Pass analsyisIDs generated to details_at_editing_local
    details_at_editing_local[ "analysisIDs" ] = AnalysisIDsString;
@@ -7001,6 +7020,77 @@ void US_Edit::write_auto( void )
    qApp->processEvents();
    
    emit edit_complete_auto( details_at_editing_local  );   
+}
+
+//Delete autoflow record 
+void US_Edit::delete_autoflow_record( void )
+{
+  QString runID_numeric     = details_at_editing_local[ "runID" ];
+
+  // Check DB connection
+   US_Passwd pw;
+   QString masterpw = pw.getPasswd();
+   US_DB2* db = new US_DB2( masterpw );
+
+   if ( db->lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+       return;
+     }
+
+   QStringList qry;
+   qry << "delete_autoflow_record"
+       << runID_numeric;
+
+   //db->query( qry );
+
+   // OR
+   
+   int status = db->statusQuery( qry );
+   
+   if ( status == US_DB2::NO_AUTOFLOW_RECORD )
+     {
+       QMessageBox::warning( this,
+			     tr( "Autoflow Record Not Deleted" ),
+			     tr( "No autoflow record\n"
+				 "associated with this experiment." ) );
+       return;
+     }
+}
+
+
+bool US_Edit::isSet_to_analyse( QString triple_name, QString opsys )
+{
+  bool have_run = false;
+
+  //In case anaprofile does not have "run" attr, so QMap<> channels_to_analyse empty (older protocols):
+  if ( channels_to_analyse.isEmpty() )
+    {
+      qDebug() << "It looks like older protocol is in use: QMap channels_to_analyse is EMPRTY!";
+      
+      have_run = true;
+      return have_run;
+    }
+  
+  QStringList triple_name_list = triple_name.split(".");
+  QString channel = triple_name_list[0] + triple_name_list[1];
+
+  QMap<QString, bool>::iterator jj;
+  for ( jj = channels_to_analyse.begin(); jj != channels_to_analyse.end(); ++jj )
+    {
+      if ( jj.key().contains( channel ) && jj.key().contains( opsys ) )
+	{
+	  if ( jj.value()  )
+	    {
+	      qDebug() << "Triple " << triple_name << " of channel (" << jj.key() << " will be analysed.";
+	      have_run = true;	      
+	      break;
+	    }
+	}
+    }
+
+  return have_run;
 }
 
 // Create JSON to be put into AutoflowAnalysis table
