@@ -1736,7 +1736,10 @@ QString US_Hydrodyn_Save::dataString(save_data *data)
             .arg(i ? "," : "")
             .FARG(*((double *)(field_to_save_data[save->field[i]])))
             .FARG(*((double *)(field_to_save_data[save->field[i]]) + 1))
-            .FARG(*((double *)(field_to_save_data[save->field[i]]) + 2));
+            .FARG(*((double *)(field_to_save_data[save->field[i]]) + 2))
+            .replace( "e+", "e" )
+            ;
+
          // DBFARG((*(double *)(field_to_save_data[save->field[i]])));
          break;
       case DT_DOUBLE_NA     :
@@ -1746,7 +1749,9 @@ QString US_Hydrodyn_Save::dataString(save_data *data)
             {
                result += QString("%1%2")
                   .arg(i ? "," : "")
-                  .FARG(*((double *)(field_to_save_data[save->field[i]])));
+                  .FARG(*((double *)(field_to_save_data[save->field[i]])))
+                  .replace( "e+", "e" )
+                  ;
                // DBFARG((*(double *)(field_to_save_data[save->field[i]])));
             } else {
                result += ",NA";

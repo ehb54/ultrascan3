@@ -599,6 +599,11 @@ void US_Hydrodyn_Hydro::setupGUI()
    j+=3;
    background->addWidget(pb_help, j, 0);
    background->addWidget(pb_cancel, j, 1);
+
+   if ( !((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode ) {
+      bg_volume_correction->hide();
+      bg_buried->hide();
+   }
 }
 
 void US_Hydrodyn_Hydro::update_unit(double val)

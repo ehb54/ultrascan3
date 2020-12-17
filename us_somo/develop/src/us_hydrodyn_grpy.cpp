@@ -486,19 +486,19 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
 
       << "Relaxation time \\(2\\)"
       << "2"
-      << "tau5"
+      << "tau2"
 
       << "Relaxation time \\(3\\)"
       << "2"
-      << "tau2"
+      << "tau3"
 
       << "Relaxation time \\(4\\)"
       << "1"
-      << "tau3"
+      << "tau4"
 
       << "Relaxation time \\(5\\)"
       << "1"
-      << "tau4"
+      << "tau5"
 
       << "Harmonic mean \\(correlation\\) time"
       << "1"
