@@ -677,7 +677,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
       this_data.rot_diff_coef_x               = grpy_captures[ "rot_diff_coef_x" ][0];
       this_data.rot_diff_coef_y               = grpy_captures[ "rot_diff_coef_y" ][0];
       this_data.rot_diff_coef_z               = grpy_captures[ "rot_diff_coef_z" ][0];
-      
+
       // qDebug() << "US_Hydrodyn::grpy_finished() asa rg pos " << this_data.results.asa_rg_pos << " neg " << this_data.results.asa_rg_neg;
       
       if ( it->second.count( "Dr" ) ) {
@@ -863,7 +863,24 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
                editor_msg( "red", QString( "Internal error: Bead model is empty?" ) );
             }
          }
-         
+
+         // rot fric and stokes
+         {
+            double factor = 1e-2 * (R/AVOGADRO) * ( K0 + hydro.temperature ) / pow( fconv, 2 );
+            this_data.rot_fric_coef_x =
+               factor / this_data.rot_diff_coef_x;
+            this_data.rot_fric_coef_y =
+               factor / this_data.rot_diff_coef_y;
+            this_data.rot_fric_coef_z =
+               factor / this_data.rot_diff_coef_z;
+
+            this_data.rot_stokes_rad_x =
+               1e8 * fconv * pow( this_data.rot_fric_coef_x / ( 8.0 * M_PI * use_solvent_visc() * 1e-2 ), 1.0/3.0 );
+            this_data.rot_stokes_rad_y =
+               1e8 * fconv * pow( this_data.rot_fric_coef_y / ( 8.0 * M_PI * use_solvent_visc() * 1e-2 ), 1.0/3.0 );
+            this_data.rot_stokes_rad_z =
+               1e8 * fconv * pow( this_data.rot_fric_coef_z / ( 8.0 * M_PI * use_solvent_visc() * 1e-2 ), 1.0/3.0 );
+         }
       }
 
       this_data.rel_times_tau_m =
@@ -933,6 +950,30 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
             .arg( QString( "" ).sprintf( "%3.2f"     , this_data.results.ff0   ) )
             .arg( QString( "" ).sprintf( "%4.2e g/s" , this_data.tra_fric_coef ) )
             .arg( QString( "" ).sprintf( "%4.2e nm"  , this_data.results.rg    ) )
+            ;
+
+         add_to_grpy += 
+            QString( 
+                    us_tr( 
+                          " Rot. Diffusion coefficient            X : %1 \t1/s (w@20C)\n"
+                          " Rot. Diffusion coefficient            Y : %2 \t1/s (w@20C)\n"
+                          " Rot. Diffusion coefficient            Z : %3 \t1/s (w@20C)\n"
+                          " Rot. Frictional coefficient           X : %4 \tg*cm^2/s (w@20C)\n"
+                          " Rot. Frictional coefficient           Y : %5 \tg*cm^2/s (w@20C)\n"
+                          " Rot. Frictional coefficient           Z : %6 \tg*cm^2/s (w@20C)\n"
+                          " Rot. Stokes' radius                   X : %7 \tnm (w@20C)\n"
+                          " Rot. Stokes' radius                   Y : %8 \tnm (w@20C)\n"
+                          " Rot. Stokes' radius                   Z : %9 \tnm (w@20C)\n"
+                           ) )
+            .arg( QString().sprintf( "%5.4g"           , this_data.rot_diff_coef_x ) )
+            .arg( QString().sprintf( "%5.4g"           , this_data.rot_diff_coef_y ) )
+            .arg( QString().sprintf( "%5.4g"           , this_data.rot_diff_coef_z ) )
+            .arg( QString().sprintf( "%5.4g"           , this_data.rot_fric_coef_x ) )
+            .arg( QString().sprintf( "%5.4g"           , this_data.rot_fric_coef_y ) )
+            .arg( QString().sprintf( "%5.4g"           , this_data.rot_fric_coef_z ) )
+            .arg( QString().sprintf( "%5.4g"           , this_data.rot_stokes_rad_x ) )
+            .arg( QString().sprintf( "%5.4g"           , this_data.rot_stokes_rad_y ) )
+            .arg( QString().sprintf( "%5.4g"           , this_data.rot_stokes_rad_z ) )
             ;
 
          add_to_grpy +=
