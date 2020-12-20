@@ -24,6 +24,20 @@ double US_Hydrodyn::model_mw( const vector < PDB_atom *> use_model ) {
    return mw;
 }
 
+vector < PDB_atom > US_Hydrodyn::exposed_model( const vector < PDB_atom > & model ) {
+   vector < PDB_atom > rmodel;
+
+   for (int i = 0; i < (int) model.size(); ++i) {
+      if ( model[i].active ) {
+         int color = get_color( &model[ i ] );
+         if ( /* color != 6 && */ color != 0 ) {
+            rmodel.push_back( model[ i ] );
+         }
+      }
+   }
+   return rmodel;
+}
+
 double US_Hydrodyn::model_mw( const vector < PDB_atom > & use_model ) {
    double mw = 0e0;
    for (unsigned int i = 0; i < use_model.size(); i++) {
@@ -847,7 +861,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
          {
             vector < vector < PDB_atom > >  save_bead_models = bead_models;
             saxs_util->bead_models.resize( 1 );
-            saxs_util->bead_models[ 0 ] = bead_model;
+            saxs_util->bead_models[ 0 ] = bead_models[ grpy_last_model_number ];
             if ( "empty model" != saxs_util->nsa_physical_stats() )
             {
                this_data.tot_volume_of = saxs_util->nsa_physical_stats_map[ "result excluded volume" ].toDouble();

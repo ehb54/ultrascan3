@@ -1498,6 +1498,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
          int out_nat;
          printf("\n\n- Starting PAT ...\n");
          {
+            // us_hydrodyn->write_dati1_supc_bead_model( "supc_pre_pat", nat, dt );
             int retval = us_hydrodyn_pat_main(nmax,
                                               nat,
                                               dt,
@@ -1514,6 +1515,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
                supc_free_alloced();
                return -1;
             }
+            // us_hydrodyn->write_dati1_pat_bead_model( "supc_post_pat", out_nat, out_dt, dt );
          }
          printf("\n\n- End of PAT ...\n\n");
          smi_progress->setValue(ppos++); // 2

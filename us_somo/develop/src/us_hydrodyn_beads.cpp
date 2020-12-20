@@ -2633,6 +2633,7 @@ bool US_Hydrodyn::pat_model( vector < PDB_atom > & model ) {
    int out_nat;
    vector < dati1_pat > out_dt( in_dt.size() + 1 );
    
+   // write_dati1_supc_bead_model( "us_hydrodyn_pat_model_pre_pat", ( int ) in_dt.size(),  &( in_dt[ 0 ] ) );
    if ( !us_hydrodyn_pat_main( ( int ) in_dt.size(),
                                ( int ) in_dt.size(),
                                &( in_dt[ 0 ] ),
@@ -2641,6 +2642,8 @@ bool US_Hydrodyn::pat_model( vector < PDB_atom > & model ) {
         ) {
       // cout << QString( "pat ok, out_nat %1\n" ).arg( out_nat );
       int dt_pos = 0;
+
+      // write_dati1_pat_bead_model( "us_hydrodyn_pat_model_post_pat", out_nat,  &( out_dt[ 0 ] ), &( in_dt[ 0 ] ) );
 
       for ( int j = 0; j < nat; ++j )  {
          PDB_atom *this_atom = &( model[ j ] );

@@ -48,25 +48,25 @@ static struct dati1_pat *dtn = 0;   // [NMAX]
 #endif
 static int nat, flag, cc, FL, autovett;
 
-static float a[3][3], a1[3][3], a2[3][3], a3[3][3];
-static float v1[3], v2[3], v3[3], xx[3];
-static float b, c, d;
-static float vv[3][4];
-static float dl1, dl2, dl3;
-static float raggio;
+static double a[3][3], a1[3][3], a2[3][3], a3[3][3];
+static double v1[3], v2[3], v3[3], xx[3];
+static double b, c, d;
+static double vv[3][4];
+static double dl1, dl2, dl3;
+static double raggio;
 
 #if defined(OLD_WAY)
  static void initarray();
 #endif
-static float approx(float a);
+static double approx(double a);
 static void calc_CM();
 static void calc_inertia_tensor();
-static void secondo(float b, float c);
-static void terzo(float b, float c, float d);
-static void sisli(float w[3][3]);
-static void sol(float c[2][3]);
-static void place1(float a1[3]);
-static void place2(float a1[3], float a2[3]);
+static void secondo(double b, double c);
+static void terzo(double b, double c, double d);
+static void sisli(double w[3][3]);
+static void sol(double c[2][3]);
+static void place1(double a1[3]);
+static void place2(double a1[3], double a2[3]);
 
 static int nmax;
 
@@ -131,7 +131,7 @@ us_hydrodyn_pat_main(int                 use_nmax,
 
    int vect; // not used: , kbh, num;
    int i, j, k, contatore;
-   float max, vvj;
+   double max, vvj;
 
 #if defined(DEBUG_WW)
    cks += (double)nmax;
@@ -146,11 +146,11 @@ us_hydrodyn_pat_main(int                 use_nmax,
    for (i = 0; i < nat; i++)
    {
 #if defined(MIMIC_FILE)
-      dt[i].x = QString("").sprintf("%f",in_dt[i].x).toFloat();
-      dt[i].y = QString("").sprintf("%f",in_dt[i].y).toFloat();
-      dt[i].z = QString("").sprintf("%f",in_dt[i].z).toFloat();
-      dt[i].r = QString("").sprintf("%f",in_dt[i].r).toFloat();
-      dt[i].m = QString("").sprintf("%f",in_dt[i].m).toFloat();
+      dt[i].x = QString("").sprintf("%f",in_dt[i].x).toDouble();
+      dt[i].y = QString("").sprintf("%f",in_dt[i].y).toDouble();
+      dt[i].z = QString("").sprintf("%f",in_dt[i].z).toDouble();
+      dt[i].r = QString("").sprintf("%f",in_dt[i].r).toDouble();
+      dt[i].m = QString("").sprintf("%f",in_dt[i].m).toDouble();
       dt[i].col = QString("").sprintf("%d",in_dt[i].col).toInt();
 #else
       dt[i].x = in_dt[i].x;
@@ -286,7 +286,7 @@ us_hydrodyn_pat_main(int                 use_nmax,
       b = (-(a[0][0] + a[1][1] + a[2][2]));
       c = a[0][0] * a[1][1] + a[0][0] * a[2][2] + a[1][1] * a[2][2] - a[0][2] * a[2][0] - a[1][2] * a[2][1] -
          a[0][1] * a[1][0];
-      d = (float)(-a[0][0] * a[1][1] * a[2][2] - 2.0 * a[0][1] * a[0][2] * a[1][2] + a[0][2] * a[0][2] * a[1][1] +
+      d = (double)(-a[0][0] * a[1][1] * a[2][2] - 2.0 * a[0][1] * a[0][2] * a[1][2] + a[0][2] * a[0][2] * a[1][1] +
                   a[1][2] * a[1][2] * a[0][0] + a[0][1] * a[0][1] * a[2][2]);
       terzo(b, c, d);
    }
@@ -568,11 +568,11 @@ us_hydrodyn_pat_main(int                 use_nmax,
    return 0;
 }
 
-static float
-approx(float a)
+static double
+approx(double a)
 {
 
-   float app;
+   double app;
 
    app = a;
 
@@ -621,7 +621,7 @@ calc_CM()
 {
 
    int i; // not used: nn;
-   float b1x, b1y, b1z, mas1;
+   double b1x, b1y, b1z, mas1;
 
    /* COMPUTATION OF THE MODELS' CENTER OF MASS */
 
@@ -761,13 +761,13 @@ initarray()
 #endif
 
 static void
-place2(float a1[3], float a2[3])
+place2(double a1[3], double a2[3])
 {
 
    int i;
-   float tetar = 0.0;
-   float b1x, b1y, b1z, b1nx, b1ny, b1nz;
-   float b2x, b2y, b2z, b2nx, b2ny, b2nz;
+   double tetar = 0.0;
+   double b1x, b1y, b1z, b1nx, b1ny, b1nz;
+   double b2x, b2y, b2z, b2nx, b2ny, b2nz;
 
    b1x = a1[0];
    b1y = a1[1];
@@ -786,28 +786,28 @@ place2(float a1[3], float a2[3])
       if (fabs(b1x) < 0.0001)   /* if x is = 0 ... */
       {
          if (b1y > 0.0)
-            tetar = (float)(PI / 2.0);
+            tetar = (double)(PI / 2.0);
          else
-            tetar = (float)(-PI / 2.0);
+            tetar = (double)(-PI / 2.0);
       }
 
       else         /* if x and y are both > 0 ...  */
       {
          if ((b1y > 0.0) && (b1x > 0.0))
-            tetar = (float)atan(b1y / b1x);
+            tetar = (double)atan(b1y / b1x);
          else if ((b1y < 0.0) && (b1x > 0.0))
-            tetar = (float)(-atan(fabs(b1y / b1x)));
+            tetar = (double)(-atan(fabs(b1y / b1x)));
          else if ((b1y < 0.0) && (b1x < 0.0))
-            tetar = (float)(-(PI - atan(b1y / b1x)));
+            tetar = (double)(-(PI - atan(b1y / b1x)));
          else if ((b1y > 0.0) && (b1x < 0.0))
-            tetar = (float)(PI - atan(fabs(b1y / b1x)));
+            tetar = (double)(PI - atan(fabs(b1y / b1x)));
       }
    }
 
    else
    {
       if (b1x < 0.0)
-         tetar = (float)PI;
+         tetar = (double)PI;
       else
          tetar = 0.0;
    }
@@ -835,28 +835,28 @@ place2(float a1[3], float a2[3])
       if (fabs(b1nx) < 0.0001)   /* if x is = 0 ... */
       {
          if (b1nz > 0.0)
-            tetar = (float)(PI / 2.0);
+            tetar = (double)(PI / 2.0);
          else
-            tetar = (float)(-PI / 2.0);
+            tetar = (double)(-PI / 2.0);
       }
 
       else         /* if x and y are both > 0 ...  */
       {
          if ((b1nz > 0.0) && (b1nx > 0.0))
-            tetar = (float)atan(b1nz / b1nx);
+            tetar = (double)atan(b1nz / b1nx);
          else if ((b1nz < 0.0) && (b1nx > 0.0))
-            tetar = (float)(-atan(fabs(b1nz / b1nx)));
+            tetar = (double)(-atan(fabs(b1nz / b1nx)));
          else if ((b1nz < 0.0) && (b1nx < 0.0))
-            tetar = (float)(-(PI - atan(b1nz / b1nx)));
+            tetar = (double)(-(PI - atan(b1nz / b1nx)));
          else if ((b1nz > 0.0) && (b1nx < 0.0))
-            tetar = (float)(PI - atan(fabs(b1nz / b1nx)));
+            tetar = (double)(PI - atan(fabs(b1nz / b1nx)));
       }
    }
 
    else
    {
       if (b1nx < 0.0)
-         tetar = (float)PI;
+         tetar = (double)PI;
       else
          tetar = 0.0;
    }
@@ -892,9 +892,9 @@ place2(float a1[3], float a2[3])
       if (fabs(b2y) < 0.0001)   /* if y is = 0 ... */
       {
          if (b2z > 0.0)
-            tetar = (float)(-PI / 2.0);
+            tetar = (double)(-PI / 2.0);
          else
-            tetar = (float)(PI / 2.0);
+            tetar = (double)(PI / 2.0);
       }
 
       else         /* if z and y are both > 0 ...  */
@@ -904,16 +904,16 @@ place2(float a1[3], float a2[3])
          else if ((b2z < 0.0) && (b2y > 0.0))
             tetar = atan(fabs(b2z / b2y));
          else if ((b2z < 0.0) && (b2y < 0.0))
-            tetar = (float)(PI - atan(b2z / b2y));
+            tetar = (double)(PI - atan(b2z / b2y));
          else if ((b2z > 0.0) && (b2y < 0.0))
-            tetar = (float)(-(PI - atan(fabs(b2z / b2y))));
+            tetar = (double)(-(PI - atan(fabs(b2z / b2y))));
       }
    }
 
    else
    {
       if (b2y < 0.0)
-         tetar = (float)PI;
+         tetar = (double)PI;
       else
          tetar = 0.0;
    }
@@ -930,12 +930,12 @@ place2(float a1[3], float a2[3])
 /****************************************************************/
 
 static void
-place1(float a1[3])
+place1(double a1[3])
 {
 
    int i;
-   float tetar = 0.0;
-   float b1x, b1y, b1z, b1nx, /* b1ny, */ b1nz;
+   double tetar = 0.0;
+   double b1x, b1y, b1z, b1nx, /* b1ny, */ b1nz;
 
    b1x = a1[0];
    b1y = a1[1];
@@ -951,9 +951,9 @@ place1(float a1[3])
       if (fabs(b1x) < 0.0001)   /* if x is = 0 ... */
       {
          if (b1y > 0.0)
-            tetar = (float)(PI / 2.0);
+            tetar = (double)(PI / 2.0);
          else
-            tetar = (float)(-PI / 2.0);
+            tetar = (double)(-PI / 2.0);
       }
 
       else         /* if both x and y are > 0 ...  */
@@ -963,16 +963,16 @@ place1(float a1[3])
          else if ((b1y < 0.0) && (b1x > 0.0))
             tetar = (-atan(fabs(b1y / b1x)));
          else if ((b1y < 0.0) && (b1x < 0.0))
-            tetar = (float)(-(PI - atan(b1y / b1x)));
+            tetar = (double)(-(PI - atan(b1y / b1x)));
          else if ((b1y > 0.0) && (b1x < 0.0))
-            tetar = (float)PI - atan(fabs(b1y / b1x));
+            tetar = (double)PI - atan(fabs(b1y / b1x));
       }
    }
 
    else
    {
       if (b1x < 0.0)
-         tetar = (float)PI;
+         tetar = (double)PI;
       else
          tetar = 0.0;
    }
@@ -996,9 +996,9 @@ place1(float a1[3])
       if (fabs(b1nx) < 0.0001)   /* if x is = 0 ... */
       {
          if (b1nz > 0.0)
-            tetar = (float)(PI / 2.0);
+            tetar = (double)(PI / 2.0);
          else
-            tetar = (float)(-PI / 2.0);
+            tetar = (double)(-PI / 2.0);
       }
 
       else         /* if x and y are both > 0 ...  */
@@ -1008,16 +1008,16 @@ place1(float a1[3])
          else if ((b1nz < 0.0) && (b1nx > 0.0))
             tetar = (-atan(fabs(b1nz / b1nx)));
          else if ((b1nz < 0.0) && (b1nx < 0.0))
-            tetar = (-((float)PI - atan(b1nz / b1nx)));
+            tetar = (-((double)PI - atan(b1nz / b1nx)));
          else if ((b1nz > 0.0) && (b1nx < 0.0))
-            tetar = (float)PI - atan(fabs(b1nz / b1nx));
+            tetar = (double)PI - atan(fabs(b1nz / b1nx));
       }
    }
 
    else
    {
       if (b1nx < 0.0)
-         tetar = (float)PI;
+         tetar = (double)PI;
       else
          tetar = 0.0;
    }
@@ -1071,9 +1071,9 @@ place1(float a1[3])
 /*********************************************************************/
 
 static void
-secondo(float b, float c)
+secondo(double b, double c)
 {
-   float delta, pfraz, pin;
+   double delta, pfraz, pin;
 
    delta = b * b - 4.0f * c;
 
@@ -1097,11 +1097,11 @@ secondo(float b, float c)
 }
 
 static void
-sisli(float w[3][3])
+sisli(double w[3][3])
 {
 
-   // not used: float det, det1, det2, det3, det4, det5, det6;
-   float b[2][3]; // not used: k[3];
+   // not used: double det, det1, det2, det3, det4, det5, det6;
+   double b[2][3]; // not used: k[3];
    int i, j;
 
    /* WE CONSIDER THE MINORS OF MAXIMUM ORDER EQUAL TO TWO */
@@ -1145,11 +1145,11 @@ sisli(float w[3][3])
 }
 
 static void
-sol(float c[2][3])
+sol(double c[2][3])
 {
 
-   float xr, x1[3];
-   float c1, c2, c3;
+   double xr, x1[3];
+   double c1, c2, c3;
 
    /* CHECK THAT AT LEAST ONE MINOR OF ORDER TWO IS <> 0 */
 
@@ -1187,12 +1187,12 @@ sol(float c[2][3])
 
 
 static void
-terzo(float b, float c, float d)
+terzo(double b, double c, double d)
 {
 
-   // not used: float nb, nc, nd;
-   float p, q, s, r, pq, epsi, y1, y2, y3, alfa, alf1;
-   float unterzo, beta, bet1, rad, pfraz, pin;
+   // not used: double nb, nc, nd;
+   double p, q, s, r, pq, epsi, y1, y2, y3, alfa, alf1;
+   double unterzo, beta, bet1, rad, pfraz, pin;
 
    if ((c == 0.0) && (d == 0.0))
    {
@@ -1209,7 +1209,7 @@ terzo(float b, float c, float d)
       goto RET0;
    }
 
-   rad = (float)(atan(1.00) / 45.0);
+   rad = (double)(atan(1.00) / 45.0);
    p = (-(b * b) / 3.0f + c);
    q = (2.0f * b * b * b - 9.0f * c * b + 27.0f * d) / 27.0f;
    s = (q * q) / 4.0f + (p * p * p) / 27.0f;

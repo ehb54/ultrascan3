@@ -806,3 +806,72 @@ void US_Hydrodyn::save_pdb_csv( csv &csv1 )
    }
    f.close();
 }
+
+#include "us_hydrodyn_pat.h"
+
+void US_Hydrodyn::write_dati1_supc_bead_model( QString filename,
+                                               int size,
+                                               void * dt ) {
+   filename = "/tmp/" + filename;
+   vector < PDB_atom > bm( size );
+   PDB_atom tmp;
+   tmp.active                    = 1;
+   tmp.exposed_code              = 1;
+   tmp.bead_ref_ionized_mw_delta = 0;
+   tmp.bead_recheck_asa          = 0;
+   tmp.bead_color                = 1;
+   
+   struct dati1_supc * udt = (struct dati1_supc *)dt;
+
+   for ( int i = 0; i < size; ++i ) {
+      tmp.bead_coordinate.axis[ 0 ] = udt[ i ].x;
+      tmp.bead_coordinate.axis[ 1 ] = udt[ i ].y;
+      tmp.bead_coordinate.axis[ 2 ] = udt[ i ].z;
+      tmp.bead_computed_radius      = udt[ i ].r;
+      tmp.bead_ref_mw               = udt[ i ].m;
+      bm.push_back( tmp );
+   }
+
+   write_bead_model( filename, &bm, US_HYDRODYN_OUTPUT_SOMO );
+}
+
+void US_Hydrodyn::write_dati1_pat_bead_model( QString filename,
+                                              int size,
+                                              void * dtp,
+                                              void * dts ) {
+   filename = "/tmp/" + filename;
+   struct dati1_pat  * udt  = (struct dati1_pat *)dtp;
+   struct dati1_supc * udts = (struct dati1_supc *)dts;
+   vector < PDB_atom > bm( size );
+   PDB_atom tmp;
+   tmp.active                    = 1;
+   tmp.exposed_code              = 1;
+   tmp.bead_ref_ionized_mw_delta = 0;
+   tmp.bead_recheck_asa          = 0;
+   tmp.bead_color                = 1;
+   
+   for ( int i = 0; i < size; ++i ) {
+      // QTextStream( stdout ) <<
+      //    QString()
+      //    .sprintf(
+      //             "xyz %f %f %f rg %f r %f m %f\n"
+      //             ,udt[ i ].x
+      //             ,udt[ i ].y
+      //             ,udt[ i ].z
+      //             ,udt[ i ].rg
+      //             ,udt[ i ].r
+      //             ,udt[ i ].m
+      //             )
+      //    ;
+                           
+                                                 
+      tmp.bead_coordinate.axis[ 0 ] = udt[ i ].x;
+      tmp.bead_coordinate.axis[ 1 ] = udt[ i ].y;
+      tmp.bead_coordinate.axis[ 2 ] = udt[ i ].z;
+      tmp.bead_computed_radius      = udts[ i ].r;
+      tmp.bead_ref_mw               = udts[ i ].m;
+      bm.push_back( tmp );
+   }
+
+   write_bead_model( filename, &bm, US_HYDRODYN_OUTPUT_SOMO );
+}

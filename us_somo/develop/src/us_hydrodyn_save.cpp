@@ -290,9 +290,9 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Relaxation times, tau(m) [ns]",
             "Relaxation times, tau(m) [ns]",
 
-            "rel_times_tau_h",
-            "Relaxation times, tau(h) [ns]",
-            "Relaxation times, tau(h) [ns]",
+            // "rel_times_tau_h",
+            // "Relaxation times, tau(h) [ns]",
+            // "Relaxation times, tau(h) [ns]",
 
             "grpy_einst_rad",
             "GRPY Einstein's radius [nm]",
@@ -585,9 +585,9 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Relaxation times, tau(m) [ns]",
             "Relaxation times, tau(m) [ns]",
 
-            "rel_times_tau_h",
-            "Relaxation times, tau(h) [ns]",
-            "Relaxation times, tau(h) [ns]",
+            // "rel_times_tau_h",
+            // "Relaxation times, tau(h) [ns]",
+            // "Relaxation times, tau(h) [ns]",
 
             "grpy_einst_rad",
             "GRPY Einstein's radius [nm]",

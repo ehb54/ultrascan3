@@ -79,6 +79,7 @@
 #include "us_hydrodyn_pdb_tool.h"
 #include "us_hydrodyn_cluster.h"
 #include "us_saxs_util.h"
+// #include "us_hydrodyn_pat.h"
 
 #include "us3i_gui_settings.h"
 #include "us3i_editor.h"
@@ -256,7 +257,18 @@ class US_EXTERN US_Hydrodyn : public QFrame
       
       struct asa_options asa;
 
+      void write_dati1_supc_bead_model( QString filename,
+                                        int size,
+                                        void * dt );
+
+      void write_dati1_pat_bead_model( QString filename,
+                                       int size,
+                                       void * dtp,
+                                       void * dts );
+
    private:
+      vector < PDB_atom > exposed_model( const vector < PDB_atom > & model );
+      
       bool mm_mode;
       bool pat_model( vector < PDB_atom > & model );
       bool compute_asa_rgs( const vector < PDB_atom > & model );
