@@ -559,7 +559,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
 
    {
       QStringList qsl = grpy_stdout.split( "\n" );
-      vector < QString > toXYZ = { "x", "y", "z" };
+      vector < QString > toXYZ = { "z", "y", "x" };
       bool ok = false;
       int i = 0;
       for ( ; i < (int) qsl.size(); ++i ) {
