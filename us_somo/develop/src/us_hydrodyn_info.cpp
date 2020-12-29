@@ -752,15 +752,77 @@ QString US_Hydrodyn::info_cite( const QString & package ) {
             "Zuk et al., Biophys J. 2018;115:782-800.\n"
             // "Rocco et al. Encyclopedia of Biophysics, add website link when new release is available\n"
          }
-            
       }
    ;
 
-   if ( !citations.count( package ) ) {
-      return QString( "No citation information stored for package '%1'" ).arg( package );
+   QString citations_used = "";
+   
+   if ( citation_stack.size() ) {
+      if ( citations.count( citation_stack[0] ) ) {
+         citations_used += " For the construction of the bead model:\n" + split_and_prepend( citations[ citation_stack[0] ], "  " );
+      } else {
+         TSO << "No citations found for bead model method " << citation_stack[ 0 ] << endl;
+      }
    }
-   return "\nFor usage of these results in publications, please cite:\n" + citations[ package ] + "\n";
+
+   if ( citations.count( package ) ) {
+      citations_used += " For the calculation of hydrodynamic parameters:\n" + split_and_prepend( citations[ package ], "  " );
+   } else {
+      TSO << "No citation informaton stored for package " << package << endl;
+   }
+
+   if ( citations_used.isEmpty() ) {
+      return QString( "No citation information currently available ('%1')" ).arg( package );
+   }
+
+   return "\nFor usage of these results in publications, please cite:\n" + citations_used + "\n";
 }
+
+QString US_Hydrodyn::split_and_prepend( const QString & qs, const QString & prepend ) {
+   QStringList qsl = qs.split( "\n" );
+   qsl.replaceInStrings( QRegExp( "^" ), prepend );
+   return qsl.join( "\n" ) + "\n";
+}
+
+void US_Hydrodyn::citation_load_pdb() {
+   // TSO << "citation_load_pdb()" << endl;
+   citation_stack.clear();
+}
+
+void US_Hydrodyn::citation_build_bead_model( const QString & type ) {
+   // TSO << "citation_build_bead_model( " << type << " )" << endl;
+   citation_stack.clear();
+   citation_stack << type;
+}
+
+void US_Hydrodyn::citation_load_bead_model( const QString & filename ) {
+   // TSO << "citation_load_bead_model( " << filename << ")" << endl;
+   citation_stack.clear();
+   QString basename = QFileInfo( filename ).baseName();
+   // TSO << "citation_load_bead_model( " << filename << ") basename:" << basename << endl;
+   QString type;
+
+   if ( basename.contains( "-so_ovlp" ) ) {
+      type = "somo-overlaps";
+   } else if ( basename.contains( "-so" ) ) {
+      type = "somo-no-overlaps";
+   } else if ( basename.contains( "-a2b_ovlp" ) ) {
+      type = "atob-overlaps";
+   } else if ( basename.contains( "-a2b" ) ) {
+      type = "atob-no-overlaps";
+   } else if ( basename.contains( "-vdw" ) ) {
+      type = "vdw";
+   }
+   
+   if ( !type.isEmpty() ) {
+      citation_stack << type;
+   }
+}
+
+void US_Hydrodyn::info_citation_stack() {
+   TSO << "citation_stack() : " << citation_stack.join( " , " ) << endl;
+}
+
 
 #undef TSO
 #undef LBE

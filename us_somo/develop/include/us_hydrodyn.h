@@ -337,6 +337,12 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void info_mw( const QString & msg, const struct PDB_model & model, bool detail = false );
       void info_residue_protons_electrons_at_pH( double pH, const struct PDB_model & model );
       QString info_cite( const QString & package );
+      QStringList citation_stack;
+      void citation_load_pdb();
+      void citation_load_bead_model( const QString & filename );
+      void info_citation_stack();
+      void citation_build_bead_model( const QString & type );
+      QString split_and_prepend( const QString & qs, const QString & prepend );
 
       void set_ionized_residue_vector( vector < struct residue > & residue_v ); // apply ionization to complete residue vector
       void reset_ionized_residue_vectors(); // for saxs hplc options

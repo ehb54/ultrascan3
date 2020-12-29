@@ -2354,6 +2354,7 @@ void US_Hydrodyn::select_residue_file()
 
 void US_Hydrodyn::reload_pdb()
 {
+   citation_load_pdb();
    if ( advanced_config.debug_1 )
    {
       printf("Reload PDB file called %d %d.\n", pdb_file.isEmpty(), !pb_somo->isEnabled());
@@ -2728,6 +2729,7 @@ int US_Hydrodyn::issue_missing_atom( bool quiet ) {
 void US_Hydrodyn::load_pdb()
 {
    issue_info.clear( );
+   citation_load_pdb();
    clear_pdb_info( "load_pdb" );
    if ( misc.restore_pb_rule ) {
       us_qdebug( "load_pdb() restoring pb rule" );
@@ -3338,6 +3340,7 @@ void US_Hydrodyn::load_bead_model()
    if (!filename.isEmpty())
    {
       add_to_directory_history( filename );
+      citation_load_bead_model( filename );
 
       options_log = "";
       pb_somo->setEnabled(false);
