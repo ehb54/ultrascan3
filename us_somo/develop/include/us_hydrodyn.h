@@ -969,6 +969,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QString                               grpy_mm_results;
       QString                               grpy_mm_name;
       save_info                             grpy_mm_save_params;
+      bool                                  grpy_was_hydro_enabled;
 
       // zeno mm data
       bool                                  zeno_mm;

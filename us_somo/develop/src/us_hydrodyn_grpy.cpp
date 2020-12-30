@@ -128,6 +128,7 @@ bool US_Hydrodyn::calc_grpy_hydro() {
    // }
 
    stopFlag = false;
+   grpy_was_hydro_enabled = pb_calc_hydro->isEnabled();
    pb_stop_calc->setEnabled(true);
    pb_calc_hydro->setEnabled(false);
    pb_calc_zeno->setEnabled(false);
@@ -305,7 +306,7 @@ bool US_Hydrodyn::calc_grpy_hydro() {
    {
       editor->append("Stopped by user\n\n");
       set_enabled();
-      pb_calc_hydro->setEnabled(true);
+      pb_calc_hydro->setEnabled(grpy_was_hydro_enabled);
       pb_calc_zeno->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
       pb_calc_grpy->setEnabled( true );
@@ -457,7 +458,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
    if (stopFlag) {
       editor_msg( "red", us_tr( "Stopped by user\n" ) );
       set_enabled();
-      pb_calc_hydro->setEnabled(true);
+      pb_calc_hydro->setEnabled(grpy_was_hydro_enabled);
       pb_calc_zeno->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
       pb_calc_grpy->setEnabled( true );
@@ -1172,7 +1173,7 @@ void US_Hydrodyn::grpy_finalize() {
    pb_show_hydro_results->setEnabled( true );
    grpy_running = false;
    set_enabled();
-   pb_calc_hydro->setEnabled(true);
+   pb_calc_hydro->setEnabled(grpy_was_hydro_enabled);
    pb_calc_zeno->setEnabled(true);
    pb_bead_saxs->setEnabled(true);
    pb_calc_grpy->setEnabled( true );

@@ -689,19 +689,19 @@ QString US_Hydrodyn::info_cite( const QString & package ) {
          {
             "somo-no-overlaps",
             "Rai et al., Structure. 2005;13:723–34.\n"
-            "Brookes et al., Eur Biophys J Biophys Lett. 2010b;39(3):423–35.\n"
-            "Brookes et al., Macromol Biosci. 2010a;10(7):746–53\n"
+            "Brookes et al., Eur Biophys J Biophys Lett. 2010;39(3):423–35.\n"
+            // "Brookes et al., Macromol Biosci. 2010;10(7):746–53\n"
          }
          ,{
             "atob-no-overlaps",
             "Byron, Biophys J. 1997;72:408–15.\n"
-            "Brookes et al., Eur Biophys J Biophys Lett. 2010b;39(3):423–35.\n"
-            "Brookes et al., Macromol Biosci. 2010a;10(7):746–53\n"
+            "Brookes et al., Eur Biophys J Biophys Lett. 2010;39(3):423–35.\n"
+            // "Brookes et al., Macromol Biosci. 2010;10(7):746–53\n"
          }
          ,{
             "somo-overlaps",
             "Rai et al., Structure. 2005;13:723–34.\n"
-            "Brookes et al., Eur Biophys J Biophys Lett. 2010b;39(3):423–35.\n"
+            "Brookes et al., Eur Biophys J Biophys Lett. 2010;39(3):423–35.\n"
             "Rocco and Byron, Eur Biophys J. 2015;44:417–431.\n"
          }
          ,{
@@ -710,47 +710,28 @@ QString US_Hydrodyn::info_cite( const QString & package ) {
          }
          ,{
             "smi",
-            "Garcia de la Torre and Bloomfield, Q Rev Biophys. 1981;14(1):81–139.\n"
+            // "Garcia de la Torre and Bloomfield, Q Rev Biophys. 1981;14(1):81–139.\n"
             "Spotorno et al., Eur Biophys J. 1997;25(5/6):373–84.\n"
-            "Brookes et al., Eur Biophys J Biophys Lett. 2010b;39(3):423–35.\n"
+            // "Brookes et al., Eur Biophys J Biophys Lett. 2010b;39(3):423–35.\n"
          }
          ,{
             "zeno",
             "Kang et al., Phys Rev E Stat Nonlinear Soft Mater Phys. 2004;69:031918.\n"
-            "Mansfield and Douglas, Phys Rev E Stat Nonlinear Soft Matter Phys. 2008;78:046712.\n"
+            // "Mansfield and Douglas, Phys Rev E Stat Nonlinear Soft Matter Phys. 2008;78:046712.\n"
             "Juba et al., J Res Natl Inst Stand Technol. 2017;122:1–2.\n"
             "Rocco and Byron, Eur Biophys J. 2015;44:417–431.\n"
-            "Brookes and Rocco, Eur Biophys J. 2018;47:855–864.\n"
+            // "Brookes and Rocco, Eur Biophys J. 2018;47:855–864.\n"
          }
          ,{
             "grpy",
             "Zuk, P.J., Cichocki, B. and Szymczak, P., 2018. GRPY: an accurate bead method for calculation of hydrodynamic properties of rigid biomacromolecules. Biophysical journal, 115(5), pp.782-800.\n"
+            "Rocco M., Brookes E., Byron O. 2021 Encyclopedia of Biophysics. https://doi.org/10.1007/978-3-642-16712-6_292\n"
          }
          ,{
             "best",
             "Aragon, J Comput Chem. 2004;25:1191–1205.\n"
             "Aragon, Methods. 2011;54:101–114.\n"
             "Brookes E., Rocco M. (2016) Calculation of Hydrodynamic Parameters: US-SOMO. In: Uchiyama S., Arisaka F., Stafford W., Laue T. (eds) Analytical Ultracentrifugation. Springer, Tokyo.\n"
-         }
-         ,{
-            "somo-no-overlaps-smi",
-            "Rai et al., Structure. 2005;13:723–34.\n"
-            "Brookes et al., Eur Biophys J Biophys Lett. 2010b;39(3):423–35.\n"
-            "Spotorno et al., Eur Biophys J. 1997;25(5/6):373–84\n"
-         }
-         ,{
-            "somo-no-overlaps-zeno",
-            "Rai et al., Structure. 2005;13:723–34.\n"
-            "Brookes et al., Eur Biophys J Biophys Lett. 2010b;39(3):423–35.\n"
-            "Mansfield and Douglas, Phys Rev E Stat Nonlinear Soft Mater Phys. 2008;78:046712.\n"
-            "Rocco and Byron, Eur Biophys J. 2015;44:417–431.\n"
-         }
-         ,{
-            "somo-no-overlaps-grpy",
-            "Rai et al., Structure. 2005;13:723–34.\n"
-            "Brookes et al., Eur Biophys J Biophys Lett. 2010b;39(3):423–35.\n"
-            "Zuk et al., Biophys J. 2018;115:782-800.\n"
-            // "Rocco et al. Encyclopedia of Biophysics, add website link when new release is available\n"
          }
       }
    ;
