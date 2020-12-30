@@ -2325,6 +2325,8 @@ void US_Hydrodyn_Batch::start( bool quiet )
       }
    }
 
+   ((US_Hydrodyn *)us_hydrodyn)->citation_clear();
+
    disable_after_start();
    disable_updates = true;
    editor->append(us_tr("\nProcess files:\n"));
@@ -3168,6 +3170,21 @@ void US_Hydrodyn_Batch::start( bool quiet )
       ((US_Hydrodyn *)us_hydrodyn)->cb_overwrite->setChecked(false);
    }
    cout << job_timer.list_times();
+
+   editor_msg( "black", us_tr( "Processing Complete" ) );
+   {
+      QString citation_type;
+      if ( batch->hydro ) {
+         citation_type = "smi";
+      } else if ( batch->zeno ) {
+         citation_type = "zeno";
+      } else if ( batch->grpy ) {
+         citation_type = "grpy";
+      }
+      if ( !citation_type.isEmpty() ) {
+         editor_msg( "dark blue", ((US_Hydrodyn *)us_hydrodyn)->info_cite( citation_type ) );
+      }
+   }
 }
 
 void US_Hydrodyn_Batch::stop()

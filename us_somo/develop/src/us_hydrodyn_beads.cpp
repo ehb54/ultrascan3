@@ -26,7 +26,7 @@ int US_Hydrodyn::calc_somo_o()
 
 int US_Hydrodyn::calc_somo( bool no_ovlp_removal )
 {
-   citation_build_bead_model( no_ovlp_removal ? "somo-no-overlaps" : "somo-overlaps" );
+   citation_build_bead_model( no_ovlp_removal ? "somo-overlaps" : "somo-no-overlaps" );
    {
       int models_selected = 0;
       for(int i = 0; i < lb_model->count(); i++) {
@@ -225,7 +225,7 @@ int US_Hydrodyn::calc_somo( bool no_ovlp_removal )
 
 int US_Hydrodyn::calc_grid_pdb( bool no_ovlp_removal )
 {
-   citation_build_bead_model( no_ovlp_removal ? "atob-no-overlaps" : "atob-overlaps" );
+   citation_build_bead_model( no_ovlp_removal ? "atob-overlaps" : "atob-no-overlaps" );
    {
       int models_selected = 0;
       for(int i = 0; i < lb_model->count(); i++) {

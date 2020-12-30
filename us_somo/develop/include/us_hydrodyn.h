@@ -276,6 +276,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void set_bead_colors( vector < PDB_atom * > use_model );
       void set_bead_colors( vector < PDB_atom > & use_model );
       bool batch_avg_hydro_active();
+      bool batch_active();
       double model_mw( const vector < PDB_atom > & use_model );
       double model_mw( const vector < PDB_atom * > use_model );
 
@@ -338,6 +339,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void info_residue_protons_electrons_at_pH( double pH, const struct PDB_model & model );
       QString info_cite( const QString & package );
       QStringList citation_stack;
+      void citation_clear();
+      QString citation_cleanup( const QString & qs );
+      bool citation_stack_contains_type( const QString & type );
       void citation_load_pdb();
       void citation_load_bead_model( const QString & filename );
       void info_citation_stack();

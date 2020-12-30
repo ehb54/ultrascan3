@@ -757,11 +757,19 @@ QString US_Hydrodyn::info_cite( const QString & package ) {
 
    QString citations_used = "";
    
+   // info_citation_stack();
+   
    if ( citation_stack.size() ) {
-      if ( citations.count( citation_stack[0] ) ) {
-         citations_used += " For the construction of the bead model:\n" + split_and_prepend( citations[ citation_stack[0] ], "  " );
-      } else {
-         TSO << "No citations found for bead model method " << citation_stack[ 0 ] << endl;
+      QString bead_model_citations = "";
+      for ( int i = 0; i < (int) citation_stack.size(); ++i ) {
+         if ( citations.count( citation_stack[i] ) ) {
+            bead_model_citations += split_and_prepend( citations[ citation_stack[i] ], "  " );
+         } else {
+            TSO << "No citations found for bead model method " << citation_stack[i] << endl;
+         }
+      }
+      if ( !bead_model_citations.isEmpty() ) {
+         citations_used += " For the construction of the bead model:\n" + citation_cleanup( bead_model_citations ) + "\n";
       }
    }
 
@@ -784,20 +792,53 @@ QString US_Hydrodyn::split_and_prepend( const QString & qs, const QString & prep
    return qsl.join( "\n" ) + "\n";
 }
 
+QString US_Hydrodyn::citation_cleanup( const QString & qs ) {
+   QStringList qsl = qs.split( "\n" );
+   set < QString > used;
+   QStringList qslout;
+   for ( int i = 0; i < (int) qsl.size(); ++i ) {
+      if ( !qsl[ i ].contains( QRegExp( "^\\s*$" ) ) && !used.count( qsl[ i ] ) ) {
+         used.insert( qsl[ i ] );
+         qslout << qsl[ i ];
+      }
+   }
+   return qslout.join( "\n" ) + "\n";
+}
+
 void US_Hydrodyn::citation_load_pdb() {
    // TSO << "citation_load_pdb()" << endl;
-   citation_stack.clear();
+   citation_clear();
+}
+
+bool US_Hydrodyn::citation_stack_contains_type( const QString & type ) {
+   for ( int i = 0; i < (int) citation_stack.size(); ++i ) {
+      if ( citation_stack[i] == type ) {
+         return true;
+      }
+   }
+   return false;
 }
 
 void US_Hydrodyn::citation_build_bead_model( const QString & type ) {
    // TSO << "citation_build_bead_model( " << type << " )" << endl;
-   citation_stack.clear();
-   citation_stack << type;
+   if ( !batch_active() ) {
+      citation_clear();
+   }
+   if ( !citation_stack_contains_type( type ) ) {
+      citation_stack << type;
+      // TSO << "citation_load_bead_model() adding type " << type << endl;
+   }
 }
+
+void US_Hydrodyn::citation_clear() {
+   citation_stack.clear();
+}   
 
 void US_Hydrodyn::citation_load_bead_model( const QString & filename ) {
    // TSO << "citation_load_bead_model( " << filename << ")" << endl;
-   citation_stack.clear();
+   if ( !batch_active() ) {
+      citation_clear();
+   }
    QString basename = QFileInfo( filename ).baseName();
    // TSO << "citation_load_bead_model( " << filename << ") basename:" << basename << endl;
    QString type;
@@ -814,8 +855,10 @@ void US_Hydrodyn::citation_load_bead_model( const QString & filename ) {
       type = "vdw";
    }
    
-   if ( !type.isEmpty() ) {
+   if ( !type.isEmpty() &&
+        !citation_stack_contains_type( type ) ) {
       citation_stack << type;
+      // TSO << "citation_load_bead_model() adding type " << type << endl;
    }
 }
 

@@ -2220,7 +2220,7 @@ void US_Hydrodyn::pdb_visualization()
 
 void US_Hydrodyn::load_config()
 {
-   QString fname = QFileDialog::getOpenFileName( 0 , "Please select a SOMO configuration file..." , somo_dir , "*.config" , 0 );
+   QString fname = QFileDialog::getOpenFileName( 0 , "Please select a SOMO configuration file..." , US_Config::get_home_dir() + "/etc", "*.config" , 0 );
    if ( fname == QString::null )
    {
       QColor save_color = editor->textColor();
@@ -3140,6 +3140,7 @@ bool US_Hydrodyn::screen_bead_model( QString filename )
    bool only_overlap = false;
    if ( !read_bead_model(filename, only_overlap ))
    {
+      citation_load_bead_model( filename );
       bool so_ovlp = QFileInfo( filename ).completeBaseName().contains( "so_ovlp" );
       us_qdebug( QString( "screen bead model so_ovlp %1" ).arg( so_ovlp ? "true" : "false" ) );
       state = BEAD_MODEL_LOADED;
@@ -3160,6 +3161,7 @@ bool US_Hydrodyn::screen_bead_model( QString filename )
    {
       if ( only_overlap )
       {
+         citation_load_bead_model( filename );
          state = BEAD_MODEL_LOADED;
          pb_visualize->setEnabled(true);
          pb_equi_grid_bead_model->setEnabled(true);
@@ -5371,4 +5373,8 @@ QString US_Hydrodyn::get_somo_dir() {
 
 bool US_Hydrodyn::batch_avg_hydro_active() {
    return batch_widget && batch_window->batch_job_running && batch.avg_hydro;
+}
+
+bool US_Hydrodyn::batch_active() {
+   return batch_widget && batch_window->batch_job_running;
 }
