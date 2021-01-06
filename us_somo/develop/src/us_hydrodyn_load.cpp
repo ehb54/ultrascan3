@@ -195,8 +195,6 @@ void US_Hydrodyn::read_residue_file() {
          for ( j = 0; j < numatoms; ++j ) {
             QString linein = ts.readLine();
             QStringList qsl = linein.split( rx_spaces , QString::SkipEmptyParts );
-            // intermediate way
-            // if ( qsl.size() != 8 && qsl.size() != 9 ) {
             if ( qsl.size() != 8 && qsl.size() != 16 ) {
                QMessageBox::critical(this, us_tr( windowTitle() ),
                                     us_tr("Please note:\n\nThere was an error reading the selected Residue File!\n"
@@ -363,7 +361,7 @@ void US_Hydrodyn::read_residue_file() {
                     new_residue.r_atom_1.count( index ) ) {
                   QMessageBox::critical(this, us_tr( windowTitle() ),
                                         us_tr("Please note:\n\nThere was an error reading the selected Residue File!\n"
-                                              "Duplicate ionization5~ index:\n" ) +
+                                              "Duplicate ionization index:\n" ) +
                                         linein,
                                         QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
                   return;

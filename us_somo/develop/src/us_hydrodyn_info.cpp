@@ -724,14 +724,14 @@ QString US_Hydrodyn::info_cite( const QString & package ) {
          }
          ,{
             "grpy",
-            "Zuk, P.J., Cichocki, B. and Szymczak, P., 2018. GRPY: an accurate bead method for calculation of hydrodynamic properties of rigid biomacromolecules. Biophysical journal, 115(5), pp.782-800.\n"
-            "Rocco M., Brookes E., Byron O. 2021 Encyclopedia of Biophysics. https://doi.org/10.1007/978-3-642-16712-6_292\n"
+            "Zuk, P.J., Cichocki, B. and Szymczak, P., 2018. Biophys J. 115(5), pp.782-800.\n"
+            "Rocco M., Brookes E., Byron O. 2021 in Encyclopedia of Biophysics. https://doi.org/10.1007/978-3-642-16712-6_292\n"
          }
          ,{
             "best",
             "Aragon, J Comput Chem. 2004;25:1191–1205.\n"
             "Aragon, Methods. 2011;54:101–114.\n"
-            "Brookes E., Rocco M. (2016) Calculation of Hydrodynamic Parameters: US-SOMO. In: Uchiyama S., Arisaka F., Stafford W., Laue T. (eds) Analytical Ultracentrifugation. Springer, Tokyo.\n"
+            "Brookes E., Rocco M. 2016 in Analytical Ultracentrifugation. Springer, Tokyo.\n"
          }
       }
    ;

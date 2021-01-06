@@ -468,6 +468,12 @@ struct atom
    bool         tmp_used;               // used for avoiding duplicate usage
    float        saxs_excl_vol;          // SAXS excluded volume value
    float        hydration;              // atomic hydration / needed float for ABB
+
+   // below only used in the residue editor
+   float         pKa;                    // pKa when defined
+   hybridization hybrid2;
+   float         hydration2;             // atomic hydration / needed float for ABB
+
    // deprecated fields
    // float        ionization_mass_change; // pH dependent change, sign matters
 };
