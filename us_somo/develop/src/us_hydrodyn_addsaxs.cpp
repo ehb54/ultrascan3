@@ -84,6 +84,22 @@ void US_AddSaxs::setupGUI()
    le_saxs_name->setMinimumHeight(minHeight1);
    connect(le_saxs_name, SIGNAL(textChanged(const QString &)), SLOT(update_saxs_name(const QString &)));
 
+   lbl_4term = new QLabel(us_tr(" 4 Term coefficients:"), this);
+   Q_CHECK_PTR(lbl_4term);
+   lbl_4term->setMinimumHeight(minHeight1);
+   lbl_4term->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_4term->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_4term );
+   lbl_4term->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+
+   lbl_5term = new QLabel(us_tr(" 5 Term coefficients:"), this);
+   Q_CHECK_PTR(lbl_5term);
+   lbl_5term->setMinimumHeight(minHeight1);
+   lbl_5term->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_5term->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_5term );
+   lbl_5term->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+
    lbl_a1 = new QLabel(us_tr(" Coefficient a(1):"), this);
    Q_CHECK_PTR(lbl_a1);
    lbl_a1->setMinimumHeight(minHeight1);
@@ -143,6 +159,14 @@ void US_AddSaxs::setupGUI()
    le_a4->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_a4->setMinimumHeight(minHeight1);
    connect(le_a4, SIGNAL(textChanged(const QString &)), SLOT(update_a4(const QString &)));
+   
+   lbl_a5 = new QLabel(us_tr(" Coefficient a(5):"), this);
+   Q_CHECK_PTR(lbl_a5);
+   lbl_a5->setMinimumHeight(minHeight1);
+   lbl_a5->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_a5->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_a5 );
+   lbl_a5->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    lbl_b1 = new QLabel(us_tr(" Coefficient b(1):"), this);
    Q_CHECK_PTR(lbl_b1);
@@ -204,6 +228,14 @@ void US_AddSaxs::setupGUI()
    le_b4->setMinimumHeight(minHeight1);
    connect(le_b4, SIGNAL(textChanged(const QString &)), SLOT(update_b4(const QString &)));
 
+   lbl_b5 = new QLabel(us_tr(" Coefficient b(5):"), this);
+   Q_CHECK_PTR(lbl_b5);
+   lbl_b5->setMinimumHeight(minHeight1);
+   lbl_b5->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_b5->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_b5 );
+   lbl_b5->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+
    lbl_c = new QLabel(us_tr(" Coefficient c:"), this);
    Q_CHECK_PTR(lbl_c);
    lbl_c->setMinimumHeight(minHeight1);
@@ -234,6 +266,90 @@ void US_AddSaxs::setupGUI()
    le_volume->setMinimumHeight(minHeight1);
    connect(le_volume, SIGNAL(textChanged(const QString &)), SLOT(update_volume(const QString &)));
 
+   le_5a1 = new QLineEdit( this );    le_5a1->setObjectName( "Coefficient a(1) Line Edit" );
+   le_5a1->setPalette( PALET_NORMAL );
+   AUTFBACK( le_5a1 );
+   le_5a1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_5a1->setMinimumHeight(minHeight1);
+   connect(le_5a1, SIGNAL(textChanged(const QString &)), SLOT(update_5a1(const QString &)));
+
+   le_5a2 = new QLineEdit( this );    le_5a2->setObjectName( "Coefficient a(1) Line Edit" );
+   le_5a2->setPalette( PALET_NORMAL );
+   AUTFBACK( le_5a2 );
+   le_5a2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_5a2->setMinimumHeight(minHeight1);
+   connect(le_5a2, SIGNAL(textChanged(const QString &)), SLOT(update_5a2(const QString &)));
+
+   le_5a3 = new QLineEdit( this );    le_5a3->setObjectName( "Coefficient a(1) Line Edit" );
+   le_5a3->setPalette( PALET_NORMAL );
+   AUTFBACK( le_5a3 );
+   le_5a3->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_5a3->setMinimumHeight(minHeight1);
+   connect(le_5a3, SIGNAL(textChanged(const QString &)), SLOT(update_5a3(const QString &)));
+
+   le_5a4 = new QLineEdit( this );    le_5a4->setObjectName( "Coefficient a(1) Line Edit" );
+   le_5a4->setPalette( PALET_NORMAL );
+   AUTFBACK( le_5a4 );
+   le_5a4->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_5a4->setMinimumHeight(minHeight1);
+   connect(le_5a4, SIGNAL(textChanged(const QString &)), SLOT(update_5a4(const QString &)));
+
+   le_5a5 = new QLineEdit( this );    le_5a5->setObjectName( "Coefficient a(1) Line Edit" );
+   le_5a5->setPalette( PALET_NORMAL );
+   AUTFBACK( le_5a5 );
+   le_5a5->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_5a5->setMinimumHeight(minHeight1);
+   connect(le_5a5, SIGNAL(textChanged(const QString &)), SLOT(update_5a5(const QString &)));
+
+   le_5b1 = new QLineEdit( this );    le_5b1->setObjectName( "Coefficient a(1) Line Edit" );
+   le_5b1->setPalette( PALET_NORMAL );
+   AUTFBACK( le_5b1 );
+   le_5b1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_5b1->setMinimumHeight(minHeight1);
+   connect(le_5b1, SIGNAL(textChanged(const QString &)), SLOT(update_5b1(const QString &)));
+
+   le_5b2 = new QLineEdit( this );    le_5b2->setObjectName( "Coefficient a(1) Line Edit" );
+   le_5b2->setPalette( PALET_NORMAL );
+   AUTFBACK( le_5b2 );
+   le_5b2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_5b2->setMinimumHeight(minHeight1);
+   connect(le_5b2, SIGNAL(textChanged(const QString &)), SLOT(update_5b2(const QString &)));
+
+   le_5b3 = new QLineEdit( this );    le_5b3->setObjectName( "Coefficient a(1) Line Edit" );
+   le_5b3->setPalette( PALET_NORMAL );
+   AUTFBACK( le_5b3 );
+   le_5b3->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_5b3->setMinimumHeight(minHeight1);
+   connect(le_5b3, SIGNAL(textChanged(const QString &)), SLOT(update_5b3(const QString &)));
+
+   le_5b4 = new QLineEdit( this );    le_5b4->setObjectName( "Coefficient a(1) Line Edit" );
+   le_5b4->setPalette( PALET_NORMAL );
+   AUTFBACK( le_5b4 );
+   le_5b4->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_5b4->setMinimumHeight(minHeight1);
+   connect(le_5b4, SIGNAL(textChanged(const QString &)), SLOT(update_5b4(const QString &)));
+
+   le_5b5 = new QLineEdit( this );    le_5b5->setObjectName( "Coefficient a(1) Line Edit" );
+   le_5b5->setPalette( PALET_NORMAL );
+   AUTFBACK( le_5b5 );
+   le_5b5->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_5b5->setMinimumHeight(minHeight1);
+   connect(le_5b5, SIGNAL(textChanged(const QString &)), SLOT(update_5b5(const QString &)));
+
+   le_5c = new QLineEdit( this );    le_5c->setObjectName( "Coefficient c Line Edit" );
+   le_5c->setPalette( PALET_NORMAL );
+   AUTFBACK( le_5c );
+   le_5c->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_5c->setMinimumHeight(minHeight1);
+   connect(le_5c, SIGNAL(textChanged(const QString &)), SLOT(update_5c(const QString &)));
+
+   le_5volume = new QLineEdit( this );    le_5volume->setObjectName( "Atomic Volume Line Edit" );
+   le_5volume->setPalette( PALET_NORMAL );
+   AUTFBACK( le_5volume );
+   le_5volume->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_5volume->setMinimumHeight(minHeight1);
+   connect(le_5volume, SIGNAL(textChanged(const QString &)), SLOT(update_5volume(const QString &)));
+
    pb_add = new QPushButton(us_tr("Add SAXS Atom to File"), this);
    Q_CHECK_PTR(pb_add);
    pb_add->setEnabled(true);
@@ -259,52 +375,77 @@ void US_AddSaxs::setupGUI()
    int /* rows=3, columns = 2,*/ spacing = 2, j=0, margin=4;
    QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
 
-   background->addWidget( lbl_info , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
+   qDebug() << "gui1";
+   background->addWidget( lbl_info , j , 0 , 1 , 4 );
    j++;
-   background->addWidget(pb_select_file, j, 0);
-   background->addWidget(lbl_table, j, 1);
+   qDebug() << "gui2";
+   background->addWidget(pb_select_file, j, 0, 1, 2);
+   background->addWidget(lbl_table, j, 2, 1, 2 );
    j++;
-   background->addWidget(lbl_number_of_saxs, j, 0);
-   background->addWidget(cmb_saxs, j, 1);
+   background->addWidget(lbl_number_of_saxs, j, 0, 1, 2);
+   background->addWidget(cmb_saxs, j, 2, 1, 2);
    j++;
-   background->addWidget(lbl_saxs_name, j, 0);
-   background->addWidget(le_saxs_name, j, 1);
+   background->addWidget(lbl_saxs_name, j, 0, 1, 2);
+   background->addWidget(le_saxs_name, j, 2, 1, 2);
    j++;
-   background->addWidget(lbl_a1, j, 0);
-   background->addWidget(le_a1, j, 1);
+   background->addWidget(lbl_4term, j, 2);
+   background->addWidget(lbl_5term, j, 3);
+   qDebug() << "gui3";
    j++;
-   background->addWidget(lbl_b1, j, 0);
-   background->addWidget(le_b1, j, 1);
+   background->addWidget(lbl_a1, j, 0, 1, 2);
+   background->addWidget(le_a1, j, 2);
+   background->addWidget(le_5a1, j, 3);
    j++;
-   background->addWidget(lbl_a2, j, 0);
-   background->addWidget(le_a2, j, 1);
+   background->addWidget(lbl_b1, j, 0, 1, 2);
+   background->addWidget(le_b1, j, 2);
+   background->addWidget(le_5b1, j, 3);
    j++;
-   background->addWidget(lbl_b2, j, 0);
-   background->addWidget(le_b2, j, 1);
+   background->addWidget(lbl_a2, j, 0, 1, 2);
+   background->addWidget(le_a2, j, 2);
+   background->addWidget(le_5a2, j, 3);
    j++;
-   background->addWidget(lbl_a3, j, 0);
-   background->addWidget(le_a3, j, 1);
+   background->addWidget(lbl_b2, j, 0, 1, 2);
+   background->addWidget(le_b2, j, 2);
+   background->addWidget(le_5b2, j, 3);
    j++;
-   background->addWidget(lbl_b3, j, 0);
-   background->addWidget(le_b3, j, 1);
+   background->addWidget(lbl_a3, j, 0, 1, 2);
+   background->addWidget(le_a3, j, 2);
+   background->addWidget(le_5a3, j, 3);
    j++;
-   background->addWidget(lbl_a4, j, 0);
-   background->addWidget(le_a4, j, 1);
+   background->addWidget(lbl_b3, j, 0, 1, 2);
+   background->addWidget(le_b3, j, 2);
+   background->addWidget(le_5b3, j, 3);
+   qDebug() << "gui5";
    j++;
-   background->addWidget(lbl_b4, j, 0);
-   background->addWidget(le_b4, j, 1);
+   background->addWidget(lbl_a4, j, 0, 1, 2);
+   background->addWidget(le_a4, j, 2);
+   background->addWidget(le_5a4, j, 3);
    j++;
-   background->addWidget(lbl_c, j, 0);
-   background->addWidget(le_c, j, 1);
+   background->addWidget(lbl_b4, j, 0, 1, 2);
+   background->addWidget(le_b4, j, 2);
+   background->addWidget(le_5b4, j, 3);
    j++;
-   background->addWidget(lbl_volume, j, 0);
-   background->addWidget(le_volume, j, 1);
+   background->addWidget(lbl_a5, j, 0, 1, 2);
+   background->addWidget(le_5a5, j, 3);
    j++;
-   background->addWidget( pb_add , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
+   background->addWidget(lbl_b5, j, 0, 1, 2);
+   background->addWidget(le_5b5, j, 3);
    j++;
-   background->addWidget(pb_help, j, 0);
-   background->addWidget(pb_close, j, 1);
+   background->addWidget(lbl_c, j, 0, 1, 2);
+   background->addWidget(le_c, j, 2);
+   background->addWidget(le_5c, j, 3);
+   j++;
+   qDebug() << "gui7";
+   background->addWidget(lbl_volume, j, 0, 1, 2);
+   background->addWidget(le_volume, j, 2, 1, 2);
+   background->addWidget(le_5volume, j, 3);
+   j++;
+   background->addWidget( pb_add , j , 0, 1, 4 );
+   j++;
+   background->addWidget(pb_help, j, 0, 1, 2 );
+   background->addWidget(pb_close, j, 2, 1, 2 );
 
+   le_5volume->hide();
 }
 
 void US_AddSaxs::add()
@@ -325,6 +466,17 @@ void US_AddSaxs::add()
          saxs_list[i].a[3] = current_saxs.a[3];
          saxs_list[i].b[3] = current_saxs.b[3];
          saxs_list[i].c = current_saxs.c;
+         saxs_list[i].a5[0] = current_saxs.a5[0];
+         saxs_list[i].b5[0] = current_saxs.b5[0];
+         saxs_list[i].a5[1] = current_saxs.a5[1];
+         saxs_list[i].b5[1] = current_saxs.b5[1];
+         saxs_list[i].a5[2] = current_saxs.a5[2];
+         saxs_list[i].b5[2] = current_saxs.b5[2];
+         saxs_list[i].a5[3] = current_saxs.a5[3];
+         saxs_list[i].b5[3] = current_saxs.b5[3];
+         saxs_list[i].a5[4] = current_saxs.a5[4];
+         saxs_list[i].b5[4] = current_saxs.b5[4];
+         saxs_list[i].c5 = current_saxs.c5;
          saxs_list[i].volume = current_saxs.volume;
       }
    }
@@ -338,6 +490,7 @@ void US_AddSaxs::add()
       cmb_saxs->clear( );
       str1.sprintf(us_trp(" Number of SAXS Entries in File: %d"), saxs_list.size());
       QTextStream ts(&f);
+      ts << qSetRealNumberPrecision(8);
       for (unsigned int i=0; i<saxs_list.size(); i++)
       {
          ts << saxs_list[i].saxs_name.toUpper() << "\t"
@@ -351,11 +504,28 @@ void US_AddSaxs::add()
             << saxs_list[i].b[3] << "\t"
             << saxs_list[i].c << "\t"
             << saxs_list[i].volume << endl;
+         if ( saxs_list[i].a5[0] &&
+              saxs_list[i].b5[0] ) {
+            ts << saxs_list[i].saxs_name.toUpper() << "\t"
+               << saxs_list[i].a5[0] << "\t"
+               << saxs_list[i].b5[0] << "\t"
+               << saxs_list[i].a5[1] << "\t"
+               << saxs_list[i].b5[1] << "\t"
+               << saxs_list[i].a5[2] << "\t"
+               << saxs_list[i].b5[2] << "\t"
+               << saxs_list[i].a5[3] << "\t"
+               << saxs_list[i].b5[3] << "\t"
+               << saxs_list[i].a5[4] << "\t"
+               << saxs_list[i].b5[4] << "\t"
+               << saxs_list[i].c5 << "\t"
+               << saxs_list[i].volume << endl;
+         }
          str1.sprintf("%d: ", i+1);
          str1 += saxs_list[i].saxs_name.toUpper();
          cmb_saxs->addItem(str1);
       }
       f.close();
+      lbl_number_of_saxs->setText( QString().sprintf(us_trp(" Number of SAXS Entries in File: %d"), saxs_list.size() ) );
    }
    else
    {
@@ -378,38 +548,80 @@ void US_AddSaxs::select_file()
       saxs_list.clear( );
       cmb_saxs->clear( );
       unsigned int i=1;
+      map < QString, struct saxs > saxs_map;
+
       if (f.open(QIODevice::ReadOnly|QIODevice::Text))
       {
          QTextStream ts(&f);
          while (!ts.atEnd())
          {
-            ts >> current_saxs.saxs_name;
-            ts >> current_saxs.a[0];
-            ts >> current_saxs.b[0];
-            ts >> current_saxs.a[1];
-            ts >> current_saxs.b[1];
-            ts >> current_saxs.a[2];
-            ts >> current_saxs.b[2];
-            ts >> current_saxs.a[3];
-            ts >> current_saxs.b[3];
-            ts >> current_saxs.c;
-            ts >> current_saxs.volume;
-            str2 = ts.readLine(); // read rest of line
-            if (!current_saxs.saxs_name.isEmpty())
-            {
-               saxs_list.push_back(current_saxs);
-               str1.sprintf("%d: ", i);
-               str1 += current_saxs.saxs_name;
-               cmb_saxs->addItem(str1);
-               i++;
+            QStringList qsl = ( ts.readLine() ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+            int pos = 0;
+            if ( qsl.size() == 11 ) {
+               saxs_map[ qsl[0] ].saxs_name = qsl[pos++];
+               saxs_map[ qsl[0] ].a[0]      = qsl[pos++].toFloat();
+               saxs_map[ qsl[0] ].b[0]      = qsl[pos++].toFloat();
+               saxs_map[ qsl[0] ].a[1]      = qsl[pos++].toFloat();
+               saxs_map[ qsl[0] ].b[1]      = qsl[pos++].toFloat();
+               saxs_map[ qsl[0] ].a[2]      = qsl[pos++].toFloat();
+               saxs_map[ qsl[0] ].b[2]      = qsl[pos++].toFloat();
+               saxs_map[ qsl[0] ].a[3]      = qsl[pos++].toFloat();
+               saxs_map[ qsl[0] ].b[3]      = qsl[pos++].toFloat();
+               saxs_map[ qsl[0] ].c         = qsl[pos++].toFloat();
+               saxs_map[ qsl[0] ].volume    = qsl[pos++].toFloat();
+            } else if ( qsl.size() == 13 ) {
+               saxs_map[ qsl[0] ].saxs_name = qsl[pos++];
+               saxs_map[ qsl[0] ].a5[0]     = qsl[pos++].toFloat();
+               saxs_map[ qsl[0] ].b5[0]     = qsl[pos++].toFloat();
+               saxs_map[ qsl[0] ].a5[1]     = qsl[pos++].toFloat();
+               saxs_map[ qsl[0] ].b5[1]     = qsl[pos++].toFloat();
+               saxs_map[ qsl[0] ].a5[2]     = qsl[pos++].toFloat();
+               saxs_map[ qsl[0] ].b5[2]     = qsl[pos++].toFloat();
+               saxs_map[ qsl[0] ].a5[3]     = qsl[pos++].toFloat();
+               saxs_map[ qsl[0] ].b5[3]     = qsl[pos++].toFloat();
+               saxs_map[ qsl[0] ].a5[4]     = qsl[pos++].toFloat();
+               saxs_map[ qsl[0] ].b5[4]     = qsl[pos++].toFloat();
+               saxs_map[ qsl[0] ].c5        = qsl[pos++].toFloat();
+               saxs_map[ qsl[0] ].volume    = qsl[pos++].toFloat();
+            } else {
+               qDebug() << "invalid line in saxs atom file";
             }
          }
          f.close();
+      }
+      for ( auto it = saxs_map.begin();
+            it != saxs_map.end();
+            ++it ) {
+         if ( !it->first.isEmpty() ) {
+            saxs_list.push_back( it->second );
+            str1.sprintf("%d: ", i);
+            str1 += it->second.saxs_name;
+            cmb_saxs->addItem(str1);
+            i++;
+         }
       }
    }
    str1.sprintf(us_trp(" Number of SAXS Entries in File: %d"), saxs_list.size());
    lbl_number_of_saxs->setText(str1);
    pb_add->setEnabled(true);
+}
+
+#define TSO QTextStream( stdout )
+#define LEQ "============================================================\n"
+#define LD  "------------------------------------------------------------\n"
+
+void US_AddSaxs::info_saxs( const QString & msg, const struct saxs & saxs ) {
+   TSO << LEQ << "info_saxs(): " << saxs.saxs_name << " " << msg << endl;
+   TSO << LD << "4 term gaussians:\n";
+   for ( int i = 0; i < 4; ++i ) {
+      TSO << "\ta & b [" << i << "] = " << saxs.a[i] << " & " << saxs.b[i] << endl;
+   }      
+   TSO << "\tc & volume = " << saxs.c << " & " << saxs.volume << endl;
+   TSO << LD << "5 term gaussians:\n";
+   for ( int i = 0; i < 5; ++i ) {
+      TSO << "\ta & b [" << i << "] = " << saxs.a5[i] << " & " << saxs.b5[i] << endl;
+   }      
+   TSO << "\tc5 = " << saxs.c5 << endl;
 }
 
 void US_AddSaxs::update_saxs_name(const QString &str)
@@ -467,30 +679,114 @@ void US_AddSaxs::update_volume(const QString &str)
    current_saxs.volume = str.toFloat();
 }
 
+void US_AddSaxs::update_5a1(const QString &str)
+{
+   current_saxs.a5[0] = str.toFloat();
+}
+
+void US_AddSaxs::update_5a2(const QString &str)
+{
+   current_saxs.a5[1] = str.toFloat();
+}
+
+void US_AddSaxs::update_5a3(const QString &str)
+{
+   current_saxs.a5[2] = str.toFloat();
+}
+
+void US_AddSaxs::update_5a4(const QString &str)
+{
+   current_saxs.a5[3] = str.toFloat();
+}
+
+void US_AddSaxs::update_5a5(const QString &str)
+{
+   current_saxs.a5[4] = str.toFloat();
+}
+
+void US_AddSaxs::update_5b1(const QString &str)
+{
+   current_saxs.b5[0] = str.toFloat();
+}
+
+void US_AddSaxs::update_5b2(const QString &str)
+{
+   current_saxs.b5[1] = str.toFloat();
+}
+
+void US_AddSaxs::update_5b3(const QString &str)
+{
+   current_saxs.b5[2] = str.toFloat();
+}
+
+void US_AddSaxs::update_5b4(const QString &str)
+{
+   current_saxs.b5[3] = str.toFloat();
+}
+
+void US_AddSaxs::update_5b5(const QString &str)
+{
+   current_saxs.b5[4] = str.toFloat();
+}
+
+void US_AddSaxs::update_5c(const QString &str)
+{
+   current_saxs.c5 = str.toFloat();
+}
+
+void US_AddSaxs::update_5volume(const QString &str)
+{
+   current_saxs.volume = str.toFloat();
+}
+
 void US_AddSaxs::select_saxs(int val)
 {
    QString str;
    le_saxs_name->setText(saxs_list[val].saxs_name.toUpper());
-   str.sprintf("%3.4f", saxs_list[val].a[0]);
+   str.sprintf("%3.6f", saxs_list[val].a[0]);
    le_a1->setText(str);
-   str.sprintf("%3.4f", saxs_list[val].b[0]);
+   str.sprintf("%3.6f", saxs_list[val].b[0]);
    le_b1->setText(str);
-   str.sprintf("%3.4f", saxs_list[val].a[1]);
+   str.sprintf("%3.6f", saxs_list[val].a[1]);
    le_a2->setText(str);
-   str.sprintf("%3.4f", saxs_list[val].b[1]);
+   str.sprintf("%3.6f", saxs_list[val].b[1]);
    le_b2->setText(str);
-   str.sprintf("%3.4f", saxs_list[val].a[2]);
+   str.sprintf("%3.6f", saxs_list[val].a[2]);
    le_a3->setText(str);
-   str.sprintf("%3.4f", saxs_list[val].b[2]);
+   str.sprintf("%3.6f", saxs_list[val].b[2]);
    le_b3->setText(str);
-   str.sprintf("%3.4f", saxs_list[val].a[3]);
+   str.sprintf("%3.6f", saxs_list[val].a[3]);
    le_a4->setText(str);
-   str.sprintf("%3.4f", saxs_list[val].b[3]);
+   str.sprintf("%3.6f", saxs_list[val].b[3]);
    le_b4->setText(str);
-   str.sprintf("%3.4f", saxs_list[val].c);
+   str.sprintf("%3.6f", saxs_list[val].c);
    le_c->setText(str);
-   str.sprintf("%3.4f", saxs_list[val].volume);
+   str.sprintf("%3.6f", saxs_list[val].volume);
    le_volume->setText(str);
+
+   str.sprintf("%3.6f", saxs_list[val].a5[0]);
+   le_5a1->setText(str);
+   str.sprintf("%3.6f", saxs_list[val].b5[0]);
+   le_5b1->setText(str);
+   str.sprintf("%3.6f", saxs_list[val].a5[1]);
+   le_5a2->setText(str);
+   str.sprintf("%3.6f", saxs_list[val].b5[1]);
+   le_5b2->setText(str);
+   str.sprintf("%3.6f", saxs_list[val].a5[2]);
+   le_5a3->setText(str);
+   str.sprintf("%3.6f", saxs_list[val].b5[2]);
+   le_5b3->setText(str);
+   str.sprintf("%3.6f", saxs_list[val].a5[3]);
+   le_5a4->setText(str);
+   str.sprintf("%3.6f", saxs_list[val].b5[3]);
+   le_5b4->setText(str);
+   str.sprintf("%3.6f", saxs_list[val].a5[4]);
+   le_5a5->setText(str);
+   str.sprintf("%3.6f", saxs_list[val].b5[4]);
+   le_5b5->setText(str);
+   str.sprintf("%3.6f", saxs_list[val].c5);
+   le_5c->setText(str);
+   
 }
 
 void US_AddSaxs::closeEvent(QCloseEvent *e)
