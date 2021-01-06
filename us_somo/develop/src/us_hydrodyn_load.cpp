@@ -1426,7 +1426,7 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
    current_model = 0;
    dna_rna_resolve();
 
-   // info_model_vector( QString( "source: model_vector" ), model_vector, { "CYS", "CYH" } );
+   info_model_vector( QString( "source: model_vector" ), model_vector, { "GLU", "HIS", "CGU" } );
    // info_model_vector_mw( QString( "read_pdb() : model_vector" ), model_vector, true );
 
    model_vector_as_loaded = model_vector;
@@ -2746,20 +2746,22 @@ void US_Hydrodyn::set_ionized_residue_vector( vector < struct residue > & residu
       int beads = (int) residue_v[ j ].r_bead.size();
       
       map < int, double > bead_ionized_mw;
+      map < int, double > bead_atom_hydration;
 
       residue_v[ j ].pH               = pH;
       residue_v[ j ].vbar_at_pH       = ionized_residue_vbar( fractions, & residue_v[ j ] );
       residue_v[ j ].ionized_mw_delta = 0e0;
 
       for ( int k = 0; k < atoms; ++k ) {
-         double ionized_mw_for_atom                                    = ionized_residue_atom_mw       ( fractions, & residue_v[ j ], & residue_v[ j ].r_atom[ k ] );
-
-         residue_v[ j ].r_atom[ k ].hybrid.ionized_mw_delta            = ionized_mw_for_atom;
-         residue_v[ j ].r_atom[ k ].hybrid.radius                      = ionized_residue_atom_radius   ( fractions, & residue_v[ j ], & residue_v[ j ].r_atom[ k ] );
-         residue_v[ j ].r_atom[ k ].hydration                          = ionized_residue_atom_hydration( fractions, & residue_v[ j ], & residue_v[ j ].r_atom[ k ] );
-         residue_v[ j ].r_atom[ k ].hybrid.protons                     = ionized_residue_atom_protons  ( fractions, & residue_v[ j ], & residue_v[ j ].r_atom[ k ] );
-         residue_v[ j ].ionized_mw_delta                               += ionized_mw_for_atom;
-         bead_ionized_mw[ residue_v[ j ].r_atom[ k ].bead_assignment ] += ionized_mw_for_atom;
+         double ionized_mw_for_atom                                        = ionized_residue_atom_mw       ( fractions, & residue_v[ j ], & residue_v[ j ].r_atom[ k ] );
+         double ionized_hydration                                          = ionized_residue_atom_hydration( fractions, & residue_v[ j ], & residue_v[ j ].r_atom[ k ] );
+         residue_v[ j ].r_atom[ k ].hybrid.ionized_mw_delta                = ionized_mw_for_atom;
+         residue_v[ j ].r_atom[ k ].hybrid.radius                          = ionized_residue_atom_radius   ( fractions, & residue_v[ j ], & residue_v[ j ].r_atom[ k ] );
+         residue_v[ j ].r_atom[ k ].hydration                              = ionized_hydration;
+         residue_v[ j ].r_atom[ k ].hybrid.protons                         = ionized_residue_atom_protons  ( fractions, & residue_v[ j ], & residue_v[ j ].r_atom[ k ] );
+         residue_v[ j ].ionized_mw_delta                                   += ionized_mw_for_atom;
+         bead_ionized_mw[ residue_v[ j ].r_atom[ k ].bead_assignment ]     += ionized_mw_for_atom;
+         bead_atom_hydration[ residue_v[ j ].r_atom[ k ].bead_assignment ] += ionized_hydration;
 
          // vdwf
          {
@@ -2784,9 +2786,12 @@ void US_Hydrodyn::set_ionized_residue_vector( vector < struct residue > & residu
       for ( int k = 0; k < beads; ++k ) {
          if ( bead_ionized_mw.count( k ) ) {
             residue_v[ j ].r_bead[ k ].ionized_mw_delta = bead_ionized_mw[ k ];
+            residue_v[ j ].r_bead[ k ].atom_hydration   = bead_atom_hydration[ k ];
             bead_ionized_mw.erase( k );
+            bead_atom_hydration.erase( k );
          } else {
             residue_v[ j ].r_bead[ k ].ionized_mw_delta = 0e0;
+            residue_v[ j ].r_bead[ k ].atom_hydration   = 0e0;
          }
       }
       if ( bead_ionized_mw.size() ) {

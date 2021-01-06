@@ -106,7 +106,9 @@ void US_Hydrodyn::info_model_vector( const QString & msg, const vector <struct P
                TSO
                   << LBD
                   << "  models residue r_bead                    : " << k << endl
-                  << "  models residue r_bead atom_hydration     : " << models[ i ].residue[ j ].r_bead[ k ].atom_hydration << endl
+                  << "  models residue r_bead hydration_flag     : " << ( models[ i ].residue[ j ].r_bead[ k ].hydration_flag ? "true - use bead hydration override" : "false - use atom hydration " ) << endl
+                  << "  models residue r_bead hydration          : " << models[ i ].residue[ j ].r_bead[ k ].hydration << endl
+                  << "  models residue r_bead atom_hydration     : " << models[ i ].residue[ j ].r_bead[ k ].atom_hydration<< endl
                   ;
             }
          }

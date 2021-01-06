@@ -2572,7 +2572,11 @@ int US_Hydrodyn::create_beads(QString *error_string, bool quiet)
                // }
                   
                this_atom->placing_method =  this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].placing_method;
-               this_atom->bead_hydration =  this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].hydration;
+               if ( this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].hydration_flag ) {
+                  this_atom->bead_hydration = this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].hydration;
+               } else {
+                  this_atom->bead_hydration = this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].atom_hydration;
+               }
                this_atom->bead_color =  this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].color;
                this_atom->bead_ref_volume =  this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].volume;
                this_atom->bead_ref_mw =  this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].mw;

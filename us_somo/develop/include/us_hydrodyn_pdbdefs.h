@@ -215,6 +215,8 @@ struct bead
    float        ionized_mw_delta;     
    bool         hydration_flag;  // false = use sum of atom's hydrations, true = bead hydration overrides
    float        atom_hydration;  // number of waters bound based upon sum of atoms' hydrations
+   // used only in residue editor
+   float        atom_hydration2; // number of waters bound based upon sum of atoms' hydrations at ph 14
 };
 
 struct saxs_options
