@@ -1597,6 +1597,8 @@ void US_AddResidue::select_beadatom()
       str.sprintf("%.0f",new_residue.r_bead[current_bead].atom_hydration);
       cnt_hydration->setEnabled( true );
    } else {
+      new_residue.r_bead[current_bead].hydration = new_residue.r_bead[current_bead].atom_hydration;
+      cnt_hydration->setValue( new_residue.r_bead[current_bead].hydration );
       str.sprintf("[pH 0]: %.0f   [pH 14]: %.0f ", new_residue.r_bead[current_bead].atom_hydration, new_residue.r_bead[current_bead].atom_hydration2);
       cnt_hydration->setEnabled( false );
    }
@@ -1665,6 +1667,8 @@ void US_AddResidue::select_r_bead(int val)
          str.sprintf("%.0f",new_residue.r_bead[current_bead].atom_hydration);
          cnt_hydration->setEnabled( true );
       } else {
+         new_residue.r_bead[current_bead].hydration = new_residue.r_bead[current_bead].atom_hydration;
+         cnt_hydration->setValue( new_residue.r_bead[current_bead].hydration );
          str.sprintf("[pH 0]: %.0f   [pH 14]: %.0f ", new_residue.r_bead[current_bead].atom_hydration, new_residue.r_bead[current_bead].atom_hydration2);
          cnt_hydration->setEnabled( false );
       }
