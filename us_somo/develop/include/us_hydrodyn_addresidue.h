@@ -80,6 +80,7 @@ class US_AddResidue : public QWidget
       QLabel *lbl_bead_mw;
       QLabel *lbl_bead_hydro_from_atom;
       QLabel *lbl_bead_hydrovol;
+      QLabel *lbl_bead_hydrorad;
 
       QLabel *lbl_info2;
       QLabel *lbl_r_atoms;
@@ -138,6 +139,7 @@ class US_AddResidue : public QWidget
       QLineEdit *le_bead_mw;
       QLineEdit *le_bead_hydro_from_atom;
       QLineEdit *le_bead_hydrovol;
+      QLineEdit *le_bead_hydrorad;
       struct residue new_residue;
       struct atom new_atom;
       struct bead new_bead;
