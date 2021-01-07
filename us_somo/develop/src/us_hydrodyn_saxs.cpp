@@ -5325,6 +5325,32 @@ void US_Hydrodyn_Saxs::select_saxs_file(const QString &filename)
    hybrid_coords[ "S" ].push_back( p );
 #endif
    // compute pairwise distances
+   // just duplicate for ionizations for now
+   {
+      vector < QString > tmp;
+      
+      for ( auto it = hybrid_coords.begin();
+            it != hybrid_coords.end();
+            ++it ) {
+         tmp.push_back( it->first );
+      }
+      for ( int j = 0; j < (int) tmp.size(); ++j ) {
+         QString atomname = tmp[j];
+         for ( int i = -2; i <= 3; ++i ) {
+            
+            if ( i < 0 ) {
+               hybrid_coords[ QString( "%1%2" ).arg( atomname ).arg( i ) ] = hybrid_coords[ atomname ];
+            } else if ( i > 0 ) {
+               hybrid_coords[ QString( "%1+%2" ).arg( atomname ).arg( i ) ] = hybrid_coords[ atomname ];
+            }
+         }
+      }
+      for ( auto it = hybrid_coords.begin();
+            it != hybrid_coords.end();
+            ++it ) {
+         QTextStream( stdout ) << "hybrid coord key " << it->first << endl;
+      }
+   }               
 
    hybrid_r.clear( );
 
