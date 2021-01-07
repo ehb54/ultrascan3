@@ -109,7 +109,7 @@ bool US_Hydrodyn::calc_grpy_hydro() {
       + "_win64.exe"
 #else
 # if defined(Q_OS_MAC)
-      + "_osx10.13"
+      + "_osx10.11"
 # else
       + "_linux64"
 # endif
