@@ -265,7 +265,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                                                               "Do you want to overwrite the values?" ) ).arg( text ),
                                                  us_tr( "&Overwrite" ), 
                                                  us_tr( "&Try again" ),
-                                                 QString::null,
+                                                 QString(),
                                                  1,
                                                  0
                                                  ) )
@@ -506,7 +506,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                                                             .arg( filename ),
                                                             us_tr( "&Yes" ), 
                                                             us_tr( "&No" ),
-                                                            QString::null, 
+                                                            QString(), 
                                                             1, 
                                                             0 ) )
                               {

@@ -6164,7 +6164,7 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_start()
                                      QString( us_tr( "Note: SD weighting is currently turned off.\n" ) ),
                                      us_tr( "&Turn on" ), 
                                      us_tr( "&Leave off" ),
-                                     QString::null,
+                                     QString(),
                                      0, // Stop == button 0
                                      0 // Escape == button 0
                                      ) ) {

@@ -634,7 +634,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start( bool from_blanks_mode_save )
                                               "Without reference blanks, only the adjusted Holm-Bonferroni method can be used." )
                                          ,us_tr( "&Yes, utilize blanks" )
                                          ,us_tr( "&No, proceed without blanks" )
-                                         ,QString::null
+                                         ,QString()
                                          ) ) {
          case -1 : // escape
             return current_mode != MODE_NORMAL ? wheel_cancel() : update_enables();
@@ -659,7 +659,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start( bool from_blanks_mode_save )
                                                QString( us_tr( "Accept currently analyzed blanks%1" ) )
                                                .arg( blanks_cormap_parameters.count( "name" ) ? 
                                                      QString( "\n%1" ).arg( blanks_cormap_parameters[ "name" ] ) : QString( "" ) )
-                                               : QString::null
+                                               : QString()
                                                ,( blanks_brookesmap_sliding_results.size() &&
                                                   blanks_cormap_pvaluepairs.size() >= IB_MIN_FRAMES ) ? 2 : 0
                                                ) ) {

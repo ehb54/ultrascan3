@@ -1355,7 +1355,7 @@ void US_Hydrodyn_Saxs::crysol_readFromStdout()
    //    editor_msg("brown", qs );
    //    text += qs;
    // };
-      //   } while ( qs != QString::null );
+      //   } while ( qs != QString() );
 
    //do {
       QString read = crysol->readStdout();

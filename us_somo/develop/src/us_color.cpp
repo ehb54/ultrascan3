@@ -1560,7 +1560,7 @@ void US_Color::delete_scheme()
   QString str = us_tr("Do you really want to delete the\n \"") + 
                lb_scheme->item(current_scheme)->text() + us_tr("\" color scheme?");
   int result = QMessageBox::warning(0, 
-        us_tr("Attention:"), str, us_tr("Yes"), us_tr("No"), QString::null, 1, 1);
+        us_tr("Attention:"), str, us_tr("Yes"), us_tr("No"), QString(), 1, 1);
   if (result == 0)
   {
     if (current_scheme == 0)

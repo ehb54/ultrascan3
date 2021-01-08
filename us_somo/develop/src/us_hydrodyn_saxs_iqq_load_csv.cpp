@@ -631,7 +631,7 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::save_as_dat()
                             us_tr( "How do you want to save as a q*I(q) file?" ),
                             us_tr( "&No, just normally" ),
                             us_tr( "&Yes, compute and save I as q*I(q)" ),
-                            QString::null,
+                            QString(),
                             0,
                             1
                             ) 

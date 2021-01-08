@@ -202,7 +202,7 @@ bool US_Hydrodyn::calc_grpy_hydro() {
                                      us_tr( "Choose the ASA method for GRPY bead inclusion"),
                                      us_tr( "&Use SOMO ASA Threshold [A^2]" ), 
                                      us_tr( "Use SOMO Bead ASA Threshold %" ), 
-                                     QString::null,
+                                     QString(),
                                      1, // Stop == button 0
                                      1 // Escape == button 0
                                      ) )

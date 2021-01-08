@@ -2659,7 +2659,7 @@ void US_Hydrodyn_Comparative::reset_param()
                                 us_tr("Reset Parameters"),
                                 us_tr("Are you sure you want to reset the parameters?"),
                                 us_tr("&Yes"), us_tr("&No"),
-                                QString::null, 0, 1 ) 
+                                QString(), 0, 1 ) 
           ) 
       {
          return;
@@ -2935,7 +2935,7 @@ void US_Hydrodyn_Comparative::loaded_merge()
                                           "Do you still want to merge them?")
                                        ).arg(csv_premerge_missing_header_qsl.join("\n")),
                                us_tr("&Yes"), us_tr("&No"),
-                               QString::null, 0, 1 )
+                               QString(), 0, 1 )
           )
       {
          return;
@@ -3217,7 +3217,7 @@ void US_Hydrodyn_Comparative::save_csv()
                                 us_tr("Multiple CSV are selected and must be merged before saving\n"
                                    "Do you want to merge them?"),
                                 us_tr("&Yes"), us_tr("&No"),
-                                QString::null, 0, 1 ) 
+                                QString(), 0, 1 ) 
           ) 
       {
          return;
@@ -3237,7 +3237,7 @@ void US_Hydrodyn_Comparative::save_csv()
                                              "Do you still want to merge them?")
                                           ).arg(csv_premerge_missing_header_qsl.join("\n")),
                                   us_tr("&Yes"), us_tr("&No"),
-                                  QString::null, 0, 1 )
+                                  QString(), 0, 1 )
              )
          {
             return;
@@ -3301,7 +3301,7 @@ void US_Hydrodyn_Comparative::save_csv()
 void US_Hydrodyn_Comparative::save()
 {
    QString fn;
-   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
+   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString() , QString() );
    if(!fn.isEmpty() )
    {
       QString text = editor->toPlainText();
@@ -3508,7 +3508,7 @@ csv US_Hydrodyn_Comparative::csv_read( QString filename )
                                        us_tr("The CSV named %1 is already loaded\nDo you want to reload it?")
                                        ).arg(filename),
                                us_tr("&Yes"), us_tr("&No"),
-                               QString::null, 0, 1 )
+                               QString(), 0, 1 )
           )
       {
          csv_error = us_tr("already loaded");
@@ -4106,7 +4106,7 @@ bool US_Hydrodyn_Comparative::csv_merge_selected_selected( csv &csv_merged )
                                           "Do you want to continue?")
                                        ).arg(csv_premerge_missing_header_qsl.join("\n")),
                                us_tr("&Yes"), us_tr("&No"),
-                               QString::null, 0, 1 )
+                               QString(), 0, 1 )
           )
       {
          return false;
@@ -4192,7 +4192,7 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
                                  us_tr("Some of the added columns that will be computed already exist.\n"
                                     "What do you want remove them?"),
                                  us_tr("&Yes, remove them"), us_tr("&No, rename them"),
-                                 QString::null, 0, 1 ) 
+                                 QString(), 0, 1 ) 
           )
       {
          for ( unsigned int i = 0; i < ce_names.size(); i++ )

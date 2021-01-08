@@ -769,7 +769,7 @@ void US_Hydrodyn_Saxs_Hplc::update_font()
 void US_Hydrodyn_Saxs_Hplc::save()
 {
    QString fn;
-   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
+   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString() , QString() );
    if(!fn.isEmpty() )
    {
       QString text = editor->toPlainText();
@@ -4118,7 +4118,7 @@ void US_Hydrodyn_Saxs_Hplc::check_discard_it_sd_mult( QStringList & files, bool 
                                         .arg( qsl.join( "\n" ) ),
                                         us_tr( "&Discard" ), 
                                         us_tr( "&Keep" ),
-                                        QString::null,
+                                        QString(),
                                         1, // Stop == button 0
                                         1 // Escape == button 0
                                         ) )
@@ -5155,7 +5155,7 @@ void US_Hydrodyn_Saxs_Hplc::view()
                                         .arg( all_selected_files().count() ),
                                         us_tr( "&Yes, view them all" ), 
                                         us_tr( "&Cancel" ),
-                                        QString::null,
+                                        QString(),
                                         1, // Stop == button 0
                                         1 // Escape == button 0
                                         ) )
@@ -8248,7 +8248,7 @@ bool US_Hydrodyn_Saxs_Hplc::ggaussian_compatible( QStringList & files, bool chec
                                                 ", centers or widths." : " or centers." ),
                                           us_tr( "&Set the last Gaussians to the file specific ones" ), 
                                           us_tr( "&Overwrite the file specific Gaussians with the last Gaussians" ),
-                                          QString::null,
+                                          QString(),
                                           0, // Stop == button 0
                                           0 // Escape == button 0
                                           ) )

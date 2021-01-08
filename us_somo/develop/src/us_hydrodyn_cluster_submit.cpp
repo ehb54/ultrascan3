@@ -499,7 +499,7 @@ void US_Hydrodyn_Cluster_Submit::update_font()
 void US_Hydrodyn_Cluster_Submit::save()
 {
    QString fn;
-   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
+   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString() , QString() );
    if(!fn.isEmpty() )
    {
       QString text = editor->toPlainText();
@@ -1187,7 +1187,7 @@ void US_Hydrodyn_Cluster_Submit::remove()
                               us_tr( "The jobs will be permenantly removed.\n"
                                   "Are you sure? " ),
                               us_tr("&Yes"), us_tr("&No"),
-                              QString::null, 0, 1 ) )
+                              QString(), 0, 1 ) )
    {
       editor_msg( "black", us_tr( "Remove canceled by user" ) );
       return;

@@ -111,7 +111,7 @@ void US_Cmdline_App::readFromStdout()
       //    *stdout << qs;
       // }
       text += qs + "\n";
-   } while ( qs != QString::null );
+   } while ( qs != QString() );
 
    do {
       QString read = process.readStdout();

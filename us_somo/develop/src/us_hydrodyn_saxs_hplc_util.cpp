@@ -586,7 +586,7 @@ bool US_Hydrodyn_Saxs_Hplc::opt_repeak_gaussians( QString file )
                                                  "What would you like to do?\n" ) ).arg( scale ),
                                     us_tr( "&Rescale the Gaussian amplitudes" ), 
                                     us_tr( "&Do not rescale" ),
-                                    QString::null,
+                                    QString(),
                                     0, // Stop == button 0
                                     0 // Escape == button 0
                                     ) )
@@ -5078,7 +5078,7 @@ void US_Hydrodyn_Saxs_Hplc::bb_cm_inc()
 
    save_parameters[ "close" ] = "true";
 
-   QString fn = QFileDialog::getSaveFileName( this , us_tr( "Choose a file name for the images" ) , QString::null , "png (*.png *.PNG)" );
+   QString fn = QFileDialog::getSaveFileName( this , us_tr( "Choose a file name for the images" ) , QString() , "png (*.png *.PNG)" );
 
    if ( !fn.isEmpty() ) {
       fn = fn.replace( QRegExp( ".png$", Qt::CaseInsensitive ), "" );

@@ -12728,7 +12728,7 @@ int US_Saxs_Util::issue_non_coded_hydro( bool quiet ) {
          //                                   )
          //                               ,us_tr( "Skip non-coded residues" )
          //                               ,us_tr( "Stop processing" )
-         //                               ,QString::null
+         //                               ,QString()
          //                               ,1
          //                               ,1
          //                               ) ) {
@@ -12857,7 +12857,7 @@ int US_Saxs_Util::issue_missing_atom_hydro( bool quiet ) {
          //                                   )
          //                               ,us_tr( "Skip residues with missing atoms" )
          //                               ,us_tr( "Stop processing" )
-         //                               ,QString::null
+         //                               ,QString()
          //                               ,1
          //                               ,1
          //                               ) ) {

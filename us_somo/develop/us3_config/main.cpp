@@ -244,7 +244,7 @@ USconfig_setup::USconfig_setup()
    do
    {
       // Ask for the directory
-      QString dir = QFileDialog::getExistingDirectory( this , "Select the UltraScan System Directory" , QString::null );
+      QString dir = QFileDialog::getExistingDirectory( this , "Select the UltraScan System Directory" , QString() );
 
    
       // Check it

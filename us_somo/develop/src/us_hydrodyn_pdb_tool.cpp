@@ -4380,7 +4380,7 @@ void US_Hydrodyn_Pdb_Tool::csv_sol2wat()
                               QString( us_tr( "What do you want to process?" ) ),
                               us_tr( "A &single file that is already loaded" ),
                               us_tr( "A &trajectory" ),
-                              QString::null,
+                              QString(),
                               0,
                               1
                               ) == 1 )
@@ -5293,7 +5293,7 @@ void US_Hydrodyn_Pdb_Tool::csv2_sol2wat()
                               QString( us_tr( "What do you want to process?" ) ),
                               us_tr( "A &single file that is already loaded" ),
                               us_tr( "A &trajectory" ),
-                              QString::null,
+                              QString(),
                               0,
                               1
                               ) == 1 )
@@ -5611,7 +5611,7 @@ void US_Hydrodyn_Pdb_Tool::split_pdb()
                               QString( us_tr( "How do you want to split the file %1?" ) ).arg( QFileInfo( filename ).fileName() ),
                               us_tr( "&Normally (by model)" ), 
                               us_tr( "Residues into models for saxs structure facture computation" ),
-                              QString::null,
+                              QString(),
                               0,
                               1
                               ) == 1 )
@@ -6824,7 +6824,7 @@ void US_Hydrodyn_Pdb_Tool::renum_pdb()
       return;
    }
 
-   QString foutname = QFileDialog::getSaveFileName( this , us_tr("Choose a filename to save the renumbered pdb") , QString::null , "*.pdb *.PDB" );
+   QString foutname = QFileDialog::getSaveFileName( this , us_tr("Choose a filename to save the renumbered pdb") , QString() , "*.pdb *.PDB" );
 
    if( foutname.isEmpty() )
    {
@@ -7378,7 +7378,7 @@ void US_Hydrodyn_Pdb_Tool::csv_find_alt()
                                       .arg( alt_residues.size() > 2 ? "are alternatives" : "is an alternative" ) ),
                                  us_tr( "&Yes" ),
                                  us_tr( "&No" ),
-                                 QString::null, 0, 1 ) )
+                                 QString(), 0, 1 ) )
       {
          return;
       } else {
@@ -7482,7 +7482,7 @@ void US_Hydrodyn_Pdb_Tool::csv2_find_alt()
                                       .arg( alt_residues.size() > 2 ? "are alternatives" : "is an alternative" ) ),
                                  us_tr( "&Yes" ),
                                  us_tr( "&No" ),
-                                 QString::null, 0, 1 ) )
+                                 QString(), 0, 1 ) )
       {
          return;
       } else {
@@ -7801,7 +7801,7 @@ QString US_Hydrodyn_Pdb_Tool::check_csv( csv & csv1, vector < QString > &error_k
                                       "Do you want to select the residues with errors?" ),
                                   us_tr( "&Yes" ),
                                   us_tr( "&No" ),
-                                  QString::null, 0, 1 ) )
+                                  QString(), 0, 1 ) )
       {
          // cout << "clearing error keys\n";
          error_keys.clear( );
@@ -7928,7 +7928,7 @@ void US_Hydrodyn_Pdb_Tool::split_pdb_by_residue( QFile &f )
                              QString( us_tr( "Do you want to skip waters?" ) ),
                              us_tr( "&Yes" ), 
                              us_tr( "&No" ),
-                             QString::null,
+                             QString(),
                              1
                              ) == 0;
 
@@ -7938,7 +7938,7 @@ void US_Hydrodyn_Pdb_Tool::split_pdb_by_residue( QFile &f )
                              QString( us_tr( "Do you want to keep the waters as singletons?" ) ),
                              us_tr( "&Yes" ), 
                              us_tr( "&No" ),
-                             QString::null,
+                             QString(),
                              0
                              ) == 0 );
       

@@ -150,9 +150,9 @@ lightingdlgbaseBase::~lightingdlgbaseBase()
 void lightingdlgbaseBase::languageChange()
 {
    setCaption( tr( "Lighting Configuration" ) );
-   stdlight->setCaption( QString::null );
+   stdlight->setCaption( QString() );
    stdlight->setText( tr( "Std" ) );
-   buttonOk->setCaption( QString::null );
+   buttonOk->setCaption( QString() );
    buttonOk->setText( tr( "&OK" ) );
    ambdiff->setText( tr( "Ambient & Diffuse Part" ) );
    spec->setText( tr( "Specular Part" ) );
