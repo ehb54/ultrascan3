@@ -122,7 +122,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Residuals : public QFrame
 
       QLabel            *lbl_title;
 
-      QwtPlot           *plot;
+      mQwtPlot          *plot;
       US_Plot           *usp_plot;
    private slots:
       void usp_config_plot( const QPoint & );

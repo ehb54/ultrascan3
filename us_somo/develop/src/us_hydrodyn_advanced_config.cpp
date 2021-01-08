@@ -9,7 +9,7 @@
 
 // #define DEBUG_CTLS
 
-US_Hydrodyn_AdvancedConfig::US_Hydrodyn_AdvancedConfig(struct advanced_config *advanced_config, bool *advanced_config_widget, void *us_hydrodyn, QWidget *p, const char *name) : QFrame( p )
+US_Hydrodyn_AdvancedConfig::US_Hydrodyn_AdvancedConfig(struct advanced_config *advanced_config, bool *advanced_config_widget, void *us_hydrodyn, QWidget *p, const char *) : QFrame( p )
 {
    this->advanced_config_widget = advanced_config_widget;
    this->advanced_config = advanced_config;
@@ -176,13 +176,13 @@ void US_Hydrodyn_AdvancedConfig::setupGUI()
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   int rows = 8
+   // int rows = 8
 #if defined(DEBUG_CTLS)   
       + 5
 #endif
       ;
 
-   int columns = 2;
+   // int columns = 2;
    int spacing = 2;
    int j=0;
    int margin=4;
@@ -297,6 +297,11 @@ void US_Hydrodyn_AdvancedConfig::set_expert_mode()
       // cb_scroll_editor->setChecked(true);
       // set_scroll_editor();
    }
+   if ( ((US_Hydrodyn *)us_hydrodyn)->save_widget ) {
+      emit ((US_Hydrodyn *)us_hydrodyn)->save_window->close();
+   }
+   ((US_Hydrodyn *)us_hydrodyn)->save_params.field.clear();
+   ((US_Hydrodyn *)us_hydrodyn)->save_params.field_flag.clear();
 
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }

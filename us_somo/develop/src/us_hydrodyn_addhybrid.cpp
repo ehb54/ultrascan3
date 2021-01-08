@@ -14,7 +14,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
    return os << qPrintable(str);
 }
 
-US_AddHybridization::US_AddHybridization(bool *widget_flag, QWidget *p, const char *name) : QWidget( p )
+US_AddHybridization::US_AddHybridization(bool *widget_flag, QWidget *p, const char *) : QWidget( p )
 {
    this->widget_flag = widget_flag;
    *widget_flag = true;
@@ -220,7 +220,7 @@ void US_AddHybridization::setupGUI()
    pb_close->setPalette( PALET_PUSHB );
    connect(pb_close, SIGNAL(clicked()), SLOT(close()));
 
-   int rows=3, columns = 2, spacing = 2, j=0, margin=4;
+   int /* rows=3, columns = 2, */ spacing = 2, j=0, margin=4;
    QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
 
    background->addWidget( lbl_info , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );

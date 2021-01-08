@@ -14,7 +14,7 @@
   \param p Parent widget.
   \param name Widget name.
 */  
-US_Admin::US_Admin(QWidget *p, const char *name) : QFrame(  p )
+US_Admin::US_Admin(QWidget *p, const char *) : QFrame(  p )
 {
   int buttonh = 26;
   

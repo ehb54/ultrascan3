@@ -17,11 +17,6 @@ class US_Vector
 {
  public:
 
-#ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
    static void printvector( QString qs, vector < unsigned int > x );
    static void printvector( QString qs, vector < int > x );
    static void printvector( QString qs, vector < QString > & x );
@@ -34,6 +29,8 @@ class US_Vector
    static QString qs_vector( QString qs, vector < unsigned int > x );
    static QString qs_vector( QString qs, vector < int > x );
    static QString qs_vector( QString qs, vector < double > x, int digits = 8, int newline = 0 );
+   static QString qs_vector( vector < double > x, int digits = 8 );
+   static QString qs_vector( vector < float > x, int digits = 8 );
    static QString qs_vector2( QString qs, vector < double > x, vector < double > y, int digits = 8 );
    static QString qs_vector2( QString qs, vector < int > x, vector < double > y, int digits = 8 );
    static QString qs_vector2( QString qs, vector < int > x, vector < int > y );
@@ -47,11 +44,6 @@ class US_Vector
    static vector < double > intersection( vector < vector < double > > &x );
    static vector < double > vunion( vector < double > &x, vector < double > &y );
    static vector < double > vunion( vector < vector < double > > &x );
-#ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
-#endif
 
 };
 

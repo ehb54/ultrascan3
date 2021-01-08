@@ -71,7 +71,7 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
                                    bool                           create_native_saxs,
                                    void                           *us_hydrodyn,
                                    QWidget                        *p, 
-                                   const char                     *name
+                                   const char                     *
                                    ) : QFrame( p )
 {
    if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_mwt_k" ) )
@@ -106,10 +106,8 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    plot_saxs_zoomer  = (ScrollZoomer *)0;
    plot_resid_zoomer = (ScrollZoomer *)0;
 
-#if QT_VERSION >= 0x040000
    saxs_legend_vis   = false;
    pr_legend_vis     = false;
-#endif
 
    saxs_residuals_widget = false;
 
@@ -972,6 +970,21 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect(pb_width, SIGNAL(clicked()), SLOT(set_width()));
    iq_widgets.push_back( pb_width );
 
+   pb_rescale = new QPushButton(us_tr("Rescale XY"), this);
+   pb_rescale->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   pb_rescale->setMinimumHeight(minHeight1);
+   pb_rescale->setPalette( PALET_PUSHB );
+   connect(pb_rescale, SIGNAL(clicked()), SLOT(do_rescale()));
+   pb_rescale->hide();
+
+   pb_rescale_y = new QPushButton(us_tr("Rescale Y"), this);
+   pb_rescale_y->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   pb_rescale_y->setMinimumHeight(minHeight1);
+   pb_rescale_y->setPalette( PALET_PUSHB );
+   connect(pb_rescale_y, SIGNAL(clicked()), SLOT(do_rescale_y()));
+   pb_rescale_y->hide();
+   // resid_widgets.push_back( pb_rescale_y );
+
    cb_eb = new QCheckBox(this);
    cb_eb->setText(us_tr("Err "));
    cb_eb->setMaximumWidth ( minHeight1 * 2 );
@@ -1532,6 +1545,9 @@ void US_Hydrodyn_Saxs::setupGUI()
 #endif
    plot_saxs->setAxisScale( QwtPlot::xBottom, 0e0, 1e0 );
 
+   plot_saxs_zoomer = new ScrollZoomer(plot_saxs->canvas());
+   plot_saxs_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+   
 //   plot_pr = new QwtPlot(this);
    usp_plot_pr = new US_Plot( plot_pr, "", "", "", this );
    connect( (QWidget *)plot_pr->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_pr( const QPoint & ) ) );
@@ -1596,6 +1612,11 @@ void US_Hydrodyn_Saxs::setupGUI()
    ((QWidget *)plot_resid->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
    connect( (QWidget *)plot_resid->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_resid( const QPoint & ) ) );
    ((QWidget *)plot_resid->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( plot_resid, SIGNAL( resized() ), SLOT( resid_resized() ) );
+   connect( plot_saxs,  SIGNAL( resized() ), SLOT( resid_resized() ) );
+
+   // doesn't seem useful
+   // plot_resid->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
    plot_info[ "US-SOMO SAXS resid" ] = plot_resid;
 #if QT_VERSION < 0x040000
    // plot_resid->enableOutline(true);
@@ -1620,18 +1641,10 @@ void US_Hydrodyn_Saxs::setupGUI()
 #endif
    // plot_resid->setAxisTitle(QwtPlot::xBottom, /* cb_guinier->isChecked() ? us_tr("q^2 (1/Angstrom^2)") : */  us_tr("q (1/Angstrom) or Frame"));
    // plot_resid->setAxisTitle(QwtPlot::yLeft, us_tr("I(q) (log scale)"));
-#if QT_VERSION < 0x040000
-   // plot_resid->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 2, QFont::Bold));
-   plot_resid->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-#endif
+   plot_resid->setAxisTitle( QwtPlot::xBottom, plot_saxs->axisTitle( QwtPlot::xBottom ) );
+
    plot_resid->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#if QT_VERSION < 0x040000
-   plot_resid->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-#endif
    plot_resid->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#if QT_VERSION < 0x040000
-   plot_resid->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-#endif
    plot_resid->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 //    plot_resid->setMargin(USglobal->config_list.margin);
    plot_resid->setTitle("");
@@ -1639,10 +1652,8 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    plot_resid_zoomer = new ScrollZoomer(plot_resid->canvas());
    plot_resid_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-   plot_resid_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
    plot_resid->hide();
+   plot_resid_zoomer->symmetric_rescale = true;
    resid_widgets.push_back( plot_resid );
 
    cb_resid_show = new QCheckBox(this);
@@ -1854,7 +1865,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    AUTFBACK( lbl_core_progress );
    lbl_core_progress->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
-   int rows=13, columns = 3, spacing = 2, j=0, margin=4;
+   int /* rows=13, columns = 3, */ spacing = 2, j=0, margin=4;
    QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
 
    background->addWidget(lbl_filename1, j, 0);
@@ -1886,6 +1897,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    hbl_load_saxs->addWidget(pb_clear_plot_saxs);
    hbl_load_saxs->addWidget(pb_width);
    hbl_load_saxs->addWidget(cb_eb);
+   hbl_load_saxs->addWidget(pb_rescale);
    background->addLayout( hbl_load_saxs , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 
@@ -2070,6 +2082,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    hbl_plot_resid_buttons->addWidget( cb_resid_show_errorbars );
    hbl_plot_resid_buttons->addWidget( cb_resid_sd );
    hbl_plot_resid_buttons->addWidget( cb_resid_pct );
+   hbl_plot_resid_buttons->addWidget( pb_rescale_y );
 
    QGridLayout * gl_manual_guinier = new QGridLayout( 0 ); gl_manual_guinier->setContentsMargins( 0, 0, 0, 0 ); gl_manual_guinier->setSpacing( 0 );
    gl_manual_guinier->addWidget( le_manual_guinier_fit_start, 0, 0 );
@@ -2081,17 +2094,17 @@ void US_Hydrodyn_Saxs::setupGUI()
    gl_manual_guinier->setColumnStretch( 2, 2 );
    gl_manual_guinier->setColumnStretch( 3, 0 );
 
-   QBoxLayout * l_plot_resid = new QVBoxLayout( 0 ); l_plot_resid->setContentsMargins( 0, 0, 0, 0 ); l_plot_resid->setSpacing( 0 );
-   l_plot_resid->addWidget( plot_resid );
-   l_plot_resid->addLayout( hbl_plot_resid_buttons );
-   l_plot_resid->addLayout( gl_manual_guinier );
+   QBoxLayout * qbl_resid = new QVBoxLayout( 0 ); qbl_resid->setContentsMargins( 0, 0, 0, 0 ); qbl_resid->setSpacing( 0 );
+   qbl_resid->addWidget( plot_resid );
+   qbl_resid->addLayout( hbl_plot_resid_buttons );
+   qbl_resid->addLayout( gl_manual_guinier );
 
-   QVBoxLayout * vbl = new QVBoxLayout(0); vbl->setContentsMargins( 0, 0, 0, 0 ); vbl->setSpacing( 0 );
-   vbl->addWidget(plot_saxs);
-   vbl->addLayout(l_plot_resid);
-   vbl->addWidget(plot_pr);
-   vbl->addWidget(lbl_core_progress);
-   background->addLayout( vbl , 0 , 2 , 1 + ( j ) - ( 0 ) , 1 + ( 2 ) - ( 2 ) );
+   qbl_plots = new QVBoxLayout(0); qbl_plots->setContentsMargins( 0, 0, 0, 0 ); qbl_plots->setSpacing( 0 );
+   qbl_plots->addWidget( plot_saxs );
+   qbl_plots->addLayout( qbl_resid );
+   qbl_plots->addWidget( plot_pr );
+   qbl_plots->addWidget( lbl_core_progress );
+   background->addLayout( qbl_plots , 0 , 2 , 1 + ( j ) - ( 0 ) , 1 + ( 2 ) - ( 2 ) );
 
    background->setColumnMinimumWidth(2, 600);
    //   for ( int j = 0; j < 15; j++ )
@@ -3368,13 +3381,8 @@ void US_Hydrodyn_Saxs::show_plot_pr()
    plot_pr->setAxisScale( QwtPlot::yLeft  , miny, maxy );
 
    plot_pr_zoomer = new ScrollZoomer(plot_pr->canvas());
-#if QT_VERSION < 0x040000
-   plot_pr_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-   plot_pr_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#else
    plot_pr_zoomer->setRubberBandPen( QPen(Qt::red, 1, Qt::DotLine ) );
    plot_pr_zoomer->setTrackerPen( QPen( Qt::red ) );
-#endif
 
    plot_pr->replot();
 
@@ -5317,6 +5325,32 @@ void US_Hydrodyn_Saxs::select_saxs_file(const QString &filename)
    hybrid_coords[ "S" ].push_back( p );
 #endif
    // compute pairwise distances
+   // just duplicate for ionizations for now
+   {
+      vector < QString > tmp;
+      
+      for ( auto it = hybrid_coords.begin();
+            it != hybrid_coords.end();
+            ++it ) {
+         tmp.push_back( it->first );
+      }
+      for ( int j = 0; j < (int) tmp.size(); ++j ) {
+         QString atomname = tmp[j];
+         for ( int i = -2; i <= 3; ++i ) {
+            
+            if ( i < 0 ) {
+               hybrid_coords[ QString( "%1%2" ).arg( atomname ).arg( i ) ] = hybrid_coords[ atomname ];
+            } else if ( i > 0 ) {
+               hybrid_coords[ QString( "%1+%2" ).arg( atomname ).arg( i ) ] = hybrid_coords[ atomname ];
+            }
+         }
+      }
+      for ( auto it = hybrid_coords.begin();
+            it != hybrid_coords.end();
+            ++it ) {
+         QTextStream( stdout ) << "hybrid coord key " << it->first << endl;
+      }
+   }               
 
    hybrid_r.clear( );
 
@@ -6298,6 +6332,7 @@ QString US_Hydrodyn_Saxs::curve_type_string(int curve)
 
 void US_Hydrodyn_Saxs::rescale_plot()
 {
+   // qDebug() << "_Saxs::rescale_plot()";
    double lowq;
    double highq;
    double lowI;
@@ -6311,21 +6346,23 @@ void US_Hydrodyn_Saxs::rescale_plot()
            << lowI << ":" << highI << endl;
    */
 
+   lowI = US_Plot_Util::round_digits( lowI );
+   highI = US_Plot_Util::round_digits( highI );
+
    plot_saxs->setAxisScale( QwtPlot::xBottom, lowq, highq );
    plot_saxs->setAxisScale( QwtPlot::yLeft,   lowI, highI );
 
-   if ( plot_saxs_zoomer )
-   {
-      delete plot_saxs_zoomer;
-   }
-   plot_saxs_zoomer = new ScrollZoomer(plot_saxs->canvas());
-#if QT_VERSION < 0x040000
-   plot_saxs_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-   plot_saxs_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#else
-   plot_saxs_zoomer->setRubberBandPen( QPen( Qt::red, 1, Qt::DotLine ) );
-   plot_saxs_zoomer->setTrackerPen( QPen( Qt::red ) );
-#endif
+   // if ( plot_saxs_zoomer )
+   // {
+   //    delete plot_saxs_zoomer;
+   // }
+   // plot_saxs_zoomer = new ScrollZoomer(plot_saxs->canvas());
+   // plot_saxs_zoomer->setRubberBandPen( QPen( Qt::red, 1, Qt::DotLine ) );
+   // plot_saxs_zoomer->setTrackerPen( QPen( Qt::red ) );
+
+   plot_saxs_zoomer->setZoomBase();
+   plot_resid->setAxisScale( QwtPlot::xBottom, lowq, highq );
+   plot_resid_zoomer->setZoomBase();
 
    plot_saxs->replot();
 }
@@ -6396,16 +6433,10 @@ void US_Hydrodyn_Saxs::set_user_range()
                                      us_tr( "q^2*I(q) (log scale)" ) :
                                      us_tr( "I(q) (log scale)" ) ) )
                                  );
-#if QT_VERSION < 0x040000
-      plot_saxs->setAxisOptions( QwtPlot::yLeft, 
-                                 cb_kratky->isChecked()  ? 
-                                 QwtAutoScale::None         : QwtAutoScale::Logarithmic );
-#else
       plot_saxs->setAxisScaleEngine(QwtPlot::yLeft, 
                                     cb_kratky->isChecked() ?
                                     new QwtLogScaleEngine(10) :  // fix this
                                     new QwtLogScaleEngine(10));
-#endif
 
       rescale_plot();
    }

@@ -80,7 +80,7 @@ void US_Hydrodyn_Saxs::plot_saxs_clicked( long
 void US_Hydrodyn_Saxs::plot_saxs_item_clicked(
 #if QT_VERSION >= 0x050000 || QT_VERSION < 0x040000
                                               const QVariant & iteminfo,
-                                              int index
+                                              int /* index */
 #else
                                               QwtPlotItem*
 # if QT_VERSION >= 0x040000
@@ -127,7 +127,7 @@ void US_Hydrodyn_Saxs::plot_pr_clicked( long
 void US_Hydrodyn_Saxs::plot_pr_item_clicked( 
 #if QT_VERSION >= 0x050000 || QT_VERSION < 0x040000
                                             const QVariant & iteminfo,
-                                            int index
+                                            int /* index */
 #else
                                             QwtPlotItem*
 # if QT_VERSION >= 0x040000

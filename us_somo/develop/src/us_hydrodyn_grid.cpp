@@ -16,7 +16,7 @@ US_Hydrodyn_Grid::US_Hydrodyn_Grid(struct overlap_reduction *grid_exposed_overla
                                    bool *grid_widget,
                                    void *us_hydrodyn,
                                    QWidget *p, 
-                                   const char *name) : QFrame( p )
+                                   const char *) : QFrame( p )
 {
    this->grid_exposed_overlap = grid_exposed_overlap;
    this->grid_buried_overlap = grid_buried_overlap;
@@ -231,7 +231,12 @@ void US_Hydrodyn_Grid::setupGUI()
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   int rows=7, columns = 2, spacing = 2, j=0, margin=4;
+   if ( !((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode ) {
+      cb_create_nmr_bead_pdb->hide();      
+      cb_equalize_radii_constant_volume->hide();
+   }
+
+   int /* rows=7, columns = 2, */ spacing = 2, j=0, margin=4;
    QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
 
    background->addWidget( lbl_info , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );

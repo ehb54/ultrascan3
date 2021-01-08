@@ -26,7 +26,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
                                          void *us_hydrodyn, 
                                          QWidget *p, 
-                                         const char *name
+                                         const char *
                                          ) : QDialog( p )
 {
    this->us_hydrodyn = us_hydrodyn;

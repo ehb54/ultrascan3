@@ -164,10 +164,10 @@ void US_Hydrodyn_Pdb_Tool::sel_nearest_residues( QTreeWidget *lv )
    }
 }
 
-set < QTreeWidgetItem * > US_Hydrodyn_Pdb_Tool::get_exposed_set_naccess( QTreeWidget * lv, 
-                                                                       double max_asa, 
-                                                                       bool sc_or_mc,
-                                                                       bool only_selected )
+set < QTreeWidgetItem * > US_Hydrodyn_Pdb_Tool::get_exposed_set_naccess( QTreeWidget * /* lv */, 
+                                                                         double /* max_asa */, 
+                                                                         bool /* sc_or_mc */,
+                                                                         bool /* only_selected */ )
 
 {
    set < QTreeWidgetItem * > result;
@@ -495,7 +495,7 @@ vector < QString > US_Hydrodyn_Pdb_Tool::get_models( QTreeWidget *lv )
 
 // -------------------- Naccess ------------------------------
 
-bool US_Hydrodyn_Pdb_Tool::naccess_run( QString pdb )
+bool US_Hydrodyn_Pdb_Tool::naccess_run( QString /* pdb */ )
 {
 #if QT_VERSION < 0x040000
    naccess_running = false;

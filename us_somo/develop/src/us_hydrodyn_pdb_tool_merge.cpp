@@ -55,7 +55,7 @@ US_Hydrodyn_Pdb_Tool_Merge::US_Hydrodyn_Pdb_Tool_Merge(
                                                        void *us_hydrodyn, 
                                                        void *pdb_tool_window, 
                                                        QWidget *p, 
-                                                       const char *name
+                                                       const char *
                                                        ) : QFrame( p )
 {
    this->us_hydrodyn = us_hydrodyn;

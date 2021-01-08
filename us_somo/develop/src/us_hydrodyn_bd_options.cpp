@@ -15,7 +15,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
    return os << qPrintable(str);
 }
 
-US_Hydrodyn_BD_Options::US_Hydrodyn_BD_Options(BD_Options *bd_options, bool *bd_widget, void *us_hydrodyn, QWidget *p, const char *name) : QFrame( p )
+US_Hydrodyn_BD_Options::US_Hydrodyn_BD_Options(BD_Options *bd_options, bool *bd_widget, void *us_hydrodyn, QWidget *p, const char *) : QFrame( p )
 {
    this->bd_options = bd_options;
    this->bd_widget = bd_widget;

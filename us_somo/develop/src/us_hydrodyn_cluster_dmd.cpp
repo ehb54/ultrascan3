@@ -25,7 +25,7 @@ US_Hydrodyn_Cluster_Dmd::US_Hydrodyn_Cluster_Dmd(
                                                csv &csv1,
                                                void *us_hydrodyn, 
                                                QWidget *p, 
-                                               const char *name
+                                               const char *
                                                ) : QDialog( p )
 {
    this->csv1 = csv1;

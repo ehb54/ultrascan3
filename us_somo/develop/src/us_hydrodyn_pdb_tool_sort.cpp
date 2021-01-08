@@ -16,7 +16,7 @@ US_Hydrodyn_Pdb_Tool_Sort::US_Hydrodyn_Pdb_Tool_Sort(
                                                      void                     *              us_hydrodyn,
                                                      map < QString, QString > *              parameters,
                                                      QWidget *                               p,
-                                                     const char *                            name
+                                                     const char *                            
                                                      ) : QDialog( p )
 {
    this->us_hydrodyn                          = us_hydrodyn;

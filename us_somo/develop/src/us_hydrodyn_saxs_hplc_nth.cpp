@@ -12,7 +12,7 @@ US_Hydrodyn_Saxs_Hplc_Nth::US_Hydrodyn_Saxs_Hplc_Nth(
                                                      void                     *              us_hydrodyn_saxs_hplc,
                                                      map < QString, QString > *              parameters,
                                                      QWidget *                               p,
-                                                     const char *                            name
+                                                     const char *                            
                                                      ) : QDialog( p )
 {
    this->us_hydrodyn_saxs_hplc                = us_hydrodyn_saxs_hplc;

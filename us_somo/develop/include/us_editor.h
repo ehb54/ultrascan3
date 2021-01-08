@@ -135,7 +135,7 @@ private slots:
     void fontChanged( const QFont &f );
     void colorChanged( const QColor &c );
     void alignmentChanged( int a );
-    void editorChanged( QWidget * );
+    void editorChanged( int );
 
 private:
 #ifndef NO_DB

@@ -13,7 +13,7 @@ US_Hydrodyn_Csv_Viewer::US_Hydrodyn_Csv_Viewer(
                                                csv csv1,
                                                void *us_hydrodyn, 
                                                QWidget *p, 
-                                               const char *name
+                                               const char *
                                                ) : QFrame( p )
 {
    this->csv1 = csv1;

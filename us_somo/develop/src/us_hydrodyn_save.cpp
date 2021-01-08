@@ -20,14 +20,14 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
                                    void *us_hydrodyn, 
                                    bool *save_widget, 
                                    QWidget *p, 
-                                   const char *name
+                                   const char *
                                    ) : QFrame( p )
 {
    this->save = save;
    this->us_hydrodyn = us_hydrodyn;
    // build vectors, maps
    {
-      QString data[] =
+      vector < QString > expert_mode_data =
          {
             "__SECTION__",
             "Main hydro results:",
@@ -78,19 +78,11 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Sedimentation coefficient s [S]",
             "Sedimentation coefficient s [S]",
 
-            "results.s20w_sd", 
-            "Sedimentation coefficient s.d.",
-            "Sedimentation coefficient s.d.",
 
             "__BREAK__",
             "results.D20w", 
             "Translational diffusion coefficient D [cm/sec^2]",
             "Translational diffusion coefficient D [cm/sec^2]",
-
-            "results.D20w_sd", 
-            "Translational diffusion coefficient D s.d.",
-            "Translational diffusion coefficient D s.d.",
-
 
             "__BREAK__",
 
@@ -98,29 +90,15 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Stokes radius [nm]", 
             "Stokes radius [nm]", 
 
-            "results.rs_sd", 
-            "Stokes radius s.d.", 
-            "Stokes radius s.d.", 
+            "tra_fric_coef", 
+            "Translational frictional coefficient [g/s]",
+            "Translational frictional coefficient",
 
             "__BREAK__",
 
             "results.ff0", 
             "Frictional ratio", 
             "Frictional ratio", 
-
-            "results.ff0_sd", 
-            "Frictional ratio s.d.", 
-            "Frictional ratio s.d.", 
-
-            "__BREAK__",
-
-            "results.rg", 
-            "Radius of gyration [nm] (from bead model)", 
-            "Radius of gyration [nm] (from bead model)", 
-
-            // "results.rg_sd", 
-            // "Radius of gyration s.d.", 
-            // "Radius of gyration s.d.", 
 
             "__BREAK__",
 
@@ -138,24 +116,13 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Intrinsic viscosity [cm^3/g]", 
             "Intrinsic viscosity [cm^3/g]", 
 
-            "results.viscosity_sd", 
-            "Intrisic viscosity s.d.", 
-            "Intrisic viscosity s.d.", 
+            "results.rg", 
+            "Radius of gyration [nm] (from bead model)", 
+            "Radius of gyration [nm] (from bead model)", 
 
-            "__SECTION__",
-            "Additional hydro results:",
-
-            "tot_surf_area",
-            "Total surface area of beads in the model [nm^2]",
-            "Total surface area of beads in the model [nm^2]",
-
-            "tot_volume_of",
-            "Total volume of beads in the model [nm^3]",
-            "Total volume of beads in the model [nm^3]",
-
-            "num_of_unused",
-            "Number of unused beads",
-            "Number of unused beads",
+            // "results.rg_sd", 
+            // "Radius of gyration s.d.", 
+            // "Radius of gyration s.d.", 
 
             "use_beads_vol",
             "Used beads volume [nm^3]",
@@ -169,37 +136,36 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Used bead mass [Da]",
             "Used bead mass [Da]",
 
+            "tot_surf_area",
+            "Total surface area of beads in the model [nm^2]",
+            "Total surface area of beads in the model [nm^2]",
+
+            "tot_volume_of",
+            "Total volume of beads in the model [nm^3]",
+            "Total volume of beads in the model [nm^3]",
+
+            "num_of_unused",
+            "Number of unused beads",
+            "Number of unused beads",
+
             "con_factor",
             "Conversion Factor",
             "Conversion Factor",
 
-            "tra_fric_coef", 
-            "Translational frictional coefficient [g/s]",
-            "Translational frictional coefficient",
+            "proc_time",
+            "Processing time [s] ",
+            "Processing time [s] ",
 
-            "tra_fric_coef_sd", 
-            "Translational frictional coefficient s.d.",
-            "Translational frictional coefficient s.d.",
+            "max_ext_x",
+            "Maximum extensions [ X, Y, Z ] [nm]",
+            "Maximum extensions [ X, Y, Z ] [nm]",
 
-            "rot_fric_coef",
-            "Rotational frictional coefficient [g*cm^2/s]",
-            "Rotational frictional coefficient [g*cm^2/s]",
+            "axi_ratios_xz",
+            "Axial ratios [ X:Z, X:Y, Y:Z ] ",
+            "Axial ratios [ X:Z, X:Y, Y:Z ] ",
 
-            "rot_diff_coef",
-            "Rotational diffusion coefficient [1/s]",
-            "Rotational diffusion coefficient [1/s]",
-
-            "rot_fric_coef_x",
-            "Rotational frictional coefficient [ X, Y, Z ] [g*cm^2/s]",
-            "Rotational frictional coefficient [ X, Y, Z ] [g*cm^2/s]",
-
-            "rot_diff_coef_x",
-            "Rotational diffusion coefficient [ X, Y, Z ] [1/s]",
-            "Rotational diffusion coefficient [ X, Y, Z ] [1/s]",
-
-            "rot_stokes_rad_x",
-            "Rotational Stokes' radius [ X, Y, Z ] [nm]",
-            "Rotational Stokes' radius [ X, Y, Z ] [nm]",
+            "__SECTION__",
+            "Additional SMI results:",
 
             "cen_of_res_x",
             "Centre of resistance [ X, Y, Z ] [nm]",
@@ -233,6 +199,73 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Corrected Einstein's radius [nm]",
             "Corrected Einstein's radius [nm]",
 
+
+            "__SECTION__",
+            "Additional ZENO results:",
+
+            "results.s20w_sd", 
+            "Sedimentation coefficient s.d.",
+            "Sedimentation coefficient s.d.",
+
+            "results.D20w_sd", 
+            "Translational diffusion coefficient D s.d.",
+            "Translational diffusion coefficient D s.d.",
+
+            "results.rs_sd", 
+            "Stokes radius s.d.", 
+            "Stokes radius s.d.", 
+
+            "tra_fric_coef_sd", 
+            "Translational frictional coefficient s.d.",
+            "Translational frictional coefficient s.d.",
+
+            "results.ff0_sd", 
+            "Frictional ratio s.d.", 
+            "Frictional ratio s.d.", 
+
+            "results.viscosity_sd", 
+            "Intrisic viscosity s.d.", 
+            "Intrisic viscosity s.d.", 
+
+            "dt_d0",
+            "Dt/d0",
+            "Dt/d0",
+
+            "dt_d0_sd",
+            "Dt/d0 s.d.",
+            "Dt/d0 s.d.",
+
+            "dimless_eta",
+            "Dimensionless intrinsic viscosity [eta]",
+            "Dimensionless intrinsic viscosity [eta]",
+
+            "dimless_eta_sd",
+            "Dimensionless intrinsic viscosity s.d.",
+            "Dimensionless intrinsic viscosity s.d.",
+
+            "__SECTION__",
+            "Additional SMI/GRPY results:",
+
+            "rot_fric_coef",
+            "Rotational frictional coefficient [g*cm^2/s]",
+            "Rotational frictional coefficient [g*cm^2/s]",
+
+            "rot_diff_coef",
+            "Rotational diffusion coefficient [1/s]",
+            "Rotational diffusion coefficient [1/s]",
+
+            "rot_fric_coef_x",
+            "Rotational frictional coefficient [ X, Y, Z ] [g*cm^2/s]",
+            "Rotational frictional coefficient [ X, Y, Z ] [g*cm^2/s]",
+
+            "rot_diff_coef_x",
+            "Rotational diffusion coefficient [ X, Y, Z ] [1/s]",
+            "Rotational diffusion coefficient [ X, Y, Z ] [1/s]",
+
+            "rot_stokes_rad_x",
+            "Rotational Stokes' radius [ X, Y, Z ] [nm]",
+            "Rotational Stokes' radius [ X, Y, Z ] [nm]",
+
             "rel_times_tau_1",
             "Relaxation times, tau(1) [ns]",
             "Relaxation times, tau(1) [ns]",
@@ -257,38 +290,14 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Relaxation times, tau(m) [ns]",
             "Relaxation times, tau(m) [ns]",
 
-            "rel_times_tau_h",
-            "Relaxation times, tau(h) [ns]",
-            "Relaxation times, tau(h) [ns]",
+            // "rel_times_tau_h",
+            // "Relaxation times, tau(h) [ns]",
+            // "Relaxation times, tau(h) [ns]",
 
-            "max_ext_x",
-            "Maximum extensions [ X, Y, Z ] [nm]",
-            "Maximum extensions [ X, Y, Z ] [nm]",
-
-            "axi_ratios_xz",
-            "Axial ratios [ X:Z, X:Y, Y:Z ] ",
-            "Axial ratios [ X:Z, X:Y, Y:Z ] ",
-
-            "proc_time",
-            "Processing time [s] ",
-            "Processing time [s] ",
-
-            "dt_d0",
-            "Dt/d0",
-            "Dt/d0",
-
-            "dt_d0_sd",
-            "Dt/d0 s.d.",
-            "Dt/d0 s.d.",
-
-            "dimless_eta",
-            "Dimensionless intrinsic viscosity [eta]",
-            "Dimensionless intrinsic viscosity [eta]",
-
-            "dimless_eta_sd",
-            "Dimensionless intrinsic viscosity s.d.",
-            "Dimensionless intrinsic viscosity s.d.",
-
+            "grpy_einst_rad",
+            "GRPY Einstein's radius [nm]",
+            "GRPY Einstein's radius [nm]",
+            
             "__SECTION__",
             "Solvent conditions:",
 
@@ -314,6 +323,10 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Solvent density [g/ml]", 
             "solvent_density [g/ml]",
 
+            "hydro.pH", 
+            "pH", 
+            "pH",
+
             "__SECTION__",
             "ASA results:",
 
@@ -330,6 +343,302 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "__END__"
          };
 
+      vector < QString > non_expert_mode_data =
+         {
+            "__SECTION__",
+            "Main hydro results:",
+
+            "results.name", 
+            "Model name", 
+            "Model name", 
+
+            // "results.num_models", 
+            // "Number of models", 
+            // "Number of models", 
+
+            "__BREAK__",
+
+            "results.total_beads", 
+            "Total beads in model",
+            "Total beads in model",
+
+            // "results.total_beads_sd", 
+            // "Total beads in model s.d.", 
+            // "Total beads in model s.d.", 
+
+            "__BREAK__",
+
+            "results.used_beads", 
+            "Used beads in model", 
+            "Used beads in model", 
+
+            // "results.used_beads_sd", 
+            // "Used beads in model s.d.", 
+            // "Used beads in model s.d.", 
+
+            "__BREAK__",
+
+            "results.mass", 
+            "Molecular mass [Da]", 
+            "Molecular mass [Da]", 
+
+            "__BREAK__",
+
+            "results.vbar", 
+            "Partial specific volume [cm^3/g]", 
+            "Partial specific volume [cm^3/g]", 
+
+            "__BREAK__",
+
+            "results.s20w", 
+            "Sedimentation coefficient s [S]",
+            "Sedimentation coefficient s [S]",
+
+
+            "__BREAK__",
+            "results.D20w", 
+            "Translational diffusion coefficient D [cm/sec^2]",
+            "Translational diffusion coefficient D [cm/sec^2]",
+
+            "__BREAK__",
+
+            "results.rs", 
+            "Stokes radius [nm]", 
+            "Stokes radius [nm]", 
+
+            "tra_fric_coef", 
+            "Translational frictional coefficient [g/s]",
+            "Translational frictional coefficient",
+
+            "__BREAK__",
+
+            "results.ff0", 
+            "Frictional ratio", 
+            "Frictional ratio", 
+
+            "__BREAK__",
+
+            "results.tau", 
+            "Relaxation Time, tau(h) [ns]", 
+            "Relaxation Time, tau(h) [ns]", 
+
+            // "results.tau_sd", 
+            // "Relaxation Time, tau(h) s.d.", 
+            // "Relaxation Time, tau(h) s.d.", 
+
+            "__BREAK__",
+
+            "results.viscosity", 
+            "Intrinsic viscosity [cm^3/g]", 
+            "Intrinsic viscosity [cm^3/g]", 
+
+            "results.rg", 
+            "Radius of gyration [nm] (from bead model)", 
+            "Radius of gyration [nm] (from bead model)", 
+
+            // "results.rg_sd", 
+            // "Radius of gyration s.d.", 
+            // "Radius of gyration s.d.", 
+
+            "use_beads_vol",
+            "Used beads volume [nm^3]",
+            "Used beads volume [nm^3]",
+
+            "use_beads_surf",
+            "Used beads surface area [nm^2]",
+            "Used beads surface area [nm^2]",
+
+            "use_bead_mass",
+            "Used bead mass [Da]",
+            "Used bead mass [Da]",
+
+            "tot_surf_area",
+            "Total surface area of beads in the model [nm^2]",
+            "Total surface area of beads in the model [nm^2]",
+
+            "tot_volume_of",
+            "Total volume of beads in the model [nm^3]",
+            "Total volume of beads in the model [nm^3]",
+
+            "num_of_unused",
+            "Number of unused beads",
+            "Number of unused beads",
+
+            "con_factor",
+            "Conversion Factor",
+            "Conversion Factor",
+
+            "proc_time",
+            "Processing time [s] ",
+            "Processing time [s] ",
+
+            "max_ext_x",
+            "Maximum extensions [ X, Y, Z ] [nm]",
+            "Maximum extensions [ X, Y, Z ] [nm]",
+
+            "axi_ratios_xz",
+            "Axial ratios [ X:Z, X:Y, Y:Z ] ",
+            "Axial ratios [ X:Z, X:Y, Y:Z ] ",
+
+            "__SECTION__",
+            "Additional SMI results:",
+
+            "cen_of_res_x",
+            "Centre of resistance [ X, Y, Z ] [nm]",
+            "Centre of resistance [ X, Y, Z ] [nm]",
+
+            "cen_of_mass_x",
+            "Centre of mass [ X, Y, Z ] [nm]",
+            "Centre of mass [ X, Y, Z ] [nm]",
+
+            "cen_of_diff_x",
+            "Centre of diffusion [ X, Y, Z ] [nm]",
+            "Centre of diffusion [ X, Y, Z ] [nm]",
+
+            "__SECTION__",
+            "Additional ZENO results:",
+
+            "results.s20w_sd", 
+            "Sedimentation coefficient s.d.",
+            "Sedimentation coefficient s.d.",
+
+            "results.D20w_sd", 
+            "Translational diffusion coefficient D s.d.",
+            "Translational diffusion coefficient D s.d.",
+
+            "results.rs_sd", 
+            "Stokes radius s.d.", 
+            "Stokes radius s.d.", 
+
+            "tra_fric_coef_sd", 
+            "Translational frictional coefficient s.d.",
+            "Translational frictional coefficient s.d.",
+
+            "results.ff0_sd", 
+            "Frictional ratio s.d.", 
+            "Frictional ratio s.d.", 
+
+            "results.viscosity_sd", 
+            "Intrisic viscosity s.d.", 
+            "Intrisic viscosity s.d.", 
+
+            "dt_d0",
+            "Dt/d0",
+            "Dt/d0",
+
+            "dt_d0_sd",
+            "Dt/d0 s.d.",
+            "Dt/d0 s.d.",
+
+            "dimless_eta",
+            "Dimensionless intrinsic viscosity [eta]",
+            "Dimensionless intrinsic viscosity [eta]",
+
+            "dimless_eta_sd",
+            "Dimensionless intrinsic viscosity s.d.",
+            "Dimensionless intrinsic viscosity s.d.",
+
+            "__SECTION__",
+            "Additional GRPY results:",
+
+            "rot_fric_coef",
+            "Rotational frictional coefficient [g*cm^2/s]",
+            "Rotational frictional coefficient [g*cm^2/s]",
+
+            "rot_diff_coef",
+            "Rotational diffusion coefficient [1/s]",
+            "Rotational diffusion coefficient [1/s]",
+
+            "rot_fric_coef_x",
+            "Rotational frictional coefficient [ X, Y, Z ] [g*cm^2/s]",
+            "Rotational frictional coefficient [ X, Y, Z ] [g*cm^2/s]",
+
+            "rot_diff_coef_x",
+            "Rotational diffusion coefficient [ X, Y, Z ] [1/s]",
+            "Rotational diffusion coefficient [ X, Y, Z ] [1/s]",
+
+            "rot_stokes_rad_x",
+            "Rotational Stokes' radius [ X, Y, Z ] [nm]",
+            "Rotational Stokes' radius [ X, Y, Z ] [nm]",
+
+            "rel_times_tau_1",
+            "Relaxation times, tau(1) [ns]",
+            "Relaxation times, tau(1) [ns]",
+
+            "rel_times_tau_2",
+            "Relaxation times, tau(2) [ns]",
+            "Relaxation times, tau(2) [ns]",
+
+            "rel_times_tau_3",
+            "Relaxation times, tau(3) [ns]",
+            "Relaxation times, tau(3) [ns]",
+
+            "rel_times_tau_4",
+            "Relaxation times, tau(4) [ns]",
+            "Relaxation times, tau(4) [ns]",
+
+            "rel_times_tau_5",
+            "Relaxation times, tau(5) [ns]",
+            "Relaxation times, tau(5) [ns]",
+
+            "rel_times_tau_m",
+            "Relaxation times, tau(m) [ns]",
+            "Relaxation times, tau(m) [ns]",
+
+            // "rel_times_tau_h",
+            // "Relaxation times, tau(h) [ns]",
+            // "Relaxation times, tau(h) [ns]",
+
+            "grpy_einst_rad",
+            "GRPY Einstein's radius [nm]",
+            "GRPY Einstein's radius [nm]",
+            
+            "__SECTION__",
+            "Solvent conditions:",
+
+            "hydro.solvent_name", 
+            "Solvent name", 
+            "Solvent name",
+
+            "hydro.solvent_acronym", 
+            "Solvent acronym", 
+            "Solvent acronym", 
+
+            "__BREAK__",
+
+            "hydro.temperature", 
+            "Solvent Temperature [C]", 
+            "Solvent Temperature [C]", 
+
+            "hydro.solvent_viscosity", 
+            "Solvent viscosity [cP]", 
+            "Solvent viscosity [cP]", 
+
+            "hydro.solvent_density", 
+            "Solvent density [g/ml]", 
+            "solvent_density [g/ml]",
+
+            "hydro.pH", 
+            "pH", 
+            "pH",
+
+            "__SECTION__",
+            "ASA results:",
+
+            "__BREAK__",
+
+            "results.asa_rg_pos", 
+            "Radius of gyration (+r) [A] (from PDB atomic structure)",
+            "Radius of gyration (+r) [A] (from PDB atomic structure)",
+
+            "results.asa_rg_neg", 
+            "Radius of gyration (-r) [A] (from PDB atomic structure)",
+            "Radius of gyration (-r) [A] (from PDB atomic structure)",
+
+            "__END__"
+         };
+   
+      vector < QString > data = ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode ? expert_mode_data : non_expert_mode_data;
       
       field.clear( );
       descriptive_name.clear( );
@@ -690,7 +999,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.rot_diff_coef);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
-         field_to_precision[field[i]] = 0;
+         field_to_precision[field[i]] = 4;
          field_to_format[field[i]] = 'g';
          continue;
       }
@@ -708,7 +1017,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.rot_diff_coef_x);
          field_to_save_data_type[field[i]] = DT_TRIPLE_DOUBLE;
-         field_to_precision[field[i]] = 0;
+         field_to_precision[field[i]] = 4;
          field_to_format[field[i]] = 'g';
          continue;
       }
@@ -857,6 +1166,15 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
          continue;
       }
 
+      if ( field[i] == "grpy_einst_rad" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.grpy_einst_rad);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 6;
+         field_to_format[field[i]] = 'g';
+         continue;
+      }
+
       if ( field[i] == "max_ext_x" )
       {
          field_to_save_data[field[i]] = (void *)&(save->data.max_ext_x);
@@ -961,11 +1279,20 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
          continue;
       }
 
+      if ( field[i] == "hydro.pH" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.hydro.pH);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 3;
+         field_to_format[field[i]] = 'g';
+         continue;
+      }
+
       if ( field[i] == "results.asa_rg_pos" )
       {
          field_to_save_data[field[i]] = (void *)&(save->data.results.asa_rg_pos);
          field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
-         field_to_precision[field[i]] = 6;
+         field_to_precision[field[i]] = 4;
          field_to_format[field[i]] = 'g';
          continue;
       }
@@ -974,7 +1301,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.results.asa_rg_neg);
          field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
-         field_to_precision[field[i]] = 6;
+         field_to_precision[field[i]] = 4;
          field_to_format[field[i]] = 'g';
          continue;
       }
@@ -1026,7 +1353,7 @@ void US_Hydrodyn_Save::setupGUI()
 {
 
    int minHeight1 = 30;
-   int minWidth1 = 150;
+   int minWidth1 = 450;
 
    lbl_possible = new QLabel(us_tr("Parameters available"), this);
    Q_CHECK_PTR(lbl_possible);
@@ -1040,7 +1367,7 @@ void US_Hydrodyn_Save::setupGUI()
    tw_possible = new QTabWidget(this);
    // tw_possible->setTabBar(tb_possible);
    // tw_possible->tabBar()
-   QListWidget *lb_this;
+   QListWidget *lb_this = NULL;
 
    for ( unsigned int i = 0; i < field.size(); i++ )
    {
@@ -1074,7 +1401,7 @@ void US_Hydrodyn_Save::setupGUI()
    // }
    tw_possible->setPalette( PALET_NORMAL );
    AUTFBACK( tw_possible );
-   connect(tw_possible, SIGNAL(currentChanged(QWidget *)), SLOT(tab_changed(QWidget *)));
+   connect(tw_possible, SIGNAL(currentChanged(int)), SLOT(tab_changed(int)));
 
    lbl_selected = new QLabel(us_tr("Parameters selected"), this);
    Q_CHECK_PTR(lbl_selected);
@@ -1104,16 +1431,18 @@ void US_Hydrodyn_Save::setupGUI()
    lb_selected->setSelectionMode(QAbstractItemView::MultiSelection);
    connect(lb_selected, SIGNAL(itemSelectionChanged()), SLOT(update_enables_selected()));
 
-   pb_add = new QPushButton("-->", this);
+   QString arrowss = "font: bold;font-size: 38px;";
+
+   pb_add = new QPushButton( u8"\u2192", this);
    Q_CHECK_PTR(pb_add);
-   pb_add->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3));
+   pb_add->setStyleSheet( arrowss );
    pb_add->setMinimumHeight(minHeight1);
    pb_add->setPalette( PALET_PUSHB );
    connect(pb_add, SIGNAL(clicked()), SLOT(add()));
 
-   pb_remove = new QPushButton("<--", this);
+   pb_remove = new QPushButton( u8"\u2190", this);
    Q_CHECK_PTR(pb_remove);
-   pb_remove->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3));
+   pb_remove->setStyleSheet( arrowss );
    pb_remove->setMinimumHeight(minHeight1);
    pb_remove->setPalette( PALET_PUSHB );
    connect(pb_remove, SIGNAL(clicked()), SLOT(remove()));
@@ -1320,7 +1649,7 @@ void US_Hydrodyn_Save::rebuild()
    header();
 }
 
-void US_Hydrodyn_Save::tab_changed(QWidget *)
+void US_Hydrodyn_Save::tab_changed(int)
 {
    update_enables_possible();
 }
@@ -1379,13 +1708,17 @@ QString US_Hydrodyn_Save::dataString(save_data *data)
       case DT_FLOAT         :
          result += QString("%1%2")
             .arg(i ? "," : "")
-            .FARG((*(float *)(field_to_save_data[save->field[i]])));
+            .FARG((*(float *)(field_to_save_data[save->field[i]])))
+            .replace( "e+", "e" )
+            ;
          // DBFARG((*(float *)(field_to_save_data[save->field[i]])));
          break;
       case DT_DOUBLE        :
          result += QString("%1%2")
             .arg(i ? "," : "")
-            .FARG(*((double *)(field_to_save_data[save->field[i]])));
+            .FARG(*((double *)(field_to_save_data[save->field[i]])))
+            .replace( "e+", "e" )
+            ;
          // DBFARG((*(double *)(field_to_save_data[save->field[i]])));
          break;
       case DT_INT           :
@@ -1403,7 +1736,10 @@ QString US_Hydrodyn_Save::dataString(save_data *data)
             .arg(i ? "," : "")
             .FARG(*((double *)(field_to_save_data[save->field[i]])))
             .FARG(*((double *)(field_to_save_data[save->field[i]]) + 1))
-            .FARG(*((double *)(field_to_save_data[save->field[i]]) + 2));
+            .FARG(*((double *)(field_to_save_data[save->field[i]]) + 2))
+            .replace( "e+", "e" )
+            ;
+
          // DBFARG((*(double *)(field_to_save_data[save->field[i]])));
          break;
       case DT_DOUBLE_NA     :
@@ -1413,7 +1749,9 @@ QString US_Hydrodyn_Save::dataString(save_data *data)
             {
                result += QString("%1%2")
                   .arg(i ? "," : "")
-                  .FARG(*((double *)(field_to_save_data[save->field[i]])));
+                  .FARG(*((double *)(field_to_save_data[save->field[i]])))
+                  .replace( "e+", "e" )
+                  ;
                // DBFARG((*(double *)(field_to_save_data[save->field[i]])));
             } else {
                result += ",NA";
@@ -1632,10 +1970,12 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
 
             break;
          case DT_DOUBLE_NA     :
+            save->data = (*data)[j];
             tmp_double = *((double *)(field_to_save_data[field[i]]));
 
             if ( tmp_double >= 0 )
             {
+
                save->data = sum;
                *((double *)(field_to_save_data[field[i]])) += tmp_double;
                sum = save->data;
@@ -1782,7 +2122,7 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
    return result;
 }
 
-QString US_Hydrodyn_Save::hydroFormatStats(vector < save_data > stats)
+QString US_Hydrodyn_Save::hydroFormatStats(vector < save_data > stats, enum HydroTypes hydrotype )
 {
    QString result;
    
@@ -1834,30 +2174,38 @@ QString US_Hydrodyn_Save::hydroFormatStats(vector < save_data > stats)
                                  stats[0].results.ff0,
                                  stats[1].results.ff0);
    
-   result += QString("").sprintf("- ROT. FRICT. COEFF.          \t%.3e\t%.3e\t[g*cm^2/s]\n",
-                                 stats[0].rot_fric_coef,
-                                 stats[1].rot_fric_coef);
-   result += QString("").sprintf("- ROT. DIFF. COEFF.           \t%.0f\t\t%.0f\t[1/s]\n",
-                                 stats[0].rot_diff_coef,
-                                 stats[1].rot_diff_coef);
-   result += QString("").sprintf("- ROT. FRICT. COEFF. [ X ]    \t%.3e\t%.3e\t[g*cm^2/s]\n",
-                                 stats[0].rot_fric_coef_x,
-                                 stats[1].rot_fric_coef_x);
-   result += QString("").sprintf("- ROT. FRICT. COEFF. [ Y ]    \t%.3e\t%.3e\t[g*cm^2/s]\n",
-                                 stats[0].rot_fric_coef_y,
-                                 stats[1].rot_fric_coef_y);
-   result += QString("").sprintf("- ROT. FRICT. COEFF. [ Z ]    \t%.3e\t%.3e\t[g*cm^2/s]\n",
-                                 stats[0].rot_fric_coef_z,
-                                 stats[1].rot_fric_coef_z);
-   result += QString("").sprintf("- ROT. DIFF. COEFF. [ X ]     \t%.0f\t\t%.0f\t[1/s]\n",
-                                 stats[0].rot_diff_coef_x,
-                                 stats[1].rot_diff_coef_x);
-   result += QString("").sprintf("- ROT. DIFF. COEFF. [ Y ]     \t%.0f\t\t%.0f\t[1/s]\n",
-                                 stats[0].rot_diff_coef_y,
-                                 stats[1].rot_diff_coef_y);
-   result += QString("").sprintf("- ROT. DIFF. COEFF. [ Z ]     \t%.0f\t\t%.0f\t[1/s]\n",
-                                 stats[0].rot_diff_coef_z,
-                                 stats[1].rot_diff_coef_z);
+   if ( hydrotype == HYDRO_UNKNOWN || hydrotype == HYDRO_SMI ) {
+      result += QString("").sprintf("- ROT. FRICT. COEFF.          \t%.3e\t%.3e\t[g*cm^2/s]\n",
+                                    stats[0].rot_fric_coef,
+                                    stats[1].rot_fric_coef);
+   }
+
+   if ( hydrotype != HYDRO_ZENO ) {
+      result += QString("").sprintf("- ROT. DIFF. COEFF.           \t%.0f\t\t%.0f\t[1/s]\n",
+                                    stats[0].rot_diff_coef,
+                                    stats[1].rot_diff_coef);
+   }
+
+   if ( hydrotype == HYDRO_UNKNOWN || hydrotype == HYDRO_SMI ) {
+      result += QString("").sprintf("- ROT. FRICT. COEFF. [ X ]    \t%.3e\t%.3e\t[g*cm^2/s]\n",
+                                    stats[0].rot_fric_coef_x,
+                                    stats[1].rot_fric_coef_x);
+      result += QString("").sprintf("- ROT. FRICT. COEFF. [ Y ]    \t%.3e\t%.3e\t[g*cm^2/s]\n",
+                                    stats[0].rot_fric_coef_y,
+                                    stats[1].rot_fric_coef_y);
+      result += QString("").sprintf("- ROT. FRICT. COEFF. [ Z ]    \t%.3e\t%.3e\t[g*cm^2/s]\n",
+                                    stats[0].rot_fric_coef_z,
+                                    stats[1].rot_fric_coef_z);
+      result += QString("").sprintf("- ROT. DIFF. COEFF. [ X ]     \t%.0f\t\t%.0f\t[1/s]\n",
+                                    stats[0].rot_diff_coef_x,
+                                    stats[1].rot_diff_coef_x);
+      result += QString("").sprintf("- ROT. DIFF. COEFF. [ Y ]     \t%.0f\t\t%.0f\t[1/s]\n",
+                                    stats[0].rot_diff_coef_y,
+                                    stats[1].rot_diff_coef_y);
+      result += QString("").sprintf("- ROT. DIFF. COEFF. [ Z ]     \t%.0f\t\t%.0f\t[1/s]\n",
+                                    stats[0].rot_diff_coef_z,
+                                    stats[1].rot_diff_coef_z);
+   }
    
    result += QString("").sprintf("\n- RADIUS OF GYRATION          \t%.2f\t\t%.2f\t\t[nm]\n", 
                                  stats[0].results.rg,
@@ -1866,34 +2214,39 @@ QString US_Hydrodyn_Save::hydroFormatStats(vector < save_data > stats)
    result += QString("").sprintf("- TRANS. STOKES' RADIUS       \t%.2f\t\t%.2f\t\t[nm]\n",
                                  stats[0].results.rs,
                                  stats[1].results.rs);
-   result += QString("").sprintf("- ROTAT. STOKES' RADIUS [ X ] \t%.2f\t\t%.2f\t\t[nm]\n",
-                                 stats[0].rot_stokes_rad_x,
-                                 stats[1].rot_stokes_rad_x);
-   result += QString("").sprintf("- ROTAT. STOKES' RADIUS [ Y ] \t%.2f\t\t%.2f\t\t[nm]\n",
-                                 stats[0].rot_stokes_rad_y,
-                                 stats[1].rot_stokes_rad_y);
-   result += QString("").sprintf("- ROTAT. STOKES' RADIUS [ Z ] \t%.2f\t\t%.2f\t\t[nm]\n",
-                                 stats[0].rot_stokes_rad_z,
-                                 stats[1].rot_stokes_rad_z);
+
+   if ( hydrotype == HYDRO_UNKNOWN || hydrotype == HYDRO_SMI ) {
+      result += QString("").sprintf("- ROTAT. STOKES' RADIUS [ X ] \t%.2f\t\t%.2f\t\t[nm]\n",
+                                    stats[0].rot_stokes_rad_x,
+                                    stats[1].rot_stokes_rad_x);
+      result += QString("").sprintf("- ROTAT. STOKES' RADIUS [ Y ] \t%.2f\t\t%.2f\t\t[nm]\n",
+                                    stats[0].rot_stokes_rad_y,
+                                    stats[1].rot_stokes_rad_y);
+      result += QString("").sprintf("- ROTAT. STOKES' RADIUS [ Z ] \t%.2f\t\t%.2f\t\t[nm]\n",
+                                    stats[0].rot_stokes_rad_z,
+                                    stats[1].rot_stokes_rad_z);
+   }
 
    if ( stats[ 0 ].results.viscosity ) {
-      result += QString("").sprintf("\n- ZENO INTRINSIC VISC.     \t%.2f\t\t%.2f\t\t[cm^3/g]\n",
+      result += QString("").sprintf("\n- INTRINSIC VISC.\t%.2f\t\t%.2f\t\t[cm^3/g]\n",
                                     stats[0].results.viscosity,
                                     stats[1].results.viscosity);
    }
    
-   result += QString("").sprintf("\n- UNCORRECTED INTRINSIC VISC. \t%.2f\t\t%.2f\t\t[cm^3/g]\n",
-                                 stats[0].unc_int_visc,
-                                 stats[1].unc_int_visc);
-   result += QString("").sprintf("- UNCORRECTED EINSTEIN'S RADIUS\t%.2f\t\t%.2f\t\t[nm]\n",
-                                 stats[0].unc_einst_rad,
-                                 stats[1].unc_einst_rad);
-   result += QString("").sprintf("- CORRECTED INTRINSIC VISCOSITY\t%.2f\t\t%.2f\t\t[cm^3/g]\n",
-                                 stats[0].cor_int_visc,
-                                 stats[1].cor_int_visc);
-   result += QString("").sprintf("- CORRECTED EINSTEIN'S RADIUS\t%.2f\t\t%.2f\t\t[nm]\n",
-                                 stats[0].cor_einst_rad,
-                                 stats[1].cor_einst_rad);
+   if ( hydrotype == HYDRO_UNKNOWN || hydrotype == HYDRO_SMI ) {
+      result += QString("").sprintf("\n- UNCORRECTED INTRINSIC VISC. \t%.2f\t\t%.2f\t\t[cm^3/g]\n",
+                                    stats[0].unc_int_visc,
+                                    stats[1].unc_int_visc);
+      result += QString("").sprintf("- UNCORRECTED EINSTEIN'S RADIUS\t%.2f\t\t%.2f\t\t[nm]\n",
+                                    stats[0].unc_einst_rad,
+                                    stats[1].unc_einst_rad);
+      result += QString("").sprintf("- CORRECTED INTRINSIC VISCOSITY\t%.2f\t\t%.2f\t\t[cm^3/g]\n",
+                                    stats[0].cor_int_visc,
+                                    stats[1].cor_int_visc);
+      result += QString("").sprintf("- CORRECTED EINSTEIN'S RADIUS\t%.2f\t\t%.2f\t\t[nm]\n",
+                                    stats[0].cor_einst_rad,
+                                    stats[1].cor_einst_rad);
+   }
    
 #if defined(TSUDA_DOUBLESUM)
    result += QString("").sprintf("- INTRINSIC VISC. (Double Sum)\t%.2f\t\t%.2f\t\t[cm^3/g]\n",
@@ -1916,24 +2269,26 @@ QString US_Hydrodyn_Save::hydroFormatStats(vector < save_data > stats)
                                  stats[1].);
 #endif
    
-   result += QString("").sprintf("\nRELAXATION TIMES\n\n");
+   if ( hydrotype != HYDRO_ZENO ) {
+      result += QString("").sprintf("\nRELAXATION TIMES\n\n");
    
-   result += QString("").sprintf(" Tau(1)                       \t%.2f\t\t%.2f\t\t[ns]\n",
-                                 stats[0].rel_times_tau_1,
-                                 stats[1].rel_times_tau_1);
-   result += QString("").sprintf(" Tau(2)                       \t%.2f\t\t%.2f\t\t[ns]\n",
-                                 stats[0].rel_times_tau_2,
-                                 stats[1].rel_times_tau_2);
-   result += QString("").sprintf(" Tau(3)                       \t%.2f\t\t%.2f\t\t[ns]\n",
-                                 stats[0].rel_times_tau_3,
-                                 stats[1].rel_times_tau_3);
-   result += QString("").sprintf(" Tau(4)                       \t%.2f\t\t%.2f\t\t[ns]\n",
-                                 stats[0].rel_times_tau_4,
-                                 stats[1].rel_times_tau_4);
-   result += QString("").sprintf(" Tau(5)                       \t%.2f\t\t%.2f\t\t[ns]\n",
-                                 stats[0].rel_times_tau_5,
-                                 stats[1].rel_times_tau_5);
+      result += QString("").sprintf(" Tau(1)                       \t%.2f\t\t%.2f\t\t[ns]\n",
+                                    stats[0].rel_times_tau_1,
+                                    stats[1].rel_times_tau_1);
+      result += QString("").sprintf(" Tau(2)                       \t%.2f\t\t%.2f\t\t[ns]\n",
+                                    stats[0].rel_times_tau_2,
+                                    stats[1].rel_times_tau_2);
+      result += QString("").sprintf(" Tau(3)                       \t%.2f\t\t%.2f\t\t[ns]\n",
+                                    stats[0].rel_times_tau_3,
+                                    stats[1].rel_times_tau_3);
+      result += QString("").sprintf(" Tau(4)                       \t%.2f\t\t%.2f\t\t[ns]\n",
+                                    stats[0].rel_times_tau_4,
+                                    stats[1].rel_times_tau_4);
+      result += QString("").sprintf(" Tau(5)                       \t%.2f\t\t%.2f\t\t[ns]\n",
+                                    stats[0].rel_times_tau_5,
+                                    stats[1].rel_times_tau_5);
 
+   }
    // compute weighted mean average tau(m)
    
    // compute weighted means & V2
@@ -2064,14 +2419,159 @@ QString US_Hydrodyn_Save::hydroFormatStats(vector < save_data > stats)
    //   result += QString("").sprintf(" Tau(h) (Weighted average)    \t%.2f\t\t\t\t[ns]\n",
    //                                 1.0 / avgrv);
    
-   result += QString("").sprintf("\n Tau(m) (Unweighted average)  \t%.2f\t\t%.2f\t\t[ns]\n",
-                                 stats[0].rel_times_tau_m,
-                                 stats[1].rel_times_tau_m);
-   result += QString("").sprintf(" Tau(h) (Unweighted average)  \t%.2f\t\t%.2f\t\t[ns]\n",
-                                 stats[0].rel_times_tau_h,
-                                 stats[1].rel_times_tau_h);
+   if ( hydrotype != HYDRO_ZENO ) {
+      result += QString("").sprintf("\n Tau(m) (Unweighted average)  \t%.2f\t\t%.2f\t\t[ns]\n",
+                                    stats[0].rel_times_tau_m,
+                                    stats[1].rel_times_tau_m);
+      result += QString("").sprintf(" Tau(h) (Unweighted average)  \t%.2f\t\t%.2f\t\t[ns]\n",
+                                    stats[0].rel_times_tau_h,
+                                    stats[1].rel_times_tau_h);
+   }
    
    result += QString("").sprintf("\n****************************************************************\n");
 
    return result;
 }
+
+save_data US_Hydrodyn_Save::save_data_initialized() {
+   save_data data;
+
+   // hydro_options hydro; these should always be initialized from current hydro_options
+
+   data.results               = US_Hydrodyn_Results::hydro_results_initialized();
+
+   data.hydro_res             = "unknown";
+   data.model_idx             = "unknown";
+
+   data.tot_surf_area         = 0e0;
+   data.tot_volume_of         = 0e0;
+   data.num_of_unused         = 0e0;
+   data.use_beads_vol         = 0e0;
+   data.use_beads_surf        = 0e0;
+   data.use_bead_mass         = 0e0;
+   data.con_factor            = 0e0;
+   data.tra_fric_coef         = 0e0;
+   data.tra_fric_coef_sd      = 0e0;
+   data.rot_fric_coef         = 0e0;
+   data.rot_diff_coef         = 0e0;
+   data.rot_fric_coef_x       = 0e0;
+   data.rot_fric_coef_y       = 0e0;
+   data.rot_fric_coef_z       = 0e0;
+   data.rot_diff_coef_x       = 0e0;
+   data.rot_diff_coef_y       = 0e0;
+   data.rot_diff_coef_z       = 0e0;
+   data.rot_stokes_rad_x      = 0e0;
+   data.rot_stokes_rad_y      = 0e0;
+   data.rot_stokes_rad_z      = 0e0;
+   data.cen_of_res_x          = 0e0;
+   data.cen_of_res_y          = 0e0;
+   data.cen_of_res_z          = 0e0;
+   data.cen_of_mass_x         = 0e0;
+   data.cen_of_mass_y         = 0e0;
+   data.cen_of_mass_z         = 0e0;
+   data.cen_of_diff_x         = 0e0;
+   data.cen_of_diff_y         = 0e0;
+   data.cen_of_diff_z         = 0e0;
+   data.cen_of_visc_x         = 0e0;
+   data.cen_of_visc_y         = 0e0;
+   data.cen_of_visc_z         = 0e0;
+   data.unc_int_visc          = 0e0;
+   data.unc_einst_rad         = 0e0;
+   data.cor_int_visc          = 0e0;
+   data.cor_einst_rad         = 0e0;
+   data.grpy_einst_rad        = 0e0;
+   data.rel_times_tau_1       = 0e0;
+   data.rel_times_tau_2       = 0e0;
+   data.rel_times_tau_3       = 0e0;
+   data.rel_times_tau_4       = 0e0;
+   data.rel_times_tau_5       = 0e0;
+   data.rel_times_tau_m       = 0e0;
+   data.rel_times_tau_h       = 0e0;
+   data.max_ext_x             = 0e0;
+   data.max_ext_y             = 0e0;
+   data.max_ext_z             = 0e0;
+   data.axi_ratios_xz         = 0e0;
+   data.axi_ratios_xy         = 0e0;
+   data.axi_ratios_yz         = 0e0;
+   data.proc_time             = 0e0;
+
+   data.dt_d0                 = 0e0;
+   data.dt_d0_sd              = 0e0;
+   data.dimless_eta           = 0e0;
+   data.dimless_eta_sd        = 0e0;
+
+   data.zeno_eta_prefactor    = 0e0;
+   data.zeno_eta_prefactor_sd = 0e0;
+   data.zeno_mep              = 0e0;
+   data.zeno_mep_sd           = 0e0;
+
+   return data;
+}
+
+save_data US_Hydrodyn_Save::save_data_initialized_from_bead_model( const vector < PDB_atom * > model, bool bead_exclusion ) {
+   save_data data = save_data_initialized();
+
+   static double fourpi      = 4.0 * M_PI;
+   static double fourpiover3 = fourpi / 3.0;
+   
+   for ( int i = 0; i < (int) model.size(); i++) {
+      if ( model[ i ]->active ) {
+         double radius         = model[ i ]->bead_computed_radius;
+         double radius2        = radius * radius;
+
+         double this_surf_area = fourpi * radius2;
+         double this_vol       = fourpiover3 * radius2 * radius;
+
+         double this_mw        = model[ i ]->bead_ref_mw + model[ i ]->bead_ref_ionized_mw_delta;
+
+         if ( bead_exclusion && model[ i ]->bead_color == 6 ) {
+            // excluded
+         } else {
+            // included
+            data.use_beads_vol  += this_vol;
+            data.use_beads_surf += this_surf_area;
+            data.use_bead_mass  += this_mw;
+         }
+
+         data.tot_volume_of += this_vol;
+         data.tot_surf_area += this_surf_area;
+      }
+   }
+   return data;
+}
+   
+save_data US_Hydrodyn_Save::save_data_initialized_from_bead_model( const vector < PDB_atom > & model, bool bead_exclusion ) {
+   save_data data = save_data_initialized();
+
+   static double fourpi      = 4.0 * M_PI;
+   static double fourpiover3 = fourpi / 3.0;
+
+   int excluded_count = 0;
+
+   for ( int i = 0; i < (int) model.size(); i++) {
+      if ( model[ i ].active ) {
+         double radius         = model[ i ].bead_computed_radius;
+         double radius2        = radius * radius;
+
+         double this_surf_area = fourpi * radius2;
+         double this_vol       = fourpiover3 * radius2 * radius;
+
+         double this_mw        = model[ i ].bead_ref_mw + model[ i ].bead_ref_ionized_mw_delta;
+
+         if ( bead_exclusion && model[ i ].bead_color == 6 ) {
+            // excluded
+            excluded_count++;
+         } else {
+            // included
+            data.use_beads_vol  += this_vol;
+            data.use_beads_surf += this_surf_area;
+            data.use_bead_mass  += this_mw;
+         }
+
+         data.tot_volume_of += this_vol;
+         data.tot_surf_area += this_surf_area;
+      }
+   }
+   return data;
+}
+   

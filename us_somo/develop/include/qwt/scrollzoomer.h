@@ -44,6 +44,8 @@ public:
 
     virtual void rescale();
 
+    bool symmetric_rescale;
+
 protected:
     virtual ScrollBar *scrollBar( Qt::Orientation );
     virtual void updateScrollBars();

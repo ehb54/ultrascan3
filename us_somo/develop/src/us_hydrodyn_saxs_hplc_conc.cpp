@@ -16,7 +16,7 @@ US_Hydrodyn_Saxs_Hplc_Conc::US_Hydrodyn_Saxs_Hplc_Conc(
                                                            csv &csv1,
                                                            void *saxs_hplc_window,
                                                            QWidget *p, 
-                                                           const char *name
+                                                           const char *
                                                            ) : QFrame( p )
 {
    org_csv = &csv1;

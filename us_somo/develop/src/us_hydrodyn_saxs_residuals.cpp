@@ -20,7 +20,7 @@ US_Hydrodyn_Saxs_Residuals::US_Hydrodyn_Saxs_Residuals(
                                                        bool plot_as_percent,
                                                        unsigned pen_width,
                                                        QWidget *p, 
-                                                       const char *name
+                                                       const char *
                                                        ) : QFrame( p )
 {
    this->saxs_residuals_widget = saxs_residuals_widget;
@@ -227,7 +227,7 @@ void US_Hydrodyn_Saxs_Residuals::setupGUI()
    // build layout
    // left box / possible
 
-   int rows = 0, columns = 2, spacing = 2, j=0, margin=4;
+   int /* rows = 0, columns = 2,*/ spacing = 2, j=0, margin=4;
    QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
 
    // background->addWidget( lbl_title , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );

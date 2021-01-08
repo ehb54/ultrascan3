@@ -7,7 +7,7 @@
 #include <QFrame>
 #include <QLabel>
 
-US_Hydrodyn_ASA::US_Hydrodyn_ASA(struct asa_options *asa, bool *asa_widget, void *us_hydrodyn, QWidget *p, const char *name) : QFrame( p )
+US_Hydrodyn_ASA::US_Hydrodyn_ASA(struct asa_options *asa, bool *asa_widget, void *us_hydrodyn, QWidget *p, const char *) : QFrame( p )
 {
    this->asa = asa;
    this->asa_widget = asa_widget;
@@ -220,6 +220,44 @@ void US_Hydrodyn_ASA::setupGUI()
    AUTFBACK( cnt_asa_grid_threshold_percent );
    connect(cnt_asa_grid_threshold_percent, SIGNAL(valueChanged(double)), SLOT(update_asa_grid_threshold_percent(double)));
 
+   lbl_vdw_grpy_probe_radius = new QLabel(us_tr(" vdW+GRPY ASA Probe Radius (A): "), this);
+   lbl_vdw_grpy_probe_radius->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_vdw_grpy_probe_radius->setMinimumHeight(minHeight1);
+   lbl_vdw_grpy_probe_radius->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_vdw_grpy_probe_radius );
+   lbl_vdw_grpy_probe_radius->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_vdw_grpy_probe_radius = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_vdw_grpy_probe_radius );
+   cnt_vdw_grpy_probe_radius->setRange(0, 10); cnt_vdw_grpy_probe_radius->setSingleStep( 0.01);
+   cnt_vdw_grpy_probe_radius->setValue((*asa).vdw_grpy_probe_radius);
+   cnt_vdw_grpy_probe_radius->setMinimumHeight(minHeight1);
+   cnt_vdw_grpy_probe_radius->setEnabled(true);
+   cnt_vdw_grpy_probe_radius->setNumButtons(3);
+   cnt_vdw_grpy_probe_radius->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_vdw_grpy_probe_radius->setPalette( PALET_NORMAL );
+   AUTFBACK( cnt_vdw_grpy_probe_radius );
+   connect(cnt_vdw_grpy_probe_radius, SIGNAL(valueChanged(double)), SLOT(update_vdw_grpy_probe_radius(double)));
+
+   lbl_vdw_grpy_threshold_percent = new QLabel(us_tr(" vdW+GRPY ASA Threshold %: "), this);
+   lbl_vdw_grpy_threshold_percent->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_vdw_grpy_threshold_percent->setMinimumHeight(minHeight1);
+   lbl_vdw_grpy_threshold_percent->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_vdw_grpy_threshold_percent );
+   lbl_vdw_grpy_threshold_percent->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_vdw_grpy_threshold_percent= new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_vdw_grpy_threshold_percent );
+   cnt_vdw_grpy_threshold_percent->setRange(0, 100); cnt_vdw_grpy_threshold_percent->setSingleStep( 0.1);
+   cnt_vdw_grpy_threshold_percent->setValue((*asa).vdw_grpy_threshold_percent);
+   cnt_vdw_grpy_threshold_percent->setMinimumHeight(minHeight1);
+   cnt_vdw_grpy_threshold_percent->setEnabled(true);
+   cnt_vdw_grpy_threshold_percent->setNumButtons(3);
+   cnt_vdw_grpy_threshold_percent->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_vdw_grpy_threshold_percent->setPalette( PALET_NORMAL );
+   AUTFBACK( cnt_vdw_grpy_threshold_percent );
+   connect(cnt_vdw_grpy_threshold_percent, SIGNAL(valueChanged(double)), SLOT(update_vdw_grpy_threshold_percent(double)));
+
    lbl_hydrate_probe_radius = new QLabel(us_tr(" Hydrate ASA Probe Radius (A): "), this);
    lbl_hydrate_probe_radius->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_hydrate_probe_radius->setMinimumHeight(minHeight1);
@@ -257,6 +295,13 @@ void US_Hydrodyn_ASA::setupGUI()
    cnt_hydrate_threshold->setPalette( PALET_NORMAL );
    AUTFBACK( cnt_hydrate_threshold );
    connect(cnt_hydrate_threshold, SIGNAL(valueChanged(double)), SLOT(update_hydrate_threshold(double)));
+
+   if ( !((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode ) {
+      lbl_hydrate_probe_radius->hide();
+      cnt_hydrate_probe_radius->hide();
+      lbl_hydrate_threshold->hide();
+      cnt_hydrate_threshold->hide();
+   }
 
    lbl_asab1_step = new QLabel(us_tr(" ASAB1 Step Size (A): "), this);
    Q_CHECK_PTR(lbl_asab1_step);
@@ -361,7 +406,7 @@ void US_Hydrodyn_ASA::setupGUI()
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   int rows=8, columns = 2, spacing = 2, j=0, margin=4;
+   int /* rows=8, columns = 2, */ spacing = 2, j=0, margin=4;
    QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
 
    background->addWidget( lbl_info , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
@@ -388,6 +433,12 @@ void US_Hydrodyn_ASA::setupGUI()
    j++;
    background->addWidget(lbl_asa_grid_threshold_percent, j, 0);
    background->addWidget(cnt_asa_grid_threshold_percent, j, 1);
+   j++;
+   background->addWidget(lbl_vdw_grpy_probe_radius, j, 0);
+   background->addWidget(cnt_vdw_grpy_probe_radius, j, 1);
+   j++;
+   background->addWidget(lbl_vdw_grpy_threshold_percent, j, 0);
+   background->addWidget(cnt_vdw_grpy_threshold_percent, j, 1);
    j++;
    background->addWidget(lbl_hydrate_probe_radius, j, 0);
    background->addWidget(cnt_hydrate_probe_radius, j, 1);
@@ -475,6 +526,18 @@ void US_Hydrodyn_ASA::update_hydrate_probe_radius(double val)
 void US_Hydrodyn_ASA::update_hydrate_threshold(double val)
 {
    (*asa).hydrate_threshold = (float) val;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_ASA::update_vdw_grpy_probe_radius(double val)
+{
+   (*asa).vdw_grpy_probe_radius = (float) val;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_ASA::update_vdw_grpy_threshold_percent(double val)
+{
+   (*asa).vdw_grpy_threshold_percent = (float) val;
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

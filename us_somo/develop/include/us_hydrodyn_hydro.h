@@ -39,14 +39,19 @@ struct hydro_options
    bool reference_system;      // false: diffusion center, true: cartesian origin (default false)
    bool boundary_cond;         // false: stick, true: slip (default false)
    bool volume_correction;      // false: Automatic, true: manual (provide value)
+   bool use_avg_for_volume;     // true: if volume_correction true, will replace volumes with averages
    double volume;               // volume correction
    bool mass_correction;      // false: Automatic, true: manual (provide value)
    double mass;               // mass correction
    bool bead_inclusion;         // false: exclude hidden beads; true: use all beads
+   bool grpy_bead_inclusion;    // false: exclude hidden beads; true: use all beads
    bool rotational;            // false: include beads in volume correction for rotational diffusion, true: exclude
    bool viscosity;            // false: include beads in volume correction for intrinsic viscosity, true: exclude
    bool overlap_cutoff;         // false: same as in model building, true: enter manually
    double overlap;            // overlap cut off value if entered manually
+   double pH;        
+
+   bool manual_solvent_conditions;     // manual viscosity & density
 
    // zeno options
 
@@ -64,6 +69,8 @@ struct hydro_options
 
 class US_EXTERN US_Hydrodyn_Hydro : public QFrame
 {
+   friend class US_Hydrodyn;
+
    Q_OBJECT
 
    public:
@@ -90,6 +97,10 @@ class US_EXTERN US_Hydrodyn_Hydro : public QFrame
       QLabel *lbl_temperature;
       QLabel *lbl_solvent_viscosity;
       QLabel *lbl_solvent_density;
+      QLabel *lbl_tc_solvent_viscosity;
+      QLabel *lbl_tc_solvent_density;
+      QLabel *lbl_smi;
+      QLabel *lbl_grpy;
       
       QGroupBox *bg_solvent_conditions;
       QGroupBox *bg_reference_system;
@@ -98,6 +109,7 @@ class US_EXTERN US_Hydrodyn_Hydro : public QFrame
       QGroupBox *bg_mass_correction;
       QGroupBox *bg_overlap;
       QGroupBox *bg_bead_inclusion;
+      QGroupBox *bg_grpy_bead_inclusion;
       
       QGroupBox *bg_buried;
 
@@ -116,6 +128,7 @@ class US_EXTERN US_Hydrodyn_Hydro : public QFrame
       QCheckBox *cb_inclusion;
       QCheckBox *cb_rotational;
       QCheckBox *cb_viscosity;
+      QCheckBox *cb_manual_solvent_conditions;
       
       QRadioButton *rb_diffusion_center;
       QRadioButton *rb_cartesian_origin;
@@ -124,9 +137,12 @@ class US_EXTERN US_Hydrodyn_Hydro : public QFrame
       QRadioButton *rb_auto_mass;
       QRadioButton *rb_manual_mass;
       QRadioButton *rb_auto_volume;
+      QRadioButton *rb_auto_volume_avg;
       QRadioButton *rb_manual_volume;
       QRadioButton *rb_exclusion;
       QRadioButton *rb_inclusion;
+      QRadioButton *rb_grpy_exclusion;
+      QRadioButton *rb_grpy_inclusion;
       QRadioButton *rb_auto_overlap;
       QRadioButton *rb_manual_overlap;
 
@@ -137,6 +153,8 @@ class US_EXTERN US_Hydrodyn_Hydro : public QFrame
       QLineEdit *le_temperature;
       QLineEdit *le_solvent_viscosity;
       QLineEdit *le_solvent_density;
+      QLineEdit *le_tc_solvent_viscosity;
+      QLineEdit *le_tc_solvent_density;
 
       QLineEdit *le_volume;
       QLineEdit *le_mass;
@@ -151,7 +169,7 @@ class US_EXTERN US_Hydrodyn_Hydro : public QFrame
 
       void update_solvent_name(const QString &str);
       void update_solvent_acronym(const QString &str);
-      void update_temperature(const QString &str);
+      void update_temperature(const QString &str, bool update_main = true );
       void update_solvent_viscosity(const QString &str);
       void update_solvent_density(const QString &str);
 
@@ -172,9 +190,12 @@ class US_EXTERN US_Hydrodyn_Hydro : public QFrame
       void select_overlap(int);
       void select_bead_inclusion();
       void select_bead_inclusion(int);
+      void select_grpy_bead_inclusion();
+      void select_grpy_bead_inclusion(int);
       void set_solvent_defaults();
       void set_rotational();
       void set_viscosity();
+      void set_manual_solvent_conditions();
       void check_solvent_defaults();
       void cancel();
       void help();

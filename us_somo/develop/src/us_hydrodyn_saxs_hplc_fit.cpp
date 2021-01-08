@@ -26,7 +26,7 @@ US_Hydrodyn_Saxs_Hplc_Fit::US_Hydrodyn_Saxs_Hplc_Fit(
                                                      US_Hydrodyn_Saxs_Hplc *hplc_win,
                                                      bool set_comm_dist,
                                                      QWidget *p, 
-                                                     const char *name
+                                                     const char *
                                                      ) : QDialog( p )
 {
    // us_qdebug( "hf0" );
@@ -681,7 +681,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    background->addSpacing( 4 );
    background->addLayout ( hbl_bottom );
 
-   void * us_hydrodyn = hplc_win->us_hydrodyn;
+   // void * us_hydrodyn = hplc_win->us_hydrodyn;
 
    if ( !U_EXPT )
    {
@@ -1530,6 +1530,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
          double ofs;
          double min = hplc_ampl_width_min;
          double max = hplc_win->gauss_max_height;
+         // qDebug() << "hplc_fit:: gauss_max_height " << max;
          if ( cb_pct_amplitude->isChecked() )
          {
             ofs = base_val * le_pct_amplitude->text().toDouble() / 100.0;

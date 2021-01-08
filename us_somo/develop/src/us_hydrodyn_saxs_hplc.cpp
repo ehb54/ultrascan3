@@ -57,6 +57,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    this->csv1 = csv1;
    this->us_hydrodyn = us_hydrodyn;
    started_in_expert_mode = ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode;
+   saxs_hplc_options_widget = 0;
 
    gaussian_param_text
       << "amplitude"
@@ -272,7 +273,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    global_Xpos += 30;
    global_Ypos += 30;
 
-   unsigned int csv_height = 40;
+   // unsigned int csv_height = 40;
    unsigned int csv_width =  1000;
 
    // cout << QString("csv size %1 %2\n").arg(csv_height).arg(csv_width);
@@ -287,7 +288,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    // editor          ->setMaximumWidth( csv_width / 3 );
    // le_created_dir    ->setMaximumWidth( csv_width / 3 );
 
-   int percharwidth = 1 + ( 7 * ( USglobal->config_list.fontSize - 1 ) / 10 );
+   // int percharwidth = 1 + ( 7 * ( USglobal->config_list.fontSize - 1 ) / 10 );
    {
       vector < QPushButton * > pbs;
       // pbs.push_back( pb_add_files );
@@ -330,6 +331,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
       pbs.push_back( pb_stack_rot_down );
       pbs.push_back( pb_stack_swap );
 
+      pbs.push_back( pb_gauss_mode );
       pbs.push_back( pb_gauss_start );
       pbs.push_back( pb_p3d );
       pbs.push_back( pb_gauss_clear );
@@ -974,12 +976,12 @@ void US_Hydrodyn_Saxs_Hplc::clear_files( QStringList files, bool quiet )
 
    disable_updates = false;
    plot_files();
-   if ( !lb_files->count() &&
-        plot_dist_zoomer )
-   {
-      delete plot_dist_zoomer;
-      plot_dist_zoomer = (ScrollZoomer *) 0;
-   }
+   // if ( !lb_files->count() &&
+   //      plot_dist_zoomer )
+   // {
+   //    delete plot_dist_zoomer;
+   //    plot_dist_zoomer = (ScrollZoomer *) 0;
+   // }
    update_csv_conc();
    if ( conc_widget )
    {
@@ -1225,9 +1227,17 @@ void US_Hydrodyn_Saxs_Hplc::add_files( bool load_conc, bool from_dir ) {
             found_times[ it->name ] = it->x;
          }
       }
+   } else {
+      if ( filenames.size() ) {
+         QRegExp rx_time( "_t(\\d+)" );
+         if ( rx_time.indexIn( filenames[ 0 ] ) != -1 ) {
+            found_times[ filenames[ 0 ] ] = rx_time.cap( 1 ).toDouble();
+         }
+      }
    }
 
    QString errors;
+   QString warnings;
 
    for ( int i = 0; i < (int)filenames.size(); i++ )
    {
@@ -1242,7 +1252,18 @@ void US_Hydrodyn_Saxs_Hplc::add_files( bool load_conc, bool from_dir ) {
          } else {
             editor_msg( "black", QString( us_tr( "%1" ) ).arg( basename ) );
             add_filenames << basename;
-            f_time[ basename ] = found_times[ filenames[ i ] ];
+            if ( found_times.count( filenames[ i ] ) ) {
+               if ( f_time.count( basename ) &&
+                    f_time[ basename ] != found_times[ filenames[ i ] ] ) {
+                  warnings += QString( "File %1 has a conflicting stored time %2 vs the time extracted from the name %3, using the stored time\n" )
+                     .arg( basename )
+                     .arg( f_time[ basename ] )
+                     .arg( found_times[ filenames[ i ] ] )
+                     ;
+               } else {
+                  f_time[ basename ] = found_times[ filenames[ i ] ];
+               }
+            }
             if ( load_conc )
             {
                f_is_time[ basename ] = true;
@@ -1262,6 +1283,10 @@ void US_Hydrodyn_Saxs_Hplc::add_files( bool load_conc, bool from_dir ) {
       editor_msg( "red", errors );
    }
 
+   if ( !warnings.isEmpty() ) {
+      editor_msg( "dark red", warnings );
+   }
+
    lb_files->addItems( add_filenames );
 
    if ( add_filenames.size() &&
@@ -1273,9 +1298,9 @@ void US_Hydrodyn_Saxs_Hplc::add_files( bool load_conc, bool from_dir ) {
    if ( add_filenames.size() && plot_dist_zoomer )
    {
       // we should only do this if the ranges are changed
-      plot_dist_zoomer->zoom ( 0 );
-      delete plot_dist_zoomer;
-      plot_dist_zoomer = (ScrollZoomer *) 0;
+      // plot_dist_zoomer->zoom ( 0 );
+      // delete plot_dist_zoomer;
+      // plot_dist_zoomer = (ScrollZoomer *) 0;
       plot_files();
    }
    update_csv_conc();
@@ -1381,9 +1406,9 @@ void US_Hydrodyn_Saxs_Hplc::add_files( QStringList filenames )
    if ( add_filenames.size() && plot_dist_zoomer )
    {
       // we should only do this if the ranges are changed
-      plot_dist_zoomer->zoom ( 0 );
-      delete plot_dist_zoomer;
-      plot_dist_zoomer = (ScrollZoomer *) 0;
+      // plot_dist_zoomer->zoom ( 0 );
+      // delete plot_dist_zoomer;
+      // plot_dist_zoomer = (ScrollZoomer *) 0;
       plot_files();
    }
    update_csv_conc();
@@ -1554,11 +1579,16 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
 
    bool is_time = false;
 
+   bool   has_conc  = false;
    double this_conc = 0e0;
+   bool   has_psv   = false;
    double this_psv  = 0e0;
+   bool   has_I0se  = false;
    double this_I0se = 0e0;
-   bool   has_time = false;
+   bool   has_time  = false;
    double this_time = 0e0;
+   bool   has_extc  = false;
+   double this_extc = 0e0;
 
    double use_units = ( ( US_Hydrodyn * ) us_hydrodyn )->saxs_options.iq_scale_angstrom ? 1.0 : 0.1;
 
@@ -1569,6 +1599,7 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
       QRegExp rx_I0se      ( "I0se:\\s*(\\S+)(\\s|$)" );
       QRegExp rx_time      ( "Time:\\s*(\\S+)(\\s|$)" );
       QRegExp rx_unit      ( "Units:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_extc      ( "ExtC_or_DRIinc:\\s*(\\S+)(\\s|$)" );
       if ( rx_unit.indexIn( qv[ 0 ] ) != -1 )
       {
          QString unitstr = rx_unit.cap( 1 ).toLower();
@@ -1587,21 +1618,29 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
       }
       if ( rx_conc.indexIn( qv[ 0 ] ) != -1 )
       {
-        this_conc = rx_conc.cap( 1 ).toDouble();
+         has_conc  = true;
+         this_conc = rx_conc.cap( 1 ).toDouble();
          // cout << QString( "found conc %1\n" ).arg( this_conc );
       }
       if ( rx_psv.indexIn( qv[ 0 ] ) != -1 )
       {
+         has_psv  = true;
          this_psv = rx_psv.cap( 1 ).toDouble();
       }
       if ( rx_I0se.indexIn( qv[ 0 ] ) != -1 )
       {
+         has_I0se  = true;
          this_I0se = rx_I0se.cap( 1 ).toDouble();
       }
       if ( rx_time.indexIn( qv[ 0 ] ) != -1 )
       {
-         has_time = true;
+         has_time  = true;
          this_time = rx_time.cap( 1 ).toDouble();
+      }
+      if ( rx_extc.indexIn( qv[ 0 ] ) != -1 )
+      {
+         has_extc  = true;
+         this_extc = rx_extc.cap( 1 ).toDouble();
       }
    }
 
@@ -2500,13 +2539,21 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
       vector < double > tmp;
       f_gaussians  [ basename ] = tmp;
    }
-   f_conc       [ basename ] = this_conc;
-   f_psv        [ basename ] = this_psv;
-   f_I0se       [ basename ] = this_I0se;
-   if ( has_time )
-   {
-      f_time       [ basename ] = this_time;
+   if ( has_conc ) {
+      f_conc       [ basename ] = this_conc;
    }
+   if ( has_psv ) {
+      f_psv        [ basename ] = this_psv;
+   }
+   if ( has_I0se ) {
+      f_I0se       [ basename ] = this_I0se;
+   }
+   if ( has_time ) {
+      f_time       [ basename ] = this_time;
+   }      
+   if ( has_extc ) {
+      f_extc       [ basename ] = this_extc;
+   }      
    return true;
 }
 
@@ -3399,10 +3446,10 @@ void US_Hydrodyn_Saxs_Hplc::smooth()
    smooth( files );
 }
 
-bool US_Hydrodyn_Saxs_Hplc::get_peak( QString file, double &peak )
+bool US_Hydrodyn_Saxs_Hplc::get_peak( QString file, double &peak, bool full )
 {
    double pos;
-   return get_peak( file, peak, pos );
+   return get_peak( file, peak, pos, full );
    // if ( !f_Is.count( file ) )
    // {
    //    editor_msg( "red", QString( us_tr( "Internal error: get_peak requested on %1 but no data available" ) ).arg( file ) );
@@ -3426,7 +3473,7 @@ bool US_Hydrodyn_Saxs_Hplc::get_peak( QString file, double &peak )
    // return true;
 }
 
-bool US_Hydrodyn_Saxs_Hplc::get_peak( QString file, double &peak, double &pos )
+bool US_Hydrodyn_Saxs_Hplc::get_peak( QString file, double &peak, double &pos, bool full )
 {
    if ( !f_Is.count( file ) )
    {
@@ -3442,12 +3489,46 @@ bool US_Hydrodyn_Saxs_Hplc::get_peak( QString file, double &peak, double &pos )
       
    peak = f_Is[ file ][ 0 ];
    pos = f_qs[ file ][ 0 ];
-   for ( unsigned int i = 1; i < ( unsigned int ) f_Is[ file ].size(); i++ )
-   {
-      if ( peak < f_Is[ file ][ i ] )
-      {
+
+   double start_pos = le_gauss_fit_start->text().toDouble();
+   double end_pos   = le_gauss_fit_end  ->text().toDouble();
+   
+   if ( full ) {
+      start_pos = f_qs[ file ][ 0 ];
+      end_pos   = f_qs[ file ].back();
+   }
+
+   if ( end_pos <= start_pos ) {
+      return false;
+   }
+
+   // get 1st
+   bool found_first = false;
+   unsigned int i = 0;
+   for ( ; i < ( unsigned int ) f_Is[ file ].size(); ++i ) {
+      double this_pos = f_qs[ file ][ i ];
+      if ( this_pos >= start_pos &&
+           this_pos <= end_pos ) {
+         found_first = true;
          peak = f_Is[ file ][ i ];
-         pos = f_qs[ file ][ i ];
+         pos  = this_pos;
+         break;
+      }
+   }
+
+   if ( !found_first ) {
+      editor_msg( "red", QString( us_tr( "Warning: get_peak: file %1 has no points between the fitting start and end range" ) ).arg( file ) );
+      return false;
+   }
+
+   for ( ; i < ( unsigned int ) f_Is[ file ].size(); i++ )
+   {
+      double this_pos = f_qs[ file ][ i ];
+      if ( this_pos <= end_pos ) {
+         if ( peak < f_Is[ file ][ i ] ) {
+            peak = f_Is[ file ][ i ];
+            pos  = this_pos;
+         }
       }
    }
    return true;
@@ -4153,93 +4234,6 @@ QString US_Hydrodyn_Saxs_Hplc::vector_double_to_csv( vector < double > vd )
    return result;
 }
 
-void US_Hydrodyn_Saxs_Hplc::rescale()
-{
-   //    hide_widgets( plot_errors_widgets, !plot_errors_widgets[ 0 ]->isVisible() );
-   //    hide_widgets( files_widgets, !files_widgets[ 0 ]->isVisible() );
-   //    hide_widgets( files_expert_widgets, !files_expert_widgets[ 0 ]->isVisible() );
-   //    hide_widgets( created_files_widgets, !created_files_widgets[ 0 ]->isVisible() );
-   //    hide_widgets( created_files_expert_widgets, !created_files_expert_widgets[ 0 ]->isVisible() );
-   //    hide_widgets( editor_widgets, !editor_widgets[ 0 ]->isVisible() );
-
-   //bool any_selected = false;
-   double minx = 0e0;
-   double maxx = 1e0;
-   double miny = 0e0;
-   double maxy = 1e0;
-
-   double file_minx;
-   double file_maxx;
-   double file_miny;
-   double file_maxy;
-   
-   bool first = true;
-   for ( int i = 0; i < lb_files->count(); i++ )
-   {
-      if ( lb_files->item( i )->isSelected() )
-      {
-         //any_selected = true;
-         if ( get_min_max( lb_files->item( i )->text(), file_minx, file_maxx, file_miny, file_maxy ) )
-         {
-            if ( first )
-            {
-               minx = file_minx;
-               maxx = file_maxx;
-               miny = file_miny;
-               maxy = file_maxy;
-               first = false;
-            } else {
-               if ( file_minx < minx )
-               {
-                  minx = file_minx;
-               }
-               if ( file_maxx > maxx )
-               {
-                  maxx = file_maxx;
-               }
-               if ( file_miny < miny )
-               {
-                  miny = file_miny;
-               }
-               if ( file_maxy > maxy )
-               {
-                  maxy = file_maxy;
-               }
-            }
-         }
-      }
-   }
-   
-   if ( plot_dist_zoomer )
-   {
-      plot_dist_zoomer->zoom ( 0 );
-      delete plot_dist_zoomer;
-   }
-
-   plot_dist->setAxisScale( QwtPlot::xBottom, minx, maxx );
-   plot_dist->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );
-   plot_dist_zoomer = new ScrollZoomer(plot_dist->canvas());
-   plot_dist_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-   plot_dist_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
-   connect( plot_dist_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
-   
-   legend_set();
-   if ( !suppress_replot )
-   {
-      plot_dist->replot();
-   }
-   if ( current_mode == MODE_NORMAL )
-   // if ( !gaussian_mode &&
-   //      !ggaussian_mode && 
-   //      !baseline_mode &&
-   //      !timeshift_mode )
-   {
-      update_enables();
-   }
-}
-
 void US_Hydrodyn_Saxs_Hplc::join()
 {
    vector < QString > selected;
@@ -4429,6 +4423,7 @@ void US_Hydrodyn_Saxs_Hplc::join()
 
 void US_Hydrodyn_Saxs_Hplc::plot_zoomed( const QRectF & /* rect */ )
 {
+   // qDebug() << "plot_zoomed event";
    //   cout << QString( "zoomed: %1 %2 %3 %4\n" )
    // .arg( rect.x1() )
    // .arg( rect.x2() )
@@ -5152,15 +5147,69 @@ void US_Hydrodyn_Saxs_Hplc::view()
 {
    int dsp_count = 0;
 
+   if ( all_selected_files().count() > 5 ) {
+         switch ( QMessageBox::question(this, 
+                                        this->windowTitle() + us_tr(": View selected" ),
+                                        QString( us_tr( "There are %1 files selected\n"
+                                                        "Do you really want to open up %2 windows to view them all?" ) )
+                                        .arg( all_selected_files().count() ),
+                                        us_tr( "&Yes, view them all" ), 
+                                        us_tr( "&Cancel" ),
+                                        QString::null,
+                                        1, // Stop == button 0
+                                        1 // Escape == button 0
+                                        ) )
+         {
+         case 0 : // Yes
+            break;
+         case 1 : // no
+         default : // no
+            return;
+            break;
+         }  
+   }
+
    for ( int i = 0; i < lb_files->count(); i++ )
    {
       if ( lb_files->item( i )->isSelected() )
       {
          QString file = lb_files->item( i )->text();
 
+         // if ( created_files_not_saved.count( file ) ) {
+         //    QTextStream( stdout ) << QString( "::view %1 created_not_saved true\n").arg( file );
+         // } else {
+         //    QTextStream( stdout ) << QString( "::view %1 created_not_saved false\n").arg( file );
+         // }
+            
          QString text;
 
-         text += QString( us_tr( "US-SOMO Hplc output: %1\n" ) ).arg( file );
+         {
+            update_csv_conc();
+            map < QString, double > concs = current_concs();
+
+            QString use_conc;
+            if ( concs.count( file ) && concs[ file ] != 0e0 )
+            {
+               use_conc = QString( " Conc:%1" ).arg( concs[ file ] );
+            } else {
+               if ( f_conc.count( file ) && f_conc[ file ] != 0e0 ) 
+               {
+                  use_conc = QString( " Conc:%1" ).arg( f_conc[ file ] );
+               }
+            }
+
+            text += QString( windowTitle() + us_tr( " %1data: %2 Units:1/a%3%4%5%6%7%8\n" ) )
+               .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
+               .arg( file )
+               .arg( f_psv .count( file ) ? QString( " PSV:%1"  ).arg( f_psv [ file ] ) : QString( "" ) )
+               .arg( f_I0se.count( file ) ? QString( " I0se:%1" ).arg( f_I0se[ file ] ) : QString( "" ) )
+               .arg( use_conc ) // f_conc.count( file ) ? QString( " Conc:%1" ).arg( f_conc[ file ] ) : QString( "" ) )
+               .arg( f_extc.count( file ) ? QString( " ExtC_or_DRIinc:%1" ).arg( f_extc[ file ] ) : QString( "" ) )
+               .arg( f_time.count( file ) ? QString( " Time:%1" ).arg( f_time[ file ] ) : QString( "" ) )
+               .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
+               ;
+         }            
+         // text += QString( us_tr( "US-SOMO Hplc output: %1\n" ) ).arg( file );
 
          bool use_errors = ( f_errors.count( file ) && 
                              f_errors[ file ].size() > 0 );
@@ -5188,23 +5237,6 @@ void US_Hydrodyn_Saxs_Hplc::view()
             }
          }
 
-#if QT_VERSION < 0x040000
-         TextEdit *edit;
-         edit = new TextEdit( this, qPrintable( file ) );
-         edit->setFont    ( QFont( "Courier" ) );
-         edit->setPalette ( PALET_NORMAL );
-         AUTFBACK( edit );
-         edit->setGeometry( global_Xpos + 30, global_Ypos + 30, 685, 600 );
-         // edit->setTitle( file );
-         if ( QFile::exists( file + ".dat" ) )
-         {
-            edit->load( file + ".dat", file );
-         } else {
-            edit->load_text( text );
-         }
-         //   edit->setTextFormat( PlainText );
-         edit->show();
-#else
          US3i_Editor * edit = new US3i_Editor( US3i_Editor::DEFAULT, true, QString(), this );
          edit->setWindowTitle( file );
          edit->resize( 685, 700 );
@@ -5216,7 +5248,6 @@ void US_Hydrodyn_Saxs_Hplc::view()
                                   US3i_GuiSettings::fontSize() ) );
          edit->e->setText( text );
          edit->show();
-#endif
       }
    }
 }
@@ -5820,10 +5851,10 @@ void US_Hydrodyn_Saxs_Hplc::add_plot( QString           name,
    
    // we could check if it has changed and then delete
    if ( plot_dist_zoomer )
-   {
-      delete plot_dist_zoomer;
-      plot_dist_zoomer = (ScrollZoomer *) 0;
-   }
+   // {
+   //    delete plot_dist_zoomer;
+   //    plot_dist_zoomer = (ScrollZoomer *) 0;
+   // }
    if ( replot )
    {
       plot_files();
@@ -5886,11 +5917,11 @@ void US_Hydrodyn_Saxs_Hplc::crop_zero()
    }
       
    // we could check if it has changed and then delete
-   if ( plot_dist_zoomer )
-   {
-      delete plot_dist_zoomer;
-      plot_dist_zoomer = (ScrollZoomer *) 0;
-   }
+   // if ( plot_dist_zoomer )
+   // {
+   //    delete plot_dist_zoomer;
+   //    plot_dist_zoomer = (ScrollZoomer *) 0;
+   // }
    plot_files();
 }
 
@@ -5943,6 +5974,7 @@ void US_Hydrodyn_Saxs_Hplc::gaussian_enables()
 {
    unsigned int g_size = ( unsigned int )gaussians.size() / gaussian_type_size;
 
+   pb_gauss_mode       ->setEnabled( false );
    pb_gauss_start      ->setEnabled( false );
    pb_gauss_clear      ->setEnabled( g_size );
    pb_gauss_new        ->setEnabled( true );
@@ -5964,9 +5996,14 @@ void US_Hydrodyn_Saxs_Hplc::gaussian_enables()
    pb_gauss_as_curves  ->setEnabled( g_size );
    wheel_enables       ( g_size && gaussian_pos < g_size );
    pb_rescale          ->setEnabled( true );
+   pb_rescale_y        ->setEnabled( true );
    pb_view             ->setEnabled( true );
    pb_errors           ->setEnabled( true );
    pb_pp               ->setEnabled( true );
+
+   le_gauss_local_pts      ->setEnabled( g_size && gaussian_pos < g_size );
+   pb_gauss_local_caruanas ->setEnabled( g_size && gaussian_pos < g_size );
+   pb_gauss_local_guos     ->setEnabled( g_size && gaussian_pos < g_size );
 }
 
 void US_Hydrodyn_Saxs_Hplc::update_gauss_pos()
@@ -6169,11 +6206,11 @@ void US_Hydrodyn_Saxs_Hplc::update_gauss_pos()
 void US_Hydrodyn_Saxs_Hplc::gauss_start()
 {
    plot_errors->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_errors->detachItems( QwtPlotItem::Rtti_PlotMarker );;
-   if ( plot_errors_zoomer )
-   {
-      delete plot_errors_zoomer;
-      plot_errors_zoomer = (ScrollZoomer *) 0;
-   }
+   // if ( plot_errors_zoomer )
+   // {
+   //    delete plot_errors_zoomer;
+   //    plot_errors_zoomer = (ScrollZoomer *) 0;
+   // }
 
    le_last_focus = (mQLineEdit *) 0;
    pb_gauss_fit->setText( us_tr( "Fit" ) );
@@ -6251,6 +6288,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_start()
 
    running               = true;
 
+   // this must be wrong:!! ***************, units do not make sense
    double max_range = gauss_max_height > f_qs[ wheel_file ].back() ? gauss_max_height : f_qs[ wheel_file ].back();
 
    qwtw_wheel->setRange( 0,  max_range); qwtw_wheel->setSingleStep( max_range / UHSH_WHEEL_RES );
@@ -6282,8 +6320,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_start()
    gauss_init_markers();
    gauss_init_gaussians();
    update_gauss_pos();
-   if ( errors_were_on )
-   {
+   if ( errors_were_on ) {
       hide_widgets( plot_errors_widgets, false );
       cb_plot_errors_group->hide();
       if ( !f_errors.count( wheel_file ) ||
@@ -6293,8 +6330,10 @@ void US_Hydrodyn_Saxs_Hplc::gauss_start()
          cb_plot_errors_sd->setChecked( false );
          cb_plot_errors_sd->hide();
       }
+      qDebug() << "saxs_hplc::gauss_start() emit do resize_plots()";
+      emit do_resize_plots();
    }
-   cb_gauss_match_amplitude->setChecked( false );
+   cb_gauss_match_amplitude->setChecked( true );
    height_natural_spline_x = f_qs[ wheel_file ];
    height_natural_spline_y = f_Is[ wheel_file ];
    height_natural_spline_y2.clear( );
@@ -6890,6 +6929,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_fit_start_text( const QString & text )
 
    if ( !suppress_replot )
    {
+      // rescale_y_plot_errors();
       plot_dist->replot();
    }
 }
@@ -6918,6 +6958,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_fit_end_text( const QString & text )
 
    if ( !suppress_replot )
    {
+      // rescale_y_plot_errors();
       plot_dist->replot();
    }
 }
@@ -7575,6 +7616,15 @@ void US_Hydrodyn_Saxs_Hplc::gauss_fit()
       return;
    }
 
+   {
+      get_peak( wheel_file, gauss_max_height );
+      gauss_max_height *= 1.2;
+      if ( gaussian_type != GAUSS ) {
+         gauss_max_height *= 20e0;
+      }
+      // qDebug() << "hplc::gauss_fit gauss_max_height " << gauss_max_height;
+   }
+
    wheel_enables( false );
    disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
    US_Hydrodyn_Saxs_Hplc_Fit *shf = 
@@ -7970,12 +8020,34 @@ double US_Hydrodyn_Saxs_Hplc::compute_gaussian_peak( QString file, vector < doub
 {
    // cout << QString( "gaussian peak file %1 current type %2\n" ).arg( file ).arg( gaussian_type );
    vector < double > gs = compute_gaussian_sum( f_qs[ file ], g );
+
+   double start_pos = le_gauss_fit_start->text().toDouble();
+   double end_pos   = le_gauss_fit_end  ->text().toDouble();
+
    double gmax = gs[ 0 ];
-   for ( unsigned int i = 1; i < ( unsigned int ) gs.size(); i++ )
-   {
-      if ( gmax < gs[ i ] )
-      {
+
+   // get 1st
+   // bool found_first = false;
+   unsigned int i = 0;
+
+   for ( ; i < ( unsigned int ) gs.size(); i++ ) {
+      double this_pos = f_qs[ file ][ i ];
+      if ( this_pos >= start_pos &&
+           this_pos <= end_pos ) {
+         // found_first = true;
          gmax = gs[ i ];
+         break;
+      }
+   }
+
+
+   for (; i < ( unsigned int ) gs.size(); i++ )
+   {
+      double this_pos = f_qs[ file ][ i ];
+      if ( this_pos <= end_pos ) {
+         if ( gmax < gs[ i ] ) {
+            gmax = gs[ i ];
+         }
       }
    }
    return gmax;
@@ -8753,7 +8825,6 @@ void US_Hydrodyn_Saxs_Hplc::update_gauss_mode()
       break;
    }
 
-   int percharwidth = 1 + ( 7 * ( USglobal->config_list.fontSize - 1 ) / 10 );
+   // int percharwidth = 1 + ( 7 * ( USglobal->config_list.fontSize - 1 ) / 10 );
    // pb_gauss_start->setMaximumWidth( percharwidth * ( pb_gauss_start->text().length() + 3 ) );
 }
-

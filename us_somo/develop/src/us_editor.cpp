@@ -12,7 +12,7 @@
 
 #if QT_VERSION < 0x040000
 
-US_Editor::US_Editor( int flag, QWidget * parent, const char *name ) : QFrame(  parent )
+US_Editor::US_Editor( int flag, QWidget * parent, const char * ) : QFrame(  parent )
 {
 #if QT_VERSION < 0x040000
    if ( flag == 0 )
@@ -318,8 +318,8 @@ TextEdit::TextEdit( QWidget *parent ):Q3MainWindow( parent,
    setupTextActions();
 
    tabWidget = new QTabWidget( this );
-   connect( tabWidget, SIGNAL( currentChanged( QWidget * ) ),
-            this, SLOT( editorChanged( QWidget * ) ) );
+   connect( tabWidget, SIGNAL( currentChanged( int ) ),
+            this, SLOT( editorChanged( int ) ) );
    setCentralWidget( tabWidget );
 }
 TextEdit::TextEdit( int id, QWidget * parent,
@@ -331,8 +331,8 @@ TextEdit::TextEdit( int id, QWidget * parent,
    setupTextActions();
 
    tabWidget = new QTabWidget( this );
-   connect( tabWidget, SIGNAL( currentChanged( QWidget * ) ),
-            this, SLOT( editorChanged( QWidget * ) ) );
+   connect( tabWidget, SIGNAL( currentChanged( int ) ),
+            this, SLOT( editorChanged( int ) ) );
    setCentralWidget( tabWidget );
 }
 
@@ -941,7 +941,7 @@ void TextEdit::alignmentChanged( int a )
       actionAlignJustify->setOn( true );
 }
 
-void TextEdit::editorChanged( QWidget * )
+void TextEdit::editorChanged( int )
 {
    if ( !currentEditor() )
       return;
@@ -950,11 +950,11 @@ void TextEdit::editorChanged( QWidget * )
    alignmentChanged( currentEditor()->alignment() );
 }
 #else
-TextEdit::TextEdit( QWidget * p, const char *name ) : QFrame( p )
+TextEdit::TextEdit( QWidget * p, const char * ) : QFrame( p )
 {
 }
 
-TextEdit::TextEdit( int, QWidget * p, const char *name ) : QFrame( p )
+TextEdit::TextEdit( int, QWidget * p, const char * ) : QFrame( p )
 {
 }
 

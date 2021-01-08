@@ -9,7 +9,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
    return os << qPrintable(str);
 }
 
-US_Write_Config::US_Write_Config( QObject* parent, const char* name) 
+US_Write_Config::US_Write_Config( QObject* parent, const char* ) 
    : QObject( parent ) 
 {
 }

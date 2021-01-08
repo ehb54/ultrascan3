@@ -1683,7 +1683,7 @@ surfracer_main(float prober,
          /*This part of the program loads up atomic coordinates from the file and assigns radii */
          i = 0;         /*atom number counter */
          {
-            system("pwd");
+            if ( system("pwd") ) {};
             QString outfile = QString("group_%1_%2.mod")
                .arg(atom_group)
                .arg(recheck ? "bead" : "atom");

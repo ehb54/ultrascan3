@@ -31,7 +31,7 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
                                                csv csv1,
                                                void *us_hydrodyn, 
                                                QWidget *p, 
-                                               const char *name
+                                               const char *
                                                ) : QFrame( p )
 {
    this->csv1 = csv1;

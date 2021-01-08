@@ -48,7 +48,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 US_Hydrodyn_Saxs_1d::US_Hydrodyn_Saxs_1d(
                                          void *us_hydrodyn, 
                                          QWidget *p, 
-                                         const char *name
+                                         const char *
                                          ) : QFrame( p )
 {
    this->us_hydrodyn = us_hydrodyn;

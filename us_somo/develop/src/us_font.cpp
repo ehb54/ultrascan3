@@ -9,7 +9,7 @@
 #include <QFrame>
 #include <QCloseEvent>
 
-US_Font::US_Font(QString *temp_fontFamily, int *temp_fontSize, QWidget *p, const char *name) : QDialog( p )
+US_Font::US_Font(QString *temp_fontFamily, int *temp_fontSize, QWidget *p, const char *) : QDialog( p )
 {
    USglobal=new US_Config();
       

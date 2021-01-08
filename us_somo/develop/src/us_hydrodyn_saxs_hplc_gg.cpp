@@ -664,3 +664,140 @@ bool US_Hydrodyn_Saxs_Hplc::gg_fit_replot() {
    gg_fit_vector( ggaussian_last_chi2, ggaussian_last_pfit_P );
    return true;
 }
+
+bool US_Hydrodyn_Saxs_Hplc::data_point_window( vector < double > &q, vector < double > &I ) {
+   // takes current data and returns vectors of point window size centered about current center
+   // used for gauss_local_caruanas() & gauss_local_gauss()
+
+   int pts = le_gauss_local_pts->text().toInt();
+
+   if ( pts < 3 ) {
+      editor_msg( "red", us_tr( "Internal error: data_point_window() local pts less than 3" ) );
+      return false;
+   }
+
+   q.resize( pts );
+   I.resize( pts );
+
+   // find and copy relevant points
+
+   if ( !f_qs.count( wheel_file ) ||
+        !f_Is.count( wheel_file ) ) {
+      editor_msg( "red", us_tr( "Internal error: data_point_window() wheel file has not points" ) );
+      return false;
+   }
+
+   vector < double > *t_q = &f_qs[ wheel_file ];
+   vector < double > *t_I = &f_Is[ wheel_file ];
+
+   int t_q_pts = (int) t_q->size();
+      
+   if ( t_q_pts <= pts ) {
+      editor_msg( "red", us_tr( "Internal error: data_point_window() wheel file has too few points" ) );
+      return false;
+   }
+
+   double center = le_gauss_pos->text().toDouble();
+
+   // find center in q
+
+   int start_pos = 0;
+   int end_pos   = t_q_pts - 1;
+   
+   int this_pos  = t_q_pts / 2;
+   int next_pos  = this_pos;
+
+   do {
+      this_pos = next_pos;
+      if ( (*t_q)[ this_pos ] > center ) {
+         next_pos  = ( this_pos + start_pos ) / 2;
+         end_pos   = this_pos;
+      } else {
+         next_pos  = ( this_pos + end_pos ) / 2;
+         start_pos = this_pos;
+      }
+   } while ( this_pos != next_pos && start_pos < end_pos );
+
+   this_pos = next_pos;
+   start_pos = this_pos - (pts / 2);
+   if ( start_pos < 0 ) {
+      start_pos = 0;
+   }
+
+   QTextStream tso(stdout);
+   tso << QString().sprintf(
+                            "center       %g\n"
+                            "this_pos     %d\n"
+                            "q[this_pos]  %g\n"
+                            "start_pos    %d\n"
+                            "q[start_pos] %g\n"
+                            ,center
+                            ,this_pos
+                            ,(*t_q)[this_pos]
+                            ,start_pos
+                            ,(*t_q)[start_pos]
+                            );
+
+   
+   for ( int i = 0; i < pts; ++i ) {
+      q[ i ] = (*t_q)[start_pos + i];
+      I[ i ] = (*t_I)[start_pos + i];
+   }
+
+   return true;
+}
+
+void US_Hydrodyn_Saxs_Hplc::gauss_local_caruanas() {
+   qDebug() << ":gauss_local_caruanas()";
+
+   vector < double > q;
+   vector < double > I;
+   if ( !data_point_window( q, I ) ) {
+      return;
+   }
+   US_Vector::printvector2( "q,I", q, I );
+
+   double mu;
+   double sigma;
+   double amp;
+
+   US_LUD us_lud;
+
+   if ( !us_lud.caruanas( q, I, mu, sigma, amp ) ) {
+      editor_msg( "red", QString( "Error: %1" ).arg( us_lud.errormsg ) );
+      return;
+   }
+
+   // ok, update gaussian
+   le_gauss_pos       ->setText( QString( "%1" ).arg( mu    ) );
+   le_gauss_pos_width ->setText( QString( "%1" ).arg( sigma ) );
+   le_gauss_pos_height->setText( QString( "%1" ).arg( amp   ) );
+   
+}
+
+void US_Hydrodyn_Saxs_Hplc::gauss_local_guos() {
+   qDebug() << ":gauss_local_guos()";
+   
+   vector < double > q;
+   vector < double > I;
+   if ( !data_point_window( q, I ) ) {
+      return;
+   }
+
+   double mu;
+   double sigma;
+   double amp;
+
+   US_LUD us_lud;
+
+   if ( !us_lud.guos( q, I, mu, sigma, amp ) ) {
+      editor_msg( "red", QString( "Error: %1" ).arg( us_lud.errormsg ) );
+      return;
+   }
+
+   // ok, update gaussian
+
+   le_gauss_pos       ->setText( QString( "%1" ).arg( mu    ) );
+   le_gauss_pos_width ->setText( QString( "%1" ).arg( sigma ) );
+   le_gauss_pos_height->setText( QString( "%1" ).arg( amp   ) );
+}

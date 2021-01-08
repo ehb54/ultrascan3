@@ -86,7 +86,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer_Nth : public QDialog
       // ------ plot section
 
       PC *                                    pc;
-      QwtPlot *                               plot_data;
+      mQwtPlot *                              plot_data;
       US_Plot *                               usp_plot_data;
    private slots:
       void usp_config_plot_data( const QPoint & );

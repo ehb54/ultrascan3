@@ -16,6 +16,9 @@
 #include "qwt_plot_curve.h"
 #include "qwt_plot_canvas.h"
 #include "qwt_symbol.h"
+#include "qwt/scrollbar.h"
+#include "qwt/scrollzoomer.h"
+#include "us_mqt.h"
 
 
 //! \brief A class to implement plot zooming
@@ -55,7 +58,7 @@ class US_EXTERN US_Plot : public QHBoxLayout
       //! \param x_axis - The title of the x (bottom) axis
       //! \param y_axis - The title of the y (left) axis
 
-      US_Plot( QwtPlot*& plot, const QString&, const QString&, const QString&, QWidget * parent = 0 );
+      US_Plot( mQwtPlot*& plot, const QString&, const QString&, const QString&, QWidget * parent = 0 );
 
       //! Make access to the zoom button public
       QToolButton* btnZoom;
@@ -67,6 +70,9 @@ class US_EXTERN US_Plot : public QHBoxLayout
          MODE_GAUSSIAN,
       };
 
+      plot_rescale_mode rescale_mode;
+      ScrollZoomer * scroll_zoomer;
+
    signals:
       //! \brief A signal that provides the bounding rectangle of a zoomed area
 #if QT_VERSION < 0x050000
@@ -77,7 +83,7 @@ class US_EXTERN US_Plot : public QHBoxLayout
 
    private:
       US_PlotConfig* configWidget;
-      QwtPlot*       plot;
+      mQwtPlot*       plot;
 
       QwtPlotZoomer* zoomer;
       QwtPlotPicker* picker;

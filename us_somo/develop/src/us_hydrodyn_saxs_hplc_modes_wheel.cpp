@@ -506,6 +506,7 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel( bool from_wheel_save )
 {
    errors_were_on = plot_errors->isVisible();
    hide_widgets( plot_errors_widgets, true );
+   cb_plot_errors_group->setChecked( true );
 
    disable_all();
    switch ( current_mode )

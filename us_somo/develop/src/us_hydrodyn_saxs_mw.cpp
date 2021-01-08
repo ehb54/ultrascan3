@@ -16,7 +16,7 @@ US_Hydrodyn_Saxs_Mw::US_Hydrodyn_Saxs_Mw(
                                          map < QString, QString > * remember_mw_source,
                                          bool allow_none,
                                          QWidget *p,
-                                         const char *name
+                                         const char *
                                          ) : QDialog( p )
 {
    this->msg = msg;

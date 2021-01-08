@@ -19,7 +19,7 @@ US_Hydrodyn_Saxs_Hplc_Baseline_Best::US_Hydrodyn_Saxs_Hplc_Baseline_Best(
                                                                          map < QString, double >                 dparameters,
                                                                          map < QString, vector < double > >      vdparameters,
                                                                          QWidget *                               p,
-                                                                         const char *                            name
+                                                                         const char *                            
                                                                          ) : QFrame(  p )
 {
    this->us_hydrodyn                          = us_hydrodyn;

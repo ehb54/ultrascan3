@@ -74,6 +74,23 @@ bool US_Timer::stop_timer( QString qs )
    return true;
 }
 
+QString US_Timer::time_min_sec( QString qs )
+{
+   if ( !timers.count( qs ) )
+   {
+      return QString("US_Timer::Error: undefined timer: %1\n").arg( qs );
+   }
+
+   if ( !counts[ qs ] )
+   {
+      return QString("US_Timer::Error: no usage counts for timer: %1\n").arg( qs );
+   }
+
+   int minutes    = floor( (double) times[ qs ] / 60000.0 );
+   double seconds = ( times[ qs ] - ( minutes * 60000 ) ) / 1000.0;
+   return QString( "%1m %2s" ).arg( minutes ).arg( seconds );
+}
+
 QString US_Timer::list_time( QString qs )
 {
    if ( !timers.count( qs ) )

@@ -17,7 +17,7 @@ US_Hydrodyn_Pdb_Tool_Renum::US_Hydrodyn_Pdb_Tool_Renum(
                                                        void                     *              us_hydrodyn,
                                                        map < QString, QString > *              parameters,
                                                        QWidget *                               p,
-                                                       const char *                            name
+                                                       const char *                            
                                                        ) : QDialog( p )
 {
    this->us_hydrodyn                          = us_hydrodyn;

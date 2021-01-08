@@ -14,7 +14,7 @@ US_Hydrodyn_Saxs_Conc::US_Hydrodyn_Saxs_Conc(
                                              csv &csv1,
                                              void *saxs_window,
                                              QWidget *p, 
-                                             const char *name
+                                             const char *
                                              ) : QDialog( p )
 {
    org_csv = &csv1;

@@ -64,6 +64,7 @@ struct batch_info
    QString csv_saxs_name;
    bool hydro;
    bool zeno;
+   bool grpy;
    bool hullrad;
    bool avg_hydro;
    QString avg_hydro_name;
@@ -169,6 +170,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       QCheckBox     *cb_compute_prr_std_dev;
       QCheckBox     *cb_hydro;
       QCheckBox     *cb_zeno;
+      QCheckBox     *cb_grpy;
       QCheckBox     *cb_hullrad;
       QCheckBox     *cb_avg_hydro;
       QLineEdit     *le_avg_hydro_name;
@@ -205,11 +207,6 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       QFont ft;
 
       bool          any_pdb_in_list;
-#ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
 
       map < QString, int > status; 
 
@@ -237,11 +234,6 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       vector < vector < double > > saxs_prr_norm;
       vector < float > saxs_prr_mw;
 
-#ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
-#endif
       void save_csv_saxs_iqq( bool quiet = false );
       void save_csv_saxs_prr();
       QString vector_double_to_csv( vector < double > vd );
@@ -262,6 +254,9 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       csv          cluster_csv_dmd;
 
       void         set_issue_info( bool as_batch = true );
+
+      void         stop_processing();
+      bool         overwriteForcedOn;
 
    public :
       void add_file( QString filename );
@@ -297,6 +292,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       void set_hydro();
       void set_zeno();
       void set_hullrad();
+      void set_grpy();
       void set_iqq();
       void set_saxs_search();
       void set_prr();

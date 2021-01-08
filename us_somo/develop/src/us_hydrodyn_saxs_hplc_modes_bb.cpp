@@ -455,6 +455,7 @@ void US_Hydrodyn_Saxs_Hplc::blanks_enables()
 #endif
                  );
    pb_rescale             ->setEnabled( true );
+   pb_rescale_y           ->setEnabled( true );
    pb_view                ->setEnabled( true );
 }
 
@@ -1005,6 +1006,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_enables()
       pb_line_width          ->setEnabled( true );
       pb_color_rotate        ->setEnabled( true );
       pb_rescale             ->setEnabled( true );
+      pb_rescale_y           ->setEnabled( true );
       cb_eb                  ->setEnabled( true );
       pb_pp                  ->setEnabled( true );
       wheel_enables();
@@ -1087,6 +1089,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_enables()
 #endif
                  );
    pb_rescale             ->setEnabled( true );
+   pb_rescale_y           ->setEnabled( true );
    pb_view                ->setEnabled( true );
 }
 

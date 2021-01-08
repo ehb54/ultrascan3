@@ -118,7 +118,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit_Global : public QDialog
       QHBoxLayout   *hbl_test;
       vector < QWidget * > test_widgets;
       QPushButton   *pb_test;
-      QwtPlot       * plot_test;
+      mQwtPlot      * plot_test;
       US_Plot       * usp_plot_test;
    private slots:
       void usp_config_plot_test( const QPoint & );

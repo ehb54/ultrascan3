@@ -11,7 +11,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
    return os << qPrintable(str);
 }
 
-US_License::US_License(QWidget *parent, const char *name) : QDialog( parent )
+US_License::US_License(QWidget *parent, const char *) : QDialog( parent )
 {
    int spacing=5, column1 = 90, column2 = 10, column3=110;
    int xpos=spacing, ypos=spacing;
