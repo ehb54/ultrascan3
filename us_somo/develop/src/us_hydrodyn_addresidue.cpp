@@ -54,7 +54,7 @@ US_AddResidue::US_AddResidue(bool *widget_flag, const double hydrovol, QWidget *
    atom_filename = US_Config::get_home_dir() + "etc/somo.atom";
    residue_filename = US_Config::get_home_dir() + "etc/somo.residue";
    setPalette( PALET_FRAME );
-   setWindowTitle(us_tr("SoMo: Modify Residue Lookup Tables"));
+   setWindowTitle(us_tr("SoMo: Modify Residue Lookup Table"));
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
