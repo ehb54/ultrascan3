@@ -33,7 +33,7 @@ contains( DEFINES, "OSX" ) {
     
      LIBS +=  -L$$US3SOMOPATH/lib -lus_somo
     }
-    LIBS += -L$$US3PATH/lib -l$$QWT3DLIBNAME
+#    LIBS += -L$$US3PATH/lib -l$$QWT3DLIBNAME
 }
 
 win32 {
