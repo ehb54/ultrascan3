@@ -23,18 +23,18 @@
 <h2>
 SOMO - Add/Edit SAXS Atomic Coefficients Lookup Table Module:</h2>
 <p>
-<img SRC="somo-saxs_coeff1.png" ALT="SOMO Add/Edit SAXS Coefficients Lookup Table SCREEN">
+
+<h3><center>Last updated: January 2021</center></h3><p>
+
+<img SRC="somo-saxs_4_5coeff.png" ALT="SOMO Add/Edit SAXS Coefficients Lookup Table SCREEN">
 </center>
 <p>
 
-In this module, you can edit the atomic SAXS coefficients table. For each atom, the scattering
-factor is approximate by a sum of four exponentials requiring eight coefficients and
-a constant. The values in the somo.saxs_atoms are taken from the International Tables of
-Crystallography, but can be edited at will.<p>
+In this module, you can edit the atomic SAXS coefficients table. For each atom, the scattering factor can be approximated by a sum of either four or five Gaussians, requiring eight or ten coefficients, respectively,  and a constant term. Since the five term Gaussians are not available for all atoms, we have maintained both sets of coefficients in this Table. Users can then choose which ones to apply in the <a href="somo_saxs_options.html"><b>US-SOMO SAS Miscellaneous Options</b></a> module. The 4 term Gaussians values in the <i>somo.saxs_atoms</i> table are taken from the International Tables of Crystallography, while the 5 terms are from Waasmaier and Kirfel, Acta Cryst. A51:416-431, 1991; Yonekura et al., IUCrJ 5:348-353, 2018. Both sets can be edited at will.<p>
 <ul>
 <li>
 A pull-down list of the  entries currently present in the table can be accessed in the first field,
-<i><b>Number of SAXS Entries in this file</b></i>.
+<i><b>Number of SAXS Entries in this file</b></i>. Note that the first entry "<i><b>A2B</i></b>" reports the scattering factors that are used for simulation of SAXS curves for <i><b>AtoB</i></b> grid bead models.
 <li>
 New entries can be added by writing an identifier in the following field, <i><b>SAXS Atom Identifier:</b></i>.
 This identifier will be carried over to the <i>somo.hybrid</i> and <i>somo.atom</i> tables,
@@ -69,7 +69,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on April 30, 2012.
+Last modified on January 7, 2021.
 </font>
 </body>
 </html>
