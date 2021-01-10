@@ -8,7 +8,7 @@
 int US_Hydrodyn::read_config(QFile& f)
 {
    QString str;
-   QTextStream( stdout ) << "read config\n";
+   // QTextStream( stdout ) << "read config\n";
    if ( f.fileName() == QString() ||
         f.fileName().isEmpty() )
    {

@@ -2817,7 +2817,7 @@ void US_Hydrodyn::load_pdb()
          }
       }
    }
-   cout << somo_pdb_dir << endl;
+   // cout << somo_pdb_dir << endl;
    
    QString use_dir = 
       path_load_pdb.isEmpty() ?
