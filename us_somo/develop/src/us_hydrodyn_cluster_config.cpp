@@ -433,7 +433,7 @@ void US_Hydrodyn_Cluster_Config::add_new()
                                         us_tr( "US-SOMO: Cluster Config: Add new system" ),
                                         us_tr( "Enter the unique system name:" ), 
                                         QLineEdit::Normal,
-                                        QString::null, 
+                                        QString(), 
                                         &ok, 
                                         this );
    if ( !ok )
@@ -474,7 +474,7 @@ void US_Hydrodyn_Cluster_Config::add_new()
                                              ).arg( lb_systems->item( pos )->text() ),
                                      us_tr( "&Yes" ),
                                      us_tr( "&No" ),
-                                     QString::null,
+                                     QString(),
                                      0,
                                      1
                                      ) )

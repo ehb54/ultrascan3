@@ -1829,7 +1829,7 @@ void US_AddResidue::select_r_atom(int val)
 
 void US_AddResidue::select_residue(int val)
 {
-   qDebug() << "select_residue( " << val << " )";
+   // qDebug() << "select_residue( " << val << " )";
    reset( false );
    existing_residue = true;
    QString str;
@@ -2551,7 +2551,7 @@ void US_AddResidue::set_hydration()
 
 void US_AddResidue::set_enable_pKa()
 {
-   qDebug() << "set_enable_pKa()";
+   // qDebug() << "set_enable_pKa()";
    if (cb_enable_pKa->isChecked()) {
       pKa_flag = true;
       lbl_pKa->show();

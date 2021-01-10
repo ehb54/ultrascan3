@@ -1221,7 +1221,7 @@ void US_Hydrodyn_Batch::load_somo()
                                                          "What would you like to do?\n")),
                                               us_tr("Use &Batch current mode settings"), 
                                               us_tr("Keep &SOMO's setting"),
-                                              QString::null,
+                                              QString(),
                                               0, // Stop == button 0
                                               0 // Escape == button 0
                                              ) )
@@ -3215,7 +3215,7 @@ void US_Hydrodyn_Batch::update_font()
 void US_Hydrodyn_Batch::save()
 {
    QString fn;
-   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
+   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString() , QString() );
    if(!fn.isEmpty() )
    {
       QString text = editor->toPlainText();

@@ -381,7 +381,7 @@ void US_Hydrodyn_BD::closeEvent(QCloseEvent *e)
 // void US_Hydrodyn_BD::save()
 // {
 //    QString fn;
-//    fn = QFileDialog::getSaveFileName(QString::null, QString::null,this );
+//    fn = QFileDialog::getSaveFileName(QString(), QString(),this );
 //    if(!fn.isEmpty() )
 //    {
 //       QString text = editor->toPlainText();

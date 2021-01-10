@@ -2221,7 +2221,7 @@ void US_Hydrodyn::pdb_visualization()
 void US_Hydrodyn::load_config()
 {
    QString fname = QFileDialog::getOpenFileName( 0 , "Please select a SOMO configuration file..." , US_Config::get_home_dir() + "/etc", "*.config" , 0 );
-   if ( fname == QString::null )
+   if ( fname == QString() )
    {
       QColor save_color = editor->textColor();
       editor->setTextColor("red");
@@ -2525,7 +2525,7 @@ int US_Hydrodyn::issue_non_coded( bool quiet ) {
                                            )
                                        ,us_tr( "Skip non-coded residues" )
                                        ,us_tr( "Stop processing" )
-                                       ,QString::null
+                                       ,QString()
                                        ,1
                                        ,1
                                        ) ) {
@@ -2653,7 +2653,7 @@ int US_Hydrodyn::issue_missing_atom( bool quiet ) {
                                            )
                                        ,us_tr( "Skip residues with missing atoms" )
                                        ,us_tr( "Stop processing" )
-                                       ,QString::null
+                                       ,QString()
                                        ,1
                                        ,1
                                        ) ) {
@@ -2817,7 +2817,7 @@ void US_Hydrodyn::load_pdb()
          }
       }
    }
-   cout << somo_pdb_dir << endl;
+   // cout << somo_pdb_dir << endl;
    
    QString use_dir = 
       path_load_pdb.isEmpty() ?
@@ -4149,7 +4149,7 @@ void US_Hydrodyn::update_font()
 void US_Hydrodyn::save()
 {
    QString fn;
-   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
+   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString() , QString() );
    if(!fn.isEmpty() )
    {
       QString text = editor->toPlainText();

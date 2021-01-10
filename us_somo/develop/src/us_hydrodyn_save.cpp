@@ -710,7 +710,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
    // build field_to_save_data, ..._type
    for ( unsigned int i = 0; i < field.size(); i++ )
    {
-      QTextStream( stderr ) << QString( "us_hydrodyn_save: %1 %2\n" ).arg( i ).arg( field[ i ] );
+      // QTextStream( stderr ) << QString( "us_hydrodyn_save: %1 %2\n" ).arg( i ).arg( field[ i ] );
       if ( field[i] == "results.name" )
       {
          field_to_save_data[field[i]] = (void *)&(save->data.results.name);

@@ -302,7 +302,7 @@ void US_Hydrodyn_Cluster_Results::update_font()
 void US_Hydrodyn_Cluster_Results::save()
 {
    QString fn;
-   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
+   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString() , QString() );
    if(!fn.isEmpty() )
    {
       QString text = editor->toPlainText();
@@ -350,7 +350,7 @@ void US_Hydrodyn_Cluster_Results::purge()
                                  us_tr( "Do you want purge these job results?" ),
                                  us_tr( "&Yes" ),
                                  us_tr( "&No" ),
-                                 QString::null, 0, 1 | QMessageBox::Default ) )
+                                 QString(), 0, 1 | QMessageBox::Default ) )
       {
          return;
       }

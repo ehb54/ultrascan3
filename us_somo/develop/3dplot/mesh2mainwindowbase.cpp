@@ -1519,7 +1519,7 @@ void Mesh2MainWindowBase::languageChange()
    QToolTip::add( normButton, tr( "Set standard view" ) );
    lighting->setText( tr( "Lighting" ) );
    QToolTip::add( lighting, tr( "Calibrate Lighting" ) );
-   lightingswitch->setText( QString::null );
+   lightingswitch->setText( QString() );
    QToolTip::add( lightingswitch, tr( "Turn Lighting on/off." ) );
    TextLabel2->setText( tr( "Polygon Offset" ) );
    QToolTip::add( offsSlider, tr( "Increase surface quality by setting polygon offset (OpenGL specific)" ) );

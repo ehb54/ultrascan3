@@ -717,7 +717,7 @@ void US_Hydrodyn_Saxs_1d::update_font()
 void US_Hydrodyn_Saxs_1d::save()
 {
    QString fn;
-   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
+   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString() , QString() );
    if(!fn.isEmpty() )
    {
       QString text = editor->toPlainText();
@@ -2553,7 +2553,7 @@ void US_Hydrodyn_Saxs_1d::save_data()
       I[ i ] /= ( double ) plot_count;
    }
 
-   QString fname = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
+   QString fname = QFileDialog::getSaveFileName( this , windowTitle() , QString() , QString() );
    bool ok_to_write = true;
    if ( fname.isEmpty() )
    {

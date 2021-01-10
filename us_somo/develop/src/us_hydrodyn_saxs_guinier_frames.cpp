@@ -735,7 +735,7 @@ void US_Hydrodyn_Saxs_Guinier_Frames::update_reffile( const QString & )
 {
    QString use_dir;
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
-   QString filename = QFileDialog::getOpenFileName( this , us_tr( "Select a file for Reference concentration intensity curve" ) , use_dir , QString::null );
+   QString filename = QFileDialog::getOpenFileName( this , us_tr( "Select a file for Reference concentration intensity curve" ) , use_dir , QString() );
 
 
    disconnect( le_reffile, SIGNAL( textChanged( const QString & ) ), 0, 0 );

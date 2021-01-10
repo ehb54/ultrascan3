@@ -289,7 +289,7 @@ double US_Hydrodyn::protons_at_pH( double pH, const struct PDB_model & model ) {
 }
          
 double US_Hydrodyn::compute_isoelectric_point( const struct PDB_model & model ) {
-   QTextStream( stdout ) << "US_Hydrodyn::compute_isoelectric_point() start" << endl;
+   // QTextStream( stdout ) << "US_Hydrodyn::compute_isoelectric_point() start" << endl;
    // later for better performance  would could skip residues/atom with 1 fraction and count up residue/atom pairs to multiply
 
    // bisection scan

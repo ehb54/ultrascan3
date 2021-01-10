@@ -277,7 +277,7 @@ void US_ImageViewer::updateStatus()
 void US_ImageViewer::saveImage( int item )
 {
    const char* fmt = saveimage->text(item);
-   QString savefilename = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
+   QString savefilename = QFileDialog::getSaveFileName( this , caption() , QString() , QString() );
 
    if ( !savefilename.isEmpty() )
       if ( !image.save( savefilename, fmt ) )
@@ -290,7 +290,7 @@ void US_ImageViewer::saveImage( int item )
 void US_ImageViewer::savePixmap( int item )
 {
    const char* fmt = savepixmap->text(item);
-   QString savefilename = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
+   QString savefilename = QFileDialog::getSaveFileName( this , caption() , QString() , QString() );
 
    if ( !savefilename.isEmpty() )
       if ( !pmScaled.save( savefilename, fmt ) )
@@ -310,7 +310,7 @@ void US_ImageViewer::newWindow()
 */
 void US_ImageViewer::openFile()
 {
-   QString newfilename = QFileDialog::getOpenFileName( this , caption() , QString::null , QString::null );
+   QString newfilename = QFileDialog::getOpenFileName( this , caption() , QString() , QString() );
 
    if ( !newfilename.isEmpty() ) {
       loadImage( newfilename ) ;

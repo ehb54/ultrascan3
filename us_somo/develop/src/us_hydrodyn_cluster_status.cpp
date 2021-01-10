@@ -409,7 +409,7 @@ void US_Hydrodyn_Cluster_Status::update_font()
 void US_Hydrodyn_Cluster_Status::save()
 {
    QString fn;
-   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
+   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString() , QString() );
    if(!fn.isEmpty() )
    {
       QString text = editor->toPlainText();
@@ -694,7 +694,7 @@ void US_Hydrodyn_Cluster_Status::complete_remove()
                               us_tr( "What do you want to do with the canceled jobs?" ),
                               us_tr( "&Push back to unsubmitted" ),
                               us_tr( "&Remove completely" ),
-                              QString::null, 0, 1 ) )
+                              QString(), 0, 1 ) )
    {
       editor_msg( "black", "completely removing" );
       for ( map < QTreeWidgetItem *, QString >::iterator it = jobs.begin();

@@ -463,7 +463,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::update_inputfile( const QString & )
 {
    QString use_dir;
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
-   QString filename = QFileDialog::getOpenFileName( this , us_tr( "Select a file for Input file" ) , use_dir , QString::null );
+   QString filename = QFileDialog::getOpenFileName( this , us_tr( "Select a file for Input file" ) , use_dir , QString() );
 
 
    disconnect( le_inputfile, SIGNAL( textChanged( const QString & ) ), 0, 0 );

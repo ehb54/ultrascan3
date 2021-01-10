@@ -188,7 +188,7 @@ void US_Editor::saveAs()
 {
    QString fn;
 
-   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
+   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString() , QString() );
    if ( !fn.isEmpty() )
    {
       QString text = e->toPlainText();
@@ -631,7 +631,7 @@ void TextEdit::fileNew()
 void TextEdit::fileOpen()
 {
    QString fn =
-      QFileDialog::getOpenFileName( this , windowTitle() , QString::null , us_tr( "All Files (*)" ) );
+      QFileDialog::getOpenFileName( this , windowTitle() , QString() , us_tr( "All Files (*)" ) );
 
    if ( !fn.isEmpty() )
       load( fn );
@@ -664,7 +664,7 @@ void TextEdit::fileSaveAs()
    if ( !currentEditor() )
       return;
    QString fn =
-      QFileDialog::getSaveFileName( this , windowTitle() , QString::null , us_tr( "All Files (*)" ) );
+      QFileDialog::getSaveFileName( this , windowTitle() , QString() , us_tr( "All Files (*)" ) );
 
    if ( !fn.isEmpty() )
    {
