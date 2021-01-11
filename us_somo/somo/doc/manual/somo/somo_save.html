@@ -23,87 +23,86 @@
 <h2>
 SOMO - Select Parameters to be Saved Module:</h2>
 <p>
-<h3><center>Last updated: December 2017 </center></h3><p>
+<h3><center>Last updated: December 2020 </center></h3><p>
 <p>
 
-<img SRC="somo-save.png" ALT="SOMO Parameters to be Saved Screen">
+<img SRC="somo-save_parameters.png" ALT="SOMO Parameters to be Saved Screen">
 </center>
 <p>
-In this module you can select a series of parameters that can be saved in a comma-separated file 
-(extension <i>.csv</i>) at the end of the hydrodynamic computations. The module consists of four,
-tab-selectable screens where the parameters are subdivided according to their origin and characteristics.
-The parameters can be toggled from one window of the panel to the other (left side, list of parameters
-available; right side, parameters to be saved) by clicking on them (multiple selection available) and
-then using the arrows present between the two windows.<br>
-The four screens are <b><i>Main hydro results:</i></b>, <b><i>Additional hydro results:</i></b>, 
-<b><i>Solvent conditions:</i></b>, and <b><i>ASA results:</i></b>. Note that the order by which you select the
-parameters (<i>i.e.</i> the order by which they appear in the right-side window) will be their order in the
-saved file.<p>
-The <b><i>Main hydro results:</i></b> screen contains all parameters which are listed in the
-<a href="somo-results.png"><i><b>Show Hydrodynamic Calculations</b></i></a> pop-up window, <i>i.e.</i>:<br>
-<b>Model name<br>
-Total beads in model<br>
+In this module you can select a series of parameters that can be saved in a comma-separated file (extension <i>.csv</i>) at the end of the hydrodynamic computations. The module consists of six, tab-selectable screens where the parameters are subdivided according to their origin and characteristics. The parameters can be toggled from one window of the panel to the other (left side, list of parameters available; right side, parameters to be saved) by clicking on them (multiple selection available; you can scroll down while keeping pressed the central mouse button to select a contiguos series of parameters) and then using the arrows present between the two windows.<br>
+The six screens are <b><i>Main hydro results:</i></b>, <b><i>Additional SMI results:</i></b>, <b><i>Additional ZENO results:</i></b>, <b><i>Additional GRPY results:</i></b>, <b><i>Solvent conditions:</i></b>, and <b><i>ASA results:</i></b>. Note that the order by which you select the parameters (<i>i.e.</i> the order by which they appear in the right-side window) will be their order in the saved file. The <b>Model name</b> "parameter" is the only one which is fixed, alwas available and not selectable, because it will be used to distinguish the results of individual models when multiple models (such as from NMR-style files) are analyzed in a single run.<p>
+The <b><i>Main hydro results:</i></b> screen contains all parameters which are listed in the <a href="somo-results.png"><i><b>Show Hydrodynamic Calculations</b></i></a> pop-up window, plus some other general parameters <i>i.e.</i>:<br>
+<p>
+<b>Total beads in model<br>
 Used beads in model<br>
 Molecular mass [Da]<br>
 Partial specific volume [cm^3/g]<br>
 Sedimentation coefficient s [S]<br>
 Translational diffusion coefficient D [cm^2/sec]<br>
 Stokes radius [nm]<br>
-Frictional ratio<br>
-Radius of gyration [nm] (from bead model)<br>
-Relaxation time tau(h) [ns]<br>
-Intrinsic viscosity [cm^3/g]</b><br>
-<p>
-The <b><i>Additional hydro results:</i></b> screen contains all the other parameters which are reported
-in the <i>*.hydro_res</i> file:<br>
-<b>Total surface area of beads in the model [nm^2]<br>
-Total volume of beads in the model [nm^3]<br>
-Number of unused beads</b> (<i>this differs from the *.hydro_res file because the used beads are already listed in the <b>Main
-hydro results</b> panel</i>)<br>
-<b>Used bead surface area [nm^2]<br>
-Used bead mass [Da]<br>
-Conversion Factor<br>
 Translational frictional coefficient [g/s]<br>
-Rotational frictional coefficient [g*cm^2/sec]<br>
-Rotational diffusion coefficient [1/sec]<br>
-Rotational frictional coefficient [X,Y,Z] [g*cm^2/sec]</b> (<i>this selects the three separate rot. frictional coeff. values
-along the X, Y, and Z axes</i>)<br>
-<b>Rotational diffusion coefficient [X,Y,Z] [1/sec]</b> (<i>this selects the three separate rot. diff. coeff. values
-along the X, Y, and Z axes</i>)<br>
-<b>Rotational Stokes' radius [X,Y,Z] [1/sec]</b> (<i>this selects the three separate rot. Stokes' radius values
-along the X, Y, and Z axes</i>)<br>
+Frictional ratio<br>
+Relaxation time tau(h) [ns]<br>
+Intrinsic viscosity [cm^3/g]<br>
+Radius of gyration [nm] (from bead model)<br>
+Used beads volume [nm^3]<br>
+Used beads surface area [nm^2]<br>
+Used bead mass [Da]<br>
+Total surface area of beads in the model [nm^2]<br>
+Total volume of beads in the model [nm^3]<br>
+Number of unused beads (</b><i>this differs from what is reported in the *.hydro_res file because the used beads are already listed in the <b>Main hydro results</b> panel</i>)<br>
+<b>Conversion Factor<br>
+Processing time [s]<br>
+Maximum extensions [X, Y, Z]<br>
+Axial ratios [X:Z, X:Y, Y:Z]</b><br>
+
+<p>
+The <b><i>Additional SMI results:</i></b> screen contains all the other parameters which are reported in the <i>*.hydro_res</i> file:<br>
+<br>
 <b>Centre of resistance [X, Y, Z] [nm]</b> (<i>X, Y, Z coordinates saved</i>)<br>
 <b>Centre of mass [X, Y, Z] [nm]</b> (<i>X, Y, Z coordinates saved</i>)<br>
-<b>Centre of diffusion [X, Y, Z] [nm]</b> (<i>X, Y, Z coordinates saved</i>)<br>
-<b>Centre of viscosity [X, Y, Z] [nm]</b> (<i>X, Y, Z coordinates saved</i>)<br>
-<b>Uncorrected intrinsic viscosity [cm^3/g]<br>
-Uncorrected Einstein's radius [nm]<br>
-Corrected intrinsic viscosity [cm^3/g]<br>
-Corrected Einstein's radius [nm]<br>
+<b>Centre of diffusion [X, Y, Z] [nm]</b> (<i>X, Y, Z coordinates saved</i>)</b><br>
+<p>
+The <b><i>Additional ZENO results:</i></b> screen contains parameters that are calculated only by the <b><i>ZENO</i></b> method, like the <i>standard deviations (s.d.)</i>, obtained from the averages of many blocks of independent runs:<br>
+<b> <p>
+Sedimentation coefficient s.d.<br>
+Translational diffusion coefficient D s.d.<br>
+Stokes radius s.d.<br>
+Translational frictional coefficient s.d.<br>
+Frictional ratio s.d.<br>
+Intrisic viscosity s.d.<br>
+Dt/d0<br>
+Dt/d0 s.d.<br>
+Dimensionless intrinsic viscosity [eta]<br>
+Dimensionless intrinsic viscosity s.d.</b>
+<p>
+The <b><i>Additional GRPY results:</i></b> screen contains additional parameters that are calculated by the <b><i>GRPY</b></i> method:<br>
+<b><p>
+Rotational frictional coefficient [g*cm^2/s]<br>
+Rotational diffusion coefficient [1/s]<br>
+Rotational frictional coefficent [X, Y, Z] [g*cm^2/s]<br>
+Rotational diffusion coefficent [X, Y, Z] [1/s]<br>
+Rotational Stokes' radius [X, Y, Z] [nm]<br>
 Relaxation times, tau(1) [ns]<br>
 Relaxation times, tau(2) [ns]<br>
 Relaxation times, tau(3) [ns]<br>
 Relaxation times, tau(4) [ns]<br>
 Relaxation times, tau(5) [ns]<br>
 Relaxation times, tau(m) [ns]<br>
-Relaxation times, tau(h) [ns]<br>
-Maximun extensions [X, Y, Z] [nm]</b> (<i>X, Y, Z coordinates saved</i>)<br>
-<b>Axial ratios [ X:Z, X:Y, Y:Z ]<br>
-Processing time [s]</b>
+GRPY Einstein's radius [nm]</b>
 <p>
 The <b><i>Solvent conditions:</i></b> screen contains the parameters as set in the <a href=somo_hydro.html><b><i>
-Hydrodynamic Calculations</i></b></a> options module:<br>
+Hydrodynamic Calculations</i></b></a> options module:<br><p>
 <b>Solvent name<br>
 Solvent acronym<br>
 Solvent Temperature [&deg;C]<br>
 Solvent viscosity [cP]<br>
-Solvent density [g/ml]</b>
+Solvent density [g/ml]<br>
+pH</b>
 <p>
-The <b><i>ASA results:</i></b> screen presently contains only two parameters, derived from the <b>ASAB1</b> execution:<br>
-<b>Radius of gyration (+r) [A] (from PDB atomic structure)</b> (<i>computed by taking into account the actual radius</i> r <i>
-of each atom</i>)<br>
-<b>Radius of gyration (-r) [A] (from PDB atomic structure)</b> (<i>computed without taking into account the actual radius</i> r <i>
-of each atom</i>)
+The <b><i>ASA results:</i></b> screen presently contains only two parameters, derived from the <b>ASAB1</b> execution:<p>
+<b>Radius of gyration (+r) [A] (from PDB atomic structure)</b> (<i>computed by taking into account the actual radius</i> r <i>of each atom</i>)<br>
+<b>Radius of gyration (-r) [A] (from PDB atomic structure)</b> (<i>computed without taking into account the actual radius</i> r <i> of each atom</i>)
 <p>
 
 
@@ -123,7 +122,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on December 18, 2017.
+Last modified on December 18, 2020.
 </font>
 </body>
 </html>
