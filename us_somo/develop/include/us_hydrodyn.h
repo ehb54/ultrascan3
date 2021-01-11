@@ -99,12 +99,6 @@
 #define START_RASMOL
 using namespace std;
 
-#if defined(Q_OS_WIN) 
-# define DEGREE_SYMBOL QString::fromLatin1( "\u00b0" )
-#else
-# define DEGREE_SYMBOL QString::fromStdWString( L"\u00b0" )
-#endif
-
 struct _vdwf {
    double mw;
    double ionized_mw_delta;
