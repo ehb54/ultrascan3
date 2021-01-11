@@ -5,6 +5,12 @@
 
 #include <QtGlobal>
 
+#if defined(Q_OS_WIN) 
+# define DEGREE_SYMBOL QString::fromLatin1( "\u00b0" )
+#else
+# define DEGREE_SYMBOL QString::fromStdWString( L"\u00b0" )
+#endif
+
 //! Color Palettes for GUI elements QT4/QT3
 #if QT_VERSION >= 0x040000
 #include "../include/us_gui_settings.h"
