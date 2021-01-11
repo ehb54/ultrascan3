@@ -1028,7 +1028,7 @@ void US_AddResidue::add()
       //      US_Static::us_message("Attention:", "The residue volume does not match the volume of the beads:\n\n" + str1);
       //      return;
    }
-   info_residue( "add" );
+   // info_residue( "add" );
    for (i=0; i<residue_list.size(); i++)
    {
       if (residue_list[i].name.toUpper() == new_residue.name.toUpper() && residue_list[i].comment.toUpper() == new_residue.comment.toUpper())
@@ -1796,18 +1796,17 @@ void US_AddResidue::select_r_atom(int val)
 
       // pKa enabled
       {
-         QTextStream( stdout ) <<
-            QString().sprintf(
-                              "select_r_atom(%d):\n"
-                              "\tnew_residue.r_atom[%d].ionization_index  %d\n"
-                              "\tr_atom_0.size()                         %d\n"
-                              "\tr_atom_1.size()                         %d\n"
-                              ,val
-                              ,val, new_residue.r_atom[val].ionization_index
-                              ,(int)new_residue.r_atom_0.size()
-                              ,(int)new_residue.r_atom_1.size()
-                              );
-
+         // QTextStream( stdout ) <<
+         //    QString().sprintf(
+         //                      "select_r_atom(%d):\n"
+         //                      "\tnew_residue.r_atom[%d].ionization_index  %d\n"
+         //                      "\tr_atom_0.size()                         %d\n"
+         //                      "\tr_atom_1.size()                         %d\n"
+         //                      ,val
+         //                      ,val, new_residue.r_atom[val].ionization_index
+         //                      ,(int)new_residue.r_atom_0.size()
+         //                      ,(int)new_residue.r_atom_1.size()
+         //                      );
 
          int index = new_residue.r_atom[val].ionization_index;
          bool has_index = index > 0;
@@ -2329,7 +2328,7 @@ void US_AddResidue::info_residue( const QString & msg ) {
    }
 
    TSO << LD;
-
+   
    for ( auto it = new_residue.r_atom_1.begin();
          it != new_residue.r_atom_1.end();
          ++it ) {
@@ -2365,7 +2364,7 @@ bool US_AddResidue::update_pKas( int atomno ) {
 
    TSO << QString( "ionization_index %1\n" ).arg( ionization_index );
 
-   info_residue( "start of update_pKas()" );
+   // info_residue( "start of update_pKas()" );
 
    if ( cb_enable_pKa->isChecked() != pKa_flag ) {
       TSO << "ERROR flag inconsistency\n";
@@ -2466,7 +2465,7 @@ bool US_AddResidue::update_pKas( int atomno ) {
    if ( ok && pKas_need_sort ) {
       TSO << "update_pKas() pKas will be sorted\n";
       map < float, atom > tmp;
-      info_residue( "pre sort" );
+      // info_residue( "pre sort" );
 
       for ( auto it = new_residue.r_atom_1.begin();
             it != new_residue.r_atom_1.end();
@@ -2505,7 +2504,7 @@ bool US_AddResidue::update_pKas( int atomno ) {
                            QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
    }
 
-   info_residue( "end of update_pKas()" );
+   // info_residue( "end of update_pKas()" );
 
    return ok;
 }

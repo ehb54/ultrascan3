@@ -56,7 +56,12 @@ void US_Hydrodyn::read_hybrid_file( QString filename ) {
       }
       f.close();
    } else {
-      editor_msg( "red", QString( us_tr( "Could not read default hybridization file %1" ) ).arg( filename ) );
+      QMessageBox::critical(this, us_tr( windowTitle() ),
+                            QString( us_tr("Please note:\nThe somo.hybrid file '%1' could not be read.\n"
+                                           "This is a critical issue" ) )
+                            .arg( filename ),
+                            QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+      exit(-1);
    }
 }
 
