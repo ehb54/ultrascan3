@@ -1018,7 +1018,7 @@ void US_Hydrodyn::setupGUI()
    pb_view_bead_model->setPalette( PALET_PUSHB );
    connect(pb_view_bead_model, SIGNAL(clicked()), SLOT(view_bead_model()));
 
-   lbl_temperature = new QLabel(us_tr(" Temp. (ºC):"), this);
+   lbl_temperature = new QLabel( us_tr( QString( " Temp. (%1C): " ).arg( DEGREE_SYMBOL ) ), this);
    Q_CHECK_PTR(lbl_temperature);
    lbl_temperature->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_temperature->setPalette( PALET_LABEL );
