@@ -1,0 +1,137 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+
+<head>
+<meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
+	<title>SOMO Bead Model Format</title>
+	<link href="mainstyle3.css" rel="styleSheet" type="text/css">
+</head>
+<style>
+  pre.code {
+  white-space: pre-wrap;
+  }
+  pre.code:before {
+  counter-reset: listing;
+  }
+  pre.code code {
+  counter-increment: listing;
+  }
+  pre.code code::before {
+  content: counter(listing) "  ";
+  display: inline-block;
+  width: 3em;        
+  padding-left: auto;
+  margin-left: auto; 
+  text-align: right;
+  background:  #fcf3cf;
+  }
+</style>
+<body>
+<table BORDER=0 CELLPADDING=5 >
+<tr>
+<td><img SRC="USSOMO-banner.png" BORDER="0" ALT="UltraScan Version"> </td>
+<td>
+<center>
+<h1>
+<i>Manual</i></h1></center>
+</td>
+</tr>
+</table>
+<hr>
+<center>
+<h2>
+SOMO - SOMO Bead Model Format:</h2>
+<p>
+<h3><center>Last updated: January 2021 </center></h3><p>
+</center>
+<p>
+
+  Here we describe the SOMO bead model format.
+  <p>Bead model files <a href=somo_bead_model_output.html>produced</a> in the SOMO format have the extension ".bead_model".
+  <p>Following is an example from a small bead model containing three beads:
+
+  <pre class="code">
+    <code>3	0.676</code>
+    <code>-12.3000	15.2190	16.4980	2.1710	16.030003	1	HIS.PB.A.15	70.7094</code>
+    <code>-11.8771	15.7328	18.9793	2.5584	41.029999	1	HIS.PB.A.15	67.4832</code>
+    <code>-9.5665	12.0546	16.9414	3.5728	80.103195	4	HIS.SC.A.15	203.3945</code>
+    <code></code>
+    <code>Field contents:</code>
+    <code>  Line 1: Number of beads, Global partial specific volume</code>
+    <code>  From line 2 on: X, Y, Z coordinates, Radius, Mass, Color coding, Correspondence with original residues, ASA</code>
+    <code></code>
+    <code>Bead Model Output:</code>
+    <code>  Sequence:                   as in original PDB file</code>
+    <code></code>
+    <code>Model scale (10^-x m) (10 = Angstrom, 9 = nanometer), where x is : 10</code>
+    <code>Bead model built with the following options:</code>
+    <code>ASA Calculation:</code>
+    <code>  Perform ASA Calculation:    On</code>
+    <code>  ASA Method:                 Rolling Sphere</code>
+    <code>  ASA Probe Radius (A):       1.40</code>
+    <code>  SOMO ASA Threshold (A^2):   20.0</code>
+    <code>  SOMO Bead ASA Threshold %:  50.0</code>
+    <code>  ASAB1 Step Size (A):        1.0</code>
+    <code></code>
+    <code>Miscellaneous options:</code>
+    <code>  Calculate vbar                 On</code>
+    <code>  pH                             14.00</code>
+    <code>  Enable Peptide Bond Rule       On</code>
+    <code></code>
+    <code>Molecular weight total: 137.16 [Da]</code>
+  </pre>
+
+
+  <ul>
+    <li>Line 1 contains the following fields:
+      <ol>
+        <li>the Number of beads</li>
+        <li>the partial specific volume</li>
+      </ol>
+    <li>Line 2 through the number of beads plus 1 (4 in this case) contain the bead definitions consisting of the following fields:</li>
+      <ol>
+        <li>X coordinate</li>
+        <li>Y coordinate</li>
+        <li>Z coordinate</li>
+        <li>Radius</li>
+        <li>Mass</li>
+        <li><a href=somo_bead_colors.html>Color coding</a></li>
+        <li>Correspondence with the original residues</li>
+        <ul>
+          <li>For manually created bead models this can be any useful reference text</li>
+        </ul>
+        <li>Accessible surface area</li>
+        <ul>
+          <li>If unknown, you can put 0</li>
+        </ul>
+      </ol>
+    <li>Note that all fields described above can be separated by one or more spaces and/or tab characters.</li>
+    <li>Lines starting at the number of beads plus 2 (5 in this case)
+    and after are purely comment lines and can contain any
+    text. However, line 13 is a special case which is recognized as
+    the model scale for the bead model file. It can be specified on any line
+    in the comment area. If not specified, a dialog box will be
+    presented requesting the model scale upon loading the bead model
+    file</li>
+  </ul>    
+
+<hr>
+<font face="helvetica" size="-1">
+www contact: <a href="mailto:brookes@uthscsa.edu">Emre Brookes</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+This document is part of the <i><b>UltraScan</b></i> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> The latest version of this document can always be found at:
+</font>
+<p>
+<font face="helvetica" size="-1">
+<a href="http://somo.aucsolutions.com">http://somo.aucsolutions.com</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+Last modified on January 11, 2021.
+</font>
+</body>
+</html>
