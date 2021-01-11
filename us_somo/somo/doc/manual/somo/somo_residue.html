@@ -131,8 +131,8 @@ the selected bead only.<br>
 First a color is assigned to the bead using the <i><b>Select Bead Color</b></i> pull-down menu. <span style="color:#CC0000">Be aware that two colors are presently reserved to "label" the beads so that they can be automatically excluded from the hydrodynamic computations, colors "0" (black) and "6" (brown); therefore, they should NOT be used</span>.
 To avoid their inadvertent selection, a <b>Warning</b> pop-up will appear if color "0" or "6" are chosen, with this message: "Black and brown are reserved colors, please chose a different color". In addition, we color-code "7" (white) exposed beads that are fused together, and "8" (grey) beads that were originally labeled as buried ("6") but are found to be above the exposure threshold upon re-check, so you should also avoid using them. In the <a href="somo-residue-3new.png">residue table</a> (an excerpt of the current <i>somo.residue</i> is shown; all entries/fields are instead explained in <a href="somo_residue_explained.pdf">this PDF</a> using Histidine as an example) provided with the UltraScan distribution, <a name="colors"></a>the colors are assigned so to label the beads as:
 <p>
-<ol>
-0. - Black: RESERVED, automatically assigned to very small beads (always excluded from computations)
+<ol start="0">
+<li>- Black: RESERVED, automatically assigned to very small beads (always excluded from computations)
 <li>- Blue: protein main-chain
 <li>- Green: protein acidic side-chain (D,E)
 <li>- Cyan: protein hydrophobic side-chain (A,V,L,I,F,W)
