@@ -789,9 +789,9 @@ bool US_Hydrodyn::install_new_version()
                {
                   QMessageBox::critical( 0, 
                                          us_tr("Could not rename file"),
-                                         QString( tr( "The following error occured when trying to copy:\n"
-                                                      "%1\n"
-                                                      ) )
+                                         QString( us_tr( "The following error occured when trying to copy:\n"
+                                                         "%1\n"
+                                                         ) )
                                          .arg( ufu.errormsg )
                                          );
                   exit(-1);
@@ -815,8 +815,25 @@ bool US_Hydrodyn::install_new_version()
          QString error;
          if ( !US_File_Util::putcontents( somorevision, contents, error ) ) {
             qDebug() << "putcontents file:" << somorevision << " contents:'" << contents << "' error:" << error;
+            QMessageBox::critical( 0, 
+                                   us_tr("Could not create file"),
+                                   QString( us_tr( "An error occured when trying to create the file\n"
+                                                   "\"%1\".\n"
+                                                   "\"%2\"\n"
+                                                   "Please check your permissions and try again.\n") )
+                                   .arg( somorevision )
+                                   .arg( error )
+                                   );
+            
+         } else {
+            QMessageBox::information( 0, 
+                                      us_tr("New configuration files successfully installed"),
+                                      us_tr( "New configuration files successfully installed.\n\n"
+                                             "Please rerun the US-SOMO program to continue.\n" )
+                                      );
          }
       }
+
       return false;
       break;
    case 1: 
