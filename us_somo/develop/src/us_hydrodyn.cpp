@@ -488,7 +488,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    residue_short_names["SER"] = 'S';
    residue_short_names["THR"] = 'T';
    residue_short_names["CYS"] = 'C';
-   residue_short_names["CYH"] = 'B';
+   residue_short_names["CYH"] = 'J';
    residue_short_names["TYR"] = 'Y';
    residue_short_names["ASN"] = 'N';
    residue_short_names["GLN"] = 'Q';
@@ -716,6 +716,14 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    }         
    add_to_directory_history( somo_pdb_dir, false );
    add_to_directory_history( somo_saxs_dir, false );
+   {
+      QString demo_dir = USglobal->config_list.system_dir + SLASH + "somo" + SLASH + "demo";
+      if ( QFile( demo_dir ).exists() ) {
+         add_to_directory_history( demo_dir, false );
+      } else {
+         qDebug() << "Notice: demo dir " << demo_dir << " not added to directory history as it doesn't exist";
+      }
+   }
 
 #if defined( HB_TEST )
    // hb test

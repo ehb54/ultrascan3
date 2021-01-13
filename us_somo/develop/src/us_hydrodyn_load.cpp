@@ -1198,8 +1198,12 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
                         editor_msg( "blue", courier, QString( "All\t%1\t%2\n" ).arg( resname_counts_wat_total ).arg(  (double) resname_counts_wat_total / (double) resname_counts_nonwat_total, 0, 'g', 2 ) );
                      }
                   }
-                  if ( mw_nonwat && mw_wat ) {
-                     editor_msg( "dark blue", courier, QString( "\ngr WAT / gr nonWAT %1" ).arg( mw_wat / mw_nonwat, 0, 'g', 3 ) );
+                  if ( mw_nonwat ) {
+                     if ( mw_wat ) {
+                        editor_msg( "dark blue", QString( "\nHydration [g/g] %1 (explicit waters)" ).arg( mw_wat / mw_nonwat, 0, 'g', 3 ) );
+                     } else if ( tot_theo_wat ) {
+                        editor_msg( "dark blue", QString( "\nHydration [g/g] %1" ).arg( tot_theo_wat * 18.01528 / mw_nonwat, 0, 'g', 3 ) );
+                     }
                   }
                }
                editor_msg( "black", "\n" );
@@ -1412,8 +1416,12 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
                   editor_msg( "blue", QString( "All\t%1\t%2\n" ).arg( resname_counts_wat_total ).arg(  (double) resname_counts_wat_total / (double) resname_counts_nonwat_total, 0, 'g', 2 ) );
                }
             }
-            if ( mw_nonwat && mw_wat ) {
-               editor_msg( "dark blue", QString( "\ngr WAT / gr nonWAT %1" ).arg( mw_wat / mw_nonwat, 0, 'g', 3 ) );
+            if ( mw_nonwat ) {
+               if ( mw_wat ) {
+                  editor_msg( "dark blue", QString( "\nHydration [g/g] %1 (explicit waters)" ).arg( mw_wat / mw_nonwat, 0, 'g', 3 ) );
+               } else if ( tot_theo_wat ) {
+                  editor_msg( "dark blue", QString( "\nHydration [g/g] %1" ).arg( tot_theo_wat * 18.01528 / mw_nonwat, 0, 'g', 3 ) );
+               }
            }
          }
          editor_msg( "black", "\n" );

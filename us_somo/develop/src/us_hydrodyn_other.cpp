@@ -753,7 +753,7 @@ bool US_Hydrodyn::install_new_version()
    msg += us_tr("\nDo you wish to proceed?");
 
    switch( QMessageBox::warning( 
-                                this, 
+                                0, 
                                 us_tr("New version detected"),
                                 msg,
                                 us_tr("&OK"),
