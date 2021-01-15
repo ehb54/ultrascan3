@@ -11,6 +11,12 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_vvv.h"
 
+#if defined(Q_OS_WIN)
+// hmm. unicode difference for Windows between QWidgets and QTextStream?
+# undef DEGREE_SYMBOL
+# define DEGREE_SYMBOL QString::fromStdWString( L"\u00b0" )
+#endif
+
 void US_Hydrodyn::read_hybrid_file( QString filename ) {
    
    if ( filename.isEmpty() ) {
