@@ -77,7 +77,7 @@ void US_Hydrodyn::view_file(const QString &filename, QString title)
       edit->setWindowTitle( title );
       edit->resize( 950, 700 );
       edit->move( this->pos().x() + 30, this->pos().y() + 30 );
-#if defined( Q_OS_OSX )
+#if defined( Q_OS_OSX ) || defined( Q_OS_WIN )
       edit->e->setFont( QFont( "Courier", US3i_GuiSettings::fontSize() - 1 ) );
 #else
       edit->e->setFont( QFont( "monospace", US3i_GuiSettings::fontSize() - 1 ) );
