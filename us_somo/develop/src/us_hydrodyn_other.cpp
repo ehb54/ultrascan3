@@ -60,7 +60,7 @@ void US_Hydrodyn::view_file(const QString &filename, QString title)
       QTextStream ts( &f );
       text = ts.readAll();
       f.close();
-      US3i_Editor * edit = new US3i_Editor( US3i_Editor::DEFAULT, true, QString(), this );
+      US3i_Editor * edit = new US3i_Editor( US3i_Editor::DEFAULT, true, QString(), 0 );
       if ( title.isEmpty() ) {
          title = filename;
          if ( title.size() > 74 ) {

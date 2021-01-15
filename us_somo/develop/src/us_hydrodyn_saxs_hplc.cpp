@@ -5237,7 +5237,7 @@ void US_Hydrodyn_Saxs_Hplc::view()
             }
          }
 
-         US3i_Editor * edit = new US3i_Editor( US3i_Editor::DEFAULT, true, QString(), this );
+         US3i_Editor * edit = new US3i_Editor( US3i_Editor::DEFAULT, true, QString(), 0 );
          edit->setWindowTitle( file );
          edit->resize( 685, 700 );
          // QPoint p = g.global_position();
