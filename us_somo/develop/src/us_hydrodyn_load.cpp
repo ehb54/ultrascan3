@@ -1642,11 +1642,12 @@ QString US_Hydrodyn::vbar_msg( double vbar, bool only_used ) {
       return
          QString(
                  us_tr(
-                       "Vbar used                   : %1 [cm^3/g] @ %2 [°C]\n"
+                       "Vbar used                   : %1 [cm^3/g] @ %2 [%3C]\n"
                        )
                  )
          .arg( partvol, 5, 'f', 3, '0' )
          .arg( hydro.temperature )
+         .arg( DEGREE_SYMBOL )
          ;
    }
 
@@ -1654,17 +1655,20 @@ QString US_Hydrodyn::vbar_msg( double vbar, bool only_used ) {
       return
          QString(
                  us_tr(
-                       "Vbar calculated             : %1 [cm^3/g] @ %2 [°C]\n"
-                       "Vbar measured               : %3 [cm^3/g] @ %4 [°C]\n"
-                       "Vbar used                   : %5 [cm^3/g] @ %6 [°C]\n"
+                       "Vbar calculated             : %1 [cm^3/g] @ %2 [%3C]\n"
+                       "Vbar measured               : %4 [cm^3/g] @ %5 [%6C]\n"
+                       "Vbar used                   : %7 [cm^3/g] @ %8 [%9C]\n"
                        )
                  )
          .arg( vbar, 5, 'f', 3, '0' )
          .arg( 20 )
+         .arg( DEGREE_SYMBOL )
          .arg( misc.vbar, 5, 'f', 3, '0' )
          .arg( misc.vbar_temperature )
+         .arg( DEGREE_SYMBOL )
          .arg( partvol, 5, 'f', 3, '0' )
          .arg( hydro.temperature )
+         .arg( DEGREE_SYMBOL )
          ;
    }
    
@@ -1672,14 +1676,16 @@ QString US_Hydrodyn::vbar_msg( double vbar, bool only_used ) {
    return
       QString(
               us_tr(
-                    "Vbar calculated             : %1 [cm^3/g] @ %2 [°C]\n"
-                    "Vbar used                   : %3 [cm^3/g] @ %4 [°C]\n"
+                    "Vbar calculated             : %1 [cm^3/g] @ %2 [%3C]\n"
+                    "Vbar used                   : %4 [cm^3/g] @ %5 [%6C]\n"
                     )
               )
       .arg( vbar, 5, 'f', 3, '0' )
       .arg( 20 )
+      .arg( DEGREE_SYMBOL )
       .arg( partvol, 5, 'f', 3, '0' )
       .arg( hydro.temperature )
+      .arg( DEGREE_SYMBOL )
       ;
 }
 
@@ -1748,13 +1754,14 @@ QString US_Hydrodyn::visc_dens_msg( bool only_used ) {
                        "Manual flag set\n"
                        "Stored solvent name      %1\n"
                        "Stored solvent viscosity %2 [cP]\n"
-                       "Stored solvent density   %3 [g/ml] @ %4 [°C]\n"
+                       "Stored solvent density   %3 [g/ml] @ %4 [%5C]\n"
                        )
                  )
          .arg( hydro.solvent_name )
          .arg( hydro.solvent_viscosity, 9, 'f', 7, '0' ) 
          .arg( hydro.solvent_density, 9, 'f', 7, '0' ) 
          .arg( hydro.temperature )
+         .arg( DEGREE_SYMBOL )
          ;
    } else {
       if ( only_used ) {
@@ -1762,15 +1769,17 @@ QString US_Hydrodyn::visc_dens_msg( bool only_used ) {
             QString(
                     us_tr(
                           "Stored solvent name      %1\n"
-                          "Used   solvent viscosity %2 [cP] @ %3 [°C]\n"
-                          "Used   solvent density   %4 [g/ml] @ %5 [°C]\n"
+                          "Used   solvent viscosity %2 [cP] @ %3 [%4C]\n"
+                          "Used   solvent density   %5 [g/ml] @ %6 [7C]\n"
                           )
                     )
             .arg( hydro.solvent_name )
             .arg( tc_solvent_visc(), 9, 'f', 7, '0' )
             .arg( hydro.temperature )
+            .arg( DEGREE_SYMBOL )
             .arg( tc_solvent_dens(), 9, 'f', 7, '0' )
             .arg( hydro.temperature )
+            .arg( DEGREE_SYMBOL )
             ;
       }
       return
@@ -1778,18 +1787,20 @@ QString US_Hydrodyn::visc_dens_msg( bool only_used ) {
                  us_tr(
                        "Stored solvent name      %1\n"
                        "Stored solvent viscosity %2 [cP]\n"
-                       "Used   solvent viscosity %3 [cP] @ %4 [°C]\n"
-                       "Stored solvent density   %5 [g/ml]\n"
-                       "Used   solvent density   %6 [g/ml] @ %7 [°C]\n"
+                       "Used   solvent viscosity %3 [cP] @ %4 [%5C]\n"
+                       "Stored solvent density   %6 [g/ml]\n"
+                       "Used   solvent density   %7 [g/ml] @ %8 [%9C]\n"
                        )
                  )
          .arg( hydro.solvent_name )
          .arg( hydro.solvent_viscosity, 9, 'f', 7, '0' ) 
          .arg( tc_solvent_visc(), 9, 'f', 7, '0' )
          .arg( hydro.temperature )
+         .arg( DEGREE_SYMBOL )
          .arg( hydro.solvent_density, 9, 'f', 7, '0' ) 
          .arg( tc_solvent_dens(), 9, 'f', 7, '0' )
          .arg( hydro.temperature )
+         .arg( DEGREE_SYMBOL )
          ;
    }
 }
@@ -1843,28 +1854,30 @@ QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *m
       qs +=
          QString(
                  us_tr(
-                       "Mol. vol. (from vbar)       : %1 [A^3] @ %2 [°C]\n"
+                       "Mol. vol. (from vbar)       : %1 [A^3] @ %2 [%3C]\n"
                        )
                  )
          .arg( mw_to_volume( model->mw + model->ionized_mw_delta, model->vbar ) )
          .arg( 20 )
+         .arg( DEGREE_SYMBOL )
          ;
    }
 
    qs +=
       QString(
               us_tr(
-                    "Mol. vol. (from vbar)       : %1 [A^3] @ %2 [°C]\n"
-                    "Mol. vol. (SAXS excl. vol.) : %3 [A^3]\n"
-                    "Radius of gyration          : %4 [A]\n"
-                    "Number of electrons         : %5\n"
-                    "Number of protons           : %6\n"
-                    "Net charge                  : %7\n"
-                    "Isoelectric point           : %8\n"
+                    "Mol. vol. (from vbar)       : %1 [A^3] @ %2 [%3C]\n"
+                    "Mol. vol. (SAXS excl. vol.) : %4 [A^3]\n"
+                    "Radius of gyration          : %5 [A]\n"
+                    "Number of electrons         : %6\n"
+                    "Number of protons           : %7\n"
+                    "Net charge                  : %8\n"
+                    "Isoelectric point           : %9\n"
                     )
               )
       .arg( mw_to_volume( model->mw + model->ionized_mw_delta, tc_vbar( model->vbar ) ) )
       .arg( hydro.temperature )
+      .arg( DEGREE_SYMBOL )
       .arg( model->volume )
       .arg( model->Rg, 0, 'f', 2 )
       .arg( model->num_elect )
