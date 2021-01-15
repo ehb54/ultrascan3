@@ -2375,12 +2375,19 @@ int zeno_cxx_main(int argc, char **argv, const char * fname, bool is_cmdline, US
 		 *resultsZeno,
 		 parameters);
 
-  delete resultsZeno;
-  delete resultsInterior;
-
-  delete spheresNearestSurfacePointFinder;
-
-  delete spheresInsideOutsideTester;
+  if ( resultsZeno ) {
+     delete resultsZeno;
+  }
+  if ( resultsInterior ) {
+     delete resultsInterior;
+  }
+  if ( spheresNearestSurfacePointFinder ) {
+     delete spheresNearestSurfacePointFinder;
+  }
+  
+  if ( spheresInsideOutsideTester ) {
+     delete spheresInsideOutsideTester;
+  }
 
 #ifdef USE_MPI
   MPI_Finalize();
