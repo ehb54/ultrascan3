@@ -11,7 +11,7 @@
   \param p Parent widget.
   \param name Widget name.
 */  
-US_Register::US_Register(QWidget *p, const char *name) : QFrame( p )
+US_Register::US_Register(QWidget *p, const char *) : QFrame( p )
 {
   // The following checks the old license location and moves
   // files if necessary.

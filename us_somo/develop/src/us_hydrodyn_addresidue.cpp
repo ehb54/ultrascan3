@@ -37,7 +37,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 
 // #define DEBUG_RESIDUE
 
-US_AddResidue::US_AddResidue(bool *widget_flag, const double hydrovol, QWidget *p, const char *name) : QWidget( p )
+US_AddResidue::US_AddResidue(bool *widget_flag, const double hydrovol, QWidget *p, const char *) : QWidget( p )
 {
    this->widget_flag = widget_flag;
    this->hydrovol = hydrovol;
@@ -46,6 +46,7 @@ US_AddResidue::US_AddResidue(bool *widget_flag, const double hydrovol, QWidget *
    USglobal = new US_Config();
    position_flag = false;
    hydration_flag = false;
+   pKa_flag = false;
    existing_residue = false;
    current_atom = 0;
    current_bead = 0;
@@ -53,7 +54,7 @@ US_AddResidue::US_AddResidue(bool *widget_flag, const double hydrovol, QWidget *
    atom_filename = US_Config::get_home_dir() + "etc/somo.atom";
    residue_filename = US_Config::get_home_dir() + "etc/somo.residue";
    setPalette( PALET_FRAME );
-   setWindowTitle(us_tr("SoMo: Modify Residue Lookup Tables"));
+   setWindowTitle(us_tr("SoMo: Modify Residue Lookup Table"));
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
@@ -231,7 +232,7 @@ void US_AddResidue::setupGUI()
    cmb_type->setMinimumHeight(minHeight1);
    connect(cmb_type, SIGNAL(activated(int)), this, SLOT(select_type(int)));
 
-   lbl_molvol = new QLabel(us_tr(" Residue anhydrous mol. vol. (A^3):"), this);
+   lbl_molvol = new QLabel(us_tr(" Residue anhydrous mol. vol. [A^3]:"), this);
    Q_CHECK_PTR(lbl_molvol);
    lbl_molvol->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_molvol->setMinimumHeight(minHeight1);
@@ -247,7 +248,7 @@ void US_AddResidue::setupGUI()
    le_molvol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_molvol, SIGNAL(textChanged(const QString &)), SLOT(update_molvol(const QString &)));
 
-   lbl_vbar = new QLabel(us_tr(" Residue partial spec. vol. (cm^3/g):"), this);
+   lbl_vbar = new QLabel(us_tr(" Residue partial spec. vol. [cm^3/g]:"), this);
    Q_CHECK_PTR(lbl_vbar);
    lbl_vbar->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_vbar->setMinimumHeight(minHeight1);
@@ -263,7 +264,23 @@ void US_AddResidue::setupGUI()
    le_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_vbar, SIGNAL(textChanged(const QString &)), SLOT(update_vbar(const QString &)));
 
-   lbl_asa = new QLabel(us_tr(" Max. Accessible Surface Area (A^2):"), this);
+   // lbl_vbar2 = new QLabel(us_tr(" Residue partial spec. vol. ionized [cm^3/g]:"), this);
+   // Q_CHECK_PTR(lbl_vbar2);
+   // lbl_vbar2->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   // lbl_vbar2->setMinimumHeight(minHeight1);
+   // lbl_vbar2->setPalette( PALET_LABEL );
+   // AUTFBACK( lbl_vbar2 );
+   // lbl_vbar2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   // le_vbar2 = new QLineEdit( this );    le_vbar2->setObjectName( "Residue vbar2 Line Edit" );
+   // le_vbar2->setPalette( PALET_NORMAL );
+   // AUTFBACK( le_vbar2 );
+   // le_vbar2->setMinimumHeight(minHeight1);
+   // le_vbar2->setEnabled(false);
+   // le_vbar2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   // connect(le_vbar2, SIGNAL(textChanged(const QString &)), SLOT(update_vbar2(const QString &)));
+
+   lbl_asa = new QLabel(us_tr(" Max. Accessible Surface Area [A^2]:    "), this);
    Q_CHECK_PTR(lbl_asa);
    lbl_asa->setMinimumHeight(minHeight1);
    lbl_asa->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -382,6 +399,77 @@ void US_AddResidue::setupGUI()
    AUTFBACK( cnt_atom_hydration );
    connect(cnt_atom_hydration, SIGNAL(valueChanged(double)), SLOT(update_atom_hydration(double)));
 
+   lbl_enable_pKa = new QLabel(us_tr(" Enable pKa: "), this);
+   Q_CHECK_PTR(lbl_enable_pKa);
+   lbl_enable_pKa->setMinimumHeight(minHeight1);
+   lbl_enable_pKa->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_enable_pKa->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_enable_pKa );
+   lbl_enable_pKa->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cb_enable_pKa = new QCheckBox(this);
+   cb_enable_pKa->setText(us_tr(" (Check if true)"));
+   cb_enable_pKa->setChecked( pKa_flag );
+   cb_enable_pKa->setEnabled(false);
+   cb_enable_pKa->setMinimumHeight(minHeight1);
+   cb_enable_pKa->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_enable_pKa->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_enable_pKa );
+   connect(cb_enable_pKa, SIGNAL(clicked()), SLOT(set_enable_pKa()));
+
+   lbl_pKa = new QLabel(us_tr(" pKa:"), this);
+   Q_CHECK_PTR(lbl_pKa);
+   lbl_pKa->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_pKa->setMinimumHeight(minHeight1);
+   lbl_pKa->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_pKa );
+   lbl_pKa->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_pKa = new QLineEdit( this );    le_pKa->setObjectName( "Residue pKa Line Edit" );
+   le_pKa->setPalette( PALET_NORMAL );
+   AUTFBACK( le_pKa );
+   le_pKa->setMinimumHeight(minHeight1);
+   le_pKa->setEnabled(false);
+   le_pKa->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_pKa, SIGNAL(textChanged(const QString &)), SLOT(update_pKa(const QString &)));
+
+   lbl_define_hybrid2 = new QLabel(us_tr(" Select Hybridization for Atom [pH 14]:"), this);
+   Q_CHECK_PTR(lbl_define_hybrid2);
+   lbl_define_hybrid2->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_define_hybrid2->setMinimumHeight(minHeight1);
+   lbl_define_hybrid2->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_define_hybrid2 );
+   lbl_define_hybrid2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cmb_hybrids2 = new QComboBox(  this );    cmb_hybrids2->setObjectName( "Hybridization Listing" );
+   cmb_hybrids2->setPalette( PALET_NORMAL );
+   AUTFBACK( cmb_hybrids2 );
+   cmb_hybrids2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+ //   cmb_hybrids2->setSizeLimit(5);
+   cmb_hybrids2->setMinimumHeight(minHeight1);
+
+   lbl_atom_hydration2 = new QLabel(us_tr(" Hydration Number for Atom [pH 14]: "), this);
+   Q_CHECK_PTR(lbl_atom_hydration2);
+   lbl_atom_hydration2->setMinimumHeight(minHeight1);
+   lbl_atom_hydration2->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_atom_hydration2->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_atom_hydration2 );
+   lbl_atom_hydration2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_atom_hydration2 = new QwtCounter(this);
+   US_Hydrodyn::sizeArrows( cnt_atom_hydration2 );
+   Q_CHECK_PTR(cnt_atom_hydration2);
+   cnt_atom_hydration2->setRange(0, 100); cnt_atom_hydration2->setSingleStep( 1);
+   cnt_atom_hydration2->setValue(0);
+   cnt_atom_hydration2->setMinimumWidth( minWidth1 );
+   cnt_atom_hydration2->setEnabled(true);
+   cnt_atom_hydration2->setNumButtons(3);
+   cnt_atom_hydration2->setEnabled(false);
+   cnt_atom_hydration2->setPalette( PALET_NORMAL );
+   AUTFBACK( cnt_atom_hydration2 );
+   connect(cnt_atom_hydration2, SIGNAL(valueChanged(double)), SLOT(update_atom_hydration2(double)));
+
+
    pb_accept_atom = new QPushButton(us_tr("Assign Current Atom"), this);
    Q_CHECK_PTR(pb_accept_atom);
    pb_accept_atom->setEnabled(false);
@@ -464,7 +552,7 @@ void US_AddResidue::setupGUI()
    cb_hydration->setEnabled(false);
    cb_hydration->setMinimumHeight(minHeight1);
    //   cb_hydration->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   cb_hydration->setPalette( PALET_LABEL );
+   cb_hydration->setPalette( PALET_NORMAL );
    AUTFBACK( cb_hydration );
    cb_hydration->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
    connect(cb_hydration, SIGNAL(clicked()), SLOT(set_hydration()));
@@ -587,7 +675,7 @@ void US_AddResidue::setupGUI()
    }
 #endif
    
-   lbl_bead_volume = new QLabel(us_tr(" Bead Volume: "), this);
+   lbl_bead_volume = new QLabel(us_tr(" Anhydrous Bead Volume: "), this);
    Q_CHECK_PTR(lbl_bead_volume);
    lbl_bead_volume->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_bead_volume->setMinimumHeight(minHeight1);
@@ -603,7 +691,7 @@ void US_AddResidue::setupGUI()
    le_bead_volume->setEnabled(false);
    connect(le_bead_volume, SIGNAL(textChanged(const QString &)), SLOT(update_bead_volume(const QString &)));
 
-   lbl_bead_mw = new QLabel(us_tr(" Bead Mol. Weight: "), this);
+   lbl_bead_mw = new QLabel(us_tr(" Anhydrous Bead Mol. Weight: "), this);
    Q_CHECK_PTR(lbl_bead_mw);
    lbl_bead_mw->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_bead_mw->setMinimumHeight(minHeight1);
@@ -635,7 +723,7 @@ void US_AddResidue::setupGUI()
    le_bead_hydro_from_atom->setEnabled(true);
    le_bead_hydro_from_atom->setReadOnly(true);
 
-   lbl_bead_hydrovol = new QLabel(us_tr(" Bead hydrated Volume, Radius: "), this);
+   lbl_bead_hydrovol = new QLabel(us_tr(" Bead hydrated Volume: "), this);
    Q_CHECK_PTR(lbl_bead_hydrovol);
    lbl_bead_hydrovol->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_bead_hydrovol->setMinimumHeight(minHeight1);
@@ -650,6 +738,22 @@ void US_AddResidue::setupGUI()
    le_bead_hydrovol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_bead_hydrovol->setEnabled(true);
    le_bead_hydrovol->setReadOnly(true);
+
+   lbl_bead_hydrorad = new QLabel(us_tr(" Bead hydrated Radius: "), this);
+   Q_CHECK_PTR(lbl_bead_hydrorad);
+   lbl_bead_hydrorad->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_bead_hydrorad->setMinimumHeight(minHeight1);
+   lbl_bead_hydrorad->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_bead_hydrorad );
+   lbl_bead_hydrorad->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_bead_hydrorad = new QLineEdit( this );    le_bead_hydrorad->setObjectName( "Residue Volume Line Edit" );
+   le_bead_hydrorad->setPalette( PALET_NORMAL );
+   AUTFBACK( le_bead_hydrorad );
+   le_bead_hydrorad->setMinimumHeight(minHeight1);
+   le_bead_hydrorad->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_bead_hydrorad->setEnabled(true);
+   le_bead_hydrorad->setReadOnly(true);
 
    pb_accept_bead = new QPushButton(us_tr("Accept Bead Definition"), this);
    Q_CHECK_PTR(pb_accept_bead);
@@ -697,7 +801,7 @@ void US_AddResidue::setupGUI()
    pb_close->setPalette( PALET_PUSHB );
    connect(pb_close, SIGNAL(clicked()), SLOT(close()));
 
-   int rows=24, columns = 5, spacing = 2, j=0, margin=4, colspace=10;
+   int /* rows=24, columns = 5, */ spacing = 2, j=0, margin=4, colspace=10;
    QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
 
    background->setColumnMinimumWidth(2, colspace);
@@ -731,6 +835,9 @@ void US_AddResidue::setupGUI()
    background->addWidget(lbl_vbar, j, 0);
    background->addWidget(le_vbar, j, 1);
    j++;
+   // background->addWidget(lbl_vbar2, j, 0);
+   // background->addWidget(le_vbar2, j, 1);
+   // j++;
    background->addWidget(lbl_asa, j, 0);
    background->addWidget(le_asa, j, 1);
    j++;
@@ -747,14 +854,26 @@ void US_AddResidue::setupGUI()
    background->addWidget(lbl_define_atom, j, 0);
    background->addWidget(cmb_atoms, j, 1);
    j++;
-   background->addWidget(lbl_define_hybrid, j, 0);
-   background->addWidget(cmb_hybrids, j, 1);
-   j++;
    background->addWidget(lbl_positioning, j, 0);
    background->addWidget(cb_positioning, j, 1);
    j++;
+   background->addWidget(lbl_enable_pKa, j, 0);
+   background->addWidget(cb_enable_pKa, j, 1);
+   j++;
+   background->addWidget(lbl_define_hybrid, j, 0);
+   background->addWidget(cmb_hybrids, j, 1);
+   j++;
    background->addWidget(lbl_atom_hydration, j, 0);
    background->addWidget(cnt_atom_hydration, j, 1);
+   j++;
+   background->addWidget(lbl_pKa, j, 0);
+   background->addWidget(le_pKa, j, 1);
+   j++;
+   background->addWidget(lbl_define_hybrid2, j, 0);
+   background->addWidget(cmb_hybrids2, j, 1);
+   j++;
+   background->addWidget(lbl_atom_hydration2, j, 0);
+   background->addWidget(cnt_atom_hydration2, j, 1);
    j++;
    background->addWidget(pb_accept_atom, j, 0);
    background->addWidget(pb_atom_continue, j, 1);
@@ -780,9 +899,12 @@ void US_AddResidue::setupGUI()
    background->addWidget(lbl_list_beadatom, j, 3);
    background->addWidget(lbl_select_beadatom, j, 4);
    j++;
-   background->addWidget( lb_list_beadatom , j , 3 , 1 + ( j+7 ) - ( j ) , 1 + ( 3 ) - ( 3 ) );
-   background->addWidget( lb_select_beadatom , j , 4 , 1 + ( j+7 ) - ( j ) , 1 + ( 4 ) - ( 4 ) );
-   j+=8;
+   {
+      int rows = 10;
+      background->addWidget( lb_list_beadatom , j , 3 , 1 + ( j + rows ) - ( j ) , 1 + ( 3 ) - ( 3 ) );
+      background->addWidget( lb_select_beadatom , j , 4 , 1 + ( j + rows ) - ( j ) , 1 + ( 4 ) - ( 4 ) );
+      j+= rows + 1;
+   }
    background->addWidget(lbl_bead_volume, j, 3);
    background->addWidget(le_bead_volume, j, 4);
    j++;
@@ -798,6 +920,9 @@ void US_AddResidue::setupGUI()
    background->addWidget(lbl_bead_hydrovol, j, 3);
    background->addWidget(le_bead_hydrovol, j, 4);
    j++;
+   background->addWidget(lbl_bead_hydrorad, j, 3);
+   background->addWidget(le_bead_hydrorad, j, 4);
+   j++;
    background->addWidget(pb_accept_bead, j, 3);
    background->addWidget(pb_reset, j, 4);
    j++;
@@ -810,6 +935,7 @@ void US_AddResidue::setupGUI()
    enable_area_1(false);
    enable_area_2(false);
    enable_area_3(false);
+   set_enable_pKa();
 }
 
 void US_AddResidue::enable_area_1(bool state)
@@ -819,6 +945,8 @@ void US_AddResidue::enable_area_1(bool state)
    le_asa->setEnabled(state);
    le_molvol->setEnabled(state);
    le_vbar->setEnabled(state);
+   // le_vbar2->setEnabled(state);
+   // le_pKa->setEnabled(state);
    cmb_type->setEnabled(state);
    le_residue_name->setEnabled(state);
    le_residue_comment->setEnabled(state);
@@ -828,14 +956,21 @@ void US_AddResidue::enable_area_1(bool state)
 
 void US_AddResidue::enable_area_2(bool state)
 {
-   cmb_r_atoms->setEnabled(state);
-   cmb_atoms->setEnabled(state);
-   cmb_atoms->setEnabled(state);
-   cmb_hybrids->setEnabled(state);
-   cb_positioning->setEnabled(state);
-   cnt_atom_hydration->setEnabled(state);
-   pb_accept_atom->setEnabled(state);
-   pb_atom_continue->setEnabled(state);
+   cmb_r_atoms        ->setEnabled(state);
+   cmb_atoms          ->setEnabled(state);
+   cmb_hybrids        ->setEnabled(state);
+   cb_positioning     ->setEnabled(state);
+   cnt_atom_hydration ->setEnabled(state);
+   pb_accept_atom     ->setEnabled(state);
+   pb_atom_continue   ->setEnabled(state);
+   lbl_enable_pKa     ->setEnabled(state);
+   cb_enable_pKa      ->setEnabled(state);
+   lbl_pKa            ->setEnabled(state);
+   le_pKa             ->setEnabled(state);
+   lbl_define_hybrid2 ->setEnabled(state);
+   cmb_hybrids2       ->setEnabled(state);
+   lbl_atom_hydration2->setEnabled(state);
+   cnt_atom_hydration2->setEnabled(state);
 }
 
 void US_AddResidue::enable_area_3(bool state)
@@ -850,6 +985,7 @@ void US_AddResidue::enable_area_3(bool state)
    le_bead_hydro_from_atom->setEnabled(state);
    cb_hydration->setEnabled(false);
    le_bead_hydrovol->setEnabled(state);
+   le_bead_hydrorad->setEnabled(state);
    lb_list_beadatom->setEnabled(state);
    lb_select_beadatom->setEnabled(state);
 }
@@ -857,7 +993,7 @@ void US_AddResidue::enable_area_3(bool state)
 void US_AddResidue::add()
 {
    int item = -1;
-   unsigned int i, j;
+   unsigned int i;
    QString str1;
    double sum = 0e0;
    for (i = 0; i < new_residue.r_bead.size(); i++)
@@ -892,25 +1028,31 @@ void US_AddResidue::add()
       //      US_Static::us_message("Attention:", "The residue volume does not match the volume of the beads:\n\n" + str1);
       //      return;
    }
+   // info_residue( "add" );
    for (i=0; i<residue_list.size(); i++)
    {
       if (residue_list[i].name.toUpper() == new_residue.name.toUpper() && residue_list[i].comment.toUpper() == new_residue.comment.toUpper())
       {
          item = (int) i;
-         residue_list[i].type = new_residue.type;
-         residue_list[i].molvol = new_residue.molvol;
-         residue_list[i].vbar = new_residue.vbar;
-         residue_list[i].asa = new_residue.asa;
-         residue_list[i].r_atom.clear( );
-         residue_list[i].r_bead.clear( );
-         for (j=0; j<new_residue.r_atom.size(); j++)
-         {
-            residue_list[i].r_atom.push_back(new_residue.r_atom[j]);
-         }
-         for (j=0; j<new_residue.r_bead.size(); j++)
-         {
-            residue_list[i].r_bead.push_back(new_residue.r_bead[j]);
-         }
+         residue_list[ i ] = new_residue;
+         // residue_list[i].type        = new_residue.type;
+         // residue_list[i].molvol      = new_residue.molvol;
+         // residue_list[i].vbar        = new_residue.vbar;
+         // residue_list[i].pKas        = new_residue.pKas;
+         // residue_list[i].r_atom      = new_residue.r_atom;
+         // residue_list[i].r_atom_1    = new_residue.r_atom_1;
+         // residue_list[i].r_bead      = new_residue.r_bead;
+         // residue_list[i].asa         = new_residue.asa;
+         // // residue_list[i]             .r_atom.clear( );
+         // // residue_list[i]             .r_bead.clear( );
+         // // for (j=0; j<new_residue.r_atom.size(); j++)
+         // // {
+         // //    residue_list[i].r_atom.push_back(new_residue.r_atom[j]);
+         // // }
+         // // for (j=0; j<new_residue.r_bead.size(); j++)
+         // // {
+         // //    residue_list[i].r_bead.push_back(new_residue.r_bead[j]);
+         // // }
       }
    }
    if (item < 0)
@@ -923,73 +1065,205 @@ void US_AddResidue::add()
    pb_accept_bead->setEnabled(false);
    pb_add->setEnabled(false);
    existing_residue = false;
-   reset();
+   reset( false );
 }
 
 void US_AddResidue::read_residue_file(const QString & filename)
 {
    QString str1, str2;
-   unsigned int numatoms, numbeads, i, j, positioner;
+   unsigned int numatoms, numbeads, i, j;
    QFile f(filename);
    residue_list.clear( );
    lb_residues->clear( );
    i=1;
+   QRegExp rx_spaces = QRegExp( "\\s+" ); 
+   int line_count = 1;
+
    if (f.open(QIODevice::ReadOnly))
    {
       QTextStream ts(&f);
       while (!ts.atEnd())
       {
          new_residue.comment = ts.readLine();
-         ts >> new_residue.name;
-         ts >> new_residue.type;
-         ts >> new_residue.molvol;
-         ts >> new_residue.asa;
-         ts >> numatoms;
-         ts >> numbeads;
-         ts >> new_residue.vbar;
-         //            cout << "name: " << new_residue.name << ", type: " << new_residue.type
-         //                  << ", molvol: " << new_residue.molvol << ", asa: " << new_residue.asa <<
-         //                  ", numatoms: " << numatoms << ", beads: " << numbeads << ", vbar: " << new_residue.vbar << endl;
-         ts.readLine(); // read rest of line
+         line_count++;
+         {
+            QStringList qsl = ( ts.readLine() ).split( rx_spaces , QString::SkipEmptyParts );
+            if ( ( qsl.size() - 7 ) % 2 ) {
+            // if ( qsl.size() != 7 && qsl.size() != 9 ) {
+               QMessageBox::critical(this, us_tr( windowTitle() ),
+                                     us_tr("Please note:\n\nThere was an error reading\nthe selected Residue File!\n"
+                                           "Line containes the wrong number of elements:\n" ) +
+                                     qsl.join( " " ),
+                                     QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+               return;
+            }
+            new_residue.name             = qsl.front();            qsl.pop_front();
+            new_residue.type             = qsl.front().toUInt();   qsl.pop_front();
+            new_residue.molvol           = qsl.front().toDouble(); qsl.pop_front();
+            new_residue.asa              = qsl.front().toDouble(); qsl.pop_front();
+            numatoms                     = qsl.front().toUInt();   qsl.pop_front();
+            numbeads                     = qsl.front().toUInt();   qsl.pop_front();
+            new_residue.vbar             = qsl.front().toDouble(); qsl.pop_front();
+            new_residue.pH               = -1;
+            new_residue.vbar_at_pH       = -1;
+            new_residue.ionized_mw_delta = 0;
+            new_residue.mw               = 0;
+            new_residue.vbars            .clear();
+            new_residue.pKas             .clear();
+            new_residue.r_atom_0         .clear();
+            new_residue.r_atom_1         .clear();
+            
+            while ( qsl.size() ) {
+               new_residue.vbars.push_back( qsl.front().toDouble() );  qsl.pop_front();
+               new_residue.pKas .push_back( qsl.front().toDouble() );  qsl.pop_front();
+            }
+
+            if ( new_residue.pKas.size() > 2 ) {
+               QMessageBox::critical(this, us_tr( windowTitle() ),
+                                     us_tr("Please note:\n\nThere was an error reading the selected Residue File!\n"
+                                           "Line contains too many pKa/vbar paris, currently only 2 are supported:\n"
+                                           "Please contact the developers to enable 3 pKas/vbars for a residue.\n"
+                                           ) +
+                                     QString( us_tr( "Residue name %1 on line %2" ) )
+                                     .arg( new_residue.name )
+                                     .arg( line_count )
+                                     ,
+                                     QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+               return;
+            }
+         }
+
+         // old way
+         // ts >> new_residue.name;
+         // ts >> new_residue.type;
+         // ts >> new_residue.molvol;
+         // ts >> new_residue.asa;
+         // ts >> numatoms;
+         // ts >> numbeads;
+         // ts >> new_residue.vbar;
+         // //            cout << "name: " << new_residue.name << ", type: " << new_residue.type
+         // //                  << ", molvol: " << new_residue.molvol << ", asa: " << new_residue.asa <<
+         // //                  ", numatoms: " << numatoms << ", beads: " << numbeads << ", vbar: " << new_residue.vbar << endl;
+         // ts.readLine(); // read rest of line
+         line_count++;
          new_residue.r_atom.clear( );
          new_residue.r_bead.clear( );
-         for (j=0; j<numatoms; j++)
-         {
-            ts >> new_atom.name;
-            ts >> new_atom.hybrid.name;
-            ts >> new_atom.hybrid.mw;
-            ts >> new_atom.hybrid.radius;
-            ts >> new_atom.bead_assignment;
-            ts >> positioner;
-            //               cout << "Atom: " << new_atom.name << ": " << new_atom.mw << ", " << new_atom.radius << ", "
-            //               << new_atom.bead_assignment << endl;
-            if(positioner == 0)
-            {
-               new_atom.positioner = false;
+         set < int > pKas_to_match;
+         for ( int m = 0; m < (int) new_residue.vbars.size(); ++m ) {
+            pKas_to_match.insert( m + 1 );
+         }
+
+         set < unsigned int > atom_serial_to_match;
+         for ( unsigned int m = 0; m < numatoms; ++m ) {
+            atom_serial_to_match.insert( m );
+         }
+
+         for (j=0; j<numatoms; j++) {
+            QString linein = ts.readLine();
+            QStringList qsl = linein.split( rx_spaces , QString::SkipEmptyParts );
+            if ( qsl.size() != 8 && qsl.size() != 16 ) {
+               QMessageBox::critical(this, us_tr( windowTitle() ),
+                                    us_tr("Please note:\n\nThere was an error reading the selected Residue File!\n"
+                                          "Line contains the wrong number of elements:\n" ) +
+                                    linein,
+                                    QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+               return;
             }
-            else
-            {
-               new_atom.positioner = true;
+
+            new_atom.name                     = qsl.front();            qsl.pop_front();
+            new_atom.hybrid.name              = qsl.front();            qsl.pop_front();
+            new_atom.hybrid.mw                = qsl.front().toFloat();  qsl.pop_front();
+            new_atom.hybrid.radius            = qsl.front().toFloat();  qsl.pop_front();
+            new_atom.bead_assignment          = qsl.front().toUInt();   qsl.pop_front();
+            new_atom.ionization_index         = 0;
+            
+            new_atom.hybrid.ionized_mw_delta  = 0e0;
+
+            new_atom.positioner       = (bool) qsl.front().toInt();    qsl.pop_front();
+            new_atom.serial_number    = qsl.front().toUInt();          qsl.pop_front();
+            new_atom.hydration        = qsl.front().toFloat();         qsl.pop_front();
+
+            if ( !atom_serial_to_match.count( new_atom.serial_number ) ) {
+               QMessageBox::critical(this, us_tr( windowTitle() ),
+                                     QString( us_tr( 
+                                                    "\nThe atom's serial number is out of range or duplicated.\n"
+                                                    "For residue: %1 and Atom: %2 "
+                                                    "on line %3 of the residue file.\n"
+                                                     ) )
+                                     .arg(new_residue.comment)
+                                     .arg(new_atom.name)
+                                     .arg(line_count)
+                                     , QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton
+                                     );
+               return;
             }
-            ts >> new_atom.serial_number;
-            ts >> new_atom.hydration;
-            str2 = ts.readLine(); // read rest of line
+            atom_serial_to_match.erase( new_atom.serial_number );
+
+            if ( qsl.size() ) {
+               struct atom new_atom_1;
+
+               int index                           = qsl.front().toInt();        qsl.pop_front();
+               new_atom_1.name                     = new_atom.name;
+               new_atom_1.hybrid.name              = qsl.front();                qsl.pop_front();
+               new_atom_1.hybrid.mw                = qsl.front().toFloat();      qsl.pop_front();
+               new_atom_1.hybrid.radius            = qsl.front().toFloat();      qsl.pop_front();
+               new_atom_1.bead_assignment          = qsl.front().toUInt();       qsl.pop_front();
+               new_atom_1.hybrid.ionized_mw_delta  = 0e0;
+               new_atom_1.positioner               = (bool) qsl.front().toInt(); qsl.pop_front();
+               new_atom_1.serial_number            = qsl.front().toUInt();       qsl.pop_front();
+               new_atom_1.hydration                = qsl.front().toFloat();      qsl.pop_front();
+               
+               if ( new_residue.r_atom_0.count( index ) ||
+                    new_residue.r_atom_1.count( index ) ) {
+                  QMessageBox::critical(this, us_tr( windowTitle() ),
+                                        us_tr("Please note:\n\nThere was an error reading the selected Residue File!\n"
+                                              "Duplicate ionization index:\n" ) +
+                                        linein,
+                                        QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+                  return;
+               }
+               if ( !pKas_to_match.count( index ) ) {
+                  QMessageBox::critical(this, us_tr( windowTitle() ),
+                                        us_tr("Please note:\n\nThere was an error reading the selected Residue File!\n"
+                                              "pKa match index invalid:\n" ) +
+                                        linein,
+                                        QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+                  return;
+               }
+               new_atom_1.pKa = new_residue.pKas[ index - 1 ];
+               if ( new_atom_1.bead_assignment != new_atom.bead_assignment ||
+                    new_atom_1.positioner      != new_atom.positioner ||
+                    new_atom_1.serial_number   != new_atom.serial_number ) {
+                  QMessageBox::critical(this, us_tr( windowTitle() ),
+                                        us_tr("Please note:\n\nThere was an error reading the selected Residue File!\n"
+                                              "mismatch in ionized bead assignment, positioner and/or serial number:\n" ) +
+                                        linein,
+                                        QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+                  return;
+               }                  
+
+               pKas_to_match.erase( index );
+                  
+               new_residue.r_atom_0[ index ] = new_atom;
+               new_residue.r_atom_1[ index ] = new_atom_1;
+               new_atom.ionization_index     = index;
+            }
+
+            line_count++;
             if (!new_atom.name.isEmpty() && new_atom.hybrid.radius > 0.0 && new_atom.hybrid.mw > 0.0)
             {
                new_residue.r_atom.push_back(new_atom);
-               /*                  str1.sprintf("%d: ", j+1);
-                                   str1 += new_atom.name;
-                                   cmb_r_atoms->addItem(str1);
-               */
             }
             else
             {
                QMessageBox::warning(this, us_tr("UltraScan Warning"),
-                                    us_tr("Please note:\n\nThere was an error reading\nthe selected Residue File!\n\nAtom "
+                                    us_tr("Please note:\n\nThere was an error reading the selected Residue File!\n"
+                                          "\nAtom "
                                        + new_atom.name + " cannot be read and will be deleted from List."),
                                     QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
             }
          }
+
          for (j=0; j<numbeads; j++)
          {
             ts >> new_bead.hydration;
@@ -998,6 +1272,7 @@ void US_AddResidue::read_residue_file(const QString & filename)
             ts >> new_bead.chain;
             ts >> new_bead.volume;
             str2 = ts.readLine(); // read rest of line
+            line_count++;
             new_residue.r_bead.push_back(new_bead);
             //               str1.sprintf("Bead %d: defined", j+1);
             //               cmb_r_beads->addItem(str1);
@@ -1149,13 +1424,25 @@ void US_AddResidue::calc_bead_mw(struct residue *res)
    for (unsigned int i=0; i<(*res).r_bead.size(); i++)
    {
       (*res).r_bead[i].mw = 0.0;
-      (*res).r_bead[i].atom_hydration = 0;
+      (*res).r_bead[i].mw2 = 0.0;
+      (*res).r_bead[i].atom_hydration  = 0;
+      (*res).r_bead[i].atom_hydration2 = 0;
       for (unsigned int j=0; j<(*res).r_atom.size(); j++)
       {
          if ((*res).r_atom[j].bead_assignment == i)
          {
             (*res).r_bead[i].mw += (*res).r_atom[j].hybrid.mw;
             (*res).r_bead[i].atom_hydration += (*res).r_atom[j].hydration;
+            if (
+                res->r_atom[j].ionization_index &&
+                res->r_atom_1.count( res->r_atom[j].ionization_index )
+                ) {
+               res->r_bead[i].atom_hydration2 += res->r_atom_1[ res->r_atom[j].ionization_index ].hydration;
+               res->r_bead[i].mw2             += res->r_atom_1[ res->r_atom[j].ionization_index ].hybrid.mw;
+            } else {
+               res->r_bead[i].atom_hydration2 += res->r_atom[j].hydration;
+               res->r_bead[i].mw2             += res->r_atom[j].hybrid.mw;
+            }
          }
       }
    }
@@ -1269,6 +1556,11 @@ void US_AddResidue::update_vbar(const QString &str)
    new_residue.vbar = str.toFloat();
 }
 
+// void US_AddResidue::update_vbar2(const QString &str)
+// {
+//    new_residue.vbar2 = str.toFloat();
+// }
+
 void US_AddResidue::update_asa(const QString &str)
 {
    new_residue.asa = str.toFloat();
@@ -1282,6 +1574,7 @@ void US_AddResidue::select_type(int val)
 void US_AddResidue::update_hybrid(int val)
 {
    cmb_hybrids->clear( );
+   cmb_hybrids2->clear( );
 #if defined(DEBUG_RESIDUE)
    cout << "update hybrid val " << val << endl;
 #endif
@@ -1294,6 +1587,7 @@ void US_AddResidue::update_hybrid(int val)
               << " hybrid.name " << atom_list[i].hybrid.name << endl;
 #endif
          cmb_hybrids->addItem(atom_list[i].hybrid.name);
+         cmb_hybrids2->addItem(atom_list[i].hybrid.name);
       }
    }
 }
@@ -1302,15 +1596,16 @@ void US_AddResidue::select_beadatom()
 {
    unsigned int i;
    QString str;
+   QString str2;
    lb_list_beadatom->clear( );
-   for (i=0; i<lb_select_beadatom->count(); i++)
+   for ( i = 0; i < (unsigned int) lb_select_beadatom->count(); i++)
    {
       if (new_residue.r_atom[i].bead_assignment == current_bead)
       {
          new_residue.r_atom[i].bead_assignment = 100000; // reset all atoms previously assigned to this bead to a different value
       }
    }
-   for (i=0; i<lb_select_beadatom->count(); i++)
+   for ( i = 0; i < (unsigned int) lb_select_beadatom->count(); i++)
    {
       if(lb_select_beadatom->item(i)->isSelected())
       {
@@ -1320,10 +1615,24 @@ void US_AddResidue::select_beadatom()
       }
    }
    calc_bead_mw(&new_residue);
-   str.sprintf("%7.2f", new_residue.r_bead[current_bead].mw);
-   le_bead_mw->setText(str);
-   str.sprintf("%f",new_residue.r_bead[current_bead].atom_hydration);
+   if ( new_residue.r_bead[current_bead].atom_hydration == new_residue.r_bead[current_bead].atom_hydration2 &&
+        new_residue.r_bead[current_bead].mw             == new_residue.r_bead[current_bead].mw2
+        ) {
+      str.sprintf("%.0f",new_residue.r_bead[current_bead].atom_hydration);
+      cnt_hydration->setEnabled( true );
+      cnt_hydration->setToolTip( "" );
+      str2.sprintf("%7.2f", new_residue.r_bead[current_bead].mw);
+   } else {
+      new_residue.r_bead[current_bead].hydration = new_residue.r_bead[current_bead].atom_hydration;
+      cnt_hydration->setValue( new_residue.r_bead[current_bead].hydration );
+      str.sprintf("[pH 0]: %.0f   [pH 14]: %.0f ", new_residue.r_bead[current_bead].atom_hydration, new_residue.r_bead[current_bead].atom_hydration2);
+      cnt_hydration->setEnabled( false );
+      cnt_hydration->setToolTip( us_tr( "Disabled because pKa values exist for at least one atom in this bead<br>" ) );
+      str2.sprintf("[pH 0]: %7.2f  [pH 14]: %7.2f", new_residue.r_bead[current_bead].mw, new_residue.r_bead[current_bead].mw2 );
+   }
+
    le_bead_hydro_from_atom->setText(str);
+   le_bead_mw->setText(str2);
    new_residue.r_bead[current_bead].hydration = new_residue.r_bead[current_bead].atom_hydration;
    cnt_hydration->setValue(new_residue.r_bead[current_bead].hydration);
    cb_hydration->setChecked(false);
@@ -1339,6 +1648,11 @@ void US_AddResidue::update_hydration(double val)
 void US_AddResidue::update_atom_hydration(double val)
 {
    new_atom.hydration = (unsigned int) val;
+}
+
+void US_AddResidue::update_atom_hydration2(double val)
+{
+   new_atom.hydration2 = (unsigned int) val;
 }
 
 void US_AddResidue::select_bead_color(int val)
@@ -1362,6 +1676,7 @@ void US_AddResidue::select_placing_method(int val)
 void US_AddResidue::select_r_bead(int val)
 {
    QString str;
+   QString str2;
    current_bead = (unsigned int) val;
    if (existing_residue)
    {
@@ -1376,18 +1691,41 @@ void US_AddResidue::select_r_bead(int val)
       str.sprintf("%7.2f", new_residue.r_bead[current_bead].volume);
       le_bead_volume->setText(str);
       calc_bead_mw(&new_residue);
-      str.sprintf("%7.2f", new_residue.r_bead[current_bead].mw);
-      le_bead_mw->setText(str);
-      str.sprintf("%f",new_residue.r_bead[current_bead].atom_hydration);
+      if ( new_residue.r_bead[current_bead].atom_hydration == new_residue.r_bead[current_bead].atom_hydration2 &&
+           new_residue.r_bead[current_bead].mw             == new_residue.r_bead[current_bead].mw2
+           ) {
+         str.sprintf("%.0f",new_residue.r_bead[current_bead].atom_hydration);
+         cnt_hydration->setEnabled( true );
+         cnt_hydration->setToolTip( "" );
+         str2.sprintf("%7.2f", new_residue.r_bead[current_bead].mw);
+      } else {
+         new_residue.r_bead[current_bead].hydration = new_residue.r_bead[current_bead].atom_hydration;
+         cnt_hydration->setValue( new_residue.r_bead[current_bead].hydration );
+         str.sprintf("[pH 0]: %.0f   [pH 14]: %.0f ", new_residue.r_bead[current_bead].atom_hydration, new_residue.r_bead[current_bead].atom_hydration2);
+         cnt_hydration->setEnabled( false );
+         cnt_hydration->setToolTip( us_tr( "Disabled because pKa values exist for at least one atom in this bead<br>" ) );
+         str2.sprintf("[pH 0]: %7.2f  [pH 14]: %7.2f", new_residue.r_bead[current_bead].mw, new_residue.r_bead[current_bead].mw2 );
+      }
       le_bead_hydro_from_atom->setText(str);
+      le_bead_mw->setText(str2);
       cb_hydration->setChecked ( new_residue.r_bead[current_bead].atom_hydration != 
                                  new_residue.r_bead[current_bead].hydration );
       new_bead.atom_hydration = new_residue.r_bead[current_bead].atom_hydration;
-      float h_volume;
-      h_volume = new_residue.r_bead[current_bead].hydration * hydrovol + new_residue.r_bead[current_bead].volume;
+      float h_volume  = new_residue.r_bead[current_bead].hydration       * hydrovol + new_residue.r_bead[current_bead].volume;
+      float h_volume2 = new_residue.r_bead[current_bead].atom_hydration2 * hydrovol + new_residue.r_bead[current_bead].volume;
+      
       float radius = pow((h_volume * (3.0/(4.0*M_PI))), 1.0/3.0);
-      str.sprintf("%7.2f A^3, %7.2f A", h_volume, radius);
+      float radius2 = pow((h_volume2 * (3.0/(4.0*M_PI))), 1.0/3.0);
+      if ( h_volume == h_volume2 &&
+           radius == radius2 ) {
+         str.sprintf("%7.2f A^3", h_volume );
+         str2.sprintf("%7.2f A", radius );
+      } else {
+         str.sprintf("[pH 0]: %7.2f A^3  [pH14]: %7.2f A^3", h_volume, h_volume2 );
+         str2.sprintf("[pH 0]: %7.2f A  [pH 14]: %7.2f A", radius, radius2 );
+      }         
       le_bead_hydrovol->setText(str);
+      le_bead_hydrorad->setText(str2);
 
       if (new_residue.r_bead[current_bead].chain)
       {
@@ -1434,26 +1772,19 @@ void US_AddResidue::select_r_bead(int val)
 
 void US_AddResidue::select_r_atom(int val)
 {
-   if (1 || existing_residue)
-   {
-      if (new_residue.r_atom[val].positioner)
-      {
+   if (1 || existing_residue) {
+      if (new_residue.r_atom[val].positioner) {
          cb_positioning->setChecked(true);
-      }
-      else
-      {
+      } else {
          cb_positioning->setChecked(false);
       }
-      for ( unsigned int i = 0; i < (unsigned int) cmb_atoms->count(); i++ )
-      {
-         if (cmb_atoms->itemText(i) == new_residue.r_atom[val].name) 
-         {
+
+      for ( unsigned int i = 0; i < (unsigned int) cmb_atoms->count(); i++ ) {
+         if (cmb_atoms->itemText(i) == new_residue.r_atom[val].name) {
             cmb_atoms->setCurrentIndex(i);
             update_hybrid(i);
-            for ( unsigned int j = 0; j < (unsigned int) cmb_hybrids->count(); j++ ) 
-            {
-               if (cmb_hybrids->itemText(j) == new_residue.r_atom[val].hybrid.name) 
-               {
+            for ( unsigned int j = 0; j < (unsigned int) cmb_hybrids->count(); j++ ) {
+               if (cmb_hybrids->itemText(j) == new_residue.r_atom[val].hybrid.name) {
                   cmb_hybrids->setCurrentIndex(j);
                   break;
                }
@@ -1462,16 +1793,51 @@ void US_AddResidue::select_r_atom(int val)
          }
       }
       cnt_atom_hydration->setValue((double) new_residue.r_atom[val].hydration);
+
+      // pKa enabled
+      {
+         // QTextStream( stdout ) <<
+         //    QString().sprintf(
+         //                      "select_r_atom(%d):\n"
+         //                      "\tnew_residue.r_atom[%d].ionization_index  %d\n"
+         //                      "\tr_atom_0.size()                         %d\n"
+         //                      "\tr_atom_1.size()                         %d\n"
+         //                      ,val
+         //                      ,val, new_residue.r_atom[val].ionization_index
+         //                      ,(int)new_residue.r_atom_0.size()
+         //                      ,(int)new_residue.r_atom_1.size()
+         //                      );
+
+         int index = new_residue.r_atom[val].ionization_index;
+         bool has_index = index > 0;
+         cb_enable_pKa->setChecked( has_index );
+         emit set_enable_pKa();
+         if ( has_index ) {
+            for ( unsigned int j = 0; j < (unsigned int) cmb_hybrids2->count(); j++ ) {
+               if (cmb_hybrids2->itemText(j) == new_residue.r_atom_1[index].hybrid.name) {
+                  cmb_hybrids2->setCurrentIndex(j);
+                  break;
+               }
+            }
+            le_pKa->setText( QString("%1").arg( new_residue.r_atom_1[index].pKa ) );
+            cnt_atom_hydration2->setValue((double) new_residue.r_atom_1[index].hydration);
+         }
+      }
    } 
 }
 
 void US_AddResidue::select_residue(int val)
 {
-   reset();
+   // qDebug() << "select_residue( " << val << " )";
+   reset( false );
    existing_residue = true;
    QString str;
    new_residue.r_atom.clear( );
    new_residue.r_bead.clear( );
+   if ( val < 0 ) {
+      existing_residue = false;
+      return;
+   }
    le_residue_name->setText(residue_list[val].name);
    le_residue_comment->setText(residue_list[val].comment);
    cnt_numatoms->setValue(residue_list[val].r_atom.size());
@@ -1479,6 +1845,8 @@ void US_AddResidue::select_residue(int val)
    cmb_type->setCurrentIndex(residue_list[val].type);
    le_molvol->setText(str.sprintf("%7.2f", residue_list[val].molvol));
    le_vbar->setText(str.sprintf("%5.3f", residue_list[val].vbar));
+   // le_vbar2->setText( residue_list[val].vbar2 != 0 ? str.sprintf("%5.3f", residue_list[val].vbar2 ) : QString( "" ) );
+   // le_pKa->setText( residue_list[val].pKa != 0 ? str.sprintf("%5.3f", residue_list[val].pKa) : QString( "" ) );
    le_asa->setText(str.sprintf("%7.2f", residue_list[val].asa));
    new_residue = residue_list[val];
 #if defined(DEBUG_RESIDUE)
@@ -1495,6 +1863,8 @@ void US_AddResidue::print_residue(struct residue res)
    cout << "Residue type: " << res.type << endl;
    cout << "Residue molvol: " << res.molvol << endl;
    cout << "Residue vbar: " << res.vbar << endl;
+   // cout << "Residue vbar2: " << res.vbar2 << endl;
+   // cout << "Residue pKa: " << res.pKa << endl;
    cout << "Residue asa: " << res.asa << endl;
    cout << "Number of atoms: " << res.r_atom.size() << endl;
    for (i=0; i<res.r_atom.size(); i++)
@@ -1530,8 +1900,10 @@ void US_AddResidue::help()
    online_help->show_help("manual/somo/somo_residue.html");
 }
 
-void US_AddResidue::reset()
+void US_AddResidue::reset( bool reselect )
 {
+   // some oddness on pb_reset, clears too much but this reset() is called in multiple places
+
    pb_delete_residue->setEnabled(false);
    pb_select_atom_file->setEnabled(false);
    pb_select_residue_file->setEnabled(false);
@@ -1541,7 +1913,8 @@ void US_AddResidue::reset()
    le_residue_comment->setText("");
    le_bead_volume->setText("0.0");
    le_bead_mw->setText("0.0");
-   le_bead_hydrovol->setText("0.0, 0.0");
+   le_bead_hydrovol->setText("0.0");
+   le_bead_hydrorad->setText("0.0");
    le_bead_hydro_from_atom->setText("0");
    cnt_numbeads->setEnabled(true);
    cnt_numbeads->setValue(0);
@@ -1552,6 +1925,10 @@ void US_AddResidue::reset()
    le_molvol->setText("");
    le_vbar->setEnabled(true);
    le_vbar->setText("");
+   // le_vbar2->setEnabled(true);
+   // le_vbar2->setText("");
+   // le_pKa->setEnabled(true);
+   // le_pKa->setText("");
    le_asa->setEnabled(true);
    le_asa->setText("");
 
@@ -1597,6 +1974,11 @@ void US_AddResidue::reset()
    existing_residue = false;
    enable_area_2(false);
    enable_area_3(false);
+
+   if ( reselect ) {
+      lb_residues->clearSelection();
+      lb_residues->setCurrentRow(0);
+   }
 }
 
 void US_AddResidue::accept_residue()
@@ -1618,6 +2000,8 @@ void US_AddResidue::accept_residue()
       le_residue_comment->setEnabled(false);
       le_molvol->setEnabled(false);
       le_vbar->setEnabled(false);
+      // le_vbar2->setEnabled(false);
+      // le_pKa->setEnabled(false);
       le_asa->setEnabled(false);
       cmb_type->setEnabled(false);
       cmb_r_atoms->setEnabled(true);
@@ -1653,32 +2037,34 @@ void US_AddResidue::accept_residue()
          cmb_r_atoms->addItem(str);
       }
       cmb_r_atoms->setCurrentIndex(0);
-      for ( unsigned int i = 0; i < (unsigned int) cmb_atoms->count(); i++ )
-      {
-         if (cmb_atoms->itemText(i) == new_residue.r_atom[0].name) 
-         {
-            cmb_atoms->setCurrentIndex(i);
-            update_hybrid(i);
-            for ( unsigned int j = 0; j < (unsigned int) cmb_hybrids->count(); j++ ) 
-            {
-               if (cmb_hybrids->itemText(j) == new_residue.r_atom[0].hybrid.name) 
-               {
-                  cmb_hybrids->setCurrentIndex(j);
-                  break;
-               }
-            }
-            break;
-         }
-      }
-      if (new_residue.r_atom[0].positioner)
-      {
-         cb_positioning->setChecked(true);
-      }
-      else
-      {
-         cb_positioning->setChecked(false);
-      }
-      cnt_atom_hydration->setValue((double) new_residue.r_atom[0].hydration);
+      select_r_atom( 0 );
+      
+      // for ( unsigned int i = 0; i < (unsigned int) cmb_atoms->count(); i++ )
+      // {
+      //    if (cmb_atoms->itemText(i) == new_residue.r_atom[0].name) 
+      //    {
+      //       cmb_atoms->setCurrentIndex(i);
+      //       update_hybrid(i);
+      //       for ( unsigned int j = 0; j < (unsigned int) cmb_hybrids->count(); j++ ) 
+      //       {
+      //          if (cmb_hybrids->itemText(j) == new_residue.r_atom[0].hybrid.name) 
+      //          {
+      //             cmb_hybrids->setCurrentIndex(j);
+      //             break;
+      //          }
+      //       }
+      //       break;
+      //    }
+      // }
+      // if (new_residue.r_atom[0].positioner)
+      // {
+      //    cb_positioning->setChecked(true);
+      // }
+      // else
+      // {
+      //    cb_positioning->setChecked(false);
+      // }
+      // cnt_atom_hydration->setValue((double) new_residue.r_atom[0].hydration);
    }
    else
    {
@@ -1867,29 +2253,32 @@ void US_AddResidue::accept_atom()
          break;
       }
    }
-   if (existing_residue)
-   {
-      unsigned int bead = new_residue.r_atom[current_item1].bead_assignment;
-      unsigned int snum = new_residue.r_atom[current_item1].serial_number;
-      bool pos = new_residue.r_atom[current_item1].positioner;
-      float hydration =  new_residue.r_atom[current_item1].hydration;
-      new_residue.r_atom[current_item1] = atom_list[current_item2];
-      new_residue.r_atom[current_item1].bead_assignment = bead;
-      new_residue.r_atom[current_item1].positioner = pos;
-      new_residue.r_atom[current_item1].serial_number = snum;
-      new_residue.r_atom[current_item1].hydration = hydration;
-   }
-   else
-   {
-      new_residue.r_atom[current_item1] = atom_list[current_item2];
+   if (existing_residue) {
+      // save values to restore after atom_list load
+      unsigned int bead                                  = new_residue.r_atom[current_item1].bead_assignment;
+      unsigned int snum                                  = new_residue.r_atom[current_item1].serial_number;
+      int ionization_index                               = new_residue.r_atom[current_item1].ionization_index;
+      bool pos                                           = new_residue.r_atom[current_item1].positioner;
+      float hydration                                    = new_residue.r_atom[current_item1].hydration;
+      
+      new_residue.r_atom[current_item1]                  = atom_list[current_item2];
+      new_residue.r_atom[current_item1].bead_assignment  = bead;
+      new_residue.r_atom[current_item1].positioner       = pos;
+      new_residue.r_atom[current_item1].serial_number    = snum;
+      new_residue.r_atom[current_item1].hydration        = hydration;
+      new_residue.r_atom[current_item1].ionization_index = ionization_index;
+   } else {
+      new_residue.r_atom[current_item1]                  = atom_list[current_item2];
+      new_residue.r_atom[current_item1].ionization_index = 0;
    }
 
    // assign a serial number specific to this residue so atoms can be distinguished
    // and prevented from being used twice in different beads
 
-   new_residue.r_atom[current_item1].hydration = (unsigned int) cnt_atom_hydration->value();
-   new_residue.r_atom[current_item1].serial_number = current_item1;
-   new_residue.r_atom[current_item1].positioner = cb_positioning->isChecked(); // position_flag;
+   new_residue.r_atom[current_item1].hydration           = (unsigned int) cnt_atom_hydration->value();
+   new_residue.r_atom[current_item1].serial_number       = current_item1;
+   new_residue.r_atom[current_item1].positioner          = cb_positioning->isChecked(); // position_flag;
+
    str.sprintf(qPrintable("Atom %d: " + atom_list[current_item2].name), current_item1+1);
    str += " (" + new_residue.r_atom[current_item1].hybrid.name + ", Positioning: ";
    if (new_residue.r_atom[current_item1].positioner)
@@ -1900,7 +2289,7 @@ void US_AddResidue::accept_atom()
    {
       str += "no)";
    }
-   cmb_r_atoms->setItemText( current_item1,str);
+   cmb_r_atoms->setItemText( current_item1,str );
    bool flag = true;
    for (int i=0; i<cmb_r_atoms->count(); i++)
    {
@@ -1910,14 +2299,214 @@ void US_AddResidue::accept_atom()
          flag = false;
       }
    }
-   if (flag)
-   {
-      pb_atom_continue->setEnabled(true); // all atoms are defined now
-   }
+
+   flag &= update_pKas( current_item1 );
+
+   pb_atom_continue->setEnabled( flag ); // all atoms are defined now
+
 #if defined(DEBUG_RESIDUE)
    cout << "Residue print accept_atom() - 2: \n";
    print_residue(new_residue);
 #endif
+}
+
+#define LEQ "============================================================\n"
+#define LD  "------------------------------------------------------------\n"
+#define TSO QTextStream( stdout )
+
+void US_AddResidue::info_residue( const QString & msg ) {
+   TSO << LD << "info_residue() : " << msg << endl << LD;
+   
+   for ( int i = 0; i < (int) new_residue.r_atom.size(); ++i ) {
+      TSO <<
+         QString( "r_atom %1 name %2 hybrid.name %3 ionization_index %4\n" )
+         .arg( i, 2 )
+         .arg( new_residue.r_atom[i].name, 4 )
+         .arg( new_residue.r_atom[i].hybrid.name, 5 )
+         .arg( new_residue.r_atom[i].ionization_index )
+         ;
+   }
+
+   TSO << LD;
+   
+   for ( auto it = new_residue.r_atom_1.begin();
+         it != new_residue.r_atom_1.end();
+         ++it ) {
+      TSO <<
+         QString( "r_atom_1 %1 name %2 hybrid.name %3 ionization_index %4\n" )
+         .arg( it->first, 2 )
+         .arg( it->second.name, 4 )
+         .arg( it->second.hybrid.name, 5 )
+         .arg( it->second.ionization_index )
+         ;
+   }
+   TSO << LD;
+
+   for ( int i = 0; i < (int) new_residue.pKas.size(); ++i ) {
+      TSO <<
+         QString( " new_residue.pKas[%1] = %2\n" )
+         .arg( i )
+         .arg( new_residue.pKas[i] )
+         ;
+   }      
+   TSO << LD;
+}
+
+bool US_AddResidue::update_pKas( int atomno ) {
+   TSO << LEQ;
+   TSO << "update_pKas( " << atomno << " )";
+   TSO << LD;
+
+   bool ok = true;
+   QString errors = "";
+   
+   int ionization_index = new_residue.r_atom[ atomno ].ionization_index;
+
+   TSO << QString( "ionization_index %1\n" ).arg( ionization_index );
+
+   // info_residue( "start of update_pKas()" );
+
+   if ( cb_enable_pKa->isChecked() != pKa_flag ) {
+      TSO << "ERROR flag inconsistency\n";
+      ok = false;
+   }
+
+   int atom_list_pos_hybrid2 = -1;
+
+   if ( cb_enable_pKa->isChecked() ) {
+      for ( int i=0; i < (int) atom_list.size(); ++i) {
+         if (
+             cmb_atoms->currentText() == atom_list[i].name &&
+             cmb_hybrids2->currentText() == atom_list[i].hybrid.name
+             ) {
+            atom_list_pos_hybrid2 = i;
+            break;
+         }
+      }
+   }
+   
+   bool pKas_need_sort = false;
+
+   if ( ionization_index ) {
+      // had a pKa previously
+      TSO << "update_pKas() had a pKa previously\n";
+      if ( cb_enable_pKa->isChecked() ) {
+         // has a pKa now, just update values
+         TSO << "update_pKas() has a pKa now, just update values\n";
+         if ( (int) new_residue.pKas.size() < ionization_index - 1 ) {
+            TSO << "ERROR new_residue.pKas.size() issue\n";
+            ok = false;
+         }
+         if ( !new_residue.r_atom_1.count( ionization_index ) ) {
+            TSO << "ERROR new_residue.r_atom_1 missing ionization index " << ionization_index << endl;
+            ok = false;
+         }
+         pKas_need_sort = new_residue.pKas.size() > 1 && new_residue.pKas[ ionization_index - 1 ] != new_atom.pKa;
+         new_residue.pKas[ ionization_index - 1 ]                  = new_atom.pKa;
+         new_residue.r_atom_1[ ionization_index ].hybrid           = atom_list[ atom_list_pos_hybrid2 ].hybrid;
+         new_residue.r_atom_1[ ionization_index ].hydration        = new_atom.hydration2;
+         new_residue.r_atom_1[ ionization_index ].pKa              = new_atom.pKa;
+         new_residue.r_atom[ atomno ].ionization_index             = ionization_index;
+         new_residue.r_atom_1[ ionization_index ].ionization_index = ionization_index;
+      } else {
+         // removed a pKa
+         TSO << "update_pKas() removed a pKa\n";
+         // doesn't effect sort order
+         new_residue.r_atom_1.erase( ionization_index );
+         {
+            int lost_index = ionization_index - 1;
+            vector < float > org_pKas = new_residue.pKas;
+            new_residue.pKas.resize( lost_index );
+
+            for ( int i = lost_index + 1; i < (int) org_pKas.size(); ++i ) {
+               new_residue.pKas.push_back( org_pKas[ i ] );
+               new_residue.r_atom_1[ i ] = new_residue.r_atom_1[ i + 1 ];
+            }
+
+            // remove last index
+            new_residue.r_atom_1.erase( org_pKas.size() );
+
+            // decrement all ionization_indices past lost index
+            for ( int i = 0; i < (int) new_residue.r_atom.size(); ++i ) {
+               if ( new_residue.r_atom[ i ].ionization_index > lost_index ) {
+                  --new_residue.r_atom[ i ].ionization_index;
+               }
+            }
+         }
+      }
+   } else {
+      // did not have a pKa prevously
+      if ( cb_enable_pKa->isChecked() ) {
+         // add a pKa
+         TSO << "update_pKas() add a pKa\n";
+         // set ionization_index as next, will be resorted later
+         pKas_need_sort = new_residue.pKas.size() > 0;
+         ionization_index                                          = (int) new_residue.pKas.size() + 1;
+         new_residue.pKas                                          .push_back( new_atom.pKa );
+         new_residue.r_atom_1[ ionization_index ]                  = atom_list[ atom_list_pos_hybrid2 ];
+         new_residue.r_atom_1[ ionization_index ].hydration        = new_atom.hydration2;
+         new_residue.r_atom_1[ ionization_index ].pKa              = new_atom.pKa;
+         new_residue.r_atom[ atomno ].ionization_index             = ionization_index;
+         new_residue.r_atom_1[ ionization_index ].ionization_index = ionization_index;
+      } else {
+         // nothing to do
+      }
+   }         
+
+   map < QString, int > atom_name_to_no;
+   for ( int i = 0; i < (int) new_residue.r_atom.size(); ++i ) {
+      if ( atom_name_to_no[ new_residue.r_atom[ i ].name ] ) {
+         errors += QString( "Duplicate atom name %1 found in atom %2, atom names must be unique\n" ).arg( new_residue.r_atom[ i ].name ).arg( i + 1 );
+         ok = false;
+      }
+      atom_name_to_no[ new_residue.r_atom[ i ].name ] = i;
+   }
+
+   if ( ok && pKas_need_sort ) {
+      TSO << "update_pKas() pKas will be sorted\n";
+      map < float, atom > tmp;
+      // info_residue( "pre sort" );
+
+      for ( auto it = new_residue.r_atom_1.begin();
+            it != new_residue.r_atom_1.end();
+            ++it ) {
+         if ( (int) new_residue.pKas.size() < it->first ) {
+            TSO << "ERROR new_residue.pKas don't contain expected ionization index\n";
+            ok = false;
+         } else {
+            TSO << "update_pKas() assigning tmp index " << it->first << endl;
+            it->second.ionization_index = it->first;
+            tmp[ new_residue.pKas[ it->first - 1 ] ] = it->second;
+         }
+      }
+      
+      new_residue.pKas.clear();
+      new_residue.r_atom_1.clear();
+      for ( auto it = tmp.begin();
+            it != tmp.end();
+            ++it ) {
+         new_residue.pKas.push_back( it->first );
+         it->second.ionization_index = (int) new_residue.pKas.size();
+         new_residue.r_atom_1[ it->second.ionization_index ] = it->second;
+         new_residue.r_atom[ atom_name_to_no[ it->second.name ] ].ionization_index = it->second.ionization_index;
+      }
+   }
+   
+   if ( new_residue.pKas.size() > 2 ) {
+      errors += QString( "Currently only 2 atoms with pKa enabled are supported, you have defined %1\n" ).arg( new_residue.pKas.size() );
+   }
+
+   ok &= new_residue.pKas.size() <= 2;
+
+   if ( !errors.isEmpty() ) {
+      QMessageBox::warning(this, us_tr( windowTitle() ),
+                           us_tr("Errors found and must be corrected before you will be able to 'Continue':\n" + errors ),
+                           QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+   }
+
+   // info_residue( "end of update_pKas()" );
+
+   return ok;
 }
 
 void US_AddResidue::set_chain()
@@ -1959,6 +2548,32 @@ void US_AddResidue::set_hydration()
    }
 }
 
+void US_AddResidue::set_enable_pKa()
+{
+   // qDebug() << "set_enable_pKa()";
+   if (cb_enable_pKa->isChecked()) {
+      pKa_flag = true;
+      lbl_pKa->show();
+      le_pKa->show();
+      lbl_define_hybrid2->show();
+      cmb_hybrids2->show();
+      lbl_atom_hydration2->show();
+      cnt_atom_hydration2->show();
+      lbl_define_hybrid  ->setText( us_tr(" Select Hybridization for Atom [pH 0]:" ) );
+      lbl_atom_hydration ->setText( us_tr(" Hydration Number for Atom [pH 0]:" ) );
+   } else {
+      pKa_flag = false;
+      lbl_pKa->hide();
+      le_pKa->hide();
+      lbl_define_hybrid2->hide();
+      cmb_hybrids2->hide();
+      lbl_atom_hydration2->hide();
+      cnt_atom_hydration2->hide();
+      lbl_define_hybrid  ->setText( us_tr(" Select Hybridization for Atom:" ) );
+      lbl_atom_hydration ->setText( us_tr(" Hydration Number for Atom:" ) );
+   }
+}
+
 void US_AddResidue::closeEvent(QCloseEvent *e)
 {
    global_Xpos -= 30;
@@ -1971,6 +2586,11 @@ void US_AddResidue::closeEvent(QCloseEvent *e)
 void US_AddResidue::update_bead_volume(const QString & val)
 {
    new_bead.volume = val.toFloat();
+}
+
+void US_AddResidue::update_pKa(const QString & val)
+{
+   new_atom.pKa = val.toFloat();
 }
 
 void US_AddResidue::delete_residue()
@@ -1991,19 +2611,24 @@ void US_AddResidue::delete_residue()
    pb_accept_bead->setEnabled(false);
    pb_add->setEnabled(false);
    existing_residue = false;
-   reset();
+   reset( false );
 }
 
 void US_AddResidue::write_residue_file()
 {
    QString str1;
    QFile f(residue_filename);
+   qDebug() << "write residue file";
    if (f.open(QIODevice::WriteOnly|QIODevice::Text))
    {
+      qDebug() << "write residue file, file open";
       lb_residues->clear( );
+      qDebug() << "write residue file, lb_residues cleared";
       QTextStream ts(&f);
+      qDebug() << "write residue file, residue_list.size(): " << residue_list.size();
       for (unsigned int i=0; i<residue_list.size(); i++)
       {
+         qDebug() << "write residue file name:" << residue_list[i].name.toUpper();
          ts << residue_list[i].comment << endl;
          ts << residue_list[i].name.toUpper()
             << "\t" << residue_list[i].type
@@ -2011,7 +2636,16 @@ void US_AddResidue::write_residue_file()
             << "\t" << residue_list[i].asa
             << "\t" << residue_list[i].r_atom.size()
             << "\t" << residue_list[i].r_bead.size()
-            << "\t" << residue_list[i].vbar << endl;
+            << "\t" << residue_list[i].vbar;
+
+         for ( int j = 0; j < (int) residue_list[i].pKas.size(); ++j ) {
+            ts << "\t" << residue_list[i].vbar
+               << "\t" << residue_list[i].pKas[ j ]
+               ;
+         }
+            
+         ts << endl;
+            
          for (unsigned int j=0; j<residue_list[i].r_atom.size(); j++)
          {
             ts << residue_list[i].r_atom[j].name.toUpper()
@@ -2021,7 +2655,23 @@ void US_AddResidue::write_residue_file()
                << "\t" << residue_list[i].r_atom[j].bead_assignment
                << "\t" << (unsigned int) residue_list[i].r_atom[j].positioner
                << "\t" << residue_list[i].r_atom[j].serial_number 
-               << "\t" << residue_list[i].r_atom[j].hydration << endl;
+               << "\t" << residue_list[i].r_atom[j].hydration
+               ;
+            if ( residue_list[i].r_atom[j].ionization_index ) {
+               int ionization_index = residue_list[i].r_atom[j].ionization_index;
+               if ( residue_list[i].r_atom_1.count( ionization_index ) ) {
+                  ts << "\t" << ionization_index
+                     << "\t" << residue_list[i].r_atom_1[ ionization_index ].hybrid.name
+                     << "\t" << residue_list[i].r_atom_1[ ionization_index ].hybrid.mw
+                     << "\t" << residue_list[i].r_atom_1[ ionization_index ].hybrid.radius
+                     << "\t" << residue_list[i].r_atom_1[ ionization_index ].bead_assignment
+                     << "\t" << (unsigned int) residue_list[i].r_atom_1[ ionization_index ].positioner
+                     << "\t" << residue_list[i].r_atom_1[ ionization_index ].serial_number 
+                     << "\t" << residue_list[i].r_atom_1[ ionization_index ].hydration
+                     ;
+               }
+            }
+            ts << endl;               
          }
          for (unsigned int j=0; j<residue_list[i].r_bead.size(); j++)
          {

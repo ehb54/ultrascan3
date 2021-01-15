@@ -11,6 +11,7 @@ zeno_main(
 #include "qfile.h"
 #include "qdir.h"
 #include "qtimer.h"
+#include <qprogressbar.h>
 
 #include "../include/us_hydrodyn.h"
 #if !defined(USE_OLD_ZENO) && __cplusplus >= 201103L
@@ -27,6 +28,7 @@ class US_Hydrodyn_Zeno
    US_Hydrodyn_Zeno( 
                     hydro_options *         options,
                     hydro_results *         results,
+                    QProgressBar *          use_progress,
                     US_Hydrodyn *           us_hydrodyn
                     );
 
@@ -36,6 +38,7 @@ class US_Hydrodyn_Zeno
                vector < PDB_atom > *   bead_model,
                double              &   sum_mass,
                double              &   sum_volume,
+               QProgressBar *          use_progress,
                bool                    keep_files = false,
                bool                    zeno_cxx = false,
                int                     threads = 1

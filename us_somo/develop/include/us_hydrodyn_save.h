@@ -33,6 +33,7 @@
 #include <iostream>
 #include "../include/us_hydrodyn_results.h"
 #include "../include/us_hydrodyn_hydro.h"
+#include "../include/us_hydrodyn_pdbdefs.h"
 
 #ifdef WIN32
 # if QT_VERSION < 0x040000
@@ -44,6 +45,8 @@ using namespace std;
 
 struct save_data
 {
+   // update US_Hydrodyn_Save::save_data_initialized() if fields added
+
    hydro_options hydro;
    hydro_results results;
    QString       hydro_res;         // copy of what is written to hydro_res file (model specific)
@@ -85,6 +88,7 @@ struct save_data
    double        unc_einst_rad;     // "Uncorrected Einstein's radius [nm]"
    double        cor_int_visc;      // "Corrected intrinsic viscosity [cm^3/g]"
    double        cor_einst_rad;     // "Corrected Einstein's radius [nm]"
+   double        grpy_einst_rad;    // "GRPY Einstein's radius[nm]"
    double        rel_times_tau_1;   // "Relaxation times, tau(1) [ns]"
    double        rel_times_tau_2;   // "Relaxation times, tau(2) [ns]"
    double        rel_times_tau_3;   // "Relaxation times, tau(3) [ns]"
@@ -120,11 +124,19 @@ struct save_info
    save_data             data;
 };
 
+
 class US_EXTERN US_Hydrodyn_Save : public QFrame
 {
    Q_OBJECT
 
    public:
+      enum HydroTypes {
+         HYDRO_UNKNOWN,
+         HYDRO_SMI,
+         HYDRO_ZENO,
+         HYDRO_GRPY
+      };
+
       US_Hydrodyn_Save(save_info *save,      
                        void *us_hydrodyn, 
                        bool *save_widget = 0,  // no save widget implies non-gui
@@ -132,9 +144,13 @@ class US_EXTERN US_Hydrodyn_Save : public QFrame
                        const char *name = 0);
       ~US_Hydrodyn_Save();
 
+      static save_data save_data_initialized();       // returns initialized save_data
+      static save_data save_data_initialized_from_bead_model( const vector < PDB_atom * > model, bool bead_exclusion = true );       // returns initialized save_data from model info
+      static save_data save_data_initialized_from_bead_model( const vector < PDB_atom > & model, bool bead_exclusion = true );       // returns initialized save_data from model info
+
       QString header();                        // returns a csv format header
       QString dataString(save_data *);         // returns a csv format data line
-      QString hydroFormatStats(vector < save_data >);      // returns a 'hydro_res' format data string of the avg, st.dev.
+      QString hydroFormatStats(vector < save_data >, enum HydroTypes hydrotype = HYDRO_UNKNOWN );      // returns a 'hydro_res' format data string of the avg, st.dev.
       vector < save_data > stats(vector < save_data > *);  // returns a 2 vector containing avg, st.dev.
 
    private:
@@ -193,7 +209,7 @@ class US_EXTERN US_Hydrodyn_Save : public QFrame
 
       void rebuild();
 
-      void tab_changed(QWidget *);
+      void tab_changed(int);
 
       void update_enables_selected();
       void update_enables_possible();

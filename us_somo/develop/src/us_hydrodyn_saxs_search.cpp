@@ -18,7 +18,7 @@ US_Hydrodyn_Saxs_Search::US_Hydrodyn_Saxs_Search(
                                                csv csv1,
                                                void *us_hydrodyn, 
                                                QWidget *p, 
-                                               const char *name
+                                               const char *
                                                ) : QFrame( p )
 {
    this->csv1 = csv1;
@@ -421,7 +421,7 @@ void US_Hydrodyn_Saxs_Search::update_font()
 void US_Hydrodyn_Saxs_Search::save()
 {
    QString fn;
-   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
+   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString() , QString() );
    if(!fn.isEmpty() )
    {
       QString text = editor->toPlainText();

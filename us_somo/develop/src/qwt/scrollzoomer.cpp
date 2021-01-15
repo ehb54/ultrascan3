@@ -54,6 +54,8 @@ ScrollZoomer::ScrollZoomer( QWidget *canvas ):
 
     d_hScrollData = new ScrollData;
     d_vScrollData = new ScrollData;
+
+    symmetric_rescale = false;
 }
 
 ScrollZoomer::~ScrollZoomer()

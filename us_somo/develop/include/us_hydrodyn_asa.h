@@ -42,6 +42,9 @@ struct asa_options
    float hydrate_probe_radius;
    float hydrate_threshold;
 
+   float vdw_grpy_probe_radius;
+   float vdw_grpy_threshold_percent;
+
    bool  vvv;
    float vvv_probe_radius;
    float vvv_grid_dR;
@@ -69,6 +72,8 @@ class US_EXTERN US_Hydrodyn_ASA : public QFrame
       QLabel *lbl_asa_threshold_percent;
       QLabel *lbl_asa_grid_threshold;
       QLabel *lbl_asa_grid_threshold_percent;
+      QLabel *lbl_vdw_grpy_probe_radius;
+      QLabel *lbl_vdw_grpy_threshold_percent;
       QLabel *lbl_hydrate_probe_radius;
       QLabel *lbl_hydrate_threshold;
       QLabel *lbl_asab1_step;
@@ -82,6 +87,8 @@ class US_EXTERN US_Hydrodyn_ASA : public QFrame
       QwtCounter *cnt_asa_threshold_percent;
       QwtCounter *cnt_asa_grid_threshold;
       QwtCounter *cnt_asa_grid_threshold_percent;
+      QwtCounter *cnt_vdw_grpy_probe_radius;
+      QwtCounter *cnt_vdw_grpy_threshold_percent;
       QwtCounter *cnt_hydrate_probe_radius;
       QwtCounter *cnt_hydrate_threshold;
       QwtCounter *cnt_asab1_step;
@@ -112,6 +119,8 @@ class US_EXTERN US_Hydrodyn_ASA : public QFrame
       void update_asa_grid_threshold(double);
       void update_asa_grid_threshold_percent(double);
       void update_asab1_step(double);
+      void update_vdw_grpy_probe_radius(double);
+      void update_vdw_grpy_threshold_percent(double);
       void update_hydrate_probe_radius(double);
       void update_hydrate_threshold(double);
       void update_vvv_probe_radius(double);

@@ -17,7 +17,7 @@ US_Hydrodyn_Cluster_Config_Server::US_Hydrodyn_Cluster_Config_Server(
                                                                      QString server_name,
                                                                      void *us_hydrodyn, 
                                                                      QWidget *p, 
-                                                                     const char *name
+                                                                     const char *
                                                                      ) : QDialog( p )
 {
    this->system_map  = &system_map;

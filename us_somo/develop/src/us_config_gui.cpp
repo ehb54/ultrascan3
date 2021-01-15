@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include "../include/us3i_color.h"
 #include "../include/us_config_gui.h"
 #include "../include/us_hydrodyn.h"
 #include <qfontmetrics.h>
@@ -12,7 +13,7 @@
 #include <QLabel>
 #include <QVBoxLayout>
 
-US_Config_GUI::US_Config_GUI(QWidget *parent, const char *name) : QFrame( parent )
+US_Config_GUI::US_Config_GUI(QWidget *parent, const char *) : QFrame( parent )
 {
    USglobal = new US_Config();
 
@@ -462,8 +463,8 @@ void US_Config_GUI::update_on_button()
 
 void US_Config_GUI::update_color()
 {
-   US_Color *uscol;
-   uscol = new US_Color();
+   US3i_Color *uscol;
+   uscol = new US3i_Color();
    US_Config::connect(uscol, SIGNAL(marginChanged(int)), this, SLOT(update_margin(int)));
    uscol->show();
 }
@@ -507,7 +508,7 @@ void US_Config_GUI::update_off_button()
 
 void US_Config_GUI::open_browser_dir()
 {
-   QString browser = QFileDialog::getOpenFileName( 0 , windowTitle() , USglobal->config_list.browser , QString::null );
+   QString browser = QFileDialog::getOpenFileName( 0 , windowTitle() , USglobal->config_list.browser , QString() );
 
 
    if ( browser != "" )
@@ -525,7 +526,7 @@ void US_Config_GUI::update_browser(const QString& newText)
 
 void US_Config_GUI::open_system_dir()
 {
-   QString system = QFileDialog::getExistingDirectory( 0 , QString::null , USglobal->config_list.system_dir , QFileDialog::ShowDirsOnly );
+   QString system = QFileDialog::getExistingDirectory( 0 , QString() , USglobal->config_list.system_dir , QFileDialog::ShowDirsOnly );
 
 
    if ( system != "" )
@@ -543,7 +544,7 @@ void US_Config_GUI::update_system_dir( const QString& newText )
 
 void US_Config_GUI::open_help_dir()
 {
-   QString help = QFileDialog::getExistingDirectory( 0 , QString::null , USglobal->config_list.help_dir , QFileDialog::ShowDirsOnly );
+   QString help = QFileDialog::getExistingDirectory( 0 , QString() , USglobal->config_list.help_dir , QFileDialog::ShowDirsOnly );
 
 
    if ( help != "" )
@@ -567,7 +568,7 @@ void US_Config_GUI::update_temperature_tol( const QString& newText )
 
 void US_Config_GUI::open_result_dir()
 {
-   QString result = QFileDialog::getExistingDirectory( 0 , QString::null , USglobal->config_list.result_dir , QFileDialog::ShowDirsOnly );
+   QString result = QFileDialog::getExistingDirectory( 0 , QString() , USglobal->config_list.result_dir , QFileDialog::ShowDirsOnly );
 
 
    if ( result != "" )
@@ -584,7 +585,7 @@ void US_Config_GUI::update_result_dir(const QString &newText)
 
 void US_Config_GUI::open_html_dir()
 {
-   QString html = QFileDialog::getExistingDirectory( 0 , QString::null , USglobal->config_list.html_dir , QFileDialog::ShowDirsOnly );
+   QString html = QFileDialog::getExistingDirectory( 0 , QString() , USglobal->config_list.html_dir , QFileDialog::ShowDirsOnly );
 
 
    if ( html != "" )
@@ -602,7 +603,7 @@ void US_Config_GUI::update_html_dir( const QString& newText )
 
 void US_Config_GUI::open_tmp_dir()
 {
-   QString tmp = QFileDialog::getExistingDirectory( 0 , QString::null , USglobal->config_list.tmp_dir , QFileDialog::ShowDirsOnly );
+   QString tmp = QFileDialog::getExistingDirectory( 0 , QString() , USglobal->config_list.tmp_dir , QFileDialog::ShowDirsOnly );
 
 
    if ( tmp != "" )
@@ -620,7 +621,7 @@ void US_Config_GUI::update_tmp_dir( const QString& newText )
 
 void US_Config_GUI::open_data_dir()
 {
-   QString data = QFileDialog::getExistingDirectory( 0 , QString::null , USglobal->config_list.data_dir , QFileDialog::ShowDirsOnly );
+   QString data = QFileDialog::getExistingDirectory( 0 , QString() , USglobal->config_list.data_dir , QFileDialog::ShowDirsOnly );
 
    
    if ( data != "" )
@@ -638,7 +639,7 @@ void US_Config_GUI::update_data_dir( const QString& newText )
 
 void US_Config_GUI::open_archive_dir()
 {
-   QString archive = QFileDialog::getExistingDirectory( 0 , QString::null , USglobal->config_list.archive_dir , QFileDialog::ShowDirsOnly );
+   QString archive = QFileDialog::getExistingDirectory( 0 , QString() , USglobal->config_list.archive_dir , QFileDialog::ShowDirsOnly );
 
    
    if ( archive != "" )
@@ -656,7 +657,7 @@ void US_Config_GUI::update_archive_dir( const QString& newText )
 
 void US_Config_GUI::open_root_dir()
 {
-   QString root = QFileDialog::getExistingDirectory( 0 , QString::null , USglobal->config_list.root_dir , QFileDialog::ShowDirsOnly );
+   QString root = QFileDialog::getExistingDirectory( 0 , QString() , USglobal->config_list.root_dir , QFileDialog::ShowDirsOnly );
 
 
    if ( root != "" ) 

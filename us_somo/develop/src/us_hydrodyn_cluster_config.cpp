@@ -24,7 +24,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 US_Hydrodyn_Cluster_Config::US_Hydrodyn_Cluster_Config(
                                          void *us_hydrodyn, 
                                          QWidget *p, 
-                                         const char *name
+                                         const char *
                                          ) : QDialog( p )
 {
    this->us_hydrodyn = us_hydrodyn;
@@ -433,7 +433,7 @@ void US_Hydrodyn_Cluster_Config::add_new()
                                         us_tr( "US-SOMO: Cluster Config: Add new system" ),
                                         us_tr( "Enter the unique system name:" ), 
                                         QLineEdit::Normal,
-                                        QString::null, 
+                                        QString(), 
                                         &ok, 
                                         this );
    if ( !ok )
@@ -474,7 +474,7 @@ void US_Hydrodyn_Cluster_Config::add_new()
                                              ).arg( lb_systems->item( pos )->text() ),
                                      us_tr( "&Yes" ),
                                      us_tr( "&No" ),
-                                     QString::null,
+                                     QString(),
                                      0,
                                      1
                                      ) )

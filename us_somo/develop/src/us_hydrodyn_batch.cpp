@@ -60,7 +60,7 @@ US_Hydrodyn_Batch::US_Hydrodyn_Batch(
                                      bool *batch_widget, 
                                      void *us_hydrodyn, 
                                      QWidget *p, 
-                                     const char *name
+                                     const char *
                                      ) : QFrame( p )
 {
 
@@ -71,6 +71,7 @@ US_Hydrodyn_Batch::US_Hydrodyn_Batch(
    this->us_hydrodyn = us_hydrodyn;
 
    started_in_expert_mode = ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode;
+   overwriteForcedOn = false;
 
    this->lb_model = ((US_Hydrodyn *)us_hydrodyn)->lb_model;
    cb_hydrate = (QCheckBox *)0;
@@ -629,6 +630,13 @@ void US_Hydrodyn_Batch::setupGUI()
    cb_zeno->setPalette( qp_cb ); AUTFBACK( cb_zeno );
    connect(cb_zeno, SIGNAL(clicked()), this, SLOT(set_zeno()));
 
+   cb_grpy = new QCheckBox(this);
+   cb_grpy->setText( " Calculate RB Hydrodynamics GRPY" );
+   cb_grpy->setChecked(batch->zeno);
+   cb_grpy->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_grpy->setPalette( qp_cb ); AUTFBACK( cb_grpy );
+   connect(cb_grpy, SIGNAL(clicked()), this, SLOT(set_grpy()));
+
    cb_hullrad = new QCheckBox(this);
    cb_hullrad->setText( " Hullrad" );
    cb_hullrad->setChecked(batch->zeno);
@@ -893,6 +901,7 @@ void US_Hydrodyn_Batch::setupGUI()
    QHBoxLayout * hbl_hydro_zeno = new QHBoxLayout; hbl_hydro_zeno->setContentsMargins( 0, 0, 0, 0 ); hbl_hydro_zeno->setSpacing( 0 );
    hbl_hydro_zeno->addWidget( cb_hydro );
    hbl_hydro_zeno->addWidget( cb_zeno );
+   hbl_hydro_zeno->addWidget( cb_grpy );
    hbl_hydro_zeno->addWidget( cb_hullrad );
 
    QVBoxLayout * leftside = new QVBoxLayout(); leftside->setContentsMargins( 0, 0, 0, 0 ); leftside->setSpacing( 0 );
@@ -978,6 +987,28 @@ void US_Hydrodyn_Batch::help()
 
 void US_Hydrodyn_Batch::closeEvent(QCloseEvent *e)
 {
+   if ( batch_job_running ) {
+      QMessageBox mb( this->windowTitle(), 
+                      us_tr("Attention:\nThere is a batch job running, do you really want to stop it?"),
+                      QMessageBox::Warning,
+                      QMessageBox::Yes | QMessageBox::Default,
+                      QMessageBox::Cancel | QMessageBox::Escape,
+                      QMessageBox::NoButton);
+      mb.setButtonText(QMessageBox::Yes, us_tr("Yes"));
+      mb.setButtonText(QMessageBox::Cancel, us_tr("Cancel"));
+      switch(mb.exec())
+      {
+      case QMessageBox::Cancel:
+         {
+            e->ignore();
+            return;
+         }
+      }
+      stop();
+      stop_processing();
+      qApp->processEvents();
+   }
+
    *batch_widget = false;
    global_Xpos -= 30;
    global_Ypos -= 30;
@@ -1190,7 +1221,7 @@ void US_Hydrodyn_Batch::load_somo()
                                                          "What would you like to do?\n")),
                                               us_tr("Use &Batch current mode settings"), 
                                               us_tr("Keep &SOMO's setting"),
-                                              QString::null,
+                                              QString(),
                                               0, // Stop == button 0
                                               0 // Escape == button 0
                                              ) )
@@ -1294,7 +1325,8 @@ void US_Hydrodyn_Batch::update_enables()
          } else {
             any_bead_model_selected = true;
          }
-         if ( get_file_name(i).contains( "so_ovlp" ) )
+         if ( get_file_name(i).contains( "-so_ovlp" ) ||
+              get_file_name(i).contains( "-vdw" ) ) 
          {
             any_so_ovlp_selected    = true;
          }
@@ -1328,6 +1360,7 @@ void US_Hydrodyn_Batch::update_enables()
       cb_equi_grid             ->setChecked( false );
       cb_hydro                 ->setChecked( false );
       cb_zeno                  ->setChecked( false );
+      cb_grpy                  ->setChecked( false );
       cb_hullrad               ->setChecked( false );
       cb_dmd                   ->setChecked( false );
       cb_prr                   ->setChecked( false ); 
@@ -1350,6 +1383,7 @@ void US_Hydrodyn_Batch::update_enables()
       cb_equi_grid             ->setEnabled( false );
       cb_hydro                 ->setEnabled( false );
       cb_zeno                  ->setEnabled( false );
+      cb_grpy                  ->setEnabled( false );
       cb_hullrad               ->setEnabled( false );
       cb_dmd                   ->setEnabled( false );
       cb_prr                   ->setEnabled( false ); 
@@ -1375,6 +1409,7 @@ void US_Hydrodyn_Batch::update_enables()
       batch->equi_grid             = false;
       batch->hydro                 = false;
       batch->zeno                  = false;
+      batch->grpy                  = false;
       batch->hullrad               = false;
       batch->dmd                   = false;
       batch->prr                   = false;
@@ -1399,6 +1434,7 @@ void US_Hydrodyn_Batch::update_enables()
          cb_somo_o   ->setEnabled( true );
          cb_grid     ->setEnabled( true );
          cb_vdw_beads->setEnabled( true );
+         cb_grpy     ->setEnabled( true );
          cb_hullrad  ->setEnabled( true );
 
          if ( !any_bead_model_selected ) {
@@ -1562,7 +1598,8 @@ void US_Hydrodyn_Batch::update_enables()
                batch->hydro         = false;
             }
             cb_zeno              ->setEnabled( true );
-            if ( batch->hydro || batch->zeno ) {
+            cb_grpy              ->setEnabled( true );
+            if ( batch->hydro || batch->zeno || batch->grpy ) {
                cb_avg_hydro         ->setEnabled( true );
             } else {
                cb_avg_hydro         ->setEnabled( false );
@@ -1577,15 +1614,13 @@ void US_Hydrodyn_Batch::update_enables()
          } else {
             cb_hydro             ->setEnabled( false );
             cb_zeno              ->setEnabled( false );
+            cb_grpy              ->setEnabled( false );
             cb_avg_hydro         ->setEnabled( false );
             le_avg_hydro_name    ->setEnabled( false );
 
-            cb_hydro             ->setChecked( false );
-            cb_zeno              ->setChecked( false );
-            cb_avg_hydro         ->setChecked( false );
-
             batch->hydro                 = false;
             batch->zeno                  = false;
+            batch->grpy                  = false;
             batch->avg_hydro             = false;
          }
       }
@@ -1602,6 +1637,7 @@ void US_Hydrodyn_Batch::update_enables()
       cb_prr               ->isChecked() || 
       cb_hydro             ->isChecked() || 
       cb_zeno              ->isChecked() ||
+      cb_grpy              ->isChecked() ||
       cb_hullrad           ->isChecked() ||
       cb_dmd               ->isChecked() || 
       0;
@@ -1615,6 +1651,7 @@ void US_Hydrodyn_Batch::update_enables()
        !cb_iqq               ->isChecked() &&
        !cb_prr               ->isChecked() &&
        !cb_hydro             ->isChecked() &&
+       !cb_grpy              ->isChecked() &&
        !cb_hullrad           ->isChecked() &&
        !cb_dmd               ->isChecked() 
        ) {
@@ -1756,6 +1793,21 @@ void US_Hydrodyn_Batch::set_issue_info( bool as_batch )
    }
 }
 
+void US_Hydrodyn_Batch::stop_processing() {
+   editor_msg( "dark red", "Stopped by user" );
+   editor_msg( "dark red", "Files selected may have changed, please verify before rerunning Start." );
+   enable_after_stop();
+   disable_updates = false;
+   save_batch_active = false;
+   ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear( );
+   if ( overwriteForcedOn )
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->overwrite = false;
+      ((US_Hydrodyn *)us_hydrodyn)->overwrite_hydro = false;
+      ((US_Hydrodyn *)us_hydrodyn)->cb_overwrite->setChecked(false);
+   }
+}   
+
 void US_Hydrodyn_Batch::screen()
 {
    disable_updates = true;
@@ -1769,6 +1821,8 @@ void US_Hydrodyn_Batch::screen()
 
    set_issue_info( false );
 
+   overwriteForcedOn = false;
+
    for ( int i = 0; i < lb_files->count(); i++ )
    {
       progress->setValue( i );
@@ -1779,11 +1833,7 @@ void US_Hydrodyn_Batch::screen()
          // editor->append(QString(us_tr("Screening: %1").arg(file)));
          if ( stopFlag )
          {
-            editor->setTextColor("dark red");
-            editor->append("Stopped by user");
-            enable_after_stop();
-            editor->setTextColor(save_color);
-            disable_updates = false;
+            stop_processing();
             return;
          }
          status[file] = 2; // screening now
@@ -2043,11 +2093,12 @@ void US_Hydrodyn_Batch::set_hydro()
    {
       cb_zeno->setChecked( false );
       batch->zeno = cb_zeno->isChecked();
-   }
-   if ( cb_hullrad->isChecked() ) {
+      cb_grpy->setChecked( false );
+      batch->grpy = cb_grpy->isChecked();
       cb_hullrad->setChecked( false );
       batch->hullrad = cb_hullrad->isChecked();
    }
+
    update_enables();
 }
 
@@ -2058,8 +2109,8 @@ void US_Hydrodyn_Batch::set_zeno()
    {
       cb_hydro->setChecked( false );
       batch->hydro = cb_hydro->isChecked();
-   }
-   if ( cb_hullrad->isChecked() ) {
+      cb_grpy->setChecked( false );
+      batch->grpy = cb_grpy->isChecked();
       cb_hullrad->setChecked( false );
       batch->hullrad = cb_hullrad->isChecked();
    }
@@ -2070,12 +2121,32 @@ void US_Hydrodyn_Batch::set_zeno()
 void US_Hydrodyn_Batch::set_hullrad()
 {
    batch->hullrad = cb_hullrad->isChecked();
-   if ( batch->hullrad )
-   {
+   if ( batch->hullrad ) {
       cb_hydro->setChecked( false );
       batch->hydro = cb_hydro->isChecked();
+      cb_zeno->setChecked( false );
+      batch->zeno = cb_zeno->isChecked();
+      cb_grpy->setChecked( false );
+      batch->grpy = cb_grpy->isChecked();
    }
-   if ( cb_zeno->isChecked() ) {
+
+   update_enables();
+}
+
+void US_Hydrodyn_Batch::set_grpy()
+{
+   batch->grpy = cb_grpy->isChecked();
+   // if ( batch->grpy ) {
+   //    QMessageBox::warning( this, windowTitle() + ": Calculate RB Hydrodynamics: GRPY", "GRPY not yet integrated" );
+   //    cb_grpy->setChecked( false );
+   //    batch->grpy = cb_grpy->isChecked();
+   //    return;
+   // }
+   if ( batch->grpy ) {
+      cb_hullrad->setChecked( false );
+      batch->hullrad = cb_hullrad->isChecked();
+      cb_hydro->setChecked( false );
+      batch->hydro = cb_hydro->isChecked();
       cb_zeno->setChecked( false );
       batch->zeno = cb_zeno->isChecked();
    }
@@ -2146,6 +2217,7 @@ void US_Hydrodyn_Batch::disable_after_start()
    cb_hydro->setEnabled(false);
    cb_zeno->setEnabled(false);
    cb_hullrad->setEnabled(false);
+   cb_grpy->setEnabled(false);
    cb_avg_hydro->setEnabled(false);
    le_avg_hydro_name->setEnabled(false);
    cb_results_dir->setEnabled(false);
@@ -2179,6 +2251,7 @@ void US_Hydrodyn_Batch::enable_after_stop()
    cb_hydro->setEnabled(true);
    cb_zeno->setEnabled(true);
    cb_hullrad->setEnabled(true);
+   cb_grpy->setEnabled(true);
    pb_select_save_params->setEnabled(true);
    cb_saveParams->setEnabled(true);
    cb_dmd->setEnabled( true );
@@ -2217,34 +2290,42 @@ void US_Hydrodyn_Batch::start( bool quiet )
    }
 
    US_Timer job_timer;
-   bool overwriteForcedOn = false;
-   if ( !quiet && !((US_Hydrodyn *)us_hydrodyn)->overwrite )
-   {
-      switch ( QMessageBox::warning(this, 
-                                    windowTitle() + us_tr( ": Warning" ),
-                                    QString(us_tr("Please note:\n\n"
-                                               "Overwriting of existing files currently off.\n"
-                                               "This could cause Batch mode to block during processing.\n"
-                                               "What would you like to do?\n")),
-                                    us_tr("&Stop"), 
-                                    us_tr("&Turn on overwrite now"),
-                                    us_tr("C&ontinue anyway"),
-                                    0, // Stop == button 0
-                                    0 // Escape == button 0
-                                    ) )
+   overwriteForcedOn = false;
+   if ( ((US_Hydrodyn *)us_hydrodyn)->overwrite ) {
+      ((US_Hydrodyn *)us_hydrodyn)->overwrite_hydro = true;
+      overwriteForcedOn = true;
+   } else {
+      if ( !quiet && !((US_Hydrodyn *)us_hydrodyn)->overwrite )
       {
-      case 0 : // stop
-         return;
-         break;
-      case 1 :
-         ((US_Hydrodyn *)us_hydrodyn)->overwrite = true;
-         ((US_Hydrodyn *)us_hydrodyn)->cb_overwrite->setChecked(true);
-         overwriteForcedOn = true;
-         break;
-      case 2 : // continue
-         break;
+         switch ( QMessageBox::warning(this, 
+                                       windowTitle() + us_tr( ": Warning" ),
+                                       QString(us_tr("Please note:\n\n"
+                                                     "Overwriting of existing files currently off.\n"
+                                                     "This could cause Batch mode to block during processing.\n"
+                                                     "What would you like to do?\n")),
+                                       us_tr("&Stop"), 
+                                       us_tr("&Turn on overwrite now"),
+                                       us_tr("C&ontinue anyway"),
+                                       0, // Stop == button 0
+                                       0 // Escape == button 0
+                                       ) )
+         {
+         case 0 : // stop
+            return;
+            break;
+         case 1 :
+            ((US_Hydrodyn *)us_hydrodyn)->overwrite = true;
+            ((US_Hydrodyn *)us_hydrodyn)->overwrite_hydro = true;
+            ((US_Hydrodyn *)us_hydrodyn)->cb_overwrite->setChecked(true);
+            overwriteForcedOn = true;
+            break;
+         case 2 : // continue
+            break;
+         }
       }
    }
+
+   ((US_Hydrodyn *)us_hydrodyn)->citation_clear();
 
    disable_after_start();
    disable_updates = true;
@@ -2284,7 +2365,8 @@ void US_Hydrodyn_Batch::start( bool quiet )
       !batch->vdw_beads &&
       !batch->hydro &&
       !batch->zeno &&
-      !batch->hullrad
+      !batch->hullrad &&
+      !batch->grpy
       ;
 
    set_issue_info();
@@ -2312,6 +2394,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
             if ( overwriteForcedOn )
             {
                ((US_Hydrodyn *)us_hydrodyn)->overwrite = false;
+               ((US_Hydrodyn *)us_hydrodyn)->overwrite_hydro = false;
                ((US_Hydrodyn *)us_hydrodyn)->cb_overwrite->setChecked(false);
             }
             return;
@@ -2344,18 +2427,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
                
             if ( stopFlag )
             {
-               editor->setTextColor("dark red");
-               editor->append("Stopped by user");
-               enable_after_stop();
-               editor->setTextColor(save_color);
-               disable_updates = false;
-               save_batch_active = false;
-               ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear( );
-               if ( overwriteForcedOn )
-               {
-                  ((US_Hydrodyn *)us_hydrodyn)->overwrite = false;
-                  ((US_Hydrodyn *)us_hydrodyn)->cb_overwrite->setChecked(false);
-               }
+               stop_processing();
                return;
             }
             bool pdb_mode =
@@ -2400,18 +2472,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
             } 
             if ( stopFlag )
             {
-               editor->setTextColor("dark red");
-               editor->append("Stopped by user");
-               enable_after_stop();
-               editor->setTextColor(save_color);
-               disable_updates = false;
-               save_batch_active = false;
-               ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear( );
-               if ( overwriteForcedOn )
-               {
-                  ((US_Hydrodyn *)us_hydrodyn)->overwrite = false;
-                  ((US_Hydrodyn *)us_hydrodyn)->cb_overwrite->setChecked(false);
-               }
+               stop_processing();
                return;
             }
             if ( result && batch->iqq )
@@ -2705,18 +2766,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
             } 
             if ( stopFlag )
             {
-               editor->setTextColor("dark red");
-               editor->append("Stopped by user");
-               enable_after_stop();
-               editor->setTextColor(save_color);
-               disable_updates = false;
-               save_batch_active = false;
-               ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear( );
-               if ( overwriteForcedOn )
-               {
-                  ((US_Hydrodyn *)us_hydrodyn)->overwrite = false;
-                  ((US_Hydrodyn *)us_hydrodyn)->cb_overwrite->setChecked(false);
-               }
+               stop_processing();
                return;
             }
             if ( result && batch->prr )
@@ -2927,21 +2977,10 @@ void US_Hydrodyn_Batch::start( bool quiet )
             progress->setValue( 1 + i * 2 );
             if ( stopFlag )
             {
-               editor->setTextColor("dark red");
-               editor->append("Stopped by user");
-               enable_after_stop();
-               editor->setTextColor(save_color);
-               disable_updates = false;
-               save_batch_active = false;
-               ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear( );
-               if ( overwriteForcedOn )
-               {
-                  ((US_Hydrodyn *)us_hydrodyn)->overwrite = false;
-                  ((US_Hydrodyn *)us_hydrodyn)->cb_overwrite->setChecked(false);
-               }
+               stop_processing();
                return;
             }
-            if ( result && ( batch->hydro || batch->zeno ) &&
+            if ( result && ( batch->hydro || batch->zeno || batch->grpy ) &&
                  ( !pdb_mode || batch->somo || batch->grid || batch->somo_o || batch->vdw_beads ) )
             {
                save_us_hydrodyn_settings();
@@ -2956,6 +2995,18 @@ void US_Hydrodyn_Batch::start( bool quiet )
                }
                if ( batch->zeno ) {
                   result = ((US_Hydrodyn *)us_hydrodyn)->calc_zeno_hydro() ? false : true;
+               }
+               if ( batch->grpy ) {
+                  result = ((US_Hydrodyn *)us_hydrodyn)->calc_grpy_hydro();
+                  if ( result ) {
+                     // qDebug() << "waiting for grpy result";
+                     while( ((US_Hydrodyn *)us_hydrodyn)->grpy_running ) {
+                        qApp->processEvents();
+                        mQThread::msleep( 333 );
+                     }
+                     result = ((US_Hydrodyn *)us_hydrodyn)->grpy_success;
+                     // qDebug() << "grpy finished";
+                  }
                }
                job_timer.end_timer   ( QString( "%1 hydrodynamics" ).arg( get_file_name( i ) ) );
                restore_us_hydrodyn_settings();
@@ -2981,6 +3032,12 @@ void US_Hydrodyn_Batch::start( bool quiet )
                   result = false;
                }
             }                  
+
+            if ( stopFlag )
+            {
+               stop_processing();
+               return;
+            }
 
             if ( result ) 
             {
@@ -3045,7 +3102,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
             fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname, 0, this);
          }         
 
-         us_qdebug( "save batch 1" );
+         // us_qdebug( "save batch 1" );
          FILE *of = us_fopen(fname, "wb");
          if ( of )
          {
@@ -3056,22 +3113,33 @@ void US_Hydrodyn_Batch::start( bool quiet )
             }
             if ( stats.size() == 2 )
             {
-               us_qdebug( "save batch 3" );
-               fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_util->hydroFormatStats(stats).toLatin1().data());
+               // us_qdebug( "save batch 3" );
+               US_Hydrodyn_Save::HydroTypes hydrotype = US_Hydrodyn_Save::HydroTypes::HYDRO_UNKNOWN;
+               if ( batch->hydro ) {
+                  hydrotype = US_Hydrodyn_Save::HydroTypes::HYDRO_SMI;
+               }
+               if ( batch->grpy ) {
+                  hydrotype = US_Hydrodyn_Save::HydroTypes::HYDRO_GRPY;
+               }
+               if ( batch->zeno ) {
+                  hydrotype = US_Hydrodyn_Save::HydroTypes::HYDRO_ZENO;
+               }
+               
+               fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_util->hydroFormatStats( stats, hydrotype ).toLatin1().data() );
             }
             fclose(of);
          }
-         us_qdebug( "save batch 4" );
+         // us_qdebug( "save batch 4" );
       }
       if ( ((US_Hydrodyn *)us_hydrodyn)->saveParams )
       {
-         us_qdebug( "save batch 5" );
+         // us_qdebug( "save batch 5" );
          QString fname = batch->avg_hydro_name + ".csv";
          if ( QFile::exists(fname) )
          {
             fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname, 0, this);
          }         
-         us_qdebug( "save batch 6" );
+         // us_qdebug( "save batch 6" );
          FILE *of = us_fopen(fname, "wb");
          if ( of )
          {
@@ -3087,7 +3155,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
             }
             fclose(of);
          }
-         us_qdebug( "save batch 7" );
+         // us_qdebug( "save batch 7" );
       }  
    }
    ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear( );
@@ -3098,17 +3166,37 @@ void US_Hydrodyn_Batch::start( bool quiet )
    if ( overwriteForcedOn )
    {
       ((US_Hydrodyn *)us_hydrodyn)->overwrite = false;
+      ((US_Hydrodyn *)us_hydrodyn)->overwrite_hydro = false;
       ((US_Hydrodyn *)us_hydrodyn)->cb_overwrite->setChecked(false);
    }
    cout << job_timer.list_times();
+
+   editor_msg( "black", us_tr( "Processing Complete" ) );
+   {
+      QString citation_type;
+      if ( batch->hydro ) {
+         citation_type = "smi";
+      } else if ( batch->zeno ) {
+         citation_type = "zeno";
+      } else if ( batch->grpy ) {
+         citation_type = "grpy";
+      }
+      if ( !citation_type.isEmpty() ) {
+         editor_msg( "dark blue", ((US_Hydrodyn *)us_hydrodyn)->info_cite( citation_type ) );
+      }
+   }
 }
 
 void US_Hydrodyn_Batch::stop()
 {
-   stopFlag = true;
-   ((US_Hydrodyn *)us_hydrodyn)->stopFlag = true;
-   ((US_Hydrodyn *)us_hydrodyn)->pb_stop_calc->setEnabled(false);
+   // qDebug() << "US_Hydrodyn_Batch::stop()";
    pb_stop->setEnabled(false);
+   stopFlag = true;
+   emit ((US_Hydrodyn *)us_hydrodyn)->stop_calc();
+   progress->reset();
+   disable_updates = false;
+   set_counts();
+   update_enables();
    qApp->processEvents();
 }
 
@@ -3127,7 +3215,7 @@ void US_Hydrodyn_Batch::update_font()
 void US_Hydrodyn_Batch::save()
 {
    QString fn;
-   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
+   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString() , QString() );
    if(!fn.isEmpty() )
    {
       QString text = editor->toPlainText();
@@ -3570,21 +3658,21 @@ void US_Hydrodyn_Batch::make_movie()
          tc_start += tc_delta;
       }
       cout << "cmdlog [" << cmdlog << "]\n";
-      system(cmdlog.toLatin1().data());
+      if ( system(cmdlog.toLatin1().data()) ) {};
       cout << "cmd0 [" << cmd0 << "]\ncmd2 [" << cmd2 << "]\n";
-      system(cmd0.toLatin1().data());
+      if ( system(cmd0.toLatin1().data()) ) {};
       for ( unsigned int i = 0; i < cmd1.size(); i++ )
       {
          cout << QString("cmd1:%1 [%2]\n").arg(i).arg(cmd1[i]);
-         system(cmd1[i].toLatin1().data());
+         if ( system(cmd1[i].toLatin1().data()) ) {};
       }
-      system(cmd2.toLatin1().data());
+      if ( system(cmd2.toLatin1().data()) ) {};
       if ( clean_up ) 
       {
          for ( unsigned int i = 0; i < cmd3.size(); i++ )
          {
             cout << QString("cmd3:%1 [%2]\n").arg(i).arg(cmd3[i]);
-            system(cmd3[i].toLatin1().data());
+            if ( system(cmd3[i].toLatin1().data()) ) {};
          }
       }
       editor_msg( "dark blue", QString(us_tr("Created movie file %1")).arg( output_file + ".avi" ) );

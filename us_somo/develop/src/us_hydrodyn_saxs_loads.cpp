@@ -1355,7 +1355,7 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
    // scaling fields
    QString scaling_target = "";
 
-   bool do_crop = false;
+   // bool do_crop = false;
 
    if ( f.open(QIODevice::ReadOnly) )
    {
@@ -1449,7 +1449,7 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
       if ( ext == "dat" ) 
       {
          // foxs?
-         do_crop = true;
+         // do_crop = true;
 
          Icolumn = 1;
          I_errorcolumn = 2;
@@ -1493,7 +1493,7 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
       }
       if ( ext == "fit" ) 
       {
-         do_crop = true;
+         // do_crop = true;
 
          Icolumn = 2;
          I_errorcolumn = 0;
@@ -3387,7 +3387,7 @@ void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
    // scaling fields
    QString scaling_target = "";
 
-   bool do_crop = false;
+   // bool do_crop = false;
 
    if ( f.open(QIODevice::ReadOnly) )
    {
@@ -3475,7 +3475,7 @@ void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
       if ( ext == "dat" ) 
       {
          // foxs?
-         do_crop = true;
+         // do_crop = true;
 
          Icolumn = 1;
          I_errorcolumn = 2;
@@ -3519,7 +3519,7 @@ void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
       }
       if ( ext == "fit" ) 
       {
-         do_crop = true;
+         // do_crop = true;
 
          Icolumn = 2;
          I_errorcolumn = 0;

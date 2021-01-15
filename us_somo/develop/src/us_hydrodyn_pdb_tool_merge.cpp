@@ -55,7 +55,7 @@ US_Hydrodyn_Pdb_Tool_Merge::US_Hydrodyn_Pdb_Tool_Merge(
                                                        void *us_hydrodyn, 
                                                        void *pdb_tool_window, 
                                                        QWidget *p, 
-                                                       const char *name
+                                                       const char *
                                                        ) : QFrame( p )
 {
    this->us_hydrodyn = us_hydrodyn;
@@ -540,7 +540,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::update_font()
 void US_Hydrodyn_Pdb_Tool_Merge::save()
 {
    QString fn;
-   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
+   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString() , QString() );
    if(!fn.isEmpty() )
    {
       QString text = editor->toPlainText();

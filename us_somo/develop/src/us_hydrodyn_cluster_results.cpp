@@ -24,7 +24,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 US_Hydrodyn_Cluster_Results::US_Hydrodyn_Cluster_Results(
                                          void *us_hydrodyn, 
                                          QWidget *p, 
-                                         const char *name
+                                         const char *
                                          ) : QDialog( p )
 {
    this->us_hydrodyn = us_hydrodyn;
@@ -302,7 +302,7 @@ void US_Hydrodyn_Cluster_Results::update_font()
 void US_Hydrodyn_Cluster_Results::save()
 {
    QString fn;
-   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
+   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString() , QString() );
    if(!fn.isEmpty() )
    {
       QString text = editor->toPlainText();
@@ -350,7 +350,7 @@ void US_Hydrodyn_Cluster_Results::purge()
                                  us_tr( "Do you want purge these job results?" ),
                                  us_tr( "&Yes" ),
                                  us_tr( "&No" ),
-                                 QString::null, 0, 1 | QMessageBox::Default ) )
+                                 QString(), 0, 1 | QMessageBox::Default ) )
       {
          return;
       }
@@ -465,7 +465,7 @@ void US_Hydrodyn_Cluster_Results::select_all()
 bool US_Hydrodyn_Cluster_Results::clean_dir( QString dir ) 
 {
    // us_qdebug( QString( "clean_dir %1" ).arg( dir ) );
-   system( "pwd" );
+   if ( system( "pwd" ) ) {};
    errormsg = "";
    if ( !QDir::setCurrent( dir ) )
    {

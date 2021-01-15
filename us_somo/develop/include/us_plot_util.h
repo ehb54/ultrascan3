@@ -8,18 +8,14 @@
 #include "us_vector.h"
 #include <qwt_plot.h>
 #include "us3i_plot.h"
+#include "qwt/scrollbar.h"
+#include "qwt/scrollzoomer.h"
 
 #include <qwt_plot_curve.h>
 #include <qwt_scale_widget.h>
 #include <qwt_scale_draw.h>
 
 using namespace std;
-#ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
-
 
 class US_EXTERN US_Plot_Util
 {
@@ -37,14 +33,59 @@ class US_EXTERN US_Plot_Util
                                   const vector < QwtPlot * > & plots,
                                   bool scale_x_to_first = false
                                   );
+   static void rescale(
+                       map < QString, QwtPlot *> plots,
+                       map < QwtPlot *, ScrollZoomer * > plot_to_zoomer,
+                       bool only_scale_y = true,
+                       bool rescale_rounding = false
+                       );
+
+   static void rescale(
+                       map < QString, QwtPlot *> plots,
+                       map < QwtPlot *, ScrollZoomer * > plot_to_zoomer,
+                       map < QwtPlot *, double >         plot_limit_x_range_min,
+                       map < QwtPlot *, double >         plot_limit_x_range_max,
+                       bool only_scale_y = true,
+                       bool rescale_rounding = false
+                       );
+
+   static void rescale(
+                       const vector < QwtPlot * > & plots,
+                       map < QwtPlot *, ScrollZoomer * > plot_to_zoomer,
+                       bool only_scale_y = true,
+                       bool rescale_rounding = false
+                       );
+
+   static void rescale(
+                       const vector < QwtPlot * > & plots,
+                       map < QwtPlot *, ScrollZoomer * > plot_to_zoomer,
+                       map < QwtPlot *, double >         plot_limit_x_range_min,
+                       map < QwtPlot *, double >         plot_limit_x_range_max,
+                       bool only_scale_y = true,
+                       bool rescale_rounding = false
+                       );
+
+   static void rescale(
+                       QwtPlot * plot,
+                       ScrollZoomer * zoomer,
+                       bool only_scale_y = true,
+                       bool rescale_rounding = false
+                       );
+
+   static void rescale(
+                       QwtPlot * plot,
+                       ScrollZoomer * zoomer,
+                       double limit_x_range_min,
+                       double limit_x_range_max,
+                       bool only_scale_y = true,
+                       bool rescale_rounding = false
+                       );
+
+   static double round_digits(
+                              double value,
+                              int digits = 2
+                              );
+                             
 };
-
-#ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
-#endif
-
-
 
 #endif

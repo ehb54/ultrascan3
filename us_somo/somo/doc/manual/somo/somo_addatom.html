@@ -22,63 +22,39 @@
 <center>
 <h2>
 SOMO - Add/Edit Atom Lookup Table Module:</h2>
+
+<p>
+<h3><center>Last updated: September 2020 </center></h3><p>
+
 <p>
 <img SRC="somo-2.png" ALT="SOMO Add/Edit Atom Lookup Table SCREEN">
 </center>
 <p>
 
-In this module, you can edit the atom table, where the atomic groups present
-in PDB files need to be defined and their parameters (molecular weight and
-radius) loaded from the hybridization table. In addition, for SAXS simulation
-this table is also linked to the SAXS coefficients table, and the excluded volume
-for each atomic group is defined in alternative to that of the bare non-hydrogen atom
-taken from the SAXS coefficient table. Load the hybridization file first, then the
-atom file if one exists, and then the SAXS coefficients file. Add new atoms to it by
-filling out the fields and clicking on <b><i>Add Atom to File</i></b>. You can also
-delete an atom (<i><b>Delete Atom</b></i>) from the file.
+In this module, you can edit the atom table, where the atomic groups present in PDB files need to be defined and their parameters (molecular weight and radius) loaded from the hybridization table. In addition, for SAXS simulation this table is also linked to the SAXS coefficients table, and the excluded volume for each atomic group is defined in alternative to that of the bare non-hydrogen atom taken from the SAXS coefficient table. Load the hybridization file first, then the
+atom file if one exists, and then the SAXS coefficients file. Add new atoms to it by filling out the fields and clicking on <b><i>Add Atom to File</i></b>. You can also delete an atom (<i><b>Delete Atom</b></i>) from the file.
 <ul>
 <li>
-The first field (<i><b>Number of Atoms in File:</b></i>) lists the existing
-defined atomic groups (with their corresponding hybridization in parentheses),
-and you can select one from the pull-down list for editing. To enter a new atom,
-go to the <i><b>Atom Name:</b></i> field (see below).
+The first field (<i><b>Number of Atoms in File:</b></i>) lists the existing defined atomic groups (with their corresponding hybridization in parentheses), and you can select one from the pull-down list for editing. To enter a new atom, go to the <i><b>Atom Name:</b></i> field (see below).<p>
 <li>
-The second field (<i><b>Number of Hybridizations in File:</b></i>) lists the
-existing hybridizations, from which one can be picked up from the pull-down list and
-entered in the <i><b>Hybridization:</b></i> field (see below). This operation
-will also automatically populate the <i><b>SAXS Atom Identifier:</b></i>,
-<i><b>Molecular Weight:</b></i> and <i><b>Radius (A):</b></i> fields (see below).
+The second field (<i><b>Number of Hybridizations in File:</b></i>) lists the existing hybridizations, from which one can be picked up from the pull-down list and entered in the <i><b>Hybridization:</b></i> field (see below). This operation will also automatically populate the <i><b>SAXS Atom Identifier:</b></i>, <i><b>Molecular Weight:</b></i> and <i><b>Radius (A):</b></i> fields (see below).<p>
 <li>
-The third field <i><b>SAXS Atom Identifier</b></i> is not directly editable, and is
-populated according to the hybridization selected.
+The third field <i><b>SAXS Atom Identifier</b></i> is not directly editable, and is populated according to the hybridization selected.<p>
 <li>
-The fourth field, <i><b>Atom Name</b></i>, is where you can enter a new atomic group.
+The fourth field, <i><b>Atom Name</b></i>, is where you can enter a new atomic group.<p>
 <li>
-The fifth field, <i><b>Hybridization:</b></i>, is instead polulated by picking up an existing
-hybridization from the pull-down list in the <i><b>Number of Hybridizations in File:</b></i>
-field (see above).
+The fifth field, <i><b>Hybridization:</b></i>, is instead polulated by picking up an existing hybridization from the pull-down list in the <i><b>Number of Hybridizations in File:</b></i> field (see above).<p>
 <li>
-The following two fields, <i><b>Molecular Weight:</b></i> and <i><b>Radius (A):</b></i>,
-are automatically populated once an hybridization is selected (see above). 
+The following two fields, <i><b>Molecular Weight:</b></i> and <i><b>Radius (A):</b></i>, are automatically populated once an hybridization is selected (see above).<p> 
 <li>
-The <i><b>Excluded Vol. for SAXS Atom:</b></i> field contains a selectable option,
-<i>Use average value (from SAXS table)</i>. If selected, it will automatically populate
-the field below, <i><b>Enter Excluded Volume (A^3):</b></i> with the atomic excluded
-volume for the non-hydrogen atom being defined, picked up from the SAXS coefficients
-table.
+The <i><b>Excluded Vol. for SAXS Atom:</b></i> field contains a selectable option, <i>Use average value (from SAXS table)</i>. If selected, it will automatically populate the field below, <i><b>Enter Excluded Volume (A^3):</b></i> with the atomic excluded volume for the non-hydrogen atom being defined, picked up from the SAXS coefficients table.<p>
 <li>
-Alternatively, to allow for entering more detailed values, the excluded volume for a particular
-atomic group can be directly entered in the <i><b>Enter Excluded Volume (A^3):</b></i> field.<br>
-<b>Warning:</b> the correct excluded volumes to be used for SAXS calculations are
-still a matter of discussion. We have entered the values reported by Svergun et al.
-(Svergun, Barberato, and Koch. J. Appl. Cryst. 28:768-773, 1995) for the atoms/groups
-listed in their Table 1. For other atoms, we have used values calculated from the atomic radii reported in the 
-<a href="http://www.knowledgedoor.com/2/elements_handbook/atomic_radius.html"> knowledgedoor.com website</a>,
-where references to the original sources are also listed.
+Alternatively, to allow for entering more detailed values, the excluded volume for a particular atomic group can be directly entered in the <i><b>Enter Excluded Volume (A^3):</b></i> field.<br>
+<b>Warning:</b> the correct excluded volumes to be used for SAXS calculations are still a matter of discussion. We have entered the values reported by Svergun et al. (Svergun, Barberato, and Koch. J. Appl. Cryst. 28:768-773, 1995) for the atoms/groups listed in their Table 1. For other atoms, we have used values calculated from the atomic radii reported in the 
+<a href="http://www.knowledgedoor.com/2/elements_handbook/atomic_radius.html"> knowledgedoor.com website</a>, where references to the original sources are also listed.
 
 </ul><p>
-After editing is completed, the updated table can be saved by clicking on
-<b><i>"Add Atom to File"</i></b>
+After editing is completed, the updated table can be saved by clicking on <b><i>"Add Atom to File"</i></b>.
 
 
 <hr>
@@ -96,7 +72,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on April 30, 2012.
+Last modified on September 8, 2020.
 </font>
 </body>
 </html>

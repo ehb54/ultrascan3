@@ -8,7 +8,7 @@
 #include <QFrame>
 #include <QCloseEvent>
 
-US_Color::US_Color(QWidget *p, const char* name) : QFrame( p )
+US_Color::US_Color(QWidget *p, const char* ) : QFrame( p )
 {
   USglobal = new US_Config();
   set_default();
@@ -569,7 +569,7 @@ US_Color::~US_Color()
 void US_Color::setup_GUI()
 {
   int j=0;
-  int rows = 8, columns = 3, spacing = 2;
+  int rows = 8, /* columns = 3,*/ spacing = 2;
   
   QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing*2 ); background->setContentsMargins( spacing*2, spacing*2, spacing*2, spacing*2 ); 
   QGridLayout * subGrid1 = new QGridLayout; subGrid1->setContentsMargins( 0, 0, 0, 0 ); subGrid1->setSpacing( 0 ); subGrid1->setSpacing( spacing ); subGrid1->setContentsMargins( spacing, spacing, spacing, spacing );
@@ -634,7 +634,7 @@ void US_Color::setup_GUI()
 //  subGrid1->addLayout( button , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 2 ) - ( 0 ) );
   
   j=0;
-  rows = 8, columns = 2, spacing = 2;
+  rows = 8, /* columns = 2,*/ spacing = 2;
 
   QGridLayout * subGrid2 = new QGridLayout; subGrid2->setContentsMargins( 0, 0, 0, 0 ); subGrid2->setSpacing( 0 ); subGrid2->setSpacing( spacing ); subGrid2->setContentsMargins( spacing, spacing, spacing, spacing );
   for (int i=0; i<rows; i++)
@@ -1560,7 +1560,7 @@ void US_Color::delete_scheme()
   QString str = us_tr("Do you really want to delete the\n \"") + 
                lb_scheme->item(current_scheme)->text() + us_tr("\" color scheme?");
   int result = QMessageBox::warning(0, 
-        us_tr("Attention:"), str, us_tr("Yes"), us_tr("No"), QString::null, 1, 1);
+        us_tr("Attention:"), str, us_tr("Yes"), us_tr("No"), QString(), 1, 1);
   if (result == 0)
   {
     if (current_scheme == 0)

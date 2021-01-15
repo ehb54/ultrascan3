@@ -1218,7 +1218,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::update_font()
 void US_Hydrodyn_Saxs_Hplc_Svd::save()
 {
    QString fn;
-   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
+   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString() , QString() );
    if(!fn.isEmpty() )
    {
       QString text = editor->toPlainText();
@@ -6149,16 +6149,16 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::convert_it_to_iq( QStringList files, QStringList
 
 void US_Hydrodyn_Saxs_Hplc_Svd::runExplicitEFARotation(
                                                        vector < vector < int > >    & M,
-                                                       vector < vector < double > > & D,
+                                                       vector < vector < double > > & /* D */,
                                                        bool                         & failed, // also a return
                                                        vector < vector < double > > & C,
                                                        vector < vector < double > > & V_bar,
                                                        vector < vector < double > > & T,
-                                                       int                            niter,
-                                                       double                         tol,
-                                                       vector < int >               & force_pos,
+                                                       int                            /* niter */,
+                                                       double                         /* tol */,
+                                                       vector < int >               & /* force_pos */,
                                                        // returns
-                                                       vector < vector < double > > & C_ret,
+                                                       vector < vector < double > > & /* C_ret */,
                                                        bool                         & converged
                                                        ) {
    /*
@@ -6512,14 +6512,14 @@ void US_Hydrodyn_Saxs_Hplc_Svd::efa_decomp_plot() {
 }
 
 void US_Hydrodyn_Saxs_Hplc_Svd::initExplicitEFA(
-                                                vector < vector < int > >    & M,
+                                                vector < vector < int > >    & /* M */,
                                                 int                            num_sv,
-                                                vector < vector < double > > & D,
-                                                vector < vector < double > > & C,
-                                                bool                         & converged,
-                                                vector < vector < double > > & V_bar,
+                                                vector < vector < double > > & /* D */,
+                                                vector < vector < double > > & /* C */,
+                                                bool                         & /* converged */,
+                                                vector < vector < double > > & /* V_bar */,
                                                 // returns
-                                                bool                         & failed,
+                                                bool                         & /* failed */,
                                                 vector < vector < double > > & T_ret
                                                  ) {
    /*
@@ -6545,13 +6545,13 @@ def initExplicitEFA(M, num_sv, D, C, converged, V_bar):
 
 void US_Hydrodyn_Saxs_Hplc_Svd::initIterativeEFA(
                                                  vector < vector < int > >   & M,
-                                                 int                           num_sv,
+                                                 int                           /* num_sv */,
                                                  vector < vector < double > > & D,
                                                  vector < vector < double > > & C,
-                                                 bool                         & converged,
-                                                 vector < vector < double > > & V_bar,
+                                                 bool                         & /* converged */,
+                                                 vector < vector < double > > & /* V_bar */,
                                                  // returns
-                                                 bool                         & failed,
+                                                 bool                         & /* failed */,
                                                  vector < vector < double > > & C_ret
                                                  ) {
    /*
@@ -6634,7 +6634,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::initHybridEFA(
                                               // returns
                                               bool                         & failed,
                                               vector < vector < double > > & C_ret,
-                                              vector < vector < double > > & T_ret
+                                              vector < vector < double > > & /* T_ret */
                                               ) {
    /*
 def initHybridEFA(M, num_sv, D, C, converged, V_bar):
@@ -6661,13 +6661,13 @@ void US_Hydrodyn_Saxs_Hplc_Svd::runIterativeEFARotation(
                                                         vector < vector < double > > & D,
                                                         bool                         & failed, // also a return
                                                         vector < vector < double > > & C,
-                                                        vector < vector < double > > & V_bar,
-                                                        vector < vector < double > > & T,
+                                                        vector < vector < double > > & /* V_bar */,
+                                                        vector < vector < double > > & /* T */,
                                                         int                            niter,
                                                         double                         tol,
                                                         vector < int >               & force_pos,
                                                         // returns
-                                                        vector < vector < double > > & C_ret,
+                                                        vector < vector < double > > & /* C_ret */,
                                                         bool                         & converged,
                                                         vector < double >            & dc,
                                                         int                          & k

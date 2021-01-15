@@ -1,0 +1,12 @@
+To compile us_somo:
+
+In subdirectory us_somo/develop
+
+$ cp local.pri.template local.pri
+
+Then, edit local.pri
+     define US3PATH, QTPATH & QWTPATH
+
+In the ultrascan3 directory
+$ bash makesomo.sh
+

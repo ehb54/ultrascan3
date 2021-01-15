@@ -8,7 +8,7 @@
 #include <QLabel>
 
 US_Hydrodyn_Bead_Output::US_Hydrodyn_Bead_Output(struct bead_output_options *bead_output,
-                                                 bool *bead_output_widget, void *us_hydrodyn, QWidget *p, const char *name) : QFrame( p )
+                                                 bool *bead_output_widget, void *us_hydrodyn, QWidget *p, const char *) : QFrame( p )
 {
    this->bead_output = bead_output;
    this->bead_output_widget = bead_output_widget;
@@ -257,7 +257,7 @@ void US_Hydrodyn_Bead_Output::setupGUI()
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   int rows=10, columns = 2, spacing = 2, j=0, margin=4;
+   int /* rows=10, columns = 2, */ spacing = 2, j=0, margin=4;
    QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
 
    background->addWidget( lbl_info , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );

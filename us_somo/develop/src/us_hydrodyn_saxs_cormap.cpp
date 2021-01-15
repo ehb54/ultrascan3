@@ -25,7 +25,7 @@ US_Hydrodyn_Saxs_Cormap::US_Hydrodyn_Saxs_Cormap(
                                                  vector < vector < double > >            adjpvaluepairs,
                                                  vector < QString >                      selected_files,
                                                  QWidget *                               p,
-                                                 const char *                            name
+                                                 const char *                            
                                                  ) : QFrame(  p )
 {
    this->us_hydrodyn                          = us_hydrodyn;
@@ -452,7 +452,7 @@ void US_Hydrodyn_Saxs_Cormap::update_font()
 void US_Hydrodyn_Saxs_Cormap::save()
 {
    QString fn;
-   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
+   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString() , QString() );
    if(!fn.isEmpty() )
    {
       QString text = editor->toPlainText();

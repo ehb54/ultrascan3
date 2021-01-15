@@ -11,7 +11,7 @@ US_Hydrodyn_OR::US_Hydrodyn_OR(struct overlap_reduction *o_r,
                                vector < void * > *other_ORs,
                                void *us_hydrodyn, 
                                QWidget *p, 
-                               const char *name) : QFrame( p )
+                               const char *) : QFrame( p )
 {
    this->o_r = o_r;
    this->replicate_o_r_method = replicate_o_r_method;
@@ -147,7 +147,7 @@ void US_Hydrodyn_OR::setupGUI()
       connect(cb_translate, SIGNAL(clicked()), SLOT(set_translate()));
    }
 
-   int rows=6, columns = 2, spacing = 2, j=0, margin=2;
+   int /* rows=6, columns = 2,*/ spacing = 2, j=0, margin=2;
    QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
 
    background->addWidget( lbl_title , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );

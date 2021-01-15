@@ -308,6 +308,21 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    pb_fasta_file->setPalette( PALET_PUSHB );
    connect(pb_fasta_file, SIGNAL(clicked()), SLOT(fasta_file()));
 
+   lbl_fasta_pH = new QLabel( us_tr( " pH:" ) );
+   lbl_fasta_pH->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_fasta_pH->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_fasta_pH );
+   lbl_fasta_pH->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   le_fasta_pH = new QLineEdit( this );
+   le_fasta_pH->setObjectName( "le_fasta_pH Line Edit" );
+   le_fasta_pH->setText( QString( "" ).sprintf( "%4.2f", ((US_Hydrodyn *)us_hydrodyn)->hydro.pH ) );
+   le_fasta_pH->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   le_fasta_pH->setPalette( PALET_EDIT );
+   AUTFBACK( le_fasta_pH );
+   le_fasta_pH->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   connect(le_fasta_pH, SIGNAL(textChanged(const QString &)), SLOT(update_fasta_pH(const QString &)));
+
    lbl_fasta_value = new QLabel( us_tr( " PSV [cm^3/g]:" ) );
    lbl_fasta_value->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_fasta_value->setPalette( PALET_NORMAL );
@@ -673,6 +688,8 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
       bl_fasta->setSpacing( 0 );
 
       bl_fasta->addWidget( pb_fasta_file );
+      bl_fasta->addWidget( lbl_fasta_pH );
+      bl_fasta->addWidget( le_fasta_pH );
       bl_fasta->addWidget( lbl_fasta_value );
       bl_fasta->addWidget( le_fasta_value );
 
@@ -1007,6 +1024,8 @@ void US_Hydrodyn_Saxs_Hplc_Options::fasta_file() {
    }
 #endif
    
+   ((US_Hydrodyn *)us_hydrodyn)->reset_ionized_residue_vectors();
+
    double psv;
    QString msgs;
    if ( !((US_Hydrodyn  *)us_hydrodyn)->calc_fasta_vbar( seq_chars, psv, msgs ) ) {
@@ -1027,4 +1046,16 @@ void US_Hydrodyn_Saxs_Hplc_Options::fasta_file() {
    le_fasta_value->setText( QString( "" ).sprintf( "%.3f", psv ) );
    le_fasta_value->setEnabled( true );
    return;
+}
+
+void US_Hydrodyn_Saxs_Hplc_Options::update_fasta_pH( const QString &str ) {
+   if ( ((US_Hydrodyn *)us_hydrodyn)->hydro.pH == str.toDouble() ) {
+      return;
+   }
+   le_fasta_value->setText("");
+   ((US_Hydrodyn *)us_hydrodyn)->set_disabled();
+   
+   ((US_Hydrodyn *)us_hydrodyn)->hydro.pH = str.toDouble();
+   ((US_Hydrodyn *)us_hydrodyn)->le_pH->setText( QString( "" ).sprintf( "%4.2f", ((US_Hydrodyn *)us_hydrodyn)->hydro.pH ) );
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }

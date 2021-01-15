@@ -31,7 +31,7 @@ US_Hydrodyn_SaxsOptions::US_Hydrodyn_SaxsOptions(
                                                  bool *sas_options_experimental_widget,
                                                  void *us_hydrodyn, 
                                                  QWidget *p, 
-                                                 const char *name
+                                                 const char *
                                                  ) : QFrame( p )
 {
    this->saxs_options                    = saxs_options;

@@ -726,12 +726,12 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
 
          PHYSPROP tmp_prop;
 
-         tmp_prop.f = (*bead_model)[i].bead_color;
-         tmp_prop.rVW = (*bead_model)[i].bead_computed_radius;
-         tmp_prop.mass = (*bead_model)[i].bead_mw;
-         tmp_prop.mass = ((int)(tmp_prop.mass * 100.0 + .5)) / 100.0;
+         tmp_prop.f             = (*bead_model)[i].bead_color;
+         tmp_prop.rVW           = (*bead_model)[i].bead_computed_radius;
+         tmp_prop.mass          = (*bead_model)[i].bead_mw + (*bead_model)[i].bead_ionized_mw_delta;
+         tmp_prop.mass          = ((int)(tmp_prop.mass * 100.0 + .5)) / 100.0;
          tmp_prop.saxs_excl_vol = (*bead_model)[i].saxs_excl_vol;
-         tmp_prop.si    = (*bead_model)[i].si;
+         tmp_prop.si            = (*bead_model)[i].si;
          // cout << QString( "atom %1 si %2\n" ).arg( (*bead_model)[i].name ).arg( (*bead_model)[i].si );;
          if ( us_hydrodyn->advanced_config.debug_1 )
          {
@@ -988,33 +988,35 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
       tmp_atom.bead_coordinate.axis[0] = this_pdb->x;
       tmp_atom.bead_coordinate.axis[1] = this_pdb->y;
       tmp_atom.bead_coordinate.axis[2] = this_pdb->z;
-      tmp_atom.bead_computed_radius = this_prop->rVW;
-      tmp_atom.bead_actual_radius = this_prop->rVW;
-      tmp_atom.radius = this_prop->rVW;
-      tmp_atom.bead_mw = this_prop->mass;
-      tmp_atom.si      = this_prop->si;
+      tmp_atom.bead_computed_radius    = this_prop->rVW;
+      tmp_atom.bead_actual_radius      = this_prop->rVW;
+      tmp_atom.radius                  = this_prop->rVW;
+      tmp_atom.bead_mw                 = this_prop->mass;
+      tmp_atom.bead_ionized_mw_delta   = 0;
+      tmp_atom.si                      = this_prop->si;
       // cout << QString( "bead sum %1 si %2\n" ).arg( result_bead_model.size() )
       // .arg( tmp_atom.si );
-      tmp_atom.mw = ((int)(this_prop->mass * 100 + .5)) / 100.0;
+      tmp_atom.mw                      = ((int)(this_prop->mass * 100 + .5)) / 100.0;
       if ( us_hydrodyn->advanced_config.debug_1 )
       {
          post_mw += ((int)((double)tmp_atom.mw * 100e0 + 5e-1)) / 1e2;
          post_mw_c++;
       }
-      tmp_atom.bead_ref_mw = this_prop->mass;
-      tmp_atom.saxs_excl_vol = this_prop->saxs_excl_vol;
-      tmp_atom.bead_ref_volume = 0;
-      tmp_atom.bead_color = 1;
-      tmp_atom.serial = this_pdb->atnum;
-      tmp_atom.exposed_code = 1;
+      tmp_atom.bead_ref_mw               = this_prop->mass;
+      tmp_atom.bead_ref_ionized_mw_delta = 0;
+      tmp_atom.saxs_excl_vol             = this_prop->saxs_excl_vol;
+      tmp_atom.bead_ref_volume           = 0;
+      tmp_atom.bead_color                = 1;
+      tmp_atom.serial                    = this_pdb->atnum;
+      tmp_atom.exposed_code              = 1;
       tmp_atom.all_beads.clear( );
-      tmp_atom.name = QString(this_pdb->atnam);
-      tmp_atom.resName = QString(this_pdb->resnam);
-      tmp_atom.iCode = QString(this_pdb->insert);
-      tmp_atom.chainID = QString(this_pdb->chain);
-      tmp_atom.chain = 1;
-      tmp_atom.active = 1;
-      tmp_atom.normalized_ot_is_valid = false;
+      tmp_atom.name                      = QString(this_pdb->atnam);
+      tmp_atom.resName                   = QString(this_pdb->resnam);
+      tmp_atom.iCode                     = QString(this_pdb->insert);
+      tmp_atom.chainID                   = QString(this_pdb->chain);
+      tmp_atom.chain                     = 1;
+      tmp_atom.active                    = 1;
+      tmp_atom.normalized_ot_is_valid    = false;
       result_bead_model.push_back(tmp_atom);
 #define DEBUG_ATOB
 #if defined(DEBUG_ATOB)
@@ -1048,21 +1050,27 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
 
    if ( use_grid_options->equalize_radii_constant_volume )
    {
-      double tot_vol = 0e0;
-      for ( unsigned int i = 0; i < ( unsigned int ) result_bead_model.size(); i++ )
-      {
-         tot_vol += ( 4e0 / 3e0 ) * M_PI * result_bead_model[ i ].radius * result_bead_model[ i ].radius * result_bead_model[ i ].radius;
-      }
-      us_hydrodyn->editor_msg( "dark blue", QString( "Equalizing bead model, total volume %1\n" ).arg( tot_vol ) );
-      double pi43           = M_PI * 4e0 / 3e0;
-      float radius = (float)pow( tot_vol / ( ( double ) result_bead_model.size() * pi43 ), 1e0 / 3e0 );
-      for ( unsigned int i = 0; i < ( unsigned int ) result_bead_model.size(); i++ )
-      {
-         result_bead_model[ i ].radius               = radius;
-         result_bead_model[ i ].bead_computed_radius = radius;
-         result_bead_model[ i ].bead_actual_radius   = radius;
-      }
+      us_hydrodyn->editor_msg( "red", QString( "Equalizing bead model radii requested, but it is currently DISABLED" ) );
    }
+      
+   // disabled!
+   // if ( use_grid_options->equalize_radii_constant_volume )
+   // {
+   //    double tot_vol = 0e0;
+   //    for ( unsigned int i = 0; i < ( unsigned int ) result_bead_model.size(); i++ )
+   //    {
+   //       tot_vol += ( 4e0 / 3e0 ) * M_PI * result_bead_model[ i ].radius * result_bead_model[ i ].radius * result_bead_model[ i ].radius;
+   //    }
+   //    us_hydrodyn->editor_msg( "dark blue", QString( "Equalizing bead model, total volume %1\n" ).arg( tot_vol ) );
+   //    double pi43           = M_PI * 4e0 / 3e0;
+   //    float radius = (float)pow( tot_vol / ( ( double ) result_bead_model.size() * pi43 ), 1e0 / 3e0 );
+   //    for ( unsigned int i = 0; i < ( unsigned int ) result_bead_model.size(); i++ )
+   //    {
+   //       result_bead_model[ i ].radius               = radius;
+   //       result_bead_model[ i ].bead_computed_radius = radius;
+   //       result_bead_model[ i ].bead_actual_radius   = radius;
+   //    }
+   // }
 
    return result_bead_model;
 }

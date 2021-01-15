@@ -220,6 +220,8 @@ SOURCES *= \
         src/us_hydrodyn_batch.cpp \
         src/us_hydrodyn_batch_movie_opts.cpp \
         src/us_hydrodyn_bead_output.cpp \
+        src/us_hydrodyn_beads.cpp \
+        src/us_hydrodyn_beads_load.cpp \
         src/us_hydrodyn_best.cpp \
         src/us_hydrodyn_bd.cpp \
         src/us_hydrodyn_bd_core.cpp \
@@ -249,10 +251,13 @@ SOURCES *= \
         src/us_hydrodyn_file2.cpp \
         src/us_hydrodyn_grid.cpp \
         src/us_hydrodyn_grid_atob.cpp \
+        src/us_hydrodyn_grpy.cpp \
         src/us_hydrodyn_hydrate.cpp \
         src/us_hydrodyn_hydrate_align.cpp \
         src/us_hydrodyn_hydro.cpp \
         src/us_hydrodyn_hydro_zeno.cpp \
+        src/us_hydrodyn_info.cpp \
+        src/us_hydrodyn_load.cpp \
         src/us_hydrodyn_misc.cpp \
         src/us_hydrodyn_other.cpp \
         src/us_hydrodyn_overlap.cpp \
@@ -325,14 +330,18 @@ SOURCES *= \
         src/us_hydrodyn_saxs_hplc_fit_global.cpp \
         src/us_hydrodyn_saxs_hplc_fit_gsm.cpp \
         src/us_hydrodyn_saxs_hplc_fit_ga.cpp \
+        src/us_hydrodyn_saxs_hplc_gauss_mode.cpp \
         src/us_hydrodyn_saxs_hplc_nth.cpp \
         src/us_hydrodyn_saxs_hplc_options.cpp \
         src/us_hydrodyn_saxs_hplc_simulate.cpp \
         src/us_hydrodyn_saxs_hplc_svd.cpp \
         src/us_hydrodyn_saxs_1d.cpp \
         src/us_hydrodyn_saxs_2d.cpp \
+        src/us_hydrodyn_settings.cpp \
         src/us_hydrodyn_supc.cpp \
+        src/us_hydrodyn_util.cpp \
         src/us_hydrodyn_xsr.cpp \
+        src/us_hydrodyn_write.cpp \
         src/us_hydrodyn_zeno.cpp \
 #  us_imgviewer.cpp \
 #  us_infopanel.cpp \
@@ -340,6 +349,7 @@ SOURCES *= \
         src/us_mqt.cpp \
         src/us_license.cpp \
         src/us_lm.cpp \
+        src/us_lud.cpp \
 #  us_lncr2.cpp \
         src/us_math.cpp \
         src/us_matrix.cpp \
@@ -451,6 +461,7 @@ SOURCES *= \
         src/us_hydrodyn_saxs_guinier_frames.cpp \
         src/us_hydrodyn_saxs_hplc_scale_trend.cpp \
         src/us_plot_util.cpp \
+        src/us3i_color.cpp \
         src/us3i_editor.cpp \
         src/us3i_editor_gui.cpp \
         src/us3i_gui_settings.cpp \
@@ -668,6 +679,7 @@ HEADERS *= \
         include/us_hydrodyn_saxs_hplc_conc_load.h \
         include/us_hydrodyn_saxs_hplc_fit.h \
         include/us_hydrodyn_saxs_hplc_fit_global.h \
+        include/us_hydrodyn_saxs_hplc_gauss_mode.h \
         include/us_hydrodyn_saxs_hplc_movie.h \
         include/us_hydrodyn_saxs_hplc_nth.h \
         include/us_hydrodyn_saxs_hplc_options.h \
@@ -684,6 +696,7 @@ HEADERS *= \
         include/us_mqt.h \
         include/us_license.h \
         include/us_lm.h \
+        include/us_lud.h \
 #  us_lncr2.h \
         include/us_math.h \
         include/us_matrix.h \
@@ -766,6 +779,7 @@ HEADERS *= \
         include/us_hydrodyn_saxs_hplc_baseline_best.h \
         include/us_hydrodyn_saxs_hplc_simulate.h \
         include/us_plot_util.h \
+        include/us3i_color.h \
         include/us3i_extern.h \
         include/us3i_editor.h \
         include/us3i_editor_gui.h \

@@ -18,7 +18,7 @@ US_Hydrodyn_Cluster_Oned::US_Hydrodyn_Cluster_Oned(
                                                    void                     *              us_hydrodyn,
                                                    map < QString, QString > *              parameters,
                                                    QWidget *                               p,
-                                                   const char *                            name
+                                                   const char *                            
                                                    ) : QDialog( p )
 {
    this->us_hydrodyn                          = us_hydrodyn;
@@ -503,7 +503,7 @@ void US_Hydrodyn_Cluster_Oned::update_1drotationfile( const QString & )
 {
    QString use_dir;
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
-   QString filename = QFileDialog::getOpenFileName( this , us_tr( "Select a file for Rotation file" ) , use_dir , QString::null );
+   QString filename = QFileDialog::getOpenFileName( this , us_tr( "Select a file for Rotation file" ) , use_dir , QString() );
 
 
    disconnect( le_1drotationfile, SIGNAL( textChanged( const QString & ) ), 0, 0 );

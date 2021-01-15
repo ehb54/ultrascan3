@@ -15,7 +15,7 @@ US_Hydrodyn_Saxs_Buffer_Conc_Load::US_Hydrodyn_Saxs_Buffer_Conc_Load(
                                                                      QStringList &qsl_text,
                                                                      csv &csv1,
                                                                      QWidget *p, 
-                                                                     const char *name
+                                                                     const char *
                                                                      ) : QDialog( p )
 {
    this->text = &qsl_text;

@@ -230,7 +230,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files, double t_min, d
       qs_zero_points = qsl_list_zero_points.join( "\n" );
    }
 
-   bool   normalize_by_conc = false;
+   // bool   normalize_by_conc = false;
    bool   conc_ok           = false;
 
    double conv = 0e0;
@@ -307,7 +307,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files, double t_min, d
             
          conc_ok = true;
          if ( parameters.count( "normalize" ) && parameters[ "normalize" ] == "true" ) {
-            normalize_by_conc = true;
+            // normalize_by_conc = true;
          }
 
          if ( parameters.count( "I0se" ) ) {
@@ -1000,7 +1000,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
    //                               .arg( files.size() ),
    //                               us_tr( "&Yes" ),
    //                               us_tr( "&No" ),
-   //                               QString::null,
+   //                               QString(),
    //                               0,
    //                               1
    //                               ) == 1 )
@@ -1015,7 +1015,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
    //                               us_tr( "Save as Gaussians or a percent of the original I(q)?" ),
    //                               us_tr( "&Gaussians" ),
    //                               us_tr( "Percent of &I(q)" ),
-   //                               QString::null,
+   //                               QString(),
    //                               0,
    //                               1
    //                               ) == 0;
@@ -2299,7 +2299,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
                                     ,
                                     us_tr( "&Turn off SD weighting" ), 
                                     us_tr( "Drop &full curves with missing SDs" ), 
-                                    qsl_zero_points.size() ? us_tr( "Drop &points with missing SDs" ) : QString::null, 
+                                    qsl_zero_points.size() ? us_tr( "Drop &points with missing SDs" ) : QString(), 
                                     0, // Stop == button 0
                                     0 // Escape == button 0
                                     ) )

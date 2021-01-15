@@ -80,8 +80,10 @@ if [ $ISWIN -eq 1 ]; then
   ls -l ./bin
   echo cp -p bin/* $ULTRASCAN/bin/
   cp -p bin/* $ULTRASCAN/bin/
-  echo cp -rp etc $ULTRASCAN/ultrascan3/
-  cp -rp etc $ULTRASCAN/ultrascan3/
+  echo cp -p add_to_bin/* $ULTRASCAN/bin/
+  cp -p add_to_bin/* $ULTRASCAN/bin/
+  echo cp -rp etc $ULTRASCAN
+  cp -rp etc $ULTRASCAN
   exit 0
 fi
 
@@ -113,6 +115,8 @@ echo "rsync -av --exclude .svn $SOMO3/bin64/ $ULTRASCAN/bin"
 rsync -av --exclude .svn $SOMO3/bin64/ $ULTRASCAN/bin
 echo rsync -av --exclude .svn $SOMO3/add_to_bin/ $ULTRASCAN/bin
 rsync -av --exclude .svn $SOMO3/add_to_bin/ $ULTRASCAN/bin
+echo rsync -av --exclude .svn $SOMO3/etc/ $ULTRASCAN/etc
+rsync -av --exclude .svn $SOMO3/etc/ $ULTRASCAN/etc
 echo ""
 echo "MAKE of somo complete"
 

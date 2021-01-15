@@ -2,9 +2,6 @@
 #define _SCROLLZOOMER_H
 
 #include <qglobal.h>
-#if QT_VERSION < 0x040000
-#include <q3scrollview.h>
-#endif
 #include <qwt_plot_zoomer.h>
 //Added by qt3to4:
 #include <QEvent>
@@ -28,19 +25,11 @@ public:
     ScrollBar *horizontalScrollBar() const;
     ScrollBar *verticalScrollBar() const;
 
-#if QT_VERSION < 0x040000
-    void setHScrollBarMode(Q3ScrollView::ScrollBarMode);
-    void setVScrollBarMode(Q3ScrollView::ScrollBarMode);
-
-    Q3ScrollView::ScrollBarMode vScrollBarMode () const;
-    Q3ScrollView::ScrollBarMode hScrollBarMode () const;
-#else
     void setHScrollBarMode(Qt::ScrollBarPolicy);
     void setVScrollBarMode(Qt::ScrollBarPolicy);
 
     Qt::ScrollBarPolicy vScrollBarMode () const;
     Qt::ScrollBarPolicy hScrollBarMode () const;
-#endif
 
     void setHScrollBarPosition(ScrollBarPosition);
     void setVScrollBarPosition(ScrollBarPosition);
@@ -54,6 +43,8 @@ public:
     virtual bool eventFilter(QObject *, QEvent *);
 
     virtual void rescale();
+
+    bool symmetric_rescale;
 
 protected:
     virtual ScrollBar *scrollBar(Qt::Orientation);

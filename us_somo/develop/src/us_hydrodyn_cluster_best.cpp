@@ -18,7 +18,7 @@ US_Hydrodyn_Cluster_Best::US_Hydrodyn_Cluster_Best(
                                                    void                     *              us_hydrodyn,
                                                    map < QString, QString > *              parameters,
                                                    QWidget *                               p,
-                                                   const char *                            name
+                                                   const char *                            
                                                    ) : QDialog( p )
 {
    this->us_hydrodyn                          = us_hydrodyn;
@@ -650,7 +650,7 @@ void US_Hydrodyn_Cluster_Best::update_bestmsrradiifile( const QString & )
 {
    QString use_dir;
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
-   QString filename = QFileDialog::getOpenFileName( this , us_tr( "Select a file for MSROLL: manual radii file" ) , use_dir , QString::null );
+   QString filename = QFileDialog::getOpenFileName( this , us_tr( "Select a file for MSROLL: manual radii file" ) , use_dir , QString() );
 
 
    disconnect( le_bestmsrradiifile, SIGNAL( textChanged( const QString & ) ), 0, 0 );
@@ -667,7 +667,7 @@ void US_Hydrodyn_Cluster_Best::update_bestmsrpatternfile( const QString & )
 {
    QString use_dir;
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
-   QString filename = QFileDialog::getOpenFileName( this , us_tr( "Select a file for MSROLL: manual name pattern file (must also provide radii file above)" ) , use_dir , QString::null );
+   QString filename = QFileDialog::getOpenFileName( this , us_tr( "Select a file for MSROLL: manual name pattern file (must also provide radii file above)" ) , use_dir , QString() );
 
 
    disconnect( le_bestmsrpatternfile, SIGNAL( textChanged( const QString & ) ), 0, 0 );

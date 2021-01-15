@@ -1179,7 +1179,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
          qApp->processEvents();
          QString savedir = QDir::currentPath();
          QDir::setCurrent( dir );
-         system( qPrintable( cmd ) );
+         if ( system( qPrintable( cmd ) ) ) {};
          QDir::setCurrent( savedir );
          {
             QFile f( dir + QDir::separator() + "output" );
@@ -1355,7 +1355,7 @@ void US_Hydrodyn_Saxs::crysol_readFromStdout()
    //    editor_msg("brown", qs );
    //    text += qs;
    // };
-      //   } while ( qs != QString::null );
+      //   } while ( qs != QString() );
 
    //do {
       QString read = crysol->readStdout();

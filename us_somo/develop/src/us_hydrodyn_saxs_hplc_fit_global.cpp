@@ -23,7 +23,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 US_Hydrodyn_Saxs_Hplc_Fit_Global::US_Hydrodyn_Saxs_Hplc_Fit_Global(
                                                                    US_Hydrodyn_Saxs_Hplc *hplc_win,
                                                                    QWidget *p, 
-                                                                   const char *name
+                                                                   const char *
                                                                    ) : QDialog( p )
 {
    this->hplc_win = hplc_win;
@@ -840,7 +840,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::setupGUI()
    background->addSpacing( 4 );
    background->addLayout ( hbl_bottom );
 
-   void * us_hydrodyn = hplc_win->us_hydrodyn;
+   // void * us_hydrodyn = hplc_win->us_hydrodyn;
 
    if ( !U_EXPT )
    {

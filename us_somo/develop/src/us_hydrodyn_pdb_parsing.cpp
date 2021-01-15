@@ -8,7 +8,7 @@
 #include <QLabel>
 
 US_Hydrodyn_PDB_Parsing::US_Hydrodyn_PDB_Parsing(struct pdb_parsing *pdb,
-                                                 bool *pdb_parsing_widget, void *us_hydrodyn, QWidget *p, const char *name) : QFrame( p )
+                                                 bool *pdb_parsing_widget, void *us_hydrodyn, QWidget *p, const char *) : QFrame( p )
 {
    this->pdb = pdb;
    this->pdb_parsing_widget = pdb_parsing_widget;
@@ -75,13 +75,31 @@ void US_Hydrodyn_PDB_Parsing::setupGUI()
 
    cb_find_sh = new QCheckBox();
    cb_find_sh->setText(us_tr(" Find free SH, change residue coding"));
-   cb_find_sh->setEnabled(false);
+   cb_find_sh->setEnabled(true);
    cb_find_sh->setChecked((*pdb).find_sh);
    cb_find_sh->setMinimumHeight(minHeight1);
    cb_find_sh->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_find_sh->setPalette( PALET_NORMAL );
    AUTFBACK( cb_find_sh );
    connect(cb_find_sh, SIGNAL(clicked()), this, SLOT(find_sh()));
+
+   lbl_thresh_SS = new QLabel(us_tr(" Disulfide distance threshold [A]: "), this);
+   lbl_thresh_SS->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_thresh_SS->setMinimumWidth(220);
+   lbl_thresh_SS->setMinimumHeight(minHeight1);
+   lbl_thresh_SS->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_thresh_SS );
+   lbl_thresh_SS->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_thresh_SS = new QLineEdit( this );    le_thresh_SS->setObjectName( "thresh_SS Line Edit" );
+   le_thresh_SS->setMinimumHeight(minHeight1);
+   le_thresh_SS->setEnabled( cb_find_sh->isChecked() );
+   le_thresh_SS->setText(QString("%1").arg( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "thresh_SS" ) ?
+                                              ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "thresh_SS" ] : "2.3" ) );
+   le_thresh_SS->setPalette( PALET_NORMAL );
+   AUTFBACK( le_thresh_SS );
+   le_thresh_SS->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_thresh_SS, SIGNAL(textChanged(const QString &)), SLOT(update_thresh_SS(const QString &)));
 
    cb_save_csv_on_load = new QCheckBox();
    cb_save_csv_on_load->setText(us_tr(" Save CSV on load PDB"));
@@ -111,6 +129,12 @@ void US_Hydrodyn_PDB_Parsing::setupGUI()
       vbox->addWidget( cb_skip_water );
       vbox->addWidget( cb_alternate );
       vbox->addWidget( cb_find_sh );
+      {
+         QHBoxLayout *hbox = new QHBoxLayout; vbox->setContentsMargins( 0, 0, 0, 0 ); vbox->setSpacing( 0 );
+         hbox->addWidget( lbl_thresh_SS );
+         hbox->addWidget( le_thresh_SS );
+         vbox->addLayout( hbox );
+      }
       vbox->addWidget( cb_save_csv_on_load );
       vbox->addWidget( cb_use_WAT_Tf );
 
@@ -231,7 +255,7 @@ void US_Hydrodyn_PDB_Parsing::setupGUI()
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   int rows=11, columns = 2, spacing = 2, j=0, margin=4;
+   int /* rows=11, columns = 2,*/ spacing = 2, j=0, margin=4;
    QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
 
    background->addWidget( lbl_info , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
@@ -268,6 +292,7 @@ void US_Hydrodyn_PDB_Parsing::find_sh()
 {
    (*pdb).find_sh = cb_find_sh->isChecked();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   le_thresh_SS->setEnabled( cb_find_sh->isChecked() );
 }
 
 void US_Hydrodyn_PDB_Parsing::save_csv_on_load()
@@ -347,3 +372,8 @@ void US_Hydrodyn_PDB_Parsing::closeEvent(QCloseEvent *e)
    e->accept();
 }
 
+void US_Hydrodyn_PDB_Parsing::update_thresh_SS(const QString &str)
+{
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "thresh_SS" ] = str;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}

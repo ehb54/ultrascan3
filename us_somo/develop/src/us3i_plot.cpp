@@ -28,6 +28,7 @@
 #include "qwt_scale_widget.h"
 #include "qwt_symbol.h"
 
+#include "us_plot_util.h" 
 
 US_Zoomer::US_Zoomer( int xAxis, int yAxis, QwtPlotCanvas* canvas )
    : QwtPlotZoomer( xAxis, yAxis, canvas )
@@ -55,11 +56,13 @@ US_Zoomer::US_Zoomer( int xAxis, int yAxis, QwtPlotCanvas* canvas )
 /*********************       US_Plot Class      *************************/
 
 // A new plot returns a QBoxLayout
-US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
+US_Plot::US_Plot( mQwtPlot*& parent_plot, const QString& title,
                   const QString& x_axis, const QString& y_axis,
                   QWidget * parent ) : QHBoxLayout()
 {
    zoomer = NULL;
+   scroll_zoomer = NULL;
+   rescale_mode  = MODE_NO_SCALE;
    setSpacing( 0 );
 
    QFont buttonFont( US3i_GuiSettings::fontFamily(),
@@ -125,9 +128,9 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    addWidget( spacer );
 
    if ( parent ) {
-      plot = new QwtPlot( parent );
+      plot = new mQwtPlot( parent );
    } else {
-      plot        = new QwtPlot;
+      plot        = new mQwtPlot;
    }
    parent_plot = plot;
 
@@ -345,21 +348,38 @@ void US_Plot::quit( void )
 }
 */
 
+// #define DEBUG_SCALE_SLOTS
+
 void US_Plot::scaleDivChangedXSlot()
 {
    QwtPlot* plt = static_cast<QwtPlot*>((sender())->parent());
-   // qDebug() << "US_Plot::scaleDivChangedXSlot(): sender " << plt->objectName() << " receiver " << plot->objectName();
    QwtInterval  intv = plt->axisInterval (QwtPlot::xBottom);
+#if defined( DEBUG_SCALE_SLOTS )
+   qDebug() << "US_Plot::scaleDivChangedXSlot(): sender " << plt->objectName() << " receiver " << plot->objectName();
+   qDebug() << "intv min " << intv.minValue() << " max " << intv.maxValue();
+#endif
    plot->setAxisScale(QwtPlot::xBottom, intv.minValue(), intv.maxValue());
-   // intv = plt->axisInterval (QwtPlot::yLeft);
-   // plot->setAxisScale(QwtPlot::yLeft, intv.minValue(), intv.maxValue());
+   if ( rescale_mode == MODE_RESID ) {
+      // doesn't work... methinks because events haven't propagated, but can't do this in a slot.
+      // maybe extend the qwtplot class and emit a signal?
+      if ( scroll_zoomer ) {
+         qDebug() << "calling rescale";
+         plot->replot();
+         US_Plot_Util::rescale( plot, scroll_zoomer );
+      } else {
+         qDebug() << "can't call rescale / no scroll zoomer";
+      }
+   }
+   
    plot->replot();
 }
 
 void US_Plot::scaleDivChangedYSlot()
 {
    QwtPlot* plt = static_cast<QwtPlot*>((sender())->parent());
-   // qDebug() << "US_Plot::scaleDivChangedYSlot(): sender " << plt->objectName() << " receiver " << plot->objectName();
+#if defined( DEBUG_SCALE_SLOTS )
+   qDebug() << "US_Plot::scaleDivChangedYSlot(): sender " << plt->objectName() << " receiver " << plot->objectName();
+#endif
    // QwtInterval  intv = plt->axisInterval (QwtPlot::xBottom);
    // plot->setAxisScale(QwtPlot::xBottom, intv.minValue(), intv.maxValue());
    QwtInterval intv = plt->axisInterval (QwtPlot::yLeft);
@@ -370,7 +390,9 @@ void US_Plot::scaleDivChangedYSlot()
 void US_Plot::scaleDivChangedSlot()
 {
    QwtPlot* plt = static_cast<QwtPlot*>((sender())->parent());
-   // qDebug() << "US_Plot::scaleDivChangedSlot(): sender " << plt->objectName() << " receiver " << plot->objectName();
+#if defined( DEBUG_SCALE_SLOTS )
+   qDebug() << "US_Plot::scaleDivChangedSlot(): sender " << plt->objectName() << " receiver " << plot->objectName();
+#endif
    QwtInterval  intv = plt->axisInterval (QwtPlot::xBottom);
    plot->setAxisScale(QwtPlot::xBottom, intv.minValue(), intv.maxValue());
    intv = plt->axisInterval (QwtPlot::yLeft);

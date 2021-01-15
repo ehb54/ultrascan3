@@ -75,7 +75,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
 
       // ----------- plot data
 
-      QwtPlot               * plot_data;
+      mQwtPlot               * plot_data;
       US_Plot               * usp_plot_data;
    private slots:
       void usp_config_plot_data( const QPoint & );
@@ -86,7 +86,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
 
       // ----------- plot errors
 
-      QwtPlot               * plot_errors;
+      mQwtPlot               * plot_errors;
       US_Plot               * usp_plot_errors;
    private slots:
       void usp_config_plot_errors( const QPoint & );
@@ -109,7 +109,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
 
       // ----------- plot svd
       
-      QwtPlot               * plot_svd;
+      mQwtPlot               * plot_svd;
       US_Plot               * usp_plot_svd;
    private slots:
       void usp_config_plot_svd( const QPoint & );
@@ -122,7 +122,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
 
       // ----------- plot autocor
 
-      QwtPlot               * plot_ac;
+      mQwtPlot               * plot_ac;
       US_Plot               * usp_plot_ac;
    private slots:
       void usp_config_plot_ac( const QPoint & );
@@ -132,7 +132,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       QwtPlotGrid           * grid_ac;
 
       // ----------- plot efa
-      QwtPlot               * plot_lefa;
+      mQwtPlot               * plot_lefa;
       US_Plot               * usp_plot_lefa;
    private slots:
       void usp_config_plot_lefa( const QPoint & );
@@ -141,7 +141,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       ScrollZoomer          * plot_lefa_zoomer;
       QwtPlotGrid           * grid_lefa;
 
-      QwtPlot               * plot_refa;
+      mQwtPlot               * plot_refa;
       US_Plot               * usp_plot_refa;
 
    private slots:
@@ -153,7 +153,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
 
       // ----------- plot efa_decomp
 
-      QwtPlot               * plot_efa_decomp;
+      mQwtPlot               * plot_efa_decomp;
       US_Plot               * usp_plot_efa_decomp;
    private slots:
       void usp_config_plot_efa_decomp( const QPoint & );

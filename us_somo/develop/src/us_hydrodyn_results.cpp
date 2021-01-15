@@ -1,5 +1,7 @@
 #include "../include/us3_defines.h"
 #include "../include/us_hydrodyn_results.h"
+#include "../include/us_hydrodyn.h"
+
 //Added by qt3to4:
 #include <QTextStream>
 #include <QCloseEvent>
@@ -10,10 +12,13 @@
 #define DOTSOMOCAP   ""
 
 US_Hydrodyn_Results::US_Hydrodyn_Results(struct hydro_results *results,
-                                         bool *result_widget, QWidget *p, const char *name) : QFrame( p )
+                                         bool *result_widget,
+                                         void *us_hydrodyn,
+                                         QWidget *p, const char *) : QFrame( p )
 {
    this->results = results;
    this->result_widget = result_widget;
+   this->us_hydrodyn = us_hydrodyn;
    *result_widget = true;
    USglobal=new US_Config();
    setPalette( PALET_FRAME );
@@ -36,10 +41,11 @@ void US_Hydrodyn_Results::setupGUI()
    int minHeight2 = 30;
    QString str;
 
-   lbl_info = new QLabel(us_tr( QString("SOMO Hydrodynamic Results\n(%1 at %2%3C)\n(Density %4 g/ml, Viscosity %5 cP)" )
+   lbl_info = new QLabel(us_tr( QString("SOMO Hydrodynamic Results\n(%1 at %2%3C, pH %4)\n(Density %5 g/ml, Viscosity %6 cP)" )
                                 .arg(results->solvent_name)
                                 .arg(results->temperature)
                                 .arg( QChar(0260) )
+                                .arg(results->pH)
                                 .arg(results->solvent_density)
                                 .arg(results->solvent_viscosity)
                                 ), this);
@@ -219,7 +225,9 @@ void US_Hydrodyn_Results::setupGUI()
    lbl_tau->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_tau = new QLineEdit( this );    le_tau->setObjectName( "tau Line Edit" );
-   if ( le_method->text() == "Zeno" ) {
+   if ( le_method->text() == "Zeno" ||
+        (le_method->text() == "SMI" && !((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
+        ) {
       le_tau->setText( "n/a" ); 
    } else {
       if (fabs((*results).tau_sd) <= 1e-100)
@@ -256,6 +264,9 @@ void US_Hydrodyn_Results::setupGUI()
    le_viscosity->setPalette( PALET_NORMAL );
    AUTFBACK( le_viscosity );
    le_viscosity->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   if ( le_method->text() == "SMI" && !((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode ) {
+      le_viscosity->setText( "n/a" );
+   }
 
    lbl_rs = new QLabel(us_tr(" Stokes Radius: "), this);
    Q_CHECK_PTR(lbl_rs);
@@ -358,7 +369,7 @@ void US_Hydrodyn_Results::setupGUI()
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   int rows=13, columns = 2, spacing = 2, j=0, margin=4;
+   int /* rows=13, columns = 2, */ spacing = 2, j=0, margin=4;
    QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
 
    background->addWidget( lbl_info , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
@@ -425,11 +436,13 @@ void US_Hydrodyn_Results::help()
 
 void US_Hydrodyn_Results::load_results()
 {
-   QString filename = QFileDialog::getOpenFileName( this , windowTitle() , somo_dir , le_method->text() == "Zeno" ? "*.zno *.ZNO" : "*.hydro_res *.HYDRO_RES" );
-   if (!filename.isEmpty())
-   {
-      view_file(filename);
-   }
+   emit ((US_Hydrodyn *)us_hydrodyn)->open_hydro_results();
+   
+   // QString filename = QFileDialog::getOpenFileName( this , windowTitle() , somo_dir , le_method->text() == "Zeno" ? "*.zno *.ZNO" : "*.hydro_res *.HYDRO_RES" );
+   // if (!filename.isEmpty())
+   // {
+   //    view_file(filename);
+   // }
 }
 
 void US_Hydrodyn_Results::load_beadmodel()
@@ -489,3 +502,41 @@ void US_Hydrodyn_Results::closeEvent(QCloseEvent *e)
    e->accept();
 }
 
+hydro_results US_Hydrodyn_Results::hydro_results_initialized() {
+   hydro_results data;
+
+   data.name               = "unknown";
+   data.method             = "unknown";
+
+   data.num_models         = 0;
+   data.total_beads        = 0e0;
+   data.total_beads_sd     = 0e0;
+   data.used_beads         = 0e0;
+   data.used_beads_sd      = 0e0;
+   data.mass               = 0e0;
+   data.s20w               = 0e0;
+   data.s20w_sd            = 0e0;
+   data.D20w               = 0e0;
+   data.D20w_sd            = 0e0;
+   data.viscosity          = 0e0;
+   data.viscosity_sd       = 0e0;
+   data.rs                 = 0e0;
+   data.rs_sd              = 0e0;
+   data.rg                 = 0e0;
+   data.rg_sd              = 0e0;
+   data.tau                = 0e0;
+   data.tau_sd             = 0e0;
+   data.vbar               = 0e0;
+   data.asa_rg_pos         = 0e0;
+   data.asa_rg_neg         = 0e0;
+   data.ff0                = 0e0;
+   data.ff0_sd             = 0e0;
+   data.solvent_name       = "unknown";
+   data.solvent_acronym    = "unknown";
+   data.temperature        = 0e0;
+   data.solvent_viscosity  = 0e0;
+   data.solvent_density    = 0e0;
+   data.pH                 = 0e0;
+
+   return data;
+}

@@ -9,7 +9,7 @@
 #include <QFrame>
 #include <QCloseEvent>
 
-US_Hydrodyn_DMD_Options::US_Hydrodyn_DMD_Options(DMD_Options *dmd_options, bool *dmd_widget, void *us_hydrodyn, QWidget *p, const char *name) : QFrame( p )
+US_Hydrodyn_DMD_Options::US_Hydrodyn_DMD_Options(DMD_Options *dmd_options, bool *dmd_widget, void *us_hydrodyn, QWidget *p, const char *) : QFrame( p )
 {
    this->dmd_options = dmd_options;
    this->dmd_widget = dmd_widget;

@@ -13,6 +13,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Options : public QDialog
 {
    Q_OBJECT
 
+      friend class US_Hydrodyn;
+
    public:
       US_Hydrodyn_Saxs_Hplc_Options(
                                     map < QString, QString > * parameters,
@@ -140,6 +142,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Options : public QDialog
       void                                    setupGUI();
 
       QPushButton                           * pb_fasta_file;
+      QLabel                                * lbl_fasta_pH;
+      QLineEdit                             * le_fasta_pH;
       QLabel                                * lbl_fasta_value;
       QLineEdit                             * le_fasta_value;
 
@@ -157,6 +161,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Options : public QDialog
       void                                    clear_gauss();
 
       void                                    update_enables();
+
+      void                                    update_fasta_pH( const QString & );
 
    protected slots:
 

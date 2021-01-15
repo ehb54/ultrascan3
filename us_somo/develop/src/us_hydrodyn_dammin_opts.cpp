@@ -13,7 +13,7 @@ US_Hydrodyn_Dammin_Opts::US_Hydrodyn_Dammin_Opts(
                                                  bool *use_partial,
                                                  QString *partial,
                                                  QWidget *p,
-                                                 const char *name
+                                                 const char *
                                                  ) : QDialog( p )
 {
    this->msg = msg;

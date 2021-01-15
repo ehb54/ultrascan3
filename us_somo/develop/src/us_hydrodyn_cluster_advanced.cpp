@@ -17,7 +17,7 @@ US_Hydrodyn_Cluster_Advanced::US_Hydrodyn_Cluster_Advanced(
                                                csv &csv1,
                                                void *us_hydrodyn, 
                                                QWidget *p, 
-                                               const char *name
+                                               const char *
                                                ) : QDialog( p )
 {
    this->csv1 = csv1;
@@ -321,7 +321,7 @@ void US_Hydrodyn_Cluster_Advanced::update_font()
 void US_Hydrodyn_Cluster_Advanced::save()
 {
    QString fn;
-   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
+   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString() , QString() );
    if(!fn.isEmpty() )
    {
       QString text = editor->toPlainText();

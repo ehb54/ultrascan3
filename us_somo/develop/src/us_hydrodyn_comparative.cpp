@@ -100,7 +100,7 @@ US_Hydrodyn_Comparative::US_Hydrodyn_Comparative(
                                                  void *us_hydrodyn, 
                                                  bool *comparative_widget,  // no comparative widget implies non-gui
                                                  QWidget *p,
-                                                 const char *name
+                                                 const char *
                                                  ) : QFrame( p )
 {
    this->comparative = comparative;
@@ -2659,7 +2659,7 @@ void US_Hydrodyn_Comparative::reset_param()
                                 us_tr("Reset Parameters"),
                                 us_tr("Are you sure you want to reset the parameters?"),
                                 us_tr("&Yes"), us_tr("&No"),
-                                QString::null, 0, 1 ) 
+                                QString(), 0, 1 ) 
           ) 
       {
          return;
@@ -2901,7 +2901,7 @@ void US_Hydrodyn_Comparative::loaded_set_ranges()
 
 void US_Hydrodyn_Comparative::loaded_view()
 {
-   for ( unsigned int i = 0; i < lb_loaded->count(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) lb_loaded->count(); i++ )
    {
       if ( lb_loaded->item(i)->isSelected() ) 
       {
@@ -2935,7 +2935,7 @@ void US_Hydrodyn_Comparative::loaded_merge()
                                           "Do you still want to merge them?")
                                        ).arg(csv_premerge_missing_header_qsl.join("\n")),
                                us_tr("&Yes"), us_tr("&No"),
-                               QString::null, 0, 1 )
+                               QString(), 0, 1 )
           )
       {
          return;
@@ -3217,7 +3217,7 @@ void US_Hydrodyn_Comparative::save_csv()
                                 us_tr("Multiple CSV are selected and must be merged before saving\n"
                                    "Do you want to merge them?"),
                                 us_tr("&Yes"), us_tr("&No"),
-                                QString::null, 0, 1 ) 
+                                QString(), 0, 1 ) 
           ) 
       {
          return;
@@ -3237,7 +3237,7 @@ void US_Hydrodyn_Comparative::save_csv()
                                              "Do you still want to merge them?")
                                           ).arg(csv_premerge_missing_header_qsl.join("\n")),
                                   us_tr("&Yes"), us_tr("&No"),
-                                  QString::null, 0, 1 )
+                                  QString(), 0, 1 )
              )
          {
             return;
@@ -3301,7 +3301,7 @@ void US_Hydrodyn_Comparative::save_csv()
 void US_Hydrodyn_Comparative::save()
 {
    QString fn;
-   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
+   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString() , QString() );
    if(!fn.isEmpty() )
    {
       QString text = editor->toPlainText();
@@ -3508,7 +3508,7 @@ csv US_Hydrodyn_Comparative::csv_read( QString filename )
                                        us_tr("The CSV named %1 is already loaded\nDo you want to reload it?")
                                        ).arg(filename),
                                us_tr("&Yes"), us_tr("&No"),
-                               QString::null, 0, 1 )
+                               QString(), 0, 1 )
           )
       {
          csv_error = us_tr("already loaded");
@@ -3785,7 +3785,7 @@ bool US_Hydrodyn_Comparative::all_selected_csv_contain( comparative_entry ce )
 {
    bool all_contain = true;
 
-   for ( unsigned int i = 0; i < lb_loaded->count(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)lb_loaded->count(); i++ )
    {
       if ( lb_loaded->item(i)->isSelected() )
       {
@@ -3805,7 +3805,7 @@ bool US_Hydrodyn_Comparative::all_selected_csv_contain( comparative_entry ce )
 bool US_Hydrodyn_Comparative::any_loaded_selected()
 {
    bool any_selected = false;
-   for ( unsigned int i = 0; i < lb_loaded->count(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) lb_loaded->count(); i++ )
    {
       if ( lb_loaded->item(i)->isSelected() )
       {
@@ -3819,7 +3819,7 @@ bool US_Hydrodyn_Comparative::any_loaded_selected()
 bool US_Hydrodyn_Comparative::one_loaded_selected()
 {
    int no_selected = 0;
-   for ( unsigned int i = 0; i < lb_loaded->count(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) lb_loaded->count(); i++ )
    {
       if ( lb_loaded->item(i)->isSelected() )
       {
@@ -3836,7 +3836,7 @@ bool US_Hydrodyn_Comparative::one_loaded_selected()
 QString US_Hydrodyn_Comparative::first_loaded_selected()
 {
    QString qs;
-   for ( unsigned int i = 0; i < lb_loaded->count(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) lb_loaded->count(); i++ )
    {
       if ( lb_loaded->item(i)->isSelected() )
       {
@@ -3850,7 +3850,7 @@ QString US_Hydrodyn_Comparative::first_loaded_selected()
 bool US_Hydrodyn_Comparative::any_selected_selected()
 {
    bool any_selected = false;
-   for ( unsigned int i = 0; i < lb_selected->count(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) lb_selected->count(); i++ )
    {
       if ( lb_selected->item(i)->isSelected() )
       {
@@ -3864,7 +3864,7 @@ bool US_Hydrodyn_Comparative::any_selected_selected()
 bool US_Hydrodyn_Comparative::one_selected_selected()
 {
    int no_selected = 0;
-   for ( unsigned int i = 0; i < lb_selected->count(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) lb_selected->count(); i++ )
    {
       if ( lb_selected->item(i)->isSelected() )
       {
@@ -3931,7 +3931,7 @@ void US_Hydrodyn_Comparative::csv_merge_loaded_selected()
    
    csv csv_merged = csvs[ first_loaded_selected() ];
    bool skip_first = true;
-   for ( unsigned int i = 0; i < lb_loaded->count(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) lb_loaded->count(); i++ )
    {
       if ( !skip_first && lb_loaded->item(i)->isSelected() ) 
       {
@@ -3995,7 +3995,7 @@ bool US_Hydrodyn_Comparative::csv_merge_selected_selected( csv &csv_merged )
    map < QString, bool > selected_names;
 
    // create a map of the selected selected names
-   for ( unsigned int i = 0; i < lb_selected->count(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) lb_selected->count(); i++ )
    {
       if ( lb_selected->item(i)->isSelected() ) 
       {
@@ -4010,7 +4010,7 @@ bool US_Hydrodyn_Comparative::csv_merge_selected_selected( csv &csv_merged )
    QString last_csv;
 
    // now find the csv's that go with them to make our csv list
-   for ( unsigned int i = 0; i < lb_loaded->count(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) lb_loaded->count(); i++ )
    {
       if ( lb_loaded->item(i)->isSelected() ) 
       {
@@ -4106,7 +4106,7 @@ bool US_Hydrodyn_Comparative::csv_merge_selected_selected( csv &csv_merged )
                                           "Do you want to continue?")
                                        ).arg(csv_premerge_missing_header_qsl.join("\n")),
                                us_tr("&Yes"), us_tr("&No"),
-                               QString::null, 0, 1 )
+                               QString(), 0, 1 )
           )
       {
          return false;
@@ -4192,7 +4192,7 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
                                  us_tr("Some of the added columns that will be computed already exist.\n"
                                     "What do you want remove them?"),
                                  us_tr("&Yes, remove them"), us_tr("&No, rename them"),
-                                 QString::null, 0, 1 ) 
+                                 QString(), 0, 1 ) 
           )
       {
          for ( unsigned int i = 0; i < ce_names.size(); i++ )
@@ -4444,7 +4444,7 @@ bool US_Hydrodyn_Comparative::any_params_enabled()
 void US_Hydrodyn_Comparative::update_selected_map() 
 {
    selected_map.clear( );
-   for ( unsigned int i = 0; i < lb_selected->count(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) lb_selected->count(); i++ )
    {
       if ( lb_selected->item(i)->isSelected() )
       {
@@ -4518,7 +4518,7 @@ bool US_Hydrodyn_Comparative::csv_get_loaded_min_max(
 
    bool done_first = false;
 
-   for ( unsigned int i = 0; i < lb_loaded->count(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) lb_loaded->count(); i++ )
    {
       if ( lb_loaded->item(i)->isSelected() )
       {
@@ -4578,7 +4578,7 @@ bool US_Hydrodyn_Comparative::csv_get_selected_min_max(
 
    update_selected_map();
 
-   for ( unsigned int i = 0; i < lb_loaded->count(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) lb_loaded->count(); i++ )
    {
       if ( lb_loaded->item(i)->isSelected() )
       {
@@ -4739,7 +4739,7 @@ bool US_Hydrodyn_Comparative::csv_premerge_column_warning_all_loaded_selected()
    csv *csv_ref = &csvs[ first_loaded_selected() ];
    bool skip_first = true;
 
-   for ( unsigned int i = 0; i < lb_loaded->count(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) lb_loaded->count(); i++ )
    {
       if ( !skip_first && lb_loaded->item(i)->isSelected() ) 
       {

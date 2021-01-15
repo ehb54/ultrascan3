@@ -14,7 +14,7 @@
 #  define SLASH "\\"
 #endif
 
-US_Hydrodyn_SasOptionsMisc::US_Hydrodyn_SasOptionsMisc(struct saxs_options *saxs_options, bool *sas_options_misc_widget, void *us_hydrodyn, QWidget *p, const char *name) : QFrame( p )
+US_Hydrodyn_SasOptionsMisc::US_Hydrodyn_SasOptionsMisc(struct saxs_options *saxs_options, bool *sas_options_misc_widget, void *us_hydrodyn, QWidget *p, const char *) : QFrame( p )
 {
    this->sas_options_misc_widget = sas_options_misc_widget;
    this->saxs_options = saxs_options;
@@ -94,6 +94,15 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    AUTFBACK( le_default_saxs_filename );
    le_default_saxs_filename->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_default_saxs_filename->setReadOnly(true);
+
+   cb_five_term_gaussians = new QCheckBox(this);
+   cb_five_term_gaussians->setText(us_tr(" Use 5 term Gaussians for native SAXS computations"));
+   cb_five_term_gaussians->setEnabled(true);
+   cb_five_term_gaussians->setChecked((*saxs_options).five_term_gaussians);
+   cb_five_term_gaussians->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_five_term_gaussians->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_five_term_gaussians );
+   connect(cb_five_term_gaussians, SIGNAL(clicked()), this, SLOT(set_five_term_gaussians()));
 
    pb_default_ff_filename = new QPushButton(us_tr("Set SAXS Formfactor File"), this);
    pb_default_ff_filename->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -333,7 +342,7 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   int rows = 0, columns = 2, spacing = 2, j=0, margin=4;
+   int /* rows = 0, columns = 2,*/ spacing = 2, j=0, margin=4;
    QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
 
    background->addWidget( lbl_info , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
@@ -350,6 +359,8 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    j++;
    background->addWidget(pb_default_ff_filename, j, 0);
    background->addWidget(le_default_ff_filename, j, 1);
+   j++;
+   background->addWidget(cb_five_term_gaussians, j, 0, 1, 2);
    j++;
 
    QHBoxLayout * hbl_iq_ask = new QHBoxLayout; hbl_iq_ask->setContentsMargins( 0, 0, 0, 0 ); hbl_iq_ask->setSpacing( 0 );
@@ -684,5 +695,11 @@ void US_Hydrodyn_SasOptionsMisc::update_iqq_scale_minq( const QString &str )
 void US_Hydrodyn_SasOptionsMisc::update_iqq_scale_maxq( const QString &str )
 {
    (*saxs_options).iqq_scale_maxq = str.toFloat();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsMisc::set_five_term_gaussians()
+{
+   (*saxs_options).five_term_gaussians = cb_five_term_gaussians->isChecked();
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }

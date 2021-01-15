@@ -62,6 +62,7 @@ struct hydro_results
    double temperature;
    double solvent_viscosity;
    double solvent_density;
+   double pH;
 };
 
 class US_EXTERN US_Hydrodyn_Results : public QFrame
@@ -69,10 +70,12 @@ class US_EXTERN US_Hydrodyn_Results : public QFrame
    Q_OBJECT
 
    public:
-      US_Hydrodyn_Results(struct hydro_results *, bool *, QWidget *p = 0, const char *name = 0);
+      US_Hydrodyn_Results(struct hydro_results *, bool *, void *us_hydrodyn, QWidget *p = 0, const char *name = 0);
       ~US_Hydrodyn_Results();
 
-   public:
+      static hydro_results hydro_results_initialized(); // returns initialized hydro_results
+
+   private:
 
       struct hydro_results *results;
       bool *result_widget;
@@ -115,6 +118,8 @@ class US_EXTERN US_Hydrodyn_Results : public QFrame
       QPushButton *pb_load_beadmodel;
 
       QString somo_dir;
+
+      void *us_hydrodyn;
 
    public slots:
 

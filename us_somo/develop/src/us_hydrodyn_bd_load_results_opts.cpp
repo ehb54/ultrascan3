@@ -18,7 +18,7 @@ US_Hydrodyn_BD_Load_Results_Opts::US_Hydrodyn_BD_Load_Results_Opts(
                                                                    double browflex_solvent_viscosity,
                                                                    bool *check_fix_overlaps,
                                                                    QWidget *p,
-                                                                   const char *name
+                                                                   const char *
                                                                    ) : QDialog( p )
 {
    this->msg = msg;
@@ -136,11 +136,7 @@ void US_Hydrodyn_BD_Load_Results_Opts::setupGUI()
    le_solvent_acronym->setEnabled(true);
    connect(le_solvent_acronym, SIGNAL(textChanged(const QString &)), SLOT(update_solvent_acronym(const QString &)));
 
-#if QT_VERSION < 0x050000
-   lbl_temperature = new QLabel(us_tr(" Temperature (ºC):  "), this);
-#else
-   lbl_temperature = new QLabel(us_tr(" Temperature (\u00b0C):  "), this);
-#endif
+   lbl_temperature = new QLabel(us_tr( QString( " Temperature (%1C): " ).arg( DEGREE_SYMBOL ) ), this);
    Q_CHECK_PTR(lbl_temperature);
    lbl_temperature->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_temperature->setPalette( PALET_LABEL );

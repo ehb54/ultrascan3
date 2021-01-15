@@ -27,7 +27,7 @@ US_Hydrodyn_Saxs_Load_Csv::US_Hydrodyn_Saxs_Load_Csv(
                                                      bool expert_mode,
                                                      void *us_hydrodyn,
                                                      QWidget *p,
-                                                     const char *name
+                                                     const char *
                                                      ) : QDialog( p )
 {
    this->msg = msg;
@@ -376,7 +376,8 @@ void US_Hydrodyn_Saxs_Load_Csv::transpose()
                // cout <<  QString("array2d_to_save[%1].size() == %2\n")
                // .arg(j)
                // .arg(array2d_to_save[j].size());
-               fprintf(of, comma.toLatin1().data());
+               // fprintf(of, comma.toLatin1().data());
+               fputs( comma.toLatin1().data(), of );
             } else {
                fprintf(of, "%s%s", comma.toLatin1().data(), array2d_to_save[j][i].toLatin1().data());
             }

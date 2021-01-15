@@ -347,7 +347,7 @@ int US_Hydrodyn::create_anaflex_files( int use_mode, int sub_mode )
                                                   .arg(use_last_bead),
                                                   us_tr(QString("&Use %1 as last bead").arg(no_of_beads)),
                                                   us_tr(QString("&Accept %1 as last bead").arg(use_last_bead)),
-                                                  QString::null,
+                                                  QString(),
                                                   0, 1 ) )
                      {
                         use_last_bead = no_of_beads;
@@ -380,7 +380,7 @@ int US_Hydrodyn::create_anaflex_files( int use_mode, int sub_mode )
                                                   .arg(use_last_bead),
                                                   us_tr(QString("&Use %1 as last bead").arg(no_of_beads)),
                                                   us_tr(QString("&Accept %1 as last bead").arg(use_last_bead)),
-                                                  QString::null,
+                                                  QString(),
                                                   0, 1 ) )
                      {
                         use_last_bead = no_of_beads;

@@ -24,9 +24,7 @@
 #include <qtreewidget.h>
 //Added by qt3to4:
 #include <QCloseEvent>
-#if QT_VERSION >= 0x040000
-# include <QHeaderView>
-#endif
+#include <QHeaderView>
 
 #include "us.h"
 #include "us_timer.h"
@@ -81,11 +79,10 @@
 #include "us_hydrodyn_pdb_tool.h"
 #include "us_hydrodyn_cluster.h"
 #include "us_saxs_util.h"
+// #include "us_hydrodyn_pat.h"
 
-#if QT_VERSION >= 0x040000
 #include "us3i_gui_settings.h"
 #include "us3i_editor.h"
-#endif
 
 //standard C and C++ defs:
 
@@ -102,14 +99,9 @@
 #define START_RASMOL
 using namespace std;
 
-#ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
-
 struct _vdwf {
    double mw;
+   double ionized_mw_delta;
    double r;
    double w;
    int color;
@@ -123,6 +115,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       friend class US_Hydrodyn_Batch;
       friend class US_Hydrodyn_Cluster;
       friend class US_Hydrodyn_Saxs;
+      friend class US_Hydrodyn_Hydro;
       friend class US_Hydrodyn_Saxs_Screen;
       friend class US_Hydrodyn_Saxs_Search;
       friend class US_Hydrodyn_Saxs_Buffer;
@@ -144,12 +137,13 @@ class US_EXTERN US_Hydrodyn : public QFrame
       friend class US_Hydrodyn_Hplc;
       friend class US_Hydrodyn_Saxs_Cormap;
       friend class US_Hydrodyn_Saxs_Hplc_Baseline_Best;
+      friend class US_Hydrodyn_AdvancedConfig;
 
       US_Hydrodyn(vector < QString >,
                   QWidget *p = 0, 
                   const char *name = 0);
       ~US_Hydrodyn();
-      int get_color(PDB_atom *);
+      int get_color(const PDB_atom *);
       BD_Options bd_options;
       BD_Options default_bd_options;
       Anaflex_Options anaflex_options;
@@ -166,10 +160,12 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool calcAutoHydro;
       bool setSuffix;
       bool overwrite;
+      bool overwrite_hydro;
       bool saveParams;
       bool guiFlag;
       QLabel *lbl_core_progress;
-      void set_disabled();
+      void set_disabled( bool clear_bead_model_file = true );
+      void set_enabled();
       QTextEdit *editor;
       void play_sounds(int);
       struct pdb_parsing pdb_parse;
@@ -255,12 +251,117 @@ class US_EXTERN US_Hydrodyn : public QFrame
                          QString prefix = "",
                          bool nodisplay = false );  
 
-   private:
+      double use_solvent_visc();                     // temperature solvent viscosity - checks manual flag
+      double use_solvent_dens();                     // temperature solvent density   - checks manual flag
+      double use_vbar( double vbar );                // temperature vbar
+      
+      struct asa_options asa;
 
-      map < QString, double > res_vbar;
-      map < QString, double > res_mw;
-      map < QString, double > fasta_vbar;
-      map < QString, double > fasta_mw;
+      void write_dati1_supc_bead_model( QString filename,
+                                        int size,
+                                        void * dt );
+
+      void write_dati1_pat_bead_model( QString filename,
+                                       int size,
+                                       void * dtp,
+                                       void * dts );
+
+   private:
+      vector < PDB_atom > exposed_model( const vector < PDB_atom > & model );
+      
+      bool mm_mode;
+      bool pat_model( vector < PDB_atom > & model );
+      bool compute_asa_rgs( const vector < PDB_atom > & model );
+
+      void set_bead_colors( vector < PDB_atom * > use_model );
+      void set_bead_colors( vector < PDB_atom > & use_model );
+      bool batch_avg_hydro_active();
+      bool batch_active();
+      double model_mw( const vector < PDB_atom > & use_model );
+      double model_mw( const vector < PDB_atom * > use_model );
+
+      int grpy_used_beads_count( const vector < PDB_atom > & use_model );
+      int grpy_used_beads_count( const vector < PDB_atom * > use_model );
+
+      int total_beads_count( const vector < PDB_atom > & use_model );
+      // protons at pH
+      double protons_at_pH( double pH, const struct PDB_model & model );
+      double compute_isoelectric_point( const struct PDB_model & model );
+
+      QString model_summary_msg( const QString &msg, struct PDB_model *model );    // summary info about model
+      double tc_vbar( double vbar );                           // temperature corrected vbar
+      QString pH_msg();                                        // vbar message
+      QString vbar_msg( double vbar, bool only_used = false ); // vbar message
+      double tc_solvent_visc();                                // temperature solvent viscosity
+      double tc_solvent_dens();                                // temperature solvent density
+      QString visc_dens_msg( bool only_used = false );         // return density and viscosity message
+
+   // distance threshold check support
+      void SS_setup();                              // called once to setup any persistant distance threshold structures
+      void SS_init();                               // called during load pdb to setup any processing structures
+      void SS_apply( struct PDB_model & model );    // called during load pdb to process any adjustments (CYS->CYH etc) *** per model! ***
+      void SS_change_residue(                       // change the residue of an entry to target_residue
+                             struct PDB_model & model
+                             ,const QString & line
+                             ,const QString target_residue
+                                                );  
+      
+      void update_model_chain_ionization( struct PDB_model & model, bool quiet = true ); // progagate ionization
+      
+      set < QString >                                           cystine_residues;
+      set < QString >                                           sulfur_atoms;
+
+      vector < QString >                                        sulfur_pdb_line;
+      vector < point   >                                        sulfur_coordinates;
+
+      map < QString, map < QString, vector < unsigned int > > > sulfur_pdb_chain_atom_idx;
+      map < QString, vector < unsigned int > >                  sulfur_pdb_chain_idx;
+
+      map < int, int >                                          sulfur_paired;
+      
+      // end distance threshold check support
+
+      map < QString, double >                                   hybrid_to_protons;   // for calculating net charge
+      map < QString, double >                                   hybrid_to_electrons; // for calculating net charge
+      void read_hybrid_file( QString filename );
+
+      // info routines (in us_hydrodyn_info.cpp
+
+      void info_model_vector( const QString & msg, const vector <struct PDB_model> & models, const set < QString > only_atoms = {} );
+      void info_model_vector_mw  ( const QString & msg, const vector <struct PDB_model> & models, bool detail = false );
+      void info_model_vector_vbar( const QString & msg, const vector <struct PDB_model> & models );
+      void info_residue_p_residue( struct PDB_model & model ); // consistency report
+      void info_compare_residues( struct residue * res1, struct residue * res2 ); // compare residues
+      void info_residue_vector( const QString & msg, vector < struct residue > & residue_v, bool only_pKa_dependent = true );
+      void info_model_p_residue( const QString & msg, const struct PDB_model & model, bool only_pKa_dependent );
+      void info_mw( const QString & msg, const vector < struct PDB_model > & models, bool detail = false );
+      void info_mw( const QString & msg, const struct PDB_model & model, bool detail = false );
+      void info_residue_protons_electrons_at_pH( double pH, const struct PDB_model & model );
+      QString info_cite( const QString & package );
+      QStringList citation_stack;
+      void citation_clear();
+      QString citation_cleanup( const QString & qs );
+      bool citation_stack_contains_type( const QString & type );
+      void citation_load_pdb();
+      void citation_load_bead_model( const QString & filename );
+      void info_citation_stack();
+      void citation_build_bead_model( const QString & type );
+      QString split_and_prepend( const QString & qs, const QString & prepend );
+
+      void set_ionized_residue_vector( vector < struct residue > & residue_v ); // apply ionization to complete residue vector
+      void reset_ionized_residue_vectors(); // for saxs hplc options
+
+      // in attic: vector < struct residue * > model_residue_v( const struct PDB_model & model ); // returns a residue * vector based upon PDB_atoms's p_residue
+
+      // end info routines
+
+      map < QString, double >  res_vbar; // for fasta 
+      // map < QString, double >  res_vbar2; 
+      // map < QString, double >  res_pKa;
+      map < QString, double >  res_mw;
+      // map < QString, double >  res_ionization_mass_change;
+      map < QString, double >  fasta_vbar;
+      map < QString, double >  fasta_mw;
       void create_fasta_vbar_mw();
       bool calc_fasta_vbar( QStringList & seq_chars, double &result, QString &msgs );
 
@@ -311,7 +412,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool alt_method; // true = new bead method, false = original bead method
       QString bead_model_file;
       struct residue current_residue;
-      struct asa_options asa;
       struct asa_options default_asa;
       struct pdb_visualization pdb_vis;
       struct pdb_visualization default_pdb_vis;
@@ -354,6 +454,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QLabel *lbl_info3;
       mQLineEdit *le_pdb_file;
       QLabel *lbl_model;
+      QLabel *lbl_rbh;
       QLabel *lbl_somo;
       QLabel *lbl_bead_model_prefix;
 
@@ -376,6 +477,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QPushButton *pb_save;
       QPushButton *pb_select_residue_file;
       QPushButton *pb_load_pdb;
+      QPushButton *pb_reload_pdb;
       QPushButton *pb_pdb_hydrate_for_saxs;
       QPushButton *pb_pdb_saxs;
       QPushButton *pb_bead_saxs;
@@ -392,6 +494,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QPushButton *pb_load_bead_model;
       QPushButton *pb_calc_hydro;
       QPushButton *pb_calc_zeno;
+      QPushButton *pb_calc_grpy;
       QPushButton *pb_calc_hullrad;
       QPushButton *pb_show_hydro_results;
       QPushButton *pb_open_hydro_results;
@@ -401,6 +504,11 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QPushButton *pb_grid;
       QPushButton *pb_view_asa;
       QPushButton *pb_view_bead_model;
+
+      QLabel      *lbl_temperature;
+      QLineEdit   *le_temperature;
+      QCheckBox   *cb_pH;
+      QLineEdit   *le_pH;
 
       QPushButton *pb_dmd_run;
 
@@ -421,7 +529,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QPushButton *pb_comparative;
       QPushButton *pb_best;
 
-      QProgressBar *progress;
       // TextEdit *e;
 
       US_AddAtom *addAtom;
@@ -459,7 +566,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       US_Hydrodyn_Save *save_window;
       QProcess *rasmol;
 
-      QString getExtendedSuffix(bool prerun = true, bool somo = true, bool no_ovlp_removal = false ); 
+      QString getExtendedSuffix(bool prerun = true, bool somo = true, bool no_ovlp_removal = false, bool vdw = false ); 
       
       vector < QString >              batch_file;
       vector < PDB_atom >             bead_model;
@@ -814,6 +921,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QStringList  last_pdb_load_calc_mw_msg;
       QStringList  last_steric_clash_log;
 
+      QString      last_bead_model;
+
       void show_zeno();
       bool calc_zeno();
       int do_calc_hydro();
@@ -836,6 +945,44 @@ class US_EXTERN US_Hydrodyn : public QFrame
       map < QString, map < QString, vector < QString > > > data_csv;
       QStringList                                          data_csv_headers;
 
+      // grpy data & methods
+      QProcess                            * grpy;
+      void                                  grpy_process_next();
+      void                                  grpy_finalize();
+      QString                               grpy_prog;
+      QStringList                           grpy_to_process;
+      QStringList                           grpy_processed;
+      QString                               grpy_last_processed;
+      QString                               grpy_stdout;
+      bool                                  grpy_running;
+      QString                               grpy_filename;
+      QVector < int >                       grpy_model_numbers;
+      int                                   grpy_last_model_number;
+      QVector < int >                       grpy_used_beads;
+      QVector < QMap < QString, double > >  grpy_addl_params;
+      QMap < QString, double >              grpy_addl_param;
+      int                                   grpy_last_used_beads;
+      bool                                  grpy_success;  // only valid if !grpy_running
+      map < QString, vector < double > >    grpy_captures;
+
+      bool                                  grpy_mm;
+      QString                               grpy_mm_results;
+      QString                               grpy_mm_name;
+      save_info                             grpy_mm_save_params;
+      bool                                  grpy_was_hydro_enabled;
+
+      // zeno mm data
+      bool                                  zeno_mm;
+      QString                               zeno_mm_results;
+      QString                               zeno_mm_name;
+      save_info                             zeno_mm_save_params;
+      
+
+      US_Timer                              timers;
+
+      hydro_results grpy_results;
+      hydro_results grpy_results2;
+
       QProcess *hullrad;
       void hullrad_process_next();
       void hullrad_finalize();
@@ -850,13 +997,34 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       QString get_somo_dir();
 
+      // deprecated
+      // double basic_fraction( float pH, float pKa );
+      // double ionized_atom_mw( float bf, struct atom *atom );
+      // double ionized_num_elect( float bf, struct atom *atom );
+      // double ionized_hydrogens( float bf, struct atom *atom );
+      // double ionized_residue_vbar( float bf, struct residue *res );
+      // double ionized_residue_atom_mw( float bf, struct atom *atom );
+      
+      vector < double > basic_fractions    ( float pH, struct residue * res );
+      double ionized_residue_vbar          ( vector < double > & fractions, struct residue * res );
+      double ionized_residue_atom_mw       ( vector < double > & fractions, struct residue *res, struct atom *atom );
+      double ionized_residue_atom_radius   ( vector < double > & fractions, struct residue *res, struct atom *atom );
+      double ionized_residue_atom_hydration( vector < double > & fractions, struct residue *res, struct atom *atom );
+      double ionized_residue_atom_protons  ( vector < double > & fractions, struct residue *res, struct atom *atom );
+                                                                                                             
    private slots:
       void hullrad_readFromStdout();
       void hullrad_readFromStderr();
       void hullrad_started();
       void hullrad_finished( int, QProcess::ExitStatus );
+      void grpy_readFromStdout();
+      void grpy_readFromStderr();
+      void grpy_started();
+      void grpy_finished( int, QProcess::ExitStatus );
       
    public:
+      QProgressBar *progress;
+      QProgressBar *mprogress;
 
       void set_expert( bool );
 
@@ -875,6 +1043,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool compute_structure_factors( QString filename, QString &error_msg );
 
       void editor_msg( QString color, QString msg );
+      void editor_msg( QString color, const QFont &font, QString msg );
 
       saxs sf_factors;
       vector < saxs > sf_bead_factors;
@@ -896,6 +1065,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       int  calc_grid();     // compute grid model from bead model
       int  calc_hydro();
       bool calc_zeno_hydro();
+      bool calc_grpy_hydro();
 
       int calc_iqq( bool bead_model, bool create_native_saxs = true, bool do_raise = true );      // bring up saxs window if needed and compute iqq curve
       int calc_prr( bool bead_model, bool create_native_saxs = true, bool do_raise = true );      // bring up saxs window if needed and compute prr curve
@@ -929,6 +1099,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void pdb_saxs( bool create_native_saxs = true, bool do_raise = true );
       void bead_saxs( bool create_native_saxs = true, bool do_raise = true );
       int pdb_hydrate_for_saxs( bool quiet = false );
+      void open_hydro_results();
       
    private slots:
       bool calc_hullrad_hydro( QString filename = "" );
@@ -980,7 +1151,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void get_atom_map(PDB_model *);
       int check_for_missing_atoms(QString *error_string, PDB_model *);
       void build_molecule_maps(PDB_model *model); // sets up maps for molecule
-      int overlap_check(bool sc, bool mc, bool buried, double tolerance, int limit = 0); // check for overlaps
+      int overlap_check(bool sc, bool mc, bool buried, double tolerance, int limit = 0, bool from_overlap_hydro = false ); // check for overlaps
       int compute_asa(bool bd_mode = false, bool no_ovlp_removal = false); // calculate maximum accessible surface area
       void show_asa();
       void show_bd();
@@ -997,33 +1168,38 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void view_asa(); // show asa file in editor
       void view_bead_model(); // show bead model file in editor
       void view_file(const QString &, QString title = "SOMO editor"); // call editor to view a file
-      void bead_check( bool use_threshold = false, bool message_type = false ); // recheck beads
+      void bead_check( bool use_threshold = false, bool message_type = false, bool vdw = false, bool only_asa = false ); // recheck beads
       void load_config();
       void write_config();
       void write_config(const QString &);
       void reset();
       void set_default();
+      void set_pH();
+      void update_temperature( const QString &, bool update_hydro = true );
+      void update_pH( const QString & );
       void update_bead_model_file(const QString &);
       void update_bead_model_prefix(const QString &);
       void radial_reduction( bool from_grid = false );
       void show_hydro_results();
-      void open_hydro_results();
-      void write_bead_asa(QString, vector <PDB_atom> *);
-      void write_bead_tsv(QString, vector <PDB_atom> *);
-      void write_bead_ebf(QString, vector <PDB_atom> *);
-      void write_bead_spt(QString, vector <PDB_atom> *, bool movie_frame = false, float scale = 1, bool black_background = false);
-      void write_bead_model(QString, vector <PDB_atom> *, QString extra_text = "" );
-      void write_corr(QString, vector <PDB_atom> *);
-      bool read_corr(QString, vector <PDB_atom> *);
+      void write_bead_asa( QString, vector <PDB_atom> * );
+      void write_bead_tsv( QString, vector <PDB_atom> * );
+      void write_bead_ebf( QString, vector <PDB_atom> * );
+      void write_bead_spt( QString, vector <PDB_atom> *, bool movie_frame = false, float scale = 1, bool black_background = false );
+      void write_bead_model( QString, vector <PDB_atom> *, QString extra_text = "" );
+      void write_bead_model( QString, vector <PDB_atom> *, int bead_model_output, QString extra_text = "" );
+      void write_corr( QString, vector <PDB_atom> * );
+      bool read_corr( QString, vector <PDB_atom> * );
       void printError(const QString &);
       void closeAttnt(QProcess *, QString);
-      void calc_vbar(struct PDB_model *);
+      void calc_vbar(struct PDB_model *, bool use_p_atom = false );
       void update_vbar(); // update the results.vbar everytime something changes the vbar in options or calculation
       void append_options_log_somo(); // append somo options to options_log
       void append_options_log_somo_ovlp(); // append somo options to options_log
       void append_options_log_atob(); // append atob options to options_log
       void append_options_log_atob_ovlp(); // append atob options to options_log
+      void append_options_log_misc(); // append misc vbar info
       void list_model_vector(vector < PDB_model > *);
+      QString default_differences_main();
       QString default_differences_load_pdb();
       QString default_differences_somo();
       QString default_differences_grid();
@@ -1150,12 +1326,5 @@ class radial_reduction_thr_t : public QThread
   int work_to_do_waiters;
   int work_done_waiters;
 };
-
-
-#ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
-#endif
 
 #endif

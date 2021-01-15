@@ -21,7 +21,7 @@ US_Hydrodyn_File2::US_Hydrodyn_File2(QString *dir,
                                      bool    &overwrite_all,
                                      int *result,
                                      QWidget *p,
-                                     const char *name) : QDialog( p )
+                                     const char *) : QDialog( p )
 {
    this->dir = dir;
    this->base = base;

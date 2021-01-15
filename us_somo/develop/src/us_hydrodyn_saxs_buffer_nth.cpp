@@ -14,7 +14,7 @@ US_Hydrodyn_Saxs_Buffer_Nth::US_Hydrodyn_Saxs_Buffer_Nth(
                                                      void                     *              us_hydrodyn_saxs_buffer,
                                                      map < QString, QString > *              parameters,
                                                      QWidget *                               p,
-                                                     const char *                            name
+                                                     const char *                            
                                                      ) : QDialog( p )
 {
    this->us_hydrodyn_saxs_buffer              = us_hydrodyn_saxs_buffer;

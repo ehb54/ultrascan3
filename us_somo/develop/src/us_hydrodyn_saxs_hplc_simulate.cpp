@@ -19,7 +19,7 @@ US_Hydrodyn_Saxs_Hplc_Simulate::US_Hydrodyn_Saxs_Hplc_Simulate(
                                                                map < QString, vector < double > >      I,
                                                                map < QString, vector < double > >      e,
                                                                QWidget *                               p,
-                                                               const char *                            name
+                                                               const char *                            
                                                                ) : QFrame(  p )
 {
    this->us_hydrodyn                = us_hydrodyn;

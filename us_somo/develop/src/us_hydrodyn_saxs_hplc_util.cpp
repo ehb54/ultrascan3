@@ -9,6 +9,7 @@
 #include "../include/us_hydrodyn_saxs_hplc_fit_global.h"
 #include "../include/us_hydrodyn_saxs_hplc_nth.h"
 #include "../include/us_hydrodyn_saxs_hplc_options.h"
+#include "../include/us_hydrodyn_saxs_hplc_gauss_mode.h"
 #include "../include/us_hydrodyn_saxs_hplc_svd.h"
 #include "../include/us_hydrodyn_saxs_hplc_movie.h"
 #include "../include/us_hydrodyn_saxs_hplc_simulate.h"
@@ -585,7 +586,7 @@ bool US_Hydrodyn_Saxs_Hplc::opt_repeak_gaussians( QString file )
                                                  "What would you like to do?\n" ) ).arg( scale ),
                                     us_tr( "&Rescale the Gaussian amplitudes" ), 
                                     us_tr( "&Do not rescale" ),
-                                    QString::null,
+                                    QString(),
                                     0, // Stop == button 0
                                     0 // Escape == button 0
                                     ) )
@@ -1078,7 +1079,7 @@ void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files )
    select_files[ peak_target ] = true;
 
    double peak;
-   if ( !get_peak( peak_target, peak ) )
+   if ( !get_peak( peak_target, peak, true ) )
    {
       return;
    }
@@ -1158,7 +1159,7 @@ void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files )
       }
 
       double this_peak;
-      if ( !get_peak( files[ i ], this_peak ) )
+      if ( !get_peak( files[ i ], this_peak, true ) )
       {
          return;
       }
@@ -2188,26 +2189,18 @@ void US_Hydrodyn_Saxs_Hplc::axis_y( bool nochange, bool no_replot )
    if ( axis_y_log )
    {
       plot_dist->setAxisTitle(QwtPlot::yLeft, title + us_tr( " (log scale)") );
-#if QT_VERSION < 0x040000
-      plot_dist->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::Logarithmic);
-#else
       plot_dist->setAxisScaleEngine(QwtPlot::yLeft, new QwtLogScaleEngine(10));
-#endif
    } else {
       plot_dist->setAxisTitle(QwtPlot::yLeft, title );
-#if QT_VERSION < 0x040000
-      plot_dist->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
-#else
       // actually need to test this, not sure what the correct version is
       plot_dist->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
-#endif
    }
-   if ( plot_dist_zoomer )
-   {
-      plot_dist_zoomer->zoom ( 0 );
-      delete plot_dist_zoomer;
-      plot_dist_zoomer = (ScrollZoomer *) 0;
-   }
+   // if ( plot_dist_zoomer )
+   // {
+   //    plot_dist_zoomer->zoom ( 0 );
+   //    delete plot_dist_zoomer;
+   //    plot_dist_zoomer = (ScrollZoomer *) 0;
+   // }
 
    switch( current_mode )
    {
@@ -2300,23 +2293,15 @@ void US_Hydrodyn_Saxs_Hplc::axis_x( bool nochange, bool no_replot )
 
    if ( axis_x_log )
    {
-      plot_dist->setAxisTitle(QwtPlot::xBottom,  title + us_tr(" (log scale)") );
-#if QT_VERSION < 0x040000
-      plot_dist  ->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::Logarithmic);
-      plot_errors->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::Logarithmic);
-#else
+      plot_dist  ->setAxisTitle(QwtPlot::xBottom,  title + us_tr(" (log scale)") );
       plot_dist  ->setAxisScaleEngine(QwtPlot::xBottom, new QwtLogScaleEngine(10));
+      plot_errors->setAxisTitle(QwtPlot::xBottom,  title + us_tr(" (log scale)") );
       plot_errors->setAxisScaleEngine(QwtPlot::xBottom, new QwtLogScaleEngine(10));
-#endif
    } else {
-      plot_dist->setAxisTitle(QwtPlot::xBottom,  title );
-#if QT_VERSION < 0x040000
-      plot_dist  ->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::None);
-      plot_errors->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::None);
-#else
+      plot_dist  ->setAxisTitle(QwtPlot::xBottom,  title );
       plot_dist  ->setAxisScaleEngine(QwtPlot::xBottom, new QwtLinearScaleEngine );
+      plot_errors->setAxisTitle(QwtPlot::xBottom,  title );
       plot_errors->setAxisScaleEngine(QwtPlot::xBottom, new QwtLinearScaleEngine );
-#endif
    }
    if ( !suppress_replot && !no_replot )
    {
@@ -2373,11 +2358,12 @@ void US_Hydrodyn_Saxs_Hplc::options()
       (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_csv_transposed" ] : "false";
    
    parameters[ "gaussian_type" ] = QString( "%1" ).arg( gaussian_type );
-   US_Hydrodyn_Saxs_Hplc_Options *sho = 
+   saxs_hplc_options_widget = 
       new US_Hydrodyn_Saxs_Hplc_Options( & parameters, (US_Hydrodyn *) us_hydrodyn, this );
-   US_Hydrodyn::fixWinButtons( sho );
-   sho->exec();
-   delete sho;
+   US_Hydrodyn::fixWinButtons( (US_Hydrodyn_Saxs_Hplc_Options*) saxs_hplc_options_widget );
+   ((US_Hydrodyn_Saxs_Hplc_Options *)saxs_hplc_options_widget)->exec();
+   delete (US_Hydrodyn_Saxs_Hplc_Options *)saxs_hplc_options_widget;
+   saxs_hplc_options_widget = 0;
 
    if ( !parameters.count( "ok" ) )
    {
@@ -5092,7 +5078,7 @@ void US_Hydrodyn_Saxs_Hplc::bb_cm_inc()
 
    save_parameters[ "close" ] = "true";
 
-   QString fn = QFileDialog::getSaveFileName( this , us_tr( "Choose a file name for the images" ) , QString::null , "png (*.png *.PNG)" );
+   QString fn = QFileDialog::getSaveFileName( this , us_tr( "Choose a file name for the images" ) , QString() , "png (*.png *.PNG)" );
 
    if ( !fn.isEmpty() ) {
       fn = fn.replace( QRegExp( ".png$", Qt::CaseInsensitive ), "" );
@@ -5280,3 +5266,41 @@ void US_Hydrodyn_Saxs_Hplc::simulate() {
                                                                                 );
    uhshs->show();
 }
+
+void US_Hydrodyn_Saxs_Hplc::gauss_mode()
+{
+   map < QString, QString > parameters;
+
+   if ( U_EXPT )
+   {
+      parameters[ "expert_mode" ] = "true";
+   }
+   
+   
+   parameters[ "gaussian_type" ] = QString( "%1" ).arg( gaussian_type );
+   US_Hydrodyn_Saxs_Hplc_Gauss_Mode *sho = 
+      new US_Hydrodyn_Saxs_Hplc_Gauss_Mode( & parameters, (US_Hydrodyn *) us_hydrodyn, this );
+   US_Hydrodyn::fixWinButtons( sho );
+   sho->exec();
+   delete sho;
+
+   if ( !parameters.count( "ok" ) )
+   {
+      return;
+   }
+
+   if ( gaussian_type != (gaussian_types)( parameters[ "gaussian_type" ].toInt() ) )
+   {
+      gaussian_type = (gaussian_types)( parameters[ "gaussian_type" ].toInt() );
+      unified_ggaussian_ok = false;
+      f_gaussians.clear( );
+      gaussians.clear( );
+      org_gaussians.clear( );
+      org_f_gaussians.clear( );
+      update_gauss_mode();
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gaussian_type" ] = QString( "%1" ).arg( gaussian_type );
+   }
+
+   update_enables();
+}
+

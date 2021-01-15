@@ -37,14 +37,18 @@ class US_AddSaxs : public QWidget
 
       QLabel *lbl_info;
       QLabel *lbl_table;
+      QLabel *lbl_4term;
+      QLabel *lbl_5term;
       QLabel *lbl_a1;
       QLabel *lbl_a2;
       QLabel *lbl_a3;
       QLabel *lbl_a4;
+      QLabel *lbl_a5;
       QLabel *lbl_b1;
       QLabel *lbl_b2;
       QLabel *lbl_b3;
       QLabel *lbl_b4;
+      QLabel *lbl_b5;
       QLabel *lbl_c;
       QLabel *lbl_volume;
       QLabel *lbl_saxs_name;
@@ -63,9 +67,23 @@ class US_AddSaxs : public QWidget
       QLineEdit *le_b4;
       QLineEdit *le_c;
       QLineEdit *le_volume;
+      QLineEdit *le_5a1;
+      QLineEdit *le_5a2;
+      QLineEdit *le_5a3;
+      QLineEdit *le_5a4;
+      QLineEdit *le_5a5;
+      QLineEdit *le_5b1;
+      QLineEdit *le_5b2;
+      QLineEdit *le_5b3;
+      QLineEdit *le_5b4;
+      QLineEdit *le_5b5;
+      QLineEdit *le_5c;
+      QLineEdit *le_5volume;
       struct saxs current_saxs;
       vector <struct saxs> saxs_list;
       QString saxs_filename;
+
+      void info_saxs( const QString & msg, const struct saxs & );
 
    private slots:
       void add();
@@ -83,6 +101,18 @@ class US_AddSaxs : public QWidget
       void update_b4(const QString &);
       void update_c(const QString &);
       void update_volume(const QString &);
+      void update_5a1(const QString &);
+      void update_5a2(const QString &);
+      void update_5a3(const QString &);
+      void update_5a4(const QString &);
+      void update_5a5(const QString &);
+      void update_5b1(const QString &);
+      void update_5b2(const QString &);
+      void update_5b3(const QString &);
+      void update_5b4(const QString &);
+      void update_5b5(const QString &);
+      void update_5c(const QString &);
+      void update_5volume(const QString &);
       void select_saxs(int);
 
    protected slots:

@@ -1310,7 +1310,7 @@ namespace xsr {
 US_Hydrodyn_Xsr::US_Hydrodyn_Xsr( 
                                  US_Hydrodyn  * us_hydrodyn,
                                  QWidget *p, 
-                                 const char *name
+                                 const char *
                                  ) : QFrame(  p )
 {
    this->us_hydrodyn      = us_hydrodyn;
@@ -1534,7 +1534,7 @@ void US_Hydrodyn_Xsr::update_font()
 void US_Hydrodyn_Xsr::save()
 {
    QString fn;
-   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
+   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString() , QString() );
    if(!fn.isEmpty() )
    {
       QString text = editor->toPlainText();

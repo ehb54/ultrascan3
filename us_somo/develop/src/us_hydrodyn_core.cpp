@@ -30,6 +30,7 @@
 // #define DEBUG1
 // #define AUTO_BB_DEBUG
 // #define BUILD_MAPS_DEBUG
+#define DEBUG_BEAD_CHECK
 
 #define USE_THREADS
 
@@ -1483,6 +1484,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                         new_bead.chain = 1;          // side chain
                         new_bead.volume = misc.avg_volume * atom_counts[count_idx];
                         new_bead.mw = misc.avg_mass * atom_counts[count_idx];
+                        new_bead.ionized_mw_delta = 0;
                         new_residue.r_bead.push_back(new_bead);
                         multi_residue_map[new_residue.name].push_back(residue_list.size());
 #if defined( DEBUG_TESTING_JML )
@@ -1566,6 +1568,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                                  residue_list[respos].r_bead[0].chain = 0;  // main chain
                                  residue_list[respos].r_bead[0].volume = misc.avg_volume * 4;
                                  residue_list[respos].r_bead[0].mw = misc.avg_mass * 4;
+                                 residue_list[respos].r_bead[0].ionized_mw_delta = 0;
 
                                  // create a 2nd bead
                                  residue_list[respos].r_bead.push_back(residue_list[respos].r_bead[0]);
@@ -1576,6 +1579,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                                     misc.avg_volume * (atom_counts[count_idx] - 4);
                                  residue_list[respos].r_bead[1].mw = 
                                     misc.avg_mass * (atom_counts[count_idx] - 4);
+                                 residue_list[respos].r_bead[1].ionized_mw_delta = 0;
                               }
                            }
                         }
@@ -1584,6 +1588,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                      new_atom.name = (this_atom->name == "OXT" ? "OXT'" : this_atom->name);
                      new_atom.hybrid.name = this_atom->name;
                      new_atom.hybrid.mw = misc.avg_mass;
+                     new_atom.hybrid.ionized_mw_delta = 0;
                      new_atom.hybrid.radius = misc.avg_radius;
                      new_atom.bead_assignment = current_bead_assignment; 
                      new_atom.positioner = true;
@@ -1689,14 +1694,14 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                            double tot_radii3_missing = 0;
                            for ( unsigned int i = 0; i < residue_list[orgrespos].r_atom.size(); i++ )
                            {
-                              tot_mw += residue_list[orgrespos].r_atom[i].hybrid.mw;
+                              tot_mw += residue_list[orgrespos].r_atom[i].hybrid.mw + residue_list[orgrespos].r_atom[i].hybrid.ionized_mw_delta;
                               tot_radii3 += pow(residue_list[orgrespos].r_atom[i].hybrid.radius, 3);
                               if ( !molecules_residue_missing_atoms_skip[QString("%1|%2|%3")
                                                                          .arg(idx)
                                                                          .arg(pos)
                                                                          .arg(i)] )
                               {
-                                 tot_mw_missing += residue_list[orgrespos].r_atom[i].hybrid.mw;
+                                 tot_mw_missing += residue_list[orgrespos].r_atom[i].hybrid.mw + residue_list[orgrespos].r_atom[i].hybrid.ionized_mw_delta;
                                  tot_radii3_missing += pow(residue_list[orgrespos].r_atom[i].hybrid.radius, 3);
                               }
                            }
@@ -1722,7 +1727,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                            for ( unsigned int i = 0; i < residue_list[orgrespos].r_atom.size(); i++ )
                            {
                               tot_mw[residue_list[orgrespos].r_atom[i].bead_assignment]
-                                 += residue_list[orgrespos].r_atom[i].hybrid.mw;
+                                 += residue_list[orgrespos].r_atom[i].hybrid.mw + residue_list[orgrespos].r_atom[i].hybrid.ionized_mw_delta;
                               tot_radii3[residue_list[orgrespos].r_atom[i].bead_assignment]
                                  += pow(residue_list[orgrespos].r_atom[i].hybrid.radius, 3);
                               if ( !molecules_residue_missing_atoms_skip[QString("%1|%2|%3")
@@ -1731,7 +1736,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                                                                          .arg(i)] )
                               {
                                  tot_mw_missing[residue_list[orgrespos].r_atom[i].bead_assignment]
-                                    += residue_list[orgrespos].r_atom[i].hybrid.mw;
+                                    += residue_list[orgrespos].r_atom[i].hybrid.mw + residue_list[orgrespos].r_atom[i].hybrid.ionized_mw_delta;
                                  tot_radii3_missing[residue_list[orgrespos].r_atom[i].bead_assignment]
                                     += pow(residue_list[orgrespos].r_atom[i].hybrid.radius, 3);
                               }
@@ -1782,14 +1787,16 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                         // create the beads
                         if ( one_bead )
                         {
-                           new_bead.volume = 0;
-                           new_bead.mw = 0;
+                           new_bead.volume           = 0;
+                           new_bead.mw               = 0;
+                           new_bead.ionized_mw_delta = 0;
                            new_bead.hydration = 0;
                            for ( unsigned int i = 0; i < residue_list[orgrespos].r_bead.size(); i++ )
                            {
-                              new_bead.volume += residue_list[orgrespos].r_bead[i].volume;
-                              new_bead.mw += residue_list[orgrespos].r_bead[i].mw;
-                              new_bead.hydration += residue_list[orgrespos].r_bead[i].hydration;
+                              new_bead.volume           += residue_list[orgrespos].r_bead[i].volume;
+                              new_bead.mw               += residue_list[orgrespos].r_bead[i].mw;
+                              new_bead.ionized_mw_delta += residue_list[orgrespos].r_bead[i].ionized_mw_delta;
+                              new_bead.hydration        += residue_list[orgrespos].r_bead[i].hydration;
                            }
                            // new_bead.hydration = (unsigned int)(misc.avg_hydration * atom_counts[count_idx] + .5);
                            new_bead.color = 10;         // light green
@@ -1847,11 +1854,13 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                                  {
                                     new_atom.name = "OXT'";
                                  }
-                                 new_atom.hybrid.mw *= atoms_scale_weight[0]; // misc.avg_mass;
-                                 new_atom.hybrid.mw = (int)(new_atom.hybrid.mw * 100 + .5) / 100.0;
-                                 new_atom.hybrid.radius *= atoms_scale_radius[0]; // misc.avg_radius;
-                                 new_atom.hybrid.radius = (int)(new_atom.hybrid.radius * 100 + .5) / 100.0;
-                                 new_atom.bead_assignment = 0; 
+                                 new_atom.hybrid.mw               *= atoms_scale_weight[0]; // misc.avg_mass;
+                                 new_atom.hybrid.mw               = (int)(new_atom.hybrid.mw * 100 + .5) / 100.0;
+                                 new_atom.hybrid.ionized_mw_delta *= atoms_scale_weight[0]; // misc.avg_mass;
+                                 new_atom.hybrid.ionized_mw_delta = (int)(new_atom.hybrid.ionized_mw_delta * 100 + .5) / 100.0;
+                                 new_atom.hybrid.radius           *= atoms_scale_radius[0]; // misc.avg_radius;
+                                 new_atom.hybrid.radius           = (int)(new_atom.hybrid.radius * 100 + .5) / 100.0;
+                                 new_atom.bead_assignment         = 0; 
                                  if ( !any_positioner )
                                  {
                                     new_atom.positioner = true;
@@ -1904,10 +1913,12 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                                  new_atom = residue_list[orgrespos].r_atom[i];
                                  if ( beads_missing_atom_count[new_atom.bead_assignment] )
                                  {
-                                    new_atom.hybrid.mw *= atoms_scale_weight[new_atom.bead_assignment]; // misc.avg_mass;
-                                    new_atom.hybrid.mw = (int)(new_atom.hybrid.mw * 100 + .5) / 100.0;
-                                    new_atom.hybrid.radius *= atoms_scale_radius[new_atom.bead_assignment]; // misc.avg_radius;
-                                    new_atom.hybrid.radius = (int)(new_atom.hybrid.radius * 100 + .5) / 100.0;
+                                    new_atom.hybrid.mw               *= atoms_scale_weight[new_atom.bead_assignment]; // misc.avg_mass;
+                                    new_atom.hybrid.mw               = (int)(new_atom.hybrid.mw * 100 + .5) / 100.0;
+                                    new_atom.hybrid.ionized_mw_delta *= atoms_scale_weight[0]; // misc.avg_mass;
+                                    new_atom.hybrid.ionized_mw_delta = (int)(new_atom.hybrid.ionized_mw_delta * 100 + .5) / 100.0;
+                                    new_atom.hybrid.radius           *= atoms_scale_radius[new_atom.bead_assignment]; // misc.avg_radius;
+                                    new_atom.hybrid.radius           = (int)(new_atom.hybrid.radius * 100 + .5) / 100.0;
                                     if ( !any_positioner[new_atom.bead_assignment] )
                                     {
                                        new_atom.positioner = true;
@@ -2119,7 +2130,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 // # define TOLERANCE 0.001       // this is used to place a limit on the allowed radial overlap
 #define TOLERANCE overlap_tolerance
 
-int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried, double tolerance, int limit )
+int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried, double tolerance, int limit, bool from_overlap_hydro )
 {
    int retval = 0;
 #if defined(DEBUG_OVERLAP)
@@ -2218,20 +2229,20 @@ int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried, double tolerance, 
                continue;
             }
             if ( bead_model[i].bead_computed_radius > tolerance * 1.001 &&
-                 bead_model[j].bead_computed_radius > tolerance * 1.001 )
-            {
+                 bead_model[j].bead_computed_radius > tolerance * 1.001 ) {
                retval++;
                if ( limit && retval > limit ) {
-                  editor_msg( "red", us_tr( "There are more than %1 overlaps greater than tolerance of %2\nWe suggest you use ZENO to calculate hydrodynamics for this model" ).arg( limit ).arg( tolerance ) );
+                  if ( !from_overlap_hydro ) {
+                     editor_msg( "red", us_tr( "There are more than %1 overlaps greater than tolerance of %2\nWe suggest you use ZENO or GRPY to calculate hydrodynamics for this model" ).arg( limit ).arg( tolerance ) );
+                  }
                   return retval;
                }
-               QColor save_color = editor->textColor();
-               editor->setTextColor("red");
-               editor->append(QString(us_tr("WARNING: Bead model has an overlap violation on beads %1 %2 overlap %3 A\n"))
-                              .arg(i + 1)
-                              .arg(j + 1)
-                              .arg(separation));
-               editor->setTextColor(save_color);
+               if ( !from_overlap_hydro ) {
+                  editor_msg( "red", QString(us_tr("WARNING: Bead model has an overlap violation on beads %1 %2 overlap %3 A\n"))
+                                 .arg(i + 1)
+                                 .arg(j + 1)
+                                 .arg(separation));
+               }
 #if defined(DEBUG_OVERLAP)
             printf("overlap check  beads %d %d on chains %d %d exposed code %d %d active %s %s : radii %f(%s) %f(%s) with coordinates [%f,%f,%f] [%f,%f,%f] sep of %f - needs reduction\n",
                    i + 1, j + 1,
@@ -2358,6 +2369,7 @@ int US_Hydrodyn::create_beads(QString *error_string, bool quiet)
          this_atom->bead_color = 0;
          this_atom->bead_ref_volume = 0;
          this_atom->bead_ref_mw = 0;
+         this_atom->bead_ref_ionized_mw_delta = 0;
          this_atom->bead_assignment = -1;
          this_atom->atom_assignment = -1;
          this_atom->chain = -1;
@@ -2540,13 +2552,35 @@ int US_Hydrodyn::create_beads(QString *error_string, bool quiet)
             {
                this_atom->active = true;
                this_atom->radius = residue_list[respos].r_atom[atompos].hybrid.radius;
-               this_atom->mw = residue_list[respos].r_atom[atompos].hybrid.mw;
+               this_atom->mw               = residue_list[respos].r_atom[atompos].hybrid.mw;
+               this_atom->ionized_mw_delta = residue_list[respos].r_atom[atompos].hybrid.ionized_mw_delta;
+
+               // if ( this_atom->p_residue ) {
+               //    // QTextStream( stdout ) << "**************************************** p_residue set " << endl;
+               //    this_atom->ionized_mw_delta = this_atom->p_residue->r_atom[atompos].hybrid.ionized_mw_delta;
+               // } else {
+               //    // QTextStream( stdout ) << "**************************************** p_residue NOT set " << endl;
+               // }
+                  
+               // if ( this_atom->ionized_mw_delta != 0 ) {
+               //    QTextStream( stdout ) << "**************************************** ionized_mw_delta found "
+               //                          << this_atom->ionized_mw_delta
+               //                          << " respos " << respos
+               //                          << " atompos " << atompos
+               //                          << endl
+               //       ;
+               // }
                   
                this_atom->placing_method =  this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].placing_method;
-               this_atom->bead_hydration =  this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].hydration;
+               if ( this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].hydration_flag ) {
+                  this_atom->bead_hydration = this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].hydration;
+               } else {
+                  this_atom->bead_hydration = this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].atom_hydration;
+               }
                this_atom->bead_color =  this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].color;
                this_atom->bead_ref_volume =  this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].volume;
                this_atom->bead_ref_mw =  this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].mw;
+               this_atom->bead_ref_ionized_mw_delta = this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].ionized_mw_delta;
                this_atom->ref_asa =  this_atom->p_residue->asa;
                this_atom->bead_computed_radius =  pow(3 * this_atom->bead_ref_volume / (4.0*M_PI), 1.0/3);
                this_atom->bead_assignment = this_atom->p_atom->bead_assignment;
@@ -3096,9 +3130,9 @@ void US_Hydrodyn::radial_reduction( bool from_grid )
    for (unsigned int i = 0; i < bead_model.size(); i++) {
       PDB_atom *this_atom = &bead_model[i];
       if (this_atom->active) {
-         molecular_mw += this_atom->bead_mw;
+         molecular_mw += this_atom->bead_mw + this_atom->bead_ionized_mw_delta;
          for (unsigned int m = 0; m < 3; m++) {
-            molecular_cog[m] += this_atom->bead_coordinate.axis[m] * this_atom->bead_mw;
+            molecular_cog[m] += this_atom->bead_coordinate.axis[m] * ( this_atom->bead_mw + this_atom->bead_ionized_mw_delta );
          }
       }
    }
@@ -3467,13 +3501,16 @@ void US_Hydrodyn::radial_reduction( bool from_grid )
 
                bead_model[max_bead2].active = false;
                for (unsigned int m = 0; m < 3; m++) {
-                  bead_model[max_bead1].bead_coordinate.axis[m] *= bead_model[max_bead1].bead_ref_mw;
+                  bead_model[max_bead1].bead_coordinate.axis[m] *= bead_model[max_bead1].bead_ref_mw + bead_model[max_bead1].bead_ref_ionized_mw_delta;
                   bead_model[max_bead1].bead_coordinate.axis[m] +=
-                     bead_model[max_bead2].bead_coordinate.axis[m] * bead_model[max_bead2].bead_ref_mw;
-                  bead_model[max_bead1].bead_coordinate.axis[m] /= bead_model[max_bead1].bead_ref_mw + bead_model[max_bead2].bead_ref_mw;
+                     bead_model[max_bead2].bead_coordinate.axis[m] * ( bead_model[max_bead2].bead_ref_mw + bead_model[max_bead2].bead_ref_ionized_mw_delta );
+                  bead_model[max_bead1].bead_coordinate.axis[m] /=
+                     bead_model[max_bead1].bead_ref_mw + bead_model[max_bead1].bead_ref_ionized_mw_delta +
+                     bead_model[max_bead2].bead_ref_mw + bead_model[max_bead2].bead_ref_ionized_mw_delta;
                }
-               bead_model[max_bead1].bead_ref_mw = bead_model[max_bead1].bead_ref_mw + bead_model[max_bead2].bead_ref_mw;
-               bead_model[max_bead1].bead_ref_volume = bead_model[max_bead1].bead_ref_volume + bead_model[max_bead2].bead_ref_volume;
+               bead_model[max_bead1].bead_ref_mw               = bead_model[max_bead1].bead_ref_mw + bead_model[max_bead2].bead_ref_mw;
+               bead_model[max_bead1].bead_ref_ionized_mw_delta = bead_model[max_bead1].bead_ref_ionized_mw_delta + bead_model[max_bead2].bead_ref_ionized_mw_delta;
+               bead_model[max_bead1].bead_ref_volume           = bead_model[max_bead1].bead_ref_volume + bead_model[max_bead2].bead_ref_volume;
                // - max_intersection_volume;
                bead_model[max_bead1].bead_actual_radius =
                   bead_model[max_bead1].bead_computed_radius =
@@ -4801,14 +4838,15 @@ int US_Hydrodyn::compute_asa( bool bd_mode, bool no_ovlp_removal )
                          this_atom->placing_method,
                          this_atom->bead_assignment); fflush(stdout);
                }
-               molecular_mw += this_atom->mw;
+               molecular_mw += this_atom->mw + this_atom->ionized_mw_delta;
                for (unsigned int m = 0; m < 3; m++) {
-                  molecular_cog[m] += this_atom->coordinate.axis[m] * this_atom->mw;
+                  molecular_cog[m] += this_atom->coordinate.axis[m] * ( this_atom->mw + this_atom->ionized_mw_delta );
                }
 
-               this_atom->bead_mw = 0;
-               this_atom->bead_asa = 0;
-               this_atom->bead_recheck_asa = 0;
+               this_atom->bead_mw               = 0;
+               this_atom->bead_ionized_mw_delta = 0;
+               this_atom->bead_asa              = 0;
+               this_atom->bead_recheck_asa      = 0;
 
                // do we have a new bead?
                // we want to put the N on a previous bead unless it is the first one of the molecule
@@ -4862,11 +4900,13 @@ int US_Hydrodyn::compute_asa( bool bd_mode, bool no_ovlp_removal )
                                   sidechain_N->mw
                                   );
                         }
-                        this_atom->bead_asa += sidechain_N->bead_asa;
-                        this_atom->bead_mw += sidechain_N->bead_mw;
-                        sidechain_N->bead_mw = 0;
-                        sidechain_N->bead_asa = 0;
-                        sidechain_N = (PDB_atom *) 0;
+                        this_atom->bead_asa                += sidechain_N->bead_asa;
+                        this_atom->bead_mw                 += sidechain_N->bead_mw;
+                        this_atom->bead_ionized_mw_delta   += sidechain_N->bead_ionized_mw_delta;
+                        sidechain_N->bead_mw               = 0;
+                        sidechain_N->bead_ionized_mw_delta = 0;
+                        sidechain_N->bead_asa              = 0;
+                        sidechain_N                        = (PDB_atom *) 0;
                      }
                      if(this_atom->name == "N" &&
                         this_atom->chain == 1) {
@@ -4920,8 +4960,10 @@ int US_Hydrodyn::compute_asa( bool bd_mode, bool no_ovlp_removal )
                   use_atom = last_main_bead;
                }
 
-               use_atom->bead_asa += this_atom->asa;
-               use_atom->bead_mw += this_atom->mw;
+               use_atom->bead_asa              += this_atom->asa;
+               use_atom->bead_mw               += this_atom->mw;
+               use_atom->bead_ionized_mw_delta += this_atom->ionized_mw_delta;
+
                if ( advanced_config.debug_1 )
                {
                   printf("atom %s %s p_atom.hybrid.mw %f atom.mw %f\n",
@@ -4950,10 +4992,10 @@ int US_Hydrodyn::compute_asa( bool bd_mode, bool no_ovlp_removal )
                             );
                   }
                   cog_msg += QString("adding %1 to %2\n").arg(this_atom->serial).arg(use_atom->serial);
-                  use_atom->bead_cog_mw += this_atom->mw;
+                  use_atom->bead_cog_mw += this_atom->mw + this_atom->ionized_mw_delta;
                   for (unsigned int m = 0; m < 3; m++) {
                      use_atom->bead_cog_coordinate.axis[m] +=
-                        this_atom->coordinate.axis[m] * this_atom->mw;
+                        this_atom->coordinate.axis[m] * ( this_atom->mw + this_atom->ionized_mw_delta );
                   }
                   if ( advanced_config.debug_3 )
                   {
@@ -5170,12 +5212,14 @@ int US_Hydrodyn::compute_asa( bool bd_mode, bool no_ovlp_removal )
                      puts("pass 2b broken head OXT NPBR replacement");
                   }
                   int posNPBR_OXT = multi_residue_map["NPBR-OXT"][0];
-                  this_atom->bead_ref_volume = residue_list[posNPBR_OXT].r_bead[0].volume;
-                  this_atom->bead_ref_mw = residue_list[posNPBR_OXT].r_bead[0].mw;
+                  this_atom->bead_ref_volume            = residue_list[posNPBR_OXT].r_bead[0].volume;
+                  this_atom->bead_ref_mw                = residue_list[posNPBR_OXT].r_bead[0].mw;
+                  this_atom->bead_ref_ionized_mw_delta  = residue_list[posNPBR_OXT].r_bead[0].ionized_mw_delta;
                }
                   
-               last_main_chain_bead->bead_ref_volume = this_atom->bead_ref_volume;
-               last_main_chain_bead->bead_ref_mw = this_atom->bead_ref_mw;
+               last_main_chain_bead->bead_ref_volume           = this_atom->bead_ref_volume;
+               last_main_chain_bead->bead_ref_mw               = this_atom->bead_ref_mw;
+               last_main_chain_bead->bead_ref_ionized_mw_delta = this_atom->bead_ref_ionized_mw_delta;
                if (last_main_chain_bead->resName == "GLY") 
                {
                   if ( advanced_config.debug_1 )
@@ -5227,9 +5271,10 @@ int US_Hydrodyn::compute_asa( bool bd_mode, bool no_ovlp_removal )
                             this_atom->placing_method); fflush(stdout);
                   }
 
-                  last_main_chain_bead->bead_ref_volume = this_atom->bead_ref_volume;
-                  last_main_chain_bead->bead_ref_mw = this_atom->bead_ref_mw;
-                  last_main_chain_bead->bead_computed_radius = this_atom->bead_computed_radius;
+                  last_main_chain_bead->bead_ref_volume           = this_atom->bead_ref_volume;
+                  last_main_chain_bead->bead_ref_mw               = this_atom->bead_ref_mw;
+                  last_main_chain_bead->bead_ref_ionized_mw_delta = this_atom->bead_ref_ionized_mw_delta;
+                  last_main_chain_bead->bead_computed_radius      = this_atom->bead_computed_radius;
                   if (this_atom->resName == "GLY") {
                      last_main_chain_bead->bead_ref_mw -= 1.01f;
                      if ( advanced_config.debug_1 )
@@ -5275,9 +5320,10 @@ int US_Hydrodyn::compute_asa( bool bd_mode, bool no_ovlp_removal )
                if ( multi_residue_map["PBR-NO-OXT"].size() == 1 )
                {
                   int pos = multi_residue_map["PBR-NO-OXT"][0];
-                  this_atom->bead_ref_volume = residue_list[pos].r_bead[0].volume;
-                  this_atom->bead_ref_mw = residue_list[pos].r_bead[0].mw;
-                  this_atom->bead_computed_radius = pow(3 * last_main_chain_bead->bead_ref_volume / (4.0*M_PI), 1.0/3);
+                  this_atom->bead_ref_volume           = residue_list[pos].r_bead[0].volume;
+                  this_atom->bead_ref_mw               = residue_list[pos].r_bead[0].mw;
+                  this_atom->bead_ref_ionized_mw_delta = residue_list[pos].r_bead[0].ionized_mw_delta;
+                  this_atom->bead_computed_radius      = pow(3 * last_main_chain_bead->bead_ref_volume / (4.0*M_PI), 1.0/3);
                   if (this_atom->resName == "GLY") {
                      this_atom->bead_ref_mw += 1.01f;
                      if ( advanced_config.debug_1 )
@@ -5324,9 +5370,10 @@ int US_Hydrodyn::compute_asa( bool bd_mode, bool no_ovlp_removal )
             if ( multi_residue_map["PBR-NO-OXT"].size() == 1 )
             {
                int pos = multi_residue_map["PBR-NO-OXT"][0];
-               last_main_chain_bead->bead_ref_volume = residue_list[pos].r_bead[0].volume;
-               last_main_chain_bead->bead_ref_mw = residue_list[pos].r_bead[0].mw;
-               last_main_chain_bead->bead_computed_radius = pow(3 * last_main_chain_bead->bead_ref_volume / (4.0*M_PI), 1.0/3);
+               last_main_chain_bead->bead_ref_volume           = residue_list[pos].r_bead[0].volume;
+               last_main_chain_bead->bead_ref_mw               = residue_list[pos].r_bead[0].mw;
+               last_main_chain_bead->bead_ref_ionized_mw_delta = residue_list[pos].r_bead[0].ionized_mw_delta;
+               last_main_chain_bead->bead_computed_radius      = pow(3 * last_main_chain_bead->bead_ref_volume / (4.0*M_PI), 1.0/3);
                if (last_main_chain_bead->resName == "GLY") {
                   last_main_chain_bead->bead_ref_mw += 1.01f;
                   if ( advanced_config.debug_1 )
@@ -6105,13 +6152,17 @@ int US_Hydrodyn::compute_asa( bool bd_mode, bool no_ovlp_removal )
 
                bead_model[max_bead2].active = false;
                for (unsigned int m = 0; m < 3; m++) {
-                  bead_model[max_bead1].bead_coordinate.axis[m] *= bead_model[max_bead1].bead_ref_mw;
+                  bead_model[max_bead1].bead_coordinate.axis[m] *=
+                     bead_model[max_bead1].bead_ref_mw + bead_model[max_bead1].bead_ref_ionized_mw_delta;
                   bead_model[max_bead1].bead_coordinate.axis[m] +=
-                     bead_model[max_bead2].bead_coordinate.axis[m] * bead_model[max_bead2].bead_ref_mw;
-                  bead_model[max_bead1].bead_coordinate.axis[m] /= bead_model[max_bead1].bead_ref_mw + bead_model[max_bead2].bead_ref_mw;
+                     bead_model[max_bead2].bead_coordinate.axis[m] * ( bead_model[max_bead2].bead_ref_mw + bead_model[max_bead2].bead_ref_ionized_mw_delta );
+                  bead_model[max_bead1].bead_coordinate.axis[m] /=
+                     bead_model[max_bead1].bead_ref_mw + bead_model[max_bead1].bead_ref_ionized_mw_delta +
+                     bead_model[max_bead2].bead_ref_mw + bead_model[max_bead2].bead_ref_ionized_mw_delta ;
                }
-               bead_model[max_bead1].bead_ref_mw = bead_model[max_bead1].bead_ref_mw + bead_model[max_bead2].bead_ref_mw;
-               bead_model[max_bead1].bead_ref_volume = bead_model[max_bead1].bead_ref_volume + bead_model[max_bead2].bead_ref_volume;
+               bead_model[max_bead1].bead_ref_mw               = bead_model[max_bead1].bead_ref_mw + bead_model[max_bead2].bead_ref_mw;
+               bead_model[max_bead1].bead_ref_ionized_mw_delta = bead_model[max_bead1].bead_ref_ionized_mw_delta + bead_model[max_bead2].bead_ref_ionized_mw_delta;
+               bead_model[max_bead1].bead_ref_volume           = bead_model[max_bead1].bead_ref_volume + bead_model[max_bead2].bead_ref_volume;
                // - max_intersection_volume;
                bead_model[max_bead1].bead_actual_radius =
                   bead_model[max_bead1].bead_computed_radius =
@@ -7113,7 +7164,7 @@ int US_Hydrodyn::compute_asa( bool bd_mode, bool no_ovlp_removal )
    return 0;
 }
 
-void US_Hydrodyn::bead_check( bool use_threshold, bool message_type )
+void US_Hydrodyn::bead_check( bool use_threshold, bool message_type, bool vdw, bool only_asa )
 {
    // recheck beads here
 
@@ -7124,14 +7175,37 @@ void US_Hydrodyn::bead_check( bool use_threshold, bool message_type )
    }
 
    QString error_string = "";
-   int retval = us_hydrodyn_asab1_main(active_atoms,
-                                       &asa,
-                                       &results,
-                                       true,
-                                       progress,
-                                       editor,
-                                       this
-                                       );
+   double save_prr = asa.probe_recheck_radius;
+   if ( vdw ) {
+      asa.probe_recheck_radius = asa.vdw_grpy_probe_radius;
+   }
+
+   int retval;
+   if ( asa.method == 1 ){
+      // rolling sphere
+      retval = us_hydrodyn_asab1_main(active_atoms,
+                                          &asa,
+                                          &results,
+                                          true,
+                                          progress,
+                                          editor,
+                                          this
+                                          );
+
+
+   } else {
+      // surfracer
+      editor_msg( "black", "Computing ASA via SurfRacer\n" );
+      retval = surfracer_main(asa.probe_radius,
+                              active_atoms,
+                              true,
+                              progress,
+                              editor
+                              );
+   }
+
+   asa.probe_recheck_radius = save_prr;
+
    if (stopFlag)
    {
       return;
@@ -7157,65 +7231,116 @@ void US_Hydrodyn::bead_check( bool use_threshold, bool message_type )
    }
 
    int b2e = 0;
-#if defined(EXPOSED_TO_BURIED)
    int e2b = 0;
-#endif
 
    //  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg( model_name( current_model ) ) + "_pre_recheck" + DOTSOMO, &bead_model);
    //  write_bead_model(somo_dir + SLASH + project + QString("_%1").arg( model_name( current_model ) ) + "_pre_recheck" + DOTSOMO, &bead_model );
 
-   for (unsigned int i = 0; i < bead_model.size(); i++)
-   {
-      float surface_area =
-         (asa.probe_radius + bead_model[i].bead_computed_radius) *
-         (asa.probe_radius + bead_model[i].bead_computed_radius) * 4 * M_PI;
-      QString msg = "";
-      if( use_threshold ?
-          ( bead_model[i].bead_recheck_asa > asa.threshold )        
-          :
-          ( bead_model[i].bead_recheck_asa > (asa.threshold_percent / 100.0) * surface_area )
-          )
-      {
-         // now exposed
-         if(bead_model[i].exposed_code != 1) {
-            // was buried
-            msg = "buried->exposed";
-            b2e++;
-            bead_model[i].exposed_code = 1;
-            bead_model[i].bead_color = 8;
+   if ( only_asa ) {
+      double total_asa = 0e0;
+      double used_asa  = 0e0;
+      double lconv = pow(10.0,9 + hydro.unit);
+      double lconv2 = lconv * lconv;
+
+      for ( int i = 0; i < (int) bead_model.size(); ++i ) {
+         total_asa += bead_model[i].bead_recheck_asa * lconv2;
+         if ( get_color( &bead_model[i] ) != 6 ) {
+            used_asa += bead_model[i].bead_recheck_asa * lconv2;
          }
       }
+      editor_msg( "dark blue",
+                  QString().sprintf(
+                                    "Recomputed ASA of beads:\n"
+                                    "Total ASA: %f\n"
+                                    "Used ASA: %f\n"
+                                    ,total_asa
+                                    ,used_asa
+                                    )
+                  );
+      return;
+   }
+                                    
+
+   if ( vdw ) {
+      for (unsigned int i = 0; i < bead_model.size(); i++) {
+         QString msg = "";
+         float surface_area =
+            (asa.vdw_grpy_probe_radius + bead_model[i].bead_computed_radius) *
+            (asa.vdw_grpy_probe_radius + bead_model[i].bead_computed_radius) * 4 * M_PI;
+         if( bead_model[i].bead_recheck_asa < (asa.vdw_grpy_threshold_percent / 100.0) * surface_area ) {
+            // now buried
+            if(bead_model[i].exposed_code == 1) {
+               // now buried
+               // was exposed
+               msg = "exposed->buried";
+               e2b++;
+               bead_model[i].exposed_code = 6;
+               bead_model[i].bead_color = 6;
+            }
+         }
+      }
+      if ( e2b > 0 ) {
+         editor_msg( "black", QString("%1 beads are buried\n").arg(e2b) );
+      }
+      if ( b2e > 0 ) {
+         editor_msg( "black", QString("%1 buried beads became exposed\n").arg(b2e) );
+      }
+      
+      return;
+   } else {
+
+      for (unsigned int i = 0; i < bead_model.size(); i++) {
+         float surface_area =
+            (asa.probe_radius + bead_model[i].bead_computed_radius) *
+            (asa.probe_radius + bead_model[i].bead_computed_radius) * 4 * M_PI;
+         QString msg = "";
+         if( use_threshold ?
+             ( bead_model[i].bead_recheck_asa > asa.threshold )        
+             :
+             ( bead_model[i].bead_recheck_asa > (asa.threshold_percent / 100.0) * surface_area )
+             )
+         {
+            // now exposed
+            if(bead_model[i].exposed_code != 1) {
+               // was buried
+               msg = "buried->exposed";
+               b2e++;
+               bead_model[i].exposed_code = 1;
+               bead_model[i].bead_color = 8;
+            }
+         }
 #if defined(EXPOSED_TO_BURIED)
-      else {
-         // now buried
-         if(bead_model[i].exposed_code == 1) {
-            // was exposed
-            msg = "exposed->buried";
-            e2b++;
-            bead_model[i].exposed_code = 6;
-            bead_model[i].bead_color = 6;
+         else {
+            // now buried
+            if(bead_model[i].exposed_code == 1) {
+               // was exposed
+               msg = "exposed->buried";
+               e2b++;
+               bead_model[i].exposed_code = 6;
+               bead_model[i].bead_color = 6;
+            }
          }
-      }
 #endif
 
-#if defined(DEBUG)
-      printf("bead %d %.2f %.2f %.2f %s %s bead mw %.2f bead ref mw %.2f\n",
-             i,
-             bead_model[i].bead_computed_radius,
-             surface_area,
-             bead_model[i].bead_recheck_asa,
-             (
-              use_threshold ?
-              ( bead_model[i].bead_recheck_asa > asa.threshold )        
-              :
-              ( bead_model[i].bead_recheck_asa > (asa.threshold_percent / 100.0) * surface_area )
-              ) ?
-             "exposed" : "buried",
-             msg.toLatin1().data(),
-             bead_model[i].bead_mw,
-             bead_model[i].bead_ref_mw
-             );
+#if defined(DEBUG_BEAD_CHECK)
+         printf("bead %d %.2f %.2f %.2f %s %s bead mw %.2f bead ref mw %.2f\n",
+                i,
+                bead_model[i].bead_computed_radius,
+                surface_area,
+                bead_model[i].bead_recheck_asa,
+                (
+                 use_threshold ?
+                 ( bead_model[i].bead_recheck_asa > asa.threshold )        
+                 :
+                 ( bead_model[i].bead_recheck_asa > (asa.threshold_percent / 100.0) * surface_area )
+                 ) ?
+                "exposed" : "buried",
+                msg.toLatin1().data(),
+                bead_model[i].bead_mw,
+                bead_model[i].bead_ref_mw
+                );
 #endif
+      }
    }
    //  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg( model_name( current_model ) ) +
    //         QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
@@ -7241,368 +7366,6 @@ void US_Hydrodyn::bead_check( bool use_threshold, bool message_type )
    {
       editor->append(QString(us_tr("%1 previously buried beads are exposed by rechecking\n")).arg(b2e));
    }
-}
-
-float US_Hydrodyn::mw_to_volume( float mw , float vbar )
-{
-   return 
-      mw * vbar * 1e24 / AVOGADRO;
-      ;
-}
-
-void US_Hydrodyn::calc_mw() 
-{
-   // cout << "calc_mw chains:\n";
-   // cout << list_chainIDs(model_vector);
-
-   saxs_util->setup_saxs_options();
-
-   unsigned int save_current_model = current_model;
-   QString error_string;
-
-   last_pdb_load_calc_mw_msg.clear( );
-
-   US_Saxs_Util usu;
-   bool do_excl_vol = true;
-   //    if ( !usu.setup_saxs_maps( 
-   //                              saxs_options.default_atom_filename ,
-   //                              saxs_options.default_hybrid_filename ,
-   //                              saxs_options.default_saxs_filename 
-   //                              ) )
-   //    {
-   //       editor_msg( "red", 
-   //                   QString( us_tr("error: could not open %1, %2 or %3, no atomic excluded volume calc") )
-   //                   .arg( saxs_options.default_atom_filename )
-   //                   .arg( saxs_options.default_hybrid_filename )
-   //                   .arg( saxs_options.default_saxs_filename ) );
-   //       do_excl_vol = false;
-   //    }
-
-   bool do_vvv = asa.vvv;
-   QFile       vvv_file;
-   QTextStream vvv_ts;
-
-   bool do_scol = ( gparams.count( "save_csv_on_load_pdb" ) &&
-                    gparams[ "save_csv_on_load_pdb" ] == "true" );
-
-   QFile       scol_file;
-   QTextStream scol_ts;
-
-   for (unsigned int i = 0; i < model_vector.size(); i++)
-   {
-      editor->append( QString(us_tr("\nModel: %1 vbar %2 cm^3/g\n") )
-                      .arg( model_vector[i].model_id )
-                      .arg( QString("").sprintf("%.3f", model_vector[i].vbar) ) );
-                     
-      current_model = i;
-
-      model_vector[i].mw         = 0.0;
-      model_vector[i].volume     = 0.0;
-      double tot_excl_vol        = 0.0;
-      double tot_scaled_excl_vol = 0.0;
-      unsigned int total_e       = 0;
-      // unsigned int total_e_noh   = 0;
-      point cm;
-      cm.axis[ 0 ] = 0.0;
-      cm.axis[ 1 ] = 0.0;
-      cm.axis[ 2 ] = 0.0;
-      double total_cm_mw = 0e0;
-
-      create_beads(&error_string, true);
-
-      double model_mw            = 0e0;
-
-      if( !error_string.length() ) 
-      {
-
-         if ( do_vvv )
-         {
-            vvv_file.setFileName( somo_dir + SLASH + "tmp" + SLASH + project + QString( "_%1.xyzr" ).arg( model_vector[i].model_id ) );
-            if ( !vvv_file.open( QIODevice::WriteOnly ) )
-            {
-               editor_msg( "red", QString( us_tr( "Error: VVV requested but can not open %1 for writing" ) ).arg( vvv_file.fileName() ) );
-               do_vvv = false;
-            } else {
-               vvv_ts.setDevice( &vvv_file );
-            }
-         }
-
-         if ( do_scol )
-         {
-            scol_file.setFileName( somo_dir + SLASH + "tmp" + SLASH + project + QString( "_%1.csv" ).arg( model_vector[i].model_id ) );
-            if ( !scol_file.open( QIODevice::WriteOnly ) )
-            {
-               editor_msg( "red", QString( us_tr( "Error: save as CSV on load PDB requested but can not open %1 for writing" ) ).arg( scol_file.fileName() ) );
-               do_scol = false;
-            } else {
-               scol_ts.setDevice( &scol_file );
-               scol_ts << "\"Atom number\",\"Atom name\",\"Residue number\",\"Residue name\",\"Radius\",\"Mass [Da]\",\"x\",\"y\",\"z\"\n";
-            }
-         }
-
-         for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) 
-         {
-            double chain_excl_vol          = 0.0;
-            double chain_scaled_excl_vol   = 0.0;
-            model_vector[i].molecule[j].mw = 0.0;
-            unsigned int chain_total_e     = 0;
-            unsigned int chain_total_e_noh = 0;
-            double molecule_mw             = 0e0;
-
-            for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) 
-            {
-               PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-               if( this_atom->active) {
-                  
-                  if ( do_vvv )
-                  {
-                     vvv_ts << QString( "%1\t%2\t%3\t%4\n" )
-                        .arg( this_atom->coordinate.axis[ 0 ] )
-                        .arg( this_atom->coordinate.axis[ 1 ] )
-                        .arg( this_atom->coordinate.axis[ 2 ] )
-                        .arg( this_atom->radius );
-                  }
-
-                  if ( do_scol )
-                  {
-                     scol_ts << QString( "%1,%2,%3,%4,%5,%6,%7,%8,%9\n" )
-                        .arg( this_atom->serial )
-                        .arg( this_atom->name )
-                        .arg( this_atom->resSeq )
-                        .arg( this_atom->resName )
-                        .arg( this_atom->radius )
-                        .arg( this_atom->mw )
-                        .arg( this_atom->coordinate.axis[ 0 ] )
-                        .arg( this_atom->coordinate.axis[ 1 ] )
-                        .arg( this_atom->coordinate.axis[ 2 ] )
-                        ;
-                  }
-
-                  // printf("model %u chain %u atom %u mw %g\n",
-                  //       i, j, k, this_atom->mw);
-                  if ( this_atom->resName != "WAT" )
-                  {
-                     model_vector[i].mw += this_atom->mw;
-                     molecule_mw        += this_atom->mw;
-                     model_mw           += this_atom->mw;
-                     cm.axis[ 0 ] += this_atom->mw * this_atom->coordinate.axis[ 0 ];
-                     cm.axis[ 1 ] += this_atom->mw * this_atom->coordinate.axis[ 1 ];
-                     cm.axis[ 2 ] += this_atom->mw * this_atom->coordinate.axis[ 2 ];
-                     total_cm_mw += this_atom->mw;
-                     model_vector[i].molecule[j].mw += this_atom->mw;
-                  }
-
-                  if ( do_excl_vol )
-                  {
-                     double excl_vol;
-                     double scaled_excl_vol;
-                     unsigned int this_e;
-                     unsigned int this_e_noh;
-                     double si = 0e0;
-                     if ( !saxs_util->set_excluded_volume( *this_atom, 
-                                                           excl_vol, 
-                                                           scaled_excl_vol, 
-                                                           saxs_options, 
-                                                           residue_atom_hybrid_map,
-                                                           this_e,
-                                                           this_e_noh,
-                                                           si) )
-                     {
-                        editor_msg( "dark red", saxs_util->errormsg );
-                     } else {
-                        chain_excl_vol        += excl_vol;
-                        chain_scaled_excl_vol += scaled_excl_vol;
-                        chain_total_e         += this_e;
-                        chain_total_e_noh     += this_e_noh;
-                        this_atom->si          = si;
-                        model_vector_as_loaded[ i ].molecule[ j ].atom[ k ].si = si;
-                        if ( this_atom->resName != "WAT" )
-                        {
-                           tot_excl_vol          += excl_vol;
-                           tot_scaled_excl_vol   += scaled_excl_vol;
-                           total_e               += this_e;
-                        }
-                        model_vector[i].volume += excl_vol;
-                     }
-                  }
-               }
-            }
-            
-            model_vector[i].molecule[j].mw = molecule_mw;
-
-            // printf("model %u chain %u mw %g\n",
-            //i, j, model_vector[i].molecule[j].mw);
-            if (model_vector[i].molecule[j].mw != 0.0 )
-            {
-               QString qs = 
-                  QString(us_tr("\nModel: %1 Chain: %2 Molecular weight %3 Daltons, Volume (from vbar) %4 A^3%5")
-                          .arg(model_vector[i].model_id)
-                          .arg(model_vector[i].molecule[j].chainID)
-                          .arg(model_vector[i].molecule[j].mw)
-                          .arg( mw_to_volume( model_vector[i].molecule[j].mw, model_vector[i].vbar ) )
-                          .arg( do_excl_vol ?
-                                QString(", atomic volume %1 A^3%2 average electron density %3 A^-3")
-                                .arg( chain_excl_vol )
-                                .arg( chain_excl_vol != chain_scaled_excl_vol ?
-                                      QString(", scaled atomic volume %1 A^2")
-                                      .arg( chain_scaled_excl_vol )
-                                      :
-                                      ""
-                                      )
-                                .arg( chain_total_e / chain_excl_vol )
-                                :
-                                ""
-                                )
-                          );
-               editor->append( qs );
-               last_pdb_load_calc_mw_msg << qs.replace( "\n", "\nREMARK " ) + QString("\n");
-            }
-         }
-         
-         cm.axis[ 0 ] /= total_cm_mw;
-         cm.axis[ 1 ] /= total_cm_mw;
-         cm.axis[ 2 ] /= total_cm_mw;
-
-         // now compute Rg
-         double Rg2 = 0e0;
-         
-         for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) 
-         {
-            for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) 
-            {
-               PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-               if( this_atom->active ) 
-               {
-                  //       i, j, k, this_atom->mw);
-                  if ( this_atom->resName != "WAT" )
-                  {
-                     Rg2 += this_atom->mw * 
-                        ( 
-                         ( this_atom->coordinate.axis[ 0 ] - cm.axis[ 0 ] ) *
-                         ( this_atom->coordinate.axis[ 0 ] - cm.axis[ 0 ] ) +
-                         ( this_atom->coordinate.axis[ 1 ] - cm.axis[ 1 ] ) *
-                         ( this_atom->coordinate.axis[ 1 ] - cm.axis[ 1 ] ) +
-                         ( this_atom->coordinate.axis[ 2 ] - cm.axis[ 2 ] ) *
-                         ( this_atom->coordinate.axis[ 2 ] - cm.axis[ 2 ] ) 
-                         );
-                  }
-               }
-            }
-         }
-
-         double Rg = sqrt( Rg2 / total_cm_mw );
-         QString qs =  QString( "\nModel %1 Rg: %2 nm" )
-            .arg( model_vector[ i ].model_id )
-            .arg( Rg / 10.0, 0, 'f', 2 );
-
-         model_vector[i].Rg = Rg;
-
-         editor->append( qs );
-         last_pdb_load_calc_mw_msg << qs;
-         if ( do_vvv )
-         {
-            vvv_file.close();
-            double volume;
-            double surf;
-            
-            vvv::compute_vol_surf( vvv_file.fileName().toLatin1().data(),
-                                   asa.vvv_probe_radius,
-                                   asa.vvv_grid_dR,
-                                   volume,
-                                   surf );
-            editor_msg( "black",
-                        QString( "VVV: probe %1 (A) grid side %2 (A) volume %3 (A^3) surface area %4 (A^2)" )
-                        .arg( asa.vvv_probe_radius )
-                        .arg( asa.vvv_grid_dR )
-                        .arg( volume )
-                        .arg( surf )
-                        );
-         }
-         if ( do_scol )
-         {
-            scol_file.close();
-            editor_msg( "blue",
-                        QString( "Created CSV atomic file: %1" ).arg( scol_file.fileName() )
-                        );
-         }
-      }
-
-      model_vector[ i ].mw = model_mw;
-
-      if ( model_vector_as_loaded.size() > i )
-      {
-         model_vector_as_loaded[ i ].mw     = model_vector[i].mw;
-         model_vector_as_loaded[ i ].volume = model_vector[i].volume;
-      }
-      {
-         dammix_remember_mw_source[ QString( "%1 Model %2" ).arg( project ).arg( i + 1 ) ] = "computed from pdb";
-         dammix_remember_mw[ QString( "%1 Model %2" ).arg( project ).arg( i + 1 ) ] = model_vector[i].mw;
-         QString qs = 
-            QString( us_tr( "\nModel: %1 Molecular weight %2 Daltons, Volume (from vbar) %3 A^3%4" ) )
-            .arg(model_vector[i].model_id)
-            .arg(model_vector[i].mw )
-            .arg( mw_to_volume( model_vector[i].mw, model_vector[i].vbar ) )
-            .arg( do_excl_vol ?
-                  QString(", atomic volume %1 A^3%2 average electron density %3 A^-3")
-                  .arg( tot_excl_vol )
-                  .arg( tot_excl_vol != tot_scaled_excl_vol ?
-                        QString(", scaled atomic volume %1 A^2")
-                        .arg( tot_scaled_excl_vol )
-                        :
-                        ""
-                        )
-                  .arg( total_e / tot_excl_vol )
-                  :
-                  ""
-                  );
-#if defined(U_EXPT)
-         {
-            double Rg = model_vector[i].Rg;
-            qs += QString( "\n%1 model %2 %3 kD, Rg %4 A,  (Rg/6.5)^3: %5 %6 %" )
-               .arg( project )
-               .arg( model_vector[i].model_id )
-               .arg( model_vector[i].mw / 1000e0, 0, 'f', 2 )
-               .arg( Rg, 0, 'f', 2 )
-               .arg( pow( Rg / 6.5e0, 3e0 ), 0, 'f', 2 )
-               .arg( 100.0 * ( ( model_vector[i].mw / 1000e0 ) - pow( Rg / 6.5e0, 3e0 ) ) / ( model_vector[i].mw / 1000e0 ), 0, 'f', 1 )
-               ;
-         }
-#endif
-
-         editor->append( qs );
-         last_pdb_load_calc_mw_msg << qs;
-      }
-
-      if ( do_excl_vol && misc.set_target_on_load_pdb )
-      {
-         misc.target_e_density = total_e / tot_excl_vol;
-         misc.target_volume = tot_excl_vol;
-         editor_msg("blue", us_tr("Target excluded volume and electron density set"));
-      }
-
-      // printf("model %u  mw %g\n",
-      //        i, model_vector[i].mw);
-
-      // {
-      //    double tmp_mw = 0e0;
-      //    for ( int j = 0; j < (int) model_vector[ i ].molecule.size(); ++j )
-      //    {
-      //       tmp_mw += model_vector[ i ].molecule[ j ].mw;
-      //       us_qdebug( QString( "model %1 molecule %2 mw %3" ).arg( i ).arg( j ).arg( model_vector[ i ].molecule[ j ].mw ) );
-      //    }
-      //    us_qdebug( QString( "" ).sprintf( 
-      //                                  "model %d total from molecules mw %.2f as model mw %.2f cm mw %.2f model_mw  %.2f", 
-      //                                  i,
-      //                                  tmp_mw, 
-      //                                  model_vector[ i ].mw,
-      //                                  total_cm_mw,
-      //                                  model_mw
-      //                                   ) );
-      // }
-
-   }
-   editor->append("\n");
-   current_model = save_current_model;
 }
 
 double US_Hydrodyn::total_volume_of_bead_model( vector < PDB_atom > &bead_model )

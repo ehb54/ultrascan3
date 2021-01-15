@@ -14,6 +14,23 @@
 #include <vector>
 #include <qcolor.h>
 #include <math.h>
+#include <qwt_plot.h>
+
+class mQwtPlot : public QwtPlot
+{
+   Q_OBJECT
+
+   public:
+
+      mQwtPlot ( QWidget *parent = 0 );
+      ~mQwtPlot();
+
+   signals:
+      void resized();
+
+   protected:
+      virtual void resizeEvent ( QResizeEvent *e );
+};
 
 class mQLabel : public QLabel
 {
