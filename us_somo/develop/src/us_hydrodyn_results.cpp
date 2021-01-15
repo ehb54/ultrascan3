@@ -481,7 +481,7 @@ void US_Hydrodyn_Results::view_file(const QString &filename)
          QTextStream ts( &f );
          text = ts.readAll();
          f.close();
-         US3i_Editor * edit = new US3i_Editor( US3i_Editor::DEFAULT, true, QString(), this );
+         US3i_Editor * edit = new US3i_Editor( US3i_Editor::DEFAULT, true, QString(), 0 );
          edit->setWindowTitle( "US-SOMO Results" );
          edit->resize( 685, 700 );
          edit->move( this->pos().x() + 30, this->pos().y() + 30 );
