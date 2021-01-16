@@ -112,7 +112,7 @@ qDebug() << "cvio:WrRDB: trx" << trx << "soluGUID"
 //qDebug() << "cvio:WrRDB:   dkStat" << diskStatus << US_DB2::NO_SOLUTION;
          if ( diskStatus == US_DB2::NO_BUFFER )
             error += "Error processing buffer " + 
-                     triple->solution.buffer.GUID + '\n' +
+                     triple->solution.buffer.GUID + "\n" +
                      "Buffer was not found in the database";
       
          else if ( diskStatus == US_DB2::NO_ANALYTE )
@@ -121,11 +121,11 @@ qDebug() << "cvio:WrRDB: trx" << trx << "soluGUID"
       
          else if ( diskStatus == US_DB2::NO_SOLUTION )
             error += "Error processing solution " + 
-                     triple->solution.solutionGUID + '\n' +
+                     triple->solution.solutionGUID + "\n" +
                      "Solution was not found in the database";
       
          else if ( diskStatus != US_DB2::OK )
-            error += "Error saving solution to DB " + '\n' +
+            error += "Error saving solution to DB \n" +
                      db->lastError();
       
       }
@@ -134,7 +134,7 @@ qDebug() << "cvio:WrRDB: trx" << trx << "soluGUID"
       {
          // This means that we weren't successful in adding it db
          error += "Error processing solution " + 
-                  triple->solution.solutionGUID + '\n' +
+                  triple->solution.solutionGUID + "\n" +
                   "Solution was not found in the database";
 //qDebug() << "cvio:WrRDB:    NO SOL in DB";
       }

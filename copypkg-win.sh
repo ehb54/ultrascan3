@@ -2,7 +2,7 @@
 #   copypkg-win   - copy files for packaging - Windows-64
 
 SRCDIR=/cygdrive/c/Users/gegorbet/us3_git/ultrascan3
-SOMOBASE=${SRCDIR}
+SOMOBASE=${SRCDIR}/us_somo
 QTBIN=c:/msys64/mingw64/bin
 QTPLG=c:/msys64/mingw64/share/qt5
 DESTDIR=/cygdrive/c/dist
@@ -45,7 +45,9 @@ fi
 # Remove any somo*prev* files in etc/
 rm -f ${PKGDIR}/etc/somo*prev*
 
+echo "Copy somo demo,doc directories"
 cp -rp ${SOMOBASE}/somo/demo ${DESTDIR}/somo/
+cp -rp ${SOMOBASE}/somo/doc ${DESTDIR}/somo/
 
 echo "Copy Qt DLLs to bin"
 for F in ${QTDLLS}; do
