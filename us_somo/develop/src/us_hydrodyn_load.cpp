@@ -669,11 +669,147 @@ void US_Hydrodyn::read_residue_file() {
    // }
 }
 
-// #define DEBUG_VBAR
+#define DEBUG_VBAR
+double US_Hydrodyn::calc_vbar_updated( struct PDB_model & model ) {
+   int chains   = (int) model.molecule.size();
+   int residues = (int) model.residue .size();
+   // spec residue info
+   map < QString, QString > spec_residue = { { "N1", "N1" },
+                                             { "N1-", "N1-" },
+                                             { "OXT", "OXT" } };
+   map < QString, double > spec_mw;
+   map < QString, double > spec_psv;
+
+   for ( auto it = spec_residue.begin();
+         it != spec_residue.end();
+         ++it ) {
+      if ( multi_residue_map.count( it->first ) ) {
+         for ( int j = 0; j < (int) multi_residue_map[ it->first ].size(); ++j ) {
+            struct residue residue_entry = residue_list[ multi_residue_map[ it->first ][ j ] ];
+            map < QString, struct atom * > res_atom_map = residue_atom_map( residue_entry );
+            if ( res_atom_map.count( it->second ) ) {
+               spec_mw[ it->first ] =
+                     res_atom_map[ it->second ]->hybrid.mw +
+                     res_atom_map[ it->second ]->hybrid.ionized_mw_delta
+                     ;
+               spec_psv[ it->first ] =
+                     residue_entry.vbar_at_pH
+                     ;
+            } else {
+               QTextStream( stdout )
+                  << "WARNING: residue list atom lookup name missing: " << it->second << endl
+                  ;
+            }
+         }
+      } else {
+         QTextStream( stdout )
+            <<  "WARNING:  multi residue map is missing this residue: " << it->first << endl
+            ;
+      }
+   }
+
+   map < QString, QString > hybrid_name_to_N = { { "N3H0", "N1-" },
+                                                 { "N3H1", "N1" } };
+
+   map < QString, double > delta_mw;
+   map < QString, double > delta_mv;
+
+   {
+      map < QString, int    > delta_counts;
+      
+      for ( int j = 0; j < chains; ++j ) {
+         int atoms = (int) model.molecule[ j ].atom.size();
+         if ( atoms ) {
+            {
+               map < QString, struct atom * > first_atom_map = first_residue_atom_map( model.molecule[ j ] );
+               if ( first_atom_map.count( "N" ) ) {
+                  if ( hybrid_name_to_N.count( first_atom_map[ "N" ]->hybrid.name ) ) {
+                     QString use_name = hybrid_name_to_N[ first_atom_map[ "N" ]->hybrid.name ];
+                     ++delta_counts[ use_name ];
+
+                     double this_mw =
+                        spec_mw[ use_name ] -
+                        first_atom_map[ "N" ]->hybrid.mw - first_atom_map[ "N" ]->hybrid.ionized_mw_delta;
+                     double this_mv =
+                        this_mw * spec_psv[ use_name ];
+                     delta_mw[ hybrid_name_to_N[ first_atom_map[ "N" ]->hybrid.name ] ] += this_mw;
+                     delta_mv[ hybrid_name_to_N[ first_atom_map[ "N" ]->hybrid.name ] ] += this_mv;
+                  }
+               } else {
+                  QTextStream( stdout ) << " WARNING: first N in chain has unexpected hybridization " << first_atom_map[ "N" ]->hybrid.name  << endl;
+               }
+            }
+            {
+               map < QString, struct atom * > last_atom_map  = last_residue_atom_map( model.molecule[ j ] );
+               QString use_name = "OXT";
+               if ( last_atom_map.count( use_name ) ) {
+                  ++delta_counts[ use_name ];
+
+                  double this_mw = spec_mw[ use_name ];
+                  double this_mv = this_mw * spec_psv[ use_name ];
+                  delta_mw[ use_name ] += this_mw;
+                  delta_mv[ use_name ] += this_mv;
+               }
+            }
+         }
+      }
+   }
+      
+   double mw = 0;
+   double mv = 0;
+
+   for ( int j = 0; j < residues; ++j ) {
+      // struct residue
+      double this_mw = model.residue[ j ].mw + model.residue[ j ].ionized_mw_delta;
+      double this_mv = model.residue[ j ].vbar_at_pH * this_mw;
+      mw += this_mw;
+      mv += this_mv;
+   }
+   double vbar         = 0;
+   double molar_volume = 0;
+
+   {
+      double covolume = gparams.count( "covolume" ) ? gparams[ "covolume" ].toDouble() : 0e0;
+      double total_mw = mw;
+      double total_mv = mv;
+      
+      QTextStream( stdout )
+         << "--------------------------------------------------------------------------------\n"
+         << "calc_vbar_updated() vbar calculation" << endl
+         << "mw residues        : " << mw << endl
+         << "mv residues        : " << mv << endl
+         ;
+
+      for ( auto it = delta_mw.begin();
+            it != delta_mw.end();
+            ++it ) {
+         QTextStream( stdout )
+            <<  "mw " << it->first << "'s            : " << it->second << endl
+            <<  "mv " << it->first << "'s            : " << delta_mv[ it->first ] << endl
+            ;
+         total_mw += it->second;
+         total_mv += delta_mv[ it->first ];
+      }
+      
+      QTextStream( stdout )
+         << "total mw            : " << total_mw << endl
+         << "total mv            : " << total_mv << endl
+         << "covolume            : " << covolume << endl
+         << "total mv + covolume : " << ( total_mv + covolume ) << endl
+         << "vbar                : " << (( total_mv + covolume ) / total_mw ) << endl
+         ;
+      molar_volume = total_mv + covolume;
+      vbar = molar_volume / total_mw;
+   }
+   model.molar_volume = molar_volume;
+   return vbar;
+}
+
 void US_Hydrodyn::calc_vbar( struct PDB_model *model, bool use_p_atom ) {
    float mw_vbar_sum = 0.0;
    float mw_sum = 0.0;
    float mw;
+   model->molar_volume = 0;
    
    // in attic: info_model_p_residue( "::calc_vbar() start", *model, false );
 
@@ -697,6 +833,10 @@ void US_Hydrodyn::calc_vbar( struct PDB_model *model, bool use_p_atom ) {
 #endif
 
    if ( use_p_atom ) {
+#if !defined(OLD_VBAR_WAY)
+      model->vbar = calc_vbar_updated( *model );
+      return;
+#else
       int chains = (int) model->molecule.size();
       for ( int j = 0; j < chains; ++j ) {
          int atoms = (int) model->molecule[ j ].atom.size();
@@ -707,7 +847,7 @@ void US_Hydrodyn::calc_vbar( struct PDB_model *model, bool use_p_atom ) {
                model->molecule[ j ].atom[ k ].p_atom->hybrid.ionized_mw_delta;
             mw_sum      += this_mw;
             mw_vbar_sum += this_mw * model->molecule[ j ].atom[ k ].p_residue->vbar_at_pH;
-#if defined( DEBUG_VBAR )
+# if defined( DEBUG_VBAR )
             qsl
                << model->molecule[ j ].atom[ k ].resName
                << model->molecule[ j ].atom[ k ].name
@@ -722,9 +862,10 @@ void US_Hydrodyn::calc_vbar( struct PDB_model *model, bool use_p_atom ) {
                
             usl->log( qsl.join( "," ) );
             qsl.clear();
-#endif
+# endif
          }
-      }               
+      }
+#endif
    } else {
       int residues = (int) model->residue.size();
       for ( int i = 0; i < residues; ++i ) {
@@ -1178,15 +1319,15 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
                   for ( map < QString, int >::iterator it = resname_counts_nonwat.begin();
                         it != resname_counts_nonwat.end();
                         ++it ) {
-                     editor_msg( "black", courier, QString( "%1\t%2\t%3%\t%4\n" )
+                     editor_msg( "black", courier, QString( "%1\t %2\t%3%\t %4\n" )
                                  .arg( it->first )
                                  .arg( it->second )
-                                 .arg( 100.0 * (double) it->second / (double) resname_counts_nonwat_total, 0, 'g', 2 )
+                                 .arg( floor( 100 * 100.0 * (double) it->second / (double) resname_counts_nonwat_total ) / 100, 0, 'g', 3 )
                                  .arg( resname_theo_wat.count( it->first ) ? resname_theo_wat[ it->first ] : 0 )
                                  );
                   }
                   if ( resname_counts_nonwat_total && resname_counts_nonwat.size() > 1 ) {
-                     editor_msg( "black", courier, QString( "All\t%1\t%2%\t%3\n" )
+                     editor_msg( "black", courier, QString( "All\t %1\t%2%\t %3\n" )
                                  .arg( resname_counts_nonwat_total )
                                  .arg( 100 )
                                  .arg( round( tot_theo_wat ) )
@@ -1396,15 +1537,15 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
             for ( map < QString, int >::iterator it = resname_counts_nonwat.begin();
                   it != resname_counts_nonwat.end();
                   ++it ) {
-               editor_msg( "black", QString( "%1\t%2\t%3%\t%4\n" )
+               editor_msg( "black", QString( "%1\t %2\t%3%\t %4\n" )
                            .arg( it->first )
                            .arg( it->second )
-                           .arg( 100.0 * (double) it->second / (double) resname_counts_nonwat_total, 0, 'g', 2 )
+                           .arg( floor( 100 * 100.0 * (double) it->second / (double) resname_counts_nonwat_total ) / 100, 0, 'g', 3 )
                            .arg( resname_theo_wat.count( it->first ) ? resname_theo_wat[ it->first ] : 0 )
                            );
             }
             if ( resname_counts_nonwat_total && resname_counts_nonwat.size() > 1 ) {
-               editor_msg( "black", QString( "All\t%1\t%2%\t%3\n" )
+               editor_msg( "black", QString( "All\t %1\t%2%\t %3\n" )
                            .arg( resname_counts_nonwat_total )
                            .arg( 100 )
                            .arg( round( tot_theo_wat ) )
@@ -1648,7 +1789,7 @@ QString US_Hydrodyn::vbar_msg( double vbar, bool only_used ) {
       return
          QString(
                  us_tr(
-                       "Vbar used                   : %1 [cm^3/g] @ %2 [%3C]\n"
+                       "Vbar used                        : %1 [cm^3/g] @ %2 [%3C]\n"
                        )
                  )
          .arg( partvol, 5, 'f', 3, '0' )
@@ -1661,9 +1802,9 @@ QString US_Hydrodyn::vbar_msg( double vbar, bool only_used ) {
       return
          QString(
                  us_tr(
-                       "Vbar calculated             : %1 [cm^3/g] @ %2 [%3C]\n"
-                       "Vbar measured               : %4 [cm^3/g] @ %5 [%6C]\n"
-                       "Vbar used                   : %7 [cm^3/g] @ %8 [%9C]\n"
+                       "Vbar calculated                  : %1 [cm^3/g] @ %2 [%3C]\n"
+                       "Vbar measured                    : %4 [cm^3/g] @ %5 [%6C]\n"
+                       "Vbar used                        : %7 [cm^3/g] @ %8 [%9C]\n"
                        )
                  )
          .arg( vbar, 5, 'f', 3, '0' )
@@ -1682,8 +1823,8 @@ QString US_Hydrodyn::vbar_msg( double vbar, bool only_used ) {
    return
       QString(
               us_tr(
-                    "Vbar calculated             : %1 [cm^3/g] @ %2 [%3C]\n"
-                    "Vbar used                   : %4 [cm^3/g] @ %5 [%6C]\n"
+                    "Vbar calculated                  : %1 [cm^3/g] @ %2 [%3C]\n"
+                    "Vbar used                        : %4 [cm^3/g] @ %5 [%6C]\n"
                     )
               )
       .arg( vbar, 5, 'f', 3, '0' )
@@ -1827,8 +1968,8 @@ QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *m
       qs +=
          QString(
                  us_tr(
-                       "Number of disulfide bonds   : %1\n"
-                       "Number of free SH           : %2\n"
+                       "Number of disulfide bonds        : %1\n"
+                       "Number of free SH                : %2\n"
                        )
                  )
          .arg( model->num_SS_bonds )
@@ -1839,16 +1980,29 @@ QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *m
    qs +=
       QString(
               us_tr(
-                    "Calculation done at pH      : %1\n"
+                    "Calculation done at pH           : %1\n"
                     )
               )
       .arg( le_pH->text() )
       ;
 
+   if ( model->molar_volume > 0 ) {
+      qs +=
+         QString(
+                 us_tr(
+                       "Molar volume                     : %1 [cm^3/mol] @ %2 [%3C]\n"
+                       )
+                 )
+         .arg( model->molar_volume )
+         .arg( 20 )
+         .arg( DEGREE_SYMBOL )
+         ;
+   }
+
    qs +=
       QString(
               us_tr(
-                    "Molecular weight            : %1 [Da]\n"
+                    "Molecular weight                 : %1 [Da]\n"
                     )
               )
             .arg( model->mw + model->ionized_mw_delta )
@@ -1860,7 +2014,7 @@ QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *m
       qs +=
          QString(
                  us_tr(
-                       "Mol. vol. (from vbar)       : %1 [A^3] @ %2 [%3C]\n"
+                       "Molecular vol. (from vbar)       : %1 [A^3] @ %2 [%3C]\n"
                        )
                  )
          .arg( mw_to_volume( model->mw + model->ionized_mw_delta, model->vbar ) )
@@ -1872,13 +2026,13 @@ QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *m
    qs +=
       QString(
               us_tr(
-                    "Mol. vol. (from vbar)       : %1 [A^3] @ %2 [%3C]\n"
-                    "Mol. vol. (SAXS excl. vol.) : %4 [A^3]\n"
-                    "Radius of gyration          : %5 [A]\n"
-                    "Number of electrons         : %6\n"
-                    "Number of protons           : %7\n"
-                    "Net charge                  : %8\n"
-                    "Isoelectric point           : %9\n"
+                    "Molecular vol. (from vbar)       : %1 [A^3] @ %2 [%3C]\n"
+                    "Molecular vol. (SAXS excl. vol.) : %4 [A^3]\n"
+                    "Radius of gyration               : %5 [A]\n"
+                    "Number of electrons              : %6\n"
+                    "Number of protons                : %7\n"
+                    "Net charge                       : %8\n"
+                    "Isoelectric point                : %9\n"
                     )
               )
       .arg( mw_to_volume( model->mw + model->ionized_mw_delta, tc_vbar( model->vbar ) ) )
@@ -1896,7 +2050,7 @@ QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *m
       qs +=
          QString(
                  us_tr(
-                       "Average electron density    : %1 [A^-3]\n"
+                       "Average electron density         : %1 [A^-3]\n"
                        )
                  )
          .arg( model->num_elect / model->volume, 0, 'f', 3 )
@@ -1992,7 +2146,9 @@ void US_Hydrodyn::calc_mw()
       create_beads(&error_string, true);
       // info_model_vector_mw( QString( "after create_beads calc_mw() : model_vector" ), model_vector, true );
       // info_mw( QString( "after create_beads in calc_mw() : model_vector[ %1 ]" ).arg( i ), model_vector[ i ], true );
+      // info_model_residues( "before calc_vbar in calc_mw()", model_vector[ i ] );
       calc_vbar( & model_vector[ i ], true );
+      // info_model_residues( "after calc_vbar in calc_mw()", model_vector[ i ] );
       // info_mw( QString( "after calc_vbar in calc_mw() : model_vector[ %1 ]" ).arg( i ), model_vector[ i ], true );
 
       double model_mw               = 0e0;
@@ -2290,6 +2446,7 @@ void US_Hydrodyn::calc_mw()
          model_vector_as_loaded[ i ].num_SH_free      = model_vector[i].num_SH_free;
          model_vector_as_loaded[ i ].vbar             = model_vector[i].vbar;
       }
+      // info_model_residues( "after update_model_chain_ionization in calc_mw()", model_vector[ i ] );
    }
    editor_msg( "black", "" );
    current_model = save_current_model;

@@ -25,6 +25,246 @@ model_vector_as_loaded
 #define LBD  "--------------------------------------------------------------------------------\n"
 #define LBE  "================================================================================\n"
 
+void US_Hydrodyn::info_model_residues( const QString & msg, struct PDB_model & model ) {
+   TSO
+      << "US_Hydrodyn::info_model_residues()" << endl
+      << msg << endl
+      //      << "models.size()             : " << model_count << endl
+      ;
+   int chains   = (int) model.molecule.size();
+   int residues = (int) model.residue .size();
+
+   TSO
+      << LBE
+      << "model chains            : " << chains << endl
+      << "model residues          : " << residues << endl
+      ;
+
+   if ( 0 ) {
+      for ( int j = 0; j < chains; ++j ) {
+         // struct PDB_chain
+         int atoms = (int) model.molecule[ j ].atom.size();
+
+         TSO
+            << LBD
+            << " model chain             : " << j << endl
+            << " model chain atoms       : " << atoms << endl
+            ;
+
+         for ( int k = 0; k < atoms; ++k ) {
+            // struct PDB_atom
+            TSO
+               << LBD
+               << "  model chain atom                    : " << k << endl
+               << "  model chain atom name               : " << model.molecule[ j ].atom[ k ].name << endl
+               << "  model chain atom resName            : " << model.molecule[ j ].atom[ k ].resName << endl
+               << "  model chain atom resSeq             : " << model.molecule[ j ].atom[ k ].resSeq << endl
+               << "  model chain atom p_residue          : " << ( model.molecule[ j ].atom[ k ].p_residue ?
+                                                                  model.molecule[ j ].atom[ k ].p_residue->name : QString( "not set" ) ) << endl
+               << "  model chain atom p_atom             : " << ( model.molecule[ j ].atom[ k ].p_atom ?
+                                                                  model.molecule[ j ].atom[ k ].p_atom->name : QString( "not set" ) ) << endl
+               << "  model chain atom model_residue_pos  : " << model.molecule[ j ].atom[ k ].model_residue_pos << endl
+               << "  model chain atom bead_assignment    : " << model.molecule[ j ].atom[ k ].bead_assignment << endl
+               ;
+         }
+      }
+   }
+   // spec residue info
+   map < QString, QString > spec_residue = { { "N1", "N1" },
+                                             { "N1-", "N1-" },
+                                             { "OXT", "OXT" } };
+   map < QString, double > spec_mw;
+   map < QString, double > spec_psv;
+
+   for ( auto it = spec_residue.begin();
+         it != spec_residue.end();
+         ++it ) {
+      TSO
+         << LBD
+         << " spec residue : " << it->first << endl;
+      if ( multi_residue_map.count( it->first ) ) {
+         for ( int j = 0; j < (int) multi_residue_map[ it->first ].size(); ++j ) {
+            struct residue residue_entry = residue_list[ multi_residue_map[ it->first ][ j ] ];
+            map < QString, struct atom * > res_atom_map = residue_atom_map( residue_entry );
+            int atoms = (int) residue_entry.r_atom.size();
+            int beads = (int) residue_entry.r_bead.size();
+            TSO
+               << LBD
+               << " residue list position            : " << j << endl
+               << " residue list name                : " << residue_entry.name << endl
+               << " residue list unique_name         : " << residue_entry.unique_name << endl
+               << " residue list r_atom.size()       : " << atoms << endl
+               << " residue list r_bead.size()       : " << beads << endl
+               << " residue list vbar                : " << residue_entry.vbar << endl
+               << " residue list vbars               : " << US_Vector::qs_vector( residue_entry.vbars ) << endl
+               << " residue list pKas                : " << US_Vector::qs_vector( residue_entry.pKas ) << endl
+               << " residue list vbar_at_pH          : " << residue_entry.vbar_at_pH << endl
+               << " residue list mw                  : " << residue_entry.mw << endl
+               << " residue list ionized_mw_delta    : " << residue_entry.ionized_mw_delta << endl
+               ;
+            
+            if ( res_atom_map.count( it->second ) ) {
+               TSO
+                  << "  residue list atom lookup name             : " << it->second << endl
+                  << "  residue list atom name                    : " << res_atom_map[ it->second ]->name << endl
+                  << "  residue list atom hybrid mw               : " << res_atom_map[ it->second ]->hybrid.mw << endl
+                  << "  residue list atom hybrid ionized mw delta : " << res_atom_map[ it->second ]->hybrid.ionized_mw_delta << endl
+                  ;
+               spec_mw[ it->first ] =
+                     res_atom_map[ it->second ]->hybrid.mw +
+                     res_atom_map[ it->second ]->hybrid.ionized_mw_delta
+                     ;
+               spec_psv[ it->first ] =
+                     residue_entry.vbar_at_pH
+                     ;
+            } else {
+               TSO
+                  << "  residue list atom lookup name missing: " << it->second << endl
+                  ;
+            }
+         }
+      } else {
+         TSO
+            <<  " multi residue map is missing this residue" << endl
+            ;
+      }
+   }
+
+   map < QString, QString > hybrid_name_to_N = { { "N3H0", "N1-" },
+                                                 { "N3H1", "N1" } };
+
+   map < QString, double > delta_mw;
+   map < QString, double > delta_mv;
+
+   {
+      TSO
+         << LBD
+         << "Aggregate special residues in chains"
+         << endl
+         ;
+
+      map < QString, int    > delta_counts;
+      
+      for ( int j = 0; j < chains; ++j ) {
+         int atoms = (int) model.molecule[ j ].atom.size();
+         if ( atoms ) {
+            {
+               map < QString, struct atom * > first_atom_map = first_residue_atom_map( model.molecule[ j ] );
+               if ( first_atom_map.count( "N" ) ) {
+                  if ( hybrid_name_to_N.count( first_atom_map[ "N" ]->hybrid.name ) ) {
+                     QString use_name = hybrid_name_to_N[ first_atom_map[ "N" ]->hybrid.name ];
+                     ++delta_counts[ use_name ];
+
+                     double this_mw =
+                        spec_mw[ use_name ] -
+                        first_atom_map[ "N" ]->hybrid.mw - first_atom_map[ "N" ]->hybrid.ionized_mw_delta;
+                     double this_mv =
+                        this_mw * spec_psv[ use_name ];
+                     delta_mw[ hybrid_name_to_N[ first_atom_map[ "N" ]->hybrid.name ] ] += this_mw;
+                     delta_mv[ hybrid_name_to_N[ first_atom_map[ "N" ]->hybrid.name ] ] += this_mv;
+
+                     TSO
+                        << " model chain first residue N hybrid name       : " << first_atom_map[ "N" ]->hybrid.name << endl
+                        << " model chain first residue N mw                : " << first_atom_map[ "N" ]->hybrid.mw << endl
+                        << " model chain first residue N ionized mw delta  : " << first_atom_map[ "N" ]->hybrid.ionized_mw_delta << endl
+                        << " model chain first residue N computed delta mw : " << this_mw  << endl
+                        << " model chain first residue N computed delta mv : " << this_mv  << endl
+                        ;
+                  }
+               } else {
+                  TSO << " WARNING: first N in chain has unexpected hybridization " << first_atom_map[ "N" ]->hybrid.name  << endl;
+               }
+            }
+            {
+               map < QString, struct atom * > last_atom_map  = last_residue_atom_map( model.molecule[ j ] );
+               QString use_name = "OXT";
+               if ( last_atom_map.count( use_name ) ) {
+                  ++delta_counts[ use_name ];
+
+                  double this_mw = spec_mw[ use_name ];
+                  double this_mv = this_mw * spec_psv[ use_name ];
+                  delta_mw[ use_name ] += this_mw;
+                  delta_mv[ use_name ] += this_mv;
+               }
+            }
+         }
+      }
+
+      TSO << LBD;
+      
+      for ( auto it = delta_mw.begin();
+            it != delta_mw.end();
+            ++it ) {
+         TSO
+            << " model molecule " << it->first << "'s count     : " << delta_counts[ it->first ] << endl
+            << " model molecule " << it->first << "'s delta mw  : " << delta_mw[ it->first ] << endl
+            << " model molecule " << it->first << "'s delta mv  : " << delta_mv[ it->first ] << endl
+         ;
+      }
+   }
+      
+   double mw = 0;
+   double mv = 0;
+
+   for ( int j = 0; j < residues; ++j ) {
+      // struct residue
+      int atoms = (int) model.residue[ j ].r_atom.size();
+      int beads = (int) model.residue[ j ].r_bead.size();
+      double this_mw = model.residue[ j ].mw + model.residue[ j ].ionized_mw_delta;
+      double this_mv = model.residue[ j ].vbar_at_pH * this_mw;
+      TSO
+         << LBD
+         << " model residue                     : " << j << endl
+         << " model residue name                : " << model.residue[ j ].name << endl
+         << " model residue unique_name         : " << model.residue[ j ].unique_name << endl
+         << " model residue r_atom.size()       : " << atoms << endl
+         << " model residue r_bead.size()       : " << beads << endl
+         << " model residue vbar                : " << model.residue[ j ].vbar << endl
+         << " model residue vbars               : " << US_Vector::qs_vector( model.residue[ j ].vbars ) << endl
+         << " model residue pKas                : " << US_Vector::qs_vector( model.residue[ j ].pKas ) << endl
+         << " model residue vbar_at_pH          : " << model.residue[ j ].vbar_at_pH << endl
+         << " model residue mw                  : " << model.residue[ j ].mw << endl
+         << " model residue ionized_mw_delta    : " << model.residue[ j ].ionized_mw_delta << endl
+         << " model residue total mw            : " << this_mw << endl
+         << " model residue mv                  : " << this_mv << endl
+         ;
+      mw += this_mw;
+      mv += this_mv;
+   }
+   {
+      double covolume = gparams.count( "covolume" ) ? gparams[ "covolume" ].toDouble() : 0e0;
+      double total_mw = mw;
+      double total_mv = mv;
+      
+      TSO
+         << LBD
+         << "vbar calculation" << endl
+         << "mw residues        : " << mw << endl
+         << "mv residues        : " << mv << endl
+         ;
+
+      for ( auto it = delta_mw.begin();
+            it != delta_mw.end();
+            ++it ) {
+         TSO
+            <<  "mw " << it->first << "'s            : " << it->second << endl
+            <<  "mv " << it->first << "'s            : " << delta_mv[ it->first ] << endl
+            ;
+         total_mw += it->second;
+         total_mv += delta_mv[ it->first ];
+      }
+      
+      TSO
+         << "total mw            : " << total_mw << endl
+         << "total mv            : " << total_mv << endl
+         << "covolume            : " << covolume << endl
+         << "total mv + covolume : " << ( total_mv + covolume ) << endl
+         << "vbar                : " << (( total_mv + covolume ) / total_mw ) << endl
+         ;
+   }
+
+}
+
 void US_Hydrodyn::info_model_vector( const QString & msg, const vector <struct PDB_model> & models, const set < QString > only_residues ) {
    // print out model vector info
 
