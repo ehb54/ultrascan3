@@ -2818,7 +2818,7 @@ double tm1=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
       //    opsys << "Wavelength";
    }
 
-   else if ( ( scanmask & 1 ) != 0 )
+   else if ( ( scanmask & 1 ) != 0 )  //<-- case of combined IP+RI runs: scanmask = 5; (5&1 = 1)
    {
       QApplication::restoreOverrideCursor();
       QApplication::restoreOverrideCursor();
@@ -3998,6 +3998,25 @@ QDateTime sttime=QDateTime::currentDateTime();
                 "\n since the optical system has been changed." ) );
    }
 
+
+   // IF IN Export: update optics type selected with up-to-now data
+   if ( inExport )
+     {
+       int runix          = runID.lastIndexOf( "-run" ) + 4;
+       QString fRunId     = runID.mid( runix );
+       int iRunId         = fRunId.toInt();
+       DbgLv(1) << "IN ::changeOptics() when Exporting: RLd:  runID" << runID << "runix" << runix << "iRunId" << iRunId;
+       int scanmask       = 1;
+       scanmask           = ( runType == "FI" ) ? 2 : scanmask;
+       scanmask           = ( runType == "IP" ) ? 4 : scanmask;
+       scanmask           = ( runType == "WI" ) ? 8 : scanmask;
+       DbgLv(1) << "RLd:     iRunId" << iRunId << "runType scanmask" << runType << scanmask;
+       
+       // Import any newly added Scan Data records
+       bool upd_ok        =  xpn_data->reimport_data( iRunId, scanmask );
+     }
+   ///////////////////////////////////////////////////////////////////////
+   
    // Set up for a new run type
    if ( auto_mode_bool ) 
      xpn_data->set_run_values( runID, rtype );
@@ -4009,7 +4028,8 @@ QDateTime sttime=QDateTime::currentDateTime();
    le_status->setText( tr( "Rebuilding AUC data ..." ) );
    qApp->processEvents();
 
-   xpn_data->build_rawData( allData );
+
+   xpn_data->build_rawData( allData );                                        // ALEXEY <-- need to update data BEFORE with xpn_data->import_data() OR reimport_data()
 double tm2=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
 DbgLv(1) << "chgOpt:   build-raw done: tm2" << tm2;
 
@@ -4052,8 +4072,10 @@ DbgLv(1) << "chgOpt: allData size" << allData.size();
    enableControls();
 
    //ALEXEY: restart timer to update newly selected Optics
+   qDebug() << "IF timer restarts? auto_mode_bool, timer_all_data_avail->isActive(), inExport: " << auto_mode_bool <<  timer_all_data_avail->isActive() << inExport;
    if ( auto_mode_bool &&  !timer_all_data_avail->isActive() && !inExport )
      {
+       qDebug() << "YES, it restarts..." ;
        connect(timer_all_data_avail, SIGNAL(timeout()), this, SLOT( retrieve_xpn_raw_auto ( ) ));
        timer_all_data_avail->start(40000);     // 60 sec
      }
@@ -4163,6 +4185,55 @@ void US_XpnDataViewer::connect_ranges( bool conn )
    }
 }
 
+// export_auc data in us_com_project -- CORRECTED
+void US_XpnDataViewer::export_auc_auto()
+{
+   inExport = true;
+
+   int nfiles = 0;
+   int noptsy     = cb_optsys->count();
+   qDebug() << "ExpAucA: noptsy koptsy" << noptsy << cb_optsys->children().count();
+
+   //--- One optics type -----//
+   if ( noptsy == 1 )
+     {
+       correct_radii();      // Perform chromatic aberration radius corrections
+       nfiles     = xpn_data->export_auc( allData );
+     }
+
+   //--- Combined optics type -----//
+   if ( noptsy > 1 )
+   {  // Export data from Optical Systems other than currently selected one
+
+     //xpn_data->set_run_values( runID, runType );    
+     //xpn_data->build_rawData( allData );            
+     
+     //int currsx     = cb_optsys->currentIndex();
+
+      for ( int osx = 0; osx < noptsy; osx++ )
+      {
+	//if ( osx == currsx )  continue;   // Skip already-handled opt sys
+
+	 qDebug() << "Current index: " << osx;
+
+	 //ALEXEY: somewhere here OR in ::changeOptics_auto() make sure to xpn_data->reimport_data() for other optics!!!
+	 // Look at the reloadData_auto()
+	 
+         cb_optsys->setCurrentIndex( osx );   
+         correct_radii();                  // Chromatic aberration correction if needed
+         int kfiles     = xpn_data->export_auc( allData ) - 2;  // Export data
+         nfiles        += kfiles;          // Total files written
+      }
+
+      // Restore Optical System selection to what it was before
+      // cb_optsys->setCurrentIndex( currsx );   //ALEXEY <-- not needed to repeat data build!!!
+    }
+
+   le_status  ->setText( tr( "%1 AUC/TMST files written ..." ).arg( nfiles ) );
+   qApp->processEvents();
+}
+   
+/*
 // export_auc data in us_com_project
 void US_XpnDataViewer::export_auc_auto()
 {
@@ -4185,20 +4256,25 @@ DbgLv(1) << "ExpAucA: noptsy koptsy" << noptsy << cb_optsys->children().count();
          if ( osx == currsx )  continue;   // Skip already-handled opt sys
 
 	 qDebug() << "Current index: " << osx;
+
+	 //ALEXEY: somewhere here OR in ::changeOptics_auto() make sure to xpn_data->reimport_data() for other optics!!!
+	 // Look at the reloadData_auto()
 	 
-         cb_optsys->setCurrentIndex( osx );
+         cb_optsys->setCurrentIndex( osx );   
          correct_radii();                  // Chromatic aberration correction if needed
          int kfiles     = xpn_data->export_auc( allData ) - 2;  // Export data
          nfiles        += kfiles;          // Total files written
       }
 
       // Restore Optical System selection to what it was before
-      cb_optsys->setCurrentIndex( currsx );
-   }
+      // cb_optsys->setCurrentIndex( currsx );   //ALEXEY <-- not needed to repeat data build!!!
+    }
 
    le_status  ->setText( tr( "%1 AUC/TMST files written ..." ).arg( nfiles ) );
    qApp->processEvents();
 }
+*/
+
 
 // Slot to export to openAUC
 void US_XpnDataViewer::export_auc()
