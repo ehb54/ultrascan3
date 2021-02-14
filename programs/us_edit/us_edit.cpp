@@ -1507,6 +1507,19 @@ void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
     filename_runID_auto = filename_runID_passed;
     
   qDebug() << "runType_combined_IP_RI: " << runType_combined_IP_RI;
+
+  //ALEXEY: create filename_runID_auto_base name
+  if ( runType_combined_IP_RI )
+    {
+      QString filename_runID_auto_base_temp = filename_runID_passed.split(",")[0];
+      int pos = filename_runID_auto_base_temp.lastIndexOf(QChar('-'));
+      
+      filename_runID_auto_base = filename_runID_auto_base_temp.left( pos );
+
+      qDebug() << "IN EDIT - filename_base for combinde runs: " << filename_runID_auto_base;
+      
+    }
+    
   ///////////////////////////////////////////////////////////////////////
   
   qDebug() << "autoflowID: " << autoflowID_passed;
@@ -6949,7 +6962,14 @@ void US_Edit::write_auto( void )
 		     {
 		       json_status = compose_json( true );
 		       qDebug() << triples_all_optics[j] << json_status;
-		       
+
+		       //ALEXEY: here for combined run, the filename_runID_auto would be incorrectly set to that of the second type, the "-RI"
+		       //Need to use "-IP"
+		       if ( runType_combined_IP_RI )
+			 {
+			   filename_runID_auto = filename_runID_auto_base + "-IP";
+			 }
+			 
 		       ID = create_autoflowAnalysis_record( dbP, triples_all_optics[j], json_status );
 		     }
 		 }
@@ -6962,6 +6982,13 @@ void US_Edit::write_auto( void )
 			 {
 			   json_status = compose_json( true );
 			   qDebug() << triples_all_optics[j] << json_status;
+
+			   //ALEXEY: here for combined run, the filename_runID_auto must be "filename_base-RI"
+			   //Need to use "-RI"
+			   if ( runType_combined_IP_RI )
+			     {
+			       filename_runID_auto = filename_runID_auto_base + "-RI";
+			     }
 			   
 			   ID = create_autoflowAnalysis_record( dbP, triples_all_optics[j], json_status );
 			   
@@ -6972,6 +6999,11 @@ void US_Edit::write_auto( void )
 			 {
 			   json_status = compose_json( false );
 			   qDebug() << triples_all_optics[j] << json_status;
+
+			   if ( runType_combined_IP_RI )
+			     {
+			       filename_runID_auto = filename_runID_auto_base + "-RI";
+			     }
 			   
 			   ID = create_autoflowAnalysis_record( dbP, triples_all_optics[j], json_status );
 			 }

@@ -289,6 +289,7 @@ class US_Edit : public US_Widgets
 
       QString filename_runID_passed;
       QString filename_runID_auto;
+      QString filename_runID_auto_base;
       QString idInv_auto;
       QString ProtocolName_auto;
       int     autoflowID_passed;
