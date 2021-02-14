@@ -2455,18 +2455,20 @@ DbgLv(1) << " enabCtl: tLx infsz" << tripListx << out_chaninfo.count();
 
       // Information is there, but we need to see if the runID exists in the
       // DB. If we didn't load it from there, then we shouldn't be able to sync
-      int recStatus = ExpData.checkRunID_auto( ExpData.invID, &db );
 
-      // if a record is found but saveStatus==BOTH,
-      //  then we are editing that record
-      if ( ( recStatus == US_DB2::OK ) && ( saveStatus != BOTH ) ) // ||
-           // ( ! ExpData.syncOK ) )
-      {
-         count++;
-         lw_todoinfo->addItem( QString::number( count ) +
-                               tr( ": Select a different runID" ) );
-         completed = false;
-      }
+      //ALEXEY -- NOT needed for autoflow here
+      // int recStatus = ExpData.checkRunID_auto( ExpData.invID, &db );
+
+      // // if a record is found but saveStatus==BOTH,
+      // //  then we are editing that record
+      // if ( ( recStatus == US_DB2::OK ) && ( saveStatus != BOTH ) ) // ||
+      //      // ( ! ExpData.syncOK ) )
+      // {
+      //    count++;
+      //    lw_todoinfo->addItem( QString::number( count ) +
+      //                          tr( ": Select a different runID" ) );
+      //    completed = false;
+      // }
 
       // Not checking operator on disk -- defined as "Local"
       if ( ExpData.operatorID == 0 )
@@ -3729,7 +3731,7 @@ DbgLv(1) << "CGui: gExpInf: IN";
 				      "This happend because you or different user "
 				      "has already saved the data into DB using different program "
 				      "session and proceeded to the next stage. \n\n"
-				      "The program will return to the autoflow runs dialogue where "
+				      "The program will return to the autoflow runs dialog where "
 				      "you can re-attach to the actual current stage of the run. "
 				      "Please allow some time for the status to be updated.") );
 	
