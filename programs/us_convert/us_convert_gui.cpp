@@ -3701,6 +3701,7 @@ void US_ConvertGui::getExpInfo_auto( void )
 DbgLv(1) << "CGui: gExpInf: IN";
    ExpData.runID = le_runID -> text();
 
+   /** not needed here -- What if there is a combuned run???
    if ( disk_controls->db() )
    {
       // Then we're working in DB, so verify connectivity
@@ -3748,6 +3749,7 @@ DbgLv(1) << "CGui: gExpInf: IN";
 	
       }
    }
+   **/
 
    // OK, proceed
 
@@ -5255,32 +5257,78 @@ void US_ConvertGui::saveUS3( void )
   dataSavedOtherwise = false;
 
   pb_saveUS3 -> setEnabled( false );
+
+  // *** CHECK if all Optics types processed **** //
+  bool all_processed = true;
+  QMap<QString, int>::iterator os;
+  for ( os = runTypes_map.begin(); os != runTypes_map.end(); ++os )
+    {
+      if ( os.value() )
+	{
+	  all_processed = false;
+	  break;
+	}
+    }
+  /////////////////////////////////////////////////////
+
   
   if ( us_convert_auto_mode )
     {
       QMap < QString, QString > autoflow_details;
       autoflow_details = read_autoflow_record( autoflowID_passed );
-      
+
       qDebug() << "autoflowID_passed, autoflow status, isSaved_auto(): " <<  autoflowID_passed << ", " << autoflow_details[ "status" ] << ", " << isSaved_auto();
       
       if ( autoflow_details[ "status" ]  != "EDITING" || isSaved_auto() )
 	{
-	  QMessageBox::information( this,
-				    tr( "The Program State Updated / being Updated" ),
-				    tr( "The program advanced or is advancing to the next stage!\n\n"
-					"This happend because you or different user "
-					"has already saved the data into DB using different program "
-					"session and is proceeding to the next stage. \n\n"
-					"The program will return to the autoflow runs dialogue where "
-					"you can re-attach to the actual current stage of the run. "
-					"Please allow some time for the status to be updated.") );
-	  
-	  resetAll_auto();
-	  emit saving_complete_back_to_initAutoflow();
-	  return;
+	  if ( runType_combined_IP_RI )
+	    {
+	      if ( !all_processed )
+		{
+		  QMessageBox::information( this,
+					    tr( "Data for Current Optical System Already Saved" ),
+					    tr( "It appears that the data for the current optical system are already saved!\n\n"
+						"The program switch to processing next optical system... " ));
+		  
+		  emit process_next_optics( );
+		  return;
+		}
+	      else
+		{
+		  QMessageBox::information( this,
+					    tr( "The Program State Updated / being Updated" ),
+					    tr( "The program advanced or is advancing to the next stage!\n\n"
+						"This happend because you or different user "
+						"has already saved the data into DB using different program "
+						"session and is proceeding to the next stage. \n\n"
+						"The program will return to the autoflow runs dialog where "
+						"you can re-attach to the actual current stage of the run. "
+						"Please allow some time for the status to be updated.") );
+		  
+		  resetAll_auto();
+		  emit saving_complete_back_to_initAutoflow();
+		  return;
+		}
+	    }
+	  else
+	    {
+	      QMessageBox::information( this,
+					tr( "The Program State Updated / being Updated" ),
+					tr( "The program advanced or is advancing to the next stage!\n\n"
+					    "This happend because you or different user "
+					    "has already saved the data into DB using different program "
+					    "session and is proceeding to the next stage. \n\n"
+					    "The program will return to the autoflow runs dialog where "
+					    "you can re-attach to the actual current stage of the run. "
+					    "Please allow some time for the status to be updated.") );
+	      
+	      resetAll_auto();
+	      emit saving_complete_back_to_initAutoflow();
+	      return;
+	    }
 	}
     }
-
+  
   // qDebug() << "ExpData: ";
 
   qDebug() << "ExpData.invID " << ExpData.invID;             
@@ -5441,17 +5489,17 @@ DbgLv(1) << "Writing to disk";
    } // End of 'else' loop for multispeed case
 
 
-   bool all_processed = true;
-   // *** CHECK if all Optics types processed **** //
-   QMap<QString, int>::iterator os;
-   for ( os = runTypes_map.begin(); os != runTypes_map.end(); ++os )
-     {
-       if ( os.value() )
-	 {
-	   all_processed = false;
-	   break;
-	 }
-     }
+   // bool all_processed = true;
+   // // *** CHECK if all Optics types processed **** //
+   // QMap<QString, int>::iterator os;
+   // for ( os = runTypes_map.begin(); os != runTypes_map.end(); ++os )
+   //   {
+   //     if ( os.value() )
+   // 	 {
+   // 	   all_processed = false;
+   // 	   break;
+   // 	 }
+   //   }
    
 // x  x  x  x  x x  x  x  x  x x  x  x  x  x x  x  x  x  x x  x  x  x  x x  x  x  x  x 
    if ( us_convert_auto_mode )   // if us_comproject OR us_comproject_academic
@@ -6058,7 +6106,7 @@ DbgLv(1) << "DBSv:  files count" << files.size();
 				       "This happend because you or different user "
 				       "has already saved the data into DB using different program "
 				       "session and proceeded to the next stage. \n\n"
-				       "The program will return to the autoflow runs dialogue where "
+				       "The program will return to the autoflow runs dialog where "
 				       "you can re-attach to the actual current stage of the run. " 
 				       "Please allow some time for the status to be updated.") );
 	 

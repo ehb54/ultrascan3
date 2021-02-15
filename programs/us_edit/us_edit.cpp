@@ -6791,9 +6791,9 @@ void US_Edit::write_auto( void )
 					tr( "The Program State Updated / being Updated" ),
 					tr( "The program advanced or is advancing to the next stage!\n\n"
 					    "This happend because you or different user "
-					    "has already saved the data into DB using different program "
+					    "has already saved edit profiles into DB using different program "
 					    "session and is proceeding to the next stage. \n\n"
-					    "The program will return to the autoflow runs dialogue where "
+					    "The program will return to the autoflow runs dialog where "
 					    "you can re-attach to the actual current stage of the run. "
 					    "Please allow some time for the status to be updated.") );
 	      
@@ -6809,9 +6809,9 @@ void US_Edit::write_auto( void )
 				    tr( "The Program State Updated / being Updated" ),
 				    tr( "The program advanced or is advancing to the next stage!\n\n"
 					"This happend because you or different user "
-					"has already saved the data into DB using different program "
+					"has already saved edit profiles into DB using different program "
 					"session and is proceeding to the next stage. \n\n"
-					"The program will return to the autoflow runs dialogue where "
+					"The program will return to the autoflow runs dialog where "
 					"you can re-attach to the actual current stage of the run. "
 					"Please allow some time for the status to be updated.") );
 	  
