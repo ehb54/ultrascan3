@@ -1465,10 +1465,17 @@ void US_AnaprofPan2DSA::constk_changed( )
 {
 DbgLv(1) << "2D:SL: CONSTK_CHG";
 }
+
 void US_AnaprofPan2DSA::apply_all_clicked( )
 {
-DbgLv(1) << "2D:SL: APLALL_CLK";
+  DbgLv(1) << "2D:SL: APLALL_CLK";
+  // Iterate over all active channels && apply gui_to_pams()
+  for (int i=0; i<active_items_2dsa.size(); i++)
+    {
+      gui_to_parms( i );
+    }
 }
+
 void US_AnaprofPan2DSA::job1_run_checked( bool chkd )
 {
 DbgLv(1) << "2D:SL: JOB1RUN_CKD" << chkd;

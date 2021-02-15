@@ -15,9 +15,10 @@ int main( int argc, char* argv[] )
 
    // License is OK.  Start up.
 
-   //US_ExperimentMain * w = new US_ExperimentMain;
-   US_ExperimentMain w;
-   w.show();                   //!< \memberof QWidget
+   US_ExperimentMain * w = new US_ExperimentMain;
+   w->show();
+   //US_ExperimentMain w;
+   //w.show();                   //!< \memberof QWidget
    return application.exec();  //!< \memberof QApplication
 }
 
