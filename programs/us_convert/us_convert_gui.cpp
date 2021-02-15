@@ -4718,9 +4718,19 @@ DbgLv(1) << "CGui: procref:  plot_current complete";
    pb_reference  ->setEnabled( false );
    referenceDefined = true;
 DbgLv(1) << "CGui: (6)referDef=" << referenceDefined;
-   enableSaveBtn();
+
+   // ALEXEY: just enable Save btn for autoflow 
+   if ( us_convert_auto_mode )
+     {
+       lw_todoinfo->clear();
+       pb_saveUS3 ->setEnabled( true );
+     }
+   else
+     enableSaveBtn();
+
    enableRunIDControl( false );
-   le_status->setText( tr( "The reference scans have been defined." ) );
+     
+     le_status->setText( tr( "The reference scans have been defined." ) );
    qApp->processEvents();
 
    qDebug() << "After Reference Defined: count of outData, out_chaninfo: " <<  outData.count() << ", " << out_chaninfo.count();

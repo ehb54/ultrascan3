@@ -30,6 +30,11 @@
 US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
 {
   //   dbg_level    = US_Settings::us_debug();
+
+  //-- Check if Database is selected in the DB preferences
+  checkDataLocation();
+  // --------------------------------------------------------
+    
    curr_panx    = 0;
    window_closed = false;
    xpn_viewer_closed_soft = false;  
@@ -191,6 +196,11 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
 US_ComProjectMain::US_ComProjectMain() : US_Widgets()
 {
   //   dbg_level    = US_Settings::us_debug();
+
+  //-- Check if Database is selected in the DB preferences
+  checkDataLocation();
+  // --------------------------------------------------------
+   
    curr_panx    = 0;
 
    window_closed = false;
@@ -362,6 +372,23 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
  }
 
 
+// Check if data location set to DB
+void US_ComProjectMain::checkDataLocation( void )
+{
+  qDebug() << "Data Location ( DB==1; Disk==2 ) -- " << US_Settings::default_data_location();
+
+  if ( US_Settings::default_data_location() == 2 ) //Disk 
+    {
+      //data_location_disk = true;
+      //window_closed = true;
+      QMessageBox::warning( this, tr( "Data Location set to Disk" ),
+			    tr( "Please change Data Location to \"Database\" in the configuraiton of your database! \n" ) );
+      
+      exit(1);
+      // this->close();
+    }
+}
+
 // Slot to init some panels (mainly Manage Opima Runs)
 void US_ComProjectMain::initPanels( int  panx )
 {
@@ -523,11 +550,16 @@ void US_ComProjectMain::closeEvent( QCloseEvent* event )
 {
     window_closed = true;
 
-    qDebug() << "initDialogue: true/false 1 : " << epanInit->initDialogueOpen ;
-    emit us_comproject_closed();
-    close_initDialogue();
-    qDebug() << "initDialogue: true/false 3 : " << epanInit->initDialogueOpen ;
+    qDebug() << "Closing 1: ";
 
+    if ( !data_location_disk )
+      {
+	qDebug() << "initDialogue: true/false 1 : " << epanInit->initDialogueOpen ;
+	emit us_comproject_closed();
+	close_initDialogue();
+	qDebug() << "initDialogue: true/false 3 : " << epanInit->initDialogueOpen ;
+      }
+    
     event->accept();
 }
 
@@ -920,6 +952,7 @@ US_InitDialogueGui::US_InitDialogueGui( QWidget* topw )
    initMsgNorecOpen = false;
    initMsgNorecDelOpen = false;
 
+   
    setPalette( US_GuiSettings::frameColor() );
    QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
    QFontMetrics fmet( sfont );
@@ -1039,6 +1072,7 @@ void US_InitDialogueGui::initRecords( void )               // <-- 1st entry poin
       else
 	mainw->tabWidget->tabBar()->setTabEnabled(i, false);
     }
+
   
   // Query 'autoflow': get count of records
   autoflow_records = get_autoflow_records();
@@ -1511,6 +1545,10 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
 // Query autoflow for # records
 int US_InitDialogueGui::get_autoflow_records( void )
 {
+
+ 
+   //--------------------------------------////
+  
    // Check DB connection
    US_Passwd pw;
    QString masterpw = pw.getPasswd();

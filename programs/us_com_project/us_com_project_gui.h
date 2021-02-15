@@ -383,6 +383,7 @@ class US_ComProjectMain : public US_Widgets
   void close_initDialogue();
 
   bool window_closed;
+  bool data_location_disk;
   bool xpn_viewer_closed_soft;
   
   int         curr_panx;       // Current panel index (0-7)
@@ -411,6 +412,7 @@ class US_ComProjectMain : public US_Widgets
   //QList< QMap<QString, QString> > instruments;  
   
 private slots:
+  void checkDataLocation( void );
   void initPanels  ( int  );     // Move to a new panel
   //void reset     ( void );
   //void newPanel  ( int  );     // Move to a new panel

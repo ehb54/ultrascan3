@@ -23,6 +23,10 @@ int main( int argc, char* argv[] )
    if ( !instance_created ) 
      exit(-1);
 
+   // if ( w->data_location_disk )
+   //   exit(-1);
+   
+   
    //w->check_current_stage();
    w->call_AutoflowDialogue();
    
