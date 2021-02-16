@@ -2189,9 +2189,17 @@ void US_ConvertGui::enableRunIDControl( bool setEnable )
 {
    if ( setEnable )
    {
-      us_setReadOnly( le_runID2, false );
-      connect( le_runID2, SIGNAL( textEdited( QString ) ),
-                          SLOT  ( runIDChanged(  )      ) );
+     if ( !us_convert_auto_mode ) //ALEXEY: do not enable edit runID && attach to slot 
+       {
+	 us_setReadOnly( le_runID2, false );
+	 connect( le_runID2, SIGNAL( textEdited( QString ) ),
+		  SLOT  ( runIDChanged(  )      ) );
+       }
+     else
+       {
+	 le_runID2->disconnect();
+	 us_setReadOnly( le_runID2, true );
+       }
    }
 
    else
@@ -5288,7 +5296,7 @@ void US_ConvertGui::saveUS3( void )
 		  QMessageBox::information( this,
 					    tr( "Data for Current Optical System Already Saved" ),
 					    tr( "It appears that the data for the current optical system are already saved!\n\n"
-						"The program switch to processing next optical system... " ));
+						"The program will switch to processing the data for next optical system... " ));
 		  
 		  emit process_next_optics( );
 		  return;
