@@ -5969,14 +5969,25 @@ DbgLv(1) << "DBSv:     tripleGUID       "
 
    else
    {
-     int status = QMessageBox::information( this,
-              tr( "Warning" ),
-              tr( "Once this data is written to the DB you will not "  ) +
-              tr( "be able to make changes to it without erasing the " ) +
-              tr( "edit profiles, models and noise files too. Proceed? " ),
-              tr( "&OK" ), tr( "&Cancel" ),
-              0, 0, 1 );
-     if ( status != 0 ) return;
+     if ( !us_convert_auto_mode )
+       {
+	 int status = QMessageBox::information( this,
+						tr( "Warning" ),
+						tr( "Once this data is written to the DB you will not "  ) +
+						tr( "be able to make changes to it without erasing the " ) +
+						tr( "edit profiles, models and noise files too. Proceed? " ),
+						tr( "&OK" ), tr( "&Cancel" ),
+						0, 0, 1 );
+	 if ( status != 0 ) return;
+       }
+     else
+       {
+	 QMessageBox::information( this,
+				   tr( "Warning" ),
+				   tr( "Once this data is written to the DB you will not "  ) +
+				   tr( "be able to make changes to it without erasing the " ) +
+				   tr( "edit profiles, models and noise files too...\n " ) );
+       }
    }
 
    // First check some of the data with the DB
