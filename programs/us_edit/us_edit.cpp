@@ -1516,7 +1516,7 @@ void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
       
       filename_runID_auto_base = filename_runID_auto_base_temp.left( pos );
 
-      qDebug() << "IN EDIT - filename_base for combinde runs: " << filename_runID_auto_base;
+      qDebug() << "IN EDIT - filename_base for combined runs: " << filename_runID_auto_base;
       
     }
     

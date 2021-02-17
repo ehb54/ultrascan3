@@ -129,7 +129,9 @@ class US_Analysis_auto : public US_Widgets
 	 QString    analysisIDs;
 	 QMap <QString, QString >    investigator_details;
 	 QString     defaultDB;
+
 	 QString    FileName;
+	 QString    FileName_parsed;
 
 	 int        sim_msg_pos_x;
 	 int        sim_msg_pos_y;
@@ -162,6 +164,8 @@ class US_Analysis_auto : public US_Widgets
 	 bool loadData( QMap < QString, QString > & );
 	 bool loadModel( QMap < QString, QString > & );
 	 bool loadNoises( QMap < QString, QString > & );
+
+	 QString get_filename( QString );
 
 	 void simulateModel( void );
 	 void adjustModel( void );

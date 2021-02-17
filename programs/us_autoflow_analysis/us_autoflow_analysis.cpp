@@ -99,6 +99,7 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   invID              = protocol_details[ "invID_passed" ].toInt();
 
   FileName           = protocol_details[ "filename" ];
+   
   analysisIDs        = protocol_details[ "analysisIDs" ];
 
   sim_msg_pos_x      = protocol_details[ "sim_msg_pos_x" ].toInt();
@@ -336,7 +337,58 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
  
 }
 
+//Parse filename and extract one for given optics type in combined runs
+QString US_Analysis_auto::get_filename( QString triple_name )
+{
+  qDebug() << "FileName -- " << FileName;
+  qDebug() << "triple_name -- " << triple_name;
+ 
+  QString filename_parsed;
+  
+  if ( FileName.contains(",") && FileName.contains("IP") && FileName.contains("RI") )
+    {
+      QStringList fileList  = FileName.split(",");
 
+      //Interference
+      if ( triple_name.contains("Interference") )
+	{
+	  for (int i=0; i<fileList.size(); ++i )
+	    {
+	      QString fname = fileList[i];
+	      int pos = fname.lastIndexOf(QChar('-'));
+	      qDebug() << "IP: pos -- " << pos;
+	      qDebug() << "IP: fname.mid( pos ) -- " << fname.mid( pos );
+	      if ( fname.mid( pos ) == "-IP")
+		{
+		  filename_parsed = fname;
+		  break;
+		}
+	    }
+	}
+      //UV/vis.
+      else
+	{
+	  for (int i=0; i<fileList.size(); ++i )
+	    {
+	      QString fname = fileList[i];
+	      int pos = fname.lastIndexOf(QChar('-'));
+	      qDebug() << "RI: pos -- " << pos;
+	      qDebug() << "RI: fname.mid( pos ) -- " << fname.mid( pos );
+	      if ( fname.mid( pos ) == "-RI")
+		{
+		  filename_parsed = fname;
+		  break;
+		}
+	    }
+	}
+    }
+  else
+    filename_parsed = FileName;
+
+  qDebug() << "Parsed filename: " <<  filename_parsed;
+
+  return filename_parsed;
+}
 
 //Gui update: timer's slot
 void US_Analysis_auto::gui_update( )
@@ -682,7 +734,7 @@ void US_Analysis_auto::gui_update( )
 					tr( "ATTENTION: FITMEN stage reached" ),
 					tr( "FITMET stage for triple %1 will be processed manually." ).arg( triple_curr ) );
 
-
+	    	      
 	      /** To FitMeniscus class -- pass:
 		  1. Name of the triple to title && and possibly to pass to scan_db() method
 		  2. Filename, triple_name
@@ -1377,8 +1429,8 @@ void US_Analysis_auto::simulateModel( )
   qDebug() << "SimulateModel: --- 2";
   
   
-  QString tmst_fpath = US_Settings::resultDir() + "/" + FileName + "/"
-    + FileName + ".time_state.tmst";
+  QString tmst_fpath = US_Settings::resultDir() + "/" + FileName_parsed + "/"
+    + FileName_parsed + ".time_state.tmst";
   QFileInfo check_file( tmst_fpath );
   simparams.sim      = ( edata->channel == "S" );
   
@@ -2006,12 +2058,16 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
 
   tripleInfo = ": " + triple_n + " (" + stage_n + ")";
 
+  //Parse filename
+  FileName_parsed = get_filename( triple_n );
+  qDebug() << "In show_overlay(): FileName_parsed: " << FileName_parsed;
+  
   //LoadData
   QMap< QString, QString > triple_info_map;
   triple_info_map[ "triple_name" ]     = triple_n;
   triple_info_map[ "stage_name" ]      = stage_n;
   triple_info_map[ "invID" ]           = QString::number(invID);
-  triple_info_map[ "filename" ]        = FileName;
+  triple_info_map[ "filename" ]        = FileName_parsed;
 
   dataLoaded = false;
   buffLoaded = false;
@@ -2027,8 +2083,8 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
 
   
   // Get speed steps from DB experiment (and maybe timestate)
-  QString tmst_fpath = US_Settings::resultDir() + "/" + FileName + "/"
-    + FileName + ".time_state.tmst";
+  QString tmst_fpath = US_Settings::resultDir() + "/" + FileName_parsed + "/"
+    + FileName_parsed + ".time_state.tmst";
 
   US_Passwd   pw;
   US_DB2*     dbP    = new US_DB2( pw.getPasswd() );
@@ -2036,7 +2092,7 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
   QString     expID;
   int         idExp  = 0;
   query << "get_experiment_info_by_runID"
-	<< FileName
+	<< FileName_parsed
 	<< QString::number(invID);
   dbP->query( query );
   
