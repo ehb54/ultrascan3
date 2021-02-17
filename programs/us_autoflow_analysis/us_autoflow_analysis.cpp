@@ -692,7 +692,7 @@ void US_Analysis_auto::gui_update( )
 	      triple_info_map[ "triple_name_key" ] = triple_curr_key;
 	      triple_info_map[ "requestID" ]       = requestID;
 	      triple_info_map[ "invID" ]           = QString::number(invID);
-	      triple_info_map[ "filename" ]        = FileName;
+	      triple_info_map[ "filename" ]        = filename; // ALEXEY -- NOT 'FileName' for combined runs;
 	      
 	      FitMen = new US_FitMeniscus( triple_info_map );
 	      	      
