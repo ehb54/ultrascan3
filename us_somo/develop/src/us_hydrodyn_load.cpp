@@ -734,9 +734,9 @@ double US_Hydrodyn::calc_vbar_updated( struct PDB_model & model ) {
                         this_mw * spec_psv[ use_name ];
                      delta_mw[ hybrid_name_to_N[ first_atom_map[ "N" ]->hybrid.name ] ] += this_mw;
                      delta_mv[ hybrid_name_to_N[ first_atom_map[ "N" ]->hybrid.name ] ] += this_mv;
+                  } else {
+                     QTextStream( stdout ) << " WARNING: first N in chain has unexpected hybridization " << first_atom_map[ "N" ]->hybrid.name  << endl;
                   }
-               } else {
-                  QTextStream( stdout ) << " WARNING: first N in chain has unexpected hybridization " << first_atom_map[ "N" ]->hybrid.name  << endl;
                }
             }
             {

@@ -170,9 +170,9 @@ void US_Hydrodyn::info_model_residues( const QString & msg, struct PDB_model & m
                         << " model chain first residue N computed delta mw : " << this_mw  << endl
                         << " model chain first residue N computed delta mv : " << this_mv  << endl
                         ;
+                  } else {
+                     TSO << " WARNING: first N in chain has unexpected hybridization " << first_atom_map[ "N" ]->hybrid.name  << endl;
                   }
-               } else {
-                  TSO << " WARNING: first N in chain has unexpected hybridization " << first_atom_map[ "N" ]->hybrid.name  << endl;
                }
             }
             {
