@@ -6766,7 +6766,25 @@ void US_Edit::write_auto( void )
 	}
     }
   //////////////////////////////////////////////////////////
-  
+
+  // ALEXEY: before processing next optics system (if multiple), push triple names to the general triple array:
+  // Also, push channel names into general channel array
+  for ( int i = 0; i < triples.size(); ++i )
+    {
+      //qDebug() << "Triple name: " << triples[i];
+      
+      QString current_triple_name = triples[i];
+      current_triple_name.replace(" / ",".");
+      
+      QStringList triple_parts = current_triple_name.split(".");
+      
+      if ( dataType == "IP" )
+	current_triple_name = triple_parts[0] + "." + triple_parts[1] + "." + QString("Interference");
+      
+      triples_all_optics << current_triple_name;
+      channels_all << triple_parts[0] + "." + triple_parts[1];
+    }
+  //-----------------------------------------------------------------//
   
   if ( autoflow_details[ "status" ]  != "EDIT_DATA"  || isSaved_auto() )
     {
@@ -6777,7 +6795,7 @@ void US_Edit::write_auto( void )
 	      QMessageBox::information( this,
 					tr( "Edit Profiles for Current Optical System Already Saved" ),
 					tr( "It appears that edit profiles for the current optical system are already saved!\n\n"
-					    "The program switch to processing next optical system... " ));
+					    "The program will switch to processing data for the next optical system... " ));
 
 	      cb_triple->disconnect();
 
@@ -6905,23 +6923,23 @@ void US_Edit::write_auto( void )
 
 
 
-   // ALEXEY: before processing next optics system (if multiple), push triple names to the general triple array:
-   // Also, push channel names into general channel array
-   for ( int i = 0; i < triples.size(); ++i )
-     {
-       //qDebug() << "Triple name: " << triples[i];
+   // // ALEXEY: before processing next optics system (if multiple), push triple names to the general triple array:
+   // // Also, push channel names into general channel array
+   // for ( int i = 0; i < triples.size(); ++i )
+   //   {
+   //     //qDebug() << "Triple name: " << triples[i];
        
-       QString current_triple_name = triples[i];
-       current_triple_name.replace(" / ",".");
+   //     QString current_triple_name = triples[i];
+   //     current_triple_name.replace(" / ",".");
       
-       QStringList triple_parts = current_triple_name.split(".");
+   //     QStringList triple_parts = current_triple_name.split(".");
        
-       if ( dataType == "IP" )
-	 current_triple_name = triple_parts[0] + "." + triple_parts[1] + "." + QString("Interference");
+   //     if ( dataType == "IP" )
+   // 	 current_triple_name = triple_parts[0] + "." + triple_parts[1] + "." + QString("Interference");
        
-       triples_all_optics << current_triple_name;
-       channels_all << triple_parts[0] + "." + triple_parts[1];
-     }
+   //     triples_all_optics << current_triple_name;
+   //     channels_all << triple_parts[0] + "." + triple_parts[1];
+   //   }
 
    // Check If all Optical Systems processed:::::::::::::::::::::::::::::
    qDebug() << "SAVING: Optics Type, all_processed:  " << filename_runID_auto << all_processed;
