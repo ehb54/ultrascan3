@@ -206,9 +206,9 @@ bool US_AnaProfile::fromXml( QXmlStreamReader& xmli )
 // AnaProf2DSA subclass constructor
 US_AnaProfile::AnaProf2DSA::AnaProf2DSA()
 {
-   fitrng      = 0.3;
+   fitrng      = 0.03;
    nchan       = 1;
-   grpoints    = 64;
+   grpoints    = 11;
    rfiters     = 5;
    mciters     = 100;
    job1run     = true;
@@ -293,8 +293,10 @@ bool US_AnaProfile::AnaProf2DSA::fromXml( QXmlStreamReader& xmli )
             //job1run        = US_Util::bool_flag( attr.value( "run" ).toString() );
 	    job2run        = US_Util::bool_flag( attr.value( "run" ).toString() );      // ALEXEY; shouldn't it be job2run ?
             job2nois       = attr.value( "noise" ).toString();
-            fitrng         = attr.value( "fit_range" ).toString().toDouble();
-            grpoints       = attr.value( "grid_points" ).toString().toInt();
+            //fitrng         = attr.value( "fit_range" ).toString().toDouble();
+	    fitrng         = attr.value( "meniscus_range" ).toString().toDouble();
+	    //grpoints       = attr.value( "grid_points" ).toString().toInt();
+	    grpoints       = attr.value( "meniscus_points" ).toString().toInt();
          }
          else if ( ename == "job_fitmen" )
          {
@@ -363,14 +365,23 @@ bool US_AnaProfile::AnaProf2DSA::toXml( QXmlStreamWriter& xmlo )
    xmlo.writeAttribute   ( "noise",          job1nois );
    xmlo.writeEndElement  (); // job_2dsa
 
+   //<job_2dsa_fm run="1" noise="(TI+RI Noise)" fit_mb_select="1" meniscus_range="0.03" meniscus_points="11"/> 
    xmlo.writeStartElement( "job_2dsa_fm" );
    xmlo.writeAttribute   ( "run",            US_Util::bool_string(
                                              job2run ) );
    xmlo.writeAttribute   ( "noise",          job2nois );
-   xmlo.writeAttribute   ( "fit_range",      QString::number(
-                                             fitrng ) );
-   xmlo.writeAttribute   ( "grid_points",    QString::number(
-                                             grpoints ) );
+
+   //ALEXEY: not used in autoflow
+   //xmlo.writeAttribute   ( "fit_range",      QString::number(
+   //                                          fitrng ) );
+
+   //xmlo.writeAttribute   ( "grid_points",    QString::number(
+   //                                          grpoints ) );
+   //-------------------------------
+   xmlo.writeAttribute   ( "fit_mb_select",    QString::number( 1 ) );
+   xmlo.writeAttribute   ( "meniscus_range",   QString::number( fitrng ) );
+   xmlo.writeAttribute   ( "meniscus_points",  QString::number( grpoints ) );
+
    xmlo.writeEndElement  (); // job_2dsa_fm
 
    xmlo.writeStartElement( "job_fitmen" );
