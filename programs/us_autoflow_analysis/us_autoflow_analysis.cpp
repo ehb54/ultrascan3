@@ -218,12 +218,13 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       
       QMap <QString, QString > ana_details = jj.value();
 
-      job1run     = false;
-      job2run     = false;
-      job3run     = false;
-      job4run     = false;
-      job5run     = false;
-      job3auto    = false;
+      job1run      = false;
+      job2run      = false;
+      job3run      = false;
+      job4run      = false;
+      job5run      = false;
+      job6run_pcsa = false;
+      job3auto     = false;
 
       QString json = ana_details["status_json"];
       qDebug() << "triple: " << triple_curr << ", status_json: " << json;
