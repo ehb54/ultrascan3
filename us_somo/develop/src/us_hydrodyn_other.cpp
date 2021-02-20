@@ -848,7 +848,7 @@ bool US_Hydrodyn::install_new_version()
 
 void US_Hydrodyn::editor_msg( QString color, QString msg )
 {
-   QColor save_color = editor->textColor();
+   QColor save_color = Qt::black; // editor->textColor();
    editor->setTextColor(color);
    editor->append( msg.replace( QRegExp( "\\n$" ) , "" ) );
    editor->setTextColor(save_color);
@@ -856,8 +856,8 @@ void US_Hydrodyn::editor_msg( QString color, QString msg )
 
 void US_Hydrodyn::editor_msg( QString color, const QFont &font, QString msg )
 {
-   QFont  save_font  = editor->currentFont();
-   QColor save_color = editor->textColor();
+   QFont  save_font  = QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ); // editor->currentFont();
+   QColor save_color = Qt::black; // editor->textColor();
    editor->setCurrentFont(font);
    editor->setTextColor(color);
    editor->append( msg.replace( QRegExp( "\\n$" ) , "" ) );

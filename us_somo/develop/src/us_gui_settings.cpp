@@ -4,13 +4,13 @@
 // Fonts
 QString US_GuiSettings::fontFamily( void )
 {
-  QSettings settings( US3, "UltraScan" );
+  QSettings settings( US3, "US-SOMO" );
   return settings.value( "fontFamily",  "Helvetica" ).toString();
 }
 
 void US_GuiSettings::set_fontFamily( const QString& fontFamily )
 {
-  QSettings settings( US3, "UltraScan" );
+  QSettings settings( US3, "US-SOMO" );
   if ( fontFamily == "Helvetica" )
     settings.remove( "fontFamily" );
   else
@@ -19,13 +19,13 @@ void US_GuiSettings::set_fontFamily( const QString& fontFamily )
 
 int US_GuiSettings::fontSize( void )
 {
-  QSettings settings( US3, "UltraScan" );
+  QSettings settings( US3, "US-SOMO" );
   return settings.value( "fontSize", 10 ).toInt();
 }
 
 void US_GuiSettings::set_fontSize( int fontSize )
 {
-  QSettings settings( US3, "UltraScan" );
+  QSettings settings( US3, "US-SOMO" );
   if ( fontSize == 10 )
     settings.remove( "fontSize" );
   else
@@ -34,7 +34,7 @@ void US_GuiSettings::set_fontSize( int fontSize )
 
 QString US_GuiSettings::guiStyle( void )
 {
-  QSettings settings( US3, "UltraScan" );
+  QSettings settings( US3, "US-SOMO" );
   QString defaultStyle;
   QString os = OS;
   
@@ -47,7 +47,7 @@ QString US_GuiSettings::guiStyle( void )
 
 void US_GuiSettings::set_guiStyle( const QString& style )
 {
-  QSettings settings( US3, "UltraScan" );
+  QSettings settings( US3, "US-SOMO" );
   QString defaultStyle;
   QString os = OS;
   
@@ -64,13 +64,13 @@ void US_GuiSettings::set_guiStyle( const QString& style )
 // Misc
 int US_GuiSettings::plotMargin( void )
 {
-  QSettings settings( US3, "UltraScan" );
+  QSettings settings( US3, "US-SOMO" );
   return settings.value( "plotMargin", 10 ).toInt();
 }
 
 void US_GuiSettings::set_plotMargin( int fontSize )
 {
-  QSettings settings( US3, "UltraScan" );
+  QSettings settings( US3, "US-SOMO" );
   if ( fontSize == 10 )
     settings.remove( "plotMargin" );
   else
@@ -82,7 +82,7 @@ void US_GuiSettings::set_plotMargin( int fontSize )
 // Label
 QPalette US_GuiSettings::labelColor( void )
 {
-  QSettings settings( US3, "UltraScan" );
+  QSettings settings( US3, "US-SOMO" );
   if ( settings.contains( "palettes/labelColor" ) )
     return settings.value( "palettes/labelColor" ).value<QPalette>();
   return labelColorDefault(); 
@@ -117,14 +117,14 @@ QPalette US_GuiSettings::labelColorDefault( void )
 
 void US_GuiSettings::set_labelColor( const QPalette& palette )
 {
-  QSettings settings( US3, "UltraScan" );
+  QSettings settings( US3, "US-SOMO" );
   settings.setValue( "palettes/labelColor", palette );
 }
 
 // Edit
 QPalette US_GuiSettings::editColor( void )
 {
-  QSettings settings( US3, "UltraScan" );
+  QSettings settings( US3, "US-SOMO" );
   if ( settings.contains( "palettes/editColor" ) )
     return settings.value( "palettes/editColor" ).value<QPalette>();
   return editColorDefault();
@@ -183,7 +183,7 @@ QPalette US_GuiSettings::editColorDefault( void )
 
 void US_GuiSettings::set_editColor( const QPalette& palette )
 {
-  QSettings settings( US3, "UltraScan" );
+  QSettings settings( US3, "US-SOMO" );
   settings.setValue( "palettes/editColor", palette );
 }
 
@@ -191,7 +191,7 @@ void US_GuiSettings::set_editColor( const QPalette& palette )
 
 QPalette US_GuiSettings::frameColor( void )
 {
-  QSettings settings( US3, "UltraScan" );
+  QSettings settings( US3, "US-SOMO" );
   if ( settings.contains( "palettes/frameColor" ) )
       return settings.value( "palettes/frameColor" ).value<QPalette>();
   return frameColorDefault();
@@ -229,7 +229,7 @@ QPalette US_GuiSettings::frameColorDefault( void )
 
 void US_GuiSettings::set_frameColor( const QPalette& palette )
 {
-  QSettings settings( US3, "UltraScan" );
+  QSettings settings( US3, "US-SOMO" );
   settings.setValue( "palettes/frameColor", palette );
 }
 
@@ -237,7 +237,7 @@ void US_GuiSettings::set_frameColor( const QPalette& palette )
 
 QPalette US_GuiSettings::pushbColor( void )
 {
-  QSettings settings( US3, "UltraScan" );
+  QSettings settings( US3, "US-SOMO" );
   if ( settings.contains( "palettes/pushbColor" ) )
       return settings.value( "palettes/pushbColor" ).value<QPalette>();
   return pushbColorDefault();
@@ -254,7 +254,7 @@ QPalette US_GuiSettings::pushbColorDefault( void )
   p.setColor( QPalette::Active, QPalette::Dark,       Qt::darkGray   ); // border
   p.setColor( QPalette::Active, QPalette::Shadow,     Qt::black      ); // Between light and dark
 
-  p.setColor( QPalette::Disabled, QPalette::ButtonText, Qt::white    ); // windowText/foreground
+  p.setColor( QPalette::Disabled, QPalette::ButtonText, Qt::red      ); // windowText/foreground
   p.setColor( QPalette::Disabled, QPalette::Button,     bluegreen    ); // background
   p.setColor( QPalette::Disabled, QPalette::Light,      Qt::white    ); // border
   p.setColor( QPalette::Disabled, QPalette::Dark,       Qt::darkGray ); // border
@@ -271,7 +271,7 @@ QPalette US_GuiSettings::pushbColorDefault( void )
 
 void US_GuiSettings::set_pushbColor( const QPalette& palette )
 {
-  QSettings settings( US3, "UltraScan" );
+  QSettings settings( US3, "US-SOMO" );
   settings.setValue( "palettes/pushbColor", palette );
 }
 
@@ -279,7 +279,7 @@ void US_GuiSettings::set_pushbColor( const QPalette& palette )
 
 QPalette US_GuiSettings::normalColor( void )
 {
-  QSettings settings( US3, "UltraScan" );
+  QSettings settings( US3, "US-SOMO" );
   if ( settings.contains( "palettes/normalColor" ) )
       return settings.value( "palettes/normalColor" ).value<QPalette>();
   return normalColorDefault();
@@ -338,14 +338,14 @@ QPalette US_GuiSettings::normalColorDefault( void )
 
 void US_GuiSettings::set_normalColor( const QPalette& palette )
 {
-  QSettings settings( US3, "UltraScan" );
+  QSettings settings( US3, "US-SOMO" );
   settings.setValue( "palettes/normalColor", palette );
 }
 
 // LCD 
 QPalette US_GuiSettings::lcdColor( void )
 {
-  QSettings settings( US3, "UltraScan" );
+  QSettings settings( US3, "US-SOMO" );
   if ( settings.contains( "palettes/lcdColor" ) )
       return settings.value( "palettes/lcdColor" ).value<QPalette>();
   return lcdColorDefault();
@@ -369,14 +369,14 @@ QPalette US_GuiSettings::lcdColorDefault( void )
 
 void US_GuiSettings::set_lcdColor( const QPalette& palette )
 {
-  QSettings settings( US3, "UltraScan" );
+  QSettings settings( US3, "US-SOMO" );
   settings.setValue( "palettes/lcdColor", palette );
 }
 
 // Plot frame
 QPalette US_GuiSettings::plotColor( void )
 {
-  QSettings settings( US3, "UltraScan" );
+  QSettings settings( US3, "US-SOMO" );
   if ( settings.contains( "palettes/plotColor" ) )
       return settings.value( "palettes/plotColor" ).value<QPalette>();
   return plotColorDefault();
@@ -398,7 +398,7 @@ QPalette US_GuiSettings::plotColorDefault( void )
 
 void US_GuiSettings::set_plotColor( const QPalette& palette )
 {
-  QSettings settings( US3, "UltraScan" );
+  QSettings settings( US3, "US-SOMO" );
   settings.setValue( "palettes/plotColor", palette );
 }
 
@@ -406,13 +406,13 @@ void US_GuiSettings::set_plotColor( const QPalette& palette )
 // Plot curve color
 QColor US_GuiSettings::plotCurve( void )
 {
-  QSettings settings( US3, "UltraScan" );
+  QSettings settings( US3, "US-SOMO" );
   return QColor( settings.value( "palettes/plotCurve", QColor( Qt::yellow ) ).toString() );
 }
 
 void US_GuiSettings::set_plotCurve( const QColor& color )
 {
-  QSettings settings( US3, "UltraScan" );
+  QSettings settings( US3, "US-SOMO" );
   if ( color == Qt::yellow )
     settings.remove( "palettes/plotCurve" );
   else
@@ -422,13 +422,13 @@ void US_GuiSettings::set_plotCurve( const QColor& color )
 // Canvas background
 QColor US_GuiSettings::plotCanvasBG( void )
 {
-  QSettings settings( US3, "UltraScan" );
+  QSettings settings( US3, "US-SOMO" );
   return QColor( settings.value( "palettes/normalColor", QColor( Qt::darkBlue ) ).toString() );
 }
 
 void US_GuiSettings::set_plotCanvasBG( const QColor& color )
 {
-  QSettings settings( US3, "UltraScan" );
+  QSettings settings( US3, "US-SOMO" );
   if ( color == Qt::darkBlue )
     settings.remove( "palettes/plotCanvasBG" );
   else
@@ -438,13 +438,13 @@ void US_GuiSettings::set_plotCanvasBG( const QColor& color )
 // Canvas major gridlines
 QColor US_GuiSettings::plotMajGrid( void )
 {
-  QSettings settings( US3, "UltraScan" );
+  QSettings settings( US3, "US-SOMO" );
   return QColor( settings.value( "palettes/plotMajGrid", QColor( Qt::white ) ).toString() );
 }
 
 void US_GuiSettings::set_plotMajGrid( const QColor& color )
 {
-  QSettings settings( US3, "UltraScan" );
+  QSettings settings( US3, "US-SOMO" );
   if ( color == Qt::white )
     settings.remove( "palettes/plotMajGrid" );
   else
@@ -454,13 +454,13 @@ void US_GuiSettings::set_plotMajGrid( const QColor& color )
 // Canvas minor gridlines
 QColor US_GuiSettings::plotMinGrid( void )
 {
-  QSettings settings( US3, "UltraScan" );
+  QSettings settings( US3, "US-SOMO" );
   return QColor( settings.value( "palettes/plotMinGrid", QColor( Qt::lightGray ) ).toString() );
 }
 
 void US_GuiSettings::set_plotMinGrid( const QColor& color )
 {
-  QSettings settings( US3, "UltraScan" );
+  QSettings settings( US3, "US-SOMO" );
   if ( color == Qt::lightGray )
     settings.remove( "palettes/plotMinGrid" );
   else
@@ -470,13 +470,13 @@ void US_GuiSettings::set_plotMinGrid( const QColor& color )
 // Plot Picker rubber band pen and Tracker pen color
 QColor US_GuiSettings::plotPicker( void )
 {
-  QSettings settings( US3, "UltraScan" );
+  QSettings settings( US3, "US-SOMO" );
   return QColor( settings.value( "palettes/plotPicker", QColor( Qt::white ) ).toString() );
 }
 
 void US_GuiSettings::set_plotPicker( const QColor& color )
 {
-  QSettings settings( US3, "UltraScan" );
+  QSettings settings( US3, "US-SOMO" );
   if ( color == Qt::white )
     settings.remove( "palettes/plotPicker" );
   else
