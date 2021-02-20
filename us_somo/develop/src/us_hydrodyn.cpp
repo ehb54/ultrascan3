@@ -1522,7 +1522,7 @@ void US_Hydrodyn::setupGUI()
    editor = new QTextEdit(this);
    editor->setPalette( PALET_NORMAL );
    editor->setReadOnly(true);
-   editor->setMinimumWidth(550);
+   editor->setMinimumWidth(600);
 
 #if QT_VERSION < 0x040000
 # if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)

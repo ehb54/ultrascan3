@@ -1789,7 +1789,7 @@ QString US_Hydrodyn::vbar_msg( double vbar, bool only_used ) {
       return
          QString(
                  us_tr(
-                       "Vbar used                        : %1 [cm^3/g] @ %2 [%3C]\n"
+                       "Vbar used                        : %1 [cm^3/g] @ %2%3C\n"
                        )
                  )
          .arg( partvol, 5, 'f', 3, '0' )
@@ -1802,9 +1802,9 @@ QString US_Hydrodyn::vbar_msg( double vbar, bool only_used ) {
       return
          QString(
                  us_tr(
-                       "Vbar calculated                  : %1 [cm^3/g] @ %2 [%3C]\n"
-                       "Vbar measured                    : %4 [cm^3/g] @ %5 [%6C]\n"
-                       "Vbar used                        : %7 [cm^3/g] @ %8 [%9C]\n"
+                       "Vbar calculated                  : %1 [cm^3/g] @ %2%3C\n"
+                       "Vbar measured                    : %4 [cm^3/g] @ %5%6C\n"
+                       "Vbar used                        : %7 [cm^3/g] @ %8%9C\n"
                        )
                  )
          .arg( vbar, 5, 'f', 3, '0' )
@@ -1823,8 +1823,8 @@ QString US_Hydrodyn::vbar_msg( double vbar, bool only_used ) {
    return
       QString(
               us_tr(
-                    "Vbar calculated                  : %1 [cm^3/g] @ %2 [%3C]\n"
-                    "Vbar used                        : %4 [cm^3/g] @ %5 [%6C]\n"
+                    "Vbar calculated                  : %1 [cm^3/g] @ %2%3C\n"
+                    "Vbar used                        : %4 [cm^3/g] @ %5%6C\n"
                     )
               )
       .arg( vbar, 5, 'f', 3, '0' )
@@ -1901,7 +1901,7 @@ QString US_Hydrodyn::visc_dens_msg( bool only_used ) {
                        "Manual flag set\n"
                        "Stored solvent name      %1\n"
                        "Stored solvent viscosity %2 [cP]\n"
-                       "Stored solvent density   %3 [g/ml] @ %4 [%5C]\n"
+                       "Stored solvent density   %3 [g/ml] @ %4%5C\n"
                        )
                  )
          .arg( hydro.solvent_name )
@@ -1916,8 +1916,8 @@ QString US_Hydrodyn::visc_dens_msg( bool only_used ) {
             QString(
                     us_tr(
                           "Stored solvent name      %1\n"
-                          "Used   solvent viscosity %2 [cP] @ %3 [%4C]\n"
-                          "Used   solvent density   %5 [g/ml] @ %6 [7C]\n"
+                          "Used   solvent viscosity %2 [cP] @ %3%4C\n"
+                          "Used   solvent density   %5 [g/ml] @ %6[%7C]\n"
                           )
                     )
             .arg( hydro.solvent_name )
@@ -1934,9 +1934,9 @@ QString US_Hydrodyn::visc_dens_msg( bool only_used ) {
                  us_tr(
                        "Stored solvent name      %1\n"
                        "Stored solvent viscosity %2 [cP]\n"
-                       "Used   solvent viscosity %3 [cP] @ %4 [%5C]\n"
+                       "Used   solvent viscosity %3 [cP] @ %4%5C\n"
                        "Stored solvent density   %6 [g/ml]\n"
-                       "Used   solvent density   %7 [g/ml] @ %8 [%9C]\n"
+                       "Used   solvent density   %7 [g/ml] @ %8%9C\n"
                        )
                  )
          .arg( hydro.solvent_name )
@@ -1986,19 +1986,6 @@ QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *m
       .arg( le_pH->text() )
       ;
 
-   if ( model->molar_volume > 0 ) {
-      qs +=
-         QString(
-                 us_tr(
-                       "Molar volume                     : %1 [cm^3/mol] @ %2 [%3C]\n"
-                       )
-                 )
-         .arg( model->molar_volume )
-         .arg( 20 )
-         .arg( DEGREE_SYMBOL )
-         ;
-   }
-
    qs +=
       QString(
               us_tr(
@@ -2008,13 +1995,26 @@ QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *m
             .arg( model->mw + model->ionized_mw_delta )
       ;
 
+   if ( model->molar_volume > 0 ) {
+      qs +=
+         QString(
+                 us_tr(
+                       "Molar volume                     : %1 [cm^3/mol] @ %2%3C\n"
+                       )
+                 )
+         .arg( model->molar_volume )
+         .arg( 20 )
+         .arg( DEGREE_SYMBOL )
+         ;
+   }
+
    qs += vbar_msg( model->vbar );
 
    if ( hydro.temperature != 20 ) {
       qs +=
          QString(
                  us_tr(
-                       "Molecular vol. (from vbar)       : %1 [A^3] @ %2 [%3C]\n"
+                       "Molecular vol. (from vbar)       : %1 [A^3]%2%3C\n"
                        )
                  )
          .arg( mw_to_volume( model->mw + model->ionized_mw_delta, model->vbar ) )
@@ -2026,7 +2026,7 @@ QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *m
    qs +=
       QString(
               us_tr(
-                    "Molecular vol. (from vbar)       : %1 [A^3] @ %2 [%3C]\n"
+                    "Molecular vol. (from vbar)       : %1 [A^3] @ %2%3C\n"
                     "Molecular vol. (SAXS excl. vol.) : %4 [A^3]\n"
                     "Radius of gyration               : %5 [A]\n"
                     "Number of electrons              : %6\n"
