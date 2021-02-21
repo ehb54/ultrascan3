@@ -669,7 +669,7 @@ void US_Hydrodyn::read_residue_file() {
    // }
 }
 
-#define DEBUG_VBAR
+// #define DEBUG_VBAR
 double US_Hydrodyn::calc_vbar_updated( struct PDB_model & model ) {
    int chains   = (int) model.molecule.size();
    int residues = (int) model.residue .size();
@@ -773,24 +773,29 @@ double US_Hydrodyn::calc_vbar_updated( struct PDB_model & model ) {
       double total_mw = mw;
       double total_mv = mv;
       
+#if defined( DEBUG_VBAR )
       QTextStream( stdout )
          << "--------------------------------------------------------------------------------\n"
          << "calc_vbar_updated() vbar calculation" << endl
          << "mw residues        : " << mw << endl
          << "mv residues        : " << mv << endl
          ;
+#endif
 
       for ( auto it = delta_mw.begin();
             it != delta_mw.end();
             ++it ) {
+#if defined( DEBUG_VBAR )
          QTextStream( stdout )
             <<  "mw " << it->first << "'s            : " << it->second << endl
             <<  "mv " << it->first << "'s            : " << delta_mv[ it->first ] << endl
             ;
+#endif
          total_mw += it->second;
          total_mv += delta_mv[ it->first ];
       }
       
+#if defined( DEBUG_VBAR )
       QTextStream( stdout )
          << "total mw            : " << total_mw << endl
          << "total mv            : " << total_mv << endl
@@ -798,6 +803,7 @@ double US_Hydrodyn::calc_vbar_updated( struct PDB_model & model ) {
          << "total mv + covolume : " << ( total_mv + covolume ) << endl
          << "vbar                : " << (( total_mv + covolume ) / total_mw ) << endl
          ;
+#endif
       molar_volume = total_mv + covolume;
       vbar = molar_volume / total_mw;
    }
@@ -2145,8 +2151,8 @@ void US_Hydrodyn::calc_mw()
       // info_model_vector_mw( QString( "before create_beads calc_mw() : model_vector" ), model_vector, true );
       create_beads(&error_string, true);
       // info_model_vector_mw( QString( "after create_beads calc_mw() : model_vector" ), model_vector, true );
-      // info_mw( QString( "after create_beads in calc_mw() : model_vector[ %1 ]" ).arg( i ), model_vector[ i ], true );
       // info_model_residues( "before calc_vbar in calc_mw()", model_vector[ i ] );
+      // info_mw( QString( "after create_beads in calc_mw() : model_vector[ %1 ]" ).arg( i ), model_vector[ i ], true );
       calc_vbar( & model_vector[ i ], true );
       // info_model_residues( "after calc_vbar in calc_mw()", model_vector[ i ] );
       // info_mw( QString( "after calc_vbar in calc_mw() : model_vector[ %1 ]" ).arg( i ), model_vector[ i ], true );
@@ -2452,7 +2458,7 @@ void US_Hydrodyn::calc_mw()
    current_model = save_current_model;
    // info_model_vector_mw( QString( "after calc_mw() : model_vector" ), model_vector, true );
    // info_model_vector( QString( "after calc_mw() : model_vector" ), model_vector );
-   // info_mw( QString( "after calc_mw() : model_vector" ), model_vector, false );
+   // info_mw( QString( "after calc_mw() : model_vector" ), model_vector, true );
    // info_residue_protons_electrons_at_pH( le_pH->text().toDouble(),  model_vector[ 0 ] );
 }
 

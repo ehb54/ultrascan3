@@ -310,7 +310,7 @@ double US_Hydrodyn::compute_isoelectric_point( const struct PDB_model & model ) 
          middle          = 0.5 * ( start + end );
          double start_p  = protons_at_pH( start , model ) - model.num_elect;
          double middle_p = protons_at_pH( middle, model ) - model.num_elect;
-         double end_p    = protons_at_pH( end   , model ) - model.num_elect;
+         // double end_p    = protons_at_pH( end   , model ) - model.num_elect;
          // if ( !(iter % 50) ) {
          //    QTextStream( stdout )
          //       << QString("").sprintf(
@@ -431,7 +431,26 @@ map < QString, struct atom * > US_Hydrodyn::first_residue_atom_map( struct PDB_c
    }
    return result;
 }
-      
+
+map < QString, int > US_Hydrodyn::first_residue_PDB_atom_map( struct PDB_chain & chain ) {
+   map < QString, int > result;
+   int atoms = (int) chain.atom.size();
+   if ( !atoms ) {
+      return result;
+   }
+   QString resName = chain.atom[ 0 ].resName;
+   QString resSeq  = chain.atom[ 0 ].resSeq;
+   
+   for ( int i = 0; i < atoms; ++i ) {
+      if ( i && ( resName != chain.atom[ i ].resName ||
+                  resSeq  != chain.atom[ i ].resSeq ) ) {
+         return result;
+      }
+      result[ chain.atom[ i ].name ] = i;
+   }
+   return result;
+}
+
 map < QString, struct atom * > US_Hydrodyn::last_residue_atom_map( struct PDB_chain & chain ) {
    map < QString, struct atom * > result;
    int atoms = (int) chain.atom.size();

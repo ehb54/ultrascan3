@@ -2931,9 +2931,42 @@ int US_Hydrodyn::create_beads(QString *error_string, bool quiet)
              tot_bead_mw);
    }
 
+   // fix N1
+   for ( int j = 0; j < (int) model_vector[current_model].molecule.size (); ++j ) {
+      fix_N1_non_pbr( model_vector[ j ] );
+   }
+
    return 0;
 }
 
+void US_Hydrodyn::fix_N1_non_pbr( struct PDB_model & model ) {
+   int chains   = (int) model.molecule.size();
+   map < QString, QString > hybrid_name_to_N = { { "N3H0", "N1-" },
+                                                 { "N3H1", "N1" } };
+   for ( int j = 0; j < chains; ++j ) {
+      int atoms = (int) model.molecule[ j ].atom.size();
+      if ( atoms ) {
+         map < QString, struct atom * > first_atom_map = first_residue_atom_map( model.molecule[ j ] );
+         if ( first_atom_map.count( "N" )
+              && hybrid_name_to_N.count( first_atom_map[ "N" ]->hybrid.name )
+              && multi_residue_map.count( hybrid_name_to_N[ first_atom_map[ "N" ]->hybrid.name ] )
+              && multi_residue_map[ hybrid_name_to_N[ first_atom_map[ "N" ]->hybrid.name ] ].size()
+              ) {
+            map < QString, int > atompos_map = first_residue_PDB_atom_map( model.molecule[ j ] );
+            if ( atompos_map.count( "N" ) ) {
+               int atompos = atompos_map[ "N" ];
+               int respos = multi_residue_map[ hybrid_name_to_N[ first_atom_map[ "N" ]->hybrid.name ] ][0];
+               model.molecule[ j ].atom[ atompos ].p_residue        = & ( residue_list[ respos ] );
+               model.molecule[ j ].atom[ atompos ].p_atom           = & ( residue_list[ respos ].r_atom[0] );
+               model.molecule[ j ].atom[ atompos ].mw               = model.molecule[ j ].atom[ atompos ].p_atom->hybrid.mw;
+               model.molecule[ j ].atom[ atompos ].ionized_mw_delta = model.molecule[ j ].atom[ atompos ].p_atom->hybrid.ionized_mw_delta;
+            } else {
+               QTextStream( stderr ) << "US_Hydrodyn::fix_N1_non_pbr no 'N' atom found in PDB_chain";
+            }
+         }
+      }
+   }
+}        
 
 
 # define POP_MC              (1 << 0)

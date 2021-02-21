@@ -270,6 +270,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       map < QString, struct atom * > residue_atom_map( struct residue & residue_entry );
       map < QString, struct atom * > first_residue_atom_map( struct PDB_chain & chain );
       map < QString, struct atom * > last_residue_atom_map( struct PDB_chain & chain );
+      map < QString, int >           first_residue_PDB_atom_map( struct PDB_chain & chain );
       
       vector < PDB_atom > exposed_model( const vector < PDB_atom > & model );
       
@@ -328,6 +329,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       map < QString, double >                                   hybrid_to_protons;   // for calculating net charge
       map < QString, double >                                   hybrid_to_electrons; // for calculating net charge
       void read_hybrid_file( QString filename );
+      
+      void fix_N1_non_pbr( struct PDB_model & model );
 
       // info routines (in us_hydrodyn_info.cpp
 
