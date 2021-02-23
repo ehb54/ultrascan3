@@ -79,6 +79,8 @@ class US_UTIL_EXTERN US_AnaProfile
             QString     job2nois;        //!< 2DSA-FM noise type
             QString     job4nois;        //!< 2DSA-IT noise type
 
+	    QString     fmb;
+	   
             QVector< Parm2DSA >  parms;  //!< Channel 2DSA parameter values
             
 /*

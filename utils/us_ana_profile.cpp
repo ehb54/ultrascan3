@@ -221,6 +221,8 @@ US_AnaProfile::AnaProf2DSA::AnaProf2DSA()
    job2nois    = "both";
    job4nois    = "both";
 
+   fmb         = "fm";
+
    parms.clear();
    Parm2DSA parm1;
    parms << parm1;
@@ -297,6 +299,15 @@ bool US_AnaProfile::AnaProf2DSA::fromXml( QXmlStreamReader& xmli )
 	    fitrng         = attr.value( "meniscus_range" ).toString().toDouble();
 	    //grpoints       = attr.value( "grid_points" ).toString().toInt();
 	    grpoints       = attr.value( "meniscus_points" ).toString().toInt();
+
+	    //fit m|b
+	    int fmb_n      = attr.value( "fit_mb_select" ).toString().toInt();
+	    if ( fmb_n == 1 )
+	      fmb = "fm";
+	    if ( fmb_n == 2 )
+	      fmb = "fb";
+	    if ( fmb_n == 3 )
+	      fmb = "fmb";
          }
          else if ( ename == "job_fitmen" )
          {
@@ -378,7 +389,15 @@ bool US_AnaProfile::AnaProf2DSA::toXml( QXmlStreamWriter& xmlo )
    //xmlo.writeAttribute   ( "grid_points",    QString::number(
    //                                          grpoints ) );
    //-------------------------------
-   xmlo.writeAttribute   ( "fit_mb_select",    QString::number( 1 ) );
+   int fmb_n=1;
+   if ( fmb == "fm" )
+     fmb_n = 1;
+   if ( fmb == "fb" )
+     fmb_n = 2;
+   if ( fmb == "fmb" )
+     fmb_n = 3;
+   
+   xmlo.writeAttribute   ( "fit_mb_select",    QString::number( fmb_n ) );
    xmlo.writeAttribute   ( "meniscus_range",   QString::number( fitrng ) );
    xmlo.writeAttribute   ( "meniscus_points",  QString::number( grpoints ) );
 

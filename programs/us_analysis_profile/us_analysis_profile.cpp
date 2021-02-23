@@ -1090,6 +1090,25 @@ US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
    QLabel*  lb_j4iter  = us_label ( tr( "Refinement Iterations" ) );
    QLabel*  lb_j5iter  = us_label ( tr( "Monte-Carlo Iterations" ) );
 
+   //QGroupBox for Fit meniscus/bottom options
+   meniscus_box = new QGroupBox(tr("Fit Meniscus | Bottom"));
+   meniscus_box-> setStyleSheet( "QGroupBox { font: bold;  background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #E0E0E0, stop: 1 #FFFFFF); border: 2px solid gray; border-radius: 10px; margin-top: 10px; margin-bottom: 10px; padding-top: 5px; } QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; left: 10px; margin: 0 5px; background-color: black; color: white; padding: 0 3px;}  QGroupBox::indicator { width: 13px; height: 13px; border: 1px solid grey; background-color: rgba(204, 204, 204, 255);} QGroupBox::indicator:hover {background-color: rgba(235, 235, 235, 255);} QLabel {background-color: rgb(105,105,105);}");
+
+   QRadioButton *fm  = new QRadioButton(tr("Fit Meniscus"));
+   fm-> setObjectName("fm");
+   QRadioButton *fb  = new QRadioButton(tr("Fit Bottom"));
+   fb-> setObjectName("fb");
+   QRadioButton *fmb = new QRadioButton(tr("Fit Meniscus and Bottom"));
+   fmb-> setObjectName("fmb");
+   
+   fm->setChecked(true);
+   QVBoxLayout *vbox = new QVBoxLayout;
+   vbox->addWidget(fm);
+   vbox->addWidget(fb);
+   vbox->addWidget(fmb);
+   vbox->addStretch(1);
+   meniscus_box->setLayout(vbox);
+    
 //   int ihgt            = lb_smin->height();
 //   QSpacerItem* spacer1 = new QSpacerItem( 20, ihgt );
 
@@ -1176,20 +1195,27 @@ US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
    genL->addWidget( ck_j1run,   row,    2, 1,  1 );
    genL->addWidget( lb_j1nois,  row++,  3, 1,  2 );
    genL->addWidget( lb_jname2,  row,    0, 1,  2 );
+
    genL->addWidget( ck_j2run,   row,    2, 1,  1 );
    genL->addWidget( lb_j2nois,  row,    3, 1,  2 );
    genL->addWidget( lb_j2gpts,  row,    5, 1,  2 );
    genL->addWidget( le_j2gpts,  row,    7, 1,  1 );
-   genL->addWidget( lb_j2mrng,  row,    8, 1,  2 );
-   genL->addWidget( le_j2mrng,  row++, 10, 1,  1 );
+   //Meniscus/bottom fit
+   genL->addWidget( meniscus_box,  row++,  9, 4,  2 );
+   genL->addWidget( lb_j2mrng,  row,    5, 1,  2 );
+   genL->addWidget( le_j2mrng,  row++,  7, 1,  1 );
+
    genL->addWidget( lb_jname3,  row,    0, 1,  2 );
    genL->addWidget( ck_j3run,   row,    2, 1,  1 );
    genL->addWidget( ck_j3auto,  row++,  5, 1,  2 );
+   
+      
    genL->addWidget( lb_jname4,  row,    0, 1,  2 );
    genL->addWidget( ck_j4run,   row,    2, 1,  1 );
    genL->addWidget( lb_j4nois,  row,    3, 1,  2 );
    genL->addWidget( lb_j4iter,  row,    5, 1,  2 );
    genL->addWidget( le_j4iter,  row++,  7, 1,  1 );
+ 
    genL->addWidget( lb_jname5,  row,    0, 1,  2 );
    genL->addWidget( ck_j5run,   row,    2, 1,  1 );
    genL->addWidget( lb_j5iter,  row,    5, 1,  2 );

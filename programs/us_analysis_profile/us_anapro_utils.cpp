@@ -790,6 +790,16 @@ DbgLv(1) << "AP2d:inP:  parms_to_gui complete";
    ck_j5run ->setChecked( ap2DSA->job5run );
    ck_j3auto->setChecked( ap2DSA->job3auto );
 
+   //ALEXEY: fit M|B
+   foreach (QRadioButton *button, meniscus_box->findChildren<QRadioButton*>())
+     {
+       if ( button->objectName() == ap2DSA->fmb )
+	 {
+	   button->setChecked( true );
+	   break;
+	 }
+     }
+
    bool was_changed     = changed;       // Save changed state
    changed              = was_changed;   // Restore changed state
 }
@@ -819,6 +829,19 @@ DbgLv(1) << "AP2d:svP: nparm" << nparm << "cchx" << cchx;
    ap2DSA->job1nois     = tr( "(TI Noise)" );
    ap2DSA->job2nois     = tr( "(TI+RI Noise)" );
    ap2DSA->job4nois     = tr( "(TI+RI Noise)" );
+
+   //ALEXEY: FM|B radio butttons
+   foreach (QRadioButton *button, meniscus_box->findChildren<QRadioButton*>())
+     {
+       if (button->isChecked())
+	 {
+	   ap2DSA->fmb = button->objectName();
+	   break;
+	 }
+     }
+   
+   
+   
 DbgLv(1) << "AP2d:svP:   runs:"
  << ap2DSA->job1run << ap2DSA->job2run << ap2DSA->job3run
  << ap2DSA->job4run << ap2DSA->job5run;
