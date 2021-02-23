@@ -1923,6 +1923,10 @@ void US_FeMatch::load_noise( )
    int noisdf  = US_Settings::noise_dialog();
    int nenois  = lnoise.count_noise( !loadDB, edata, &model,
          mieGUIDs, nieGUIDs );
+   
+   qDebug() << "load_noise(): mieGUIDs, nieGUIDs, editGUID, modelGUID -- " <<  mieGUIDs << nieGUIDs << editGUID << modelGUID;
+   qDebug() << "load_noise(): !loadDB, noisdf, nenois -- " << !loadDB << noisdf << nenois;
+   
    if ( nenois > 0 )
    {  // There is/are noise(s):  ask user if she wants to load
       US_Passwd pw;

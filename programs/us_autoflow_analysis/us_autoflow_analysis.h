@@ -90,6 +90,15 @@ class US_Analysis_auto : public US_Widgets
 	 QList< US_Model >             tmodels;
 	 QVector< int >                kcomps;
 
+
+	 QStringList noiIDs;      // Noise GUIDs
+	 QStringList noiEdIDs;    // Noise edit GUIDs
+	 QStringList noiMoIDs;    // Noise model GUIDs
+	 QStringList noiTypes;    // Noise types
+	 QStringList modIDs;      // Model GUIDs
+	 QStringList modEdIDs;    // Model edit GUIDs
+	 QStringList modDescs;    // Model descriptions
+
 	 int           thrdone;
 	 
 	 double       density;
@@ -164,6 +173,13 @@ class US_Analysis_auto : public US_Widgets
 	 bool loadData( QMap < QString, QString > & );
 	 bool loadModel( QMap < QString, QString > & );
 	 bool loadNoises( QMap < QString, QString > & );
+	 void loadNoises_whenAbsent ( void );
+	 int  count_noise_auto( US_DataIO::EditedData*, US_Model*,
+				QStringList&, QStringList& );
+
+	 int id_list_db_auto( QString );
+	 int models_in_edit_auto( QString, QStringList& );
+	 int noises_in_model_auto( QString, QStringList& );
 
 	 QString get_filename( QString );
 
