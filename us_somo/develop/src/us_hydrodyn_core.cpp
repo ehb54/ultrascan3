@@ -2732,7 +2732,6 @@ int US_Hydrodyn::create_beads(QString *error_string, bool quiet)
                   this_atom->mw          += delta_mw;
                   this_atom->bead_ref_mw += delta_mw;
                }
-
                
                if ( advanced_config.debug_1 ||
                     advanced_config.debug_2 )
@@ -2949,9 +2948,7 @@ int US_Hydrodyn::create_beads(QString *error_string, bool quiet)
    }
 
    // fix N1
-   for ( int j = 0; j < (int) model_vector[current_model].molecule.size (); ++j ) {
-      fix_N1_non_pbr( model_vector[ j ] );
-   }
+   fix_N1_non_pbr( model_vector[ current_model ] );
 
    return 0;
 }
@@ -2984,7 +2981,6 @@ void US_Hydrodyn::fix_N1_non_pbr( struct PDB_model & model ) {
       }
    }
 }        
-
 
 # define POP_MC              (1 << 0)
 # define POP_SC              (1 << 1)
