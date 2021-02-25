@@ -127,10 +127,10 @@ DbgLv(1) << "Main: BB";
    sb_order->setPalette( US_GuiSettings::editColor() );
    sb_order->setToolTip( tr( "Order of fitting curve" ) );
 
-   le_men_lor   = us_lineedit( "", -1, false );
+   le_men_lor   = us_lineedit( "", -1, true );
    le_men_lor->setToolTip(
          tr( "Selected-minimum meniscus radius value" ) );
-   le_bot_lor   = us_lineedit( "", -1, false );
+   le_bot_lor   = us_lineedit( "", -1, true );
    le_bot_lor->setToolTip(
          tr( "Selected-minimum bottom radius value" ) );
    le_men_fit   = us_lineedit( "", -1, false );
@@ -292,18 +292,18 @@ DbgLv(1) << "Main: BB";
    reset();
    
    // Hide /////
-   lb_men_lor ->hide();
-   le_men_lor ->hide();
-   lb_men_fit ->hide();
-   le_men_fit ->hide();
-   lb_zfloor  ->hide();
-   ct_zfloor  ->hide();
-   lb_bot_lor ->hide();
-   le_bot_lor ->hide();
-   lb_bot_fit ->hide();
-   le_bot_fit ->hide();
-   lb_mprads  ->hide();
-   le_mprads  ->hide();
+   // lb_men_lor ->hide();
+   // le_men_lor ->hide();
+   // lb_men_fit ->hide();
+   // le_men_fit ->hide();
+   // lb_zfloor  ->hide();
+   // ct_zfloor  ->hide();
+   // lb_bot_lor ->hide();
+   // le_bot_lor ->hide();
+   // lb_bot_fit ->hide();
+   // le_bot_fit ->hide();
+   // lb_mprads  ->hide();
+   // le_mprads  ->hide();
    
    pb_scandb  ->hide();   
    pb_invest  ->hide();  
@@ -1211,6 +1211,17 @@ void US_FitMeniscus::plot_2d( void )
 // Update an edit file with a new meniscus and/or bottom radius value
 void US_FitMeniscus::edit_update( void )
 {
+
+  //ALEXEYL if autoflow: check if edit profiles already updated form other FITMEN session
+  if ( auto_mode )
+    {
+      //Check autoflowAnalysis's record nextWaitStatus = 'COMPLETE', nextWaitStatusMsg = 'The manual stage has been completed'
+      //for requestID: triple_information[ "requestID" ]
+      //What if autoflowAnalysis record does not exist anymore?
+      //if yes, inform user, close and return to 5. ANALYSIS normally
+      //return;
+    }
+  
 #define MENI_HIGHVAL 7.0
 #define BOTT_LOWVAL 7.0
    QString fn = filedir + "/" + fname_edit;
@@ -1831,7 +1842,8 @@ void US_FitMeniscus::get_editProfile_copy( QMap < QString, QString > & triple_in
 qDebug() << "EditProfile filename / EditDataID: " << fn.key() << "/" << fn.value();
       QString filename = fn.key();
       int editedDataID = fn.value();
-      
+
+      QString dirpath  = US_Settings::resultDir() + "/" + triple_information[ "filename" ];
       QString filepath = US_Settings::resultDir() + "/" + triple_information[ "filename" ] + "/" + filename;
 
       // Can check here if such filename exists
@@ -1839,7 +1851,12 @@ qDebug() << "EditProfile filename / EditDataID: " << fn.key() << "/" << fn.value
       if ( check_file.exists() && check_file.isFile() )
 qDebug() << "EditProfile file: " << filepath << " exists";
       else
-      db->readBlobFromDB( filepath, "download_editData", editedDataID );
+	{
+	  if ( !QDir( dirpath ).exists() )
+	    QDir().mkdir( dirpath );
+	    
+	  db->readBlobFromDB( filepath, "download_editData", editedDataID );
+	}
    }
 }
 
@@ -2476,6 +2493,13 @@ DbgLv(1) << "DbSc:     fittype" << fittype << "fextn" << fextn;
          QString tripleID   = descript.section( '.', -3, -3 );
          QString editLabel  = ansysID .section( '_',  0, -5 );
          QString anType     = ansysID .section( '_',  2, -3 );
+
+	 //ALEXEY: if FMB (fittype==3), anType = "2DSA-FMB"
+	 if ( fittype == 3 )
+	   {
+	     anType = "2DSA-FMB";
+	     qDebug() << "FMB: ";
+	   }
 DbgLv(1) << "DbSc:       anType" << anType << "editLabel" << editLabel << "ansysID" << ansysID;
          QString ftfname    = runID + "/" + anType + "." + editLabel + "."
                               + tripleID + fextn;
@@ -2561,6 +2585,14 @@ DbgLv(1) << "DbSc:    *FIT* " << descript;
          }
 
          QString anType     = ansysID .section( '_',  2, -3 );
+
+	 //ALEXEY: if FMB (fittype==3), anType = "2DSA-FMB"
+	 if ( fittype == 3 )
+	   {
+	     anType = "2DSA-FMB";
+	     qDebug() << "FMB: ";
+	   }
+	 
          QString ftfname    = runID + "/" + anType + "." + editLabel + "."
                               + tripleID + fextn;
          mdescr.description = descript;
