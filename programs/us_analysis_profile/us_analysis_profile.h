@@ -160,6 +160,8 @@ class US_AnaprofPan2DSA : public US_WidgetsDialog
       QLineEdit*   le_j4iter;
       QLineEdit*   le_j5iter;
 
+      QGroupBox *  meniscus_box;
+
       QCheckBox*   ck_varyvb;
       QCheckBox*   ck_j1run;
       QCheckBox*   ck_j2run;

@@ -201,11 +201,19 @@ US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const bool auto_mode )
       	 have_ti         = ( ti_noise != 0  &&  ti_noise->count > 0 );
       	 have_ri         = ( ri_noise != 0  &&  ri_noise->count > 0 );
       	 have_bm         = ( resbmap != 0 );
-      	 DbgLv(1) << "RP:edata  " << have_ed;
-      	 DbgLv(1) << "RP:sdata  " << have_sd;
-      	 DbgLv(1) << "RP:ti_noise count" << (have_ti ? ti_noise->count : 0);
-      	 DbgLv(1) << "RP:ri_noise count" << (have_ri ? ri_noise->count : 0);
-      	 DbgLv(1) << "RP:resbmap" << have_bm;
+      	 qDebug() << "RP:edata  " << have_ed;
+      	 qDebug() << "RP:sdata  " << have_sd;
+
+	 qDebug() << "RP:have_ti " << have_ti;
+	 qDebug() << "RP:have_ri " << have_ri;
+
+	 
+      	 qDebug() << "RP:ti_noise count1" << ti_noise->count;
+	 qDebug() << "RP:ri_noise count1" << ri_noise->count;
+	 
+      	 qDebug() << "RP:ti_noise count" << (have_ti ? ti_noise->count : 0);
+      	 qDebug() << "RP:ri_noise count" << (have_ri ? ri_noise->count : 0);
+      	 qDebug() << "RP:resbmap" << have_bm;
 
 	 tripleInfo = aa->aa_tripleInfo();
 	 
