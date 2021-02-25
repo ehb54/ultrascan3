@@ -2048,7 +2048,10 @@ DbgLv(1) << "wrMo:  mc mciter mGUID" << model.monteCarlo << mc_iter
    model.analysis    = type;
    QString runID     = edata->runID;
 
-   if ( fit_meni )
+   if ( fit_menbot )
+      model.global      = US_Model::MENIBOTT;
+
+   else if ( fit_meni )
       model.global      = US_Model::MENISCUS;
 
    else if ( fit_bott )
@@ -2065,7 +2068,7 @@ DbgLv(1) << "wrMo:  mc mciter mGUID" << model.monteCarlo << mc_iter
    else
       model.global      = US_Model::NONE; 
 DbgLv(0) << "wrMo:  is_glob glob_sols" << is_global_fit << glob_sols
- << "f_men f_bot" << fit_meni << fit_bott << "m.glob" << model.global;
+ << "f_men f_bot f_mbo" << fit_meni << fit_bott << fit_menbot << "m.glob" << model.global;
 
    model.meniscus    = meniscus_value;
    model.bottom      = fit_bott ? bottom_value : 0.0;

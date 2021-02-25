@@ -573,10 +573,12 @@ void US_2dsa::save( void )
 DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    bool    fitMeni      = ( model.global == US_Model::MENISCUS );
    bool    fitBott      = ( model.global == US_Model::BOTTOM );
+   bool    fitMeBo      = ( model.global == US_Model::MENIBOTT );
    bool    montCar      = model.monteCarlo;
    QString analysisType = QString( cusGrid ? "2DSA-CG" : "2DSA" )
                         + QString( fitMeni ? "-FM" : "" )
                         + QString( fitBott ? "-FB" : "" )
+                        + QString( fitMeBo ? "-FMB" : "" )
                         + QString( refIter ? "-IT" : "" )
                         + QString( montCar ? "-MC" : "" );
    QString requestID    = "local";
@@ -826,6 +828,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    respath           = respath + "/" + runID + "/";
    QString analybase = fitMeni ? "2DSA-FM" : ( montCar ? "2DSA-MC" : "2DSA" );
    analybase         = fitBott ? "2DSA-FB" : analybase;
+   analybase         = fitMeBo ? "2DSA-FMB" : analybase;
    QString analynode = "/" + analybase + ".";
    QString filebase  = reppath  + analybase + dext + ".";
    QString htmlFile  = filebase + "report.html";
@@ -1205,10 +1208,17 @@ QString US_2dsa::distrib_info()
       QString adate     = "a" + QDateTime::currentDateTime().toUTC()
                           .toString( "yyMMddhhmm" );
       bool    cusGrid   = model.description.contains( "CUSTOMGRID" );
+      bool    refIter   = model.description.contains( "REFITERS" );
       bool    fitMeni   = ( model.global == US_Model::MENISCUS );
+      bool    fitBott   = ( model.global == US_Model::BOTTOM );
+      bool    fitMeBo   = ( model.global == US_Model::MENIBOTT );
       bool    montCar   = model.monteCarlo;
+DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
       QString anType    = QString( cusGrid ? "2DSA-CG" : "2DSA" )
                         + QString( fitMeni ? "-FM" : "" )
+                        + QString( fitBott ? "-FB" : "" )
+                        + QString( fitMeBo ? "-FMB" : "" )
+                        + QString( refIter ? "-IT" : "" )
                         + QString( montCar ? "-MC" : "" );
       maDesc            = adate + "_" + anType + "_local_i01";
    }

@@ -3463,13 +3463,16 @@ DbgLv(1) << "NIE: msetBase" << msetBase;
    if ( msetBase.contains( "2DSA-FM-IT" ) )
    {
       msetBase     = msetBase.replace( "2DSA-FM-IT", "2DSA-FM" );
-DbgLv(1) << "NIE: msetBase" << msetBase;
    }
    if ( msetBase.contains( "2DSA-FB-IT" ) )
    {
       msetBase     = msetBase.replace( "2DSA-FB-IT", "2DSA-FB" );
-DbgLv(1) << "NIE: msetBase" << msetBase;
    }
+   if ( msetBase.contains( "2DSA-FMB-IT" ) )
+   {
+      msetBase     = msetBase.replace( "2DSA-FMB-IT", "2DSA-FMB" );
+   }
+DbgLv(1) << "NIE: msetBase" << msetBase;
    QStringList query;
    QString fname;
    QString noiID;
