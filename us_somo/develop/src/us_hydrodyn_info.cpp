@@ -25,6 +25,71 @@ model_vector_as_loaded
 #define LBD  "--------------------------------------------------------------------------------\n"
 #define LBE  "================================================================================\n"
 
+void US_Hydrodyn::info_bead_models_mw( const QString & msg, const vector < vector < PDB_atom > > & b_models ) {
+   int models = (int) bead_models.size();
+   TSO
+      << LBE
+      << "US_Hydrodyn::info_bead_models_mw()" << endl
+      << msg << endl
+      << "bead_models.size()             : " << models << endl
+      ;
+   for ( int i = 0; i < models; ++i ) {
+      info_bead_models_mw( msg + QString( "model %1" ).arg( i ), b_models[ i ] );
+   }
+}
+   
+void US_Hydrodyn::info_bead_models_mw( const QString & msg, const vector < PDB_atom > & b_model ) {
+   int beads = (int) b_model.size();
+   TSO
+      << LBE
+      << "US_Hydrodyn::info_bead_models_mw()" << endl
+      << msg << endl
+      << "bead_model.size() == beads          : " << beads << endl
+      ;
+   double sum_mw          = 0e0;
+   double sum_bead_mw     = 0e0;
+   double sum_bead_ref_mw = 0e0;
+   for ( int j = 0; j < beads; ++j ) {
+      if ( b_model[ j ].active ) {
+         sum_mw          += b_model[ j ].mw          + b_model[ j ].ionized_mw_delta;
+         if ( b_model[ j ].is_bead ) {
+            sum_bead_mw     += b_model[ j ].bead_mw     + b_model[ j ].bead_ionized_mw_delta;
+            sum_bead_ref_mw += b_model[ j ].bead_ref_mw + b_model[ j ].bead_ref_ionized_mw_delta;
+         }
+      }
+      TSO
+         << LBD
+         << "  bead model bead                           : " << j << endl
+         << "  bead model bead name                      : " << b_model[ j ].name << endl
+         << "  bead model bead resName                   : " << b_model[ j ].resName << endl
+         << "  bead model bead resSeq                    : " << b_model[ j ].resSeq << endl
+         << "  bead model bead mw                        : " << b_model[ j ].mw << endl
+         << "  bead model bead ionized mw delta          : " << b_model[ j ].ionized_mw_delta << endl
+         << "  bead model bead bead_mw                   : " << b_model[ j ].bead_mw << endl
+         << "  bead model bead bead_ionized_mw_delta     : " << b_model[ j ].bead_ionized_mw_delta << endl
+         << "  bead model bead bead_ref_mw               : " << b_model[ j ].bead_ref_mw << endl
+         << "  bead model bead bead_ref_ionized_mw_delta : " << b_model[ j ].bead_ref_ionized_mw_delta << endl
+         << "  bead model bead p_residue                 : " << ( b_model[ j ].p_residue ?
+                                                                  b_model[ j ].p_residue->name : QString( "not set" ) ) << endl
+         << "  bead model bead p_atom                    : " << ( b_model[ j ].p_atom ?
+                                                                  b_model[ j ].p_atom->name : QString( "not set" ) ) << endl
+         << "  bead model bead model_residue_pos         : " << b_model[ j ].model_residue_pos << endl
+         << "  bead model bead bead_assignment           : " << b_model[ j ].bead_assignment << endl
+         ;
+   }
+
+   for ( int j = 0; j < beads; ++j ) {
+      QTextStream( stdout ) << "bead " << j << " mw " << b_model[j].bead_mw + b_model[j].bead_ionized_mw_delta << endl;
+   }
+
+   TSO
+      << LBD
+      << " active sum_mw                  : " << sum_mw << endl
+      << " active bead sum_bead_mw        : " << sum_bead_mw << endl
+      << " active bead sum_bead_ref_mw    : " << sum_bead_ref_mw << endl
+      ;
+}
+
 void US_Hydrodyn::info_model_residues( const QString & msg, struct PDB_model & model ) {
    TSO
       << "US_Hydrodyn::info_model_residues()" << endl
@@ -58,6 +123,7 @@ void US_Hydrodyn::info_model_residues( const QString & msg, struct PDB_model & m
                << "  model chain atom                    : " << k << endl
                << "  model chain atom name               : " << model.molecule[ j ].atom[ k ].name << endl
                << "  model chain atom resName            : " << model.molecule[ j ].atom[ k ].resName << endl
+               << "  model chain atom resSeq             : " << model.molecule[ j ].atom[ k ].resSeq << endl
                << "  model chain atom resSeq             : " << model.molecule[ j ].atom[ k ].resSeq << endl
                << "  model chain atom p_residue          : " << ( model.molecule[ j ].atom[ k ].p_residue ?
                                                                   model.molecule[ j ].atom[ k ].p_residue->name : QString( "not set" ) ) << endl
@@ -790,12 +856,25 @@ void US_Hydrodyn::info_mw( const QString & msg, const struct PDB_model & model, 
 
 
       if ( detail ) {
+         double sum_mw          = 0e0;
+         double sum_bead_mw     = 0e0;
+         double sum_bead_ref_mw = 0e0;
+
          for ( int k = 0; k < atoms; ++k ) {
             // struct PDB_atom
             if ( !model.molecule[ j ].atom[ k ].p_atom ||
                  !model.molecule[ j ].atom[ k ].p_residue ) {
                continue;
             }
+
+            if ( model.molecule[ j ].atom[ k ].active) {
+               sum_mw          += model.molecule[ j ].atom[ k ].mw          + model.molecule[ j ].atom[ k ].ionized_mw_delta;
+               if ( model.molecule[ j ].atom[ k ].is_bead ) {
+                  sum_bead_mw     += model.molecule[ j ].atom[ k ].bead_mw     + model.molecule[ j ].atom[ k ].bead_ionized_mw_delta;
+                  sum_bead_ref_mw += model.molecule[ j ].atom[ k ].bead_ref_mw + model.molecule[ j ].atom[ k ].bead_ref_ionized_mw_delta;
+               }
+            }
+            
             TSO
                << LBD
                << "  model chain atom                                : " << k << endl
@@ -811,8 +890,24 @@ void US_Hydrodyn::info_mw( const QString & msg, const struct PDB_model & model, 
                << "  model chain atom p_atom hybrid radius           : " << model.molecule[ j ].atom[ k ].p_atom->hybrid.radius << endl
                << "  model chain atom p_atom hybrid protons          : " << model.molecule[ j ].atom[ k ].p_atom->hybrid.protons << endl
                << "  model chain atom p_atom hydration               : " << model.molecule[ j ].atom[ k ].p_atom->hydration << endl
+               << "  model chain atom active                         : " << ( model.molecule[ j ].atom[ k ].active ? "yes" : "no" ) << endl
+               << "  model chain atom is_bead                        : " << ( model.molecule[ j ].atom[ k ].is_bead ? "yes" : "no" ) << endl
                ;
+            if ( model.molecule[ j ].atom[ k ].is_bead ) {
+               TSO
+                  << "  model chain atom bead_mw                        : " << model.molecule[ j ].atom[ k ].bead_mw << endl
+                  << "  model chain atom bead_ionized_mw_delta          : " << model.molecule[ j ].atom[ k ].bead_ionized_mw_delta << endl
+                  << "  model chain atom bead_ref_mw                    : " << model.molecule[ j ].atom[ k ].bead_ref_mw << endl
+                  << "  model chain atom bead_ref_ionized_mw_delta      : " << model.molecule[ j ].atom[ k ].bead_ref_ionized_mw_delta << endl
+                  ;
+            }
          }
+         TSO
+            << LBD
+            << " active sum_mw             : " << sum_mw << endl
+            << " active bead sum_bead_mw   : " << sum_bead_mw << endl
+            << " active sum_bead_ref_mw    : " << sum_bead_ref_mw << endl
+            ;
       }
    }
 }

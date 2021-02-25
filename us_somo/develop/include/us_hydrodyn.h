@@ -334,6 +334,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       // info routines (in us_hydrodyn_info.cpp
 
+      void info_bead_models_mw( const QString & msg, const vector < vector < PDB_atom > > & b_models );
+      void info_bead_models_mw( const QString & msg, const vector < PDB_atom > & b_model );
       void info_model_vector( const QString & msg, const vector <struct PDB_model> & models, const set < QString > only_atoms = {} );
       void info_model_residues( const QString & msg, struct PDB_model & model );
       void info_model_vector_mw  ( const QString & msg, const vector <struct PDB_model> & models, bool detail = false );

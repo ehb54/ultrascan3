@@ -756,7 +756,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
             for ( unsigned int i = 0; i < bead_model.size(); ++i )
             {
                PDB_atom *this_atom = &(bead_model[i]);
-               double bead_tot_mw = this_atom->bead_mw + this_atom->bead_ionized_mw_delta;
+               double bead_tot_mw = this_atom->bead_ref_mw + this_atom->bead_ref_ionized_mw_delta;
                cm.axis[ 0 ] += bead_tot_mw * this_atom->bead_coordinate.axis[ 0 ];
                cm.axis[ 1 ] += bead_tot_mw * this_atom->bead_coordinate.axis[ 1 ];
                cm.axis[ 2 ] += bead_tot_mw * this_atom->bead_coordinate.axis[ 2 ];
@@ -773,7 +773,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
             for ( unsigned int i = 0; i < bead_model.size(); ++i )
             {
                PDB_atom *this_atom = &(bead_model[i]);
-               Rg2 += ( this_atom->bead_mw + this_atom->bead_ionized_mw_delta ) * 
+               Rg2 += ( this_atom->bead_ref_mw + this_atom->bead_ref_ionized_mw_delta ) * 
                   ( 
                    ( this_atom->bead_coordinate.axis[ 0 ] - cm.axis[ 0 ] ) *
                    ( this_atom->bead_coordinate.axis[ 0 ] - cm.axis[ 0 ] ) +

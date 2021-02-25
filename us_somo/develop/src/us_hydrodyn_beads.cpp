@@ -220,6 +220,9 @@ int US_Hydrodyn::calc_somo( bool no_ovlp_removal )
    {
       play_sounds(1);
    }
+   // info_model_vector_mw( QString( "after calc_somo() : model_vector" ), model_vector, true );
+   // info_bead_models_mw( QString( "after calc_somo() : model_vector" ), bead_models );
+   progress->reset();
    return 0;
 }
 
@@ -1532,14 +1535,31 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
             return -1;
          }
 
-         // QTextStream( stdout ) << "vdwf: atom name " << this_atom->name << " p_residue->name " << this_atom->p_residue->name << endl;
+         // QTextStream( stdout )
+         //    << "vdwf: atom name " << this_atom->name
+         //    << " p_residue->name " << this_atom->p_residue->name
+         //    << endl;
 
+         QString use_res_name  = this_atom->name != "OXT" ? this_atom->p_residue->name : "OXT";
+         QString use_atom_name = this_atom->p_residue->name == "N1" ? "N1" : this_atom->name;
+
+         if ( !k &&
+              this_atom->name == "N" ) {
+            if ( use_res_name == "PRO" ) {
+               use_res_name = "N1-";
+            } else {
+               use_res_name = "N1";
+            }
+            use_atom_name = use_res_name;
+         }
+              
          QString res_idx =
             QString("%1|%2")
-            .arg(this_atom->name != "OXT" ? this_atom->p_residue->name : "OXT" )
-            .arg(this_atom->p_residue->name == "N1" ? "N1" : this_atom->name);
+            .arg( use_res_name )
+            .arg( use_atom_name )
+            ;
 
-         // QTextStream( stdout ) << "vdwf: res_idx is " << res_idx << " ";
+         // QTextStream( stdout ) << "vdwf: res_idx is " << res_idx << " " << endl;
          
          if ( vdwf.count( res_idx ) ) {
             // QTextStream( stdout ) << "found ionized_mw_delta " << vdwf[ res_idx ].ionized_mw_delta << endl;
@@ -1578,7 +1598,7 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
             }
             // us_qdebug( QString( "bead model radius for %1 = %2" ).arg( res_idx ).arg(  tmp_atom.bead_computed_radius ) );
             // us_qdebug( QString( "bead model mw for %1 = %2" ).arg( res_idx ).arg( this_vdwf.mw ) );
-            
+
             tmp_atom.radius                    = tmp_atom.bead_computed_radius;
             tmp_atom.bead_ref_mw               = this_vdwf.mw;
             tmp_atom.bead_ref_ionized_mw_delta = this_vdwf.ionized_mw_delta;
