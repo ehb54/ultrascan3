@@ -229,8 +229,8 @@ void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
          total_asa += (*model)[i].bead_asa;
          total_ref_asa += (*model)[i].ref_asa;
          total_mass += (*model)[i].bead_ref_mw + (*model)[i].bead_ref_ionized_mw_delta;
-         printf("write_bead_asa model[%d].bead_ref_mw %g\n",
-                i, ((*model)[i].bead_ref_mw) + (*model)[i].bead_ref_ionized_mw_delta);
+         // printf("write_bead_asa model[%d].bead_ref_mw %g\n",
+         //        i, ((*model)[i].bead_ref_mw) + (*model)[i].bead_ref_ionized_mw_delta);
          total_vol += (*model)[i].bead_ref_volume_unhydrated;
 
          QString residue =

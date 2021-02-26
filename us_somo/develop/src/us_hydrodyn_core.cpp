@@ -7256,7 +7256,7 @@ void US_Hydrodyn::bead_check( bool use_threshold, bool message_type, bool vdw, b
 {
    // recheck beads here
 
-   printf("bead recheck use threshold%s\n", use_threshold ? "" : " percent");
+   // printf("bead recheck use threshold%s\n", use_threshold ? "" : " percent");
    active_atoms.clear( );
    for(unsigned int i = 0; i < bead_model.size(); i++) {
       active_atoms.push_back(&bead_model[i]);

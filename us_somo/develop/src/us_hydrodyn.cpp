@@ -3839,7 +3839,7 @@ int US_Hydrodyn::do_calc_hydro()
       return -1;
    }
 
-   printf("back from supc retval %d\n", retval);
+   // printf("back from supc retval %d\n", retval);
    pb_show_hydro_results->setEnabled(retval ? false : true);
    pb_calc_hydro->setEnabled(true);
    pb_calc_zeno->setEnabled(true);

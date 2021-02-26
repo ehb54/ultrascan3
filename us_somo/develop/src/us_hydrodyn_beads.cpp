@@ -560,7 +560,9 @@ int US_Hydrodyn::calc_grid_pdb( bool no_ovlp_removal )
                      grid                 = org_grid;
                      return -1;
                   }
+#if defined(DEBUG)
                   printf("back from grid_atob 0\n"); fflush(stdout);
+#endif
                   if (somo_processed.size() < current_model + 1) {
                      somo_processed.resize(current_model + 1);
                   }
@@ -1288,6 +1290,8 @@ int US_Hydrodyn::calc_grid()
 
 int US_Hydrodyn::calc_vdw_beads()
 {
+   // info_mw( "calc_vdw_beads() start : model_vector", model_vector, true );
+
    citation_build_bead_model( "vdw" );
    {
       int models_selected = 0;
@@ -1307,16 +1311,17 @@ int US_Hydrodyn::calc_vdw_beads()
       QMessageBox::warning( this,
                             us_tr( "Selected model contains XHY residue" ),
                             us_tr( 
-                               "Can not process models that contain the XHY residue.\n"
-                               "These are currently generated only for SAXS/SANS computations\n"
-                               )
+                                  "Can not process models that contain the XHY residue.\n"
+                                  "These are currently generated only for SAXS/SANS computations\n"
+                                   )
                             );
       return -1;
    }
 
    stopFlag = false;
    pb_stop_calc->setEnabled(true);
-   model_vector = model_vector_as_loaded;
+   // wipes out p_atom, no longer used
+   // model_vector = model_vector_as_loaded;
    options_log = "";
    append_options_log_misc();
    bool any_errors = false;
@@ -1339,7 +1344,6 @@ int US_Hydrodyn::calc_vdw_beads()
       delete results_window;
       results_widget = false;
    }
-
 
    // {
    //    double vdw_ot_mult = gparams.count( "vdw_ot_mult" ) ? gparams[ "vdw_ot_mult" ].toDouble() : 0;
@@ -1365,9 +1369,10 @@ int US_Hydrodyn::calc_vdw_beads()
    somo_processed.resize(lb_model->count());
    bead_models.resize(lb_model->count());
 
+
    for ( current_model = 0; current_model < (unsigned int)lb_model->count(); current_model++ ) {
       if ( lb_model->item( current_model )->isSelected() ) {
-         us_qdebug( QString( "in calc_vdw_beads: is selected current model %1" ).arg( current_model ) );
+         // us_qdebug( QString( "in calc_vdw_beads: is selected current model %1" ).arg( current_model ) );
          {
             QString error_string;
             // create bead model from atoms
@@ -1436,7 +1441,8 @@ int US_Hydrodyn::calc_vdw_beads()
       play_sounds(1);
    }
 
-
+   progress->reset();
+   
    return ( any_errors ? -1 : 0 );
 }
 
@@ -1445,6 +1451,8 @@ int US_Hydrodyn::calc_vdw_beads()
 // add global multiplier for OT 
 
 int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
+   // qDebug() << "create_vdw_beads() start current model = " << current_model;
+   // info_mw( "create_vdw_beads() start : model_vector[current_model]", model_vector[current_model], true );
    error_string = "";
    double vdw_ot_mult = gparams.count( "vdw_ot_mult" ) ? gparams[ "vdw_ot_mult" ].toDouble() : 0;
    double vdw_ot_dpct = gparams.count( "vdw_ot_dpct" ) ? gparams[ "vdw_ot_dpct" ].toDouble() : 0;
@@ -1534,10 +1542,15 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
             editor_msg( "red", QString( us_tr( "Internal error: p_residue not set!, contact the developers" ) ) );
             return -1;
          }
+         if ( !this_atom->p_atom) {
+            editor_msg( "red", QString( us_tr( "Internal error: p_atom not set!, contact the developers" ) ) );
+            return -1;
+         }
 
          // QTextStream( stdout )
          //    << "vdwf: atom name " << this_atom->name
          //    << " p_residue->name " << this_atom->p_residue->name
+         //    << " p_atom->hybrid.name " << this_atom->p_atom->hybrid.name
          //    << endl;
 
          QString use_res_name  = this_atom->name != "OXT" ? this_atom->p_residue->name : "OXT";
@@ -1564,7 +1577,13 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
          if ( vdwf.count( res_idx ) ) {
             // QTextStream( stdout ) << "found ionized_mw_delta " << vdwf[ res_idx ].ionized_mw_delta << endl;
             PDB_atom tmp_atom;
-            _vdwf this_vdwf = vdwf[ res_idx ];
+            _vdwf this_vdwf            = vdwf[ res_idx ];
+            // overwrite from p_atom
+            this_vdwf.mw               = this_atom->p_atom->hybrid.mw;
+            this_vdwf.ionized_mw_delta = this_atom->p_atom->hybrid.ionized_mw_delta;
+            this_vdwf.r                = this_atom->p_atom->hybrid.radius;
+            this_vdwf.w                = this_atom->p_atom->hydration;
+            
             if ( this_atom->resName == "WAT" ) {
                this_vdwf.mw = 0.0;
             }

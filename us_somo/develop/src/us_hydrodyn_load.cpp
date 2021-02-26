@@ -3031,6 +3031,7 @@ void US_Hydrodyn::set_ionized_residue_vector( vector < struct residue > & residu
 
    // {
    //    set < QString > only_res = { "LYS", "GLU" };
+   //    // set < QString > only_res = { "DA" };
       
    //    // QTextStream( stdout ) << "******** begin res_vbar, mw map ********" << endl;
 

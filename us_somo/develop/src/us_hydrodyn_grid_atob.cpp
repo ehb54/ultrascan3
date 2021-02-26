@@ -14,6 +14,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 #endif
 
 #undef DEBUG
+// #define DEBUG_ATOB
 
 /*Declaration of new structure types*/
 
@@ -534,7 +535,9 @@ AtoB(PDB * pdb,
       fprintf(stderr, "\n No se puede abrir archivo para escribir!!");
       exit(1);
    }
+#if defined( DEBUG_ATOB )
    printf(">>Writing down correspondance file: %s\n", log_filename);
+#endif
 
    for (n = 1, i = 0; i < npoints_x; i++) 
    {
@@ -826,9 +829,11 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
    /*max box size is slightly (EXP_COEF*100 %) bigger than particle! */
 
 
+#if defined(DEBUG_ASA)
    printf("0 - LMAX_x %f DMAX_x %f\n", LMAX_x, DMAX_z); fflush(stdout);
    printf("0 - LMAX_y %f DMAX_y %f\n", LMAX_y, DMAX_y); fflush(stdout);
    printf("0 - LMAX_z %f DMAX_z %f\n", LMAX_z, DMAX_x); fflush(stdout);
+#endif
 
    long npoints_x = (long) (LMAX_x / use_grid_options->cube_side);
    long npoints_y = (long) (LMAX_y / use_grid_options->cube_side);
@@ -836,9 +841,12 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
    npoints_x++;
    npoints_y++;
    npoints_z++;
+
+#if defined(DEBUG_ASA)
    printf("npoints_x %ld\n", npoints_x);
    printf("npoints_y %ld\n", npoints_y);
    printf("npoints_z %ld\n", npoints_z);
+#endif
 
 #if defined(DEBUG)
    puts("grid_atob 3");
@@ -1018,7 +1026,6 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
       tmp_atom.active                    = 1;
       tmp_atom.normalized_ot_is_valid    = false;
       result_bead_model.push_back(tmp_atom);
-#define DEBUG_ATOB
 #if defined(DEBUG_ATOB)
       printf(
              "after a2b: %d %s %s %s %s %g %g %g %g %g\n"
