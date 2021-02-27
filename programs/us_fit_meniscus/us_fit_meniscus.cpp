@@ -1,6 +1,11 @@
 //! \file us_fit_meniscus.cpp
 //#include <QApplication>
 
+#include <QJsonDocument>
+#include <QJsonValue>
+#include <QJsonArray>
+#include <QJsonObject>
+
 #include "us_fit_meniscus.h"
 #include "us_license_t.h"
 #include "us_license.h"
@@ -1208,19 +1213,137 @@ void US_FitMeniscus::plot_2d( void )
    meniscus_plot->replot();
 }
 
+
+//Read autoflowAnalysis record for given requestID
+QMap< QString, QString> US_FitMeniscus::read_autoflowAnalysis_record( const QString& requestID )
+{
+  QMap <QString, QString> analysis_details;
+
+  US_Passwd pw;
+  US_DB2* db = new US_DB2( pw.getPasswd() );
+  
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+  			    tr( "FitMeniscus: Could not connect to database \n" ) + db->lastError() );
+      return analysis_details;
+    }
+
+  QStringList qry;
+  qry << "read_autoflowAnalysis_record"
+      << requestID;
+  
+  db->query( qry );
+
+  while ( db->next() )
+    {
+      analysis_details[ "requestID" ]      = db->value( 0 ).toString();
+      analysis_details[ "triple_name" ]    = db->value( 1 ).toString();
+      analysis_details[ "cluster" ]        = db->value( 2 ).toString();
+      analysis_details[ "filename" ]       = db->value( 3 ).toString();
+      analysis_details[ "aprofileGUID" ]   = db->value( 4 ).toString();
+      analysis_details[ "invID" ]          = db->value( 5 ).toString();
+      analysis_details[ "CurrentGfacID" ]  = db->value( 6 ).toString();
+      analysis_details[ "currentHPCARID" ] = db->value( 7 ).toString();
+      analysis_details[ "status_json" ]    = db->value( 8 ).toString();
+      analysis_details[ "status" ]         = db->value( 9 ).toString();
+      analysis_details[ "status_msg" ]     = db->value( 10 ).toString();
+      analysis_details[ "create_time" ]    = db->value( 11 ).toString();   
+      analysis_details[ "update_time" ]    = db->value( 12 ).toString();
+      analysis_details[ "create_userd" ]   = db->value( 13 ).toString();
+      analysis_details[ "update_user" ]    = db->value( 14 ).toString();
+      analysis_details[ "nextWaitStatus" ] = db->value( 15 ).toString();
+      analysis_details[ "nextWaitStatusMsg" ] = db->value( 16 ).toString();
+    }
+  
+  return analysis_details;
+}
+
 // Update an edit file with a new meniscus and/or bottom radius value
 void US_FitMeniscus::edit_update( void )
 {
 
-  //ALEXEYL if autoflow: check if edit profiles already updated form other FITMEN session
+  //ALEXEY: if autoflow: check if edit profiles already updated from other FITMEN session
   if ( auto_mode )
     {
-      //Check autoflowAnalysis's record nextWaitStatus = 'COMPLETE', nextWaitStatusMsg = 'The manual stage has been completed'
-      //for requestID: triple_information[ "requestID" ]
-      //What if autoflowAnalysis record does not exist anymore?
-      //if yes, inform user, close and return to 5. ANALYSIS normally
-      //return;
+      QMap <QString, QString> analysis_details;
+      QString requestID = triple_information[ "requestID" ];
+
+      analysis_details = read_autoflowAnalysis_record( requestID );
+
+      if ( !analysis_details.size() )
+	{
+	  //no record, so analysis completed/cancelled and already in the autoflowAnalysisHistory
+
+	  QMessageBox::information( this,
+				    tr( "FITMEN | Triple Analysis already processed" ),
+				    tr( "It appears that FITMEN stage has already been processed by "
+					"a different user from different session and "
+					"the entire analysis for the current triple is completed. \n\n"
+					"The program will return to the autoflow runs dialog where "
+					"you can re-attach to the actual current stage of the run. "));
+					
+	  
+	  emit triple_analysis_processed( );
+	  close();
+	  
+	  return;
+	}
+      else
+	{
+	  //there is an autoflowAnalysis record:
+	  
+	  QString status_gen     = analysis_details["status"];
+	  QString nextWaitStatus = analysis_details[ "nextWaitStatus" ] ;
+	  QString status_json    = analysis_details["status_json"];
+
+	  QJsonDocument jsonDoc = QJsonDocument::fromJson( status_json.toUtf8() );
+	  if (!jsonDoc.isObject())
+	    {
+	      qDebug() << "FITMEN: NOT a JSON Doc !!";
+	      return;
+	    }
+
+	  const QJsonValue &submitted  = jsonDoc.object().value("submitted");          
+	  
+	  //look for FITMEN stage in "submitted" stages
+	  QString stage_name = submitted.toString();
+	  if ( submitted.toString() == "FITMEN" )
+	    {
+	      if ( nextWaitStatus != "WAIT" || status_gen != "WAIT" )
+		{
+		  QMessageBox::information( this,
+					    tr( "FITMEN already processed" ),
+					    tr( "It appears that FITMEN stage has already been processed by "
+						"a different user from different session.\n\n"
+						"The program will return to ANALYSIS tab where "
+						"you can continue to monitor the overall analysis progress." ) );
+		  
+		  emit editProfiles_updated_earlier();
+		  close();
+		  
+		  return;
+		}
+	    }
+	  else
+	    {
+	      //FITMEN is no in "submitted" stages anymore, so it's prcessed:
+	      QMessageBox::information( this,
+					tr( "FITMEN already processed" ),
+					tr( "It appears that FITMEN stage has already been processed by "
+					    "a different user from different session.\n\n"
+					    "The program will return to ANALYSIS tab where "
+					    "you can continue to monitor the overall analysis progress." ) );
+	      
+	      emit editProfiles_updated_earlier();
+	      close();
+	      
+	      return;
+	    }
+	}
     }
+  //-- End check for FITMEN stage status in autoflow ---- //
+  //-- However, it's not complete: upon updating edit profile below, the row needs to be locked while updating --//
   
 #define MENI_HIGHVAL 7.0
 #define BOTT_LOWVAL 7.0

@@ -222,6 +222,8 @@ class US_Analysis_auto : public US_Widgets
 	void reset_auto     ( void );
 
 	void update_autoflowAnalysis_statuses( QMap < QString, QString > & );
+	void editProfiles_updated_earlier( void );
+	void triple_analysis_processed( void );
 
 	void delete_job  ( QString );
 	void show_overlay( QString );
@@ -235,7 +237,8 @@ class US_Analysis_auto : public US_Widgets
 	
       signals:
 	void analysis_update_process_stopped( void );
-	void close_analysissetup_msg( void ); 
+	void close_analysissetup_msg( void );
+	void analysis_back_to_initAutoflow( void );
    
 };
 #endif

@@ -165,6 +165,8 @@ class US_FitMeniscus : public US_Widgets
       void file_loaded(    QString );
       void file_loaded_auto( QMap < QString, QString >& );
       void get_editProfile_copy( QMap < QString, QString >& );
+      QMap< QString, QString> read_autoflowAnalysis_record( const QString& );
+      
       
       void update_disk_db( bool );
       void update_db_edit( QString, QString, QString& );
@@ -184,5 +186,7 @@ class US_FitMeniscus : public US_Widgets
 
    signals:
       void editProfiles_updated( QMap < QString, QString > &);
+      void editProfiles_updated_earlier( void );
+      void triple_analysis_processed( void );
 };
 #endif

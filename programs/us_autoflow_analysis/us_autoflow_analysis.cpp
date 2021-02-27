@@ -755,7 +755,17 @@ void US_Analysis_auto::gui_update( )
 	      /***************************************************************************************************/
 	      connect( FitMen, SIGNAL( editProfiles_updated(  QMap < QString, QString > & ) ),
 		       this, SLOT( update_autoflowAnalysis_statuses (  QMap < QString, QString > &) ) );
-	      
+
+	      connect( FitMen, SIGNAL( editProfiles_updated_earlier( ) ),
+		       this, SLOT( editProfiles_updated_earlier( ) ) );
+
+	      connect( FitMen, SIGNAL( editProfiles_updated_earlier( ) ),
+		       this, SLOT( editProfiles_updated_earlier( ) ) );
+
+	      connect( FitMen, SIGNAL( triple_analysis_processed( ) ),
+		       this, SLOT( triple_analysis_processed( ) ) );
+		      
+		       
 	      FitMen->show();
 
 	      Manual_update[ triple_curr_key ] = true;
@@ -2876,6 +2886,23 @@ void US_Analysis_auto::update_autoflowAnalysis_statuses (  QMap < QString, QStri
   timer_update->start(5000);
 
   qDebug() << "Timer restarted after updating EditProfiles for channel -- " << channel_name;
+}
+
+// slot to update autoflowAnalysis record at fitmen stage WHEN already treated from different session
+void US_Analysis_auto::editProfiles_updated_earlier ( void )
+{
+  //Restart timer:
+  connect(timer_update, SIGNAL(timeout()), this, SLOT( gui_update ( ) ));
+  timer_update->start(5000);
+
+  qDebug() << "Timer restarted: editProfiles were updated EARLIER -- ";
+}
+
+// slot to update autoflowAnalysis record at fitmen stage WHEN already treated from different session
+void US_Analysis_auto::triple_analysis_processed ( void )
+{
+  qDebug() << "FITMEN: entire analysis for triple completed -- ";
+  emit analysis_back_to_initAutoflow( );
 }
 
 //reset Analysis GUI: stopping all update processes

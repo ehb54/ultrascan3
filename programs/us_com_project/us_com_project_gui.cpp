@@ -361,7 +361,8 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( epanEditing, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
 
    connect( epanAnalysis, SIGNAL( processes_stopped() ), this, SLOT( analysis_update_stopped() ));
-
+   connect( epanAnalysis, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
+   
    connect( this, SIGNAL( pass_to_report( QMap < QString, QString > & ) ),   epanReport, SLOT( do_report( QMap < QString, QString > & )  ) );
 
    
@@ -2331,7 +2332,10 @@ US_AnalysisGui::US_AnalysisGui( QWidget* topw )
    // When coming back to Manage Optima Runs
    connect( sdiag, SIGNAL( analysis_update_process_stopped() ), this, SLOT( processes_stopped_passed()  ) );
 
-   connect( sdiag, SIGNAL( close_analysissetup_msg() ), this, SLOT ( analysissetup_msg_closed() ) ); 
+   connect( sdiag, SIGNAL( close_analysissetup_msg() ), this, SLOT ( analysissetup_msg_closed() ) );
+
+   //ALEXEY: back to initAutoflow when user stuck at FITMEN (already processed) and program proceeded to REPORT
+   connect( sdiag, SIGNAL( analysis_back_to_initAutoflow( ) ), this, SLOT( to_initAutoflow ( ) ) );
 
    offset = 0;
    sdiag->move(offset, 2*offset);
@@ -2390,7 +2394,10 @@ void US_AnalysisGui::analysissetup_msg_closed( void )
   //mainw->diag_expsetup->close();
 }
 
-
+void US_AnalysisGui::to_initAutoflow( void )
+{
+  emit switch_to_initAutoflow();
+}
 
 
 // US_Report

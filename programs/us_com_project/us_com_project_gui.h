@@ -314,10 +314,12 @@ class US_AnalysisGui : public US_WidgetsDialog
    void do_analysis( QMap < QString, QString > & );
    void processes_stopped_passed( void );
    void analysissetup_msg_closed( void );
+   void to_initAutoflow( void );
 
  signals:
    void start_analysis( QMap < QString, QString > & );
    void processes_stopped( void );
+   void switch_to_initAutoflow( void);
     
 };
 
