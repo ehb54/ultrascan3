@@ -30,7 +30,7 @@
 // #define DEBUG1
 // #define AUTO_BB_DEBUG
 // #define BUILD_MAPS_DEBUG
-#define DEBUG_BEAD_CHECK
+// #define DEBUG_BEAD_CHECK
 
 #define USE_THREADS
 
@@ -2345,6 +2345,9 @@ int US_Hydrodyn::create_beads(QString *error_string, bool quiet)
 
    QRegExp count_hydrogens("H(\\d)");
 
+   map < QString, QString > hybrid_name_to_N = { { "N3H0", "N1-" },
+                                                 { "N3H1", "N1" } };
+
    for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++)
    {
       QString last_resSeq = "";
@@ -2693,30 +2696,43 @@ int US_Hydrodyn::create_beads(QString *error_string, bool quiet)
                   }
                } // saxs setup
 
-               if ( misc.pb_rule_on &&
-                    this_atom->resName == "PRO" &&
-                    this_atom->name == "N" &&
-                    !k )
-               {
-                  if ( advanced_config.debug_1 )
-                  {
-                     puts("handled +1 mw for first N on PRO");
-                  }
-                  this_atom->mw += 1.0;
-                  // bead ref mw handled in pass 2b
-               }
-               if ( !misc.pb_rule_on &&
-                    this_atom->name == "N" &&
-                    !k )
-               {
-                  if ( advanced_config.debug_1 )
-                  {
-                     puts("handled +1 mw for first N");
-                  }
-                  this_atom->mw += 1.0;
-                  this_atom->bead_ref_mw += 1.0;
-               }
+               // This bit is going, we need to instead lookup ionized values
 
+               // if ( misc.pb_rule_on &&
+               //      this_atom->resName == "PRO" &&
+               //      this_atom->name == "N" &&
+               //      !k )
+               // {
+               //    if ( advanced_config.debug_1 )
+               //    {
+               //       puts("handled +1 mw for first N on PRO");
+               //    }
+               //    this_atom->mw += 1.01f;
+               //    // bead ref mw handled in pass 2b
+               // }
+
+               if ( !k &&
+                    this_atom->name == "N" &&
+                    ( !misc.pb_rule_on ||
+                      this_atom->resName == "PRO" ) )
+               {
+                  double delta_mw = 1.01f;
+                  if ( hybrid_name_to_N.count( this_atom->p_atom->hybrid.name ) &&
+                       multi_residue_map.count( hybrid_name_to_N[this_atom->p_atom->hybrid.name ] ) &&
+                       multi_residue_map[ hybrid_name_to_N[this_atom->p_atom->hybrid.name ] ].size()
+                       ) {
+                     int index = multi_residue_map[ hybrid_name_to_N[this_atom->p_atom->hybrid.name ] ][0];
+                     delta_mw =
+                        residue_list[ index ].r_atom[ 0 ].hybrid.mw
+                        + residue_list[ index ].r_atom[ 0 ].hybrid.ionized_mw_delta
+                        - this_atom->mw
+                        ;
+                  }
+                  qDebug() << "handled first N mw delta " << delta_mw;
+                  this_atom->mw          += delta_mw;
+                  this_atom->bead_ref_mw += delta_mw;
+               }
+               
                if ( advanced_config.debug_1 ||
                     advanced_config.debug_2 )
                {
@@ -2931,10 +2947,40 @@ int US_Hydrodyn::create_beads(QString *error_string, bool quiet)
              tot_bead_mw);
    }
 
+   // fix N1
+   fix_N1_non_pbr( model_vector[ current_model ] );
+
    return 0;
 }
 
-
+void US_Hydrodyn::fix_N1_non_pbr( struct PDB_model & model ) {
+   int chains   = (int) model.molecule.size();
+   map < QString, QString > hybrid_name_to_N = { { "N3H0", "N1-" },
+                                                 { "N3H1", "N1" } };
+   for ( int j = 0; j < chains; ++j ) {
+      int atoms = (int) model.molecule[ j ].atom.size();
+      if ( atoms ) {
+         map < QString, struct atom * > first_atom_map = first_residue_atom_map( model.molecule[ j ] );
+         if ( first_atom_map.count( "N" )
+              && hybrid_name_to_N.count( first_atom_map[ "N" ]->hybrid.name )
+              && multi_residue_map.count( hybrid_name_to_N[ first_atom_map[ "N" ]->hybrid.name ] )
+              && multi_residue_map[ hybrid_name_to_N[ first_atom_map[ "N" ]->hybrid.name ] ].size()
+              ) {
+            map < QString, int > atompos_map = first_residue_PDB_atom_map( model.molecule[ j ] );
+            if ( atompos_map.count( "N" ) ) {
+               int atompos = atompos_map[ "N" ];
+               int respos = multi_residue_map[ hybrid_name_to_N[ first_atom_map[ "N" ]->hybrid.name ] ][0];
+               model.molecule[ j ].atom[ atompos ].p_residue        = & ( residue_list[ respos ] );
+               model.molecule[ j ].atom[ atompos ].p_atom           = & ( residue_list[ respos ].r_atom[0] );
+               model.molecule[ j ].atom[ atompos ].mw               = model.molecule[ j ].atom[ atompos ].p_atom->hybrid.mw;
+               model.molecule[ j ].atom[ atompos ].ionized_mw_delta = model.molecule[ j ].atom[ atompos ].p_atom->hybrid.ionized_mw_delta;
+            } else {
+               QTextStream( stderr ) << "US_Hydrodyn::fix_N1_non_pbr no 'N' atom found in PDB_chain";
+            }
+         }
+      }
+   }
+}        
 
 # define POP_MC              (1 << 0)
 # define POP_SC              (1 << 1)
@@ -4548,6 +4594,9 @@ void US_Hydrodyn::radial_reduction( bool from_grid )
 
 int US_Hydrodyn::compute_asa( bool bd_mode, bool no_ovlp_removal )
 {
+   // advanced_config.debug_1 = true;
+   // advanced_config.debug_2 = true;
+   
    QString error_string = "";
    progress->reset();
    editor->append(QString("\nBuilding the bead model for %1 model %2\n").arg(project).arg( model_name( current_model ) ) );
@@ -4624,6 +4673,8 @@ int US_Hydrodyn::compute_asa( bool bd_mode, bool no_ovlp_removal )
       }
    }
 
+   // info_mw( "compute_asa() after create_beads()", model_vector, true );
+   
    if(error_string.length()) {
       progress->setValue(mppos);
       qApp->processEvents();
@@ -4759,7 +4810,6 @@ int US_Hydrodyn::compute_asa( bool bd_mode, bool no_ovlp_removal )
 
    FILE *asaf = us_fopen(QString(somo_tmp_dir + SLASH + "atom.asa"), "w");
 
-
    // for (unsigned int i = 0; i < model_vector.size (); i++)
    {
       unsigned int i = current_model;
@@ -4794,6 +4844,7 @@ int US_Hydrodyn::compute_asa( bool bd_mode, bool no_ovlp_removal )
       }
    }
    fclose(asaf);
+   // info_mw( "compute_asa() after pass 1", model_vector, true );
 
    progress->setValue(ppos++); // 3
    qApp->processEvents();
@@ -4960,9 +5011,9 @@ int US_Hydrodyn::compute_asa( bool bd_mode, bool no_ovlp_removal )
                   use_atom = last_main_bead;
                }
 
-               use_atom->bead_asa              += this_atom->asa;
-               use_atom->bead_mw               += this_atom->mw;
-               use_atom->bead_ionized_mw_delta += this_atom->ionized_mw_delta;
+               use_atom->bead_asa                  += this_atom->asa;
+               use_atom->bead_mw                   += this_atom->mw;
+               use_atom->bead_ionized_mw_delta     += this_atom->ionized_mw_delta;
 
                if ( advanced_config.debug_1 )
                {
@@ -5091,6 +5142,21 @@ int US_Hydrodyn::compute_asa( bool bd_mode, bool no_ovlp_removal )
       return -1;
    }
 
+   // info_mw( "compute_asa() after pass 2", model_vector, true );
+   // // pass 2a set ref_mw from bead_mw
+   // for ( int j = 0; j < (int) model_vector[ current_model ].molecule.size (); ++j) {
+   //    for ( int k = 0; k < (int) model_vector[ current_model ].molecule[ j ].atom.size (); ++k) {
+   //       PDB_atom *this_atom = &(model_vector[ current_model ].molecule[ j ].atom[ k ]);
+   //       if ( this_atom->active &&
+   //            this_atom->is_bead ) {
+   //          this_atom->bead_ref_mw               = this_atom->bead_mw;
+   //          this_atom->bead_ref_ionized_mw_delta = this_atom->bead_ionized_mw_delta;
+   //       }
+   //    }
+   // }
+         
+   // info_mw( "compute_asa() after pass 2a", model_vector, true );
+   
    // pass 2b move bead_ref_volume, ref_mw, computed_radius from
    // next main chain back one including adjustments for GLY, PRO, OXT
 
@@ -5173,11 +5239,28 @@ int US_Hydrodyn::compute_asa( bool bd_mode, bool no_ovlp_removal )
                 this_atom->resName == "PRO"
                 )
             {
-               if ( advanced_config.debug_1 )
-               {
-                  puts("pass 2b PRO 1st N +1 mw adjustment");
+               double delta_mw = 1.01f;
+               if ( multi_residue_map.count( "N1-" ) &&
+                    multi_residue_map[ "N1-" ].size() &&
+                    multi_residue_map.count( "PRO" ) &&
+                    multi_residue_map[ "PRO" ].size()
+                    ) {
+                  int index1 = multi_residue_map[ "N1-" ][0];
+                  int index2 = multi_residue_map[ "PRO" ][0];
+                  delta_mw =
+                     residue_list[ index1 ].r_atom[ 0 ].hybrid.mw
+                     + residue_list[ index1 ].r_atom[ 0 ].hybrid.ionized_mw_delta
+                     - residue_list[ index2 ].r_atom[ 0 ].hybrid.mw
+                     - residue_list[ index2 ].r_atom[ 0 ].hybrid.ionized_mw_delta
+                     ;
                }
-               this_atom->bead_ref_mw += 1.0;
+               qDebug() << "handled first N mw delta " << delta_mw;
+               this_atom->bead_ref_mw          += delta_mw;
+               // if ( advanced_config.debug_1 )
+               // {
+               //    puts("pass 2b PRO 1st N +1 mw adjustment");
+               // }
+               // this_atom->bead_ref_mw += 1.01f;
                // what about a volume adjustment?
                first_is_pro = false;
             }
@@ -5236,7 +5319,7 @@ int US_Hydrodyn::compute_asa( bool bd_mode, bool no_ovlp_removal )
                   {
                      puts("pass 2b main_chain bead adjustment +1");
                   }
-                  last_main_chain_bead->bead_ref_mw += 1.0;
+                  last_main_chain_bead->bead_ref_mw += 1.01f;
                }
                last_main_chain_bead->bead_computed_radius = this_atom->bead_computed_radius;
             } // OXT
@@ -5400,6 +5483,7 @@ int US_Hydrodyn::compute_asa( bool bd_mode, bool no_ovlp_removal )
       return -1;
    }
 
+   // info_mw( "compute_asa() after pass 2b", model_vector, true );
    // pass 2c hydration
 
    // for (unsigned int i = 0; i < model_vector.size (); i++)   {
@@ -5435,6 +5519,7 @@ int US_Hydrodyn::compute_asa( bool bd_mode, bool no_ovlp_removal )
       return -1;
    }
 
+   // info_mw( "compute_asa() after pass 2c", model_vector, true );
 
 #if defined(OLD_ASAB1_SC_COMPUTE)
    // pass 2d compute mc asa
@@ -5467,6 +5552,7 @@ int US_Hydrodyn::compute_asa( bool bd_mode, bool no_ovlp_removal )
          }
       }
    }
+   // info_mw( "compute_asa() after pass 2d", model_vector, true );
 #endif // OLD_ASABA_SC_COMPUTE
 
 #if defined(DEBUG1) || defined(DEBUG)
@@ -5615,6 +5701,8 @@ int US_Hydrodyn::compute_asa( bool bd_mode, bool no_ovlp_removal )
          }
       }
    }
+
+   // info_mw( "compute_asa() after pass 3", model_vector, true );
 
    // pass 4 print results
    progress->setValue(ppos++); // 7
@@ -7168,7 +7256,7 @@ void US_Hydrodyn::bead_check( bool use_threshold, bool message_type, bool vdw, b
 {
    // recheck beads here
 
-   printf("bead recheck use threshold%s\n", use_threshold ? "" : " percent");
+   // printf("bead recheck use threshold%s\n", use_threshold ? "" : " percent");
    active_atoms.clear( );
    for(unsigned int i = 0; i < bead_model.size(); i++) {
       active_atoms.push_back(&bead_model[i]);

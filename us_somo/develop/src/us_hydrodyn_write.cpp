@@ -182,7 +182,7 @@ void US_Hydrodyn::write_bead_tsv(QString fname, vector<PDB_atom> *model) {
                  (*model)[i].visibility ? "Y" : "N",
 
                  (*model)[i].exposed_code,
-                 (*model)[i].bead_mw + (*model)[i].bead_ionized_mw_delta,
+                 (*model)[i].bead_ref_mw + (*model)[i].bead_ref_ionized_mw_delta,
                  (*model)[i].bead_positioner ? "Y" : "N",
                  (*model)[i].active ? ((*model)[i].bead_positioner ? "Y" : "N") : "Inactive",
                  (*model)[i].placing_method,
@@ -229,8 +229,8 @@ void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
          total_asa += (*model)[i].bead_asa;
          total_ref_asa += (*model)[i].ref_asa;
          total_mass += (*model)[i].bead_ref_mw + (*model)[i].bead_ref_ionized_mw_delta;
-         printf("write_bead_asa model[%d].bead_ref_mw %g\n",
-                i, ((*model)[i].bead_ref_mw) + (*model)[i].bead_ref_ionized_mw_delta);
+         // printf("write_bead_asa model[%d].bead_ref_mw %g\n",
+         //        i, ((*model)[i].bead_ref_mw) + (*model)[i].bead_ref_ionized_mw_delta);
          total_vol += (*model)[i].bead_ref_volume_unhydrated;
 
          QString residue =
@@ -521,6 +521,7 @@ void US_Hydrodyn::write_bead_model( QString fname,
             residues = use_model[i]->residue_list;
          }
          summary_mw += use_model[i]->bead_ref_mw + use_model[i]->bead_ref_ionized_mw_delta;
+         // QTextStream( stdout ) << "bead ref " << i << " mw " << use_model[i]->bead_ref_mw + use_model[i]->bead_ref_ionized_mw_delta << endl;
 
          if (fsomo) {
             fprintf(fsomo,
@@ -574,6 +575,8 @@ void US_Hydrodyn::write_bead_model( QString fname,
                        use_model[i]->bead_computed_radius);
             }
          }
+      // } else {
+      //    qDebug() << "bead " << i << " inactive";
       }
    }
    if (fsomo) {
@@ -607,6 +610,7 @@ void US_Hydrodyn::write_bead_model( QString fname,
          // fprintf(fsomo, extra_text.toLatin1().data() );
          fputs(extra_text.toLatin1().data(), fsomo );
       }
+      qDebug() << "write bead model total mw " << summary_mw;
 
       fclose(fsomo);
    }
