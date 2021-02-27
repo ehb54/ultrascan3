@@ -225,6 +225,8 @@ class US_Analysis_auto : public US_Widgets
 	void editProfiles_updated_earlier( void );
 	void triple_analysis_processed( void );
 
+	bool check_fitmen_status( const QString& );
+
 	void delete_job  ( QString );
 	void show_overlay( QString );
 

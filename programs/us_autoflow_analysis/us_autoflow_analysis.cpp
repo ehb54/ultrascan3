@@ -735,6 +735,21 @@ void US_Analysis_auto::gui_update( )
 					tr( "ATTENTION: FITMEN stage reached" ),
 					tr( "FITMET stage for triple %1 will be processed manually." ).arg( triple_curr ) );
 
+
+	      //--- Check status of the FITMEN | Entire Analysis for the triple before calling FitMen constructor:
+	      bool fitmen_processed;
+	      fitmen_processed = check_fitmen_status( requestID );
+
+	      if ( fitmen_processed )
+		{
+		  Manual_update[ triple_curr_key ] = true;
+		  qDebug() << "CHECK on FITMEN: already processed ? -- " << fitmen_processed;
+		  
+		  in_gui_update  = false; 
+		  
+		  return;
+		}
+	      //-------------------------------------------------------------------------------------------------//
 	    	      
 	      /** To FitMeniscus class -- pass:
 		  1. Name of the triple to title && and possibly to pass to scan_db() method
@@ -2909,6 +2924,90 @@ void US_Analysis_auto::triple_analysis_processed ( void )
 void US_Analysis_auto::reset_analysis_panel_public( )
 {
   reset_analysis_panel( );
+}
+
+// Check FITMEN status before calling FITMEN constructor
+bool US_Analysis_auto::check_fitmen_status( const QString& requestID )
+{
+  bool status = false;
+  
+  US_Passwd pw;
+  US_DB2    dbP( pw.getPasswd() );
+
+  // Get the buffer data from the database
+  if ( dbP.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Could not connect to database \n" ) +  dbP.lastError() );
+      return status;
+    }
+
+  QMap <QString, QString> analysis_details;
+  
+  analysis_details = read_autoflowAnalysis_record(  &dbP, requestID );
+
+  if ( !analysis_details.size() )
+    {
+      //no record, so analysis completed/cancelled and already in the autoflowAnalysisHistory
+      
+      QMessageBox::information( this,
+				tr( "FITMEN | Triple Analysis already processed" ),
+				tr( "It appears that FITMEN stage has already been processed by "
+				    "a different user from different session and "
+				    "the entire analysis for the current triple is completed. \n\n"
+				    "The program will return to the autoflow runs dialog where "
+				    "you can re-attach to the actual current stage of the run. "));
+      
+      status = true;
+    }
+  else
+    {
+      //there is an autoflowAnalysis record:
+      
+      QString status_gen     = analysis_details["status"];
+      QString nextWaitStatus = analysis_details[ "nextWaitStatus" ] ;
+      QString status_json    = analysis_details["status_json"];
+      
+      QJsonDocument jsonDoc = QJsonDocument::fromJson( status_json.toUtf8() );
+      if (!jsonDoc.isObject())
+	{
+	  qDebug() << "FITMEN: NOT a JSON Doc !!";
+	  status = true;
+	}
+      
+      const QJsonValue &submitted  = jsonDoc.object().value("submitted");          
+      
+      //look for FITMEN stage in "submitted" stages
+      QString stage_name = submitted.toString();
+      if ( submitted.toString() == "FITMEN" )
+	{
+	  if ( status_gen != "WAIT" )
+	    {
+	      QMessageBox::information( this,
+					tr( "FITMEN already processed" ),
+					tr( "It appears that FITMEN stage has already been processed by "
+					    "a different user from different session.\n\n"
+					    "The program will return to ANALYSIS tab where "
+					    "you can continue to monitor the overall analysis progress." ) );
+	     
+	      status = true;
+	    }
+	}
+      else
+	{
+	  //FITMEN is no in "submitted" stages anymore, so it's processed:
+	  QMessageBox::information( this,
+				    tr( "FITMEN already processed" ),
+				    tr( "It appears that FITMEN stage has already been processed by "
+					"a different user from different session.\n\n"
+					"The program will return to ANALYSIS tab where "
+					"you can continue to monitor the overall analysis progress." ) );
+	 	  
+	  status = true;
+	}
+    }
+  
+  return status;
 }
 
 //reset Analysis GUI: stopping all update processes
