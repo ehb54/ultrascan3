@@ -1310,7 +1310,7 @@ void US_FitMeniscus::edit_update( void )
 	  QString stage_name = submitted.toString();
 	  if ( submitted.toString() == "FITMEN" )
 	    {
-	      if ( nextWaitStatus != "WAIT" || status_gen != "WAIT" )
+	      if ( status_gen != "WAIT" )
 		{
 		  QMessageBox::information( this,
 					    tr( "FITMEN already processed" ),
