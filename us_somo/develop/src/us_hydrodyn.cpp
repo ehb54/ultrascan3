@@ -488,7 +488,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    residue_short_names["SER"] = 'S';
    residue_short_names["THR"] = 'T';
    residue_short_names["CYS"] = 'C';
-   residue_short_names["CYH"] = 'J';
+   residue_short_names["CYH"] = 'C';
    residue_short_names["TYR"] = 'Y';
    residue_short_names["ASN"] = 'N';
    residue_short_names["GLN"] = 'Q';
