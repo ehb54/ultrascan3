@@ -23,7 +23,7 @@
 <h2>
 SOMO - Accessible Surface Area (ASA) Options Module:</h2>
 <p>
-<h3><center>Last updated: March 2021 </center></h3><p>
+<h3><center>Last updated: February 2021 </center></h3><p>
 <p>
 <img SRC="somo-asa1.png" ALT="SOMO ASA Screen">
 </center>
@@ -42,10 +42,10 @@ The <b>default</b> value is <b>50%</b> for <i>SoMo</i>-type beads.
 <br>Likewise, in the <i><b>Grid ASA Threshold (A^2)</b></i> field, you set the accessible surface area threshold above which primary beads will be considered to be exposed to the solvent in the <i>AtoB (Grid)</i> method. This will allow a better treatment of the beads during the overlap removal phase. The <b>default</b> value is <b>10 &Aring;<sup>2</sup></b>.
 <br>The <i><b>Grid Bead ASA Threshold %</b></i> field lets you set the % of the surface of a bead that must be at least accessible to re-classify as exposed a bead previously considered to be buried in the <i>Grid (AtoB)</i> method. If the <i>Enable ASA screening</i> function in the <a href=somo_grid.html>SOMO Grid Function Options (AtoB)</a> module is <b>not</b> selected, beads are <b>all</b> assigned as being buried, and their final status <b>must</b> be checked by
 the <b>Re-check bead ASA</b> routine. The <b>default</b> value is <b>30%</b>.<br>
-Two new fields were added from the <span style="color:#CC0000">March 2021</span> release:<br>
+Two new fields were added from the <span style="color:#CC0000">February 2021</span> release:<br>
 In the <i><b>vdW+GRPY ASA Probe Radius (A)</b></i> field, a different radius (&Aring;) from the one utilized for all the previuosly-described operations is set for the identification of buried beads in <i>vdW</i>-type models when their hydrodynamic parameters are computed using the <b><i>GRPY</i></b> method. This is because in <i>vdW</i> models each atom is represented by a bead, and thus using the standard 1.4 &Aring; water radius value will result in too many beads being considered as buried and thus potentially <i>excluded</i> from the hydrodynamic computations (see the <a href="somo_hydro.html"><b><i>Hydrodynamic Calculations Options</b></i></a>). The <b>default</b> value is <b>1 &Aring;</b>.<br>
 Likewise, the <i><b>vdW+GRPY ASA Threshold %</b></i> field has been created to allow for a much lower % of the surface
-of a <i>vdW</i> bead that must be at least accessible to avoid classifying it as buried and thus potentially being <i>excluded</i> from the hydrodynamic computations using the <b><i>GRPY</i></b> method (see the <a href="somo_hydro.html"><b><i>Hydrodynamic Calculations Options</b></i></a>). This results because since in <i>vdW</i>-type models each bead represent an atom, and within a <i>residue</i> most atoms are chemically bound to other atoms, their free surface is much lower than the one we compute from their atomic radius. A better measure of their "starting" ASA would be to perform an ASA check on each atom within a <i>residue</i> like if it was completely isolated from all other residues. Waiting for this method to be implemented, currently (<span style="color:#CC0000">March 2021</span>) a very low <b>default</b> value of <b>1%</b> is set for this field.<br>
+of a <i>vdW</i> bead that must be at least accessible to avoid classifying it as buried and thus potentially being <i>excluded</i> from the hydrodynamic computations using the <b><i>GRPY</i></b> method (see the <a href="somo_hydro.html"><b><i>Hydrodynamic Calculations Options</b></i></a>). This results because since in <i>vdW</i>-type models each bead represent an atom, and within a <i>residue</i> most atoms are chemically bound to other atoms, their free surface is much lower than the one we compute from their atomic radius. A better measure of their "starting" ASA would be to perform an ASA check on each atom within a <i>residue</i> like if it was completely isolated from all other residues. Waiting for this method to be implemented, currently (<span style="color:#CC0000">February 2021</span>) a very low <b>default</b> value of <b>1%</b> is set for this field.<br>
 
 Finally, the <i><b>ASAB1 Step Size (A)</b></i> field defines the increment between the 2D slices in which the structure (or the model) is subdivided in the rolling sphere method, which are then integrated. The <b>default</b> value is <b>1 &Aring;</b>.
 <p>
