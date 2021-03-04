@@ -1889,9 +1889,11 @@ DbgLv(1) << " triples    size" << ntriple;
    editIDs   .fill( "",     ntriple );
    editFnames.fill( "none", ntriple );
 
-   isMwl        = ( nwaveln > 2  &&  ntriple > 16 );
+   //isMwl        = ( nwaveln > 2  &&  ntriple > 16 );
+   isMwl        = ( nwaveln > 1 );
    lrng_bycell  = false;         // Assume initially cell lambdas all the same
-DbgLv(1) << "LD(): isMwl" << isMwl << "nwaveln" << nwaveln << toti_wvlns.size();
+DbgLv(1) << "LD(): isMwl" << isMwl << "nwaveln" << nwaveln << toti_wvlns.size()
+ << "ntriple" << ntriple;
 
    if ( isMwl )
    {  // Set values related to MultiWaveLength
@@ -3585,7 +3587,8 @@ DbgLv(1) << " triples    size" << ntriple;
    editIDs   .fill( "",     ntriple );
    editFnames.fill( "none", ntriple );
 
-   isMwl        = ( nwaveln > 2  &&  ntriple > 16 );
+   //isMwl        = ( nwaveln > 2  &&  ntriple > 12 );
+   isMwl        = ( nwaveln > 1 );
    lrng_bycell  = false;         // Assume initially cell lambdas all the same
 DbgLv(1) << "LD(): isMwl" << isMwl << "nwaveln" << nwaveln << toti_wvlns.size();
 
@@ -4761,7 +4764,7 @@ DbgLv(1) << " PlRng:  nmcols" << nmcols;
      int ccx     = indext;
      int wvx     = cb_lplot->currentIndex();
      indext      = ccx * nwaveln + wvx;
-     DbgLv(1) << "plot_range(): ccx wvx indext" << ccx << wvx << indext;
+DbgLv(1) << "plot_range(): ccx wvx indext" << ccx << wvx << indext;
 	 //}
    }
 
@@ -6511,6 +6514,8 @@ DbgLv(1) << " 2)gap_fringe" << gap_fringe << "idax" << idax;
 
    replot();
 DbgLv(1) << "EDT:NewTr: DONE";
+   int row = cb_triple->currentIndex() + 1;
+   pb_nextChan->setEnabled( row < cb_triple->count() );
 
 }
 
@@ -8237,12 +8242,12 @@ void US_Edit::next_triple_auto( void )
        new_triple_auto( dax );
        
        if ( (row + 1 ) == cb_triple->count() )
-	 pb_nextChan ->setEnabled( false );
+         pb_nextChan ->setEnabled( false );
        
        qDebug() << "NEXT Triple: row " << row << ", cb_triple->count() " << cb_triple->count() ;
-     }
+   }
    else
-     pb_nextChan ->setEnabled( false );
+     pb_nextChan->setEnabled( row < cb_triple->count() );
 }
 
 // Advance to next triple and plot edited curves
@@ -8307,7 +8312,7 @@ void US_Edit::next_triple( void )
 
    new_triple( dax );
 
-   pb_nextChan ->setEnabled( false );
+   pb_nextChan->setEnabled( row < cb_triple->count() );
 }
 
 
