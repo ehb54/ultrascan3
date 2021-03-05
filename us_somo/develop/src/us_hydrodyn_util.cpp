@@ -310,7 +310,7 @@ double US_Hydrodyn::compute_isoelectric_point( const struct PDB_model & model ) 
          middle          = 0.5 * ( start + end );
          double start_p  = protons_at_pH( start , model ) - model.num_elect;
          double middle_p = protons_at_pH( middle, model ) - model.num_elect;
-         double end_p    = protons_at_pH( end   , model ) - model.num_elect;
+         // double end_p    = protons_at_pH( end   , model ) - model.num_elect;
          // if ( !(iter % 50) ) {
          //    QTextStream( stdout )
          //       << QString("").sprintf(
@@ -362,3 +362,117 @@ double US_Hydrodyn::compute_isoelectric_point( const struct PDB_model & model ) 
    // return best_pH;
    // }
 }
+
+map < QString, struct atom * > US_Hydrodyn::residue_atom_map( struct residue & residue_entry ) {
+   // map residue to allow lookup on atoms by atom name
+   map < QString, struct atom * > result;
+   int atoms = (int) residue_entry.r_atom.size();
+   for ( int i = 0; i < atoms; ++i ) {
+      result[ residue_entry.r_atom[ i ].name ] = &( residue_entry.r_atom[ i ] );
+   }
+   return result;
+}
+
+map < QString, struct atom * > US_Hydrodyn::first_residue_atom_map( struct PDB_chain & chain ) {
+   map < QString, struct atom * > result;
+   int atoms = (int) chain.atom.size();
+   if ( !atoms ) {
+      return result;
+   }
+   QString resName = chain.atom[ 0 ].resName;
+   QString resSeq  = chain.atom[ 0 ].resSeq;
+   // QTextStream( stdout )
+   //    << "US_Hydrodyn::first_residue_atom_map() resName " << resName
+   //    << " orgResName " <<  chain.atom[ 0 ].orgResName
+   //    << endl
+   //    ;
+   
+   if ( !multi_residue_map.count( resName ) ||
+        !multi_residue_map[ resName ].size() ) {
+      QTextStream( stderr ) 
+         << "US_Hydrodyn::first_residue_atom_map() resName " << resName
+         << " MISSING from multi_residue_map!"
+         << endl
+         ;
+      return result;
+   }
+
+   if ( multi_residue_map[ resName ].size() > 1 ) {
+      QTextStream( stderr ) 
+         << "US_Hydrodyn::first_residue_atom_map() resName " << resName
+         << " WARNING more than one entry in multi_residue_map using first one!"
+         << endl
+         ;
+   }
+
+   auto org_residue_entry = residue_atom_map( residue_list[ multi_residue_map[ resName ][ 0 ] ] );
+
+   for ( int i = 0; i < atoms; ++i ) {
+      if ( i && ( resName != chain.atom[ i ].resName ||
+                  resSeq  != chain.atom[ i ].resSeq ) ) {
+         return result;
+      }
+      if ( chain.atom[ i ].p_atom ) {
+         if ( org_residue_entry.count( chain.atom[ i ].name ) ) {
+            result[ chain.atom[ i ].name ] = org_residue_entry[ chain.atom[ i ].name ];
+         } else {
+            if ( chain.atom[ i ].name != "OXT" ) {
+               QTextStream( stderr ) 
+                  << "US_Hydrodyn::first_residue_atom_map() resName " << resName
+                  << " WARNING atom " << chain.atom[ i ].name << " not found in residue list, using p_atom"
+                  << endl
+                  ;
+            }
+            result[ chain.atom[ i ].name ] = chain.atom[ i ].p_atom;
+         }
+      } else {
+         QTextStream( stderr ) << "US_Hydrodyn::first_residue_atom_map() p_atom not set for atom " << chain.atom[ i ].name << endl;
+      }
+   }
+   return result;
+}
+
+map < QString, int > US_Hydrodyn::first_residue_PDB_atom_map( struct PDB_chain & chain ) {
+   map < QString, int > result;
+   int atoms = (int) chain.atom.size();
+   if ( !atoms ) {
+      return result;
+   }
+   QString resName = chain.atom[ 0 ].resName;
+   QString resSeq  = chain.atom[ 0 ].resSeq;
+   
+   for ( int i = 0; i < atoms; ++i ) {
+      if ( i && ( resName != chain.atom[ i ].resName ||
+                  resSeq  != chain.atom[ i ].resSeq ) ) {
+         return result;
+      }
+      result[ chain.atom[ i ].name ] = i;
+   }
+   return result;
+}
+
+map < QString, struct atom * > US_Hydrodyn::last_residue_atom_map( struct PDB_chain & chain ) {
+   map < QString, struct atom * > result;
+   int atoms = (int) chain.atom.size();
+   if ( !atoms ) {
+      return result;
+   }
+   QString resName = chain.atom[ atoms - 1 ].resName;
+   QString resSeq  = chain.atom[ atoms - 1 ].resSeq;
+   for ( int i = atoms - 1; i >= 0; --i ) {
+      if ( i && ( resName != chain.atom[ i ].resName ||
+                  resSeq  != chain.atom[ i ].resSeq ) ) {
+         return result;
+      }
+      if ( chain.atom[ i ].p_atom ) {
+         result[ chain.atom[ i ].name ] = chain.atom[ i ].p_atom;
+      } else {
+         QTextStream( stderr ) << "US_Hydrodyn::last_residue_atom_map() p_atom not set for atom " << chain.atom[ i ].name << endl;
+      }
+   }
+   return result;
+}
+                  
+   
+   
+      

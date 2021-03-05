@@ -188,12 +188,12 @@ static bool recheck;
 static vector <PDB_atom *> active_atoms;
 static US_Hydrodyn *us_hydrodyn;
 
-static void
-em(const char *s)
-{
-   puts(s);
-   fflush(stdout);
-}
+// static void
+// em(const char *s)
+// {
+//    puts(s);
+//    fflush(stdout);
+// }
 
 static void
 asab1_free_alloced()
@@ -330,10 +330,10 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
                        )
 {
 
-   em("asab1_main");
-   em("asab1_main 1");
+   // em("asab1_main");
+   // em("asab1_main 1");
    //  nmax1 = 4000;
-   em("asab1_main 2");
+   // em("asab1_main 2");
    progress = use_progress;
    editor = use_editor;
    asa_opts = use_asa_opts;
@@ -369,6 +369,7 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
 
    flag1 = 0;
 
+#if defined( ASA_DEBUG )
    printf("########################################################\n");
    printf("#    National Institute for Cancer Research (IST)      #\n");
    printf("#          Advanced Biotechnologies Center (CBA)       #\n");
@@ -384,6 +385,7 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
    printf("\n\n\n\n To process a PBD file, enter 2\n ");
    printf("To re-check a bead model, enter 3\n\n ");
    printf("--> ");
+#endif
    //    scanf("%d", &ini);
    ini = 3;
 
@@ -433,14 +435,14 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
    {
       printf("\n\n- Insert the ASA threshold level in Angstroms^2 [usually 10] : ");
       if ( scanf("%f", &asalevel) ) {};
-      em("s1");
+      // em("s1");
       initarray();
-      em("s2");
+      // em("s2");
    }
 
    else if (ini == 3)
    {
-      em("s3");
+      // em("s3");
       flag1 = 1;
       init2();
       qApp->processEvents();
@@ -449,7 +451,7 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
          asab1_free_alloced();
          return -1;
       }
-      em("s4");
+      // em("s4");
       ini = 2;
       check_asa = 1;
       min_asa = asa_opts->threshold_percent;
@@ -464,11 +466,11 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
    else
    {
 
-      em("s5");
+      // em("s5");
       init();
-      em("s6");
+      // em("s6");
    }
-   em("s7");
+   // em("s7");
 
    // cout << QString(" rprobe %1\n" ).arg( rprobe );
    // cout << QString(" min_asa %1\n" ).arg( min_asa );
@@ -482,9 +484,9 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
       asab1_free_alloced();
       return -1;
    }
-   em("s8");
+   // em("s8");
    ragir();
-   em("s9");
+   // em("s9");
    if ( !recheck )
    {
       results->asa_rg_pos = ro;
@@ -540,7 +542,9 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
    */
 
    Dz = ((float) fabs(maxz - minz)) / passi;
+#if defined( ASA_DEBUG )
    printf("\n\n\n");
+#endif
 
    for (i = 1; i < passi; i++)   /* iteration for the number of steps */
    {
@@ -589,6 +593,7 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
       qApp->processEvents();
 
       nc = 0;
+#if defined( DEBUG_ASA )
       printf("%s%d\t", "Iteration number  = ", i + 1);
       if (flag1 == 0)
       {
@@ -599,6 +604,7 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
          printf("%s%d  ", "Number of beads in this iteration = ", cont1);
       }
       fflush(stdout);
+#endif
 
       while (nc < cont1)
       {
@@ -1110,14 +1116,18 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
 
    if (check_asa == 1)
    {
+#if defined( DEBUG_ASA )
       printf("\n\nRE-CHECK\n");
+#endif
       /*   pippa=us_fopen(outfile1,"w");   */
       dd2 = dt;
       countb = 0;
 
       for (l = 0; l < nat; l++)
       {
+#if defined( ASA_DEBUG )
          printf("%d %.2f\n", l, asa[l]);
+#endif
          float sa;
          float sapp;
          if ( recheck ) {
@@ -1146,11 +1156,13 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
                    sapp,
                    sa);
          } else {
+#if defined( ASA_DEBUG )
             printf("ASA: atom %u asa %f sapp %f sa %f\n",
                    l,
                    asa[l],
                    sapp,
                    sa);
+#endif
          }            
 
          if (!recheck) 
@@ -1169,8 +1181,10 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
             {
                countb = countb + 1;
                dt[l].col = 8;
+#if defined( ASA_DEBUG )
                printf("\n #%d [bead %4d] - Surf_%6.2f - ASA_%6.2f o/oASA_%6.2f - Threshold_%6.2f", countb, l + 1, zz,
                       asa[l], asa[l] * 100 / zz, min_asa);
+#endif
             }
          }
 
@@ -1206,7 +1220,9 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
       fclose(mol1);
       fclose(mol);
    }
+#if defined( ASA_DEBUG )
    printf("\n\n\n");
+#endif
    asab1_free_alloced();
    QFile::remove("controll");
    QFile::remove("plotter");
@@ -1754,8 +1770,10 @@ init2()
 
    strcpy(ridotto_rmc, ridotto);
    strcat(ridotto_rmc, ".rmc");
+#if defined( DEBUG_ASA )
    printf("\n");
    printf("\t Creating file %s for radii, masses and colors\n", ridotto_rmc);
+#endif
 
    qApp->processEvents();
    if (us_hydrodyn->stopFlag)
@@ -1933,18 +1951,18 @@ initarray()
    char nome[30];
    char filename[100];
    char *tmp;
-   em("i3_1");
+   // em("i3_1");
    tmp = (char *) malloc(100 * sizeof(char *));
    tmp = (char *) getenv("SOMO_PATH");
-   em("i3_2");
+   // em("i3_2");
    strcpy(filename, tmp);
-   em("i3_3");
+   // em("i3_3");
    strcat(filename, "/bin/tabella1.cor");
    fprintf(stderr, "\nInput tabella: %s", filename);
-   em("i3_4");
+   // em("i3_4");
 
    init3_pippa = us_fopen(filename, "r");
-   em("i3_5");
+   // em("i3_5");
 
    /*init3_pippa=us_fopen("tabella1.cor","r");*/
 
@@ -1953,14 +1971,14 @@ initarray()
    /* THE VALUES IN ROWS 29-48 ARE ASA FROM TRIPEPTIDES GLY-XXX-GLY TAKEN FROM TABLE 4.4 OF CREIGHTON */
    /* IN ROWS 21-26 AND 49-54 ARE THE VALUES FOR GAL, NAG, FUC, MAN, SIA AND GLUC (OG1) DEDUCED FROM KALIANNAN 2001 */
    /* IN ROWS 27-28 AND 55-56 ARE THE SUPPOSED VALUES FOR OG2 AND OG3 (TAIL OF OCTYL GLUCOSIDE) */
-   em("i3_6");
+   // em("i3_6");
    for (i = 0; i < 56; i++)
    {
       if ( fscanf(init3_pippa, "%d", &nat) ) {};
       arr1[i] = (float) nat;
    }
    fclose(init3_pippa);
-   em("i3_7");
+   // em("i3_7");
 
    nat = 0;
    flagr1 = 0;
@@ -1970,11 +1988,11 @@ initarray()
    init3_mol1 = us_fopen("contrall", "w");
    //fprintf(init3_mol1, "");
    fclose(init3_mol1);
-   em("i3_8");
+   // em("i3_8");
 
    init3_mol1 = us_fopen("contrall", "ab");
 
-   em("i3_9");
+   // em("i3_9");
    while (init3_brook == NULL)
    {
       pulisci();
@@ -3849,12 +3867,16 @@ formato()
    float passo;
 
    pulisci();
+#if defined( DEBUG_ASA )
    printf("\n\n%s%f%s", "Molecule's extension along the z-axis = ", fabs(maxz - minz), " [angstrom]");
+#endif
 
    conferma = 0;
    while (conferma == 0)
    {
+#if defined( DEBUG_ASA )
       printf("\n\nInsert the integration step in angstroms : ");
+#endif
       // scanf("%f", &passo);
       passo = asa_opts->asab1_step;
       printf("%.2f\n", passo);
@@ -3867,7 +3889,9 @@ formato()
          if ( scanf("%f", &passo) ) {};
       }
 
+#if defined( DEBUG_ASA )
       printf("\n\n%s%.0f\n\n", "Number of resulting iterations: ", ceil(fabs(maxz - minz) / passo));
+#endif
       // printf("%s", "Confirm ? [yes=1;no=0] ");
       // scanf("%d", &conferma);
       conferma = 1;

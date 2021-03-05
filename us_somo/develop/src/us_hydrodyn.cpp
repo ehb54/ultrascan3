@@ -488,7 +488,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    residue_short_names["SER"] = 'S';
    residue_short_names["THR"] = 'T';
    residue_short_names["CYS"] = 'C';
-   residue_short_names["CYH"] = 'J';
+   residue_short_names["CYH"] = 'C';
    residue_short_names["TYR"] = 'Y';
    residue_short_names["ASN"] = 'N';
    residue_short_names["GLN"] = 'Q';
@@ -1522,7 +1522,7 @@ void US_Hydrodyn::setupGUI()
    editor = new QTextEdit(this);
    editor->setPalette( PALET_NORMAL );
    editor->setReadOnly(true);
-   editor->setMinimumWidth(550);
+   editor->setMinimumWidth(600);
 
 #if QT_VERSION < 0x040000
 # if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
@@ -3839,7 +3839,7 @@ int US_Hydrodyn::do_calc_hydro()
       return -1;
    }
 
-   printf("back from supc retval %d\n", retval);
+   // printf("back from supc retval %d\n", retval);
    pb_show_hydro_results->setEnabled(retval ? false : true);
    pb_calc_hydro->setEnabled(true);
    pb_calc_zeno->setEnabled(true);

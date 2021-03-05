@@ -184,6 +184,7 @@ struct PDB_model
    float mw;                                // mw of model
    float ionized_mw_delta;     
    float volume;
+   double molar_volume;                     // mv of model
    int   num_elect;                         // number of electrons
    int   num_SS_bonds;                      // number of SS bonds
    int   num_SH_free;                       // number of free SH

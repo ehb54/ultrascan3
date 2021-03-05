@@ -267,6 +267,11 @@ class US_EXTERN US_Hydrodyn : public QFrame
                                        void * dts );
 
    private:
+      map < QString, struct atom * > residue_atom_map( struct residue & residue_entry );
+      map < QString, struct atom * > first_residue_atom_map( struct PDB_chain & chain );
+      map < QString, struct atom * > last_residue_atom_map( struct PDB_chain & chain );
+      map < QString, int >           first_residue_PDB_atom_map( struct PDB_chain & chain );
+      
       vector < PDB_atom > exposed_model( const vector < PDB_atom > & model );
       
       bool mm_mode;
@@ -324,10 +329,15 @@ class US_EXTERN US_Hydrodyn : public QFrame
       map < QString, double >                                   hybrid_to_protons;   // for calculating net charge
       map < QString, double >                                   hybrid_to_electrons; // for calculating net charge
       void read_hybrid_file( QString filename );
+      
+      void fix_N1_non_pbr( struct PDB_model & model );
 
       // info routines (in us_hydrodyn_info.cpp
 
+      void info_bead_models_mw( const QString & msg, const vector < vector < PDB_atom > > & b_models );
+      void info_bead_models_mw( const QString & msg, const vector < PDB_atom > & b_model );
       void info_model_vector( const QString & msg, const vector <struct PDB_model> & models, const set < QString > only_atoms = {} );
+      void info_model_residues( const QString & msg, struct PDB_model & model );
       void info_model_vector_mw  ( const QString & msg, const vector <struct PDB_model> & models, bool detail = false );
       void info_model_vector_vbar( const QString & msg, const vector <struct PDB_model> & models );
       void info_residue_p_residue( struct PDB_model & model ); // consistency report
@@ -1192,6 +1202,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void printError(const QString &);
       void closeAttnt(QProcess *, QString);
       void calc_vbar(struct PDB_model *, bool use_p_atom = false );
+      double calc_vbar_updated( struct PDB_model & );
       void update_vbar(); // update the results.vbar everytime something changes the vbar in options or calculation
       void append_options_log_somo(); // append somo options to options_log
       void append_options_log_somo_ovlp(); // append somo options to options_log

@@ -4091,18 +4091,12 @@ void US_Hydrodyn::display_default_differences()
 
    if ( str != "" )
    {
-      QColor save_color = editor->textColor();
-      editor->setTextColor("dark red");
-      editor->append("\nNon-default options:\n" + str );
-      editor->setTextColor(save_color);
-      editor->append( "\nTo reset to default: Menu bar -> Configuration -> Reset to Default Configuration\n" );
+      editor_msg( "dark red", "\nNon-default options:\n" + str );
+      editor_msg( "black", "\nTo reset to default: Menu bar -> Configuration -> Reset to Default Configuration\n" );
    }
    else
    {
-      QColor save_color = editor->textColor();
-      editor->setTextColor("dark green");
-      editor->append("\nAll options set to default values\n");
-      editor->setTextColor(save_color);
+      editor_msg( "dark green", "\nAll options set to default values\n");
    }
    le_bead_model_suffix->setText(
                                  setSuffix ? (getExtendedSuffix(true, true) + " / " +
