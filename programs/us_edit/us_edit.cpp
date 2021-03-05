@@ -6963,7 +6963,7 @@ void US_Edit::write_auto( void )
 
    // Process triples by channel, generate appropriate JSON (with or without 2DSA_FM stage) for autoflowAnalysis record && create those records
    QStringList AnalysisIDs;
-
+   
    for ( int i = 0; i < channels_all.size(); ++i  )
      {
        for ( int j = 0; j < triples_all_optics.size(); ++j )
@@ -6989,6 +6989,9 @@ void US_Edit::write_auto( void )
 			 }
 			 
 		       ID = create_autoflowAnalysis_record( dbP, triples_all_optics[j], json_status );
+
+		       if (ID)
+			 create_autoflowAnalysisStages_record( dbP, ID );
 		     }
 		 }
 	       //UV.vis
@@ -7012,6 +7015,9 @@ void US_Edit::write_auto( void )
 			   
 			   //So, reference wvl is defiend as the 1st one in the channel domain
 			   isSet_ref_wvl[ channels_all[i] ] = true;
+
+			   if (ID)
+			     create_autoflowAnalysisStages_record( dbP,  ID );
 			 }
 		       else
 			 {
@@ -7250,6 +7256,18 @@ int US_Edit::create_autoflowAnalysis_record( US_DB2* db, QString& tripleName, QS
 
    return autoflowAnalysisID;
    
+}
+
+// Function to create a single autoflowAnalysisStages record:
+void US_Edit::create_autoflowAnalysisStages_record( US_DB2* db, int ID ) 
+{
+  QStringList qry;
+  qry << "new_autoflow_analysis_stages_record"
+      << QString::number( ID );
+  
+  qDebug() << "Query: " << qry;
+  
+  db->query( qry );
 }
 
 

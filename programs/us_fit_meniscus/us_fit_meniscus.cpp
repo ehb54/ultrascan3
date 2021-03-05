@@ -1214,6 +1214,33 @@ void US_FitMeniscus::plot_2d( void )
 }
 
 
+//get status of the unique start of the FITMEN update
+int US_FitMeniscus::read_autoflowAnalysisStages( const QString& requestID )
+{
+  int status = 0;
+
+  US_Passwd pw;
+  US_DB2* db = new US_DB2( pw.getPasswd() );
+  
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+  			    tr( "FitMeniscus: Could not connect to database \n" ) + db->lastError() );
+      return status;
+    }
+
+
+  //qDebug() << "BEFORE query ";
+  QStringList qry;
+  qry << "fitmen_autoflow_analysis_status"
+      << requestID;
+
+  status = db->statusQuery( qry );
+  //qDebug() << "AFTER query ";
+
+  return status;
+}
+
 //Read autoflowAnalysis record for given requestID
 QMap< QString, QString> US_FitMeniscus::read_autoflowAnalysis_record( const QString& requestID )
 {
@@ -1266,9 +1293,38 @@ void US_FitMeniscus::edit_update( void )
   //ALEXEY: if autoflow: check if edit profiles already updated from other FITMEN session
   if ( auto_mode )
     {
-      QMap <QString, QString> analysis_details;
       QString requestID = triple_information[ "requestID" ];
+      //--- LOCK && UPDATE the autoflowStages' ANALYSIS field for the record
+      int status_fitmen_unique;
+      status_fitmen_unique = read_autoflowAnalysisStages( requestID );
 
+      qDebug() << "status_fitmen_unique -- " << status_fitmen_unique ;
+
+      if ( !status_fitmen_unique )
+	{
+	  QMessageBox::information( this,
+				    tr( "FITMEN | Triple Analysis already processed" ),
+				    tr( "It appears that FITMEN stage has already been processed by "
+					"a different user from different session. \n\n"
+					"The program will return to the autoflow runs dialog where "
+					"you can re-attach to the actual current stage of the run. "));
+	  
+	  
+	  emit triple_analysis_processed( );
+	  close();
+	  return;
+	}
+
+
+      /*
+      //-- CHECK status --//
+      // Regular procedure
+      // if (started | done)
+      //    return; 
+
+      //--- CHECK for longer times after possible update ------- //
+      QMap <QString, QString> analysis_details;
+      
       analysis_details = read_autoflowAnalysis_record( requestID );
 
       if ( !analysis_details.size() )
@@ -1341,6 +1397,7 @@ void US_FitMeniscus::edit_update( void )
 	      return;
 	    }
 	}
+      */
     }
   //-- End check for FITMEN stage status in autoflow ---- //
   //-- However, it's not complete: upon updating edit profile below, the row needs to be locked while updating --//
@@ -2617,12 +2674,6 @@ DbgLv(1) << "DbSc:     fittype" << fittype << "fextn" << fextn;
          QString editLabel  = ansysID .section( '_',  0, -5 );
          QString anType     = ansysID .section( '_',  2, -3 );
 
-	 //ALEXEY: if FMB (fittype==3), anType = "2DSA-FMB"
-	 if ( fittype == 3 )
-	   {
-	     anType = "2DSA-FMB";
-	     qDebug() << "FMB: ";
-	   }
 DbgLv(1) << "DbSc:       anType" << anType << "editLabel" << editLabel << "ansysID" << ansysID;
          QString ftfname    = runID + "/" + anType + "." + editLabel + "."
                               + tripleID + fextn;
@@ -2708,13 +2759,6 @@ DbgLv(1) << "DbSc:    *FIT* " << descript;
          }
 
          QString anType     = ansysID .section( '_',  2, -3 );
-
-	 //ALEXEY: if FMB (fittype==3), anType = "2DSA-FMB"
-	 if ( fittype == 3 )
-	   {
-	     anType = "2DSA-FMB";
-	     qDebug() << "FMB: ";
-	   }
 	 
          QString ftfname    = runID + "/" + anType + "." + editLabel + "."
                               + tripleID + fextn;

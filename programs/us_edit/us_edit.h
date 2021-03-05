@@ -357,6 +357,7 @@ class US_Edit : public US_Widgets
       
       void update_autoflow_record_atEditData( US_DB2*, QString& );
       int  create_autoflowAnalysis_record( US_DB2*, QString&,  QString& );
+      void create_autoflowAnalysisStages_record( US_DB2*, int ); 
       QString compose_json( bool );
 
       void delete_autoflow_record ( void );
