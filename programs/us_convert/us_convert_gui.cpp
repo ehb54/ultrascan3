@@ -5778,6 +5778,12 @@ void US_ConvertGui::delete_autoflow_record( void )
 				 "associated with this experiment." ) );
        return;
      }
+   
+   //Also, delete autoflowStages record
+   qry.clear();
+   qry << "delete_autoflow_stages_record"
+       << QString::number( autoflowID_passed );
+   
 }
    
 
