@@ -335,6 +335,8 @@ class US_ConvertGui : public US_Widgets
       //void import_data_auto  (QString &, QString &, QString &, QString &);
       void import_data_auto  ( QMap < QString, QString > & ) ;
       QMap < QString, QString > read_autoflow_record( int );
+      int  read_autoflow_stages_record( int );
+      void revert_autoflow_stages_record ( int );
       bool isSaved_auto( void );
 
       void process_optics( void );  

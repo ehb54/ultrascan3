@@ -6638,6 +6638,60 @@ bool US_Edit::isSaved_auto( void )
 }
 
 
+//Read autoflowStages record
+int US_Edit::read_autoflow_stages_record( int autoflowID  )
+{
+   int status = 0;
+  
+   // Check DB connection
+   US_Passwd pw;
+   QString masterpw = pw.getPasswd();
+   US_DB2* db = new US_DB2( masterpw );
+
+   if ( db->lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+       return status;
+     }
+
+
+   //qDebug() << "BEFORE query ";
+   QStringList qry;
+   qry << "autoflow_edit_status"
+       << QString::number( autoflowID );
+   
+   status = db->statusQuery( qry );
+   //qDebug() << "AFTER query ";
+
+   return status;
+}
+
+//Set autoflowStages record back to "unlnown"
+void US_Edit::revert_autoflow_stages_record( int autoflowID )
+{
+   // Check DB connection
+   US_Passwd pw;
+   QString masterpw = pw.getPasswd();
+   US_DB2* db = new US_DB2( masterpw );
+
+   if ( db->lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+       return;
+     }
+   
+   //qDebug() << "BEFORE query ";
+   QStringList qry;
+   qry << "autoflow_edit_status_revert"
+       << QString::number( autoflowID );
+   
+   db->query( qry );
+   //qDebug() << "AFTER query ";
+   
+}
+
 // Query autoflow record
 QMap< QString, QString> US_Edit::read_autoflow_record( int autoflowID  )
 {
@@ -6697,7 +6751,35 @@ QMap< QString, QString> US_Edit::read_autoflow_record( int autoflowID  )
 // Save edit profile(s)
 void US_Edit::write_auto( void )
 {
+  
+  /*
+  //--- Check if saving already initiated
+  int status_edit_unique;
+  status_edit_unique = read_autoflow_stages_record( autoflowID_passed );
 
+  qDebug() << "status_edit_unique -- " << status_edit_unique ;
+  
+  if ( !status_edit_unique )
+    {
+
+      QMessageBox::information( this,
+				tr( "The Program State Updated / Being Updated" ),
+				tr( "The program advanced or is advancing to the next stage!\n\n"
+				    "This happened because you or different user "
+				    "has already saved edit profiles into DB using different program "
+				    "session and the program is proceeding to the next stage. \n\n"
+				    "The program will return to the autoflow runs dialog where "
+				    "you can re-attach to the actual current stage of the run. "
+				    "Please allow some time for the status to be updated.") );
+      
+      
+      reset();
+      emit back_to_initAutoflow( );
+      return;
+    }
+    //-------------------------------------------
+    */
+  
   pb_write       ->setEnabled( false );
 
   /*
@@ -6804,6 +6886,9 @@ void US_Edit::write_auto( void )
 
 	      cb_triple->disconnect();
 
+	      //set autoflowStages record to "unknown" again !!
+	      //revert_autoflow_stages_record( autoflowID_passed );
+	      
 	      reset();
 	      emit process_next_optics( );
 	      return;
@@ -6811,11 +6896,11 @@ void US_Edit::write_auto( void )
 	  else
 	    {
 	      QMessageBox::information( this,
-					tr( "The Program State Updated / being Updated" ),
+					tr( "The Program State Updated / Being Updated" ),
 					tr( "The program advanced or is advancing to the next stage!\n\n"
-					    "This happend because you or different user "
+					    "This happened because you or different user "
 					    "has already saved edit profiles into DB using different program "
-					    "session and is proceeding to the next stage. \n\n"
+					    "session and the program is proceeding to the next stage. \n\n"
 					    "The program will return to the autoflow runs dialog where "
 					    "you can re-attach to the actual current stage of the run. "
 					    "Please allow some time for the status to be updated.") );
@@ -6829,11 +6914,11 @@ void US_Edit::write_auto( void )
       else
 	{
 	  QMessageBox::information( this,
-				    tr( "The Program State Updated / being Updated" ),
+				    tr( "The Program State Updated / Being Updated" ),
 				    tr( "The program advanced or is advancing to the next stage!\n\n"
 					"This happend because you or different user "
 					"has already saved edit profiles into DB using different program "
-					"session and is proceeding to the next stage. \n\n"
+					"session and the program is proceeding to the next stage. \n\n"
 					"The program will return to the autoflow runs dialog where "
 					"you can re-attach to the actual current stage of the run. "
 					"Please allow some time for the status to be updated.") );
@@ -6951,6 +7036,9 @@ void US_Edit::write_auto( void )
    
    if ( !all_processed )
      {
+       //set autoflowStages record to "unknown" again !!
+       //revert_autoflow_stages_record( autoflowID_passed );
+       
        reset();
        emit process_next_optics( );
        return;

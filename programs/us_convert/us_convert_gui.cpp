@@ -5163,6 +5163,60 @@ DbgLv(1) << "DelChan:  EXCLUDED cc trx" << celchn << trx;
 }
 
 
+//Read autoflowStages record
+int US_ConvertGui::read_autoflow_stages_record( int autoflowID  )
+{
+   int status = 0;
+  
+   // Check DB connection
+   US_Passwd pw;
+   QString masterpw = pw.getPasswd();
+   US_DB2* db = new US_DB2( masterpw );
+
+   if ( db->lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+       return status;
+     }
+
+
+   //qDebug() << "BEFORE query ";
+   QStringList qry;
+   qry << "autoflow_import_status"
+       << QString::number( autoflowID );
+   
+   status = db->statusQuery( qry );
+   //qDebug() << "AFTER query ";
+
+   return status;
+}
+
+//Set autoflowStages record back to "unlnown"
+void US_ConvertGui::revert_autoflow_stages_record( int autoflowID )
+{
+   // Check DB connection
+   US_Passwd pw;
+   QString masterpw = pw.getPasswd();
+   US_DB2* db = new US_DB2( masterpw );
+
+   if ( db->lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+       return;
+     }
+   
+   //qDebug() << "BEFORE query ";
+   QStringList qry;
+   qry << "autoflow_import_status_revert"
+       << QString::number( autoflowID );
+   
+   db->query( qry );
+   //qDebug() << "AFTER query ";
+   
+}
+
 // Query autoflow record
 QMap< QString, QString> US_ConvertGui::read_autoflow_record( int autoflowID  )
 {
@@ -5257,7 +5311,36 @@ bool US_ConvertGui::isSaved_auto( void )
 // Function to save US3 data
 void US_ConvertGui::saveUS3( void )
 {
+  /*
+  //Check if saving already initiated
+  if ( us_convert_auto_mode )
+    {
+      int status_import_unique;
+      status_import_unique = read_autoflow_stages_record( autoflowID_passed );
 
+      qDebug() << "status_import_unique -- " << status_import_unique ;
+
+      if ( !status_import_unique )
+	{
+	  QMessageBox::information( this,
+				    tr( "The Program State Updated / Being Updated" ),
+				    tr( "The program advanced or is advancing to the next stage!\n\n"
+					"This happened because you or different user "
+					"has already saved the data into DB using different program "
+					"session and the program is proceeding to the next stage. \n\n"
+					"The program will return to the autoflow runs dialog where "
+					"you can re-attach to the actual current stage of the run. "
+					"Please allow some time for the status to be updated.") );
+	  
+	  
+	  resetAll_auto();
+	  emit saving_complete_back_to_initAutoflow();
+	  return;
+	}
+      
+    }
+  */
+  
   qDebug() << "Save INIT 1: ";
 
   //ALEXEY: If autoflow stage already proceeded (e.g. to EDIT_DATA, ANALYSIS ), and/or data already saved to DB
@@ -5297,7 +5380,10 @@ void US_ConvertGui::saveUS3( void )
 					    tr( "Data for Current Optical System Already Saved" ),
 					    tr( "It appears that the data for the current optical system are already saved!\n\n"
 						"The program will switch to processing the data for next optical system... " ));
-		  
+
+		  //set autoflowStages record to "unknown" again !!
+		  //revert_autoflow_stages_record( autoflowID_passed );
+
 		  emit process_next_optics( );
 		  return;
 		}
@@ -5306,9 +5392,9 @@ void US_ConvertGui::saveUS3( void )
 		  QMessageBox::information( this,
 					    tr( "The Program State Updated / being Updated" ),
 					    tr( "The program advanced or is advancing to the next stage!\n\n"
-						"This happend because you or different user "
+						"This happened because you or different user "
 						"has already saved the data into DB using different program "
-						"session and is proceeding to the next stage. \n\n"
+						"session and the program is proceeding to the next stage. \n\n"
 						"The program will return to the autoflow runs dialog where "
 						"you can re-attach to the actual current stage of the run. "
 						"Please allow some time for the status to be updated.") );
@@ -5323,9 +5409,9 @@ void US_ConvertGui::saveUS3( void )
 	      QMessageBox::information( this,
 					tr( "The Program State Updated / being Updated" ),
 					tr( "The program advanced or is advancing to the next stage!\n\n"
-					    "This happend because you or different user "
+					    "This happened because you or different user "
 					    "has already saved the data into DB using different program "
-					    "session and is proceeding to the next stage. \n\n"
+					    "session and the program is proceeding to the next stage. \n\n"
 					    "The program will return to the autoflow runs dialog where "
 					    "you can re-attach to the actual current stage of the run. "
 					    "Please allow some time for the status to be updated.") );
@@ -5517,6 +5603,9 @@ DbgLv(1) << "Writing to disk";
 	   
 	   if ( !all_processed )
 	     {
+	       //set autoflowStages record to "unknown" again !!
+	       //revert_autoflow_stages_record( autoflowID_passed );
+	       
 	       emit process_next_optics( );
 	       return;
 	     }
@@ -5545,6 +5634,10 @@ DbgLv(1) << "Writing to disk";
 	      
 	       if ( !all_processed )
 		 {
+
+		   //set autoflowStages record to "unknown" again !!
+		   //revert_autoflow_stages_record( autoflowID_passed );
+		   
 		   emit process_next_optics( );
 		   return;
 		 }
@@ -5562,7 +5655,7 @@ DbgLv(1) << "Writing to disk";
 		   return;
 		 }
 	     }
-	   else                   // us_comproject BUT the run IS GMP, so procced                    
+	   else                   // us_comproject BUT the run IS GMP, so proceed                    
 	     {
 	       if ( !dataSavedOtherwise )
 		 {
@@ -5571,6 +5664,9 @@ DbgLv(1) << "Writing to disk";
 		   
 		   if ( !all_processed )
 		     {
+		       //set autoflowStages record to "unknown" again !!
+		       //revert_autoflow_stages_record( autoflowID_passed );
+		       
 		       emit process_next_optics( );
 		       return;
 		     }
@@ -5586,6 +5682,8 @@ DbgLv(1) << "Writing to disk";
 		       
 		       // Either emit ONLY if not US_MODE, or do NOT connect with slot on us_comproject...
 		       //update_autoflow_record_atLimsImport();
+
+		       //set autoflowSatges to "DONE" ?
 		       
 		       resetAll_auto();
 		       emit saving_complete_auto( details_at_editing  );   
@@ -5957,14 +6055,17 @@ DbgLv(1) << "DBSv:     tripleGUID       "
    // Ok, let's make sure they know what'll happen
    if ( saveStatus == BOTH )
    {
-     int status = QMessageBox::information( this,
-              tr( "Warning" ),
-              tr( "This will overwrite the raw data currently in the " ) +
-              tr( "database, and all existing edit profiles, models "  ) +
-              tr( "and noise data will be deleted too. Proceed? "      ),
-              tr( "&OK" ), tr( "&Cancel" ),
-              0, 0, 1 );
-     if ( status != 0 ) return;
+     if ( !us_convert_auto_mode )
+       {
+	 int status = QMessageBox::information( this,
+						tr( "Warning" ),
+						tr( "This will overwrite the raw data currently in the " ) +
+						tr( "database, and all existing edit profiles, models "  ) +
+						tr( "and noise data will be deleted too. Proceed? "      ),
+						tr( "&OK" ), tr( "&Cancel" ),
+						0, 0, 1 );
+	 if ( status != 0 ) return;
+       }
    }
 
    else
@@ -5982,11 +6083,11 @@ DbgLv(1) << "DBSv:     tripleGUID       "
        }
      else
        {
-	 QMessageBox::information( this,
-				   tr( "Warning" ),
-				   tr( "Once this data is written to the DB you will not "  ) +
-				   tr( "be able to make changes to it without erasing the " ) +
-				   tr( "edit profiles, models and noise files too...\n " ) );
+	 // QMessageBox::information( this,
+	 // 			   tr( "Warning" ),
+	 // 			   tr( "Once this data is written to the DB you will not "  ) +
+	 // 			   tr( "be able to make changes to it without erasing the " ) +
+	 // 			   tr( "edit profiles, models and noise files too...\n " ) );
        }
    }
 
@@ -6122,9 +6223,9 @@ DbgLv(1) << "DBSv:  files count" << files.size();
 	 QMessageBox::information( this,
 				   tr( "The Program State Updated / Data already saved:" ),
 				   tr( "The program advanced or is advancing to the next stage!\n\n"
-				       "This happend because you or different user "
+				       "This happened because you or different user "
 				       "has already saved the data into DB using different program "
-				       "session and proceeded to the next stage. \n\n"
+				       "session and the program proceeded to the next stage. \n\n"
 				       "The program will return to the autoflow runs dialog where "
 				       "you can re-attach to the actual current stage of the run. " 
 				       "Please allow some time for the status to be updated.") );

@@ -6200,7 +6200,7 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
                                      + db->lastError() );
       return;
    }
-
+   
    if ( db != NULL )
    {
       QStringList qry;
@@ -6223,6 +6223,13 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
    }
 
    qDebug() << "Generated AUTOFLOW ID : " <<  protocol_details[ "autoflowID" ];
+
+   /*
+   //Also, create record in autoflowStages table:
+   QStringList qry_stages;
+   qry_stages << "add_autoflow_stages_record" << protocol_details[ "autoflowID" ];
+   db->statusQuery( qry_stages );
+   */
 }
 
 // Function to build a Json object and document holding experiment controls

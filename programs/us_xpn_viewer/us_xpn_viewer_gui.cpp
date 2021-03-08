@@ -1941,6 +1941,31 @@ void US_XpnDataViewer::delete_autoflow_record( void )
 //Delete autoflow record upon Run abortion
 void US_XpnDataViewer::updateautoflow_record_atLiveUpdate( void )
 {
+  /*
+   //--- Check if saving already initiated
+   int status_liveupdate_unique;
+   status_liveupdate_unique = read_autoflow_stages_record( autoflowID_passed );
+   
+   qDebug() << "status_liveupdate_unique -- " << status_liveupdate_unique ;
+   
+   if ( !status_liveupdate_unique )
+     {
+       QMessageBox::information( this,
+				 tr( "The Program State Updated / Being Updated" ),
+				 tr( "The program advanced or is advancing to the next stage!\n\n"
+				     "This happened because you or different user "
+				     "used different program session to proceed to the IMPORT or later stage. \n\n"
+				     "The program will return to the autoflow runs dialog where "
+				     "you can re-attach to the actual current stage of the run. "
+				     "Please allow some time for the status to be updated.") );
+       
+
+       reset_auto();
+       emit close_program(); 
+       return;
+     }
+   //-------------------------------------------
+   */
 
    details_at_live_update[ "runID" ] = RunID_to_retrieve;
   
@@ -1989,21 +2014,66 @@ void US_XpnDataViewer::updateautoflow_record_atLiveUpdate( void )
        details_at_live_update[ "expAborted" ] = QString("YES");
      }
    
-   // // OR
-
-   // qDebug() << "Trying to Update Autoflow table AT LIVE_UPDATE!!";
-   // int status = db->statusQuery( qry );
    
-   // if ( status == US_DB2::NO_AUTOFLOW_RECORD )
-   //   {
-   //     QMessageBox::warning( this,
-   // 			     tr( "Autoflow Record Not Updated" ),
-   // 			     tr( "No autoflow record\n"
-   // 				 "associated with RunID %1 exists!" ).arg( RunID_to_retrieve ) );
-   //     return;
-   //   }
+   //set autoflowStages record to "unknown" again !!
+   //revert_autoflow_stages_record( autoflowID_passed );
+      
 }
+
+//Read autoflowStages record
+int US_XpnDataViewer::read_autoflow_stages_record( int autoflowID  )
+{
+   int status = 0;
+  
+   // Check DB connection
+   US_Passwd pw;
+   QString masterpw = pw.getPasswd();
+   US_DB2* db = new US_DB2( masterpw );
+
+   if ( db->lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+       return status;
+     }
+
+
+   //qDebug() << "BEFORE query ";
+   QStringList qry;
+   qry << "autoflow_liveupdate_status"
+       << QString::number( autoflowID );
    
+   status = db->statusQuery( qry );
+   //qDebug() << "AFTER query ";
+
+   return status;
+}
+
+//Set autoflowStages record back to "unlnown"
+void US_XpnDataViewer::revert_autoflow_stages_record( int autoflowID )
+{
+   // Check DB connection
+   US_Passwd pw;
+   QString masterpw = pw.getPasswd();
+   US_DB2* db = new US_DB2( masterpw );
+
+   if ( db->lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+       return;
+     }
+   
+   //qDebug() << "BEFORE query ";
+   QStringList qry;
+   qry << "autoflow_liveupdate_status_revert"
+       << QString::number( autoflowID );
+   
+   db->query( qry );
+   //qDebug() << "AFTER query ";
+   
+}
+
 //Stop machine
 void US_XpnDataViewer::stop_optima( void )
 {
@@ -2369,9 +2439,11 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
   correctRadii = protocol_details[ "correctRadii" ];
   expAborted   = protocol_details[ "expAborted" ];
   runID_passed = protocol_details[ "runID" ];
-  
+
   qDebug() << "RUNID_PASSED !!! AutoflowID " << runID_passed << " !!! " << protocol_details[ "autoflowID" ];
 
+  autoflowID_passed = protocol_details[ "autoflowID" ].toInt();
+  
   details_at_live_update = protocol_details;
 
   selectOptimaByName_auto( OptimaName );                         //New

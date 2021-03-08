@@ -371,6 +371,9 @@ class US_Edit : public US_Widgets
       void process_optics_auto ( void );
       
       QMap< QString, QString> read_autoflow_record( int );
+      int read_autoflow_stages_record( int );
+      void revert_autoflow_stages_record( int );
+      
       bool isSaved_auto( void );
       
       void reset_editdata_panel ( void );

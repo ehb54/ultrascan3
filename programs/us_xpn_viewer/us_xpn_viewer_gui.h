@@ -101,6 +101,8 @@ class US_XpnDataViewer : public US_Widgets
   private:
      bool auto_mode_bool;
      bool inExport;
+
+     int autoflowID_passed;
      
      QVector< US_DataIO::RawData >   allData;    //!< All AUC raw data
 
@@ -356,6 +358,9 @@ class US_XpnDataViewer : public US_Widgets
      int    read_timeElapsed_offset( void );
      void   delete_autoflow_record( void );
      void   updateautoflow_record_atLiveUpdate( void );
+
+     int    read_autoflow_stages_record( int );
+     void   revert_autoflow_stages_record( int );
 
      //void   expStatFive( void );
      //void   expStatThree( void );
