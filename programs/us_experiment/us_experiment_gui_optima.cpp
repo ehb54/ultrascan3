@@ -5389,16 +5389,20 @@ void US_ExperGuiUpload::submitExperiment()
 
          int ScanCount;
          int ScanInt;
-         if ( scanint_sec > scanint_sec_min * Total_wvl[i] )
-         {
-            ScanCount = int( duration_sec / scanint_sec );
-            ScanInt   = scanint_sec;
-         }
-         else
-         {
-            ScanCount = int( duration_sec / (scanint_sec_min * Total_wvl[i] ) );
-            ScanInt   = scanint_sec_min * Total_wvl[i];
-         }
+         // if ( scanint_sec > scanint_sec_min * Total_wvl[i] )
+         // {
+         //    ScanCount = int( duration_sec / scanint_sec );
+         //    ScanInt   = scanint_sec;
+         // }
+         // else
+         // {
+         //    ScanCount = int( duration_sec / (scanint_sec_min * Total_wvl[i] ) );
+         //    ScanInt   = scanint_sec_min * Total_wvl[i];
+         // }
+
+	 ScanCount = int( duration_sec / ( scanint_sec * Total_wvl[i] ) );
+	 ScanInt   = scanint_sec;
+	 
          qDebug() << "Duration_sec: " << duration_sec << ", delay_sec: " << delay_sec << ", scanint_sec: " << scanint_sec << ", Tot_wvl: " << Total_wvl[i];
 
          for (int j=0; j<ncells; j++)
@@ -5428,14 +5432,14 @@ void US_ExperGuiUpload::submitExperiment()
 //34123123123123123123
             if ( has_absorbance )
             {
-               //Stop if ScanCount > 1501
-               if ( ScanCount > 1501 )
+               //Stop if ScanCount > 1500
+               if ( ScanCount > 1500 )
                {
                   QMessageBox::critical( this,
                   tr( "*ERROR* in Submitting Protocol" ),
                   tr( "Protocol cannot be submitted: \n"
                       "Number of scans per cell per wavelengths is %1. \n"
-                      "It must not exceed 1501. \n\n"
+                      "It must not exceed 1500. \n\n"
                       "Please revise experiment parameters accordingly." )
                      .arg( ScanCount ) );
                   return;
@@ -5639,8 +5643,9 @@ void US_ExperGuiUpload::submitExperiment()
 
          int ScanCount;
          int ScanInt;
-         //ScanCount = int( duration_sec / (scanint_sec * ncells_interference ));  //ALEXEY: do NOT divide by #cells ?
-	 ScanCount = int( duration_sec / (scanint_sec  ));
+
+	 ScanCount = int( duration_sec / (scanint_sec * (ncells_interference / 2)  ));  //ALEXEY: do NOT divide by #cells ?
+	 //ScanCount = int( duration_sec / (scanint_sec  ));
 	 ScanInt   = scanint_sec;
 
          qDebug() << "Duration_sec: " << duration_sec << ", delay_sec_int: " << delay_sec << ", scanint_sec_int: " << scanint_sec;
@@ -5664,13 +5669,13 @@ void US_ExperGuiUpload::submitExperiment()
             if ( has_interference )
             {
                //ALEXEY: For interference as well ?
-               if ( ScanCount > 1501 )
+               if ( ScanCount > 1500 )
                {
                   QMessageBox::critical( this,
                   tr( "*ERROR* in Submitting Protocol" ),
                   tr( "Protocol cannot be submitted: \n"
                       "Number of scans per cell per wavelengths is %1. \n"
-                      "It must not exceed 1501. \n\n"
+                      "It must not exceed 1500. \n\n"
                       "Please revise experiment parameters accordingly." )
                      .arg( ScanCount ) );
 

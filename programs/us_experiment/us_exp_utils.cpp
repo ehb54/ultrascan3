@@ -2379,10 +2379,14 @@ DbgLv(1) << "EGRn:inP:    ii" << ii << "channel" << channel;
 DbgLv(1) << "EGRn:inP: # speeds, #cells: " << nsp << ", " << ncells;
 
    QVector < int > Total_wvl(nsp);
+   QVector < int > ncells_used(nsp);
 
    for (int i=0; i<nsp; i++)
-     Total_wvl[i] = 0;
-
+     {
+       Total_wvl[i] = 0;
+       ncells_used[i] = 0;
+     }
+   
 DbgLv(1) << "EGRn:inP: Total_wvl.size():  " << Total_wvl.size();
 
    for (int i=0; i<nsp; i++)
@@ -2403,6 +2407,8 @@ DbgLv(1) << "EGRn:inP:  rpRange->nranges: " << rpRange->nranges;
             {
 DbgLv(1) << "EGRn:inP:   # of Ranges for cell " << j << ": " << rpRange->chrngs[ ii ].wvlens.count();
                Total_wvl[i]  += rpRange->chrngs[ ii ].wvlens.count();
+
+	       ++ncells_used[i];
             }
          }
 DbgLv(1) << "EGRn:inP:  #Wvl for cell: " << j << " is: " << Total_wvl[i];
@@ -2416,15 +2422,20 @@ DbgLv(1) << "EGRn:inP:  #Wvl for cell: " << j << " is: " << Total_wvl[i];
       double scanint_sec  = rpSpeed->ssteps[ i ].scanintv;
       double scanint_sec_min = rpSpeed->ssteps[ i ].scanintv_min;
 
+      qDebug() << "RANGES INIT: duration_sec , scanint_sec, scanint_sec_min,  Total_wvl[i], ncells_used[i] -- "
+	       << duration_sec << scanint_sec << scanint_sec_min << Total_wvl[i] << ncells_used[i];
+
       int scancount;
       if ( Total_wvl[i] == 0 )
          scancount = 0;
       else
       {
-         if ( scanint_sec > scanint_sec_min * Total_wvl[i])
-            scancount = int( duration_sec / scanint_sec );
-         else
-            scancount = int( duration_sec / ( scanint_sec_min * Total_wvl[i] ) );
+         // if ( scanint_sec > scanint_sec_min * Total_wvl[i])
+         //    scancount = int( duration_sec / scanint_sec );
+         // else
+         //    scancount = int( duration_sec / ( scanint_sec_min * Total_wvl[i] ) );
+
+	scancount = int( duration_sec / ( scanint_sec * Total_wvl[i] ) );
       }
 
       mainw->ScanCount_global = scancount;
@@ -2442,17 +2453,26 @@ DbgLv(1) << "EGRn:inP:  speed" << i << "scancount" << scancount;
       QString rayleigh    = tr( "Rayleigh Interference" );
       
       bool has_interference = false;
+      int ncells_used_int = 0;
       for ( int ii = 0; ii < oprof.count(); ii++ )
 	{
 	  if ( oprof[ ii ].contains( rayleigh ) )
 	    {
+	      ++ncells_used_int;
 	      has_interference = true;
-	      break;
+	      //break;
 	    }
 	}
       if ( has_interference )
-	scancount_int = int( duration_sec / scanint_sec_int ); 
-      
+	{
+	  //scancount_int = int( duration_sec / scanint_sec_int );
+	  ncells_used_int /= 2;
+	  scancount_int = int( duration_sec / ( scanint_sec_int * ncells_used_int ) );
+	  
+	  qDebug() << "RANGES INIT Interference: duration_sec , scanint_sec_int, ncells_used -- "
+		   << duration_sec << scanint_sec_int << ncells_used_int;
+	}
+	  
       QString scancount_stage_int = tr( "Stage %1. Number of Scans per Cell (Interference): %2 " ).arg(i+1).arg(scancount_int);
       cb_scancount->addItem( scancount_stage_int );      
    }

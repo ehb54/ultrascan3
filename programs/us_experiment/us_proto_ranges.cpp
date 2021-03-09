@@ -623,10 +623,14 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 
    // Update ScanCount info per stage, per wavelength
    int tot_wvl = 0;
+   int ncells_used = 0;
    for ( int ii = 0; ii < nrnchan; ii++ )
-     tot_wvl += swvlens[ ii ].size();
-
+     {
+       tot_wvl += swvlens[ ii ].size();
+       ++ncells_used;
+     }
    tot_wvl /= 2; // per all cells, not channels (for now)
+   ncells_used /= 2;
 
    cb_scancount->clear();
    int nsp = sibIValue( "speeds",  "nspeeds" );
@@ -635,12 +639,17 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
       double duration_sec    = rpSpeed->ssteps[ i ].duration;
       double scanint_sec     = rpSpeed->ssteps[ i ].scanintv;
       double scanint_sec_min = rpSpeed->ssteps[ i ].scanintv_min;
-
+      
+      qDebug() << "RANGES SET MANUAL: duration_sec , scanint_sec, scanint_sec_min,  tot_wvl, ncells_used -- "
+	       << duration_sec << scanint_sec << scanint_sec_min << tot_wvl << ncells_used;
+      
       int scancount = 0;
-      if ( scanint_sec > scanint_sec_min*tot_wvl )
-         scancount = int( duration_sec / scanint_sec );
-      else
-         scancount = int( duration_sec / (scanint_sec_min * tot_wvl) );
+      // if ( scanint_sec > scanint_sec_min*tot_wvl )
+      //    scancount = int( duration_sec / scanint_sec );
+      // else
+      //    scancount = int( duration_sec / (scanint_sec_min * tot_wvl) );
+
+      scancount = int( duration_sec / (scanint_sec * tot_wvl) );
 
       mainw->ScanCount_global = scancount;
       QString scancount_stage = tr( "Stage %1. Number of Scans per Wavelength (UV/vis): %2 " ).arg(i+1).arg(scancount);
@@ -656,16 +665,25 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
       QString rayleigh    = tr( "Rayleigh Interference" );
       
       bool has_interference = false;
+      int ncells_used_int = 0;
       for ( int ii = 0; ii < oprof.count(); ii++ )
 	{
 	  if ( oprof[ ii ].contains( rayleigh ) )
 	    {
 	      has_interference = true;
-	      break;
+	      ++ncells_used_int;
+	      //break;
 	    }
 	}
       if ( has_interference )
-	scancount_int = int( duration_sec / scanint_sec_int ); 
+	{
+	  //scancount_int = int( duration_sec / scanint_sec_int );
+	  ncells_used_int /= 2;
+	  scancount_int = int( duration_sec / ( scanint_sec_int * ncells_used_int ) );
+
+	  qDebug() << "RANGES SET MANUAL Interference: duration_sec , scanint_sec_int, ncells_used -- "
+		   << duration_sec << scanint_sec_int << ncells_used_int;
+	}
       
       QString scancount_stage_int = tr( "Stage %1. Number of Scans per Cell (Interference): %2 " ).arg(i+1).arg(scancount_int);
       cb_scancount->addItem( scancount_stage_int );      
@@ -789,11 +807,15 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 
    // Update ScanCount info per stage, per wavelength
    int tot_wvl = 0;
+   int ncells_used = 0;
    for ( int ii = 0; ii < nrnchan; ii++ )
-     tot_wvl += swvlens[ ii ].size();
-
+     {
+       tot_wvl += swvlens[ ii ].size();
+       ++ncells_used;
+     }
    tot_wvl /= 2; // per all cells, not channels (for now)
-
+   ncells_used /= 2;
+   
    cb_scancount->clear();
    int nsp = sibIValue( "speeds",  "nspeeds" );
    for ( int i = 0; i < nsp; i++ )
@@ -802,11 +824,16 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
       double scanint_sec  = rpSpeed->ssteps[ i ].scanintv;
       double scanint_sec_min = rpSpeed->ssteps[ i ].scanintv_min;
 
+      qDebug() << "RANGES SET SELECTOR: duration_sec , scanint_sec, scanint_sec_min,  tot_wvl, ncells_used -- "
+	       << duration_sec << scanint_sec << scanint_sec_min << tot_wvl << ncells_used;
+
       int scancount = 0;
-      if ( scanint_sec > scanint_sec_min*tot_wvl )
-         scancount = int( duration_sec / scanint_sec );
-      else
-         scancount = int( duration_sec / (scanint_sec_min * tot_wvl) );
+      // if ( scanint_sec > scanint_sec_min*tot_wvl )
+      //    scancount = int( duration_sec / scanint_sec );
+      // else
+      //    scancount = int( duration_sec / (scanint_sec_min * tot_wvl) );
+
+      scancount = int( duration_sec / (scanint_sec * tot_wvl) );
 
       mainw->ScanCount_global = scancount;
 
@@ -823,16 +850,25 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
       QString rayleigh    = tr( "Rayleigh Interference" );
       
       bool has_interference = false;
+      int ncells_used_int = 0;
       for ( int ii = 0; ii < oprof.count(); ii++ )
 	{
 	  if ( oprof[ ii ].contains( rayleigh ) )
 	    {
+	      ++ncells_used_int;
 	      has_interference = true;
-	      break;
+	      //break;
 	    }
 	}
       if ( has_interference )
-	scancount_int = int( duration_sec / scanint_sec_int ); 
+	{
+	  //scancount_int = int( duration_sec / scanint_sec_int );
+	  ncells_used_int /= 2;
+	  scancount_int = int( duration_sec / ( scanint_sec_int * ncells_used_int ) );
+
+	  qDebug() << "RANGES SET MANUAL Interference: duration_sec , scanint_sec_int, ncells_used -- "
+		   << duration_sec << scanint_sec_int << ncells_used_int;
+	}
       
       QString scancount_stage_int = tr( "Stage %1. Number of Scans per Cell (Interference): %2 " ).arg(i+1).arg(scancount_int);
       cb_scancount->addItem( scancount_stage_int );      
