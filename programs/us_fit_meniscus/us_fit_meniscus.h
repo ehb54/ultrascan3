@@ -32,6 +32,7 @@ class US_FitMeniscus : public US_Widgets
       US_FitMeniscus( QMap<QString, QString> triple_info_map );
 
       bool auto_mode;
+      bool no_fm_data;
       
       // Class to hold model descriptions
       class ModelDesc
@@ -163,7 +164,7 @@ class US_FitMeniscus : public US_Widgets
       void scan_dbase_auto( QMap <QString, QString> & );
       
       void file_loaded(    QString );
-      void file_loaded_auto( QMap < QString, QString >& );
+      bool file_loaded_auto( QMap < QString, QString >& );
       void get_editProfile_copy( QMap < QString, QString >& );
       QMap< QString, QString> read_autoflowAnalysis_record( const QString& );
       int read_autoflowAnalysisStages( const QString& );

@@ -33,6 +33,7 @@ US_FitMeniscus::US_FitMeniscus( QMap<QString, QString> triple_info_map ) : US_Wi
   qDebug() << "triple_information: filename, triple_name: " <<  triple_information["filename"] << triple_information["triple_name"];
   
   auto_mode = true;
+  no_fm_data = false;
   
   setWindowTitle( tr( "Fit Meniscus from 2DSA Data: ") + triple_information[ "triple_name" ] );
   setPalette( US_GuiSettings::frameColor() );
@@ -329,7 +330,8 @@ DbgLv(1) << "Main: BB";
 //Regular constructor
 US_FitMeniscus::US_FitMeniscus() : US_Widgets()
 {
-  auto_mode = false;
+   auto_mode = false;
+   no_fm_data = false;
    
    setWindowTitle( tr( "Fit Meniscus from 2DSA Data" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -2041,7 +2043,7 @@ qDebug() << "EditProfile file: " << filepath << " exists";
 }
 
 // Slot for handling a loaded file:  set the name of loaded,edit files
-void US_FitMeniscus::file_loaded_auto( QMap < QString, QString > & triple_information  )
+bool US_FitMeniscus::file_loaded_auto( QMap < QString, QString > & triple_information  )
 {
   qDebug() << "In file_loaded_auto: ";
   QString file_directory = US_Settings::resultDir() + QString("/") + triple_information[ "filename" ];
@@ -2057,6 +2059,18 @@ void US_FitMeniscus::file_loaded_auto( QMap < QString, QString > & triple_inform
   QStringList fm_files = directory.entryList( QStringList() << "2DSA-FM*" + triple_name_cut + "*.fitmen.dat", QDir::Files | QDir::NoSymLinks);
 
   qDebug() << "In file_loaded_auto: 22";
+
+  //ALEXEY: if there is no files (since no "-FM" models produced for what ever reason), issue a warning:
+  if ( !fm_files.size()  )
+    {
+      QMessageBox::warning( this,
+			    tr( "FM models problem" ),
+			    tr( "No \"FM | FMB\" models have been found for the present run. \n\n"
+				"Program will return to the autoflow runs manager...") );
+
+      no_fm_data = true;
+      return false;
+    }
   
   QString fn = directory.absoluteFilePath( fm_files[0] );  //ALEXEY: *should be* the only one fitmen.dat file 
 
@@ -2178,6 +2192,8 @@ DbgLv(1) << "FL: aplmwl: nedtfs" << nedtfs << "edtfilt" << edtfilt;
    //Meniscus position, user specified curve
    minimum_curve_sel = us_curve( meniscus_plot, tr( "Minimum Pointer" ) ); 
    minimum_curve_sel->setPen( QPen( QBrush( Qt::red ), 3.0 ) );
+
+   return true;
 }
 
 

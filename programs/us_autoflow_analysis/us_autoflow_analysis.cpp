@@ -791,7 +791,13 @@ void US_Analysis_auto::gui_update( )
 	      
 	      qDebug() << "Update stopped at FITMEN for triple -- " << triple_curr_key;
 	      
-	      in_gui_update  = false; 
+	      in_gui_update  = false;
+
+	      if ( FitMen -> no_fm_data )
+		{
+		  FitMen->close();
+		  triple_analysis_processed( );
+		}
 
 	      return;
 	    }
@@ -2917,6 +2923,7 @@ void US_Analysis_auto::editProfiles_updated_earlier ( void )
 void US_Analysis_auto::triple_analysis_processed ( void )
 {
   qDebug() << "FITMEN: entire analysis for triple completed -- ";
+
   emit analysis_back_to_initAutoflow( );
 }
 
