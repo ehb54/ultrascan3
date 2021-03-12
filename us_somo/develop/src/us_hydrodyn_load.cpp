@@ -1246,7 +1246,7 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
                sulfur_pdb_chain_idx[ temp_chain.atom[ 0 ].chainID ].push_back( (unsigned int) temp_model.molecule.size() );
             }
             temp_model.molecule.push_back(temp_chain); // add the last chain of this model
-            SS_apply( temp_model );
+            SS_apply( temp_model, QString( "%1_model_%2").arg( project ).arg( temp_model.model_id ) );
             editor_msg( "black", "\nResidue sequence from " + project +".pdb model " +
                            QString("%1").arg( temp_model.model_id ) + ":");
             str = "";
@@ -1461,7 +1461,8 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
          }
          temp_model.molecule.push_back(temp_chain);
       }
-      SS_apply( temp_model );
+      SS_apply( temp_model, project );
+
       editor->append("\nResidue sequence from " + project +".pdb:\n");
       str = "";
       QString sstr = "";

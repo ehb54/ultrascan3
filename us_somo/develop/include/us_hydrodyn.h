@@ -304,7 +304,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
    // distance threshold check support
       void SS_setup();                              // called once to setup any persistant distance threshold structures
       void SS_init();                               // called during load pdb to setup any processing structures
-      void SS_apply( struct PDB_model & model );    // called during load pdb to process any adjustments (CYS->CYH etc) *** per model! ***
+      void SS_apply( struct PDB_model & model,
+                     const QString & ssbondfile );  // called during load pdb to process any adjustments (CYS->CYH etc) *** per model! ***
       void SS_change_residue(                       // change the residue of an entry to target_residue
                              struct PDB_model & model
                              ,const QString & line
