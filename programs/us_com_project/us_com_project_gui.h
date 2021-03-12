@@ -91,6 +91,7 @@ class US_InitDialogueGui : public US_WidgetsDialog
    US_SelectItem* pdiag_autoflow;
 
    void initRecordsDialogue( void );
+   void checkCertificates( void );
 
    bool initDialogueOpen;
    bool initMsgNorecOpen;
@@ -118,8 +119,7 @@ class US_InitDialogueGui : public US_WidgetsDialog
     static int list_all_autoflow_records( QList< QStringList >&, US_DB2* );
     
     void read_optima_machines( US_DB2* = 0 ); 
-    QList< QMap<QString, QString> > instruments;  
-    
+    QList< QMap<QString, QString> > instruments;
 
  protected:
     void resizeEvent(QResizeEvent *event) override;

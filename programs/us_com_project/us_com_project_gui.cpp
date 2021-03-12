@@ -34,7 +34,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
   //-- Check if Database is selected in the DB preferences
   checkDataLocation();
   // --------------------------------------------------------
-    
+
    curr_panx    = 0;
    window_closed = false;
    xpn_viewer_closed_soft = false;  
@@ -936,8 +936,11 @@ void US_ComProjectMain::switch_to_report( QMap < QString, QString > & protocol_d
 
 
 // Function to Call initiation of the Autoflow Record Dialogue form _main.cpp
-void US_ComProjectMain::call_AutoflowDialogue( void )
+void US_ComProjectMain::call_AutoflowDialogue( void )                           //<--- Entry point from main 
 {
+  //Check Optima's certificates first:
+  epanInit->checkCertificates();
+    
   epanInit->initRecordsDialogue();
 }
 
@@ -1059,6 +1062,116 @@ void US_InitDialogueGui::initAutoflowPanel( void )
 {
   initRecords();
   initRecordsDialogue();
+}
+
+
+//Check for certificates
+void US_InitDialogueGui::checkCertificates( void )
+{
+  US_Passwd  pw;
+  US_DB2* dbP  = new US_DB2( pw.getPasswd() );
+  
+  //read_optima_machines
+  read_optima_machines( dbP );
+
+  for ( int i=0; i < this->instruments.size(); ++i )
+    {
+      QMap< QString, QString > instrument_curr = this->instruments[i];
+      
+      QString alias          = instrument_curr[ "name" ];
+      QString dbhost         = instrument_curr[ "optimaHost" ];
+      QString optima_msgPort = instrument_curr[ "msgPort" ];
+      
+      qDebug() << "In CHECK Connection: alias, dbhost, optima_msgPort -- "
+	       << alias << dbhost << optima_msgPort;
+      
+      // Check for certificate license key and its expiraiton
+      Link *link = new Link;
+      bool status_sys_data = link->connectToServer( dbhost, optima_msgPort.toInt() );
+      
+      // Ceritificate location && check for nearing or actual expiration date ////////////////////
+      QString certPath = US_Settings::etcDir() + QString("/optima/"); 
+      QString keyFile  = certPath + QString( "client.key" );
+      QString pemFile  = certPath + QString( "client.pem" );
+      
+      QFile certfile( pemFile );
+      certfile.open(QIODevice::ReadOnly);
+      QSslCertificate cert(&certfile,QSsl::Pem);
+      
+      QDateTime expdate = cert.expiryDate();
+      
+      QString fmt = "yyyy-MM-dd";
+      QString expdate_str = expdate.toString(fmt);
+      
+      qDebug() << "Qt's way of showing expiraiton date: " << cert.expiryDate() << expdate_str; 
+      
+      // get current QDate
+      QDate dNow(QDate::currentDate());
+      
+      // Certs expiration QDate 
+      QDate dEndCerts =  QDate::fromString(expdate_str, fmt);
+      
+      // Difference
+      int daysToExpiration = dNow.daysTo(dEndCerts);
+      
+      qDebug() << "Now, End, expiration in days:  " << dNow << dEndCerts << daysToExpiration;
+      
+      // End of checking expiraiton date ////////////////////////////////////////////////////////////
+      
+      if ( !status_sys_data || daysToExpiration <= 0 )
+	{
+	  QMessageBox msgBox_sys_data;
+	  msgBox_sys_data.setIcon(QMessageBox::Critical);
+	  msgBox_sys_data.setWindowTitle(tr("Optima System Data Server Connection Problem!"));
+	  
+	  QString msg_sys_text = QString("Attention! UltraScan is not able to communicate with the data acquisition server on the %1.").arg(alias);
+	  QString msg_sys_text_info = QString("");
+	  
+	  if ( daysToExpiration > 0 )
+	    {
+	      msg_sys_text += QString(tr("\n\nPlease check the following:"));
+	      msg_sys_text_info += QString( tr("1. %1 is turned on\n"
+					       "2. the data acquisition server on %1 is running\n"
+					       "3. your license key is stored in $HOME/ultrascan/etc/optima and is not expired\n\n"
+					       "Submission of the experimental protocol is suspended until this condition is resolved." ))
+		.arg(alias);
+	    }
+	  else
+	    {
+	      msg_sys_text_info += QString( tr("Your license key is expired! Submission of the experimental protocol is suspended.\n"
+					       "Please renew the key and try to submit again."));
+	    }
+	  
+	  msg_sys_text_info += QString( tr("\n\nThe program will be closed.") );
+	  msgBox_sys_data.setText( msg_sys_text );
+	  msgBox_sys_data.setInformativeText( msg_sys_text_info );
+	  
+	  QPushButton *Cancel_sys    = msgBox_sys_data.addButton(tr("OK"), QMessageBox::RejectRole);
+	  
+	  msgBox_sys_data.exec();
+	  
+	  exit(1);
+	  return;
+	}
+      else
+	{
+	  if ( daysToExpiration <= 30 )
+	    {
+	      qDebug() << "Certs nearing expiration!! ";
+	      
+	      QMessageBox::warning( this,
+				    tr( "License Key Nearing Expiraiton" ),
+				    QString(tr( "Your license key will expire within %1 days. \n\n This program will not function without it.") ).arg(daysToExpiration));
+	      
+	    }
+	  
+	  //Disconnect link
+	  link->disconnectFromServer();
+	}
+      link->disconnectFromServer();
+    }
+  
+  //  End of checkig for conneciton to Optima sys_data server ///////////////////////////////////////////////
 }
 
 

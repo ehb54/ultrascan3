@@ -5070,7 +5070,7 @@ void US_ExperGuiUpload::submitExperiment_confirm()
       
       if ( daysToExpiration > 0 )
 	{
-	  msg_sys_text += QString(tr("Please check the following:"));
+	  msg_sys_text += QString(tr("\nPlease check the following:"));
 	  msg_sys_text_info += QString( tr("1. %1 is turned on \n2. the data acquisition server on %1 is running \n3. your license key is stored in $HOME/ultrascan/etc/optima and is not expired \n\nSubmission of the experimental protocol is suspended until this condition is resolved." ))
 	    .arg(alias);
 	}
