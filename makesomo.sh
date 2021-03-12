@@ -107,6 +107,25 @@ if [ $ISMAC -ne 0 ]; then
   ./somo_appnames.sh
 fi
 
+# symlink bin64 to bin util somo is updated to drop bin64                                                                                                                                                             
+if [ "`uname -s`" = "Linux" ]; then
+    SOMOBIN64="$ULTRASCAN/bin64"
+    SOMOBIN="$ULTRASCAN/bin"
+
+    if [ -L ${SOMOBIN64} ] ; then
+        if [ -e ${SOMOBIN64} ] ; then
+            echo "${SOMOBIN64} - symlink ok"
+        else
+            echo "ERROR: ${SOMOBIN64} is a broken link, manually fix"
+        fi
+    elif [ -e ${SOMOBIN64} ] ; then
+        echo "ERROR: ${SOMOBIN64} - not a symlink, manually fix"
+    else
+        echo "creating ${SOMOBIN64} symlink"
+        ln -s ${SOMOBIN} ${SOMOBIN64}
+    fi
+fi
+
 ls -lrt ./lib ./bin64
 echo ""
 echo "rsync -av --exclude .svn $SOMO3/lib/ $ULTRASCAN/lib"
