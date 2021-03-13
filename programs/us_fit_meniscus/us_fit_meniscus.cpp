@@ -2052,6 +2052,10 @@ bool US_FitMeniscus::file_loaded_auto( QMap < QString, QString > & triple_inform
   triple_name_cut.replace("/","");
   triple_name_cut.replace(" ","");
 
+  if ( triple_name_cut.contains("Interference") )
+    triple_name_cut.replace("Interference","660");
+  
+
   qDebug() << "In file_loaded_auto: 11: " << triple_name_cut;
   qDebug() << "Triple filename: " << triple_information[ "filename" ];
   
