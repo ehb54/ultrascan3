@@ -111,7 +111,8 @@ SSBOND   1 CYS A   28    CYS D   28                          1555   1555  2.05
       }
    }
 
-   if ( !ssbond_data.isEmpty() ) {
+   // disabled file output for now
+   if ( 0 && !ssbond_data.isEmpty() ) {
       QString error;
       US_File_Util::putcontents( somo_tmp_dir + "/" + ssbondfile + ".ssbond.txt", ssbond_data, error );
    }
