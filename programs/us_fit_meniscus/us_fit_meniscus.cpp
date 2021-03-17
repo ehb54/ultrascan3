@@ -1291,7 +1291,7 @@ QMap< QString, QString> US_FitMeniscus::read_autoflowAnalysis_record( const QStr
 // Update an edit file with a new meniscus and/or bottom radius value
 void US_FitMeniscus::edit_update( void )
 {
-
+  /***/
   //ALEXEY: if autoflow: check if edit profiles already updated from other FITMEN session
   if ( auto_mode )
     {
@@ -1316,8 +1316,9 @@ void US_FitMeniscus::edit_update( void )
 	  close();
 	  return;
 	}
-
-
+    }
+  /***/
+  
       /*
       //-- CHECK status --//
       // Regular procedure
@@ -1399,8 +1400,8 @@ void US_FitMeniscus::edit_update( void )
 	      return;
 	    }
 	}
-      */
     }
+   */
   //-- End check for FITMEN stage status in autoflow ---- //
   //-- However, it's not complete: upon updating edit profile below, the row needs to be locked while updating --//
   

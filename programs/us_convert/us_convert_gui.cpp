@@ -5311,7 +5311,7 @@ bool US_ConvertGui::isSaved_auto( void )
 // Function to save US3 data
 void US_ConvertGui::saveUS3( void )
 {
-  /*
+  /****/
   //Check if saving already initiated
   if ( us_convert_auto_mode )
     {
@@ -5339,7 +5339,7 @@ void US_ConvertGui::saveUS3( void )
 	}
       
     }
-  */
+  /****/
   
   qDebug() << "Save INIT 1: ";
 
@@ -5380,9 +5380,10 @@ void US_ConvertGui::saveUS3( void )
 					    tr( "Data for Current Optical System Already Saved" ),
 					    tr( "It appears that the data for the current optical system are already saved!\n\n"
 						"The program will switch to processing the data for next optical system... " ));
-
+		  /***/
 		  //set autoflowStages record to "unknown" again !!
-		  //revert_autoflow_stages_record( autoflowID_passed );
+		  revert_autoflow_stages_record( autoflowID_passed );
+		  /***/
 
 		  emit process_next_optics( );
 		  return;
@@ -5603,8 +5604,10 @@ DbgLv(1) << "Writing to disk";
 	   
 	   if ( !all_processed )
 	     {
+	       /***/
 	       //set autoflowStages record to "unknown" again !!
-	       //revert_autoflow_stages_record( autoflowID_passed );
+	       revert_autoflow_stages_record( autoflowID_passed );
+	       /***/
 	       
 	       emit process_next_optics( );
 	       return;
@@ -5634,9 +5637,10 @@ DbgLv(1) << "Writing to disk";
 	      
 	       if ( !all_processed )
 		 {
-
+		   /***/
 		   //set autoflowStages record to "unknown" again !!
-		   //revert_autoflow_stages_record( autoflowID_passed );
+		   revert_autoflow_stages_record( autoflowID_passed );
+		   /***/
 		   
 		   emit process_next_optics( );
 		   return;
@@ -5664,8 +5668,10 @@ DbgLv(1) << "Writing to disk";
 		   
 		   if ( !all_processed )
 		     {
+		       /***/
 		       //set autoflowStages record to "unknown" again !!
-		       //revert_autoflow_stages_record( autoflowID_passed );
+		       revert_autoflow_stages_record( autoflowID_passed );
+		       /***/
 		       
 		       emit process_next_optics( );
 		       return;

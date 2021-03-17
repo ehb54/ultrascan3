@@ -6752,7 +6752,7 @@ QMap< QString, QString> US_Edit::read_autoflow_record( int autoflowID  )
 void US_Edit::write_auto( void )
 {
   
-  /*
+  /****/
   //--- Check if saving already initiated
   int status_edit_unique;
   status_edit_unique = read_autoflow_stages_record( autoflowID_passed );
@@ -6778,7 +6778,7 @@ void US_Edit::write_auto( void )
       return;
     }
     //-------------------------------------------
-    */
+  /*****/
   
   pb_write       ->setEnabled( false );
 
@@ -6886,8 +6886,10 @@ void US_Edit::write_auto( void )
 
 	      cb_triple->disconnect();
 
+	      /***/
 	      //set autoflowStages record to "unknown" again !!
-	      //revert_autoflow_stages_record( autoflowID_passed );
+	      revert_autoflow_stages_record( autoflowID_passed );
+	      /****/
 	      
 	      reset();
 	      emit process_next_optics( );
@@ -7036,8 +7038,10 @@ void US_Edit::write_auto( void )
    
    if ( !all_processed )
      {
+       /****/
        //set autoflowStages record to "unknown" again !!
-       //revert_autoflow_stages_record( autoflowID_passed );
+       revert_autoflow_stages_record( autoflowID_passed );
+       /****/
        
        reset();
        emit process_next_optics( );
