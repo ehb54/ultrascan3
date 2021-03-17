@@ -1946,7 +1946,7 @@ void US_XpnDataViewer::delete_autoflow_record( void )
 //Delete autoflow record upon Run abortion
 void US_XpnDataViewer::updateautoflow_record_atLiveUpdate( void )
 {
-  /***/
+  /**
    //--- Check if saving already initiated
    int status_liveupdate_unique;
    status_liveupdate_unique = read_autoflow_stages_record( autoflowID_passed );
@@ -1970,7 +1970,7 @@ void US_XpnDataViewer::updateautoflow_record_atLiveUpdate( void )
        return;
      }
    //-------------------------------------------
-   /***/
+   **/
 
    details_at_live_update[ "runID" ] = RunID_to_retrieve;
   
@@ -2022,7 +2022,7 @@ void US_XpnDataViewer::updateautoflow_record_atLiveUpdate( void )
 
    /***/
    //set autoflowStages record to "unknown" again !!
-   revert_autoflow_stages_record( autoflowID_passed );
+   //revert_autoflow_stages_record( autoflowID_passed );
    /**/   
 }
 

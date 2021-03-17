@@ -1317,7 +1317,7 @@ void US_FitMeniscus::edit_update( void )
 	  return;
 	}
     }
-  /***/
+  /****/
   
       /*
       //-- CHECK status --//
