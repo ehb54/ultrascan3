@@ -1516,6 +1516,15 @@ DbgLv(1) << " eupd:  s_meni s_bott" << s_meni << s_bott;
          QMessageBox::information( (QWidget*)this,
                                    tr( "Canceled" ),
                                    tr( "\"Update Edit\" has been canceled!" ) );
+
+	 //-- Revert autoflowAnalysisSatges back to 'unknown'
+	 if ( auto_mode )
+	   {
+	     QString requestID = triple_information[ "requestID" ];
+	     revert_autoflow_analysis_stages_record( requestID );
+	   }
+	 //---------------------------------------------------//
+	 
          return;
       }
       else
@@ -1564,6 +1573,15 @@ DbgLv(1) << " eupd:   ixmlin ixblin" << ixmlin << ixblin << "ncmlin ncblin" << n
             tr( "The selected Meniscus value, %1 , extends into the data"
                 " range whose left-side value is %2 . This Edit update"
                 " cannot be performed!" ).arg( mennew ).arg( lefval ) );
+
+	 //-- Revert autoflowAnalysisSatges back to 'unknown'
+	 if ( auto_mode )
+	   {
+	     QString requestID = triple_information[ "requestID" ];
+	     revert_autoflow_analysis_stages_record( requestID );
+	   }
+	 //---------------------------------------------------//
+	 
          return;
       }
 
@@ -1626,6 +1644,14 @@ DbgLv(1) << " eupd:   ixmlin ixblin" << ixmlin << ixblin << "ncmlin ncblin" << n
 
       if ( ! fileo.open( QIODevice::WriteOnly | QIODevice::Text ) )
       {
+	//-- Revert autoflowAnalysisSatges back to 'unknown'
+	if ( auto_mode )
+	  {
+	    QString requestID = triple_information[ "requestID" ];
+	    revert_autoflow_analysis_stages_record( requestID );
+	  }
+	//---------------------------------------------------//
+	
          return;
       }
 
@@ -1887,6 +1913,31 @@ DbgLv(1) << " call Remove Models";
        close();
      }
 }
+
+// Slot to revert autoflowAnalysisStages record
+void US_FitMeniscus::revert_autoflow_analysis_stages_record( const QString& requestID )
+{
+   // Check DB connection
+   US_Passwd pw;
+   QString masterpw = pw.getPasswd();
+   US_DB2* db = new US_DB2( masterpw );
+
+   if ( db->lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "FitMen revert: Could not connect to database \n" ) + db->lastError() );
+       return;
+     }
+   
+   //qDebug() << "BEFORE query ";
+   QStringList qry;
+   qry << "fitmen_autoflow_analysis_status_revert"
+       << requestID;
+   
+   db->query( qry );
+   //qDebug() << "AFTER query ";
+}
+
 
 // Slot for handling a loaded file:  set the name of loaded,edit files
 void US_FitMeniscus::file_loaded( QString fn )

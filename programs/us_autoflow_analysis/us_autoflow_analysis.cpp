@@ -2889,7 +2889,12 @@ void US_Analysis_auto::update_autoflowAnalysis_statuses (  QMap < QString, QStri
 
   qDebug() << "In update_statuses: triple_name_parts: " << triple_name_parts;
   
-  QStringList requestID_list = Channel_to_requestIDs[ channel_name ];
+  QStringList requestID_list; 
+
+  if ( triple_curr_key.contains("Interference") )
+    requestID_list << requestID;
+  else
+    requestID_list = Channel_to_requestIDs[ channel_name ];
 
   qDebug() << "Channel_name, requestIDs to update: " << channel_name << requestID_list;
   
