@@ -2023,6 +2023,15 @@ QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *m
 
    qs += vbar_msg( model->vbar );
 
+   qs += 
+      QString(
+              us_tr(
+                    "SAXS excluded volume (anhydrous) : %1 [A^3]\n"
+                    )
+              )
+      .arg( model->volume )
+      ;
+   
    if ( hydro.temperature != 20 ) {
       qs +=
          QString(
@@ -2041,12 +2050,11 @@ QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *m
               us_tr(
                     "Anh. Molecular vol. (from vbar)  : %1 [A^3] @ %2%3C\n"
                     "Hyd. Molecular vol. (from vbar)  : %4 [A^3] @ %5%6C\n"
-                    "Anh. Molc. vol. (SAXS excl. vol.): %7 [A^3]\n"
-                    "Radius of gyration               : %8 [A]\n"
-                    "Number of electrons              : %9\n"
-                    "Number of protons                : %10\n"
-                    "Net charge                       : %11\n"
-                    "Isoelectric point                : %12\n"
+                    "Radius of gyration               : %7 [A]\n"
+                    "Number of electrons              : %8\n"
+                    "Number of protons                : %9\n"
+                    "Net charge                       : %10\n"
+                    "Isoelectric point                : %11\n"
                     )
               )
       .arg( mw_to_volume( model->mw + model->ionized_mw_delta, tc_vbar( model->vbar ) ) )
@@ -2055,7 +2063,6 @@ QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *m
       .arg( mw_to_volume( model->mw + model->ionized_mw_delta, tc_vbar( model->vbar ) ) + model->hydration * misc.hydrovol )
       .arg( hydro.temperature )
       .arg( DEGREE_SYMBOL )
-      .arg( model->volume )
       .arg( model->Rg, 0, 'f', 2 )
       .arg( model->num_elect )
       .arg( model->protons, 0, 'f', 1 )
