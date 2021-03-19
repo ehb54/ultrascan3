@@ -1083,9 +1083,15 @@ bool US_Analysis_auto::loadData( QMap < QString, QString > & triple_information 
   query << "get_editedDataFilenamesIDs" << triple_information["filename"];
   db->query( query );
 
-  qDebug() << "Query: " << query;
+  qDebug() << "In loadData() Query: " << query;
+  qDebug() << "In loadData() Query: triple_information[ \"triple_name\" ]  -- " << triple_information[ "triple_name" ];
 
   int latest_update_time = 1e100;
+
+  QString triple_name_actual = triple_information[ "triple_name" ];
+
+  if ( triple_name_actual.contains("Interference") )
+    triple_name_actual.replace( "Interference", "660" );
   
   while ( db->next() )
     {
@@ -1097,7 +1103,7 @@ bool US_Analysis_auto::loadData( QMap < QString, QString > & triple_information 
 
       QDateTime now = QDateTime::currentDateTime();
                
-      if ( filename.contains( triple_information[ "triple_name" ] ) ) 
+      if ( filename.contains( triple_name_actual ) ) 
 	{
 	  int time_to_now = date.secsTo(now);
 	  if ( time_to_now < latest_update_time )
@@ -1112,12 +1118,17 @@ bool US_Analysis_auto::loadData( QMap < QString, QString > & triple_information 
 	}
     }
 
+  qDebug() << "In loadData() after Query ";
+  
   QString edirpath  = US_Settings::resultDir() + "/" + triple_information[ "filename" ];
   QDir edir( edirpath );
   if (!edir.exists())
     edir.mkpath( edirpath );
   
   QString efilepath = US_Settings::resultDir() + "/" + triple_information[ "filename" ] + "/" + efilename;
+
+  qDebug() << "In loadData() efilename: " << efilename;
+
   
   // Can check here if such filename exists
   // QFileInfo check_file( efilepath );
@@ -1125,6 +1136,8 @@ bool US_Analysis_auto::loadData( QMap < QString, QString > & triple_information 
   //   qDebug() << "EditProfile file: " << efilepath << " exists";
   // else
   db->readBlobFromDB( efilepath, "download_editData", eID );
+
+  qDebug() << "In loadData() after readBlobFromDB ";
 
   //Now download rawData corresponding to rID:
   QString efilename_copy = efilename;
@@ -1148,6 +1161,8 @@ bool US_Analysis_auto::loadData( QMap < QString, QString > & triple_information 
   US_DataIO::loadData( uresdir, efilename, editedData, rawData );
 
   eID_global = eID;
+
+  qDebug() << "END of loadData(), eID_global: " << eID_global;
 
   return true;
 }
@@ -1174,7 +1189,7 @@ bool US_Analysis_auto::loadModel( QMap < QString, QString > & triple_information
   query << "get_modelDescsIDs" << triple_information[ "eID" ];
   db->query( query );
   
-  qDebug() << "Query: " << query;
+  qDebug() << "In loadModel() Query: " << query;
   
   int latest_update_time = 1e100;
   int mID=0;
@@ -1281,7 +1296,7 @@ bool US_Analysis_auto::loadNoises( QMap < QString, QString > & triple_informatio
   query << "get_noiseTypesIDs" << triple_information[ "mID" ];
   db->query( query );
   
-  qDebug() << "Query: " << query;
+  qDebug() << "In loadNoises() Query: " << query;
 
   int latest_update_time_ti = 1e100;
   int latest_update_time_ri = 1e100;
