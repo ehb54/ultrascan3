@@ -1098,6 +1098,7 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
    bool model_flag = false;
    temp_model.molecule.clear( );
    temp_model.residue.clear( );
+   temp_model.hydration = 0;
    clear_temp_chain(&temp_chain);
    bool currently_aa_chain = false; // do we have an amino acid chain (pbr)
    bool last_was_ENDMDL = false;    // to fix pdbs with missing MODEL tag
@@ -1246,7 +1247,7 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
                sulfur_pdb_chain_idx[ temp_chain.atom[ 0 ].chainID ].push_back( (unsigned int) temp_model.molecule.size() );
             }
             temp_model.molecule.push_back(temp_chain); // add the last chain of this model
-            SS_apply( temp_model );
+            SS_apply( temp_model, QString( "%1_model_%2").arg( project ).arg( temp_model.model_id ) );
             editor_msg( "black", "\nResidue sequence from " + project +".pdb model " +
                            QString("%1").arg( temp_model.model_id ) + ":");
             str = "";
@@ -1358,6 +1359,7 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
                         editor_msg( "dark blue", QString( "\nHydration [g/g] %1" ).arg( tot_theo_wat * 18.01528 / mw_nonwat, 0, 'g', 3 ) );
                      }
                   }
+                  temp_model.hydration = tot_theo_wat;
                }
                editor_msg( "black", "\n" );
             }
@@ -1461,7 +1463,8 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
          }
          temp_model.molecule.push_back(temp_chain);
       }
-      SS_apply( temp_model );
+      SS_apply( temp_model, project );
+
       editor->append("\nResidue sequence from " + project +".pdb:\n");
       str = "";
       QString sstr = "";
@@ -1575,7 +1578,8 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
                } else if ( tot_theo_wat ) {
                   editor_msg( "dark blue", QString( "\nHydration [g/g] %1" ).arg( tot_theo_wat * 18.01528 / mw_nonwat, 0, 'g', 3 ) );
                }
-           }
+            }
+            temp_model.hydration = tot_theo_wat;
          }
          editor_msg( "black", "\n" );
 
@@ -1960,6 +1964,9 @@ QString US_Hydrodyn::visc_dens_msg( bool only_used ) {
 
 QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *model ) {
 
+   // qDebug() << "model->hydration:" << model->hydration;
+   // qDebug() << "misc.hydrovol:" << misc.hydrovol;
+
    QString qs;
 
    qs += "\n";
@@ -2016,11 +2023,20 @@ QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *m
 
    qs += vbar_msg( model->vbar );
 
+   qs += 
+      QString(
+              us_tr(
+                    "SAXS excluded volume (anhydrous) : %1 [A^3]\n"
+                    )
+              )
+      .arg( model->volume )
+      ;
+   
    if ( hydro.temperature != 20 ) {
       qs +=
          QString(
                  us_tr(
-                       "Molecular vol. (from vbar)       : %1 [A^3]%2%3C\n"
+                       "Anh. Molecular vol. (from vbar)  : %1 [A^3] @ %2%3C\n"
                        )
                  )
          .arg( mw_to_volume( model->mw + model->ionized_mw_delta, model->vbar ) )
@@ -2032,19 +2048,21 @@ QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *m
    qs +=
       QString(
               us_tr(
-                    "Molecular vol. (from vbar)       : %1 [A^3] @ %2%3C\n"
-                    "Molecular vol. (SAXS excl. vol.) : %4 [A^3]\n"
-                    "Radius of gyration               : %5 [A]\n"
-                    "Number of electrons              : %6\n"
-                    "Number of protons                : %7\n"
-                    "Net charge                       : %8\n"
-                    "Isoelectric point                : %9\n"
+                    "Anh. Molecular vol. (from vbar)  : %1 [A^3] @ %2%3C\n"
+                    "Hyd. Molecular vol. (from vbar)  : %4 [A^3] @ %5%6C\n"
+                    "Radius of gyration               : %7 [A]\n"
+                    "Number of electrons              : %8\n"
+                    "Number of protons                : %9\n"
+                    "Net charge                       : %10\n"
+                    "Isoelectric point                : %11\n"
                     )
               )
       .arg( mw_to_volume( model->mw + model->ionized_mw_delta, tc_vbar( model->vbar ) ) )
       .arg( hydro.temperature )
       .arg( DEGREE_SYMBOL )
-      .arg( model->volume )
+      .arg( mw_to_volume( model->mw + model->ionized_mw_delta, tc_vbar( model->vbar ) ) + model->hydration * misc.hydrovol )
+      .arg( hydro.temperature )
+      .arg( DEGREE_SYMBOL )
       .arg( model->Rg, 0, 'f', 2 )
       .arg( model->num_elect )
       .arg( model->protons, 0, 'f', 1 )
@@ -2063,6 +2081,7 @@ QString US_Hydrodyn::model_summary_msg( const QString & msg, struct PDB_model *m
       ;
    }
 
+   // qDebug() << "model->hydration:" << model->hydration;
 
 
    return qs;
@@ -2475,6 +2494,7 @@ void US_Hydrodyn::update_model_chain_ionization( struct PDB_model & model, bool 
    int residues = (int) model.residue.size();
 
    model.ionized_mw_delta = 0e0;
+   // model.hydration        = 0e0;
    
    for ( int j = 0; j < chains; ++j ) {
       int atoms = (int) model.molecule[ j ].atom.size();
@@ -2483,6 +2503,8 @@ void US_Hydrodyn::update_model_chain_ionization( struct PDB_model & model, bool 
          
          // add to chain & model
          model.ionized_mw_delta += model.molecule[ j ].atom[ k ].ionized_mw_delta ;
+         // model.hydration        += 
+         //    model.residue[ model.molecule[ j ].atom[ k ].model_residue_pos ].r_atom[ model.molecule[ j ].atom[ k ].atom_assignment ].hydration;
          model.molecule[ j ].ionized_mw_delta += model.molecule[ j ].atom[ k ].ionized_mw_delta ;
 
          if ( quiet ) {

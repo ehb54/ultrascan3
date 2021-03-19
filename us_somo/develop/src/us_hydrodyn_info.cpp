@@ -1062,7 +1062,7 @@ QString US_Hydrodyn::info_cite( const QString & package ) {
          ,{
             "grpy",
             "Zuk, P.J., Cichocki, B. and Szymczak, P., 2018. Biophys J. 115(5), pp.782-800.\n"
-            "Rocco M., Brookes E., Byron O. 2021 in Encyclopedia of Biophysics. https://doi.org/10.1007/978-3-642-16712-6_292\n"
+            "Rocco M., Brookes E., Byron O. 2021 in Encyclopedia of Biophysics. https://doi.org/10.1007/978-3-642-35943-9_292-1\n"
          }
          ,{
             "best",

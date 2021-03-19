@@ -35,7 +35,7 @@ void US_Hydrodyn::SS_init() {
    sulfur_pdb_chain_idx        .clear();
 }
 
-void US_Hydrodyn::SS_apply( struct PDB_model & model ) {
+void US_Hydrodyn::SS_apply( struct PDB_model & model, const QString & ssbondfile ) {
    int sulfurs = (int) sulfur_pdb_line.size();
 
    model.num_SS_bonds = 0;
@@ -63,6 +63,12 @@ void US_Hydrodyn::SS_apply( struct PDB_model & model ) {
    double thresh_SS = gparams[ "thresh_SS" ].toDouble();
    editor_msg( "dark blue", QString( "Checking disulfide distance, current distance threshold %1 [A]" ).arg( thresh_SS ) );
 
+/* SS pdb format format https://www.rbvi.ucsf.edu/chimera/docs/UsersGuide/tutorials/pdbintro.html
+SSBOND   1 CYS A   28    CYS D   28                          1555   1555  2.05 
+*/
+   
+   QString ssbond_data;
+
    for ( int i = 0; i < sulfurs; ++i ) {
       if ( !sulfur_paired.count( i ) ) {
 #if defined( DEBUG_SS )
@@ -86,10 +92,29 @@ void US_Hydrodyn::SS_apply( struct PDB_model & model ) {
                               .arg( sulfur_pdb_line[ i ].left( 26 ) )
                               .arg( sulfur_pdb_line[ j ].left( 26 ) )
                               .arg( this_distance ) );
+                  {
+                     QString pdb_ssbond =
+                        QString( "SSBOND %1 %2 %3    %4 %5                          1555   1555 %6\n" )
+                        .arg( model.num_SS_bonds, 3 )
+                        .arg( sulfur_pdb_line[ i ].mid( 17, 5 ) )
+                        .arg( sulfur_pdb_line[ i ].mid( 22, 4 ) )
+                        .arg( sulfur_pdb_line[ j ].mid( 17, 5 ) )
+                        .arg( sulfur_pdb_line[ j ].mid( 22, 4 ) )
+                        .arg( this_distance, 5, 'f', 2 )
+                        ;
+                     // QTextStream(stdout) << pdb_ssbond;
+                     ssbond_data += pdb_ssbond;
+                  }
                }
             }
          }
       }
+   }
+
+   // disabled file output for now
+   if ( 0 && !ssbond_data.isEmpty() ) {
+      QString error;
+      US_File_Util::putcontents( somo_tmp_dir + "/" + ssbondfile + ".ssbond.txt", ssbond_data, error );
    }
 
    for ( auto it = sulfur_paired.begin();
@@ -472,7 +497,3 @@ map < QString, struct atom * > US_Hydrodyn::last_residue_atom_map( struct PDB_ch
    }
    return result;
 }
-                  
-   
-   
-      
