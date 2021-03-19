@@ -503,6 +503,14 @@ void US_SelectItem::deleted_autoflow()
 	   return;
 	 }
 
+       //Also delete record from autoflowStages table:
+       q.clear();
+       q << "delete_autoflow_stages_record"
+	 << AutoflowID;
+
+       db->statusQuery( q );
+       //---------------------------------------------
+       
        items.removeAt( AutoflowRow );     // Remove deleted item row
        list_data();                       // Rebuild protocol list in the dialog
        

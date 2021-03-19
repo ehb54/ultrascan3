@@ -5789,7 +5789,7 @@ void US_ConvertGui::delete_autoflow_record( void )
    qry.clear();
    qry << "delete_autoflow_stages_record"
        << QString::number( autoflowID_passed );
-   
+   db->statusQuery( qry );
 }
    
 
