@@ -20,7 +20,9 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 
 #define SLASH QDir::separator()
 #define USPTM_DEBUG
+// #define USPTM_DEBUG_RUN_ONE
 // #define USPTM_DEBUG2
+// #define USPTM_TIMERS
 
 ostream& operator<<(ostream& out, const range_entry& c)
 {
@@ -182,7 +184,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
    { for ( int i = 0; i < t_csv->rowCount(); ++i ) { t_csv->item( i, 0 )->setFlags( t_csv->item( i, 0 )->flags() ^ Qt::ItemIsEditable ); } };
    t_csv->setSelectionMode( QAbstractItemView::MultiSelection );t_csv->setSelectionBehavior( QAbstractItemView::SelectRows );
 
-   connect( t_csv, SIGNAL( valueChanged( int, int ) ), SLOT( table_value( int, int ) ) );
+   connect( t_csv, SIGNAL( cellChanged( int, int ) ), SLOT( table_value( int, int ) ) );
    connect( t_csv, SIGNAL( itemSelectionChanged() ), SLOT( update_enables() ) );
 
    pb_sel_auto = new QPushButton(us_tr("Compute Guess"), this);
@@ -1619,6 +1621,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::chains_from()
                                                     true );
    le_chains_from->setText( filename );
    update_enables();
+   raise();
 }
 
 void US_Hydrodyn_Pdb_Tool_Merge::chains_to()
@@ -1629,6 +1632,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::chains_to()
                                                     true );
    le_chains_to->setText( filename );
    update_enables();
+   raise();
 }
 
 void US_Hydrodyn_Pdb_Tool_Merge::target()
@@ -1997,9 +2001,12 @@ void US_Hydrodyn_Pdb_Tool_Merge::update_t_csv_range( vector < range_entry > &ran
          pos = ( unsigned int ) t_csv->rowCount();
          t_csv->setRowCount( pos + 1 );
          t_csv->setItem( pos, 0, new QTableWidgetItem( ranges[ i ].chain ) );
+         fill_csv_empty_items();
       }
+      disconnect( t_csv, SIGNAL( cellChanged( int, int ) ), 0, 0 );
       t_csv->setItem( pos, col_start, new QTableWidgetItem( QString("%1").arg( ranges[ i ].start ) ) );
       t_csv->setItem( pos, col_end  , new QTableWidgetItem( QString("%1").arg( ranges[ i ].end ) ) );
+      connect( t_csv, SIGNAL( cellChanged( int, int ) ), SLOT( table_value( int, int ) ) );
    }
 }
 
@@ -2622,8 +2629,10 @@ void US_Hydrodyn_Pdb_Tool_Merge::update_t_csv_data()
 
 void US_Hydrodyn_Pdb_Tool_Merge::run_one()
 {
+#if defined( USPTM_DEBUG_RUN_ONE )
    us_qdebug( "run one" );
-   
+#endif
+
    filtered = false;
 
    // process trial
@@ -3099,7 +3108,9 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
                new_csv.data[ datapos ][ 10 ] = QString( "%1" ).arg( result[ 0 ].axis[ 2 ] );
                pos_type [ datapos ] = 0;
                pos_coord[ datapos ] = result[ 0 ];
+#if defined( USPTM_DEBUG_RUN_ONE )
                us_qdebug( QString( "type 0 checking for vdw of %1 at datapos %2" ).arg( new_csv.data[ datapos ][ 13 ] ).arg( datapos ) );
+#endif
                pos_vdw  [ datapos ] = usu->atom_vdw.count( new_csv.data[ datapos ][ 13 ] ) ?
                   usu->atom_vdw[ new_csv.data[ datapos ][ 13 ] ] : 
                   ( usu->atom_vdw.count( "default" ) ? 
@@ -3145,7 +3156,9 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
 
                pos_type [ datapos ] = 1;
                pos_coord[ datapos ] = result[ 0 ];
+#if defined( USPTM_DEBUG_RUN_ONE )
                us_qdebug( QString( "type 1 checking for vdw of %1 at datapos %2" ).arg( new_csv.data[ datapos ][ 13 ] ).arg( datapos ) );
+#endif
                pos_vdw  [ datapos ] = usu->atom_vdw.count( new_csv.data[ datapos ][ 13 ] ) ?
                   usu->atom_vdw[ new_csv.data[ datapos ][ 13 ] ] : 
                   ( usu->atom_vdw.count( "default" ) ? 
@@ -3194,7 +3207,9 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
             new_csv.data[ datapos ][ 10 ] = QString( "%1" ).arg( result[ 0 ].axis[ 2 ] );
             pos_type [ datapos ] = 2;
             pos_coord[ datapos ] = result[ 0 ];
+#if defined( USPTM_DEBUG_RUN_ONE )
             us_qdebug( QString( "type 2 checking for vdw of %1 at datapos %2" ).arg( new_csv.data[ datapos ][ 13 ] ).arg( datapos ) );
+#endif
             pos_vdw  [ datapos ] = usu->atom_vdw.count( new_csv.data[ datapos ][ 13 ] ) ?
                usu->atom_vdw[ new_csv.data[ datapos ][ 13 ] ] : 
                ( usu->atom_vdw.count( "default" ) ? 
@@ -3284,7 +3299,9 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
                new_csv.data[ datapos ][ 10 ] = QString( "%1" ).arg( result[ 0 ].axis[ 2 ] );
                pos_type [ datapos ] = 3;
                pos_coord[ datapos ] = result[ 0 ];
+#if defined( USPTM_DEBUG_RUN_ONE )
                us_qdebug( QString( "type 3 checking for vdw of %1 at datapos %2" ).arg( new_csv.data[ datapos ][ 13 ] ).arg( datapos ) );
+#endif
                pos_vdw  [ datapos ] = usu->atom_vdw.count( new_csv.data[ datapos ][ 13 ] ) ?
                   usu->atom_vdw[ new_csv.data[ datapos ][ 13 ] ] : 
                   ( usu->atom_vdw.count( "default" ) ? 
@@ -3293,7 +3310,9 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
          }
       }            
 
+#if defined( USPTM_DEBUG_RUN_ONE )
       us_qdebug( "run one 2" );
+#endif
       last_chain = "__first__";
       unsigned atompos = 0;
       for ( unsigned int i = 0; i < (unsigned int) new_csv.data.size(); i++ )
@@ -3328,6 +3347,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
             types_to_pos[ pos_type[ i ] ].push_back( i );
          }
 
+#if defined( USPTM_DEBUG_RUN_ONE )
          for ( map < unsigned int, int >::iterator it = pos_type.begin();
                it != pos_type.end();
                ++it ) {
@@ -3341,6 +3361,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
                    .arg( pos_coord[ it->first ].axis[ 2 ] )
                    );
          }
+#endif
          
          // compare type 4 to the others
 
@@ -3387,11 +3408,13 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
                         unsigned int res4no = new_csv.data[ types_to_pos[ 4 ][ j ] ][ 3 ].toUInt();
                         unsigned int resano = new_csv.data[ it->second       [ k ] ][ 3 ].toUInt();
                         
+#if defined( USPTM_DEBUG_RUN_ONE )
                         us_qdebug( QString( "chain4 %1 resno %2 chainalt %3 resno %4" )
                                 .arg( chain4 )
                                 .arg( res4no )
                                 .arg( chaina )
                                 .arg( resano ) );
+#endif
 
                         // exclude fit range for now
                         if (
@@ -3411,9 +3434,11 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
                         //    excluded = true;
                         // }
 
+#if defined( USPTM_DEBUG_RUN_ONE )
                         if ( excluded ) {
                            us_qdebug( "excluded" );
                         }
+#endif
 
                         if ( !excluded ) {
                            QString msg = 
@@ -3425,8 +3450,11 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
                               .arg( pos_vdw[ it->second[ k ] ] )
                               ;
                            editor_msg( "dark red", msg );
+#if defined( USPTM_DEBUG_RUN_ONE )
                            us_qdebug( msg );
+#endif
 
+#if defined( USPTM_DEBUG_RUN_ONE )
                            {
                               int i = types_to_pos[ 4 ][ j ];
                               us_qdebug( 
@@ -3470,6 +3498,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
                                                    )
                                       );
                            }
+#endif
                                
                            filtered = true;
                            break;
@@ -3481,7 +3510,9 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
          }
       }
 
+#if defined( USPTM_DEBUG_RUN_ONE )
       us_qdebug( "run one 3" );
+#endif
 
       csv_to = new_csv;
       
@@ -3519,6 +3550,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::extra_chains()
                t_csv->setItem( pos, 0, new QTableWidgetItem( cross_chain ) );
                t_csv->setItem( pos, 3, new QTableWidgetItem( t_csv->item( it->second, 3 )->text() ) );
                t_csv->setItem( pos, 4, new QTableWidgetItem( t_csv->item( it->second, 4 )->text() ) );
+               fill_csv_empty_items();
             }
          }
       }
@@ -3569,6 +3601,16 @@ void US_Hydrodyn_Pdb_Tool_Merge::only_closest()
    unsigned int pos = 0;
    progress->setValue( pos ); progress->setMaximum( size );
 
+#if defined( USPTM_TIMERS )
+   US_Timer             us_timers;
+   us_timers            .clear_timers();
+               
+   us_timers.init_timer ( "only_closest() chains_to_check_loop" );
+   us_timers.init_timer ( "only_closest() select chains in pdb editor" );
+   us_timers.init_timer ( "only_closest() minimum pair distance" );
+   us_timers.start_timer( "only_closest() chains_to_check_loop" );
+#endif
+
    for ( map < QString, QStringList >::iterator it = chains_to_check.begin();
          it != chains_to_check.end();
          it++ )
@@ -3589,18 +3631,30 @@ void US_Hydrodyn_Pdb_Tool_Merge::only_closest()
          // find distance of nearest residue pair in chain
          editor_msg( "dark gray", QString( us_tr( "Finding closest pair of chain %1 and %2" ) ).arg( it->first ).arg( it->second[ i ] ) );
          // select chains in pdb editor for the fun of it
-         {
+         if ( 0 ) {
             QStringList chains;
             chains << it->first;
             chains << it->second[ i ];
+#if defined( USPTM_TIMERS )
+            us_timers.start_timer ( "only_closest() select chains in pdb editor" );
+#endif
             ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->select_chain( lv_csv_from, chains );
+#if defined( USPTM_TIMERS )
+            us_timers.end_timer ( "only_closest() select chains in pdb editor" );
+#endif
          }
          QString key_chain_a;
          QString key_chain_b;
 
+#if defined( USPTM_TIMERS )
+         us_timers.start_timer ( "only_closest() minimum pair distance" );
+#endif
          double distance = 
             ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)
             ->minimum_pair_distance( lv_csv_from, it->first, it->second[ i ], key_chain_a, key_chain_b );
+#if defined( USPTM_TIMERS )
+         us_timers.end_timer ( "only_closest() minimum pair distance" );
+#endif
 
          if ( !i )
          {
@@ -3648,11 +3702,18 @@ void US_Hydrodyn_Pdb_Tool_Merge::only_closest()
          // need to add gap check here:
          unsigned int pos = ( unsigned int ) t_csv->rowCount();
          t_csv->setRowCount( pos + 1 );
+         disconnect( t_csv, SIGNAL( cellChanged( int, int ) ), 0, 0 );
          t_csv->setItem( pos, 0, new QTableWidgetItem( cross_chain ) );
          t_csv->setItem( pos, 3, new QTableWidgetItem( QString( "%1" ).arg( residue_b_pos - 1 ) ) );
          t_csv->setItem( pos, 4, new QTableWidgetItem( QString( "%1" ).arg( residue_b_pos + 1 ) ) );
+         fill_csv_empty_items();
+         connect( t_csv, SIGNAL( cellChanged( int, int ) ), SLOT( table_value( int, int ) ) );
       }
    }
+#if defined( USPTM_TIMERS )
+   us_timers.end_timer( "only_closest() chains_to_check_loop" );
+   QTextStream( stdout ) << us_timers.list_times() << "\n";
+#endif
    progress->setValue( 1 ); progress->setMaximum( 1 );
    running = false;
    extra_chains_done = true;
@@ -3705,7 +3766,6 @@ void US_Hydrodyn_Pdb_Tool_Merge::update_cache_range()
 void US_Hydrodyn_Pdb_Tool_Merge::table_value( int row, int col )
 {
    update_cache_range();
-
    QString chain       = t_csv->item( row, 0 )->text();
    bool    extra_chain = chain.length() > 2;
 
@@ -3713,9 +3773,9 @@ void US_Hydrodyn_Pdb_Tool_Merge::table_value( int row, int col )
    {
       if ( col < 3 || col > 4 )
       {
-         disconnect( t_csv, SIGNAL( valueChanged( int, int ) ), 0, 0 );
+         disconnect( t_csv, SIGNAL( cellChanged( int, int ) ), 0, 0 );
          t_csv->setItem( row, col, new QTableWidgetItem( "" ) );
-         connect( t_csv, SIGNAL( valueChanged( int, int ) ), SLOT( table_value( int, int ) ) );
+         connect( t_csv, SIGNAL( cellChanged( int, int ) ), SLOT( table_value( int, int ) ) );
          return;
       }
       QString actual_chain = chain.length() == 2 ? " " : chain.left( 1 );
@@ -3727,25 +3787,25 @@ void US_Hydrodyn_Pdb_Tool_Merge::table_value( int row, int col )
       if ( cache_from_ranges[ cache_from_range_pos[ actual_chain ] ].start > 
            t_csv->item( row, col )->text().toUInt() ) 
       {
-         disconnect( t_csv, SIGNAL( valueChanged( int, int ) ), 0, 0 );
+         disconnect( t_csv, SIGNAL( cellChanged( int, int ) ), 0, 0 );
          t_csv->setItem( row, col, new QTableWidgetItem( QString( "%1" ).arg( cache_from_ranges[ cache_from_range_pos[ actual_chain ] ].start ) ) );
-         connect( t_csv, SIGNAL( valueChanged( int, int ) ), SLOT( table_value( int, int ) ) );
+         connect( t_csv, SIGNAL( cellChanged( int, int ) ), SLOT( table_value( int, int ) ) );
       }
       if ( cache_from_ranges[ cache_from_range_pos[ actual_chain ] ].end <
            t_csv->item( row, col )->text().toUInt() ) 
       {
-         disconnect( t_csv, SIGNAL( valueChanged( int, int ) ), 0, 0 );
+         disconnect( t_csv, SIGNAL( cellChanged( int, int ) ), 0, 0 );
          t_csv->setItem( row, col, new QTableWidgetItem( QString( "%1" ).arg( cache_from_ranges[ cache_from_range_pos[ actual_chain ] ].end ) ) );
-         connect( t_csv, SIGNAL( valueChanged( int, int ) ), SLOT( table_value( int, int ) ) );
+         connect( t_csv, SIGNAL( cellChanged( int, int ) ), SLOT( table_value( int, int ) ) );
       }
       if ( col == 3 )
       {
          if ( t_csv->item( row, col )->text().toUInt() >
               t_csv->item( row, col + 1 )->text().toUInt() )
          {
-            disconnect( t_csv, SIGNAL( valueChanged( int, int ) ), 0, 0 );
+            disconnect( t_csv, SIGNAL( cellChanged( int, int ) ), 0, 0 );
             t_csv->setItem( row, col + 1, new QTableWidgetItem( t_csv->item( row, col )->text() ) );
-            connect( t_csv, SIGNAL( valueChanged( int, int ) ), SLOT( table_value( int, int ) ) );
+            connect( t_csv, SIGNAL( cellChanged( int, int ) ), SLOT( table_value( int, int ) ) );
          }
          return;
       }
@@ -3754,9 +3814,9 @@ void US_Hydrodyn_Pdb_Tool_Merge::table_value( int row, int col )
          if ( t_csv->item( row, col - 1 )->text().toUInt() >
               t_csv->item( row, col )->text().toUInt() )
          {
-            disconnect( t_csv, SIGNAL( valueChanged( int, int ) ), 0, 0 );
+            disconnect( t_csv, SIGNAL( cellChanged( int, int ) ), 0, 0 );
             t_csv->setItem( row, col - 1, new QTableWidgetItem( t_csv->item( row, col )->text() ) );
-            connect( t_csv, SIGNAL( valueChanged( int, int ) ), SLOT( table_value( int, int ) ) );
+            connect( t_csv, SIGNAL( cellChanged( int, int ) ), SLOT( table_value( int, int ) ) );
          }
          return;
       }
@@ -3790,7 +3850,6 @@ void US_Hydrodyn_Pdb_Tool_Merge::table_value( int row, int col )
       return recalc_from_cut  ( row, col );
    }
 }
-
          
 unsigned int US_Hydrodyn_Pdb_Tool_Merge::residue_length( bool         use_from,
                                                          QString      chain, 
@@ -4064,7 +4123,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::recalc_from_merge( int row, int col )
 
    if ( any_changed )
    {
-      disconnect( t_csv, SIGNAL( valueChanged( int, int ) ), 0, 0 );
+      disconnect( t_csv, SIGNAL( cellChanged( int, int ) ), 0, 0 );
       if ( current_merge_start_changed )
       {
          QString toset = current_merge_start ? QString( "%1" ).arg( current_merge_start ) : "";
@@ -4095,7 +4154,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::recalc_from_merge( int row, int col )
          QString toset = current_cut_end   ? QString( "%1" ).arg( current_cut_end       ) : "";
          t_csv->setItem( row, 6, new QTableWidgetItem( toset ) );
       }
-      connect( t_csv, SIGNAL( valueChanged( int, int ) ), SLOT( table_value( int, int ) ) );
+      connect( t_csv, SIGNAL( cellChanged( int, int ) ), SLOT( table_value( int, int ) ) );
    }
 }         
 
@@ -4304,7 +4363,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::recalc_from_fit( int row, int col )
 
    if ( any_changed )
    {
-      disconnect( t_csv, SIGNAL( valueChanged( int, int ) ), 0, 0 );
+      disconnect( t_csv, SIGNAL( cellChanged( int, int ) ), 0, 0 );
       if ( current_merge_start_changed )
       {
          QString toset = current_merge_start ? QString( "%1" ).arg( current_merge_start ) : "";
@@ -4335,7 +4394,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::recalc_from_fit( int row, int col )
          QString toset = current_cut_end   ? QString( "%1" ).arg( current_cut_end       ) : "";
          t_csv->setItem( row, 6, new QTableWidgetItem( toset ) );
       }
-      connect( t_csv, SIGNAL( valueChanged( int, int ) ), SLOT( table_value( int, int ) ) );
+      connect( t_csv, SIGNAL( cellChanged( int, int ) ), SLOT( table_value( int, int ) ) );
    }
 }
 
@@ -4580,7 +4639,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::recalc_from_cut( int row, int col )
 
    if ( any_changed )
    {
-      disconnect( t_csv, SIGNAL( valueChanged( int, int ) ), 0, 0 );
+      disconnect( t_csv, SIGNAL( cellChanged( int, int ) ), 0, 0 );
       if ( current_merge_start_changed )
       {
          QString toset = current_merge_start ? QString( "%1" ).arg( current_merge_start ) : "";
@@ -4611,7 +4670,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::recalc_from_cut( int row, int col )
          QString toset = current_cut_end   ? QString( "%1" ).arg( current_cut_end       ) : "";
          t_csv->setItem( row, 6, new QTableWidgetItem( toset ) );
       }
-      connect( t_csv, SIGNAL( valueChanged( int, int ) ), SLOT( table_value( int, int ) ) );
+      connect( t_csv, SIGNAL( cellChanged( int, int ) ), SLOT( table_value( int, int ) ) );
    }
 }
 
@@ -4649,4 +4708,47 @@ bool US_Hydrodyn_Pdb_Tool_Merge::get_chains( QString chain, QString &fit_chain, 
    fit_chain   = qsl[ 0 ];
    cross_chain = qsl[ 1 ];
    return true;
+}
+
+void US_Hydrodyn_Pdb_Tool_Merge::fill_csv_empty_items() {
+   int cols = (int) t_csv->columnCount();
+   int rows = (int) t_csv->rowCount();
+
+   disconnect( t_csv, SIGNAL( cellChanged( int, int ) ), 0, 0 );
+
+   for ( int i = 0; i < rows; ++i ) {
+      for ( int j = 0; j < cols; ++j ) {
+         if ( !t_csv->item( i, j ) ) {
+            // qDebug() << "setting empty t_csv item " << i << j;
+            t_csv->setItem( i, j, new QTableWidgetItem( QString("" ) ) );
+         }
+      }
+   }
+   connect( t_csv, SIGNAL( cellChanged( int, int ) ), SLOT( table_value( int, int ) ) );
+}
+
+void US_Hydrodyn_Pdb_Tool_Merge::info_csv( const QString & msg ) {
+   int cols = (int) t_csv->columnCount();
+   int rows = (int) t_csv->rowCount();
+   QTextStream( stdout )
+      << "=============================================================\n"
+      << msg << "\n" 
+      << "-------------------------------------------------------------\n"
+      ;
+
+   for ( int i = 0; i < rows; ++i ) {
+      QTextStream( stdout ) << "row " << i << " ";
+      for ( int j = 0; j < cols; ++j ) {
+         if ( t_csv->item( i, j ) ) {
+            QTextStream( stdout ) <<  t_csv->item( i, j )->text();
+         } else {
+            QTextStream( stdout ) << "no item";
+         }
+         QTextStream( stdout ) << " | ";
+      }
+      QTextStream( stdout ) << "\n";
+   }
+   QTextStream( stdout )
+      << "=============================================================\n"
+      ;
 }
