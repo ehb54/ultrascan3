@@ -1679,7 +1679,7 @@ pdb_sel_count US_Hydrodyn_Pdb_Tool::count_selected( QTreeWidget *lv )
       selection_since_count_csv2 = false;
       last_count_csv2 = counts;
    }
-   us_qdebug( QString( "SOLs counts %1" ).arg( counts.SOLs ) );
+   // us_qdebug( QString( "SOLs counts %1" ).arg( counts.SOLs ) );
    return counts;
 }
 
@@ -2412,7 +2412,7 @@ void US_Hydrodyn_Pdb_Tool::visualize( QTreeWidget *lv )
       f_spt.close();
    }
 
-   ((US_Hydrodyn *)us_hydrodyn)->model_viewer( filename, "-script" );
+   ((US_Hydrodyn *)us_hydrodyn)->model_viewer( spt_filename, "-script" );
 
    //    QStringList qsl = atom_sel_rasmol( lv );
    //    cout << QString( "atom set %1\n" ).arg( qsl.size() );

@@ -205,6 +205,9 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool_Merge : public QFrame
       bool         get_chains( QString chain, QString &fit_chain, QString &cross_chain );
       bool         get_chains( QString chain );
 
+      void         fill_csv_empty_items();
+      void         info_csv( const QString & msg );
+
    private slots:
 
       void setupGUI();
