@@ -112,9 +112,11 @@ SSBOND   1 CYS A   28    CYS D   28                          1555   1555  2.05
    }
 
    // disabled file output for now
-   if ( 0 && !ssbond_data.isEmpty() ) {
+   if ( advanced_config.expert_mode && misc.export_ssbond && !ssbond_data.isEmpty() ) {
       QString error;
-      US_File_Util::putcontents( somo_tmp_dir + "/" + ssbondfile + ".ssbond.txt", ssbond_data, error );
+      QString fname = somo_tmp_dir + "/" + ssbondfile + ".ssbond.txt";
+      editor_msg( "dark blue", QString( "SSBONDs in PDB format written to %1" ).arg( fname ) );
+      US_File_Util::putcontents( fname, ssbond_data, error );
    }
 
    for ( auto it = sulfur_paired.begin();
