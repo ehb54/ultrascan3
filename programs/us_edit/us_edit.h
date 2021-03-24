@@ -26,15 +26,20 @@ class US_Edit : public US_Widgets
 	 // New constructor for automated read/upload/update
 	 US_Edit(QString auto_mode);
 
+	 US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,  QString  workingDir );
+
 	 //void us_mode_passed  ( void );
 	 //bool usmode;
 
 	 bool us_edit_auto_mode;
+	 bool us_edit_auto_mode_manual;
 	 bool all_loaded;
 	 bool is_spike_auto;
 	  
 
       private:
+	 US_Edit*              sdiag;
+	 
 
       enum { MENISCUS, AIRGAP, RANGE, PLATEAU, BASELINE, FINISHED } step;
 
@@ -200,6 +205,10 @@ class US_Edit : public US_Widgets
       QPushButton*       pb_spikes;
       QPushButton*       pb_invert;
       QPushButton*       pb_write;
+
+      QPushButton*       pb_pass;
+      QPushButton*       pb_emanual;
+      
       QPushButton*       pb_residuals;
       QPushButton*       pb_priorEdits;
       QPushButton*       pb_reviewep;
@@ -367,7 +376,8 @@ class US_Edit : public US_Widgets
    private slots:         
       void load              ( void );
       void load_auto         ( QMap < QString, QString > & );
-
+      void load_manual_auto  ( void );
+      
       void process_optics_auto ( void );
       
       QMap< QString, QString> read_autoflow_record( int );
@@ -424,6 +434,7 @@ class US_Edit : public US_Widgets
       void write_triple      ( void );
       void write_mwl         ( void );
 
+      void manual_edit_auto  ( void );
       void write_auto        ( void );
       void write_triple_auto ( int );
       void write_mwl_auto    ( int );
@@ -499,6 +510,10 @@ class US_Edit : public US_Widgets
       void reset_triple      ( void );
       void reset_outData     ( void );
       void close_edit        ( void );
+      void pass_values       ( void );
+
+      void update_triple_edit_params (  QMap < QString, QStringList > & );
+      
       void help              ( void )
       { showHelp.show_help( "manual/us_edit.html" ); };
  
@@ -507,6 +522,8 @@ class US_Edit : public US_Widgets
       void edit_complete_auto( QMap< QString, QString> & );
       void back_to_initAutoflow( void );
 
+      void pass_edit_params( QMap< QString, QStringList> & );
+      
       void process_next_optics( void );
 };
 #endif

@@ -65,6 +65,7 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
 
 
   us_edit_auto_mode = true;
+  us_edit_auto_mode_manual = false;
   all_loaded = false;
   is_spike_auto = false;
 
@@ -311,7 +312,8 @@ pb_plateau->setVisible(false);
 
    //pb_write       = us_pushbutton( tr( "Save Current Edit Profile" ), false );
    pb_write       = us_pushbutton( tr( "Save Edit Profiles" ), false );
-
+   pb_emanual     = us_pushbutton( tr( "Edit Profiles Manually" ), false );
+   
    lo_writemwl    = us_checkbox  ( tr( "Save to all Wavelengths" ),
                                    ck_writemwl, true );
 
@@ -348,6 +350,7 @@ pb_plateau->setVisible(false);
    
    connect( pb_float,        SIGNAL( clicked() ), SLOT( floating()  ) );
    connect( pb_write,        SIGNAL( clicked() ), SLOT( write_auto()  ) );
+   connect( pb_emanual,      SIGNAL( clicked() ), SLOT( manual_edit_auto()  ) );
 
    connect ( this, SIGNAL( process_next_optics () ), SLOT ( process_optics_auto () )  );
    
@@ -452,6 +455,7 @@ pb_plateau->setVisible(false);
    //Noise/Undo/Save
    specs->addWidget( pb_spikes,       s_row++, 0, 1, 6 );
    specs->addWidget( pb_undo,         s_row++, 0, 1, 6 );
+   specs->addWidget( pb_emanual,      s_row++, 0, 1, 6 );
    specs->addWidget( pb_write,        s_row++, 0, 1, 6 );
    
    //*NEW STUFF
@@ -644,10 +648,531 @@ pb_plateau->setVisible(false);
    // details[ "invID_passed" ] = QString("86");
    // details[ "filename" ]     = QString("Yu_ABC-ala-indivdual_111320-run869");
    // details[ "protocolName" ] = QString("Yu_ABC-ala-indivdual_111320");  
+
+   // details[ "invID_passed" ] = QString("2");
+   // details[ "filename" ]     = ("test-021621-IF-RI-B-run953-IP");
+   // details[ "protocolName" ] = QString("test-021621-IF-RI-B");  
+
+   // details[ "invID_passed" ] = QString("2");
+   // //details[ "filename" ]     = ("test-021721-IF-RI-B-run955-IP");
+   // details[ "filename" ]     = ("test-021721-IF-RI-B-run955-RI");
+   // details[ "protocolName" ] = QString("test-021721-IF-RI-B");
+
+   // details[ "invID_passed" ] = QString("2");
+   // details[ "filename" ]     = ("test-021421-IF-RI-B_alexey-run974-IP");
+   // details[ "protocolName" ] = QString("test-021421-IF-RI-B_alexey");
+
    
    // load_auto( details );
    
 
+}
+
+
+// AUTO: Constructor for manual processing 
+US_Edit::US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,  QString  workingDir  ) : US_Widgets()
+{
+ 
+   check        = US_Images::getIcon( US_Images::CHECK );
+   invert       = 1.0;
+   all_edits    = false;
+   men_1click   = US_Settings::debug_match( "men2click" ) ? false : true;
+   total_speeds = 0;
+   total_edits  = 0;
+   v_line       = NULL;
+   dbg_level    = US_Settings::us_debug();
+   dbP          = NULL;
+   chlamb       = QChar( 955 );
+   gap_thresh   = 50.0;
+   gap_fringe   = 0.4;
+   bottom       = 0.0;
+DbgLv(1) << " 0)gap_fringe" << gap_fringe;
+
+   us_edit_auto_mode = false;
+   us_edit_auto_mode_manual = true;
+   all_loaded = false;
+   is_spike_auto = false;
+ 
+//usmode = false;
+ 
+   setWindowTitle( tr( "Edit UltraScan Data Manually" ) );
+   setPalette( US_GuiSettings::frameColor() );
+
+   QVBoxLayout* top = new QVBoxLayout( this );
+   top->setSpacing         ( 2 );
+   top->setContentsMargins ( 2, 2, 2, 2 );
+
+   // Put the Run Info across the entire window
+   QHBoxLayout* runInfo = new QHBoxLayout();
+   QLabel* lb_info = us_label( tr( "Run Info:" ), -1 );
+   runInfo->addWidget( lb_info );
+
+   le_info = us_lineedit( "", 1, true );
+   runInfo->addWidget( le_info );
+
+   top->addLayout( runInfo );
+
+   QHBoxLayout* main = new QHBoxLayout();
+   QVBoxLayout* left = new QVBoxLayout;
+
+   // Start of Grid Layout
+   QGridLayout* specs = new QGridLayout;
+
+   // Investigator
+   QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
+
+   if ( US_Settings::us_inv_level() < 3 )
+      pb_investigator->setEnabled( false );
+
+   int     id      = US_Settings::us_inv_ID();
+   QString number  = ( id > 0 ) ? 
+      QString::number( US_Settings::us_inv_ID() ) + ": " 
+      : "";
+   le_investigator = us_lineedit( number + US_Settings::us_inv_name(),
+                                  1, true );
+
+   // Disk/DB control
+   disk_controls   = new US_Disk_DB_Controls;
+
+   // Load
+   QPushButton*
+      pb_load      = us_pushbutton( tr( "Load Data" ) );
+   pb_details      = us_pushbutton( tr( "Run Details" ), false );
+      pb_report    = us_pushbutton( tr( "View Report" ), false );
+
+   // Triple and Speed Step
+   lb_triple       = us_label( tr( "Cell / Channel / Wavelength" ), -1 );
+   cb_triple       = us_comboBox();
+   lb_rpms         = us_label( tr( "Speed Step (RPM) of triple" ), -1 );
+   cb_rpms         = us_comboBox();
+   lb_rpms->setVisible( false );
+   cb_rpms->setVisible( false );
+
+   // Scan Gaps
+   QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
+   lb_gaps         = us_label( tr( "Threshold for Scan Gaps" ), -1 );
+   ct_gaps         = us_counter( 1, 10.0, 100.0 );
+   ct_gaps->setSingleStep ( 10.0 );
+   ct_gaps->setValue( 50.0 );
+
+   // MWL Control
+   QFontMetrics fmet( font );
+   int fwid = fmet.maxWidth();
+   int rhgt = ct_gaps->height();
+   int lwid = fwid * 4;
+   int swid = lwid + fwid;
+   lb_mwlctl       = us_banner( tr( "Wavelength Controls" ) );
+   QButtonGroup* r_group = new QButtonGroup( this );
+   QButtonGroup* x_group = new QButtonGroup( this );
+   lo_lrange       = us_radiobutton( tr( "Lambda Range" ),       rb_lrange,
+                                     true  );
+   lo_custom       = us_radiobutton( tr( "Custom Lambda List" ), rb_custom,
+                                     false );
+   rb_lrange->setFont( font );
+   rb_custom->setFont( font );
+   r_group->addButton( rb_lrange, 0 );
+   r_group->addButton( rb_custom, 1 );
+   lb_ldelta       = us_label( tr( "%1 Index Increment:" ).arg( chlamb ), -1 );
+   ct_ldelta       = us_counter( 1, 1, 100, 1 );
+   ct_ldelta->setFont( font );
+   ct_ldelta->setSingleStep( 1 );
+   ct_ldelta->setMinimumWidth( lwid );
+   ct_ldelta->resize( rhgt, swid );
+   lb_lstart       = us_label( tr( "%1 Start:" ).arg( chlamb ), -1 );
+   lb_lend         = us_label( tr( "%1 End:"   ).arg( chlamb ), -1 );
+   lb_lplot        = us_label( tr( "Plot (W nm):" ), -1 );
+
+   int     nlmbd   = 224;
+   int     lmbdlo  = 251;
+   int     lmbdhi  = 650;
+   int     lmbddl  = 1;
+   QString lrsmry  = tr( "%1 raw: %2 %3 to %4" )
+      .arg( nlmbd ).arg( chlamb ).arg( lmbdlo ).arg( lmbdhi );
+   le_ltrng  = us_lineedit( lrsmry, -1, true );
+   QString lxsmry = tr( "%1 MWL exports: %2 %3 to %4, raw index increment %5" )
+      .arg( nlmbd ).arg( chlamb ).arg( lmbdlo ).arg( lmbdhi ).arg( lmbddl );
+   le_lxrng       = us_lineedit( lxsmry, -1, true );
+   cb_lplot       = us_comboBox();
+   cb_lstart      = us_comboBox();
+   cb_lend        = us_comboBox();
+
+   cb_lplot ->setFont( font );
+   cb_lstart->setFont( font );
+   cb_lend  ->setFont( font );
+
+   pb_custom      = us_pushbutton(  tr( "Custom Lambdas" ),      false, -1 );
+   pb_incall      = us_pushbutton(  tr( "Include All Lambdas" ), true,  -1 );
+   pb_larrow      = us_pushbutton(  tr( "previous" ), true, -2 );
+   pb_rarrow      = us_pushbutton(  tr( "next"     ), true, -2 );
+   pb_larrow->setIcon( US_Images::getIcon( US_Images::ARROW_LEFT ) );
+   pb_rarrow->setIcon( US_Images::getIcon( US_Images::ARROW_RIGHT ) );
+
+   lo_radius      = us_radiobutton( tr( "x axis Radius" ),     rb_radius,
+                                    true  );
+   lo_waveln      = us_radiobutton( tr( "x axis Wavelength" ), rb_waveln,
+                                    false );
+   rb_radius->setFont( font );
+   rb_waveln->setFont( font );
+   x_group->addButton( rb_radius, 0 );
+   x_group->addButton( rb_waveln, 1 );
+
+   QStringList lambdas;
+lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
+   cb_lplot ->addItems( lambdas );
+   cb_lstart->addItems( lambdas );
+   cb_lend  ->addItems( lambdas );
+
+   cb_lplot ->setCurrentIndex( 2 );
+   cb_lstart->setCurrentIndex( 0 );
+   cb_lend  ->setCurrentIndex( 6 );
+
+   connect_mwl_ctrls( true );
+
+   // Scan Controls
+   QLabel* lb_scan = us_banner( tr( "Scan Controls" ) );
+   
+   // Scans
+   QLabel* lb_from = us_label(  tr( "Scan Focus from:" ), -1 );
+   lb_from->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
+
+   ct_from        = us_counter( 3, 0.0, 0.0 ); // Update range upon load
+   ct_from->setSingleStep( 1 );
+
+   QLabel* lb_to  = us_label( tr( "to:" ), -1 );
+   lb_to->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
+
+   ct_to          = us_counter( 3, 0.0, 0.0 ); // Update range upon load
+   ct_to->setSingleStep( 1 );
+   
+   // Exclude and Include pushbuttons
+   pb_excludeRange = us_pushbutton( tr( "Exclude Scan Range" ), false );
+   pb_exclusion    = us_pushbutton( tr( "Exclusion Profile" ),  false );
+   pb_edit1       = us_pushbutton( tr( "Edit Single Scan" ), false );
+   pb_include     = us_pushbutton( tr( "Include All" ), false );
+
+   // Edit controls 
+   QLabel* lb_edit = us_banner( tr( "Edit Controls" ) );
+
+   // Edit Triple:Speed display (Equilibrium only)
+   lb_edtrsp      = us_label( tr( "Edit Triple:Speed :" ), -1, true );
+   le_edtrsp      = us_lineedit( "" );
+   lb_edtrsp->setVisible(  false );
+   le_edtrsp->setVisible(  false );
+
+   // Meniscus
+   pb_meniscus    = us_pushbutton( tr( "Specify Meniscus" ), false );
+   le_meniscus    = us_lineedit( "", 1 );
+   lb_meniscus    = us_label(      tr( "Meniscus:" ), -1 );
+
+   // Air Gap (hidden by default)
+   pb_airGap = us_pushbutton( tr( "Specify Air Gap" ), false );
+   le_airGap = us_lineedit( "", 1, true );
+   pb_airGap->setHidden( true );
+   le_airGap->setHidden( true );
+
+   // Data range
+   pb_dataRange   = us_pushbutton( tr( "Specify Data Range" ), false );
+   le_dataRange   = us_lineedit( "", 1, true );
+pb_dataRange->setVisible(false);
+le_dataRange->setVisible(false);
+   // Plateau
+   pb_plateau     = us_pushbutton( tr( "Specify Plateau" ), false );
+pb_plateau->setVisible(false);
+   le_plateau     = us_lineedit( "", 1, true );
+   // Baseline
+   lb_baseline    = us_label(      tr( "Baseline:" ), -1 );
+   le_baseline    = us_lineedit( "", 1, true );
+
+//*NEW STUFF
+//QLabel* 
+   lb_dataStart   = us_label(      tr( "Data Start:" ), -1 );
+//QLineEdit* 
+   le_dataStart   = us_lineedit( "", 1, true );
+//QPushButton* 
+   pb_dataEnd     = us_pushbutton( tr( "Specify Range/End:" ), false );
+//QLineEdit* 
+   le_dataEnd     = us_lineedit( "", 1, false );
+//QLabel* 
+   lb_plateau     = us_label(      tr( "Plateau:" ), -1 );
+//QPushButton* 
+   pb_nextChan    = us_pushbutton( tr( "Next Triple" ), false );
+//*NEW STUFF
+   // OD Limit
+   lb_odlim       = us_label( tr( "OD Limit:" ), -1 );
+   odlimit        = 1.8;
+   ct_odlim       = us_counter( 3, 0.1, 50000.0, odlimit );
+   ct_odlim ->setFont( font );
+   ct_odlim ->setSingleStep( 0.01 );
+   ct_odlim ->setMinimumWidth( lwid );
+   ct_odlim ->resize( rhgt, swid );
+
+   // Noise, Residuals, Invert, Spikes, Prior, Undo
+   pb_noise       = us_pushbutton( tr( "Determine RI Noise" ),        false );
+   pb_residuals   = us_pushbutton( tr( "Subtract Noise" ),            false );
+   pb_invert      = us_pushbutton( tr( "Invert Sign" ),               false );
+   pb_spikes      = us_pushbutton( tr( "Remove Spikes" ),             false );
+   pb_priorEdits  = us_pushbutton( tr( "Apply Prior Edits" ),         false );
+   pb_undo        = us_pushbutton( tr( "Undo Noise and Spikes" ),     false );
+
+   // Review, Next Triple, Float, Save, Save-all
+   pb_reviewep    = us_pushbutton( tr( "Review Edit Profile" ),       false );
+   pb_nexteqtr    = us_pushbutton( tr( "Next Eq. Triple" ),           false );
+   pb_reviewep->setVisible( false );
+   pb_nexteqtr->setVisible( false );
+   pb_float       = us_pushbutton( tr( "Mark Data as Floating" ),     false );
+   pb_write       = us_pushbutton( tr( "Save Current Edit Profile" ), false );
+   lo_writemwl    = us_checkbox  ( tr( "Save to all Wavelengths" ),
+                                   ck_writemwl, true );
+
+   connect( pb_excludeRange, SIGNAL( clicked() ), SLOT( exclude_range() ) );
+   connect( pb_details,      SIGNAL( clicked() ), SLOT( details()       ) );
+   connect( pb_report,       SIGNAL( clicked() ), SLOT( view_report()   ) );
+   connect( pb_investigator, SIGNAL( clicked() ),
+                             SLOT  ( sel_investigator()         ) );
+   connect( pb_load,         SIGNAL( clicked() ), SLOT( load()  ) );
+   connect( cb_triple,       SIGNAL( currentIndexChanged( int ) ), 
+                             SLOT  ( new_triple         ( int ) ) );
+   connect( pb_exclusion,    SIGNAL( clicked() ), SLOT( exclusion()     ) );
+   connect( pb_edit1,        SIGNAL( clicked() ), SLOT( edit_scan()     ) );
+   connect( pb_include,      SIGNAL( clicked() ), SLOT( include()       ) );
+   connect( pb_meniscus,     SIGNAL( clicked() ), SLOT( set_meniscus()  ) );
+   connect( pb_airGap,       SIGNAL( clicked() ), SLOT( set_airGap()    ) );
+//   connect( pb_dataRange,    SIGNAL( clicked() ), SLOT( set_dataRange() ) );
+//   connect( pb_plateau,      SIGNAL( clicked() ), SLOT( set_plateau()   ) );
+   connect( pb_dataEnd,      SIGNAL( clicked() ), SLOT( set_dataRange() ) );
+   connect( ct_odlim,        SIGNAL( valueChanged   ( double ) ),
+                             SLOT  ( od_radius_limit( double ) ) );
+   connect( pb_noise,        SIGNAL( clicked() ), SLOT( noise() ) );
+   connect( pb_residuals,    SIGNAL( clicked() ),
+                             SLOT  ( subtract_residuals() ) );
+   connect( pb_invert,       SIGNAL( clicked() ), SLOT( invert_values() ) );
+   connect( pb_spikes,       SIGNAL( clicked() ), SLOT( remove_spikes() ) );
+   connect( pb_priorEdits,   SIGNAL( clicked() ), SLOT( apply_prior()   ) );
+   connect( pb_undo,         SIGNAL( clicked() ), SLOT( undo()      ) );
+   connect( pb_reviewep,     SIGNAL( clicked() ), SLOT( review_edits()  ) );
+   connect( pb_nexteqtr,     SIGNAL( clicked() ), SLOT( next_triple()   ) );
+   connect( pb_nextChan,     SIGNAL( clicked() ), SLOT( next_triple()   ) );
+   connect( pb_float,        SIGNAL( clicked() ), SLOT( floating()  ) );
+   connect( pb_write,        SIGNAL( clicked() ), SLOT( write()     ) );
+
+   // Lay out specs widgets and layouts
+   int s_row = 0;
+   specs->addWidget( pb_investigator, s_row,   0, 1, 2 );
+   specs->addWidget( le_investigator, s_row++, 2, 1, 4 );
+   //specs->addLayout( disk_controls,   s_row++, 0, 1, 6 );
+   specs->addWidget( pb_load,         s_row,   0, 1, 2 );
+   specs->addWidget( pb_details,      s_row,   2, 1, 2 );
+   specs->addWidget( pb_report,       s_row++, 4, 1, 2 );
+   specs->addWidget( lb_triple,       s_row,   0, 1, 3 );
+//   specs->addWidget( cb_triple,       s_row++, 3, 1, 3 );
+//*NEW STUFF
+   specs->addWidget( cb_triple,       s_row,   3, 1, 2 );
+   specs->addWidget( pb_nextChan,     s_row++, 5, 1, 1 );
+//*NEW STUFF
+   specs->addWidget( lb_rpms,         s_row,   0, 1, 3 );
+   specs->addWidget( cb_rpms,         s_row++, 3, 1, 3 );
+   specs->addWidget( lb_gaps,         s_row,   0, 1, 3 );
+   specs->addWidget( ct_gaps,         s_row++, 3, 1, 3 );
+   specs->addWidget( le_lxrng,        s_row++, 0, 1, 6 );
+   specs->addWidget( lb_mwlctl,       s_row++, 0, 1, 6 );
+   specs->addLayout( lo_lrange,       s_row,   0, 1, 3 );
+   specs->addLayout( lo_custom,       s_row++, 3, 1, 3 );
+   specs->addWidget( lb_ldelta,       s_row,   0, 1, 2 );
+   specs->addWidget( ct_ldelta,       s_row,   2, 1, 1 );
+   specs->addWidget( le_ltrng,        s_row++, 3, 1, 3 );
+   specs->addWidget( lb_lstart,       s_row,   0, 1, 2 );
+   specs->addWidget( cb_lstart,       s_row,   2, 1, 1 );
+   specs->addWidget( lb_lend,         s_row,   3, 1, 2 );
+   specs->addWidget( cb_lend,         s_row++, 5, 1, 1 );
+   specs->addWidget( pb_custom,       s_row,   0, 1, 3 );
+   specs->addWidget( pb_incall,       s_row++, 3, 1, 3 );
+   specs->addLayout( lo_radius,       s_row,   0, 1, 3 );
+   specs->addLayout( lo_waveln,       s_row++, 3, 1, 3 );
+   specs->addWidget( lb_lplot,        s_row,   0, 1, 2 );
+   specs->addWidget( cb_lplot,        s_row,   2, 1, 1 );
+   specs->addWidget( pb_larrow,       s_row,   3, 1, 2 );
+   specs->addWidget( pb_rarrow,       s_row++, 5, 1, 1 );
+   specs->addWidget( lb_scan,         s_row++, 0, 1, 6 );
+   specs->addWidget( lb_from,         s_row,   0, 1, 3 );
+   specs->addWidget( ct_from,         s_row++, 3, 1, 3 );
+   specs->addWidget( lb_to,           s_row,   0, 1, 3 );
+   specs->addWidget( ct_to,           s_row++, 3, 1, 3 );
+   specs->addWidget( pb_excludeRange, s_row,   0, 1, 3 );
+   specs->addWidget( pb_exclusion,    s_row++, 3, 1, 3 );
+   specs->addWidget( pb_edit1,        s_row,   0, 1, 3 );
+   specs->addWidget( pb_include,      s_row++, 3, 1, 3 );
+   specs->addWidget( lb_edit,         s_row++, 0, 1, 6 );
+   specs->addWidget( lb_edtrsp,       s_row,   0, 1, 3 );
+   specs->addWidget( le_edtrsp,       s_row++, 3, 1, 3 );
+//   specs->addWidget( pb_meniscus,     s_row,   0, 1, 3 );
+//   specs->addWidget( le_meniscus,     s_row++, 3, 1, 3 );
+   specs->addWidget( lb_meniscus,     s_row,   0, 1, 1 );
+   specs->addWidget( le_meniscus,     s_row,   1, 1, 2 );
+   specs->addWidget( pb_meniscus,     s_row++, 3, 1, 3 );
+   specs->addWidget( pb_airGap,       s_row,   0, 1, 3 );
+   specs->addWidget( le_airGap,       s_row++, 3, 1, 3 );
+//   specs->addWidget( pb_dataRange,    s_row,   0, 1, 3 );
+//   specs->addWidget( le_dataRange,    s_row++, 3, 1, 3 );
+//   specs->addWidget( pb_plateau,      s_row,   0, 1, 3 );
+//   specs->addWidget( le_plateau,      s_row++, 3, 1, 3 );
+//   specs->addWidget( lb_baseline,     s_row,   0, 1, 3 );
+//   specs->addWidget( le_baseline,     s_row++, 3, 1, 3 );
+//*NEW STUFF
+   specs->addWidget( lb_dataStart,    s_row,   0, 1, 1 );
+   specs->addWidget( le_dataStart,    s_row,   1, 1, 2 );
+   specs->addWidget( pb_dataEnd,      s_row,   3, 1, 2 );
+   specs->addWidget( le_dataEnd,      s_row++, 5, 1, 1 );
+   specs->addWidget( lb_baseline,     s_row,   0, 1, 1 );
+   specs->addWidget( le_baseline,     s_row,   1, 1, 3 );
+   specs->addWidget( lb_plateau,      s_row,   4, 1, 1 );
+   specs->addWidget( le_plateau,      s_row++, 5, 1, 1 );
+//*NEW STUFF
+//   specs->addWidget( lb_odlim,        s_row,   0, 1, 3 );
+//   specs->addWidget( ct_odlim,        s_row++, 3, 1, 3 );
+   specs->addWidget( lb_odlim,        s_row,   0, 1, 3 );
+   specs->addWidget( ct_odlim,        s_row++, 3, 1, 3 );
+   specs->addWidget( pb_noise,        s_row,   0, 1, 3 );
+   specs->addWidget( pb_residuals,    s_row++, 3, 1, 3 );
+   specs->addWidget( pb_invert,       s_row,   0, 1, 3 );
+   specs->addWidget( pb_spikes,       s_row++, 3, 1, 3 );
+   specs->addWidget( pb_priorEdits,   s_row,   0, 1, 3 );
+   specs->addWidget( pb_undo,         s_row++, 3, 1, 3 );
+   specs->addWidget( pb_reviewep,     s_row,   0, 1, 3 );
+   specs->addWidget( pb_nexteqtr,     s_row++, 3, 1, 3 );
+   specs->addWidget( pb_float,        s_row,   0, 1, 3 );
+   specs->addWidget( pb_write,        s_row++, 3, 1, 3 );
+   specs->addLayout( lo_writemwl,     s_row++, 3, 1, 3 );
+
+   // Button rows
+   QBoxLayout*  buttons   = new QHBoxLayout;
+   // QPushButton* pb_reset  = us_pushbutton( tr( "Reset" ) );
+   // QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
+   // QPushButton* pb_accept = us_pushbutton( tr( "Close" ) );
+
+   // connect( pb_reset,  SIGNAL( clicked() ), SLOT( reset() ) );
+   // connect( pb_help,   SIGNAL( clicked() ), SLOT( help()  ) );
+   // connect( pb_accept, SIGNAL( clicked()    ),
+   //          this,      SLOT  ( close_edit() ) );
+
+   // buttons->addWidget( pb_reset );
+   // buttons->addWidget( pb_help );
+   // buttons->addWidget( pb_accept );
+
+   QPushButton* pb_cancel  = us_pushbutton( tr( "Cancel" ) );
+   pb_pass    = us_pushbutton( tr( "Accept" ), false );
+   
+   connect( pb_cancel, SIGNAL( clicked() ), SLOT( close()  ) );
+   connect( pb_pass,   SIGNAL( clicked()    ),
+	    this,      SLOT  ( pass_values() ) );
+   
+   buttons->addWidget( pb_cancel );
+   buttons->addWidget( pb_pass );
+
+
+
+   // -- Hide some buttons ----
+      
+   pb_investigator->hide();
+   le_investigator->hide();
+   pb_load        ->hide(); 
+   pb_details     ->hide();
+   pb_report      ->hide();
+   lb_gaps        ->hide();
+   ct_gaps        ->hide();
+
+   
+   lb_scan        ->hide();
+   lb_from        ->hide();
+   lb_to          ->hide();
+   ct_from        ->hide();
+   ct_to          ->hide();
+   pb_excludeRange->hide();
+   pb_exclusion   ->hide();
+   pb_edit1       ->hide();
+   pb_include     ->hide();
+
+   // pb_meniscus    ->hide();
+   // pb_dataRange   ->hide();
+   // pb_airGap      ->hide();  
+
+   pb_noise       ->hide();
+   pb_residuals   ->hide();
+   pb_invert      ->hide();
+   pb_priorEdits  ->hide();
+   pb_float       ->hide();
+
+   pb_spikes      ->hide();
+   pb_undo        ->hide();
+   pb_write       ->hide();
+   
+   // pb_reset       ->hide();
+   // pb_help        ->hide();
+   // pb_accept      ->hide();
+
+   //MWL
+   lb_mwlctl      ->hide();
+   lb_ldelta      ->hide();
+   ct_ldelta      ->hide();
+   lb_lstart      ->hide();
+   lb_lend        ->hide();
+   lb_lplot       ->hide();
+   cb_lplot       ->hide();
+   cb_lstart      ->hide();
+   cb_lend        ->hide();
+   le_ltrng       ->hide();
+   le_lxrng       ->hide();
+   pb_custom      ->hide();
+   pb_incall      ->hide();
+   pb_larrow      ->hide();
+   pb_rarrow      ->hide();
+   //lo_writemwl    ->hide();
+   ck_writemwl    ->hide();
+   	 
+   rb_lrange      ->hide();
+   rb_custom      ->hide();
+   rb_radius      ->hide();
+   rb_waveln      ->hide();
+   
+   
+   //---------------------
+   
+
+   
+
+   // Plot layout on right side of window
+   plot = new US_Plot( data_plot, 
+         tr( "Absorbance Data" ),
+         tr( "Radius (in cm)" ), tr( "Absorbance" ),
+         true, "", "rainbow" );
+   
+   data_plot->setMinimumSize( 600, 400 );
+
+   data_plot->enableAxis( QwtPlot::xBottom, true );
+   data_plot->enableAxis( QwtPlot::yLeft  , true );
+
+   pick = new US_PlotPicker( data_plot );
+   // Set rubber band to display for Control+Left Mouse Button
+   pick->setRubberBand  ( QwtPicker::VLineRubberBand );
+   pick->setMousePattern( QwtEventPattern::MouseSelect1,
+                          Qt::LeftButton, Qt::ControlModifier );
+
+   left->addLayout( specs );
+   left->addStretch();
+   left->addLayout( buttons );
+
+   main->addLayout( left );
+   main->addLayout( plot );
+   main->setStretchFactor( left, 2 );
+   main->setStretchFactor( plot, 3 );
+   top ->addLayout( main );
+
+   reset();
+
+   //Load already selected data
+   this->allData    = allData;
+   this->triples    = triples;
+   this->workingDir = workingDir;
+   load_manual_auto();
 }
 
 
@@ -670,6 +1195,7 @@ US_Edit::US_Edit() : US_Widgets()
 DbgLv(1) << " 0)gap_fringe" << gap_fringe;
 
    us_edit_auto_mode = false;
+   us_edit_auto_mode_manual = false;
    all_loaded = false;
    is_spike_auto = false;
  
@@ -2096,6 +2622,7 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 
    show_mwl_controls( isMwl );
 
+   
 
    /***************** TESTING ******************************************/
 
@@ -2223,7 +2750,8 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 	   US_DataIO::EditValues  edits;
 	   edits.airGapLeft  = airGap_left;
 	   edits.airGapRight = airGap_right;
-	   
+
+	   	   
 	   QList< int > excludes;
            
 	   for ( int i = 0; i < data.scanData.size(); i++ )
@@ -2257,11 +2785,11 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 	   
 	   US_DataIO::calc_integral( data, edits );
 	   
-	   
+	   	   
 	   step = PLATEAU;
 	   //plot_range();              //ALEXEY <--- here applies the gap removal
 	   next_step();
-	  	  	   
+
 	   //qApp->processEvents();
 	   
 	   //ALEXEY: here create a QMap to couple current triple AND meniscus, ranges, plateau and baseline;
@@ -2301,6 +2829,7 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
      new_triple_auto( 0 );                  //ALEXEY <--- here does NOT applies the gap removal
 
    pb_write->setEnabled( true );
+   pb_emanual->setEnabled( true );
    pb_undo ->setEnabled( false ); 
 
    le_status->setText( tr( "Edit controls set" ) );
@@ -2812,15 +3341,15 @@ QVector<double> US_Edit::find_airGap_interference_auto()
   airGap_left_av  /= x_airGap_lefts.size();
   airGap_right_av /= x_airGap_rights.size();
   
-  airGap_vals.push_back(airGap_left_av);
-  airGap_vals.push_back(airGap_right_av);
+  // airGap_vals.push_back(airGap_left_av);
+  // airGap_vals.push_back(airGap_right_av);
 
   //TEMP
-  // airGap_vals.push_back(5.9);
-  // airGap_vals.push_back(5.95);
+  airGap_vals.push_back(5.85);
+  airGap_vals.push_back(5.90);
 
   
-  qDebug() << "INTERFERENCE: airGaps: " << airGap_left_av << " -- " << airGap_right_av;
+  qDebug() << "INTERFERENCE: airGaps: " << airGap_vals;
     
   return airGap_vals;
 }
@@ -3798,6 +4327,555 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
    qDebug() << "baseline: "   << baseline;
 }
 
+
+// Load an AUC data set already selected
+void US_Edit::load_manual_auto( void )
+{
+   workingDir.chop(1);
+   runID = workingDir.section( "/", -1, -1 );
+DbgLv(1) << "Ld: runID" << runID << "wdir" << workingDir;
+   sData     .clear();
+   sd_offs   .clear();
+   sd_knts   .clear();
+   cb_triple->clear();
+   files     .clear();
+   
+   if ( triples.size() == 0 )
+   {
+      QMessageBox::warning( this,
+            tr( "No Files Found" ),
+            tr( "There were no files of the form *.auc\n"  
+                "found in the specified directory." ) );
+      return;
+   }
+
+   cb_triple->addItems( triples );
+   connect( cb_triple, SIGNAL( currentIndexChanged( int ) ), 
+                       SLOT  ( new_triple         ( int ) ) );
+   triple_index = 0;
+   data_index   = 0;
+   
+   le_info->setText( runID );
+
+   data     = allData[ 0 ];
+   dataType = QString( QChar( data.type[ 0 ] ) ) 
+            + QString( QChar( data.type[ 1 ] ) );
+
+   if ( dataType == "IP" )
+   {
+      lb_gaps->setText( tr( "Fringe Tolerance" ) );
+
+      ct_gaps->setRange     ( 0.0, 20.0 );
+      ct_gaps->setSingleStep( 0.001 );
+      ct_gaps->setValue     ( 0.4 );
+      ct_gaps->setNumButtons( 3 );
+
+      connect( ct_gaps, SIGNAL( valueChanged        ( double ) ), 
+                        SLOT  ( set_fringe_tolerance( double ) ) );
+   }
+   else
+   {
+      lb_gaps->setText( tr( "Threshold for Scan Gaps" ) );
+      
+      ct_gaps->disconnect   ();
+      ct_gaps->setRange     ( 10.0, 100.0 );
+      ct_gaps->setSingleStep( 10.0 );
+      ct_gaps->setValue     ( 50.0 );
+      ct_gaps->setNumButtons( 1 );
+   }
+
+   QString runtype = runID + "." + dataType;
+DbgLv(1) << "Ld: runtype" << runtype;
+   nwaveln         = 0;
+   ncelchn         = 0;
+   outData.clear();
+
+   for ( int trx = 0; trx < triples.size(); trx++ )
+   {  // Generate file names
+      QString triple = QString( triples.at( trx ) ).replace( " / ", "." );
+      QString file   = runtype + "." + triple + ".auc";
+      files << file;
+
+      // Save pointers as initial output data vector
+      outData << &allData[ trx ];
+
+      QString scell  = triple.section( ".", 0, 0 ).simplified();
+      QString schan  = triple.section( ".", 1, 1 ).simplified();
+      QString swavl  = triple.section( ".", 2, 2 ).simplified();
+
+      if ( ! rawc_wvlns.contains( swavl ) )
+      {  // Accumulate wavelengths in case this is MWL
+         nwaveln++;
+         rawc_wvlns << swavl;
+      }
+
+      nwavelo         = nwaveln;
+      QString celchn  = scell + " / " + schan;
+
+      if ( ! celchns.contains( celchn ) )
+      {  // Accumulate cell/channel values in case this is MWL
+         ncelchn++;
+         celchns << celchn;
+      }
+   }
+DbgLv(1) << "rawc_wvlns size" << rawc_wvlns.size() << nwaveln;
+DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
+   rawc_wvlns.sort();
+   rawi_wvlns.clear();
+   toti_wvlns.clear();
+
+   for ( int wvx = 0; wvx < nwaveln; wvx++ )
+   {
+      int iwavl    = rawc_wvlns[ wvx ].toInt();
+      rawi_wvlns << iwavl;
+      toti_wvlns << iwavl;
+   }
+
+   workingDir   = workingDir + "/";
+   QString file = workingDir + runtype + ".xml";
+   expType      = "";
+   QFile xf( file );
+
+   if ( xf.open( QIODevice::ReadOnly | QIODevice::Text ) )
+   {
+      QXmlStreamReader xml( &xf );
+
+      while( ! xml.atEnd() )
+      {
+         xml.readNext();
+
+         if ( xml.isStartElement()  &&  xml.name() == "experiment" )
+         {
+            QXmlStreamAttributes xa = xml.attributes();
+            expType   = xa.value( "type" ).toString();
+            break;
+         }
+      }
+
+      xf.close();
+   }
+
+   if ( expType.isEmpty()  &&  disk_controls->db() )
+   {  // no experiment type yet and data read from DB:  try for DB exp type
+      if ( dbP == NULL )
+      {
+         US_Passwd pw;
+         dbP          = new US_DB2( pw.getPasswd() );
+
+         if ( dbP == NULL  ||  dbP->lastErrno() != US_DB2::OK )
+         {
+            QMessageBox::warning( this, tr( "Connection Problem" ),
+              tr( "Could not connect to database\n" )
+              + ( ( dbP != NULL ) ? dbP->lastError() : "" ) );
+            dbP          = NULL;
+            return;
+         }
+      }
+
+      QStringList query;
+      query << "get_experiment_info_by_runID" << runID 
+            << QString::number( US_Settings::us_inv_ID() );
+
+      dbP->query( query );
+      dbP->next();
+      expType    = dbP->value( 8 ).toString();
+   }
+
+   if ( expType.isEmpty() )  // if no experiment type, assume Velocity
+      expType    = "Velocity";
+
+   else                      // insure Ulll... form, e.g., "Equilibrium"
+      expType    = expType.left( 1 ).toUpper() +
+                   expType.mid(  1 ).toLower();
+
+
+   // Set booleans for experiment type
+   expIsVelo  = ( expType.compare( "Velocity",    Qt::CaseInsensitive ) == 0 );
+   expIsEquil = ( expType.compare( "Equilibrium", Qt::CaseInsensitive ) == 0 );
+   expIsDiff  = ( expType.compare( "Diffusion",   Qt::CaseInsensitive ) == 0 );
+   expIsOther = ( !expIsVelo  &&  !expIsEquil  &&  !expIsDiff );
+   expType    = expIsOther ? "Other" : expType;
+   odlimit    = 1.8;
+   init_includes();
+
+   if ( expIsEquil )
+   {  // Equilibrium
+      lb_rpms    ->setVisible( true  );
+      cb_rpms    ->setVisible( true  );
+      pb_plateau ->setVisible( false );
+      le_plateau ->setVisible( false ); 
+      lb_baseline->setVisible( false ); 
+      le_baseline->setVisible( false ); 
+      lb_edtrsp  ->setVisible( true  );
+      le_edtrsp  ->setVisible( true  );
+      pb_reviewep->setVisible( true  );
+      pb_nexteqtr->setVisible( true  );
+      pb_write   ->setText( tr( "Save Edit Profiles" ) );
+
+      sData.clear();
+      US_DataIO::SpeedData  ssDat;
+      int ksd    = 0;
+
+      for ( int jd = 0; jd < allData.size(); jd++ )
+      {
+         data  = allData[ jd ];
+         sd_offs << ksd;
+
+         if ( jd > 0 )
+            sd_knts << ( ksd - sd_offs[ jd - 1 ] );
+
+         trip_rpms.clear();
+
+         for ( int ii = 0; ii < data.scanData.size(); ii++ )
+         {
+            double  drpm = data.scanData[ ii ].rpm;
+            QString arpm = QString::number( drpm );
+            if ( ! trip_rpms.contains( arpm ) )
+            {
+               trip_rpms << arpm;
+               ssDat.first_scan = ii + 1;
+               ssDat.scan_count = 1;
+               ssDat.speed      = drpm;
+               ssDat.meniscus   = 0.0;
+               ssDat.dataLeft   = 0.0;
+               ssDat.dataRight  = 0.0;
+               sData << ssDat;
+               ksd++;
+            }
+
+            else
+            {
+               int jj = trip_rpms.indexOf( arpm );
+               ssDat  = sData[ jj ];
+               ssDat.scan_count++;
+               sData[ jj ].scan_count++;
+            }
+         }
+
+         if ( jd == 0 )
+            cb_rpms->addItems( trip_rpms );
+
+         total_speeds += trip_rpms.size();
+      }
+
+      sd_knts << ( ksd - sd_offs[ allData.size() - 1 ] );
+
+      if ( allData.size() > 1 )
+      {
+         data   = allData[ 0 ];
+         ksd    = sd_knts[ 0 ];
+         trip_rpms.clear();
+         cb_rpms ->clear();
+         for ( int ii = 0; ii < ksd; ii++ )
+         {
+            QString arpm = QString::number( sData[ ii ].speed );
+            trip_rpms << arpm;
+         }
+
+         cb_rpms->addItems( trip_rpms );
+      }
+
+      pick     ->disconnect();
+      connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
+                     SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
+
+      pb_priorEdits->disconnect();
+      connect( pb_priorEdits, SIGNAL( clicked() ), SLOT( prior_equil() ) );
+      plot_scan();
+
+      connect( cb_rpms,   SIGNAL( currentIndexChanged( int ) ), 
+                          SLOT  ( new_rpmval         ( int ) ) );
+   }
+
+   else
+   {  // non-Equilibrium
+      bool notMwl  = ( nwaveln < 3 );
+      lb_rpms    ->setVisible( false );
+      cb_rpms    ->setVisible( false );
+//      pb_plateau ->setVisible( true  );
+      le_plateau ->setVisible( true  ); 
+      lb_baseline->setVisible( notMwl );
+      le_baseline->setVisible( notMwl ); 
+      lb_edtrsp  ->setVisible( false );
+      le_edtrsp  ->setVisible( false );
+      pb_reviewep->setVisible( false );
+      pb_nexteqtr->setVisible( false );
+
+      pb_write   ->setText( tr( "Save Current Edit Profile" ) );
+
+      pb_priorEdits->disconnect();
+      connect( pb_priorEdits, SIGNAL( clicked() ), SLOT( apply_prior() ) );
+DbgLv(1) << "LD():  triples size" << triples.size();
+      if ( notMwl )
+         plot_current( 0 );
+   }
+
+   // Enable pushbuttons
+   pb_details   ->setEnabled( true );
+   pb_include   ->setEnabled( true );
+   pb_exclusion ->setEnabled( true );
+   pb_meniscus  ->setEnabled( true );
+   pb_airGap    ->setEnabled( false );
+//   pb_dataRange ->setEnabled( false );
+//   pb_plateau   ->setEnabled( false );
+   pb_noise     ->setEnabled( false );
+   pb_spikes    ->setEnabled( false );
+   pb_invert    ->setEnabled( true );
+   pb_priorEdits->setEnabled( true );
+   pb_float     ->setEnabled( true );
+   pb_undo      ->setEnabled( true );
+
+   connect( ct_from, SIGNAL( valueChanged ( double ) ),
+                     SLOT  ( focus_from   ( double ) ) );
+
+   connect( ct_to,   SIGNAL( valueChanged ( double ) ),
+                     SLOT  ( focus_to     ( double ) ) );
+
+   step = MENISCUS;
+   set_pbColors( pb_meniscus );
+
+   // Temperature check
+   double              dt = 0.0;
+   US_DataIO::RawData  triple;
+
+   foreach( triple, allData )
+   {
+       double temp_spread = triple.temperature_spread();
+       dt = ( temp_spread > dt ) ? temp_spread : dt;
+   }
+
+   if ( dt > US_Settings::tempTolerance() )
+   {
+      QMessageBox::warning( this,
+            tr( "Temperature Problem" ),
+            tr( "The temperature in this run varied over the course\n"
+                "of the run to a larger extent than allowed by the\n"
+                "current threshold (" )
+                + QString::number( US_Settings::tempTolerance(), 'f', 1 )
+                + " " + DEGC + tr( ". The accuracy of experimental\n"
+                "results may be affected significantly." ) );
+   }
+
+   ntriple      = triples.size();
+DbgLv(1) << " triples    size" << ntriple;
+   editGUIDs .fill( "",     ntriple );
+   editIDs   .fill( "",     ntriple );
+   editFnames.fill( "none", ntriple );
+
+   //isMwl        = ( nwaveln > 2  &&  ntriple > 12 );
+   isMwl        = ( nwaveln > 1 );
+   lrng_bycell  = false;         // Assume initially cell lambdas all the same
+DbgLv(1) << "LD(): isMwl" << isMwl << "nwaveln" << nwaveln << toti_wvlns.size();
+
+   if ( isMwl )
+   {  // Set values related to MultiWaveLength
+      connect_mwl_ctrls( false );
+
+      // Load the internal object that keeps track of MWL data
+DbgLv(1) << "IS-MWL:   load_mwl begun";
+      mwl_data.load_mwl( allData );
+DbgLv(1) << "IS-MWL:   load_mwl complete";
+
+      // Initial export lambdas are input lambdas: save the input lists
+      ncelchn      = mwl_data.countOf( "cellchann" );
+      maxwavl      = rawc_wvlns.size();
+DbgLv(1) << "IS-MWL: max wvlns size" << maxwavl;
+      wavelns_i.clear();
+
+      for ( int ccx = 0; ccx < ncelchn; ccx++ )
+      {  // Save lambdas for each cell; flag if any cell-to-cell differences
+         QVector< int > wvs;
+         nwavelo      = mwl_data.lambdas( wvs, ccx );
+         wavelns_i << wvs;
+
+         if ( nwavelo != maxwavl )
+         {
+            lrng_bycell  = true;           // Flag based on count difference
+         }
+
+         else
+         {
+            for ( int wvx = 0; wvx < nwaveln; wvx++ )
+            {
+               if ( wvs[ wvx ] != toti_wvlns[ wvx ] )
+               {
+                  lrng_bycell  = true;     // Flag based on value difference
+                  break;
+               }
+            }
+         }
+      } // END: cell scan loop
+
+      lambdas_by_cell( 0 );
+
+      nwavelo      = nwaveln;
+      slambda      = toti_wvlns[ 0 ];
+      elambda      = toti_wvlns[ nwaveln - 1 ];
+      dlambda      = 1;
+      le_ltrng ->setText( tr( "%1 raw: %2 %3 to %4" )
+         .arg( nwaveln ).arg( chlamb ).arg( slambda ).arg( elambda ) );
+      le_lxrng ->setText( tr( "%1 MWL exports: %2 %3 to %4,"
+                              " raw index increment %5" )
+         .arg( nwavelo ).arg( chlamb ).arg( slambda ).arg( elambda )
+         .arg( dlambda ) );
+
+      expd_radii .clear();
+      expc_wvlns .clear();
+      nwavelo      = mwl_data.lambdas( expi_wvlns, 0 );
+DbgLv(1) << "IS-MWL:    new nwavelo" << nwavelo << expi_wvlns.count();
+
+      // Initialize export wavelength lists for first channel
+      for ( int wvx = 0; wvx < nwavelo; wvx++ )
+      {
+         expc_wvlns << QString::number( expi_wvlns[ wvx ] );
+      }
+
+      // Update wavelength lists in GUI elements
+      cb_lstart->clear();
+      cb_lend  ->clear();
+      cb_lplot ->clear();
+      cb_lstart->addItems( expc_wvlns );
+      cb_lend  ->addItems( expc_wvlns );
+      cb_lplot ->addItems( expc_wvlns );
+      int lastx    = nwavelo - 1;
+      plotndx      = nwavelo / 2;
+      cb_lplot ->setCurrentIndex( plotndx );
+      cb_lstart->setCurrentIndex( 0 );
+      cb_lend  ->setCurrentIndex( lastx );
+DbgLv(1) << "IS-MWL:  expi_wvlns size" << expi_wvlns.size() << nwaveln;
+
+      edata         = &allData[ 0 ];
+      nrpoint       = edata->pointCount();
+      int nscan     = edata->scanCount();
+      for ( int trx = 0; trx < allData.size(); trx++ )
+         nscan         = qMax( nscan, allData[ trx ].scanCount() );
+      int ndset     = ncelchn * nrpoint;
+      int ndpoint   = nscan * maxwavl;
+DbgLv(1) << "IS-MWL:   nrpoint nscan ndset ndpoint" << nrpoint << nscan
+ << ndset << ndpoint;
+
+      for ( int ii = 0; ii < nrpoint; ii++ )
+      {  // Update the list of radii that may be plotted
+         expd_radii << data.xvalues[ ii ];
+         expc_radii << QString().sprintf( "%.3f", data.xvalues[ ii ] );
+      }
+DbgLv(1) << "IS-MWL:  expd_radii size" << expd_radii.size() << nrpoint;
+
+      QVector< double > wrdata;
+      wrdata.fill( 0.0, ndpoint );
+      rdata .clear();
+DbgLv(1) << "IS-MWL:  wrdata size" << wrdata.size() << ndpoint;
+
+      for ( int ii = 0; ii < ndset; ii++ )
+      {  // Initialize the data vector that has wavelength as the x-axis
+         rdata << wrdata;
+      }
+DbgLv(1) << "IS-MWL:  rdata size" << rdata.size() << ndset;
+
+      // Update wavelength-x-axis data vector with amplitude data points
+      // The input has (ncelchn * nwaveln) data sets, each of which
+      //   contains (nscan * nrpoint) data points.
+      // The output has (ncelchn * nrpoint) data sets, each of which
+      //   contains (nscan * nwaveln) data points.
+      int trx       = 0;
+
+      for ( int ccx = 0; ccx < ncelchn; ccx++ )
+      {  // Handle each triple of AUC data
+         lambdas_by_cell( ccx );                      // Lambdas in cell
+
+         for ( int jwx = 0; jwx < nwaveln; jwx++ )
+         {  // Each wavelength in the current cell
+            edata         = &allData[ trx ];               // Triple data
+            int iwavl     = rawi_wvlns[ jwx ];             // Wavelength value
+            int wvx       = toti_wvlns.indexOf( iwavl );   // Wavelength index
+DbgLv(1) << "IS-MWL:   trx ccx wvx" << trx << ccx << wvx;
+
+            for ( int scx = 0; scx < edata->scanCount(); scx++ )
+            {  // Each scan of a triple
+               US_DataIO::Scan* scan  = &edata->scanData[ scx ];
+               int odx       = ccx * nrpoint;         // Output dataset index
+               int opx       = scx * maxwavl + wvx;   // Output point index
+DbgLv(2) << "IS-MWL:    scx odx opx" << scx << odx << opx;
+               for ( int rax = 0; rax < nrpoint; rax++ )
+               {  // Store ea. radius data point as a wavelength point in a scan
+                  rdata[ odx++ ][ opx ]  = scan->rvalues[ rax ];
+               } // END: radius points loop
+            } // END: scans loop
+
+            trx++;
+         } // END: input triples loop
+      } // END: input celchn loop
+DbgLv(1) << "IS-MWL:    Triples loop complete";
+
+DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
+      lb_triple->setText( tr( "Cell / Channel" ) );
+      cb_triple->disconnect();
+      cb_triple->clear();
+      cb_triple->addItems( celchns );
+      connect( cb_triple, SIGNAL( currentIndexChanged( int ) ), 
+                          SLOT  ( new_triple         ( int ) ) );
+      pb_nextChan->setEnabled( celchns.size() > 1 );
+
+      odlimit   = 1.8;
+
+      connect_mwl_ctrls( true );
+
+      plot_mwl();
+   } // END: isMwl=true
+   else
+   {
+      new_triple( 0 );
+//*DEBUG* Print times,omega^ts
+ triple = allData[0];
+ double timel = triple.scanData[0].rpm / 400.0;
+ double rpmc  = 400.0;
+ int    nstep = (int)timel;
+ double w2ti  = 0.0;
+ for ( int ii=0; ii<nstep; ii++ )
+ {
+  w2ti += sq( rpmc * M_PI / 30.0 );
+  rpmc += 400.0;
+ }
+ for ( int ii=0; ii<triple.scanData.size(); ii++ )
+ {
+  US_DataIO::Scan* ds=&triple.scanData[ii];
+  double timec = ds->seconds;
+  double rpmc  = ds->rpm;
+  w2ti += ( timec - timel ) * sq( rpmc * M_PI / 30.0 );
+  qDebug() << "scan" << ii+1 << "delta-r rpm seconds" << ds->delta_r
+   << rpmc << timec << "omega2t w2t-integ" << ds->omega2t << w2ti;
+  if(ii==0)
+  {
+   double deltt = ds->omega2t / sq(rpmc*M_PI/30.0);
+   double time1 = timel + deltt;
+   qDebug() << "   scan 1 omega2t-implied time" << time1;
+  }
+  timel = timec;
+ }
+//*DEBUG* Print times,omega^ts
+   }
+
+   // Set up OD limit and any MWL controls
+   ct_odlim->disconnect();
+   ct_odlim->setValue( odlimit );
+   connect( ct_odlim,  SIGNAL( valueChanged       ( double ) ),
+            this,      SLOT  ( od_radius_limit    ( double ) ) );
+
+   show_mwl_controls( isMwl );
+
+
+   // DEBUG
+   qDebug() << "meniscus: "   << meniscus;
+   qDebug() << "meniscus_left: "   << meniscus_left;
+   qDebug() << "range_left:"  << range_left;
+   qDebug() << "range_right:" << range_right;
+   qDebug() << "plateau: "    << plateau;
+   qDebug() << "baseline: "   << baseline;
+}
+
+
+
+
 // Set pushbutton colors
 void US_Edit::set_pbColors( QPushButton* pb )
 {
@@ -4261,7 +5339,11 @@ DbgLv(1) << "AGap:  plot_range()";
                   {
                      pb_report  ->setEnabled( true );
                      pb_write   ->setEnabled( true );
-                     ck_writemwl->setEnabled( true );
+
+		     if ( us_edit_auto_mode_manual )
+		       pb_pass->setEnabled( true );
+
+		     ck_writemwl->setEnabled( true );
                      pb_reviewep->setEnabled( true );
                      pb_nexteqtr->setEnabled( true );
                      step         = FINISHED;
@@ -4289,6 +5371,10 @@ DbgLv(1) << "AGap:  plot_range()";
 	      qDebug() << "In RANGES: total_edits, total_speeds: " << total_edits << ", " << total_speeds;
                all_edits = true;
                pb_write   ->setEnabled( true );
+
+	       if ( us_edit_auto_mode_manual )
+		 pb_pass->setEnabled( true );
+	       
                ck_writemwl->setEnabled( true );
                changes_made = all_edits;
             }
@@ -4317,6 +5403,10 @@ DbgLv(1) << "AGap:  plot_range()";
          ct_to->setValue( 0.0 );  // Uncolor all scans
          pb_report  ->setEnabled( true );
          pb_write   ->setEnabled( true );
+
+	 if ( us_edit_auto_mode_manual )
+	   pb_pass->setEnabled( true );
+	 
          ck_writemwl->setEnabled( isMwl );
          changes_made = true;
          next_step();
@@ -4359,6 +5449,10 @@ DbgLv(1) << "BL: AA : baseline bl" << baseline << bl;
 
          pb_report     ->setEnabled( true );
          pb_write      ->setEnabled( true );
+
+	 if ( us_edit_auto_mode_manual )
+	   pb_pass->setEnabled( true );
+	 
          ck_writemwl   ->setEnabled( isMwl );
          changes_made = true;
          next_step();
@@ -6746,7 +7840,33 @@ QMap< QString, QString> US_Edit::read_autoflow_record( int autoflowID  )
    return protocol_details;
 }
 
+// Call manuall editor
+void US_Edit::manual_edit_auto( void )
+{
+  sdiag = new US_Edit( allData, triples, workingDir );
+  /** The following will block parent windows from closing BUT not from continuing timer execution ***/
+  sdiag->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
+  sdiag->setWindowModality(Qt::ApplicationModal);
+  /***************************************************************************************************/
 
+  connect( sdiag, SIGNAL( pass_edit_params( QMap< QString, QStringList> & ) ),
+	   this,  SLOT( update_triple_edit_params (  QMap < QString, QStringList > &) ) );
+  
+  sdiag->show();
+}
+
+
+// Update triple's edit params with those obtained manually..
+void US_Edit:: update_triple_edit_params (  QMap < QString, QStringList > &  edit_params )
+{
+  QString t_name = edit_params.keys()[0];
+  editProfile[ t_name ] = edit_params[ t_name ];
+
+  qDebug() << "In update_triple_edit_params: t_name -- " << t_name;
+  qDebug() << "In update_triple_edit_params: editProfile[ t_name ] -- " << editProfile[ t_name ];
+
+  new_triple_auto( 0 ); 
+}
 
 // Save edit profile(s)
 void US_Edit::write_auto( void )
@@ -8503,11 +9623,13 @@ void US_Edit::progress_load( QString progress )
 // Show or hide MWL Controls
 void US_Edit::show_mwl_controls( bool show )
 {
-  if ( !us_edit_auto_mode )
+  if ( !us_edit_auto_mode  )
     {
-      lb_gaps    ->setVisible( !show );
-      ct_gaps    ->setVisible( !show );
-      
+      if ( !us_edit_auto_mode_manual )
+	{
+	  lb_gaps    ->setVisible( !show );
+	  ct_gaps    ->setVisible( !show );
+	}
       
       le_lxrng   ->setVisible( show );
       lb_mwlctl  ->setVisible( show );
@@ -10587,6 +11709,47 @@ QString US_Edit::scan_info_auto( int trx )
    
    return ss;
 }
+
+// Close edit after review of saved edits
+void US_Edit::pass_values( void )
+{
+  //collect menicsus | airGap | baseline | range | etc data && pass to main edit stage
+
+  QString triple_name = cb_triple->itemText( cb_triple->currentIndex() );
+  
+  QMap< QString, QStringList > editProfile_triple;
+  QStringList triple_params;
+  triple_params <<  QString::number(meniscus)
+		<<  QString::number(range_left)
+		<<  QString::number(range_right)
+		<<  QString::number(plateau)
+		<<  QString::number(baseline)
+		<<  QString::number(baseline_od)
+		<<  QString("spike_false");
+
+  if ( dataType == "IP" )
+    {
+      triple_params <<  QString::number(airGap_left)
+		    <<  QString::number(airGap_right);
+    }
+  
+  editProfile_triple[ triple_name ] = triple_params;
+
+  qDebug() << "In PASSING values manually: triple_name, parms -- " << triple_name << editProfile_triple[ triple_name ];
+
+  int status = QMessageBox::information( this,
+					 tr( "New Edit Parameters" ),
+					 tr( "This will overwrite current edit parameters. "
+					     "Do you want to proceed? " ),
+					 tr( "&OK" ), tr( "&Cancel" ),
+					 0, 0, 1 );
+  
+  if ( status != 0 ) return;
+  
+  emit pass_edit_params( editProfile_triple );
+  close();
+}
+
 
 // Close edit after review of saved edits
 void US_Edit::close_edit( void )
