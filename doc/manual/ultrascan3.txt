@@ -1,9 +1,9 @@
 UltraScan III
 
-Copyright 1989 - 2020
+Copyright 1989 - 2021
 
-Copyright © 1989?2020 Borries Demeler, Ph.D.
-Copyright © 1997?2020 The University of Texas Health Science Center at San Antonio
+Copyright © 1989?2021 Borries Demeler, Ph.D.
+Copyright © 1997?2021 The University of Texas Health Science Center at San Antonio
 All rights reserved.
 
 UltraScan is free software; you can redistribute it and/or modify it under the
