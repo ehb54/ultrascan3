@@ -1135,6 +1135,8 @@ if(rrdif<1.0e-4 && dbg_level>0)
          {
             qDebug() << "The simulated data does not have enough "
                         "radial points and ends too early!\n"
+	                "\n Please check your centerpiece selection \n"
+                        "and make sure the bottom of the cell is correctly defined for this experiment!"
                         "exiting...";
 DbgLv(1) << "jj ii sztrad szerad" << jj << ii << tdradsz << expdata.radius.size()
  <<  "trad erad" << tmp_data.radius[jj-1] << expdata.radius[ii] << rrdif;

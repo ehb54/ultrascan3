@@ -185,6 +185,9 @@ DbgLv(1) << "APG: ipro: 1)ch s1 s2 s3"
    {  // Examine protocol's channel solutions
       QString chname  = iProto->rpSolut.chsols[ ii ].channel;
       QString sodesc  = iProto->rpSolut.chsols[ ii ].solution;
+
+      
+      
       chname          = QString( chname ).section( ":", 0, 0 )
                                          .section( ",", 0, 0 )
                                          .replace( " / ", "" );
@@ -195,6 +198,10 @@ DbgLv(1) << "APG: ipro:  s:ii" << ii << "chname" << chname << "sodesc" << sodesc
 
    for ( int ii = 0; ii < ncho; ii++ )
    {  // Examine protocol's channel optics
+
+      //ALEXEY: also Ranges
+      QList< double > wvls = iProto->rpRange.chrngs[ ii ].wvlens;
+     
       QString chname  = iProto->rpOptic.chopts[ ii ].channel;
       QString scan1   = iProto->rpOptic.chopts[ ii ].scan1;
       QString scan2   = iProto->rpOptic.chopts[ ii ].scan2;
@@ -233,6 +240,10 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
          {  // Replace channel and channel description
             currProf.pchans  [ nchn ] = chname;
             currProf.chndescs[ nchn ] = chentr;
+
+	    //ALEXEY: also ranges for each channl
+	    currProf.ch_wvls[ chentr ] = wvls;
+	    
             chx             = currProf.lc_ratios.count() - 1;
             if ( chx < nchn )
             {
@@ -243,6 +254,8 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
                currProf.data_ends << currProf.data_ends[ chx ];
 
 	       currProf.analysis_run << currProf.analysis_run[ chx ];
+	       
+	       //currProf.ch_wvls << currProf.ch_wvls[ chx ];
             }
 DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
 	 << "dae size" << currProf.data_ends.count() << "chentr" << chentr
@@ -252,6 +265,11 @@ DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
          {  // Append channel and channel description
             currProf.pchans   << chname;
             currProf.chndescs << chentr;
+
+	    //ALEXEY: also ranges for each channl
+	    currProf.ch_wvls[ chentr ] = wvls;
+	    
+	    
             int lch         = nchn - 1;
             // Duplicate previous parameter values
             currProf.lc_ratios << currProf.lc_ratios[ lch ];
@@ -261,6 +279,8 @@ DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
             currProf.data_ends << currProf.data_ends[ lch ];
 
 	    currProf.analysis_run << currProf.analysis_run[ lch ];
+
+	    //currProf.ch_wvls << currProf.ch_wvls[ lch ];
 	    
 DbgLv(1) << "APG: ipro:     lch" << lch << "lv_tol da_end"
  << currProf.lv_tolers[ lch ] << currProf.data_ends[ lch ]
@@ -286,6 +306,7 @@ DbgLv(1) << "APG: ipro:     lch" << lch << "lv_tol da_end"
          currProf.data_ends.removeLast();
 
 	 currProf.analysis_run.removeLast();
+
       }
    }
 
@@ -536,10 +557,18 @@ US_AnaprofPanGen::US_AnaprofPanGen( QWidget* topw )
    QLabel* lb_panel    = us_banner( tr( "1: Specify OD range and other general parameters" ) );
    panel->addWidget( lb_panel );
 
+
+   
    // Create layout and GUI components
 //   genL            = new QGridLayout();
    genL            = NULL;
-
+   //middle_h = new QHBoxLayout;
+   //middle_h = new QGridLayout;
+   middle_h = new QGridLayout;
+   left     = new QVBoxLayout;
+   right    = new QVBoxLayout;
+   
+   
    pb_aproname     = us_pushbutton( tr( "Analysis Profile Name" ) );
    pb_protname     = us_pushbutton( tr( "Protocol Name" ) );
 
@@ -581,6 +610,8 @@ void US_AnaprofPanGen::build_general_layout()
    bool have_genl  = true;      // Flag if a general layout exists
    int nchn        = sl_chnsel.count();
 DbgLv(1) << "APGe: bgL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
+
+
 
    int kchnl       = nchn;
    int kchnh       = nchn;
@@ -725,6 +756,8 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
                                  + QString( QChar( 181 ) ) + "l)" );
    QLabel* lb_lvtol  = us_label( tr( "+/- %\nToler." ) );
    QLabel* lb_daend  = us_label( tr( "Data End\n(cm)" ) );
+   QLabel* lb_channelana  = us_label( tr( "Run" ) );
+   QLabel* lb_mwvprefs    = us_label( tr( "Mwv\nPrefs." ) );
            pb_applya = us_pushbutton( tr( "Apply to All" ) );
    lb_chann ->setObjectName( "Chann Label" );
    lb_lcrat ->setObjectName( "LcRat Label" );
@@ -742,30 +775,62 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
    lb_lvtol->setMaximumHeight( lbhgt );
    lb_daend->setMaximumHeight( lbhgt );
 
-   genL->addWidget( lb_chann, row,    0, 2, 5 );
-   genL->addWidget( lb_lcrat, row,    5, 2, 1 );
-   genL->addWidget( lb_lctol, row,    6, 2, 1 );
-   genL->addWidget( lb_ldvol, row,    7, 2, 1 );
-   genL->addWidget( lb_lvtol, row,    8, 2, 1 );
-   genL->addWidget( lb_daend, row++,  9, 2, 1 ); row++;
+   // genL->addWidget( lb_chann, row,    0, 2, 5 );
+   // genL->addWidget( lb_lcrat, row,    5, 2, 1 );
+   // genL->addWidget( lb_lctol, row,    6, 2, 1 );
+   // genL->addWidget( lb_ldvol, row,    7, 2, 1 );
+   // genL->addWidget( lb_lvtol, row,    8, 2, 1 );
+   // genL->addWidget( lb_daend, row,    9, 2, 1 );
+   // genL->addWidget( lb_channelana, row,  10, 2, 1 );
+   // genL->addWidget( lb_mwvprefs,   row++,11, 2, 1 ); row++;
+
+   genL->addWidget( lb_chann, row,    0, 2, 3 );
+   genL->addWidget( lb_lcrat, row,    3, 2, 1 );
+   genL->addWidget( lb_lctol, row,    4, 2, 1 );
+   genL->addWidget( lb_ldvol, row,    5, 2, 1 );
+   genL->addWidget( lb_lvtol, row,    6, 2, 1 );
+   genL->addWidget( lb_daend, row,    7, 2, 1 );
+   genL->addWidget( lb_channelana, row,  8, 2, 1 );
+   genL->addWidget( lb_mwvprefs,   row++,9, 2, 1 ); row++;
    genL->setRowStretch( 0, 0 );
    genL->setRowStretch( 1, 0 );
 
-   
-   QCheckBox*     ck_analysisrun;
 
+   row_global = row;
+   QCheckBox*     ck_analysisrun;
+   QCheckBox*     ck_mwvprefs;
+
+   //clear the right box
+   qDebug() << "Right.count(), gr_mwvbox.size() -- " << right->count() << gr_mwvbox.size();
+   gr_mwvbox.clear();
+   ck_mwv   .clear();
+   
+   for(int k = 0; k < right->count(); ++k)
+     {
+       QWidget* w = right->itemAt(k)->widget();
+
+       if ( w != NULL )
+	 {
+	   qDebug() << "Widget " << w->objectName() << " to be deleted...";
+	   delete w;
+	 }
+     }
+   //
+  
    for ( int ii = 0; ii < nchn; ii++ )
    {
       QString schan( sl_chnsel[ ii ] );
 DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
+
+      QList< double > curr_wvls = currProf -> ch_wvls[ schan ];
+      
+ 
       QLineEdit* le_chann = us_lineedit( schan, 0, true  );
       QLineEdit* le_lcrat = us_lineedit( "1.0", 0, false );
       QLineEdit* le_lctol = us_lineedit( "5",   0, false );
       QLineEdit* le_ldvol = us_lineedit( "460", 0, false );
       QLineEdit* le_lvtol = us_lineedit( "10",  0, false );
       QLineEdit* le_daend = us_lineedit( "7.0", 0, false );
-
-      
       
       QString stchan      = QString::number( ii ) + ": ";
       le_chann->setObjectName( stchan + "channel" );
@@ -782,29 +847,49 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       le_lvtols << le_lvtol;
       le_daends << le_daend;
 
-      genL->addWidget( le_chann,  row,    0, 1, 5 );
-      genL->addWidget( le_lcrat,  row,    5, 1, 1 );
-      genL->addWidget( le_lctol,  row,    6, 1, 1 );
-      genL->addWidget( le_ldvol,  row,    7, 1, 1 );
-      genL->addWidget( le_lvtol,  row,    8, 1, 1 );
-      genL->addWidget( le_daend,  row,    9, 1, 1 );
+      // genL->addWidget( le_chann,  row,    0, 1, 5 );
+      // genL->addWidget( le_lcrat,  row,    5, 1, 1 );
+      // genL->addWidget( le_lctol,  row,    6, 1, 1 );
+      // genL->addWidget( le_ldvol,  row,    7, 1, 1 );
+      // genL->addWidget( le_lvtol,  row,    8, 1, 1 );
+      // genL->addWidget( le_daend,  row,    9, 1, 1 );
+
+      genL->addWidget( le_chann,  row,    0, 1, 3 );
+      genL->addWidget( le_lcrat,  row,    3, 1, 1 );
+      genL->addWidget( le_lctol,  row,    4, 1, 1 );
+      genL->addWidget( le_ldvol,  row,    5, 1, 1 );
+      genL->addWidget( le_lvtol,  row,    6, 1, 1 );
+      genL->addWidget( le_daend,  row,    7, 1, 1 );
 
       //ALEXEY: add checkbox to define analysis
-      ck_analysisrun = new QCheckBox( tr("Run"), this );
+      //ck_analysisrun = new QCheckBox( tr("Run"), this );
+      ck_analysisrun = new QCheckBox( tr(""), this );
       ck_analysisrun ->setAutoFillBackground( true );
       ck_analysisrun ->setChecked( true );
       QString strow  = QString::number( ii );
       ck_analysisrun ->setObjectName( strow + ": Run" );
-      genL->addWidget( ck_analysisrun,  row,  10, 1, 1 );
+      genL->addWidget( ck_analysisrun,  row,  8, 1, 1, Qt::AlignHCenter );
       connect( ck_analysisrun, SIGNAL( toggled     ( bool ) ),
                this,           SLOT  ( runChecked( bool ) ) );
 
       ck_runs << ck_analysisrun;
       //END of run checkbox seciton
+
+      //MWL prefs
+      ck_mwvprefs = new QCheckBox( tr(""), this );
+      ck_mwvprefs ->setAutoFillBackground( true );
+      ck_mwvprefs ->setChecked( false );
+      ck_mwvprefs ->setObjectName( strow + ": MWV" );
+      genL->addWidget( ck_mwvprefs,  row,  9, 1, 1, Qt::AlignHCenter );
+      connect( ck_mwvprefs, SIGNAL( toggled     ( bool ) ),
+               this,        SLOT  ( mwvChecked( bool ) ) );
+
+      ck_mwv << ck_mwvprefs;
+      //END of MWL prefs
       
       if ( ii == 0 )
       {
-         genL->addWidget( pb_applya, row++, 11, 1, 2 );
+         genL->addWidget( pb_applya, row++, 10, 1, 2 );
          connect( pb_applya, SIGNAL( clicked       ( ) ),
                   this,      SLOT(   applied_to_all( ) ) );
       }
@@ -813,6 +898,29 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
          row++;
       }
 
+      //MWV dialog
+      // //QGroupBox for Fit meniscus/bottom options
+      QString ch_name_c = schan;
+      QString ch_name = ch_name_c.split(":")[0] + " : " + ch_name_c.split(":")[1]; 
+
+      QList< double > wvlss = { 280, 340, 500 };
+      
+      
+      QGroupBox * wvl_box = createGroup( ch_name,  curr_wvls );
+      scrollArea_r      = new QScrollArea( this );
+      scrollArea_r     ->setWidgetResizable( true );
+      scrollArea_r     ->setObjectName( strow  + ": wvl_box" );
+      scrollArea_r     ->setWidget( wvl_box );
+      
+ 
+      gr_mwvbox << scrollArea_r;
+      
+      // //genL->addWidget( scrollArea, row_global, 14 );
+      right->addWidget( scrollArea_r  );
+      qDebug() << "Right.count(), gr_mwvbox.size() AFTER insert -- " << right->count() << gr_mwvbox.size(); ;
+      // //END MWV dialog
+      
+      
       connect( le_lcrat,    SIGNAL( editingFinished   ( void ) ),
                this,        SLOT(   lcrat_text_changed( void ) ) );
       connect( le_lctol,    SIGNAL( editingFinished   ( void ) ),
@@ -825,6 +933,7 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
                this,        SLOT(   daend_text_changed( void ) ) );
    }
 DbgLv(1) << "Ge:SL: nchn" << nchn << "lcrat size" << le_lcrats.count();
+
 
    int ihgt        = pb_aproname->height();
    QSpacerItem* spacer1 = new QSpacerItem( 20, ihgt );
@@ -842,11 +951,159 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "lcrat size" << le_lcrats.count();
    genL           ->setSpacing         ( 2 );
    genL           ->setContentsMargins ( 2, 2, 2, 2 );
    containerWidget->setLayout( genL );
+   
+   scrollArea     ->setVerticalScrollBarPolicy( Qt::ScrollBarAsNeeded );
    scrollArea     ->setWidgetResizable( true );
    scrollArea     ->setWidget( containerWidget );
-   panel          ->addWidget( scrollArea );
+   //panel          ->addWidget( scrollArea );
+
+
+   left  -> addWidget( scrollArea, Qt::AlignTop  );
+
+   QWidget *controlsRestrictorWidget_right = new QWidget();
+   controlsRestrictorWidget_right->setLayout( right );
+   controlsRestrictorWidget_right->setMinimumHeight(500);
+
+   QWidget *controlsRestrictorWidget_left = new QWidget();
+   controlsRestrictorWidget_left->setLayout( left );
+   controlsRestrictorWidget_left->setMinimumHeight(500);
+ 
+
+   //middle_h->addLayout( left,  0, 0, -1, 7 );
+   //middle_h->addLayout( right, 0, 7, -1, 2 );
+   middle_h->addWidget( controlsRestrictorWidget_left,  0, 0, -1, 7 );
+   middle_h->addWidget( controlsRestrictorWidget_right, 0, 7, -1, 2 );
+   //middle_h->setSizeConstraint(QLayout::SetNoConstraint);
+   
+   //middle_h->setRowStretch( 0, 1);
+   //Hide all gr_mwvbox instances:
+   for ( int i=0; i < gr_mwvbox.size(); ++i )
+     gr_mwvbox[ i ]->setVisible( false );
+  
+      
+   panel->addLayout( middle_h );
+
+   panel->addStretch();
+   
    adjustSize();
 }
+
+//Togle MWLPrefs checkbox
+void US_AnaprofPanGen::mwvChecked( bool checked )
+{
+   QObject* sobj       = sender();      // Sender object
+   QString oname       = sobj->objectName();
+   int irow            = oname.section( ":", 0, 0 ).toInt();
+
+   QString channel_name = sl_chnsel[ irow ];
+
+   qDebug() << "oname, Channel name to MWL edit: Checked: " << oname << channel_name << " : " << checked;
+
+   QString mwvbox_oname = QString::number( irow ) + ": wvl_box";
+   qDebug() << "mwvbox_oname -- " << mwvbox_oname;
+
+   //if checked, show groupbox dialog with all wavelengths
+   if ( checked )
+     {
+        for ( int i=0; i < gr_mwvbox.size(); ++i )
+	 {
+	   if ( gr_mwvbox[ i ]->objectName() == mwvbox_oname )
+	     {
+	       //right->addWidget( gr_mwvbox[ i ]  );
+	       gr_mwvbox[ i ]->setVisible( true );
+	       break;
+	     }
+	 }
+       //make all checkboxes unselectable
+       
+       
+       }
+   else
+     {
+       
+       for ( int i=0; i < gr_mwvbox.size(); ++i )
+	 {
+	   if ( gr_mwvbox[ i ]->objectName() == mwvbox_oname )
+	     {
+	       //right->removeWidget( gr_mwvbox[ i ]  );
+	       gr_mwvbox[ i ]->setVisible( false );
+	       break;
+	     }
+	 }
+     }
+}
+
+
+//create groupBox
+QGroupBox * US_AnaprofPanGen::createGroup( QString & triple_name, QList< double > & wvls )
+{
+  QGroupBox *groupBox = new QGroupBox ( triple_name );
+
+  QPalette p = groupBox->palette();
+  p.setColor(QPalette::Dark, Qt::white);
+  groupBox->setPalette(p);
+
+  groupBox-> setStyleSheet( "QGroupBox { font: bold;  background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #E0E0E0, stop: 1 #FFFFFF); border: 2px solid gray; border-radius: 10px; margin-top: 10px; margin-bottom: 10px; padding-top: 5px; } QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; left: 10px; margin: 0 5px; background-color: black; color: white; padding: 0 3px;}  QGroupBox::indicator { width: 13px; height: 13px; border: 1px solid grey; background-color: rgba(204, 204, 204, 255);} QGroupBox::indicator:hover {background-color: rgba(235, 235, 235, 255);} QLabel {background-color: rgb(105,105,105);}");
+    
+  groupBox->setFlat(true);
+
+  //GUI
+  QGridLayout* genL   = new QGridLayout();
+  genL->setSpacing        ( 1 );
+  //genL->setContentsMargins( 20, 10, 20, 15 );
+  
+  int row = 0;
+
+  QLabel*     lb_wvl     = us_label( tr( "Wvl" ) );
+  QLabel*     lb_edit    = us_label( tr( "FitMen" ) );
+  QLabel*     lb_run     = us_label( tr( "Run" ) );
+
+  
+  genL->addWidget( lb_wvl,    row,    0, 1, 1 );
+  genL->addWidget( lb_edit,   row,    1, 1, 1 );
+  genL->addWidget( lb_run,    row++,  2, 1, 1 );
+
+  QLineEdit    * le_wvl;
+  QRadioButton * rb_edit;
+  QCheckBox    * ck_run;
+    
+  for ( int ii = 0; ii < wvls.size(); ii++ )
+    {
+      QString strow  = QString::number( ii );
+      
+      //wvl
+      le_wvl = new QLineEdit;
+      le_wvl ->setPlaceholderText( QString::number (wvls[ii]) );
+      le_wvl ->setReadOnly(true);
+      genL->addWidget( le_wvl,  row,   0, 1, 1 );
+
+      //edit meniscus
+      rb_edit =  new QRadioButton(tr(""));
+      rb_edit -> setObjectName( strow + ": triple_edit");
+      genL->addWidget( rb_edit,  row,   1, 1, 1, Qt::AlignHCenter );
+      
+      //Run checkbox
+      ck_run = new QCheckBox( tr(""), this );
+      ck_run ->setAutoFillBackground( true );
+      ck_run ->setChecked( true );
+      ck_run ->setObjectName( strow + ": triple_run" );
+      genL->addWidget( ck_run,  row++,  2, 1, 1, Qt::AlignHCenter );
+      
+            
+    }
+
+  int ihgt_r        = pb_aproname->height();
+  QSpacerItem* spacer2 = new QSpacerItem( 20, ihgt_r*10 );
+  genL ->setRowStretch( row, 1 );
+  genL ->addItem( spacer2,  row++,  0, 1, 1 );
+  
+  
+  groupBox->setLayout(genL);
+ 
+  
+  return groupBox;
+}
+
 
 //Togle Analysis Run checkbox
 void US_AnaprofPanGen::runChecked( bool checked )
@@ -858,6 +1115,33 @@ void US_AnaprofPanGen::runChecked( bool checked )
    QString channel_name = sl_chnsel[ irow ];
 
    qDebug() << "Channel name to RUN: Checked: " << channel_name << " : " << checked;
+
+   QString mwv_oname = QString::number( irow ) + ": MWV";
+   qDebug() << "mwv_oname -- " << mwv_oname;
+
+   //if not checked, disable MWV checkbox, and otherwise:
+   if ( !checked )
+     {
+       for ( int i=0; i<ck_mwv.size(); ++i )
+	 {
+	   if ( ck_mwv[ i ]->objectName() == mwv_oname )
+	     {
+	       ck_mwv[ i ]->setEnabled( false );
+	       break;
+	     }
+	 }
+     }
+   else
+     {
+       for ( int i=0; i<ck_mwv.size(); ++i )
+	 {
+	   if ( ck_mwv[ i ]->objectName() == mwv_oname )
+	     {
+	       ck_mwv[ i ]->setEnabled( true );
+	       break;
+	     }
+	 }
+     }
 
    //ALEXEY: check what's unselected -- if all triples then disable 2DSA && PCSA tabs
    int run_sum = 0;

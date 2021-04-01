@@ -26,6 +26,9 @@ US_AnaProfile::US_AnaProfile()
    data_ends << 7.0;
 
    analysis_run << 1;
+   
+   QList< double > wvl = { 280 };
+   ch_wvls[ chndescs[0] ] = wvl;
 }
 
 // AnaProfile Equality operator
