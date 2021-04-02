@@ -201,6 +201,8 @@ DbgLv(1) << "APG: ipro:  s:ii" << ii << "chname" << chname << "sodesc" << sodesc
 
       //ALEXEY: also Ranges
       QList< double > wvls = iProto->rpRange.chrngs[ ii ].wvlens;
+
+      
      
       QString chname  = iProto->rpOptic.chopts[ ii ].channel;
       QString scan1   = iProto->rpOptic.chopts[ ii ].scan1;
@@ -243,6 +245,7 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
 
 	    //ALEXEY: also ranges for each channl
 	    currProf.ch_wvls[ chentr ] = wvls;
+	    qDebug() << "In inherit_prot: wvls.size() for channel -- " << wvls.size() << " for " << chentr;
 	    
             chx             = currProf.lc_ratios.count() - 1;
             if ( chx < nchn )
@@ -637,11 +640,12 @@ DbgLv(1) << "APGe: bgL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
       kchnh           = 1;
    }
 
-    if (  nchn == kchnl  &&  nchn == kchnh )
-    {  // Channel elements all have the same count
- DbgLv(1) << "APGe: bgL: REBUILD skipped";
-       return;
-    }
+   //ALEXEY:  BUG !!! Always rebuild !!!  
+ //    if (  nchn == kchnl  &&  nchn == kchnh )
+ //    {  // Channel elements all have the same count
+ // DbgLv(1) << "APGe: bgL: REBUILD skipped";
+ //       return;
+ //    }
 
    if ( genL != NULL )
    {
@@ -822,7 +826,7 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
       QString schan( sl_chnsel[ ii ] );
 DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
 
-      QList< double > curr_wvls = currProf -> ch_wvls[ schan ];
+      
       
  
       QLineEdit* le_chann = us_lineedit( schan, 0, true  );
@@ -904,7 +908,9 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       QString ch_name = ch_name_c.split(":")[0] + " : " + ch_name_c.split(":")[1]; 
 
       QList< double > wvlss = { 280, 340, 500 };
-      
+      QList< double > curr_wvls = currProf -> ch_wvls[ schan ];
+
+      qDebug() << "In build_gen: curr_wvls.size() for schan -- " << curr_wvls.size() << " for " << schan;
       
       QGroupBox * wvl_box = createGroup( ch_name,  curr_wvls );
       scrollArea_r      = new QScrollArea( this );
