@@ -257,8 +257,7 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
                currProf.data_ends << currProf.data_ends[ chx ];
 
 	       currProf.analysis_run << currProf.analysis_run[ chx ];
-	       
-	       //currProf.ch_wvls << currProf.ch_wvls[ chx ];
+	       currProf.wvl_edit << currProf.wvl_edit[ chx ];
             }
 DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
 	 << "dae size" << currProf.data_ends.count() << "chentr" << chentr
@@ -282,8 +281,7 @@ DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
             currProf.data_ends << currProf.data_ends[ lch ];
 
 	    currProf.analysis_run << currProf.analysis_run[ lch ];
-
-	    //currProf.ch_wvls << currProf.ch_wvls[ lch ];
+	    currProf.wvl_edit     << currProf.wvl_edit[ lch ];
 	    
 DbgLv(1) << "APG: ipro:     lch" << lch << "lv_tol da_end"
  << currProf.lv_tolers[ lch ] << currProf.data_ends[ lch ]
@@ -309,7 +307,7 @@ DbgLv(1) << "APG: ipro:     lch" << lch << "lv_tol da_end"
          currProf.data_ends.removeLast();
 
 	 currProf.analysis_run.removeLast();
-
+	 currProf.wvl_edit.removeLast();
       }
    }
 
@@ -804,30 +802,28 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
    QCheckBox*     ck_analysisrun;
    QCheckBox*     ck_mwvprefs;
 
-   //clear the right box
-   qDebug() << "Right.count(), gr_mwvbox.size() -- " << right->count() << gr_mwvbox.size();
-   gr_mwvbox.clear();
-   ck_mwv   .clear();
-   
-   for(int k = 0; k < right->count(); ++k)
-     {
-       QWidget* w = right->itemAt(k)->widget();
 
-       if ( w != NULL )
+   // Clear the right layout from QGroupboxes
+   qDebug() << "Right.count(), gr_mwvbox.size() BEFORE deletion -- " << right->count() << gr_mwvbox.size();
+   if ( right->layout() != NULL )
+     {
+       QLayoutItem* item;
+       while ( ( item = right->layout()->takeAt( 0 ) ) != NULL )
 	 {
-	   qDebug() << "Widget " << w->objectName() << " to be deleted...";
-	   delete w;
+	   delete item->widget();
+	   delete item;
 	 }
+       //delete m_view->layout();
      }
-   //
-  
+   ck_mwv   .clear();
+   gr_mwvbox.clear();
+   qDebug() << "Right.count(), gr_mwvbox.size() AFTER deletion -- " << right->count() << gr_mwvbox.size();
+   //END clearing right
+      
    for ( int ii = 0; ii < nchn; ii++ )
    {
       QString schan( sl_chnsel[ ii ] );
 DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
-
-      
-      
  
       QLineEdit* le_chann = us_lineedit( schan, 0, true  );
       QLineEdit* le_lcrat = us_lineedit( "1.0", 0, false );
@@ -918,10 +914,8 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       scrollArea_r     ->setObjectName( strow  + ": wvl_box" );
       scrollArea_r     ->setWidget( wvl_box );
       
- 
       gr_mwvbox << scrollArea_r;
       
-      // //genL->addWidget( scrollArea, row_global, 14 );
       right->addWidget( scrollArea_r  );
       qDebug() << "Right.count(), gr_mwvbox.size() AFTER insert -- " << right->count() << gr_mwvbox.size(); ;
       // //END MWV dialog
@@ -1020,10 +1014,8 @@ void US_AnaprofPanGen::mwvChecked( bool checked )
 	       break;
 	     }
 	 }
-       //make all checkboxes unselectable
-       
-       
-       }
+       //make all checkboxes unselectable ?
+     }
    else
      {
        
@@ -1085,28 +1077,28 @@ QGroupBox * US_AnaprofPanGen::createGroup( QString & triple_name, QList< double 
 
       //edit meniscus
       rb_edit =  new QRadioButton(tr(""));
-      rb_edit -> setObjectName( strow + ": triple_edit");
+      rb_edit -> setObjectName( strow + ":triple_edit:" + QString::number (wvls[ii]) );
       genL->addWidget( rb_edit,  row,   1, 1, 1, Qt::AlignHCenter );
-      
+
+      if ( ii == int(wvls.size()/2) )
+	rb_edit->setChecked( true );
+
       //Run checkbox
       ck_run = new QCheckBox( tr(""), this );
       ck_run ->setAutoFillBackground( true );
       ck_run ->setChecked( true );
-      ck_run ->setObjectName( strow + ": triple_run" );
+      ck_run ->setObjectName( strow + ":triple_run:" + QString::number (wvls[ii]) );
       genL->addWidget( ck_run,  row++,  2, 1, 1, Qt::AlignHCenter );
-      
-            
+
     }
 
   int ihgt_r        = pb_aproname->height();
-  QSpacerItem* spacer2 = new QSpacerItem( 20, ihgt_r*10 );
+  QSpacerItem* spacer2 = new QSpacerItem( 20, ihgt_r );
   genL ->setRowStretch( row, 1 );
   genL ->addItem( spacer2,  row++,  0, 1, 1 );
   
-  
   groupBox->setLayout(genL);
- 
-  
+   
   return groupBox;
 }
 
@@ -1132,7 +1124,9 @@ void US_AnaprofPanGen::runChecked( bool checked )
 	 {
 	   if ( ck_mwv[ i ]->objectName() == mwv_oname )
 	     {
-	       ck_mwv[ i ]->setEnabled( false );
+	       gr_mwvbox[ i ]->setVisible( false );
+	       ck_mwv[ i ]   ->setChecked( false );
+	       ck_mwv[ i ]   ->setEnabled( false );
 	       break;
 	     }
 	 }
