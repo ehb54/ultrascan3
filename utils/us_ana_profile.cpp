@@ -28,6 +28,8 @@ US_AnaProfile::US_AnaProfile()
    analysis_run << 1;
 
    wvl_edit << 280;
+
+   wvl_not_run << "";
    
    QList< double > wvl = { 280 };
    ch_wvls[ chndescs[0] ] = wvl;
@@ -132,6 +134,11 @@ bool US_AnaProfile::toXml( QXmlStreamWriter& xmlo )
      //ALEXEY: wvl to edit
      xmlo.writeAttribute    ( "wvl_edit",
    			QString::number( wvl_edit[ kk ] ) );
+     
+     //ALEXEY: wvl not to be analyzed
+     xmlo.writeAttribute    ( "wvl_not_run", wvl_not_run[ kk ]  );
+
+     
      xmlo.writeEndElement();
      // channel_parms
 
@@ -166,6 +173,7 @@ bool US_AnaProfile::fromXml( QXmlStreamReader& xmli )
 
    analysis_run.clear();
    wvl_edit    .clear();
+   wvl_not_run .clear();
    
    while( ! xmli.atEnd() )
    {
@@ -199,6 +207,7 @@ bool US_AnaProfile::fromXml( QXmlStreamReader& xmli )
 	    //analysis_run << 1;
 	    analysis_run << attr.value( "run" ).toString().toInt();
 	    wvl_edit     << attr.value( "wvl_edit" ).toString().toInt();
+	    wvl_not_run  << attr.value( "wvl_not_run" ).toString();
 //3-------------------------------------------------------------------------->80
             chx++;
 //qDebug() << "AP:fX:  chx" << chx << pchans.count();

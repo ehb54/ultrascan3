@@ -257,7 +257,8 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
                currProf.data_ends << currProf.data_ends[ chx ];
 
 	       currProf.analysis_run << currProf.analysis_run[ chx ];
-	       currProf.wvl_edit << currProf.wvl_edit[ chx ];
+	       currProf.wvl_edit     << currProf.wvl_edit[ chx ];
+	       currProf.wvl_not_run  << currProf.wvl_not_run[ chx ];
             }
 DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
 	 << "dae size" << currProf.data_ends.count() << "chentr" << chentr
@@ -282,6 +283,7 @@ DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
 
 	    currProf.analysis_run << currProf.analysis_run[ lch ];
 	    currProf.wvl_edit     << currProf.wvl_edit[ lch ];
+	    currProf.wvl_not_run  << currProf.wvl_not_run[ lch ];
 	    
 DbgLv(1) << "APG: ipro:     lch" << lch << "lv_tol da_end"
  << currProf.lv_tolers[ lch ] << currProf.data_ends[ lch ]
@@ -308,6 +310,7 @@ DbgLv(1) << "APG: ipro:     lch" << lch << "lv_tol da_end"
 
 	 currProf.analysis_run.removeLast();
 	 currProf.wvl_edit.removeLast();
+	 currProf.wvl_not_run.removeLast();
       }
    }
 

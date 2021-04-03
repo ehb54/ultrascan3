@@ -203,6 +203,8 @@ class US_UTIL_EXTERN US_AnaProfile
 
       QList< int > analysis_run;
       QList< int > wvl_edit;
+
+      QList< QString > wvl_not_run; 
       
       QMap< QString, QList< double > > ch_wvls;
    private:

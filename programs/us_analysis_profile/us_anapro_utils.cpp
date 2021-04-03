@@ -405,8 +405,10 @@ DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.cou
 	 << "currProf->analysis_run[ ii] currProf->analysis_run[ kk ]" << currProf->analysis_run[ ii ] << currProf->analysis_run[ kk ];
 
        
-	 //ALEXEY: also set info on wvl for edit && triples not to be analysed
+	 //ALEXEY: also set info on wvl for edit 
 	 kk              = qMin( ii, currProf->wvl_edit.count() - 1 );
+
+	 qDebug() << "currProf->wvl_edit[ ii] currProf->wvl_edit[ kk ]" << currProf->wvl_edit[ ii ] << currProf->wvl_edit[ kk ];
 	 
 	 QScrollArea *sa = gr_mwvbox[ ii ];
 	 foreach (QRadioButton *button, sa->findChildren<QRadioButton*>())
@@ -419,6 +421,23 @@ DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.cou
 		 
 		 qDebug() << "US_AnaprofPanGen::initPanel(): wvl_to_edit " <<  wvl_to_edit << " for channel " << ii; 
 		 break;
+	       }
+	   }
+
+	 //ALEXEY: also set info on wvl not to be analyzed 
+	 kk              = qMin( ii, currProf->wvl_not_run.count() - 1 );
+
+	 qDebug() << "currProf->wvl_not_run[ ii] currProf->wvl_not_run[ kk ]" << currProf->wvl_not_run[ ii ] << currProf->wvl_not_run[ kk ];
+
+	 foreach (QCheckBox *ckbox, sa->findChildren<QCheckBox*>())
+	   {
+	     QString wvl_not_to_run = (ckbox->objectName()).split(":")[2];
+	     
+	     if ( currProf->wvl_not_run[ kk ].contains( wvl_not_to_run ) )
+	       {
+		 ckbox->setChecked( false );
+		 
+		 qDebug() << "US_AnaprofPanGen::initPanel(): wvl_not_to_run " <<  wvl_not_to_run << " for channel " << ii; 
 	       }
 	   }
       }
@@ -528,6 +547,7 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
       
       currProf->analysis_run.clear( );
       currProf->wvl_edit.clear( );
+      currProf->wvl_not_run.clear( );
 
       for ( int ii = 0; ii < nchan; ii++ )
       {
@@ -545,7 +565,7 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 
 	 qDebug() << "APGR: SAVE: channel -- " << ii << int(ck_runs[ ii ]->isChecked());
 
-	 //ALEXEY: also save info on wvl for edit && triples not to be analysed 
+	 //ALEXEY: also save info on wvl for edit 
 	 QScrollArea *sa = gr_mwvbox[ ii ];
 	 foreach (QRadioButton *button, sa->findChildren<QRadioButton*>())
 	   {
@@ -558,6 +578,21 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 		 break;
 	       }
 	   }
+
+	 //ALEXEY: also save info on wvl not to be analyzed
+	 QString wvl_list_not_run;
+	 foreach (QCheckBox *ckbox, sa->findChildren<QCheckBox*>())
+	   {
+	     if ( !ckbox->isChecked() )
+	       {
+		 qDebug() << "US_AnaprofPanGen::savePanel(): wvl_not_to_run " <<  (ckbox->objectName()).split(":")[2] << " for channel " << ii;
+
+		 wvl_list_not_run += (ckbox->objectName()).split(":")[2] + ":";
+	       }
+	   }
+	 wvl_list_not_run.chop(1);
+	 currProf->wvl_not_run << wvl_list_not_run;
+	 
       }
    }
 DbgLv(1) << "APGe: svP:  done";
