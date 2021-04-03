@@ -20,10 +20,10 @@ DEFINES += NO_EDITOR_PRINT
 
 TARGET  = us_somo
 
-revision.target           = include/us_revision.h
-revision.commands         = sh revision.sh
-revision.depends          = FORCE
-unix:QMAKE_EXTRA_TARGETS += revision
+revision.target      = include/us_revision.h
+revision.commands    = sh revision.sh
+revision.depends     = FORCE
+QMAKE_EXTRA_TARGETS += revision
 
 # OSX also reports UNIX
 contains( DEFINES, "OSX" ) {
