@@ -375,6 +375,7 @@ DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.cou
       for ( int ii = 0; ii < nchan; ii++ )
       {
 	qDebug() <<  "currProf->analysis_run.size(): " << currProf->analysis_run.count();
+	qDebug() <<  "currProf->wvl_edit.size(): " << currProf->wvl_edit.count();
 	qDebug() <<  "nchan, sl_chnsel.size(): " << nchan << sl_chnsel.count();
 	
          int kk          = qMin( ii, sl_chnsel.count() - 1 );
@@ -399,10 +400,46 @@ DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.cou
 	 else
 	   ck_runs[ ii ] ->setChecked( false  );
 	 
-DbgLv(1) << "APGe: inP:    ii kk" << ii << kk << "chann" << sl_chnsel[kk] << "lvtol daend dae[kk]"
+	 DbgLv(1) << "APGe: inP:    ii kk" << ii << kk << "chann" << sl_chnsel[kk] << "lvtol daend dae[kk]"
 	 << currProf->lv_tolers[ii] << currProf->data_ends[ii] << currProf->data_ends[kk]
 	 << "currProf->analysis_run[ ii] currProf->analysis_run[ kk ]" << currProf->analysis_run[ ii ] << currProf->analysis_run[ kk ];
- 
+
+       
+	 //ALEXEY: also set info on wvl for edit 
+	 kk              = qMin( ii, currProf->wvl_edit.count() - 1 );
+
+	 qDebug() << "currProf->wvl_edit[ ii] currProf->wvl_edit[ kk ]" << currProf->wvl_edit[ ii ] << currProf->wvl_edit[ kk ];
+	 
+	 QScrollArea *sa = gr_mwvbox[ ii ];
+	 foreach (QRadioButton *button, sa->findChildren<QRadioButton*>())
+	   {
+	     int wvl_to_edit = (button->objectName()).split(":")[2].toInt();
+	     
+	     if ( currProf->wvl_edit[ kk ] == wvl_to_edit )
+	       {
+		 button->setChecked( true );
+		 
+		 qDebug() << "US_AnaprofPanGen::initPanel(): wvl_to_edit " <<  wvl_to_edit << " for channel " << ii; 
+		 break;
+	       }
+	   }
+
+	 //ALEXEY: also set info on wvl not to be analyzed 
+	 kk              = qMin( ii, currProf->wvl_not_run.count() - 1 );
+
+	 qDebug() << "currProf->wvl_not_run[ ii] currProf->wvl_not_run[ kk ]" << currProf->wvl_not_run[ ii ] << currProf->wvl_not_run[ kk ];
+
+	 foreach (QCheckBox *ckbox, sa->findChildren<QCheckBox*>())
+	   {
+	     QString wvl_not_to_run = (ckbox->objectName()).split(":")[2];
+	     
+	     if ( currProf->wvl_not_run[ kk ].contains( wvl_not_to_run ) )
+	       {
+		 ckbox->setChecked( false );
+		 
+		 qDebug() << "US_AnaprofPanGen::initPanel(): wvl_not_to_run " <<  wvl_not_to_run << " for channel " << ii; 
+	       }
+	   }
       }
    }
 else
@@ -507,7 +544,10 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
       currProf->l_volumes.clear( );
       currProf->lv_tolers.clear( );
       currProf->data_ends.clear( );
+      
       currProf->analysis_run.clear( );
+      currProf->wvl_edit.clear( );
+      currProf->wvl_not_run.clear( );
 
       for ( int ii = 0; ii < nchan; ii++ )
       {
@@ -524,6 +564,35 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 	   currProf->analysis_run << 0;
 
 	 qDebug() << "APGR: SAVE: channel -- " << ii << int(ck_runs[ ii ]->isChecked());
+
+	 //ALEXEY: also save info on wvl for edit 
+	 QScrollArea *sa = gr_mwvbox[ ii ];
+	 foreach (QRadioButton *button, sa->findChildren<QRadioButton*>())
+	   {
+	     if ( button->isChecked() )
+	       {
+		 int wvl_to_edit = (button->objectName()).split(":")[2].toInt();
+		 qDebug() << "US_AnaprofPanGen::savePanel(): wvl_to_edit " <<  wvl_to_edit << " for channel " << ii; 
+		 
+		 currProf->wvl_edit << wvl_to_edit;
+		 break;
+	       }
+	   }
+
+	 //ALEXEY: also save info on wvl not to be analyzed
+	 QString wvl_list_not_run;
+	 foreach (QCheckBox *ckbox, sa->findChildren<QCheckBox*>())
+	   {
+	     if ( !ckbox->isChecked() )
+	       {
+		 qDebug() << "US_AnaprofPanGen::savePanel(): wvl_not_to_run " <<  (ckbox->objectName()).split(":")[2] << " for channel " << ii;
+
+		 wvl_list_not_run += (ckbox->objectName()).split(":")[2] + ":";
+	       }
+	   }
+	 wvl_list_not_run.chop(1);
+	 currProf->wvl_not_run << wvl_list_not_run;
+	 
       }
    }
 DbgLv(1) << "APGe: svP:  done";
@@ -601,6 +670,17 @@ QStringList US_AnaprofPanGen::getLValue( const QString type )
 	 qDebug() << "Ana RUN for channel " << ii << " is: "  << currProf->analysis_run[ ii ];
 	 value << QString::number (currProf->analysis_run[ ii ]) ;
 	 qDebug() << "Ana RUN for channel " << ii << " value: " << value;
+       }
+   }
+   else if ( type == "wvledit" )
+   {
+     value.clear();
+     //for ( int ii = 0; ii < nchan; ii++ )
+     for ( int ii = 0; ii < sl_chnsel.count(); ii++ )
+       {
+	 qDebug() << "WVL EDIT for channel " << ii << " is: "  << currProf->wvl_edit[ ii ];
+	 value << QString::number (currProf->wvl_edit[ ii ]) ;
+	 qDebug() << "WVL EDIT for channel " << ii << " value: " << value;
        }
    }
    else if ( type == "lcratios" )
@@ -839,8 +919,8 @@ DbgLv(1) << "AP2d:svP: nparm" << nparm << "cchx" << cchx;
 	   break;
 	 }
      }
-   
-   
+
+  
    
 DbgLv(1) << "AP2d:svP:   runs:"
  << ap2DSA->job1run << ap2DSA->job2run << ap2DSA->job3run

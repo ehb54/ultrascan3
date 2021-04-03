@@ -57,6 +57,8 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       void disable_name_buttons( void );
       void pass_names( QString&, QString& );
       void inherit_protocol( US_RunProtocol* );
+      QGroupBox *createGroup( QString &, QList< double > &);
+      
             
    private:
       US_AnalysisProfileGui* mainw;   // Parent to all panels
@@ -64,11 +66,19 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       
       US_Help  showHelp;
 
+      //QHBoxLayout* middle_h;
+      
       QGridLayout* genL;
       QVBoxLayout* panel;
       QScrollArea* scrollArea;
       QWidget*     containerWidget;
-
+      
+      QGridLayout* middle_h;
+      QVBoxLayout* left;
+      QVBoxLayout* right;
+      QScrollArea* scrollArea_r;
+      QWidget*     containerWidget_r;
+	
       QPushButton* pb_aproname;
       QPushButton* pb_protname;
       QPushButton* pb_applya;
@@ -84,6 +94,9 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       QList< QLineEdit* >    le_daends;
 
       QList< QCheckBox* >    ck_runs;
+      QList< QCheckBox* >    ck_mwv;
+      QList< QScrollArea* >  gr_mwvbox;
+      int row_global;
       
       int          dbg_level;
       bool         use_db;              // Using the LIMS database?
@@ -93,6 +106,7 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       void  build_general_layout( void );
 
       void  runChecked( bool );
+      void  mwvChecked( bool );
 
       void  apro_button_clicked( void );
       void  prot_button_clicked( void );
