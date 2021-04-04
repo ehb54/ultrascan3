@@ -1083,6 +1083,9 @@ QGroupBox * US_AnaprofPanGen::createGroup( QString & triple_name, QList< double 
       rb_edit -> setObjectName( strow + ":triple_edit:" + QString::number (wvls[ii]) );
       genL->addWidget( rb_edit,  row,   1, 1, 1, Qt::AlignHCenter );
 
+      // connect( rb_edit, SIGNAL( toggled   ( bool ) ),
+      //          this,    SLOT  ( rbClicked ( bool ) ) );
+      
       if ( ii == int(wvls.size()/2) )
 	rb_edit->setChecked( true );
 

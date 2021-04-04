@@ -149,6 +149,7 @@ class US_Edit : public US_Widgets
       QMap < QString, bool > isSet_ref_wvl;
 
       QMap < QString, bool > channels_to_analyse;
+      QMap < QString, QString > triples_skip_analysis;
       
       QStringList        trip_rpms;
       QStringList        celchns;
@@ -372,6 +373,7 @@ class US_Edit : public US_Widgets
       void delete_autoflow_record ( void );
       
       bool isSet_to_analyse( QString, QString  );
+      bool isSet_to_analyse_triple( QString, QString  );
       
    private slots:         
       void load              ( void );

@@ -1990,6 +1990,7 @@ void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
   isSet_ref_wvl.clear();
 
   channels_to_analyse.clear();
+  triples_skip_analysis.clear();
   
   // analysis stages
   job1run     = false;
@@ -3078,11 +3079,18 @@ bool US_Edit::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
 		
 		aprof_channel_to_parms[ channel_name ] = aprof_parms;
 	       
-		//Read what triples to analyse:
+		//Read what channels to analyse:
 		if ( attr.hasAttribute("run") )
 		  {
 		    QString channel_desc = attr.value( "chandesc" ).toString();
 		    channels_to_analyse[ channel_desc ] = bool_flag( attr.value( "run" ).toString() );
+		  }
+
+		//Read what triples NOT to analyse:
+		if ( attr.hasAttribute("wvl_not_run") )
+		  {
+		    QString channel_desc = attr.value( "chandesc" ).toString();
+		    triples_skip_analysis[ channel_desc ] = attr.value( "wvl_not_run" ).toString();
 		  }
 	      }
 	  }
@@ -8193,7 +8201,8 @@ void US_Edit::write_auto( void )
 	       //Interference
 	       if ( triples_all_optics[j].contains( "Interference" ) )
 		 {
-		   if ( isSet_to_analyse( triples_all_optics[ j ] , QString("Interf") ) )
+		   if ( isSet_to_analyse( triples_all_optics[ j ] , QString("Interf") ) &&
+			isSet_to_analyse_triple( triples_all_optics[ j ] , QString("Interf") ) )
 		     {
 		       json_status = compose_json( true );
 		       qDebug() << triples_all_optics[j] << json_status;
@@ -8214,7 +8223,8 @@ void US_Edit::write_auto( void )
 	       //UV.vis
 	       else		 
 		 {
-		   if ( isSet_to_analyse( triples_all_optics[ j ],  QString("UV/vis") ) )
+		   if ( isSet_to_analyse( triples_all_optics[ j ],  QString("UV/vis") ) &&
+			isSet_to_analyse_triple( triples_all_optics[ j ],  QString("UV/vis") ) )
 		     {
 		       if ( !isSet_ref_wvl[ channels_all[i] ] )
 			 {
@@ -8370,6 +8380,42 @@ bool US_Edit::isSet_to_analyse( QString triple_name, QString opsys )
 	}
     }
 
+  return have_run;
+}
+
+bool US_Edit::isSet_to_analyse_triple( QString triple_name, QString opsys )
+{
+  bool have_run = true;
+
+  //In case anaprofile does not have "wvl_not_run" attr, so QMap<> triples_skip_analysis empty (older protocols):
+  if ( triples_skip_analysis.isEmpty() )
+    {
+      qDebug() << "It looks like older protocol is in use: QMap triples_skip_analysis is EMPRTY!";
+      
+      have_run = true;
+      return have_run;
+    }
+  
+  QStringList triple_name_list = triple_name.split(".");
+  QString channel = triple_name_list[0] + triple_name_list[1];
+  QString wvl = triple_name_list[2];    
+  
+  QMap<QString, QString>::iterator jj;
+  for ( jj = triples_skip_analysis.begin(); jj != triples_skip_analysis.end(); ++jj )
+    {
+      if ( jj.key().contains( channel ) && jj.key().contains( opsys ) )
+	{
+	  QString wvl_list_skipped = jj.value();
+
+	  if ( wvl_list_skipped.contains( wvl ) )
+	    {
+	      qDebug() << "Triple " << triple_name << " of channel (" << jj.key() << " will NOT be analysed.";
+	      have_run = false;	      
+	      break;
+	    }
+	}
+    }
+  
   return have_run;
 }
 
