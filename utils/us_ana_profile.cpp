@@ -174,6 +174,7 @@ bool US_AnaProfile::fromXml( QXmlStreamReader& xmli )
    analysis_run.clear();
    wvl_edit    .clear();
    wvl_not_run .clear();
+   ch_wvls     .clear();
    
    while( ! xmli.atEnd() )
    {

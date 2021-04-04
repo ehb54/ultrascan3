@@ -163,6 +163,8 @@ void US_AnalysisProfileGui::inherit_protocol( US_RunProtocol* iProto )
 
 DbgLv(1) << "APG00: ipro: kchn nchs ncho" << kchn << nchs << ncho;
 
+ currProf.ch_wvls.clear();
+
    if ( nchs < 1  ||  ncho < 1 )
      return;
 
@@ -199,11 +201,6 @@ DbgLv(1) << "APG: ipro:  s:ii" << ii << "chname" << chname << "sodesc" << sodesc
    for ( int ii = 0; ii < ncho; ii++ )
    {  // Examine protocol's channel optics
 
-      //ALEXEY: also Ranges
-      QList< double > wvls = iProto->rpRange.chrngs[ ii ].wvlens;
-
-      
-     
       QString chname  = iProto->rpOptic.chopts[ ii ].channel;
       QString scan1   = iProto->rpOptic.chopts[ ii ].scan1;
       QString scan2   = iProto->rpOptic.chopts[ ii ].scan2;
@@ -228,7 +225,23 @@ DbgLv(1) << "APG: ipro:  o.ii" << ii << "chname" << chname
       if ( chx < 0 )          continue;
 
       QString sodesc  = sl_sols[ chx ];  // Channel's solution
+      
+      //ALEXEY: also Ranges
+      QList< double > wvls;
+      for ( int ch_r = 0; ch_r < iProto->rpRange.chrngs.size(); ++ch_r )
+	{
+	  QString chdesc_from_ranges = (iProto->rpRange.chrngs[ ch_r ].channel).split(",")[0];
+	  chdesc_from_ranges.replace(" / ","");
 
+	  qDebug() << " chdesc_from_ranges, chname_rpOptics  -- " << chdesc_from_ranges << chname;
+
+	  if ( chname.contains(chdesc_from_ranges) )
+	    {
+	      //QList< double > wvls = iProto->rpRange.chrngs[ ii ].wvlens;
+	      wvls = iProto->rpRange.chrngs[ ch_r ].wvlens;
+	    }
+	}
+      
       for ( int jj = 0; jj < ods.count(); jj++ )
       {  // Create a channel entry for each optics type of this channel
          QString opdesc  = ods[ jj ];
@@ -243,9 +256,15 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
             currProf.pchans  [ nchn ] = chname;
             currProf.chndescs[ nchn ] = chentr;
 
-	    //ALEXEY: also ranges for each channl
-	    currProf.ch_wvls[ chentr ] = wvls;
-	    qDebug() << "In inherit_prot: wvls.size() for channel -- " << wvls.size() << " for " << chentr;
+	    //ALEXEY: also ranges for each channel
+	    if ( opdesc.contains("vis.") )
+	      currProf.ch_wvls[ chentr ] = wvls;
+	    if ( opdesc.contains("Interf.") )
+	      {
+		QList< double > wvl_interf = { 660 };
+		currProf.ch_wvls[ chentr ] = wvl_interf;
+	      }
+	    qDebug() << "In inherit_prot: wvls.size() for channel -- " << currProf.ch_wvls[ chentr ].size() << " for " << chentr;
 	    
             chx             = currProf.lc_ratios.count() - 1;
             if ( chx < nchn )
@@ -269,9 +288,16 @@ DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
             currProf.pchans   << chname;
             currProf.chndescs << chentr;
 
-	    //ALEXEY: also ranges for each channl
-	    currProf.ch_wvls[ chentr ] = wvls;
-	    
+	    //ALEXEY: also ranges for each channel
+	    if ( opdesc.contains("vis.") )
+	      currProf.ch_wvls[ chentr ] = wvls;
+	    if ( opdesc.contains("Interf.") )
+	      {
+		QList< double > wvl_interf = { 660 };
+		currProf.ch_wvls[ chentr ] = wvl_interf;
+	      }
+	    qDebug() << "In inherit_prot: wvls.size() for channel -- " << currProf.ch_wvls[ chentr ].size() << " for " << chentr;
+	    	    
 	    
             int lch         = nchn - 1;
             // Duplicate previous parameter values
@@ -294,6 +320,10 @@ DbgLv(1) << "APG: ipro:     lch" << lch << "lv_tol da_end"
       }
    }
 
+   //ALEXEY:Debug
+   qDebug() << "In inherit_prot: size of currProf.ch_wvls QMap -- " << currProf.ch_wvls.count();
+   //////////////
+
    kchn            = currProf.pchans.count();
 
    if ( kchn > nchn )
@@ -311,6 +341,8 @@ DbgLv(1) << "APG: ipro:     lch" << lch << "lv_tol da_end"
 	 currProf.analysis_run.removeLast();
 	 currProf.wvl_edit.removeLast();
 	 currProf.wvl_not_run.removeLast();
+
+	 //currProf.ch_wvls.removeLast();  //ALEXEY: needed?
       }
    }
 
