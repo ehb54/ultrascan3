@@ -662,6 +662,9 @@ pb_plateau->setVisible(false);
    // details[ "filename" ]     = ("test-021421-IF-RI-B_alexey-run974-IP");
    // details[ "protocolName" ] = QString("test-021421-IF-RI-B_alexey");
 
+   // details[ "invID_passed" ] = QString("2");
+   // details[ "filename" ]     = QString("Demo-033121-1-run1391");
+   // details[ "protocolName" ] = QString("Demo-033121-1");
    
    // load_auto( details );
    
@@ -1990,6 +1993,7 @@ void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
   isSet_ref_wvl.clear();
 
   channels_to_analyse.clear();
+  triple_to_edit.clear();
   triples_skip_analysis.clear();
   
   // analysis stages
@@ -3084,6 +3088,13 @@ bool US_Edit::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
 		  {
 		    QString channel_desc = attr.value( "chandesc" ).toString();
 		    channels_to_analyse[ channel_desc ] = bool_flag( attr.value( "run" ).toString() );
+		  }
+		
+		//Read what triple selected for editing:
+		if ( attr.hasAttribute("wvl_edit") )
+		  {
+		    QString channel_desc = attr.value( "chandesc" ).toString();
+		    triple_to_edit[ channel_desc ] = attr.value( "run" ).toString();
 		  }
 
 		//Read what triples NOT to analyse:
@@ -8204,16 +8215,14 @@ void US_Edit::write_auto( void )
 		   if ( isSet_to_analyse( triples_all_optics[ j ] , QString("Interf") ) &&
 			isSet_to_analyse_triple( triples_all_optics[ j ] , QString("Interf") ) )
 		     {
-		       json_status = compose_json( true );
-		       qDebug() << triples_all_optics[j] << json_status;
-
 		       //ALEXEY: here for combined run, the filename_runID_auto would be incorrectly set to that of the second type, the "-RI"
 		       //Need to use "-IP"
 		       if ( runType_combined_IP_RI )
-			 {
-			   filename_runID_auto = filename_runID_auto_base + "-IP";
-			 }
-			 
+			 filename_runID_auto = filename_runID_auto_base + "-IP";
+		       
+		       json_status = compose_json( true );
+		       qDebug() << triples_all_optics[j] << json_status;
+
 		       ID = create_autoflowAnalysis_record( dbP, triples_all_optics[j], json_status );
 
 		       if (ID)
@@ -8226,48 +8235,72 @@ void US_Edit::write_auto( void )
 		   if ( isSet_to_analyse( triples_all_optics[ j ],  QString("UV/vis") ) &&
 			isSet_to_analyse_triple( triples_all_optics[ j ],  QString("UV/vis") ) )
 		     {
+		       //ALEXEY: here for combined run, the filename_runID_auto must be "filename_base-RI"
+		       //Need to use "-RI"
+		       if ( runType_combined_IP_RI )
+			 filename_runID_auto = filename_runID_auto_base + "-RI";
+
+		       QString t_wvl = triples_all_optics[ j ].split(".")[2];
+		       
 		       if ( !isSet_ref_wvl[ channels_all[i] ] )
 			 {
-			   json_status = compose_json( true );
-			   qDebug() << triples_all_optics[j] << json_status;
-
-			   //ALEXEY: here for combined run, the filename_runID_auto must be "filename_base-RI"
-			   //Need to use "-RI"
-			   if ( runType_combined_IP_RI )
+			   // If there is an infortmaiton on specific triple to edit in the AProfile
+			   if ( !triple_to_edit.isEmpty() )
 			     {
-			       filename_runID_auto = filename_runID_auto_base + "-RI";
+			       // If triple set for FM fit (and edit): defined by "wvl_edit" attr in Aprofile
+			       if ( t_wvl == triple_to_edit[ channels_all[i] ] )
+				 {
+				   json_status = compose_json( true );
+				   qDebug() << triples_all_optics[j] << json_status;
+				   
+				   ID = create_autoflowAnalysis_record( dbP, triples_all_optics[j], json_status );
+				   
+				   //So, reference wvl is defiend as the triple specified in AProfile
+				   isSet_ref_wvl[ channels_all[i] ] = true;
+				   
+				   if (ID)
+				     create_autoflowAnalysisStages_record( dbP,  ID );
+				 }
+			       else
+				 {
+				   json_status = compose_json( false );
+				   qDebug() << triples_all_optics[j] << json_status;
+				   
+				   ID = create_autoflowAnalysis_record( dbP, triples_all_optics[j], json_status );
+				 }
 			     }
-			   
-			   ID = create_autoflowAnalysis_record( dbP, triples_all_optics[j], json_status );
-			   
-			   //So, reference wvl is defiend as the 1st one in the channel domain
-			   isSet_ref_wvl[ channels_all[i] ] = true;
+			   //No informaiton os specifi triple to edit -- select 1st triple in a channel as default
+			   else
+			     {
+			       json_status = compose_json( true );
+			       qDebug() << triples_all_optics[j] << json_status;
+			       
+			       ID = create_autoflowAnalysis_record( dbP, triples_all_optics[j], json_status );
 
-			   if (ID)
-			     create_autoflowAnalysisStages_record( dbP,  ID );
+			       //So, reference wvl is defiend as the 1st one in the channel domain
+			       isSet_ref_wvl[ channels_all[i] ] = true;
+			       
+			       if (ID)
+				 create_autoflowAnalysisStages_record( dbP,  ID );
+			     }
 			 }
 		       else
 			 {
 			   json_status = compose_json( false );
 			   qDebug() << triples_all_optics[j] << json_status;
-
-			   if ( runType_combined_IP_RI )
-			     {
-			       filename_runID_auto = filename_runID_auto_base + "-RI";
-			     }
 			   
 			   ID = create_autoflowAnalysis_record( dbP, triples_all_optics[j], json_status );
 			 }
 		     }
 		 }
-
+	       
 	       if ( ID )
 		 AnalysisIDs << QString::number( ID );
 	       
 	     }
 	 }
      }
-
+   
    
    le_status->setText( tr( "Saving COMPLETE " ) );
    qApp->processEvents();

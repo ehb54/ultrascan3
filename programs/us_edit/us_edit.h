@@ -150,6 +150,7 @@ class US_Edit : public US_Widgets
 
       QMap < QString, bool > channels_to_analyse;
       QMap < QString, QString > triples_skip_analysis;
+      QMap < QString, QString > triple_to_edit;
       
       QStringList        trip_rpms;
       QStringList        celchns;
