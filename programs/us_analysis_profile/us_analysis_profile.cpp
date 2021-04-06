@@ -163,7 +163,7 @@ void US_AnalysisProfileGui::inherit_protocol( US_RunProtocol* iProto )
 
 DbgLv(1) << "APG00: ipro: kchn nchs ncho" << kchn << nchs << ncho;
 
- currProf.ch_wvls.clear();
+   currProf.ch_wvls.clear();
 
    if ( nchs < 1  ||  ncho < 1 )
      return;
@@ -936,12 +936,16 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       //MWV dialog
       // //QGroupBox for Fit meniscus/bottom options
       QString ch_name_c = schan;
-      QString ch_name = ch_name_c.split(":")[0] + " : " + ch_name_c.split(":")[1]; 
+      
 
-      QList< double > wvlss = { 280, 340, 500 };
+      //QList< double > wvlss = { 280, 340, 500 };
       QList< double > curr_wvls = currProf -> ch_wvls[ schan ];
 
       qDebug() << "In build_gen: curr_wvls.size() for schan -- " << curr_wvls.size() << " for " << schan;
+
+      QString ch_name = ch_name_c.split(":")[0] + " : " + ch_name_c.split(":")[1];
+
+      qDebug() << "In build_gen: ch_name -- " << ch_name;
       
       QGroupBox * wvl_box = createGroup( ch_name,  curr_wvls );
       scrollArea_r      = new QScrollArea( this );
@@ -1128,6 +1132,13 @@ QGroupBox * US_AnaprofPanGen::createGroup( QString & triple_name, QList< double 
       ck_run ->setObjectName( strow + ":triple_run:" + QString::number (wvls[ii]) );
       genL->addWidget( ck_run,  row++,  2, 1, 1, Qt::AlignHCenter );
 
+    }
+
+  //Disable radiobtn && checkbox if Interf.
+  if ( triple_name.split(":")[1].contains("Interf") &&  wvls.size() )
+    {
+      ck_run ->setEnabled( false );
+      rb_edit->setEnabled( false );
     }
 
   int ihgt_r        = pb_aproname->height();
