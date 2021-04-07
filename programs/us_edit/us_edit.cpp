@@ -2675,7 +2675,7 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
        le_status->setText( tr( "Setting edit controls for channel %1" ).arg( triple_name ) );
        qApp->processEvents();
        
-       index_data_auto( trx );
+       index_data_auto( trx );     // <-- HERE the particular data index is selected (the 1st ?), which will be edited  
 
        edata          = outData[ data_index ];
        data           = *edata;
@@ -10887,12 +10887,20 @@ int US_Edit::index_data_auto( int trx, int wvx )
    triple_index = trx;  // Triple index
    int odatx    = triple_index;               // Default output data index
 
+   QString triple_name = cb_triple->itemText( trx );
+
+   qDebug() << "Index_data_auto: triple_name, isMwl -- " << triple_name << isMwl;
+   
    if ( isMwl )
    {  // For MWL, compute data index from wavelength and triple indexes
       if ( wvx < 0 )
       {  // For the default case, use the current wavelength index
          plotndx      = cb_lplot->currentIndex();
          int iwavl    = expi_wvlns[ plotndx ];              //ALEXEY: do we need to set data in the middle of the triple set ??
+
+	 //Debug
+	 for ( int g=0; g<expi_wvlns.size(); ++g )
+	   qDebug() << "MWL wavelengths for triple: " << triple_name << expi_wvlns[ g ];
 
 	 //int iwavl    = expi_wvlns[ 0 ];                      // ALEXEY: OR beginning of the set? ??   
 	 data_index   = mwl_data.data_index( iwavl, triple_index );
