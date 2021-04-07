@@ -950,7 +950,8 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       QGroupBox * wvl_box = createGroup( ch_name,  curr_wvls );
       scrollArea_r      = new QScrollArea( this );
       scrollArea_r     ->setWidgetResizable( true );
-      scrollArea_r     ->setObjectName( strow  + ": wvl_box" );
+      //scrollArea_r     ->setObjectName( strow  + ",wvl_box," + ch_name );
+      scrollArea_r     ->setObjectName( strow  + ": wvl_box");
       scrollArea_r     ->setWidget( wvl_box );
       
       gr_mwvbox << scrollArea_r;
@@ -1075,6 +1076,7 @@ void US_AnaprofPanGen::mwvChecked( bool checked )
 QGroupBox * US_AnaprofPanGen::createGroup( QString & triple_name, QList< double > & wvls )
 {
   QGroupBox *groupBox = new QGroupBox ( triple_name );
+  groupBox -> setObjectName( triple_name );
 
   QPalette p = groupBox->palette();
   p.setColor(QPalette::Dark, Qt::white);
@@ -1118,19 +1120,27 @@ QGroupBox * US_AnaprofPanGen::createGroup( QString & triple_name, QList< double 
       rb_edit =  new QRadioButton(tr(""));
       rb_edit -> setObjectName( strow + ":triple_edit:" + QString::number (wvls[ii]) );
       genL->addWidget( rb_edit,  row,   1, 1, 1, Qt::AlignHCenter );
-
-      // connect( rb_edit, SIGNAL( toggled   ( bool ) ),
-      //          this,    SLOT  ( rbClicked ( bool ) ) );
       
-      if ( ii == int(wvls.size()/2) )
-	rb_edit->setChecked( true );
-
+      //Create signalMapper, to pass argument to standard (argument-less) signals:
+      signalMapper = new QSignalMapper(this);
+      connect(signalMapper, SIGNAL( mapped( QString ) ), this, SLOT( rbEditClicked( QString ) ) );
+      connect( rb_edit, SIGNAL( clicked() ), signalMapper, SLOT(map()));
+      QString arg_passed = triple_name + "," + strow;
+      signalMapper->setMapping ( rb_edit, arg_passed );
+            
       //Run checkbox
       ck_run = new QCheckBox( tr(""), this );
       ck_run ->setAutoFillBackground( true );
       ck_run ->setChecked( true );
       ck_run ->setObjectName( strow + ":triple_run:" + QString::number (wvls[ii]) );
       genL->addWidget( ck_run,  row++,  2, 1, 1, Qt::AlignHCenter );
+
+      if ( ii == int(wvls.size()/2) )
+	{
+	  rb_edit->setChecked( true );
+	  ck_run ->setChecked( true );
+	  ck_run ->setEnabled( false );
+	}
 
     }
 
@@ -1141,6 +1151,13 @@ QGroupBox * US_AnaprofPanGen::createGroup( QString & triple_name, QList< double 
       rb_edit->setEnabled( false );
     }
 
+  //Disable radiobtn && checkbox if only 1 wvl in a channel (not MWL).
+  if ( wvls.size() == 1 )
+    {
+      ck_run ->setEnabled( false );
+      rb_edit->setEnabled( false );
+    } 
+
   int ihgt_r        = pb_aproname->height();
   QSpacerItem* spacer2 = new QSpacerItem( 20, ihgt_r );
   genL ->setRowStretch( row, 1 );
@@ -1149,6 +1166,84 @@ QGroupBox * US_AnaprofPanGen::createGroup( QString & triple_name, QList< double 
   groupBox->setLayout(genL);
    
   return groupBox;
+}
+
+//toggle radioBtns in groupBox layouts: bind radiobutton to checkbox
+void US_AnaprofPanGen::rbEditClicked ( QString arg_passed )
+{
+   // QObject* sobj       = sender();      // Sender object
+   // QString oname       = sobj->objectName();
+   // QString irow        = oname.split(":")[0];
+
+   // // casting to the known class sender connected with (QRadioButton)
+   // QRadioButton* rb_edit = qobject_cast<QRadioButton*>(sender());
+
+   // qDebug() << "Radiobtn CLICKED: oname, irow -- " << oname << irow;
+
+   QString triple_name = arg_passed.split(",")[0];
+   QString irow        = arg_passed.split(",")[1];
+  
+   //get QGroupBox associated with the clicked RadioButton
+   QScrollArea *sa = NULL;
+   for ( int i=0; i < gr_mwvbox.size(); ++i )
+     {
+       QGroupBox *gb = gr_mwvbox[ i ]->findChild<QGroupBox *>( );
+       QString gbox_objectName =  gb->objectName();
+
+       qDebug() << "gbox_objectName -- " << gbox_objectName;
+
+       if ( gbox_objectName == triple_name )
+	 {
+	   sa = gr_mwvbox[ i ];
+	   break;
+	 }
+     }
+
+   qDebug() << "QGroubbox identified:  ObjectName -- " << sa->objectName();
+   
+   // Now get the checkbox located on the same row as radiobtn
+   if ( sa != NULL )
+     {
+       //identify QRadioButton:
+       QRadioButton* rb_selected = NULL;
+       foreach (QRadioButton *rb, sa->findChildren<QRadioButton*>())
+	 {
+	   QString rb_row = (rb->objectName()).split(":")[0];
+	   if ( rb_row == irow )
+	     {
+	       rb_selected = rb;
+	       break;
+	     }
+	 }
+
+       if ( rb_selected == NULL )
+	 qDebug() << "No RadioButton selected ...";
+       
+       foreach (QCheckBox *ckbox, sa->findChildren<QCheckBox*>())
+	 {
+	   QString ck_row = (ckbox->objectName()).split(":")[0];
+	     
+	   if ( ck_row == irow )
+	     {
+	       if ( rb_selected -> isChecked() )
+		 {
+		   ckbox->setChecked( true );
+		   ckbox->setEnabled( false );
+		 }
+	       else
+		 {
+		   //ckbox->setChecked( true );
+		   ckbox->setEnabled( true );
+		 }
+	     }
+	   //Enable the rest of checkboxes (associated with not-checked  radiobuttons)
+	   else
+	     {
+	        ckbox->setEnabled( true );
+	     }
+	   	     
+	 }
+     }
 }
 
 

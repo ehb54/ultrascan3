@@ -58,7 +58,8 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       void pass_names( QString&, QString& );
       void inherit_protocol( US_RunProtocol* );
       QGroupBox *createGroup( QString &, QList< double > &);
-      
+
+      QSignalMapper  *signalMapper;
             
    private:
       US_AnalysisProfileGui* mainw;   // Parent to all panels
@@ -107,6 +108,8 @@ class US_AnaprofPanGen : public US_WidgetsDialog
 
       void  runChecked( bool );
       void  mwvChecked( bool );
+
+      void  rbEditClicked( QString );
 
       void  apro_button_clicked( void );
       void  prot_button_clicked( void );
