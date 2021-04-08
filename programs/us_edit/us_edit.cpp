@@ -669,7 +669,7 @@ pb_plateau->setVisible(false);
    // details[ "protocolName" ] = QString("SavelyevA_BSA_082520");
 
    
-   //load_auto( details );
+   //  load_auto( details );
    
 
 }
@@ -2691,20 +2691,23 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
        le_status->setText( tr( "Setting edit controls for channel %1" ).arg( triple_name ) );
        qApp->processEvents();
 
-       qDebug() << "#triples, #wavelns_i -- " << cb_triple->count() << wavelns_i.size();
-       qDebug() << "#wavelns in triple   -- " << triple_name << wavelns_i[ trx ].size();
-
+      
        //Debug
        for ( int g=0; g < expi_wvlns.size(); ++g )
 	 qDebug() << "MWL wavelengths for triple: " << triple_name << expi_wvlns[ g ];
 
        if ( isMwl )
 	 {
-	   //iwavl_edit_ref[ trx ] = 0;  // <-- wvl set as reference one for editing; find out what is it from AProfile 
-
+	   qDebug() << "#triples, #wavelns_i -- " << cb_triple->count() << wavelns_i.size();
+	   qDebug() << "#wavelns in triple   -- " << triple_name << wavelns_i[ trx ].size();
+	   //Debug
+	   for ( int g=0; g < expi_wvlns.size(); ++g )
+	     qDebug() << "MWL wavelengths for triple: " << triple_name << expi_wvlns[ g ];
+	   
 	   //Check here if info for EDIT wvl is set in the AProfile:
 	   //    if yes, identify wvl for current triple:
 	   //    otherwise, use current plotndx
+
 	   QString channel_desc = triple_name;
 	   channel_desc.replace(" / ",".");
 	   QString opsys = QString("UV/vis");
@@ -9771,7 +9774,9 @@ void US_Edit::prior_triple_auto( void )
 
       if ( row == 0 )
 	pb_priorChan ->setEnabled( false );
+
       
+      pb_nextChan ->setEnabled( true );
       qDebug() << "PRIOR Triple: row " << row << ", cb_triple->count() " << cb_triple->count() ;
     }
   else
