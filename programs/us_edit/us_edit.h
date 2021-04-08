@@ -151,6 +151,9 @@ class US_Edit : public US_Widgets
       QMap < QString, bool > channels_to_analyse;
       QMap < QString, QString > triples_skip_analysis;
       QMap < QString, QString > triple_to_edit;
+
+      QVector < int > iwavl_edit_ref;
+      QVector < int > iwavl_edit_ref_index;
       
       QStringList        trip_rpms;
       QStringList        celchns;
@@ -375,6 +378,8 @@ class US_Edit : public US_Widgets
       
       bool isSet_to_analyse( QString, QString  );
       bool isSet_to_analyse_triple( QString, QString  );
+      bool isSet_to_edit_triple( QString, QString );
+      bool isSet_edit_info_for_channel( QString, QString );
       
    private slots:         
       void load              ( void );

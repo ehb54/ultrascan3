@@ -607,7 +607,7 @@ pb_plateau->setVisible(false);
    setMinimumSize( 950, 450 );
    adjustSize();
  
-   // TESTING ...
+   // TESTING...
    QMap < QString, QString > details;
    
    // // Data WITH existing Aprofile corresponding to existing protocol!!!
@@ -639,10 +639,6 @@ pb_plateau->setVisible(false);
    // details[ "filename" ]     = QString("KulkarniJ_NP025-D2O-0-20-17K_091220-run1285");
    // details[ "protocolName" ] = QString("KulkarniJ_NP025-D2O-0-20-17K_091220");
 
-   // /* A.S.: 2A/B[245,270,280]; */
-   // details[ "invID_passed" ] = QString("12");
-   // details[ "filename" ]     = QString("SavelyevA_BSA_082520-run1276");
-   // details[ "protocolName" ] = QString("SavelyevA_BSA_082520");
 
    // /* Yu: */
    // details[ "invID_passed" ] = QString("86");
@@ -662,11 +658,18 @@ pb_plateau->setVisible(false);
    // details[ "filename" ]     = ("test-021421-IF-RI-B_alexey-run974-IP");
    // details[ "protocolName" ] = QString("test-021421-IF-RI-B_alexey");
 
+   // MWV from demeler9
    // details[ "invID_passed" ] = QString("2");
    // details[ "filename" ]     = QString("Demo-033121-1-run1391");
    // details[ "protocolName" ] = QString("Demo-033121-1");
+
+   // // /* A.S.: 2A/B[245,270,280];  MWV from demeler6*/
+   // details[ "invID_passed" ] = QString("12");
+   // details[ "filename" ]     = QString("SavelyevA_BSA_082520-run1276");
+   // details[ "protocolName" ] = QString("SavelyevA_BSA_082520");
+
    
-   // load_auto( details );
+   //load_auto( details );
    
 
 }
@@ -2067,6 +2070,8 @@ void US_Edit::process_optics_auto( )
   editProfile.clear();
   centerpieceParameters.clear();
   aprofileParameters.clear();
+  iwavl_edit_ref.clear();
+  iwavl_edit_ref_index.clear();
   
   //Read centerpiece names from protocol:
   centerpiece_names.clear();
@@ -2666,6 +2671,17 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 
    
    qDebug() << "DATA SIZE: " << outData.count(); 
+
+
+   //ALEXEY: Resize && fill with zero iwavl_edit_ref vector:
+   iwavl_edit_ref      .resize( cb_triple->count() );
+   iwavl_edit_ref_index.resize( cb_triple->count() );
+   for ( int trx = 0; trx < cb_triple->count(); trx++ )
+     {
+       iwavl_edit_ref[ trx ] = 0;
+       iwavl_edit_ref_index[ trx ] = 0;
+     }
+
    
    //for ( int trx = 0; trx < triples.size(); trx++ )
    for ( int trx = 0; trx < cb_triple->count(); trx++ )
@@ -2674,9 +2690,74 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 
        le_status->setText( tr( "Setting edit controls for channel %1" ).arg( triple_name ) );
        qApp->processEvents();
-       
-       index_data_auto( trx );     // <-- HERE the particular data index is selected (the 1st ?), which will be edited  
 
+       qDebug() << "#triples, #wavelns_i -- " << cb_triple->count() << wavelns_i.size();
+       qDebug() << "#wavelns in triple   -- " << triple_name << wavelns_i[ trx ].size();
+
+       //Debug
+       for ( int g=0; g < expi_wvlns.size(); ++g )
+	 qDebug() << "MWL wavelengths for triple: " << triple_name << expi_wvlns[ g ];
+
+       if ( isMwl )
+	 {
+	   //iwavl_edit_ref[ trx ] = 0;  // <-- wvl set as reference one for editing; find out what is it from AProfile 
+
+	   //Check here if info for EDIT wvl is set in the AProfile:
+	   //    if yes, identify wvl for current triple:
+	   //    otherwise, use current plotndx
+	   QString channel_desc = triple_name;
+	   channel_desc.replace(" / ",".");
+	   QString opsys = QString("UV/vis");
+	   
+	   if ( isSet_edit_info_for_channel( channel_desc,  opsys ) )
+	     {
+	       //iwavl = wvl_from_aprofile;
+	       QMap<QString, QString>::iterator jjj;
+	       for ( jjj = triple_to_edit.begin(); jjj != triple_to_edit.end(); ++jjj )
+		 {
+		   if ( jjj.key().contains( channel_desc ) && jjj.key().contains( opsys ) )
+		     {
+		       QString wvl_set_edit = jjj.value();
+
+		       iwavl_edit_ref[ trx ] =  wvl_set_edit.toInt();
+		       qDebug() << "Reference wvl --  " <<  wvl_set_edit << " was identified using AProfile";
+		       		       
+		       break;
+		     }
+		 }
+
+	       //TEST
+	       //iwavl_edit_ref[ trx ] = 245;
+
+	       //Now, identify wvl index:
+	       for ( int w_i=0; w_i < expi_wvlns.size(); ++w_i )
+		 {
+		   if ( expi_wvlns[ w_i ] == iwavl_edit_ref[ trx ] )
+		     {
+		       iwavl_edit_ref_index[ trx ] = w_i;
+		       break;
+		     }
+		 }
+	     }
+	   else
+	     {
+	       plotndx  = cb_lplot->currentIndex();
+
+	       //TEST
+	       //plotndx = 0;
+	       
+	       iwavl_edit_ref[ trx ]       = expi_wvlns[ plotndx ];
+	       iwavl_edit_ref_index[ trx ] = plotndx;
+	       qDebug() << "Wvl index && value -- " <<  iwavl_edit_ref_index[ trx ] << iwavl_edit_ref[ trx ];
+	     }
+	   
+	   data_index   = mwl_data.data_index( iwavl_edit_ref[ trx ], trx );
+	 }
+       else
+	 index_data_auto( trx );
+
+       qDebug() << "Data index: " << data_index;
+       
        edata          = outData[ data_index ];
        data           = *edata;
        
@@ -3094,7 +3175,7 @@ bool US_Edit::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
 		if ( attr.hasAttribute("wvl_edit") )
 		  {
 		    QString channel_desc = attr.value( "chandesc" ).toString();
-		    triple_to_edit[ channel_desc ] = attr.value( "run" ).toString();
+		    triple_to_edit[ channel_desc ] = attr.value( "wvl_edit" ).toString();
 		  }
 
 		//Read what triples NOT to analyse:
@@ -6122,6 +6203,24 @@ void US_Edit::plot_mwl( void )
    QString     schan   = celchn.section( "/", 1, 1 ).simplified();
    QString     svalu;
 
+
+   //ALEXEY: when all data loaded && processed for meniscus, plot reference wvl (selected for edit)
+   if ( us_edit_auto_mode && all_loaded )
+     {
+       data_index = mwl_data.data_index( iwavl_edit_ref[ triple_index ], triple_index );
+       index = data_index;
+
+       recndx = iwavl_edit_ref_index[ triple_index ];
+
+       qDebug() << "In PLOT_MWL when all loaded: triple_index, iwavl_edit_ref[ triple_index ], iwavl_edit_ref_index[ triple_index , data_index -- "
+		<< triple_index  << ", "
+		<< iwavl_edit_ref[ triple_index ] << ", "
+		<< iwavl_edit_ref_index[ triple_index ] << ", "
+		<< data_index;
+    
+     }
+   /////////////////////////////////////////////////////////////////////////////////////////////////
+
 DbgLv(1) << "PlMwl:  index celchn" << index << celchn;
 
    if ( xaxis_radius )
@@ -7073,6 +7172,9 @@ DbgLv(1) << "EDT:NewTr: tripindex" << triple_index << "chgs" << changes_made << 
    rb_waveln->setChecked( false );
 
    index_data();
+
+   
+   
 DbgLv(1) << "EDT:NewTr: trip,data index" << triple_index << data_index;
 
    if ( isMwl )
@@ -7113,6 +7215,14 @@ DbgLv(1) << "EDT:NewTr:  nwavelo" << nwavelo;
                        SLOT  ( new_triple_auto    ( int ) ) );
 
    QString otdt   = dataType;
+
+   //ALEXEY: if MVL plot triple for the reference wvl identified from the AProfile  
+   if ( isMwl )
+     data_index   = mwl_data.data_index( iwavl_edit_ref[ triple_index ], triple_index );
+   else
+     index_data_auto( triple_index );
+   ////////////////////////////////////////////////////////////////////////////////
+   
    edata          = outData[ data_index ];
    data           = *edata;
 
@@ -7211,6 +7321,7 @@ DbgLv(1) << "EDT:NewTr:   sw tri dx" << swavl << triple << idax << "dataType" <<
          swavl            = cb_lplot->currentText();
          triple          += " / " + swavl;
          plotrec          = swavl.toInt();
+
       }
 
       QString fname    = editFnames[ idax ];
@@ -8240,15 +8351,14 @@ void US_Edit::write_auto( void )
 		       if ( runType_combined_IP_RI )
 			 filename_runID_auto = filename_runID_auto_base + "-RI";
 
-		       QString t_wvl = triples_all_optics[ j ].split(".")[2];
-		       
+		       // Was channel's reference wvl set? 		       
 		       if ( !isSet_ref_wvl[ channels_all[i] ] )
 			 {
-			   // If there is an infortmaiton on specific triple to edit in the AProfile
-			   if ( !triple_to_edit.isEmpty() )
+			   // If there is an infortmaiton on specific triple to edit (for a current channel) in the AProfile?
+			   if ( isSet_edit_info_for_channel( triples_all_optics[ j ],  QString("UV/vis") ) )
 			     {
-			       // If triple set for FM fit (and edit): defined by "wvl_edit" attr in Aprofile
-			       if ( t_wvl == triple_to_edit[ channels_all[i] ] )
+			       // If this particular  triple set for FM fit (and edit): defined by "wvl_edit" attr in Aprofile
+			       if ( isSet_to_edit_triple( triples_all_optics[ j ],  QString("UV/vis") ) )
 				 {
 				   json_status = compose_json( true );
 				   qDebug() << triples_all_optics[j] << json_status;
@@ -8390,7 +8500,7 @@ bool US_Edit::isSet_to_analyse( QString triple_name, QString opsys )
   //In case anaprofile does not have "run" attr, so QMap<> channels_to_analyse empty (older protocols):
   if ( channels_to_analyse.isEmpty() )
     {
-      qDebug() << "It looks like older protocol is in use: QMap channels_to_analyse is EMPRTY!";
+      qDebug() << "It looks like older protocol is in use: QMap channels_to_analyse is EMPTY!";
       
       have_run = true;
       return have_run;
@@ -8423,7 +8533,7 @@ bool US_Edit::isSet_to_analyse_triple( QString triple_name, QString opsys )
   //In case anaprofile does not have "wvl_not_run" attr, so QMap<> triples_skip_analysis empty (older protocols):
   if ( triples_skip_analysis.isEmpty() )
     {
-      qDebug() << "It looks like older protocol is in use: QMap triples_skip_analysis is EMPRTY!";
+      qDebug() << "It looks like older protocol is in use: QMap triples_skip_analysis is EMPTY!";
       
       have_run = true;
       return have_run;
@@ -8451,6 +8561,71 @@ bool US_Edit::isSet_to_analyse_triple( QString triple_name, QString opsys )
   
   return have_run;
 }
+
+
+bool US_Edit::isSet_edit_info_for_channel( QString triple_name, QString opsys )
+{
+  bool have_set = false;
+    
+  QStringList triple_name_list = triple_name.split(".");
+  QString channel = triple_name_list[0] + triple_name_list[1];
+  
+  QMap<QString, QString>::iterator jj;
+  for ( jj = triple_to_edit.begin(); jj != triple_to_edit.end(); ++jj )
+    {
+      if ( jj.key().contains( channel ) && jj.key().contains( opsys ) )
+	{
+	  QString wvl_set_edit = jj.value();
+
+	  if ( !wvl_set_edit.isEmpty() )
+	    {
+	      qDebug() << "Edit Informaiton for channel " << channel << " is SET.";
+	      have_set = true;	      
+	      break;
+	    }
+	}
+    }
+  
+  return have_set;
+}
+
+			    
+bool US_Edit::isSet_to_edit_triple( QString triple_name, QString opsys )
+{
+  bool have_run = false;
+
+  //In case anaprofile does not have "wvl_edit" attr, so QMap<> triple_to_edit empty (older protocols):
+  if ( triple_to_edit.isEmpty() )
+    {
+      qDebug() << "It looks like older protocol is in use: QMap triple_to_edit is EMPTY!";
+      
+      have_run = true;
+      return have_run;
+    }
+  
+  QStringList triple_name_list = triple_name.split(".");
+  QString channel = triple_name_list[0] + triple_name_list[1];
+  QString wvl = triple_name_list[2];    
+  
+  QMap<QString, QString>::iterator jj;
+  for ( jj = triple_to_edit.begin(); jj != triple_to_edit.end(); ++jj )
+    {
+      if ( jj.key().contains( channel ) && jj.key().contains( opsys ) )
+	{
+	  QString wvl_set_edit = jj.value();
+
+	  if ( wvl_set_edit == wvl )
+	    {
+	      qDebug() << "Triple " << triple_name << " for channel " <<  channel << " is set for EDIT.";
+	      have_run = true;	      
+	      break;
+	    }
+	}
+    }
+  
+  return have_run;
+}
+
 
 // Create JSON to be put into AutoflowAnalysis table
 QString US_Edit::compose_json( bool fm_stage )
@@ -10890,6 +11065,10 @@ int US_Edit::index_data_auto( int trx, int wvx )
    QString triple_name = cb_triple->itemText( trx );
 
    qDebug() << "Index_data_auto: triple_name, isMwl -- " << triple_name << isMwl;
+
+   //Debug
+   for ( int g=0; g < expi_wvlns.size(); ++g )
+     qDebug() << "MWL wavelengths for triple: " << triple_name << expi_wvlns[ g ];
    
    if ( isMwl )
    {  // For MWL, compute data index from wavelength and triple indexes
@@ -10897,10 +11076,6 @@ int US_Edit::index_data_auto( int trx, int wvx )
       {  // For the default case, use the current wavelength index
          plotndx      = cb_lplot->currentIndex();
          int iwavl    = expi_wvlns[ plotndx ];              //ALEXEY: do we need to set data in the middle of the triple set ??
-
-	 //Debug
-	 for ( int g=0; g<expi_wvlns.size(); ++g )
-	   qDebug() << "MWL wavelengths for triple: " << triple_name << expi_wvlns[ g ];
 
 	 //int iwavl    = expi_wvlns[ 0 ];                      // ALEXEY: OR beginning of the set? ??   
 	 data_index   = mwl_data.data_index( iwavl, triple_index );
