@@ -418,6 +418,7 @@ DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.cou
 	     if ( currProf->wvl_edit[ kk ] == wvl_to_edit )
 	       {
 		 button->setChecked( true );
+		 button->click();
 		 qDebug() << "US_AnaprofPanGen::initPanel(): wvl_to_edit " <<  wvl_to_edit << " for channel " << ii; 
 		 break;
 	       }

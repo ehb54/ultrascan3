@@ -1105,6 +1105,8 @@ QGroupBox * US_AnaprofPanGen::createGroup( QString & triple_name, QList< double 
   QLineEdit    * le_wvl;
   QRadioButton * rb_edit;
   QCheckBox    * ck_run;
+
+  //currProf->wvl_edit.clear();
     
   for ( int ii = 0; ii < wvls.size(); ii++ )
     {
@@ -1140,6 +1142,8 @@ QGroupBox * US_AnaprofPanGen::createGroup( QString & triple_name, QList< double 
 	  rb_edit->setChecked( true );
 	  ck_run ->setChecked( true );
 	  ck_run ->setEnabled( false );
+
+	  //currProf->wvl_edit <<  wvls[ ii ]; 
 	}
 
     }
