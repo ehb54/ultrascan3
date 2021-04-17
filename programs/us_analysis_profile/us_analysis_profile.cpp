@@ -439,6 +439,7 @@ DbgLv(1) << "APG: ipro:  ap_xml length" << ap_xml.length();
 DbgLv(1) << "APG: ipro:   2kparm pkparm" << currProf.ap2DSA.parms.count() << currProf.apPCSA.parms.count()
  << "kpchan" << currProf.pchans.count();
 //         initPanels();
+
       }
    }
 
@@ -852,6 +853,8 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
      }
    ck_mwv   .clear();
    gr_mwvbox.clear();
+   //currProf->wvl_edit.clear();
+
    qDebug() << "Right.count(), gr_mwvbox.size() AFTER deletion -- " << right->count() << gr_mwvbox.size();
    //END clearing right
       
@@ -1106,8 +1109,7 @@ QGroupBox * US_AnaprofPanGen::createGroup( QString & triple_name, QList< double 
   QRadioButton * rb_edit;
   QCheckBox    * ck_run;
 
-  //currProf->wvl_edit.clear();
-    
+      
   for ( int ii = 0; ii < wvls.size(); ii++ )
     {
       QString strow  = QString::number( ii );

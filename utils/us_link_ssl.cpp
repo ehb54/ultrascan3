@@ -7,33 +7,55 @@
 #include "us_link_ssl.h"
 #include "us_settings.h"
 
-Link::Link()
+
+Link::Link( QString alias )
+//Link::Link()
 {
   connect(&server, &QSslSocket::readyRead, this, &Link::rx);
   connect(&server, &QSslSocket::disconnected, this, &Link::serverDisconnect);
   connect(&server, SIGNAL(sslErrors(QList<QSslError>)), this, SLOT(sslErrors(QList<QSslError>)));
  
-  QString certPath = US_Settings::etcDir() + QString("/optima/"); //US_Settings::appBaseDir() + QString( "/etc/sys_server/" );
-  QString keyFile  = certPath + QString( "client.key" );
-  QString pemFile  = certPath + QString( "client.pem" );
+  certPath = US_Settings::etcDir() + QString("/optima/");
+
+  disconnected_itself = false;
+  connected_itself    = false;
+  
+  QString client_name = alias;
+  client_name.simplified();
+  client_name.replace(" ", "");
+  client_name = client_name.toLower();
+  
+  // QString keyFile  = certPath + QString( "client.key" );
+  // QString pemFile  = certPath + QString( "client.pem" );
+
+  QString keyFile  = certPath + client_name + QString( ".key" );
+  QString pemFile  = certPath + client_name + QString( ".pem" );
+  
+  //  qDebug() << "keyFile, pemFile -- " << keyFile << pemFile;
+
   server.setPrivateKey(keyFile, QSsl::Ec );
   server.setLocalCertificate(pemFile);
 
   qDebug() << "Client's certs directory: " << keyFile << pemFile;
-  // server.setPrivateKey("client.key", QSsl::Ec );
-  // server.setLocalCertificate("client.pem");
+   
   server.setPeerVerifyMode(QSslSocket::VerifyNone);
+
 }
 
 bool Link::connectToServer( const QString& host, const int port )
 {
   bool status_ok = false;
+
+  // if ( !QDir( certPath ).exists() )
+  //   return status_ok;
+
   
   server.connectToHostEncrypted(host, port);
   if (server.waitForEncrypted(15000))
     {
-      server.write("***qsslsocket_client_example sent this nothing command***\n");
+      //server.write("***qsslsocket_client_example sent this nothing command***\n");
       status_ok = true;
+      server.waitForReadyRead(30000);
     }
   else
     {
@@ -78,17 +100,27 @@ void Link::disconnectFromServer( void  )
 void Link::sslErrors(const QList<QSslError> &errors)
 {
   foreach (const QSslError &error, errors)
-    qDebug() << error.errorString();
+    {
+      qDebug() << error.errorString();
+      // if ( QString (error.errorString() ).contains("The certificate is self-signed, and untrusted")  )
+      // 	server.ignoreSslErrors(errors);
+    }
+  //server.ignoreSslErrors(errors);
 }
 
 void Link::serverDisconnect(void)
 {
-  qDebug("Server disconnected");
+  qDebug() << "Server disconnected from inside LINK";
+  disconnected_itself = true;
   //exit(0);
 }
 
 void Link::rx(void)
 {
+  connected_itself = true;
+
+  //qDebug() << "In LINK: ready to read: connected_itself " << connected_itself;
+  
   QByteArray response_data = server.readAll();
   QJsonDocument json = QJsonDocument::fromJson(response_data);
   

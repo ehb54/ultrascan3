@@ -1419,7 +1419,7 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
   //if ( correctRadii == "NO" )
   if ( details_at_live_update[ "correctRadii" ] == "NO" )
     {
-      if ( !usmode ) // us_comprojetc
+      if ( !usmode ) // us_comproject
 	{
 	  //return because in commercial ver. ther must be radii corrections for instrument!!!
 	  QMessageBox::information( this,
@@ -1436,7 +1436,7 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
 	   return;
 	  
 	}
-      else          // us_comproject_academoc / Data Acquisition  
+      else          // us_comproject_academic / Data Acquisition  
 	{
 	  //dialog
 	  

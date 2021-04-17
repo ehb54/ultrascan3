@@ -1444,20 +1444,28 @@ void US_XpnDataViewer::changeOptima( int ndx )
    
    test_optima_connection();
 
-   //check_sysdata_connection();
 }
 
 // sysserver conneciton
+//bool US_XpnDataViewer::check_sysdata_connection( Link* link1 )
 bool US_XpnDataViewer::check_sysdata_connection( void )
 {
-  Link *link1 = new Link;
+  Link *link1 = new Link( xpndesc );
+  //Link *link1 = new Link();
   bool status_sys_data = link1->connectToServer( xpnhost, xpnmsgPort.toInt() );
-
+  
   qDebug() << "status_sys_data: " << status_sys_data;
 
-  link1->disconnectFromServer();
+  //US_Sleep::msleep( 400 );
 
-  if ( !status_sys_data )
+  link1->disconnectFromServer();
+  delete link1;
+  
+  bool combined_check = status_sys_data & link1->connected_itself;
+  
+  qDebug() << "status_sys_data & connected_itself = ? " << status_sys_data << " & " << link1->connected_itself << " = " << combined_check;
+  
+  if ( !combined_check )
     {
       QMessageBox msgBox_sys_data;
       msgBox_sys_data.setIcon(QMessageBox::Critical);
@@ -1482,8 +1490,9 @@ bool US_XpnDataViewer::check_sysdata_connection( void )
 	}
 
     }
-
-  return status_sys_data;
+  
+  //return status_sys_data;
+  return combined_check;
   
 }
 
@@ -2458,7 +2467,8 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
   //Also gives System Msg port: "xmpmsgPort" !!!
 
   //link->connectToServer( xpnhost, xpnmsgPort.toInt() );
-  link = new Link;
+  link = new Link( OptimaName );
+  //link = new Link();
   
   //ALEXEY: just define all QTimers here for later safe stopping
   timer_all_data_avail = new QTimer;
@@ -3239,7 +3249,7 @@ DbgLv(1) << "RDa: allData size" << allData.size();
 void US_XpnDataViewer::load_xpn_raw( )
 {
   //Disable if no connection to sys_data server 
-  if ( !check_sysdata_connection() )
+  if ( !check_sysdata_connection( ) )
     return;
   /////////////////////////////////////////////
   

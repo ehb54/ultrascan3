@@ -939,6 +939,7 @@ void US_ComProjectMain::switch_to_report( QMap < QString, QString > & protocol_d
 void US_ComProjectMain::call_AutoflowDialogue( void )                           //<--- Entry point from main 
 {
   //Check Optima's certificates first:
+  // if ( !mainw->us_mode_bool ) 
   epanInit->checkCertificates();
     
   epanInit->initRecordsDialogue();
@@ -1086,16 +1087,29 @@ void US_InitDialogueGui::checkCertificates( void )
 	       << alias << dbhost << optima_msgPort;
       
       // Check for certificate license key and its expiraiton
-      Link *link = new Link;
+      Link *link = new Link( alias );
       bool status_sys_data = link->connectToServer( dbhost, optima_msgPort.toInt() );
-      
+      bool combined_check = status_sys_data & link->connected_itself;
+            
       // Ceritificate location && check for nearing or actual expiration date ////////////////////
-      QString certPath = US_Settings::etcDir() + QString("/optima/"); 
-      QString keyFile  = certPath + QString( "client.key" );
-      QString pemFile  = certPath + QString( "client.pem" );
+      QString certPath = US_Settings::etcDir() + QString("/optima/");
+
+      QString client_name = alias;
+      client_name.simplified();
+      client_name.replace(" ", "");
+      client_name = client_name.toLower();
+      
+      // QString keyFile  = certPath + QString( "client.key" );
+      // QString pemFile  = certPath + QString( "client.pem" );
+
+      QString keyFile  = certPath + client_name + ".key";
+      QString pemFile  = certPath + client_name + ".pem";
+
+      qDebug() << "keyFile, pemFile -- " << keyFile << pemFile;
       
       QFile certfile( pemFile );
-      certfile.open(QIODevice::ReadOnly);
+      bool certfile_exists = certfile.open(QIODevice::ReadOnly);
+      
       QSslCertificate cert(&certfile,QSsl::Pem);
       
       QDateTime expdate = cert.expiryDate();
@@ -1107,7 +1121,7 @@ void US_InitDialogueGui::checkCertificates( void )
       
       // get current QDate
       QDate dNow(QDate::currentDate());
-      
+	  
       // Certs expiration QDate 
       QDate dEndCerts =  QDate::fromString(expdate_str, fmt);
       
@@ -1118,7 +1132,7 @@ void US_InitDialogueGui::checkCertificates( void )
       
       // End of checking expiraiton date ////////////////////////////////////////////////////////////
       
-      if ( !status_sys_data || daysToExpiration <= 0 )
+      if ( !combined_check || daysToExpiration <= 0 || !certfile_exists )
 	{
 	  QMessageBox msgBox_sys_data;
 	  msgBox_sys_data.setIcon(QMessageBox::Critical);
@@ -1126,20 +1140,29 @@ void US_InitDialogueGui::checkCertificates( void )
 	  
 	  QString msg_sys_text = QString("Attention! UltraScan is not able to communicate with the data acquisition server on the %1.").arg(alias);
 	  QString msg_sys_text_info = QString("");
-	  
-	  if ( daysToExpiration > 0 )
+
+	  if (certfile_exists  )
 	    {
-	      msg_sys_text += QString(tr("\n\nPlease check the following:"));
-	      msg_sys_text_info += QString( tr("1. %1 is turned on\n"
-					       "2. the data acquisition server on %1 is running\n"
-					       "3. your license key is stored in $HOME/ultrascan/etc/optima and is not expired\n\n"
-					       "Submission of the experimental protocol is suspended until this condition is resolved." ))
-		.arg(alias);
+	      if ( daysToExpiration > 0 )
+		{
+		  msg_sys_text += QString(tr("\n\nPlease check the following:"));
+		  msg_sys_text_info += QString( tr("1. %1 is turned on\n"
+						   "2. the data acquisition server on %1 is running\n"
+						   "3. your license key is stored in $HOME/ultrascan/etc/optima and is not expired\n\n"
+						   "Submission of the experimental protocol is suspended until this condition is resolved." ))
+		    .arg(alias);
+		}
+	      else
+		{
+		  msg_sys_text_info += QString( tr("Your license key is expired! Submission of the experimental protocol is suspended.\n"
+						   "Please renew the key and try to submit again."));
+		}
 	    }
 	  else
 	    {
-	      msg_sys_text_info += QString( tr("Your license key is expired! Submission of the experimental protocol is suspended.\n"
-					       "Please renew the key and try to submit again."));
+	      msg_sys_text += QString(tr("\n\nIt appears the license key for %1 is missing:")).arg(alias);
+	      msg_sys_text_info += QString( tr("Please check that your license key is stored in $HOME/ultrascan/etc/optima and is not expired\n\n"
+					       "Submission of the experimental protocol is suspended until this condition is resolved." ));
 	    }
 	  
 	  msg_sys_text_info += QString( tr("\n\nThe program will be closed.") );

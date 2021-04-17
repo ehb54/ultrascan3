@@ -9,13 +9,18 @@ class US_UTIL_EXTERN Link : public QObject
 	Q_OBJECT
 
 public:
-	Link();
+	Link( QString );
+	//Link();
 	bool connectToServer(const QString&, const int);
 	void disconnectFromServer( void );
 
 	void stopOptima( void );
 	void skipOptimaStage( void );
 
+	QString certPath;
+	bool    disconnected_itself;
+	bool    connected_itself;
+	
 	QString elapsedTime;
 	QString temperature;
 	QString rpm;
