@@ -388,6 +388,20 @@ void US_ComProjectMain::checkDataLocation( void )
       exit(1);
       // this->close();
     }
+  else if ( US_Settings::default_data_location() == 1 ) //DB
+    {
+      //Check DB connection: exit if no connection..
+      US_Passwd pw;
+      QString masterpw = pw.getPasswd();
+      US_DB2* db = new US_DB2( masterpw );
+      
+      if ( db->lastErrno() != US_DB2::OK )
+	{
+	  QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
+				tr( "Could not connect to database \n" ) + db->lastError() );
+	  exit(1);
+	}
+    }
 }
 
 // Slot to init some panels (mainly Manage Opima Runs)
@@ -1071,9 +1085,16 @@ void US_InitDialogueGui::checkCertificates( void )
 {
   US_Passwd  pw;
   US_DB2* dbP  = new US_DB2( pw.getPasswd() );
+
   
   //read_optima_machines
   read_optima_machines( dbP );
+
+  QMap < QString, QString > Optimas_disconnect_msg;
+  Optimas_disconnect_msg.clear();
+
+  int count_instruments_disconnected = 0;
+  QStringList Optima_names;
 
   for ( int i=0; i < this->instruments.size(); ++i )
     {
@@ -1085,6 +1106,9 @@ void US_InitDialogueGui::checkCertificates( void )
       
       qDebug() << "In CHECK Connection: alias, dbhost, optima_msgPort -- "
 	       << alias << dbhost << optima_msgPort;
+
+      //Collect all Optima names:
+      Optima_names << alias;
       
       // Check for certificate license key and its expiraiton
       Link *link = new Link( alias );
@@ -1131,50 +1155,50 @@ void US_InitDialogueGui::checkCertificates( void )
       qDebug() << "Now, End, expiration in days:  " << dNow << dEndCerts << daysToExpiration;
       
       // End of checking expiraiton date ////////////////////////////////////////////////////////////
-      
+            
       if ( !combined_check || daysToExpiration <= 0 || !certfile_exists )
 	{
-	  QMessageBox msgBox_sys_data;
-	  msgBox_sys_data.setIcon(QMessageBox::Critical);
-	  msgBox_sys_data.setWindowTitle(tr("Optima System Data Server Connection Problem!"));
-	  
-	  QString msg_sys_text = QString("Attention! UltraScan is not able to communicate with the data acquisition server on the %1.").arg(alias);
+	  ++count_instruments_disconnected;
 	  QString msg_sys_text_info = QString("");
-
-	  if (certfile_exists  )
+	  
+	  if ( certfile_exists  )
 	    {
 	      if ( daysToExpiration > 0 )
 		{
-		  msg_sys_text += QString(tr("\n\nPlease check the following:"));
+		  msg_sys_text_info += QString(tr("\n%1 Please check the following for %2:")).arg( QChar(0x2022), alias );
 		  msg_sys_text_info += QString( tr("1. %1 is turned on\n"
 						   "2. the data acquisition server on %1 is running\n"
-						   "3. your license key is stored in $HOME/ultrascan/etc/optima and is not expired\n\n"
-						   "Submission of the experimental protocol is suspended until this condition is resolved." ))
-		    .arg(alias);
+						   "3. your license key is stored in $HOME/ultrascan/etc/optima and is valid and not expired.\n")).arg( alias );
+		  //"Submission of the experimental protocol is suspended until this condition is resolved." )).arg(alias);
 		}
 	      else
 		{
-		  msg_sys_text_info += QString( tr("Your license key is expired! Submission of the experimental protocol is suspended.\n"
-						   "Please renew the key and try to submit again."));
+		  msg_sys_text_info += QString( tr("\n%1 Your license key for %2 is expired!\n"
+						   "Please renew the key and try to submit again.\n")).arg( QChar(0x2022), alias );
+		  // "Submission of the experimental protocol is suspended.\n"
+		  //"Please renew the key and try to submit again.")).arg( alias );
 		}
 	    }
 	  else
 	    {
-	      msg_sys_text += QString(tr("\n\nIt appears the license key for %1 is missing:")).arg(alias);
-	      msg_sys_text_info += QString( tr("Please check that your license key is stored in $HOME/ultrascan/etc/optima and is not expired\n\n"
-					       "Submission of the experimental protocol is suspended until this condition is resolved." ));
+	      msg_sys_text_info += QString(tr("\n%1 It appears the license key for %2 is missing:")).arg( QChar(0x2022), alias);
+	      msg_sys_text_info += QString( tr("\nPlease check that your license key is stored in\n"
+					       "$HOME/ultrascan/etc/optima/ and is not expired.\n"));
+	      //"Submission of the experimental protocol is suspended until this condition is resolved." ));
 	    }
+
+	  Optimas_disconnect_msg[ alias ] = msg_sys_text_info;
 	  
-	  msg_sys_text_info += QString( tr("\n\nThe program will be closed.") );
-	  msgBox_sys_data.setText( msg_sys_text );
-	  msgBox_sys_data.setInformativeText( msg_sys_text_info );
+	  // //msg_sys_text_info += QString( tr("\n\nThe program will be closed.") );
+	  // msgBox_sys_data.setText( msg_sys_text );
+	  // msgBox_sys_data.setInformativeText( msg_sys_text_info );
 	  
-	  QPushButton *Cancel_sys    = msgBox_sys_data.addButton(tr("OK"), QMessageBox::RejectRole);
+	  // QPushButton *Cancel_sys    = msgBox_sys_data.addButton(tr("OK"), QMessageBox::RejectRole);
 	  
-	  msgBox_sys_data.exec();
+	  // msgBox_sys_data.exec();
 	  
-	  exit(1);
-	  return;
+	  // exit(1);
+	  // return;
 	}
       else
 	{
@@ -1183,7 +1207,7 @@ void US_InitDialogueGui::checkCertificates( void )
 	      qDebug() << "Certs nearing expiration!! ";
 	      
 	      QMessageBox::warning( this,
-				    tr( "License Key Nearing Expiraiton" ),
+				    QString(tr( "License Key for %1 Nearing Expiraiton" )).arg( alias ),
 				    QString(tr( "Your license key will expire within %1 days. \n\n This program will not function without it.") ).arg(daysToExpiration));
 	      
 	    }
@@ -1192,6 +1216,43 @@ void US_InitDialogueGui::checkCertificates( void )
 	  link->disconnectFromServer();
 	}
       link->disconnectFromServer();
+    }
+  
+  // Display message & close the program if all machines are disconnected
+  if ( count_instruments_disconnected == this->instruments.size() )
+    {
+      QString inst_names;
+      if( Optima_names.size() > 1 )
+	inst_names = Optima_names.join(", ");
+      else
+	inst_names = Optima_names.join("");
+      
+      QMessageBox msgBox_sys_data;
+      msgBox_sys_data.setIcon(QMessageBox::Critical);
+      msgBox_sys_data.setWindowTitle(tr("Optima System Data Server Connection Problem!"));
+
+      QString msg_sys_text = QString("Attention! UltraScan is not able to communicate with the data acquisition server(s) on the %1.").arg(inst_names);
+      msgBox_sys_data.setText( msg_sys_text );
+
+      QString msg_sys_text_info_final  = QString("");
+      for (int i=0; i < Optima_names.size(); ++i )
+	{
+	  msg_sys_text_info_final += Optimas_disconnect_msg[ Optima_names[i] ];
+	}
+
+      if ( Optima_names.size() > 1 )  
+	msg_sys_text_info_final += QString( tr("\n\nSubmission of the experimental protocol is suspended until at least one of these conditions is resolved."));
+      else
+	msg_sys_text_info_final += QString( tr("\n\nSubmission of the experimental protocol is suspended until this condition is resolved."));
+      
+      msg_sys_text_info_final += QString( tr("\n\nThe program will be closed.") );
+
+      msgBox_sys_data.setInformativeText( msg_sys_text_info_final );
+      QPushButton *Cancel_sys    = msgBox_sys_data.addButton(tr("OK"), QMessageBox::RejectRole);
+      msgBox_sys_data.exec();
+
+      exit(1);
+      return;
     }
   
   //  End of checkig for conneciton to Optima sys_data server ///////////////////////////////////////////////
