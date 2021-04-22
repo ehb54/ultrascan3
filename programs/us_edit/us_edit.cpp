@@ -538,16 +538,16 @@ pb_plateau->setVisible(false);
        ct_ldelta      ->hide();
        lb_lstart      ->hide();
        lb_lend        ->hide();
-       lb_lplot       ->hide();
-       cb_lplot       ->hide();
+       //lb_lplot       ->hide();
+       //cb_lplot       ->hide();
        cb_lstart      ->hide();
        cb_lend        ->hide();
        le_ltrng       ->hide();
        le_lxrng       ->hide();
        pb_custom      ->hide();
        pb_incall      ->hide();
-       pb_larrow      ->hide();
-       pb_rarrow      ->hide();
+       //pb_larrow      ->hide();
+       //pb_rarrow      ->hide();
        //lo_writemwl    ->hide();
        ck_writemwl    ->hide();
 	 
@@ -669,7 +669,7 @@ pb_plateau->setVisible(false);
    // details[ "protocolName" ] = QString("SavelyevA_BSA_082520");
 
    
-   //  load_auto( details );
+   // load_auto( details );
    
 
 }
@@ -2072,6 +2072,7 @@ void US_Edit::process_optics_auto( )
   aprofileParameters.clear();
   iwavl_edit_ref.clear();
   iwavl_edit_ref_index.clear();
+  triple_plot_first_time.clear();
   
   //Read centerpiece names from protocol:
   centerpiece_names.clear();
@@ -2590,7 +2591,7 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
    {
      qDebug() << "LOADING 1";
      
-     new_triple_auto( 0 );                             //ALEXEY <--- new_triple_auto()
+     //new_triple_auto( 0 );                             //ALEXEY <--- new_triple_auto()
      pb_nextChan->setEnabled( cb_triple->count() > 1 );
 
      qDebug() << "LOADING 2";
@@ -2670,16 +2671,26 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
      qDebug() << "Triple, AprofParms: " << cb_triple->itemText( i )  << ", " << aprofileParameters[i];
 
    
-   qDebug() << "DATA SIZE: " << outData.count(); 
+   qDebug() << "DATA SIZE: " << outData.count();
+
+   if ( !isMwl )
+     {
+       lb_lplot ->setHidden( true );
+       cb_lplot ->setHidden( true );
+       pb_larrow->setHidden( true );
+       pb_rarrow->setHidden( true );
+     }
 
 
    //ALEXEY: Resize && fill with zero iwavl_edit_ref vector:
-   iwavl_edit_ref      .resize( cb_triple->count() );
-   iwavl_edit_ref_index.resize( cb_triple->count() );
+   iwavl_edit_ref        .resize( cb_triple->count() );
+   iwavl_edit_ref_index  .resize( cb_triple->count() );
+   triple_plot_first_time.resize( cb_triple->count() );
    for ( int trx = 0; trx < cb_triple->count(); trx++ )
      {
        iwavl_edit_ref[ trx ] = 0;
        iwavl_edit_ref_index[ trx ] = 0;
+       triple_plot_first_time[ trx ] = 0;
      }
 
    
@@ -2729,7 +2740,7 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 		     }
 		 }
 
-	       //TEST
+	       //TEST:: IMPORTANT ** comment out when done with testing !!
 	       //iwavl_edit_ref[ trx ] = 245;
 
 	       //Now, identify wvl index:
@@ -2746,8 +2757,8 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 	     {
 	       plotndx  = cb_lplot->currentIndex();
 
-	       //TEST
-	       //plotndx = 0;
+	       //TEST:: IMPORTANT ** comment out when done with testing !!
+	       //plotndx = 2;
 	       
 	       iwavl_edit_ref[ trx ]       = expi_wvlns[ plotndx ];
 	       iwavl_edit_ref_index[ trx ] = plotndx;
@@ -5084,6 +5095,8 @@ void US_Edit::plot_current( int index )
 // Re-plot
 void US_Edit::replot( void )
 {
+  qDebug() << "In replot: step -- " << step;
+  
    switch( step )
    {
       case FINISHED:
@@ -6208,7 +6221,7 @@ void US_Edit::plot_mwl( void )
 
 
    //ALEXEY: when all data loaded && processed for meniscus, plot reference wvl (selected for edit)
-   if ( us_edit_auto_mode && all_loaded )
+   if ( us_edit_auto_mode && all_loaded && !triple_plot_first_time[ triple_index ] )
      {
        data_index = mwl_data.data_index( iwavl_edit_ref[ triple_index ], triple_index );
        index = data_index;
@@ -6220,6 +6233,8 @@ void US_Edit::plot_mwl( void )
 		<< iwavl_edit_ref[ triple_index ] << ", "
 		<< iwavl_edit_ref_index[ triple_index ] << ", "
 		<< data_index;
+
+       triple_plot_first_time[ triple_index ] = 1;
     
      }
    /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -7101,8 +7116,9 @@ void US_Edit::subtract_residuals( void )
 void US_Edit::new_triple_auto( int index )
 {
   triple_index    = index;
-
+  
   qDebug() << "NEW_TRIPLE_AUTO: triple_index: " << triple_index;
+
 
   // Remove Spike: Icon/Enable
   if ( editProfile[ cb_triple->currentText() ].count() > 6 )
@@ -7375,6 +7391,13 @@ DbgLv(1) << " 2)gap_fringe" << gap_fringe << "idax" << idax;
       ct_gaps->setNumButtons( 1 );
    }
 
+   //ALEXEY: reset to 0, to plot each time representative wvl (for MWL)
+   triple_plot_first_time[ triple_index ] = 0;
+   //Also, set current wvl to the reference one
+   qDebug() << "In new_triple_auto: ref_wvl_index -- " << iwavl_edit_ref_index[ triple_index ];
+   cb_lplot->setCurrentIndex( iwavl_edit_ref_index[ triple_index ] );
+   ////////////////////////////////////////////////////
+   
    replot();
 DbgLv(1) << "EDT:NewTr: DONE";
 
@@ -9729,8 +9752,9 @@ void US_Edit::next_triple_auto( void )
 	   cb_rpms  ->setCurrentIndex( 0 );
 	 }
        
-       //int dax = index_data_auto( cb_triple->currentIndex() );
        int dax = index_data();
+       //int dax = mwl_data.data_index( iwavl_edit_ref[ triple_index ], triple_index );
+       
        data    = *outData[ dax ];
        
        new_triple_auto( dax );
@@ -9766,7 +9790,7 @@ void US_Edit::prior_triple_auto( void )
       // 	   cb_rpms  ->setCurrentIndex( 0 );
       // 	 }
       
-      //int dax = index_data_auto( cb_triple->currentIndex() );
+      
       int dax = index_data();
       data    = *outData[ dax ];
       
@@ -10154,14 +10178,26 @@ void US_Edit::lambda_plot_value( int value )
 DbgLv(1) << "lambda_plot_value  value" << value << plotrec;
    QString fname    = ( menissv != 0.0 ) ? editFnames[ idax ] : "none";
 
+   //ALEXEY: 
+   if ( us_edit_auto_mode )
+     {
+       plot_mwl();
+       plot_range();
+       return;
+     }
+   ////////
+   
 
    if ( fname == "none" )
    {  // New wavelength has no edit:  turn off edits
+     qDebug() << "Setting meniscus!!";
       set_meniscus();
    }
 
    else if ( fname != "same" )
    {  // New wavelength has its own edit:  apply it
+
+     qDebug() << " Same: appluing edits --";
       US_DataIO::EditValues parameters;
 
       US_DataIO::readEdits( workingDir + fname, parameters );
@@ -10171,6 +10207,8 @@ DbgLv(1) << "lambda_plot_value  value" << value << plotrec;
 
    else if ( step != MENISCUS )
    {  // New wavelength has same edit as others in channel:  make sure applied
+
+     qDebug() << "FOR MWL: switching between wavelengths...";
    }
 
    plot_mwl();
@@ -11085,7 +11123,7 @@ int US_Edit::index_data_auto( int trx, int wvx )
 	 //int iwavl    = expi_wvlns[ 0 ];                      // ALEXEY: OR beginning of the set? ??   
 	 data_index   = mwl_data.data_index( iwavl, triple_index );
          odatx        = data_index;
-DbgLv(1) << "IxDa: dx" << data_index << "plx wavl trx"
+DbgLv(1) << "IxDa_AUTO: dx" << data_index << "plx wavl trx"
  << plotndx << iwavl << triple_index;
       }
 

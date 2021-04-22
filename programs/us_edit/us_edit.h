@@ -154,6 +154,7 @@ class US_Edit : public US_Widgets
 
       QVector < int > iwavl_edit_ref;
       QVector < int > iwavl_edit_ref_index;
+      QVector < int > triple_plot_first_time; 
       
       QStringList        trip_rpms;
       QStringList        celchns;

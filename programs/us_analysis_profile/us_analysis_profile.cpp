@@ -795,7 +795,7 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
    QLabel* lb_lvtol  = us_label( tr( "+/- %\nToler." ) );
    QLabel* lb_daend  = us_label( tr( "Data End\n(cm)" ) );
    QLabel* lb_channelana  = us_label( tr( "Run" ) );
-   QLabel* lb_mwvprefs    = us_label( tr( "Mwv\nPrefs." ) );
+   QLabel* lb_mwvprefs    = us_label( tr( "MWL\nPrefs." ) );
            pb_applya = us_pushbutton( tr( "Apply to All" ) );
    lb_chann ->setObjectName( "Chann Label" );
    lb_lcrat ->setObjectName( "LcRat Label" );
