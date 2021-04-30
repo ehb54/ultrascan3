@@ -1424,6 +1424,8 @@ DbgLv(1) << " eupd:  fn" << fn;
    bool all_wvl  = ( nedtfs > 1  &&  ck_applymwl->isChecked() );
    bool rmv_mdls = true;
    bool db_upd   = dkdb_cntrls->db();
+
+   qDebug() << "In edit_update(): confirm ? " << confirm;
 //*DEBUG*
 //db_upd=false;
 //*DEBUG*
@@ -3296,6 +3298,13 @@ DbgLv(1) << "RmvMod:  ix_setfit lkModx" << ix_setfit << lkModx;
    {
       ModelDesc dmodd;
       QString   invID = QString::number( US_Settings::us_inv_ID() );
+
+      if ( auto_mode )
+	{
+	  invID =  triple_information[ "invID" ];
+	  qDebug() << "In remove_models(): invID -- " << invID;
+	}
+      
       QString   edtID = QString::number( idEdit );
       US_Passwd pw;
       US_DB2 db( pw.getPasswd() );
