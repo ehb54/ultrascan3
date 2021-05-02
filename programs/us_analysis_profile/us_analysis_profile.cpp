@@ -239,6 +239,8 @@ DbgLv(1) << "APG: ipro:  o.ii" << ii << "chname" << chname
 	    {
 	      //QList< double > wvls = iProto->rpRange.chrngs[ ii ].wvlens;
 	      wvls = iProto->rpRange.chrngs[ ch_r ].wvlens;
+
+	      qDebug() << " wvls -- " << wvls;
 	    }
 	}
       
@@ -251,6 +253,10 @@ DbgLv(1) << "APG: ipro:  o.ii" << ii << "chname" << chname
          QString chentr  = chname + ":" + opdesc + ":" + sodesc;
 DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
 
+        //ALEXEY: chname for currProf.ch_wvls:
+        QString sodesc_cut  = QString( chentr ).section( ":", 2, 2 );
+        QString chentr_wvls = chname + ":" + opdesc + ":" + sodesc_cut;
+
          if ( nchn < kchn )
          {  // Replace channel and channel description
             currProf.pchans  [ nchn ] = chname;
@@ -258,13 +264,13 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
 
 	    //ALEXEY: also ranges for each channel
 	    if ( opdesc.contains("vis.") )
-	      currProf.ch_wvls[ chentr ] = wvls;
+	      currProf.ch_wvls[ chentr_wvls ] = wvls;
 	    if ( opdesc.contains("Interf.") )
 	      {
 		QList< double > wvl_interf = { 660 };
-		currProf.ch_wvls[ chentr ] = wvl_interf;
+		currProf.ch_wvls[ chentr_wvls ] = wvl_interf;
 	      }
-	    qDebug() << "In inherit_prot: wvls.size() for channel -- " << currProf.ch_wvls[ chentr ].size() << " for " << chentr;
+	    qDebug() << "In inherit_prot: wvls.size() for channel -- " << currProf.ch_wvls[ chentr_wvls ].size() << " for " << chentr_wvls;
 	    
             chx             = currProf.lc_ratios.count() - 1;
             if ( chx < nchn )
@@ -290,13 +296,13 @@ DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
 
 	    //ALEXEY: also ranges for each channel
 	    if ( opdesc.contains("vis.") )
-	      currProf.ch_wvls[ chentr ] = wvls;
+	      currProf.ch_wvls[ chentr_wvls ] = wvls;
 	    if ( opdesc.contains("Interf.") )
 	      {
 		QList< double > wvl_interf = { 660 };
-		currProf.ch_wvls[ chentr ] = wvl_interf;
+		currProf.ch_wvls[ chentr_wvls ] = wvl_interf;
 	      }
-	    qDebug() << "In inherit_prot: wvls.size() for channel -- " << currProf.ch_wvls[ chentr ].size() << " for " << chentr;
+	    qDebug() << "In inherit_prot: wvls.size() for channel -- " << currProf.ch_wvls[ chentr_wvls ].size() << " for " << chentr_wvls;
 	    	    
 	    
             int lch         = nchn - 1;
