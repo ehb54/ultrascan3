@@ -118,7 +118,7 @@ class US_UTIL_EXTERN US_Global
     bool          valid;
     bool          deleteFlag;
     QSharedMemory sharedMemory;
-    QString       errors;
+    QStringList   errors;
 
     void read_global ( void );
     void write_global( void );

@@ -11,10 +11,8 @@ US_Global::US_Global()
 {
   valid      = false;
   deleteFlag = false;
-  errors     = "";
+  errors.clear();
   
-  qDebug() << "us_global constructor start";
-
 #ifndef Q_OS_WIN
   // Make the key specific to the uid
   QString key = QString( "UltraScan%1" ).arg( getuid() );
@@ -32,8 +30,8 @@ US_Global::US_Global()
      valid = true;
   } else {
      qDebug() << "us_global constructor sharedMemory.attach() is false";
-     if ( sharedMemory.errorString().contains( "permisson denied" ) ) {
-        errors = sharedMemory.errorString();
+     if ( sharedMemory.errorString().contains( "permission denied" ) ) {
+        errors << sharedMemory.errorString();
      }
      qDebug() << sharedMemory.errorString();
   }
@@ -41,7 +39,7 @@ US_Global::US_Global()
   if ( !valid ) {
      if ( sharedMemory.error() == QSharedMemory::OutOfResources ) {
         qDebug() << "Shared memory out of resources";
-        errors = sharedMemory.errorString();
+        errors << sharedMemory.errorString();
      } else if ( sharedMemory.create( sizeof global ) ) {
         valid = true;
         set_global_position( QPoint( 50, 50 ) );
@@ -50,7 +48,7 @@ US_Global::US_Global()
      } else {
         qDebug( "Failure to create shared memory" );
         qDebug() << sharedMemory.errorString();
-        errors = sharedMemory.errorString();
+        errors << sharedMemory.errorString();
      }
   }
 }
@@ -106,5 +104,5 @@ void  US_Global::write_global( void )
 }
 
 QString US_Global::errorString() {
-   return errors;
+   return errors.join( "\n" );
 }
