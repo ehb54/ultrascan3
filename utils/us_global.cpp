@@ -11,6 +11,9 @@ US_Global::US_Global()
 {
   valid      = false;
   deleteFlag = false;
+  errors     = "";
+  
+  qDebug() << "us_global constructor start";
 
 #ifndef Q_OS_WIN
   // Make the key specific to the uid
@@ -19,30 +22,36 @@ US_Global::US_Global()
   QString key = QString( "UltraScan" );
 #endif
 
+  //  key += "-t";
+  qDebug() << "us_global constructor key ='" << key << "'";
+
   sharedMemory.setKey( key );
 
-  if ( sharedMemory.attach() )
-  { 
-    valid = true;
+  if ( sharedMemory.attach() ) { 
+     qDebug() << "us_global constructor valid=true";
+     valid = true;
+  } else {
+     qDebug() << "us_global constructor sharedMemory.attach() is false";
+     if ( sharedMemory.errorString().contains( "permisson denied" ) ) {
+        errors = sharedMemory.errorString();
+     }
+     qDebug() << sharedMemory.errorString();
   }
-
-  else if ( sharedMemory.error() == QSharedMemory::OutOfResources )
-  {
-    qDebug() << "Shared memory out of resources";
-  }
-
-  else if ( sharedMemory.create( sizeof global ) )
-  {
-    valid = true;
-    set_global_position( QPoint( 50, 50 ) );
-    setPasswd( "" );
-    // Add an additional global initialization here
-  }
-
-  else
-  {
-    qDebug( "Failure to create shared memory" );
-    qDebug() << sharedMemory.errorString();
+     
+  if ( !valid ) {
+     if ( sharedMemory.error() == QSharedMemory::OutOfResources ) {
+        qDebug() << "Shared memory out of resources";
+        errors = sharedMemory.errorString();
+     } else if ( sharedMemory.create( sizeof global ) ) {
+        valid = true;
+        set_global_position( QPoint( 50, 50 ) );
+        setPasswd( "" );
+        // Add an additional global initialization here
+     } else {
+        qDebug( "Failure to create shared memory" );
+        qDebug() << sharedMemory.errorString();
+        errors = sharedMemory.errorString();
+     }
   }
 }
 
@@ -96,3 +105,6 @@ void  US_Global::write_global( void )
   sharedMemory.unlock();
 }
 
+QString US_Global::errorString() {
+   return errors;
+}

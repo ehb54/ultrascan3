@@ -89,6 +89,10 @@ class US_UTIL_EXTERN US_Global
     */
     void scheduleDelete( void ) { deleteFlag = true; }
 
+    /*! \brief last shared memory errorString
+    */
+    QString errorString();
+
   private:
 
     /*!
@@ -114,6 +118,7 @@ class US_UTIL_EXTERN US_Global
     bool          valid;
     bool          deleteFlag;
     QSharedMemory sharedMemory;
+    QString       errors;
 
     void read_global ( void );
     void write_global( void );
