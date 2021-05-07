@@ -733,7 +733,7 @@ void US_Analysis_auto::gui_update( )
 	    {
 	      QMessageBox::information( this,
 					tr( "ATTENTION: FITMEN stage reached" ),
-					tr( "FITMET stage for triple %1 will be processed manually." ).arg( triple_curr ) );
+					tr( "FITMEN stage for triple %1 will be processed manually." ).arg( triple_curr ) );
 
 
 	      //--- Check status of the FITMEN | Entire Analysis for the triple before calling FitMen constructor:
@@ -774,9 +774,6 @@ void US_Analysis_auto::gui_update( )
 	      connect( FitMen, SIGNAL( editProfiles_updated_earlier( ) ),
 		       this, SLOT( editProfiles_updated_earlier( ) ) );
 
-	      connect( FitMen, SIGNAL( editProfiles_updated_earlier( ) ),
-		       this, SLOT( editProfiles_updated_earlier( ) ) );
-
 	      connect( FitMen, SIGNAL( triple_analysis_processed( ) ),
 		       this, SLOT( triple_analysis_processed( ) ) );
 		      
@@ -796,7 +793,8 @@ void US_Analysis_auto::gui_update( )
 	      if ( FitMen -> no_fm_data )
 		{
 		  FitMen->close();
-		  triple_analysis_processed( );
+		  //triple_analysis_processed( );
+		  delete_jobs_at_fitmen( triple_curr_key );
 		}
 
 	      return;
@@ -1011,10 +1009,10 @@ void US_Analysis_auto::gui_update( )
       QString msg_text = "All triples have been processed.";
       
       if ( failed_triples )
-	msg_text += QString("\n\n NOTE: analyses for the following triples failed: \n %1").arg( Failed_triples_list.join(", ") );
+	msg_text += QString("\n\nNOTE: analyses for the following triples FAILED: \n\n%1").arg( Failed_triples_list.join(", ") );
 
       if ( canceled_triples )
-	msg_text += QString("\n\n NOTE: analyses for the following triples have been canceled: \n %1").arg( Canceled_triples_list.join(", ") );
+	msg_text += QString("\n\nNOTE: analyses for the following triples have been CANCELED: \n\n%1").arg( Canceled_triples_list.join(", ") );
  
       
       QMessageBox::information( this,
@@ -2732,6 +2730,102 @@ void US_Analysis_auto::show_overlay( QString triple_stage )
   resplotd->setWindowModality(Qt::ApplicationModal);
   resplotd->show();
   */
+}
+
+
+//Cancel all jobs if FITMEN for a channel was processed by other means: NO FM modles
+void US_Analysis_auto::delete_jobs_at_fitmen( QString triple_name )
+{
+
+  qDebug() << "At delete_jobs_at_fitmen: triple_name: " << triple_name;
+  
+  QString triple_n_copy = triple_name;
+  QStringList triple_n_parts = triple_n_copy.split(".");
+  QString channel_n = triple_n_parts[0] + "." + triple_n_parts[1];
+
+  QStringList requestID_list = Channel_to_requestIDs[ channel_n ];
+  qDebug() << "In delete_at_fitmen other WVLs: channel info -- " <<  requestID_list;
+
+  QMap <QString, QString > ana_details = Array_of_analysis[ triple_name ];
+  QString requestID = ana_details["requestID"];
+  qDebug() << "RequestID -- " << requestID;
+
+  bool mwl_channel = false;
+  QStringList triple_list_affected;
+  
+  if ( requestID_list.size() > 1 ) 
+    {
+      mwl_channel = true;
+      //remove currently selected requestID -- for primary wvl
+      requestID_list.removeOne( requestID );
+      qDebug() << "In delete_at_fitmen other WVLs: MODIFIED channel info -- " <<  requestID_list;
+      
+      for ( int i=0; i<requestID_list.size(); ++i )
+	{
+	  //extract triple information for the rest of wvl
+	  QString requestID_affected = requestID_list[i];
+	  QMap< QString, QString > ana_details_affected = Array_of_analysis_by_requestID[ requestID_affected ];
+	  triple_list_affected << ana_details_affected[ "triple_name" ];
+	}
+    }
+  
+  QMessageBox msg_delete;
+  msg_delete.setIcon(QMessageBox::Critical);
+  msg_delete.setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint);
+  msg_delete.setWindowTitle(tr("Job Cancelation!"));
+  
+  QString msg_sys_text = QString("ATTENTION!\n\nThe FITMEN stage for triple %1 has been processed outside of the GMP framework. \nAll scheduled jobs will be canceled for this triple." )
+    .arg( triple_name );
+  
+  //if ( mwl_channel && ( stage_n == "2DSA" || stage_n == "2DSA-FM" ) )
+  msg_sys_text += QString("\n\nSince this is a multi-wavelength analysis, scheduled jobs for the following same-channel triples will be canceled as well: \n\n%1")
+    .arg( triple_list_affected.join(", ") );
+  
+  msg_delete.setText( msg_sys_text );
+
+  //QString msg_sys_text_info = QString("Do you want to proceed?");
+  //msg_delete.setInformativeText( msg_sys_text_info );
+  
+  QPushButton *Accept_sys    = msg_delete.addButton(tr("OK"),    QMessageBox::YesRole);
+  //QPushButton *Cancel_sys    = msg_delete.addButton(tr("Cancel"), QMessageBox::RejectRole);
+  
+  msg_delete.exec();
+
+  if (msg_delete.clickedButton() == Accept_sys)
+    {
+      //Send signal to autoflowAnalysis record ? 
+      qDebug() << "DELETION chosen !!";
+
+      US_Passwd pw;
+      US_DB2    db( pw.getPasswd() );
+      
+      // Get the buffer data from the database
+      if ( db.lastErrno() != US_DB2::OK )
+	{
+	  QMessageBox::warning( this, tr( "Connection Problem" ),
+				tr( "Could not connect to database \n" ) +  db.lastError() );
+	  return;
+	}
+  
+  
+      /** DEBUG **/
+      // QMap <QString, QString > current_analysis;
+      // current_analysis = read_autoflowAnalysis_record( &db, requestID );
+      
+      // qDebug() << "GUID to DETETE! -- " << current_analysis[ "CurrentGfacID" ];
+      // qDebug() << "Status && statusMsg to DETETE! -- " << current_analysis[ "status" ] << current_analysis[ "status_msg" ];
+      /* **********/
+  
+      update_autoflowAnalysis_uponDeletion( &db, requestID );
+      update_autoflowAnalysis_uponDeletion_other_wvl( &db, requestID_list );
+   
+    }
+
+  //Restart timer:
+  connect(timer_update, SIGNAL(timeout()), this, SLOT( gui_update ( ) ));
+  timer_update->start(5000);
+
+  qDebug() << "Timer restarted after Canceling jobs at FITMEN (processed by other means) for channel -- " << channel_n;
 }
 
 //Slot to delete Job

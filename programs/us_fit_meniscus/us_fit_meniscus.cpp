@@ -2124,7 +2124,7 @@ bool US_FitMeniscus::file_loaded_auto( QMap < QString, QString > & triple_inform
       QMessageBox::warning( this,
 			    tr( "FM models problem" ),
 			    tr( "No \"FM | FMB\" models have been found for the present run. \n\n"
-				"Program will return to the autoflow runs manager...") );
+				"Program will proceed with the analysis of other triples...") );
 
       no_fm_data = true;
       return false;

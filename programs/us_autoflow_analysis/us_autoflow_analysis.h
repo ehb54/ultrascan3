@@ -228,6 +228,7 @@ class US_Analysis_auto : public US_Widgets
 	bool check_fitmen_status( const QString& );
 
 	void delete_job  ( QString );
+	void delete_jobs_at_fitmen  ( QString );
 	void show_overlay( QString );
 
 	void show_results   ( void );
