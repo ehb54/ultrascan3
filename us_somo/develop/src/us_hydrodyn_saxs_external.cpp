@@ -514,11 +514,16 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
    }
 
    QStringList created_files;
+   QString rxstr = "\\..*$";
+   if ( !ift_last_processed.contains( QRegExp( rxstr ) ) ) {
+      rxstr = "$";
+   }
 
    // p(r) file
    if ( files.count( caps[ 2 ] ) ) {
       // copy this to our created files
-      QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( ift_last_processed ).replace( QRegExp( "\\..*$" ), "_ift.sprr" );
+      QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( ift_last_processed ).replace( QRegExp( rxstr ), "_ift.sprr" );
+         
       dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
       double mw = get_mw( QString( "%1" ).arg( ift_last_processed ).replace( QRegExp( "\\..*$" ), "_ift P(r)" ), false, true );
       QString header =
@@ -542,7 +547,7 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
    // "out" file
    if ( files.count( caps[ 0 ] ) ) {
       // copy this to our created files
-      QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( ift_last_processed ).replace( QRegExp( "\\..*$" ), "_ift_summary.txt" );
+      QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( ift_last_processed ).replace( QRegExp( rxstr ), "_ift_summary.txt" );
       dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
       US_File_Util ufu;
       if ( !ufu.copy( files[ caps[ 0 ] ], dest, true ) ) {
@@ -555,7 +560,7 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
    // fit file
    if ( files.count( caps[ 4 ] ) ) {
       // copy this to our created files
-      QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( ift_last_processed ).replace( QRegExp( "\\..*$" ), "_fit.ssaxs" );
+      QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( ift_last_processed ).replace( QRegExp( rxstr ), "_fit.ssaxs" );
       dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
       US_File_Util ufu;
       if ( !ufu.copy( files[ caps[ 4 ] ], dest, true, "# IFT I(q) fitting from " + ift_last_processed + "\nq\tI(q)\tSD\n" ) ) {
