@@ -668,6 +668,9 @@ pb_plateau->setVisible(false);
    // details[ "filename" ]     = QString("SavelyevA_BSA_082520-run1276");
    // details[ "protocolName" ] = QString("SavelyevA_BSA_082520");
 
+   // details[ "invID_passed" ] = QString("97");
+   // details[ "filename" ]     = QString("GabirH_NetUnc-050921_MW-run1442");
+   // details[ "protocolName" ] = QString("GabirH_NetUnc-050921_MW");
    
    // load_auto( details );
    
@@ -2726,9 +2729,12 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 	   if ( isSet_edit_info_for_channel( channel_desc,  opsys ) )
 	     {
 	       //iwavl = wvl_from_aprofile;
+	       channel_desc.replace(".","");
+	       
 	       QMap<QString, QString>::iterator jjj;
 	       for ( jjj = triple_to_edit.begin(); jjj != triple_to_edit.end(); ++jjj )
 		 {
+		   qDebug() << "jjj.key(), channel_desc, opsys -- " << jjj.key() << channel_desc << opsys;
 		   if ( jjj.key().contains( channel_desc ) && jjj.key().contains( opsys ) )
 		     {
 		       QString wvl_set_edit = jjj.value();
