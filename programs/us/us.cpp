@@ -124,6 +124,24 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
     qDebug( "US_Win: invalid global memory" );
   }
   
+  if ( !US_Settings::status().isEmpty() ) {
+     qDebug( "US_Win: invalid settings" );
+     QMessageBox::critical(this
+                           ,windowTitle()
+                           ,QString(
+                                    tr(
+                                       "There is a error with your settings file:\n"
+                                       "\"%1\"\n"
+                                       "This can cause various problems and should be corrected.\n"
+                                       )
+                                    )
+                           .arg( US_Settings::status() )
+                           ,QMessageBox::Ok
+                           ,QMessageBox::NoButton
+                           ,QMessageBox::NoButton
+                           );
+  }
+
   g.set_global_position( QPoint( 50, 50 ) ); // Ensure initialization
   QPoint p = g.global_position();
   setGeometry( QRect( p, p + QPoint( 710, 532 ) ) );

@@ -160,5 +160,9 @@ class US_UTIL_EXTERN US_Settings
     // DA status
     static void set_DA_status( const QString& );
     static bool get_DA_status( const QString& );
+
+    //! \brief get the status of QSettings
+    //! \return empty QString if ok. otherwise an error message QString
+    static QString status();
 };
 #endif
