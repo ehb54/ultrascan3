@@ -530,7 +530,7 @@ QString US_Settings::status()
      return QString( "Settings format error. The file %1 is garbled" ).arg( settings.fileName() );
      break;
   default:
-     return QString( "Unknown settings error %1. Perhaps remove the file %1 and try again." ).arg( settings.status() ).arg( settings.fileName() );
+     return QString( "Unknown settings error %1. Perhaps remove the file %2 and try again." ).arg( settings.status() ).arg( settings.fileName() );
      break;
   }
 }
