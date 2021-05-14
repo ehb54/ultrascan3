@@ -20,26 +20,23 @@ US_Global::US_Global()
   QString key = QString( "UltraScan" );
 #endif
 
-  qDebug() << "us_global constructor key ='" << key << "'";
-
   sharedMemory.setKey( key );
 
   if ( sharedMemory.attach() ) { 
-     qDebug() << "us_global constructor sharedMemory.attach() ok";
+     // qDebug() << "us_global constructor sharedMemory.attach() ok";
      valid = true;
   } else {
      switch( sharedMemory.error() ) {
      case QSharedMemory::NotFound :
+        // this is the expected path when shared memory doesn't already exist
         {
-           // this is expected when shared memory doesn't already exist
            if ( sharedMemory.create( sizeof global ) ) {
-              qDebug() << "us_global constructor sharedMemory.create() ok";
+              // qDebug() << "us_global constructor sharedMemory.create() ok";
               valid = true;
               set_global_position( QPoint( 50, 50 ) );
               setPasswd( "" );
               // Add an additional global initialization here
            } else {
-              qDebug() << "us_global constructor sharedMemory.create() failed " << sharedMemory.error() << " " << sharedMemory.errorString();
               // create errors
               switch( sharedMemory.error() ) {
               case QSharedMemory::NoError :          // should never happen
