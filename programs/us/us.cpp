@@ -122,6 +122,21 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   {
     // Do something for invalid global memory
     qDebug( "US_Win: invalid global memory" );
+    QMessageBox::critical(this
+                          ,windowTitle()
+                          ,QString(
+                                   tr( 
+                                      "There is a error connecting to global memory:\n"
+                                      "\"%1\"\n"
+                                      "This will cause Database connections to fail\n"
+                                      "Please ask your system administrator to resolve this."
+                                       )
+                                   )
+                          .arg( g.errorString() )
+                          ,QMessageBox::Ok
+                          ,QMessageBox::NoButton
+                          ,QMessageBox::NoButton
+                          );
   }
   
   g.set_global_position( QPoint( 50, 50 ) ); // Ensure initialization
