@@ -20,36 +20,63 @@ US_Global::US_Global()
   QString key = QString( "UltraScan" );
 #endif
 
-  //  key += "-t";
   qDebug() << "us_global constructor key ='" << key << "'";
 
   sharedMemory.setKey( key );
 
   if ( sharedMemory.attach() ) { 
-     qDebug() << "us_global constructor valid=true";
+     qDebug() << "us_global constructor sharedMemory.attach() ok";
      valid = true;
   } else {
-     qDebug() << "us_global constructor sharedMemory.attach() is false";
-     if ( sharedMemory.errorString().contains( "permission denied" ) ) {
-        errors << sharedMemory.errorString();
-     }
-     qDebug() << sharedMemory.errorString();
-  }
-     
-  if ( !valid ) {
-     if ( sharedMemory.error() == QSharedMemory::OutOfResources ) {
-        qDebug() << "Shared memory out of resources";
-        errors << sharedMemory.errorString();
-     } else if ( sharedMemory.create( sizeof global ) ) {
-        valid = true;
-        set_global_position( QPoint( 50, 50 ) );
-        setPasswd( "" );
-        // Add an additional global initialization here
-     } else {
-        qDebug( "Failure to create shared memory" );
-        qDebug() << sharedMemory.errorString();
-        errors << sharedMemory.errorString();
-     }
+     switch( sharedMemory.error() ) {
+     case QSharedMemory::NotFound :
+        {
+           // this is expected when shared memory doesn't already exist
+           if ( sharedMemory.create( sizeof global ) ) {
+              qDebug() << "us_global constructor sharedMemory.create() ok";
+              valid = true;
+              set_global_position( QPoint( 50, 50 ) );
+              setPasswd( "" );
+              // Add an additional global initialization here
+           } else {
+              qDebug() << "us_global constructor sharedMemory.create() failed " << sharedMemory.error() << " " << sharedMemory.errorString();
+              // create errors
+              switch( sharedMemory.error() ) {
+              case QSharedMemory::NoError :          // should never happen
+              case QSharedMemory::LockError :        // should never happen 
+              case QSharedMemory::KeyError :         // strange if key is invalid
+              case QSharedMemory::AlreadyExists :    // bad ... possible on race condition ... could try attach again
+              case QSharedMemory::PermissionDenied : // bad ... likely needs shmutil fix (or system reboot if no one is available to fix with shmutil)
+              case QSharedMemory::OutOfResources :   // bad ... system out of resources, need admin help
+              case QSharedMemory::InvalidSize :      // bad
+              case QSharedMemory::UnknownError :     // bad
+              default :
+                 {
+                    qDebug() << "US_Global() constructor : unexpected sharedMemory create error : " << sharedMemory.errorString();
+                    errors << "on create() : " + sharedMemory.errorString();
+                    break;
+                 }
+              }
+           }
+           break;
+        }
+
+     case QSharedMemory::NoError :          // should never happen
+     case QSharedMemory::InvalidSize :      // should never happen
+     case QSharedMemory::AlreadyExists :    // should never happen
+     case QSharedMemory::LockError :        // should never happen 
+     case QSharedMemory::OutOfResources :   // should never happen
+     case QSharedMemory::PermissionDenied : // bad ... likely requires admin intervention, shmutil to clear
+     case QSharedMemory::KeyError :         // strange if key is invalid
+     case QSharedMemory::UnknownError :     // bad
+     default:
+        {
+           qDebug() << "US_Global() constructor : unexpected sharedMemory attach error : " << sharedMemory.error() << " " << sharedMemory.errorString();
+           errors << "on attach() : " + sharedMemory.errorString();
+           break;
+        }        
+
+     }           
   }
 }
 

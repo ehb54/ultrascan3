@@ -109,6 +109,8 @@ int main(int argc, char *argv[])
       if ( shm.attach() ) {
          TSO << "attach successful\n";
          if ( shm.detach() ) {
+            TSO << "detach successful\n";
+         } else {
             TSO << "detach failed: " << shm.errorString() << "\n";
          }
       } else {
@@ -124,7 +126,7 @@ int main(int argc, char *argv[])
       if ( shm.create( sizeof( global ) ) ) {
          TSO << "create shm successful\n";
       } else {
-         TSO << "attach shm failed: " << shm.errorString() << "\n";
+         TSO << "create shm failed: " << shm.errorString() << "\n";
       }
    }
 
