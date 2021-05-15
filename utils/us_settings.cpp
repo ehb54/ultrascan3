@@ -511,3 +511,28 @@ bool US_Settings::get_DA_status( const QString& da_type )
       
 }
 /*****************************************************************/
+
+QString US_Settings::status()
+{
+  QSettings settings( US3, "UltraScan" );
+  settings.setValue( "status_test", true );
+  settings.sync();
+  settings.remove( "status_test" );
+  
+  switch ( settings.status() ) {
+  case QSettings::NoError :
+     return "";
+     break;
+  case QSettings::AccessError :
+     return QString( "Access error. Check permissions and ownership of %1" ).arg( settings.fileName() );
+     break;
+  case QSettings::FormatError :
+     return QString( "Settings format error. The file %1 is garbled" ).arg( settings.fileName() );
+     break;
+  default:
+     return QString( "Unknown settings error %1. Perhaps remove the file %2 and try again." ).arg( settings.status() ).arg( settings.fileName() );
+     break;
+  }
+}
+     
+     
