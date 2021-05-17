@@ -390,6 +390,8 @@ class US_ComProjectMain : public US_Widgets
   bool xpn_viewer_closed_soft;
   
   int         curr_panx;       // Current panel index (0-7)
+
+  QWidget * cornerWidget;
   //QStringList occupied_instruments;
 
   //US_SelectItem* pdiag_autoflow;

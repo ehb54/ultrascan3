@@ -148,9 +148,8 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    tabWidget->tabBar()->setStyleSheet( "QTabBar::tab {min-width: 70;} QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:first {background: blue; color: lightgray; min-width: 50;}  QTabBar::tab:first:hover {background: #4169E1; color: white}   QTabBar::tab:disabled { color: rgba(0, 0, 0, 70%) } ");
    //tabWidget->tabBar()->setStyleSheet( "QTabBar::tab {min-width: 70;} QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:first {background: blue; color: lightgray; min-width: 50;}  QTabBar::tab:first:hover {background: #4169E1; color: white}  QTabBar::tab:last {background: blue; color: lightgray; min-width: 50;}  QTabBar::tab:last:hover {background: #4169E1; color: white} QTabBar::tab:disabled { color: rgba(0, 0, 0, 70%) } ");
 
-
    //Close & Help
-   auto *cornerWidget = new QWidget(tabWidget);
+   cornerWidget = new QWidget(tabWidget);
    auto *hbox = new QVBoxLayout(cornerWidget);
    auto *m_help = us_pushbutton( tr( "Help" ) );
    auto *m_exit = us_pushbutton( tr( "Exit" ) );
@@ -159,10 +158,10 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    
    hbox->addWidget(m_help);
    hbox->addWidget(m_exit);
-   hbox->setSpacing(2);
-   hbox->setContentsMargins(2, 2, 2, 2);
+   hbox->setSpacing(1);
+   hbox->setContentsMargins(1, 1, 1, 1);
 
-   cornerWidget->setFixedWidth( tabWidget->tabBar()->width() - 8 );
+   cornerWidget->setFixedWidth( tabWidget->tabBar()->width() - 20 );
    //hbox->setStretch(0,1);
  
    qDebug() << "ACAD:TabWidget position: " << tabWidget->x() << tabWidget->y();
@@ -176,7 +175,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    //m_exit->move(pos_x, pos_y);
    cornerWidget->move(pos_x, pos_y);
    // End of Help & Exit
-
+   
    
    main->addWidget( tabWidget );
 
@@ -352,7 +351,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    tabWidget->tabBar()->setStyleSheet( "QTabBar::tab {min-width: 70;} QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:first {background: blue; color: lightgray; min-width: 50;}  QTabBar::tab:first:hover {background: #4169E1; color: white}  QTabBar::tab:disabled { color: rgba(0, 0, 0, 70%)  } ");
 
    //Close & Help
-   auto *cornerWidget = new QWidget(tabWidget);
+   cornerWidget = new QWidget(tabWidget);
    auto *hbox = new QVBoxLayout(cornerWidget);
    auto *m_help = us_pushbutton( tr( "Help" ) );
    auto *m_exit = us_pushbutton( tr( "Exit" ) );
@@ -361,10 +360,10 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    
    hbox->addWidget(m_help);
    hbox->addWidget(m_exit);
-   hbox->setSpacing(2);
-   hbox->setContentsMargins(2, 2, 2, 2);
+   hbox->setSpacing(1);
+   hbox->setContentsMargins(1, 1, 1, 1);
 
-   cornerWidget->setFixedWidth( tabWidget->tabBar()->width() - 8 );
+   cornerWidget->setFixedWidth( tabWidget->tabBar()->width() - 20 );
    //hbox->setStretch(0,1);
  
    qDebug() << "TabWidget position: " << tabWidget->x() << tabWidget->y();
@@ -1483,6 +1482,8 @@ void US_InitDialogueGui::initRecordsDialogue( void )
 
   offset = 20;
   pdiag_autoflow->move(offset, 2*offset);
+
+  //mainw->cornerWidget->setFixedWidth( mainw->tabWidget->tabBar()->width() - 20 );
 
   initDialogueOpen = true;
 
