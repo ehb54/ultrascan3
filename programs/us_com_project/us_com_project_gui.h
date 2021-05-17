@@ -349,29 +349,6 @@ class US_ReportGui : public US_WidgetsDialog
     void start_report( QMap < QString, QString > & );
 };
 
-//! \brief Exit panel
-class US_ExitGui : public US_WidgetsDialog 
-{
-  Q_OBJECT
-  
-  public:
-    US_ExitGui( QWidget* );
-    ~US_ExitGui() {};
-  
-  private:
-    US_ComProjectMain*    mainw;      // Parent to all panels
-    int offset;
-
-  /* protected: */
-  /*   void resizeEvent(QResizeEvent *event) override; */
-      
-  private slots:
-    
-
-  signals:
-    
-};
-
 
 
 //! \brief ComProject Main Window
@@ -425,8 +402,7 @@ class US_ComProjectMain : public US_Widgets
   US_EditingGui*    epanEditing;     // US_Editing panel
   US_AnalysisGui*   epanAnalysis;    // US_Analysis panel
   US_ReportGui*     epanReport;      // US_Report panel
-  US_ExitGui*       epanExit;        // exit the program
-  
+    
   //int         statflag;        // Composite panels status flag
   //int         dbg_level;       // Debug print flag
   //int         curr_panx;       // Current panel index (0-7)

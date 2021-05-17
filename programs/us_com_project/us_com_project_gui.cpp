@@ -94,8 +94,6 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    epanPostProd        = new US_PostProdGui( this );
    // epanAnalysis        = new US_AnalysisGui( this );
    // epanReport          = new US_ReportGui  ( this );
-
-   //epanExit            = new US_ExitGui( this ); 
    
    //   statflag            = 0;
 
@@ -108,10 +106,16 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    // tabWidget->addTab( epanReport,    tr( "5: Report"  ) );
 
    
-   //tabWidget->addTab( epanExit,  tr( "Close Program"  ) );
+   // tabWidget->addTab( epanExit,  tr( "Close Program"  ) );
    // QPushButton *b1 = new QPushButton("Close");
    // connect( b1, SIGNAL( clicked() ), this, SLOT( close()  ) );
    // tabWidget->addTab( b1,      tr( "Close"   ) );
+
+   // QToolButton* m_exit = new QToolButton();
+   // m_exit->setText("Close");
+   // //m_exit->setIcon(QIcon(":/Resources/exit.png"));
+   // //m_exit->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Maximum);
+   // tabWidget->setCornerWidget(m_exit, Qt::TopRightCorner);
    
    tabWidget->setCurrentIndex( curr_panx );
    tabWidget->tabBar()->setFixedHeight(500);
@@ -143,6 +147,31 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    tabWidget->tabBar()->setStyleSheet( "QTabBar::tab {min-width: 70;} QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:first {background: blue; color: lightgray; min-width: 50;}  QTabBar::tab:first:hover {background: #4169E1; color: white}   QTabBar::tab:disabled { color: rgba(0, 0, 0, 70%) } ");
    //tabWidget->tabBar()->setStyleSheet( "QTabBar::tab {min-width: 70;} QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:first {background: blue; color: lightgray; min-width: 50;}  QTabBar::tab:first:hover {background: #4169E1; color: white}  QTabBar::tab:last {background: blue; color: lightgray; min-width: 50;}  QTabBar::tab:last:hover {background: #4169E1; color: white} QTabBar::tab:disabled { color: rgba(0, 0, 0, 70%) } ");
 
+      //Close & Help
+   auto *cornerWidget = new QWidget(tabWidget);
+   auto *hbox = new QVBoxLayout(cornerWidget);
+   auto *m_help = new QPushButton(tr("Help"), this);
+   auto *m_exit = new QPushButton(tr("Exit"), this);
+   connect( m_exit, SIGNAL( clicked() ), this, SLOT( close()  ) );
+   //connect( m_help, SIGNAL( clicked() ), this, SLOT( help_m()  ) );
+   
+   hbox->addWidget(m_help);
+   hbox->addWidget(m_exit);
+   hbox->setContentsMargins(2, 2, 2, 2);
+   
+   //QPushButton* m_exit = new QPushButton(tabWidget);
+   //m_exit->setText("Close");
+
+   qDebug() << "ACAD:TabWidget position: " << tabWidget->x() << tabWidget->y();
+   qDebug() << "ACAD:TabWidget size    : " << tabWidget->width() << tabWidget->height();
+   qDebug() << "ACAD:TabWidget->tabBar position: " << tabWidget->tabBar()->x() << tabWidget->tabBar()->y();
+   qDebug() << "ACAD:TabWidget->tabBar size    : " << tabWidget->tabBar()->width() << tabWidget->tabBar()->height();
+   int pos_x = (tabWidget->tabBar()->width())/2;
+   int pos_y = (tabWidget->tabBar()->height())*1.12;
+   qDebug() << "pos_x, pos_y: " << pos_x << pos_y;
+   //m_exit->move(pos_x, pos_y);
+   cornerWidget->move(pos_x, pos_y);
+   // End Close & Help
    
    main->addWidget( tabWidget );
 
@@ -157,10 +186,10 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
 
    connect( tabWidget, SIGNAL( currentChanged( int ) ), this, SLOT( initPanels( int ) ) );
 
-   QPushButton* pb_close_program = us_pushbutton( tr( "CLOSE PROGRAM"));
-   pb_close_program->setStyleSheet( "QPushButton { background: red; color: lightgray; min-height: 20 } QPushButton::hover {  background-color: #9E0606; color: white } ");
-   connect( pb_close_program, SIGNAL( clicked() ), this, SLOT( close()  ) );
-   main->addWidget( pb_close_program );
+   // QPushButton* pb_close_program = us_pushbutton( tr( "CLOSE PROGRAM"));
+   // pb_close_program->setStyleSheet( "QPushButton { background: red; color: lightgray; min-height: 20 } QPushButton::hover {  background-color: #9E0606; color: white } ");
+   // connect( pb_close_program, SIGNAL( clicked() ), this, SLOT( close()  ) );
+   // main->addWidget( pb_close_program );
 
 
    logWidget = us_textedit();
@@ -278,8 +307,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    epanEditing         = new US_EditingGui ( this );
    epanAnalysis        = new US_AnalysisGui( this );
    epanReport          = new US_ReportGui  ( this );
-   //epanExit            = new US_ExitGui    ( this );
-   
+      
    //   statflag            = 0;
 
    // Add panels to the tab widget
@@ -291,6 +319,8 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    tabWidget->addTab( epanAnalysis,  tr( "5: Analysis"  ) );
    tabWidget->addTab( epanReport,    tr( "6: Report"  ) );
    //tabWidget->addTab( epanExit,      tr( "Close Program"  ) );
+
+
    
    tabWidget->setCurrentIndex( curr_panx );
    tabWidget->tabBar()->setFixedHeight(500);
@@ -308,6 +338,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    tabWidget->setTabIcon( 4, US_Images::getIcon( US_Images::EDITING_COM ) );
    tabWidget->setTabIcon( 5, US_Images::getIcon( US_Images::ANALYSIS_COM_2 ) );
    tabWidget->setTabIcon( 6, US_Images::getIcon( US_Images::REPORT_COM ) );
+   
 
    tabWidget->tabBar()->setIconSize(QSize(50,50));
 
@@ -316,6 +347,39 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    //no hoover
    tabWidget->tabBar()->setStyleSheet( "QTabBar::tab {min-width: 70;} QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:first {background: blue; color: lightgray; min-width: 50;}  QTabBar::tab:first:hover {background: #4169E1; color: white}  QTabBar::tab:disabled { color: rgba(0, 0, 0, 70%)  } ");
 
+   //Close & Help
+   auto *cornerWidget = new QWidget(tabWidget);
+   auto *hbox = new QVBoxLayout(cornerWidget);
+   auto *m_help = new QPushButton(tr("Help"), this);
+   auto *m_exit = new QPushButton(tr("Exit"), this);
+   connect( m_exit, SIGNAL( clicked() ), this, SLOT( close()  ) );
+   //connect( m_help, SIGNAL( clicked() ), this, SLOT( help_m()  ) );
+   
+   hbox->addWidget(m_help);
+   hbox->addWidget(m_exit);
+   hbox->setContentsMargins(2, 2, 2, 2);
+   
+   //QPushButton* m_exit = new QPushButton(tabWidget);
+   //m_exit->setText("Close");
+
+   qDebug() << "TabWidget position: " << tabWidget->x() << tabWidget->y();
+   qDebug() << "TabWidget size    : " << tabWidget->width() << tabWidget->height();
+   qDebug() << "TabWidget->tabBar position: " << tabWidget->tabBar()->x() << tabWidget->tabBar()->y();
+   qDebug() << "TabWidget->tabBar size    : " << tabWidget->tabBar()->width() << tabWidget->tabBar()->height();
+   int pos_x = (tabWidget->tabBar()->width())/2;
+   int pos_y = (tabWidget->tabBar()->height())*1.12;
+   qDebug() << "pos_x, pos_y: " << pos_x << pos_y;
+   //m_exit->move(pos_x, pos_y);
+   cornerWidget->move(pos_x, pos_y);
+   
+   
+   
+   //m_exit->setIcon(QIcon(":/Resources/exit.png"));
+   //m_exit->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Maximum);
+   //tabWidget->setCornerWidget(m_exit);
+   
+   
+   
    main->addWidget( tabWidget );
 
    
@@ -330,10 +394,10 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    
    connect( tabWidget, SIGNAL( currentChanged( int ) ), this, SLOT( initPanels( int ) ) );
 
-   QPushButton* pb_close_program = us_pushbutton( tr( "CLOSE PROGRAM"));
-   pb_close_program->setStyleSheet( "QPushButton { background: red; color: lightgray; min-height: 20 } QPushButton::hover {  background-color: #9E0606; color: white } ");
-   connect( pb_close_program, SIGNAL( clicked() ), this, SLOT( close()  ) );
-   main->addWidget( pb_close_program );
+   // QPushButton* pb_close_program = us_pushbutton( tr( "CLOSE PROGRAM"));
+   // pb_close_program->setStyleSheet( "QPushButton { background: red; color: lightgray; min-height: 20 } QPushButton::hover {  background-color: #9E0606; color: white } ");
+   // connect( pb_close_program, SIGNAL( clicked() ), this, SLOT( close()  ) );
+   // main->addWidget( pb_close_program );
 
    
       
@@ -2719,44 +2783,3 @@ void US_ReportGui::do_report( QMap < QString, QString > & protocol_details )
 
 
 
-
-// ExitGui
-US_ExitGui::US_ExitGui( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
-{
-   mainw               = (US_ComProjectMain*)topw;
-
-   setPalette( US_GuiSettings::frameColor() );
-   QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
-   QFontMetrics fmet( sfont );
-   //int fwid     = fmet.maxWidth();
-   //int lwid     = fwid * 4;
-   //int swid     = lwid + fwid;
-   
-   // Main VBox
-   QVBoxLayout* main     = new QVBoxLayout (this);
-   main->setSpacing        ( 2 );
-   main->setContentsMargins( 2, 2, 2, 2 );
-      
-   QGridLayout* genL   = new QGridLayout();
-
-   // // //QPlainTextEdit* panel_desc = new QPlainTextEdit(this);
-   // QTextEdit* panel_desc = new QTextEdit(this);
-   // panel_desc->viewport()->setAutoFillBackground(false);
-   // panel_desc->setFrameStyle(QFrame::NoFrame);
-   // panel_desc->setPlainText(" Tab to Generate Report...  ---UNDER CONSTRUCTION--- ");
-   // panel_desc->setReadOnly(true);
-   // //panel_desc->setMaximumHeight(30);
-   // QFontMetrics m (panel_desc -> font()) ;
-   // int RowHeight = m.lineSpacing() ;
-   // panel_desc -> setFixedHeight  (2* RowHeight) ;
-
-   // int row = 0;
-   // genL->addWidget( panel_desc,  row++,   0, 1, 12);
- 
-   // assemble main
-   main->addLayout(genL);
-   main->addStretch();
-
- 
-}
