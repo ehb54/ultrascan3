@@ -94,6 +94,8 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    epanPostProd        = new US_PostProdGui( this );
    // epanAnalysis        = new US_AnalysisGui( this );
    // epanReport          = new US_ReportGui  ( this );
+
+   //epanExit            = new US_ExitGui( this ); 
    
    //   statflag            = 0;
 
@@ -104,6 +106,12 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    tabWidget->addTab( epanPostProd,  tr( "3: LIMS Import"  ) );
    // tabWidget->addTab( epanAnalysis,  tr( "4: Analysis"  ) );
    // tabWidget->addTab( epanReport,    tr( "5: Report"  ) );
+
+   
+   //tabWidget->addTab( epanExit,  tr( "Close Program"  ) );
+   // QPushButton *b1 = new QPushButton("Close");
+   // connect( b1, SIGNAL( clicked() ), this, SLOT( close()  ) );
+   // tabWidget->addTab( b1,      tr( "Close"   ) );
    
    tabWidget->setCurrentIndex( curr_panx );
    tabWidget->tabBar()->setFixedHeight(500);
@@ -132,7 +140,9 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    //tabWidget->tabBar()->setStyleSheet( "QTabBar::tab {min-width: 70;} QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:hover {background: lightgray;} QTabBar::tab:first {background: blue; color: lightgray; min-width: 50;}  QTabBar::tab:first:hover {background: #4169E1; color: white}  QTabBar::tab:disabled { color: rgba(0, 0, 0, 70%) } ");
 
    //no hoover
-   tabWidget->tabBar()->setStyleSheet( "QTabBar::tab {min-width: 70;} QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:first {background: blue; color: lightgray; min-width: 50;}  QTabBar::tab:first:hover {background: #4169E1; color: white}  QTabBar::tab:disabled { color: rgba(0, 0, 0, 70%) } ");
+   tabWidget->tabBar()->setStyleSheet( "QTabBar::tab {min-width: 70;} QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:first {background: blue; color: lightgray; min-width: 50;}  QTabBar::tab:first:hover {background: #4169E1; color: white}   QTabBar::tab:disabled { color: rgba(0, 0, 0, 70%) } ");
+   //tabWidget->tabBar()->setStyleSheet( "QTabBar::tab {min-width: 70;} QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:first {background: blue; color: lightgray; min-width: 50;}  QTabBar::tab:first:hover {background: #4169E1; color: white}  QTabBar::tab:last {background: blue; color: lightgray; min-width: 50;}  QTabBar::tab:last:hover {background: #4169E1; color: white} QTabBar::tab:disabled { color: rgba(0, 0, 0, 70%) } ");
+
    
    main->addWidget( tabWidget );
 
@@ -146,6 +156,12 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
      }
 
    connect( tabWidget, SIGNAL( currentChanged( int ) ), this, SLOT( initPanels( int ) ) );
+
+   QPushButton* pb_close_program = us_pushbutton( tr( "CLOSE PROGRAM"));
+   pb_close_program->setStyleSheet( "QPushButton { background: red; color: lightgray; min-height: 20 } QPushButton::hover {  background-color: #9E0606; color: white } ");
+   connect( pb_close_program, SIGNAL( clicked() ), this, SLOT( close()  ) );
+   main->addWidget( pb_close_program );
+
 
    logWidget = us_textedit();
    logWidget->setMaximumHeight(30);
@@ -262,6 +278,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    epanEditing         = new US_EditingGui ( this );
    epanAnalysis        = new US_AnalysisGui( this );
    epanReport          = new US_ReportGui  ( this );
+   //epanExit            = new US_ExitGui    ( this );
    
    //   statflag            = 0;
 
@@ -273,6 +290,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    tabWidget->addTab( epanEditing,   tr( "4: Editing"  ) );
    tabWidget->addTab( epanAnalysis,  tr( "5: Analysis"  ) );
    tabWidget->addTab( epanReport,    tr( "6: Report"  ) );
+   //tabWidget->addTab( epanExit,      tr( "Close Program"  ) );
    
    tabWidget->setCurrentIndex( curr_panx );
    tabWidget->tabBar()->setFixedHeight(500);
@@ -311,9 +329,16 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
      }
    
    connect( tabWidget, SIGNAL( currentChanged( int ) ), this, SLOT( initPanels( int ) ) );
+
+   QPushButton* pb_close_program = us_pushbutton( tr( "CLOSE PROGRAM"));
+   pb_close_program->setStyleSheet( "QPushButton { background: red; color: lightgray; min-height: 20 } QPushButton::hover {  background-color: #9E0606; color: white } ");
+   connect( pb_close_program, SIGNAL( clicked() ), this, SLOT( close()  ) );
+   main->addWidget( pb_close_program );
+
+   
       
    logWidget = us_textedit();
-   logWidget->setMaximumHeight(30);
+   logWidget->setMaximumHeight(15);
    logWidget->setReadOnly(true);
    logWidget->append("Log comes here...");
    logWidget->verticalScrollBar()->setValue(logWidget->verticalScrollBar()->maximum());
@@ -2688,4 +2713,50 @@ void US_ReportGui::resizeEvent(QResizeEvent *event)
 void US_ReportGui::do_report( QMap < QString, QString > & protocol_details )
 {
   emit start_report( protocol_details );
+}
+
+
+
+
+
+
+// ExitGui
+US_ExitGui::US_ExitGui( QWidget* topw )
+   : US_WidgetsDialog( topw, 0 )
+{
+   mainw               = (US_ComProjectMain*)topw;
+
+   setPalette( US_GuiSettings::frameColor() );
+   QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
+   QFontMetrics fmet( sfont );
+   //int fwid     = fmet.maxWidth();
+   //int lwid     = fwid * 4;
+   //int swid     = lwid + fwid;
+   
+   // Main VBox
+   QVBoxLayout* main     = new QVBoxLayout (this);
+   main->setSpacing        ( 2 );
+   main->setContentsMargins( 2, 2, 2, 2 );
+      
+   QGridLayout* genL   = new QGridLayout();
+
+   // // //QPlainTextEdit* panel_desc = new QPlainTextEdit(this);
+   // QTextEdit* panel_desc = new QTextEdit(this);
+   // panel_desc->viewport()->setAutoFillBackground(false);
+   // panel_desc->setFrameStyle(QFrame::NoFrame);
+   // panel_desc->setPlainText(" Tab to Generate Report...  ---UNDER CONSTRUCTION--- ");
+   // panel_desc->setReadOnly(true);
+   // //panel_desc->setMaximumHeight(30);
+   // QFontMetrics m (panel_desc -> font()) ;
+   // int RowHeight = m.lineSpacing() ;
+   // panel_desc -> setFixedHeight  (2* RowHeight) ;
+
+   // int row = 0;
+   // genL->addWidget( panel_desc,  row++,   0, 1, 12);
+ 
+   // assemble main
+   main->addLayout(genL);
+   main->addStretch();
+
+ 
 }
