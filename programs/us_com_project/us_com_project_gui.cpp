@@ -119,6 +119,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    
    tabWidget->setCurrentIndex( curr_panx );
    tabWidget->tabBar()->setFixedHeight(500);
+   tabWidget->tabBar()->setFixedWidth(200);
    
    //icon_path = std::getenv("ULTRASCAN");
    //qDebug() << "Path is: " << icon_path;
@@ -147,31 +148,35 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    tabWidget->tabBar()->setStyleSheet( "QTabBar::tab {min-width: 70;} QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:first {background: blue; color: lightgray; min-width: 50;}  QTabBar::tab:first:hover {background: #4169E1; color: white}   QTabBar::tab:disabled { color: rgba(0, 0, 0, 70%) } ");
    //tabWidget->tabBar()->setStyleSheet( "QTabBar::tab {min-width: 70;} QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:first {background: blue; color: lightgray; min-width: 50;}  QTabBar::tab:first:hover {background: #4169E1; color: white}  QTabBar::tab:last {background: blue; color: lightgray; min-width: 50;}  QTabBar::tab:last:hover {background: #4169E1; color: white} QTabBar::tab:disabled { color: rgba(0, 0, 0, 70%) } ");
 
-      //Close & Help
+
+   //Close & Help
    auto *cornerWidget = new QWidget(tabWidget);
    auto *hbox = new QVBoxLayout(cornerWidget);
-   auto *m_help = new QPushButton(tr("Help"), this);
-   auto *m_exit = new QPushButton(tr("Exit"), this);
+   auto *m_help = us_pushbutton( tr( "Help" ) );
+   auto *m_exit = us_pushbutton( tr( "Exit" ) );
    connect( m_exit, SIGNAL( clicked() ), this, SLOT( close()  ) );
    //connect( m_help, SIGNAL( clicked() ), this, SLOT( help_m()  ) );
    
    hbox->addWidget(m_help);
    hbox->addWidget(m_exit);
+   hbox->setSpacing(2);
    hbox->setContentsMargins(2, 2, 2, 2);
-   
-   //QPushButton* m_exit = new QPushButton(tabWidget);
-   //m_exit->setText("Close");
 
+   cornerWidget->setFixedWidth( tabWidget->tabBar()->width() - 8 );
+   //hbox->setStretch(0,1);
+ 
    qDebug() << "ACAD:TabWidget position: " << tabWidget->x() << tabWidget->y();
    qDebug() << "ACAD:TabWidget size    : " << tabWidget->width() << tabWidget->height();
    qDebug() << "ACAD:TabWidget->tabBar position: " << tabWidget->tabBar()->x() << tabWidget->tabBar()->y();
    qDebug() << "ACAD:TabWidget->tabBar size    : " << tabWidget->tabBar()->width() << tabWidget->tabBar()->height();
-   int pos_x = (tabWidget->tabBar()->width())/2;
+   //int pos_x = (tabWidget->tabBar()->width());
+   int pos_x = tabWidget->tabBar()->x();
    int pos_y = (tabWidget->tabBar()->height())*1.12;
    qDebug() << "pos_x, pos_y: " << pos_x << pos_y;
    //m_exit->move(pos_x, pos_y);
    cornerWidget->move(pos_x, pos_y);
-   // End Close & Help
+   // End of Help & Exit
+
    
    main->addWidget( tabWidget );
 
@@ -324,7 +329,8 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    
    tabWidget->setCurrentIndex( curr_panx );
    tabWidget->tabBar()->setFixedHeight(500);
-   
+   tabWidget->tabBar()->setFixedWidth(200);
+
    //icon_path = std::getenv("ULTRASCAN");
    //qDebug() << "Path is: " << icon_path;
    //icon_path.append("/etc/"); 
@@ -342,44 +348,37 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
 
    tabWidget->tabBar()->setIconSize(QSize(50,50));
 
-   //tabWidget->tabBar()->setStyleSheet( "QTabBar::tab {min-width: 70;} QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:hover {background: lightgray;} QTabBar::tab:first {background: blue; color: lightgray; min-width: 50;}  QTabBar::tab:first:hover {background: #4169E1; color: white}  QTabBar::tab:disabled { color: rgba(0, 0, 0, 70%)  } ");
-
    //no hoover
    tabWidget->tabBar()->setStyleSheet( "QTabBar::tab {min-width: 70;} QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:first {background: blue; color: lightgray; min-width: 50;}  QTabBar::tab:first:hover {background: #4169E1; color: white}  QTabBar::tab:disabled { color: rgba(0, 0, 0, 70%)  } ");
 
    //Close & Help
    auto *cornerWidget = new QWidget(tabWidget);
    auto *hbox = new QVBoxLayout(cornerWidget);
-   auto *m_help = new QPushButton(tr("Help"), this);
-   auto *m_exit = new QPushButton(tr("Exit"), this);
+   auto *m_help = us_pushbutton( tr( "Help" ) );
+   auto *m_exit = us_pushbutton( tr( "Exit" ) );
    connect( m_exit, SIGNAL( clicked() ), this, SLOT( close()  ) );
    //connect( m_help, SIGNAL( clicked() ), this, SLOT( help_m()  ) );
    
    hbox->addWidget(m_help);
    hbox->addWidget(m_exit);
+   hbox->setSpacing(2);
    hbox->setContentsMargins(2, 2, 2, 2);
-   
-   //QPushButton* m_exit = new QPushButton(tabWidget);
-   //m_exit->setText("Close");
 
+   cornerWidget->setFixedWidth( tabWidget->tabBar()->width() - 8 );
+   //hbox->setStretch(0,1);
+ 
    qDebug() << "TabWidget position: " << tabWidget->x() << tabWidget->y();
    qDebug() << "TabWidget size    : " << tabWidget->width() << tabWidget->height();
    qDebug() << "TabWidget->tabBar position: " << tabWidget->tabBar()->x() << tabWidget->tabBar()->y();
    qDebug() << "TabWidget->tabBar size    : " << tabWidget->tabBar()->width() << tabWidget->tabBar()->height();
-   int pos_x = (tabWidget->tabBar()->width())/2;
+   //int pos_x = (tabWidget->tabBar()->width());
+   int pos_x = tabWidget->tabBar()->x();
    int pos_y = (tabWidget->tabBar()->height())*1.12;
    qDebug() << "pos_x, pos_y: " << pos_x << pos_y;
    //m_exit->move(pos_x, pos_y);
    cornerWidget->move(pos_x, pos_y);
-   
-   
-   
-   //m_exit->setIcon(QIcon(":/Resources/exit.png"));
-   //m_exit->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Maximum);
-   //tabWidget->setCornerWidget(m_exit);
-   
-   
-   
+   // End of Help & Exit
+     
    main->addWidget( tabWidget );
 
    
