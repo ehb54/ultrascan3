@@ -23,5 +23,10 @@ US_ReportGMP::US_ReportGMP()
   initItem.total_percent    = 0.58;
 
   reportItems.push_back( initItem );
+
+  //Main params
+  tot_conc     = 5;
+  rmsd_limit   = 0.001;
+  av_intensity = 10;
 }
  

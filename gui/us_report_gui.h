@@ -30,20 +30,28 @@ class US_ReportGui: public US_Widgets
    private:
       int row;
       QVBoxLayout* main;
+      QGridLayout* params;
       QGridLayout* genL;
       QScrollArea* scrollArea;
       QWidget*     containerWidget;
+      QGridLayout* addRem_buttons;
       QHBoxLayout* lower_buttons;
 
+      QLineEdit*   le_tot_conc;
+      QLineEdit*   le_rmsd_limit;
+      QLineEdit*   le_av_intensity;
+
       QPushButton*  pb_addRow;
+      QPushButton*  pb_removeRow;
       QPushButton*  pb_cancel;
       QPushButton*  pb_accept;
 
       void build_report_layout( void );
-      
+
    private slots:
      void update_report( void );
      void add_row( void );
+     void remove_row( void );
      
    public slots:
 };

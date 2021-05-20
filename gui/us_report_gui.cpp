@@ -27,16 +27,48 @@ US_ReportGui::US_ReportGui( US_ReportGMP *tmp_report ) : US_Widgets()
   main->setSpacing( 2 );
   main->setContentsMargins( 2, 2, 2, 2 );
 
-  //Bunner
-  QLabel* bn_report     = us_banner( tr( "Report Parameters" ) );
+  //Top level parameters
+  QLabel* bn_report     = us_banner( tr( "Main Report Parameters" ) );
   bn_report->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
-
   main->addWidget( bn_report );
 
-  //Main Table
-  genL          = NULL;
-  lower_buttons = NULL;
+  params    =  new QGridLayout();
+  params    ->setSpacing         ( 2 );
+  params    ->setContentsMargins ( 2, 2, 2, 2 );
+
+  QLabel* lb_tot_conc       = us_label( tr( "Total Concentration" ) );
+  QLabel* lb_rmsd_limit     = us_label( tr( "RMSD (upper limit)" ) );
+  QLabel* lb_av_intensity   = us_label( tr( "Average Intensity" ) );
+
+  le_tot_conc      = us_lineedit( QString::number(report->tot_conc),   0, false  );
+  le_rmsd_limit    = us_lineedit( QString::number(report->rmsd_limit), 0, false  );
+  le_av_intensity  = us_lineedit( QString::number(report->av_intensity),  0, false  );
+
+  row = 0;
+  params->addWidget( lb_tot_conc,       row,    0, 1, 2 );
+  params->addWidget( le_tot_conc,       row,    3, 1, 2 );
+  params->addWidget( lb_rmsd_limit,     row,    5, 1, 2 );
+  params->addWidget( le_rmsd_limit,     row,    7, 1, 2 );
+  params->addWidget( lb_av_intensity,   row,    9, 1, 2 );
+  params->addWidget( le_av_intensity,   row++,    13, 1, 2 );
+ 
+  // int ihgt        = le_tot_conc->height();
+  // QSpacerItem* spacer1 = new QSpacerItem( 20, 0.75*ihgt, QSizePolicy::Expanding );
+  // params->setRowStretch( row, 1 );
+  // params->addItem( spacer1,  row++,  0, 1, 1 );
+
+  main->addLayout( params );
   
+  //Banner for Table
+  QLabel* bn_report_t     = us_banner( tr( "Report Parameters: Type | Method" ) );
+  bn_report_t->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+  main->addWidget( bn_report_t );
+
+  //Main Table
+  genL           = NULL;
+  addRem_buttons = NULL;
+  lower_buttons  = NULL;
+   
   build_report_layout();
 
 }
@@ -55,6 +87,7 @@ void US_ReportGui::build_report_layout( void )
 	  delete item;
 	}
       delete genL;
+      delete scrollArea;
     }
   //End cleaning layout
   
@@ -73,7 +106,7 @@ void US_ReportGui::build_report_layout( void )
   QLabel* lb_intval  = us_label( tr( "Integration Value" ) );
   QLabel* lb_tol     = us_label( tr( "Tolerance (%)" ) );
   QLabel* lb_total   = us_label( tr( "Fraction of Total (%)" ) );
-
+    
   row = 0;
   genL->addWidget( lb_type,   row,    0, 1, 2 );
   genL->addWidget( lb_method, row,    3, 1, 2 );
@@ -81,7 +114,7 @@ void US_ReportGui::build_report_layout( void )
   genL->addWidget( lb_high,   row,    7, 1, 2 );
   genL->addWidget( lb_intval, row,    9, 1, 2 );
   genL->addWidget( lb_tol,    row,    11, 1, 2 );
-  genL->addWidget( lb_total,  row++,  13, 1, 2 );
+  genL->addWidget( lb_total,  row++,    13, 1, 2 );
   //End of table header
   
   QComboBox* cb_type;  
@@ -97,7 +130,7 @@ void US_ReportGui::build_report_layout( void )
   QLineEdit* le_intval; 
   QLineEdit* le_tol;    
   QLineEdit* le_total;
-  
+    
 
   for ( int ii = 0; ii < r_item_num; ii++ )
     {
@@ -125,7 +158,6 @@ void US_ReportGui::build_report_layout( void )
       le_tol        = us_lineedit( QString::number(curr_item.tolerance), 0, false  );
       le_total      = us_lineedit( QString::number(curr_item.total_percent), 0, false  );
 
-
       genL->addWidget( cb_type,   row,    0, 1, 2 );
       genL->addWidget( cb_method, row,    3, 1, 2 );
       genL->addWidget( le_low,    row,    5, 1, 2 );
@@ -133,31 +165,66 @@ void US_ReportGui::build_report_layout( void )
       genL->addWidget( le_intval, row,    9, 1, 2 );
       genL->addWidget( le_tol,    row,    11, 1, 2 );
       genL->addWidget( le_total,  row++,  13, 1, 2 );
-      
     }
   
   int ihgt        = le_low->height();
-  QSpacerItem* spacer1 = new QSpacerItem( 20, 1.25*ihgt );
+  QSpacerItem* spacer2 = new QSpacerItem( 20, 1*ihgt, QSizePolicy::Expanding);
   genL->setRowStretch( row, 1 );
-  genL->addItem( spacer1,  row++,  0, 1, 1 );
+  genL->addItem( spacer2,  row++,  0, 1, 1 );
 
-  //Add new row button
-  pb_addRow = us_pushbutton( tr( "Add New Row" ) );
+  // //Add new row button && Remove Row(s) button
+  // pb_addRow     = us_pushbutton( tr( "Add New Row" ) );
+  // connect( pb_addRow, SIGNAL( clicked() ), this, SLOT( add_row()  ) );
+
+  // pb_removeRow  = us_pushbutton( tr( "Remove Last Row" ) );
+  // connect( pb_removeRow, SIGNAL( clicked() ), this, SLOT( remove_row()  ) );
+  // if (  report->reportItems.size() < 2 )
+  //   pb_removeRow->setEnabled( false );
+    
+  // genL->addWidget( pb_removeRow, row,  11, 1, 2 );
+  // genL->addWidget( pb_addRow,    row,  13, 1, 2 );
+
+  //add Scroll Area to genL
+  scrollArea      = new QScrollArea;
+  containerWidget = new QWidget;
+  containerWidget->setLayout( genL );
+  scrollArea     ->setVerticalScrollBarPolicy( Qt::ScrollBarAsNeeded );
+  scrollArea     ->setWidgetResizable( true );
+  scrollArea     ->setWidget( containerWidget );
+  main->addWidget( scrollArea );
+
+  //main->addLayout( genL );
+
+  //Build | Re-build Add/Remove buttons layout
+  qDebug() << "Building Add|Remove Buttons Layout -- ";
+  //Clean layout first:
+  if ( addRem_buttons != NULL && addRem_buttons->layout() != NULL )
+    {
+      QLayoutItem* item;
+      while ( ( item = addRem_buttons->layout()->takeAt( 0 ) ) != NULL )
+	{
+	  delete item->widget();
+	  delete item;
+	}
+      delete addRem_buttons;
+    }
+  
+  addRem_buttons     = new QGridLayout();
+  
+  pb_addRow     = us_pushbutton( tr( "Add New Row" ) );
   connect( pb_addRow, SIGNAL( clicked() ), this, SLOT( add_row()  ) );
-  genL->addWidget( pb_addRow,  row++,  13, 1, 2 );
 
-  // //add Scroll Area to genL
-  // scrollArea      = new QScrollArea( this );
-  // containerWidget = new QWidget;
-  // containerWidget->setLayout( genL );
-  // scrollArea     ->setVerticalScrollBarPolicy( Qt::ScrollBarAsNeeded );
-  // scrollArea     ->setWidgetResizable( true );
-  // scrollArea     ->setWidget( containerWidget );
-  // main->addWidget( scrollArea );
+  pb_removeRow  = us_pushbutton( tr( "Remove Last Row" ) );
+  connect( pb_removeRow, SIGNAL( clicked() ), this, SLOT( remove_row()  ) );
+  if (  report->reportItems.size() < 2 )
+    pb_removeRow->setEnabled( false );
+  
+  addRem_buttons->addWidget( pb_removeRow, row,  11, 1, 2 );
+  addRem_buttons->addWidget( pb_addRow,    row,  13, 1, 2 );
 
-  main->addLayout( genL );
-
-
+  main->addLayout( addRem_buttons );
+   
+  
   //Build | Re-build Lower buttons layout
   qDebug() << "Building Lower Buttons Layout -- ";
   //Clean genL layout first:
@@ -185,8 +252,8 @@ void US_ReportGui::build_report_layout( void )
    
   main->addLayout( lower_buttons );
 
-  // setMinimumSize( 950, 450 );
-  // adjustSize();
+  setMinimumSize( 850, 450 );
+  //adjustSize();
 
 }
 
@@ -212,7 +279,17 @@ void US_ReportGui::add_row( void )
   
   report->reportItems.push_back( initItem );
 
-
-
+  //re-build genL layout
   build_report_layout( );
 }
+
+//Slot to remove rows
+void US_ReportGui::remove_row( void )
+{
+  report->reportItems.removeLast();
+  
+  //re-build genL layout
+  build_report_layout( );
+}
+
+

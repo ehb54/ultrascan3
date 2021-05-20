@@ -30,6 +30,13 @@ class US_UTIL_EXTERN US_ReportGMP
 
       QVector< ReportItem > reportItems; 
 
+      //Main parameters set manually in reference reports
+      double tot_conc;
+      double rmsd_limit;
+      double av_intensity;
+
+      //Rest of parameters followign from protocol
+      
       
     private:
       
