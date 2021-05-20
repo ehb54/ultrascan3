@@ -93,7 +93,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    epanObserv          = new US_ObservGui  ( this );
    epanPostProd        = new US_PostProdGui( this );
    // epanAnalysis        = new US_AnalysisGui( this );
-   // epanReport          = new US_ReportGui  ( this );
+   // epanReport          = new US_ReportStageGui  ( this );
    
    //   statflag            = 0;
 
@@ -161,7 +161,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    hbox->setSpacing(1);
    hbox->setContentsMargins(1, 1, 1, 1);
 
-   cornerWidget->setFixedWidth( tabWidget->tabBar()->width() - 20 );
+   //cornerWidget->setFixedWidth( tabWidget->tabBar()->width() - 20 );
    //hbox->setStretch(0,1);
  
    qDebug() << "ACAD:TabWidget position: " << tabWidget->x() << tabWidget->y();
@@ -169,7 +169,8 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    qDebug() << "ACAD:TabWidget->tabBar position: " << tabWidget->tabBar()->x() << tabWidget->tabBar()->y();
    qDebug() << "ACAD:TabWidget->tabBar size    : " << tabWidget->tabBar()->width() << tabWidget->tabBar()->height();
    //int pos_x = (tabWidget->tabBar()->width());
-   int pos_x = tabWidget->tabBar()->x();
+   //int pos_x = tabWidget->tabBar()->x();
+   int pos_x = (tabWidget->tabBar()->width())/4;
    int pos_y = (tabWidget->tabBar()->height())*1.12;
    qDebug() << "pos_x, pos_y: " << pos_x << pos_y;
    //m_exit->move(pos_x, pos_y);
@@ -310,7 +311,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    epanPostProd        = new US_PostProdGui( this );
    epanEditing         = new US_EditingGui ( this );
    epanAnalysis        = new US_AnalysisGui( this );
-   epanReport          = new US_ReportGui  ( this );
+   epanReport          = new US_ReportStageGui  ( this );
       
    //   statflag            = 0;
 
@@ -363,7 +364,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    hbox->setSpacing(1);
    hbox->setContentsMargins(1, 1, 1, 1);
 
-   cornerWidget->setFixedWidth( tabWidget->tabBar()->width() - 20 );
+   //cornerWidget->setFixedWidth( tabWidget->tabBar()->width() - 20 );
    //hbox->setStretch(0,1);
  
    qDebug() << "TabWidget position: " << tabWidget->x() << tabWidget->y();
@@ -371,7 +372,8 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    qDebug() << "TabWidget->tabBar position: " << tabWidget->tabBar()->x() << tabWidget->tabBar()->y();
    qDebug() << "TabWidget->tabBar size    : " << tabWidget->tabBar()->width() << tabWidget->tabBar()->height();
    //int pos_x = (tabWidget->tabBar()->width());
-   int pos_x = tabWidget->tabBar()->x();
+   //int pos_x = tabWidget->tabBar()->x();
+   int pos_x = (tabWidget->tabBar()->width())/4;
    int pos_y = (tabWidget->tabBar()->height())*1.12;
    qDebug() << "pos_x, pos_y: " << pos_x << pos_y;
    //m_exit->move(pos_x, pos_y);
@@ -2687,8 +2689,8 @@ void US_AnalysisGui::to_initAutoflow( void )
 
 
 // US_Report
-US_ReportGui::US_ReportGui( QWidget* topw )
-   : US_WidgetsDialog( topw, 0 )
+US_ReportStageGui::US_ReportStageGui( QWidget* topw )
+  : US_WidgetsDialog( topw, 0 )
 {
    mainw               = (US_ComProjectMain*)topw;
 
@@ -2744,7 +2746,7 @@ US_ReportGui::US_ReportGui( QWidget* topw )
 
 }
 
-void US_ReportGui::resizeEvent(QResizeEvent *event)
+void US_ReportStageGui::resizeEvent(QResizeEvent *event)
 {
     int tab_width = mainw->tabWidget->tabBar()->width();
     int upper_height = mainw->gen_banner->height() + //mainw->welcome->height()
@@ -2774,7 +2776,7 @@ void US_ReportGui::resizeEvent(QResizeEvent *event)
     QWidget::resizeEvent(event);
 }
 
-void US_ReportGui::do_report( QMap < QString, QString > & protocol_details )
+void US_ReportStageGui::do_report( QMap < QString, QString > & protocol_details )
 {
   emit start_report( protocol_details );
 }

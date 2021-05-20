@@ -3055,6 +3055,9 @@ void US_Edit::read_centerpiece_names_from_protocol()
 	{
 	  QString ename   = xmli.name().toString();
 
+	  // if( ename == "rotor" )                <-- HERE retrieve operID
+	  //   readProtocolRotor_auto( xmli );
+
 	  if ( ename == "cells" )
 	    readProtocolCells_auto( xmli );
 

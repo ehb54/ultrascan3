@@ -530,6 +530,8 @@ void US_ExperGuiGeneral::check_user_level()
    usr_enab       = false;
    int inv_lev    = US_Settings::us_inv_level();
 
+   qDebug() << "IN check_user_level(): inv_lev -- " << inv_lev; 
+
    if ( inv_lev > 2 )
    {  // All admin users and above are enabled
       usr_enab       = true;

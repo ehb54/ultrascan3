@@ -35,6 +35,10 @@ US_AnaProfile::US_AnaProfile()
    //QList< double > wvl = { 280 };
    QList< double > wvl = { 1 };
    ch_wvls[ chndescs[0] ] = wvl;
+
+   //Reports
+   US_ReportGMP report; 
+   ch_reports[ chndescs[0] ] = report;
 }
 
 // AnaProfile Equality operator

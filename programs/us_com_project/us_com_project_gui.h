@@ -46,7 +46,8 @@
 #include "us_license_t.h"
 #include "us_license.h"
 #include "us_local_server.h"
-
+#include "us_report_gmp.h"
+#include "us_report_gui.h"
 
 
 class US_ComProjectMain;
@@ -325,13 +326,13 @@ class US_AnalysisGui : public US_WidgetsDialog
 
 
 //! \brief Report panel
-class US_ReportGui : public US_WidgetsDialog 
+class US_ReportStageGui : public US_WidgetsDialog 
 {
   Q_OBJECT
   
   public:
-    US_ReportGui( QWidget* );
-    ~US_ReportGui() {};
+    US_ReportStageGui( QWidget* );
+    ~US_ReportStageGui() {};
   
      US_Reports_auto*     sdiag;
      
@@ -398,12 +399,12 @@ class US_ComProjectMain : public US_Widgets
     
  private:
   US_InitDialogueGui*  epanInit;     // US_Init panel
-  US_ExperGui*      epanExp;         // US_Exp panel
-  US_ObservGui*     epanObserv;      // US_Observ panel
-  US_PostProdGui*   epanPostProd;    // US_PostProd panel
-  US_EditingGui*    epanEditing;     // US_Editing panel
-  US_AnalysisGui*   epanAnalysis;    // US_Analysis panel
-  US_ReportGui*     epanReport;      // US_Report panel
+  US_ExperGui*         epanExp;         // US_Exp panel
+  US_ObservGui*        epanObserv;      // US_Observ panel
+  US_PostProdGui*      epanPostProd;    // US_PostProd panel
+  US_EditingGui*       epanEditing;     // US_Editing panel
+  US_AnalysisGui*      epanAnalysis;    // US_Analysis panel
+  US_ReportStageGui*   epanReport;      // US_Report panel
     
   //int         statflag;        // Composite panels status flag
   //int         dbg_level;       // Debug print flag

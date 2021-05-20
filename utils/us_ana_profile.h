@@ -6,6 +6,8 @@
 #include "us_extern.h"
 #include "us_db2.h"
 
+#include "us_report_gmp.h"
+
 //! A class to define a Ana Profile object for US_AnalysisProfileGui and
 //!  related classes
 class US_UTIL_EXTERN US_AnaProfile
@@ -207,6 +209,11 @@ class US_UTIL_EXTERN US_AnaProfile
       QList< QString > wvl_not_run; 
       
       QMap< QString, QList< double > > ch_wvls;
+
+
+      //--- REPORT_GMP -----------------------------------------------//
+      QMap< QString, US_ReportGMP > ch_reports; 
+      
    private:
 };
 #endif

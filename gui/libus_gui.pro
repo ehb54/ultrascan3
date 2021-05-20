@@ -61,6 +61,7 @@ HEADERS      = \
                us_project_gui.h         \
                us_properties.h          \
                us_resids_bitmap.h       \
+               us_report_gui.h          \
                us_rotor_gui.h           \
                us_run_details2.h        \
                us_sassoc.h              \
@@ -112,6 +113,7 @@ SOURCES      = \
                us_project_gui.cpp         \
                us_properties.cpp          \
                us_resids_bitmap.cpp       \
+               us_report_gui.cpp          \
                us_rotor_gui.cpp           \
                us_run_details2.cpp        \
                us_sassoc.cpp              \

@@ -16,6 +16,10 @@
 #include "us_passwd.h"
 #include "us_db2.h"
 #include "us_select_runs.h"
+
+#include "us_report_gmp.h"
+#include "us_report_gui.h"
+
 //#include "us_license_t.h"
 //#include "us_license.h"
 
@@ -64,6 +68,9 @@ class US_AnaprofPanGen : public US_WidgetsDialog
    private:
       US_AnalysisProfileGui* mainw;   // Parent to all panels
       US_AnaProfile*    currProf;     // Current AnaProfile controls
+
+      // US_ReportGMP*     reportGMP;
+      US_ReportGui*     reportGui;
       
       US_Help  showHelp;
 
@@ -95,6 +102,7 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       QList< QLineEdit* >    le_daends;
 
       QList< QCheckBox* >    ck_runs;
+      QList< QPushButton * > pb_reports;
       QList< QCheckBox* >    ck_mwv;
       QList< QScrollArea* >  gr_mwvbox;
       int row_global;
@@ -107,6 +115,7 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       void  build_general_layout( void );
 
       void  runChecked( bool );
+      void  setReport( void );
       void  mwvChecked( bool );
 
       void  rbEditClicked( QString );

@@ -6,6 +6,7 @@
 #include "us_datafiles.h"
 #include "us_sleep.h"
 #include "us_util.h"
+#include "us_report_gmp.h"
 
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c)  setData(a,b,c)
@@ -164,6 +165,9 @@ void US_AnalysisProfileGui::inherit_protocol( US_RunProtocol* iProto )
 DbgLv(1) << "APG00: ipro: kchn nchs ncho" << kchn << nchs << ncho;
 
    currProf.ch_wvls.clear();
+   //Do we need to clear ch_reports() QMap here ?
+   currProf.ch_reports.clear();
+   
 
    if ( nchs < 1  ||  ncho < 1 )
      return;
@@ -243,6 +247,9 @@ DbgLv(1) << "APG: ipro:  o.ii" << ii << "chname" << chname
 	      qDebug() << " wvls -- " << wvls;
 	    }
 	}
+
+      //ALEXEY: also US_ReportGMP (blank/default for now)
+      US_ReportGMP reportGMP = US_ReportGMP();
       
       for ( int jj = 0; jj < ods.count(); jj++ )
       {  // Create a channel entry for each optics type of this channel
@@ -261,6 +268,9 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
          {  // Replace channel and channel description
             currProf.pchans  [ nchn ] = chname;
             currProf.chndescs[ nchn ] = chentr;
+
+	    //ALEXEY: insert ch_reports here
+	    currProf.ch_reports[ chentr_wvls ] = reportGMP;
 
 	    //ALEXEY: also ranges for each channel
 	    if ( opdesc.contains("vis.") )
@@ -293,6 +303,9 @@ DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
          {  // Append channel and channel description
             currProf.pchans   << chname;
             currProf.chndescs << chentr;
+
+	    //ALEXEY: insert ch_reports here
+	    currProf.ch_reports[ chentr_wvls ] = reportGMP;
 
 	    //ALEXEY: also ranges for each channel
 	    if ( opdesc.contains("vis.") )
@@ -770,7 +783,8 @@ DbgLv(1) << "APGe: bgL:    scrollArea children count ZERO";
    le_lvtols.clear();
    le_daends.clear();
 
-   ck_runs  .clear();
+   ck_runs    .clear();
+   pb_reports .clear();
 
    // Start building main layout
    int row         = 0;
@@ -801,6 +815,9 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
    QLabel* lb_lvtol  = us_label( tr( "+/- %\nToler." ) );
    QLabel* lb_daend  = us_label( tr( "Data End\n(cm)" ) );
    QLabel* lb_channelana  = us_label( tr( "Run" ) );
+   
+   QLabel* lb_report  = us_label( tr( "Report" ) );
+   
    QLabel* lb_mwvprefs    = us_label( tr( "MWL\nPrefs." ) );
            pb_applya = us_pushbutton( tr( "Apply to All" ) );
    lb_chann ->setObjectName( "Chann Label" );
@@ -835,13 +852,15 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
    genL->addWidget( lb_lvtol, row,    6, 2, 1 );
    genL->addWidget( lb_daend, row,    7, 2, 1 );
    genL->addWidget( lb_channelana, row,  8, 2, 1 );
-   genL->addWidget( lb_mwvprefs,   row++,9, 2, 1 ); row++;
+   genL->addWidget( lb_report, row,  9, 2, 1 );
+   genL->addWidget( lb_mwvprefs,   row++,10, 2, 1 ); row++;
    genL->setRowStretch( 0, 0 );
    genL->setRowStretch( 1, 0 );
 
 
    row_global = row;
    QCheckBox*     ck_analysisrun;
+   QPushButton*   pb_reportprefs;
    QCheckBox*     ck_mwvprefs;
 
 
@@ -919,12 +938,22 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       ck_runs << ck_analysisrun;
       //END of run checkbox seciton
 
+      //Report
+      pb_reportprefs = us_pushbutton( tr( "Report" ) );
+      pb_reportprefs ->setObjectName( strow + ": Report ," + schan );
+      genL->addWidget( pb_reportprefs,  row,  9, 1, 1, Qt::AlignHCenter );
+      connect( pb_reportprefs, SIGNAL( clicked     ( ) ),
+               this,        SLOT  ( setReport( ) ) );
+
+      pb_reports << pb_reportprefs;
+      //End of Report
+      
       //MWL prefs
       ck_mwvprefs = new QCheckBox( tr(""), this );
       ck_mwvprefs ->setAutoFillBackground( true );
       ck_mwvprefs ->setChecked( false );
       ck_mwvprefs ->setObjectName( strow + ": MWV" );
-      genL->addWidget( ck_mwvprefs,  row,  9, 1, 1, Qt::AlignHCenter );
+      genL->addWidget( ck_mwvprefs,  row,  10, 1, 1, Qt::AlignHCenter );
       connect( ck_mwvprefs, SIGNAL( toggled     ( bool ) ),
                this,        SLOT  ( mwvChecked( bool ) ) );
 
@@ -933,7 +962,7 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       
       if ( ii == 0 )
       {
-         genL->addWidget( pb_applya, row++, 10, 1, 2 );
+         genL->addWidget( pb_applya, row++, 11, 1, 2 );
          connect( pb_applya, SIGNAL( clicked       ( ) ),
                   this,      SLOT(   applied_to_all( ) ) );
       }
@@ -1273,9 +1302,26 @@ void US_AnaprofPanGen::runChecked( bool checked )
    QString mwv_oname = QString::number( irow ) + ": MWV";
    qDebug() << "mwv_oname -- " << mwv_oname;
 
-   //if not checked, disable MWV checkbox, and otherwise:
+   QString report_oname = QString::number( irow ) + ": Report";
+   qDebug() << "report_oname -- " << report_oname;
+
+   
+
+   //if not checked, disable Report btn && MWV checkbox, and otherwise:
    if ( !checked )
      {
+       //Report
+       for ( int i=0; i < pb_reports.size(); ++i )
+	 {
+	   if ( pb_reports[ i ]->objectName().contains( report_oname ) )
+	     {
+	       pb_reports[ i ] -> setEnabled( false );
+	       break;
+	     }
+	 }
+       
+       
+       //MWV
        for ( int i=0; i<ck_mwv.size(); ++i )
 	 {
 	   if ( ck_mwv[ i ]->objectName() == mwv_oname )
@@ -1289,6 +1335,17 @@ void US_AnaprofPanGen::runChecked( bool checked )
      }
    else
      {
+       //Report
+       for ( int i=0; i < pb_reports.size(); ++i )
+	 {
+	   if ( pb_reports[ i ]->objectName().contains( report_oname ) )
+	     {
+	       pb_reports[ i ] -> setEnabled( true );
+	       break;
+	     }
+	 }
+       
+       //MWV
        for ( int i=0; i<ck_mwv.size(); ++i )
 	 {
 	   if ( ck_mwv[ i ]->objectName() == mwv_oname )
@@ -1314,6 +1371,32 @@ void US_AnaprofPanGen::runChecked( bool checked )
      {
        emit set_tabs_buttons_inactive();
      }
+}
+
+//Report Btn clicked
+void US_AnaprofPanGen::setReport( void )
+{
+   QObject* sobj       = sender();      // Sender object
+   QString oname       = sobj->objectName();
+   int irow            = oname.section( ":", 0, 0 ).toInt();
+
+   QString channel_name = sl_chnsel[ irow ];
+
+   qDebug() << "Set Report: Clicked: " << channel_name;
+
+   qDebug() << "Report_oname -- " << oname;
+
+   //Find out channel desc
+   QString chan_desc = oname.section( ",", 1, 1 );
+   qDebug() << "Channel_desc -- " << chan_desc;
+
+   US_ReportGMP* chan_report = &(currProf -> ch_reports[ chan_desc ]);
+   
+   reportGui = new US_ReportGui( chan_report );
+   reportGui->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
+   reportGui->setWindowModality(Qt::ApplicationModal);
+   reportGui->show();
+
 }
 
 

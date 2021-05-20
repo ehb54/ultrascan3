@@ -55,6 +55,7 @@ HEADERS      = us_ana_profile.h   \
                us_project.h       \
                us_protocol_util.h \
                us_report.h        \
+               us_report_gmp.h    \
                us_rotor.h         \
                us_run_protocol.h  \
                us_settings.h      \
@@ -104,6 +105,7 @@ SOURCES      = us_ana_profile.cpp   \
                us_project.cpp       \
                us_protocol_util.cpp \
                us_report.cpp        \
+               us_report_gmp.cpp    \
                us_rotor.cpp         \
                us_run_protocol.cpp  \
                us_settings.cpp      \
