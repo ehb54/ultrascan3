@@ -192,6 +192,26 @@ class US_GUI_EXTERN US_Widgets : public QFrame
                               QSpinBox** = (QSpinBox**)NULL,
                               QSpinBox** = (QSpinBox**)NULL );
 
+    //! \param fontAdjust - Adjustment to default font size
+    //! \param dd_hide    - Flag whether to hide dd spinbox
+    //! \param hh_hide    - Flag whether to hide hh spinbox
+    //! \param mm_hide    - Flag whether to hide mm spinbox
+    //! \param ss_hide    - Flag whether to hide ss spinbox
+    //! \param dd         - Optional pointer to days QSpinBox pointer
+    //! \param hh         - Optional pointer to hrs  QSpinBox pointer
+    //! \param mm         - Optional pointer to min  QSpinBox pointer
+    //! \param ss         - Optional pointer to sec  QSpinBox pointer
+    QHBoxLayout* us_ddhhmmsslay( const int = 0,
+				 const int = 0,
+				 const int = 0,
+				 const int = 0,
+				 const int = 0,
+                                 QSpinBox** = (QSpinBox**)NULL,
+                                 QSpinBox** = (QSpinBox**)NULL,
+                                 QSpinBox** = (QSpinBox**)NULL,
+                                 QSpinBox** = (QSpinBox**)NULL
+				);
+    
     //! \param fontAdjust -  adjustment to default font size\n
     //! * Color is set to US_GuiSettings::normalEdit()
     QSpinBox* us_spinbox( int = 0 );

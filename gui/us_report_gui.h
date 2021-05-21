@@ -4,8 +4,7 @@
 
 #include "us_extern.h"
 #include "us_widgets.h"
-#include "us_widgets_dialog.h"
-
+#include "us_run_protocol.h"
 #include "us_report_gmp.h"
 
 //! This class provides a tabbed entry for solution selection
@@ -41,6 +40,13 @@ class US_ReportGui: public US_Widgets
       QLineEdit*   le_tot_conc;
       QLineEdit*   le_rmsd_limit;
       QLineEdit*   le_av_intensity;
+      QLineEdit*   le_wvl;
+            
+      //duration
+      QSpinBox*    sb_durat_dd;
+      QSpinBox*    sb_durat_hh;
+      QSpinBox*    sb_durat_mm;
+      QSpinBox*    sb_durat_ss;
 
       QPushButton*  pb_addRow;
       QPushButton*  pb_removeRow;

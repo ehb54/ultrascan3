@@ -6,6 +6,7 @@
 #include "us_passwd.h"
 #include "us_db2.h"
 #include "us_investigator.h"
+
 //#include "us_report_gmp.h"
 
 
@@ -23,7 +24,8 @@ US_ReportGui::US_ReportGui( US_ReportGMP *tmp_report ) : US_Widgets()
 
   setWindowTitle( tr( "Channel Report Editor"));
   
-  setPalette( US_GuiSettings::frameColor() );
+  //setPalette( US_GuiSettings::frameColor() );
+  setPalette( US_GuiSettings::normalColor() );
   main  = new QVBoxLayout( this );
   main->setSpacing( 2 );
   main->setContentsMargins( 2, 2, 2, 2 );
@@ -40,18 +42,36 @@ US_ReportGui::US_ReportGui( US_ReportGMP *tmp_report ) : US_Widgets()
   QLabel* lb_tot_conc       = us_label( tr( "Total Concentration" ) );
   QLabel* lb_rmsd_limit     = us_label( tr( "RMSD (upper limit)" ) );
   QLabel* lb_av_intensity   = us_label( tr( "Average Intensity" ) );
+  QLabel* lb_duration       = us_label( tr( "Experiment Duration" ) );
+  QLabel* lb_wvl            = us_label( tr( "Wavelength" ) );
+  QHBoxLayout* lo_duratlay  = us_ddhhmmsslay( 0, 1,0,0,1, &sb_durat_dd, &sb_durat_hh, &sb_durat_mm, &sb_durat_ss ); // ALEXEY 0 - visible, 1 - hidden
 
-  le_tot_conc      = us_lineedit( QString::number(report->tot_conc),   0, false  );
-  le_rmsd_limit    = us_lineedit( QString::number(report->rmsd_limit), 0, false  );
-  le_av_intensity  = us_lineedit( QString::number(report->av_intensity),  0, false  );
+  le_tot_conc      = us_lineedit( QString::number(report->tot_conc),     0, false  );
+  le_rmsd_limit    = us_lineedit( QString::number(report->rmsd_limit),   0, false  );
+  le_av_intensity  = us_lineedit( QString::number(report->av_intensity), 0, false  );
 
+  QList< int > dhms_dur;
+  US_RunProtocol::timeToList( report->experiment_duration, dhms_dur );
+  sb_durat_dd ->setValue( (int)dhms_dur[ 0 ] );
+  sb_durat_hh ->setValue( (int)dhms_dur[ 1 ] );
+  sb_durat_mm ->setValue( (int)dhms_dur[ 2 ] );
+  sb_durat_ss ->setValue( (int)dhms_dur[ 3 ] );
+
+  le_wvl           = us_lineedit( QString::number(report->wavelength),  0, true  );
+  
   row = 0;
   params->addWidget( lb_tot_conc,       row,    0, 1, 2 );
   params->addWidget( le_tot_conc,       row,    3, 1, 2 );
   params->addWidget( lb_rmsd_limit,     row,    5, 1, 2 );
   params->addWidget( le_rmsd_limit,     row,    7, 1, 2 );
   params->addWidget( lb_av_intensity,   row,    9, 1, 2 );
-  params->addWidget( le_av_intensity,   row++,    13, 1, 2 );
+  params->addWidget( le_av_intensity,   row++,  13, 1, 2 );
+
+  params->addWidget( lb_duration,       row,    0, 1, 2 );
+  params->addLayout( lo_duratlay,       row,    3, 1, 2 );
+  params->addWidget( lb_wvl,            row,    9, 1, 2 );
+  params->addWidget( le_wvl,            row++,  13, 1, 2 );
+  
  
   // int ihgt        = le_tot_conc->height();
   // QSpacerItem* spacer1 = new QSpacerItem( 20, 0.75*ihgt, QSizePolicy::Expanding );
@@ -249,13 +269,15 @@ void US_ReportGui::build_report_layout( void )
 //Slot to update report
 void US_ReportGui::update_report( void )
 {
-  
+  //evaluate_fields(); //maybe connect to every double field
+  //gui_to_report();
+
+  close();
 }
 
-//Slot to cancel any updates on report
+//Slot to cancel any updates on channel's report
 void US_ReportGui::cancel_update( void )
 {
-  
   QMessageBox msgBox;
   msgBox.setIcon(QMessageBox::Critical);
   msgBox.setWindowTitle(tr("Cancel Updates"));
@@ -272,7 +294,9 @@ void US_ReportGui::cancel_update( void )
     {
       //Send copy of the report to restore to original
       qDebug() << "Sizes: report CHANGED,  report_original -- " << report->reportItems.size() << report_copy_original.reportItems.size();
+      
       report = &( report_copy_original );
+
       qDebug() << "Sizes: report RESTORED, report_original -- " << report->reportItems.size() << report_copy_original.reportItems.size();
       qDebug() << "Report_copy_original.channel_name -- " << report_copy_original.channel_name;
       emit cancel_changes( report_copy_original );

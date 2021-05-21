@@ -37,6 +37,8 @@ class US_UTIL_EXTERN US_ReportGMP
       double tot_conc;
       double rmsd_limit;
       double av_intensity;
+      double wavelength;
+      double experiment_duration;
 
       //Rest of parameters followign from protocol
       int     scan_number;
@@ -45,8 +47,6 @@ class US_UTIL_EXTERN US_ReportGMP
       QString instrument_used;
       QString technician;
       QString data_owner;
-      double  experiment_duration;
-      double  wavelength;
       double  av_temperature;
       QString rotor;
       QString calibration;

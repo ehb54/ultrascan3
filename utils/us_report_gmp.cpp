@@ -31,5 +31,8 @@ US_ReportGMP::US_ReportGMP()
   tot_conc     = 5;
   rmsd_limit   = 0.001;
   av_intensity = 10;
+
+  wavelength   = 280;
+  experiment_duration = 5400;
 }
  
