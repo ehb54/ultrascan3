@@ -28,7 +28,10 @@ class US_UTIL_EXTERN US_ReportGMP
 	double  total_percent;
       };
 
-      QVector< ReportItem > reportItems; 
+      QVector< ReportItem > reportItems;
+
+      //Channel name
+      QString channel_name;
 
       //Main parameters set manually in reference reports
       double tot_conc;
@@ -36,7 +39,19 @@ class US_UTIL_EXTERN US_ReportGMP
       double av_intensity;
 
       //Rest of parameters followign from protocol
-      
+      int     scan_number;
+      double  load_volume;
+      double  av_rotor_speed;
+      QString instrument_used;
+      QString technician;
+      QString data_owner;
+      double  experiment_duration;
+      double  wavelength;
+      double  av_temperature;
+      QString rotor;
+      QString calibration;
+
+      QString score;
       
     private:
       

@@ -271,6 +271,7 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
 
 	    //ALEXEY: insert ch_reports here
 	    currProf.ch_reports[ chentr_wvls ] = reportGMP;
+	    currProf.ch_reports[ chentr_wvls ].channel_name = chentr_wvls;
 
 	    //ALEXEY: also ranges for each channel
 	    if ( opdesc.contains("vis.") )
@@ -306,7 +307,8 @@ DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
 
 	    //ALEXEY: insert ch_reports here
 	    currProf.ch_reports[ chentr_wvls ] = reportGMP;
-
+	    currProf.ch_reports[ chentr_wvls ].channel_name = chentr_wvls;
+	    
 	    //ALEXEY: also ranges for each channel
 	    if ( opdesc.contains("vis.") )
 	      currProf.ch_wvls[ chentr_wvls ] = wvls;
@@ -1383,20 +1385,32 @@ void US_AnaprofPanGen::setReport( void )
    QString channel_name = sl_chnsel[ irow ];
 
    qDebug() << "Set Report: Clicked: " << channel_name;
-
    qDebug() << "Report_oname -- " << oname;
 
    //Find out channel desc
    QString chan_desc = oname.section( ",", 1, 1 );
    qDebug() << "Channel_desc -- " << chan_desc;
+   qDebug() << "ReportItems.size() -- " << currProf->ch_reports[ chan_desc ].reportItems.size();
 
+   qDebug() << "Report channel name --  " << currProf->ch_reports[ chan_desc ] .channel_name;
+   
    US_ReportGMP* chan_report = &(currProf -> ch_reports[ chan_desc ]);
    
    reportGui = new US_ReportGui( chan_report );
    reportGui->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
    reportGui->setWindowModality(Qt::ApplicationModal);
+
+   connect( reportGui, SIGNAL( cancel_changes( US_ReportGMP& ) ), this, SLOT( restore_report( US_ReportGMP& )  ) ); 
+   
    reportGui->show();
 
+}
+
+void US_AnaprofPanGen::restore_report( US_ReportGMP& orig_report )
+{
+  qDebug() << "Channel Name, Size of ReportItems in orig -- " << orig_report.channel_name  << orig_report.reportItems.size();
+  
+  currProf->ch_reports[ orig_report.channel_name ] = orig_report;
 }
 
 

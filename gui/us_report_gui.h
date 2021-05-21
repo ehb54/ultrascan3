@@ -22,10 +22,11 @@ class US_ReportGui: public US_Widgets
       ~US_ReportGui() {};
 
       US_ReportGMP*   report;
+      US_ReportGMP    report_copy_original;
 
    signals:
-      //void reportAccept( void );
-      //void reportCancel( void );
+      void cancel_changes( US_ReportGMP & );
+      
       
    private:
       int row;
@@ -52,6 +53,7 @@ class US_ReportGui: public US_Widgets
      void update_report( void );
      void add_row( void );
      void remove_row( void );
+     void cancel_update( void );
      
    public slots:
 };

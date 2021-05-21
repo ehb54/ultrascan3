@@ -18,7 +18,8 @@
 // Report GUI 
 US_ReportGui::US_ReportGui( US_ReportGMP *tmp_report ) : US_Widgets()
 {
-  this->report = tmp_report;
+  this->report               = tmp_report;
+  this->report_copy_original = *report;
 
   setWindowTitle( tr( "Channel Report Editor"));
   
@@ -172,18 +173,6 @@ void US_ReportGui::build_report_layout( void )
   genL->setRowStretch( row, 1 );
   genL->addItem( spacer2,  row++,  0, 1, 1 );
 
-  // //Add new row button && Remove Row(s) button
-  // pb_addRow     = us_pushbutton( tr( "Add New Row" ) );
-  // connect( pb_addRow, SIGNAL( clicked() ), this, SLOT( add_row()  ) );
-
-  // pb_removeRow  = us_pushbutton( tr( "Remove Last Row" ) );
-  // connect( pb_removeRow, SIGNAL( clicked() ), this, SLOT( remove_row()  ) );
-  // if (  report->reportItems.size() < 2 )
-  //   pb_removeRow->setEnabled( false );
-    
-  // genL->addWidget( pb_removeRow, row,  11, 1, 2 );
-  // genL->addWidget( pb_addRow,    row,  13, 1, 2 );
-
   //add Scroll Area to genL
   scrollArea      = new QScrollArea;
   containerWidget = new QWidget;
@@ -244,7 +233,7 @@ void US_ReportGui::build_report_layout( void )
   pb_cancel   = us_pushbutton( tr( "Cancel" ) );
   pb_accept   = us_pushbutton( tr( "Accept" ) );
   
-  connect( pb_cancel, SIGNAL( clicked() ), this, SLOT( close() ) );
+  connect( pb_cancel, SIGNAL( clicked() ), this, SLOT( cancel_update() ) );
   connect( pb_accept, SIGNAL( clicked() ), SLOT( update_report() ) );
 
   lower_buttons->addWidget( pb_cancel );
@@ -261,6 +250,36 @@ void US_ReportGui::build_report_layout( void )
 void US_ReportGui::update_report( void )
 {
   
+}
+
+//Slot to cancel any updates on report
+void US_ReportGui::cancel_update( void )
+{
+  
+  QMessageBox msgBox;
+  msgBox.setIcon(QMessageBox::Critical);
+  msgBox.setWindowTitle(tr("Cancel Updates"));
+  
+  //QString msg_text      = QString("Attention! Do you want to cancel all report updates for channel %1?").arg( channel_name );
+  QString msg_text      = QString("Attention! Do you want to cancel all report updates for the current channel?");
+  msgBox.setText( msg_text );
+    
+  QPushButton *Accept    = msgBox.addButton(tr("Yes"), QMessageBox::YesRole);
+  QPushButton *Cancel    = msgBox.addButton(tr("No"), QMessageBox::RejectRole);
+  msgBox.exec();
+  
+  if ( msgBox.clickedButton() == Accept )
+    {
+      //Send copy of the report to restore to original
+      qDebug() << "Sizes: report CHANGED,  report_original -- " << report->reportItems.size() << report_copy_original.reportItems.size();
+      report = &( report_copy_original );
+      qDebug() << "Sizes: report RESTORED, report_original -- " << report->reportItems.size() << report_copy_original.reportItems.size();
+      qDebug() << "Report_copy_original.channel_name -- " << report_copy_original.channel_name;
+      emit cancel_changes( report_copy_original );
+      close();
+    }
+  else if (msgBox.clickedButton() == Cancel)
+    return;
 }
 
 

@@ -24,6 +24,9 @@ US_ReportGMP::US_ReportGMP()
 
   reportItems.push_back( initItem );
 
+  //Channel name
+  channel_name = QString("1A:UV/vis.:(unspecified)");
+
   //Main params
   tot_conc     = 5;
   rmsd_limit   = 0.001;
