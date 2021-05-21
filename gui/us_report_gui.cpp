@@ -29,7 +29,7 @@ US_ReportGui::US_ReportGui( US_ReportGMP *tmp_report ) : US_Widgets()
   main->setContentsMargins( 2, 2, 2, 2 );
 
   //Top level parameters
-  QLabel* bn_report     = us_banner( tr( "Main Report Parameters" ) );
+  QLabel* bn_report     = us_banner( QString( tr( "Report Parameters for channel: %1" ) ).arg( report->channel_name ), 1 );
   bn_report->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
   main->addWidget( bn_report );
 
