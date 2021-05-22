@@ -119,7 +119,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    
    tabWidget->setCurrentIndex( curr_panx );
    tabWidget->tabBar()->setFixedHeight(500);
-   tabWidget->tabBar()->setFixedWidth(200);
+   //tabWidget->tabBar()->setFixedWidth(200);
    
    //icon_path = std::getenv("ULTRASCAN");
    //qDebug() << "Path is: " << icon_path;
@@ -329,7 +329,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    
    tabWidget->setCurrentIndex( curr_panx );
    tabWidget->tabBar()->setFixedHeight(500);
-   tabWidget->tabBar()->setFixedWidth(200);
+   //tabWidget->tabBar()->setFixedWidth(200);
 
    //icon_path = std::getenv("ULTRASCAN");
    //qDebug() << "Path is: " << icon_path;
