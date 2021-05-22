@@ -19,6 +19,7 @@ US_AnaProfile::US_AnaProfile()
 
    pchans    << "1A";
    chndescs  << "1A:UV/vis.:(unspecified)";
+   chndescs_alt  << "1A:UV/vis.:(unspecified)";
    lc_ratios << 1.0;
    lc_tolers << 5.0;
    l_volumes << 460.0;
@@ -37,8 +38,9 @@ US_AnaProfile::US_AnaProfile()
    ch_wvls[ chndescs[0] ] = wvl;
 
    //Reports
-   US_ReportGMP report; 
-   ch_reports[ chndescs[0] ] = report;
+   //US_ReportGMP report; 
+   US_ReportGMP report = US_ReportGMP();
+   ch_reports[ chndescs_alt[0] ] = report;
 }
 
 // AnaProfile Equality operator

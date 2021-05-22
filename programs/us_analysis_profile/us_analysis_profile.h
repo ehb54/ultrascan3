@@ -105,6 +105,9 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       QList< QPushButton * > pb_reports;
       QList< QCheckBox* >    ck_mwv;
       QList< QScrollArea* >  gr_mwvbox;
+
+      QMap< QString, US_ReportGMP > internal_reports; 
+      
       int row_global;
       
       int          dbg_level;

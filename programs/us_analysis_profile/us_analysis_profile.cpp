@@ -166,7 +166,7 @@ DbgLv(1) << "APG00: ipro: kchn nchs ncho" << kchn << nchs << ncho;
 
    currProf.ch_wvls.clear();
    //Do we need to clear ch_reports() QMap here ?
-   currProf.ch_reports.clear();
+   //currProf.ch_reports.clear();
    
 
    if ( nchs < 1  ||  ncho < 1 )
@@ -248,8 +248,8 @@ DbgLv(1) << "APG: ipro:  o.ii" << ii << "chname" << chname
 	    }
 	}
 
-      //ALEXEY: also US_ReportGMP (blank/default for now)
-      US_ReportGMP reportGMP = US_ReportGMP();
+      // //ALEXEY: also US_ReportGMP (blank/default for now)
+      // US_ReportGMP reportGMP = US_ReportGMP();
       
       for ( int jj = 0; jj < ods.count(); jj++ )
       {  // Create a channel entry for each optics type of this channel
@@ -268,9 +268,11 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
          {  // Replace channel and channel description
             currProf.pchans  [ nchn ] = chname;
             currProf.chndescs[ nchn ] = chentr;
-
+	    currProf.chndescs_alt[ nchn ] = chentr_wvls;
+	    
 	    //ALEXEY: insert ch_reports here
-	    currProf.ch_reports[ chentr_wvls ] = reportGMP;
+	    //currProf.ch_reports[ chentr_wvls ] = reportGMP;
+	    currProf.ch_reports[ chentr_wvls ] = currProf.ch_reports[ currProf.chndescs_alt[ nchn ] ];
 	    currProf.ch_reports[ chentr_wvls ].channel_name = chentr_wvls;
 
 	    //ALEXEY: also ranges for each channel
@@ -304,9 +306,11 @@ DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
          {  // Append channel and channel description
             currProf.pchans   << chname;
             currProf.chndescs << chentr;
-
+	    currProf.chndescs_alt << chentr_wvls;
+	    
 	    //ALEXEY: insert ch_reports here
-	    currProf.ch_reports[ chentr_wvls ] = reportGMP;
+	    //currProf.ch_reports[ chentr_wvls ] = reportGMP;
+	    currProf.ch_reports[ chentr_wvls ] = currProf.ch_reports[ currProf.chndescs_alt.last() ];
 	    currProf.ch_reports[ chentr_wvls ].channel_name = chentr_wvls;
 	    
 	    //ALEXEY: also ranges for each channel
@@ -353,6 +357,7 @@ DbgLv(1) << "APG: ipro:     lch" << lch << "lv_tol da_end"
       {
          currProf.pchans   .removeLast();
          currProf.chndescs .removeLast();
+	 currProf.chndescs_alt .removeLast();
          currProf.lc_ratios.removeLast();
          currProf.lc_tolers.removeLast();
          currProf.l_volumes.removeLast();
@@ -787,6 +792,7 @@ DbgLv(1) << "APGe: bgL:    scrollArea children count ZERO";
 
    ck_runs    .clear();
    pb_reports .clear();
+   internal_reports.clear();
 
    // Start building main layout
    int row         = 0;
@@ -1390,11 +1396,13 @@ void US_AnaprofPanGen::setReport( void )
    //Find out channel desc
    QString chan_desc = oname.section( ",", 1, 1 );
    qDebug() << "Channel_desc -- " << chan_desc;
-   qDebug() << "ReportItems.size() -- " << currProf->ch_reports[ chan_desc ].reportItems.size();
+   // qDebug() << "ReportItems.size() -- " << currProf->ch_reports[ chan_desc ].reportItems.size();
 
-   qDebug() << "Report channel name --  " << currProf->ch_reports[ chan_desc ] .channel_name;
+   // qDebug() << "Report channel name --  " << currProf->ch_reports[ chan_desc ] .channel_name;
+   // qDebug() << "Report duration, wvl  -- "      << currProf->ch_reports[ chan_desc ] .experiment_duration << currProf->ch_reports[ chan_desc ].wavelength;
    
-   US_ReportGMP* chan_report = &(currProf -> ch_reports[ chan_desc ]);
+   // US_ReportGMP* chan_report = &(currProf -> ch_reports[ chan_desc ]);
+   US_ReportGMP* chan_report = &(internal_reports[ chan_desc ]);
    
    reportGui = new US_ReportGui( chan_report );
    reportGui->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
@@ -1410,7 +1418,8 @@ void US_AnaprofPanGen::restore_report( US_ReportGMP& orig_report )
 {
   qDebug() << "Channel Name, Size of ReportItems in orig -- " << orig_report.channel_name  << orig_report.reportItems.size();
   
-  currProf->ch_reports[ orig_report.channel_name ] = orig_report;
+  //currProf->ch_reports[ orig_report.channel_name ] = orig_report;
+  internal_reports[ orig_report.channel_name ] = orig_report;
 }
 
 

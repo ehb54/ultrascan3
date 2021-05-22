@@ -196,6 +196,7 @@ class US_UTIL_EXTERN US_AnaProfile
 
       QStringList  pchans;         //!< Profile channels
       QStringList  chndescs;       //!< Channel descriptions
+      QStringList  chndescs_alt;   //!< Alt Channel descriptions for ch_wvls && ch_reports;
 
       QList< double> lc_ratios;    //!< Loading concentration ratios
       QList< double> lc_tolers;    //!< Load concentration tolerances

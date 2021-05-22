@@ -325,6 +325,7 @@ DbgLv(1) << "APGe: inP: nchan" << nchan;
    for ( int ii = 0; ii < nchan; ii++ )
    {
       QString chann  = currProf->pchans  [ ii ];
+      //QString chdesc_alt = currProf->chndescs_alt[ ii ];
       QString chdesc = currProf->chndescs[ ii ];
       QString chopts = QString( chdesc ).section( ":", 1, 1 );
       QString chname = QString( chdesc ).section( ":", 0, 0 )
@@ -404,12 +405,14 @@ DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.cou
 	 << currProf->lv_tolers[ii] << currProf->data_ends[ii] << currProf->data_ends[kk]
 	 << "currProf->analysis_run[ ii] currProf->analysis_run[ kk ]" << currProf->analysis_run[ ii ] << currProf->analysis_run[ kk ];
 
+
+	
        
 	 //ALEXEY: also set info on wvl for edit 
 	 kk              = qMin( ii, currProf->wvl_edit.count() - 1 );
 
 	 qDebug() << "currProf->wvl_edit[ ii] currProf->wvl_edit[ kk ]" << currProf->wvl_edit[ ii ] << currProf->wvl_edit[ kk ];
-	 
+
 	 QScrollArea *sa = gr_mwvbox[ ii ];
 	 foreach (QRadioButton *button, sa->findChildren<QRadioButton*>())
 	   {
@@ -423,6 +426,13 @@ DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.cou
 		 break;
 	       }
 	   }
+
+	 //ALEXEY: set ReportGMP per channel
+	 kk              = qMin( ii, currProf->chndescs_alt.count() - 1 );
+	 qDebug() << "US_AnaprofPanGen::initPanel(): ReportGMP kk, ii currProf->chndescs_alt.count() " << kk <<  ii << currProf->chndescs_alt.count();
+	 QString chdesc_alt = currProf->chndescs_alt[ kk ];
+	 qDebug() << "US_AnaprofPanGen::initPanel(): chdesc_alt " << chdesc_alt;
+	 internal_reports[ chdesc_alt ] = currProf->ch_reports[ chdesc_alt ];
 
 	 //ALEXEY: also set info on wvl not to be analyzed 
 	 kk              = qMin( ii, currProf->wvl_not_run.count() - 1 );
@@ -578,6 +588,10 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 		 break;
 	       }
 	   }
+
+	 //ALEXEY: also save ReportGMP per channel
+	 QString chdesc_alt = currProf->chndescs_alt[ ii ];
+	 currProf->ch_reports[ chdesc_alt ] = internal_reports[ chdesc_alt ]; 
 
 	 //ALEXEY: also save info on wvl not to be analyzed
 	 QString wvl_list_not_run;

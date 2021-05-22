@@ -54,6 +54,7 @@ class US_ReportGui: public US_Widgets
       QPushButton*  pb_accept;
 
       void build_report_layout( void );
+      void gui_to_report( void );
 
    private slots:
      void update_report( void );

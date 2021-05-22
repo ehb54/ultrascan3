@@ -51,7 +51,8 @@ US_ReportGui::US_ReportGui( US_ReportGMP *tmp_report ) : US_Widgets()
   le_av_intensity  = us_lineedit( QString::number(report->av_intensity), 0, false  );
 
   QList< int > dhms_dur;
-  US_RunProtocol::timeToList( report->experiment_duration, dhms_dur );
+  double exp_dur = report->experiment_duration;
+  US_RunProtocol::timeToList( exp_dur, dhms_dur );
   sb_durat_dd ->setValue( (int)dhms_dur[ 0 ] );
   sb_durat_hh ->setValue( (int)dhms_dur[ 1 ] );
   sb_durat_mm ->setValue( (int)dhms_dur[ 2 ] );
@@ -179,6 +180,16 @@ void US_ReportGui::build_report_layout( void )
       le_tol        = us_lineedit( QString::number(curr_item.tolerance), 0, false  );
       le_total      = us_lineedit( QString::number(curr_item.total_percent), 0, false  );
 
+      //set Object Name based on row number
+      QString stchan      =  QString::number( ii ) + ": ";
+      cb_type      -> setObjectName( stchan + "type" );
+      cb_method    -> setObjectName( stchan + "method" );
+      le_low       -> setObjectName( stchan + "low" );
+      le_high      -> setObjectName( stchan + "high" );
+      le_intval    -> setObjectName( stchan + "intval" );
+      le_tol       -> setObjectName( stchan + "tol" );
+      le_total     -> setObjectName( stchan + "total" );
+      
       genL->addWidget( cb_type,   row,    0, 1, 2 );
       genL->addWidget( cb_method, row,    3, 1, 2 );
       genL->addWidget( le_low,    row,    5, 1, 2 );
@@ -270,9 +281,73 @@ void US_ReportGui::build_report_layout( void )
 void US_ReportGui::update_report( void )
 {
   //evaluate_fields(); //maybe connect to every double field
-  //gui_to_report();
+  gui_to_report();
 
   close();
+}
+
+//Transfer GUI params to US_ReportGMP structure
+void US_ReportGui::gui_to_report( void )
+{
+  //Main params
+  report->tot_conc            = le_tot_conc     ->text().toDouble();
+  report->rmsd_limit          = le_rmsd_limit   ->text().toDouble();
+  report->av_intensity        = le_av_intensity ->text().toDouble();
+
+  QList< int > dhms_dur;
+  int t_day        = (double)sb_durat_dd->value();
+  int t_hour       = (double)sb_durat_hh->value();
+  int t_minute     = (double)sb_durat_mm->value();
+  int t_second     = (double)sb_durat_ss->value();
+
+  dhms_dur << t_day << t_hour << t_minute << t_second;
+  
+  double exp_dur = 0;
+  US_RunProtocol::timeFromList( exp_dur, dhms_dur );
+  report->experiment_duration = exp_dur;
+
+  //ReportItems
+  for ( int ii = 0; ii < report->reportItems.size(); ii++ )
+    {
+      QString stchan      =  QString::number( ii ) + ": ";
+      
+      //type
+      QComboBox * cb_type    = containerWidget->findChild<QComboBox *>( stchan + "type" );
+      qDebug() << "ii, cb_type->currentText()" << ii << cb_type->currentText();
+      report->reportItems[ ii ].type = cb_type->currentText();
+      
+      //method
+      QComboBox * cb_method    = containerWidget->findChild<QComboBox *>( stchan + "method" );
+      qDebug() << "ii, cb_method->currentText()" << ii << cb_method->currentText();
+      report->reportItems[ ii ].method = cb_method->currentText();
+      
+      //range_low
+      QLineEdit * le_low    = containerWidget->findChild<QLineEdit *>( stchan + "low" );
+      qDebug() << "ii, le_low->text()" << ii << le_low->text();
+      report->reportItems[ ii ].range_low = le_low->text().toDouble();
+
+      //range_high
+      QLineEdit * le_high    = containerWidget->findChild<QLineEdit *>( stchan + "high" );
+      qDebug() << "ii, le_high->text()" << ii << le_high->text();
+      report->reportItems[ ii ].range_high = le_high->text().toDouble();
+
+      //integration value
+      QLineEdit * le_intval  = containerWidget->findChild<QLineEdit *>( stchan + "intval" );
+      qDebug() << "ii, le_intval->text()" << ii << le_intval->text();
+      report->reportItems[ ii ].integration_val = le_intval->text().toDouble();
+      
+      //tolerance
+      QLineEdit * le_tol  = containerWidget->findChild<QLineEdit *>( stchan + "tol" );
+      qDebug() << "ii, le_tol->text()" << ii << le_tol->text();
+      report->reportItems[ ii ].tolerance = le_tol->text().toDouble();
+      
+      //percent
+      QLineEdit * le_total  = containerWidget->findChild<QLineEdit *>( stchan + "total" );
+      qDebug() << "ii, le_total->text()" << ii << le_total->text();
+      report->reportItems[ ii ].total_percent = le_total->text().toDouble();
+    }
+  
+    
 }
 
 //Slot to cancel any updates on channel's report
