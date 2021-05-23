@@ -34,6 +34,7 @@ class US_ReportGui: public US_Widgets
       QGridLayout* genL;
       QScrollArea* scrollArea;
       QWidget*     containerWidget;
+      QWidget*     topContainerWidget;
       QGridLayout* addRem_buttons;
       QHBoxLayout* lower_buttons;
 
@@ -53,10 +54,14 @@ class US_ReportGui: public US_Widgets
       QPushButton*  pb_cancel;
       QPushButton*  pb_accept;
 
+      QMap< QString, bool > isErrorField;
+      
       void build_report_layout( void );
       void gui_to_report( void );
-
+      int  check_syntax( void );
+            
    private slots:
+     void verify_text ( const QString& );
      void update_report( void );
      void add_row( void );
      void remove_row( void );

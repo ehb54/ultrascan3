@@ -13,6 +13,7 @@
 #if QT_VERSION < 0x050000
 #define setSymbol(a)      setSymbol(*a)
 #define setSamples(a,b,c) setData(a,b,c)
+#define QRegularExpression(a)  QRegExp(a)
 #endif
 
 
@@ -50,6 +51,19 @@ US_ReportGui::US_ReportGui( US_ReportGMP *tmp_report ) : US_Widgets()
   le_rmsd_limit    = us_lineedit( QString::number(report->rmsd_limit),   0, false  );
   le_av_intensity  = us_lineedit( QString::number(report->av_intensity), 0, false  );
 
+  le_tot_conc      -> setObjectName( "tot_conc" );
+  le_rmsd_limit    -> setObjectName( "rmsd" );
+  le_av_intensity  -> setObjectName( "av_intensity" );
+
+  //set connecitons btw textChanged() and slot
+  connect( le_tot_conc,   SIGNAL( textChanged ( const QString& ) ),
+	   this,          SLOT  ( verify_text ( const QString& ) ) );
+  connect( le_rmsd_limit, SIGNAL( textChanged ( const QString& ) ),
+	   this,          SLOT  ( verify_text ( const QString& ) ) );
+  connect( le_av_intensity, SIGNAL( textChanged ( const QString& ) ),
+	   this,          SLOT  ( verify_text ( const QString& ) ) );
+   
+
   QList< int > dhms_dur;
   double exp_dur = report->experiment_duration;
   US_RunProtocol::timeToList( exp_dur, dhms_dur );
@@ -79,8 +93,12 @@ US_ReportGui::US_ReportGui( US_ReportGMP *tmp_report ) : US_Widgets()
   // params->setRowStretch( row, 1 );
   // params->addItem( spacer1,  row++,  0, 1, 1 );
 
-  main->addLayout( params );
+  topContainerWidget = new QWidget;
+  topContainerWidget->setLayout( params );
+  main->addWidget( topContainerWidget );
   
+  //main->addLayout( params );
+
   //Banner for Table
   QLabel* bn_report_t     = us_banner( tr( "Report Parameters: Type | Method" ) );
   bn_report_t->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
@@ -90,7 +108,7 @@ US_ReportGui::US_ReportGui( US_ReportGMP *tmp_report ) : US_Widgets()
   genL           = NULL;
   addRem_buttons = NULL;
   lower_buttons  = NULL;
-   
+
   build_report_layout();
 
 }
@@ -189,6 +207,18 @@ void US_ReportGui::build_report_layout( void )
       le_intval    -> setObjectName( stchan + "intval" );
       le_tol       -> setObjectName( stchan + "tol" );
       le_total     -> setObjectName( stchan + "total" );
+
+      //set connecitons btw textChanged() and slot
+      connect( le_low, SIGNAL( textChanged ( const QString& ) ),
+	       this,   SLOT  ( verify_text ( const QString& ) ) );
+      connect( le_high, SIGNAL( textChanged ( const QString& ) ),
+	       this,   SLOT  ( verify_text ( const QString& ) ) );
+      connect( le_intval, SIGNAL( textChanged ( const QString& ) ),
+	       this,   SLOT  ( verify_text ( const QString& ) ) );
+      connect( le_tol, SIGNAL( textChanged ( const QString& ) ),
+	       this,   SLOT  ( verify_text ( const QString& ) ) );
+      connect( le_total, SIGNAL( textChanged ( const QString& ) ),
+	       this,   SLOT  ( verify_text ( const QString& ) ) );
       
       genL->addWidget( cb_type,   row,    0, 1, 2 );
       genL->addWidget( cb_method, row,    3, 1, 2 );
@@ -280,10 +310,68 @@ void US_ReportGui::build_report_layout( void )
 //Slot to update report
 void US_ReportGui::update_report( void )
 {
-  //evaluate_fields(); //maybe connect to every double field
+  //Check for errors
+  int syntax_errors = check_syntax();
+  if ( syntax_errors != 0 )
+    {
+      QString mtitle_error    = tr( "Error" );
+      QString message_error   = QString( tr( "There are %1 syntax errors!"
+					     "\n\nPlease fix them (red fields) before accepting..." ))
+	                        .arg( QString::number( syntax_errors ) );
+      QMessageBox::critical( this, mtitle_error, message_error );
+      return;
+    }
+
+  //save Gui params to reportGMP structure
   gui_to_report();
 
   close();
+}
+
+
+//Verify text
+void US_ReportGui::verify_text( const QString& text )
+{
+  QObject* sobj       = sender();      // Sender object
+  QString oname       = sobj->objectName();
+  
+  qDebug() << "QLineEdit oname -- " << oname;
+  QLineEdit * curr_widget = NULL;
+
+  if ( oname.contains(":") )
+    curr_widget = containerWidget->findChild<QLineEdit *>( oname );
+  else
+    curr_widget = topContainerWidget->findChild<QLineEdit *>( oname );
+  // else if ( oname == "tot_conc" )
+  //   curr_widget = le_tot_conc;
+  // else if ( oname == "rmsd" )
+  //   curr_widget = le_rmsd_limit;
+  // else if ( oname == "av_intensity" )
+  //   curr_widget = le_av_intensity;
+
+  QRegExp rx_double("\\d*\\.?\\d+");
+
+  if ( curr_widget != NULL )
+    {      
+      if ( !rx_double.exactMatch( text ) )
+	{
+	  QPalette *palette = new QPalette();
+	  palette->setColor(QPalette::Text,Qt::white);
+	  palette->setColor(QPalette::Base,Qt::red);
+	  curr_widget->setPalette(*palette);
+
+	  isErrorField[ oname ] = true;
+	}
+      else
+	{
+	  QPalette *palette = new QPalette();
+	  palette->setColor(QPalette::Text,Qt::black);
+	  palette->setColor(QPalette::Base,Qt::white);
+	  curr_widget->setPalette(*palette);
+
+	  isErrorField[ oname ] = false;
+	}
+    }
 }
 
 //Transfer GUI params to US_ReportGMP structure
@@ -346,8 +434,6 @@ void US_ReportGui::gui_to_report( void )
       qDebug() << "ii, le_total->text()" << ii << le_total->text();
       report->reportItems[ ii ].total_percent = le_total->text().toDouble();
     }
-  
-    
 }
 
 //Slot to cancel any updates on channel's report
@@ -385,6 +471,22 @@ void US_ReportGui::cancel_update( void )
 //Slot to add row
 void US_ReportGui::add_row( void )
 {
+  //Check if there are exsiting syntax errors:
+  int syntax_errors = check_syntax();
+  if ( syntax_errors != 0 )
+    {
+      QString mtitle_error    = tr( "Error" );
+      QString message_error   = QString( tr( "There are %1 syntax errors!"
+					     "\n\nPlease fix them (red fields) before adding new row..." ))
+	                        .arg( QString::number( syntax_errors ) );
+      QMessageBox::critical( this, mtitle_error, message_error );
+      return;
+    }
+
+  //If no errors, save Gui params to reportGMP structure
+  gui_to_report();
+
+  //Add plain ReportItem
   US_ReportGMP::ReportItem initItem;
   
   initItem.type             = QString("S");
@@ -404,10 +506,42 @@ void US_ReportGui::add_row( void )
 //Slot to remove rows
 void US_ReportGui::remove_row( void )
 {
+  //Check if there are exsiting syntax errors:
+  int syntax_errors = check_syntax();
+  if ( syntax_errors != 0 )
+    {
+      QString mtitle_error    = tr( "Error" );
+      QString message_error   = QString( tr( "There are %1 syntax errors!"
+					     "\n\nPlease fix them (red fields) before removing row..." ))
+	                        .arg( QString::number( syntax_errors ) );
+      QMessageBox::critical( this, mtitle_error, message_error );
+      return;
+    }
+
+  //If no errors, remove last row
   report->reportItems.removeLast();
+
+  //save Gui params to reportGMP structure
+  gui_to_report();
   
   //re-build genL layout
   build_report_layout( );
 }
 
+//Check systax errors in the fields
+int US_ReportGui::check_syntax( void )
+{
+  int syntax_errors = 0;
+  
+  QMap<QString, bool>::iterator ri;
+  for ( ri = isErrorField.begin(); ri != isErrorField.end(); ++ri )
+    {
+      if ( ri.value() )
+	{
+	  qDebug() << "Error for object name -- " << ri.key();
+	  ++syntax_errors;
+	}
+    }
 
+  return syntax_errors;
+}
