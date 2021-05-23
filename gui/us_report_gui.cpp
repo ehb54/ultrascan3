@@ -58,7 +58,7 @@ US_ReportGui::US_ReportGui( US_ReportGMP *tmp_report ) : US_Widgets()
   sb_durat_mm ->setValue( (int)dhms_dur[ 2 ] );
   sb_durat_ss ->setValue( (int)dhms_dur[ 3 ] );
 
-  le_wvl           = us_lineedit( QString::number(report->wavelength),  0, true  );
+  le_wvl      = us_lineedit( QString::number(report->wavelength),  0, true  );
   
   row = 0;
   params->addWidget( lb_tot_conc,       row,    0, 1, 2 );

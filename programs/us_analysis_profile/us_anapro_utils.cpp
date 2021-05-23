@@ -433,6 +433,8 @@ DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.cou
 	 QString chdesc_alt = currProf->chndescs_alt[ kk ];
 	 qDebug() << "US_AnaprofPanGen::initPanel(): chdesc_alt " << chdesc_alt;
 	 internal_reports[ chdesc_alt ] = currProf->ch_reports[ chdesc_alt ];
+	 internal_reports[ chdesc_alt ].wavelength = currProf->wvl_edit[ kk ];
+	 
 
 	 //ALEXEY: also set info on wvl not to be analyzed 
 	 kk              = qMin( ii, currProf->wvl_not_run.count() - 1 );

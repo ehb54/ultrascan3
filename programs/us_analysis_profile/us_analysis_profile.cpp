@@ -982,8 +982,7 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       //MWV dialog
       // //QGroupBox for Fit meniscus/bottom options
       QString ch_name_c = schan;
-      
-
+ 
       //QList< double > wvlss = { 280, 340, 500 };
       QList< double > curr_wvls = currProf -> ch_wvls[ schan ];
 
@@ -1271,13 +1270,30 @@ void US_AnaprofPanGen::rbEditClicked ( QString arg_passed )
        foreach (QCheckBox *ckbox, sa->findChildren<QCheckBox*>())
 	 {
 	   QString ck_row = (ckbox->objectName()).split(":")[0];
-	     
+	   QString wvl    = (ckbox->objectName()).split(":")[2];
+	   	     
 	   if ( ck_row == irow )
 	     {
 	       if ( rb_selected -> isChecked() )
 		 {
 		   ckbox->setChecked( true );
 		   ckbox->setEnabled( false );
+
+		   //Update report.wavelength with the selected wvl for current channel:
+		   QMap<QString, US_ReportGMP>::iterator ri;
+		   QString chann_desc_short = triple_name;
+		   chann_desc_short.simplified();
+		   chann_desc_short.replace( " ", "" );
+		   for ( ri = internal_reports.begin(); ri != internal_reports.end(); ++ri )
+		     {
+		       qDebug() << "Key [chandesc] of internal_reports QMap VS triple_name:  " << ri.key() << " VS " << chann_desc_short;
+		       if ( ri.key().contains( chann_desc_short ) )
+			 {
+			   qDebug() << "SETTING ref. wvl for channel -- " << wvl << " for " << ri.key();  
+			   internal_reports[ ri.key() ].wavelength = wvl.toDouble();
+			   break;
+			 }
+		     }
 		 }
 	       else
 		 {
