@@ -11376,7 +11376,7 @@ double US_Saxs_Util::holm_bonferroni( vector < double > P, double alpha ) {
 
    return 1e0;
 }
-#if QT_VERSION >= 0x040000
+
 US_EXPORT QString us_tr( QString qs ) {
    return QObject::tr( qPrintable( qs ) );
 }
@@ -11392,4 +11392,65 @@ US_EXPORT void us_qdebug( QString qs ) {
 US_EXPORT FILE * us_fopen( QString f, const char *mode ) {
    return fopen( qPrintable( f ), mode );
 }
-#endif
+
+map < QString, QString > US_Saxs_Util::pdb_fields( const QString & pdb_line ) {
+   map < QString, QString > result;
+
+   result[ "recname" ] = pdb_line.mid( 0, 6 ).trimmed();
+
+   // pdb data from https://www.wwpdb.org/documentation/file-format-content/format33
+
+   if ( result[ "recname" ] == "LINK" ) {
+      result[ "name1"     ] = pdb_line.mid( 12, 4 ).trimmed();
+      result[ "resname1"  ] = pdb_line.mid( 17, 3 ).trimmed();
+      result[ "chainid1"  ] = pdb_line.mid( 21, 1 ).trimmed();
+      result[ "resseq1"   ] = pdb_line.mid( 22, 4 ).trimmed();
+      result[ "name2"     ] = pdb_line.mid( 42, 4 ).trimmed();
+      result[ "resname2"  ] = pdb_line.mid( 47, 3 ).trimmed();
+      result[ "chainid2"  ] = pdb_line.mid( 51, 1 ).trimmed();
+      result[ "resseq2"   ] = pdb_line.mid( 52, 4 ).trimmed();
+      result[ "length"    ] = pdb_line.mid( 73, 5 ).trimmed();
+   } else if ( result[ "recname" ] == "ATOM" ||
+               result[ "recname" ] == "HETATM" ) {
+      result[ "serial"    ] = pdb_line.mid(  6, 5 ).trimmed();
+      result[ "name"      ] = pdb_line.mid( 12, 4 ).trimmed();
+      result[ "resname"   ] = pdb_line.mid( 17, 3 ).trimmed();
+      result[ "chainid"   ] = pdb_line.mid( 21, 1 ).trimmed();
+      result[ "resseq"    ] = pdb_line.mid( 22, 4 ).trimmed();
+      result[ "element"   ] = pdb_line.mid( 76, 2 ).trimmed();
+   } else if ( result[ "recname" ] == "REMARK" ) {
+      result[ "remarknum" ] = pdb_line.mid(  7, 3 ).trimmed();
+      result[ "contents"  ] = pdb_line.mid( 11    ).trimmed();
+      if ( result[ "remarknum" ] == "766" ) {
+         if ( result[ "contents" ].contains( QRegExp( "^DMD LINK RANGE " ) ) ) {
+            QStringList dmdlinkinfo = result[ "contents" ].mid( 15 ).trimmed().split( QRegExp( " +" ) );
+            if ( dmdlinkinfo.size() == 2 ) {
+               bool ok;
+               if ( dmdlinkinfo[ 0 ] == "PERCENT" ) {
+                  result[ "dmdlinkpercent" ] = dmdlinkinfo[ 1 ];
+                  result[ "dmdlinkpercent" ].toFloat( &ok );
+                  if ( !ok ) {
+                     result[ "error" ] = "REMARK 766 DMD LINK RANGE PERCENT not provided a valid number";
+                  }
+               } else {
+                  result[ "dmdlinkstart" ] = dmdlinkinfo[ 0 ];
+                  result[ "dmdlinkend"   ] = dmdlinkinfo[ 1 ];
+                  result[ "dmdlinkstart" ].toFloat( &ok );
+                  if ( ok ) {
+                     result[ "dmdlinkend"   ].toFloat( &ok );
+                  }
+                  if ( !ok ) {
+                     result[ "error" ] = "REMARK 766 DMD LINK RANGE not provided a valid pair of numbers";
+                  }
+               }                  
+            } else {
+               result[ "error" ] = "REMARK 766 DMD LINK RANGE WRONG FORMAT";
+            }               
+         } else {
+            result[ "error" ] = "REMARK 766 UNKNOWN FORMAT";
+         }
+      }
+   }
+
+   return result;
+}

@@ -2032,7 +2032,17 @@ QString US_Hydrodyn_Cluster::dmd_base_addition( QStringList &base_source_files, 
       << "DMD_NA_allatom.par"
       << "PRO_RNA_MOL.DMDParam"
       << "allatom.par"
-      << "medutop.pro";
+      << "medutop.pro"
+      << "BMA.mol2"
+      << "GAL.mol2"
+      << "MAN.mol2"
+      << "NAG.mol2"
+      << "NDG.mol2"
+      << "OXT.mol2"
+      << "SIA.mol2"
+      ;
+
+   // PDMD TODO : should probably grab mol2's from a directory inspection
 
    QString out;
    for ( unsigned int i = 0; i < (unsigned int)files.size(); i++ )

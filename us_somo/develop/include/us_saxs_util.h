@@ -1509,6 +1509,34 @@ class US_EXTERN US_Saxs_Util
       QStringList  experimental_grids;
       bool         process_one_iqq();
 
+      // dmd hetatm mol2 support structures:
+      set < QString >                       dmd_mol2;             // set of supported hetatm residue names
+      map < QString, QString >              dmd_mol2_res;         // newly assigned residue name to original residue name
+      map < QString, map < int, int > >     dmd_chain;            // maps chain id and residue number to dmd's chain number
+      map < QString, map < int, int > >     dmd_res;              // maps chain id and residue number to dmd's residue number
+      map < QString, map < int, int > >     dmd_res_link;         // maps chain id and residue number to dmd's residue number for links
+      map < QString, map < int, QString > > dmd_org_chain;        // maps chain id and residue number to pdb's original chain number
+      map < QString, map < int, int > >     dmd_org_res;          // maps chain id and residue number to pdb's original residue number
+      QStringList                           dmd_pdb_add_back;     // lines to restore to pdbs - REMARKs etc, not ATOMs or HETATMs
+
+      // dmd for truncated base name
+      QString                               dmd_basename;
+
+      // dmd hetatm mol2 support routines:
+      void                              dmd_clear( bool also_clear_dmd_mol2 = true );  // clears data structures 
+      QString                           dmd_next_res( const QString & source );        // returns a unique residuename and updates dmd_mol2
+      bool                              dmd_pdb_prepare( QStringList & qsl_pdb
+                                                         ,QStringList & qsl_pdb_removed
+                                                         ,QStringList & qsl_link_constraints );
+                                                                                       // process HETATM, LINK and renumbering
+      bool                              dmd_pdb_restore( const QStringList & qsl_pdb
+                                                         ,QStringList & qsl_pdb_restored
+                                                         ,bool add_back = true );
+                                                                                      // restore HETATM, LINK and renumbering
+                                                                                      // add_back will add back dmd link & remark 766s
+
+      static map < QString, QString >   pdb_fields( const QString & pdb_line );
+      
       bool         strip_pdb( 
                              QString & pdb_stripped,
                              const QString & pdb,
