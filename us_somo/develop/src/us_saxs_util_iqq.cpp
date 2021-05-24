@@ -993,11 +993,11 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
       if ( option == "dmdsupportfile" ) {
          QString filename = control_parameters[ option ];
-         static QRegExp rx_mol2 = QRegExp( "([^/ .]+)\\.mol2$" );
-         if ( rx_mol2.indexIn( filename, 0 ) != -1 ) {
-            QString mol2 = rx_mol2.cap(1);
-            dmd_mol2.insert( mol2 );
-         }
+         // static QRegExp rx_mol2 = QRegExp( "([^/ .]+)\\.mol2$" );
+         // if ( rx_mol2.indexIn( filename, 0 ) != -1 ) {
+         //    QString mol2 = rx_mol2.cap(1);
+         //    dmd_mol2.insert( mol2 );
+         // }
       }
 
       if ( option == "dmdstrippdb" )

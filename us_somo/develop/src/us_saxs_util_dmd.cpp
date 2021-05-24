@@ -503,7 +503,7 @@ bool US_Saxs_Util::dmd_strip_pdb()
       for ( auto it = dmd_mol2_res.begin();
             it != dmd_mol2_res.end();
             ++it ) {
-         tsot << "MOL " << it->first << " ./" << it->second << ".mol2\n";
+         tsot << "MOL " << it->first << " ./" << it->first << ".mol2\n";
       }
       fot.close();
    }
@@ -1104,16 +1104,14 @@ bool US_Saxs_Util::dmd_run( QString run_description )
    return true;
 }
       
-void US_Saxs_Util::dmd_clear( bool also_clear_dmd_mol2 ) {
-   if ( also_clear_dmd_mol2 ) {
-      dmd_mol2    .clear();
-   }
-   dmd_mol2_res .clear();
-   dmd_chain    .clear();
-   dmd_res      .clear();
-   dmd_res_link .clear();
-   dmd_org_chain.clear();
-   dmd_org_res  .clear();
+void US_Saxs_Util::dmd_clear() {
+   dmd_mol2_res           .clear();
+   dmd_chain              .clear();
+   dmd_res                .clear();
+   dmd_res_link           .clear();
+   dmd_org_chain          .clear();
+   dmd_org_res            .clear();
+   dmd_pdb_prepare_reports.clear();
 }
 
 QString US_Saxs_Util::dmd_next_res( const QString & source ) {
@@ -1152,6 +1150,24 @@ static void map_dump( const QString & tag, const map < QString, QString > & mapq
    }
 }
 
+static QStringList map_dump( const QString & tag, const map < QString, int > & mqsi, bool also_stdout = true ) {
+   QStringList result;
+   for ( auto it = mqsi.begin();
+         it != mqsi.end();
+         ++it ) {
+      result << "'" + it->first + "' : '" + QString( "%1" ).arg( it->second );
+   }
+   if ( also_stdout ) {
+      TSO
+         << tag
+         << "\n"
+         << result.join( "\n" )
+         << "\n"
+         ;
+   }
+   return result;
+}
+
 static void map_dump( const QString & tag, const map < QString, map < int, int > > & mapqii ) {
    QTextStream tso(stdout);
    tso << tag << "\n";
@@ -1164,6 +1180,19 @@ static void map_dump( const QString & tag, const map < QString, map < int, int >
 
          tso << "'" << it->first << "' : " << it2->first << " -> " << it2->second << "\n";
       }
+   }
+}
+
+static void map_dump( const QString & tag, const map < QString, QStringList > & mqsqsl ) {
+   TSO << tag << "\n";
+   for ( auto it = mqsqsl.begin();
+         it != mqsqsl.end();
+         ++it ) {
+      TSO
+         << it->first << "\n"
+         << it->second.join("\n")
+         << "\n"
+         ;
    }
 }
 
@@ -1196,6 +1225,39 @@ static void map_dump( const QString & tag, const map < int, set < int > > & mapi
       }
       tso << "\n";
    }
+}
+
+static QStringList map_dump( const QString & tag, map < QString, map < QString, set < QString > > > & mqsmqssqs, bool also_stdout = true ) {
+   QStringList result;
+   QString     result_line;
+   for ( auto it = mqsmqssqs.begin();
+         it != mqsmqssqs.end();
+         ++it ) {
+      result_line = it->first + ":";
+      result << result_line;
+      
+      for ( auto it2 = it->second.begin();
+            it2 != it->second.end();
+            ++it2 ) {
+         result_line = " chain resseq : " + QString( "%1" ).arg( it2->first ).leftJustified( 6, QChar( ' ' ) ) + " atoms : (" + QString( "%1" ).arg( it2->second.size() ) + ")";
+         for ( auto it3 = it2->second.begin();
+               it3 != it2->second.end();
+               ++it3 ) {
+            result_line += " " + *it3;
+         }
+         result << result_line;
+      }
+      result << "";
+   }
+   if ( also_stdout ) {
+      TSO
+         << tag
+         << "\n"
+         << result.join( "\n" )
+         << "\n"
+         ;
+   }
+   return result;  
 }
 
 static void map_dump( const QString & tag, const set < int > & seti ) {
@@ -1267,7 +1329,9 @@ bool US_Saxs_Util::dmd_pdb_prepare( QStringList & qsl_pdb
    errormsg  = "";
    noticemsg = "";
 
-   dmd_clear( false );
+   set < QString > remove_hetatms = { "HOH", "WAT" };
+
+   dmd_clear();
    qsl_pdb_removed     .clear();
    qsl_link_constraints.clear();
    dmd_pdb_add_back    .clear();
@@ -1296,6 +1360,11 @@ bool US_Saxs_Util::dmd_pdb_prepare( QStringList & qsl_pdb
    QString this_resname      = "";
    QString hetatm_new_resname;
 
+   // hetatm_struct maps orignal resname and chainid:resseq to the set of atoms contained for consistency validation
+   map < QString, map < QString, set < QString > > > hetatm_struct; 
+   map < QString, int >                              hetatm_chain_atoms; // (original) chain id to number of atoms
+   map < QString, QStringList >                      hetatm_lines;       // lines of HETATM by new resname for mol2 processing
+   
    int dmd_resseq_atom       = 0;
    int dmd_resseq_hetatm     = 0;
    int dmd_resseq_atom_link  = 0; // restarts for each chain
@@ -1445,11 +1514,13 @@ bool US_Saxs_Util::dmd_pdb_prepare( QStringList & qsl_pdb
       if ( fields[ "recname" ] == "HETATM" ) {
 
          // check for valid hetatms
-         if ( !dmd_mol2.count( fields[ "resname" ] ) ) {
+         if ( remove_hetatms.count( fields[ "resname" ] ) ) {
             qsl_pdb_removed << line;
          }
 
          last_atom_was_hetatm = true;
+         hetatm_struct[ fields[ "resname" ] ][ fields[ "chainid" ] + ":" + fields[ "resseq" ] ].insert( fields[ "name" ] );
+         hetatm_chain_atoms[ fields[ "chainid" ] ]++;
 
          if ( !first_residue &&
               last_resseq != this_resseq ) {
@@ -1466,6 +1537,7 @@ bool US_Saxs_Util::dmd_pdb_prepare( QStringList & qsl_pdb
          }
 
          line.replace( 17, 3, hetatm_new_resname );
+         hetatm_lines[ hetatm_new_resname ] << line;
 
          first_residue = false;
          new_residue   = false;
@@ -1484,6 +1556,11 @@ bool US_Saxs_Util::dmd_pdb_prepare( QStringList & qsl_pdb
       modified_pdb << line;
    }
       
+   // hetatm_struct_checks validation
+   dmd_pdb_prepare_reports[ "hetatm_struct" ]      = map_dump( "hetatm_struct", hetatm_struct, false );
+   dmd_pdb_prepare_reports[ "hetatm_chain_atoms" ] = map_dump( "hetatm_chain_atoms", hetatm_chain_atoms, false );
+   // map_dump( "hetatm_lines", hetatm_lines );
+
    // process LINKs
    {
       TSO << "link atompair summary\n";
@@ -1618,9 +1695,34 @@ bool US_Saxs_Util::dmd_pdb_prepare( QStringList & qsl_pdb
                      groupline += QString( " %1?" ).arg( *it );
                   }
                }
-               TSO << groupline << "\n";
+               dmd_pdb_prepare_reports[ "connectivity" ] << groupline;
             }
          }
+      }
+   }
+
+   // create pdb files for mol2
+   {
+      for ( auto it = hetatm_lines.begin();
+            it != hetatm_lines.end();
+            ++it ) {
+         QFile fo( QString( "_hetatm_%1.pdb" ).arg( it->first ) );
+         if ( !fo.open( QIODevice::WriteOnly ) ) {
+            errormsg =
+               QString( "Error: dmd_pdb_prepare() can not open file %2 for writing" )
+               .arg( fo.fileName() )
+               ;
+            return false;
+         }
+         QTextStream tso(&fo);
+         tso << it->second.join("\n") << "\n";
+         fo.close();
+         QString cmd = QString( "babel -ipdb %1 -omol2 > %2.mol2 2> /dev/null" ).arg( fo.fileName() ).arg( it->first );
+         if ( system( cmd.toLatin1().data() ) != 0 ) {
+            errormsg = QString( "dmd_pdb_prepare() : command %1 failed" ).arg( cmd );
+            return false;
+         }
+         QFile::remove( fo.fileName() ); // clean up
       }
    }
 
@@ -1633,6 +1735,8 @@ bool US_Saxs_Util::dmd_pdb_prepare( QStringList & qsl_pdb
    // map_dump( "dmd_org_res", dmd_org_res );
    // map_dump( "dmd_org_chain", dmd_org_chain );
 
+   map_dump( "dmd_pdb_prepare_reports", dmd_pdb_prepare_reports );
+
    qsl_pdb = modified_pdb;
    return true;
 }
@@ -1644,7 +1748,7 @@ bool US_Saxs_Util::dmd_pdb_restore( const QStringList & qsl_pdb, QStringList & q
       return false;
    }
 
-   bool removeH = control_parameters.count( "dmdremoveH" );
+   bool removeH = false; // control_parameters.count( "dmdremoveH" );
 
    int startpos = 0;
    if ( add_back ) {

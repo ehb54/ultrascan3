@@ -1510,7 +1510,6 @@ class US_EXTERN US_Saxs_Util
       bool         process_one_iqq();
 
       // dmd hetatm mol2 support structures:
-      set < QString >                       dmd_mol2;             // set of supported hetatm residue names
       map < QString, QString >              dmd_mol2_res;         // newly assigned residue name to original residue name
       map < QString, map < int, int > >     dmd_chain;            // maps chain id and residue number to dmd's chain number
       map < QString, map < int, int > >     dmd_res;              // maps chain id and residue number to dmd's residue number
@@ -1518,12 +1517,13 @@ class US_EXTERN US_Saxs_Util
       map < QString, map < int, QString > > dmd_org_chain;        // maps chain id and residue number to pdb's original chain number
       map < QString, map < int, int > >     dmd_org_res;          // maps chain id and residue number to pdb's original residue number
       QStringList                           dmd_pdb_add_back;     // lines to restore to pdbs - REMARKs etc, not ATOMs or HETATMs
+      map < QString, QStringList >          dmd_pdb_prepare_reports; // for easy GUI display
 
       // dmd for truncated base name
       QString                               dmd_basename;
 
       // dmd hetatm mol2 support routines:
-      void                              dmd_clear( bool also_clear_dmd_mol2 = true );  // clears data structures 
+      void                              dmd_clear();                                   // clears data structures 
       QString                           dmd_next_res( const QString & source );        // returns a unique residuename and updates dmd_mol2
       bool                              dmd_pdb_prepare( QStringList & qsl_pdb
                                                          ,QStringList & qsl_pdb_removed
