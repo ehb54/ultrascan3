@@ -962,7 +962,7 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
 
       //Report
       pb_reportprefs = us_pushbutton( tr( "Report" ) );
-      pb_reportprefs ->setObjectName( strow + ": Report ," + schan );
+      pb_reportprefs ->setObjectName( strow + ": Report --chann_name--" + schan );
       genL->addWidget( pb_reportprefs,  row,  9, 1, 1, Qt::AlignHCenter );
       connect( pb_reportprefs, SIGNAL( clicked     ( ) ),
                this,        SLOT  ( setReport( ) ) );
@@ -1424,7 +1424,7 @@ void US_AnaprofPanGen::setReport( void )
    qDebug() << "Report_oname -- " << oname;
 
    //Find out channel desc
-   QString chan_desc = oname.section( ",", 1, 1 );
+   QString chan_desc = oname.section( "--chann_name--", 1, 1 );
    qDebug() << "Channel_desc -- " << chan_desc;
    // qDebug() << "ReportItems.size() -- " << currProf->ch_reports[ chan_desc ].reportItems.size();
 
