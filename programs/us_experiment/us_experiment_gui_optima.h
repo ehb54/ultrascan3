@@ -351,6 +351,7 @@ class US_ExperGuiSpeeds : public US_WidgetsDialog
       void    ssChgScIntTime_hh( int );
       void    ssChgScIntTime_mm( int );
       void    ssChgScIntTime_ss( int );
+
       //interference
       void    ssChgScIntTime_int_hh( int );
       void    ssChgScIntTime_int_mm( int );

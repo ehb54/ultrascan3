@@ -2150,7 +2150,8 @@ void US_ExperGuiSpeeds::ssChgScIntTime_hh( int val )
    ssscintmin = (double)sb_scnint_mm->value();
    ssscintsec = (double)sb_scnint_ss->value();
 
-   if ( val - minimum_hh == 1 )
+   //if ( val - minimum_hh == 1 )
+   if ( val - minimum_hh > 0 ) 
    {
       sb_scnint_mm->setMinimum(0);
       sb_scnint_ss->setMinimum(0);
@@ -2185,7 +2186,8 @@ void US_ExperGuiSpeeds::ssChgScIntTime_mm( int val )
    double minimum_mm =  scanint_mm_min[curssx];
    double minimum_ss =  scanint_ss_min[curssx];
 
-   if ( val - minimum_mm == 1 )
+   //if ( val - minimum_mm == 0 )
+   if ( val - minimum_mm > 0 )
      {
        sb_scnint_ss->setMinimum(0);
        //sb_scnint_ss->setValue(0);
