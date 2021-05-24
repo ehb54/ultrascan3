@@ -1502,10 +1502,12 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   // pdiag_autoflow->setObjectName("hello");
   // pdiag_autoflow->setWindowFlags(Qt::FramelessWindowHint);
   // pdiag_autoflow->setStyleSheet("#hello{border:4px solid darkgrey}");
-    
-  //disable 'Define Another Exp.' button if all instruments are in use
-  if ( occupied_instruments.size() >= instruments.size() )
-    pdiag_autoflow->pb_cancel->setEnabled( false );
+
+
+  //ALEXEY: "Define Another Exp." button should be always available
+  // //disable 'Define Another Exp.' button if all instruments are in use
+  // if ( occupied_instruments.size() >= instruments.size() )
+  //   pdiag_autoflow->pb_cancel->setEnabled( false );
 
   qDebug() << "occupied_instruments.size(), instruments.size()" << occupied_instruments.size() << ", " <<  instruments.size();
   
@@ -1702,12 +1704,13 @@ void US_InitDialogueGui::update_autoflow_data( void )
       if ( autoflowdata[ i ][ 5 ] == "LIVE_UPDATE" )
 	occupied_instruments << autoflowdata[ i ][ 2 ];
     }
-  
-  //Re-set Define Another Exp. button
-  if ( occupied_instruments.size() >= instruments.size() )
-    pdiag_autoflow->pb_cancel->setEnabled( false );
-  else
-    pdiag_autoflow->pb_cancel->setEnabled( true );
+
+  //ALEXEY: "Define Another Exp." button should be always available
+  // //Re-set Define Another Exp. button
+  // if ( occupied_instruments.size() >= instruments.size() )
+  //   pdiag_autoflow->pb_cancel->setEnabled( false );
+  // else
+  //   pdiag_autoflow->pb_cancel->setEnabled( true );
 
 
   qDebug() << "Define Another Exp. button reset";
