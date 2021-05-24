@@ -148,6 +148,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    tabWidget->tabBar()->setStyleSheet( "QTabBar::tab {min-width: 70;} QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:first {background: blue; color: lightgray; min-width: 50;}  QTabBar::tab:first:hover {background: #4169E1; color: white}   QTabBar::tab:disabled { color: rgba(0, 0, 0, 70%) } ");
    //tabWidget->tabBar()->setStyleSheet( "QTabBar::tab {min-width: 70;} QTabBar::tab:selected {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #fafafa, stop: 0.4 #f4f4f4, stop: 0.5 #e7e7e7, stop: 1.0 #fafafa); } QTabBar::tab:first {background: blue; color: lightgray; min-width: 50;}  QTabBar::tab:first:hover {background: #4169E1; color: white}  QTabBar::tab:last {background: blue; color: lightgray; min-width: 50;}  QTabBar::tab:last:hover {background: #4169E1; color: white} QTabBar::tab:disabled { color: rgba(0, 0, 0, 70%) } ");
 
+
    //Close & Help
    cornerWidget = new QWidget(tabWidget);
    auto *hbox = new QVBoxLayout(cornerWidget);
@@ -161,23 +162,31 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    hbox->setSpacing(1);
    hbox->setContentsMargins(1, 1, 1, 1);
 
+   QFont font_t = tabWidget->property("font").value<QFont>();
+   qDebug() << font_t.family() << font_t.pointSize();
+   QFontMetrics fm_t(font_t);
+   int pixelsWide = fm_t.width("Manage Optima Runs");
+   
+   qDebug() << "FONT_T: fm_t.width() -- " <<  pixelsWide;
+   cornerWidget->setMinimumWidth( pixelsWide );
+
    //cornerWidget->setFixedWidth( tabWidget->tabBar()->width() - 20 );
    //hbox->setStretch(0,1);
  
-   qDebug() << "ACAD:TabWidget position: " << tabWidget->x() << tabWidget->y();
-   qDebug() << "ACAD:TabWidget size    : " << tabWidget->width() << tabWidget->height();
-   qDebug() << "ACAD:TabWidget->tabBar position: " << tabWidget->tabBar()->x() << tabWidget->tabBar()->y();
-   qDebug() << "ACAD:TabWidget->tabBar size    : " << tabWidget->tabBar()->width() << tabWidget->tabBar()->height();
-   //int pos_x = (tabWidget->tabBar()->width());
-   //int pos_x = tabWidget->tabBar()->x();
-   int pos_x = (tabWidget->tabBar()->width())/4;
+   qDebug() << "TabWidget position: " << tabWidget->x() << tabWidget->y();
+   qDebug() << "TabWidget size    : " << tabWidget->width() << tabWidget->height();
+   qDebug() << "TabWidget->tabBar position: " << tabWidget->tabBar()->x() << tabWidget->tabBar()->y();
+   qDebug() << "TabWidget->tabBar size    : " << tabWidget->tabBar()->width() << tabWidget->tabBar()->height();
+
+   int pos_x_offset = fm_t.width("M");
+   int pos_x = tabWidget->tabBar()->x() + pos_x_offset*1.2;
+   //int pos_x = (tabWidget->tabBar()->width())/4;
    int pos_y = (tabWidget->tabBar()->height())*1.12;
    qDebug() << "pos_x, pos_y: " << pos_x << pos_y;
    //m_exit->move(pos_x, pos_y);
    cornerWidget->move(pos_x, pos_y);
    // End of Help & Exit
-   
-   
+        
    main->addWidget( tabWidget );
 
    for (int i=0; i < tabWidget->count(); ++i )
@@ -364,6 +373,14 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    hbox->setSpacing(1);
    hbox->setContentsMargins(1, 1, 1, 1);
 
+   QFont font_t = tabWidget->property("font").value<QFont>();
+   qDebug() << font_t.family() << font_t.pointSize();
+   QFontMetrics fm_t(font_t);
+   int pixelsWide = fm_t.width("Manage Optima Runs");
+   
+   qDebug() << "FONT_T: fm_t.width() -- " <<  pixelsWide;
+   cornerWidget->setMinimumWidth( pixelsWide );
+
    //cornerWidget->setFixedWidth( tabWidget->tabBar()->width() - 20 );
    //hbox->setStretch(0,1);
  
@@ -371,9 +388,10 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    qDebug() << "TabWidget size    : " << tabWidget->width() << tabWidget->height();
    qDebug() << "TabWidget->tabBar position: " << tabWidget->tabBar()->x() << tabWidget->tabBar()->y();
    qDebug() << "TabWidget->tabBar size    : " << tabWidget->tabBar()->width() << tabWidget->tabBar()->height();
-   //int pos_x = (tabWidget->tabBar()->width());
-   //int pos_x = tabWidget->tabBar()->x();
-   int pos_x = (tabWidget->tabBar()->width())/4;
+
+   int pos_x_offset = fm_t.width("M");
+   int pos_x = tabWidget->tabBar()->x() + pos_x_offset*1.2;
+   //int pos_x = (tabWidget->tabBar()->width())/4;
    int pos_y = (tabWidget->tabBar()->height())*1.12;
    qDebug() << "pos_x, pos_y: " << pos_x << pos_y;
    //m_exit->move(pos_x, pos_y);
