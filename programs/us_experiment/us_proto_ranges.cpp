@@ -1454,7 +1454,7 @@ bool US_SelectWavelengths_manual::text_to_numbers( void )
 
   qDebug() << "First and Last element: " << selected[0].toDouble() << ", " << selected[ selected.size() -1 ].toDouble();
 
-  if ( selected[0].toDouble() < 180.0 || selected[ selected.size() -1 ].toDouble() > 800.0  )   // Boundaries [100-800] nm
+  if ( selected[0].toDouble() < 180.0 || selected[ selected.size() -1 ].toDouble() > 800.0  )   // Boundaries [180-800] nm
     {
       QPalette *palette = new QPalette();
       palette->setColor(QPalette::Text,Qt::red);

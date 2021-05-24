@@ -797,10 +797,15 @@ DbgLv(1) << "APGe: bgL:    scrollArea children count ZERO";
    // Start building main layout
    int row         = 0;
 
+   // genL->addWidget( pb_aproname,     row,    0, 1, 5 );
+   // genL->addWidget( le_aproname,     row++,  5, 1, 6 );
+   // genL->addWidget( pb_protname,     row,    0, 1, 5 );
+   // genL->addWidget( le_protname,     row++,  5, 1, 6 );
+
    genL->addWidget( pb_aproname,     row,    0, 1, 3 );
    genL->addWidget( le_aproname,     row++,  3, 1, 6 );
    genL->addWidget( pb_protname,     row,    0, 1, 3 );
-   genL->addWidget( le_protname,     row++,  3, 1, 6 );
+   genL->addWidget( le_protname,     row++,  3, 1, 6 ); 
 
    connect( pb_aproname, SIGNAL( clicked            ( ) ),
             this,        SLOT(   apro_button_clicked( ) ) );
@@ -851,7 +856,8 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
    // genL->addWidget( lb_lvtol, row,    8, 2, 1 );
    // genL->addWidget( lb_daend, row,    9, 2, 1 );
    // genL->addWidget( lb_channelana, row,  10, 2, 1 );
-   // genL->addWidget( lb_mwvprefs,   row++,11, 2, 1 ); row++;
+   // genL->addWidget( lb_report, row,   11, 2, 1 );
+   // genL->addWidget( lb_mwvprefs,   row++,12, 2, 1 ); row++;
 
    genL->addWidget( lb_chann, row,    0, 2, 3 );
    genL->addWidget( lb_lcrat, row,    3, 2, 1 );
@@ -932,6 +938,14 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       genL->addWidget( le_lvtol,  row,    6, 1, 1 );
       genL->addWidget( le_daend,  row,    7, 1, 1 );
 
+      QFont font   = le_chann->property("font").value<QFont>();
+      QFontMetrics fm(font);
+      int pixelsWide = fm.width( le_chann->text() );
+      int pixelsHigh = fm.height();
+      //pb_aproname->setMinimumWidth( pixelsWide );
+      le_chann->setMinimumWidth( pixelsWide*1.1 );
+      le_chann->adjustSize();
+      
       //ALEXEY: add checkbox to define analysis
       //ck_analysisrun = new QCheckBox( tr("Run"), this );
       ck_analysisrun = new QCheckBox( tr(""), this );

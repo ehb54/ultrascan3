@@ -28,13 +28,12 @@ US_AnaProfile::US_AnaProfile()
 
    analysis_run << 1;
 
-   //wvl_edit << 280;
    wvl_edit << 1;
-   
+      
    wvl_not_run << "";
 
    //QList< double > wvl = { 280 };
-   QList< double > wvl = { 1 };
+   QList< double > wvl = { 180 };
    ch_wvls[ chndescs[0] ] = wvl;
 
    //Reports
