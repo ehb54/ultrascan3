@@ -1711,6 +1711,29 @@ DbgLv(1) << " eupd:   ixmlin ixblin" << ixmlin << ixblin << "ncmlin ncblin" << n
 
    else
    {  // Apply to all wavelengths in a cell/channel
+
+     //ALEXEY: Set progressDialog
+     progress_msg = NULL;
+     if( auto_mode )
+       {
+	 progress_msg = new QProgressDialog ("Updating edit profiles...", QString(), 0, nedtfs, this);
+	 progress_msg->setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
+	 progress_msg->setWindowModality(Qt::WindowModal);
+	 progress_msg->setWindowTitle(tr("Updating Edit Profiles"));
+	 QFont font_d  = progress_msg->property("font").value<QFont>();
+	 QFontMetrics fm(font_d);
+	 int pixelsWide = fm.width( progress_msg->windowTitle() );
+	 qDebug() << "Progress_msg: pixelsWide -- " << pixelsWide;
+	 progress_msg ->setMinimumWidth( pixelsWide*2 );
+	 progress_msg->adjustSize();
+	 
+	 progress_msg->setAutoClose( false );
+	 progress_msg->setValue( 0 );
+	 //progress_msg->setRange( 1, nedtfs );
+	 progress_msg->show();
+       }
+     ////////////////////////////
+
       QString dmsg   = "";
       int idEdsv   = idEdit;
 DbgLv(1) << " eupd: AppWvl: nedtfs" << nedtfs;
@@ -1839,6 +1862,12 @@ DbgLv(1) << " eupd:  write: fn" << fn;
 
          if ( db_upd )
          {
+
+	   if (progress_msg != NULL )
+	     {
+	       progress_msg->setValue( jj );
+	     }
+	     
 DbgLv(1) << " eupd:       call upd_db_ed";
             update_db_edit( edtext, fn, dmsg );
 DbgLv(1) << " eupd:       ret fr upd_db_ed  idEdit" << idEdit;
@@ -1855,6 +1884,7 @@ DbgLv(1) << " eupd:       idEdit" << idEdit;
       QApplication::restoreOverrideCursor();
       QApplication::restoreOverrideCursor();
 
+            
       // Construct the edit update message
       mmsg     = tr( "In file directory\n    " ) + filedir + " ,\n" +
                  tr( "file\n    " ) + fname_edit + "\n";
@@ -1911,6 +1941,12 @@ DbgLv(1) << " call Remove Models";
    //For autoflow Analysis
    if ( auto_mode )
      {
+       if ( progress_msg != NULL )
+	 {
+	   progress_msg->setValue( progress_msg->maximum() );
+	   progress_msg->close();
+	 }
+       
        emit editProfiles_updated( triple_information );
        close();
      }

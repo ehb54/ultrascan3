@@ -34,6 +34,8 @@ class US_FitMeniscus : public US_Widgets
       bool auto_mode;
       bool no_fm_data;
       
+      QProgressDialog * progress_msg;
+            
       // Class to hold model descriptions
       class ModelDesc
       {
