@@ -1153,13 +1153,27 @@ QGroupBox * US_AnaprofPanGen::createGroup( QString & triple_name, QList< double 
   int row = 0;
 
   QLabel*     lb_wvl     = us_label( tr( "Wvl" ) );
+
   QLabel*     lb_edit    = us_label( tr( "FitMen" ) );
+  // QFont font_e   = lb_edit->property("font").value<QFont>();
+  // QFontMetrics fm_e(font_e);
+  // int pixelsWide_e = fm_e.width( lb_edit->text() );
+  // lb_edit->setMaximumWidth( pixelsWide_e*1.1 );
+  // lb_edit->adjustSize();
+
   QLabel*     lb_run     = us_label( tr( "Run" ) );
+  // QFont font_r   = lb_run->property("font").value<QFont>();
+  // QFontMetrics fm_r(font_r);
+  // int pixelsWide_r = fm_r.width( lb_run->text() );
+  // lb_run->setMaximumWidth( pixelsWide_r*1.1 );
+  // lb_run->adjustSize();
 
   
   genL->addWidget( lb_wvl,    row,    0, 1, 1 );
   genL->addWidget( lb_edit,   row,    1, 1, 1 );
   genL->addWidget( lb_run,    row++,  2, 1, 1 );
+
+  
 
   QLineEdit    * le_wvl;
   QRadioButton * rb_edit;
@@ -1174,6 +1188,12 @@ QGroupBox * US_AnaprofPanGen::createGroup( QString & triple_name, QList< double 
       le_wvl = new QLineEdit;
       le_wvl ->setPlaceholderText( QString::number (wvls[ii]) );
       le_wvl ->setReadOnly(true);
+      QFont font   = le_wvl->property("font").value<QFont>();
+      QFontMetrics fm(font);
+      int pixelsWide = fm.width( le_wvl->placeholderText() );
+      le_wvl->setMaximumWidth( pixelsWide*2 );
+      le_wvl->adjustSize();
+      
       genL->addWidget( le_wvl,  row,   0, 1, 1 );
 
       //edit meniscus
