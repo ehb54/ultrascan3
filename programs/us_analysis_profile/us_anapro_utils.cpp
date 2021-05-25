@@ -405,8 +405,6 @@ DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.cou
 	 << currProf->lv_tolers[ii] << currProf->data_ends[ii] << currProf->data_ends[kk]
 	 << "currProf->analysis_run[ ii] currProf->analysis_run[ kk ]" << currProf->analysis_run[ ii ] << currProf->analysis_run[ kk ];
 
-
-	
        
 	 //ALEXEY: also set info on wvl for edit 
 	 kk              = qMin( ii, currProf->wvl_edit.count() - 1 );
@@ -457,6 +455,8 @@ DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.cou
 else
  DbgLv(1) << "APGe: inP:  lcrats count, nchan" << le_lcrats.count() << nchan;
 
+   //Also show MWL prefs for the first channel to fill the space
+   ck_mwv[ 0 ] ->setChecked( true  );
 }
 
 // Check the Run name

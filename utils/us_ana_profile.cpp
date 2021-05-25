@@ -28,7 +28,7 @@ US_AnaProfile::US_AnaProfile()
 
    analysis_run << 1;
 
-   wvl_edit << 1;
+   wvl_edit << 180;
       
    wvl_not_run << "";
 

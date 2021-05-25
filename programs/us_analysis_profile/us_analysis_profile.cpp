@@ -941,7 +941,7 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       QFont font   = le_chann->property("font").value<QFont>();
       QFontMetrics fm(font);
       int pixelsWide = fm.width( le_chann->text() );
-      int pixelsHigh = fm.height();
+      //int pixelsHigh = fm.height();
       //pb_aproname->setMinimumWidth( pixelsWide );
       le_chann->setMinimumWidth( pixelsWide*1.1 );
       le_chann->adjustSize();
@@ -1050,7 +1050,7 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "lcrat size" << le_lcrats.count();
    genL           ->setSpacing         ( 2 );
    genL           ->setContentsMargins ( 2, 2, 2, 2 );
    containerWidget->setLayout( genL );
-   
+
    scrollArea     ->setVerticalScrollBarPolicy( Qt::ScrollBarAsNeeded );
    scrollArea     ->setWidgetResizable( true );
    scrollArea     ->setWidget( containerWidget );
