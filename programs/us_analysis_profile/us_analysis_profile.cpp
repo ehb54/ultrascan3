@@ -1191,7 +1191,7 @@ QGroupBox * US_AnaprofPanGen::createGroup( QString & triple_name, QList< double 
       QFont font   = le_wvl->property("font").value<QFont>();
       QFontMetrics fm(font);
       int pixelsWide = fm.width( le_wvl->placeholderText() );
-      le_wvl->setMaximumWidth( pixelsWide*2 );
+      le_wvl->setMaximumWidth( pixelsWide*3 );
       le_wvl->adjustSize();
       
       genL->addWidget( le_wvl,  row,   0, 1, 1 );
