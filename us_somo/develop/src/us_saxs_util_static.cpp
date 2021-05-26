@@ -11430,7 +11430,7 @@ map < QString, QString > US_Saxs_Util::pdb_fields( const QString & pdb_line ) {
                   result[ "dmdlinkpercent" ] = dmdlinkinfo[ 1 ];
                   result[ "dmdlinkpercent" ].toFloat( &ok );
                   if ( !ok ) {
-                     result[ "error" ] = "REMARK 766 DMD LINK RANGE PERCENT not provided a valid number";
+                     result[ "error" ] = "REMARK 766 DMD LINK RANGE PERCENT not provided a valid number:\n" + pdb_line;
                   }
                } else {
                   result[ "dmdlinkstart" ] = dmdlinkinfo[ 0 ];
@@ -11440,14 +11440,14 @@ map < QString, QString > US_Saxs_Util::pdb_fields( const QString & pdb_line ) {
                      result[ "dmdlinkend"   ].toFloat( &ok );
                   }
                   if ( !ok ) {
-                     result[ "error" ] = "REMARK 766 DMD LINK RANGE not provided a valid pair of numbers";
+                     result[ "error" ] = "REMARK 766 DMD LINK RANGE not provided a valid pair of numbers:\n" + pdb_line;
                   }
                }                  
             } else {
-               result[ "error" ] = "REMARK 766 DMD LINK RANGE WRONG FORMAT";
+               result[ "error" ] = "REMARK 766 DMD LINK RANGE WRONG FORMAT:\n" + pdb_line;
             }               
          } else {
-            result[ "error" ] = "REMARK 766 UNKNOWN FORMAT";
+            result[ "error" ] = "REMARK 766 UNKNOWN FORMAT:\n" + pdb_line;
          }
       }
    }

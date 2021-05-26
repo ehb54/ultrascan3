@@ -114,6 +114,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
    public:
       friend class US_Hydrodyn_Batch;
       friend class US_Hydrodyn_Cluster;
+      friend class US_Hydrodyn_Cluster_Dmd;
       friend class US_Hydrodyn_Saxs;
       friend class US_Hydrodyn_Hydro;
       friend class US_Hydrodyn_Saxs_Screen;
@@ -1023,6 +1024,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
       double ionized_residue_atom_hydration( vector < double > & fractions, struct residue *res, struct atom *atom );
       double ionized_residue_atom_protons  ( vector < double > & fractions, struct residue *res, struct atom *atom );
                                                                                                              
+      bool dmd_failed_validation;
+      map < QString, map < QString, QStringList > > dmd_all_pdb_prepare_reports;
+
    private slots:
       void hullrad_readFromStdout();
       void hullrad_readFromStderr();

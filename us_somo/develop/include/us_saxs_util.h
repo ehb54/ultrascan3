@@ -134,6 +134,7 @@ class US_EXTERN US_Saxs_Util
       friend class US_Hydrodyn_Pdb_Tool;
       friend class US_Hydrodyn_Saxs;
       friend class US_Hydrodyn;
+      friend class US_Hydrodyn_Cluster_Dmd;
 
       US_Saxs_Util();
       ~US_Saxs_Util();
@@ -1518,6 +1519,7 @@ class US_EXTERN US_Saxs_Util
       map < QString, map < int, int > >     dmd_org_res;          // maps chain id and residue number to pdb's original residue number
       QStringList                           dmd_pdb_add_back;     // lines to restore to pdbs - REMARKs etc, not ATOMs or HETATMs
       map < QString, QStringList >          dmd_pdb_prepare_reports; // for easy GUI display
+      map < QString, set < int > >          dmd_chain_is_hetatm;  // maps chain id and residue number to hetatm status
 
       // dmd for truncated base name
       QString                               dmd_basename;
@@ -1527,8 +1529,11 @@ class US_EXTERN US_Saxs_Util
       QString                           dmd_next_res( const QString & source );        // returns a unique residuename and updates dmd_mol2
       bool                              dmd_pdb_prepare( QStringList & qsl_pdb
                                                          ,QStringList & qsl_pdb_removed
-                                                         ,QStringList & qsl_link_constraints );
+                                                         ,QStringList & qsl_link_constraints
+                                                         ,bool production_run = true );
                                                                                        // process HETATM, LINK and renumbering
+      bool                              dmd_pdb_prepare( QString & pdb ); // utility, non-production version
+
       bool                              dmd_pdb_restore( const QStringList & qsl_pdb
                                                          ,QStringList & qsl_pdb_restored
                                                          ,bool add_back = true );

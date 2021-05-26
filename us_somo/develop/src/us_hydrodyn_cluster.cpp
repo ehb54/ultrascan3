@@ -1801,6 +1801,28 @@ void US_Hydrodyn_Cluster::dmd()
    US_Hydrodyn::fixWinButtons( hcd );
    hcd->exec();
    delete hcd;
+   if ( ((US_Hydrodyn *)us_hydrodyn)->dmd_failed_validation ) {
+      QStringList errors;
+      for ( auto it = ((US_Hydrodyn *)us_hydrodyn)->dmd_all_pdb_prepare_reports.begin();
+            it != ((US_Hydrodyn *)us_hydrodyn)->dmd_all_pdb_prepare_reports.end();
+            ++it ) {
+         if ( it->second.count( "errors" ) ) {
+            errors << it->first + " : " + it->second[ "errors" ].join( "\n" );
+         }
+      }
+               
+      QMessageBox::warning(
+                           this
+                           ,us_tr( windowTitle() )
+                           ,us_tr("There were errors found preventing DMD from running:\n" + errors.join("\n") )
+                           ,QMessageBox::Ok
+                           ,QMessageBox::NoButton
+                           ,QMessageBox::NoButton
+                           );
+
+      QMetaObject::invokeMethod(this, "close", Qt::QueuedConnection);
+      return;
+   }
    update_enables();
    update_validator();
 }

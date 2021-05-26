@@ -25,6 +25,7 @@
 
 #include <map>
 #include <vector>
+#include <set>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -99,12 +100,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Dmd : public QDialog
       QStringList   csv_parse_line( QString qs );
 
 
-#ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
-
+      map < QString, bool >                    selected_map;
       map < QString, QString >                 full_filenames;
       map < QString, vector < QString > >      residues_chain;
       map < QString, map < QString, bool > >   residues_chain_map;
@@ -114,16 +110,22 @@ class US_EXTERN US_Hydrodyn_Cluster_Dmd : public QDialog
       map < QString, vector < QString > >      residues_range_chain;
       map < QString, vector < unsigned int > > residues_range_chain_pos;
 
-#ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
-#endif
+      // us_saxs_util dmd residue structures
+      map < QString, map < QString, map < int, int > > >  dmd_chain;        // maps chain id and residue number to dmd's chain number
+      map < QString, map < QString, map < int, int > > >  dmd_res_link;     // maps chain id and residue number to dmd's residue number
+      map < QString, map < QString, set < int > > >       dmd_chain_is_hetatm;
+      
+
       bool          setup_residues      ( QString filename );
       void          residue_summary     ( QString filename );
       bool          gui_setup;
       bool          convert_static_range( int row );
-
+      bool          dmd_native_range    ( const QString & filename,
+                                          const QString & chainid,
+                                          const int resseq_start,
+                                          const int resseq_end,
+                                          QString & dmd_static );
+      
    private slots:
 
       void setupGUI();

@@ -6,6 +6,7 @@
 
 #define DMD_LINK_RANGE_DEFAULT_PERCENT 1
 #define DMD_MAX_BASENAME_LENGTH        30
+// #define DMD_DEBUG_MAP_DUMPS
 
 #define TSO QTextStream( stdout )
 
@@ -76,7 +77,10 @@ bool US_Saxs_Util::dmd_findSS()
 
    TSO << "Starting " + prog + "\n";
    TSO << cmd << endl;
-   system( cmd.toLatin1().data() );
+   if ( !system( cmd.toLatin1().data() ) ) {
+      errormsg =  QString( "Error: command %1 did not return a successful exit code" ).arg( cmd );
+      return false;
+   }
    TSO << "Finished " + prog + "\n";
 
    // findSS creates 1 file: constraints_file
@@ -239,7 +243,10 @@ bool US_Saxs_Util::dmd_prepare()
    
    TSO << "Starting " + prog + "\n";
    TSO << cmd << endl;
-   system( cmd.toLatin1().data() );
+   if ( !system( cmd.toLatin1().data() ) ) {
+      errormsg =  QString( "Error: command %1 did not return a successful exit code" ).arg( cmd );
+      return false;
+   }
    TSO << "Finished " + prog + "\n";
 
    if ( !QFile::exists( param_file ) )
@@ -867,7 +874,10 @@ bool US_Saxs_Util::dmd_run( QString run_description )
    
    TSO << "Starting " + prog + "\n";
    TSO << cmd << endl;
-   system( cmd.toLatin1().data() );
+   if ( !system( cmd.toLatin1().data() ) ) {
+      errormsg =  QString( "Error: command %1 did not return a successful exit code" ).arg( cmd );
+      return false;
+   }
    TSO << "Finished " + prog + "\n";
 
    if ( !QFile::exists( restart_file ) )
@@ -949,7 +959,10 @@ bool US_Saxs_Util::dmd_run( QString run_description )
       
       TSO << "Starting " + prog + "\n";
       TSO << cmd << endl;
-      system( cmd.toLatin1().data() );
+      if ( !system( cmd.toLatin1().data() ) ) {
+         errormsg =  QString( "Error: command %1 did not return a successful exit code" ).arg( cmd );
+         return false;
+      }
       TSO << "Finished " + prog + "\n";
       
       if ( !QFile::exists( pdb_out_to_fix_file ) )
@@ -1112,6 +1125,7 @@ void US_Saxs_Util::dmd_clear() {
    dmd_org_chain          .clear();
    dmd_org_res            .clear();
    dmd_pdb_prepare_reports.clear();
+   dmd_chain_is_hetatm    .clear();
 }
 
 QString US_Saxs_Util::dmd_next_res( const QString & source ) {
@@ -1140,6 +1154,8 @@ QString US_Saxs_Util::dmd_next_res( const QString & source ) {
    return res;
 }
 
+#if defined(DMD_DEBUG_MAP_DUMPS)
+
 static void map_dump( const QString & tag, const map < QString, QString > & mapqsqs ) {
    QTextStream tso(stdout);
    tso << tag << "\n";
@@ -1148,24 +1164,6 @@ static void map_dump( const QString & tag, const map < QString, QString > & mapq
          ++it ) {
       tso << "'" << it->first << "' : '" << it->second << "'\n";
    }
-}
-
-static QStringList map_dump( const QString & tag, const map < QString, int > & mqsi, bool also_stdout = true ) {
-   QStringList result;
-   for ( auto it = mqsi.begin();
-         it != mqsi.end();
-         ++it ) {
-      result << "'" + it->first + "' : '" + QString( "%1" ).arg( it->second );
-   }
-   if ( also_stdout ) {
-      TSO
-         << tag
-         << "\n"
-         << result.join( "\n" )
-         << "\n"
-         ;
-   }
-   return result;
 }
 
 static void map_dump( const QString & tag, const map < QString, map < int, int > > & mapqii ) {
@@ -1227,6 +1225,57 @@ static void map_dump( const QString & tag, const map < int, set < int > > & mapi
    }
 }
 
+
+static void map_dump( const QString & tag, const set < int > & seti ) {
+   QTextStream tso(stdout);
+   tso << tag << "\n";
+   for ( auto it = seti.begin();
+         it != seti.end();
+         ++it ) {
+      tso << " " << *it;
+   }
+   tso << "\n";
+}
+
+static QString boolstr( const bool & flag ) {
+   if ( flag ) {
+      return "True";
+   }
+   return "False";
+}
+
+static QString map_dump( const set < int > & seti ) {
+   QString result;
+   for ( auto it = seti.begin();
+         it != seti.end();
+         ++it ) {
+      result += QString( " %1" ).arg( *it );
+   }
+   return result;
+}
+
+#endif
+
+// map_dump()s needed for return values
+
+static QStringList map_dump( const QString & tag, const map < QString, int > & mqsi, bool also_stdout = true ) {
+   QStringList result;
+   for ( auto it = mqsi.begin();
+         it != mqsi.end();
+         ++it ) {
+      result << "'" + it->first + "' : '" + QString( "%1" ).arg( it->second );
+   }
+   if ( also_stdout ) {
+      TSO
+         << tag
+         << "\n"
+         << result.join( "\n" )
+         << "\n"
+         ;
+   }
+   return result;
+}
+
 static QStringList map_dump( const QString & tag, map < QString, map < QString, set < QString > > > & mqsmqssqs, bool also_stdout = true ) {
    QStringList result;
    QString     result_line;
@@ -1260,33 +1309,6 @@ static QStringList map_dump( const QString & tag, map < QString, map < QString, 
    return result;  
 }
 
-static void map_dump( const QString & tag, const set < int > & seti ) {
-   QTextStream tso(stdout);
-   tso << tag << "\n";
-   for ( auto it = seti.begin();
-         it != seti.end();
-         ++it ) {
-      tso << " " << *it;
-   }
-   tso << "\n";
-}
-
-static QString map_dump( const set < int > & seti ) {
-   QString result;
-   for ( auto it = seti.begin();
-         it != seti.end();
-         ++it ) {
-      result += QString( " %1" ).arg( *it );
-   }
-   return result;
-}
-
-static QString boolstr( const bool & flag ) {
-   if ( flag ) {
-      return "True";
-   }
-   return "False";
-}
 
 static QString nth_letter( int n ) {
    if ( n < 1 || n > 26 ) {
@@ -1323,9 +1345,34 @@ static set < int > connected_vertices_run( int pos, map < int, set < int > > & c
 }
 
 
+bool US_Saxs_Util::dmd_pdb_prepare( QString & pdb ) {
+   QStringList qsl_pdb;
+   QStringList qsl_pdb_removed;
+   QStringList qsl_pdb_constraints;
+
+   QFile fi( pdb );
+   if ( !fi.open( QIODevice::ReadOnly ) ) {
+      errormsg =  QString( "Error: can not read file %1" )
+         .arg( pdb );
+      return false;
+   }
+
+   {
+      QTextStream tsi ( &fi );
+      while ( !tsi.atEnd() ) {
+         qsl_pdb << tsi.readLine();
+      }
+      fi.close();
+   }
+
+   return dmd_pdb_prepare( qsl_pdb, qsl_pdb_removed, qsl_pdb_constraints, false );
+}
+
+
 bool US_Saxs_Util::dmd_pdb_prepare( QStringList & qsl_pdb
                                     ,QStringList & qsl_pdb_removed
-                                    ,QStringList & qsl_link_constraints ) {
+                                    ,QStringList & qsl_link_constraints
+                                    ,bool production_run ) {
    errormsg  = "";
    noticemsg = "";
 
@@ -1347,8 +1394,8 @@ bool US_Saxs_Util::dmd_pdb_prepare( QStringList & qsl_pdb
    bool link_range_defined   = false;
    bool link_percent_on      = true;
    double link_percent       = DMD_LINK_RANGE_DEFAULT_PERCENT;
-   double link_start;
-   double link_end;
+   double link_start         = 0;
+   double link_end           = 0;
 
    // HETATM tracking data
    bool first_residue        = true;  // true when we start a model or chain, false after residue
@@ -1516,7 +1563,10 @@ bool US_Saxs_Util::dmd_pdb_prepare( QStringList & qsl_pdb
          // check for valid hetatms
          if ( remove_hetatms.count( fields[ "resname" ] ) ) {
             qsl_pdb_removed << line;
+            continue;
          }
+
+         dmd_chain_is_hetatm[ fields[ "chainid" ] ].insert( fields[ "resseq" ].toInt() );
 
          last_atom_was_hetatm = true;
          hetatm_struct[ fields[ "resname" ] ][ fields[ "chainid" ] + ":" + fields[ "resseq" ] ].insert( fields[ "name" ] );
@@ -1557,8 +1607,8 @@ bool US_Saxs_Util::dmd_pdb_prepare( QStringList & qsl_pdb
    }
       
    // hetatm_struct_checks validation
-   dmd_pdb_prepare_reports[ "hetatm_struct" ]      = map_dump( "hetatm_struct", hetatm_struct, false );
-   dmd_pdb_prepare_reports[ "hetatm_chain_atoms" ] = map_dump( "hetatm_chain_atoms", hetatm_chain_atoms, false );
+   dmd_pdb_prepare_reports[ "HETATM Chain Detail" ]      = map_dump( "hetatm_struct", hetatm_struct, false );
+   dmd_pdb_prepare_reports[ "HETATM Chain Atom Count" ]  = map_dump( "hetatm_chain_atoms", hetatm_chain_atoms, false );
    // map_dump( "hetatm_lines", hetatm_lines );
 
    // process LINKs
@@ -1664,12 +1714,12 @@ bool US_Saxs_Util::dmd_pdb_prepare( QStringList & qsl_pdb
          chain_links[ dmd_chain[ chainid1 ][ resseq1 ] ].insert( dmd_chain[ chainid2 ][ resseq2 ] );
          chain_links[ dmd_chain[ chainid2 ][ resseq2 ] ].insert( dmd_chain[ chainid1 ][ resseq1 ] );
          qsl_link_constraints << constraint;
-         TSO << constraint << endl;
+         // TSO << constraint << endl;
       }
 
       // link_check
       {
-         map_dump( "chain_links", chain_links );
+         // map_dump( "chain_links", chain_links );
          if ( !link_range_defined ) {
             noticemsg += QString( "Notice: using a default link range of %1 centered on the LINK distance provided" )
                .arg( DMD_LINK_RANGE_DEFAULT_PERCENT );
@@ -1695,14 +1745,14 @@ bool US_Saxs_Util::dmd_pdb_prepare( QStringList & qsl_pdb
                      groupline += QString( " %1?" ).arg( *it );
                   }
                }
-               dmd_pdb_prepare_reports[ "connectivity" ] << groupline;
+               dmd_pdb_prepare_reports[ "Connectivity" ] << groupline;
             }
          }
       }
    }
 
    // create pdb files for mol2
-   {
+   if ( production_run ) {
       for ( auto it = hetatm_lines.begin();
             it != hetatm_lines.end();
             ++it ) {
@@ -1735,7 +1785,7 @@ bool US_Saxs_Util::dmd_pdb_prepare( QStringList & qsl_pdb
    // map_dump( "dmd_org_res", dmd_org_res );
    // map_dump( "dmd_org_chain", dmd_org_chain );
 
-   map_dump( "dmd_pdb_prepare_reports", dmd_pdb_prepare_reports );
+   // map_dump( "dmd_pdb_prepare_reports", dmd_pdb_prepare_reports );
 
    qsl_pdb = modified_pdb;
    return true;
