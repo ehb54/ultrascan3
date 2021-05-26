@@ -166,9 +166,9 @@ DbgLv(1) << "APG00: ipro: kchn nchs ncho" << kchn << nchs << ncho;
 
    currProf.ch_wvls.clear();
    //Do we need to clear ch_reports() QMap here ?
-   //currProf.ch_reports.clear();
-   
+   currProf.ch_reports.clear();
 
+   
    if ( nchs < 1  ||  ncho < 1 )
      return;
 
@@ -792,7 +792,7 @@ DbgLv(1) << "APGe: bgL:    scrollArea children count ZERO";
 
    ck_runs    .clear();
    pb_reports .clear();
-   internal_reports.clear();
+   //internal_reports.clear();
 
    // Start building main layout
    int row         = 0;
@@ -1008,7 +1008,8 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       
       QGroupBox * wvl_box = createGroup( ch_name,  curr_wvls );
       scrollArea_r      = new QScrollArea( this );
-      scrollArea_r     ->setWidgetResizable( true );
+      scrollArea_r       ->setMaximumWidth( (pixelsWide_w + pixelsWide_w +  pixelsWide_r )*3 );
+      scrollArea_r       ->setWidgetResizable( true );
       //scrollArea_r     ->setObjectName( strow  + ",wvl_box," + ch_name );
       scrollArea_r     ->setObjectName( strow  + ": wvl_box");
       scrollArea_r     ->setWidget( wvl_box );
@@ -1070,8 +1071,9 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "lcrat size" << le_lcrats.count();
 
    //middle_h->addLayout( left,  0, 0, -1, 7 );
    //middle_h->addLayout( right, 0, 7, -1, 2 );
-   middle_h->addWidget( controlsRestrictorWidget_left,  0, 0, -1, 7 );
-   middle_h->addWidget( controlsRestrictorWidget_right, 0, 7, -1, 2 );
+   //middle_h->addWidget( controlsRestrictorWidget_left,  0, 0, -1, 7 );
+   middle_h->addWidget( controlsRestrictorWidget_left, 0, 0 );
+   middle_h->addWidget( controlsRestrictorWidget_right, 0, 7, -1, 2, Qt::AlignRight);
    //middle_h->setSizeConstraint(QLayout::SetNoConstraint);
    
    //middle_h->setRowStretch( 0, 1);
@@ -1079,7 +1081,6 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "lcrat size" << le_lcrats.count();
    for ( int i=0; i < gr_mwvbox.size(); ++i )
      gr_mwvbox[ i ]->setVisible( false );
   
-      
    panel->addLayout( middle_h );
 
    panel->addStretch();
@@ -1153,18 +1154,21 @@ QGroupBox * US_AnaprofPanGen::createGroup( QString & triple_name, QList< double 
   int row = 0;
 
   QLabel*     lb_wvl     = us_label( tr( "Wvl" ) );
-
+  QFont font_w   = lb_wvl->property("font").value<QFont>();
+  QFontMetrics fm_w(font_w);
+  pixelsWide_w = fm_w.width( lb_wvl->text() );
+  
   QLabel*     lb_edit    = us_label( tr( "FitMen" ) );
-  // QFont font_e   = lb_edit->property("font").value<QFont>();
-  // QFontMetrics fm_e(font_e);
-  // int pixelsWide_e = fm_e.width( lb_edit->text() );
+  QFont font_e   = lb_edit->property("font").value<QFont>();
+  QFontMetrics fm_e(font_e);
+  pixelsWide_e = fm_e.width( lb_edit->text() );
   // lb_edit->setMaximumWidth( pixelsWide_e*1.1 );
   // lb_edit->adjustSize();
 
   QLabel*     lb_run     = us_label( tr( "Run" ) );
-  // QFont font_r   = lb_run->property("font").value<QFont>();
-  // QFontMetrics fm_r(font_r);
-  // int pixelsWide_r = fm_r.width( lb_run->text() );
+  QFont font_r   = lb_run->property("font").value<QFont>();
+  QFontMetrics fm_r(font_r);
+  pixelsWide_r = fm_r.width( lb_run->text() );
   // lb_run->setMaximumWidth( pixelsWide_r*1.1 );
   // lb_run->adjustSize();
 
@@ -1244,7 +1248,7 @@ QGroupBox * US_AnaprofPanGen::createGroup( QString & triple_name, QList< double 
   QSpacerItem* spacer2 = new QSpacerItem( 20, ihgt_r );
   genL ->setRowStretch( row, 1 );
   genL ->addItem( spacer2,  row++,  0, 1, 1 );
-  
+
   groupBox->setLayout(genL);
    
   return groupBox;

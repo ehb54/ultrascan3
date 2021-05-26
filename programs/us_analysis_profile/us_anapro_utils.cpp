@@ -337,8 +337,11 @@ DbgLv(1) << "APGe: inP: nchan" << nchan;
            ( chopts.contains( tr( "(not installed)" ) ) )  ||
            ( chopts.contains( "nterf" )  &&
              chname.contains( "B" ) ) )
-         continue;
-
+	{
+	  
+	  continue;
+	}
+      
       // Otherwise, recompose "channel:optics:solution" and add
       QString chsolu = QString( chdesc ).section( ":", 2, 2 );
       QString chnsel = chname + ":" + chopts + ":" + chsolu;
@@ -347,6 +350,45 @@ DbgLv(1) << "APGe: inP: nchan" << nchan;
 DbgLv(1) << "APGe: inP:  ch" << ii << "chdesc" << chdesc
  << "chnsel" << chnsel;
    }
+
+   // //ALEXEY: now exclude channels for B:Interf. from the following QLists/QMaps:
+   // QStringList      chndescs_alt_copy;
+   // QList< int >     wvl_edit_copy;
+   // QList< QString > wvl_not_run_copy;
+   // QMap< QString, QList< double > > ch_wvls_copy;
+   // QMap< QString, US_ReportGMP > ch_reports_copy;
+
+   // chndescs_alt_copy.clear();
+   // wvl_edit_copy    .clear();
+   // wvl_not_run_copy .clear();
+   // ch_wvls_copy     .clear();
+   // ch_reports_copy  .clear();
+   
+   // for ( int ii = 0; ii < nchan; ii++ )
+   //   {
+   //     QString chann_desc = currProf->chndescs_alt[ ii ];
+   //     if ( chann_desc.contains("B:Interf.") )
+   // 	 continue;
+       
+   //     chndescs_alt_copy << currProf->chndescs_alt[ ii  ];
+   //     wvl_edit_copy     << currProf->wvl_edit[ ii ];
+   //     wvl_not_run_copy  << currProf->wvl_not_run[ ii ];
+   //     ch_wvls_copy[ chann_desc ]     =  currProf->ch_wvls[ chann_desc ];
+   //     ch_reports_copy[ chann_desc ]  =  currProf->ch_reports[ chann_desc ];
+   //   }
+   
+   // currProf->chndescs_alt  .clear();
+   // currProf->wvl_edit      .clear();
+   // currProf->wvl_not_run   .clear();
+   // currProf->ch_wvls       .clear();
+   // currProf->ch_reports    .clear();
+
+   // currProf->chndescs_alt = chndescs_alt_copy;
+   // currProf->wvl_edit     = wvl_edit_copy;
+   // currProf->wvl_not_run  = wvl_not_run_copy;
+   // currProf->ch_wvls      = ch_wvls_copy;
+   // currProf->ch_reports   = ch_reports_copy;
+   
 //*DEBUG*
 QObject* pwidg=le_aproname->parent();
 QList<QObject*> allObjects=pwidg->children();
@@ -371,15 +413,27 @@ DbgLv(1) << "APGe: inP: 1)tol,dae size" << currProf->lv_tolers.count() << currPr
 DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.count()
  << "nchan_gui" << nchan;
 
+   //Clear internal_reports QMap
+   internal_reports.clear();
+ 
    if ( le_lcrats.count() == nchan )
    { // Reset General channel parameter gui elements
       for ( int ii = 0; ii < nchan; ii++ )
       {
 	qDebug() <<  "currProf->analysis_run.size(): " << currProf->analysis_run.count();
-	qDebug() <<  "currProf->wvl_edit.size(): " << currProf->wvl_edit.count();
-	qDebug() <<  "nchan, sl_chnsel.size(): " << nchan << sl_chnsel.count();
 	
-         int kk          = qMin( ii, sl_chnsel.count() - 1 );
+
+	//ALEXEY: the next 5 following QLists/QMaps must be stripped of the enties associated with B:Interf. channels!!!
+	qDebug() <<  "currProf->wvl_edit.size(): "     << currProf->wvl_edit.count();
+	qDebug() <<  "currProf->wvl_not_run.size(): "  << currProf->wvl_not_run.count();
+	qDebug() <<  "currProf->ch_wvls.size(): "      << currProf->ch_wvls.count();
+	qDebug() <<  "currProf->ch_reports.size():   "  << currProf->ch_reports.count();
+	qDebug() <<  "currProf->chndescs_alt.size(): " << currProf->chndescs_alt.count();
+	
+	qDebug() <<  "nchan, sl_chnsel.size(): " << nchan << sl_chnsel.count();
+	qDebug() << "ch_wvls for --  " << currProf->chndescs_alt[ ii ] << currProf->ch_wvls[ currProf->chndescs_alt[ ii  ] ];
+	
+	 int kk          = qMin( ii, sl_chnsel.count() - 1 );
          le_channs[ ii ]->setText( sl_chnsel[ kk ] );
          kk              = qMin( ii, currProf->lc_ratios.count() - 1 );
          le_lcrats[ ii ]->setText( QString::number( currProf->lc_ratios[ kk ] ) );
@@ -428,11 +482,15 @@ DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.cou
 	 //ALEXEY: set ReportGMP per channel
 	 kk              = qMin( ii, currProf->chndescs_alt.count() - 1 );
 	 qDebug() << "US_AnaprofPanGen::initPanel(): ReportGMP kk, ii currProf->chndescs_alt.count() " << kk <<  ii << currProf->chndescs_alt.count();
+	 
 	 QString chdesc_alt = currProf->chndescs_alt[ kk ];
 	 qDebug() << "US_AnaprofPanGen::initPanel(): chdesc_alt " << chdesc_alt;
 	 internal_reports[ chdesc_alt ] = currProf->ch_reports[ chdesc_alt ];
+	 qDebug() << "US_AnaprofPanGen::initPanel(): internal_reports[ chdesc_alt ].size() -- " << internal_reports.size();
 	 internal_reports[ chdesc_alt ].wavelength = currProf->wvl_edit[ kk ];
-	 
+	 qDebug() << "US_AnaprofPanGen::initPanel(): internal_reports[ chdesc_alt ].wavelength, currProf->wvl_edit.size() -- "
+		  << internal_reports[ chdesc_alt ].wavelength
+		  << currProf->wvl_edit.size();
 
 	 //ALEXEY: also set info on wvl not to be analyzed 
 	 kk              = qMin( ii, currProf->wvl_not_run.count() - 1 );
@@ -456,7 +514,10 @@ else
  DbgLv(1) << "APGe: inP:  lcrats count, nchan" << le_lcrats.count() << nchan;
 
    //Also show MWL prefs for the first channel to fill the space
-   ck_mwv[ 0 ] ->setChecked( true  );
+   if ( ck_runs[ 0 ] ->isChecked( ) )
+     ck_mwv[ 0 ] ->setChecked( true  );
+   else
+     ck_mwv[ 0 ] ->setChecked( false  );
 }
 
 // Check the Run name

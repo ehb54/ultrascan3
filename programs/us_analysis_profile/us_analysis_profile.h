@@ -74,6 +74,10 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       
       US_Help  showHelp;
 
+      int pixelsWide_w;
+      int pixelsWide_e;
+      int pixelsWide_r;
+
       //QHBoxLayout* middle_h;
       
       QGridLayout* genL;
