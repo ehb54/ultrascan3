@@ -365,44 +365,7 @@ DbgLv(1) << "APGe: inP:  ch" << ii << "chdesc" << chdesc
       }
 
     qDebug() << "chndescs_alt_copy  -- " << chndescs_alt_copy ;
-
-   // //Older
-   // QStringList      chndescs_alt_copy;
-   // QList< int >     wvl_edit_copy;
-   // QList< QString > wvl_not_run_copy;
-   // QMap< QString, QList< double > > ch_wvls_copy;
-   // QMap< QString, US_ReportGMP > ch_reports_copy;
-
-   // chndescs_alt_copy.clear();
-   // wvl_edit_copy    .clear();
-   // wvl_not_run_copy .clear();
-   // ch_wvls_copy     .clear();
-   // ch_reports_copy  .clear();
-   
-   // for ( int ii = 0; ii < nchan; ii++ )
-   //   {
-   //     QString chann_desc = currProf->chndescs_alt[ ii ];
-   //     if ( chann_desc.contains("B:Interf.") )
-   // 	 continue;
-    
-   //     chndescs_alt_copy << currProf->chndescs_alt[ ii  ];
-   //     wvl_edit_copy     << currProf->wvl_edit[ ii ];
-   //     wvl_not_run_copy  << currProf->wvl_not_run[ ii ];
-   //     ch_wvls_copy[ chann_desc ]     =  currProf->ch_wvls[ chann_desc ];
-   //     ch_reports_copy[ chann_desc ]  =  currProf->ch_reports[ chann_desc ];
-   //   }
-   
-   // currProf->chndescs_alt  .clear();
-   // currProf->wvl_edit      .clear();
-   // currProf->wvl_not_run   .clear();
-   // currProf->ch_wvls       .clear();
-   // currProf->ch_reports    .clear();
-
-   // currProf->chndescs_alt = chndescs_alt_copy;
-   // currProf->wvl_edit     = wvl_edit_copy;
-   // currProf->wvl_not_run  = wvl_not_run_copy;
-   // currProf->ch_wvls      = ch_wvls_copy;
-   // currProf->ch_reports   = ch_reports_copy;
+        
    
 //*DEBUG*
 QObject* pwidg=le_aproname->parent();
@@ -509,6 +472,9 @@ DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.cou
 		  << internal_reports[ chdesc_alt ].wavelength
 		  << currProf->wvl_edit.size();
 
+	 //Also, important to re-insert correct-order chndescs_alt!!!
+	 currProf->chndescs_alt[ ii ] = chdesc_alt;
+	 
 	 //ALEXEY: also set info on wvl not to be analyzed 
 	 kk              = qMin( ii, currProf->wvl_not_run.count() - 1 );
 
@@ -537,6 +503,8 @@ else
    else
      ck_mwv[ 0 ] ->setChecked( false  );
 
+   // Save to update Gui
+   qDebug() << "US_AnaprofPanGen::initPanel(): before save: currProf->chndescs_alt, size() -- " << currProf->chndescs_alt << currProf->chndescs_alt.size();
    savePanel();
 }
 
@@ -642,6 +610,8 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
       currProf->wvl_edit.clear( );
       currProf->wvl_not_run.clear( );
 
+      currProf->ch_reports.clear();
+
       for ( int ii = 0; ii < nchan; ii++ )
       {
          currProf->lc_ratios << le_lcrats[ ii ]->text().toDouble();
@@ -674,6 +644,7 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 
 	 //ALEXEY: also save ReportGMP per channel
 	 QString chdesc_alt = currProf->chndescs_alt[ ii ];
+	 qDebug() << "US_AnaprofPanGen::savePanel(): chdesc_alt -- " << chdesc_alt;
 	 currProf->ch_reports[ chdesc_alt ] = internal_reports[ chdesc_alt ]; 
 
 	 //ALEXEY: also save info on wvl not to be analyzed
