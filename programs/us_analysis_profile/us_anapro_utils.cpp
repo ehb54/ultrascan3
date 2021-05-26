@@ -351,7 +351,22 @@ DbgLv(1) << "APGe: inP:  ch" << ii << "chdesc" << chdesc
  << "chnsel" << chnsel;
    }
 
-   // //ALEXEY: now exclude channels for B:Interf. from the following QLists/QMaps:
+    // //ALEXEY: now exclude channels for B:Interf. from the following QLists/QMaps:
+    QStringList      chndescs_alt_copy;
+    chndescs_alt_copy.clear();
+   
+    for ( int ii = 0; ii < nchan; ii++ )
+      {
+        QString chann_desc = currProf->chndescs_alt[ ii ];
+        if ( chann_desc.contains("B:Interf") )
+    	 continue;
+     
+        chndescs_alt_copy <<  currProf->chndescs_alt[ ii ];
+      }
+
+    qDebug() << "chndescs_alt_copy  -- " << chndescs_alt_copy ;
+
+   // //Older
    // QStringList      chndescs_alt_copy;
    // QList< int >     wvl_edit_copy;
    // QList< QString > wvl_not_run_copy;
@@ -369,7 +384,7 @@ DbgLv(1) << "APGe: inP:  ch" << ii << "chdesc" << chdesc
    //     QString chann_desc = currProf->chndescs_alt[ ii ];
    //     if ( chann_desc.contains("B:Interf.") )
    // 	 continue;
-       
+    
    //     chndescs_alt_copy << currProf->chndescs_alt[ ii  ];
    //     wvl_edit_copy     << currProf->wvl_edit[ ii ];
    //     wvl_not_run_copy  << currProf->wvl_not_run[ ii ];
@@ -422,7 +437,6 @@ DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.cou
       {
 	qDebug() <<  "currProf->analysis_run.size(): " << currProf->analysis_run.count();
 	
-
 	//ALEXEY: the next 5 following QLists/QMaps must be stripped of the enties associated with B:Interf. channels!!!
 	qDebug() <<  "currProf->wvl_edit.size(): "     << currProf->wvl_edit.count();
 	qDebug() <<  "currProf->wvl_not_run.size(): "  << currProf->wvl_not_run.count();
@@ -463,14 +477,16 @@ DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.cou
 	 //ALEXEY: also set info on wvl for edit 
 	 kk              = qMin( ii, currProf->wvl_edit.count() - 1 );
 
-	 qDebug() << "currProf->wvl_edit[ ii] currProf->wvl_edit[ kk ]" << currProf->wvl_edit[ ii ] << currProf->wvl_edit[ kk ];
+	 qDebug() << "ii kk currProf->wvl_edit[ ii] currProf->wvl_edit[ kk ]" << ii << kk << currProf->wvl_edit[ ii ] << currProf->wvl_edit[ kk ];
 
 	 QScrollArea *sa = gr_mwvbox[ ii ];
 	 foreach (QRadioButton *button, sa->findChildren<QRadioButton*>())
 	   {
 	     int wvl_to_edit = (button->objectName()).split(":")[2].toInt();
+
+	     qDebug() << "currProf->wvl_edit[ kk ] == wvl_to_edit -- " << currProf->wvl_edit[ kk ] <<  " = " <<  wvl_to_edit;
 	     
-	     if ( currProf->wvl_edit[ kk ] == wvl_to_edit )
+	     if ( currProf->wvl_edit[ kk ] == wvl_to_edit )  // <-- NOT FULFILLED ????????
 	       {
 		 button->setChecked( true );
 		 button->click();
@@ -483,7 +499,8 @@ DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.cou
 	 kk              = qMin( ii, currProf->chndescs_alt.count() - 1 );
 	 qDebug() << "US_AnaprofPanGen::initPanel(): ReportGMP kk, ii currProf->chndescs_alt.count() " << kk <<  ii << currProf->chndescs_alt.count();
 	 
-	 QString chdesc_alt = currProf->chndescs_alt[ kk ];
+	 //QString chdesc_alt = currProf->chndescs_alt[ kk ];
+	 QString chdesc_alt = chndescs_alt_copy[ ii ]; 
 	 qDebug() << "US_AnaprofPanGen::initPanel(): chdesc_alt " << chdesc_alt;
 	 internal_reports[ chdesc_alt ] = currProf->ch_reports[ chdesc_alt ];
 	 qDebug() << "US_AnaprofPanGen::initPanel(): internal_reports[ chdesc_alt ].size() -- " << internal_reports.size();
@@ -495,7 +512,8 @@ DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.cou
 	 //ALEXEY: also set info on wvl not to be analyzed 
 	 kk              = qMin( ii, currProf->wvl_not_run.count() - 1 );
 
-	 qDebug() << "currProf->wvl_not_run[ ii] currProf->wvl_not_run[ kk ]" << currProf->wvl_not_run[ ii ] << currProf->wvl_not_run[ kk ];
+	 //ALEXEY: this string caused crash
+	 //qDebug() << "currProf->wvl_not_run[ ii] currProf->wvl_not_run[ kk ]" << currProf->wvl_not_run[ ii ] << currProf->wvl_not_run[ kk ];
 
 	 foreach (QCheckBox *ckbox, sa->findChildren<QCheckBox*>())
 	   {
@@ -518,6 +536,8 @@ else
      ck_mwv[ 0 ] ->setChecked( true  );
    else
      ck_mwv[ 0 ] ->setChecked( false  );
+
+   savePanel();
 }
 
 // Check the Run name

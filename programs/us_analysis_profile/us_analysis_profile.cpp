@@ -165,10 +165,7 @@ void US_AnalysisProfileGui::inherit_protocol( US_RunProtocol* iProto )
 DbgLv(1) << "APG00: ipro: kchn nchs ncho" << kchn << nchs << ncho;
 
    currProf.ch_wvls.clear();
-   //Do we need to clear ch_reports() QMap here ?
-   currProf.ch_reports.clear();
-
-   
+      
    if ( nchs < 1  ||  ncho < 1 )
      return;
 
