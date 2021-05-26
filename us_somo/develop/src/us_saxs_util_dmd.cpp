@@ -78,8 +78,9 @@ bool US_Saxs_Util::dmd_findSS()
    TSO << "Starting " + prog + "\n";
    TSO << cmd << endl;
    if ( !system( cmd.toLatin1().data() ) ) {
-      errormsg =  QString( "Error: command %1 did not return a successful exit code" ).arg( cmd );
-      return false;
+      // findSS.linux returns non-zero even on success
+      // errormsg =  QString( "Error: command %1 did not return a successful exit code" ).arg( cmd );
+      // return false;
    }
    TSO << "Finished " + prog + "\n";
 
@@ -244,8 +245,9 @@ bool US_Saxs_Util::dmd_prepare()
    TSO << "Starting " + prog + "\n";
    TSO << cmd << endl;
    if ( !system( cmd.toLatin1().data() ) ) {
-      errormsg =  QString( "Error: command %1 did not return a successful exit code" ).arg( cmd );
-      return false;
+      // complex.linux returns non-zero even on success
+      // errormsg =  QString( "Error: command %1 did not return a successful exit code" ).arg( cmd );
+      // return false;
    }
    TSO << "Finished " + prog + "\n";
 
@@ -875,8 +877,9 @@ bool US_Saxs_Util::dmd_run( QString run_description )
    TSO << "Starting " + prog + "\n";
    TSO << cmd << endl;
    if ( !system( cmd.toLatin1().data() ) ) {
-      errormsg =  QString( "Error: command %1 did not return a successful exit code" ).arg( cmd );
-      return false;
+      // xDMD.linux returns non-zero even on success
+      // errormsg =  QString( "Error: command %1 did not return a successful exit code" ).arg( cmd );
+      // return false;
    }
    TSO << "Finished " + prog + "\n";
 
@@ -960,8 +963,9 @@ bool US_Saxs_Util::dmd_run( QString run_description )
       TSO << "Starting " + prog + "\n";
       TSO << cmd << endl;
       if ( !system( cmd.toLatin1().data() ) ) {
-         errormsg =  QString( "Error: command %1 did not return a successful exit code" ).arg( cmd );
-         return false;
+         // complex_M2P.linux returns non-zero even on success
+         // errormsg =  QString( "Error: command %1 did not return a successful exit code" ).arg( cmd );
+         // return false;
       }
       TSO << "Finished " + prog + "\n";
       
@@ -1099,6 +1103,7 @@ bool US_Saxs_Util::dmd_run( QString run_description )
       output_files << pdb_out_file;
       if ( dmdmmlastout ) {
          // also save allmodels
+         QRegExp rx_check_line( "^(ATOM|HETATM)" );
          QString pdb_out_file = dmd_basename + "_" + run_description +  "_m-all.pdb";
          QFile fo( pdb_out_file );
          if ( !fo.open( QIODevice::WriteOnly ) ) {
@@ -1109,7 +1114,18 @@ bool US_Saxs_Util::dmd_run( QString run_description )
          }
          QTextStream tso( &fo );
          tso << dmd_pdb_add_back.join( "\n" ) << "\n";
-         tso << allmodels.join( "" ) << "END\n";
+         int allmodels_size = (int) allmodels.size();
+         for ( int i = 0; i < allmodels_size; ++i ) {
+            QString qs = allmodels[ i ];
+            if ( rx_check_line.indexIn( qs ) != -1 &&
+                 qs.mid( 76, 2 ).trimmed() == "H" ) {
+               continue;
+            }
+            if ( !qs.trimmed().isEmpty() ) {
+               tso << qs.trimmed() << "\n";
+            }
+         }
+         tso <<  "END\n";
          fo.close();
          output_files << pdb_out_file;
       }         
