@@ -814,6 +814,10 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       void    submitExperiment( void );  // Submit the experiment
       void    saveRunProtocol ( void );  // Save the Run Protocol
 
+      void    saveReports ( US_AnaProfile* );  // Save the Reports
+      int     writeReportToDB( QString, US_ReportGMP ); //Write ReportItems && Parent Report
+      int     writeReportItemToDB( US_DB2*, QString, int, US_ReportGMP::ReportItem ); 
+
       void    saveAnalysisProfile ( void );  // Save the Analysis Profile
 
       QString buildJson       ( void );  // Build the JSON

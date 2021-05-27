@@ -52,6 +52,8 @@ class US_UTIL_EXTERN US_ReportGMP
       QString calibration;
 
       QString score;
+
+      
       
     private:
       

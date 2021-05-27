@@ -4659,7 +4659,104 @@ DbgLv(1) << "EGUp:  connected" << connected;
    initPanel();
 }
 
-// Slot to save the current Run Protocol
+// Slot to save the current Reports && fill out QMaps relating chdesc-to-reportID
+void US_ExperGuiUpload::saveReports( US_AnaProfile* aprof )
+{
+  qDebug() << "Saving REPORTS !!!";
+
+  //Iterate over Reports 
+  QMap<QString, US_ReportGMP>::iterator ri;
+  for ( ri = aprof->ch_reports.begin(); ri != aprof->ch_reports.end(); ++ri )
+    {
+      //Generate new Report GuiID:
+      if ( aprof->ch_report_guids [ ri.key() ].startsWith( "0000" ) )
+	aprof->ch_report_guids [ ri.key() ] = US_Util::new_guid();
+
+
+      //Return new Report ID from DB insertion:
+      int reportID = writeReportToDB( aprof->ch_report_guids[ ri.key() ], ri.value() );
+      aprof->ch_report_ids[ ri.key() ] = reportID;
+      
+      qDebug() << "Report ID/GUID: channel -- " << ri.key() << ": " << aprof->ch_report_ids[ ri.key() ] << " / " << aprof->ch_report_guids[ ri.key() ];
+    }
+}
+
+//Write a single  Report to DB
+int US_ExperGuiUpload::writeReportToDB( QString reportGUID, US_ReportGMP report )
+{
+  qDebug() << "Writing Report " << report.channel_name;
+  int reportID = 0;
+  
+  US_DB2* dbP  = NULL;
+  US_Passwd pw;
+  dbP            = new US_DB2( pw.getPasswd() );
+  if ( dbP->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Saving Report: Could not connect to database: \n" ) + dbP->lastError() );
+      return reportID;
+    }
+
+  //Save parent Report
+  QStringList qry;
+  qry << "new_record"
+      << reportGUID
+      << QString::number( report.tot_conc )
+      << QString::number( report.rmsd_limit )
+      << QString::number( report.av_intensity )
+      << QString::number( report.experiment_duration )
+      << QString::number( report.wavelength )
+    ;
+
+  qDebug() << "Query: new_record: " << qry;
+  reportID = dbP->functionQuery( qry );
+  qDebug() << "Save Report:  new DB: ID" << reportID;
+  
+  //Now save ReportItems (children)
+  for ( int ii = 0; ii < report.reportItems.size(); ii++ )
+    {
+      US_ReportGMP::ReportItem curr_reportItem = report.reportItems[ ii ];
+      writeReportItemToDB( dbP, reportGUID, reportID, curr_reportItem );
+    }
+  
+  
+  return reportID; 
+}
+
+// Write a singe ReportItem
+int US_ExperGuiUpload::writeReportItemToDB( US_DB2* dbP, QString reportGUID, int reportID, US_ReportGMP::ReportItem reportItem ) 
+{
+  int reportItemID = 0;
+
+  //Infer main params
+  QString type          =  reportItem.type;
+  QString method        =  reportItem.method;
+  QString range_low     =  QString::number( reportItem.range_low ); 
+  QString range_high    =  QString::number( reportItem.range_high );
+  QString int_value     =  QString::number( reportItem.integration_val ); 
+  QString tolerance     =  QString::number( reportItem.tolerance );     
+  QString total_percent =  QString::number( reportItem.total_percent );  
+  
+  QStringList qry;
+  qry << "new_recorditem"
+      << reportGUID
+      << QString::number( reportID ) 
+      << type
+      << method
+      << range_low
+      << range_high
+      << tolerance
+      << total_percent
+    ;
+    
+  qDebug() << "Query: new_recorditem: " << qry;
+  reportItemID = dbP->functionQuery( qry );
+  qDebug() << "Save ReportItem:  new DB: ID" << reportItemID;
+
+  return reportItemID;
+}
+
+// Slot to save the current Analysis Profile
 void US_ExperGuiUpload::saveAnalysisProfile()
 {
    rpAprof->ap_xml.clear();
@@ -4674,6 +4771,10 @@ void US_ExperGuiUpload::saveAnalysisProfile()
    aprof  ->aprofname   = rpAprof->aprofname;
    aprof  ->aprofGUID   = rpAprof->aprofGUID;
 
+   //save reports BEFORE writng down Aprofile's XML
+   //saveReports( aprof );
+   //exit(1); //TEMP!!!!
+   
    aprof  ->toXml( xmlo_aprof );
 //DbgLv(1) << "XML AProfile: " << rpAprof->ap_xml;
 
@@ -4714,6 +4815,9 @@ DbgLv(1) << "EGAp:svAP:  qry" << qry;
 DbgLv(1) << "EGAp:svAP:  new DB:  ID" << aprof->aprofID
  << dbP->lastError();
    }
+
+   
+   
 
    return;
 }
