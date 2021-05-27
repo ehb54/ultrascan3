@@ -25,9 +25,7 @@
 bool US_Saxs_Util::dmd_run_with_log( const QString & tag
                                      ,const QString & cmd
                                      ,const QString & log ) {
-   if ( !control_parameters.count( "dmdtime" )
-        // || !we_have_udp_messaging_setup
-        ) {
+   if ( !control_parameters.count( "dmdtime" ) || !us_udp_msg ) {
       // no point in forking, as no messaging or no dmdtime provided
       if ( !system( cmd.toLatin1().data() ) ) {
          // dmd commands don't seem to honor zero status exit standards
@@ -62,7 +60,7 @@ bool US_Saxs_Util::dmd_run_with_log( const QString & tag
          if ( (int) this_time != last_time ) {
             double pct = 100.0 * this_time / max_time;
             QString msg = QString( "%1 : %2%" ).arg( tag ).arg( pct );
-            TSO << msg << endl;
+            us_udp_msg->send_json( { { "_progressmsg", msg } } );
             last_time = (int) this_time;
          }
       }
@@ -81,6 +79,10 @@ bool US_Saxs_Util::dmd_findSS()
       return false;
    }
       
+   if ( us_udp_msg ) {
+      us_udp_msg->send_json( { { "_progressmsg", "Finding disulphides" } } );
+   }
+
    QString pdb = control_parameters[ "inputfile" ];
 
    QString prog = 
@@ -456,6 +458,10 @@ bool US_Saxs_Util::input_dimensions( point &range )
 
 bool US_Saxs_Util::dmd_strip_pdb()
 {
+   if ( us_udp_msg ) {
+      us_udp_msg->send_json( { { "_progressmsg", "Preparing pdb" } } );
+   }
+
    // dmdstrip is the entry point for dmd runs, so let's try alternative save strategy before exposing via gui
    control_parameters[ "dmdmmlastout" ] = "on";
    control_parameters[ "dmdremoveH"   ] = "on";
@@ -969,6 +975,9 @@ bool US_Saxs_Util::dmd_run( QString run_description )
 
    // *************** EXTRACT PDBS ****************
    // we are going to go ahead and combine the extraction:
+   if ( us_udp_msg ) {
+      us_udp_msg->send_json( { { "_progressmsg", QString( "Extracting %1 result pdbs" ).arg( is_relax ? "Relaxation" : "Equilibrium" ) } } );
+   }
    if ( control_parameters.count( "dmdtimestep" ) )
    {
       bool dmdmmlastout = control_parameters.count( "dmdmmlastout" );

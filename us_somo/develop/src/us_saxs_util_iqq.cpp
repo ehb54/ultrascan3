@@ -970,6 +970,9 @@ bool US_Saxs_Util::read_control( QString controlfile )
       if ( option == "tgzoutput" )
       {
 #if defined( USE_MPI )
+         if ( us_udp_msg ) {
+            us_udp_msg->send_json( { { "_progressmsg", "Assembling output" } } );
+         }
          if ( !nsa_mpi || !myrank )
          {
 #endif

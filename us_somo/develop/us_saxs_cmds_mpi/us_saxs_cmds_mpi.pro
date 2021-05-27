@@ -3,6 +3,7 @@ include ( ../cmdline.pri )
 QMAKE_CC = mpicc
 QMAKE_CXX = mpicxx
 QMAKE_LINK = mpicxx
+QMAKE_CXXFLAGS += -march=native
 
 DEFINES         += USE_MPI
 SOURCES		+= ../src/us_saxs_gp.cpp
