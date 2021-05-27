@@ -3,6 +3,7 @@
 //Added by qt3to4:
 #include <QTextStream>
 #include <bits/stdc++.h>
+#include <sys/wait.h>
 
 #define DMD_LINK_RANGE_DEFAULT_PERCENT 1
 #define DMD_MAX_BASENAME_LENGTH        30
@@ -20,6 +21,57 @@
 // otherwise, make a bunch of individuals
 // and load as a "stack" ?
 // also, potential renumbering of pdb
+
+bool US_Saxs_Util::dmd_run_with_log( const QString & tag
+                                     ,const QString & cmd
+                                     ,const QString & log ) {
+   if ( !control_parameters.count( "dmdtime" )
+        // || !we_have_udp_messaging_setup
+        ) {
+      // no point in forking, as no messaging or no dmdtime provided
+      if ( !system( cmd.toLatin1().data() ) ) {
+         // dmd commands don't seem to honor zero status exit standards
+         // errormsg =  QString( "Error: command %1 did not return a successful exit code" ).arg( cmd );
+         // return false;
+      }
+      return true;
+   }
+
+   if ( int pid = fork() ) {
+      int status = system( cmd.toLatin1().data() );
+      kill( pid, SIGKILL );
+      int options = 0;
+      waitpid( pid, &options, 0 );
+      if ( !status ) {
+         // dmd commands don't seem to honor zero status exit standards
+         // errormsg =  QString( "Error: command %1 did not return a successful exit code" ).arg( cmd );
+         // return false;
+      }
+   } else {
+      int max_time = control_parameters[ "dmdtime" ].toInt();
+      while( !QFile( log ).exists() ) {
+         sleep( 10 );
+      }
+      FILE *pipe = popen( QString( "tail -f %1" ).arg( log ).toLatin1().data(), "r" );
+      array < char, 256 > buffer;
+      int last_time = 0;
+      while  ( fgets(buffer.data(), 256, pipe) != NULL) {
+         QString qs = QString( "%1" ).arg( buffer.data() ).trimmed();
+         QStringList qsl = qs.split( QRegExp( "\\s+" ) );
+         double this_time = qsl[ 0 ].toFloat();
+         if ( (int) this_time != last_time ) {
+            double pct = 100.0 * this_time / max_time;
+            QString msg = QString( "%1 : %2%" ).arg( tag ).arg( pct );
+            TSO << msg << endl;
+            last_time = (int) this_time;
+         }
+      }
+      fclose( pipe );
+      exit(0);
+   }      
+   
+   return true;
+}   
 
 bool US_Saxs_Util::dmd_findSS()
 {
@@ -654,6 +706,8 @@ bool US_Saxs_Util::dmd_run( QString run_description )
    }
       
    QString dmd_heat_xc;
+   bool is_relax = run_description.toLower() == "relax";
+   
    if ( run_description.toLower() == "relax" )
    {
       if ( control_parameters.count( "dmdrelaxheatxc" ) )
@@ -876,7 +930,8 @@ bool US_Saxs_Util::dmd_run( QString run_description )
    
    TSO << "Starting " + prog + "\n";
    TSO << cmd << endl;
-   if ( !system( cmd.toLatin1().data() ) ) {
+   if ( !dmd_run_with_log( is_relax ? "Relaxation" : "Equilibrium",  cmd, echo_file ) ) {
+   // if ( !system( cmd.toLatin1().data() ) ) {
       // xDMD.linux returns non-zero even on success
       // errormsg =  QString( "Error: command %1 did not return a successful exit code" ).arg( cmd );
       // return false;

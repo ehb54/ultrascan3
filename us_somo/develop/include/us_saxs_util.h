@@ -1555,6 +1555,12 @@ class US_EXTERN US_Saxs_Util
       bool         calc_saxs_iq_native_hybrid_bead_model();
       bool         run_iqq_bead_model();
 
+      bool         dmd_run_with_log( const QString & tag
+                                     ,const QString & cmd
+                                     ,const QString & log
+                                     );
+      
+      
       static float mw_to_volume( float mw, float vbar );
 
       // gp stuff
