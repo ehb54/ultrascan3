@@ -40,6 +40,10 @@ US_AnaProfile::US_AnaProfile()
    //US_ReportGMP report; 
    US_ReportGMP report = US_ReportGMP();
    ch_reports[ chndescs_alt[0] ] = report;
+
+   //Report Ids/Guids qmaps
+   ch_report_guids[ chndescs_alt[0] ] = QString( "00000000-0000-0000-0000-000000000000" );
+   ch_report_ids[ chndescs_alt[0] ] = 0; 
 }
 
 // AnaProfile Equality operator

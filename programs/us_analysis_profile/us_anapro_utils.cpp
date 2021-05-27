@@ -612,6 +612,9 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 
       currProf->ch_reports.clear();
 
+      currProf->ch_report_ids.clear();
+      currProf->ch_report_guids.clear();
+      
       for ( int ii = 0; ii < nchan; ii++ )
       {
          currProf->lc_ratios << le_lcrats[ ii ]->text().toDouble();
@@ -647,6 +650,10 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 	 qDebug() << "US_AnaprofPanGen::savePanel(): chdesc_alt -- " << chdesc_alt;
 	 currProf->ch_reports[ chdesc_alt ] = internal_reports[ chdesc_alt ]; 
 
+	 //ALEXEY: fill QMap relating chdesc_alt to future reportID or reportGUID
+	 currProf->ch_report_ids[ chdesc_alt ]   = 0;
+	 currProf->ch_report_guids[ chdesc_alt ] = QString( "00000000-0000-0000-0000-000000000000" );
+	 
 	 //ALEXEY: also save info on wvl not to be analyzed
 	 QString wvl_list_not_run;
 	 foreach (QCheckBox *ckbox, sa->findChildren<QCheckBox*>())

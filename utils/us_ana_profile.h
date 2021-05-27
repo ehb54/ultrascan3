@@ -211,9 +211,13 @@ class US_UTIL_EXTERN US_AnaProfile
       
       QMap< QString, QList< double > > ch_wvls;
 
-
       //--- REPORT_GMP -----------------------------------------------//
-      QMap< QString, US_ReportGMP > ch_reports; 
+      QMap< QString, US_ReportGMP > ch_reports;
+
+      //QMap relating chdesc_alt to reportID or reportGUID
+      QMap< QString, int >     ch_report_ids;
+      QMap< QString, QString > ch_report_guids;
+	
       
    private:
 };
