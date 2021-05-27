@@ -4772,11 +4772,14 @@ void US_ExperGuiUpload::saveAnalysisProfile()
    aprof  ->aprofGUID   = rpAprof->aprofGUID;
 
    //save reports BEFORE writng down Aprofile's XML
-   //saveReports( aprof );
+   saveReports( aprof );
    //exit(1); //TEMP!!!!
    
    aprof  ->toXml( xmlo_aprof );
 //DbgLv(1) << "XML AProfile: " << rpAprof->ap_xml;
+
+   qDebug() << "XML AProfile: " << rpAprof->ap_xml;
+   //exit(1);
 
    QString xmlopath;
    QString dapath;
@@ -4797,7 +4800,8 @@ DbgLv(1) << "EGAp:svAP: new_file" << new_file << "xmlopath" <<  xmlopath;
          xofile.close();
       }
    }
-
+   //exit(1); //TEMP!!!!
+   
    // Write an analysis profile entry to the database
    US_Passwd  pw;
    US_DB2* dbP         = ( sibSValue( "general", "dbdisk" ) == "DB" )

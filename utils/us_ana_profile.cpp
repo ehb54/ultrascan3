@@ -120,7 +120,7 @@ bool US_AnaProfile::toXml( QXmlStreamWriter& xmlo )
      if (  chndescs[ii].contains( "B:Interf" ) )
        continue;
        
-     qDebug() << "WRITE: Ch description: " << chndescs[ ii ];
+     qDebug() << "WRITE: Ch description vs. chndescs_alt: " << chndescs[ ii ] << " vs. " << chndescs_alt[ kk ];
 
      qDebug() << "Index of affected PARMS: " << kk;
      xmlo.writeStartElement ( "channel_parms" );
@@ -150,14 +150,17 @@ bool US_AnaProfile::toXml( QXmlStreamWriter& xmlo )
      xmlo.writeAttribute    ( "wvl_not_run", wvl_not_run[ kk ]  );
 
      
+     //ALEXEY: Id or guid of the channel's report
+     xmlo.writeAttribute    ( "chandesc_alt", chndescs_alt[ kk ]  );
+     xmlo.writeAttribute    ( "report_id",    QString::number( ch_report_ids[ chndescs_alt[ kk ] ]  ));
+     xmlo.writeAttribute    ( "report_guid",  ch_report_guids[ chndescs_alt[ kk ] ]  );
+     
      xmlo.writeEndElement();
      // channel_parms
 
      kk++;
 
    }
-
-
 
    ap2DSA.toXml( xmlo );
    apPCSA.toXml( xmlo );
@@ -186,6 +189,10 @@ bool US_AnaProfile::fromXml( QXmlStreamReader& xmli )
    wvl_edit    .clear();
    wvl_not_run .clear();
    //ch_wvls     .clear();
+
+   // ch_reports.clear();
+   // ch_report_ids.clear();
+   // ch_report_guids.clear();
    
    while( ! xmli.atEnd() )
    {
@@ -220,6 +227,11 @@ bool US_AnaProfile::fromXml( QXmlStreamReader& xmli )
 	    analysis_run << attr.value( "run" ).toString().toInt();
 	    wvl_edit     << attr.value( "wvl_edit" ).toString().toInt();
 	    wvl_not_run  << attr.value( "wvl_not_run" ).toString();
+
+	    QString channel_alt_desc = attr.value( "chandesc_alt" ).toString();
+	    chndescs_alt  << channel_alt_desc;
+	    ch_report_ids[ channel_alt_desc ]   = attr.value( "report_id" ).toString().toInt();
+	    ch_report_guids[ channel_alt_desc ] = attr.value( "report_guid" ).toString();
 //3-------------------------------------------------------------------------->80
             chx++;
 //qDebug() << "AP:fX:  chx" << chx << pchans.count();
