@@ -459,10 +459,35 @@ DbgLv(1) << "APG: ipro:  ap_xml isEmpty" << ap_xml.isEmpty();
 DbgLv(1) << "APG: ipro:  ap_xml length" << ap_xml.length();
          QXmlStreamReader xmli( ap_xml );
          currProf.fromXml( xmli );
-DbgLv(1) << "APG: ipro:   2kparm pkparm" << currProf.ap2DSA.parms.count() << currProf.apPCSA.parms.count()
- << "kpchan" << currProf.pchans.count();
-//         initPanels();
+	 
+	 DbgLv(1) << "APG: ipro:   2kparm pkparm" << currProf.ap2DSA.parms.count() << currProf.apPCSA.parms.count()
+		  << "kpchan" << currProf.pchans.count();
+	 //         initPanels();
 
+	 //Check here if ch_report_ids[ channel_alt_desc ] and/or ch_report_guids[ channel_alt_desc ] are not empty
+	 if ( currProf.ch_report_ids.size() )
+	   {
+	     //fill in currProf->ch_reports[ chdesc_alt ] by reading ReportIDs from ch_report_ids[ chdesc_alt ]
+	     
+	     //Also, clean  currProf->ch_reports first  (since it will be re-created form DB here )
+	     currProf.ch_reports.clear();  // <-- Will this cause crash - as this omits "B:Interf." cannels ??
+
+	     // iterate over QMap ch_report_ids[ chdesc_alt ]
+	     QMap<QString, int>::iterator ri;
+	     for ( ri = currProf.ch_report_ids.begin(); ri != currProf.ch_report_ids.end(); ++ri )
+	       {
+		 QString channel_alt_desc = ri.key();
+		 int     reportID         = ri.value();
+
+		 //retrieve report from DB
+		 US_ReportGMP * reportFromDB = new US_ReportGMP();
+		 get_report_by_ID( reportFromDB, reportID );
+
+		 //assign retieved report to currProf.ch_reports[ channel_alt_desc ];
+		 currProf.ch_reports[ channel_alt_desc ] = *reportFromDB;
+	       }
+	     
+	   }
       }
    }
 
@@ -583,6 +608,82 @@ DbgLv(1) << "APG: ipro: nchn" << nchn << "call pGen iP";
 
     // qDebug() << "Inherit: AFTER copying..";
 }
+
+//retrieve Report by ID from DB into ReportGMP structure
+void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP* reportFromDB, int reportID )
+{
+  US_DB2* db  = NULL;
+  US_Passwd pw;
+  db            = new US_DB2( pw.getPasswd() );
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Reading Report: Could not connect to database: \n" ) + db->lastError() );
+      return;
+    }
+
+  //Read parent Report
+  QStringList qry;
+  qry << "get_report_by_id" << QString::number( reportID );
+  db->query( qry );
+  
+  if ( db->lastErrno() == US_DB2::OK )      
+    {
+      while ( db->next() )
+	{
+	  reportFromDB->channel_name          = db->value( 0 ).toString();  
+	  reportFromDB->tot_conc              = db->value( 1 ).toString().toDouble();  
+	  reportFromDB->rmsd_limit            = db->value( 2 ).toString().toDouble();
+	  reportFromDB->av_intensity          = db->value( 3 ).toString().toDouble();
+	  reportFromDB->experiment_duration   = db->value( 4 ).toString().toDouble();
+	  reportFromDB->wavelength            = db->value( 5 ).toString().toDouble();
+	}
+    }
+
+  //Read children: reportItems-by-reportID && insert them to parent report
+  reportFromDB->reportItems.clear();
+  
+  qry.clear();
+  qry << "get_report_items_ids_by_report_id" << QString::number( reportID );
+  db->query( qry );
+  
+  if ( db->lastErrno() == US_DB2::OK )      // If not, no instruments defined
+    {
+      QList< int > reportItemsIDs;
+      
+      while ( db->next() )
+	{
+	  int ID = db->value( 0 ).toString().toInt();
+	  reportItemsIDs << ID;
+	  
+	  qDebug() << "ReportItemID: " << ID;
+	}
+      
+      // reportItem information
+      foreach ( int ID, reportItemsIDs )
+	{
+	  qry.clear();
+	  qry  << QString( "get_report_item_info_by_id" )
+	       << QString::number( ID );
+	  db->query( qry );
+	  db->next();
+
+	  US_ReportGMP::ReportItem reportItem_read;
+	  
+	  reportItem_read.type             =   db->value( 0 ).toString();
+	  reportItem_read.method           =   db->value( 1 ).toString();
+	  reportItem_read.range_low        =   db->value( 2 ).toString().toDouble();	   
+	  reportItem_read.range_high       =   db->value( 3 ).toString().toDouble();
+	  reportItem_read.integration_val  =   db->value( 4 ).toString().toDouble();	   
+	  reportItem_read.tolerance        =   db->value( 5 ).toString().toDouble();
+	  reportItem_read.total_percent    =   db->value( 6 ).toString().toDouble();
+
+	  reportFromDB->reportItems.push_back( reportItem_read );
+	}
+      
+    }
+}
+
 
 // Reset parameters to their defaults
 void US_AnalysisProfileGui::close_program( void )

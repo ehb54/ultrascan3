@@ -19,6 +19,7 @@ class US_UTIL_EXTERN US_ReportGMP
 
       struct ReportItem
       {
+	//need also ID?
 	QString type;
 	QString method;
 	double  range_low;
@@ -30,6 +31,8 @@ class US_UTIL_EXTERN US_ReportGMP
 
       QVector< ReportItem > reportItems;
 
+      //need also ID?
+      
       //Channel name
       QString channel_name;
 
@@ -40,7 +43,7 @@ class US_UTIL_EXTERN US_ReportGMP
       double wavelength;
       double experiment_duration;
 
-      //Rest of parameters followign from protocol
+      //Rest of parameters followign from protocol: not used so far
       int     scan_number;
       double  load_volume;
       double  av_rotor_speed;
@@ -53,9 +56,7 @@ class US_UTIL_EXTERN US_ReportGMP
 
       QString score;
 
-      
-      
-    private:
+   private:
       
 };
 #endif

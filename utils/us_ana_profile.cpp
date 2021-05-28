@@ -41,9 +41,9 @@ US_AnaProfile::US_AnaProfile()
    US_ReportGMP report = US_ReportGMP();
    ch_reports[ chndescs_alt[0] ] = report;
 
-   //Report Ids/Guids qmaps
-   ch_report_guids[ chndescs_alt[0] ] = QString( "00000000-0000-0000-0000-000000000000" );
-   ch_report_ids[ chndescs_alt[0] ] = 0; 
+   // //Report Ids/Guids qmaps
+   // ch_report_guids[ chndescs_alt[0] ] = QString( "00000000-0000-0000-0000-000000000000" );
+   // ch_report_ids[ chndescs_alt[0] ] = 0; 
 }
 
 // AnaProfile Equality operator
@@ -188,11 +188,10 @@ bool US_AnaProfile::fromXml( QXmlStreamReader& xmli )
    analysis_run.clear();
    wvl_edit    .clear();
    wvl_not_run .clear();
-   //ch_wvls     .clear();
 
-   // ch_reports.clear();
-   // ch_report_ids.clear();
-   // ch_report_guids.clear();
+   chndescs_alt   .clear();
+   ch_report_ids  .clear();
+   ch_report_guids.clear();
    
    while( ! xmli.atEnd() )
    {

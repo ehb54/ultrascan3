@@ -4664,13 +4664,18 @@ void US_ExperGuiUpload::saveReports( US_AnaProfile* aprof )
 {
   qDebug() << "Saving REPORTS !!!";
 
+  //Clear ch_desc-to-ids/guid maps
+  aprof->ch_report_guids.clear();
+  aprof->ch_report_ids.clear();
+  
+
   //Iterate over Reports 
   QMap<QString, US_ReportGMP>::iterator ri;
   for ( ri = aprof->ch_reports.begin(); ri != aprof->ch_reports.end(); ++ri )
     {
       //Generate new Report GuiID:
-      if ( aprof->ch_report_guids [ ri.key() ].startsWith( "0000" ) )
-	aprof->ch_report_guids [ ri.key() ] = US_Util::new_guid();
+      //if ( aprof->ch_report_guids [ ri.key() ].startsWith( "0000" ) )
+      aprof->ch_report_guids [ ri.key() ] = US_Util::new_guid();
 
 
       //Return new Report ID from DB insertion:
@@ -4699,8 +4704,9 @@ int US_ExperGuiUpload::writeReportToDB( QString reportGUID, US_ReportGMP report 
 
   //Save parent Report
   QStringList qry;
-  qry << "new_record"
+  qry << "new_report"
       << reportGUID
+      << report.channel_name
       << QString::number( report.tot_conc )
       << QString::number( report.rmsd_limit )
       << QString::number( report.av_intensity )
@@ -4708,7 +4714,7 @@ int US_ExperGuiUpload::writeReportToDB( QString reportGUID, US_ReportGMP report 
       << QString::number( report.wavelength )
     ;
 
-  qDebug() << "Query: new_record: " << qry;
+  qDebug() << "Query: new_report: " << qry;
   reportID = dbP->functionQuery( qry );
   qDebug() << "Save Report:  new DB: ID" << reportID;
   
@@ -4738,18 +4744,19 @@ int US_ExperGuiUpload::writeReportItemToDB( US_DB2* dbP, QString reportGUID, int
   QString total_percent =  QString::number( reportItem.total_percent );  
   
   QStringList qry;
-  qry << "new_recorditem"
+  qry << "new_report_item"
       << reportGUID
       << QString::number( reportID ) 
       << type
       << method
       << range_low
       << range_high
+      << int_value 
       << tolerance
       << total_percent
     ;
     
-  qDebug() << "Query: new_recorditem: " << qry;
+  qDebug() << "Query: new_report_item: " << qry;
   reportItemID = dbP->functionQuery( qry );
   qDebug() << "Save ReportItem:  new DB: ID" << reportItemID;
 
@@ -4778,7 +4785,6 @@ void US_ExperGuiUpload::saveAnalysisProfile()
    aprof  ->toXml( xmlo_aprof );
 //DbgLv(1) << "XML AProfile: " << rpAprof->ap_xml;
 
-   qDebug() << "XML AProfile: " << rpAprof->ap_xml;
    //exit(1);
 
    QString xmlopath;
@@ -4800,7 +4806,7 @@ DbgLv(1) << "EGAp:svAP: new_file" << new_file << "xmlopath" <<  xmlopath;
          xofile.close();
       }
    }
-   //exit(1); //TEMP!!!!
+   exit(1); //TEMP!!!!
    
    // Write an analysis profile entry to the database
    US_Passwd  pw;
