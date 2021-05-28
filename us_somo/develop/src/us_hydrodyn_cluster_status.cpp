@@ -192,6 +192,11 @@ void US_Hydrodyn_Cluster_Status::setupGUI()
                               << us_tr( "Date created" )
                               );
 
+   lv_files->setColumnWidth( 0, 150 );
+   lv_files->setColumnWidth( 1, 100 );
+   lv_files->setColumnWidth( 2, 200 );
+   lv_files->setColumnWidth( 3, 80 );
+
    connect( lv_files, SIGNAL( itemSelectionChanged() ), SLOT( update_enables() ) );
 
    pb_refresh = new QPushButton(us_tr("Refresh status"), this);
