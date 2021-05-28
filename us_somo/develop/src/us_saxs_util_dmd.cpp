@@ -59,7 +59,7 @@ bool US_Saxs_Util::dmd_run_with_log( const QString & tag
          double this_time = qsl[ 0 ].toFloat();
          if ( (int) this_time != last_time ) {
             double pct = 100.0 * this_time / max_time;
-            QString msg = QString( "%1 : %2%" ).arg( tag ).arg( pct );
+            QString msg = QString( "%1 : %2%" ).arg( tag ).arg( pct, 0, 'g', 2 );
             us_udp_msg->send_json( { { "_progressmsg", msg } } );
             last_time = (int) this_time;
          }
