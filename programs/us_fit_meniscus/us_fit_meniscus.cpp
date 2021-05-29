@@ -1448,6 +1448,8 @@ DbgLv(1) << " eupd:  fn" << fn;
    double botnew = 0.0;
    double lefval = 0.0;
 
+   
+   
    if ( have3val )
    {  // Fit is meniscus + bottom
       mennew         = le_men_fit->text().toDouble();
@@ -1539,6 +1541,9 @@ DbgLv(1) << " eupd:  s_meni s_bott" << s_meni << s_bott;
 
    mmsg           = "";
 
+   //ALEXEY: Set progressDialog
+   progress_msg = NULL;
+   
    // Proceed with updating the Edit data
 
    if ( ! all_wvl  ||  nedtfs == 1 )
@@ -1713,7 +1718,7 @@ DbgLv(1) << " eupd:   ixmlin ixblin" << ixmlin << ixblin << "ncmlin ncblin" << n
    {  // Apply to all wavelengths in a cell/channel
 
      //ALEXEY: Set progressDialog
-     progress_msg = NULL;
+     //progress_msg = NULL;
      if( auto_mode )
        {
 	 progress_msg = new QProgressDialog ("Updating edit profiles...", QString(), 0, nedtfs, this);
