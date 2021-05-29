@@ -108,7 +108,7 @@ US_Hydrodyn_Cluster_Submit::US_Hydrodyn_Cluster_Submit(
    global_Xpos += 30;
    global_Ypos += 30;
 
-   setGeometry( global_Xpos, global_Ypos, 700, 600 );
+   setGeometry( global_Xpos, global_Ypos, 800, 600 );
 }
 
 US_Hydrodyn_Cluster_Submit::~US_Hydrodyn_Cluster_Submit()
@@ -204,12 +204,6 @@ void US_Hydrodyn_Cluster_Submit::setupGUI()
    lv_files->setEnabled(true);
    lv_files->setSelectionMode( QAbstractItemView::MultiSelection );
 
-#if QT_VERSION < 0x040000
-   lv_files->addColumn( us_tr( "Name" ) );
-   lv_files->addColumn( us_tr( "Created" ) );
-   lv_files->addColumn( us_tr( "Size" ) );
-   lv_files->addColumn( us_tr( "Status" ) );
-#else
    lv_files->setColumnCount( 4 );
    lv_files->setHeaderLabels( QStringList()
                               << us_tr( "Name" )
@@ -217,7 +211,11 @@ void US_Hydrodyn_Cluster_Submit::setupGUI()
                               << us_tr( "Size" )
                               << us_tr( "Status" )
                               );
-#endif   
+
+   lv_files->setColumnWidth( 0, 250 );
+   lv_files->setColumnWidth( 1, 220 );
+   lv_files->setColumnWidth( 2, 150 );
+   lv_files->setColumnWidth( 3, 80 );
 
    connect( lv_files, SIGNAL( itemSelectionChanged() ), SLOT( update_enables() ) );
 
@@ -233,7 +231,6 @@ void US_Hydrodyn_Cluster_Submit::setupGUI()
    lb_systems->setMinimumHeight(minHeight1 * 
                                 ( ((US_Hydrodyn_Cluster *)cluster_window)->cluster_systems.size() > 8 ?
                                   8 : ((US_Hydrodyn_Cluster *)cluster_window)->cluster_systems.size() ) );
-   lb_systems->setMinimumWidth( 500 );
    lb_systems->setPalette( PALET_EDIT );
    AUTFBACK( lb_systems );
    lb_systems->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
