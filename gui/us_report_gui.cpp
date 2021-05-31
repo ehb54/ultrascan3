@@ -161,8 +161,8 @@ void US_ReportGui::build_report_layout( void )
   QComboBox* cb_method;
   QStringList sl_types;
   QStringList sl_methods;
-  sl_types     << QString("S") << QString("D") << QString("f/f0") << QString("MW");
-  sl_methods   << QString("2DSA-IT") << QString("PCSA-SL") << QString("2DSA-MC") << QString("raw");
+  sl_types     << QString("s") << QString("D") << QString("f/f0") << QString("MW");
+  sl_methods   << QString("2DSA-IT") << QString("PCSA-SL/DS/IS") << QString("2DSA-MC") << QString("raw");
   qDebug() << "Begin ReportItems iteration -- ";
    
   QLineEdit* le_low;    
@@ -489,7 +489,7 @@ void US_ReportGui::add_row( void )
   //Add plain ReportItem
   US_ReportGMP::ReportItem initItem;
   
-  initItem.type             = QString("S");
+  initItem.type             = QString("s");
   initItem.method           = QString("2DSA-IT");
   initItem.range_low        = 3.2;
   initItem.range_high       = 3.7;

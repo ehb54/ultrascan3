@@ -14,7 +14,7 @@ US_ReportGMP::US_ReportGMP()
 
   ReportItem initItem;
   
-  initItem.type             = QString("S");
+  initItem.type             = QString("s");
   initItem.method           = QString("2DSA-IT");
   initItem.range_low        = 3.2;
   initItem.range_high       = 3.7;

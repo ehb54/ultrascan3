@@ -479,6 +479,8 @@ DbgLv(1) << "APG: ipro:  ap_xml length" << ap_xml.length();
 		 QString channel_alt_desc = ri.key();
 		 int     reportID         = ri.value();
 
+		 qDebug() << "Reading reportItems form DB: channel_alt_desc, reportID  -- " << channel_alt_desc << ", " << reportID;
+		 
 		 //retrieve report from DB
 		 US_ReportGMP * reportFromDB = new US_ReportGMP();
 		 get_report_by_ID( reportFromDB, reportID );
@@ -624,7 +626,8 @@ void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP* reportFromDB, int re
 
   //Read parent Report
   QStringList qry;
-  qry << "get_report_by_id" << QString::number( reportID );
+  qry << "get_report_info_by_id" << QString::number( reportID );
+  qDebug() << "In get_report_by_ID(): query -- " << qry;
   db->query( qry );
   
   if ( db->lastErrno() == US_DB2::OK )      
@@ -645,6 +648,7 @@ void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP* reportFromDB, int re
   
   qry.clear();
   qry << "get_report_items_ids_by_report_id" << QString::number( reportID );
+  qDebug() << "In get_report_by_ID() 1: query -- " << qry;
   db->query( qry );
   
   if ( db->lastErrno() == US_DB2::OK )      // If not, no instruments defined

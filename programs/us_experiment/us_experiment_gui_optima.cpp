@@ -4779,7 +4779,7 @@ void US_ExperGuiUpload::saveAnalysisProfile()
    aprof  ->aprofGUID   = rpAprof->aprofGUID;
 
    //save reports BEFORE writng down Aprofile's XML
-   //saveReports( aprof ); <-------------------------------------- TEMPORARY comment!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+   saveReports( aprof ); //<-------------------------------------- TEMPORARY comment!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    
    aprof  ->toXml( xmlo_aprof );
 //DbgLv(1) << "XML AProfile: " << rpAprof->ap_xml;
