@@ -465,7 +465,19 @@ DbgLv(1) << "APG: ipro:  ap_xml length" << ap_xml.length();
 	 //         initPanels();
 
 	 //Check here if ch_report_ids[ channel_alt_desc ] and/or ch_report_guids[ channel_alt_desc ] are not empty
-	 if ( currProf.ch_report_ids.size() )
+	 //Also check if ch_report_ids.values() - the IDs - are not 0!!!
+	 QList< int > reportIDs_list  = currProf.ch_report_ids.values();
+	 bool null_reportID = false;
+	 for (int i=0; i<reportIDs_list.size(); ++i)
+	   {
+	     if( reportIDs_list[i] == 0 )
+	       {
+		 null_reportID = true;
+		 break;
+	       }
+	   }
+	 
+	 if ( currProf.ch_report_ids.size() && !null_reportID )
 	   {
 	     //fill in currProf->ch_reports[ chdesc_alt ] by reading ReportIDs from ch_report_ids[ chdesc_alt ]
 	     
