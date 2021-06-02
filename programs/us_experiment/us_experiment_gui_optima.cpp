@@ -1699,8 +1699,10 @@ QString US_ExperGuiSpeeds::speedp_description( int ssx )
    //int    escans  = qRound( (durtim / 60.0) * 6.0 );      // Estimated step scans             //ALEXEY: 6 scans per minute ???
 
    //Uv-vis
-   double scaninterval =  ssvals[ ssx ][ "scanintv" ];  //ALEXEY: ssval[]["scanintv"] is set (in secs)  according to table: RPM vs scanint
-   int escans = qRound( durtim / scaninterval );
+   //double scaninterval     =  ssvals[ ssx ][ "scanintv" ];  //ALEXEY: ssval[]["scanintv"] is set (in secs)  according to table: RPM vs scanint
+   //int escans = qRound( durtim / scaninterval );
+   double scaninterval_min = ssvals[ ssx ][ "scanintv_min" ]; //Use minimum scanint instead (always)
+   int escans = qRound( durtim / scaninterval_min );
    //interference
    double scaninterval_int =  ssvals[ ssx ][ "scanintv_int" ];
    int escans_int = qRound( durtim / scaninterval_int );
@@ -1713,7 +1715,7 @@ QString US_ExperGuiSpeeds::speedp_description( int ssx )
        tscans        += qRound( ssvals[ ii ][ "duration" ] / ssvals[ ii ][ "scanintv" ] );  //ALEXEY bug fixed
        tscans_int    += qRound( ssvals[ ii ][ "duration" ] / ssvals[ ii ][ "scanintv_int" ] );
      }
-   qDebug() << "SCAN INT: " << scaninterval << ", # Scans: " << tscans;
+   qDebug() << "SCAN INT: " << scaninterval_min << ", # Scans: " << tscans;
 
 
    // return tr( "Speed Profile %1 :    %2 rpm for %3 hr %4 min"
