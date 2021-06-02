@@ -670,6 +670,15 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 	  scaninterval = int( scanint_sec_min * tot_wvl );
 	  scaninterval_updated = true; //updated: show in RED
 	}
+
+      //Increase scan interval if scancount >= 1500:
+      if( scancount >= 1500 )
+	{
+	  scaninterval = int( duration_sec / 1500 );
+	  scancount    = 1500;
+	  scaninterval_updated = true; //updated: show in RED
+	}
+
       
       // scancount = int( duration_sec / (scanint_sec * tot_wvl) );
 
@@ -886,6 +895,16 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 	  scaninterval = int( scanint_sec_min * tot_wvl );
 	  scaninterval_updated = true; //updated: show in RED
 	}
+
+      //Increase scan interval if scancount >= 1500:
+      if( scancount >= 1500 )
+	{
+	  scaninterval = int( duration_sec / 1500 );
+	  scancount    = 1500;
+	  scaninterval_updated = true; //updated: show in RED
+	}
+
+      
       //scancount = int( duration_sec / (scanint_sec * tot_wvl) );
 
       mainw->ScanCount_global = scancount;

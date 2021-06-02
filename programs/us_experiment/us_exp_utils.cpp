@@ -2451,6 +2451,15 @@ DbgLv(1) << "EGRn:inP:  #Wvl for cell: " << j << " is: " << Total_wvl[i];
 	//scancount = int( duration_sec / ( scanint_sec * Total_wvl[i] ) );
       }
 
+      //Increase scan interval if scancount >= 1500:
+      if( scancount >= 1500 )
+	{
+	  scaninterval = int( duration_sec / 1500 );
+	  scancount    = 1500;
+	  scaninterval_updated = true; //updated: show in RED
+	}
+
+      
       mainw->ScanCount_global = scancount;
 
       DbgLv(1) << "EGRn:inP:  speed" << i << "scancount" << scancount;

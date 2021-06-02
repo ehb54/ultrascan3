@@ -5555,10 +5555,18 @@ void US_ExperGuiUpload::submitExperiment()
             ScanInt   = scanint_sec_min * Total_wvl[i];
          }
 
+	 //Increase scan interval if scancount >= 1500:
+	 if( ScanCount >= 1500 )
+	   {
+	     ScanInt    = int( duration_sec / 1500 );
+	     ScanCount  = 1500;
+	   }
+
 	 // ScanCount = int( duration_sec / ( scanint_sec * Total_wvl[i] ) );
 	 // ScanInt   = scanint_sec;
 	 
          qDebug() << "Duration_sec: " << duration_sec << ", delay_sec: " << delay_sec << ", scanint_sec: " << scanint_sec << ", Tot_wvl: " << Total_wvl[i];
+	 qDebug() << "ScanCount: global (ranges) vs. computed here: -- " << mainw->ScanCount_global << " vs. " << ScanCount;
 
          for (int j=0; j<ncells; j++)
          {
