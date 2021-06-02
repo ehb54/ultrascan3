@@ -36,10 +36,15 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
    QLabel* lb_panel    = us_banner( tr( "7: Specify wavelength and radius ranges" ) );
    panel->addWidget( lb_panel );
 
-   QPushButton* pb_details  = us_pushbutton( tr( "View Current Range Settings" ) );
+   //QPushButton* pb_details  = us_pushbutton( tr( "View Current Range Settings" ) );
+   QPushButton* pb_details  = us_pushbutton( tr( "View Ranges" ) );
    connect( pb_details,   SIGNAL( clicked()       ),
             this,         SLOT  ( detailRanges()  ) );
 
+   // Show also a scan interval (if it was updated - in RED !!!)
+   QLabel*  lb_scanint = us_label( "Scan Interval (in red if updated): " );
+   le_scanint          = us_lineedit( "", 0, true  );
+   
    // Show listbox with ScanCount per stage
    cb_scancount      = new QComboBox;
    rpSpeed = &(mainw->currProto.rpSpeed);
@@ -55,8 +60,14 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
    // banners->setContentsMargins( 2, 2, 2, 2 );
    // banners->setHorizontalSpacing( 2 );
    int row             = 0;
-   banners->addWidget( pb_details,      row,   0, 1, 8 );
-   banners->addWidget( cb_scancount,    row++,   8, 1, 8 );
+   banners->addWidget( pb_details,      row,   0, 1, 2 );
+
+   banners->addWidget( lb_scanint,      row,   2, 1, 4 );
+   banners->addWidget( le_scanint,      row,   6, 1, 2 );
+
+   banners->addWidget( cb_scancount,    row++, 8, 1, 8 );
+   //banners->addWidget( cb_scancount,    row++,   8, 1, 8 );
+   
    banners->addWidget( lb_hdr1,         row,   0, 1, 3 );
    banners->addWidget( lb_hdr2,         row,   3, 1, 6 );
    banners->addWidget( lb_hdr3,         row++, 9, 1, 7 );
@@ -644,15 +655,47 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 	       << duration_sec << scanint_sec << scanint_sec_min << tot_wvl << ncells_used;
       
       int scancount = 0;
-      // if ( scanint_sec > scanint_sec_min*tot_wvl )
-      //    scancount = int( duration_sec / scanint_sec );
-      // else
-      //    scancount = int( duration_sec / (scanint_sec_min * tot_wvl) );
-
-      scancount = int( duration_sec / (scanint_sec * tot_wvl) );
+      int scaninterval;
+      bool scaninterval_updated = false;
+      
+      //ALEXEY: use this algorithm
+      if ( scanint_sec > scanint_sec_min*tot_wvl )
+	{
+	  scancount     = int( duration_sec / scanint_sec );
+	  scaninterval  = scanint_sec;
+	}
+      else
+	{
+	  scancount    = int( duration_sec / (scanint_sec_min * tot_wvl) );
+	  scaninterval = int( scanint_sec_min * tot_wvl );
+	  scaninterval_updated = true; //updated: show in RED
+	}
+      
+      // scancount = int( duration_sec / (scanint_sec * tot_wvl) );
 
       mainw->ScanCount_global = scancount;
-      QString scancount_stage = tr( "Stage %1. Number of Scans per Wavelength (UV/vis): %2 " ).arg(i+1).arg(scancount);
+      
+      //Update le_scanint text: set text color RED if updated
+      QList< int > hms_scanint;
+      double scaninterval_d = scaninterval;
+      US_RunProtocol::timeToList( scaninterval_d, hms_scanint );
+      QString scint_str = QString::number( hms_scanint[ 1 ] ) + "h " + QString::number( hms_scanint[ 2 ] ) + "m " + QString::number( hms_scanint[ 3 ] ) + "s";
+      le_scanint->setText( scint_str );
+      QPalette *palette = new QPalette();
+      if ( scaninterval_updated )
+	{
+	  palette->setColor(QPalette::Text,Qt::red);
+	  //palette->setColor(QPalette::Base,Qt::white);
+	  le_scanint->setPalette(*palette);
+	}
+      else
+	{
+	  palette->setColor(QPalette::Text,Qt::black);
+	  //palette->setColor(QPalette::Base,Qt::white);
+	  le_scanint->setPalette(*palette);
+	}
+      
+      QString scancount_stage = tr( "Stage %1. Number of Scans per Triple (UV/vis): %2 " ).arg(i+1).arg(scancount);
       cb_scancount->addItem( scancount_stage );
 
 
@@ -828,16 +871,46 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 	       << duration_sec << scanint_sec << scanint_sec_min << tot_wvl << ncells_used;
 
       int scancount = 0;
-      // if ( scanint_sec > scanint_sec_min*tot_wvl )
-      //    scancount = int( duration_sec / scanint_sec );
-      // else
-      //    scancount = int( duration_sec / (scanint_sec_min * tot_wvl) );
+      int scaninterval;
+      bool scaninterval_updated = false;
 
-      scancount = int( duration_sec / (scanint_sec * tot_wvl) );
+      //ALEXEY: use this algorithm
+      if ( scanint_sec > scanint_sec_min*tot_wvl )
+	{
+	  scancount     = int( duration_sec / scanint_sec );
+	  scaninterval  = scanint_sec;
+	}
+      else
+	{
+	  scancount    = int( duration_sec / (scanint_sec_min * tot_wvl) );
+	  scaninterval = int( scanint_sec_min * tot_wvl );
+	  scaninterval_updated = true; //updated: show in RED
+	}
+      //scancount = int( duration_sec / (scanint_sec * tot_wvl) );
 
       mainw->ScanCount_global = scancount;
 
-      QString scancount_stage = tr( "Stage %1. Number of Scans per Wavelength (UV/vis): %2 " ).arg(i+1).arg(scancount);
+      //Update le_scanint text: set text color RED if updated
+      QList< int > hms_scanint;
+      double scaninterval_d = scaninterval;
+      US_RunProtocol::timeToList( scaninterval_d, hms_scanint );
+      QString scint_str = QString::number( hms_scanint[ 1 ] ) + "h " + QString::number( hms_scanint[ 2 ] ) + "m " + QString::number( hms_scanint[ 3 ] ) + "s";
+      le_scanint->setText( scint_str );
+      QPalette *palette = new QPalette();
+      if ( scaninterval_updated )
+	{
+	  palette->setColor(QPalette::Text,Qt::red);
+	  //palette->setColor(QPalette::Base,Qt::white);
+	  le_scanint->setPalette(*palette);
+	}
+      else
+	{
+	  palette->setColor(QPalette::Text,Qt::black);
+	  //palette->setColor(QPalette::Base,Qt::white);
+	  le_scanint->setPalette(*palette);
+	}
+
+      QString scancount_stage = tr( "Stage %1. Number of Scans per Triple (UV/vis): %2 " ).arg(i+1).arg(scancount);
       cb_scancount->addItem( scancount_stage );
 
 

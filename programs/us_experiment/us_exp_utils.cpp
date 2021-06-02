@@ -2428,22 +2428,55 @@ DbgLv(1) << "EGRn:inP:  #Wvl for cell: " << j << " is: " << Total_wvl[i];
 	       << duration_sec << scanint_sec << scanint_sec_min << Total_wvl[i] << ncells_used[i];
 
       int scancount;
+      int scaninterval = 0;
+      bool scaninterval_updated = false;
+      
       if ( Total_wvl[i] == 0 )
          scancount = 0;
       else
-      {
-         // if ( scanint_sec > scanint_sec_min * Total_wvl[i])
-         //    scancount = int( duration_sec / scanint_sec );
-         // else
-         //    scancount = int( duration_sec / ( scanint_sec_min * Total_wvl[i] ) );
-
-	scancount = int( duration_sec / ( scanint_sec * Total_wvl[i] ) );
+      { 
+	//ALEXEY: use this algorithms:  
+	if ( scanint_sec > scanint_sec_min * Total_wvl[i])
+	  {
+	    scancount     = int( duration_sec / scanint_sec );
+	    scaninterval  = scanint_sec;
+	  }
+	else
+	  {
+	    scancount    = int( duration_sec / ( scanint_sec_min * Total_wvl[i] ) );
+	    scaninterval = int( scanint_sec_min * Total_wvl[i] );
+	    scaninterval_updated = true; //updated: show in RED
+	  }
+	
+	//scancount = int( duration_sec / ( scanint_sec * Total_wvl[i] ) );
       }
 
       mainw->ScanCount_global = scancount;
 
-DbgLv(1) << "EGRn:inP:  speed" << i << "scancount" << scancount;
-      QString scancount_stage = tr( "Stage %1. Number of Scans per Wavelength (UV/vis): %2 " ).arg(i+1).arg(scancount);
+      DbgLv(1) << "EGRn:inP:  speed" << i << "scancount" << scancount;
+
+      //Update le_scanint text: set text color RED if updated
+      QList< int > hms_scanint;
+      double scaninterval_d = scaninterval;
+      US_RunProtocol::timeToList( scaninterval_d, hms_scanint );
+      QString scint_str = QString::number( hms_scanint[ 1 ] ) + "h " + QString::number( hms_scanint[ 2 ] ) + "m " + QString::number( hms_scanint[ 3 ] ) + "s";
+      le_scanint->setText( scint_str );
+      QPalette *palette = new QPalette();
+      if ( scaninterval_updated )
+	{
+	  palette->setColor(QPalette::Text,Qt::red);
+	  //palette->setColor(QPalette::Base,Qt::white);
+	  le_scanint->setPalette(*palette);
+	}
+      else
+	{
+	  palette->setColor(QPalette::Text,Qt::black);
+	  //palette->setColor(QPalette::Base,Qt::white);
+	  le_scanint->setPalette(*palette);
+	}
+      
+      //Update cb_scancount string:
+      QString scancount_stage = tr( "Stage %1. Number of Scans per Triple (UV/vis): %2 " ).arg(i+1).arg(scancount);
       cb_scancount->addItem( scancount_stage );
 
       //ALEXEY: add interference info:

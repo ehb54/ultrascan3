@@ -580,6 +580,7 @@ class US_ExperGuiRanges : public US_WidgetsDialog
       QVector< double >          hicrads;  // High radius value, ea. channel
 
       QComboBox * cb_scancount;
+      QLineEdit * le_scanint;
       
    private slots:
       // \brief Manage extinction profiles in a dialog

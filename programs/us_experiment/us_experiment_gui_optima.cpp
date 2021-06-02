@@ -1722,7 +1722,7 @@ QString US_ExperGuiSpeeds::speedp_description( int ssx )
    //        .arg( durhr ).arg( durmin ).arg( escans ).arg( tscans );
 
    return tr( "Speed Profile %1 :    %2 rpm for %3 hr %4 min"
-              "  Estimated # of scans: %5 (UV-vis, total), %6 (Interference, per cell)" )
+              "  Maximum # of scans possible: %5 (UV-vis, total), %6 (Interference, per cell)" )
           .arg( ssx + 1 ).arg( ssvals[ ssx ][ "speed" ] )
       .arg( durhr ).arg( durmin ).arg( escans ).arg( escans_int );
 }
@@ -5540,19 +5540,21 @@ void US_ExperGuiUpload::submitExperiment()
 
          int ScanCount;
          int ScanInt;
-         // if ( scanint_sec > scanint_sec_min * Total_wvl[i] )
-         // {
-         //    ScanCount = int( duration_sec / scanint_sec );
-         //    ScanInt   = scanint_sec;
-         // }
-         // else
-         // {
-         //    ScanCount = int( duration_sec / (scanint_sec_min * Total_wvl[i] ) );
-         //    ScanInt   = scanint_sec_min * Total_wvl[i];
-         // }
 
-	 ScanCount = int( duration_sec / ( scanint_sec * Total_wvl[i] ) );
-	 ScanInt   = scanint_sec;
+	 //ALEXEY: use this algorithm:
+         if ( scanint_sec > scanint_sec_min * Total_wvl[i] )
+         {
+            ScanCount = int( duration_sec / scanint_sec );
+            ScanInt   = scanint_sec;
+         }
+         else
+         {
+            ScanCount = int( duration_sec / (scanint_sec_min * Total_wvl[i] ) );
+            ScanInt   = scanint_sec_min * Total_wvl[i];
+         }
+
+	 // ScanCount = int( duration_sec / ( scanint_sec * Total_wvl[i] ) );
+	 // ScanInt   = scanint_sec;
 	 
          qDebug() << "Duration_sec: " << duration_sec << ", delay_sec: " << delay_sec << ", scanint_sec: " << scanint_sec << ", Tot_wvl: " << Total_wvl[i];
 
