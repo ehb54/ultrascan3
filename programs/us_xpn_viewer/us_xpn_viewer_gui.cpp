@@ -2188,7 +2188,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
   current_stage = link->current_stage.toInt();
   totstage    = link->tot_stages.toInt();
 
-  // Update rmp, temperature GUI icons...
+    // Update rmp, temperature GUI icons...
   //RPM speed
   double rpm_for_meter = double(rpm/1000.0);
   rpm_box->setSpeed(rpm_for_meter);
@@ -2215,6 +2215,10 @@ void US_XpnDataViewer::check_for_sysdata( void )
   //Running Time
   QList< int > dhms_r;
   int running_time = exp_time;// + etimoff; //ALEXEY: OR elapsed_time + etimoff? OR just exp_time ???? //ALEXEY: etimoff < 0 ?
+
+  qDebug() << "Experiment Time (AKA Running Time: exp_time) from the link-machine ---- " << exp_time;
+  
+  
   if ( running_time < 0 )
     running_time = 0;
   timeToList( running_time, dhms_r );
@@ -2222,9 +2226,14 @@ void US_XpnDataViewer::check_for_sysdata( void )
   //ALEXEY: hh:mm:ss - OR do we need dd:hh:mm instead ?
   //ALEXEY: if times >~1 day, update #hours
   if ( dhms_r[0] > 0 )
-    dhms_r[1] += 24;
-  
+    {
+      dhms_r[1] += dhms_r[0]*24;
+    }
+      
   running_time_text = QString::number(dhms_r[1]) + ":" + QString::number(dhms_r[2]) + ":" + QString::number(dhms_r[3]);
+  
+  qDebug() << "Experiment Time (AKA Raunning Time: exp_time) from the link-machine text ---- " <<  running_time_text;
+    
   le_running->setText( running_time_text );
   //qApp->processEvents();
 
@@ -2234,28 +2243,45 @@ void US_XpnDataViewer::check_for_sysdata( void )
   QList< int > dhms_e;
   int elapsed_time = int( elapsed_timer->elapsed() / 1000 ) + ElapsedTimeOffset;
   int elapsed_time_1 = elapsed_time;
+
+  qDebug() << "Epaplsed Time 1: " << elapsed_time;
+    
   timeToList( elapsed_time, dhms_e );
   QString elapsed_time_text;
   //ALEXEY: hh:mm:ss - OR do we need dd:hh:mm instead ?
   //ALEXEY: if times >~1 day, update #hours
   if ( dhms_e[0] > 0 )
-    dhms_e[1] += 24;
-  
+    {
+      dhms_e[1] += dhms_e[0]*24;
+    }
+      
   elapsed_time_text = QString::number(dhms_e[1]) + ":" + QString::number(dhms_e[2]) + ":" + QString::number(dhms_e[3]);
+  qDebug() << "Epaplsed Time 2 (text): " << elapsed_time_text;
   le_elapsed->setText( elapsed_time_text );
   //qApp->processEvents();
   
   //Remaining Time
   QList< int > dhms_remain;
   int remaining_time = TotalDuration.toInt() - ( exp_time ); //+ etimoff );
+
+  qDebug() << "Remaining Time:  TotalDuration.toInt() - ( exp_time ): -- " << TotalDuration.toInt() << " - " << ( exp_time ) << " = " << remaining_time;
+    
   timeToList( remaining_time, dhms_remain );
   QString remaining_time_text;
   //ALEXEY: hh:mm:ss - OR do we need dd:hh:mm instead ?
   //ALEXEY: if times >~1 day, update #hours
   if ( dhms_remain[0] > 0 )
-    dhms_remain[1] += 24;
-    
+    {
+      qDebug() << "Remaining Time [DD HH MM SS]: "
+	       << dhms_remain[0]
+	       << dhms_remain[1]
+	       << dhms_remain[2]
+	       << dhms_remain[3];
+
+      dhms_remain[1] += dhms_remain[0]*24;
+    }
   remaining_time_text = QString::number(dhms_remain[1]) + ":" + QString::number(dhms_remain[2]) + ":" + QString::number(dhms_remain[3]);
+  qDebug() << "Remaining Time: text: " << remaining_time_text;
   le_remaining->setText( remaining_time_text );
   //qApp->processEvents();
 
