@@ -470,7 +470,7 @@ DbgLv(1) << "APG: ipro:  ap_xml length" << ap_xml.length();
 	 bool null_reportID = false;
 	 for (int i=0; i<reportIDs_list.size(); ++i)
 	   {
-	     if( reportIDs_list[i] == 0 )
+	     if( reportIDs_list[i] <= 0 ) //reportid is -1 or 0, so no report associated with the channel
 	       {
 		 null_reportID = true;
 		 break;
