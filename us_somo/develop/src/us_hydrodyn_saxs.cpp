@@ -8137,7 +8137,8 @@ bool US_Hydrodyn_Saxs::write_temp_pdb_selected_models( QString & error_msg ) {
    unsigned int pos = 0;
 
    do {
-      last_selected_pdb_filename = QString("%1%2-%3.pdb").arg( use_dir ).arg( QFileInfo( contrib_file ).baseName() ).arg( pos );
+      //      last_selected_pdb_filename = QString("%1%2-%3.pdb").arg( use_dir ).arg( QFileInfo( contrib_file ).baseName() ).arg( pos );
+      last_selected_pdb_filename = QString("%1%2-%3.pdb").arg( use_dir ).arg( "temp" ).arg( pos );
       pos++;
    } while( QFile::exists( last_selected_pdb_filename ) );
 

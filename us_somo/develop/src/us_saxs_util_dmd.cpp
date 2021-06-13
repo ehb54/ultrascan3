@@ -1538,7 +1538,6 @@ bool US_Saxs_Util::dmd_pdb_prepare( QStringList & qsl_pdb
                               "ORIGX1|"
                               "ORIGX2|"
                               "ORIGX3|"
-                              "REMARK|"
                               "REVDAT|"
                               "SCALE1|"
                               "SCALE2|"
