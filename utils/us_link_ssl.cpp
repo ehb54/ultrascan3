@@ -133,7 +133,7 @@ void Link::rx(void)
   vacuum      = rootObj["vacuum"].toString();
   current_stage = rootObj["stage"].toString().split("/")[0];
   tot_stages  = rootObj["stage"].toString().split("/")[1];
-  running_scans   = rootObj["Running scan"].toString();
+  running_scans = rootObj["Running scan"].toString();
   tot_scans   = rootObj["Total scans"].toString();
   
   

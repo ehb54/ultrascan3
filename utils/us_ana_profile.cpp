@@ -253,7 +253,8 @@ US_AnaProfile::AnaProf2DSA::AnaProf2DSA()
    fitrng      = 0.03;
    nchan       = 1;
    grpoints    = 11;
-   rfiters     = 5;
+   //rfiters     = 5;
+   rfiters     = 10;
    mciters     = 100;
    job1run     = true;
    job2run     = true;
@@ -520,7 +521,8 @@ US_AnaProfile::AnaProf2DSA::Parm2DSA::Parm2DSA()
    s_max      = 10.0;
    k_min      = 1.0;
    k_max      = 5.0;
-   ff0_const  = 0.72;
+   //ff0_const  = 0.72;
+   ff0_const  = 1.0;
    s_grpts    = 64;
    k_grpts    = 64;
    gridreps   = 8;
