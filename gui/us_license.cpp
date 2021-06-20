@@ -493,7 +493,7 @@ void US_License::update( void )
                   + "&licensetype=" + licensetype;
 //qDebug() << "requesting update";
   // Send request
-  QString url     = "http://ultrascan.aucsolutions.com/update-license.php";
+  QString url     = "https://ultrascan.aucsolutions.com/update-license.php";
   US_HttpPost* transmit = new US_HttpPost( url, req );
   connect( transmit, SIGNAL( US_Http_post_response( const QString& ) ),
            this,     SLOT  ( update_response      ( const QString& ) ) );
@@ -618,7 +618,7 @@ bool US_License::save( void )
 
     case US_License_t::Invalid:
       message = tr( "Failure.\n"
-          "The data presented is invalid." );
+          "The data presented is invalid." ) + error;
       break;
 
     case US_License_t::BadPlatform:
