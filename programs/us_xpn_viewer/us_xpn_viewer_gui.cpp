@@ -2034,7 +2034,8 @@ void US_XpnDataViewer::updateautoflow_record_atLiveUpdate( void )
    /***/
    //set autoflowStages record to "unknown" again !!
    revert_autoflow_stages_record( autoflowID_passed );
-   /**/   
+   /**/
+
 }
 
 //Read autoflowStages record
@@ -2085,10 +2086,11 @@ void US_XpnDataViewer::revert_autoflow_stages_record( int autoflowID )
    QStringList qry;
    qry << "autoflow_liveupdate_status_revert"
        << QString::number( autoflowID );
+
+   qDebug() << "revert_autoflow_stages_record: query --  " << qry;
    
    db->query( qry );
-   //qDebug() << "AFTER query ";
-   
+      
 }
 
 //Stop machine

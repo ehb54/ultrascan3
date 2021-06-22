@@ -61,6 +61,7 @@ class US_UTIL_EXTERN US_RunProtocol
                   double      duration;      //!< Duration in seconds
                   double      delay;         //!< Delay in seconds
 		  double      delay_stage;   //!< Delay in seconds
+		  double      total_time;
                   double      scanintv;      //!< Scan interval in seconds
 		  double      scanintv_min;  //!< Fastest scan interval
 

@@ -1322,6 +1322,9 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
 
    QLabel*  lb_delay_stage    = us_label( tr( "Stage Delay (hh[H] mm[M]):" ) );
 
+   QLabel*  lb_total_time     = us_label( tr( "Total Time (without equilibration):" ) );
+   le_total_time              = us_lineedit( "", 0, true  );
+   
    QLayout* lo_delay_stage_sync  = us_checkbox( tr( "Synchronize Stage Delay with the 1st Speed Profile: " ), ck_sync_delay, false );
 
    connect( ck_sync_delay, SIGNAL( toggled     ( bool ) ),
@@ -1389,7 +1392,8 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    double df_accel     = rpSpeed->ssteps[ 0 ].accel;
    double df_duratm    = rpSpeed->ssteps[ 0 ].duration;
    double df_delatm_stage    = rpSpeed->ssteps[ 0 ].delay_stage;
-
+   double df_total_time = rpSpeed->ssteps[ 0 ].total_time;
+   
    //interference
    double df_delatm_int    = rpSpeed->ssteps[ 0 ].delay_int;
    double df_scint_int     = rpSpeed->ssteps[ 0 ].scanintv_int;
@@ -1438,14 +1442,16 @@ DbgLv(1) << "EGSp:   def  d h m s " << dhms_dly;
    ssvals[ 0 ][ "speed" ]    = df_speed;  // Speed default
    ssvals[ 0 ][ "accel" ]    = df_accel;  // Acceleration default
    ssvals[ 0 ][ "duration" ] = df_duratm; // Duration in seconds default (5h 30m)
+   ssvals[ 0 ][ "delay_stage" ]  = df_delatm_stage; // Delay of the stage in seconds
+   ssvals[ 0 ][ "total_time" ]  = df_total_time; // Delay of the stage in seconds
+   
 
    //Uv-vis
    ssvals[ 0 ][ "delay" ]    = df_delatm; // Delay to 1st scan in seconds default (2m 30s) DUE to acceleration
    //interference
    ssvals[ 0 ][ "delay_int" ]    = df_delatm_int;
 
-   ssvals[ 0 ][ "delay_stage" ]  = df_delatm_stage; // Delay of the stage in seconds
-
+  
    //Uv-vis
    ssvals[ 0 ][ "scanintv" ]     = df_scint;  //ALEXEY
    ssvals[ 0 ][ "scanintv_min" ] = df_scint_min;  //ALEXEY
@@ -1489,10 +1495,17 @@ DbgLv(1) << "EGSp: init sb/de components";
    sb_delay_int_ss ->setValue( (int)dhms_dly_int[ 3 ] );
 
 
+   //delay Stage
    sb_delay_st_dd ->setValue( (int)dhms_dly_stage[ 0 ] );
    sb_delay_st_hh ->setValue( (int)dhms_dly_stage[ 1 ] );
    sb_delay_st_mm ->setValue( (int)dhms_dly_stage[ 2 ] );
    sb_delay_st_ss ->setValue( (int)dhms_dly_stage[ 3 ] );
+
+   //Total Time
+   QList< int > hms_tot;
+   US_RunProtocol::timeToList( df_total_time, hms_tot );
+   QString tot_str = QString::number( hms_tot[ 0 ] ) + "d " + QString::number( hms_tot[ 1 ] ) + "h " + QString::number( hms_tot[ 2 ] ) + "m ";
+   le_total_time->setText( tot_str );
 
 
    // sb_scnint->setValue( 0 );                    //ALEXEY
@@ -1559,6 +1572,10 @@ DbgLv(1) << "EGSp: addWidg/Layo BB";
 
   genL->addWidget( lb_delay_stage,    row,    0, 1,  5 );
   genL->addLayout( lo_delaylay_stage, row++,  5, 1,  1 );
+  
+  genL->addWidget( lb_total_time,    row,    0, 1,  5 );
+  genL->addWidget( le_total_time,    row++,  5, 1,  1 );
+
   genL->addLayout( lo_delay_stage_sync, row++,0, 1,  5 );
 
 
@@ -2084,6 +2101,14 @@ void US_ExperGuiSpeeds::ssChgDuratTime_hh( int val )
    cb_prof->setItemText( curssx, profdesc[ curssx ] );
 
    qDebug() << "Time in sec aftes HH changed: " << ssdurtim;
+
+   // Set total time
+   QList< int > hms_tot;
+   double ssdurtim_d = ssdurtim + ssvals[ curssx ][ "delay_stage" ];
+   ssvals[ curssx ][ "total_time" ] = ssdurtim_d;
+   US_RunProtocol::timeToList( ssdurtim_d, hms_tot );
+   QString tot_str = QString::number( hms_tot[ 0 ] ) + "d " + QString::number( hms_tot[ 1 ] ) + "h " + QString::number( hms_tot[ 2 ] ) + "m ";
+   le_total_time->setText( tot_str );
 }
 
 // Slot for change in duration time (mins)
@@ -2101,6 +2126,14 @@ void US_ExperGuiSpeeds::ssChgDuratTime_mm( int val )
    cb_prof->setItemText( curssx, profdesc[ curssx ] );
 
    qDebug() << "Time in sec aftes MINS changed: " << ssdurtim;
+
+   // Set total time
+   QList< int > hms_tot;
+   double ssdurtim_d = ssdurtim + ssvals[ curssx ][ "delay_stage" ];
+   ssvals[ curssx ][ "total_time" ] = ssdurtim_d;
+   US_RunProtocol::timeToList( ssdurtim_d, hms_tot );
+   QString tot_str = QString::number( hms_tot[ 0 ] ) + "d " + QString::number( hms_tot[ 1 ] ) + "h " + QString::number( hms_tot[ 2 ] ) + "m ";
+   le_total_time->setText( tot_str );
 }
 
 // Slot for change in duration time (sec)
@@ -2116,6 +2149,14 @@ void US_ExperGuiSpeeds::ssChgDuratTime_ss( int val )
 
    profdesc[ curssx ] = speedp_description( curssx );
    cb_prof->setItemText( curssx, profdesc[ curssx ] );
+
+   // Set total time
+   QList< int > hms_tot;
+   double ssdurtim_d = ssdurtim + ssvals[ curssx ][ "delay_stage" ];
+   ssvals[ curssx ][ "total_time" ] = ssdurtim_d;
+   US_RunProtocol::timeToList( ssdurtim_d, hms_tot );
+   QString tot_str = QString::number( hms_tot[ 0 ] ) + "d " + QString::number( hms_tot[ 1 ] ) + "h " + QString::number( hms_tot[ 2 ] ) + "m ";
+   le_total_time->setText( tot_str );
 }
 
 // Slot for change in duration day
@@ -2133,6 +2174,14 @@ void US_ExperGuiSpeeds::ssChgDuratDay( int val )
    cb_prof->setItemText( curssx, profdesc[ curssx ] );
 
    qDebug() << "Time in sec aftes DAYS changed: " << ssdurtim;
+
+   // Set total time
+   QList< int > hms_tot;
+   double ssdurtim_d = ssdurtim + ssvals[ curssx ][ "delay_stage" ];
+   ssvals[ curssx ][ "total_time" ] = ssdurtim_d;
+   US_RunProtocol::timeToList( ssdurtim_d, hms_tot );
+   QString tot_str = QString::number( hms_tot[ 0 ] ) + "d " + QString::number( hms_tot[ 1 ] ) + "h " + QString::number( hms_tot[ 2 ] ) + "m ";
+   le_total_time->setText( tot_str );
 }
 /* END OF DURATION ***********************************************************************************/
 
@@ -2337,6 +2386,7 @@ void US_ExperGuiSpeeds::ssChgDelayTime_hh( int val )
 DbgLv(1) << "EGSp: chgDlyT:  ssdly h m s" << ssdlyhr << ssdlymin << ssdlysec
 << "t" << ssdlytim;
    ssvals[ curssx ][ "delay" ] = ssdlytim;  // Set Delay in step vals vector
+
 }
 
 // Slot for change in delay time (mins)
@@ -2349,6 +2399,7 @@ void US_ExperGuiSpeeds::ssChgDelayTime_mm( int val )
 DbgLv(1) << "EGSp: chgDlyT:  ssdly h m s" << ssdlyhr << ssdlymin << ssdlysec
 << "t" << ssdlytim;
    ssvals[ curssx ][ "delay" ] = ssdlytim;  // Set Delay in step vals vector
+
 }
 
 // Slot for change in delay time (hour/minute/second)
@@ -2361,6 +2412,7 @@ void US_ExperGuiSpeeds::ssChgDelayTime_ss( int val )
 DbgLv(1) << "EGSp: chgDlyT:  ssdly h m s" << ssdlyhr << ssdlymin << ssdlysec
 << "t" << ssdlytim;
    ssvals[ curssx ][ "delay" ] = ssdlytim;  // Set Delay in step vals vector
+
 }
 
 // Slot for change in delay day
@@ -2379,6 +2431,7 @@ DbgLv(1) << "EGSp: chgDlyD: val" << val << "ssdly d h"
 
    double ssdlytim  = ( val * 3600.0 * 24 ) + ( ssdlyhr * 3600.0 ) + ( ssdlymin * 60.0 ) + ssdlysec;
    ssvals[ curssx ][ "delay" ] = ssdlytim;  // Set Delay in step vals vector
+
 }
 /* END OF UV-vis DELAY ***********************************************************************************/
 
@@ -2461,6 +2514,14 @@ void US_ExperGuiSpeeds::ssChgDelayStageTime_hh( int val )
    if ( curssx == 0 && ck_sync_delay->isChecked() ) //1st stage
      stageDelay_sync();
 
+   // Set total time
+   QList< int > hms_tot;
+   double ssdurtim_d = ssdlytim + ssvals[ curssx ][ "duration" ];
+   ssvals[ curssx ][ "total_time" ] = ssdurtim_d;
+   US_RunProtocol::timeToList( ssdurtim_d, hms_tot );
+   QString tot_str = QString::number( hms_tot[ 0 ] ) + "d " + QString::number( hms_tot[ 1 ] ) + "h " + QString::number( hms_tot[ 2 ] ) + "m ";
+   le_total_time->setText( tot_str );
+
 }
 
 // Slot for change in delay time (mins)
@@ -2474,6 +2535,15 @@ void US_ExperGuiSpeeds::ssChgDelayStageTime_mm( int val )
 
    if ( curssx == 0  && ck_sync_delay->isChecked() ) //1st stage
      stageDelay_sync();
+
+
+   // Set total time
+   QList< int > hms_tot;
+   double ssdurtim_d = ssdlytim + ssvals[ curssx ][ "duration" ];
+   ssvals[ curssx ][ "total_time" ] = ssdurtim_d;
+   US_RunProtocol::timeToList( ssdurtim_d, hms_tot );
+   QString tot_str = QString::number( hms_tot[ 0 ] ) + "d " + QString::number( hms_tot[ 1 ] ) + "h " + QString::number( hms_tot[ 2 ] ) + "m ";
+   le_total_time->setText( tot_str );
 }
 /* END OF STAGE DELAY ***********************************************************************************/
 

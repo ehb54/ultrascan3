@@ -271,7 +271,10 @@ class US_ExperGuiSpeeds : public US_WidgetsDialog
       QSpinBox*    sb_delay_st_dd;
       QSpinBox*    sb_delay_st_hh;
       QSpinBox*    sb_delay_st_mm;
-      QSpinBox*    sb_delay_st_ss;     
+      QSpinBox*    sb_delay_st_ss;
+
+      //Total Time
+      QLineEdit *  le_total_time;
 
       //Uv-vis scanint
       QSpinBox*    sb_scnint_dd;
