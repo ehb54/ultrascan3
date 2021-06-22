@@ -413,7 +413,9 @@ bool US_RunProtocol::RunProtoSpeed::fromXml( QXmlStreamReader& xmli )
 
 	    //Stage delay
 	    if ( ! stage_delay.isEmpty() )
-	      US_RunProtocol::timeFromString( ss.delay_stage, stage_delay ); 
+	      US_RunProtocol::timeFromString( ss.delay_stage, stage_delay );
+
+	    ss.total_time = ss.duration + ss.delay_stage;
 
             ssteps << ss;
          }
