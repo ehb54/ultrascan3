@@ -1329,6 +1329,10 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
 
    connect( ck_sync_delay, SIGNAL( toggled     ( bool ) ),
                this,       SLOT  ( syncdelayChecked( bool ) ) );
+
+
+   
+   
    
    //ALEXEY: do not create these checkboxes for now
    // QLayout* lo_endoff  = us_checkbox( tr( "Spin down centrifuge at job end" ),
@@ -1579,6 +1583,22 @@ DbgLv(1) << "EGSp: addWidg/Layo BB";
   genL->addLayout( lo_delay_stage_sync, row++,0, 1,  5 );
 
 
+  //Scan # estimator:
+  QLabel* lb_scan_estimator    = us_banner( tr( "Scan Number Estimator:" ) );
+  QLabel* lb_wvl_per_cell = us_label(tr( "Sum of all wavelengths per cell to be scanned:" ));
+  sb_wvl_per_cell = us_spinbox();
+  sb_wvl_per_cell->setRange(1, 100);
+  connect( sb_wvl_per_cell,  SIGNAL( valueChanged     ( int ) ),
+	   this,             SLOT  ( ssChgWvlPerCell  ( int ) ) );
+  
+  QLabel* lb_scans_per_cell = us_label(tr( "Total number of scans per wavelength, per cell:" ));
+  le_scans_per_cell = us_lineedit( "", 0, true  ); 
+  genL->addWidget( lb_scan_estimator,  row++,    0, 1,  8 );
+  genL->addWidget( lb_wvl_per_cell,    row,    0, 1,  5 );
+  genL->addWidget( sb_wvl_per_cell,    row++,  5, 1,  1 );
+  genL->addWidget( lb_scans_per_cell,  row,    0, 1,  5 );
+  genL->addWidget( le_scans_per_cell,  row++,  5, 1,  1 );
+  
   //UV-vis.
   QLabel* lb_uvvis    = us_banner( tr( "UV-Visible (total):" ) );
   genL->addWidget( lb_uvvis,     row++,    0, 1,  8 );
@@ -2084,6 +2104,25 @@ DbgLv(1) << "EGSp: chgAcc: val" << val << "ssx" << curssx;
 }
 
 
+/*Scan # Estimator *****************************************************************************/
+void US_ExperGuiSpeeds::ssChgWvlPerCell( int val )
+{
+  int tot_wvl = val;
+  double duration_sec    = ssvals[ curssx ][ "duration" ];     //ssteps[ i ].duration;
+  double scanint_sec     = ssvals[ curssx ][ "scanintv" ];     //ssteps[ i ].scanintv;
+  double scanint_sec_min = ssvals[ curssx ][ "scanintv_min" ]; //ssteps[ i ].scanintv_min;
+
+  int scancount = 0;
+  
+  //ALEXEY: use this algorithm to calculate scanCount && scanInt
+  if ( scanint_sec > scanint_sec_min*tot_wvl )
+      scancount     = int( duration_sec / scanint_sec );
+  else
+    scancount    = int( duration_sec / (scanint_sec_min * tot_wvl) );
+    
+  le_scans_per_cell -> setText( QString::number( scancount ));
+}
+
 
 /* DURATION ***********************************************************************************/
 // Slot for change in duration time (hours)
@@ -2109,6 +2148,19 @@ void US_ExperGuiSpeeds::ssChgDuratTime_hh( int val )
    US_RunProtocol::timeToList( ssdurtim_d, hms_tot );
    QString tot_str = QString::number( hms_tot[ 0 ] ) + "d " + QString::number( hms_tot[ 1 ] ) + "h " + QString::number( hms_tot[ 2 ] ) + "m ";
    le_total_time->setText( tot_str );
+
+   //Set Scan # in estimator
+   int tot_wvl = (int)sb_wvl_per_cell->value();
+   double duration_sec    = ssvals[ curssx ][ "duration" ];     //ssteps[ i ].duration;
+   double scanint_sec     = ssvals[ curssx ][ "scanintv" ];     //ssteps[ i ].scanintv;
+   double scanint_sec_min = ssvals[ curssx ][ "scanintv_min" ]; //ssteps[ i ].scanintv_min;
+   int scancount = 0;
+   if ( scanint_sec > scanint_sec_min*tot_wvl )
+     scancount     = int( duration_sec / scanint_sec );
+   else
+     scancount    = int( duration_sec / (scanint_sec_min * tot_wvl) );
+   
+   le_scans_per_cell -> setText( QString::number( scancount ));
 }
 
 // Slot for change in duration time (mins)
@@ -2134,6 +2186,20 @@ void US_ExperGuiSpeeds::ssChgDuratTime_mm( int val )
    US_RunProtocol::timeToList( ssdurtim_d, hms_tot );
    QString tot_str = QString::number( hms_tot[ 0 ] ) + "d " + QString::number( hms_tot[ 1 ] ) + "h " + QString::number( hms_tot[ 2 ] ) + "m ";
    le_total_time->setText( tot_str );
+
+   //Set Scan # in estimator
+   int tot_wvl = (int)sb_wvl_per_cell->value();
+   double duration_sec    = ssvals[ curssx ][ "duration" ];     //ssteps[ i ].duration;
+   double scanint_sec     = ssvals[ curssx ][ "scanintv" ];     //ssteps[ i ].scanintv;
+   double scanint_sec_min = ssvals[ curssx ][ "scanintv_min" ]; //ssteps[ i ].scanintv_min;
+   int scancount = 0;
+   if ( scanint_sec > scanint_sec_min*tot_wvl )
+     scancount     = int( duration_sec / scanint_sec );
+   else
+     scancount    = int( duration_sec / (scanint_sec_min * tot_wvl) );
+   
+   le_scans_per_cell -> setText( QString::number( scancount ));
+   
 }
 
 // Slot for change in duration time (sec)
@@ -2157,6 +2223,19 @@ void US_ExperGuiSpeeds::ssChgDuratTime_ss( int val )
    US_RunProtocol::timeToList( ssdurtim_d, hms_tot );
    QString tot_str = QString::number( hms_tot[ 0 ] ) + "d " + QString::number( hms_tot[ 1 ] ) + "h " + QString::number( hms_tot[ 2 ] ) + "m ";
    le_total_time->setText( tot_str );
+
+   //Set Scan # in estimator
+   int tot_wvl = (int)sb_wvl_per_cell->value();
+   double duration_sec    = ssvals[ curssx ][ "duration" ];     //ssteps[ i ].duration;
+   double scanint_sec     = ssvals[ curssx ][ "scanintv" ];     //ssteps[ i ].scanintv;
+   double scanint_sec_min = ssvals[ curssx ][ "scanintv_min" ]; //ssteps[ i ].scanintv_min;
+   int scancount = 0;
+   if ( scanint_sec > scanint_sec_min*tot_wvl )
+     scancount     = int( duration_sec / scanint_sec );
+   else
+     scancount    = int( duration_sec / (scanint_sec_min * tot_wvl) );
+   
+   le_scans_per_cell -> setText( QString::number( scancount ));
 }
 
 // Slot for change in duration day
@@ -2182,6 +2261,19 @@ void US_ExperGuiSpeeds::ssChgDuratDay( int val )
    US_RunProtocol::timeToList( ssdurtim_d, hms_tot );
    QString tot_str = QString::number( hms_tot[ 0 ] ) + "d " + QString::number( hms_tot[ 1 ] ) + "h " + QString::number( hms_tot[ 2 ] ) + "m ";
    le_total_time->setText( tot_str );
+
+   //Set Scan # in estimator
+   int tot_wvl = (int)sb_wvl_per_cell->value();
+   double duration_sec    = ssvals[ curssx ][ "duration" ];     //ssteps[ i ].duration;
+   double scanint_sec     = ssvals[ curssx ][ "scanintv" ];     //ssteps[ i ].scanintv;
+   double scanint_sec_min = ssvals[ curssx ][ "scanintv_min" ]; //ssteps[ i ].scanintv_min;
+   int scancount = 0;
+   if ( scanint_sec > scanint_sec_min*tot_wvl )
+     scancount     = int( duration_sec / scanint_sec );
+   else
+     scancount    = int( duration_sec / (scanint_sec_min * tot_wvl) );
+   
+   le_scans_per_cell -> setText( QString::number( scancount ));
 }
 /* END OF DURATION ***********************************************************************************/
 
@@ -2226,6 +2318,20 @@ void US_ExperGuiSpeeds::ssChgScIntTime_hh( int val )
 
    profdesc[ curssx ] = speedp_description( curssx );
    cb_prof->setItemText( curssx, profdesc[ curssx ] );
+
+   //Set Scan # in estimator
+   int tot_wvl = (int)sb_wvl_per_cell->value();
+   double duration_sec    = ssvals[ curssx ][ "duration" ];     //ssteps[ i ].duration;
+   double scanint_sec     = ssvals[ curssx ][ "scanintv" ];     //ssteps[ i ].scanintv;
+   double scanint_sec_min = ssvals[ curssx ][ "scanintv_min" ]; //ssteps[ i ].scanintv_min;
+   int scancount = 0;
+   if ( scanint_sec > scanint_sec_min*tot_wvl )
+     scancount     = int( duration_sec / scanint_sec );
+   else
+     scancount    = int( duration_sec / (scanint_sec_min * tot_wvl) );
+   
+   le_scans_per_cell -> setText( QString::number( scancount ));
+   
 }
 
 // Slot for change in Scan Int time (mins)
@@ -2258,6 +2364,19 @@ void US_ExperGuiSpeeds::ssChgScIntTime_mm( int val )
 
    profdesc[ curssx ] = speedp_description( curssx );
    cb_prof->setItemText( curssx, profdesc[ curssx ] );
+
+   //Set Scan # in estimator
+   int tot_wvl = (int)sb_wvl_per_cell->value();
+   double duration_sec    = ssvals[ curssx ][ "duration" ];     //ssteps[ i ].duration;
+   double scanint_sec     = ssvals[ curssx ][ "scanintv" ];     //ssteps[ i ].scanintv;
+   double scanint_sec_min = ssvals[ curssx ][ "scanintv_min" ]; //ssteps[ i ].scanintv_min;
+   int scancount = 0;
+   if ( scanint_sec > scanint_sec_min*tot_wvl )
+     scancount     = int( duration_sec / scanint_sec );
+   else
+     scancount    = int( duration_sec / (scanint_sec_min * tot_wvl) );
+   
+   le_scans_per_cell -> setText( QString::number( scancount ));
 }
 
 // Slot for change in Scan Int time (sec)
@@ -2271,6 +2390,20 @@ void US_ExperGuiSpeeds::ssChgScIntTime_ss( int val )
 
    profdesc[ curssx ] = speedp_description( curssx );
    cb_prof->setItemText( curssx, profdesc[ curssx ] );
+
+   //Set Scan # in estimator
+   int tot_wvl = (int)sb_wvl_per_cell->value();
+   double duration_sec    = ssvals[ curssx ][ "duration" ];     //ssteps[ i ].duration;
+   double scanint_sec     = ssvals[ curssx ][ "scanintv" ];     //ssteps[ i ].scanintv;
+   double scanint_sec_min = ssvals[ curssx ][ "scanintv_min" ]; //ssteps[ i ].scanintv_min;
+   int scancount = 0;
+   if ( scanint_sec > scanint_sec_min*tot_wvl )
+     scancount     = int( duration_sec / scanint_sec );
+   else
+     scancount    = int( duration_sec / (scanint_sec_min * tot_wvl) );
+   
+   le_scans_per_cell -> setText( QString::number( scancount ));
+   
 }
 /* END OF UV-vis SCAN Int ***********************************************************************************/
 

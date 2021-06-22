@@ -276,6 +276,10 @@ class US_ExperGuiSpeeds : public US_WidgetsDialog
       //Total Time
       QLineEdit *  le_total_time;
 
+      //Scan # estimator
+      QSpinBox*    sb_wvl_per_cell;
+      QLineEdit *  le_scans_per_cell;
+
       //Uv-vis scanint
       QSpinBox*    sb_scnint_dd;
       QSpinBox*    sb_scnint_hh;
@@ -325,6 +329,9 @@ class US_ExperGuiSpeeds : public US_WidgetsDialog
       void    ssChgDuratDay ( int );
       //! \brief Slot for SS change in Scan Int
       void    ssChangeScInt ( double, int );
+
+      //Scan # estimator
+      void ssChgWvlPerCell( int );
       
       //! \brief Slot for SS change in duration time
       //void    ssChgDuratTime( const QTime& );
