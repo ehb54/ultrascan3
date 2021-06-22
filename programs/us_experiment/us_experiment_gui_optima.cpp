@@ -1330,9 +1330,6 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    connect( ck_sync_delay, SIGNAL( toggled     ( bool ) ),
                this,       SLOT  ( syncdelayChecked( bool ) ) );
 
-
-   
-   
    
    //ALEXEY: do not create these checkboxes for now
    // QLayout* lo_endoff  = us_checkbox( tr( "Spin down centrifuge at job end" ),
@@ -1407,7 +1404,7 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    double df_scint     = rpSpeed->ssteps[ 0 ].scanintv; //ALEXEY read default scanint in secs corresponding to default RPM
    double df_scint_min = rpSpeed->ssteps[ 0 ].scanintv_min;
 
-
+   
    QList< int > dhms_dur;
    QList< int > dhms_dly_stage;
    //Uv-vis
@@ -1416,14 +1413,22 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    //interference
    QList< int > dhms_dly_int;
    QList< int > hms_scint_int;
-   US_RunProtocol::timeToList( df_duratm, dhms_dur );
-   US_RunProtocol::timeToList( df_delatm_stage, dhms_dly_stage );
+
+   double df_duratm_c       = df_duratm;
+   double df_delatm_stage_c = df_delatm_stage;
+   double df_delatm_c       = df_delatm;
+   double df_scint_c        = df_scint;
+   double df_delatm_int_c   = df_delatm_int;
+   double df_scint_int_c    = df_scint_int;
+   
+   US_RunProtocol::timeToList( df_duratm_c, dhms_dur );
+   US_RunProtocol::timeToList( df_delatm_stage_c, dhms_dly_stage );
    //Uv-vis
-   US_RunProtocol::timeToList( df_delatm, dhms_dly );
-   US_RunProtocol::timeToList( df_scint,  hms_scint );
+   US_RunProtocol::timeToList( df_delatm_c, dhms_dly );
+   US_RunProtocol::timeToList( df_scint_c,  hms_scint );
    //interference
-   US_RunProtocol::timeToList( df_delatm_int, dhms_dly_int );
-   US_RunProtocol::timeToList( df_scint_int,  hms_scint_int );
+   US_RunProtocol::timeToList( df_delatm_int_c, dhms_dly_int );
+   US_RunProtocol::timeToList( df_scint_int_c,  hms_scint_int );
 
 DbgLv(1) << "EGSp: df_duratm" << df_duratm;
 DbgLv(1) << "EGSp:   def  d h m s " << dhms_dur;
@@ -1511,7 +1516,7 @@ DbgLv(1) << "EGSp: init sb/de components";
    QString tot_str = QString::number( hms_tot[ 0 ] ) + "d " + QString::number( hms_tot[ 1 ] ) + "h " + QString::number( hms_tot[ 2 ] ) + "m ";
    le_total_time->setText( tot_str );
 
-
+   
    // sb_scnint->setValue( 0 );                    //ALEXEY
    // tm_scnint->setTime ( QTime( 0, 0 ) );
 
@@ -1590,9 +1595,24 @@ DbgLv(1) << "EGSp: addWidg/Layo BB";
   sb_wvl_per_cell->setRange(1, 100);
   connect( sb_wvl_per_cell,  SIGNAL( valueChanged     ( int ) ),
 	   this,             SLOT  ( ssChgWvlPerCell  ( int ) ) );
-  
+
   QLabel* lb_scans_per_cell = us_label(tr( "Total number of scans per wavelength, per cell:" ));
   le_scans_per_cell = us_lineedit( "", 0, true  ); 
+
+  //set default
+  int tot_wvl = (int)sb_wvl_per_cell->value();
+  double duration_sec    = df_duratm;
+  double scanint_sec     = df_scint;
+  double scanint_sec_min = df_scint_min;
+  int scancount = 0;
+  qDebug() << "Setting DEFAULTs for scan # estimator: duration, scanInt, scanInt_min -- " << duration_sec << scanint_sec << scanint_sec_min;
+  //ALEXEY: use this algorithm to calculate scanCount && scanInt
+  if ( scanint_sec > scanint_sec_min*tot_wvl )
+    scancount     = int( duration_sec / scanint_sec );
+  else
+    scancount    = int( duration_sec / (scanint_sec_min * tot_wvl) );
+  le_scans_per_cell -> setText( QString::number( scancount ));
+  
   genL->addWidget( lb_scan_estimator,  row++,    0, 1,  8 );
   genL->addWidget( lb_wvl_per_cell,    row,    0, 1,  5 );
   genL->addWidget( sb_wvl_per_cell,    row++,  5, 1,  1 );
