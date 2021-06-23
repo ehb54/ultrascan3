@@ -692,14 +692,17 @@ DbgLv(1) << "EGGe:ldPro: Disk-B: load_db" << load_db;
    // Select a protocol
    QString delete_button = "DELETE";
    //US_SelectItem pdiag( protdata, hdrs, pdtitle, &prx, -2 );
-   US_SelectItem* pdiag = new  US_SelectItem( protdata, hdrs, pdtitle, &prx, delete_button, -2 );  //ALEXEY <-- wit Delete button and functionality
+   US_SelectItem* pdiag = new  US_SelectItem( protdata, hdrs, pdtitle, &prx, delete_button, -2 );  //ALEXEY <-- with Delete button and functionality
 
    connect( pdiag, SIGNAL( accept_deletion() ), this, SLOT( update_protdata() ));
 
    if ( pdiag->exec() == QDialog::Accepted )
    {  // Accept in dialog:  get selected protocol name and its XML
-DbgLv(1) << "EGGe:ldPro:  ACCEPT  prx" << prx << "sel proto" << protdata[prx][0] << "protID" << protdata[prx][2];
-
+     DbgLv(1) << "EGGe:ldPro:  ACCEPT  prx" << prx << "sel proto" << protdata[prx][0] << "protID" << protdata[prx][2];
+     
+     //ALEXEY: need to reset everything:
+     mainw->reset();
+      
       QString pname         = protdata[ prx ][ 0 ];
 
       // Get the protocol XML that matches the selected protocol name
