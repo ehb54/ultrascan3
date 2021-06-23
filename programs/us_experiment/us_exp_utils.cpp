@@ -2674,11 +2674,17 @@ DbgLv(1) << "EGAp:inP:  sdiag initPanels()";
    mainw->currAProf           = sdiag->currProf;
    sdiag->initPanels();
    mainw->currAProf           = sdiag->currProf;
+
+
+   qDebug() << "EXP_APROFILE_GUI -- initPanel(): sdiag->currProf.aprofname -- " << sdiag->currProf.aprofname;
 }
 
 void US_ExperGuiAProfile::reset_sdiag( void )
 {
    sdiag->reset();
+
+   qDebug() << "EXP_APROFILE_GUI RESET-- reset_sdiag(): sdiag->currProf.aprofname -- " << sdiag->currProf.aprofname;
+
 }
 
 void US_ExperGuiAProfile::savePanel()

@@ -148,6 +148,7 @@ void US_ExperimentMain::reset( void )
   currProto = US_RunProtocol();
   loadProto = US_RunProtocol();
 
+    
   epanRotor->setFirstLab();  //need to reset Lab && savePanel() for Rotors
 
   /**************** */
@@ -4171,6 +4172,8 @@ US_ExperGuiAProfile::US_ExperGuiAProfile( QWidget* topw )
    sdiag->currProf.protoID
                        = mainw->currProto.protoID;
    mainw->currAProf    = sdiag->currProf;
+
+   qDebug() << "EXP_APROFILE_GUI -- FIRST intitialization: sdiag->currProf.aprofname -- " << sdiag->currProf.aprofname;
    sdiag->show();
 }
 

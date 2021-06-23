@@ -127,8 +127,10 @@ void US_AnalysisProfileGui::reset( void )
 {
 DbgLv(1) << "MAIN:  Resetting internal protocol...";
    currProf = US_AnaProfile();
-   initPanels();
+   loadProf = US_AnaProfile();
+   initPanels();                      //if commented and nothing else done causes crash
 
+   ap_xml.clear();
 }
 
 // Set auto mode (comes from ComProject or Experiment)
@@ -380,6 +382,8 @@ DbgLv(1) << "APG: ipro: name" << iProto->protoname
    currProf.aprofGUID   = iProto->rpAprof.aprofGUID = iProto->protoGUID;
    currProf.aprofname   = iProto->rpAprof.aprofname = iProto->protoname;
 DbgLv(1) << "APG: ipro: name GUID" << currProf.aprofname << currProf.aprofGUID;
+
+ qDebug() << "APG: ipro: currProf.aprofname, iProto->rpAprof.aprofname, need_rec -- " << currProf.aprofname << iProto->rpAprof.aprofname << need_rec;
 
    // Load Analysis Profile from database or local file
    if ( need_rec )
