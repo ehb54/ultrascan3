@@ -8,7 +8,7 @@
 #include "us_report_gmp.h"
 
 //! This class provides a tabbed entry for solution selection
-class US_ReportGui: public US_Widgets
+class US_GUI_EXTERN US_ReportGui: public US_Widgets
 {
   Q_OBJECT
 
