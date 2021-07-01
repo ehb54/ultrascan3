@@ -426,11 +426,19 @@ DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.cou
 	 kk              = qMin( ii, currProf->analysis_run.count() - 1 );
 
 	 qDebug() << "kk out of currProf->analysis_run: " << kk;
-	 
+
+	 //Analysis run
 	 if ( currProf->analysis_run[ kk ] )
 	   ck_runs[ ii ] ->setChecked( true  );
 	 else
 	   ck_runs[ ii ] ->setChecked( false  );
+
+	 //Report run
+	 if ( currProf->report_run[ kk ] )
+	   ck_report_runs[ ii ] ->setChecked( true  );
+	 else
+	   ck_report_runs[ ii ] ->setChecked( false  );
+
 	 
 	 DbgLv(1) << "APGe: inP:    ii kk" << ii << kk << "chann" << sl_chnsel[kk] << "lvtol daend dae[kk]"
 	 << currProf->lv_tolers[ii] << currProf->data_ends[ii] << currProf->data_ends[kk]
@@ -629,7 +637,17 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 	 else
 	   currProf->analysis_run << 0;
 
-	 qDebug() << "APGR: SAVE: channel -- " << ii << int(ck_runs[ ii ]->isChecked());
+	 qDebug() << "APGR: SAVE: run channel analysis -- " << ii << int(ck_runs[ ii ]->isChecked());
+
+	 
+	 //ALEXEY: add additional field for channels' reports
+	 if ( ck_report_runs[ ii ]->isChecked() ) 
+	   currProf->report_run << 1;
+	 else
+	   currProf->report_run << 0;
+
+	 qDebug() << "APGR: SAVE: run channel report -- " << ii << int(ck_report_runs[ ii ]->isChecked());
+	 
 
 	 //ALEXEY: also save info on wvl for edit 
 	 QScrollArea *sa = gr_mwvbox[ ii ];

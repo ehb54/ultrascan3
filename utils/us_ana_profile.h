@@ -205,6 +205,7 @@ class US_UTIL_EXTERN US_AnaProfile
       QList< double> data_ends;    //!< Load volume tolerances
 
       QList< int > analysis_run;
+      QList< int > report_run;
       QList< int > wvl_edit;
 
       QList< QString > wvl_not_run; 

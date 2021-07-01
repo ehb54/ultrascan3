@@ -27,6 +27,7 @@ US_AnaProfile::US_AnaProfile()
    data_ends << 7.0;
 
    analysis_run << 1;
+   report_run   << 1;
 
    wvl_edit << 180;
       
@@ -138,9 +139,14 @@ bool US_AnaProfile::toXml( QXmlStreamWriter& xmlo )
    			QString::number( lv_tolers[ kk ] ) );
      xmlo.writeAttribute    ( "data_end",
    			QString::number( data_ends[ kk ] ) );
-     //ALEXEY
+     //ALEXEY: analyse?
      xmlo.writeAttribute    ( "run",
    			QString::number( analysis_run[ kk ] ) );
+
+     //ALEXEY: run report ?
+     xmlo.writeAttribute    ( "run_report",
+   			QString::number( report_run[ kk ] ) );
+    
      
      //ALEXEY: wvl to edit
      xmlo.writeAttribute    ( "wvl_edit",
@@ -186,6 +192,7 @@ bool US_AnaProfile::fromXml( QXmlStreamReader& xmli )
    data_ends.clear();
 
    analysis_run.clear();
+   report_run  .clear();
    wvl_edit    .clear();
    wvl_not_run .clear();
 
@@ -224,6 +231,7 @@ bool US_AnaProfile::fromXml( QXmlStreamReader& xmli )
 	    //ALEXEY: for now -- put all checked; later will be 'run="1"' OR 'run="0"' field
 	    //analysis_run << 1;
 	    analysis_run << attr.value( "run" ).toString().toInt();
+	    report_run   << attr.value( "run_report" ).toString().toInt();
 	    wvl_edit     << attr.value( "wvl_edit" ).toString().toInt();
 	    wvl_not_run  << attr.value( "wvl_not_run" ).toString();
 
