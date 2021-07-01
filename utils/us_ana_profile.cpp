@@ -231,7 +231,17 @@ bool US_AnaProfile::fromXml( QXmlStreamReader& xmli )
 	    //ALEXEY: for now -- put all checked; later will be 'run="1"' OR 'run="0"' field
 	    //analysis_run << 1;
 	    analysis_run << attr.value( "run" ).toString().toInt();
-	    report_run   << attr.value( "run_report" ).toString().toInt();
+
+	    if ( attr.hasAttribute("run_report") ) 
+	      report_run   << attr.value( "run_report" ).toString().toInt();
+	    else  // This will not be needed for newer analysis profiles; logic is for backward compatibility..
+	      {
+		if ( attr.value( "run" ).toString().toInt() ) 
+		  report_run   << 1;
+		else
+		  report_run   << 0;
+	      }
+		
 	    wvl_edit     << attr.value( "wvl_edit" ).toString().toInt();
 	    wvl_not_run  << attr.value( "wvl_not_run" ).toString();
 
