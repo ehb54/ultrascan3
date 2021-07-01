@@ -908,8 +908,9 @@ DbgLv(1) << "APGe: bgL:    scrollArea children count ZERO";
    le_lvtols.clear();
    le_daends.clear();
 
-   ck_runs    .clear();
-   pb_reports .clear();
+   ck_runs       .clear();
+   ck_report_runs.clear();
+   pb_reports    .clear();
    //internal_reports.clear();
 
    // Start building main layout
@@ -946,6 +947,7 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
    QLabel* lb_lvtol  = us_label( tr( "+/- %\nToler." ) );
    QLabel* lb_daend  = us_label( tr( "Data End\n(cm)" ) );
    QLabel* lb_channelana  = us_label( tr( "Run" ) );
+   QLabel* lb_runreport  = us_label( tr( "Run\nReport" ) );
    
    QLabel* lb_report  = us_label( tr( "Report" ) );
    
@@ -984,14 +986,16 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
    genL->addWidget( lb_lvtol, row,    6, 2, 1 );
    genL->addWidget( lb_daend, row,    7, 2, 1 );
    genL->addWidget( lb_channelana, row,  8, 2, 1 );
-   genL->addWidget( lb_report, row,  9, 2, 1 );
-   genL->addWidget( lb_mwvprefs,   row++,10, 2, 1 ); row++;
+   genL->addWidget( lb_runreport, row,  9, 2, 1 );
+   genL->addWidget( lb_report, row,  10, 2, 1 );
+   genL->addWidget( lb_mwvprefs,   row++,11, 2, 1 ); row++;
    genL->setRowStretch( 0, 0 );
    genL->setRowStretch( 1, 0 );
 
 
    row_global = row;
    QCheckBox*     ck_analysisrun;
+   QCheckBox*     ck_reportrun;
    QPushButton*   pb_reportprefs;
    QCheckBox*     ck_mwvprefs;
 
@@ -1078,10 +1082,23 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       ck_runs << ck_analysisrun;
       //END of run checkbox seciton
 
+      //Run Report checkboxes
+      ck_reportrun = new QCheckBox( tr(""), this );
+      ck_reportrun ->setAutoFillBackground( true );
+      ck_reportrun ->setChecked( true );
+      ck_reportrun ->setObjectName( strow + ": RunReport" );
+      genL->addWidget( ck_reportrun,  row,  9, 1, 1, Qt::AlignHCenter );
+      connect( ck_reportrun, SIGNAL( toggled     ( bool ) ),
+               this,         SLOT  ( reportRunChecked( bool ) ) );
+
+      ck_report_runs << ck_reportrun;
+      //END of runReport cks
+      
+
       //Report
       pb_reportprefs = us_pushbutton( tr( "Report" ) );
       pb_reportprefs ->setObjectName( strow + ": Report --chann_name--" + schan );
-      genL->addWidget( pb_reportprefs,  row,  9, 1, 1, Qt::AlignHCenter );
+      genL->addWidget( pb_reportprefs,  row,  10, 1, 1, Qt::AlignHCenter );
       connect( pb_reportprefs, SIGNAL( clicked     ( ) ),
                this,        SLOT  ( setReport( ) ) );
 
@@ -1093,7 +1110,7 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       ck_mwvprefs ->setAutoFillBackground( true );
       ck_mwvprefs ->setChecked( false );
       ck_mwvprefs ->setObjectName( strow + ": MWV" );
-      genL->addWidget( ck_mwvprefs,  row,  10, 1, 1, Qt::AlignHCenter );
+      genL->addWidget( ck_mwvprefs,  row,  11, 1, 1, Qt::AlignHCenter );
       connect( ck_mwvprefs, SIGNAL( toggled     ( bool ) ),
                this,        SLOT  ( mwvChecked( bool ) ) );
 
@@ -1102,7 +1119,7 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       
       if ( ii == 0 )
       {
-         genL->addWidget( pb_applya, row++, 11, 1, 2 );
+         genL->addWidget( pb_applya, row++, 12, 1, 2 );
          connect( pb_applya, SIGNAL( clicked       ( ) ),
                   this,      SLOT(   applied_to_all( ) ) );
       }
@@ -1467,27 +1484,20 @@ void US_AnaprofPanGen::rbEditClicked ( QString arg_passed )
      }
 }
 
-
-//Togle Analysis Run checkbox
-void US_AnaprofPanGen::runChecked( bool checked )
+//Togle Report Run checkbox
+void US_AnaprofPanGen::reportRunChecked( bool checked )
 {
-   QObject* sobj       = sender();      // Sender object
-   QString oname       = sobj->objectName();
-   int irow            = oname.section( ":", 0, 0 ).toInt();
+  QObject* sobj       = sender();      // Sender object
+  QString oname       = sobj->objectName();
+  int irow            = oname.section( ":", 0, 0 ).toInt();
 
-   QString channel_name = sl_chnsel[ irow ];
-
-   qDebug() << "Channel name to RUN: Checked: " << channel_name << " : " << checked;
-
-   QString mwv_oname = QString::number( irow ) + ": MWV";
-   qDebug() << "mwv_oname -- " << mwv_oname;
-
-   QString report_oname = QString::number( irow ) + ": Report";
-   qDebug() << "report_oname -- " << report_oname;
-
-   
-
-   //if not checked, disable Report btn && MWV checkbox, and otherwise:
+  QString channel_name = sl_chnsel[ irow ];
+  qDebug() << "Report to RUN: Checked: " << channel_name << " : " << checked;
+    
+  QString report_oname = QString::number( irow ) + ": Report";
+  qDebug() << "report_oname -- " << report_oname;
+  
+  //if not checked, disable Report btn && otherwise:
    if ( !checked )
      {
        //Report
@@ -1499,6 +1509,65 @@ void US_AnaprofPanGen::runChecked( bool checked )
 	       break;
 	     }
 	 }
+     }
+   else
+     {
+       //Report
+       for ( int i=0; i < pb_reports.size(); ++i )
+	 {
+	   if ( pb_reports[ i ]->objectName().contains( report_oname ) )
+	     {
+	       pb_reports[ i ] -> setEnabled( true );
+	       break;
+	     }
+	 }
+     }
+}
+
+//Togle Analysis Run checkbox
+void US_AnaprofPanGen::runChecked( bool checked )
+{
+   QObject* sobj       = sender();      // Sender object
+   QString oname       = sobj->objectName();
+   int irow            = oname.section( ":", 0, 0 ).toInt();
+
+   QString channel_name = sl_chnsel[ irow ];
+   qDebug() << "Channel name to RUN: Checked: " << channel_name << " : " << checked;
+
+   QString mwv_oname = QString::number( irow ) + ": MWV";
+   qDebug() << "mwv_oname -- " << mwv_oname;
+
+   QString report_oname = QString::number( irow ) + ": Report";
+   qDebug() << "report_oname -- " << report_oname;
+
+   QString run_report_oname = QString::number( irow ) + ": RunReport";
+   qDebug() << "run_report_oname -- " << run_report_oname;
+   
+
+   //if not checked, disable Report btn && MWV checkbox, and otherwise:
+   if ( !checked )
+     {
+
+       //Run Report
+       for ( int i=0; i < ck_report_runs.size(); ++i )
+	 {
+	   if ( ck_report_runs[ i ]->objectName().contains( run_report_oname ) )
+	     {
+	       ck_report_runs[ i ] -> setChecked( false );
+	       ck_report_runs[ i ] -> setEnabled( false );
+	       break;
+	     }
+	 }
+       
+       // //Report: No need for Report btn since it's bound now to Run Report checkbox...
+       // for ( int i=0; i < pb_reports.size(); ++i )
+       // 	 {
+       // 	   if ( pb_reports[ i ]->objectName().contains( report_oname ) )
+       // 	     {
+       // 	       pb_reports[ i ] -> setEnabled( false );
+       // 	       break;
+       // 	     }
+       // 	 }
        
        
        //MWV
@@ -1515,15 +1584,25 @@ void US_AnaprofPanGen::runChecked( bool checked )
      }
    else
      {
-       //Report
-       for ( int i=0; i < pb_reports.size(); ++i )
+       //Run Report
+       for ( int i=0; i < ck_report_runs.size(); ++i )
 	 {
-	   if ( pb_reports[ i ]->objectName().contains( report_oname ) )
+	   if ( ck_report_runs[ i ]->objectName().contains( run_report_oname ) )
 	     {
-	       pb_reports[ i ] -> setEnabled( true );
+	       ck_report_runs[ i ] -> setEnabled( true );
 	       break;
 	     }
 	 }
+       
+       // //Report: No need for Report btn since it's bound now to Run Report checkbox...
+       // for ( int i=0; i < pb_reports.size(); ++i )
+       // 	 {
+       // 	   if ( pb_reports[ i ]->objectName().contains( report_oname ) )
+       // 	     {
+       // 	       pb_reports[ i ] -> setEnabled( true );
+       // 	       break;
+       // 	     }
+       // 	 }
        
        //MWV
        for ( int i=0; i<ck_mwv.size(); ++i )

@@ -106,6 +106,7 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       QList< QLineEdit* >    le_daends;
 
       QList< QCheckBox* >    ck_runs;
+      QList< QCheckBox* >    ck_report_runs;
       QList< QPushButton * > pb_reports;
       QList< QCheckBox* >    ck_mwv;
       QList< QScrollArea* >  gr_mwvbox;
@@ -122,6 +123,7 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       void  build_general_layout( void );
 
       void  runChecked( bool );
+      void  reportRunChecked( bool );
       void  setReport( void );
       void  mwvChecked( bool );
 
@@ -137,7 +139,7 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       void  lvtol_text_changed ( void );
       void  daend_text_changed ( void );
       void  applied_to_all     ( void );
-      void restore_report      ( US_ReportGMP &  );
+      void  restore_report      ( US_ReportGMP &  );
       
  signals:
       void  set_tabs_buttons_inactive       ( void );
