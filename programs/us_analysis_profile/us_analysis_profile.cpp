@@ -294,6 +294,7 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
                currProf.data_ends << currProf.data_ends[ chx ];
 
 	       currProf.analysis_run << currProf.analysis_run[ chx ];
+	       currProf.report_run   << currProf.report_run[ chx ];
 	       currProf.wvl_edit     << currProf.wvl_edit[ chx ];
 	       currProf.wvl_not_run  << currProf.wvl_not_run[ chx ];
             }
@@ -332,6 +333,7 @@ DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
             currProf.data_ends << currProf.data_ends[ lch ];
 
 	    currProf.analysis_run << currProf.analysis_run[ lch ];
+	    currProf.report_run   << currProf.report_run[ lch ];
 	    currProf.wvl_edit     << currProf.wvl_edit[ lch ];
 	    currProf.wvl_not_run  << currProf.wvl_not_run[ lch ];
 	    
@@ -363,9 +365,10 @@ DbgLv(1) << "APG: ipro:     lch" << lch << "lv_tol da_end"
          currProf.lv_tolers.removeLast();
          currProf.data_ends.removeLast();
 
-	 currProf.analysis_run.removeLast();
-	 currProf.wvl_edit.removeLast();
-	 currProf.wvl_not_run.removeLast();
+	 currProf.analysis_run .removeLast();
+	 currProf.report_run   .removeLast();
+	 currProf.wvl_edit     .removeLast();
+	 currProf.wvl_not_run  .removeLast();
 
 	 //currProf.ch_wvls.removeLast();  //ALEXEY: needed?
       }

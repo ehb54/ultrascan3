@@ -614,9 +614,10 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
       currProf->lv_tolers.clear( );
       currProf->data_ends.clear( );
       
-      currProf->analysis_run.clear( );
-      currProf->wvl_edit.clear( );
-      currProf->wvl_not_run.clear( );
+      currProf->analysis_run .clear( );
+      currProf->report_run   .clear( );
+      currProf->wvl_edit     .clear( );
+      currProf->wvl_not_run  .clear( );
 
       currProf->ch_reports.clear();
 
