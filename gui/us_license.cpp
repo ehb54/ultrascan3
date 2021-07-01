@@ -561,7 +561,7 @@ void US_License::request( void )
 
   // Send request
   //qDebug() << "sending: " << request;
-  QString      url      = "http://ultrascan.aucsolutions.com/request-license.php";
+  QString      url      = "https://ultrascan.aucsolutions.com/request-license.php";
   US_HttpPost* transmit = new US_HttpPost( url, request );
   connect( transmit, SIGNAL( US_Http_post_response( const QString& ) ),
            this,     SLOT  ( request_response     ( const QString& ) ) );
