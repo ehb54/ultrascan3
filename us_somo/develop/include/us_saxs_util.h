@@ -1540,6 +1540,10 @@ class US_EXTERN US_Saxs_Util
                                                                                       // restore HETATM, LINK and renumbering
                                                                                       // add_back will add back dmd link & remark 766s
 
+      // dmd fix position of HETATM
+      QString                           dmd_fix_hetatm_name_pos( const QString & qs );
+      QStringList                       dmd_fix_hetatm_name_pos( const QStringList & qsl );
+
       static map < QString, QString >   pdb_fields( const QString & pdb_line );
       
       bool         strip_pdb( 
@@ -1559,7 +1563,6 @@ class US_EXTERN US_Saxs_Util
                                      ,const QString & cmd
                                      ,const QString & log
                                      );
-      
       
       static float mw_to_volume( float mw, float vbar );
 

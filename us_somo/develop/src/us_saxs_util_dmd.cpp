@@ -1956,9 +1956,35 @@ bool US_Saxs_Util::dmd_pdb_restore( const QStringList & qsl_pdb, QStringList & q
          line.replace( 21, 1, dmd_org_chain[ chainid ][ resseq ] );
          line.replace( 22, 4, QString( "%1" ).arg( dmd_org_res[ chainid ][ resseq ], 4, 10, QChar( ' ' ) ) );
       }
-      qsl_pdb_restored << line;
+      qsl_pdb_restored << dmd_fix_hetatm_name_pos( line );
    }
 
    return true;
 }
 
+QString US_Saxs_Util::dmd_fix_hetatm_name_pos( const QString & qs ) {
+   auto fields = pdb_fields( qs );
+   if ( fields[ "recname" ] != "HETATM" ) {
+      return qs;
+   }
+   QString atomname = fields[ "name" ];
+   int len = atomname.length();
+   if ( len == 4 ) {
+      return qs;
+   }
+   atomname = " " + atomname;
+   while ( atomname.length() < 4 ) {
+      atomname += " ";
+   }
+   QString result = qs.mid( 0, 12 ) + atomname + qs.mid( 16 );
+   return result;
+}
+
+QStringList US_Saxs_Util::dmd_fix_hetatm_name_pos( const QStringList & qsl ) {
+   QStringList result;
+   for ( int i = 0; i < (int) qsl.size(); ++i ) {
+      result << dmd_fix_hetatm_name_pos( qsl[ i ] );
+   }
+   return result;
+}
+      
