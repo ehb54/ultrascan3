@@ -602,8 +602,13 @@ bool US_AnaProfile::AnaProfPCSA::fromXml( QXmlStreamReader& xmli )
          {
             QXmlStreamAttributes attr = xmli.attributes();
             QString chan   = attr.value( "channel" ).toString();
-            QString ctype  = attr.value( "curve_type" ).toString();
-            QString xtype  = attr.value( "x_type" ).toString();
+	    
+	    //ALEXEY: get (modified)  curve type form XML & transform into appropriate internal varialble 
+	    //QString ctype  = attr.value( "curve_type" ).toString();
+	    QString ctype_t  = attr.value( "curve_type" ).toString();
+	    QString ctype = curve_type_fromXml( ctype_t );
+	    
+	    QString xtype  = attr.value( "x_type" ).toString();
             QString ytype  = attr.value( "y_type" ).toString();
             QString ztype  = attr.value( "z_type" ).toString();
             QString ntype  = attr.value( "noise" ).toString();
@@ -663,6 +668,50 @@ bool US_AnaProfile::AnaProfPCSA::fromXml( QXmlStreamReader& xmli )
    return ( ! xmli.hasError() );
 }
 
+// get curve type from AProfile in a format suitable for internal use
+QString US_AnaProfile::AnaProfPCSA::curve_type_fromXml( QString curve_param )
+{
+  QString curve_type = QString("");
+
+  if ( curve_param.contains( "All") )
+    curve_type = "All (IS + DS + SL)";
+  if ( curve_param.contains( "IS") )
+    curve_type = "Increasing Sigmoid";
+  if ( curve_param.contains( "DS") )
+    curve_type = "Decreasing Sigmoid";
+  if ( curve_param.contains( "SL") )
+    curve_type = "Straight Line";
+  if ( curve_param.contains( "HL") )
+    curve_type = "Horizontal Line";
+  if ( curve_param.contains( "2O") )
+    curve_type = "Second Order Power";  
+    
+  return curve_type;
+  
+}
+
+// get curve type in a format suitable for Analysis submission
+QString US_AnaProfile::AnaProfPCSA::curve_type_toXml( QString curve_param )
+{
+  QString curve_type = QString("");
+
+  if ( curve_param.contains( "All") )
+    curve_type = "All";
+  if ( curve_param.contains( "Increasing Sigmoid") )
+    curve_type = "IS";
+  if ( curve_param.contains( "Decreasing Sigmoid") )
+    curve_type = "DS";
+  if ( curve_param.contains( "Straight Line") )
+    curve_type = "SL";
+  if ( curve_param.contains( "Horizontal Line") )
+    curve_type = "HL";
+  if ( curve_param.contains( "Second Order Power") )
+    curve_type = "2O";  
+    
+  return curve_type;
+  
+}
+
 // Write the current PCSA portion of controls to an XML stream
 bool US_AnaProfile::AnaProfPCSA::toXml( QXmlStreamWriter& xmlo )
 {
@@ -674,7 +723,12 @@ bool US_AnaProfile::AnaProfPCSA::toXml( QXmlStreamWriter& xmlo )
    {
       xmlo.writeStartElement( "channel_parms" );
       xmlo.writeAttribute   ( "channel",            parms[ ii ].channel );
-      xmlo.writeAttribute   ( "curve_type",         parms[ ii ].curv_type );
+
+      //ALEXEY: transform into "SL,IS,DS,All,HL,2O"
+      //xmlo.writeAttribute   ( "curve_type",         parms[ ii ].curv_type );
+      QString curve_type = curve_type_toXml( parms[ ii ].curv_type );
+      xmlo.writeAttribute   ( "curve_type",         curve_type );
+      
       xmlo.writeAttribute   ( "x_type",             parms[ ii ].x_type );
       xmlo.writeAttribute   ( "y_type",             parms[ ii ].y_type );
       xmlo.writeAttribute   ( "z_type",             parms[ ii ].z_type );

@@ -152,6 +152,13 @@ class US_UTIL_EXTERN US_AnaProfile
             //! Save controls to XML
             bool toXml  ( QXmlStreamWriter& );
 
+	    //Transform curve type string toXml
+	    QString curve_type_toXml( QString );
+
+	    //Transform curve type string fromXml
+	    QString curve_type_fromXml( QString );	    
+
+	    
             int         nchan;           //!< Number of channels
             bool        job_run;         //!< run-pcsa-job flag
 

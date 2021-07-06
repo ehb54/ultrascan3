@@ -5013,8 +5013,8 @@ void US_ExperGuiUpload::saveAnalysisProfile()
    saveReports( aprof ); //<-------------------------------------- TEMPORARY comment!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    
    aprof  ->toXml( xmlo_aprof );
-//DbgLv(1) << "XML AProfile: " << rpAprof->ap_xml;
-
+   //DbgLv(1) << "XML AProfile: " << rpAprof->ap_xml;
+   //exit(1);
    
    QString xmlopath;
    QString dapath;

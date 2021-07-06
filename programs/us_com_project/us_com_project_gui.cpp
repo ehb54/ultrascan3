@@ -1219,12 +1219,13 @@ void US_InitDialogueGui::checkCertificates( void )
       
       // Check for certificate license key and its expiraiton
       Link *link = new Link( alias );
+
       bool status_sys_data = link->connectToServer( dbhost, optima_msgPort.toInt() );
       bool combined_check = status_sys_data & link->connected_itself;
-            
+      
       // Ceritificate location && check for nearing or actual expiration date ////////////////////
       QString certPath = US_Settings::etcDir() + QString("/optima/");
-
+      
       QString client_name = alias;
       client_name.simplified();
       client_name.replace(" ", "");
@@ -1262,7 +1263,8 @@ void US_InitDialogueGui::checkCertificates( void )
       qDebug() << "Now, End, expiration in days:  " << dNow << dEndCerts << daysToExpiration;
       
       // End of checking expiraiton date ////////////////////////////////////////////////////////////
-            
+      qDebug() << "combined_check, daysToExpiration, certfile_exists -- " << combined_check <<  daysToExpiration << certfile_exists;
+      
       if ( !combined_check || daysToExpiration <= 0 || !certfile_exists )
 	{
 	  ++count_instruments_disconnected;
