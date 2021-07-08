@@ -2392,25 +2392,44 @@ DbgLv(1) << "APpc: IN";
                << tr( "Straight Line" )
                << tr( "Horizontal Line [ C(s) ]" )
                << tr( "Second Order Power Law" );
-   QStringList sl_axistype;
-   sl_axistype << "s" << "f/f0" << "mw" << "vbar" << "D";
-   QStringList sl_zaxistyp;
-   sl_zaxistyp << "vbar" << "f/f0" << "mw";
+   
+   // QStringList sl_axistype;
+   // sl_axistype << "s" << "f/f0" << "mw" << "vbar" << "D";
+   QStringList sl_xaxistype;
+   sl_xaxistype << "s";
 
+   QStringList sl_yaxistype;
+   sl_yaxistype << "f/f0" << "mw" << "vbar";
+   
+   QStringList sl_zaxistyp;
+   //sl_zaxistyp << "vbar" << "f/f0" << "mw";
+   sl_zaxistyp << "vbar" << "f/f0";
+
+   
    cb_curvtype     = new QComboBox( this );
    cb_curvtype->addItems( sl_curvtype );
    cb_curvtype->setCurrentIndex( 0 );
+   
    cb_xaxistyp     = new QComboBox( this );
-   cb_xaxistyp->addItems( sl_axistype );
+   //cb_xaxistyp->addItems( sl_axistype );
+   cb_xaxistyp->addItems( sl_xaxistype );
+   cb_xaxistyp->setEnabled( false );
+   
    le_xmin         = us_lineedit( "1", 0, false );
    le_xmax         = us_lineedit( "10", 0, false );
+
    cb_yaxistyp     = new QComboBox( this );
-   cb_yaxistyp->addItems( sl_axistype );
-   cb_yaxistyp->setCurrentIndex( 1 );
+   //cb_yaxistyp->addItems( sl_axistype );
+   cb_yaxistyp->addItems( sl_yaxistype );
+   //cb_yaxistyp->setCurrentIndex( 1 );
+
    le_ymin         = us_lineedit( "1", 0, false );
    le_ymax         = us_lineedit( "5", 0, false );
+
    cb_zaxistyp     = new QComboBox( this );
    cb_zaxistyp->addItems( sl_zaxistyp );
+   cb_zaxistyp->setEnabled( false );
+
    le_zvalue       = us_lineedit( "0.732", 0, false );
    le_varcount     = us_lineedit( "6", 0, false );
    le_grfiters     = us_lineedit( "3", 0, false );
@@ -2794,7 +2813,23 @@ DbgLv(1) << "PC:SL: XMAX_CHG";
 // Y Axis selected
 void US_AnaprofPanPCSA::yaxis_selected( int yaxx )
 {
-DbgLv(1) << "PC:SL: YAXIS_SEL" << yaxx;
+  DbgLv(1) << "PC:SL: YAXIS_SEL" << yaxx << cb_yaxistyp->itemText( yaxx );
+  QString ytype =  cb_yaxistyp->itemText( yaxx );
+
+  if ( ytype == "f/f0" || ytype == "mw" )
+    {
+      int ind_z = cb_zaxistyp->findText("vbar");
+      if ( ind_z != -1  )
+	  cb_zaxistyp -> setCurrentIndex( ind_z );
+    }
+  
+  if ( ytype == "vbar" )
+    {
+      int ind_z = cb_zaxistyp->findText("f/f0");
+      if ( ind_z != -1  )
+	cb_zaxistyp -> setCurrentIndex( ind_z );
+    }
+  
 }
 // Y Min changed
 void US_AnaprofPanPCSA::ymin_changed( )
