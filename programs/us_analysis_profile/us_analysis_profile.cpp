@@ -2654,13 +2654,28 @@ DbgLv(1) << "PC:SL-gp: *ERROR* rowx>=kparm";
    parm1.noise_flag += ( ck_rinoise ->isChecked() ? 2 : 0 );
    parm1.treg_flag   = 0;
    parm1.treg_flag   = ( ck_tregspec->isChecked() ? 1 : 0 );
-   parm1.treg_flag   = ( ck_tregauto->isChecked() ? 2 : 0 );
+
+   //ALEXEY : bug fixed
+   //parm1.treg_flag   = ( ck_tregauto->isChecked() ? 2 : 0 );
+   if ( !ck_tregspec->isChecked() )
+     parm1.treg_flag   = ( ck_tregauto->isChecked() ? 2 : 0 );
+
+   //ALEXEY: handle treg_type text:
+   if ( parm1.treg_flag == 0 )
+     parm1.treg_type = "none";
+   if ( parm1.treg_flag == 1 )
+     parm1.treg_type = "specified_alpha";
+   if ( parm1.treg_flag == 2 )
+     parm1.treg_type = "auto_computed_alpha";
+   
    parm1.curv_type   = cb_curvtype->currentText();
    parm1.x_type      = cb_xaxistyp->currentText();
    parm1.y_type      = cb_yaxistyp->currentText();
    parm1.z_type      = cb_zaxistyp->currentText();
    parm1.channel     = sl_chnsel[ rowx ];
 DbgLv(1) << "PC:SL-gp:  curv_type" << parm1.curv_type << "channel" << parm1.channel;
+
+ qDebug() << "In gui_to_parms:  ck_tregspec->isChecked(), parm1.treg_flag -- " <<  ck_tregspec->isChecked() << parm1.treg_flag;
 
    currProf->apPCSA.parms.replace( rowx, parm1 );
 }
@@ -2747,6 +2762,8 @@ DbgLv(1) << "PC:SL-pg:  curv_type" << parm1.curv_type << "channel" << chan;
 DbgLv(1) << "PC:SL-pg:   curvtype ndx" << cb_curvtype->currentIndex()
  << "chnsel ndx" << cb_chnsel->currentIndex();
 
+ qDebug() << "In param_to_gui:  parm1.treg_flag -- " << parm1.treg_flag;
+ 
    pb_nextch  ->setEnabled( rowx < ( sl_chnsel.count() - 1 ) );
 }
 

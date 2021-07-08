@@ -627,9 +627,14 @@ bool US_AnaProfile::AnaProfPCSA::fromXml( QXmlStreamReader& xmli )
             noisflg        = ( ntype == "ti"   ) ? 1 : noisflg;
             noisflg        = ( ntype == "ri"   ) ? 2 : noisflg;
             noisflg        = ( ntype == "both" ) ? 3 : noisflg;
-            int tregflg    = 0;
-            tregflg        = ( ttype == "spec" ) ? 1 : tregflg;
-            tregflg        = ( ttype == "auto" ) ? 2 : tregflg;
+
+	    int tregflg    = 0;
+            // tregflg        = ( ttype == "spec" ) ? 1 : tregflg;
+            // tregflg        = ( ttype == "auto" ) ? 2 : tregflg;
+
+	    //ALEXEY: change "regularization" to: {"none","specified_alpha","auto_computed_alpha"}
+	    tregflg        = ( ttype == "specified_alpha" )     ? 1 : tregflg;
+	    tregflg        = ( ttype == "auto_computed_alpha" ) ? 2 : tregflg;
 
             parm1.channel    = chan;
             parm1.curv_type  = ctype;
@@ -749,7 +754,9 @@ bool US_AnaProfile::AnaProfPCSA::toXml( QXmlStreamWriter& xmlo )
       xmlo.writeAttribute   ( "curve_reso_points",  QString::number(
                                                     parms[ ii ].creso_pts ) );
       xmlo.writeAttribute   ( "noise",              parms[ ii ].noise_type );
+      
       xmlo.writeAttribute   ( "regularization",     parms[ ii ].treg_type );
+
       xmlo.writeAttribute   ( "reg_alpha",          QString::number(
                                                     parms[ ii ].tr_alpha ) );
       xmlo.writeAttribute   ( "mc_iterations",      QString::number(
