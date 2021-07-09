@@ -2418,6 +2418,10 @@ DbgLv(1) << "APpc: IN";
    le_xmin         = us_lineedit( "1", 0, false );
    le_xmax         = us_lineedit( "10", 0, false );
 
+   //Add objectName
+   le_xmin      -> setObjectName( "xmin" );
+   le_xmax      -> setObjectName( "xmax" );
+
    cb_yaxistyp     = new QComboBox( this );
    //cb_yaxistyp->addItems( sl_axistype );
    cb_yaxistyp->addItems( sl_yaxistype );
@@ -2426,11 +2430,20 @@ DbgLv(1) << "APpc: IN";
    le_ymin         = us_lineedit( "1", 0, false );
    le_ymax         = us_lineedit( "5", 0, false );
 
+   //Add objectName
+   le_ymin      -> setObjectName( "ymin" );
+   le_ymax      -> setObjectName( "ymax" );
+
    cb_zaxistyp     = new QComboBox( this );
    cb_zaxistyp->addItems( sl_zaxistyp );
    cb_zaxistyp->setEnabled( false );
 
-   le_zvalue       = us_lineedit( "0.732", 0, false );
+   //le_zvalue       = us_lineedit( "0.732", 0, false );
+   le_zvalue       = us_lineedit( "0", 0, false );
+   //Add objectName
+   le_zvalue      -> setObjectName( "zvalue" );
+   
+   
    le_varcount     = us_lineedit( "6", 0, false );
    le_grfiters     = us_lineedit( "3", 0, false );
    le_crpoints     = us_lineedit( "200", 0, false );
@@ -2520,20 +2533,49 @@ DbgLv(1) << "APpc: IN";
             this,         SLOT  ( apply_all_clicked( )      ) );
    connect( cb_xaxistyp,  SIGNAL( activated        ( int )  ),
             this,         SLOT  ( xaxis_selected   ( int )  ) );
-   connect( le_xmin,      SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( xmin_changed     ( )      ) );
-   connect( le_xmax,      SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( xmax_changed     ( )      ) );
+
+   // connect( le_xmin,      SIGNAL( editingFinished  ( )      ),
+   //          this,         SLOT  ( xmin_changed     ( )      ) );
+   // connect( le_xmax,      SIGNAL( editingFinished  ( )      ),
+   //          this,         SLOT  ( xmax_changed     ( )      ) );
+   // connect( le_xmin, SIGNAL( textChanged ( const QString& ) ),
+   // 	       this,   SLOT  ( verify_xyz ( const QString& ) ) );
+   // connect( le_xmax, SIGNAL( textChanged ( const QString& ) ),
+   // 	       this,   SLOT  ( verify_xyz ( const QString& ) ) );
+
+   connect( le_xmin, SIGNAL( editingFinished  ( ) ),
+   	       this,   SLOT  ( verify_xyz ( ) ) );
+   connect( le_xmax, SIGNAL( editingFinished (  ) ),
+   	       this,   SLOT  ( verify_xyz ( ) ) );
+   
+
    connect( cb_yaxistyp,  SIGNAL( activated        ( int )  ),
             this,         SLOT  ( yaxis_selected   ( int )  ) );
-   connect( le_ymin,      SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( ymin_changed     ( )      ) );
-   connect( le_ymax,      SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( ymax_changed     ( )      ) );
+   
+   // connect( le_ymin,      SIGNAL( editingFinished  ( )      ),
+   //          this,         SLOT  ( ymin_changed     ( )      ) );
+   // connect( le_ymax,      SIGNAL( editingFinished  ( )      ),
+   //          this,         SLOT  ( ymax_changed     ( )      ) );
+   // connect( le_ymin, SIGNAL( textChanged ( const QString& ) ),
+   // 	       this,   SLOT  ( verify_xyz ( const QString& ) ) );
+   // connect( le_ymax, SIGNAL( textChanged ( const QString& ) ),
+   // 	       this,   SLOT  ( verify_xyz ( const QString& ) ) );
+   connect( le_ymin, SIGNAL( editingFinished  ( ) ),
+   	       this,   SLOT  ( verify_xyz ( ) ) );
+   connect( le_ymax, SIGNAL( editingFinished (  ) ),
+   	       this,   SLOT  ( verify_xyz ( ) ) );
+
    connect( cb_zaxistyp,  SIGNAL( activated        ( int )  ),
             this,         SLOT  ( zaxis_selected   ( int )  ) );
+   
+   // connect( le_zvalue,    SIGNAL( editingFinished  ( )      ),
+   //          this,         SLOT  ( zvalue_changed   ( )      ) );
+   // connect( le_zvalue, SIGNAL( textChanged ( const QString& ) ),
+   // 	    this,   SLOT  ( verify_xyz ( const QString& ) ) );
    connect( le_zvalue,    SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( zvalue_changed   ( )      ) );
+            this,         SLOT  ( verify_xyz ( )    ) );
+   
+
    connect( le_varcount,  SIGNAL( editingFinished  ( )      ),
             this,         SLOT  ( varcount_changed ( )      ) );
    connect( le_grfiters,  SIGNAL( editingFinished  ( )      ),
@@ -2810,6 +2852,209 @@ void US_AnaprofPanPCSA::xmax_changed( )
 {
 DbgLv(1) << "PC:SL: XMAX_CHG";
 }
+
+//ALEXEY: New xyz validator
+//void US_AnaprofPanPCSA::verify_xyz( const QString& text )
+void US_AnaprofPanPCSA::verify_xyz(  )
+{
+  QObject* sobj       = sender();      // Sender object
+  QString oname       = sobj->objectName();
+
+  QString text;
+  
+  qDebug() << "QLineEdit oname -- " << oname;
+  QLineEdit * curr_widget = NULL;
+
+  QRegExp rx_double;
+
+  
+  if ( oname.contains("xmin") )
+    {
+      curr_widget = le_xmin;
+      rx_double.setPattern("[+-]?\\d*\\.?\\d+");
+    }
+  if ( oname.contains("xmax") )
+    {
+      curr_widget = le_xmax;
+      rx_double.setPattern("[+-]?\\d*\\.?\\d+");
+    }
+  if ( oname.contains("ymin") )
+    {
+      curr_widget = le_ymin;
+      rx_double.setPattern("\\d*\\.?\\d+");
+    }
+  if ( oname.contains("ymax") )
+    {
+      curr_widget = le_ymax;
+      rx_double.setPattern("\\d*\\.?\\d+");
+    }
+  if ( oname.contains("zvalue") )
+    {
+      curr_widget = le_zvalue;
+      rx_double.setPattern("\\d*\\.?\\d+");
+    }
+  
+  
+  if ( curr_widget != NULL )
+    {
+      text = curr_widget->text();
+      
+      if ( !rx_double.exactMatch( text ) )
+	{
+	  QPalette *palette = new QPalette();
+	  palette->setColor(QPalette::Text,Qt::white);
+	  palette->setColor(QPalette::Base,Qt::red);
+	  curr_widget->setPalette(*palette);
+
+	  isErrorField[ oname ] = true;
+	}
+      else
+	{
+	  QPalette *palette = new QPalette();
+	  palette->setColor(QPalette::Text,Qt::black);
+	  palette->setColor(QPalette::Base,Qt::white);
+	  curr_widget->setPalette(*palette);
+
+	  isErrorField[ oname ] = false;
+
+	  double x = text.toDouble();
+
+	  //for xmin/xmax && y_min/y_max:
+	  bind_min_max( oname, x );
+	    
+	}
+    }
+}
+
+//Bind xmin/xmax or ymin/ymax
+void US_AnaprofPanPCSA::bind_min_max( QString oname, double x )
+{
+  //x_min 
+  if ( oname == "xmin" )
+    {
+      if ( x > 0 )
+	{
+	  if ( x < 0.1 )
+	    {
+	      le_xmin -> setText( QString::number( 0.1 ));
+	      if ( le_xmax->text().toDouble() <= 0.1 )
+		le_xmax -> setText( QString::number( 10 ));
+	    }
+	  else
+	    {
+	      if ( le_xmax->text().toDouble() < x )
+		le_xmax -> setText( QString::number( x + 10 ));
+	    }
+	}
+
+      if ( x < 0 )
+	{
+	  if ( x > -0.1 )
+	    {
+	      le_xmin -> setText( QString::number( -10 ));
+	      le_xmax -> setText( QString::number( -0.1 ));
+	    }
+	  else
+	    {
+	      le_xmax -> setText( QString::number( -0.1 ));
+	    }
+	}
+    }
+
+  //x_max
+  if ( oname == "xmax" )
+    {
+      if ( le_xmin->text().toDouble() > 0 )
+	{
+	  if ( x < le_xmin->text().toDouble() )
+	    le_xmax -> setText( QString::number( le_xmin->text().toDouble() + 0.01 ));
+	}
+      if ( le_xmin->text().toDouble() < 0 )
+	{
+	  if ( x < le_xmin->text().toDouble() )
+	    {
+	      double new_xmax = le_xmin->text().toDouble() + 1;
+	      if ( new_xmax < -0.1 ) 
+		le_xmax -> setText( QString::number( new_xmax ));
+	      else
+		le_xmax -> setText( QString::number( -0.1 ));
+	    }
+	  else
+	    {
+	      if (  x > -0.1 )
+		le_xmax -> setText( QString::number( -0.1 ));
+	    }
+		  
+	}
+    }
+
+  //y_min
+  if ( oname == "ymin" )
+    {
+      QString ytype =  cb_yaxistyp->currentText(  );
+
+      //qDebug() << "In bind_min_max: ytype -- " << ytype;
+      
+      if ( ytype == "f/f0" ) 
+	{
+	  if ( le_ymin->text().toDouble() < 1.0 )
+	    le_ymin -> setText( QString::number( 1 ) );
+	}
+    }
+
+  //y_max
+  if ( oname == "ymax" )
+    {
+      QString ytype =  cb_yaxistyp->currentText(  );
+      
+      if ( ytype == "f/f0" ) 
+	{
+	  if ( le_ymax->text().toDouble() < le_ymin->text().toDouble() )
+	    le_ymax -> setText( QString::number( le_ymin->text().toDouble() + 0.01) );
+	}
+    }
+
+  //z_value
+  if ( oname == "zvalue" )
+    {
+      QString ztype =  cb_zaxistyp->currentText(  );
+      qDebug() << "In bind_min_max: ztype -- " << ztype;
+      
+      if ( ztype == "f/f0" ) 
+	{
+	  if ( le_zvalue->text().toDouble() < 1.0 )
+	    le_zvalue -> setText( QString::number( 1 ));
+	}
+
+      if ( ztype == "vbar" ) 
+	{
+	  if ( le_zvalue->text().toDouble() <= 0 )
+	    le_zvalue -> setText( QString::number( 0.01 ) );
+	}
+      
+    }
+  
+}
+
+//Check systax errors in the xyz fields
+int US_AnaprofPanPCSA::check_syntax_xyz( void )
+{
+  int syntax_errors = 0;
+  
+  QMap<QString, bool>::iterator ri;
+  for ( ri = isErrorField.begin(); ri != isErrorField.end(); ++ri )
+    {
+      if ( ri.value() )
+	{
+	  qDebug() << "Error for object name -- " << ri.key();
+	  ++syntax_errors;
+	}
+    }
+
+  return syntax_errors;
+}
+
+
 // Y Axis selected
 void US_AnaprofPanPCSA::yaxis_selected( int yaxx )
 {
@@ -2818,16 +3063,44 @@ void US_AnaprofPanPCSA::yaxis_selected( int yaxx )
 
   if ( ytype == "f/f0" || ytype == "mw" )
     {
+      if ( ytype == "f/f0" )
+	{
+	  //Default f/f0 range:
+	  le_ymin -> setText( QString::number( 1 ));
+	  le_ymax -> setText( QString::number( 4 ));
+	}
+
+      if ( ytype == "mw" )
+	{
+	  //Default mw range:
+	  le_ymin -> setText( QString::number( 1 ));
+	  le_ymax -> setText( QString::number( 1000 ));
+	}
+      
       int ind_z = cb_zaxistyp->findText("vbar");
       if ( ind_z != -1  )
+	{
 	  cb_zaxistyp -> setCurrentIndex( ind_z );
+ 
+	  //default vbar: 0
+	  le_zvalue -> setText( QString::number( 0 ));
+	}
     }
   
   if ( ytype == "vbar" )
     {
+      //Default vbar range:
+      le_ymin -> setText( QString::number( 0.72 ));
+      le_ymax -> setText( QString::number( 10   ));
+      
       int ind_z = cb_zaxistyp->findText("f/f0");
       if ( ind_z != -1  )
-	cb_zaxistyp -> setCurrentIndex( ind_z );
+	{
+	  cb_zaxistyp -> setCurrentIndex( ind_z );
+
+	  //default f/f0: 1
+	  le_zvalue -> setText( QString::number( 1 ));
+	}
     }
   
 }

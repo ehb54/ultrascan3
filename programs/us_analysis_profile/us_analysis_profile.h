@@ -118,7 +118,7 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       int          dbg_level;
       bool         use_db;              // Using the LIMS database?
 
-
+      
    private slots:
       void  build_general_layout( void );
 
@@ -304,6 +304,10 @@ class US_AnaprofPanPCSA : public US_WidgetsDialog
       int          dbg_level;
       int          cchx;          // Current PCSA channel index
 
+      QMap< QString, bool > isErrorField;
+      int  check_syntax_xyz( void );
+      void bind_min_max( QString, double );
+
    private slots:
       void nopcsa_checked   ( bool );
       void channel_selected ( int );
@@ -313,6 +317,10 @@ class US_AnaprofPanPCSA : public US_WidgetsDialog
       void curvtype_selected( int );
       void apply_all_clicked( );
       void xaxis_selected   ( int );
+
+      //void verify_xyz ( const QString& );
+      void verify_xyz ( void );
+      
       void xmin_changed     ( );
       void xmax_changed     ( );
       void yaxis_selected( int );

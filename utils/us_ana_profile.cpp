@@ -777,7 +777,10 @@ US_AnaProfile::AnaProfPCSA::ParmPCSA::ParmPCSA()
    x_max      = 10.0;
    y_min      = 1.0;
    y_max      = 4.0;
-   z_value    = 0.72;
+   
+   //z_value    = 0.72;
+   z_value    = 0;
+   
    tr_alpha   = 0.0;
    varcount   = 3;
    grf_iters  = 6;

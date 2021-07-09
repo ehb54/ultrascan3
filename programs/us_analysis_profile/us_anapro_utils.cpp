@@ -1239,6 +1239,19 @@ DbgLv(1) << "APpc:inP:   parms_to_gui complete";
 // Save PCSA panel controls when about to leave the panel
 void US_AnaprofPanPCSA::savePanel()
 {
+  //ALEXEY: check syntax of xyz types:
+  int syntax_errors = check_syntax_xyz();
+  if ( syntax_errors != 0 )
+    {
+      QString mtitle_error    = tr( "Error" );
+      QString message_error   = QString( tr( "There are %1 syntax errors!"
+					     "\n\nPlease fix them (red fields) before accepting..." ))
+	                        .arg( QString::number( syntax_errors ) );
+      QMessageBox::critical( this, mtitle_error, message_error );
+      return;
+    }
+  //////////////////////////////////////////
+  
    apPCSA             = &(mainw->currProf.apPCSA);
    int nparm          = apPCSA ->parms.count();
    apPCSA->job_run    = !ck_nopcsa->isChecked();
