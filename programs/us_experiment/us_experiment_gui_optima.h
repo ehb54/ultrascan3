@@ -990,6 +990,8 @@ class US_ExperimentMain : public US_Widgets
       void    exclude_used_instruments( QStringList &);
 
       US_AnaProfile* get_aprofile( void );
+
+      void back_to_pcsa( void );
 	
     signals:
       void us_exp_is_closed( void );

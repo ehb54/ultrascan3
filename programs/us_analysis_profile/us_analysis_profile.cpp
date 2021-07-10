@@ -91,6 +91,8 @@ DbgLv(1) << "MAIN:  tabs added";
    connect( pb_help,   SIGNAL( clicked()   ),
             this,      SLOT  ( help()      ) );
 
+   connect( apanPCSA, SIGNAL( back_to_pcsa () ), this, SLOT( back_to_pcsa() )  );
+
    main->addWidget( tabWidget );
    main->addLayout( statL );
    main->addLayout( buttL );
@@ -121,6 +123,17 @@ DbgLv(1) << "MAIN:  CALL reset()";
    resize( 500, 450 );
 }
 
+
+void US_AnalysisProfileGui::back_to_pcsa( void )
+{
+  if ( tabWidget-> currentIndex() != 2 )
+    {
+      tabWidget-> setCurrentIndex( 2 ) ;
+      return;
+    }
+    
+  emit back_to_pcsa_signal();
+}
 
 // Reset parameters to their defaults
 void US_AnalysisProfileGui::reset( void )
@@ -3028,8 +3041,8 @@ void US_AnaprofPanPCSA::bind_min_max( QString oname, double x )
 
       if ( ztype == "vbar" ) 
 	{
-	  if ( le_zvalue->text().toDouble() <= 0 )
-	    le_zvalue -> setText( QString::number( 0.01 ) );
+	  if ( le_zvalue->text().toDouble() < 0 )
+	    le_zvalue -> setText( QString::number( 0 ) );
 	}
       
     }

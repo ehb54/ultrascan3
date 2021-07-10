@@ -111,6 +111,10 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    connect( epanUpload, SIGNAL( expdef_submitted( QMap < QString, QString > &) ),
             this,       SLOT  ( optima_submitted( QMap < QString, QString > & ) ) );
 
+   connect( epanAProfile->sdiag, SIGNAL( back_to_pcsa_signal() ),
+            this,       SLOT  ( back_to_pcsa() ) );
+
+
 
    main->addWidget( tabWidget );
    main->addLayout( statL );
@@ -138,7 +142,15 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    //reset();
 }
 
+// Go back to PCSA when syntax errors
+void US_ExperimentMain::back_to_pcsa( void )
+{
+  qDebug() << "Going back to PCSA!";
+  tabWidget->setCurrentIndex( 7 );
+  
+}
 
+     
 // Reset parameters to their defaults
 void US_ExperimentMain::reset( void )
 {
@@ -4156,6 +4168,7 @@ US_ExperGuiAProfile::US_ExperGuiAProfile( QWidget* topw )
 
    // Embed AnalysisProfile object in panel
    sdiag               = new US_AnalysisProfileGui;
+    
    sdiag->setParent( this, Qt::Widget );
    int offset          =  lb_panel->height() + 4;
    sdiag->move( 0, offset );

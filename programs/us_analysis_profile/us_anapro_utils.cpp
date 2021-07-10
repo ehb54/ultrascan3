@@ -1244,10 +1244,12 @@ void US_AnaprofPanPCSA::savePanel()
   if ( syntax_errors != 0 )
     {
       QString mtitle_error    = tr( "Error" );
-      QString message_error   = QString( tr( "There are %1 syntax errors!"
-					     "\n\nPlease fix them (red fields) before accepting..." ))
+      QString message_error   = QString( tr( "There are %1 syntax errors in PCSA settings!"
+					     "\n\nThe program will return to PCSA settings to fix the errors (red fields) before proceeding..." ))
 	                        .arg( QString::number( syntax_errors ) );
       QMessageBox::critical( this, mtitle_error, message_error );
+
+      emit back_to_pcsa();
       return;
     }
   //////////////////////////////////////////

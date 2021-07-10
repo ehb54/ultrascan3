@@ -337,6 +337,10 @@ class US_AnaprofPanPCSA : public US_WidgetsDialog
       void tregauto_checked( bool );
       void alpha_changed( );
       void mciters_changed ( );
+      
+  signals:
+      void back_to_pcsa( void );
+
 };
 
 
@@ -411,6 +415,8 @@ class US_AnalysisProfileGui : public US_Widgets
       void disable_tabs_buttons( void);  // Slot to unable Tabs and Buttons when user level is low
       void enable_tabs_buttons_readonly( void);  // Slot to enable Tabs and Buttons after profile is loaded
       void enable_tabs_buttons( void);  // Slot to enable Tabs and Buttons after run_name is entered
+
+      void back_to_pcsa( void );
       
     public slots:
       void reset     ( void );
@@ -420,6 +426,7 @@ class US_AnalysisProfileGui : public US_Widgets
 
     signals:
       void us_exp_is_closed( void );
+      void back_to_pcsa_signal( void );
       
       
 };
