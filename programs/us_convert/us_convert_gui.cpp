@@ -552,6 +552,12 @@ DbgLv(1) << "CGui: reset complete";
    // QString curdir   = QString("/home/alexey/ultrascan/imports/2-itf-abs-test-run1182");
    // QString protname = QString("1-itf-abs-test");
    // QString invid    = QString("6");
+
+   // //From new CCH on demeler9: Mwl case
+   // QString curdir   = QString("/home/alexey/ultrascan/imports/062421_Optima2-test-2-run1142");
+   // QString protname = QString("062421_Optima2-test-2");
+   // QString invid    = QString("2");
+   // QString aprofileguid = QString("f873e8d6-6ec9-4db9-b17f-f51b21206719");
    
    
    // QMap < QString, QString > protocol_details;
@@ -564,9 +570,10 @@ DbgLv(1) << "CGui: reset complete";
    // protocol_details[ "expAborted" ]     = QString("NO");
    // //protocol_details[ "runID" ]          =  ;
    // protocol_details[ "label" ]          = QString("Some label");
+   // protocol_details[ "aprofileguid" ]   = aprofileguid;
 
    
-   // /*********************************************************************************/
+   // // /*********************************************************************************/
 
    
    // import_data_auto( protocol_details ); 
@@ -1347,6 +1354,8 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
   runID_numeric     = details_at_live_update[ "runID" ];
 
   Exp_label         = details_at_live_update[ "label" ];
+
+  AProfileGUID      = details_at_live_update[ "aprofileguid" ];
 
   qDebug() << "Exp_label: " << Exp_label;
 
@@ -5071,6 +5080,54 @@ DbgLv(1) << "DelTrip:  EXCLUDED ss trx sel" << ss << trx << selected[ss];
          }
       }
 
+      //ALEXEY: If autoflow: - check if Mwl; if yes, check for all selected triples if it's a reference wvl for EDIT & 2DSA_FM & FITMEN...
+      //        if yes, inform user that all channel will be selected for drop-out, confirm... 
+      if ( us_convert_auto_mode &&  isMwl )
+	{
+	  channels_to_analyse.clear();
+	  triple_to_edit     .clear();
+	  
+	  read_aprofile_data_from_aprofile();
+	  
+	  for ( int ss = 0; ss < selsiz; ss++ )
+	    {
+	      QString triple_name = selected[ ss ];
+
+	      if ( isSet_to_edit_triple ( triple_name ) )
+		{
+		  //inform user that selected triple is the representative one for a channel...
+		  qDebug() << "Representative triple -- " << triple_name ;
+
+		  QString celchn = triple_name.section( "/", 0, 1 ).simplified();
+		  
+		  int status     = QMessageBox::information( this,
+							     tr( "Drop Triples of Selected Cell/Channel" ),
+							     tr( "One of the selected triples, \"%1\", appears to be a representative triple"
+								 " for channel \"%2\" required for subsequent EDITING and ANALYSIS stages.\n\n"
+								 "ATTENTION:  Exclusion of this triple will lead to exclusion of the"
+								 " entire channel \"%2\" from further analysis.\n\n"
+								 "If that is what you intend, click \"Proceed\".\n\n"
+								 "Otherwise, you should \"Cancel\".\n" ).arg( triple_name ).arg( celchn ),
+							     tr( "&Proceed" ), tr( "&Cancel" ) );
+		  
+		  if ( status != 0 ) return;
+		  
+		  for ( int trx = 0; trx < all_triples.size(); trx++ )
+		    {  // Mark matching triples as excluded
+		      QString tcelchn = QString( all_triples[ trx ] )
+			.section( "/", 0, 1 ).simplified();
+		      
+		      if ( tcelchn == celchn )
+			{
+			  all_tripinfo[ trx ].excluded = true;
+			  DbgLv(1) << "DelChan:  EXCLUDED cc trx" << celchn << trx;
+			}
+		    }
+		}
+	    }
+	}
+      //END of adiitional drop-out
+      
       // Rebuild the output data controls
 DbgLv(1) << "DelTrip: bldout call";
       build_output_data();
@@ -5087,6 +5144,136 @@ DbgLv(1) << "DelTrip: bldout  RTN";
    plot_titles();              // Output a plot of the current data
    plot_all();
 }
+
+//Check if triple is the reference one for a channel..
+bool US_ConvertGui::isSet_to_edit_triple( QString triple_name )
+{
+  bool isRef = false;
+
+  //In case anaprofile does not have "wvl_edit" attr, so QMap<> triple_to_edit empty (older protocols):
+  if ( triple_to_edit.isEmpty() )
+    {
+      qDebug() << "It looks like older protocol is in use: QMap triple_to_edit is EMPTY!";
+      
+      isRef = true;
+      return isRef;
+    }
+
+  triple_name.replace( " / ", "." );
+  QStringList triple_name_list = triple_name.split(".");
+  QString channel = triple_name_list[0] + triple_name_list[1];
+  QString wvl = triple_name_list[2];    
+  
+  QMap<QString, QString>::iterator jj;
+  for ( jj = triple_to_edit.begin(); jj != triple_to_edit.end(); ++jj )
+    {
+      if ( jj.key().contains( channel ) )
+	{
+	  QString wvl_set_edit = jj.value();
+
+	  if ( wvl_set_edit == wvl )
+	    {
+	      qDebug() << "Triple " << triple_name << " for channel " <<  channel << " is set for EDIT.";
+	      isRef = true;	      
+	      break;
+	    }
+	}
+    }
+  
+  return isRef;
+}
+
+// Read AProfile info on the reference wvls if Mwl case:
+void US_ConvertGui::read_aprofile_data_from_aprofile()
+{
+  QString aprofile_xml;
+  
+  // Check DB connection
+  US_Passwd pw;
+  QString masterPW = pw.getPasswd();
+  US_DB2 db( masterPW );
+  
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Read protocol: Could not connect to database \n" ) + db.lastError() );
+      return;
+    }
+
+  qDebug() << "AProfGUID: " << AProfileGUID;
+
+    
+  QStringList qry;
+  qry << "get_aprofile_info" << AProfileGUID;
+  db.query( qry );
+  
+  while ( db.next() )
+    {
+      //currProf.aprofID     = db.value( 0 ).toInt();
+      //currProf.aprofname   = db.value( 1 ).toString();
+      aprofile_xml         = db.value( 2 ).toString();
+    }
+
+  //qDebug() << "aprofile_xml: " <<  aprofile_xml;
+  
+  if ( !aprofile_xml.isEmpty() )
+    {
+      QXmlStreamReader xmli( aprofile_xml );
+      readAProfileBasicParms_auto( xmli );
+    }
+
+}
+
+//Read channel-to-ref_wvl info from AProfile
+bool US_ConvertGui::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
+{
+  while( ! xmli.atEnd() )
+    {
+      QString ename   = xmli.name().toString();
+      
+      if ( xmli.isStartElement() )
+      {
+	if ( ename == "channel_parms" )
+	  {
+            QXmlStreamAttributes attr = xmli.attributes();
+	    
+	    if ( attr.hasAttribute("load_volume") ) //ensure it reads upper-level <channel_parms>
+	      {
+		QString channel_name = attr.value( "channel" ).toString();
+		
+		//Read what channels to analyse:
+		if ( attr.hasAttribute("run") )
+		  {
+		    //QString channel_desc = attr.value( "chandesc" ).toString();
+		    channels_to_analyse[ channel_name ] = bool_flag( attr.value( "run" ).toString() );
+		  }
+		
+		//Read what triple selected for editing:
+		if ( attr.hasAttribute("wvl_edit") )
+		  {
+		    //QString channel_desc = attr.value( "chandesc" ).toString();
+		    triple_to_edit[ channel_name ] = attr.value( "wvl_edit" ).toString();
+		  }
+	      }
+	  }
+      }
+      
+      bool was_end    = xmli.isEndElement();  // Just read was End of element?
+      xmli.readNext();                        // Read the next element
+
+      if ( was_end  &&  ename == "p_2dsa" )   // Break 
+         break;
+    }
+  
+  return ( ! xmli.hasError() );
+}
+
+// Return a flag if an XML attribute string represents true or false.
+bool US_ConvertGui::bool_flag( const QString xmlattr )
+{
+   return ( !xmlattr.isEmpty()  &&  ( xmlattr == "1"  ||  xmlattr == "T" ) );
+}
+
 
 // Drop the triples for the selected channel
 void US_ConvertGui::drop_channel()

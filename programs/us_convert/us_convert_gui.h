@@ -279,8 +279,14 @@ class US_ConvertGui : public US_Widgets
       bool readProtocolCells_auto ( QXmlStreamReader& );
       bool readProtocolSolutions_auto ( QXmlStreamReader& );
 
+      void read_aprofile_data_from_aprofile( void );
+      bool readAProfileBasicParms_auto ( QXmlStreamReader& );
+      static bool bool_flag( const QString );
+      bool isSet_to_edit_triple( QString );
+
       int autoflowID_passed;
       QString ProtocolName_auto;
+      QString AProfileGUID;
       QString Exp_label;
       bool    gmpRun_bool;
       bool dataSavedOtherwise;
@@ -321,7 +327,10 @@ class US_ConvertGui : public US_Widgets
 
       //US_Solution * solution_auto;
 
-      QMap < QString, QString > details_at_editing; 
+      QMap < QString, QString > details_at_editing;
+
+      QMap < QString, bool >    channels_to_analyse;
+      QMap < QString, QString > triple_to_edit;
 
   private slots:
       //! \brief Select the current investigator
