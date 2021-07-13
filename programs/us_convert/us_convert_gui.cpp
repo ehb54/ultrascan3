@@ -1358,8 +1358,8 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
 
   AProfileGUID      = details_at_live_update[ "aprofileguid" ];
 
-  //After AProfileGUID, read details from analysis profile
-  read_aprofile_data_from_aprofile();
+  // //After AProfileGUID, read details from analysis profile
+  // read_aprofile_data_from_aprofile();
 
   qDebug() << "Exp_label: " << Exp_label;
 
@@ -1603,7 +1603,7 @@ DbgLv(1) << "CGui: import: RTN";
 void US_ConvertGui::process_optics()
 {
   channels_to_drop   .clear();
-  read_aprofile_data_from_aprofile();
+  //read_aprofile_data_from_aprofile();
   
   if ( impType == 2 )
    {
@@ -1934,6 +1934,10 @@ DbgLv(1) << "CGui:iA: CURRENT DIR_1: " << importDir;
 
    qDebug() << "DEBUG for HEXAL: type_to_process: " << type_to_process;
    //*****************************************************//
+
+
+   //Read AProfile here: IMPORTANT -- read only channels corresponding to current runType:
+   read_aprofile_data_from_aprofile();
    
    
    for ( int trx = 0; trx < files.size(); trx++ )
@@ -5253,26 +5257,56 @@ bool US_ConvertGui::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
 	    if ( attr.hasAttribute("load_volume") ) //ensure it reads upper-level <channel_parms>
 	      {
 		QString channel_name = attr.value( "channel" ).toString();
-		
-		//Read what channels to analyse:
-		if ( attr.hasAttribute("run") )
-		  {
-		    //QString channel_desc = attr.value( "chandesc" ).toString();
-		    channels_to_analyse[ channel_name ] = bool_flag( attr.value( "run" ).toString() );
-		  }
+		QString channel_desc = attr.value( "chandesc" ).toString();
 
-		//Read what reportID corresponds to channel:
-		if ( attr.hasAttribute("report_id") )
+		QString opsys = channel_desc.split(":")[1]; // UV/vis. or Interf.
+
+		if ( runType_combined_IP_RI ) //combined run !
 		  {
-		    //QString channel_desc = attr.value( "chandesc" ).toString();
-		    channels_report[ channel_name ] = bool_flag( attr.value( "report_id" ).toString() );
+		    if ( opsys.contains("UV/vis") &&  type_to_process == "RI" )
+		      {
+			//Read what channels to analyse:
+			if ( attr.hasAttribute("run") )
+			  channels_to_analyse[ channel_name ] = bool_flag( attr.value( "run" ).toString() );
+			
+			//Read what reportID corresponds to channel:
+			if ( attr.hasAttribute("report_id") )
+			  channels_report[ channel_name ] = bool_flag( attr.value( "report_id" ).toString() );
+			
+			//Read what triple selected for editing:
+			if ( attr.hasAttribute("wvl_edit") )
+			  triple_to_edit[ channel_name ] = attr.value( "wvl_edit" ).toString();
+		      }
+		    if ( opsys.contains("Interf") &&  type_to_process == "IP" )
+		      {
+			//Read what channels to analyse:
+			if ( attr.hasAttribute("run") )
+			  channels_to_analyse[ channel_name ] = bool_flag( attr.value( "run" ).toString() );
+			
+			//Read what reportID corresponds to channel:
+			if ( attr.hasAttribute("report_id") )
+			  channels_report[ channel_name ] = bool_flag( attr.value( "report_id" ).toString() );
+			
+			//Read what triple selected for editing:
+			if ( attr.hasAttribute("wvl_edit") )
+			  triple_to_edit[ channel_name ] = attr.value( "wvl_edit" ).toString();
+		      }
 		  }
-		//Read what triple selected for editing:
-		if ( attr.hasAttribute("wvl_edit") )
+		else //1-type optics
 		  {
-		    //QString channel_desc = attr.value( "chandesc" ).toString();
-		    triple_to_edit[ channel_name ] = attr.value( "wvl_edit" ).toString();
+		    //Read what channels to analyse:
+		    if ( attr.hasAttribute("run") )
+		      channels_to_analyse[ channel_name ] = bool_flag( attr.value( "run" ).toString() );
+		    
+		    //Read what reportID corresponds to channel:
+		    if ( attr.hasAttribute("report_id") )
+		      channels_report[ channel_name ] = bool_flag( attr.value( "report_id" ).toString() );
+			
+		    //Read what triple selected for editing:
+			if ( attr.hasAttribute("wvl_edit") )
+			  triple_to_edit[ channel_name ] = attr.value( "wvl_edit" ).toString();
 		  }
+		  
 	      }
 	  }
       }
