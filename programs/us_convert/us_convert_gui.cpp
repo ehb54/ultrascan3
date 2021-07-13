@@ -1319,8 +1319,9 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
   dataSavedOtherwise     = false;
   runType_combined_IP_RI = false;
 
-  runTypes_map.clear();
-  runTypeList.clear();
+  channels_to_drop   .clear();
+  runTypes_map       .clear();
+  runTypeList        .clear();
   
   // ALEXEY TO BE ADDED...
   /* 
@@ -1356,6 +1357,9 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
   Exp_label         = details_at_live_update[ "label" ];
 
   AProfileGUID      = details_at_live_update[ "aprofileguid" ];
+
+  //After AProfileGUID, read details from analysis profile
+  read_aprofile_data_from_aprofile();
 
   qDebug() << "Exp_label: " << Exp_label;
 
@@ -1598,6 +1602,9 @@ DbgLv(1) << "CGui: import: RTN";
 //Slot to process next optics type
 void US_ConvertGui::process_optics()
 {
+  channels_to_drop   .clear();
+  read_aprofile_data_from_aprofile();
+  
   if ( impType == 2 )
    {
      qDebug() << "IMPORT AUC auto...";
@@ -5076,7 +5083,7 @@ DbgLv(1) << "DelTrip: selected size" << selsiz;
          if ( trx >= 0 )
          {
             all_tripinfo[ trx ].excluded = true;
-DbgLv(1) << "DelTrip:  EXCLUDED ss trx sel" << ss << trx << selected[ss];
+	    DbgLv(1) << "DelTrip:  EXCLUDED ss trx sel tripleDesc" << ss << trx << selected[ss] <<  all_tripinfo[ trx ].tripleDesc;
          }
       }
 
@@ -5084,10 +5091,7 @@ DbgLv(1) << "DelTrip:  EXCLUDED ss trx sel" << ss << trx << selected[ss];
       //        if yes, inform user that all channel will be selected for drop-out, confirm... 
       if ( us_convert_auto_mode &&  isMwl )
 	{
-	  channels_to_analyse.clear();
-	  triple_to_edit     .clear();
-	  
-	  read_aprofile_data_from_aprofile();
+	  // read_aprofile_data_from_aprofile();
 	  
 	  for ( int ss = 0; ss < selsiz; ss++ )
 	    {
@@ -5098,7 +5102,7 @@ DbgLv(1) << "DelTrip:  EXCLUDED ss trx sel" << ss << trx << selected[ss];
 		  //inform user that selected triple is the representative one for a channel...
 		  qDebug() << "Representative triple -- " << triple_name ;
 
-		  QString celchn = triple_name.section( "/", 0, 1 ).simplified();
+		  QString celchn = triple_name.section( "/", 0, 1 ).simplified();   // "2 / B"
 		  
 		  int status     = QMessageBox::information( this,
 							     tr( "Drop Triples of Selected Cell/Channel" ),
@@ -5111,10 +5115,14 @@ DbgLv(1) << "DelTrip:  EXCLUDED ss trx sel" << ss << trx << selected[ss];
 							     tr( "&Proceed" ), tr( "&Cancel" ) );
 		  
 		  if ( status != 0 ) return;
+
+		  //Mark channel to be dropped - for exclusion of the report
+		  channels_to_drop[ QString( celchn ).replace(" / ","") ] = true;
+		  qDebug() << "DROP Reference Wwl: Channel_cell for EXCLUSION -- " << celchn;
 		  
 		  for ( int trx = 0; trx < all_triples.size(); trx++ )
 		    {  // Mark matching triples as excluded
-		      QString tcelchn = QString( all_triples[ trx ] )
+		      QString tcelchn = QString( all_triples[ trx ] )       // "2 / B"
 			.section( "/", 0, 1 ).simplified();
 		      
 		      if ( tcelchn == celchn )
@@ -5186,6 +5194,11 @@ bool US_ConvertGui::isSet_to_edit_triple( QString triple_name )
 // Read AProfile info on the reference wvls if Mwl case:
 void US_ConvertGui::read_aprofile_data_from_aprofile()
 {
+  channels_to_analyse.clear();
+  triple_to_edit     .clear();
+  channels_to_drop   .clear();
+  channels_report    .clear();
+  
   QString aprofile_xml;
   
   // Check DB connection
@@ -5247,7 +5260,13 @@ bool US_ConvertGui::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
 		    //QString channel_desc = attr.value( "chandesc" ).toString();
 		    channels_to_analyse[ channel_name ] = bool_flag( attr.value( "run" ).toString() );
 		  }
-		
+
+		//Read what reportID corresponds to channel:
+		if ( attr.hasAttribute("report_id") )
+		  {
+		    //QString channel_desc = attr.value( "chandesc" ).toString();
+		    channels_report[ channel_name ] = bool_flag( attr.value( "report_id" ).toString() );
+		  }
 		//Read what triple selected for editing:
 		if ( attr.hasAttribute("wvl_edit") )
 		  {
@@ -5275,11 +5294,11 @@ bool US_ConvertGui::bool_flag( const QString xmlattr )
 }
 
 
-// Drop the triples for the selected channel
+// Drop the triples for the selected channel (all A's or B's) ('Drop All Channel 'A's')
 void US_ConvertGui::drop_channel()
 {
    QString chann  = lw_triple->currentItem()->text()
-                    .section( "/", 1, 1 ).simplified();
+                    .section( "/", 1, 1 ).simplified();  // "A" or "B"  
    int status     = QMessageBox::information( this,
       tr( "Drop Triples with Selected Channel" ),
       tr( "You have selected a list item that implies you wish to"
@@ -5290,6 +5309,17 @@ void US_ConvertGui::drop_channel()
 
    if ( status != 0 ) return;
 
+   //identify all dropped channels
+   for (int ii = 0; ii < lw_triple->count(); ii++)
+     {
+       QString channel_cell = lw_triple->item( ii )->text().section( "/", 0, 1 ).simplified();
+       if ( channel_cell.contains( chann ) )
+	 {
+	   channels_to_drop[ QString( channel_cell ).replace(" / ","") ] = true;
+	   qDebug() << "DROP All A's/B's: Channel_cell for EXCLUSION -- " << channel_cell;
+	 }
+     }
+       
    for ( int trx = 0; trx < all_triples.size(); trx++ )
    {  // Mark matching triples as excluded
       QString tchan = QString( all_triples[ trx ] )
@@ -5312,11 +5342,11 @@ DbgLv(1) << "DelChan:  EXCLUDED chn trx" << chann << trx;
    plot_all();
 }
 
-// Drop the triples for the selected cell/channel
+// Drop the triples for the selected cell/channel ('Drop Selected Data')
 void US_ConvertGui::drop_cellchan()
 {
    QString celchn = lw_triple->currentItem()->text()
-                    .section( "/", 0, 1 ).simplified();
+                    .section( "/", 0, 1 ).simplified();  // "1 / A"
    int status     = QMessageBox::information( this,
       tr( "Drop Triples of Selected Cell/Channel" ),
       tr( "You have selected a list item that implies you wish to"
@@ -5327,6 +5357,10 @@ void US_ConvertGui::drop_cellchan()
 
    if ( status != 0 ) return;
 
+   //Mark channel to be dropped - for exclusion of the report
+   channels_to_drop[ QString( celchn ).replace(" / ","") ] = true;
+   qDebug() << "DROP Selected Data: Channel_cell for EXCLUSION -- " << celchn;
+   
    for ( int trx = 0; trx < all_triples.size(); trx++ )
    {  // Mark matching triples as excluded
       QString tcelchn = QString( all_triples[ trx ] )
@@ -5498,7 +5532,7 @@ bool US_ConvertGui::isSaved_auto( void )
 // Function to save US3 data
 void US_ConvertGui::saveUS3( void )
 {
-  /***/
+    /***/
   //Check if saving already initiated
   if ( us_convert_auto_mode )
     {
@@ -5527,6 +5561,117 @@ void US_ConvertGui::saveUS3( void )
       
     }
   /****/
+
+  
+  
+  //Now we need to go over dropped triples and/or entire channles & ensure this info is reflected in channels' autoflowReports
+  if ( us_convert_auto_mode )
+    {
+      qDebug() << "START treating dropped channels/triples && updating autoflowReports: ";
+      
+      QMap<QString, bool>::iterator dr;
+      for ( dr = channels_to_drop.begin(); dr != channels_to_drop.end(); ++dr )
+	{
+	  qDebug() << "Dropped channel -- " << dr.key() << dr.value();
+	}
+      
+      //Go over triples and see if excluded && to what un-dropped channel it belongs to...
+      triples_dropped_from_channel.clear();
+      QList< QString > chans_dropped = channels_to_drop.keys();
+      for ( int trx = 0; trx < all_tripinfo.count(); trx++ )
+	{
+	  if ( all_tripinfo[ trx ].excluded )
+	    {
+	      QString channel_cell  = all_tripinfo[ trx ].tripleDesc.section( " / ", 0, 1 );
+	      bool triple_from_dropped_channel = false;
+	      for ( int i = 0; i < chans_dropped.size(); ++i )
+		{
+		  if ( chans_dropped[ i ] == QString( channel_cell ).replace(" / ","") )
+		    {
+		      triple_from_dropped_channel = true;
+		      break;
+		    }
+		}
+	      
+	      if ( !triple_from_dropped_channel )
+		{
+		  qDebug() << "Dropped triple -- " << all_tripinfo[ trx ].tripleDesc << " from channel " << channel_cell;
+		  QString triple_desc = all_tripinfo[ trx ].tripleDesc;
+		  triples_dropped_from_channel[ QString( channel_cell ).replace(" / ","") ] << QString( triple_desc ).replace(" / ",".");
+		}
+	    }
+	}
+      
+      // Update 'triples_dropped' filed in the 'autoflowReport' table (NOTE: default "none"; if entire channel dropped - "all"; if some triples - "list of triples")
+      // Iterate over reports (by reportIDs -- from AnalysisProfile) && update 'triples_dropped' filed as per above:
+
+      // Determine if we are using the database
+      US_Passwd pw;
+      QString masterPW = pw.getPasswd();
+      US_DB2 dbP( masterPW );
+      
+      if ( dbP.lastErrno() != US_DB2::OK )
+	{
+	  QMessageBox::warning( this, tr( "Connection Problem" ),
+				tr( "Could not connect to database: \n" ) + dbP.lastError() );
+	  return;
+	}
+       
+      
+      QMap<QString, QString>::iterator chan_rep;
+      for ( chan_rep = channels_report.begin(); chan_rep != channels_report.end(); ++chan_rep )
+	{
+	  QString chan_key = chan_rep.key();
+	  QString reportID = chan_rep.value();
+	  qDebug() << "Channel name -- " << chan_key << ", reportID -- " << reportID;
+
+	  //qDebug() << "channels_to_drop[ chan_key ] " << channels_to_drop[ chan_key ];
+
+	  QStringList qry;
+	  
+	  //if entire channel dropped
+	  if ( channels_to_drop.contains( chan_key ) )
+	    {
+	      qDebug() << "ALL triples dropped for a channel -- " << chan_key;
+	      
+	      qry.clear();
+	      qry << "update_autoflow_report_at_import"
+		  << reportID
+		  << QString("all");
+
+	      dbP.query( qry );
+	    }
+	  else
+	    {
+	      //some triples in a channl dropped
+	      if ( triples_dropped_from_channel.contains( chan_key ) )
+		{
+		  QString DroppedTriplesString = triples_dropped_from_channel[ chan_key ].join(",");
+
+		  qDebug() << "Some triples dropped for a channel -- " << chan_key << ": " << DroppedTriplesString;
+
+		  qry.clear();
+		  qry << "update_autoflow_report_at_import"
+		      << reportID
+		      << DroppedTriplesString;
+
+		  dbP.query( qry );
+		}
+	      else
+		//nothing dropped; by default, "none" is in the autoflowReport's "triples_dropped" field
+		{
+		  qDebug() << "Nothing dropped for a channel -- " << chan_key;
+		}
+	    }
+	}
+            
+      //return; //for testing!!!
+      ///
+    }
+  /////////////////////////////
+  
+  
+
   
   qDebug() << "Save INIT 1: ";
 

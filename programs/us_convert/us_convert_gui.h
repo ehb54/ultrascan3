@@ -331,6 +331,9 @@ class US_ConvertGui : public US_Widgets
 
       QMap < QString, bool >    channels_to_analyse;
       QMap < QString, QString > triple_to_edit;
+      QMap < QString, bool >    channels_to_drop;
+      QMap < QString, QString > channels_report;
+      QMap < QString, QStringList >    triples_dropped_from_channel;
 
   private slots:
       //! \brief Select the current investigator
