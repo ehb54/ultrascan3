@@ -683,7 +683,7 @@ void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP* reportFromDB, int re
   qDebug() << "In get_report_by_ID() 1: query -- " << qry;
   db->query( qry );
   
-  if ( db->lastErrno() == US_DB2::OK )      // If not, no instruments defined
+  if ( db->lastErrno() == US_DB2::OK )      // If not, no ReportItem(s) are associated with the parent Report in DB!!
     {
       QList< int > reportItemsIDs;
       
@@ -717,6 +717,22 @@ void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP* reportFromDB, int re
 	  reportFromDB->reportItems.push_back( reportItem_read );
 	}
       
+    }
+  else //No reportItem(s) for report in the DB: push default rpeortItem structure??
+    {
+      qDebug() << "Adding plain reportItem to channel -- " ;
+      //Add plain ReportItem
+      US_ReportGMP::ReportItem initItem;
+      
+      initItem.type             = QString("s");
+      initItem.method           = QString("2DSA-IT");
+      initItem.range_low        = 3.2;
+      initItem.range_high       = 3.7;
+      initItem.integration_val  = 0.57;
+      initItem.tolerance        = 10; 
+      initItem.total_percent    = 0.58;
+      
+      reportFromDB->reportItems.push_back( initItem );
     }
 }
 
