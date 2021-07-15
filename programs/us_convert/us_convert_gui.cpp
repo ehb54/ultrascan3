@@ -558,6 +558,11 @@ DbgLv(1) << "CGui: reset complete";
    // QString protname = QString("062421_Optima2-test-2");
    // QString invid    = QString("2");
    // QString aprofileguid = QString("f873e8d6-6ec9-4db9-b17f-f51b21206719");
+
+   // QString curdir   = QString("/home/alexey/ultrascan/imports/DaubnauD_ComEA_071421-run1163");
+   // QString protname = QString("DaubnauD_ComEA_071421");
+   // QString invid    = QString("104");
+   // QString aprofileguid = QString("4b130961-40b3-4e23-91b7-34fa928bdc44");
    
    
    // QMap < QString, QString > protocol_details;
@@ -5300,7 +5305,7 @@ bool US_ConvertGui::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
 		    
 		    //Read what reportID corresponds to channel:
 		    if ( attr.hasAttribute("report_id") )
-		      channels_report[ channel_name ] = bool_flag( attr.value( "report_id" ).toString() );
+		      channels_report[ channel_name ] = attr.value( "report_id" ).toString() ;
 			
 		    //Read what triple selected for editing:
 			if ( attr.hasAttribute("wvl_edit") )
