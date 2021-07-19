@@ -649,7 +649,8 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
    {
       double duration_sec    = rpSpeed->ssteps[ i ].duration;
       double scanint_sec     = rpSpeed->ssteps[ i ].scanintv;
-      double scanint_sec_min = rpSpeed->ssteps[ i ].scanintv_min;
+      double scanint_sec_min;
+      std::modf (rpSpeed->ssteps[ i ].scanintv_min, &scanint_sec_min);
       
       qDebug() << "RANGES SET MANUAL: duration_sec , scanint_sec, scanint_sec_min,  tot_wvl, ncells_used -- "
 	       << duration_sec << scanint_sec << scanint_sec_min << tot_wvl << ncells_used;
@@ -682,7 +683,8 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
       
       // scancount = int( duration_sec / (scanint_sec * tot_wvl) );
 
-      mainw->ScanCount_global = scancount;
+      mainw->ScanCount_global   = scancount;
+      mainw->TotalWvlNum_global = tot_wvl; 
       
       //Update le_scanint text: set text color RED if updated
       QList< int > hms_scanint;
@@ -696,6 +698,8 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 	  palette->setColor(QPalette::Text,Qt::red);
 	  //palette->setColor(QPalette::Base,Qt::white);
 	  le_scanint->setPalette(*palette);
+
+	  rpSpeed->ssteps[ i ].scanintv = scaninterval;
 	}
       else
 	{
@@ -706,6 +710,8 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
       
       QString scancount_stage = tr( "Stage %1. Number of Scans per Triple (UV/vis): %2 " ).arg(i+1).arg(scancount);
       cb_scancount->addItem( scancount_stage );
+
+      
 
 
       //ALEXEY: add interference info:
@@ -874,7 +880,8 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
    {
       double duration_sec = rpSpeed->ssteps[ i ].duration;
       double scanint_sec  = rpSpeed->ssteps[ i ].scanintv;
-      double scanint_sec_min = rpSpeed->ssteps[ i ].scanintv_min;
+      double scanint_sec_min;
+      std::modf (rpSpeed->ssteps[ i ].scanintv_min, &scanint_sec_min);
 
       qDebug() << "RANGES SET SELECTOR: duration_sec , scanint_sec, scanint_sec_min,  tot_wvl, ncells_used -- "
 	       << duration_sec << scanint_sec << scanint_sec_min << tot_wvl << ncells_used;
@@ -908,6 +915,7 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
       //scancount = int( duration_sec / (scanint_sec * tot_wvl) );
 
       mainw->ScanCount_global = scancount;
+      mainw->TotalWvlNum_global = tot_wvl; 
 
       //Update le_scanint text: set text color RED if updated
       QList< int > hms_scanint;
@@ -921,6 +929,8 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 	  palette->setColor(QPalette::Text,Qt::red);
 	  //palette->setColor(QPalette::Base,Qt::white);
 	  le_scanint->setPalette(*palette);
+
+	  rpSpeed->ssteps[ i ].scanintv = scaninterval;
 	}
       else
 	{

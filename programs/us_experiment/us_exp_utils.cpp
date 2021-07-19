@@ -1125,6 +1125,9 @@ DbgLv(1) << "EGSp:inP:  ii" << ii << "speed accel durat delay scnint"
 
       //profdesc[ curssx ] = speedp_description( curssx );
       cb_prof->setItemText( ii, speedp_description( ii ) );
+
+      if ( mainw->TotalWvlNum_global )
+	sb_wvl_per_cell->setValue( mainw->TotalWvlNum_global );
    }
 }
 
@@ -2422,7 +2425,8 @@ DbgLv(1) << "EGRn:inP:  #Wvl for cell: " << j << " is: " << Total_wvl[i];
    {
       double duration_sec = rpSpeed->ssteps[ i ].duration;
       double scanint_sec  = rpSpeed->ssteps[ i ].scanintv;
-      double scanint_sec_min = rpSpeed->ssteps[ i ].scanintv_min;
+      double scanint_sec_min;
+      std::modf (rpSpeed->ssteps[ i ].scanintv_min, &scanint_sec_min);
 
       qDebug() << "RANGES INIT: duration_sec , scanint_sec, scanint_sec_min,  Total_wvl[i], ncells_used[i] -- "
 	       << duration_sec << scanint_sec << scanint_sec_min << Total_wvl[i] << ncells_used[i];
@@ -2460,7 +2464,8 @@ DbgLv(1) << "EGRn:inP:  #Wvl for cell: " << j << " is: " << Total_wvl[i];
 	}
 
       
-      mainw->ScanCount_global = scancount;
+      mainw->ScanCount_global   = scancount;
+      mainw->TotalWvlNum_global = Total_wvl[i];
 
       DbgLv(1) << "EGRn:inP:  speed" << i << "scancount" << scancount;
 
@@ -2476,6 +2481,8 @@ DbgLv(1) << "EGRn:inP:  #Wvl for cell: " << j << " is: " << Total_wvl[i];
 	  palette->setColor(QPalette::Text,Qt::red);
 	  //palette->setColor(QPalette::Base,Qt::white);
 	  le_scanint->setPalette(*palette);
+
+	  rpSpeed->ssteps[ i ].scanintv = scaninterval;
 	}
       else
 	{

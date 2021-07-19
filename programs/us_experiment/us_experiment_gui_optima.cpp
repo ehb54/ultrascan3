@@ -50,8 +50,9 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    usmode = false;
    global_reset = false;
    instruments_in_use.clear();
-   ScanCount_global = 0;
-
+   ScanCount_global   = 0;
+   TotalWvlNum_global = 0;
+   
    // Create tab and panel widgets
    tabWidget           = us_tabwidget();
 
@@ -1606,7 +1607,7 @@ DbgLv(1) << "EGSp: addWidg/Layo BB";
 
   //Scan # estimator:
   QLabel* lb_scan_estimator    = us_banner( tr( "Scan Number Estimator:" ) );
-  QLabel* lb_wvl_per_cell = us_label(tr( "Sum of all wavelengths per cell to be scanned:" ));
+  QLabel* lb_wvl_per_cell = us_label(tr( "Sum of all wavelengths from each cell to be scanned:" ));
   sb_wvl_per_cell = us_spinbox();
   sb_wvl_per_cell->setRange(1, 100);
   connect( sb_wvl_per_cell,  SIGNAL( valueChanged     ( int ) ),
@@ -2146,8 +2147,9 @@ void US_ExperGuiSpeeds::ssChgWvlPerCell( int val )
   int tot_wvl = val;
   double duration_sec    = ssvals[ curssx ][ "duration" ];     //ssteps[ i ].duration;
   double scanint_sec     = ssvals[ curssx ][ "scanintv" ];     //ssteps[ i ].scanintv;
-  double scanint_sec_min = ssvals[ curssx ][ "scanintv_min" ]; //ssteps[ i ].scanintv_min;
-
+  double scanint_sec_min;
+  std::modf (ssvals[ curssx ][ "scanintv_min" ], &scanint_sec_min);
+  
   int scancount = 0;
   
   //ALEXEY: use this algorithm to calculate scanCount && scanInt
@@ -2189,7 +2191,10 @@ void US_ExperGuiSpeeds::ssChgDuratTime_hh( int val )
    int tot_wvl = (int)sb_wvl_per_cell->value();
    double duration_sec    = ssvals[ curssx ][ "duration" ];     //ssteps[ i ].duration;
    double scanint_sec     = ssvals[ curssx ][ "scanintv" ];     //ssteps[ i ].scanintv;
-   double scanint_sec_min = ssvals[ curssx ][ "scanintv_min" ]; //ssteps[ i ].scanintv_min;
+   // double scanint_sec_min = ssvals[ curssx ][ "scanintv_min" ]; //ssteps[ i ].scanintv_min;
+   double scanint_sec_min;
+   std::modf (ssvals[ curssx ][ "scanintv_min" ], &scanint_sec_min);
+   
    int scancount = 0;
    if ( scanint_sec > scanint_sec_min*tot_wvl )
      scancount     = int( duration_sec / scanint_sec );
@@ -2227,7 +2232,10 @@ void US_ExperGuiSpeeds::ssChgDuratTime_mm( int val )
    int tot_wvl = (int)sb_wvl_per_cell->value();
    double duration_sec    = ssvals[ curssx ][ "duration" ];     //ssteps[ i ].duration;
    double scanint_sec     = ssvals[ curssx ][ "scanintv" ];     //ssteps[ i ].scanintv;
-   double scanint_sec_min = ssvals[ curssx ][ "scanintv_min" ]; //ssteps[ i ].scanintv_min;
+   //double scanint_sec_min = ssvals[ curssx ][ "scanintv_min" ]; //ssteps[ i ].scanintv_min;
+   double scanint_sec_min;
+   std::modf (ssvals[ curssx ][ "scanintv_min" ], &scanint_sec_min);
+   
    int scancount = 0;
    if ( scanint_sec > scanint_sec_min*tot_wvl )
      scancount     = int( duration_sec / scanint_sec );
@@ -2264,7 +2272,10 @@ void US_ExperGuiSpeeds::ssChgDuratTime_ss( int val )
    int tot_wvl = (int)sb_wvl_per_cell->value();
    double duration_sec    = ssvals[ curssx ][ "duration" ];     //ssteps[ i ].duration;
    double scanint_sec     = ssvals[ curssx ][ "scanintv" ];     //ssteps[ i ].scanintv;
-   double scanint_sec_min = ssvals[ curssx ][ "scanintv_min" ]; //ssteps[ i ].scanintv_min;
+   //double scanint_sec_min = ssvals[ curssx ][ "scanintv_min" ]; //ssteps[ i ].scanintv_min;
+   double scanint_sec_min;
+   std::modf (ssvals[ curssx ][ "scanintv_min" ], &scanint_sec_min);
+   
    int scancount = 0;
    if ( scanint_sec > scanint_sec_min*tot_wvl )
      scancount     = int( duration_sec / scanint_sec );
@@ -2302,7 +2313,10 @@ void US_ExperGuiSpeeds::ssChgDuratDay( int val )
    int tot_wvl = (int)sb_wvl_per_cell->value();
    double duration_sec    = ssvals[ curssx ][ "duration" ];     //ssteps[ i ].duration;
    double scanint_sec     = ssvals[ curssx ][ "scanintv" ];     //ssteps[ i ].scanintv;
-   double scanint_sec_min = ssvals[ curssx ][ "scanintv_min" ]; //ssteps[ i ].scanintv_min;
+   //double scanint_sec_min = ssvals[ curssx ][ "scanintv_min" ]; //ssteps[ i ].scanintv_min;
+   double scanint_sec_min;
+   std::modf (ssvals[ curssx ][ "scanintv_min" ], &scanint_sec_min);
+   
    int scancount = 0;
    if ( scanint_sec > scanint_sec_min*tot_wvl )
      scancount     = int( duration_sec / scanint_sec );
@@ -2359,7 +2373,10 @@ void US_ExperGuiSpeeds::ssChgScIntTime_hh( int val )
    int tot_wvl = (int)sb_wvl_per_cell->value();
    double duration_sec    = ssvals[ curssx ][ "duration" ];     //ssteps[ i ].duration;
    double scanint_sec     = ssvals[ curssx ][ "scanintv" ];     //ssteps[ i ].scanintv;
-   double scanint_sec_min = ssvals[ curssx ][ "scanintv_min" ]; //ssteps[ i ].scanintv_min;
+   //double scanint_sec_min = ssvals[ curssx ][ "scanintv_min" ]; //ssteps[ i ].scanintv_min;
+   double scanint_sec_min;
+   std::modf (ssvals[ curssx ][ "scanintv_min" ], &scanint_sec_min);
+   
    int scancount = 0;
    if ( scanint_sec > scanint_sec_min*tot_wvl )
      scancount     = int( duration_sec / scanint_sec );
@@ -2405,7 +2422,10 @@ void US_ExperGuiSpeeds::ssChgScIntTime_mm( int val )
    int tot_wvl = (int)sb_wvl_per_cell->value();
    double duration_sec    = ssvals[ curssx ][ "duration" ];     //ssteps[ i ].duration;
    double scanint_sec     = ssvals[ curssx ][ "scanintv" ];     //ssteps[ i ].scanintv;
-   double scanint_sec_min = ssvals[ curssx ][ "scanintv_min" ]; //ssteps[ i ].scanintv_min;
+   //double scanint_sec_min = ssvals[ curssx ][ "scanintv_min" ]; //ssteps[ i ].scanintv_min;
+   double scanint_sec_min;
+   std::modf (ssvals[ curssx ][ "scanintv_min" ], &scanint_sec_min);
+   
    int scancount = 0;
    if ( scanint_sec > scanint_sec_min*tot_wvl )
      scancount     = int( duration_sec / scanint_sec );
@@ -2431,7 +2451,10 @@ void US_ExperGuiSpeeds::ssChgScIntTime_ss( int val )
    int tot_wvl = (int)sb_wvl_per_cell->value();
    double duration_sec    = ssvals[ curssx ][ "duration" ];     //ssteps[ i ].duration;
    double scanint_sec     = ssvals[ curssx ][ "scanintv" ];     //ssteps[ i ].scanintv;
-   double scanint_sec_min = ssvals[ curssx ][ "scanintv_min" ]; //ssteps[ i ].scanintv_min;
+   //double scanint_sec_min = ssvals[ curssx ][ "scanintv_min" ]; //ssteps[ i ].scanintv_min;
+   double scanint_sec_min;
+   std::modf (ssvals[ curssx ][ "scanintv_min" ], &scanint_sec_min);
+   
    int scancount = 0;
    if ( scanint_sec > scanint_sec_min*tot_wvl )
      scancount     = int( duration_sec / scanint_sec );
@@ -5774,7 +5797,10 @@ void US_ExperGuiUpload::submitExperiment()
          double duration_sec = rpSpeed->ssteps[ curr_stage ].duration;
          double delay_sec    = rpSpeed->ssteps[ curr_stage ].delay;
          double scanint_sec  = rpSpeed->ssteps[ curr_stage ].scanintv;
-         double scanint_sec_min  = rpSpeed->ssteps[ curr_stage ].scanintv_min;
+         //double scanint_sec_min  = rpSpeed->ssteps[ curr_stage ].scanintv_min;
+	 double scanint_sec_min;
+	 std::modf ( rpSpeed->ssteps[ curr_stage ].scanintv_min, &scanint_sec_min);
+	 
 
          qDebug() << "Size of rpSpeed is: " << rpSpeed->ssteps.size() << ", while nstages_size is: " << nstages_size << ", size of Total_wvl is: " <<  Total_wvl.size();
          qDebug() << "DURATION!!! duration_sec = rpSpeed->ssteps[ curr_stage ].duration: " << duration_sec <<  "=" <<  rpSpeed->ssteps[ curr_stage ].duration;
