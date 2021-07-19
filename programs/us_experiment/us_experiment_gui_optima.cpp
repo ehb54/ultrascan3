@@ -157,9 +157,9 @@ void US_ExperimentMain::reset( void )
 {
   global_reset = true;
 
-  //Clean Reset
-  currProto = US_RunProtocol();
-  loadProto = US_RunProtocol();
+  // //Clean Reset
+  // currProto = US_RunProtocol();
+  // loadProto = US_RunProtocol();
 
     
   epanRotor->setFirstLab();  //need to reset Lab && savePanel() for Rotors
@@ -637,7 +637,13 @@ DbgLv(1) << "EGGe:main: prnames,prdata counts" << pr_names.count() << protdata.c
       currProto->project      = "";
       currProto->temperature  = 20.0;
       currProto->temeq_delay  = 10.0;
+
+      qDebug() << "currProto->investigator 1: -- " <<  currProto->investigator;
+      
       initPanel();
+
+      qDebug() << "currProto->investigator 2: -- " <<  currProto->investigator;
+      
       le_protocol->setText( "" );
       le_project ->setText( "" );
       le_label   ->setText( "" );
@@ -666,6 +672,8 @@ DbgLv(1) << "EGGe:main: prnames,prdata counts" << pr_names.count() << protdata.c
 #endif
 
    check_runname();
+
+    qDebug() << "currProto->investigator 3: -- " <<  currProto->investigator;
 
 }
 
@@ -712,10 +720,12 @@ DbgLv(1) << "EGGe:ldPro: Disk-B: load_db" << load_db;
    if ( pdiag->exec() == QDialog::Accepted )
    {  // Accept in dialog:  get selected protocol name and its XML
      DbgLv(1) << "EGGe:ldPro:  ACCEPT  prx" << prx << "sel proto" << protdata[prx][0] << "protID" << protdata[prx][2];
-     
+
+     qDebug() << "In load_protocol: before RESET, currProto->investigator: -- " << currProto->investigator;
      //ALEXEY: need to reset everything:
      mainw->reset();
-      
+     qDebug() << "In load_protocol: after RESET, currProto->investigator: -- " << currProto->investigator;
+     
       QString pname         = protdata[ prx ][ 0 ];
 
       // Get the protocol XML that matches the selected protocol name
@@ -762,8 +772,13 @@ DbgLv(1) << "EGGe:ldPro:    cTempe" << mainw->currProto.temperature
    // If there is a linked AnalysisProfile, add it
 
    // Initialize all other panels using the new protocol
+
+   qDebug() << "In load_protocol: currProto->investigator 1 --  " <<  currProto->investigator;
+      
    mainw->initPanels();
 
+   qDebug() << "In load_protocol: currProto->investigator 2 --  " <<  currProto->investigator;
+   
    check_runname();
 }
 
@@ -3517,6 +3532,8 @@ int US_ExperGuiSolutions::allSolutions()
    sonames << "(unspecified)";
    QStringList soids;
 
+   qDebug() << "In allSolutions(), currProto->investigator 1 -- " << mainw->currProto.investigator;
+   
    US_Passwd pw;
    US_DB2* dbP       = ( sibSValue( "general", "dbdisk" ) == "DB" )
                        ? new US_DB2( pw.getPasswd() ) : NULL;
@@ -3526,6 +3543,11 @@ int US_ExperGuiSolutions::allSolutions()
       soids << "-1";
       QString invID     = sibSValue( "general", "investigator" )
                              .section( ":", 0, 0 ).simplified();
+
+      qDebug() << "In allSolutions(), currProto->investigator 2 -- " << mainw->currProto.investigator;
+      qDebug() << "In allSolutions(), invID -- " << invID;   //ALEXEY: when inv changed, this sibSValue does NOT capture invID !!! needs correction...
+
+	
       QStringList qry;
       qry << "all_solutionIDs" << invID;
       dbP->query( qry );
@@ -3646,6 +3668,7 @@ DbgLv(1) << "EGSo: allSo:      desc" << descr << "solID" << solID;
       }
    }  // Re-mapping ids to names
 DbgLv(1) << "EGSo: allSo: sids count" << solu_ids.keys().count();
+DbgLv(1) << "EGSo: allSo: sids keys --" << solu_ids.keys(); 
 
    return solu_ids.keys().count();
 }
