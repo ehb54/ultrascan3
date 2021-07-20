@@ -480,7 +480,26 @@ void US_SelectItem::deleted_autoflow()
      {
        US_Passwd pw;
        US_DB2* db = new US_DB2( pw.getPasswd() );
+       
        QStringList q( "" );
+
+       //Before deleting, read AnalysisIDs for autoflow record: 
+       q.clear();
+       q << "read_autoflow_record" << AutoflowID;
+       db->query( q );
+
+       QString analysisIDs;
+       
+       if ( db->lastErrno() == US_DB2::OK )      // Autoflow record exists
+	 {
+	   while ( db->next() )
+	     {
+	       analysisIDs  = db->value( 19 ).toString();
+	     }
+	 }
+
+       //--------------------------------------------
+
        q.clear();
        q  << QString( "delete_autoflow_record_by_id" )
 	  << AutoflowID;
@@ -510,6 +529,25 @@ void US_SelectItem::deleted_autoflow()
 
        db->statusQuery( q );
        //---------------------------------------------
+
+
+       //Also update status of all associated autoflowAnalysis records
+       QStringList analysisIDs_list = analysisIDs.split(",");
+
+       for( int i=0; i < analysisIDs_list.size(); ++i )
+	 {
+	   QString requestID = analysisIDs_list[i];
+	   
+	   q.clear();
+	   q << "update_autoflow_analysis_record_at_deletion"
+	     << requestID;
+
+	   qDebug() << "CANCEL autoflowAnalysis, top-level: Query -- " << q;
+	   db->query( q );
+	   
+	 }
+       //-------------------------------------------------------------
+       
        
        items.removeAt( AutoflowRow );     // Remove deleted item row
        list_data();                       // Rebuild protocol list in the dialog

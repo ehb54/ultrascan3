@@ -1734,7 +1734,7 @@ void US_InitDialogueGui::update_autoflow_data( void )
 
 
   qDebug() << "Define Another Exp. button reset";
-  
+
 }
 
 // Slot to read all Optima machines <------------------------------- // New
