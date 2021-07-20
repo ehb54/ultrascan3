@@ -2950,6 +2950,7 @@ void US_Analysis_auto::update_autoflowAnalysis_uponDeletion ( US_DB2* db, const 
   QStringList qry;
 
   qry << "update_autoflow_analysis_record_at_deletion"
+      << QString("Job scheduled for deletion, analysis stage")
       << requestID;
 
   qDebug() << "DELETION: Query -- " << qry;

@@ -540,6 +540,7 @@ void US_SelectItem::deleted_autoflow()
 	   
 	   q.clear();
 	   q << "update_autoflow_analysis_record_at_deletion"
+	     << QString("Canceled by user, top-level")
 	     << requestID;
 
 	   qDebug() << "CANCEL autoflowAnalysis, top-level: Query -- " << q;
