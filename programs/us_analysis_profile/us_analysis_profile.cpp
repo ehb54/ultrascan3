@@ -2859,7 +2859,32 @@ DbgLv(1) << "PC:SL-pg:   curvtype ndx" << cb_curvtype->currentIndex()
 
 void US_AnaprofPanPCSA::apply_all_clicked( )
 {
-DbgLv(1) << "PC:SL: APLALL_CLK";
+  DbgLv(1) << "PC:SL: APLALL_CLK";
+
+  int active_curr_ind = active_items_pcsa.indexOf( cb_chnsel->currentIndex() );
+  int chnx    = active_items_pcsa[ active_curr_ind ];
+
+  qDebug() << "Current chan index -- " <<  active_curr_ind << chnx;
+
+  US_AnaProfile* currProf  = &mainw->currProf;
+  QVector< US_AnaProfile::AnaProfPCSA::ParmPCSA >* parms = &currProf->apPCSA.parms;
+  int kchan       = currProf->pchans.count();
+  int kparm       = currProf->apPCSA.parms.size();
+  qDebug() << "Size of chans, parms -- " << kchan <<  kparm;
+
+  //Save current chan parameters
+  gui_to_parms( chnx );
+
+  //Get current row parameters:
+  US_AnaProfile::AnaProfPCSA::ParmPCSA parm_curr  = parms->at( chnx );
+
+  //Replace params for all other channels with the current ones:
+  for ( int i = 0; i < kparm; ++i  )
+    {
+      QString chan_g  = parms->at( i ).channel;
+      currProf->apPCSA.parms.replace( i, parm_curr );
+      currProf->apPCSA.parms[ i ].channel = chan_g;
+    }
 }
 // Curve Type Selected
 void US_AnaprofPanPCSA::curvtype_selected( int curx )
