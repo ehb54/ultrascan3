@@ -2324,10 +2324,35 @@ DbgLv(1) << "2D:SL: CONSTK_CHG";
 void US_AnaprofPan2DSA::apply_all_clicked( )
 {
   DbgLv(1) << "2D:SL: APLALL_CLK";
-  // Iterate over all active channels && apply gui_to_pams()
-  for (int i=0; i<active_items_2dsa.size(); i++)
+  // // Iterate over all active channels && apply gui_to_pams()
+  // for (int i=0; i<active_items_2dsa.size(); i++)
+  //   {
+  //     gui_to_parms( i );
+  //   }
+
+  int active_curr_ind = active_items_2dsa.indexOf( cb_chnsel->currentIndex() );
+  int chnx    = active_items_2dsa[ active_curr_ind ];
+
+  qDebug() << "Apply to All: 2DSA: Current chan index -- " <<  active_curr_ind << chnx;
+
+  US_AnaProfile* currProf  = &mainw->currProf;
+  QVector< US_AnaProfile::AnaProf2DSA::Parm2DSA >* parms = &currProf->ap2DSA.parms;
+  int kchan       = currProf->pchans.count();
+  int kparm       = currProf->ap2DSA.parms.size();
+  qDebug() << "2DSA: Size of chans, parms -- " << kchan <<  kparm;
+
+  //Save current chan parameters
+  gui_to_parms( chnx );
+
+  //Get current row parameters:
+  US_AnaProfile::AnaProf2DSA::Parm2DSA parm_curr  = parms->at( chnx );
+
+  //Replace params for all other channels with the current ones:
+  for ( int i = 0; i < kparm; ++i  )
     {
-      gui_to_parms( i );
+      QString chan_g  = parms->at( i ).channel;
+      currProf->ap2DSA.parms.replace( i, parm_curr );
+      currProf->ap2DSA.parms[ i ].channel = chan_g;
     }
 }
 
@@ -2861,6 +2886,7 @@ void US_AnaprofPanPCSA::apply_all_clicked( )
 {
   DbgLv(1) << "PC:SL: APLALL_CLK";
 
+  
   int active_curr_ind = active_items_pcsa.indexOf( cb_chnsel->currentIndex() );
   int chnx    = active_items_pcsa[ active_curr_ind ];
 
@@ -2885,6 +2911,8 @@ void US_AnaprofPanPCSA::apply_all_clicked( )
       currProf->apPCSA.parms.replace( i, parm_curr );
       currProf->apPCSA.parms[ i ].channel = chan_g;
     }
+  
+
 }
 // Curve Type Selected
 void US_AnaprofPanPCSA::curvtype_selected( int curx )
