@@ -325,6 +325,29 @@ void US_ReportGui::update_report( void )
   //save Gui params to reportGMP structure
   gui_to_report();
 
+  //now ask if you want to apply all settings for current report to all other channels' reports
+  QMessageBox msgBox;
+  msgBox.setIcon(QMessageBox::Information);
+  msgBox.setWindowTitle(tr("Apply to Other Reports"));
+  
+  QString msg_text      = QString("Do you want to apply current report settings to all other channels?");
+  msgBox.setText( msg_text );
+    
+  QPushButton *Accept    = msgBox.addButton(tr("Yes"), QMessageBox::YesRole);
+  QPushButton *Cancel    = msgBox.addButton(tr("No"), QMessageBox::RejectRole);
+  msgBox.exec();
+  
+  if ( msgBox.clickedButton() == Accept )
+    {
+      //Emit signal
+      qDebug() << "Applying report settigns to all --";
+      emit apply_to_all_reports( report );
+      close();
+    }
+  else if (msgBox.clickedButton() == Cancel)
+    close();
+    return;
+
   close();
 }
 

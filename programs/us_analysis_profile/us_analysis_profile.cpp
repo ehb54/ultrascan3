@@ -1691,7 +1691,8 @@ void US_AnaprofPanGen::setReport( void )
    reportGui->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
    reportGui->setWindowModality(Qt::ApplicationModal);
 
-   connect( reportGui, SIGNAL( cancel_changes( US_ReportGMP& ) ), this, SLOT( restore_report( US_ReportGMP& )  ) ); 
+   connect( reportGui, SIGNAL( cancel_changes      ( US_ReportGMP& ) ), this, SLOT( restore_report        ( US_ReportGMP& )  ) );
+   connect( reportGui, SIGNAL( apply_to_all_reports( US_ReportGMP* ) ), this, SLOT( apply_to_other_reports( US_ReportGMP* )  ) );
    
    reportGui->show();
 
@@ -1703,6 +1704,36 @@ void US_AnaprofPanGen::restore_report( US_ReportGMP& orig_report )
   
   //currProf->ch_reports[ orig_report.channel_name ] = orig_report;
   internal_reports[ orig_report.channel_name ] = orig_report;
+}
+
+void US_AnaprofPanGen::apply_to_other_reports( US_ReportGMP* report )
+{
+  QString primary_report_channel = report->channel_name;
+  
+  QMap<QString, US_ReportGMP>::iterator ri;
+  for ( ri = internal_reports.begin(); ri != internal_reports.end(); ++ri )
+    {
+      if ( ri.key().contains( primary_report_channel ) )
+	continue;
+      
+      qDebug() << "Applying report's " << primary_report_channel << " settings to channel " << ri.key();  
+
+      internal_reports[ ri.key() ].tot_conc            = report->tot_conc;
+      internal_reports[ ri.key() ].rmsd_limit          = report->rmsd_limit;
+      internal_reports[ ri.key() ].av_intensity        = report->av_intensity;
+      //internal_reports[ ri.key() ].wavelength          = report->wavelength;
+      //internal_reports[ ri.key() ].experiment_duration = report->experiment_duration;
+
+      //Now go over reportItems:
+      //1st, clear current array of reportItems:
+      internal_reports[ ri.key() ].reportItems.clear();
+
+      for ( int ic = 0; ic < report->reportItems.size(); ++ic )
+	{
+	  //US_ReportGMP::ReportItem copied_item = report->reportItems[ ic ];
+	  internal_reports[ ri.key() ].reportItems.push_back( report->reportItems[ ic ] );
+	}
+    }
 }
 
 

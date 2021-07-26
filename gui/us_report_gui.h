@@ -24,7 +24,8 @@ class US_GUI_EXTERN US_ReportGui: public US_Widgets
       US_ReportGMP    report_copy_original;
 
    signals:
-      void cancel_changes( US_ReportGMP & );
+      void  cancel_changes       ( US_ReportGMP & );
+      void  apply_to_all_reports ( US_ReportGMP* );
       
       
    private:

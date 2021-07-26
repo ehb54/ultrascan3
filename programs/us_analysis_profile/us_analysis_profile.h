@@ -139,7 +139,8 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       void  lvtol_text_changed ( void );
       void  daend_text_changed ( void );
       void  applied_to_all     ( void );
-      void  restore_report      ( US_ReportGMP &  );
+      void  restore_report         ( US_ReportGMP &  );
+      void  apply_to_other_reports ( US_ReportGMP *  );
       
  signals:
       void  set_tabs_buttons_inactive       ( void );
