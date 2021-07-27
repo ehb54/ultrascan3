@@ -279,7 +279,8 @@ US_AnaProfile::AnaProf2DSA::AnaProf2DSA()
    job3run     = true;
    job4run     = true;
    job5run     = true;
-   job3auto    = true;
+   //job3auto    = true;
+   job3auto    =false;
    job1nois    = "ti";
    job2nois    = "both";
    job4nois    = "both";
@@ -399,6 +400,8 @@ bool US_AnaProfile::AnaProf2DSA::fromXml( QXmlStreamReader& xmli )
             QXmlStreamAttributes attr = xmli.attributes();
             job3run        = US_Util::bool_flag( attr.value( "run" ).toString() );
             job3auto       = attr.value( "interactive" ).toString().toInt() == 0;
+
+	    qDebug() << "In 2DSA's fromXml(): job3auto -- " << job3auto;
          }
          else if ( ename == "job_2dsa_it" )
          {
@@ -491,7 +494,7 @@ bool US_AnaProfile::AnaProf2DSA::toXml( QXmlStreamWriter& xmlo )
    xmlo.writeStartElement( "job_fitmen" );
    xmlo.writeAttribute   ( "run",            US_Util::bool_string(
                                              job3run ) );
-   xmlo.writeAttribute   ( "interactive",  ( job2run ? "1" : "0" ) );
+   xmlo.writeAttribute   ( "interactive",  ( job3auto ? "0" : "1" ) );
    xmlo.writeEndElement  (); // job_fitmen
 
    xmlo.writeStartElement( "job_2dsa_it" );

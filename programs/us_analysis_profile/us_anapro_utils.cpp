@@ -962,6 +962,8 @@ DbgLv(1) << "AP2d:inP:  parms_to_gui complete";
    ck_j3run ->setChecked( ap2DSA->job3run );
    ck_j4run ->setChecked( ap2DSA->job4run );
    ck_j5run ->setChecked( ap2DSA->job5run );
+
+   qDebug() << "In 2DSA's initPanel(): ap2DSA->job3auto -- " << ap2DSA->job3auto;
    ck_j3auto->setChecked( ap2DSA->job3auto );
 
    //ALEXEY: fit M|B

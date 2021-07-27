@@ -658,7 +658,7 @@ pb_plateau->setVisible(false);
    // details[ "filename" ]     = ("test-021421-IF-RI-B_alexey-run974-IP");
    // details[ "protocolName" ] = QString("test-021421-IF-RI-B_alexey");
 
-   // MWV from demeler9
+   // //MWV from demeler9
    // details[ "invID_passed" ] = QString("2");
    // details[ "filename" ]     = QString("Demo-033121-1-run1391");
    // details[ "protocolName" ] = QString("Demo-033121-1");
@@ -668,9 +668,9 @@ pb_plateau->setVisible(false);
    // details[ "filename" ]     = QString("SavelyevA_BSA_082520-run1276");
    // details[ "protocolName" ] = QString("SavelyevA_BSA_082520");
 
-   // details[ "invID_passed" ] = QString("97");
-   // details[ "filename" ]     = QString("GabirH_NetUnc-050921_MW-run1442");
-   // details[ "protocolName" ] = QString("GabirH_NetUnc-050921_MW");
+   // // details[ "invID_passed" ] = QString("97");
+   // // details[ "filename" ]     = QString("GabirH_NetUnc-050921_MW-run1442");
+   // // details[ "protocolName" ] = QString("GabirH_NetUnc-050921_MW");
    
    // load_auto( details );
    
@@ -2661,10 +2661,11 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 
    //AProfile details per channel
    read_aprofile_data_from_aprofile();
-   qDebug() << "job1run, job2run, job3run, job4run, job5run, job6run_pcsa: "
+   qDebug() << "job1run, job2run, job3run, job3auto, job4run, job5run, job6run_pcsa: "
 	    <<  job1run << ", "
 	    <<  job2run << ", "
 	    <<  job3run << ", "
+	    <<  job3auto << ", "
 	    <<  job4run << ", "
 	    <<  job5run << ", "
 	    <<  job6run_pcsa;
@@ -3233,8 +3234,9 @@ bool US_Edit::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
             QXmlStreamAttributes attr = xmli.attributes();
             job3run        = bool_flag( attr.value( "run" ).toString() );
             job3auto       = attr.value( "interactive" ).toString().toInt() == 0;
-
-	    qDebug() << "job3run: " << job3run;
+	    	    
+	    qDebug() << "job3run:  " << job3run;
+	    qDebug() << "job3auto: " << job3auto;
 	  }
 	else if ( ename == "job_2dsa_it" )
 	  {
