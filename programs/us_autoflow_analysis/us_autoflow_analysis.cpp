@@ -5205,7 +5205,8 @@ DbgLv(1) << " eupd:       idEdit" << idEdit;
        progress_msg_fmb->setValue( progress_msg->maximum() );
        progress_msg_fmb->close();
      }
-   
+
+   update_autoflowAnalysis_statuses( triple_information );
    //emit editProfiles_updated( triple_information );
    //close();
    
