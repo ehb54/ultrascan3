@@ -8676,7 +8676,12 @@ QString US_Edit::compose_json( bool fm_stage )
   if (job2run && fm_stage )
     json += QString("\"2DSA_FM\",");
   if (job3run )
-    json += QString("\"FITMEN\",");
+    {
+      if ( job3auto ) 
+	json += QString("\"FITMEN_AUTO\",");
+      else
+	json += QString("\"FITMEN\",");
+    }
   if (job4run )
     json += QString("\"2DSA_IT\",");
   if (job5run )

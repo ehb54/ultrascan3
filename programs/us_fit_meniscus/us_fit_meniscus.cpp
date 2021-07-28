@@ -3843,6 +3843,12 @@ DbgLv(1) << "NIE:     noiFname" << noiFname;
       QStringList nIDs;
       QString invID = QString::number( US_Settings::us_inv_ID() );
 
+      if ( auto_mode )
+	{
+	  invID =  triple_information[ "invID" ];
+	  qDebug() << "In noises_in_edits(): invID -- " << invID;
+	}
+      
       QStringList edtIDs;
       QStringList edtNams;
 

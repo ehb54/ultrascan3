@@ -69,6 +69,72 @@ class US_Analysis_auto : public US_Widgets
 	 
 	 QPointer< US_ResidsBitmap >    rbmapd;
 
+	 // Class to hold model descriptions
+	 class ModelDesc
+	 {
+         public:
+	   QString   description;    // Full model description
+	   QString   baseDescr;      // Base analysis-set description
+	   QString   fitfname;       // Associated fit file name
+	   QString   modelID;        // Model DB ID
+	   QString   modelGUID;      // Model GUID
+	   QString   filepath;       // Full path model file name
+	   QString   editID;         // Edit parent DB ID
+	   QString   editGUID;       // Edit parent GUID
+	   QString   antime;         // Analysis date & time (yymmddHHMM)
+	   QDateTime lmtime;         // Record lastmod date & time
+	   double    variance;       // Variance value
+	   double    meniscus;       // Meniscus radius value
+	   double    bottom;         // Bottom radius value
+	   
+	   // Less than operator to enable sort
+	   bool operator< ( const ModelDesc& md )
+	     const { return ( description < md.description ); }
+	 };
+	 
+	 // Class to hold noise description
+	 class NoiseDesc
+	 {
+         public:
+	   QString   description;    // Full noise description
+	   QString   baseDescr;      // Base analysis-set description
+	   QString   noiseID;        // Noise DB ID
+	   QString   noiseGUID;      // Noise GUID
+	   QString   filepath;       // Full path noise file name
+	   QString   modelID;        // Model parent DB ID
+	   QString   modelGUID;      // Model parent GUID
+	   QString   antime;         // Analysis date & time (yymmddHHMM)
+	   
+	   // Less than operator to enable sort
+	   bool operator< ( const NoiseDesc& nd )
+	     const { return ( description < nd.description ); }
+	 };
+	 
+
+	 bool no_fm_data_auto;
+	 QProgressDialog * progress_msg_fmb;
+	 QVector< double >    v_meni;
+	 QVector< double >    v_bott;
+	 QVector< double >    v_rmsd;
+	 
+	 QString              filedir;
+	 QString              fname_load;
+	 QString              fname_edit;
+	 QStringList          edtfiles;
+	 int                  nedtfs;
+	 int                  ix_best;
+	 int                  ix_setfit;
+	 bool                 have3val;
+	 bool                 bott_fit;
+	 int                  idEdit;
+
+	 double               fit_xvl; //for 2d data
+	 double               f_meni;  //for 3d data
+	 double               f_bott;  //for 3d data
+
+	 double               dy_global;
+	 double               miny_global;
+	 
 	 QString tripleInfo;
 	 
 	 int eID_global;
@@ -165,6 +231,21 @@ class US_Analysis_auto : public US_Widgets
 
 	 QMap < QString, QString > get_investigator_info ( US_DB2*, const QString& );
 
+	 void scan_dbase_auto( QMap <QString, QString> & );
+	 void get_editProfile_copy( QMap < QString, QString >& );
+	 bool file_loaded_auto( QMap < QString, QString >& );
+	 void load_data_auto( const QString&   );
+	 void process_2d( void );
+	 void process_3d( void );
+	 void edit_update_auto( QMap < QString, QString >&  );
+	 int  read_autoflowAnalysisStages( const QString& );
+	 void revert_autoflow_analysis_stages_record( const QString& );
+	 void update_db_edit( QString, QString );
+	 void remove_models_auto( QString );
+	 void index_model_setfit( void );
+	 void noises_in_edit( QString, QStringList&, QStringList&, QStringList&, QString );
+	 
+	 
 	 void update_autoflowAnalysis_status_at_fitmen ( US_DB2*, const QStringList& );
 
 	 void update_autoflowAnalysis_uponDeletion ( US_DB2*, const QString& );
@@ -225,7 +306,7 @@ class US_Analysis_auto : public US_Widgets
 	void editProfiles_updated_earlier( void );
 	void triple_analysis_processed( void );
 
-	bool check_fitmen_status( const QString& );
+	bool check_fitmen_status( const QString&, const QString& );
 
 	void delete_job  ( QString );
 	void delete_jobs_at_fitmen  ( QString );
