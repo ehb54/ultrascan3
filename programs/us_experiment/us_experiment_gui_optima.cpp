@@ -1622,7 +1622,7 @@ DbgLv(1) << "EGSp: addWidg/Layo BB";
 
   //Scan # estimator:
   QLabel* lb_scan_estimator    = us_banner( tr( "Scan Number Estimator:" ) );
-  QLabel* lb_wvl_per_cell = us_label(tr( "Sum of all wavelengths from each cell to be scanned:" ));
+  QLabel* lb_wvl_per_cell = us_label(tr( "Sum of all wavelengths (from all cells) to be scanned:" ));
   sb_wvl_per_cell = us_spinbox();
   sb_wvl_per_cell->setRange(1, 100);
   connect( sb_wvl_per_cell,  SIGNAL( valueChanged     ( int ) ),
