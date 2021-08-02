@@ -767,6 +767,15 @@ void US_Analysis_auto::gui_update( )
 	      scan_dbase_auto      ( triple_info_map_auto );
 	      get_editProfile_copy ( triple_info_map_auto );
 	      file_loaded_auto     ( triple_info_map_auto );
+
+	      if ( no_fm_data_auto )
+		{
+		  //triple_analysis_processed( );
+		  delete_jobs_at_fitmen( triple_curr_key );
+
+		  return;
+		}
+	      
 	      //Now, update editProfiles
 	      edit_update_auto     ( triple_info_map_auto );
 	      
@@ -4126,13 +4135,13 @@ bool US_Analysis_auto::file_loaded_auto( QMap < QString, QString > & triple_info
   QDir directory (file_directory);
   QStringList fm_files = directory.entryList( QStringList() << "2DSA-FM*" + triple_name_cut + "*.fitmen.dat", QDir::Files | QDir::NoSymLinks);
 
-  qDebug() << "In file_loaded_auto: 22";
+  qDebug() << "In file_loaded_auto: 22 -- triple: " << triple_name_cut;
 
   //ALEXEY: if there is no files (since no "-FM" models produced for what ever reason), issue a warning:
   if ( !fm_files.size()  )
     {
       QMessageBox::warning( this,
-			    tr( "FM models problem" ),
+			    QString( tr( "FM models problem: %1" ) ).arg( triple_name_cut ),
 			    tr( "No \"FM | FMB\" models have been found for the present run. \n\n"
 				"Program will proceed with the analysis of other triples...") );
 
