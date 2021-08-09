@@ -262,6 +262,9 @@ DbgLv(1) << "APG: ipro:  o.ii" << ii << "chname" << chname
 
       // //ALEXEY: also US_ReportGMP (blank/default for now)
       // US_ReportGMP reportGMP = US_ReportGMP();
+       
+      
+       
       
       for ( int jj = 0; jj < ods.count(); jj++ )
       {  // Create a channel entry for each optics type of this channel
@@ -282,10 +285,6 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
             currProf.chndescs[ nchn ] = chentr;
 	    currProf.chndescs_alt[ nchn ] = chentr_wvls;
 	    
-	    //ALEXEY: insert ch_reports here
-	    //currProf.ch_reports[ chentr_wvls ] = reportGMP;
-	    currProf.ch_reports[ chentr_wvls ] = currProf.ch_reports[ currProf.chndescs_alt[ nchn ] ];
-	    currProf.ch_reports[ chentr_wvls ].channel_name = chentr_wvls;
 
 	    //ALEXEY: also ranges for each channel
 	    if ( opdesc.contains("vis.") )
@@ -296,6 +295,22 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
 		currProf.ch_wvls[ chentr_wvls ] = wvl_interf;
 	      }
 	    qDebug() << "In inherit_prot: wvls.size() for channel -- " << currProf.ch_wvls[ chentr_wvls ].size() << " for " << chentr_wvls;
+
+	    // //ALEXEY: insert ch_reports here
+	    // //currProf.ch_reports[ chentr_wvls ] = reportGMP;
+	    // currProf.ch_reports[ chentr_wvls ] = currProf.ch_reports[ currProf.chndescs_alt[ nchn ] ];
+	    // currProf.ch_reports[ chentr_wvls ].channel_name = chentr_wvls;
+
+	    //ALEXEY_NEW_REPORT: move these 2 lines below setting currProf.ch_wvls[ chentr_wvls ]
+	    //Next, iterate over wvls & fill QMap< QString, QMap < QString( wvls[i]), US_ReportGMP > > currProf.ch_reports[ chentr_wvls ][wvl]  
+	    QList< double > ch_wavelengths = currProf.ch_wvls[ chentr_wvls ];
+
+	    for ( int i=0; i<ch_wavelengths.size(); ++i )
+	      {
+		QString c_wvl = QString::number ( ch_wavelengths[ i ] );
+		currProf.ch_reports[ chentr_wvls ][ c_wvl ] = currProf.ch_reports[ currProf.chndescs_alt[ nchn ] ][ c_wvl ];
+		currProf.ch_reports[ chentr_wvls ][ c_wvl ].channel_name = chentr_wvls;
+	      }
 	    
             chx             = currProf.lc_ratios.count() - 1;
             if ( chx < nchn )
@@ -321,10 +336,6 @@ DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
             currProf.chndescs << chentr;
 	    currProf.chndescs_alt << chentr_wvls;
 	    
-	    //ALEXEY: insert ch_reports here
-	    //currProf.ch_reports[ chentr_wvls ] = reportGMP;
-	    currProf.ch_reports[ chentr_wvls ] = currProf.ch_reports[ currProf.chndescs_alt.last() ];
-	    currProf.ch_reports[ chentr_wvls ].channel_name = chentr_wvls;
 	    
 	    //ALEXEY: also ranges for each channel
 	    if ( opdesc.contains("vis.") )
@@ -335,7 +346,25 @@ DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
 		currProf.ch_wvls[ chentr_wvls ] = wvl_interf;
 	      }
 	    qDebug() << "In inherit_prot: wvls.size() for channel -- " << currProf.ch_wvls[ chentr_wvls ].size() << " for " << chentr_wvls;
+
+	    
+	    // //ALEXEY: insert ch_reports here
+	    // //currProf.ch_reports[ chentr_wvls ] = reportGMP;
+	    // currProf.ch_reports[ chentr_wvls ] = currProf.ch_reports[ currProf.chndescs_alt.last() ];
+	    // currProf.ch_reports[ chentr_wvls ].channel_name = chentr_wvls;
+
+	    //ALEXEY_NEW_REPORT: move these 2 lines below setting currProf.ch_wvls[ chentr_wvls ]
+	    //Next, iterate over wvls & fill QMap< QString, QMap < QString( wvls[i]), US_ReportGMP > > currProf.ch_reports[ chentr_wvls ][wvl]  
+	    QList< double > ch_wavelengths = currProf.ch_wvls[ chentr_wvls ];
+	    
+	    for ( int i=0; i<ch_wavelengths.size(); ++i )
+	      {
+		QString c_wvl = QString::number ( ch_wavelengths[ i ] );
+		currProf.ch_reports[ chentr_wvls ][ c_wvl ] = currProf.ch_reports[ currProf.chndescs_alt[ nchn ] ][ c_wvl ];
+		currProf.ch_reports[ chentr_wvls ][ c_wvl ].channel_name = chentr_wvls;
+	      }
 	    	    
+	    
 	    
             int lch         = nchn - 1;
             // Duplicate previous parameter values
@@ -486,18 +515,24 @@ DbgLv(1) << "APG: ipro:  ap_xml length" << ap_xml.length();
 
 	 //Check here if ch_report_ids[ channel_alt_desc ] and/or ch_report_guids[ channel_alt_desc ] are not empty
 	 //Also check if ch_report_ids.values() - the IDs - are not 0!!!
-	 QList< int > reportIDs_list  = currProf.ch_report_ids.values();
-	 bool null_reportID = false;
-	 for (int i=0; i<reportIDs_list.size(); ++i)
-	   {
-	     if( reportIDs_list[i] <= 0 ) //reportid is -1 or 0, so no report associated with the channel
-	       {
-		 null_reportID = true;
-		 break;
-	       }
-	   }
+
+	 //ALEXEY_NEW_REPORT:
+	 // currProf.ch_report_ids IS QMap< QString, QList < int > >:
+	 // 
 	 
-	 if ( currProf.ch_report_ids.size() && !null_reportID )
+	 // QList< int > reportIDs_list  = currProf.ch_report_ids.values();
+	 // bool null_reportID = false;
+	 // for (int i=0; i<reportIDs_list.size(); ++i)
+	 //   {
+	 //     if( reportIDs_list[i] <= 0 ) //reportid is -1 or 0, so no report associated with the channel
+	 //       {
+	 // 	 null_reportID = true;
+	 // 	 break;
+	 //       }
+	 //   }
+	 
+	 // if ( currProf.ch_report_ids.size() && !null_reportID )
+	 if ( currProf.ch_report_ids.size() )
 	   {
 	     //fill in currProf->ch_reports[ chdesc_alt ] by reading ReportIDs from ch_report_ids[ chdesc_alt ]
 	     
@@ -505,22 +540,37 @@ DbgLv(1) << "APG: ipro:  ap_xml length" << ap_xml.length();
 	     currProf.ch_reports.clear();  // <-- Will this cause crash - as this omits "B:Interf." cannels ??
 
 	     // iterate over QMap ch_report_ids[ chdesc_alt ]
-	     QMap<QString, int>::iterator ri;
+	     QMap<QString, QList <int >>::iterator ri;
 	     for ( ri = currProf.ch_report_ids.begin(); ri != currProf.ch_report_ids.end(); ++ri )
 	       {
 		 QString channel_alt_desc = ri.key();
-		 int     reportID         = ri.value();
+		 //int     reportID         = ri.value();
 
-		 qDebug() << "Reading reportItems form DB: channel_alt_desc, reportID  -- " << channel_alt_desc << ", " << reportID;
+		 QList< int > reportIDs  = ri.value();
 		 
-		 //retrieve report from DB
-		 US_ReportGMP * reportFromDB = new US_ReportGMP();
-		 get_report_by_ID( reportFromDB, reportID );
+		 //ALEXEY_NEW_REPORT: here ri.value() will be QList/QVector of reportIDs for a given channel
+		 //next will be cycle over this QList... 
 
-		 //assign retieved report to currProf.ch_reports[ channel_alt_desc ];
-		 currProf.ch_reports[ channel_alt_desc ] = *reportFromDB;
+		 for (int rid = 0; rid < reportIDs.size(); ++rid )
+		   {
+		     int reportID = reportIDs[ rid ];
+		     qDebug() << "Reading reportItems form DB: channel_alt_desc, reportID  -- " << channel_alt_desc << ", " << reportID;
+		 
+		     //retrieve report from DB
+		     US_ReportGMP * reportFromDB = new US_ReportGMP();
+		     get_report_by_ID( reportFromDB, reportID );
+		     
+		     
+		     //ALEXEY_NEW_REPORT: here the QMap< QString, QMap < QString(wvl), US_ReportGMP > > currProf.ch_reports will be filled
+		     //Something like currProf.ch_reports[ channel_alt_desc ][ wvl ] -- where wvl == *reportFromDB->wavelength;
+		     // OR  wvl is returned from get_report_by_ID( reportFromDB, reportID );
+
+		     QString wvl_read = QString::number( reportFromDB->wavelength );
+		     
+		     //assign retieved report to currProf.ch_reports[ channel_alt_desc ];
+		     currProf.ch_reports[ channel_alt_desc ][ wvl_read ] = *reportFromDB;
+		   }
 	       }
-	     
 	   }
       }
    }
@@ -799,7 +849,7 @@ US_AnaprofPanGen::US_AnaprofPanGen( QWidget* topw )
 
    // Set defaults
    currProf        = &mainw->currProf;
-
+   
    // Build the general layout
    build_general_layout( );
 QLayout* play=panel->layout();
@@ -1484,21 +1534,24 @@ void US_AnaprofPanGen::rbEditClicked ( QString arg_passed )
 		   ckbox->setChecked( true );
 		   ckbox->setEnabled( false );
 
-		   //Update report.wavelength with the selected wvl for current channel:
-		   QMap<QString, US_ReportGMP>::iterator ri;
-		   QString chann_desc_short = triple_name;
-		   chann_desc_short.simplified();
-		   chann_desc_short.replace( " ", "" );
-		   for ( ri = internal_reports.begin(); ri != internal_reports.end(); ++ri )
-		     {
-		       qDebug() << "Key [chandesc] of internal_reports QMap VS triple_name:  " << ri.key() << " VS " << chann_desc_short;
-		       if ( ri.key().contains( chann_desc_short ) )
-			 {
-			   qDebug() << "SETTING ref. wvl for channel -- " << wvl << " for " << ri.key();  
-			   internal_reports[ ri.key() ].wavelength = wvl.toDouble();
-			   break;
-			 }
-		     }
+
+		   // //ALEXEY_NEW_REPORT: this setting wvl will not be needed...
+		   // //Update report.wavelength with the selected wvl for current channel:
+		   // QMap<QString, US_ReportGMP>::iterator ri;
+		   // QString chann_desc_short = triple_name;
+		   // chann_desc_short.simplified();
+		   // chann_desc_short.replace( " ", "" );
+		   // for ( ri = internal_reports.begin(); ri != internal_reports.end(); ++ri )
+		   //   {
+		   //     qDebug() << "Key [chandesc] of internal_reports QMap VS triple_name:  " << ri.key() << " VS " << chann_desc_short;
+		   //     if ( ri.key().contains( chann_desc_short ) )
+		   // 	 {
+		   // 	   qDebug() << "SETTING ref. wvl for channel -- " << wvl << " for " << ri.key();  
+		   // 	   internal_reports[ ri.key() ].wavelength = wvl.toDouble();
+		   // 	   break;
+		   // 	 }
+		   //   }
+		   ///////////////////////////////////////////////////////
 		 }
 	       else
 		 {
@@ -1679,63 +1732,83 @@ void US_AnaprofPanGen::setReport( void )
    //Find out channel desc
    QString chan_desc = oname.section( "--chann_name--", 1, 1 );
    qDebug() << "Channel_desc -- " << chan_desc;
-   // qDebug() << "ReportItems.size() -- " << currProf->ch_reports[ chan_desc ].reportItems.size();
 
-   // qDebug() << "Report channel name --  " << currProf->ch_reports[ chan_desc ] .channel_name;
-   // qDebug() << "Report duration, wvl  -- "      << currProf->ch_reports[ chan_desc ] .experiment_duration << currProf->ch_reports[ chan_desc ].wavelength;
    
-   // US_ReportGMP* chan_report = &(currProf -> ch_reports[ chan_desc ]);
-   US_ReportGMP* chan_report = &(internal_reports[ chan_desc ]);
+   //ALEXEY_NEW_REPORT: internal_reports[ chan_desc ] is now QMap < QString( wvl), US_ReportGMP >
+   // OR should I create a small dialog with all channel's wvls, choose one && pass to US_ReportGui ? (one-by-one)
+   //US_ReportGMP* chan_report = &(internal_reports[ chan_desc ]);
+
+// //TESTING !!!!
+//    QMap < QString, US_ReportGMP* > channel_report_map = report_map[ chan_desc ];
+//    reportGui = new US_ReportGui( channel_report_map );
+// ///////////////
+
+   QMap < QString, US_ReportGMP* > channel_report_map;
+   QMap < QString, US_ReportGMP>::iterator ri;
+   for ( ri = internal_reports[ chan_desc ].begin(); ri != internal_reports[ chan_desc ].end(); ++ri )
+     {
+       QString wvl = ri.key();
+
+       //qDebug() << "In setReport: wvl -- " << wvl;
+       channel_report_map[ wvl ] = &( internal_reports[ chan_desc ][ wvl] );
+     }
    
-   reportGui = new US_ReportGui( chan_report );
+      
+   reportGui = new US_ReportGui(  channel_report_map );
    reportGui->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
    reportGui->setWindowModality(Qt::ApplicationModal);
+   
+   connect( reportGui, SIGNAL( cancel_changes ( QMap< QString, US_ReportGMP>& ) ), this, SLOT( restore_report  ( QMap< QString, US_ReportGMP>& )  ) );
 
-   connect( reportGui, SIGNAL( cancel_changes      ( US_ReportGMP& ) ), this, SLOT( restore_report        ( US_ReportGMP& )  ) );
-   connect( reportGui, SIGNAL( apply_to_all_reports( US_ReportGMP* ) ), this, SLOT( apply_to_other_reports( US_ReportGMP* )  ) );
+   //ALEXEY_NEW_REPORT: this signals may not be needed...
+   // connect( reportGui, SIGNAL( apply_to_all_reports( US_ReportGMP* ) ), this, SLOT( apply_to_other_reports( US_ReportGMP* )  ) );
+   // /////////////////////////////////////////////////////
    
    reportGui->show();
 
 }
 
-void US_AnaprofPanGen::restore_report( US_ReportGMP& orig_report )
+//ALEXEY_NEW_REPORT: this method may not be needed...
+void US_AnaprofPanGen::restore_report( QMap < QString, US_ReportGMP> & orig_report_map )
 {
-  qDebug() << "Channel Name, Size of ReportItems in orig -- " << orig_report.channel_name  << orig_report.reportItems.size();
+  QString channame = orig_report_map.values()[0].channel_name;
+  qDebug() << "Channel Name in orig -- " << channame;
   
-  //currProf->ch_reports[ orig_report.channel_name ] = orig_report;
-  internal_reports[ orig_report.channel_name ] = orig_report;
+  internal_reports[ channame ] = orig_report_map;
 }
+/////////////////////////////////////////////////////
 
+//ALEXEY_NEW_REPORT: this method may not be needed...
 void US_AnaprofPanGen::apply_to_other_reports( US_ReportGMP* report )
 {
-  QString primary_report_channel = report->channel_name;
+  // QString primary_report_channel = report->channel_name;
   
-  QMap<QString, US_ReportGMP>::iterator ri;
-  for ( ri = internal_reports.begin(); ri != internal_reports.end(); ++ri )
-    {
-      if ( ri.key().contains( primary_report_channel ) )
-	continue;
+  // QMap<QString, US_ReportGMP>::iterator ri;
+  // for ( ri = internal_reports.begin(); ri != internal_reports.end(); ++ri )
+  //   {
+  //     if ( ri.key().contains( primary_report_channel ) )
+  // 	continue;
       
-      qDebug() << "Applying report's " << primary_report_channel << " settings to channel " << ri.key();  
+  //     qDebug() << "Applying report's " << primary_report_channel << " settings to channel " << ri.key();  
 
-      internal_reports[ ri.key() ].tot_conc            = report->tot_conc;
-      internal_reports[ ri.key() ].rmsd_limit          = report->rmsd_limit;
-      internal_reports[ ri.key() ].av_intensity        = report->av_intensity;
-      //internal_reports[ ri.key() ].wavelength          = report->wavelength;
-      //internal_reports[ ri.key() ].experiment_duration = report->experiment_duration;
+  //     internal_reports[ ri.key() ].tot_conc            = report->tot_conc;
+  //     internal_reports[ ri.key() ].rmsd_limit          = report->rmsd_limit;
+  //     internal_reports[ ri.key() ].av_intensity        = report->av_intensity;
+  //     //internal_reports[ ri.key() ].wavelength          = report->wavelength;
+  //     //internal_reports[ ri.key() ].experiment_duration = report->experiment_duration;
 
-      //Now go over reportItems:
-      //1st, clear current array of reportItems:
-      internal_reports[ ri.key() ].reportItems.clear();
+  //     //Now go over reportItems:
+  //     //1st, clear current array of reportItems:
+  //     internal_reports[ ri.key() ].reportItems.clear();
 
-      for ( int ic = 0; ic < report->reportItems.size(); ++ic )
-	{
-	  //US_ReportGMP::ReportItem copied_item = report->reportItems[ ic ];
-	  internal_reports[ ri.key() ].reportItems.push_back( report->reportItems[ ic ] );
-	}
-    }
+  //     for ( int ic = 0; ic < report->reportItems.size(); ++ic )
+  // 	{
+  // 	  //US_ReportGMP::ReportItem copied_item = report->reportItems[ ic ];
+  // 	  internal_reports[ ri.key() ].reportItems.push_back( report->reportItems[ ic ] );
+  // 	}
+  //   }
 }
-
+//////////////////////////////////////////////////////
 
 int US_AnaprofPanGen::getProfiles( QStringList& prnames,
       QList< QStringList >& prentries )

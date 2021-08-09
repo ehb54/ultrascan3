@@ -6,6 +6,7 @@
 #include "us_passwd.h"
 #include "us_db2.h"
 #include "us_investigator.h"
+#include "us_images.h"
 
 //#include "us_report_gmp.h"
 
@@ -17,11 +18,34 @@
 #endif
 
 
-// Report GUI 
-US_ReportGui::US_ReportGui( US_ReportGMP *tmp_report ) : US_Widgets()
+// Report GUI
+//ALEXEY_NEW_REPORT: an arg now is QMap < QString( wvl ), US_ReportGMP > ?  
+//US_ReportGui::US_ReportGui( US_ReportGMP *tmp_report ) : US_Widgets()
+US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Widgets()
 {
-  this->report               = tmp_report;
+  this->report_map           = report_map; 
+
+  QList < QString > report_map_keys = report_map.keys();
+  QStringList wvl_passed;
+  for ( int i=0; i < report_map_keys.size(); ++i )
+    wvl_passed << report_map_keys[ i ];
+
+  qDebug() << "Wvl_passed to ReportGui -- " << wvl_passed;
+
+  int init_index = 0; // 1st in a QMap;
+    
+  this->report               = report_map[ report_map_keys[ init_index ] ]; 
   this->report_copy_original = *report;
+
+  //Copy original QMap in case of cancelling updates:
+  QMap < QString, US_ReportGMP* >::iterator ri;
+  for ( ri = report_map.begin(); ri != report_map.end(); ++ri )
+    {
+      QString wvl = ri.key();
+      
+      report_map_copy_original[ wvl ] = *( ri.value() );
+    }
+  /////////////////////////////////////////////////
 
   setWindowTitle( tr( "Channel Report Editor"));
   
@@ -72,22 +96,47 @@ US_ReportGui::US_ReportGui( US_ReportGMP *tmp_report ) : US_Widgets()
   sb_durat_mm ->setValue( (int)dhms_dur[ 2 ] );
   sb_durat_ss ->setValue( (int)dhms_dur[ 3 ] );
 
-  le_wvl      = us_lineedit( QString::number(report->wavelength),  0, true  );
+  //ALEXEY_NEW_REPORT: wvl
+  cb_wvl =  us_comboBox();
+  cb_wvl -> addItems( wvl_passed );
+  cb_wvl -> setCurrentIndex( init_index );
+  connect( cb_wvl,  SIGNAL( currentIndexChanged( int ) ),
+            this,   SLOT  ( changeWvl          ( int ) ) );
+  /////////////////////////////////////////////////////////////////////////////
+
+  pb_prev_wvl     = us_pushbutton(  tr( "previous" ), true, 0 );
+  pb_next_wvl     = us_pushbutton(  tr( "next"     ), true, 0 );
+  pb_prev_wvl     ->setIcon( US_Images::getIcon( US_Images::ARROW_LEFT ) );
+  pb_next_wvl     ->setIcon( US_Images::getIcon( US_Images::ARROW_RIGHT ) );
+
+  connect( pb_prev_wvl, SIGNAL( clicked    () ),
+	   this,        SLOT  ( wvl_prev   () ) );
+  connect( pb_next_wvl, SIGNAL( clicked    () ),
+	   this,        SLOT  ( wvl_next   () ) );
+  ////////////////////////////////////////////////////////////////////////////
+
+  pb_apply_all   = us_pushbutton(  tr( "Apply to all wvls" ), true, 0 );
+  connect( pb_apply_all, SIGNAL( clicked          () ),
+	   this,         SLOT  ( apply_all_wvls   () ) );
+
+
+  ////////////////////////////////////////////////////////////////////////////
   
   row = 0;
   params->addWidget( lb_tot_conc,       row,    0, 1, 2 );
   params->addWidget( le_tot_conc,       row,    3, 1, 2 );
   params->addWidget( lb_rmsd_limit,     row,    5, 1, 2 );
   params->addWidget( le_rmsd_limit,     row,    7, 1, 2 );
-  params->addWidget( lb_av_intensity,   row,    9, 1, 2 );
-  params->addWidget( le_av_intensity,   row++,  13, 1, 2 );
-
+  params->addWidget( lb_wvl,            row,    9, 1, 2 );
+  params->addWidget( cb_wvl,            row++,  13, 1, 2 );
   params->addWidget( lb_duration,       row,    0, 1, 2 );
   params->addLayout( lo_duratlay,       row,    3, 1, 2 );
-  params->addWidget( lb_wvl,            row,    9, 1, 2 );
-  params->addWidget( le_wvl,            row++,  13, 1, 2 );
+  params->addWidget( lb_av_intensity,   row,    5, 1, 2 );
+  params->addWidget( le_av_intensity,   row,    7, 1, 2 );
+  params->addWidget( pb_prev_wvl,       row,    9, 1, 2 );
+  params->addWidget( pb_next_wvl,       row++,  13, 1, 2 );
+  params->addWidget( pb_apply_all,      row++,  13, 1, 2 );
   
- 
   // int ihgt        = le_tot_conc->height();
   // QSpacerItem* spacer1 = new QSpacerItem( 20, 0.75*ihgt, QSizePolicy::Expanding );
   // params->setRowStretch( row, 1 );
@@ -96,6 +145,26 @@ US_ReportGui::US_ReportGui( US_ReportGMP *tmp_report ) : US_Widgets()
   topContainerWidget = new QWidget;
   topContainerWidget->setLayout( params );
   main->addWidget( topContainerWidget );
+
+  ////////////////////////////////////////////////////////////////////////////
+  if ( report_map_keys.size() == 1) //single-wvl
+    {
+      pb_prev_wvl  ->setEnabled( false );
+      pb_next_wvl  ->setEnabled( false );
+      pb_apply_all ->setEnabled( false );
+      
+      pb_prev_wvl  ->hide();
+      pb_next_wvl  ->hide();
+      pb_apply_all ->hide();
+
+      cb_wvl ->setEnabled( false );       
+    }
+
+  /////////////////////////////////////////////////////////////////////////////
+  if ( init_index == 0 )
+    pb_prev_wvl  ->setEnabled( false );
+  if ( (init_index + 1 ) == cb_wvl->count() )
+    pb_next_wvl  ->setEnabled( false );
   
   //main->addLayout( params );
 
@@ -154,7 +223,7 @@ void US_ReportGui::build_report_layout( void )
   genL->addWidget( lb_high,   row,    7, 1, 2 );
   genL->addWidget( lb_intval, row,    9, 1, 2 );
   genL->addWidget( lb_tol,    row,    11, 1, 2 );
-  genL->addWidget( lb_total,  row++,    13, 1, 2 );
+  genL->addWidget( lb_total,  row++,  13, 1, 2 );
   //End of table header
   
   QComboBox* cb_type;  
@@ -325,6 +394,7 @@ void US_ReportGui::update_report( void )
   //save Gui params to reportGMP structure
   gui_to_report();
 
+  /**
   //now ask if you want to apply all settings for current report to all other channels' reports
   QMessageBox msgBox;
   msgBox.setIcon(QMessageBox::Information);
@@ -347,7 +417,8 @@ void US_ReportGui::update_report( void )
   else if (msgBox.clickedButton() == Cancel)
     close();
     return;
-
+  *****/
+  
   close();
 }
 
@@ -476,14 +547,16 @@ void US_ReportGui::cancel_update( void )
   
   if ( msgBox.clickedButton() == Accept )
     {
-      //Send copy of the report to restore to original
-      qDebug() << "Sizes: report CHANGED,  report_original -- " << report->reportItems.size() << report_copy_original.reportItems.size();
+      // //Send copy of the report to restore to original
+      // qDebug() << "Sizes: report CHANGED,  report_original -- " << report->reportItems.size() << report_copy_original.reportItems.size();
       
-      report = &( report_copy_original );
+      // report = &( report_copy_original );
 
-      qDebug() << "Sizes: report RESTORED, report_original -- " << report->reportItems.size() << report_copy_original.reportItems.size();
-      qDebug() << "Report_copy_original.channel_name -- " << report_copy_original.channel_name;
-      emit cancel_changes( report_copy_original );
+      // qDebug() << "Sizes: report RESTORED, report_original -- " << report->reportItems.size() << report_copy_original.reportItems.size();
+      // qDebug() << "Report_copy_original.channel_name -- " << report_copy_original.channel_name;
+      // emit cancel_changes( report_copy_original );
+
+      emit cancel_changes( report_map_copy_original );
       close();
     }
   else if (msgBox.clickedButton() == Cancel)
@@ -567,4 +640,183 @@ int US_ReportGui::check_syntax( void )
     }
 
   return syntax_errors;
+}
+
+// Slot to select channel's wavelength     
+void US_ReportGui::changeWvl( int ndx )
+{
+  //Check for errors
+  int syntax_errors = check_syntax();
+  if ( syntax_errors != 0 )
+    {
+      QString mtitle_error    = tr( "Error" );
+      QString message_error   = QString( tr( "There are %1 syntax errors!"
+					     "\n\nPlease fix them (red fields) before proceeding..." ))
+	                        .arg( QString::number( syntax_errors ) );
+      QMessageBox::critical( this, mtitle_error, message_error );
+      return;
+    }
+  
+   //first, save all changes for current report under consideration:
+   gui_to_report();
+  
+   //cb_wvl->setCurrentIndex( ndx );
+   QString curr_wvl    = cb_wvl ->itemText( ndx );
+
+   qDebug() << "Current wvl -- " << curr_wvl;
+
+   //set current report to that corresponding to the new wvl:
+   this->report = report_map[ curr_wvl ];
+
+   //update upper portion of the Gui with the new values
+   le_tot_conc     -> setText( QString::number(report->tot_conc) );
+   le_rmsd_limit   -> setText( QString::number(report->rmsd_limit) );
+   le_av_intensity -> setText( QString::number(report->av_intensity) );
+   
+   QList< int > dhms_dur;
+   double exp_dur = report->experiment_duration;
+   US_RunProtocol::timeToList( exp_dur, dhms_dur );
+   sb_durat_dd ->setValue( (int)dhms_dur[ 0 ] );
+   sb_durat_hh ->setValue( (int)dhms_dur[ 1 ] );
+   sb_durat_mm ->setValue( (int)dhms_dur[ 2 ] );
+   sb_durat_ss ->setValue( (int)dhms_dur[ 3 ] );
+
+   //re-build genL layout ( lower portion, the reportItems )
+   build_report_layout( );
+   
+   //Next/Previous wvl btns
+   if ( ndx == 0 )
+     pb_prev_wvl->setEnabled( false );
+   else
+     pb_prev_wvl->setEnabled( true );
+   
+   if ( (ndx + 1) == cb_wvl->count() )
+     pb_next_wvl->setEnabled( false );
+   else
+     pb_next_wvl->setEnabled( true );
+    
+}
+
+// Slot to select next channel's wavelength     
+void US_ReportGui::wvl_next( void )
+{
+  //Check for errors
+  int syntax_errors = check_syntax();
+  if ( syntax_errors != 0 )
+    {
+      QString mtitle_error    = tr( "Error" );
+      QString message_error   = QString( tr( "There are %1 syntax errors!"
+					     "\n\nPlease fix them (red fields) before proceeding..." ))
+	                        .arg( QString::number( syntax_errors ) );
+      QMessageBox::critical( this, mtitle_error, message_error );
+      return;
+    }
+  ///////////////
+  
+  pb_prev_wvl ->setEnabled( true );
+  int row = cb_wvl->currentIndex() + 1;
+
+  if ( (row + 1 ) <= cb_wvl->count() )
+    {
+      cb_wvl->setCurrentIndex( row );
+      
+      if ( (row + 1 ) == cb_wvl->count() )
+	pb_next_wvl ->setEnabled( false );
+    }
+  else
+    pb_next_wvl->setEnabled( row < cb_wvl->count() );
+}
+
+// Slot to select previous channel's wavelength     
+void US_ReportGui::wvl_prev( void )
+{
+  //Check for errors
+  int syntax_errors = check_syntax();
+  if ( syntax_errors != 0 )
+    {
+      QString mtitle_error    = tr( "Error" );
+      QString message_error   = QString( tr( "There are %1 syntax errors!"
+					     "\n\nPlease fix them (red fields) before proceeding..." ))
+	                        .arg( QString::number( syntax_errors ) );
+      QMessageBox::critical( this, mtitle_error, message_error );
+      return;
+    }
+  ///////////////
+  
+  
+  pb_next_wvl ->setEnabled( true );
+  int row = cb_wvl->currentIndex() - 1;
+
+  if ( row  >= 0 )
+    {
+      cb_wvl->setCurrentIndex( row );
+      
+      if ( row == 0 )
+	pb_prev_wvl ->setEnabled( false );
+      
+    }
+  else
+    pb_prev_wvl ->setEnabled( false );
+}
+
+//Slot to apply current triple's settings to the rest of triples (wvls) in a channel
+void US_ReportGui::apply_all_wvls( void )
+{
+  //Check for errors
+  int syntax_errors = check_syntax();
+  if ( syntax_errors != 0 )
+    {
+      QString mtitle_error    = tr( "Error" );
+      QString message_error   = QString( tr( "There are %1 syntax errors!"
+					     "\n\nPlease fix them (red fields) before proceeding..." ))
+	                        .arg( QString::number( syntax_errors ) );
+      QMessageBox::critical( this, mtitle_error, message_error );
+      return;
+    }
+  ///////////////
+    
+  //now ask if you want to apply all settings for current report to all other channel's triples
+  QMessageBox msgBox;
+  msgBox.setIcon(QMessageBox::Information);
+  msgBox.setWindowTitle(tr("Apply to Other Channel's Triples"));
+  
+  QString msg_text      = QString("Do you want to apply current settings to all other triples?\n\n(Existing settings will be overwritten...)");
+  msgBox.setText( msg_text );
+    
+  QPushButton *Accept    = msgBox.addButton(tr("Yes"), QMessageBox::YesRole);
+  QPushButton *Cancel    = msgBox.addButton(tr("No"), QMessageBox::RejectRole);
+  msgBox.exec();
+  
+  if ( msgBox.clickedButton() == Accept )
+    {
+      qDebug() << "Applying report settigns to all --";
+
+      // apply gui params to current report structure:
+      gui_to_report();
+      
+      QString current_report_key = cb_wvl ->currentText();
+      qDebug() << "In apply_to_all: current_report_key, report->wavelength -- " << current_report_key << report->wavelength;  
+      //iterate over channel's triples:
+      QMap<QString, US_ReportGMP* >::iterator ri;
+      for ( ri = report_map.begin(); ri != report_map.end(); ++ri )
+	{
+	  if ( ri.key().contains( current_report_key ) )
+	    continue;
+	  
+	  report_map[ ri.key() ]->tot_conc            = report->tot_conc;
+	  report_map[ ri.key() ]->rmsd_limit          = report->rmsd_limit;
+	  report_map[ ri.key() ]->av_intensity        = report->av_intensity;
+	  report_map[ ri.key() ]->experiment_duration = report->experiment_duration;
+	  
+	  //Now go over reportItems:
+	  //1st, clear current array of reportItems:
+	  report_map[ ri.key() ]->reportItems.clear();
+	  
+	  for ( int ic = 0; ic < report->reportItems.size(); ++ic )
+	    report_map[ ri.key() ]->reportItems.push_back( report->reportItems[ ic ] );
+	}
+      
+    }
+  else if (msgBox.clickedButton() == Cancel)
+    return;
 }

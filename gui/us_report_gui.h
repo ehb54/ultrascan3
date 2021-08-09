@@ -17,14 +17,17 @@ class US_GUI_EXTERN US_ReportGui: public US_Widgets
       //! brief Report Gui. To 
       //! instantiate the class a calling function must
       //! provide the ID of the investigator.
-      US_ReportGui( US_ReportGMP* );
+      //! US_ReportGui( US_ReportGMP* );
+      US_ReportGui( QMap < QString, US_ReportGMP * > );
       ~US_ReportGui() {};
 
+      QMap < QString, US_ReportGMP * > report_map;
+      QMap < QString, US_ReportGMP  >  report_map_copy_original;
       US_ReportGMP*   report;
       US_ReportGMP    report_copy_original;
 
    signals:
-      void  cancel_changes       ( US_ReportGMP & );
+      void  cancel_changes       ( QMap <QString, US_ReportGMP> & );
       void  apply_to_all_reports ( US_ReportGMP* );
       
       
@@ -42,8 +45,11 @@ class US_GUI_EXTERN US_ReportGui: public US_Widgets
       QLineEdit*   le_tot_conc;
       QLineEdit*   le_rmsd_limit;
       QLineEdit*   le_av_intensity;
-      QLineEdit*   le_wvl;
-            
+      QComboBox*   cb_wvl;
+      QPushButton* pb_prev_wvl;
+      QPushButton* pb_next_wvl;
+      QPushButton* pb_apply_all;
+      
       //duration
       QSpinBox*    sb_durat_dd;
       QSpinBox*    sb_durat_hh;
@@ -67,6 +73,10 @@ class US_GUI_EXTERN US_ReportGui: public US_Widgets
      void add_row( void );
      void remove_row( void );
      void cancel_update( void );
+     void changeWvl ( int );                        
+     void wvl_prev  ( void );
+     void wvl_next  ( void );
+     void apply_all_wvls( void );
      
    public slots:
 };

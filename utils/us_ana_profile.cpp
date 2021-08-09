@@ -40,7 +40,11 @@ US_AnaProfile::US_AnaProfile()
    //Reports
    //US_ReportGMP report; 
    US_ReportGMP report = US_ReportGMP();
-   ch_reports[ chndescs_alt[0] ] = report;
+   //ch_reports[ chndescs_alt[0] ] = report;
+
+
+   //ALEXEY_NEW_REPORT:
+   ch_reports[ chndescs_alt[0] ] [ QString::number( wvl[ 0 ] ) ] = report;
 
    // //Report Ids/Guids qmaps
    // ch_report_guids[ chndescs_alt[0] ] = QString( "00000000-0000-0000-0000-000000000000" );
@@ -158,8 +162,28 @@ bool US_AnaProfile::toXml( QXmlStreamWriter& xmlo )
      
      //ALEXEY: Id or guid of the channel's report
      xmlo.writeAttribute    ( "chandesc_alt", chndescs_alt[ kk ]  );
-     xmlo.writeAttribute    ( "report_id",    QString::number( ch_report_ids[ chndescs_alt[ kk ] ]  ));
-     xmlo.writeAttribute    ( "report_guid",  ch_report_guids[ chndescs_alt[ kk ] ]  );
+
+     //ALEXEY_NEW_REPORT:
+     // iterate over all channel's reportIDs [i]:
+     // "report_id" && "report_guid" will now be strings like "100,101,102,.."
+     // ch_report_ids[ chndescs_alt[ kk ] ]   [ i ], where i is for QList < int >, a list of reportIDs...
+     // ch_report_guids[ chndescs_alt[ kk ] ] [ i ]
+
+     QList < int > reportIDs   =  ch_report_ids[ chndescs_alt[ kk ] ];
+     QStringList   reportIDs_list;
+     QStringList   reportGUIDs_list =  ch_report_guids[ chndescs_alt[ kk ] ];
+
+     for ( int ri = 0; ri < reportIDs.size(); ++ri )
+       reportIDs_list   << QString::number( reportIDs[ ri ] );
+
+     QString reportIDs_string   = reportIDs_list.join(",");
+     QString reportGUIDs_string = reportGUIDs_list.join(",");
+     
+     xmlo.writeAttribute    ( "report_id",   reportIDs_string   );
+     xmlo.writeAttribute    ( "report_guid", reportGUIDs_string );
+
+     // xmlo.writeAttribute    ( "report_id",    QString::number( ch_report_ids[ chndescs_alt[ kk ] ]  ));
+     // xmlo.writeAttribute    ( "report_guid",  ch_report_guids[ chndescs_alt[ kk ] ]  );
      
      xmlo.writeEndElement();
      // channel_parms
@@ -247,8 +271,24 @@ bool US_AnaProfile::fromXml( QXmlStreamReader& xmli )
 
 	    QString channel_alt_desc = attr.value( "chandesc_alt" ).toString();
 	    chndescs_alt  << channel_alt_desc;
-	    ch_report_ids[ channel_alt_desc ]   = attr.value( "report_id" ).toString().toInt();
-	    ch_report_guids[ channel_alt_desc ] = attr.value( "report_guid" ).toString();
+
+	    //ALEXEY_NEW_REPORT:
+	    // attr.value( "report_id" ).toString() will be something like "101,102,103,.."
+	    // transform this string into QList < int >
+	    // insert this QList into ch_report_ids[ channel_alt_desc ]
+
+	    QString reportIDs_string   = attr.value( "report_id" ).toString();
+	    QString reportGIUDs_string = attr.value( "report_guid" ).toString();
+
+	    QStringList reportIDs_list   = reportIDs_string.split(",");
+	    QStringList reportGIUDs_list = reportGIUDs_string.split(",");
+
+	    QList < int > reportIDs_qlist;
+	    for( int ri=0; ri<reportIDs_list.size(); ++ri )
+	      reportIDs_qlist.push_back ( reportIDs_list[ ri ].toInt() );
+	    
+	    ch_report_ids[ channel_alt_desc ]   = reportIDs_qlist;
+	    ch_report_guids[ channel_alt_desc ] = reportGIUDs_list;
 //3-------------------------------------------------------------------------->80
             chx++;
 //qDebug() << "AP:fX:  chx" << chx << pchans.count();

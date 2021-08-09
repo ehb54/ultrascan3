@@ -64,6 +64,8 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       QGroupBox *createGroup( QString &, QList< double > &);
 
       QSignalMapper  *signalMapper;
+
+ 
             
    private:
       US_AnalysisProfileGui* mainw;   // Parent to all panels
@@ -111,7 +113,13 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       QList< QCheckBox* >    ck_mwv;
       QList< QScrollArea* >  gr_mwvbox;
 
-      QMap< QString, US_ReportGMP > internal_reports; 
+      //QMap< QString, US_ReportGMP > internal_reports; 
+      //ALEXEY_NEW_REPORT:
+      QMap< QString, QMap < QString, US_ReportGMP > > internal_reports; 
+
+      // TESTING
+      QMap< QString, QMap < QString, US_ReportGMP* > > report_map;
+      
       
       int row_global;
       
@@ -139,7 +147,7 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       void  lvtol_text_changed ( void );
       void  daend_text_changed ( void );
       void  applied_to_all     ( void );
-      void  restore_report         ( US_ReportGMP &  );
+      void  restore_report         ( QMap < QString, US_ReportGMP> &  );
       void  apply_to_other_reports ( US_ReportGMP *  );
       
  signals:

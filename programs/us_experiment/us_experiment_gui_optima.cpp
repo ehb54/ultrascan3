@@ -4960,19 +4960,45 @@ void US_ExperGuiUpload::saveReports( US_AnaProfile* aprof )
   
 
   //Iterate over Reports 
-  QMap<QString, US_ReportGMP>::iterator ri;
+  //QMap<QString, US_ReportGMP>::iterator ri;
+
+  //ALEXEY_NEW_REPORT:
+  QMap< QString, QMap < QString, US_ReportGMP > >::iterator ri;
+  
   for ( ri = aprof->ch_reports.begin(); ri != aprof->ch_reports.end(); ++ri )
     {
-      //Generate new Report GuiID:
-      //if ( aprof->ch_report_guids [ ri.key() ].startsWith( "0000" ) )
-      aprof->ch_report_guids [ ri.key() ] = US_Util::new_guid();
+      //ALEXEY_NEW_REPORT:
+      // now will be a cycle over channel's wvls:
+      // ri.value() IS a QMap < QString( wvl ), US_ReportGMP >
+      // iterate over this QMap's keys() == wavelengths
+      // aprof->ch_report_ids[ ri.key() ][ i ] = reportID;
+      // //Generate new Report GuiID:
+      // aprof->ch_report_guids [ ri.key() ] = US_Util::new_guid();
 
-
-      //Return new Report ID from DB insertion:
-      int reportID = writeReportToDB( aprof->ch_report_guids[ ri.key() ], ri.value() );
-      aprof->ch_report_ids[ ri.key() ] = reportID;
+      QString chan_desc = ri.key();
+      QList< int > ch_reportIDs;
+      QStringList  ch_reportGUIDs;
       
-      qDebug() << "Report ID/GUID: channel -- " << ri.key() << ": " << aprof->ch_report_ids[ ri.key() ] << " / " << aprof->ch_report_guids[ ri.key() ];
+      QMap < QString, US_ReportGMP > triple_reports = ri.value();
+      QMap < QString, US_ReportGMP >::iterator tri;
+      for ( tri = triple_reports.begin(); tri != triple_reports.end(); ++tri )
+	{
+	  QString curr_guid = US_Util::new_guid();
+	  ch_reportGUIDs << curr_guid;
+
+	  //Return new Report ID from DB insertion:
+	  int reportID = writeReportToDB( curr_guid, tri.value() );
+	  ch_reportIDs.push_back( reportID );
+	  
+	  qDebug() << "Report ID/GUID: triple -- "
+		   << ri.key() << ": " << tri.key()
+		   << " -- " << reportID << " / "
+		   << curr_guid;
+	}
+
+      //now, insert reportIDs && reportGUIDs for current channel:
+      aprof->ch_report_guids [ chan_desc ] = ch_reportGUIDs;
+      aprof->ch_report_ids   [ chan_desc ] = ch_reportIDs;
     }
 }
 

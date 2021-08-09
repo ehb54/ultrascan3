@@ -307,6 +307,21 @@ void US_AnaprofPanGen::initPanel()
 use_db=false;
 #endif
 
+
+//TESTING
+   QMap < QString, US_ReportGMP* > ch_report_map;
+   US_ReportGMP* reportGMP_1 = new US_ReportGMP();
+   US_ReportGMP* reportGMP_2 = new US_ReportGMP();
+   US_ReportGMP* reportGMP_3 = new US_ReportGMP();
+   US_ReportGMP* reportGMP_4 = new US_ReportGMP();
+   ch_report_map.insert ( QString( "280" ), reportGMP_1 ); 
+   ch_report_map.insert ( QString( "290" ), reportGMP_2 );
+   ch_report_map.insert ( QString( "300" ), reportGMP_3 ); 
+   ch_report_map.insert ( QString( "310" ), reportGMP_4 );
+
+//END of TESTING
+ 
+ 
  
    // Populate GUI settings from protocol,analysis controls
    le_protname   ->setText( currProf->protoname );
@@ -393,6 +408,7 @@ DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.cou
 
    //Clear internal_reports QMap
    internal_reports.clear();
+   
  
    if ( le_lcrats.count() == nchan )
    { // Reset General channel parameter gui elements
@@ -473,12 +489,40 @@ DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.cou
 	 //QString chdesc_alt = currProf->chndescs_alt[ kk ];
 	 QString chdesc_alt = chndescs_alt_copy[ ii ]; 
 	 qDebug() << "US_AnaprofPanGen::initPanel(): chdesc_alt " << chdesc_alt;
-	 internal_reports[ chdesc_alt ] = currProf->ch_reports[ chdesc_alt ];
+
+	 //ALEXEY_NEW_REPORT: there will be cycle over wvls:
+	 // QList of currProf->ch_wvls[ chdesc_alt ] -> current_wvl:
+	 // internal_reports[ chdesc_alt ][ wvl ] = currProf->ch_reports[ chdesc_alt ] [ wvl ];
+
+	 //TESTING
+	 //report_map[ chdesc_alt ] = ch_report_map;
+	 //END_OF_TESTING
+
+	 QList < double > ch_wavelengths = currProf->ch_wvls[ chdesc_alt ];
+	 for ( int w=0; w<ch_wavelengths.size(); ++w )
+	   {
+	     QString curr_w = QString::number ( ch_wavelengths[ w ] );
+	     internal_reports[ chdesc_alt ][ curr_w ] = currProf->ch_reports[ chdesc_alt ] [ curr_w ];
+	     internal_reports[ chdesc_alt ][ curr_w ].wavelength = ch_wavelengths[ w ];
+
+	     qDebug() << "US_AnaprofPanGen::initPanel(): ch_wavelengths[ w ] --  " << ch_wavelengths[ w ];
+	   }
+	 
+	 //internal_reports[ chdesc_alt ] = currProf->ch_reports[ chdesc_alt ];
 	 qDebug() << "US_AnaprofPanGen::initPanel(): internal_reports[ chdesc_alt ].size() -- " << internal_reports.size();
-	 internal_reports[ chdesc_alt ].wavelength = currProf->wvl_edit[ kk ];
-	 qDebug() << "US_AnaprofPanGen::initPanel(): internal_reports[ chdesc_alt ].wavelength, currProf->wvl_edit.size() -- "
-		  << internal_reports[ chdesc_alt ].wavelength
-		  << currProf->wvl_edit.size();
+	 qDebug() << "US_AnaprofPanGen::initPanel(): internal_reports[ chdesc_alt ][ QString::number ( ch_wavelengths[ 0 ] )] -- "
+		  << internal_reports[ chdesc_alt ][ QString::number ( ch_wavelengths[ 0 ] )].tot_conc
+		  << internal_reports[ chdesc_alt ][ QString::number ( ch_wavelengths[ 0 ] )].wavelength;
+
+	 // //ALEXEY_NEW_REPORT: this .wavelength needs to be properly set for each triple
+	 // internal_reports[ chdesc_alt ].wavelength = currProf->wvl_edit[ kk ];
+	 // qDebug() << "US_AnaprofPanGen::initPanel(): internal_reports[ chdesc_alt ].wavelength, currProf->wvl_edit.size() -- "
+	 // 	  << internal_reports[ chdesc_alt ].wavelength
+	 // 	  << currProf->wvl_edit.size();
+
+	 ///////////////////////////////////////////////////////////
+	 
+	 
 
 	 //Also, important to re-insert correct-order chndescs_alt!!!
 	 currProf->chndescs_alt[ ii ] = chdesc_alt;
@@ -667,8 +711,27 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 	 //ALEXEY: also save ReportGMP per channel
 	 QString chdesc_alt = currProf->chndescs_alt[ ii ];
 	 qDebug() << "US_AnaprofPanGen::savePanel(): chdesc_alt -- " << chdesc_alt;
-	 currProf->ch_reports[ chdesc_alt ] = internal_reports[ chdesc_alt ]; 
+	 
+	 //ALEXEY_NEW_REPORT: will be a cycle over wvl
+	 // QMap internal_reports[ chdesc_alt ]:: keys(); --> all channel's wvls
+	 // currProf->ch_reports[ chdesc_alt ] [ wvl ] = internal_reports[ chdesc_alt ][ wvl ]; 
+	 QList < QString > ch_wavelengths = internal_reports[ chdesc_alt ].keys();
+	 qDebug() << "internal_reports[ chdesc_alt ].keys()   -- " << internal_reports[ chdesc_alt ].keys();
+	 qDebug() << "internal_reports[ chdesc_alt ][ ch_wavelengths[0] ] -- "
+		  << internal_reports[ chdesc_alt ][ ch_wavelengths[0] ].tot_conc
+		  << internal_reports[ chdesc_alt ][ ch_wavelengths[0] ].wavelength;
+	 
+	 for ( int w=0; w<ch_wavelengths.size(); ++w )
+	   {
+	     QString curr_w = ch_wavelengths[ w ];
+	     qDebug() << "curr_w -- " << curr_w;
 
+	     currProf->ch_reports[ chdesc_alt ][ curr_w ] = internal_reports[ chdesc_alt ][ curr_w ];
+	     qDebug() << "After insertion..";
+	   }
+	 
+	 //currProf->ch_reports[ chdesc_alt ] = internal_reports[ chdesc_alt ];	 
+	 
 	 // //ALEXEY: fill QMap relating chdesc_alt to future reportID or reportGUID
 	 // currProf->ch_report_ids[ chdesc_alt ]   = 0;
 	 // currProf->ch_report_guids[ chdesc_alt ] = QString( "00000000-0000-0000-0000-000000000000" );
