@@ -581,7 +581,7 @@ DbgLv(1) << "CGui: reset complete";
    // // /*********************************************************************************/
 
    
-   // import_data_auto( protocol_details ); 
+   //import_data_auto( protocol_details ); 
    
 
    qDebug() << "US_CONVERT: SET !"; 
@@ -5276,7 +5276,7 @@ bool US_ConvertGui::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
 			
 			//Read what reportID corresponds to channel:
 			if ( attr.hasAttribute("report_id") )
-			  channels_report[ channel_name ] = bool_flag( attr.value( "report_id" ).toString() );
+			  channels_report[ channel_name ] = attr.value( "report_id" ).toString();
 			
 			//Read what triple selected for editing:
 			if ( attr.hasAttribute("wvl_edit") )
@@ -5290,7 +5290,7 @@ bool US_ConvertGui::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
 			
 			//Read what reportID corresponds to channel:
 			if ( attr.hasAttribute("report_id") )
-			  channels_report[ channel_name ] = bool_flag( attr.value( "report_id" ).toString() );
+			  channels_report[ channel_name ] = attr.value( "report_id" ).toString();
 			
 			//Read what triple selected for editing:
 			if ( attr.hasAttribute("wvl_edit") )
@@ -5607,7 +5607,79 @@ void US_ConvertGui::saveUS3( void )
   if ( us_convert_auto_mode )
     {
       qDebug() << "START treating dropped channels/triples && updating autoflowReports: ";
+
+      // Determine if we are using the database
+      US_Passwd pw;
+      QString masterPW = pw.getPasswd();
+      US_DB2 dbP( masterPW );
       
+      if ( dbP.lastErrno() != US_DB2::OK )
+	{
+	  QMessageBox::warning( this, tr( "Connection Problem" ),
+				tr( "Could not connect to database: \n" ) + dbP.lastError() );
+	  return;
+	}
+
+      // First, create a QMap relating excluded triples' tripleDesc and reportIDs:
+      QMap<QString,QString> excluded_triple_to_reportID; 
+      QMap<QString, QString>::iterator chan_rep;
+      for ( chan_rep = channels_report.begin(); chan_rep != channels_report.end(); ++chan_rep )
+	{
+	  QString chan_key  = chan_rep.key();
+	  QString reportIDs = chan_rep.value();
+	  qDebug() << "Channel name -- " << chan_key << ", reportIDs -- " << reportIDs;
+
+	  QStringList reportIDs_list = reportIDs.split(",");
+	  for (int i=0; i<reportIDs_list.size(); ++i)
+	    {
+	      QString rID = reportIDs_list[i];
+	      QString Wavelength;
+
+	      QStringList qry;
+	      qry << "get_report_info_by_id" << rID;
+	      dbP.query( qry );
+  
+	      if ( dbP.lastErrno() == US_DB2::OK )      
+		{
+		  while ( dbP.next() )
+		    {
+		      Wavelength  = dbP.value( 5 ).toString();
+		    }
+		}
+
+	      //Now that we know triple-report's channel name && wavelength, go over excluded triples and update corresponding autoflowReport records.. 
+	      for ( int trx = 0; trx < all_tripinfo.count(); trx++ )
+		{
+		  if ( all_tripinfo[ trx ].excluded )
+		    {
+		      QString triple_desc   = all_tripinfo[ trx ].tripleDesc;
+		      triple_desc.replace(" / ","");
+		      qDebug() << "Dropped triple -- " << triple_desc << "; Report's channel & Wvl " <<  chan_key << " & " << Wavelength;
+
+		      if ( triple_desc.contains( chan_key ) && triple_desc.contains( Wavelength ) && !Wavelength.isEmpty() )
+			{
+			  //Update 'tripleDropped' to 'YES' in autoflowReport record for reportID == rID:
+
+			  qry.clear();
+			  qry << "update_autoflow_report_at_import"
+			      << rID
+			      << QString("YES");
+
+			  qDebug() << "Updating autoflowReport record: query, rID -- " << qry << rID;
+			  dbP.query( qry );
+			}
+		    }
+		}
+	    }
+	  
+	}
+
+      /***************************************************************/
+      //return; //for testing!!!
+
+
+      
+      /**********  OLD way to treat autoflowReports per channel basis:
       QMap<QString, bool>::iterator dr;
       for ( dr = channels_to_drop.begin(); dr != channels_to_drop.end(); ++dr )
 	{
@@ -5705,7 +5777,7 @@ void US_ConvertGui::saveUS3( void )
 	}
             
       //return; //for testing!!!
-      ///
+      ***************************************************************************************************/
     }
   /////////////////////////////
   
