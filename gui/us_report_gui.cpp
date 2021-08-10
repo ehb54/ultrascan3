@@ -30,8 +30,12 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
   for ( int i=0; i < report_map_keys.size(); ++i )
     wvl_passed << report_map_keys[ i ];
 
-  qDebug() << "Wvl_passed to ReportGui -- " << wvl_passed;
+  qDebug() << "Size of report_map_keys -- " << report_map_keys.size();
+  qDebug() << "Wvl_passed to ReportGui -- " << wvl_passed << ", wvl_passed[0].toInt() -- " << wvl_passed[0].toInt();
 
+  if ( wvl_passed.size() == 1 && !wvl_passed[0].toInt() )
+    wvl_passed.clear();
+  
   int init_index = 0; // 1st in a QMap;
     
   this->report               = report_map[ report_map_keys[ init_index ] ]; 

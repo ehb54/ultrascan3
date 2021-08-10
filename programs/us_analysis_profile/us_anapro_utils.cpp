@@ -457,8 +457,8 @@ DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.cou
 
 	 
 	 DbgLv(1) << "APGe: inP:    ii kk" << ii << kk << "chann" << sl_chnsel[kk] << "lvtol daend dae[kk]"
-	 << currProf->lv_tolers[ii] << currProf->data_ends[ii] << currProf->data_ends[kk]
-	 << "currProf->analysis_run[ ii] currProf->analysis_run[ kk ]" << currProf->analysis_run[ ii ] << currProf->analysis_run[ kk ];
+		  << currProf->lv_tolers[ii] << currProf->data_ends[ii] << currProf->data_ends[kk]
+		  << "currProf->analysis_run[ ii] currProf->analysis_run[ kk ]" << currProf->analysis_run[ ii ] << currProf->analysis_run[ kk ];
 
        
 	 //ALEXEY: also set info on wvl for edit 
