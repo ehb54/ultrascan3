@@ -3144,7 +3144,7 @@ DbgLv(1) << "EGSo:  nholes mxrow" << nholes << mxrow;
       genL->addWidget( pb_comm, row++,  5, 1, 1 );
 
       cb_solu->addItems( sonames );
-
+      
       connect( pb_comm, SIGNAL( clicked()           ),
                this,    SLOT  ( addComments()       ) );
 
@@ -3180,6 +3180,19 @@ DbgLv(1) << "EGSo:  nholes mxrow" << nholes << mxrow;
 
 DbgLv(1) << "EGSo:main: call initPanel()";
    initPanel();
+}
+
+//Function to clear solution's comment when colution changed
+void US_ExperGuiSolutions::changeSolu ( int ind )
+{
+   QObject* sobj       = sender();      // Sender object
+   QString oname       = sobj->objectName();
+   int irow            = oname.section( ":", 0, 0 ).toInt();
+
+   qDebug() << "Solution: oname, irow -- " << oname << irow;
+
+   manual_comment[ QString::number( irow ) ] = QString("");
+   //rpSolut->chsols[ irow ].ch_comment = QString("");
 }
 
 // Function to rebuild the Solutions protocol after Cells change

@@ -451,6 +451,7 @@ class US_ExperGuiSolutions : public US_WidgetsDialog
 
       QMap <int, bool> solution_comment_init;
       int      mxrow;                           // Max rows (24)
+      //QVector< QComboBox* >    cc_solus;        // Solution choice pointers
       
    private:
       US_ExperimentMain*   mainw;
@@ -496,6 +497,8 @@ class US_ExperGuiSolutions : public US_WidgetsDialog
       // \brief Rebuild the solution part of the current run protocol
       void rebuild_Solut     ( void );
       void regenSolList      ( void );
+
+      void changeSolu        ( int );
 };
 
 

@@ -392,8 +392,14 @@ DbgLv(1) << "main:  Ce:iP:";
 DbgLv(1) << "main:  So:iP:";
    epanSolutions->initPanel();
    for ( int ii = 0; ii < epanSolutions->mxrow; ii++ )    //ALEXEY: reset channel comment while protocol re-loaded
-     epanSolutions->solution_comment_init[ ii ] = false;
+     {
+       epanSolutions->solution_comment_init[ ii ] = false;
 
+       // QComboBox*   cb_solution =   epanSolutions->cc_solus[ ii ];
+       // cb_solution->disconnect( SIGNAL( currentIndexChanged( int ) ) );
+
+     }
+   
 DbgLv(1) << "main:  Op:iP:";
    epanOptical  ->initPanel();
 DbgLv(1) << "main:  Rn:iP:";
@@ -1752,6 +1758,16 @@ DbgLv(1) << "EGSo:inP: call rbS";
       cc_comms[ ii ]->setVisible( false );
    }
 DbgLv(1) << "EGSo:inP: mxrow" << mxrow << "labls count" << cc_labls.count();
+
+
+//ALEXEY: connect changeSolu slot here:
+ for ( int ii = 0; ii < mxrow; ii++ )
+   {
+     QComboBox*   cb_solution = cc_solus[ ii ];
+     connect( cb_solution,  SIGNAL( currentIndexChanged( int ) ),
+	      this,         SLOT  ( changeSolu         ( int ) ) );
+      
+   }
 }
 
 // Save panel controls when about to leave the panel
@@ -1850,6 +1866,15 @@ DbgLv(1) << "EGSo: svP: nchanf" << nchanf << "nchant" << nchant;
 DbgLv(1) << "EGSo: svP: nuniqs" << nuniqs;
 DbgLv(1) << "EGSo: svP:  solus" << solus;
 DbgLv(1) << "EGSo: svP:  sids " << sids;
+
+//ALEXEY: disconnect changeSolu slot here:
+ for ( int ii = 0; ii < mxrow; ii++ )
+   {
+     QComboBox*   cb_solution = cc_solus[ ii ];
+     cb_solution->disconnect();
+      
+   }
+ 
 }
 
 // Get a specific panel value
