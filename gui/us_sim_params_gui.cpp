@@ -357,7 +357,7 @@ US_SimParamsGui::US_SimParamsGui(
          .arg( DEGC ) );
    main->addWidget( lb_temperature,  row, 4, 1, 3 );
 
-   cnt_temperature    = us_counter( 3, 10.0, 40.0, NORMAL_TEMP );
+   cnt_temperature    = us_counter( 3, 2.0, 40.0, NORMAL_TEMP );
    cnt_temperature->setSingleStep    ( 0.1 );
    cnt_temperature->setIncSteps( QwtCounter::Button1,   1 );
    cnt_temperature->setIncSteps( QwtCounter::Button2,  10 );
