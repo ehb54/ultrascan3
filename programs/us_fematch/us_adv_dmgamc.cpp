@@ -77,7 +77,8 @@ US_AdvDmgaMc::US_AdvDmgaMc( US_Model* amodel,
    ls_params << tr( "Reaction 1 k_off Rate:" );
    cb_params->addItems( ls_params );
 
-   ct_modelnbr  = us_counter( 2, 1,  50,     1 );
+   ct_modelnbr  = us_counter( 2, 1,  imodels.size(),     1 );
+//ct_modelnbr  = us_counter( 2, 1,  1000,     1 );
 
    QLabel* lb_ms_mean   = us_label(  tr( "Mean" ) );
    QLabel* lb_ms_95lo   = us_label(  tr( "95% Conf.Low" ) );
