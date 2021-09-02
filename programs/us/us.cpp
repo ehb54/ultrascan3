@@ -530,9 +530,17 @@ void US_Win::closeProcs( void )
   QString closeText = tr( "&Close Gracefully" );
   QString leaveText = tr( "&Leave Running" );
 
-  QPushButton* kill  = box.addButton( killText , QMessageBox::YesRole );
-                       box.addButton( closeText, QMessageBox::YesRole );
-  QPushButton* leave = box.addButton( leaveText, QMessageBox::NoRole  );
+  QPushButton* close = box.addButton( closeText, QMessageBox::YesRole );
+  QPushButton* kill  = box.addButton( killText , QMessageBox::NoRole );
+  QPushButton* leave = box.addButton( leaveText, QMessageBox::NoRole );
+
+  close->setToolTip( tr( "Close all descendent processes in a graceful way." ) );
+  kill ->setToolTip( tr( "Do a hard kill of the process(es), especially when"
+                         " a 'Close Gracefully' did not work." ) );
+  leave->setToolTip( tr( "Exit the main 'us' window, but leave the"
+                         " dependent processes running." ) );
+
+  box.setDefaultButton( close );
 
   box.exec();
 
