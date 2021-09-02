@@ -522,13 +522,14 @@ void US_Win::closeProcs( void )
   
   QMessageBox box;
   box.setWindowTitle( tr( "Attention" ) );
-  box.setText( QString( tr( "The following process%1 still running:\n%2"
-                            "Do you want to close %3?" )
+  box.setText( QString( tr( "The following process%1 still active:\n\n%2"
+                            "\nYou can leave %3 open or close %3.\n"
+                            "If a program is unresponsive, you can terminate it." )
                              .arg( isAre ).arg( names ).arg( itThem ) ) );
 
-  QString killText  = tr( "&Kill" );
-  QString closeText = tr( "&Close Gracefully" );
-  QString leaveText = tr( "&Leave Running" );
+  QString leaveText = tr( "&Leave open" );
+  QString closeText = tr( "&Close" );
+  QString killText  = tr( "&Terminate" );
 
   QPushButton* close = box.addButton( closeText, QMessageBox::YesRole );
   QPushButton* kill  = box.addButton( killText , QMessageBox::NoRole );
