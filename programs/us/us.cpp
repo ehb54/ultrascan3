@@ -535,11 +535,9 @@ void US_Win::closeProcs( void )
   QPushButton* kill  = box.addButton( killText , QMessageBox::NoRole );
   QPushButton* leave = box.addButton( leaveText, QMessageBox::NoRole );
 
-  close->setToolTip( tr( "Close all descendent processes in a graceful way." ) );
-  kill ->setToolTip( tr( "Do a hard kill of the process(es), especially when"
-                         " a 'Close Gracefully' did not work." ) );
-  leave->setToolTip( tr( "Exit the main 'us' window, but leave the"
-                         " dependent processes running." ) );
+  close->setToolTip( tr( "Close the process normally" ) );
+  kill ->setToolTip( tr( "When process appears to be stuck" ) );
+  leave->setToolTip( tr( "Leave the process running" ) );
 
   box.setDefaultButton( close );
 
