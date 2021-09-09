@@ -117,28 +117,48 @@ void Link::serverDisconnect(void)
 
 void Link::rx(void)
 {
-  connected_itself = true;
+   connected_itself = true;
 
-  //qDebug() << "In LINK: ready to read: connected_itself " << connected_itself;
-  
-  QByteArray response_data = server.readAll();
-  QJsonDocument json = QJsonDocument::fromJson(response_data);
-  
-  QJsonObject rootObj = json.object();
+   //qDebug() << "In LINK: ready to read: connected_itself " << connected_itself;
 
-  elapsedTime = rootObj["elapsedTime"].toString();
-  omega2T     = rootObj["omega2T"].toString();
-  rpm         = rootObj["speed"].toString();
-  temperature = rootObj["temperature"].toString();
-  vacuum      = rootObj["vacuum"].toString();
-  current_stage = rootObj["stage"].toString().split("/")[0];
-  tot_stages  = rootObj["stage"].toString().split("/")[1];
-  running_scans = rootObj["Running scan"].toString();
-  tot_scans   = rootObj["Total scans"].toString();
-  
-  
-  
-  //qDebug() << rootObj["elapsedTime"].toString() << rootObj["omega2T"].toString() << rootObj["speed"].toString() << rootObj["temperature"].toString();
-	
-  //QTextStream(stdout) << server.readAll();
+   QByteArray response_data = server.readAll();
+   // optima sometimes returns 0xFF for the board
+   response_data.replace( '\xff', ' ' );
+   QJsonParseError parseerror;
+   QJsonDocument json = QJsonDocument::fromJson(response_data, &parseerror );
+   if ( parseerror.error ) {
+      qDebug() << "Link::rx() json parse error " << parseerror.errorString() << "\n";
+      qDebug() << "Link::rx() response_data " << response_data;
+   } else {
+      QJsonObject rootObj = json.object();
+
+      if (
+          rootObj.contains("elapsedTime") &&
+          rootObj.contains("omega2T") &&
+          rootObj.contains("speed") &&
+          rootObj.contains("temperature") &&
+          rootObj.contains("vacuum") &&
+          rootObj.contains("stage") &&
+          rootObj.contains("Running scan") &&
+          rootObj.contains("Total scans")
+          ) {
+
+         elapsedTime = rootObj["elapsedTime"].toString();
+         omega2T     = rootObj["omega2T"].toString();
+         rpm         = rootObj["speed"].toString();
+         temperature = rootObj["temperature"].toString();
+         vacuum      = rootObj["vacuum"].toString();
+         current_stage = rootObj["stage"].toString().split("/")[0];
+         tot_stages  = rootObj["stage"].toString().split("/")[1];
+         running_scans = rootObj["Running scan"].toString();
+         tot_scans   = rootObj["Total scans"].toString();
+      } else {
+         qDebug() << "Link::rx() received incorrect json\n";
+         qDebug() << "Link::rx() response_data " << response_data;
+      }
+   }
+
+   //qDebug() << rootObj["elapsedTime"].toString() << rootObj["omega2T"].toString() << rootObj["speed"].toString() << rootObj["temperature"].toString();
+
+   //QTextStream(stdout) << server.readAll();
 }
