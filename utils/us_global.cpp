@@ -7,7 +7,6 @@
 #include <unistd.h>
 #endif
 
-
 #if !defined( Q_OS_WIN ) && !defined( Q_OS_MACOS )
 # include <set>
 # include <csignal>
@@ -18,7 +17,6 @@
 static std::set < QSharedMemory * > last_shared_memory;
 static bool shutdown_signal_handler_installed = false;
 static size_t sizeof_global;
-
 
 static void shm_post_routine() {
    qDebug() << "US_Global: detaching shared memory";
@@ -54,7 +52,6 @@ static void shutdown_signal_handler( int signal_num ) {
    exit(-signal_num);
 }
 #endif
-
 
 US_Global::US_Global()
 {
