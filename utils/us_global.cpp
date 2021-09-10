@@ -7,6 +7,52 @@
 #include <unistd.h>
 #endif
 
+#if !defined( Q_OS_WIN ) && !defined( Q_OS_MACOS )
+# include <set>
+# include <csignal>
+
+// shared memory shutdown
+// we need to keep used shared memory segments to properly detatch on a OS signal shutdown
+
+static std::set < QSharedMemory * > last_shared_memory;
+static bool shutdown_signal_handler_installed = false;
+static size_t sizeof_global;
+
+static void shm_post_routine() {
+   qDebug() << "US_Global: detaching shared memory";
+   if ( last_shared_memory.size() ) {
+      for ( auto it = last_shared_memory.begin();
+            it != last_shared_memory.end();
+            ++it ) {
+         if ( (*it)->isAttached() ) {
+            // qDebug() << "Detaching QSharedMemory";
+            (*it)->detach();
+         }
+      }
+   } else {
+      // qDebug() << "No QSharedMemory to detach";
+   }
+   // create again for good cleanup (otherwise seems to leave semaphore and temp file for semaphore)
+   {
+      QSharedMemory sharedMemory;
+# ifndef Q_OS_WIN
+      // Make the key specific to the uid
+      QString key = QString( "UltraScan%1" ).arg( getuid() );
+# else
+      QString key = QString( "UltraScan" );
+# endif
+      sharedMemory.setKey( key );
+      sharedMemory.create( sizeof_global );
+   }
+}
+   
+static void shutdown_signal_handler( int signal_num ) {
+   qDebug() << "US_Global: Caught signal '" << signal_num << "'. Exiting.";
+   shm_post_routine();
+   exit(-signal_num);
+}
+#endif
+
 US_Global::US_Global()
 {
   valid      = false;
@@ -18,6 +64,38 @@ US_Global::US_Global()
   QString key = QString( "UltraScan%1" ).arg( getuid() );
 #else
   QString key = QString( "UltraScan" );
+#endif
+
+#if !defined( Q_OS_WIN ) && !defined( Q_OS_MACOS )
+  // install signal handler to properly clean up shared memory
+  // qDebug() << "US_Global::signal handler check";
+  sizeof_global = sizeof global;
+  if ( !shutdown_signal_handler_installed ) {
+     std::set < int > sigs = {
+                              SIGABRT
+                              ,SIGALRM
+                              ,SIGFPE
+                              ,SIGHUP
+                              ,SIGILL
+                              ,SIGINT
+                              ,SIGPIPE
+                              ,SIGQUIT
+                              ,SIGSEGV
+                              ,SIGTERM
+                              ,SIGUSR1
+                              ,SIGUSR2
+     };
+     for ( auto it = sigs.begin();
+           it != sigs.end();
+           ++it ) {
+        signal( *it, shutdown_signal_handler );
+     }
+     shutdown_signal_handler_installed = true;    
+     qDebug() << "US_Global: shutdown signal handler installed";
+  }
+  last_shared_memory.insert( &sharedMemory );
+  // qDebug() << "US_Global::inserted shared memory";
+  qAddPostRoutine( shm_post_routine );
 #endif
 
   sharedMemory.setKey( key );
@@ -81,6 +159,11 @@ US_Global::~US_Global()
 {
   sharedMemory.detach();
   if ( deleteFlag ) sharedMemory.deleteLater();
+#if !defined( Q_OS_WIN ) && !defined( Q_OS_MACOS )
+  if ( last_shared_memory.count( &sharedMemory ) ) {
+    last_shared_memory.erase( &sharedMemory );
+  }
+#endif
 }
 
 void US_Global::set_global_position( const QPoint& p )
