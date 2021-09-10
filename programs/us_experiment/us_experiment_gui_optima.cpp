@@ -3705,6 +3705,8 @@ DbgLv(1) << "EGSo:addComm: sname irow" << sname << irow;
 DbgLv(1) << "EGSo:addComm:  cclabl" << cclabl;
    QString sdescr      = cc_solus[ irow ]->currentText();
 
+   qDebug() << "Solution name: " << sdescr;
+
    qDebug() << "ADD_Comment: 1";
 
    // Get list of channel comment component strings
@@ -3720,6 +3722,8 @@ DbgLv(1) << "EGSo:addComm:  cclabl" << cclabl;
      {
        qDebug() << "ADD_Comment: 1a1";
 
+       qDebug() << "Manual comment at the beginnig: " << manual_comment[ row_comment ];
+
        qDebug() << "irow: " << irow << ",  rpSolut->chsols.size() " << rpSolut->chsols.size();  //ALEXEY  rpSolut->chsols.size() is ZERO: bug
 
        QString protocol_comment("");
@@ -3728,10 +3732,21 @@ DbgLv(1) << "EGSo:addComm:  cclabl" << cclabl;
           protocol_comment += rpSolut->chsols[ irow ].ch_comment;
 
        qDebug() << "ADD_Comment: 1aa";
-       protocol_comment.replace(sdescr, "");
-       protocol_comment.remove( QRegExp("^[,\\s*]+") );
 
-       manual_comment[ row_comment ] = protocol_comment.trimmed();  // Initialize manual comment for solution from protocol
+       //ALEXEY: Check if the solution descrition does not coinside with that of the protocol's comment:
+       // I.e. if solution was changed from the GUI: then re-set manual_comment to empty string
+       if ( !protocol_comment.contains( sdescr ) )
+	 manual_comment[ row_comment ] = QString("");
+       else
+	 {
+	   protocol_comment.replace(sdescr, "");
+	   protocol_comment.remove( QRegExp("^[,\\s*]+") );
+	   
+	   manual_comment[ row_comment ] = protocol_comment.trimmed();  // Initialize manual comment for solution from protocol
+	 }
+       
+
+       qDebug() << "Manual comment form protocol: " << manual_comment[ row_comment ];
 
        qDebug() << "ADD_Comment: 1aaa";
 
