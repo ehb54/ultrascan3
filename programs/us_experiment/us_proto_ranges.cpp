@@ -42,13 +42,21 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
             this,         SLOT  ( detailRanges()  ) );
 
    // Show also a scan interval (if it was updated - in RED !!!)
-   QLabel*  lb_scanint = us_label( "Scan Interval (in red if updated): " );
+   QLabel*  lb_scanint = us_label( "Scan Interval: UV/vis. (in red if updated): " );
    le_scanint          = us_lineedit( "", 0, true  );
    
    // Show listbox with ScanCount per stage
    cb_scancount      = new QComboBox;
    rpSpeed = &(mainw->currProto.rpSpeed);
 
+
+   // Show also a scan interval for INTERFEREBCE  (if it was updated - in RED !!!)
+   QLabel*  lb_scanint_int = us_label( "Scan Interval: Interference (in red if updated): " );
+   le_scanint_int          = us_lineedit( "", 0, true  );
+   
+   // Show listbox with ScanCount per stage
+   cb_scancount_int      = new QComboBox;
+   
    //cb_scancount->addItem( tr( "Stage %1. Number of Scans: %2 " ).arg(1).arg( 0 ) );
 
 
@@ -67,6 +75,12 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
 
    banners->addWidget( cb_scancount,    row++, 8, 1, 8 );
    //banners->addWidget( cb_scancount,    row++,   8, 1, 8 );
+
+   //Interference
+   banners->addWidget( lb_scanint_int,      row,   2, 1, 4 );
+   banners->addWidget( le_scanint_int,      row,   6, 1, 2 );
+
+   banners->addWidget( cb_scancount_int,    row++, 8, 1, 8 );
    
    banners->addWidget( lb_hdr1,         row,   0, 1, 3 );
    banners->addWidget( lb_hdr2,         row,   3, 1, 6 );
@@ -643,7 +657,9 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
    tot_wvl /= 2; // per all cells, not channels (for now)
    ncells_used /= 2;
 
-   cb_scancount->clear();
+   cb_scancount    ->clear();
+   cb_scancount_int->clear();
+
    int nsp = sibIValue( "speeds",  "nspeeds" );
    for ( int i = 0; i < nsp; i++ )
    {
@@ -658,54 +674,69 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
       int scancount = 0;
       int scaninterval;
       bool scaninterval_updated = false;
-      
-      //ALEXEY: use this algorithm
-      if ( scanint_sec > scanint_sec_min*tot_wvl )
-	{
-	  scancount     = int( duration_sec / scanint_sec );
-	  scaninterval  = scanint_sec;
-	}
-      else
-	{
-	  scancount    = int( duration_sec / (scanint_sec_min * tot_wvl) );
-	  scaninterval = int( scanint_sec_min * tot_wvl );
-	  scaninterval_updated = true; //updated: show in RED
-	}
 
-      //Increase scan interval if scancount >= 1500:
-      if( scancount >= 1500 )
+      //ALEXEY: check if there is Absorbance
+      QStringList oprof_a   = sibLValue( "optical", "profiles" );
+      QString uvvis       = tr( "UV/visible" );
+            
+      bool has_absorbance = false;
+      for ( int ii = 0; ii < oprof_a.count(); ii++ )
 	{
-	  scaninterval = int( duration_sec / 1500 );
-	  scancount    = 1500;
-	  scaninterval_updated = true; //updated: show in RED
+	  if ( oprof_a[ ii ].contains( uvvis ) )
+	    {
+	      has_absorbance = true;
+	      break;
+	    }
 	}
-
-      
-      // scancount = int( duration_sec / (scanint_sec * tot_wvl) );
-
-      mainw->ScanCount_global   = scancount;
-      mainw->TotalWvlNum_global = tot_wvl; 
-      
-      //Update le_scanint text: set text color RED if updated
-      QList< int > hms_scanint;
-      double scaninterval_d = scaninterval;
-      US_RunProtocol::timeToList( scaninterval_d, hms_scanint );
-      QString scint_str = QString::number( hms_scanint[ 1 ] ) + "h " + QString::number( hms_scanint[ 2 ] ) + "m " + QString::number( hms_scanint[ 3 ] ) + "s";
-      le_scanint->setText( scint_str );
-      QPalette *palette = new QPalette();
-      if ( scaninterval_updated )
+      if ( has_absorbance )
 	{
-	  palette->setColor(QPalette::Text,Qt::red);
-	  //palette->setColor(QPalette::Base,Qt::white);
-	  le_scanint->setPalette(*palette);
+	  //ALEXEY: use this algorithm
+	  if ( scanint_sec > scanint_sec_min*tot_wvl )
+	    {
+	      scancount     = int( duration_sec / scanint_sec );
+	      scaninterval  = scanint_sec;
+	    }
+	  else
+	    {
+	      scancount    = int( duration_sec / (scanint_sec_min * tot_wvl) );
+	      scaninterval = int( scanint_sec_min * tot_wvl );
+	      scaninterval_updated = true; //updated: show in RED
+	    }
+	  
+	  //Increase scan interval if scancount >= 1500:
+	  if( scancount >= 1500 )
+	    {
+	      scaninterval = int( duration_sec / 1500 );
+	      scancount    = 1500;
+	      scaninterval_updated = true; //updated: show in RED
+	    }
+	  
+	  mainw->ScanCount_global   = scancount;
+	  mainw->TotalWvlNum_global = tot_wvl; 
+	
+	  
+	  //Update le_scanint text: set text color RED if updated
+	  QList< int > hms_scanint;
+	  double scaninterval_d = scaninterval;
+	  US_RunProtocol::timeToList( scaninterval_d, hms_scanint );
+	  QString scint_str = QString::number( hms_scanint[ 1 ] ) + "h " + QString::number( hms_scanint[ 2 ] ) + "m " + QString::number( hms_scanint[ 3 ] ) + "s";
+	  le_scanint->setText( scint_str );
+	  QPalette *palette = new QPalette();
+	  if ( scaninterval_updated )
+	    {
+	      palette->setColor(QPalette::Text,Qt::red);
+	      //palette->setColor(QPalette::Base,Qt::white);
+	      le_scanint->setPalette(*palette);
+	      
+	      rpSpeed->ssteps[ i ].scanintv = scaninterval;
+	    }
+	  else
+	    {
+	      palette->setColor(QPalette::Text,Qt::black);
+	      //palette->setColor(QPalette::Base,Qt::white);
+	      le_scanint->setPalette(*palette);
+	    }
 
-	  rpSpeed->ssteps[ i ].scanintv = scaninterval;
-	}
-      else
-	{
-	  palette->setColor(QPalette::Text,Qt::black);
-	  //palette->setColor(QPalette::Base,Qt::white);
-	  le_scanint->setPalette(*palette);
 	}
       
       QString scancount_stage = tr( "Stage %1. Number of Scans per Triple (UV/vis): %2 " ).arg(i+1).arg(scancount);
@@ -717,6 +748,8 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
       //ALEXEY: add interference info:
       double scanint_sec_int  = rpSpeed->ssteps[ i ].scanintv_int;
       int scancount_int = 0;
+      int scaninterval_int;
+      bool scaninterval_int_updated = false;
       //ALEXEY: check if there is interference
       QStringList oprof   = sibLValue( "optical", "profiles" );
       //QString uvvis       = tr( "UV/visible" );
@@ -735,16 +768,62 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 	}
       if ( has_interference )
 	{
-	  //scancount_int = int( duration_sec / scanint_sec_int );
 	  ncells_used_int /= 2;
-	  scancount_int = int( duration_sec / ( scanint_sec_int * ncells_used_int ) );
+	  
+	  //ALEXEY: use this algorithm for Interference: scanint_min=5; 
+	  if ( scanint_sec_int > 5 * ncells_used_int )
+	    {
+	      scancount_int     = int( duration_sec / scanint_sec_int );
+	      scaninterval_int  = scanint_sec_int;
+	    }
+	  else
+	    {
+	      scancount_int            = int( duration_sec / (5 * ncells_used_int ) );
+	      scaninterval_int         = int( 5 * ncells_used_int );
+	      scaninterval_int_updated = true; //updated: show in RED
+	    }
+	  
+	  //Increase scan interval if scancount >= 1500:
+	  if( scancount_int >= 1500 )
+	    {
+	      scaninterval_int         = int( duration_sec / 1500 );
+	      scancount_int            = 1500;
+	      scaninterval_int_updated = true; //updated: show in RED
+	    }
 
-	  qDebug() << "RANGES SET MANUAL Interference: duration_sec , scanint_sec_int, ncells_used -- "
+      	  qDebug() << "RANGES SET MANUAL Interference: duration_sec , scanint_sec_int, ncells_used -- "
 		   << duration_sec << scanint_sec_int << ncells_used_int;
+
+	  mainw->ScanCount_global_int   = scancount_int;
+	
+	  
+          
+	  //Update le_scanint text: set text color RED if updated
+	  QList< int > hms_scanint_int;
+	  double scaninterval_d_int = scaninterval_int;
+	  US_RunProtocol::timeToList( scaninterval_d_int, hms_scanint_int );
+	  QString scint_str_int = QString::number( hms_scanint_int[ 1 ] ) + "h " + QString::number( hms_scanint_int[ 2 ] ) + "m " + QString::number( hms_scanint_int[ 3 ] ) + "s";
+	  le_scanint_int->setText( scint_str_int );
+	  QPalette *palette_int = new QPalette();
+	  if ( scaninterval_int_updated )
+	    {
+	      palette_int->setColor(QPalette::Text,Qt::red);
+	      //palette->setColor(QPalette::Base,Qt::white);
+	      le_scanint_int->setPalette(*palette_int);
+	      
+	      rpSpeed->ssteps[ i ].scanintv_int = scaninterval_int;
+	    }
+	  else
+	    {
+	      palette_int->setColor(QPalette::Text,Qt::black);
+	      //palette->setColor(QPalette::Base,Qt::white);
+	      le_scanint_int->setPalette(*palette_int);
+	    }
+	  
 	}
       
       QString scancount_stage_int = tr( "Stage %1. Number of Scans per Cell (Interference): %2 " ).arg(i+1).arg(scancount_int);
-      cb_scancount->addItem( scancount_stage_int );      
+      cb_scancount_int->addItem( scancount_stage_int );      
       
    }
 
@@ -874,7 +953,9 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
    tot_wvl /= 2; // per all cells, not channels (for now)
    ncells_used /= 2;
    
-   cb_scancount->clear();
+   cb_scancount    ->clear();
+   cb_scancount_int->clear();
+   
    int nsp = sibIValue( "speeds",  "nspeeds" );
    for ( int i = 0; i < nsp; i++ )
    {
@@ -890,55 +971,72 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
       int scaninterval;
       bool scaninterval_updated = false;
 
-      //ALEXEY: use this algorithm
-      if ( scanint_sec > scanint_sec_min*tot_wvl )
+      //ALEXEY: check if there is Absorbance
+      QStringList oprof_a   = sibLValue( "optical", "profiles" );
+      QString uvvis       = tr( "UV/visible" );
+            
+      bool has_absorbance = false;
+      for ( int ii = 0; ii < oprof_a.count(); ii++ )
 	{
-	  scancount     = int( duration_sec / scanint_sec );
-	  scaninterval  = scanint_sec;
+	  if ( oprof_a[ ii ].contains( uvvis ) )
+	    {
+	      has_absorbance = true;
+	      break;
+	    }
 	}
-      else
-	{
-	  scancount    = int( duration_sec / (scanint_sec_min * tot_wvl) );
-	  scaninterval = int( scanint_sec_min * tot_wvl );
-	  scaninterval_updated = true; //updated: show in RED
-	}
-
-      //Increase scan interval if scancount >= 1500:
-      if( scancount >= 1500 )
-	{
-	  scaninterval = int( duration_sec / 1500 );
-	  scancount    = 1500;
-	  scaninterval_updated = true; //updated: show in RED
-	}
-
       
-      //scancount = int( duration_sec / (scanint_sec * tot_wvl) );
-
-      mainw->ScanCount_global = scancount;
-      mainw->TotalWvlNum_global = tot_wvl; 
-
-      //Update le_scanint text: set text color RED if updated
-      QList< int > hms_scanint;
-      double scaninterval_d = scaninterval;
-      US_RunProtocol::timeToList( scaninterval_d, hms_scanint );
-      QString scint_str = QString::number( hms_scanint[ 1 ] ) + "h " + QString::number( hms_scanint[ 2 ] ) + "m " + QString::number( hms_scanint[ 3 ] ) + "s";
-      le_scanint->setText( scint_str );
-      QPalette *palette = new QPalette();
-      if ( scaninterval_updated )
+      if ( has_absorbance )
 	{
-	  palette->setColor(QPalette::Text,Qt::red);
-	  //palette->setColor(QPalette::Base,Qt::white);
-	  le_scanint->setPalette(*palette);
+	  
+	  //ALEXEY: use this algorithm
+	  if ( scanint_sec > scanint_sec_min*tot_wvl )
+	    {
+	      scancount     = int( duration_sec / scanint_sec );
+	      scaninterval  = scanint_sec;
+	    }
+	  else
+	    {
+	      scancount    = int( duration_sec / (scanint_sec_min * tot_wvl) );
+	      scaninterval = int( scanint_sec_min * tot_wvl );
+	      scaninterval_updated = true; //updated: show in RED
+	    }
+	  
+	  //Increase scan interval if scancount >= 1500:
+	  if( scancount >= 1500 )
+	    {
+	      scaninterval = int( duration_sec / 1500 );
+	      scancount    = 1500;
+	      scaninterval_updated = true; //updated: show in RED
+	    }
+	  
+	  mainw->ScanCount_global = scancount;
+	  mainw->TotalWvlNum_global = tot_wvl; 
 
-	  rpSpeed->ssteps[ i ].scanintv = scaninterval;
-	}
-      else
-	{
-	  palette->setColor(QPalette::Text,Qt::black);
-	  //palette->setColor(QPalette::Base,Qt::white);
-	  le_scanint->setPalette(*palette);
-	}
+		  
+	  //Update le_scanint text: set text color RED if updated
+	  QList< int > hms_scanint;
+	  double scaninterval_d = scaninterval;
+	  US_RunProtocol::timeToList( scaninterval_d, hms_scanint );
+	  QString scint_str = QString::number( hms_scanint[ 1 ] ) + "h " + QString::number( hms_scanint[ 2 ] ) + "m " + QString::number( hms_scanint[ 3 ] ) + "s";
+	  le_scanint->setText( scint_str );
+	  QPalette *palette = new QPalette();
+	  if ( scaninterval_updated )
+	    {
+	      palette->setColor(QPalette::Text,Qt::red);
+	      //palette->setColor(QPalette::Base,Qt::white);
+	      le_scanint->setPalette(*palette);
+	      
+	      rpSpeed->ssteps[ i ].scanintv = scaninterval;
+	    }
+	  else
+	    {
+	      palette->setColor(QPalette::Text,Qt::black);
+	      //palette->setColor(QPalette::Base,Qt::white);
+	      le_scanint->setPalette(*palette);
+	    }
 
+	}
+      
       QString scancount_stage = tr( "Stage %1. Number of Scans per Triple (UV/vis): %2 " ).arg(i+1).arg(scancount);
       cb_scancount->addItem( scancount_stage );
 
@@ -946,6 +1044,8 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
       //ALEXEY: add interference info:
       double scanint_sec_int  = rpSpeed->ssteps[ i ].scanintv_int;
       int scancount_int = 0;
+      int scaninterval_int;
+      bool scaninterval_int_updated = false;
       //ALEXEY: check if there is interference
       QStringList oprof   = sibLValue( "optical", "profiles" );
       //QString uvvis       = tr( "UV/visible" );
@@ -964,16 +1064,61 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 	}
       if ( has_interference )
 	{
-	  //scancount_int = int( duration_sec / scanint_sec_int );
-	  ncells_used_int /= 2;
-	  scancount_int = int( duration_sec / ( scanint_sec_int * ncells_used_int ) );
 
-	  qDebug() << "RANGES SET MANUAL Interference: duration_sec , scanint_sec_int, ncells_used -- "
+	  ncells_used_int /= 2;
+	  
+	  //ALEXEY: use this algorithm for Interference: scanint_min=5; 
+	  if ( scanint_sec_int > 5 * ncells_used_int )
+	    {
+	      scancount_int     = int( duration_sec / scanint_sec_int );
+	      scaninterval_int  = scanint_sec_int;
+	    }
+	  else
+	    {
+	      scancount_int            = int( duration_sec / (5 * ncells_used_int ) );
+	      scaninterval_int         = int( 5 * ncells_used_int );
+	      scaninterval_int_updated = true; //updated: show in RED
+	    }
+	  
+	  //Increase scan interval if scancount >= 1500:
+	  if( scancount_int >= 1500 )
+	    {
+	      scaninterval_int         = int( duration_sec / 1500 );
+	      scancount_int            = 1500;
+	      scaninterval_int_updated = true; //updated: show in RED
+	    }
+
+      	  qDebug() << "RANGES SET MANUAL Interference: duration_sec , scanint_sec_int, ncells_used -- "
 		   << duration_sec << scanint_sec_int << ncells_used_int;
+
+	  mainw->ScanCount_global_int   = scancount_int;
+
+	  //Update le_scanint text: set text color RED if updated
+	  QList< int > hms_scanint_int;
+	  double scaninterval_d_int = scaninterval_int;
+	  US_RunProtocol::timeToList( scaninterval_d_int, hms_scanint_int );
+	  QString scint_str_int = QString::number( hms_scanint_int[ 1 ] ) + "h " + QString::number( hms_scanint_int[ 2 ] ) + "m " + QString::number( hms_scanint_int[ 3 ] ) + "s";
+	  le_scanint_int->setText( scint_str_int );
+	  QPalette *palette_int = new QPalette();
+	  if ( scaninterval_int_updated )
+	    {
+	      palette_int->setColor(QPalette::Text,Qt::red);
+	      //palette->setColor(QPalette::Base,Qt::white);
+	      le_scanint_int->setPalette(*palette_int);
+	      
+	      rpSpeed->ssteps[ i ].scanintv_int = scaninterval_int;
+	    }
+	  else
+	    {
+	      palette_int->setColor(QPalette::Text,Qt::black);
+	      //palette->setColor(QPalette::Base,Qt::white);
+	      le_scanint_int->setPalette(*palette_int);
+	    }
 	}
       
+      
       QString scancount_stage_int = tr( "Stage %1. Number of Scans per Cell (Interference): %2 " ).arg(i+1).arg(scancount_int);
-      cb_scancount->addItem( scancount_stage_int );      
+      cb_scancount_int->addItem( scancount_stage_int );      
       
    }
 
