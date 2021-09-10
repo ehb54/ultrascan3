@@ -7,12 +7,15 @@
 #include <sys/types.h>
 #include <pwd.h>
 #include <unistd.h>
+#include <set>
+#include <csignal>
 
 #define TSO QTextStream( stdout )
 #define TSE QTextStream( stderr )
 
 
 // update if US_Global::Global changes structure
+QSharedMemory shm;
 
 class Global
 {
@@ -21,6 +24,17 @@ public:
    char   passwd[64];
    // Add other global values as necessary
 };
+
+void signal_handler( int signal_num ) {
+   TSE << "Caught signal:" << signal_num << ". Exiting.\n";
+   if ( shm.isAttached() ) {
+      TSE << "Detaching Q Shared Memory\n";
+      shm.detach();
+   } else {
+      TSE << "No QSharedMemory to detach\n";
+   }
+   exit(-signal_num);
+}
 
 int main(int argc, char *argv[])
 {
@@ -34,11 +48,11 @@ int main(int argc, char *argv[])
    parser.addVersionOption();
 
    parser.addOption(
-                     {
-                      { "u", "user" }
-                      ,"set user name"
-                      ,"user"
-                     }
+                    {
+                     { "u", "user" }
+                     ,"set user name"
+                     ,"user"
+                    }
                     );
    
    parser.addOption(
@@ -63,6 +77,29 @@ int main(int argc, char *argv[])
                     }
                     );
    
+   parser.addOption(
+                    {
+                     { "K", "nativekey" }
+                     ,"set native key"
+                     ,"nativekey"
+                    }
+                    );
+   
+   parser.addOption(
+                    {
+                     { "k", "key" }
+                     ,"set key"
+                     ,"key"
+                    }
+                    );
+   
+   parser.addOption(
+                    {
+                     { "S", "signal" }
+                     ,"catch signals"
+                    }
+                    );
+   
    parser.process(a);
 
    const QStringList args = parser.optionNames();
@@ -71,41 +108,90 @@ int main(int argc, char *argv[])
       parser.showHelp(1);
    }
 
-   QString user       = qgetenv( "USER" );
-   bool    testattach = false;
-   bool    createshm  = false;
-   int     sleepsec   = 0;
+   QString user           = qgetenv( "USER" );
+   bool    testattach     = false;
+   bool    createshm      = false;
+   int     sleepsec       = 0;
+   bool    catchsigs      = false;
+   bool    use_nativekey  = false;
+   QString nativekey      = "";
+   bool    use_manualkey  = false;
+   QString manualkey      = "";
 
    for ( int i = 0; i < (int) args.size(); ++i ) {
       QString arg = args[i];
       if ( arg == "u" ) {
          user      = parser.value( arg );
+      } else if ( arg == "K" ) {
+         use_nativekey = true;
+         nativekey     = parser.value( arg );
+      } else if ( arg == "k" ) {
+         use_manualkey = true;
+         manualkey     = parser.value( arg );
       } else if ( arg == "s" ) {
          sleepsec  = parser.value( arg ).toInt();
       } else if ( arg == "t" ) {
          testattach = true;
       } else if ( arg == "c" ) {
          createshm = true;
+      } else if ( arg == "S" ) {
+         catchsigs = true;
       } 
    }   
 
+   if ( catchsigs ) {
+      std::set < int > sigs = {
+                               SIGABRT
+                               ,SIGALRM
+                               ,SIGFPE
+                               ,SIGHUP
+                               ,SIGILL
+                               ,SIGINT
+                               ,SIGPIPE
+                               ,SIGQUIT
+                               ,SIGSEGV
+                               ,SIGTERM
+                               ,SIGUSR1
+                               ,SIGUSR2
+      };
+      for ( auto it = sigs.begin();
+            it != sigs.end();
+            ++it ) {
+         signal( *it, signal_handler );
+      }
+   }
+
+   if ( use_nativekey && use_manualkey ) {
+      TSO << "you can not set both a nativekey and a key\n";
+      exit(-1);
+   }
+
    passwd * pwinfo = getpwnam( user.toLocal8Bit().data() );
 
-   QSharedMemory shm;
    Global        global;
 
 #ifndef Q_OS_WIN
-  // Make the key specific to the uid
-  QString key = QString( "UltraScan%1" ).arg( pwinfo->pw_uid );
+   // Make the key specific to the uid
+   QString key = QString( "UltraScan%1" ).arg( pwinfo->pw_uid );
 #else
-  QString key = QString( "UltraScan" );
+   QString key = QString( "UltraScan" );
 #endif
+   if ( use_manualkey ) {
+      key = manualkey;
+   }
 
    if ( testattach ) {
       TSO << "testing shm attach for user " << user << "\n";
       TSO << "Key is " << key << "\n";
 
-      shm.setKey( key );
+      if ( use_nativekey ) {
+         TSO << "key (native) is " << nativekey << "\n";
+         shm.setNativeKey( nativekey );
+      } else {
+         TSO << "Key is " << key << "\n";
+         shm.setKey( key );
+         TSO << "Native key is " << shm.nativeKey() << "\n";
+      }
       if ( shm.attach() ) {
          TSO << "attach successful\n";
          if ( shm.detach() ) {
@@ -120,9 +206,15 @@ int main(int argc, char *argv[])
 
    if ( createshm ) {
       TSO << "create shm for user " << user << "\n";
-      TSO << "Key is " << key << "\n";
 
-      shm.setKey( key );
+      if ( use_nativekey ) {
+         TSO << "key (native) is " << nativekey << "\n";
+         shm.setNativeKey( nativekey );
+      } else {
+         TSO << "Key is " << key << "\n";
+         shm.setKey( key );
+         TSO << "Native key is " << shm.nativeKey() << "\n";
+      }
       if ( shm.create( sizeof( global ) ) ) {
          TSO << "create shm successful\n";
       } else {
