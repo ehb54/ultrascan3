@@ -788,7 +788,7 @@ bool US_Win::notice_check()
    // Query notice table in the us3_notice database
    US_Passwd pw;
    US_DB2    db;
-   QString   host  ( "uslims.aucsolutions.com" );
+   QString   host  ( "ultrascan.aucsolutions.com" );
    QString   dbname( "us3_notice" );
    QString   user  ( "us3_notice" );
    QString   passwd( "us3_notice" );
