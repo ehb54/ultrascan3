@@ -50,8 +50,9 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    usmode = false;
    global_reset = false;
    instruments_in_use.clear();
-   ScanCount_global   = 0;
-   TotalWvlNum_global = 0;
+   ScanCount_global       = 0;
+   ScanCount_global_int   = 0;
+   TotalWvlNum_global     = 0;
    
    // Create tab and panel widgets
    tabWidget           = us_tabwidget();
@@ -3704,6 +3705,8 @@ DbgLv(1) << "EGSo:addComm: sname irow" << sname << irow;
 DbgLv(1) << "EGSo:addComm:  cclabl" << cclabl;
    QString sdescr      = cc_solus[ irow ]->currentText();
 
+   qDebug() << "Solution name: " << sdescr;
+
    qDebug() << "ADD_Comment: 1";
 
    // Get list of channel comment component strings
@@ -3719,6 +3722,8 @@ DbgLv(1) << "EGSo:addComm:  cclabl" << cclabl;
      {
        qDebug() << "ADD_Comment: 1a1";
 
+       qDebug() << "Manual comment at the beginnig: " << manual_comment[ row_comment ];
+
        qDebug() << "irow: " << irow << ",  rpSolut->chsols.size() " << rpSolut->chsols.size();  //ALEXEY  rpSolut->chsols.size() is ZERO: bug
 
        QString protocol_comment("");
@@ -3727,10 +3732,21 @@ DbgLv(1) << "EGSo:addComm:  cclabl" << cclabl;
           protocol_comment += rpSolut->chsols[ irow ].ch_comment;
 
        qDebug() << "ADD_Comment: 1aa";
-       protocol_comment.replace(sdescr, "");
-       protocol_comment.remove( QRegExp("^[,\\s*]+") );
 
-       manual_comment[ row_comment ] = protocol_comment.trimmed();  // Initialize manual comment for solution from protocol
+       //ALEXEY: Check if the solution descrition does not coinside with that of the protocol's comment:
+       // I.e. if solution was changed from the GUI: then re-set manual_comment to empty string
+       if ( !protocol_comment.contains( sdescr ) )
+	 manual_comment[ row_comment ] = QString("");
+       else
+	 {
+	   protocol_comment.replace(sdescr, "");
+	   protocol_comment.remove( QRegExp("^[,\\s*]+") );
+	   
+	   manual_comment[ row_comment ] = protocol_comment.trimmed();  // Initialize manual comment for solution from protocol
+	 }
+       
+
+       qDebug() << "Manual comment form protocol: " << manual_comment[ row_comment ];
 
        qDebug() << "ADD_Comment: 1aaa";
 
@@ -5167,13 +5183,27 @@ void US_ExperGuiUpload::saveRunProtocol()
     {
       QMessageBox::critical( this,
                              tr( "*ERROR* in Saving Protocol" ),
-                             tr( "Protocol cannot be saved: \n"
+                             tr( "UV/vis.: Protocol cannot be saved: \n"
                                  "Number of scans per cell per wavelengths is %1. \n"
                                  "It must not exceed 1501. \n\n"
                                  "Please revise experiment parameters accordingly." )
                                 .arg( mainw->ScanCount_global ) );
       return;
     }
+
+  if ( mainw->ScanCount_global_int > 1501 )
+    {
+      QMessageBox::critical( this,
+                             tr( "*ERROR* in Saving Protocol" ),
+                             tr( "Protocol cannot be saved: \n"
+                                 "Interference: Number of scans per cell is %1. \n"
+                                 "It must not exceed 1501. \n\n"
+                                 "Please revise experiment parameters accordingly." )
+			     .arg( mainw->ScanCount_global_int ) );
+      return;
+    }
+
+  
 
 DbgLv(1) << "EGUp:svRP: IN";
    // Test that the current protocol name is new
@@ -5929,7 +5959,7 @@ void US_ExperGuiUpload::submitExperiment()
                if ( ScanCount > 1500 )
                {
                   QMessageBox::critical( this,
-                  tr( "*ERROR* in Submitting Protocol" ),
+                  tr( "*ERROR* in Submitting Protocol: UV/vis." ),
                   tr( "Protocol cannot be submitted: \n"
                       "Number of scans per cell per wavelengths is %1. \n"
                       "It must not exceed 1500. \n\n"
@@ -6137,12 +6167,35 @@ void US_ExperGuiUpload::submitExperiment()
          int ScanCount;
          int ScanInt;
 
-	 ScanCount = int( duration_sec / (scanint_sec * (ncells_interference / 2)  ));  //ALEXEY: do NOT divide by #cells ?
-	 //ScanCount = int( duration_sec / (scanint_sec  ));
-	 ScanInt   = scanint_sec;
+	 // ScanCount = int( duration_sec / (scanint_sec * (ncells_interference / 2)  ));  //ALEXEY: do NOT divide by #cells ?
+	 // //ScanCount = int( duration_sec / (scanint_sec  ));
+	 // ScanInt   = scanint_sec;
+
+	 //ALEXEY: use this algorithm for Interference (same as for UV/vis, but scanint_int_min = 5 sec)
+	 if ( scanint_sec > 5 * (ncells_interference / 2) )
+         {
+            ScanCount = int( duration_sec / scanint_sec );
+            ScanInt   = scanint_sec;
+         }
+         else
+         {
+            ScanCount = int( duration_sec / (5 * (ncells_interference / 2) ) );
+            ScanInt   = 5 * (ncells_interference / 2) ;
+         }
+
+	 //Increase scan interval if scancount >= 1500:
+	 if( ScanCount >= 1500 )
+	   {
+	     ScanInt    = int( duration_sec / 1500 );
+	     ScanCount  = 1500;
+	   }
+
+	 
 
          qDebug() << "Duration_sec: " << duration_sec << ", delay_sec_int: " << delay_sec << ", scanint_sec_int: " << scanint_sec;
+	 qDebug() << "ScanCount_int: global (ranges) vs. computed here: -- " << mainw->ScanCount_global_int << " vs. " << ScanCount;
 
+	 
          for (int j=0; j<ncells; j++)
          {
             QString channel;
@@ -6165,7 +6218,7 @@ void US_ExperGuiUpload::submitExperiment()
                if ( ScanCount > 1500 )
                {
                   QMessageBox::critical( this,
-                  tr( "*ERROR* in Submitting Protocol" ),
+                  tr( "*ERROR* in Submitting Protocol: Interference" ),
                   tr( "Protocol cannot be submitted: \n"
                       "Number of scans per cell per wavelengths is %1. \n"
                       "It must not exceed 1500. \n\n"

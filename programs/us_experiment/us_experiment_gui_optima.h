@@ -593,7 +593,9 @@ class US_ExperGuiRanges : public US_WidgetsDialog
       QVector< double >          hicrads;  // High radius value, ea. channel
 
       QComboBox * cb_scancount;
+      QComboBox * cb_scancount_int;
       QLineEdit * le_scanint;
+      QLineEdit * le_scanint_int;
       
    private slots:
       // \brief Manage extinction profiles in a dialog
@@ -934,6 +936,7 @@ class US_ExperimentMain : public US_Widgets
       bool solutions_change;
 
       int ScanCount_global;
+      int ScanCount_global_int;
       int TotalWvlNum_global;
       
       bool    connection_status;
