@@ -73,12 +73,3 @@ cm-y-cyan-magenta-red-black.xml
 cm-y-green-blue-red.xml
 #LINK   - soft links to be duplicated in ~/ultrascan/etc/
 cm-default.xml  ->  cm-w-cyan-magenta-red-black.xml
-us3-GMP-icon-128x128.ico
-us3-GMP-icon-128x128.png
-us3-GMP-icon-128x128.xpm
-us3-GMP-icon-32x32.ico
-us3-GMP-icon-32x32.png
-us3-GMP-icon-32x32.xpm
-us3-GMP-icon-48x48.ico
-us3-GMP-icon-48x48.png
-us3-GMP-icon-48x48.xpm
