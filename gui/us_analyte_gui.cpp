@@ -300,9 +300,12 @@ DbgLv(1) << "AnaS:   ana-extsiz" << analyte->extinction.keys().size();
        }
      
    }
-   else {
-     e280 = QString::number( analyte->extinction[ 280.0 ] );
-   }
+   else
+     {
+       //ALEXEY: add this ONLY for proteins
+       if ( analyte->type == US_Analyte::PROTEIN )
+	 e280 = QString::number( analyte->extinction[ 280.0 ] );
+     }
 
    qDebug() << "Select ANALYTE 2:: -- extcount, extMAP -- " << extcount << analyte->extinction;
    qDebug() << "Select ANALYTE: type 2::  -- " << analyte->type;
@@ -2873,6 +2876,8 @@ DbgLv(1) << "AnaE:SL: editCanceled()  origAnaGUID" << orig_analyte.analyteGUID;
 // Slot to accept edited analyte
 void US_AnalyteMgrEdit::editAccepted()
 {
+
+  qDebug() << "In EditSpectrum 1: analyte-extinction -- " << analyte->extinction;
 DbgLv(1) << "AnaE:SL: editAccepted()  anaGUID" << analyte->analyteGUID;
    if ( from_db )
    { // Update analyte in database
