@@ -469,7 +469,8 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
 
    connect( epanAnalysis, SIGNAL( processes_stopped() ), this, SLOT( analysis_update_stopped() ));
    connect( epanAnalysis, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
-   
+
+   connect( epanAnalysis, SIGNAL( switch_to_report( QMap < QString, QString > & ) ), this, SLOT( switch_to_report( QMap < QString, QString > & )  ) );
    connect( this, SIGNAL( pass_to_report( QMap < QString, QString > & ) ),   epanReport, SLOT( do_report( QMap < QString, QString > & )  ) );
 
    
@@ -2648,6 +2649,9 @@ US_AnalysisGui::US_AnalysisGui( QWidget* topw )
    //ALEXEY: back to initAutoflow when user stuck at FITMEN (already processed) and program proceeded to REPORT
    connect( sdiag, SIGNAL( analysis_back_to_initAutoflow( ) ), this, SLOT( to_initAutoflow ( ) ) );
 
+   //ALEXEY: switch to Report
+   connect( sdiag, SIGNAL( analysis_complete_auto(  QMap < QString, QString > & ) ), this, SLOT( to_report (  QMap < QString, QString > &) ) );
+
    offset = 0;
    sdiag->move(offset, 2*offset);
    sdiag->setFrameShape( QFrame::Box);
@@ -2708,6 +2712,12 @@ void US_AnalysisGui::analysissetup_msg_closed( void )
 void US_AnalysisGui::to_initAutoflow( void )
 {
   emit switch_to_initAutoflow();
+}
+
+//proceed to Report stage
+void US_AnalysisGui::to_report( QMap < QString, QString > & protocol_details )
+{
+  emit switch_to_report( protocol_details );
 }
 
 

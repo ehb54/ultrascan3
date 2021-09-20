@@ -105,6 +105,9 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   sim_msg_pos_x      = protocol_details[ "sim_msg_pos_x" ].toInt();
   sim_msg_pos_y      = protocol_details[ "sim_msg_pos_y" ].toInt();
 
+  //Copy protocol details
+  protocol_details_at_analysis = protocol_details;
+
   QStringList analysisIDs_list = analysisIDs.split(",");
 
   US_Passwd pw;
@@ -1073,7 +1076,11 @@ void US_Analysis_auto::gui_update( )
 
       if ( canceled_triples )
 	msg_text += QString("\n\nNOTE: analyses for the following triples have been CANCELED: \n\n%1").arg( Canceled_triples_list.join(", ") );
- 
+
+      msg_text +=  QString("\n\nThe program will proceed to the Reporting stage. ");
+
+      //Update autoflow record at Analysis completion
+      update_autoflow_record_atAnalysis();
       
       QMessageBox::information( this,
 				tr( "All Triples Processed !" ),
@@ -1082,11 +1089,48 @@ void US_Analysis_auto::gui_update( )
       in_gui_update  = false; 
       
       //ALEXEY: Switch to next stage (Report) ?
+      
+      emit analysis_complete_auto( protocol_details_at_analysis );
     }
 
   in_gui_update  = false; 
 }
 
+
+//Update autoflow record upon Analysis completion
+void US_Analysis_auto::update_autoflow_record_atAnalysis( void )
+{
+   // Check DB connection
+   US_Passwd pw;
+   QString masterpw = pw.getPasswd();
+   US_DB2* db = new US_DB2( masterpw );
+
+   if ( db->lastErrno() != US_DB2::OK )
+     {
+       QMessageBox::warning( this, tr( "Connection Problem" ),
+			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+       return;
+     }
+
+   QStringList qry;
+   qry << "update_autoflow_at_analysis"
+       << protocol_details_at_analysis[ "runID" ];
+       
+
+   //db->query( qry );
+
+   int status = db->statusQuery( qry );
+   
+   if ( status == US_DB2::NO_AUTOFLOW_RECORD )
+     {
+       QMessageBox::warning( this,
+			     tr( "Autoflow Record Not Updated" ),
+			     tr( "No autoflow record\n"
+				 "associated with this experiment." ) );
+       return;
+     }
+
+}
 
 // public function to get pointer to edit data
 US_DataIO::EditedData*      US_Analysis_auto::aa_editdata() { return edata;     }
