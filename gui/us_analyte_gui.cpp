@@ -280,18 +280,32 @@ DbgLv(1) << "AnaS:   ana-extsiz" << analyte->extinction.keys().size();
    int rescount         = pp.residues;
    int extcount         = analyte->extinction.keys().count();
 
+   qDebug() << "Select ANALYTE 1:: -- extcount, extMAP -- " << extcount << analyte->extinction;
+   qDebug() << "Select ANALYTE: type 1::  -- " << analyte->type;
+
    //QString e280         = ( extcount == 0 ) ? tr( "(none)" ) : QString::number( pp.e280 );
    QString e280         = "";
    
    if ( extcount == 0 ) {
      //e280 = tr( "(none)" );
      e280 = QString::number( pp.e280 );
-     analyte->extinction[ 280.0 ] = pp.e280;
+     
+     //ALEXEY: should we skip this for non-PROTEINS ??
+     // It uses incorrect logic for proteins in ::calc_vbar() when DNA/RNA contains Cytosin (mistakes for Cysteine)
+     if ( analyte->type == US_Analyte::PROTEIN )
+       {
+	 analyte->extinction[ 280.0 ] = pp.e280;
+	 
+	 qDebug() << "Select ANALYTE:: -- e280: " << pp.e280;
+       }
+     
    }
    else {
      e280 = QString::number( analyte->extinction[ 280.0 ] );
    }
-   
+
+   qDebug() << "Select ANALYTE 2:: -- extcount, extMAP -- " << extcount << analyte->extinction;
+   qDebug() << "Select ANALYTE: type 2::  -- " << analyte->type;
    
    le_molecwt   ->setText( QString::number( analyte->mw ) );
    le_vbar20    ->setText( QString::number( analyte->vbar20 ) );
@@ -304,6 +318,7 @@ DbgLv(1) << "AnaS:   ana-extsiz" << analyte->extinction.keys().size();
    }
 
    else if ( analyte->type != US_Analyte::PROTEIN )
+     //if ( analyte->type == US_Analyte::DNA || analyte->type == US_Analyte::RNA ) //ALEXEY: bug fixed
    {
       QString strand    = "";
       strand            = analyte->doubleStranded ? tr( "Double Stranded" ) : strand;
@@ -319,10 +334,18 @@ DbgLv(1) << "AnaS:   ana-extsiz" << analyte->extinction.keys().size();
       le_lithium  ->setText( QString::number( analyte->lithium   ) );
       le_magnesium->setText( QString::number( analyte->magnesium ) );
       le_calcium  ->setText( QString::number( analyte->calcium   ) );
+
+      //ALEXEY: shouldn't we reset analyte->extinction[ 280.0 ] && entire analyte_extinciton to 0 / empty .clear()?;
+
+      qDebug() << "Select ANALYTE 3:: -- extcount, extMAP -- " << extcount << analyte->extinction;
+
    }
 
+   qDebug() << "Select ANALYTE 4:: -- extcount, extMAP -- " << extcount << analyte->extinction;
+   qDebug() << "Analyte->type: " << analyte->type;
    te_analyte_smry->setText( analyte_smry( analyte ) );
-
+   qDebug() << "Select ANALYTE 5:: -- extcount, extMAP -- " << extcount << analyte->extinction;
+   
    pb_accept  ->setEnabled ( true );
    pb_delete  ->setEnabled ( true );
    pb_info    ->setEnabled ( true );
@@ -1201,6 +1224,8 @@ DbgLv(1) << "agN: aInfo   descr" << ana->description << "type" << ana->type;
    US_Math2::calc_vbar( pp, ana->sequence, 20.0 );
    ana->mw         = ( ana->mw == 0.0 ) ? pp.mw : ana->mw;
 
+   qDebug() << "In Summary 1: analyte->extinciton: " <<  ana->extinction;
+     
    // Absorbing residues
    
 DbgLv(1) << "W: " << pp.w;
@@ -1231,7 +1256,9 @@ DbgLv(1) << "Tot AAs: " << all_abs;
      }
    
 DbgLv(1) << "AA absorbibg String: " << absorbing_residues;
-   
+
+   qDebug() << "In Summary 2: analyte->extinciton: " <<  ana->extinction;
+ 
    // Compose the sequence summary string
    int total       = 0;
    QString seqsmry = ana->sequence;
@@ -1263,6 +1290,8 @@ DbgLv(1) << "AA absorbibg String: " << absorbing_residues;
       seqsmry     += QString().sprintf( "%d", total ) + " tot";
    }
 
+   qDebug() << "In Summary 3: analyte->extinciton: " <<  ana->extinction;
+   
    // Compose the summary string for extinction pairs
    QString extsmry;
    QList< double > ekeys = ana->extinction.keys();
@@ -1276,6 +1305,8 @@ DbgLv(1) << "AA absorbibg String: " << absorbing_residues;
                         + QString::number( ana->extinction[ lambda ] );
    }
 
+   qDebug() << "In Summary 4: analyte->extinciton: " <<  ana->extinction;
+   
    // Compose the summary message lines
    QStringList mlines;
    QString     amsg;
@@ -1293,16 +1324,38 @@ DbgLv(1) << "AA absorbibg String: " << absorbing_residues;
    //                                                   : tr( "pairs" ) )
    //           + tr( "  (lambda/coeff.):" );
    // mlines << "  " + extsmry;
-   
-   mlines << tr( "AAs absorbing at 280 nm: " ) +  absorbing_residues;
-   mlines << tr( "E280:                    " ) +  QString::number( analyte->extinction[ 280.0 ]);
-   mlines << tr( "Extinction count:        " ) +  QString::number( extknt );
 
+   qDebug() << "In Summary 4a: analyte->extinciton: " <<  ana->extinction;
+   //ALEXEY: do not include absorbing residues information for non-protein analytes ??
+
+   qDebug() << "Ana->type :: " << ana->type << analyte->type ;
+   if ( ana->type == 0 )
+     {
+       mlines << tr( "AAs absorbing at 280 nm: " ) +  absorbing_residues;
+       
+       qDebug() << "In Summary 4b: analyte->extinciton: " <<  ana->extinction;
+       
+       //mlines << tr( "E280:                    " ) +  QString::number( analyte->extinction[ 280.0 ]);
+       //ALEXEY: bug fix for showing analyte's extinciton at 280.0 when it doesn't exist
+       if( analyte->extinction.contains( 280.0 ))
+	 {
+	   mlines << tr( "E280:                    " ) +  QString::number( analyte->extinction[ 280.0 ]);
+	 }
+       else
+	 mlines << tr( "E280:                    " ) +  QString::number( 0 );
+       
+       qDebug() << "In Summary 4c: analyte->extinciton: " <<  ana->extinction;
+       
+       mlines << tr( "Extinction count:        " ) +  QString::number( extknt );
+     }
+   
    for ( int ii = 0; ii < mlines.count(); ii++ )
    {  // Create a single string from the lines
       amsg         += mlines[ ii ] + "\n";
    }
 
+   qDebug() << "In Summary 5: analyte->extinciton: " <<  ana->extinction;
+   
    return amsg;
 }
 
@@ -1787,7 +1840,9 @@ void US_AnalyteMgrNew::update_sequence( QString seq )
 
       case US_Analyte::DNA:
       case US_Analyte::RNA:
+	qDebug() << "DNA/RNA extrinction BEFORE:-- " << analyte->extinction.count();
 	update_nucleotide();
+	qDebug() << "DNA/RNA extrinction AFTER: -- " << analyte->extinction.count();
 	break;
 
       case US_Analyte::CARBOHYDRATE:
@@ -2503,7 +2558,11 @@ DbgLv(1) << "AnaN: Analyte Type: " << analyte->type;
       analyte->vbar20 = le_protein_vbar20->text().toDouble();
    }
 
+   qDebug() << "In Accept new analyte 1: -- " << analyte->extinction.count();
+   
    verify_vbar();
+
+   qDebug() << "In Accept new analyte 2: -- " << analyte->extinction.count();
 
    if ( from_db )
    { // Add analyte to database
@@ -2517,6 +2576,8 @@ DbgLv(1) << "AnaN:SL:  newAcc: Disk";
       write_disk();
    }
 
+   qDebug() << "In Accept new analyte 3: -- " << analyte->extinction.count();
+   
    emit newAnaAccepted();
 }
 

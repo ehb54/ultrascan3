@@ -736,6 +736,9 @@ DEBUG_QUERY;
 
 int US_Analyte::write_db( US_DB2* db )
 {
+
+   qDebug() << "Extinciton 1 : " << extinction.count();
+   
    QStringList q;
    bool        insert = true;
 
@@ -834,6 +837,8 @@ DEBUG_QUERY;
    //if ( !extinction.isEmpty() )
 
    qDebug() << "new_or_changed_spectrum: " << new_or_changed_spectrum;
+   qDebug() << "Extinciton 2 : " << extinction.count();
+   
 
    if ( !extinction.isEmpty() and new_or_changed_spectrum )  
    {
