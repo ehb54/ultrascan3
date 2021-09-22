@@ -481,7 +481,19 @@ void US_Analysis_auto::gui_update( )
       QJsonDocument jsonDoc = QJsonDocument::fromJson( status_json.toUtf8() );
       if (!jsonDoc.isObject())
 	{
-	  qDebug() << "NOT a JSON Doc !!";
+	  qDebug() << "All Doc: NOT a JSON Doc !!";
+	  
+	  QMessageBox::warning( this, tr( "JSON Format Problem" ),
+				tr( "JSON message for status of the analysis performed on triple %1 appears to be corrupted. "
+				    "This may be an indicaiton of the problem with the analysis run for this triple.\n\n"
+				    "This problem will preclude status monitoring for other triples. "
+				    "Please check log messages, or contact administrator for help.\n\n"
+				    "The program will return to the autoflow runs dialog.").arg( triple_curr ) );
+	  
+	  in_gui_update  = false;
+
+	  emit analysis_back_to_initAutoflow( );;
+	  
 	  return;
 	}
       // const QJsonValue &to_process = jsonDoc["to_process"];
