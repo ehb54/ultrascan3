@@ -104,7 +104,7 @@ void US_Reports_auto::initPanel( QMap < QString, QString > & protocol_details )
   
   int num_triples = 10;
   
-  progress_msg = new QProgressDialog ("Accessing run's protocol...", QString(), 0, 3, this);
+  progress_msg = new QProgressDialog ("Accessing run's protocol...", QString(), 0, 6, this);
   //progress_msg->setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
   progress_msg->setWindowFlags(Qt::Tool | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
   //progress_msg->setWindowModality(Qt::WindowModal);
@@ -146,20 +146,6 @@ void US_Reports_auto::initPanel( QMap < QString, QString > & protocol_details )
   progress_msg->setValue( 3 );
   qApp->processEvents();
   
-  // //Somewhere in cycle
-  // for (int jj=0; jj < num_triples; ++jj )
-  //   {
-  //     read_protocol_data_triples();
-  //     progress_msg->setValue( jj );
-  //     progress_msg->setLabelText( QString( tr("Generating Report for Triple %1")).arg( jj ) );
-  //     qApp->processEvents();
-  //   }
-
-    
-  progress_msg->setValue( progress_msg->maximum() );
-  progress_msg->close();
-  pb_download_report->setVisible( true );
-
   //Debug
   qDebug() << "Protocols' details: -- "
 	   << currProto.investigator
@@ -172,10 +158,28 @@ void US_Reports_auto::initPanel( QMap < QString, QString > & protocol_details )
 	   << currProto.exp_label;
   ////
   get_current_date();
+  progress_msg->setValue( 4 );
+  qApp->processEvents();
+  
   ////
   format_needed_params();
+  progress_msg->setValue( 5 );
+  qApp->processEvents();
+  
   /// 
   assemble_pdf();
+  progress_msg->setValue( 6 );
+  qApp->processEvents();
+
+
+  progress_msg->setValue( progress_msg->maximum() );
+  progress_msg->close();
+  pb_download_report->setVisible( true );
+
+  //Inform user of the PDF location
+  QMessageBox::information( this, tr( "Report PDF Ready" ),
+			    tr( "Report PDF was saved at \n%1\n\n"
+				"You can view it by pressing \'View Report\' button below" ).arg( filePath ) );
 }
 
 //Format selected parameters to D H M format
