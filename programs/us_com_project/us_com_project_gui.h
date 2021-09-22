@@ -347,9 +347,11 @@ class US_ReportStageGui : public US_WidgetsDialog
       
   private slots:
     void do_report( QMap < QString, QString > & );
+    void reset_reporting( void );
 
   signals:
     void start_report( QMap < QString, QString > & );
+    void reset_reporting_passed ( void );
 };
 
 
@@ -472,6 +474,7 @@ signals:
   void reset_lims_import( void );
   void reset_data_editing( void );
   void reset_live_update( void );
+  void reset_reporting( void );
 };
 
 

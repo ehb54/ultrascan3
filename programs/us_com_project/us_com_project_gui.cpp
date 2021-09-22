@@ -473,7 +473,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( epanAnalysis, SIGNAL( switch_to_report( QMap < QString, QString > & ) ), this, SLOT( switch_to_report( QMap < QString, QString > & )  ) );
    connect( this, SIGNAL( pass_to_report( QMap < QString, QString > & ) ),   epanReport, SLOT( do_report( QMap < QString, QString > & )  ) );
 
-   
+   connect( this, SIGNAL( reset_reporting() ),  epanReport, SLOT( reset_reporting( )  ) );
    
    setMinimumSize( QSize( 1350, 800 ) );
    adjustSize();
@@ -585,7 +585,8 @@ void US_ComProjectMain::initPanels( int  panx )
       if ( curr_panx == 6 )
 	{
 	  qDebug() << "Jumping from Report.";
-	  //emit reset_data_editing();
+	  
+	  emit reset_reporting();
 	}      
       
       xpn_viewer_closed_soft = false;
@@ -1049,8 +1050,9 @@ void US_ComProjectMain::switch_to_report( QMap < QString, QString > & protocol_d
       else
 	tabWidget->tabBar()->setTabEnabled(i, false);
      }
-   
 
+   
+   qApp->processEvents();
    // ALEXEY: Make a record to 'autoflow' table: stage# = 4; 
 
    emit pass_to_report( protocol_details );
@@ -2764,10 +2766,8 @@ US_ReportStageGui::US_ReportStageGui( QWidget* topw )
    sdiag->setParent(this, Qt::Widget);
    
    connect( this, SIGNAL( start_report( QMap < QString, QString > & ) ), sdiag, SLOT( initPanel ( QMap < QString, QString > & )  ) );
-   // // In initPanel() - re-generate GUI based on # of rows corresponding to # stages in AProfile...
 
-   // // When coming back to Manage Optima Runs
-   // connect( sdiag, SIGNAL( analysis_update_process_stopped() ), this, SLOT( processes_stopped_passed()  ) );
+   connect( this, SIGNAL( reset_reporting_passed( ) ), sdiag, SLOT(  reset_report_panel (  )  ) );
 
    offset = 0;
    sdiag->move(offset, 2*offset);
@@ -2814,6 +2814,10 @@ void US_ReportStageGui::do_report( QMap < QString, QString > & protocol_details 
   emit start_report( protocol_details );
 }
 
+void US_ReportStageGui::reset_reporting( void )
+{
+  emit reset_reporting_passed();
+}
 
 
 

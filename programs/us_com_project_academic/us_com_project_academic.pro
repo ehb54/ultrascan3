@@ -6,6 +6,7 @@ QT           += sql
 QT           += xml
 QT           += network
 QT           += svg
+QT           += printsupport
 
 HEADERS       = ../us_com_project/us_com_project_gui.h \
                 ../us_experiment/us_experiment_gui_optima.h  \
