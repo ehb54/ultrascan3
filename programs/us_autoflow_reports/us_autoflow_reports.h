@@ -6,6 +6,7 @@
 #include "us_passwd.h"
 #include "us_run_protocol.h"
 #include "us_protocol_util.h"
+#include "us_solution.h"
 
 class US_Reports_auto : public US_Widgets
 {
@@ -39,6 +40,9 @@ class US_Reports_auto : public US_Widgets
 	 QString    scanint_uvvis_str;
 	 QString    delay_int_str;
 	 QString    scanint_int_str;
+
+	 int        ncells_used;
+	 int        nsol_channels;
 	 
 	 QVector< QString >  Array_of_triples;
 	 
@@ -49,6 +53,7 @@ class US_Reports_auto : public US_Widgets
 	 void  get_current_date( void );
 	 void  format_needed_params( void );
 	 void  assemble_pdf( void );
+	 void  add_solution_details( const QString, QString& );
 
       private slots:
 	void initPanel( QMap < QString, QString > & );

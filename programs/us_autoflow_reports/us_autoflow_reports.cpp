@@ -346,6 +346,70 @@ void US_Reports_auto::assemble_pdf()
     .arg( scanint_int_str )                                               //9
     ;
 
+  QString html_cells = tr(
+    "<h3 align=left>Cell Centerpiece Usage </h3>"
+			   )
+     ;
+   
+  ncells_used = currProto. rpCells. nused;
+  html_cells += tr(
+     "# of Used Cells:  %1"
+		    )
+    .arg( ncells_used )                                                   //1
+    ;
+   
+  html_cells += tr(
+      "<table>"
+		   )
+    ;
+
+  for ( int i=0; i<ncells_used; ++i )
+    {
+      html_cells += tr(
+        "<tr> <td>Cell Number:</td><td>%1</td> &nbsp;&nbsp;&nbsp;&nbsp; <td>Centerpiece:</td><td>%2</td> &nbsp;&nbsp;&nbsp;&nbsp; <td>Windows:</td><td>%3</td>  </tr>"
+			)
+	.arg( QString::number( currProto. rpCells. used[i].cell ))        //1
+	.arg( currProto. rpCells. used[i].centerpiece )                   //2
+	.arg( currProto. rpCells. used[i].windows )                       //3 
+	;
+    }
+  
+  html_cells += tr(
+      "</table>"
+    "<hr>"
+		   )
+    ;
+
+  QString html_solutions = tr(
+    "<h3 align=left>Solutions for Each Channel</h3>"			      
+			      )
+    ;
+   
+  nsol_channels = currProto.rpSolut.nschan;
+  html_solutions += tr(
+     "# of Solution Channels:  %1"
+		    )
+    .arg( nsol_channels )                                                   //1
+    ;
+  
+  for ( int i=0; i<nsol_channels; ++i )
+    {
+      html_solutions += tr(
+       "<table>"		   
+        "<tr> <td>Cell/Channel:</td><td>%1</td> &nbsp;&nbsp;&nbsp;&nbsp; <td>Solution:</td><td>%2</td> &nbsp;&nbsp;&nbsp;&nbsp; <td>Comment:</td><td>%3</td> </tr>"
+       "</table>"
+			)
+	.arg( currProto. rpSolut. chsols[i].channel )                       //1
+	.arg( currProto. rpSolut. chsols[i].solution )                      //2
+	.arg( currProto. rpSolut. chsols[i].ch_comment )                    //3
+	;
+
+      QString sol_id = currProto. rpSolut. chsols[i].sol_id;
+      add_solution_details( sol_id, html_solutions );
+    }
+
+  html_solutions += tr( "<hr>" );
+  
   QString html_paragraph_close = tr(
     "</p>"
 				    )
@@ -367,6 +431,8 @@ void US_Reports_auto::assemble_pdf()
     + html_general
     + html_lab_rotor
     + html_speed
+    + html_cells
+    + html_solutions
     + html_paragraph_close
     + html_footer;
     
@@ -383,6 +449,73 @@ void US_Reports_auto::assemble_pdf()
   printer.setPageMargins(QMarginsF(15, 15, 15, 15));
   
   document.print(&printer);
+}
+
+//Fetch Solution details && add to html_solutions
+void US_Reports_auto::add_solution_details( const QString sol_id, QString& html_solutions )
+{
+  //get Solution info by ID:
+  US_Passwd pw;
+  QString masterPW = pw.getPasswd();
+  US_DB2 db( masterPW );
+  
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Database Problem" ),
+         tr( "Database returned the following error: \n" ) +  db.lastError() );
+      
+      return;
+    }
+
+  US_Solution*   solution = new US_Solution;
+  int solutionID = sol_id.toInt();
+
+  int status = US_DB2::OK;
+  status = solution->readFromDB  ( solutionID, &db );
+
+  // Error reporting
+  if ( status == US_DB2::NO_BUFFER )
+    {
+      QMessageBox::information( this,
+				tr( "Attention" ),
+				tr( "The buffer this solution refers to was not found.\n"
+				    "Please restore and try again.\n" ) );
+    }
+  
+  else if ( status == US_DB2::NO_ANALYTE )
+    {
+      QMessageBox::information( this,
+				tr( "Attention" ),
+				tr( "One of the analytes this solution refers to was not found.\n"
+				    "Please restore and try again.\n" ) );
+    }
+  
+  else if ( status != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Database Problem" ),
+			    tr( "Database returned the following error: \n" ) +  db.lastError() );
+    }
+  
+
+  // //access analytes
+  int num_analytes = solution->analyteInfo.size();
+  // for (int i=0; i < solution->analyteInfo.size(); ++i )
+  //   solution->analyteInfo[ i ].analyte.vbar20;
+  
+  //append html string
+  html_solutions += tr(
+		       //"<i>Solution Information for \'%1\'</i>"
+  "<table style=\"margin-left:20px\">"
+     "<caption align=left> <i>Solution Information for \'%1\'</i> </caption>"
+     "<tr><td>Common VBar (20&#8451;):</td> <td> %2</td> &nbsp;&nbsp;&nbsp;&nbsp; <td>Storage Temperature, &#8451;:</td> &nbsp;&nbsp;&nbsp;&nbsp; <td>%3</td> </tr>"
+  "</table>"
+  "<br>"
+		       )
+    .arg( solution->solutionDesc )
+    .arg( QString::number( solution->commonVbar20 ))
+    .arg( QString::number( solution->storageTemp ))
+    ;
+  
 }
 
 /*
