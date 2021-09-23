@@ -6,6 +6,7 @@
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_protocol_util.h"
+#include "us_math2.h"
 
 // Constructor
 US_Reports_auto::US_Reports_auto() : US_Widgets()
@@ -70,7 +71,7 @@ US_Reports_auto::US_Reports_auto() : US_Widgets()
   
   // initPanel( protocol_details );
   
-  // // -----------------
+  // // // -----------------
 
   panel->addStretch();
 
@@ -497,24 +498,187 @@ void US_Reports_auto::add_solution_details( const QString sol_id, QString& html_
     }
   
 
-  // //access analytes
+  //analytes information
+  QString analyte_gen_info      = QString("");
+  QString analyte_detailed_info = QString("");
   int num_analytes = solution->analyteInfo.size();
-  // for (int i=0; i < solution->analyteInfo.size(); ++i )
-  //   solution->analyteInfo[ i ].analyte.vbar20;
+  for (int i=0; i < num_analytes; ++i )
+    {
+      US_Analyte analyte = solution->analyteInfo[ i ].analyte;
+      QString a_name     = analyte.description;
+      QString a_amount   = QString::number( solution->analyteInfo[ i ].amount );
+
+      analyte_gen_info += tr(
+			     "<tr>"
+			     "<td>Analyte #%1:</td> &nbsp;&nbsp;&nbsp;&nbsp; "
+			     "<td> Name: </td>  <td> %2</td> &nbsp;&nbsp;&nbsp;&nbsp;"
+			     "<td> Molar Ratio:</td> <td>%3</td>"
+			     "</tr>"
+			     )
+	.arg( QString::number( i + 1 ) )  //1
+	.arg( a_name )                    //2
+	.arg( a_amount )                  //3
+	;
+
+      QString a_mw     = QString::number( analyte.mw ) + " D";
+      QString a_vbar20 = QString::number( analyte.vbar20 );
+      
+      int seqlen       = analyte.sequence.length();
+      QString seqsmry  = analyte.sequence;
+      int total       = 0;
+      
+      if ( seqlen == 0 )
+	seqsmry         = tr( "(empty)" );
+      else
+	{
+	  seqsmry         = seqsmry.toLower()
+	    .remove( QRegExp( "[\\s0-9]" ) );
+	  seqlen          = seqsmry.length();
+	  if ( seqlen > 25 )
+	    {
+	      seqsmry        = QString( seqsmry ).left( 10 ) + " ... "
+		+ QString( seqsmry ).mid( seqlen - 10 );
+	    }
+	  //seqsmry          += "\n  ";
+	  seqsmry          += "<br>  ";
+	  
+	  for ( int ii = 0; ii < 26; ii++ )
+	    {
+	      QString letter  = QString( QChar( 'a' + ii ) );
+	      int lcount      = analyte.sequence.count( letter );
+	      total          += lcount;
+	      if ( lcount > 0 )
+		{
+		  seqsmry     += QString().sprintf( "%d", lcount )
+		    + " " + letter.toUpper() + ", ";
+		  //seqsmry          += "\n  ";
+		}
+	    }
+	  seqsmry     += QString().sprintf( "%d", total ) + " tot";
+	}
+
+      QString a_type   = tr( "Carbohydrate/Other" );
+      a_type           = analyte.type == ( US_Analyte::PROTEIN ) ? tr( "Protein" ) : a_type;
+      a_type           = analyte.type == ( US_Analyte::DNA ) ? tr( "DNA" ) : a_type;
+      a_type           = analyte.type == ( US_Analyte::RNA ) ? tr( "RNA" ) : a_type;
+
+      //absorbing residues
+      US_Math2::Peptide p;
+      US_Math2::calc_vbar( p, analyte.sequence, 20.0 );
+      analyte.mw         = ( analyte.mw == 0.0 ) ? p.mw : analyte.mw;
+      
+      // Absorbing residues
+      int cys = int(p.c);
+      int hao = int(p.j);
+      int orn = int(p.o);
+      int trp = int(p.w);
+      int tyr = int(p.y);
+      int all_abs = 0;
+      all_abs = cys + hao + orn + trp + tyr;
+      qDebug() << "Tot AAs: " << all_abs;
+      QString absorbing_residues = tr( "(empty)" );
+      if (all_abs > 0)
+	{
+	  absorbing_residues = "";
+	  if ( cys > 0)
+	    absorbing_residues += QString().sprintf( "%d", cys ) + " " + "Cys"  + ", ";
+	  if ( hao > 0)
+	 absorbing_residues += QString().sprintf( "%d", hao ) + " " + "Hao"  + ", ";
+	  if ( orn > 0)
+	    absorbing_residues += QString().sprintf( "%d", orn ) + " " + "Orn"  + ", ";
+	  if ( trp > 0)
+	    absorbing_residues += QString().sprintf( "%d", trp ) + " " + "Trp"  + ", ";
+	  if ( tyr > 0)
+	    absorbing_residues += QString().sprintf( "%d", tyr ) + " " + "Tyr"  + ", ";
+
+	  absorbing_residues += QString().sprintf( "%d", all_abs ) + " tot";
+	}
+
+      //remeber to exclude absorbing residues for non-protein species
+      
+      analyte_detailed_info += tr(
+				  "<tr> <td> Type: </td> <td>%1</td>              </tr>"
+				  "<tr> <td> Molecular Weight: </td>  <td> %2</td></tr>"
+				  "<tr> <td> Vbar (20 deg. C): </td>  <td> %3</td></tr>"
+				  "<tr> <td> Sequence Length:  </td>  <td> %4</td></tr>"
+				  "<tr> <td> Sequence Summary: </td>  <td> %5</td></tr>"
+				  )
+	.arg( a_type )                        //1
+	.arg( a_mw )                          //2 
+	.arg( a_vbar20 )                      //3
+	.arg( QString::number( seqlen  ) )    //4
+	.arg( seqsmry  )                      //5
+	;
+
+      //add absorbig residues if PROTEINS
+      if ( analyte.type == 0 )
+	{
+	  analyte_detailed_info += tr(
+				      "<tr> <td> AAs absorbing at 280 nm: </td> <td>%1</td> </tr>"
+				      "<tr> <td> E280: </td>  <td> %2</td>                  </tr>"
+				      "<tr> <td> Extinction count: </td>  <td> %3</td>      </tr>"
+				      )
+	    .arg( absorbing_residues )
+	    .arg( QString::number( analyte.extinction[ 280.0 ] ) )
+	    .arg( QString::number( analyte.extinction.keys().count() ) )
+	    ;
+	}
+    }
+
+
+  //general buffer information
+  QString buffer_gen_info = QString("");
+  US_Buffer buffer = solution->buffer;
+
+  buffer_gen_info += tr(
+			"<tr>"
+			"<td> Name: </td>     <td> %1</td> &nbsp;&nbsp;&nbsp;&nbsp;"
+			"<td> Density:</td>   <td>%2</td> &nbsp;&nbsp;&nbsp;&nbsp;"
+			"<td> Viscosity:</td> <td>%3</td> &nbsp;&nbsp;&nbsp;&nbsp;"
+			"</tr>"
+			     )
+    .arg( buffer.description )                //1
+    .arg( buffer.density )                    //2
+    .arg( buffer.viscosity )                  //3
+    ;  
   
-  //append html string
+  //append html string: solution general info
   html_solutions += tr(
-		       //"<i>Solution Information for \'%1\'</i>"
   "<table style=\"margin-left:20px\">"
      "<caption align=left> <i>Solution Information for \'%1\'</i> </caption>"
-     "<tr><td>Common VBar (20&#8451;):</td> <td> %2</td> &nbsp;&nbsp;&nbsp;&nbsp; <td>Storage Temperature, &#8451;:</td> &nbsp;&nbsp;&nbsp;&nbsp; <td>%3</td> </tr>"
+        "<tr><td>Common VBar (20&#8451;):</td> <td> %2</td> &nbsp;&nbsp;&nbsp;&nbsp; <td>Storage Temperature, &#8451;:</td>  <td>%3</td> </tr>"
   "</table>"
-  "<br>"
 		       )
     .arg( solution->solutionDesc )
     .arg( QString::number( solution->commonVbar20 ))
     .arg( QString::number( solution->storageTemp ))
     ;
+      
+  //append html string: analytes general info
+  html_solutions += tr(
+  "<table style=\"margin-left:20px\">"
+     "<caption align=left> <i>Analytes Information</i> </caption>"
+       "%1"
+  "</table>"
+  "<table style=\"margin-left:50px\">"
+      "%2"
+  "</table>"  
+		       )
+    .arg( analyte_gen_info )
+    .arg( analyte_detailed_info )
+    ;
+
+  //append html string: buffer general info
+  html_solutions += tr(
+  "<table style=\"margin-left:20px\">"
+     "<caption align=left> <i>Buffer Information</i> </caption>"
+       "%1"
+  "</table>"
+  "<br>"
+		       )
+    .arg( buffer_gen_info )
+    ;
+ 
   
 }
 
