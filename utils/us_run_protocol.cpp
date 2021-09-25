@@ -525,6 +525,10 @@ US_RunProtocol::RunProtoSpeed::SpeedStep::SpeedStep()
    scanintv_int    = 5.0;  
    scanintv_int_min = scanintv_int;
 
+   //ALEXEY: also initialize new added params
+   scancount = 0;
+   scancount_int = 0;
+
    has_uvvis = false;
    has_interference = false;
 }

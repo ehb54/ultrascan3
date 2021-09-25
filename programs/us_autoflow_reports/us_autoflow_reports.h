@@ -43,6 +43,12 @@ class US_Reports_auto : public US_Widgets
 
 	 int        ncells_used;
 	 int        nsol_channels;
+	 int        nchan_optics;
+	 int        nchan_ranges;
+
+	 bool       has_uvvis;
+	 bool       has_interference;
+	 bool       has_fluorescense;
 	 
 	 QVector< QString >  Array_of_triples;
 	 
@@ -54,6 +60,7 @@ class US_Reports_auto : public US_Widgets
 	 void  format_needed_params( void );
 	 void  assemble_pdf( void );
 	 void  add_solution_details( const QString, const QString, QString& );
+	 void  add_ranges_details(  QString& );
 
       private slots:
 	void initPanel( QMap < QString, QString > & );

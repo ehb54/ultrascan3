@@ -2507,7 +2507,7 @@ DbgLv(1) << "EGRn:inP:  #Wvl for cell: " << j << " is: " << Total_wvl[i];
 	      scaninterval_updated = true; //updated: show in RED
 	    }
 	  
-	  
+	  rpSpeed->ssteps[ i ].scancount = scancount;
 	  mainw->ScanCount_global   = scancount;
 	  mainw->TotalWvlNum_global = Total_wvl[i];
 
@@ -2607,6 +2607,7 @@ DbgLv(1) << "EGRn:inP:  #Wvl for cell: " << j << " is: " << Total_wvl[i];
 	  qDebug() << "RANGES INIT Interference: duration_sec , scanint_sec_int, ncells_used -- "
 		   << duration_sec << scanint_sec_int << ncells_used_int;
 
+	  rpSpeed->ssteps[ i ].scancount = scancount_int;
 	  mainw->ScanCount_global_int   = scancount_int;
 	
 	  

@@ -27,6 +27,10 @@ US_Reports_auto::US_Reports_auto() : US_Widgets()
   genL->setSpacing        ( 2 );
   genL->setContentsMargins( 2, 2, 2, 2 );
 
+  has_uvvis        = false;
+  has_interference = false;
+  has_fluorescense = false;
+
   // QLabel* lb_triple   = us_banner( tr( "Triple" ) );
   // QLabel* lb_passed   = us_banner( tr( "Analysis Convergence" ) );
   // QLabel* lb_action1  = us_banner( tr( "View" ) );
@@ -245,6 +249,7 @@ void US_Reports_auto::format_needed_params()
   scanint_int_str = //QString::number( hms_scanint_uvvis[ 0 ] ) + "d " +
     QString::number( hms_scanint_int[ 1 ] ) + "h " + QString::number( hms_scanint_int[ 2 ] ) + "m " + QString::number( hms_scanint_int[ 3 ] ) + "s ";
   qDebug() << "ScanInt Interference str: " << scanint_int_str;
+
   
 }
 
@@ -261,6 +266,7 @@ void US_Reports_auto::get_current_date()
 //Start assembling PDF file
 void US_Reports_auto::assemble_pdf()
 {
+  //HEADER: begin
   QString html_header = tr( 
     "<div align=left>"
       "Created, %1<br>"
@@ -270,19 +276,24 @@ void US_Reports_auto::assemble_pdf()
 		     )
     .arg( current_date )
     ;
+  //HEADER: end
+
   
+  //TITLE: begin
   QString html_title = tr(
     "<h1 align=center>REPORT FOR RUN <br><i>%1</i></h1>"
     "<hr>"
 			  )
     .arg( currProto. protoname )    //1
     ;
+  //TITLE: end
 
   QString html_paragraph_open = tr(
     "<p align=justify>"
 				   )
     ;
   
+  //GENERAL: begin
   QString html_general = tr(
     
     "<h3 align=left>General Settings</h3>"
@@ -301,7 +312,10 @@ void US_Reports_auto::assemble_pdf()
     .arg( currProto. temperature)   //4
     .arg( currProto. temeq_delay)   //5
     ;
-    
+  //GENERAL: end
+
+
+  //ROTOR/LAB: begin
   QString html_lab_rotor = tr(
     "<h3 align=left>Lab/Rotor Parameters</h3>"
       "<table>"
@@ -325,7 +339,10 @@ void US_Reports_auto::assemble_pdf()
     .arg( currProto. rpRotor.opername  )   //5
     .arg( currProto. rpRotor.exptype )     //6
     ;
+  //ROTOR/LAB: end 	  
 
+  
+  //SPEEDS: begin
   QString html_speed = tr(
     "<h3 align=left>Speed Parameters </h3>"
       "<table>"
@@ -353,7 +370,10 @@ void US_Reports_auto::assemble_pdf()
     .arg( delay_int_str   )                                               //8
     .arg( scanint_int_str )                                               //9
     ;
+  //SPEEDS: end
 
+
+  //CELLS: begin
   QString html_cells = tr(
     "<h3 align=left>Cell Centerpiece Usage </h3>"
 			   )
@@ -363,7 +383,7 @@ void US_Reports_auto::assemble_pdf()
   html_cells += tr(
      "# of Used Cells:  %1<br>"
 		    )
-    .arg( ncells_used )                                                   //1
+    .arg( QString::number ( ncells_used ) )                                        //1
     ;
    
   html_cells += tr(
@@ -406,7 +426,10 @@ void US_Reports_auto::assemble_pdf()
     "<hr>"
 		   )
     ;
+  //CELLS: end
 
+  
+  //SOLUTIONS: begin
   QString html_solutions = tr(
 			      "<h3 align=left>Solutions for Channels</h3>"			      
 			      )
@@ -437,6 +460,223 @@ void US_Reports_auto::assemble_pdf()
     }
 
   html_solutions += tr( "<hr>" );
+  //SOLUTIONS: end
+
+
+  //OPTICAL: begin
+  QString html_optical = tr(
+			    "<h3 align=left>Optics </h3>"
+			   )
+    ;
+  nchan_optics = currProto. rpOptic. nochan;
+  html_optical += tr(
+		     "# of Channels With Optics:  %1<br>"
+		     )
+    .arg( QString::number( nchan_optics ))                                                     //1
+    ;
+  html_optical += tr(
+		     "<table>"
+		     );
+
+  for ( int i=0; i<nchan_optics; ++i )
+    {
+      QString channel  = currProto. rpOptic. chopts[i].channel;
+      QString scan1    = currProto. rpOptic. chopts[i].scan1;
+      QString scan2    = currProto. rpOptic. chopts[i].scan2;
+      QString scan3    = currProto. rpOptic. chopts[i].scan3;
+
+      // //test
+      // if ( i == 3 )
+      // 	scan2 = tr( "Interf." );
+      // if ( i == nchan_optics - 2 )
+      // 	scan3 = tr( "Fluorescense" );
+      // if ( i == nchan_optics - 1 )
+      // 	scan2 = tr( "Interference" );
+      // //////
+
+      
+      html_optical += tr(
+			 "<tr>" 
+			    "<td>Cell/Channel:</td><td>%1</td> &nbsp;&nbsp;&nbsp;&nbsp;"
+			 )
+	.arg( channel );                      //1
+      
+      
+      if ( !scan1.isEmpty() )
+	{
+	  has_uvvis = true;
+	  html_optical += tr(
+			     "<td> %1: </td> &nbsp;&nbsp;&nbsp;&nbsp;"
+			     )
+	    .arg( scan1 );                    //1
+	}
+      else
+	html_optical += tr("<td> &nbsp;&nbsp;&nbsp;&nbsp; </td>");
+      
+      if ( !scan2.isEmpty() )
+	{
+	  has_interference = true;
+	  html_optical += tr(
+			     "<td> %1: </td> &nbsp;&nbsp;&nbsp;&nbsp;"
+			     )
+	    .arg( scan2 );                        //1
+	}
+      else
+	html_optical += tr("<td> &nbsp;&nbsp;&nbsp;&nbsp; </td>" );    
+      
+      if ( !scan3.isEmpty() )
+	{
+	  has_fluorescense = true;
+	  html_optical += tr(
+			     "<td> %1: </td> &nbsp;&nbsp;&nbsp;&nbsp;"
+			     )
+	    .arg( scan3 );                        //1
+	}
+      else
+	html_optical += tr("<td> &nbsp;&nbsp;&nbsp;&nbsp; </td>" );    
+           
+      
+      html_optical += tr(
+			 "</tr>"
+			 );
+    }
+  
+  html_optical += tr(
+      "</table>"
+    "<hr>"
+		   )
+    ;
+  //OPTICAL: end
+
+
+  //RANGES: begin
+  QString html_ranges = tr(
+			   "<h3 align=left> Ranges </h3>"
+			   )
+    ;
+  nchan_ranges  = currProto. rpRange. nranges;
+  html_ranges  += tr(
+		     "# of Channels With Ranges:  %1<br>"
+		     )
+    .arg( QString::number( nchan_ranges ))                                  //1
+    ;
+  
+  for ( int i=0; i < nchan_ranges; ++i )
+    {
+      html_ranges += tr(
+			"<table>"		   
+			  "<tr>"
+			    "<td><b>Cell/Channel:</b> &nbsp;&nbsp;&nbsp;&nbsp; </td> <td><b>%1</b></td>"
+			  "</tr>"
+			"</table>"
+			)
+	.arg( currProto. rpRange. chrngs[i].channel )                       //1
+	;
+
+      int w_count     = currProto. rpRange. chrngs[i].wvlens.size();
+      double  w_min   = currProto. rpRange. chrngs[i].wvlens[0];
+      double  w_max   = currProto. rpRange. chrngs[i].wvlens[ w_count - 1 ];
+      double  r_min   = currProto. rpRange. chrngs[i].lo_rad;
+      double  r_max   = currProto. rpRange. chrngs[i].hi_rad;
+      QString w_range = QString::number( w_min ) + tr(" to ") + QString::number( w_max );
+      QString r_range = QString::number( r_min ) + tr(" to ") + QString::number( r_max );
+
+      //wavelengths:
+      QString all_wvl = QString("");
+      QList< double > wvl_list = currProto. rpRange. chrngs[i].wvlens;
+      int counter = 0;
+      for (int  jj =0; jj < w_count; jj++)
+	{
+	  ++counter;
+	  all_wvl += tr("%1").arg( wvl_list[jj] );
+         if( jj != wvl_list.size() -1 )
+	   all_wvl += tr(", ");
+         if(counter % 8 == 0)
+	   all_wvl += tr("<br>");
+	}
+      
+      html_ranges += tr(
+			"<table style=\"margin-left:30px\">"
+			  "<tr><td> Selected Wavelength count: </td>  <td> %1 </td> </tr>"
+			  "<tr><td> Selected Wavelength range: </td>  <td> %2 </td> </tr>"
+			  "<tr><td> Raduis range:              </td>  <td> %3 </td> </tr>"
+			  "<tr><td> Selected Wavelengths:      </td>  <td> %4 </td> </tr>"
+			"</table>"
+			)
+	.arg( QString::number( w_count ) )        //1
+	.arg( w_range )                           //2
+	.arg( r_range )                           //3
+	.arg( all_wvl )                           //4	
+	;
+      
+    }  
+
+  html_ranges += tr( "<hr>" ) ;
+  //RANGES: end
+
+  
+  //SCAN_COUNT: begin
+  QString html_scan_count = tr(
+			       "<h3 align=left> Scan Counts and Scan Intervals For Optics in Use </h3>"
+			       )
+    ;
+
+  double scanintv     = currProto. rpSpeed. ssteps[0].scanintv;
+  double scanintv_int = currProto. rpSpeed. ssteps[0].scanintv_int;
+  int scancount       = currProto. rpSpeed. ssteps[0].scancount;
+  int scancount_int   = currProto. rpSpeed. ssteps[0].scancount_int;
+
+  //UV-vis
+  QString html_scan_count_uv = tr(
+				  "<table>"		   
+				    "<tr>"
+				      "<td><b><i>UV-visible optics:</i></b></td>"
+				    "</tr>"
+				  "</table>"
+			)
+    ;
+  html_scan_count_uv += tr(
+			   "<table style=\"margin-left:30px\">"
+			     "<tr><td> Scan Interval:             </td>  <td> %1 </td> </tr>"
+			     "<tr><td> # Scans per Triple:        </td>  <td> %2 </td> </tr>"
+			   "</table>"
+			   )
+    .arg( scanint_uvvis_str )                             //1
+    .arg( QString::number( scancount ) )                  //2
+    ;
+  
+  //Interference
+  QString html_scan_count_int = tr(
+				   "<table>"		   
+				     "<tr>"
+				       "<td><b><i>Interference optics:</i></b></td>"
+				     "</tr>"
+				   "</table>"
+				   )
+    ;
+  html_scan_count_int += tr(
+			    "<table style=\"margin-left:30px\">"
+			      "<tr><td> Scan Interval:             </td>  <td> %1 </td> </tr>"
+			      "<tr><td> # Scans per Cell:          </td>  <td> %2 </td> </tr>"
+			    "</table>"
+			   )
+    .arg( scanint_int_str )                                //1
+    .arg( QString::number( scancount_int ) )               //2
+    ;
+
+
+  if ( has_uvvis )
+    html_scan_count += html_scan_count_uv;
+  if ( has_interference )
+    html_scan_count += html_scan_count_int;  
+  
+  html_scan_count += tr( "<hr>" ) ;
+  //SCAN_COUNT: end
+
+  
+  //APROFILE: begin
+  //APROFILE: end
+  
   
   QString html_paragraph_close = tr(
     "</p>"
@@ -451,6 +691,7 @@ void US_Reports_auto::assemble_pdf()
     .arg( currProto. protoname )
     ;
 
+  //Main assembly
   QString html_assembled = QString("");
   html_assembled +=
     html_header
@@ -461,6 +702,9 @@ void US_Reports_auto::assemble_pdf()
     + html_speed
     + html_cells
     + html_solutions
+    + html_optical
+    + html_ranges
+    + html_scan_count
     + html_paragraph_close
     + html_footer;
     
@@ -479,6 +723,12 @@ void US_Reports_auto::assemble_pdf()
   document.print(&printer);
 }
 
+//Fetch Ranges details && add to html_solutions
+void US_Reports_auto::add_ranges_details( QString& html_ranges )
+{
+  
+}
+  
 //Fetch Solution details && add to html_solutions
 void US_Reports_auto::add_solution_details( const QString sol_id, const QString sol_comment, QString& html_solutions )
 {
@@ -706,15 +956,15 @@ void US_Reports_auto::add_solution_details( const QString sol_id, const QString 
 
   buffer_gen_info += tr(
 			"<tr>"
-			  "<td> Bufffer Name: </td> <td> %1 </td> "
+			  "<td> Buffer Name: </td> <td> %1 </td> "
 			"</tr>"
 			     )
     .arg( buffer.description )                //1
     ;
 
   buffer_detailed_info += tr(
-			     "<tr><td> Density (20&#8451;,g/cm<sup>3</sup>):  </td>   <td>%1</td>  </tr>"
-			     "<tr><td> Viscosity (20&#8451;,cP): </td>   <td>%2</td>               </tr>"
+			     "<tr><td> Density (20&#8451;, g/cm<sup>3</sup>):  </td>   <td>%1</td>  </tr>"
+			     "<tr><td> Viscosity (20&#8451;, cP): </td>   <td>%2</td>               </tr>"
 			     "<tr><td> pH:       </td>   <td>%3 </td>                              </tr>"
 			     "<tr><td> Compressibility:</td>   <td>%4</td>                         </tr>"			     
 			     )
@@ -767,8 +1017,6 @@ void US_Reports_auto::add_solution_details( const QString sol_id, const QString 
     .arg( buffer_detailed_info )
     .arg( buffer_components_info )
     ;
- 
-  
 }
 
 /*
