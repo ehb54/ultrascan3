@@ -383,9 +383,11 @@ bool US_RunProtocol::RunProtoSpeed::fromXml( QXmlStreamReader& xmli )
 	    //Uv-vis
 	    QString s_dy = attr.value( "delay" )        .toString();
             QString s_si = attr.value( "scan_interval" ).toString();
+	    ss.scancount = attr.value( "scancount" )    .toString().toInt();
 	    //interference
 	    QString s_dy_int = attr.value( "delay_int" )        .toString();
             QString s_si_int = attr.value( "scan_interval_int" ).toString();
+	    ss.scancount_int = attr.value( "scancount_int" )    .toString().toInt();
 	    
             double d_du  = attr.value( "duration_minutes" ).toString().toDouble();
             double d_dy  = attr.value( "delay_seconds"    ).toString().toDouble();
@@ -448,7 +450,7 @@ bool US_RunProtocol::RunProtoSpeed::fromXml( QXmlStreamReader& xmli )
 // Write the current Speed portion of controls to an XML stream
 bool US_RunProtocol::RunProtoSpeed::toXml( QXmlStreamWriter& xmlo )
 {
-  xmlo.writeStartElement( "speed" );
+   xmlo.writeStartElement( "speed" );
    xmlo.writeAttribute( "spin_down",          spin_down    ? "1" : "0" );
    xmlo.writeAttribute( "radial_calibration", radial_calib ? "1" : "0" );
 
@@ -486,10 +488,12 @@ bool US_RunProtocol::RunProtoSpeed::toXml( QXmlStreamWriter& xmlo )
       //Uv_vis
       xmlo.writeAttribute   ( "delay",         s_delay );
       xmlo.writeAttribute   ( "scan_interval", s_sintv );
+      xmlo.writeAttribute   ( "scancount",     QString::number( ssteps[ ii ].scancount ) );
       
       //interference
       xmlo.writeAttribute   ( "delay_int",         s_delay_int );
-      xmlo.writeAttribute   ( "scan_interval_int", s_sintv_int );      
+      xmlo.writeAttribute   ( "scan_interval_int", s_sintv_int );
+      xmlo.writeAttribute   ( "scancount_int",     QString::number( ssteps[ ii ].scancount_int ) );
 
       //stage delay
       xmlo.writeAttribute   ( "stage_delay", s_stdelay );
