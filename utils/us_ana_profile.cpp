@@ -535,6 +535,8 @@ bool US_AnaProfile::AnaProf2DSA::toXml( QXmlStreamWriter& xmlo )
    xmlo.writeAttribute   ( "run",            US_Util::bool_string(
                                              job3run ) );
    xmlo.writeAttribute   ( "interactive",  ( job3auto ? "0" : "1" ) );
+   //ALEXEY: add gui_intercative="1" for auto processing FITMEN_AUTO in GUI
+   //xmlo.writeAttribute   ( "gui_interactive", QString::number( 1 )  );   
    xmlo.writeEndElement  (); // job_fitmen
 
    xmlo.writeStartElement( "job_2dsa_it" );

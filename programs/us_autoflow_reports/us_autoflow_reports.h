@@ -53,7 +53,7 @@ class US_Reports_auto : public US_Widgets
 	 void  get_current_date( void );
 	 void  format_needed_params( void );
 	 void  assemble_pdf( void );
-	 void  add_solution_details( const QString, QString& );
+	 void  add_solution_details( const QString, const QString, QString& );
 
       private slots:
 	void initPanel( QMap < QString, QString > & );

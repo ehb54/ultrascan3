@@ -62,16 +62,23 @@ US_Reports_auto::US_Reports_auto() : US_Widgets()
   setMinimumSize( 950, 450 );
   adjustSize();
    
-  // // ---- Testing ----
-  // QMap < QString, QString > protocol_details;
+  // ---- Testing ----
+  QMap < QString, QString > protocol_details;
+  // //small: 4 channels
   // protocol_details[ "aprofileguid" ] = QString("d13ffad0-6f27-4fd8-8aa0-df8eef87a6ea");
   // protocol_details[ "protocolName" ] = QString("alexey-abs-itf-test1");
   // protocol_details[ "invID_passed" ] = QString("12");
   // protocol_details[ "runID" ]        = QString("1569");
+
+  // //large: 16 channels
+  // protocol_details[ "aprofileguid" ] = QString("255023d4-c725-48ac-8c93-a7c832b5c893");
+  // protocol_details[ "protocolName" ] = QString("Alexey-test-report-1");
+  // protocol_details[ "invID_passed" ] = QString("12");
+  // protocol_details[ "runID" ]        = QString("1570");
   
   // initPanel( protocol_details );
   
-  // // // -----------------
+  // -----------------
 
   panel->addStretch();
 
@@ -327,10 +334,10 @@ void US_Reports_auto::assemble_pdf()
         "<tr><td>Active Scaning Time:    </td>                  <td>%3</td></tr>"
         "<tr><td>Stage Delay:          </td>                    <td>%4</td></tr>"
         "<tr><td>Total Time (without equilibration):  </td>     <td>%5</td></tr>"
-        "<tr><td><br><i>UV-visible optics (total):</i> </td>  "
+        "<tr><td><br><b><i>UV-visible optics (total):</i></b>   </td>  "
         "<tr><td>Delay to First Scan:            </td>          <td>%6</td></tr>"
         "<tr><td>Scan Interval:                  </td>          <td>%7</td></tr>"
-        "<tr><td><br><i>Interference optics (per cell):</i></td>   "
+        "<tr><td><br><b><i>Interference optics (per cell):</i></b></td>   "
         "<tr><td>Delay to First Scan:  </td>                    <td>%8</td></tr>"
         "<tr><td>Scan Interval:        </td>                    <td>%9</td></tr>"
       "</table>"
@@ -354,7 +361,7 @@ void US_Reports_auto::assemble_pdf()
    
   ncells_used = currProto. rpCells. nused;
   html_cells += tr(
-     "# of Used Cells:  %1"
+     "# of Used Cells:  %1<br>"
 		    )
     .arg( ncells_used )                                                   //1
     ;
@@ -366,12 +373,31 @@ void US_Reports_auto::assemble_pdf()
 
   for ( int i=0; i<ncells_used; ++i )
     {
+      QString cell        = QString::number( currProto. rpCells. used[i].cell );
+      QString centerpiece = currProto. rpCells. used[i].centerpiece;
+      QString cell_label  = QString( tr( "Centerpiece" ) );
+      QString window      = currProto. rpCells. used[i].windows;
+      
+      //check if last cell counterbalance
+      if ( i == ncells_used - 1 && 
+	   currProto. rpCells. used[i].cbalance.contains( tr("counterbalance") ) )
+	{
+	  cell_label = tr("Counterbalance");
+	  centerpiece = currProto. rpCells. used[i].cbalance;
+	  window = tr("N/A");
+	}
+	
       html_cells += tr(
-        "<tr> <td>Cell Number:</td><td>%1</td> &nbsp;&nbsp;&nbsp;&nbsp; <td>Centerpiece:</td><td>%2</td> &nbsp;&nbsp;&nbsp;&nbsp; <td>Windows:</td><td>%3</td>  </tr>"
+		       "<tr>" 
+		       "<td>Cell Number:</td><td>%1</td> &nbsp;&nbsp;&nbsp;&nbsp;" 
+		       "<td> %2: </td><td> %3 </td> &nbsp;&nbsp;&nbsp;&nbsp;"
+		       "<td>Windows:</td><td> %4 </td>"
+		       "</tr>"
 			)
-	.arg( QString::number( currProto. rpCells. used[i].cell ))        //1
-	.arg( currProto. rpCells. used[i].centerpiece )                   //2
-	.arg( currProto. rpCells. used[i].windows )                       //3 
+	.arg( cell )                          //1
+	.arg( cell_label )                    //2
+	.arg( centerpiece )                   //3
+	.arg( window )                        //4 
 	;
     }
   
@@ -382,13 +408,13 @@ void US_Reports_auto::assemble_pdf()
     ;
 
   QString html_solutions = tr(
-    "<h3 align=left>Solutions for Each Channel</h3>"			      
+			      "<h3 align=left>Solutions for Channels</h3>"			      
 			      )
     ;
    
   nsol_channels = currProto.rpSolut.nschan;
   html_solutions += tr(
-     "# of Solution Channels:  %1"
+     "# of Solution Channels:  %1 <br>"
 		    )
     .arg( nsol_channels )                                                   //1
     ;
@@ -396,17 +422,18 @@ void US_Reports_auto::assemble_pdf()
   for ( int i=0; i<nsol_channels; ++i )
     {
       html_solutions += tr(
-       "<table>"		   
-        "<tr> <td>Cell/Channel:</td><td>%1</td> &nbsp;&nbsp;&nbsp;&nbsp; <td>Solution:</td><td>%2</td> &nbsp;&nbsp;&nbsp;&nbsp; <td>Comment:</td><td>%3</td> </tr>"
-       "</table>"
+			   "<table>"		   
+			   "<tr>"
+			      "<td><b>Cell/Channel:</b> &nbsp;&nbsp;&nbsp;&nbsp; </td> <td><b>%1</b></td>"
+			   "</tr>"
+			   "</table>"
 			)
 	.arg( currProto. rpSolut. chsols[i].channel )                       //1
-	.arg( currProto. rpSolut. chsols[i].solution )                      //2
-	.arg( currProto. rpSolut. chsols[i].ch_comment )                    //3
 	;
 
-      QString sol_id = currProto. rpSolut. chsols[i].sol_id;
-      add_solution_details( sol_id, html_solutions );
+      QString sol_id      = currProto. rpSolut. chsols[i].sol_id;
+      QString sol_comment = currProto. rpSolut. chsols[i].ch_comment;
+      add_solution_details( sol_id, sol_comment, html_solutions );
     }
 
   html_solutions += tr( "<hr>" );
@@ -453,7 +480,7 @@ void US_Reports_auto::assemble_pdf()
 }
 
 //Fetch Solution details && add to html_solutions
-void US_Reports_auto::add_solution_details( const QString sol_id, QString& html_solutions )
+void US_Reports_auto::add_solution_details( const QString sol_id, const QString sol_comment, QString& html_solutions )
 {
   //get Solution info by ID:
   US_Passwd pw;
@@ -496,23 +523,55 @@ void US_Reports_auto::add_solution_details( const QString sol_id, QString& html_
       QMessageBox::warning( this, tr( "Database Problem" ),
 			    tr( "Database returned the following error: \n" ) +  db.lastError() );
     }
+  //End of reading Solution:
+
+  //add general solution details to html_solutions string:
+  html_solutions += tr(
+		       "<table style=\"margin-left:5px\">"
+		       "<caption align=left> <b><i>Solution Information </i></b> </caption>"
+		       "</table>"
+		       
+		       "<table style=\"margin-left:20px\">"
+		         "<tr><td> Solution Name: </td>               <td> %1 </td> </tr>"
+		         "<tr><td> Solution Comment: </td>            <td> %2 </td> </tr>"
+		         "<tr><td> Common VBar (20&#8451;):</td>      <td> %3 </td> </tr>"
+		         "<tr><td> Storage Temperature (&#8451;):</td><td> %4 </td> </tr>" 
+		       "</table>"
+		       )
+    .arg( solution->solutionDesc )                          //1
+    .arg( sol_comment )                                     //2
+    .arg( QString::number( solution->commonVbar20 ))        //3
+    .arg( QString::number( solution->storageTemp ))         //4
+    ;
   
 
-  //analytes information
-  QString analyte_gen_info      = QString("");
-  QString analyte_detailed_info = QString("");
+  //Get analytes information
+  html_solutions += tr(
+		       "<table style=\"margin-left:20px\">"
+		          "<caption align=left> <b><i>Analytes Information</i></b> </caption>"
+		       "</table>"
+		       )
+    ;
+  
+  QString analyte_gen_info;
+  QString analyte_detailed_info;
   int num_analytes = solution->analyteInfo.size();
   for (int i=0; i < num_analytes; ++i )
     {
+      //clear analyte's strings:
+      analyte_gen_info = QString("");
+      analyte_detailed_info = QString("");
+
+     
       US_Analyte analyte = solution->analyteInfo[ i ].analyte;
       QString a_name     = analyte.description;
       QString a_amount   = QString::number( solution->analyteInfo[ i ].amount );
 
       analyte_gen_info += tr(
 			     "<tr>"
-			     "<td>Analyte #%1:</td> &nbsp;&nbsp;&nbsp;&nbsp; "
-			     "<td> Name: </td>  <td> %2</td> &nbsp;&nbsp;&nbsp;&nbsp;"
-			     "<td> Molar Ratio:</td> <td>%3</td>"
+			       "<td>Analyte #%1:</td> &nbsp;&nbsp;&nbsp;&nbsp; "
+			       "<td> Name: </td>  <td> %2</td> &nbsp;&nbsp;&nbsp;&nbsp;"
+			       "<td> Molar Ratio:</td> <td>%3</td>"
 			     "</tr>"
 			     )
 	.arg( QString::number( i + 1 ) )  //1
@@ -599,7 +658,7 @@ void US_Reports_auto::add_solution_details( const QString sol_id, QString& html_
       analyte_detailed_info += tr(
 				  "<tr> <td> Type: </td> <td>%1</td>              </tr>"
 				  "<tr> <td> Molecular Weight: </td>  <td> %2</td></tr>"
-				  "<tr> <td> Vbar (20 deg. C): </td>  <td> %3</td></tr>"
+				  "<tr> <td> Vbar (20 &#8451;): </td>  <td> %3</td></tr>"
 				  "<tr> <td> Sequence Length:  </td>  <td> %4</td></tr>"
 				  "<tr> <td> Sequence Summary: </td>  <td> %5</td></tr>"
 				  )
@@ -623,60 +682,90 @@ void US_Reports_auto::add_solution_details( const QString sol_id, QString& html_
 	    .arg( QString::number( analyte.extinction.keys().count() ) )
 	    ;
 	}
+
+      //add info on the current analyte to html_solutions string 
+      html_solutions += tr(
+			   "<table style=\"margin-left:40px\">"
+			      "%1"
+			   "</table>"
+			   "<table style=\"margin-left:60px\">"
+			      "%2"
+			   "</table>"  
+			   )
+	.arg( analyte_gen_info )
+	.arg( analyte_detailed_info )
+	;     
+      
     }
 
 
   //general buffer information
-  QString buffer_gen_info = QString("");
+  QString buffer_gen_info      = QString("");
+  QString buffer_detailed_info = QString("");
   US_Buffer buffer = solution->buffer;
 
   buffer_gen_info += tr(
 			"<tr>"
-			"<td> Name: </td>     <td> %1</td> &nbsp;&nbsp;&nbsp;&nbsp;"
-			"<td> Density:</td>   <td>%2</td> &nbsp;&nbsp;&nbsp;&nbsp;"
-			"<td> Viscosity:</td> <td>%3</td> &nbsp;&nbsp;&nbsp;&nbsp;"
+			  "<td> Bufffer Name: </td> <td> %1 </td> "
 			"</tr>"
 			     )
     .arg( buffer.description )                //1
-    .arg( buffer.density )                    //2
-    .arg( buffer.viscosity )                  //3
-    ;  
+    ;
+
+  buffer_detailed_info += tr(
+			     "<tr><td> Density (20&#8451;,g/cm<sup>3</sup>):  </td>   <td>%1</td>  </tr>"
+			     "<tr><td> Viscosity (20&#8451;,cP): </td>   <td>%2</td>               </tr>"
+			     "<tr><td> pH:       </td>   <td>%3 </td>                              </tr>"
+			     "<tr><td> Compressibility:</td>   <td>%4</td>                         </tr>"			     
+			     )
+    .arg( QString::number( buffer.density ) )                    //1
+    .arg( QString::number( buffer.viscosity ) )                  //2
+    .arg( QString::number( buffer.pH ) )                         //3
+    .arg( QString::number( buffer.compressibility ) )            //4
+    ;
+
+  //buffer components (if any)
+  QString buffer_components_info = QString("");
+  for ( int i=0; i < buffer.component.size(); ++i )
+    {
+      QString component_desc =
+	buffer.component[i].name
+	+ " (" + QString::number( buffer.concentration[ i ] ) + " "
+	+ buffer.component[i].unit
+	+ ")";
+
+
+      buffer_components_info += tr(
+				   "<tr><td> Component Name:</td> &nbsp;&nbsp;  <td>%1</td>  </tr>"
+				   )
+	.arg( component_desc )
+	;
+    }
   
-  //append html string: solution general info
-  html_solutions += tr(
-  "<table style=\"margin-left:20px\">"
-     "<caption align=left> <i>Solution Information for \'%1\'</i> </caption>"
-        "<tr><td>Common VBar (20&#8451;):</td> <td> %2</td> &nbsp;&nbsp;&nbsp;&nbsp; <td>Storage Temperature, &#8451;:</td>  <td>%3</td> </tr>"
-  "</table>"
-		       )
-    .arg( solution->solutionDesc )
-    .arg( QString::number( solution->commonVbar20 ))
-    .arg( QString::number( solution->storageTemp ))
-    ;
+
       
-  //append html string: analytes general info
-  html_solutions += tr(
-  "<table style=\"margin-left:20px\">"
-     "<caption align=left> <i>Analytes Information</i> </caption>"
-       "%1"
-  "</table>"
-  "<table style=\"margin-left:50px\">"
-      "%2"
-  "</table>"  
-		       )
-    .arg( analyte_gen_info )
-    .arg( analyte_detailed_info )
-    ;
+
 
   //append html string: buffer general info
   html_solutions += tr(
-  "<table style=\"margin-left:20px\">"
-     "<caption align=left> <i>Buffer Information</i> </caption>"
-       "%1"
-  "</table>"
-  "<br>"
+		       "<table style=\"margin-left:30px\">"
+		          "<caption align=left> <b><i>Buffer Information</i></b> </caption>"
+		       "</table>"
+		       
+		       "<table style=\"margin-left:70px\">"
+		           "%1"
+		       "</table>"
+		       "<table style=\"margin-left:100px\">"
+		           "%2"
+		       "</table>"
+		         "<table style=\"margin-left:130px\">"
+		           "%3"
+		       "</table>"  
+		       "<br>"
 		       )
     .arg( buffer_gen_info )
+    .arg( buffer_detailed_info )
+    .arg( buffer_components_info )
     ;
  
   

@@ -671,6 +671,10 @@ pb_plateau->setVisible(false);
    // // details[ "invID_passed" ] = QString("97");
    // // details[ "filename" ]     = QString("GabirH_NetUnc-050921_MW-run1442");
    // // details[ "protocolName" ] = QString("GabirH_NetUnc-050921_MW");
+
+   // details[ "invID_passed" ] = QString("104");
+   // details[ "filename" ]     = QString("DubnauD_ComEA-DNA_MW1_092221-run1201");
+   // details[ "protocolName" ] = QString("DubnauD_ComEA-DNA_MW1_092221");
    
    // load_auto( details );
    
