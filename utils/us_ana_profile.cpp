@@ -541,7 +541,7 @@ bool US_AnaProfile::AnaProf2DSA::toXml( QXmlStreamWriter& xmlo )
      }
    else  //auto-pick, so non-interactive
      {
-       xmlo.writeStartElement( "job_fitmen" );
+       xmlo.writeStartElement( "job_fitmen_auto" );
        xmlo.writeAttribute   ( "run",   US_Util::bool_string( job3run ) );
        xmlo.writeAttribute   ( "interactive",  "0" );
      }
