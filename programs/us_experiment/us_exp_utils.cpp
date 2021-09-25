@@ -2607,8 +2607,8 @@ DbgLv(1) << "EGRn:inP:  #Wvl for cell: " << j << " is: " << Total_wvl[i];
 	  qDebug() << "RANGES INIT Interference: duration_sec , scanint_sec_int, ncells_used -- "
 		   << duration_sec << scanint_sec_int << ncells_used_int;
 
-	  rpSpeed->ssteps[ i ].scancount = scancount_int;
-	  mainw->ScanCount_global_int   = scancount_int;
+	  rpSpeed->ssteps[ i ].scancount_int = scancount_int;
+	  mainw->ScanCount_global_int        = scancount_int;
 	
 	  
 	  //Update le_scanint text: set text color RED if updated
