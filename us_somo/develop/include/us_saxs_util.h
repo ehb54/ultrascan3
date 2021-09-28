@@ -1021,6 +1021,11 @@ class US_EXTERN US_Saxs_Util
                         map < QString, QString >           & results
                        );
 
+      bool run_align   (
+                        map < QString, QString >           & parameters,
+                        map < QString, QString >           & results
+                       );
+
       //bool screen_pdb( QString, bool display_pdb = false, bool skip_clear_issue = false );
       void read_residue_file();
       bool screen_pdb(QString filename, bool  parameters_set_first_model); //, bool display_pdb, bool skipclearissue );
@@ -1062,6 +1067,36 @@ class US_EXTERN US_Saxs_Util
       static int us_usleep( unsigned int usec );
 
    private:
+
+   // distance threshold check support
+      bool run_ssbond   (
+                        map < QString, QString >           & parameters,
+                        map < QString, QString >           & results
+                        );
+
+      void SS_setup();                              // called once to setup any persistant distance threshold structures
+      void SS_init();                               // called during load pdb to setup any processing structures
+      void SS_apply( struct PDB_model & model,
+                     QString & ssbond_data ); // called during load pdb to process any adjustments (CYS->CYH etc) *** per model! ***
+      void SS_change_residue(                       // change the residue of an entry to target_residue
+                             struct PDB_model & model
+                             ,const QString & line
+                             ,const QString target_residue
+                                                );  
+      
+      set < QString >                                           cystine_residues;
+      set < QString >                                           sulfur_atoms;
+
+      vector < QString >                                        sulfur_pdb_line;
+      vector < point   >                                        sulfur_coordinates;
+
+      map < QString, map < QString, vector < unsigned int > > > sulfur_pdb_chain_atom_idx;
+      map < QString, vector < unsigned int > >                  sulfur_pdb_chain_idx;
+
+      map < int, int >                                          sulfur_paired;
+      
+      // end distance threshold check support
+
 
       // double       minusoneoverfourpisq;
       // unsigned int exponential_terms;

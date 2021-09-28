@@ -422,6 +422,7 @@ SOURCES *= \
         src/us_saxs_util_pm.cpp \
         src/us_saxs_util_sgp.cpp \
         src/us_saxs_util_sgp_phys.cpp \
+        src/us_saxs_util_ssbond.cpp \
         src/us_saxs_util_static.cpp \
 #  us_select_channel.cpp \
 #  us_selectmodel.cpp \

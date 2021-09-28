@@ -11417,6 +11417,9 @@ map < QString, QString > US_Saxs_Util::pdb_fields( const QString & pdb_line ) {
       result[ "resname"   ] = pdb_line.mid( 17, 3 ).trimmed();
       result[ "chainid"   ] = pdb_line.mid( 21, 1 ).trimmed();
       result[ "resseq"    ] = pdb_line.mid( 22, 4 ).trimmed();
+      result[ "x"         ] = pdb_line.mid( 30, 8 ).trimmed();
+      result[ "y"         ] = pdb_line.mid( 38, 8 ).trimmed();
+      result[ "z"         ] = pdb_line.mid( 46, 8 ).trimmed();
       result[ "element"   ] = pdb_line.mid( 76, 2 ).trimmed();
    } else if ( result[ "recname" ] == "REMARK" ) {
       result[ "remarknum" ] = pdb_line.mid(  7, 3 ).trimmed();

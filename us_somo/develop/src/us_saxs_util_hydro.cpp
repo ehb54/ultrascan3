@@ -517,6 +517,8 @@ void US_Saxs_Util::read_residue_file()
    msroll_radii.clear( );
    msroll_names.clear( );
 
+   SS_init();
+
    // i=1;
    if (f.open(QIODevice::ReadOnly|QIODevice::Text))
    {
@@ -11467,6 +11469,9 @@ bool US_Saxs_Util::read_pdb_hydro( QString filename, bool parameters_set_first_m
             // push back previous chain if it exists
             if ( chain_flag )
             {
+               if ( temp_chain.atom.size() ) {
+                  sulfur_pdb_chain_idx[ temp_chain.atom[ 0 ].chainID ].push_back( (unsigned int) temp_model.molecule.size() );
+               }
                temp_model.molecule.push_back(temp_chain);
                clear_temp_chain(&temp_chain);
                chain_flag = true;
@@ -11518,6 +11523,9 @@ bool US_Saxs_Util::read_pdb_hydro( QString filename, bool parameters_set_first_m
          if (str1.left(6) == "ENDMDL") // we need to save the previously recorded molecule
          {
             last_was_ENDMDL = true;
+            if ( temp_chain.atom.size() ) {
+               sulfur_pdb_chain_idx[ temp_chain.atom[ 0 ].chainID ].push_back( (unsigned int) temp_model.molecule.size() );
+            }
             temp_model.molecule.push_back(temp_chain); // add the last chain of this model
             // noticemsg += "Residue sequence from model " +
             // QString("%1").arg( model_vector.size() + 1 ) + ": \n";
@@ -11654,6 +11662,9 @@ bool US_Saxs_Util::read_pdb_hydro( QString filename, bool parameters_set_first_m
                      {
                         if ( temp_chain.atom.size() ) 
                         {
+                           if ( temp_chain.atom.size() ) {
+                              sulfur_pdb_chain_idx[ temp_chain.atom[ 0 ].chainID ].push_back( (unsigned int) temp_model.molecule.size() );
+                           }
                            temp_model.molecule.push_back(temp_chain);
                         }
                         clear_temp_chain(&temp_chain);
@@ -11681,7 +11692,13 @@ bool US_Saxs_Util::read_pdb_hydro( QString filename, bool parameters_set_first_m
    }
    if(!model_flag)   // there were no model definitions, just a single molecule,
    {                  // we still need to save the results
-      temp_model.molecule.push_back(temp_chain);
+      if ( temp_chain.atom.size() ) {
+         if ( temp_chain.atom.size() ) {
+            sulfur_pdb_chain_idx[ temp_chain.atom[ 0 ].chainID ].push_back( (unsigned int) temp_model.molecule.size() );
+         }
+         temp_model.molecule.push_back(temp_chain);
+      }
+      // SS_apply( temp_model, project );
 
       //editor->append("\nResidue sequence from " + project +".pdb:\n");
       us_log->log("\nResidue sequence from " + project +".pdb model " + QString("%1").arg( temp_model.model_id ) + ": \n");
