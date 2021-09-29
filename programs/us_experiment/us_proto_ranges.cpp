@@ -710,7 +710,8 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 	      scancount    = 1500;
 	      scaninterval_updated = true; //updated: show in RED
 	    }
-	  
+
+	  rpSpeed->ssteps[ i ].scancount = scancount;
 	  mainw->ScanCount_global   = scancount;
 	  mainw->TotalWvlNum_global = tot_wvl; 
 	
@@ -794,6 +795,7 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
       	  qDebug() << "RANGES SET MANUAL Interference: duration_sec , scanint_sec_int, ncells_used -- "
 		   << duration_sec << scanint_sec_int << ncells_used_int;
 
+	  rpSpeed->ssteps[ i ].scancount_int = scancount_int;
 	  mainw->ScanCount_global_int   = scancount_int;
 	
 	  
@@ -1008,7 +1010,8 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 	      scancount    = 1500;
 	      scaninterval_updated = true; //updated: show in RED
 	    }
-	  
+
+	  rpSpeed->ssteps[ i ].scancount = scancount;
 	  mainw->ScanCount_global = scancount;
 	  mainw->TotalWvlNum_global = tot_wvl; 
 
@@ -1091,6 +1094,7 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
       	  qDebug() << "RANGES SET MANUAL Interference: duration_sec , scanint_sec_int, ncells_used -- "
 		   << duration_sec << scanint_sec_int << ncells_used_int;
 
+	  rpSpeed->ssteps[ i ].scancount_int = scancount_int;
 	  mainw->ScanCount_global_int   = scancount_int;
 
 	  //Update le_scanint text: set text color RED if updated

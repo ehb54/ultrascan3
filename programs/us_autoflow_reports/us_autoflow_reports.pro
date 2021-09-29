@@ -3,6 +3,7 @@ include( ../../gui.pri )
 TARGET        = us_autoflow_reports
 QT           += xml
 QT           += sql
+QT           += printsupport
 
 HEADERS       = us_autoflow_reports.h
 

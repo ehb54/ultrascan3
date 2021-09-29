@@ -550,7 +550,7 @@ void US_EditSpectrum::editmanually( void )
     sdiag->setWindowTitle( "Manage Extinction Spectrum" );
     sdiag->exec();
 
-    qDebug() << "Before edit maually, e280: " << analyte->extinction[280.0];
+    //qDebug() << "Before edit maually, e280: " << analyte->extinction[280.0];
     
     if ( changed )
       {
@@ -565,7 +565,7 @@ void US_EditSpectrum::editmanually( void )
 	  {
 	    analyte->extinction.clear();                                                   
 	    analyte->extinction = loc_extinct;
-	    qDebug() << "Inside edit manually, e280: " << analyte->extinction[280.0];
+	    //qDebug() << "Inside edit manually, e280: " << analyte->extinction[280.0];
 	  }
 	if ( type == "SOLUTION")
 	  {

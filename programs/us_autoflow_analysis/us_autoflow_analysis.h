@@ -111,6 +111,8 @@ class US_Analysis_auto : public US_Widgets
 	 };
 	 
 
+	 QMap < QString, QString > protocol_details_at_analysis;
+	 
 	 bool no_fm_data_auto;
 	 QProgressDialog * progress_msg_fmb;
 	 QVector< double >    v_meni;
@@ -306,6 +308,8 @@ class US_Analysis_auto : public US_Widgets
 	void editProfiles_updated_earlier( void );
 	void triple_analysis_processed( void );
 
+	void update_autoflow_record_atAnalysis( void );
+
 	bool check_fitmen_status( const QString&, const QString& );
 
 	void delete_job  ( QString );
@@ -323,6 +327,7 @@ class US_Analysis_auto : public US_Widgets
 	void analysis_update_process_stopped( void );
 	void close_analysissetup_msg( void );
 	void analysis_back_to_initAutoflow( void );
+	void analysis_complete_auto( QMap <QString, QString> & );
    
 };
 #endif

@@ -316,11 +316,13 @@ class US_AnalysisGui : public US_WidgetsDialog
    void processes_stopped_passed( void );
    void analysissetup_msg_closed( void );
    void to_initAutoflow( void );
+   void to_report( QMap < QString, QString > & );
 
  signals:
    void start_analysis( QMap < QString, QString > & );
    void processes_stopped( void );
    void switch_to_initAutoflow( void);
+   void switch_to_report( QMap < QString, QString > &  );
     
 };
 
@@ -345,9 +347,11 @@ class US_ReportStageGui : public US_WidgetsDialog
       
   private slots:
     void do_report( QMap < QString, QString > & );
+    void reset_reporting( void );
 
   signals:
     void start_report( QMap < QString, QString > & );
+    void reset_reporting_passed ( void );
 };
 
 
@@ -470,6 +474,7 @@ signals:
   void reset_lims_import( void );
   void reset_data_editing( void );
   void reset_live_update( void );
+  void reset_reporting( void );
 };
 
 

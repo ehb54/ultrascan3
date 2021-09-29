@@ -435,7 +435,7 @@ bool US_AnaProfile::AnaProf2DSA::fromXml( QXmlStreamReader& xmli )
 	    if ( fmb_n == 3 )
 	      fmb = "fmb";
          }
-         else if ( ename == "job_fitmen" )
+         else if ( ename == "job_fitmen" || ename == "job_fitmen_auto" )
          {
             QXmlStreamAttributes attr = xmli.attributes();
             job3run        = US_Util::bool_flag( attr.value( "run" ).toString() );
@@ -531,12 +531,24 @@ bool US_AnaProfile::AnaProf2DSA::toXml( QXmlStreamWriter& xmlo )
 
    xmlo.writeEndElement  (); // job_2dsa_fm
 
-   xmlo.writeStartElement( "job_fitmen" );
-   xmlo.writeAttribute   ( "run",            US_Util::bool_string(
-                                             job3run ) );
-   xmlo.writeAttribute   ( "interactive",  ( job3auto ? "0" : "1" ) );
-   xmlo.writeEndElement  (); // job_fitmen
+   //job_fitmen || job_fitmen_auto
+   if ( !job3auto ) //manual, so interactive
+     {
+       xmlo.writeStartElement( "job_fitmen" );
+       xmlo.writeAttribute   ( "run",   US_Util::bool_string( job3run ) );
+       xmlo.writeAttribute   ( "interactive",  "1" );
+       //xmlo.writeAttribute   ( "interactive",  ( job3auto ? "0" : "1" ) );
+     }
+   else  //auto-pick, so non-interactive
+     {
+       xmlo.writeStartElement( "job_fitmen_auto" );
+       xmlo.writeAttribute   ( "run",   US_Util::bool_string( job3run ) );
+       xmlo.writeAttribute   ( "interactive",  "0" );
+     }
+   xmlo.writeEndElement  (); // job_fitmen || job_fitmen_auto
 
+
+   
    xmlo.writeStartElement( "job_2dsa_it" );
    xmlo.writeAttribute   ( "run",            US_Util::bool_string(
                                              job4run ) );

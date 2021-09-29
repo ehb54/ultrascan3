@@ -4706,17 +4706,36 @@ DbgLv(1) << "EGUp:dE: nsolut" << ssolut.count();
                .arg( lo_radi ).arg( hi_radi );
    }
 
+   //ALEXEY: below -- when Interference present, there is inconsistency btw. :
+   //           (1)  cAP->pchans.count(); -- includes ALL channels (B-Interf.)
+   //           (2)  cAP2->parms.size()   -- 2DSA structures do NOT include (B-Interf.)
+   //           (3)  cAP2p>parms.size()   -- PCSA structures do NOT include (B-Interf.)
+   
+   qDebug() << "AProfile: 1";   
    US_AnaProfile* cAP  = &mainw->currAProf;
    US_AnaProfile::AnaProf2DSA* cAP2 = &cAP->ap2DSA;
    US_AnaProfile::AnaProfPCSA* cAPp = &cAP->apPCSA;
+
+   qDebug() << "AProfile: 2";
+   
    QString aprname     = cAP->aprofname;
    QString proname     = cAP->protoname;
    int nchna           = cAP->pchans.count();
+
+   //ALEXEY: separate params for these (nchna may not be equal to nchna_2dsa && nchna_pcsa)
+   int nchna_2dsa       = cAP2->parms.size();
+   int nchna_pcsa       = cAPp->parms.size();   
+
+   qDebug() << "AProfile: 3";
+   
    QString scrat       = QString::number( cAP->lc_ratios[ 0 ] );
    QString sctol       = QString::number( cAP->lc_tolers[ 0 ] );
    QString slvol       = QString::number( cAP->l_volumes[ 0 ] );
    QString svtol       = QString::number( cAP->lv_tolers[ 0 ] );
    QString sdaen       = QString::number( cAP->data_ends[ 0 ] );
+
+   qDebug() << "AProfile: 4";
+   
    dtext += tr( "\nAnalysis Profile\n" );
    dtext += tr( "  Profile Name:   " ) + cAP->aprofname  + "\n";
    dtext += tr( "  Protocol Name:  " ) + cAP->protoname  + "\n";
@@ -4732,8 +4751,12 @@ DbgLv(1) << "EGUp:dE: nsolut" << ssolut.count();
    dtext += tr( "    Loading Volume:           " ) + slvol + "\n";
    dtext += tr( "    Volume Tolerance percent: " ) + svtol + "\n";
    dtext += tr( "    Data End (cm):            " ) + sdaen + "\n";
+
+   qDebug() << "AProfile: 5";
+   
    for ( int ii = 1; ii < nchna; ii++ )
    {
+     //ALEXEY:: should we skip B-Interf. here ? (like for 2DSA && PCSA )
       dtext += tr( "  Channel:        " ) + cAP->chndescs [ ii ]  + "\n";
       int nsame           = 0;
 
@@ -4772,9 +4795,18 @@ DbgLv(1) << "EGUp:dE: nsolut" << ssolut.count();
       else if ( nsame > 0 )
          dtext += tr( "      [ other values same as previous ]\n" );
    }
+
+   qDebug() << "AProfile: 6";         //ALEXEY: here it crashes
+   qDebug() << "nchna: -- " << nchna;
+   qDebug() << "cAP2->parms.size() -- " << cAP2->parms.size();
+   
    dtext += tr( "  2DSA Analysis Controls: \n" );
-   for ( int ii = 0; ii < nchna; ii++ )
-   {
+   //   for ( int ii = 0; ii < nchna; ii++ )
+   for ( int ii = 0; ii < nchna_2dsa; ii++ )
+     {
+
+     qDebug() << "Inside 2DSA controls: ii -- " << ii << cAP2->parms[ ii ].channel;
+     
       dtext += tr( "    Channel:          " ) + cAP2->parms[ ii ].channel  + "\n";
       dtext += tr( "      s Min, Max, Points:     " ) +
                QString::number( cAP2->parms[ ii ].s_min ) + ", " +
@@ -4820,12 +4852,21 @@ DbgLv(1) << "EGUp:dE: nsolut" << ssolut.count();
    dtext += tr( "      MonteCarlo Iterations:  " ) +
             QString::number( cAP2->mciters ) + "\n";
 
+   
+   qDebug() << "AProfile: 7";
+   qDebug() << "nchna: -- " << nchna;
+   qDebug() << "cAPp->parms.size() -- " << cAPp->parms.size();
+   
    dtext += tr( "  PCSA Analysis Controls: \n" );
    if ( cAPp->job_run )
    {
       dtext += tr( "    Run PCSA job?            YES\n" );
-      for ( int ii = 0; ii < nchna; ii++ )
+      //      for ( int ii = 0; ii < nchna; ii++ )
+      for ( int ii = 0; ii < nchna_pcsa; ii++ )
       {
+
+	 qDebug() << "Inside PCSA controls: ii -- " << ii << cAPp->parms[ ii ].channel;
+	
          dtext += tr( "    Channel:          " ) + cAPp->parms[ ii ].channel  + "\n";
          dtext += tr( "      Curve Type:              " ) +
                   cAPp->parms[ ii ].curv_type + "\n";
@@ -4860,6 +4901,8 @@ DbgLv(1) << "EGUp:dE: nsolut" << ssolut.count();
    {
       dtext += tr( "    Run PCSA job?            no\n" );
    }
+
+   qDebug() << "AProfile: 8";
 /**
 x               double       x_min;
 x                 double       x_max;
@@ -4889,6 +4932,8 @@ x                 QString      treg_type;
    dtext += tr( "  PROTOCOL SAVED:             " ) + v_svcok + "\n";
    dtext += tr( "  SUBMIT ENABLED:             " ) + v_uleok + "\n";
    dtext += tr( "  SUBMIT COMPLETED:           " ) + v_ulcok + "\n";
+
+   qDebug() << "AProfile: 9";
 
 //    // Generate a JSON stream to be uploaded
 

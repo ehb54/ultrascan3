@@ -69,6 +69,9 @@ class US_UTIL_EXTERN US_RunProtocol
 		  double      scanintv_int;  //!< Scan interval in seconds (interference)
 		  double      scanintv_int_min;  //!< Fastest scan interval (interference)
 
+		  int         scancount;        // #scans for UV/vis
+		  int         scancount_int;    // #scans for Interference
+
 		  bool        has_uvvis;
 		  bool        has_interference;
 		  
