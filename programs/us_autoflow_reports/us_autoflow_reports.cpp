@@ -66,8 +66,8 @@ US_Reports_auto::US_Reports_auto() : US_Widgets()
   setMinimumSize( 950, 450 );
   adjustSize();
    
-  // ---- Testing ----
-  QMap < QString, QString > protocol_details;
+  // // ---- Testing ----
+  // QMap < QString, QString > protocol_details;
   // //small: 4 channels
   // protocol_details[ "aprofileguid" ] = QString("d13ffad0-6f27-4fd8-8aa0-df8eef87a6ea");
   // protocol_details[ "protocolName" ] = QString("alexey-abs-itf-test1");
@@ -100,7 +100,8 @@ void US_Reports_auto::view_report ( void )
 //reset
 void US_Reports_auto::reset_report_panel ( void )
 {
-  currProto = US_RunProtocol();  //ALEXEY: do we need to reset US_Protocol ?
+  currProto = US_RunProtocol();  //ALEXEY: we need to reset US_Protocol
+  currAProf = US_AnaProfile();   //ALEXEY: we need to reset US_AnaProfile
   pb_download_report->setVisible( false );
 }
   
@@ -116,7 +117,7 @@ void US_Reports_auto::initPanel( QMap < QString, QString > & protocol_details )
   
   int num_triples = 10;
   
-  progress_msg = new QProgressDialog ("Accessing run's protocol...", QString(), 0, 6, this);
+  progress_msg = new QProgressDialog ("Accessing run's protocol...", QString(), 0, 7, this);
   //progress_msg->setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
   progress_msg->setWindowFlags(Qt::Tool | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
   //progress_msg->setWindowModality(Qt::WindowModal);
@@ -158,7 +159,7 @@ void US_Reports_auto::initPanel( QMap < QString, QString > & protocol_details )
   progress_msg->setValue( 3 );
   qApp->processEvents();
   
-  //Debug
+  //Debug: protocol
   qDebug() << "Protocols' details: -- "
 	   << currProto.investigator
 	   << currProto.runname
@@ -168,19 +169,41 @@ void US_Reports_auto::initPanel( QMap < QString, QString > & protocol_details )
 	   << currProto.temperature
 	   << currProto.temeq_delay
 	   << currProto.exp_label;
+
+  //read AProfile into US_AnaProfile structure
+  sdiag = new US_AnalysisProfileGui;
+  sdiag->inherit_protocol( &currProto );
+  currAProf              = sdiag->currProf;
+  currAProf.protoGUID    = currProto.protoGUID;
+  currAProf.protoID      = currProto.protoID;
+  currAProf.protoname    = currProto.protoname;
+  cAP2                   = currAProf.ap2DSA;
+  cAPp                   = currAProf.apPCSA;
+  progress_msg->setValue( 4 );
+  qApp->processEvents();
+
+  //Debug: AProfile
+  qDebug() << "AProfile's details: -- "
+	   << currAProf.aprofname
+	   << currAProf.protoname
+	   << currAProf.chndescs
+	   << currAProf.lc_ratios
+	   << cAP2.parms[ 0 ].channel
+	   << cAPp.parms[ 0 ].channel;
+  
   ////
   get_current_date();
-  progress_msg->setValue( 4 );
+  progress_msg->setValue( 5 );
   qApp->processEvents();
   
   ////
   format_needed_params();
-  progress_msg->setValue( 5 );
+  progress_msg->setValue( 6 );
   qApp->processEvents();
   
   /// 
   assemble_pdf();
-  progress_msg->setValue( 6 );
+  progress_msg->setValue( 7 );
   qApp->processEvents();
 
 
@@ -284,7 +307,7 @@ void US_Reports_auto::assemble_pdf()
     "<h1 align=center>REPORT FOR RUN <br><i>%1</i></h1>"
     "<hr>"
 			  )
-    .arg( currProto. protoname )    //1
+    .arg( currProto. protoname + "-run" + runID )    //1
     ;
   //TITLE: end
 
@@ -307,7 +330,8 @@ void US_Reports_auto::assemble_pdf()
     "<hr>"
 			    )
     .arg( currProto. investigator)  //1
-    .arg( currProto. runname)       //2  
+    //.arg( currProto. runname)       //2  
+    .arg( currProto. protoname + "-run" + runID) //2
     .arg( currProto. project)       //3
     .arg( currProto. temperature)   //4
     .arg( currProto. temeq_delay)   //5
@@ -675,6 +699,13 @@ void US_Reports_auto::assemble_pdf()
 
   
   //APROFILE: begin
+  QString html_analysis_profile = tr(
+				     "<h3 align=left> Analysis Profile </h3>"
+				     )
+    ;
+  
+  
+  html_analysis_profile += tr( "<hr>" ) ;
   //APROFILE: end
   
   
@@ -705,6 +736,7 @@ void US_Reports_auto::assemble_pdf()
     + html_optical
     + html_ranges
     + html_scan_count
+    + html_analysis_profile
     + html_paragraph_close
     + html_footer;
     

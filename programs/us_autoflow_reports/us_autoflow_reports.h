@@ -6,6 +6,7 @@
 #include "us_passwd.h"
 #include "us_run_protocol.h"
 #include "us_protocol_util.h"
+#include "../us_analysis_profile/us_analysis_profile.h"
 #include "us_solution.h"
 
 class US_Reports_auto : public US_Widgets
@@ -20,6 +21,11 @@ class US_Reports_auto : public US_Widgets
 
 	 QProgressDialog * progress_msg;
 	 US_RunProtocol    currProto;
+
+	 US_AnalysisProfileGui*     sdiag; 
+	 US_AnaProfile              currAProf;
+	 US_AnaProfile::AnaProf2DSA cAP2;
+	 US_AnaProfile::AnaProfPCSA cAPp;
 	 	 
       private:
 	 QPushButton*  pb_download_report;

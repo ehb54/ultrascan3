@@ -60,7 +60,7 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       void check_runname( void );
       void disable_name_buttons( void );
       void pass_names( QString&, QString& );
-      void inherit_protocol( US_RunProtocol* );
+      //void inherit_protocol( US_RunProtocol* );
       QGroupBox *createGroup( QString &, QList< double > &);
 
       QSignalMapper  *signalMapper;
