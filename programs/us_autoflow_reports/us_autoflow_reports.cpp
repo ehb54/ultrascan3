@@ -66,8 +66,8 @@ US_Reports_auto::US_Reports_auto() : US_Widgets()
   setMinimumSize( 950, 450 );
   adjustSize();
    
-  // // ---- Testing ----
-  // QMap < QString, QString > protocol_details;
+  // ---- Testing ----
+  QMap < QString, QString > protocol_details;
   // //small: 4 channels
   // protocol_details[ "aprofileguid" ] = QString("d13ffad0-6f27-4fd8-8aa0-df8eef87a6ea");
   // protocol_details[ "protocolName" ] = QString("alexey-abs-itf-test1");
@@ -79,6 +79,13 @@ US_Reports_auto::US_Reports_auto() : US_Widgets()
   // protocol_details[ "protocolName" ] = QString("Alexey-test-report-1");
   // protocol_details[ "invID_passed" ] = QString("12");
   // protocol_details[ "runID" ]        = QString("1570");
+
+  // //small: 4 channels with actual reportsGMP
+  // protocol_details[ "aprofileguid" ] = QString("dfd6898c-3744-4e5c-a9cd-94e14e1fb9e5");
+  // protocol_details[ "protocolName" ] = QString("test_triple_report3");
+  // protocol_details[ "invID_passed" ] = QString("12");
+  // protocol_details[ "runID" ]        = QString("1699");
+ 
   
   // initPanel( protocol_details );
   
@@ -177,19 +184,40 @@ void US_Reports_auto::initPanel( QMap < QString, QString > & protocol_details )
   currAProf.protoGUID    = currProto.protoGUID;
   currAProf.protoID      = currProto.protoID;
   currAProf.protoname    = currProto.protoname;
+  //2DSA parms
   cAP2                   = currAProf.ap2DSA;
+  //PCSA parms
   cAPp                   = currAProf.apPCSA;
+  //Channel descriptions
+  chndescs               = currAProf.chndescs;
+  //Channel alt_descriptions
+  chndescs_alt           = currAProf.chndescs_alt;
+  //Channel reports
+  ch_reports             = currAProf.ch_reports;
+  //Channel wavelengths
+  ch_wvls                = currAProf.ch_wvls;
+    
   progress_msg->setValue( 4 );
   qApp->processEvents();
 
   //Debug: AProfile
-  qDebug() << "AProfile's details: -- "
+  QString channel_desc_alt = chndescs_alt[ 0 ];
+  QString channel_desc     = chndescs[ 0 ];
+  QString wvl              = QString::number( ch_wvls[ channel_desc ][ 0 ] );
+  US_ReportGMP reportGMP   = ch_reports[ channel_desc_alt ][ wvl ];
+  //US_ReportGMP reportGMP = ch_reports[ chndescs_alt[ 0 ] ][ QString::number( ch_wvls[ chndescs_alt[ 0 ] ][ 0 ] ) ];
+  
+  qDebug() << "AProfile's && ReportGMP's details: -- "
 	   << currAProf.aprofname
 	   << currAProf.protoname
 	   << currAProf.chndescs
+	   << currAProf.chndescs_alt
 	   << currAProf.lc_ratios
 	   << cAP2.parms[ 0 ].channel
-	   << cAPp.parms[ 0 ].channel;
+	   << cAPp.parms[ 0 ].channel
+	   << reportGMP.rmsd_limit
+	   << reportGMP.wavelength
+	   << reportGMP.reportItems[ 0 ].type;
   
   ////
   get_current_date();
@@ -703,7 +731,27 @@ void US_Reports_auto::assemble_pdf()
 				     "<h3 align=left> Analysis Profile </h3>"
 				     )
     ;
+  //General per-channel settings
+  html_analysis_profile += tr(
+			      "<h4 align=left> General Settings </h4>"
+			      )
+    ;
   
+  //General per-triple settings: Report
+
+  //General per-triple settings: Report: Items
+
+  //2DSA per-channel settings
+  html_analysis_profile += tr(
+			      "<h4 align=left> 2DSA Analysis Controls </h4>"
+			      )
+    ;
+
+  //PCSA per-channel settings 
+  html_analysis_profile += tr(
+			      "<h4 align=left> PCSA Analysis Controls </h4>"
+			      )
+    ;
   
   html_analysis_profile += tr( "<hr>" ) ;
   //APROFILE: end

@@ -26,6 +26,12 @@ class US_Reports_auto : public US_Widgets
 	 US_AnaProfile              currAProf;
 	 US_AnaProfile::AnaProf2DSA cAP2;
 	 US_AnaProfile::AnaProfPCSA cAPp;
+	 QStringList  chndescs;       
+	 QStringList  chndescs_alt;
+	 QMap< QString, QMap < QString, US_ReportGMP > > ch_reports;
+	 QMap< QString, QList< double > > ch_wvls;
+	 
+	 
 	 	 
       private:
 	 QPushButton*  pb_download_report;
