@@ -670,6 +670,7 @@ void US_Reports_auto::assemble_pdf()
   //SCAN_COUNT: begin
   QString html_scan_count = tr(
 			       "<h3 align=left> Scan Counts and Scan Intervals For Optics in Use </h3>"
+			       "&nbsp;&nbsp;<br>"
 			       )
     ;
 
@@ -727,29 +728,211 @@ void US_Reports_auto::assemble_pdf()
 
   
   //APROFILE: begin
+  //General per-channel settings including Report | ReportItems
   QString html_analysis_profile = tr(
-				     "<h3 align=left> Analysis Profile </h3>"
+				     "<h3 align=left> Analysis Profile: General Settings and Reports  </h3>"
+				     "&nbsp;&nbsp;<br>"
 				     )
     ;
-  //General per-channel settings
   html_analysis_profile += tr(
-			      "<h4 align=left> General Settings </h4>"
+			      "<table>"		   
+			         "<tr> <td> Profile Name:  &nbsp;&nbsp;&nbsp;&nbsp; </td>  <td> %1 </td></tr>"
+			         "<tr> <td> Protocol Name: &nbsp;&nbsp;&nbsp;&nbsp; </td>  <td> %2 </td></tr>"
+			      "</table>"
+			      "<br>"
 			      )
+    .arg( currAProf.aprofname  )         //1
+    .arg( currAProf.protoname  )         //2
     ;
+
+  int nchna   = currAProf.pchans.count();
+  for ( int i = 0; i < nchna; i++ )
+    {
+      QString channel_desc_alt = chndescs_alt[ i ];
+      QString channel_desc     = chndescs[ i ];
+      
+      html_analysis_profile += tr(
+				  "<table>"		   
+				     "<tr>"
+				        "<td><b>Channel:</b> &nbsp;&nbsp;&nbsp;&nbsp; </td> <td><b>%1</b></td>"
+				      "</tr>"
+				  "</table>"
+				  )
+	.arg( channel_desc )              //1
+	;
+
+      QString loading_ratio  = QString::number( currAProf.lc_ratios[ i ] );
+      QString ratio_tol      = QString::number( currAProf.lc_tolers[ i ] );
+      QString volume         = QString::number( currAProf.l_volumes[ i ] );
+      QString volume_tol     = QString::number( currAProf.lv_tolers[ i ] );
+      QString data_end       = QString::number( currAProf.data_ends[ i ] );
+
+      QString run_analysis;
+      if ( currAProf.analysis_run[ i ] )
+	run_analysis = tr("YES");
+      else
+	run_analysis = tr("NO");
+      
+      html_analysis_profile += tr(
+				  "<table style=\"margin-left:30px\">"
+				     "<tr><td> Loading Ratio:              </td>  <td> %1 </td> </tr>"
+				     "<tr><td> Ratio Tolerance (&#177;%):  </td>  <td> %2 </td> </tr>"
+				     "<tr><td> Loading Volume (&#181;l):   </td>  <td> %3 </td> </tr>"
+				     "<tr><td> Volume Tolerance (&#177;%): </td>  <td> %4 </td> </tr>"
+				     "<tr><td> Data End (cm):              </td>  <td> %5 </td> </tr>"
+				  "</table>"
+				  )
+	.arg( loading_ratio )             //1
+	.arg( ratio_tol )                 //2
+	.arg( volume )                    //3
+	.arg( volume_tol )                //4
+	.arg( data_end )                  //5
+	;
+
+      
+      html_analysis_profile += tr(
+				  "<table style=\"margin-left:30px\">"
+				     "<tr><td> <i>Run Analysis:</i>        </td>  <td> %1 </td> </tr>"
+				  "</table>"
+				  )
+	.arg( run_analysis )               //1
+	;
+				  
+      bool triple_report = false;
+      
+      if ( currAProf.analysis_run[ i ] )
+	{
+	  //check what representative wvl is:
+	  QString rep_wvl = QString::number( currAProf.wvl_edit[ i ] );
+	  html_analysis_profile += tr(
+				      "<table style=\"margin-left:50px\">"
+				         "<tr><td> Wavelength for Edit, 2DSA-FM & Fitmen Stages (nm):   </td>  <td> %1 </td> </tr>"
+				      "</table>"
+				      )
+	    .arg( rep_wvl )                //1
+	    ;
+	  
+	  //now check if report will be run:
+	  QString run_report;
+	  if ( currAProf.report_run[ i ] )
+	    {
+	      run_report    = tr("YES");
+	      triple_report = true;
+	    }
+	  else
+	    run_report = tr("NO");
+
+	  html_analysis_profile += tr(
+				      "<table style=\"margin-left:30px\">"
+				         "<tr><td> <i> Run Report: </i>    </td>  <td> %1 </td> </tr>"
+				      "</table>"
+				      )
+	    .arg( run_report)              //1
+	    ;
+	}
+
+       
+      //Separate Report | ReportItems table
+      if ( triple_report )
+	{
+	  QList < double > chann_wvls                  = ch_wvls[ channel_desc ];
+	  QMap < QString, US_ReportGMP > chann_reports = ch_reports[ channel_desc_alt ];
+	    
+	  int chann_wvl_number = chann_wvls.size();
+
+	  for ( int jj = 0; jj < chann_wvl_number; ++jj )
+	    {
+	      QString wvl            = QString::number( chann_wvls[ jj ] );
+	      QString triple_name    = channel_desc.split(":")[ 0 ] + "/" + wvl;
+	      US_ReportGMP reportGMP = chann_reports[ wvl ];
+	      
+	      html_analysis_profile += tr(
+					  "<table style=\"margin-left:50px\">"
+					     "<tr><td> <b><i> Report Parameters for Triple: </i> &nbsp;&nbsp;&nbsp; %1 </b></td> </tr>"
+					  "</table>"
+					  )
+		.arg( triple_name )                                             //1
+		;
+
+	      //Exp. duration entered in the Channel Report Editor
+	      QList< int > hms_tot;
+	      double total_time = reportGMP.experiment_duration;
+	      US_RunProtocol::timeToList( total_time, hms_tot );
+	      QString exp_dur_str = QString::number( hms_tot[ 0 ] ) + "d " + QString::number( hms_tot[ 1 ] ) + "h " + QString::number( hms_tot[ 2 ] ) + "m ";
+
+	      html_analysis_profile += tr(
+					  "<table style=\"margin-left:70px\">"
+					     "<tr><td> Total Concentration: </td>  <td> %1 </td> </tr>"
+					     "<tr><td> RMSD (upper limit):  </td>  <td> %2 </td> </tr>"
+					     "<tr><td> Average Intensity:   </td>  <td> %3 </td> </tr>"
+					     "<tr><td> Experiment Duration: </td>  <td> %4 </td> </tr>"
+					  "</table>"
+					  )
+		.arg( QString::number( reportGMP.tot_conc ) )                    //1
+		.arg( QString::number( reportGMP.rmsd_limit )  )                 //2
+		.arg( QString::number( reportGMP.av_intensity )  )               //3
+		.arg( exp_dur_str )                                              //4
+		;
+
+	      //Now go over ReportItems for the current triple:
+	      int report_items_number = reportGMP.reportItems.size();
+
+	      for ( int kk = 0; kk < report_items_number; ++kk )
+		{
+		  US_ReportGMP::ReportItem curr_item = reportGMP.reportItems[ kk ];
+		  
+		  html_analysis_profile += tr(
+					      "<table style=\"margin-left:90px\">"
+					         "<tr><td> <b><i> Report Item #%1: </i> &nbsp;&nbsp; Type | Method Parameters </b></td> </tr>"
+					      "</table>"
+					      )
+		    .arg( QString::number( kk + 1 ) )                                 //1
+		    ;
+
+		  html_analysis_profile += tr(
+					      "<table style=\"margin-left:110px\">"
+					         "<tr><td> Type:                  </td>  <td> %1 </td> </tr>"
+					         "<tr><td> Method:                </td>  <td> %2 </td> </tr>"
+					         "<tr><td> Range Low:             </td>  <td> %3 </td> </tr>"
+					         "<tr><td> Range High:            </td>  <td> %4 </td> </tr>"
+					         "<tr><td> Integration Value:     </td>  <td> %5 </td> </tr>"
+					         "<tr><td> Tolerance (%):         </td>  <td> %6 </td> </tr>"
+					         "<tr><td> Fraction of Total (%): </td>  <td> %7 </td> </tr>"
+					      "</table>"
+					      )
+		    .arg( curr_item.type )                                      //1
+		    .arg( curr_item.method   )                                  //2
+		    .arg( QString::number( curr_item.range_low )  )             //3
+		    .arg( QString::number( curr_item.range_high )  )            //4
+		    .arg( QString::number( curr_item.integration_val )  )       //5
+		    .arg( QString::number( curr_item.tolerance )  )             //6
+		    .arg( QString::number( curr_item.total_percent )  )         //7
+		    ;
+		  
+		}
+	      
+	    }
+	}
+      
+      html_analysis_profile += tr(
+				  "<br>"
+				  )
+	;
+      }
+    html_analysis_profile += tr( "<hr>" ) ;
   
-  //General per-triple settings: Report
-
-  //General per-triple settings: Report: Items
-
   //2DSA per-channel settings
   html_analysis_profile += tr(
-			      "<h4 align=left> 2DSA Analysis Controls </h4>"
+			      "<h3 align=left> Analysis Profile: 2DSA Controls </h3>"
+			      "&nbsp;&nbsp;<br>"
 			      )
     ;
-
+  html_analysis_profile += tr( "<hr>" ) ;
+  
   //PCSA per-channel settings 
   html_analysis_profile += tr(
-			      "<h4 align=left> PCSA Analysis Controls </h4>"
+			      "<h3 align=left> Analysis Profile: PCSA Controls </h3>"
+			      "&nbsp;&nbsp;<br>"
 			      )
     ;
   
@@ -899,7 +1082,7 @@ void US_Reports_auto::add_solution_details( const QString sol_id, const QString 
 
       analyte_gen_info += tr(
 			     "<tr>"
-			       "<td>Analyte #%1:</td> &nbsp;&nbsp;&nbsp;&nbsp; "
+			       "<td> <i>Analyte #%1: </i></td> &nbsp;&nbsp;&nbsp;&nbsp; "
 			       "<td> Name: </td>  <td> %2</td> &nbsp;&nbsp;&nbsp;&nbsp;"
 			       "<td> Molar Ratio:</td> <td>%3</td>"
 			     "</tr>"
@@ -1099,6 +1282,10 @@ void US_Reports_auto::add_solution_details( const QString sol_id, const QString 
     ;
 }
 
+
+
+
+// ============== BELOW is an old per-trpile treatment ===========================//
 /*
 //init correct # of us_labels rows based on passed # stages from AProfile
 void US_Reports_auto::initPanel( QMap < QString, QString > & protocol_details )
@@ -1177,7 +1364,7 @@ void US_Reports_auto::initPanel( QMap < QString, QString > & protocol_details )
   panel->addStretch();
 
 }
-*/
+
 
 
 //read from protocol all triples: if Interference - just one wvl (660); if UV/vis - read all wvl/channel pairs and store
@@ -1310,3 +1497,4 @@ bool US_Reports_auto::read_protoRanges( QXmlStreamReader& xmli )
 
    return ( ! xmli.hasError() );
 }
+*/

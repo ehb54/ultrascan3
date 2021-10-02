@@ -73,6 +73,7 @@ class US_Reports_auto : public US_Widgets
 	 void  assemble_pdf( void );
 	 void  add_solution_details( const QString, const QString, QString& );
 	 void  add_ranges_details(  QString& );
+	 void  inherit_protocol( US_RunProtocol* );
 
       private slots:
 	void initPanel( QMap < QString, QString > & );
