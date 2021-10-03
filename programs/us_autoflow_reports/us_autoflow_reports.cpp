@@ -1088,25 +1088,24 @@ void US_Reports_auto::assemble_pdf()
       QString vary_vbar = cAP2.parms[ i ].varyvbar ? tr( "YES" ) : tr( "no" );
 
       QString const_ff0 = QString::number( cAP2.parms[ i ].ff0_const );
-      
+
       html_analysis_profile_2dsa += tr(
-				       "<table style=\"margin-left:30px\">"
-				          "<tr><td> s Min, Max, Grid Points:     </td>  <td> %1 </td> </tr>"
-				          "<tr><td> f/f0 Min, Max, Grid Points:  </td>  <td> %2 </td> </tr>"
-				          "<tr><td> Grid Repetitions:            </td>  <td> %3 </td> </tr>"
-				          "<tr><td> Custom Grid:                 </td>  <td> %4 </td> </tr>"
-				          "<tr><td> Varying Vbar:                </td>  <td> %5 </td> </tr>"
-				          "<tr><td> Constant f/f0:               </td>  <td> %6 </td> </tr>"
-				       "</table>"
-				       )
-	.arg( s_data )                     //1
-	.arg( ff0_data )                   //2
-	.arg( grid_rep )                   //3
-	.arg( custom_grid )                //4
-	.arg( vary_vbar )                  //5
-	.arg( const_ff0 )                  //6
+                                       "<table style=\"margin-left:30px\">"
+                                          "<tr><td> s Min, Max, Grid Points:     </td>  <td> %1 </td> </tr>"
+                                          "<tr><td> f/f0 Min, Max, Grid Points:  </td>  <td> %2 </td> </tr>"
+                                          "<tr><td> Grid Repetitions:            </td>  <td> %3 </td> </tr>"
+                                          "<tr><td> Custom Grid:                 </td>  <td> %4 </td> </tr>"
+                                          "<tr><td> Varying Vbar:                </td>  <td> %5 </td> </tr>"
+                                          "<tr><td> Constant f/f0:               </td>  <td> %6 </td> </tr>"
+                                       "</table>"
+                                       )
+	.arg( s_data )                     //1                                                                                 
+        .arg( ff0_data )                   //2                                                                                 
+	.arg( grid_rep )                   //3                                                                                 
+        .arg( custom_grid )                //4                                                                                 
+	.arg( vary_vbar )                  //5                                                                                 
+        .arg( const_ff0 )                  //6
 	;
-      
     }
   
   html_analysis_profile_2dsa += tr( "<hr>" ) ;
@@ -1120,10 +1119,71 @@ void US_Reports_auto::assemble_pdf()
 					  )
     ;
 
-  int nchna_pcsa   = cAPp.parms.size();
-  for ( int i = 0; i < nchna_pcsa; i++ )
+  html_analysis_profile_pcsa += tr(
+				   "<table style=\"margin-left:10px\">"
+				     //PCSA
+				     "<tr>"
+				         "<td> \"2DSA\":    </td>"
+				         "<td> Run?         </td>"    
+                                         "<td> %1           </td>"
+				      "</tr>"
+				   "</table>"
+				   )
+    .arg( cAPp.job_run ? tr( "YES" ) : tr( "no" ) )
+    ;
+
+  if ( cAPp.job_run )
     {
-      
+      int nchna_pcsa   = cAPp.parms.size();
+      for ( int i = 0; i < nchna_pcsa; i++ )
+	{
+	  html_analysis_profile_pcsa += tr(
+					   "<table>"		   
+					     "<tr>"
+					        "<td><b>Channel:</b> &nbsp;&nbsp;&nbsp;&nbsp; </td> <td><b>%1</b></td>"
+					     "</tr>"
+					   "</table>"
+					   )
+	    .arg( cAPp.parms[ i ].channel )            //1
+	    ;
+
+	  QString x_data =  cAPp.parms[ i ].x_type + ", " +
+	                    QString::number( cAPp.parms[ i ].x_min ) + ", " +
+	                    QString::number( cAPp.parms[ i ].x_max );
+	  QString y_data =  cAPp.parms[ i ].y_type + ", " +
+	                    QString::number( cAPp.parms[ i ].y_min ) + ", " +
+	                    QString::number( cAPp.parms[ i ].y_max );	  
+	  QString z_data =  cAPp.parms[ i ].z_type + ", " +
+	                    QString::number( cAPp.parms[ i ].z_value );
+	                 	  
+	  html_analysis_profile_pcsa += tr(
+					   "<table style=\"margin-left:30px\">"
+					     "<tr><td> Curve Type:                </td>  <td> %1 </td> </tr>"
+					     "<tr><td> X Axis Type, Min, Max:     </td>  <td> %2 </td> </tr>"
+					     "<tr><td> Y Axis Type, Min, Max:     </td>  <td> %3 </td> </tr>"
+					     "<tr><td> Z Axis Type, Value:        </td>  <td> %4 </td> </tr>"
+					     "<tr><td> Variations Count:          </td>  <td> %5 </td> </tr>"
+					     "<tr><td> Grid Fit Iterations:       </td>  <td> %6 </td> </tr>"
+					     "<tr><td> Curve Resolution Points:   </td>  <td> %7 </td> </tr>"
+					     "<tr><td> Noise Type:                </td>  <td> %8 </td> </tr>"
+					     "<tr><td> Tikhonov Regularization:   </td>  <td> %9 </td> </tr>"
+					     "<tr><td> Tikhonov Alpha:            </td>  <td> %10 </td> </tr>"
+					     "<tr><td> MonteCarlo Iterations:     </td>  <td> %11 </td> </tr>"
+					   "</table>"
+					   )
+	    .arg( cAPp.parms[ i ].curv_type )                     //1
+	    .arg( x_data )                                        //2
+	    .arg( y_data )                                        //3
+	    .arg( z_data )                                        //4
+	    .arg( QString::number( cAPp.parms[ i ].varcount ) )   //5
+	    .arg( QString::number( cAPp.parms[ i ].grf_iters ) )  //6
+	    .arg( QString::number( cAPp.parms[ i ].creso_pts ) )  //7
+	    .arg( cAPp.parms[ i ].noise_type )                    //8
+	    .arg( cAPp.parms[ i ].treg_type )                     //9
+	    .arg( QString::number( cAPp.parms[ i ].tr_alpha ) )   //10
+	    .arg( QString::number( cAPp.parms[ i ].mc_iters ) )   //11
+	;
+	}
     }
   
   html_analysis_profile_pcsa += tr( "<hr>" ) ;
