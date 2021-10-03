@@ -515,7 +515,7 @@ void US_Reports_auto::assemble_pdf()
   //SOLUTIONS: end
 
 
-  //OPTICAL: begin
+  //OPTICS: begin
   QString html_optical = tr(
 			    "<h3 align=left>Optics </h3>"
 			   )
@@ -598,7 +598,7 @@ void US_Reports_auto::assemble_pdf()
     "<hr>"
 		   )
     ;
-  //OPTICAL: end
+  //OPTICS: end
 
 
   //RANGES: begin
@@ -728,7 +728,7 @@ void US_Reports_auto::assemble_pdf()
 
   
   //APROFILE: begin
-  //General per-channel settings including Report | ReportItems
+  //ANALYSIS: General settings && Reports: begin
   QString html_analysis_profile = tr(
 				     "<h3 align=left> Analysis Profile: General Settings and Reports  </h3>"
 				     "&nbsp;&nbsp;<br>"
@@ -919,24 +919,215 @@ void US_Reports_auto::assemble_pdf()
 				  )
 	;
       }
-    html_analysis_profile += tr( "<hr>" ) ;
-  
-  //2DSA per-channel settings
-  html_analysis_profile += tr(
-			      "<h3 align=left> Analysis Profile: 2DSA Controls </h3>"
-			      "&nbsp;&nbsp;<br>"
-			      )
-    ;
   html_analysis_profile += tr( "<hr>" ) ;
-  
-  //PCSA per-channel settings 
-  html_analysis_profile += tr(
-			      "<h3 align=left> Analysis Profile: PCSA Controls </h3>"
-			      "&nbsp;&nbsp;<br>"
-			      )
+  //ANALYSIS: General settings && Reports: end
+    
+    
+  //ANALYSIS: 2DSA per-channel settings: begin
+  QString html_analysis_profile_2dsa = tr(
+					  "<h3 align=left> Analysis Profile: 2DSA Controls </h3>"
+					  "&nbsp;&nbsp;<br>"
+					  )
+    ;
+
+  //Job Flow Summary:
+  html_analysis_profile_2dsa += tr(
+				   "<table>"		   
+				    "<tr>"
+				       "<td><b>Job Flow Summary:</b></td>"
+				    "</tr>"
+				  "</table>"
+			)
+    ;
+  html_analysis_profile_2dsa += tr(
+				   "<table style=\"margin-left:10px\">"
+				      //2DSA
+				      "<tr>"
+				         "<td> \"2DSA  (TI Noise)\": </td>"
+				         "<td> Run?                  </td>"    
+                                         "<td> %1                    </td>"
+				         "<td> &nbsp;&nbsp;          </td>"
+				         "<td> &nbsp;&nbsp;          </td>"
+                                      "</tr>"
+
+				      //2DSA-FM
+				      "<tr>"
+                                         "<td> \"2DSA-FM  (TI+RI Noise)\": </td>"
+				         "<td> Run?                        </td>"
+				         "<td> %2                          </td>"
+				         "<td> &nbsp;&nbsp;                </td>"
+				         "<td> &nbsp;&nbsp;                </td>"
+                                      "</tr>"
+				      "<tr>"
+				         "<td> &nbsp;&nbsp;                </td>"
+				         "<td> &nbsp;&nbsp;                </td>"
+				         "<td> &nbsp;&nbsp;                </td>"
+				         "<td> Meniscus Grid Points:       </td>"
+				         "<td> %3                          </td>"
+				      "</tr>"
+				      "<tr>"
+				         "<td> &nbsp;&nbsp;                </td>"
+				         "<td> &nbsp;&nbsp;                </td>"
+				         "<td> &nbsp;&nbsp;                </td>"
+				         "<td> Meniscus Fit Range (cm):    </td>"
+				         "<td> %4                          </td>"
+				      "</tr>"
+				      "<tr>"
+				         "<td> &nbsp;&nbsp;                </td>"
+				         "<td> &nbsp;&nbsp;                </td>"
+				         "<td> &nbsp;&nbsp;                </td>"
+				         "<td> Fit Type:                   </td>"
+				         "<td> %5                          </td>"
+				      "</tr>"				   
+
+				      //FITMEN
+				      "<tr>"
+				         "<td> \"FITMEN\":                 </td>"
+				         "<td> Run?                        </td>"
+				         "<td> %6                          </td>"
+				         "<td> &nbsp;&nbsp;                </td>"
+				         "<td> &nbsp;&nbsp;                </td>"
+				      "</tr>"
+				      "<tr>"
+				         "<td> &nbsp;&nbsp;                </td>"
+				         "<td> &nbsp;&nbsp;                </td>"
+				         "<td> &nbsp;&nbsp;                </td>"
+				         "<td> Auto-pick?                  </td>"
+				         "<td> %7                          </td>"
+				      "</tr>"
+
+				      //2DSA-IT
+				      "<tr>"
+				         "<td> \"2DSA-IT  (TI+RI Noise)\": </td>"
+				         "<td> Run?                        </td>"
+				         "<td> %8                          </td>"
+				         "<td> &nbsp;&nbsp;                </td>"
+				         "<td> &nbsp;&nbsp;                </td>"
+                                      "</tr>"
+				      "<tr>"
+				         "<td> &nbsp;&nbsp;                </td>"
+				         "<td> &nbsp;&nbsp;                </td>"
+				         "<td> &nbsp;&nbsp;                </td>"
+				         "<td> Refinement Iterations:      </td>"
+				         "<td> %9                          </td>"
+				      "</tr>"
+				   
+				      //2DSA-MC
+				      "<tr>"
+				         "<td> \"2DSA-MC\":                </td>"
+				         "<td> Run?                        </td>"
+				         "<td> %10                         </td>"
+				         "<td> &nbsp;&nbsp;                </td>"
+				         "<td> &nbsp;&nbsp;                </td>"
+				      "</tr>"
+				      "<tr>"
+				         "<td> &nbsp;&nbsp;                </td>"
+				         "<td> &nbsp;&nbsp;                </td>"
+				         "<td> &nbsp;&nbsp;                </td>"
+				         "<td> MonteCarlo Iterations:      </td>"
+				         "<td> %11                         </td>"
+				      "</tr>"
+				   
+				   "</table>"
+				   "<br>"
+				   )
+    .arg( ( cAP2.job1run ? tr( "YES" ) : tr( "NO" ) ) )       //1
+
+    .arg( ( cAP2.job2run ? tr( "YES" ) : tr( "NO" ) ) )       //2
+    .arg( QString::number( cAP2.grpoints ) )                  //3
+    .arg( QString::number( cAP2.fitrng ) )                    //4
+    .arg( cAP2.fmb )                                          //5
+
+    .arg( ( cAP2.job3run ? tr( "YES" ) : tr( "NO" ) ) )       //6
+    .arg( ( cAP2.job3auto ? tr( "YES" ) : tr( "NO" ) ) )      //7
+
+    .arg( ( cAP2.job4run ? tr( "YES" ) : tr( "NO" ) ) )       //8
+    .arg( ( QString::number( cAP2.rfiters ) ) )               //9
+    
+    .arg( ( cAP2.job5run ? tr( "YES" ) : tr( "NO" ) ) )       //10
+    .arg( ( QString::number( cAP2.mciters ) ) )               //11	  
     ;
   
-  html_analysis_profile += tr( "<hr>" ) ;
+
+  //Per-Channel params:
+  html_analysis_profile_2dsa += tr(
+				   "<table>"		   
+				     "<tr>"
+				       "<td><b>Per-Channel Profile:</b></td>"
+				     "</tr>"
+				   "</table>"
+				   "<br>"
+				   )
+    ;
+  int nchna_2dsa   = cAP2.parms.size();
+  for ( int i = 0; i < nchna_2dsa; i++ )
+    {
+      html_analysis_profile_2dsa += tr(
+				       "<table>"		   
+				         "<tr>"
+				            "<td><b>Channel:</b> &nbsp;&nbsp;&nbsp;&nbsp; </td> <td><b>%1</b></td>"
+				          "</tr>"
+				       "</table>"
+				       )
+	.arg( cAP2.parms[ i ].channel )            //1
+	;
+
+
+      QString s_data = QString::number( cAP2.parms[ i ].s_min ) + ", " +
+	               QString::number( cAP2.parms[ i ].s_max ) + ", " +
+                       QString::number( cAP2.parms[ i ].s_grpts );
+
+      QString ff0_data = QString::number( cAP2.parms[ i ].k_min ) + ", " +
+	               QString::number( cAP2.parms[ i ].k_max ) + ", " +
+                       QString::number( cAP2.parms[ i ].k_grpts );
+
+      QString grid_rep =  QString::number( cAP2.parms[ i ].gridreps );
+
+      QString custom_grid = cAP2.parms[ i ].cgrid_name;
+
+      QString vary_vbar = cAP2.parms[ i ].varyvbar ? tr( "YES" ) : tr( "no" );
+
+      QString const_ff0 = QString::number( cAP2.parms[ i ].ff0_const );
+      
+      html_analysis_profile_2dsa += tr(
+				       "<table style=\"margin-left:30px\">"
+				          "<tr><td> s Min, Max, Grid Points:     </td>  <td> %1 </td> </tr>"
+				          "<tr><td> f/f0 Min, Max, Grid Points:  </td>  <td> %2 </td> </tr>"
+				          "<tr><td> Grid Repetitions:            </td>  <td> %3 </td> </tr>"
+				          "<tr><td> Custom Grid:                 </td>  <td> %4 </td> </tr>"
+				          "<tr><td> Varying Vbar:                </td>  <td> %5 </td> </tr>"
+				          "<tr><td> Constant f/f0:               </td>  <td> %6 </td> </tr>"
+				       "</table>"
+				       )
+	.arg( s_data )                     //1
+	.arg( ff0_data )                   //2
+	.arg( grid_rep )                   //3
+	.arg( custom_grid )                //4
+	.arg( vary_vbar )                  //5
+	.arg( const_ff0 )                  //6
+	;
+      
+    }
+  
+  html_analysis_profile_2dsa += tr( "<hr>" ) ;
+  //ANALYSIS: 2DSA per-channel settings: end
+  
+  
+  //ANALYSIS: PCSA per-channel settings: begin 
+  QString html_analysis_profile_pcsa = tr(
+					  "<h3 align=left> Analysis Profile: PCSA Controls </h3>"
+					  "&nbsp;&nbsp;<br>"
+					  )
+    ;
+
+  int nchna_pcsa   = cAPp.parms.size();
+  for ( int i = 0; i < nchna_pcsa; i++ )
+    {
+      
+    }
+  
+  html_analysis_profile_pcsa += tr( "<hr>" ) ;
+  //ANALYSIS: PCSA per-channel settings: end
   //APROFILE: end
   
   
@@ -968,6 +1159,8 @@ void US_Reports_auto::assemble_pdf()
     + html_ranges
     + html_scan_count
     + html_analysis_profile
+    + html_analysis_profile_2dsa
+    + html_analysis_profile_pcsa 
     + html_paragraph_close
     + html_footer;
     
