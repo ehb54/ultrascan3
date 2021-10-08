@@ -141,8 +141,10 @@ class US_EXTERN US_Hydrodyn : public QFrame
       friend class US_Hydrodyn_AdvancedConfig;
 
       US_Hydrodyn(vector < QString >,
+                  QString gui_script_file = "",
                   QWidget *p = 0, 
                   const char *name = 0);
+
       ~US_Hydrodyn();
       int get_color(const PDB_atom *);
       BD_Options bd_options;
@@ -268,6 +270,11 @@ class US_EXTERN US_Hydrodyn : public QFrame
                                        void * dts );
 
    private:
+      bool     gui_script;
+      QString  gui_script_file;
+      void     gui_script_msg  ( int line, QString arg, QString msg );
+      void     gui_script_error( int line, QString arg, QString msg, bool doexit = true );
+      
       map < QString, struct atom * > residue_atom_map( struct residue & residue_entry );
       map < QString, struct atom * > first_residue_atom_map( struct PDB_chain & chain );
       map < QString, struct atom * > last_residue_atom_map( struct PDB_chain & chain );
@@ -1036,6 +1043,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void grpy_readFromStderr();
       void grpy_started();
       void grpy_finished( int, QProcess::ExitStatus );
+      void gui_script_run();
       
    public:
       QProgressBar *progress;
