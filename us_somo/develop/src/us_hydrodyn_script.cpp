@@ -9,6 +9,7 @@
 // (this) us_hydrodyn_load.cpp contains code to load files 
 
 #include "../include/us_hydrodyn.h"
+#include "../include/us_write_config.h"
 
 #define TSE QTextStream( stderr )
 #define TSO QTextStream( stdout )
@@ -64,6 +65,16 @@ void US_Hydrodyn::gui_script_run() {
       if ( cmd == "exit" ) {
          gui_script_msg( i, cmd, "exiting normally" );
          exit( 0 );
+      } else if ( cmd == "threads" ) {
+         if ( ls.isEmpty() ) {
+            gui_script_error( i, cmd, "missing argument" );
+         }
+         QString opt1 = ls.front(); ls.pop_front();
+         USglobal->config_list.numThreads = opt1.toUInt();
+         US_Write_Config *WConfig;
+         WConfig = new US_Write_Config();
+         bool result = WConfig->write_config(USglobal->config_list);
+         gui_script_msg( i, cmd, QString("Threads now %1 write config result %2\n").arg( opt1 ).arg(result ? "ok" : "not ok") );
       } else if ( cmd == "show" ) {
          show();
          if ( batch_widget ) {

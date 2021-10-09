@@ -125,6 +125,8 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
       qDebug() << "script active " << gui_script_file;
       this->gui_script_file = gui_script_file;
       gui_script = true;
+   } else {
+      gui_script = false;
    }
 
 #if defined( PINV_TEST )

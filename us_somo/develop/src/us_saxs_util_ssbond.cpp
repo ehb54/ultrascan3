@@ -113,7 +113,7 @@ void US_Saxs_Util::SS_init() {
 
 void US_Saxs_Util::SS_apply( struct PDB_model & model, QString & ssbond_data ) {
    int sulfurs = (int) sulfur_pdb_line.size();
-   TSE << "SS_apply()\n";
+   //   TSE << "SS_apply()\n";
 
    model.num_SS_bonds = 0;
    model.num_SH_free  = 0;

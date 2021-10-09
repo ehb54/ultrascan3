@@ -26,7 +26,7 @@ int main (int argc, char **argv)
 
    QString residue_filename;
    QString script_filename;
-   QString gui_script_filename;
+   QString gui_script_filename = "";
 
    US_Hydrodyn *hydrodyn;
    vector < QString > batch_file;
