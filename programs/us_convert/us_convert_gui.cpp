@@ -1357,6 +1357,7 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
 
   ExpData.invID     = details_at_live_update[ "invID_passed" ].toInt();
   ProtocolName_auto = details_at_live_update[ "protocolName" ];
+  OptimaName        = details_at_live_update[ "OptimaName" ];
   runID_numeric     = details_at_live_update[ "runID" ];
 
   Exp_label         = details_at_live_update[ "label" ];
@@ -6177,7 +6178,8 @@ void US_ConvertGui::update_autoflow_record_atLimsImport( void )
    QStringList qry;
    qry << "update_autoflow_at_lims_import"
        << runID_numeric
-       << filename_toDB;
+       << filename_toDB
+       << OptimaName;
 
    //db->query( qry );
 
@@ -6211,7 +6213,8 @@ void US_ConvertGui::delete_autoflow_record( void )
 
    QStringList qry;
    qry << "delete_autoflow_record"
-       << runID_numeric;
+       << runID_numeric
+       << OptimaName;
 
    //db->query( qry );
 

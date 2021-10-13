@@ -1126,7 +1126,8 @@ void US_Analysis_auto::update_autoflow_record_atAnalysis( void )
 
    QStringList qry;
    qry << "update_autoflow_at_analysis"
-       << protocol_details_at_analysis[ "runID" ];
+       << protocol_details_at_analysis[ "runID" ]
+       << protocol_details_at_analysis[ "OptimaName" ];
        
 
    //db->query( qry );

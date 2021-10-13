@@ -1876,7 +1876,8 @@ void US_XpnDataViewer::update_autoflow_runId_timeStarted( void )
    QStringList qry;
    qry << "update_autoflow_runid_starttime"
        << ExpID_to_use
-       << RunID_to_retrieve;
+       << RunID_to_retrieve
+       << OptimaName;
 
    db->query( qry );
    //ALEXEY: Updates with runID && timeStarted only once, when runID && runStarttime IS NULL
@@ -1901,7 +1902,8 @@ int US_XpnDataViewer::read_timeElapsed_offset( void )
    
    QStringList qry;
    qry << "read_autoflow_times_mod"
-       << RunID_to_retrieve;
+       << RunID_to_retrieve
+       << OptimaName;
 
    // //Test only
    // qry << "read_autoflow_times_mod_test";
@@ -1928,7 +1930,8 @@ void US_XpnDataViewer::delete_autoflow_record( void )
 
    QStringList qry;
    qry << "delete_autoflow_record"
-       << RunID_to_retrieve;
+       << RunID_to_retrieve
+       << OptimaName;
 
    //db->query( qry );
 
@@ -2000,7 +2003,8 @@ void US_XpnDataViewer::updateautoflow_record_atLiveUpdate( void )
    QStringList qry;
    qry << "update_autoflow_at_live_update"
        << RunID_to_retrieve
-       << currentDir;
+       << currentDir
+       << OptimaName;
 
    db->query( qry );
 
@@ -2011,7 +2015,8 @@ void US_XpnDataViewer::updateautoflow_record_atLiveUpdate( void )
      {
        qry.clear();
        qry << "update_autoflow_at_live_update_radiicorr"
-	   << RunID_to_retrieve;
+	   << RunID_to_retrieve
+	   << OptimaName;
 
        db->query( qry );
 
@@ -2023,7 +2028,8 @@ void US_XpnDataViewer::updateautoflow_record_atLiveUpdate( void )
      {
        qry.clear();
        qry << "update_autoflow_at_live_update_expaborted"
-	   << RunID_to_retrieve;
+	   << RunID_to_retrieve
+	   << OptimaName;
 
        db->query( qry );
 

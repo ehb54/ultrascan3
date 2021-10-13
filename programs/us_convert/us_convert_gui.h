@@ -286,6 +286,7 @@ class US_ConvertGui : public US_Widgets
 
       int autoflowID_passed;
       QString ProtocolName_auto;
+      QString OptimaName;
       QString AProfileGUID;
       QString Exp_label;
       bool    gmpRun_bool;

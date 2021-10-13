@@ -8493,6 +8493,7 @@ void US_Edit::write_auto( void )
 void US_Edit::delete_autoflow_record( void )
 {
   QString runID_numeric     = details_at_editing_local[ "runID" ];
+  QString OptimaName        = details_at_editing_local[ "OptimaName" ]; 
 
   // Check DB connection
    US_Passwd pw;
@@ -8508,7 +8509,8 @@ void US_Edit::delete_autoflow_record( void )
 
    QStringList qry;
    qry << "delete_autoflow_record"
-       << runID_numeric;
+       << runID_numeric
+       <<  OptimaName;
 
    //db->query( qry );
 
@@ -8705,6 +8707,7 @@ QString US_Edit::compose_json( bool fm_stage )
 void US_Edit::update_autoflow_record_atEditData( US_DB2* db,  QString& AnalysisIDsString )
 {
    QString runID_numeric     = details_at_editing_local[ "runID" ];
+   QString OptimaName        = details_at_editing_local[ "OptimaName" ];
    
    // // Check DB connection
    // US_Passwd pw;
@@ -8721,7 +8724,8 @@ void US_Edit::update_autoflow_record_atEditData( US_DB2* db,  QString& AnalysisI
    QStringList qry;
    qry << "update_autoflow_at_edit_data"
        << runID_numeric
-       << AnalysisIDsString;
+       << AnalysisIDsString
+       << OptimaName;
 
    qDebug() << "Updating Autoflow tables with analysisIDs!!!";
    qDebug() << "query: " << qry;

@@ -1123,7 +1123,7 @@ void US_Reports_auto::assemble_pdf()
 				   "<table style=\"margin-left:10px\">"
 				     //PCSA
 				     "<tr>"
-				         "<td> \"2DSA\":    </td>"
+				         "<td> \"PCSA\":    </td>"
 				         "<td> Run?         </td>"    
                                          "<td> %1           </td>"
 				      "</tr>"
