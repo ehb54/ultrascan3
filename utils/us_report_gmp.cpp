@@ -28,9 +28,9 @@ US_ReportGMP::US_ReportGMP()
   channel_name = QString("1A:UV/vis.:(unspecified)");
 
   //Main params
-  tot_conc     = 5;
-  rmsd_limit   = 0.001;
-  av_intensity = 10;
+  tot_conc     = 0.6;
+  rmsd_limit   = 0.002;
+  av_intensity = 10000;
 
   wavelength   = 180;
   experiment_duration = 5400;
