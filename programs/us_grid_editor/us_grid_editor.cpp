@@ -2113,7 +2113,7 @@ void US_Grid_Editor::select_x_axis( int ival )
    const double  xvmns[] = {       1.0,   1.0,   2e+4,  0.60, 1e-8, 1e-8 };
    const double  xvmxs[] = {      10.0,   4.0,   1e+5,  0.80, 1e-7, 1e-7 };
    const double  xmins[] = { -100000.0,   1.0,    0.0,  0.01, 1e-9, 1e-9 };
-   const double  xmaxs[] = {  100000.0,  50.0,  1e+10,  3.00, 1e-5, 1e-5 };
+   const double  xmaxs[] = {  100000.0,  50.0,  1e+10,  3.00, 3e-5, 1e-5 };
    const double  xincs[] = {      0.01,  0.01, 1000.0,  0.01, 1e-9, 1e-9 };
    const QString xtitls[] = { tr( "s (x 1e13)" ),
                               tr( "f/f0-value" ),
@@ -2186,7 +2186,7 @@ void US_Grid_Editor::select_y_axis( int ival )
    const double  yvmns[] = {       1.0,   1.0,   2e+4,  0.60, 1e-8, 1e-8 };
    const double  yvmxs[] = {      10.0,   4.0,   1e+6,  0.80, 1e-7, 1e-7 };
    const double  ymins[] = { -100000.0,   1.0,    0.0,  0.01, 1e-9, 1e-9 };
-   const double  ymaxs[] = {  100000.0,  50.0,  1e+10,  3.00, 1e-5, 1e-5 };
+   const double  ymaxs[] = {  100000.0,  50.0,  1e+10,  3.00, 3e-5, 1e-5 };
    const double  yincs[] = {      0.01,  0.01, 1000.0,  0.01, 1e-9, 1e-9 };
    const QString ytitls[] = { tr( "s (x 1e13)" ),
                               tr( "f/f0-value" ),
