@@ -1018,6 +1018,9 @@ DbgLv(1) << "AP2d:inP:  parms_to_gui complete";
 
    le_j2gpts->setText( QString::number( ap2DSA->grpoints ) );
    le_j2mrng->setText( QString::number( ap2DSA->fitrng ) );
+
+   le_j2iter->setText( QString::number( ap2DSA->j2rfiters ) );
+   
    le_j4iter->setText( QString::number( ap2DSA->rfiters ) );
    le_j5iter->setText( QString::number( ap2DSA->mciters ) );
    ck_j1run ->setChecked( ap2DSA->job1run );
@@ -1056,6 +1059,9 @@ DbgLv(1) << "AP2d:svP: nparm" << nparm << "cchx" << cchx;
 
    ap2DSA->nchan        = nparm;
    ap2DSA->fitrng       = le_j2mrng->text().toDouble();
+ 
+   ap2DSA->j2rfiters    = le_j2iter->text().toDouble();
+   
    ap2DSA->grpoints     = le_j2gpts->text().toInt();
    ap2DSA->rfiters      = le_j4iter->text().toInt();
    ap2DSA->mciters      = le_j5iter->text().toInt();

@@ -651,7 +651,7 @@ void US_Reports_auto::assemble_pdf()
 			"<table style=\"margin-left:30px\">"
 			  "<tr><td> Selected Wavelength count: </td>  <td> %1 </td> </tr>"
 			  "<tr><td> Selected Wavelength range: </td>  <td> %2 </td> </tr>"
-			  "<tr><td> Raduis range:              </td>  <td> %3 </td> </tr>"
+			  "<tr><td> Radius range:              </td>  <td> %3 </td> </tr>"
 			  "<tr><td> Selected Wavelengths:      </td>  <td> %4 </td> </tr>"
 			"</table>"
 			)

@@ -2020,6 +2020,8 @@ US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
    QLabel*  lb_j4nois  = us_label ( tr( "(TI+RI noise)" ) );
    QLabel*  lb_j2gpts  = us_label ( tr( "Meniscus Grid Points" ) );
    QLabel*  lb_j2mrng  = us_label ( tr( "Meniscus Fit Range (cm)" ) );
+   QLabel*  lb_j2iter  = us_label ( tr( "Refinement Iterations" ) );
+   
    QLabel*  lb_j4iter  = us_label ( tr( "Refinement Iterations" ) );
    QLabel*  lb_j5iter  = us_label ( tr( "Monte-Carlo Iterations" ) );
 
@@ -2050,7 +2052,7 @@ US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
    le_smax         = us_lineedit( "10", 0, false );
    le_sgrpts       = us_lineedit( "64", 0, false );
    le_kmin         = us_lineedit( "1", 0, false );
-   le_kmax         = us_lineedit( "5", 0, false );
+   le_kmax         = us_lineedit( "4", 0, false );
    le_kgrpts       = us_lineedit( "64", 0, false );
    le_grreps       = us_lineedit( "8", 0, false );
    le_custmg       = us_lineedit( "(none)", 0, false );
@@ -2086,6 +2088,8 @@ US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
    ck_j5run ->setAutoFillBackground( true  );
    le_j2gpts       = us_lineedit( "10", 0, false );
    le_j2mrng       = us_lineedit( "0.03", 0, false );
+   le_j2iter       = us_lineedit( "1", 0, false );
+   
    ck_j3auto       = new QCheckBox( tr( "Auto-pick" ), this );
    ck_j3auto->setPalette( US_GuiSettings::normalColor() );
    ck_j3auto->setChecked( true );
@@ -2137,6 +2141,8 @@ US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
    genL->addWidget( meniscus_box,  row++,  9, 4,  2 );
    genL->addWidget( lb_j2mrng,  row,    5, 1,  2 );
    genL->addWidget( le_j2mrng,  row++,  7, 1,  1 );
+   genL->addWidget( lb_j2iter,  row,    5, 1,  2 );
+   genL->addWidget( le_j2iter,  row++,  7, 1,  1 );  
 
    genL->addWidget( lb_jname3,  row,    0, 1,  2 );
    genL->addWidget( ck_j3run,   row,    2, 1,  1 );
@@ -2193,6 +2199,10 @@ US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
             this,         SLOT  ( mgpoints_changed ( )      ) );
    connect( le_j2mrng,    SIGNAL( editingFinished  ( )      ),
             this,         SLOT  ( mfrange_changed  ( )      ) );
+
+   connect( le_j2iter,    SIGNAL( editingFinished  ( )      ),
+            this,         SLOT  ( mfiter_changed  ( )      ) );
+   
    connect( ck_j3run,     SIGNAL( toggled          ( bool ) ),
             this,         SLOT  ( job3_run_checked ( bool ) ) );
    connect( ck_j3auto,    SIGNAL( toggled          ( bool ) ),
@@ -2476,6 +2486,10 @@ void US_AnaprofPan2DSA::mfrange_changed( )
 {
 DbgLv(1) << "2D:SL: J2MRNG_CHG";
 }
+void US_AnaprofPan2DSA::mfiter_changed( )
+{
+DbgLv(1) << "2D:SL: J2ITER_CHG";
+}
 void US_AnaprofPan2DSA::job3_run_checked( bool chkd )
 {
 DbgLv(1) << "2D:SL: JOB3RUN_CKD" << chkd;
@@ -2602,7 +2616,7 @@ DbgLv(1) << "APpc: IN";
    le_zvalue      -> setObjectName( "zvalue" );
    
    
-   le_varcount     = us_lineedit( "6", 0, false );
+   le_varcount     = us_lineedit( "10", 0, false );
    le_grfiters     = us_lineedit( "3", 0, false );
    le_crpoints     = us_lineedit( "200", 0, false );
    ck_tregspec     = new QCheckBox( tr( "On-specified" ), this );
@@ -2615,7 +2629,7 @@ DbgLv(1) << "APpc: IN";
    ck_tregauto->setAutoFillBackground( true  );
    le_regalpha     = us_lineedit( "0", 0, true );
    us_setReadOnly( le_regalpha, true );
-   le_mciters      = us_lineedit( "0", 0, false );
+   le_mciters      = us_lineedit( "1", 0, false );
    ck_tinoise      = new QCheckBox( "TI", this );
    ck_tinoise ->setPalette( US_GuiSettings::normalColor() );
    ck_tinoise ->setChecked( false );

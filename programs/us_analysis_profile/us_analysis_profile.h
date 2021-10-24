@@ -203,6 +203,7 @@ class US_AnaprofPan2DSA : public US_WidgetsDialog
       QLineEdit*   le_constk; 
       QLineEdit*   le_j2gpts;
       QLineEdit*   le_j2mrng;
+      QLineEdit*   le_j2iter;
       QLineEdit*   le_j4iter;
       QLineEdit*   le_j5iter;
 
@@ -243,6 +244,7 @@ class US_AnaprofPan2DSA : public US_WidgetsDialog
       void job2_run_checked ( bool );
       void mgpoints_changed ( );
       void mfrange_changed  ( );
+      void mfiter_changed  ( );
       void job3_run_checked ( bool );
       void autopick_checked ( bool );
       void job4_run_checked ( bool );

@@ -69,6 +69,7 @@ class US_UTIL_EXTERN US_AnaProfile
             double      fitrng;          //!< Meniscus fit range
             int         nchan;           //!< Number of channels
             int         grpoints;        //!< Grid points
+	    int         j2rfiters;       //!< Max refinement iteraitons for 2DSA-FM step
             int         rfiters;         //!< Max refinement iterations
             int         mciters;         //!< Monte-carlo iterations
             bool        job1run;         //!< Run 1 (2dsa) run flag

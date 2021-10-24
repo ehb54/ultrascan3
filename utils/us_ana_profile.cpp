@@ -311,6 +311,7 @@ US_AnaProfile::AnaProf2DSA::AnaProf2DSA()
    fitrng      = 0.03;
    nchan       = 1;
    grpoints    = 11;
+   j2rfiters   = 1;
    //rfiters     = 5;
    rfiters     = 10;
    mciters     = 100;
@@ -405,7 +406,8 @@ bool US_AnaProfile::AnaProf2DSA::fromXml( QXmlStreamReader& xmli )
 	    //fitrng         = attr.value( "fit_range" ).toString().toDouble();
 	    //grpoints       = attr.value( "grid_points" ).toString().toInt();
 
-	    //ALEXEY -- check if the following 2 attributes exist (for older ana_profiles):
+	    //ALEXEY -- check if the following 3 attributes exist (for older ana_profiles):
+	    //Meniscus Range
 	    attr_ref       = attr.value("meniscus_range");
 	    if ( !attr_ref.isNull() )
 	      {
@@ -416,6 +418,7 @@ bool US_AnaProfile::AnaProf2DSA::fromXml( QXmlStreamReader& xmli )
 	    else
 	      fitrng         = 0.03; //DEFAULT if no attribute found
 
+	    //Meniscus Points
 	    attr_ref       = attr.value("meniscus_points");
 	    if ( !attr_ref.isNull() )
 	      {
@@ -425,6 +428,18 @@ bool US_AnaProfile::AnaProf2DSA::fromXml( QXmlStreamReader& xmli )
 	      }
 	    else
 	      grpoints       = 11; //DEFAULT if no attribute found
+
+	    //Refinement Iterations
+	    attr_ref       = attr.value("max_iterations");
+	    if ( !attr_ref.isNull() )
+	      {
+		j2rfiters       = attr.value( "max_iterations" ).toString().toInt();
+		if ( !j2rfiters )
+		  j2rfiters = 1; //DEFAULT if 0 stored in xml (due old ana_profiles)
+	      }
+	    else
+	      j2rfiters       = 1; //DEFAULT if no attribute found
+	    
 	    
 	    //fit m|b
 	    int fmb_n      = attr.value( "fit_mb_select" ).toString().toInt();
@@ -528,6 +543,7 @@ bool US_AnaProfile::AnaProf2DSA::toXml( QXmlStreamWriter& xmlo )
    xmlo.writeAttribute   ( "fit_mb_select",    QString::number( fmb_n ) );
    xmlo.writeAttribute   ( "meniscus_range",   QString::number( fitrng ) );
    xmlo.writeAttribute   ( "meniscus_points",  QString::number( grpoints ) );
+   xmlo.writeAttribute   ( "max_iterations",   QString::number( j2rfiters ) );
 
    xmlo.writeEndElement  (); // job_2dsa_fm
 
@@ -593,7 +609,7 @@ US_AnaProfile::AnaProf2DSA::Parm2DSA::Parm2DSA()
    s_min      = 1.0;
    s_max      = 10.0;
    k_min      = 1.0;
-   k_max      = 5.0;
+   k_max      = 4.0;
    //ff0_const  = 0.72;
    ff0_const  = 1.0;
    s_grpts    = 64;
@@ -837,12 +853,12 @@ US_AnaProfile::AnaProfPCSA::ParmPCSA::ParmPCSA()
    z_value    = 0;
    
    tr_alpha   = 0.0;
-   varcount   = 3;
-   grf_iters  = 6;
-   creso_pts  = 100;
+   varcount   = 10;
+   grf_iters  = 3;
+   creso_pts  = 200;
    noise_flag = 0;
    treg_flag  = 0;
-   mc_iters   = 0;
+   mc_iters   = 1;
    channel    = "1A";
    curv_type  = "All";
    x_type     = "s";
