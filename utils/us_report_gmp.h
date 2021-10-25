@@ -38,11 +38,13 @@ class US_UTIL_EXTERN US_ReportGMP
 
       //Main parameters set manually in reference reports
       double tot_conc;
+      double tot_conc_tol;
       double rmsd_limit;
       double av_intensity;
       double wavelength;
       double experiment_duration;
-
+      double experiment_duration_tol;
+      
       //Rest of parameters followign from protocol: not used so far
       int     scan_number;
       double  load_volume;

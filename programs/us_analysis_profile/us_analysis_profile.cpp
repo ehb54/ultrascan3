@@ -733,6 +733,9 @@ void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP* reportFromDB, int re
 	  reportFromDB->av_intensity          = db->value( 3 ).toString().toDouble();
 	  reportFromDB->experiment_duration   = db->value( 4 ).toString().toDouble();
 	  reportFromDB->wavelength            = db->value( 5 ).toString().toDouble();
+
+	  reportFromDB->tot_conc_tol          = db->value( 6 ).toString().toDouble();
+	  reportFromDB->experiment_duration_tol = db->value( 7 ).toString().toDouble(); 
 	}
     }
 

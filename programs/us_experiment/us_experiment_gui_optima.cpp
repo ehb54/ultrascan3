@@ -5102,6 +5102,9 @@ int US_ExperGuiUpload::writeReportToDB( QString reportGUID, US_ReportGMP report 
       << QString::number( report.av_intensity )
       << QString::number( report.experiment_duration )
       << QString::number( report.wavelength )
+
+      << QString::number( report.tot_conc_tol )
+      << QString::number( report.experiment_duration_tol )
     ;
 
   qDebug() << "Query: new_report: " << qry;

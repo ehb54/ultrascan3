@@ -43,6 +43,7 @@ class US_GUI_EXTERN US_ReportGui: public US_Widgets
       QHBoxLayout* lower_buttons;
 
       QLineEdit*   le_tot_conc;
+      QLineEdit*   le_tot_conc_tol;
       QLineEdit*   le_rmsd_limit;
       QLineEdit*   le_av_intensity;
       QComboBox*   cb_wvl;
@@ -55,6 +56,8 @@ class US_GUI_EXTERN US_ReportGui: public US_Widgets
       QSpinBox*    sb_durat_hh;
       QSpinBox*    sb_durat_mm;
       QSpinBox*    sb_durat_ss;
+      QLineEdit*   le_duration_tol;
+      
 
       QPushButton*  pb_addRow;
       QPushButton*  pb_removeRow;

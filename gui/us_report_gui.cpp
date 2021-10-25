@@ -69,19 +69,28 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
   params    ->setContentsMargins ( 2, 2, 2, 2 );
 
   QLabel* lb_tot_conc       = us_label( tr( "Total Concentration" ) );
+  QLabel* lb_tot_conc_tol   = us_label( tr( "Tolerance (+/-%)" ) );
   QLabel* lb_rmsd_limit     = us_label( tr( "RMSD (upper limit)" ) );
   QLabel* lb_av_intensity   = us_label( tr( "Minimum Intensity" ) );
   QLabel* lb_duration       = us_label( tr( "Experiment Duration" ) );
+  QLabel* lb_duration_tol   = us_label( tr( "Tolerance (+/-%)" ) );
   QLabel* lb_wvl            = us_label( tr( "Wavelength" ) );
   QHBoxLayout* lo_duratlay  = us_ddhhmmsslay( 0, 0,0,0,1, &sb_durat_dd, &sb_durat_hh, &sb_durat_mm, &sb_durat_ss ); // ALEXEY 0 - visible, 1 - hidden
 
   le_tot_conc      = us_lineedit( QString::number(report->tot_conc),     0, false  );
+  
+  le_tot_conc_tol  = us_lineedit( QString::number(report->tot_conc_tol),     0, false  );
+  le_duration_tol  = us_lineedit( QString::number(report->experiment_duration_tol),     0, false  );
+  
   le_rmsd_limit    = us_lineedit( QString::number(report->rmsd_limit),   0, false  );
   le_av_intensity  = us_lineedit( QString::number(report->av_intensity), 0, false  );
 
   le_tot_conc      -> setObjectName( "tot_conc" );
   le_rmsd_limit    -> setObjectName( "rmsd" );
   le_av_intensity  -> setObjectName( "av_intensity" );
+  
+  le_tot_conc_tol  -> setObjectName( "tot_conc_tol" );
+  le_duration_tol  -> setObjectName( "duration_tol" );
 
   //set connecitons btw textChanged() and slot
   connect( le_tot_conc,   SIGNAL( textChanged ( const QString& ) ),
@@ -128,18 +137,29 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
   
   row = 0;
   params->addWidget( lb_tot_conc,       row,    0, 1, 2 );
-  params->addWidget( le_tot_conc,       row,    3, 1, 2 );
-  params->addWidget( lb_rmsd_limit,     row,    5, 1, 2 );
-  params->addWidget( le_rmsd_limit,     row,    7, 1, 2 );
-  params->addWidget( lb_wvl,            row,    9, 1, 2 );
-  params->addWidget( cb_wvl,            row++,  13, 1, 2 );
+  params->addWidget( le_tot_conc,       row,    2, 1, 2 );
+  
+  params->addWidget( lb_tot_conc_tol,   row,    4, 1, 2 );
+  params->addWidget( le_tot_conc_tol,   row,    6, 1, 2 );
+
+  params->addWidget( lb_rmsd_limit,     row,    8, 1, 2 );
+  params->addWidget( le_rmsd_limit,     row,    10, 1, 2 );
+
+  params->addWidget( lb_wvl,            row,    12, 1, 2 );
+  params->addWidget( cb_wvl,            row++,  14, 1, 2 );
+
   params->addWidget( lb_duration,       row,    0, 1, 2 );
-  params->addLayout( lo_duratlay,       row,    3, 1, 2 );
-  params->addWidget( lb_av_intensity,   row,    5, 1, 2 );
-  params->addWidget( le_av_intensity,   row,    7, 1, 2 );
-  params->addWidget( pb_prev_wvl,       row,    9, 1, 2 );
-  params->addWidget( pb_next_wvl,       row++,  13, 1, 2 );
-  params->addWidget( pb_apply_all,      row++,  13, 1, 2 );
+  params->addLayout( lo_duratlay,       row,    2, 1, 2 );
+
+  params->addWidget( lb_duration_tol,   row,    4, 1, 2 );
+  params->addWidget( le_duration_tol,   row,    6, 1, 2 );  
+
+  params->addWidget( lb_av_intensity,   row,    8, 1, 2 );
+  params->addWidget( le_av_intensity,   row,    10, 1, 2 );
+
+  params->addWidget( pb_prev_wvl,       row,    12, 1, 2 );
+  params->addWidget( pb_next_wvl,       row++,  14, 1, 2 );
+  params->addWidget( pb_apply_all,      row++,  14, 1, 2 );
   
   // int ihgt        = le_tot_conc->height();
   // QSpacerItem* spacer1 = new QSpacerItem( 20, 0.75*ihgt, QSizePolicy::Expanding );
@@ -480,6 +500,9 @@ void US_ReportGui::gui_to_report( void )
   report->rmsd_limit          = le_rmsd_limit   ->text().toDouble();
   report->av_intensity        = le_av_intensity ->text().toDouble();
 
+  report->tot_conc_tol        = le_tot_conc_tol ->text().toDouble();
+  report->experiment_duration_tol        = le_duration_tol ->text().toDouble();
+  
   QList< int > dhms_dur;
   int t_day        = (double)sb_durat_dd->value();
   int t_hour       = (double)sb_durat_hh->value();
@@ -676,6 +699,9 @@ void US_ReportGui::changeWvl( int ndx )
    le_tot_conc     -> setText( QString::number(report->tot_conc) );
    le_rmsd_limit   -> setText( QString::number(report->rmsd_limit) );
    le_av_intensity -> setText( QString::number(report->av_intensity) );
+
+   le_tot_conc_tol -> setText( QString::number(report->tot_conc_tol) );
+   le_duration_tol -> setText( QString::number(report->experiment_duration_tol) );
    
    QList< int > dhms_dur;
    double exp_dur = report->experiment_duration;
@@ -811,6 +837,9 @@ void US_ReportGui::apply_all_wvls( void )
 	  report_map[ ri.key() ]->rmsd_limit          = report->rmsd_limit;
 	  report_map[ ri.key() ]->av_intensity        = report->av_intensity;
 	  report_map[ ri.key() ]->experiment_duration = report->experiment_duration;
+
+	  report_map[ ri.key() ]->tot_conc_tol        = report->tot_conc_tol;
+	  report_map[ ri.key() ]->experiment_duration_tol   = report->experiment_duration_tol;
 	  
 	  //Now go over reportItems:
 	  //1st, clear current array of reportItems:
