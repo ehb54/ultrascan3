@@ -36,6 +36,9 @@ US_ReportGMP::US_ReportGMP()
   experiment_duration = 19800;
 
   tot_conc_tol = 10;
-  experiment_duration_tol = 10; 
+  experiment_duration_tol = 10;
+
+  exp_time_changed = false;
+  DBread = false;
 }
  

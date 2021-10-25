@@ -100,7 +100,12 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
   connect( le_av_intensity, SIGNAL( textChanged ( const QString& ) ),
 	   this,          SLOT  ( verify_text ( const QString& ) ) );
    
-
+  qDebug() << "Report params on load: tot_conc, conc_tol, duraiton, duration_tol -- "
+	   <<  report->tot_conc
+	   <<  report->tot_conc_tol
+	   <<  report->experiment_duration
+	   <<  report->experiment_duration_tol;
+  
   QList< int > dhms_dur;
   double exp_dur = report->experiment_duration;
   US_RunProtocol::timeToList( exp_dur, dhms_dur );
@@ -108,6 +113,16 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
   sb_durat_hh ->setValue( (int)dhms_dur[ 1 ] );
   sb_durat_mm ->setValue( (int)dhms_dur[ 2 ] );
   sb_durat_ss ->setValue( (int)dhms_dur[ 3 ] );
+
+  //Connect Exp. Duration counters to changes:
+  connect( sb_durat_dd,  SIGNAL( valueChanged   ( int ) ),
+	   this,         SLOT  ( ssChgDuratTime_dd  ( int ) ) );
+  connect( sb_durat_hh,  SIGNAL( valueChanged   ( int ) ),
+	   this,         SLOT  ( ssChgDuratTime_hh ( int ) ) );
+  connect( sb_durat_mm,  SIGNAL( valueChanged   ( int ) ),
+	   this,         SLOT  ( ssChgDuratTime_mm ( int ) ) );
+  connect( sb_durat_ss,  SIGNAL( valueChanged   ( int ) ),
+	   this,         SLOT  ( ssChgDuratTime_ss ( int ) ) );
 
   //ALEXEY_NEW_REPORT: wvl
   cb_wvl =  us_comboBox();
@@ -204,6 +219,24 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
 
   build_report_layout();
 
+}
+
+//Exp. Durat. counters
+void US_ReportGui::ssChgDuratTime_dd( int val )
+{
+  report->exp_time_changed = true;
+}
+void US_ReportGui::ssChgDuratTime_hh( int val )
+{
+  report->exp_time_changed = true;
+}
+void US_ReportGui::ssChgDuratTime_mm( int val )
+{
+  report->exp_time_changed = true;
+}
+void US_ReportGui::ssChgDuratTime_ss( int val )
+{
+  report->exp_time_changed = true;
 }
 
 //Layout build
@@ -544,10 +577,14 @@ void US_ReportGui::gui_to_report( void )
   int t_second     = (double)sb_durat_ss->value();
 
   dhms_dur << t_day << t_hour << t_minute << t_second;
+
+  qDebug() << "Gui-to-report: DURATION: dd hh mm ss -- " << t_day << t_hour << t_minute << t_second;
   
   double exp_dur = 0;
   US_RunProtocol::timeFromList( exp_dur, dhms_dur );
   report->experiment_duration = exp_dur;
+
+  qDebug() << "Gui-to-report: DURATION: in seconds -- " << exp_dur;
 
   //ReportItems
   for ( int ii = 0; ii < report->reportItems.size(); ii++ )

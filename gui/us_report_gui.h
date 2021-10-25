@@ -80,6 +80,11 @@ class US_GUI_EXTERN US_ReportGui: public US_Widgets
      void wvl_prev  ( void );
      void wvl_next  ( void );
      void apply_all_wvls( void );
+
+     void    ssChgDuratTime_dd( int );
+     void    ssChgDuratTime_hh( int );
+     void    ssChgDuratTime_mm( int );
+     void    ssChgDuratTime_ss( int );
      
    public slots:
 };

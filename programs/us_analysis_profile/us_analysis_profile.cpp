@@ -312,7 +312,12 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
 		currProf.ch_reports[ chentr_wvls ][ c_wvl ].channel_name = chentr_wvls;
 
 		double tot_time_exp = iProto->rpSpeed.ssteps[0].duration + iProto->rpSpeed.ssteps[0].delay_stage;
-		currProf.ch_reports[ chentr_wvls ][ c_wvl ].experiment_duration = tot_time_exp;      // <== 1st speed step!!! 
+
+		if ( currProf.ch_reports[ chentr_wvls ][ c_wvl ].DBread || currProf.ch_reports[ chentr_wvls ][ c_wvl ].exp_time_changed )
+		  {
+		  }
+		else
+		  currProf.ch_reports[ chentr_wvls ][ c_wvl ].experiment_duration = tot_time_exp;      // <== 1st speed step!!!
 
 		qDebug() << "Exp. Duraiton -- " << tot_time_exp;
 
@@ -370,7 +375,12 @@ DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
 		currProf.ch_reports[ chentr_wvls ][ c_wvl ].channel_name = chentr_wvls;
 
 		double tot_time_exp = iProto->rpSpeed.ssteps[0].duration + iProto->rpSpeed.ssteps[0].delay_stage;
-		currProf.ch_reports[ chentr_wvls ][ c_wvl ].experiment_duration = tot_time_exp;      // <== 1st speed step!!! 
+
+		if ( currProf.ch_reports[ chentr_wvls ][ c_wvl ].DBread || currProf.ch_reports[ chentr_wvls ][ c_wvl ].exp_time_changed )
+		  {
+		  }
+		else
+		  currProf.ch_reports[ chentr_wvls ][ c_wvl ].experiment_duration = tot_time_exp;      // <== 1st speed step!!! 
 
 		qDebug() << "Exp. Duraiton -- " << tot_time_exp;
 	      }
@@ -737,6 +747,8 @@ void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP* reportFromDB, int re
 	  reportFromDB->tot_conc_tol          = db->value( 6 ).toString().toDouble();
 	  reportFromDB->experiment_duration_tol = db->value( 7 ).toString().toDouble(); 
 	}
+
+      reportFromDB->DBread = true;
     }
 
   //Read children: reportItems-by-reportID && insert them to parent report

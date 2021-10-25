@@ -44,6 +44,10 @@ class US_UTIL_EXTERN US_ReportGMP
       double wavelength;
       double experiment_duration;
       double experiment_duration_tol;
+
+      //Bool flag for changed exp. time & if read form DB
+      bool exp_time_changed;
+      bool DBread;
       
       //Rest of parameters followign from protocol: not used so far
       int     scan_number;
