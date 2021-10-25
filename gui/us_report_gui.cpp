@@ -70,10 +70,10 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
 
   QLabel* lb_tot_conc       = us_label( tr( "Total Concentration" ) );
   QLabel* lb_rmsd_limit     = us_label( tr( "RMSD (upper limit)" ) );
-  QLabel* lb_av_intensity   = us_label( tr( "Average Intensity" ) );
+  QLabel* lb_av_intensity   = us_label( tr( "Minimum Intensity" ) );
   QLabel* lb_duration       = us_label( tr( "Experiment Duration" ) );
   QLabel* lb_wvl            = us_label( tr( "Wavelength" ) );
-  QHBoxLayout* lo_duratlay  = us_ddhhmmsslay( 0, 1,0,0,1, &sb_durat_dd, &sb_durat_hh, &sb_durat_mm, &sb_durat_ss ); // ALEXEY 0 - visible, 1 - hidden
+  QHBoxLayout* lo_duratlay  = us_ddhhmmsslay( 0, 0,0,0,1, &sb_durat_dd, &sb_durat_hh, &sb_durat_mm, &sb_durat_ss ); // ALEXEY 0 - visible, 1 - hidden
 
   le_tot_conc      = us_lineedit( QString::number(report->tot_conc),     0, false  );
   le_rmsd_limit    = us_lineedit( QString::number(report->rmsd_limit),   0, false  );

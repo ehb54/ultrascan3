@@ -33,6 +33,6 @@ US_ReportGMP::US_ReportGMP()
   av_intensity = 10000;
 
   wavelength   = 180;
-  experiment_duration = 5400;
+  experiment_duration = 19800;
 }
  

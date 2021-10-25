@@ -504,6 +504,7 @@ DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.cou
 	     QString curr_w = QString::number ( ch_wavelengths[ w ] );
 	     internal_reports[ chdesc_alt ][ curr_w ] = currProf->ch_reports[ chdesc_alt ] [ curr_w ];
 	     internal_reports[ chdesc_alt ][ curr_w ].wavelength = ch_wavelengths[ w ];
+	     //internal_reports[ chdesc_alt ][ curr_w ].experiment_duration = currProf->ch_reports[ chdesc_alt ] [ curr_w ].experiment_duration;
 
 	     qDebug() << "US_AnaprofPanGen::initPanel(): ch_wavelengths[ w ] --  " << ch_wavelengths[ w ];
 	   }

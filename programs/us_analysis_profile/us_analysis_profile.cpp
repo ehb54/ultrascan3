@@ -310,6 +310,12 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
 		QString c_wvl = QString::number ( ch_wavelengths[ i ] );
 		currProf.ch_reports[ chentr_wvls ][ c_wvl ] = currProf.ch_reports[ currProf.chndescs_alt[ nchn ] ][ c_wvl ];
 		currProf.ch_reports[ chentr_wvls ][ c_wvl ].channel_name = chentr_wvls;
+
+		double tot_time_exp = iProto->rpSpeed.ssteps[0].duration + iProto->rpSpeed.ssteps[0].delay_stage;
+		currProf.ch_reports[ chentr_wvls ][ c_wvl ].experiment_duration = tot_time_exp;      // <== 1st speed step!!! 
+
+		qDebug() << "Exp. Duraiton -- " << tot_time_exp;
+
 	      }
 	    
             chx             = currProf.lc_ratios.count() - 1;
@@ -362,6 +368,11 @@ DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
 		QString c_wvl = QString::number ( ch_wavelengths[ i ] );
 		currProf.ch_reports[ chentr_wvls ][ c_wvl ] = currProf.ch_reports[ currProf.chndescs_alt[ nchn ] ][ c_wvl ];
 		currProf.ch_reports[ chentr_wvls ][ c_wvl ].channel_name = chentr_wvls;
+
+		double tot_time_exp = iProto->rpSpeed.ssteps[0].duration + iProto->rpSpeed.ssteps[0].delay_stage;
+		currProf.ch_reports[ chentr_wvls ][ c_wvl ].experiment_duration = tot_time_exp;      // <== 1st speed step!!! 
+
+		qDebug() << "Exp. Duraiton -- " << tot_time_exp;
 	      }
 	    	    
 	    
