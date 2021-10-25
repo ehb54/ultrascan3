@@ -289,7 +289,7 @@ void US_ReportGui::build_report_layout( void )
       le_high       = us_lineedit( QString::number(curr_item.range_high), 0, false  );
       le_intval     = us_lineedit( QString::number(curr_item.integration_val), 0, false  );
       le_tol        = us_lineedit( QString::number(curr_item.tolerance), 0, false  );
-      le_total      = us_lineedit( QString::number(curr_item.total_percent), 0, false  );
+      le_total      = us_lineedit( QString::number(curr_item.total_percent), 0, true  );
 
       //set Object Name based on row number
       QString stchan      =  QString::number( ii ) + ": ";
@@ -488,6 +488,40 @@ void US_ReportGui::verify_text( const QString& text )
 	  curr_widget->setPalette(*palette);
 
 	  isErrorField[ oname ] = false;
+
+	  //ALEXEY: for a given row, compute 'Fraction of Total' (read-only) as '(Int_Val / Total Conc.) * 100%'
+	  if ( oname.contains(": intval") )
+	    {
+	      double tot_conc_val = le_tot_conc ->text().toDouble();
+	      if ( text.toDouble() > tot_conc_val ) 
+		curr_widget -> setText( QString::number( tot_conc_val ) );
+			      
+	      QString item_row = oname.split(":")[0] + QString(": ");
+	      QString objName_fraction_of_total  = item_row + "total";
+	      QLineEdit * fraction_of_total_widget = containerWidget->findChild<QLineEdit *>( objName_fraction_of_total );
+
+	      double fraction = ( curr_widget ->text().toDouble() / tot_conc_val ) * 100.0;
+	      fraction_of_total_widget -> setText( QString::number( fraction ) );
+	      palette->setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+	      fraction_of_total_widget -> setPalette( *palette );
+	    }
+	  //ALEXEY: check the same for tot_conc: apply to all ReportItems' 'Fraction of Total'
+	  if ( oname.contains("tot_conc") )
+	    {
+	      int r_item_num = report->reportItems.size();
+	      for ( int ii = 0; ii < r_item_num; ii++ )
+		{
+		  QString objName_integration_val      = QString::number( ii ) + QString(": intval");
+		  QString objName_fraction_of_total    = QString::number( ii ) + QString(": total");
+		  QLineEdit * integration_val_widget   = containerWidget->findChild<QLineEdit *>( objName_integration_val );
+		  QLineEdit * fraction_of_total_widget = containerWidget->findChild<QLineEdit *>( objName_fraction_of_total );
+		  
+		  double fraction = ( integration_val_widget ->text().toDouble() / text.toDouble() ) * 100.0;
+		  fraction_of_total_widget -> setText( QString::number( fraction ) );
+		  palette->setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+		  fraction_of_total_widget -> setPalette( *palette );
+		}
+	    }
 	}
     }
 }
@@ -617,8 +651,11 @@ void US_ReportGui::add_row( void )
   initItem.range_low        = 3.2;
   initItem.range_high       = 3.7;
   initItem.integration_val  = 0.57;
-  initItem.tolerance        = 10; 
-  initItem.total_percent    = 0.58;
+  initItem.tolerance        = 10;
+
+  //Compute 'Fraction of Total' based on tot_conc:
+  double tot_conc_val = le_tot_conc -> text().toDouble();
+  initItem.total_percent    = ( initItem.integration_val / tot_conc_val) * 100.0;
   
   report->reportItems.push_back( initItem );
 

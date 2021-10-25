@@ -20,7 +20,7 @@ US_ReportGMP::US_ReportGMP()
   initItem.range_high       = 3.7;
   initItem.integration_val  = 0.57;
   initItem.tolerance        = 10; 
-  initItem.total_percent    = 0.58;
+  initItem.total_percent    = 95;
 
   reportItems.push_back( initItem );
 
