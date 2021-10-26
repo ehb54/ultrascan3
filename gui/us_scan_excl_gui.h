@@ -13,21 +13,21 @@ class US_GUI_EXTERN US_ScanExclGui: public US_Widgets
 
   public:
 
-      US_ScanExclGui( QStringList, QList< int *> , QList< int *>  );
+      US_ScanExclGui( QStringList, QList< int > , QList< int >  );
       ~US_ScanExclGui() {};
 
    signals:
-      
+      void update_aprofile_scans( QMap< int, int>& );
       
    private:
 
       QStringList channels_desc;
-      QList < int *>  scan_beg;
-      QList < int *>  scan_end;
+      QList < int >  scan_beg;
+      QList < int >  scan_end;
       
       int row;
       QVBoxLayout* main;
-      QGridLayout* params;
+      QGridLayout* params; 
       QGridLayout* genL;
       QScrollArea* scrollArea;
       QWidget*     containerWidget;

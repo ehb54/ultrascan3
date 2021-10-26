@@ -16,7 +16,7 @@
 #endif
 
 
-US_ScanExclGui::US_ScanExclGui( QStringList channels_desc, QList< int *> scan_beg, QList< int *> scan_end ) : US_Widgets()
+US_ScanExclGui::US_ScanExclGui( QStringList channels_desc, QList< int > scan_beg, QList< int > scan_end ) : US_Widgets()
 {
   this->channels_desc = channels_desc;
   this->scan_beg      = scan_beg;
@@ -101,13 +101,15 @@ void US_ScanExclGui::build_layout ( void )
       QString chan_desc = channels_desc[ ii ];
 
       qDebug() << "Build layout: chan_Desc -- " << chan_desc;
-      qDebug() << "Build layout: scan_beg[ii], scan_end[ii]  -- " << *scan_beg[ii] << *scan_end[ii];
+      qDebug() << "Build layout: scan_beg[ii], scan_end[ii]  -- " << scan_beg[ii] << scan_end[ii];
 
       le_chan_desc        = us_lineedit( chan_desc,  0, true  );
       sb_begin            = us_spinbox();
       sb_end              = us_spinbox();
-      sb_begin            ->setValue( (int)*scan_beg[ii] );
-      sb_end              ->setValue( (int)*scan_end[ii] );
+      // sb_begin            ->setValue( (int)*scan_beg[ii] );
+      // sb_end              ->setValue( (int)*scan_end[ii] );
+      sb_begin            ->setValue( (int)scan_beg[ii] );
+      sb_end              ->setValue( (int)scan_end[ii] );    
       
       QString stchan      =  QString::number( ii ) + ": ";
       le_chan_desc        -> setObjectName( stchan + "desc" );
@@ -168,17 +170,42 @@ void US_ScanExclGui::build_layout ( void )
 //save gui to parms
 void US_ScanExclGui::gui_to_parms( void )
 {
+  QMap <int, int> scan_ranges_map;
   
+  for ( int ii = 0; ii < channels_desc.size(); ii++ )
+    {
+      QString stchan      =  QString::number( ii ) + ": ";
+
+      //scan begin
+      QSpinBox * sb_b = containerWidget->findChild< QSpinBox *>( stchan + "begin" );
+      // int sb_b_val = (int)sb_b->value();
+      // scan_beg[ ii ] =  &sb_b_val;
+      scan_beg[ ii ] = (int)sb_b->value();
+      
+      //scan end
+      QSpinBox * sb_e = containerWidget->findChild< QSpinBox *>( stchan + "end" );
+      // int sb_e_val = (int)sb_e->value();
+      // scan_end[ ii ] =  &sb_e_val;
+      scan_end[ ii ] = (int)sb_e->value();
+	
+      qDebug() << "In gui_to_parms: scna_beg, scan_end -- " << scan_beg[ ii ] << scan_end[ ii ];
+
+      scan_ranges_map[ scan_beg[ ii ]  ] = scan_end[ ii ];
+    }
+  
+  
+  emit update_aprofile_scans( scan_ranges_map );
 }
 
 //cancel
 void US_ScanExclGui::cancel_update( void )
 {
-  
+  close();
 }
 
 //update
 void US_ScanExclGui::update_scans_excl( void ) 
 {
-  
+  gui_to_parms( );
+  close();
 }

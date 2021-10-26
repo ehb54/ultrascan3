@@ -154,6 +154,7 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       void  applied_to_all     ( void );
       void  restore_report         ( QMap < QString, US_ReportGMP> &  );
       void  apply_to_other_reports ( US_ReportGMP *  );
+      void  update_excl_scans( QMap< int, int > & );
       
  signals:
       void  set_tabs_buttons_inactive       ( void );

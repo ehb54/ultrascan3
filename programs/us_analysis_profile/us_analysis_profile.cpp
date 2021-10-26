@@ -1925,28 +1925,41 @@ QMessageBox::information( this, "Under Development",
 //Scan Range to exclude
 void US_AnaprofPanGen::set_scan_ranges()
 {
-  QList< int *> excl_scan_beg;
-  QList< int *> excl_scan_end;
+  // QList< int *> excl_scan_beg;
+  // QList< int *> excl_scan_end;
 
-  qDebug() << "Set_scan_ranges: scan_excl_begin.size() -- " << currProf->scan_excl_begin.size();
+  // qDebug() << "Set_scan_ranges: scan_excl_begin.size() -- " << currProf->scan_excl_begin.size();
   
-  for (int i = 0; i < currProf->scan_excl_begin.size(); ++i )
-    {
-      excl_scan_beg << &( currProf->scan_excl_begin[ i ] );
-      excl_scan_end << &( currProf->scan_excl_end  [ i ] );
-    }
+  // for (int i = 0; i < currProf->scan_excl_begin.size(); ++i )
+  //   {
+  //     excl_scan_beg << &( currProf->scan_excl_begin[ i ] );
+  //     excl_scan_end << &( currProf->scan_excl_end  [ i ] );
+  //   }
   
   qDebug() << "Set_scan_ranges 2: ";
 
-  scanExclGui = new US_ScanExclGui( currProf->chndescs, excl_scan_beg, excl_scan_end );
+  //scanExclGui = new US_ScanExclGui( currProf->chndescs, excl_scan_beg, excl_scan_end );
+  scanExclGui = new US_ScanExclGui( currProf->chndescs, currProf->scan_excl_begin, currProf->scan_excl_end );
   scanExclGui->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
   scanExclGui->setWindowModality(Qt::ApplicationModal);
   
-  //connect( reportGui, SIGNAL( cancel_changes ( QMap< QString, US_ReportGMP>& ) ), this, SLOT( restore_report  ( QMap< QString, US_ReportGMP>& )  ) );
+  connect( scanExclGui, SIGNAL(  update_aprofile_scans( QMap< int, int >& ) ), this, SLOT( update_excl_scans  ( QMap< int, int >& )  ) );
      
   scanExclGui->show();
-  
-  
+}
+
+//Update excl. scan ranges
+void US_AnaprofPanGen::update_excl_scans( QMap< int, int >& scan_ranges_pairs )
+{
+  currProf->scan_excl_begin.clear();
+  currProf->scan_excl_end.clear();
+
+  QMap< int, int >::iterator ri;
+  for ( ri = scan_ranges_pairs.begin(); ri != scan_ranges_pairs.end(); ++ri )
+    {
+      currProf->scan_excl_begin << ri.key();
+      currProf->scan_excl_end   << ri.value();
+    }	
 }
 
 // Protocol button clicked

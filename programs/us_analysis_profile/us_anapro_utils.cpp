@@ -427,6 +427,8 @@ DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.cou
 	
 	qDebug() <<  "nchan, sl_chnsel.size(): " << nchan << sl_chnsel.count();
 	qDebug() << "ch_wvls for --  " << currProf->chndescs_alt[ ii ] << currProf->ch_wvls[ currProf->chndescs_alt[ ii  ] ];
+
+	qDebug() << "scan_beg, scan_end for -- " << currProf->chndescs_alt[ ii ] << currProf->scan_excl_begin[ ii  ]  << currProf->scan_excl_end[ ii  ];
 	
 	 int kk          = qMin( ii, sl_chnsel.count() - 1 );
          le_channs[ ii ]->setText( sl_chnsel[ kk ] );
