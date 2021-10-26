@@ -212,6 +212,9 @@ class US_UTIL_EXTERN US_AnaProfile
       QList< double> lv_tolers;    //!< Load volume tolerances
       QList< double> data_ends;    //!< Load volume tolerances
 
+      QList< int > scan_excl_begin;
+      QList< int > scan_excl_end;
+
       QList< int > analysis_run;
       QList< int > report_run;
       QList< int > wvl_edit;
@@ -233,6 +236,9 @@ class US_UTIL_EXTERN US_AnaProfile
       //ALEXEY_NEW_REPORT:
       QMap< QString, QList < int > >     ch_report_ids;
       QMap< QString, QStringList >       ch_report_guids;
+
+      /* //QMap for scan exclusion: channame -> QStringList( beginning scans, end scans)  */
+      /* QMap< QString, QStringList >       ch_scans_excl; */
 	
       
    private:

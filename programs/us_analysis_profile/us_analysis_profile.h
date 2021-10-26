@@ -20,6 +20,8 @@
 #include "us_report_gmp.h"
 #include "us_report_gui.h"
 
+#include "us_scan_excl_gui.h"
+
 //#include "us_license_t.h"
 //#include "us_license.h"
 
@@ -73,6 +75,7 @@ class US_AnaprofPanGen : public US_WidgetsDialog
 
       // US_ReportGMP*     reportGMP;
       US_ReportGui*     reportGui;
+      US_ScanExclGui*   scanExclGui;   
       
       US_Help  showHelp;
 
@@ -95,6 +98,7 @@ class US_AnaprofPanGen : public US_WidgetsDialog
 	
       QPushButton* pb_aproname;
       QPushButton* pb_protname;
+      //QPushButton* pb_scan_excl;
       QPushButton* pb_applya;
 
       QLineEdit*   le_aproname;
@@ -139,6 +143,7 @@ class US_AnaprofPanGen : public US_WidgetsDialog
 
       void  apro_button_clicked( void );
       void  prot_button_clicked( void );
+      void  set_scan_ranges    ( void );
       void  apro_text_changed  ( void );
       void  prot_text_changed  ( void );
       void  lcrat_text_changed ( void );

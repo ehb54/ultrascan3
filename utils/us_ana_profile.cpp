@@ -29,6 +29,9 @@ US_AnaProfile::US_AnaProfile()
    analysis_run << 1;
    report_run   << 1;
 
+   scan_excl_begin << 0;
+   scan_excl_end   << 0;
+   
    wvl_edit << 180;
       
    wvl_not_run << "";
@@ -48,7 +51,11 @@ US_AnaProfile::US_AnaProfile()
 
    // //Report Ids/Guids qmaps
    // ch_report_guids[ chndescs_alt[0] ] = QString( "00000000-0000-0000-0000-000000000000" );
-   // ch_report_ids[ chndescs_alt[0] ] = 0; 
+   // ch_report_ids[ chndescs_alt[0] ] = 0;
+
+   // //Scan Exlc. QMAp
+   // QStringList scan_ranges = {"0","0"};
+   // ch_scans_excl[ chndescs_alt[0] ] = scan_ranges;
 }
 
 // AnaProfile Equality operator

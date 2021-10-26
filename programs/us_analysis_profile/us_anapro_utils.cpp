@@ -415,6 +415,8 @@ DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.cou
       for ( int ii = 0; ii < nchan; ii++ )
       {
 	qDebug() <<  "currProf->analysis_run.size(): " << currProf->analysis_run.count();
+	qDebug() <<  "currProf->scan_excl_begin.size(): " << currProf->scan_excl_begin.count();
+	qDebug() <<  "currProf->scan_excl_end.size(): " << currProf->scan_excl_end.count();
 	
 	//ALEXEY: the next 5 following QLists/QMaps must be stripped of the enties associated with B:Interf. channels!!!
 	qDebug() <<  "currProf->wvl_edit.size(): "     << currProf->wvl_edit.count();

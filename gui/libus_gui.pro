@@ -65,6 +65,7 @@ HEADERS      = \
                us_rotor_gui.h           \
                us_run_details2.h        \
                us_sassoc.h              \
+               us_scan_excl_gui.h       \
                us_select_edits.h        \
                us_select_item.h         \
                us_select_runs.h         \
@@ -117,6 +118,7 @@ SOURCES      = \
                us_rotor_gui.cpp           \
                us_run_details2.cpp        \
                us_sassoc.cpp              \
+               us_scan_excl_gui.cpp       \
                us_select_item.cpp         \
                us_select_edits.cpp        \
                us_select_runs.cpp         \

@@ -284,7 +284,10 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
             currProf.pchans  [ nchn ] = chname;
             currProf.chndescs[ nchn ] = chentr;
 	    currProf.chndescs_alt[ nchn ] = chentr_wvls;
-	    
+
+	    // //Fill out Excl. Scans QMap:
+	    // QStringList scan_ranges = { "0", "0" };
+	    // currProf.ch_scans_excl[ chentr_wvls ] = scan_ranges;
 
 	    //ALEXEY: also ranges for each channel
 	    if ( opdesc.contains("vis.") )
@@ -336,10 +339,17 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
 	       currProf.report_run   << currProf.report_run[ chx ];
 	       currProf.wvl_edit     << currProf.wvl_edit[ chx ];
 	       currProf.wvl_not_run  << currProf.wvl_not_run[ chx ];
+
+	       currProf.scan_excl_begin  << currProf.scan_excl_begin[ chx ];
+	       currProf.scan_excl_end    << currProf.scan_excl_end[ chx ];
             }
 DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
 	 << "dae size" << currProf.data_ends.count() << "chentr" << chentr
-	 << "currProf.analysis_run[ chx ]" << currProf.analysis_run[ chx ];
+	 << "currProf.analysis_run[ chx ]" << currProf.analysis_run[ chx ]
+	 << "currProf.scan_excl_begin[ chx ]" << currProf.scan_excl_begin[ chx ]
+	 << "currProf.scan_excl_end[ chx ]" << currProf.scan_excl_end[ chx ];
+
+
          }
          else
          {  // Append channel and channel description
@@ -399,11 +409,17 @@ DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
 	    currProf.report_run   << currProf.report_run[ lch ];
 	    currProf.wvl_edit     << currProf.wvl_edit[ lch ];
 	    currProf.wvl_not_run  << currProf.wvl_not_run[ lch ];
+
+	    currProf.scan_excl_begin  << currProf.scan_excl_begin[ lch ];
+	    currProf.scan_excl_end    << currProf.scan_excl_end[ lch ];
 	    
-DbgLv(1) << "APG: ipro:     lch" << lch << "lv_tol da_end"
- << currProf.lv_tolers[ lch ] << currProf.data_ends[ lch ]
- << "dae size" << currProf.data_ends.count()
-	 << "currProf.analysis_run[ chx ]" << currProf.analysis_run[ chx ];;
+	    DbgLv(1) << "APG: ipro:     lch" << lch << "lv_tol da_end"
+		     << currProf.lv_tolers[ lch ] << currProf.data_ends[ lch ]
+		     << "dae size" << currProf.data_ends.count()
+		     << "currProf.analysis_run[ lch ]" << currProf.analysis_run[ lch ]
+		     << "currProf.scan_excl_begin[ lch ]" << currProf.scan_excl_begin[ lch ]
+		     << "currProf.scan_excl_end[ lch ]" << currProf.scan_excl_end[ lch ];
+
          }
          nchn++;
       }
@@ -433,6 +449,9 @@ DbgLv(1) << "APG: ipro:     lch" << lch << "lv_tol da_end"
 	 currProf.wvl_edit     .removeLast();
 	 currProf.wvl_not_run  .removeLast();
 
+	 // currProf.scan_excl_begin .removeLast();
+	 // currProf.scan_excl_end   .removeLast();
+	 
 	 //currProf.ch_wvls.removeLast();  //ALEXEY: needed?
       }
    }
@@ -857,7 +876,6 @@ US_AnaprofPanGen::US_AnaprofPanGen( QWidget* topw )
    left     = new QVBoxLayout;
    right    = new QVBoxLayout;
    
-   
    pb_aproname     = us_pushbutton( tr( "Analysis Profile Name" ) );
    pb_protname     = us_pushbutton( tr( "Protocol Name" ) );
 
@@ -872,6 +890,8 @@ US_AnaprofPanGen::US_AnaprofPanGen( QWidget* topw )
    le_aproname->setObjectName( "Aprof LineEdit" );
    pb_protname->setObjectName( "Proto Button" );
    le_protname->setObjectName( "Proto LineEdit" );
+
+   //pb_scan_excl->setObjectName( "Scan Exclusion" );
 
    // Set defaults
    currProf        = &mainw->currProf;
@@ -933,6 +953,7 @@ DbgLv(1) << "APGe: bgL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
  //       return;
  //    }
 
+   
    if ( genL != NULL )
    {
 /*
@@ -994,9 +1015,11 @@ DbgLv(1) << "APGe: bgL:    scrollArea child *REMOVED*";
 else
 DbgLv(1) << "APGe: bgL:    scrollArea children count ZERO";
 
+
       delete genL;
       delete scrollArea;
       delete pb_applya;
+
       //delete containerWidget;
 //   scrollArea      = new QScrollArea( this );
 //   containerWidget = new QWidget;
@@ -1029,10 +1052,15 @@ DbgLv(1) << "APGe: bgL:    scrollArea children count ZERO";
    // genL->addWidget( pb_protname,     row,    0, 1, 5 );
    // genL->addWidget( le_protname,     row++,  5, 1, 6 );
 
+   //Scan exclusion at the beginnig && end of the channel's scan set:
+   QPushButton* pb_scan_excl    = us_pushbutton( tr( "Excluded Scan Range: Beginning | End" ) );
+
    genL->addWidget( pb_aproname,     row,    0, 1, 3 );
    genL->addWidget( le_aproname,     row++,  3, 1, 6 );
    genL->addWidget( pb_protname,     row,    0, 1, 3 );
-   genL->addWidget( le_protname,     row++,  3, 1, 6 ); 
+   genL->addWidget( le_protname,     row,    3, 1, 6 );
+
+   genL->addWidget( pb_scan_excl,    row++,  10, 1, 3 );
 
    connect( pb_aproname, SIGNAL( clicked            ( ) ),
             this,        SLOT(   apro_button_clicked( ) ) );
@@ -1042,6 +1070,8 @@ DbgLv(1) << "APGe: bgL:    scrollArea children count ZERO";
             this,        SLOT(   apro_text_changed( void ) ) );
    connect( le_protname, SIGNAL( editingFinished  ( void ) ),
             this,        SLOT(   prot_text_changed( void ) ) );
+   connect( pb_scan_excl, SIGNAL( clicked            ( ) ),
+	    this,        SLOT(   set_scan_ranges( ) ) );
 
    // Build channel lists and rows
 DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
@@ -1890,6 +1920,33 @@ DbgLv(1) << "GP:SL: APRO BTN";
 QMessageBox::information( this, "Under Development",
  "This will lead to an AnalysisProfileGui selection dialog" );
 //*TEMPORARY
+}
+
+//Scan Range to exclude
+void US_AnaprofPanGen::set_scan_ranges()
+{
+  QList< int *> excl_scan_beg;
+  QList< int *> excl_scan_end;
+
+  qDebug() << "Set_scan_ranges: scan_excl_begin.size() -- " << currProf->scan_excl_begin.size();
+  
+  for (int i = 0; i < currProf->scan_excl_begin.size(); ++i )
+    {
+      excl_scan_beg << &( currProf->scan_excl_begin[ i ] );
+      excl_scan_end << &( currProf->scan_excl_end  [ i ] );
+    }
+  
+  qDebug() << "Set_scan_ranges 2: ";
+
+  scanExclGui = new US_ScanExclGui( currProf->chndescs, excl_scan_beg, excl_scan_end );
+  scanExclGui->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
+  scanExclGui->setWindowModality(Qt::ApplicationModal);
+  
+  //connect( reportGui, SIGNAL( cancel_changes ( QMap< QString, US_ReportGMP>& ) ), this, SLOT( restore_report  ( QMap< QString, US_ReportGMP>& )  ) );
+     
+  scanExclGui->show();
+  
+  
 }
 
 // Protocol button clicked
