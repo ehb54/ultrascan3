@@ -35,26 +35,26 @@ US_ScanExclGui::US_ScanExclGui( QStringList channels_desc, QList< int > scan_beg
   bn_excl_scans->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
   main->addWidget( bn_excl_scans );
 
-  params    =  new QGridLayout();
-  params    ->setSpacing         ( 2 );
-  params    ->setContentsMargins ( 2, 2, 2, 2 );
+  // params    =  new QGridLayout();
+  // params    ->setSpacing         ( 2 );
+  // params    ->setContentsMargins ( 2, 2, 2, 2 );
 
-  QLabel* lb_channame       = us_label( tr( "Channel Description" ) );
-  QLabel* lb_begin          = us_label( tr( "Number of scans at the beginning of run:" ) );
-  QLabel* lb_end            = us_label( tr( "Number of scans at the end of run:" ) );
+  // QLabel* lb_channame       = us_label( tr( "Channel Description" ) );
+  // QLabel* lb_begin          = us_label( tr( "Number of scans at the beginning of run:" ) );
+  // QLabel* lb_end            = us_label( tr( "Number of scans at the end of run:" ) );
 
   
 
-  ////////////////////////////////////////////////////////////////////////////
+  // ////////////////////////////////////////////////////////////////////////////
   
   row = 0;
-  params->addWidget( lb_channame,       row,    0, 1, 2 );
-  params->addWidget( lb_begin,          row,    2, 1, 2 );
-  params->addWidget( lb_end,            row++,  4, 1, 2 );
+  // params->addWidget( lb_channame,       row,    0, 1, 2 );
+  // params->addWidget( lb_begin,          row,    2, 1, 2 );
+  // params->addWidget( lb_end,            row++,  4, 1, 2 );
 
-  topContainerWidget = new QWidget;
-  topContainerWidget->setLayout( params );
-  main->addWidget( topContainerWidget );
+  // topContainerWidget = new QWidget;
+  // topContainerWidget->setLayout( params );
+  // main->addWidget( topContainerWidget );
 
 
   //main->addLayout( params );
@@ -90,9 +90,22 @@ void US_ScanExclGui::build_layout ( void )
   genL        ->setSpacing         ( 2 );
   genL        ->setContentsMargins ( 2, 2, 2, 2 );
 
+  
+  //add headers
+  QLabel* lb_channame       = us_label( tr( "Channel Description" ) );
+  QLabel* lb_begin          = us_label( tr( "Number of scans at\nthe beginning of run:" ) );
+  QLabel* lb_end            = us_label( tr( "Number of scans at\nthe end of run:" ) );
+
+  genL->addWidget( lb_channame,    row,    0, 1, 2 );
+  genL->addWidget( lb_begin,       row,    3, 1, 2 );
+  genL->addWidget( lb_end,         row++,  5, 1, 2 );
+  
+  
   QLineEdit*   le_chan_desc; 
   QSpinBox*    sb_begin; 
   QSpinBox*    sb_end; 
+
+  pb_applyall = us_pushbutton( tr( "Apply to All" ) );
   
   qDebug() << "Sizes of channels_desc, scan_beg | end: " << channels_desc.size() << scan_beg.size() << scan_end.size();
   
@@ -119,7 +132,22 @@ void US_ScanExclGui::build_layout ( void )
 
       genL->addWidget( le_chan_desc,   row,    0, 1, 2 );
       genL->addWidget( sb_begin,       row,    3, 1, 2 );
-      genL->addWidget( sb_end,         row++,  5, 1, 2 );
+      genL->addWidget( sb_end,         row,    5, 1, 2 );
+
+      QFont font   = le_chan_desc->property("font").value<QFont>();
+      QFontMetrics fm(font);
+      int pixelsWide = fm.width( le_chan_desc->text() );
+      le_chan_desc->setMinimumWidth( pixelsWide*1.1 );
+      le_chan_desc->adjustSize();
+      
+      if ( ii == 0 )
+	{
+	  genL->addWidget( pb_applyall, row++, 7, 1, 2 );
+	  connect( pb_applyall, SIGNAL( clicked       ( ) ),
+		   this,        SLOT(   applied_to_all( ) ) );
+	}
+      else
+	row++;
     }
 
   int ihgt        = le_chan_desc->height();
@@ -167,10 +195,31 @@ void US_ScanExclGui::build_layout ( void )
 
 }
 
+//Apply to all channels
+void US_ScanExclGui::applied_to_all( void )
+{
+  QSpinBox * sb_b = containerWidget->findChild< QSpinBox *>( "0: begin" );
+  QSpinBox * sb_e = containerWidget->findChild< QSpinBox *>( "0: end" );
+  
+  int s_b_0 =  (int)sb_b->value();
+  int s_e_0 =  (int)sb_e->value();
+  
+  for ( int ii = 0; ii < channels_desc.size(); ii++ )
+    {
+      QString stchan      =  QString::number( ii ) + ": ";
+
+      QSpinBox * sb_b = containerWidget->findChild< QSpinBox *>( stchan + "begin" );
+      sb_b -> setValue( (int)s_b_0 );
+
+      QSpinBox * sb_e = containerWidget->findChild< QSpinBox *>( stchan + "end" );
+      sb_e -> setValue( (int)s_e_0 );
+    }
+}
+
 //save gui to parms
 void US_ScanExclGui::gui_to_parms( void )
 {
-  QMap <int, int> scan_ranges_map;
+  QStringList scan_ranges_list;
   
   for ( int ii = 0; ii < channels_desc.size(); ii++ )
     {
@@ -190,11 +239,13 @@ void US_ScanExclGui::gui_to_parms( void )
 	
       qDebug() << "In gui_to_parms: scna_beg, scan_end -- " << scan_beg[ ii ] << scan_end[ ii ];
 
-      scan_ranges_map[ scan_beg[ ii ]  ] = scan_end[ ii ];
+      QString range_pair = QString::number( scan_beg[ ii ] ) + ":" + QString::number( scan_end[ ii ] ); 
+      
+      scan_ranges_list << range_pair;
     }
   
   
-  emit update_aprofile_scans( scan_ranges_map );
+  emit update_aprofile_scans( scan_ranges_list );
 }
 
 //cancel

@@ -17,7 +17,7 @@ class US_GUI_EXTERN US_ScanExclGui: public US_Widgets
       ~US_ScanExclGui() {};
 
    signals:
-      void update_aprofile_scans( QMap< int, int>& );
+      void update_aprofile_scans( QStringList& );
       
    private:
 
@@ -27,7 +27,7 @@ class US_GUI_EXTERN US_ScanExclGui: public US_Widgets
       
       int row;
       QVBoxLayout* main;
-      QGridLayout* params; 
+      //QGridLayout* params; 
       QGridLayout* genL;
       QScrollArea* scrollArea;
       QWidget*     containerWidget;
@@ -40,6 +40,7 @@ class US_GUI_EXTERN US_ScanExclGui: public US_Widgets
            
       QPushButton*  pb_cancel;
       QPushButton*  pb_accept;
+      QPushButton*  pb_applyall;
       
       void build_layout( void );
       void gui_to_parms( void );
@@ -47,6 +48,7 @@ class US_GUI_EXTERN US_ScanExclGui: public US_Widgets
    private slots:
       void cancel_update( void );
       void update_scans_excl( void );
+      void applied_to_all( void );
      
    public slots:
 };

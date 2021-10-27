@@ -1053,14 +1053,14 @@ DbgLv(1) << "APGe: bgL:    scrollArea children count ZERO";
    // genL->addWidget( le_protname,     row++,  5, 1, 6 );
 
    //Scan exclusion at the beginnig && end of the channel's scan set:
-   QPushButton* pb_scan_excl    = us_pushbutton( tr( "Excluded Scan Range: Beginning | End" ) );
+   QPushButton* pb_scan_excl    = us_pushbutton( tr( "Excluded Scans Ranges" ) );
 
    genL->addWidget( pb_aproname,     row,    0, 1, 3 );
    genL->addWidget( le_aproname,     row++,  3, 1, 6 );
    genL->addWidget( pb_protname,     row,    0, 1, 3 );
    genL->addWidget( le_protname,     row,    3, 1, 6 );
 
-   genL->addWidget( pb_scan_excl,    row++,  10, 1, 3 );
+   genL->addWidget( pb_scan_excl,    row++,  9, 1, 3 );
 
    connect( pb_aproname, SIGNAL( clicked            ( ) ),
             this,        SLOT(   apro_button_clicked( ) ) );
@@ -1943,23 +1943,44 @@ void US_AnaprofPanGen::set_scan_ranges()
   scanExclGui->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
   scanExclGui->setWindowModality(Qt::ApplicationModal);
   
-  connect( scanExclGui, SIGNAL(  update_aprofile_scans( QMap< int, int >& ) ), this, SLOT( update_excl_scans  ( QMap< int, int >& )  ) );
+  connect( scanExclGui, SIGNAL(  update_aprofile_scans( QStringList& ) ), this, SLOT( update_excl_scans  ( QStringList& )  ) );
      
   scanExclGui->show();
 }
 
 //Update excl. scan ranges
-void US_AnaprofPanGen::update_excl_scans( QMap< int, int >& scan_ranges_pairs )
+void US_AnaprofPanGen::update_excl_scans( QStringList& scan_ranges_list )
 {
   currProf->scan_excl_begin.clear();
   currProf->scan_excl_end.clear();
 
-  QMap< int, int >::iterator ri;
-  for ( ri = scan_ranges_pairs.begin(); ri != scan_ranges_pairs.end(); ++ri )
+  qDebug() << "Scan update: init sizes scan_excl_beginn, scan_excl_end -- "
+	   << currProf->scan_excl_begin.size()
+	   << currProf->scan_excl_end.size();
+
+  // QMap< int, int >::iterator ri;
+  // for ( ri = scan_ranges_pairs.begin(); ri != scan_ranges_pairs.end(); ++ri )
+  //   {
+  //     currProf->scan_excl_begin << ri.key();
+  //     currProf->scan_excl_end   << ri.value();
+
+  //     qDebug() << "in QMap update: " << ri.key() << ri.value();
+  //   }
+
+  for ( int i=0; i < scan_ranges_list.size(); ++i )
     {
-      currProf->scan_excl_begin << ri.key();
-      currProf->scan_excl_end   << ri.value();
-    }	
+      QString s_b = scan_ranges_list[ i ].split(":")[0];
+      QString s_e = scan_ranges_list[ i ].split(":")[1];
+      
+      currProf->scan_excl_begin << s_b.toInt();
+      currProf->scan_excl_end   << s_e.toInt();
+
+      qDebug() << "in scan_list update: " << s_b.toInt() << s_e.toInt();
+    }
+
+  qDebug() << "Scan update: final sizes scan_excl_beginn, scan_excl_end -- "
+	   << currProf->scan_excl_begin.size()
+	   << currProf->scan_excl_end.size();
 }
 
 // Protocol button clicked
