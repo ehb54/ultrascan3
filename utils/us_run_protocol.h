@@ -406,6 +406,9 @@ class US_UTIL_EXTERN US_RunProtocol
       double       temperature;    //!< Run temperature in degrees centigrade
       double       temeq_delay;    //!< Temperature-equilibration delay minutes
 
+      int          scanCount;
+      int          scanCount_int;
+
    private:
 };
 #endif

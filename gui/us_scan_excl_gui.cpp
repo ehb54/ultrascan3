@@ -130,10 +130,13 @@ void US_ScanExclGui::build_layout ( void )
       sb_end              -> setObjectName( stchan + "end" );
 
 
+      // if ( !chan_desc.contains("B:Interf.") )
+      // 	{
       genL->addWidget( le_chan_desc,   row,    0, 1, 2 );
       genL->addWidget( sb_begin,       row,    3, 1, 2 );
       genL->addWidget( sb_end,         row,    5, 1, 2 );
-
+      // }
+      
       QFont font   = le_chan_desc->property("font").value<QFont>();
       QFontMetrics fm(font);
       int pixelsWide = fm.width( le_chan_desc->text() );
@@ -148,6 +151,13 @@ void US_ScanExclGui::build_layout ( void )
 	}
       else
 	row++;
+
+      if ( chan_desc.contains("B:Interf.") )
+	{
+	  le_chan_desc->hide();
+	  sb_begin    ->hide();
+	  sb_end      ->hide();
+	}
     }
 
   int ihgt        = le_chan_desc->height();

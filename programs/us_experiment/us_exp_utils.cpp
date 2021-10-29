@@ -2508,8 +2508,9 @@ DbgLv(1) << "EGRn:inP:  #Wvl for cell: " << j << " is: " << Total_wvl[i];
 	    }
 	  
 	  rpSpeed->ssteps[ i ].scancount = scancount;
-	  mainw->ScanCount_global   = scancount;
-	  mainw->TotalWvlNum_global = Total_wvl[i];
+	  mainw->ScanCount_global    = scancount;
+	  mainw->currProto.scanCount = scancount;
+	  mainw->TotalWvlNum_global  = Total_wvl[i];
 
       
 	  DbgLv(1) << "EGRn:inP:  speed" << i << "scancount" << scancount;
@@ -2609,7 +2610,7 @@ DbgLv(1) << "EGRn:inP:  #Wvl for cell: " << j << " is: " << Total_wvl[i];
 
 	  rpSpeed->ssteps[ i ].scancount_int = scancount_int;
 	  mainw->ScanCount_global_int        = scancount_int;
-	
+	  mainw->currProto.scanCount_int     = scancount_int;
 	  
 	  //Update le_scanint text: set text color RED if updated
 	  QList< int > hms_scanint_int;

@@ -713,6 +713,7 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 
 	  rpSpeed->ssteps[ i ].scancount = scancount;
 	  mainw->ScanCount_global   = scancount;
+	  mainw->currProto.scanCount;
 	  mainw->TotalWvlNum_global = tot_wvl; 
 	
 	  
@@ -796,8 +797,8 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 		   << duration_sec << scanint_sec_int << ncells_used_int;
 
 	  rpSpeed->ssteps[ i ].scancount_int = scancount_int;
-	  mainw->ScanCount_global_int   = scancount_int;
-	
+	  mainw->ScanCount_global_int     = scancount_int;
+	  mainw->currProto.scanCount_int  = scancount_int; 
 	  
           
 	  //Update le_scanint text: set text color RED if updated
@@ -1012,8 +1013,9 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 	    }
 
 	  rpSpeed->ssteps[ i ].scancount = scancount;
-	  mainw->ScanCount_global = scancount;
-	  mainw->TotalWvlNum_global = tot_wvl; 
+	  mainw->ScanCount_global    = scancount;
+	  mainw->currProto.scanCount = scancount;
+	  mainw->TotalWvlNum_global  = tot_wvl; 
 
 		  
 	  //Update le_scanint text: set text color RED if updated
@@ -1095,7 +1097,8 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 		   << duration_sec << scanint_sec_int << ncells_used_int;
 
 	  rpSpeed->ssteps[ i ].scancount_int = scancount_int;
-	  mainw->ScanCount_global_int   = scancount_int;
+	  mainw->ScanCount_global_int        = scancount_int;
+	  mainw->currProto.scanCount_int     = scancount_int;
 
 	  //Update le_scanint text: set text color RED if updated
 	  QList< int > hms_scanint_int;

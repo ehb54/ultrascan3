@@ -405,6 +405,9 @@ class US_AnalysisProfileGui : public US_Widgets
       void    auto_name_passed( QString&, QString& ); 
       void    inherit_protocol( US_RunProtocol* );
       void    get_report_by_ID( US_ReportGMP*, int );
+
+      int     scanCount;
+      int     scanCount_int;
       
    private:
 

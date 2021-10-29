@@ -20,6 +20,9 @@ US_RunProtocol::US_RunProtocol()
    temeq_delay     = 10.0;
    exp_label       = "";
    runname         = "";
+
+   scanCount       = 0;
+   scanCount_int   =0;
 }
 
 // RunProtocol Equality operator

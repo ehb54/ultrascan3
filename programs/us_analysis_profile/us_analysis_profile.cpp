@@ -177,6 +177,17 @@ void US_AnalysisProfileGui::inherit_protocol( US_RunProtocol* iProto )
    int nchs        = iProto->rpSolut.chsols.count();
    int ncho        = iProto->rpOptic.chopts.count();
 
+   //ALEXEY: pass scanCount && scanCount_global from protocol
+   scanCount     = iProto->scanCount;
+   scanCount_int = iProto->scanCount_int;
+
+   qDebug() << "In inherit: ScanCounts : "
+	    << scanCount
+	    << scanCount_int
+	    << iProto->rpSpeed.ssteps[ 0 ].scancount
+	    << iProto->rpSpeed.ssteps[ 0 ].scancount_int;
+   
+
 DbgLv(1) << "APG00: ipro: kchn nchs ncho" << kchn << nchs << ncho;
 
    currProf.ch_wvls.clear();
@@ -449,8 +460,8 @@ DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
 	 currProf.wvl_edit     .removeLast();
 	 currProf.wvl_not_run  .removeLast();
 
-	 // currProf.scan_excl_begin .removeLast();
-	 // currProf.scan_excl_end   .removeLast();
+	 currProf.scan_excl_begin .removeLast();
+	 currProf.scan_excl_end   .removeLast();
 	 
 	 //currProf.ch_wvls.removeLast();  //ALEXEY: needed?
       }
@@ -1936,8 +1947,21 @@ void US_AnaprofPanGen::set_scan_ranges()
   //     excl_scan_end << &( currProf->scan_excl_end  [ i ] );
   //   }
   
-  qDebug() << "Set_scan_ranges 2: ";
+  qDebug() << "Set_scan_ranges 2: scanCount && scanCount_int -- "
+	   << mainw->scanCount << " && "
+	   << mainw->scanCount_int;
 
+  qDebug() << "Set_scan_ranges: SIZES:  currProf->chndescs, currProf->scan_excl_begin, currProf->scan_excl_end -- "
+	   << currProf->chndescs.size()
+	   << currProf->scan_excl_begin.size()
+	   << currProf->scan_excl_end.size();
+
+  //debug
+  for ( int i=0; i < currProf->chndescs.size(); ++i  )
+    qDebug() << "Ch_desc, scan_beg, scan_end -- " << currProf->chndescs[i] << currProf->scan_excl_begin[i] << currProf->scan_excl_end[i];
+  for ( int i=0; i < currProf->scan_excl_begin.size(); ++i ) 
+    qDebug() << "scan_beg, scan_end -- " << currProf->scan_excl_begin[i] << currProf->scan_excl_end[i];
+  
   //scanExclGui = new US_ScanExclGui( currProf->chndescs, excl_scan_beg, excl_scan_end );
   scanExclGui = new US_ScanExclGui( currProf->chndescs, currProf->scan_excl_begin, currProf->scan_excl_end );
   scanExclGui->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);

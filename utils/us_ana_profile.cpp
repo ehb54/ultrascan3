@@ -123,6 +123,21 @@ bool US_AnaProfile::toXml( QXmlStreamWriter& xmlo )
    //     qDebug() << "data_ends: " << i << data_ends[ i ];
    //     qDebug() << "analysis_run: " << i << analysis_run[ i ];
    //   }
+
+   qDebug() << "Size: pchans(), chndescs.size(),  scan_excl_begin.size(), scan_excl_end.size()  -- "
+	    << pchans.count()
+	    << chndescs.size()
+	    << scan_excl_begin.size()
+	    << scan_excl_end.size()
+     ;
+   
+   for ( int ii = 0; ii < pchans.count(); ii++ )
+     {
+        qDebug() << "In toXML AProfile: Ch_desc, scan_beg, scan_end -- "
+		 << chndescs[ ii ]
+		 << scan_excl_begin[ ii ]
+		 << scan_excl_end[ ii ];
+     }
    //END of DEBUG
 
    int kk = 0;
@@ -176,7 +191,7 @@ bool US_AnaProfile::toXml( QXmlStreamWriter& xmlo )
      // ch_report_ids[ chndescs_alt[ kk ] ]   [ i ], where i is for QList < int >, a list of reportIDs...
      // ch_report_guids[ chndescs_alt[ kk ] ] [ i ]
 
-     QList < int > reportIDs   =  ch_report_ids[ chndescs_alt[ kk ] ];
+     QList < int > reportIDs        =  ch_report_ids[ chndescs_alt[ kk ] ];
      QStringList   reportIDs_list;
      QStringList   reportGUIDs_list =  ch_report_guids[ chndescs_alt[ kk ] ];
 
@@ -188,6 +203,10 @@ bool US_AnaProfile::toXml( QXmlStreamWriter& xmlo )
      
      xmlo.writeAttribute    ( "report_id",   reportIDs_string   );
      xmlo.writeAttribute    ( "report_guid", reportGUIDs_string );
+
+     //scan exclusions: ATTENTION -- use ii index, NOT kk!!!
+     xmlo.writeAttribute    ( "scan_excl_begin", QString::number( scan_excl_begin[ ii ] )    );
+     xmlo.writeAttribute    ( "scan_excl_end",   QString::number( scan_excl_end[ ii ] ) );
 
      // xmlo.writeAttribute    ( "report_id",    QString::number( ch_report_ids[ chndescs_alt[ kk ] ]  ));
      // xmlo.writeAttribute    ( "report_guid",  ch_report_guids[ chndescs_alt[ kk ] ]  );
@@ -230,6 +249,9 @@ bool US_AnaProfile::fromXml( QXmlStreamReader& xmli )
    chndescs_alt   .clear();
    ch_report_ids  .clear();
    ch_report_guids.clear();
+
+   scan_excl_begin.clear(); 
+   scan_excl_end.  clear();
    
    while( ! xmli.atEnd() )
    {
@@ -296,6 +318,16 @@ bool US_AnaProfile::fromXml( QXmlStreamReader& xmli )
 	    
 	    ch_report_ids[ channel_alt_desc ]   = reportIDs_qlist;
 	    ch_report_guids[ channel_alt_desc ] = reportGIUDs_list;
+
+	    if ( attr.hasAttribute("scan_excl_begin") ) 
+	      scan_excl_begin <<  attr.value( "scan_excl_begin" ).toString().toInt();
+	    else
+	      scan_excl_begin << 0;
+	    if ( attr.hasAttribute("scan_excl_end") )
+	      scan_excl_end   <<  attr.value( "scan_excl_end" )  .toString().toInt();
+	    else
+	      scan_excl_end   << 0;
+	    
 //3-------------------------------------------------------------------------->80
             chx++;
 //qDebug() << "AP:fX:  chx" << chx << pchans.count();
