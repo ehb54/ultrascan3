@@ -127,11 +127,11 @@ void US_ScanExclGui::build_layout ( void )
       sb_end              ->setValue( (int)scan_end[ii] );
 
       //set Maximum values based on type of Optics
-      sb_begin            ->setMinimum( scanCount );
+      sb_begin            ->setMaximum( scanCount );
       sb_end              ->setMaximum( scanCount );
       if( chan_desc.contains("Interf.") )
 	{
-	  sb_begin            ->setMinimum( scanCount_int );
+	  sb_begin            ->setMaximum( scanCount_int );
 	  sb_end              ->setMaximum( scanCount_int );
 	}
 
