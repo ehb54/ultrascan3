@@ -16,11 +16,13 @@
 #endif
 
 
-US_ScanExclGui::US_ScanExclGui( QStringList channels_desc, QList< int > scan_beg, QList< int > scan_end ) : US_Widgets()
+US_ScanExclGui::US_ScanExclGui( QStringList channels_desc, QList< int > scan_beg, QList< int > scan_end, int scanCount, int scanCount_int ) : US_Widgets()
 {
   this->channels_desc = channels_desc;
   this->scan_beg      = scan_beg;
   this->scan_end      = scan_end;
+  this->scanCount     = scanCount;
+  this->scanCount_int = scanCount_int;
     
   setWindowTitle( tr( "Scan Exclusion Editor"));
   
@@ -122,8 +124,18 @@ void US_ScanExclGui::build_layout ( void )
       // sb_begin            ->setValue( (int)*scan_beg[ii] );
       // sb_end              ->setValue( (int)*scan_end[ii] );
       sb_begin            ->setValue( (int)scan_beg[ii] );
-      sb_end              ->setValue( (int)scan_end[ii] );    
-      
+      sb_end              ->setValue( (int)scan_end[ii] );
+
+      //set Maximum values based on type of Optics
+      sb_begin            ->setMinimum( scanCount );
+      sb_end              ->setMaximum( scanCount );
+      if( chan_desc.contains("Interf.") )
+	{
+	  sb_begin            ->setMinimum( scanCount_int );
+	  sb_end              ->setMaximum( scanCount_int );
+	}
+
+	  
       QString stchan      =  QString::number( ii ) + ": ";
       le_chan_desc        -> setObjectName( stchan + "desc" );
       sb_begin            -> setObjectName( stchan + "begin" );

@@ -1963,7 +1963,7 @@ void US_AnaprofPanGen::set_scan_ranges()
     qDebug() << "scan_beg, scan_end -- " << currProf->scan_excl_begin[i] << currProf->scan_excl_end[i];
   
   //scanExclGui = new US_ScanExclGui( currProf->chndescs, excl_scan_beg, excl_scan_end );
-  scanExclGui = new US_ScanExclGui( currProf->chndescs, currProf->scan_excl_begin, currProf->scan_excl_end );
+  scanExclGui = new US_ScanExclGui( currProf->chndescs, currProf->scan_excl_begin, currProf->scan_excl_end, mainw->scanCount, mainw->scanCount_int );
   scanExclGui->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
   scanExclGui->setWindowModality(Qt::ApplicationModal);
   

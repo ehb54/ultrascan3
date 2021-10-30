@@ -13,7 +13,7 @@ class US_GUI_EXTERN US_ScanExclGui: public US_Widgets
 
   public:
 
-      US_ScanExclGui( QStringList, QList< int > , QList< int >  );
+      US_ScanExclGui( QStringList, QList< int > , QList< int >, int, int  );
       ~US_ScanExclGui() {};
 
    signals:
@@ -24,6 +24,9 @@ class US_GUI_EXTERN US_ScanExclGui: public US_Widgets
       QStringList channels_desc;
       QList < int >  scan_beg;
       QList < int >  scan_end;
+      int scanCount;
+      int scanCount_int;
+      
       
       int row;
       QVBoxLayout* main;
