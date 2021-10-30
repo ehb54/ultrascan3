@@ -84,6 +84,9 @@ class US_Edit : public US_Widgets
       double             range_right;
       double             baseline;
 
+      int                scanExcl_begin_ind;
+      int                scanExcl_end_ind;
+
       double             baseline_od;
       
       double             invert;
@@ -94,6 +97,7 @@ class US_Edit : public US_Widgets
 
       QStringList        triple_info;
       QMap< QString, QStringList> editProfile;
+      QMap< QString, QStringList> editProfile_scans_excl;
 
       QStringList        centparms_info;
       QMap< int, QStringList>  centerpieceParameters;
@@ -104,6 +108,7 @@ class US_Edit : public US_Widgets
       QString    AProfileGUID;
       double     aprofile_volume;
       QMap <QString, QStringList>  aprof_channel_to_parms;
+      QMap <QString, QStringList>  aprof_channel_to_scans;
       QMap <int, QStringList>      aprofileParameters;
       
 

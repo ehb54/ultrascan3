@@ -2075,6 +2075,7 @@ void US_Edit::process_optics_auto( )
 {
   all_loaded = false;
   editProfile.clear();
+  editProfile_scans_excl.clear();
   centerpieceParameters.clear();
   aprofileParameters.clear();
   iwavl_edit_ref.clear();
@@ -2707,6 +2708,14 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
      {
        QString triple_name = cb_triple->itemText( trx );
 
+       //Alternative chname:
+       QStringList triple_name_list_ = cb_triple->itemText( trx ).split("/");
+       QString triple_cell_number_   = triple_name_list_[0].trimmed();
+       QString triple_channel_       = triple_name_list_[1].trimmed();
+       QString channelname_        = triple_cell_number_ + triple_channel_;
+       qDebug() << "channelname_: " << channelname_ ;
+       
+
        le_status->setText( tr( "Setting edit controls for channel %1" ).arg( triple_name ) );
        qApp->processEvents();
 
@@ -2834,7 +2843,21 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 	   
 	   //ALEXEY: get all cb_triple listbox items (texts)...
 	   editProfile[ triple_name ] = triple_info;
-	   
+
+
+	   //Fill out editProfile_scans_excl MAP:
+	   QMap<QString, QStringList>::const_iterator ci = aprof_channel_to_scans.constBegin();
+	   while (ci != aprof_channel_to_scans.constEnd())
+	     {
+	       if ( channelname_.contains(ci.key()) )
+		 {
+		   qDebug() << "Channel, AProfile SCANSS: " << channelname_ << ", " << ci.key() << ": " << ci.value();
+		   editProfile_scans_excl[ triple_name ] = ci.value();
+		   break;
+		 }
+	       ++ci;
+	     }
+	   	   
 	   qDebug() << triple_name  << ", " << triple_info;
 	   
 	 }
@@ -2919,7 +2942,20 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 	   
 	   //ALEXEY: get all cb_triple listbox items (texts)...
 	   editProfile[ triple_name ] = triple_info;
-	   
+
+	   //Fill out editProfile_scans_excl MAP:
+	   QMap<QString, QStringList>::const_iterator ci = aprof_channel_to_scans.constBegin();
+	   while (ci != aprof_channel_to_scans.constEnd())
+	     {
+	       if ( channelname_.contains(ci.key()) )
+		 {
+		   qDebug() << "Channel, AProfile SCANSS: " << channelname_ << ", " << ci.key() << ": " << ci.value();
+		   editProfile_scans_excl[ triple_name ] = ci.value();
+		   break;
+		 }
+	       ++ci;
+	     }
+
 	   qDebug() << triple_name  << ", " << triple_info;
 	 }
      }
@@ -2961,6 +2997,7 @@ void US_Edit::reset_editdata_panel( void )
 void US_Edit::read_aprofile_data_from_aprofile()
 {
   aprof_channel_to_parms.clear();
+  aprof_channel_to_scans.clear();
 
   QString aprofile_xml;
   
@@ -3211,6 +3248,18 @@ bool US_Edit::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
 		  {
 		    QString channel_desc = attr.value( "chandesc" ).toString();
 		    triples_skip_analysis[ channel_desc ] = attr.value( "wvl_not_run" ).toString();
+		  }
+
+		//Read scan exclusion information:
+		if ( attr.hasAttribute("scan_excl_begin") )
+		  {
+		    QStringList scan_excl_pairs;
+		    scan_excl_pairs << attr.value( "scan_excl_begin" ).toString()
+				    << attr.value( "scan_excl_end" )  .toString();
+		    
+		    qDebug() << "READING aprof XML, scans excl.: " << channel_name << ", " << scan_excl_pairs;
+		    
+		    aprof_channel_to_scans[ channel_name ] = scan_excl_pairs;
 		  }
 	      }
 	  }
@@ -8824,7 +8873,10 @@ void US_Edit::write_triple_auto( int trx )
 
    le_status->setText( tr( "Saving edit profile for channel %1" ).arg( triple_name ) );
    qApp->processEvents();
-      
+
+   scanExcl_begin_ind = editProfile_scans_excl[ triple_name ][0].toInt();
+   scanExcl_end_ind   = editProfile_scans_excl[ triple_name ][1].toInt();
+   
    meniscus      = editProfile[ triple_name ][0].toDouble();
    range_left    = editProfile[ triple_name ][1].toDouble();
    range_right   = editProfile[ triple_name ][2].toDouble();
@@ -10396,7 +10448,10 @@ void US_Edit::write_mwl_auto( int trx )
 
    le_status->setText( tr( "Saving edit profile for channel %1" ).arg( triple_name ) );
    qApp->processEvents();
-     
+
+   scanExcl_begin_ind = editProfile_scans_excl[ triple_name ][0].toInt();
+   scanExcl_end_ind   = editProfile_scans_excl[ triple_name ][1].toInt();
+   
    meniscus      = editProfile[ triple_name ][0].toDouble();
    range_left    = editProfile[ triple_name ][1].toDouble();
    range_right   = editProfile[ triple_name ][2].toDouble();
@@ -10841,22 +10896,46 @@ DbgLv(1) << "EDT:WrXml:  waveln" << waveln;
    xml.writeAttribute   ( "wavelength", waveln  );
 
    // Write excluded scans
-   if ( data.scanData.size() > includes.size() )
-   {
-      xml.writeStartElement( "excludes" );
-
-      for ( int ii = 0; ii < data.scanData.size(); ii++ )
-      {
-         if ( ! includes.contains( ii ) )
-         {
-            xml.writeStartElement( "exclude" );
-            xml.writeAttribute   ( "scan", QString::number( ii ) );
-            xml.writeEndElement  ();
-         }
-      }
-
-      xml.writeEndElement  ();  // excludes
-   }
+   if ( us_edit_auto_mode )  //<-- write excluded scans (beg|end) based on AProfile
+     {
+        xml.writeStartElement( "excludes" );
+	
+	//beginning of the scan set
+	for ( int ii = 0; ii < scanExcl_begin_ind; ii++ )
+	  {
+	    xml.writeStartElement( "exclude" );
+	    xml.writeAttribute   ( "scan", QString::number( ii ) );
+	    xml.writeEndElement  ();
+	  }
+	//end of the scan set
+       	for ( int ii = data.scanData.size() - scanExcl_begin_ind; ii < data.scanData.size(); ii++ )
+	  {
+	    xml.writeStartElement( "exclude" );
+	    xml.writeAttribute   ( "scan", QString::number( ii ) );
+	    xml.writeEndElement  ();
+	  }	
+	
+	xml.writeEndElement  ();  // excludes
+     }
+   else
+     {
+       if ( data.scanData.size() > includes.size() )
+	 {
+	   xml.writeStartElement( "excludes" );
+	   
+	   for ( int ii = 0; ii < data.scanData.size(); ii++ )
+	     {
+	       if ( ! includes.contains( ii ) )
+		 {
+		   xml.writeStartElement( "exclude" );
+		   xml.writeAttribute   ( "scan", QString::number( ii ) );
+		   xml.writeEndElement  ();
+		 }
+	     }
+	 
+	   xml.writeEndElement  ();  // excludes
+	 }
+     }
 
    // Write edits
    if ( ! changed_points.isEmpty() )
