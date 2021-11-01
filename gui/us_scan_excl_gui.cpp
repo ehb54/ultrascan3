@@ -123,17 +123,21 @@ void US_ScanExclGui::build_layout ( void )
       sb_end              = us_spinbox();
       // sb_begin            ->setValue( (int)*scan_beg[ii] );
       // sb_end              ->setValue( (int)*scan_end[ii] );
-      sb_begin            ->setValue( (int)scan_beg[ii] );
-      sb_end              ->setValue( (int)scan_end[ii] );
 
       //set Maximum values based on type of Optics
       sb_begin            ->setMaximum( scanCount );
       sb_end              ->setMaximum( scanCount );
+	
       if( chan_desc.contains("Interf.") )
 	{
 	  sb_begin            ->setMaximum( scanCount_int );
 	  sb_end              ->setMaximum( scanCount_int );
 	}
+
+      qDebug() << "Maximum range: sb_begin -- " << sb_begin->maximum();
+      
+      sb_begin            ->setValue( (int)scan_beg[ii] );
+      sb_end              ->setValue( (int)scan_end[ii] );
 
 	  
       QString stchan      =  QString::number( ii ) + ": ";
