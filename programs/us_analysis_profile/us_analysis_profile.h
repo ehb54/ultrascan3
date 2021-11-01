@@ -116,6 +116,7 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       QList< QPushButton * > pb_reports;
       QList< QCheckBox* >    ck_mwv;
       QList< QScrollArea* >  gr_mwvbox;
+      QList< QSpinBox* >     sb_repl_groups;
 
       //QMap< QString, US_ReportGMP > internal_reports; 
       //ALEXEY_NEW_REPORT:

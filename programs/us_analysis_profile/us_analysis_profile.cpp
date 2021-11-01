@@ -1053,6 +1053,7 @@ DbgLv(1) << "APGe: bgL:    scrollArea children count ZERO";
    ck_runs       .clear();
    ck_report_runs.clear();
    pb_reports    .clear();
+   sb_repl_groups.clear();
    //internal_reports.clear();
 
    // Start building main layout
@@ -1099,6 +1100,8 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
    QLabel* lb_runreport  = us_label( tr( "Run\nReport" ) );
    
    QLabel* lb_report  = us_label( tr( "Report" ) );
+
+   QLabel* lb_repl_group  = us_label( tr( "Replicate\nGroup" ) );
    
    QLabel* lb_mwvprefs    = us_label( tr( "MWL\nPrefs." ) );
            pb_applya = us_pushbutton( tr( "Apply to All" ) );
@@ -1137,7 +1140,10 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
    genL->addWidget( lb_channelana, row,  8, 2, 1 );
    genL->addWidget( lb_runreport, row,  9, 2, 1 );
    genL->addWidget( lb_report, row,  10, 2, 1 );
-   genL->addWidget( lb_mwvprefs,   row++,11, 2, 1 ); row++;
+   
+   genL->addWidget( lb_repl_group, row,  11, 2, 1 );
+   
+   genL->addWidget( lb_mwvprefs,   row++,12, 2, 1 ); row++;
    genL->setRowStretch( 0, 0 );
    genL->setRowStretch( 1, 0 );
 
@@ -1147,7 +1153,7 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
    QCheckBox*     ck_reportrun;
    QPushButton*   pb_reportprefs;
    QCheckBox*     ck_mwvprefs;
-
+   QSpinBox*      sb_repl_group;
 
    // Clear the right layout from QGroupboxes
    qDebug() << "Right.count(), gr_mwvbox.size() BEFORE deletion -- " << right->count() << gr_mwvbox.size();
@@ -1253,13 +1259,25 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
 
       pb_reports << pb_reportprefs;
       //End of Report
+
+      //Replicate Groups
+      sb_repl_group  = us_spinbox();
+      sb_repl_group->setObjectName( strow + ": Replicate --chann_name--" + schan );
+      sb_repl_group ->setMaximum( nchn );
+      genL->addWidget( sb_repl_group,  row,  11, 1, 1, Qt::AlignHCenter );
+      // connect( sb_repl_group, SIGNAL( clicked     ( ) ),
+      //          this,        SLOT  ( setReplicate( ) ) );
+
+      sb_repl_groups << sb_repl_group;
+      
+      //End Repl.groups
       
       //MWL prefs
       ck_mwvprefs = new QCheckBox( tr(""), this );
       ck_mwvprefs ->setAutoFillBackground( true );
       ck_mwvprefs ->setChecked( false );
       ck_mwvprefs ->setObjectName( strow + ": MWV" );
-      genL->addWidget( ck_mwvprefs,  row,  11, 1, 1, Qt::AlignHCenter );
+      genL->addWidget( ck_mwvprefs,  row,  12, 1, 1, Qt::AlignHCenter );
       connect( ck_mwvprefs, SIGNAL( toggled     ( bool ) ),
                this,        SLOT  ( mwvChecked( bool ) ) );
 
@@ -1268,7 +1286,7 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       
       if ( ii == 0 )
       {
-         genL->addWidget( pb_applya, row++, 12, 1, 2 );
+         genL->addWidget( pb_applya, row++, 13, 1, 2 );
          connect( pb_applya, SIGNAL( clicked       ( ) ),
                   this,      SLOT(   applied_to_all( ) ) );
       }
@@ -1648,6 +1666,10 @@ void US_AnaprofPanGen::reportRunChecked( bool checked )
     
   QString report_oname = QString::number( irow ) + ": Report";
   qDebug() << "report_oname -- " << report_oname;
+
+  QString replicate_oname = QString::number( irow ) + ": Replicate";
+  qDebug() << "replicate_oname -- " << replicate_oname;
+ 
   
   //if not checked, disable Report btn && otherwise:
    if ( !checked )
@@ -1661,6 +1683,15 @@ void US_AnaprofPanGen::reportRunChecked( bool checked )
 	       break;
 	     }
 	 }
+       //Replicate
+       for ( int i=0; i < sb_repl_groups.size(); ++i )
+	 {
+	   if ( sb_repl_groups[ i ]->objectName().contains( replicate_oname ) )
+	     {
+	       sb_repl_groups[ i ] -> setEnabled( false );
+	       break;
+	     }
+	 }
      }
    else
      {
@@ -1670,6 +1701,15 @@ void US_AnaprofPanGen::reportRunChecked( bool checked )
 	   if ( pb_reports[ i ]->objectName().contains( report_oname ) )
 	     {
 	       pb_reports[ i ] -> setEnabled( true );
+	       break;
+	     }
+	 }
+       //Replicate
+       for ( int i=0; i < sb_repl_groups.size(); ++i )
+	 {
+	   if ( sb_repl_groups[ i ]->objectName().contains( replicate_oname ) )
+	     {
+	       sb_repl_groups[ i ] -> setEnabled( true );
 	       break;
 	     }
 	 }
@@ -1695,7 +1735,9 @@ void US_AnaprofPanGen::runChecked( bool checked )
    QString run_report_oname = QString::number( irow ) + ": RunReport";
    qDebug() << "run_report_oname -- " << run_report_oname;
    
-
+   QString replicate_oname = QString::number( irow ) + ": Replicate";
+   qDebug() << "replicate_oname -- " << replicate_oname;
+   
    //if not checked, disable Report btn && MWV checkbox, and otherwise:
    if ( !checked )
      {
@@ -1710,7 +1752,8 @@ void US_AnaprofPanGen::runChecked( bool checked )
 	       break;
 	     }
 	 }
-       
+
+              
        // //Report: No need for Report btn since it's bound now to Run Report checkbox...
        // for ( int i=0; i < pb_reports.size(); ++i )
        // 	 {
@@ -1721,6 +1764,17 @@ void US_AnaprofPanGen::runChecked( bool checked )
        // 	     }
        // 	 }
        
+
+       //Replicates
+       for ( int i=0; i < sb_repl_groups.size(); ++i )
+	 {
+	   if ( sb_repl_groups[ i ]->objectName().contains( replicate_oname ) )
+	     {
+	       sb_repl_groups[ i ] -> setEnabled( false );
+	       break;
+	     }
+	 }
+
        
        //MWV
        for ( int i=0; i<ck_mwv.size(); ++i )
@@ -1752,6 +1806,16 @@ void US_AnaprofPanGen::runChecked( bool checked )
        // 	   if ( pb_reports[ i ]->objectName().contains( report_oname ) )
        // 	     {
        // 	       pb_reports[ i ] -> setEnabled( true );
+       // 	       break;
+       // 	     }
+       // 	 }
+
+       // //Replicates: No need for Report btn since it's bound now to Run Report checkbox...
+       // for ( int i=0; i < sb_repl_groups.size(); ++i )
+       // 	 {
+       // 	   if ( sb_repl_groups[ i ]->objectName().contains( replicate_oname ) )
+       // 	     {
+       // 	       sb_repl_groups[ i ] -> setEnabled( true );
        // 	       break;
        // 	     }
        // 	 }
