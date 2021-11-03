@@ -715,6 +715,29 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 	  QList < QString > ch_wvls_reference = internal_reports[ group_channels[0] ].keys();
 	  US_ReportGMP reference_group_report = internal_reports[ group_channels[0] ] [ ch_wvls_reference[0] ];
 
+	  //What about reports for other wavelengths of the reference channel?
+	  //Do they need to be also the same to the 1st wvl ?
+	  for( int rgj = 1; rgj < ch_wvls_reference.size(); ++rgj )
+	    {
+	      US_ReportGMP *report_to_change_ref = &(internal_reports[ group_channels[0] ] [ ch_wvls_reference[ rgj ] ]);
+
+	      report_to_change_ref->tot_conc                 = reference_group_report.tot_conc;
+	      report_to_change_ref->tot_conc_tol             = reference_group_report.tot_conc_tol;
+	      
+	      report_to_change_ref->rmsd_limit               = reference_group_report.rmsd_limit;
+	      report_to_change_ref->av_intensity             = reference_group_report.av_intensity;
+	      
+	      report_to_change_ref->experiment_duration      = reference_group_report.experiment_duration;
+	      report_to_change_ref->experiment_duration_tol  = reference_group_report.experiment_duration_tol;
+	      
+	      //now, clear reportItems && fill with reference ReportGMP:
+	      report_to_change_ref->reportItems.clear();
+	      
+	      for ( int icr = 0; icr < reference_group_report.reportItems.size(); ++icr )
+		report_to_change_ref->reportItems.push_back( reference_group_report.reportItems[ icr ] );
+	    }
+
+	  //Now, modify the reports for other channels (per-triple babsis)
 	  for( int i = 1; i < group_channels.size(); ++i )
 	    {
 	      QList < QString > ch_wvls_to_change = internal_reports[ group_channels[i] ].keys();
@@ -732,7 +755,7 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 		  report_to_change->experiment_duration      = reference_group_report.experiment_duration;
 		  report_to_change->experiment_duration_tol  = reference_group_report.experiment_duration_tol;
 
-		  //now, clear rpeortItems && fill with reference ReportGMP:
+		  //now, clear rerortItems && fill with reference ReportGMP:
 		  report_to_change->reportItems.clear();
 		  
 		  for ( int ic = 0; ic < reference_group_report.reportItems.size(); ++ic )
