@@ -218,6 +218,7 @@ class US_UTIL_EXTERN US_AnaProfile
       QList< int > analysis_run;
       QList< int > report_run;
       QList< int > wvl_edit;
+      QList< int > replicates;
 
       QList< QString > wvl_not_run; 
       

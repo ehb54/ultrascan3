@@ -453,6 +453,9 @@ DbgLv(1) << "APGe: inP: 1)le_chn,lcr size" << le_channs.count() << le_lcrats.cou
 	 else
 	   ck_runs[ ii ] ->setChecked( false  );
 
+	 //Replicates
+	 sb_repl_groups[ ii ]->setValue( currProf->replicates[ kk ] );
+	 
 	 //Report run
 	 if ( currProf->report_run[ kk ] )
 	   ck_report_runs[ ii ] ->setChecked( true  );
@@ -670,8 +673,75 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 
       currProf->ch_reports.clear();
 
+      currProf->replicates.clear();
+
       // currProf->ch_report_ids.clear();
       // currProf->ch_report_guids.clear();
+
+      //ALEXEY: here -- for replicate groups -- we need to process internal_reports:
+      //1. group channel_descriptions by replicate group #, e.g. QMap< repl_group_number, QStringList ( chdesc_alt ) >;
+      //   1a. if repl_group_number == 0 (default), OR QStringList.size() == 1 : not really a group, so continue / skip;
+      //2. internal_report corresponding to QStringList[ 0 ] - is a primary ReportGMP; make it to be all other reports in a group  
+      QMap< int, QStringList > replicates_to_channdesc;
+
+      for ( int ii = 0; ii < nchan; ii++ )
+	{
+	  if ( sb_repl_groups[ ii ]->isEnabled() )
+	    {
+	      int replicate_group_number   = sb_repl_groups[ ii ]->value();
+	      QString chdesc_alt           = currProf->chndescs_alt[ ii ];
+	      replicates_to_channdesc[ replicate_group_number ] << chdesc_alt;
+	    }
+	}
+      QMap< int, QStringList >::iterator rgi;
+      for ( rgi = replicates_to_channdesc.begin(); rgi != replicates_to_channdesc.end(); ++rgi )
+	{
+	  int group_number           = rgi.key();
+	  QStringList group_channels = rgi.value();
+
+	  if( group_number == 0 || group_channels.size() == 1 )
+	    continue;
+
+	  //do copying US_ReportGMPs here:
+	  // internal_reports IS map-of-maps: QMap < chann_desc, QMap< wvl_number,  US_ReportGMP >>:
+	  // So, what do we consider the primary ReportGMP?
+	  //          -- 1st channel | 1st wavelength ?
+	  //          -- e.g.: 1st wavelength:
+	  //                   QList < QString > ch_wavelengths = internal_reports[ group_channels[0] ].keys();
+	  //          -- e.g.: US_ReportGMP primary_report = internal_reports[ group_channels[0] ] [ ch_wavelengths[0] ] ?
+	  //
+	  // WHAT if smae-group channels have different # wavelength (AKA triples ) ?
+
+	  QList < QString > ch_wvls_reference = internal_reports[ group_channels[0] ].keys();
+	  US_ReportGMP reference_group_report = internal_reports[ group_channels[0] ] [ ch_wvls_reference[0] ];
+
+	  for( int i = 1; i < group_channels.size(); ++i )
+	    {
+	      QList < QString > ch_wvls_to_change = internal_reports[ group_channels[i] ].keys();
+
+	      for( int j = 0; j < ch_wvls_to_change.size(); ++j )
+		{
+		  US_ReportGMP *report_to_change = &(internal_reports[ group_channels[i] ] [ ch_wvls_to_change[j] ]);
+
+		  report_to_change->tot_conc                 = reference_group_report.tot_conc;
+		  report_to_change->tot_conc_tol             = reference_group_report.tot_conc_tol;
+
+		  report_to_change->rmsd_limit               = reference_group_report.rmsd_limit;
+		  report_to_change->av_intensity             = reference_group_report.av_intensity;
+
+		  report_to_change->experiment_duration      = reference_group_report.experiment_duration;
+		  report_to_change->experiment_duration_tol  = reference_group_report.experiment_duration_tol;
+
+		  //now, clear rpeortItems && fill with reference ReportGMP:
+		  report_to_change->reportItems.clear();
+		  
+		  for ( int ic = 0; ic < reference_group_report.reportItems.size(); ++ic )
+		    report_to_change->reportItems.push_back( reference_group_report.reportItems[ ic ] );
+		  
+		}
+	    }
+	}
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////
       
       for ( int ii = 0; ii < nchan; ii++ )
       {
@@ -688,6 +758,10 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 	   currProf->analysis_run << 0;
 
 	 qDebug() << "APGR: SAVE: run channel analysis -- " << ii << int(ck_runs[ ii ]->isChecked());
+
+
+	 //Replicates
+	 currProf->replicates << sb_repl_groups[ ii ]->value();
 
 	 
 	 //ALEXEY: add additional field for channels' reports
@@ -716,6 +790,8 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 	 //ALEXEY: also save ReportGMP per channel
 	 QString chdesc_alt = currProf->chndescs_alt[ ii ];
 	 qDebug() << "US_AnaprofPanGen::savePanel(): chdesc_alt -- " << chdesc_alt;
+
+
 	 
 	 //ALEXEY_NEW_REPORT: will be a cycle over wvl
 	 // QMap internal_reports[ chdesc_alt ]:: keys(); --> all channel's wvls

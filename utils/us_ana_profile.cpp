@@ -31,6 +31,8 @@ US_AnaProfile::US_AnaProfile()
 
    scan_excl_begin << 0;
    scan_excl_end   << 0;
+
+   replicates  << 0;
    
    wvl_edit << 180;
       
@@ -208,6 +210,9 @@ bool US_AnaProfile::toXml( QXmlStreamWriter& xmlo )
      xmlo.writeAttribute    ( "scan_excl_begin", QString::number( scan_excl_begin[ ii ] )    );
      xmlo.writeAttribute    ( "scan_excl_end",   QString::number( scan_excl_end[ ii ] ) );
 
+     //replicates: back to index 'kk'!!!
+     xmlo.writeAttribute    ( "replicate_group", QString::number( replicates[ kk ] )    );
+     
      // xmlo.writeAttribute    ( "report_id",    QString::number( ch_report_ids[ chndescs_alt[ kk ] ]  ));
      // xmlo.writeAttribute    ( "report_guid",  ch_report_guids[ chndescs_alt[ kk ] ]  );
      
@@ -252,6 +257,8 @@ bool US_AnaProfile::fromXml( QXmlStreamReader& xmli )
 
    scan_excl_begin.clear(); 
    scan_excl_end.  clear();
+
+   replicates. clear();
    
    while( ! xmli.atEnd() )
    {
@@ -327,6 +334,12 @@ bool US_AnaProfile::fromXml( QXmlStreamReader& xmli )
 	      scan_excl_end   <<  attr.value( "scan_excl_end" )  .toString().toInt();
 	    else
 	      scan_excl_end   << 0;
+
+	    if (  attr.hasAttribute ("replicate_group") )
+	      replicates << attr.value( "replicate_group" )  .toString().toInt();
+	    else
+	      replicates << 0;
+	      
 	    
 //3-------------------------------------------------------------------------->80
             chx++;

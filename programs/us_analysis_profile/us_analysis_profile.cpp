@@ -353,7 +353,9 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
 
 	       currProf.scan_excl_begin  << currProf.scan_excl_begin[ chx ];
 	       currProf.scan_excl_end    << currProf.scan_excl_end[ chx ];
-            }
+	       
+	       currProf.replicates << currProf.replicates[ chx ];
+	    }
 DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
 	 << "dae size" << currProf.data_ends.count() << "chentr" << chentr
 	 << "currProf.analysis_run[ chx ]" << currProf.analysis_run[ chx ]
@@ -424,6 +426,8 @@ DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
 	    currProf.scan_excl_begin  << currProf.scan_excl_begin[ lch ];
 	    currProf.scan_excl_end    << currProf.scan_excl_end[ lch ];
 	    
+	    currProf.replicates << currProf.replicates[ lch ];
+	    	    
 	    DbgLv(1) << "APG: ipro:     lch" << lch << "lv_tol da_end"
 		     << currProf.lv_tolers[ lch ] << currProf.data_ends[ lch ]
 		     << "dae size" << currProf.data_ends.count()
@@ -462,6 +466,8 @@ DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
 
 	 currProf.scan_excl_begin .removeLast();
 	 currProf.scan_excl_end   .removeLast();
+
+	 currProf.replicates   .removeLast();
 	 
 	 //currProf.ch_wvls.removeLast();  //ALEXEY: needed?
       }
