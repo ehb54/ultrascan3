@@ -99,6 +99,10 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
 	   this,          SLOT  ( verify_text ( const QString& ) ) );
   connect( le_av_intensity, SIGNAL( textChanged ( const QString& ) ),
 	   this,          SLOT  ( verify_text ( const QString& ) ) );
+  connect( le_tot_conc_tol, SIGNAL( textChanged ( const QString& ) ),
+	   this,          SLOT  ( verify_text ( const QString& ) ) );
+  connect( le_duration_tol, SIGNAL( textChanged ( const QString& ) ),
+	   this,          SLOT  ( verify_text ( const QString& ) ) );  
    
   qDebug() << "Report params on load: tot_conc, conc_tol, duraiton, duration_tol -- "
 	   <<  report->tot_conc
@@ -486,7 +490,7 @@ void US_ReportGui::verify_text( const QString& text )
   QObject* sobj       = sender();      // Sender object
   QString oname       = sobj->objectName();
   
-  qDebug() << "QLineEdit oname -- " << oname;
+  qDebug() << "QLineEdit oname, text -- " << oname << text;
   QLineEdit * curr_widget = NULL;
 
   if ( oname.contains(":") )
@@ -515,6 +519,7 @@ void US_ReportGui::verify_text( const QString& text )
 	}
       else
 	{
+	  qDebug() << "Text verified!";
 	  QPalette *palette = new QPalette();
 	  palette->setColor(QPalette::Text,Qt::black);
 	  palette->setColor(QPalette::Base,Qt::white);
@@ -542,6 +547,9 @@ void US_ReportGui::verify_text( const QString& text )
 	  if ( oname.contains("tot_conc") )
 	    {
 	      int r_item_num = report->reportItems.size();
+
+	      qDebug() <<  "In Verify_text: report->reportItems.size() -- " << r_item_num;
+
 	      for ( int ii = 0; ii < r_item_num; ii++ )
 		{
 		  QString objName_integration_val      = QString::number( ii ) + QString(": intval");
@@ -585,6 +593,8 @@ void US_ReportGui::gui_to_report( void )
   report->experiment_duration = exp_dur;
 
   qDebug() << "Gui-to-report: DURATION: in seconds -- " << exp_dur;
+
+  qDebug() << "Gui-to-report: reportItems.size()  -- " << report->reportItems.size();  
 
   //ReportItems
   for ( int ii = 0; ii < report->reportItems.size(); ii++ )
@@ -758,8 +768,8 @@ void US_ReportGui::changeWvl( int ndx )
       return;
     }
   
-   //first, save all changes for current report under consideration:
-   gui_to_report();
+   //first, save all changes for current | old (if clicked pb_prev | pb_next ) triple's report under consideration:
+   gui_to_report(); 
   
    //cb_wvl->setCurrentIndex( ndx );
    QString curr_wvl    = cb_wvl ->itemText( ndx );
@@ -769,13 +779,31 @@ void US_ReportGui::changeWvl( int ndx )
    //set current report to that corresponding to the new wvl:
    this->report = report_map[ curr_wvl ];
 
+   qDebug() << "ChangeWvl: switched to new report --";
+
+   //At this point, we need to temporarily disconnect upper-portion GUi widgets from ::verify_Text()
+   // As the new layout is not built yet...
+   le_tot_conc     ->disconnect();
+   le_rmsd_limit   ->disconnect();
+   le_av_intensity ->disconnect();
+   le_tot_conc_tol ->disconnect();
+   le_duration_tol ->disconnect();
+
    //update upper portion of the Gui with the new values
    le_tot_conc     -> setText( QString::number(report->tot_conc) );
+   qDebug() << "ChangeWvl: tot_conc set --";
+   
    le_rmsd_limit   -> setText( QString::number(report->rmsd_limit) );
+   qDebug() << "ChangeWvl: rmsd_lim set --";
+   
    le_av_intensity -> setText( QString::number(report->av_intensity) );
-
+   qDebug() << "ChangeWvl: av_intensity set --";
+   
    le_tot_conc_tol -> setText( QString::number(report->tot_conc_tol) );
+   qDebug() << "ChangeWvl: tot_conc_tol set --";
+   
    le_duration_tol -> setText( QString::number(report->experiment_duration_tol) );
+   qDebug() << "ChangeWvl: duration_tol set --";
    
    QList< int > dhms_dur;
    double exp_dur = report->experiment_duration;
@@ -787,6 +815,18 @@ void US_ReportGui::changeWvl( int ndx )
 
    //re-build genL layout ( lower portion, the reportItems )
    build_report_layout( );
+
+   //Reconnect upper-portion Gui elements to ::verify_text()
+   connect( le_tot_conc,   SIGNAL( textChanged ( const QString& ) ),
+	    this,          SLOT  ( verify_text ( const QString& ) ) );
+   connect( le_rmsd_limit, SIGNAL( textChanged ( const QString& ) ),
+	    this,          SLOT  ( verify_text ( const QString& ) ) );
+   connect( le_av_intensity, SIGNAL( textChanged ( const QString& ) ),
+	    this,          SLOT  ( verify_text ( const QString& ) ) );
+   connect( le_tot_conc_tol, SIGNAL( textChanged ( const QString& ) ),
+	    this,          SLOT  ( verify_text ( const QString& ) ) );
+   connect( le_duration_tol, SIGNAL( textChanged ( const QString& ) ),
+	    this,          SLOT  ( verify_text ( const QString& ) ) );  
    
    //Next/Previous wvl btns
    if ( ndx == 0 )
@@ -851,6 +891,9 @@ void US_ReportGui::wvl_prev( void )
   pb_next_wvl ->setEnabled( true );
   int row = cb_wvl->currentIndex() - 1;
 
+  qDebug() << "Row: PREV clicked -- " << row;
+
+    
   if ( row  >= 0 )
     {
       cb_wvl->setCurrentIndex( row );
