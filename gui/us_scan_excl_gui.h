@@ -27,6 +27,7 @@ class US_GUI_EXTERN US_ScanExclGui: public US_Widgets
       int scanCount;
       int scanCount_int;
       
+      QMap< QString, int > maxScans_map;
       
       int row;
       QVBoxLayout* main;
@@ -52,6 +53,7 @@ class US_GUI_EXTERN US_ScanExclGui: public US_Widgets
       void cancel_update( void );
       void update_scans_excl( void );
       void applied_to_all( void );
+      void scan_excl_changed( int );
      
    public slots:
 };

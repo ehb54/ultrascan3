@@ -88,24 +88,29 @@ void US_ScanExclGui::build_layout ( void )
     }
   //End cleaning layout
 
+  maxScans_map.clear();
+  
   genL        =  new QGridLayout();
   genL        ->setSpacing         ( 2 );
   genL        ->setContentsMargins ( 2, 2, 2, 2 );
 
   
   //add headers
-  QLabel* lb_channame       = us_label( tr( "Channel Description" ) );
-  QLabel* lb_begin          = us_label( tr( "Number of scans at\nthe beginning of run:" ) );
-  QLabel* lb_end            = us_label( tr( "Number of scans at\nthe end of run:" ) );
+  QLabel* lb_channame        = us_label( tr( "Channel Description" ) );
+  QLabel* lb_begin           = us_label( tr( "Number of scans at\nthe beginning of run:" ) );
+  QLabel* lb_end             = us_label( tr( "Number of scans at\nthe end of run:" ) );
+  QLabel* lb_remaining_scans = us_label( tr( "Total number of \nremaining scans:" ) );
 
-  genL->addWidget( lb_channame,    row,    0, 1, 2 );
-  genL->addWidget( lb_begin,       row,    3, 1, 2 );
-  genL->addWidget( lb_end,         row++,  5, 1, 2 );
+  genL->addWidget( lb_channame,        row,    0, 1, 2 );
+  genL->addWidget( lb_begin,           row,    3, 1, 2 );
+  genL->addWidget( lb_end,             row,    5, 1, 2 );
+  genL->addWidget( lb_remaining_scans, row++,  7, 1, 2 );
   
   
   QLineEdit*   le_chan_desc; 
   QSpinBox*    sb_begin; 
-  QSpinBox*    sb_end; 
+  QSpinBox*    sb_end;
+  QLineEdit*   le_remaining_scans; 
 
   pb_applyall = us_pushbutton( tr( "Apply to All" ) );
   
@@ -121,17 +126,28 @@ void US_ScanExclGui::build_layout ( void )
       le_chan_desc        = us_lineedit( chan_desc,  0, true  );
       sb_begin            = us_spinbox();
       sb_end              = us_spinbox();
+      
+      
       // sb_begin            ->setValue( (int)*scan_beg[ii] );
       // sb_end              ->setValue( (int)*scan_end[ii] );
 
       //set Maximum values based on type of Optics
       sb_begin            ->setMaximum( scanCount );
       sb_end              ->setMaximum( scanCount );
-	
+
+      //Calculate #remaining scans for a channel/triple
+      int remaining_scans_num;
+      QString max_scanCount;
+      remaining_scans_num = scanCount - ( scan_beg[ii] + scan_end[ii] );
+      maxScans_map[ QString::number( ii ) ]  = scanCount ;
+
       if( chan_desc.contains("Interf.") )
 	{
 	  sb_begin            ->setMaximum( scanCount_int );
 	  sb_end              ->setMaximum( scanCount_int );
+
+	  remaining_scans_num = scanCount_int - ( scan_beg[ii] + scan_end[ii] );
+	  maxScans_map[ QString::number( ii ) ] = scanCount_int;
 	}
 
       qDebug() << "Maximum range: sb_begin -- " << sb_begin->maximum();
@@ -139,19 +155,27 @@ void US_ScanExclGui::build_layout ( void )
       sb_begin            ->setValue( (int)scan_beg[ii] );
       sb_end              ->setValue( (int)scan_end[ii] );
 
+      
+      le_remaining_scans  = us_lineedit( QString::number( remaining_scans_num ),  0, true  );
 	  
       QString stchan      =  QString::number( ii ) + ": ";
       le_chan_desc        -> setObjectName( stchan + "desc" );
       sb_begin            -> setObjectName( stchan + "begin" );
       sb_end              -> setObjectName( stchan + "end" );
-
+      le_remaining_scans  -> setObjectName( stchan + "remain" );
 
       // if ( !chan_desc.contains("B:Interf.") )
       // 	{
-      genL->addWidget( le_chan_desc,   row,    0, 1, 2 );
-      genL->addWidget( sb_begin,       row,    3, 1, 2 );
-      genL->addWidget( sb_end,         row,    5, 1, 2 );
+      genL->addWidget( le_chan_desc,         row,    0, 1, 2 );
+      genL->addWidget( sb_begin,             row,    3, 1, 2 );
+      genL->addWidget( sb_end,               row,    5, 1, 2 );
+      genL->addWidget( le_remaining_scans,   row,    7, 1, 2 );
       // }
+
+      connect( sb_begin,   SIGNAL( valueChanged ( int ) ),
+	       this,       SLOT  ( scan_excl_changed ( int ) ) );
+      connect( sb_end,     SIGNAL( valueChanged ( int ) ),
+	       this,       SLOT  ( scan_excl_changed ( int ) ) );
       
       QFont font   = le_chan_desc->property("font").value<QFont>();
       QFontMetrics fm(font);
@@ -161,7 +185,7 @@ void US_ScanExclGui::build_layout ( void )
       
       if ( ii == 0 )
 	{
-	  genL->addWidget( pb_applyall, row++, 7, 1, 2 );
+	  genL->addWidget( pb_applyall, row++, 9, 1, 2 );
 	  connect( pb_applyall, SIGNAL( clicked       ( ) ),
 		   this,        SLOT(   applied_to_all( ) ) );
 	}
@@ -173,6 +197,7 @@ void US_ScanExclGui::build_layout ( void )
 	  le_chan_desc->hide();
 	  sb_begin    ->hide();
 	  sb_end      ->hide();
+	  le_remaining_scans ->hide();
 	}
     }
 
@@ -220,6 +245,48 @@ void US_ScanExclGui::build_layout ( void )
   setMinimumSize( 850, 450 );
 
 }
+
+//Slot to update scan excl. counters
+void US_ScanExclGui::scan_excl_changed( int )
+{
+  QObject* sobj       = sender();      
+  QString oname       = sobj->objectName();
+
+  bool isBegin        = false;
+  QSpinBox * sb_widget_counterpart = NULL;
+  QString objName_for_sb_widget_counterpart;
+  
+  QSpinBox * sb_widget = containerWidget->findChild<QSpinBox *>( oname );
+  QString item_row = oname.split(":")[0] + QString(": ");
+  QString row_num  = oname.split(":")[0];
+  
+  if ( oname.contains(": begin") )
+    {
+      isBegin = true;
+      objName_for_sb_widget_counterpart = item_row + "end";
+      sb_widget_counterpart = containerWidget->findChild<QSpinBox *>( objName_for_sb_widget_counterpart );
+    }
+  else
+    {
+      objName_for_sb_widget_counterpart = item_row + "begin";
+      sb_widget_counterpart = containerWidget->findChild<QSpinBox *>( objName_for_sb_widget_counterpart );
+    }
+  
+  qDebug() << "Clicked couner:        oname, value -- "
+	   << oname
+	   << sb_widget->value();
+  qDebug() << "Counterpart's widget:  oname, value -- "
+	   << objName_for_sb_widget_counterpart
+	   << sb_widget_counterpart->value();
+
+  //set # of remaining scans for the channel
+  QString objName_for_le_remainScans = item_row + "remain";
+  QLineEdit* le_remainScans = containerWidget->findChild<QLineEdit *>( objName_for_le_remainScans );
+  int rem_scans_num = maxScans_map[ row_num ] - ( sb_widget->value() + sb_widget_counterpart->value() );
+
+  le_remainScans ->setText( QString::number( rem_scans_num ));
+}
+
 
 //Apply to all channels
 void US_ScanExclGui::applied_to_all( void )
