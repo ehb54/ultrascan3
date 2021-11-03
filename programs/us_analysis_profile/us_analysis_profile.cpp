@@ -178,12 +178,14 @@ void US_AnalysisProfileGui::inherit_protocol( US_RunProtocol* iProto )
    int ncho        = iProto->rpOptic.chopts.count();
 
    //ALEXEY: pass scanCount && scanCount_global from protocol
-   scanCount     = iProto->scanCount;
-   scanCount_int = iProto->scanCount_int;
+   // scanCount     = iProto->scanCount;
+   // scanCount_int = iProto->scanCount_int;
+   scanCount     = iProto->rpSpeed.ssteps[ 0 ].scancount;
+   scanCount_int = iProto->rpSpeed.ssteps[ 0 ].scancount_int;
 
    qDebug() << "In inherit: ScanCounts : "
-	    << scanCount
-	    << scanCount_int
+	    << iProto->scanCount
+	    << iProto->scanCount_int
 	    << iProto->rpSpeed.ssteps[ 0 ].scancount
 	    << iProto->rpSpeed.ssteps[ 0 ].scancount_int;
    
