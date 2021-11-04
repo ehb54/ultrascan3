@@ -206,10 +206,15 @@ bool US_AnaProfile::toXml( QXmlStreamWriter& xmlo )
      xmlo.writeAttribute    ( "report_id",   reportIDs_string   );
      xmlo.writeAttribute    ( "report_guid", reportGUIDs_string );
 
-     //scan exclusions: ATTENTION -- use ii index, NOT kk!!!
-     xmlo.writeAttribute    ( "scan_excl_begin", QString::number( scan_excl_begin[ ii ] )    );
-     xmlo.writeAttribute    ( "scan_excl_end",   QString::number( scan_excl_end[ ii ] ) );
+     // //scan exclusions: ATTENTION -- use ii index, NOT kk!!!
+     // xmlo.writeAttribute    ( "scan_excl_begin", QString::number( scan_excl_begin[ ii ] )    );
+     // xmlo.writeAttribute    ( "scan_excl_end",   QString::number( scan_excl_end[ ii ] ) );
 
+     //scan exclusions: ATTENTION -- Now use kk index, as for all other attributes
+     xmlo.writeAttribute    ( "scan_excl_begin", QString::number( scan_excl_begin[ kk ] )    );
+     xmlo.writeAttribute    ( "scan_excl_end",   QString::number( scan_excl_end[ kk ] ) );
+
+     
      //replicates: back to index 'kk'!!!
      xmlo.writeAttribute    ( "replicate_group", QString::number( replicates[ kk ] )    );
      
