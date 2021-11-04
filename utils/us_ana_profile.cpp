@@ -33,6 +33,8 @@ US_AnaProfile::US_AnaProfile()
    scan_excl_end   << 0;
 
    replicates  << 0;
+
+   replicates_to_channdesc_main.clear();
    
    wvl_edit << 180;
       

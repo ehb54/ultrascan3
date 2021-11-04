@@ -219,6 +219,7 @@ class US_UTIL_EXTERN US_AnaProfile
       QList< int > report_run;
       QList< int > wvl_edit;
       QList< int > replicates;
+      QMap < int, QStringList > replicates_to_channdesc_main;
 
       QList< QString > wvl_not_run; 
       

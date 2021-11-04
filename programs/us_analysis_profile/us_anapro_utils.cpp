@@ -675,6 +675,8 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 
       currProf->replicates.clear();
 
+      currProf->replicates_to_channdesc_main.clear();
+
       // currProf->ch_report_ids.clear();
       // currProf->ch_report_guids.clear();
 
@@ -691,6 +693,8 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 	      int replicate_group_number   = sb_repl_groups[ ii ]->value();
 	      QString chdesc_alt           = currProf->chndescs_alt[ ii ];
 	      replicates_to_channdesc[ replicate_group_number ] << chdesc_alt;
+
+	      currProf->replicates_to_channdesc_main [ replicate_group_number ] << chdesc_alt;
 	    }
 	}
       QMap< int, QStringList >::iterator rgi;
@@ -1189,11 +1193,57 @@ DbgLv(1) << "AP2d:svP: nparm" << nparm << "cchx" << cchx;
 	 }
      }
 
-  
+   DbgLv(1) << "AP2d:svP:   runs:"
+	    << ap2DSA->job1run << ap2DSA->job2run << ap2DSA->job3run
+	    << ap2DSA->job4run << ap2DSA->job5run;
+
+   //ALEXEY: here, process replicate groups defined in Gen tab:
+   //1. Identify primary channel & its parameters;
+   //2. Copy (replace) other's replicate group channel's parms with these reference parameters
+
+   US_AnaProfile* currProf  = &mainw->currProf;
+   QMap < int, QStringList > replicates_to_channdesc = currProf->replicates_to_channdesc_main;
    
-DbgLv(1) << "AP2d:svP:   runs:"
- << ap2DSA->job1run << ap2DSA->job2run << ap2DSA->job3run
- << ap2DSA->job4run << ap2DSA->job5run;
+   QMap< int, QStringList >::iterator rgi;
+   for ( rgi = replicates_to_channdesc.begin(); rgi != replicates_to_channdesc.end(); ++rgi )
+     {
+       int group_number           = rgi.key();
+       QStringList group_channels = rgi.value();
+
+       qDebug() << "In 2DSA's savePanel(): repl. number, channels -- "
+		<< group_number << group_channels;
+       
+       if( group_number == 0 || group_channels.size() == 1 )
+	    continue;
+
+       //identify reference 2DSA parms:
+       US_AnaProfile::AnaProf2DSA::Parm2DSA reference_2dsa_parms;
+       for ( int i = 0; i < nparm; ++i  )
+	 {
+	   QString chan_name  = ap2DSA->parms.at( i ).channel;
+	   if ( chan_name == group_channels[0] )
+	     {
+	       reference_2dsa_parms = ap2DSA->parms.at( i );
+	       break;
+	     }
+	 }
+       //now apply ref_parms's parameters to other channels' 2DSA settings:
+       qDebug() << "Reference 2DSA parms for channel " << group_channels[0] << reference_2dsa_parms.channel;
+       for( int ii = 1; ii < group_channels.size(); ++ii )
+	 {
+	   for ( int jj = 0; jj < nparm; ++jj  )
+	     {
+	       QString chan_name  = ap2DSA->parms.at( jj ).channel;
+	       if ( chan_name == group_channels[ ii ] )
+		 {
+		   ap2DSA->parms.replace( jj, reference_2dsa_parms );
+		   //restore channel name:
+		   ap2DSA->parms[ jj ].channel = chan_name;
+		 }
+	     }
+	 }
+     }
+   //END of replicates processing for 2DSA
 }
 
 // Get a specific panel value
@@ -1433,12 +1483,62 @@ void US_AnaprofPanPCSA::savePanel()
    int nparm          = apPCSA ->parms.count();
    apPCSA->job_run    = !ck_nopcsa->isChecked();
    apPCSA->nchan      = nparm;
-DbgLv(1) << "APpc:svP: nparm" << nparm << "cchx" << cchx
- << "  job_run" << apPCSA->job_run;
 
+   DbgLv(1) << "APpc:svP: nparm" << nparm << "cchx" << cchx
+	    << "  job_run" << apPCSA->job_run;
+   
    gui_to_parms( cchx );
-DbgLv(1) << "APpc:svP:   gui_to_parms complete   cchx" << cchx;
 
+   DbgLv(1) << "APpc:svP:   gui_to_parms complete   cchx" << cchx;
+
+ 
+   //ALEXEY: here, process replicate groups defined in Gen tab:
+   //1. Identify primary channel & its parameters;
+   //2. Copy (replace) other's replicate group channel's parms with these reference parameters
+
+   US_AnaProfile* currProf  = &mainw->currProf;
+   QMap < int, QStringList > replicates_to_channdesc = currProf->replicates_to_channdesc_main;
+   
+   QMap< int, QStringList >::iterator rgi;
+   for ( rgi = replicates_to_channdesc.begin(); rgi != replicates_to_channdesc.end(); ++rgi )
+     {
+       int group_number           = rgi.key();
+       QStringList group_channels = rgi.value();
+
+       qDebug() << "In PCSA's savePanel(): repl. number, channels -- "
+		<< group_number << group_channels;
+       
+       if( group_number == 0 || group_channels.size() == 1 )
+	    continue;
+
+       //identify reference PCSA parms:
+       US_AnaProfile::AnaProfPCSA::ParmPCSA reference_pcsa_parms;
+       for ( int i = 0; i < nparm; ++i  )
+	 {
+	   QString chan_name  = apPCSA->parms.at( i ).channel;
+	   if ( chan_name == group_channels[0] )
+	     {
+	       reference_pcsa_parms = apPCSA->parms.at( i );
+	       break;
+	     }
+	 }
+       //now apply ref_parms's parameters to other channels' PCSA settings:
+       qDebug() << "Reference PCSA parms for channel " << group_channels[0] << reference_pcsa_parms.channel;
+       for( int ii = 1; ii < group_channels.size(); ++ii )
+	 {
+	   for ( int jj = 0; jj < nparm; ++jj  )
+	     {
+	       QString chan_name  = apPCSA->parms.at( jj ).channel;
+	       if ( chan_name == group_channels[ ii ] )
+		 {
+		   apPCSA->parms.replace( jj, reference_pcsa_parms );
+		   //restore channel name:
+		   apPCSA->parms[ jj ].channel = chan_name;
+		 }
+	     }
+	 }
+     }
+   //END of replicates processing for PCSA
 }
 
 // Get a specific panel value
