@@ -327,6 +327,19 @@ DbgLv(1) << "APG: ipro:    o.jj" << jj << "chentr" << chentr;
 		currProf.ch_reports[ chentr_wvls ][ c_wvl ] = currProf.ch_reports[ currProf.chndescs_alt[ nchn ] ][ c_wvl ];
 		currProf.ch_reports[ chentr_wvls ][ c_wvl ].channel_name = chentr_wvls;
 
+		//set different default params for Interf. reportGMP
+		if ( chentr_wvls.contains("Interf.") )
+		  {
+		    if ( currProf.ch_reports[ chentr_wvls ][ c_wvl ].DBread || currProf.ch_reports[ chentr_wvls ][ c_wvl ].interf_report_changed )
+		      {
+		      }
+		    else
+		      {
+			currProf.ch_reports[ chentr_wvls ][ c_wvl ].tot_conc = 3.0;
+			currProf.ch_reports[ chentr_wvls ][ c_wvl ].reportItems.clear();
+		      }
+		  }
+
 		double tot_time_exp = iProto->rpSpeed.ssteps[0].duration + iProto->rpSpeed.ssteps[0].delay_stage;
 
 		if ( currProf.ch_reports[ chentr_wvls ][ c_wvl ].DBread || currProf.ch_reports[ chentr_wvls ][ c_wvl ].exp_time_changed )
@@ -399,6 +412,20 @@ DbgLv(1) << "APG: ipro:     chx nchn dae" << chx << nchn
 		currProf.ch_reports[ chentr_wvls ][ c_wvl ] = currProf.ch_reports[ currProf.chndescs_alt[ nchn ] ][ c_wvl ];
 		currProf.ch_reports[ chentr_wvls ][ c_wvl ].channel_name = chentr_wvls;
 
+		//set different default params for Interf. reportGMP
+		if ( chentr_wvls.contains("Interf.") )
+		  {
+		    if ( currProf.ch_reports[ chentr_wvls ][ c_wvl ].DBread || currProf.ch_reports[ chentr_wvls ][ c_wvl ].interf_report_changed )
+		      {
+		      }
+		    else
+		      {
+			currProf.ch_reports[ chentr_wvls ][ c_wvl ].tot_conc = 3.0;
+			currProf.ch_reports[ chentr_wvls ][ c_wvl ].reportItems.clear();
+		      }
+		  }
+		
+		
 		double tot_time_exp = iProto->rpSpeed.ssteps[0].duration + iProto->rpSpeed.ssteps[0].delay_stage;
 
 		if ( currProf.ch_reports[ chentr_wvls ][ c_wvl ].DBread || currProf.ch_reports[ chentr_wvls ][ c_wvl ].exp_time_changed )
@@ -845,8 +872,9 @@ void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP* reportFromDB, int re
       initItem.integration_val  = 0.57;
       initItem.tolerance        = 10; 
       initItem.total_percent    = 0.58;
-      
-      reportFromDB->reportItems.push_back( initItem );
+
+      if ( !reportFromDB->channel_name.contains("Interf.") ) 
+	reportFromDB->reportItems.push_back( initItem );
     }
 }
 

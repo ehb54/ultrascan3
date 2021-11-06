@@ -48,6 +48,7 @@ class US_UTIL_EXTERN US_ReportGMP
       //Bool flag for changed exp. time & if read form DB
       bool exp_time_changed;
       bool DBread;
+      bool interf_report_changed;
       
       //Rest of parameters followign from protocol: not used so far
       int     scan_number;

@@ -40,5 +40,6 @@ US_ReportGMP::US_ReportGMP()
 
   exp_time_changed = false;
   DBread = false;
+  interf_report_changed = false;
 }
  

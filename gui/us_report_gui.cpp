@@ -84,6 +84,8 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
   
   le_rmsd_limit    = us_lineedit( QString::number(report->rmsd_limit),   0, false  );
   le_av_intensity  = us_lineedit( QString::number(report->av_intensity), 0, false  );
+  if ( report->channel_name.contains("Interf.") )
+    le_av_intensity->setEnabled( false );
 
   le_tot_conc      -> setObjectName( "tot_conc" );
   le_rmsd_limit    -> setObjectName( "rmsd" );
@@ -301,11 +303,10 @@ void US_ReportGui::build_report_layout( void )
   QLineEdit* le_tol;    
   QLineEdit* le_total;
     
-
   for ( int ii = 0; ii < r_item_num; ii++ )
     {
       US_ReportGMP::ReportItem curr_item = report->reportItems[ ii ];
-
+      
       //type ComboBox
       cb_type   =  us_comboBox();
       cb_type   -> clear();
@@ -313,7 +314,7 @@ void US_ReportGui::build_report_layout( void )
       //need to set index corr. to type in ReportItem
       int type_ind = cb_type->findText( curr_item.type );
       cb_type->setCurrentIndex( type_ind );
-
+      
       //method ComboBox
       cb_method = us_comboBox();      
       cb_method->clear();
@@ -321,13 +322,13 @@ void US_ReportGui::build_report_layout( void )
       //need to set index corr. to method in ReportItem
       int method_ind = cb_method->findText( curr_item.method );
       cb_method->setCurrentIndex( method_ind );
-
+      
       le_low        = us_lineedit( QString::number(curr_item.range_low),  0, false  );
       le_high       = us_lineedit( QString::number(curr_item.range_high), 0, false  );
       le_intval     = us_lineedit( QString::number(curr_item.integration_val), 0, false  );
       le_tol        = us_lineedit( QString::number(curr_item.tolerance), 0, false  );
       le_total      = us_lineedit( QString::number(curr_item.total_percent), 0, true  );
-
+      
       //set Object Name based on row number
       QString stchan      =  QString::number( ii ) + ": ";
       cb_type      -> setObjectName( stchan + "type" );
@@ -337,7 +338,7 @@ void US_ReportGui::build_report_layout( void )
       le_intval    -> setObjectName( stchan + "intval" );
       le_tol       -> setObjectName( stchan + "tol" );
       le_total     -> setObjectName( stchan + "total" );
-
+      
       //set connecitons btw textChanged() and slot
       connect( le_low, SIGNAL( textChanged ( const QString& ) ),
 	       this,   SLOT  ( verify_text ( const QString& ) ) );
@@ -359,7 +360,7 @@ void US_ReportGui::build_report_layout( void )
       genL->addWidget( le_total,  row++,  13, 1, 2 );
     }
   
-  int ihgt        = le_low->height();
+  int ihgt        = lb_low->height();
   QSpacerItem* spacer2 = new QSpacerItem( 20, 1*ihgt, QSizePolicy::Expanding);
   genL->setRowStretch( row, 1 );
   genL->addItem( spacer2,  row++,  0, 1, 1 );
@@ -396,8 +397,16 @@ void US_ReportGui::build_report_layout( void )
 
   pb_removeRow  = us_pushbutton( tr( "Remove Last Row" ) );
   connect( pb_removeRow, SIGNAL( clicked() ), this, SLOT( remove_row()  ) );
-  if (  report->reportItems.size() < 2 )
-    pb_removeRow->setEnabled( false );
+  if ( !report->channel_name.contains("Interf.") )
+    {
+      if (  report->reportItems.size() < 2   )
+	pb_removeRow->setEnabled( false );
+    }
+  else
+    {
+      if (  report->reportItems.size() < 1   )
+	pb_removeRow->setEnabled( false );
+    }
   
   addRem_buttons->addWidget( pb_removeRow, row,  11, 1, 2 );
   addRem_buttons->addWidget( pb_addRow,    row,  13, 1, 2 );
@@ -692,13 +701,27 @@ void US_ReportGui::add_row( void )
 
   //Add plain ReportItem
   US_ReportGMP::ReportItem initItem;
-  
-  initItem.type             = QString("s");
-  initItem.method           = QString("2DSA-IT");
-  initItem.range_low        = 3.2;
-  initItem.range_high       = 3.7;
-  initItem.integration_val  = 0.57;
-  initItem.tolerance        = 10;
+
+  if ( report-> channel_name . contains("Interf.") )
+    {
+      initItem.type             = QString("s");
+      initItem.method           = QString("2DSA-IT");
+      initItem.range_low        = 0;
+      initItem.range_high       = 0;
+      initItem.integration_val  = 0;
+      initItem.tolerance        = 0;
+
+      report->interf_report_changed = true;
+    }
+  else
+    {
+      initItem.type             = QString("s");
+      initItem.method           = QString("2DSA-IT");
+      initItem.range_low        = 3.2;
+      initItem.range_high       = 3.7;
+      initItem.integration_val  = 0.57;
+      initItem.tolerance        = 10;
+    }
 
   //Compute 'Fraction of Total' based on tot_conc:
   double tot_conc_val = le_tot_conc -> text().toDouble();
