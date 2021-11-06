@@ -132,8 +132,8 @@ void US_ScanExclGui::build_layout ( void )
       // sb_end              ->setValue( (int)*scan_end[ii] );
 
       //set Maximum values based on type of Optics
-      sb_begin            ->setMaximum( scanCount );
-      sb_end              ->setMaximum( scanCount );
+      sb_begin            ->setMaximum( (int)( scanCount/2 - 5));
+      sb_end              ->setMaximum( (int)( scanCount/2 - 5));
 
       //Calculate #remaining scans for a channel/triple
       int remaining_scans_num;
@@ -143,8 +143,8 @@ void US_ScanExclGui::build_layout ( void )
 
       if( chan_desc.contains("Interf.") )
 	{
-	  sb_begin            ->setMaximum( scanCount_int );
-	  sb_end              ->setMaximum( scanCount_int );
+	  sb_begin            ->setMaximum( (int)( scanCount_int/2 - 5));
+	  sb_end              ->setMaximum( (int)( scanCount_int/2 - 5));
 
 	  remaining_scans_num = scanCount_int - ( scan_beg[ii] + scan_end[ii] );
 	  maxScans_map[ QString::number( ii ) ] = scanCount_int;
