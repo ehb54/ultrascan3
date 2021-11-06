@@ -673,9 +673,9 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 
       currProf->ch_reports.clear();
 
-      currProf->replicates.clear();
-
-      currProf->replicates_to_channdesc_main.clear();
+      currProf->replicates                         .clear();
+      currProf->replicates_to_channdesc_main       .clear();
+      currProf->channdesc_to_overlapping_wvls_main .clear();
 
       // currProf->ch_report_ids.clear();
       // currProf->ch_report_guids.clear();
@@ -684,7 +684,8 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
       //1. group channel_descriptions by replicate group #, e.g. QMap< repl_group_number, QStringList ( chdesc_alt ) >;
       //   1a. if repl_group_number == 0 (default), OR QStringList.size() == 1 : not really a group, so continue / skip;
       //2. internal_report corresponding to QStringList[ 0 ] - is a primary ReportGMP; make it to be all other reports in a group  
-      QMap< int, QStringList > replicates_to_channdesc;
+      QMap< int, QStringList >     replicates_to_channdesc;
+      QMap< QString, QStringList > channdesc_to_overlapping_wvls;
 
       for ( int ii = 0; ii < nchan; ii++ )
 	{
@@ -714,61 +715,66 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 	  //                   QList < QString > ch_wavelengths = internal_reports[ group_channels[0] ].keys();
 	  //          -- e.g.: US_ReportGMP primary_report = internal_reports[ group_channels[0] ] [ ch_wavelengths[0] ] ?
 	  //
-	  // WHAT if smae-group channels have different # wavelength (AKA triples ) ?
 
-	  QList < QString > ch_wvls_reference = internal_reports[ group_channels[0] ].keys();
-	  US_ReportGMP reference_group_report = internal_reports[ group_channels[0] ] [ ch_wvls_reference[0] ];
+	  //Go over all reference reports (triple reports in the 1st channel of the replicate group): 
+	  QList < QString > reference_ch_wvls = internal_reports[ group_channels[0] ].keys();
 
-	  //What about reports for other wavelengths of the reference channel?
-	  //Do they need to be also the same to the 1st wvl ?
-	  for( int rgj = 1; rgj < ch_wvls_reference.size(); ++rgj )
+	  for( int rgj = 0; rgj < reference_ch_wvls.size(); ++rgj )
 	    {
-	      US_ReportGMP *report_to_change_ref = &(internal_reports[ group_channels[0] ] [ ch_wvls_reference[ rgj ] ]);
-
-	      report_to_change_ref->tot_conc                 = reference_group_report.tot_conc;
-	      report_to_change_ref->tot_conc_tol             = reference_group_report.tot_conc_tol;
-	      
-	      report_to_change_ref->rmsd_limit               = reference_group_report.rmsd_limit;
-	      report_to_change_ref->av_intensity             = reference_group_report.av_intensity;
-	      
-	      report_to_change_ref->experiment_duration      = reference_group_report.experiment_duration;
-	      report_to_change_ref->experiment_duration_tol  = reference_group_report.experiment_duration_tol;
-	      
-	      //now, clear reportItems && fill with reference ReportGMP:
-	      report_to_change_ref->reportItems.clear();
-	      
-	      for ( int icr = 0; icr < reference_group_report.reportItems.size(); ++icr )
-		report_to_change_ref->reportItems.push_back( reference_group_report.reportItems[ icr ] );
-	    }
-
-	  //Now, modify the reports for other channels (per-triple babsis)
-	  for( int i = 1; i < group_channels.size(); ++i )
-	    {
-	      QList < QString > ch_wvls_to_change = internal_reports[ group_channels[i] ].keys();
-
-	      for( int j = 0; j < ch_wvls_to_change.size(); ++j )
+	      US_ReportGMP reference_group_report = internal_reports[ group_channels[0] ] [ reference_ch_wvls[ rgj ] ];
+	      //Now, go over the reports for other channels in a group (per-triple babsis)
+	      for( int i = 1; i < group_channels.size(); ++i )
 		{
-		  US_ReportGMP *report_to_change = &(internal_reports[ group_channels[i] ] [ ch_wvls_to_change[j] ]);
+		  QList < QString > other_group_ch_wvls = internal_reports[ group_channels[i] ].keys();
 
-		  report_to_change->tot_conc                 = reference_group_report.tot_conc;
-		  report_to_change->tot_conc_tol             = reference_group_report.tot_conc_tol;
+		  for( int j = 0; j < other_group_ch_wvls.size(); ++j )
+		    {
+		      //If other channel's wvl is the same to the reference channel's wvl, copy Report's params
+		      if ( other_group_ch_wvls[ j ] == reference_ch_wvls[ rgj ] )
+			{
+			  //QMap of the overpalling replicate group wavelengths (all overlapping triples):
+			  QString ref_triple   = group_channels[ 0 ].split(":")[0] + "." + reference_ch_wvls[ rgj ];
+			  QString other_triple = group_channels[ i ].split(":")[0] + "." + other_group_ch_wvls[ j ];
+			  
+			  channdesc_to_overlapping_wvls[ group_channels [0] ]                << ref_triple << other_triple;
+			  currProf->channdesc_to_overlapping_wvls_main [ group_channels[0] ] << ref_triple << other_triple;
 
-		  report_to_change->rmsd_limit               = reference_group_report.rmsd_limit;
-		  report_to_change->av_intensity             = reference_group_report.av_intensity;
+			  //Modify the report with the reference one:
+			  US_ReportGMP *other_group_report_to_change = &(internal_reports[ group_channels[ i ] ] [ other_group_ch_wvls[ j ] ]);
 
-		  report_to_change->experiment_duration      = reference_group_report.experiment_duration;
-		  report_to_change->experiment_duration_tol  = reference_group_report.experiment_duration_tol;
-
-		  //now, clear rerortItems && fill with reference ReportGMP:
-		  report_to_change->reportItems.clear();
-		  
-		  for ( int ic = 0; ic < reference_group_report.reportItems.size(); ++ic )
-		    report_to_change->reportItems.push_back( reference_group_report.reportItems[ ic ] );
-		  
+			  other_group_report_to_change->tot_conc                 = reference_group_report.tot_conc;
+			  other_group_report_to_change->tot_conc_tol             = reference_group_report.tot_conc_tol;
+			  
+			  other_group_report_to_change->rmsd_limit               = reference_group_report.rmsd_limit;
+			  other_group_report_to_change->av_intensity             = reference_group_report.av_intensity;
+			  
+			  other_group_report_to_change->experiment_duration      = reference_group_report.experiment_duration;
+			  other_group_report_to_change->experiment_duration_tol  = reference_group_report.experiment_duration_tol;
+			  
+			  //now, clear rerortItems && fill with reference ReportGMP:
+			  other_group_report_to_change->reportItems.clear();
+			  
+			  for ( int ic = 0; ic < reference_group_report.reportItems.size(); ++ic )
+			    other_group_report_to_change->reportItems.push_back( reference_group_report.reportItems[ ic ] );
+			}
+		    }
 		}
 	    }
 	}
-      ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      
+      QMap< QString, QStringList >::iterator wvl_overlap;
+      for ( wvl_overlap = channdesc_to_overlapping_wvls.begin(); wvl_overlap != channdesc_to_overlapping_wvls.end(); ++wvl_overlap )
+	{
+	  wvl_overlap.value().removeDuplicates();
+	  qDebug() << "Reference Channel: " << wvl_overlap.key() << ", list of overlapping wvls: " << wvl_overlap.value();
+	}
+      //repeat duplicates removal for upper-level currPof->channdesc_to_overlapping_wvls_main:
+      for ( wvl_overlap = currProf->channdesc_to_overlapping_wvls_main.begin(); wvl_overlap != currProf->channdesc_to_overlapping_wvls_main.end(); ++wvl_overlap )
+	wvl_overlap.value().removeDuplicates();
+    
+      // END of copying reference RpeortGMP per replicate group   //////////////////////////////////////////////////////////
+
+      
       
       for ( int ii = 0; ii < nchan; ii++ )
       {

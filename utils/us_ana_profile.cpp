@@ -35,6 +35,7 @@ US_AnaProfile::US_AnaProfile()
    replicates  << 0;
 
    replicates_to_channdesc_main.clear();
+   channdesc_to_overlapping_wvls_main.clear();
    
    wvl_edit << 180;
       
@@ -216,12 +217,15 @@ bool US_AnaProfile::toXml( QXmlStreamWriter& xmlo )
      xmlo.writeAttribute    ( "scan_excl_begin", QString::number( scan_excl_begin[ kk ] )    );
      xmlo.writeAttribute    ( "scan_excl_end",   QString::number( scan_excl_end[ kk ] ) );
 
-     
-     //replicates: back to index 'kk'!!!
-     xmlo.writeAttribute    ( "replicate_group", QString::number( replicates[ kk ] )    );
-     
-     // xmlo.writeAttribute    ( "report_id",    QString::number( ch_report_ids[ chndescs_alt[ kk ] ]  ));
-     // xmlo.writeAttribute    ( "report_guid",  ch_report_guids[ chndescs_alt[ kk ] ]  );
+     xmlo.writeAttribute    ( "replicate_group",       QString::number( replicates[ kk ] )    );
+
+     //overlapping wvls:
+     QStringList repl_wvl_overlap = channdesc_to_overlapping_wvls_main [ chndescs_alt[ kk ] ];
+     if ( !repl_wvl_overlap.isEmpty() )
+       {
+	 QString repl_wvl_overlap_str = repl_wvl_overlap.join(","); 
+	 xmlo.writeAttribute    ( "replicate_wvl_overlap", repl_wvl_overlap_str  );
+       }
      
      xmlo.writeEndElement();
      // channel_parms

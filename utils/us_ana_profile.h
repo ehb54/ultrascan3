@@ -220,6 +220,7 @@ class US_UTIL_EXTERN US_AnaProfile
       QList< int > wvl_edit;
       QList< int > replicates;
       QMap < int, QStringList > replicates_to_channdesc_main;
+      QMap< QString, QStringList > channdesc_to_overlapping_wvls_main;
 
       QList< QString > wvl_not_run; 
       
