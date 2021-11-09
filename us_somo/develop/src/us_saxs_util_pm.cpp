@@ -2304,6 +2304,8 @@ bool US_Saxs_Util::run_align(
 
    bool quiet = parameters.count( "quiet" ) != 0;
 
+   bool save = parameters.count( "save" ) != 0;
+
    // get files
    QStringList from;
    QStringList to;
@@ -2364,6 +2366,33 @@ bool US_Saxs_Util::run_align(
       }
    }
 
+   // build save information if requested
+   set < QString > save_keys;
+   QString save_chainid;
+   int save_resseq_start = 0;
+   int save_resseq_end   = 0;
+   if ( save ) {
+      QStringList save_parts = parameters[ "save" ].split( ":" );
+      if ( save_parts.count() != 2 ) {
+         results[ "errors" ] += "save format must be ChainID:startresseq-endresseq\n";
+         return false;
+      }
+      QStringList save_range = save_parts[1].split( "-" );
+      if ( save_range.count() != 2 ) {
+         results[ "errors" ] += "save format must be ChainID:startresseq-endresseq\n";
+         return false;
+      }
+      save_chainid      = save_parts[0];
+      save_resseq_start = save_range[0].toInt();
+      save_resseq_end   = save_range[1].toInt();
+      if ( save_resseq_start > save_resseq_end ) {
+         results[ "errors" ] += "save startresseq is greater than endresseq\n";
+         return false;
+      }
+      TSO << QString( "save info: chain '%1', range %2-%3\n" ).arg( save_chainid ).arg( save_resseq_start ).arg( save_resseq_end );
+   }
+      
+
    // build from/to atoms map
    map < QString, tuple < double, double, double > > from_points;
    map < QString, tuple < double, double, double > > to_points;
@@ -2408,6 +2437,12 @@ bool US_Saxs_Util::run_align(
                .arg( fields[ "chainid" ] )
                .arg( fields[ "resseq" ] )
                .arg( fields[ "name" ] );
+            if ( save &&
+                 fields[ "chainid" ] == save_chainid &&
+                 fields[ "resseq" ].toInt() >= save_resseq_start &&
+                 fields[ "resseq" ].toInt() <= save_resseq_end ) {
+               save_keys.insert( key );
+            }
             if ( to_points.count( key ) ) {
                results[ "errors" ] += QString( "to file %1 has duplicate chain:resseq:atom entry %2\n" ).arg( parameters["to"] ).arg( key );
                return false;
@@ -2438,6 +2473,15 @@ bool US_Saxs_Util::run_align(
    }
    if ( results["errors"].length() ) {
       return false;
+   }
+
+   if ( save ) {
+      TSO << "save_keys:\n";
+      for ( auto it = save_keys.begin();
+            it != save_keys.end();
+            ++it ) {
+         TSO << *it << "\n";
+      }
    }
 
    // print coordinates for the atom keys
@@ -2566,15 +2610,17 @@ bool US_Saxs_Util::run_align(
             .arg( fields[ "chainid" ] )
             .arg( fields[ "resseq" ] )
             .arg( fields[ "name" ] );
-         QString outline =
-            QString( "%1%2%3%4%5" )
-            .arg( line.mid( 0, 30 ) )
-            .arg( get<0>( remapped_from_points[ key ] ), 8, 'f', 3 )
-            .arg( get<1>( remapped_from_points[ key ] ), 8, 'f', 3 )
-            .arg( get<2>( remapped_from_points[ key ] ), 8, 'f', 3 )
-            .arg( line.mid( 54 ) )
-            ;
-         rplc_atoms << outline;
+         if ( !save_keys.count( key ) ) {
+            QString outline =
+               QString( "%1%2%3%4%5" )
+               .arg( line.mid( 0, 30 ) )
+               .arg( get<0>( remapped_from_points[ key ] ), 8, 'f', 3 )
+               .arg( get<1>( remapped_from_points[ key ] ), 8, 'f', 3 )
+               .arg( get<2>( remapped_from_points[ key ] ), 8, 'f', 3 )
+               .arg( line.mid( 54 ) )
+               ;
+            rplc_atoms << outline;
+         }
       }
    }
 
@@ -2654,9 +2700,16 @@ bool US_Saxs_Util::run_align(
          if ( fields[ "recname" ].contains( rx_atomhetatm )
               && fields[ "chainid" ] == parameters[ "cut" ]
               ) {
+            QString key = QString( "%1:%2:%3" )
+               .arg( fields[ "chainid" ] )
+               .arg( fields[ "resseq" ] )
+               .arg( fields[ "name" ] );
             if ( !cut_replaced ) {
                out_lines << rplc_atoms;
                cut_replaced = true;
+            }
+            if ( save_keys.count( key ) ) {
+               out_lines << line;
             }
             continue;
          }
