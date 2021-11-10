@@ -2302,9 +2302,14 @@ bool US_Saxs_Util::run_align(
       return false;
    }
 
-   bool quiet = parameters.count( "quiet" ) != 0;
+   bool quiet   = parameters.count( "quiet" )   != 0;
 
-   bool save = parameters.count( "save" ) != 0;
+   bool save    = parameters.count( "save" )    != 0;
+
+   bool frommap = parameters.count( "frommap" ) != 0;
+
+   bool atter   = parameters.count( "atter" )   != 0;
+   QString atter_chainid = atter ? parameters[ "atter" ] : "";
 
    // get files
    QStringList from;
@@ -2332,6 +2337,40 @@ bool US_Saxs_Util::run_align(
 
    int from_size = (int) from.size();
    int to_size   = (int) to  .size();
+   QRegExp rx_atomhetatm = QRegExp( "^(ATOM|HETATM)$" );
+
+   // build frommap if requested
+   if ( frommap ) {
+      map < QString, QString > frommap_chains;
+      QStringList level0 = parameters[ "frommap" ].split( ";" ); // maps
+      for ( int i = 0; i < (int) level0.count(); ++i ) {
+         QStringList level1 = level0[i].split( ":" );
+         if ( level1.count() != 2 ) {
+            results[ "errors" ] += "frommap format must be orgchainID:newchainID{;..}\n";
+            return false;
+         }
+         if ( frommap_chains.count( level1[0] ) ) {
+            results[ "errors" ] += "frommap duplicate orgchainID specified\n";
+            return false;
+         }
+            
+         frommap_chains[ level1[0] ] = level1[1];
+      }
+      for ( int i = 0; i < from_size; ++i ) {
+         QString line = from[ i ];
+         auto fields = pdb_fields( line );
+         if ( fields[ "recname" ].contains( rx_atomhetatm ) &&
+              frommap_chains.count( fields[ "chainid" ] ) ) {
+            from[ i ] = line.mid( 0, 21 ) + frommap_chains[ fields[ "chainid" ] ] + line.mid( 22 );
+            if ( !quiet ) {
+               TSO
+                  << "-" << line << "\n"
+                  << "+" << from[ i ] << "\n"
+                  ;
+            }
+         }
+      }         
+   }
 
    // parse atoms
    set < QString > atoms; // format "ChainID:Residue:Atomname"
@@ -2393,14 +2432,13 @@ bool US_Saxs_Util::run_align(
    }
       
 
+   
    // build from/to atoms map
    map < QString, tuple < double, double, double > > from_points;
    map < QString, tuple < double, double, double > > to_points;
    map < QString, tuple < double, double, double > > remapped_from_points;
-   QRegExp rx_atomhetatm = QRegExp( "^(ATOM|HETATM)$" );
    
    {   
-      
       for ( int i = 0; i < from_size; ++i ) {
          QString line = from[ i ];
          auto fields = pdb_fields( line );
@@ -2475,14 +2513,14 @@ bool US_Saxs_Util::run_align(
       return false;
    }
 
-   if ( save ) {
-      TSO << "save_keys:\n";
-      for ( auto it = save_keys.begin();
-            it != save_keys.end();
-            ++it ) {
-         TSO << *it << "\n";
-      }
-   }
+   // if ( save ) {
+   //    TSO << "save_keys:\n";
+   //    for ( auto it = save_keys.begin();
+   //          it != save_keys.end();
+   //          ++it ) {
+   //       TSO << *it << "\n";
+   //    }
+   // }
 
    // print coordinates for the atom keys
 
@@ -2704,7 +2742,7 @@ bool US_Saxs_Util::run_align(
                .arg( fields[ "chainid" ] )
                .arg( fields[ "resseq" ] )
                .arg( fields[ "name" ] );
-            if ( !cut_replaced ) {
+            if ( !cut_replaced && !atter ) {
                out_lines << rplc_atoms;
                cut_replaced = true;
             }
@@ -2713,12 +2751,24 @@ bool US_Saxs_Util::run_align(
             }
             continue;
          }
+         if ( atter
+              && fields[ "recname" ] == "TER"
+              && fields[ "chainid" ] == atter_chainid ) {
+               out_lines << rplc_atoms;
+               cut_replaced = true;
+         }
+         
          if ( fields[ "recname" ].contains( rx_linkconect ) ) {
             continue;
          }
          out_lines << line;
       }
+      if ( !cut_replaced ) {
+         results[ "errors" ] += "Replacement atoms not added\n";
+         return false;
+      }
    }
+
 
    // redo atom numbers
    {

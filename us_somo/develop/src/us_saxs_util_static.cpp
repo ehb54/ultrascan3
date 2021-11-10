@@ -11400,7 +11400,12 @@ map < QString, QString > US_Saxs_Util::pdb_fields( const QString & pdb_line ) {
 
    // pdb data from https://www.wwpdb.org/documentation/file-format-content/format33
 
-   if ( result[ "recname" ] == "LINK" ) {
+   if ( result[ "recname" ] == "TER" ) {
+      result[ "serial"    ] = pdb_line.mid(  6, 5 ).trimmed();
+      result[ "resname"   ] = pdb_line.mid( 17, 3 ).trimmed();
+      result[ "chainid"   ] = pdb_line.mid( 21, 1 ).trimmed();
+      result[ "resseq"    ] = pdb_line.mid( 22, 4 ).trimmed();
+   } else if ( result[ "recname" ] == "LINK" ) {
       result[ "name1"     ] = pdb_line.mid( 12, 4 ).trimmed();
       result[ "resname1"  ] = pdb_line.mid( 17, 3 ).trimmed();
       result[ "chainid1"  ] = pdb_line.mid( 21, 1 ).trimmed();
