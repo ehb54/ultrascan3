@@ -41,5 +41,13 @@ US_ReportGMP::US_ReportGMP()
   exp_time_changed = false;
   DBread = false;
   interf_report_changed = false;
+
+  //report mask params
+  tot_conc_mask             = true;
+  rmsd_limit_mask           = true;
+  av_intensity_mask         = true;
+  experiment_duration_mask  = true;
+  integration_results_mask  = true;
+
 }
  

@@ -5092,6 +5092,26 @@ int US_ExperGuiUpload::writeReportToDB( QString reportGUID, US_ReportGMP report 
       return reportID;
     }
 
+  //Copmose JSON string for report Mask first:
+  QString jsonMask = QString("{");
+
+  int tot_conc_bool = report.tot_conc_mask ? 1 : 0;
+  jsonMask += QString("\"tot_conc\":\"") + QString::number( tot_conc_bool ) + QString("\",");
+
+  int rmsd_lim_bool = report.rmsd_limit_mask ? 1 : 0;
+  jsonMask += QString("\"rmsd_lim\":\"") + QString::number( rmsd_lim_bool ) + QString("\",");
+
+  int intensity_bool = report.av_intensity_mask ? 1 : 0;
+  jsonMask += QString("\"intensity\":\"") + QString::number( intensity_bool ) + QString("\",");
+  
+  int exp_dur_bool = report.experiment_duration_mask ? 1 : 0;
+  jsonMask += QString("\"exp_dur\":\"") + QString::number( exp_dur_bool ) + QString("\",");
+
+  int integration_bool = report.integration_results_mask ? 1 : 0;
+  jsonMask += QString("\"integration\":\"") + QString::number( integration_bool ) + QString("\"");
+  
+  jsonMask += QString("}");
+  
   //Save parent Report
   QStringList qry;
   qry << "new_report"
@@ -5105,6 +5125,8 @@ int US_ExperGuiUpload::writeReportToDB( QString reportGUID, US_ReportGMP report 
 
       << QString::number( report.tot_conc_tol )
       << QString::number( report.experiment_duration_tol )
+
+      << jsonMask
     ;
 
   qDebug() << "Query: new_report: " << qry;

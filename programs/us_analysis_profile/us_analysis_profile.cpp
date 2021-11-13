@@ -797,22 +797,53 @@ void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP* reportFromDB, int re
   qry << "get_report_info_by_id" << QString::number( reportID );
   qDebug() << "In get_report_by_ID(): query -- " << qry;
   db->query( qry );
+
+  QString reportMaskJson;
   
   if ( db->lastErrno() == US_DB2::OK )      
     {
       while ( db->next() )
 	{
-	  reportFromDB->channel_name          = db->value( 0 ).toString();  
-	  reportFromDB->tot_conc              = db->value( 1 ).toString().toDouble();  
-	  reportFromDB->rmsd_limit            = db->value( 2 ).toString().toDouble();
-	  reportFromDB->av_intensity          = db->value( 3 ).toString().toDouble();
-	  reportFromDB->experiment_duration   = db->value( 4 ).toString().toDouble();
-	  reportFromDB->wavelength            = db->value( 5 ).toString().toDouble();
+	  reportFromDB->channel_name            = db->value( 0 ).toString();  
+	  reportFromDB->tot_conc                = db->value( 1 ).toString().toDouble();  
+	  reportFromDB->rmsd_limit              = db->value( 2 ).toString().toDouble();
+	  reportFromDB->av_intensity            = db->value( 3 ).toString().toDouble();
+	  reportFromDB->experiment_duration     = db->value( 4 ).toString().toDouble();
+	  reportFromDB->wavelength              = db->value( 5 ).toString().toDouble();
 
-	  reportFromDB->tot_conc_tol          = db->value( 6 ).toString().toDouble();
-	  reportFromDB->experiment_duration_tol = db->value( 7 ).toString().toDouble(); 
+	  reportFromDB->tot_conc_tol            = db->value( 6 ).toString().toDouble();
+	  reportFromDB->experiment_duration_tol = db->value( 7 ).toString().toDouble();
+
+	  reportMaskJson                        = db->value( 8 ).toString();
 	}
 
+      //process report Mask Json into US_ReportGMP fields:
+      QJsonDocument jsonDoc = QJsonDocument::fromJson( reportMaskJson.toUtf8() );
+      if (!jsonDoc.isObject())
+	{
+	  qDebug() << "All Doc: NOT a JSON Doc !!";
+	}
+      QJsonObject rootObj = jsonDoc.object();
+      if (
+          rootObj.contains("tot_conc") &&
+          rootObj.contains("rmsd_lim") &&
+          rootObj.contains("intensity") &&
+          rootObj.contains("exp_dur") &&
+          rootObj.contains("integration")
+	  )
+	{
+	  rootObj["tot_conc"].toString().toInt() ? reportFromDB->tot_conc_mask   = true : reportFromDB->tot_conc_mask   = false;
+	  rootObj["rmsd_lim"].toString().toInt() ? reportFromDB->rmsd_limit_mask = true : reportFromDB->rmsd_limit_mask = false;
+	  rootObj["intensity"].toString().toInt() ? reportFromDB->av_intensity_mask = true : reportFromDB->av_intensity_mask = false;
+	  rootObj["exp_dur"].toString().toInt() ? reportFromDB->experiment_duration_mask = true : reportFromDB->experiment_duration_mask = false;
+	  rootObj["integration"].toString().toInt() ? reportFromDB->integration_results_mask = true : reportFromDB->integration_results_mask = false;
+	}
+      else
+	{
+	  qDebug() << "No json mask set for report !\n";
+	}
+      
+      //was read from DB
       reportFromDB->DBread = true;
     }
 

@@ -41,6 +41,7 @@ class US_GUI_EXTERN US_ReportGui: public US_Widgets
       QWidget*     topContainerWidget;
       QGridLayout* addRem_buttons;
       QHBoxLayout* lower_buttons;
+      QGridLayout* reportmask;
 
       QLineEdit*   le_tot_conc;
       QLineEdit*   le_tot_conc_tol;
@@ -50,6 +51,13 @@ class US_GUI_EXTERN US_ReportGui: public US_Widgets
       QPushButton* pb_prev_wvl;
       QPushButton* pb_next_wvl;
       QPushButton* pb_apply_all;
+
+      //report mask
+      QCheckBox*   ck_tot_conc;
+      QCheckBox*   ck_rmsd;
+      QCheckBox*   ck_exp_duration;
+      QCheckBox*   ck_min_intensity;
+      QCheckBox*   ck_integration;
       
       //duration
       QSpinBox*    sb_durat_dd;
@@ -63,6 +71,7 @@ class US_GUI_EXTERN US_ReportGui: public US_Widgets
       QPushButton*  pb_removeRow;
       QPushButton*  pb_cancel;
       QPushButton*  pb_accept;
+      QPushButton*  pb_repmask;
 
       QMap< QString, bool > isErrorField;
       
@@ -73,6 +82,7 @@ class US_GUI_EXTERN US_ReportGui: public US_Widgets
    private slots:
      void verify_text ( const QString& );
      void update_report( void );
+     void report_mask( void );
      void add_row( void );
      void remove_row( void );
      void cancel_update( void );

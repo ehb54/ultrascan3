@@ -49,6 +49,14 @@ class US_UTIL_EXTERN US_ReportGMP
       bool exp_time_changed;
       bool DBread;
       bool interf_report_changed;
+
+      //report mask params
+      bool tot_conc_mask;
+      bool rmsd_limit_mask;
+      bool av_intensity_mask;
+      bool experiment_duration_mask;
+      bool integration_results_mask;
+
       
       //Rest of parameters followign from protocol: not used so far
       int     scan_number;

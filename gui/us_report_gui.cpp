@@ -101,7 +101,7 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
 	   this,          SLOT  ( verify_text ( const QString& ) ) );
   connect( le_av_intensity, SIGNAL( textChanged ( const QString& ) ),
 	   this,          SLOT  ( verify_text ( const QString& ) ) );
-  connect( le_tot_conc_tol, SIGNAL( textChanged ( const QString& ) ),
+ connect( le_tot_conc_tol, SIGNAL( textChanged ( const QString& ) ),
 	   this,          SLOT  ( verify_text ( const QString& ) ) );
   connect( le_duration_tol, SIGNAL( textChanged ( const QString& ) ),
 	   this,          SLOT  ( verify_text ( const QString& ) ) );  
@@ -219,9 +219,10 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
   main->addWidget( bn_report_t );
 
   //Main Table
-  genL           = NULL;
-  addRem_buttons = NULL;
-  lower_buttons  = NULL;
+  genL               = NULL;
+  addRem_buttons     = NULL;
+  reportmask         = NULL;
+  lower_buttons      = NULL;
 
   build_report_layout();
 
@@ -413,6 +414,63 @@ void US_ReportGui::build_report_layout( void )
 
   main->addLayout( addRem_buttons );
    
+
+  //Build Report Mask header && button
+  qDebug() << "Building Report Mask header and  Buttons Layout -- ";
+  //Clean genL layout first:
+  if ( reportmask != NULL && reportmask->layout() != NULL )
+    {
+      QLayoutItem* item;
+      while ( ( item = reportmask->layout()->takeAt( 0 ) ) != NULL )
+	{
+	  delete item->widget();
+	  delete item;
+	}
+      delete reportmask;
+    }
+  //End cleaning layout
+  reportmask     =  new QGridLayout();
+  reportmask     ->setSpacing         ( 2 );
+  reportmask     ->setContentsMargins ( 2, 2, 2, 2 );
+    
+  //Banner
+  QLabel* bn_repmask_t     = us_banner( tr( "Report Profile (Mask) Settings" ) );
+  bn_repmask_t->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+
+  ck_tot_conc     = new QCheckBox( tr( "Total Concentration" ), this );
+  ck_tot_conc ->setPalette( US_GuiSettings::normalColor() );
+  ck_tot_conc ->setChecked( report-> tot_conc_mask );
+  ck_tot_conc ->setAutoFillBackground( true  );
+
+  ck_rmsd     = new QCheckBox( tr( "RMSD (upper limit)" ), this );
+  ck_rmsd ->setPalette( US_GuiSettings::normalColor() );
+  ck_rmsd ->setChecked( report-> rmsd_limit_mask );
+  ck_rmsd ->setAutoFillBackground( true  );  
+
+  ck_exp_duration     = new QCheckBox( tr( "Experiment Duration" ), this );
+  ck_exp_duration ->setPalette( US_GuiSettings::normalColor() );
+  ck_exp_duration ->setChecked( report-> experiment_duration_mask );
+  ck_exp_duration ->setAutoFillBackground( true  );  
+  
+  ck_min_intensity     = new QCheckBox( tr( "Minimum Intensity" ), this );
+  ck_min_intensity ->setPalette( US_GuiSettings::normalColor() );
+  ck_min_intensity ->setChecked( report -> av_intensity_mask  );
+  ck_min_intensity ->setAutoFillBackground( true  );  
+  
+  ck_integration     = new QCheckBox( tr( "Integration Results" ), this );
+  ck_integration ->setPalette( US_GuiSettings::normalColor() );
+  ck_integration ->setChecked( report -> integration_results_mask );
+  ck_integration ->setAutoFillBackground( true  );
+
+  row = 0;
+  reportmask->addWidget( bn_repmask_t,     row++,  0, 1, 6 );
+  reportmask->addWidget( ck_tot_conc,      row,    0, 1, 2 );
+  reportmask->addWidget( ck_rmsd,          row,    2, 1, 2 );
+  reportmask->addWidget( ck_exp_duration,  row++,  4, 1, 2 );
+  reportmask->addWidget( ck_min_intensity, row,    0, 1, 2 );
+  reportmask->addWidget( ck_integration,   row,    2, 1, 2 );
+  
+  main->addLayout( reportmask );
   
   //Build | Re-build Lower buttons layout
   qDebug() << "Building Lower Buttons Layout -- ";
@@ -444,6 +502,12 @@ void US_ReportGui::build_report_layout( void )
   setMinimumSize( 850, 450 );
   //adjustSize();
 
+}
+
+//Slot to call Report Mask Gui
+void US_ReportGui::report_mask( void )
+{
+  
 }
 
 //Slot to update report
@@ -605,6 +669,7 @@ void US_ReportGui::gui_to_report( void )
 
   qDebug() << "Gui-to-report: reportItems.size()  -- " << report->reportItems.size();  
 
+
   //ReportItems
   for ( int ii = 0; ii < report->reportItems.size(); ii++ )
     {
@@ -645,6 +710,14 @@ void US_ReportGui::gui_to_report( void )
       qDebug() << "ii, le_total->text()" << ii << le_total->text();
       report->reportItems[ ii ].total_percent = le_total->text().toDouble();
     }
+
+  //Report Mask params.
+  report -> tot_conc_mask             = ck_tot_conc      ->isChecked();
+  report -> rmsd_limit_mask           = ck_rmsd          ->isChecked();
+  report -> av_intensity_mask         = ck_min_intensity ->isChecked();
+  report -> experiment_duration_mask  = ck_exp_duration  ->isChecked();
+  report -> integration_results_mask  = ck_integration   ->isChecked();
+
 }
 
 //Slot to cancel any updates on channel's report
@@ -980,6 +1053,12 @@ void US_ReportGui::apply_all_wvls( void )
 
 	  report_map[ ri.key() ]->tot_conc_tol        = report->tot_conc_tol;
 	  report_map[ ri.key() ]->experiment_duration_tol   = report->experiment_duration_tol;
+
+	  report_map[ ri.key() ]->tot_conc_mask              = report->tot_conc_mask;
+	  report_map[ ri.key() ]->rmsd_limit_mask            = report->rmsd_limit_mask;
+	  report_map[ ri.key() ]->av_intensity_mask          = report->av_intensity_mask;
+	  report_map[ ri.key() ]->experiment_duration_mask   = report->experiment_duration_mask;
+	  report_map[ ri.key() ]->integration_results_mask   = report->integration_results_mask;
 	  
 	  //Now go over reportItems:
 	  //1st, clear current array of reportItems:

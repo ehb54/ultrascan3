@@ -750,6 +750,12 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 			  
 			  other_group_report_to_change->experiment_duration      = reference_group_report.experiment_duration;
 			  other_group_report_to_change->experiment_duration_tol  = reference_group_report.experiment_duration_tol;
+
+			  other_group_report_to_change->tot_conc_mask            = reference_group_report.tot_conc_mask;
+			  other_group_report_to_change->rmsd_limit_mask          = reference_group_report.rmsd_limit_mask;
+			  other_group_report_to_change->av_intensity_mask        = reference_group_report.av_intensity_mask;
+			  other_group_report_to_change->experiment_duration_mask = reference_group_report.experiment_duration_mask;
+			  other_group_report_to_change->integration_results_mask = reference_group_report.integration_results_mask;
 			  
 			  //now, clear rerortItems && fill with reference ReportGMP:
 			  other_group_report_to_change->reportItems.clear();
