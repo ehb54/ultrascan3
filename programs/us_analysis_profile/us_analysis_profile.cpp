@@ -1131,14 +1131,18 @@ DbgLv(1) << "APGe: bgL:    scrollArea children count ZERO";
    // genL->addWidget( pb_protname,     row,    0, 1, 5 );
    // genL->addWidget( le_protname,     row++,  5, 1, 6 );
 
+   //Button to call geneal profile mask settings (section 1 of the report PDF)
+   QPushButton* pb_gen_report_sttings    = us_pushbutton( tr( "General Report Settings" ) );
+   
    //Scan exclusion at the beginnig && end of the channel's scan set:
    QPushButton* pb_scan_excl    = us_pushbutton( tr( "Excluded Scans Ranges" ) );
 
    genL->addWidget( pb_aproname,     row,    0, 1, 3 );
-   genL->addWidget( le_aproname,     row++,  3, 1, 6 );
+   genL->addWidget( le_aproname,     row,    3, 1, 6 );
+   genL->addWidget( pb_gen_report_sttings,   row++,  9, 1, 3 );
+   
    genL->addWidget( pb_protname,     row,    0, 1, 3 );
    genL->addWidget( le_protname,     row,    3, 1, 6 );
-
    genL->addWidget( pb_scan_excl,    row++,  9, 1, 3 );
 
    connect( pb_aproname, SIGNAL( clicked            ( ) ),
@@ -1151,7 +1155,9 @@ DbgLv(1) << "APGe: bgL:    scrollArea children count ZERO";
             this,        SLOT(   prot_text_changed( void ) ) );
    connect( pb_scan_excl, SIGNAL( clicked            ( ) ),
 	    this,        SLOT(   set_scan_ranges( ) ) );
-
+   connect( pb_gen_report_sttings, SIGNAL( clicked            ( ) ),
+	    this,        SLOT(   set_gen_report_settings( ) ) );  
+   
    // Build channel lists and rows
 DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
    QLabel* lb_chann  = us_label( tr( "CellChannel:\n"
@@ -2064,20 +2070,21 @@ QMessageBox::information( this, "Under Development",
 //*TEMPORARY
 }
 
+//Set general Rpeort settings
+void US_AnaprofPanGen::set_gen_report_settings()
+{
+  reportGenGui = new US_ReportGenGui( );
+  reportGenGui->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
+  reportGenGui->setWindowModality(Qt::ApplicationModal);
+  
+  //connect( reportGenGui, SIGNAL(  update_details( QStringList& ) ), this, SLOT( update_gen_report_settings  ( QStringList& )  ) );
+     
+  reportGenGui->show();
+}
+
 //Scan Range to exclude
 void US_AnaprofPanGen::set_scan_ranges()
 {
-  // QList< int *> excl_scan_beg;
-  // QList< int *> excl_scan_end;
-
-  // qDebug() << "Set_scan_ranges: scan_excl_begin.size() -- " << currProf->scan_excl_begin.size();
-  
-  // for (int i = 0; i < currProf->scan_excl_begin.size(); ++i )
-  //   {
-  //     excl_scan_beg << &( currProf->scan_excl_begin[ i ] );
-  //     excl_scan_end << &( currProf->scan_excl_end  [ i ] );
-  //   }
-  
   qDebug() << "Set_scan_ranges 2: scanCount && scanCount_int -- "
 	   << mainw->scanCount << " && "
 	   << mainw->scanCount_int;

@@ -1,4 +1,4 @@
-//! \file us_report_gui.h
+//! \file us_scan_excl_gui.h
 #ifndef US_SCANEXCL_GUI_H
 #define US_SCANEXCL_GUI_H
 
