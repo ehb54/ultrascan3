@@ -5193,6 +5193,8 @@ void US_ExperGuiUpload::saveAnalysisProfile()
    aprof  ->aprofname   = rpAprof->aprofname;
    aprof  ->aprofGUID   = rpAprof->aprofGUID;
 
+   qDebug() << "IN Saving APRofile: aprof  -> rpeort_mask -- " << aprof->report_mask;
+     
    //save reports BEFORE writng down Aprofile's XML
    saveReports( aprof ); //<-------------------------------------- TEMPORARY comment!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    
@@ -5230,8 +5232,13 @@ DbgLv(1) << "EGAp:svAP: new_file" << new_file << "xmlopath" <<  xmlopath;
    if ( dbP != NULL )
    {
       QStringList qry;
-      qry << "new_aprofile" << aprof->aprofGUID << aprof->aprofname
-          << rpAprof->ap_xml;
+      qry << "new_aprofile"
+	  << aprof->aprofGUID
+	  << aprof->aprofname
+          << rpAprof->ap_xml
+	  << aprof->report_mask
+	;
+      
       dbP->statusQuery( qry );
       aprof->aprofID      = dbP->lastInsertID();
 DbgLv(1) << "EGAp:svAP:  qry" << qry;

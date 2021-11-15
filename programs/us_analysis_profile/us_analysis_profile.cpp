@@ -526,9 +526,12 @@ DbgLv(1) << "APG: ipro: name GUID" << currProf.aprofname << currProf.aprofGUID;
       US_DB2* dbP          = load_db ? new US_DB2( pw.getPasswd() ) : NULL;
       load_db              = ( dbP != NULL );
 
+      QString reportMask_DB;
+      
       if ( load_db )
       {  // Get AProfile XML from the database
 //load_db=false;
+	 
          int status           = US_DB2::OK;
          QStringList qry;
          qry << "get_aprofile_info" << currProf.aprofGUID;
@@ -548,11 +551,14 @@ DbgLv(1) << "APG: ipro:   load_db" << load_db;
                currProf.aprofID     = dbP->value( 0 ).toInt();
                currProf.aprofname   = dbP->value( 1 ).toString();
                ap_xml               = dbP->value( 2 ).toString();
+
+	       reportMask_DB = dbP->value( 4 ).toString();
             }
             aprsrc               = QString( "readDB" );
 DbgLv(1) << "APG: ipro:  ap ID,name,lnxml" << currProf.aprofID
  << currProf.aprofname << ap_xml.length();
-         }
+
+	 }
       }
 
 DbgLv(1) << "APG: ipro:  load_db" << load_db;
@@ -587,6 +593,10 @@ DbgLv(1) << "APG: ipro:    aprofID" << currProf.aprofID;
          }
       }
 
+      //Get reportMask (if not empty)
+      if ( ! reportMask_DB.isEmpty() )
+	currProf.report_mask = reportMask_DB;
+	
       // Get AnalysisProfile from XML
 DbgLv(1) << "APG: ipro:  ap_xml isEmpty" << ap_xml.isEmpty();
       if ( !ap_xml.isEmpty() )
