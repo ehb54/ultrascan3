@@ -61,6 +61,7 @@ class US_GUI_EXTERN US_ReportGenGui: public US_Widgets
       void gui_to_parms( void );
       
    private slots:
+      void changedItem   ( QTreeWidgetItem*, int );
       void cancel_selection( void );
       void update_selection( void );
 

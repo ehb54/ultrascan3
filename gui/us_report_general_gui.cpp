@@ -140,9 +140,6 @@ void US_ReportGenGui::build_layout( void )
 
   treeWidget->setStyleSheet( "QTreeWidget { font: bold; font-size: " + QString::number(sfont.pointSize() ) + "pt;}  QTreeView { alternate-background-color: yellow;} QTreeView::item:hover { border: black;  border-radius:1px;  background-color: rgba(0,128,255,95);}");
 
-  // connect( treeWidget, SIGNAL( itemChanged( QTreeWidgetItem*, int ) ),
-  // 	   this,       SLOT(   changedItem( QTreeWidgetItem*, int ) ) );
-
   
   // topLevelItems.clear();
   // solutionItems.clear();
@@ -185,12 +182,6 @@ void US_ReportGenGui::build_layout( void )
   QStringList topItemNameList, solutionItemNameList, analysisItemNameList,
               analysisGenItemNameList, analysis2DSAItemNameList, analysisPCSAItemNameList;
   int wiubase = (int)QTreeWidgetItem::UserType;
-
-  //The incoming JSON:
-
-
-  topLevelItems.clear();
-  topLevelItems = json.keys();
 
   for ( int i=0; i<topLevelItems.size(); ++i )
     {
@@ -343,7 +334,10 @@ void US_ReportGenGui::build_layout( void )
   treeWidget->resizeColumnToContents( 0 );
   treeWidget->resizeColumnToContents( 1 );
 
+  connect( treeWidget, SIGNAL( itemChanged( QTreeWidgetItem*, int ) ),
+  	   this,       SLOT(   changedItem( QTreeWidgetItem*, int ) ) );
 
+  
   // int ihgt        = le_chan_desc->height();
   // QSpacerItem* spacer2 = new QSpacerItem( 20, 1*ihgt, QSizePolicy::Expanding);
   // genL->setRowStretch( row, 1 );
@@ -390,6 +384,72 @@ void US_ReportGenGui::build_layout( void )
   
 }
 
+//What to check/uncheck upon change in items status
+void US_ReportGenGui::changedItem( QTreeWidgetItem* item, int col )
+{
+  if ( col == 0  ) //we deal with col 0 only...
+    {
+      //qDebug() << "Changed item name0" << item->text( 1 );
+
+      //if has (nested) children items
+      int children_lev1 = item->childCount();
+      if ( children_lev1 )
+	{
+	  treeWidget -> disconnect();
+
+	  for( int i = 0; i < children_lev1; ++i )
+	    {
+	      item->child(i)->setCheckState( 0, (Qt::CheckState) item->checkState(0) );
+
+	      int children_lev2 = item->child(i)->childCount();
+	      if ( children_lev2 )
+		{
+		  for( int ii = 0; ii < children_lev2; ++ii )
+		    {
+		      item->child(i)->child(ii)->setCheckState( 0, (Qt::CheckState) item->child(i)->checkState(0) );
+		    }
+		}
+	    }
+	  
+	  connect( treeWidget, SIGNAL( itemChanged( QTreeWidgetItem*, int ) ),
+	       this,       SLOT(   changedItem( QTreeWidgetItem*, int ) ) );
+	}
+      
+           
+      //qDebug() << "Changed item name1 " << item->text( 1 );
+      	
+      //if has parent item
+      QTreeWidgetItem* parent_item = item->parent();
+
+      //qDebug() << "Changed item name2: " << item->text( 1 );
+      
+      if ( parent_item )
+	{
+	  //qDebug() << "Changed item name3: " << item->text( 1 );
+	  treeWidget -> disconnect();
+	  
+	  //qDebug() << " Current item, " << item->text( 1 ) << ", has a parent: " << parent_item->text( 1 );
+	    
+	  int checked_children = 0;
+	  int parent_item_children = parent_item ->childCount();
+	  for( int i = 0; i < parent_item_children; ++i )
+	    {
+	      if ( int( parent_item->child( i )->checkState(0) ) )
+		++checked_children;
+	    }
+	  if ( checked_children )
+	    parent_item->setCheckState( 0, Qt::Checked );
+	  else
+	    parent_item->setCheckState( 0, Qt::Unchecked );
+
+	  connect( treeWidget, SIGNAL( itemChanged( QTreeWidgetItem*, int ) ),
+  	           this,       SLOT(   changedItem( QTreeWidgetItem*, int ) ) );
+	}
+    }
+}
+
+
+//Save selection to JSON string & emit signal
 void US_ReportGenGui::gui_to_parms( void )
 {
   QString mask_edited;
