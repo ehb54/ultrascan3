@@ -2073,13 +2073,65 @@ QMessageBox::information( this, "Under Development",
 //Set general Rpeort settings
 void US_AnaprofPanGen::set_gen_report_settings()
 {
-  reportGenGui = new US_ReportGenGui( );
+  QString reportMask_tmp;
+  
+  reportMask_tmp =
+   "{"
+      "\"A. General Settings\":        \"1\","
+      "\"B. Lab/Rotor Parameters\":    \"1\","
+      "\"C. Optima Machine Operator\": \"1\","
+      "\"D. Speed Parameters\":        \"1\","
+      "\"E. Cell Centerpiece Usage\":  \"1\","
+      "\"F. Solutions for Channels\":"
+               "["
+                  "{\"Solution Information\":  \"1\"},"
+                  "{\"Analyte Information\":   \"1\"},"
+                  "{\"Buffer  Information\":   \"1\"}"
+               "],"
+      "\"G. Optics\":                  \"1\","
+      "\"H. Ranges\":                  \"1\","
+      "\"I. Scan Counts and Intervals for Optics\": \"1\","
+      "\"J. Analysis Profile\":"
+               "["
+                  "{\"General Settings\":"
+                          "{"
+                             "\"Channel General Settings\":            \"1\","
+                             "\"Report Parameters (per-triple)\":      \"1\","
+                             "\"Report Item Parameters (per-triple)\": \"1\""
+                           "}},"
+                   "{\"2DSA Controls\":" 
+                          "{"
+                             "\"Job Flow Summary\":     \"1\","
+                             "\"Per-Channel Profiles\": \"1\""
+                          "}},"
+                   "{\"PCSA Controls\":"
+                          "{"
+                              "\"Job Flow Summary\":     \"1\","
+                              "\"Per-Channel Profiles\": \"1\""
+                          "}}"
+  
+               "]"
+   "}"
+     ;
+  
+  //reportMask_tmp = "{\"A. General Settings\":\"2\",\"B. Lab/Rotor Parameters\":\"2\",\"C. Optima Machine Operator\":\"2\",\"D. Speed Parameters\":\"2\",\"E. Cell Centerpiece Usage\":\"2\",\"F. Solutions for Channels\":[{\"Solution Information\":\"0\"},{\"Analyte Information\":\"0\"},{\"Buffer  Information\":\"0\"}],\"G. Optics\":\"2\",\"H. Ranges\":\"0\",\"I. Scan Counts and Intervals for Optics\":\"2\",\"J. Analysis Profile\":[{\"General Settings\":{\"Channel General Settings\":\"0\",\"Report Item Parameters (per-triple)\":\"0\",\"Report Parameters (per-triple)\":\"0\"}},{\"2DSA Controls\":{\"Job Flow Summary\":\"2\",\"Per-Channel Profiles\":\"2\"}},{\"PCSA Controls\":{\"Job Flow Summary\":\"2\",\"Per-Channel Profiles\":\"2\"}}]}";
+  
+    
+  //reportGenGui = new US_ReportGenGui( reportMask_tmp );
+  reportGenGui = new US_ReportGenGui( currProf->report_mask );
   reportGenGui->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
   reportGenGui->setWindowModality(Qt::ApplicationModal);
   
-  //connect( reportGenGui, SIGNAL(  update_details( QStringList& ) ), this, SLOT( update_gen_report_settings  ( QStringList& )  ) );
+  connect( reportGenGui, SIGNAL(  update_details( QString& ) ), this, SLOT( update_gen_report_settings  ( QString& )  ) );
      
   reportGenGui->show();
+}
+
+//Update general report mask settings
+void US_AnaprofPanGen::update_gen_report_settings( QString& mask_updated )
+{
+  currProf->report_mask.clear();
+  currProf->report_mask = mask_updated;
 }
 
 //Scan Range to exclude

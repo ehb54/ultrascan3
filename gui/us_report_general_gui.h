@@ -13,13 +13,15 @@ class US_GUI_EXTERN US_ReportGenGui: public US_Widgets
 
   public:
 
-      US_ReportGenGui( );
+      US_ReportGenGui( QString );
       ~US_ReportGenGui() {};
 
    signals:
-      //void update_details( QStringList& );
+      void update_details( QString& );
       
    private:
+      QString reportMask;
+      QJsonObject json;
       QTreeWidget     *treeWidget;
       QMap<QString, QTreeWidgetItem *> topItem;
       QMap<QString, QTreeWidgetItem *> solutionItem;
@@ -28,11 +30,20 @@ class US_GUI_EXTERN US_ReportGenGui: public US_Widgets
       QMap<QString, QTreeWidgetItem *> analysis2DSAItem;
       QMap<QString, QTreeWidgetItem *> analysisPCSAItem;
       QStringList topLevelItems;
+      
       QStringList solutionItems;
+      QStringList solutionItems_vals;
+      
       QStringList analysisItems;
+
       QStringList analysisGenItems;
+      QStringList analysisGenItems_vals;
+
       QStringList analysis2DSAItems;
+      QStringList analysis2DSAItems_vals;
+
       QStringList analysisPCSAItems;
+      QStringList analysisPCSAItems_vals;
       
       int row;
       

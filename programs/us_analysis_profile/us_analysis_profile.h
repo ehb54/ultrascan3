@@ -159,6 +159,7 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       void  restore_report         ( QMap < QString, US_ReportGMP> &  );
       void  apply_to_other_reports ( US_ReportGMP *  );
       void  update_excl_scans( QStringList & );
+      void  update_gen_report_settings ( QString& );
       
  signals:
       void  set_tabs_buttons_inactive       ( void );

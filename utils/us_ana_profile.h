@@ -242,6 +242,8 @@ class US_UTIL_EXTERN US_AnaProfile
 
       /* //QMap for scan exclusion: channame -> QStringList( beginning scans, end scans)  */
       /* QMap< QString, QStringList >       ch_scans_excl; */
+
+      QString report_mask;
 	
       
    private:

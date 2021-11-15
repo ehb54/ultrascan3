@@ -54,13 +54,47 @@ US_AnaProfile::US_AnaProfile()
    //ALEXEY_NEW_REPORT:
    ch_reports[ chndescs_alt[0] ] [ QString::number( wvl[ 0 ] ) ] = report;
 
-   // //Report Ids/Guids qmaps
-   // ch_report_guids[ chndescs_alt[0] ] = QString( "00000000-0000-0000-0000-000000000000" );
-   // ch_report_ids[ chndescs_alt[0] ] = 0;
+   //default JSON for report profile: general settings 
+   report_mask =
+   "{"
+      "\"A. General Settings\":        \"1\","
+      "\"B. Lab/Rotor Parameters\":    \"1\","
+      "\"C. Optima Machine Operator\": \"1\","
+      "\"D. Speed Parameters\":        \"1\","
+      "\"E. Cell Centerpiece Usage\":  \"1\","
+      "\"F. Solutions for Channels\":"
+               "["
+                  "{\"Solution Information\":  \"1\"},"
+                  "{\"Analyte Information\":   \"1\"},"
+                  "{\"Buffer  Information\":   \"1\"}"
+               "],"
+      "\"G. Optics\":                  \"1\","
+      "\"H. Ranges\":                  \"1\","
+      "\"I. Scan Counts and Intervals for Optics\": \"1\","
+      "\"J. Analysis Profile\":"
+               "["
+                  "{\"General Settings\":"
+                          "{"
+                             "\"Channel General Settings\":            \"1\","
+                             "\"Report Parameters (per-triple)\":      \"1\","
+                             "\"Report Item Parameters (per-triple)\": \"1\""
+                           "}},"
+                   "{\"2DSA Controls\":" 
+                          "{"
+                             "\"Job Flow Summary\":     \"1\","
+                             "\"Per-Channel Profiles\": \"1\""
+                          "}},"
+                   "{\"PCSA Controls\":"
+                          "{"
+                              "\"Job Flow Summary\":     \"1\","
+                              "\"Per-Channel Profiles\": \"1\""
+                          "}}"
+  
+               "]"
+   "}"
+     ;
 
-   // //Scan Exlc. QMAp
-   // QStringList scan_ranges = {"0","0"};
-   // ch_scans_excl[ chndescs_alt[0] ] = scan_ranges;
+    
 }
 
 // AnaProfile Equality operator
