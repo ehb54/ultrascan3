@@ -144,6 +144,7 @@ DbgLv(1) << "MAIN:  Resetting internal protocol...";
    initPanels();                      //if commented and nothing else done causes crash
 
    ap_xml.clear();
+   
 }
 
 // Set auto mode (comes from ComProject or Experiment)

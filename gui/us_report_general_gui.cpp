@@ -140,44 +140,6 @@ void US_ReportGenGui::build_layout( void )
 
   treeWidget->setStyleSheet( "QTreeWidget { font: bold; font-size: " + QString::number(sfont.pointSize() ) + "pt;}  QTreeView { alternate-background-color: yellow;} QTreeView::item:hover { border: black;  border-radius:1px;  background-color: rgba(0,128,255,95);}");
 
-  
-  // topLevelItems.clear();
-  // solutionItems.clear();
-  // topLevelItems << "General Settings"
-  // 		<< "Lab/Rotor Parameters"
-  // 		<< "Optima Machine Operator"
-  // 		<< "Speed Parameters"
-  // 		<< "Cell Centerpiece Usage"
-  // 		<< "Solutions for Channels"
-  // 		<< "Optics"
-  // 		<< "Ranges"
-  // 		<< "Scan Counts and Intervals for Optics"
-  // 		<< "Analysis Profile"
-  //   ;
-
-  // solutionItems << "Solution Information"
-  // 		<< "Analyte Information"
-  // 		<< "Buffer Information"
-  //   ;
-
-  // analysisItems << "General Settings"
-  // 		<< "2DSA Controls"
-  // 		<< "PCSA Controls"
-  //   ;
-
-  // analysisGenItems << "Channel General Settings"
-  // 		   << "Report Parameters (per-triple)"
-  // 		   << "Report Item Parameters (per-triple)"
-  //   ;
-
-  // analysis2DSAItems << "Job Flow Summary"
-  // 		    << "Per-Channel Profiles"
-  //   ;
-
-  // analysisPCSAItems << "Job Flow Summary"
-  // 		    << "Per-Channel Profiles"
-  //   ;
-  
   QString indent( "  " );
   QStringList topItemNameList, solutionItemNameList, analysisItemNameList,
               analysisGenItemNameList, analysis2DSAItemNameList, analysisPCSAItemNameList;

@@ -86,6 +86,11 @@ US_Reports_auto::US_Reports_auto() : US_Widgets()
   // protocol_details[ "invID_passed" ] = QString("12");
   // protocol_details[ "runID" ]        = QString("1699");
  
+  // //report 4-channels, with reportMask: just solution info
+  // protocol_details[ "aprofileguid" ] = QString("3ab7e103-cb7f-4976-aca1-494e2bc89997");
+  // protocol_details[ "protocolName" ] = QString("test_Nov17_mask_2");
+  // protocol_details[ "invID_passed" ] = QString("12");
+  // protocol_details[ "runID" ]        = QString("1771");
   
   // initPanel( protocol_details );
   
@@ -110,6 +115,25 @@ void US_Reports_auto::reset_report_panel ( void )
   currProto = US_RunProtocol();  //ALEXEY: we need to reset US_Protocol
   currAProf = US_AnaProfile();   //ALEXEY: we need to reset US_AnaProfile
   pb_download_report->setVisible( false );
+
+  html_general.clear();
+  html_lab_rotor.clear();
+  html_operator.clear();
+  html_speed.clear();
+  html_cells.clear();
+  html_solutions.clear();
+  html_optical.clear();
+  html_ranges.clear();
+  html_scan_count.clear();
+  html_analysis_profile.clear();
+  html_analysis_profile_2dsa.clear();
+  html_analysis_profile_pcsa .clear();
+  
+  ShowReportParts.   clear();
+  ShowSolutionParts. clear();
+  ShowAnalysisGenParts. clear();
+  ShowAnalysis2DSAParts. clear();
+  ShowAnalysisPCSAParts. clear();
 }
   
 //init correct # of us_labels rows based on passed # stages from AProfile
@@ -196,6 +220,11 @@ void US_Reports_auto::initPanel( QMap < QString, QString > & protocol_details )
   ch_reports             = currAProf.ch_reports;
   //Channel wavelengths
   ch_wvls                = currAProf.ch_wvls;
+
+  //report Mask
+  reportMask             = currAProf.report_mask;
+  parse_mask_json();
+  qDebug () << "Report Mask: " << reportMask;
     
   progress_msg->setValue( 4 );
   qApp->processEvents();
@@ -345,7 +374,7 @@ void US_Reports_auto::assemble_pdf()
     ;
   
   //GENERAL: begin
-  QString html_general = tr(
+  html_general = tr(
     
     "<h3 align=left>General Settings</h3>"
       "<table>"
@@ -368,34 +397,40 @@ void US_Reports_auto::assemble_pdf()
 
 
   //ROTOR/LAB: begin
-  QString html_lab_rotor = tr(
+  html_lab_rotor = tr(
     "<h3 align=left>Lab/Rotor Parameters</h3>"
       "<table>"
         "<tr><td>Laboratory:</td>      <td>%1</td></tr>"
         "<tr><td>Rotor: </td>          <td>%2</td></tr>"
-        "<tr><td>Calibration Date:</td>     <td>%3</td></tr>"
+        "<tr><td>Calibration Date:</td><td>%3</td></tr>"
       "</table>"
     "<hr>"
-    "<h3 align=left>Optima Machine/Operator </h3>"
-      "<table>"
-        "<tr><td>Optima: </td>           <td>%4</td></tr>"
-        "<tr><td>Operator: </td>         <td>%5</td></tr>"
-        "<tr><td>Experiment Type:</td>   <td>%6</td></tr>"
-      "</table>"
-    "<hr>"
-				)
+			      )
     .arg( currProto. rpRotor.laboratory )  //1
     .arg( currProto. rpRotor.rotor )       //2
     .arg( currProto. rpRotor.calibration)  //3
-    .arg( currProto. rpRotor.instrname )   //4
-    .arg( currProto. rpRotor.opername  )   //5
-    .arg( currProto. rpRotor.exptype )     //6
     ;
-  //ROTOR/LAB: end 	  
+  //ROTOR/LAB: end 	      
+  
+  //OPERATOR: begin
+  html_operator = tr(     
+    "<h3 align=left>Optima Machine/Operator </h3>"
+      "<table>"
+        "<tr><td>Optima: </td>           <td>%1</td></tr>"
+        "<tr><td>Operator: </td>         <td>%2</td></tr>"
+        "<tr><td>Experiment Type:</td>   <td>%3</td></tr>"
+      "</table>"
+    "<hr>"
+				  )
+    .arg( currProto. rpRotor.instrname )   //1
+    .arg( currProto. rpRotor.opername  )   //2
+    .arg( currProto. rpRotor.exptype )     //3
+    ;
+  //OPERATOR: end 	  
 
   
   //SPEEDS: begin
-  QString html_speed = tr(
+  html_speed = tr(
     "<h3 align=left>Speed Parameters </h3>"
       "<table>"
         "<tr><td>Rotor Speed  (RPM):    </td>                   <td>%1</td></tr>"
@@ -426,7 +461,7 @@ void US_Reports_auto::assemble_pdf()
 
 
   //CELLS: begin
-  QString html_cells = tr(
+  html_cells = tr(
     "<h3 align=left>Cell Centerpiece Usage </h3>"
 			   )
      ;
@@ -482,9 +517,9 @@ void US_Reports_auto::assemble_pdf()
 
   
   //SOLUTIONS: begin
-  QString html_solutions = tr(
-			      "<h3 align=left>Solutions for Channels</h3>"			      
-			      )
+  html_solutions = tr(
+		      "<h3 align=left>Solutions for Channels</h3>"			      
+		      )
     ;
    
   nsol_channels = currProto.rpSolut.nschan;
@@ -516,9 +551,9 @@ void US_Reports_auto::assemble_pdf()
 
 
   //OPTICS: begin
-  QString html_optical = tr(
-			    "<h3 align=left>Optics </h3>"
-			   )
+  html_optical = tr(
+		    "<h3 align=left>Optical Systems </h3>"
+		    )
     ;
   nchan_optics = currProto. rpOptic. nochan;
   html_optical += tr(
@@ -602,9 +637,9 @@ void US_Reports_auto::assemble_pdf()
 
 
   //RANGES: begin
-  QString html_ranges = tr(
-			   "<h3 align=left> Ranges </h3>"
-			   )
+  html_ranges = tr(
+		   "<h3 align=left> Ranges </h3>"
+		   )
     ;
   nchan_ranges  = currProto. rpRange. nranges;
   html_ranges  += tr(
@@ -668,10 +703,10 @@ void US_Reports_auto::assemble_pdf()
 
   
   //SCAN_COUNT: begin
-  QString html_scan_count = tr(
-			       "<h3 align=left> Scan Counts and Scan Intervals For Optics in Use </h3>"
-			       "&nbsp;&nbsp;<br>"
-			       )
+  html_scan_count = tr(
+		       "<h3 align=left> Scan Counts and Scan Intervals For Optics in Use </h3>"
+		       "&nbsp;&nbsp;<br>"
+		       )
     ;
 
   double scanintv     = currProto. rpSpeed. ssteps[0].scanintv;
@@ -729,18 +764,22 @@ void US_Reports_auto::assemble_pdf()
   
   //APROFILE: begin
   //ANALYSIS: General settings && Reports: begin
-  QString html_analysis_profile = tr(
-				     "<h3 align=left> Analysis Profile: General Settings and Reports  </h3>"
-				     "&nbsp;&nbsp;<br>"
-				     )
+  html_analysis_profile = tr(
+			     "<h3 align=left> Analysis Profile: General Settings and Reports  </h3>"
+			     "&nbsp;&nbsp;<br>"
+			     )
     ;
-  html_analysis_profile += tr(
-			      "<table>"		   
-			         "<tr> <td> Profile Name:  &nbsp;&nbsp;&nbsp;&nbsp; </td>  <td> %1 </td></tr>"
-			         "<tr> <td> Protocol Name: &nbsp;&nbsp;&nbsp;&nbsp; </td>  <td> %2 </td></tr>"
-			      "</table>"
-			      "<br>"
-			      )
+
+  //Begin of the General Analysis Section
+  QString html_analysis_gen;
+  
+  html_analysis_gen += tr(
+			  "<table>"		   
+			  "<tr> <td> Profile Name:  &nbsp;&nbsp;&nbsp;&nbsp; </td>  <td> %1 </td></tr>"
+			  "<tr> <td> Protocol Name: &nbsp;&nbsp;&nbsp;&nbsp; </td>  <td> %2 </td></tr>"
+			  "</table>"
+			  "<br>"
+			  )
     .arg( currAProf.aprofname  )         //1
     .arg( currAProf.protoname  )         //2
     ;
@@ -751,13 +790,13 @@ void US_Reports_auto::assemble_pdf()
       QString channel_desc_alt = chndescs_alt[ i ];
       QString channel_desc     = chndescs[ i ];
       
-      html_analysis_profile += tr(
-				  "<table>"		   
-				     "<tr>"
-				        "<td><b>Channel:</b> &nbsp;&nbsp;&nbsp;&nbsp; </td> <td><b>%1</b></td>"
-				      "</tr>"
-				  "</table>"
-				  )
+      html_analysis_gen += tr(
+			      "<table>"		   
+			      "<tr>"
+			      "<td><b>Channel:</b> &nbsp;&nbsp;&nbsp;&nbsp; </td> <td><b>%1</b></td>"
+			      "</tr>"
+			      "</table>"
+			      )
 	.arg( channel_desc )              //1
 	;
 
@@ -773,7 +812,7 @@ void US_Reports_auto::assemble_pdf()
       else
 	run_analysis = tr("NO");
       
-      html_analysis_profile += tr(
+      html_analysis_gen += tr(
 				  "<table style=\"margin-left:30px\">"
 				     "<tr><td> Loading Ratio:              </td>  <td> %1 </td> </tr>"
 				     "<tr><td> Ratio Tolerance (&#177;%):  </td>  <td> %2 </td> </tr>"
@@ -790,7 +829,7 @@ void US_Reports_auto::assemble_pdf()
 	;
 
       
-      html_analysis_profile += tr(
+      html_analysis_gen    += tr(
 				  "<table style=\"margin-left:30px\">"
 				     "<tr><td> <i>Run Analysis:</i>        </td>  <td> %1 </td> </tr>"
 				  "</table>"
@@ -804,7 +843,7 @@ void US_Reports_auto::assemble_pdf()
 	{
 	  //check what representative wvl is:
 	  QString rep_wvl = QString::number( currAProf.wvl_edit[ i ] );
-	  html_analysis_profile += tr(
+	  html_analysis_gen += tr(
 				      "<table style=\"margin-left:50px\">"
 				         "<tr><td> Wavelength for Edit, 2DSA-FM & Fitmen Stages (nm):   </td>  <td> %1 </td> </tr>"
 				      "</table>"
@@ -822,7 +861,7 @@ void US_Reports_auto::assemble_pdf()
 	  else
 	    run_report = tr("NO");
 
-	  html_analysis_profile += tr(
+	  html_analysis_gen     += tr(
 				      "<table style=\"margin-left:30px\">"
 				         "<tr><td> <i> Run Report: </i>    </td>  <td> %1 </td> </tr>"
 				      "</table>"
@@ -830,6 +869,10 @@ void US_Reports_auto::assemble_pdf()
 	    .arg( run_report)              //1
 	    ;
 	}
+
+      if ( ShowAnalysisGenParts[ "Channel General Settings" ].toInt()  )
+	html_analysis_profile += html_analysis_gen;
+      //End of the General Analysis Section
 
        
       //Separate Report | ReportItems table
@@ -845,14 +888,6 @@ void US_Reports_auto::assemble_pdf()
 	      QString wvl            = QString::number( chann_wvls[ jj ] );
 	      QString triple_name    = channel_desc.split(":")[ 0 ] + "/" + wvl;
 	      US_ReportGMP reportGMP = chann_reports[ wvl ];
-	      
-	      html_analysis_profile += tr(
-					  "<table style=\"margin-left:50px\">"
-					     "<tr><td> <b><i> Report Parameters for Triple: </i> &nbsp;&nbsp;&nbsp; %1 </b></td> </tr>"
-					  "</table>"
-					  )
-		.arg( triple_name )                                             //1
-		;
 
 	      //Exp. duration entered in the Channel Report Editor
 	      QList< int > hms_tot;
@@ -860,19 +895,34 @@ void US_Reports_auto::assemble_pdf()
 	      US_RunProtocol::timeToList( total_time, hms_tot );
 	      QString exp_dur_str = QString::number( hms_tot[ 0 ] ) + "d " + QString::number( hms_tot[ 1 ] ) + "h " + QString::number( hms_tot[ 2 ] ) + "m ";
 
-	      html_analysis_profile += tr(
-					  "<table style=\"margin-left:70px\">"
-					     "<tr><td> Total Concentration: </td>  <td> %1 </td> </tr>"
-					     "<tr><td> RMSD (upper limit):  </td>  <td> %2 </td> </tr>"
-					     "<tr><td> Average Intensity:   </td>  <td> %3 </td> </tr>"
-					     "<tr><td> Experiment Duration: </td>  <td> %4 </td> </tr>"
-					  "</table>"
-					  )
-		.arg( QString::number( reportGMP.tot_conc ) )                    //1
-		.arg( QString::number( reportGMP.rmsd_limit )  )                 //2
-		.arg( QString::number( reportGMP.av_intensity )  )               //3
-		.arg( exp_dur_str )                                              //4
-		;
+	      if ( ShowAnalysisGenParts[ "Report Parameters (per-triple)" ].toInt()  )
+		{
+		  html_analysis_profile += tr(
+					      "<table style=\"margin-left:50px\">"
+					      "<tr><td> <b><i> Report Parameters for Triple: </i> &nbsp;&nbsp;&nbsp; %1 </b></td> </tr>"
+					      "</table>"
+					      )
+		    .arg( triple_name )                                             //1
+		    ;
+		  
+		  html_analysis_profile += tr(
+					      "<table style=\"margin-left:70px\">"
+					      "<tr><td> Total Concentration:           </td>  <td> %1 </td> </tr>"
+					      "<tr><td> Total Concentration Tolerance: </td>  <td> %2 </td> </tr>"
+					      "<tr><td> RMSD (upper limit):            </td>  <td> %3 </td> </tr>"
+					      "<tr><td> Average Intensity:             </td>  <td> %4 </td> </tr>"
+					      "<tr><td> Experiment Duration:           </td>  <td> %5 </td> </tr>"
+					      "<tr><td> Experiment Duration Tolerance: </td>  <td> %6 </td> </tr>"
+					      "</table>"
+					      )
+		    .arg( QString::number( reportGMP.tot_conc ) )                    //1
+		    .arg( QString::number( reportGMP.tot_conc_tol ) )                //2
+		    .arg( QString::number( reportGMP.rmsd_limit )  )                 //3
+		    .arg( QString::number( reportGMP.av_intensity )  )               //4
+		    .arg( exp_dur_str )                                              //5
+		    .arg( QString::number( reportGMP.experiment_duration_tol ) )     //6
+		    ;
+		}
 
 	      //Now go over ReportItems for the current triple:
 	      int report_items_number = reportGMP.reportItems.size();
@@ -880,37 +930,38 @@ void US_Reports_auto::assemble_pdf()
 	      for ( int kk = 0; kk < report_items_number; ++kk )
 		{
 		  US_ReportGMP::ReportItem curr_item = reportGMP.reportItems[ kk ];
-		  
-		  html_analysis_profile += tr(
-					      "<table style=\"margin-left:90px\">"
-					         "<tr><td> <b><i> Report Item #%1: </i> &nbsp;&nbsp; Type | Method Parameters </b></td> </tr>"
-					      "</table>"
-					      )
-		    .arg( QString::number( kk + 1 ) )                                 //1
-		    ;
 
-		  html_analysis_profile += tr(
-					      "<table style=\"margin-left:110px\">"
-					         "<tr><td> Type:                  </td>  <td> %1 </td> </tr>"
-					         "<tr><td> Method:                </td>  <td> %2 </td> </tr>"
-					         "<tr><td> Range Low:             </td>  <td> %3 </td> </tr>"
-					         "<tr><td> Range High:            </td>  <td> %4 </td> </tr>"
-					         "<tr><td> Integration Value:     </td>  <td> %5 </td> </tr>"
-					         "<tr><td> Tolerance (%):         </td>  <td> %6 </td> </tr>"
-					         "<tr><td> Fraction of Total (%): </td>  <td> %7 </td> </tr>"
-					      "</table>"
-					      )
-		    .arg( curr_item.type )                                      //1
-		    .arg( curr_item.method   )                                  //2
-		    .arg( QString::number( curr_item.range_low )  )             //3
-		    .arg( QString::number( curr_item.range_high )  )            //4
-		    .arg( QString::number( curr_item.integration_val )  )       //5
-		    .arg( QString::number( curr_item.tolerance )  )             //6
-		    .arg( QString::number( curr_item.total_percent )  )         //7
-		    ;
-		  
+		  if ( ShowAnalysisGenParts[ "Report Item Parameters (per-triple)" ].toInt()  )
+		    {
+		      html_analysis_profile += tr(
+						  "<table style=\"margin-left:90px\">"
+						  "<tr><td> <b><i> Report Item #%1: </i> &nbsp;&nbsp; Type | Method Parameters </b></td> </tr>"
+						  "</table>"
+						  )
+			.arg( QString::number( kk + 1 ) )                                 //1
+			;
+		      
+		      html_analysis_profile += tr(
+						  "<table style=\"margin-left:110px\">"
+						  "<tr><td> Type:                  </td>  <td> %1 </td> </tr>"
+						  "<tr><td> Method:                </td>  <td> %2 </td> </tr>"
+						  "<tr><td> Range Low:             </td>  <td> %3 </td> </tr>"
+						  "<tr><td> Range High:            </td>  <td> %4 </td> </tr>"
+						  "<tr><td> Integration Value:     </td>  <td> %5 </td> </tr>"
+						  "<tr><td> Tolerance (%):         </td>  <td> %6 </td> </tr>"
+						  "<tr><td> Fraction of Total (%): </td>  <td> %7 </td> </tr>"
+						  "</table>"
+						  )
+			.arg( curr_item.type )                                      //1
+			.arg( curr_item.method   )                                  //2
+			.arg( QString::number( curr_item.range_low )  )             //3
+			.arg( QString::number( curr_item.range_high )  )            //4
+			.arg( QString::number( curr_item.integration_val )  )       //5
+			.arg( QString::number( curr_item.tolerance )  )             //6
+			.arg( QString::number( curr_item.total_percent )  )         //7
+			;
+		    }
 		}
-	      
 	    }
 	}
       
@@ -924,14 +975,15 @@ void US_Reports_auto::assemble_pdf()
     
     
   //ANALYSIS: 2DSA per-channel settings: begin
-  QString html_analysis_profile_2dsa = tr(
-					  "<h3 align=left> Analysis Profile: 2DSA Controls </h3>"
-					  "&nbsp;&nbsp;<br>"
-					  )
+  html_analysis_profile_2dsa = tr(
+				  "<h3 align=left> Analysis Profile: 2DSA Controls </h3>"
+				  "&nbsp;&nbsp;<br>"
+				  )
     ;
 
   //Job Flow Summary:
-  html_analysis_profile_2dsa += tr(
+  QString html_analysis_profile_2dsa_flow;
+  html_analysis_profile_2dsa_flow += tr(
 				   "<table>"		   
 				    "<tr>"
 				       "<td><b>Job Flow Summary:</b></td>"
@@ -939,7 +991,7 @@ void US_Reports_auto::assemble_pdf()
 				  "</table>"
 			)
     ;
-  html_analysis_profile_2dsa += tr(
+  html_analysis_profile_2dsa_flow += tr(
 				   "<table style=\"margin-left:10px\">"
 				      //2DSA
 				      "<tr>"
@@ -1047,10 +1099,14 @@ void US_Reports_auto::assemble_pdf()
     .arg( ( cAP2.job5run ? tr( "YES" ) : tr( "NO" ) ) )       //10
     .arg( ( QString::number( cAP2.mciters ) ) )               //11	  
     ;
+
+  if ( ShowAnalysis2DSAParts[ "Job Flow Summary" ].toInt()  )
+    html_analysis_profile_2dsa +=  html_analysis_profile_2dsa_flow;
   
 
   //Per-Channel params:
-  html_analysis_profile_2dsa += tr(
+  QString html_analysis_profile_2dsa_per_channel;
+  html_analysis_profile_2dsa_per_channel += tr(
 				   "<table>"		   
 				     "<tr>"
 				       "<td><b>Per-Channel Profile:</b></td>"
@@ -1062,7 +1118,7 @@ void US_Reports_auto::assemble_pdf()
   int nchna_2dsa   = cAP2.parms.size();
   for ( int i = 0; i < nchna_2dsa; i++ )
     {
-      html_analysis_profile_2dsa += tr(
+      html_analysis_profile_2dsa_per_channel += tr(
 				       "<table>"		   
 				         "<tr>"
 				            "<td><b>Channel:</b> &nbsp;&nbsp;&nbsp;&nbsp; </td> <td><b>%1</b></td>"
@@ -1089,7 +1145,7 @@ void US_Reports_auto::assemble_pdf()
 
       QString const_ff0 = QString::number( cAP2.parms[ i ].ff0_const );
 
-      html_analysis_profile_2dsa += tr(
+      html_analysis_profile_2dsa_per_channel += tr(
                                        "<table style=\"margin-left:30px\">"
                                           "<tr><td> s Min, Max, Grid Points:     </td>  <td> %1 </td> </tr>"
                                           "<tr><td> f/f0 Min, Max, Grid Points:  </td>  <td> %2 </td> </tr>"
@@ -1107,19 +1163,23 @@ void US_Reports_auto::assemble_pdf()
         .arg( const_ff0 )                  //6
 	;
     }
+
+  if ( ShowAnalysis2DSAParts[ "Per-Channel Profiles" ].toInt()  )
+    html_analysis_profile_2dsa +=  html_analysis_profile_2dsa_per_channel;
   
   html_analysis_profile_2dsa += tr( "<hr>" ) ;
   //ANALYSIS: 2DSA per-channel settings: end
   
   
   //ANALYSIS: PCSA per-channel settings: begin 
-  QString html_analysis_profile_pcsa = tr(
-					  "<h3 align=left> Analysis Profile: PCSA Controls </h3>"
-					  "&nbsp;&nbsp;<br>"
-					  )
+  html_analysis_profile_pcsa = tr(
+				  "<h3 align=left> Analysis Profile: PCSA Controls </h3>"
+				  "&nbsp;&nbsp;<br>"
+				  )
     ;
 
-  html_analysis_profile_pcsa += tr(
+  QString html_analysis_profile_pcsa_flow;
+  html_analysis_profile_pcsa_flow += tr(
 				   "<table style=\"margin-left:10px\">"
 				     //PCSA
 				     "<tr>"
@@ -1132,12 +1192,18 @@ void US_Reports_auto::assemble_pdf()
     .arg( cAPp.job_run ? tr( "YES" ) : tr( "no" ) )
     ;
 
+  if ( ShowAnalysisPCSAParts[ "Job Flow Summary" ].toInt()  )
+    html_analysis_profile_pcsa +=  html_analysis_profile_pcsa_flow;
+  //End of PCSA Flow
+  
+
+  QString html_analysis_profile_pcsa_per_channel;
   if ( cAPp.job_run )
     {
       int nchna_pcsa   = cAPp.parms.size();
       for ( int i = 0; i < nchna_pcsa; i++ )
 	{
-	  html_analysis_profile_pcsa += tr(
+	  html_analysis_profile_pcsa_per_channel += tr(
 					   "<table>"		   
 					     "<tr>"
 					        "<td><b>Channel:</b> &nbsp;&nbsp;&nbsp;&nbsp; </td> <td><b>%1</b></td>"
@@ -1156,7 +1222,7 @@ void US_Reports_auto::assemble_pdf()
 	  QString z_data =  cAPp.parms[ i ].z_type + ", " +
 	                    QString::number( cAPp.parms[ i ].z_value );
 	                 	  
-	  html_analysis_profile_pcsa += tr(
+	  html_analysis_profile_pcsa_per_channel += tr(
 					   "<table style=\"margin-left:30px\">"
 					     "<tr><td> Curve Type:                </td>  <td> %1 </td> </tr>"
 					     "<tr><td> X Axis Type, Min, Max:     </td>  <td> %2 </td> </tr>"
@@ -1185,6 +1251,9 @@ void US_Reports_auto::assemble_pdf()
 	;
 	}
     }
+
+  if ( ShowAnalysisPCSAParts[ "Per-Channel Profiles" ].toInt()  )
+    html_analysis_profile_pcsa +=  html_analysis_profile_pcsa_per_channel;
   
   html_analysis_profile_pcsa += tr( "<hr>" ) ;
   //ANALYSIS: PCSA per-channel settings: end
@@ -1204,25 +1273,38 @@ void US_Reports_auto::assemble_pdf()
     .arg( currProto. protoname )
     ;
 
-  //Main assembly
+  
+  //Main assembly: reportMask based
   QString html_assembled = QString("");
   html_assembled +=
     html_header
     + html_title
-    + html_paragraph_open
-    + html_general
-    + html_lab_rotor
-    + html_speed
-    + html_cells
-    + html_solutions
-    + html_optical
-    + html_ranges
-    + html_scan_count
-    + html_analysis_profile
-    + html_analysis_profile_2dsa
-    + html_analysis_profile_pcsa 
-    + html_paragraph_close
+    + html_paragraph_open;
+
+  assemble_parts( html_assembled );
+  
+  html_assembled += html_paragraph_close
     + html_footer;
+  
+  
+  // html_assembled +=
+  //   html_header
+  //   + html_title
+  //   + html_paragraph_open
+  //   + html_general
+  //   + html_lab_rotor
+  //   + html_operator
+  //   + html_speed
+  //   + html_cells
+  //   + html_solutions
+  //   + html_optical
+  //   + html_ranges
+  //   + html_scan_count
+  //   + html_analysis_profile
+  //   + html_analysis_profile_2dsa
+  //   + html_analysis_profile_pcsa 
+  //   + html_paragraph_close
+  //   + html_footer;
     
   QTextDocument document;
   document.setHtml( html_assembled );
@@ -1237,6 +1319,166 @@ void US_Reports_auto::assemble_pdf()
   printer.setPageMargins(QMarginsF(15, 15, 15, 15));
   
   document.print(&printer);
+}
+
+//assemble parts of the PDF based on mask
+void US_Reports_auto::assemble_parts( QString & html_str )
+{
+  // for( int i=0; i<topLevelItems.size(); ++i  )
+  //   qDebug() << "toplevel names, vals -- " << topLevelItems[i] << topLevelItems_vals[i];
+  
+  QMap < QString, bool >::iterator top;
+  for ( top = ShowReportParts.begin(); top != ShowReportParts.end(); ++top )
+    {
+      qDebug() << "QMap key, val -- " << top.key() << top.value();
+      
+      if ( top.key().contains("General") && top.value() )
+    	html_str += html_general;
+      if ( top.key().contains("Rotor") && top.value() )
+    	html_str += html_lab_rotor;
+      if ( top.key().contains("Operator") && top.value() )
+    	html_str += html_operator;
+      if ( top.key().contains("Speed") && top.value() )
+    	html_str += html_speed;
+      if ( top.key().contains("Cells") && top.value() )
+    	html_str += html_cells;
+
+      if ( top.key().contains("Solutions") && top.value() )
+	html_str += html_solutions;
+          
+      if ( top.key().contains("Optical Systems") && top.value() )
+    	html_str += html_optical;      
+      if ( top.key().contains("Ranges") && top.value() )
+    	html_str += html_ranges;
+      if ( top.key().contains("Scan Counts") && top.value() )
+    	html_str += html_scan_count;
+
+      //Analysis
+      if ( top.key().contains("Analysis Profile") && top.value() )
+    	{
+	  if ( has_anagen_items ) 
+	    html_str += html_analysis_profile;
+	  if ( has_ana2dsa_items ) 
+	    html_str += html_analysis_profile_2dsa;
+	  if ( has_anapcsa_items ) 
+	    html_str += html_analysis_profile_pcsa ;
+    	}
+    }
+}
+
+//Pasre reportMask JSON
+void US_Reports_auto::parse_mask_json( void )
+{
+  QJsonDocument jsonDoc = QJsonDocument::fromJson( reportMask.toUtf8() );
+  QJsonObject json = jsonDoc.object();
+
+  int has_sol_items = 0;
+  int has_analysis_items = 0;
+  has_anagen_items = 0;
+  has_ana2dsa_items = 0;
+  has_anapcsa_items = 0;
+  
+  foreach(const QString& key, json.keys())
+    {
+      QJsonValue value = json.value(key);
+      qDebug() << "Key = " << key << ", Value = " << value;//.toString();
+
+      if ( value.isString() )
+	{
+	  if ( value.toString().toInt() )
+	      ShowReportParts[ key ] = true;
+	  else
+	    ShowReportParts[ key ] = false;
+	}
+      else if ( value.isArray() )
+	ShowReportParts[ key ] = true;
+
+      //treat Solutions && Analysis: nested JSON
+      if ( key.contains("Solutions") || key.contains("Analysis") )
+	{
+	   QJsonArray json_array = value.toArray();
+	   for (int i=0; i < json_array.size(); ++i )
+	     {
+	       foreach(const QString& array_key, json_array[i].toObject().keys())
+		 {
+		   if (  key.contains("Solutions") )
+		     {
+		       solutionItems      << array_key;
+		       solutionItems_vals << json_array[i].toObject().value(array_key).toString();
+
+		       ShowSolutionParts[ array_key ] = json_array[i].toObject().value(array_key).toString();
+		       if ( ShowSolutionParts[ array_key ].toInt() )
+			 ++has_sol_items;
+		     }
+		   if (  key.contains("Analysis") )
+		     {
+		       QJsonObject newObj = json_array[i].toObject().value(array_key).toObject();
+		       analysisItems << array_key;
+
+		       foreach ( const QString& n_key, newObj.keys() )
+			 {
+			   QString analysis_cathegory_item_value  = newObj.value( n_key ).toString();
+			   
+			   if ( analysis_cathegory_item_value.toInt() )
+			     ++has_analysis_items;
+			   
+			   if ( array_key.contains("General") )
+			     {
+			       analysisGenItems << n_key;
+			       analysisGenItems_vals << newObj.value( n_key ).toString();
+
+			       ShowAnalysisGenParts[ n_key ] = analysis_cathegory_item_value;
+			       if ( ShowAnalysisGenParts[ n_key ].toInt() )
+				 ++has_anagen_items;
+			     }
+			   
+			   if ( array_key.contains("2DSA") )
+			     {
+			       analysis2DSAItems << n_key;
+			       analysis2DSAItems_vals << newObj.value( n_key ).toString();
+
+			       ShowAnalysis2DSAParts[ n_key ] = analysis_cathegory_item_value;
+			       if ( ShowAnalysis2DSAParts[ n_key ].toInt() )
+				 ++has_ana2dsa_items;
+			     }
+			   
+			   if ( array_key.contains("PCSA") ) 
+			     {
+			       analysisPCSAItems << n_key;
+			       analysisPCSAItems_vals << newObj.value( n_key ).toString();
+
+			       ShowAnalysisPCSAParts[ n_key ] = analysis_cathegory_item_value;
+			       if ( ShowAnalysisPCSAParts[ n_key ].toInt() )
+				 ++has_anapcsa_items;
+			     }
+			 }
+		     }
+		 }
+	     }
+	   
+	   //Set if to show "Solutions" based on children items
+	   if ( key.contains("Solutions") &&  !has_sol_items )
+	     ShowReportParts[ key ] = false;
+
+	   if ( key.contains("Analysis") &&  !has_analysis_items )
+	     ShowReportParts[ key ] = false;
+	}
+    }
+
+  
+  qDebug() << "solutionItems: "      << solutionItems;
+  qDebug() << "solutionItems_vals: " << solutionItems_vals;
+
+  qDebug() << "analysisItems: "      << analysisItems;
+  
+  qDebug() << "analysisGenItems: "   << analysisGenItems;
+  qDebug() << "analysisGenItems_vals: " << analysisGenItems_vals;
+
+  qDebug() << "analysis2DSAItems: "  << analysis2DSAItems;
+  qDebug() << "analysis2DSAItems_vals: " << analysis2DSAItems_vals;
+
+  qDebug() << "analysisPCSAItems: "  << analysisPCSAItems;
+  qDebug() << "analysisPCSAItems_vals: " << analysisPCSAItems_vals;
 }
 
 //Fetch Ranges details && add to html_solutions
@@ -1312,12 +1554,15 @@ void US_Reports_auto::add_solution_details( const QString sol_id, const QString 
   
 
   //Get analytes information
-  html_solutions += tr(
-		       "<table style=\"margin-left:20px\">"
-		          "<caption align=left> <b><i>Analytes Information</i></b> </caption>"
-		       "</table>"
-		       )
-    ;
+  if ( ShowSolutionParts[ "Analyte Information" ].toInt()  )
+    {
+      html_solutions += tr(
+			   "<table style=\"margin-left:20px\">"
+			   "<caption align=left> <b><i>Analytes Information</i></b> </caption>"
+			   "</table>"
+			   )
+	;
+    }
   
   QString analyte_gen_info;
   QString analyte_detailed_info;
@@ -1449,18 +1694,21 @@ void US_Reports_auto::add_solution_details( const QString sol_id, const QString 
 	    ;
 	}
 
-      //add info on the current analyte to html_solutions string 
-      html_solutions += tr(
-			   "<table style=\"margin-left:40px\">"
-			      "%1"
-			   "</table>"
-			   "<table style=\"margin-left:60px\">"
-			      "%2"
-			   "</table>"  
-			   )
-	.arg( analyte_gen_info )
-	.arg( analyte_detailed_info )
-	;     
+      //add info on the current analyte to html_solutions string
+      if ( ShowSolutionParts[ "Analyte Information" ].toInt()  )
+	{
+	  html_solutions += tr(
+			       "<table style=\"margin-left:40px\">"
+			         "%1"
+			       "</table>"
+			       "<table style=\"margin-left:60px\">"
+			         "%2"
+			       "</table>"  
+			       )
+	    .arg( analyte_gen_info )
+	    .arg( analyte_detailed_info )
+	    ;
+	}
       
     }
 
@@ -1513,26 +1761,29 @@ void US_Reports_auto::add_solution_details( const QString sol_id, const QString 
 
 
   //append html string: buffer general info
-  html_solutions += tr(
-		       "<table style=\"margin-left:30px\">"
-		          "<caption align=left> <b><i>Buffer Information</i></b> </caption>"
-		       "</table>"
-		       
-		       "<table style=\"margin-left:70px\">"
+  if ( ShowSolutionParts[ "Buffer Information" ].toInt()  )
+    {
+      html_solutions += tr(
+			   "<table style=\"margin-left:30px\">"
+			   "<caption align=left> <b><i>Buffer Information</i></b> </caption>"
+			   "</table>"
+			   
+			   "<table style=\"margin-left:70px\">"
 		           "%1"
-		       "</table>"
-		       "<table style=\"margin-left:100px\">"
+			   "</table>"
+			   "<table style=\"margin-left:100px\">"
 		           "%2"
-		       "</table>"
-		         "<table style=\"margin-left:130px\">"
+			   "</table>"
+			   "<table style=\"margin-left:130px\">"
 		           "%3"
-		       "</table>"  
-		       "<br>"
-		       )
-    .arg( buffer_gen_info )
-    .arg( buffer_detailed_info )
-    .arg( buffer_components_info )
-    ;
+			   "</table>"  
+			   "<br>"
+			   )
+	.arg( buffer_gen_info )
+	.arg( buffer_detailed_info )
+	.arg( buffer_components_info )
+	;
+    }
 }
 
 

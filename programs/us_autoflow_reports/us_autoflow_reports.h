@@ -30,10 +30,48 @@ class US_Reports_auto : public US_Widgets
 	 QStringList  chndescs_alt;
 	 QMap< QString, QMap < QString, US_ReportGMP > > ch_reports;
 	 QMap< QString, QList< double > > ch_wvls;
+
+	 QMap <QString, bool >    ShowReportParts;
+	 QMap <QString, QString > ShowSolutionParts;
+	 QMap <QString, QString > ShowAnalysisGenParts;
+	 QMap <QString, QString > ShowAnalysis2DSAParts;
+	 QMap <QString, QString > ShowAnalysisPCSAParts;
+	 int has_anagen_items;
+	 int has_ana2dsa_items;
+	 int has_anapcsa_items;
 	 
-	 
-	 	 
       private:
+	 QString html_general;
+	 QString html_lab_rotor;
+	 QString html_operator;
+	 QString html_speed;
+	 QString html_cells;
+	 QString html_solutions;
+	 QString html_optical;
+	 QString html_ranges;
+	 QString html_scan_count;
+	 QString html_analysis_profile;
+	 QString html_analysis_profile_2dsa;
+	 QString html_analysis_profile_pcsa; 
+	 
+	 QString reportMask;
+	 /* QStringList topLevelItems; */
+	 /* QStringList topLevelItems_vals; */
+	 
+	 QStringList solutionItems;
+	 QStringList solutionItems_vals;
+	 
+	 QStringList analysisItems;
+	 
+	 QStringList analysisGenItems;
+	 QStringList analysisGenItems_vals;
+	 
+	 QStringList analysis2DSAItems;
+	 QStringList analysis2DSAItems_vals;
+	 
+	 QStringList analysisPCSAItems;
+	 QStringList analysisPCSAItems_vals;
+	 
 	 QPushButton*  pb_download_report;
 
 	 QString    AProfileGUID;
@@ -74,6 +112,8 @@ class US_Reports_auto : public US_Widgets
 	 void  add_solution_details( const QString, const QString, QString& );
 	 void  add_ranges_details(  QString& );
 	 void  inherit_protocol( US_RunProtocol* );
+	 void  parse_mask_json ( void );
+	 void  assemble_parts( QString& );
 
       private slots:
 	void initPanel( QMap < QString, QString > & );

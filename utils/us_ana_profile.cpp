@@ -68,7 +68,7 @@ US_AnaProfile::US_AnaProfile()
                   "{\"Analyte Information\":   \"1\"},"
                   "{\"Buffer  Information\":   \"1\"}"
                "],"
-      "\"G. Optics\":                  \"1\","
+      "\"G. Optical Systems\":         \"1\","
       "\"H. Ranges\":                  \"1\","
       "\"I. Scan Counts and Intervals for Optics\": \"1\","
       "\"J. Analysis Profile\":"
