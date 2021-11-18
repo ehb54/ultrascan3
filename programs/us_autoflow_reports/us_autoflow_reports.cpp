@@ -87,8 +87,8 @@ US_Reports_auto::US_Reports_auto() : US_Widgets()
   // protocol_details[ "runID" ]        = QString("1699");
  
   // //report 4-channels, with reportMask: just solution info
-  // protocol_details[ "aprofileguid" ] = QString("3ab7e103-cb7f-4976-aca1-494e2bc89997");
-  // protocol_details[ "protocolName" ] = QString("test_Nov17_mask_2");
+  // protocol_details[ "aprofileguid" ] = QString("25a192dc-5cd1-4377-8077-0830e0a67078");
+  // protocol_details[ "protocolName" ] = QString("test_Nov17_mask_3");
   // protocol_details[ "invID_passed" ] = QString("12");
   // protocol_details[ "runID" ]        = QString("1771");
   
@@ -1391,7 +1391,7 @@ void US_Reports_auto::parse_mask_json( void )
 	    ShowReportParts[ key ] = false;
 	}
       else if ( value.isArray() )
-	ShowReportParts[ key ] = true;
+	ShowReportParts[ key ] = true;  //for now
 
       //treat Solutions && Analysis: nested JSON
       if ( key.contains("Solutions") || key.contains("Analysis") )
@@ -1403,9 +1403,6 @@ void US_Reports_auto::parse_mask_json( void )
 		 {
 		   if (  key.contains("Solutions") )
 		     {
-		       solutionItems      << array_key;
-		       solutionItems_vals << json_array[i].toObject().value(array_key).toString();
-
 		       ShowSolutionParts[ array_key ] = json_array[i].toObject().value(array_key).toString();
 		       if ( ShowSolutionParts[ array_key ].toInt() )
 			 ++has_sol_items;
@@ -1413,8 +1410,7 @@ void US_Reports_auto::parse_mask_json( void )
 		   if (  key.contains("Analysis") )
 		     {
 		       QJsonObject newObj = json_array[i].toObject().value(array_key).toObject();
-		       analysisItems << array_key;
-
+		      
 		       foreach ( const QString& n_key, newObj.keys() )
 			 {
 			   QString analysis_cathegory_item_value  = newObj.value( n_key ).toString();
@@ -1424,9 +1420,6 @@ void US_Reports_auto::parse_mask_json( void )
 			   
 			   if ( array_key.contains("General") )
 			     {
-			       analysisGenItems << n_key;
-			       analysisGenItems_vals << newObj.value( n_key ).toString();
-
 			       ShowAnalysisGenParts[ n_key ] = analysis_cathegory_item_value;
 			       if ( ShowAnalysisGenParts[ n_key ].toInt() )
 				 ++has_anagen_items;
@@ -1434,9 +1427,6 @@ void US_Reports_auto::parse_mask_json( void )
 			   
 			   if ( array_key.contains("2DSA") )
 			     {
-			       analysis2DSAItems << n_key;
-			       analysis2DSAItems_vals << newObj.value( n_key ).toString();
-
 			       ShowAnalysis2DSAParts[ n_key ] = analysis_cathegory_item_value;
 			       if ( ShowAnalysis2DSAParts[ n_key ].toInt() )
 				 ++has_ana2dsa_items;
@@ -1444,9 +1434,6 @@ void US_Reports_auto::parse_mask_json( void )
 			   
 			   if ( array_key.contains("PCSA") ) 
 			     {
-			       analysisPCSAItems << n_key;
-			       analysisPCSAItems_vals << newObj.value( n_key ).toString();
-
 			       ShowAnalysisPCSAParts[ n_key ] = analysis_cathegory_item_value;
 			       if ( ShowAnalysisPCSAParts[ n_key ].toInt() )
 				 ++has_anapcsa_items;
@@ -1464,21 +1451,6 @@ void US_Reports_auto::parse_mask_json( void )
 	     ShowReportParts[ key ] = false;
 	}
     }
-
-  
-  qDebug() << "solutionItems: "      << solutionItems;
-  qDebug() << "solutionItems_vals: " << solutionItems_vals;
-
-  qDebug() << "analysisItems: "      << analysisItems;
-  
-  qDebug() << "analysisGenItems: "   << analysisGenItems;
-  qDebug() << "analysisGenItems_vals: " << analysisGenItems_vals;
-
-  qDebug() << "analysis2DSAItems: "  << analysis2DSAItems;
-  qDebug() << "analysis2DSAItems_vals: " << analysis2DSAItems_vals;
-
-  qDebug() << "analysisPCSAItems: "  << analysisPCSAItems;
-  qDebug() << "analysisPCSAItems_vals: " << analysisPCSAItems_vals;
 }
 
 //Fetch Ranges details && add to html_solutions

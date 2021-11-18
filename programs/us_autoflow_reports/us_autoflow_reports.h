@@ -55,23 +55,7 @@ class US_Reports_auto : public US_Widgets
 	 QString html_analysis_profile_pcsa; 
 	 
 	 QString reportMask;
-	 /* QStringList topLevelItems; */
-	 /* QStringList topLevelItems_vals; */
-	 
-	 QStringList solutionItems;
-	 QStringList solutionItems_vals;
-	 
-	 QStringList analysisItems;
-	 
-	 QStringList analysisGenItems;
-	 QStringList analysisGenItems_vals;
-	 
-	 QStringList analysis2DSAItems;
-	 QStringList analysis2DSAItems_vals;
-	 
-	 QStringList analysisPCSAItems;
-	 QStringList analysisPCSAItems_vals;
-	 
+
 	 QPushButton*  pb_download_report;
 
 	 QString    AProfileGUID;
