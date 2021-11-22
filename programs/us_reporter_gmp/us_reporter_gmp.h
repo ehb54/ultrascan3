@@ -1,5 +1,5 @@
-#ifndef US_REPORTS_AUTO_H
-#define US_REPORTS_AUTO_H
+#ifndef US_REPORTER_GMP_H
+#define US_REPORTER_GMP_H
 
 #include "us_widgets.h"
 #include "us_db2.h"
@@ -8,19 +8,27 @@
 #include "us_protocol_util.h"
 #include "../us_analysis_profile/us_analysis_profile.h"
 #include "us_solution.h"
+#include "us_help.h"
+#include "us_extern.h"
+#include "us_select_item.h"
 
-class US_Reports_auto : public US_Widgets
+class US_ReporterGMP : public US_Widgets
 {
    Q_OBJECT
 
       public:
-         US_Reports_auto();
+         US_ReporterGMP();
 	 
-	 QVBoxLayout* panel;
-	 QGridLayout* genL;
+	 /* QVBoxLayout* panel; */
+	 /* QGridLayout* genL; */
 
+	 QTreeWidget     *genTree;
+	 QTreeWidget     *perChanTree;
+	 
 	 QProgressDialog * progress_msg;
 	 US_RunProtocol    currProto;
+
+	 QString ap_xml;
 
 	 US_AnalysisProfileGui*     sdiag; 
 	 US_AnaProfile              currAProf;
@@ -41,6 +49,10 @@ class US_Reports_auto : public US_Widgets
 	 int has_anapcsa_items;
 	 
       private:
+
+	 QList< QStringList >  autoflowdata;
+	 US_SelectItem* pdiag_autoflow;
+	 
 	 QString html_general;
 	 QString html_lab_rotor;
 	 QString html_operator;
@@ -56,7 +68,11 @@ class US_Reports_auto : public US_Widgets
 	 
 	 QString reportMask;
 
+	 US_Help       showHelp;
+
 	 QPushButton*  pb_download_report;
+	 QPushButton*  pb_help;
+	 QPushButton*  pb_close;
 
 	 QString    AProfileGUID;
 	 QString    ProtocolName_auto;
@@ -86,23 +102,24 @@ class US_Reports_auto : public US_Widgets
 	 
 	 QVector< QString >  Array_of_triples;
 	 
-	 //void  read_protocol_data_triples( void );
-	 //bool  read_protoOptics( QXmlStreamReader&  );
-	 //bool  read_protoRanges( QXmlStreamReader&  );
-
 	 void  get_current_date( void );
 	 void  format_needed_params( void );
 	 void  assemble_pdf( void );
 	 void  add_solution_details( const QString, const QString, QString& );
-	 void  add_ranges_details(  QString& );
-	 //void  inherit_protocol( US_RunProtocol* );
 	 void  parse_mask_json ( void );
 	 void  assemble_parts( QString& );
+	 int   list_all_autoflow_records( QList< QStringList >&  );
+	 QMap < QString, QString > read_autoflow_record( int );
+	 QString read_reporMask( QString );
 
       private slots:
 	void initPanel( QMap < QString, QString > & );
 	void reset_report_panel ( void );
 	void view_report ( void );
+	void load_gmp_run ( void );
+	
+	void help          ( void )
+	{ showHelp.show_help( "reporter_gmp.html" ); };
 	
       signals:
 	void reset_reports( void );

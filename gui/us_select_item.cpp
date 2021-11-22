@@ -62,6 +62,11 @@ US_SelectItem::US_SelectItem( QList< QStringList >& items,
 	   deleted_button_autoflow  = true;
 	   autoflow_da     = true;
 	 }
+       if( add_label == "AUTOFLOW_GMP_REPORT")
+	 {
+	   
+	   
+	 }
      }
    
    selxP             = aselxP;
