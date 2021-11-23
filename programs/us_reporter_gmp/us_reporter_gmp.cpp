@@ -37,14 +37,14 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   //leftLayout
   QLabel*      bn_actions     = us_banner( tr( "Actions:" ) );
   QLabel*      lb_loaded_run  = us_label( tr( "Loaded Run:" ) );
-  QLineEdit*   le_loaded_run  = us_lineedit( tr(""), 0, true );
+  le_loaded_run               = us_lineedit( tr(""), 0, true );
 
   QPushButton* pb_loadrun       = us_pushbutton( tr( "Load GMP Run" ) );
-  QPushButton* pb_gen_report    = us_pushbutton( tr( "Generate Report" ) );
-  QPushButton* pb_view_report   = us_pushbutton( tr( "View Report" ) );
-  QPushButton* pb_reset_trees   = us_pushbutton( tr( "Reset Trees" ) );
-  pb_help       = us_pushbutton( tr( "Help" ) );
-  pb_close      = us_pushbutton( tr( "Close" ) );
+  pb_gen_report    = us_pushbutton( tr( "Generate Report" ) );
+  pb_view_report   = us_pushbutton( tr( "View Report" ) );
+  pb_reset_trees   = us_pushbutton( tr( "Reset Trees" ) );
+  pb_help          = us_pushbutton( tr( "Help" ) );
+  pb_close         = us_pushbutton( tr( "Close" ) );
 		
   int row           = 0;
   buttonsLayout->addWidget( bn_actions,     row++, 0, 1, 12 );
@@ -54,10 +54,14 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   buttonsLayout->addWidget( pb_gen_report,  row++, 0, 1, 12 );
   buttonsLayout->addWidget( pb_view_report, row++, 0, 1, 12 );
   buttonsLayout->addWidget( pb_reset_trees, row++, 0, 1, 12 );
-  
+
   buttonsLayout->addWidget( pb_help,        row,   0, 1, 6, Qt::AlignBottom );
   buttonsLayout->addWidget( pb_close,       row++, 6, 1, 6, Qt::AlignBottom );
- 
+
+  pb_gen_report  ->setEnabled( false );
+  pb_view_report ->setEnabled( false );
+  pb_reset_trees ->setEnabled( false );
+    
   connect( pb_help,    SIGNAL( clicked()      ),
 	   this,       SLOT(   help()         ) );
   connect( pb_close,   SIGNAL( clicked()      ),
@@ -65,9 +69,8 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
 
   connect( pb_loadrun, SIGNAL( clicked()      ),
 	   this,       SLOT(   load_gmp_run()         ) );
-  
-  
-  
+
+    
   //rightLayout: genTree
   QLabel*      lb_gentree  = us_label(      tr( "General Report Profile Settings:" ) );
   QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
@@ -77,6 +80,7 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   genTree->setHeaderLabels( theads );
   genTree->setFont( QFont( US_Widgets::fixedFont().family(),
 			      US_GuiSettings::fontSize() + 1 ) );
+  genTree->installEventFilter   ( this );
   genTreeLayout->addWidget( lb_gentree );
   genTreeLayout->addWidget( genTree );
   
@@ -106,7 +110,7 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   mainLayout->setStretchFactor( leftLayout, 6 );
   mainLayout->setStretchFactor( rghtLayout, 8 );
   
-  resize( 1060, 650 );
+  resize( 1350, 800 );
 }
 
 //load GMP run
@@ -134,9 +138,8 @@ void US_ReporterGMP::load_gmp_run ( void )
     {
       autoflow_id_selected  = autoflowdata[ prx ][ 0 ];
 
-      //clean trees
-      genTree     ->clear();
-      perChanTree ->clear();
+      //reset Gui && internal structures
+      reset_report_panel();
     }
   else
     return;
@@ -149,22 +152,12 @@ void US_ReporterGMP::load_gmp_run ( void )
   
   protocol_details[ "autoflowID" ] = QString::number(autoflowID);
 
-  QString stage        = protocol_details[ "status" ];
-  QString currDir      = protocol_details[ "dataPath" ];
-  QString invID_passed = protocol_details[ "invID_passed" ];
-  QString ProtName     = protocol_details[ "protocolName" ];
-  QString expName      = protocol_details[ "experimentName" ];
-  QString correctRadii = protocol_details[ "correctRadii" ];
-  QString expAborted   = protocol_details[ "expAborted" ];
-  QString runID        = protocol_details[ "runID" ];
-  QString exp_label    = protocol_details[ "label" ];
+  AProfileGUID       = protocol_details[ "aprofileguid" ];
+  ProtocolName_auto  = protocol_details[ "protocolName" ];
+  invID              = protocol_details[ "invID_passed" ].toInt();
+  runID              = protocol_details[ "runID" ];
+  
 
-  QString gmp_Run      = protocol_details[ "gmpRun" ];
-  QString filename     = protocol_details[ "filename" ];
-  QString aprofileguid = protocol_details[ "aprofileguid" ];
-  QString analysisIDs  = protocol_details[ "analysisIDs" ];
-
-  qDebug() << "CURR DIRECTORY : "   << currDir;
   qDebug() << "1.ExpAborted: "      << protocol_details[ "expAborted" ];
   qDebug() << "1.CorrectRadii: "    << protocol_details[ "correctRadii" ];
 
@@ -172,14 +165,17 @@ void US_ReporterGMP::load_gmp_run ( void )
   qDebug() << "GMP Run ? "      << protocol_details[ "gmpRun" ];
 
   qDebug() << "AnalysisIDs: "   << protocol_details[ "analysisIDs" ];
-  qDebug() << "aprofileguid: "  << aprofileguid;
+  qDebug() << "aprofileguid: "  << AProfileGUID ;
   
-  //Now, read protocol's 'reportMask' && reportItems masks && populate trees
-  
-  QString reportMask = read_reporMask( aprofileguid );
-  qDebug() << "Report Mask General: " << reportMask;
 
-  
+  //Now, read protocol's 'reportMask' && reportItems masks && populate trees
+  read_protocol_and_reportMasks( );
+  build_genTree();
+
+  le_loaded_run ->setText( protocol_details[ "filename" ] );
+  pb_gen_report  ->setEnabled( true );
+  //pb_view_report ->setEnabled( true );
+  pb_reset_trees ->setEnabled( true );
 }
 
 // Query autoflow (history) table for records
@@ -215,10 +211,11 @@ int US_ReporterGMP::list_all_autoflow_records( QList< QStringList >& autoflowdat
 
       QDateTime time_created     = db->value( 13 ).toDateTime().toUTC();
       QString gmpRun             = db->value( 14 ).toString();
+      QString full_runname       = db->value( 15 ).toString();
       
       QDateTime local(QDateTime::currentDateTime());
 
-      autoflowentry << id << runname << optimaname  << time_created.toString(); // << time_started.toString(); // << local.toString( Qt::ISODate );
+      autoflowentry << id << full_runname << optimaname  << time_created.toString(); // << time_started.toString(); // << local.toString( Qt::ISODate );
 
       if ( time_started.toString().isEmpty() )
 	autoflowentry << QString( tr( "NOT STARTED" ) );
@@ -235,8 +232,10 @@ int US_ReporterGMP::list_all_autoflow_records( QList< QStringList >& autoflowdat
 	status = "LIMS_IMPORT";
       
       autoflowentry << status << gmpRun;
-      
-      autoflowdata  << autoflowentry;
+
+      if ( !full_runname.isEmpty() )
+	autoflowdata  << autoflowentry;
+
       nrecs++;
     }
 
@@ -301,34 +300,361 @@ QMap< QString, QString>  US_ReporterGMP::read_autoflow_record( int autoflowID  )
 }
 
 //read protocol's rpeortMask
-QString US_ReporterGMP::read_reporMask( QString aprofGUID )
+void US_ReporterGMP::read_protocol_and_reportMasks( void )
 {
-  US_Passwd  pw;
-  US_DB2* dbP    = new US_DB2( pw.getPasswd() );
+  //read protocol into US_RunProtocol structure:
+  US_Passwd pw;
+  QString masterPW = pw.getPasswd();
+  US_DB2 db( masterPW );
   
-  ap_xml.clear();
-  int status;
-  QString reportMask_DB;
-  
-  QStringList qry;
-  qry << "get_aprofile_info" << aprofGUID;
-  dbP->query( qry );
-  
-  qDebug() << "read_reportMask: query, status -- " << qry;
-  
-  if ( dbP->lastErrno() == US_DB2::OK ) 
+  if ( db.lastErrno() != US_DB2::OK )
     {
-      while ( dbP->next() )
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Read protocol: Could not connect to database \n" ) + db.lastError() );
+      return;
+    }
+
+  QString xmlstr( "" );
+  US_ProtocolUtil::read_record_auto( ProtocolName_auto, invID,  &xmlstr, NULL, &db );
+  QXmlStreamReader xmli( xmlstr );
+  currProto. fromXml( xmli );
+    
+  //Debug: protocol
+  qDebug() << "Protocols' details: -- "
+	   << currProto.investigator
+	   << currProto.runname
+	   << currProto.protoname
+	   << currProto.protoID
+	   << currProto.project
+	   << currProto.temperature
+	   << currProto.temeq_delay
+	   << currProto.exp_label;
+
+  //read AProfile into US_AnaProfile structure
+  sdiag = new US_AnalysisProfileGui;
+  sdiag->inherit_protocol( &currProto );
+  currAProf              = sdiag->currProf;
+  currAProf.protoGUID    = currProto.protoGUID;
+  currAProf.protoID      = currProto.protoID;
+  currAProf.protoname    = currProto.protoname;
+  //2DSA parms
+  cAP2                   = currAProf.ap2DSA;
+  //PCSA parms
+  cAPp                   = currAProf.apPCSA;
+  //Channel descriptions
+  chndescs               = currAProf.chndescs;
+  //Channel alt_descriptions
+  chndescs_alt           = currAProf.chndescs_alt;
+  //Channel reports
+  ch_reports             = currAProf.ch_reports;
+  //Channel wavelengths
+  ch_wvls                = currAProf.ch_wvls;
+
+  //report Mask
+  reportMask             = currAProf.report_mask;
+  parse_gen_mask_json();
+
+  qDebug() << "ReportMask: " << reportMask;
+}
+
+//parse JSON for general rpeort mask
+void US_ReporterGMP::parse_gen_mask_json ( void )
+{
+  QJsonDocument jsonDoc = QJsonDocument::fromJson( reportMask.toUtf8() );
+  json = jsonDoc.object();
+
+  topLevelItems = json.keys();
+  
+  foreach(const QString& key, json.keys())
+    {
+      QJsonValue value = json.value(key);
+      qDebug() << "Key = " << key << ", Value = " << value;//.toString();
+      
+      if ( key.contains("Solutions") || key.contains("Analysis") )
 	{
-	  //currProf.aprofID     = dbP->value( 0 ).toInt();
-	  //currProf.aprofname   = dbP->value( 1 ).toString();
-	  ap_xml               = dbP->value( 2 ).toString();
-	  reportMask_DB        = dbP->value( 4 ).toString();
+	   QJsonArray json_array = value.toArray();
+	   for (int i=0; i < json_array.size(); ++i )
+	     {
+	       foreach(const QString& array_key, json_array[i].toObject().keys())
+		 {
+		   if (  key.contains("Solutions") )
+		     {
+		       solutionItems      << array_key;
+		       solutionItems_vals << json_array[i].toObject().value(array_key).toString(); 
+		     }
+		   if (  key.contains("Analysis") )
+		     {
+		       QJsonObject newObj = json_array[i].toObject().value(array_key).toObject();
+		       analysisItems << array_key;
+
+		       foreach ( const QString& n_key, newObj.keys() )
+			 {
+			   if ( array_key.contains("General") )
+			     {
+			       analysisGenItems << n_key;
+			       analysisGenItems_vals << newObj.value( n_key ).toString();
+			     }
+			   if ( array_key.contains("2DSA") )
+			     {
+			       analysis2DSAItems << n_key;
+			       analysis2DSAItems_vals << newObj.value( n_key ).toString();
+			     }
+			   if ( array_key.contains("PCSA") ) 
+			     {
+			       analysisPCSAItems << n_key;
+			       analysisPCSAItems_vals << newObj.value( n_key ).toString();
+			     }
+			 }
+		     }
+		 }
+	     }
 	}
     }
 
-  return reportMask_DB;
+  qDebug() << "solutionItems: " << solutionItems;
+  qDebug() << "solutionItems_vals: " << solutionItems_vals;
+
+  qDebug() << "analysisItems: " << analysisItems;
+  
+  qDebug() << "analysisGenItems: " << analysisGenItems;
+  qDebug() << "analysisGenItems_vals: " << analysisGenItems_vals;
+
+  qDebug() << "analysis2DSAItems: " << analysis2DSAItems;
+  qDebug() << "analysis2DSAItems_vals: " << analysis2DSAItems_vals;
+
+  qDebug() << "analysisPCSAItems: " << analysisPCSAItems;
+  qDebug() << "analysisPCSAItems_vals: " << analysisPCSAItems_vals;
+
 }
+
+//build general report mask tree
+void US_ReporterGMP::build_genTree ( void )
+{
+  QString indent( "  " );
+  QStringList topItemNameList, solutionItemNameList, analysisItemNameList,
+              analysisGenItemNameList, analysis2DSAItemNameList, analysisPCSAItemNameList;
+  int wiubase = (int)QTreeWidgetItem::UserType;
+
+  for ( int i=0; i<topLevelItems.size(); ++i )
+    {
+      QString topItemName = topLevelItems[i];
+      topItemNameList.clear();
+      topItemNameList << "" << indent + topItemName;
+      topItem [ topItemName ] = new QTreeWidgetItem( genTree, topItemNameList, wiubase );
+
+      //Solutions: add 1-level children
+      if( topItemName.contains("Solutions") )
+	{
+	  int checked_childs = 0;
+	  for ( int is=0; is<solutionItems.size(); ++is )
+	    {
+	      QString solutionItemName = solutionItems[ is ];
+	      solutionItemNameList.clear();
+	      solutionItemNameList << "" << indent.repeated( 2 ) + solutionItemName;
+	      solutionItem [ solutionItemName ] = new QTreeWidgetItem( topItem [ topItemName ], solutionItemNameList, wiubase);
+
+	      if ( solutionItems_vals[ is ].toInt() )
+		{
+		  solutionItem [ solutionItemName ] ->setCheckState( 0, Qt::Checked );
+		  ++checked_childs;
+		}
+	      else
+		solutionItem [ solutionItemName ] ->setCheckState( 0, Qt::Unchecked );
+	    }
+	  if ( checked_childs )
+	    topItem [ topItemName ] ->setCheckState( 0, Qt::Checked );
+	  else
+	    topItem [ topItemName ] ->setCheckState( 0, Qt::Unchecked );
+	  
+	}
+      
+      //Analysis Profile: add 2-levelchildren
+      else if ( topItemName.contains("Analysis Profile") )
+	{
+	  int checked_childs = 0;
+	  for ( int ia=0; ia < analysisItems.size(); ++ia )
+	    {
+	      QString analysisItemName = analysisItems[ ia ];
+	      analysisItemNameList.clear();
+	      analysisItemNameList << "" << indent.repeated( 2 ) + analysisItemName;
+	      analysisItem [ analysisItemName ] = new QTreeWidgetItem( topItem [ topItemName ], analysisItemNameList, wiubase);
+	      
+	      //General analysis
+	      if( analysisItemName.contains("General") )
+		{
+		  int checked_gen = 0;
+		  for ( int iag=0; iag < analysisGenItems.size(); ++iag )
+		    {
+		      QString analysisGenItemName = analysisGenItems[ iag ];
+		      analysisGenItemNameList.clear();
+		      analysisGenItemNameList << "" << indent.repeated( 3 ) + analysisGenItemName;
+		      analysisGenItem [ analysisGenItemName ] = new QTreeWidgetItem( analysisItem [ analysisItemName ], analysisGenItemNameList, wiubase);
+
+		      if ( analysisGenItems_vals[ iag ].toInt() )
+			{
+			  analysisGenItem [ analysisGenItemName ] ->setCheckState( 0, Qt::Checked );
+			  ++checked_gen;
+			}
+		      else
+			analysisGenItem [ analysisGenItemName ] ->setCheckState( 0, Qt::Unchecked );
+		    }
+
+		  if ( checked_gen )
+		    {
+		      analysisItem [ analysisItemName ] ->setCheckState( 0, Qt::Checked );
+		      ++checked_childs;
+		    }
+		  else
+		    analysisItem [ analysisItemName ] ->setCheckState( 0, Qt::Unchecked );
+		}
+	      //2DSA analysis
+	      if( analysisItemName.contains("2DSA") )
+		{
+		  int checked_2dsa = 0;
+		  for ( int ia2=0; ia2 < analysis2DSAItems.size(); ++ia2 )
+		    {
+		      QString analysis2DSAItemName = analysis2DSAItems[ ia2 ];
+		      analysis2DSAItemNameList.clear();
+		      analysis2DSAItemNameList << "" << indent.repeated( 3 ) + analysis2DSAItemName;
+		      analysis2DSAItem [ analysis2DSAItemName ] = new QTreeWidgetItem( analysisItem [ analysisItemName ], analysis2DSAItemNameList, wiubase);
+
+		      if ( analysis2DSAItems_vals[ ia2 ].toInt() )
+			{
+			  analysis2DSAItem [ analysis2DSAItemName ] ->setCheckState( 0, Qt::Checked );
+			  ++checked_2dsa;
+			}
+		      else
+			analysis2DSAItem [ analysis2DSAItemName ] ->setCheckState( 0, Qt::Unchecked );
+		    }
+
+		  if ( checked_2dsa )
+		    {
+		      analysisItem [ analysisItemName ] ->setCheckState( 0, Qt::Checked );
+		      ++checked_childs;
+		    }
+		  else
+		    analysisItem [ analysisItemName ] ->setCheckState( 0, Qt::Unchecked );
+		}
+
+	      //PCSA analysis
+	      if( analysisItemName.contains("PCSA") )
+		{
+		  int checked_pcsa = 0;
+		  for ( int iap=0; iap < analysisPCSAItems.size(); ++iap )
+		    {
+		      QString analysisPCSAItemName = analysisPCSAItems[ iap ];
+		      analysisPCSAItemNameList.clear();
+		      analysisPCSAItemNameList << "" << indent.repeated( 3 ) + analysisPCSAItemName;
+		      analysisPCSAItem [ analysisPCSAItemName ] = new QTreeWidgetItem( analysisItem [ analysisItemName ], analysisPCSAItemNameList, wiubase);
+
+		      if ( analysisPCSAItems_vals[ iap ].toInt() )
+			{
+			  analysisPCSAItem [ analysisPCSAItemName ] ->setCheckState( 0, Qt::Checked );
+			  ++checked_pcsa;
+			}
+		      else
+			analysisPCSAItem [ analysisPCSAItemName ] ->setCheckState( 0, Qt::Unchecked );
+		    }
+
+		  if ( checked_pcsa )
+		    {
+		      analysisItem [ analysisItemName ] ->setCheckState( 0, Qt::Checked );
+		      ++checked_childs;
+		    }
+		  else
+		    analysisItem [ analysisItemName ] ->setCheckState( 0, Qt::Unchecked );
+		}
+	    }
+	  if ( checked_childs )
+	    topItem [ topItemName ] ->setCheckState( 0, Qt::Checked );
+	  else
+	    topItem [ topItemName ] ->setCheckState( 0, Qt::Unchecked );
+	}
+
+      //set checked/unchecked for top-level item
+      else
+	{
+	  if ( json.value( topItemName ).toString().toInt() )
+	    topItem [ topItemName ] ->setCheckState( 0, Qt::Checked );
+	  else
+	    topItem [ topItemName ] ->setCheckState( 0, Qt::Unchecked );
+	}
+    }
+
+  
+  genTree->expandAll();    
+  genTree->resizeColumnToContents( 0 );
+  genTree->resizeColumnToContents( 1 );
+
+  connect( genTree, SIGNAL( itemChanged    ( QTreeWidgetItem*, int ) ),
+  	   this,    SLOT  ( changedItem_gen( QTreeWidgetItem*, int ) ) );
+
+}
+
+//What to check/uncheck upon change in items status
+void US_ReporterGMP::changedItem_gen( QTreeWidgetItem* item, int col )
+{
+  if ( col == 0  ) //we deal with col 0 only...
+    {
+      //qDebug() << "Changed item name0" << item->text( 1 );
+
+      //if has (nested) children items
+      int children_lev1 = item->childCount();
+      if ( children_lev1 )
+	{
+	  genTree -> disconnect();
+
+	  for( int i = 0; i < children_lev1; ++i )
+	    {
+	      item->child(i)->setCheckState( 0, (Qt::CheckState) item->checkState(0) );
+
+	      int children_lev2 = item->child(i)->childCount();
+	      if ( children_lev2 )
+		{
+		  for( int ii = 0; ii < children_lev2; ++ii )
+		    {
+		      item->child(i)->child(ii)->setCheckState( 0, (Qt::CheckState) item->child(i)->checkState(0) );
+		    }
+		}
+	    }
+	  
+	  connect( genTree, SIGNAL( itemChanged( QTreeWidgetItem*, int ) ),
+	           this,       SLOT(   changedItem_gen( QTreeWidgetItem*, int ) ) );
+	}
+      
+           
+      //qDebug() << "Changed item name1 " << item->text( 1 );
+      	
+      //if has parent item
+      QTreeWidgetItem* parent_item = item->parent();
+
+      //qDebug() << "Changed item name2: " << item->text( 1 );
+      
+      if ( parent_item )
+	{
+	  //qDebug() << "Changed item name3: " << item->text( 1 );
+	  genTree -> disconnect();
+	  
+	  //qDebug() << " Current item, " << item->text( 1 ) << ", has a parent: " << parent_item->text( 1 );
+	    
+	  int checked_children = 0;
+	  int parent_item_children = parent_item ->childCount();
+	  for( int i = 0; i < parent_item_children; ++i )
+	    {
+	      if ( int( parent_item->child( i )->checkState(0) ) )
+		++checked_children;
+	    }
+	  if ( checked_children )
+	    parent_item->setCheckState( 0, Qt::Checked );
+	  else
+	    parent_item->setCheckState( 0, Qt::Unchecked );
+
+	  connect( genTree, SIGNAL( itemChanged( QTreeWidgetItem*, int ) ),
+  	           this,    SLOT(   changedItem_gen( QTreeWidgetItem*, int ) ) );
+	}
+    }
+}
+
 
 //view report
 void US_ReporterGMP::view_report ( void )
@@ -340,14 +666,57 @@ void US_ReporterGMP::view_report ( void )
 //reset
 void US_ReporterGMP::reset_report_panel ( void )
 {
+  le_loaded_run ->setText( "" );
+
+  //cleaning genTree && it's objects
+  // for (int i = 0; i < genTree->topLevelItemCount(); ++i)
+  //   {
+  //     qDeleteAll(genTree->topLevelItem(i)->takeChildren());
+  //   }
+  genTree     ->clear();
+  qApp->processEvents();
   
+  topItem.clear();
+  solutionItem.clear();
+  analysisItem.clear();
+  analysisGenItem.clear();
+  analysis2DSAItem.clear();
+  analysisPCSAItem.clear();
+
+  topLevelItems.clear();
+  solutionItems.clear();
+  solutionItems_vals.clear();
+  analysisItems.clear();
+  analysisGenItems.clear();
+  analysisGenItems_vals.clear();
+  analysis2DSAItems.clear();
+  analysis2DSAItems_vals.clear();
+  analysisPCSAItems.clear();
+  analysisPCSAItems_vals.clear();
+
+  //cleaning perTriple tree & it's objects
+  perChanTree ->clear();
+  qApp->processEvents();
+  
+  currProto = US_RunProtocol();  //ALEXEY: we need to reset US_Protocol
+  currAProf = US_AnaProfile();   //ALEXEY: we need to reset US_AnaProfile
+  
+  html_general.clear();
+  html_lab_rotor.clear();
+  html_operator.clear();
+  html_speed.clear();
+  html_cells.clear();
+  html_solutions.clear();
+  html_optical.clear();
+  html_ranges.clear();
+  html_scan_count.clear();
+  html_analysis_profile.clear();
+  html_analysis_profile_2dsa.clear();
+  html_analysis_profile_pcsa .clear();
+
+  qApp->processEvents();
 }
 
-//init correct # of us_labels rows based on passed # stages from AProfile
-void US_ReporterGMP::initPanel( QMap < QString, QString > & protocol_details )
-{
-  
-}
 
 //Format times
 void US_ReporterGMP::format_needed_params()

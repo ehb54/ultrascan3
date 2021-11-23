@@ -38,6 +38,7 @@ class US_ReporterGMP : public US_Widgets
 	 QStringList  chndescs_alt;
 	 QMap< QString, QMap < QString, US_ReportGMP > > ch_reports;
 	 QMap< QString, QList< double > > ch_wvls;
+	 QString      reportMask;
 
 	 QMap <QString, bool >    ShowReportParts;
 	 QMap <QString, QString > ShowSolutionParts;
@@ -50,9 +51,34 @@ class US_ReporterGMP : public US_Widgets
 	 
       private:
 
+	 //General report Mask
+	 QJsonObject json;
+	 QMap<QString, QTreeWidgetItem *> topItem;
+	 QMap<QString, QTreeWidgetItem *> solutionItem;
+	 QMap<QString, QTreeWidgetItem *> analysisItem;
+	 QMap<QString, QTreeWidgetItem *> analysisGenItem;
+	 QMap<QString, QTreeWidgetItem *> analysis2DSAItem;
+	 QMap<QString, QTreeWidgetItem *> analysisPCSAItem;
+	 QStringList topLevelItems;
+	 
+	 QStringList solutionItems;
+	 QStringList solutionItems_vals;
+	 
+	 QStringList analysisItems;
+	 
+	 QStringList analysisGenItems;
+	 QStringList analysisGenItems_vals;
+	 
+	 QStringList analysis2DSAItems;
+	 QStringList analysis2DSAItems_vals;
+	 
+	 QStringList analysisPCSAItems;
+	 QStringList analysisPCSAItems_vals;
+	 //End of general report mask
+	 
 	 QList< QStringList >  autoflowdata;
 	 US_SelectItem* pdiag_autoflow;
-	 
+
 	 QString html_general;
 	 QString html_lab_rotor;
 	 QString html_operator;
@@ -66,13 +92,15 @@ class US_ReporterGMP : public US_Widgets
 	 QString html_analysis_profile_2dsa;
 	 QString html_analysis_profile_pcsa; 
 	 
-	 QString reportMask;
-
 	 US_Help       showHelp;
 
 	 QPushButton*  pb_download_report;
+	 QPushButton*  pb_gen_report  ;
+	 QPushButton*  pb_view_report ;
+	 QPushButton*  pb_reset_trees ;
 	 QPushButton*  pb_help;
 	 QPushButton*  pb_close;
+	 QLineEdit*    le_loaded_run;
 
 	 QString    AProfileGUID;
 	 QString    ProtocolName_auto;
@@ -110,13 +138,17 @@ class US_ReporterGMP : public US_Widgets
 	 void  assemble_parts( QString& );
 	 int   list_all_autoflow_records( QList< QStringList >&  );
 	 QMap < QString, QString > read_autoflow_record( int );
-	 QString read_reporMask( QString );
+
+	 void read_protocol_and_reportMasks( void );
+	 void parse_gen_mask_json ( void );
+	 void build_genTree ( void );
 
       private slots:
-	void initPanel( QMap < QString, QString > & );
 	void reset_report_panel ( void );
 	void view_report ( void );
 	void load_gmp_run ( void );
+	void changedItem_gen ( QTreeWidgetItem*, int );
+	
 	
 	void help          ( void )
 	{ showHelp.show_help( "reporter_gmp.html" ); };
