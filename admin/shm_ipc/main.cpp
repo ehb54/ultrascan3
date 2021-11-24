@@ -16,6 +16,8 @@
 #define TSO QTextStream( stdout )
 #define TSE QTextStream( stderr )
 
+int shmid;
+void *shmbuf;
 
 // update if US_Global::Global changes structure
 class Global
@@ -26,8 +28,31 @@ public:
    // Add other global values as necessary
 };
 
+void signal_handler( int signal_num ) {
+   TSE << "Caught signal:" << signal_num << ". Exiting.\n";
+   // deletes it :(
+   // if ( shmid != -1 ) {
+   //    struct shmid_ds shmds;
+   //    if ( -1 == shmctl( shmid, IPC_RMID, &shmds ) ) {
+   //       TSE << "shmctl set IPC_RMID failed\n";
+   //    } else {
+   //       TSE << "shmctl set IPC_RMID\n";
+   //    }
+   // }
+   if ( shmbuf != (void *)-1 ) {
+      TSE << "Detaching Shared Memory\n";
+      shmdt( shmbuf );
+   } else {
+      TSE << "No shared memory to detach\n";
+   }
+   exit(-signal_num);
+}
+
 int main(int argc, char *argv[])
 {
+   shmid = -1;
+   shmbuf = (void *)-1;
+
    QCoreApplication a(argc, argv);
    QCoreApplication::setApplicationName("shmutil");
    QCoreApplication::setApplicationVersion("Version: 1");
@@ -37,6 +62,7 @@ int main(int argc, char *argv[])
    parser.addHelpOption();
    parser.addVersionOption();
 
+   
    parser.addOption(
                     {
                      { "u", "user" }
@@ -67,6 +93,13 @@ int main(int argc, char *argv[])
                     }
                     );
    
+   parser.addOption(
+                    {
+                     { "S", "signal" }
+                     ,"catch signals"
+                    }
+                    );
+
    parser.process(a);
 
    const QStringList args = parser.optionNames();
@@ -79,6 +112,7 @@ int main(int argc, char *argv[])
    bool    testattach     = false;
    bool    createshm      = false;
    int     sleepsec       = 0;
+   bool    catchsigs      = false;
 
    for ( int i = 0; i < (int) args.size(); ++i ) {
       QString arg = args[i];
@@ -90,8 +124,32 @@ int main(int argc, char *argv[])
          testattach = true;
       } else if ( arg == "c" ) {
          createshm = true;
+      } else if ( arg == "S" ) {
+         catchsigs = true;
       } 
    }   
+
+   if ( catchsigs ) {
+      std::set < int > sigs = {
+                               SIGABRT
+                               ,SIGALRM
+                               ,SIGFPE
+                               ,SIGHUP
+                               ,SIGILL
+                               ,SIGINT
+                               ,SIGPIPE
+                               ,SIGQUIT
+                               ,SIGSEGV
+                               ,SIGTERM
+                               ,SIGUSR1
+                               ,SIGUSR2
+      };
+      for ( auto it = sigs.begin();
+            it != sigs.end();
+            ++it ) {
+         signal( *it, signal_handler );
+      }
+   }
 
    passwd * pwinfo = getpwnam( user.toLocal8Bit().data() );
 
@@ -108,22 +166,15 @@ int main(int argc, char *argv[])
 
       // attach to existing
       {
-         int shmid = shmget( key
-                             ,sizeof(Global)
-                             ,0
-                           );
+         shmid = shmget( key
+                         ,sizeof(Global)
+                         ,0
+                         );
          if ( shmid == -1 ) {
             TSO << "shmget (attach) failed\n";
             exit(-1);
          }
          TSO << "shmget (attach) succeeded\n";
-
-         void *shmbuf;
-         if ( (void *)-1 == (shmbuf = shmat( shmid, 0, 0 ) ) ) {
-            TSO << "shmat (attach) failed\n";
-            exit(-1);
-         }
-         TSO << "shmat (attach) succeeded\n";
 
          // verify size
          struct shmid_ds shmds;
@@ -133,12 +184,24 @@ int main(int argc, char *argv[])
             exit(-1);
          }
          TSO << "shmctl (attach) IPC_STAT succeeded\n";
-         
+         TSO << "shmctl nattch is " << shmds.shm_nattch << "\n";
+
          if ( shmds.shm_segsz != sizeof(Global) ) {
             TSO << "shmctl (attach) size mismatch " << shmds.shm_segsz << " vs " << sizeof(Global) << "\n";
             exit(-1);
          }
-            
+
+         if ( (void *)-1 == (shmbuf = shmat( shmid, 0, 0 ) ) ) {
+            TSO << "shmat (attach) failed\n";
+            exit(-1);
+         }
+         TSO << "shmat (attach) succeeded\n";
+
+         if ( shmds.shm_nattch == 0 ) {
+            TSO << "zeroing data\n";
+            memset( shmbuf, 0, sizeof(Global) );
+         }
+
          // copy data
          memcpy( (void*)&global, shmbuf, sizeof(Global) );
 
@@ -156,23 +219,16 @@ int main(int argc, char *argv[])
       // create
       {
          // shm_open
-         int shmid = shmget( key
-                             ,sizeof(Global)
-                             ,IPC_CREAT | 0600
-                           );
+         shmid = shmget( key
+                         ,sizeof(Global)
+                         ,IPC_CREAT | 0600
+                         );
          if ( shmid == -1 ) {
             TSO << "shmget (create) failed\n";
             exit(-1);
          }
          TSO << "shmget (create) succeeded\n";
          
-         void *shmbuf;
-         if ( (void *)-1 == (shmbuf = shmat( shmid, 0, 0 ) ) ) {
-            TSO << "shmat (create) failed\n";
-            exit(-1);
-         }
-         TSO << "shmat (create) succedded\n";
-
          struct shmid_ds shmds;
          
          if ( -1 == shmctl( shmid, IPC_STAT, &shmds ) ) {
@@ -180,6 +236,19 @@ int main(int argc, char *argv[])
             exit(-1);
          }
          TSO << "shmctl (create) IPC_STAT succedded\n";
+         TSO << "shmctl nattch is " << shmds.shm_nattch << "\n";
+
+         void *shmbuf;
+         if ( (void *)-1 == (shmbuf = shmat( shmid, 0, 0 ) ) ) {
+            TSO << "shmat (create) failed\n";
+            exit(-1);
+         }
+         TSO << "shmat (create) succeeded\n";
+
+         if ( shmds.shm_nattch == 0 ) {
+            TSO << "zeroing data\n";
+            memset( shmbuf, 0, sizeof(Global) );
+         }
 
          // setup silly data
          {
@@ -188,18 +257,11 @@ int main(int argc, char *argv[])
             memcpy( shmbuf, (void*)&global, sizeof(Global) );
          }
 
-         if ( sleepsec ) {
-            TSO << "sleeping for " << sleepsec << " seconds\n";
-            sleep( sleepsec );
-         }
-         
-         if ( -1 == shmctl( shmid, IPC_RMID, &shmds ) ) {
-            TSO << "shmctl (create) IPC_RMID failed\n";
-            exit(-1);
-         }
-         TSO << "shmctl (create) IPC_RMID succedded\n";
-
-         exit(-1);
+         // if ( -1 == shmctl( shmid, IPC_RMID, &shmds ) ) {
+         //    TSO << "shmctl (create) IPC_RMID failed\n";
+         //    exit(-1);
+         // }
+         // TSO << "shmctl (create) IPC_RMID succedded\n";
       }
    }
 
@@ -207,6 +269,8 @@ int main(int argc, char *argv[])
       TSO << "sleeping for " << sleepsec << " seconds\n";
       sleep( sleepsec );
    }
+
+   signal_handler(0);
 
    return 0;
 }

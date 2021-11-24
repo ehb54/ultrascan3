@@ -203,7 +203,7 @@ int main(int argc, char *argv[])
          }
          TSO << "mmap succeeded\n";
          // setup the shared memory to empty
-         // ? shm_unlink(key);
+         shm_unlink(key.toLocal8Bit().data());
       }
 
    }
