@@ -277,8 +277,9 @@ void US_ReportGui::build_report_layout( void )
   QLabel* lb_low     = us_label( tr( "Range Low" ) );
   QLabel* lb_high    = us_label( tr( "Range High" ) );
   QLabel* lb_intval  = us_label( tr( "Integration Value" ) );
-  QLabel* lb_tol     = us_label( tr( "Tolerance (%)" ) );
   QLabel* lb_total   = us_label( tr( "Fraction of Total (%)" ) );
+  QLabel* lb_tol     = us_label( tr( "Tolerance (%)" ) );
+  
     
   row = 0;
   genL->addWidget( lb_type,   row,    0, 1, 2 );
@@ -286,8 +287,8 @@ void US_ReportGui::build_report_layout( void )
   genL->addWidget( lb_low,    row,    5, 1, 2 );
   genL->addWidget( lb_high,   row,    7, 1, 2 );
   genL->addWidget( lb_intval, row,    9, 1, 2 );
-  genL->addWidget( lb_tol,    row,    11, 1, 2 );
-  genL->addWidget( lb_total,  row++,  13, 1, 2 );
+  genL->addWidget( lb_total,  row,    11, 1, 2 );
+  genL->addWidget( lb_tol,    row++,  13, 1, 2 );
   //End of table header
   
   QComboBox* cb_type;  
@@ -327,8 +328,8 @@ void US_ReportGui::build_report_layout( void )
       le_low        = us_lineedit( QString::number(curr_item.range_low),  0, false  );
       le_high       = us_lineedit( QString::number(curr_item.range_high), 0, false  );
       le_intval     = us_lineedit( QString::number(curr_item.integration_val), 0, false  );
-      le_tol        = us_lineedit( QString::number(curr_item.tolerance), 0, false  );
       le_total      = us_lineedit( QString::number(curr_item.total_percent), 0, true  );
+      le_tol        = us_lineedit( QString::number(curr_item.tolerance), 0, false  );
       
       //set Object Name based on row number
       QString stchan      =  QString::number( ii ) + ": ";
@@ -337,8 +338,8 @@ void US_ReportGui::build_report_layout( void )
       le_low       -> setObjectName( stchan + "low" );
       le_high      -> setObjectName( stchan + "high" );
       le_intval    -> setObjectName( stchan + "intval" );
-      le_tol       -> setObjectName( stchan + "tol" );
       le_total     -> setObjectName( stchan + "total" );
+      le_tol       -> setObjectName( stchan + "tol" );
       
       //set connecitons btw textChanged() and slot
       connect( le_low, SIGNAL( textChanged ( const QString& ) ),
@@ -357,8 +358,8 @@ void US_ReportGui::build_report_layout( void )
       genL->addWidget( le_low,    row,    5, 1, 2 );
       genL->addWidget( le_high,   row,    7, 1, 2 );
       genL->addWidget( le_intval, row,    9, 1, 2 );
-      genL->addWidget( le_tol,    row,    11, 1, 2 );
-      genL->addWidget( le_total,  row++,  13, 1, 2 );
+      genL->addWidget( le_total,  row,    11, 1, 2 );
+      genL->addWidget( le_tol,    row++,  13, 1, 2 );
     }
   
   int ihgt        = lb_low->height();
