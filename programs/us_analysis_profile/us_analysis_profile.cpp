@@ -276,10 +276,7 @@ DbgLv(1) << "APG: ipro:  o.ii" << ii << "chname" << chname
 
       // //ALEXEY: also US_ReportGMP (blank/default for now)
       // US_ReportGMP reportGMP = US_ReportGMP();
-       
-      
-       
-      
+         
       for ( int jj = 0; jj < ods.count(); jj++ )
       {  // Create a channel entry for each optics type of this channel
          QString opdesc  = ods[ jj ];
