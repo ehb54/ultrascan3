@@ -56,6 +56,7 @@ class US_UTIL_EXTERN US_ReportGMP
       bool av_intensity_mask;
       bool experiment_duration_mask;
       bool integration_results_mask;
+      //bool show_plots;
 
       
       //Rest of parameters followign from protocol: not used so far

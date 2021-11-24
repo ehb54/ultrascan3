@@ -66,7 +66,7 @@ US_AnaProfile::US_AnaProfile()
                "["
                   "{\"Solution Information\":  \"1\"},"
                   "{\"Analyte Information\":   \"1\"},"
-                  "{\"Buffer  Information\":   \"1\"}"
+                  "{\"Buffer Information\":    \"1\"}"
                "],"
       "\"G. Optical Systems\":         \"1\","
       "\"H. Ranges\":                  \"1\","

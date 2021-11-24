@@ -18,12 +18,9 @@ class US_ReporterGMP : public US_Widgets
 
       public:
          US_ReporterGMP();
-	 
-	 /* QVBoxLayout* panel; */
-	 /* QGridLayout* genL; */
-
-	 QTreeWidget     *genTree;
-	 QTreeWidget     *perChanTree;
+	 	 
+	 QTreeWidget     * genTree;
+	 QTreeWidget     * perChanTree;
 	 
 	 QProgressDialog * progress_msg;
 	 US_RunProtocol    currProto;
@@ -37,17 +34,30 @@ class US_ReporterGMP : public US_Widgets
 	 QStringList  chndescs;       
 	 QStringList  chndescs_alt;
 	 QMap< QString, QMap < QString, US_ReportGMP > > ch_reports;
+	 QMap< QString, QMap < QString, US_ReportGMP > > ch_reports_internal;
 	 QMap< QString, QList< double > > ch_wvls;
-	 QString      reportMask;
+	 // QString      reportMask;
 
-	 QMap <QString, bool >    ShowReportParts;
-	 QMap <QString, QString > ShowSolutionParts;
-	 QMap <QString, QString > ShowAnalysisGenParts;
-	 QMap <QString, QString > ShowAnalysis2DSAParts;
-	 QMap <QString, QString > ShowAnalysisPCSAParts;
-	 int has_anagen_items;
-	 int has_ana2dsa_items;
-	 int has_anapcsa_items;
+	 struct GenReportMaskStructure
+	 {
+	   QMap <QString, bool >    ShowReportParts;
+	   QMap <QString, QString > ShowSolutionParts;
+	   QMap <QString, QString > ShowAnalysisGenParts;
+	   QMap <QString, QString > ShowAnalysis2DSAParts;
+	   QMap <QString, QString > ShowAnalysisPCSAParts;
+	   int has_anagen_items;
+	   int has_ana2dsa_items;
+	   int has_anapcsa_items;
+	 };
+
+	 GenReportMaskStructure genMask_edited;
+
+	 struct PerChanReportMaskStructure
+	 {
+	   
+	 };
+
+	 PerChanReportMaskStructure perChanMask_edited;
 	 
       private:
 
@@ -75,6 +85,12 @@ class US_ReporterGMP : public US_Widgets
 	 QStringList analysisPCSAItems;
 	 QStringList analysisPCSAItems_vals;
 	 //End of general report mask
+
+	 //perChan Report masks
+	 QMap<QString, QTreeWidgetItem *> chanItem;
+	 QMap<QString, QTreeWidgetItem *> tripleItem;
+	 QMap<QString, QTreeWidgetItem *> tripleMaskItem;
+	 
 	 
 	 QList< QStringList >  autoflowdata;
 	 US_SelectItem* pdiag_autoflow;
@@ -97,7 +113,10 @@ class US_ReporterGMP : public US_Widgets
 	 QPushButton*  pb_download_report;
 	 QPushButton*  pb_gen_report  ;
 	 QPushButton*  pb_view_report ;
-	 QPushButton*  pb_reset_trees ;
+	 QPushButton*  pb_select_all ;
+	 QPushButton*  pb_unselect_all ;
+	 QPushButton*  pb_expand_all ;
+	 QPushButton*  pb_collapse_all ;
 	 QPushButton*  pb_help;
 	 QPushButton*  pb_close;
 	 QLineEdit*    le_loaded_run;
@@ -134,22 +153,31 @@ class US_ReporterGMP : public US_Widgets
 	 void  format_needed_params( void );
 	 void  assemble_pdf( void );
 	 void  add_solution_details( const QString, const QString, QString& );
-	 void  parse_mask_json ( void );
 	 void  assemble_parts( QString& );
 	 int   list_all_autoflow_records( QList< QStringList >&  );
 	 QMap < QString, QString > read_autoflow_record( int );
 
 	 void read_protocol_and_reportMasks( void );
-	 void parse_gen_mask_json ( void );
+	 void parse_gen_mask_json ( const QString  );
 	 void build_genTree ( void );
-
+	 void build_perChanTree ( void ) ;
+	 void gui_to_parms ( void ) ;
+	 QString tree_to_json ( QMap < QString, QTreeWidgetItem * > );
+	 void parse_edited_gen_mask_json( const QString, GenReportMaskStructure &  );
+	 void parse_edited_perChan_mask_json( const QString, PerChanReportMaskStructure &  );
+	 
       private slots:
 	void reset_report_panel ( void );
 	void view_report ( void );
 	void load_gmp_run ( void );
-	void changedItem_gen ( QTreeWidgetItem*, int );
-	
-	
+	void generate_report( void );
+	void changedItem_gen    ( QTreeWidgetItem*, int );
+	void changedItem_triple ( QTreeWidgetItem*, int );
+	void select_all( void );
+	void unselect_all( void );
+	void expand_all( void );
+	void collapse_all( void );
+			
 	void help          ( void )
 	{ showHelp.show_help( "reporter_gmp.html" ); };
 	
