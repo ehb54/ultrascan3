@@ -179,6 +179,7 @@ void US_ReporterGMP::load_gmp_run ( void )
   progress_msg->setAutoClose( false );
   progress_msg->setValue( 0 );
   progress_msg->show();
+  qApp->processEvents();
   
   // Get detailed info on the autoflow record
   QMap < QString, QString > protocol_details;
@@ -218,6 +219,7 @@ void US_ReporterGMP::load_gmp_run ( void )
   qApp->processEvents();
 
   progress_msg->setValue( progress_msg->maximum() );
+  qApp->processEvents();
   progress_msg->close();
 
   //Enable some buttons
@@ -1023,12 +1025,34 @@ void US_ReporterGMP::reset_report_panel ( void )
 //Generate report
 void US_ReporterGMP::generate_report( void )
 {
+  progress_msg->setWindowTitle(tr("Generating Report"));
+  progress_msg->setLabelText( "Generating report..." );
+  int msg_range = currProto.rpSolut.nschan + 4;
+  progress_msg->setRange( 0, msg_range );
+  progress_msg->setValue( 0 );
+  progress_msg->show();
+  qApp->processEvents();
+  
   gui_to_parms();
+  progress_msg->setValue( 1 );
+  qApp->processEvents();
   
   get_current_date();
+  progress_msg->setValue( 2 );
+  qApp->processEvents();
+  
   format_needed_params();
+  progress_msg->setValue( 3 );
+  qApp->processEvents();
+  
   assemble_pdf();
-
+  progress_msg->setValue( 4 );
+  qApp->processEvents();
+  
+  progress_msg->setValue( progress_msg->maximum() );
+  qApp->processEvents();
+  progress_msg->close();
+  
   pb_view_report->setEnabled( true );
 
   //Inform user of the PDF location
@@ -1238,6 +1262,9 @@ void US_ReporterGMP::assemble_pdf()
       QString sol_id      = currProto. rpSolut. chsols[i].sol_id;
       QString sol_comment = currProto. rpSolut. chsols[i].ch_comment;
       add_solution_details( sol_id, sol_comment, html_solutions );
+
+      progress_msg->setValue( progress_msg->value() + i );
+      qApp->processEvents();
     }
 
   html_solutions += tr( "<hr>" );
@@ -2612,3 +2639,4 @@ void US_ReporterGMP::add_solution_details( const QString sol_id, const QString s
 	;
     }
 }
+
