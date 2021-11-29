@@ -1301,7 +1301,8 @@ void US_FitMeniscus::edit_update( void )
       status_fitmen_unique = read_autoflowAnalysisStages( requestID );
 
       qDebug() << "status_fitmen_unique -- " << status_fitmen_unique ;
-
+      //status_fitmen_unique is 0 if already STARTED:
+      
       if ( !status_fitmen_unique )
 	{
 	  QMessageBox::information( this,

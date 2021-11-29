@@ -3185,6 +3185,8 @@ bool US_Analysis_auto::check_fitmen_status( const QString& requestID, const QStr
   
   analysis_details = read_autoflowAnalysis_record(  &dbP, requestID );
 
+  qDebug() << "In check_fitmen 1: -- " << requestID << stageName;
+  
   if ( !analysis_details.size() )
     {
       //no record, so analysis completed/cancelled and already in the autoflowAnalysisHistory
@@ -3206,7 +3208,12 @@ bool US_Analysis_auto::check_fitmen_status( const QString& requestID, const QStr
       QString status_gen     = analysis_details["status"];
       QString nextWaitStatus = analysis_details[ "nextWaitStatus" ] ;
       QString status_json    = analysis_details["status_json"];
-      
+
+      qDebug() << "In check_fitmen 2: -- "
+	       << status_gen     << "\n"
+	       << nextWaitStatus << "\n"
+	       << status_json ;
+        
       QJsonDocument jsonDoc = QJsonDocument::fromJson( status_json.toUtf8() );
       if (!jsonDoc.isObject())
 	{
@@ -3218,10 +3225,18 @@ bool US_Analysis_auto::check_fitmen_status( const QString& requestID, const QStr
       
       //look for FITMEN | FITMEN_AUTO stage in "submitted" stages
       QString stage_name = submitted.toString();
+
+      qDebug() << "In check_fitmen 3: -- "
+	       << submitted.toString() <<  stageName;
+	
       if ( submitted.toString() == stageName )
 	{
+	  qDebug() << "In check_fitmen 4: ";
+	  
 	  if ( status_gen != "WAIT" )
 	    {
+	      qDebug() << "In check_fitmen 5: ";
+	      
 	      QMessageBox::information( this,
 					QString( tr( "%1 already processed" )).arg( stageName ),
 					QString( tr( "It appears that %1 stage has already been processed by "
@@ -3234,6 +3249,7 @@ bool US_Analysis_auto::check_fitmen_status( const QString& requestID, const QStr
 	}
       else
 	{
+	  qDebug() << "In check_fitmen 6: ";
 	  //FITMEN | FITMEN_AUTO  is no in "submitted" stages anymore, so it's processed:
 	  QMessageBox::information( this,
 				    QString( tr( "%1 already processed" )).arg( stageName ),
