@@ -68,6 +68,17 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   // QMap < QString, QString > protocol_details;
   // protocol_details[ "invID_passed" ] = QString("3");
   // protocol_details[ "analysisIDs"  ] = QString( "125" );
+
+  //What's needed ////////////////////////////////////////////////////////
+  // AProfileGUID       = protocol_details[ "aprofileguid" ];
+  // ProtocolName_auto  = protocol_details[ "protocolName" ];
+  // invID              = protocol_details[ "invID_passed" ].toInt();
+
+  // FileName           = protocol_details[ "filename" ];
+   
+  // analysisIDs        = protocol_details[ "analysisIDs" ];
+  ////////////////////////////////////////////////////////////////////////
+
   
   // initPanel( protocol_details );
 
