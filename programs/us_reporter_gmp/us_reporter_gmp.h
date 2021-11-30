@@ -96,6 +96,7 @@ class US_ReporterGMP : public US_Widgets
 	 QList< QStringList >  autoflowdata;
 	 US_SelectItem* pdiag_autoflow;
 
+	 QString html_assembled;
 	 QString html_general;
 	 QString html_lab_rotor;
 	 QString html_operator;
@@ -158,6 +159,7 @@ class US_ReporterGMP : public US_Widgets
 	 void  assemble_parts( QString& );
 	 int   list_all_autoflow_records( QList< QStringList >&  );
 	 QMap < QString, QString > read_autoflow_record( int );
+	 void  write_pdf_report( void );
 
 	 void read_protocol_and_reportMasks( void );
 	 void parse_gen_mask_json ( const QString  );
@@ -314,6 +316,9 @@ class US_ReporterGMP : public US_Widgets
 	 QPoint        rpd_pos;
 	 QString    FileName_parsed;
 
+	 //main simulation results
+	 QString rmsd_global;
+
 	 void simulate_triple( const QString );
 	 bool loadData( QMap < QString, QString > & );
 	 bool loadModel( QMap < QString, QString > & );
@@ -327,7 +332,11 @@ class US_ReporterGMP : public US_Widgets
 	 int noises_in_model_auto( QString, QStringList& );
 	 void simulateModel( QMap < QString, QString > & );
 	 void adjustModel( void );
-
+	 
+	 QString text_model(     US_Model, int );
+	 QString html_header   ( QString, QString, US_DataIO::EditedData* );
+	 QString distrib_info( void );
+	 
 	 QString get_filename( QString );
 	 
       public slots:
@@ -352,7 +361,19 @@ class US_ReporterGMP : public US_Widgets
 	void calc_residuals( void );
 	double  interp_sval( double, double*, double*,  int );
 	void plotres(   void );
-			
+
+	QString indent    (     int  )  const;
+	QString table_row( const QString&, const QString& ) const;
+	QString table_row( const QString&, const QString&,
+			   const QString& )                 const;
+	QString table_row( const QString&, const QString&,
+			   const QString&, const QString&,
+			   const QString& )                 const;
+	QString table_row( const QString&, const QString&,
+			   const QString&, const QString&,
+			   const QString&, const QString&,
+			   const QString& )                 const;
+	
 	void help          ( void )
 	{ showHelp.show_help( "reporter_gmp.html" ); };
 	
