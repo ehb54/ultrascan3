@@ -7,6 +7,7 @@
 #include "us_run_protocol.h"
 #include "us_protocol_util.h"
 #include "../us_analysis_profile/us_analysis_profile.h"
+#include "../us_fematch/us_fematch.h"
 #include "us_solution.h"
 #include "us_help.h"
 #include "us_extern.h"
@@ -126,6 +127,7 @@ class US_ReporterGMP : public US_Widgets
 	 int        invID;
 	 QString    runID;
 	 QString    filePath;
+	 QString    FileName;
 
 	 QString    current_date;
 	 
@@ -165,7 +167,175 @@ class US_ReporterGMP : public US_Widgets
 	 QString tree_to_json ( QMap < QString, QTreeWidgetItem * > );
 	 void parse_edited_gen_mask_json( const QString, GenReportMaskStructure &  );
 	 void parse_edited_perChan_mask_json( const QString, PerChanReportMaskStructure &  );
+
+	 //for model simulations:
+	 QPointer< US_ResidPlotFem >    resplotd;
+	 US_DataIO::EditedData*      rg_editdata();
+	 US_DataIO::RawData*         rg_simdata();
+	 QList< int >*               rg_excllist();
+	 US_Model*                   rg_model();
+	 US_Noise*                   rg_ti_noise();
+	 US_Noise*                   rg_ri_noise();
+	 QPointer< US_ResidsBitmap > rg_resbmap();
+	 QString                     rg_tripleInfo();
+
+	 bool model_exists;
 	 
+	 QVector< US_DataIO::RawData    > rawData;
+	 QVector< US_DataIO::EditedData > editedData;
+
+	 QVector< SP_SPEEDPROFILE >     speed_steps;
+	 
+	 US_DataIO::EditedData*      edata;
+	 US_DataIO::RawData*         rdata;
+	 US_DataIO::RawData*         sdata;
+	 US_DataIO::RawData          wsdata;
+	 
+	 QPointer< US_ResidsBitmap >    rbmapd;
+
+	 // Class to hold model descriptions
+	 class ModelDesc
+	 {
+         public:
+	   QString   description;    // Full model description
+	   QString   baseDescr;      // Base analysis-set description
+	   QString   fitfname;       // Associated fit file name
+	   QString   modelID;        // Model DB ID
+	   QString   modelGUID;      // Model GUID
+	   QString   filepath;       // Full path model file name
+	   QString   editID;         // Edit parent DB ID
+	   QString   editGUID;       // Edit parent GUID
+	   QString   antime;         // Analysis date & time (yymmddHHMM)
+	   QDateTime lmtime;         // Record lastmod date & time
+	   double    variance;       // Variance value
+	   double    meniscus;       // Meniscus radius value
+	   double    bottom;         // Bottom radius value
+	   
+	   // Less than operator to enable sort
+	   bool operator< ( const ModelDesc& md )
+	     const { return ( description < md.description ); }
+	 };
+	 
+	 // Class to hold noise description
+	 class NoiseDesc
+	 {
+         public:
+	   QString   description;    // Full noise description
+	   QString   baseDescr;      // Base analysis-set description
+	   QString   noiseID;        // Noise DB ID
+	   QString   noiseGUID;      // Noise GUID
+	   QString   filepath;       // Full path noise file name
+	   QString   modelID;        // Model parent DB ID
+	   QString   modelGUID;      // Model parent GUID
+	   QString   antime;         // Analysis date & time (yymmddHHMM)
+	   
+	   // Less than operator to enable sort
+	   bool operator< ( const NoiseDesc& nd )
+	     const { return ( description < nd.description ); }
+	 };
+
+	 QVector< double >    v_meni;
+	 QVector< double >    v_bott;
+	 QVector< double >    v_rmsd;
+	 
+	 QString              filedir;
+	 QString              fname_load;
+	 QString              fname_edit;
+	 QStringList          edtfiles;
+	 int                  nedtfs;
+	 int                  ix_best;
+	 int                  ix_setfit;
+	 bool                 have3val;
+	 bool                 bott_fit;
+	 int                  idEdit;
+
+	 double               fit_xvl; //for 2d data
+	 double               f_meni;  //for 3d data
+	 double               f_bott;  //for 3d data
+
+	 double               dy_global;
+	 double               miny_global;
+	 QString tripleInfo;
+	 
+	 int eID_global;
+	 
+	 US_Model                    model;
+	 US_Model                    model_loaded;
+	 US_Model                    model_used;
+	 
+	 US_Noise                    ri_noise;
+	 US_Noise                    ti_noise;
+	 QList< int >                excludedScans;
+	 US_Solution                 solution_rec;
+
+	 US_Math2::SolutionData      solution;
+	 QVector< QVector< double > > resids;
+	 
+	 US_SimulationParameters     simparams;
+	 QList< US_DataIO::RawData >   tsimdats;
+	 QList< US_Model >             tmodels;
+	 QVector< int >                kcomps;
+
+
+	 QStringList noiIDs;      // Noise GUIDs
+	 QStringList noiEdIDs;    // Noise edit GUIDs
+	 QStringList noiMoIDs;    // Noise model GUIDs
+	 QStringList noiTypes;    // Noise types
+	 QStringList modIDs;      // Model GUIDs
+	 QStringList modEdIDs;    // Model edit GUIDs
+	 QStringList modDescs;    // Model descriptions
+
+	 int           thrdone;
+	 
+	 double       density;
+	 double       viscosity;
+	 double       vbar;
+	 double       compress;
+
+	 QString      svbar_global;
+	 
+	 bool         manual;
+	 bool          dataLoaded;
+	 bool          haveSim;
+	 bool          dataLatest;
+	 bool          buffLoaded;
+	 bool          cnstvb;
+	 bool          cnstff;
+	 bool          exp_steps;
+	 bool          dat_steps;
+	 bool          is_dmga_mc;
+
+	 QMap< QString, QString >    adv_vals;
+
+	 int           dbg_level;
+	 int           nthread;
+	 int           scanCount;
+
+	 QPoint        rpd_pos;
+	 QString    FileName_parsed;
+
+	 void simulate_triple( const QString );
+	 bool loadData( QMap < QString, QString > & );
+	 bool loadModel( QMap < QString, QString > & );
+	 bool loadNoises( QMap < QString, QString > & );
+	 void loadNoises_whenAbsent ( void );
+	 int  count_noise_auto( US_DataIO::EditedData*, US_Model*,
+				QStringList&, QStringList& );
+
+	 int id_list_db_auto( QString );
+	 int models_in_edit_auto( QString, QStringList& );
+	 int noises_in_model_auto( QString, QStringList& );
+	 void simulateModel( QMap < QString, QString > & );
+	 void adjustModel( void );
+
+	 QString get_filename( QString );
+	 
+      public slots:
+	void    thread_progress( int, int );
+	void    thread_complete( int );
+	void    resplot_done( void );
+	void    update_progress( int );
+	
       private slots:
 	void reset_report_panel ( void );
 	void view_report ( void );
@@ -177,6 +347,11 @@ class US_ReporterGMP : public US_Widgets
 	void unselect_all( void );
 	void expand_all( void );
 	void collapse_all( void );
+
+	void show_results   ( void );
+	void calc_residuals( void );
+	double  interp_sval( double, double*, double*,  int );
+	void plotres(   void );
 			
 	void help          ( void )
 	{ showHelp.show_help( "reporter_gmp.html" ); };
