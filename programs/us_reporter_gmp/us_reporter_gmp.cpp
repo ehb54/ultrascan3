@@ -1020,6 +1020,7 @@ void US_ReporterGMP::reset_report_panel ( void )
   currAProf = US_AnaProfile();   
 
   //reset html assembled strings
+  html_assembled.clear();
   html_general.clear();
   html_lab_rotor.clear();
   html_operator.clear();
@@ -1048,6 +1049,22 @@ void US_ReporterGMP::generate_report( void )
   progress_msg->show();
   qApp->processEvents();
 
+  //reset html assembled strings
+  html_assembled.clear();
+  html_general.clear();
+  html_lab_rotor.clear();
+  html_operator.clear();
+  html_speed.clear();
+  html_cells.clear();
+  html_solutions.clear();
+  html_optical.clear();
+  html_ranges.clear();
+  html_scan_count.clear();
+  html_analysis_profile.clear();
+  html_analysis_profile_2dsa.clear();
+  html_analysis_profile_pcsa .clear();
+
+  
   //Part 1
   gui_to_parms();
   progress_msg->setValue( 1 );
@@ -1073,6 +1090,9 @@ void US_ReporterGMP::generate_report( void )
   for ( int i=0; i<Array_of_triples.size(); ++i )
     simulate_triple ( Array_of_triples[i] );
   
+
+  write_pdf_report( );
+  qApp->processEvents();
   
   pb_view_report->setEnabled( true );
 
@@ -2162,6 +2182,7 @@ void US_ReporterGMP::simulateModel( QMap < QString, QString > & tripleInfo )
 			      .arg( tripleInfo[ "stage_name" ])
 			      .arg( tripleInfo[ "triple_name" ] ) );
   progress_msg->setValue( 0 );
+  qApp->processEvents();
   
   int    nconc   = edata->pointCount();
   double radlo   = edata->radius( 0 );
@@ -2364,7 +2385,8 @@ void US_ReporterGMP::simulateModel( QMap < QString, QString > & tripleInfo )
 	   << "ntc" << ntc << "meshtype" << simparams.meshType;
   
   // Do simulation by several possible ways: 1-/Multi-thread, ASTFEM/ASTFVM
-  if ( nthread < 2 )
+  //if ( nthread < 2 )
+  if ( nthread < 999 )
     {
       if ( model.components[ 0 ].sigma == 0.0  &&
 	   model.components[ 0 ].delta == 0.0  &&
@@ -2608,8 +2630,17 @@ if(!usescan) kexcls++;
    rmsd  /= (double)( kpts );
    //le_variance->setText( QString::number( rmsd ) );
    rmsd   = sqrt( rmsd );
-   //le_rmsd    ->setText( QString::number( rmsd ) );
+
+   rmsd_global =  QString::number( rmsd );
+
    qDebug() << "CALC_RESID: matchd" << matchd << "kexcls" << kexcls << "rmsd" << rmsd;
+
+   //output HTML string for Distributions for current triple:
+   //QString html_distibutions = distrib_info();
+   html_assembled += "<p class=\"pagebreak \">\n";
+   html_assembled += html_header( "US_Fematch", text_model( model, 2 ), edata );
+   html_assembled += distrib_info();
+   html_assembled += "</p>\n";
 }
 
 // Interpolate an sdata y (readings) value for a given x (radius)
@@ -2638,6 +2669,647 @@ double US_ReporterGMP::interp_sval( double xv, double* sx, double* sy, int ssize
    double dy = sy[ jj ] - sy[ ii ];
    return ( sy[ ii ] + ( xv - sx[ ii ] ) * dy / dx );
 }
+
+// Model type text string
+QString US_ReporterGMP::text_model( US_Model model, int width )
+{
+   QString stitle = model.typeText();
+   QString title  = stitle;
+
+   if ( width != 0 )
+   {  // long title:  add any suffixes and check need to center
+      switch ( (int)model.analysis )
+      {
+         case (int)US_Model::TWODSA:
+         case (int)US_Model::TWODSA_MW:
+            title = tr( "2-Dimensional Spectrum Analysis" );
+            break;
+
+         case (int)US_Model::GA:
+         case (int)US_Model::GA_MW:
+            title = tr( "Genetic Algorithm Analysis" );
+            break;
+
+         case (int)US_Model::COFS:
+            title = tr( "C(s) Analysis" );
+            break;
+
+         case (int)US_Model::FE:
+            title = tr( "Finite Element Analysis" );
+            break;
+
+         case (int)US_Model::PCSA:
+            title = tr( "Parametrically Constrained Spectrum Analysis\n" );
+
+            if ( stitle.contains( "-SL" ) )
+               title += tr( "(Straight Line)" );
+
+            else if ( stitle.contains( "-IS" ) )
+               title += tr( "(Increasing Sigmoid)" );
+
+            else if ( stitle.contains( "-DS" ) )
+               title += tr( "(Decreasing Sigmoid)" );
+
+            else if ( stitle.contains( "-HL" ) )
+               title += tr( "(Horizontal Line)" );
+
+            else if ( stitle.contains( "-2O" ) )
+               title += tr( "(2nd-Order Power Law)" );
+
+            break;
+
+         case (int)US_Model::DMGA:
+            title = tr( "Discrete Model Genetic Algorithm" );
+            break;
+
+         case (int)US_Model::MANUAL:
+         default:
+            title = tr( "2-Dimensional Spectrum Analysis" );
+            break;
+      }
+
+
+            if ( stitle.contains( "-SL" ) )
+      if ( model.associations.size() > 1 )
+         title = title + " (RA)";
+
+      if ( model.global == US_Model::MENISCUS )
+         title = title + " (Menisc.)";
+
+      else if ( model.global == US_Model::GLOBAL )
+         title = title + " (Global)";
+
+      else if ( model.global == US_Model::SUPERGLOBAL )
+         title = title + " (S.Glob.)";
+
+      if ( model.monteCarlo )
+         title = title + " (MC)";
+
+      if ( width > title.length() )
+      {  // long title centered:  center it in fixed-length string
+         int lent = title.length();
+         int lenl = ( width - lent ) / 2;
+         int lenr = width - lent - lenl;
+         title    = QString( " " ).repeated( lenl ) + title
+                  + QString( " " ).repeated( lenr );
+      }
+   }
+
+   return title;
+}
+
+
+// Compose a report HTML header
+QString US_ReporterGMP::html_header( QString title, QString head1,
+				     US_DataIO::EditedData* edata )
+{
+   QString s = QString( "<?xml version=\"1.0\"?>\n" );
+   s  += "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n";
+   s  += "                      \"http://www.w3.org/TR/xhtml1/DTD"
+         "/xhtml1-strict.dtd\">\n";
+   s  += "<html xmlns=\"http://www.w3.org/1999/xhtml\""
+         " xml:lang=\"en\" lang=\"en\">\n";
+   s  += "  <head>\n";
+   s  += "    <title> " + title + " </title>\n";
+   s  += "    <meta http-equiv=\"Content-Type\" content="
+         "\"text/html; charset=iso-8859-1\"/>\n";
+   s  += "    <style type=\"text/css\" >\n";
+   s  += "      td { padding-right: 1em; }\n";
+   s  += "      body { background-color: white; }\n";
+
+   s  += "    .pagebreak\n";
+   s  += "    {\n";
+   s  += "      page-break-before: always; border: 1px solid; \n";
+   s  += "    }\n";
+   
+   s  += "    </style>\n";
+   s  += "  </head>\n  <body>\n";
+   s  += "    <h1>" + head1 + "</h1>\n";
+   s  += indent( 2 ) + tr( "<h2>Data Report for Run \"" ) + edata->runID;
+   s  += "\",<br/>\n" + indent( 2 ) + "&nbsp;" + tr( " Cell " ) + edata->cell;
+   s  += tr( ", Channel " ) + edata->channel;
+   s  += tr( ", Wavelength " ) + edata->wavelength;
+   s  += ",<br/>\n" + indent( 2 ) + "&nbsp;" + tr( " Edited Dataset " );
+   s  += edata->editID + "</h2>\n";
+
+   return s;
+}
+
+// Distribution information HTML string
+QString US_ReporterGMP::distrib_info()
+{
+   int  ncomp     = model_used.components.size();
+   double vari_m  = model_used.variance;
+   double rmsd_m  = ( vari_m == 0.0 ) ? 0.0 : sqrt( vari_m );
+
+   if ( ncomp == 0 )
+      return "";
+
+   QString msim   = adv_vals[ "modelsim" ];
+
+   if ( is_dmga_mc )
+   {
+
+      if ( msim == "model" )
+      {  // Use DMGA-MC single-iteration model
+         msim           = "<b>&nbsp;&nbsp;( single iteration )</b>";
+      }
+      else
+      {  // Use mean|median|mode model
+         msim           = "<b>&nbsp;&nbsp;( " + msim + " )</b>";
+      }
+   }
+   else
+   {  // Normal non-DMGA-MC model
+      msim           = "";
+      if ( model_used.monteCarlo  &&
+           ! model_used.description.contains( "_mcN" ) )
+         msim           = "<b>&nbsp;&nbsp;( single iteration )</b>";
+   }
+
+   QString mdla = model_used.description
+                  .section( ".", -2, -2 ).section( "_", 1, -1 );
+   if ( mdla.isEmpty() )
+      mdla         = model_used.description.section( ".", 0, -2 );
+
+   QString mstr = "\n" + indent( 2 )
+                  + tr( "<h3>Data Analysis Settings:</h3>\n" )
+                  + indent( 2 ) + "<table>\n";
+
+   mstr += table_row( tr( "Model Analysis:" ), mdla + msim );
+   mstr += table_row( tr( "Number of Components:" ),
+                      QString::number( ncomp ) );
+   mstr += table_row( tr( "Residual RMS Deviation:" ),
+                      rmsd_global  );
+   mstr += table_row( tr( "Model-reported RMSD:"    ),
+                      ( rmsd_m > 0.0 ) ? QString::number( rmsd_m ) : "(none)" );
+
+   double sum_mw  = 0.0;
+   double sum_s   = 0.0;
+   double sum_D   = 0.0;
+   double sum_c   = 0.0;
+   double sum_v   = 0.0;
+   double sum_k   = 0.0;
+   double mink    = 1e+99;
+   double maxk    = -1e+99;
+   double minv    = 1e+99;
+   double maxv    = -1e+99;
+
+   for ( int ii = 0; ii < ncomp; ii++ )
+   {
+      double conc = model_used.components[ ii ].signal_concentration;
+      double kval = model_used.components[ ii ].f_f0;
+      double vval = model_used.components[ ii ].vbar20;
+      sum_c      += conc;
+      sum_mw     += ( model_used.components[ ii ].mw * conc );
+      sum_s      += ( model_used.components[ ii ].s  * conc );
+      sum_D      += ( model_used.components[ ii ].D  * conc );
+      sum_v      += ( vval * conc );
+      sum_k      += ( kval * conc );
+      mink        = qMin( kval, mink );
+      maxk        = qMax( kval, maxk );
+      minv        = qMin( vval, minv );
+      maxv        = qMax( vval, maxv );
+   }
+
+   mstr += table_row( tr( "Weight Average s20,W:" ),
+                      QString().sprintf( "%6.4e", ( sum_s  / sum_c ) ) );
+   mstr += table_row( tr( "Weight Average D20,W:" ),
+                      QString().sprintf( "%6.4e", ( sum_D  / sum_c ) ) );
+   mstr += table_row( tr( "W.A. Molecular Weight:" ),
+                      QString().sprintf( "%6.4e", ( sum_mw / sum_c ) ) );
+   if ( ! cnstff )
+      mstr += table_row( tr( "Weight Average f/f0:" ),
+                         QString::number( ( sum_k / sum_c ) ) );
+   if ( ! cnstvb )
+      mstr += table_row( tr( "Weight Average vbar20:" ),
+                         QString::number( ( sum_v / sum_c ) ) );
+   mstr += table_row( tr( "Total Concentration:" ),
+                      QString().sprintf( "%6.4e", sum_c ) );
+
+   if ( cnstvb )
+      mstr += table_row( tr( "Constant vbar20:" ),
+                         QString::number( minv ) );
+   else if ( cnstff )
+      mstr += table_row( tr( "Constant f/f0:" ),
+                         QString::number( mink ) );
+   mstr += indent( 2 ) + "</table>\n";
+
+   mstr += "\n" + indent( 2 ) + tr( "<h3>Distribution Information:</h3>\n" );
+   mstr += indent( 2 ) + "<table>\n";
+
+   if ( cnstvb )
+   {  // Normal constant-vbar distribution
+      mstr += table_row( tr( "Molec. Wt." ), tr( "S Apparent" ),
+                         tr( "S 20,W" ),     tr( "D Apparent" ),
+                         tr( "D 20,W" ),     tr( "f / f0" ),
+                         tr( "Concentration" ) );
+
+      for ( int ii = 0; ii < ncomp; ii++ )
+      {
+         double conc = model_used.components[ ii ].signal_concentration;
+         double perc = 100.0 * conc / sum_c;
+         mstr       += table_row(
+               QString().sprintf( "%10.4e",
+                  model_used.components[ ii ].mw   ),
+               QString().sprintf( "%10.4e",
+                  model       .components[ ii ].s    ),
+               QString().sprintf( "%10.4e",
+                  model_used.components[ ii ].s    ),
+               QString().sprintf( "%10.4e",
+                  model       .components[ ii ].D    ),
+               QString().sprintf( "%10.4e",
+                  model_used.components[ ii ].D    ),
+               QString().sprintf( "%10.4e",
+                  model_used.components[ ii ].f_f0 ),
+               QString().sprintf( "%10.4e (%5.2f %%)", conc, perc ) );
+      }
+   }
+
+   else if ( cnstff )
+   {  // Constant-f/f0, varying vbar
+      mstr += table_row( tr( "Molec. Wt." ), tr( "S Apparent" ),
+                         tr( "S 20,W" ),     tr( "D Apparent" ),
+                         tr( "D 20,W" ),     tr( "Vbar20" ),
+                         tr( "Concentration" ) );
+
+      for ( int ii = 0; ii < ncomp; ii++ )
+      {
+         double conc = model_used.components[ ii ].signal_concentration;
+         double perc = 100.0 * conc / sum_c;
+         mstr       += table_row(
+               QString().sprintf( "%10.4e",
+                  model_used.components[ ii ].mw     ),
+               QString().sprintf( "%10.4e",
+                  model       .components[ ii ].s      ),
+               QString().sprintf( "%10.4e",
+                  model_used.components[ ii ].s      ),
+               QString().sprintf( "%10.4e",
+                  model       .components[ ii ].D      ),
+               QString().sprintf( "%10.4e",
+                  model_used.components[ ii ].D      ),
+               QString().sprintf( "%10.4e",
+                  model_used.components[ ii ].vbar20 ),
+               QString().sprintf( "%10.4e (%5.2f %%)", conc, perc ) );
+      }
+   }
+
+   else
+   {  // Neither vbar nor f/f0 are constant
+      mstr += table_row( tr( "Molec. Wt." ), tr( "S Apparent" ),
+                         tr( "S 20,W" ),     tr( "D 20,W"     ),
+                         tr( "f / f0" ),     tr( "Vbar20" ),
+                         tr( "Concentration" ) );
+
+      for ( int ii = 0; ii < ncomp; ii++ )
+      {
+         double conc = model_used.components[ ii ].signal_concentration;
+         double perc = 100.0 * conc / sum_c;
+         mstr       += table_row(
+               QString().sprintf( "%10.4e",
+                  model_used.components[ ii ].mw     ),
+               QString().sprintf( "%10.4e",
+                  model       .components[ ii ].s      ),
+               QString().sprintf( "%10.4e",
+                 model_used.components[ ii ].s      ),
+               QString().sprintf( "%10.4e",
+                  model_used.components[ ii ].D      ),
+               QString().sprintf( "%10.4e",
+                  model_used.components[ ii ].f_f0 ),
+               QString().sprintf( "%10.4e",
+                  model_used.components[ ii ].vbar20 ),
+               QString().sprintf( "%10.4e (%5.2f %%)", conc, perc ) );
+      }
+   }
+
+   // Show associations information if present
+   if ( model_used.associations.size() > 0 )
+   {
+      mstr += indent( 2 ) + "</table>\n" + indent( 2 );
+      mstr += tr( "<h3>Reversible Associations Information:</h3>\n" );
+      mstr += indent( 2 ) + "<table>\n";
+      mstr += table_row( tr( "Reactant 1" ), tr( "Reactant 2" ),
+                         tr( "Product"    ), tr( "K_dissociation"  ),
+                         tr( "k_off Rate" ) );
+
+      for ( int ii = 0; ii < model_used.associations.size(); ii++ )
+      {
+         US_Model::Association as1 = model.associations[ ii ];
+         double k_d    = as1.k_d;
+         double k_off  = as1.k_off;
+         QString reac1 = tr( "component %1" ).arg( as1.rcomps[ 0 ] + 1 );
+         QString reac2 = tr( "(none)" );
+         QString prod  = tr( "component %1" ).arg( as1.rcomps[ 1 ] + 1 );
+         if ( as1.rcomps.size() > 2 )
+         {
+            reac2         = prod;
+            prod          = tr( "component %1" ).arg( as1.rcomps[ 2 ] + 1 );
+         }
+
+         mstr       += table_row( reac1, reac2, prod,
+                                  QString().sprintf( "%10.4e", k_d   ),
+                                  QString().sprintf( "%10.4e", k_off ) );
+      }
+   }
+
+   mstr += indent( 2 ) + "</table>\n";
+
+   /*
+   if ( is_dmga_mc )
+   {  // Compute DMGA-MC statistics and add them to the report
+      QVector< double >             rstats;
+      QVector< QVector< double > >  mstats;
+      int niters     = imodels.size();
+      int ncomp      = imodels[ 0 ].components  .size();
+      int nreac      = imodels[ 0 ].associations.size();
+
+      // Build RMSD statistics across iterations
+      US_DmgaMcStats::build_rmsd_stats( niters, imodels, rstats );
+
+      // Build statistics across iterations
+      int ntatt = US_DmgaMcStats::build_model_stats( niters, imodels, mstats );
+
+      // Compose the summary statistics chart
+      mstr += indent( 2 );
+      mstr += tr( "<h3>Discrete Model GA-MC Summary Statistics:</h3>\n" );
+      mstr += indent( 2 ) + "<table>\n";
+      mstr += table_row( tr( "Component" ), tr( "Attribute" ),
+                         tr( "Mean_Value" ), tr( "95%_Confidence(low)"  ),
+                         tr( "95%_Confidence(high)" ) );
+      int kd         = 0;
+      QString fixd   = tr( "(Fixed)" );
+      QString blnk( "" );
+      QStringList atitl;
+      QStringList rtitl;
+      atitl << tr( "Concentration" )
+            << tr( "Vbar20" )
+            << tr( "Molecular Weight" )
+            << tr( "Sedimentation Coefficient" )
+            << tr( "Diffusion Coefficient" )
+            << tr( "Frictional Ratio" );
+      rtitl << tr( "K_dissociation" )
+            << tr( "K_off Rate" );
+
+      // Show summary of RMSDs
+      mstr += table_row( tr( "(All)" ), tr( "RMSD" ),
+                         QString().sprintf( "%10.4e", rstats[  2 ] ),
+                         QString().sprintf( "%10.4e", rstats[  9 ] ),
+                         QString().sprintf( "%10.4e", rstats[ 10 ] ) );
+
+      // Show summary of component attributes
+      for ( int ii = 0; ii < ncomp; ii++ )
+      {
+         QString compnum = QString().sprintf( "%2d", ii + 1 );
+         for ( int jj = 0; jj < 6; jj++ )
+         {
+            bool is_fixed   = ( mstats[ kd ][ 0 ] == mstats[ kd ][ 1 ] );
+            QString strclo  = is_fixed ? fixd :
+                              QString().sprintf( "%10.4e", mstats[ kd ][  9 ] );
+            QString strchi  = is_fixed ? blnk :
+                              QString().sprintf( "%10.4e", mstats[ kd ][ 10 ] );
+            mstr += table_row( compnum, atitl[ jj ],
+                              QString().sprintf( "%10.4e", mstats[ kd ][  2 ] ),
+                              strclo, strchi );
+            kd++;
+         }
+      }
+
+      mstr += indent( 2 ) + "</table>\n";
+      mstr += indent( 2 ) + "<table>\n";
+      mstr += table_row( tr( "Reaction" ), tr( "Attribute" ),
+                         tr( "Mean_Value" ), tr( "95%_Confidence(low)"  ),
+                         tr( "95%_Confidence(high)" ) );
+      // Show summary of reaction attributes;
+      for ( int ii = 0; ii < nreac; ii++ )
+      {
+         QString reacnum = QString().sprintf( "%2d", ii + 1 );
+         bool is_fixed   = ( mstats[ kd ][ 0 ] == mstats[ kd ][ 1 ] );
+         QString strclo  = is_fixed ? fixd :
+                            QString().sprintf( "%10.4e", mstats[ kd ][  9 ] );
+         QString strchi  = is_fixed ? blnk :
+                            QString().sprintf( "%10.4e", mstats[ kd ][ 10 ] );
+         mstr += table_row( reacnum, tr( "K_dissociation" ),
+                            QString().sprintf( "%10.4e", mstats[ kd ][  2 ] ),
+                            strclo, strchi );
+         kd++;
+         is_fixed        = ( mstats[ kd ][ 0 ] == mstats[ kd ][ 1 ] );
+         strclo          = is_fixed ? fixd :
+                            QString().sprintf( "%10.4e", mstats[ kd ][  9 ] );
+         strchi          = is_fixed ? blnk :
+                            QString().sprintf( "%10.4e", mstats[ kd ][ 10 ] );
+         mstr += table_row( reacnum, tr( "K_off Rate" ),
+                            QString().sprintf( "%10.4e", mstats[ kd ][  2 ] ),
+                            strclo, strchi );
+         kd++;
+      }
+
+      mstr += indent( 2 ) + "</table>\n";
+
+      // Compose the details statistics entries
+      mstr += indent( 2 );
+      mstr += tr( "<h3>Discrete Model GA-MC Detailed Statistics:</h3>\n" );
+      int icomp       = 1;
+      int ireac       = 1;
+      int kdmax       = 6;
+      int kk          = 0;
+
+      // First, the RMSDs
+      mstr += indent( 2 ) + tr( "<h4>Details for MC Iteration RMSDs:</h4>\n" );
+      mstr += indent( 2 ) + "<table>\n";
+      mstr += table_row( tr( "Minimum:" ),
+              QString().sprintf( "%10.4e", rstats[  0 ] ) );
+      mstr += table_row( tr( "Maximum:" ),
+              QString().sprintf( "%10.4e", rstats[  1 ] ) );
+      mstr += table_row( tr( "Mean:" ),
+              QString().sprintf( "%10.4e", rstats[  2 ] ) );
+      mstr += table_row( tr( "Median:" ),
+              QString().sprintf( "%10.4e", rstats[  3 ] ) );
+      mstr += table_row( tr( "Skew:" ),
+              QString().sprintf( "%10.4e", rstats[  4 ] ) );
+      mstr += table_row( tr( "Kurtosis:" ),
+              QString().sprintf( "%10.4e", rstats[  5 ] ) );
+      mstr += table_row( tr( "Lower Mode:" ),
+              QString().sprintf( "%10.4e", rstats[  6 ] ) );
+      mstr += table_row( tr( "Upper Mode:" ),
+              QString().sprintf( "%10.4e", rstats[  7 ] ) );
+      mstr += table_row( tr( "Mode Center:" ),
+              QString().sprintf( "%10.4e", rstats[  8 ] ) );
+      mstr += table_row( tr( "95% Confidence Interval Low:" ),
+              QString().sprintf( "%10.4e", rstats[  9 ] ) );
+      mstr += table_row( tr( "95% Confidence Interval High:" ),
+              QString().sprintf( "%10.4e", rstats[ 10 ] ) );
+      mstr += table_row( tr( "99% Confidence Interval Low:" ),
+              QString().sprintf( "%10.4e", rstats[ 11 ] ) );
+      mstr += table_row( tr( "99% Confidence Interval High:" ),
+              QString().sprintf( "%10.4e", rstats[ 12 ] ) );
+      mstr += table_row( tr( "Standard Deviation:" ),
+              QString().sprintf( "%10.4e", rstats[ 13 ] ) );
+      mstr += table_row( tr( "Standard Error:" ),
+              QString().sprintf( "%10.4e", rstats[ 14 ] ) );
+      mstr += table_row( tr( "Variance:" ),
+              QString().sprintf( "%10.4e", rstats[ 15 ] ) );
+      mstr += table_row( tr( "Correlation Coefficient:" ),
+              QString().sprintf( "%10.4e", rstats[ 16 ] ) );
+      mstr += table_row( tr( "Number of Bins:" ),
+              QString().sprintf( "%10.0f", rstats[ 17 ] ) );
+      mstr += table_row( tr( "Distribution Area:" ),
+              QString().sprintf( "%10.4e", rstats[ 18 ] ) );
+      mstr += table_row( tr( "95% Confidence Limit Low:" ),
+              QString().sprintf( "%10.4e", rstats[ 19 ] ) );
+      mstr += table_row( tr( "95% Confidence Limit High:" ),
+              QString().sprintf( "%10.4e", rstats[ 20 ] ) );
+      mstr += table_row( tr( "99% Confidence Limit Low:" ),
+              QString().sprintf( "%10.4e", rstats[ 21 ] ) );
+      mstr += table_row( tr( "99% Confidence Limit High:" ),
+              QString().sprintf( "%10.4e", rstats[ 22 ] ) );
+      mstr += indent( 2 ) + "</table>\n";
+
+      // Then, components and attributes
+      for ( kd = 0; kd < ntatt; kd++ )
+      {
+         QString compnum = tr( "Component %1 " ).arg( icomp );
+         QString reacnum = tr( "Reaction %1 "  ).arg( ireac );
+         QString attrib  = compnum + atitl[ kk ];
+         mstr += indent( 2 ) + "<h4>" + tr( "Details for " );
+
+         if ( icomp <= ncomp )
+         {  // Title for component detail
+            if ( imodels[ 0 ].is_product( icomp - 1 )  &&  kk == 0 )
+               mstr += compnum + tr( "(Product) Total Concentration" )
+                     + ":</h4>\n";
+            else
+               mstr += compnum + atitl[ kk ] + ":</h4>\n";
+         }
+         else
+         {  // Title for reaction detail
+            mstr += reacnum + rtitl[ kk ] + ":</h4>\n";
+         }
+
+         mstr += indent( 2 ) + "<table>\n";
+         bool is_fixed   = ( mstats[ kd ][ 0 ] == mstats[ kd ][ 1 ] );
+
+         if ( is_fixed )
+         {  // Fixed has limited lines
+            mstr += table_row( tr( "Minimum:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][  0 ] ) );
+            mstr += table_row( tr( "Maximum:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][  1 ] ) );
+            mstr += table_row( tr( "Mean:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][  2 ] ) );
+            mstr += table_row( tr( "Median (Fixed)" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][  3 ] ) );
+         }
+
+         else
+         {  // Float has full set of statistics details
+            mstr += table_row( tr( "Minimum:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][  0 ] ) );
+            mstr += table_row( tr( "Maximum:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][  1 ] ) );
+            mstr += table_row( tr( "Mean:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][  2 ] ) );
+            mstr += table_row( tr( "Median:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][  3 ] ) );
+            mstr += table_row( tr( "Skew:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][  4 ] ) );
+            mstr += table_row( tr( "Kurtosis:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][  5 ] ) );
+            mstr += table_row( tr( "Lower Mode:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][  6 ] ) );
+            mstr += table_row( tr( "Upper Mode:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][  7 ] ) );
+            mstr += table_row( tr( "Mode Center:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][  8 ] ) );
+            mstr += table_row( tr( "95% Confidence Interval Low:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][  9 ] ) );
+            mstr += table_row( tr( "95% Confidence Interval High:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][ 10 ] ) );
+            mstr += table_row( tr( "99% Confidence Interval Low:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][ 11 ] ) );
+            mstr += table_row( tr( "99% Confidence Interval High:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][ 12 ] ) );
+            mstr += table_row( tr( "Standard Deviation:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][ 13 ] ) );
+            mstr += table_row( tr( "Standard Error:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][ 14 ] ) );
+            mstr += table_row( tr( "Variance:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][ 15 ] ) );
+            mstr += table_row( tr( "Correlation Coefficient:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][ 16 ] ) );
+            mstr += table_row( tr( "Number of Bins:" ),
+                    QString().sprintf( "%10.0f", mstats[ kd ][ 17 ] ) );
+            mstr += table_row( tr( "Distribution Area:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][ 18 ] ) );
+            mstr += table_row( tr( "95% Confidence Limit Low:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][ 19 ] ) );
+            mstr += table_row( tr( "95% Confidence Limit High:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][ 20 ] ) );
+            mstr += table_row( tr( "99% Confidence Limit Low:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][ 21 ] ) );
+            mstr += table_row( tr( "99% Confidence Limit High:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][ 22 ] ) );
+         }
+
+         mstr += indent( 2 ) + "</table>\n";
+
+         if ( (++kk) >= kdmax )
+         {
+            kk              = 0;
+            icomp++;
+            if ( icomp > ncomp )
+            {
+               ireac           = icomp - ncomp;
+               kdmax           = 2;
+            }
+         }
+      }
+   }
+   */
+
+   return mstr;
+}
+
+
+// String to accomplish line indentation
+QString  US_ReporterGMP::indent( const int spaces ) const
+{
+   return ( QString( " " ).leftJustified( spaces, ' ' ) );
+}
+
+// Table row HTML with 2 columns
+QString  US_ReporterGMP::table_row( const QString& s1, const QString& s2 ) const
+{
+   return( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td></tr>\n" );
+}
+
+// Table row HTML with 3 columns
+QString  US_ReporterGMP::table_row( const QString& s1, const QString& s2,
+                               const QString& s3 ) const
+{
+   return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>" + s3
+            + "</td></tr>\n" );
+}
+
+// Table row HTML with 5 columns
+QString  US_ReporterGMP::table_row( const QString& s1, const QString& s2,
+                               const QString& s3, const QString& s4,
+                               const QString& s5 ) const
+{
+   return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>" + s3
+            + "</td><td>" + s4 + "</td><td>" + s5 + "</td></tr>\n" );
+}
+
+// Table row HTML with 7 columns
+QString  US_ReporterGMP::table_row( const QString& s1, const QString& s2,
+                               const QString& s3, const QString& s4,
+                               const QString& s5, const QString& s6,
+                               const QString& s7 ) const
+{
+   return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>"
+            + s3 + "</td><td>" + s4 + "</td><td>" + s5 + "</td><td>"
+            + s6 + "</td><td>" + s7 + "</td></tr>\n" );
+}
+
 
 // Open a residual plot dialog
 void US_ReporterGMP::plotres( )
@@ -2678,6 +3350,7 @@ void US_ReporterGMP::thread_progress( int thr, int icomp )
    for ( int ii = 0; ii < nthread; ii++ )
       kcomp += kcomps[ ii ];
    progress_msg->setValue( kcomp );
+   qApp->processEvents();
    qDebug() << "THR PROGR thr icomp" << thr << icomp << "kcomp" << kcomp;
 }
 
@@ -2840,8 +3513,44 @@ QString US_ReporterGMP::get_filename( QString triple_name )
 //Start assembling PDF file
 void US_ReporterGMP::assemble_pdf()
 {
+
+  QString rptpage;
+
+  // Compose the report header
+  rptpage   = QString( "<?xml version=\"1.0\"?>\n" );
+  rptpage  += "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n";
+  rptpage  += "                      \"http://www.w3.org/TR/xhtml1/DTD"
+              "/xhtml1-strict.dtd\">\n";
+  rptpage  += "<html xmlns=\"http://www.w3.org/1999/xhtml\""
+              " xml:lang=\"en\" lang=\"en\">\n";
+  rptpage  += "  <head>\n";
+  rptpage  += "  <title> Ultrascan III Composite Report </title>\n";
+  rptpage  += "  <meta http-equiv=\"Content-Type\" content="
+              "\"text/html; charset=iso-8859-1\"/>\n";
+  rptpage  += "  <style type=\"text/css\" >\n";
+  rptpage  += "    td { padding-right: 1em; }\n";
+  rptpage  += "    body { background-color: white; }\n";
+  rptpage  += "    .pagebreak\n";
+  rptpage  += "    {\n";
+  rptpage  += "      page-break-before: always; border: 1px solid; \n";
+  rptpage  += "    }\n";
+  rptpage  += "    .parahead\n";
+  rptpage  += "    {\n";
+  rptpage  += "      font-weight: bold;\n";
+  rptpage  += "      font-style:  italic;\n";
+  rptpage  += "    }\n";
+  rptpage  += "    .datatext\n";
+  rptpage  += "    {\n";
+  rptpage  += "      font-family: monospace;\n";
+  rptpage  += "    }\n";
+  rptpage  += "  </style>\n";
+  rptpage  += "  </head>\n  <body>\n";
+   
+  
   //HEADER: begin
-  QString html_header = tr( 
+  QString html_header = QString("");
+  html_header += rptpage;
+  html_header += tr( 
     "<div align=left>"
       "Created, %1<br>"
       "with UltraScan-GMP<br>"
@@ -2855,7 +3564,7 @@ void US_ReporterGMP::assemble_pdf()
   
   //TITLE: begin
   QString html_title = tr(
-    "<h1 align=center>REPORT FOR RUN <br><i>%1</i></h1>"
+    "<h1 align=center>GMP REPORT FOR RUN <br><i>%1</i></h1>"
     "<hr>"
 			  )
     .arg( currProto. protoname + "-run" + runID )    //1
@@ -3760,10 +4469,27 @@ void US_ReporterGMP::assemble_pdf()
   //APROFILE: end
   
   
-  QString html_paragraph_close = tr(
-    "</p>"
-				    )
-    ;
+
+  
+  //Main assembly: reportMask based
+  //QString html_assembled = QString("");
+  html_assembled +=
+    html_header
+    + html_title
+    + html_paragraph_open;
+
+  assemble_parts( html_assembled );
+
+  QString html_paragraph_close = tr( "</p>" );
+  html_assembled += html_paragraph_close;
+  
+}
+
+
+//write PDF Report
+void US_ReporterGMP::write_pdf_report( void )
+{
+  QString html_paragraph_close = tr( "</p>" );
 
   QString html_footer = tr( 
     "<div align=right>"
@@ -3772,40 +4498,9 @@ void US_ReporterGMP::assemble_pdf()
 			    )
     .arg( currProto. protoname )
     ;
-
   
-  //Main assembly: reportMask based
-  QString html_assembled = QString("");
-  html_assembled +=
-    html_header
-    + html_title
-    + html_paragraph_open;
-
-  assemble_parts( html_assembled );
-  
-  html_assembled += html_paragraph_close
-    + html_footer;
-  
-  
-  // html_assembled +=
-  //   html_header
-  //   + html_title
-  //   + html_paragraph_open
-  //   + html_general
-  //   + html_lab_rotor
-  //   + html_operator
-  //   + html_speed
-  //   + html_cells
-  //   + html_solutions
-  //   + html_optical
-  //   + html_ranges
-  //   + html_scan_count
-  //   + html_analysis_profile
-  //   + html_analysis_profile_2dsa
-  //   + html_analysis_profile_pcsa 
-  //   + html_paragraph_close
-  //   + html_footer;
-    
+  html_assembled += html_footer;
+   
   QTextDocument document;
   document.setHtml( html_assembled );
   
@@ -3816,12 +4511,11 @@ void US_ReporterGMP::assemble_pdf()
   QString fileName  = currProto. protoname + "-run" + runID + ".pdf";
   filePath  = US_Settings::tmpDir() + "/" + fileName;
   printer.setOutputFileName( filePath );
-  printer.setPageMargins(QMarginsF(15, 15, 15, 15));
+  printer.setFullPage(true);
+  printer.setPageMargins(QMarginsF(0, 0, 0, 0));
   
   document.print(&printer);
 }
-
-
 
 //save trees' selections into internal structures
 void US_ReporterGMP::gui_to_parms( void )
