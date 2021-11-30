@@ -774,6 +774,11 @@ void US_ReporterGMP::build_perChanTree ( void )
 	      QString wvl            = QString::number( chann_wvls[ jj ] );
 	      QString triple_name    = channel_desc.split(":")[ 0 ] + "/" + wvl;
 
+	      //Push to Array_of_triples;
+	      QString tripleName = channel_desc_alt.section( ":", 0, 0 )[0] + "." + channel_desc_alt.section( ":", 0, 0 )[1] + "." + wvl;
+	      qDebug() << "TripleName -- " << tripleName; 
+	      Array_of_triples.push_back( tripleName );
+
 	      //Triple item: child-level 1 in a perChanTree
 	      QString tripleItemName = "Triple:  " + wvl + " nm";
 	      tripleItemNameList.clear();
@@ -1006,6 +1011,9 @@ void US_ReporterGMP::reset_report_panel ( void )
   chanItem   .clear();
   tripleItem .clear();
   tripleMaskItem . clear();
+
+  //clean triple_array
+  Array_of_triples.clear();
   
   //reset US_Protocol && US_AnaProfile
   currProto = US_RunProtocol();  
@@ -1058,16 +1066,13 @@ void US_ReporterGMP::generate_report( void )
   qApp->processEvents();
   
   progress_msg->setValue( progress_msg->maximum() );
+  progress_msg->close();
   qApp->processEvents();
 
   //Part 2
-  progress_msg->setLabelText( "Downloading data and models..." );
-  progress_msg->setValue( 0 );
-  qApp->processEvents();
-
+  for ( int i=0; i<Array_of_triples.size(); ++i )
+    simulate_triple ( Array_of_triples[i] );
   
-   
-  progress_msg->close();
   
   pb_view_report->setEnabled( true );
 
@@ -1078,8 +1083,18 @@ void US_ReporterGMP::generate_report( void )
 }
 
 //simulate triple 
-void US_ReporterGMP::simulate_triple( QString triple_stage )
+void US_ReporterGMP::simulate_triple( const QString triplesname )
 {
+  // Show msg while data downloaded and simulated
+  progress_msg = new QProgressDialog (QString("Downloading data and models for triple %1...").arg( triplesname ), QString(), 0, 5, this);
+  progress_msg->setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
+  progress_msg->setWindowModality(Qt::WindowModal);
+  progress_msg->setWindowTitle(tr("Simulating Models"));
+  progress_msg->setAutoClose( false );
+  progress_msg->setValue( 0 );
+  progress_msg->show();
+  qApp->processEvents();
+  
   speed_steps  .clear();
   edata = NULL;
   rdata = NULL;
@@ -1106,16 +1121,8 @@ void US_ReporterGMP::simulate_triple( QString triple_stage )
   ri_noise.count = 0;
 
 
-  //triple_stage format: '2DSA-IT (2 / A / 255)'
-  QString tr_st = triple_stage.simplified();
-  tr_st.replace( " ", "" );
-    
-  QStringList triple_stage_parts = tr_st.split("(");
-  QString stage_n = triple_stage_parts[0];
-  QString triple_n  = triple_stage_parts[1];
-  triple_n.chop(1);
-  triple_n.replace("/",".");
-
+  QString stage_n   = QString("2DSA-IT");
+  QString triple_n  = triplesname;
   //stage_n : '2DSA-IT'
   //triple_n: '2.A.255'
 
@@ -1304,12 +1311,31 @@ void US_ReporterGMP::simulate_triple( QString triple_stage )
   
 
   //Load Model (latest ) && noise(s)
-  loadModel( triple_info_map  );
+  triple_info_map[ "stage_name" ] = QString("2DSA-IT");
+  if ( !loadModel( triple_info_map  ) && !model_exists )
+    {
+      triple_info_map[ "stage_name" ] = QString("2DSA-FM");
+      if ( !loadModel( triple_info_map  ) && !model_exists )
+	{
+	  triple_info_map[ "stage_name" ] = QString("2DSA");
+	  if ( !loadModel( triple_info_map  ) && !model_exists )
+	    {
+	      qDebug() << "In loadModel(): No models (2DSA-IT, 2DSA-FM, 2DSA) found for triple -- " << triple_info_map[ "triple_name" ];
+
+	      QMessageBox::critical( this, tr( "No Model Found" ),
+				     QString( tr( "In loadModel(): No models (2DSA-IT, 2DSA-FM, 2DSA) found for triple %1" ))
+				     .arg( triple_info_map[ "triple_name" ] ) );
+	      
+	      return;
+	    }
+	}
+    }
+
   progress_msg->setValue( 5 );
   qApp->processEvents();
 
   //Simulate Model
-  simulateModel();
+  simulateModel( triple_info_map );
 
   
   qDebug() << "Closing sim_msg-- ";
@@ -1490,7 +1516,7 @@ bool US_ReporterGMP::loadModel( QMap < QString, QString > & triple_information )
   int latest_update_time = 1e100;
   int mID=0;
 
-  bool model_exists = false;
+  model_exists = false;
   
   while ( db->next() )
     {
@@ -1540,11 +1566,17 @@ bool US_ReporterGMP::loadModel( QMap < QString, QString > & triple_information )
 
   if ( ! model_exists )
     {
-      QMessageBox::critical( this, tr( "Model Does Not Exists!" ),
-			     QString (tr( "Triple %1 does not have  %2 model !" ))
-			     .arg( triple_information[ "triple_name" ] )
-			     .arg( triple_information[ "stage_name" ] ) );
-			     
+      // QMessageBox::critical( this, tr( "Model Does Not Exists!" ),
+      // 			     QString (tr( "Triple %1 does not have  %2 model !" ))
+      // 			     .arg( triple_information[ "triple_name" ] )
+      // 			     .arg( triple_information[ "stage_name" ] ) );
+
+      progress_msg->setLabelText( QString("Model %1 is NOT found for triple %2.\n Trying other models...")
+				  .arg( triple_information[ "stage_name" ] )
+				  .arg( triple_information[ "triple_name" ] ) );
+      progress_msg->setValue( 4 );
+      qApp->processEvents();
+      
       return false;
     }
   
@@ -2124,9 +2156,11 @@ DbgLv(2) << "LaNoi:idlDB: ii jj moGUID" << ii << jj << moGUID;
 }
 
 //Simulate Model
-void US_ReporterGMP::simulateModel( )
+void US_ReporterGMP::simulateModel( QMap < QString, QString > & tripleInfo )
 {
-  progress_msg->setLabelText( "Simulating model..." );
+  progress_msg->setLabelText( QString("Simulating model %1 for triple %2...")
+			      .arg( tripleInfo[ "stage_name" ])
+			      .arg( tripleInfo[ "triple_name" ] ) );
   progress_msg->setValue( 0 );
   
   int    nconc   = edata->pointCount();
@@ -2493,7 +2527,7 @@ void US_ReporterGMP::show_results( )
    // plot3d();
 
    
-   plotres(); // <------- TEMP
+   //plotres(); // <------- TEMP
    QApplication::restoreOverrideCursor();
 }
 

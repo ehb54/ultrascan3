@@ -179,6 +179,7 @@ class US_ReporterGMP : public US_Widgets
 	 QPointer< US_ResidsBitmap > rg_resbmap();
 	 QString                     rg_tripleInfo();
 
+	 bool model_exists;
 	 
 	 QVector< US_DataIO::RawData    > rawData;
 	 QVector< US_DataIO::EditedData > editedData;
@@ -313,7 +314,7 @@ class US_ReporterGMP : public US_Widgets
 	 QPoint        rpd_pos;
 	 QString    FileName_parsed;
 
-	 void simulate_triple( QString );
+	 void simulate_triple( const QString );
 	 bool loadData( QMap < QString, QString > & );
 	 bool loadModel( QMap < QString, QString > & );
 	 bool loadNoises( QMap < QString, QString > & );
@@ -324,7 +325,7 @@ class US_ReporterGMP : public US_Widgets
 	 int id_list_db_auto( QString );
 	 int models_in_edit_auto( QString, QStringList& );
 	 int noises_in_model_auto( QString, QStringList& );
-	 void simulateModel( void );
+	 void simulateModel( QMap < QString, QString > & );
 	 void adjustModel( void );
 
 	 QString get_filename( QString );
