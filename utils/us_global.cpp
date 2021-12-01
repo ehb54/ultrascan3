@@ -8,49 +8,8 @@
 #endif
 
 #if !defined( Q_OS_WIN ) && !defined( Q_OS_MACOS )
-# include <set>
-# include <csignal>
-
-// shared memory shutdown
-// we need to keep used shared memory segments to properly detatch on a OS signal shutdown
-
-static std::set < QSharedMemory * > last_shared_memory;
-static bool shutdown_signal_handler_installed = false;
-static size_t sizeof_global;
-
-static void shm_post_routine() {
-   qDebug() << "US_Global: detaching shared memory";
-   if ( last_shared_memory.size() ) {
-      for ( auto it = last_shared_memory.begin();
-            it != last_shared_memory.end();
-            ++it ) {
-         if ( (*it)->isAttached() ) {
-            // qDebug() << "Detaching QSharedMemory";
-            (*it)->detach();
-         }
-      }
-   } else {
-      // qDebug() << "No QSharedMemory to detach";
-   }
-   // create again for good cleanup (otherwise seems to leave semaphore and temp file for semaphore)
-   {
-      QSharedMemory sharedMemory;
-# ifndef Q_OS_WIN
-      // Make the key specific to the uid
-      QString key = QString( "UltraScan%1" ).arg( getuid() );
-# else
-      QString key = QString( "UltraScan" );
-# endif
-      sharedMemory.setKey( key );
-      sharedMemory.create( sizeof_global );
-   }
-}
-   
-static void shutdown_signal_handler( int signal_num ) {
-   qDebug() << "US_Global: Caught signal '" << signal_num << "'. Exiting.";
-   shm_post_routine();
-   exit(-signal_num);
-}
+#include <sys/ipc.h>
+#include <sys/shm.h>
 #endif
 
 US_Global::US_Global()
@@ -59,44 +18,62 @@ US_Global::US_Global()
   deleteFlag = false;
   errors.clear();
   
-#ifndef Q_OS_WIN
+#if !defined( Q_OS_WIN ) && !defined( Q_OS_MACOS )
+  // for Linux use direct sysV shm
+
+  // the SHM_KEY_BASE can be adjusted if the current value clobbers some other program's usage
+# define SHM_KEY_BASE 0xe1000000 
+
+  key_t key = SHM_KEY_BASE + getuid();
+
+  // shm_open
+  int shmid = shmget( key
+                      ,sizeof(Global)
+                      ,IPC_CREAT | 0600
+                      );
+  if ( shmid == -1 ) {
+     valid = false;
+     errors << "Unable to get shared memory";
+     return;
+  }
+
+  QTextStream( stdout ) << "shmget (create) succeeded\n";
+         
+  struct shmid_ds shmds;
+         
+  if ( -1 == shmctl( shmid, IPC_STAT, &shmds ) ) {
+     valid = false;
+     errors << "Unable to get status of shared memory";
+     return;
+  }
+  QTextStream( stdout ) << "shmctl IPC_STAT succedded\n";
+  QTextStream( stdout ) << "shmctl nattch is " << shmds.shm_nattch << "\n";
+
+  if ( (void *)-1 == (shmbuf = shmat( shmid, 0, 0 ) ) ) {
+     valid = false;
+     errors << "Unable to attach to of shared memory";
+     return;
+  }
+  QTextStream( stdout ) << "shmat succeeded\n";
+
+  if ( shmds.shm_nattch == 0 ) {
+     QTextStream( stdout ) << "zeroing data\n";
+     set_global_position( QPoint( 50, 50 ) );
+     setPasswd( "" );
+     write_global();
+  } else {
+     read_global();
+  }
+  valid = true;
+  return;
+
+#else
+# ifndef Q_OS_WIN
   // Make the key specific to the uid
   QString key = QString( "UltraScan%1" ).arg( getuid() );
-#else
+# else
   QString key = QString( "UltraScan" );
-#endif
-
-#if !defined( Q_OS_WIN ) && !defined( Q_OS_MACOS )
-  // install signal handler to properly clean up shared memory
-  // qDebug() << "US_Global::signal handler check";
-  sizeof_global = sizeof global;
-  if ( !shutdown_signal_handler_installed ) {
-     std::set < int > sigs = {
-                              SIGABRT
-                              ,SIGALRM
-                              ,SIGFPE
-                              ,SIGHUP
-                              ,SIGILL
-                              ,SIGINT
-                              ,SIGPIPE
-                              ,SIGQUIT
-                              ,SIGSEGV
-                              ,SIGTERM
-                              ,SIGUSR1
-                              ,SIGUSR2
-     };
-     for ( auto it = sigs.begin();
-           it != sigs.end();
-           ++it ) {
-        signal( *it, shutdown_signal_handler );
-     }
-     shutdown_signal_handler_installed = true;    
-     qDebug() << "US_Global: shutdown signal handler installed";
-  }
-  last_shared_memory.insert( &sharedMemory );
-  // qDebug() << "US_Global::inserted shared memory";
-  qAddPostRoutine( shm_post_routine );
-#endif
+# endif
 
   sharedMemory.setKey( key );
 
@@ -153,16 +130,14 @@ US_Global::US_Global()
 
      }           
   }
+#endif
 }
 
 US_Global::~US_Global()
 {
+#if !defined( Q_OS_WIN ) && !defined( Q_OS_MACOS )
   sharedMemory.detach();
   if ( deleteFlag ) sharedMemory.deleteLater();
-#if !defined( Q_OS_WIN ) && !defined( Q_OS_MACOS )
-  if ( last_shared_memory.count( &sharedMemory ) ) {
-    last_shared_memory.erase( &sharedMemory );
-  }
 #endif
 }
 
@@ -196,18 +171,28 @@ QString US_Global::passwd( void )
 
 void  US_Global::read_global( void )
 {
+#if !defined( Q_OS_WIN ) && !defined( Q_OS_MACOS )
+  // we are not locking, hopefully not an issue, if strange issues are apparent, could add a separate locking semaphore
+  memcpy( (void*)&global, shmbuf, sizeof(Global) );
+#else
   sharedMemory.lock();
   char* from = (char*)sharedMemory.data();
   memcpy( (char*)&global, from, qMin( sharedMemory.size(), (int)sizeof global ) );
   sharedMemory.unlock();
+#endif
 }
 
 void  US_Global::write_global( void )
 {
+#if !defined( Q_OS_WIN ) && !defined( Q_OS_MACOS )
+  // we are not locking, hopefully not an issue, if strange issues are apparent, could add a separate locking semaphore
+  memcpy( shmbuf, (void*)&global, sizeof(Global) );
+#else
   sharedMemory.lock();
   char* to = (char*)sharedMemory.data();
   memcpy( to, (char*)&global, qMin( sharedMemory.size(), (int)sizeof global ) );
   sharedMemory.unlock();
+#endif
 }
 
 QString US_Global::errorString() {
