@@ -2522,7 +2522,8 @@ void US_ReporterGMP::update_progress( int icomp )
 void US_ReporterGMP::show_results( )
 {
    progress_msg->setValue( progress_msg->maximum() );
-  
+   qApp->processEvents();
+   
    haveSim     = true;
    // pb_distrib->setEnabled( true );
    // pb_view   ->setEnabled( true );
@@ -2542,6 +2543,8 @@ void US_ReporterGMP::show_results( )
    //    rbmapd->close();
    // }
 
+   assemble_distrib_html( );
+   
    rbmapd = new US_ResidsBitmap( resids );
    // rbmapd->move( bmd_pos );
    // rbmapd->show();
@@ -2635,14 +2638,19 @@ if(!usescan) kexcls++;
 
    qDebug() << "CALC_RESID: matchd" << matchd << "kexcls" << kexcls << "rmsd" << rmsd;
 
-   //output HTML string for Distributions for current triple:
-   //QString html_distibutions = distrib_info();
-   html_assembled += "<p class=\"pagebreak \">\n";
-   html_assembled += html_header( "US_Fematch", text_model( model, 2 ), edata );
-   html_assembled += distrib_info();
-   html_assembled += "</p>\n";
 }
 
+
+//output HTML string for Distributions for current triple:
+void  US_ReporterGMP::assemble_distrib_html( void )
+{
+  //QString html_distibutions = distrib_info();
+  html_assembled += "<p class=\"pagebreak \">\n";
+  html_assembled += html_header( "US_Fematch", text_model( model, 2 ), edata );
+  html_assembled += distrib_info();
+  html_assembled += "</p>\n";
+}
+  
 // Interpolate an sdata y (readings) value for a given x (radius)
 double US_ReporterGMP::interp_sval( double xv, double* sx, double* sy, int ssize )
 {
@@ -3528,7 +3536,7 @@ void US_ReporterGMP::assemble_pdf()
   rptpage  += "  <meta http-equiv=\"Content-Type\" content="
               "\"text/html; charset=iso-8859-1\"/>\n";
   rptpage  += "  <style type=\"text/css\" >\n";
-  rptpage  += "    td { padding-right: 1em; }\n";
+  rptpage  += "    td { padding-right: 0.75em; }\n";
   rptpage  += "    body { background-color: white; }\n";
   rptpage  += "    .pagebreak\n";
   rptpage  += "    {\n";

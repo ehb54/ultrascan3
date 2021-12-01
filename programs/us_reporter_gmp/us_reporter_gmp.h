@@ -359,6 +359,7 @@ class US_ReporterGMP : public US_Widgets
 
 	void show_results   ( void );
 	void calc_residuals( void );
+	void assemble_distrib_html( void );
 	double  interp_sval( double, double*, double*,  int );
 	void plotres(   void );
 
