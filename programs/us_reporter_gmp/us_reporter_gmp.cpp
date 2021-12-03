@@ -5,6 +5,7 @@
 #include "us_reporter_gmp.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_gui_util.h"
 #include "us_protocol_util.h"
 #include "us_math2.h"
 #include "us_constants.h"
@@ -1088,8 +1089,10 @@ void US_ReporterGMP::generate_report( void )
 
   //Part 2
   for ( int i=0; i<Array_of_triples.size(); ++i )
-    simulate_triple ( Array_of_triples[i] );
-  
+    {
+      currentTripleName = Array_of_triples[i];
+      simulate_triple ( currentTripleName );
+    }
 
   write_pdf_report( );
   qApp->processEvents();
@@ -2545,14 +2548,16 @@ void US_ReporterGMP::show_results( )
 
    assemble_distrib_html( );
    
-   rbmapd = new US_ResidsBitmap( resids );
+   // rbmapd = new US_ResidsBitmap( resids );
    // rbmapd->move( bmd_pos );
    // rbmapd->show();
 
    // plot3d();
 
    
-   //plotres(); // <------- TEMP
+   plotres(); // <------- save plots into files locally
+   
+   
    QApplication::restoreOverrideCursor();
 }
 
@@ -2649,6 +2654,21 @@ void  US_ReporterGMP::assemble_distrib_html( void )
   html_assembled += html_header( "US_Fematch", text_model( model, 2 ), edata );
   html_assembled += distrib_info();
   html_assembled += "</p>\n";
+}
+
+//output HTML plots for currentTriple
+void  US_ReporterGMP::assemble_plots_html( QMap< QString, QString > mapTypeToFile )
+{
+  // Embed plots in the composite report
+  QMap < QString, QString >::iterator ii;
+  for ( ii = mapTypeToFile.begin(); ii != mapTypeToFile.end(); ++ii )
+    {
+      QString filename = ii.value();
+      QString label = "";
+      
+      html_assembled   += "    <div><img src=\"" + filename 
+	+ "\" alt=\"" + label + "\"/></div>\n\n";
+    }
 }
   
 // Interpolate an sdata y (readings) value for a given x (radius)
@@ -3329,14 +3349,123 @@ void US_ReporterGMP::plotres( )
    // }
 
   // <------------ TEMP
-  resplotd = new US_ResidPlotFem( this, true );
-  //resplotd->move( rpd_pos );
-  //resplotd->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
-  resplotd->setWindowFlags( Qt::Dialog );
-  resplotd->setWindowModality(Qt::ApplicationModal);
-  resplotd->show();
+  resplotd = new US_ResidPlotFem( this, "REPORT" );
+  // resplotd->move( rpd_pos );
+  // resplotd->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
+  // resplotd->setWindowFlags( Qt::Dialog );
+  // resplotd->setWindowModality(Qt::ApplicationModal);
+  //resplotd->show();
+
+  QMap < QString, QString > mapTypeToFileName;
+  mkdir( US_Settings::reportDir(), edata->runID );
+  const QString svgext( ".svgz" );
+  const QString pngext( ".png" );
+  const QString csvext( ".csv" );
+  QString tripnode  = QString( currentTripleName ).replace( ".", "" );
+  QString basename  = US_Settings::reportDir() + "/" + edata->runID + "/" + text_model( model, 0 ) + "." + tripnode + ".";
+
+  //QString img01File = basename + "velocity"   + pngext;
+  QString img01File = basename + "velocity"   + svgext;
+  QString img02File = basename + "residuals"  + pngext;
+
+  mapTypeToFileName[ "velocity"  ] = basename + "velocity"   + pngext;
+  mapTypeToFileName[ "residuals" ] = img02File;
   
-  connect( resplotd, SIGNAL( on_close() ), this, SLOT( resplot_done() ) );
+  write_plot( img01File, resplotd->rp_data_plot1() );  //<-- rp_data_plot1() gives overlay (Exp/Simulations) plot
+  write_plot( img02File, resplotd->rp_data_plot2() );  //<-- rp_data_plot2() gives residuals plot
+
+  assemble_plots_html( mapTypeToFileName );
+  
+  // connect( resplotd, SIGNAL( on_close() ), this, SLOT( resplot_done() ) );
+}
+
+
+// Create a subdirectory if need be
+bool US_ReporterGMP::mkdir( const QString& baseDir, const QString& subdir )
+{
+   QDir folder( baseDir );
+
+   if ( folder.exists( subdir ) ) return true;
+
+   if ( folder.mkdir( subdir ) ) return true;
+
+   QMessageBox::warning( this,
+      tr( "File error" ),
+      tr( "Could not create the directory:\n" ) + baseDir + "/" + subdir );
+
+   return false;
+}
+
+// Write out a plot
+void US_ReporterGMP::write_plot( const QString& filename, const QwtPlot* plot )
+{
+   if ( filename.contains( ".svg" ) )
+   {  // Save an SVG file and a PNG copy
+      if ( US_GuiUtil::save_plot( filename, plot ) != 0 )
+         QMessageBox::warning( this, tr( "File Write Error" ),
+            tr( "Unable to write file" ) + filename );
+   }
+   
+//    else if ( filename.endsWith( "rbitmap.png" ) )
+//    {  // Special case of rbitmap PNG
+//       if ( rbmapd == 0 )
+//       {  // if it is not currently displayed, display it
+//          rbmapd = new US_ResidsBitmap( resids );
+//          rbmapd->move( bmd_pos );
+//          rbmapd->show();
+//          rbmapd->raise();
+//       }
+
+//       else
+//       {  // if already displayed,  replot and re-activate
+//          rbmapd->replot( resids );
+//          rbmapd->raise();
+//          rbmapd->activateWindow();
+//       }
+
+// #if QT_VERSION > 0x050000
+//       QPixmap pixmap = ((QWidget*)rbmapd)->grab();
+// #else
+//       QPixmap pixmap = QPixmap::grabWidget( rbmapd, 0, 0,
+//                                             rbmapd->width(), rbmapd->height() );
+// #endif
+
+//       if ( ! pixmap.save( filename ) )
+//          QMessageBox::warning( this, tr( "File Write Error" ),
+//             tr( "Unable to write file" ) + filename );
+//    }
+
+//    else if ( filename.endsWith( "3dplot.png" ) )
+//    {  // Special case of 3dplot PNG
+//       if ( eplotcd == 0 )
+//       {  // if no 3d plot control up,  create it now
+//          eplotcd = new US_PlotControlFem( this, &model );
+//          eplotcd->move( epd_pos );
+//          eplotcd->show();
+//          eplotcd->do_3dplot();
+//       }
+
+// #if defined(Q_OS_WIN) || defined(Q_OS_MAC)
+//       US_Plot3D* widgw = eplotcd->widget_3dplot();
+//       bool ok          = widgw->save_plot( filename, QString( "png" ) );
+// #else
+//       QGLWidget* dataw = eplotcd->data_3dplot();
+//       QPixmap pixmap   = dataw->renderPixmap( dataw->width(), dataw->height(),
+//                                             true  );
+//       bool ok          = pixmap.save( filename );
+// #endif
+
+//       if ( ! ok )
+//          QMessageBox::warning( this, tr( "File Write Error" ),
+//             tr( "Unable to write file" ) + filename );
+//    }
+
+   else if ( filename.endsWith( ".png" ) )
+   {  // General case of PNG
+      if ( US_GuiUtil::save_png( filename, plot ) != 0 )
+         QMessageBox::warning( this, tr( "File Write Error" ),
+            tr( "Unable to write file" ) + filename );
+   }
 }
 
 
@@ -4476,8 +4605,6 @@ void US_ReporterGMP::assemble_pdf()
   //ANALYSIS: PCSA per-channel settings: end
   //APROFILE: end
   
-  
-
   
   //Main assembly: reportMask based
   //QString html_assembled = QString("");

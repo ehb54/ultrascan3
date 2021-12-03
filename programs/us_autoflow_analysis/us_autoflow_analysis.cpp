@@ -2434,8 +2434,10 @@ void US_Analysis_auto::plotres( )
    //    resplotd->close();
    // }
 
-   resplotd = new US_ResidPlotFem( this, true );
-   //resplotd->move( rpd_pos );
+   //resplotd = new US_ResidPlotFem( this, true );
+   resplotd = new US_ResidPlotFem( this, QString("ANALYSIS") );
+
+  //resplotd->move( rpd_pos );
    //resplotd->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
    resplotd->setWindowFlags( Qt::Dialog );
    resplotd->setWindowModality(Qt::ApplicationModal);

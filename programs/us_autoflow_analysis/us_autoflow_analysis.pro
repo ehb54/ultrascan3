@@ -3,10 +3,12 @@ include( ../../gui.pri )
 TARGET        = us_autoflow_analysis
 QT           += xml
 QT           += sql
-QT           += svg opengl
+QT           += svg opengl printsupport
 
 HEADERS       = us_autoflow_analysis.h \
+                ../us_analysis_profile/us_analysis_profile.h  \
                 ../us_fit_meniscus/us_fit_meniscus.h \
+                ../us_reporter_gmp/us_reporter_gmp.h \
                 ../us_fematch/us_fematch.h  \
                 ../us_fematch/us_plot_control_fem.h \
                 ../us_fematch/us_resplot_fem.h \
@@ -17,7 +19,10 @@ HEADERS       = us_autoflow_analysis.h \
 
 SOURCES       = us_autoflow_analysis_main.cpp       \
                 us_autoflow_analysis.cpp         \
+                ../us_analysis_profile/us_analysis_profile.cpp  \
+                ../us_analysis_profile/us_anapro_utils.cpp \
                 ../us_fit_meniscus/us_fit_meniscus.cpp \
+                ../us_reporter_gmp/us_reporter_gmp.cpp \
                 ../us_fematch/us_fematch.cpp  \
                 ../us_fematch/us_plot_control_fem.cpp \
                 ../us_fematch/us_resplot_fem.cpp      \

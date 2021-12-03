@@ -39,6 +39,17 @@ class US_ReporterGMP : public US_Widgets
 	 QMap< QString, QList< double > > ch_wvls;
 	 // QString      reportMask;
 
+	 //for model simulations:
+	 QPointer< US_ResidPlotFem >    resplotd;
+	 US_DataIO::EditedData*      rg_editdata();
+	 US_DataIO::RawData*         rg_simdata();
+	 QList< int >*               rg_excllist();
+	 US_Model*                   rg_model();
+	 US_Noise*                   rg_ti_noise();
+	 US_Noise*                   rg_ri_noise();
+	 QPointer< US_ResidsBitmap > rg_resbmap();
+	 QString                     rg_tripleInfo();
+
 	 struct GenReportMaskStructure
 	 {
 	   QMap <QString, bool >    ShowReportParts;
@@ -151,6 +162,7 @@ class US_ReporterGMP : public US_Widgets
 	 bool       has_fluorescense;
 	 
 	 QVector< QString >  Array_of_triples;
+	 QString   currentTripleName;
 	 
 	 void  get_current_date( void );
 	 void  format_needed_params( void );
@@ -170,16 +182,7 @@ class US_ReporterGMP : public US_Widgets
 	 void parse_edited_gen_mask_json( const QString, GenReportMaskStructure &  );
 	 void parse_edited_perChan_mask_json( const QString, PerChanReportMaskStructure &  );
 
-	 //for model simulations:
-	 QPointer< US_ResidPlotFem >    resplotd;
-	 US_DataIO::EditedData*      rg_editdata();
-	 US_DataIO::RawData*         rg_simdata();
-	 QList< int >*               rg_excllist();
-	 US_Model*                   rg_model();
-	 US_Noise*                   rg_ti_noise();
-	 US_Noise*                   rg_ri_noise();
-	 QPointer< US_ResidsBitmap > rg_resbmap();
-	 QString                     rg_tripleInfo();
+
 
 	 bool model_exists;
 	 
@@ -360,6 +363,7 @@ class US_ReporterGMP : public US_Widgets
 	void show_results   ( void );
 	void calc_residuals( void );
 	void assemble_distrib_html( void );
+	void assemble_plots_html( QMap< QString, QString > );
 	double  interp_sval( double, double*, double*,  int );
 	void plotres(   void );
 
@@ -374,6 +378,9 @@ class US_ReporterGMP : public US_Widgets
 			   const QString&, const QString&,
 			   const QString&, const QString&,
 			   const QString& )                 const;
+	
+	void    write_plot    ( const QString&, const QwtPlot* );
+	bool    mkdir         ( const QString&, const QString& );
 	
 	void help          ( void )
 	{ showHelp.show_help( "reporter_gmp.html" ); };
