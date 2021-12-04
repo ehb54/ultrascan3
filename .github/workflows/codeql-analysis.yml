@@ -84,6 +84,10 @@ jobs:
       - name: Build
         run: |
           cp admin/codeql/docker/local.pri.gui local.pri
+          cd qwtplot3d
+          qmake
+          make
+          cd ..
           cd utils
           qmake
           make
