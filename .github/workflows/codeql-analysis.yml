@@ -46,10 +46,9 @@ jobs:
           languages: ${{ matrix.language }}
       - name: Build
         run: |
-          cd /ultrascan3
-          git pull
-          cd /ultrascan3/utils
+          cp admin/codeql/docker/local.pri.gui local.pri
+          cd utils
           qmake
-          make
+          LD_PRELOAD=/__t/CodeQL/0.0.0-20211122/x64/codeql/tools/linux64/lib_x86_64_trace.so make
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v1
