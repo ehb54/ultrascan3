@@ -21,8 +21,8 @@ on:
     - cron: '20 18 * * 1'
 
 jobs:
-  analyze-qwtplot3d:
-    name: Analyze qwtplot3d
+  analyze-mpi:
+    name: Analyze mpi
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -46,43 +46,15 @@ jobs:
           languages: ${{ matrix.language }}
       - name: Build
         run: |
-          cp admin/codeql/docker/local.pri.gui local.pri
-          cd qwtplot3d
-          qmake
-          make
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v1
-
-  analyze-utils:
-    name: Analyze utils
-    runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-      actions: read
-
-    strategy:
-      fail-fast: false
-      matrix:
-        language: [cpp]
-
-    # Specify the container in which actions will run
-    container:
-      image: ehb1/us3comp:latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v1
-        with:
-          languages: ${{ matrix.language }}
-      - name: Build
-        run: |
-          cp admin/codeql/docker/local.pri.gui local.pri
+          cp admin/codeql/docker/local.pri.mpi local.pri
           cd utils
           qmake
           make
-#          LD_PRELOAD=/__t/CodeQL/0.0.0-20211122/x64/codeql/tools/linux64/lib_x86_64_trace.so make
+          cd ..
+          cd programs/us_mpi_analysis
+          qmake
+          make
+          cd ../..
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v1
 
@@ -112,9 +84,29 @@ jobs:
       - name: Build
         run: |
           cp admin/codeql/docker/local.pri.gui local.pri
+          cd utils
+          qmake
+          make
+          cd ..
           cd gui
           qmake
           make
-#          LD_PRELOAD=/__t/CodeQL/0.0.0-20211122/x64/codeql/tools/linux64/lib_x86_64_trace.so make
+          cd ..
+          cd programs/us
+          qmake
+          make
+          cd ../..
+          cd programs/us_2dplot
+          qmake
+          make
+          cd ../..
+          cd us_2dsa
+          qmake
+          make
+          cd ../..
+          cd programs/us_2dsa
+          qmake
+          make
+          cd ../..
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v1
