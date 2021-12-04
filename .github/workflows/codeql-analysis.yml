@@ -21,8 +21,40 @@ on:
     - cron: '20 18 * * 1'
 
 jobs:
-  analyze:
-    name: Analyze
+  analyze-qwtplot3d:
+    name: Analyze qwtplot3d
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [cpp]
+
+    # Specify the container in which actions will run
+    container:
+      image: ehb1/us3comp:latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v1
+        with:
+          languages: ${{ matrix.language }}
+      - name: Build
+        run: |
+          cp admin/codeql/docker/local.pri.gui local.pri
+          cd qwtplot3d
+          qmake
+          make
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v1
+
+  analyze-utils:
+    name: Analyze utils
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -49,6 +81,40 @@ jobs:
           cp admin/codeql/docker/local.pri.gui local.pri
           cd utils
           qmake
-          LD_PRELOAD=/__t/CodeQL/0.0.0-20211122/x64/codeql/tools/linux64/lib_x86_64_trace.so make
+          make
+#          LD_PRELOAD=/__t/CodeQL/0.0.0-20211122/x64/codeql/tools/linux64/lib_x86_64_trace.so make
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v1
+
+  analyze-gui:
+    name: Analyze gui
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [cpp]
+
+    # Specify the container in which actions will run
+    container:
+      image: ehb1/us3comp:latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v1
+        with:
+          languages: ${{ matrix.language }}
+      - name: Build
+        run: |
+          cp admin/codeql/docker/local.pri.gui local.pri
+          cd gui
+          qmake
+          make
+#          LD_PRELOAD=/__t/CodeQL/0.0.0-20211122/x64/codeql/tools/linux64/lib_x86_64_trace.so make
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v1
