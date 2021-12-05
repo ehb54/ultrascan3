@@ -2657,13 +2657,12 @@ void  US_ReporterGMP::assemble_distrib_html( void )
 }
 
 //output HTML plots for currentTriple
-void  US_ReporterGMP::assemble_plots_html( QMap< QString, QString > mapTypeToFile )
+void  US_ReporterGMP::assemble_plots_html( QStringList PlotsFilenames )
 {
   // Embed plots in the composite report
-  QMap < QString, QString >::iterator ii;
-  for ( ii = mapTypeToFile.begin(); ii != mapTypeToFile.end(); ++ii )
+  for ( int i = 0;  i < PlotsFilenames.size(); ++ i )
     {
-      QString filename = ii.value();
+      QString filename = PlotsFilenames[ i ];
       QString label = "";
       
       html_assembled   += "    <div><img src=\"" + filename 
@@ -3342,21 +3341,8 @@ QString  US_ReporterGMP::table_row( const QString& s1, const QString& s2,
 // Open a residual plot dialog
 void US_ReporterGMP::plotres( )
 {
-   // if ( resplotd != 0 )
-   // {
-   //    rpd_pos  = resplotd->pos();
-   //    resplotd->close();
-   // }
-
-  // <------------ TEMP
-  resplotd = new US_ResidPlotFem( this, "REPORT" );
-  // resplotd->move( rpd_pos );
-  // resplotd->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
-  // resplotd->setWindowFlags( Qt::Dialog );
-  // resplotd->setWindowModality(Qt::ApplicationModal);
-  //resplotd->show();
-
-  QMap < QString, QString > mapTypeToFileName;
+  
+  QStringList PlotsFileNames;
   mkdir( US_Settings::reportDir(), edata->runID );
   const QString svgext( ".svgz" );
   const QString pngext( ".png" );
@@ -3364,21 +3350,291 @@ void US_ReporterGMP::plotres( )
   QString tripnode  = QString( currentTripleName ).replace( ".", "" );
   QString basename  = US_Settings::reportDir() + "/" + edata->runID + "/" + text_model( model, 0 ) + "." + tripnode + ".";
 
-  //QString img01File = basename + "velocity"   + pngext;
-  QString img01File = basename + "velocity"   + svgext;
-  QString img02File = basename + "residuals"  + pngext;
+  QString img01File = basename + "velocity_nc" + svgext;
+  QString img02File = basename + "residuals"   + pngext;
+  QString img03File = basename + "s_distrib"   + svgext;
+  QString img04File = basename + "mw_distrib"  + svgext;
+  QString img05File = basename + "D_distrib"   + svgext;
+  QString img06File = basename + "ff0_vs_s"    + svgext;
+  QString img07File = basename + "ff0_vs_mw"   + svgext;
+  QString img08File = basename + "D_vs_s"      + svgext;
+  QString img09File = basename + "D_vs_mw"     + svgext;
 
-  mapTypeToFileName[ "velocity"  ] = basename + "velocity"   + pngext;
-  mapTypeToFileName[ "residuals" ] = img02File;
+  // Plots for Exp-Sim ovelray (with noises rmoved && residual plot)
+  resplotd = new US_ResidPlotFem( this, "REPORT" );
   
   write_plot( img01File, resplotd->rp_data_plot1() );  //<-- rp_data_plot1() gives overlay (Exp/Simulations) plot
-  write_plot( img02File, resplotd->rp_data_plot2() );  //<-- rp_data_plot2() gives residuals plot
-
-  assemble_plots_html( mapTypeToFileName );
+  PlotsFileNames <<  basename + "velocity_nc"   + pngext;
   
-  // connect( resplotd, SIGNAL( on_close() ), this, SLOT( resplot_done() ) );
+  write_plot( img02File, resplotd->rp_data_plot2() );  //<-- rp_data_plot2() gives residuals plot
+  PlotsFileNames << img02File;
+
+  //Stick Plots for S-, MW-, D- distributions
+  plotLayout1 = new US_Plot( data_plot1,
+			     tr( "Residuals" ),
+			     tr( "Radius (cm)" ),
+			     tr( "OD Difference" ),
+			     true, "^resids [0-9].*", "rainbow" );
+  
+  plotLayout2 = new US_Plot( data_plot2,
+			     tr( "Velocity Data" ),
+			     tr( "Radius (cm)" ),
+			     tr( "Absorbance" ),
+			     true, ".*in range", "rainbow" );
+  
+  data_plot1->setMinimumSize( 560, 240 );
+  data_plot2->setMinimumSize( 560, 240 );
+    
+  distrib_plot_stick( 0 );               // s-distr.
+  write_plot( img03File, data_plot1 );
+  PlotsFileNames <<  basename + "s_distrib"   + pngext;
+  
+  distrib_plot_stick( 1 );
+  write_plot( img04File, data_plot1 );   // MW-distr.
+  PlotsFileNames <<  basename + "mw_distrib"  + pngext;
+  
+  distrib_plot_stick( 2 );
+  write_plot( img05File, data_plot1 );   // D-distr.
+  PlotsFileNames <<  basename + "D_distrib"  + pngext;
+
+  //2D distributions: ff0_vs_s, ff0_vs_mw, D_vs_s, D_vs_mw
+  distrib_plot_2d( ( cnstvb ? 3 : 5 ) );
+  write_plot( img06File, data_plot1 );
+  PlotsFileNames <<  basename + "ff0_vs_s"  + pngext;
+  
+  distrib_plot_2d( ( cnstvb ? 4 : 6 ) );
+  write_plot( img07File, data_plot1 );
+  PlotsFileNames <<  basename + "ff0_vs_mw"  + pngext;
+
+  distrib_plot_2d(    7 );
+  write_plot( img08File, data_plot1 );
+  PlotsFileNames <<  basename + "D_vs_s"  + pngext;
+
+  distrib_plot_2d(    8 );
+  write_plot( img09File, data_plot1 );
+  PlotsFileNames <<  basename + "D_vs_mw"  + pngext;
+  
+  //add .PNG plots to combined PDF report
+  assemble_plots_html( PlotsFileNames  );
 }
 
+
+// Do stick type distribution plot
+void US_ReporterGMP::distrib_plot_stick( int type )
+{
+   QString pltitle = tr( "Run " ) + edata->runID + tr( " :\nCell " )
+      + edata->cell + " (" + edata->wavelength + " nm)";
+   QString xatitle;
+   QString yatitle = tr( "Rel. Concentr." );
+
+   if ( type == 0 )
+   {
+      pltitle = pltitle + tr( "\ns20,W Distribution" );
+      xatitle = tr( "Corrected Sedimentation Coefficient" );
+   }
+
+   else if ( type == 1 )
+   {
+      pltitle = pltitle + tr( "\nMW Distribution" );
+      xatitle = tr( "Molecular Weight (Dalton)" );
+   }
+
+   else if ( type == 2 )
+   {
+      pltitle = pltitle + tr( "\nD20,W Distribution" );
+      xatitle = tr( "D20,W (cm^2/sec)" );
+   }
+
+   dataPlotClear( data_plot1 );
+
+   data_plot1->setTitle(                       pltitle );
+   data_plot1->setAxisTitle( QwtPlot::yLeft,   yatitle );
+   data_plot1->setAxisTitle( QwtPlot::xBottom, xatitle );
+
+   QwtPlotGrid*  data_grid = us_grid(  data_plot1 );
+   QwtPlotCurve* data_curv = us_curve( data_plot1, "distro" );
+
+
+   int     dsize  = model_used.components.size();
+   QVector< double > vecx( dsize );
+   QVector< double > vecy( dsize );
+   double* xx     = vecx.data();
+   double* yy     = vecy.data();
+   double  xmin   = 1.0e30;
+   double  xmax   = -1.0e30;
+   double  ymin   = 1.0e30;
+   double  ymax   = -1.0e30;
+   double  xval;
+   double  yval;
+   double  rdif;
+
+   for ( int jj = 0; jj < dsize; jj++ )
+   {
+      xval     = ( type == 0 ) ? model_used.components[ jj ].s :
+               ( ( type == 1 ) ? model_used.components[ jj ].mw :
+                                 model_used.components[ jj ].D );
+      yval     = model_used.components[ jj ].signal_concentration;
+      xx[ jj ] = xval;
+      yy[ jj ] = yval;
+      xmin     = min( xval, xmin );
+      xmax     = max( xval, xmax );
+      ymin     = min( yval, ymin );
+      ymax     = max( yval, ymax );
+   }
+
+   rdif   = ( xmax - xmin ) / 20.0;
+   xmin  -= rdif;
+   xmax  += rdif;
+   rdif   = ( ymax - ymin ) / 20.0;
+   ymin  -= rdif;
+   ymax  += rdif;
+   xmin   = ( type == 0 ) ? xmin : max( xmin, 0.0 );
+   ymin   = max( ymin, 0.0 );
+
+   data_grid->enableYMin ( true );
+   data_grid->enableY    ( true );
+   data_grid->setMajorPen(
+      QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine ) );
+
+   data_curv->setSamples( xx, yy, dsize );
+   data_curv->setPen    ( QPen( Qt::yellow, 3, Qt::SolidLine ) );
+   data_curv->setStyle  ( QwtPlotCurve::Sticks );
+
+   data_plot1->setAxisAutoScale( QwtPlot::xBottom );
+   data_plot1->setAxisAutoScale( QwtPlot::yLeft   );
+   data_plot1->setAxisScale( QwtPlot::xBottom, xmin, xmax );
+   data_plot1->setAxisScale( QwtPlot::yLeft,   ymin, ymax );
+
+   data_plot1->replot();
+}
+
+// Do 2d type distribution plot
+void US_ReporterGMP::distrib_plot_2d( int type )
+{
+   QString pltitle = tr( "Run " ) + edata->runID + tr( " :\nCell " )
+      + edata->cell + " (" + edata->wavelength + " nm)";
+   QString yatitle;
+   QString xatitle;
+
+   if ( type == 3 )
+   {
+      pltitle = pltitle + tr( "\nf/f0 vs Sed. Coeff." );
+      yatitle = tr( "Frictional Ratio f/f0" );
+      xatitle = tr( "Sedimentation Coefficient s20,W" );
+   }
+
+   else if ( type == 4 )
+   {
+      pltitle = pltitle + tr( "\nf/f0 vs Mol. Weight" );
+      yatitle = tr( "Frictional Ratio f/f0" );
+      xatitle = tr( "Molecular Weight" );
+   }
+
+   else if ( type == 5 )
+   {
+      pltitle = pltitle + tr( "\nVbar vs Sed. Coeff." );
+      yatitle = tr( "Vbar at 20" ) + DEGC;
+      xatitle = tr( "Sedimentation Coefficient s20,W" );
+   }
+
+   else if ( type == 6 )
+   {
+      pltitle = pltitle + tr( "\nVbar vs Mol. Weight" );
+      yatitle = tr( "Vbar at 20" ) + DEGC;
+      xatitle = tr( "Molecular Weight" );
+   }
+
+   else if ( type == 7 )
+   {
+      pltitle = pltitle + tr( "\nDiff. Coeff. vs Sed. Coeff." );
+      yatitle = tr( "Diff. Coeff. D20,W" );
+      xatitle = tr( "Sedimentation Coefficient s20,W" );
+   }
+
+   else if ( type == 8 )
+   {
+      pltitle = pltitle + tr( "\nDiff. Coeff. vs Molecular Weight" );
+      yatitle = tr( "Diff. Coeff. D20,W" );
+      xatitle = tr( "Molecular Weight" );
+   }
+
+   dataPlotClear( data_plot1 );
+
+   data_plot1->setTitle(                       pltitle );
+   data_plot1->setAxisTitle( QwtPlot::yLeft,   yatitle );
+   data_plot1->setAxisTitle( QwtPlot::xBottom, xatitle );
+
+   QwtPlotGrid*  data_grid = us_grid(  data_plot1 );
+   QwtPlotCurve* data_curv = us_curve( data_plot1, "distro" );
+   QwtSymbol*    symbol    = new QwtSymbol;
+
+   int     dsize  = model_used.components.size();
+   QVector< double > vecx( dsize );
+   QVector< double > vecy( dsize );
+   double* xx     = vecx.data();
+   double* yy     = vecy.data();
+   double  xmin   = 1.0e30;
+   double  xmax   = -1.0e30;
+   double  ymin   = 1.0e30;
+   double  ymax   = -1.0e30;
+   double  xval;
+   double  yval;
+   double  rdif;
+
+   for ( int jj = 0; jj < dsize; jj++ )
+   {
+      xval     = ( ( type & 1 ) == 1 ) ? model_used.components[ jj ].s :
+                                         model_used.components[ jj ].mw;
+
+      if ( type < 5 )             yval = model_used.components[ jj ].f_f0;
+      else if ( type < 7 )        yval = model_used.components[ jj ].vbar20;
+      else                        yval = model_used.components[ jj ].D;
+
+      xx[ jj ] = xval;
+      yy[ jj ] = yval;
+      xmin     = min( xval, xmin );
+      xmax     = max( xval, xmax );
+      ymin     = min( yval, ymin );
+      ymax     = max( yval, ymax );
+   }
+
+   rdif   = ( xmax - xmin ) / 20.0;
+   xmin  -= rdif;
+   xmax  += rdif;
+   rdif   = ( ymax - ymin ) / 20.0;
+   ymin  -= rdif;
+   ymax  += rdif;
+   xmin   = ( type & 1 ) == 1 ? xmin : max( xmin, 0.0 );
+   ymin   = max( ymin, 0.0 );
+
+   data_grid->enableYMin ( true );
+   data_grid->enableY    ( true );
+   data_grid->setMajorPen(
+      QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine ) );
+
+   symbol->setStyle( QwtSymbol::Ellipse );
+   symbol->setPen(   QPen(   Qt::red    ) );
+   symbol->setBrush( QBrush( Qt::yellow ) );
+   if ( dsize > 100 )
+      symbol->setSize(  5 );
+   else if ( dsize > 50 )
+      symbol->setSize(  8 );
+   else if ( dsize > 20 )
+      symbol->setSize( 10 );
+   else
+      symbol->setSize( 12 );
+
+   data_curv->setStyle  ( QwtPlotCurve::NoCurve );
+   data_curv->setSymbol ( symbol );
+   data_curv->setSamples( xx, yy, dsize );
+
+   data_plot1->setAxisAutoScale( QwtPlot::xBottom );
+   data_plot1->setAxisAutoScale( QwtPlot::yLeft   );
+   data_plot1->setAxisScale( QwtPlot::xBottom, xmin, xmax );
+   data_plot1->setAxisScale( QwtPlot::yLeft,   ymin, ymax );
+
+   data_plot1->replot();
+}
 
 // Create a subdirectory if need be
 bool US_ReporterGMP::mkdir( const QString& baseDir, const QString& subdir )

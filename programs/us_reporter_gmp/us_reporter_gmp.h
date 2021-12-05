@@ -70,7 +70,14 @@ class US_ReporterGMP : public US_Widgets
 	 };
 
 	 PerChanReportMaskStructure perChanMask_edited;
-	 
+
+	 US_Plot*     plotLayout1;  // Derived from QVBoxLayout
+	 US_Plot*     plotLayout2;
+
+	 // Widgets
+	 QwtPlot*     data_plot1;
+	 QwtPlot*     data_plot2;
+	 	 
       private:
 
 	 //General report Mask
@@ -363,7 +370,7 @@ class US_ReporterGMP : public US_Widgets
 	void show_results   ( void );
 	void calc_residuals( void );
 	void assemble_distrib_html( void );
-	void assemble_plots_html( QMap< QString, QString > );
+	void assemble_plots_html( QStringList );
 	double  interp_sval( double, double*, double*,  int );
 	void plotres(   void );
 
@@ -381,6 +388,9 @@ class US_ReporterGMP : public US_Widgets
 	
 	void    write_plot    ( const QString&, const QwtPlot* );
 	bool    mkdir         ( const QString&, const QString& );
+
+	void distrib_plot_stick(  int );
+	void distrib_plot_2d   (  int );
 	
 	void help          ( void )
 	{ showHelp.show_help( "reporter_gmp.html" ); };
