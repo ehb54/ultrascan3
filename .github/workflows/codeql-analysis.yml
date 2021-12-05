@@ -1,0 +1,352 @@
+# For most projects, this workflow file will not need changing; you simply need
+# to commit it to your repository.
+#
+# You may wish to alter this file to override the set of languages analyzed,
+# or to provide custom queries or build logic.
+#
+# ******** NOTE ********
+# We have attempted to detect the languages in your repository. Please check
+# the `language` matrix defined below to confirm you have the correct set of
+# supported CodeQL languages.
+#
+name: "CodeQL"
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    # The branches below must be a subset of the branches above
+    branches: [ master ]
+  schedule:
+    - cron: '20 18 * * 1'
+
+jobs:
+  analyze-mpi:
+    name: Analyze mpi
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [cpp]
+
+    # Specify the container in which actions will run
+    container:
+      image: ehb1/us3comp:latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v1
+        with:
+          languages: ${{ matrix.language }}
+      - name: Build
+        run: |
+          cp admin/codeql/docker/local.pri.mpi local.pri
+          cd utils
+          qmake
+          make
+          cd ..
+          cd programs/us_mpi_analysis
+          qmake
+          make
+          cd ../..
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v1
+
+  analyze-gui:
+    name: Analyze gui
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [cpp]
+
+    # Specify the container in which actions will run
+    container:
+      image: ehb1/us3comp:latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v1
+        with:
+          languages: ${{ matrix.language }}
+      - name: Build
+        run: |
+          cp admin/codeql/docker/local.pri.gui local.pri
+          cd qwtplot3d
+          qmake
+          make
+          cd ..
+          cd utils
+          qmake
+          make
+          cd ..
+          cd gui
+          qmake
+          make
+          cd ..
+          cd programs/us
+          qmake
+          make
+          cd ../..
+          cd programs/us_2dplot
+          qmake
+          make
+          cd ../..
+          cd programs/us_2dsa
+          qmake
+          make
+          cd ../..
+          cd programs/us_2dsa
+          qmake
+          make
+          cd ../..
+          cd programs/us_analysis_profile
+          qmake
+          make
+          cd ../..
+          cd programs/us_analyte
+          qmake
+          make
+          cd ../..
+          cd programs/us_astfem_sim
+          qmake
+          make
+          cd ../..
+          cd programs/us_autoflow_analysis
+          qmake
+          make
+          cd ../..
+          cd programs/us_autoflow_reports
+          qmake
+          make
+          cd ../..
+          cd programs/us_buffer
+          qmake
+          make
+          cd ../..
+          cd programs/us_buoyancy
+          qmake
+          make
+          cd ../..
+          cd programs/us_cfa_viewer
+          qmake
+          make
+          cd ../..
+          cd programs/us_colorgradient
+          qmake
+          make
+          cd ../..
+          cd programs/us_combine_models
+          qmake
+          make
+          cd ../..
+          cd programs/us_com_project
+          qmake
+          make
+          cd ../..
+          cd programs/us_com_project_academic
+          qmake
+          make
+          cd ../..
+          cd programs/us_config
+          qmake
+          make
+          cd ../..
+          cd programs/us_convert
+          qmake
+          make
+          cd ../..
+          cd programs/us_dcdt
+          qmake
+          make
+          cd ../..
+          cd programs/us_ddist_combine
+          qmake
+          make
+          cd ../..
+          cd programs/us_density_match
+          qmake
+          make
+          cd ../..
+          cd programs/us_dmga_init
+          qmake
+          make
+          cd ../..
+          cd programs/us_edit
+          qmake
+          make
+          cd ../..
+          cd programs/us_equiltime
+          qmake
+          make
+          cd ../..
+          cd programs/us_experiment
+          qmake
+          make
+          cd ../..
+          cd programs/us_export_legacy
+          qmake
+          make
+          cd ../..
+          cd programs/us_extinction
+          qmake
+          make
+          cd ../..
+          cd programs/us_fds_filemanager
+          qmake
+          make
+          cd ../..
+          cd programs/us_fematch
+          qmake
+          make
+          cd ../..
+          cd programs/us_fit_meniscus
+          qmake
+          make
+          cd ../..
+          cd programs/us_ga_init
+          qmake
+          make
+          cd ../..
+          cd programs/us_globalequil
+          qmake
+          make
+          cd ../..
+          cd programs/us_grid_editor
+          qmake
+          make
+          cd ../..
+          cd programs/us_helpdaemon
+          qmake
+          make
+          cd ../..
+          cd programs/us_integral
+          qmake
+          make
+          cd ../..
+          cd programs/us_investigator
+          qmake
+          make
+          cd ../..
+          cd programs/us_license
+          qmake
+          make
+          cd ../..
+          cd programs/us_manage_data
+          qmake
+          make
+          cd ../..
+          cd programs/us_model_gui
+          qmake
+          make
+          cd ../..
+          cd programs/us_modelmetrics
+          qmake
+          make
+          cd ../..
+          cd programs/us_mwlr_viewer
+          qmake
+          make
+          cd ../..
+          cd programs/us_mwl_species_fit
+          qmake
+          make
+          cd ../..
+          cd programs/us_mwl_species_sim
+          qmake
+          make
+          cd ../..
+          cd programs/us_mwl_spectra
+          qmake
+          make
+          cd ../..
+          cd programs/us_pcsa
+          qmake
+          make
+          cd ../..
+          cd programs/us_predict1
+          qmake
+          make
+          cd ../..
+          cd programs/us_predict2
+          qmake
+          make
+          cd ../..
+          cd programs/us_project
+          qmake
+          make
+          cd ../..
+          cd programs/us_pseudo3d_combine
+          qmake
+          make
+          cd ../..
+          cd programs/us_ramp
+          qmake
+          make
+          cd ../..
+          cd programs/us_rasmol_control
+          qmake
+          make
+          cd ../..
+          cd programs/us_reporter
+          qmake
+          make
+          cd ../..
+          cd programs/us_reporter_gmp
+          qmake
+          make
+          cd ../..
+          cd programs/us_rotor
+          qmake
+          make
+          cd ../..
+          cd programs/us_rotor_calibration
+          qmake
+          make
+          cd ../..
+          cd programs/us_sassoc
+          qmake
+          make
+          cd ../..
+          cd programs/us_second_moment
+          qmake
+          make
+          cd ../..
+          cd programs/us_solution
+          qmake
+          make
+          cd ../..
+          cd programs/us_spectrum
+          qmake
+          make
+          cd ../..
+          cd programs/us_tmst_viewer
+          qmake
+          make
+          cd ../..
+          cd programs/us_vhw_combine
+          qmake
+          make
+          cd ../..
+          cd programs/us_vhw_enhanced
+          qmake
+          make
+          cd ../..
+          cd programs/us_xpn_viewer
+          qmake
+          make
+          cd ../..
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v1
