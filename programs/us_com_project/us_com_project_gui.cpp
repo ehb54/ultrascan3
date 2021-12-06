@@ -488,16 +488,18 @@ void US_ComProjectMain::checkDataLocation( void )
 
   if ( US_Settings::default_data_location() == 2 ) //Disk 
     {
-      //data_location_disk = true;
+      data_location_disk = true;
       //window_closed = true;
       QMessageBox::warning( this, tr( "Data Location set to Disk" ),
 			    tr( "Please change Data Location to \"Database\" in the configuraiton of your database! \n" ) );
       
       exit(1);
-      // this->close();
     }
+  
   else if ( US_Settings::default_data_location() == 1 ) //DB
     {
+      data_location_disk = false;
+      
       //Check DB connection: exit if no connection..
       US_Passwd pw;
       QString masterpw = pw.getPasswd();
@@ -675,6 +677,7 @@ void US_ComProjectMain::closeEvent( QCloseEvent* event )
     window_closed = true;
 
     qDebug() << "Closing 1: ";
+    qDebug() << "data_location_disk: " <<  data_location_disk;
 
     if ( !data_location_disk )
       {
@@ -682,7 +685,11 @@ void US_ComProjectMain::closeEvent( QCloseEvent* event )
 	emit us_comproject_closed();
 	close_initDialogue();
 	qDebug() << "initDialogue: true/false 3 : " << epanInit->initDialogueOpen ;
+
+	qApp->processEvents();
       }
+
+    qApp->processEvents();
     
     event->accept();
 }
