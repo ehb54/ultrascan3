@@ -2337,11 +2337,11 @@ void US_Hydrodyn::calc_mw()
                   if ( this_atom->resName != "WAT" ) {
                      Rg2 += ( this_atom->mw + this_atom->ionized_mw_delta ) * 
                         ( 
-                         ( this_atom->coordinate.axis[ 0 ] - cm.axis[ 0 ] ) *
+                         (double) ( this_atom->coordinate.axis[ 0 ] - cm.axis[ 0 ] ) *
                          ( this_atom->coordinate.axis[ 0 ] - cm.axis[ 0 ] ) +
-                         ( this_atom->coordinate.axis[ 1 ] - cm.axis[ 1 ] ) *
+                         (double) ( this_atom->coordinate.axis[ 1 ] - cm.axis[ 1 ] ) *
                          ( this_atom->coordinate.axis[ 1 ] - cm.axis[ 1 ] ) +
-                         ( this_atom->coordinate.axis[ 2 ] - cm.axis[ 2 ] ) *
+                         (double) ( this_atom->coordinate.axis[ 2 ] - cm.axis[ 2 ] ) *
                          ( this_atom->coordinate.axis[ 2 ] - cm.axis[ 2 ] ) 
                          );
                   }
@@ -2716,12 +2716,12 @@ double US_Hydrodyn::ionized_residue_atom_radius( vector < double > & fractions, 
    }
 
    double r0_3 =
-      res->r_atom_0[ atom->ionization_index ].hybrid.radius *
+      (double) res->r_atom_0[ atom->ionization_index ].hybrid.radius *
       res->r_atom_0[ atom->ionization_index ].hybrid.radius *
       res->r_atom_0[ atom->ionization_index ].hybrid.radius;
       
    double r1_3 =
-      res->r_atom_1[ atom->ionization_index ].hybrid.radius *
+      (double) res->r_atom_1[ atom->ionization_index ].hybrid.radius *
       res->r_atom_1[ atom->ionization_index ].hybrid.radius *
       res->r_atom_1[ atom->ionization_index ].hybrid.radius;
 

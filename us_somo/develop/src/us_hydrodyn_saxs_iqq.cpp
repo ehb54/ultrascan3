@@ -66,12 +66,12 @@ bool US_Hydrodyn_Saxs::compute_scale_excl_vol()
                {
                   if ( our_saxs_options->swh_excl_vol > 0e0 )
                   {
-                     our_saxs_options->iq_target_ev += our_saxs_options->swh_excl_vol * swh_count;
+                     our_saxs_options->iq_target_ev += (double) our_saxs_options->swh_excl_vol * swh_count;
                      editor_msg( "blue", 
                                  QString( us_tr( "Adding water to excluded volume using preset excl vol %1 number of waters %2 -> excluded volume %3\n" ) )
                                  .arg( our_saxs_options->swh_excl_vol )
                                  .arg( swh_count )
-                                 .arg( our_saxs_options->swh_excl_vol * swh_count ) );
+                                 .arg( (double) our_saxs_options->swh_excl_vol * swh_count ) );
                   } else {
                      QString mapkey = "WAT|OW";
                      QString hybrid_name = residue_atom_hybrid_map[mapkey];
@@ -1028,7 +1028,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
                   pr_n.resize(hist.size());
                   for ( unsigned int i = 0; i < hist_pr.size(); i++) 
                   {
-                     r[i] = i * delta_pr;
+                     r[i] = (double) i * delta_pr;
                      pr[i] = (double) hist_pr[i];
                      pr_n[i] = (double) hist_pr[i];
                   }
@@ -1092,7 +1092,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
             pr_n.resize(hist_pr.size());
             for ( unsigned int i = 0; i < hist_pr.size(); i++) 
             {
-               r[i] = i * delta_pr;
+               r[i] = (double) i * delta_pr;
                pr[i] = (double) hist_pr[i];
                pr_n[i] = (double) hist_pr[i];
             }
@@ -1124,7 +1124,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
          pr.resize(hist_pr.size());
          for ( unsigned int i = 0; i < hist_pr.size(); i++) 
          {
-            r[i] = i * delta_pr;
+            r[i] = (double)i * delta_pr;
             pr[i] = (double) hist_pr[i];
 #if defined(PR_DEBUG)
             printf("%e %e\n", r[i], pr[i]);

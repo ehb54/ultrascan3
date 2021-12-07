@@ -174,7 +174,7 @@ namespace LM {
          if ( (fvec = (double *) malloc(m * sizeof(double))) == NULL ||
               (diag = (double *) malloc(n * sizeof(double))) == NULL ||
               (qtf  = (double *) malloc(n * sizeof(double))) == NULL ||
-              (fjac = (double *) malloc(n*m*sizeof(double))) == NULL ||
+              (fjac = (double *) malloc((unsigned long)n*m*sizeof(double))) == NULL ||
               (wa1  = (double *) malloc(n * sizeof(double))) == NULL ||
               (wa2  = (double *) malloc(n * sizeof(double))) == NULL ||
               (wa3  = (double *) malloc(n * sizeof(double))) == NULL ||

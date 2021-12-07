@@ -1230,11 +1230,11 @@ bool US_Saxs_Util::calc_mw()
                   {
                      Rg2 += this_atom->mw * 
                         ( 
-                         ( this_atom->coordinate.axis[ 0 ] - cm.axis[ 0 ] ) *
+                         (double) ( this_atom->coordinate.axis[ 0 ] - cm.axis[ 0 ] ) *
                          ( this_atom->coordinate.axis[ 0 ] - cm.axis[ 0 ] ) +
-                         ( this_atom->coordinate.axis[ 1 ] - cm.axis[ 1 ] ) *
+                         (double) ( this_atom->coordinate.axis[ 1 ] - cm.axis[ 1 ] ) *
                          ( this_atom->coordinate.axis[ 1 ] - cm.axis[ 1 ] ) +
-                         ( this_atom->coordinate.axis[ 2 ] - cm.axis[ 2 ] ) *
+                         (double) ( this_atom->coordinate.axis[ 2 ] - cm.axis[ 2 ] ) *
                          ( this_atom->coordinate.axis[ 2 ] - cm.axis[ 2 ] ) 
                          );
                   }

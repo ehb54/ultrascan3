@@ -6376,7 +6376,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_new()
       
    gaussian_pos = ( gaussians.size() / gaussian_type_size ) - 1;
    gauss_add_marker( 0e0, Qt::blue, QString( "%1" ).arg( gaussian_pos + 1 ) );
-   gauss_add_gaussian( &(gaussians[ gaussian_pos * gaussian_type_size ]), Qt::green );
+   gauss_add_gaussian( &(gaussians[ (vector<double>::size_type) gaussian_pos * gaussian_type_size ]), Qt::green );
    disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
    update_gauss_pos();
    connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
@@ -7083,7 +7083,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_init_markers()
          } else {
             for ( unsigned int i = 0; i < unified_ggaussian_gaussians_size; i++ )
             {
-               gauss_add_marker( unified_ggaussian_params[ common_size * i ], Qt::blue, QString( "%1" ).arg( i + 1 ) );
+               gauss_add_marker( unified_ggaussian_params[ (vector<double>::size_type) common_size * i ], Qt::blue, QString( "%1" ).arg( i + 1 ) );
             }
          }
       }
@@ -7207,7 +7207,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_replot_gaussian()
    }
 
    vector < double > x = f_qs[ wheel_file ];
-   vector < double > y = gaussian( &(gaussians[ gaussian_pos * gaussian_type_size ] ) );
+   vector < double > y = gaussian( &(gaussians[ (vector<double>::size_type) gaussian_pos * gaussian_type_size ] ) );
 
 #if QT_VERSION < 0x040000
    plot_dist->setCurveData( plotted_gaussians[ gaussian_pos ],
