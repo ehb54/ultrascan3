@@ -14631,8 +14631,8 @@ bool US_Saxs_Util::calc_zeno_hydro()
             zeno_results.rs_sd             = sqrt( fabs( ( zeno_results2.rs          - zeno_results.rs          * zeno_results.rs          * num ) * numdecinv ) );
             zeno_results.rg_sd             = sqrt( fabs( ( zeno_results2.rg          - zeno_results.rg          * zeno_results.rg          * num ) * numdecinv ) );
             zeno_results.ff0_sd            = sqrt( fabs( ( zeno_results2.ff0         - zeno_results.ff0         * zeno_results.ff0         * num ) * numdecinv ) );
-            zeno_results.used_beads_sd     = sqrt( fabs( ( zeno_results2.used_beads  - zeno_results.used_beads  * zeno_results.used_beads  * (double) num ) * numdecinv ) );
-            zeno_results.total_beads_sd    = sqrt( fabs( ( zeno_results2.total_beads - zeno_results.total_beads * zeno_results.total_beads * (double) num ) * numdecinv ) );
+            zeno_results.used_beads_sd     = sqrt( fabs( ( zeno_results2.used_beads  - (double) zeno_results.used_beads  * zeno_results.used_beads  * num ) * numdecinv ) );
+            zeno_results.total_beads_sd    = sqrt( fabs( ( zeno_results2.total_beads - (double) zeno_results.total_beads * zeno_results.total_beads * num ) * numdecinv ) );
             
             results_hydro = zeno_results;
          }

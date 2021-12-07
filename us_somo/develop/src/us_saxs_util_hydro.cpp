@@ -3669,13 +3669,13 @@ bool US_Saxs_Util::calc_mw_hydro()
                   //       i, j, k, this_atom->mw);
                   if ( this_atom->resName != "WAT" )
                   {
-                     Rg2 += this_atom->mw * 
+                     Rg2 += (double) this_atom->mw * 
                         ( 
-                         ( this_atom->coordinate.axis[ 0 ] - cm.axis[ 0 ] ) *
+                         (double) ( this_atom->coordinate.axis[ 0 ] - cm.axis[ 0 ] ) *
                          ( this_atom->coordinate.axis[ 0 ] - cm.axis[ 0 ] ) +
-                         ( this_atom->coordinate.axis[ 1 ] - cm.axis[ 1 ] ) *
+                         (double) ( this_atom->coordinate.axis[ 1 ] - cm.axis[ 1 ] ) *
                          ( this_atom->coordinate.axis[ 1 ] - cm.axis[ 1 ] ) +
-                         ( this_atom->coordinate.axis[ 2 ] - cm.axis[ 2 ] ) *
+                         (double) ( this_atom->coordinate.axis[ 2 ] - cm.axis[ 2 ] ) *
                          ( this_atom->coordinate.axis[ 2 ] - cm.axis[ 2 ] ) 
                          );
                   }
@@ -5066,17 +5066,17 @@ static void outward_translate_2_spheres(float *r1, // radius of sphere 1
 
    float sfact =
       sqrt(
-           (*r1 + *r2) * (*r1 + *r2) *
-           ((*r1 * *r1 * (-1 + v1[0] * v1[0] + v1[1] * v1[1] + v1[2] * v1[2]) -
+           (double) (*r1 + *r2) * (*r1 + *r2) *
+           ((double) (*r1 * *r1 * (-1 + v1[0] * v1[0] + v1[1] * v1[1] + v1[2] * v1[2]) -
 
              2 * *r1 * *r2 * (1 + v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2]) +
 
              *r2 * *r2 * (-1 + v2[0] * v2[0] + v2[1] * v2[1] + v2[2] * v2[2])) *
 
-            ((*r1 + *r2) * (*r1 + *r2) -
-             (x1[0] - x2[0]) * (x1[0] - x2[0]) -
-             (x1[1] - x2[1]) * (x1[1] - x2[1]) -
-             (x1[2] - x2[2]) * (x1[2] - x2[2])) +
+            ((double) (*r1 + *r2) * (*r1 + *r2) -
+             (double) (x1[0] - x2[0]) * (x1[0] - x2[0]) -
+             (double) (x1[1] - x2[1]) * (x1[1] - x2[1]) -
+             (double) (x1[2] - x2[2]) * (x1[2] - x2[2])) +
 
             pow(*r1 * *r1 +
                 *r1 * (
@@ -12681,7 +12681,7 @@ double US_Saxs_Util::total_volume_of_bead_model( vector < PDB_atom > &bead_model
    {
       if ( bead_model[ i ].active ) 
       {
-         tot_vol += bead_model[ i ].bead_computed_radius * bead_model[ i ].bead_computed_radius * bead_model[ i ].bead_computed_radius;
+         tot_vol += (double) bead_model[ i ].bead_computed_radius * bead_model[ i ].bead_computed_radius * bead_model[ i ].bead_computed_radius;
       }
    }
    return tot_vol * pi43;

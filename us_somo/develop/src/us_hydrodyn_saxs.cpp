@@ -2851,7 +2851,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   // << " radius cubed " << radius * radius * radius 
                   // << " pi radius cubed " << M_PI * radius * radius * radius 
                   // << endl;
-                  new_atom.b = b[hybrid_name] - our_saxs_options->water_e_density * atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
+                  new_atom.b = b[hybrid_name] - (double) our_saxs_options->water_e_density * atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
                   b_count++;
                   b_bar += new_atom.b;
 #if defined(BUG_DEBUG)
@@ -3059,7 +3059,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                      // }
                   } else {
                      // good for both saxs & sans
-                     double this_pr = atoms[i].b * atoms[j].b * b_bar_inv2;
+                     double this_pr = (double) atoms[i].b * atoms[j].b * b_bar_inv2;
                      hist[pos] += this_pr;
                      // if ( cb_guinier->isChecked() )
                      // {
@@ -3111,7 +3111,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                      hist[pos]++;
                   } else {
                      // good for both saxs & sans
-                     hist[pos] += atoms[i].b * atoms[j].b * b_bar_inv2;
+                     hist[pos] += (double) atoms[i].b * atoms[j].b * b_bar_inv2;
                   }
                }
             }
