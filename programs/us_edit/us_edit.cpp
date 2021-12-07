@@ -673,8 +673,8 @@ pb_plateau->setVisible(false);
    // // details[ "protocolName" ] = QString("GabirH_NetUnc-050921_MW");
 
    // details[ "invID_passed" ] = QString("104");
-   // details[ "filename" ]     = QString("DubnauD_ComEA-DNA_MW1_092221-run1201");
-   // details[ "protocolName" ] = QString("DubnauD_ComEA-DNA_MW1_092221");
+   // details[ "filename" ]     = QString("DubnauD_ComEA-14pbDNA_5-1_100621-run1233");
+   // details[ "protocolName" ] = QString("DubnauD_ComEA-14pbDNA_5-1_100621");
    
    // load_auto( details );
    
@@ -3282,7 +3282,7 @@ bool US_Edit::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
 
 	   qDebug() << "job2run: " << job2run;
          }
-	else if ( ename == "job_fitmen" )
+	else if ( ename == "job_fitmen" || ename == "job_fitmen_auto" )
 	  {
             QXmlStreamAttributes attr = xmli.attributes();
             job3run        = bool_flag( attr.value( "run" ).toString() );
@@ -8469,7 +8469,7 @@ void US_Edit::write_auto( void )
 				   ID = create_autoflowAnalysis_record( dbP, triples_all_optics[j], json_status );
 				 }
 			     }
-			   //No informaiton os specifi triple to edit -- select 1st triple in a channel as default
+			   //No informaiton on specifi triple to edit -- select 1st triple in a channel as default
 			   else
 			     {
 			       json_status = compose_json( true );
@@ -8730,7 +8730,7 @@ QString US_Edit::compose_json( bool fm_stage )
     json += QString("\"2DSA\",");
   if (job2run && fm_stage )
     json += QString("\"2DSA_FM\",");
-  if (job3run )
+  if ( job3run )
     {
       if ( job3auto ) 
 	json += QString("\"FITMEN_AUTO\",");
