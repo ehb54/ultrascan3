@@ -4,7 +4,7 @@
 
 unsigned long square(int num)
 {
-   return num * num;
+   return (long) num * num;
 }
 
 float square(float num)
@@ -1049,7 +1049,9 @@ int nnls(
    else for(j=0; j<n; j++) w[j]=0.;
    *rnorm=sqrt(sm);
    /* Free working space, if it was allocated here */
-   if(wp==NULL) free(w); if(zzp==NULL) free(zz); if(indexp==NULL) free(index);
+   if(wp==NULL) free(w);
+   if(zzp==NULL) free(zz);
+   if(indexp==NULL) free(index);
    return(ret);
 } /* nnls_ */
 /****************************************************************************/

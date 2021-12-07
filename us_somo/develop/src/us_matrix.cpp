@@ -1174,7 +1174,7 @@ void generalLeastSquares(float **M, unsigned int points, unsigned int order, flo
          A[i][j] = 0;
          for (k=0; k<points; k++)
          {
-            A[i][j] += M[k][i] * M[k][j];
+            A[i][j] += (double) M[k][i] * M[k][j];
          }
       }
    }
@@ -1183,7 +1183,7 @@ void generalLeastSquares(float **M, unsigned int points, unsigned int order, flo
       B[j] = 0.0;
       for (k=0; k<points; k++)
       {
-         B[j] += y_raw[k] * M[k][j]; // y_raw contains the experimental y-values on entry
+         B[j] += (double) y_raw[k] * M[k][j]; // y_raw contains the experimental y-values on entry
       }
    }
    Cholesky_Decomposition(A, order);
@@ -1348,7 +1348,7 @@ void conc_dep_s(float sigma, double **right, double **c_current,
       ca[i] = temp1 * sigma * square(c_current[i]) +
          square(sigma) * square((*c_current)[i]) * (*c_current)[i];
 #else
-      ca[i] = temp1 * sigma * square((*c_current)[i]);
+      ca[i] = (double) temp1 * sigma * square((*c_current)[i]);
 #endif
    }
    m3vm(a2, &ca, points);

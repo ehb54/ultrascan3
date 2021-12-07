@@ -2732,12 +2732,12 @@ bool US_Saxs_Util::compute_scale_excl_vol()
                {
                   if ( our_saxs_options.swh_excl_vol > 0e0 )
                   {
-                     our_saxs_options.iq_target_ev += our_saxs_options.swh_excl_vol * swh_count;
+                     our_saxs_options.iq_target_ev += (double) our_saxs_options.swh_excl_vol * swh_count;
                      scale_excl_vol_msgs += 
                         QString( "Adding water to excluded volume using preset excl vol %1 number of waters %2 -> excluded volume %3\n" )
                         .arg( our_saxs_options.swh_excl_vol )
                         .arg( swh_count )
-                        .arg( our_saxs_options.swh_excl_vol * swh_count );
+                        .arg( (double) our_saxs_options.swh_excl_vol * swh_count );
                   } else {
                      QString mapkey = "WAT|OW";
                      QString hybrid_name = residue_atom_hybrid_map[mapkey];

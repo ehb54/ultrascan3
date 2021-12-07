@@ -2238,7 +2238,7 @@ void US_Hydrodyn_Saxs_Hplc::axis_y( bool nochange, bool no_replot )
          {
             for ( int i = 0; i < (int) rb_testiq_gaussians.size(); i++ )
             {
-               gauss_add_marker( unified_ggaussian_params[ common_size * i ], Qt::blue, QString( "%1" ).arg( i + 1 ) );
+               gauss_add_marker( unified_ggaussian_params[ (vector<double>::size_type) common_size * i ], Qt::blue, QString( "%1" ).arg( i + 1 ) );
             }
             testiq_gauss_line();
          }
@@ -3924,8 +3924,8 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
                // us_qdebug( QString( "qv %1 blanks_created_q[ i ] %2" ).arg( qv ).arg( blanks_created_q[ i * use_decimate ] ) );
                
                // if ( qv <= cormap_maxq ) {
-               if ( blanks_created_q[ i * use_decimate ] <= cormap_maxq &&
-                    blanks_created_q[ i * use_decimate ] >= cormap_minq ) {
+               if ( blanks_created_q[ (vector<double>::size_type) i * use_decimate ] <= cormap_maxq &&
+                    blanks_created_q[ (vector<double>::size_type) i * use_decimate ] >= cormap_minq ) {
                   use_blanks_created << use_preq_blanks_created[ i ];
                }
             }

@@ -505,7 +505,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast_bead_model()
                   pr_n.resize(hist.size());
                   for ( unsigned int i = 0; i < hist_pr.size(); i++) 
                   {
-                     r[i] = i * delta_pr;
+                     r[i] = (double) i * delta_pr;
                      pr[i] = (double) hist_pr[i];
                      pr_n[i] = (double) hist_pr[i];
                   }
@@ -569,7 +569,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast_bead_model()
             pr_n.resize(hist_pr.size());
             for ( unsigned int i = 0; i < hist_pr.size(); i++) 
             {
-               r[i] = i * delta_pr;
+               r[i] = (double) i * delta_pr;
                pr[i] = (double) hist_pr[i];
                pr_n[i] = (double) hist_pr[i];
             }
@@ -601,7 +601,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast_bead_model()
          pr.resize(hist_pr.size());
          for ( unsigned int i = 0; i < hist_pr.size(); i++) 
          {
-            r[i] = i * delta_pr;
+            r[i] = (double) i * delta_pr;
             pr[i] = (double) hist_pr[i];
 #if defined(PR_DEBUG)
             printf("%e %e\n", r[i], pr[i]);
