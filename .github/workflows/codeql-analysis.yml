@@ -352,3 +352,47 @@ jobs:
           cd ../..
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v1
+
+  analyze-somo:
+    name: Analyze somo
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [cpp]
+
+    # Specify the container in which actions will run
+    container:
+      image: ehb1/us3comp:latest
+      options: --cpus 2
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v1
+        with:
+          languages: ${{ matrix.language }}
+      - name: Build
+        run: |
+          bdir=`pwd`
+          echo $bdir
+          pwd
+          export ULTRASCAN=$bdir
+          export us3=$bdir
+          cd us_somo/develop
+          ./revision.sh
+          ./version.sh
+          cp $bdir/admin/codeql/docker/local.pri.somo local.pri
+          qmake libus_somo.pro
+          make -j4
+          qmake us_somo.pro
+          make -j4
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v1
+
+
