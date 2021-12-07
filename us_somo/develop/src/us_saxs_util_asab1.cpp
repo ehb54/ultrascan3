@@ -291,7 +291,7 @@ us_saxs_util_asab1_main(vector <PDB_atom *> use_active_atoms,
    int contatom, contatom1, indCA, indC, indO;
    int posiz, massa = 0, check_asa = 0;
    float sommarc, Dz, d1z, zz, temp, asamin, asalevel = 10, asapep, asatot, perc, voltot;
-   char azoto[1];
+   char azoto[2];
    char carbonio0[3];
    char carbonio1[2];
    char carbonio2[3];
@@ -2976,7 +2976,7 @@ static void
 ordcol()
 {
    char key[200];
-   char sp[3], fine[3];
+   char sp[4], fine[4];
    int i;
 
    fine[0] = 'S';

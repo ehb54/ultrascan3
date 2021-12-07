@@ -760,7 +760,7 @@ void US_Hydrodyn_Saxs_Hplc::testiq()
       
       for ( int i = 0; i < (int) unified_ggaussian_gaussians_size; i++ )
       {
-         gauss_add_marker( unified_ggaussian_params[ common_size * i ], Qt::blue, QString( "%1" ).arg( i + 1 ) );
+         gauss_add_marker( unified_ggaussian_params[ (vector<double>::size_type) common_size * i ], Qt::blue, QString( "%1" ).arg( i + 1 ) );
       }
       testiq_gauss_line();
    }         
@@ -3440,7 +3440,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
       for ( int i = 0; i < (int) unified_ggaussian_gaussians_size; i++ )
       {
          int line_width = use_line_width < 3 ? ( use_line_width + 1 ) : use_line_width;
-         double pos = unified_ggaussian_params[ common_size * i  ];
+         double pos = unified_ggaussian_params[ (vector<double>::size_type) common_size * i  ];
          QString text = QString( "%1" ).arg( i + 1 );
          QColor color = rb_testiq_gaussians[ i ]->isChecked() ? Qt::magenta : Qt::blue;
 #if QT_VERSION >= 0x040000

@@ -632,9 +632,9 @@ calc_CM()
 
    for (i = 0; i < nat; i++)
    {
-      b1x += dt[i].x * dt[i].m;
-      b1y += dt[i].y * dt[i].m;
-      b1z += dt[i].z * dt[i].m;
+      b1x += (double) dt[i].x * dt[i].m;
+      b1y += (double) dt[i].y * dt[i].m;
+      b1z += (double) dt[i].z * dt[i].m;
       mas1 += dt[i].m;
    }
 

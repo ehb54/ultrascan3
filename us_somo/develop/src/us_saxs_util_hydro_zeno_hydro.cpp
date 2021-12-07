@@ -14461,13 +14461,13 @@ bool US_Saxs_Util::calc_zeno_hydro()
                      for ( unsigned int i = 0; i < bead_model.size(); ++i )
                      {
                         PDB_atom *this_atom = &(bead_model[i]);
-                        Rg2 += this_atom->mw * 
+                        Rg2 += (double) this_atom->mw * 
                            ( 
-                            ( this_atom->bead_coordinate.axis[ 0 ] - cm.axis[ 0 ] ) *
+                            (double) ( this_atom->bead_coordinate.axis[ 0 ] - cm.axis[ 0 ] ) *
                             ( this_atom->bead_coordinate.axis[ 0 ] - cm.axis[ 0 ] ) +
-                            ( this_atom->bead_coordinate.axis[ 1 ] - cm.axis[ 1 ] ) *
+                            (double) ( this_atom->bead_coordinate.axis[ 1 ] - cm.axis[ 1 ] ) *
                             ( this_atom->bead_coordinate.axis[ 1 ] - cm.axis[ 1 ] ) +
-                            ( this_atom->bead_coordinate.axis[ 2 ] - cm.axis[ 2 ] ) *
+                            (double) ( this_atom->bead_coordinate.axis[ 2 ] - cm.axis[ 2 ] ) *
                             ( this_atom->bead_coordinate.axis[ 2 ] - cm.axis[ 2 ] ) 
                              );
                      }
@@ -14631,8 +14631,8 @@ bool US_Saxs_Util::calc_zeno_hydro()
             zeno_results.rs_sd             = sqrt( fabs( ( zeno_results2.rs          - zeno_results.rs          * zeno_results.rs          * num ) * numdecinv ) );
             zeno_results.rg_sd             = sqrt( fabs( ( zeno_results2.rg          - zeno_results.rg          * zeno_results.rg          * num ) * numdecinv ) );
             zeno_results.ff0_sd            = sqrt( fabs( ( zeno_results2.ff0         - zeno_results.ff0         * zeno_results.ff0         * num ) * numdecinv ) );
-            zeno_results.used_beads_sd     = sqrt( fabs( ( zeno_results2.used_beads  - zeno_results.used_beads  * zeno_results.used_beads  * num ) * numdecinv ) );
-            zeno_results.total_beads_sd    = sqrt( fabs( ( zeno_results2.total_beads - zeno_results.total_beads * zeno_results.total_beads * num ) * numdecinv ) );
+            zeno_results.used_beads_sd     = sqrt( fabs( ( zeno_results2.used_beads  - zeno_results.used_beads  * zeno_results.used_beads  * (double) num ) * numdecinv ) );
+            zeno_results.total_beads_sd    = sqrt( fabs( ( zeno_results2.total_beads - zeno_results.total_beads * zeno_results.total_beads * (double) num ) * numdecinv ) );
             
             results_hydro = zeno_results;
          }

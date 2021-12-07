@@ -773,13 +773,13 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
             for ( unsigned int i = 0; i < bead_model.size(); ++i )
             {
                PDB_atom *this_atom = &(bead_model[i]);
-               Rg2 += ( this_atom->bead_ref_mw + this_atom->bead_ref_ionized_mw_delta ) * 
+               Rg2 += ( (double) this_atom->bead_ref_mw + this_atom->bead_ref_ionized_mw_delta ) * 
                   ( 
-                   ( this_atom->bead_coordinate.axis[ 0 ] - cm.axis[ 0 ] ) *
+                   (double) ( this_atom->bead_coordinate.axis[ 0 ] - cm.axis[ 0 ] ) *
                    ( this_atom->bead_coordinate.axis[ 0 ] - cm.axis[ 0 ] ) +
-                   ( this_atom->bead_coordinate.axis[ 1 ] - cm.axis[ 1 ] ) *
+                   (double) ( this_atom->bead_coordinate.axis[ 1 ] - cm.axis[ 1 ] ) *
                    ( this_atom->bead_coordinate.axis[ 1 ] - cm.axis[ 1 ] ) +
-                   ( this_atom->bead_coordinate.axis[ 2 ] - cm.axis[ 2 ] ) *
+                   (double) ( this_atom->bead_coordinate.axis[ 2 ] - cm.axis[ 2 ] ) *
                    ( this_atom->bead_coordinate.axis[ 2 ] - cm.axis[ 2 ] ) 
                     );
             }
@@ -1109,8 +1109,8 @@ void US_Hydrodyn::grpy_finalize() {
             grpy_results.rs_sd                = sqrt( fabs( ( grpy_results2.rs                - grpy_results.rs                * grpy_results.rs                * num ) * numdecinv ) );
             grpy_results.rg_sd                = sqrt( fabs( ( grpy_results2.rg                - grpy_results.rg                * grpy_results.rg                * num ) * numdecinv ) );
             grpy_results.ff0_sd               = sqrt( fabs( ( grpy_results2.ff0               - grpy_results.ff0               * grpy_results.ff0               * num ) * numdecinv ) );
-            grpy_results.used_beads_sd        = sqrt( fabs( ( grpy_results2.used_beads        - grpy_results.used_beads        * grpy_results.used_beads        * num ) * numdecinv ) );
-            grpy_results.total_beads_sd       = sqrt( fabs( ( grpy_results2.total_beads       - grpy_results.total_beads       * grpy_results.total_beads       * num ) * numdecinv ) );
+            grpy_results.used_beads_sd        = sqrt( fabs( ( grpy_results2.used_beads        - (double) grpy_results.used_beads  * grpy_results.used_beads     * num ) * numdecinv ) );
+            grpy_results.total_beads_sd       = sqrt( fabs( ( grpy_results2.total_beads       - (double) grpy_results.total_beads * grpy_results.total_beads    * num ) * numdecinv ) );
             
             results = grpy_results;
          }

@@ -560,23 +560,23 @@ supc_alloc()
 static int
 supc_alloc_2()
 {
-   a = (float *) malloc(nat * 3 * nat * 3 * sizeof(float));
+   a = (float *) malloc( (double)nat * 3 * nat * 3 * sizeof(float));
    if (!a)
    {
       supc_free_alloced();
       fprintf(stderr, "memory allocation error\n");
       return US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC;
    }
-   memset(a, 0, nat * 3 * nat * 3 * sizeof(float));
+   memset(a, 0, (double)nat * 3 * nat * 3 * sizeof(float));
 
-   q = (float *) malloc(nat * nat * 9 * sizeof(float));
+   q = (float *) malloc((double) nat * nat * 9 * sizeof(float));
    if (!q)
    {
       supc_free_alloced();
       fprintf(stderr, "memory allocation error\n");
       return US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC;
    }
-   memset(q, 0, nat * nat * 9 * sizeof(float));
+   memset(q, 0, (double) nat * nat * 9 * sizeof(float));
    return 0;
 }
 
@@ -2165,8 +2165,8 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
             vol_mas = pesmol;
          }
 
-         VIM += vis * correz * pow(fconv, 3);
-         temp = vis * correz * pow(fconv, 3);
+         VIM += (double) vis * correz * pow(fconv, 3);
+         temp = (double) vis * correz * pow(fconv, 3);
          VIM2 += pow(temp, 2.0f);
 
          RE += 1.0E7 * pow((0.3 * pesmol * vis / (M_PI * AVO)), 0.333333) * fconv;
@@ -2804,14 +2804,14 @@ stampa_ris()
    {
      //us_qdebug( QString( "ra -1 or -3 ro %1" ).arg( ro ) );
       // printf("\n%s%.2f\t%s\n", "- RADIUS OF GYRATION (Hydrated Beads)   = ", ro * fconv, "[nm]");
-      supc_results->rg = ro * fconv;
+      supc_results->rg = (double) ro * fconv;
       // printf("%s%.2f\t%s\n", "- RADIUS OF GYRATION (Unhydrated Beads) = ", rou * fconv, "[nm]");
    }
    else
    {
      //us_qdebug( QString( "ra !(-1 or -3) ro %1" ).arg( ro ) );
       // printf("\n%s%.2f\t%s\n", "- RADIUS OF GYRATION              = ", ro * fconv, "[nm]");
-      supc_results->rg = ro * fconv;
+      supc_results->rg = (double) ro * fconv;
    }
 
    //  printf("%s%.2f\t%s\n", "- TRANSLATIONAL STOKES' RADIUS    = ", f * fconv / (bc * M_PI * ETAo), "[nm]");
@@ -3186,14 +3186,14 @@ mem_ris(int model)
          create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
          this_data.hydro_res += hydro_res;         
       }
-      this_data.use_beads_vol =  volcor1 * pow(fconv, 3.0f);
+      this_data.use_beads_vol = (double) volcor1 * pow(fconv, 3.0f);
    }
    if (volcor == 2)
    {
       hydro_res.sprintf("%s%.2f%s\n", "- Used BEADS Volume       = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
-      this_data.use_beads_vol =  volcor1 * pow(fconv, 3.0f);
+      this_data.use_beads_vol =  (double) volcor1 * pow(fconv, 3.0f);
    }
 
    // hydro_res.sprintf("%s%.2f [nm^2]\n", "- Used BEADS ASA          = ", used_asa[model]);
@@ -3435,7 +3435,7 @@ mem_ris(int model)
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
       
-      this_data.results.rg = ro * fconv;
+      this_data.results.rg = (double) ro * fconv;
       hydro_res.sprintf("%s%.2f\t%s\n", "- RADIUS OF GYRATION (Unydrated Beads) = ", rou * fconv, "[nm]");
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
@@ -3445,7 +3445,7 @@ mem_ris(int model)
       hydro_res.sprintf("\n%s%.2f\t%s\n", "- RADIUS OF GYRATION              = ", ro * fconv, "[nm]");
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
-      this_data.results.rg = ro * fconv;
+      this_data.results.rg = (double) ro * fconv;
    }
    hydro_res.sprintf("%s%.2f\t%s\n", "- TRANSLATIONAL STOKES' RADIUS    = ", f * fconv / (bc * M_PI * ETAo), "[nm]");
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
@@ -3474,16 +3474,16 @@ mem_ris(int model)
            "[nm]");
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
-   this_data.cen_of_res_x = roR[0] * fconv;
-   this_data.cen_of_res_y = roR[1] * fconv;
-   this_data.cen_of_res_z = roR[2] * fconv;
+   this_data.cen_of_res_x = (double) roR[0] * fconv;
+   this_data.cen_of_res_y = (double) roR[1] * fconv;
+   this_data.cen_of_res_z = (double) roR[2] * fconv;
 
    hydro_res.sprintf("%s%5.2f\t%5.2f\t%5.2f\t%s\n", "- CENTRE OF MASS         :  ", xm * fconv, ym * fconv, zm * fconv, "[nm]");
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
-   this_data.cen_of_mass_x = xm * fconv;
-   this_data.cen_of_mass_y = ym * fconv;
-   this_data.cen_of_mass_z = zm * fconv;
+   this_data.cen_of_mass_x = (double) xm * fconv;
+   this_data.cen_of_mass_y = (double) ym * fconv;
+   this_data.cen_of_mass_z = (double) zm * fconv;
 
    if (cd == 2)
    {
@@ -3491,18 +3491,18 @@ mem_ris(int model)
               roD[2] * fconv, "[nm]");
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
-      this_data.cen_of_diff_x = roD[0] * fconv;
-      this_data.cen_of_diff_y = roD[1] * fconv;
-      this_data.cen_of_diff_z = roD[2] * fconv;
+      this_data.cen_of_diff_x = (double) roD[0] * fconv;
+      this_data.cen_of_diff_y = (double) roD[1] * fconv;
+      this_data.cen_of_diff_z = (double) roD[2] * fconv;
    }
 
    hydro_res.sprintf("%s%5.2f\t%5.2f\t%5.2f\t%s\n\n", "- CENTRE OF VISCOSITY    :  ", vc[0] * fconv, vc[1] * fconv, vc[2] * fconv,
            "[nm]");
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
-   this_data.cen_of_visc_x = vc[0] * fconv;
-   this_data.cen_of_visc_y = vc[1] * fconv;
-   this_data.cen_of_visc_z = vc[2] * fconv;
+   this_data.cen_of_visc_x = (double) vc[0] * fconv;
+   this_data.cen_of_visc_y = (double) vc[1] * fconv;
+   this_data.cen_of_visc_z = (double) vc[2] * fconv;
 
    if (mascor == 2)
    {
@@ -3522,7 +3522,7 @@ mem_ris(int model)
    hydro_res.sprintf("%s%.2f\t%s\n", "- UNCORRECTED INTRINSIC VISCOSITY      = ", vis * correz * pow(fconv, 3.0f), "[cm^3/g]");
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
-   this_data.unc_int_visc = vis * correz * pow(fconv, 3.0f);
+   this_data.unc_int_visc = (double) vis * correz * pow(fconv, 3.0f);
 
    einst = pow(0.3 * pesmol * vis / ( M_PI * AVO), 0.33333);
    einst = 1E7 * einst;
@@ -3533,7 +3533,7 @@ mem_ris(int model)
    hydro_res.sprintf("%s%.2f\t%s\n", "- UNCORRECTED EINSTEIN'S RADIUS        = ", einst * fconv, "[nm]");
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
-   this_data.unc_einst_rad = einst * fconv;
+   this_data.unc_einst_rad = (double) einst * fconv;
 
    if ((volcor == 1) && ((colorsixf == 0) || (colorsixf == 1) || (colorsixf == 2)))
    {
@@ -3554,7 +3554,7 @@ mem_ris(int model)
       hydro_res.sprintf("%s%.2f\t%s\n", "- CORRECTED EINSTEIN'S RADIUS          = ", einst * fconv, "[nm]");
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
-      this_data.cor_einst_rad = einst * fconv;
+      this_data.cor_einst_rad = (double) einst * fconv;
    }
    else
    {
@@ -3575,7 +3575,7 @@ mem_ris(int model)
       hydro_res.sprintf("%s%.2f\t%s\n", "- CORRECTED EINSTEIN'S RADIUS          = ", einst * fconv, "[nm]");
       create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
       this_data.hydro_res += hydro_res;
-      this_data.cor_einst_rad = einst * fconv;
+      this_data.cor_einst_rad = (double) einst * fconv;
    }
 
 #if defined(TSUDA_DOUBLESUM)
@@ -3785,7 +3785,7 @@ mem_ris(int model)
    hydro_res.sprintf("\n%s\t%.2f\t%s (%s)\n", " Tau(m) ", taom * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());
    this_data.hydro_res += hydro_res;
-   this_data.rel_times_tau_m = taom * pow(fconv, 3.0f);
+   this_data.rel_times_tau_m = (double) taom * pow(fconv, 3.0f);
 
    hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(h) ", taoh * 1.0E+09 * pow(fconv, 3.0f), "[ns] ", tag2.toLatin1().data());
    create_hydro_res && fprintf(ris, "%s", hydro_res.toLatin1().data());

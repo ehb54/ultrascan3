@@ -350,7 +350,7 @@ us_hydrodyn_asab1_main_hydro(vector <PDB_atom *> use_active_atoms,
    int i, ii, l, j, s, kk, kkk, ini, contatom, contatom1, indCA, indC, indO;
    int posiz, massa = 0, check_asa = 0;
    float sommarc, Dz, d1z, zz, temp, asamin, asalevel, asapep, asatot, perc, voltot;
-   char azoto[1];
+   char azoto[2];
    char carbonio0[3];
    char carbonio1[2];
    char carbonio2[3];

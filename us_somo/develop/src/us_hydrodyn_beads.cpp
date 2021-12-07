@@ -2162,8 +2162,8 @@ void US_Hydrodyn::hullrad_finalize() {
             hullrad_results.rs_sd             = sqrt( fabs( ( hullrad_results2.rs          - hullrad_results.rs          * hullrad_results.rs          * num ) * numdecinv ) );
             hullrad_results.rg_sd             = sqrt( fabs( ( hullrad_results2.rg          - hullrad_results.rg          * hullrad_results.rg          * num ) * numdecinv ) );
             hullrad_results.ff0_sd            = sqrt( fabs( ( hullrad_results2.ff0         - hullrad_results.ff0         * hullrad_results.ff0         * num ) * numdecinv ) );
-            hullrad_results.used_beads_sd     = sqrt( fabs( ( hullrad_results2.used_beads  - hullrad_results.used_beads  * hullrad_results.used_beads  * num ) * numdecinv ) );
-            hullrad_results.total_beads_sd    = sqrt( fabs( ( hullrad_results2.total_beads - hullrad_results.total_beads * hullrad_results.total_beads * num ) * numdecinv ) );
+            hullrad_results.used_beads_sd     = sqrt( fabs( ( (double) hullrad_results2.used_beads  - (double) hullrad_results.used_beads  * (double) hullrad_results.used_beads  * num ) * numdecinv ) );
+            hullrad_results.total_beads_sd    = sqrt( fabs( ( (double) hullrad_results2.total_beads - (double) hullrad_results.total_beads * (double) hullrad_results.total_beads * num ) * numdecinv ) );
             
             results = hullrad_results;
          }
