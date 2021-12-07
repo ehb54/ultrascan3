@@ -36,6 +36,7 @@ jobs:
     # Specify the container in which actions will run
     container:
       image: ehb1/us3comp:latest
+      options: --cpus 2
 
     steps:
       - name: Checkout repository
@@ -49,11 +50,11 @@ jobs:
           cp admin/codeql/docker/local.pri.mpi local.pri
           cd utils
           qmake
-          make
+          make -j4
           cd ..
           cd programs/us_mpi_analysis
           qmake
-          make
+          make -j4
           cd ../..
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v1
@@ -73,6 +74,7 @@ jobs:
     # Specify the container in which actions will run
     container:
       image: ehb1/us3comp:latest
+      options: --cpus 2
 
     steps:
       - name: Checkout repository
@@ -86,267 +88,267 @@ jobs:
           cp admin/codeql/docker/local.pri.gui local.pri
           cd qwtplot3d
           qmake
-          make
+          make -j4
           cd ..
           cd utils
           qmake
-          make
+          make -j4
           cd ..
           cd gui
           qmake
-          make
+          make -j4
           cd ..
           cd programs/us
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_2dplot
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_2dsa
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_2dsa
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_analysis_profile
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_analyte
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_astfem_sim
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_autoflow_analysis
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_autoflow_reports
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_buffer
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_buoyancy
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_cfa_viewer
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_colorgradient
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_combine_models
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_com_project
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_com_project_academic
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_config
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_convert
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_dcdt
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_ddist_combine
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_density_match
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_dmga_init
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_edit
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_equiltime
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_experiment
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_export_legacy
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_extinction
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_fds_filemanager
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_fematch
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_fit_meniscus
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_ga_init
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_globalequil
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_grid_editor
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_helpdaemon
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_integral
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_investigator
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_license
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_manage_data
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_model_gui
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_modelmetrics
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_mwlr_viewer
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_mwl_species_fit
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_mwl_species_sim
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_mwl_spectra
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_pcsa
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_predict1
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_predict2
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_project
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_pseudo3d_combine
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_ramp
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_rasmol_control
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_reporter
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_reporter_gmp
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_rotor
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_rotor_calibration
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_sassoc
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_second_moment
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_solution
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_spectrum
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_tmst_viewer
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_vhw_combine
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_vhw_enhanced
           qmake
-          make
+          make -j4
           cd ../..
           cd programs/us_xpn_viewer
           qmake
-          make
+          make -j4
           cd ../..
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v1
