@@ -56,7 +56,7 @@ class US_GUI_EXTERN US_Plot3D : public QMainWindow
       //! \return          Flag if save was successful
       bool save_plot( const QString, const QString );
 
-
+     
    private:
       QWidget*      centralWidget;
       QGridLayout*  mainLayout;

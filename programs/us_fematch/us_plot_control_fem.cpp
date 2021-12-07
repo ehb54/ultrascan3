@@ -244,6 +244,12 @@ void US_PlotControlFem::do_3dplot()
    plot3_btn();
 }
 
+//modified copy for autoflow
+void US_PlotControlFem::do_3dplot_auto()
+{
+   plot3_btn_auto();
+}
+
 // Public slot to return a pointer to the 3D plot data widget
 QGLWidget* US_PlotControlFem::data_3dplot( void )
 {
@@ -252,6 +258,7 @@ QGLWidget* US_PlotControlFem::data_3dplot( void )
    if ( plot3d_w != 0 )
    {
       //plot3_btn();
+      qDebug() << "3D: plot3d_w not NULL ";
       widgP = plot3d_w->dataWidgetP();
    }
 
@@ -425,6 +432,30 @@ void US_PlotControlFem::plot3_btn()
    plot3d_w->replot       ( );
 
    plot3d_w->setVisible( true );
+}
+
+// 3d plot button clicked: modified copy for autoflow
+void US_PlotControlFem::plot3_btn_auto()
+{
+   int    typex  = dimensionType( xCheck );
+   int    typey  = dimensionType( yCheck );
+   int    typez  = 1; 
+   double rxscl  = ct_rxscale->value();
+   double ryscl  = ct_ryscale->value();
+//qDebug() << "PC: p3btn type x,y" << typex << typey;
+
+   if ( plot3d_w == 0 )
+   {
+     plot3d_w = new US_Plot3D( this, model );
+     connect( plot3d_w, SIGNAL( has_closed() ),
+               this,     SLOT(   plot_close() )  );
+   }
+
+   plot3d_w->setTypes     ( typex, typey, typez );
+   plot3d_w->setParameters( zscale, gridres, pksmooth, pkwidth, rxscl, ryscl );
+   plot3d_w->replot       ( );
+
+   plot3d_w->setVisible( false );
 }
 
 // close button clicked

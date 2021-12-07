@@ -2528,12 +2528,6 @@ void US_ReporterGMP::show_results( )
    qApp->processEvents();
    
    haveSim     = true;
-   // pb_distrib->setEnabled( true );
-   // pb_view   ->setEnabled( true );
-   // pb_save   ->setEnabled( true );
-   // pb_plot3d ->setEnabled( true );
-   // pb_plotres->setEnabled( true );
-
    calc_residuals();             // calculate residuals
 
    //distrib_plot_resids();        // plot residuals
@@ -3359,6 +3353,7 @@ void US_ReporterGMP::plotres( )
   QString img07File = basename + "ff0_vs_mw"   + svgext;
   QString img08File = basename + "D_vs_s"      + svgext;
   QString img09File = basename + "D_vs_mw"     + svgext;
+  QString img10File = basename + "3dplot"      + pngext;
 
   // Plots for Exp-Sim ovelray (with noises rmoved && residual plot)
   resplotd = new US_ResidPlotFem( this, "REPORT" );
@@ -3413,6 +3408,10 @@ void US_ReporterGMP::plotres( )
   distrib_plot_2d(    8 );
   write_plot( img09File, data_plot1 );
   PlotsFileNames <<  basename + "D_vs_mw"  + pngext;
+
+  //3D plot
+  write_plot( img10File, NULL );
+  PlotsFileNames <<  img10File;
   
   //add .PNG plots to combined PDF report
   assemble_plots_html( PlotsFileNames  );
@@ -3691,30 +3690,32 @@ void US_ReporterGMP::write_plot( const QString& filename, const QwtPlot* plot )
 //             tr( "Unable to write file" ) + filename );
 //    }
 
-//    else if ( filename.endsWith( "3dplot.png" ) )
-//    {  // Special case of 3dplot PNG
-//       if ( eplotcd == 0 )
-//       {  // if no 3d plot control up,  create it now
-//          eplotcd = new US_PlotControlFem( this, &model );
-//          eplotcd->move( epd_pos );
-//          eplotcd->show();
-//          eplotcd->do_3dplot();
-//       }
+    else if ( filename.endsWith( "3dplot.png" ) )
+    {  // Special case of 3dplot PNG
+       // if ( eplotcd == 0 )
+       // {  // if no 3d plot control up,  create it now
+          eplotcd = new US_PlotControlFem( this, &model );
+          // eplotcd->move( epd_pos );
+          // eplotcd->show();
+          eplotcd->do_3dplot_auto();
+	  //}
 
-// #if defined(Q_OS_WIN) || defined(Q_OS_MAC)
-//       US_Plot3D* widgw = eplotcd->widget_3dplot();
-//       bool ok          = widgw->save_plot( filename, QString( "png" ) );
-// #else
-//       QGLWidget* dataw = eplotcd->data_3dplot();
-//       QPixmap pixmap   = dataw->renderPixmap( dataw->width(), dataw->height(),
-//                                             true  );
-//       bool ok          = pixmap.save( filename );
-// #endif
+ #if defined(Q_OS_WIN) || defined(Q_OS_MAC)
+       qDebug() << "3D: Q_OS_WIN || Q_OS_MAC ";	  
+       US_Plot3D* widgw = eplotcd->widget_3dplot();
+       bool ok          = widgw->save_plot( filename, QString( "png" ) );
+ #else
+       qDebug() << "3D: Q_OS_LINUX || other";	  
+       QGLWidget* dataw = eplotcd->data_3dplot();
+       QPixmap pixmap   = dataw->renderPixmap( dataw->width(), dataw->height(),
+                                             true  );
+       bool ok          = pixmap.save( filename );
+ #endif
 
-//       if ( ! ok )
-//          QMessageBox::warning( this, tr( "File Write Error" ),
-//             tr( "Unable to write file" ) + filename );
-//    }
+       if ( ! ok )
+          QMessageBox::warning( this, tr( "File Write Error" ),
+             tr( "Unable to write file" ) + filename );
+    }
 
    else if ( filename.endsWith( ".png" ) )
    {  // General case of PNG

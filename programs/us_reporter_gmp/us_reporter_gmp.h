@@ -41,6 +41,7 @@ class US_ReporterGMP : public US_Widgets
 
 	 //for model simulations:
 	 QPointer< US_ResidPlotFem >    resplotd;
+	 QPointer< US_PlotControlFem >  eplotcd;
 	 US_DataIO::EditedData*      rg_editdata();
 	 US_DataIO::RawData*         rg_simdata();
 	 QList< int >*               rg_excllist();

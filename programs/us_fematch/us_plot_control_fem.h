@@ -28,7 +28,8 @@ class US_PlotControlFem : public US_WidgetsDialog
 
       //! \brief Force (re-)plot of currently specified 3-D plot
       void do_3dplot( void );
-
+      void do_3dplot_auto( void );
+      
       //! \brief Return 3-d plot data widget pointer
       QGLWidget* data_3dplot( void );
 
@@ -77,6 +78,7 @@ class US_PlotControlFem : public US_WidgetsDialog
       void peaks_value( double );
       void peakw_value( double );
       void plot3_btn(  void );
+      void plot3_btn_auto(  void );
       void close_all(  void );
       void plot_close( void );
       int  dimensionType( QVector< QCheckBox* >& );
