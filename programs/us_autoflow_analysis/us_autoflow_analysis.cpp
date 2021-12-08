@@ -5297,7 +5297,7 @@ DbgLv(1) << " eupd:       idEdit" << idEdit;
    //Set progress to max
    if ( progress_msg_fmb != NULL )
      {
-       progress_msg_fmb->setValue( progress_msg->maximum() );
+       progress_msg_fmb->setValue( progress_msg_fmb->maximum() );  //ALEXEY -- bug fixed..
        progress_msg_fmb->close();
      }
 
@@ -5896,6 +5896,8 @@ DbgLv(1) << "  Delete: " << recID << recFname.section("/",-1,-1) << recDesc;
 
             // No need to remove noises from DB; model remove did that
          }
+
+	 //ALEXEY: crashed here!!!! After deleting noises
       }
    }
 
