@@ -2,7 +2,6 @@
 
 This is the home of the UltraScan GUI software source code.
 More information is available [here](https://ultrascan.aucsolutions.com)
-Binaries are available [here]
 
 ### installation
 
