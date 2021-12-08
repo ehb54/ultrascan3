@@ -37,4 +37,4 @@ Update the ultrascan3 code ```cd /ultrascan3 && git pull```
 
 Compile both `us` and `us3_somo` ```cd /ultrascan3 && ./makeall.sh && ./makesomo.sh```
 
-Run the compiled application ```LD_LIBRARY_PATH=/ultrascan3/lib /ultrascan3/bin/us```
+Run the compiled application ```LD_LIBRARY_PATH=/ultrascan3/lib:/qwt-6.1.5/lib /ultrascan3/bin/us```
