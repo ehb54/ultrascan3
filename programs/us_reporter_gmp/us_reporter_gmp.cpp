@@ -422,6 +422,28 @@ void US_ReporterGMP::read_protocol_and_reportMasks( void )
   //Channel wavelengths
   ch_wvls                = currAProf.ch_wvls;
 
+  //Debug: AProfile
+  QString channel_desc_alt = chndescs_alt[ 0 ];
+  QString channel_desc     = chndescs[ 0 ];
+  QString wvl              = QString::number( ch_wvls[ channel_desc ][ 0 ] );
+  US_ReportGMP reportGMP   = ch_reports[ channel_desc_alt ][ wvl ];
+    
+  qDebug() << "AProfile's && ReportGMP's details: -- "
+	   << currAProf.aprofname
+	   << currAProf.protoname
+	   << currAProf.chndescs
+	   << currAProf.chndescs_alt
+	   << currAProf.lc_ratios
+	   << cAP2.parms[ 0 ].channel
+	   << cAPp.parms[ 0 ].channel
+	   << reportGMP.rmsd_limit
+	   << reportGMP.wavelength
+	   << reportGMP.reportItems[ 0 ].type;
+
+  qDebug() << "Number of wvls in channel: " << chndescs_alt[ 0 ] << ": " <<  ch_wvls[ channel_desc_alt ].size();
+  qDebug() << "Wvls in channel: " << chndescs_alt[ 0 ] << ": " << ch_wvls[ channel_desc_alt ];
+
+  
   //report Mask
   QString gen_reportMask = currAProf.report_mask;
   parse_gen_mask_json( gen_reportMask );
@@ -764,8 +786,13 @@ void US_ReporterGMP::build_perChanTree ( void )
 	  chanItemNameList << "" << indent + chanItemName;
 	  chanItem [ chanItemName ] = new QTreeWidgetItem( perChanTree, chanItemNameList, wiubase );
 	  
-	  QList < double > chann_wvls                  = ch_wvls[ channel_desc ];
+	  //QList < double > chann_wvls                  = ch_wvls[ channel_desc ];
+	  QList < double > chann_wvls                  = ch_wvls[ channel_desc_alt ];
 	  QMap < QString, US_ReportGMP > chann_reports = ch_reports[ channel_desc_alt ];
+
+	  qDebug() << "channel_desc_alt , channel_desc: "   << channel_desc_alt << " , " <<  channel_desc;
+	  qDebug() << "chann_wvls [ channel_desc ] -- "     << chann_wvls;
+	  qDebug() << "chann_wvls [ channel_desc_alt ] -- " << ch_wvls[ channel_desc_alt ];
 	  
 	  int chann_wvl_number = chann_wvls.size();
 
@@ -985,6 +1012,7 @@ void US_ReporterGMP::reset_report_panel ( void )
   //     qDeleteAll(genTree->topLevelItem(i)->takeChildren());
   //   }
   genTree     ->clear();
+  genTree     -> disconnect();
   qApp->processEvents();
   
   topItem.clear();
@@ -1007,6 +1035,7 @@ void US_ReporterGMP::reset_report_panel ( void )
 
   //cleaning perTriple tree & it's objects
   perChanTree ->clear();
+  perChanTree ->disconnect();
   qApp->processEvents();
 
   chanItem   .clear();
