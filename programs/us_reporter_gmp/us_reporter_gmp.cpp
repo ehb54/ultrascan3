@@ -4510,7 +4510,8 @@ void US_ReporterGMP::assemble_pdf()
       //Separate Report | ReportItems table
       if ( triple_report )
 	{
-	  QList < double > chann_wvls                  = ch_wvls[ channel_desc ];
+	  //QList < double > chann_wvls                = ch_wvls[ channel_desc ]; //ALEXEY: <-- BUG!
+	  QList < double > chann_wvls                  = ch_wvls[ channel_desc_alt ]; 
 	  QMap < QString, US_ReportGMP > chann_reports = ch_reports[ channel_desc_alt ];
 	    
 	  int chann_wvl_number = chann_wvls.size();
@@ -4944,10 +4945,18 @@ void US_ReporterGMP::gui_to_parms( void )
   //tree-to-json: genTree && json-to-genMask structure
   QString editedMask_gen = tree_to_json ( topItem );
   parse_edited_gen_mask_json( editedMask_gen, genMask_edited );
+
+
+  // //DEBUG
+  // exit(1);
+  
   
   //tree-to-json: perChanTree
   QString editedMask_perChan = tree_to_json ( chanItem );
   parse_edited_perChan_mask_json( editedMask_perChan, perChanMask_edited );
+
+  // //DEBUG
+  // exit(1);
 }
 
 //Pasre reportMask JSON
@@ -4993,6 +5002,12 @@ void US_ReporterGMP::parse_edited_gen_mask_json( const QString maskJson, GenRepo
 		 {
 		   if (  key.contains("Solutions") )
 		     {
+
+		       qDebug() << "Parse_editedJsonGen: Solution: array_key, value: "
+				<<  array_key
+				<<  json_array[i].toObject().value(array_key).toString();
+			       
+		       
 		       MaskStr.ShowSolutionParts[ array_key ] = json_array[i].toObject().value(array_key).toString();
 		       if ( MaskStr.ShowSolutionParts[ array_key ].toInt() )
 			 ++has_sol_items;
@@ -5013,6 +5028,11 @@ void US_ReporterGMP::parse_edited_gen_mask_json( const QString maskJson, GenRepo
 			       MaskStr.ShowAnalysisGenParts[ n_key ] = analysis_cathegory_item_value;
 			       if ( MaskStr.ShowAnalysisGenParts[ n_key ].toInt() )
 				 ++MaskStr.has_anagen_items;
+
+			       qDebug() << "Parse_editedJsonGen: Analysis:Gen: n_key, value: "
+					<<  n_key
+					<<  MaskStr.ShowAnalysisGenParts[ n_key ];
+			       
 			     }
 			   
 			   if ( array_key.contains("2DSA") )
@@ -5020,6 +5040,11 @@ void US_ReporterGMP::parse_edited_gen_mask_json( const QString maskJson, GenRepo
 			       MaskStr.ShowAnalysis2DSAParts[ n_key ] = analysis_cathegory_item_value;
 			       if ( MaskStr.ShowAnalysis2DSAParts[ n_key ].toInt() )
 				 ++MaskStr.has_ana2dsa_items;
+
+			       qDebug() << "Parse_editedJsonGen: Analysis:2DSA: n_key, value: "
+					<<  n_key
+					<<  MaskStr.ShowAnalysis2DSAParts[ n_key ];
+			       
 			     }
 			   
 			   if ( array_key.contains("PCSA") ) 
@@ -5027,6 +5052,10 @@ void US_ReporterGMP::parse_edited_gen_mask_json( const QString maskJson, GenRepo
 			       MaskStr.ShowAnalysisPCSAParts[ n_key ] = analysis_cathegory_item_value;
 			       if ( MaskStr.ShowAnalysisPCSAParts[ n_key ].toInt() )
 				 ++MaskStr.has_anapcsa_items;
+
+			       qDebug() << "Parse_editedJsonGen: Analysis:PCSA: n_key, value: "
+					<<  n_key
+					<<  MaskStr.ShowAnalysisPCSAParts[ n_key ];
 			     }
 			 }
 		     }
