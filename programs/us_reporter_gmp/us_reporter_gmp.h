@@ -67,7 +67,10 @@ class US_ReporterGMP : public US_Widgets
 
 	 struct PerChanReportMaskStructure
 	 {
-	   
+	   QMap < QString, bool >  ShowChannelParts;
+	   QMap < QString, QMap < QString, QMap < QString, QString > > > ShowTripleParts;
+
+	   QMap < QString, QMap < QString, int > >  has_triple_items;
 	 };
 
 	 PerChanReportMaskStructure perChanMask_edited;

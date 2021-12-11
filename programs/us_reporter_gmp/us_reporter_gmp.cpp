@@ -2571,13 +2571,6 @@ void US_ReporterGMP::show_results( )
 
    assemble_distrib_html( );
    
-   // rbmapd = new US_ResidsBitmap( resids );
-   // rbmapd->move( bmd_pos );
-   // rbmapd->show();
-
-   // plot3d();
-
-   
    plotres(); // <------- save plots into files locally
    
    
@@ -3364,7 +3357,6 @@ QString  US_ReporterGMP::table_row( const QString& s1, const QString& s2,
 // Open a residual plot dialog
 void US_ReporterGMP::plotres( )
 {
-  
   QStringList PlotsFileNames;
   mkdir( US_Settings::reportDir(), edata->runID );
   const QString svgext( ".svgz" );
@@ -4946,11 +4938,6 @@ void US_ReporterGMP::gui_to_parms( void )
   QString editedMask_gen = tree_to_json ( topItem );
   parse_edited_gen_mask_json( editedMask_gen, genMask_edited );
 
-
-  // //DEBUG
-  // exit(1);
-  
-  
   //tree-to-json: perChanTree
   QString editedMask_perChan = tree_to_json ( chanItem );
   parse_edited_perChan_mask_json( editedMask_perChan, perChanMask_edited );
@@ -5075,7 +5062,51 @@ void US_ReporterGMP::parse_edited_gen_mask_json( const QString maskJson, GenRepo
 //Pasre reportMask JSON: perChan
 void US_ReporterGMP::parse_edited_perChan_mask_json( const QString maskJson, PerChanReportMaskStructure & MaskStr )
 {
-  
+    QJsonDocument jsonDoc = QJsonDocument::fromJson( maskJson.toUtf8() );
+    QJsonObject json = jsonDoc.object();
+    
+    MaskStr.ShowChannelParts      .clear();
+    MaskStr.ShowTripleParts       .clear();
+    MaskStr.has_triple_items      .clear();
+
+    
+    foreach(const QString& key, json.keys())
+      {
+	int has_channel_items = 0;
+	
+	QJsonValue value = json.value(key);
+	qDebug() << "Key = " << key << ", Value = " << value;//.toString();
+
+	MaskStr.ShowChannelParts[ key ] = false;  //for now
+	
+	QJsonArray json_array = value.toArray();
+	for (int i=0; i < json_array.size(); ++i )
+	  {
+	    foreach(const QString& array_key, json_array[i].toObject().keys())
+	      {
+		QJsonObject newObj = json_array[i].toObject().value(array_key).toObject();
+
+		foreach ( const QString& n_key, newObj.keys() )
+		  {
+		    QString triple_item_value  = newObj.value( n_key ).toString();
+		    
+		    if ( triple_item_value.toInt() )
+		      ++has_channel_items;
+		    
+		    MaskStr.ShowTripleParts[ key ][ array_key ][ n_key ] = triple_item_value;
+		    if ( MaskStr.ShowTripleParts[ key ][ array_key ][ n_key ].toInt() )
+		      ++MaskStr.has_triple_items[ key ][ array_key ];
+		    
+		    qDebug() << "Parse_editedJsonTriples: Channel/Triple: " <<  key << "/" << array_key  << ": " <<  "n_key, value: "
+			     <<  n_key
+			     <<  triple_item_value;
+		  }
+	      }
+	  }
+
+	if ( !has_channel_items )
+	  MaskStr.ShowChannelParts[ key ] = false;
+      }
 }
 
 //transform 3-level tree to JSON
