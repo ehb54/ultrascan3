@@ -184,9 +184,13 @@ int US_Experiment::saveToDB_auto( bool update, US_DB2* db,
 {
 qDebug() << "Exp:svToDB: update" << update << "ss-count" << speedsteps.count();
    // Let's see if the project is in the db already
-   int status = project.saveToDB( db );
-qDebug() << "Exp:svToDB: projsv status(+NO_PR)" << status << US_DB2::NO_PROJECT
- << "expID" << expID;
+
+ int status = project.saveToDB_auto( invID_passed, db );    // ALEXEY -- invID_passed must be used !!!
+ qDebug() << "Exp:svToDB: projsv status(+NO_PR)"
+	  << status << US_DB2::NO_PROJECT
+	  << "expID" << expID
+	  << invID_passed;
+
    if ( status == US_DB2::NO_PROJECT )
       return status;
 
@@ -203,7 +207,7 @@ qDebug() << "Exp:svToDB: projsv status(+NO_PR)" << status << US_DB2::NO_PROJECT
    // Check for experiment runID in database
    int saveStatus = 0;
    QStringList q;
-   status = checkRunID( db );
+   status = checkRunID_auto( invID_passed, db );
    if ( status == US_DB2::OK && ! update )
    {
       // Then the runID exists already, and we're not updating

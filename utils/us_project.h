@@ -73,6 +73,7 @@ class US_UTIL_EXTERN US_Project
           \param    db For database access, an open database connection
       */
       int saveToDB           ( US_DB2* = 0 );
+      int saveToDB_auto      ( int, US_DB2* = 0 );
 
       //! \brief    Function to delete the current project from disk, if it exists
       void deleteFromDisk    ( void );
