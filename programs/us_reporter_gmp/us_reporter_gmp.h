@@ -186,6 +186,7 @@ class US_ReporterGMP : public US_Widgets
 
 	 void read_protocol_and_reportMasks( void );
 	 void parse_gen_mask_json ( const QString  );
+	 void get_item_childs( QList< QTreeWidgetItem* > &, QTreeWidgetItem* );
 	 void build_genTree ( void );
 	 void build_perChanTree ( void ) ;
 	 void gui_to_parms ( void ) ;
@@ -364,8 +365,7 @@ class US_ReporterGMP : public US_Widgets
 	void view_report ( void );
 	void load_gmp_run ( void );
 	void generate_report( void );
-	void changedItem_gen    ( QTreeWidgetItem*, int );
-	void changedItem_triple ( QTreeWidgetItem*, int );
+	void changedItem    ( QTreeWidgetItem*, int );
 	void select_all( void );
 	void unselect_all( void );
 	void expand_all( void );

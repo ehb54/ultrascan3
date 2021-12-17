@@ -683,74 +683,75 @@ void US_ReporterGMP::build_genTree ( void )
   genTree->resizeColumnToContents( 0 );
   genTree->resizeColumnToContents( 1 );
 
-  connect( genTree, SIGNAL( itemChanged    ( QTreeWidgetItem*, int ) ),
-  	   this,    SLOT  ( changedItem_gen( QTreeWidgetItem*, int ) ) );
+  connect( genTree, SIGNAL( itemChanged   ( QTreeWidgetItem*, int ) ),
+  	   this,    SLOT  ( changedItem   ( QTreeWidgetItem*, int ) ) );
 
+}
+
+//get Item's children
+void US_ReporterGMP::get_item_childs( QList< QTreeWidgetItem* > & children_list, QTreeWidgetItem* item)
+{
+  children_list << item;
+  
+  int children = item->childCount();
+  for ( int i = 0; i < children; ++i )
+    get_item_childs( children_list, item->child(i) ); 
 }
 
 //What to check/uncheck upon change in items status
-void US_ReporterGMP::changedItem_gen( QTreeWidgetItem* item, int col )
+void US_ReporterGMP::changedItem( QTreeWidgetItem* item, int col )
 {
-  if ( col == 0  ) //we deal with col 0 only...
+  //we deal with col 0 only
+  if ( col != 0  ) 
+    return;
+
+  //disconnect
+  item -> treeWidget() -> disconnect();
+
+  //go over children: recursive search for all children down the tree
+  int children = item->childCount();
+  QList< QTreeWidgetItem* > children_list;
+  QTreeWidgetItem* current_c_item = new QTreeWidgetItem;
+
+  for( int i = 0; i < children; ++i )
+    get_item_childs( children_list, item->child(i) ); 
+
+  for ( int i = 0; i < children_list.size(); ++i )
+    children_list[ i ] -> setCheckState( 0, (Qt::CheckState) item->checkState(0) );
+
+  //Go over parents
+  QTreeWidgetItem* parent_item = item->parent();
+  QList< QTreeWidgetItem* > parents_list;
+  QTreeWidgetItem* current_p_item = new QTreeWidgetItem;
+  
+  while ( parent_item )
     {
-      //qDebug() << "Changed item name0" << item->text( 1 );
-
-      //if has (nested) children items
-      int children_lev1 = item->childCount();
-      if ( children_lev1 )
-	{
-	  genTree -> disconnect();
-
-	  for( int i = 0; i < children_lev1; ++i )
-	    {
-	      item->child(i)->setCheckState( 0, (Qt::CheckState) item->checkState(0) );
-
-	      int children_lev2 = item->child(i)->childCount();
-	      if ( children_lev2 )
-		{
-		  for( int ii = 0; ii < children_lev2; ++ii )
-		    {
-		      item->child(i)->child(ii)->setCheckState( 0, (Qt::CheckState) item->child(i)->checkState(0) );
-		    }
-		}
-	    }
-	  
-	  connect( genTree, SIGNAL( itemChanged( QTreeWidgetItem*, int ) ),
-	           this,       SLOT(   changedItem_gen( QTreeWidgetItem*, int ) ) );
-	}
-      
-           
-      //qDebug() << "Changed item name1 " << item->text( 1 );
-      	
-      //if has parent item
-      QTreeWidgetItem* parent_item = item->parent();
-
-      //qDebug() << "Changed item name2: " << item->text( 1 );
-      
-      if ( parent_item )
-	{
-	  //qDebug() << "Changed item name3: " << item->text( 1 );
-	  genTree -> disconnect();
-	  
-	  //qDebug() << " Current item, " << item->text( 1 ) << ", has a parent: " << parent_item->text( 1 );
-	    
-	  int checked_children = 0;
-	  int parent_item_children = parent_item ->childCount();
-	  for( int i = 0; i < parent_item_children; ++i )
-	    {
-	      if ( int( parent_item->child( i )->checkState(0) ) )
-		++checked_children;
-	    }
-	  if ( checked_children )
-	    parent_item->setCheckState( 0, Qt::Checked );
-	  else
-	    parent_item->setCheckState( 0, Qt::Unchecked );
-
-	  connect( genTree, SIGNAL( itemChanged( QTreeWidgetItem*, int ) ),
-  	           this,    SLOT(   changedItem_gen( QTreeWidgetItem*, int ) ) );
-	}
+      parents_list << parent_item;
+      current_p_item = parent_item;
+      parent_item  = current_p_item -> parent();
     }
+  
+  for( int j = 0; j < parents_list.size(); ++j )
+    {
+      int checked_children = 0;
+      int parent_item_children = parents_list[ j ] ->childCount();
+      for( int jj = 0; jj < parent_item_children; ++jj )
+	{
+	  if ( int( parents_list[ j ]->child( jj )->checkState(0) ) )
+	    ++checked_children;
+	}
+      
+      if ( checked_children )
+	parents_list[ j ]->setCheckState( 0, Qt::Checked );
+      else
+	parents_list[ j ]->setCheckState( 0, Qt::Unchecked );
+    }
+
+  //reconnect
+  connect( item -> treeWidget(), SIGNAL( itemChanged( QTreeWidgetItem*, int ) ),
+	   this,                 SLOT(   changedItem( QTreeWidgetItem*, int ) ) );
 }
+
 
 //build perChanTree
 void US_ReporterGMP::build_perChanTree ( void )
@@ -875,73 +876,8 @@ void US_ReporterGMP::build_perChanTree ( void )
   perChanTree->resizeColumnToContents( 1 );
 
   connect( perChanTree, SIGNAL( itemChanged( QTreeWidgetItem*, int ) ),
-  	   this,        SLOT(   changedItem_triple( QTreeWidgetItem*, int ) ) );
+  	   this,        SLOT(   changedItem( QTreeWidgetItem*, int ) ) );
 }
-
-//What to check/uncheck upon change in items status
-void US_ReporterGMP::changedItem_triple( QTreeWidgetItem* item, int col )
-{
-  if ( col == 0  ) //we deal with col 0 only...
-    {
-      //qDebug() << "Changed item name0" << item->text( 1 );
-
-      //if has (nested) children items
-      int children_lev1 = item->childCount();
-      if ( children_lev1 )
-	{
-	  perChanTree -> disconnect();
-
-	  for( int i = 0; i < children_lev1; ++i )
-	    {
-	      item->child(i)->setCheckState( 0, (Qt::CheckState) item->checkState(0) );
-
-	      int children_lev2 = item->child(i)->childCount();
-	      if ( children_lev2 )
-		{
-		  for( int ii = 0; ii < children_lev2; ++ii )
-		    {
-		      item->child(i)->child(ii)->setCheckState( 0, (Qt::CheckState) item->child(i)->checkState(0) );
-		    }
-		}
-	    }
-	  
-	  connect( perChanTree, SIGNAL( itemChanged( QTreeWidgetItem*, int ) ),
-	           this,        SLOT(   changedItem_triple( QTreeWidgetItem*, int ) ) );
-	}
-      
-           
-      //qDebug() << "Changed item name1 " << item->text( 1 );
-      	
-      //if has parent item
-      QTreeWidgetItem* parent_item = item->parent();
-
-      //qDebug() << "Changed item name2: " << item->text( 1 );
-      
-      if ( parent_item )
-	{
-	  //qDebug() << "Changed item name3: " << item->text( 1 );
-	  perChanTree -> disconnect();
-	  
-	  //qDebug() << " Current item, " << item->text( 1 ) << ", has a parent: " << parent_item->text( 1 );
-	    
-	  int checked_children = 0;
-	  int parent_item_children = parent_item ->childCount();
-	  for( int i = 0; i < parent_item_children; ++i )
-	    {
-	      if ( int( parent_item->child( i )->checkState(0) ) )
-		++checked_children;
-	    }
-	  if ( checked_children )
-	    parent_item->setCheckState( 0, Qt::Checked );
-	  else
-	    parent_item->setCheckState( 0, Qt::Unchecked );
-
-	  connect( perChanTree, SIGNAL( itemChanged( QTreeWidgetItem*, int ) ),
-  	           this,        SLOT(   changedItem_triple( QTreeWidgetItem*, int ) ) );
-	}
-    }
-}
-
 
 //select all items in trees
 void US_ReporterGMP::select_all ( void )
