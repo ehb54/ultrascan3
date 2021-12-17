@@ -270,8 +270,8 @@ void US_Minimize::updateQN(float **gamma, float **delta)
    {
       for (j=0; j<parameters; j++)
       {
-         information_matrix[i][j] = information_matrix[i][j] - hgammatranspose[i][j]/lambda
-            + ddtranspose[i][j]/deltagamma + lambda * vvtranspose[i][j];
+         information_matrix[i][j] = information_matrix[i][j] - (double) hgammatranspose[i][j]/lambda
+            + (double) ddtranspose[i][j]/deltagamma + (double) vvtranspose[i][j]*lambda;
       }
    }
    matrix->mmv(&temp, gamma, &information_matrix, parameters, parameters);
@@ -660,7 +660,7 @@ int US_Minimize::Fit()
          }
          for (unsigned int i=0; i<parameters; i++)
          {
-            guess[i] = guess[i] + search[i] * alpha;
+            guess[i] = guess[i] + search[i] * (double) alpha;
          }
          calc_model(guess);// updates solution, needed to calculate y_delta
          calc_jacobian();  // gives us jacobian matrix
@@ -845,7 +845,7 @@ int US_Minimize::Fit()
                //               qDebug() << "Alpha: " << st  ;
                for (unsigned int i=0; i<parameters; i++)
                {
-                  test_guess[i] = guess[i] + st * (float) B[i];
+                  test_guess[i] = guess[i] + st * B[i];
                   //                  test_guess[i] = guess[i] + lambda * (float) B[i];
                }
 					break;
@@ -878,7 +878,7 @@ int US_Minimize::Fit()
                }
                for (unsigned int i=0; i<parameters; i++)
                {
-                  test_guess[i] = guess[i] + st * (float) B[i];
+                  test_guess[i] = guess[i] + st * B[i];
                }
                break;
             }
@@ -1247,7 +1247,7 @@ float US_Minimize::calc_testParameter(float **search, float step)
    float res;
    for (unsigned int i=0; i<parameters; i++)
    {
-      test_guess[i] = guess[i] + step * (*search)[i];
+      test_guess[i] = guess[i] + (double) step * (*search)[i];
       //qDebug() << "Step: " << step << ", Test-guess(" << i << "): " << test_guess[i] << ", guess: " << guess[i] << ", search: " << (*search)[i]  ;
    }
    /*

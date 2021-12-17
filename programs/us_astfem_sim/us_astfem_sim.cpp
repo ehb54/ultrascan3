@@ -806,7 +806,7 @@ DbgLv(1) << "first_last_data for the step" << sp->time_first << sp->time_last
       if ( astfem )
       {
          astfem->disconnect();
-         free( astfem );
+         delete( astfem );
       }
 
       // make sure the selected model is adjusted for the selected temperature
