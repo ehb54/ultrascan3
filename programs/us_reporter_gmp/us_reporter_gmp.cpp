@@ -711,7 +711,6 @@ void US_ReporterGMP::changedItem( QTreeWidgetItem* item, int col )
   //go over children: recursive search for all children down the tree
   int children = item->childCount();
   QList< QTreeWidgetItem* > children_list;
-  QTreeWidgetItem* current_c_item = new QTreeWidgetItem;
 
   for( int i = 0; i < children; ++i )
     get_item_childs( children_list, item->child(i) ); 
@@ -757,9 +756,13 @@ void US_ReporterGMP::changedItem( QTreeWidgetItem* item, int col )
 void US_ReporterGMP::build_perChanTree ( void )
 {
   QString indent( "  " );
-  QStringList chanItemNameList, tripleItemNameList, tripleMaskItemNameList;
+  QStringList chanItemNameList, tripleItemNameList, tripleItemModelNameList, tripleMaskItemNameList, tripleMaskItemPlotNameList;
+
+  QStringList tripleReportModelsList;
   QStringList tripleReportMasksList;
   QList< bool > tripleReportMasksList_vals;
+  QStringList tripleReportMasksPlotList;
+  
   int wiubase = (int)QTreeWidgetItem::UserType;
   
   int nchna   = currAProf.pchans.count();
@@ -782,7 +785,7 @@ void US_ReporterGMP::build_perChanTree ( void )
       if ( triple_report )
 	{
 	  // Channel Name: topItem in a perChanTree
-	  QString chanItemName = "Channel: " + channel_desc_alt.section( ":", 0, 1 );
+	  QString chanItemName = "Channel " + channel_desc_alt.section( ":", 0, 1 ).replace(":","-");
 	  chanItemNameList.clear();
 	  chanItemNameList << "" << indent + chanItemName;
 	  chanItem [ chanItemName ] = new QTreeWidgetItem( perChanTree, chanItemNameList, wiubase );
@@ -809,7 +812,7 @@ void US_ReporterGMP::build_perChanTree ( void )
 	      Array_of_triples.push_back( tripleName );
 
 	      //Triple item: child-level 1 in a perChanTree
-	      QString tripleItemName = "Triple:  " + wvl + " nm";
+	      QString tripleItemName = wvl + " nm Wavelength";
 	      tripleItemNameList.clear();
 	      tripleItemNameList << "" << indent.repeated( 2 ) + tripleItemName;
 	      tripleItem [ tripleItemName ] = new QTreeWidgetItem( chanItem [ chanItemName ], tripleItemNameList, wiubase);
@@ -827,32 +830,83 @@ void US_ReporterGMP::build_perChanTree ( void )
 				    << "RMSD Limit"
 				    << "Minimum Intensity"
 				    << "Experiment Duration"
-				    << "Integraiton Results";
+				    << "Integration Results"
+				    << "Plots";
 	      
 	      tripleReportMasksList_vals.clear();
 	      tripleReportMasksList_vals << reportGMP. tot_conc_mask
 	      				 << reportGMP. rmsd_limit_mask
 	      				 << reportGMP. av_intensity_mask
 	      				 << reportGMP. experiment_duration_mask
-	      				 << reportGMP. integration_results_mask;
+	      				 << reportGMP. integration_results_mask
+					 << true;
 
+	      //TEMP: define model list
+	      tripleReportModelsList.clear();
+	      tripleReportModelsList << "2DSA-IT"
+				     << "2DSA-MC"
+				     << "PCSA";
+	      
+	      
 	      int checked_masks = 0;
-	      for ( int kk = 0; kk < tripleReportMasksList.size(); ++kk )
+	      //start triple's models
+	      for ( int mm = 0; mm < tripleReportModelsList.size(); ++mm )
 		{
-		  //Triple's mask params: child-level 2 in a perChanTree
-		  QString tripleMaskItemName = tripleReportMasksList[ kk ];
-		  tripleMaskItemNameList.clear();
-		  tripleMaskItemNameList << "" << indent.repeated( 3 ) + tripleMaskItemName;
-		  tripleMaskItem [ tripleItemName ] = new QTreeWidgetItem(  tripleItem [ tripleItemName ], tripleMaskItemNameList, wiubase);
-
-		  if ( tripleReportMasksList_vals[ kk ] )
+		  //Triple's mask params: child-level 3 in a perChanTree
+		  QString tripleItemModelName = tripleReportModelsList[ mm ] + " Model";
+		  QString tripleModelName     = tripleItemName + "," + tripleItemModelName;
+		  tripleItemModelNameList.clear();
+		  tripleItemModelNameList << "" << indent.repeated( 3 ) + tripleItemModelName;
+		  tripleModelItem [ tripleModelName ] = new QTreeWidgetItem(  tripleItem [ tripleItemName ], tripleItemModelNameList, wiubase);
+		  
+		  //start triple's masks
+		  for ( int kk = 0; kk < tripleReportMasksList.size(); ++kk )
 		    {
-		      tripleMaskItem [ tripleItemName ] ->setCheckState( 0, Qt::Checked );
-		      ++checked_masks;
+		      //Triple's mask params: child-level 3 in a perChanTree
+		      QString tripleMaskItemName = tripleReportMasksList[ kk ];
+		      tripleMaskItemNameList.clear();
+		      tripleMaskItemNameList << "" << indent.repeated( 4 ) + tripleMaskItemName;
+		      tripleMaskItem [ tripleModelName ] = new QTreeWidgetItem(  tripleModelItem [ tripleModelName ], tripleMaskItemNameList, wiubase);
+		      
+		      if ( tripleReportMasksList_vals[ kk ] )
+			{
+			  tripleMaskItem [ tripleModelName ] ->setCheckState( 0, Qt::Checked );
+			  ++checked_masks;
+			}
+		      else
+			tripleMaskItem [ tripleModelName ] ->setCheckState( 0, Qt::Unchecked );
+		      
+		      //plots
+		      if ( tripleMaskItemName.contains("Plots") )
+			{
+			  tripleReportMasksPlotList.clear();
+			  tripleReportMasksPlotList << "Experiment-Simulation Velocity Data (noise corrected) "
+						    << "Experiment-Simulation Residuals"
+						    << "Sedimentation Coefficient Distribution"
+						    << "Molecular Weight Distribution"
+						    << "Diffusion Coefficient Distribution"
+						    << "f/f0-vs-s 2D Model"
+						    << "f/f0-vs-MW 2D Model"
+						    << "D-vs-s 2D Model"
+						    << "D-vs-MW 2D Model"
+						    << "3D Model Plot";
+			  
+			  for ( int hh = 0; hh < tripleReportMasksPlotList.size(); ++hh )
+			    {
+			      QString tripleMaskItemPlotName = tripleReportMasksPlotList[ hh ];
+			      tripleMaskItemPlotNameList.clear();
+			      tripleMaskItemPlotNameList << "" << indent.repeated( 5 ) + tripleMaskItemPlotName;
+			      tripleMaskPlotItem [ tripleModelName ] = new QTreeWidgetItem( tripleMaskItem [ tripleModelName ], tripleMaskItemPlotNameList, wiubase);
+			      
+			      tripleMaskPlotItem [ tripleModelName ] ->setCheckState( 0, Qt::Checked );
+
+			      ++checked_masks;
+			    }
+			}
 		    }
-		  else
-		    tripleMaskItem [ tripleItemName ] ->setCheckState( 0, Qt::Unchecked );
+		  //end of triple's masks
 		}
+	      //end of triple's modles
 
 	      if ( checked_masks )
 		{
@@ -974,9 +1028,11 @@ void US_ReporterGMP::reset_report_panel ( void )
   perChanTree ->disconnect();
   qApp->processEvents();
 
-  chanItem   .clear();
-  tripleItem .clear();
-  tripleMaskItem . clear();
+  chanItem           .clear();
+  tripleItem         .clear();
+  tripleModelItem    .clear();
+  tripleMaskItem     .clear();
+  tripleMaskPlotItem .clear();
 
   //clean triple_array
   Array_of_triples.clear();
@@ -5001,12 +5057,14 @@ void US_ReporterGMP::parse_edited_perChan_mask_json( const QString maskJson, Per
     QJsonDocument jsonDoc = QJsonDocument::fromJson( maskJson.toUtf8() );
     QJsonObject json = jsonDoc.object();
     
-    MaskStr.ShowChannelParts      .clear();
-    MaskStr.ShowTripleParts       .clear();
-    MaskStr.has_triple_items      .clear();
+    MaskStr.ShowChannelParts          .clear();
+    MaskStr.ShowTripleModelParts      .clear();
+    MaskStr.has_tripleModel_items     .clear();
+    MaskStr.ShowTripleModelPlotParts  .clear();
+    MaskStr.has_tripleModelPlot_items .clear();
 
     
-    foreach(const QString& key, json.keys())
+    foreach(const QString& key, json.keys())                                          //over channels
       {
 	int has_channel_items = 0;
 	
@@ -5016,26 +5074,65 @@ void US_ReporterGMP::parse_edited_perChan_mask_json( const QString maskJson, Per
 	MaskStr.ShowChannelParts[ key ] = false;  //for now
 	
 	QJsonArray json_array = value.toArray();
-	for (int i=0; i < json_array.size(); ++i )
+	for (int i=0; i < json_array.size(); ++i )  
 	  {
-	    foreach(const QString& array_key, json_array[i].toObject().keys())
+	    foreach(const QString& array_key, json_array[i].toObject().keys())        //over triples
 	      {
-		QJsonObject newObj = json_array[i].toObject().value(array_key).toObject();
+		QJsonObject tripleObj = json_array[i].toObject().value(array_key).toObject();
 
-		foreach ( const QString& n_key, newObj.keys() )
+		foreach ( const QString& n_key, tripleObj.keys() )                    //over models
 		  {
-		    QString triple_item_value  = newObj.value( n_key ).toString();
-		    
-		    if ( triple_item_value.toInt() )
-		      ++has_channel_items;
-		    
-		    MaskStr.ShowTripleParts[ key ][ array_key ][ n_key ] = triple_item_value;
-		    if ( MaskStr.ShowTripleParts[ key ][ array_key ][ n_key ].toInt() )
-		      ++MaskStr.has_triple_items[ key ][ array_key ];
-		    
-		    qDebug() << "Parse_editedJsonTriples: Channel/Triple: " <<  key << "/" << array_key  << ": " <<  "n_key, value: "
-			     <<  n_key
-			     <<  triple_item_value;
+		    QJsonObject modelObj = tripleObj.value( n_key ).toObject();
+
+		    foreach ( const QString& j_key, modelObj.keys() )                 //over models' features (tot_conc, RMSD...) 
+		      {
+			QJsonValue feature_value = modelObj.value( j_key );
+			
+			if ( feature_value.isString() ) //deal with plots main characteristics ( tot_conc, RMSD)
+			  {
+			    if ( feature_value.toString().toInt() )
+			      ++has_channel_items;
+
+			    QString triple_name = key + "," + array_key;
+			    MaskStr.ShowTripleModelParts[ triple_name ][ n_key ][ j_key ] = feature_value.toString();
+			    if ( MaskStr.ShowTripleModelParts[ triple_name ][ n_key ][ j_key ].toInt() )
+			      ++MaskStr.has_tripleModel_items[ triple_name ][ n_key ];
+			    
+			    qDebug() << "Parse_editedJsonTriples: Channel/Triple: " <<  key << "/" << array_key  << ": "
+				     <<  "n_key, j_key, feature_value: "
+				     <<  n_key
+				     <<  j_key
+				     <<  feature_value.toString();
+			  }
+			else  
+			  {
+			    if ( j_key.contains("Plots") ) //deal with plots: separate QJsonObject
+			      { 
+				QJsonObject plotObj = modelObj.value( j_key ).toObject();
+				
+				foreach ( const QString& p_key, plotObj.keys() )           //over plots, per model/per triple/per channel
+				  {
+				    QString feature_plot_value = plotObj.value( p_key ).toString();
+				    
+				    QString triple_name = key + "," + array_key;
+				    MaskStr.ShowTripleModelPlotParts[ triple_name ][ n_key ][ p_key ] = feature_plot_value;
+				    if ( MaskStr.ShowTripleModelPlotParts[ triple_name ][ n_key ][ p_key ].toInt() )
+				      ++MaskStr.has_tripleModelPlot_items[ triple_name ][ n_key ];
+
+				    qDebug() << "Parse_editedJsonTriples: Channel/Triple: " <<  key << "/" << array_key  << ": "
+					     <<  "n_key, j_key, p_key, feature_PLOT_value: "
+					     <<  n_key
+					     <<  j_key
+					     <<  p_key
+					     <<  feature_plot_value;
+				  }
+			      }
+			    else // maybe later there will be other objects per triple's model
+			      {
+				
+			      }
+			  }
+		      }
 		  }
 	      }
 	  }
@@ -5045,6 +5142,73 @@ void US_ReporterGMP::parse_edited_perChan_mask_json( const QString maskJson, Per
       }
 }
 
+void US_ReporterGMP::get_children_to_json( QString& mask_edited, QTreeWidgetItem* item )
+{
+  for( int i = 0; i < item->childCount(); ++i )
+    {
+      mask_edited += "\"" + item->child(i)->text(1).trimmed() + "\":";
+      
+      int children_lev2 = item->child(i)->childCount();
+      if ( !children_lev2 )
+	{
+	  mask_edited += "\"" + QString::number( int(item->child(i)->checkState(0)) ) + "\"";
+	  if ( i != item->childCount()-1 )
+	    mask_edited += ",";
+	}
+      else
+	{
+	  mask_edited += "{";
+	  get_children_to_json( mask_edited, item->child(i) );
+	  mask_edited += "},";
+	}
+    }
+
+  //ALEXEY: <-- little trick to enable super-fast recursive over arbitrary tree:))
+  mask_edited.replace(",},","},");  
+}
+
+
+//transform 3-level tree to JSON
+QString US_ReporterGMP::tree_to_json( QMap < QString, QTreeWidgetItem * > topLevItems )
+{
+  QString mask_edited;
+  mask_edited += "{";
+  
+  QMap < QString, QTreeWidgetItem * >::iterator top;
+  for ( top = topLevItems.begin(); top != topLevItems.end(); ++top )
+    {
+      mask_edited += "\"" + top.key().trimmed() + "\":";
+      int children_lev1 = top.value()->childCount();
+      if ( !children_lev1 )
+	{
+	  mask_edited += "\"" + QString::number( int(top.value()->checkState(0)) ) + "\",";
+	}
+      else
+	{
+	  mask_edited += "[{";
+	  
+	  //here we need to generalize for any tree nestedness: recursive
+	  get_children_to_json( mask_edited, top.value() );
+
+	  mask_edited += "}],";
+	}
+    }
+
+  //ALEXEY: <-- little trick to enable super-fast recursive over arbitrary tree:))
+  mask_edited.replace(",}],","}],"); 
+  QString to_replace = "}],";
+  QString new_substr = "}]";
+  mask_edited.replace( mask_edited.lastIndexOf( to_replace ), to_replace.size(), new_substr );
+
+  mask_edited += "}";
+
+  qDebug() << "Edited Mask: " << mask_edited;
+
+  return mask_edited;
+}
+
+
+/*
 //transform 3-level tree to JSON
 QString US_ReporterGMP::tree_to_json( QMap < QString, QTreeWidgetItem * > topLevItems )
 {
@@ -5115,6 +5279,7 @@ QString US_ReporterGMP::tree_to_json( QMap < QString, QTreeWidgetItem * > topLev
 
   return mask_edited;
 }
+*/
 
 //Format times
 void US_ReporterGMP::format_needed_params()

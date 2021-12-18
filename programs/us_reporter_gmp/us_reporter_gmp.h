@@ -68,9 +68,13 @@ class US_ReporterGMP : public US_Widgets
 	 struct PerChanReportMaskStructure
 	 {
 	   QMap < QString, bool >  ShowChannelParts;
-	   QMap < QString, QMap < QString, QMap < QString, QString > > > ShowTripleParts;
+	   
+	   QMap < QString, QMap < QString, QMap < QString, QString > > > ShowTripleModelParts;
+	   QMap < QString, QMap < QString, int > >  has_tripleModel_items;
 
-	   QMap < QString, QMap < QString, int > >  has_triple_items;
+	   QMap < QString, QMap < QString, QMap < QString, QString > > > ShowTripleModelPlotParts;
+	   QMap < QString, QMap < QString, int > >  has_tripleModelPlot_items;
+
 	 };
 
 	 PerChanReportMaskStructure perChanMask_edited;
@@ -112,9 +116,10 @@ class US_ReporterGMP : public US_Widgets
 	 //perChan Report masks
 	 QMap<QString, QTreeWidgetItem *> chanItem;
 	 QMap<QString, QTreeWidgetItem *> tripleItem;
+	 QMap<QString, QTreeWidgetItem *> tripleModelItem;
 	 QMap<QString, QTreeWidgetItem *> tripleMaskItem;
-	 
-	 
+	 QMap<QString, QTreeWidgetItem *> tripleMaskPlotItem; 
+	 	 
 	 QList< QStringList >  autoflowdata;
 	 US_SelectItem* pdiag_autoflow;
 
@@ -190,6 +195,8 @@ class US_ReporterGMP : public US_Widgets
 	 void build_genTree ( void );
 	 void build_perChanTree ( void ) ;
 	 void gui_to_parms ( void ) ;
+	 
+	 void get_children_to_json( QString &, QTreeWidgetItem* );
 	 QString tree_to_json ( QMap < QString, QTreeWidgetItem * > );
 	 void parse_edited_gen_mask_json( const QString, GenReportMaskStructure &  );
 	 void parse_edited_perChan_mask_json( const QString, PerChanReportMaskStructure &  );
