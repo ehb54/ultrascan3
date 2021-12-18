@@ -1384,7 +1384,7 @@ int US_AnalysisControlPc::memory_check()
    int    status   = 0;
    int    nscans   = edata->scanCount();
    int    npoints  = edata->pointCount();
-   int    idsize   = nscans * npoints * sizeof( double );
+   long int    idsize   = (long) nscans * npoints * sizeof( double );
    int    nsols    = (int)ct_cresolu ->value();
    int    nthrds   = (int)ct_thrdcnt ->value();
    double dsize    = (double)idsize * (double)( nsols + nxdata ) / mb_fact;
