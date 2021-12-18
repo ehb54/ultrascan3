@@ -5168,7 +5168,7 @@ void US_ReporterGMP::get_children_to_json( QString& mask_edited, QTreeWidgetItem
 }
 
 
-//transform 3-level tree to JSON
+//transform arbitrary-level tree to JSON
 QString US_ReporterGMP::tree_to_json( QMap < QString, QTreeWidgetItem * > topLevItems )
 {
   QString mask_edited;
