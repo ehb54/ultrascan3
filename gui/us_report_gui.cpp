@@ -272,23 +272,25 @@ void US_ReportGui::build_report_layout( void )
   genL        ->setContentsMargins ( 2, 2, 2, 2 );
 
   //Table Header
-  QLabel* lb_type    = us_label( tr( "Type" ) );
-  QLabel* lb_method  = us_label( tr( "Method" ) );
-  QLabel* lb_low     = us_label( tr( "Range Low" ) );
-  QLabel* lb_high    = us_label( tr( "Range High" ) );
-  QLabel* lb_intval  = us_label( tr( "Integration Value" ) );
-  QLabel* lb_total   = us_label( tr( "Fraction of Total (%)" ) );
-  QLabel* lb_tol     = us_label( tr( "Tolerance (%)" ) );
+  QLabel* lb_type     = us_label( tr( "Type" ) );
+  QLabel* lb_method   = us_label( tr( "Method" ) );
+  QLabel* lb_low      = us_label( tr( "Range Low" ) );
+  QLabel* lb_high     = us_label( tr( "Range High" ) );
+  QLabel* lb_intval   = us_label( tr( "Integration Value" ) );
+  QLabel* lb_total    = us_label( tr( "Fraction of Total (%)" ) );
+  QLabel* lb_tol      = us_label( tr( "Tolerance (%)" ) );
+  QLabel* lb_combined = us_label( tr( "Combined Plot" ) );
   
     
   row = 0;
-  genL->addWidget( lb_type,   row,    0, 1, 2 );
-  genL->addWidget( lb_method, row,    3, 1, 2 );
-  genL->addWidget( lb_low,    row,    5, 1, 2 );
-  genL->addWidget( lb_high,   row,    7, 1, 2 );
-  genL->addWidget( lb_intval, row,    9, 1, 2 );
-  genL->addWidget( lb_total,  row,    11, 1, 2 );
-  genL->addWidget( lb_tol,    row++,  13, 1, 2 );
+  genL->addWidget( lb_type,     row,    0, 1, 2 );
+  genL->addWidget( lb_method,   row,    3, 1, 2 );
+  genL->addWidget( lb_low,      row,    5, 1, 2 );
+  genL->addWidget( lb_high,     row,    7, 1, 2 );
+  genL->addWidget( lb_intval,   row,    9, 1, 2 );
+  genL->addWidget( lb_total,    row,    11, 1, 2 );
+  genL->addWidget( lb_tol,      row,    13, 1, 2 );
+  genL->addWidget( lb_combined, row++,  15, 1, 2 );
   //End of table header
   
   QComboBox* cb_type;  
@@ -304,6 +306,7 @@ void US_ReportGui::build_report_layout( void )
   QLineEdit* le_intval; 
   QLineEdit* le_tol;    
   QLineEdit* le_total;
+  QCheckBox* ck_combined_plot;
     
   for ( int ii = 0; ii < r_item_num; ii++ )
     {
@@ -330,6 +333,11 @@ void US_ReportGui::build_report_layout( void )
       le_intval     = us_lineedit( QString::number(curr_item.integration_val), 0, false  );
       le_total      = us_lineedit( QString::number(curr_item.total_percent), 0, true  );
       le_tol        = us_lineedit( QString::number(curr_item.tolerance), 0, false  );
+
+      ck_combined_plot     = new QCheckBox( tr( "" ), this );
+      ck_combined_plot ->setPalette( US_GuiSettings::normalColor() );
+      ck_combined_plot ->setChecked( curr_item.combined_plot );
+      ck_combined_plot ->setAutoFillBackground( true  );
       
       //set Object Name based on row number
       QString stchan      =  QString::number( ii ) + ": ";
@@ -340,7 +348,8 @@ void US_ReportGui::build_report_layout( void )
       le_intval    -> setObjectName( stchan + "intval" );
       le_total     -> setObjectName( stchan + "total" );
       le_tol       -> setObjectName( stchan + "tol" );
-      
+      ck_combined_plot -> setObjectName( stchan + "combined_plot" );
+            
       //set connecitons btw textChanged() and slot
       connect( le_low, SIGNAL( textChanged ( const QString& ) ),
 	       this,   SLOT  ( verify_text ( const QString& ) ) );
@@ -353,13 +362,14 @@ void US_ReportGui::build_report_layout( void )
       connect( le_total, SIGNAL( textChanged ( const QString& ) ),
 	       this,   SLOT  ( verify_text ( const QString& ) ) );
       
-      genL->addWidget( cb_type,   row,    0, 1, 2 );
-      genL->addWidget( cb_method, row,    3, 1, 2 );
-      genL->addWidget( le_low,    row,    5, 1, 2 );
-      genL->addWidget( le_high,   row,    7, 1, 2 );
-      genL->addWidget( le_intval, row,    9, 1, 2 );
-      genL->addWidget( le_total,  row,    11, 1, 2 );
-      genL->addWidget( le_tol,    row++,  13, 1, 2 );
+      genL->addWidget( cb_type,           row,    0, 1, 2 );
+      genL->addWidget( cb_method,         row,    3, 1, 2 );
+      genL->addWidget( le_low,            row,    5, 1, 2 );
+      genL->addWidget( le_high,           row,    7, 1, 2 );
+      genL->addWidget( le_intval,         row,    9, 1, 2 );
+      genL->addWidget( le_total,          row,    11, 1, 2 );
+      genL->addWidget( le_tol,            row,    13, 1, 2 );
+      genL->addWidget( ck_combined_plot,  row++,  15, 1, 2, Qt::AlignHCenter );
     }
   
   int ihgt        = lb_low->height();
@@ -463,6 +473,12 @@ void US_ReportGui::build_report_layout( void )
   ck_integration ->setChecked( report -> integration_results_mask );
   ck_integration ->setAutoFillBackground( true  );
 
+  ck_plots     = new QCheckBox( tr( "Show Plots" ), this );
+  ck_plots ->setPalette( US_GuiSettings::normalColor() );
+  ck_plots ->setChecked( report -> plots_mask );
+  ck_plots ->setAutoFillBackground( true  );
+ 
+
   row = 0;
   reportmask->addWidget( bn_repmask_t,     row++,  0, 1, 6 );
   reportmask->addWidget( ck_tot_conc,      row,    0, 1, 2 );
@@ -470,6 +486,7 @@ void US_ReportGui::build_report_layout( void )
   reportmask->addWidget( ck_exp_duration,  row++,  4, 1, 2 );
   reportmask->addWidget( ck_min_intensity, row,    0, 1, 2 );
   reportmask->addWidget( ck_integration,   row,    2, 1, 2 );
+  reportmask->addWidget( ck_plots,         row,    4, 1, 2 );
   
   main->addLayout( reportmask );
   
@@ -710,6 +727,11 @@ void US_ReportGui::gui_to_report( void )
       QLineEdit * le_total  = containerWidget->findChild<QLineEdit *>( stchan + "total" );
       qDebug() << "ii, le_total->text()" << ii << le_total->text();
       report->reportItems[ ii ].total_percent = le_total->text().toDouble();
+
+      //combined plot
+      QCheckBox * ck_combinedplot  = containerWidget->findChild<QCheckBox *>( stchan + "combined_plot" );
+      qDebug() << "ii, ck_combinedplot->isChecked()" << ii << ck_combinedplot->isChecked();
+      report->reportItems[ ii ].combined_plot = ck_combinedplot->isChecked() ? 1 : 0;
     }
 
   //Report Mask params.
@@ -718,6 +740,7 @@ void US_ReportGui::gui_to_report( void )
   report -> av_intensity_mask         = ck_min_intensity ->isChecked();
   report -> experiment_duration_mask  = ck_exp_duration  ->isChecked();
   report -> integration_results_mask  = ck_integration   ->isChecked();
+  report -> plots_mask                = ck_plots         ->isChecked();
 
 }
 
@@ -784,6 +807,7 @@ void US_ReportGui::add_row( void )
       initItem.range_high       = 0;
       initItem.integration_val  = 0;
       initItem.tolerance        = 0;
+      initItem.combined_plot    = 1;
 
       report->interf_report_changed = true;
     }
@@ -795,6 +819,7 @@ void US_ReportGui::add_row( void )
       initItem.range_high       = 3.7;
       initItem.integration_val  = 0.57;
       initItem.tolerance        = 10;
+      initItem.combined_plot    = 1;
     }
 
   //Compute 'Fraction of Total' based on tot_conc:
@@ -1060,6 +1085,7 @@ void US_ReportGui::apply_all_wvls( void )
 	  report_map[ ri.key() ]->av_intensity_mask          = report->av_intensity_mask;
 	  report_map[ ri.key() ]->experiment_duration_mask   = report->experiment_duration_mask;
 	  report_map[ ri.key() ]->integration_results_mask   = report->integration_results_mask;
+	  report_map[ ri.key() ]->plots_mask                 = report->plots_mask;
 	  
 	  //Now go over reportItems:
 	  //1st, clear current array of reportItems:

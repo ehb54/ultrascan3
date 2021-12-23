@@ -5108,7 +5108,11 @@ int US_ExperGuiUpload::writeReportToDB( QString reportGUID, US_ReportGMP report 
   jsonMask += QString("\"exp_dur\":\"") + QString::number( exp_dur_bool ) + QString("\",");
 
   int integration_bool = report.integration_results_mask ? 1 : 0;
-  jsonMask += QString("\"integration\":\"") + QString::number( integration_bool ) + QString("\"");
+  jsonMask += QString("\"integration\":\"") + QString::number( integration_bool ) + QString("\",");
+
+  int plots_bool = report.plots_mask ? 1 : 0;
+  jsonMask += QString("\"plots\":\"") + QString::number( plots_bool ) + QString("\"");
+ 
   
   jsonMask += QString("}");
   
@@ -5157,6 +5161,7 @@ int US_ExperGuiUpload::writeReportItemToDB( US_DB2* dbP, QString reportGUID, int
   QString int_value     =  QString::number( reportItem.integration_val ); 
   QString tolerance     =  QString::number( reportItem.tolerance );     
   QString total_percent =  QString::number( reportItem.total_percent );  
+  QString combined_plot =  QString::number( reportItem.combined_plot );  
   
   QStringList qry;
   qry << "new_report_item"
@@ -5169,6 +5174,7 @@ int US_ExperGuiUpload::writeReportItemToDB( US_DB2* dbP, QString reportGUID, int
       << int_value 
       << tolerance
       << total_percent
+      << combined_plot
     ;
     
   qDebug() << "Query: new_report_item: " << qry;

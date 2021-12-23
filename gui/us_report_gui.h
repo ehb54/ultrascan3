@@ -58,6 +58,7 @@ class US_GUI_EXTERN US_ReportGui: public US_Widgets
       QCheckBox*   ck_exp_duration;
       QCheckBox*   ck_min_intensity;
       QCheckBox*   ck_integration;
+      QCheckBox*   ck_plots;
       
       //duration
       QSpinBox*    sb_durat_dd;

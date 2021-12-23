@@ -756,6 +756,7 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 			  other_group_report_to_change->av_intensity_mask        = reference_group_report.av_intensity_mask;
 			  other_group_report_to_change->experiment_duration_mask = reference_group_report.experiment_duration_mask;
 			  other_group_report_to_change->integration_results_mask = reference_group_report.integration_results_mask;
+			  other_group_report_to_change->plots_mask              = reference_group_report.plots_mask;
 			  
 			  //now, clear rerortItems && fill with reference ReportGMP:
 			  other_group_report_to_change->reportItems.clear();

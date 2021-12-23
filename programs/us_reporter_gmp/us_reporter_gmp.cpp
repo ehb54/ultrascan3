@@ -823,7 +823,8 @@ void US_ReporterGMP::build_perChanTree ( void )
 		       << reportGMP. rmsd_limit_mask
 		       << reportGMP. av_intensity_mask
 		       << reportGMP. experiment_duration_mask
-		       << reportGMP. integration_results_mask;
+		       << reportGMP. integration_results_mask
+		       << reportGMP. plots_mask;
 
 	      tripleReportMasksList.clear();
 	      tripleReportMasksList << "Total Concentration"
@@ -839,7 +840,7 @@ void US_ReporterGMP::build_perChanTree ( void )
 	      				 << reportGMP. av_intensity_mask
 	      				 << reportGMP. experiment_duration_mask
 	      				 << reportGMP. integration_results_mask
-					 << true;
+					 << reportGMP. plots_mask;
 
 	      //TEMP: define model list
 	      tripleReportModelsList.clear();

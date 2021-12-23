@@ -27,6 +27,7 @@ class US_UTIL_EXTERN US_ReportGMP
 	double  integration_val;
 	double  tolerance;
 	double  total_percent;
+	int     combined_plot;
       };
 
       QVector< ReportItem > reportItems;
@@ -56,7 +57,7 @@ class US_UTIL_EXTERN US_ReportGMP
       bool av_intensity_mask;
       bool experiment_duration_mask;
       bool integration_results_mask;
-      //bool show_plots;
+      bool plots_mask;
 
       
       //Rest of parameters followign from protocol: not used so far

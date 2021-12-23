@@ -837,7 +837,8 @@ void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP* reportFromDB, int re
           rootObj.contains("rmsd_lim") &&
           rootObj.contains("intensity") &&
           rootObj.contains("exp_dur") &&
-          rootObj.contains("integration")
+          rootObj.contains("integration") &&
+	  rootObj.contains("plots")
 	  )
 	{
 	  rootObj["tot_conc"].toString().toInt() ? reportFromDB->tot_conc_mask   = true : reportFromDB->tot_conc_mask   = false;
@@ -845,6 +846,7 @@ void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP* reportFromDB, int re
 	  rootObj["intensity"].toString().toInt() ? reportFromDB->av_intensity_mask = true : reportFromDB->av_intensity_mask = false;
 	  rootObj["exp_dur"].toString().toInt() ? reportFromDB->experiment_duration_mask = true : reportFromDB->experiment_duration_mask = false;
 	  rootObj["integration"].toString().toInt() ? reportFromDB->integration_results_mask = true : reportFromDB->integration_results_mask = false;
+	  rootObj["plots"].toString().toInt() ? reportFromDB->plots_mask = true : reportFromDB->plots_mask = false;
 	}
       else
 	{
@@ -893,6 +895,7 @@ void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP* reportFromDB, int re
 	  reportItem_read.integration_val  =   db->value( 4 ).toString().toDouble();	   
 	  reportItem_read.tolerance        =   db->value( 5 ).toString().toDouble();
 	  reportItem_read.total_percent    =   db->value( 6 ).toString().toDouble();
+	  reportItem_read.combined_plot    =   db->value( 7 ).toString().toInt();
 
 	  reportFromDB->reportItems.push_back( reportItem_read );
 	}
@@ -911,6 +914,7 @@ void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP* reportFromDB, int re
       initItem.integration_val  = 0.57;
       initItem.tolerance        = 10; 
       initItem.total_percent    = 0.58;
+      initItem.combined_plot    = 1;
 
       if ( !reportFromDB->channel_name.contains("Interf.") ) 
 	reportFromDB->reportItems.push_back( initItem );

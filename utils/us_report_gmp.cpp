@@ -21,6 +21,7 @@ US_ReportGMP::US_ReportGMP()
   initItem.integration_val  = 0.57;
   initItem.tolerance        = 10; 
   initItem.total_percent    = 95;
+  initItem.combined_plot    = 1;
 
   reportItems.push_back( initItem );
 
@@ -48,6 +49,7 @@ US_ReportGMP::US_ReportGMP()
   av_intensity_mask         = true;
   experiment_duration_mask  = true;
   integration_results_mask  = true;
+  plots_mask                = true;
 
 }
  
