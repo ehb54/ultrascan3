@@ -3245,9 +3245,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
       }
       guinier_plot_rg_zoomer = new ScrollZoomer(guinier_plot_rg->canvas());
       guinier_plot_rg_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-      guinier_plot_rg_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+      guinier_plot_rg_zoomer->setTrackerPen(QPen(Qt::red));
    }
       
    double mw_use_min = posmin - 1e0;
@@ -3430,9 +3428,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
       }
       guinier_plot_mw_zoomer = new ScrollZoomer(guinier_plot_mw->canvas());
       guinier_plot_mw_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-      guinier_plot_mw_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+      guinier_plot_mw_zoomer->setTrackerPen(QPen(Qt::red));
    }
 
    if ( testiq_active && rb_testiq_gaussians.size() )
@@ -3506,9 +3502,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_range(
       // puts( "redoing zoomer" );
       guinier_plot_zoomer = new ScrollZoomer(guinier_plot->canvas());
       guinier_plot_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-      guinier_plot_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+      guinier_plot_zoomer->setTrackerPen(QPen(Qt::red));
       // connect( guinier_plot_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
    }
 
@@ -3524,9 +3518,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_range(
       guinier_plot_errors_zoomer = new ScrollZoomer(guinier_plot_errors->canvas());
       guinier_plot_errors_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
       guinier_plot_errors_zoomer->symmetric_rescale = true;
-#if QT_VERSION < 0x040000
-      guinier_plot_errors_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+      guinier_plot_errors_zoomer->setTrackerPen(QPen(Qt::red));
       // connect( guinier_plot_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
    }
 }
@@ -4173,9 +4165,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_rg_t_start_text( const QString & text )
    }
    guinier_plot_rg_zoomer = new ScrollZoomer(guinier_plot_rg->canvas());
    guinier_plot_rg_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-   guinier_plot_rg_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+   guinier_plot_rg_zoomer->setTrackerPen(QPen(Qt::red));
 }
 
 void US_Hydrodyn_Saxs_Hplc::guinier_rg_t_end_text( const QString & text )
@@ -4192,9 +4182,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_rg_t_end_text( const QString & text )
    }
    guinier_plot_rg_zoomer = new ScrollZoomer(guinier_plot_rg->canvas());
    guinier_plot_rg_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-   guinier_plot_rg_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+   guinier_plot_rg_zoomer->setTrackerPen(QPen(Qt::red));
 }
 
 void US_Hydrodyn_Saxs_Hplc::guinier_rg_t_start_focus( bool hasFocus )
@@ -4245,9 +4233,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_rg_rg_start_text( const QString & text )
    }
    guinier_plot_rg_zoomer = new ScrollZoomer(guinier_plot_rg->canvas());
    guinier_plot_rg_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-   guinier_plot_rg_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+   guinier_plot_rg_zoomer->setTrackerPen(QPen(Qt::red));
 }
 
 void US_Hydrodyn_Saxs_Hplc::guinier_rg_rg_end_text( const QString & text )
@@ -4264,9 +4250,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_rg_rg_end_text( const QString & text )
    }
    guinier_plot_rg_zoomer = new ScrollZoomer(guinier_plot_rg->canvas());
    guinier_plot_rg_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-   guinier_plot_rg_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+   guinier_plot_rg_zoomer->setTrackerPen(QPen(Qt::red));
 }
 
 #define UHSH_MAX_RG 1000
@@ -4319,9 +4303,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_mw_t_start_text( const QString & text )
    }
    guinier_plot_mw_zoomer = new ScrollZoomer(guinier_plot_mw->canvas());
    guinier_plot_mw_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-   guinier_plot_mw_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+   guinier_plot_mw_zoomer->setTrackerPen(QPen(Qt::red));
 }
 
 void US_Hydrodyn_Saxs_Hplc::guinier_mw_t_end_text( const QString & text )
@@ -4338,9 +4320,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_mw_t_end_text( const QString & text )
    }
    guinier_plot_mw_zoomer = new ScrollZoomer(guinier_plot_mw->canvas());
    guinier_plot_mw_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-   guinier_plot_mw_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+   guinier_plot_mw_zoomer->setTrackerPen(QPen(Qt::red));
 }
 
 void US_Hydrodyn_Saxs_Hplc::guinier_mw_t_start_focus( bool hasFocus )
@@ -4391,9 +4371,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_mw_mw_start_text( const QString & text )
    }
    guinier_plot_mw_zoomer = new ScrollZoomer(guinier_plot_mw->canvas());
    guinier_plot_mw_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-   guinier_plot_mw_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+   guinier_plot_mw_zoomer->setTrackerPen(QPen(Qt::red));
 }
 
 void US_Hydrodyn_Saxs_Hplc::guinier_mw_mw_end_text( const QString & text )
@@ -4410,9 +4388,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_mw_mw_end_text( const QString & text )
    }
    guinier_plot_mw_zoomer = new ScrollZoomer(guinier_plot_mw->canvas());
    guinier_plot_mw_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-   guinier_plot_mw_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+   guinier_plot_mw_zoomer->setTrackerPen(QPen(Qt::red));
 }
 
 #define UHSH_MAX_MW 1e7
@@ -5400,9 +5376,7 @@ void US_Hydrodyn_Saxs_Hplc::scale_update_plot_errors()
 
 //    plot_errors_zoomer = new ScrollZoomer(plot_errors->canvas());
 //    plot_errors_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-// #if QT_VERSION < 0x040000
-//    plot_errors_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-// #endif
+//    plot_errors_zoomer->setTrackerPen(QPen(Qt::red));
    // connect( plot_errors_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
 
    if ( hide )

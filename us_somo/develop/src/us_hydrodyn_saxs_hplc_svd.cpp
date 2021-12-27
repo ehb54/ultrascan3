@@ -1308,9 +1308,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::plot_files()
       plot_data->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );
       plot_data_zoomer = new ScrollZoomer(plot_data->canvas());
       plot_data_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-      plot_data_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+      plot_data_zoomer->setTrackerPen(QPen(Qt::red));
       // connect( plot_data_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_data_zoomed( const QRectF & ) ) );
    }
    
@@ -2502,9 +2500,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::rescale( bool do_update_enables )
       plot_data->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );
       plot_data_zoomer = new ScrollZoomer(plot_data->canvas());
       plot_data_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-      plot_data_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+      plot_data_zoomer->setTrackerPen(QPen(Qt::red));
       // connect( plot_data_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_data_zoomed( const QRectF & ) ) );
    }
    
@@ -4282,9 +4278,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors_group()
 
       plot_errors_zoomer = new ScrollZoomer(plot_errors->canvas());
       plot_errors_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-      plot_errors_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+      plot_errors_zoomer->setTrackerPen(QPen(Qt::red));
       // connect( plot_errors_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
    }
 

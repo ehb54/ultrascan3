@@ -532,9 +532,7 @@ bool US_Hydrodyn_Saxs_Hplc::gg_fit_vector(
    }
    ggqfit_plot_zoomer = new ScrollZoomer(ggqfit_plot->canvas());
    ggqfit_plot_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-   ggqfit_plot_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+   ggqfit_plot_zoomer->setTrackerPen(QPen(Qt::red));
 
    ggqfit_plot->replot();
 

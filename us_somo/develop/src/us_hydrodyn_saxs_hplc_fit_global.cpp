@@ -3082,9 +3082,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::test()
       plot_test->setAxisScale( QwtPlot::xBottom, t[0], t.back() );
       plot_test_zoomer = new ScrollZoomer(plot_test->canvas());
       plot_test_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-      plot_test_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+      plot_test_zoomer->setTrackerPen(QPen(Qt::red));
       // connect( plot_test_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_test_zoomed( const QRectF & ) ) );
    }
    

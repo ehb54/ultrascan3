@@ -353,9 +353,7 @@ void US_Hydrodyn_Saxs_Hplc_Scale_Trend::update_plot()
    {
       plot_zoomer = new ScrollZoomer(plot->canvas());
       plot_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-      plot_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
+      plot_zoomer->setTrackerPen(QPen(Qt::red));
    }
 
    plot->replot();

@@ -774,6 +774,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 #endif
    plot_dist_zoomer = new ScrollZoomer(plot_dist->canvas());
    plot_dist_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+   plot_dist_zoomer->setTrackerPen(QPen(Qt::red));
    connect( plot_dist_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
 
 //   plot_ref = new QwtPlot( qs_plots );
@@ -883,6 +884,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
    plot_errors_zoomer = new ScrollZoomer(plot_errors->canvas());
    plot_errors_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+   plot_errors_zoomer->setTrackerPen(QPen(Qt::red));
    plot_errors_zoomer->symmetric_rescale = true;
    connect( plot_errors_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
 
