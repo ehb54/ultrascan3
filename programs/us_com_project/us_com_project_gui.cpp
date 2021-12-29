@@ -2769,11 +2769,13 @@ US_ReportStageGui::US_ReportStageGui( QWidget* topw )
    main->addStretch();
 
    // Open US_Analysis_auto ...  
-   sdiag = new US_Reports_auto();
+   //sdiag = new US_Reports_auto();
+   sdiag = new US_ReporterGMP( "AUTO" );
    sdiag->setParent(this, Qt::Widget);
    
-   connect( this, SIGNAL( start_report( QMap < QString, QString > & ) ), sdiag, SLOT( initPanel ( QMap < QString, QString > & )  ) );
-
+   //connect( this, SIGNAL( start_report( QMap < QString, QString > & ) ), sdiag, SLOT( initPanel ( QMap < QString, QString > & )  ) );
+   connect( this, SIGNAL( start_report( QMap < QString, QString > & ) ), sdiag, SLOT( loadRun_auto ( QMap < QString, QString > & )  ) );
+   
    connect( this, SIGNAL( reset_reporting_passed( ) ), sdiag, SLOT(  reset_report_panel (  )  ) );
 
    offset = 0;

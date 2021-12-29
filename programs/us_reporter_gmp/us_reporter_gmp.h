@@ -19,9 +19,13 @@ class US_ReporterGMP : public US_Widgets
 
       public:
          US_ReporterGMP();
-	 	 
+	 US_ReporterGMP( QString );
+	 
 	 QTreeWidget     * genTree;
 	 QTreeWidget     * perChanTree;
+
+	 bool auto_mode;
+	 QLabel* lb_hdr1 ;
 	 
 	 QProgressDialog * progress_msg;
 	 US_RunProtocol    currProto;
@@ -142,6 +146,7 @@ class US_ReporterGMP : public US_Widgets
 	 QPushButton*  pb_download_report;
 	 QPushButton*  pb_gen_report  ;
 	 QPushButton*  pb_view_report ;
+	 QPushButton*  pb_view_report_auto ;
 	 QPushButton*  pb_select_all ;
 	 QPushButton*  pb_unselect_all ;
 	 QPushButton*  pb_expand_all ;
@@ -368,6 +373,7 @@ class US_ReporterGMP : public US_Widgets
 	void    update_progress( int );
 	
       private slots:
+	void loadRun_auto( QMap < QString, QString > & );
 	void reset_report_panel ( void );
 	void view_report ( void );
 	void load_gmp_run ( void );

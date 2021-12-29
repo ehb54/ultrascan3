@@ -20,6 +20,8 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
 {
   setWindowTitle( tr( "GMP Report Generator"));
   setPalette( US_GuiSettings::frameColor() );
+
+  auto_mode = false;
   
   // primary layouts
   QHBoxLayout* mainLayout     = new QHBoxLayout( this );
@@ -139,6 +141,239 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   
   resize( 1350, 800 );
 }
+
+//For autoflow: constructor
+US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
+{
+  setWindowTitle( tr( "GMP Report Generator"));
+  setPalette( US_GuiSettings::frameColor() );
+
+  auto_mode = true;
+  
+  // primary layouts
+  QVBoxLayout* superLayout    = new QVBoxLayout( this );
+  superLayout->setSpacing        ( 2 );
+  superLayout->setContentsMargins( 2, 2, 2, 2 );
+  //banner with (to be) run name
+  lb_hdr1          = us_banner( tr( "" ), 1 );
+  superLayout->addWidget(lb_hdr1);
+  //gridLayout for View Rpeort in autoflow
+  QGridLayout* genL   = new QGridLayout();
+  genL->setSpacing        ( 2 );
+  genL->setContentsMargins( 2, 2, 2, 2 );
+
+  int row1 = 1;
+  int ihgt        = lb_hdr1->height();
+  QSpacerItem* spacer2 = new QSpacerItem( 20, 100*ihgt, QSizePolicy::Expanding);
+  genL->setRowStretch( row1, 1 );
+  genL->addItem( spacer2,  row1++,  0, 1, 1 );
+
+  //mainLayout to host left/right
+  QHBoxLayout* mainLayout     = new QHBoxLayout( this );
+
+  QWidget* leftWidget         = new QWidget();
+  QVBoxLayout* leftLayout     = new QVBoxLayout(leftWidget);
+  QWidget* rightWidget        = new QWidget();
+  QVBoxLayout* rghtLayout     = new QVBoxLayout(rightWidget);
+
+  QGridLayout* buttonsLayout  = new QGridLayout();
+  QGridLayout* genTreeLayout  = new QGridLayout();
+  QGridLayout* perChanTreeLayout  = new QGridLayout();
+  mainLayout->setSpacing        ( 2 );
+  mainLayout->setContentsMargins( 2, 2, 2, 2 );
+  leftLayout->setSpacing        ( 0 );
+  leftLayout->setContentsMargins( 0, 1, 0, 1 );
+  rghtLayout->setSpacing        ( 0 );
+  rghtLayout->setContentsMargins( 0, 1, 0, 1 );
+  buttonsLayout->setSpacing     ( 1 );
+  buttonsLayout->setContentsMargins( 0, 0, 0, 0 );
+  genTreeLayout->setSpacing        ( 1 );
+  genTreeLayout->setContentsMargins( 0, 0, 0, 0 );
+  perChanTreeLayout->setSpacing        ( 1 );
+  perChanTreeLayout->setContentsMargins( 0, 0, 0, 0 );
+
+  //leftLayout
+  QLabel*      bn_actions     = us_banner( tr( "Actions:" ), 1 );
+  QLabel*      lb_loaded_run  = us_label( tr( "Loaded Run:" ) );
+  le_loaded_run               = us_lineedit( tr(""), 0, true );
+
+  QPushButton* pb_loadrun       = us_pushbutton( tr( "Load GMP Run" ) );
+  pb_gen_report    = us_pushbutton( tr( "Generate Report" ) );
+  pb_view_report   = us_pushbutton( tr( "View Report" ) );
+  pb_select_all    = us_pushbutton( tr( "Select All" ) );
+  pb_unselect_all  = us_pushbutton( tr( "Unselect All" ) );
+  pb_expand_all    = us_pushbutton( tr( "Expand All" ) );
+  pb_collapse_all  = us_pushbutton( tr( "Collapse All" ) );
+  pb_help          = us_pushbutton( tr( "Help" ) );
+  pb_close         = us_pushbutton( tr( "Close" ) );
+		
+  int row           = 0;
+  buttonsLayout->addWidget( bn_actions,     row++, 0, 1, 12 );
+  buttonsLayout->addWidget( lb_loaded_run,  row,   0, 1, 2 );
+  buttonsLayout->addWidget( le_loaded_run,  row++, 2, 1, 10 );
+  buttonsLayout->addWidget( pb_loadrun,     row++, 0, 1, 12 );
+  buttonsLayout->addWidget( pb_gen_report,  row++, 0, 1, 12 );
+  buttonsLayout->addWidget( pb_view_report, row++, 0, 1, 12 );
+  buttonsLayout->addWidget( pb_select_all,  row  , 0, 1, 6 );
+  buttonsLayout->addWidget( pb_unselect_all,row++, 6, 1, 6 );
+  buttonsLayout->addWidget( pb_expand_all,  row  , 0, 1, 6 );
+  buttonsLayout->addWidget( pb_collapse_all,row++, 6, 1, 6 );
+
+  buttonsLayout->addWidget( pb_help,        row,   0, 1, 6, Qt::AlignBottom );
+  buttonsLayout->addWidget( pb_close,       row++, 6, 1, 6, Qt::AlignBottom );
+
+  pb_gen_report  ->setEnabled( false );
+  pb_view_report ->setEnabled( false );
+  pb_select_all  ->setEnabled( false );
+  pb_unselect_all->setEnabled( false );
+  pb_expand_all  ->setEnabled( false );
+  pb_collapse_all->setEnabled( false );
+  
+  connect( pb_help,    SIGNAL( clicked()      ),
+	   this,       SLOT(   help()         ) );
+  connect( pb_close,   SIGNAL( clicked()      ),
+	   this,       SLOT(   close()        ) );
+
+  connect( pb_loadrun,      SIGNAL( clicked()      ),
+	   this,            SLOT(   load_gmp_run()   ) );
+  connect( pb_gen_report,   SIGNAL( clicked()      ),
+	   this,            SLOT(   generate_report()   ) );
+  connect( pb_view_report,  SIGNAL( clicked()      ),
+	   this,            SLOT(   view_report()   ) );
+  connect( pb_select_all,   SIGNAL( clicked()      ),
+	   this,            SLOT( select_all()   ) );
+  connect( pb_unselect_all, SIGNAL( clicked()      ),
+	   this,            SLOT(   unselect_all()   ) );
+  connect( pb_expand_all,   SIGNAL( clicked()      ),
+	   this,            SLOT( expand_all()   ) );
+  connect( pb_collapse_all, SIGNAL( clicked()      ),
+	   this,            SLOT(   collapse_all()   ) ); 
+    
+  //rightLayout: genTree
+  QLabel*      lb_gentree  = us_banner(      tr( "General Report Profile Settings:" ), 1 );
+  QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
+  genTree = new QTreeWidget();
+  QStringList theads;
+  theads << "Selected" << "Protocol Settings";
+  genTree->setHeaderLabels( theads );
+  genTree->setFont( QFont( US_Widgets::fixedFont().family(),
+			      US_GuiSettings::fontSize() + 1 ) );
+  genTree->installEventFilter   ( this );
+  genTreeLayout->addWidget( lb_gentree );
+  genTreeLayout->addWidget( genTree );
+  
+  genTree->setStyleSheet( "QTreeWidget { font: bold; font-size: " + QString::number(sfont.pointSize() ) + "pt;}  QTreeView { alternate-background-color: yellow;} QTreeView::item:hover { border: black;  border-radius:1px;  background-color: rgba(0,128,255,95);}");
+
+  //rightLayout: perChannel tree
+  QLabel*      lb_chantree  = us_banner(      tr( "Per-Triple Report Profile Settings:" ), 1 );
+  perChanTree = new QTreeWidget();
+  QStringList chan_theads;
+  chan_theads << "Selected" << "Protocol Settings";
+  perChanTree->setHeaderLabels( theads );
+  perChanTree->setFont( QFont( US_Widgets::fixedFont().family(),
+			       US_GuiSettings::fontSize() + 1 ) );
+  perChanTreeLayout->addWidget( lb_chantree );
+  perChanTreeLayout->addWidget( perChanTree );
+  perChanTree->setStyleSheet( "QTreeWidget { font: bold; font-size: " + QString::number(sfont.pointSize() ) + "pt;}  QTreeView { alternate-background-color: yellow;} QTreeView::item:hover { border: black;  border-radius:1px;  background-color: rgba(0,128,255,95);}");
+
+  
+  // put layouts together for overall layout
+  leftLayout->addLayout( buttonsLayout );
+  leftLayout->addStretch();
+  rghtLayout->addLayout( genTreeLayout );
+  rghtLayout->addLayout( perChanTreeLayout );
+
+  
+  // mainLayout->addLayout( leftLayout );
+  // mainLayout->addLayout( rghtLayout );
+  // mainLayout->setStretchFactor( leftLayout, 6 );
+  // mainLayout->setStretchFactor( rghtLayout, 8 );
+
+  mainLayout->addWidget( leftWidget, 6 );
+  mainLayout->addWidget( rightWidget, 8 );
+
+  //superLayout
+  superLayout -> addLayout( mainLayout );
+  pb_view_report_auto   = us_pushbutton( tr( "View Report" ) );
+  genL->addWidget( pb_view_report_auto );
+  pb_view_report_auto ->setVisible( false );
+  connect( pb_view_report_auto,  SIGNAL( clicked()      ),
+	   this,                 SLOT(   view_report()   ) );
+  superLayout -> addLayout( genL );
+  
+  // Hide layouts
+   if ( a_mode.toStdString() == "AUTO")
+     {
+       leftWidget  -> hide();
+       rightWidget -> hide();
+       
+     }
+  
+  resize( 1350, 800 );
+}
+
+
+//Autoflow: loadRun_auto
+void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details )
+{
+  AProfileGUID       = protocol_details[ "aprofileguid" ];
+  ProtocolName_auto  = protocol_details[ "protocolName" ];
+  invID              = protocol_details[ "invID_passed" ].toInt();
+  runID              = protocol_details[ "runID" ];
+  FileName           = protocol_details[ "filename" ];
+
+  lb_hdr1 ->setText( QString( tr("Report for run: %1") ).arg(FileName) );
+  lb_hdr1->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+  
+  //show progress dialog
+  progress_msg = new QProgressDialog ("Accessing run's protocol...", QString(), 0, 7, this);
+  progress_msg->setWindowFlags(Qt::Tool | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
+  progress_msg->setModal( true );
+  progress_msg->setWindowTitle(tr("Assessing Run's Protocol"));
+  QFont font_d  = progress_msg->property("font").value<QFont>();
+  QFontMetrics fm(font_d);
+  int pixelsWide = fm.width( progress_msg->windowTitle() );
+  qDebug() << "Progress_msg: pixelsWide -- " << pixelsWide;
+  progress_msg ->setMinimumWidth( pixelsWide*2 );
+  progress_msg->adjustSize();
+  progress_msg->setAutoClose( false );
+  progress_msg->setValue( 0 );
+  progress_msg->show();
+  qApp->processEvents();
+
+  progress_msg->setValue( 1 );
+  qApp->processEvents();
+
+  qDebug() << "1.ExpAborted: "      << protocol_details[ "expAborted" ];
+  qDebug() << "1.CorrectRadii: "    << protocol_details[ "correctRadii" ];
+
+  qDebug() << "Exp. Label: "    << protocol_details[ "label" ];
+  qDebug() << "GMP Run ? "      << protocol_details[ "gmpRun" ];
+
+  qDebug() << "AnalysisIDs: "   << protocol_details[ "analysisIDs" ];
+  qDebug() << "aprofileguid: "  << AProfileGUID ;
+  
+
+  //Now, read protocol's 'reportMask' && reportItems masks && populate trees
+  read_protocol_and_reportMasks( );
+
+  build_genTree();  
+  progress_msg->setValue( 6 );
+  qApp->processEvents();
+
+  build_perChanTree();
+  progress_msg->setValue( 7 );
+  qApp->processEvents();
+
+  progress_msg->setValue( progress_msg->maximum() );
+  qApp->processEvents();
+  progress_msg->close();
+
+  //generate report (download modles, simulate, create PDFs)
+  generate_report();
+  
+}
+
 
 //load GMP run
 void US_ReporterGMP::load_gmp_run ( void )
@@ -1005,6 +1240,9 @@ void US_ReporterGMP::reset_report_panel ( void )
   genTree     ->clear();
   genTree     -> disconnect();
   qApp->processEvents();
+
+  if ( auto_mode )
+    pb_view_report_auto->setVisible( false );
   
   topItem.clear();
   solutionItem.clear();
@@ -1118,13 +1356,27 @@ void US_ReporterGMP::generate_report( void )
 
   write_pdf_report( );
   qApp->processEvents();
-  
+
   pb_view_report->setEnabled( true );
 
-  //Inform user of the PDF location
-  QMessageBox::information( this, tr( "Report PDF Ready" ),
-			    tr( "Report PDF was saved at \n%1\n\n"
-				"You can view it by pressing \'View Report\' button on the left" ).arg( filePath ) );
+
+  if ( auto_mode )
+    {
+      pb_view_report_auto->setVisible( true );
+      
+      //Inform user of the PDF location
+      QMessageBox::information( this, tr( "Report PDF Ready" ),
+				tr( "Report PDF was saved at \n%1\n\n"
+				    "You can view it by pressing \'View Report\' button below" ).arg( filePath ) );
+    }
+  else
+    {
+      //Inform user of the PDF location
+      QMessageBox::information( this, tr( "Report PDF Ready" ),
+				tr( "Report PDF was saved at \n%1\n\n"
+				    "You can view it by pressing \'View Report\' button on the left" ).arg( filePath ) );
+    }
+  
 }
 
 //simulate triple 

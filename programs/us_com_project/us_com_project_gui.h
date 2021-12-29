@@ -26,7 +26,7 @@
 #include "../us_edit/us_select_lambdas.h"
 
 #include "../us_autoflow_analysis/us_autoflow_analysis.h"
-#include "../us_autoflow_reports/us_autoflow_reports.h"
+#include "../us_reporter_gmp/us_reporter_gmp.h"
 
 #include "us_protocol_util.h"
 #include "us_project_gui.h"
@@ -336,8 +336,9 @@ class US_ReportStageGui : public US_WidgetsDialog
     US_ReportStageGui( QWidget* );
     ~US_ReportStageGui() {};
   
-     US_Reports_auto*     sdiag;
-     
+    //US_Reports_auto*     sdiag;
+    US_ReporterGMP*     sdiag;
+    
   private:
     US_ComProjectMain*    mainw;      // Parent to all panels
     int offset;
