@@ -130,10 +130,10 @@ jobs:
           qmake
           make -j4
           cd ../..
-          cd programs/us_autoflow_reports
-          qmake
-          make -j4
-          cd ../..
+          # cd programs/us_autoflow_reports
+          # qmake
+          # make -j4
+          # cd ../..
           cd programs/us_buffer
           qmake
           make -j4
