@@ -186,6 +186,7 @@ class US_ReporterGMP : public US_Widgets
 	 
 	 QVector< QString >  Array_of_triples;
 	 QMap< QString, QStringList > Triple_to_Models;
+	 QMap< QString, QString > triple_info_map;
 	 QString   currentTripleName;
 	 
 	 void  get_current_date( void );
@@ -388,12 +389,12 @@ class US_ReporterGMP : public US_Widgets
 	void expand_all( void );
 	void collapse_all( void );
 
-	void show_results   ( void );
+	void show_results   ( QMap < QString, QString > & );
 	void calc_residuals( void );
 	void assemble_distrib_html( void );
 	void assemble_plots_html( QStringList );
 	double  interp_sval( double, double*, double*,  int );
-	void plotres(   void );
+	void plotres( QMap < QString, QString > &   );
 
 	QString indent    (     int  )  const;
 	QString table_row( const QString&, const QString& ) const;

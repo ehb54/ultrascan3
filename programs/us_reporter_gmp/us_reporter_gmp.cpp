@@ -1294,8 +1294,13 @@ void US_ReporterGMP::build_perChanTree ( void )
 			}
 		    }
 		  //end of triple's masks
+		  if ( checked_masks )
+		    tripleModelItem [ tripleModelName ] ->setCheckState( 0, Qt::Checked );
+		  else
+		    tripleModelItem [ tripleModelName ] ->setCheckState( 0, Qt::Unchecked );
+		  
 		}
-	      //end of triple's modles
+	      //end of triple's models
 
 	      if ( checked_masks )
 		{
@@ -1621,7 +1626,7 @@ void US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
   qDebug() << "In show_overlay(): FileName_parsed: " << FileName_parsed;
   
   //LoadData
-  QMap< QString, QString > triple_info_map;
+  triple_info_map.clear();
   triple_info_map[ "triple_name" ]     = triple_n;
   triple_info_map[ "stage_name" ]      = stage_n;
   triple_info_map[ "invID" ]           = QString::number(invID);
@@ -2644,7 +2649,7 @@ DbgLv(2) << "LaNoi:idlDB: ii jj moGUID" << ii << jj << moGUID;
 }
 
 //Simulate Model
-void US_ReporterGMP::simulateModel( QMap < QString, QString > & tripleInfo )
+void US_ReporterGMP::simulateModel( QMap < QString, QString> & tripleInfo )
 {
   progress_msg->setLabelText( QString("Simulating model %1 for triple %2...")
 			      .arg( tripleInfo[ "stage_name" ])
@@ -2916,7 +2921,7 @@ void US_ReporterGMP::simulateModel( QMap < QString, QString > & tripleInfo )
       //Simulation part is over
       //-----------------------
       
-      show_results();
+      show_results( triple_info_map );
     }
   
   else
@@ -2987,7 +2992,7 @@ void US_ReporterGMP::update_progress( int icomp )
 
 
 // Show simulation and residual when the simulation is complete
-void US_ReporterGMP::show_results( )
+void US_ReporterGMP::show_results( QMap <QString, QString> & tripleInfo )
 {
    progress_msg->setValue( progress_msg->maximum() );
    qApp->processEvents();
@@ -3007,7 +3012,7 @@ void US_ReporterGMP::show_results( )
 
    assemble_distrib_html( );
    
-   plotres(); // <------- save plots into files locally
+   plotres( tripleInfo ); // <------- save plots into files locally
    
    
    QApplication::restoreOverrideCursor();
@@ -3791,8 +3796,43 @@ QString  US_ReporterGMP::table_row( const QString& s1, const QString& s2,
 
 
 // Open a residual plot dialog
-void US_ReporterGMP::plotres( )
+void US_ReporterGMP::plotres( QMap < QString, QString> & tripleInfo )
 {
+
+  QString t_name = tripleInfo[ "triple_name" ];
+  t_name.replace(".", "");
+  QString s_name = tripleInfo[ "stage_name" ] ;
+
+  bool show_3d   = ( perChanMask_edited. ShowTripleModelPlotParts[ t_name ][ s_name ][ "3D Model Plot" ].toInt() ) ? true : false ;
+  bool show_d_mw = ( perChanMask_edited. ShowTripleModelPlotParts[ t_name ][ s_name ][ "D-vs-MW 2D Model" ].toInt() ) ? true : false ; 
+  bool show_d_s  = ( perChanMask_edited. ShowTripleModelPlotParts[ t_name ][ s_name ][ "D-vs-s 2D Model" ].toInt() ) ? true : false ; 
+  bool show_dd   = ( perChanMask_edited. ShowTripleModelPlotParts[ t_name ][ s_name ][ "Diffusion Coefficient Distribution" ].toInt() ) ? true : false ;
+  bool show_res  = ( perChanMask_edited. ShowTripleModelPlotParts[ t_name ][ s_name ][ "Experiment-Simulation Residuals" ].toInt() ) ? true : false ; ;
+  bool show_vel  = ( perChanMask_edited. ShowTripleModelPlotParts[ t_name ][ s_name ][ "Experiment-Simulation Velocity Data (noise corrected)" ].toInt() ) ? true : false ;
+  bool show_mw   = ( perChanMask_edited. ShowTripleModelPlotParts[ t_name ][ s_name ][ "Molecular Weight Distribution" ].toInt() ) ? true : false ;
+  bool show_sd   = ( perChanMask_edited. ShowTripleModelPlotParts[ t_name ][ s_name ][ "Sedimentation Coefficient Distribution" ].toInt() ) ? true : false ;
+  bool show_f_mw = ( perChanMask_edited. ShowTripleModelPlotParts[ t_name ][ s_name ][ "f/f0-vs-MW 2D Model" ] .toInt() ) ? true : false ;
+  bool show_f_s  = ( perChanMask_edited. ShowTripleModelPlotParts[ t_name ][ s_name ][ "f/f0-vs-s 2D Model" ].toInt() ) ? true : false ;
+
+  //Debug
+  qDebug() << "triple_name, stage_n: "
+	   << tripleInfo[ "triple_name" ]
+	   << tripleInfo[ "stage_name" ] ;
+
+  qDebug() << "show_3d: "   << show_3d;
+  qDebug() << "show_d_mw: " << show_d_mw; 
+  qDebug() << "show_d_s: "  << show_d_s;  
+  qDebug() << "show_dd: "   << show_dd ;  
+  qDebug() << "show_res: "  << show_res;  
+  qDebug() << "show_vel: "  << show_vel;  
+  qDebug() << "show_mw: "   << show_mw;   
+  qDebug() << "show_sd: "   << show_sd;   
+  qDebug() << "show_f_mw: " << show_f_mw; 
+  qDebug() << "show_f_s: "  << show_f_s; 
+  //End Debug
+
+  
+  
   QStringList PlotsFileNames;
   mkdir( US_Settings::reportDir(), edata->runID );
   const QString svgext( ".svgz" );
@@ -3814,13 +3854,19 @@ void US_ReporterGMP::plotres( )
 
   // Plots for Exp-Sim ovelray (with noises rmoved && residual plot)
   resplotd = new US_ResidPlotFem( this, "REPORT" );
-  
-  write_plot( img01File, resplotd->rp_data_plot1() );  //<-- rp_data_plot1() gives overlay (Exp/Simulations) plot
-  PlotsFileNames <<  basename + "velocity_nc"   + pngext;
-  
-  write_plot( img02File, resplotd->rp_data_plot2() );  //<-- rp_data_plot2() gives residuals plot
-  PlotsFileNames << img02File;
 
+  if ( show_vel )
+    {
+      write_plot( img01File, resplotd->rp_data_plot1() );  //<-- rp_data_plot1() gives overlay (Exp/Simulations) plot
+      PlotsFileNames <<  basename + "velocity_nc"   + pngext;
+    }
+
+  if ( show_res )
+    {
+      write_plot( img02File, resplotd->rp_data_plot2() );  //<-- rp_data_plot2() gives residuals plot
+      PlotsFileNames << img02File;
+    }
+      
   //Stick Plots for S-, MW-, D- distributions
   plotLayout1 = new US_Plot( data_plot1,
 			     tr( "Residuals" ),
@@ -3836,42 +3882,68 @@ void US_ReporterGMP::plotres( )
   
   data_plot1->setMinimumSize( 560, 240 );
   data_plot2->setMinimumSize( 560, 240 );
-    
-  distrib_plot_stick( 0 );               // s-distr.
-  write_plot( img03File, data_plot1 );
-  PlotsFileNames <<  basename + "s_distrib"   + pngext;
-  
-  distrib_plot_stick( 1 );
-  write_plot( img04File, data_plot1 );   // MW-distr.
-  PlotsFileNames <<  basename + "mw_distrib"  + pngext;
-  
-  distrib_plot_stick( 2 );
-  write_plot( img05File, data_plot1 );   // D-distr.
-  PlotsFileNames <<  basename + "D_distrib"  + pngext;
 
+  if ( show_sd )
+    {
+      distrib_plot_stick( 0 );               // s-distr.
+      write_plot( img03File, data_plot1 );
+      PlotsFileNames <<  basename + "s_distrib"   + pngext;
+    }
+
+  if ( show_mw )
+    {
+      distrib_plot_stick( 1 );
+      write_plot( img04File, data_plot1 );   // MW-distr.
+      PlotsFileNames <<  basename + "mw_distrib"  + pngext;
+    }
+
+  if ( show_dd )
+    {
+      distrib_plot_stick( 2 );
+      write_plot( img05File, data_plot1 );   // D-distr.
+      PlotsFileNames <<  basename + "D_distrib"  + pngext;
+    }
+
+  
   //2D distributions: ff0_vs_s, ff0_vs_mw, D_vs_s, D_vs_mw
-  distrib_plot_2d( ( cnstvb ? 3 : 5 ) );
-  write_plot( img06File, data_plot1 );
-  PlotsFileNames <<  basename + "ff0_vs_s"  + pngext;
-  
-  distrib_plot_2d( ( cnstvb ? 4 : 6 ) );
-  write_plot( img07File, data_plot1 );
-  PlotsFileNames <<  basename + "ff0_vs_mw"  + pngext;
+  if ( show_f_s )
+    {
+      distrib_plot_2d( ( cnstvb ? 3 : 5 ) );
+      write_plot( img06File, data_plot1 );
+      PlotsFileNames <<  basename + "ff0_vs_s"  + pngext;
+    }
 
-  distrib_plot_2d(    7 );
-  write_plot( img08File, data_plot1 );
-  PlotsFileNames <<  basename + "D_vs_s"  + pngext;
+   if ( show_f_mw )
+    {
+      distrib_plot_2d( ( cnstvb ? 4 : 6 ) );
+      write_plot( img07File, data_plot1 );
+      PlotsFileNames <<  basename + "ff0_vs_mw"  + pngext;
+    }
 
-  distrib_plot_2d(    8 );
-  write_plot( img09File, data_plot1 );
-  PlotsFileNames <<  basename + "D_vs_mw"  + pngext;
+   if (show_d_s )
+     {
+       distrib_plot_2d(    7 );
+       write_plot( img08File, data_plot1 );
+       PlotsFileNames <<  basename + "D_vs_s"  + pngext;
+     }
 
-  //3D plot
-  write_plot( img10File, NULL );
-  PlotsFileNames <<  img10File;
-  
-  //add .PNG plots to combined PDF report
-  assemble_plots_html( PlotsFileNames  );
+   if ( show_d_mw )
+     {
+       distrib_plot_2d(    8 );
+       write_plot( img09File, data_plot1 );
+       PlotsFileNames <<  basename + "D_vs_mw"  + pngext;
+     }
+
+   
+   //3D plot
+   if ( show_3d )
+     {
+       write_plot( img10File, NULL );
+       PlotsFileNames <<  img10File;
+     }
+   
+   //add .PNG plots to combined PDF report
+   assemble_plots_html( PlotsFileNames  );
 }
 
 
@@ -4229,7 +4301,7 @@ void US_ReporterGMP::thread_complete( int thr )
       }
 
       // Then show the results
-      show_results();
+      show_results( triple_info_map );
    }
 }
 
