@@ -72,10 +72,12 @@ class US_ReporterGMP : public US_Widgets
 	 struct PerChanReportMaskStructure
 	 {
 	   QMap < QString, bool >  ShowChannelParts;
-	   
+   
+	   //     triple_name     model           feature  value  [Exp. Duration, Intensity, RMSD, Integration Results, Tot. Conc.]
 	   QMap < QString, QMap < QString, QMap < QString, QString > > > ShowTripleModelParts;
 	   QMap < QString, QMap < QString, int > >  has_tripleModel_items;
 
+	   //     triple_name     model           feature  value  [All types of plots] 
 	   QMap < QString, QMap < QString, QMap < QString, QString > > > ShowTripleModelPlotParts;
 	   QMap < QString, QMap < QString, int > >  has_tripleModelPlot_items;
 
@@ -183,6 +185,7 @@ class US_ReporterGMP : public US_Widgets
 	 bool       has_fluorescense;
 	 
 	 QVector< QString >  Array_of_triples;
+	 QMap< QString, QStringList > Triple_to_Models;
 	 QString   currentTripleName;
 	 
 	 void  get_current_date( void );
@@ -346,7 +349,7 @@ class US_ReporterGMP : public US_Widgets
 	 //main simulation results
 	 QString rmsd_global;
 
-	 void simulate_triple( const QString );
+	 void simulate_triple( const QString, QString );
 	 bool loadData( QMap < QString, QString > & );
 	 bool loadModel( QMap < QString, QString > & );
 	 bool loadNoises( QMap < QString, QString > & );
@@ -374,6 +377,7 @@ class US_ReporterGMP : public US_Widgets
 	
       private slots:
 	void loadRun_auto( QMap < QString, QString > & );
+	void check_models ( void );
 	void reset_report_panel ( void );
 	void view_report ( void );
 	void load_gmp_run ( void );

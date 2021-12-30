@@ -356,7 +356,23 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
 
   //Now, read protocol's 'reportMask' && reportItems masks && populate trees
   read_protocol_and_reportMasks( );
+  progress_msg->setValue( 2 );
+  qApp->processEvents();
 
+  //check models existence
+  check_models();
+  progress_msg->setValue( 3 );
+  qApp->processEvents();
+
+  //debug
+  QMap < QString, QStringList >::iterator mm;
+  for ( mm = Triple_to_Models.begin(); mm != Triple_to_Models.end(); ++mm )
+    {
+      qDebug() << "For triple -- " << mm.key() << ", there are models: " << mm.value();
+    }
+  //end debug
+  
+  //build Trees
   build_genTree();  
   progress_msg->setValue( 6 );
   qApp->processEvents();
@@ -372,6 +388,131 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   //generate report (download modles, simulate, create PDFs)
   generate_report();
   
+}
+
+//check models existence for a run loaded
+void US_ReporterGMP::check_models ( void )
+{
+  //build Array of triples
+  QVector< QString >  Array_of_tripleNames;
+  int nchna   = currAProf.pchans.count();
+  for ( int i = 0; i < nchna; i++ )
+    {
+      QString channel_desc_alt = chndescs_alt[ i ];
+      QString channel_desc     = chndescs[ i ];
+
+      QList < double > chann_wvls    = ch_wvls[ channel_desc_alt ];
+      int chann_wvl_number           = chann_wvls.size();
+      
+      for ( int jj = 0; jj < chann_wvl_number; ++jj )
+	{
+	  QString wvl            = QString::number( chann_wvls[ jj ] );
+	  
+	  QString tripleName = channel_desc_alt.section( ":", 0, 0 )[0] + "." + channel_desc_alt.section( ":", 0, 0 )[1] + "." + wvl;
+	  qDebug() << "TripleName -- " << tripleName; 
+	  Array_of_tripleNames.push_back( tripleName );
+	}
+    }
+      
+  US_Passwd   pw;
+  US_DB2* db = new US_DB2( pw.getPasswd() );
+    
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QApplication::restoreOverrideCursor();
+      QMessageBox::information( this,
+				tr( "DB Connection Problem" ),
+				tr( "There was an error connecting to the database:\n" )
+				+ db->lastError() );
+      
+      return;
+    }
+
+  //iterate over triples && get eID for each triple's data:
+  for ( int i=0; i < Array_of_tripleNames.size(); ++ i )
+    {
+      //Parse filename
+      QString filename_received = get_filename( Array_of_tripleNames[ i ] );
+      qDebug() << "In show_overlay(): filename_received: " << filename_received;
+      
+      int rID=0;
+      QString rfilename;
+      int eID=0;
+      QString efilename;
+      
+      //get EditedData filename && editedDataID for current triple, then infer rawDataID 
+      QStringList query;
+      query << "get_editedDataFilenamesIDs" << filename_received;
+      db->query( query );
+      
+      int latest_update_time = 1e100;
+      
+      QString triple_name_actual = Array_of_tripleNames[ i ];
+      
+      if ( triple_name_actual.contains("Interference") )
+	triple_name_actual.replace( "Interference", "660" );
+      
+      while ( db->next() )
+	{
+	  QString  filename            = db->value( 0 ).toString();
+	  int      editedDataID        = db->value( 1 ).toInt();
+	  int      rawDataID           = db->value( 2 ).toInt();
+	  //QString  date                = US_Util::toUTCDatetimeText( db->value( 3 ).toDateTime().toString( "yyyy/MM/dd HH:mm" ), true );
+	  QDateTime date               = db->value( 3 ).toDateTime();
+	  
+	  QDateTime now = QDateTime::currentDateTime();
+
+	  qDebug() << "1. In check_model: filename, editedDataID  -- " << filename << editedDataID ;
+	  
+	  if ( filename.contains( triple_name_actual ) ) 
+	    {
+	      int time_to_now = date.secsTo(now);
+	      if ( time_to_now < latest_update_time )
+		{
+		  latest_update_time = time_to_now;
+		  //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
+		  
+		  rID       = rawDataID;
+		  eID       = editedDataID;
+		  efilename = filename;
+
+		  qDebug() << "In check_model: eID, efilename, triple_name_actual -- " <<  eID << efilename << triple_name_actual;
+		}
+	    }
+	}
+
+      qDebug() << "In check_models: eID -- " << QString::number( eID );
+      
+      //now check models based on eID:
+      query.clear();
+      query << "get_modelDescsIDs" << QString::number( eID );
+      db->query( query );
+
+      QStringList model_list;
+      
+      while ( db->next() )
+	{
+	  QString  description         = db->value( 0 ).toString();
+	  int      modelID             = db->value( 1 ).toInt();
+	  //QString  date                = US_Util::toUTCDatetimeText( db->value( 3 ).toDateTime().toString( "yyyy/MM/dd HH:mm" ), true );
+	  QDateTime date               = db->value( 2 ).toDateTime();
+	  
+	  QDateTime now = QDateTime::currentDateTime();
+	  
+	  if ( description.contains( "2DSA-IT" ) )
+	    model_list << "2DSA-IT";
+	  
+	  if ( description.contains( "2DSA-MC" ) )
+	    model_list << "2DSA-MC";
+
+	  if ( description.contains( "PCSA" ) )
+	    model_list << "PCSA";
+	  
+	}
+
+      //populate QMap connecting triple name to it's existing models
+      Triple_to_Models[ Array_of_tripleNames[ i ] ] = model_list;
+    }
 }
 
 
@@ -452,6 +593,19 @@ void US_ReporterGMP::load_gmp_run ( void )
 
   //Now, read protocol's 'reportMask' && reportItems masks && populate trees
   read_protocol_and_reportMasks( );
+
+  //check models existence
+  check_models();
+  progress_msg->setValue( 3 );
+  qApp->processEvents();
+
+  //debug
+  QMap < QString, QStringList >::iterator mm;
+  for ( mm = Triple_to_Models.begin(); mm != Triple_to_Models.end(); ++mm )
+    {
+      qDebug() << "For triple -- " << mm.key() << ", there are models: " << mm.value();
+    }
+  //end debug
 
   build_genTree();  
   progress_msg->setValue( 6 );
@@ -1079,10 +1233,9 @@ void US_ReporterGMP::build_perChanTree ( void )
 
 	      //TEMP: define model list
 	      tripleReportModelsList.clear();
-	      tripleReportModelsList << "2DSA-IT"
-				     << "2DSA-MC"
-				     << "PCSA";
+	      //tripleReportModelsList << "2DSA-IT" << "2DSA-MC" << "PCSA";
 	      
+	      tripleReportModelsList = Triple_to_Models[ tripleName ];
 	      
 	      int checked_masks = 0;
 	      //start triple's models
@@ -1275,6 +1428,9 @@ void US_ReporterGMP::reset_report_panel ( void )
 
   //clean triple_array
   Array_of_triples.clear();
+
+  //clean QMap connecting triple names to their models
+  Triple_to_Models.clear();
   
   //reset US_Protocol && US_AnaProfile
   currProto = US_RunProtocol();  
@@ -1348,10 +1504,42 @@ void US_ReporterGMP::generate_report( void )
   qApp->processEvents();
 
   //Part 2
-  for ( int i=0; i<Array_of_triples.size(); ++i )
+  if ( auto_mode )
     {
-      currentTripleName = Array_of_triples[i];
-      simulate_triple ( currentTripleName );
+      for ( int i=0; i<Array_of_triples.size(); ++i )
+	{
+	  currentTripleName = Array_of_triples[i];
+	  
+	  //here should be cycle over triple's models ( 2DSA-IT, 2DSA-MC etc..)
+	  QStringList models_to_do = Triple_to_Models[ currentTripleName ];
+	  
+	  for ( int j = 0; j < models_to_do.size(); ++j )
+	    simulate_triple ( currentTripleName, models_to_do[ j ] );
+	}
+    }
+  else
+    { //Will be modified for stand-alone GMP Reporter based on edited tree JSON
+      for ( int i=0; i<Array_of_triples.size(); ++i )
+	{
+	  currentTripleName = Array_of_triples[i];
+	  
+	  //here should be cycle over triple's models ( 2DSA-IT, 2DSA-MC etc..)
+	  QStringList models_to_do = Triple_to_Models[ currentTripleName ];
+	  
+	  for ( int j = 0; j < models_to_do.size(); ++j )
+	    {
+	      QString triplename_alt = currentTripleName;
+	      triplename_alt.replace(".","");
+
+	      qDebug() << "Triple / Model " <<  triplename_alt << " / " <<  models_to_do[ j ] << "has items ? "
+		       << perChanMask_edited. has_tripleModel_items     [ triplename_alt ][ models_to_do[ j ] ]
+		       << perChanMask_edited. has_tripleModelPlot_items [ triplename_alt ][ models_to_do[ j ] ];
+	      
+	      if ( perChanMask_edited. has_tripleModel_items     [ triplename_alt ][ models_to_do[ j ] ] ||
+		   perChanMask_edited. has_tripleModelPlot_items [ triplename_alt ][ models_to_do[ j ] ] ) 
+		simulate_triple ( currentTripleName, models_to_do[ j ] );
+	    }
+	}
     }
 
   write_pdf_report( );
@@ -1380,7 +1568,7 @@ void US_ReporterGMP::generate_report( void )
 }
 
 //simulate triple 
-void US_ReporterGMP::simulate_triple( const QString triplesname )
+void US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_model )
 {
   // Show msg while data downloaded and simulated
   progress_msg = new QProgressDialog (QString("Downloading data and models for triple %1...").arg( triplesname ), QString(), 0, 5, this);
@@ -1418,7 +1606,8 @@ void US_ReporterGMP::simulate_triple( const QString triplesname )
   ri_noise.count = 0;
 
 
-  QString stage_n   = QString("2DSA-IT");
+  //QString stage_n   = QString("2DSA-IT");
+  QString stage_n   = stage_model;
   QString triple_n  = triplesname;
   //stage_n : '2DSA-IT'
   //triple_n: '2.A.255'
@@ -1608,25 +1797,27 @@ void US_ReporterGMP::simulate_triple( const QString triplesname )
   
 
   //Load Model (latest ) && noise(s)
-  triple_info_map[ "stage_name" ] = QString("2DSA-IT");
-  if ( !loadModel( triple_info_map  ) && !model_exists )
-    {
-      triple_info_map[ "stage_name" ] = QString("2DSA-FM");
-      if ( !loadModel( triple_info_map  ) && !model_exists )
-	{
-	  triple_info_map[ "stage_name" ] = QString("2DSA");
-	  if ( !loadModel( triple_info_map  ) && !model_exists )
-	    {
-	      qDebug() << "In loadModel(): No models (2DSA-IT, 2DSA-FM, 2DSA) found for triple -- " << triple_info_map[ "triple_name" ];
+  loadModel( triple_info_map  );
+  
+  // triple_info_map[ "stage_name" ] = QString("2DSA-IT");
+  // if ( !loadModel( triple_info_map  ) && !model_exists )
+  //   {
+  //     triple_info_map[ "stage_name" ] = QString("2DSA-FM");
+  //     if ( !loadModel( triple_info_map  ) && !model_exists )
+  // 	{
+  // 	  triple_info_map[ "stage_name" ] = QString("2DSA");
+  // 	  if ( !loadModel( triple_info_map  ) && !model_exists )
+  // 	    {
+  // 	      qDebug() << "In loadModel(): No models (2DSA-IT, 2DSA-FM, 2DSA) found for triple -- " << triple_info_map[ "triple_name" ];
 
-	      QMessageBox::critical( this, tr( "No Model Found" ),
-				     QString( tr( "In loadModel(): No models (2DSA-IT, 2DSA-FM, 2DSA) found for triple %1" ))
-				     .arg( triple_info_map[ "triple_name" ] ) );
+  // 	      QMessageBox::critical( this, tr( "No Model Found" ),
+  // 				     QString( tr( "In loadModel(): No models (2DSA-IT, 2DSA-FM, 2DSA) found for triple %1" ))
+  // 				     .arg( triple_info_map[ "triple_name" ] ) );
 	      
-	      return;
-	    }
-	}
-    }
+  // 	      return;
+  // 	    }
+  // 	}
+  //   }
 
   progress_msg->setValue( 5 );
   qApp->processEvents();
@@ -5188,7 +5379,7 @@ void US_ReporterGMP::gui_to_parms( void )
   parse_edited_perChan_mask_json( editedMask_perChan, perChanMask_edited );
 
   // //DEBUG
-  // exit(1);
+  //  exit(1);
 }
 
 //Pasre reportMask JSON
@@ -5346,14 +5537,15 @@ void US_ReporterGMP::parse_edited_perChan_mask_json( const QString maskJson, Per
 			    if ( feature_value.toString().toInt() )
 			      ++has_channel_items;
 
-			    QString triple_name = key + "," + array_key;
-			    MaskStr.ShowTripleModelParts[ triple_name ][ n_key ][ j_key ] = feature_value.toString();
-			    if ( MaskStr.ShowTripleModelParts[ triple_name ][ n_key ][ j_key ].toInt() )
-			      ++MaskStr.has_tripleModel_items[ triple_name ][ n_key ];
+			    QString triple_name = key.split(" ")[1].split("-")[0] + array_key.split(" ")[0];
+			    QString model_name  = n_key.split(" ")[0];
+			    MaskStr.ShowTripleModelParts[ triple_name ][ model_name ][ j_key ] = feature_value.toString();
+			    if ( MaskStr.ShowTripleModelParts[ triple_name ][ model_name ][ j_key ].toInt() )
+			      ++MaskStr.has_tripleModel_items[ triple_name ][ model_name ];
 			    
-			    qDebug() << "Parse_editedJsonTriples: Channel/Triple: " <<  key << "/" << array_key  << ": "
-				     <<  "n_key, j_key, feature_value: "
-				     <<  n_key
+			    qDebug() << "Parse_editedJsonTriples: triple_name: " <<  triple_name  << ": "
+				     <<  "model_name, j_key, feature_value: "
+				     <<  model_name
 				     <<  j_key
 				     <<  feature_value.toString();
 			  }
@@ -5367,14 +5559,15 @@ void US_ReporterGMP::parse_edited_perChan_mask_json( const QString maskJson, Per
 				  {
 				    QString feature_plot_value = plotObj.value( p_key ).toString();
 				    
-				    QString triple_name = key + "," + array_key;
-				    MaskStr.ShowTripleModelPlotParts[ triple_name ][ n_key ][ p_key ] = feature_plot_value;
-				    if ( MaskStr.ShowTripleModelPlotParts[ triple_name ][ n_key ][ p_key ].toInt() )
-				      ++MaskStr.has_tripleModelPlot_items[ triple_name ][ n_key ];
+				    QString triple_name = key.split(" ")[1].split("-")[0]  + array_key.split(" ")[0];
+				    QString model_name  = n_key.split(" ")[0];
+				    MaskStr.ShowTripleModelPlotParts[ triple_name ][ model_name ][ p_key ] = feature_plot_value;
+				    if ( MaskStr.ShowTripleModelPlotParts[ triple_name ][ model_name ][ p_key ].toInt() )
+				      ++MaskStr.has_tripleModelPlot_items[ triple_name ][ model_name ];
 
-				    qDebug() << "Parse_editedJsonTriples: Channel/Triple: " <<  key << "/" << array_key  << ": "
-					     <<  "n_key, j_key, p_key, feature_PLOT_value: "
-					     <<  n_key
+				    qDebug() << "Parse_editedJsonTriples: triple_name: " <<  triple_name  << ": "
+					     <<  "model_name, j_key, p_key, feature_PLOT_value: "
+					     <<  model_name
 					     <<  j_key
 					     <<  p_key
 					     <<  feature_plot_value;
