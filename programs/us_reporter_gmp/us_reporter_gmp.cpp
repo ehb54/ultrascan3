@@ -3936,7 +3936,7 @@ void US_ReporterGMP::plotres( QMap < QString, QString> & tripleInfo )
 
    
    //3D plot
-   if ( show_3d )
+   if ( show_3d && !auto_mode )
      {
        write_plot( img10File, NULL );
        PlotsFileNames <<  img10File;
