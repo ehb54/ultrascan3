@@ -916,9 +916,9 @@ qDebug() << "ScDB: nedit" << nedit;
       QString echeck   = editpars[ kp++ ];
 
       QString filebase = filename.section( "/", -1, -1 );
-      QString runID    = descrip.isEmpty() ? filebase.section( ".", 0, -7 )
+      QString runID    = descrip.isEmpty() ? filebase.section( ".", 0, -7 )  // 'DubnauD_ComEA-high_121021-run1237'
                          : descrip;
-      QString editID   = filebase.section( ".", -6, -6 );
+      QString editID   = filebase.section( ".", -6, -6 );  // '2201051846-midscans'
       QString dataType = filebase.section( ".", -5, -5 );
       QString tripID   = filebase.section( ".", -4, -2 );
       QString edtlamb  = tripID  .section( ".",  2,  2 );
@@ -1427,8 +1427,9 @@ void US_DataLoader::pare_to_latest( void )
       {
          int jj = ii + 1;
 
-         QString clabel = keys.at( ii );
-         QString flabel = keys.at( jj );
+         QString clabel = keys.at( ii );                 
+	 QString flabel = keys.at( jj );               
+	                                               
 
          QString crunid = clabel.section( ".", 0, -2 );
          QString frunid = flabel.section( ".", 0, -2 );
@@ -1441,12 +1442,22 @@ void US_DataLoader::pare_to_latest( void )
             if ( cruncc == fruncc )
                kmwl++;                 // Mark possible MWL case
 
-            continue;
+            continue;                                                   
          }
 
          // This record's label differs from next only by edit code: remove it
-         int       cdetm = vals.at( ii ).editID.left( 10 ).toInt();
-         int       fdetm = vals.at( jj ).editID.left( 10 ).toInt();
+         // int       cdetm = vals.at( ii ).editID.left( 10 ).toInt();
+         // int       fdetm = vals.at( jj ).editID.left( 10 ).toInt();
+	 quint64      cdetm = vals.at( ii ).editID.left( 10 ).toLong();
+         quint64      fdetm = vals.at( jj ).editID.left( 10 ).toLong();
+	 
+	 qDebug() << "PARE 1: vals.at( ii ).editID.left(10), vals.at( jj ).editID.left( 10 ) -- "
+		  <<  vals.at( ii ).editID.left( 10 )
+		  <<  vals.at( jj ).editID.left( 10 );
+	 qDebug() << "PARE 2: vals.at( ii ).editID.left(10).toInt(), vals.at( jj ).editID.left( 10 ).toLong() -- "
+		  <<  vals.at( ii ).editID.left( 10 ).toInt()
+		  <<  vals.at( jj ).editID.left( 10 ).toLong();
+	 
 qDebug() << "PARE ii" << ii << "C,F edtm" << cdetm << fdetm;
 qDebug() << "  C,F lab" << clabel << flabel;
          if ( cdetm <= fdetm )         // Remove the earlier of the two
