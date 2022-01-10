@@ -667,7 +667,7 @@ void US_Extinction::plot()
       for(int m = 0; m < xfit_data.size(); m++)
 	{
 	  QwtPlotCurve* fitdata;
-	  fitdata = us_curve(data_plot, title);
+	  fitdata = us_curve(data_plot, title + "-fit");
 	  fitdata->setPen(QPen(Qt::cyan));
 	  double* xx_ffit = (double*)xfit_data.at(m).data();
 	  double* yy_ffit = (double*)yfit_data.at(m).data();
