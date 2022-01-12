@@ -2163,8 +2163,56 @@ void US_AnaprofPanGen::update_gen_report_settings( QString& mask_updated )
 void US_AnaprofPanGen::set_combplot_parms( ) 
 {
   qDebug() << "currProf->combPlots_parms --  " << currProf->combPlots_parms;
+
+  //collect all 'type-method' combinations across all triples:
+  QStringList type_method_list;
+  //int nchna   = currProf->pchans.count();
+  int nchna    = le_channs.count();
+  for ( int i = 0; i < nchna; i++ )
+    {
+      QString channel_desc_alt = currProf-> chndescs_alt[ i ];
+      QString channel_desc     = currProf-> chndescs[ i ];
+
+      bool triple_report = false;
+      
+      if ( ck_runs[ i ] -> isChecked()  )
+	{
+	  //now check if report will be run:
+	  QString run_report;
+	  if ( ck_report_runs[ i ] -> isChecked() )
+	    triple_report = true;
+	}
+
+      if ( triple_report )
+	{
+	  QMap < QString, US_ReportGMP > chann_reports = internal_reports[ channel_desc_alt ];
+	  QList < QString > ch_wavelengths             = chann_reports.keys();
+
+	  int chann_wvl_number = ch_wavelengths.size();
+	  for ( int jj = 0; jj < chann_wvl_number; ++jj )
+	    {
+	      QString wvl              = ch_wavelengths[ jj ];
+	      US_ReportGMP c_reportGMP = chann_reports[ wvl ];
+
+	      int report_items_number = c_reportGMP.reportItems.size();
+	      for ( int kk = 0; kk < report_items_number; ++kk )
+		{
+		  US_ReportGMP::ReportItem curr_item = c_reportGMP.reportItems[ kk ];
+		  QString c_type   = curr_item.type;
+		  QString c_method = curr_item.method;
+
+		  QString c_t_m = c_type + "," + c_method;
+		  qDebug() << "c_t_m -- " << c_t_m;
+		  type_method_list << c_t_m;
+		}
+	    }
+	}
+    }
+  type_method_list.removeDuplicates();
+  qDebug() << "Type-Method list: " << type_method_list;
+  //end of collecting 'type-methods' combinations
   
-  combPlotsGui = new US_CombPlotsGui( currProf->combPlots_parms ); 
+  combPlotsGui = new US_CombPlotsGui( currProf->combPlots_parms, type_method_list ); 
   combPlotsGui ->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
   combPlotsGui ->setWindowModality(Qt::ApplicationModal);
   

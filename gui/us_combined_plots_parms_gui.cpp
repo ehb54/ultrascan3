@@ -15,9 +15,10 @@
 #define QRegularExpression(a)  QRegExp(a)
 #endif
 
-US_CombPlotsGui::US_CombPlotsGui( QString combPlotsMask ) : US_Widgets()
+US_CombPlotsGui::US_CombPlotsGui( QString combPlotsMask, QStringList type_method_list ) : US_Widgets()
 {
-  this->combPlotsMask = combPlotsMask;
+  this->combPlotsMask    = combPlotsMask;
+  this->type_method_list = type_method_list;
 
   //here, process combPlotsMask JSON
   parse_json();
@@ -162,6 +163,30 @@ void US_CombPlotsGui::build_layout ( void )
       genL->addWidget( le_xmin,            row,    7, 1, 2 );
       genL->addWidget( le_xmax,            row++,  9, 1, 2 );
 
+      //hide (or disable ?) rows for which type-method is not in the type_method_list:
+      bool row_exists = false;
+      for ( int ii=0; ii < type_method_list.size(); ++ii )
+	{
+	  if ( type_method_list[ ii ].contains( key ) )
+	    {
+	      row_exists = true;
+	      break;
+	    }
+	}
+      if ( !row_exists )
+	{
+	  le_type   -> setEnabled( false );
+	  le_method -> setEnabled( false );
+	  le_sigma  -> setEnabled( false );
+	  le_xmin   -> setEnabled( false );
+	  le_xmax   -> setEnabled( false );
+
+	  le_type   -> setVisible( false );
+	  le_method -> setVisible( false );
+	  le_sigma  -> setVisible( false );
+	  le_xmin   -> setVisible( false );
+	  le_xmax   -> setVisible( false );
+	}
     }
   
   int ihgt        = le_type->height();

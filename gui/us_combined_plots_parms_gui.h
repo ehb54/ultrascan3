@@ -13,14 +13,15 @@ class US_GUI_EXTERN US_CombPlotsGui: public US_Widgets
 
   public:
 
-      US_CombPlotsGui( QString  );
+  US_CombPlotsGui( QString, QStringList  );
       ~US_CombPlotsGui() {};
 
    signals:
        void update_combplots_parms( QString& );
       
    private:
-       QString combPlotsMask;
+       QString     combPlotsMask;
+       QStringList type_method_list;
        QJsonObject json;
        
        
