@@ -22,6 +22,7 @@
 
 #include "us_scan_excl_gui.h"
 #include "us_report_general_gui.h"
+#include "us_combined_plots_parms_gui.h"
 
 //#include "us_license_t.h"
 //#include "us_license.h"
@@ -77,7 +78,9 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       // US_ReportGMP*     reportGMP;
       US_ReportGui*     reportGui;
       US_ScanExclGui*   scanExclGui;
-      US_ReportGenGui*  reportGenGui;  
+      US_ReportGenGui*  reportGenGui;
+      US_CombPlotsGui*  combPlotsGui;
+      
       
       US_Help  showHelp;
 
@@ -147,6 +150,7 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       void  apro_button_clicked( void );
       void  prot_button_clicked( void );
       void  set_scan_ranges    ( void );
+      void  set_combplot_parms    ( void );
       void  set_gen_report_settings    ( void );
       void  apro_text_changed  ( void );
       void  prot_text_changed  ( void );
@@ -160,6 +164,7 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       void  apply_to_other_reports ( US_ReportGMP *  );
       void  update_excl_scans( QStringList & );
       void  update_gen_report_settings ( QString& );
+      void  update_combplots_settings  ( QString& );
       
  signals:
       void  set_tabs_buttons_inactive       ( void );

@@ -525,6 +525,7 @@ DbgLv(1) << "APG: ipro: name GUID" << currProf.aprofname << currProf.aprofGUID;
       load_db              = ( dbP != NULL );
 
       QString reportMask_DB;
+      QString combinedPlotsParms_DB;
       
       if ( load_db )
       {  // Get AProfile XML from the database
@@ -550,7 +551,8 @@ DbgLv(1) << "APG: ipro:   load_db" << load_db;
                currProf.aprofname   = dbP->value( 1 ).toString();
                ap_xml               = dbP->value( 2 ).toString();
 
-	       reportMask_DB = dbP->value( 4 ).toString();
+	       reportMask_DB         = dbP->value( 4 ).toString();
+	       combinedPlotsParms_DB = dbP->value( 5 ).toString();
             }
             aprsrc               = QString( "readDB" );
 DbgLv(1) << "APG: ipro:  ap ID,name,lnxml" << currProf.aprofID
@@ -594,6 +596,10 @@ DbgLv(1) << "APG: ipro:    aprofID" << currProf.aprofID;
       //Get reportMask (if not empty)
       if ( ! reportMask_DB.isEmpty() )
 	currProf.report_mask = reportMask_DB;
+
+      //Get combinedPlotsParms (if not empty)
+      if ( ! combinedPlotsParms_DB.isEmpty() )
+	currProf.combPlots_parms = combinedPlotsParms_DB;
 	
       // Get AnalysisProfile from XML
 DbgLv(1) << "APG: ipro:  ap_xml isEmpty" << ap_xml.isEmpty();
@@ -1422,11 +1428,18 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
 DbgLv(1) << "Ge:SL: nchn" << nchn << "lcrat size" << le_lcrats.count();
 
 
+   //Add button to set global combuned plot parameters
+   QPushButton* pb_combplot_global    = us_pushbutton( tr( "Global Parameters for \nCombined Plots" ) );
+   genL->addWidget( pb_combplot_global,    row++,  9, 2, 3 );
+   connect( pb_combplot_global, SIGNAL( clicked  ( ) ),
+	    this,         SLOT(   set_combplot_parms( ) ) );
+
    int ihgt        = pb_aproname->height();
    QSpacerItem* spacer1 = new QSpacerItem( 20, ihgt );
    genL->setRowStretch( row, 1 );
    genL->addItem( spacer1,  row++,  0, 1, 1 );
    mainw->setColumnStretches( genL );
+   
 
 //   QScrollArea *scrollArea  = new QScrollArea( this );
 //   QWidget* containerWidget = new QWidget;
@@ -2146,6 +2159,28 @@ void US_AnaprofPanGen::update_gen_report_settings( QString& mask_updated )
   currProf->report_mask = mask_updated;
 }
 
+//Set Combined Plot Global Parms
+void US_AnaprofPanGen::set_combplot_parms( ) 
+{
+  qDebug() << "currProf->combPlots_parms --  " << currProf->combPlots_parms;
+  
+  combPlotsGui = new US_CombPlotsGui( currProf->combPlots_parms ); 
+  combPlotsGui ->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
+  combPlotsGui ->setWindowModality(Qt::ApplicationModal);
+  
+  connect( combPlotsGui, SIGNAL( update_combplots_parms( QString& ) ), this, SLOT( update_combplots_settings  ( QString& )  ) );
+     
+  combPlotsGui->show();
+}
+
+//Update combined plots global params
+void US_AnaprofPanGen::update_combplots_settings( QString& combPlots_updated )
+{
+  currProf->combPlots_parms .clear();
+  currProf->combPlots_parms = combPlots_updated;
+}
+
+  
 //Scan Range to exclude
 void US_AnaprofPanGen::set_scan_ranges()
 {

@@ -33,6 +33,7 @@ HEADERS      = \
                us_buffer_gui.h          \
                us_choice.h              \
                us_colorgradIO.h         \
+               us_combined_plots_parms_gui.h \
                us_data_loader.h         \
                us_edit_spectrum.h       \
                us_editor.h              \
@@ -87,6 +88,7 @@ SOURCES      = \
                us_buffer_gui.cpp          \
                us_choice.cpp              \
                us_colorgradIO.cpp         \
+               us_combined_plots_parms_gui.cpp \
                us_data_loader.cpp         \
                us_edit_spectrum.cpp       \
                us_editor.cpp              \

@@ -244,8 +244,8 @@ class US_UTIL_EXTERN US_AnaProfile
       /* QMap< QString, QStringList >       ch_scans_excl; */
 
       QString report_mask;
-	
-      
+      QString combPlots_parms;
+
    private:
 };
 #endif
