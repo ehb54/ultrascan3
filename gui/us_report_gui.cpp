@@ -103,7 +103,7 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
 	   this,          SLOT  ( verify_text ( const QString& ) ) );
  connect( le_tot_conc_tol, SIGNAL( textChanged ( const QString& ) ),
 	   this,          SLOT  ( verify_text ( const QString& ) ) );
-  connect( le_duration_tol, SIGNAL( textChanged ( const QString& ) ),
+ connect( le_duration_tol, SIGNAL( textChanged ( const QString& ) ),
 	   this,          SLOT  ( verify_text ( const QString& ) ) );  
    
   qDebug() << "Report params on load: tot_conc, conc_tol, duraiton, duration_tol -- "
@@ -297,7 +297,7 @@ void US_ReportGui::build_report_layout( void )
   QComboBox* cb_method;
   QStringList sl_types;
   QStringList sl_methods;
-  sl_types     << QString("s") << QString("D") << QString("f/f0") << QString("MW");
+  sl_types     << QString("s") << QString("D") << QString("f/f0") << QString("MW") << QString("Radius");
   sl_methods   << QString("2DSA-IT") << QString("PCSA-SL/DS/IS") << QString("2DSA-MC") << QString("raw");
   qDebug() << "Begin ReportItems iteration -- ";
    
@@ -319,7 +319,7 @@ void US_ReportGui::build_report_layout( void )
       //need to set index corr. to type in ReportItem
       int type_ind = cb_type->findText( curr_item.type );
       cb_type->setCurrentIndex( type_ind );
-      
+            
       //method ComboBox
       cb_method = us_comboBox();      
       cb_method->clear();
@@ -327,6 +327,18 @@ void US_ReportGui::build_report_layout( void )
       //need to set index corr. to method in ReportItem
       int method_ind = cb_method->findText( curr_item.method );
       cb_method->setCurrentIndex( method_ind );
+
+      //Check if the type "Radius": if not, disable method's "raw" item:
+      int raw_ind_method = cb_method->findText("raw");
+      if ( curr_item.type != "Radius" )
+	{
+	  SetComboBoxItemEnabled( cb_method, raw_ind_method, false );
+	}
+      else
+	{
+	  cb_method -> setEnabled( false );
+	}
+      
       
       le_low        = us_lineedit( QString::number(curr_item.range_low),  0, false  );
       le_high       = us_lineedit( QString::number(curr_item.range_high), 0, false  );
@@ -370,6 +382,12 @@ void US_ReportGui::build_report_layout( void )
       genL->addWidget( le_total,          row,    11, 1, 2 );
       genL->addWidget( le_tol,            row,    13, 1, 2 );
       genL->addWidget( ck_combined_plot,  row++,  15, 1, 2, Qt::AlignHCenter );
+
+      //Slots for cb_type | cb_method
+      connect( cb_type,    SIGNAL( activated        ( int )  ),
+               this,       SLOT  ( type_changed     ( int )  ) );
+      connect( cb_method,  SIGNAL( activated        ( int )  ),
+               this,       SLOT  ( method_changed   ( int )  ) );
     }
   
   int ihgt        = lb_low->height();
@@ -1098,4 +1116,81 @@ void US_ReportGui::apply_all_wvls( void )
     }
   else if (msgBox.clickedButton() == Cancel)
     return;
+}
+
+
+//set behavior for type counterbox
+void US_ReportGui::type_changed( int t)
+{
+  QObject* sobj        = sender();      // Sender object
+  QString oname        = sobj->objectName();
+  int irow             = oname.section( ":", 0, 0 ).toInt();
+  QString stchan       = QString::number( irow ) + ": ";
+  
+  QString method_oname = stchan + "method";
+  QString low_oname    = stchan + "low";
+  QString high_oname   = stchan + "high";
+
+  qDebug() << "Type_CHANGED: tname, mname -- " << oname << method_oname;
+
+  //type
+  QComboBox * cb_type    = containerWidget->findChild<QComboBox *>( oname );
+  //method
+  QComboBox * cb_method  = containerWidget->findChild<QComboBox *>( method_oname );
+  //low
+  QLineEdit * le_low     = containerWidget->findChild<QLineEdit *>( low_oname );
+  //high
+  QLineEdit * le_high    = containerWidget->findChild<QLineEdit *>( high_oname );
+
+  cb_method -> setEnabled( true );
+  
+  QString type   =  cb_type->itemText( t );
+  int raw_ind_method = cb_method->findText("raw");
+
+  if ( type == "Radius" )
+    {
+      if ( raw_ind_method != -1  )
+	{
+	  //set default low | high values
+	  le_low  -> setText(QString::number( 5.8 ));
+	  le_high -> setText(QString::number( 7.2 ));
+	  
+	  cb_method -> setCurrentIndex( raw_ind_method );
+	  cb_method -> setEnabled( false );
+	}
+    }
+  else //type: s, D, MW, f/f0
+    {
+      //set default low | high values
+      le_low  -> setText(QString::number( 3.2 ));
+      le_high -> setText(QString::number( 3.7 ));
+      
+      SetComboBoxItemEnabled( cb_method, raw_ind_method, false );
+      int it_ind_method = cb_method->findText("2DSA-IT");
+      cb_method -> setCurrentIndex( it_ind_method );
+    }
+}
+
+//enable/disable QComboBox Item
+void US_ReportGui::SetComboBoxItemEnabled(QComboBox * comboBox, int index, bool enabled)
+{
+  auto * model = qobject_cast<QStandardItemModel*>(comboBox->model());
+  assert(model);
+
+  if ( !model )
+    return;
+  
+  auto * item = model->item(index);
+  assert( item );
+
+  if ( !item )
+    return;
+
+  item->setEnabled(enabled);
+}
+
+//set behavior for method counterbox
+void US_ReportGui::method_changed( int m)
+{
+  
 }

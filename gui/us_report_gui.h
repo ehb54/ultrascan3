@@ -79,7 +79,8 @@ class US_GUI_EXTERN US_ReportGui: public US_Widgets
       void build_report_layout( void );
       void gui_to_report( void );
       int  check_syntax( void );
-            
+      void SetComboBoxItemEnabled(QComboBox*, int, bool);
+      
    private slots:
      void verify_text ( const QString& );
      void update_report( void );
@@ -96,6 +97,9 @@ class US_GUI_EXTERN US_ReportGui: public US_Widgets
      void    ssChgDuratTime_hh( int );
      void    ssChgDuratTime_mm( int );
      void    ssChgDuratTime_ss( int );
+
+     void    type_changed     ( int );
+     void    method_changed   ( int );
      
    public slots:
 };
