@@ -1422,6 +1422,9 @@ void US_InitDialogueGui::initRecords( void )               // <-- 1st entry poin
 	occupied_instruments << autoflowdata[ i ][ 2 ];
     }
 
+  //ALEXEY: to allow queueing, I clear occupied instruments:
+  occupied_instruments.clear();
+  
   qDebug() << "Init Autoflow Records: DONE, occupied instruments: " << occupied_instruments;
 }
 
