@@ -21,19 +21,6 @@
 #define setSamples(a,b,c)  setData(a,b,c)
 #endif
 
-// Main program
-int main( int argc, char* argv[] )
-{
-   QApplication application( argc, argv );
-
-   #include "main1.inc"
-
-   // License is OK.  Start up.
-   
-   US_DDistr_Combine w;
-   w.show();                   //!< \memberof QWidget
-   return application.exec();  //!< \memberof QApplication
-}
 
 const double epsilon = 0.0005;    // Equivalence magnitude ratio radius
 
@@ -461,6 +448,74 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
 
 }
 
+//Load auto | GMP report
+QStringList US_DDistr_Combine::load_auto( QStringList runids_passed, QStringList aDescrs_passed  )
+{
+  QStringList runids;
+  QStringList modelDescModified;
+  
+  runids. clear();
+  aDescrs.clear();
+
+  runids  = runids_passed;
+  aDescrs = aDescrs_passed;
+
+  qDebug() << "load_auto in ddist_comb: runids, aDescrs -- " << runids << "\n" << aDescrs;
+
+  //create distros structure
+  update_distros();
+
+  runID = runids[ 0 ];
+  //model names
+  QString grunID = "Global-" + runID;
+  for ( int ii = 0; ii < distros.size(); ii++ )  //ALEXEY <-- should be only 1
+    {
+      DbgLv(1) << "RunIDSel:  ii runID" << ii << distros[ii].runID;
+
+      if ( distros[ ii ].runID == runID  ||
+           distros[ ii ].runID.startsWith( grunID ) )
+	{  // Only (possibly) add item with matching run ID
+	  QString mdesc = distros[ ii ].mdescr;
+	  QString ddesc = distros[ ii ].ddescr;
+	  
+	  // if ( mfilter )
+	  //   {  // If method-filtering, skip any item whose method is not checked
+	  //     QString meth = mdesc.section( ".", -1, -1 ).section( "_", -3, -3 );
+	  //     DbgLv(1) << "RunIDSel:    meth" << meth;
+	  //     if ( ! methods.contains( meth ) )  continue;
+	  //   }
+	  
+	  DbgLv(1) << "RunIDSel:     added: ddesc" << ddesc;
+	  //lw_models->addItem( distribID( mdesc, ddesc ) );
+	  modelDescModified << distribID( mdesc, ddesc );
+
+	  //qDebug() << "load_auto: distribID() -- " << distribID( mdesc, ddesc );
+	}
+    }
+
+  // //go over modelDescModified
+  // for ( int ii = 0; ii < modelDescModified.size(); ii++ )  
+  //   {
+  //     //here maybe a fiter by type|model
+  //     if ( modelDescModified[ ii ].contains("2DSA-IT") ) 
+  // 	model_select_auto ( modelDescModified[ ii ] ); 
+  //   }
+
+  return modelDescModified;
+}
+
+//return pointer to data_plot1
+QwtPlot* US_DDistr_Combine::rp_data_plot1()
+{
+  return data_plot1;
+}
+
+//reset data_plot1
+void US_DDistr_Combine::reset_data_plot1()
+{
+  reset_plot();
+}
+
 // Load data
 void US_DDistr_Combine::load( void )
 {
@@ -475,6 +530,10 @@ void US_DDistr_Combine::load( void )
             this,    SLOT( update_disk_db( bool ) ) );
    srdiag.exec();
 
+
+   qDebug() << "load in ddist_comb: runids, aDescrs -- " << runids << "\n" << aDescrs; 
+
+     
    int nrunids = runids.count();
    int nsprojs = cmb_svproj->count();
    if ( nrunids < 1 )   return;
@@ -1311,6 +1370,41 @@ DbgLv(1) << "RunIDSel:     added: ddesc" << ddesc;
    {
       cmb_svproj->setCurrentIndex( cmb_svproj->findText( runID ) );
    }
+}
+
+// Model distribution selected -- FOR GMP reporter | 6. REPORT
+void US_DDistr_Combine::model_select_auto( QString modelNameMod )
+{
+   QString          distrID = modelNameMod;
+   int              mdx     = distro_by_descr( distrID );
+DbgLv(1) << "ModelSel: model" << distrID << "mdx" << mdx;
+   DistrDesc*       ddesc   = &distros[ mdx ];
+
+   if ( ! pdisIDs.contains( distrID ) )
+   {  // If this distro not yet filled out, do so now
+
+      fill_in_desc( distros[ mdx ], pdistrs.size() );
+
+      pdistrs << *ddesc;     // Add to list of plotted distros
+      pdisIDs << distrID;    // Add to list of IDs of plotted distros
+   }
+
+   if ( ddesc->model.components.size() == 0 )
+   {
+      QMessageBox::critical( this, tr( "Zero-Components Model" ),
+            tr( "*ERROR* The selected model has zero components.\n"
+                "This selection is ignored" ) );
+      return;
+   }
+
+   plot_data();
+
+   pb_saveda->setEnabled( true );
+   pb_resetd->setEnabled( true );
+   pb_resetp->setEnabled( true );
+
+   te_status->setText( tr( "Count of plotted distributions: %1." )
+         .arg( pdistrs.count() ) );
 }
 
 // Model distribution selected

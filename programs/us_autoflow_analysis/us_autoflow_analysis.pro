@@ -15,7 +15,9 @@ HEADERS       = us_autoflow_analysis.h \
                 ../us_fematch/us_advanced_fem.h     \
                 ../us_fematch/us_adv_dmgamc.h       \
                 ../us_fematch/us_dmga_mc_stats.h    \
-                ../us_fematch/us_thread_worker.h
+                ../us_fematch/us_thread_worker.h    \
+                ../us_ddist_combine/us_ddist_combine.h \
+                ../us_ddist_combine/us_select_rundd.h 
 
 SOURCES       = us_autoflow_analysis_main.cpp       \
                 us_autoflow_analysis.cpp         \
@@ -29,7 +31,9 @@ SOURCES       = us_autoflow_analysis_main.cpp       \
                 ../us_fematch/us_advanced_fem.cpp     \
                 ../us_fematch/us_adv_dmgamc.cpp       \
                 ../us_fematch/us_dmga_mc_stats.cpp    \
-                ../us_fematch/us_thread_worker.cpp
+                ../us_fematch/us_thread_worker.cpp    \
+                ../us_ddist_combine/us_ddist_combine.cpp \
+                ../us_ddist_combine/us_select_rundd.cpp 
                 
                 
                

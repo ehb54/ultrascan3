@@ -8,6 +8,7 @@
 #include "us_protocol_util.h"
 #include "../us_analysis_profile/us_analysis_profile.h"
 #include "../us_fematch/us_fematch.h"
+#include "../us_ddist_combine/us_ddist_combine.h"
 #include "us_solution.h"
 #include "us_help.h"
 #include "us_extern.h"
@@ -32,6 +33,7 @@ class US_ReporterGMP : public US_Widgets
 
 	 QString ap_xml;
 
+	 US_DDistr_Combine*         sdiag_combplot;
 	 US_AnalysisProfileGui*     sdiag; 
 	 US_AnaProfile              currAProf;
 	 US_AnaProfile::AnaProf2DSA cAP2;
@@ -363,6 +365,8 @@ class US_ReporterGMP : public US_Widgets
 	 int noises_in_model_auto( QString, QStringList& );
 	 void simulateModel( QMap < QString, QString > & );
 	 void adjustModel( void );
+
+	 QStringList scan_dbase_models( QStringList );
 	 
 	 QString text_model(     US_Model, int );
 	 QString html_header   ( QString, QString, US_DataIO::EditedData* );

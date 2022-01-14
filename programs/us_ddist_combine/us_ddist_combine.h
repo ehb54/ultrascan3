@@ -19,6 +19,11 @@ class US_DDistr_Combine : public US_Widgets
    public:
       US_DDistr_Combine();
 
+      QStringList load_auto( QStringList, QStringList  );
+      void      model_select_auto   ( QString );
+      QwtPlot* rp_data_plot1();
+      void     reset_data_plot1();
+      
    private:
 
       // Distribution description object
@@ -160,7 +165,10 @@ class US_DDistr_Combine : public US_Widgets
       void plot_data      ( void );
       void plot_distr     ( DistrDesc, QString );
       void runid_select   ( int );
+
       void model_select   ( int );
+      
+      
       void setColor       ( DistrDesc&, int );
       void possibleColors ( void );
       int  distro_by_descr( QString& );

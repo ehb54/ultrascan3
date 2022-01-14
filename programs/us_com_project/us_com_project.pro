@@ -37,7 +37,9 @@ HEADERS       = us_com_project_gui.h \
                 ../us_fematch/us_adv_dmgamc.h       \
                 ../us_fematch/us_dmga_mc_stats.h    \
                 ../us_fematch/us_thread_worker.h    \
-                ../us_reporter_gmp/us_reporter_gmp.h  
+                ../us_reporter_gmp/us_reporter_gmp.h \
+                ../us_ddist_combine/us_ddist_combine.h \
+                ../us_ddist_combine/us_select_rundd.h 
                 
                 
 
@@ -75,7 +77,9 @@ SOURCES       = us_com_project_main.cpp \
                 ../us_fematch/us_adv_dmgamc.cpp       \
                 ../us_fematch/us_dmga_mc_stats.cpp    \
                 ../us_fematch/us_thread_worker.cpp    \
-                ../us_reporter_gmp/us_reporter_gmp.cpp
+                ../us_reporter_gmp/us_reporter_gmp.cpp \
+                ../us_ddist_combine/us_ddist_combine.cpp \
+                ../us_ddist_combine/us_select_rundd.cpp 
                 
 
 

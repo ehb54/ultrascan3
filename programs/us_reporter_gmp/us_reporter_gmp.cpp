@@ -302,12 +302,12 @@ US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
   superLayout -> addLayout( genL );
   
   // Hide layouts
-   if ( a_mode.toStdString() == "AUTO")
-     {
-       leftWidget  -> hide();
-       rightWidget -> hide();
-       
-     }
+  if ( a_mode.toStdString() == "AUTO")
+    {
+      leftWidget  -> hide();
+      rightWidget -> hide();
+      
+    }
   
   resize( 1350, 800 );
 }
@@ -1508,6 +1508,54 @@ void US_ReporterGMP::generate_report( void )
   progress_msg->close();
   qApp->processEvents();
 
+  //Combined Plots Generation
+  sdiag_combplot = new US_DDistr_Combine();
+  QStringList runIDs_single;
+  runIDs_single << FileName; //<-- a single-type runID (e.g. RI) - NOT combined runs for now...
+  QStringList aDescrs = scan_dbase_models( runIDs_single );
+  QStringList modelDescModified = sdiag_combplot->load_auto( runIDs_single, aDescrs );
+
+  //write combined plots
+  mkdir( US_Settings::reportDir(), FileName );
+  const QString svgext( ".svgz" );
+  const QString pngext( ".png" );
+  const QString csvext( ".csv" );
+  QString basename  = US_Settings::reportDir() + "/" + FileName + "/" + FileName + ".";
+  
+  //go over modelDescModified
+  QStringList modelNames;
+  modelNames << "2DSA-FM" << "2DSA-IT" << "2DSA-MC" << "PCSA";
+  QStringList CombPlotsFileNames;
+    
+  for ( int m = 0; m < modelNames.size(); m++ )  
+    {
+      bool isModel = false;
+      QString imgComb01File = basename + "combined" + "." + modelNames[ m ]  + svgext;
+      
+      for ( int ii = 0; ii < modelDescModified.size(); ii++ )  
+	{
+	  //fiter by type|model
+	  if ( modelDescModified[ ii ].contains( modelNames[ m ] ) )
+	    {
+	      isModel = true;
+	      sdiag_combplot-> model_select_auto ( modelDescModified[ ii ] ); 
+	    }
+	}
+      //write plot
+      if ( isModel )  //TEMPORARY: will read a type-method combined plot QMap defined at the beginnig
+	{
+	  write_plot( imgComb01File, sdiag_combplot->rp_data_plot1() );                //<-- rp_data_plot1() gives combined plot
+	  CombPlotsFileNames << basename + "combined" + "." + modelNames[ m ] + pngext;
+	}
+      //reset plot
+      sdiag_combplot->reset_data_plot1();
+    }
+  //assemble combined plots into html
+  assemble_plots_html( CombPlotsFileNames  );
+  
+  //exit(1);
+  //End of Combined Plots
+
   //Part 2
   if ( auto_mode )
     {
@@ -1547,6 +1595,8 @@ void US_ReporterGMP::generate_report( void )
 	}
     }
 
+
+
   write_pdf_report( );
   qApp->processEvents();
 
@@ -1570,6 +1620,195 @@ void US_ReporterGMP::generate_report( void )
 				    "You can view it by pressing \'View Report\' button on the left" ).arg( filePath ) );
     }
   
+}
+
+// Scan database for models associated with run sets
+QStringList  US_ReporterGMP::scan_dbase_models( QStringList runIDs )
+{
+   QStringList   wDescrs;
+  
+   US_Passwd   pw;
+   US_DB2      db( pw.getPasswd() );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      QMessageBox::information( this,
+         tr( "DB Connection Problem" ),
+         tr( "There was an error connecting to the database:\n" )
+         + db.lastError() );
+      return wDescrs;
+   }
+
+   QStringList        mmIDs;        // Model modelIDs
+   QStringList        mmGUIDs;      // Model modelGUIDs
+   QStringList        meIDs;        // Model editIDs;
+   QVector< QString > mmDescs;      // Model descriptions
+   QMap< QString, QString > ddmap;  // editID,dataDescr map
+
+   QStringList query;
+   QString     invID  = QString::number( US_Settings::us_inv_ID() );
+   int          ntmodel = 0;
+   int          nmodel  = 0;
+   bool         no_una  = ! runIDs.contains( "UNASSIGNED" );
+DbgLv(1) << "ScMd: UNASSGN: no-UNASSIGNED" << no_una;
+
+   // First accumulate model information for UNASSIGNED models
+   query.clear();
+   query << "get_model_desc_by_editID" << invID << "1";
+   db.query( query );
+
+   while ( db.next() )
+   {
+      QString mdlid    = db.value( 0 ).toString();
+      QString mdlGid   = db.value( 1 ).toString();
+      QString mdesc    = db.value( 2 ).toString();
+      QString edtid    = db.value( 6 ).toString();
+      int     kk       = mdesc.lastIndexOf( ".model" );
+      mdesc            = ( kk < 1 ) ? mdesc : mdesc.left( kk );
+      QString mrunid   = mdesc.section( ".", -3, -3 );
+DbgLv(1) << "ScMd: UNASSGN: mid,eid,mdesc,mrun" << mdlid << edtid << mdesc << mrunid;
+      if ( ! runIDs.contains( mrunid )  &&  no_una )
+         continue;       // Skip any without a desired run prefix
+DbgLv(1) << "ScMd: UNASSGN:  ++USED++";
+      mmIDs   << mdlid;
+      mmGUIDs << mdlGid;
+      meIDs   << edtid;
+      mmDescs << mdesc;
+      nmodel++;
+   }
+DbgLv(1) << "ScMd: runid UNASGN editId 1   nmodel" << nmodel;
+
+QTime timer;
+timer.start();
+   // Accumulate model information for runs present
+   for ( int rr = 0; rr < runIDs.count(); rr++ )
+   {
+      QString runid    = runIDs[ rr ];
+      query.clear();
+      query << "get_model_desc_by_runID" << invID << runid;
+      db.query( query );
+
+      while( db.next() )
+      {
+         QString mdlid    = db.value( 0 ).toString();
+         QString mdlGid   = db.value( 1 ).toString();
+         QString mdesc    = db.value( 2 ).toString();
+         QString edtid    = db.value( 6 ).toString();
+         int     kk       = mdesc.lastIndexOf( ".model" );
+         mdesc            = ( kk < 1 ) ? mdesc : mdesc.left( kk );
+         mmIDs   << mdlid;
+         mmGUIDs << mdlGid;
+         meIDs   << edtid;
+         mmDescs << mdesc;
+         nmodel++;
+      }
+DbgLv(1) << "ScMd: runid" << runid << "nmodel" << nmodel;
+
+      // Repeat the scan for "global-<run>%" variation
+      QString grunid   = "Global-" + runid + "%";
+      query.clear();
+      query << "get_model_desc_by_runID" << invID << grunid;
+      db.query( query );
+
+      while( db.next() )
+      {
+         QString mdlid    = db.value( 0 ).toString();
+         QString mdlGid   = db.value( 1 ).toString();
+         QString mdesc    = db.value( 2 ).toString();
+         QString edtid    = db.value( 6 ).toString();
+         int     kk       = mdesc.lastIndexOf( ".model" );
+         mdesc            = ( kk < 1 ) ? mdesc : mdesc.left( kk );
+         mmIDs   << mdlid;
+         mmGUIDs << mdlGid;
+         meIDs   << edtid;
+         mmDescs << mdesc;
+         nmodel++;
+      }
+DbgLv(1) << "ScMd:  runid" << runid << "nmodel" << nmodel;
+   }
+DbgLv(1) << "ScMd:scan time(1)" << timer.elapsed();
+
+   // Accumulate model information for "Global-" UNASSIGNED models
+   query.clear();
+   query << "get_model_desc_by_runID" << invID << "Global-%";
+   db.query( query );
+
+   while ( db.next() )
+   {
+      QString mdlid    = db.value( 0 ).toString();
+      if ( mmIDs.contains( mdlid ) )
+         continue;
+
+      QString mdlGid   = db.value( 1 ).toString();
+      QString mdesc    = db.value( 2 ).toString();
+      int     kk       = mdesc.lastIndexOf( ".model" );
+      mdesc            = ( kk < 1 ) ? mdesc : mdesc.left( kk );
+      mmIDs   << mdlid;
+      mmGUIDs << mdlGid;
+      meIDs   << "1";
+      mmDescs << mdesc;
+      nmodel++;
+   }
+DbgLv(1) << "ScMd: runid glob% UNASGN editId 1   nmodel" << nmodel;
+
+   query.clear();
+   query << "count_models" << invID;
+   ntmodel  = db.functionQuery( query );
+DbgLv(1) << "ScMd: ntmodel" << ntmodel << "nmodel" << nmodel;
+DbgLv(1) << "ScMd:scan time(2)" << timer.elapsed();
+int m=nmodel-1;
+if ( m>1 ) {
+DbgLv(1) << "ScMd: 0: id,gid,eid,desc" << mmIDs[0] << mmGUIDs[0] << meIDs[0] << mmDescs[0];
+DbgLv(1) << "ScMd: m: id,gid,eid,desc" << mmIDs[m] << mmGUIDs[m] << meIDs[m] << mmDescs[m]; }
+
+   // Scan all saved models from the end back, saving any
+   //   cell description by edit ID
+   for ( int mm = nmodel - 1; mm >=0; mm-- )
+   {
+      QString medtid   = meIDs[ mm ];
+
+      if ( ddmap.contains( medtid ) )  continue;   // Skip if already mapped
+
+      // Not yet mapped, so find any cell description in the model XML
+      QString mdlid    = mmIDs[ mm ];
+      query.clear();
+      query << "get_model_info" << mdlid;
+      db.query( query );
+      db.next();
+      QString mxml     = db.value( 2 ).toString();
+      int     kk       = mxml.indexOf( "dataDescrip=" );
+DbgLv(1) << "ScMd: mm kk medtid" << mm << kk << medtid;
+
+      if ( kk > 0 )
+      {  // We have found the data description, so map it
+         QString ddesc    = mxml.mid( kk + 13 );
+         kk               = ddesc.indexOf( "\"" );
+         ddesc            = ddesc.left( kk );
+         ddmap[ medtid ]  = ddesc;
+      }
+   }
+DbgLv(1) << "ScMd:scan time(3)" << timer.elapsed();
+
+   // Do one more pass through all the models, completing
+   //  the model descriptions
+   for ( int mm = 0; mm < nmodel; mm++ )
+   {
+      QString mID    = mmIDs  [ mm ];
+      QString mGUID  = mmGUIDs[ mm ];
+      QString mdesc  = mmDescs[ mm ];
+      QString meID   = meIDs  [ mm ];
+      QString ddesc  = ddmap.contains( meID ) ? ddmap[ meID ] : "";
+      QString runid  = mdesc.section( ".", 0, -3 );
+      if ( meID == "1" )
+              runid  = "UNASSIGNED";
+      QString odesc  = runid + "\t" + mGUID + "\t" + mdesc + "\t" + ddesc;
+      wDescrs << odesc;
+      DbgLv(1) << "ScMd:  mm meID" << mm << meID << "ddesc" << ddesc;
+   }
+
+   DbgLv(1) << "ScMd:scan time(9)" << timer.elapsed();
+
+   return wDescrs;
 }
 
 //simulate triple 
@@ -3126,6 +3365,7 @@ void  US_ReporterGMP::assemble_plots_html( QStringList PlotsFilenames )
 	+ "\" alt=\"" + label + "\"/></div>\n\n";
     }
 }
+
   
 // Interpolate an sdata y (readings) value for a given x (radius)
 double US_ReporterGMP::interp_sval( double xv, double* sx, double* sy, int ssize )
