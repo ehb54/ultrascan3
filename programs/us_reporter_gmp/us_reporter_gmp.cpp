@@ -1646,7 +1646,6 @@ QStringList  US_ReporterGMP::scan_dbase_models( QStringList runIDs )
    QMap< QString, QString > ddmap;  // editID,dataDescr map
 
    QStringList query;
-   QString     invID  = QString::number( US_Settings::us_inv_ID() );
    int          ntmodel = 0;
    int          nmodel  = 0;
    bool         no_una  = ! runIDs.contains( "UNASSIGNED" );
@@ -1654,7 +1653,7 @@ DbgLv(1) << "ScMd: UNASSGN: no-UNASSIGNED" << no_una;
 
    // First accumulate model information for UNASSIGNED models
    query.clear();
-   query << "get_model_desc_by_editID" << invID << "1";
+   query << "get_model_desc_by_editID" << QString::number( invID ) << "1";
    db.query( query );
 
    while ( db.next() )
@@ -1685,7 +1684,7 @@ timer.start();
    {
       QString runid    = runIDs[ rr ];
       query.clear();
-      query << "get_model_desc_by_runID" << invID << runid;
+      query << "get_model_desc_by_runID" << QString::number( invID ) << runid;
       db.query( query );
 
       while( db.next() )
@@ -1707,7 +1706,7 @@ DbgLv(1) << "ScMd: runid" << runid << "nmodel" << nmodel;
       // Repeat the scan for "global-<run>%" variation
       QString grunid   = "Global-" + runid + "%";
       query.clear();
-      query << "get_model_desc_by_runID" << invID << grunid;
+      query << "get_model_desc_by_runID" << QString::number( invID ) << grunid;
       db.query( query );
 
       while( db.next() )
@@ -1730,7 +1729,7 @@ DbgLv(1) << "ScMd:scan time(1)" << timer.elapsed();
 
    // Accumulate model information for "Global-" UNASSIGNED models
    query.clear();
-   query << "get_model_desc_by_runID" << invID << "Global-%";
+   query << "get_model_desc_by_runID" << QString::number( invID ) << "Global-%";
    db.query( query );
 
    while ( db.next() )
@@ -1752,7 +1751,7 @@ DbgLv(1) << "ScMd:scan time(1)" << timer.elapsed();
 DbgLv(1) << "ScMd: runid glob% UNASGN editId 1   nmodel" << nmodel;
 
    query.clear();
-   query << "count_models" << invID;
+   query << "count_models" << QString::number( invID );
    ntmodel  = db.functionQuery( query );
 DbgLv(1) << "ScMd: ntmodel" << ntmodel << "nmodel" << nmodel;
 DbgLv(1) << "ScMd:scan time(2)" << timer.elapsed();
