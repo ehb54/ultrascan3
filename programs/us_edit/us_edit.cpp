@@ -675,6 +675,11 @@ pb_plateau->setVisible(false);
    // details[ "invID_passed" ] = QString("104");
    // details[ "filename" ]     = QString("DubnauD_ComEA-14pbDNA_5-1_100621-run1233");
    // details[ "protocolName" ] = QString("DubnauD_ComEA-14pbDNA_5-1_100621");
+
+   // details[ "invID_passed" ] = QString("77");
+   // details[ "filename" ]     = QString("Johnson_C_EWS_10uM_20uM_NaPi_MES_01-13-22-run1242");
+   // details[ "protocolName" ] = QString("Johnson_C_EWS_10uM_20uM_NaPi_MES_01-13-22");
+ 
    
    // load_auto( details );
    
@@ -10908,7 +10913,7 @@ DbgLv(1) << "EDT:WrXml:  waveln" << waveln;
 	    xml.writeEndElement  ();
 	  }
 	//end of the scan set
-       	for ( int ii = data.scanData.size() - scanExcl_begin_ind; ii < data.scanData.size(); ii++ )
+       	for ( int ii = data.scanData.size() - scanExcl_end_ind; ii < data.scanData.size(); ii++ )
 	  {
 	    xml.writeStartElement( "exclude" );
 	    xml.writeAttribute   ( "scan", QString::number( ii ) );
