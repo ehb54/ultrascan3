@@ -1552,7 +1552,6 @@ void US_ReporterGMP::generate_report( void )
     }
   //assemble combined plots into html
   assemble_plots_html( CombPlotsFileNames  );
-  
   //exit(1);
   //End of Combined Plots
 
@@ -3249,6 +3248,8 @@ void US_ReporterGMP::show_results( QMap <QString, QString> & tripleInfo )
    // }
 
    assemble_distrib_html( );
+
+   //assemble_integration_results_html( );
    
    plotres( tripleInfo ); // <------- save plots into files locally
    
@@ -3351,10 +3352,21 @@ void  US_ReporterGMP::assemble_distrib_html( void )
   html_assembled += "</p>\n";
 }
 
+// //output HTML string for Report params-to-Run Details comparison && Integraiton Results for current triple:
+// void  US_ReporterGMP::assemble_integration_results_html( void )
+// {
+//   //html_assembled += "<p class=\"pagebreak \">\n";
+//   html_assembled += "<p >";
+//   html_assembled += "\n" + indent( 2 ) + tr( "<h3>Run Details and Integration Results:</h3>\n" );
+//   html_assembled += integration_info();
+//   html_assembled += "</p>\n";
+// }
+
 //output HTML plots for currentTriple
 void  US_ReporterGMP::assemble_plots_html( QStringList PlotsFilenames )
 {
   // Embed plots in the composite report
+  html_assembled += "<p class=\"pagebreak \">\n";
   for ( int i = 0;  i < PlotsFilenames.size(); ++ i )
     {
       QString filename = PlotsFilenames[ i ];
@@ -3363,6 +3375,7 @@ void  US_ReporterGMP::assemble_plots_html( QStringList PlotsFilenames )
       html_assembled   += "    <div><img src=\"" + filename 
 	+ "\" alt=\"" + label + "\"/></div>\n\n";
     }
+  html_assembled += "</p>\n";
 }
 
   
@@ -3517,6 +3530,7 @@ QString US_ReporterGMP::html_header( QString title, QString head1,
 
    return s;
 }
+
 
 // Distribution information HTML string
 QString US_ReporterGMP::distrib_info()
@@ -3736,6 +3750,140 @@ QString US_ReporterGMP::distrib_info()
    }
 
    mstr += indent( 2 ) + "</table>\n";
+
+
+   //Now add Basic Report params comparison to actual Run Details
+   QString t_name = model_used.description.split(".")[1];
+   QString wvl    = t_name.mid(2,3);
+   qDebug() << "In DISTRIB: triple, wvl -- " << t_name << wvl;
+   
+   double tot_conc_r, tot_conc_tol_r, rmsd_r, av_int_r, exp_dur_r, exp_dur_tol_r;
+
+   //length of run (based on rdata - for current triple )
+   double last_f  = rdata ->scanData.last().seconds;
+   double first_f = rdata ->scanData.first().seconds;
+   int  hours     = (int)qFloor( last_f / 3600.0 );
+   int  mins      = (int)qRound( ( last_f - hours * 3600.0 ) / 60.0 );
+   QString hh     = ( hours == 1 ) ? tr( "hr" ) : tr( "hrs" );
+   hh    = "h";
+   QString wks    = QString().sprintf( "%d %s %02d m", hours, hh.toLatin1().data(), mins );
+   int fmins     = (int)qFloor( first_f / 60.0 );
+   int fsecs     = first_f - fmins * 60.0;
+   QString mm    = ( fmins == 1 ) ? tr( "min" ) : tr( "mins" );
+   QString scan1time = QString().sprintf( "%d m %02d s", fmins, fsecs );
+   //end of length
+   
+   US_ReportGMP reportGMP;  
+   int nchna   = currAProf.pchans.count();
+   for ( int i = 0; i < nchna; i++ )
+     {
+       QString channel_desc_alt = chndescs_alt[ i ];
+
+       if ( t_name. contains( channel_desc_alt.split(":")[0] ) )
+	 {
+	   reportGMP = ch_reports[ channel_desc_alt ][ wvl ];
+
+	   tot_conc_r     = reportGMP.tot_conc ;
+	   tot_conc_tol_r = reportGMP.tot_conc_tol ;
+	   rmsd_r         = reportGMP.rmsd_limit ;
+	   av_int_r       = reportGMP.av_intensity ;
+	   exp_dur_r      = reportGMP.experiment_duration ;
+	   exp_dur_tol_r  = reportGMP.experiment_duration_tol ;
+	   
+	   break;
+	 }
+     }
+   //transform exp_duration_report into hh mm format
+   int  hours_r     = (int)qFloor( exp_dur_r / 3600.0 );
+   int  mins_r      = (int)qRound( ( exp_dur_r - hours_r * 3600.0 ) / 60.0 );
+   QString hh_r     = ( hours_r == 1 ) ? tr( "hr" ) : tr( "hrs" );
+   hh_r    = "h";
+   QString exp_dur_r_hh_mm    = QString().sprintf( "%d %s %02d m", hours_r, hh_r.toLatin1().data(), mins_r );
+   //end of exp_dur_r transformation
+
+   //passes
+   QString tot_conc_passed = ( sum_c  >= ( tot_conc_r * (1 - tot_conc_tol_r/100.0)  ) && sum_c  <= ( tot_conc_r * (1 + tot_conc_tol_r/100.0) ) ) ? "YES" : "NO";
+   QString exp_dur_passed  = ( last_f >= ( exp_dur_r * (1 - exp_dur_tol_r/100.0)  )   && last_f <= ( exp_dur_r * (1 + exp_dur_tol_r/100.0) ) ) ? "YES" : "NO";
+   //end passes
+   
+   mstr += "\n" + indent( 2 ) + tr( "<h3>Comparison Between Run/Simulation Results and Report Parameters:</h3>\n" );
+   mstr += indent( 2 ) + "<table>\n";
+   
+   mstr += table_row( tr( "Parameter: " ),
+                      tr( "Report Value:" ),
+		      tr( "Tolerance, %:"),
+		      tr( "Simulation Value:" ),
+		      tr( "PASSED ?" ));
+   mstr += table_row( tr( "Total Concentration" ),
+		      QString::number( tot_conc_r ),
+		      QString::number(tot_conc_tol_r) + "%",
+                      QString().sprintf( "%6.4e", sum_c ),
+		      tot_conc_passed) ;
+   mstr += table_row( tr( "RMSD limit" ),
+		      QString::number( rmsd_r ),
+		      QString(""),
+                      rmsd_global,
+		      QString( "YES" ));
+   mstr += table_row( tr( "Experiment Duration" ),
+		      exp_dur_r_hh_mm,
+		      QString::number(exp_dur_tol_r) + "%",
+		      wks,
+		      exp_dur_passed ) ;
+   mstr += table_row( tr( "Minimum Intensity" ),
+		      QString::number( av_int_r ),
+		      QString(""),
+                      QString("to be passed.."),
+		      QString( "YES" ));
+   
+   mstr += indent( 2 ) + "</table>\n";
+
+   //Now, integration results
+   mstr += "\n" + indent( 2 ) + tr( "<h3>Integration Results: Fraction of Total Concentration:</h3>\n" );
+   mstr += indent( 2 ) + "<table>\n";
+   mstr += table_row( tr( "Type | Method: " ),
+                      tr( "Report Value:" ),
+		      tr( "Tolerance, %:"),
+		      tr( "Simulation Value:" ),
+		      tr( "PASSED ?" ));
+   int report_items_number = reportGMP.reportItems.size();
+   for ( int kk = 0; kk < report_items_number; ++kk )
+     {
+       US_ReportGMP::ReportItem curr_item = reportGMP.reportItems[ kk ];
+       QString type_meth      = curr_item.type + " | " + curr_item.method;
+       QString frac_tot_r     = QString::number( curr_item.total_percent );
+       QString frac_tot_tol_r = QString::number( curr_item.tolerance ) + "%";
+
+       double  low  = curr_item.range_low;
+       double  high = curr_item.range_high;
+
+       //do we need to include only method (2DSA-IT) corresponding to model (2DSA-IT)?? 
+       //check the type
+       if( curr_item.type == "s") //use S 20,W
+	 {
+	   
+	 }
+       if( curr_item.type == "D") //use D 20,W
+	 {
+	   
+	 }
+       if( curr_item.type == "f/f0") //use f/f0
+	 {
+	   
+	 }
+       if( curr_item.type == "MW") //use MW
+	 {
+	   
+	 }
+       mstr += table_row( type_meth,
+			  frac_tot_r,
+			  frac_tot_tol_r,
+			  tr( "to be computed.." ),
+			  tr( "YES" ));
+       
+      
+     }
+   mstr += indent( 2 ) + "</table>\n";
+   //End of integration results
 
    /*
    if ( is_dmga_mc )
@@ -4011,6 +4159,14 @@ QString  US_ReporterGMP::table_row( const QString& s1, const QString& s2,
 {
    return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>" + s3
             + "</td></tr>\n" );
+}
+
+// Table row HTML with 4 columns
+QString  US_ReporterGMP::table_row( const QString& s1, const QString& s2,
+                               const QString& s3, const QString& s4 ) const
+{
+   return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>" + s3
+            + "</td><td>" + s4 + "</td></tr>\n" );
 }
 
 // Table row HTML with 5 columns
