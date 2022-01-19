@@ -8265,12 +8265,12 @@ DbgLv(1) << "CGui:IOD: RETURN";
 void US_ConvertGui::build_output_data()
 {
     DbgLv(1) << "CGui: BOD: allsz" << allData.size() << "outsz" << outData.size();
-    tempData = outData;
-    temp_tripinfo = out_tripinfo;
-    temp_triples = out_triples;
-    temp_chaninfo = out_chaninfo;
-    temp_channels = out_channels;
-    temp_chandatx = out_chandatx;
+    QVector< US_DataIO::RawData* > tempData = outData;
+    QList< US_Convert::TripleInfo > temp_tripinfo = out_tripinfo;
+    QStringList  temp_triples = out_triples;
+    QList< US_Convert::TripleInfo > temp_chaninfo = out_chaninfo;
+    QStringList  temp_channels = out_channels;
+    QList< int > temp_chandatx = out_chandatx;
     outData.clear();   // Pointers to output data
     out_tripinfo.clear();   // Output triple information objects
     out_triples.clear();   // Output triple strings ("1 / A / 250")
@@ -8290,7 +8290,7 @@ void US_ConvertGui::build_output_data()
         bool used_temp = false;
         // check if the non-updated output data pointers and lists already contain the triple
         for (int ttrx = 0; ttrx < tempData.size();ttrx++){
-            US_Convert::TripleInfo *ttripinfo = &temp_tripinfo[ttrx];
+            US_Convert::TripleInfo *ttripinfo = temp_tripinfo[ttrx];
             if (ttripinfo->tripleID==tripinfo->tripleID) {
                 // update export-data pointers and lists using the old export-data pointers and lists
                 DbgLv(1) << "CGui: BOD:  trx" << trx << " found in tempData as ttrx " << ttrx;
