@@ -8288,13 +8288,17 @@ void US_ConvertGui::build_output_data()
             continue;
         }
         bool used_temp = false;
+        US_Convert::TripleInfo *ttripinfo;
+        int ttrx;
         // check if the non-updated output data pointers and lists already contain the triple
-        for (int ttrx = 0; ttrx < tempData.size();ttrx++){
-            US_Convert::TripleInfo *ttripinfo = &temp_tripinfo[ttrx];
-            if (ttripinfo->tripleID==tripinfo->tripleID) {
+        for (int tttrx = 0; tttrx < tempData.size();tttrx++){
+            US_Convert::TripleInfo *tttripinfo = &temp_tripinfo[tttrx];
+            if (tttripinfo->tripleID==tripinfo->tripleID) {
                 // update export-data pointers and lists using the old export-data pointers and lists
-                DbgLv(1) << "CGui: BOD:  trx" << trx << " found in tempData as ttrx " << ttrx;
-                used_temp = true
+                DbgLv(1) << "CGui: BOD:  trx" << trx << " found in tempData as ttrx " << tttrx;
+                used_temp = true;
+                ttripinfo = tttripinfo;
+                ttrx = tttrx;
                 break;
             }
         }
