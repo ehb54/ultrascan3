@@ -8264,43 +8264,68 @@ DbgLv(1) << "CGui:IOD: RETURN";
 // Build output data pointers and lists after new exclusions
 void US_ConvertGui::build_output_data()
 {
-DbgLv(1) << "CGui: BOD: allsz" << allData.size() << "outsz" << outData.size();
-   outData     .clear();   // Pointers to output data
-   out_tripinfo.clear();   // Output triple information objects
-   out_triples .clear();   // Output triple strings ("1 / A / 250")
-   out_chaninfo.clear();   // Output channel information objects
-   out_channels.clear();   // Output channel strings ("2 / B")
-   out_chandatx.clear();   // Triple start indexes for each channel
-   int outx       = 0;     // Output triple data index
+    DbgLv(1) << "CGui: BOD: allsz" << allData.size() << "outsz" << outData.size();
+    tempData = outData;
+    temp_tripinfo = out_tripinfo;
+    temp_triples = out_triples;
+    temp_chaninfo = out_chaninfo;
+    temp_channels = out_channels;
+    temp_chandatx = out_chandatx;
+    outData.clear();   // Pointers to output data
+    out_tripinfo.clear();   // Output triple information objects
+    out_triples.clear();   // Output triple strings ("1 / A / 250")
+    out_chaninfo.clear();   // Output channel information objects
+    out_channels.clear();   // Output channel strings ("2 / B")
+    out_chandatx.clear();   // Triple start indexes for each channel
+    int outx = 0;     // Output triple data index
 
-   // Set up updated export-data pointers list and supporting output lists
-   for ( int trx = 0; trx < allData.size(); trx++ )
-   {
-      US_Convert::TripleInfo* tripinfo = &all_tripinfo[ trx ];
+    // Set up updated export-data pointers list and supporting output lists
+    for (int trx = 0; trx < allData.size(); trx++) {
+        US_Convert::TripleInfo *tripinfo = &all_tripinfo[trx];
 
-      if ( tripinfo->excluded )
-      {
-DbgLv(1) << "CGui: BOD:  trx" << trx << "EXCLUDED";
-         continue;
-      }
+        if (tripinfo->excluded) {
+            DbgLv(1) << "CGui: BOD:  trx" << trx << "EXCLUDED";
+            continue;
+        }
+        bool used_temp = false;
+        // check if the non-updated output data pointers and lists already contain the triple
+        for (int ttrx = 0; ttrx < tempData.size();ttrx++){
+            US_Convert::TripleInfo *ttripinfo = &temp_tripinfo[ttrx];
+            if (ttripinfo->tripleID==tripinfo->tripleID) {
+                // update export-data pointers and lists using the old export-data pointers and lists
+                DbgLv(1) << "CGui: BOD:  trx" << trx << " found in tempData as ttrx " << ttrx;
+                used_temp = true;
+                outData << &tempData[ttrx];
 
-      outData      << &allData[ trx ];
+                QString triple = ttripinfo->tripleDesc;
+                QString celchn = triple.section(" / ", 0, 1);
 
-      QString triple = tripinfo->tripleDesc;
-      QString celchn = triple.section( " / ", 0, 1 );
+                out_tripinfo << *ttripinfo;
+                out_triples << triple;
+                break;
+            }
+        }
+        // update export-data pointers and lists using the raw data
+        if (!used_temp){
+            outData << &allData[trx];
 
-      out_tripinfo << *tripinfo;
-      out_triples  << triple;
+            QString triple = tripinfo->tripleDesc;
+            QString celchn = triple.section(" / ", 0, 1);
 
-      if ( !isMwl  ||  ! out_channels.contains( celchn ) )
-      {
-         out_channels << celchn;
-         out_chaninfo << *tripinfo;
-         out_chandatx << outx;
-      }
-DbgLv(1) << "CGui: BOD:  trx" << trx << "add to out" << outx << triple;
+            out_tripinfo << *tripinfo;
+            out_triples << triple;
+        }
 
-      outx++;
+        if (!isMwl || !out_channels.contains(celchn)) {
+            out_channels << celchn;
+            out_chaninfo << *tripinfo;
+            out_chandatx << outx;
+        }
+        DbgLv(1) << "CGui: BOD:  trx" << trx << "add to out" << outx << triple;
+
+        outx++;
+    }
+    DbgLv(1) << "CGui: BOD: outsz" << outData.size();
    }
 DbgLv(1) << "CGui: BOD: outsz" << outData.size();
 }
