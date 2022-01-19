@@ -8329,8 +8329,7 @@ void US_ConvertGui::build_output_data()
     }
     DbgLv(1) << "CGui: BOD: outsz" << outData.size();
    }
-DbgLv(1) << "CGui: BOD: outsz" << outData.size();
-}
+
 
 // Turn ct_tolerance connection on or off
 void US_ConvertGui::connectTolerance( bool setConnect )
