@@ -8302,12 +8302,14 @@ void US_ConvertGui::build_output_data()
                 break;
             }
         }
+        QString triple;
+        QString celchn;
         // update export-data pointers and lists using the raw data
         if (!used_temp){
             outData << &allData[trx];
 
-            QString triple = tripinfo->tripleDesc;
-            QString celchn = triple.section(" / ", 0, 1);
+            triple = tripinfo->tripleDesc;
+            celchn = triple.section(" / ", 0, 1);
 
             out_tripinfo << *tripinfo;
             out_triples << triple;
@@ -8315,8 +8317,8 @@ void US_ConvertGui::build_output_data()
         else {
             outData << tempData[ttrx];
 
-            QString triple = ttripinfo->tripleDesc;
-            QString celchn = triple.section(" / ", 0, 1);
+            triple = ttripinfo->tripleDesc;
+            celchn = triple.section(" / ", 0, 1);
 
             out_tripinfo << *ttripinfo;
             out_triples << triple;
