@@ -8290,18 +8290,11 @@ void US_ConvertGui::build_output_data()
         bool used_temp = false;
         // check if the non-updated output data pointers and lists already contain the triple
         for (int ttrx = 0; ttrx < tempData.size();ttrx++){
-            US_Convert::TripleInfo *ttripinfo = temp_tripinfo[ttrx];
+            US_Convert::TripleInfo *ttripinfo = &temp_tripinfo[ttrx];
             if (ttripinfo->tripleID==tripinfo->tripleID) {
                 // update export-data pointers and lists using the old export-data pointers and lists
                 DbgLv(1) << "CGui: BOD:  trx" << trx << " found in tempData as ttrx " << ttrx;
-                used_temp = true;
-                outData << &tempData[ttrx];
-
-                QString triple = ttripinfo->tripleDesc;
-                QString celchn = triple.section(" / ", 0, 1);
-
-                out_tripinfo << *ttripinfo;
-                out_triples << triple;
+                used_temp = true
                 break;
             }
         }
@@ -8313,6 +8306,15 @@ void US_ConvertGui::build_output_data()
             QString celchn = triple.section(" / ", 0, 1);
 
             out_tripinfo << *tripinfo;
+            out_triples << triple;
+        }
+        else {
+            outData << tempData[ttrx];
+
+            QString triple = ttripinfo->tripleDesc;
+            QString celchn = triple.section(" / ", 0, 1);
+
+            out_tripinfo << *ttripinfo;
             out_triples << triple;
         }
 
