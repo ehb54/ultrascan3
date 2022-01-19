@@ -1499,7 +1499,7 @@ void US_InitDialogueGui::initRecordsDialogue( void )
        << "Run Name"
        << "Optima Name"
        << "Created"
-       << "Run Status"
+       << "Optima Run Status"
        << "Stage"
        << "GMP";
   

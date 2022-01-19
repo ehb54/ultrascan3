@@ -559,11 +559,17 @@ DbgLv(1) << "CGui: reset complete";
    // QString invid    = QString("2");
    // QString aprofileguid = QString("f873e8d6-6ec9-4db9-b17f-f51b21206719");
 
+   //Single WVL
    // QString curdir   = QString("/home/alexey/ultrascan/imports/DaubnauD_ComEA_071421-run1163");
    // QString protname = QString("DaubnauD_ComEA_071421");
    // QString invid    = QString("104");
    // QString aprofileguid = QString("4b130961-40b3-4e23-91b7-34fa928bdc44");
-   
+
+   // //MWL
+   // QString curdir   = QString("/home/alexey/ultrascan/imports/JasonH_HHP1-comparison-MWL_041020-run724");
+   // QString protname = QString("JasonH_HHP1-comparison-MWL_041020");
+   // QString invid    = QString("29");
+   // QString aprofileguid = QString("fafe5452-eac9-44c6-b8e6-04b1b8b7e3d7");
    
    // QMap < QString, QString > protocol_details;
    // //protocol_details[ "status" ];
@@ -581,7 +587,7 @@ DbgLv(1) << "CGui: reset complete";
    // // /*********************************************************************************/
 
    
-   //import_data_auto( protocol_details ); 
+   // import_data_auto( protocol_details ); 
    
 
    qDebug() << "US_CONVERT: SET !"; 
@@ -4760,6 +4766,7 @@ DbgLv(1) << "CGui: (6)referDef=" << referenceDefined;
      {
        lw_todoinfo->clear();
        pb_saveUS3 ->setEnabled( true );
+       show_intensity_auto();
      }
    else
      enableSaveBtn();
@@ -4790,11 +4797,17 @@ void US_ConvertGui::cClick( const QwtDoublePoint& p )
 
       case REFERENCE :
          // process reference scan
-         if ( reference_start == 0.0 )
-            start_reference( p );
-
-         else
-            process_reference( p );
+	if ( reference_start == 0.0 )
+	  start_reference( p );
+	
+	else
+	  {
+	    process_reference( p );
+	    // if( us_convert_auto_mode )
+	    //   {
+	    // 	show_intensity_auto();
+	    //   }
+	  }
 
       default :
          break;
@@ -4964,6 +4977,73 @@ DbgLv(1) << "CGui: show_intensity  scn1 scnn" << scan_nbrs[0]
    dialog->exec();
    qApp->processEvents();
 }
+
+//Modified fnc for autoflow
+void US_ConvertGui::show_intensity_auto( void )
+{
+   QString triple = out_triples[ 0 ];
+   QVector< double > scan_nbrs;
+
+   if ( isMwl )
+   {  // For MWL, set special triple string and build scan numbers
+      int riscans    = ExpData.RI_nscans;
+      int riwvlns    = ExpData.RI_nwvlns;
+      triple      = out_channels[ 0 ] + " / "
+         + QString::number( ExpData.RIwvlns[ 0 ] ) + "-"
+         + QString::number( ExpData.RIwvlns[ riwvlns - 1 ] );
+
+      // Scan numbers are composite wavelength.scan
+      double scndiv  = 0.1;
+      double scnmax  = (double)riscans;
+      double scnfra  = scnmax * scndiv;
+      while ( scnfra > 0.999 )
+      {
+         scndiv        *= 0.1;
+         scnfra         = scnmax * scndiv;
+      }
+DbgLv(1) << "CGui: show_intensity  scndiv scnfra" << scndiv << scnfra;
+
+      for ( int ii = 0; ii < riwvlns; ii++ )
+      {
+         double wvbase  = (double)ExpData.RIwvlns[ ii ];
+
+	 qDebug() << "In show_intensity_auto: Mwl, wvl -- " << wvbase;
+
+	 double sum = 0.0;
+         for ( int jj = 0; jj < riscans; jj++ )
+         {
+            double scnnbr  = wvbase + scndiv * (double)( jj + 1 );
+            scan_nbrs << scnnbr;
+
+	    sum += ExpData.RIProfile[ ii*riscans + jj ];
+	    //qDebug() << "For wvl " << wvbase << ", scans are -- " << ExpData.RIProfile[ ii*riscans + jj ];
+          }
+
+	 qDebug() << "MWL: For wvl " << wvbase << ", Av. Intensity is -- " << double( sum / riscans );
+      }
+   }
+
+   else
+     {  // For non-MWL, set scan numbers vector
+       double sum = 0.0;
+       for ( int ii = 0; ii < ExpData.RIProfile.size(); ii++ )
+	 {
+	   scan_nbrs << (double)( ii + 1 );
+	   sum += ExpData.RIProfile[ ii ];
+	 }
+
+       qDebug() << "Non-MWL: Av. Intensity is -- " << double( sum / ExpData.RIProfile.size() );
+     }
+   ///////////////
+ 
+   // US_Intensity* dialog
+   //    = new US_Intensity( runID, triple,
+   //                      ( const QVector< double > ) ExpData.RIProfile,
+   //                      ( const QVector< double > ) scan_nbrs );
+   // dialog->exec();
+   qApp->processEvents();
+}
+
 
 // Un-do reference scans apply
 void US_ConvertGui::cancel_reference( void )

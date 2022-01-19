@@ -398,7 +398,10 @@ class US_ConvertGui : public US_Widgets
       void cClick            ( const QwtDoublePoint& );
       void process_subsets   ( void );
       void define_reference  ( void );
+
       void show_intensity    ( void );
+      void show_intensity_auto ( void );
+
       void cancel_reference  ( void );
       void drop_reference    ( void );
       void drop_channel      ( void );

@@ -3756,6 +3756,8 @@ QString US_ReporterGMP::distrib_info()
    QString t_name = model_used.description.split(".")[1];
    QString wvl    = t_name.mid(2,3);
    qDebug() << "In DISTRIB: triple, wvl -- " << t_name << wvl;
+
+   qDebug() << "Model description, mdla, msim -- " << model_used.description <<  mdla << msim;
    
    double tot_conc_r, tot_conc_tol_r, rmsd_r, av_int_r, exp_dur_r, exp_dur_tol_r;
 
@@ -3804,13 +3806,14 @@ QString US_ReporterGMP::distrib_info()
    //passes
    QString tot_conc_passed = ( sum_c  >= ( tot_conc_r * (1 - tot_conc_tol_r/100.0)  ) && sum_c  <= ( tot_conc_r * (1 + tot_conc_tol_r/100.0) ) ) ? "YES" : "NO";
    QString exp_dur_passed  = ( last_f >= ( exp_dur_r * (1 - exp_dur_tol_r/100.0)  )   && last_f <= ( exp_dur_r * (1 + exp_dur_tol_r/100.0) ) ) ? "YES" : "NO";
+   QString rmsd_passed = ( rmsd_global.toDouble() <= rmsd_r ) ? "YES" : "NO";
    //end passes
    
    mstr += "\n" + indent( 2 ) + tr( "<h3>Comparison Between Run/Simulation Results and Report Parameters:</h3>\n" );
    mstr += indent( 2 ) + "<table>\n";
    
    mstr += table_row( tr( "Parameter: " ),
-                      tr( "Report Value:" ),
+                      tr( "Target Value:" ),
 		      tr( "Tolerance, %:"),
 		      tr( "Simulation Value:" ),
 		      tr( "PASSED ?" ));
@@ -3823,7 +3826,7 @@ QString US_ReporterGMP::distrib_info()
 		      QString::number( rmsd_r ),
 		      QString(""),
                       rmsd_global,
-		      QString( "YES" ));
+		      rmsd_passed );
    mstr += table_row( tr( "Experiment Duration" ),
 		      exp_dur_r_hh_mm,
 		      QString::number(exp_dur_tol_r) + "%",
@@ -3833,54 +3836,78 @@ QString US_ReporterGMP::distrib_info()
 		      QString::number( av_int_r ),
 		      QString(""),
                       QString("to be passed.."),
-		      QString( "YES" ));
+		      QString( "to be determined.." ));
    
    mstr += indent( 2 ) + "</table>\n";
 
    //Now, integration results
    mstr += "\n" + indent( 2 ) + tr( "<h3>Integration Results: Fraction of Total Concentration:</h3>\n" );
    mstr += indent( 2 ) + "<table>\n";
-   mstr += table_row( tr( "Type | Method: " ),
-                      tr( "Report Value:" ),
+   mstr += table_row( tr( "Type:" ),
+		      tr( "Range:"),
+                      tr( "Integration from Model (target):" ),
+		      tr( "Fraction % from Model (target):" ),
 		      tr( "Tolerance, %:"),
-		      tr( "Simulation Value:" ),
 		      tr( "PASSED ?" ));
    int report_items_number = reportGMP.reportItems.size();
    for ( int kk = 0; kk < report_items_number; ++kk )
      {
        US_ReportGMP::ReportItem curr_item = reportGMP.reportItems[ kk ];
-       QString type_meth      = curr_item.type + " | " + curr_item.method;
-       QString frac_tot_r     = QString::number( curr_item.total_percent );
-       QString frac_tot_tol_r = QString::number( curr_item.tolerance ) + "%";
+       QString type           = curr_item.type;
+       QString method         = curr_item.method;
+       QString int_val_r      = QString::number( curr_item.integration_val );
+       double  frac_tot_r     = curr_item.total_percent;
+       double  frac_tot_tol_r = curr_item.tolerance ;
+       double  low            = curr_item.range_low;
+       double  high           = curr_item.range_high;
 
-       double  low  = curr_item.range_low;
-       double  high = curr_item.range_high;
+       QString range = "[" + QString::number(low) + " - " + QString::number(high) + "]";
 
-       //do we need to include only method (2DSA-IT) corresponding to model (2DSA-IT)?? 
-       //check the type
-       if( curr_item.type == "s") //use S 20,W
+       //integrate over model_used
+       double int_val_m = 0;
+       for ( int ii = 0; ii < ncomp; ii++ )
 	 {
-	   
+	   double conc = model_used.components[ ii ].signal_concentration;
+	   double s_20 = model_used.components[ ii ].s;
+	   double D_20 = model_used.components[ ii ].D;
+	   double f_f0 = model_used.components[ ii ].f_f0;
+	   double mw   = model_used.components[ ii ].mw;
+
+	   if ( type == "s" )
+	     {
+	       if ( s_20 >= low*pow(10,-13) && s_20 <= high*pow(10,-13) )
+		 int_val_m += conc;
+	     }
+	   else if ( type == "D" )
+	     {
+	       if ( D_20 >= low*pow(10,-7) && D_20 <= high*pow(10,-7) )
+		 int_val_m += conc;
+	     }
+	   else if ( type == "f/f0")
+	     {
+	       if ( f_f0 >= low && f_f0 <= high )
+		 int_val_m += conc;
+	     }
+	   else if ( type == "MW")
+	     {
+	       if ( mw >= low*pow(10,3) && mw <= high*pow(10,3) )
+		 int_val_m += conc;
+	     }
 	 }
-       if( curr_item.type == "D") //use D 20,W
+
+       double frac_tot_m = double( int_val_m / sum_c ) * 100.0;
+       QString tot_frac_passed = ( frac_tot_m >= ( frac_tot_r * (1 - frac_tot_tol_r/100.0)  )
+				   && frac_tot_m <= ( frac_tot_r * (1 + frac_tot_tol_r/100.0)  ) ) ? "YES" : "NO";
+
+       if ( mdla.contains ( method ) )
 	 {
-	   
+	   mstr += table_row( type,
+			      range,
+			      QString().sprintf( "%10.4e", int_val_m) + " (" + int_val_r + ")",
+			      QString().sprintf( "%5.2f%%", frac_tot_m ) + " (" + QString::number( frac_tot_r ) + "%)",
+			      QString::number( frac_tot_tol_r ),
+			      tot_frac_passed );
 	 }
-       if( curr_item.type == "f/f0") //use f/f0
-	 {
-	   
-	 }
-       if( curr_item.type == "MW") //use MW
-	 {
-	   
-	 }
-       mstr += table_row( type_meth,
-			  frac_tot_r,
-			  frac_tot_tol_r,
-			  tr( "to be computed.." ),
-			  tr( "YES" ));
-       
-      
      }
    mstr += indent( 2 ) + "</table>\n";
    //End of integration results
@@ -4176,6 +4203,16 @@ QString  US_ReporterGMP::table_row( const QString& s1, const QString& s2,
 {
    return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>" + s3
             + "</td><td>" + s4 + "</td><td>" + s5 + "</td></tr>\n" );
+}
+
+// Table row HTML with 6 columns
+QString  US_ReporterGMP::table_row( const QString& s1, const QString& s2,
+                               const QString& s3, const QString& s4,
+                               const QString& s5, const QString& s6 ) const
+{
+   return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>"
+            + s3 + "</td><td>" + s4 + "</td><td>" + s5 + "</td><td>"
+            + s6 + "</td><td>\n" );
 }
 
 // Table row HTML with 7 columns
