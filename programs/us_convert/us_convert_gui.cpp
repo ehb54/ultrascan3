@@ -1549,7 +1549,37 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
      
      readProtocol_auto();
      getLabInstrumentOperatorInfo_auto();
-     
+
+     //Auto-process reference scans
+     char chtype[ 3 ] = { 'R', 'A', '\0' };
+     strncpy( chtype, allData[ 0 ].type, 2 );
+     QString dataType = QString( chtype ).left( 2 );
+     qDebug() << "Data type -- " << dataType;
+     if ( dataType == "RI" )
+       {
+	 double low_ref  = 5.87 - 0.005;
+	 double high_ref = 5.87 + 0.005;
+	 process_reference_auto( low_ref, high_ref );
+
+	 QMessageBox msgBox;
+	 msgBox.setText(tr("Attention: Reference scans have been defined automatically."));
+	 msgBox.setInformativeText("You may Accept and proceed with saving the data, or choose to reset reference scans definitions and Define Manually:");
+	 msgBox.setWindowTitle(tr("Reference Scans: Automated Processing"));
+	 QPushButton *Automatic  = msgBox.addButton(tr("Accept "),   QMessageBox::YesRole);
+	 QPushButton *Manual     = msgBox.addButton(tr("Define Manually"), QMessageBox::YesRole);
+	 	 
+	 msgBox.setIcon(QMessageBox::Question);
+	 msgBox.exec();
+	 
+	 if (msgBox.clickedButton() == Automatic) {
+	   return;
+	 }
+	 else if (msgBox.clickedButton() == Manual) {
+	   cancel_reference();
+	 }
+       }
+     //end of auto-processing reference range
+
      return;
    }
   
@@ -1616,7 +1646,7 @@ DbgLv(1) << "CGui: import: RTN";
 //Slot to process next optics type
 void US_ConvertGui::process_optics()
 {
-  intensityJsonRI      .clear();
+  intensityJsonRI    .clear();
   channels_to_drop   .clear();
   //read_aprofile_data_from_aprofile();
   
@@ -1643,10 +1673,40 @@ void US_ConvertGui::process_optics()
      
      readProtocol_auto();
      getLabInstrumentOperatorInfo_auto();
+
+     //Auto-process reference scans
+     char chtype[ 3 ] = { 'R', 'A', '\0' };
+     strncpy( chtype, allData[ 0 ].type, 2 );
+     QString dataType = QString( chtype ).left( 2 );
+     qDebug() << "Data type -- " << dataType;
+     if ( dataType == "RI" )
+       {
+	 double low_ref  = 5.87 - 0.005;
+	 double high_ref = 5.87 + 0.005;
+	 process_reference_auto( low_ref, high_ref );
+
+	 QMessageBox msgBox;
+	 msgBox.setText(tr("Attention: Reference scans have been defined automatically."));
+	 msgBox.setInformativeText("You may Accept and proceed with saving the data, or choose to reset reference scans definitions and Define Manually:");
+	 msgBox.setWindowTitle(tr("Reference Scans: Automated Processing"));
+	 QPushButton *Automatic  = msgBox.addButton(tr("Accept "),   QMessageBox::YesRole);
+	 QPushButton *Manual     = msgBox.addButton(tr("Define Manually"), QMessageBox::YesRole);
+	 	 
+	 msgBox.setIcon(QMessageBox::Question);
+	 msgBox.exec();
+	 
+	 if (msgBox.clickedButton() == Automatic) {
+	   return;
+	 }
+	 else if (msgBox.clickedButton() == Manual) {
+	   cancel_reference();
+	 }
+       } 
+     //end of auto-processing reference range
      
      return;
    }
-} 
+}
 
 
 // User pressed the import data button
@@ -4707,6 +4767,57 @@ void US_ConvertGui::start_reference( const QwtDoublePoint& p )
 
    draw_vline( reference_start );
    data_plot->replot();
+}
+
+// Select end point of reference scan in intensity data
+void US_ConvertGui::process_reference_auto( const double low, const double high )
+{
+  reference_start = low;
+  reference_end = high;;
+
+  data_plot->replot();
+  
+  // Calculate the averages for all triples
+  PseudoCalcAvg();
+  
+  // Now that we have the averages, let's replot
+  Pseudo_reference_triple = tripListx;
+  
+  // Default to displaying the first non-reference triple
+  for ( int trx = 0; trx < outData.size(); trx++ )
+    {
+      if ( trx != Pseudo_reference_triple )
+	{
+	  tripListx = trx;
+	  break;
+	}
+    }
+
+  if ( isMwl )
+   {
+      triple_index();
+      DbgLv(1) << "CGui: procref: 2)setrow-tripx" << tripListx;
+   }
+  lw_triple->setCurrentRow( tripListx );
+  plot_current();
+  DbgLv(1) << "CGui: procref:  plot_current complete";
+  QApplication::restoreOverrideCursor();
+
+  pb_reference  ->setEnabled( false );
+  referenceDefined = true;
+  DbgLv(1) << "CGui: (6)referDef=" << referenceDefined;
+
+  // ALEXEY: just enable Save btn for autoflow 
+  lw_todoinfo->clear();
+  pb_saveUS3 ->setEnabled( true );
+  show_intensity_auto();
+    
+  enableRunIDControl( false );
+     
+  le_status->setText( tr( "The reference scans have been defined." ) );
+  qApp->processEvents();
+
+  qDebug() << "After Reference Defined: count of outData, out_chaninfo: " <<  outData.count() << ", " << out_chaninfo.count();
 }
 
 // Select end point of reference scan in intensity data
