@@ -28,7 +28,8 @@
 #include "us_tmst_plot.h"
 #include "us_astfem_math.h"
 #include "us_protocol_util.h"
-
+#include <iostream>
+using namespace std;
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c)  setData(a,b,c)
 #define setMinimum(a)      setMinValue(a)
