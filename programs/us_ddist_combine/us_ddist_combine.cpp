@@ -1373,7 +1373,7 @@ DbgLv(1) << "RunIDSel:     added: ddesc" << ddesc;
 }
 
 // Model distribution selected -- FOR GMP reporter | 6. REPORT
-void US_DDistr_Combine::model_select_auto( QString modelNameMod )
+void US_DDistr_Combine::model_select_auto( QString modelNameMod  )
 {
    QString          distrID = modelNameMod;
    int              mdx     = distro_by_descr( distrID );
@@ -1397,6 +1397,7 @@ DbgLv(1) << "ModelSel: model" << distrID << "mdx" << mdx;
       return;
    }
 
+    
    plot_data();
 
    pb_saveda->setEnabled( true );

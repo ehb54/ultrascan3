@@ -559,7 +559,7 @@ DbgLv(1) << "CGui: reset complete";
    // QString invid    = QString("2");
    // QString aprofileguid = QString("f873e8d6-6ec9-4db9-b17f-f51b21206719");
 
-   //Single WVL
+   // //Single WVL
    // QString curdir   = QString("/home/alexey/ultrascan/imports/DaubnauD_ComEA_071421-run1163");
    // QString protname = QString("DaubnauD_ComEA_071421");
    // QString invid    = QString("104");
@@ -1333,6 +1333,8 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
   channels_to_drop   .clear();
   runTypes_map       .clear();
   runTypeList        .clear();
+
+  intensityJsonRI      .clear();
   
   // ALEXEY TO BE ADDED...
   /* 
@@ -1614,6 +1616,7 @@ DbgLv(1) << "CGui: import: RTN";
 //Slot to process next optics type
 void US_ConvertGui::process_optics()
 {
+  intensityJsonRI      .clear();
   channels_to_drop   .clear();
   //read_aprofile_data_from_aprofile();
   
@@ -4981,6 +4984,9 @@ DbgLv(1) << "CGui: show_intensity  scn1 scnn" << scan_nbrs[0]
 //Modified fnc for autoflow
 void US_ConvertGui::show_intensity_auto( void )
 {
+   intensityJsonRI. clear();
+   intensityJsonRI += "{ \"Intensity\": ";
+  
    QString triple = out_triples[ 0 ];
    QVector< double > scan_nbrs;
 
@@ -5003,6 +5009,8 @@ void US_ConvertGui::show_intensity_auto( void )
       }
 DbgLv(1) << "CGui: show_intensity  scndiv scnfra" << scndiv << scnfra;
 
+      intensityJsonRI += "[{";
+ 
       for ( int ii = 0; ii < riwvlns; ii++ )
       {
          double wvbase  = (double)ExpData.RIwvlns[ ii ];
@@ -5018,11 +5026,15 @@ DbgLv(1) << "CGui: show_intensity  scndiv scnfra" << scndiv << scnfra;
 	    sum += ExpData.RIProfile[ ii*riscans + jj ];
 	    //qDebug() << "For wvl " << wvbase << ", scans are -- " << ExpData.RIProfile[ ii*riscans + jj ];
           }
+	 double av_int =  double( sum / riscans );
+	 qDebug() << "MWL: For wvl " << wvbase << ", Av. Intensity is -- " << av_int;
 
-	 qDebug() << "MWL: For wvl " << wvbase << ", Av. Intensity is -- " << double( sum / riscans );
+	 intensityJsonRI += "\"" + QString::number( wvbase ) + "\"" + ":" + "\""  + QString::number( av_int ) + "\",";
       }
+      
+      intensityJsonRI.chop(1);
+      intensityJsonRI += "}]";
    }
-
    else
      {  // For non-MWL, set scan numbers vector
        double sum = 0.0;
@@ -5031,16 +5043,18 @@ DbgLv(1) << "CGui: show_intensity  scndiv scnfra" << scndiv << scnfra;
 	   scan_nbrs << (double)( ii + 1 );
 	   sum += ExpData.RIProfile[ ii ];
 	 }
-
-       qDebug() << "Non-MWL: Av. Intensity is -- " << double( sum / ExpData.RIProfile.size() );
+       double av_int = double( sum / ExpData.RIProfile.size() );
+       qDebug() << "Non-MWL: Av. Intensity is -- " << av_int;
+       
+       intensityJsonRI += "\"" + QString::number( av_int ) + "\"";
      }
-   ///////////////
- 
-   // US_Intensity* dialog
-   //    = new US_Intensity( runID, triple,
-   //                      ( const QVector< double > ) ExpData.RIProfile,
-   //                      ( const QVector< double > ) scan_nbrs );
-   // dialog->exec();
+
+   intensityJsonRI += "}";
+
+   qDebug() << "intensityJsonRI -- " << intensityJsonRI;
+
+   
+
    qApp->processEvents();
 }
 
@@ -6230,7 +6244,7 @@ DbgLv(1) << "Writing to disk";
      }
 }
 
-//Update autoflow record upon Editing compleation
+//Update autoflow record upon Editing completion
 void US_ConvertGui::update_autoflow_record_atLimsImport( void )
 {
   QString filename_toDB;
@@ -6256,10 +6270,35 @@ void US_ConvertGui::update_autoflow_record_atLimsImport( void )
      }
 
    QStringList qry;
+
+   //now, make a record in the autoflowIntensity table, return ID
+   int autoflowIntensityID = 0;
+   if ( ! intensityJsonRI.isEmpty() )
+     {
+       qry.clear();
+       qry << "new_autoflow_intensity_record"
+	   << QString::number( autoflowID_passed )
+	   << intensityJsonRI;
+       
+       autoflowIntensityID = db->functionQuery( qry );
+
+       if ( !autoflowIntensityID )
+	 {
+	   QMessageBox::warning( this, tr( "AutoflowIntensity Record Problem" ),
+				 tr( "autoflowIntensity: There was a problem with creating a record in autoflowIntensity table \n" ) + db->lastError() );
+
+	   return;
+	 }
+     }
+
+   details_at_editing[ "intensityID" ] = QString::number( autoflowIntensityID );
+   
+   //update autoflow record 
    qry << "update_autoflow_at_lims_import"
        << runID_numeric
        << filename_toDB
-       << OptimaName;
+       << OptimaName
+       << QString::number( autoflowIntensityID );
 
    //db->query( qry );
 
@@ -6273,7 +6312,6 @@ void US_ConvertGui::update_autoflow_record_atLimsImport( void )
 				 "associated with this experiment." ) );
        return;
      }
-   
 }
 
 //Delete autoflow record upon Run abortion

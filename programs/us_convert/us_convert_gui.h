@@ -145,6 +145,7 @@ class US_ConvertGui : public US_Widgets
       QMap < QString, int > runTypes_map;
       QString       type_to_process;
       QStringList   runTypeList;
+      QString       intensityJsonRI;
 
       QMap < int, bool > description_changed;
       

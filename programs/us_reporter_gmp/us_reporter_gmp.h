@@ -165,6 +165,7 @@ class US_ReporterGMP : public US_Widgets
 	 QString    runID;
 	 QString    filePath;
 	 QString    FileName;
+	 QString    intensityID;
 
 	 QString    current_date;
 	 
@@ -190,6 +191,8 @@ class US_ReporterGMP : public US_Widgets
 	 QMap< QString, QStringList > Triple_to_Models;
 	 QMap< QString, QString > triple_info_map;
 	 QString   currentTripleName;
+	 QMap< QString, QString > intensityRIMap;
+	 
 	 
 	 void  get_current_date( void );
 	 void  format_needed_params( void );
@@ -201,6 +204,7 @@ class US_ReporterGMP : public US_Widgets
 	 void  write_pdf_report( void );
 
 	 void read_protocol_and_reportMasks( void );
+	 QMap< QString, QString > read_autoflowIntensity( QString, US_DB2*);
 	 void parse_gen_mask_json ( const QString  );
 	 void get_item_childs( QList< QTreeWidgetItem* > &, QTreeWidgetItem* );
 	 void build_genTree ( void );
