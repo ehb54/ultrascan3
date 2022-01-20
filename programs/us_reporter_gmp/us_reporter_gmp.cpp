@@ -321,12 +321,13 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   invID              = protocol_details[ "invID_passed" ].toInt();
   runID              = protocol_details[ "runID" ];
   FileName           = protocol_details[ "filename" ];
+  intensityID        = protocol_details[ "intensityID" ];
 
   lb_hdr1 ->setText( QString( tr("Report for run: %1") ).arg(FileName) );
   lb_hdr1->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
   
   //show progress dialog
-  progress_msg = new QProgressDialog ("Accessing run's protocol...", QString(), 0, 7, this);
+  progress_msg = new QProgressDialog ("Accessing run's protocol...", QString(), 0, 10, this);
   progress_msg->setWindowFlags(Qt::Tool | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
   progress_msg->setModal( true );
   progress_msg->setWindowTitle(tr("Assessing Run's Protocol"));
@@ -352,16 +353,16 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
 
   qDebug() << "AnalysisIDs: "   << protocol_details[ "analysisIDs" ];
   qDebug() << "aprofileguid: "  << AProfileGUID ;
-  
 
+  
   //Now, read protocol's 'reportMask' && reportItems masks && populate trees
   read_protocol_and_reportMasks( );
-  progress_msg->setValue( 2 );
+  progress_msg->setValue( 7 );
   qApp->processEvents();
 
   //check models existence
   check_models();
-  progress_msg->setValue( 3 );
+  progress_msg->setValue( 8 );
   qApp->processEvents();
 
   //debug
@@ -374,11 +375,11 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   
   //build Trees
   build_genTree();  
-  progress_msg->setValue( 6 );
+  progress_msg->setValue( 9 );
   qApp->processEvents();
 
   build_perChanTree();
-  progress_msg->setValue( 7 );
+  progress_msg->setValue( 10 );
   qApp->processEvents();
 
   progress_msg->setValue( progress_msg->maximum() );
@@ -549,7 +550,7 @@ void US_ReporterGMP::load_gmp_run ( void )
 
   
   //show progress dialog
-  progress_msg = new QProgressDialog ("Accessing run's protocol...", QString(), 0, 7, this);
+  progress_msg = new QProgressDialog ("Accessing run's protocol...", QString(), 0, 9, this);
   progress_msg->setWindowFlags(Qt::Tool | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
   progress_msg->setModal( true );
   progress_msg->setWindowTitle(tr("Assessing Run's Protocol"));
@@ -577,7 +578,8 @@ void US_ReporterGMP::load_gmp_run ( void )
   invID              = protocol_details[ "invID_passed" ].toInt();
   runID              = protocol_details[ "runID" ];
   FileName           = protocol_details[ "filename" ];
-
+  intensityID        = protocol_details[ "intensityID" ];
+  
   progress_msg->setValue( 1 );
   qApp->processEvents();
 
@@ -593,10 +595,10 @@ void US_ReporterGMP::load_gmp_run ( void )
 
   //Now, read protocol's 'reportMask' && reportItems masks && populate trees
   read_protocol_and_reportMasks( );
-
+  
   //check models existence
   check_models();
-  progress_msg->setValue( 3 );
+  progress_msg->setValue( 7 );
   qApp->processEvents();
 
   //debug
@@ -608,11 +610,11 @@ void US_ReporterGMP::load_gmp_run ( void )
   //end debug
 
   build_genTree();  
-  progress_msg->setValue( 6 );
+  progress_msg->setValue( 8 );
   qApp->processEvents();
 
   build_perChanTree();
-  progress_msg->setValue( 7 );
+  progress_msg->setValue( 9 );
   qApp->processEvents();
 
   progress_msg->setValue( progress_msg->maximum() );
@@ -742,7 +744,8 @@ QMap< QString, QString>  US_ReporterGMP::read_autoflow_record( int autoflowID  )
 	   protocol_details[ "filename" ]       = db->value( 17 ).toString();
 	   protocol_details[ "aprofileguid" ]   = db->value( 18 ).toString();
 
-	   protocol_details[ "analysisIDs" ]   = db->value( 19 ).toString();
+	   protocol_details[ "analysisIDs" ]    = db->value( 19 ).toString();
+	   protocol_details[ "intensityID" ]    = db->value( 20 ).toString();
 	   	   
 	 }
      }
@@ -832,15 +835,75 @@ void US_ReporterGMP::read_protocol_and_reportMasks( void )
   qDebug() << "Number of wvls in channel: " << chndescs_alt[ 0 ] << ": " <<  ch_wvls[ channel_desc_alt ].size();
   qDebug() << "Wvls in channel: " << chndescs_alt[ 0 ] << ": " << ch_wvls[ channel_desc_alt ];
 
+  //autoflowIntensity
+  intensityRIMap = read_autoflowIntensity( intensityID, &db );
+  progress_msg->setValue( 5 );
+  qApp->processEvents();
   
   //report Mask
   QString gen_reportMask = currAProf.report_mask;
   parse_gen_mask_json( gen_reportMask );
 
-  progress_msg->setValue( 5 );
+  progress_msg->setValue( 6 );
   qApp->processEvents();
 
   qDebug() << "General ReportMask: " << gen_reportMask;
+
+}
+
+//read Intensity info
+QMap< QString, QString > US_ReporterGMP::read_autoflowIntensity( QString ID, US_DB2* db )
+{
+  QString iJson;
+  QMap< QString, QString > iMap;
+  QStringList qry;
+  qry << "read_autoflow_intensity_record" << ID;
+  db->query( qry );
+
+  qDebug() << "readIntens: qry -- " << qry;
+    
+  if ( db->lastErrno() == US_DB2::OK )      // Intensity record exists
+    {
+      while ( db->next() )
+	{
+	  iJson  = db->value( 0 ).toString();
+	}
+    }
+
+  qDebug() << "iJson: " << iJson;
+  //parse JSON into QMap
+  if ( !iJson.isEmpty() )
+    {
+      QJsonDocument jsonDoc = QJsonDocument::fromJson( iJson.toUtf8() );
+      QJsonObject json_obj = jsonDoc.object();
+
+      foreach(const QString& key, json_obj.keys())
+	{
+	  QJsonValue value = json_obj.value(key);
+
+	  if ( value.isString() )  //single-wvl
+	    {
+	      iMap["singlewvl"] = value.toString();
+	    }
+	  else if ( value.isArray() ) //MWL
+	    {
+	      QJsonArray json_array = value.toArray();
+	      for (int i=0; i < json_array.size(); ++i )
+		{
+		  foreach(const QString& array_key, json_array[i].toObject().keys())
+		    {
+		      iMap[ array_key ] = json_array[i].toObject().value(array_key).toString();
+
+		      qDebug() << "Intensity: MWL -- array_key, val: "
+			       << array_key
+			       << json_array[i].toObject().value(array_key).toString();
+		    }
+		}
+	    }
+	}
+    }
+  
+  return iMap;
 }
 
 //parse JSON for general rpeort mask
@@ -1434,6 +1497,9 @@ void US_ReporterGMP::reset_report_panel ( void )
   //clean triple_array
   Array_of_triples.clear();
 
+  //clean intensity RI Map
+  intensityRIMap .clear();
+
   //clean QMap connecting triple names to their models
   Triple_to_Models.clear();
   
@@ -1465,7 +1531,7 @@ void US_ReporterGMP::generate_report( void )
 {
   progress_msg->setWindowTitle(tr("Generating Report"));
   progress_msg->setLabelText( "Generating report: Part 1..." );
-  int msg_range = currProto.rpSolut.nschan + 4;
+  int msg_range = currProto.rpSolut.nschan + 5;
   progress_msg->setRange( 0, msg_range );
   progress_msg->setValue( 0 );
   progress_msg->show();
@@ -1504,9 +1570,7 @@ void US_ReporterGMP::generate_report( void )
   progress_msg->setValue( 4 );
   qApp->processEvents();
   
-  progress_msg->setValue( progress_msg->maximum() );
-  progress_msg->close();
-  qApp->processEvents();
+  
 
   //Combined Plots Generation
   sdiag_combplot = new US_DDistr_Combine();
@@ -1525,35 +1589,44 @@ void US_ReporterGMP::generate_report( void )
   //go over modelDescModified
   QStringList modelNames;
   modelNames << "2DSA-FM" << "2DSA-IT" << "2DSA-MC" << "PCSA";
+  QList< int > xtype;
+  xtype << 0 << 1 << 2 << 3;
   QStringList CombPlotsFileNames;
     
   for ( int m = 0; m < modelNames.size(); m++ )  
     {
       bool isModel = false;
       QString imgComb01File = basename + "combined" + "." + modelNames[ m ]  + svgext;
-      
+
       for ( int ii = 0; ii < modelDescModified.size(); ii++ )  
 	{
 	  //fiter by type|model
 	  if ( modelDescModified[ ii ].contains( modelNames[ m ] ) )
 	    {
 	      isModel = true;
-	      sdiag_combplot-> model_select_auto ( modelDescModified[ ii ] ); 
+	      sdiag_combplot-> model_select_auto ( modelDescModified[ ii ] );
 	    }
 	}
+      
       //write plot
       if ( isModel )  //TEMPORARY: will read a type-method combined plot QMap defined at the beginnig
 	{
 	  write_plot( imgComb01File, sdiag_combplot->rp_data_plot1() );                //<-- rp_data_plot1() gives combined plot
 	  CombPlotsFileNames << basename + "combined" + "." + modelNames[ m ] + pngext;
 	}
-      //reset plot
+      // reset plot
       sdiag_combplot->reset_data_plot1();
     }
   //assemble combined plots into html
   assemble_plots_html( CombPlotsFileNames  );
+  progress_msg->setValue( 5 );
+  qApp->processEvents();
   //exit(1);
   //End of Combined Plots
+
+  progress_msg->setValue( progress_msg->maximum() );
+  progress_msg->close();
+  qApp->processEvents();
 
   //Part 2
   if ( auto_mode )
@@ -3803,10 +3876,33 @@ QString US_ReporterGMP::distrib_info()
    QString exp_dur_r_hh_mm    = QString().sprintf( "%d %s %02d m", hours_r, hh_r.toLatin1().data(), mins_r );
    //end of exp_dur_r transformation
 
+   //autoflowIntensity (for specific wvl)
+   double av_int_exp;
+   QList< QString > intensity_keys = intensityRIMap.keys();
+   if ( intensity_keys.size() ==  1 ) //single wvl
+     {
+       av_int_exp = intensityRIMap.first().toDouble();
+       qDebug() << "single wvl: key, value -- " << intensityRIMap.firstKey() << intensityRIMap.first();
+     }
+   else //MWL
+     {
+       QMap<QString, QString >::iterator jj;
+       for ( jj = intensityRIMap.begin(); jj != intensityRIMap.end(); ++jj )
+	 {
+	   if ( t_name.contains( jj.key() ) )
+	     {
+	       av_int_exp = jj.value().toDouble();
+	       break;
+	     }
+	 }
+     }
+   //
+
    //passes
    QString tot_conc_passed = ( sum_c  >= ( tot_conc_r * (1 - tot_conc_tol_r/100.0)  ) && sum_c  <= ( tot_conc_r * (1 + tot_conc_tol_r/100.0) ) ) ? "YES" : "NO";
    QString exp_dur_passed  = ( last_f >= ( exp_dur_r * (1 - exp_dur_tol_r/100.0)  )   && last_f <= ( exp_dur_r * (1 + exp_dur_tol_r/100.0) ) ) ? "YES" : "NO";
    QString rmsd_passed = ( rmsd_global.toDouble() <= rmsd_r ) ? "YES" : "NO";
+   QString av_int_passed = ( av_int_exp > av_int_r ) ? "YES" : "NO";
    //end passes
    
    mstr += "\n" + indent( 2 ) + tr( "<h3>Comparison Between Run/Simulation Results and Report Parameters:</h3>\n" );
@@ -3835,8 +3931,8 @@ QString US_ReporterGMP::distrib_info()
    mstr += table_row( tr( "Minimum Intensity" ),
 		      QString::number( av_int_r ),
 		      QString(""),
-                      QString("to be passed.."),
-		      QString( "to be determined.." ));
+                      QString::number( av_int_exp ) ,
+		      av_int_passed );
    
    mstr += indent( 2 ) + "</table>\n";
 

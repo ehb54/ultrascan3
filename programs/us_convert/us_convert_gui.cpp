@@ -5053,6 +5053,8 @@ DbgLv(1) << "CGui: show_intensity  scndiv scnfra" << scndiv << scnfra;
 
    qDebug() << "intensityJsonRI -- " << intensityJsonRI;
 
+   
+
    qApp->processEvents();
 }
 
