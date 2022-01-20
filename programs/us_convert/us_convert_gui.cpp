@@ -8295,6 +8295,7 @@ void US_ConvertGui::build_output_data()
             US_Convert::TripleInfo *tttripinfo = &temp_tripinfo[tttrx];
             if (tttripinfo->tripleID==tripinfo->tripleID) {
                 // update export-data pointers and lists using the old export-data pointers and lists
+                cout << "CGui: BOD:  trx" << trx << " found in tempData as ttrx " << tttrx;
                 DbgLv(1) << "CGui: BOD:  trx" << trx << " found in tempData as ttrx " << tttrx;
                 used_temp = true;
                 ttripinfo = tttripinfo;
@@ -8315,6 +8316,7 @@ void US_ConvertGui::build_output_data()
             out_triples << triple;
         }
         else {
+            cout << "used outdata"
             outData << tempData[ttrx];
 
             triple = ttripinfo->tripleDesc;
