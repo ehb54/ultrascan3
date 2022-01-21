@@ -23,6 +23,7 @@ class US_DDistr_Combine : public US_Widgets
       void      model_select_auto   ( QString   );
       QwtPlot* rp_data_plot1();
       void     reset_data_plot1();
+      void     changedPlotX_auto ( int );
       
    private:
 
@@ -162,7 +163,10 @@ class US_DDistr_Combine : public US_Widgets
       void save           ( void );
       void reset_data     ( void );
       void reset_plot     ( void );
+
       void plot_data      ( void );
+      void plot_data_auto ( void );
+      
       void plot_distr     ( DistrDesc, QString );
       void runid_select   ( int );
 

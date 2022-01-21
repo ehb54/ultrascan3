@@ -1590,13 +1590,14 @@ void US_ReporterGMP::generate_report( void )
   QStringList modelNames;
   modelNames << "2DSA-FM" << "2DSA-IT" << "2DSA-MC" << "PCSA";
   QList< int > xtype;
-  xtype << 0 << 1 << 2 << 3;
+  xtype <<  1 << 2 << 3; //ALEXEY: 0: s20; 1: MW; 2: D; 3: f/f0
+                         //Note: xtype==0 (s20) is the default, so iterate starting form 1... 
   QStringList CombPlotsFileNames;
     
   for ( int m = 0; m < modelNames.size(); m++ )  
     {
       bool isModel = false;
-      QString imgComb01File = basename + "combined" + "." + modelNames[ m ]  + svgext;
+      QString imgComb01File = basename + "combined" + "." + modelNames[ m ]  + ".s20" + svgext;
 
       for ( int ii = 0; ii < modelDescModified.size(); ii++ )  
 	{
@@ -1612,7 +1613,27 @@ void US_ReporterGMP::generate_report( void )
       if ( isModel )  //TEMPORARY: will read a type-method combined plot QMap defined at the beginnig
 	{
 	  write_plot( imgComb01File, sdiag_combplot->rp_data_plot1() );                //<-- rp_data_plot1() gives combined plot
-	  CombPlotsFileNames << basename + "combined" + "." + modelNames[ m ] + pngext;
+	  imgComb01File.replace( svgext, pngext ); 
+	  CombPlotsFileNames << imgComb01File;
+      	  
+	  //Now that we have s20 plotted, plot other types [ MW, D, f/f0 ]
+	  for ( int xt= 0; xt < xtype.size(); ++xt )
+	    {
+	      QString imgComb02File = basename + "combined" + "." + modelNames[ m ];
+
+	      sdiag_combplot-> changedPlotX_auto( xtype[ xt ] );
+
+	      if( xtype[ xt ] == 1 )
+		imgComb02File += ".MW" + svgext;
+	      if( xtype[ xt ] == 2 )
+		imgComb02File += ".D20" + svgext;
+	      if( xtype[ xt ] == 3 )
+		imgComb02File += ".f_f0" + svgext;
+	      	      
+	      write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() );                //<-- rp_data_plot1() gives combined plot
+	      imgComb02File.replace( svgext, pngext );
+	      CombPlotsFileNames << imgComb02File;
+	    }
 	}
       // reset plot
       sdiag_combplot->reset_data_plot1();

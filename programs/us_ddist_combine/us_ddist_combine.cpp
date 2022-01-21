@@ -513,6 +513,10 @@ QwtPlot* US_DDistr_Combine::rp_data_plot1()
 //reset data_plot1
 void US_DDistr_Combine::reset_data_plot1()
 {
+  xtype   = 0;
+  pdistrs .clear();
+  pdisIDs .clear(); 
+  
   reset_plot();
 }
 
@@ -889,6 +893,76 @@ void US_DDistr_Combine::reset_plot( void )
    connect( le_plxmax,   SIGNAL( editingFinished( ) ),
       this, SLOT( envvalChange() ) );
 
+}
+
+// Plot all data: for GMP Report
+void US_DDistr_Combine::plot_data_auto( void )
+{
+DbgLv(1) << "pDa:  xtype" << xtype;
+   dataPlotClear( data_plot1 );
+	data_plot1->setCanvasBackground( QBrush(Qt::white) );
+   QString titleY = tr( "Signal Concentration" );
+DbgLv(1) << "pDa:  titleY" << titleY;
+   QString titleP;
+   QString titleX;
+
+   if      ( xtype == 0 )
+   {
+      titleP = tr( "Discrete s20,W Distributions" );
+      titleX = tr( "Sedimentation Coefficient x 1.e+13 (20,W)" );
+   }
+   else if ( xtype == 1 )
+   {
+      titleP = tr( "Discrete Molecular Weight Distributions" );
+      titleX = tr( "Molecular Weight (Dalton)" );
+   }
+   else if ( xtype == 2 )
+   {
+      titleP = tr( "Discrete D20,W Distributions" );
+      titleX = tr( "Diffusion Coefficient (20,W)" );
+   }
+   else if ( xtype == 3 )
+   {
+      titleP = tr( "Discrete Frictional Ratio Distributions" );
+      titleX = tr( "Frictional Ratio (f/f0)" );
+   }
+   else if ( xtype == 4 )
+   {
+      titleP = tr( "Discrete Vbar Distributions" );
+      titleX = tr( "Partial Specific Volume (vbar)" );
+   }
+   else if ( xtype == 5 )
+   {
+      titleP = tr( "Discrete Log of Molecular Weight Distributions" );
+      titleX = tr( "Molecular Weight (Log, Dalton)" );
+   }
+DbgLv(1) << "pDa:  titleP" << titleP;
+DbgLv(1) << "pDa:  titleX" << titleX;
+   data_plot1->setTitle    ( titleP );
+   data_plot1->setAxisTitle( QwtPlot::xBottom, titleX );
+   data_plot1->setAxisTitle( QwtPlot::yLeft,   titleY );
+   double plxmin = 1e+30;
+   double plxmax = -1e+30;
+
+   for ( int ii = 0; ii < pdistrs.size(); ii++ )
+   {
+      setColor( pdistrs[ ii ], ii );
+      plot_distr( pdistrs[ ii ], pdisIDs[ ii ] );
+
+      for ( int jj = 0; jj < pdistrs[ ii ].xvals.size(); jj++ )
+      {
+         plxmin        = qMin( plxmin, pdistrs[ ii ].xvals[ jj ] );
+         plxmax        = qMax( plxmax, pdistrs[ ii ].xvals[ jj ] );
+      }
+   }
+   le_plxmin->disconnect();
+   le_plxmax->disconnect();
+   le_plxmin->setText( QString::number( plxmin ) );
+   le_plxmax->setText( QString::number( plxmax ) );
+   connect( le_plxmin,   SIGNAL( editingFinished( ) ),
+      this, SLOT(envvalChange( ) ) );
+   connect( le_plxmax,   SIGNAL( editingFinished( ) ),
+      this, SLOT(envvalChange( ) ) );
 }
 
 // Plot all data
@@ -2138,6 +2212,57 @@ DbgLv(1) << "  PX=Molec.Wt.log";
                this,        SLOT(   envvalChange(    ) ) );
 
       plot_data();
+   }
+}
+
+// React to a change in the X type of plots
+void US_DDistr_Combine::changedPlotX_auto( int type )
+{
+   xtype      = type;
+
+   int npdis    = pdistrs.size();
+   if ( npdis > 0 )
+   {  // Re-do plot distros to account for X-type change
+      QList< DistrDesc >  wdistros;
+      DistrDesc           ddist;
+      DistrDesc*          pddist;
+
+      for ( int ii = 0; ii < npdis; ii++ )
+      {  // Build rudimentary plot distros without value arrays
+         pddist       = &pdistrs[ ii ];
+         ddist.runID  = pddist->runID;
+         ddist.mGUID  = pddist->mGUID;
+         ddist.mdescr = pddist->mdescr;
+         ddist.iters  = pddist->iters;
+         ddist.xtype  = xtype;
+         ddist.model  = pddist->model;
+         ddist.ddescr = pddist->ddescr;
+
+         wdistros << ddist;
+      }
+
+      pdistrs.clear();
+      pdisIDs.clear();
+
+      for ( int ii = 0; ii < npdis; ii++ )
+      {
+         pddist       = &wdistros[ ii ];
+         fill_in_desc( *pddist, ii );
+
+         pdistrs << *pddist;
+         pdisIDs << distribID( pddist->mdescr, pddist->ddescr );
+      }
+
+      le_plxmin->disconnect();
+      le_plxmax->disconnect();
+      le_plxmin->setText( "0" );
+      le_plxmax->setText( "0" );
+      connect( le_plxmin,   SIGNAL( editingFinished( ) ),
+               this,        SLOT(   envvalChange(    ) ) );
+      connect( le_plxmax,   SIGNAL( editingFinished( ) ),
+               this,        SLOT(   envvalChange(    ) ) );
+
+      plot_data_auto();
    }
 }
 
