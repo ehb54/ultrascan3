@@ -20,10 +20,10 @@ class US_DDistr_Combine : public US_Widgets
       US_DDistr_Combine();
 
       QStringList load_auto( QStringList, QStringList  );
-      void      model_select_auto   ( QString   );
+      void      model_select_auto   ( QString, QMap < QString, QString >  );
       QwtPlot* rp_data_plot1();
       void     reset_data_plot1();
-      void     changedPlotX_auto ( int );
+      void     changedPlotX_auto ( int,  QMap < QString, QString >);
       
    private:
 
@@ -165,9 +165,11 @@ class US_DDistr_Combine : public US_Widgets
       void reset_plot     ( void );
 
       void plot_data      ( void );
-      void plot_data_auto ( void );
+      void plot_data_auto ( QMap < QString, QString > );
       
       void plot_distr     ( DistrDesc, QString );
+      void plot_distr_auto( DistrDesc, QString, QMap < QString, QString > );
+      
       void runid_select   ( int );
 
       void model_select   ( int );
@@ -194,6 +196,9 @@ class US_DDistr_Combine : public US_Widgets
       bool equivalent        ( double, double, double );
       int  envel_data( QVector< double >&, QVector< double >&,
                        QVector< double >&, QVector< double >& );
+      int  envel_data_auto( QVector< double >&, QVector< double >&,
+			    QVector< double >&, QVector< double >&,
+			    double, double, double );
 
       void help(      void )
       { showHelp.show_help( "ddist_combine.html" ); };

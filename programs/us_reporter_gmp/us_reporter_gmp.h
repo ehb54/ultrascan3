@@ -191,7 +191,9 @@ class US_ReporterGMP : public US_Widgets
 	 QMap< QString, QStringList > Triple_to_Models;
 	 QMap< QString, QString > triple_info_map;
 	 QString   currentTripleName;
+
 	 QMap< QString, QString > intensityRIMap;
+	 QMap< QString, QMap< QString, QString > > comboPlotsMap;
 	 
 	 
 	 void  get_current_date( void );
@@ -206,6 +208,7 @@ class US_ReporterGMP : public US_Widgets
 	 void read_protocol_and_reportMasks( void );
 	 QMap< QString, QString > read_autoflowIntensity( QString, US_DB2*);
 	 void parse_gen_mask_json ( const QString  );
+	 QMap< QString, QMap< QString, QString > > parse_comb_plots_json ( const QString  );
 	 void get_item_childs( QList< QTreeWidgetItem* > &, QTreeWidgetItem* );
 	 void build_genTree ( void );
 	 void build_perChanTree ( void ) ;

@@ -849,6 +849,45 @@ void US_ReporterGMP::read_protocol_and_reportMasks( void )
 
   qDebug() << "General ReportMask: " << gen_reportMask;
 
+  //combined_plots params
+  QString combPlots_parms = currAProf.combPlots_parms;
+  comboPlotsMap = parse_comb_plots_json( combPlots_parms );
+}
+
+//combPlots parms
+QMap< QString, QMap< QString, QString > > US_ReporterGMP::parse_comb_plots_json( QString combPlots )
+{
+  QMap< QString, QMap< QString, QString > > iMap;
+  qDebug() << "combPlots: " << combPlots;
+  //parse JSON into QMap
+  if ( !combPlots.isEmpty() )
+    {
+      QJsonDocument jsonDoc = QJsonDocument::fromJson( combPlots.toUtf8() );
+      QJsonObject json_obj = jsonDoc.object();
+
+      foreach(const QString& key, json_obj.keys())
+	{
+	  QJsonValue value = json_obj.value(key);
+
+	  qDebug() << "CombPlots key (type,method), value: " << key << value;
+	  
+	  QJsonArray json_array = value.toArray();
+	  for (int i=0; i < json_array.size(); ++i )
+	    {
+	      foreach(const QString& array_key, json_array[i].toObject().keys())
+		{
+		  iMap[ key ][ array_key ] = json_array[i].toObject().value(array_key).toString();
+
+		  qDebug() << "ComboPlots Map: -- type_method, parameter, value: "
+			   << key
+			   << array_key
+			   << json_array[i].toObject().value(array_key).toString();
+		}
+	    }
+	}
+    }
+
+  return iMap;
 }
 
 //read Intensity info
@@ -1500,6 +1539,9 @@ void US_ReporterGMP::reset_report_panel ( void )
   //clean intensity RI Map
   intensityRIMap .clear();
 
+  //clear comboplots Map
+  comboPlotsMap  .clear();
+
   //clean QMap connecting triple names to their models
   Triple_to_Models.clear();
   
@@ -1588,7 +1630,7 @@ void US_ReporterGMP::generate_report( void )
   
   //go over modelDescModified
   QStringList modelNames;
-  modelNames << "2DSA-FM" << "2DSA-IT" << "2DSA-MC" << "PCSA";
+  modelNames << "2DSA-IT" << "2DSA-MC" << "PCSA";
   QList< int > xtype;
   xtype <<  1 << 2 << 3; //ALEXEY: 0: s20; 1: MW; 2: D; 3: f/f0
                          //Note: xtype==0 (s20) is the default, so iterate starting form 1... 
@@ -1605,7 +1647,11 @@ void US_ReporterGMP::generate_report( void )
 	  if ( modelDescModified[ ii ].contains( modelNames[ m ] ) )
 	    {
 	      isModel = true;
-	      sdiag_combplot-> model_select_auto ( modelDescModified[ ii ] );
+
+	      //retrieve s,Model combPlot params:
+	      QString t_m = "s," + modelNames[ m ];
+	      QMap < QString, QString > c_params = comboPlotsMap[ t_m ];
+	      sdiag_combplot-> model_select_auto ( modelDescModified[ ii ], c_params ); //ALEXEY: here it plots s20 combPlot (xtype == 0)
 	    }
 	}
       
@@ -1620,17 +1666,32 @@ void US_ReporterGMP::generate_report( void )
 	  for ( int xt= 0; xt < xtype.size(); ++xt )
 	    {
 	      QString imgComb02File = basename + "combined" + "." + modelNames[ m ];
-
-	      sdiag_combplot-> changedPlotX_auto( xtype[ xt ] );
+	      QMap < QString, QString > c_parms;
 
 	      if( xtype[ xt ] == 1 )
-		imgComb02File += ".MW" + svgext;
+		{
+		  imgComb02File += ".MW" + svgext;
+		  QString t_m = "MW," + modelNames[ m ];
+		  c_parms = comboPlotsMap[ t_m ];
+		}
+	      
 	      if( xtype[ xt ] == 2 )
-		imgComb02File += ".D20" + svgext;
+		{
+		  imgComb02File += ".D20" + svgext;
+		  QString t_m = "D," + modelNames[ m ];
+		  c_parms = comboPlotsMap[ t_m ];
+		}
+	      
 	      if( xtype[ xt ] == 3 )
-		imgComb02File += ".f_f0" + svgext;
+		{
+		  imgComb02File += ".f_f0" + svgext;
+		  QString t_m = "f/f0," + modelNames[ m ];
+		  c_parms = comboPlotsMap[ t_m ];
+		}
+
+	      sdiag_combplot-> changedPlotX_auto( xtype[ xt ], c_parms );
 	      	      
-	      write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() );                //<-- rp_data_plot1() gives combined plot
+	      write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() );              //<-- rp_data_plot1() gives combined plot
 	      imgComb02File.replace( svgext, pngext );
 	      CombPlotsFileNames << imgComb02File;
 	    }
