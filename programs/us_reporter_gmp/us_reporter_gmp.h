@@ -194,7 +194,7 @@ class US_ReporterGMP : public US_Widgets
 
 	 QMap< QString, QString > intensityRIMap;
 	 QMap< QString, QMap< QString, QString > > comboPlotsMap;
-	 
+	 QMap< QString, int > comboPlotsMapTypes;
 	 
 	 void  get_current_date( void );
 	 void  format_needed_params( void );

@@ -817,7 +817,7 @@ void US_ReporterGMP::read_protocol_and_reportMasks( void )
   //Debug: AProfile
   QString channel_desc_alt = chndescs_alt[ 0 ];
   QString channel_desc     = chndescs[ 0 ];
-  QString wvl              = QString::number( ch_wvls[ channel_desc ][ 0 ] );
+  QString wvl              = QString::number( ch_wvls[ channel_desc_alt ][ 0 ] );
   US_ReportGMP reportGMP   = ch_reports[ channel_desc_alt ][ wvl ];
     
   qDebug() << "AProfile's && ReportGMP's details: -- "
@@ -1309,6 +1309,21 @@ void US_ReporterGMP::build_perChanTree ( void )
 	      tripleItem [ tripleItemName ] = new QTreeWidgetItem( chanItem [ chanItemName ], tripleItemNameList, wiubase);
 
 	      US_ReportGMP reportGMP = chann_reports[ wvl ];
+
+	      //Identify which type-methods will be in Combined ptols
+	      int report_items_number = reportGMP.reportItems.size();
+	      for ( int kk = 0; kk < report_items_number; ++kk )
+		{
+		  US_ReportGMP::ReportItem curr_item = reportGMP.reportItems[ kk ];
+		  QString type           = curr_item.type;
+		  QString method         = curr_item.method;
+		  int     combPlot       = curr_item.combined_plot;
+
+		  QString t_m = type + "," + method;
+		  if ( combPlot )
+		    comboPlotsMapTypes[ t_m ] = 1;
+		}
+	      ////////////////////////////////////////////////////////
 	      
 	      qDebug() << reportGMP. tot_conc_mask
 		       << reportGMP. rmsd_limit_mask
@@ -1539,8 +1554,9 @@ void US_ReporterGMP::reset_report_panel ( void )
   //clean intensity RI Map
   intensityRIMap .clear();
 
-  //clear comboplots Map
-  comboPlotsMap  .clear();
+  //clear comboplots Maps
+  comboPlotsMap      .clear();
+  comboPlotsMapTypes .clear();
 
   //clean QMap connecting triple names to their models
   Triple_to_Models.clear();
@@ -1612,8 +1628,6 @@ void US_ReporterGMP::generate_report( void )
   progress_msg->setValue( 4 );
   qApp->processEvents();
   
-  
-
   //Combined Plots Generation
   sdiag_combplot = new US_DDistr_Combine();
   QStringList runIDs_single;
@@ -1633,7 +1647,7 @@ void US_ReporterGMP::generate_report( void )
   modelNames << "2DSA-IT" << "2DSA-MC" << "PCSA";
   QList< int > xtype;
   xtype <<  1 << 2 << 3; //ALEXEY: 0: s20; 1: MW; 2: D; 3: f/f0
-                         //Note: xtype==0 (s20) is the default, so iterate starting form 1... 
+                         //Note: xtype==0 (s20) is the default, so iterate later starting from 1... 
   QStringList CombPlotsFileNames;
     
   for ( int m = 0; m < modelNames.size(); m++ )  
@@ -1658,42 +1672,52 @@ void US_ReporterGMP::generate_report( void )
       //write plot
       if ( isModel )  //TEMPORARY: will read a type-method combined plot QMap defined at the beginnig
 	{
-	  write_plot( imgComb01File, sdiag_combplot->rp_data_plot1() );                //<-- rp_data_plot1() gives combined plot
-	  imgComb01File.replace( svgext, pngext ); 
-	  CombPlotsFileNames << imgComb01File;
-      	  
+	  //here writes a 's'-type IF it's to be included:
+	  QString t_m = "s," + modelNames[ m ];
+	  if ( comboPlotsMapTypes.contains( t_m ) && comboPlotsMapTypes[ t_m ] != 0  )
+	    {
+	      write_plot( imgComb01File, sdiag_combplot->rp_data_plot1() );                //<-- rp_data_plot1() gives combined plot
+	      imgComb01File.replace( svgext, pngext ); 
+	      CombPlotsFileNames << imgComb01File;
+	    }
+	  
 	  //Now that we have s20 plotted, plot other types [ MW, D, f/f0 ]
 	  for ( int xt= 0; xt < xtype.size(); ++xt )
 	    {
 	      QString imgComb02File = basename + "combined" + "." + modelNames[ m ];
 	      QMap < QString, QString > c_parms;
-
+	      QString t_m;
+	      
 	      if( xtype[ xt ] == 1 )
 		{
 		  imgComb02File += ".MW" + svgext;
-		  QString t_m = "MW," + modelNames[ m ];
+		  t_m = "MW," + modelNames[ m ];
 		  c_parms = comboPlotsMap[ t_m ];
 		}
 	      
-	      if( xtype[ xt ] == 2 )
+	      else if( xtype[ xt ] == 2 )
 		{
 		  imgComb02File += ".D20" + svgext;
-		  QString t_m = "D," + modelNames[ m ];
+		  t_m = "D," + modelNames[ m ];
 		  c_parms = comboPlotsMap[ t_m ];
 		}
 	      
-	      if( xtype[ xt ] == 3 )
+	      else if( xtype[ xt ] == 3 )
 		{
 		  imgComb02File += ".f_f0" + svgext;
-		  QString t_m = "f/f0," + modelNames[ m ];
+		  t_m = "f/f0," + modelNames[ m ];
 		  c_parms = comboPlotsMap[ t_m ];
 		}
 
-	      sdiag_combplot-> changedPlotX_auto( xtype[ xt ], c_parms );
-	      	      
-	      write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() );              //<-- rp_data_plot1() gives combined plot
-	      imgComb02File.replace( svgext, pngext );
-	      CombPlotsFileNames << imgComb02File;
+	      //check if to generate Combined plot for current 'type-method':
+	      if ( comboPlotsMapTypes.contains( t_m ) && comboPlotsMapTypes[ t_m ] != 0  )
+		{
+		  sdiag_combplot-> changedPlotX_auto( xtype[ xt ], c_parms );
+		  
+		  write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() );              //<-- rp_data_plot1() gives combined plot
+		  imgComb02File.replace( svgext, pngext );
+		  CombPlotsFileNames << imgComb02File;
+		}
 	    }
 	}
       // reset plot
