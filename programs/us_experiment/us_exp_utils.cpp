@@ -1057,6 +1057,10 @@ void US_ExperGuiSpeeds::initPanel()
 
    bool was_changed     = changed;       // Save changed state
    sb_count ->setValue  ( nspeed  );
+
+   if ( mainw->automode )
+     sb_count            ->setEnabled( false );
+   
    ct_speed ->setMaximum( speedmax );    // Set speed max based on rotor max
    ct_speed ->setValue  ( rpSpeed->ssteps[ curssx ].speed );
    ct_accel ->setValue  ( rpSpeed->ssteps[ curssx ].accel );
