@@ -3937,6 +3937,7 @@ QString US_ReporterGMP::distrib_info()
    qDebug() << "In DISTRIB: triple, wvl -- " << t_name << wvl;
 
    qDebug() << "Model description, mdla, msim -- " << model_used.description <<  mdla << msim;
+   QString model_name = mdla.split("_")[1];
    
    double tot_conc_r, tot_conc_tol_r, rmsd_r, av_int_r, exp_dur_r, exp_dur_tol_r;
 
@@ -4010,108 +4011,161 @@ QString US_ReporterGMP::distrib_info()
    QString rmsd_passed = ( rmsd_global.toDouble() <= rmsd_r ) ? "YES" : "NO";
    QString av_int_passed = ( av_int_exp > av_int_r ) ? "YES" : "NO";
    //end passes
+
+   //check what to show on the report
+   QMap < QString, QString > Model_parms_to_compare = perChanMask_edited.ShowTripleModelParts[ t_name ][ model_name ];
+   bool show_tot_conc = false;
+   bool show_rmsd     = false;
+   bool show_exp_dur  = false;
+   bool show_min_int  = false;
+   bool show_integration = false;
+
+   QMap< QString, QString >::iterator sh;
+   for ( sh = Model_parms_to_compare.begin(); sh != Model_parms_to_compare.end(); ++sh )
+     {
+       if ( sh.key().contains( "Concentration" ) && sh.value().toInt() )
+	 show_tot_conc = true;
+
+       if ( sh.key().contains( "RMSD" ) && sh.value().toInt() )
+	 show_rmsd = true;
+
+       if ( sh.key().contains( "Duration" ) && sh.value().toInt() )
+	 show_exp_dur = true;
+
+       if ( sh.key().contains( "Intensity" ) && sh.value().toInt() )
+	 show_min_int = true;
+
+       if ( sh.key().contains( "Integration" ) && sh.value().toInt() )
+	 show_integration = true;
+     }
+
+   bool show_comparison_section = false;
+   if ( show_tot_conc || show_rmsd || show_exp_dur || show_min_int )
+     show_comparison_section = true;
+   //////////////////////////////////////
    
-   mstr += "\n" + indent( 2 ) + tr( "<h3>Comparison Between Run/Simulation Results and Report Parameters:</h3>\n" );
-   mstr += indent( 2 ) + "<table>\n";
-   
-   mstr += table_row( tr( "Parameter: " ),
-                      tr( "Target Value:" ),
-		      tr( "Tolerance, %:"),
-		      tr( "Simulation Value:" ),
-		      tr( "PASSED ?" ));
-   mstr += table_row( tr( "Total Concentration" ),
-		      QString::number( tot_conc_r ),
-		      QString::number(tot_conc_tol_r) + "%",
-                      QString().sprintf( "%6.4e", sum_c ),
-		      tot_conc_passed) ;
-   mstr += table_row( tr( "RMSD limit" ),
-		      QString::number( rmsd_r ),
-		      QString(""),
-                      rmsd_global,
-		      rmsd_passed );
-   mstr += table_row( tr( "Experiment Duration" ),
-		      exp_dur_r_hh_mm,
-		      QString::number(exp_dur_tol_r) + "%",
-		      wks,
-		      exp_dur_passed ) ;
-   mstr += table_row( tr( "Minimum Intensity" ),
-		      QString::number( av_int_r ),
-		      QString(""),
-                      QString::number( av_int_exp ) ,
-		      av_int_passed );
-   
-   mstr += indent( 2 ) + "</table>\n";
+   if ( show_comparison_section )
+     {
+       mstr += "\n" + indent( 2 ) + tr( "<h3>Comparison Between Run/Simulation Results and Report Parameters:</h3>\n" );
+       mstr += indent( 2 ) + "<table>\n";
+       
+       mstr += table_row( tr( "Parameter: " ),
+			  tr( "Target Value:" ),
+			  tr( "Tolerance, %:"),
+			  tr( "Simulation Value:" ),
+			  tr( "PASSED ?" ));
+
+       if ( show_tot_conc ) 
+	 {
+	   mstr += table_row( tr( "Total Concentration" ),
+			      QString::number( tot_conc_r ),
+			      QString::number(tot_conc_tol_r) + "%",
+			      QString().sprintf( "%6.4e", sum_c ),
+			      tot_conc_passed) ;
+	 }
+       
+       if ( show_rmsd )
+	 {
+	   mstr += table_row( tr( "RMSD limit" ),
+			      QString::number( rmsd_r ),
+			      QString(""),
+			      rmsd_global,
+			      rmsd_passed );
+	 }
+       
+       if ( show_exp_dur )
+	 {
+	   mstr += table_row( tr( "Experiment Duration" ),
+			      exp_dur_r_hh_mm,
+			      QString::number(exp_dur_tol_r) + "%",
+			      wks,
+			      exp_dur_passed ) ;
+	 }
+       
+       if ( show_min_int ) 
+	 {
+	   mstr += table_row( tr( "Minimum Intensity" ),
+			      QString::number( av_int_r ),
+			      QString(""),
+			      QString::number( av_int_exp ) ,
+			      av_int_passed );
+	 }
+       mstr += indent( 2 ) + "</table>\n";
+     }
 
    //Now, integration results
-   mstr += "\n" + indent( 2 ) + tr( "<h3>Integration Results: Fraction of Total Concentration:</h3>\n" );
-   mstr += indent( 2 ) + "<table>\n";
-   mstr += table_row( tr( "Type:" ),
-		      tr( "Range:"),
-                      tr( "Integration from Model (target):" ),
-		      tr( "Fraction % from Model (target):" ),
-		      tr( "Tolerance, %:"),
-		      tr( "PASSED ?" ));
-   int report_items_number = reportGMP.reportItems.size();
-   for ( int kk = 0; kk < report_items_number; ++kk )
+   if ( show_integration )
      {
-       US_ReportGMP::ReportItem curr_item = reportGMP.reportItems[ kk ];
-       QString type           = curr_item.type;
-       QString method         = curr_item.method;
-       QString int_val_r      = QString::number( curr_item.integration_val );
-       double  frac_tot_r     = curr_item.total_percent;
-       double  frac_tot_tol_r = curr_item.tolerance ;
-       double  low            = curr_item.range_low;
-       double  high           = curr_item.range_high;
-
-       QString range = "[" + QString::number(low) + " - " + QString::number(high) + "]";
-
-       //integrate over model_used
-       double int_val_m = 0;
-       for ( int ii = 0; ii < ncomp; ii++ )
+       mstr += "\n" + indent( 2 ) + tr( "<h3>Integration Results: Fraction of Total Concentration:</h3>\n" );
+       mstr += indent( 2 ) + "<table>\n";
+       mstr += table_row( tr( "Type:" ),
+			  tr( "Range:"),
+			  tr( "Integration from Model (target):" ),
+			  tr( "Fraction % from Model (target):" ),
+			  tr( "Tolerance, %:"),
+			  tr( "PASSED ?" ));
+       int report_items_number = reportGMP.reportItems.size();
+       for ( int kk = 0; kk < report_items_number; ++kk )
 	 {
-	   double conc = model_used.components[ ii ].signal_concentration;
-	   double s_20 = model_used.components[ ii ].s;
-	   double D_20 = model_used.components[ ii ].D;
-	   double f_f0 = model_used.components[ ii ].f_f0;
-	   double mw   = model_used.components[ ii ].mw;
-
-	   if ( type == "s" )
+	   US_ReportGMP::ReportItem curr_item = reportGMP.reportItems[ kk ];
+	   QString type           = curr_item.type;
+	   QString method         = curr_item.method;
+	   QString int_val_r      = QString::number( curr_item.integration_val );
+	   double  frac_tot_r     = curr_item.total_percent;
+	   double  frac_tot_tol_r = curr_item.tolerance ;
+	   double  low            = curr_item.range_low;
+	   double  high           = curr_item.range_high;
+	   
+	   QString range = "[" + QString::number(low) + " - " + QString::number(high) + "]";
+	   
+	   //integrate over model_used
+	   double int_val_m = 0;
+	   for ( int ii = 0; ii < ncomp; ii++ )
 	     {
-	       if ( s_20 >= low*pow(10,-13) && s_20 <= high*pow(10,-13) )
-		 int_val_m += conc;
+	       double conc = model_used.components[ ii ].signal_concentration;
+	       double s_20 = model_used.components[ ii ].s;
+	       double D_20 = model_used.components[ ii ].D;
+	       double f_f0 = model_used.components[ ii ].f_f0;
+	       double mw   = model_used.components[ ii ].mw;
+	       
+	       if ( type == "s" )
+		 {
+		   if ( s_20 >= low*pow(10,-13) && s_20 <= high*pow(10,-13) )
+		     int_val_m += conc;
+		 }
+	       else if ( type == "D" )
+		 {
+		   if ( D_20 >= low*pow(10,-7) && D_20 <= high*pow(10,-7) )
+		     int_val_m += conc;
+		 }
+	       else if ( type == "f/f0")
+		 {
+		   if ( f_f0 >= low && f_f0 <= high )
+		     int_val_m += conc;
+		 }
+	       else if ( type == "MW")
+		 {
+		   if ( mw >= low*pow(10,3) && mw <= high*pow(10,3) )
+		     int_val_m += conc;
+		 }
 	     }
-	   else if ( type == "D" )
+	   
+	   double frac_tot_m = double( int_val_m / sum_c ) * 100.0;
+	   QString tot_frac_passed = ( frac_tot_m >= ( frac_tot_r * (1 - frac_tot_tol_r/100.0)  )
+				       && frac_tot_m <= ( frac_tot_r * (1 + frac_tot_tol_r/100.0)  ) ) ? "YES" : "NO";
+	   
+	   if ( mdla.contains ( method ) )
 	     {
-	       if ( D_20 >= low*pow(10,-7) && D_20 <= high*pow(10,-7) )
-		 int_val_m += conc;
-	     }
-	   else if ( type == "f/f0")
-	     {
-	       if ( f_f0 >= low && f_f0 <= high )
-		 int_val_m += conc;
-	     }
-	   else if ( type == "MW")
-	     {
-	       if ( mw >= low*pow(10,3) && mw <= high*pow(10,3) )
-		 int_val_m += conc;
+	       mstr += table_row( type,
+				  range,
+				  QString().sprintf( "%10.4e", int_val_m) + " (" + int_val_r + ")",
+				  QString().sprintf( "%5.2f%%", frac_tot_m ) + " (" + QString::number( frac_tot_r ) + "%)",
+				  QString::number( frac_tot_tol_r ),
+				  tot_frac_passed );
 	     }
 	 }
-
-       double frac_tot_m = double( int_val_m / sum_c ) * 100.0;
-       QString tot_frac_passed = ( frac_tot_m >= ( frac_tot_r * (1 - frac_tot_tol_r/100.0)  )
-				   && frac_tot_m <= ( frac_tot_r * (1 + frac_tot_tol_r/100.0)  ) ) ? "YES" : "NO";
-
-       if ( mdla.contains ( method ) )
-	 {
-	   mstr += table_row( type,
-			      range,
-			      QString().sprintf( "%10.4e", int_val_m) + " (" + int_val_r + ")",
-			      QString().sprintf( "%5.2f%%", frac_tot_m ) + " (" + QString::number( frac_tot_r ) + "%)",
-			      QString::number( frac_tot_tol_r ),
-			      tot_frac_passed );
-	 }
+       mstr += indent( 2 ) + "</table>\n";
      }
-   mstr += indent( 2 ) + "</table>\n";
    //End of integration results
 
    /*
