@@ -9,6 +9,7 @@
 #include "../us_analysis_profile/us_analysis_profile.h"
 #include "../us_fematch/us_fematch.h"
 #include "../us_ddist_combine/us_ddist_combine.h"
+#include "../us_pseudo3d_combine/us_pseudo3d_combine.h"
 #include "us_solution.h"
 #include "us_help.h"
 #include "us_extern.h"
@@ -33,6 +34,7 @@ class US_ReporterGMP : public US_Widgets
 
 	 QString ap_xml;
 
+	 US_Pseudo3D_Combine*       sdiag_pseudo3d; 
 	 US_DDistr_Combine*         sdiag_combplot;
 	 US_AnalysisProfileGui*     sdiag; 
 	 US_AnaProfile              currAProf;

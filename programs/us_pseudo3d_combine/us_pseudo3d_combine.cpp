@@ -26,19 +26,7 @@
 
 #define PA_TMDIS_MS 0   // default Plotall time per distro in milliseconds
 
-// main program
-int main( int argc, char* argv[] )
-{
-   QApplication application( argc, argv );
 
-   #include "main1.inc"
-
-   // License is OK.  Start up.
-   
-   US_Pseudo3D_Combine w;
-   w.show();                   //!< \memberof QWidget
-   return application.exec();  //!< \memberof QApplication
-}
 
 // qSort LessThan method for S_Solute sort
 bool distro_lessthan( const S_Solute &solu1, const S_Solute &solu2 )
@@ -808,7 +796,7 @@ void US_Pseudo3D_Combine::load_distro()
 
    if ( dialog.exec() != QDialog::Accepted )
       return;  // no selection made
-
+   
    need_save  = false;
 
    for ( int jj = 0; jj < models.count(); jj++ )
@@ -823,6 +811,44 @@ void US_Pseudo3D_Combine::load_distro()
    pb_rmvdist->setEnabled( models.count() > 0 );
 
    update_curr_distr( (double)system.size() );
+}
+
+//Modified copy for GMP
+void US_Pseudo3D_Combine::load_distro_auto( QString invID_passed, QStringList m_t_r )
+{
+   // get a model description or set of descriptions for distribution data
+   QList< US_Model > models;
+   QStringList       mdescs;
+   bool              loadDB = dkdb_cntrls->db();
+
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+   
+   US_ModelLoader dialog( true, mfilter, models, mdescs, pfilts, invID_passed );
+
+   dialog. accepted_auto ( m_t_r );
+
+   qDebug() << "In load_distro(): mdescs -- " << mdescs;
+   
+   need_save  = false;
+
+   for ( int jj = 0; jj < models.count(); jj++ )
+   {  // load each selected distribution model
+      load_distro( models[ jj ], mdescs[ jj ] );
+   }
+
+   curr_distr = system.size() - 1;
+   need_save  = ck_savepl->isChecked()  &&  !cont_loop;
+   ct_curr_distr->setEnabled( true );
+   ct_curr_distr->setValue( curr_distr + 1 );
+   pb_rmvdist->setEnabled( models.count() > 0 );
+
+   update_curr_distr( (double)system.size() );
+}
+
+//return pointer to data_plot
+QwtPlot* US_Pseudo3D_Combine::rp_data_plot()
+{
+  return data_plot;
 }
 
 void US_Pseudo3D_Combine::load_distro( US_Model model, QString mdescr )

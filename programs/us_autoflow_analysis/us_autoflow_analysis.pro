@@ -17,7 +17,10 @@ HEADERS       = us_autoflow_analysis.h \
                 ../us_fematch/us_dmga_mc_stats.h    \
                 ../us_fematch/us_thread_worker.h    \
                 ../us_ddist_combine/us_ddist_combine.h \
-                ../us_ddist_combine/us_select_rundd.h 
+                ../us_ddist_combine/us_select_rundd.h  \
+                ../us_pseudo3d_combine/us_pseudo3d_combine.h \
+                ../us_pseudo3d_combine/us_remove_distros.h
+                
 
 SOURCES       = us_autoflow_analysis_main.cpp       \
                 us_autoflow_analysis.cpp         \
@@ -33,7 +36,10 @@ SOURCES       = us_autoflow_analysis_main.cpp       \
                 ../us_fematch/us_dmga_mc_stats.cpp    \
                 ../us_fematch/us_thread_worker.cpp    \
                 ../us_ddist_combine/us_ddist_combine.cpp \
-                ../us_ddist_combine/us_select_rundd.cpp 
+                ../us_ddist_combine/us_select_rundd.cpp \
+                ../us_pseudo3d_combine/us_pseudo3d_combine.cpp \
+                ../us_pseudo3d_combine/us_remove_distros.cpp
+                
                 
                 
                

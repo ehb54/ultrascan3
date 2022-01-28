@@ -50,6 +50,9 @@ class US_GUI_EXTERN US_ModelLoader : public US_WidgetsDialog
       US_ModelLoader( bool, QString&, QList< US_Model >&, QStringList&,
                       QStringList& );
 
+      US_ModelLoader( bool, QString&, QList< US_Model >&, QStringList&,
+                      QStringList&, QString );
+
       /*! \brief Alternate constructor for dialog to select models
                  and load their distribution data (no runIDs list)
           \param dbSrc    Flag: default models source to database
@@ -58,6 +61,8 @@ class US_GUI_EXTERN US_ModelLoader : public US_WidgetsDialog
           \param adescrs  Output selected model description strings
       */
       US_ModelLoader( bool, QString&, QList< US_Model >&, QStringList& );
+
+      void accepted_auto(  QStringList );
 
    signals:
       //! \brief A signal to the parent that disk/db selection has changed
@@ -159,15 +164,23 @@ class US_GUI_EXTERN US_ModelLoader : public US_WidgetsDialog
       QString description(       int  );
 
       void build_dialog(  void );
+      void build_dialog_auto( QString );
+      
       void select_diskdb( void );
       void get_person(    void );
       void update_person( int  );
+      
       void list_models (  void );
+      void list_models_auto (  QString );
+      
       void msearch(       const QString& );
       void records_list ( void );
       void singles_list ( void );
       void cancelled(     void );
+      
       void accepted(      void );
+      
+
       void change_single( bool );
       void change_edit  ( bool );
       void change_unasgn( bool );

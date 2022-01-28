@@ -16,7 +16,10 @@ HEADERS       = us_fematch.h          \
                 ../us_reporter_gmp/us_reporter_gmp.h  \
                 ../us_analysis_profile/us_analysis_profile.h \
                 ../us_ddist_combine/us_ddist_combine.h \
-                ../us_ddist_combine/us_select_rundd.h 
+                ../us_ddist_combine/us_select_rundd.h  \
+                ../us_pseudo3d_combine/us_pseudo3d_combine.h \
+                ../us_pseudo3d_combine/us_remove_distros.h
+                
                 
                 
 
@@ -34,7 +37,10 @@ SOURCES       = us_fematch_main.cpp     \
                 ../us_analysis_profile/us_analysis_profile.cpp   \
                 ../us_analysis_profile/us_anapro_utils.cpp   \
                 ../us_ddist_combine/us_ddist_combine.cpp \
-                ../us_ddist_combine/us_select_rundd.cpp 
+                ../us_ddist_combine/us_select_rundd.cpp  \
+                ../us_pseudo3d_combine/us_pseudo3d_combine.cpp \
+                ../us_pseudo3d_combine/us_remove_distros.cpp
+                
                 
                 
                 
