@@ -1175,14 +1175,16 @@ void US_ReportGui::type_changed( int t)
 void US_ReportGui::SetComboBoxItemEnabled(QComboBox * comboBox, int index, bool enabled)
 {
   auto * model = qobject_cast<QStandardItemModel*>(comboBox->model());
-  assert(model);
-
+  //assert(model);
+  Q_ASSERT(model);
+  
   if ( !model )
     return;
   
   auto * item = model->item(index);
-  assert( item );
-
+  //assert( item );
+  Q_ASSERT( item );
+    
   if ( !item )
     return;
 
