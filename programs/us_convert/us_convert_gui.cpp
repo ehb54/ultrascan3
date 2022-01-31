@@ -6402,15 +6402,18 @@ void US_ConvertGui::update_autoflow_record_atLimsImport( void )
 	 }
      }
 
+   qDebug() << "autoflowIntensityID -- " << autoflowIntensityID;
    details_at_editing[ "intensityID" ] = QString::number( autoflowIntensityID );
    
-   //update autoflow record 
+   //update autoflow record
+   qry.clear();
    qry << "update_autoflow_at_lims_import"
        << runID_numeric
        << filename_toDB
        << OptimaName
        << QString::number( autoflowIntensityID );
 
+   qDebug() << "Query for update_autoflow_at_lims_import -- " << qry;
    //db->query( qry );
 
    int status = db->statusQuery( qry );
