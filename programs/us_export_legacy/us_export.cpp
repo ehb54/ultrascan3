@@ -608,7 +608,11 @@ DbgLv(1) << "rawDtype" << rawDtype << "htype" << htype;
       ddesc  = rdata->description + "\n";
       hcell  = rdata->cell;
       fext   = "." + rawDtype + QString::number( hcell );
+
       tripa  = triples[ drow ];
+     
+
+           
       twofer = tripa.contains( "A" );
       bfirst = false;
       if ( twofer )
@@ -629,10 +633,21 @@ DbgLv(1) << "rawDtype" << rawDtype << "htype" << htype;
       else     // We are at a B, so set to output "Radius 0.0 Value-B"
          bfirst = true;
 
+      //ALEXEY: create sub-dir based on triple name:
+      QString tripleName = tripa;
+      tripleName.replace(" / ","");
+      mkdir( odirname, tripleName );
+      QString odirname_triple =  odirname + tripleName + "/";
+      //////////////////////////////////////////////////////////////////
+      
       for ( int ii = 0; ii < nscan; ii++ )
       {  // Output a file for each scan
          ofname = QString().sprintf( "%05i", ( ii + 1 ) ) + fext;
-         ofpath = odirname + ofname;            // Full path output file
+
+	 //ofpath = odirname + ofname;            // Full path output file
+
+	 ofpath = odirname_triple + ofname;            // Full path output file
+	 
          dscan  = &rdata->scanData[ ii ];       // Current scan pointer
          htemp  = dscan->temperature;           // Temperature
          hrpm   = dscan->rpm;                   // RPM
@@ -649,6 +664,8 @@ DbgLv(1) << "rawDtype" << rawDtype << "htype" << htype;
                   ? QString().sprintf( "%6.3f %i\n", hradi, hcoun )
                   : QString().sprintf( "%4i %i\n",   hwavl, hcoun ) );
 DbgLv(1) << "OFNAME" << ofname;
+DbgLv(1) << "Ofpath" << ofpath;
+         
 
          QFile legfile( ofpath );
 
