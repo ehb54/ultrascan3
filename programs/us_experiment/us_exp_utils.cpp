@@ -2347,7 +2347,9 @@ DbgLv(1) << "EGRn:inP:  call rbS";
    rebuild_Ranges();
 
    QString ch_none( "none" );
-DbgLv(1) << "EGRn:inP:  nrnchan" << nrnchan;
+   DbgLv(1) << "EGRn:inP:  nrnchan" << nrnchan;
+   
+
 
    for ( int ii = 0; ii < nrnchan; ii++ )
    {
@@ -2394,6 +2396,56 @@ DbgLv(1) << "EGRn:inP:    ii" << ii << "channel" << channel;
          }
    }
 
+   //////////////////////////////////////////////////////////////
+      //ALEXEY
+   // get a list of same-cell rows; disconnect
+   for ( int i = 0; i < nrnchan; i++ )
+   {
+     QString clabl       = cc_labls[ i ]->text();
+
+     if ( !clabl.split(",")[0].contains("/ A") )
+       continue;
+       
+     QString scell       = clabl.left( 1 );
+     QString labnone     = tr( "none" );
+     QList< int >  ccrows;
+     int kswavl          = swvlens[ i ].count();
+     QString labwlr      = cc_lrngs[ i ]->text();
+     
+     for ( int ii = 0; ii < nrnchan; ii++ )
+       {
+	 // Ignore the exact same row
+	 if ( ii == i )
+	   continue;
+	 // Get row label and quit loop when at end visible rows
+	 QString rlabl       = cc_labls[ ii ]->text();
+	 if ( rlabl == labnone )
+	   break;
+	 // Compare the cell value to that of the one (un)checked
+	 QString rcell       = rlabl.left( 1 );
+	 if ( rcell == scell )
+	   {  // Save same-cell row and disconnect the checkbox
+	     ccrows << ii;
+	   }
+       }
+     
+     // Set check-state of  boxes in same-cell rows and reconnect : ALEXEY: here set of channel A is copied to B
+     for ( int j = 0; j < ccrows.count(); j++ )
+       {
+	 int ccrow           = ccrows[ j ];
+	 
+	 qDebug() << "::initPanel(), Ranges: same-cell rows -- " << clabl << cc_labls[ ccrow ]->text();
+	 
+	 cc_lrngs[ ccrow ]->setText( labwlr );
+	 
+	 swvlens[ ccrow ].clear();
+	 for ( int jj = 0; jj < kswavl; jj++ )
+	   swvlens[ ccrow ] << swvlens[ i ][ jj ];
+       }
+   }
+   ///////////////////////////////////////////////////////////////
+
+   
    // Make remaining rows invisible
    for ( int ii = nrnchan; ii < mxrow; ii++ )
    {
