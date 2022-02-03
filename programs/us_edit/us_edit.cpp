@@ -2985,8 +2985,7 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
    pb_undo ->setEnabled( false ); 
 
    le_status->setText( tr( "Edit controls set" ) );
-   
-   // /************** END OF TESTING ****************************************/   
+
 }
 
 void US_Edit::reset_editdata_panel( void )
@@ -7466,6 +7465,34 @@ DbgLv(1) << " 2)gap_fringe" << gap_fringe << "idax" << idax;
    qDebug() << "In new_triple_auto: ref_wvl_index -- " << iwavl_edit_ref_index[ triple_index ];
    cb_lplot->setCurrentIndex( iwavl_edit_ref_index[ triple_index ] );
    ////////////////////////////////////////////////////
+
+
+   //Here, take into account excluded scans on per triple basis
+   int scanExcl_begin_ind = editProfile_scans_excl[ cb_triple->currentText() ][0].toInt();
+   int scanExcl_end_ind   = editProfile_scans_excl[ cb_triple->currentText() ][1].toInt();
+
+   qDebug() << "IN new_Triple_auto(): triple -- " << cb_triple->currentText() 
+   	    << "ScanBegin -- " << scanExcl_begin_ind
+   	    << "ScanEnd -- "   << scanExcl_end_ind ;
+
+   qDebug() << "Includes size before remove: " << includes.size();
+   //for ( int i = 0; i < includes.size(); ++i  )
+   //  qDebug() << "Includes after remove: " << includes[ i ];
+   
+   for ( int ii = 0; ii < scanExcl_begin_ind; ii++ )
+     {
+       includes.removeFirst();
+     }
+   //end of the scan set
+   for ( int ii = data.scanData.size() - scanExcl_end_ind; ii < data.scanData.size(); ii++ )
+     {
+       includes.removeLast();
+     }
+
+   qDebug() << "Includes size after remove: " << includes.size();
+   //for ( int i = 0; i < includes.size(); ++i  )
+   //  qDebug() << "Includes after remove: " << includes[ i ];
+   ///////////////////////////////////////////////////////////
    
    replot();
 DbgLv(1) << "EDT:NewTr: DONE";
@@ -7476,6 +7503,8 @@ DbgLv(1) << "EDT:NewTr: DONE";
 //qDebug() << "Triple: " << triple << ", cb_triple_text: " << cb_triple->currentText();
 //qDebug() << editProfile[ triple ] << ", " <<  editProfile[ cb_triple->currentText() ];
 
+ 
+ 
  if ( all_loaded ) 
    {
      qDebug() << "NEW_TRIPLE_AUTO: all_loaded: " << all_loaded;

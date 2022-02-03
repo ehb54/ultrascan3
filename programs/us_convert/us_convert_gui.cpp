@@ -1563,10 +1563,10 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
 
 	 QMessageBox msgBox;
 	 msgBox.setText(tr("Attention: Reference scans have been defined automatically."));
-	 msgBox.setInformativeText("You may Accept and proceed with saving the data, or choose to reset reference scans definitions and Define Manually:");
+	 msgBox.setInformativeText("You may review and proceed with saving the data, or choose to reset reference scans definitions by clicking 'Undo Reference Scans':");
 	 msgBox.setWindowTitle(tr("Reference Scans: Automated Processing"));
-	 QPushButton *Automatic  = msgBox.addButton(tr("Accept "),   QMessageBox::YesRole);
-	 QPushButton *Manual     = msgBox.addButton(tr("Define Manually"), QMessageBox::YesRole);
+	 QPushButton *Automatic  = msgBox.addButton(tr("OK "),   QMessageBox::YesRole);
+	 //QPushButton *Manual     = msgBox.addButton(tr("Define Manually"), QMessageBox::YesRole);
 	 	 
 	 msgBox.setIcon(QMessageBox::Question);
 	 msgBox.exec();
@@ -1574,9 +1574,9 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
 	 if (msgBox.clickedButton() == Automatic) {
 	   return;
 	 }
-	 else if (msgBox.clickedButton() == Manual) {
-	   cancel_reference();
-	 }
+	 // else if (msgBox.clickedButton() == Manual) {
+	 //   cancel_reference();
+	 // }
        }
      //end of auto-processing reference range
 
@@ -1687,10 +1687,10 @@ void US_ConvertGui::process_optics()
 
 	 QMessageBox msgBox;
 	 msgBox.setText(tr("Attention: Reference scans have been defined automatically."));
-	 msgBox.setInformativeText("You may Accept and proceed with saving the data, or choose to reset reference scans definitions and Define Manually:");
+	 msgBox.setInformativeText("You may review and proceed with saving the data, or choose to reset reference scans definitions by clicking 'Undo Reference Scans':");
 	 msgBox.setWindowTitle(tr("Reference Scans: Automated Processing"));
-	 QPushButton *Automatic  = msgBox.addButton(tr("Accept "),   QMessageBox::YesRole);
-	 QPushButton *Manual     = msgBox.addButton(tr("Define Manually"), QMessageBox::YesRole);
+	 QPushButton *Automatic  = msgBox.addButton(tr("OK "),   QMessageBox::YesRole);
+	 //QPushButton *Manual     = msgBox.addButton(tr("Define Manually"), QMessageBox::YesRole);
 	 	 
 	 msgBox.setIcon(QMessageBox::Question);
 	 msgBox.exec();
@@ -1698,9 +1698,9 @@ void US_ConvertGui::process_optics()
 	 if (msgBox.clickedButton() == Automatic) {
 	   return;
 	 }
-	 else if (msgBox.clickedButton() == Manual) {
-	   cancel_reference();
-	 }
+	 // else if (msgBox.clickedButton() == Manual) {
+	 //   cancel_reference();
+	 // }
        } 
      //end of auto-processing reference range
      
