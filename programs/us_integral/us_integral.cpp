@@ -668,7 +668,8 @@ DbgLv(1) << "LD:   efname" << efname;
    US_DataIO::loadData( edir, efname, edata );
 DbgLv(1) << "LD:  edata: desc run cell chan"
  << edata.description << edata.runID << edata.cell << edata.channel;
-   tsys.label    = edata.description;
+   tsys.label    = edata.description + " (" + efname.section(".",0,0) + " "
+           + efname.section(".",-5,-2) + " " + tsys.method + ")" + "[" + QString::number( alldis.size() ) + "]";
 
    // Now, get associated solution,buffer values
    QString soluID;
