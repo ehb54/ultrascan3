@@ -6620,7 +6620,7 @@ void US_ReporterGMP::assemble_parts( QString & html_str )
     	html_str += html_operator;
       if ( top.key().contains("Speed") && top.value() )
     	html_str += html_speed;
-      if ( top.key().contains("Cells") && top.value() )
+      if ( top.key().contains("Cell") && top.value() )
     	html_str += html_cells;
 
       if ( top.key().contains("Solutions") && top.value() )
