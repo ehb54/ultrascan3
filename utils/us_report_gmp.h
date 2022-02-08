@@ -59,6 +59,20 @@ class US_UTIL_EXTERN US_ReportGMP
       bool integration_results_mask;
       bool plots_mask;
 
+      //Pseudo3D mask parameters
+      bool pseudo3d_2dsait_s_ff0;
+      bool pseudo3d_2dsait_s_d;
+      bool pseudo3d_2dsait_mw_ff0;
+      bool pseudo3d_2dsait_mw_d;
+      bool pseudo3d_2dsamc_s_ff0;
+      bool pseudo3d_2dsamc_s_d;
+      bool pseudo3d_2dsamc_mw_ff0;
+      bool pseudo3d_2dsamc_mw_d;
+      bool pseudo3d_pcsa_s_ff0;
+      bool pseudo3d_pcsa_s_d;
+      bool pseudo3d_pcsa_mw_ff0;
+      bool pseudo3d_pcsa_mw_d;
+      
       
       //Rest of parameters followign from protocol: not used so far
       int     scan_number;

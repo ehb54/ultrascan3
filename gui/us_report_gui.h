@@ -59,6 +59,20 @@ class US_GUI_EXTERN US_ReportGui: public US_Widgets
       QCheckBox*   ck_min_intensity;
       QCheckBox*   ck_integration;
       QCheckBox*   ck_plots;
+
+      QGroupBox*   pseudo3d_box;
+      QCheckBox*   ck_2dsait_s_ff0;
+      QCheckBox*   ck_2dsait_s_d;
+      QCheckBox*   ck_2dsait_mw_ff0;
+      QCheckBox*   ck_2dsait_mw_d;
+      QCheckBox*   ck_2dsamc_s_ff0;
+      QCheckBox*   ck_2dsamc_s_d;
+      QCheckBox*   ck_2dsamc_mw_ff0;
+      QCheckBox*   ck_2dsamc_mw_d;
+      QCheckBox*   ck_pcsa_s_ff0;
+      QCheckBox*   ck_pcsa_s_d;
+      QCheckBox*   ck_pcsa_mw_ff0;
+      QCheckBox*   ck_pcsa_mw_d;
       
       //duration
       QSpinBox*    sb_durat_dd;

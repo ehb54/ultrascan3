@@ -853,6 +853,21 @@ void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP* reportFromDB, int re
 	  rootObj["exp_dur"].toString().toInt() ? reportFromDB->experiment_duration_mask = true : reportFromDB->experiment_duration_mask = false;
 	  rootObj["integration"].toString().toInt() ? reportFromDB->integration_results_mask = true : reportFromDB->integration_results_mask = false;
 	  rootObj["plots"].toString().toInt() ? reportFromDB->plots_mask = true : reportFromDB->plots_mask = false;
+
+	  rootObj["pseudo3d_2dsait_s_ff0"].toString().toInt() ? reportFromDB->pseudo3d_2dsait_s_ff0   = true : reportFromDB-> pseudo3d_2dsait_s_ff0  = false;
+	  rootObj["pseudo3d_2dsait_s_d"].toString().toInt() ? reportFromDB->pseudo3d_2dsait_s_d   = true : reportFromDB-> pseudo3d_2dsait_s_d  = false;
+	  rootObj["pseudo3d_2dsait_mw_ff0"].toString().toInt() ? reportFromDB->pseudo3d_2dsait_mw_ff0   = true : reportFromDB-> pseudo3d_2dsait_mw_ff0  = false;
+	  rootObj["pseudo3d_2dsait_mw_d"].toString().toInt() ? reportFromDB->pseudo3d_2dsait_mw_d   = true : reportFromDB-> pseudo3d_2dsait_mw_d  = false;
+
+	  rootObj["pseudo3d_2dsamc_s_ff0"].toString().toInt() ? reportFromDB->pseudo3d_2dsamc_s_ff0   = true : reportFromDB-> pseudo3d_2dsamc_s_ff0  = false;
+	  rootObj["pseudo3d_2dsamc_s_d"].toString().toInt() ? reportFromDB->pseudo3d_2dsamc_s_d   = true : reportFromDB-> pseudo3d_2dsamc_s_d  = false;
+	  rootObj["pseudo3d_2dsamc_mw_ff0"].toString().toInt() ? reportFromDB->pseudo3d_2dsamc_mw_ff0   = true : reportFromDB-> pseudo3d_2dsamc_mw_ff0  = false;
+	  rootObj["pseudo3d_2dsamc_mw_d"].toString().toInt() ? reportFromDB->pseudo3d_2dsamc_mw_d   = true : reportFromDB-> pseudo3d_2dsamc_mw_d  = false;	  
+
+	  rootObj["pseudo3d_pcsa_s_ff0"].toString().toInt() ? reportFromDB->pseudo3d_pcsa_s_ff0   = true : reportFromDB-> pseudo3d_pcsa_s_ff0  = false;
+	  rootObj["pseudo3d_pcsa_s_d"].toString().toInt() ? reportFromDB->pseudo3d_pcsa_s_d   = true : reportFromDB-> pseudo3d_pcsa_s_d  = false;
+	  rootObj["pseudo3d_pcsa_mw_ff0"].toString().toInt() ? reportFromDB->pseudo3d_pcsa_mw_ff0   = true : reportFromDB-> pseudo3d_pcsa_mw_ff0  = false;
+	  rootObj["pseudo3d_pcsa_mw_d"].toString().toInt() ? reportFromDB->pseudo3d_pcsa_mw_d   = true : reportFromDB-> pseudo3d_pcsa_mw_d  = false;
 	}
       else
 	{
@@ -2453,7 +2468,7 @@ US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
 
    //QGroupBox for Fit meniscus/bottom options
    meniscus_box = new QGroupBox(tr("Fit Meniscus | Bottom"));
-   meniscus_box-> setStyleSheet( "QGroupBox { font: bold;  background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #E0E0E0, stop: 1 #FFFFFF); border: 2px solid gray; border-radius: 10px; margin-top: 10px; margin-bottom: 10px; padding-top: 5px; } QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; left: 10px; margin: 0 5px; background-color: black; color: white; padding: 0 3px;}  QGroupBox::indicator { width: 13px; height: 13px; border: 1px solid grey; background-color: rgba(204, 204, 204, 255);} QGroupBox::indicator:hover {background-color: rgba(235, 235, 235, 255);} QLabel {background-color: rgb(105,105,105);}");
+   meniscus_box-> setStyleSheet( "QGroupBox { font: bold,  background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #E0E0E0, stop: 1 #FFFFFF); border: 2px solid gray; border-radius: 10px; margin-top: 10px; margin-bottom: 10px; padding-top: 5px; } QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; left: 10px; margin: 0 5px; background-color: black; color: white; padding: 0 3px;}  QGroupBox::indicator { width: 13px; height: 13px; border: 1px solid grey; background-color: rgba(204, 204, 204, 255);} QGroupBox::indicator:hover {background-color: rgba(235, 235, 235, 255);} QLabel {background-color: rgb(105,105,105);}");
 
    QRadioButton *fm  = new QRadioButton(tr("Fit Meniscus"));
    fm-> setObjectName("fm");
