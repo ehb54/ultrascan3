@@ -64,26 +64,28 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   in_reload_end_process = false;
   all_processed = true;
   
-  // // ---- Testing ----
+  // // // ---- Testing ----
   // QMap < QString, QString > protocol_details;
-  // protocol_details[ "invID_passed" ] = QString("3");
-  // protocol_details[ "analysisIDs"  ] = QString( "125" );
 
-  //What's needed ////////////////////////////////////////////////////////
-  // AProfileGUID       = protocol_details[ "aprofileguid" ];
-  // ProtocolName_auto  = protocol_details[ "protocolName" ];
-  // invID              = protocol_details[ "invID_passed" ].toInt();
 
-  // FileName           = protocol_details[ "filename" ];
-   
-  // analysisIDs        = protocol_details[ "analysisIDs" ];
-  ////////////////////////////////////////////////////////////////////////
+  // protocol_details[ "invID_passed" ] = QString("2");
+  // protocol_details[ "analysisIDs"  ] = QString( "1951,1952,1953,1954,1955,1956,1957,1958,1959,1960,1961,1962,1963,1964" );
+
+  // // //What's needed ////////////////////////////////////////////////////////
+  // // AProfileGUID       = protocol_details[ "aprofileguid" ];
+  // // ProtocolName_auto  = protocol_details[ "protocolName" ];
+  // // invID              = protocol_details[ "invID_passed" ].toInt();
+
+  // // FileName           = protocol_details[ "filename" ];
+  
+  // // analysisIDs        = protocol_details[ "analysisIDs" ];
+  // // /////////////////////////////////////////////////////////////////////
 
   
   // initPanel( protocol_details );
 
-  // -----------------
-  //Test of github's ssh key 2...
+  // // -----------------
+  // //Test of github's ssh key 2...
 
 }
 
