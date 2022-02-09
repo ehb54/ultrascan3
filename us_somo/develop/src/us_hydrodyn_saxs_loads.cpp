@@ -18,6 +18,48 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 #include <QTextStream>
 #endif
 
+static QStringList csv_transpose( const QStringList &qsl ) {
+   // qDebug() << "csv_transpose()";
+   // QTextStream( stdout ) << "source:" << qsl.join( "\n" ) << "\n";
+
+   map < int, map < int, QString > >  data;
+
+   int rows = (int) qsl.size();
+
+   int max_cols = 0;
+
+   for ( int i = 0; i < rows; ++i ) {
+      QStringList row = qsl[i].split( "," );
+      int cols = (int) row.size();
+      if ( max_cols < cols ) {
+         max_cols = cols;
+      }
+      
+      for ( int j = 0; j < cols; j++ ) {
+         data[ i ][ j ] = row[ j ];
+      }
+   }
+
+   QStringList res;
+
+   {
+      for ( int j = 0; j < max_cols; ++j ) {
+         QString line;
+         for ( int i = 0; i < rows; ++i ) {
+            if ( data.count( i ) && data[ i ].count( j ) ) {
+               line += data[ i ][ j ];
+            }
+            line += ",";
+         }
+         res << line;
+      }
+   }
+   
+   // QTextStream( stdout )  << "result\n" << res.join( "\n" ) << "\n";
+   
+   return res;
+}
+      
 void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves )
 {
 
@@ -50,6 +92,12 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
    }
    
    QStringList qsl_headers = qsl.filter("\"Name\",\"Type; q:\"");
+   QStringList qsl_t_headers = qsl.filter( QRegExp( "^\"(Name|Type; q:)\"" ) );
+   if ( qsl_t_headers.size() == 2 ) {
+      qsl = csv_transpose( qsl );
+      qsl_headers = qsl.filter("\"Name\",\"Type; q:\"");         
+   }
+
    if ( qsl_headers.size() == 0 && !just_plotted_curves ) 
    {
       // QMessageBox mb(us_tr("UltraScan Warning"),
@@ -1446,7 +1494,7 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
             Icolumn = 1;
          }
       }
-      if ( ext == "dat" ) 
+      if ( ext == "dat" || ext == "txt" ) 
       {
          // foxs?
          // do_crop = true;

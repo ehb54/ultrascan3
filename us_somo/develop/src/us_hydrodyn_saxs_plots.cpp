@@ -1620,11 +1620,15 @@ void US_Hydrodyn_Saxs::pp()
            saxs_iqq_residuals_widgets.count( it->first ) &&
            saxs_iqq_residuals_widgets[ it->first ] &&
            it->second->plot ) {
-         plot_info[ "US-SOMO SAXS Residuals " + it->first ] = it->second->plot;
+         use_plot_info[ "US-SOMO SAXS Residuals " + it->first ] = it->second->plot;
       }
    }
 
-   if ( !US_Plot_Util::printtofile( fn, plot_info, errors, messages ) )
+   if ( saxs_residuals_widget ) {
+      use_plot_info[ "US-SOMO SAXS PRR Residuals" ] = saxs_residuals_window->plot;
+   }
+
+   if ( !US_Plot_Util::printtofile( fn, use_plot_info, errors, messages ) )
    {
       editor_msg( "red", errors );
    } else {

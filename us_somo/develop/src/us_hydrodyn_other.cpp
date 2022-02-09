@@ -913,7 +913,8 @@ bool US_Hydrodyn::is_dammin_dammif(QString filename)
                 !tmp.contains("Number of particle atoms") &&
                 !tmp.contains("Number of atoms written") &&
                 !tmp.contains("Filtered number of atoms") &&
-                !tmp.contains("Dummy atom radius")
+                !tmp.contains("Dummy atom radius") &&
+                !tmp.contains("Number of dummy atoms")
                 );
 
       if ( ts.atEnd() &
@@ -921,7 +922,8 @@ bool US_Hydrodyn::is_dammin_dammif(QString filename)
            !tmp.contains("Number of particle atoms") &&
            !tmp.contains("Number of atoms written") &&
            !tmp.contains("Filtered number of atoms") &&
-           !tmp.contains("Dummy atom radius")
+           !tmp.contains("Dummy atom radius") &&
+           !tmp.contains("Number of dummy atoms")
            )
       {
          f.close();

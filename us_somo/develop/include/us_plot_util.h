@@ -17,6 +17,8 @@
 
 using namespace std;
 
+#define UPU_EB_PREFIX "^e#"
+
 class US_EXTERN US_Plot_Util
 {
  public:
