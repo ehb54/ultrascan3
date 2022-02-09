@@ -1628,52 +1628,56 @@ void US_ReporterGMP::generate_report( void )
   progress_msg->setValue( 4 );
   qApp->processEvents();
 
+  
   //Pseudo3D Plots Generation
   //FileName; //<-- a single-type runID (e.g. RI) - NOT combined runs for now...
-  QStringList m_t_r;
-  //TEST
-  QString triple_ps;
-  QStringList models_ps;
-  QMap < QString, QStringList >::iterator mm;
-  for ( mm = Triple_to_Models.begin(); mm != Triple_to_Models.end(); ++mm )
-    {
-      triple_ps = mm.key();
-      triple_ps.replace(".","");
-      models_ps = mm.value();
-
-      qDebug() << "For triple -- " << triple_ps << ", there are models: " << mm.value();
-      break;
-    }
-  m_t_r << triple_ps << models_ps[ 0 ] << FileName;
-
-  qDebug() << "m_t_r to model_loader -- " << m_t_r;
-      
-  sdiag_pseudo3d = new US_Pseudo3D_Combine();
-  sdiag_pseudo3d -> load_distro_auto ( QString::number( invID ), m_t_r );
-  
-  
-
-  //write plots
   mkdir( US_Settings::reportDir(), FileName );
   const QString svgext( ".svgz" );
   const QString pngext( ".png" );
   const QString csvext( ".csv" );
   QString basename  = US_Settings::reportDir() + "/" + FileName + "/" + FileName + ".";
-
   QStringList Pseudo3dPlotsFileNames;
-  QString imgPseudo3d01File = basename + "pseudo3D" + "." + models_ps[ 0 ]  + "." +  triple_ps + svgext;
   
-  write_plot( imgPseudo3d01File, sdiag_pseudo3d->rp_data_plot() );                //<-- rp_data_plot() gives pointer to pseudo3D plot
-  imgPseudo3d01File.replace( svgext, pngext ); 
-  Pseudo3dPlotsFileNames << imgPseudo3d01File;
+  //TEST
+  QMap < QString, QStringList >::iterator mm;
+  for ( mm = Triple_to_Models.begin(); mm != Triple_to_Models.end(); ++mm )
+    {
+      QString triple_ps = mm.key();
+      triple_ps.replace(".","");
+      QStringList models_ps = mm.value();
 
+      qDebug() << "For triple -- " << triple_ps << ", there are models: " << mm.value();
+      
+      for ( int ml = 0; ml < models_ps.size(); ++ml )
+	{
+	  QStringList m_t_r;  
+      	  m_t_r << triple_ps << models_ps[ ml ] << FileName;
+      
+	  qDebug() << "m_t_r to model_loader -- " << m_t_r;
+	  
+	  sdiag_pseudo3d = new US_Pseudo3D_Combine();
+	  sdiag_pseudo3d -> load_distro_auto ( QString::number( invID ), m_t_r );
+	  
+	  //write plot: here default is [s-f/f0] coordinates (x,y)
+	  QString imgPseudo3d01File = basename + "pseudo3D" + "." + models_ps[ 0 ]  + "." +  triple_ps + svgext;
+	  write_plot( imgPseudo3d01File, sdiag_pseudo3d->rp_data_plot() );                //<-- rp_data_plot() gives pointer to pseudo3D plot
+	  imgPseudo3d01File.replace( svgext, pngext ); 
+	  Pseudo3dPlotsFileNames << imgPseudo3d01File;
+
+	  //here, we have to go over [x-y] coordinates for given [triple-model]: 
+
+	  //reset plots
+	  sdiag_pseudo3d->reset_auto();
+	}
+    }
+  
   //assemble combined plots into html
   assemble_plots_html( Pseudo3dPlotsFileNames  );
   progress_msg->setValue( 5 );
   qApp->processEvents();
   
   // exit(1);
-  ///
+  //End of Pseudo3D Plots ///
   
   
   //Combined Plots Generation

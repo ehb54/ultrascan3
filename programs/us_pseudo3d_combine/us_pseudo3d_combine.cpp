@@ -381,6 +381,11 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    reset();
 }
 
+void US_Pseudo3D_Combine::reset_auto( void )
+{
+  reset();
+}
+
 void US_Pseudo3D_Combine::reset( void )
 {
    dataPlotClear( data_plot );
@@ -830,7 +835,8 @@ void US_Pseudo3D_Combine::load_distro_auto( QString invID_passed, QStringList m_
    qDebug() << "In load_distro(): mdescs -- " << mdescs;
    
    need_save  = false;
-
+   QApplication::restoreOverrideCursor();
+   
    for ( int jj = 0; jj < models.count(); jj++ )
    {  // load each selected distribution model
       load_distro( models[ jj ], mdescs[ jj ] );
@@ -1376,6 +1382,8 @@ void US_Pseudo3D_Combine::select_x_axis( int ival )
 
    plot_x     = ival;
 
+   qDebug() << "Pseudo3D: x_axis changed: ival,  xlabs[ plot_x ] -- " << ival <<  xlabs[ plot_x ];
+
    lb_plt_smin->setText( tr( "Plot Limit " ) + xlabs[ plot_x ]
                        + tr( " Minimum:" ) );
    lb_plt_smax->setText( tr( "Plot Limit " ) + xlabs[ plot_x ]
@@ -1413,6 +1421,8 @@ void US_Pseudo3D_Combine::select_y_axis( int ival )
 
    plot_y     = ival;
 qDebug() << "select-y: plot_y" << plot_y;
+
+   qDebug() << "Pseudo3D: y_axis changed: ival,  ylabs[ plot_y ] -- " << ival <<  ylabs[ plot_y ];
 
    lb_plt_kmin->setText( tr( "Plot Limit " ) + ylabs[ plot_y ]
                        + tr( " Minimum:" ) );

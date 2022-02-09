@@ -52,6 +52,7 @@ class US_Pseudo3D_Combine : public US_Widgets
 
       void load_distro_auto( QString, QStringList );
       QwtPlot* rp_data_plot();
+      void reset_auto(       void );
 
    private:
 
