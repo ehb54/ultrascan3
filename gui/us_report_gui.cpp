@@ -882,7 +882,26 @@ void US_ReportGui::gui_to_report( void )
   report -> pseudo3d_pcsa_s_d         = ck_pcsa_s_d       ->isChecked();
   report -> pseudo3d_pcsa_mw_ff0      = ck_pcsa_mw_ff0    ->isChecked();
   report -> pseudo3d_pcsa_mw_d        = ck_pcsa_mw_d      ->isChecked();
-  
+
+  if( report -> pseudo3d_2dsait_s_ff0    ||  
+      report -> pseudo3d_2dsait_s_d      ||
+      report -> pseudo3d_2dsait_mw_ff0   ||
+      report -> pseudo3d_2dsait_mw_d     ||
+      report -> pseudo3d_2dsamc_s_ff0    || 
+      report -> pseudo3d_2dsamc_s_d      ||
+      report -> pseudo3d_2dsamc_mw_ff0   ||
+      report -> pseudo3d_2dsamc_mw_d     ||
+      report -> pseudo3d_pcsa_s_ff0      ||
+      report -> pseudo3d_pcsa_s_d        ||
+      report -> pseudo3d_pcsa_mw_ff0     ||
+      report -> pseudo3d_pcsa_mw_d       
+      )
+    {
+      report -> pseudo3d_mask = true;
+    }
+  else
+    report -> pseudo3d_mask = false;
+
 }
 
 //Slot to cancel any updates on channel's report
@@ -1241,6 +1260,8 @@ void US_ReportGui::apply_all_wvls( void )
 	  report_map[ ri.key() ]->pseudo3d_pcsa_s_d      = report -> pseudo3d_pcsa_s_d      ;
 	  report_map[ ri.key() ]->pseudo3d_pcsa_mw_ff0   = report -> pseudo3d_pcsa_mw_ff0   ;
 	  report_map[ ri.key() ]->pseudo3d_pcsa_mw_d     = report -> pseudo3d_pcsa_mw_d     ;
+
+	  report_map[ ri.key() ]->pseudo3d_mask          = report -> pseudo3d_mask          ;
 	  
 	  
 	  //Now go over reportItems:

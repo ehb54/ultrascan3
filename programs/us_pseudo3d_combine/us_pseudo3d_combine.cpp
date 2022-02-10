@@ -1370,6 +1370,18 @@ qDebug() << "Remove Distros";
    plot_data();
 }
 
+// Select coordinate for horizontal axis: copy for GMP
+void US_Pseudo3D_Combine::select_x_axis_auto( int ival )
+{
+  select_x_axis( ival );
+}
+
+// Select coordinate for vertical axis: copy for GMP
+void US_Pseudo3D_Combine::select_y_axis_auto( int ival )
+{
+  select_y_axis( ival );
+}
+
 // Select coordinate for horizontal axis
 void US_Pseudo3D_Combine::select_x_axis( int ival )
 {

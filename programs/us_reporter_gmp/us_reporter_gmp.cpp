@@ -1247,12 +1247,16 @@ void US_ReporterGMP::changedItem( QTreeWidgetItem* item, int col )
 void US_ReporterGMP::build_perChanTree ( void )
 {
   QString indent( "  " );
-  QStringList chanItemNameList, tripleItemNameList, tripleItemModelNameList, tripleMaskItemNameList, tripleMaskItemPlotNameList;
+  QStringList chanItemNameList, tripleItemNameList,
+    tripleItemModelNameList, tripleMaskItemNameList,
+    tripleMaskItemPlotNameList, tripleMaskItemPseudoNameList;
 
   QStringList tripleReportModelsList;
   QStringList tripleReportMasksList;
   QList< bool > tripleReportMasksList_vals;
+  QList< bool > tripleReportMasksPseudoList_vals;
   QStringList tripleReportMasksPlotList;
+  QStringList tripleReportMasksPseudoList;
   
   int wiubase = (int)QTreeWidgetItem::UserType;
   
@@ -1330,7 +1334,8 @@ void US_ReporterGMP::build_perChanTree ( void )
 		       << reportGMP. av_intensity_mask
 		       << reportGMP. experiment_duration_mask
 		       << reportGMP. integration_results_mask
-		       << reportGMP. plots_mask;
+		       << reportGMP. plots_mask
+		       << reportGMP. pseudo3d_mask;
 
 	      tripleReportMasksList.clear();
 	      tripleReportMasksList << "Total Concentration"
@@ -1338,7 +1343,8 @@ void US_ReporterGMP::build_perChanTree ( void )
 				    << "Minimum Intensity"
 				    << "Experiment Duration"
 				    << "Integration Results"
-				    << "Plots";
+				    << "Plots"
+				    << "Pseudo3d Distributions";
 	      
 	      tripleReportMasksList_vals.clear();
 	      tripleReportMasksList_vals << reportGMP. tot_conc_mask
@@ -1346,7 +1352,10 @@ void US_ReporterGMP::build_perChanTree ( void )
 	      				 << reportGMP. av_intensity_mask
 	      				 << reportGMP. experiment_duration_mask
 	      				 << reportGMP. integration_results_mask
-					 << reportGMP. plots_mask;
+					 << reportGMP. plots_mask
+					 << reportGMP. pseudo3d_mask;
+
+	      
 
 	      //TEMP: define model list
 	      tripleReportModelsList.clear();
@@ -1396,21 +1405,78 @@ void US_ReporterGMP::build_perChanTree ( void )
 						    << "D-vs-s 2D Model"
 						    << "D-vs-MW 2D Model"
 						    << "3D Model Plot";
-			  
+								  
 			  for ( int hh = 0; hh < tripleReportMasksPlotList.size(); ++hh )
 			    {
 			      QString tripleMaskItemPlotName = tripleReportMasksPlotList[ hh ];
 			      tripleMaskItemPlotNameList.clear();
 			      tripleMaskItemPlotNameList << "" << indent.repeated( 5 ) + tripleMaskItemPlotName;
 			      tripleMaskPlotItem [ tripleModelName ] = new QTreeWidgetItem( tripleMaskItem [ tripleModelName ], tripleMaskItemPlotNameList, wiubase);
-			      
-			      tripleMaskPlotItem [ tripleModelName ] ->setCheckState( 0, Qt::Checked );
 
-			      ++checked_masks;
+			      if ( tripleReportMasksList_vals[ kk ] )
+				{
+				  tripleMaskPlotItem [ tripleModelName ] ->setCheckState( 0, Qt::Checked );
+				  ++checked_masks;
+				}
+			      else
+				tripleMaskPlotItem [ tripleModelName ] ->setCheckState( 0, Qt::Unchecked );
 			    }
 			}
+		      //end of triple's masks
+		      
+		      //pseudo3d distr.
+		      if ( tripleMaskItemName.contains("Pseudo3d") )
+			{
+			  tripleReportMasksPseudoList.clear();
+			  tripleReportMasksPseudoList << "Pseudo3d s-vs-f/f0 Distribution"
+						      << "Pseudo3d s-vs-D Distribution"
+						      << "Pseudo3d MW-vs-f/f0 Distribution"
+						      << "Pseudo3d MW-vs-D Distribution";
+
+			  tripleReportMasksPseudoList_vals. clear();
+			  if ( tripleItemModelName.contains( "2DSA-IT" )  )
+			    {
+			      tripleReportMasksPseudoList_vals << reportGMP. pseudo3d_2dsait_s_ff0
+							       << reportGMP. pseudo3d_2dsait_s_d
+							       << reportGMP. pseudo3d_2dsait_mw_ff0
+							       << reportGMP. pseudo3d_2dsait_mw_d;
+			    }
+			  else if ( tripleItemModelName.contains( "2DSA-MC" ) )
+			    {
+			      tripleReportMasksPseudoList_vals << reportGMP. pseudo3d_2dsamc_s_ff0
+							       << reportGMP. pseudo3d_2dsamc_s_d
+							       << reportGMP. pseudo3d_2dsamc_mw_ff0
+							       << reportGMP. pseudo3d_2dsamc_mw_d;
+			    }
+			  else if ( tripleItemModelName.contains( "PCSA" ) )
+			    {
+			      tripleReportMasksPseudoList_vals << reportGMP. pseudo3d_pcsa_s_ff0
+							       << reportGMP. pseudo3d_pcsa_s_d
+							       << reportGMP. pseudo3d_pcsa_mw_ff0
+							       << reportGMP. pseudo3d_pcsa_mw_d;
+			    }
+			  
+			  
+			  for ( int ps = 0; ps < tripleReportMasksPseudoList.size(); ++ps )
+			    {
+			      QString tripleMaskItemPseudoName = tripleReportMasksPseudoList[ ps ];
+			      tripleMaskItemPseudoNameList.clear();
+			      tripleMaskItemPseudoNameList << "" << indent.repeated( 5 ) + tripleMaskItemPseudoName;
+			      tripleMaskPseudoItem [ tripleModelName ] = new QTreeWidgetItem( tripleMaskItem [ tripleModelName ], tripleMaskItemPseudoNameList, wiubase);
+
+			      if ( tripleReportMasksPseudoList_vals[ ps ] )
+				{
+				  tripleMaskPseudoItem [ tripleModelName ] ->setCheckState( 0, Qt::Checked );
+				  ++checked_masks;
+				}
+			      else
+				tripleMaskPseudoItem [ tripleModelName ] ->setCheckState( 0, Qt::Unchecked );
+
+			    }
+			}
+		      //end of pseudo3d distr. masks
 		    }
-		  //end of triple's masks
+		  
 		  if ( checked_masks )
 		    tripleModelItem [ tripleModelName ] ->setCheckState( 0, Qt::Checked );
 		  else
@@ -1636,6 +1702,7 @@ void US_ReporterGMP::generate_report( void )
   const QString pngext( ".png" );
   const QString csvext( ".csv" );
   QString basename  = US_Settings::reportDir() + "/" + FileName + "/" + FileName + ".";
+  QString imgPseudo3d01File;
   QStringList Pseudo3dPlotsFileNames;
   
   //TEST
@@ -1659,13 +1726,33 @@ void US_ReporterGMP::generate_report( void )
 	  sdiag_pseudo3d -> load_distro_auto ( QString::number( invID ), m_t_r );
 	  
 	  //write plot: here default is [s-f/f0] coordinates (x,y)
-	  QString imgPseudo3d01File = basename + "pseudo3D" + "." + models_ps[ 0 ]  + "." +  triple_ps + svgext;
+	  imgPseudo3d01File = basename + "pseudo3D" + "." + models_ps[ ml ]  + "." +  triple_ps + ".sff0" + svgext;  // [s-f/f0]
 	  write_plot( imgPseudo3d01File, sdiag_pseudo3d->rp_data_plot() );                //<-- rp_data_plot() gives pointer to pseudo3D plot
 	  imgPseudo3d01File.replace( svgext, pngext ); 
 	  Pseudo3dPlotsFileNames << imgPseudo3d01File;
 
 	  //here, we have to go over [x-y] coordinates for given [triple-model]: 
+	  // s: 0; f/f0: 1; MW: 2; D: 4
+	  //[0-1] (s-f/f0) already processed:
+	  //to_process: [0-4], [2-1], [2-4]:
+	  sdiag_pseudo3d -> select_y_axis_auto( 4 ); // [s-D]
+	  imgPseudo3d01File = basename + "pseudo3D" + "." + models_ps[ ml ]  + "." +  triple_ps + ".sD" + svgext;
+	  write_plot( imgPseudo3d01File, sdiag_pseudo3d->rp_data_plot() );                //<-- rp_data_plot() gives pointer to pseudo3D plot
+	  imgPseudo3d01File.replace( svgext, pngext ); 
+	  Pseudo3dPlotsFileNames << imgPseudo3d01File;
 
+	  sdiag_pseudo3d -> select_x_axis_auto( 2 ); // [MW-D]
+	  imgPseudo3d01File = basename + "pseudo3D" + "." + models_ps[ ml ]  + "." +  triple_ps + ".mwD" + svgext;
+	  write_plot( imgPseudo3d01File, sdiag_pseudo3d->rp_data_plot() );                //<-- rp_data_plot() gives pointer to pseudo3D plot
+	  imgPseudo3d01File.replace( svgext, pngext ); 
+	  Pseudo3dPlotsFileNames << imgPseudo3d01File;
+
+	  sdiag_pseudo3d -> select_y_axis_auto( 1 ); // [MW-f/f0]
+	  imgPseudo3d01File = basename + "pseudo3D" + "." + models_ps[ ml ]  + "." +  triple_ps + ".mwff0" + svgext;
+	  write_plot( imgPseudo3d01File, sdiag_pseudo3d->rp_data_plot() );                //<-- rp_data_plot() gives pointer to pseudo3D plot
+	  imgPseudo3d01File.replace( svgext, pngext ); 
+	  Pseudo3dPlotsFileNames << imgPseudo3d01File;
+	  
 	  //reset plots
 	  sdiag_pseudo3d->reset_auto();
 	}

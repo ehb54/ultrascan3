@@ -871,7 +871,8 @@ void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP* reportFromDB, int re
 	  rootObj.contains("pseudo3d_pcsa_s_ff0") &&
           rootObj.contains("pseudo3d_pcsa_s_d") &&
 	  rootObj.contains("pseudo3d_pcsa_mw_ff0") &&
-	  rootObj.contains("pseudo3d_pcsa_mw_d") 
+	  rootObj.contains("pseudo3d_pcsa_mw_d") &&
+	  rootObj.contains("pseudo3d_mask") 
 	  )
 	{
 	  rootObj["pseudo3d_2dsait_s_ff0"].toString().toInt() ? reportFromDB->pseudo3d_2dsait_s_ff0   = true : reportFromDB-> pseudo3d_2dsait_s_ff0  = false;
@@ -888,6 +889,8 @@ void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP* reportFromDB, int re
 	  rootObj["pseudo3d_pcsa_s_d"].toString().toInt() ? reportFromDB->pseudo3d_pcsa_s_d   = true : reportFromDB-> pseudo3d_pcsa_s_d  = false;
 	  rootObj["pseudo3d_pcsa_mw_ff0"].toString().toInt() ? reportFromDB->pseudo3d_pcsa_mw_ff0   = true : reportFromDB-> pseudo3d_pcsa_mw_ff0  = false;
 	  rootObj["pseudo3d_pcsa_mw_d"].toString().toInt() ? reportFromDB->pseudo3d_pcsa_mw_d   = true : reportFromDB-> pseudo3d_pcsa_mw_d  = false;
+
+	  rootObj["pseudo3d_mask"].toString().toInt() ? reportFromDB->pseudo3d_mask   = true : reportFromDB-> pseudo3d_mask  = false;
 	  
 	}
       else

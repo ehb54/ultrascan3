@@ -53,6 +53,8 @@ class US_Pseudo3D_Combine : public US_Widgets
       void load_distro_auto( QString, QStringList );
       QwtPlot* rp_data_plot();
       void reset_auto(       void );
+      void select_x_axis_auto( int  );
+      void select_y_axis_auto( int  );
 
    private:
 

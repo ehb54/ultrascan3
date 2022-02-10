@@ -60,6 +60,7 @@ class US_UTIL_EXTERN US_ReportGMP
       bool plots_mask;
 
       //Pseudo3D mask parameters
+      bool pseudo3d_mask;
       bool pseudo3d_2dsait_s_ff0;
       bool pseudo3d_2dsait_s_d;
       bool pseudo3d_2dsait_mw_ff0;

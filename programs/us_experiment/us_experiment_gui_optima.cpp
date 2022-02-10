@@ -5153,7 +5153,10 @@ int US_ExperGuiUpload::writeReportToDB( QString reportGUID, US_ReportGMP report 
   jsonMask += QString("\"pseudo3d_pcsa_mw_ff0\":\"") + QString::number( pseudo3d_pcsa_mw_ff0_bool ) + QString("\",");
 
   int pseudo3d_pcsa_mw_d_bool = report.pseudo3d_pcsa_mw_d ? 1 : 0;
-  jsonMask += QString("\"pseudo3d_pcsa_mw_d\":\"") + QString::number( pseudo3d_pcsa_mw_d_bool ) + QString("\""); 
+  jsonMask += QString("\"pseudo3d_pcsa_mw_d\":\"") + QString::number( pseudo3d_pcsa_mw_d_bool ) + QString("\",");
+
+  int pseudo3d_mask_bool = report.pseudo3d_mask ? 1 : 0;
+  jsonMask += QString("\"pseudo3d_mask\":\"") + QString::number( pseudo3d_mask_bool ) + QString("\"");
   
   jsonMask += QString("}");
   

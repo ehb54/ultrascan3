@@ -128,7 +128,8 @@ class US_ReporterGMP : public US_Widgets
 	 QMap<QString, QTreeWidgetItem *> tripleItem;
 	 QMap<QString, QTreeWidgetItem *> tripleModelItem;
 	 QMap<QString, QTreeWidgetItem *> tripleMaskItem;
-	 QMap<QString, QTreeWidgetItem *> tripleMaskPlotItem; 
+	 QMap<QString, QTreeWidgetItem *> tripleMaskPlotItem;
+	 QMap<QString, QTreeWidgetItem *> tripleMaskPseudoItem;
 	 	 
 	 QList< QStringList >  autoflowdata;
 	 US_SelectItem* pdiag_autoflow;
