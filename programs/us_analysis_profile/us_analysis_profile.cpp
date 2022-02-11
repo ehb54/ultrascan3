@@ -831,6 +831,7 @@ void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP* reportFromDB, int re
 	  reportMaskJson                        = db->value( 8 ).toString();
 	}
 
+      qDebug() << "report's channelname, wvl -- " << reportFromDB->channel_name << reportFromDB->wavelength;
       qDebug() << "reportMaskJson form DB -- " << reportMaskJson;
       //process report Mask Json into US_ReportGMP fields:
       QJsonDocument jsonDoc = QJsonDocument::fromJson( reportMaskJson.toUtf8() );
