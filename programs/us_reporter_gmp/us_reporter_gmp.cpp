@@ -1707,12 +1707,17 @@ void US_ReporterGMP::generate_report( void )
       for ( int i=0; i<Array_of_triples.size(); ++i )
 	{
 	  currentTripleName = Array_of_triples[i];
-	  
+	  QString triplename_alt = currentTripleName;
+	  triplename_alt.replace(".","");
+	      
 	  //here should be cycle over triple's models ( 2DSA-IT, 2DSA-MC etc..)
 	  QStringList models_to_do = Triple_to_Models[ currentTripleName ];
 	  
 	  for ( int j = 0; j < models_to_do.size(); ++j )
-	    simulate_triple ( currentTripleName, models_to_do[ j ] );
+	    {
+	      simulate_triple ( currentTripleName, models_to_do[ j ] );
+	      plot_pseudo3D( triplename_alt );
+	    }
 	}
     }
   else
@@ -1735,11 +1740,16 @@ void US_ReporterGMP::generate_report( void )
 	      
 	      if ( perChanMask_edited. has_tripleModel_items     [ triplename_alt ][ models_to_do[ j ] ] ||
 		   perChanMask_edited. has_tripleModelPlot_items [ triplename_alt ][ models_to_do[ j ] ] ) 
-		simulate_triple ( currentTripleName, models_to_do[ j ] );
+		{
+		  simulate_triple ( currentTripleName, models_to_do[ j ] );
+		  
+		  plot_pseudo3D( triplename_alt );
+		}
 	    }
 	}
     }
 
+  /*
   //Pseudo3D Plots Generation (after simulations? Actual simulations are NOT needed for Pseudo3d plots?)
   //FileName; //<-- a single-type runID (e.g. RI) - NOT combined runs for now...
 
@@ -1863,6 +1873,7 @@ void US_ReporterGMP::generate_report( void )
   qApp->processEvents();
   progress_msg->close();
   //End of Pseudo3D Plots ///
+  */
 
 
   //Combined Plots Generation
@@ -1872,11 +1883,11 @@ void US_ReporterGMP::generate_report( void )
   QStringList aDescrs = scan_dbase_models( runIDs_single );
   QStringList modelDescModified = sdiag_combplot->load_auto( runIDs_single, aDescrs );
 
-  // mkdir( US_Settings::reportDir(), FileName );
-  // const QString svgext( ".svgz" );
-  // const QString pngext( ".png" );
-  // const QString csvext( ".csv" );
-  // QString basename  = US_Settings::reportDir() + "/" + FileName + "/" + FileName + ".";
+  mkdir( US_Settings::reportDir(), FileName );
+  const QString svgext( ".svgz" );
+  const QString pngext( ".png" );
+  const QString csvext( ".csv" );
+  QString basename  = US_Settings::reportDir() + "/" + FileName + "/" + FileName + ".";
 
   //estimate # of combined plots
   int combpl_number = 3*4;
@@ -3649,9 +3660,124 @@ void US_ReporterGMP::show_results( QMap <QString, QString> & tripleInfo )
    //assemble_integration_results_html( );
    
    plotres( tripleInfo ); // <------- save plots into files locally
-   
+
+   //plot_pseudo3D( tripleInfo );       // <--- psedo3d per triple/model
    
    QApplication::restoreOverrideCursor();
+}
+
+//Plot pseudo3d distr.
+void US_ReporterGMP::plot_pseudo3D( QString triple_name )
+{
+  QString t_name = triple_name;
+  t_name.replace(".", "");
+  
+  //Pseudo3D Plots Generation (after simulations? Actual simulations are NOT needed for Pseudo3d plots?)
+  //FileName; //<-- a single-type runID (e.g. RI) - NOT combined runs for now...
+
+  mkdir( US_Settings::reportDir(), FileName );
+  const QString svgext( ".svgz" );
+  const QString pngext( ".png" );
+  const QString csvext( ".csv" );
+  QString basename  = US_Settings::reportDir() + "/" + FileName + "/" + FileName + ".";
+  
+  QString imgPseudo3d01File;
+  QStringList Pseudo3dPlotsFileNames;
+
+  QMap < QString, QStringList >::iterator mm;
+  int pr_val  = 0;
+  for ( mm = Triple_to_Models.begin(); mm != Triple_to_Models.end(); ++mm )
+    {      
+      QString triple_ps = mm.key();
+      triple_ps.replace(".","");
+      QStringList models_ps = mm.value();
+
+      if ( triple_ps == t_name )
+	{
+	  
+	  qDebug() << "For triple -- " << triple_ps << ", there are models: " << mm.value();
+	  
+	  for ( int ml = 0; ml < models_ps.size(); ++ml )
+	    {
+	      ++pr_val;
+	      progress_msg->setValue( pr_val );
+	      
+	      QStringList m_t_r;  
+	      m_t_r << triple_ps << models_ps[ ml ] << FileName;
+	      
+	      qDebug() << "m_t_r to model_loader -- " << m_t_r;
+	      
+	      sdiag_pseudo3d = new US_Pseudo3D_Combine();
+	      sdiag_pseudo3d -> load_distro_auto ( QString::number( invID ), m_t_r );
+	      
+	      //here identify what to show:
+	      bool show_s_ff0  = (perChanMask_edited.ShowTripleModelPseudo3dParts[ triple_ps ][ models_ps[ ml ] ][ "Pseudo3d s-vs-f/f0 Distribution" ].toInt()) ? true : false ;
+	      bool show_s_d    = (perChanMask_edited.ShowTripleModelPseudo3dParts[ triple_ps ][ models_ps[ ml ] ][ "Pseudo3d s-vs-D Distribution" ].toInt()) ? true : false ;
+	      bool show_mw_ff0 = (perChanMask_edited.ShowTripleModelPseudo3dParts[ triple_ps ][ models_ps[ ml ] ][ "Pseudo3d MW-vs-f/f0 Distribution" ].toInt()) ? true : false ;
+	      bool show_mw_d   = (perChanMask_edited.ShowTripleModelPseudo3dParts[ triple_ps ][ models_ps[ ml ] ][ "Pseudo3d MW-vs-D Distribution" ].toInt()) ? true : false ;
+	      
+	      //write plot: here default is [s-f/f0] coordinates (x,y)
+	      if( show_s_ff0 )
+		{
+		  sdiag_pseudo3d -> select_x_axis_auto( 0 ); // [s-]
+		  sdiag_pseudo3d -> select_y_axis_auto( 1 ); // [s-f/f0]
+		  imgPseudo3d01File = basename + "pseudo3D" + "." + models_ps[ ml ]  + "." +  triple_ps + ".sff0" + svgext;  // [s-f/f0]
+		  write_plot( imgPseudo3d01File, sdiag_pseudo3d->rp_data_plot() );                //<-- rp_data_plot() gives pointer to pseudo3D plot
+		  imgPseudo3d01File.replace( svgext, pngext ); 
+		  Pseudo3dPlotsFileNames << imgPseudo3d01File;
+		}
+	      // ++pr_val;
+	      // progress_msg->setValue( pr_val );
+	      
+	      //here, we have to go over [x-y] coordinates for given [triple-model]: 
+	      // s: 0; f/f0: 1; MW: 2; D: 4
+	      //[0-1] (s-f/f0) already processed:
+	      //to_process: [0-4], [2-1], [2-4]:
+	      if( show_s_d )
+		{
+		  sdiag_pseudo3d -> select_x_axis_auto( 0 ); // [s-]
+		  sdiag_pseudo3d -> select_y_axis_auto( 4 ); // [s-D]
+		  imgPseudo3d01File = basename + "pseudo3D" + "." + models_ps[ ml ]  + "." +  triple_ps + ".sD" + svgext;
+		  write_plot( imgPseudo3d01File, sdiag_pseudo3d->rp_data_plot() );                //<-- rp_data_plot() gives pointer to pseudo3D plot
+		  imgPseudo3d01File.replace( svgext, pngext ); 
+		  Pseudo3dPlotsFileNames << imgPseudo3d01File;
+		}
+	      // ++pr_val;
+	      // progress_msg->setValue( pr_val );
+	      
+	      if( show_mw_ff0 )
+		{
+		  sdiag_pseudo3d -> select_x_axis_auto( 2 ); // [MW-]
+		  sdiag_pseudo3d -> select_y_axis_auto( 1 ); // [MW-f/f0]
+		  imgPseudo3d01File = basename + "pseudo3D" + "." + models_ps[ ml ]  + "." +  triple_ps + ".mwff0" + svgext;
+		  write_plot( imgPseudo3d01File, sdiag_pseudo3d->rp_data_plot() );                //<-- rp_data_plot() gives pointer to pseudo3D plot
+		  imgPseudo3d01File.replace( svgext, pngext ); 
+		  Pseudo3dPlotsFileNames << imgPseudo3d01File;
+		}
+	      // ++pr_val;
+	      // progress_msg->setValue( pr_val );
+	      
+	      if( show_mw_d )
+		{
+		  sdiag_pseudo3d -> select_x_axis_auto( 2 ); // [MW-]
+		  sdiag_pseudo3d -> select_y_axis_auto( 4 ); // [MW-D]
+		  imgPseudo3d01File = basename + "pseudo3D" + "." + models_ps[ ml ]  + "." +  triple_ps + ".mwD" + svgext;
+		  write_plot( imgPseudo3d01File, sdiag_pseudo3d->rp_data_plot() );                //<-- rp_data_plot() gives pointer to pseudo3D plot
+		  imgPseudo3d01File.replace( svgext, pngext ); 
+		  Pseudo3dPlotsFileNames << imgPseudo3d01File;
+		}
+	      // ++pr_val;
+	      // progress_msg->setValue( pr_val );
+	      
+	      //reset plots
+	      sdiag_pseudo3d->reset_auto();
+	    }
+	}
+    }
+  
+  //assemble combined plots into html
+  assemble_plots_html( Pseudo3dPlotsFileNames  );
+  //progress_msg->setValue( progress_msg->maximum() );
 }
 
 // Calculate residual absorbance values (data - sim - noise)
