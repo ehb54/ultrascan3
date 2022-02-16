@@ -712,8 +712,14 @@ DbgLv(1) << "(T)PLOT ENV save: plot3File" << plot3File;
    }
 
    // Copy csv files from results to reports directory
+   if QFile( drpt0File ).exists())
+        QFile( drpt0File ).remove();
    QFile( data0File ).copy( drpt0File );
+   if QFile( drpt1File ).exists())
+    QFile( drpt1File ).remove();
    QFile( data1File ).copy( drpt1File );
+   if QFile( drpt2File ).exists())
+    QFile( drpt2File ).remove();
    QFile( data2File ).copy( drpt2File );
    // Build results,reports output files lists
    files << " ";
