@@ -9,6 +9,7 @@
 #include "../us_analysis_profile/us_analysis_profile.h"
 #include "../us_fematch/us_fematch.h"
 #include "../us_ddist_combine/us_ddist_combine.h"
+#include "../us_pseudo3d_combine/us_pseudo3d_combine.h"
 #include "us_solution.h"
 #include "us_help.h"
 #include "us_extern.h"
@@ -33,6 +34,7 @@ class US_ReporterGMP : public US_Widgets
 
 	 QString ap_xml;
 
+	 US_Pseudo3D_Combine*       sdiag_pseudo3d; 
 	 US_DDistr_Combine*         sdiag_combplot;
 	 US_AnalysisProfileGui*     sdiag; 
 	 US_AnaProfile              currAProf;
@@ -83,6 +85,9 @@ class US_ReporterGMP : public US_Widgets
 	   QMap < QString, QMap < QString, QMap < QString, QString > > > ShowTripleModelPlotParts;
 	   QMap < QString, QMap < QString, int > >  has_tripleModelPlot_items;
 
+	   //     triple_name     model           feature  value  [All types of pseudo distr.] 
+	   QMap < QString, QMap < QString, QMap < QString, QString > > > ShowTripleModelPseudo3dParts;
+	   QMap < QString, QMap < QString, int > >  has_tripleModelPseudo3d_items;
 	 };
 
 	 PerChanReportMaskStructure perChanMask_edited;
@@ -126,7 +131,8 @@ class US_ReporterGMP : public US_Widgets
 	 QMap<QString, QTreeWidgetItem *> tripleItem;
 	 QMap<QString, QTreeWidgetItem *> tripleModelItem;
 	 QMap<QString, QTreeWidgetItem *> tripleMaskItem;
-	 QMap<QString, QTreeWidgetItem *> tripleMaskPlotItem; 
+	 QMap<QString, QTreeWidgetItem *> tripleMaskPlotItem;
+	 QMap<QString, QTreeWidgetItem *> tripleMaskPseudoItem;
 	 	 
 	 QList< QStringList >  autoflowdata;
 	 US_SelectItem* pdiag_autoflow;
@@ -165,6 +171,7 @@ class US_ReporterGMP : public US_Widgets
 	 QString    runID;
 	 QString    filePath;
 	 QString    FileName;
+	 QString    intensityID;
 
 	 QString    current_date;
 	 
@@ -190,6 +197,10 @@ class US_ReporterGMP : public US_Widgets
 	 QMap< QString, QStringList > Triple_to_Models;
 	 QMap< QString, QString > triple_info_map;
 	 QString   currentTripleName;
+
+	 QMap< QString, QString > intensityRIMap;
+	 QMap< QString, QMap< QString, QString > > comboPlotsMap;
+	 QMap< QString, int > comboPlotsMapTypes;
 	 
 	 void  get_current_date( void );
 	 void  format_needed_params( void );
@@ -201,7 +212,9 @@ class US_ReporterGMP : public US_Widgets
 	 void  write_pdf_report( void );
 
 	 void read_protocol_and_reportMasks( void );
+	 QMap< QString, QString > read_autoflowIntensity( QString, US_DB2*);
 	 void parse_gen_mask_json ( const QString  );
+	 QMap< QString, QMap< QString, QString > > parse_comb_plots_json ( const QString  );
 	 void get_item_childs( QList< QTreeWidgetItem* > &, QTreeWidgetItem* );
 	 void build_genTree ( void );
 	 void build_perChanTree ( void ) ;
@@ -401,7 +414,8 @@ class US_ReporterGMP : public US_Widgets
 	void assemble_plots_html( QStringList );
 	double  interp_sval( double, double*, double*,  int );
 	void plotres( QMap < QString, QString > &   );
-
+	void plot_pseudo3D( QString, QString );
+	
 	QString indent    (     int  )  const;
 	QString table_row( const QString&, const QString& ) const;
 	QString table_row( const QString&, const QString&,

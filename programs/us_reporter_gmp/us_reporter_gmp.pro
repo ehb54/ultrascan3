@@ -18,7 +18,12 @@ HEADERS       = us_reporter_gmp.h \
                 ../us_fematch/us_advanced_fem.h     \
                 ../us_fematch/us_adv_dmgamc.h       \
                 ../us_fematch/us_dmga_mc_stats.h    \
-                ../us_fematch/us_thread_worker.h
+                ../us_fematch/us_thread_worker.h    \
+                ../us_pseudo3d_combine/us_pseudo3d_combine.h \
+                ../us_pseudo3d_combine/us_remove_distros.h
+                
+                
+                
 
 SOURCES       = us_reporter_gmp_main.cpp       \
                 us_reporter_gmp.cpp            \
@@ -34,7 +39,10 @@ SOURCES       = us_reporter_gmp_main.cpp       \
                 ../us_fematch/us_advanced_fem.cpp     \
                 ../us_fematch/us_adv_dmgamc.cpp       \
                 ../us_fematch/us_dmga_mc_stats.cpp    \
-                ../us_fematch/us_thread_worker.cpp
+                ../us_fematch/us_thread_worker.cpp    \
+                ../us_pseudo3d_combine/us_pseudo3d_combine.cpp \
+                ../us_pseudo3d_combine/us_remove_distros.cpp
+                
                 
 
                

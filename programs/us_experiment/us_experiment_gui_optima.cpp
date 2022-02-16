@@ -1379,6 +1379,9 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    sb_count            = us_spinbox();
    sb_count            ->setMinimum(1);  //ALEXEY BUG FIX
 
+   if ( mainw->automode )
+     sb_count            ->setEnabled( false );
+   
    cb_prof             = new QComboBox( this );
    ct_speed            = us_counter( 2, 1000,  80000, 100 );
    ct_accel            = us_counter( 2,   50,   1000,  50 );
@@ -5111,8 +5114,49 @@ int US_ExperGuiUpload::writeReportToDB( QString reportGUID, US_ReportGMP report 
   jsonMask += QString("\"integration\":\"") + QString::number( integration_bool ) + QString("\",");
 
   int plots_bool = report.plots_mask ? 1 : 0;
-  jsonMask += QString("\"plots\":\"") + QString::number( plots_bool ) + QString("\"");
- 
+  jsonMask += QString("\"plots\":\"") + QString::number( plots_bool ) + QString("\",");
+
+  //pseudo 3D plots
+  int pseudo3d_2dsait_s_ff0_bool = report.pseudo3d_2dsait_s_ff0 ? 1 : 0;
+  jsonMask += QString("\"pseudo3d_2dsait_s_ff0\":\"") + QString::number( pseudo3d_2dsait_s_ff0_bool ) + QString("\",");
+
+  int pseudo3d_2dsait_s_d_bool = report.pseudo3d_2dsait_s_d ? 1 : 0;
+  jsonMask += QString("\"pseudo3d_2dsait_s_d\":\"") + QString::number( pseudo3d_2dsait_s_d_bool ) + QString("\",");
+
+  int pseudo3d_2dsait_mw_ff0_bool = report.pseudo3d_2dsait_mw_ff0 ? 1 : 0;
+  jsonMask += QString("\"pseudo3d_2dsait_mw_ff0\":\"") + QString::number( pseudo3d_2dsait_mw_ff0_bool ) + QString("\",");
+
+  int pseudo3d_2dsait_mw_d_bool = report.pseudo3d_2dsait_mw_d ? 1 : 0;
+  jsonMask += QString("\"pseudo3d_2dsait_mw_d\":\"") + QString::number( pseudo3d_2dsait_mw_d_bool ) + QString("\",");
+
+
+  int pseudo3d_2dsamc_s_ff0_bool = report.pseudo3d_2dsamc_s_ff0 ? 1 : 0;
+  jsonMask += QString("\"pseudo3d_2dsamc_s_ff0\":\"") + QString::number( pseudo3d_2dsamc_s_ff0_bool ) + QString("\",");
+
+  int pseudo3d_2dsamc_s_d_bool = report.pseudo3d_2dsamc_s_d ? 1 : 0;
+  jsonMask += QString("\"pseudo3d_2dsamc_s_d\":\"") + QString::number( pseudo3d_2dsamc_s_d_bool ) + QString("\",");
+
+  int pseudo3d_2dsamc_mw_ff0_bool = report.pseudo3d_2dsamc_mw_ff0 ? 1 : 0;
+  jsonMask += QString("\"pseudo3d_2dsamc_mw_ff0\":\"") + QString::number( pseudo3d_2dsamc_mw_ff0_bool ) + QString("\",");
+
+  int pseudo3d_2dsamc_mw_d_bool = report.pseudo3d_2dsamc_mw_d ? 1 : 0;
+  jsonMask += QString("\"pseudo3d_2dsamc_mw_d\":\"") + QString::number( pseudo3d_2dsamc_mw_d_bool ) + QString("\",");
+
+
+  int pseudo3d_pcsa_s_ff0_bool = report.pseudo3d_pcsa_s_ff0 ? 1 : 0;
+  jsonMask += QString("\"pseudo3d_pcsa_s_ff0\":\"") + QString::number( pseudo3d_pcsa_s_ff0_bool ) + QString("\",");
+
+  int pseudo3d_pcsa_s_d_bool = report.pseudo3d_pcsa_s_d ? 1 : 0;
+  jsonMask += QString("\"pseudo3d_pcsa_s_d\":\"") + QString::number( pseudo3d_pcsa_s_d_bool ) + QString("\",");
+
+  int pseudo3d_pcsa_mw_ff0_bool = report.pseudo3d_pcsa_mw_ff0 ? 1 : 0;
+  jsonMask += QString("\"pseudo3d_pcsa_mw_ff0\":\"") + QString::number( pseudo3d_pcsa_mw_ff0_bool ) + QString("\",");
+
+  int pseudo3d_pcsa_mw_d_bool = report.pseudo3d_pcsa_mw_d ? 1 : 0;
+  jsonMask += QString("\"pseudo3d_pcsa_mw_d\":\"") + QString::number( pseudo3d_pcsa_mw_d_bool ) + QString("\",");
+
+  int pseudo3d_mask_bool = report.pseudo3d_mask ? 1 : 0;
+  jsonMask += QString("\"pseudo3d_mask\":\"") + QString::number( pseudo3d_mask_bool ) + QString("\"");
   
   jsonMask += QString("}");
   

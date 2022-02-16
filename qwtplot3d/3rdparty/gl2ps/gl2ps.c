@@ -2630,8 +2630,8 @@ static void gl2psPrintPostScriptImagemap(GLfloat x, GLfloat y,
   
   gl2psPrintf("gsave\n");
   gl2psPrintf("%.2f %.2f translate\n", x, y);
-  gl2psPrintf("%d %d scale\n%d %d\ntrue\n", width, height,width, height); 
-  gl2psPrintf("[ %d 0 0 -%d 0 %d ] {<", width, height);
+  gl2psPrintf("%d %d scale\n%d %d\ntrue\n", width, height,width, height);
+  gl2psPrintf("[ %d 0 0 -%d 0 %d ] {<", width, height, height);
   for(i = 0; i < size; i++){
     gl2psWriteByte(*imagemap);
     imagemap++;

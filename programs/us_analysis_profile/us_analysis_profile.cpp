@@ -831,6 +831,8 @@ void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP* reportFromDB, int re
 	  reportMaskJson                        = db->value( 8 ).toString();
 	}
 
+      qDebug() << "report's channelname, wvl -- " << reportFromDB->channel_name << reportFromDB->wavelength;
+      qDebug() << "reportMaskJson form DB -- " << reportMaskJson;
       //process report Mask Json into US_ReportGMP fields:
       QJsonDocument jsonDoc = QJsonDocument::fromJson( reportMaskJson.toUtf8() );
       if (!jsonDoc.isObject())
@@ -858,6 +860,45 @@ void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP* reportFromDB, int re
 	{
 	  qDebug() << "No json mask set for report !\n";
 	}
+      if (
+          rootObj.contains("pseudo3d_2dsait_s_ff0") &&
+          rootObj.contains("pseudo3d_2dsait_s_d") &&
+	  rootObj.contains("pseudo3d_2dsait_mw_ff0") &&
+	  rootObj.contains("pseudo3d_2dsait_mw_d") &&
+	  rootObj.contains("pseudo3d_2dsamc_s_ff0") &&
+          rootObj.contains("pseudo3d_2dsamc_s_d") &&
+	  rootObj.contains("pseudo3d_2dsamc_mw_ff0") &&
+	  rootObj.contains("pseudo3d_2dsamc_mw_d") &&
+	  rootObj.contains("pseudo3d_pcsa_s_ff0") &&
+          rootObj.contains("pseudo3d_pcsa_s_d") &&
+	  rootObj.contains("pseudo3d_pcsa_mw_ff0") &&
+	  rootObj.contains("pseudo3d_pcsa_mw_d") &&
+	  rootObj.contains("pseudo3d_mask") 
+	  )
+	{
+	  rootObj["pseudo3d_2dsait_s_ff0"].toString().toInt() ? reportFromDB->pseudo3d_2dsait_s_ff0   = true : reportFromDB-> pseudo3d_2dsait_s_ff0  = false;
+	  rootObj["pseudo3d_2dsait_s_d"].toString().toInt() ? reportFromDB->pseudo3d_2dsait_s_d   = true : reportFromDB-> pseudo3d_2dsait_s_d  = false;
+	  rootObj["pseudo3d_2dsait_mw_ff0"].toString().toInt() ? reportFromDB->pseudo3d_2dsait_mw_ff0   = true : reportFromDB-> pseudo3d_2dsait_mw_ff0  = false;
+	  rootObj["pseudo3d_2dsait_mw_d"].toString().toInt() ? reportFromDB->pseudo3d_2dsait_mw_d   = true : reportFromDB-> pseudo3d_2dsait_mw_d  = false;
+
+	  rootObj["pseudo3d_2dsamc_s_ff0"].toString().toInt() ? reportFromDB->pseudo3d_2dsamc_s_ff0   = true : reportFromDB-> pseudo3d_2dsamc_s_ff0  = false;
+	  rootObj["pseudo3d_2dsamc_s_d"].toString().toInt() ? reportFromDB->pseudo3d_2dsamc_s_d   = true : reportFromDB-> pseudo3d_2dsamc_s_d  = false;
+	  rootObj["pseudo3d_2dsamc_mw_ff0"].toString().toInt() ? reportFromDB->pseudo3d_2dsamc_mw_ff0   = true : reportFromDB-> pseudo3d_2dsamc_mw_ff0  = false;
+	  rootObj["pseudo3d_2dsamc_mw_d"].toString().toInt() ? reportFromDB->pseudo3d_2dsamc_mw_d   = true : reportFromDB-> pseudo3d_2dsamc_mw_d  = false;	  
+
+	  rootObj["pseudo3d_pcsa_s_ff0"].toString().toInt() ? reportFromDB->pseudo3d_pcsa_s_ff0   = true : reportFromDB-> pseudo3d_pcsa_s_ff0  = false;
+	  rootObj["pseudo3d_pcsa_s_d"].toString().toInt() ? reportFromDB->pseudo3d_pcsa_s_d   = true : reportFromDB-> pseudo3d_pcsa_s_d  = false;
+	  rootObj["pseudo3d_pcsa_mw_ff0"].toString().toInt() ? reportFromDB->pseudo3d_pcsa_mw_ff0   = true : reportFromDB-> pseudo3d_pcsa_mw_ff0  = false;
+	  rootObj["pseudo3d_pcsa_mw_d"].toString().toInt() ? reportFromDB->pseudo3d_pcsa_mw_d   = true : reportFromDB-> pseudo3d_pcsa_mw_d  = false;
+
+	  rootObj["pseudo3d_mask"].toString().toInt() ? reportFromDB->pseudo3d_mask   = true : reportFromDB-> pseudo3d_mask  = false;
+	  
+	}
+      else
+	{
+	  qDebug() << "No json Pseudo3D plots mask set for report !\n";
+	}
+      
       
       //was read from DB
       reportFromDB->DBread = true;
@@ -2469,7 +2510,8 @@ US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
    vbox->addWidget(fmb);
    vbox->addStretch(1);
    meniscus_box->setLayout(vbox);
-    
+   
+   
 //   int ihgt            = lb_smin->height();
 //   QSpacerItem* spacer1 = new QSpacerItem( 20, ihgt );
 

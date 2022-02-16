@@ -635,7 +635,7 @@ void US_ExperGuiRanges::selectWavelengths_manual()
    }
 DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 
-   // Set check-state of Interference boxes in same-cell rows and reconnect
+   // Set check-state of Interference boxes in same-cell rows and reconnect : ALEXEY: here set of channel A is copied to B
    for ( int ii = 0; ii < ccrows.count(); ii++ )
    {
       int ccrow           = ccrows[ ii ];
@@ -934,7 +934,7 @@ DbgLv(1) << "EGRn: sW: labwlr" << labwlr << "swvlens" << swvlens;
    }
 DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 
-   // Set check-state of Interference boxes in same-cell rows and reconnect
+   // Set check-state of Interference boxes in same-cell rows and reconnect  :: ALEXEY: here set of channel A is copied to B
    for ( int ii = 0; ii < ccrows.count(); ii++ )
    {
       int ccrow           = ccrows[ ii ];

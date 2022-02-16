@@ -495,16 +495,127 @@ void US_ReportGui::build_report_layout( void )
   ck_plots ->setPalette( US_GuiSettings::normalColor() );
   ck_plots ->setChecked( report -> plots_mask );
   ck_plots ->setAutoFillBackground( true  );
+
+  //GroupBox for pseudo3D plots
+  pseudo3d_box = new QGroupBox(tr("Pseudo 3D Plots"));
+  QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
+  int f_size = sfont.pointSize();
+  qDebug() << "Font Size -- " << f_size;
+  pseudo3d_box-> setStyleSheet( QString( "QGroupBox { font:bold; font-size: %1pt; background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #E0E0E0, stop: 1 #FFFFFF); border: 2px solid gray; border-radius: 10px; margin-top: 10px; margin-bottom: 10px; padding-top: 5px; } QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; left: 10px; margin: 0 5px; background-color: black; color: white; padding: 0 3px;}  QGroupBox::indicator { width: 13px; height: 13px; border: 1px solid grey; background-color: rgba(204, 204, 204, 255);} QGroupBox::indicator:hover {background-color: rgba(235, 235, 235, 255);} QLabel {background-color: rgb(105,105,105);}").arg( f_size ));
+
+  QLabel* xy_s_ff0     = us_label( tr("s-f/f0"), -1 );
+  QLabel* xy_s_d       = us_label( tr("s-D"), -1 );
+  QLabel* xy_mw_ff0    = us_label( tr("MW-f/f0"), -1 );
+  QLabel* xy_mw_d      = us_label( tr("MW-D"), -1 );
+
+  QLabel* model_2dsait = us_label( tr("2DSA-IT"), -1 );
+  QLabel* model_2dsamc = us_label( tr("2DSA-MC"), -1 );
+  QLabel* model_pcsa   = us_label( tr("PCSA"), -1 );
+
+  //2DSA-IT checkboxes
+  ck_2dsait_s_ff0       = new QCheckBox( tr( "" ), this );
+  ck_2dsait_s_ff0 ->setPalette( US_GuiSettings::normalColor() );
+  ck_2dsait_s_ff0 ->setChecked( report -> pseudo3d_2dsait_s_ff0 );
+  ck_2dsait_s_ff0 ->setAutoFillBackground( true  );
+
+  ck_2dsait_s_d       = new QCheckBox( tr( "" ), this );
+  ck_2dsait_s_d ->setPalette( US_GuiSettings::normalColor() );
+  ck_2dsait_s_d ->setChecked( report -> pseudo3d_2dsait_s_d );
+  ck_2dsait_s_d ->setAutoFillBackground( true  );
+
+  ck_2dsait_mw_ff0       = new QCheckBox( tr( "" ), this );
+  ck_2dsait_mw_ff0 ->setPalette( US_GuiSettings::normalColor() );
+  ck_2dsait_mw_ff0 ->setChecked( report -> pseudo3d_2dsait_mw_ff0 );
+  ck_2dsait_mw_ff0 ->setAutoFillBackground( true  );
+  
+  ck_2dsait_mw_d       = new QCheckBox( tr( "" ), this );
+  ck_2dsait_mw_d ->setPalette( US_GuiSettings::normalColor() );
+  ck_2dsait_mw_d ->setChecked( report -> pseudo3d_2dsait_mw_d );
+  ck_2dsait_mw_d ->setAutoFillBackground( true  );
+
+  //2DSA-MC checkboxes
+  ck_2dsamc_s_ff0       = new QCheckBox( tr( "" ), this );
+  ck_2dsamc_s_ff0 ->setPalette( US_GuiSettings::normalColor() );
+  ck_2dsamc_s_ff0 ->setChecked( report -> pseudo3d_2dsamc_s_ff0 );
+  ck_2dsamc_s_ff0 ->setAutoFillBackground( true  );
+
+  ck_2dsamc_s_d       = new QCheckBox( tr( "" ), this );
+  ck_2dsamc_s_d ->setPalette( US_GuiSettings::normalColor() );
+  ck_2dsamc_s_d ->setChecked( report -> pseudo3d_2dsamc_s_d );
+  ck_2dsamc_s_d ->setAutoFillBackground( true  );
+
+  ck_2dsamc_mw_ff0       = new QCheckBox( tr( "" ), this );
+  ck_2dsamc_mw_ff0 ->setPalette( US_GuiSettings::normalColor() );
+  ck_2dsamc_mw_ff0 ->setChecked( report -> pseudo3d_2dsamc_mw_ff0 );
+  ck_2dsamc_mw_ff0 ->setAutoFillBackground( true  );
+  
+  ck_2dsamc_mw_d       = new QCheckBox( tr( "" ), this );
+  ck_2dsamc_mw_d ->setPalette( US_GuiSettings::normalColor() );
+  ck_2dsamc_mw_d ->setChecked( report -> pseudo3d_2dsamc_mw_d );
+  ck_2dsamc_mw_d ->setAutoFillBackground( true  );
+
+  //PCSA checkboxes
+  ck_pcsa_s_ff0       = new QCheckBox( tr( "" ), this );
+  ck_pcsa_s_ff0 ->setPalette( US_GuiSettings::normalColor() );
+  ck_pcsa_s_ff0 ->setChecked( report -> pseudo3d_pcsa_s_ff0 );
+  ck_pcsa_s_ff0 ->setAutoFillBackground( true  );
+
+  ck_pcsa_s_d       = new QCheckBox( tr( "" ), this );
+  ck_pcsa_s_d ->setPalette( US_GuiSettings::normalColor() );
+  ck_pcsa_s_d ->setChecked( report -> pseudo3d_pcsa_s_d );
+  ck_pcsa_s_d ->setAutoFillBackground( true  );
+
+  ck_pcsa_mw_ff0       = new QCheckBox( tr( "" ), this );
+  ck_pcsa_mw_ff0 ->setPalette( US_GuiSettings::normalColor() );
+  ck_pcsa_mw_ff0 ->setChecked( report -> pseudo3d_pcsa_mw_ff0 );
+  ck_pcsa_mw_ff0 ->setAutoFillBackground( true  );
+  
+  ck_pcsa_mw_d       = new QCheckBox( tr( "" ), this );
+  ck_pcsa_mw_d ->setPalette( US_GuiSettings::normalColor() );
+  ck_pcsa_mw_d ->setChecked( report -> pseudo3d_pcsa_mw_d );
+  ck_pcsa_mw_d ->setAutoFillBackground( true  );  
+  
+  QGridLayout *gbox = new QGridLayout;
+  gbox              ->setSpacing         ( 1 );
+  gbox              ->setContentsMargins ( 0, 0, 0, 0 );
+  row = 0;
+  gbox ->addWidget( xy_s_ff0,         row,   2, 1, 2 );
+  gbox ->addWidget( xy_s_d,           row,   4, 1, 2 );
+  gbox ->addWidget( xy_mw_ff0,        row,   6, 1, 2 );
+  gbox ->addWidget( xy_mw_d,          row++, 8, 1, 2 );
+  
+  gbox ->addWidget( model_2dsait,     row,   0, 1, 2 );
+  gbox ->addWidget( ck_2dsait_s_ff0,  row,   2, 1, 2, Qt::AlignHCenter);
+  gbox ->addWidget( ck_2dsait_s_d,    row,   4, 1, 2, Qt::AlignHCenter );
+  gbox ->addWidget( ck_2dsait_mw_ff0, row,   6, 1, 2, Qt::AlignHCenter );
+  gbox ->addWidget( ck_2dsait_mw_d,   row++, 8, 1, 2, Qt::AlignHCenter );
+
+  gbox ->addWidget( model_2dsamc,     row,   0, 1, 2 );
+  gbox ->addWidget( ck_2dsamc_s_ff0,  row,   2, 1, 2, Qt::AlignHCenter );
+  gbox ->addWidget( ck_2dsamc_s_d,    row,   4, 1, 2, Qt::AlignHCenter );
+  gbox ->addWidget( ck_2dsamc_mw_ff0, row,   6, 1, 2, Qt::AlignHCenter );
+  gbox ->addWidget( ck_2dsamc_mw_d,   row++, 8, 1, 2, Qt::AlignHCenter );
  
 
+  gbox ->addWidget( model_pcsa,       row,   0, 1, 2 );
+  gbox ->addWidget( ck_pcsa_s_ff0,    row,   2, 1, 2, Qt::AlignHCenter );
+  gbox ->addWidget( ck_pcsa_s_d,      row,   4, 1, 2, Qt::AlignHCenter );
+  gbox ->addWidget( ck_pcsa_mw_ff0,   row,   6, 1, 2, Qt::AlignHCenter );
+  gbox ->addWidget( ck_pcsa_mw_d,     row++, 8, 1, 2, Qt::AlignHCenter );
+    
+  pseudo3d_box->setLayout( gbox );
+    
   row = 0;
   reportmask->addWidget( bn_repmask_t,     row++,  0, 1, 6 );
   reportmask->addWidget( ck_tot_conc,      row,    0, 1, 2 );
-  reportmask->addWidget( ck_rmsd,          row,    2, 1, 2 );
-  reportmask->addWidget( ck_exp_duration,  row++,  4, 1, 2 );
-  reportmask->addWidget( ck_min_intensity, row,    0, 1, 2 );
-  reportmask->addWidget( ck_integration,   row,    2, 1, 2 );
-  reportmask->addWidget( ck_plots,         row,    4, 1, 2 );
+  reportmask->addWidget( ck_min_intensity, row,    2, 1, 2 );
+  reportmask->addWidget( pseudo3d_box,     row++,  4, 4, 2 );
+
+  reportmask->addWidget( ck_rmsd,          row,    0, 1, 2 );
+  reportmask->addWidget( ck_integration,   row++,  2, 1, 2 );
+  
+  reportmask->addWidget( ck_exp_duration,  row,    0, 1, 2 );
+  reportmask->addWidget( ck_plots,         row++,  2, 1, 2 );
   
   main->addLayout( reportmask );
   
@@ -535,7 +646,7 @@ void US_ReportGui::build_report_layout( void )
    
   main->addLayout( lower_buttons );
 
-  setMinimumSize( 850, 450 );
+  setMinimumSize( 850, 500 );
   //adjustSize();
 
 }
@@ -702,9 +813,7 @@ void US_ReportGui::gui_to_report( void )
   report->experiment_duration = exp_dur;
 
   qDebug() << "Gui-to-report: DURATION: in seconds -- " << exp_dur;
-
   qDebug() << "Gui-to-report: reportItems.size()  -- " << report->reportItems.size();  
-
 
   //ReportItems
   for ( int ii = 0; ii < report->reportItems.size(); ii++ )
@@ -759,6 +868,39 @@ void US_ReportGui::gui_to_report( void )
   report -> experiment_duration_mask  = ck_exp_duration  ->isChecked();
   report -> integration_results_mask  = ck_integration   ->isChecked();
   report -> plots_mask                = ck_plots         ->isChecked();
+
+  //Pseuso 3D plots Mask params.
+  report -> pseudo3d_2dsait_s_ff0     = ck_2dsait_s_ff0   ->isChecked();
+  report -> pseudo3d_2dsait_s_d       = ck_2dsait_s_d     ->isChecked();
+  report -> pseudo3d_2dsait_mw_ff0    = ck_2dsait_mw_ff0  ->isChecked();
+  report -> pseudo3d_2dsait_mw_d      = ck_2dsait_mw_d    ->isChecked();
+  report -> pseudo3d_2dsamc_s_ff0     = ck_2dsamc_s_ff0   ->isChecked();
+  report -> pseudo3d_2dsamc_s_d       = ck_2dsamc_s_d     ->isChecked();
+  report -> pseudo3d_2dsamc_mw_ff0    = ck_2dsamc_mw_ff0  ->isChecked();
+  report -> pseudo3d_2dsamc_mw_d      = ck_2dsamc_mw_d    ->isChecked();
+  report -> pseudo3d_pcsa_s_ff0       = ck_pcsa_s_ff0     ->isChecked();
+  report -> pseudo3d_pcsa_s_d         = ck_pcsa_s_d       ->isChecked();
+  report -> pseudo3d_pcsa_mw_ff0      = ck_pcsa_mw_ff0    ->isChecked();
+  report -> pseudo3d_pcsa_mw_d        = ck_pcsa_mw_d      ->isChecked();
+
+  if( report -> pseudo3d_2dsait_s_ff0    ||  
+      report -> pseudo3d_2dsait_s_d      ||
+      report -> pseudo3d_2dsait_mw_ff0   ||
+      report -> pseudo3d_2dsait_mw_d     ||
+      report -> pseudo3d_2dsamc_s_ff0    || 
+      report -> pseudo3d_2dsamc_s_d      ||
+      report -> pseudo3d_2dsamc_mw_ff0   ||
+      report -> pseudo3d_2dsamc_mw_d     ||
+      report -> pseudo3d_pcsa_s_ff0      ||
+      report -> pseudo3d_pcsa_s_d        ||
+      report -> pseudo3d_pcsa_mw_ff0     ||
+      report -> pseudo3d_pcsa_mw_d       
+      )
+    {
+      report -> pseudo3d_mask = true;
+    }
+  else
+    report -> pseudo3d_mask = false;
 
 }
 
@@ -1104,6 +1246,23 @@ void US_ReportGui::apply_all_wvls( void )
 	  report_map[ ri.key() ]->experiment_duration_mask   = report->experiment_duration_mask;
 	  report_map[ ri.key() ]->integration_results_mask   = report->integration_results_mask;
 	  report_map[ ri.key() ]->plots_mask                 = report->plots_mask;
+
+	  //Pseuso 3D plots Mask params.
+	  report_map[ ri.key() ]->pseudo3d_2dsait_s_ff0  = report -> pseudo3d_2dsait_s_ff0  ;
+	  report_map[ ri.key() ]->pseudo3d_2dsait_s_d    = report -> pseudo3d_2dsait_s_d    ;
+	  report_map[ ri.key() ]->pseudo3d_2dsait_mw_ff0 = report -> pseudo3d_2dsait_mw_ff0 ;
+	  report_map[ ri.key() ]->pseudo3d_2dsait_mw_d   = report -> pseudo3d_2dsait_mw_d   ;
+	  report_map[ ri.key() ]->pseudo3d_2dsamc_s_ff0  = report -> pseudo3d_2dsamc_s_ff0  ;
+	  report_map[ ri.key() ]->pseudo3d_2dsamc_s_d    = report -> pseudo3d_2dsamc_s_d    ;
+	  report_map[ ri.key() ]->pseudo3d_2dsamc_mw_ff0 = report -> pseudo3d_2dsamc_mw_ff0 ;
+	  report_map[ ri.key() ]->pseudo3d_2dsamc_mw_d   = report -> pseudo3d_2dsamc_mw_d   ;
+	  report_map[ ri.key() ]->pseudo3d_pcsa_s_ff0    = report -> pseudo3d_pcsa_s_ff0    ;
+	  report_map[ ri.key() ]->pseudo3d_pcsa_s_d      = report -> pseudo3d_pcsa_s_d      ;
+	  report_map[ ri.key() ]->pseudo3d_pcsa_mw_ff0   = report -> pseudo3d_pcsa_mw_ff0   ;
+	  report_map[ ri.key() ]->pseudo3d_pcsa_mw_d     = report -> pseudo3d_pcsa_mw_d     ;
+
+	  report_map[ ri.key() ]->pseudo3d_mask          = report -> pseudo3d_mask          ;
+	  
 	  
 	  //Now go over reportItems:
 	  //1st, clear current array of reportItems:
@@ -1175,14 +1334,16 @@ void US_ReportGui::type_changed( int t)
 void US_ReportGui::SetComboBoxItemEnabled(QComboBox * comboBox, int index, bool enabled)
 {
   auto * model = qobject_cast<QStandardItemModel*>(comboBox->model());
-  assert(model);
-
+  //assert(model);
+  Q_ASSERT(model);
+  
   if ( !model )
     return;
   
   auto * item = model->item(index);
-  assert( item );
-
+  //assert( item );
+  Q_ASSERT( item );
+    
   if ( !item )
     return;
 

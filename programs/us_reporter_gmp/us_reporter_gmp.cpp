@@ -321,12 +321,13 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   invID              = protocol_details[ "invID_passed" ].toInt();
   runID              = protocol_details[ "runID" ];
   FileName           = protocol_details[ "filename" ];
+  intensityID        = protocol_details[ "intensityID" ];
 
   lb_hdr1 ->setText( QString( tr("Report for run: %1") ).arg(FileName) );
   lb_hdr1->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
   
   //show progress dialog
-  progress_msg = new QProgressDialog ("Accessing run's protocol...", QString(), 0, 7, this);
+  progress_msg = new QProgressDialog ("Accessing run's protocol...", QString(), 0, 10, this);
   progress_msg->setWindowFlags(Qt::Tool | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
   progress_msg->setModal( true );
   progress_msg->setWindowTitle(tr("Assessing Run's Protocol"));
@@ -352,16 +353,16 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
 
   qDebug() << "AnalysisIDs: "   << protocol_details[ "analysisIDs" ];
   qDebug() << "aprofileguid: "  << AProfileGUID ;
-  
 
+  
   //Now, read protocol's 'reportMask' && reportItems masks && populate trees
   read_protocol_and_reportMasks( );
-  progress_msg->setValue( 2 );
+  progress_msg->setValue( 7 );
   qApp->processEvents();
 
   //check models existence
   check_models();
-  progress_msg->setValue( 3 );
+  progress_msg->setValue( 8 );
   qApp->processEvents();
 
   //debug
@@ -374,11 +375,11 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   
   //build Trees
   build_genTree();  
-  progress_msg->setValue( 6 );
+  progress_msg->setValue( 9 );
   qApp->processEvents();
 
   build_perChanTree();
-  progress_msg->setValue( 7 );
+  progress_msg->setValue( 10 );
   qApp->processEvents();
 
   progress_msg->setValue( progress_msg->maximum() );
@@ -549,7 +550,7 @@ void US_ReporterGMP::load_gmp_run ( void )
 
   
   //show progress dialog
-  progress_msg = new QProgressDialog ("Accessing run's protocol...", QString(), 0, 7, this);
+  progress_msg = new QProgressDialog ("Accessing run's protocol...", QString(), 0, 9, this);
   progress_msg->setWindowFlags(Qt::Tool | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
   progress_msg->setModal( true );
   progress_msg->setWindowTitle(tr("Assessing Run's Protocol"));
@@ -577,7 +578,8 @@ void US_ReporterGMP::load_gmp_run ( void )
   invID              = protocol_details[ "invID_passed" ].toInt();
   runID              = protocol_details[ "runID" ];
   FileName           = protocol_details[ "filename" ];
-
+  intensityID        = protocol_details[ "intensityID" ];
+  
   progress_msg->setValue( 1 );
   qApp->processEvents();
 
@@ -593,10 +595,10 @@ void US_ReporterGMP::load_gmp_run ( void )
 
   //Now, read protocol's 'reportMask' && reportItems masks && populate trees
   read_protocol_and_reportMasks( );
-
+  
   //check models existence
   check_models();
-  progress_msg->setValue( 3 );
+  progress_msg->setValue( 7 );
   qApp->processEvents();
 
   //debug
@@ -608,11 +610,11 @@ void US_ReporterGMP::load_gmp_run ( void )
   //end debug
 
   build_genTree();  
-  progress_msg->setValue( 6 );
+  progress_msg->setValue( 8 );
   qApp->processEvents();
 
   build_perChanTree();
-  progress_msg->setValue( 7 );
+  progress_msg->setValue( 9 );
   qApp->processEvents();
 
   progress_msg->setValue( progress_msg->maximum() );
@@ -742,7 +744,8 @@ QMap< QString, QString>  US_ReporterGMP::read_autoflow_record( int autoflowID  )
 	   protocol_details[ "filename" ]       = db->value( 17 ).toString();
 	   protocol_details[ "aprofileguid" ]   = db->value( 18 ).toString();
 
-	   protocol_details[ "analysisIDs" ]   = db->value( 19 ).toString();
+	   protocol_details[ "analysisIDs" ]    = db->value( 19 ).toString();
+	   protocol_details[ "intensityID" ]    = db->value( 20 ).toString();
 	   	   
 	 }
      }
@@ -807,14 +810,14 @@ void US_ReporterGMP::read_protocol_and_reportMasks( void )
   chndescs_alt           = currAProf.chndescs_alt;
   //Channel reports
   ch_reports             = currAProf.ch_reports;
-  ch_reports_internal    = currAProf.ch_reports;
+  //ch_reports_internal    = currAProf.ch_reports;
   //Channel wavelengths
   ch_wvls                = currAProf.ch_wvls;
 
   //Debug: AProfile
   QString channel_desc_alt = chndescs_alt[ 0 ];
   QString channel_desc     = chndescs[ 0 ];
-  QString wvl              = QString::number( ch_wvls[ channel_desc ][ 0 ] );
+  QString wvl              = QString::number( ch_wvls[ channel_desc_alt ][ 0 ] );
   US_ReportGMP reportGMP   = ch_reports[ channel_desc_alt ][ wvl ];
     
   qDebug() << "AProfile's && ReportGMP's details: -- "
@@ -831,16 +834,120 @@ void US_ReporterGMP::read_protocol_and_reportMasks( void )
 
   qDebug() << "Number of wvls in channel: " << chndescs_alt[ 0 ] << ": " <<  ch_wvls[ channel_desc_alt ].size();
   qDebug() << "Wvls in channel: " << chndescs_alt[ 0 ] << ": " << ch_wvls[ channel_desc_alt ];
+  qDebug() << "Pseudo3d pars: "
+	   << reportGMP .pseudo3d_2dsait_s_ff0
+	   << reportGMP .pseudo3d_2dsait_s_d
+	   << reportGMP .pseudo3d_2dsait_mw_ff0
+	   << reportGMP .pseudo3d_2dsait_mw_d;
 
+  //autoflowIntensity
+  intensityRIMap = read_autoflowIntensity( intensityID, &db );
+  progress_msg->setValue( 5 );
+  qApp->processEvents();
   
   //report Mask
   QString gen_reportMask = currAProf.report_mask;
   parse_gen_mask_json( gen_reportMask );
 
-  progress_msg->setValue( 5 );
+  progress_msg->setValue( 6 );
   qApp->processEvents();
 
   qDebug() << "General ReportMask: " << gen_reportMask;
+
+  //combined_plots params
+  QString combPlots_parms = currAProf.combPlots_parms;
+  comboPlotsMap = parse_comb_plots_json( combPlots_parms );
+}
+
+//combPlots parms
+QMap< QString, QMap< QString, QString > > US_ReporterGMP::parse_comb_plots_json( QString combPlots )
+{
+  QMap< QString, QMap< QString, QString > > iMap;
+  qDebug() << "combPlots: " << combPlots;
+  //parse JSON into QMap
+  if ( !combPlots.isEmpty() )
+    {
+      QJsonDocument jsonDoc = QJsonDocument::fromJson( combPlots.toUtf8() );
+      QJsonObject json_obj = jsonDoc.object();
+
+      foreach(const QString& key, json_obj.keys())
+	{
+	  QJsonValue value = json_obj.value(key);
+
+	  qDebug() << "CombPlots key (type,method), value: " << key << value;
+	  
+	  QJsonArray json_array = value.toArray();
+	  for (int i=0; i < json_array.size(); ++i )
+	    {
+	      foreach(const QString& array_key, json_array[i].toObject().keys())
+		{
+		  iMap[ key ][ array_key ] = json_array[i].toObject().value(array_key).toString();
+
+		  qDebug() << "ComboPlots Map: -- type_method, parameter, value: "
+			   << key
+			   << array_key
+			   << json_array[i].toObject().value(array_key).toString();
+		}
+	    }
+	}
+    }
+
+  return iMap;
+}
+
+//read Intensity info
+QMap< QString, QString > US_ReporterGMP::read_autoflowIntensity( QString ID, US_DB2* db )
+{
+  QString iJson;
+  QMap< QString, QString > iMap;
+  QStringList qry;
+  qry << "read_autoflow_intensity_record" << ID;
+  db->query( qry );
+
+  qDebug() << "readIntens: qry -- " << qry;
+    
+  if ( db->lastErrno() == US_DB2::OK )      // Intensity record exists
+    {
+      while ( db->next() )
+	{
+	  iJson  = db->value( 0 ).toString();
+	}
+    }
+
+  qDebug() << "iJson: " << iJson;
+  //parse JSON into QMap
+  if ( !iJson.isEmpty() )
+    {
+      QJsonDocument jsonDoc = QJsonDocument::fromJson( iJson.toUtf8() );
+      QJsonObject json_obj = jsonDoc.object();
+
+      foreach(const QString& key, json_obj.keys())
+	{
+	  QJsonValue value = json_obj.value(key);
+
+	  if ( value.isString() )  //single-wvl
+	    {
+	      iMap["singlewvl"] = value.toString();
+	    }
+	  else if ( value.isArray() ) //MWL
+	    {
+	      QJsonArray json_array = value.toArray();
+	      for (int i=0; i < json_array.size(); ++i )
+		{
+		  foreach(const QString& array_key, json_array[i].toObject().keys())
+		    {
+		      iMap[ array_key ] = json_array[i].toObject().value(array_key).toString();
+
+		      qDebug() << "Intensity: MWL -- array_key, val: "
+			       << array_key
+			       << json_array[i].toObject().value(array_key).toString();
+		    }
+		}
+	    }
+	}
+    }
+  
+  return iMap;
 }
 
 //parse JSON for general rpeort mask
@@ -1145,12 +1252,16 @@ void US_ReporterGMP::changedItem( QTreeWidgetItem* item, int col )
 void US_ReporterGMP::build_perChanTree ( void )
 {
   QString indent( "  " );
-  QStringList chanItemNameList, tripleItemNameList, tripleItemModelNameList, tripleMaskItemNameList, tripleMaskItemPlotNameList;
+  QStringList chanItemNameList, tripleItemNameList,
+    tripleItemModelNameList, tripleMaskItemNameList,
+    tripleMaskItemPlotNameList, tripleMaskItemPseudoNameList;
 
   QStringList tripleReportModelsList;
   QStringList tripleReportMasksList;
   QList< bool > tripleReportMasksList_vals;
+  QList< bool > tripleReportMasksPseudoList_vals;
   QStringList tripleReportMasksPlotList;
+  QStringList tripleReportMasksPseudoList;
   
   int wiubase = (int)QTreeWidgetItem::UserType;
   
@@ -1207,13 +1318,29 @@ void US_ReporterGMP::build_perChanTree ( void )
 	      tripleItem [ tripleItemName ] = new QTreeWidgetItem( chanItem [ chanItemName ], tripleItemNameList, wiubase);
 
 	      US_ReportGMP reportGMP = chann_reports[ wvl ];
+
+	      //Identify which type-methods will be in Combined ptols
+	      int report_items_number = reportGMP.reportItems.size();
+	      for ( int kk = 0; kk < report_items_number; ++kk )
+		{
+		  US_ReportGMP::ReportItem curr_item = reportGMP.reportItems[ kk ];
+		  QString type           = curr_item.type;
+		  QString method         = curr_item.method;
+		  int     combPlot       = curr_item.combined_plot;
+
+		  QString t_m = type + "," + method;
+		  if ( combPlot )
+		    comboPlotsMapTypes[ t_m ] = 1;
+		}
+	      ////////////////////////////////////////////////////////
 	      
 	      qDebug() << reportGMP. tot_conc_mask
 		       << reportGMP. rmsd_limit_mask
 		       << reportGMP. av_intensity_mask
 		       << reportGMP. experiment_duration_mask
 		       << reportGMP. integration_results_mask
-		       << reportGMP. plots_mask;
+		       << reportGMP. plots_mask
+		       << reportGMP. pseudo3d_mask;
 
 	      tripleReportMasksList.clear();
 	      tripleReportMasksList << "Total Concentration"
@@ -1221,7 +1348,8 @@ void US_ReporterGMP::build_perChanTree ( void )
 				    << "Minimum Intensity"
 				    << "Experiment Duration"
 				    << "Integration Results"
-				    << "Plots";
+				    << "Plots"
+				    << "Pseudo3d Distributions";
 	      
 	      tripleReportMasksList_vals.clear();
 	      tripleReportMasksList_vals << reportGMP. tot_conc_mask
@@ -1229,12 +1357,11 @@ void US_ReporterGMP::build_perChanTree ( void )
 	      				 << reportGMP. av_intensity_mask
 	      				 << reportGMP. experiment_duration_mask
 	      				 << reportGMP. integration_results_mask
-					 << reportGMP. plots_mask;
+					 << reportGMP. plots_mask
+					 << reportGMP. pseudo3d_mask;
 
-	      //TEMP: define model list
+	      //define models per triple:
 	      tripleReportModelsList.clear();
-	      //tripleReportModelsList << "2DSA-IT" << "2DSA-MC" << "PCSA";
-	      
 	      tripleReportModelsList = Triple_to_Models[ tripleName ];
 	      
 	      int checked_masks = 0;
@@ -1279,21 +1406,79 @@ void US_ReporterGMP::build_perChanTree ( void )
 						    << "D-vs-s 2D Model"
 						    << "D-vs-MW 2D Model"
 						    << "3D Model Plot";
-			  
+								  
 			  for ( int hh = 0; hh < tripleReportMasksPlotList.size(); ++hh )
 			    {
 			      QString tripleMaskItemPlotName = tripleReportMasksPlotList[ hh ];
 			      tripleMaskItemPlotNameList.clear();
 			      tripleMaskItemPlotNameList << "" << indent.repeated( 5 ) + tripleMaskItemPlotName;
 			      tripleMaskPlotItem [ tripleModelName ] = new QTreeWidgetItem( tripleMaskItem [ tripleModelName ], tripleMaskItemPlotNameList, wiubase);
-			      
-			      tripleMaskPlotItem [ tripleModelName ] ->setCheckState( 0, Qt::Checked );
 
-			      ++checked_masks;
+			      if ( tripleReportMasksList_vals[ kk ] )
+				{
+				  tripleMaskPlotItem [ tripleModelName ] ->setCheckState( 0, Qt::Checked );
+				  ++checked_masks;
+				}
+			      else
+				tripleMaskPlotItem [ tripleModelName ] ->setCheckState( 0, Qt::Unchecked );
 			    }
 			}
+		      //end of triple's masks
+		      
+		      //pseudo3d distr.
+		      if ( tripleMaskItemName.contains("Pseudo3d") )
+			{
+			  tripleReportMasksPseudoList.clear();
+			  tripleReportMasksPseudoList << "Pseudo3d s-vs-f/f0 Distribution"
+						      << "Pseudo3d s-vs-D Distribution"
+						      << "Pseudo3d MW-vs-f/f0 Distribution"
+						      << "Pseudo3d MW-vs-D Distribution";
+
+			  tripleReportMasksPseudoList_vals. clear();
+			  if ( tripleItemModelName.contains( "2DSA-IT" )  )
+			    {
+			      tripleReportMasksPseudoList_vals << reportGMP. pseudo3d_2dsait_s_ff0
+							       << reportGMP. pseudo3d_2dsait_s_d
+							       << reportGMP. pseudo3d_2dsait_mw_ff0
+							       << reportGMP. pseudo3d_2dsait_mw_d;
+			      qDebug() << "In pseudo3d tree: tripleReportMasksPseudoList_vals (2DSA-IT) -- " << tripleReportMasksPseudoList_vals;
+			    }
+			  else if ( tripleItemModelName.contains( "2DSA-MC" ) )
+			    {
+			      tripleReportMasksPseudoList_vals << reportGMP. pseudo3d_2dsamc_s_ff0
+							       << reportGMP. pseudo3d_2dsamc_s_d
+							       << reportGMP. pseudo3d_2dsamc_mw_ff0
+							       << reportGMP. pseudo3d_2dsamc_mw_d;
+			      qDebug() << "In pseudo3d tree: tripleReportMasksPseudoList_vals (2DSA-MC) -- " << tripleReportMasksPseudoList_vals;
+			    }
+			  else if ( tripleItemModelName.contains( "PCSA" ) )
+			    {
+			      tripleReportMasksPseudoList_vals << reportGMP. pseudo3d_pcsa_s_ff0
+							       << reportGMP. pseudo3d_pcsa_s_d
+							       << reportGMP. pseudo3d_pcsa_mw_ff0
+							       << reportGMP. pseudo3d_pcsa_mw_d;
+			      qDebug() << "In pseudo3d tree: tripleReportMasksPseudoList_vals (PCSA) -- " << tripleReportMasksPseudoList_vals;
+			    }
+			  			  
+			  for ( int ps = 0; ps < tripleReportMasksPseudoList.size(); ++ps )
+			    {
+			      QString tripleMaskItemPseudoName = tripleReportMasksPseudoList[ ps ];
+			      tripleMaskItemPseudoNameList.clear();
+			      tripleMaskItemPseudoNameList << "" << indent.repeated( 5 ) + tripleMaskItemPseudoName;
+			      tripleMaskPseudoItem [ tripleModelName ] = new QTreeWidgetItem( tripleMaskItem [ tripleModelName ], tripleMaskItemPseudoNameList, wiubase);
+
+			      if ( tripleReportMasksPseudoList_vals[ ps ] )
+				{
+				  tripleMaskPseudoItem [ tripleModelName ] ->setCheckState( 0, Qt::Checked );
+				  ++checked_masks;
+				}
+			      else
+				tripleMaskPseudoItem [ tripleModelName ] ->setCheckState( 0, Qt::Unchecked );
+			    }
+			}
+		      //end of pseudo3d distr. masks
 		    }
-		  //end of triple's masks
+		  
 		  if ( checked_masks )
 		    tripleModelItem [ tripleModelName ] ->setCheckState( 0, Qt::Checked );
 		  else
@@ -1434,6 +1619,13 @@ void US_ReporterGMP::reset_report_panel ( void )
   //clean triple_array
   Array_of_triples.clear();
 
+  //clean intensity RI Map
+  intensityRIMap .clear();
+
+  //clear comboplots Maps
+  comboPlotsMap      .clear();
+  comboPlotsMapTypes .clear();
+
   //clean QMap connecting triple names to their models
   Triple_to_Models.clear();
   
@@ -1465,7 +1657,7 @@ void US_ReporterGMP::generate_report( void )
 {
   progress_msg->setWindowTitle(tr("Generating Report"));
   progress_msg->setLabelText( "Generating report: Part 1..." );
-  int msg_range = currProto.rpSolut.nschan + 4;
+  int msg_range = currProto.rpSolut.nschan + 5;
   progress_msg->setRange( 0, msg_range );
   progress_msg->setValue( 0 );
   progress_msg->show();
@@ -1503,57 +1695,11 @@ void US_ReporterGMP::generate_report( void )
   assemble_pdf();
   progress_msg->setValue( 4 );
   qApp->processEvents();
-  
+
   progress_msg->setValue( progress_msg->maximum() );
   progress_msg->close();
   qApp->processEvents();
-
-  //Combined Plots Generation
-  sdiag_combplot = new US_DDistr_Combine();
-  QStringList runIDs_single;
-  runIDs_single << FileName; //<-- a single-type runID (e.g. RI) - NOT combined runs for now...
-  QStringList aDescrs = scan_dbase_models( runIDs_single );
-  QStringList modelDescModified = sdiag_combplot->load_auto( runIDs_single, aDescrs );
-
-  //write combined plots
-  mkdir( US_Settings::reportDir(), FileName );
-  const QString svgext( ".svgz" );
-  const QString pngext( ".png" );
-  const QString csvext( ".csv" );
-  QString basename  = US_Settings::reportDir() + "/" + FileName + "/" + FileName + ".";
   
-  //go over modelDescModified
-  QStringList modelNames;
-  modelNames << "2DSA-FM" << "2DSA-IT" << "2DSA-MC" << "PCSA";
-  QStringList CombPlotsFileNames;
-    
-  for ( int m = 0; m < modelNames.size(); m++ )  
-    {
-      bool isModel = false;
-      QString imgComb01File = basename + "combined" + "." + modelNames[ m ]  + svgext;
-      
-      for ( int ii = 0; ii < modelDescModified.size(); ii++ )  
-	{
-	  //fiter by type|model
-	  if ( modelDescModified[ ii ].contains( modelNames[ m ] ) )
-	    {
-	      isModel = true;
-	      sdiag_combplot-> model_select_auto ( modelDescModified[ ii ] ); 
-	    }
-	}
-      //write plot
-      if ( isModel )  //TEMPORARY: will read a type-method combined plot QMap defined at the beginnig
-	{
-	  write_plot( imgComb01File, sdiag_combplot->rp_data_plot1() );                //<-- rp_data_plot1() gives combined plot
-	  CombPlotsFileNames << basename + "combined" + "." + modelNames[ m ] + pngext;
-	}
-      //reset plot
-      sdiag_combplot->reset_data_plot1();
-    }
-  //assemble combined plots into html
-  assemble_plots_html( CombPlotsFileNames  );
-  //exit(1);
-  //End of Combined Plots
 
   //Part 2
   if ( auto_mode )
@@ -1561,12 +1707,17 @@ void US_ReporterGMP::generate_report( void )
       for ( int i=0; i<Array_of_triples.size(); ++i )
 	{
 	  currentTripleName = Array_of_triples[i];
-	  
+	  QString triplename_alt = currentTripleName;
+	  triplename_alt.replace(".","");
+	      
 	  //here should be cycle over triple's models ( 2DSA-IT, 2DSA-MC etc..)
 	  QStringList models_to_do = Triple_to_Models[ currentTripleName ];
 	  
 	  for ( int j = 0; j < models_to_do.size(); ++j )
-	    simulate_triple ( currentTripleName, models_to_do[ j ] );
+	    {
+	      simulate_triple ( currentTripleName, models_to_do[ j ] );
+	      plot_pseudo3D( triplename_alt, models_to_do[ j ]);
+	    }
 	}
     }
   else
@@ -1589,12 +1740,269 @@ void US_ReporterGMP::generate_report( void )
 	      
 	      if ( perChanMask_edited. has_tripleModel_items     [ triplename_alt ][ models_to_do[ j ] ] ||
 		   perChanMask_edited. has_tripleModelPlot_items [ triplename_alt ][ models_to_do[ j ] ] ) 
-		simulate_triple ( currentTripleName, models_to_do[ j ] );
+		{
+		  simulate_triple ( currentTripleName, models_to_do[ j ] );
+		  
+		  plot_pseudo3D( triplename_alt, models_to_do[ j ]);
+		}
 	    }
 	}
     }
 
+  /*
+  //Pseudo3D Plots Generation (after simulations? Actual simulations are NOT needed for Pseudo3d plots?)
+  //FileName; //<-- a single-type runID (e.g. RI) - NOT combined runs for now...
 
+  mkdir( US_Settings::reportDir(), FileName );
+  const QString svgext( ".svgz" );
+  const QString pngext( ".png" );
+  const QString csvext( ".csv" );
+  QString basename  = US_Settings::reportDir() + "/" + FileName + "/" + FileName + ".";
+  
+  QString imgPseudo3d01File;
+  QStringList Pseudo3dPlotsFileNames;
+
+  //Estimate # of all pseudo3d distributons
+  int pseudo3d_number = 0;
+  QMap < QString, QStringList >::iterator mm;
+  for ( mm = Triple_to_Models.begin(); mm != Triple_to_Models.end(); ++mm )
+    pseudo3d_number += mm.value().size();
+  pseudo3d_number *= 4;
+  
+  // Show msg while data downloaded and simulated
+  progress_msg = new QProgressDialog (QString("Generating pseudo3d distributions..."), QString(), 0, pseudo3d_number, this);
+  progress_msg->setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
+  progress_msg->setWindowModality(Qt::WindowModal);
+  progress_msg->setWindowTitle(tr("Pseudo3D Distributions"));
+  progress_msg->setAutoClose( false );
+  progress_msg->setValue( 0 );
+  progress_msg->show();
+  qApp->processEvents();
+  
+  //TEST
+  //QMap < QString, QStringList >::iterator mm;
+  int pr_val  = 0;
+  for ( mm = Triple_to_Models.begin(); mm != Triple_to_Models.end(); ++mm )
+    {      
+      QString triple_ps = mm.key();
+      triple_ps.replace(".","");
+      QStringList models_ps = mm.value();
+
+      qDebug() << "For triple -- " << triple_ps << ", there are models: " << mm.value();
+
+      for ( int ml = 0; ml < models_ps.size(); ++ml )
+	{
+	  ++pr_val;
+	  progress_msg->setValue( pr_val );
+	  
+	  QStringList m_t_r;  
+      	  m_t_r << triple_ps << models_ps[ ml ] << FileName;
+      
+	  qDebug() << "m_t_r to model_loader -- " << m_t_r;
+	  
+	  sdiag_pseudo3d = new US_Pseudo3D_Combine();
+	  sdiag_pseudo3d -> load_distro_auto ( QString::number( invID ), m_t_r );
+
+	  //here identify what to show:
+	  bool show_s_ff0  = (perChanMask_edited.ShowTripleModelPseudo3dParts[ triple_ps ][ models_ps[ ml ] ][ "Pseudo3d s-vs-f/f0 Distribution" ].toInt()) ? true : false ;
+	  bool show_s_d    = (perChanMask_edited.ShowTripleModelPseudo3dParts[ triple_ps ][ models_ps[ ml ] ][ "Pseudo3d s-vs-D Distribution" ].toInt()) ? true : false ;
+	  bool show_mw_ff0 = (perChanMask_edited.ShowTripleModelPseudo3dParts[ triple_ps ][ models_ps[ ml ] ][ "Pseudo3d MW-vs-f/f0 Distribution" ].toInt()) ? true : false ;
+	  bool show_mw_d   = (perChanMask_edited.ShowTripleModelPseudo3dParts[ triple_ps ][ models_ps[ ml ] ][ "Pseudo3d MW-vs-D Distribution" ].toInt()) ? true : false ;
+
+	  //write plot: here default is [s-f/f0] coordinates (x,y)
+	  if( show_s_ff0 )
+	    {
+	      sdiag_pseudo3d -> select_x_axis_auto( 0 ); // [s-]
+	      sdiag_pseudo3d -> select_y_axis_auto( 1 ); // [s-f/f0]
+	      imgPseudo3d01File = basename + "pseudo3D" + "." + models_ps[ ml ]  + "." +  triple_ps + ".sff0" + svgext;  // [s-f/f0]
+	      write_plot( imgPseudo3d01File, sdiag_pseudo3d->rp_data_plot() );                //<-- rp_data_plot() gives pointer to pseudo3D plot
+	      imgPseudo3d01File.replace( svgext, pngext ); 
+	      Pseudo3dPlotsFileNames << imgPseudo3d01File;
+	    }
+	  ++pr_val;
+	  progress_msg->setValue( pr_val );
+
+	  //here, we have to go over [x-y] coordinates for given [triple-model]: 
+	  // s: 0; f/f0: 1; MW: 2; D: 4
+	  //[0-1] (s-f/f0) already processed:
+	  //to_process: [0-4], [2-1], [2-4]:
+	  if( show_s_d )
+	    {
+	      sdiag_pseudo3d -> select_x_axis_auto( 0 ); // [s-]
+	      sdiag_pseudo3d -> select_y_axis_auto( 4 ); // [s-D]
+	      imgPseudo3d01File = basename + "pseudo3D" + "." + models_ps[ ml ]  + "." +  triple_ps + ".sD" + svgext;
+	      write_plot( imgPseudo3d01File, sdiag_pseudo3d->rp_data_plot() );                //<-- rp_data_plot() gives pointer to pseudo3D plot
+	      imgPseudo3d01File.replace( svgext, pngext ); 
+	      Pseudo3dPlotsFileNames << imgPseudo3d01File;
+	    }
+	  ++pr_val;
+	  progress_msg->setValue( pr_val );
+
+	  if( show_mw_ff0 )
+	    {
+	      sdiag_pseudo3d -> select_x_axis_auto( 2 ); // [MW-]
+	      sdiag_pseudo3d -> select_y_axis_auto( 1 ); // [MW-f/f0]
+	      imgPseudo3d01File = basename + "pseudo3D" + "." + models_ps[ ml ]  + "." +  triple_ps + ".mwff0" + svgext;
+	      write_plot( imgPseudo3d01File, sdiag_pseudo3d->rp_data_plot() );                //<-- rp_data_plot() gives pointer to pseudo3D plot
+	      imgPseudo3d01File.replace( svgext, pngext ); 
+	      Pseudo3dPlotsFileNames << imgPseudo3d01File;
+	    }
+	  ++pr_val;
+	  progress_msg->setValue( pr_val );
+
+	  if( show_mw_d )
+	    {
+	      sdiag_pseudo3d -> select_x_axis_auto( 2 ); // [MW-]
+	      sdiag_pseudo3d -> select_y_axis_auto( 4 ); // [MW-D]
+	      imgPseudo3d01File = basename + "pseudo3D" + "." + models_ps[ ml ]  + "." +  triple_ps + ".mwD" + svgext;
+	      write_plot( imgPseudo3d01File, sdiag_pseudo3d->rp_data_plot() );                //<-- rp_data_plot() gives pointer to pseudo3D plot
+	      imgPseudo3d01File.replace( svgext, pngext ); 
+	      Pseudo3dPlotsFileNames << imgPseudo3d01File;
+	    }
+	  ++pr_val;
+	  progress_msg->setValue( pr_val );
+	  
+	  //reset plots
+	  sdiag_pseudo3d->reset_auto();
+	}
+    }
+  
+  //assemble combined plots into html
+  assemble_plots_html( Pseudo3dPlotsFileNames  );
+  progress_msg->setValue( progress_msg->maximum() );
+  qApp->processEvents();
+  progress_msg->close();
+  //End of Pseudo3D Plots ///
+  */
+
+
+  //Combined Plots Generation
+  sdiag_combplot = new US_DDistr_Combine();
+  QStringList runIDs_single;
+  runIDs_single << FileName; //<-- a single-type runID (e.g. RI) - NOT combined runs for now...
+  QStringList aDescrs = scan_dbase_models( runIDs_single );
+  QStringList modelDescModified = sdiag_combplot->load_auto( runIDs_single, aDescrs );
+
+  mkdir( US_Settings::reportDir(), FileName );
+  const QString svgext( ".svgz" );
+  const QString pngext( ".png" );
+  const QString csvext( ".csv" );
+  QString basename  = US_Settings::reportDir() + "/" + FileName + "/" + FileName + ".";
+
+  //estimate # of combined plots
+  int combpl_number = 3*4;
+  // Show msg while data downloaded and simulated
+  progress_msg = new QProgressDialog (QString("Generating combined plots..."), QString(), 0, combpl_number, this);
+  progress_msg->setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
+  progress_msg->setWindowModality(Qt::WindowModal);
+  progress_msg->setWindowTitle(tr("Combined Plots"));
+  progress_msg->setAutoClose( false );
+  progress_msg->setValue( 0 );
+  progress_msg->show();
+  qApp->processEvents();
+
+  int pr_cp_val = 0;
+  
+  //go over modelDescModified
+  QStringList modelNames;
+  modelNames << "2DSA-IT" << "2DSA-MC" << "PCSA";
+  QList< int > xtype;
+  xtype <<  1 << 2 << 3; //ALEXEY: 0: s20; 1: MW; 2: D; 3: f/f0
+                         //Note: xtype==0 (s20) is the default, so iterate later starting from 1... 
+  QStringList CombPlotsFileNames;
+    
+  for ( int m = 0; m < modelNames.size(); m++ )  
+    {
+      bool isModel = false;
+      QString imgComb01File = basename + "combined" + "." + modelNames[ m ]  + ".s20" + svgext;
+
+      for ( int ii = 0; ii < modelDescModified.size(); ii++ )  
+	{
+	  //fiter by type|model
+	  if ( modelDescModified[ ii ].contains( modelNames[ m ] ) )
+	    {
+	      isModel = true;
+
+	      //retrieve s,Model combPlot params:
+	      QString t_m = "s," + modelNames[ m ];
+	      QMap < QString, QString > c_params = comboPlotsMap[ t_m ];
+	      sdiag_combplot-> model_select_auto ( modelDescModified[ ii ], c_params ); //ALEXEY: here it plots s20 combPlot (xtype == 0)
+
+	    }
+	}
+      
+      ++pr_cp_val;
+      progress_msg->setValue( pr_cp_val );
+      
+      //write plot
+      if ( isModel )  //TEMPORARY: will read a type-method combined plot QMap defined at the beginnig
+	{
+	  //here writes a 's'-type IF it's to be included:
+	  QString t_m = "s," + modelNames[ m ];
+	  if ( comboPlotsMapTypes.contains( t_m ) && comboPlotsMapTypes[ t_m ] != 0  )
+	    {
+	      write_plot( imgComb01File, sdiag_combplot->rp_data_plot1() );                //<-- rp_data_plot1() gives combined plot
+	      imgComb01File.replace( svgext, pngext ); 
+	      CombPlotsFileNames << imgComb01File;
+	    }
+
+	  ++pr_cp_val;
+	  progress_msg->setValue( pr_cp_val );
+	  
+	  //Now that we have s20 plotted, plot other types [ MW, D, f/f0 ]
+	  for ( int xt= 0; xt < xtype.size(); ++xt )
+	    {
+	      QString imgComb02File = basename + "combined" + "." + modelNames[ m ];
+	      QMap < QString, QString > c_parms;
+	      QString t_m;
+	      
+	      if( xtype[ xt ] == 1 )
+		{
+		  imgComb02File += ".MW" + svgext;
+		  t_m = "MW," + modelNames[ m ];
+		  c_parms = comboPlotsMap[ t_m ];
+		}
+	      
+	      else if( xtype[ xt ] == 2 )
+		{
+		  imgComb02File += ".D20" + svgext;
+		  t_m = "D," + modelNames[ m ];
+		  c_parms = comboPlotsMap[ t_m ];
+		}
+	      
+	      else if( xtype[ xt ] == 3 )
+		{
+		  imgComb02File += ".f_f0" + svgext;
+		  t_m = "f/f0," + modelNames[ m ];
+		  c_parms = comboPlotsMap[ t_m ];
+		}
+
+	      //check if to generate Combined plot for current 'type-method':
+	      if ( comboPlotsMapTypes.contains( t_m ) && comboPlotsMapTypes[ t_m ] != 0  )
+		{
+		  sdiag_combplot-> changedPlotX_auto( xtype[ xt ], c_parms );
+		  
+		  write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() );              //<-- rp_data_plot1() gives combined plot
+		  imgComb02File.replace( svgext, pngext );
+		  CombPlotsFileNames << imgComb02File;
+		}
+
+	      ++pr_cp_val;
+	      progress_msg->setValue( pr_cp_val );
+	    }
+	}
+      // reset plot
+      sdiag_combplot->reset_data_plot1();
+    }
+  //assemble combined plots into html
+  assemble_plots_html( CombPlotsFileNames  );
+  
+  progress_msg->setValue( progress_msg->maximum() );
+  progress_msg->close();
+  qApp->processEvents();
+  //exit(1);
+  //End of Combined Plots //
+  
 
   write_pdf_report( );
   qApp->processEvents();
@@ -2071,6 +2479,7 @@ void US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
   qDebug() << "Closing sim_msg-- ";
   //msg_sim->accept();
   progress_msg->close();
+  qApp->processEvents();
 
   /*
   // Show plot
@@ -3252,9 +3661,104 @@ void US_ReporterGMP::show_results( QMap <QString, QString> & tripleInfo )
    //assemble_integration_results_html( );
    
    plotres( tripleInfo ); // <------- save plots into files locally
-   
+
+   //plot_pseudo3D( tripleInfo );       // <--- psedo3d per triple/model
    
    QApplication::restoreOverrideCursor();
+}
+
+//Plot pseudo3d distr.
+void US_ReporterGMP::plot_pseudo3D( QString triple_name,  QString stage_model)
+{
+  QString t_name = triple_name;
+  t_name.replace(".", "");
+  
+  //Pseudo3D Plots Generation (after simulations? Actual simulations are NOT needed for Pseudo3d plots?)
+  //FileName; //<-- a single-type runID (e.g. RI) - NOT combined runs for now...
+
+  mkdir( US_Settings::reportDir(), FileName );
+  const QString svgext( ".svgz" );
+  const QString pngext( ".png" );
+  const QString csvext( ".csv" );
+  QString basename  = US_Settings::reportDir() + "/" + FileName + "/" + FileName + ".";
+  
+  QString imgPseudo3d01File;
+  QStringList Pseudo3dPlotsFileNames;
+
+  
+  QStringList m_t_r;  
+  m_t_r << t_name << stage_model << FileName;
+  
+  qDebug() << "m_t_r to model_loader -- " << m_t_r;
+  
+  sdiag_pseudo3d = new US_Pseudo3D_Combine();
+  sdiag_pseudo3d -> load_distro_auto ( QString::number( invID ), m_t_r );
+  
+  //here identify what to show:
+  bool show_s_ff0  = (perChanMask_edited.ShowTripleModelPseudo3dParts[ t_name ][ stage_model ][ "Pseudo3d s-vs-f/f0 Distribution" ].toInt()) ? true : false ;
+  bool show_s_d    = (perChanMask_edited.ShowTripleModelPseudo3dParts[ t_name ][ stage_model ][ "Pseudo3d s-vs-D Distribution" ].toInt()) ? true : false ;
+  bool show_mw_ff0 = (perChanMask_edited.ShowTripleModelPseudo3dParts[ t_name ][ stage_model ][ "Pseudo3d MW-vs-f/f0 Distribution" ].toInt()) ? true : false ;
+  bool show_mw_d   = (perChanMask_edited.ShowTripleModelPseudo3dParts[ t_name ][ stage_model ][ "Pseudo3d MW-vs-D Distribution" ].toInt()) ? true : false ;
+  
+  //write plot: here default is [s-f/f0] coordinates (x,y)
+  if( show_s_ff0 )
+    {
+      sdiag_pseudo3d -> select_x_axis_auto( 0 ); // [s-]
+      sdiag_pseudo3d -> select_y_axis_auto( 1 ); // [s-f/f0]
+      imgPseudo3d01File = basename + "pseudo3D" + "." + stage_model  + "." +  t_name + ".sff0" + svgext;  // [s-f/f0]
+      write_plot( imgPseudo3d01File, sdiag_pseudo3d->rp_data_plot() );                //<-- rp_data_plot() gives pointer to pseudo3D plot
+      imgPseudo3d01File.replace( svgext, pngext ); 
+      Pseudo3dPlotsFileNames << imgPseudo3d01File;
+    }
+  // ++pr_val;
+  // progress_msg->setValue( pr_val );
+  
+  //here, we have to go over [x-y] coordinates for given [triple-model]: 
+  // s: 0; f/f0: 1; MW: 2; D: 4
+  //[0-1] (s-f/f0) already processed:
+  //to_process: [0-4], [2-1], [2-4]:
+  if( show_s_d )
+    {
+      sdiag_pseudo3d -> select_x_axis_auto( 0 ); // [s-]
+      sdiag_pseudo3d -> select_y_axis_auto( 4 ); // [s-D]
+      imgPseudo3d01File = basename + "pseudo3D" + "." + stage_model  + "." +  t_name + ".sD" + svgext;
+      write_plot( imgPseudo3d01File, sdiag_pseudo3d->rp_data_plot() );                //<-- rp_data_plot() gives pointer to pseudo3D plot
+      imgPseudo3d01File.replace( svgext, pngext ); 
+      Pseudo3dPlotsFileNames << imgPseudo3d01File;
+    }
+  // ++pr_val;
+  // progress_msg->setValue( pr_val );
+  
+  if( show_mw_ff0 )
+    {
+      sdiag_pseudo3d -> select_x_axis_auto( 2 ); // [MW-]
+      sdiag_pseudo3d -> select_y_axis_auto( 1 ); // [MW-f/f0]
+      imgPseudo3d01File = basename + "pseudo3D" + "." + stage_model  + "." +  t_name + ".mwff0" + svgext;
+      write_plot( imgPseudo3d01File, sdiag_pseudo3d->rp_data_plot() );                //<-- rp_data_plot() gives pointer to pseudo3D plot
+      imgPseudo3d01File.replace( svgext, pngext ); 
+      Pseudo3dPlotsFileNames << imgPseudo3d01File;
+    }
+  // ++pr_val;
+  // progress_msg->setValue( pr_val );
+  
+  if( show_mw_d )
+    {
+      sdiag_pseudo3d -> select_x_axis_auto( 2 ); // [MW-]
+      sdiag_pseudo3d -> select_y_axis_auto( 4 ); // [MW-D]
+      imgPseudo3d01File = basename + "pseudo3D" + "." + stage_model  + "." +  t_name + ".mwD" + svgext;
+      write_plot( imgPseudo3d01File, sdiag_pseudo3d->rp_data_plot() );                //<-- rp_data_plot() gives pointer to pseudo3D plot
+      imgPseudo3d01File.replace( svgext, pngext ); 
+      Pseudo3dPlotsFileNames << imgPseudo3d01File;
+    }
+  // ++pr_val;
+  // progress_msg->setValue( pr_val );
+  
+  //reset plots
+  sdiag_pseudo3d->reset_auto();
+  
+  //assemble combined plots into html
+  assemble_plots_html( Pseudo3dPlotsFileNames  );
+  //progress_msg->setValue( progress_msg->maximum() );
 }
 
 // Calculate residual absorbance values (data - sim - noise)
@@ -3758,6 +4262,7 @@ QString US_ReporterGMP::distrib_info()
    qDebug() << "In DISTRIB: triple, wvl -- " << t_name << wvl;
 
    qDebug() << "Model description, mdla, msim -- " << model_used.description <<  mdla << msim;
+   QString model_name = mdla.split("_")[1];
    
    double tot_conc_r, tot_conc_tol_r, rmsd_r, av_int_r, exp_dur_r, exp_dur_tol_r;
 
@@ -3803,113 +4308,189 @@ QString US_ReporterGMP::distrib_info()
    QString exp_dur_r_hh_mm    = QString().sprintf( "%d %s %02d m", hours_r, hh_r.toLatin1().data(), mins_r );
    //end of exp_dur_r transformation
 
+   //autoflowIntensity (for specific wvl)
+   double av_int_exp;
+   QList< QString > intensity_keys = intensityRIMap.keys();
+   if ( intensity_keys.size() ==  1 ) //single wvl
+     {
+       av_int_exp = intensityRIMap.first().toDouble();
+       qDebug() << "single wvl: key, value -- " << intensityRIMap.firstKey() << intensityRIMap.first();
+     }
+   else //MWL
+     {
+       QMap<QString, QString >::iterator jj;
+       for ( jj = intensityRIMap.begin(); jj != intensityRIMap.end(); ++jj )
+	 {
+	   if ( t_name.contains( jj.key() ) )
+	     {
+	       av_int_exp = jj.value().toDouble();
+	       break;
+	     }
+	 }
+     }
+   //
+
    //passes
    QString tot_conc_passed = ( sum_c  >= ( tot_conc_r * (1 - tot_conc_tol_r/100.0)  ) && sum_c  <= ( tot_conc_r * (1 + tot_conc_tol_r/100.0) ) ) ? "YES" : "NO";
    QString exp_dur_passed  = ( last_f >= ( exp_dur_r * (1 - exp_dur_tol_r/100.0)  )   && last_f <= ( exp_dur_r * (1 + exp_dur_tol_r/100.0) ) ) ? "YES" : "NO";
    QString rmsd_passed = ( rmsd_global.toDouble() <= rmsd_r ) ? "YES" : "NO";
+   QString av_int_passed = ( av_int_exp > av_int_r ) ? "YES" : "NO";
    //end passes
+
+   //check what to show on the report
+   QMap < QString, QString > Model_parms_to_compare = perChanMask_edited.ShowTripleModelParts[ t_name ][ model_name ];
+   bool show_tot_conc = false;
+   bool show_rmsd     = false;
+   bool show_exp_dur  = false;
+   bool show_min_int  = false;
+   bool show_integration = false;
+
+   QMap< QString, QString >::iterator sh;
+   for ( sh = Model_parms_to_compare.begin(); sh != Model_parms_to_compare.end(); ++sh )
+     {
+       if ( sh.key().contains( "Concentration" ) && sh.value().toInt() )
+	 show_tot_conc = true;
+
+       if ( sh.key().contains( "RMSD" ) && sh.value().toInt() )
+	 show_rmsd = true;
+
+       if ( sh.key().contains( "Duration" ) && sh.value().toInt() )
+	 show_exp_dur = true;
+
+       if ( sh.key().contains( "Intensity" ) && sh.value().toInt() )
+	 show_min_int = true;
+
+       if ( sh.key().contains( "Integration" ) && sh.value().toInt() )
+	 show_integration = true;
+     }
+
+   bool show_comparison_section = false;
+   if ( show_tot_conc || show_rmsd || show_exp_dur || show_min_int )
+     show_comparison_section = true;
+   //////////////////////////////////////
    
-   mstr += "\n" + indent( 2 ) + tr( "<h3>Comparison Between Run/Simulation Results and Report Parameters:</h3>\n" );
-   mstr += indent( 2 ) + "<table>\n";
-   
-   mstr += table_row( tr( "Parameter: " ),
-                      tr( "Target Value:" ),
-		      tr( "Tolerance, %:"),
-		      tr( "Simulation Value:" ),
-		      tr( "PASSED ?" ));
-   mstr += table_row( tr( "Total Concentration" ),
-		      QString::number( tot_conc_r ),
-		      QString::number(tot_conc_tol_r) + "%",
-                      QString().sprintf( "%6.4e", sum_c ),
-		      tot_conc_passed) ;
-   mstr += table_row( tr( "RMSD limit" ),
-		      QString::number( rmsd_r ),
-		      QString(""),
-                      rmsd_global,
-		      rmsd_passed );
-   mstr += table_row( tr( "Experiment Duration" ),
-		      exp_dur_r_hh_mm,
-		      QString::number(exp_dur_tol_r) + "%",
-		      wks,
-		      exp_dur_passed ) ;
-   mstr += table_row( tr( "Minimum Intensity" ),
-		      QString::number( av_int_r ),
-		      QString(""),
-                      QString("to be passed.."),
-		      QString( "to be determined.." ));
-   
-   mstr += indent( 2 ) + "</table>\n";
+   if ( show_comparison_section )
+     {
+       mstr += "\n" + indent( 2 ) + tr( "<h3>Comparison Between Run/Simulation Results and Report Parameters:</h3>\n" );
+       mstr += indent( 2 ) + "<table>\n";
+       
+       mstr += table_row( tr( "Parameter: " ),
+			  tr( "Target Value:" ),
+			  tr( "Tolerance, %:"),
+			  tr( "Simulation Value:" ),
+			  tr( "PASSED ?" ));
+
+       if ( show_tot_conc ) 
+	 {
+	   mstr += table_row( tr( "Total Concentration" ),
+			      QString::number( tot_conc_r ),
+			      QString::number(tot_conc_tol_r) + "%",
+			      QString().sprintf( "%6.4e", sum_c ),
+			      tot_conc_passed) ;
+	 }
+       
+       if ( show_rmsd )
+	 {
+	   mstr += table_row( tr( "RMSD limit" ),
+			      QString::number( rmsd_r ),
+			      QString(""),
+			      rmsd_global,
+			      rmsd_passed );
+	 }
+       
+       if ( show_exp_dur )
+	 {
+	   mstr += table_row( tr( "Experiment Duration" ),
+			      exp_dur_r_hh_mm,
+			      QString::number(exp_dur_tol_r) + "%",
+			      wks,
+			      exp_dur_passed ) ;
+	 }
+       
+       if ( show_min_int ) 
+	 {
+	   mstr += table_row( tr( "Minimum Intensity" ),
+			      QString::number( av_int_r ),
+			      QString(""),
+			      QString::number( av_int_exp ) ,
+			      av_int_passed );
+	 }
+       mstr += indent( 2 ) + "</table>\n";
+     }
 
    //Now, integration results
-   mstr += "\n" + indent( 2 ) + tr( "<h3>Integration Results: Fraction of Total Concentration:</h3>\n" );
-   mstr += indent( 2 ) + "<table>\n";
-   mstr += table_row( tr( "Type:" ),
-		      tr( "Range:"),
-                      tr( "Integration from Model (target):" ),
-		      tr( "Fraction % from Model (target):" ),
-		      tr( "Tolerance, %:"),
-		      tr( "PASSED ?" ));
-   int report_items_number = reportGMP.reportItems.size();
-   for ( int kk = 0; kk < report_items_number; ++kk )
+   if ( show_integration )
      {
-       US_ReportGMP::ReportItem curr_item = reportGMP.reportItems[ kk ];
-       QString type           = curr_item.type;
-       QString method         = curr_item.method;
-       QString int_val_r      = QString::number( curr_item.integration_val );
-       double  frac_tot_r     = curr_item.total_percent;
-       double  frac_tot_tol_r = curr_item.tolerance ;
-       double  low            = curr_item.range_low;
-       double  high           = curr_item.range_high;
-
-       QString range = "[" + QString::number(low) + " - " + QString::number(high) + "]";
-
-       //integrate over model_used
-       double int_val_m = 0;
-       for ( int ii = 0; ii < ncomp; ii++ )
+       mstr += "\n" + indent( 2 ) + tr( "<h3>Integration Results: Fraction of Total Concentration:</h3>\n" );
+       mstr += indent( 2 ) + "<table>\n";
+       mstr += table_row( tr( "Type:" ),
+			  tr( "Range:"),
+			  tr( "Integration from Model (target):" ),
+			  tr( "Fraction % from Model (target):" ),
+			  tr( "Tolerance, %:"),
+			  tr( "PASSED ?" ));
+       int report_items_number = reportGMP.reportItems.size();
+       for ( int kk = 0; kk < report_items_number; ++kk )
 	 {
-	   double conc = model_used.components[ ii ].signal_concentration;
-	   double s_20 = model_used.components[ ii ].s;
-	   double D_20 = model_used.components[ ii ].D;
-	   double f_f0 = model_used.components[ ii ].f_f0;
-	   double mw   = model_used.components[ ii ].mw;
-
-	   if ( type == "s" )
+	   US_ReportGMP::ReportItem curr_item = reportGMP.reportItems[ kk ];
+	   QString type           = curr_item.type;
+	   QString method         = curr_item.method;
+	   QString int_val_r      = QString::number( curr_item.integration_val );
+	   double  frac_tot_r     = curr_item.total_percent;
+	   double  frac_tot_tol_r = curr_item.tolerance ;
+	   double  low            = curr_item.range_low;
+	   double  high           = curr_item.range_high;
+	   
+	   QString range = "[" + QString::number(low) + " - " + QString::number(high) + "]";
+	   
+	   //integrate over model_used
+	   double int_val_m = 0;
+	   for ( int ii = 0; ii < ncomp; ii++ )
 	     {
-	       if ( s_20 >= low*pow(10,-13) && s_20 <= high*pow(10,-13) )
-		 int_val_m += conc;
+	       double conc = model_used.components[ ii ].signal_concentration;
+	       double s_20 = model_used.components[ ii ].s;
+	       double D_20 = model_used.components[ ii ].D;
+	       double f_f0 = model_used.components[ ii ].f_f0;
+	       double mw   = model_used.components[ ii ].mw;
+	       
+	       if ( type == "s" )
+		 {
+		   if ( s_20 >= low*pow(10,-13) && s_20 <= high*pow(10,-13) )
+		     int_val_m += conc;
+		 }
+	       else if ( type == "D" )
+		 {
+		   if ( D_20 >= low*pow(10,-7) && D_20 <= high*pow(10,-7) )
+		     int_val_m += conc;
+		 }
+	       else if ( type == "f/f0")
+		 {
+		   if ( f_f0 >= low && f_f0 <= high )
+		     int_val_m += conc;
+		 }
+	       else if ( type == "MW")
+		 {
+		   if ( mw >= low*pow(10,3) && mw <= high*pow(10,3) )
+		     int_val_m += conc;
+		 }
 	     }
-	   else if ( type == "D" )
+	   
+	   double frac_tot_m = double( int_val_m / sum_c ) * 100.0;
+	   QString tot_frac_passed = ( frac_tot_m >= ( frac_tot_r * (1 - frac_tot_tol_r/100.0)  )
+				       && frac_tot_m <= ( frac_tot_r * (1 + frac_tot_tol_r/100.0)  ) ) ? "YES" : "NO";
+	   
+	   if ( mdla.contains ( method ) )
 	     {
-	       if ( D_20 >= low*pow(10,-7) && D_20 <= high*pow(10,-7) )
-		 int_val_m += conc;
-	     }
-	   else if ( type == "f/f0")
-	     {
-	       if ( f_f0 >= low && f_f0 <= high )
-		 int_val_m += conc;
-	     }
-	   else if ( type == "MW")
-	     {
-	       if ( mw >= low*pow(10,3) && mw <= high*pow(10,3) )
-		 int_val_m += conc;
+	       mstr += table_row( type,
+				  range,
+				  QString().sprintf( "%10.4e", int_val_m) + " (" + int_val_r + ")",
+				  QString().sprintf( "%5.2f%%", frac_tot_m ) + " (" + QString::number( frac_tot_r ) + "%)",
+				  QString::number( frac_tot_tol_r ),
+				  tot_frac_passed );
 	     }
 	 }
-
-       double frac_tot_m = double( int_val_m / sum_c ) * 100.0;
-       QString tot_frac_passed = ( frac_tot_m >= ( frac_tot_r * (1 - frac_tot_tol_r/100.0)  )
-				   && frac_tot_m <= ( frac_tot_r * (1 + frac_tot_tol_r/100.0)  ) ) ? "YES" : "NO";
-
-       if ( mdla.contains ( method ) )
-	 {
-	   mstr += table_row( type,
-			      range,
-			      QString().sprintf( "%10.4e", int_val_m) + " (" + int_val_r + ")",
-			      QString().sprintf( "%5.2f%%", frac_tot_m ) + " (" + QString::number( frac_tot_r ) + "%)",
-			      QString::number( frac_tot_tol_r ),
-			      tot_frac_passed );
-	 }
+       mstr += indent( 2 ) + "</table>\n";
      }
-   mstr += indent( 2 ) + "</table>\n";
    //End of integration results
 
    /*
@@ -5883,7 +6464,7 @@ void US_ReporterGMP::gui_to_parms( void )
   parse_edited_perChan_mask_json( editedMask_perChan, perChanMask_edited );
 
   // //DEBUG
-  //  exit(1);
+  // exit(1);
 }
 
 //Pasre reportMask JSON
@@ -6005,12 +6586,13 @@ void US_ReporterGMP::parse_edited_perChan_mask_json( const QString maskJson, Per
     QJsonDocument jsonDoc = QJsonDocument::fromJson( maskJson.toUtf8() );
     QJsonObject json = jsonDoc.object();
     
-    MaskStr.ShowChannelParts          .clear();
-    MaskStr.ShowTripleModelParts      .clear();
-    MaskStr.has_tripleModel_items     .clear();
-    MaskStr.ShowTripleModelPlotParts  .clear();
-    MaskStr.has_tripleModelPlot_items .clear();
-
+    MaskStr.ShowChannelParts              .clear();
+    MaskStr.ShowTripleModelParts          .clear();
+    MaskStr.has_tripleModel_items         .clear();
+    MaskStr.ShowTripleModelPlotParts      .clear();
+    MaskStr.has_tripleModelPlot_items     .clear();
+    MaskStr.ShowTripleModelPseudo3dParts  .clear();
+    MaskStr.has_tripleModelPseudo3d_items .clear();
     
     foreach(const QString& key, json.keys())                                          //over channels
       {
@@ -6077,9 +6659,27 @@ void US_ReporterGMP::parse_edited_perChan_mask_json( const QString maskJson, Per
 					     <<  feature_plot_value;
 				  }
 			      }
-			    else // maybe later there will be other objects per triple's model
+			    else if ( j_key.contains("Pseudo3d") )  // deal with Pseudo3d distributions
 			      {
+				QJsonObject pseudo3dObj = modelObj.value( j_key ).toObject();
 				
+				foreach ( const QString& p_key, pseudo3dObj.keys() )           //over pseudo3d, per model/per triple/per channel
+				  {
+				    QString feature_pseudo3d_value = pseudo3dObj.value( p_key ).toString();
+				    
+				    QString triple_name = key.split(" ")[1].split("-")[0]  + array_key.split(" ")[0];
+				    QString model_name  = n_key.split(" ")[0];
+				    MaskStr.ShowTripleModelPseudo3dParts[ triple_name ][ model_name ][ p_key ] = feature_pseudo3d_value;
+				    if ( MaskStr.ShowTripleModelPseudo3dParts[ triple_name ][ model_name ][ p_key ].toInt() )
+				      ++MaskStr.has_tripleModelPseudo3d_items[ triple_name ][ model_name ];
+				    
+				    qDebug() << "Parse_editedJsonTriples: triple_name: " <<  triple_name  << ": "
+					     <<  "model_name, j_key, p_key, feature_PSEUDO_value: "
+					     <<  model_name
+					     <<  j_key
+					     <<  p_key
+					     <<  feature_pseudo3d_value;
+				  }
 			      }
 			  }
 		      }
@@ -6316,7 +6916,7 @@ void US_ReporterGMP::assemble_parts( QString & html_str )
     	html_str += html_operator;
       if ( top.key().contains("Speed") && top.value() )
     	html_str += html_speed;
-      if ( top.key().contains("Cells") && top.value() )
+      if ( top.key().contains("Cell") && top.value() )
     	html_str += html_cells;
 
       if ( top.key().contains("Solutions") && top.value() )

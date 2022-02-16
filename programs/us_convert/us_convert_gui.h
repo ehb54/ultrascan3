@@ -145,6 +145,7 @@ class US_ConvertGui : public US_Widgets
       QMap < QString, int > runTypes_map;
       QString       type_to_process;
       QStringList   runTypeList;
+      QString       intensityJsonRI;
 
       QMap < int, bool > description_changed;
       
@@ -308,6 +309,7 @@ class US_ConvertGui : public US_Widgets
       void init_excludes   ( void );
       void start_reference  ( const QwtDoublePoint& );
       void process_reference( const QwtDoublePoint& );
+      void process_reference_auto( const double, const double );
       void PseudoCalcAvg   ( void );
       void PseudoCalcAvgMWL( void );
       bool read            ( void );

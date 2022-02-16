@@ -436,6 +436,7 @@ void US_ExportLegacy::export_data( void )
 // Export most types of data (1 channel per file set, 3 columns per point)
 void US_ExportLegacy::exp_mosttypes( QStringList& files )
 {
+  qDebug() << "Abs export";
    // Get data pointers and output directory
    rdata       = &rawList [ 0 ];
    QString legadir( US_Settings::importDir() );
@@ -472,6 +473,8 @@ DbgLv(1) << "rawDtype" << rawDtype << "htype" << htype;
    QString fext     = "." + rawDtype + QString::number( hcell );
    bool    channdir = false;
 
+   QString tripa;
+   
    if ( htype == "R" )
    { // For RA, determine if pseudo absorbance needing channel subdirectories
       for ( int drow = 0; drow < ntriples; drow++ )
@@ -490,6 +493,9 @@ DbgLv(1) << " drow chann" << drow << chann;
    {  // Output a set of files for each input triple
       rdata  = &rawList [ drow ];               // Current data
       nscan  = rdata->scanCount();
+
+      tripa  = triples[ drow ];
+      
       ddesc  = rdata->description + "\n";
       hcell  = rdata->cell;
       fext   = "." + rawDtype + QString::number( hcell );
@@ -502,10 +508,21 @@ DbgLv(1) << " drow chann" << drow << chann;
          mkdir( legadir, odirchan );
       }
 
+
+      //ALEXEY: create sub-dir based on triple name:
+      QString tripleName = tripa;
+      tripleName.replace(" / ","");
+      mkdir( odirname, tripleName );
+      QString odirname_triple =  odirname + tripleName + "/";
+      //////////////////////////////////////////////////////////////////
+      
       for ( int ii = 0; ii < nscan; ii++ )
       {  // Output a file for each scan
          ofname = chann + QString().sprintf( "%05i", ( ii + 1 ) ) + fext;
-         ofpath = odirname + ofname;            // Full path file name for scan
+
+	 //ofpath = odirname + ofname;            // Full path file name for scan
+	 ofpath = odirname_triple + ofname;            // Full path output file
+	 
          dscan  = &rdata->scanData[ ii ];       // Scan pointer
          htemp  = dscan->temperature;           // Temperature
          hrpm   = dscan->rpm;                   // RPM
@@ -521,7 +538,7 @@ DbgLv(1) << " drow chann" << drow << chann;
          oline  = oline + ( wldata
                   ? QString().sprintf( "%6.3f %i\n", hradi, hcoun )
                   : QString().sprintf( "%4i %i\n",   hwavl, hcoun ) );
-DbgLv(1) << "OFNAME" << ofname;
+	 DbgLv(1) << "OFNAME, ofpath " << ofname << ofpath;
 
          QFile legfile( ofpath );
 
@@ -558,6 +575,8 @@ if (jj < 3  || jj > (nvalu-4))
          legfile.close();                       // Close file
       }  // END: scan loop
    }
+
+   qDebug() << "Abs export Finished";
 }
 
 // Special export of intensity data (2 channels at a time)
@@ -608,7 +627,9 @@ DbgLv(1) << "rawDtype" << rawDtype << "htype" << htype;
       ddesc  = rdata->description + "\n";
       hcell  = rdata->cell;
       fext   = "." + rawDtype + QString::number( hcell );
+
       tripa  = triples[ drow ];
+                
       twofer = tripa.contains( "A" );
       bfirst = false;
       if ( twofer )
@@ -629,10 +650,21 @@ DbgLv(1) << "rawDtype" << rawDtype << "htype" << htype;
       else     // We are at a B, so set to output "Radius 0.0 Value-B"
          bfirst = true;
 
+      //ALEXEY: create sub-dir based on triple name:
+      QString tripleName = tripa;
+      tripleName.replace(" / ","");
+      mkdir( odirname, tripleName );
+      QString odirname_triple =  odirname + tripleName + "/";
+      //////////////////////////////////////////////////////////////////
+      
       for ( int ii = 0; ii < nscan; ii++ )
       {  // Output a file for each scan
          ofname = QString().sprintf( "%05i", ( ii + 1 ) ) + fext;
-         ofpath = odirname + ofname;            // Full path output file
+
+	 //ofpath = odirname + ofname;            // Full path output file
+
+	 ofpath = odirname_triple + ofname;            // Full path output file
+	 
          dscan  = &rdata->scanData[ ii ];       // Current scan pointer
          htemp  = dscan->temperature;           // Temperature
          hrpm   = dscan->rpm;                   // RPM
@@ -649,6 +681,8 @@ DbgLv(1) << "rawDtype" << rawDtype << "htype" << htype;
                   ? QString().sprintf( "%6.3f %i\n", hradi, hcoun )
                   : QString().sprintf( "%4i %i\n",   hwavl, hcoun ) );
 DbgLv(1) << "OFNAME" << ofname;
+DbgLv(1) << "Ofpath" << ofpath;
+         
 
          QFile legfile( ofpath );
 

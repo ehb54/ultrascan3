@@ -50,6 +50,12 @@ class US_Pseudo3D_Combine : public US_Widgets
       //! \brief Pseudo-3D Combination constructor
       US_Pseudo3D_Combine();
 
+      void load_distro_auto( QString, QStringList );
+      QwtPlot* rp_data_plot();
+      void reset_auto(       void );
+      void select_x_axis_auto( int  );
+      void select_y_axis_auto( int  );
+
    private:
 
       enum attr_type { ATTR_S, ATTR_K, ATTR_W, ATTR_V, ATTR_D, ATTR_F };
@@ -186,7 +192,10 @@ class US_Pseudo3D_Combine : public US_Widgets
       void select_conloop( void );
       void update_disk_db( bool );
       void select_prefilt( void );
+
       void load_distro(    void );
+      
+      
       void load_distro(    US_Model, QString );
       void load_color(     void );
       void plotall(     void );
