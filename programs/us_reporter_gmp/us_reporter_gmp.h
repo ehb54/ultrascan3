@@ -414,7 +414,8 @@ class US_ReporterGMP : public US_Widgets
 	void assemble_plots_html( QStringList );
 	double  interp_sval( double, double*, double*,  int );
 	void plotres( QMap < QString, QString > &   );
-
+	void plot_pseudo3D( QString, QString );
+	
 	QString indent    (     int  )  const;
 	QString table_row( const QString&, const QString& ) const;
 	QString table_row( const QString&, const QString&,
