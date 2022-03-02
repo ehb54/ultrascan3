@@ -17,15 +17,16 @@ US_SelectItem::US_SelectItem( QList< QStringList >& items,
    const int def_sort )
    : US_WidgetsDialog( 0, 0 ), items( items ), hdrs( hdrs )
 {
-   multi_sel         = false;
-   deleted_button    = false;
-   autoflow_button   = false;
-   autoflow_da       = false;
-   selxP             = aselxP;
-   selxsP            = NULL;
-   sort_ord          = ( def_sort < 0 ) ? Qt::DescendingOrder
-                                        : Qt::AscendingOrder;
-   sort_col          = qAbs( def_sort ) - 1;
+   multi_sel           = false;
+   deleted_button      = false;
+   autoflow_button     = false;
+   autoflow_gmp_report = false;
+   autoflow_da         = false;
+   selxP               = aselxP;
+   selxsP              = NULL;
+   sort_ord            = ( def_sort < 0 ) ? Qt::DescendingOrder
+                                          : Qt::AscendingOrder;
+   sort_col            = qAbs( def_sort ) - 1;
 
    build_layout( titl );
 
@@ -45,6 +46,7 @@ US_SelectItem::US_SelectItem( QList< QStringList >& items,
    deleted_button_autoflow    = false;
    autoflow_button   = false;
    autoflow_da       = false;
+   autoflow_gmp_report = false;
    
    
    if ( !add_label.isEmpty() )
@@ -64,8 +66,7 @@ US_SelectItem::US_SelectItem( QList< QStringList >& items,
 	 }
        if( add_label == "AUTOFLOW_GMP_REPORT")
 	 {
-	   
-	   
+	   autoflow_gmp_report = true;	   
 	 }
      }
    
@@ -299,7 +300,7 @@ void US_SelectItem::list_data()
       {  // Bump therow count for each item name matching the filter
          //QString iname    = itemlist.at( ii );
 	 QString iname;
-	 if ( autoflow_button )
+	 if ( autoflow_button || autoflow_gmp_report)
 	   iname = items[ ii ][ 1 ];  // Search by runID
 	 else
 	   iname    = itemlist.at( ii );
@@ -325,7 +326,7 @@ void US_SelectItem::list_data()
       // QString iname    = itemlist.at( ii );
 
      QString iname;
-     if ( autoflow_button )
+     if ( autoflow_button || autoflow_gmp_report )
        iname = items[ ii ][ 1 ];  // Search by runID
      else
        iname    = itemlist.at( ii );

@@ -66,6 +66,7 @@ class US_GUI_EXTERN US_SelectItem : public US_WidgetsDialog
       bool           deleted_button_autoflow; //If Delete Autoflow button is present
       bool           autoflow_button; //If autoflow, Cancel becomes define another Experiment
       bool           autoflow_da;  // If called by non-GMP us_comproject (DA)
+      bool           autoflow_gmp_report;
       
       Qt::SortOrder  sort_ord;    //!< Default sort order flag
       int            sort_col;    //!< Default sort column
