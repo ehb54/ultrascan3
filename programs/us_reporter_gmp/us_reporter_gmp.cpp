@@ -1906,6 +1906,18 @@ void US_ReporterGMP::generate_report( void )
       qry << "new_autoflow_history_record" << AutoflowID_auto;
       qDebug() << "Query for autoflowHistory -- " << qry;
       db->query( qry );
+
+      //delete autoflow record
+      qry.clear();
+      qry << "delete_autoflow_record_by_id" << AutoflowID_auto;
+      db->statusQuery( qry );
+
+      //Also delete record from autoflowStages table:
+      qry.clear();
+      qry << "delete_autoflow_stages_record" << AutoflowID_auto;
+      db->statusQuery( qry );
+
+      //END of copy to History, deletion of primary autoflow record
       
       
       //Inform user of the PDF location
