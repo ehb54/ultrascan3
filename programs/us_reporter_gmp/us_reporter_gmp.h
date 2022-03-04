@@ -167,6 +167,7 @@ class US_ReporterGMP : public US_Widgets
 
 	 QString    AProfileGUID;
 	 QString    ProtocolName_auto;
+	 QString    AutoflowID_auto;
 	 int        invID;
 	 QString    runID;
 	 QString    filePath;
