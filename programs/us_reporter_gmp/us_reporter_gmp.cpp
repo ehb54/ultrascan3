@@ -1749,132 +1749,20 @@ void US_ReporterGMP::generate_report( void )
     }
 
   //Combined Plots Generation
-  sdiag_combplot = new US_DDistr_Combine();
-  QStringList runIDs_single;
-  
-  //FileName_parsed = get_filename( triple_n );
-  
-  runIDs_single << FileName; //<-- a single-type runID (e.g. RI) - NOT combined runs for now...
-  QStringList aDescrs = scan_dbase_models( runIDs_single );
-  QStringList modelDescModified = sdiag_combplot->load_auto( runIDs_single, aDescrs );
-
-  mkdir( US_Settings::reportDir(), FileName );
-  const QString svgext( ".svgz" );
-  const QString pngext( ".png" );
-  const QString csvext( ".csv" );
-  QString basename  = US_Settings::reportDir() + "/" + FileName + "/" + FileName + ".";
-
-  //estimate # of combined plots
-  int combpl_number = 3*4;
-  // Show msg while data downloaded and simulated
-  progress_msg = new QProgressDialog (QString("Generating combined plots..."), QString(), 0, combpl_number, this);
-  progress_msg->setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
-  progress_msg->setWindowModality(Qt::WindowModal);
-  progress_msg->setWindowTitle(tr("Combined Plots"));
-  progress_msg->setAutoClose( false );
-  progress_msg->setValue( 0 );
-  progress_msg->show();
-  qApp->processEvents();
-
-  int pr_cp_val = 0;
-  
-  //go over modelDescModified
-  QStringList modelNames;
-  modelNames << "2DSA-IT" << "2DSA-MC" << "PCSA";
-  QList< int > xtype;
-  xtype <<  1 << 2 << 3; //ALEXEY: 0: s20; 1: MW; 2: D; 3: f/f0
-                         //Note: xtype==0 (s20) is the default, so iterate later starting from 1... 
-  QStringList CombPlotsFileNames;
-    
-  for ( int m = 0; m < modelNames.size(); m++ )  
+  QStringList fileNameList;
+  fileNameList. clear();
+  if ( FileName.contains(",") && FileName.contains("IP") && FileName.contains("RI") )
     {
-      bool isModel = false;
-      QString imgComb01File = basename + "combined" + "." + modelNames[ m ]  + ".s20" + svgext;
-
-      for ( int ii = 0; ii < modelDescModified.size(); ii++ )  
-	{
-	  //fiter by type|model
-	  if ( modelDescModified[ ii ].contains( modelNames[ m ] ) )
-	    {
-	      isModel = true;
-
-	      //retrieve s,Model combPlot params:
-	      QString t_m = "s," + modelNames[ m ];
-	      QMap < QString, QString > c_params = comboPlotsMap[ t_m ];
-	      sdiag_combplot-> model_select_auto ( modelDescModified[ ii ], c_params ); //ALEXEY: here it plots s20 combPlot (xtype == 0)
-
-	    }
-	}
-      
-      ++pr_cp_val;
-      progress_msg->setValue( pr_cp_val );
-      
-      //write plot
-      if ( isModel )  //TEMPORARY: will read a type-method combined plot QMap defined at the beginnig
-	{
-	  //here writes a 's'-type IF it's to be included:
-	  QString t_m = "s," + modelNames[ m ];
-	  if ( comboPlotsMapTypes.contains( t_m ) && comboPlotsMapTypes[ t_m ] != 0  )
-	    {
-	      write_plot( imgComb01File, sdiag_combplot->rp_data_plot1() );                //<-- rp_data_plot1() gives combined plot
-	      imgComb01File.replace( svgext, pngext ); 
-	      CombPlotsFileNames << imgComb01File;
-	    }
-
-	  ++pr_cp_val;
-	  progress_msg->setValue( pr_cp_val );
-	  
-	  //Now that we have s20 plotted, plot other types [ MW, D, f/f0 ]
-	  for ( int xt= 0; xt < xtype.size(); ++xt )
-	    {
-	      QString imgComb02File = basename + "combined" + "." + modelNames[ m ];
-	      QMap < QString, QString > c_parms;
-	      QString t_m;
-	      
-	      if( xtype[ xt ] == 1 )
-		{
-		  imgComb02File += ".MW" + svgext;
-		  t_m = "MW," + modelNames[ m ];
-		  c_parms = comboPlotsMap[ t_m ];
-		}
-	      
-	      else if( xtype[ xt ] == 2 )
-		{
-		  imgComb02File += ".D20" + svgext;
-		  t_m = "D," + modelNames[ m ];
-		  c_parms = comboPlotsMap[ t_m ];
-		}
-	      
-	      else if( xtype[ xt ] == 3 )
-		{
-		  imgComb02File += ".f_f0" + svgext;
-		  t_m = "f/f0," + modelNames[ m ];
-		  c_parms = comboPlotsMap[ t_m ];
-		}
-
-	      //check if to generate Combined plot for current 'type-method':
-	      if ( comboPlotsMapTypes.contains( t_m ) && comboPlotsMapTypes[ t_m ] != 0  )
-		{
-		  sdiag_combplot-> changedPlotX_auto( xtype[ xt ], c_parms );
-		  
-		  write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() );              //<-- rp_data_plot1() gives combined plot
-		  imgComb02File.replace( svgext, pngext );
-		  CombPlotsFileNames << imgComb02File;
-		}
-
-	      ++pr_cp_val;
-	      progress_msg->setValue( pr_cp_val );
-	    }
-	}
-      // reset plot
-      sdiag_combplot->reset_data_plot1();
+      fileNameList  = FileName.split(",");
     }
-  //assemble combined plots into html
-  assemble_plots_html( CombPlotsFileNames  );
-  
-  progress_msg->setValue( progress_msg->maximum() );
-  progress_msg->close();
-  qApp->processEvents();
+  else
+    {
+      fileNameList << FileName;
+    }
+
+  for ( int i=0; i<fileNameList.size(); ++i )
+    process_combined_plots( fileNameList[i] );
+   
   //exit(1);
   //End of Combined Plots //
   
@@ -3574,6 +3462,136 @@ void US_ReporterGMP::show_results( QMap <QString, QString> & tripleInfo )
    //plot_pseudo3D( tripleInfo );       // <--- psedo3d per triple/model
    
    QApplication::restoreOverrideCursor();
+}
+
+
+//Combined Plots
+void US_ReporterGMP::process_combined_plots ( QString filename_passed )
+{
+  sdiag_combplot = new US_DDistr_Combine();
+  QStringList runIDs_single;
+    
+  runIDs_single << filename_passed;
+  QStringList aDescrs = scan_dbase_models( runIDs_single );
+  QStringList modelDescModified = sdiag_combplot->load_auto( runIDs_single, aDescrs );
+
+  mkdir( US_Settings::reportDir(), filename_passed );
+  const QString svgext( ".svgz" );
+  const QString pngext( ".png" );
+  const QString csvext( ".csv" );
+  QString basename  = US_Settings::reportDir() + "/" + filename_passed + "/" + filename_passed + ".";
+
+  //estimate # of combined plots
+  int combpl_number = 3*4;
+  // Show msg while data downloaded and simulated
+  progress_msg = new QProgressDialog (QString("Generating combined plots..."), QString(), 0, combpl_number, this);
+  progress_msg->setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
+  progress_msg->setWindowModality(Qt::WindowModal);
+  progress_msg->setWindowTitle(tr("Combined Plots"));
+  progress_msg->setAutoClose( false );
+  progress_msg->setValue( 0 );
+  progress_msg->show();
+  qApp->processEvents();
+
+  int pr_cp_val = 0;
+  
+  //go over modelDescModified
+  QStringList modelNames;
+  modelNames << "2DSA-IT" << "2DSA-MC" << "PCSA";
+  QList< int > xtype;
+  xtype <<  1 << 2 << 3; //ALEXEY: 0: s20; 1: MW; 2: D; 3: f/f0
+                         //Note: xtype==0 (s20) is the default, so iterate later starting from 1... 
+  QStringList CombPlotsFileNames;
+    
+  for ( int m = 0; m < modelNames.size(); m++ )  
+    {
+      bool isModel = false;
+      QString imgComb01File = basename + "combined" + "." + modelNames[ m ]  + ".s20" + svgext;
+
+      for ( int ii = 0; ii < modelDescModified.size(); ii++ )  
+	{
+	  //fiter by type|model
+	  if ( modelDescModified[ ii ].contains( modelNames[ m ] ) )
+	    {
+	      isModel = true;
+
+	      //retrieve s,Model combPlot params:
+	      QString t_m = "s," + modelNames[ m ];
+	      QMap < QString, QString > c_params = comboPlotsMap[ t_m ];
+	      sdiag_combplot-> model_select_auto ( modelDescModified[ ii ], c_params ); //ALEXEY: here it plots s20 combPlot (xtype == 0)
+
+	    }
+	}
+      
+      ++pr_cp_val;
+      progress_msg->setValue( pr_cp_val );
+      
+      //write plot
+      if ( isModel )  //TEMPORARY: will read a type-method combined plot QMap defined at the beginnig
+	{
+	  //here writes a 's'-type IF it's to be included:
+	  QString t_m = "s," + modelNames[ m ];
+	  if ( comboPlotsMapTypes.contains( t_m ) && comboPlotsMapTypes[ t_m ] != 0  )
+	    {
+	      write_plot( imgComb01File, sdiag_combplot->rp_data_plot1() );                //<-- rp_data_plot1() gives combined plot
+	      imgComb01File.replace( svgext, pngext ); 
+	      CombPlotsFileNames << imgComb01File;
+	    }
+
+	  ++pr_cp_val;
+	  progress_msg->setValue( pr_cp_val );
+	  
+	  //Now that we have s20 plotted, plot other types [ MW, D, f/f0 ]
+	  for ( int xt= 0; xt < xtype.size(); ++xt )
+	    {
+	      QString imgComb02File = basename + "combined" + "." + modelNames[ m ];
+	      QMap < QString, QString > c_parms;
+	      QString t_m;
+	      
+	      if( xtype[ xt ] == 1 )
+		{
+		  imgComb02File += ".MW" + svgext;
+		  t_m = "MW," + modelNames[ m ];
+		  c_parms = comboPlotsMap[ t_m ];
+		}
+	      
+	      else if( xtype[ xt ] == 2 )
+		{
+		  imgComb02File += ".D20" + svgext;
+		  t_m = "D," + modelNames[ m ];
+		  c_parms = comboPlotsMap[ t_m ];
+		}
+	      
+	      else if( xtype[ xt ] == 3 )
+		{
+		  imgComb02File += ".f_f0" + svgext;
+		  t_m = "f/f0," + modelNames[ m ];
+		  c_parms = comboPlotsMap[ t_m ];
+		}
+
+	      //check if to generate Combined plot for current 'type-method':
+	      if ( comboPlotsMapTypes.contains( t_m ) && comboPlotsMapTypes[ t_m ] != 0  )
+		{
+		  sdiag_combplot-> changedPlotX_auto( xtype[ xt ], c_parms );
+		  
+		  write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() );              //<-- rp_data_plot1() gives combined plot
+		  imgComb02File.replace( svgext, pngext );
+		  CombPlotsFileNames << imgComb02File;
+		}
+
+	      ++pr_cp_val;
+	      progress_msg->setValue( pr_cp_val );
+	    }
+	}
+      // reset plot
+      sdiag_combplot->reset_data_plot1();
+    }
+  //assemble combined plots into html
+  assemble_plots_html( CombPlotsFileNames  );
+  
+  progress_msg->setValue( progress_msg->maximum() );
+  progress_msg->close();
+  qApp->processEvents();
 }
 
 //Plot pseudo3d distr.
