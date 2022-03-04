@@ -1379,7 +1379,7 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    sb_count            = us_spinbox();
    sb_count            ->setMinimum(1);  //ALEXEY BUG FIX
 
-   if ( mainw->automode )
+   if ( mainw->automode && !mainw->usmode )
      sb_count            ->setEnabled( false );
    
    cb_prof             = new QComboBox( this );
