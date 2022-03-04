@@ -1751,6 +1751,9 @@ void US_ReporterGMP::generate_report( void )
   //Combined Plots Generation
   sdiag_combplot = new US_DDistr_Combine();
   QStringList runIDs_single;
+  
+  //FileName_parsed = get_filename( triple_n );
+  
   runIDs_single << FileName; //<-- a single-type runID (e.g. RI) - NOT combined runs for now...
   QStringList aDescrs = scan_dbase_models( runIDs_single );
   QStringList modelDescModified = sdiag_combplot->load_auto( runIDs_single, aDescrs );
@@ -3582,18 +3585,21 @@ void US_ReporterGMP::plot_pseudo3D( QString triple_name,  QString stage_model)
   //Pseudo3D Plots Generation (after simulations? Actual simulations are NOT needed for Pseudo3d plots?)
   //FileName; //<-- a single-type runID (e.g. RI) - NOT combined runs for now...
 
-  mkdir( US_Settings::reportDir(), FileName );
+  QString filename_returned = get_filename( triple_name );
+  qDebug() << "In plot_pseudo3D, filename_returned -- " << filename_returned;
+  
+  mkdir( US_Settings::reportDir(), filename_returned );
   const QString svgext( ".svgz" );
   const QString pngext( ".png" );
   const QString csvext( ".csv" );
-  QString basename  = US_Settings::reportDir() + "/" + FileName + "/" + FileName + ".";
+  QString basename  = US_Settings::reportDir() + "/" + filename_returned + "/" + filename_returned + ".";
   
   QString imgPseudo3d01File;
   QStringList Pseudo3dPlotsFileNames;
 
   
   QStringList m_t_r;  
-  m_t_r << t_name << stage_model << FileName;
+  m_t_r << t_name << stage_model << filename_returned;
   
   qDebug() << "m_t_r to model_loader -- " << m_t_r;
   
