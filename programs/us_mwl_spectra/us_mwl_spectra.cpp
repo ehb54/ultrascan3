@@ -128,7 +128,7 @@ US_MwlSpectra::US_MwlSpectra() : US_Widgets()
 
    // Advanced Plotting controls
    QLabel*      lb_advplot  = us_banner( tr( "Advanced Plotting Control" ) );
-   lo_srngsum  = us_checkbox  ( tr( "X Range Sum" ).arg(xaxis),
+   QLayout*     lo_srngsum  = us_checkbox  ( tr( "X Range Sum" ).arg(xaxis),
                                              ck_srngsum, false );
                 pb_svdata   = us_pushbutton( tr( "Save Data"       ) );
                 pb_plot2d   = us_pushbutton( tr( "Refresh 2D Plot" ) );
