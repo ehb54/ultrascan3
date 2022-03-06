@@ -4020,8 +4020,8 @@ QString US_ReporterGMP::distrib_info()
    QString mstr = "\n" + indent( 2 )
                   + tr( "<h3>Timestamps:</h3>\n" )
                   + indent( 2 ) + "<table>\n";
-   mstr += table_row( tr( "Data Edited at:" ), model.editDataUpdated );
-   mstr += table_row( tr( "Model Analysed at:" ), model.timeCreated );
+   mstr += table_row( tr( "Data Edited at:" ), model.editDataUpdated + " (UTC)");
+   mstr += table_row( tr( "Model Analysed at:" ), model.timeCreated + " (UTC)");
    mstr += indent( 2 ) + "</table>\n";
       
    //Main Analysis Settings
