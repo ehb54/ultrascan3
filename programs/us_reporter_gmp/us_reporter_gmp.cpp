@@ -2031,7 +2031,9 @@ void US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
   edata = NULL;
   rdata = NULL;
   //sdata = NULL;
-  eID_global = 0;
+  eID_global  = 0;
+  eID_updated = "";
+  
   sdata          = &wsdata;
   
   dbg_level  = US_Settings::us_debug();
@@ -2081,7 +2083,8 @@ void US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
   loadData( triple_info_map );
   progress_msg->setValue( 1 );
   
-  triple_info_map[ "eID" ]        = QString::number( eID_global );
+  triple_info_map[ "eID" ]         = QString::number( eID_global );
+  triple_info_map[ "eID_updated" ] = eID_updated;
   // Assign edata && rdata
   edata     = &editedData[ 0 ];
   rdata     = &rawData[ 0 ];
@@ -2369,9 +2372,10 @@ bool US_ReporterGMP::loadData( QMap < QString, QString > & triple_information )
 	      latest_update_time = time_to_now;
 	      //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
 
-	      rID       = rawDataID;
-	      eID       = editedDataID;
-	      efilename = filename;
+	      rID         = rawDataID;
+	      eID         = editedDataID;
+	      efilename   = filename;
+	      eID_updated = db->value( 3 ).toString();
 	    }
 	}
     }
@@ -2521,6 +2525,9 @@ bool US_ReporterGMP::loadModel( QMap < QString, QString > & triple_information )
   rc   = model.load( QString::number( mID ), db );
   qDebug() << "LdM:  model load rc" << rc;
   qApp->processEvents();
+
+  //EditDataUpdated for the model:
+  model.editDataUpdated = triple_information[ "eID_updated" ];
 
   model_loaded = model;   // Save model exactly as loaded
   model_used   = model;   // Make that the working model
@@ -3973,6 +3980,11 @@ QString US_ReporterGMP::distrib_info()
    double vari_m  = model_used.variance;
    double rmsd_m  = ( vari_m == 0.0 ) ? 0.0 : sqrt( vari_m );
 
+   qDebug() << "Distrib_info(): Model Name, time created, editUpdated -- "
+	    << model.description
+	    << model.timeCreated
+	    << model.editDataUpdated;
+   
    if ( ncomp == 0 )
       return "";
 
@@ -4003,7 +4015,17 @@ QString US_ReporterGMP::distrib_info()
    if ( mdla.isEmpty() )
       mdla         = model_used.description.section( ".", 0, -2 );
 
+   
+   //TimeStamps
    QString mstr = "\n" + indent( 2 )
+                  + tr( "<h3>Timestamps:</h3>\n" )
+                  + indent( 2 ) + "<table>\n";
+   mstr += table_row( tr( "Data Edited at:" ), model.editDataUpdated );
+   mstr += table_row( tr( "Model Analysed at:" ), model.timeCreated );
+   mstr += indent( 2 ) + "</table>\n";
+      
+   //Main Analysis Settings
+   mstr +=        "\n" + indent( 2 )
                   + tr( "<h3>Data Analysis Settings:</h3>\n" )
                   + indent( 2 ) + "<table>\n";
 

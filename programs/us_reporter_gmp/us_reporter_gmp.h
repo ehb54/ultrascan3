@@ -306,7 +306,8 @@ class US_ReporterGMP : public US_Widgets
 	 double               miny_global;
 	 QString tripleInfo;
 	 
-	 int eID_global;
+	 int                  eID_global;
+	 QString              eID_updated; 
 	 
 	 US_Model                    model;
 	 US_Model                    model_loaded;
