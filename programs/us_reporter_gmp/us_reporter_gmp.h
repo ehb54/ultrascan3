@@ -92,6 +92,11 @@ class US_ReporterGMP : public US_Widgets
 
 	 PerChanReportMaskStructure perChanMask_edited;
 
+	 QString JsonMask_gen_loaded;
+	 QString JsonMask_perChan_loaded;
+
+	 bool GMP_report;
+	 
 	 US_Plot*     plotLayout1;  // Derived from QVBoxLayout
 	 US_Plot*     plotLayout2;
 

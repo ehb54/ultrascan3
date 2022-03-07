@@ -22,6 +22,7 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   setPalette( US_GuiSettings::frameColor() );
 
   auto_mode = false;
+  GMP_report = true;
   
   // primary layouts
   QHBoxLayout* mainLayout     = new QHBoxLayout( this );
@@ -148,7 +149,8 @@ US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
   setWindowTitle( tr( "GMP Report Generator"));
   setPalette( US_GuiSettings::frameColor() );
 
-  auto_mode = true;
+  auto_mode  = true;
+  GMP_report = true;
   
   // primary layouts
   QVBoxLayout* superLayout    = new QVBoxLayout( this );
@@ -631,6 +633,12 @@ void US_ReporterGMP::load_gmp_run ( void )
   pb_expand_all   ->setEnabled( true );
   pb_collapse_all ->setEnabled( true );
 
+
+  //Capture tree state:
+  JsonMask_gen_loaded     = tree_to_json ( topItem );
+  JsonMask_perChan_loaded = tree_to_json ( chanItem );
+  GMP_report = true;
+  
   //Inform user that current configuraiton corresponds to GMP report
   QMessageBox::information( this, tr( "Report Profile Uploaded" ),
 			    tr( "Report profile uploaded for GMP run:\n"
@@ -638,7 +646,6 @@ void US_ReporterGMP::load_gmp_run ( void )
 				"ATTENTION: Current profile configuration corresponds to GMP report settings.\n"
 				"Any changes in the profile settings will result in generation of the non-GMP report!")
 			    .arg( protocol_details[ "filename" ] ) );
-  
 }
 
 // Query autoflow (history) table for records
@@ -1588,7 +1595,7 @@ void US_ReporterGMP::reset_report_panel ( void )
   //   {
   //     qDeleteAll(genTree->topLevelItem(i)->takeChildren());
   //   }
-  genTree     ->clear();
+  genTree     -> clear();
   genTree     -> disconnect();
   qApp->processEvents();
 
@@ -1623,6 +1630,13 @@ void US_ReporterGMP::reset_report_panel ( void )
   tripleModelItem    .clear();
   tripleMaskItem     .clear();
   tripleMaskPlotItem .clear();
+
+  //Clear loaded JsonMasks for gen/perChan trees
+  JsonMask_gen_loaded     .clear();
+  JsonMask_perChan_loaded .clear();
+
+  //Set GMP_report bool to true:
+  GMP_report = true;
 
   //clean triple_array
   Array_of_triples.clear();
@@ -5460,11 +5474,14 @@ void US_ReporterGMP::assemble_pdf()
 
   
   //TITLE: begin
+  QString report_type;
+  GMP_report ? report_type = "GMP" : report_type = "Non-GMP";
   QString html_title = tr(
-    "<h1 align=center>GMP REPORT FOR RUN <br><i>%1</i></h1>"
+    "<h1 align=center>%1 Report for Run: <br><i>%2</i></h1>"
     "<hr>"
 			  )
-    .arg( currProto. protoname + "-run" + runID )    //1
+    .arg( report_type )                              //1
+    .arg( currProto. protoname + "-run" + runID )    //2
     ;
   //TITLE: end
 
@@ -6424,6 +6441,10 @@ void US_ReporterGMP::gui_to_parms( void )
   QString editedMask_perChan = tree_to_json ( chanItem );
   parse_edited_perChan_mask_json( editedMask_perChan, perChanMask_edited );
 
+  //Compare Json mask states to originally loaded:
+  if( editedMask_gen !=JsonMask_gen_loaded || editedMask_perChan != JsonMask_perChan_loaded )
+    GMP_report = false;
+  
   // //DEBUG
   // exit(1);
 }
