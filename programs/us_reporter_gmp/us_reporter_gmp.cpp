@@ -6441,10 +6441,14 @@ void US_ReporterGMP::gui_to_parms( void )
   QString editedMask_perChan = tree_to_json ( chanItem );
   parse_edited_perChan_mask_json( editedMask_perChan, perChanMask_edited );
 
-  //Compare Json mask states to originally loaded:
-  if( editedMask_gen !=JsonMask_gen_loaded || editedMask_perChan != JsonMask_perChan_loaded )
-    GMP_report = false;
-  
+  //For GMP Reporter only: Compare Json mask states to originally loaded:
+  if ( auto_mode )
+    GMP_report = true;
+  else
+    {
+      if( editedMask_gen !=JsonMask_gen_loaded || editedMask_perChan != JsonMask_perChan_loaded )
+	GMP_report = false;
+    }
   // //DEBUG
   // exit(1);
 }
