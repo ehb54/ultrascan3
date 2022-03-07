@@ -630,6 +630,15 @@ void US_ReporterGMP::load_gmp_run ( void )
   pb_unselect_all ->setEnabled( true );
   pb_expand_all   ->setEnabled( true );
   pb_collapse_all ->setEnabled( true );
+
+  //Inform user that current configuraiton corresponds to GMP report
+  QMessageBox::information( this, tr( "Report Profile Uploaded" ),
+			    tr( "Report profile uploaded for GMP run:\n"
+				"%1\n\n"
+				"ATTENTION: Current profile configuration corresponds to GMP report settings.\n"
+				"Any changes in the profile settings will result in generation of the non-GMP report!")
+			    .arg( protocol_details[ "filename" ] ) );
+  
 }
 
 // Query autoflow (history) table for records
