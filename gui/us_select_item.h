@@ -80,6 +80,7 @@ class US_GUI_EXTERN US_SelectItem : public US_WidgetsDialog
       void cancelled      ( void );
       void accepted       ( void );
       void deleted        ( void );
+      bool check_protocol_for_autoflow( QString, QString );
       void deleted_autoflow ( void );
       void help           ( void )
       { showHelp.show_help( "select_item.html" ); };
