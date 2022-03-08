@@ -1183,12 +1183,206 @@ qDebug() << "rpt:svFD:  filename" << filename << "newTriple" << newTriple;
    // Get any existing report for this run
    // Start by reading any DB info we have, or create new report
    QString now        = QDateTime::currentDateTime().toString();
-   US_Report::Status status = this->readDB( new_runID, db, newTriple );     //ALEXEY <-- pass invID if autoflow; will be needed for us_edit
+   US_Report::Status status = this->readDB( new_runID, db, newTriple );    
 qDebug() << "rpt:svFD:  rdDB stat" << status;
 
    if ( status == US_Report::NOT_FOUND )
    {  // For a new report, save what we have
-      US_Report::Status saveStatus = this->saveDB( db );                    //ALEXEY <-- pass invID if autoflow; will be needed for us_edit
+      US_Report::Status saveStatus = this->saveDB( db );                   
+      if ( saveStatus != US_Report::REPORT_OK )
+      {
+         qDebug() << "report.saveDB error"
+                  << saveStatus;
+         qDebug() << db->lastError() << db->lastErrno();
+         this->show();
+      }
+   }
+
+   // Read an existing triple, or create a new one
+   int     tripNdx    = this->findTriple( newTriple );
+qDebug() << "rpt:svFD:  tripNdx" << tripNdx;
+   if ( tripNdx < 0 )
+   {
+      // Not found, so create one
+      status             = this->addTriple( newTriple, dataDescription, db );
+      if ( status != US_Report::REPORT_OK )
+      {
+         qDebug() << "saveDocumentFromFile.addTriple error"
+                  << status;
+         qDebug() << db->lastError() << db->lastErrno();
+         return US_Report::DB_ERROR;
+      }
+      // Refresh tripNdx
+      tripNdx            = this->findTriple( newTriple );
+qDebug() << "rpt:svFD:  2)tripNdx" << tripNdx;
+   }
+   
+   else if ( this->triples[ tripNdx ].dataDescription != dataDescription )
+   {  // The data description field has changed and needs to be updated
+      this->triples[ tripNdx ].dataDescription = dataDescription;
+      this->triples[ tripNdx ].saveDB( this->ID, db );
+qDebug() << "rpt:svFD:  *triples UPDATE";
+   }
+
+   US_Report::ReportTriple* trip = &this->triples[ tripNdx ];
+
+   // Build a list of documents already assigned to the triple
+   QStringList  tdnames;
+   QList< int > tdNdxs;
+   QString filepath;
+   QString dirfile    = dir.endsWith( "/" ) ? dir : ( dir + "/" );
+   int     ntdocs     = trip->docs.count();
+   int     idTrip     = trip->tripleID;
+qDebug() << "rpt:svFD:  dirfile" << dirfile << "ntdocs" << ntdocs << "idTrip" << idTrip;
+
+   for ( int ii = 0; ii < ntdocs; ii++ )
+   {
+      filename           = trip->docs[ ii ].filename;
+      int tidEdit        = trip->docs[ ii ].editedDataID;
+
+      if ( tidEdit == idEdit  &&  filenames.contains( filename ) )
+      {
+         tdnames << filename;
+         tdNdxs  << ii;
+qDebug() << "rpt:svFD: trip docs filename" << filename << "ii" << ii;
+      }
+else
+qDebug() << "rpt:svFD:  MISS: trip docs filename" << filename << "ii" << ii
+ << "tidEdit" << tidEdit << "idEdit" << idEdit;
+   }
+qDebug() << "rpt:svFD: tdNdxs.count()" << tdNdxs.count() << "nfiles" << nfiles;
+
+   // Add any new documents to the triple's list
+   //if ( tdNdxs.count() < nfiles )
+   {
+      for ( int ii = 0; ii < nfiles; ii++ )
+      {  // Examine each specified file name
+         filename           = filenames[ ii ];
+qDebug() << "rpt:svFD:  fnames filename" << filename << "ii" << ii;
+
+         if ( !tdnames.contains( filename ) )
+         {  // This document is new and needs to be added to the triple's list
+qDebug() << "rpt:svFD:    NEW to triple doc";
+            US_Report::ReportDocument rdoc;
+            QString newAnal    = filename.section( ".", -4, -4 );
+            QString newSubanal = filename.section( ".", -2, -2 );
+            QString newDoctype = filename.section( ".", -1, -1 );
+            QString newLabel   = this->rTypes.appLabels[ newAnal    ] + ":" +
+                                 this->rTypes.rptLabels[ newSubanal ] + ":" +
+                                 this->rTypes.extLabels[ newDoctype ];
+            QString docGUID    = US_Util::new_guid();
+
+            rdoc.documentGUID  = docGUID;             // Build report doc
+            rdoc.label         = newLabel;
+            rdoc.filename      = filename;
+            rdoc.analysis      = newAnal;
+            rdoc.subAnalysis   = newSubanal;
+            rdoc.documentType  = newDoctype;
+            rdoc.editedDataID  = idEdit;
+
+            QStringList qry( "new_reportDocument" );  // Create new doc record
+            qry << QString::number( idTrip )
+                << docGUID
+                << QString::number( idEdit )
+                << newLabel
+                << filename
+                << newAnal
+                << newSubanal
+                << newDoctype;
+            db->query( qry );
+
+            int ndstat = db->lastErrno();
+            if ( ndstat != US_DB2::OK )
+            {
+               qDebug() << "new_reportDocument error"
+                        << ndstat << db->lastError();
+               return US_Report::DB_ERROR;
+            }
+
+            rdoc.documentID    = db->lastInsertID();  // Save doc DB Id
+
+            trip->docs << rdoc;                       // Add to triple's docs
+qDebug() << "rpt:svFD:    new_reportDoc (no error) docID" << rdoc.documentID;
+
+            tdnames << filename;                      // Save doc file name
+            tdNdxs  << ntdocs;                        // Save index in doc list
+            ntdocs++;                                 // Bump triple's doc count
+         }
+      }
+   }
+
+   // Update the contents of each of the specified report documents
+   for ( int ii = 0; ii < nfiles; ii++ )
+   {
+      filepath           = filepaths[ ii ];
+      filename           = filenames[ ii ];
+      int tdnamx         = tdnames.indexOf( filename );
+
+      if ( tdnamx < 0 )
+      {
+qDebug() << "rpt:svFD:    *TDNAMX err* filename" << filename;
+         qDebug() << "upload_reportContents TDNAMX error"
+                  << filename;
+         return US_Report::MISC_ERROR;
+      }
+
+      int tdndx          = tdNdxs[ tdnamx ];
+      int idDoc          = trip->docs[ tdndx ].documentID;
+
+      int wrstat         = db->writeBlobToDB( filepath,
+                              QString( "upload_reportContents" ), idDoc );
+qDebug() << "rpt:svFD:    upld contents size" << QFileInfo(filepath).size()
+ << "filepath" << filepath << "idDoc" << idDoc;
+
+      if ( wrstat != US_DB2::OK )
+      {
+qDebug() << "rpt:svFD:    *wrBlob err* wrstat" << wrstat << db->lastError();
+         qDebug() << "upload_reportContents error"
+                  << wrstat << db->lastError();
+         return US_Report::DB_ERROR;
+      }
+   }
+
+   return US_Report::REPORT_OK;
+}
+
+// Saves a list of report document records to DB
+US_Report::Status US_Report::saveFileDocuments_auto( int invID_passed, const QString& dir,
+						     const QStringList& filepaths, US_DB2* db, int idEdit,
+						     const QString dataDescription )
+{
+   // Get the runID by parsing the directory
+   QString new_runID  = QString( dir ).section( "/", -1, -1 );
+qDebug() << "rpt:svFD: dir" << dir << "idEdit" << idEdit << "datDsc" << dataDescription
+ << "new_runID" << new_runID;
+   if ( new_runID.isEmpty() )
+      return US_Report::MISC_ERROR;
+
+   // Parse the triple string from the first filename
+   int     nfiles     = filepaths.count();
+qDebug() << "rpt:svFD:  nfiles" << nfiles << "fpath0" << filepaths[0];
+
+   if ( nfiles < 1 )
+      return US_Report::MISC_ERROR;
+
+   QStringList filenames;
+   for ( int jj = 0; jj < nfiles; jj++ )
+      filenames << QString( filepaths[ jj ] ).section( "/", -1, -1 );
+
+   QString filename   = filenames[ 0 ];
+   QString newTriple  = filename.section( '.', -3, -3 );
+   newTriple          = US_Util::expanded_triple( newTriple, false );
+qDebug() << "rpt:svFD:  filename" << filename << "newTriple" << newTriple;
+
+   // Get any existing report for this run
+   // Start by reading any DB info we have, or create new report
+   QString now        = QDateTime::currentDateTime().toString();
+   US_Report::Status status = this->readDB_auto( invID_passed, new_runID, db, newTriple );     //ALEXEY <-- pass invID if autoflow;  needed for us_edit
+qDebug() << "rpt:svFD:  rdDB stat" << status;
+
+   if ( status == US_Report::NOT_FOUND )
+   {  // For a new report, save what we have
+      US_Report::Status saveStatus = this->saveDB_auto( invID_passed, db );                    //ALEXEY <-- pass invID if autoflow;  needed for us_edit
       if ( saveStatus != US_Report::REPORT_OK )
       {
          qDebug() << "report.saveDB error"

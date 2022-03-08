@@ -11685,8 +11685,8 @@ void US_Edit::save_report_auto( const QString rtext, const QString rptfpath,
       freport.runID    = runID;
 
       // Write the report record to the database
-      int st = freport.saveFileDocuments( pfdir,  rfiles, dbP,
-                                          idEdit, tripdesc );
+      int st = freport.saveFileDocuments_auto( idInv_auto.toInt(), pfdir,  rfiles, dbP,   //include invID explicitly
+					       idEdit, tripdesc );
 
       if ( st != US_DB2::OK )
       {
