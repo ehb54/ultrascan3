@@ -8858,7 +8858,8 @@ int US_Edit::create_autoflowAnalysis_record( US_DB2* db, QString& tripleName, QS
        << filename_runID_auto
        << AProfileGUID
        << idInv_auto
-       << status_json;
+       << status_json
+       << QString::number( autoflowID_passed );
  
    qDebug() << "AutoflowAnalysis Record for triple: " << tripleName;
    qDebug() << "Query: " << qry;
