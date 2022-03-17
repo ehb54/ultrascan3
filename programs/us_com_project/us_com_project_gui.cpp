@@ -193,9 +193,9 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
      {
        //ALEXEY: OR enable all tabs ? (e.g. for demonstration, in a read-only mode or the like ?)
        if ( i == 0 ) 
-	 tabWidget->tabBar()->setTabEnabled(i, true);
+   	 tabWidget->tabBar()->setTabEnabled(i, true);
        else
-	 tabWidget->tabBar()->setTabEnabled(i, false);
+   	 tabWidget->tabBar()->setTabEnabled(i, false);
      }
 
    connect( tabWidget, SIGNAL( currentChanged( int ) ), this, SLOT( initPanels( int ) ) );
@@ -400,7 +400,6 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
      
    main->addWidget( tabWidget );
 
-   
    for (int i=0; i < tabWidget->count(); ++i )
      {
        //ALEXEY: OR enable all tabs ? (e.g. for demonstration, in a read-only mode or the like ?)

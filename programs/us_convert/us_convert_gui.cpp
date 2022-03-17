@@ -462,6 +462,15 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
 
        pb_reset->hide();
        pb_close->hide();
+
+       //Hide scan exclusion controls
+       lb_scan    ->hide();
+       lb_from    ->hide();
+       ct_from    ->hide();
+       lb_to      ->hide();
+       ct_to      ->hide();
+       pb_exclude ->hide();
+       pb_include ->hide();         
        
      }
    
@@ -1321,6 +1330,19 @@ void US_ConvertGui::us_mode_passed( void )
 {
   qDebug() << "US_Convert:   US_MODE SIGNAL: ";
   usmode = true;
+
+  //Hide scan exclusion controls
+  lb_scan    ->setVisible( true );
+   
+  lb_from    ->setVisible( true );
+  ct_from    ->setVisible( true );
+  
+  lb_to      ->setVisible( true );
+  ct_to      ->setVisible( true );
+  
+  pb_exclude ->setVisible( true );
+  pb_include ->setVisible( true );         
+  
 }
 
 
