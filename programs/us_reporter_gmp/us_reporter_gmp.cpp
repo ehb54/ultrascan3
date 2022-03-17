@@ -21,7 +21,7 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   setWindowTitle( tr( "GMP Report Generator"));
   setPalette( US_GuiSettings::frameColor() );
 
-  auto_mode = false;
+  auto_mode  = false;
   GMP_report = true;
   
   // primary layouts
@@ -412,7 +412,13 @@ void US_ReporterGMP::check_models ( void )
 	{
 	  QString wvl            = QString::number( chann_wvls[ jj ] );
 	  
-	  QString tripleName = channel_desc_alt.section( ":", 0, 0 )[0] + "." + channel_desc_alt.section( ":", 0, 0 )[1] + "." + wvl;
+	  QString tripleName = channel_desc_alt.section( ":", 0, 0 )[0] + "." + channel_desc_alt.section( ":", 0, 0 )[1];
+
+	  if ( channel_desc_alt.contains( "Interf" ) ) 
+	    tripleName += ".Interference";
+	  else
+	    tripleName += "." + wvl;
+	  
 	  qDebug() << "TripleName -- " << tripleName; 
 	  Array_of_tripleNames.push_back( tripleName );
 	}
@@ -625,7 +631,17 @@ void US_ReporterGMP::load_gmp_run ( void )
   progress_msg->close();
 
   //Enable some buttons
-  le_loaded_run   ->setText( protocol_details[ "filename" ] );
+  //process runname: if combined, correct for nicer appearance
+  QString full_runname = protocol_details[ "filename" ];
+  if ( full_runname.contains(",") && full_runname.contains("IP") && full_runname.contains("RI") )
+    {
+      QString full_runname_edited  = full_runname.split(",")[0];
+      full_runname_edited.chop(3);
+      
+      full_runname = full_runname_edited + " (combined RI+IP) ";
+    }
+      
+  le_loaded_run   ->setText( full_runname );
   pb_gen_report   ->setEnabled( true );
   pb_view_report  ->setEnabled( false );
   pb_select_all   ->setEnabled( true );
@@ -645,7 +661,7 @@ void US_ReporterGMP::load_gmp_run ( void )
 				"%1\n\n"
 				"ATTENTION: Current profile configuration corresponds to GMP report settings.\n"
 				"Any changes in the profile settings will result in generation of the non-GMP report!")
-			    .arg( protocol_details[ "filename" ] ) );
+			    .arg( full_runname ) );
 }
 
 // Query autoflow (history) table for records
@@ -685,6 +701,15 @@ int US_ReporterGMP::list_all_autoflow_records( QList< QStringList >& autoflowdat
       
       QDateTime local(QDateTime::currentDateTime());
 
+      //process runname: if combined, correct for nicer appearance
+      if ( full_runname.contains(",") && full_runname.contains("IP") && full_runname.contains("RI") )
+	{
+	  QString full_runname_edited  = full_runname.split(",")[0];
+	  full_runname_edited.chop(3);
+
+	  full_runname = full_runname_edited + " (combined RI+IP) ";
+	}
+      
       autoflowentry << id << full_runname << optimaname  << time_created.toString(); // << time_started.toString(); // << local.toString( Qt::ISODate );
 
       if ( time_started.toString().isEmpty() )
@@ -1322,7 +1347,14 @@ void US_ReporterGMP::build_perChanTree ( void )
 	      QString triple_name    = channel_desc.split(":")[ 0 ] + "/" + wvl;
 
 	      //Push to Array_of_triples;
-	      QString tripleName = channel_desc_alt.section( ":", 0, 0 )[0] + "." + channel_desc_alt.section( ":", 0, 0 )[1] + "." + wvl;
+	      //QString tripleName = channel_desc_alt.section( ":", 0, 0 )[0] + "." + channel_desc_alt.section( ":", 0, 0 )[1] + "." + wvl;
+	      QString tripleName = channel_desc_alt.section( ":", 0, 0 )[0] + "." + channel_desc_alt.section( ":", 0, 0 )[1];
+
+	      if ( channel_desc_alt.contains( "Interf" ) ) 
+		tripleName += ".Interference";
+	      else
+		tripleName += "." + wvl;
+	      	      
 	      qDebug() << "TripleName -- " << tripleName; 
 	      Array_of_triples.push_back( tripleName );
 
@@ -3629,6 +3661,9 @@ void US_ReporterGMP::plot_pseudo3D( QString triple_name,  QString stage_model)
 {
   QString t_name = triple_name;
   t_name.replace(".", "");
+
+  if ( t_name. contains( "Interference" ) )
+    t_name. replace( "Interference", "660" );
   
   //Pseudo3D Plots Generation (after simulations? Actual simulations are NOT needed for Pseudo3d plots?)
   //FileName; //<-- a single-type runID (e.g. RI) - NOT combined runs for now...
@@ -3653,6 +3688,9 @@ void US_ReporterGMP::plot_pseudo3D( QString triple_name,  QString stage_model)
   
   sdiag_pseudo3d = new US_Pseudo3D_Combine();
   sdiag_pseudo3d -> load_distro_auto ( QString::number( invID ), m_t_r );
+
+  //Replace back for internals
+  t_name. replace( "660", "Interference");
   
   //here identify what to show:
   bool show_s_ff0  = (perChanMask_edited.ShowTripleModelPseudo3dParts[ t_name ][ stage_model ][ "Pseudo3d s-vs-f/f0 Distribution" ].toInt()) ? true : false ;
@@ -6609,7 +6647,14 @@ void US_ReporterGMP::parse_edited_perChan_mask_json( const QString maskJson, Per
 			    if ( feature_value.toString().toInt() )
 			      ++has_channel_items;
 
-			    QString triple_name = key.split(" ")[1].split("-")[0] + array_key.split(" ")[0];
+			    //QString triple_name = key.split(" ")[1].split("-")[0] + array_key.split(" ")[0];
+			    QString triple_name = key.split(" ")[1].split("-")[0];
+
+			    if ( key.contains( "Interf" ) )
+			      triple_name += "Interference";
+			    else
+			      triple_name += array_key.split(" ")[0];
+			    
 			    QString model_name  = n_key.split(" ")[0];
 			    MaskStr.ShowTripleModelParts[ triple_name ][ model_name ][ j_key ] = feature_value.toString();
 			    if ( MaskStr.ShowTripleModelParts[ triple_name ][ model_name ][ j_key ].toInt() )
@@ -6631,7 +6676,14 @@ void US_ReporterGMP::parse_edited_perChan_mask_json( const QString maskJson, Per
 				  {
 				    QString feature_plot_value = plotObj.value( p_key ).toString();
 				    
-				    QString triple_name = key.split(" ")[1].split("-")[0]  + array_key.split(" ")[0];
+				    //QString triple_name = key.split(" ")[1].split("-")[0]  + array_key.split(" ")[0];
+				    QString triple_name = key.split(" ")[1].split("-")[0];
+
+				    if ( key.contains( "Interf" ) )
+				      triple_name += "Interference";
+				    else
+				      triple_name += array_key.split(" ")[0];
+				    
 				    QString model_name  = n_key.split(" ")[0];
 				    MaskStr.ShowTripleModelPlotParts[ triple_name ][ model_name ][ p_key ] = feature_plot_value;
 				    if ( MaskStr.ShowTripleModelPlotParts[ triple_name ][ model_name ][ p_key ].toInt() )
@@ -6653,7 +6705,15 @@ void US_ReporterGMP::parse_edited_perChan_mask_json( const QString maskJson, Per
 				  {
 				    QString feature_pseudo3d_value = pseudo3dObj.value( p_key ).toString();
 				    
-				    QString triple_name = key.split(" ")[1].split("-")[0]  + array_key.split(" ")[0];
+				    //QString triple_name = key.split(" ")[1].split("-")[0]  + array_key.split(" ")[0];
+				    QString triple_name = key.split(" ")[1].split("-")[0];
+
+				    if ( key.contains( "Interf" ) )
+				      triple_name += "Interference";
+				    else
+				      triple_name += array_key.split(" ")[0];
+
+				    
 				    QString model_name  = n_key.split(" ")[0];
 				    MaskStr.ShowTripleModelPseudo3dParts[ triple_name ][ model_name ][ p_key ] = feature_pseudo3d_value;
 				    if ( MaskStr.ShowTripleModelPseudo3dParts[ triple_name ][ model_name ][ p_key ].toInt() )
