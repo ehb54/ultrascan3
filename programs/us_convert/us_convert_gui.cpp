@@ -2692,8 +2692,13 @@ void US_ConvertGui::readProtocol_auto( void )
    
    QString xmlstr( "" );
    //US_ProtocolUtil::read_record( ProtocolName_auto, &xmlstr, NULL, &db );
-   US_ProtocolUtil::read_record_auto( ProtocolName_auto, ExpData.invID,  &xmlstr, NULL, &db );
+
+   qDebug() << "IN READ PROTOCOL --";
+   qDebug() << "ProtocolName_auto, ExpData.invID -- " << ProtocolName_auto << ExpData.invID;
    
+   int idProtocol_read = US_ProtocolUtil::read_record_auto( ProtocolName_auto, ExpData.invID,  &xmlstr, NULL, &db );
+
+   qDebug() << "idProtocol_read -- " << idProtocol_read;
    qDebug() << "Protocol READ !!! ";
     
    QXmlStreamReader xmli( xmlstr );
@@ -2717,6 +2722,11 @@ void US_ConvertGui::readProtocol_auto( void )
 	       ProtInfo.optimahost      = attr.value( "optima_host"  ).toString();
 	       ProtInfo.investigator    = attr.value( "investigator" ).toString();
 	       ProtInfo.temperature     = attr.value( "temperature"  ).toString().toDouble();
+
+	       qDebug() << ProtInfo.protname << ProtInfo.protGUID
+			<< ProtInfo.project  << ProtInfo.projectID
+			<< ProtInfo.optimahost << ProtInfo.investigator
+			<< ProtInfo.temperature;
 	     }
 	   
 	   else if ( ename == "rotor" )      { readProtocolRotor_auto( xmli ); }
@@ -2758,6 +2768,8 @@ bool US_ConvertGui::readProtocolRotor_auto( QXmlStreamReader& xmli )
 	    ProtInfo.ProtRotor.operID      = attr.value( "operid"       ).toString().toInt();
 	    ProtInfo.ProtRotor.exptype     = attr.value( "exptype"      ).toString();
 	    ProtInfo.ProtRotor.instID      = attr.value( "instid"       ).toString().toInt();
+
+	    qDebug() << "labID: " << ProtInfo.ProtRotor.labID << attr.value( "labid"       ).toString().toInt();
          }
 
          else
@@ -2789,6 +2801,8 @@ bool US_ConvertGui::readProtocolCells_auto( QXmlStreamReader& xmli )
 	      QXmlStreamAttributes attr = xmli.attributes();
 	      ProtInfo.ProtCells.ncell          = attr.value( "total_holes" ).toString().toInt();
 	      ProtInfo.ProtCells.nused          = attr.value( "used_holes"  ).toString().toInt();
+
+	      qDebug() << "Cells: " << ProtInfo.ProtCells.ncell  << attr.value( "total_holes" ).toString().toInt();
 	    }
 	  
 	  else if ( ename == "cell" )
