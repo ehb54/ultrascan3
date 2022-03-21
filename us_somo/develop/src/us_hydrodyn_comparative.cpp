@@ -193,7 +193,7 @@ comparative_info US_Hydrodyn_Comparative::empty_comparative_info()
 {
    comparative_info ci;
    ci.ce_s = empty_comparative_entry("Sedimentation coefficient s [S]");
-   ci.ce_D = empty_comparative_entry("Translational diffusion coefficient D [cm/sec^2]");
+   ci.ce_D = empty_comparative_entry("Translational diffusion coefficient D [cm^2/sec]");
    ci.ce_sr = empty_comparative_entry("Stokes radius [nm]");
    ci.ce_fr = empty_comparative_entry("Frictional ratio");
    ci.ce_rg = empty_comparative_entry("Radius of gyration [nm] (from bead model)");
