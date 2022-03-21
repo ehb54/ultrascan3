@@ -14505,7 +14505,7 @@ bool US_Saxs_Util::calc_zeno_hydro()
                                  )
                         .arg( QString( "" ).sprintf( "%4.2e cm^3/g"  , this_data.results.viscosity ) )
                         .arg( QString( "" ).sprintf( "%4.2e g/s"     , this_data.tra_fric_coef ) )
-                        .arg( QString( "" ).sprintf( "%4.2e cm/sec^2", this_data.results.D20w ) )
+                        .arg( QString( "" ).sprintf( "%4.2e cm^2/sec", this_data.results.D20w ) )
                         ;
                   }		  
 

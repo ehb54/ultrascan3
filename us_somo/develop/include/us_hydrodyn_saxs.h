@@ -459,6 +459,9 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void update_iqq_suffix();
 
    private:
+      bool write_temp_pdb_selected_models( QString & error_msg );
+      QString last_selected_pdb_filename;
+
       QBoxLayout * qbl_plots;
       QBoxLayout * qbl_resid;
 
