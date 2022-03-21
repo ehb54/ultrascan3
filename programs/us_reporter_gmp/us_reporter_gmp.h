@@ -201,6 +201,7 @@ class US_ReporterGMP : public US_Widgets
 	 
 	 QVector< QString >  Array_of_triples;
 	 QMap< QString, QStringList > Triple_to_Models;
+	 QMap< QString, QMap< QString, QString > > Triple_to_ModelsDesc;
 	 QMap< QString, QString > triple_info_map;
 	 QString   currentTripleName;
 
@@ -221,6 +222,8 @@ class US_ReporterGMP : public US_Widgets
 	 QMap< QString, QString > read_autoflowIntensity( QString, US_DB2*);
 	 void parse_gen_mask_json ( const QString  );
 	 QMap< QString, QMap< QString, QString > > parse_comb_plots_json ( const QString  );
+	 QMap< QString, QString > parse_models_desc_json( const QString ); 
+	 
 	 void get_item_childs( QList< QTreeWidgetItem* > &, QTreeWidgetItem* );
 	 void build_genTree ( void );
 	 void build_perChanTree ( void ) ;
@@ -403,7 +406,7 @@ class US_ReporterGMP : public US_Widgets
 	
       private slots:
 	void loadRun_auto( QMap < QString, QString > & );
-	void check_models ( void );
+	void check_models ( int );
 	void reset_report_panel ( void );
 	void view_report ( void );
 	void load_gmp_run ( void );

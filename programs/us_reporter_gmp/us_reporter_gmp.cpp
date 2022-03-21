@@ -364,7 +364,7 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   qApp->processEvents();
 
   //check models existence
-  check_models();
+  check_models( AutoflowID_auto.toInt() );
   progress_msg->setValue( 8 );
   qApp->processEvents();
 
@@ -395,7 +395,7 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
 }
 
 //check models existence for a run loaded
-void US_ReporterGMP::check_models ( void )
+void US_ReporterGMP::check_models ( int autoflowID )
 {
   //build Array of triples
   QVector< QString >  Array_of_tripleNames;
@@ -437,65 +437,84 @@ void US_ReporterGMP::check_models ( void )
       
       return;
     }
-
+  
   //iterate over triples && get eID for each triple's data:
   for ( int i=0; i < Array_of_tripleNames.size(); ++ i )
     {
-      //Parse filename
-      QString filename_received = get_filename( Array_of_tripleNames[ i ] );
-      qDebug() << "In show_overlay(): filename_received: " << filename_received;
-      
-      int rID=0;
-      QString rfilename;
-      int eID=0;
-      QString efilename;
-      
-      //get EditedData filename && editedDataID for current triple, then infer rawDataID 
-      QStringList query;
-      query << "get_editedDataFilenamesIDs" << filename_received;
-      db->query( query );
-      
-      int latest_update_time = 1e100;
-      
       QString triple_name_actual = Array_of_tripleNames[ i ];
       
       if ( triple_name_actual.contains("Interference") )
 	triple_name_actual.replace( "Interference", "660" );
       
+      //get requestID in autoflowAnalysis based on tripleName & autoflowID
+      QStringList query;
+      query << "get_modelAnalysisInfo" << Array_of_tripleNames[ i ] << QString::number( autoflowID );
+      db->query( query );
+
+      QString modelDescJson;
       while ( db->next() )
 	{
-	  QString  filename            = db->value( 0 ).toString();
-	  int      editedDataID        = db->value( 1 ).toInt();
-	  int      rawDataID           = db->value( 2 ).toInt();
-	  //QString  date                = US_Util::toUTCDatetimeText( db->value( 3 ).toDateTime().toString( "yyyy/MM/dd HH:mm" ), true );
-	  QDateTime date               = db->value( 3 ).toDateTime();
+	  modelDescJson           = db->value( 0 ).toString();
+	  //Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ] = modelDescJson;
 	  
-	  QDateTime now = QDateTime::currentDateTime();
-
-	  qDebug() << "1. In check_model: filename, editedDataID  -- " << filename << editedDataID ;
-	  
-	  if ( filename.contains( triple_name_actual ) ) 
-	    {
-	      int time_to_now = date.secsTo(now);
-	      if ( time_to_now < latest_update_time )
-		{
-		  latest_update_time = time_to_now;
-		  //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
-		  
-		  rID       = rawDataID;
-		  eID       = editedDataID;
-		  efilename = filename;
-
-		  qDebug() << "In check_model: eID, efilename, triple_name_actual -- " <<  eID << efilename << triple_name_actual;
-		}
-	    }
+	  qDebug() << "Triple, modelDesc -- " << Array_of_tripleNames[ i ] << modelDescJson;
 	}
+      ///
 
-      qDebug() << "In check_models: eID -- " << QString::number( eID );
+      //Now parse modelDecsJson for eID, modelIDs
+      Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ] = parse_models_desc_json( modelDescJson ); 
+      
+            
+      // //Parse filename
+      // QString filename_received = get_filename( Array_of_tripleNames[ i ] );
+      // qDebug() << "In show_overlay(): filename_received: " << filename_received;
+      
+      // int eID=0;
+      // QString efilename;
+      
+      // //get EditedData filename && editedDataID for current triple, then infer rawDataID 
+      // query.clear();
+      // query << "get_editedDataFilenamesIDs" << filename_received;
+      // db->query( query );
+      
+      // int latest_update_time = 1e100;
+      
+      // while ( db->next() )
+      //  	{
+      //  	  QString  filename            = db->value( 0 ).toString();
+      //  	  int      editedDataID        = db->value( 1 ).toInt();
+      //  	  int      rawDataID           = db->value( 2 ).toInt();
+      //  	  //QString  date                = US_Util::toUTCDatetimeText( db->value( 3 ).toDateTime().toString( "yyyy/MM/dd HH:mm" ), true );
+      //  	  QDateTime date               = db->value( 3 ).toDateTime();
+        
+      //  	  QDateTime now = QDateTime::currentDateTime();
+
+      //  	  qDebug() << "1. In check_model: filename, editedDataID  -- " << filename << editedDataID ;
+        
+      //  	  if ( filename.contains( triple_name_actual ) ) 
+      //  	    {
+      //  	      int time_to_now = date.secsTo(now);
+      //  	      if ( time_to_now < latest_update_time )
+      //  		{
+      //  		  latest_update_time = time_to_now;
+      //  		  //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
+      	  
+      //  		  rID       = rawDataID;
+      //  		  eID       = editedDataID;
+      //  		  efilename = filename;
+
+      //  		  qDebug() << "In check_model: eID, efilename, triple_name_actual -- " <<  eID << efilename << triple_name_actual;
+      //  		}
+      //  	    }
+      //  	}
+
+
+      QString eID = Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "eID" ];
+      qDebug() << "In check_models: eID -- " << eID;
       
       //now check models based on eID:
       query.clear();
-      query << "get_modelDescsIDs" << QString::number( eID );
+      query << "get_modelDescsIDs" << eID;
       db->query( query );
 
       QStringList model_list;
@@ -503,26 +522,87 @@ void US_ReporterGMP::check_models ( void )
       while ( db->next() )
 	{
 	  QString  description         = db->value( 0 ).toString();
-	  int      modelID             = db->value( 1 ).toInt();
+	  QString  modelID             = db->value( 1 ).toString();
 	  //QString  date                = US_Util::toUTCDatetimeText( db->value( 3 ).toDateTime().toString( "yyyy/MM/dd HH:mm" ), true );
 	  QDateTime date               = db->value( 2 ).toDateTime();
 	  
 	  QDateTime now = QDateTime::currentDateTime();
 	  
-	  if ( description.contains( "2DSA-IT" ) )
-	    model_list << "2DSA-IT";
+	  if ( description.contains( "2DSA-IT" ) && modelID == Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "2DSA-IT" ] )
+	    {
+	      qDebug() << "2DSA-IT Ids: modelID, read from modelLink: " << modelID << Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "2DSA-IT" ];
+	      model_list << "2DSA-IT";
+	    }
 	  
-	  if ( description.contains( "2DSA-MC" ) )
-	    model_list << "2DSA-MC";
-
-	  if ( description.contains( "PCSA" ) )
-	    model_list << "PCSA";
+	  if ( description.contains( "2DSA-MC" ) && modelID == Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "2DSA-MC" ] )
+	    {
+	      qDebug() << "2DSA-MC Ids: modelID, read from modelLink: " << modelID << Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "2DSA-MC" ];
+	      model_list << "2DSA-MC";
+	    }
 	  
+	  if ( description.contains( "PCSA" ) && modelID == Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "PCSA" ] )
+	    {
+	      qDebug() << "PCSA Ids: modelID, read from modelLink: " << modelID << Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "PCSA" ];
+	      model_list << "PCSA";
+	    }
 	}
 
       //populate QMap connecting triple name to it's existing models
       Triple_to_Models[ Array_of_tripleNames[ i ] ] = model_list;
     }
+}
+
+QMap< QString, QString > US_ReporterGMP::parse_models_desc_json( QString modelDescJson )
+{
+  QMap <QString, QString>  modelDesc_shortened;
+
+  if ( !modelDescJson.isEmpty() )
+    {
+      QJsonDocument jsonDoc = QJsonDocument::fromJson( modelDescJson.toUtf8() );
+      QJsonObject json_obj = jsonDoc.object();
+      
+      foreach(const QString& key, json_obj.keys())
+	{
+	  QJsonValue value = json_obj.value(key);
+	  
+	  qDebug() << "ModelsDesc key, value: " << key << value;
+
+	  if ( key == "2DSA_IT" || key == "2DSA_MC" || key == "PCSA" ) 
+	    {
+	      QString key_mod = key;
+	      key_mod. replace("_","-");
+	      
+	      QJsonArray json_array = value.toArray();
+	      for (int i=0; i < json_array.size(); ++i )
+		{
+		  foreach(const QString& array_key, json_array[i].toObject().keys())
+		    {
+		      if ( array_key == "modelID" )
+			{
+			  if ( !modelDesc_shortened.contains( key_mod ) )  //Temporary, for PCSA (2 entries)
+			    {
+			      modelDesc_shortened[ key_mod ] = json_array[i].toObject().value(array_key).toString();
+			      qDebug() << "modelDescJson Map: -- model, property, value: "
+				       << key_mod
+				       << array_key
+				       << json_array[i].toObject().value(array_key).toString();
+			    }
+			}
+		      if ( array_key == "editeddataID" )
+			{
+			  modelDesc_shortened[ "eID" ] = json_array[i].toObject().value(array_key).toString();
+			  qDebug() << "modelDescJson Map: -- meID, value: "
+				   << array_key
+				   << json_array[i].toObject().value(array_key).toString();
+			  
+			}
+		    }
+		}
+	    }
+	}
+    }
+  
+  return modelDesc_shortened;
 }
 
 
@@ -606,10 +686,13 @@ void US_ReporterGMP::load_gmp_run ( void )
   read_protocol_and_reportMasks( );
   
   //check models existence
-  check_models();
+  check_models(  autoflowID );
   progress_msg->setValue( 7 );
   qApp->processEvents();
 
+  //DEBUG
+  //exit(1);
+  
   //debug
   QMap < QString, QStringList >::iterator mm;
   for ( mm = Triple_to_Models.begin(); mm != Triple_to_Models.end(); ++mm )
@@ -1682,6 +1765,7 @@ void US_ReporterGMP::reset_report_panel ( void )
 
   //clean QMap connecting triple names to their models
   Triple_to_Models.clear();
+  Triple_to_ModelsDesc.clear();
   
   //reset US_Protocol && US_AnaProfile
   currProto = US_RunProtocol();  
@@ -2389,14 +2473,20 @@ bool US_ReporterGMP::loadData( QMap < QString, QString > & triple_information )
       return false;
     }
 
+  qDebug() << "In load Data: triple, eID (from modelsLink) -- "
+	   << triple_information[ "triple_name" ]
+	   << Triple_to_ModelsDesc[ triple_information[ "triple_name" ] ] [ "eID" ] ;
+  
   int rID=0;
   QString rfilename;
-  int eID=0;
+  //int eID=0;
+  int eID = Triple_to_ModelsDesc[ triple_information[ "triple_name" ] ] [ "eID" ].toInt();
+
   QString efilename;
   
   //get EditedData filename && editedDataID for current triple, then infer rawDataID 
   QStringList query;
-  query << "get_editedDataFilenamesIDs" << triple_information["filename"];
+  query << "get_editedDataFilenamesIDs" << triple_information["filename"] << QString::number( eID ) ;
   db->query( query );
 
   qDebug() << "In loadData() Query: " << query;
@@ -2414,27 +2504,31 @@ bool US_ReporterGMP::loadData( QMap < QString, QString > & triple_information )
       QString  filename            = db->value( 0 ).toString();
       int      editedDataID        = db->value( 1 ).toInt();
       int      rawDataID           = db->value( 2 ).toInt();
-      //QString  date                = US_Util::toUTCDatetimeText( db->value( 3 ).toDateTime().toString( "yyyy/MM/dd HH:mm" ), true );
+      rID         = rawDataID;
+      efilename   = filename;
+      
       QDateTime date               = db->value( 3 ).toDateTime();
-
-      QDateTime now = QDateTime::currentDateTime();
+      eID_updated                  = db->value( 3 ).toString();
+      
+      // QDateTime now = QDateTime::currentDateTime();
                
-      if ( filename.contains( triple_name_actual ) ) 
-	{
-	  int time_to_now = date.secsTo(now);
-	  if ( time_to_now < latest_update_time )
-	    {
-	      latest_update_time = time_to_now;
-	      //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
+      // if ( filename.contains( triple_name_actual ) ) 
+      // 	{
+      // 	  int time_to_now = date.secsTo(now);
+      // 	  if ( time_to_now < latest_update_time )
+      // 	    {
+      // 	      latest_update_time = time_to_now;
+      // 	      //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
 
-	      rID         = rawDataID;
-	      eID         = editedDataID;
-	      efilename   = filename;
-	      eID_updated = db->value( 3 ).toString();
-	    }
-	}
+      // 	      rID         = rawDataID;
+      // 	      eID         = editedDataID;
+      // 	      efilename   = filename;
+      // 	      eID_updated = db->value( 3 ).toString();
+      // 	    }
+      // 	}
     }
 
+  
   qDebug() << "In loadData() after Query ";
   
   QString edirpath  = US_Settings::resultDir() + "/" + triple_information[ "filename" ];
@@ -2501,82 +2595,89 @@ bool US_ReporterGMP::loadModel( QMap < QString, QString > & triple_information )
       return false;
     }
 
-  //first, get ModelIDs corresponding to editedDataID AND triple_stage && select latest one
-  QStringList query;
-  query << "get_modelDescsIDs" << triple_information[ "eID" ];
-  db->query( query );
+  // //first, get ModelIDs corresponding to editedDataID AND triple_stage && select latest one
+  // QStringList query;
+  // query << "get_modelDescsIDs" << triple_information[ "eID" ];
+  // db->query( query );
   
-  qDebug() << "In loadModel() Query: " << query;
+  // qDebug() << "In loadModel() Query: " << query;
   
-  int latest_update_time = 1e100;
-  int mID=0;
+  // int latest_update_time = 1e100;
+  // int mID=0;
 
-  model_exists = false;
+  // model_exists = false;
   
-  while ( db->next() )
-    {
-      QString  description         = db->value( 0 ).toString();
-      int      modelID             = db->value( 1 ).toInt();
-      //QString  date                = US_Util::toUTCDatetimeText( db->value( 3 ).toDateTime().toString( "yyyy/MM/dd HH:mm" ), true );
-      QDateTime date               = db->value( 2 ).toDateTime();
+  // while ( db->next() )
+  //   {
+  //     QString  description         = db->value( 0 ).toString();
+  //     int      modelID             = db->value( 1 ).toInt();
+  //     //QString  date                = US_Util::toUTCDatetimeText( db->value( 3 ).toDateTime().toString( "yyyy/MM/dd HH:mm" ), true );
+  //     QDateTime date               = db->value( 2 ).toDateTime();
 
-      QDateTime now = QDateTime::currentDateTime();
+  //     QDateTime now = QDateTime::currentDateTime();
       
-      if ( description.contains( triple_information[ "stage_name" ] ) ) 
-	{
-	  //if contains, it matches & the model exists (e.g. 2DSA-IT); now find the latest one
-	  model_exists = true;
+  //     if ( description.contains( triple_information[ "stage_name" ] ) ) 
+  // 	{
+  // 	  //if contains, it matches & the model exists (e.g. 2DSA-IT); now find the latest one
+  // 	  model_exists = true;
 	  
-	  if ( triple_information[ "stage_name" ] == "2DSA" )
-	    {
-	      if ( !description.contains("-FM_") && !description.contains("-IT_") && !description.contains("-MC_") && !description.contains("_mcN") )
-		{
-		  int time_to_now = date.secsTo(now);
-		  if ( time_to_now < latest_update_time )
-		    {
-		      latest_update_time = time_to_now;
-		      //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
+  // 	  if ( triple_information[ "stage_name" ] == "2DSA" )
+  // 	    {
+  // 	      if ( !description.contains("-FM_") && !description.contains("-IT_") && !description.contains("-MC_") && !description.contains("_mcN") )
+  // 		{
+  // 		  int time_to_now = date.secsTo(now);
+  // 		  if ( time_to_now < latest_update_time )
+  // 		    {
+  // 		      latest_update_time = time_to_now;
+  // 		      //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
 
-		      qDebug() << "Model 2DSA: ID, desc, timetonow -- " << modelID << description << time_to_now;
+  // 		      qDebug() << "Model 2DSA: ID, desc, timetonow -- " << modelID << description << time_to_now;
 		  		      
-		      mID       = modelID;
-		    }
-		}
-	    }
-	  else
-	    {
-	      int time_to_now = date.secsTo(now);
-	      if ( time_to_now < latest_update_time )
-		{
-		  latest_update_time = time_to_now;
-		  //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
+  // 		      mID       = modelID;
+  // 		    }
+  // 		}
+  // 	    }
+  // 	  else
+  // 	    {
+  // 	      int time_to_now = date.secsTo(now);
+  // 	      if ( time_to_now < latest_update_time )
+  // 		{
+  // 		  latest_update_time = time_to_now;
+  // 		  //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
 		  
-		  qDebug() << "Model NON-2DSA: ID, desc, timetonow -- " << modelID << description << time_to_now;
+  // 		  qDebug() << "Model NON-2DSA: ID, desc, timetonow -- " << modelID << description << time_to_now;
 		  
-		  mID       = modelID;
-		}
-	    }
-	}
-    }
+  // 		  mID       = modelID;
+  // 		}
+  // 	    }
+  // 	}
+  //   }
 
-  if ( ! model_exists )
-    {
-      // QMessageBox::critical( this, tr( "Model Does Not Exists!" ),
-      // 			     QString (tr( "Triple %1 does not have  %2 model !" ))
-      // 			     .arg( triple_information[ "triple_name" ] )
-      // 			     .arg( triple_information[ "stage_name" ] ) );
+  // if ( ! model_exists )
+  //   {
+  //     // QMessageBox::critical( this, tr( "Model Does Not Exists!" ),
+  //     // 			     QString (tr( "Triple %1 does not have  %2 model !" ))
+  //     // 			     .arg( triple_information[ "triple_name" ] )
+  //     // 			     .arg( triple_information[ "stage_name" ] ) );
 
-      progress_msg->setLabelText( QString("Model %1 is NOT found for triple %2.\n Trying other models...")
-				  .arg( triple_information[ "stage_name" ] )
-				  .arg( triple_information[ "triple_name" ] ) );
-      progress_msg->setValue( 4 );
-      qApp->processEvents();
+  //     progress_msg->setLabelText( QString("Model %1 is NOT found for triple %2.\n Trying other models...")
+  // 				  .arg( triple_information[ "stage_name" ] )
+  // 				  .arg( triple_information[ "triple_name" ] ) );
+  //     progress_msg->setValue( 4 );
+  //     qApp->processEvents();
       
-      return false;
-    }
+  //     return false;
+  //   }
+
+
+  int mID = Triple_to_ModelsDesc[ triple_information[ "triple_name" ] ] [ triple_information[ "stage_name" ] ].toInt();
   
   int  rc      = 0;
-  qDebug() << "ModelID to retrieve: -- " << mID;
+  qDebug() << "ModelID to retrieve for triple, stage: -- "
+	   << triple_information[ "triple_name" ]
+	   << triple_information[ "stage_name" ]
+	   << mID;
+  
   rc   = model.load( QString::number( mID ), db );
   qDebug() << "LdM:  model load rc" << rc;
   qApp->processEvents();
