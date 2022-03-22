@@ -385,7 +385,20 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   qApp->processEvents();
   progress_msg->close();
 
-  //generate report (download modles, simulate, create PDFs)
+  //compose a message on missing models
+  QString msg_missing_models = missing_models_msg();
+  
+  //Inform user that current configuraiton corresponds to GMP report
+  if ( !GMP_report )
+    {
+      QMessageBox::information( this, tr( "Report Profile Uploaded" ),
+				tr( "ATTENTION: There are missing models for certain triples: \n\n"
+				    "%2\n\n"
+				    "As a result, a non-GMP report will be generated!")
+				.arg( msg_missing_models) );
+    }
+  
+  //generate report (download models, simulate, create PDFs)
   generate_report();
   
 }
@@ -417,6 +430,26 @@ void US_ReporterGMP::check_for_missing_models ( void )
   for ( mm = Triple_to_ModelsMissing.begin(); mm != Triple_to_ModelsMissing.end(); ++mm )
     qDebug() << "For triple -- " << mm.key() << ", there are missing models: " << mm.value();
   
+}
+
+//Compose a string of missing models
+QString US_ReporterGMP::missing_models_msg( void )
+{
+  QString models_str;
+
+  QMap < QString, QStringList >::iterator mm;
+  for ( mm = Triple_to_ModelsMissing.begin(); mm != Triple_to_ModelsMissing.end(); ++mm )
+    {
+      if ( !mm.value().isEmpty() )
+	{
+	  models_str += mm.key() + ", missing models: " + mm.value().join(", ") + "\n";
+	}
+    }
+
+  if ( !models_str.isEmpty() )
+    GMP_report = false;
+  
+  return models_str;
 }
  
 //check models existence for a run loaded
@@ -758,14 +791,31 @@ void US_ReporterGMP::load_gmp_run ( void )
   JsonMask_gen_loaded     = tree_to_json ( topItem );
   JsonMask_perChan_loaded = tree_to_json ( chanItem );
   GMP_report = true;
+
+  //compose a message on missing models
+  QString msg_missing_models = missing_models_msg();
   
   //Inform user that current configuraiton corresponds to GMP report
-  QMessageBox::information( this, tr( "Report Profile Uploaded" ),
-			    tr( "Report profile uploaded for GMP run:\n"
-				"%1\n\n"
-				"ATTENTION: Current profile configuration corresponds to GMP report settings.\n\n"
-				"Any changes in the profile settings will result in generation of the non-GMP report!")
-			    .arg( full_runname ) );
+  if ( GMP_report )
+    {
+      QMessageBox::information( this, tr( "Report Profile Uploaded" ),
+				tr( "Report profile uploaded for GMP run:\n"
+				    "%1\n\n"
+				    "ATTENTION: Current profile configuration corresponds to GMP report settings.\n\n"
+				    "Any changes in the profile settings will result in generation of the non-GMP report!")
+				.arg( full_runname ) );
+    }
+  else
+    {
+      QMessageBox::information( this, tr( "Report Profile Uploaded" ),
+				tr( "Report profile uploaded for GMP run:\n"
+				    "%1\n\n"
+				    "ATTENTION: There are missing models for certain triples: \n\n"
+				    "%2\n\n"
+				    "As a result, a non-GMP report will be generated!")
+				.arg( full_runname )
+				.arg( msg_missing_models) );
+    }
 }
 
 // Query autoflow (history) table for records

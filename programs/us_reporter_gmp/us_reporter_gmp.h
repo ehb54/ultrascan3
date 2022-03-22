@@ -410,6 +410,7 @@ class US_ReporterGMP : public US_Widgets
 	void loadRun_auto( QMap < QString, QString > & );
 	void check_models ( int );
 	void check_for_missing_models ( void );
+	QString  missing_models_msg( void );
 	void reset_report_panel ( void );
 	void view_report ( void );
 	void load_gmp_run ( void );
