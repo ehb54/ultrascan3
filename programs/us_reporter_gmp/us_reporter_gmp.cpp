@@ -368,13 +368,9 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   progress_msg->setValue( 8 );
   qApp->processEvents();
 
-  //debug
-  QMap < QString, QStringList >::iterator mm;
-  for ( mm = Triple_to_Models.begin(); mm != Triple_to_Models.end(); ++mm )
-    {
-      qDebug() << "For triple -- " << mm.key() << ", there are models: " << mm.value();
-    }
-  //end debug
+  //identify what's intended to be simulated
+  check_for_missing_models( );
+  ////
   
   //build Trees
   build_genTree();  
@@ -393,7 +389,36 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   generate_report();
   
 }
+ 
+//check models existence for a run/protocol loaded
+void US_ReporterGMP::check_for_missing_models ( void )
+{
+  bool hasIT   = cAP2. job4run; //2dsa-it       
+  bool hasMC   = cAP2. job5run; //2dsa-mc
+  bool hasPCSA = cAPp .job_run; //pcsa
+  
+  QMap < QString, QStringList >::iterator mm;
+  for ( mm = Triple_to_Models.begin(); mm != Triple_to_Models.end(); ++mm )
+    {
+      QStringList missing_models;
+      qDebug() << "For triple -- " << mm.key() << ", there are models: " << mm.value();
 
+      if ( hasIT && !mm.value().contains( "2DSA-IT" ))
+	missing_models << "2DSA-IT";
+      if ( hasMC && !mm.value().contains( "2DSA-MC" ))
+	missing_models << "2DSA-MC";
+      if ( hasPCSA && !mm.value().contains( "PCSA" ))
+	missing_models << "PCSA";
+	
+      Triple_to_ModelsMissing[ mm.key() ] = missing_models;
+    }
+
+  //debug
+  for ( mm = Triple_to_ModelsMissing.begin(); mm != Triple_to_ModelsMissing.end(); ++mm )
+    qDebug() << "For triple -- " << mm.key() << ", there are missing models: " << mm.value();
+  
+}
+ 
 //check models existence for a run loaded
 void US_ReporterGMP::check_models ( int autoflowID )
 {
@@ -686,20 +711,16 @@ void US_ReporterGMP::load_gmp_run ( void )
   read_protocol_and_reportMasks( );
   
   //check models existence
-  check_models(  autoflowID );
+  check_models( autoflowID );
   progress_msg->setValue( 7 );
   qApp->processEvents();
 
   //DEBUG
   //exit(1);
   
-  //debug
-  QMap < QString, QStringList >::iterator mm;
-  for ( mm = Triple_to_Models.begin(); mm != Triple_to_Models.end(); ++mm )
-    {
-      qDebug() << "For triple -- " << mm.key() << ", there are models: " << mm.value();
-    }
-  //end debug
+  //identify what's intended to be simulated
+  check_for_missing_models();
+  ////
 
   build_genTree();  
   progress_msg->setValue( 8 );
@@ -742,7 +763,7 @@ void US_ReporterGMP::load_gmp_run ( void )
   QMessageBox::information( this, tr( "Report Profile Uploaded" ),
 			    tr( "Report profile uploaded for GMP run:\n"
 				"%1\n\n"
-				"ATTENTION: Current profile configuration corresponds to GMP report settings.\n"
+				"ATTENTION: Current profile configuration corresponds to GMP report settings.\n\n"
 				"Any changes in the profile settings will result in generation of the non-GMP report!")
 			    .arg( full_runname ) );
 }
@@ -1764,8 +1785,9 @@ void US_ReporterGMP::reset_report_panel ( void )
   comboPlotsMapTypes .clear();
 
   //clean QMap connecting triple names to their models
-  Triple_to_Models.clear();
-  Triple_to_ModelsDesc.clear();
+  Triple_to_Models       . clear();
+  Triple_to_ModelsDesc   . clear();
+  Triple_to_ModelsMissing. clear();
   
   //reset US_Protocol && US_AnaProfile
   currProto = US_RunProtocol();  

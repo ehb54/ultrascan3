@@ -201,7 +201,9 @@ class US_ReporterGMP : public US_Widgets
 	 
 	 QVector< QString >  Array_of_triples;
 	 QMap< QString, QStringList > Triple_to_Models;
+	 QMap< QString, QStringList > Triple_to_ModelsMissing;
 	 QMap< QString, QMap< QString, QString > > Triple_to_ModelsDesc;
+	 
 	 QMap< QString, QString > triple_info_map;
 	 QString   currentTripleName;
 
@@ -407,6 +409,7 @@ class US_ReporterGMP : public US_Widgets
       private slots:
 	void loadRun_auto( QMap < QString, QString > & );
 	void check_models ( int );
+	void check_for_missing_models ( void );
 	void reset_report_panel ( void );
 	void view_report ( void );
 	void load_gmp_run ( void );
