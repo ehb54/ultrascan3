@@ -81,8 +81,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
 
             "__BREAK__",
             "results.D20w", 
-            "Translational diffusion coefficient D [cm/sec^2]",
-            "Translational diffusion coefficient D [cm/sec^2]",
+            "Translational diffusion coefficient D [cm^2/sec]",
+            "Translational diffusion coefficient D [cm^2/sec]",
 
             "__BREAK__",
 
@@ -397,8 +397,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
 
             "__BREAK__",
             "results.D20w", 
-            "Translational diffusion coefficient D [cm/sec^2]",
-            "Translational diffusion coefficient D [cm/sec^2]",
+            "Translational diffusion coefficient D [cm^2/sec]",
+            "Translational diffusion coefficient D [cm^2/sec]",
 
             "__BREAK__",
 

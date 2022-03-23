@@ -613,6 +613,20 @@ void US_SelectItem::deleted()
    //Attempt protocol deletion:
    qDebug() << "Prtotcol ID to delete: ID, name: " << ProtID << ", " << items[ ProtRow ][ 0 ];
 
+   //Here, check if the protocol part of the autoflow || autoflowHistory tables:
+   //If YES, inform of inability to delete, return:
+   bool isRequired = check_protocol_for_autoflow( ProtID, items[ ProtRow ][ 0 ] );
+   if ( isRequired )
+     {
+       QMessageBox::information( this, tr( "Protocol Cannot be Deleted" ),
+				 tr( "The Protocol:\n\n"
+				     "\"%1\"\n\n"
+				     "can NOT be deleted since it is required by the GMP framework!" )
+				 .arg( items[ ProtRow ][ 0 ] ) );
+       
+       return;
+     }
+   
    int response = QMessageBox::question( this,
 					 tr( "Delete Protocol?" ),
 					 tr( "You have selected the following Protocol to delete:\n    \"" )
@@ -653,3 +667,25 @@ void US_SelectItem::deleted()
    
    emit accept_deletion();        // Signal to pass to us_experiment to update (re-read reduced) protdata
 }
+
+
+//Check if the protocol part of GMP framework
+bool US_SelectItem::check_protocol_for_autoflow( QString pID, QString pName )
+{
+  bool isRequired = false;
+  int  protNumber = 0;
+  
+  US_Passwd pw;
+  US_DB2* db = new US_DB2( pw.getPasswd() );
+
+  QStringList q;
+  q  << QString( "check_protocol_for_autoflow" ) 
+     << pName;
+
+  protNumber  = db -> functionQuery( q );
+
+  protNumber ? isRequired = true : isRequired = false;
+  
+  return isRequired;
+}
+
