@@ -1797,6 +1797,15 @@ DbgLv(1) << " eupd:       ixmlin ixblin ixllin" << ixmlin << ixblin << ixllin;
                    " range whose left-side value is %2 . This Edit update"
                    " cannot be performed!" ).arg( mennew ).arg( lefval ) );
             continue;
+
+	    //-- Revert autoflowAnalysisSatges back to 'unknown'
+	    if ( auto_mode )
+	      {
+		QString requestID = triple_information[ "requestID" ];
+		revert_autoflow_analysis_stages_record( requestID );
+	      }
+	 //---------------------------------------------------//
+	    
          }
 
          demval        = s_meni.length() - ncmval;  // Deltas in old,new value strings

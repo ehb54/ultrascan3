@@ -2558,7 +2558,7 @@ bool US_ReporterGMP::loadData( QMap < QString, QString > & triple_information )
   
   //get EditedData filename && editedDataID for current triple, then infer rawDataID 
   QStringList query;
-  query << "get_editedDataFilenamesIDs" << triple_information["filename"] << QString::number( eID ) ;
+  query << "get_editedDataFilenamesIDs_forReport" << triple_information["filename"] << QString::number( eID ) ;
   db->query( query );
 
   qDebug() << "In loadData() Query: " << query;
@@ -3853,7 +3853,8 @@ void US_ReporterGMP::plot_pseudo3D( QString triple_name,  QString stage_model)
   QString imgPseudo3d01File;
   QStringList Pseudo3dPlotsFileNames;
 
-  
+
+  //ALEXEY: should it be a stricter requirement (modelID ?)
   QStringList m_t_r;  
   m_t_r << t_name << stage_model << filename_returned;
   
