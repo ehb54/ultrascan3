@@ -91,6 +91,7 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwc_mw_per_N" ] = "112";
    }
 
+   last_selected_pdb_filename = "";
    external_running = false;
    rasmol = NULL;
    this->saxs_widget = saxs_widget;
@@ -467,6 +468,7 @@ void US_Hydrodyn_Saxs::refresh(
    this->source = source;
    this->create_native_saxs = create_native_saxs;
    model_filepathname = filepathname;
+   last_selected_pdb_filename = "";
    QFileInfo fi(filename);
    bead_model_ok_for_saxs = true;
    switch (source)
@@ -2530,7 +2532,14 @@ void US_Hydrodyn_Saxs::show_pr_contrib()
          "yellow",
       };
 
-   QString out = QString("load %1\nselect all\ncolor gray\n").arg( QFileInfo( contrib_file ).fileName() );
+   QString error_msg;
+
+   if ( !write_temp_pdb_selected_models( error_msg ) ) {
+      editor_msg( "dark red", error_msg );
+      return;
+   }
+
+   QString out = QString("load %1\nselect all\ncolor gray\n").arg( QFileInfo( last_selected_pdb_filename ).fileName() );
    for ( map < QString, double >::iterator it = contrib_sums.begin();
          it != contrib_sums.end();
          it++ )
@@ -2545,14 +2554,10 @@ void US_Hydrodyn_Saxs::show_pr_contrib()
    // put "out" into spt file:
    out += "select all\n";
 
-   QDir::setCurrent( contrib_file );
-   // cout << "contrib file: " << contrib_file << endl;
-   QString fname = 
-      QFileInfo(contrib_file).path() + SLASH + QFileInfo(contrib_file).baseName() + ".spt";
-   // cout << "spt file: " << fname << endl;
+   QDir::setCurrent( last_selected_pdb_filename );
+   QString fname = last_selected_pdb_filename + ".spt";
    QFile f(fname);
-   if ( !f.open( QIODevice::WriteOnly ) )
-   {
+   if ( !f.open( QIODevice::WriteOnly ) ) {
       editor_msg( "red", "Error creating file " + fname + "\n");
       return;
    }
@@ -5093,7 +5098,7 @@ void US_Hydrodyn_Saxs::select_saxs_file(const QString &filename)
          {
             continue;
          }
-         // qs.trimmed();
+         qs.trimmed();
          QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
          int pos = 0;
          if ( qsl.size() == 11 )
@@ -8121,4 +8126,68 @@ void US_Hydrodyn_Saxs::usp_config_plot_resid( const QPoint & ) {
    US_PlotChoices *uspc = new US_PlotChoices( usp_plot_resid );
    uspc->exec();
    delete uspc;
+}
+
+bool US_Hydrodyn_Saxs::write_temp_pdb_selected_models( QString & error_msg ) {
+   if ( !last_selected_pdb_filename.isEmpty() ) {
+      return true;
+   }
+
+   QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_tmp_dir + QDir::separator();
+   unsigned int pos = 0;
+
+   do {
+      //      last_selected_pdb_filename = QString("%1%2-%3.pdb").arg( use_dir ).arg( QFileInfo( contrib_file ).baseName() ).arg( pos );
+      last_selected_pdb_filename = QString("%1%2-%3.pdb").arg( use_dir ).arg( "temp" ).arg( pos );
+      pos++;
+   } while( QFile::exists( last_selected_pdb_filename ) );
+
+   QFile f( last_selected_pdb_filename );
+   if ( !f.open( QIODevice::WriteOnly ) ) {
+      error_msg = QString( us_tr("can not open file %1 for writing" ) ).arg( last_selected_pdb_filename );
+      last_selected_pdb_filename = "";
+      return false;
+   }
+
+   QString pdb_header = "REMARK US-SOMO temporary file for visualization\n";
+   QString pdb_text   = "";
+
+   for ( int h = 0; h < (int) selected_models.size(); ++h ) {
+      int i = selected_models[ h ];
+      pdb_text += QString( "MODEL     %1\n" ).arg( i + 1 );
+      for (unsigned int j = 0; j < (unsigned int) model_vector[i].molecule.size (); j++) {
+         for (unsigned int k = 0; k < (unsigned int) model_vector[i].molecule[j].atom.size (); k++) {
+            PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+
+            pdb_text +=
+               QString("")
+               .sprintf(     
+                        "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                        this_atom->serial,
+                        this_atom->orgName.toLatin1().data(),
+                        this_atom->resName.toLatin1().data(),
+                        this_atom->chainID.toLatin1().data(),
+                        this_atom->resSeq.toUInt(),
+                        this_atom->coordinate.axis[ 0 ],
+                        this_atom->coordinate.axis[ 1 ],
+                        this_atom->coordinate.axis[ 2 ],
+                        this_atom->occupancy,
+                        this_atom->tempFactor,
+                        this_atom->element.toLatin1().data()
+                             );
+         }
+      }
+
+      pdb_text +=
+         "TER\nENDMDL\n";
+   }
+
+   QTextStream ts( &f );
+   ts << pdb_header;
+   ts << pdb_text;
+   ts << "END\n";
+   f.close();
+
+   // qDebug() << QString( us_tr( "File %1 created\n" ) ).arg( last_selected_pdb_filename );
+   return true;
 }
