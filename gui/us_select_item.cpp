@@ -17,15 +17,16 @@ US_SelectItem::US_SelectItem( QList< QStringList >& items,
    const int def_sort )
    : US_WidgetsDialog( 0, 0 ), items( items ), hdrs( hdrs )
 {
-   multi_sel         = false;
-   deleted_button    = false;
-   autoflow_button   = false;
-   autoflow_da       = false;
-   selxP             = aselxP;
-   selxsP            = NULL;
-   sort_ord          = ( def_sort < 0 ) ? Qt::DescendingOrder
-                                        : Qt::AscendingOrder;
-   sort_col          = qAbs( def_sort ) - 1;
+   multi_sel           = false;
+   deleted_button      = false;
+   autoflow_button     = false;
+   autoflow_gmp_report = false;
+   autoflow_da         = false;
+   selxP               = aselxP;
+   selxsP              = NULL;
+   sort_ord            = ( def_sort < 0 ) ? Qt::DescendingOrder
+                                          : Qt::AscendingOrder;
+   sort_col            = qAbs( def_sort ) - 1;
 
    build_layout( titl );
 
@@ -45,6 +46,7 @@ US_SelectItem::US_SelectItem( QList< QStringList >& items,
    deleted_button_autoflow    = false;
    autoflow_button   = false;
    autoflow_da       = false;
+   autoflow_gmp_report = false;
    
    
    if ( !add_label.isEmpty() )
@@ -64,8 +66,7 @@ US_SelectItem::US_SelectItem( QList< QStringList >& items,
 	 }
        if( add_label == "AUTOFLOW_GMP_REPORT")
 	 {
-	   
-	   
+	   autoflow_gmp_report = true;	   
 	 }
      }
    
@@ -263,6 +264,7 @@ void US_SelectItem::list_data()
    nitems              = items.count();
    itemlist.clear();
 
+   qDebug() << "have_search " << have_search;
    qDebug() << "LIST DATA 1";
 
    for ( int ii = 0; ii < nitems; ii++ )
@@ -296,7 +298,13 @@ void US_SelectItem::list_data()
       nrows            = 0;
       for ( int ii = 0; ii < mxrows; ii++ )
       {  // Bump therow count for each item name matching the filter
-         QString iname    = itemlist.at( ii );
+         //QString iname    = itemlist.at( ii );
+	 QString iname;
+	 if ( autoflow_button || autoflow_gmp_report)
+	   iname = items[ ii ][ 1 ];  // Search by runID
+	 else
+	   iname    = itemlist.at( ii );
+	 
          if ( iname.contains( dsearch, Qt::CaseInsensitive ) )
             nrows++;
       }
@@ -315,11 +323,19 @@ void US_SelectItem::list_data()
    int kk           = 0;
    for ( int ii = 0; ii < mxrows; ii++ )
    {  // Propagate list widget with labels
-      QString iname    = itemlist.at( ii );
+      // QString iname    = itemlist.at( ii );
+
+     QString iname;
+     if ( autoflow_button || autoflow_gmp_report )
+       iname = items[ ii ][ 1 ];  // Search by runID
+     else
+       iname    = itemlist.at( ii );
 
       qDebug() << "LIST DATA 4a";
       qDebug() << "4a: autoflow_da, items[ ii ][ ncols -1 ]: " << autoflow_da << "," <<  items[ ii ][ ncols -1 ];
       qDebug() << "LIST DATA 4ab";
+
+      qDebug() << "have_search, iname, dsearch -- " << have_search << iname << dsearch;
       
       // Skip where name does not match the filter
       if ( have_search  &&
@@ -327,7 +343,8 @@ void US_SelectItem::list_data()
          continue;
 
       // Set the column 0 name field
-      tw_data->setItem( kk, 0, new QTableWidgetItem( iname ) );
+      //tw_data->setItem( kk, 0, new QTableWidgetItem( iname ) );
+      tw_data->setItem( kk, 0, new QTableWidgetItem( items[ ii ][ 0 ] ) );
 
       //qDebug() << "4a: autoflow_da, items[ ii ][ ncols -1 ]: " << autoflow_da << "," <<  items[ ii ][ ncols -1 ];
       

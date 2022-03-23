@@ -763,6 +763,12 @@ void US_Analysis_auto::gui_update( )
 	  //New case of automated 'FITMEN_AUTO' stage:
 	  if ( submitted.toString() == "FITMEN_AUTO" && Process_2dsafm[ triple_curr_key ] )
 	    {
+	      //What if submited stage still "FITMEN_AUTO" but nextWaitStatus="COMPLETE" ? (the submission daemon didn't yet updated submitted status...)
+	      //I.e., FITMEN_AUTO was processed BUT submission daemon still sees it in 'status' "FITMEN_AUTO" ?
+	      qDebug() << "FITMEN_AUTO: nextWaitStatus -- " << nextWaitStatus;
+	      if ( nextWaitStatus == "COMPLETE" || nextWaitStatus == "complete" )
+		continue;
+	      
 	      //--- Check status of the FITMEN_AUTO | Entire Analysis for the triple 
 	      bool fitmen_auto_processed;
 	      fitmen_auto_processed = check_fitmen_status( requestID, stage_name );
@@ -810,8 +816,6 @@ void US_Analysis_auto::gui_update( )
 	      
 	      //End of automatic processing
 
-	      
-	      
 	      return;	      
 	    }
 	  // END of new automated 'FITMEN_AUTO' stage
