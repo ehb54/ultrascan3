@@ -112,8 +112,11 @@ class US_Analysis_auto : public US_Widgets
 	 
 
 	 QMap < QString, QString > protocol_details_at_analysis;
+
 	 
+	 bool fitmen_bad_vals;
 	 bool no_fm_data_auto;
+
 	 QProgressDialog * progress_msg_fmb;
 	 QVector< double >    v_meni;
 	 QVector< double >    v_bott;
@@ -313,7 +316,7 @@ class US_Analysis_auto : public US_Widgets
 	bool check_fitmen_status( const QString&, const QString& );
 
 	void delete_job  ( QString );
-	void delete_jobs_at_fitmen  ( QString );
+	void delete_jobs_at_fitmen  ( QMap< QString, QString > & );
 	void show_overlay( QString );
 
 	void show_results   ( void );
