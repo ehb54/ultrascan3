@@ -4945,6 +4945,7 @@ DbgLv(1) << " eupd:  s_meni s_bott" << s_meni << s_bott;
                               " that you \"Cancel\" the \"Update Edit\"\n"
                               "and retry after setting a reasonable value." );
       }
+
    }
    else if ( botnew != 0.0  &&  botnew < BOTT_LOWVAL )
    {
@@ -5194,6 +5195,12 @@ DbgLv(1) << " eupd:       ixmlin ixblin ixllin" << ixmlin << ixblin << ixllin;
                tr( "The selected Meniscus value, %1 , extends into the data"
                    " range whose left-side value is %2 . This Edit update"
                    " cannot be performed!" ).arg( mennew ).arg( lefval ) );
+
+	    //-- Revert autoflowAnalysisSatges back to 'unknown'
+	    QString requestID = triple_information[ "requestID" ];
+	    revert_autoflow_analysis_stages_record( requestID );
+	    //---------------------------------------------------//
+	    
             continue;
          }
 

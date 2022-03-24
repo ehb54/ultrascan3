@@ -1796,7 +1796,7 @@ DbgLv(1) << " eupd:       ixmlin ixblin ixllin" << ixmlin << ixblin << ixllin;
                tr( "The selected Meniscus value, %1 , extends into the data"
                    " range whose left-side value is %2 . This Edit update"
                    " cannot be performed!" ).arg( mennew ).arg( lefval ) );
-            continue;
+            
 
 	    //-- Revert autoflowAnalysisSatges back to 'unknown'
 	    if ( auto_mode )
@@ -1804,9 +1804,10 @@ DbgLv(1) << " eupd:       ixmlin ixblin ixllin" << ixmlin << ixblin << ixllin;
 		QString requestID = triple_information[ "requestID" ];
 		revert_autoflow_analysis_stages_record( requestID );
 	      }
-	 //---------------------------------------------------//
-	    
-         }
+	    //---------------------------------------------------//
+
+	    continue;
+	 }
 
          demval        = s_meni.length() - ncmval;  // Deltas in old,new value strings
          debval        = s_bott.length() - ncbval;
