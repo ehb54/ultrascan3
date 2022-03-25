@@ -505,7 +505,7 @@ void US_Analysis_auto::gui_update( )
 	  
 	  in_gui_update  = false;
 
-	  emit analysis_back_to_initAutoflow( );;
+	  emit analysis_back_to_initAutoflow( );
 	  
 	  return;
 	}
