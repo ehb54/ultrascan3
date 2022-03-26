@@ -26,9 +26,11 @@ qDebug() << "PU:l_all: dbP" << dbP;
       QStringList qry;
       qry << "get_protocol_desc" << inv_id;
       dbP->query( qry );
-qDebug() << "PU:l_all: qry" << qry;
-qDebug() << "PU:l_all:  qry stat" << dbP->lastError();
-
+      
+      qDebug() << "PU:l_all: qry" << qry;
+      qDebug() << "PU:l_all:  qry stat" << dbP->lastError();
+      qDebug() << "PU:l_all:  qry errno, US_DB2::OK" << dbP->lastErrno() << US_DB2::OK;
+ 
       if ( dbP->lastErrno() != US_DB2::OK )
          return nrecs;
 
