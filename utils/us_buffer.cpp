@@ -434,7 +434,8 @@ US_Buffer::US_Buffer()
    componentIDs       .clear();
    cosed_componentIDs .clear();
    concentration      .clear();
-   cosed_attributes.clear();
+   cosed_attributes   .clear();
+   overlaying         .clear();
 }
 
 void US_Buffer::getSpectrum( US_DB2* db, const QString& type ) 
@@ -557,7 +558,7 @@ bool US_Buffer::writeToDisk( const QString& filename ) const
                             QString::number( cosed_attributes[ i ][ 0 ], 'f', 5 ) );
         xml.writeAttribute( "s", QString::number(cosed_attributes[ i ][ 1 ], 'f', 5 ) );
         xml.writeAttribute( "D", QString::number(cosed_attributes[ i ][ 2 ], 'f', 5) );
-        xml.writeAttribute( "overlaying", US_Util::bool_string( cosed_attributes[ i ][ 3 ] ))
+        xml.writeAttribute( "overlaying", US_Util::bool_string( overlaying[ i ] ))
         xml.writeEndElement(); // component
     }
 
@@ -638,6 +639,7 @@ bool US_Buffer::readFromDB( US_DB2* db, const QString& bufID )
    cosed_componentIDs .clear();
    concentration      .clear();
    cosed_attributes   .clear();
+   overlaying         .clear();
    q                  .clear();
 
    q << "get_buffer_components" <<  bufferID;
@@ -679,12 +681,12 @@ bool US_Buffer::readFromDB( US_DB2* db, const QString& bufID )
     while ( db->next() )
     {
         cosed_componentIDs  << db->value( 0 ).toString();
-        QList <double,double,double,bool> cosed_comp_attr;
+        QList <double> cosed_comp_attr;
         cosed_comp_attr      << db->value( 4 ).toString().toDouble();
         cosed_comp_attr      << db->value( 5 ).toString().toDouble();
         cosed_comp_attr      << db->value( 6 ).toString().toDouble();
-        cosed_comp_attr      << US_Util::bool_flag(db->value( 7 ).toString() );
         cosed_attributes     << cosed_comp_attr;
+        overlaying      << US_Util::bool_flag(db->value( 7 ).toString() );
     }
 
     for ( int i = 0; i < cosed_componentIDs.size(); i++ )
@@ -833,7 +835,7 @@ int US_Buffer::saveToDB( US_DB2* db, const QString private_buffer )
           << QString::number( cosed_attributes[ i ][ 0 ], 'f', 5 )
           << QString::number( cosed_attributes[ i ][ 1 ], 'f', 5 )
           << QString::number( cosed_attributes[ i ][ 2 ], 'f', 5)
-          << US_Util::bool_string( cosed_attributes[ i ][ 3 ] )
+          << US_Util::bool_string( overlaying[ i ] )
         db->statusQuery( q );
 //qDebug() << "add_buffer_components-status=" << db->lastErrno();
 
@@ -961,8 +963,8 @@ void US_Buffer::readBuffer( QXmlStreamReader& xml )
          cosed_componentIDs   << a.value( "id"            ).toString();
          cosed_comp_attr      << a.value( "s"             ).toString().toDouble();
          cosed_comp_attr      << a.value( "D"             ).toString().toDouble();
-         cosed_comp_attr      << US_Util::bool_flag(a.value( "overlaying"    ));
          cosed_attributes     << cosed_comp_attr;
+         overlaying      << US_Util::bool_flag(a.value( "overlaying"    ));
       }
       if ( xml.isStartElement()  &&  xml.name() == "spectrum" )
         readSpectrum( xml );
@@ -1091,6 +1093,6 @@ void US_Buffer::dumpBuffer( void ) const
    for ( int i = 0; i < cosed_component.size(); i++ )
    {
       qDebug() << cosed_component[ i ].name << cosed_attributes[ i ][ 0 ] << cosed_attributes[ i ][ 1 ]
-      << cosed_attributes[ i ][ 2 ] << cosed_attributes[ i ][ 3 ] << cosed_componentIDs[ i ];
+      << cosed_attributes[ i ][ 2 ] << overlaying[ i ] << cosed_componentIDs[ i ];
    }
 };
