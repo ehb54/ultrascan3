@@ -143,6 +143,7 @@ class US_ReporterGMP : public US_Widgets
 	 US_SelectItem* pdiag_autoflow;
 
 	 QString html_assembled;
+	 QString html_failed;
 	 QString html_general;
 	 QString html_lab_rotor;
 	 QString html_operator;
@@ -178,6 +179,7 @@ class US_ReporterGMP : public US_Widgets
 	 QString    filePath;
 	 QString    FileName;
 	 QString    intensityID;
+	 QString    analysisIDs;
 
 	 QString    current_date;
 	 
@@ -202,6 +204,7 @@ class US_ReporterGMP : public US_Widgets
 	 QVector< QString >  Array_of_triples;
 	 QMap< QString, QStringList > Triple_to_Models;
 	 QMap< QString, QStringList > Triple_to_ModelsMissing;
+	 QMap< QString, QString >     Triple_to_FailedStage;
 	 QMap< QString, QMap< QString, QString > > Triple_to_ModelsDesc;
 	 
 	 QMap< QString, QString > triple_info_map;
@@ -408,8 +411,12 @@ class US_ReporterGMP : public US_Widgets
 	
       private slots:
 	void loadRun_auto( QMap < QString, QString > & );
+	void check_failed_triples( void );
+	QMap < QString, QString > read_autoflowAnalysis_record( US_DB2*, const QString& );
+	QMap < QString, QString > read_autoflowAnalysisHistory_record( US_DB2*, const QString& );
 	void check_models ( int );
 	void check_for_missing_models ( void );
+	QString  compose_html_failed_stage_missing_models( void );
 	QString  missing_models_msg( void );
 	void reset_report_panel ( void );
 	void view_report ( void );
