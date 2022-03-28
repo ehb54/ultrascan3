@@ -40,8 +40,12 @@ class US_BufferGuiSelect: public US_Widgets
       US_BufferGuiSelect( int*, int*, US_Buffer* );
 
       //! A BufferComponent vector structure for all components in 
-      //! template list (stored in us_home/etc/buffer.xml). 
+      //! template list (stored in us_home/etc/bufferComponents.xml).
       QMap< QString, US_BufferComponent > component_list;
+
+      //! A CosedComponent vector structure for all components in
+      //! template list (stored in us_home/etc/cosedComponents.xml).
+      QMap< QString, US_BufferComponent > cosed_component_list;
 
       US_Buffer*    buffer;
       int*          personID;
@@ -72,6 +76,7 @@ class US_BufferGuiSelect: public US_Widgets
 
       QListWidget*  lw_buffer_list;
       QListWidget*  lw_buffer_comps;
+      QListWidget*  lw_cosed_comps;
 
       US_Help       showHelp;
 
@@ -154,7 +159,7 @@ class US_BufferGuiNew : public US_Widgets
       bool          from_db;
       int           dbg_level;
       US_Buffer*    buffer;
-
+      bool          cosed;
       QPushButton*  pb_accept;
       QPushButton*  pb_spectrum;
 
@@ -166,37 +171,50 @@ class US_BufferGuiNew : public US_Widgets
       QLineEdit*    le_viscos;
       QLineEdit*    le_ph;   
       QLineEdit*    le_compress;
-
+      QLineEdit*    le_sedcoeff;
+      QLineEdit*    le_diffcoeff;
+      QCheckBox*    ck_overlaying;
       QCheckBox*    ck_manual;
 
       QListWidget*  lw_allcomps;
       QListWidget*  lw_bufcomps;
+      QListWidget*  lw_allcosed;
+      QListWidget*  lw_cosedcomps;
 
       //! A BufferComponent map structure for all components in 
-      //!   template list (stored in us_home/etc/buffer.xml). 
+      //!   template list (stored in us_home/etc/bufferComponents.xml).
       QMap< QString, US_BufferComponent > component_list;
+      //! A BufferComponent map structure for all cosedimenting components in
+      //!   template list (stored in us_home/etc/cosedComponents.xml).
+      QMap< QString, US_CosedComponent > cosed_component_list;
 
       US_Help       showHelp;
 
    private slots:
 
-      void new_description ();
-      void add_component   ();
-      void select_bcomp    ();
-      void remove_bcomp    ( QListWidgetItem* );
-      void recalc_density  ( void );
-      void recalc_viscosity( void );
-      void ph              ( void );
-      void compressibility ( void );
-      void density         ( void );
-      void viscosity       ( void );
-      void manual_flag     ( bool );
+      void new_description     ();
+      void add_component       ();
+      void add_cosed_component ();
+      void select_bcomp        ();
+      void select_cosedcomp    ();
+      void remove_bcomp        ( QListWidgetItem* );
+      void remove_cosedcomp    ( QListWidgetItem* );
+      void recalc_density      ( void );
+      void recalc_viscosity    ( void );
+      void ph                  ( void );
+      void compressibility     ( void );
+      void density             ( void );
+      void viscosity           ( void );
+      void sedcoeff            ( void );
+      void diffcoeff           ( void );
+      void manual_flag         ( bool );
+      void overlaying_flag     ( bool );
       //void spectrum        ( void );
-      void spectrum_class  ( void );
-      void newAccepted     ( void );
-      void newCanceled     ( void );
-      void write_db        ( void );
-      void write_disk      ( void );
+      void spectrum_class      ( void );
+      void newAccepted         ( void );
+      void newCanceled         ( void );
+      void write_db            ( void );
+      void write_disk          ( void );
       void help( void ) { showHelp.show_help( "buffer_new.html" ); };
       
    public slots:
