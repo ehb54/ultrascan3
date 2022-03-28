@@ -269,7 +269,7 @@ void US_CosedComponent::getInfoFromDB( US_DB2* db )
     range             = range.isEmpty() ? sl.join( " " ) : range;
 }
 
-void US_BufferComponent::getAllFromHD(
+void US_CosedComponent::getAllFromHD(
         QMap< QString, US_CosedComponent >& componentList )
 {
     componentList.clear();
@@ -415,6 +415,7 @@ void US_CosedComponent::putAllToHD(
 //-------------  US_Buffer
 US_Buffer::US_Buffer()
 {
+   qDebug() << "test2";
    compressibility = 0.0;
    pH              = WATER_PH;
    density         = DENS_20W;
@@ -422,6 +423,7 @@ US_Buffer::US_Buffer()
    manual          = false;
    replace_spectrum = false;
    new_or_changed_spectrum = false;
+
    person             .clear();
    bufferID           .clear();
    GUID               .clear();
@@ -558,7 +560,7 @@ bool US_Buffer::writeToDisk( const QString& filename ) const
                             QString::number( cosed_attributes[ i ][ 0 ], 'f', 5 ) );
         xml.writeAttribute( "s", QString::number(cosed_attributes[ i ][ 1 ], 'f', 5 ) );
         xml.writeAttribute( "D", QString::number(cosed_attributes[ i ][ 2 ], 'f', 5) );
-        xml.writeAttribute( "overlaying", US_Util::bool_string( overlaying[ i ] ))
+        xml.writeAttribute( "overlaying", US_Util::bool_string( overlaying[ i ] ));
         xml.writeEndElement(); // component
     }
 
@@ -671,7 +673,7 @@ bool US_Buffer::readFromDB( US_DB2* db, const QString& bufID )
     q << "get_cosed_components" <<  bufferID;
 
     db->query( q );
-    int status = db->lastErrno();
+    status = db->lastErrno();
     if ( status != US_DB2::OK  &&  status != US_DB2::NOROWS )
     {
         qDebug() << "get_cosed_components error=" << status;
@@ -835,7 +837,7 @@ int US_Buffer::saveToDB( US_DB2* db, const QString private_buffer )
           << QString::number( cosed_attributes[ i ][ 0 ], 'f', 5 )
           << QString::number( cosed_attributes[ i ][ 1 ], 'f', 5 )
           << QString::number( cosed_attributes[ i ][ 2 ], 'f', 5)
-          << US_Util::bool_string( overlaying[ i ] )
+          << US_Util::bool_string( overlaying[ i ] );
         db->statusQuery( q );
 //qDebug() << "add_buffer_components-status=" << db->lastErrno();
 
@@ -958,13 +960,13 @@ void US_Buffer::readBuffer( QXmlStreamReader& xml )
       if ( xml.isStartElement()  &&  xml.name() == "cosed_component" )
       {
          QXmlStreamAttributes a = xml.attributes();
-         QList <double,double,double,bool> cosed_comp_attr;
+         QList <double> cosed_comp_attr;
          cosed_comp_attr      << a.value( "concentration" ).toString().toDouble();
          cosed_componentIDs   << a.value( "id"            ).toString();
          cosed_comp_attr      << a.value( "s"             ).toString().toDouble();
          cosed_comp_attr      << a.value( "D"             ).toString().toDouble();
          cosed_attributes     << cosed_comp_attr;
-         overlaying      << US_Util::bool_flag(a.value( "overlaying"    ));
+         overlaying      << US_Util::bool_flag(a.value( "overlaying" ).toString());
       }
       if ( xml.isStartElement()  &&  xml.name() == "spectrum" )
         readSpectrum( xml );

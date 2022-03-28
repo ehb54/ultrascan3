@@ -105,7 +105,7 @@ class US_UTIL_EXTERN US_Buffer
                                       //!< make up the buffer.
       QList< US_CosedComponent >  cosed_component; //!< A list of cosedimenting components that make up the buffer.
       QList< double > concentration;  //!< Concentrations for each component.
-      QList< QList < double > cosed_attributes; //!< Attributes for each cosed component
+      QList< QList < double >> cosed_attributes; //!< Attributes for each cosed component
                                                                //!< (conc,s,D).
       QList< bool > overlaying; //!< Overlaying attribute for each cosed component.
       QStringList     componentIDs;   //!< An aux list for disk input of buffer components.

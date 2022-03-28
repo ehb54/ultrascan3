@@ -16,7 +16,9 @@ int main( int argc, char* argv[] )
    #include "main1.inc"
 
    // License is OK.  Start up.
-   US_BufferGui* w = new US_BufferGui;
+   US_Buffer buf = US_Buffer();
+   qDebug() << "test343535";
+   US_BufferGui* w = new US_BufferGui();
    w->show();                   //!< \memberof QWidget
    return application.exec();  //!< \memberof QApplication
 }

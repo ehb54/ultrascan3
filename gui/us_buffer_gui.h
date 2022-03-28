@@ -45,7 +45,7 @@ class US_BufferGuiSelect: public US_Widgets
 
       //! A CosedComponent vector structure for all components in
       //! template list (stored in us_home/etc/cosedComponents.xml).
-      QMap< QString, US_BufferComponent > cosed_component_list;
+      QMap< QString, US_CosedComponent > cosed_component_list;
 
       US_Buffer*    buffer;
       int*          personID;
@@ -113,6 +113,7 @@ class US_BufferGuiSelect: public US_Widgets
       void read_from_db    ( const QString&   );
       void search          ( const QString& = QString() );
       void show_component  ( const QString&, double );
+      void show_cosed_component  ( const QString&, double, double, double, bool );
       void reject          ( void );
       void accept          ( void );
       void read_buffer     ( void );
@@ -184,7 +185,7 @@ class US_BufferGuiNew : public US_Widgets
       //! A BufferComponent map structure for all components in 
       //!   template list (stored in us_home/etc/bufferComponents.xml).
       QMap< QString, US_BufferComponent > component_list;
-      //! A BufferComponent map structure for all cosedimenting components in
+      //! A CosedComponent map structure for all cosedimenting components in
       //!   template list (stored in us_home/etc/cosedComponents.xml).
       QMap< QString, US_CosedComponent > cosed_component_list;
 
@@ -205,10 +206,7 @@ class US_BufferGuiNew : public US_Widgets
       void compressibility     ( void );
       void density             ( void );
       void viscosity           ( void );
-      void sedcoeff            ( void );
-      void diffcoeff           ( void );
       void manual_flag         ( bool );
-      void overlaying_flag     ( bool );
       //void spectrum        ( void );
       void spectrum_class      ( void );
       void newAccepted         ( void );
