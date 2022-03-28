@@ -135,6 +135,7 @@ class US_InitDialogueGui : public US_WidgetsDialog
      void switch_to_editing_init(  QMap < QString, QString > & protocol_details );
      void switch_to_analysis_init(  QMap < QString, QString > & protocol_details );
      void switch_to_report_init(  QMap < QString, QString > & protocol_details );
+     void to_initAutoflow( void );
 
 };
 

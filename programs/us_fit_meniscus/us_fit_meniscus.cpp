@@ -34,6 +34,7 @@ US_FitMeniscus::US_FitMeniscus( QMap<QString, QString> triple_info_map ) : US_Wi
   
   auto_mode = true;
   no_fm_data = false;
+  bad_men_vals = false;
   
   setWindowTitle( tr( "Fit Meniscus from 2DSA Data: ") + triple_information[ "triple_name" ] );
   setPalette( US_GuiSettings::frameColor() );
@@ -332,6 +333,7 @@ US_FitMeniscus::US_FitMeniscus() : US_Widgets()
 {
    auto_mode = false;
    no_fm_data = false;
+   bad_men_vals = false;
    
    setWindowTitle( tr( "Fit Meniscus from 2DSA Data" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -1510,34 +1512,39 @@ DbgLv(1) << " eupd:  s_meni s_bott" << s_meni << s_bott;
 
    if ( bad_vals )
    {
-      int response   = QMessageBox::critical( (QWidget*)this,
-                                               mhdr,
-                                               mmsg,
-                                               QMessageBox::Save,
-                                               QMessageBox::Cancel );
-
-      if ( response == QMessageBox::Cancel )
-      {
-         QMessageBox::information( (QWidget*)this,
-                                   tr( "Canceled" ),
-                                   tr( "\"Update Edit\" has been canceled!" ) );
-
-	 //-- Revert autoflowAnalysisSatges back to 'unknown'
-	 if ( auto_mode )
-	   {
-	     QString requestID = triple_information[ "requestID" ];
-	     revert_autoflow_analysis_stages_record( requestID );
-	   }
-	 //---------------------------------------------------//
+     if ( !auto_mode )
+       {
+	 int response   = QMessageBox::critical( (QWidget*)this,
+						 mhdr,
+						 mmsg,
+						 QMessageBox::Save,
+						 QMessageBox::Cancel );
 	 
-         return;
-      }
-      else
-      {
-         QMessageBox::information( (QWidget*)this,
-                                   tr( "Saving" ),
-                                   tr( "\"Update Edit\" will proceed!" ) );
-      }
+	 if ( response == QMessageBox::Cancel )
+	   {
+	     QMessageBox::information( (QWidget*)this,
+				       tr( "Canceled" ),
+				       tr( "\"Update Edit\" has been canceled!" ) );
+	     
+	     return;
+	   }
+	 else
+	   {
+	     QMessageBox::information( (QWidget*)this,
+				       tr( "Saving" ),
+				       tr( "\"Update Edit\" will proceed!" ) );
+	   }
+       }
+     else //GMP framework: stop ANALYSIS for current triple, send signal
+       {
+	 bad_men_vals = true;
+	 QString reason_for_failure = mhdr + ", " + mmsg.split("!")[0];
+	 triple_information[ "failed" ] = reason_for_failure;
+	 emit bad_meniscus_values( triple_information );
+	 close();
+
+	 return;
+       }
    }
 
    mmsg           = "";
@@ -1572,27 +1579,36 @@ DbgLv(1) << " eupd:  s_meni s_bott" << s_meni << s_bott;
          ncbval   = edtext.indexOf( "\"",  ixbval + 1 ) - ixbval;
          ncblin   = edtext.indexOf( ">", ixblin ) - ixblin + 1;
       }
-DbgLv(1) << " eupd:  mennew" << mennew << "lefval" << lefval << "botnew" << botnew;
-DbgLv(1) << " eupd:   ixmlin ixblin" << ixmlin << ixblin << "ncmlin ncblin" << ncmlin << ncblin;
+      
+      DbgLv(1) << " eupd:  mennew" << mennew << "lefval" << lefval << "botnew" << botnew;
+      DbgLv(1) << " eupd:   ixmlin ixblin" << ixmlin << ixblin << "ncmlin ncblin" << ncmlin << ncblin;
 
+      
       if ( mennew >= lefval )
-      {
-         QMessageBox::warning( this, tr( "Meniscus within Data Range" ),
-            tr( "The selected Meniscus value, %1 , extends into the data"
-                " range whose left-side value is %2 . This Edit update"
-                " cannot be performed!" ).arg( mennew ).arg( lefval ) );
+	{
+	  if ( !auto_mode )
+	    {
+	      QMessageBox::warning( this, tr( "Meniscus within Data Range" ),
+				    tr( "The selected Meniscus value, %1 , extends into the data"
+					" range whose left-side value is %2 . This Edit update"
+					" cannot be performed!" ).arg( mennew ).arg( lefval ) );
+	      
+	      return;
+	    }
+	  else // GMP
+	    {
+	      bad_men_vals = true;
+	      QString reason_for_failure = QString( "The selected Meniscus value, %1 , extends into the data range whose left-side value is %2")
+		.arg( mennew )
+		.arg( lefval );
+	      triple_information[ "failed" ] = reason_for_failure;
+	      emit bad_meniscus_values( triple_information );
+	      close();
 
-	 //-- Revert autoflowAnalysisSatges back to 'unknown'
-	 if ( auto_mode )
-	   {
-	     QString requestID = triple_information[ "requestID" ];
-	     revert_autoflow_analysis_stages_record( requestID );
-	   }
-	 //---------------------------------------------------//
-	 
-         return;
-      }
-
+	      return;
+	    }
+	}
+      
       demval        = s_meni.length() - ncmval;  // Deltas old,new values
       debval        = s_bott.length() - ncbval;
 
@@ -1788,16 +1804,35 @@ DbgLv(1) << " eupd:       edtext len" << edtext.length();
             ncbval   = edtext.indexOf( "\"",  ixbval + 1 ) - ixbval;
             ncblin   = edtext.indexOf( ">", ixblin ) - ixblin + 1;
          }
-DbgLv(1) << " eupd:       ixmlin ixblin ixllin" << ixmlin << ixblin << ixllin;
+	 
+	 DbgLv(1) << " eupd:       ixmlin ixblin ixllin" << ixmlin << ixblin << ixllin;
 
          if ( mennew >= lefval )
-         {
-            QMessageBox::warning( this, tr( "Meniscus within Data Range" ),
-               tr( "The selected Meniscus value, %1 , extends into the data"
-                   " range whose left-side value is %2 . This Edit update"
-                   " cannot be performed!" ).arg( mennew ).arg( lefval ) );
-            continue;
-         }
+	   {
+	     if ( !auto_mode )
+	       {
+		 QMessageBox::warning( this, tr( "Meniscus within Data Range" ),
+				       tr( "The selected Meniscus value, %1 , extends into the data"
+					   " range whose left-side value is %2 . This Edit update"
+					   " cannot be performed!" ).arg( mennew ).arg( lefval ) );
+		 
+		 continue;
+	       }
+	     else //GMP
+	       {
+		 bad_men_vals = true;
+		 QString reason_for_failure = QString( "The selected Meniscus value, %1 , extends into the data range whose left-side value is %2")
+		   .arg( mennew )
+		   .arg( lefval );
+		 triple_information[ "failed" ] = reason_for_failure;
+		 emit bad_meniscus_values( triple_information );
+		 close();
+		 		 
+		 return;  //ALEXEY - if one wvl in a triple fails, ALL fail!!!
+		 //continue;
+	       }
+	     
+	   }
 
          demval        = s_meni.length() - ncmval;  // Deltas in old,new value strings
          debval        = s_bott.length() - ncbval;

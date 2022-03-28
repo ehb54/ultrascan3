@@ -207,12 +207,13 @@ DbgLv(1) << "ENABLING!!!";
 //Slot to ENABLE tabs and Next/Prev buttons, but make all Widgets read-only
 void US_AnalysisProfileGui::enable_tabs_buttons_readonly( void )
 {
-DbgLv(1) << "ENABLING!!!";
-   pb_next   ->setEnabled( true );
-   pb_prev   ->setEnabled( true );
+DbgLv(1) << "AProfie: ENABLING in read-only mode!!!";
+   // pb_next   ->setEnabled( true );
+   // pb_prev   ->setEnabled( true );
 
+   qDebug() << "TbWidget count: " << tabWidget->count();
 
-   for ( int ii = 1; ii < tabWidget->count(); ii++ )
+   for ( int ii = 0; ii < tabWidget->count(); ii++ )
    {
       tabWidget ->setTabEnabled( ii, true );
       QPalette pal = tabWidget ->tabBar()->palette();
@@ -222,11 +223,13 @@ DbgLv(1) << "ENABLING!!!";
       QWidget* pWidget= tabWidget->widget( ii );
 
       //Find all children of each Tab in QTabWidget [children of all types...]
-      QList< QPushButton* > allPButtons = pWidget->findChildren< QPushButton* >();
-      QList< QComboBox* >   allCBoxes   = pWidget->findChildren< QComboBox* >();
-      QList< QSpinBox* >    allSBoxes   = pWidget->findChildren< QSpinBox* >();
-      QList< QwtCounter* >  allCounters = pWidget->findChildren< QwtCounter* >();
-      QList< QCheckBox* >   allChBoxes  = pWidget->findChildren< QCheckBox* >();
+      QList< QPushButton* > allPButtons  = pWidget->findChildren< QPushButton* >();
+      QList< QComboBox* >   allCBoxes    = pWidget->findChildren< QComboBox* >();
+      QList< QSpinBox* >    allSBoxes    = pWidget->findChildren< QSpinBox* >();
+      QList< QwtCounter* >  allCounters  = pWidget->findChildren< QwtCounter* >();
+      QList< QCheckBox* >   allChBoxes   = pWidget->findChildren< QCheckBox* >();
+      QList< QLineEdit* >   allLineedits = pWidget->findChildren< QLineEdit* >();
+      QList< QGroupBox* >   allGBoxes    = pWidget->findChildren< QGroupBox* >();
 
       // and so on ..
 
@@ -254,6 +257,10 @@ DbgLv(1) << "ENABLING!!!";
          allCounters[jj]->setEnabled(false);
       for (int jj = 0; jj < allChBoxes.count(); jj++ )
          allChBoxes[jj] ->setEnabled(false);
+      for (int jj = 0; jj < allLineedits.count(); jj++ )
+	allLineedits[jj] ->setEnabled(false);
+      for (int jj = 0; jj < allGBoxes.count(); jj++ )
+	allGBoxes[jj] ->setEnabled(false);
       // and so on ..
 
    }
@@ -321,16 +328,15 @@ use_db=false;
 
 //END of TESTING
  
- 
- 
+  
    // Populate GUI settings from protocol,analysis controls
    le_protname   ->setText( currProf->protoname );
    le_aproname   ->setText( currProf->aprofname );
 DbgLv(1) << "APGe: inP: aname pname" << currProf->aprofname << currProf->protoname;
 
-DbgLv(1) << "APGe: inP: CALL check_user_level()";
-   check_user_level();
-DbgLv(1) << "APGe: inP:  RTN check_user_level()";
+// DbgLv(1) << "APGe: inP: CALL check_user_level()";
+//    check_user_level();
+// DbgLv(1) << "APGe: inP:  RTN check_user_level()";
 
    int nchan      = currProf->pchans.count();
 DbgLv(1) << "APGe: inP: nchan" << nchan;
@@ -566,6 +572,11 @@ else
    // Save to update Gui
    qDebug() << "US_AnaprofPanGen::initPanel(): before save: currProf->chndescs_alt, size() -- " << currProf->chndescs_alt << currProf->chndescs_alt.size();
    savePanel();
+
+   DbgLv(1) << "APGe: FROM initAprfile:General - inP: CALL check_user_level()";
+      check_user_level();
+   DbgLv(1) << "APGe: inP:  FROM initAprfile:General - RTN check_user_level()";
+
 }
 
 // Check the Run name
@@ -632,6 +643,8 @@ DbgLv(1) << "APGe:ckul: level" << US_Settings::us_inv_level();
 //         emit set_tabs_buttons_inactive();
 //      else
 //         emit set_tabs_buttons_active_readonly();
+
+      emit set_tabs_buttons_active_readonly();
 
 DbgLv(1) << "SIGNAL!!!!" ;
    }
