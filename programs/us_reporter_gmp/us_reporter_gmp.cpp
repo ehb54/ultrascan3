@@ -1821,8 +1821,8 @@ void US_ReporterGMP::build_perChanTree ( void )
 						    << "f/f0-vs-s 2D Model"
 						    << "f/f0-vs-MW 2D Model"
 						    << "D-vs-s 2D Model"
-						    << "D-vs-MW 2D Model"
-						    << "3D Model Plot";
+						    << "D-vs-MW 2D Model";
+			  //<< "3D Model Plot";
 								  
 			  for ( int hh = 0; hh < tripleReportMasksPlotList.size(); ++hh )
 			    {
@@ -5222,7 +5222,8 @@ void US_ReporterGMP::plotres( QMap < QString, QString> & tripleInfo )
   t_name.replace(".", "");
   QString s_name = tripleInfo[ "stage_name" ] ;
 
-  bool show_3d   = ( perChanMask_edited. ShowTripleModelPlotParts[ t_name ][ s_name ][ "3D Model Plot" ].toInt() ) ? true : false ;
+  //bool show_3d   = ( perChanMask_edited. ShowTripleModelPlotParts[ t_name ][ s_name ][ "3D Model Plot" ].toInt() ) ? true : false ;
+  bool show_3d   = false;
   bool show_d_mw = ( perChanMask_edited. ShowTripleModelPlotParts[ t_name ][ s_name ][ "D-vs-MW 2D Model" ].toInt() ) ? true : false ; 
   bool show_d_s  = ( perChanMask_edited. ShowTripleModelPlotParts[ t_name ][ s_name ][ "D-vs-s 2D Model" ].toInt() ) ? true : false ; 
   bool show_dd   = ( perChanMask_edited. ShowTripleModelPlotParts[ t_name ][ s_name ][ "Diffusion Coefficient Distribution" ].toInt() ) ? true : false ;
