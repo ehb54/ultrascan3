@@ -193,9 +193,9 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
      {
        //ALEXEY: OR enable all tabs ? (e.g. for demonstration, in a read-only mode or the like ?)
        if ( i == 0 ) 
-	 tabWidget->tabBar()->setTabEnabled(i, true);
+   	 tabWidget->tabBar()->setTabEnabled(i, true);
        else
-	 tabWidget->tabBar()->setTabEnabled(i, false);
+   	 tabWidget->tabBar()->setTabEnabled(i, false);
      }
 
    connect( tabWidget, SIGNAL( currentChanged( int ) ), this, SLOT( initPanels( int ) ) );
@@ -225,6 +225,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    connect( epanInit, SIGNAL( define_new_experiment_init( QStringList & ) ), this, SLOT( define_new_experiment( QStringList &)  ) );
    connect( epanInit, SIGNAL( switch_to_live_update_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
    connect( epanInit, SIGNAL( switch_to_post_processing_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & )  ) );
+   connect( epanInit, SIGNAL( to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
    
    connect( this, SIGNAL( pass_used_instruments( QStringList & ) ), epanExp, SLOT( pass_used_instruments( QStringList &)  ) );
    
@@ -400,7 +401,6 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
      
    main->addWidget( tabWidget );
 
-   
    for (int i=0; i < tabWidget->count(); ++i )
      {
        //ALEXEY: OR enable all tabs ? (e.g. for demonstration, in a read-only mode or the like ?)
@@ -442,7 +442,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( epanInit, SIGNAL( switch_to_editing_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_editing( QMap < QString, QString > & )  ) );
    connect( epanInit, SIGNAL( switch_to_analysis_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_analysis( QMap < QString, QString > & )  ) );
    connect( epanInit, SIGNAL( switch_to_report_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_report( QMap < QString, QString > & )  ) );
-   
+   connect( epanInit, SIGNAL( to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
          
    connect( this, SIGNAL( pass_used_instruments( QStringList & ) ), epanExp, SLOT( pass_used_instruments( QStringList &)  ) );
    
@@ -1589,6 +1589,16 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   
   int autoflowID = autoflow_id_selected.toInt();
   protocol_details = read_autoflow_record( autoflowID );
+
+  //Check if run selected still exists
+  if ( protocol_details.isEmpty() )
+    {
+      qDebug() << "Run does NOT exists!!! Updating list...";
+
+      //emit to_initAutoflow();
+      initAutoflowPanel();
+      return;
+    }
   
   protocol_details[ "autoflowID" ] = QString::number(autoflowID);
 
@@ -1948,6 +1958,15 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_record( int autoflowID
 	   protocol_details[ "analysisIDs" ]   = db->value( 19 ).toString();
 	   protocol_details[ "intensityID" ]   = db->value( 20 ).toString();	   
 	 }
+     }
+   else
+     {
+       QMessageBox::warning( this, tr( "No Run Exists" ),
+			     tr( "Selected run does not exists in the DB!  \n\n" )
+			     + db->lastError()
+			     + tr("\n\nThis means that the run either completed OR "
+				  "has been manually deleted.\n\n"
+				  "The Run List will be updated...") );
      }
 
    return protocol_details;

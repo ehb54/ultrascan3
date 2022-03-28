@@ -26,9 +26,11 @@ qDebug() << "PU:l_all: dbP" << dbP;
       QStringList qry;
       qry << "get_protocol_desc" << inv_id;
       dbP->query( qry );
-qDebug() << "PU:l_all: qry" << qry;
-qDebug() << "PU:l_all:  qry stat" << dbP->lastError();
-
+      
+      qDebug() << "PU:l_all: qry" << qry;
+      qDebug() << "PU:l_all:  qry stat" << dbP->lastError();
+      qDebug() << "PU:l_all:  qry errno, US_DB2::OK" << dbP->lastErrno() << US_DB2::OK;
+ 
       if ( dbP->lastErrno() != US_DB2::OK )
          return nrecs;
 
@@ -417,6 +419,8 @@ int US_ProtocolUtil::read_record_auto( const QString protname, int invID_passed,
       qry << "get_protocol_desc" << QString::number( invID_passed );
       dbP->query( qry );
 
+      qDebug() << "In US_ProtocolUtil::read_record_auto: DB NOT NULL; query -- " << qry;
+
       if ( dbP->lastErrno() != US_DB2::OK )
          return idprot;    // Error exit:  unable to read DB record
 
@@ -445,8 +449,13 @@ int US_ProtocolUtil::read_record_auto( const QString protname, int invID_passed,
       }  // END: db records
    }  // END: from database
 
+   qDebug() << "In US_ProtocolUtil::read_record_auto 2:";
+   
    if ( idprot < 0 )
    {  // Find the record in a local file with a matching name
+
+     qDebug() << "In US_ProtocolUtil::read_record_auto 3:";
+     
       QString datdir      = US_Settings::dataDir() + "/projects/";
       datdir.replace( "\\", "/" );        // Possible Windows fix
       QStringList rfilt( "R*.xml" );      // "~/ultrascan/data/projects/R*.xml"
@@ -502,6 +511,9 @@ int US_ProtocolUtil::read_record_auto( const QString protname, int invID_passed,
       }  // END: file loop
    }  // END: local disk
 
+   
+   qDebug() << "In US_ProtocolUtil::read_record_auto 4: idprot " << idprot ;
+   
    return idprot;
 }
 

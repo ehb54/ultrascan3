@@ -8858,7 +8858,8 @@ int US_Edit::create_autoflowAnalysis_record( US_DB2* db, QString& tripleName, QS
        << filename_runID_auto
        << AProfileGUID
        << idInv_auto
-       << status_json;
+       << status_json
+       << QString::number( autoflowID_passed );
  
    qDebug() << "AutoflowAnalysis Record for triple: " << tripleName;
    qDebug() << "Query: " << qry;
@@ -11685,8 +11686,8 @@ void US_Edit::save_report_auto( const QString rtext, const QString rptfpath,
       freport.runID    = runID;
 
       // Write the report record to the database
-      int st = freport.saveFileDocuments( pfdir,  rfiles, dbP,
-                                          idEdit, tripdesc );
+      int st = freport.saveFileDocuments_auto( idInv_auto.toInt(), pfdir,  rfiles, dbP,   //include invID explicitly
+					       idEdit, tripdesc );
 
       if ( st != US_DB2::OK )
       {

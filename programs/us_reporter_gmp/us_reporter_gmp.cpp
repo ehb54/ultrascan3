@@ -21,7 +21,8 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   setWindowTitle( tr( "GMP Report Generator"));
   setPalette( US_GuiSettings::frameColor() );
 
-  auto_mode = false;
+  auto_mode  = false;
+  GMP_report = true;
   
   // primary layouts
   QHBoxLayout* mainLayout     = new QHBoxLayout( this );
@@ -148,7 +149,8 @@ US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
   setWindowTitle( tr( "GMP Report Generator"));
   setPalette( US_GuiSettings::frameColor() );
 
-  auto_mode = true;
+  auto_mode  = true;
+  GMP_report = true;
   
   // primary layouts
   QVBoxLayout* superLayout    = new QVBoxLayout( this );
@@ -362,17 +364,13 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   qApp->processEvents();
 
   //check models existence
-  check_models();
+  check_models( AutoflowID_auto.toInt() );
   progress_msg->setValue( 8 );
   qApp->processEvents();
 
-  //debug
-  QMap < QString, QStringList >::iterator mm;
-  for ( mm = Triple_to_Models.begin(); mm != Triple_to_Models.end(); ++mm )
-    {
-      qDebug() << "For triple -- " << mm.key() << ", there are models: " << mm.value();
-    }
-  //end debug
+  //identify what's intended to be simulated
+  check_for_missing_models( );
+  ////
   
   //build Trees
   build_genTree();  
@@ -387,13 +385,75 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   qApp->processEvents();
   progress_msg->close();
 
-  //generate report (download modles, simulate, create PDFs)
+  //compose a message on missing models
+  QString msg_missing_models = missing_models_msg();
+  
+  //Inform user that current configuraiton corresponds to GMP report
+  if ( !GMP_report )
+    {
+      QMessageBox::information( this, tr( "Report Profile Uploaded" ),
+				tr( "ATTENTION: There are missing models for certain triples: \n\n"
+				    "%2\n\n"
+				    "As a result, a non-GMP report will be generated!")
+				.arg( msg_missing_models) );
+    }
+  
+  //generate report (download models, simulate, create PDFs)
   generate_report();
   
 }
+ 
+//check models existence for a run/protocol loaded
+void US_ReporterGMP::check_for_missing_models ( void )
+{
+  bool hasIT   = cAP2. job4run; //2dsa-it       
+  bool hasMC   = cAP2. job5run; //2dsa-mc
+  bool hasPCSA = cAPp .job_run; //pcsa
+  
+  QMap < QString, QStringList >::iterator mm;
+  for ( mm = Triple_to_Models.begin(); mm != Triple_to_Models.end(); ++mm )
+    {
+      QStringList missing_models;
+      qDebug() << "For triple -- " << mm.key() << ", there are models: " << mm.value();
 
+      if ( hasIT && !mm.value().contains( "2DSA-IT" ))
+	missing_models << "2DSA-IT";
+      if ( hasMC && !mm.value().contains( "2DSA-MC" ))
+	missing_models << "2DSA-MC";
+      if ( hasPCSA && !mm.value().contains( "PCSA" ))
+	missing_models << "PCSA";
+	
+      Triple_to_ModelsMissing[ mm.key() ] = missing_models;
+    }
+
+  //debug
+  for ( mm = Triple_to_ModelsMissing.begin(); mm != Triple_to_ModelsMissing.end(); ++mm )
+    qDebug() << "For triple -- " << mm.key() << ", there are missing models: " << mm.value();
+  
+}
+
+//Compose a string of missing models
+QString US_ReporterGMP::missing_models_msg( void )
+{
+  QString models_str;
+
+  QMap < QString, QStringList >::iterator mm;
+  for ( mm = Triple_to_ModelsMissing.begin(); mm != Triple_to_ModelsMissing.end(); ++mm )
+    {
+      if ( !mm.value().isEmpty() )
+	{
+	  models_str += mm.key() + ", missing models: " + mm.value().join(", ") + "\n";
+	}
+    }
+
+  if ( !models_str.isEmpty() )
+    GMP_report = false;
+  
+  return models_str;
+}
+ 
 //check models existence for a run loaded
-void US_ReporterGMP::check_models ( void )
+void US_ReporterGMP::check_models ( int autoflowID )
 {
   //build Array of triples
   QVector< QString >  Array_of_tripleNames;
@@ -410,7 +470,13 @@ void US_ReporterGMP::check_models ( void )
 	{
 	  QString wvl            = QString::number( chann_wvls[ jj ] );
 	  
-	  QString tripleName = channel_desc_alt.section( ":", 0, 0 )[0] + "." + channel_desc_alt.section( ":", 0, 0 )[1] + "." + wvl;
+	  QString tripleName = channel_desc_alt.section( ":", 0, 0 )[0] + "." + channel_desc_alt.section( ":", 0, 0 )[1];
+
+	  if ( channel_desc_alt.contains( "Interf" ) ) 
+	    tripleName += ".Interference";
+	  else
+	    tripleName += "." + wvl;
+	  
 	  qDebug() << "TripleName -- " << tripleName; 
 	  Array_of_tripleNames.push_back( tripleName );
 	}
@@ -429,65 +495,84 @@ void US_ReporterGMP::check_models ( void )
       
       return;
     }
-
+  
   //iterate over triples && get eID for each triple's data:
   for ( int i=0; i < Array_of_tripleNames.size(); ++ i )
     {
-      //Parse filename
-      QString filename_received = get_filename( Array_of_tripleNames[ i ] );
-      qDebug() << "In show_overlay(): filename_received: " << filename_received;
-      
-      int rID=0;
-      QString rfilename;
-      int eID=0;
-      QString efilename;
-      
-      //get EditedData filename && editedDataID for current triple, then infer rawDataID 
-      QStringList query;
-      query << "get_editedDataFilenamesIDs" << filename_received;
-      db->query( query );
-      
-      int latest_update_time = 1e100;
-      
       QString triple_name_actual = Array_of_tripleNames[ i ];
       
       if ( triple_name_actual.contains("Interference") )
 	triple_name_actual.replace( "Interference", "660" );
       
+      //get requestID in autoflowAnalysis based on tripleName & autoflowID
+      QStringList query;
+      query << "get_modelAnalysisInfo" << Array_of_tripleNames[ i ] << QString::number( autoflowID );
+      db->query( query );
+
+      QString modelDescJson;
       while ( db->next() )
 	{
-	  QString  filename            = db->value( 0 ).toString();
-	  int      editedDataID        = db->value( 1 ).toInt();
-	  int      rawDataID           = db->value( 2 ).toInt();
-	  //QString  date                = US_Util::toUTCDatetimeText( db->value( 3 ).toDateTime().toString( "yyyy/MM/dd HH:mm" ), true );
-	  QDateTime date               = db->value( 3 ).toDateTime();
+	  modelDescJson           = db->value( 0 ).toString();
+	  //Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ] = modelDescJson;
 	  
-	  QDateTime now = QDateTime::currentDateTime();
-
-	  qDebug() << "1. In check_model: filename, editedDataID  -- " << filename << editedDataID ;
-	  
-	  if ( filename.contains( triple_name_actual ) ) 
-	    {
-	      int time_to_now = date.secsTo(now);
-	      if ( time_to_now < latest_update_time )
-		{
-		  latest_update_time = time_to_now;
-		  //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
-		  
-		  rID       = rawDataID;
-		  eID       = editedDataID;
-		  efilename = filename;
-
-		  qDebug() << "In check_model: eID, efilename, triple_name_actual -- " <<  eID << efilename << triple_name_actual;
-		}
-	    }
+	  qDebug() << "Triple, modelDesc -- " << Array_of_tripleNames[ i ] << modelDescJson;
 	}
+      ///
 
-      qDebug() << "In check_models: eID -- " << QString::number( eID );
+      //Now parse modelDecsJson for eID, modelIDs
+      Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ] = parse_models_desc_json( modelDescJson ); 
+      
+            
+      // //Parse filename
+      // QString filename_received = get_filename( Array_of_tripleNames[ i ] );
+      // qDebug() << "In show_overlay(): filename_received: " << filename_received;
+      
+      // int eID=0;
+      // QString efilename;
+      
+      // //get EditedData filename && editedDataID for current triple, then infer rawDataID 
+      // query.clear();
+      // query << "get_editedDataFilenamesIDs" << filename_received;
+      // db->query( query );
+      
+      // int latest_update_time = 1e100;
+      
+      // while ( db->next() )
+      //  	{
+      //  	  QString  filename            = db->value( 0 ).toString();
+      //  	  int      editedDataID        = db->value( 1 ).toInt();
+      //  	  int      rawDataID           = db->value( 2 ).toInt();
+      //  	  //QString  date                = US_Util::toUTCDatetimeText( db->value( 3 ).toDateTime().toString( "yyyy/MM/dd HH:mm" ), true );
+      //  	  QDateTime date               = db->value( 3 ).toDateTime();
+        
+      //  	  QDateTime now = QDateTime::currentDateTime();
+
+      //  	  qDebug() << "1. In check_model: filename, editedDataID  -- " << filename << editedDataID ;
+        
+      //  	  if ( filename.contains( triple_name_actual ) ) 
+      //  	    {
+      //  	      int time_to_now = date.secsTo(now);
+      //  	      if ( time_to_now < latest_update_time )
+      //  		{
+      //  		  latest_update_time = time_to_now;
+      //  		  //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
+      	  
+      //  		  rID       = rawDataID;
+      //  		  eID       = editedDataID;
+      //  		  efilename = filename;
+
+      //  		  qDebug() << "In check_model: eID, efilename, triple_name_actual -- " <<  eID << efilename << triple_name_actual;
+      //  		}
+      //  	    }
+      //  	}
+
+
+      QString eID = Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "eID" ];
+      qDebug() << "In check_models: eID -- " << eID;
       
       //now check models based on eID:
       query.clear();
-      query << "get_modelDescsIDs" << QString::number( eID );
+      query << "get_modelDescsIDs" << eID;
       db->query( query );
 
       QStringList model_list;
@@ -495,26 +580,87 @@ void US_ReporterGMP::check_models ( void )
       while ( db->next() )
 	{
 	  QString  description         = db->value( 0 ).toString();
-	  int      modelID             = db->value( 1 ).toInt();
+	  QString  modelID             = db->value( 1 ).toString();
 	  //QString  date                = US_Util::toUTCDatetimeText( db->value( 3 ).toDateTime().toString( "yyyy/MM/dd HH:mm" ), true );
 	  QDateTime date               = db->value( 2 ).toDateTime();
 	  
 	  QDateTime now = QDateTime::currentDateTime();
 	  
-	  if ( description.contains( "2DSA-IT" ) )
-	    model_list << "2DSA-IT";
+	  if ( description.contains( "2DSA-IT" ) && modelID == Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "2DSA-IT" ] )
+	    {
+	      qDebug() << "2DSA-IT Ids: modelID, read from modelLink: " << modelID << Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "2DSA-IT" ];
+	      model_list << "2DSA-IT";
+	    }
 	  
-	  if ( description.contains( "2DSA-MC" ) )
-	    model_list << "2DSA-MC";
-
-	  if ( description.contains( "PCSA" ) )
-	    model_list << "PCSA";
+	  if ( description.contains( "2DSA-MC" ) && modelID == Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "2DSA-MC" ] )
+	    {
+	      qDebug() << "2DSA-MC Ids: modelID, read from modelLink: " << modelID << Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "2DSA-MC" ];
+	      model_list << "2DSA-MC";
+	    }
 	  
+	  if ( description.contains( "PCSA" ) && modelID == Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "PCSA" ] )
+	    {
+	      qDebug() << "PCSA Ids: modelID, read from modelLink: " << modelID << Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "PCSA" ];
+	      model_list << "PCSA";
+	    }
 	}
 
       //populate QMap connecting triple name to it's existing models
       Triple_to_Models[ Array_of_tripleNames[ i ] ] = model_list;
     }
+}
+
+QMap< QString, QString > US_ReporterGMP::parse_models_desc_json( QString modelDescJson )
+{
+  QMap <QString, QString>  modelDesc_shortened;
+
+  if ( !modelDescJson.isEmpty() )
+    {
+      QJsonDocument jsonDoc = QJsonDocument::fromJson( modelDescJson.toUtf8() );
+      QJsonObject json_obj = jsonDoc.object();
+      
+      foreach(const QString& key, json_obj.keys())
+	{
+	  QJsonValue value = json_obj.value(key);
+	  
+	  qDebug() << "ModelsDesc key, value: " << key << value;
+
+	  if ( key == "2DSA_IT" || key == "2DSA_MC" || key == "PCSA" ) 
+	    {
+	      QString key_mod = key;
+	      key_mod. replace("_","-");
+	      
+	      QJsonArray json_array = value.toArray();
+	      for (int i=0; i < json_array.size(); ++i )
+		{
+		  foreach(const QString& array_key, json_array[i].toObject().keys())
+		    {
+		      if ( array_key == "modelID" )
+			{
+			  if ( !modelDesc_shortened.contains( key_mod ) )  //Temporary, for PCSA (2 entries)
+			    {
+			      modelDesc_shortened[ key_mod ] = json_array[i].toObject().value(array_key).toString();
+			      qDebug() << "modelDescJson Map: -- model, property, value: "
+				       << key_mod
+				       << array_key
+				       << json_array[i].toObject().value(array_key).toString();
+			    }
+			}
+		      if ( array_key == "editeddataID" )
+			{
+			  modelDesc_shortened[ "eID" ] = json_array[i].toObject().value(array_key).toString();
+			  qDebug() << "modelDescJson Map: -- meID, value: "
+				   << array_key
+				   << json_array[i].toObject().value(array_key).toString();
+			  
+			}
+		    }
+		}
+	    }
+	}
+    }
+  
+  return modelDesc_shortened;
 }
 
 
@@ -598,17 +744,16 @@ void US_ReporterGMP::load_gmp_run ( void )
   read_protocol_and_reportMasks( );
   
   //check models existence
-  check_models();
+  check_models( autoflowID );
   progress_msg->setValue( 7 );
   qApp->processEvents();
 
-  //debug
-  QMap < QString, QStringList >::iterator mm;
-  for ( mm = Triple_to_Models.begin(); mm != Triple_to_Models.end(); ++mm )
-    {
-      qDebug() << "For triple -- " << mm.key() << ", there are models: " << mm.value();
-    }
-  //end debug
+  //DEBUG
+  //exit(1);
+  
+  //identify what's intended to be simulated
+  check_for_missing_models();
+  ////
 
   build_genTree();  
   progress_msg->setValue( 8 );
@@ -623,13 +768,54 @@ void US_ReporterGMP::load_gmp_run ( void )
   progress_msg->close();
 
   //Enable some buttons
-  le_loaded_run   ->setText( protocol_details[ "filename" ] );
+  //process runname: if combined, correct for nicer appearance
+  QString full_runname = protocol_details[ "filename" ];
+  if ( full_runname.contains(",") && full_runname.contains("IP") && full_runname.contains("RI") )
+    {
+      QString full_runname_edited  = full_runname.split(",")[0];
+      full_runname_edited.chop(3);
+      
+      full_runname = full_runname_edited + " (combined RI+IP) ";
+    }
+      
+  le_loaded_run   ->setText( full_runname );
   pb_gen_report   ->setEnabled( true );
   pb_view_report  ->setEnabled( false );
   pb_select_all   ->setEnabled( true );
   pb_unselect_all ->setEnabled( true );
   pb_expand_all   ->setEnabled( true );
   pb_collapse_all ->setEnabled( true );
+
+
+  //Capture tree state:
+  JsonMask_gen_loaded     = tree_to_json ( topItem );
+  JsonMask_perChan_loaded = tree_to_json ( chanItem );
+  GMP_report = true;
+
+  //compose a message on missing models
+  QString msg_missing_models = missing_models_msg();
+  
+  //Inform user that current configuraiton corresponds to GMP report
+  if ( GMP_report )
+    {
+      QMessageBox::information( this, tr( "Report Profile Uploaded" ),
+				tr( "Report profile uploaded for GMP run:\n"
+				    "%1\n\n"
+				    "ATTENTION: Current profile configuration corresponds to GMP report settings.\n\n"
+				    "Any changes in the profile settings will result in generation of the non-GMP report!")
+				.arg( full_runname ) );
+    }
+  else
+    {
+      QMessageBox::information( this, tr( "Report Profile Uploaded" ),
+				tr( "Report profile uploaded for GMP run:\n"
+				    "%1\n\n"
+				    "ATTENTION: There are missing models for certain triples: \n\n"
+				    "%2\n\n"
+				    "As a result, a non-GMP report will be generated!")
+				.arg( full_runname )
+				.arg( msg_missing_models) );
+    }
 }
 
 // Query autoflow (history) table for records
@@ -669,6 +855,15 @@ int US_ReporterGMP::list_all_autoflow_records( QList< QStringList >& autoflowdat
       
       QDateTime local(QDateTime::currentDateTime());
 
+      //process runname: if combined, correct for nicer appearance
+      if ( full_runname.contains(",") && full_runname.contains("IP") && full_runname.contains("RI") )
+	{
+	  QString full_runname_edited  = full_runname.split(",")[0];
+	  full_runname_edited.chop(3);
+
+	  full_runname = full_runname_edited + " (combined RI+IP) ";
+	}
+      
       autoflowentry << id << full_runname << optimaname  << time_created.toString(); // << time_started.toString(); // << local.toString( Qt::ISODate );
 
       if ( time_started.toString().isEmpty() )
@@ -1306,7 +1501,14 @@ void US_ReporterGMP::build_perChanTree ( void )
 	      QString triple_name    = channel_desc.split(":")[ 0 ] + "/" + wvl;
 
 	      //Push to Array_of_triples;
-	      QString tripleName = channel_desc_alt.section( ":", 0, 0 )[0] + "." + channel_desc_alt.section( ":", 0, 0 )[1] + "." + wvl;
+	      //QString tripleName = channel_desc_alt.section( ":", 0, 0 )[0] + "." + channel_desc_alt.section( ":", 0, 0 )[1] + "." + wvl;
+	      QString tripleName = channel_desc_alt.section( ":", 0, 0 )[0] + "." + channel_desc_alt.section( ":", 0, 0 )[1];
+
+	      if ( channel_desc_alt.contains( "Interf" ) ) 
+		tripleName += ".Interference";
+	      else
+		tripleName += "." + wvl;
+	      	      
 	      qDebug() << "TripleName -- " << tripleName; 
 	      Array_of_triples.push_back( tripleName );
 
@@ -1579,7 +1781,7 @@ void US_ReporterGMP::reset_report_panel ( void )
   //   {
   //     qDeleteAll(genTree->topLevelItem(i)->takeChildren());
   //   }
-  genTree     ->clear();
+  genTree     -> clear();
   genTree     -> disconnect();
   qApp->processEvents();
 
@@ -1615,6 +1817,13 @@ void US_ReporterGMP::reset_report_panel ( void )
   tripleMaskItem     .clear();
   tripleMaskPlotItem .clear();
 
+  //Clear loaded JsonMasks for gen/perChan trees
+  JsonMask_gen_loaded     .clear();
+  JsonMask_perChan_loaded .clear();
+
+  //Set GMP_report bool to true:
+  GMP_report = true;
+
   //clean triple_array
   Array_of_triples.clear();
 
@@ -1626,7 +1835,9 @@ void US_ReporterGMP::reset_report_panel ( void )
   comboPlotsMapTypes .clear();
 
   //clean QMap connecting triple names to their models
-  Triple_to_Models.clear();
+  Triple_to_Models       . clear();
+  Triple_to_ModelsDesc   . clear();
+  Triple_to_ModelsMissing. clear();
   
   //reset US_Protocol && US_AnaProfile
   currProto = US_RunProtocol();  
@@ -1749,129 +1960,20 @@ void US_ReporterGMP::generate_report( void )
     }
 
   //Combined Plots Generation
-  sdiag_combplot = new US_DDistr_Combine();
-  QStringList runIDs_single;
-  runIDs_single << FileName; //<-- a single-type runID (e.g. RI) - NOT combined runs for now...
-  QStringList aDescrs = scan_dbase_models( runIDs_single );
-  QStringList modelDescModified = sdiag_combplot->load_auto( runIDs_single, aDescrs );
-
-  mkdir( US_Settings::reportDir(), FileName );
-  const QString svgext( ".svgz" );
-  const QString pngext( ".png" );
-  const QString csvext( ".csv" );
-  QString basename  = US_Settings::reportDir() + "/" + FileName + "/" + FileName + ".";
-
-  //estimate # of combined plots
-  int combpl_number = 3*4;
-  // Show msg while data downloaded and simulated
-  progress_msg = new QProgressDialog (QString("Generating combined plots..."), QString(), 0, combpl_number, this);
-  progress_msg->setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
-  progress_msg->setWindowModality(Qt::WindowModal);
-  progress_msg->setWindowTitle(tr("Combined Plots"));
-  progress_msg->setAutoClose( false );
-  progress_msg->setValue( 0 );
-  progress_msg->show();
-  qApp->processEvents();
-
-  int pr_cp_val = 0;
-  
-  //go over modelDescModified
-  QStringList modelNames;
-  modelNames << "2DSA-IT" << "2DSA-MC" << "PCSA";
-  QList< int > xtype;
-  xtype <<  1 << 2 << 3; //ALEXEY: 0: s20; 1: MW; 2: D; 3: f/f0
-                         //Note: xtype==0 (s20) is the default, so iterate later starting from 1... 
-  QStringList CombPlotsFileNames;
-    
-  for ( int m = 0; m < modelNames.size(); m++ )  
+  QStringList fileNameList;
+  fileNameList. clear();
+  if ( FileName.contains(",") && FileName.contains("IP") && FileName.contains("RI") )
     {
-      bool isModel = false;
-      QString imgComb01File = basename + "combined" + "." + modelNames[ m ]  + ".s20" + svgext;
-
-      for ( int ii = 0; ii < modelDescModified.size(); ii++ )  
-	{
-	  //fiter by type|model
-	  if ( modelDescModified[ ii ].contains( modelNames[ m ] ) )
-	    {
-	      isModel = true;
-
-	      //retrieve s,Model combPlot params:
-	      QString t_m = "s," + modelNames[ m ];
-	      QMap < QString, QString > c_params = comboPlotsMap[ t_m ];
-	      sdiag_combplot-> model_select_auto ( modelDescModified[ ii ], c_params ); //ALEXEY: here it plots s20 combPlot (xtype == 0)
-
-	    }
-	}
-      
-      ++pr_cp_val;
-      progress_msg->setValue( pr_cp_val );
-      
-      //write plot
-      if ( isModel )  //TEMPORARY: will read a type-method combined plot QMap defined at the beginnig
-	{
-	  //here writes a 's'-type IF it's to be included:
-	  QString t_m = "s," + modelNames[ m ];
-	  if ( comboPlotsMapTypes.contains( t_m ) && comboPlotsMapTypes[ t_m ] != 0  )
-	    {
-	      write_plot( imgComb01File, sdiag_combplot->rp_data_plot1() );                //<-- rp_data_plot1() gives combined plot
-	      imgComb01File.replace( svgext, pngext ); 
-	      CombPlotsFileNames << imgComb01File;
-	    }
-
-	  ++pr_cp_val;
-	  progress_msg->setValue( pr_cp_val );
-	  
-	  //Now that we have s20 plotted, plot other types [ MW, D, f/f0 ]
-	  for ( int xt= 0; xt < xtype.size(); ++xt )
-	    {
-	      QString imgComb02File = basename + "combined" + "." + modelNames[ m ];
-	      QMap < QString, QString > c_parms;
-	      QString t_m;
-	      
-	      if( xtype[ xt ] == 1 )
-		{
-		  imgComb02File += ".MW" + svgext;
-		  t_m = "MW," + modelNames[ m ];
-		  c_parms = comboPlotsMap[ t_m ];
-		}
-	      
-	      else if( xtype[ xt ] == 2 )
-		{
-		  imgComb02File += ".D20" + svgext;
-		  t_m = "D," + modelNames[ m ];
-		  c_parms = comboPlotsMap[ t_m ];
-		}
-	      
-	      else if( xtype[ xt ] == 3 )
-		{
-		  imgComb02File += ".f_f0" + svgext;
-		  t_m = "f/f0," + modelNames[ m ];
-		  c_parms = comboPlotsMap[ t_m ];
-		}
-
-	      //check if to generate Combined plot for current 'type-method':
-	      if ( comboPlotsMapTypes.contains( t_m ) && comboPlotsMapTypes[ t_m ] != 0  )
-		{
-		  sdiag_combplot-> changedPlotX_auto( xtype[ xt ], c_parms );
-		  
-		  write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() );              //<-- rp_data_plot1() gives combined plot
-		  imgComb02File.replace( svgext, pngext );
-		  CombPlotsFileNames << imgComb02File;
-		}
-
-	      ++pr_cp_val;
-	      progress_msg->setValue( pr_cp_val );
-	    }
-	}
-      // reset plot
-      sdiag_combplot->reset_data_plot1();
+      fileNameList  = FileName.split(",");
     }
-  //assemble combined plots into html
-  assemble_plots_html( CombPlotsFileNames  );
-  
-  progress_msg->setValue( progress_msg->maximum() );
-  progress_msg->close();
-  qApp->processEvents();
+  else
+    {
+      fileNameList << FileName;
+    }
+
+  for ( int i=0; i<fileNameList.size(); ++i )
+    process_combined_plots( fileNameList[i] );
+   
   //exit(1);
   //End of Combined Plots //
   
@@ -2140,7 +2242,9 @@ void US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
   edata = NULL;
   rdata = NULL;
   //sdata = NULL;
-  eID_global = 0;
+  eID_global  = 0;
+  eID_updated = "";
+  
   sdata          = &wsdata;
   
   dbg_level  = US_Settings::us_debug();
@@ -2190,7 +2294,8 @@ void US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
   loadData( triple_info_map );
   progress_msg->setValue( 1 );
   
-  triple_info_map[ "eID" ]        = QString::number( eID_global );
+  triple_info_map[ "eID" ]         = QString::number( eID_global );
+  triple_info_map[ "eID_updated" ] = eID_updated;
   // Assign edata && rdata
   edata     = &editedData[ 0 ];
   rdata     = &rawData[ 0 ];
@@ -2440,14 +2545,20 @@ bool US_ReporterGMP::loadData( QMap < QString, QString > & triple_information )
       return false;
     }
 
+  qDebug() << "In load Data: triple, eID (from modelsLink) -- "
+	   << triple_information[ "triple_name" ]
+	   << Triple_to_ModelsDesc[ triple_information[ "triple_name" ] ] [ "eID" ] ;
+  
   int rID=0;
   QString rfilename;
-  int eID=0;
+  //int eID=0;
+  int eID = Triple_to_ModelsDesc[ triple_information[ "triple_name" ] ] [ "eID" ].toInt();
+
   QString efilename;
   
   //get EditedData filename && editedDataID for current triple, then infer rawDataID 
   QStringList query;
-  query << "get_editedDataFilenamesIDs" << triple_information["filename"];
+  query << "get_editedDataFilenamesIDs_forReport" << triple_information["filename"] << QString::number( eID ) ;
   db->query( query );
 
   qDebug() << "In loadData() Query: " << query;
@@ -2465,26 +2576,31 @@ bool US_ReporterGMP::loadData( QMap < QString, QString > & triple_information )
       QString  filename            = db->value( 0 ).toString();
       int      editedDataID        = db->value( 1 ).toInt();
       int      rawDataID           = db->value( 2 ).toInt();
-      //QString  date                = US_Util::toUTCDatetimeText( db->value( 3 ).toDateTime().toString( "yyyy/MM/dd HH:mm" ), true );
+      rID         = rawDataID;
+      efilename   = filename;
+      
       QDateTime date               = db->value( 3 ).toDateTime();
-
-      QDateTime now = QDateTime::currentDateTime();
+      eID_updated                  = db->value( 3 ).toString();
+      
+      // QDateTime now = QDateTime::currentDateTime();
                
-      if ( filename.contains( triple_name_actual ) ) 
-	{
-	  int time_to_now = date.secsTo(now);
-	  if ( time_to_now < latest_update_time )
-	    {
-	      latest_update_time = time_to_now;
-	      //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
+      // if ( filename.contains( triple_name_actual ) ) 
+      // 	{
+      // 	  int time_to_now = date.secsTo(now);
+      // 	  if ( time_to_now < latest_update_time )
+      // 	    {
+      // 	      latest_update_time = time_to_now;
+      // 	      //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
 
-	      rID       = rawDataID;
-	      eID       = editedDataID;
-	      efilename = filename;
-	    }
-	}
+      // 	      rID         = rawDataID;
+      // 	      eID         = editedDataID;
+      // 	      efilename   = filename;
+      // 	      eID_updated = db->value( 3 ).toString();
+      // 	    }
+      // 	}
     }
 
+  
   qDebug() << "In loadData() after Query ";
   
   QString edirpath  = US_Settings::resultDir() + "/" + triple_information[ "filename" ];
@@ -2551,85 +2667,95 @@ bool US_ReporterGMP::loadModel( QMap < QString, QString > & triple_information )
       return false;
     }
 
-  //first, get ModelIDs corresponding to editedDataID AND triple_stage && select latest one
-  QStringList query;
-  query << "get_modelDescsIDs" << triple_information[ "eID" ];
-  db->query( query );
+  // //first, get ModelIDs corresponding to editedDataID AND triple_stage && select latest one
+  // QStringList query;
+  // query << "get_modelDescsIDs" << triple_information[ "eID" ];
+  // db->query( query );
   
-  qDebug() << "In loadModel() Query: " << query;
+  // qDebug() << "In loadModel() Query: " << query;
   
-  int latest_update_time = 1e100;
-  int mID=0;
+  // int latest_update_time = 1e100;
+  // int mID=0;
 
-  model_exists = false;
+  // model_exists = false;
   
-  while ( db->next() )
-    {
-      QString  description         = db->value( 0 ).toString();
-      int      modelID             = db->value( 1 ).toInt();
-      //QString  date                = US_Util::toUTCDatetimeText( db->value( 3 ).toDateTime().toString( "yyyy/MM/dd HH:mm" ), true );
-      QDateTime date               = db->value( 2 ).toDateTime();
+  // while ( db->next() )
+  //   {
+  //     QString  description         = db->value( 0 ).toString();
+  //     int      modelID             = db->value( 1 ).toInt();
+  //     //QString  date                = US_Util::toUTCDatetimeText( db->value( 3 ).toDateTime().toString( "yyyy/MM/dd HH:mm" ), true );
+  //     QDateTime date               = db->value( 2 ).toDateTime();
 
-      QDateTime now = QDateTime::currentDateTime();
+  //     QDateTime now = QDateTime::currentDateTime();
       
-      if ( description.contains( triple_information[ "stage_name" ] ) ) 
-	{
-	  //if contains, it matches & the model exists (e.g. 2DSA-IT); now find the latest one
-	  model_exists = true;
+  //     if ( description.contains( triple_information[ "stage_name" ] ) ) 
+  // 	{
+  // 	  //if contains, it matches & the model exists (e.g. 2DSA-IT); now find the latest one
+  // 	  model_exists = true;
 	  
-	  if ( triple_information[ "stage_name" ] == "2DSA" )
-	    {
-	      if ( !description.contains("-FM_") && !description.contains("-IT_") && !description.contains("-MC_") && !description.contains("_mcN") )
-		{
-		  int time_to_now = date.secsTo(now);
-		  if ( time_to_now < latest_update_time )
-		    {
-		      latest_update_time = time_to_now;
-		      //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
+  // 	  if ( triple_information[ "stage_name" ] == "2DSA" )
+  // 	    {
+  // 	      if ( !description.contains("-FM_") && !description.contains("-IT_") && !description.contains("-MC_") && !description.contains("_mcN") )
+  // 		{
+  // 		  int time_to_now = date.secsTo(now);
+  // 		  if ( time_to_now < latest_update_time )
+  // 		    {
+  // 		      latest_update_time = time_to_now;
+  // 		      //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
 
-		      qDebug() << "Model 2DSA: ID, desc, timetonow -- " << modelID << description << time_to_now;
+  // 		      qDebug() << "Model 2DSA: ID, desc, timetonow -- " << modelID << description << time_to_now;
 		  		      
-		      mID       = modelID;
-		    }
-		}
-	    }
-	  else
-	    {
-	      int time_to_now = date.secsTo(now);
-	      if ( time_to_now < latest_update_time )
-		{
-		  latest_update_time = time_to_now;
-		  //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
+  // 		      mID       = modelID;
+  // 		    }
+  // 		}
+  // 	    }
+  // 	  else
+  // 	    {
+  // 	      int time_to_now = date.secsTo(now);
+  // 	      if ( time_to_now < latest_update_time )
+  // 		{
+  // 		  latest_update_time = time_to_now;
+  // 		  //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
 		  
-		  qDebug() << "Model NON-2DSA: ID, desc, timetonow -- " << modelID << description << time_to_now;
+  // 		  qDebug() << "Model NON-2DSA: ID, desc, timetonow -- " << modelID << description << time_to_now;
 		  
-		  mID       = modelID;
-		}
-	    }
-	}
-    }
+  // 		  mID       = modelID;
+  // 		}
+  // 	    }
+  // 	}
+  //   }
 
-  if ( ! model_exists )
-    {
-      // QMessageBox::critical( this, tr( "Model Does Not Exists!" ),
-      // 			     QString (tr( "Triple %1 does not have  %2 model !" ))
-      // 			     .arg( triple_information[ "triple_name" ] )
-      // 			     .arg( triple_information[ "stage_name" ] ) );
+  // if ( ! model_exists )
+  //   {
+  //     // QMessageBox::critical( this, tr( "Model Does Not Exists!" ),
+  //     // 			     QString (tr( "Triple %1 does not have  %2 model !" ))
+  //     // 			     .arg( triple_information[ "triple_name" ] )
+  //     // 			     .arg( triple_information[ "stage_name" ] ) );
 
-      progress_msg->setLabelText( QString("Model %1 is NOT found for triple %2.\n Trying other models...")
-				  .arg( triple_information[ "stage_name" ] )
-				  .arg( triple_information[ "triple_name" ] ) );
-      progress_msg->setValue( 4 );
-      qApp->processEvents();
+  //     progress_msg->setLabelText( QString("Model %1 is NOT found for triple %2.\n Trying other models...")
+  // 				  .arg( triple_information[ "stage_name" ] )
+  // 				  .arg( triple_information[ "triple_name" ] ) );
+  //     progress_msg->setValue( 4 );
+  //     qApp->processEvents();
       
-      return false;
-    }
+  //     return false;
+  //   }
+
+
+  int mID = Triple_to_ModelsDesc[ triple_information[ "triple_name" ] ] [ triple_information[ "stage_name" ] ].toInt();
   
   int  rc      = 0;
-  qDebug() << "ModelID to retrieve: -- " << mID;
+  qDebug() << "ModelID to retrieve for triple, stage: -- "
+	   << triple_information[ "triple_name" ]
+	   << triple_information[ "stage_name" ]
+	   << mID;
+  
   rc   = model.load( QString::number( mID ), db );
   qDebug() << "LdM:  model load rc" << rc;
   qApp->processEvents();
+
+  //EditDataUpdated for the model:
+  model.editDataUpdated = triple_information[ "eID_updated" ];
 
   model_loaded = model;   // Save model exactly as loaded
   model_used   = model;   // Make that the working model
@@ -3573,32 +3699,172 @@ void US_ReporterGMP::show_results( QMap <QString, QString> & tripleInfo )
    QApplication::restoreOverrideCursor();
 }
 
+
+//Combined Plots
+void US_ReporterGMP::process_combined_plots ( QString filename_passed )
+{
+  sdiag_combplot = new US_DDistr_Combine();
+  QStringList runIDs_single;
+    
+  runIDs_single << filename_passed;
+  QStringList aDescrs = scan_dbase_models( runIDs_single );
+  QStringList modelDescModified = sdiag_combplot->load_auto( runIDs_single, aDescrs );
+
+  mkdir( US_Settings::reportDir(), filename_passed );
+  const QString svgext( ".svgz" );
+  const QString pngext( ".png" );
+  const QString csvext( ".csv" );
+  QString basename  = US_Settings::reportDir() + "/" + filename_passed + "/" + filename_passed + ".";
+
+  //estimate # of combined plots
+  int combpl_number = 3*4;
+  // Show msg while data downloaded and simulated
+  progress_msg = new QProgressDialog (QString("Generating combined plots..."), QString(), 0, combpl_number, this);
+  progress_msg->setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
+  progress_msg->setWindowModality(Qt::WindowModal);
+  progress_msg->setWindowTitle(tr("Combined Plots"));
+  progress_msg->setAutoClose( false );
+  progress_msg->setValue( 0 );
+  progress_msg->show();
+  qApp->processEvents();
+
+  int pr_cp_val = 0;
+  
+  //go over modelDescModified
+  QStringList modelNames;
+  modelNames << "2DSA-IT" << "2DSA-MC" << "PCSA";
+  QList< int > xtype;
+  xtype <<  1 << 2 << 3; //ALEXEY: 0: s20; 1: MW; 2: D; 3: f/f0
+                         //Note: xtype==0 (s20) is the default, so iterate later starting from 1... 
+  QStringList CombPlotsFileNames;
+    
+  for ( int m = 0; m < modelNames.size(); m++ )  
+    {
+      bool isModel = false;
+      QString imgComb01File = basename + "combined" + "." + modelNames[ m ]  + ".s20" + svgext;
+
+      for ( int ii = 0; ii < modelDescModified.size(); ii++ )  
+	{
+	  //fiter by type|model
+	  if ( modelDescModified[ ii ].contains( modelNames[ m ] ) )
+	    {
+	      isModel = true;
+
+	      //retrieve s,Model combPlot params:
+	      QString t_m = "s," + modelNames[ m ];
+	      QMap < QString, QString > c_params = comboPlotsMap[ t_m ];
+	      sdiag_combplot-> model_select_auto ( modelDescModified[ ii ], c_params ); //ALEXEY: here it plots s20 combPlot (xtype == 0)
+
+	    }
+	}
+      
+      ++pr_cp_val;
+      progress_msg->setValue( pr_cp_val );
+      
+      //write plot
+      if ( isModel )  //TEMPORARY: will read a type-method combined plot QMap defined at the beginnig
+	{
+	  //here writes a 's'-type IF it's to be included:
+	  QString t_m = "s," + modelNames[ m ];
+	  if ( comboPlotsMapTypes.contains( t_m ) && comboPlotsMapTypes[ t_m ] != 0  )
+	    {
+	      write_plot( imgComb01File, sdiag_combplot->rp_data_plot1() );                //<-- rp_data_plot1() gives combined plot
+	      imgComb01File.replace( svgext, pngext ); 
+	      CombPlotsFileNames << imgComb01File;
+	    }
+
+	  ++pr_cp_val;
+	  progress_msg->setValue( pr_cp_val );
+	  
+	  //Now that we have s20 plotted, plot other types [ MW, D, f/f0 ]
+	  for ( int xt= 0; xt < xtype.size(); ++xt )
+	    {
+	      QString imgComb02File = basename + "combined" + "." + modelNames[ m ];
+	      QMap < QString, QString > c_parms;
+	      QString t_m;
+	      
+	      if( xtype[ xt ] == 1 )
+		{
+		  imgComb02File += ".MW" + svgext;
+		  t_m = "MW," + modelNames[ m ];
+		  c_parms = comboPlotsMap[ t_m ];
+		}
+	      
+	      else if( xtype[ xt ] == 2 )
+		{
+		  imgComb02File += ".D20" + svgext;
+		  t_m = "D," + modelNames[ m ];
+		  c_parms = comboPlotsMap[ t_m ];
+		}
+	      
+	      else if( xtype[ xt ] == 3 )
+		{
+		  imgComb02File += ".f_f0" + svgext;
+		  t_m = "f/f0," + modelNames[ m ];
+		  c_parms = comboPlotsMap[ t_m ];
+		}
+
+	      //check if to generate Combined plot for current 'type-method':
+	      if ( comboPlotsMapTypes.contains( t_m ) && comboPlotsMapTypes[ t_m ] != 0  )
+		{
+		  sdiag_combplot-> changedPlotX_auto( xtype[ xt ], c_parms );
+		  
+		  write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() );              //<-- rp_data_plot1() gives combined plot
+		  imgComb02File.replace( svgext, pngext );
+		  CombPlotsFileNames << imgComb02File;
+		}
+
+	      ++pr_cp_val;
+	      progress_msg->setValue( pr_cp_val );
+	    }
+	}
+      // reset plot
+      sdiag_combplot->reset_data_plot1();
+    }
+  //assemble combined plots into html
+  assemble_plots_html( CombPlotsFileNames  );
+  
+  progress_msg->setValue( progress_msg->maximum() );
+  progress_msg->close();
+  qApp->processEvents();
+}
+
 //Plot pseudo3d distr.
 void US_ReporterGMP::plot_pseudo3D( QString triple_name,  QString stage_model)
 {
   QString t_name = triple_name;
   t_name.replace(".", "");
+
+  if ( t_name. contains( "Interference" ) )
+    t_name. replace( "Interference", "660" );
   
   //Pseudo3D Plots Generation (after simulations? Actual simulations are NOT needed for Pseudo3d plots?)
   //FileName; //<-- a single-type runID (e.g. RI) - NOT combined runs for now...
 
-  mkdir( US_Settings::reportDir(), FileName );
+  QString filename_returned = get_filename( triple_name );
+  qDebug() << "In plot_pseudo3D, filename_returned -- " << filename_returned;
+  
+  mkdir( US_Settings::reportDir(), filename_returned );
   const QString svgext( ".svgz" );
   const QString pngext( ".png" );
   const QString csvext( ".csv" );
-  QString basename  = US_Settings::reportDir() + "/" + FileName + "/" + FileName + ".";
+  QString basename  = US_Settings::reportDir() + "/" + filename_returned + "/" + filename_returned + ".";
   
   QString imgPseudo3d01File;
   QStringList Pseudo3dPlotsFileNames;
 
-  
+
+  //ALEXEY: should it be a stricter requirement (modelID ?)
   QStringList m_t_r;  
-  m_t_r << t_name << stage_model << FileName;
+  m_t_r << t_name << stage_model << filename_returned;
   
   qDebug() << "m_t_r to model_loader -- " << m_t_r;
   
   sdiag_pseudo3d = new US_Pseudo3D_Combine();
   sdiag_pseudo3d -> load_distro_auto ( QString::number( invID ), m_t_r );
+
+  //Replace back for internals
+  t_name. replace( "660", "Interference");
   
   //here identify what to show:
   bool show_s_ff0  = (perChanMask_edited.ShowTripleModelPseudo3dParts[ t_name ][ stage_model ][ "Pseudo3d s-vs-f/f0 Distribution" ].toInt()) ? true : false ;
@@ -3949,6 +4215,11 @@ QString US_ReporterGMP::distrib_info()
    double vari_m  = model_used.variance;
    double rmsd_m  = ( vari_m == 0.0 ) ? 0.0 : sqrt( vari_m );
 
+   qDebug() << "Distrib_info(): Model Name, time created, editUpdated -- "
+	    << model.description
+	    << model.timeCreated
+	    << model.editDataUpdated;
+   
    if ( ncomp == 0 )
       return "";
 
@@ -3979,7 +4250,17 @@ QString US_ReporterGMP::distrib_info()
    if ( mdla.isEmpty() )
       mdla         = model_used.description.section( ".", 0, -2 );
 
+   
+   //TimeStamps
    QString mstr = "\n" + indent( 2 )
+                  + tr( "<h3>Timestamps:</h3>\n" )
+                  + indent( 2 ) + "<table>\n";
+   mstr += table_row( tr( "Data Edited at:" ), model.editDataUpdated + " (UTC)");
+   mstr += table_row( tr( "Model Analysed at:" ), model.timeCreated + " (UTC)");
+   mstr += indent( 2 ) + "</table>\n";
+      
+   //Main Analysis Settings
+   mstr +=        "\n" + indent( 2 )
                   + tr( "<h3>Data Analysis Settings:</h3>\n" )
                   + indent( 2 ) + "<table>\n";
 
@@ -5405,11 +5686,14 @@ void US_ReporterGMP::assemble_pdf()
 
   
   //TITLE: begin
+  QString report_type;
+  GMP_report ? report_type = "GMP" : report_type = "Non-GMP";
   QString html_title = tr(
-    "<h1 align=center>GMP REPORT FOR RUN <br><i>%1</i></h1>"
+    "<h1 align=center>%1 Report for Run: <br><i>%2</i></h1>"
     "<hr>"
 			  )
-    .arg( currProto. protoname + "-run" + runID )    //1
+    .arg( report_type )                              //1
+    .arg( currProto. protoname + "-run" + runID )    //2
     ;
   //TITLE: end
 
@@ -6369,6 +6653,14 @@ void US_ReporterGMP::gui_to_parms( void )
   QString editedMask_perChan = tree_to_json ( chanItem );
   parse_edited_perChan_mask_json( editedMask_perChan, perChanMask_edited );
 
+  //For GMP Reporter only: Compare Json mask states to originally loaded:
+  if ( auto_mode )
+    GMP_report = true;
+  else
+    {
+      if( editedMask_gen !=JsonMask_gen_loaded || editedMask_perChan != JsonMask_perChan_loaded )
+	GMP_report = false;
+    }
   // //DEBUG
   // exit(1);
 }
@@ -6529,7 +6821,14 @@ void US_ReporterGMP::parse_edited_perChan_mask_json( const QString maskJson, Per
 			    if ( feature_value.toString().toInt() )
 			      ++has_channel_items;
 
-			    QString triple_name = key.split(" ")[1].split("-")[0] + array_key.split(" ")[0];
+			    //QString triple_name = key.split(" ")[1].split("-")[0] + array_key.split(" ")[0];
+			    QString triple_name = key.split(" ")[1].split("-")[0];
+
+			    if ( key.contains( "Interf" ) )
+			      triple_name += "Interference";
+			    else
+			      triple_name += array_key.split(" ")[0];
+			    
 			    QString model_name  = n_key.split(" ")[0];
 			    MaskStr.ShowTripleModelParts[ triple_name ][ model_name ][ j_key ] = feature_value.toString();
 			    if ( MaskStr.ShowTripleModelParts[ triple_name ][ model_name ][ j_key ].toInt() )
@@ -6551,7 +6850,14 @@ void US_ReporterGMP::parse_edited_perChan_mask_json( const QString maskJson, Per
 				  {
 				    QString feature_plot_value = plotObj.value( p_key ).toString();
 				    
-				    QString triple_name = key.split(" ")[1].split("-")[0]  + array_key.split(" ")[0];
+				    //QString triple_name = key.split(" ")[1].split("-")[0]  + array_key.split(" ")[0];
+				    QString triple_name = key.split(" ")[1].split("-")[0];
+
+				    if ( key.contains( "Interf" ) )
+				      triple_name += "Interference";
+				    else
+				      triple_name += array_key.split(" ")[0];
+				    
 				    QString model_name  = n_key.split(" ")[0];
 				    MaskStr.ShowTripleModelPlotParts[ triple_name ][ model_name ][ p_key ] = feature_plot_value;
 				    if ( MaskStr.ShowTripleModelPlotParts[ triple_name ][ model_name ][ p_key ].toInt() )
@@ -6573,7 +6879,15 @@ void US_ReporterGMP::parse_edited_perChan_mask_json( const QString maskJson, Per
 				  {
 				    QString feature_pseudo3d_value = pseudo3dObj.value( p_key ).toString();
 				    
-				    QString triple_name = key.split(" ")[1].split("-")[0]  + array_key.split(" ")[0];
+				    //QString triple_name = key.split(" ")[1].split("-")[0]  + array_key.split(" ")[0];
+				    QString triple_name = key.split(" ")[1].split("-")[0];
+
+				    if ( key.contains( "Interf" ) )
+				      triple_name += "Interference";
+				    else
+				      triple_name += array_key.split(" ")[0];
+
+				    
 				    QString model_name  = n_key.split(" ")[0];
 				    MaskStr.ShowTripleModelPseudo3dParts[ triple_name ][ model_name ][ p_key ] = feature_pseudo3d_value;
 				    if ( MaskStr.ShowTripleModelPseudo3dParts[ triple_name ][ model_name ][ p_key ].toInt() )

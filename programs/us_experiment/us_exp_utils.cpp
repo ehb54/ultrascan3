@@ -610,6 +610,9 @@ void US_ExperGuiGeneral::check_user_level()
    {  // User not enabled to set investigator
       pb_investigator->setEnabled( false );
       pb_project     ->setEnabled( false );
+      ct_tempera     ->setEnabled( false );
+      ct_tedelay     ->setEnabled( false );
+      le_protocol    ->setEnabled( false );
 
       if ( !loaded_proto )
          emit set_tabs_buttons_inactive();
@@ -2390,10 +2393,13 @@ DbgLv(1) << "EGRn:inP:    ii" << ii << "channel" << channel;
                }
        else
          {
-           cc_wavls[ ii ]->setEnabled( true );
-           cc_lrads[ ii ]->setEnabled( true );
-           cc_hrads[ ii ]->setEnabled( true );
-         }
+	   if ( US_Settings::us_inv_level() > 2 ) //ALEXEY: if user level 3 or more
+	     {
+	       cc_wavls[ ii ]->setEnabled( true );
+	       cc_lrads[ ii ]->setEnabled( true );
+	       cc_hrads[ ii ]->setEnabled( true );
+	     }
+	 }
    }
 
    //////////////////////////////////////////////////////////////

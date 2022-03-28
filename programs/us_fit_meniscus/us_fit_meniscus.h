@@ -33,6 +33,7 @@ class US_FitMeniscus : public US_Widgets
 
       bool auto_mode;
       bool no_fm_data;
+      bool bad_men_vals;
       
       QProgressDialog * progress_msg;
             
@@ -194,5 +195,6 @@ class US_FitMeniscus : public US_Widgets
       void editProfiles_updated( QMap < QString, QString > &);
       void editProfiles_updated_earlier( void );
       void triple_analysis_processed( void );
+      void bad_meniscus_values( QMap < QString, QString > & );
 };
 #endif
