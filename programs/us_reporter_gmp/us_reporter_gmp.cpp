@@ -1927,25 +1927,34 @@ void US_ReporterGMP::build_perChanTree ( void )
   for ( ch = chanItem.begin(); ch != chanItem.end(); ++ch )
     {
       int channel_children = ch.value()->childCount();
+      int hidden_triples = 0;
       
-      if ( channel_children < 2 )
+      for ( int i = 0; i < channel_children; ++i )
 	{
-	  QTreeWidgetItem* child_triple = ch.value()->child( 0 );
+	  QTreeWidgetItem* child_triple = ch.value()->child( i );
 	  if ( !child_triple-> childCount() )
 	    {
-	      qDebug() << "Channel " << ch.value()->text( 1 )
-		       << " has ONLY child: "
+	      qDebug() << "Channel's " << ch.value()->text( 1 )
+		       << " triple: "
 		       << child_triple->text(1)
-		       << " with NO children";
+		       << " has NO children";
 
-	      //Hide channel treeItem
-	      ch.value()->setHidden( true );
+	      ++hidden_triples;
+	      //Hide triple treeItem
+	      child_triple->setHidden( true );
 	    }
+	}
+      if ( channel_children == hidden_triples )
+	{
+	  qDebug() << "We have to hide entire channel  " << ch.value()->text( 1 );
+	  //Hide channel treeItem
+	  ch.value()->setHidden( true );
 	}
     }
   //End of disabling empty tree branches
   
-  perChanTree->expandAll();    
+  perChanTree->expandAll();
+  //perChanTree->expandToDepth( 2 );
   perChanTree->resizeColumnToContents( 0 );
   perChanTree->resizeColumnToContents( 1 );
 
