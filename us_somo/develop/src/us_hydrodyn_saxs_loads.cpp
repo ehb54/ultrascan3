@@ -60,6 +60,48 @@ static QStringList csv_transpose( const QStringList &qsl ) {
    return res;
 }
       
+static QStringList csv_pr2iq( const QStringList &qsl ) {
+   qDebug() << "csv_pr2iq()";
+   QTextStream( stdout ) << "source:" << qsl.join( "\n" ) << "\n";
+
+   QStringList res;
+
+   int rows = (int) qsl.size();
+
+   for ( int i = 0; i < rows; ++i ) {
+      QStringList row = qsl[i].split( "," );
+      if ( row.size() < 4 ) {
+         continue;
+      }
+
+      row = row.mid(0,1) + row.mid( 3 );
+
+      if ( row[1] == "\"P(r)\"" ) {
+         // drop either "\"P(r)\"" or "\"P(r) normed\""
+         continue;
+      }
+
+      if ( row[1] == "\"P(r) normed\"" ) {
+         row[1] = "\"I(q)\"";
+      }
+
+      if ( row[1] == "\"Type; r:\"" ) {
+         row[1] = "\"Type; q:\"";
+      }
+
+      // QTextStream( stdout ) << "row[1] [" << row[1] << "]\n";
+
+      row.insert(2, "0" );
+
+      // QTextStream( stdout ) << row.join( "," ) << "\n";
+      res << row.join( "," );
+   }
+
+   QTextStream( stdout )  << "result\n" << res.join( "\n" ) << "\n";
+   
+   return res;
+}
+      
 void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves )
 {
 
@@ -98,6 +140,32 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
       qsl_headers = qsl.filter("\"Name\",\"Type; q:\"");         
    }
 
+   // check if p(r) and load as Iq
+   {
+      qsl_headers = qsl.filter("\"Name\",\"MW (Daltons)\",\"Area\",\"Type; r:\"");
+      qDebug() << "checking for p(r)";
+      if ( qsl_headers.size() != 0 ) {
+         switch( QMessageBox::warning(
+                                      this
+                                      ,windowTitle()
+                                      ,us_tr("The file appears to be in P(r) format.\n"
+                                             "Load as if it were an I(q)?")
+                                      ,QMessageBox::Ok | QMessageBox::Cancel
+                                      ,QMessageBox::Cancel
+                                      ) ) {
+         case QMessageBox::Ok :
+            break;
+         case QMessageBox::Cancel :
+         default:
+            return;
+            break;
+         }
+         // reprocess
+         qsl = csv_pr2iq( qsl );
+         qsl_headers = qsl.filter("\"Name\",\"Type; q:\"");
+      }
+   }
+            
    if ( qsl_headers.size() == 0 && !just_plotted_curves ) 
    {
       // QMessageBox mb(us_tr("UltraScan Warning"),
