@@ -396,8 +396,8 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   if ( !GMP_report )
     {
       QMessageBox::information( this, tr( "Report Profile Uploaded" ),
-				tr( "ATTENTION: There are missing models for certain triples: \n\n"
-				    "%2\n\n"
+				tr( "<font color='red'><b>ATTENTION:</b> There are missing models for certain triples: </font><br><br>"
+				    "%2<br><br>"
 				    "As a result, a non-GMP report will be generated!")
 				.arg( msg_missing_models) );
     }
@@ -592,7 +592,8 @@ void US_ReporterGMP::check_for_missing_models ( void )
   bool hasIT   = cAP2. job4run; //2dsa-it       
   bool hasMC   = cAP2. job5run; //2dsa-mc
   bool hasPCSA = cAPp .job_run; //pcsa
-  
+
+   
   QMap < QString, QStringList >::iterator mm;
   for ( mm = Triple_to_Models.begin(); mm != Triple_to_Models.end(); ++mm )
     {
@@ -620,15 +621,15 @@ QString US_ReporterGMP::missing_models_msg( void )
 {
   QString models_str;
 
-  QMap < QString, QStringList >::iterator mm;
-  for ( mm = Triple_to_ModelsMissing.begin(); mm != Triple_to_ModelsMissing.end(); ++mm )
+  QMap < QString, QString >::iterator mm;
+  for ( mm = Triple_to_FailedStage.begin(); mm != Triple_to_FailedStage.end(); ++mm )
     {
       if ( !mm.value().isEmpty() )
 	{
-	  models_str += mm.key() + ", missing models: " + mm.value().join(", ") + "\n";
+	  models_str += mm.key() + ", missing models: " + Triple_to_ModelsMissing[ mm.key() ].join(", ") + "<br>";
 	}
     }
-
+  
   if ( !models_str.isEmpty() )
     GMP_report = false;
   
@@ -643,16 +644,16 @@ QString US_ReporterGMP::compose_html_failed_stage_missing_models( void )
   
   failed_str += "<table>";
   
-  QMap < QString, QStringList >::iterator mm;
-  for ( mm = Triple_to_ModelsMissing.begin(); mm != Triple_to_ModelsMissing.end(); ++mm )
+  QMap < QString, QString >::iterator mm;
+  for ( mm = Triple_to_FailedStage.begin(); mm != Triple_to_FailedStage.end(); ++mm )
     {
       if ( !mm.value().isEmpty() )
 	{
 	  areFailed = true;
 	  
 	  failed_str += "<tr><td style=\"color:red;\">" + mm.key() + ",</td><td> analysis failed/canceled at stage: </td><td style=\"color:red;\">"
-	                + Triple_to_FailedStage[ mm.key() ] + ";</td>" + 
-	                + "<td>Models missing: </td><td style=\"color:red;\">" +  mm.value().join(", ") + "</td></tr>";
+	                + mm.value() + ";</td>" + 
+	                + "<td>Models missing: </td><td style=\"color:red;\">" +  Triple_to_ModelsMissing[ mm.key() ].join(", ") + "</td></tr>";
 	}
     }
 
@@ -1024,13 +1025,13 @@ void US_ReporterGMP::load_gmp_run ( void )
   else
     {
       QMessageBox::information( this, tr( "Report Profile Uploaded" ),
-				tr( "Report profile uploaded for GMP run:\n"
-				    "%1\n\n"
-				    "ATTENTION: There are missing models for certain triples: \n\n"
-				    "%2\n\n"
-				    "As a result, a non-GMP report will be generated!")
-				.arg( full_runname )
-				.arg( msg_missing_models) );
+      				QString ( "Report profile uploaded for GMP run:<br><br>"
+					  "%1<br><br>"
+					  "<font color='red'><b>ATTENTION:</b> There are missing models for certain triples: </font><br><br>"
+					  "%2<br><br>"
+					  "As a result, a non-GMP report will be generated!")
+      				.arg( full_runname )
+      				.arg( msg_missing_models) );
     }
 }
 
