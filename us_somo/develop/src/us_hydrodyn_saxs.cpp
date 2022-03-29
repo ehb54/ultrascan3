@@ -2555,6 +2555,9 @@ void US_Hydrodyn_Saxs::show_pr_contrib()
    out += "select all\n";
 
    QDir::setCurrent( last_selected_pdb_filename );
+
+   qDebug() << last_selected_pdb_filename;
+
    QString fname = last_selected_pdb_filename + ".spt";
    QFile f(fname);
    if ( !f.open( QIODevice::WriteOnly ) ) {

@@ -14590,7 +14590,7 @@ bool US_Hydrodyn::calc_zeno()
                            .arg( this_data.results.viscosity_sd ? QString( "" ).sprintf( " [%4.2e]"      , this_data.results.viscosity_sd ) : "" )
                            .arg( QString( "" ).sprintf( "%4.2e g/s"     , this_data.tra_fric_coef ) )
                            .arg( this_data.tra_fric_coef_sd ? QString( "" ).sprintf( " [%4.2e]"      , this_data.tra_fric_coef_sd ) : "" )
-                           .arg( QString( "" ).sprintf( "%4.2e cm/sec^2", this_data.results.D20w ) )
+                           .arg( QString( "" ).sprintf( "%4.2e cm^2/sec", this_data.results.D20w ) )
                            .arg( this_data.results.D20w_sd ? QString( "" ).sprintf( " [%4.2e]"      , this_data.results.D20w_sd ) : "" )
                            ;
 

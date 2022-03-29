@@ -387,11 +387,11 @@ bool US_Saxs_Util::run_hydro(
 
 	if (fabs(results_hydro.D20w_sd) <= 1e-100)
 	  {
-	    results[ "D20w" ] =  QString::number(results_hydro.D20w, 'e', 2) + " cm/sec^2";			   
+	    results[ "D20w" ] =  QString::number(results_hydro.D20w, 'e', 2) + " cm^2/sec";			   
 	  }
 	else
 	  {
-	    results[ "D20w" ] = (QString("").sprintf("%4.2e cm/sec^2 (%4.2e)", results_hydro.D20w, results_hydro.D20w_sd));
+	    results[ "D20w" ] = (QString("").sprintf("%4.2e cm^2/sec (%4.2e)", results_hydro.D20w, results_hydro.D20w_sd));
 	  }
 	
 	if (fabs(results_hydro.rs_sd) <= 1e-100)
