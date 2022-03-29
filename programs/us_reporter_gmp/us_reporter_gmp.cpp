@@ -1922,6 +1922,29 @@ void US_ReporterGMP::build_perChanTree ( void )
 	}
     }
 
+  //Now check if tripleItem tree widgets have any children (have any models):
+  QMap < QString, QTreeWidgetItem * >::iterator ch;
+  for ( ch = chanItem.begin(); ch != chanItem.end(); ++ch )
+    {
+      int channel_children = ch.value()->childCount();
+      
+      if ( channel_children < 2 )
+	{
+	  QTreeWidgetItem* child_triple = ch.value()->child( 0 );
+	  if ( !child_triple-> childCount() )
+	    {
+	      qDebug() << "Channel " << ch.value()->text( 1 )
+		       << " has ONLY child: "
+		       << child_triple->text(1)
+		       << " with NO children";
+
+	      //Hide channel treeItem
+	      ch.value()->setHidden( true );
+	    }
+	}
+    }
+  //End of disabling empty tree branches
+  
   perChanTree->expandAll();    
   perChanTree->resizeColumnToContents( 0 );
   perChanTree->resizeColumnToContents( 1 );
