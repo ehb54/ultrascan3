@@ -249,7 +249,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu(  P_DENSMTCH , tr( "Density Matc&hing"                 ), utilities );
 
   addMenu(  P_VIEWMWL ,  tr( "&View Multiwavelength Data"        ), multiwave );
-  addMenu(  P_VIEWMSS ,  tr( "View MWL &S-Spectra"               ), multiwave );
+  addMenu(  P_VIEWMSS ,  tr( "View MWL-Spectra"               ), multiwave );
   addMenu(  P_MWSPECF ,  tr( "MWL Species Fit"                   ), multiwave );
   addMenu(  P_MWFSIMU ,  tr( "Optima MWL Fit Simulation"         ), multiwave );
 
@@ -676,7 +676,7 @@ void US_Win::help( int index )
             " * Minji Kim\n"
             " * Brad Langford\n"
             " * Thomas Laue\n"
-            " * Konrad Löhr\n"
+            " * Konrad LÃ¶hr\n"
             " * Luitgard Nagel-Steger\n"
             " * Zach Ozer\n"
             " * Karel Planken\n"

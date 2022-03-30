@@ -266,8 +266,8 @@ namespace US_WinData
     },
 
     { P_VIEWMSS,   0, 0, "us_mwl_spectra",
-      QObject::tr( "Loading View Multiwavelength S-Spectra"  ),
-      QObject::tr( "View Multiwavelength S-Spectra Program"  )
+      QObject::tr( "Loading View Multiwavelength Spectra"  ),
+      QObject::tr( "View Multiwavelength Spectra Program"  )
     },
 
     { P_MWSPECF,   0, 0, "us_mwl_species_fit",
