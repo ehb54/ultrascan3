@@ -1457,17 +1457,18 @@ qDebug() << "Timing: accept-load: mcount" << modelsCount
 }
 
 // Accept button:  set up to return model information: mod. copy for GMP
-void US_ModelLoader::accepted_auto( QStringList m_t_r )
+void US_ModelLoader::accepted_auto( QStringList m_t_r_id )
 {
    QList< ModelDesc >        allmods = model_descriptions;
    //QList< QListWidgetItem* > selmods = lw_models->selectedItems();
    QList< QListWidgetItem* > selmods;
 
-   QString model_passed  = m_t_r[ 0 ];
-   QString triple_passed = m_t_r[ 1 ];
-   QString runid_passed  = m_t_r[ 2 ];
-
-   qDebug() << "In accepted_auto() 1: passed vals -- " << model_passed << triple_passed << runid_passed;
+   QString model_passed   = m_t_r_id[ 0 ];
+   QString triple_passed  = m_t_r_id[ 1 ];
+   QString runid_passed   = m_t_r_id[ 2 ];
+   QString modelid_passed = m_t_r_id[ 3 ];
+   
+   qDebug() << "In accepted_auto() 1: passed vals -- " << model_passed << triple_passed << runid_passed << modelid_passed;
    
    //check for precise name overlapp: must contain model, tripe, run:
    for(int i = 0; i < lw_models->count(); ++i)
@@ -1475,13 +1476,19 @@ void US_ModelLoader::accepted_auto( QStringList m_t_r )
        QListWidgetItem* item = lw_models->item(i);
        QString model_text    = item->text();
 
+       //get original description of the model
+       QString mdesc   = alt_description( model_text, false );
+       int     mdx     = modelIndex( mdesc, allmods );
+       QString modelID = allmods.at( mdx ).DB_id;
+       
        if ( model_text.contains( model_passed ) &&
 	    model_text.contains( triple_passed ) &&
-	    model_text.contains( runid_passed ) )
+	    model_text.contains( runid_passed ) &&
+	    modelID == modelid_passed )
 	 {
 	   selmods << item;
-	   qDebug() << "In accepted_auto(): model_passed, triple_passed, runid_passed, model_text -- "
-		    << model_passed << triple_passed << runid_passed  << model_text; 
+	   qDebug() << "In accepted_auto(): model_passed, triple_passed, runid_passed, model_text, modelID -- "
+		    << model_passed << triple_passed << runid_passed  << model_text << modelID; 
 	 }
      }
 

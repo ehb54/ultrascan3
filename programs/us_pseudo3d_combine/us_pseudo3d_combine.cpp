@@ -819,7 +819,7 @@ void US_Pseudo3D_Combine::load_distro()
 }
 
 //Modified copy for GMP
-void US_Pseudo3D_Combine::load_distro_auto( QString invID_passed, QStringList m_t_r )
+void US_Pseudo3D_Combine::load_distro_auto( QString invID_passed, QStringList m_t_r_id )
 {
    // get a model description or set of descriptions for distribution data
    QList< US_Model > models;
@@ -830,7 +830,7 @@ void US_Pseudo3D_Combine::load_distro_auto( QString invID_passed, QStringList m_
    
    US_ModelLoader dialog( true, mfilter, models, mdescs, pfilts, invID_passed );
 
-   dialog. accepted_auto ( m_t_r );
+   dialog. accepted_auto ( m_t_r_id );
 
    qDebug() << "In load_distro(): mdescs -- " << mdescs;
    

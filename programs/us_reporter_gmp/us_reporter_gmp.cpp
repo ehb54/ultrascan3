@@ -669,7 +669,6 @@ QString US_ReporterGMP::compose_html_failed_stage_missing_models( void )
 void US_ReporterGMP::check_models ( int autoflowID )
 {
   //build Array of triples
-  QVector< QString >  Array_of_tripleNames;
   int nchna   = currAProf.pchans.count();
   for ( int i = 0; i < nchna; i++ )
     {
@@ -733,53 +732,13 @@ void US_ReporterGMP::check_models ( int autoflowID )
       ///
 
       //Now parse modelDecsJson for eID, modelIDs
+      //Triple_to_ModeslDesc[ "1.A.225" ] [ "2DSA-IT" ] = modelID;
+      //Triple_to_ModeslDesc[ "1.A.225" ] [ "2DSA-MC" ] = modelID;
+      //Triple_to_ModeslDesc[ "1.A.225" ] [ "PCSA" ]    = modelID;
+      //Triple_to_ModeslDesc[ "1.A.225" ] [ "eID" ]     = eID;
       Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ] = parse_models_desc_json( modelDescJson ); 
-      
+
             
-      // //Parse filename
-      // QString filename_received = get_filename( Array_of_tripleNames[ i ] );
-      // qDebug() << "In show_overlay(): filename_received: " << filename_received;
-      
-      // int eID=0;
-      // QString efilename;
-      
-      // //get EditedData filename && editedDataID for current triple, then infer rawDataID 
-      // query.clear();
-      // query << "get_editedDataFilenamesIDs" << filename_received;
-      // db->query( query );
-      
-      // int latest_update_time = 1e100;
-      
-      // while ( db->next() )
-      //  	{
-      //  	  QString  filename            = db->value( 0 ).toString();
-      //  	  int      editedDataID        = db->value( 1 ).toInt();
-      //  	  int      rawDataID           = db->value( 2 ).toInt();
-      //  	  //QString  date                = US_Util::toUTCDatetimeText( db->value( 3 ).toDateTime().toString( "yyyy/MM/dd HH:mm" ), true );
-      //  	  QDateTime date               = db->value( 3 ).toDateTime();
-        
-      //  	  QDateTime now = QDateTime::currentDateTime();
-
-      //  	  qDebug() << "1. In check_model: filename, editedDataID  -- " << filename << editedDataID ;
-        
-      //  	  if ( filename.contains( triple_name_actual ) ) 
-      //  	    {
-      //  	      int time_to_now = date.secsTo(now);
-      //  	      if ( time_to_now < latest_update_time )
-      //  		{
-      //  		  latest_update_time = time_to_now;
-      //  		  //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
-      	  
-      //  		  rID       = rawDataID;
-      //  		  eID       = editedDataID;
-      //  		  efilename = filename;
-
-      //  		  qDebug() << "In check_model: eID, efilename, triple_name_actual -- " <<  eID << efilename << triple_name_actual;
-      //  		}
-      //  	    }
-      //  	}
-
-
       QString eID = Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "eID" ];
       qDebug() << "In check_models: eID -- " << eID;
       
@@ -965,6 +924,20 @@ void US_ReporterGMP::load_gmp_run ( void )
   progress_msg->setValue( 7 );
   qApp->processEvents();
 
+  //debug
+  for ( int i=0; i < Array_of_tripleNames.size(); ++ i )
+    {
+      QMap< QString, QString > tmap =  Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ];
+      QMap < QString, QString >::iterator it;
+      for ( it = tmap.begin(); it != tmap.end(); ++it )
+	{
+	  qDebug() << "ModelsDesc: Triple, QMap -- "
+		   << Array_of_tripleNames[ i ]
+		   << it.key()
+		   << it.value();
+	}
+    }
+  
   //DEBUG
   //exit(1);
   
@@ -2075,6 +2048,7 @@ void US_ReporterGMP::reset_report_panel ( void )
 
   //clean triple_array
   Array_of_triples.clear();
+  Array_of_tripleNames.clear();
 
   //clean intensity RI Map
   intensityRIMap .clear();
@@ -2169,8 +2143,6 @@ void US_ReporterGMP::generate_report( void )
       for ( int i=0; i<Array_of_triples.size(); ++i )
 	{
 	  currentTripleName = Array_of_triples[i];
-	  QString triplename_alt = currentTripleName;
-	  triplename_alt.replace(".","");
 	      
 	  //here should be cycle over triple's models ( 2DSA-IT, 2DSA-MC etc..)
 	  QStringList models_to_do = Triple_to_Models[ currentTripleName ];
@@ -2178,7 +2150,7 @@ void US_ReporterGMP::generate_report( void )
 	  for ( int j = 0; j < models_to_do.size(); ++j )
 	    {
 	      simulate_triple ( currentTripleName, models_to_do[ j ] );
-	      plot_pseudo3D( triplename_alt, models_to_do[ j ]);
+	      plot_pseudo3D( currentTripleName, models_to_do[ j ]);
 	    }
 	}
     }
@@ -2205,7 +2177,7 @@ void US_ReporterGMP::generate_report( void )
 		{
 		  simulate_triple ( currentTripleName, models_to_do[ j ] );
 		  
-		  plot_pseudo3D( triplename_alt, models_to_do[ j ]);
+		  plot_pseudo3D( currentTripleName, models_to_do[ j ]);
 		}
 	    }
 	}
@@ -4084,7 +4056,9 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
 //Plot pseudo3d distr.
 void US_ReporterGMP::plot_pseudo3D( QString triple_name,  QString stage_model)
 {
-  QString t_name = triple_name;
+  qDebug() << "In plot_pseudo3D: init -- " << triple_name << stage_model;
+  QString modelid = Triple_to_ModelsDesc[ triple_name ][ stage_model ];
+  QString t_name  = triple_name;
   t_name.replace(".", "");
 
   if ( t_name. contains( "Interference" ) )
@@ -4107,13 +4081,13 @@ void US_ReporterGMP::plot_pseudo3D( QString triple_name,  QString stage_model)
 
 
   //ALEXEY: should it be a stricter requirement (modelID ?)
-  QStringList m_t_r;  
-  m_t_r << t_name << stage_model << filename_returned;
+  QStringList m_t_r_id;  
+  m_t_r_id << stage_model << t_name << filename_returned << modelid;
   
-  qDebug() << "m_t_r to model_loader -- " << m_t_r;
+  qDebug() << "m_t_r_id to model_loader -- " << m_t_r_id;
   
   sdiag_pseudo3d = new US_Pseudo3D_Combine();
-  sdiag_pseudo3d -> load_distro_auto ( QString::number( invID ), m_t_r );
+  sdiag_pseudo3d -> load_distro_auto ( QString::number( invID ), m_t_r_id );
 
   //Replace back for internals
   t_name. replace( "660", "Interference");

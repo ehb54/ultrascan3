@@ -202,6 +202,7 @@ class US_ReporterGMP : public US_Widgets
 	 bool       has_fluorescense;
 	 
 	 QVector< QString >  Array_of_triples;
+	 QVector< QString >  Array_of_tripleNames;
 	 QMap< QString, QStringList > Triple_to_Models;
 	 QMap< QString, QStringList > Triple_to_ModelsMissing;
 	 QMap< QString, QString >     Triple_to_FailedStage;
