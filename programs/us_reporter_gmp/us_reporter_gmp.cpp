@@ -325,6 +325,7 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   FileName           = protocol_details[ "filename" ];
   intensityID        = protocol_details[ "intensityID" ];
   AutoflowID_auto    = protocol_details[ "autoflowID" ];
+  analysisIDs        = protocol_details[ "analysisIDs" ];
   
   lb_hdr1 ->setText( QString( tr("Report for run: %1") ).arg(FileName) );
   lb_hdr1->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
@@ -363,6 +364,9 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   progress_msg->setValue( 7 );
   qApp->processEvents();
 
+  //check triples for failure
+  check_failed_triples( );
+  
   //check models existence
   check_models( AutoflowID_auto.toInt() );
   progress_msg->setValue( 8 );
@@ -392,8 +396,8 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   if ( !GMP_report )
     {
       QMessageBox::information( this, tr( "Report Profile Uploaded" ),
-				tr( "ATTENTION: There are missing models for certain triples: \n\n"
-				    "%2\n\n"
+				tr( "<font color='red'><b>ATTENTION:</b> There are missing models for certain triples: </font><br><br>"
+				    "%2<br><br>"
 				    "As a result, a non-GMP report will be generated!")
 				.arg( msg_missing_models) );
     }
@@ -402,14 +406,194 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   generate_report();
   
 }
- 
+
+
+//check for failed triples
+void US_ReporterGMP::check_failed_triples( void )
+{
+
+  US_Passwd pw;
+  US_DB2    db( pw.getPasswd() );
+
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Could not connect to database \n" ) +  db.lastError() );
+      return;
+    }
+  
+  QStringList analysisIDs_list = analysisIDs.split(",");
+  for( int i=0; i < analysisIDs_list.size(); ++i )
+    {
+      QMap <QString, QString> analysis_details;
+      QString requestID = analysisIDs_list[i];
+      
+      qDebug() << "GMP Report: RequestID: " << requestID;
+      
+      analysis_details = read_autoflowAnalysis_record( &db, requestID );
+
+      if ( !analysis_details.size() )
+	{
+	  analysis_details = read_autoflowAnalysisHistory_record( &db, requestID );
+	  qDebug() << "GMP Report: analysis_details.size() FROM autoflowAnalysisHistory -- " << analysis_details.size();
+	}
+      else
+	qDebug() << "GMP Report: analysis_details.size() FROM autoflowAnalysis -- " << analysis_details.size();
+
+      QString triple_name    = analysis_details[ "triple_name" ]  ;
+      QString cluster        = analysis_details[ "cluster" ]      ;
+      QString filename       = analysis_details[ "filename" ]     ;
+      QString curr_gfacID    = analysis_details[ "CurrentGfacID" ];
+      QString curr_HPCAnalysisRequestID   = analysis_details[ "currentHPCARID"];
+      QString status_json    = analysis_details[ "status_json" ]  ;
+      QString status         = analysis_details[ "status" ]       ;
+      QString status_msg     = analysis_details[ "status_msg" ]   ;
+      QString create_time    = analysis_details[ "create_time" ]  ;   
+      QString update_time    = analysis_details[ "update_time" ]  ;
+      QString nextWaitStatus = analysis_details[ "nextWaitStatus" ] ;
+      QString nextWaitStatusMsg = analysis_details[ "nextWaitStatusMsg" ] ;
+
+      qDebug() << "Status -- " << status; 
+
+      QJsonDocument jsonDoc = QJsonDocument::fromJson( status_json.toUtf8() );
+      if (!jsonDoc.isObject())
+	{
+	  qDebug() << "GMP Report: All Doc: NOT a JSON Doc !!";
+	  
+	  QMessageBox::warning( this, tr( "JSON Format Problem" ),
+				tr( "JSON message for status of the analysis performed on triple %1 appears to be corrupted. "
+				    "This may be an indicaiton of the problem with the analysis run for this triple.\n\n"
+				    "This problem will preclude status monitoring for other triples. "
+				    "Please check log messages, or contact administrator for help.\n\n"
+				    "The program will return to the autoflow runs dialog.").arg( triple_name ) );
+	  return;
+	}
+      
+      const QJsonValue &to_process = jsonDoc.object().value("to_process");
+      const QJsonValue &processed  = jsonDoc.object().value("processed");
+      const QJsonValue &submitted  = jsonDoc.object().value("submitted");          
+
+      QJsonArray to_process_array  = to_process.toArray();
+      QJsonArray processed_array   = processed.toArray();
+
+      if ( status == "FAILED" || status == "CANCELED" )
+	{
+	  if ( processed.isUndefined())
+	    qDebug() << "Nothing has been processed yet !!";
+	  else
+	    {
+	      qDebug() << "analysing last() of processed:" ;
+	      //get last() array's element
+	      QString stage_failed = processed_array.last().toObject().keys().last();
+
+	      qDebug() << "GMP Report: stage_failed for triple -- " << triple_name << stage_failed;
+
+	      Triple_to_FailedStage[ triple_name ] = stage_failed;
+	    }
+	}
+    }
+}
+
+// Read AutoflowAnalysisRecord
+QMap< QString, QString>  US_ReporterGMP::read_autoflowAnalysis_record( US_DB2* db, const QString& requestID )
+{
+  QMap <QString, QString> analysis_details;
+  
+  // if ( db->lastErrno() != US_DB2::OK )
+  //   {
+  //     QMessageBox::warning( this, tr( "Connection Problem" ),
+  // 			    tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+  //     return analysis_details;
+  //   }
+
+  QStringList qry;
+  qry << "read_autoflowAnalysis_record"
+      << requestID;
+  
+  db->query( qry );
+
+  if ( db->lastErrno() == US_DB2::OK )    
+    {
+      while ( db->next() )
+	{
+	  analysis_details[ "requestID" ]      = db->value( 0 ).toString();
+	  analysis_details[ "triple_name" ]    = db->value( 1 ).toString();
+	  analysis_details[ "cluster" ]        = db->value( 2 ).toString();
+	  analysis_details[ "filename" ]       = db->value( 3 ).toString();
+	  analysis_details[ "aprofileGUID" ]   = db->value( 4 ).toString();
+	  analysis_details[ "invID" ]          = db->value( 5 ).toString();
+	  analysis_details[ "CurrentGfacID" ]  = db->value( 6 ).toString();
+	  analysis_details[ "currentHPCARID" ] = db->value( 7 ).toString();
+	  analysis_details[ "status_json" ]    = db->value( 8 ).toString();
+	  analysis_details[ "status" ]         = db->value( 9 ).toString();
+	  analysis_details[ "status_msg" ]     = db->value( 10 ).toString();
+	  analysis_details[ "create_time" ]    = db->value( 11 ).toString();   
+	  analysis_details[ "update_time" ]    = db->value( 12 ).toString();
+	  analysis_details[ "create_userd" ]   = db->value( 13 ).toString();
+	  analysis_details[ "update_user" ]    = db->value( 14 ).toString();
+	  analysis_details[ "nextWaitStatus" ] = db->value( 15 ).toString();
+	  analysis_details[ "nextWaitStatusMsg" ] = db->value( 16 ).toString();
+	}
+    }
+
+  //qDebug() << "In reading autoflwoAnalysis record: json: " << analysis_details[ "status_json" ] ;
+  
+  return analysis_details;
+}
+
+// Read AutoflowAnalysisHistory Record
+QMap< QString, QString>  US_ReporterGMP::read_autoflowAnalysisHistory_record( US_DB2* db, const QString& requestID )
+{
+  QMap <QString, QString> analysis_details;
+  
+  QStringList qry;
+  qry << "read_autoflowAnalysisHistory_record"
+      << requestID;
+
+  qDebug() << "In read_autoflowAnalysisHistory_record(), qry -- " << qry;
+  
+  db->query( qry );
+
+  if ( db->lastErrno() == US_DB2::OK )    
+    {
+      while ( db->next() )
+	{
+	  analysis_details[ "requestID" ]      = db->value( 0 ).toString();
+	  analysis_details[ "triple_name" ]    = db->value( 1 ).toString();
+	  analysis_details[ "cluster" ]        = db->value( 2 ).toString();
+	  analysis_details[ "filename" ]       = db->value( 3 ).toString();
+	  analysis_details[ "aprofileGUID" ]   = db->value( 4 ).toString();
+	  analysis_details[ "invID" ]          = db->value( 5 ).toString();
+	  analysis_details[ "CurrentGfacID" ]  = db->value( 6 ).toString();
+	  analysis_details[ "currentHPCARID" ] = db->value( 7 ).toString();
+	  analysis_details[ "status_json" ]    = db->value( 8 ).toString();
+	  analysis_details[ "status" ]         = db->value( 9 ).toString();
+	  analysis_details[ "status_msg" ]     = db->value( 10 ).toString();
+	  analysis_details[ "create_time" ]    = db->value( 11 ).toString();   
+	  analysis_details[ "update_time" ]    = db->value( 12 ).toString();
+	  analysis_details[ "create_userd" ]   = db->value( 13 ).toString();
+	  analysis_details[ "update_user" ]    = db->value( 14 ).toString();
+	  analysis_details[ "nextWaitStatus" ] = db->value( 15 ).toString();
+	  analysis_details[ "nextWaitStatusMsg" ] = db->value( 16 ).toString();
+
+	}
+    }
+
+  //qDebug() << "In reading autoflwoAnalysis record: json: " << analysis_details[ "status_json" ] ;
+  
+  return analysis_details;
+}
+
+
+
 //check models existence for a run/protocol loaded
 void US_ReporterGMP::check_for_missing_models ( void )
 {
   bool hasIT   = cAP2. job4run; //2dsa-it       
   bool hasMC   = cAP2. job5run; //2dsa-mc
   bool hasPCSA = cAPp .job_run; //pcsa
-  
+
+   
   QMap < QString, QStringList >::iterator mm;
   for ( mm = Triple_to_Models.begin(); mm != Triple_to_Models.end(); ++mm )
     {
@@ -437,26 +621,54 @@ QString US_ReporterGMP::missing_models_msg( void )
 {
   QString models_str;
 
-  QMap < QString, QStringList >::iterator mm;
-  for ( mm = Triple_to_ModelsMissing.begin(); mm != Triple_to_ModelsMissing.end(); ++mm )
+  QMap < QString, QString >::iterator mm;
+  for ( mm = Triple_to_FailedStage.begin(); mm != Triple_to_FailedStage.end(); ++mm )
     {
       if ( !mm.value().isEmpty() )
 	{
-	  models_str += mm.key() + ", missing models: " + mm.value().join(", ") + "\n";
+	  models_str += mm.key() + ", missing models: " + Triple_to_ModelsMissing[ mm.key() ].join(", ") + "<br>";
 	}
     }
-
+  
   if ( !models_str.isEmpty() )
     GMP_report = false;
   
   return models_str;
 }
- 
+
+//Failed Stages | Missing Models
+QString US_ReporterGMP::compose_html_failed_stage_missing_models( void )
+{
+  QString failed_str;
+  bool areFailed = false;
+  
+  failed_str += "<table>";
+  
+  QMap < QString, QString >::iterator mm;
+  for ( mm = Triple_to_FailedStage.begin(); mm != Triple_to_FailedStage.end(); ++mm )
+    {
+      if ( !mm.value().isEmpty() )
+	{
+	  areFailed = true;
+	  
+	  failed_str += "<tr><td style=\"color:red;\">" + mm.key() + ",</td><td> analysis failed/canceled at stage: </td><td style=\"color:red;\">"
+	                + mm.value() + ";</td>" + 
+	                + "<td>Models missing: </td><td style=\"color:red;\">" +  Triple_to_ModelsMissing[ mm.key() ].join(", ") + "</td></tr>";
+	}
+    }
+
+  failed_str += "</table>";
+
+  if( !areFailed )
+    failed_str.clear();
+    
+  return failed_str;
+}
+
 //check models existence for a run loaded
 void US_ReporterGMP::check_models ( int autoflowID )
 {
   //build Array of triples
-  QVector< QString >  Array_of_tripleNames;
   int nchna   = currAProf.pchans.count();
   for ( int i = 0; i < nchna; i++ )
     {
@@ -520,53 +732,13 @@ void US_ReporterGMP::check_models ( int autoflowID )
       ///
 
       //Now parse modelDecsJson for eID, modelIDs
+      //Triple_to_ModeslDesc[ "1.A.225" ] [ "2DSA-IT" ] = modelID;
+      //Triple_to_ModeslDesc[ "1.A.225" ] [ "2DSA-MC" ] = modelID;
+      //Triple_to_ModeslDesc[ "1.A.225" ] [ "PCSA" ]    = modelID;
+      //Triple_to_ModeslDesc[ "1.A.225" ] [ "eID" ]     = eID;
       Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ] = parse_models_desc_json( modelDescJson ); 
-      
+
             
-      // //Parse filename
-      // QString filename_received = get_filename( Array_of_tripleNames[ i ] );
-      // qDebug() << "In show_overlay(): filename_received: " << filename_received;
-      
-      // int eID=0;
-      // QString efilename;
-      
-      // //get EditedData filename && editedDataID for current triple, then infer rawDataID 
-      // query.clear();
-      // query << "get_editedDataFilenamesIDs" << filename_received;
-      // db->query( query );
-      
-      // int latest_update_time = 1e100;
-      
-      // while ( db->next() )
-      //  	{
-      //  	  QString  filename            = db->value( 0 ).toString();
-      //  	  int      editedDataID        = db->value( 1 ).toInt();
-      //  	  int      rawDataID           = db->value( 2 ).toInt();
-      //  	  //QString  date                = US_Util::toUTCDatetimeText( db->value( 3 ).toDateTime().toString( "yyyy/MM/dd HH:mm" ), true );
-      //  	  QDateTime date               = db->value( 3 ).toDateTime();
-        
-      //  	  QDateTime now = QDateTime::currentDateTime();
-
-      //  	  qDebug() << "1. In check_model: filename, editedDataID  -- " << filename << editedDataID ;
-        
-      //  	  if ( filename.contains( triple_name_actual ) ) 
-      //  	    {
-      //  	      int time_to_now = date.secsTo(now);
-      //  	      if ( time_to_now < latest_update_time )
-      //  		{
-      //  		  latest_update_time = time_to_now;
-      //  		  //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
-      	  
-      //  		  rID       = rawDataID;
-      //  		  eID       = editedDataID;
-      //  		  efilename = filename;
-
-      //  		  qDebug() << "In check_model: eID, efilename, triple_name_actual -- " <<  eID << efilename << triple_name_actual;
-      //  		}
-      //  	    }
-      //  	}
-
-
       QString eID = Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "eID" ];
       qDebug() << "In check_models: eID -- " << eID;
       
@@ -726,6 +898,7 @@ void US_ReporterGMP::load_gmp_run ( void )
   runID              = protocol_details[ "runID" ];
   FileName           = protocol_details[ "filename" ];
   intensityID        = protocol_details[ "intensityID" ];
+  analysisIDs        = protocol_details[ "analysisIDs" ];
   
   progress_msg->setValue( 1 );
   qApp->processEvents();
@@ -742,12 +915,29 @@ void US_ReporterGMP::load_gmp_run ( void )
 
   //Now, read protocol's 'reportMask' && reportItems masks && populate trees
   read_protocol_and_reportMasks( );
+
+  //check triples for failure
+  check_failed_triples( );
   
   //check models existence
   check_models( autoflowID );
   progress_msg->setValue( 7 );
   qApp->processEvents();
 
+  //debug
+  for ( int i=0; i < Array_of_tripleNames.size(); ++ i )
+    {
+      QMap< QString, QString > tmap =  Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ];
+      QMap < QString, QString >::iterator it;
+      for ( it = tmap.begin(); it != tmap.end(); ++it )
+	{
+	  qDebug() << "ModelsDesc: Triple, QMap -- "
+		   << Array_of_tripleNames[ i ]
+		   << it.key()
+		   << it.value();
+	}
+    }
+  
   //DEBUG
   //exit(1);
   
@@ -808,13 +998,13 @@ void US_ReporterGMP::load_gmp_run ( void )
   else
     {
       QMessageBox::information( this, tr( "Report Profile Uploaded" ),
-				tr( "Report profile uploaded for GMP run:\n"
-				    "%1\n\n"
-				    "ATTENTION: There are missing models for certain triples: \n\n"
-				    "%2\n\n"
-				    "As a result, a non-GMP report will be generated!")
-				.arg( full_runname )
-				.arg( msg_missing_models) );
+      				QString ( "Report profile uploaded for GMP run:<br><br>"
+					  "%1<br><br>"
+					  "<font color='red'><b>ATTENTION:</b> There are missing models for certain triples: </font><br><br>"
+					  "%2<br><br>"
+					  "As a result, a non-GMP report will be generated!")
+      				.arg( full_runname )
+      				.arg( msg_missing_models) );
     }
 }
 
@@ -1605,8 +1795,8 @@ void US_ReporterGMP::build_perChanTree ( void )
 						    << "f/f0-vs-s 2D Model"
 						    << "f/f0-vs-MW 2D Model"
 						    << "D-vs-s 2D Model"
-						    << "D-vs-MW 2D Model"
-						    << "3D Model Plot";
+						    << "D-vs-MW 2D Model";
+			  //<< "3D Model Plot";
 								  
 			  for ( int hh = 0; hh < tripleReportMasksPlotList.size(); ++hh )
 			    {
@@ -1705,7 +1895,39 @@ void US_ReporterGMP::build_perChanTree ( void )
 	}
     }
 
-  perChanTree->expandAll();    
+  //Now check if tripleItem tree widgets have any children (have any models):
+  QMap < QString, QTreeWidgetItem * >::iterator ch;
+  for ( ch = chanItem.begin(); ch != chanItem.end(); ++ch )
+    {
+      int channel_children = ch.value()->childCount();
+      int hidden_triples = 0;
+      
+      for ( int i = 0; i < channel_children; ++i )
+	{
+	  QTreeWidgetItem* child_triple = ch.value()->child( i );
+	  if ( !child_triple-> childCount() )
+	    {
+	      qDebug() << "Channel's " << ch.value()->text( 1 )
+		       << " triple: "
+		       << child_triple->text(1)
+		       << " has NO children";
+
+	      ++hidden_triples;
+	      //Hide triple treeItem
+	      child_triple->setHidden( true );
+	    }
+	}
+      if ( channel_children == hidden_triples )
+	{
+	  qDebug() << "We have to hide entire channel  " << ch.value()->text( 1 );
+	  //Hide channel treeItem
+	  ch.value()->setHidden( true );
+	}
+    }
+  //End of disabling empty tree branches
+  
+  perChanTree->expandAll();
+  //perChanTree->expandToDepth( 2 );
   perChanTree->resizeColumnToContents( 0 );
   perChanTree->resizeColumnToContents( 1 );
 
@@ -1826,6 +2048,7 @@ void US_ReporterGMP::reset_report_panel ( void )
 
   //clean triple_array
   Array_of_triples.clear();
+  Array_of_tripleNames.clear();
 
   //clean intensity RI Map
   intensityRIMap .clear();
@@ -1838,6 +2061,7 @@ void US_ReporterGMP::reset_report_panel ( void )
   Triple_to_Models       . clear();
   Triple_to_ModelsDesc   . clear();
   Triple_to_ModelsMissing. clear();
+  Triple_to_FailedStage  . clear();
   
   //reset US_Protocol && US_AnaProfile
   currProto = US_RunProtocol();  
@@ -1845,6 +2069,7 @@ void US_ReporterGMP::reset_report_panel ( void )
 
   //reset html assembled strings
   html_assembled.clear();
+  html_failed. clear();
   html_general.clear();
   html_lab_rotor.clear();
   html_operator.clear();
@@ -1875,6 +2100,7 @@ void US_ReporterGMP::generate_report( void )
 
   //reset html assembled strings
   html_assembled.clear();
+  html_failed.clear();
   html_general.clear();
   html_lab_rotor.clear();
   html_operator.clear();
@@ -1917,8 +2143,6 @@ void US_ReporterGMP::generate_report( void )
       for ( int i=0; i<Array_of_triples.size(); ++i )
 	{
 	  currentTripleName = Array_of_triples[i];
-	  QString triplename_alt = currentTripleName;
-	  triplename_alt.replace(".","");
 	      
 	  //here should be cycle over triple's models ( 2DSA-IT, 2DSA-MC etc..)
 	  QStringList models_to_do = Triple_to_Models[ currentTripleName ];
@@ -1926,7 +2150,7 @@ void US_ReporterGMP::generate_report( void )
 	  for ( int j = 0; j < models_to_do.size(); ++j )
 	    {
 	      simulate_triple ( currentTripleName, models_to_do[ j ] );
-	      plot_pseudo3D( triplename_alt, models_to_do[ j ]);
+	      plot_pseudo3D( currentTripleName, models_to_do[ j ]);
 	    }
 	}
     }
@@ -1953,7 +2177,7 @@ void US_ReporterGMP::generate_report( void )
 		{
 		  simulate_triple ( currentTripleName, models_to_do[ j ] );
 		  
-		  plot_pseudo3D( triplename_alt, models_to_do[ j ]);
+		  plot_pseudo3D( currentTripleName, models_to_do[ j ]);
 		}
 	    }
 	}
@@ -3832,7 +4056,9 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
 //Plot pseudo3d distr.
 void US_ReporterGMP::plot_pseudo3D( QString triple_name,  QString stage_model)
 {
-  QString t_name = triple_name;
+  qDebug() << "In plot_pseudo3D: init -- " << triple_name << stage_model;
+  QString modelid = Triple_to_ModelsDesc[ triple_name ][ stage_model ];
+  QString t_name  = triple_name;
   t_name.replace(".", "");
 
   if ( t_name. contains( "Interference" ) )
@@ -3855,13 +4081,13 @@ void US_ReporterGMP::plot_pseudo3D( QString triple_name,  QString stage_model)
 
 
   //ALEXEY: should it be a stricter requirement (modelID ?)
-  QStringList m_t_r;  
-  m_t_r << t_name << stage_model << filename_returned;
+  QStringList m_t_r_id;  
+  m_t_r_id << stage_model << t_name << filename_returned << modelid;
   
-  qDebug() << "m_t_r to model_loader -- " << m_t_r;
+  qDebug() << "m_t_r_id to model_loader -- " << m_t_r_id;
   
   sdiag_pseudo3d = new US_Pseudo3D_Combine();
-  sdiag_pseudo3d -> load_distro_auto ( QString::number( invID ), m_t_r );
+  sdiag_pseudo3d -> load_distro_auto ( QString::number( invID ), m_t_r_id );
 
   //Replace back for internals
   t_name. replace( "660", "Interference");
@@ -5003,7 +5229,8 @@ void US_ReporterGMP::plotres( QMap < QString, QString> & tripleInfo )
   t_name.replace(".", "");
   QString s_name = tripleInfo[ "stage_name" ] ;
 
-  bool show_3d   = ( perChanMask_edited. ShowTripleModelPlotParts[ t_name ][ s_name ][ "3D Model Plot" ].toInt() ) ? true : false ;
+  //bool show_3d   = ( perChanMask_edited. ShowTripleModelPlotParts[ t_name ][ s_name ][ "3D Model Plot" ].toInt() ) ? true : false ;
+  bool show_3d   = false;
   bool show_d_mw = ( perChanMask_edited. ShowTripleModelPlotParts[ t_name ][ s_name ][ "D-vs-MW 2D Model" ].toInt() ) ? true : false ; 
   bool show_d_s  = ( perChanMask_edited. ShowTripleModelPlotParts[ t_name ][ s_name ][ "D-vs-s 2D Model" ].toInt() ) ? true : false ; 
   bool show_dd   = ( perChanMask_edited. ShowTripleModelPlotParts[ t_name ][ s_name ][ "Diffusion Coefficient Distribution" ].toInt() ) ? true : false ;
@@ -5701,7 +5928,25 @@ void US_ReporterGMP::assemble_pdf()
     "<p align=justify>"
 				   )
     ;
+
   
+  //Failed Triples' Analyses, Missing Models info (if any):
+  QString str_failed_stage_missing_models;
+  str_failed_stage_missing_models = compose_html_failed_stage_missing_models();
+  qDebug() << "STR_on_failed: " << str_failed_stage_missing_models;
+  if ( !str_failed_stage_missing_models.isEmpty() )
+    {
+      html_failed  = tr(
+			"<h3 style=\"color:red;\" align=left> ATTENTION: Analyses for Some Triples Failed or Have Been Canceled!</h3>"
+			"%1"
+			"<hr>"
+			)
+	.arg( str_failed_stage_missing_models )
+	;
+    }
+  //End of failed|missing
+			
+			
   //GENERAL: begin
   html_general = tr(
     
@@ -7123,6 +7368,9 @@ void US_ReporterGMP::get_current_date()
 //assemble parts of the PDF based on mask
 void US_ReporterGMP::assemble_parts( QString & html_str )
 {
+  //info on failed analyses
+  html_str += html_failed;
+  
   QMap < QString, bool >::iterator top;
   for ( top = genMask_edited.ShowReportParts.begin(); top != genMask_edited.ShowReportParts.end(); ++top )
     {
