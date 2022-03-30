@@ -415,7 +415,6 @@ void US_CosedComponent::putAllToHD(
 //-------------  US_Buffer
 US_Buffer::US_Buffer()
 {
-   qDebug() << "test2";
    compressibility = 0.0;
    pH              = WATER_PH;
    density         = DENS_20W;
@@ -944,8 +943,11 @@ void US_Buffer::readBuffer( QXmlStreamReader& xml )
    viscosity       = a.value( "viscosity"   ).toString().toDouble();
    manual          = US_Util::bool_flag( a.value( "manual" ).toString() );
 
-   concentration.clear();
-   componentIDs .clear();
+   concentration     .clear();
+   componentIDs      .clear();
+   cosed_componentIDs.clear();
+   cosed_attributes  .clear();
+   overlaying        .clear();
 
    while ( ! xml.atEnd() )
    {
