@@ -676,7 +676,7 @@ void US_Win::help( int index )
             " * Minji Kim\n"
             " * Brad Langford\n"
             " * Thomas Laue\n"
-            " * Konrad L�hr\n"
+            " * Konrad Löhr\n"
             " * Luitgard Nagel-Steger\n"
             " * Zach Ozer\n"
             " * Karel Planken\n"
