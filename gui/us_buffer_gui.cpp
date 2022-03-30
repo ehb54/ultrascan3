@@ -80,15 +80,15 @@ US_BufferGuiSelect::US_BufferGuiSelect( int *invID, int *select_db_disk,
    main->addWidget( le_search,       row,   1, 1, 2 );
    main->addWidget( pb_cancel,       row,   3, 1, 1 );
    main->addWidget( pb_accept,       row++, 4, 1, 1 );
-   main->addWidget( lw_buffer_list,  row,   0, 6, 3 );
+   main->addWidget( lw_buffer_list,  row,   0,10, 3 );
    main->addWidget( pb_spectrum,     row,   3, 1, 1 );
    main->addWidget( pb_delete,       row++, 4, 1, 1 );
    main->addWidget( pb_info,         row,   3, 1, 1 );
    main->addWidget( pb_help,         row++, 4, 1, 1 );
-   main->addWidget( bn_bcomps,       row++, 3, 4, 2 );
+   main->addWidget( bn_bcomps,       row++, 3, 1, 2 );
    main->addWidget( lw_buffer_comps, row,   3, 3, 2 );
    row += 3;
-   main->addWidget( bn_cosedcomps,   row++, 3, 3, 2 );
+   main->addWidget( bn_cosedcomps,   row++, 3, 1, 2 );
    main->addWidget( lw_cosed_comps,  row,   3, 3, 2 );
    row += 3;
    main->addWidget( lb_density,      row,   0, 1, 2 );
@@ -145,6 +145,7 @@ DbgLv(1) << "BufS:  selbuf: ROW" << lw_buffer_list->currentRow();
    le_compressib->setText( QString::number( buffer->compressibility, 'e', 4 ) );
 
    lw_buffer_comps->clear();
+   lw_cosed_comps ->clear();
 
 DbgLv(1) << "BufS: desc" << buffer->description
  << "compsize" << buffer->componentIDs.size();
@@ -154,7 +155,17 @@ DbgLv(0) << "MwDa: dbg_level" << dbg_level;
       show_component( buffer->componentIDs [ ii ],
                       buffer->concentration[ ii ] );
    }
-
+DbgLv(1) << "BufS: desc" << buffer->description
+         << "compsize" << buffer->cosed_componentIDs.size();
+DbgLv(0) << "MwDa: dbg_level" << dbg_level;
+   for ( int ii = 0; ii < buffer->cosed_componentIDs.size(); ii++ )
+   {
+      show_cosed_component( buffer->cosed_componentIDs [ ii ],
+                            buffer->cosed_attributes[ ii ][ 0 ],
+                            buffer->cosed_attributes[ ii ][ 1 ],
+                            buffer->cosed_attributes[ ii ][ 2 ],
+                            buffer->overlaying[ ii] );
+   }
    pb_accept->setEnabled ( true );
    pb_delete->setEnabled ( true );
    pb_info  ->setEnabled ( true );
@@ -211,8 +222,8 @@ DbgLv(1) << "shco: name conc unit" << name << sconc << unit
 // Show each cosed component for the current buffer
 void US_BufferGuiSelect::show_cosed_component( const QString& componentID, double conc, double s, double D, bool overlay )
 {
-   QString name  = component_list[ componentID ].name;
-   QString unit  = component_list[ componentID ].unit;
+   QString name  = cosed_component_list[ componentID ].name;
+   QString unit  = cosed_component_list[ componentID ].unit;
 
    QString sconc = QString::number( conc, 'f', 1 );
    QString s_s = QString::number( s, 'f', 1 );
@@ -230,22 +241,22 @@ void US_BufferGuiSelect::read_from_disk( QListWidgetItem* item )
    int row = lw_buffer_list->row( item );
    int buf = buffer_metadata[ row ].index;
 DbgLv(1) << "row: " << row << " buf: "  << buf;
-   buffer->extinction.clear();
+   buffer->extinction     .clear();
+   buffer->component      .clear();
+   buffer->cosed_component.clear();
 
    if ( ! buffer->readFromDisk( filenames[ buf ] ) )
       qDebug() << "read failed";
 
-   buffer->component.clear();
-   buffer->cosed_component.clear();
 
    for ( int ii = 0; ii < buffer->componentIDs.size(); ii++ )
    {
       QString index = buffer->componentIDs[ ii ];
       buffer->component << component_list[ index ];
    }
-   for ( int ii = 0; ii < buffer->cosed_componentIDs.size(); ii++ )
+   for ( int iii = 0; iii < buffer->cosed_componentIDs.size(); iii++ )
    {
-      QString index = buffer->cosed_componentIDs[ ii ];
+      QString index = buffer->cosed_componentIDs[ iii ];
       buffer->cosed_component << cosed_component_list[ index ];
    }
 }
@@ -491,7 +502,7 @@ void US_BufferGuiSelect::info_buffer( void )
    for ( int ii = 0; ii < ncosedcomp; ii++ )
    {
       US_CosedComponent bcomp = buffer->cosed_component[ ii ];
-      QString compx    = tr( "%1 of %2" ).arg( ii + 1 ).arg( ncomp );
+      QString compx    = tr( "%1 of %2" ).arg( ii + 1 ).arg( ncosedcomp );
       QString dcoeffs  = QString::number( bcomp.dens_coeff[ 0 ] ) + " " +
                          QString::number( bcomp.dens_coeff[ 1 ] ) + " " +
                          QString::number( bcomp.dens_coeff[ 2 ] ) + " " +
@@ -509,13 +520,12 @@ void US_BufferGuiSelect::info_buffer( void )
       QString d_value  = QString::number( buffer->cosed_attributes[ ii ][ 2 ] );
       QString o_layed  = ( buffer->overlaying[ ii ] )?QString("Overlayed"):QString("Not Overlayed");
 
-      lines << "  " + tr( "Component index:           " ) + compx;
+      lines << "  " + tr( "Cosed Component index:     " ) + compx;
       lines << "  " + tr( "Component ID:              " ) + bcomp.componentID;
       lines << "  " + tr( "Name:                      " ) + bcomp.name;
       lines << "  " + tr( "Concentration:             " ) + concen + " " + bcomp.unit;
       lines << "  " + tr( "Sedimentation Coefficient: " ) + s_value + " " + "1/s";
       lines << "  " + tr( "Diffusion Coefficient:     " ) + d_value + " " + "cm^2/s";
-      lines << "  " + tr( "Sedimentation Coefficient: " ) + s_value + " " + "1/s";
       lines << "  " + tr( "Start condition:           " ) + o_layed;
       lines << "  " + tr( "Density Coefficients:      " ) + dcoeffs;
       lines << "  " + tr( "Viscosity Coefficients:    " ) + vcoeffs;
@@ -912,7 +922,6 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
    from_db    = ( (*db_or_disk) == 1 );
    dbg_level  = US_Settings::us_debug();
    cosed      = false;
-   qDebug() << "test";
    // Read all buffer components from the
    //  $ULTRASCAN3/etc/bufferComponents xml file:
    US_BufferComponent::getAllFromHD( component_list );
@@ -963,6 +972,8 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
    le_diffcoeff        = us_lineedit( "" );
    lw_allcomps         = us_listwidget();
    lw_bufcomps         = us_listwidget();
+   lw_allcosed         = us_listwidget();
+   lw_cosedcomps       = us_listwidget();
 
 
    QPalette upal       = lb_bselect->palette();
@@ -997,7 +1008,7 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
    main->addWidget( bn_general,         row++, 0, 1, 8 );
    main->addWidget( pb_cancel,          row,   4, 1, 2 );
    main->addWidget( pb_accept,          row++, 6, 1, 2 );
-   main->addLayout( lo_manual,          row,   0, 1, 8 );
+   main->addLayout( lo_manual,          row,   0, 1, 4 );
    main->addWidget( pb_spectrum,        row,   4, 1, 2 );
    main->addWidget( pb_help,            row++, 6, 1, 2 );
    main->addWidget( lb_density,         row,   0, 1, 2 );
@@ -1007,9 +1018,10 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
    main->addWidget( lb_viscos,          row,   0, 1, 2 );
    main->addWidget( le_viscos,          row,   2, 1, 2 );
    main->addWidget( lb_compress,        row,   4, 1, 2 );
-   main->addWidget( le_compress,        row,   6, 1, 2 );
-   main->addWidget( lb_bselect,         row,   0, 2, 4 );
+   main->addWidget( le_compress,        row++, 6, 1, 2 );
+   main->addWidget( lb_bselect,         row++, 0, 2, 4 );
    main->addWidget( le_concen,          row++, 4, 1, 4 );
+   main->addWidget( bn_buffer,          row++, 0, 1, 8 );
    main->addWidget( bn_allcomps,        row,   0, 1, 4 );
    main->addWidget( bn_bufcomps,        row++, 4, 1, 4 );
    main->addWidget( lw_allcomps,        row,   0, 3, 4 );
@@ -1020,11 +1032,11 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
    main->addWidget( le_sedcoeff,        row,   2, 1, 2 );
    main->addWidget( lb_diffcoeff,       row,   4, 1, 2 );
    main->addWidget( le_diffcoeff,       row++, 6, 1, 2 );
-   main->addLayout( lo_overlayed,       row,   0, 1, 8 );
+   main->addLayout( lo_overlayed,       row++, 0, 1, 8 );
    main->addWidget( bn_all_cosed_comps, row,   0, 1, 4 );
    main->addWidget( bn_cosed_comps,     row++, 4, 1, 4 );
    main->addWidget( lw_allcosed,        row,   0, 3, 4 );
-   main->addWidget( lw_cosedcomps,     row,   4, 3, 4 );
+   main->addWidget( lw_cosedcomps,      row,   4, 3, 4 );
 
 
 
@@ -1064,7 +1076,7 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
    connect( lw_bufcomps,   SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
             this,          SLOT  ( remove_bcomp(      QListWidgetItem* ) ) );
    connect( lw_allcosed,   SIGNAL( itemSelectionChanged() ),
-            this,          SLOT  ( select_bcosed()     ));
+            this,          SLOT  ( select_cosedcomp()     ));
    connect( lw_cosedcomps, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
             this,          SLOT  ( remove_cosedcomp(  QListWidgetItem* ) ) );
    connect( le_density,    SIGNAL( editingFinished()   ),
@@ -1077,8 +1089,6 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
             this,          SLOT  ( compressibility()   ) );
    connect( ck_manual,     SIGNAL( toggled    ( bool ) ),
             this,          SLOT  ( manual_flag( bool ) ) );
-   connect( ck_overlaying, SIGNAL( toggled        ( bool ) ),
-            this,          SLOT  ( overlaying_flag( bool ) ) );
    connect( le_sedcoeff,   SIGNAL( editingFinished()   ),
             this,          SLOT  ( add_cosed_component() ) );
    connect( le_diffcoeff,  SIGNAL( editingFinished()   ),
@@ -1270,26 +1280,30 @@ DbgLv(1) << "BufN:SL: adco:   concen" << concen << "newitem" << entext;
 // Slot for entry of concentration to complete add-component
 void US_BufferGuiNew::add_cosed_component()
 {
-   DbgLv(1) << "BufN:SL: add_component()";
+   DbgLv(1) << "BufN:SL: add_cosed_component()";
    // escape if not all values are defined (will be reinvoked as soon the next field is field)
-   if (le_concen->text().isEmpty() or le_sedcoeff->text().isEmpty() or le_diffcoeff->text().isEmpty())
-      return;
+   if (le_concen->text().isEmpty() or le_sedcoeff->text().isEmpty() or le_diffcoeff->text().isEmpty()){
+      DbgLv(2) << "BufN:SL: add_cosed_component() not filled";
+      return;}
    double concen     = le_concen    ->text().toDouble();
    double sed_coeff  = le_sedcoeff  ->text().toDouble();
    double diff_coeff = le_diffcoeff ->text().toDouble();
    bool   overlaying = ck_overlaying->isChecked();
 
-
-   le_concen->setText( "" );
+   // reset gui
+   le_concen    ->setText( "" );
+   le_sedcoeff  ->setText( "" );
+   le_diffcoeff ->setText( "" );
+   ck_overlaying->setChecked( false );
 
    if ( concen == 0.0 )
       return;
 
    // Get selected component
-   QListWidgetItem* item    = lw_allcomps->currentItem();
+   QListWidgetItem* item    = lw_allcosed->currentItem();
    QString compID  = QString::number( item->type() );
    US_CosedComponent bcomp = cosed_component_list[ compID ];
-   DbgLv(1) << "BufN:SL: adco:" << item->text();
+   DbgLv(1) << "BufN:SL: adcosedco:" << item->text();
 
    // Verify that concentration is within a valid range
    QString prange = QString( bcomp.range ).section( " ", 0, 0 );
@@ -1317,7 +1331,13 @@ void US_BufferGuiNew::add_cosed_component()
                              + bcomp.unit );
       return;
    }
-
+   QString overlay_str;
+   if (overlaying){
+      overlay_str = QString("Overlayed");
+   }
+   else{
+      overlay_str = QString("");
+   }
    // Check if ingredient already exists
    for ( int ii = 0; ii < buffer->cosed_component.size(); ii++ )
    {
@@ -1327,18 +1347,17 @@ void US_BufferGuiNew::add_cosed_component()
          buffer->cosed_attributes[ ii ][ 1 ] = sed_coeff;
          buffer->cosed_attributes[ ii ][ 2 ] = diff_coeff;
          buffer->overlaying[ ii ]            = overlaying;
-         QString entext  = bcomp.name + " (" + concen + " " + bcomp.unit + ")" + " (" + sed_coeff + " s; "
-               + diff_coeff + " cm^2/s) " + overlaying;
+         QString entext  = bcomp.name + " (" + QString::number(concen) + " " + bcomp.unit + ")" + " (" + QString::number(sed_coeff) + " s; "
+               + QString::number(diff_coeff) + " cm^2/s) " + overlay_str;
          lw_cosedcomps->item( ii )->setText( entext );
 
          return;
       }
    }
-
    DbgLv(1) << "BufN:SL: adco:  cname" << bcomp.name << "crange" << bcomp.range
             << "cunit" << bcomp.unit;
-   QString entext  = bcomp.name + " (" + concen + " " + bcomp.unit + ")" + " (" + sed_coeff + " s; "
-                     + diff_coeff + " cm^2/s) " + overlaying;
+   QString entext  = bcomp.name + " (" + QString::number(concen) + " " + bcomp.unit + ")" + " (" + QString::number(sed_coeff) + " s; "
+                     + QString::number(diff_coeff) + " cm^2/s) " + overlay_str;
    lw_cosedcomps->addItem( entext );
 
    QList<double> comp_attr;
@@ -1346,7 +1365,7 @@ void US_BufferGuiNew::add_cosed_component()
    buffer->cosed_attributes << comp_attr;
    buffer->overlaying << overlaying;
    buffer->cosed_component     << bcomp;
-   buffer->componentIDs  << compID;
+   buffer->cosed_componentIDs  << compID;
    DbgLv(1) << "BufN:SL: adco:   concen" << concen << "newitem" << entext;
 
    bool can_accept = ( !le_descrip->text().isEmpty()  &&
@@ -1368,7 +1387,7 @@ DbgLv(1) << "BufN:SL: select_bcomp()" << item->text();
    QString bctext  = item->text();
 DbgLv(1) << "BufN:SL:  selb:  cname" << bcomp.name << "crange" << bcomp.range
  << "cunit" << bcomp.unit;
-   QString lbtext  = tr( "Please enter the concentration of\n " )
+   QString lbtext  = tr( "Please enter the concentration of\n" )
                      + bcomp.name + tr( " in " ) + bcomp.unit + ":";
    lb_bselect->setText( lbtext );
 }
@@ -1385,8 +1404,8 @@ void US_BufferGuiNew::select_cosedcomp( )
    QString bctext  = item->text();
    DbgLv(1) << "BufN:SL:  selb:  cname" << bcomp.name << "crange" << bcomp.range
             << "cunit" << bcomp.unit;
-   QString lbtext  = tr( "Please enter the Concentration and other Attributes of\n " )
-                     + bcomp.name + tr( " in " ) + bcomp.unit + ":";
+   QString lbtext  = tr( "Please enter the concentration and other \nattributes of " )
+                     + bcomp.name + ":";
    lb_bselect->setText( lbtext );
 }
 
