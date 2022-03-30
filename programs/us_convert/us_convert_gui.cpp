@@ -4347,7 +4347,7 @@ DbgLv(1) << "chgTrp: trDx trLx" << tripDatax << tripListx
    // 	 le_description ->setText( outData[ tripDatax ]->description );
    //   }
    // else
-     le_description ->setText( outData[ tripDatax ]->description );
+   le_description ->setText( outData[ tripDatax ]->description );
 
    le_solutionDesc->setText( out_chaninfo[ tripListx ].solution.solutionDesc );
    le_centerpieceDesc ->setText( out_chaninfo[ tripListx ].centerpieceName );
@@ -5402,6 +5402,14 @@ DbgLv(1) << "DelTrip: bldout  RTN";
 
    plot_titles();              // Output a plot of the current data
    plot_all();
+
+   //Set correct Solution/Descr/Centerpiece  Names
+   triple_index();
+   le_description ->setText( outData[ tripDatax ]->description );
+
+   le_solutionDesc->setText( out_chaninfo[ tripListx ].solution.solutionDesc );
+   le_centerpieceDesc ->setText( out_chaninfo[ tripListx ].centerpieceName );
+   
 }
 
 //Check if triple is the reference one for a channel..
@@ -5615,12 +5623,31 @@ DbgLv(1) << "DelChan:  EXCLUDED chn trx" << chann << trx;
 
    build_output_data();        // Rebuild the output data controls
 
+   if ( outData.size() < 1 )
+     {
+       le_description ->setText("");
+       le_solutionDesc->setText("");
+       le_centerpieceDesc ->setText( "" );
+
+       QMessageBox::warning( this, tr( "All Data Dropped" ),
+			     tr( "ATTENTION: All data dropped. Nothing to work with...\n" ));
+       return;
+     }
+   
    build_lambda_ctrl();        // Rebuild lambda controls
 
    setTripleInfo();            // Review new triple information
 
    plot_titles();              // Output a plot of the current data
    plot_all();
+
+   //Set correct Solution/Descr/Centerpiece  Names
+   triple_index();
+   le_description ->setText( outData[ tripDatax ]->description );
+
+   le_solutionDesc->setText( out_chaninfo[ tripListx ].solution.solutionDesc );
+   le_centerpieceDesc ->setText( out_chaninfo[ tripListx ].centerpieceName );
+
 }
 
 // Drop the triples for the selected cell/channel ('Drop Selected Data')
@@ -5662,6 +5689,13 @@ DbgLv(1) << "DelChan:  EXCLUDED cc trx" << celchn << trx;
 
    plot_titles();              // Output a plot of the current data
    plot_all();
+
+   //Set correct Solution/Descr/Centerpiece  Names
+   triple_index();
+   le_description ->setText( outData[ tripDatax ]->description );
+
+   le_solutionDesc->setText( out_chaninfo[ tripListx ].solution.solutionDesc );
+   le_centerpieceDesc ->setText( out_chaninfo[ tripListx ].centerpieceName );
 }
 
 
@@ -8522,7 +8556,7 @@ void US_ConvertGui::build_output_data()
         outx++;
     }
     DbgLv(1) << "CGui: BOD: outsz" << outData.size();
-   }
+}
 
 
 // Turn ct_tolerance connection on or off
