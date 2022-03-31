@@ -405,6 +405,7 @@ class US_ConvertGui : public US_Widgets
       void show_intensity_auto ( void );
 
       void cancel_reference  ( void );
+      int  check_for_data_left ( QString, QString );
       void drop_reference    ( void );
       void drop_channel      ( void );
       void drop_cellchan     ( void );

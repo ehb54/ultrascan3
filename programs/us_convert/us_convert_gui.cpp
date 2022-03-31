@@ -5326,7 +5326,30 @@ DbgLv(1) << "DelTrip: selected size" << selsiz;
 
    // Modify triples or cell/channels and wavelengths for specified excludes
    if ( selsiz > 0 )
-   {
+     {
+       //check if there will be any data left
+       if ( (out_triples.size() - selsiz) <= 0 )
+	 {
+	   int stat     = QMessageBox::warning( this,
+						tr( "All Data To Be Dropped" ),
+						tr( "<font color='red'><b>ATTENTION:</b> Are you sure you want to drop all data?</font><br><br>"
+						    "(At least 1 triple is required to proceed to Editing, Analysis & Report stages...)<br><br>"
+						    "If that is what you intend, click <b>\"Proceed\"</b>.<br><br>"
+						    "NOTE: The program will be reset; you will no longer be able to process current run "
+						    "with this program<br>"),
+						tr( "&Proceed" ), tr( "&Cancel" ) );
+	   
+	   if ( stat != 0 ) 
+	     return;
+	   
+	   //delete autoflow record & return to Run Manager
+	   delete_autoflow_record();
+	   resetAll_auto();
+	   emit saving_complete_back_to_initAutoflow( );
+	   return;
+	 }
+       //End of preliminary check for remaining data
+     
       for ( int ss = 0; ss < selsiz; ss++ )
       {  // Mark selected triples as excluded
          int trx    = all_triples.indexOf( selected[ ss ] );
@@ -5366,6 +5389,30 @@ DbgLv(1) << "DelTrip: selected size" << selsiz;
 							     tr( "&Proceed" ), tr( "&Cancel" ) );
 		  
 		  if ( status != 0 ) return;
+
+		  //Now check for remainig data using "cellchannel"
+		  if ( check_for_data_left( celchn, "cellchannel" ) <= 0 )
+		    {
+		      int stat     = QMessageBox::warning( this,
+							   tr( "All Data To Be Dropped" ),
+							   tr( "<font color='red'><b>ATTENTION:</b> Are you sure you want to drop all data?</font><br><br>"
+							       "(At least 1 triple is required to proceed to Editing, Analysis & Report stages...)<br><br>"
+							       "If that is what you intend, click <b>\"Proceed\"</b>.<br><br>"
+							       "NOTE: The program will be reset; you will no longer be able to process current run "
+							       "with this program<br>"),
+							   tr( "&Proceed" ), tr( "&Cancel" ) );
+		      
+		      if ( stat != 0 ) 
+			return;
+		      
+		      //delete autoflow record & return to Run Manager
+		      //delete_autoflow_record();
+		      resetAll_auto();
+		      emit saving_complete_back_to_initAutoflow( );
+		      return;
+		    }
+		  //End of final check for remaining data
+		  
 
 		  //Mark channel to be dropped - for exclusion of the report
 		  channels_to_drop[ QString( celchn ).replace(" / ","") ] = true;
@@ -5582,21 +5629,84 @@ bool US_ConvertGui::bool_flag( const QString xmlattr )
    return ( !xmlattr.isEmpty()  &&  ( xmlattr == "1"  ||  xmlattr == "T" ) );
 }
 
+int US_ConvertGui::check_for_data_left( QString chann, QString type )
+{
+  int triples_to_exclude = 0;
+
+  if ( type == "channel" )
+    {
+      for ( int trx = 0; trx < all_triples.size(); trx++ )
+	{  // Mark matching triples as excluded
+	  QString tchan = QString( all_triples[ trx ] )
+	    .section( "/", 1, 1 ).simplified();
+	  
+	  if ( tchan == chann )
+	    {
+	      ++triples_to_exclude;
+	    }
+	}
+    }
+
+  if ( type == "cellchannel" )
+    {
+      for ( int trx = 0; trx < all_triples.size(); trx++ )
+	{  // Mark matching triples as excluded
+	  QString tcelchn = QString( all_triples[ trx ] )
+	    .section( "/", 0, 1 ).simplified();
+	  
+	  if ( tcelchn == chann )
+	    {
+	      ++triples_to_exclude;
+	    }
+	}
+    }
+  
+  
+  int triples_left = out_triples.size() - triples_to_exclude;
+
+  qDebug() << "In check_for_left_data(): triples_left: " << out_triples.size() << " - " << triples_to_exclude << " = " << triples_left;
+  
+  return triples_left;
+}
 
 // Drop the triples for the selected channel (all A's or B's) ('Drop All Channel 'A's')
 void US_ConvertGui::drop_channel()
 {
-   QString chann  = lw_triple->currentItem()->text()
+  QString chann  = lw_triple->currentItem()->text()
                     .section( "/", 1, 1 ).simplified();  // "A" or "B"  
-   int status     = QMessageBox::information( this,
-      tr( "Drop Triples with Selected Channel" ),
-      tr( "You have selected a list item that implies you wish to"
-          " drop triples that have channel '%1'\n\n"
-          "If that is what you intend, click \"Proceed\".\n\n"
-          "Otherwise, you should \"Cancel\".\n" ).arg( chann ),
-      tr( "&Proceed" ), tr( "&Cancel" ) );
 
-   if ( status != 0 ) return;
+  //check if there will be any data left
+  if ( check_for_data_left( chann, "channel" ) <= 0 )
+    {
+      int stat     = QMessageBox::warning( this,
+					   tr( "All Data To Be Dropped" ),
+					   tr( "<font color='red'><b>ATTENTION:</b> Are you sure you want to drop all data?</font><br><br>"
+					       "(At least 1 triple is required to proceed to Editing, Analysis & Report stages...)<br><br>"
+					       "If that is what you intend, click <b>\"Proceed\"</b>.<br><br>"
+					       "NOTE: The program will be reset; you will no longer be able to process current run "
+					       "with this program<br>"),
+					   tr( "&Proceed" ), tr( "&Cancel" ) );
+      
+      if ( stat != 0 ) 
+	return;
+
+      //delete autoflow record & return to Run Manager
+      delete_autoflow_record();
+      resetAll_auto();
+      emit saving_complete_back_to_initAutoflow( );
+      return;
+    }
+  //End of checking for remaining triples
+  
+  int status     = QMessageBox::information( this,
+					     tr( "Drop Triples with Selected Channel" ),
+					     tr( "You have selected a list item that implies you wish to"
+						 " drop triples that have channel '%1'\n\n"
+						 "If that is what you intend, click \"Proceed\".\n\n"
+						 "Otherwise, you should \"Cancel\".\n" ).arg( chann ),
+					     tr( "&Proceed" ), tr( "&Cancel" ) );
+  
+  if ( status != 0 ) return;
 
    //identify all dropped channels
    for (int ii = 0; ii < lw_triple->count(); ii++)
@@ -5623,17 +5733,6 @@ DbgLv(1) << "DelChan:  EXCLUDED chn trx" << chann << trx;
 
    build_output_data();        // Rebuild the output data controls
 
-   if ( outData.size() < 1 )
-     {
-       le_description ->setText("");
-       le_solutionDesc->setText("");
-       le_centerpieceDesc ->setText( "" );
-
-       QMessageBox::warning( this, tr( "All Data Dropped" ),
-			     tr( "ATTENTION: All data dropped. Nothing to work with...\n" ));
-       return;
-     }
-   
    build_lambda_ctrl();        // Rebuild lambda controls
 
    setTripleInfo();            // Review new triple information
@@ -5653,8 +5752,34 @@ DbgLv(1) << "DelChan:  EXCLUDED chn trx" << chann << trx;
 // Drop the triples for the selected cell/channel ('Drop Selected Data')
 void US_ConvertGui::drop_cellchan()
 {
-   QString celchn = lw_triple->currentItem()->text()
-                    .section( "/", 0, 1 ).simplified();  // "1 / A"
+  QString celchn = lw_triple->currentItem()->text()
+    .section( "/", 0, 1 ).simplified();  // "1 / A"
+  
+  //check if there will be any data left
+  if ( check_for_data_left( celchn, "cellchannel" ) <= 0 )
+    {
+      int stat     = QMessageBox::warning( this,
+					   tr( "All Data To Be Dropped" ),
+					   tr( "<font color='red'><b>ATTENTION:</b> Are you sure you want to drop all data?</font><br><br>"
+					       "(At least 1 triple is required to proceed to Editing, Analysis & Report stages...)<br><br>"
+					       "If that is what you intend, click <b>\"Proceed\"</b>.<br><br>"
+					       "NOTE: The program will be reset; you will no longer be able to process current run "
+					       "with this program<br>"),
+					   tr( "&Proceed" ), tr( "&Cancel" ) );
+      
+      if ( stat != 0 ) 
+	return;
+
+      //delete autoflow record & return to Run Manager
+      delete_autoflow_record();
+      resetAll_auto();
+      emit saving_complete_back_to_initAutoflow( );
+      return;
+    }
+  //End of checking for remaining triples
+   
+
+   
    int status     = QMessageBox::information( this,
       tr( "Drop Triples of Selected Cell/Channel" ),
       tr( "You have selected a list item that implies you wish to"
