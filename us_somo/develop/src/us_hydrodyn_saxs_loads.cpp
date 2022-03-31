@@ -76,12 +76,12 @@ static QStringList csv_pr2iq( const QStringList &qsl ) {
 
       row = row.mid(0,1) + row.mid( 3 );
 
-      if ( row[1] == "\"P(r)\"" ) {
+      if ( row[1] == "\"P(r) normed\"" ) {
          // drop either "\"P(r)\"" or "\"P(r) normed\""
          continue;
       }
 
-      if ( row[1] == "\"P(r) normed\"" ) {
+      if ( row[1] == "\"P(r)\"" ) {
          row[1] = "\"I(q)\"";
       }
 
