@@ -5450,6 +5450,7 @@ DbgLv(1) << "EGUp:svRP:   dbP" << dbP;
          tr( "*ERROR* in Protocol Write" ),
          tr( "An error occurred in the attempt to save"
              " new protocol\n  %1\n  %2 ." ).arg( protoname ).arg( errmsg ) );
+
       return save_aborted;
    }
 
@@ -5463,11 +5464,14 @@ DbgLv(1) << "EGUp:svRP:   dbP" << dbP;
    QString pguid       = currProto->protoGUID;
    prentry << protoname << pdate << protid << pguid;
 
+   qDebug() << "Updated proto list: " << prentry;
+   
    mainw->updateProtos( prentry );            // Update existing protocols list
    proto_svd           = true;
    ck_prot_svd->setChecked( true );
 
-
+   qDebug() << "constructor parms: mainw->automode, have_run -- " << mainw->automode  << have_run;
+   
    if ( mainw->automode && !have_run)
      {
        QString mtitle_done    = tr( "Success" );
@@ -5480,6 +5484,8 @@ DbgLv(1) << "EGUp:svRP:   dbP" << dbP;
        QString message_done   = tr( "Protocol has been successfully saved." );
        QMessageBox::information( this, mtitle_done, message_done );
      }
+
+   return save_aborted;
 }
 
 // Slot to read all Optima machines <------------------------------- // 
