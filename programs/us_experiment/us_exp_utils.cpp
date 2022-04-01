@@ -522,8 +522,8 @@ void US_ExperGuiGeneral::update_inv( void )
    qDebug() << "USCFG: UpdInv: ID,name,lev" << ID << fname << lname << level;
 //if(ID<1) return;
 
-   US_Settings::set_us_inv_name ( lname + ", " + fname );
-   US_Settings::set_us_inv_ID   ( ID );
+   // US_Settings::set_us_inv_name ( lname + ", " + fname );
+   // US_Settings::set_us_inv_ID   ( ID );
    US_Settings::set_us_inv_level( level );
 }
 
@@ -531,7 +531,10 @@ void US_ExperGuiGeneral::update_inv( void )
 //IF USER cannot edit anything (low-level user)
 void US_ExperGuiGeneral::check_user_level()
 {
-   //update_inv();
+   update_inv();                                                       //ALEXEY: this might be needed!!!
+  // MAYBE check for actual usr_level &&  US_Settings::set_us_inv_level( level ) ONLY!!! (NO inv_id && NO inv name)
+
+  
    // Default flag:  user not enabled to change investigator
    usr_enab       = false;
    int inv_lev    = US_Settings::us_inv_level();

@@ -3934,6 +3934,8 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
   QStringList aDescrs = scan_dbase_models( runIDs_single );
   QStringList modelDescModified = sdiag_combplot->load_auto( runIDs_single, aDescrs );
 
+  qDebug() << "ComboPlots generation: modelDescModified -- " << modelDescModified;
+
   mkdir( US_Settings::reportDir(), filename_passed );
   const QString svgext( ".svgz" );
   const QString pngext( ".png" );
@@ -3977,6 +3979,7 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
 	      //retrieve s,Model combPlot params:
 	      QString t_m = "s," + modelNames[ m ];
 	      QMap < QString, QString > c_params = comboPlotsMap[ t_m ];
+	      qDebug() << "over models: c_params -- " << c_params;
 	      sdiag_combplot-> model_select_auto ( modelDescModified[ ii ], c_params ); //ALEXEY: here it plots s20 combPlot (xtype == 0)
 
 	    }
