@@ -522,8 +522,8 @@ void US_ExperGuiGeneral::update_inv( void )
    qDebug() << "USCFG: UpdInv: ID,name,lev" << ID << fname << lname << level;
 //if(ID<1) return;
 
-   // US_Settings::set_us_inv_name ( lname + ", " + fname );
-   // US_Settings::set_us_inv_ID   ( ID );
+   US_Settings::set_us_inv_name ( lname + ", " + fname );
+   US_Settings::set_us_inv_ID   ( ID );
    US_Settings::set_us_inv_level( level );
 }
 
@@ -545,6 +545,7 @@ void US_ExperGuiGeneral::check_user_level()
    {  // All admin users and above are enabled
       usr_enab       = true;
    }
+   /*
    else
    {  // Non-admin users enabled if they have instrument permit
       int inv_id     = US_Settings::us_inv_ID();
@@ -607,7 +608,7 @@ void US_ExperGuiGeneral::check_user_level()
          }
       }
    } // END: Test of non-admin instrument permit
-
+   */
 
    if ( ! usr_enab )
    {  // User not enabled to set investigator
