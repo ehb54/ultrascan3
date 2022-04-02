@@ -25,6 +25,7 @@ class US_ReporterGMP : public US_Widgets
 	 
 	 QTreeWidget     * genTree;
 	 QTreeWidget     * perChanTree;
+	 QTreeWidget     * combPlotsTree;
 
 	 bool auto_mode;
 	 QLabel* lb_hdr1 ;
@@ -138,7 +139,11 @@ class US_ReporterGMP : public US_Widgets
 	 QMap<QString, QTreeWidgetItem *> tripleMaskItem;
 	 QMap<QString, QTreeWidgetItem *> tripleMaskPlotItem;
 	 QMap<QString, QTreeWidgetItem *> tripleMaskPseudoItem;
-	 	 
+
+	 //CombPlots masks
+	 QMap<QString, QTreeWidgetItem *> topItemCombPlots;
+	 QMap<QString, QTreeWidgetItem *> ItemCombPlots;
+	 
 	 QList< QStringList >  autoflowdata;
 	 US_SelectItem* pdiag_autoflow;
 
@@ -209,12 +214,15 @@ class US_ReporterGMP : public US_Widgets
 	 QMap< QString, QMap< QString, QString > > Triple_to_ModelsDesc;
 	 QMap< QString, QMap< QString, QString > > Triple_to_ModelsDescGuid;
 	 
+
+	 
 	 QMap< QString, QString > triple_info_map;
 	 QString   currentTripleName;
 
 	 QMap< QString, QString > intensityRIMap;
 	 QMap< QString, QMap< QString, QString > > comboPlotsMap;
 	 QMap< QString, int > comboPlotsMapTypes;
+	 QMap< QString, QStringList > CombPlots_Type_to_Models;
 	 
 	 void  get_current_date( void );
 	 void  format_needed_params( void );
@@ -234,6 +242,7 @@ class US_ReporterGMP : public US_Widgets
 	 void get_item_childs( QList< QTreeWidgetItem* > &, QTreeWidgetItem* );
 	 void build_genTree ( void );
 	 void build_perChanTree ( void ) ;
+	 void build_combPlotsTree ( void ) ; 
 	 void gui_to_parms ( void ) ;
 	 
 	 void get_children_to_json( QString &, QTreeWidgetItem* );

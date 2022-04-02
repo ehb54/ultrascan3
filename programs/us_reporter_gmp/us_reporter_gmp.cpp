@@ -31,6 +31,7 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   QGridLayout* buttonsLayout  = new QGridLayout();
   QGridLayout* genTreeLayout  = new QGridLayout();
   QGridLayout* perChanTreeLayout  = new QGridLayout();
+  QGridLayout* combPlotsLayout  = new QGridLayout();
   mainLayout->setSpacing        ( 2 );
   mainLayout->setContentsMargins( 2, 2, 2, 2 );
   leftLayout->setSpacing        ( 0 );
@@ -43,6 +44,8 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   genTreeLayout->setContentsMargins( 0, 0, 0, 0 );
   perChanTreeLayout->setSpacing        ( 1 );
   perChanTreeLayout->setContentsMargins( 0, 0, 0, 0 );
+  combPlotsLayout->setSpacing        ( 1 );
+  combPlotsLayout->setContentsMargins( 0, 0, 0, 0 );
 
   //leftLayout
   QLabel*      bn_actions     = us_banner( tr( "Actions:" ), 1 );
@@ -121,19 +124,31 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   perChanTree = new QTreeWidget();
   QStringList chan_theads;
   chan_theads << "Selected" << "Protocol Settings";
-  perChanTree->setHeaderLabels( theads );
+  perChanTree->setHeaderLabels( chan_theads );
   perChanTree->setFont( QFont( US_Widgets::fixedFont().family(),
 			       US_GuiSettings::fontSize() + 1 ) );
   perChanTreeLayout->addWidget( lb_chantree );
   perChanTreeLayout->addWidget( perChanTree );
   perChanTree->setStyleSheet( "QTreeWidget { font: bold; font-size: " + QString::number(sfont.pointSize() ) + "pt;}  QTreeView { alternate-background-color: yellow;} QTreeView::item:hover { border: black;  border-radius:1px;  background-color: rgba(0,128,255,95);}");
 
-  
+  //rightLayout: combPlotLayout
+  QLabel*      lb_combplots  = us_banner(      tr( "Combined Plot Distributions Settings:" ), 1 );
+  combPlotsTree = new QTreeWidget();
+  QStringList combplots_theads;
+  combplots_theads << "Selected" << "Protocol Settings";
+  combPlotsTree->setHeaderLabels( combplots_theads );
+  combPlotsTree->setFont( QFont( US_Widgets::fixedFont().family(),
+				 US_GuiSettings::fontSize() + 1 ) );
+  combPlotsLayout->addWidget( lb_combplots );
+  combPlotsLayout->addWidget( combPlotsTree );
+  combPlotsTree  ->setStyleSheet( "QTreeWidget { font: bold; font-size: " + QString::number(sfont.pointSize() ) + "pt;}  QTreeView { alternate-background-color: yellow;} QTreeView::item:hover { border: black;  border-radius:1px;  background-color: rgba(0,128,255,95);}");
+      
   // put layouts together for overall layout
   leftLayout->addLayout( buttonsLayout );
   leftLayout->addStretch();
   rghtLayout->addLayout( genTreeLayout );
   rghtLayout->addLayout( perChanTreeLayout );
+  rghtLayout->addLayout( combPlotsLayout );
 
   mainLayout->addLayout( leftLayout );
   mainLayout->addLayout( rghtLayout );
@@ -181,6 +196,7 @@ US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
   QGridLayout* buttonsLayout  = new QGridLayout();
   QGridLayout* genTreeLayout  = new QGridLayout();
   QGridLayout* perChanTreeLayout  = new QGridLayout();
+  QGridLayout* combPlotsLayout  = new QGridLayout();
   mainLayout->setSpacing        ( 2 );
   mainLayout->setContentsMargins( 2, 2, 2, 2 );
   leftLayout->setSpacing        ( 0 );
@@ -193,7 +209,10 @@ US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
   genTreeLayout->setContentsMargins( 0, 0, 0, 0 );
   perChanTreeLayout->setSpacing        ( 1 );
   perChanTreeLayout->setContentsMargins( 0, 0, 0, 0 );
+  combPlotsLayout->setSpacing        ( 1 );
+  combPlotsLayout->setContentsMargins( 0, 0, 0, 0 );
 
+  
   //leftLayout
   QLabel*      bn_actions     = us_banner( tr( "Actions:" ), 1 );
   QLabel*      lb_loaded_run  = us_label( tr( "Loaded Run:" ) );
@@ -278,13 +297,25 @@ US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
   perChanTreeLayout->addWidget( perChanTree );
   perChanTree->setStyleSheet( "QTreeWidget { font: bold; font-size: " + QString::number(sfont.pointSize() ) + "pt;}  QTreeView { alternate-background-color: yellow;} QTreeView::item:hover { border: black;  border-radius:1px;  background-color: rgba(0,128,255,95);}");
 
-  
+  //rightLayout: combPlotLayout
+  QLabel*      lb_combplots  = us_banner(      tr( "Combined Plot Distributions Settings:" ), 1 );
+  combPlotsTree = new QTreeWidget();
+  QStringList combplots_theads;
+  combplots_theads << "Selected" << "Protocol Settings";
+  combPlotsTree->setHeaderLabels( combplots_theads );
+  combPlotsTree->setFont( QFont( US_Widgets::fixedFont().family(),
+				 US_GuiSettings::fontSize() + 1 ) );
+  combPlotsLayout->addWidget( lb_combplots );
+  combPlotsLayout->addWidget( combPlotsTree );
+  combPlotsTree  ->setStyleSheet( "QTreeWidget { font: bold; font-size: " + QString::number(sfont.pointSize() ) + "pt;}  QTreeView { alternate-background-color: yellow;} QTreeView::item:hover { border: black;  border-radius:1px;  background-color: rgba(0,128,255,95);}");
+      
+    
   // put layouts together for overall layout
   leftLayout->addLayout( buttonsLayout );
   leftLayout->addStretch();
   rghtLayout->addLayout( genTreeLayout );
   rghtLayout->addLayout( perChanTreeLayout );
-
+  rghtLayout->addLayout( combPlotsLayout );
   
   // mainLayout->addLayout( leftLayout );
   // mainLayout->addLayout( rghtLayout );
@@ -331,7 +362,7 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   lb_hdr1->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
   
   //show progress dialog
-  progress_msg = new QProgressDialog ("Accessing run's protocol...", QString(), 0, 10, this);
+  progress_msg = new QProgressDialog ("Accessing run's protocol...", QString(), 0, 11, this);
   progress_msg->setWindowFlags(Qt::Tool | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
   progress_msg->setModal( true );
   progress_msg->setWindowTitle(tr("Assessing Run's Protocol"));
@@ -383,6 +414,10 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
 
   build_perChanTree();
   progress_msg->setValue( 10 );
+  qApp->processEvents();
+
+  build_combPlotsTree();
+  progress_msg->setValue( 11 );
   qApp->processEvents();
 
   progress_msg->setValue( progress_msg->maximum() );
@@ -886,7 +921,7 @@ void US_ReporterGMP::load_gmp_run ( void )
 
   
   //show progress dialog
-  progress_msg = new QProgressDialog ("Accessing run's protocol...", QString(), 0, 9, this);
+  progress_msg = new QProgressDialog ("Accessing run's protocol...", QString(), 0, 10, this);
   progress_msg->setWindowFlags(Qt::Tool | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
   progress_msg->setModal( true );
   progress_msg->setWindowTitle(tr("Assessing Run's Protocol"));
@@ -977,7 +1012,11 @@ void US_ReporterGMP::load_gmp_run ( void )
   build_perChanTree();
   progress_msg->setValue( 9 );
   qApp->processEvents();
-
+  
+  build_combPlotsTree();
+  progress_msg->setValue( 10 );
+  qApp->processEvents();
+  
   progress_msg->setValue( progress_msg->maximum() );
   qApp->processEvents();
   progress_msg->close();
@@ -1588,6 +1627,8 @@ void US_ReporterGMP::build_genTree ( void )
   genTree->resizeColumnToContents( 0 );
   genTree->resizeColumnToContents( 1 );
 
+  genTree->setMinimumHeight( (genTree->height())*1.3 );
+
   connect( genTree, SIGNAL( itemChanged   ( QTreeWidgetItem*, int ) ),
   	   this,    SLOT  ( changedItem   ( QTreeWidgetItem*, int ) ) );
 
@@ -1956,9 +1997,74 @@ void US_ReporterGMP::build_perChanTree ( void )
   perChanTree->resizeColumnToContents( 0 );
   perChanTree->resizeColumnToContents( 1 );
 
+  perChanTree->setMinimumHeight( (perChanTree->height())*1.5 );
+  
   connect( perChanTree, SIGNAL( itemChanged( QTreeWidgetItem*, int ) ),
   	   this,        SLOT(   changedItem( QTreeWidgetItem*, int ) ) );
 }
+
+
+//select all items in trees
+void US_ReporterGMP::build_combPlotsTree ( void )
+{
+  QString indent( "  " );
+
+  QStringList topItemNameList, ItemNameList;
+ 
+  int wiubase = (int)QTreeWidgetItem::UserType;
+
+  CombPlots_Type_to_Models.clear();
+
+  QMap<QString, int >::iterator cpt;
+  for ( cpt = comboPlotsMapTypes.begin(); cpt != comboPlotsMapTypes.end(); ++cpt )
+    {
+      if ( cpt.value() )
+	{
+	  QString type  = cpt.key().split(",")[ 0 ];
+	  QString model = cpt.key().split(",")[ 1 ];
+
+	  CombPlots_Type_to_Models[ type ] << model;
+	  
+	}
+    }
+
+  //remove duplicates && build tree
+  QMap<QString, QStringList >::iterator tm;
+  for ( tm = CombPlots_Type_to_Models.begin(); tm != CombPlots_Type_to_Models.end(); ++tm )
+    {
+      CombPlots_Type_to_Models[ tm.key() ].removeDuplicates();
+      QStringList unique_models = CombPlots_Type_to_Models[ tm.key() ];
+
+      topItemNameList.clear();
+      topItemNameList << "" << indent + tm.key();
+      topItemCombPlots [ tm.key() ] = new QTreeWidgetItem( combPlotsTree, topItemNameList, wiubase );
+
+      topItemCombPlots [ tm.key() ] ->setCheckState( 0, Qt::Checked );
+
+      for( int i=0; i<unique_models.size(); ++i )
+	{
+	  QString modelName =  tm.key() + "," + unique_models[ i ];
+	  ItemNameList.clear();
+	  ItemNameList << "" << indent.repeated( 2 ) + unique_models[ i ];
+	  ItemCombPlots [ modelName ] = new QTreeWidgetItem( topItemCombPlots [ tm.key() ], ItemNameList, wiubase);
+
+	  ItemCombPlots [ modelName ] ->setCheckState( 0, Qt::Checked );
+	}
+    }
+
+  combPlotsTree->expandAll();
+  //perChanTree->expandToDepth( 2 );
+  combPlotsTree->resizeColumnToContents( 0 );
+  combPlotsTree->resizeColumnToContents( 1 );
+
+  //combPlotsTree->setMaximumHeight(30);
+
+  connect( combPlotsTree, SIGNAL( itemChanged( QTreeWidgetItem*, int ) ),
+  	   this,          SLOT(   changedItem( QTreeWidgetItem*, int ) ) );
+  
+}
+
+
 
 //select all items in trees
 void US_ReporterGMP::select_all ( void )
@@ -1976,6 +2082,13 @@ void US_ReporterGMP::select_all ( void )
       perChanTree_rootItem->child(i)->setCheckState( 0, Qt::Unchecked );
       perChanTree_rootItem->child(i)->setCheckState( 0, Qt::Checked );
     }
+
+  QTreeWidgetItem* combPlotsTree_rootItem = combPlotsTree -> invisibleRootItem();
+  for( int i = 0; i < combPlotsTree_rootItem->childCount(); ++i )
+    {
+      combPlotsTree_rootItem->child(i)->setCheckState( 0, Qt::Unchecked );
+      combPlotsTree_rootItem->child(i)->setCheckState( 0, Qt::Checked );
+    } 
 }
 
 
@@ -1993,13 +2106,20 @@ void US_ReporterGMP::unselect_all ( void )
     {
       perChanTree_rootItem->child(i)->setCheckState( 0, Qt::Unchecked );
     }
+
+  QTreeWidgetItem* combPlotsTree_rootItem = combPlotsTree -> invisibleRootItem();
+  for( int i = 0; i < combPlotsTree_rootItem->childCount(); ++i )
+    {
+      combPlotsTree_rootItem->child(i)->setCheckState( 0, Qt::Unchecked );
+    }
 }
 
 //expand all items in trees
 void US_ReporterGMP::expand_all ( void )
 {
-  genTree     ->expandAll();
-  perChanTree ->expandAll();
+  genTree       ->expandAll();
+  perChanTree   ->expandAll();
+  combPlotsTree ->expandAll();
 }
 
 //collapse all items in trees
@@ -2007,6 +2127,7 @@ void US_ReporterGMP::collapse_all ( void )
 {
   genTree       ->collapseAll();
   perChanTree   ->collapseAll();
+  combPlotsTree ->collapseAll();
 }
 
 //view report
@@ -2079,8 +2200,9 @@ void US_ReporterGMP::reset_report_panel ( void )
   intensityRIMap .clear();
 
   //clear comboplots Maps
-  comboPlotsMap      .clear();
-  comboPlotsMapTypes .clear();
+  comboPlotsMap            .clear();
+  comboPlotsMapTypes       .clear();
+  CombPlots_Type_to_Models .clear();
 
   //clean QMap connecting triple names to their models
   Triple_to_Models         . clear();
