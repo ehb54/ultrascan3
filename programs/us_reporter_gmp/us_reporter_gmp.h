@@ -207,6 +207,7 @@ class US_ReporterGMP : public US_Widgets
 	 QMap< QString, QStringList > Triple_to_ModelsMissing;
 	 QMap< QString, QString >     Triple_to_FailedStage;
 	 QMap< QString, QMap< QString, QString > > Triple_to_ModelsDesc;
+	 QMap< QString, QMap< QString, QString > > Triple_to_ModelsDescGuid;
 	 
 	 QMap< QString, QString > triple_info_map;
 	 QString   currentTripleName;
@@ -228,7 +229,7 @@ class US_ReporterGMP : public US_Widgets
 	 QMap< QString, QString > read_autoflowIntensity( QString, US_DB2*);
 	 void parse_gen_mask_json ( const QString  );
 	 QMap< QString, QMap< QString, QString > > parse_comb_plots_json ( const QString  );
-	 QMap< QString, QString > parse_models_desc_json( const QString ); 
+	 QMap< QString, QString > parse_models_desc_json( const QString, const QString ); 
 	 
 	 void get_item_childs( QList< QTreeWidgetItem* > &, QTreeWidgetItem* );
 	 void build_genTree ( void );
@@ -437,6 +438,7 @@ class US_ReporterGMP : public US_Widgets
 	double  interp_sval( double, double*, double*,  int );
 	void plotres( QMap < QString, QString > &   );
 	void plot_pseudo3D( QString, QString );
+	bool modelGuidExistsForStage( QString, QString );
 	void process_combined_plots ( QString );
 	
 	QString indent    (     int  )  const;

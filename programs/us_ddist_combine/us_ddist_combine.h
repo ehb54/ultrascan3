@@ -19,7 +19,7 @@ class US_DDistr_Combine : public US_Widgets
    public:
       US_DDistr_Combine();
 
-      QStringList load_auto( QStringList, QStringList  );
+      QList< QStringList > load_auto( QStringList, QStringList  );
       void      model_select_auto   ( QString, QMap < QString, QString >  );
       QwtPlot* rp_data_plot1();
       void     reset_data_plot1();

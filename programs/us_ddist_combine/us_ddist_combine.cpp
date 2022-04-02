@@ -449,10 +449,11 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
 }
 
 //Load auto | GMP report
-QStringList US_DDistr_Combine::load_auto( QStringList runids_passed, QStringList aDescrs_passed  )
+QList< QStringList > US_DDistr_Combine::load_auto( QStringList runids_passed, QStringList aDescrs_passed  )
 {
   QStringList runids;
   QStringList modelDescModified;
+  QStringList modelDescModifiedGuid;
   
   runids. clear();
   aDescrs.clear();
@@ -468,7 +469,7 @@ QStringList US_DDistr_Combine::load_auto( QStringList runids_passed, QStringList
   runID = runids[ 0 ];
   //model names
   QString grunID = "Global-" + runID;
-  for ( int ii = 0; ii < distros.size(); ii++ )  //ALEXEY <-- should be only 1
+  for ( int ii = 0; ii < distros.size(); ii++ )  
     {
       DbgLv(1) << "RunIDSel:  ii runID" << ii << distros[ii].runID;
 
@@ -477,6 +478,7 @@ QStringList US_DDistr_Combine::load_auto( QStringList runids_passed, QStringList
 	{  // Only (possibly) add item with matching run ID
 	  QString mdesc = distros[ ii ].mdescr;
 	  QString ddesc = distros[ ii ].ddescr;
+	  QString mguid = distros[ ii ].mGUID;
 	  
 	  // if ( mfilter )
 	  //   {  // If method-filtering, skip any item whose method is not checked
@@ -487,7 +489,8 @@ QStringList US_DDistr_Combine::load_auto( QStringList runids_passed, QStringList
 	  
 	  DbgLv(1) << "RunIDSel:     added: ddesc" << ddesc;
 	  //lw_models->addItem( distribID( mdesc, ddesc ) );
-	  modelDescModified << distribID( mdesc, ddesc );
+	  modelDescModified     << distribID( mdesc, ddesc );
+	  modelDescModifiedGuid << mguid;
 
 	  //qDebug() << "load_auto: distribID() -- " << distribID( mdesc, ddesc );
 	}
@@ -501,7 +504,11 @@ QStringList US_DDistr_Combine::load_auto( QStringList runids_passed, QStringList
   // 	model_select_auto ( modelDescModified[ ii ] ); 
   //   }
 
-  return modelDescModified;
+  QList < QStringList > modelsList; 
+  modelsList << modelDescModified << modelDescModifiedGuid;
+  
+  //return modelDescModified;
+  return modelsList;
 }
 
 //return pointer to data_plot1

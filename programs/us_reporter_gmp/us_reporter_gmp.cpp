@@ -732,11 +732,12 @@ void US_ReporterGMP::check_models ( int autoflowID )
       ///
 
       //Now parse modelDecsJson for eID, modelIDs
-      //Triple_to_ModeslDesc[ "1.A.225" ] [ "2DSA-IT" ] = modelID;
+      //Triple_to_ModeslDesc[ "1.A.225" ] [ "2DSA-IT" ] = modelID; 
       //Triple_to_ModeslDesc[ "1.A.225" ] [ "2DSA-MC" ] = modelID;
       //Triple_to_ModeslDesc[ "1.A.225" ] [ "PCSA" ]    = modelID;
       //Triple_to_ModeslDesc[ "1.A.225" ] [ "eID" ]     = eID;
-      Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ] = parse_models_desc_json( modelDescJson ); 
+      Triple_to_ModelsDesc    [ Array_of_tripleNames[ i ] ] = parse_models_desc_json( modelDescJson, "modelID"   );
+      Triple_to_ModelsDescGuid[ Array_of_tripleNames[ i ] ] = parse_models_desc_json( modelDescJson, "modelGUID" );
 
             
       QString eID = Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ][ "eID" ];
@@ -782,7 +783,8 @@ void US_ReporterGMP::check_models ( int autoflowID )
     }
 }
 
-QMap< QString, QString > US_ReporterGMP::parse_models_desc_json( QString modelDescJson )
+//Create QMap for shorter desctiption of triple's models (2DSA-IT, ...) to modelIDs, OR to modelGUIDs
+QMap< QString, QString > US_ReporterGMP::parse_models_desc_json( QString modelDescJson, QString model_property )
 {
   QMap <QString, QString>  modelDesc_shortened;
 
@@ -807,7 +809,8 @@ QMap< QString, QString > US_ReporterGMP::parse_models_desc_json( QString modelDe
 		{
 		  foreach(const QString& array_key, json_array[i].toObject().keys())
 		    {
-		      if ( array_key == "modelID" )
+		      //by modelID
+		      if ( array_key == "modelID" && array_key == model_property )
 			{
 			  if ( !modelDesc_shortened.contains( key_mod ) )  //Temporary, for PCSA (2 entries)
 			    {
@@ -818,6 +821,20 @@ QMap< QString, QString > US_ReporterGMP::parse_models_desc_json( QString modelDe
 				       << json_array[i].toObject().value(array_key).toString();
 			    }
 			}
+		      
+		      //by modelGUID
+		      if ( array_key == "modelGUID" && array_key == model_property )
+			{
+			  if ( !modelDesc_shortened.contains( key_mod ) )  //Temporary, for PCSA (2 entries)
+			    {
+			      modelDesc_shortened[ key_mod ] = json_array[i].toObject().value(array_key).toString();
+			      qDebug() << "modelDescJson Map: -- model, property, value: "
+				       << key_mod
+				       << array_key
+				       << json_array[i].toObject().value(array_key).toString();
+			    }
+			}
+		      
 		      if ( array_key == "editeddataID" )
 			{
 			  modelDesc_shortened[ "eID" ] = json_array[i].toObject().value(array_key).toString();
@@ -927,7 +944,9 @@ void US_ReporterGMP::load_gmp_run ( void )
   //debug
   for ( int i=0; i < Array_of_tripleNames.size(); ++ i )
     {
-      QMap< QString, QString > tmap =  Triple_to_ModelsDesc[ Array_of_tripleNames[ i ] ];
+      QMap< QString, QString > tmap     =  Triple_to_ModelsDesc    [ Array_of_tripleNames[ i ] ];
+      QMap< QString, QString > tmapguid =  Triple_to_ModelsDescGuid[ Array_of_tripleNames[ i ] ];
+
       QMap < QString, QString >::iterator it;
       for ( it = tmap.begin(); it != tmap.end(); ++it )
 	{
@@ -935,6 +954,12 @@ void US_ReporterGMP::load_gmp_run ( void )
 		   << Array_of_tripleNames[ i ]
 		   << it.key()
 		   << it.value();
+
+	  qDebug() << "ModelsDescGuid: Triple, QMap -- "
+		   << Array_of_tripleNames[ i ]
+		   << it.key()
+		   << tmapguid [ it.key() ];
+
 	}
     }
   
@@ -999,10 +1024,10 @@ void US_ReporterGMP::load_gmp_run ( void )
     {
       QMessageBox::information( this, tr( "Report Profile Uploaded" ),
       				QString ( "Report profile uploaded for GMP run:<br><br>"
-					  "%1<br><br>"
+					  "<b>%1</b><br><br>"
 					  "<font color='red'><b>ATTENTION:</b> There are missing models for certain triples: </font><br><br>"
 					  "%2<br><br>"
-					  "As a result, a non-GMP report will be generated!")
+					  "As a result, a <b>non-GMP</b> report will be generated!")
       				.arg( full_runname )
       				.arg( msg_missing_models) );
     }
@@ -2058,10 +2083,11 @@ void US_ReporterGMP::reset_report_panel ( void )
   comboPlotsMapTypes .clear();
 
   //clean QMap connecting triple names to their models
-  Triple_to_Models       . clear();
-  Triple_to_ModelsDesc   . clear();
-  Triple_to_ModelsMissing. clear();
-  Triple_to_FailedStage  . clear();
+  Triple_to_Models         . clear();
+  Triple_to_ModelsDesc     . clear();
+  Triple_to_ModelsDescGuid . clear();
+  Triple_to_ModelsMissing  . clear();
+  Triple_to_FailedStage    . clear();
   
   //reset US_Protocol && US_AnaProfile
   currProto = US_RunProtocol();  
@@ -3923,6 +3949,27 @@ void US_ReporterGMP::show_results( QMap <QString, QString> & tripleInfo )
    QApplication::restoreOverrideCursor();
 }
 
+//Check if model exists for particular stage (2DSA-IT, or 2DSA-MC...) by its modelGUID (across all triples) 
+bool US_ReporterGMP::modelGuidExistsForStage( QString model, QString mguid)
+{
+  bool isModelGuid = false;
+
+  for ( int i=0; i < Array_of_tripleNames.size(); ++ i )
+    {
+      QMap< QString, QString > tmapguid =  Triple_to_ModelsDescGuid[ Array_of_tripleNames[ i ] ];
+
+      if ( tmapguid[ model ] == mguid )
+	{
+	  qDebug() << "For stage: " << model << ", there is modelGuid: " << mguid << " (" <<  Array_of_tripleNames[ i ] << ")";
+	  
+	  isModelGuid = true;
+	  break;
+	}
+    }
+  
+  return isModelGuid;
+}
+
 
 //Combined Plots
 void US_ReporterGMP::process_combined_plots ( QString filename_passed )
@@ -3932,9 +3979,13 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
     
   runIDs_single << filename_passed;
   QStringList aDescrs = scan_dbase_models( runIDs_single );
-  QStringList modelDescModified = sdiag_combplot->load_auto( runIDs_single, aDescrs );
-
-  qDebug() << "ComboPlots generation: modelDescModified -- " << modelDescModified;
+  //QStringList modelDescModified = sdiag_combplot->load_auto( runIDs_single, aDescrs );
+  QList < QStringList > modelDescModifiedList = sdiag_combplot->load_auto( runIDs_single, aDescrs );
+  QStringList modelDescModified     = modelDescModifiedList[ 0 ];
+  QStringList modelDescModifiedGuid = modelDescModifiedList[ 1 ];
+  
+  qDebug() << "ComboPlots generation: modelDescModified -- "     << modelDescModified;
+  qDebug() << "ComboPlots generation: modelDescModifiedGuid -- " << modelDescModifiedGuid;
 
   mkdir( US_Settings::reportDir(), filename_passed );
   const QString svgext( ".svgz" );
@@ -3972,14 +4023,14 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
       for ( int ii = 0; ii < modelDescModified.size(); ii++ )  
 	{
 	  //fiter by type|model
-	  if ( modelDescModified[ ii ].contains( modelNames[ m ] ) )
+	  if ( modelDescModified[ ii ].contains( modelNames[ m ] ) && modelGuidExistsForStage( modelNames[ m ], modelDescModifiedGuid[ ii ] ) )
 	    {
 	      isModel = true;
 
 	      //retrieve s,Model combPlot params:
 	      QString t_m = "s," + modelNames[ m ];
 	      QMap < QString, QString > c_params = comboPlotsMap[ t_m ];
-	      qDebug() << "over models: c_params -- " << c_params;
+	      //qDebug() << "over models: c_params -- " << c_params;
 	      sdiag_combplot-> model_select_auto ( modelDescModified[ ii ], c_params ); //ALEXEY: here it plots s20 combPlot (xtype == 0)
 
 	    }
