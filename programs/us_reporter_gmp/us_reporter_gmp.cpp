@@ -21,6 +21,8 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   setWindowTitle( tr( "GMP Report Generator"));
   setPalette( US_GuiSettings::frameColor() );
 
+  first_time_gen_tree_build = true;
+  first_time_perChan_tree_build = true;
   auto_mode  = false;
   GMP_report = true;
   
@@ -156,6 +158,10 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   mainLayout->setStretchFactor( rghtLayout, 8 );
   
   resize( 1350, 800 );
+
+  qDebug() << "Init gen Tree: height -- "     << genTree->height();
+  qDebug() << "Init perChan Tree: height -- " << perChanTree->height();
+  qDebug() << "Init Combo Tree: height -- "   << combPlotsTree->height();
 }
 
 //For autoflow: constructor
@@ -164,6 +170,8 @@ US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
   setWindowTitle( tr( "GMP Report Generator"));
   setPalette( US_GuiSettings::frameColor() );
 
+  first_time_gen_tree_build = true;
+  first_time_perChan_tree_build = true;
   auto_mode  = true;
   GMP_report = true;
   
@@ -1016,6 +1024,12 @@ void US_ReporterGMP::load_gmp_run ( void )
   build_combPlotsTree();
   progress_msg->setValue( 10 );
   qApp->processEvents();
+
+  //debug
+  qDebug() << "Built gen Tree: height -- "     << genTree->height();
+  qDebug() << "Built perChan Tree: height -- " << perChanTree->height();
+  qDebug() << "Built Combo Tree: height -- "   << combPlotsTree->height();
+
   
   progress_msg->setValue( progress_msg->maximum() );
   qApp->processEvents();
@@ -1627,8 +1641,15 @@ void US_ReporterGMP::build_genTree ( void )
   genTree->resizeColumnToContents( 0 );
   genTree->resizeColumnToContents( 1 );
 
-  genTree->setMinimumHeight( (genTree->height())*1.3 );
-
+  //qDebug() << "Build gen Tree: height -- " << genTree->height();
+  qDebug() << "gen Tree first time build ? " << first_time_gen_tree_build;
+  if ( first_time_gen_tree_build )
+    {
+      qDebug() << "Resizing gen Tree: ";
+      genTree->setMinimumHeight( (genTree->height())*1.3 );
+      first_time_gen_tree_build = false;
+    }
+  
   connect( genTree, SIGNAL( itemChanged   ( QTreeWidgetItem*, int ) ),
   	   this,    SLOT  ( changedItem   ( QTreeWidgetItem*, int ) ) );
 
@@ -1997,7 +2018,14 @@ void US_ReporterGMP::build_perChanTree ( void )
   perChanTree->resizeColumnToContents( 0 );
   perChanTree->resizeColumnToContents( 1 );
 
-  perChanTree->setMinimumHeight( (perChanTree->height())*1.5 );
+  //qDebug() << "Build perChan Tree: height -- " << perChanTree->height();
+  qDebug() << "perChan Tree first time build ? " << first_time_perChan_tree_build;
+  if ( first_time_perChan_tree_build )
+    {
+      qDebug() << "Resizing perChan Tree: ";
+      perChanTree->setMinimumHeight( (perChanTree->height())*1.5 );
+      first_time_perChan_tree_build = false;
+    }
   
   connect( perChanTree, SIGNAL( itemChanged( QTreeWidgetItem*, int ) ),
   	   this,        SLOT(   changedItem( QTreeWidgetItem*, int ) ) );
@@ -2151,6 +2179,9 @@ void US_ReporterGMP::reset_report_panel ( void )
   //   }
   genTree     -> clear();
   genTree     -> disconnect();
+
+  qDebug() << "Size Hint for gen Tree -- " << genTree->sizeHint();
+  //genTree->resize( genTree->sizeHint() );
   qApp->processEvents();
 
   if ( auto_mode )
@@ -2177,6 +2208,8 @@ void US_ReporterGMP::reset_report_panel ( void )
   //cleaning perTriple tree & it's objects
   perChanTree ->clear();
   perChanTree ->disconnect();
+  qDebug() << "Size Hint for perChan Tree -- " << perChanTree->sizeHint();
+  //perChanTree->resize( perChanTree->sizeHint() );
   qApp->processEvents();
 
   chanItem           .clear();
@@ -2184,6 +2217,16 @@ void US_ReporterGMP::reset_report_panel ( void )
   tripleModelItem    .clear();
   tripleMaskItem     .clear();
   tripleMaskPlotItem .clear();
+
+  //cleaning combPlotsTriple tree & it's objects
+  combPlotsTree ->clear();
+  combPlotsTree ->disconnect();
+  qDebug() << "Size Hint for combPlots Tree -- " << combPlotsTree->sizeHint();
+  //combPlotsTree->resize( combPlotsTree->sizeHint() );
+  qApp->processEvents();
+
+  topItemCombPlots .clear();
+  ItemCombPlots    .clear();
 
   //Clear loaded JsonMasks for gen/perChan trees
   JsonMask_gen_loaded     .clear();

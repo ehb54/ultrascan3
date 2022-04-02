@@ -26,6 +26,8 @@ class US_ReporterGMP : public US_Widgets
 	 QTreeWidget     * genTree;
 	 QTreeWidget     * perChanTree;
 	 QTreeWidget     * combPlotsTree;
+	 bool            first_time_gen_tree_build;
+	 bool            first_time_perChan_tree_build;
 
 	 bool auto_mode;
 	 QLabel* lb_hdr1 ;
