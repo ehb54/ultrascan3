@@ -2284,6 +2284,8 @@ void US_ReporterGMP::generate_report( void )
   progress_msg->setWindowTitle(tr("Generating Report"));
   progress_msg->setLabelText( "Generating report: Part 1..." );
   int msg_range = currProto.rpSolut.nschan + 5;
+
+  qDebug() << "Generate report: msg_range -- " << msg_range;
   progress_msg->setRange( 0, msg_range );
   progress_msg->setValue( 0 );
   progress_msg->show();
@@ -2319,8 +2321,9 @@ void US_ReporterGMP::generate_report( void )
   progress_msg->setValue( 3 );
   qApp->processEvents();
 
-  assemble_pdf();
-  progress_msg->setValue( 4 );
+  assemble_pdf( progress_msg );
+  int progress_val = progress_msg->value(); 
+  progress_msg->setValue( ++progress_val );
   qApp->processEvents();
 
   progress_msg->setValue( progress_msg->maximum() );
@@ -2329,6 +2332,16 @@ void US_ReporterGMP::generate_report( void )
   
 
   //Part 2
+
+  //Get proper filename
+  QStringList fileNameList;
+  fileNameList. clear();
+  if ( FileName.contains(",") && FileName.contains("IP") && FileName.contains("RI") )
+    fileNameList  = FileName.split(",");
+  else
+    fileNameList << FileName;
+  
+  
   if ( auto_mode )
     {
       for ( int i=0; i<Array_of_triples.size(); ++i )
@@ -2341,9 +2354,15 @@ void US_ReporterGMP::generate_report( void )
 	  for ( int j = 0; j < models_to_do.size(); ++j )
 	    {
 	      simulate_triple ( currentTripleName, models_to_do[ j ] );
+
+	      //Pseudo3D Distr.
 	      plot_pseudo3D( currentTripleName, models_to_do[ j ]);
 	    }
 	}
+
+      //Combined Plots
+      for ( int i=0; i<fileNameList.size(); ++i )
+	process_combined_plots( fileNameList[i] );
     }
   else
     { //Will be modified for stand-alone GMP Reporter based on edited tree JSON
@@ -2367,30 +2386,21 @@ void US_ReporterGMP::generate_report( void )
 		   perChanMask_edited. has_tripleModelPlot_items [ triplename_alt ][ models_to_do[ j ] ] ) 
 		{
 		  simulate_triple ( currentTripleName, models_to_do[ j ] );
-		  
+
+		  //Pseudo3D Distr.
 		  plot_pseudo3D( currentTripleName, models_to_do[ j ]);
 		}
 	    }
 	}
-    }
 
-  //Combined Plots Generation
-  QStringList fileNameList;
-  fileNameList. clear();
-  if ( FileName.contains(",") && FileName.contains("IP") && FileName.contains("RI") )
-    {
-      fileNameList  = FileName.split(",");
+      //Combined Plots
+      if ( combPlotsMask_edited. has_combo_plots )
+	{
+	  for ( int i=0; i<fileNameList.size(); ++i )
+	    process_combined_plots( fileNameList[i] );
+	}
     }
-  else
-    {
-      fileNameList << FileName;
-    }
-
-  for ( int i=0; i<fileNameList.size(); ++i )
-    process_combined_plots( fileNameList[i] );
-   
-  //exit(1);
-  //End of Combined Plots //
+  //End of Part 2
   
 
   write_pdf_report( );
@@ -4159,7 +4169,7 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
   QString basename  = US_Settings::reportDir() + "/" + filename_passed + "/" + filename_passed + ".";
 
   //estimate # of combined plots
-  int combpl_number = 3*4;
+  int combpl_number = 3*3;
   // Show msg while data downloaded and simulated
   progress_msg = new QProgressDialog (QString("Generating combined plots..."), QString(), 0, combpl_number, this);
   progress_msg->setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
@@ -4207,9 +4217,19 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
       //write plot
       if ( isModel )  //TEMPORARY: will read a type-method combined plot QMap defined at the beginnig
 	{
+	  //here identify what to show:
+	  bool show_combo_s    = (combPlotsMask_edited.ShowCombPlotParts[ "s"    ][ modelNames[ m ] ].toInt()) ? true : false ;
+	  bool show_combo_D    = (combPlotsMask_edited.ShowCombPlotParts[ "D"    ][ modelNames[ m ] ].toInt()) ? true : false ;
+	  bool show_combo_ff0  = (combPlotsMask_edited.ShowCombPlotParts[ "f/f0" ][ modelNames[ m ] ].toInt()) ? true : false ;
+	  bool show_combo_MW   = (combPlotsMask_edited.ShowCombPlotParts[ "MW"   ][ modelNames[ m ] ].toInt()) ? true : false ;
+
+	  qDebug() << "In process ComboPlots: Model: show_combo_s, show_combo_D, show_combo_ff0, show_combo_MW -- "
+		   << modelNames[m] << ": " << show_combo_s << show_combo_D << show_combo_ff0 << show_combo_MW ;
+	  
 	  //here writes a 's'-type IF it's to be included:
-	  QString t_m = "s," + modelNames[ m ];
-	  if ( comboPlotsMapTypes.contains( t_m ) && comboPlotsMapTypes[ t_m ] != 0  )
+	  // QString t_m = "s," + modelNames[ m ];
+	  // if ( comboPlotsMapTypes.contains( t_m ) && comboPlotsMapTypes[ t_m ] != 0  )
+	  if ( show_combo_s ) 
 	    {
 	      write_plot( imgComb01File, sdiag_combplot->rp_data_plot1() );                //<-- rp_data_plot1() gives combined plot
 	      imgComb01File.replace( svgext, pngext ); 
@@ -4224,12 +4244,13 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
 	    {
 	      QString imgComb02File = basename + "combined" + "." + modelNames[ m ];
 	      QMap < QString, QString > c_parms;
-	      QString t_m;
+	      QString t_m, c_type;
 	      
 	      if( xtype[ xt ] == 1 )
 		{
 		  imgComb02File += ".MW" + svgext;
 		  t_m = "MW," + modelNames[ m ];
+		  c_type = "MW";
 		  c_parms = comboPlotsMap[ t_m ];
 		}
 	      
@@ -4237,6 +4258,7 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
 		{
 		  imgComb02File += ".D20" + svgext;
 		  t_m = "D," + modelNames[ m ];
+		  c_type = "D";
 		  c_parms = comboPlotsMap[ t_m ];
 		}
 	      
@@ -4244,11 +4266,14 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
 		{
 		  imgComb02File += ".f_f0" + svgext;
 		  t_m = "f/f0," + modelNames[ m ];
+		  c_type = "f/f0";
 		  c_parms = comboPlotsMap[ t_m ];
 		}
 
 	      //check if to generate Combined plot for current 'type-method':
-	      if ( comboPlotsMapTypes.contains( t_m ) && comboPlotsMapTypes[ t_m ] != 0  )
+	      //if ( comboPlotsMapTypes.contains( t_m ) && comboPlotsMapTypes[ t_m ] != 0  )
+	      bool show_combo_plot_other_types   = (combPlotsMask_edited.ShowCombPlotParts[ c_type ][ modelNames[ m ] ].toInt()) ? true : false ;
+	      if ( show_combo_plot_other_types )
 		{
 		  sdiag_combplot-> changedPlotX_auto( xtype[ xt ], c_parms );
 		  
@@ -6080,7 +6105,7 @@ QString US_ReporterGMP::get_filename( QString triple_name )
 }
 
 //Start assembling PDF file
-void US_ReporterGMP::assemble_pdf()
+void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
 {
 
   QString rptpage;
@@ -6338,7 +6363,9 @@ void US_ReporterGMP::assemble_pdf()
       QString sol_comment = currProto. rpSolut. chsols[i].ch_comment;
       add_solution_details( sol_id, sol_comment, html_solutions );
 
-      progress_msg->setValue( progress_msg->value() + i );
+      qDebug() << "Progress_msg value() -- " << progress_msg->value() ;
+      int progress_val = progress_msg->value() ;
+      progress_msg->setValue( ++progress_val );
       qApp->processEvents();
     }
 
@@ -7117,6 +7144,10 @@ void US_ReporterGMP::gui_to_parms( void )
   QString editedMask_perChan = tree_to_json ( chanItem );
   parse_edited_perChan_mask_json( editedMask_perChan, perChanMask_edited );
 
+  //tree-to-json: combPlotsTree
+  QString editedMask_combPlots = tree_to_json ( topItemCombPlots );
+  parse_edited_combPlots_mask_json( editedMask_combPlots, combPlotsMask_edited );
+  
   //For GMP Reporter only: Compare Json mask states to originally loaded:
   if ( auto_mode )
     GMP_report = true;
@@ -7125,8 +7156,8 @@ void US_ReporterGMP::gui_to_parms( void )
       if( editedMask_gen !=JsonMask_gen_loaded || editedMask_perChan != JsonMask_perChan_loaded )
 	GMP_report = false;
     }
-  // //DEBUG
-  // exit(1);
+  //DEBUG
+  //exit(1);
 }
 
 //Pasre reportMask JSON
@@ -7375,6 +7406,41 @@ void US_ReporterGMP::parse_edited_perChan_mask_json( const QString maskJson, Per
 	  MaskStr.ShowChannelParts[ key ] = false;
       }
 }
+
+
+//Pasre reportMask JSON: combPlots
+void US_ReporterGMP::parse_edited_combPlots_mask_json( const QString maskJson, CombPlotsReportMaskStructure & MaskStr )
+{
+  QJsonDocument jsonDoc = QJsonDocument::fromJson( maskJson.toUtf8() );
+  QJsonObject json = jsonDoc.object();
+    
+  MaskStr. ShowCombPlotsTypes  .clear();
+  MaskStr. ShowCombPlotParts   .clear();
+  MaskStr. has_combo_plots = 0;
+  
+  foreach(const QString& key, json.keys())                                          //over types
+    {
+      QJsonValue value = json.value(key);
+      qDebug() << "Key = " << key << ", Value = " << value;//.toString();
+      
+      QJsonArray json_array = value.toArray();
+      for (int i=0; i < json_array.size(); ++i )  
+	{
+	  foreach(const QString& array_key, json_array[i].toObject().keys())        //over triples
+	    {
+	      QJsonValue show_plot = json_array[i].toObject().value(array_key);
+	      MaskStr. ShowCombPlotParts[ key ][ array_key ] = show_plot.toString();
+
+	      qDebug() << "CombPlots: type, model, yes/no -- "
+		       << key << array_key << show_plot.toString();
+
+	      if ( MaskStr. ShowCombPlotParts[ key ][ array_key ] .toInt() )
+		++MaskStr. has_combo_plots;
+	    }
+	}
+    }
+}
+
 
 void US_ReporterGMP::get_children_to_json( QString& mask_edited, QTreeWidgetItem* item )
 {

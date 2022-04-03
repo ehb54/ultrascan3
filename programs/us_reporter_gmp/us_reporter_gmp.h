@@ -95,6 +95,18 @@ class US_ReporterGMP : public US_Widgets
 
 	 PerChanReportMaskStructure perChanMask_edited;
 
+	 struct CombPlotsReportMaskStructure
+	 {
+	   QMap <QString, int >    ShowCombPlotsTypes;
+
+	   //     type (s,D,..)   model    yes/no
+	   QMap < QString, QMap < QString, QString> >  ShowCombPlotParts;
+
+	   int has_combo_plots;
+	 };
+	 
+	 CombPlotsReportMaskStructure combPlotsMask_edited;
+
 	 QString JsonMask_gen_loaded;
 	 QString JsonMask_perChan_loaded;
 
@@ -228,7 +240,7 @@ class US_ReporterGMP : public US_Widgets
 	 
 	 void  get_current_date( void );
 	 void  format_needed_params( void );
-	 void  assemble_pdf( void );
+	 void  assemble_pdf( QProgressDialog * );
 	 void  add_solution_details( const QString, const QString, QString& );
 	 void  assemble_parts( QString& );
 	 int   list_all_autoflow_records( QList< QStringList >&  );
@@ -251,7 +263,7 @@ class US_ReporterGMP : public US_Widgets
 	 QString tree_to_json ( QMap < QString, QTreeWidgetItem * > );
 	 void parse_edited_gen_mask_json( const QString, GenReportMaskStructure &  );
 	 void parse_edited_perChan_mask_json( const QString, PerChanReportMaskStructure &  );
-
+	 void parse_edited_combPlots_mask_json( const QString, CombPlotsReportMaskStructure &  );
 
 
 	 bool model_exists;
