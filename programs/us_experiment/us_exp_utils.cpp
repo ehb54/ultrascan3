@@ -531,7 +531,7 @@ void US_ExperGuiGeneral::update_inv( void )
 //IF USER cannot edit anything (low-level user)
 void US_ExperGuiGeneral::check_user_level()
 {
-   update_inv();                                                       //ALEXEY: this might be needed!!!
+  //update_inv();                                                       //ALEXEY: this might be needed!!!
   // MAYBE check for actual usr_level &&  US_Settings::set_us_inv_level( level ) ONLY!!! (NO inv_id && NO inv name)
 
   

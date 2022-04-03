@@ -358,6 +358,9 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
    ct_tedelay->setValue     ( 10 );
    ct_tedelay->adjustSize   ();
 
+   //IMPORTANT: set your own credentials (as in DB)
+   update_inv();
+   
    // Set up an approprate investigator text
    if ( US_Settings::us_inv_level() < 1 )
       pb_investigator->setEnabled( false );
