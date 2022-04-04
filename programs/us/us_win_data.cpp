@@ -21,7 +21,7 @@ namespace US_WinData
 
     P_GLOBFITEQ,                                // Global Fit Menu
 
-    P_GETDATA,      P_CONVERT,      P_EXPORT,       P_CEXPERI,  // Utilities Menu
+    P_GETDATA,      P_GMPRPT,       P_CONVERT,      P_EXPORT,       P_CEXPERI,  // Utilities Menu
     P_FDSMAN,       P_FITMEN,       P_COLORGRAD,
     P_RPTGEN,       P_ROTORCAL,     P_LICENSE,
     P_VHWCOMB,      P_DDCOMB,       P_INTCOMB,      P_GLOMODL,
@@ -164,7 +164,12 @@ namespace US_WinData
       QObject::tr( "Acquisition Experimental Data Routine" ),
       QObject::tr( "Acquisition Experimental Data Program" )
     },
-    
+
+    { P_GMPRPT,    1, 0, "us_reporter_gmp",
+      QObject::tr( "Loading GMP Report Generator" ),
+      QObject::tr( "GMP Report Generator Program" )
+    },
+            
     { P_CONVERT,  1, 0, "us_convert",
       QObject::tr( "Loading Experimental Data Import Routine" ),
       QObject::tr( "Experimental Data Import Program" )
@@ -198,7 +203,8 @@ namespace US_WinData
     { P_RPTGEN,    1, 0, "us_reporter",
       QObject::tr( "Loading Report Generator" ),
       QObject::tr( "Report Generator Program" )
-    },
+    },   
+    
 
     { P_ROTORCAL,  1, 0, "us_rotor_calibration",
       QObject::tr( "Loading Rotor Calibration" ),

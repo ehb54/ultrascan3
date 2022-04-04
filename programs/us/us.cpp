@@ -227,6 +227,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu(  P_SPECDEC  , tr( "Spectrum &Decomposition"           ), spectrum);
   
   addMenu(  P_GETDATA  , tr( "&Data Acquisition"                 ), utilities );
+  addMenu(  P_GMPRPT   , tr( "&GMP Report Generator"             ), utilities );
   addMenu(  P_CONVERT  , tr( "&Import Experimental Data"         ), utilities );
   addMenu(  P_EXPORT   , tr( "&Export OpenAUC Data"              ), utilities );
 #if 0    // temporarily disable Create Experiment until truly ready
@@ -236,7 +237,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu(  P_FITMEN   , tr( "&Fit Meniscus"                     ), utilities );
   utilities->addMenu(spectrum);
   addMenu(  P_COLORGRAD, tr( "Color &Gradient Generator"         ), utilities );
-  addMenu(  P_RPTGEN   , tr( "&Report Generator"                 ), utilities );
+  addMenu(  P_RPTGEN   , tr( "&Report Generator"                 ), utilities );  
   addMenu(  P_ROTORCAL , tr( "Rotor &Calibration"                ), utilities );
   addMenu(  P_LICENSE  , tr( "&License Manager"                  ), utilities );
   addMenu(  P_VHWCOMB  , tr( "Combine Distribution &Plots (vHW)" ), utilities );
