@@ -248,6 +248,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu(  P_VIEWXPN  , tr( "View Raw &Optima Data"             ), utilities );
   addMenu(  P_VIEWTMST , tr( "View &TimeState"                   ), utilities );
   addMenu(  P_DENSMTCH , tr( "Density Matc&hing"                 ), utilities );
+  addMenu(  P_PSEUDO_ABS , tr( "Pseudo-Absorbance"                 ), utilities );
 
   addMenu(  P_VIEWMWL ,  tr( "&View Multiwavelength Data"        ), multiwave );
   addMenu(  P_VIEWMSS ,  tr( "View MWL-Spectra"               ), multiwave );
