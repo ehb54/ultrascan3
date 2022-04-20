@@ -579,6 +579,12 @@ DbgLv(1) << "CGui: reset complete";
    // QString protname = QString("JasonH_HHP1-comparison-MWL_041020");
    // QString invid    = QString("29");
    // QString aprofileguid = QString("fafe5452-eac9-44c6-b8e6-04b1b8b7e3d7");
+
+   // QString curdir   = QString("/home/alexey/ultrascan/imports/NielsenJ_AmyloidLL37-041822-37C-repeat-run1309");
+   // QString protname = QString("NielsenJ_AmyloidLL37-highconc-37C-v2");
+   // QString invid    = QString("115");
+   // QString aprofileguid = QString("bfcfa916-1c61-4084-8f3a-69ca98468d0b");
+   
    
    // QMap < QString, QString > protocol_details;
    // //protocol_details[ "status" ];
@@ -1577,28 +1583,30 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
      strncpy( chtype, allData[ 0 ].type, 2 );
      QString dataType = QString( chtype ).left( 2 );
      qDebug() << "Data type -- " << dataType;
+
+     //TEMPORARY !!!!
      if ( dataType == "RI" )
        {
-	 double low_ref  = 5.87 - 0.005;
-	 double high_ref = 5.87 + 0.005;
-	 process_reference_auto( low_ref, high_ref );
+     	 double low_ref  = 5.87 - 0.005;
+     	 double high_ref = 5.87 + 0.005;
+     	 process_reference_auto( low_ref, high_ref );
 
-	 QMessageBox msgBox;
-	 msgBox.setText(tr("Attention: Reference scans have been defined automatically."));
-	 msgBox.setInformativeText("You may review and proceed with saving the data, or choose to reset reference scans definitions by clicking 'Undo Reference Scans':");
-	 msgBox.setWindowTitle(tr("Reference Scans: Automated Processing"));
-	 QPushButton *Automatic  = msgBox.addButton(tr("OK "),   QMessageBox::YesRole);
-	 //QPushButton *Manual     = msgBox.addButton(tr("Define Manually"), QMessageBox::YesRole);
-	 	 
-	 msgBox.setIcon(QMessageBox::Question);
-	 msgBox.exec();
-	 
-	 if (msgBox.clickedButton() == Automatic) {
-	   return;
-	 }
-	 // else if (msgBox.clickedButton() == Manual) {
-	 //   cancel_reference();
-	 // }
+     	 QMessageBox msgBox;
+     	 msgBox.setText(tr("Attention: Reference scans have been defined automatically."));
+     	 msgBox.setInformativeText("You may review and proceed with saving the data, or choose to reset reference scans definitions by clicking 'Undo Reference Scans':");
+     	 msgBox.setWindowTitle(tr("Reference Scans: Automated Processing"));
+     	 QPushButton *Automatic  = msgBox.addButton(tr("OK "),   QMessageBox::YesRole);
+     	 //QPushButton *Manual     = msgBox.addButton(tr("Define Manually"), QMessageBox::YesRole);
+      	 
+     	 msgBox.setIcon(QMessageBox::Question);
+     	 msgBox.exec();
+      
+     	 if (msgBox.clickedButton() == Automatic) {
+     	   return;
+     	 }
+     	 // else if (msgBox.clickedButton() == Manual) {
+     	 //   cancel_reference();
+     	 // }
        }
      //end of auto-processing reference range
 
@@ -4812,13 +4820,15 @@ void US_ConvertGui::process_reference_auto( const double low, const double high 
   reference_end = high;;
 
   data_plot->replot();
-  
+
+    
   // Calculate the averages for all triples
   PseudoCalcAvg();
-  
+
   // Now that we have the averages, let's replot
   Pseudo_reference_triple = tripListx;
-  
+
+ 
   // Default to displaying the first non-reference triple
   for ( int trx = 0; trx < outData.size(); trx++ )
     {
@@ -4835,6 +4845,8 @@ void US_ConvertGui::process_reference_auto( const double low, const double high 
       DbgLv(1) << "CGui: procref: 2)setrow-tripx" << tripListx;
    }
   lw_triple->setCurrentRow( tripListx );
+
+  
   plot_current();
   DbgLv(1) << "CGui: procref:  plot_current complete";
   QApplication::restoreOverrideCursor();
@@ -5000,8 +5012,14 @@ void US_ConvertGui::PseudoCalcAvg( void )
       }
 
       if ( count > 0 )
-         ExpData.RIProfile << sum / count;
-
+	{
+	  //ExpData.RIProfile << sum / count;
+	  
+	  if ( sum > 0 )
+	    ExpData.RIProfile << sum / count;
+	  else
+	    ExpData.RIProfile << 1.0; 
+	}
       else
          ExpData.RIProfile << 1.0;    // See the log10 function, later
 
@@ -8276,8 +8294,21 @@ DbgLv(1) << "PseCalcAvgMWL: ccx tripx nlambda" << ccx << tripx << nlambda;
             rr++;
          }
 
-         double rip_avg  = count > 0 ? ( sum / (double)count ) : 1.0;
-         ri_prof           << rip_avg;
+
+	 //ALEXEY: check for non-positive data (sum):
+	 double rip_avg;
+	 //double rip_avg  = count > 0 ? ( sum / (double)count ) : 1.0;
+	 if ( count > 0 )
+	   {
+	     if ( sum > 0 )
+	       rip_avg =  sum / (double)count;
+	     else
+	       rip_avg = 1.0; 
+	   }
+	 else
+	   rip_avg = 1.0;  
+
+	 ri_prof           << rip_avg;
          ExpData.RIProfile << rip_avg;
 
       } // END: scan loop for reference triple
