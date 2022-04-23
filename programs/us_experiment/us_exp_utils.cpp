@@ -346,10 +346,11 @@ void US_ExperimentMain::enable_tabs_buttons_readonly( void )
 
       for ( int i = 0; i < allCBoxes.count(); i++ )
       {
-         if ( (allCBoxes[i]->currentText()).contains("Speed Profile") )
-            allCBoxes[i]->setEnabled(true);
-         else
-            allCBoxes[i]->setEnabled(false);
+	if ( (allCBoxes[i]->currentText()).contains("Speed Profile") ||
+	     ( allCBoxes[i]->currentText()).contains(": Optima") )
+	  allCBoxes[i]->setEnabled(true);
+	else
+	  allCBoxes[i]->setEnabled(false);
       }
       for ( int i = 0; i < allSBoxes.count(); i++ )
          allSBoxes[i]->setEnabled(false);
