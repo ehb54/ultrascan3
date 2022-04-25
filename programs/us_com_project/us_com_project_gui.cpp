@@ -1544,6 +1544,9 @@ void US_InitDialogueGui::initRecordsDialogue( void )
 
   qDebug() << "occupied_instruments.size(), instruments.size()" << occupied_instruments.size() << ", " <<  instruments.size();
   
+
+  //ALEXEY: clear occupied instr. as we decided on queueing...
+  occupied_instruments.clear();
   
   QString autoflow_id_selected("");
   
@@ -1755,6 +1758,8 @@ void US_InitDialogueGui::update_autoflow_data( void )
   // else
   //   pdiag_autoflow->pb_cancel->setEnabled( true );
 
+  //ALEXEY: also always clear occupied_instruments as we decide on queueing...
+  occupied_instruments. clear();
 
   qDebug() << "Define Another Exp. button reset";
 
