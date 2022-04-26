@@ -1,5 +1,5 @@
-#ifndef BUILD_COLORMAP_H
-#define BUILD_COLORMAP_H
+#ifndef US_GEN_COLORMAP_H
+#define US_GEN_COLORMAP_H
 
 #include <QObject>
 #include <QVector>
@@ -31,4 +31,4 @@ private:
     QVector<int> rang_hvalues(void);
 };
 
-#endif // BUILD_COLORMAP_H
+#endif // US_GEN_COLORMAP_H

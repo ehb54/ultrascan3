@@ -1,21 +1,23 @@
-#ifndef CONVERT_SCAN_H
-#define CONVERT_SCAN_H
+#ifndef US_CONVERT_SCAN_H
+#define US_CONVERT_SCAN_H
 #include <us_widgets.h>
 #include <us_settings.h>
 #include <us_dataIO.h>
 #include <../us_convert/us_select_triples.h>
-#include <refScan_dataIO.h>
+#include <us_refScan_dataIO.h>
 #include "us_plot.h"
-#include "build_colormap.h"
+#include "us_gen_colormap.h"
 #include "us_db2.h"
 #include "us_passwd.h"
 
-class convertScan : public US_Widgets
+class US_ConvertScan : public US_Widgets
 {
     Q_OBJECT
 
 public:
-    convertScan();
+    US_ConvertScan();
+    QPushButton* pb_close;
+    bool hasData;
 
     signals:
     void sig_plot(void);
@@ -35,7 +37,8 @@ private slots:
 //    void slt_edit_runid(QString);
     void slt_load_refScans(void);
     void slt_new_scan_range(double);
-    void slt_check_box(int);
+    void slt_zeroing(int);
+    void slt_xrange(int);
     void slt_reset_scans(void);
     void slt_reset_allscans(void);
     void slt_apply_allscans(void);
@@ -75,7 +78,6 @@ private:
         }
     };
 
-
     class CCW{
     public:
         QVector<int> index;
@@ -94,74 +96,72 @@ private:
             return cell.size();
         }
     };
-    const double abs_max = 3;
+    const double maxAbs = 3;
+
+    QPushButton* pb_prev_id;
+    QPushButton* pb_next_id;
+    QPushButton* pb_import;
+    QPushButton* pb_reset;
+    QPushButton* pb_import_refScans;
+    QPushButton* pb_reset_refData;
+    QPushButton* pb_save;
+    QPushButton* pb_pick_rp;
+
+    QLineEdit* le_lambstrt;
+    QLineEdit* le_lambstop;
+    QLineEdit* le_runIdInt;
+    QLineEdit* le_runIdAbs;
+    QLineEdit* le_dir;
+    QLineEdit* le_desc;
+    QLineEdit* le_status;
+    QLineEdit* le_ref_range;
+    QLineEdit* le_xrange;
+    QLabel* plot_title;
+
+    QComboBox* cb_plot_id;
+    QComboBox* cb_buffer;
+
+    US_PlotPicker *picker;
+    US_Plot* usplot_insty;
+    US_Plot* usplot_abs;
+    QwtPlot* qwtplot_insty;
+    QwtPlot* qwtplot_abs;
+    QwtPlotGrid* grid;
+
+    QwtCounter* ct_scan_l;
+    QwtCounter* ct_scan_u;
+    QwtCounter* ct_smooth;
+
+    QListWidget* lw_triple;
+    QCheckBox *ckb_zeroing;
+    QCheckBox *ckb_xrange;
+    US_Disk_DB_Controls* diskDB_ctrl;
+
     CCW ccwList;
     CCW ccwListMain;
     QStringList ccwStrListMain;
     CCW_LIST ccwItemList;
 
-    refScanDataIO::RefData refData;
-
-    int lambda_id;
-    int n_wavelengths;
+    US_DB2 *dbCon;
+    US_Passwd pw;
+    QString status, percent;
+    int cpos, le_cursor_pos = -1;
+    double x_min_picked, x_max_picked;
+    int wavl_id;
+    int n_wavls;
     int refId;
     QVector<int> intDataId;
     QVector<double> wavelength;
-    QString status, percent;
-    QLineEdit* le_lambstrt;
-    QLineEdit* le_lambstop;
-    QLineEdit* le_runIdInt;
-    QLineEdit* le_dir;
-    QLineEdit* le_runIdAbs;
-    QLineEdit* le_desc;
-    QListWidget*  lw_triple;
-    QLabel* plot_title;
-    QComboBox* cb_plot_id;
-    QPushButton* pb_prev_id;
-    QPushButton* pb_next_id;
-    QPushButton* pb_import;
-    QPushButton* pb_import_refScans;
-    QPushButton* pb_reset_refData;
-    US_Disk_DB_Controls* diskDB_ctrl;
-    QLineEdit* le_status;
-    QPushButton* pb_reset;
-    US_Plot* usplot_insty;
-    QwtPlot* qwtplot_insty;
-    int le_cursor_pos = -1;
     QVector<double> xvalues;
     QVector<US_DataIO::Scan> intensity;
     QVector<US_DataIO::Scan> absorbance;
-    QVector<US_DataIO::Scan> absorbance_buffer;
-
-    US_Plot* usplot_abs;
-    QwtPlot* qwtplot_abs;
-    QPushButton* pb_save;
-
-    QwtCounter* ct_lower;
-    QwtCounter* ct_upper;
-    QString runID;
-    QString runType;
-    QString currentDir;
+    QVector<US_DataIO::Scan> absorbanceBuffer;
     QVector<US_DataIO::RawData> allIntData;
-    QVector<QVector<int>> scans_range;
+    QVector<QVector<int>> scansRange;
+    US_RefScanDataIO::RefData refData;
     QFileInfoList allIntDataFiles;
-    QCheckBox *ckb_shift_zero;
-    QPushButton *pb_pick_rp;
-    QwtPlotGrid* grid;
-    int cpos;
-    QComboBox *cb_buffer;
-    QwtCounter* ct_smooth;
-    QLineEdit* le_ref_range;
-    double x_min_picked, x_max_picked;
-    QLineEdit *le_lower_x;
-    QLineEdit *le_upper_x;
-    US_PlotPicker *picker;
-    US_DB2 *dbCon;
-    US_Passwd pw;
-
 
     void clear(void);
-
     void make_ccwItemList(void);
     void set_lambda_ctrl(void);
     void set_widgetList(void);
@@ -170,22 +170,20 @@ private:
     void plot_refscan(void);
     void plot_absorbance(void);
     void set_scan_range(void);
-
     void get_absorbance(int, int, bool buffer);
     void get_intensity(int);
     bool get_refId(double);
     void set_buffer_list(void);
     void get_relative_absorbance(int);
-    void shift_absorbance(void);
+    void trim_absorbance(void);
     QVector<double> get_smooth(QVector<double>, int);
     void load_from_DB(void);
-
 };
 
 class LoadDBWidget : public US_WidgetsDialog{
     Q_OBJECT
 public:
-    LoadDBWidget(QWidget* w, US_DB2 *dbCon, refScanDataIO::RefData&);
+    LoadDBWidget(QWidget* w, US_DB2 *dbCon, US_RefScanDataIO::RefData&);
 
 private slots:
     void slt_set_refTable(void);
@@ -193,13 +191,12 @@ private slots:
 //    void slt_cancel(void);
 private:
     US_DB2 *db;
-    refScanDataIO::RefData *refData;
+    US_RefScanDataIO::RefData *refData;
     QVector<int> instrumentIDs;
     QStringList instrumentNames;
     QVector<QVector<int>> instrumentRefList;
     QTreeWidget *tw_instruments;
     QTreeWidget *tw_refData;
-
 
     class refScanTableInfo{
     public:
@@ -219,8 +216,7 @@ private:
 
     QVector<refScanTableInfo> refTable;
     QDate str2date(QString);
-
 };
 
 
-#endif // CONVERT_SCAN_H
+#endif // US_CONVERT_SCAN_H

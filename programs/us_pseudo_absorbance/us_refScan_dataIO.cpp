@@ -1,6 +1,6 @@
-#include "refScan_dataIO.h"
+#include "us_refScan_dataIO.h"
 
-int refScanDataIO::writeRefData( const QString& file, RefData& data )
+int US_RefScanDataIO::writeRefData( const QString& file, RefData& data )
 {
     //define unions;
     union union16 u16a, u16b;
@@ -77,7 +77,7 @@ int refScanDataIO::writeRefData( const QString& file, RefData& data )
     return OK;
 }
 
-int refScanDataIO::readRefData( const QString& file, RefData& data )
+int US_RefScanDataIO::readRefData( const QString& file, RefData& data )
 {
     //define unions;
     union union16 u16a, u16b;
@@ -189,20 +189,20 @@ int refScanDataIO::readRefData( const QString& file, RefData& data )
     return err;
 }
 
-void refScanDataIO::write( QDataStream& ds, const char* c, int len, quint32& crc )
+void US_RefScanDataIO::write( QDataStream& ds, const char* c, int len, quint32& crc )
 {
    ds.writeRawData( c, len );
    crc = US_Crc::crc32( crc, (unsigned char*) c, len );
 }
 
-void refScanDataIO::read( QDataStream& ds, char* cc, int len, quint32& crc )
+void US_RefScanDataIO::read( QDataStream& ds, char* cc, int len, quint32& crc )
 {
    ds.readRawData( cc, len );
    crc = US_Crc::crc32( crc, (uchar*) cc, len );
 }
 
 // Compose and return an error string
-QString refScanDataIO::errorString( int code )
+QString US_RefScanDataIO::errorString( int code )
 {
    switch ( code )
    {
@@ -218,7 +218,7 @@ QString refScanDataIO::errorString( int code )
 }
 
 
-void refScanDataIO::RefData::clear(){
+void US_RefScanDataIO::RefData::clear(){
     type[0] = ' ';
     type[1] = ' ';
     nWavelength = 0;

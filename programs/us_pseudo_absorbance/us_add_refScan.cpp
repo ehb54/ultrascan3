@@ -1,51 +1,27 @@
-#include <add_refScan.h>
-#include <QListView>
-#include <QTreeView>
-#include <QStringList>
-#include <QDir>
-#include <QString>
-#include <QtGlobal>
-#include <algorithm>
-#include <cmath>
-#include <iostream>
-#include "us_settings.h"
-//#include "us_gui_settings.h"
-//#include "us_investigator.h"
-//#include "us_math2.h"
-#include "us_util.h"
-//#include "us_constants.h"
-#include "us_images.h"
-#include "us_widgets.h"
-#include <QMouseEvent>
-#include <qwt_legend.h>
+#include <us_add_refScan.h>
 
-
-addRefScan::addRefScan() : US_Widgets()
+US_AddRefScan::US_AddRefScan() : US_Widgets()
 {
-    setWindowTitle( tr( "Add / Edit Reference Scans" ) );
-    setPalette( US_GuiSettings::frameColor() );
-    QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
-//    QFont font( US_GuiSettings::fontFamily(), 10 );
-
-
-    QDateTime currTime = QDateTime::currentDateTimeUtc();
-    qDebug() << currTime.toString();
-
+    setPalette( US_GuiSettings::frameColorDefault() );
     dbCon = new US_DB2();
-
-    QHBoxLayout* main_layout = new QHBoxLayout(this);
-    QVBoxLayout* left_layout = new QVBoxLayout();
-    QVBoxLayout* right_layout = new QVBoxLayout();
-    tabs = new QTabWidget();
-    tabs->setAutoFillBackground(true);
 
     // Put the Run Info across the entire window
     QLabel* lb_run = us_banner(tr("Load the Run(s)"));
     pb_import = us_pushbutton(tr("Import Data"));
     pb_reset = us_pushbutton(tr("Reset"), false);
-    QHBoxLayout* load_l = new QHBoxLayout();
-    load_l->addWidget(pb_import);
-    load_l->addWidget(pb_reset);
+    QHBoxLayout* import_lyt = new QHBoxLayout();
+    import_lyt->addWidget(pb_import);
+    import_lyt->addWidget(pb_reset);
+
+    QLabel* lb_rid = us_label(tr("RunID(s):"));
+    QHBoxLayout* rid_lyt = new QHBoxLayout();
+    rid_lyt->addWidget(lb_rid);
+    rid_lyt->addStretch(1);
+    lb_runIDs = new QLabel();
+    lb_runIDs->setMinimumHeight(100);
+    lb_runIDs->setStyleSheet(tr("border: 1px solid black;"
+                                "border-radius: 5px;"
+                                "padding: 2px;background-color: white;"));
 
     // Multi-Wavelength Lambda Controls
     static QChar clambda( 955 );   // Lambda character
@@ -62,20 +38,34 @@ addRefScan::addRefScan() : US_Widgets()
     pb_prev_id->setIcon( US_Images::getIcon( US_Images::ARROW_LEFT  ) );
     pb_next_id->setIcon( US_Images::getIcon( US_Images::ARROW_RIGHT ) );
 
+    QHBoxLayout* wavl_rng_lyt = new QHBoxLayout();
+    wavl_rng_lyt->addWidget(lb_lambstrt);
+    wavl_rng_lyt->addWidget(le_lambstrt);
+    wavl_rng_lyt->addWidget(lb_lambstop);
+    wavl_rng_lyt->addWidget(le_lambstop);
+
+    QHBoxLayout* wavl_plt_lyt = new QHBoxLayout();
+    wavl_plt_lyt->addWidget(lb_lambplot);
+    wavl_plt_lyt->addWidget(cb_plot_id);
+    wavl_plt_lyt->addWidget(pb_prev_id);
+    wavl_plt_lyt->addWidget(pb_next_id);
+
     // processing control
-    QLabel* lb_pctrl = us_banner(tr("Processing Control"));
-    sw_cluster = new SwitchButton(this); // Default style is Style::ONOFF
-    sw_cluster->setValue(false);
-    QLabel* lb_cluster = us_label("Clustering");
-    pb_setting = us_pushbutton("Setting", false, 0 );
-    pb_setting->setDisabled(true);
+    QLabel* lb_cluster = us_banner(tr("Processing Control"));
+    ckb_cluster = new QCheckBox();
+    QGridLayout* ckb_cls_lyt = us_checkbox("Cluster Scans", ckb_cluster);
+    ckb_cluster->setCheckState(Qt::Unchecked);
+    ckb_align = new QCheckBox();
+    QGridLayout* ckb_aln_lyt = us_checkbox("Align Scans", ckb_align);
+    ckb_align->setCheckState(Qt::Unchecked);
+    pb_clscltr = us_pushbutton("Clustering Control", false, 0 );
+    pb_clscltr->setDisabled(true);
 
-    sw_align = new SwitchButton(this); // Default style is Style::ONOFF
-    sw_align->setValue(false);
-    sw_align->setDisabled(true);
-    QLabel* lb_align = us_label("Aligning");
+    QHBoxLayout* cls_aln_lyt = new QHBoxLayout();
+    cls_aln_lyt->addLayout(ckb_cls_lyt);
+    cls_aln_lyt->addLayout(ckb_aln_lyt);
 
-    // saving control
+    // save refScan control
     QLabel* lb_save = us_banner(tr("Saving Control"));
     dkdb_ctrl = new US_Disk_DB_Controls();
     dkdb_ctrl->set_disk();
@@ -84,6 +74,8 @@ addRefScan::addRefScan() : US_Widgets()
     le_dir = us_lineedit( US_Settings::importDir(), -1, true );
     lb_dbName   = us_label( tr( "Database:" ), -1 );
     le_dbName  = us_lineedit( "", -1, true );
+    pb_save = us_pushbutton("Save", false, 0 );
+    pb_save->setDisabled(true);
 
     if (dkdb_ctrl->db()){
         lb_dir->hide();
@@ -92,99 +84,74 @@ addRefScan::addRefScan() : US_Widgets()
         lb_dbName->hide();
         le_dbName->hide();
     }
+    QHBoxLayout* dir_lyt = new QHBoxLayout();
+    dir_lyt->addWidget(lb_dir);
+    dir_lyt->addWidget(le_dir);
+    QHBoxLayout* db_lyt = new QHBoxLayout();
+    db_lyt->addWidget(lb_dbName);
+    db_lyt->addWidget(le_dbName);
 
-    pb_save = us_pushbutton("Save", false, 0 );
-    pb_save->setDisabled(true);
-
+    // status
     QLabel* lb_status = us_label(tr("Status:"));
     le_status = us_lineedit(tr(""), -1, true);
+    QHBoxLayout* status_lyt = new QHBoxLayout();
+    status_lyt->addWidget(lb_status);
+    status_lyt->addWidget(le_status);
+    QPalette stpal;
+    stpal.setColor( QPalette::Text, Qt::white );
+    stpal.setColor( QPalette::Base, Qt::blue  );
+    le_status->setPalette( stpal );
 
-    QPushButton* pb_close = us_pushbutton("close", true, 0 );
-    QPushButton* pb_help = us_pushbutton("help", true, 0 );
+    // close
+    pb_close = us_pushbutton("Close", true, 0 );
+    QPushButton* pb_help = us_pushbutton("Help", true, 0 );
+    QHBoxLayout* close_lyt = new QHBoxLayout();
+    close_lyt->addWidget(pb_close);
+    close_lyt->addWidget(pb_help);
 
-    left_layout->addStretch(0);
-    left_layout->setSpacing(5);
-    right_layout->setSpacing(0);
+    // layout
+    QVBoxLayout* left_lyt = new QVBoxLayout();
+    left_lyt->addStretch(0);
+    left_lyt->setSpacing(5);
+    left_lyt->addWidget(lb_run);
+    left_lyt->addLayout(import_lyt);
+    left_lyt->addLayout(rid_lyt);
+    left_lyt->addWidget(lb_runIDs);
+    left_lyt->addWidget(lb_mwlctrl);
+    left_lyt->addLayout(wavl_rng_lyt);
+    left_lyt->addLayout(wavl_plt_lyt);
+    left_lyt->addWidget(lb_cluster);
+    left_lyt->addLayout(cls_aln_lyt);
+    left_lyt->addWidget(pb_clscltr);
+    left_lyt->addWidget(lb_save);
+    left_lyt->addLayout(dkdb_ctrl);
+    left_lyt->addLayout(dir_lyt);
+    left_lyt->addLayout(db_lyt);
+    left_lyt->addWidget(pb_save);
+    //    left_lyt->setStretch(0);
+    //    left_lyt->addSpacing(20);
+    left_lyt->addStretch(1);
+    left_lyt->addLayout(status_lyt);
+    left_lyt->addLayout(close_lyt);
 
-    left_layout->addWidget(lb_run); //, 0, Qt::AlignTop);
-    left_layout->addLayout(load_l); //, 0, Qt::AlignTop);
-
-    left_layout->addWidget(lb_mwlctrl);
-    QHBoxLayout* mwlctrl_l1 = new QHBoxLayout();
-    mwlctrl_l1->addWidget(lb_lambstrt);
-    mwlctrl_l1->addWidget(le_lambstrt);
-    mwlctrl_l1->addWidget(lb_lambstop);
-    mwlctrl_l1->addWidget(le_lambstop);
-    left_layout->addLayout(mwlctrl_l1, 1);
-    QHBoxLayout* mwlctrl_l2 = new QHBoxLayout();
-    mwlctrl_l2->addWidget(lb_lambplot);
-    mwlctrl_l2->addWidget(cb_plot_id);
-    mwlctrl_l2->addWidget(pb_prev_id);
-    mwlctrl_l2->addWidget(pb_next_id);
-    left_layout->addLayout(mwlctrl_l2);
-
-    left_layout->addWidget(lb_pctrl);
-    QGridLayout* cluster_l = new QGridLayout();
-    int row = 0;
-    cluster_l->addWidget(sw_cluster,   row, 0, 1, 1);
-    cluster_l->addWidget(lb_cluster,   row, 1, 1, 1);
-    cluster_l->addWidget(pb_setting,   row, 2, 1, 1);
-    cluster_l->addWidget(sw_align,   ++row, 0, 1, 1);
-    cluster_l->addWidget(lb_align,     row, 1, 1, 1);
-    left_layout->addLayout(cluster_l);
-
-    left_layout->addWidget(lb_save);
-    left_layout->addLayout(dkdb_ctrl);
-    QHBoxLayout* dir_l = new QHBoxLayout();
-    dir_l->addWidget(lb_dir);
-    dir_l->addWidget(le_dir);
-    left_layout->addLayout(dir_l);
-
-    QHBoxLayout* db_l = new QHBoxLayout();
-    db_l->addWidget(lb_dbName);
-    db_l->addWidget(le_dbName);
-    left_layout->addLayout(db_l);
-
-    left_layout->addWidget(pb_save);
-
-//    left_layout->setStretch(0);
-//    left_layout->addSpacing(20);
-    left_layout->addStretch(1);
-
-    QHBoxLayout* status_l = new QHBoxLayout();
-    status_l->addWidget(lb_status);
-    status_l->addWidget(le_status);
-    left_layout->addLayout(status_l);
-
-    QHBoxLayout* close_l = new QHBoxLayout();
-    close_l->addWidget(pb_close);
-    close_l->addWidget(pb_help);
-
-    left_layout->addLayout(close_l);
 
     //*****tabs*****//
     QwtText xLabel, yLabel;
     // tab 0
-    QWidget* tab0 = new QWidget();
-    QVBoxLayout* tab0_layout = new QVBoxLayout(tab0);
-    QHBoxLayout* hbl0_u = new QHBoxLayout();
     US_Plot* tab0_usplotL = new US_Plot( tab0_plotLU, tr( "" ),
                                          tr( "Radius (in cm)" ), tr( "Intensity" ),
                                          true, "", "rainbow" );
-    tab0_plotLU->setMinimumSize( 600, 400 );
+    tab0_plotLU->setMinimumSize( 400, 400 );
     tab0_plotLU->enableAxis( QwtPlot::xBottom, true );
     tab0_plotLU->enableAxis( QwtPlot::yLeft  , true );
 
     US_Plot* tab0_usplotR = new US_Plot( tab0_plotRU, tr( "" ),
                                          tr( "Radius (in cm)" ), tr( "Intensity" ),
                                          true, "", "rainbow" );
-    tab0_plotRU->setMinimumSize( 600, 400 );
+    tab0_plotRU->setMinimumSize( 400, 400 );
     tab0_plotRU->enableAxis( QwtPlot::xBottom, true );
     tab0_plotRU->enableAxis( QwtPlot::yLeft  , true );
-    hbl0_u->addLayout(tab0_usplotL);
-    hbl0_u->addLayout(tab0_usplotR);
 
-    QHBoxLayout* hbl0_d = new QHBoxLayout();
     US_Plot* tab0_devplotL = new US_Plot(tab0_plotLD, tr(""),
                                          tr( "Radius (in cm)" ), tr( "Deviation" ));
 //    tab0_plotLD->setMinimumSize( 600, 400 );
@@ -198,71 +165,70 @@ addRefScan::addRefScan() : US_Widgets()
     tab0_plotRD->setMaximumHeight(300);
     tab0_plotRD->enableAxis( QwtPlot::xBottom, true );
     tab0_plotRD->enableAxis( QwtPlot::yLeft, true );
-    hbl0_d->addLayout(tab0_devplotL);
-    hbl0_d->addLayout(tab0_devplotR);
 
-    tab0_layout->addLayout(hbl0_u);
-    tab0_layout->addLayout(hbl0_d);
-//    tab0_layout->setRowStretch(0, 1);
-//    tab0_layout->setRowStretch(1, 0);
-
+    QWidget* tab0 = new QWidget();
+    QGridLayout* tab0_lyt = new QGridLayout(tab0);
+    tab0_lyt->addLayout(tab0_usplotL,  0, 0, 1, 1);
+    tab0_lyt->addLayout(tab0_usplotR,  0, 1, 1, 1);
+    tab0_lyt->addLayout(tab0_devplotL, 1, 0, 1, 1);
+    tab0_lyt->addLayout(tab0_devplotR, 1, 1, 1, 1);
 
     // tab 1
-    font.setBold(true);
-    QWidget* tab1 = new QWidget();
-    QVBoxLayout* tab1_layout = new QVBoxLayout(tab1);
-
-    lb_tab1_wlbw = us_banner(tr(""));
-
+    lb_tab1_wlbw = us_label(tr(""));
+    lb_tab1_wlbw->setAlignment(Qt::AlignCenter);
     US_Plot* tab1_usplotLU = new US_Plot(tab1_plotLU, tr(""),
                                          tr("RMSD of Intensity" ), tr("Distribution"));
-//    tab1_plotLU->setMinimumSize( 600, 400 );
-    tab1_plotLU->setMaximumHeight(350);
+//    tab1_plotLU->setMinimumSize( 450, 300 );
+    tab1_plotLU->setMaximumSize( 500, 300 );
     tab1_plotLU->enableAxis( QwtPlot::xBottom, true );
     tab1_plotLU->enableAxis( QwtPlot::yLeft, true );
     tab1_plotLU->setCanvasBackground( Qt::white );
 
     US_Plot* tab1_usplotRU = new US_Plot(tab1_plotRU, tr(""),
                                          tr("RMSD of Intensity" ), tr("Intensity of Scans"));
-//    tab1_plotRU->setMinimumSize( 600, 400 );
-    tab1_plotRU->setMaximumHeight(350);
+//    tab1_plotRU->setMinimumSize( 450, 300 );
+    tab1_plotRU->setMaximumSize( 500, 300 );
     tab1_plotRU->enableAxis( QwtPlot::xBottom, true );
     tab1_plotRU->enableAxis( QwtPlot::yLeft, true );
     tab1_plotRU->setCanvasBackground( Qt::white );
 
-    QLabel* lb_tab1_rmsd = us_banner(tr("RMSD overlaps"));
+    QLabel* lb_tab1_rmsd = us_label(tr("RMSD Overlaps"));
+    lb_tab1_rmsd->setAlignment(Qt::AlignCenter);
     US_Plot* tab1_usplotLD = new US_Plot(tab1_plotLD, tr(""),
                                          tr("RMSD of Intensity" ), tr("Wavelength (in nm)"));
 //    tab1_plotLD->setMinimumSize( 600, 400 );
-    tab1_plotLD->setMaximumHeight(350);
+    tab1_plotLD->setMaximumHeight(200);
     tab1_plotLD->enableAxis( QwtPlot::xBottom, true );
     tab1_plotLD->enableAxis( QwtPlot::yLeft, true );
     tab1_plotLD->setCanvasBackground( Qt::white );
 
-    QLabel* lb_tab1_mean = us_banner(tr("Intensity overlaps"));
+    QLabel* lb_tab1_mean = us_label(tr("Intensity Overlaps"));
+    lb_tab1_mean->setAlignment(Qt::AlignCenter);
     US_Plot* tab1_usplotRD = new US_Plot(tab1_plotRD, tr(""),
                                          tr("Intensity of Scans" ), tr("Wavelength (in nm)"));
 //    tab1_plotRD->setMinimumSize( 600, 400 );
-    tab1_plotRD->setMaximumHeight(350);
+    tab1_plotRD->setMaximumHeight(200);
     tab1_plotRD->enableAxis( QwtPlot::xBottom, true );
     tab1_plotRD->enableAxis( QwtPlot::yLeft, true );
     tab1_plotRD->setCanvasBackground( Qt::white );
 
-    QGridLayout* gl1 = new QGridLayout();
-    gl1->addWidget(lb_tab1_wlbw,  0, 0, 1, 2);
-    gl1->addLayout(tab1_usplotLU, 1, 0, 1, 1);
-    gl1->addLayout(tab1_usplotRU, 1, 1, 1, 1);
-    gl1->addWidget(lb_tab1_rmsd,  2, 0, 1, 1);
-    gl1->addWidget(lb_tab1_mean,  2, 1, 1, 1);
-    gl1->addLayout(tab1_usplotLD, 3, 0, 1, 1);
-    gl1->addLayout(tab1_usplotRD, 3, 1, 1, 1);
+    QGridLayout* tab1_plt_lyt = new QGridLayout();
+    tab1_plt_lyt->addWidget(lb_tab1_wlbw,  0, 0, 1, 2);
+    tab1_plt_lyt->addLayout(tab1_usplotLU, 1, 0, 1, 1);
+    tab1_plt_lyt->addLayout(tab1_usplotRU, 1, 1, 1, 1);
+    tab1_plt_lyt->addWidget(lb_tab1_rmsd,  2, 0, 1, 1);
+    tab1_plt_lyt->addWidget(lb_tab1_mean,  2, 1, 1, 1);
+    tab1_plt_lyt->addLayout(tab1_usplotLD, 3, 0, 1, 1);
+    tab1_plt_lyt->addLayout(tab1_usplotRD, 3, 1, 1, 1);
+
 
     QLabel* lb_bws = us_label(tr("Bandwidth Scale:"));
     ct_bws = us_counter(1, 1, 5, 2);
     ct_bws->setSingleStep(0.25);
     pb_reset_bws = us_pushbutton(tr("Reset"), true, 0 );
-    ck_bws_all = new QCheckBox("All Lambdas");
-    ck_bws_all->setStyleSheet("QCheckBox {background-color: white; color: back;}");
+    ckb_bws_all = new QCheckBox();
+    QGridLayout *ckb_bws_lyt = us_checkbox("All Lambdas", ckb_bws_all);
+    ckb_bws_all->setStyleSheet("QCheckBox {background-color: white; color: back;}");
 
     QLabel* lb_lambplot_tab1 = us_label   ( tr( "Plot %1:"     ).arg( clambda ) );
     cb_plot_id_tab1  = us_comboBox();
@@ -273,30 +239,32 @@ addRefScan::addRefScan() : US_Widgets()
     pb_next_id_tab1->setIcon( US_Images::getIcon( US_Images::ARROW_RIGHT ) );
 
     QLabel* lb_merge = us_label(tr("Number of Neighbors:"));
-    ct_winlen = us_counter(1, 0, winlen_max, winlen_default);
+    ct_winlen = us_counter(1, 0, winlen_max, winlen_dflt);
     ct_winlen->setSingleStep(1);
     pb_find_merge = us_pushbutton(QString("Find and Merge"), true, 0 );
 
-    QHBoxLayout* hbl1_2 = new QHBoxLayout();
+    QHBoxLayout* tab1_wg_lyt = new QHBoxLayout();
 //    hbl1_2->addStretch(1);
-    hbl1_2->addWidget(lb_bws);
-    hbl1_2->addWidget(ct_bws);
-    hbl1_2->addWidget(pb_reset_bws);
-    hbl1_2->addWidget(ck_bws_all);
-    hbl1_2->addStretch(1);
-    hbl1_2->addWidget(lb_lambplot_tab1);
-    hbl1_2->addWidget(cb_plot_id_tab1);
-    hbl1_2->addWidget(pb_prev_id_tab1);
-    hbl1_2->addWidget(pb_next_id_tab1);
-    hbl1_2->addStretch(1);
-    hbl1_2->addWidget(lb_merge);
-    hbl1_2->addWidget(ct_winlen);
-//    hbl1_2->addStretch(1);
-    hbl1_2->addWidget(pb_find_merge, 2);
+    tab1_wg_lyt->addWidget(lb_bws);
+    tab1_wg_lyt->addWidget(ct_bws);
+    tab1_wg_lyt->addWidget(pb_reset_bws);
+    tab1_wg_lyt->addLayout(ckb_bws_lyt);
+    tab1_wg_lyt->addStretch(1);
+    tab1_wg_lyt->addWidget(lb_lambplot_tab1);
+    tab1_wg_lyt->addWidget(cb_plot_id_tab1);
+    tab1_wg_lyt->addWidget(pb_prev_id_tab1);
+    tab1_wg_lyt->addWidget(pb_next_id_tab1);
+    tab1_wg_lyt->addStretch(1);
+    tab1_wg_lyt->addWidget(lb_merge);
+    tab1_wg_lyt->addWidget(ct_winlen);
+//    tab1_wg_lyt->addStretch(1);
+    tab1_wg_lyt->addWidget(pb_find_merge, 2);
 
-    tab1_layout->addLayout(gl1);
-    tab1_layout->addStretch(1);
-    tab1_layout->addLayout(hbl1_2);
+    QWidget* tab1 = new QWidget();
+    QVBoxLayout* tab1_lyt = new QVBoxLayout(tab1);
+    tab1_lyt->addLayout(tab1_plt_lyt);
+    tab1_lyt->addStretch(1);
+    tab1_lyt->addLayout(tab1_wg_lyt);
 
 
     // tab 2
@@ -322,17 +290,55 @@ addRefScan::addRefScan() : US_Widgets()
 
 
     //**//
-    tabs->addTab(tab0, tr("Plot Scans"));
+    tabs = new QTabWidget();
+    tabs->setAutoFillBackground(true);
+    tabs->addTab(tab0, tr("Plots"));
     tabs->addTab(tab1, tr("Clustering Control"));
-    tabs->tabBar()->setTabTextColor(0,Qt::black);
-    tabs->tabBar()->setTabTextColor(1,Qt::black);
+//    tabs->setTabShape(QTabWidget::Triangular);
+    tabs->tabBar()->setMinimumWidth(400);
 
-    right_layout->addWidget(tabs);
-    main_layout->addLayout(left_layout);
-    main_layout->addLayout(right_layout);
-    main_layout->setSpacing(1);
-    main_layout->setMargin(1);
-    setLayout(main_layout);
+//    QStringList styleSheet;
+//    styleSheet << "QTabWidget::pane {border-top: 2px solid #C2C7CB;}";
+//    styleSheet << "QTabWidget::tab-bar {left: 5px;}";
+//    styleSheet << "QTabBar::tab:selected {font: 20; color: black;}";
+//    styleSheet << "QTabBar::tab:!selected {font: 10; color: gray;}";
+//    styleSheet << "QTabBar::tab {background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,"
+//                                    "stop: 0 #E1E1E1, stop: 0.4 #DDDDDD,"
+//                                    "stop: 0.5 #D8D8D8, stop: 1.0 #D3D3D3);"
+//                               "border: 2px solid #C4C4C3;"
+//                               "border-bottom-color: #C2C7CB;"
+//                               "border-top-left-radius: 4px;"
+//                               "border-top-right-radius: 4px;"
+//                               "min-width: 8ex;"
+//                               "padding: 2px;}";
+//    styleSheet << "QTabBar::tab:selected, QTabBar::tab:hover {"
+//                     "background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,"
+//                           "stop: 0 #fafafa, stop: 0.4 #f4f4f4,"
+//                           "stop: 0.5 #e7e7e7, stop: 1.0 #fafafa);}";
+//    styleSheet << "QTabBar::tab:selected {border-color: #9B9B9B; border-bottom-color: #C2C7CB;}";
+//    styleSheet << "QTabBar::tab:!selected {margin-top: 2px;}";
+//    styleSheet << "QTabBar::tab:selected {margin-left: -4px; margin-right: -4px;}";
+//    styleSheet << "QTabBar::tab:first:selected {margin-left: 0;}";
+//    styleSheet << "QTabBar::tab:last:selected {margin-right: 0;}";
+//    styleSheet << "QTabBar::tab:only-one {margin: 0;};";
+//    tabs->setStyleSheet(styleSheet.join(" "));
+//    tabs->setStyleSheet("background-color: rgba( 255, 255, 255, 0% );");
+
+
+
+
+
+
+    QVBoxLayout* right_lyt = new QVBoxLayout();
+    right_lyt->setSpacing(0);
+    right_lyt->addWidget(tabs);
+
+    QHBoxLayout* main_lyt = new QHBoxLayout(this);
+    main_lyt->addLayout(left_lyt);
+    main_lyt->addLayout(right_lyt);
+    main_lyt->setSpacing(1);
+    main_lyt->setMargin(1);
+    setLayout(main_lyt);
 
     clear();
     enable_widgets(false);
@@ -342,28 +348,26 @@ addRefScan::addRefScan() : US_Widgets()
     connect(pb_next_id,      SIGNAL(clicked()), this, SLOT(slt_next_id()));
     connect(pb_prev_id_tab1, SIGNAL(clicked()), this, SLOT(slt_prev_id()));
     connect(pb_next_id_tab1, SIGNAL(clicked()), this, SLOT(slt_next_id()));
-    connect(cb_plot_id_tab1, SIGNAL(currentIndexChanged(int)), this, SLOT(slt_set_id(int)));
-    connect(sw_cluster,      SIGNAL(valueChanged(bool)), this, SIGNAL(sig_clustering(bool)));
+
+//    connect(sw_cluster,      SIGNAL(valueChanged(bool)), this, SIGNAL(sig_clustering(bool)));
     connect(this,            SIGNAL(sig_clustering(bool)), this, SLOT(slt_clustering(bool)));
-    connect(sw_cluster,      SIGNAL(valueChanged(bool)), this, SLOT(slt_turnoff_align(bool)));
-    connect(pb_setting,      SIGNAL(clicked()), this, SLOT(slt_setting()));
+//    connect(sw_cluster,      SIGNAL(valueChanged(bool)), this, SLOT(slt_turnoff_align(bool)));
+    connect(pb_clscltr,      SIGNAL(clicked()), this, SLOT(slt_setting()));
     connect(ct_bws,          SIGNAL(valueChanged(double)), this, SLOT(slt_new_bws(double)));
     connect(pb_find_merge,   SIGNAL(clicked()), this, SLOT(slt_find_merge()));
     connect(ct_winlen,       SIGNAL(valueChanged(double)), this, SLOT(slt_new_wlen(double)));
     connect(this,            SIGNAL(sig_plot_tab0()), this, SLOT(slt_plot_tab0()));
     connect(this,            SIGNAL(sig_plot_tab1()), this, SLOT(slt_plot_tab1()));
     connect(pb_reset_bws,    SIGNAL(clicked()), this, SLOT(slt_reset_bws()));
-    connect(sw_align,        SIGNAL(valueChanged(bool)), this, SLOT(slt_align(bool)));
+//    connect(ch,        SIGNAL(valueChanged(bool)), this, SLOT(slt_align(bool)));
     connect(pb_save,         SIGNAL(clicked()), this, SLOT(slt_save()));
-    connect(pb_close,         SIGNAL(clicked()), this, SLOT(close()));
     connect(dkdb_ctrl, SIGNAL(changed(bool)), this, SLOT(slt_db_local_switch(bool)));
 }
 
 //***SLOTS***//
 
-void addRefScan::slt_import(){
+void US_AddRefScan::slt_import(){
     clear();
-    QTextStream out(stdout);
     QFileDialog* fdialog;
     QStringList dir_list;
     fdialog = new QFileDialog(this, Qt::Dialog);
@@ -391,7 +395,7 @@ void addRefScan::slt_import(){
     if (dir_list.size() == 0)
         return;
 
-    QString  dir_name;
+    QString dir_name;
     QDir dir;
     dir.setSorting(QDir::Name);
     dir.setFilter(QDir::Files);
@@ -399,7 +403,7 @@ void addRefScan::slt_import(){
     QStringList files_path;
     runIDs.clear();
 
-    bool runID_changed;
+    bool runID_changed = false;
     QStringList runID_old, runID_new;
     QStringList runTypeList;
     for (int i = 0; i < dir_list.size(); ++i){
@@ -413,22 +417,18 @@ void addRefScan::slt_import(){
             QString rtp = fname.section(".", -5, -5);
             QString rid = fname.section(".", 0, -6);
             QString rido = fname.section(".", 0, -6);
-            QRegularExpression re( "[^A-Za-z0-9_-]" );
-            QRegularExpressionMatch match = re.match(rid);
-            runID_changed = false;
-            if (match.hasMatch()){
-                QStringList match_list = match.capturedTexts();
-                runID_changed = true;
-                for (int j = 0; j < match_list.size(); ++j)
-                    rid = rid.replace(match_list.at(j), "_");
+            QRegExp re( "[^A-Za-z0-9_-]" );
+            int reIdx = rid.indexOf(re, 0);
+            if (reIdx >= 0) runID_changed = true;
+            while (reIdx >= 0){
+                rid = rid.replace(reIdx, "_");
+                reIdx = rid.indexOf(re, reIdx);
             }
-
             if (runID_changed)
                 if (!runID_new.contains(rid)){
                     runID_new << rid;
                     runID_old << rido;
                 }
-
             if (!runIDs.contains(rid))
                 runIDs << rid;
             if (!runTypeList.contains(rtp))
@@ -449,7 +449,6 @@ void addRefScan::slt_import(){
         QMessageBox::warning( this, tr( "Error" ), tr("AUC file(s) not found !"));
         status = "Error: AUC file(s) not found !";
         le_status->setText(status);
-
         return;
     }
 
@@ -480,67 +479,68 @@ void addRefScan::slt_import(){
     mean_rmsd();
     estimate_bw();
     status = "wavelengths= %1, Scans= %2";
-    le_status->setText(status.arg(n_wavelengths).arg(n_scans));
+    le_status->setText(status.arg(n_wavls).arg(n_scans));
     enable_widgets(true);
+    hasData = true;
     return;
 }
 
-void addRefScan::slt_set_id(int id){
+void US_AddRefScan::slt_set_id(int id){
     cb_plot_id->setCurrentIndex(id);
     cb_plot_id_tab1->setCurrentIndex(id);
     return;
 }
 
-void addRefScan::slt_prev_id(void){
-    --lambda_id;
-    slt_set_id(lambda_id);
+void US_AddRefScan::slt_prev_id(void){
+    --wavl_id;
+    slt_set_id(wavl_id);
     return;
 }
 
-void addRefScan::slt_next_id(void){
-    ++lambda_id;
-    slt_set_id(lambda_id);
+void US_AddRefScan::slt_next_id(void){
+    ++wavl_id;
+    slt_set_id(wavl_id);
     return;
 }
 
-void addRefScan::slt_plot_id(int id){
-    lambda_id = id;
-    cb_plot_id_tab1->setCurrentIndex(lambda_id);
-    pb_prev_id->setDisabled(lambda_id <= 0);
-    pb_next_id->setDisabled(lambda_id >= (n_wavelengths - 1));
-    pb_prev_id_tab1->setDisabled(lambda_id <= 0);
-    pb_next_id_tab1->setDisabled(lambda_id >= (n_wavelengths - 1));
-    ct_bws->setValue(wavelength_bws.at(lambda_id));
-    get_current(lambda_id);
+void US_AddRefScan::slt_plot_id(int id){
+    wavl_id = id;
+    cb_plot_id_tab1->setCurrentIndex(wavl_id);
+    pb_prev_id->setDisabled(wavl_id <= 0);
+    pb_next_id->setDisabled(wavl_id >= (n_wavls - 1));
+    pb_prev_id_tab1->setDisabled(wavl_id <= 0);
+    pb_next_id_tab1->setDisabled(wavl_id >= (n_wavls - 1));
+    ct_bws->setValue(wavlBwS.at(wavl_id));
+    get_current(wavl_id);
     emit sig_plot_tab0();
-    if (sw_cluster->value())
-        emit sig_plot_tab1();
+//    if (sw_cluster->value())
+//        emit sig_plot_tab1();
     return;
 }
 
-void addRefScan::slt_plot_tab0(void){
+void US_AddRefScan::slt_plot_tab0(void){
 //    plot_scans();
     plot_scans_R();
     plot_scans_L();
     return;
 }
 
-void addRefScan::slt_plot_tab1(void){
+void US_AddRefScan::slt_plot_tab1(void){
     plot_meanrmsd();
     plot_dist();
     plot_overlaps();
     return;
 }
 
-void addRefScan::slt_new_bws(double val){
-    if (ck_bws_all->isChecked())
-        wavelength_bws.fill(val);
+void US_AddRefScan::slt_new_bws(double val){
+    if (ckb_bws_all->isChecked())
+        wavlBwS.fill(val);
     else
-        wavelength_bws[lambda_id] = val;
+        wavlBwS[wavl_id] = val;
     plot_dist();
     slt_turnoff_align(true);
-    scan_wavelength_S.clear();
-    wavelength_scid_S.clear();
+    scanWavl_S.clear();
+    wavlScid_S.clear();
     tab0_plotRU->detachItems(QwtPlotItem::Rtti_PlotItem, false);
     tab0_plotRD->detachItems(QwtPlotItem::Rtti_PlotItem, false);
     tab0_plotRU->setTitle(tr("Selected: "));
@@ -549,11 +549,11 @@ void addRefScan::slt_new_bws(double val){
     return;
 }
 
-void addRefScan::slt_new_wlen(double val){
+void US_AddRefScan::slt_new_wlen(double val){
     winlen = val;
     slt_turnoff_align(true);
-    scan_wavelength_S.clear();
-    wavelength_scid_S.clear();
+    scanWavl_S.clear();
+    wavlScid_S.clear();
     tab0_plotRU->detachItems(QwtPlotItem::Rtti_PlotItem, false);
     tab0_plotRD->detachItems(QwtPlotItem::Rtti_PlotItem, false);
     tab0_plotRU->setTitle(tr("Selected: "));
@@ -563,75 +563,75 @@ void addRefScan::slt_new_wlen(double val){
     return;
 }
 
-void addRefScan::slt_clustering(bool status){
-    tabs->setTabEnabled(1, status);
-    pb_setting->setEnabled(status);
+void US_AddRefScan::slt_clustering(bool status){
+//    tabs->setTabEnabled(1, status);
+    pb_clscltr->setEnabled(status);
     if (status){
-        scan_wavelength_S.clear();
-        wavelength_scid_S.clear();
+        scanWavl_S.clear();
+        wavlScid_S.clear();
     }
-    get_current(lambda_id);
+    get_current(wavl_id);
     emit sig_plot_tab0();
     emit sig_plot_tab1();
     return;
 }
 
-void addRefScan::slt_setting(void){
+void US_AddRefScan::slt_setting(void){
     tabs->setCurrentIndex(1);
     return;
 }
 
-void addRefScan::slt_align(bool){
+void US_AddRefScan::slt_align(bool){
 //    get_current(lambda_id);
 //    emit sig_plot_tab0();
     plot_scans_R();
     return;
 }
 
-void addRefScan::slt_reset_bws(void){
-    if (ck_bws_all->isChecked())
-        wavelength_bws.fill(bws_default, n_wavelengths);
+void US_AddRefScan::slt_reset_bws(void){
+    if (ckb_bws_all->isChecked())
+        wavlBwS.fill(bws_dflt, n_wavls);
     else
-        wavelength_bws[lambda_id] = bws_default;
-    ct_bws->setValue(bws_default);
+        wavlBwS[wavl_id] = bws_dflt;
+    ct_bws->setValue(bws_dflt);
     return;
 }
 
-void addRefScan::slt_find_merge(void){
-    scan_wavelength_W.clear();
-    scan_wavelength_W = scan_wavelength;
+void US_AddRefScan::slt_find_merge(void){
+    scanWavl_W.clear();
+    scanWavl_W << scanWavl;
     find_clusters();
     merge_clusters();
-    wavelength_scid_S.clear();
+    wavlScid_S.clear();
     QVector<int> ids_wl_i;
-    for (int i = 0; i < n_wavelengths; ++i){
+    for (int i = 0; i < n_wavls; ++i){
         ids_wl_i.clear();
         for (int j = 0; j < n_scans; ++j){
-            if (wavelength.at(i) == scan_wavelength_S.at(j))
+            if (wavelength.at(i) == scanWavl_S.at(j))
                 ids_wl_i.append(j);
         }
-        wavelength_scid_S.append(ids_wl_i);
+        wavlScid_S.append(ids_wl_i);
     }
     slt_turnoff_align(false);
-    get_current(lambda_id);
+    get_current(wavl_id);
     emit sig_plot_tab0();
     return;
 }
 
-void addRefScan::slt_save(void){
-    refScanDataIO::RefData refScans;
+void US_AddRefScan::slt_save(void){
+    US_RefScanDataIO::RefData refScans;
     char ct[2] = {'R', 'I'};
     qstrncpy(refScans.type, ct, 3);
-    refScans.nWavelength = n_wavelengths;
+    refScans.nWavelength = n_wavls;
     refScans.nPoints = n_points;
     refScans.xValues << xvalues;
     status = "Preparing: %1 %2";
-    for (int i = 0; i < n_wavelengths; ++i){
+    for (int i = 0; i < n_wavls; ++i){
         get_current(i);
         refScans.wavelength << wavelength.at(i) / 10.0;
         refScans.rValues << current.ref_S;
         refScans.std << get_std(current.dev_S_aln);
-        percent = QString::number(100.0 * (i + 1) / n_wavelengths, 'f', 1);
+        percent = QString::number(100.0 * (i + 1) / n_wavls, 'f', 1);
         le_status->setText(status.arg(percent).arg(QChar(37)));
         qApp->processEvents();
     }
@@ -653,7 +653,7 @@ void addRefScan::slt_save(void){
     return;
 }
 
-void addRefScan::slt_db_local_switch(bool status){
+void US_AddRefScan::slt_db_local_switch(bool status){
     if (status){
         lb_dir->hide();
         le_dir->hide();
@@ -672,7 +672,7 @@ void addRefScan::slt_db_local_switch(bool status){
 
 //*********//
 
-QVector<double> addRefScan::get_std(QVector<QVector<double>> dev){
+QVector<double> US_AddRefScan::get_std(QVector<QVector<double>> dev){
     QVector<double> vecStd;
     double std;
     int ns = dev.size();
@@ -685,7 +685,7 @@ QVector<double> addRefScan::get_std(QVector<QVector<double>> dev){
     return vecStd;
 }
 
-void addRefScan::write2txt(const QString& file, refScanDataIO::RefData& data){
+void US_AddRefScan::write2txt(const QString& file, US_RefScanDataIO::RefData& data){
     QFile out_file(file);
     QString sval;
     double dval;
@@ -742,86 +742,85 @@ void addRefScan::write2txt(const QString& file, refScanDataIO::RefData& data){
     return;
 }
 
-void addRefScan::clear(void){
-    lambda_id = 0;
+void US_AddRefScan::clear(void){
+    hasData = false;
+    wavl_id = 0;
     n_scans = 0;
-    n_wavelengths = 0;
+    n_wavls = 0;
     n_points = 0;
     runIDs.clear();
     runType.clear();
-    winlen = winlen_default;
-    wavelength_crp.clear();
+    winlen = winlen_dflt;
     wavelength.clear();
-    wavelength_scid.clear();
-    wavelength_scid_S.clear();
-    scan_wavelength.clear();
-    scan_wavelength_W.clear();
-    scan_wavelength_S.clear();
+    wavlScid.clear();
+    wavlScid_S.clear();
+    scanWavl.clear();
+    scanWavl_W.clear();
+    scanWavl_S.clear();
     xvalues.clear();
-    wavelength_bw.clear();
-    wavelength_bws.clear();
-    scan_rvalues.clear();
-    scan_mean.clear();
-    scan_rmsd.clear();
-    cluster_ids.clear();
-    cluster_rng.clear();
+    wavlBw.clear();
+    wavlBwS.clear();
+    scanRvalues.clear();
+    scanMean.clear();
+    scanRmsd.clear();
+    clusterIDs.clear();
+    clusterRng.clear();
     return;
 }
 
-void addRefScan::slt_turnoff_align(bool status){
+void US_AddRefScan::slt_turnoff_align(bool status){
     if (status){
-        sw_align->setValue(false);
-        sw_align->setDisabled(true);
+        ckb_align->setCheckState(Qt::Unchecked);
+        ckb_align->setDisabled(true);
     }else{
-        sw_align->setEnabled(true);
+        ckb_align->setEnabled(true);
     }
     return;
 }
 
 
-void addRefScan::enable_widgets(bool status){
+void US_AddRefScan::enable_widgets(bool status){
     if (status){
-        connect(cb_plot_id, SIGNAL(currentIndexChanged(int)), this, SLOT(slt_plot_id(int)));
         le_lambstrt->setText(QString::number(wavelength.at(0) / 10.0));
-    //    le_lambstrt->show();
-        le_lambstop->setText(QString::number(wavelength.at(n_wavelengths - 1) / 10.0));
-    //    le_lambstop->show();
+        le_lambstop->setText(QString::number(wavelength.at(n_wavls - 1) / 10.0));
         QString clamb;
-        for (int i = 0; i < n_wavelengths; ++i){
+        for (int i = 0; i < n_wavls; ++i){
             clamb = QString::number(wavelength.at(i) / 10.0);
             cb_plot_id->addItem(clamb);
             cb_plot_id_tab1->addItem(clamb);
         }
-        cb_plot_id->setCurrentIndex(lambda_id);
+        cb_plot_id->setCurrentIndex(wavl_id);
         cb_plot_id->setEnabled(true);
-        sw_align->setEnabled(true);
-        sw_cluster->setEnabled(true);
-        tabs->setTabEnabled(0, true);
-        ct_winlen->setValue(winlen_default);
+        ckb_align->setEnabled(true);
+        ckb_cluster->setEnabled(true);
+        ct_winlen->setValue(winlen_dflt);
         pb_save->setEnabled(true);
+        connect(cb_plot_id_tab1, SIGNAL(currentIndexChanged(int)), this, SLOT(slt_set_id(int)));
+        connect(cb_plot_id, SIGNAL(currentIndexChanged(int)), this, SLOT(slt_plot_id(int)));
     }else{
         cb_plot_id->disconnect();
+        cb_plot_id_tab1->disconnect();
         le_status->clear();
         le_lambstrt->clear();
         le_lambstop->clear();
         cb_plot_id->clear();
         cb_plot_id_tab1->clear();
-        pb_setting->setDisabled(true);
+        pb_clscltr->setDisabled(true);
         pb_prev_id->setDisabled(true);
         pb_next_id->setDisabled(true);
         cb_plot_id->setDisabled(true);
-        sw_cluster->setValue(false);
-        sw_cluster->setDisabled(true);
-        pb_setting->setDisabled(true);
-        tabs->setTabEnabled(0, false);
-        tabs->setTabEnabled(1, false);
+        ckb_cluster->setCheckState(Qt::Unchecked);
+        ckb_cluster->setDisabled(true);
+        ckb_align->setCheckState(Qt::Unchecked);
+        ckb_align->setDisabled(true);
+        pb_clscltr->setDisabled(true);
         pb_save->setDisabled(true);
     }
     return;
 }
 
 
-bool addRefScan::parse_files(QStringList files_path){
+bool US_AddRefScan::parse_files(QStringList files_path){
     int n_files = files_path.size();
     status = "Parsing Files: %1 %2";
     xvalues.clear();
@@ -922,48 +921,48 @@ bool addRefScan::parse_files(QStringList files_path){
             const double *rp = raw_data.scanData.at(j).rvalues.data();
             for (int k = id_b; k < id_e; ++k)
                 rval << rp[k];
-            scan_rvalues << rval;
+            scanRvalues << rval;
             int wl = qRound(raw_data.scanData.at(j).wavelength * 10);
-            scan_wavelength << wl;
+            scanWavl << wl;
             if (! wavelength.contains(wl))
                 wavelength << wl;
         }
     }
 
     std::sort(wavelength.begin(), wavelength.end());
-    n_scans = scan_wavelength.size();
-    n_wavelengths = wavelength.size();
+    n_scans = scanWavl.size();
+    n_wavls = wavelength.size();
     QVector<int> ids_wl_i;
-    for (int i = 0; i < n_wavelengths; ++i){
+    for (int i = 0; i < n_wavls; ++i){
         ids_wl_i.clear();
         for (int j = 0; j < n_scans; ++j)
-            if (wavelength.at(i) == scan_wavelength.at(j))
+            if (wavelength.at(i) == scanWavl.at(j))
                 ids_wl_i.append(j);
-        wavelength_scid << ids_wl_i;
+        wavlScid << ids_wl_i;
     }
     return true;
 }
 
 
-void addRefScan::mean_rmsd(void){
+void US_AddRefScan::mean_rmsd(void){
     int i, j, k, ns, id;
     double mean, rmsd;
     QVector<double> rval;
     const double *r;
-    scan_mean.resize(n_scans);
-    scan_rmsd.resize(n_scans);
-    double *avep = scan_mean.data();
-    double *msdp = scan_rmsd.data();
+    scanMean.resize(n_scans);
+    scanRmsd.resize(n_scans);
+    double *avep = scanMean.data();
+    double *msdp = scanRmsd.data();
     status = "Calculating Mean %1 RMSD: %2 %3";
-    for (i = 0; i < n_wavelengths; ++i){
-        percent = QString::number(100.0 * (i + 1) / n_wavelengths, 'f', 1);
+    for (i = 0; i < n_wavls; ++i){
+        percent = QString::number(100.0 * (i + 1) / n_wavls, 'f', 1);
         le_status->setText(status.arg(QChar(38)).arg(percent).arg(QChar(37)));
         qApp->processEvents();
-        ns = wavelength_scid.at(i).size();
+        ns = wavlScid.at(i).size();
         for (j = 0; j < ns; ++j){
             mean = 0;
-            id = wavelength_scid.at(i).at(j);
-            rval = scan_rvalues.at(id);
+            id = wavlScid.at(i).at(j);
+            rval = scanRvalues.at(id);
             r = rval.data();
             for (k = 0; k < n_points; ++k)
                 mean += r[k];
@@ -980,7 +979,7 @@ void addRefScan::mean_rmsd(void){
     return;
 }
 
-QVector<int> addRefScan::arange(int start, int stop, int step){
+QVector<int> US_AddRefScan::arange(int start, int stop, int step){
     QVector<int> vector;
     while (start < stop) {
         vector.append(start);
@@ -989,7 +988,7 @@ QVector<int> addRefScan::arange(int start, int stop, int step){
     return vector;
 }
 
-QVector<int> addRefScan::arange(int start, int stop){
+QVector<int> US_AddRefScan::arange(int start, int stop){
     QVector<int> vector;
     int step = 1;
     while (start < stop) {
@@ -999,7 +998,7 @@ QVector<int> addRefScan::arange(int start, int stop){
     return vector;
 }
 
-QVector<int> addRefScan::arange(int stop){
+QVector<int> US_AddRefScan::arange(int stop){
     QVector<int> vector;
     int start = 0;
     int step = 1;
@@ -1010,7 +1009,7 @@ QVector<int> addRefScan::arange(int stop){
     return vector;
 }
 
-QVector<double> addRefScan::linspace(double start, double stop, int num){
+QVector<double> US_AddRefScan::linspace(double start, double stop, int num){
     QVector<double> linspaced;
     if (num == 0)
         return linspaced;
@@ -1030,14 +1029,14 @@ QVector<double> addRefScan::linspace(double start, double stop, int num){
     return linspaced;
 }
 
-double addRefScan::pdf(double x, double mu, double sigma){
+double US_AddRefScan::pdf(double x, double mu, double sigma){
     const double pi = 3.14159265358979323846;
     double coeff = 1 / (sigma * std::sqrt(2 * pi));
     double y = coeff * std::exp(-0.5 * std::pow((x - mu) / sigma, 2));
     return y;
 }
 
-double addRefScan::quantile(QVector<double> x, double q){
+double US_AddRefScan::quantile(QVector<double> x, double q){
     double qnt;
     int size_x = x.size();
     std::sort(x.begin(), x.end());
@@ -1054,7 +1053,7 @@ double addRefScan::quantile(QVector<double> x, double q){
     return qnt;
 }
 
-double addRefScan::skewness(QVector<double> x){
+double US_AddRefScan::skewness(QVector<double> x){
     double q1 = quantile(x, 0.25);
     double q2 = quantile(x, 0.50);
     double q3 = quantile(x, 0.75);
@@ -1064,7 +1063,7 @@ double addRefScan::skewness(QVector<double> x){
     return sk;
 }
 
-double addRefScan::variance(QVector<double> x){
+double US_AddRefScan::variance(QVector<double> x){
     double var = 0;
     double mean = 0;
     int size_x = x.size();
@@ -1077,7 +1076,7 @@ double addRefScan::variance(QVector<double> x){
     return var;
 }
 
-double addRefScan::bwe_norm(QVector<double> x){
+double US_AddRefScan::bwe_norm(QVector<double> x){
     int size_x = x.size();
     double sv = std::sqrt(variance(x));
     sv = sv * std::pow(4.0 / (3.0 * size_x), (1.0 / 5.0));
@@ -1085,21 +1084,21 @@ double addRefScan::bwe_norm(QVector<double> x){
 }
 
 
-double addRefScan::sj_phi6(double x){
+double US_AddRefScan::sj_phi6(double x){
     double y;
     y = std::pow(x, 6) - 15 * std::pow(x, 4) + 45 * std::pow(x, 2) - 15;
     y *= pdf(x, 0, 1);
     return y;
 }
 
-double addRefScan::sj_phi4(double x){
+double US_AddRefScan::sj_phi4(double x){
     double y;
     y = std::pow(x, 4) - 6 * std::pow(x, 2) + 3;
     y *= pdf(x, 0, 1);
     return y;
 }
 
-double addRefScan::sj_param(QVector<QVector<double>> *W, int size_x,
+double US_AddRefScan::sj_param(QVector<QVector<double>> *W, int size_x,
                              double h, double tdb, double sda){
     int i, j;
     double alpha2, w2, sdalpha2, v;
@@ -1117,7 +1116,7 @@ double addRefScan::sj_param(QVector<QVector<double>> *W, int size_x,
     return v;
 }
 
-double addRefScan::bwe_sj(QVector<double> x){
+double US_AddRefScan::bwe_sj(QVector<double> x){
     int i, j;
     int size_x = x.size();
     double lam, a, b, hstep, tdb, sda, w1, w2, h0, v0, h1, v1, h;
@@ -1167,7 +1166,7 @@ double addRefScan::bwe_sj(QVector<double> x){
 
 }
 
-QVector<QVector<double>> addRefScan::kde(QVector<double> x, double bw){
+QVector<QVector<double>> US_AddRefScan::kde(QVector<double> x, double bw){
     int size_x = x.size(), np = 2000, i, j;
     double diff;
     QVector<double> xx(np);
@@ -1212,7 +1211,7 @@ QVector<QVector<double>> addRefScan::kde(QVector<double> x, double bw){
 }
 
 
-QMap<QString, QVector<int>> addRefScan::loc_minmax(QVector<double> sdiff){
+QMap<QString, QVector<int>> US_AddRefScan::loc_minmax(QVector<double> sdiff){
     int i;
     double s1, s2;
     QMap<QString, QVector<int>> out;
@@ -1237,58 +1236,58 @@ QMap<QString, QVector<int>> addRefScan::loc_minmax(QVector<double> sdiff){
 }
 
 
-void addRefScan::estimate_bw(void){
-    if (wavelength_bw.size() > 0 && wavelength_bws.size() > 0)
+void US_AddRefScan::estimate_bw(void){
+    if (wavlBw.size() > 0 && wavlBwS.size() > 0)
         return;
-    wavelength_bw.fill(0, n_wavelengths);
-    wavelength_bws.fill(bws_default, n_wavelengths);
+    wavlBw.fill(0, n_wavls);
+    wavlBwS.fill(bws_dflt, n_wavls);
     QVector<double> rmsd_i;
     QVector<int> ids_i;
     int i, j;
-    double *bwp = wavelength_bw.data();
+    double *bwp = wavlBw.data();
     double *msdp;
-    double *sc_msdp = scan_rmsd.data();
+    double *sc_msdp = scanRmsd.data();
     status = "Bandwidth estimation: %1 %2";
-    for (i = 0; i < n_wavelengths; ++i){
+    for (i = 0; i < n_wavls; ++i){
         rmsd_i.clear();
         ids_i.clear();
-        ids_i = wavelength_scid.at(i);
+        ids_i = wavlScid.at(i);
         rmsd_i.fill(0, ids_i.size());
         msdp = rmsd_i.data();
         for (j = 0; j < ids_i.size(); ++j)
             msdp[j] = sc_msdp[ids_i.at(j)];
         bwp[i] = bwe_sj(rmsd_i);
-        percent = QString::number(100.0 * (i + 1) / n_wavelengths, 'f', 1);
+        percent = QString::number(100.0 * (i + 1) / n_wavls, 'f', 1);
         le_status->setText(status.arg(percent).arg(QChar(37)));
         qApp->processEvents();
     }
     return;
 }
 
-void addRefScan::find_clusters(void){
-    scan_wavelength_S.fill(0, n_scans);
+void US_AddRefScan::find_clusters(void){
+    scanWavl_S.fill(0, n_scans);
     QVector<QVector<double>> rmsd_i_kde;
     QMap<QString, QVector<int>> minmax_loc;
     double bw;
-    cluster_ids.clear();
-    cluster_rng.clear();
+    clusterIDs.clear();
+    clusterRng.clear();
     status = "Finding clusters: %1 %2";
-    for (int i = 0; i < n_wavelengths; ++i){
+    for (int i = 0; i < n_wavls; ++i){
         rmsd_i_kde.clear();
         minmax_loc.clear();
         get_current(i);
-        bw = wavelength_bw.at(i) * wavelength_bws.at(i);
+        bw = wavlBw.at(i) * wavlBwS.at(i);
         rmsd_i_kde = kde(current.rmsd, bw);
         minmax_loc = loc_minmax(rmsd_i_kde.at(2));
         get_clusters_i(current.rmsd, current.scid, wavelength.at(i), rmsd_i_kde, minmax_loc);
-        percent = QString::number(100.0 * (i + 1) / n_wavelengths, 'f', 1);
+        percent = QString::number(100.0 * (i + 1) / n_wavls, 'f', 1);
         le_status->setText(status.arg(percent).arg(QChar(37)));
         qApp->processEvents();
     }
     return;
 }
 
-void addRefScan::get_clusters_i(QVector<double> rmsd_i, QVector<int> ids_i, double wl,
+void US_AddRefScan::get_clusters_i(QVector<double> rmsd_i, QVector<int> ids_i, double wl,
                                  QVector<QVector<double>> kde_out,
                                  QMap<QString, QVector<int>> minmax_loc){
     QVector<double> X = kde_out.at(0);
@@ -1375,17 +1374,17 @@ void addRefScan::get_clusters_i(QVector<double> rmsd_i, QVector<int> ids_i, doub
         cls_minmax_s.append(cls_minmax.at(idx.at(i)));
         if (i == 0){
             for (j = 0; j < cls_ids_s.at(i).size(); ++j){
-                scan_wavelength_W[cls_ids_s.at(i).at(j)] = 0;
-                scan_wavelength_S[cls_ids_s.at(i).at(j)] = wl;
+                scanWavl_W[cls_ids_s.at(i).at(j)] = 0;
+                scanWavl_S[cls_ids_s.at(i).at(j)] = wl;
             }
         }
     }
-    cluster_ids.append(cls_ids_s);
-    cluster_rng.append(cls_minmax_s);
+    clusterIDs.append(cls_ids_s);
+    clusterRng.append(cls_minmax_s);
     return ;
 }
 
-void addRefScan::merge_clusters(void){
+void US_AddRefScan::merge_clusters(void){
     int n, id, id_j, chk_id;
     double i1, i2, j1, j2;
     int wl_i, wl_j, chk_wl;
@@ -1404,8 +1403,8 @@ void addRefScan::merge_clusters(void){
         le_status->setText(status.arg(100.0).arg(QChar(37)));
         return;
     }
-    for (int i = 0; i < n_wavelengths; ++i){
-        percent = QString::number(100.0 * (i + 1) / n_wavelengths, 'f', 1);
+    for (int i = 0; i < n_wavls; ++i){
+        percent = QString::number(100.0 * (i + 1) / n_wavls, 'f', 1);
         le_status->setText(status.arg(percent).arg(QChar(37)));
         qApp->processEvents();
         window_ids.clear();
@@ -1413,7 +1412,7 @@ void addRefScan::merge_clusters(void){
         n = -1 * winlen;
         const int dwl = 10 * winlen;
         for (int j = 0; j < 2 * winlen + 1; ++j){
-            if (n != 0 && 0 <= (i + n) && (i + n) < n_wavelengths){
+            if (n != 0 && 0 <= (i + n) && (i + n) < n_wavls){
                 int delta = qAbs(wavelength.at(i + n) - wl_i);
                 if (delta <= dwl)
                     window_ids.append(i + n);
@@ -1422,18 +1421,18 @@ void addRefScan::merge_clusters(void){
         }
         if (window_ids.size() == 0)
             continue;
-        i1 = cluster_rng.at(i).at(0).at(0);
-        i2 = cluster_rng.at(i).at(0).at(1);
+        i1 = clusterRng.at(i).at(0).at(0);
+        i2 = clusterRng.at(i).at(0).at(1);
         rmsd_i.clear();
         mean_i.clear();
         rmsd_i_min =  1e20;
         rmsd_i_max = -1e20;
         mean_i_min =  1e20;
         mean_i_max = -1e20;
-        for (int j = 0; j < cluster_ids.at(i).at(0).size(); ++j){
-            id = cluster_ids.at(i).at(0).at(j);
-            rmsd = scan_rmsd.at(id);
-            mean = scan_mean.at(id);
+        for (int j = 0; j < clusterIDs.at(i).at(0).size(); ++j){
+            id = clusterIDs.at(i).at(0).at(j);
+            rmsd = scanRmsd.at(id);
+            mean = scanMean.at(id);
             rmsd_i.append(rmsd);
             mean_i.append(mean);
             rmsd_i_min = qMin(rmsd_i_min, rmsd);
@@ -1450,7 +1449,7 @@ void addRefScan::merge_clusters(void){
         for (int j = 0; j < window_ids.size(); ++j){
             cls_rng_j.clear();
             id_j = window_ids.at(j);
-            cls_rng_j = cluster_rng.at(id_j);
+            cls_rng_j = clusterRng.at(id_j);
             if (cls_rng_j.size() > 1){
                 wl_j = wavelength.at(id_j);
                 for (int k = 1; k < cls_rng_j.size(); ++k){
@@ -1458,20 +1457,20 @@ void addRefScan::merge_clusters(void){
                     j2 = cls_rng_j.at(k).at(1);
                     if ((j1 <= i1 && i1 < j2) || (i1 <= j1 && j1 < i2)){
                         cls_ids_j_k.clear();
-                        cls_ids_j_k = cluster_ids.at(id_j).at(k);
+                        cls_ids_j_k = clusterIDs.at(id_j).at(k);
                         for (int l = 0; l < cls_ids_j_k.size(); ++l){
                             chk_id = cls_ids_j_k.at(l);
-                            chk_wl = scan_wavelength_W.at(chk_id);
+                            chk_wl = scanWavl_W.at(chk_id);
                             if (chk_wl == wl_j){
-                                chk_rmsd = scan_rmsd.at(chk_id);
-                                chk_mean = scan_mean.at(chk_id);
+                                chk_rmsd = scanRmsd.at(chk_id);
+                                chk_mean = scanMean.at(chk_id);
                                 merge = chk_rmsd >= rmsd_i_min;
                                 merge = merge && (chk_rmsd <= rmsd_i_max);
                                 merge = merge && (chk_mean >= mean_i_min);
                                 merge = merge && (chk_mean<= mean_i_max);
                                 if (merge){
-                                    scan_wavelength_W[chk_id] = 0;
-                                    scan_wavelength_S[chk_id] = wl_i;
+                                    scanWavl_W[chk_id] = 0;
+                                    scanWavl_S[chk_id] = wl_i;
                                 }
                             }
                         }
@@ -1483,7 +1482,7 @@ void addRefScan::merge_clusters(void){
     return;
 }
 
-QVector<bool> addRefScan::trimming(QVector<double> rmsd, double threshold){
+QVector<bool> US_AddRefScan::trimming(QVector<double> rmsd, double threshold){
     int ns = rmsd.size();
     QVector<bool> tsk(ns, true);
     bool *bp = tsk.data();
@@ -1508,7 +1507,7 @@ QVector<bool> addRefScan::trimming(QVector<double> rmsd, double threshold){
     return tsk;
 }
 
-QVector<bool> addRefScan::cropping(QVector<double> rmsd, QVector<bool>tsk, double margin){
+QVector<bool> US_AddRefScan::cropping(QVector<double> rmsd, QVector<bool>tsk, double margin){
     int ns = rmsd.size();
     QVector<bool> crop(ns, true);
     bool *bp = tsk.data();
@@ -1531,7 +1530,7 @@ QVector<bool> addRefScan::cropping(QVector<double> rmsd, QVector<bool>tsk, doubl
     return crop;
 }
 
-void addRefScan::plot_scans_L(void){
+void US_AddRefScan::plot_scans_L(void){
     tab0_plotLU->detachItems(QwtPlotItem::Rtti_PlotItem, false);
     tab0_plotLD->detachItems(QwtPlotItem::Rtti_PlotItem, false);
     QPen refpen = QPen(Qt::red);
@@ -1539,7 +1538,7 @@ void addRefScan::plot_scans_L(void){
     QPen nopen = QPen(Qt::NoBrush, 0, Qt::NoPen);
     //** left up raw scans plot
     QString title;
-    double wl = wavelength.at(lambda_id) / 10.0;
+    double wl = wavelength.at(wavl_id) / 10.0;
 //    QVector<double> xval = xvalues.at(lambda_id);
     double *x, *r;
     x = xvalues.data();
@@ -1559,7 +1558,7 @@ void addRefScan::plot_scans_L(void){
     int ns = current.scid.size();
     const int *idp = current.scid.data();
     for (int i = 0; i < ns; ++i){
-        rval = scan_rvalues.at(idp[i]);
+        rval = scanRvalues.at(idp[i]);
         r = rval.data();
         QwtPlotCurve* curve1 = us_curve( tab0_plotLU,"");
         curve1->setSamples(x, r, n_points);
@@ -1597,7 +1596,7 @@ void addRefScan::plot_scans_L(void){
     return;
 }
 
-void addRefScan::plot_scans_R(void){
+void US_AddRefScan::plot_scans_R(void){
     tab0_plotRU->detachItems(QwtPlotItem::Rtti_PlotItem, false);
     tab0_plotRD->detachItems(QwtPlotItem::Rtti_PlotItem, false);
     int ns = current.scid_S.size();
@@ -1611,7 +1610,7 @@ void addRefScan::plot_scans_R(void){
     refpen.setWidth(4);
     QPen nopen = QPen(Qt::NoBrush, 0, Qt::NoPen);
     QString title;
-    double wl = wavelength.at(lambda_id) / 10.0;
+    double wl = wavelength.at(wavl_id) / 10.0;
 //    QVector<double> xval = xvalues.at(lambda_id);
     double *x, *r;
     x = xvalues.data();
@@ -1634,9 +1633,9 @@ void addRefScan::plot_scans_R(void){
 
     const int *idp = current.scid_S.data();
     for (int i = 0; i < ns; ++i){
-        rval_s = scan_rvalues.at(idp[i]);
+        rval_s = scanRvalues.at(idp[i]);
         r = rval_s.data();
-        if (sw_align->value()){
+        if (ckb_align->isChecked()){
             for (int j = 0; j < n_points; ++j)
                 r[j] -= current.mean_S.at(i) - current.aveMean_S;
         }
@@ -1658,7 +1657,7 @@ void addRefScan::plot_scans_R(void){
     //** right down selected deviation plot
 
     for (int i = 0; i < ns; ++i){
-        if (sw_align->value())
+        if (ckb_align->isChecked())
             dev_s = current.dev_S_aln.at(i);
         else
             dev_s = current.dev_S.at(i);
@@ -1673,7 +1672,7 @@ void addRefScan::plot_scans_R(void){
         dev_s.clear();
     }
     tab0_plotRD->setAxisScale( QwtPlot::xBottom, min_x - dx / 10, max_x + dx / 10);
-    if (sw_align->value())
+    if (ckb_align->isChecked())
         tab0_plotRD->setAxisScale( QwtPlot::yLeft  , -minmax_dsa - dvsa, minmax_dsa + dvsa);
     else
         tab0_plotRD->setAxisScale( QwtPlot::yLeft  , -minmax_ds - dvs, minmax_ds + dvs);
@@ -1809,13 +1808,13 @@ void addRefScan::plot_scans_R(void){
 //}
 
 
-void addRefScan::plot_dist(void){
+void US_AddRefScan::plot_dist(void){
     tab1_plotLU->detachItems(QwtPlotItem::Rtti_PlotItem, false);
     QVector<QVector<double>> rmsd_kde;
     QMap<QString, QVector<int>> minmax_loc;
     double bw, bws;
-    bw = wavelength_bw.at(lambda_id);
-    bws = wavelength_bws.at(lambda_id);
+    bw = wavlBw.at(wavl_id);
+    bws = wavlBwS.at(wavl_id);
     rmsd_kde = kde(current.rmsd, bw * bws);
     double const *xx = rmsd_kde.at(0).data();
     double const *yy = rmsd_kde.at(1).data();
@@ -1882,7 +1881,7 @@ void addRefScan::plot_dist(void){
     QString title;
     double sk = skewness(current.rmsd);
     title = "Wavelength= %1 nm, skewness=%2, Bandwidth= %3";
-    double wl = wavelength.at(lambda_id) / 10.0;
+    double wl = wavelength.at(wavl_id) / 10.0;
     QString s1 = QString::number(sk, 'f', 3);
     QString s2 = QString::number(bw * bws, 'f', 3);
     lb_tab1_wlbw->setText(title.arg(wl).arg(s1, s2));
@@ -1892,7 +1891,7 @@ void addRefScan::plot_dist(void){
 }
 
 
-void addRefScan::plot_meanrmsd(void){
+void US_AddRefScan::plot_meanrmsd(void){
     tab1_plotRU->detachItems(QwtPlotItem::Rtti_PlotItem, false);
     int ns = current.rmsd.size();
     QVector<double> mean = current.mean;
@@ -1924,7 +1923,7 @@ void addRefScan::plot_meanrmsd(void){
     return;
 }
 
-void addRefScan::plot_overlaps(void){
+void US_AddRefScan::plot_overlaps(void){
     tab1_plotLD->detachItems(QwtPlotItem::Rtti_PlotItem, false);
     tab1_plotRD->detachItems(QwtPlotItem::Rtti_PlotItem, false);
     int tpncy = 255;
@@ -1946,20 +1945,20 @@ void addRefScan::plot_overlaps(void){
 
     QVector<int> window_ids;
     int n = -1 * winlen;
-    window_ids.append(lambda_id);
-    int wl = wavelength.at(lambda_id);
+    window_ids.append(wavl_id);
+    int wl = wavelength.at(wavl_id);
     const int dwl = 10 * winlen;
     for (int i = 0; i < 2 * winlen + 1; ++i){
-        if (n != 0 && 0 <= (lambda_id + n) && (lambda_id + n) < n_wavelengths){
-            int delta = qAbs(wavelength.at(lambda_id + n) - wl);
+        if (n != 0 && 0 <= (wavl_id + n) && (wavl_id + n) < n_wavls){
+            int delta = qAbs(wavelength.at(wavl_id + n) - wl);
             if (delta <= dwl)
-                window_ids.append(lambda_id + n);
+                window_ids.append(wavl_id + n);
         }
         ++n;
     }
 
-    const double *sc_rmsd = scan_rmsd.data();
-    const double *sc_mean = scan_mean.data();
+    const double *sc_rmsd = scanRmsd.data();
+    const double *sc_mean = scanMean.data();
     double rmsd, mean;
     int min_wl   = 10000;
     int max_wl   = 0;
@@ -1977,7 +1976,7 @@ void addRefScan::plot_overlaps(void){
     int id;
     for (int i = 0; i < window_ids.size(); ++i){
         id = window_ids.at(i);
-        scid = wavelength_scid.at(id);
+        scid = wavlScid.at(id);
         wl = wavelength.at(id);
         min_wl = qMin(min_wl, wl);
         max_wl = qMax(max_wl, wl);
@@ -2023,7 +2022,7 @@ void addRefScan::plot_overlaps(void){
     return;
 }
 
-void addRefScan::get_current(int id){
+void US_AddRefScan::get_current(int id){
     current.aveMean = 0;
     current.scid.clear();
     current.mean.clear();
@@ -2033,15 +2032,15 @@ void addRefScan::get_current(int id){
     current.dev_aln.clear();
 
     QVector<int> scid;
-    scid << wavelength_scid.at(id);
+    scid << wavlScid.at(id);
     int ns = scid.size();
     QVector<double> mean(ns, 0);
     QVector<double> rmsd(ns, 0);
     const int *idp = scid.data();
     double *mp = mean.data();
     double *rp = rmsd.data();
-    const double* scmp = scan_mean.data();
-    const double* scrp = scan_rmsd.data();
+    const double* scmp = scanMean.data();
+    const double* scrp = scanRmsd.data();
     double aveMean = 0;
     double sm;
     for (int i = 0; i < ns; ++i){
@@ -2071,8 +2070,8 @@ void addRefScan::get_current(int id){
     current.dev_S.clear();
     current.dev_S_aln.clear();
 
-    if (wavelength_scid_S.size() == 0){
-        if (! sw_cluster->value()){
+    if (wavlScid_S.size() == 0){
+        if (! ckb_cluster->isChecked()){
             current.aveMean_S = aveMean;
             current.scid_S << scid;
             current.mean_S << mean;
@@ -2083,7 +2082,7 @@ void addRefScan::get_current(int id){
         }
     }else{
         QVector<int> scid_S;
-        scid_S << wavelength_scid_S.at(id);
+        scid_S << wavlScid_S.at(id);
         ns = scid_S.size();
         QVector<double> rmsd_S(ns, 0);
         idp = scid_S.data();
@@ -2125,7 +2124,7 @@ void addRefScan::get_current(int id){
     return;
 }
 
-void addRefScan::get_plot_params(void){
+void US_AddRefScan::get_plot_params(void){
     double max_x    = -1e20;
     double min_x    =  1e20;
     double max_r    = -1e20;
@@ -2145,7 +2144,7 @@ void addRefScan::get_plot_params(void){
     const double *rp, *dp, *dap;
     const int *idp = current.scid.data();
     for (int i = 0; i < current.scid.size(); ++i){
-        rval = scan_rvalues.at(idp[i]);
+        rval = scanRvalues.at(idp[i]);
         dev = current.dev.at(i);
         rp = rval.data();
         dp = dev.data();
@@ -2194,7 +2193,7 @@ void addRefScan::get_plot_params(void){
     return;
 }
 
-QVector<double> addRefScan::get_ref_rval(QVector<int> ids){
+QVector<double> US_AddRefScan::get_ref_rval(QVector<int> ids){
     int i, j, ns;
     ns = ids.size();
     int *idp = ids.data();
@@ -2203,7 +2202,7 @@ QVector<double> addRefScan::get_ref_rval(QVector<int> ids){
     double *rf = ref_rval.data();
     const double *r;
     for (i = 0; i < ns; ++i){
-        rval = scan_rvalues.at(idp[i]);
+        rval = scanRvalues.at(idp[i]);
         r = rval.data();
         for (j = 0; j < n_points; ++j){
             rf[j] += r[j] / ns;
@@ -2213,7 +2212,7 @@ QVector<double> addRefScan::get_ref_rval(QVector<int> ids){
     return ref_rval;
 }
 
-QVector<QVector<QVector<double>>> addRefScan::get_ref_dev(QVector<int> ids, QVector<double> ref,
+QVector<QVector<QVector<double>>> US_AddRefScan::get_ref_dev(QVector<int> ids, QVector<double> ref,
                                                            QVector<double> mean, double aveMean){
     QVector<double> rval;
     QVector<QVector<double>> ref_dev;
@@ -2227,7 +2226,7 @@ QVector<QVector<QVector<double>>> addRefScan::get_ref_dev(QVector<int> ids, QVec
     double r;
     const double *rf = ref.data();
     for (int i = 0; i < ns; ++i){
-        rval = scan_rvalues.at(idp[i]);
+        rval = scanRvalues.at(idp[i]);
         rp = rval.data();
         for (int j = 0; j < n_points; ++j){
             r = rp[j];
@@ -2245,7 +2244,7 @@ QVector<QVector<QVector<double>>> addRefScan::get_ref_dev(QVector<int> ids, QVec
     return output;
 }
 
-bool addRefScan::checkRunIDs(US_DB2* db, QVector<int>& experimentIDs,
+bool US_AddRefScan::check_runIDs(US_DB2* db, QVector<int>& experimentIDs,
                              QVector<QDate>& runIDs_date, int& instrumentID){
     // Let's see if we can find the run ID
     QString procedure("get_info_for_referenceScan");
@@ -2315,31 +2314,31 @@ bool addRefScan::checkRunIDs(US_DB2* db, QVector<int>& experimentIDs,
 
 }
 
-void addRefScan::save_local(refScanDataIO::RefData &refScans){
+void US_AddRefScan::save_local(US_RefScanDataIO::RefData &refScans){
     QString outFileName;
     FileNameWidget FileName(outFileName);
     FileName.show();
     int s = FileName.exec();
     if (s == QDialog::Accepted){
         qDebug() << outFileName;
-        int error = refScanDataIO::writeRefData(outFileName, refScans);
-        if (error != refScanDataIO::OK)
-            le_status->setText(refScanDataIO::errorString(error));
+        int error = US_RefScanDataIO::writeRefData(outFileName, refScans);
+        if (error != US_RefScanDataIO::OK)
+            le_status->setText(US_RefScanDataIO::errorString(error));
         else{
             le_status->setText("Written on the local disk");
-            refScanDataIO::RefData refScans2;
-            refScanDataIO::readRefData(outFileName, refScans2);
+            US_RefScanDataIO::RefData refScans2;
+            US_RefScanDataIO::readRefData(outFileName, refScans2);
             qDebug() << "";
         }
     }
     return;
 }
 
-void addRefScan::save_db(refScanDataIO::RefData &refScans){
+void US_AddRefScan::save_db(US_RefScanDataIO::RefData &refScans){
     QVector<int> experimentIDs;
     QVector<QDate> runIDs_date;
     int instrumentID;
-    bool checked = checkRunIDs(dbCon, experimentIDs,
+    bool checked = check_runIDs(dbCon, experimentIDs,
                                runIDs_date, instrumentID);
     if (! checked){
         le_status->setText("DB upload failed !");
@@ -2412,8 +2411,8 @@ void addRefScan::save_db(refScanDataIO::RefData &refScans){
         QFileInfo finfo(tempDir, fname.arg(ms));
         QString fpath = finfo.absoluteFilePath();
         qDebug() << fpath;
-        int referr = refScanDataIO::writeRefData(fpath, refScans);
-        if (referr == refScanDataIO::OK){
+        int referr = US_RefScanDataIO::writeRefData(fpath, refScans);
+        if (referr == US_RefScanDataIO::OK){
             int db_write = dbCon->writeBlobToDB(fpath, QString( "upload_referenceScanData" ),
                                                    refDataID );
             if (db_write == US_DB2::DBERROR){
@@ -2445,7 +2444,7 @@ void addRefScan::save_db(refScanDataIO::RefData &refScans){
     return;
 }
 
-void addRefScan::check_connection(){
+void US_AddRefScan::check_connection(){
 //    if (dbCon->isConnected())
 //        return;
 
@@ -2462,7 +2461,7 @@ void addRefScan::check_connection(){
     return;
 }
 
-void addRefScan::get_refScanDBinfo(US_DB2* db, QVector<refScanTableInfo>& refTable){
+void US_AddRefScan::get_refScanDBinfo(US_DB2* db, QVector<refScanTableInfo>& refTable){
     // Let's see if we can find the run ID
     refTable.clear();
     QStringList q;
@@ -2502,21 +2501,17 @@ void addRefScan::get_refScanDBinfo(US_DB2* db, QVector<refScanTableInfo>& refTab
     return;
 }
 
-QDate addRefScan::str2date(QString date_str){
-    QRegularExpression re_d("^(\\d+)-(\\d+)-(\\d+)");
-    QRegularExpressionMatch match = re_d.match(date_str);
-    QStringList match_list = match.capturedTexts();
-    int day = 0, month = 0, year = 0;
-    if (match_list.size() > 0) {
-        year = match_list.at(1).toInt();
-        month = match_list.at(2).toInt();
-        day = match_list.at(3).toInt();
+QDate US_AddRefScan::str2date(QString date){
+    QRegExp re("\\d+:\\d+:\\d+");
+    QStringList match = date.remove(re).simplified().split("-");
+    if (match.size() == 3) {
+        int year = match.at(0).toInt();
+        int month = match.at(1).toInt();
+        int day = match.at(2).toInt();
         return QDate(year, month, day);
     }else
         return QDate();
 }
-
-
 
 FileNameWidget::FileNameWidget(QString &inputName):US_WidgetsDialog(nullptr, Qt::Dialog){
     setWindowTitle( tr( "Set Reference Scans File Name" ) );
@@ -2570,7 +2565,7 @@ FileNameWidget::FileNameWidget(QString &inputName):US_WidgetsDialog(nullptr, Qt:
     vb->addLayout(hb);
     setLayout(vb);
 
-    le_final->setText(_check_file_name().fileName());
+    le_final->setText(check_fname().fileName());
 
     connect(pb_cancel, SIGNAL(clicked()), this, SLOT(slt_cancel()));
     connect(pb_ok,     SIGNAL(clicked()), this, SLOT(slt_ok()));
@@ -2578,7 +2573,7 @@ FileNameWidget::FileNameWidget(QString &inputName):US_WidgetsDialog(nullptr, Qt:
 }
 
 void FileNameWidget::slt_ok(void){
-    QString fpath = _check_file_name().absoluteFilePath();
+    QString fpath = check_fname().absoluteFilePath();
     *fileName = fpath;
     this->accept();
 }
@@ -2593,11 +2588,11 @@ void FileNameWidget::slt_edit(QString text){
     re.setPattern("[^a-zA-Z0-9-]+");
     text.replace(re, "");
     le_base->setText(text);
-    le_final->setText(_check_file_name().fileName());
+    le_final->setText(check_fname().fileName());
     return;
 }
 
-QFileInfo FileNameWidget::_check_file_name(void){
+QFileInfo FileNameWidget::check_fname(void){
     QString fn;
     fn += le_prep->text();
     if (le_base->text().size() > 0)

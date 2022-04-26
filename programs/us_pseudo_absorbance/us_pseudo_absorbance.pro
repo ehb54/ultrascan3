@@ -4,20 +4,18 @@ TARGET        = us_pseudo_absorbance
 QT           += xml printsupport
 
 HEADERS       = \
-    add_refScan.h \
-    build_colormap.h \
-    convert_scan.h \
-    refScan_dataIO.h \
-    select_program.h \
-    switch.h \
-    ../us_convert/us_select_triples.h
+    ../us_convert/us_select_triples.h \
+    us_refScan_dataIO.h \
+    us_add_refScan.h \
+    us_convert_scan.h \
+    us_gen_colormap.h \
+    us_pseudo_absorbance.h
+
 
 SOURCES       =       \
-                add_refScan.cpp \
-                build_colormap.cpp \
-                convert_scan.cpp \
-                refScan_dataIO.cpp \
-                select_program.cpp \
-                switch.cpp \
                 ../us_convert/us_select_triples.cpp \
-                us_pseudo_absorbance_main.cpp
+                us_refScan_dataIO.cpp \
+                us_add_refScan.cpp \
+                us_convert_scan.cpp \
+                us_gen_colormap.cpp \
+                us_pseudo_absorbance.cpp

@@ -1,8 +1,8 @@
 #ifndef US_ADD_REF_SCAN_H
 #define US_ADD_REF_SCAN_H
 
-#include <QDomDocument>
-#include <QFileDialog>
+//#include <QDomDocument>
+//#include <QFileDialog>
 //#include "us_extern.h"
 #include "us_widgets.h"
 //#include "us_help.h"
@@ -13,18 +13,38 @@
 #include "qwt_plot_marker.h"
 //#include "us_license_t.h"
 //#include "us_license.h"
-#include <QTabWidget>
-#include "switch.h"
-#include "refScan_dataIO.h"
-#include <QCalendar>
+//#include <QTabWidget>
+#include "us_refScan_dataIO.h"
+//#include <QCalendar>
+//#include <QListView>
+//#include <QTreeView>
+//#include <QStringList>
+//#include <QDir>
+//#include <QString>
+//#include <QtGlobal>
+//#include <algorithm>
+//#include <cmath>
+//#include <iostream>
+#include "us_settings.h"
+//#include "us_gui_settings.h"
+//#include "us_investigator.h"
+//#include "us_math2.h"
+#include "us_util.h"
+//#include "us_constants.h"
+#include "us_images.h"
+//#include "us_widgets.h"
+//#include <QMouseEvent>
+//#include <qwt_legend.h>
 
 
-class addRefScan : public US_Widgets
+class US_AddRefScan : public US_Widgets
 {
     Q_OBJECT
 
 public:
-    addRefScan();
+    US_AddRefScan();
+    QPushButton* pb_close;
+    bool hasData;
 
     signals:
     void sig_clustering(bool);
@@ -51,37 +71,41 @@ private slots:
     void slt_db_local_switch(bool);
 
 private:
-    US_Passwd pw;
-    US_DB2* dbCon;
-    QStringList runIDs;
-    QString runType;
-
-    int lambda_id;
-    int invId;
-    QString status, percent;
-    QLineEdit* le_lambstrt;
-    QLineEdit* le_lambstop;
-    QComboBox* cb_plot_id;
     QPushButton* pb_prev_id;
     QPushButton* pb_next_id;
+    QPushButton* pb_prev_id_tab1;
+    QPushButton* pb_next_id_tab1;
+    QPushButton* pb_prev_id_tab2;
+    QPushButton* pb_next_id_tab2;
     QPushButton* pb_import;
     QPushButton* pb_reset;
-    QPushButton* pb_setting;
-    QLineEdit* le_status;
-    QLineEdit* le_investigator;
-    SwitchButton* sw_cluster;
-    SwitchButton* sw_align;
+    QPushButton* pb_clscltr;
     QPushButton* pb_reset_bws;
-    QCheckBox* ck_bws_all;
+    QPushButton* pb_find_merge;
+    QPushButton* pb_save;
+
+    QLineEdit* le_lambstrt;
+    QLineEdit* le_lambstop;
+    QLineEdit* le_status;
     QLineEdit* le_dir;
     QLineEdit* le_dbName;
+
     QLabel* lb_dbName;
-
-    US_Disk_DB_Controls* dkdb_ctrl;
     QLabel* lb_dir;
-    QRadioButton *rb_db;
+    QLabel* lb_tab1_wlbw;
+    QLabel* lb_runIDs;
 
-    QTabWidget* tabs;
+    QComboBox* cb_plot_id;
+    QComboBox* cb_plot_id_tab1;
+    QComboBox* cb_plot_id_tab2;
+
+    QCheckBox* ckb_cluster;
+    QCheckBox* ckb_align;
+    QCheckBox* ckb_bws_all;
+
+    QwtCounter* ct_bws;
+    QwtCounter* ct_winlen;
+
     QwtPlot* tab0_plotLU;
     QwtPlot* tab0_plotRU;
     QwtPlot* tab0_plotLD;
@@ -92,40 +116,39 @@ private:
     QwtPlot* tab1_plotRD;
     QwtPlot* tab2_plotL;
     QwtPlot* tab2_plotR;
-    QLabel* lb_tab1_wlbw;
-    QComboBox* cb_plot_id_tab1;
-    QPushButton* pb_prev_id_tab1;
-    QPushButton* pb_next_id_tab1;
-    QComboBox* cb_plot_id_tab2;
-    QPushButton* pb_prev_id_tab2;
-    QPushButton* pb_next_id_tab2;
-    QwtCounter* ct_bws;
-    QwtCounter* ct_winlen;
-    QPushButton* pb_find_merge;
-    QPushButton* pb_save;
+    QwtPlotGrid* grid;
 
+    QRadioButton *rb_db;
+    QTabWidget* tabs;
+    US_Disk_DB_Controls* dkdb_ctrl;
+    US_Passwd pw;
+    US_DB2* dbCon;
+
+    QStringList runIDs;
+    QString runType;
+    int wavl_id;
+    QString status, percent;
     int winlen;
-    const int winlen_default = 1;
+    const int winlen_dflt = 1;
     const int winlen_max = 4;
-    const double crp_default = 0;
-    const double bws_default = 2;
-    int n_scans, n_wavelengths, n_points;
+    const double crp_dflt = 0;
+    const double bws_dflt = 2;
+    int n_scans, n_wavls, n_points;
     QVector<int> wavelength;
-    QVector<QVector<int>> wavelength_scid;
-    QVector<QVector<int>> wavelength_scid_S;
+    QVector<QVector<int>> wavlScid;
+    QVector<QVector<int>> wavlScid_S;
     QVector<double> xvalues;
-    QVector<QVector<double>> scan_rvalues;
-    QVector<int> scan_wavelength;
-    QVector<int> scan_wavelength_W;
-    QVector<int> scan_wavelength_S;
-    QVector<double> scan_mean;
-    QVector<double> scan_rmsd;
-    QVector<double> wavelength_bw;
-    QVector<double> wavelength_bws;
-    QVector<double> wavelength_crp;
-    QVector<QVector<QVector<double>>> cluster_ids;
-    QVector<QVector<QVector<double>>> cluster_rng;
-    QList< QMap<QString, QString> > instruments;
+    QVector<QVector<double>> scanRvalues;
+    QVector<int> scanWavl;
+    QVector<int> scanWavl_W;
+    QVector<int> scanWavl_S;
+    QVector<double> scanMean;
+    QVector<double> scanRmsd;
+    QVector<double> wavlBw;
+    QVector<double> wavlBwS;
+    QVector<double> wavlCrp;
+    QVector<QVector<QVector<double>>> clusterIDs;
+    QVector<QVector<QVector<double>>> clusterRng;
 
     struct currentValues{
         QVector<int> scid;
@@ -171,7 +194,7 @@ private:
     };
 
     void clear(void);
-    void write2txt(const QString&, refScanDataIO::RefData& );
+    void write2txt(const QString&, US_RefScanDataIO::RefData& );
     bool parse_files(QStringList);
     QVector<double> linspace(double start, double stop, int num);
     QVector<int> arange(int start, int stop, int step);
@@ -211,10 +234,10 @@ private:
     void enable_widgets(bool);
     void find_clusters(void);
     void merge_clusters(void);
-    void save_local(refScanDataIO::RefData&);
-    void save_db(refScanDataIO::RefData&);
+    void save_local(US_RefScanDataIO::RefData&);
+    void save_db(US_RefScanDataIO::RefData&);
     void check_connection(void);
-    bool checkRunIDs(US_DB2*, QVector<int>&, QVector<QDate>&, int&);
+    bool check_runIDs(US_DB2*, QVector<int>&, QVector<QDate>&, int&);
     void get_refScanDBinfo(US_DB2*, QVector<refScanTableInfo>&);
     QDate str2date(QString);
 
@@ -240,7 +263,7 @@ private:
     QLineEdit *le_final;
     QDir importDir;
 
-    QFileInfo _check_file_name(void);
+    QFileInfo check_fname(void);
 };
 
 

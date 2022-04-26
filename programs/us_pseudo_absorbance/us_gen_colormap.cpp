@@ -1,4 +1,4 @@
-#include "build_colormap.h"
+#include "us_gen_colormap.h"
 
 HSVcolormap::HSVcolormap(){}
 
@@ -89,16 +89,4 @@ QVector<int> HSVcolormap::rang_hvalues(void){
     hrange << hstop;
     return hrange;
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
