@@ -1835,6 +1835,22 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
   autoflowdata.clear();
 
   QStringList qry;
+  //Check user level && ID
+  QStringList defaultDB = US_Settings::defaultDB();
+  QString user_guid   = defaultDB.at( 9 );
+  
+  //get personID from personGUID
+  qry.clear();
+  qry << QString( "get_personID_from_GUID" ) << user_guid;
+  dbP->query( qry );
+  
+  int user_id = 0;
+  
+  if ( dbP->next() )
+    user_id = dbP->value( 0 ).toInt();
+    
+  //now look at autpflow runs
+  qry.clear();
   qry << "get_autoflow_desc";
   dbP->query( qry );
 
@@ -1856,6 +1872,8 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
       QDateTime time_created     = dbP->value( 13 ).toDateTime().toUTC();
       QString gmpRun             = dbP->value( 14 ).toString();
       QString operatorID         = dbP->value( 16 ).toString();
+
+      qDebug() << "OperatorID -- " << operatorID;
       
       QDateTime local(QDateTime::currentDateTime());
 
@@ -1881,20 +1899,6 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
       //Check user level && GUID; if <3, check if the user is operator || investigator
       if ( US_Settings::us_inv_level() < 3 )
 	{
-	  QStringList defaultDB = US_Settings::defaultDB();
-	  QString user_guid   = defaultDB.at( 9 );
-
-	  //get personID from personGUID
-	  QStringList q;
-	  q.clear();
-	  q << QString( "get_personID_from_GUID" ) << user_guid;
-	  dbP->query( q );
-
-	  int user_id = 0;
-	  
-	  if ( dbP->next() )
-	    user_id = dbP->value( 0 ).toInt();
-
 	  qDebug() << "User level low: " << US_Settings::us_inv_level();
 	  qDebug() << "user_id, operatorID.toInt(), invID.toInt() -- " << user_id << operatorID.toInt() << invID.toInt();
 
