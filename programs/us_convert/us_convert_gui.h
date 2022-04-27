@@ -150,6 +150,7 @@ class US_ConvertGui : public US_Widgets
       QMap < int, bool > description_changed;
 
       bool auto_ref_scan;
+      int  autoflowStatusID;
       
       QString       runType;
       QString       oldRunType;

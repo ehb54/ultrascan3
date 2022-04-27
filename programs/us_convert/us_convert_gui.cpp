@@ -5334,6 +5334,7 @@ DbgLv(1) << "CGui: (8)referDef=" << referenceDefined;
    le_status->setText( tr( "The reference scans have been canceled." ) );
    QApplication::restoreOverrideCursor();
    qApp->processEvents();
+
 }
 
 // Drop selected triples
@@ -6593,6 +6594,10 @@ DbgLv(1) << "Writing to database";
 //Record RI or IP  status to autoflowStatus
 void US_ConvertGui::record_import_status( bool auto_ref, QString runtype )
 {
+  autoflowStatusID = 0;
+  QString importRI_Json;
+  QString importIP_Json;
+  
   // Check DB connection
   US_Passwd pw;
   QString masterpw = pw.getPasswd();
@@ -6619,18 +6624,110 @@ void US_ConvertGui::record_import_status( bool auto_ref, QString runtype )
   QString email = db->value( 4 ).toString();
   int     level = db->value( 5 ).toInt();
 
-  qDebug() << "IN US_convert, record RI status: ID,name,lev" << ID << fname << lname << email << level;
+  qDebug() << "IN US_convert, record RI status: ID,name,email,lev" << ID << fname << lname << email << level;
   
   //Record to autoflowStatus:
   qry.clear();
 
-  if ( runtype == "RI ")
+  //first, check if there is already a record in autoflowStatus with autoflowID == autoflowID_passed;
+  // that is a scenario for combined RI+IP type
+  // if there IS record, update it; otherwise create a new one..
+
+  qry << "get_autoflowStatus_id" << QString::number( autoflowID_passed );
+  autoflowStatusID = db->functionQuery( qry );
+
+  qDebug() << "autoflowStatusID -- " << autoflowStatusID;
+  qDebug() << "runtype -- "          << runtype;
+  
+  qry.clear();
+  
+  if ( runtype == "RI")
     {
+      QString refScan = auto_ref ? QString("automated") : QString("manual");
+	
+      importRI_Json. clear();
+      importRI_Json += "{ \"Person\": ";
+
+      importRI_Json += "[{";
+      importRI_Json += "\"ID\":\""     + QString::number( ID )     + "\",";
+      importRI_Json += "\"fname\":\""  + fname                     + "\",";
+      importRI_Json += "\"lname\":\""  + lname                     + "\",";
+      importRI_Json += "\"email\":\""  + email                     + "\",";
+      importRI_Json += "\"level\":\""  + QString::number( level )  + "\"";
+      importRI_Json += "}],";
+
+      importRI_Json += "\"RefScan\": \"" + refScan + "\"";
+      
+      importRI_Json += "}";
+      
+      if ( !autoflowStatusID )
+	{
+	  //create new record
+	  qry << "new_autoflowStatusRI_record"
+	      << QString::number( autoflowID_passed )
+	      << importRI_Json;
+
+	  //qDebug() << "new_autoflowStatusRI_record qry -- " << qry;
+
+	  autoflowStatusID = db->functionQuery( qry );
+	}
+      else
+	{
+	  //update
+	  qry << "update_autoflowStatusRI_record"
+	      << QString::number( autoflowStatusID )
+	      << QString::number( autoflowID_passed )
+	      << importRI_Json;
+
+	  db->query( qry );
+	}
     }
 
   if ( runtype == "IP" )
     {
+      importIP_Json. clear();
+      importIP_Json += "{ \"Person\": ";
+
+      importIP_Json += "[{";
+      importIP_Json += "\"ID\":\""     + QString::number( ID )     + "\",";
+      importIP_Json += "\"fname\":\""  + fname                     + "\",";
+      importIP_Json += "\"lname\":\""  + lname                     + "\",";
+      importIP_Json += "\"email\":\""  + email                     + "\",";
+      importIP_Json += "\"level\":\""  + QString::number( level )  + "\"";
+      importIP_Json += "}]";
+      
+      importIP_Json += "}";
+      
+      if ( !autoflowStatusID )
+	{
+	  //create new record
+	  qry << "new_autoflowStatusIP_record"
+	      << QString::number( autoflowID_passed )
+	      << importIP_Json;
+
+	  autoflowStatusID = db->functionQuery( qry );
+	}
+      else
+	{
+	  //update
+	  qry << "update_autoflowStatusIP_record"
+	      << QString::number( autoflowStatusID )
+	      << QString::number( autoflowID_passed )
+	      << importIP_Json;
+
+	  db->query( qry );
+	}      
     }
+
+  if ( !autoflowStatusID )
+    {
+      QMessageBox::warning( this, tr( "AutoflowStatus Record Problem" ),
+			    tr( "autoflowStatus (IMPORT {RI,IP}): There was a problem with creating a record in autoflowStatus table \n" ) + db->lastError() );
+      
+      return;
+    }
+
+  qDebug() << "in record_import_status: importRI_Json,importIP_Json -- " << importRI_Json << "\n" << importIP_Json;
 } 
 
 
@@ -6680,17 +6777,30 @@ void US_ConvertGui::update_autoflow_record_atLimsImport( void )
 	   return;
 	 }
      }
-
    qDebug() << "autoflowIntensityID -- " << autoflowIntensityID;
    details_at_editing[ "intensityID" ] = QString::number( autoflowIntensityID );
+
+
+   //Now check if autoflowStatus record was created:
+   if ( !autoflowStatusID )
+     {
+       QMessageBox::warning( this, tr( "AutoflowStatus Record Problem" ),
+			     tr( "autoflowStatus (IMPORT {RI,IP}): There was a problem with creating a record in autoflowStatus table \n" ) );
+       
+       return;
+     }
+   qDebug() << "autoflowStatusID -- " << autoflowStatusID;
+   details_at_editing[ "statusID" ] = QString::number( autoflowStatusID );
    
-   //update autoflow record
+   
+   //finally, update autoflow record
    qry.clear();
    qry << "update_autoflow_at_lims_import"
        << runID_numeric
        << filename_toDB
        << OptimaName
-       << QString::number( autoflowIntensityID );
+       << QString::number( autoflowIntensityID )
+       << QString::number( autoflowStatusID );
 
    qDebug() << "Query for update_autoflow_at_lims_import -- " << qry;
    //db->query( qry );
