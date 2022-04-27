@@ -51,6 +51,8 @@ US_ConvertGui::US_ConvertGui( QString auto_mode ) : US_Widgets()
    ExpData.invID = US_Settings::us_inv_ID();
 
    usmode    = false;
+
+   auto_ref_scan = true;
    
    // Ensure data directories are there
    QDir dir;
@@ -614,6 +616,8 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    ExpData.invID = US_Settings::us_inv_ID();
 
    usmode    = false;
+
+   auto_ref_scan = true;
    
    // Ensure data directories are there
    QDir dir;
@@ -1248,6 +1252,8 @@ void US_ConvertGui::resetAll_auto( void )
 
    reset_auto();
 
+   auto_ref_scan = true;
+   
    le_status->setText( tr( "(no data loaded)" ) );
    subsets.clear();
    reference_start = 0;
@@ -1591,6 +1597,8 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
      	 double high_ref = 5.87 + 0.005;
      	 process_reference_auto( low_ref, high_ref );
 
+	 auto_ref_scan = true;
+	 
      	 QMessageBox msgBox;
      	 msgBox.setText(tr("Attention: Reference scans have been defined automatically."));
      	 msgBox.setInformativeText("You may review and proceed with saving the data, or choose to reset reference scans definitions by clicking 'Undo Reference Scans':");
@@ -1714,6 +1722,8 @@ void US_ConvertGui::process_optics()
 	 double low_ref  = 5.87 - 0.005;
 	 double high_ref = 5.87 + 0.005;
 	 process_reference_auto( low_ref, high_ref );
+
+	 auto_ref_scan = true;
 
 	 QMessageBox msgBox;
 	 msgBox.setText(tr("Attention: Reference scans have been defined automatically."));
@@ -5307,6 +5317,10 @@ DbgLv(1) << "CGui: (8)referDef=" << referenceDefined;
 
    setTripleInfo();
 
+
+   //ALEXEY: set auto_ref_scan to FALSE
+   auto_ref_scan = false;
+
    pb_reference  ->setEnabled( true );
    pb_cancelref  ->setEnabled( false );
    pb_intensity  ->setEnabled( false );
@@ -6440,12 +6454,12 @@ DbgLv(1) << "Writing to database";
          {
             saveUS3Disk();        // Save AUCs to disk
             writeTimeStateDisk(); // Save TimeState to disk
-DbgLv(1) << "Writing to disk";
+	    DbgLv(1) << "Writing to disk";
          }
       } // End of 'spx' for loop (counts for each speed step)
    } // End of 'else' loop for multispeed case
-
-
+   
+   
    // bool all_processed = true;
    // // *** CHECK if all Optics types processed **** //
    // QMap<QString, int>::iterator os;
@@ -6457,6 +6471,13 @@ DbgLv(1) << "Writing to disk";
    // 	   break;
    // 	 }
    //   }
+
+//Now, make a record on was the Reference Scan defined automatically (for "RI" type) && who did SAVE the data
+   if ( us_convert_auto_mode )
+     {
+       record_import_status( auto_ref_scan, runType );
+     }
+   
    
 // x  x  x  x  x x  x  x  x  x x  x  x  x  x x  x  x  x  x x  x  x  x  x x  x  x  x  x 
    if ( us_convert_auto_mode )   // if us_comproject OR us_comproject_academic
@@ -6567,6 +6588,51 @@ DbgLv(1) << "Writing to disk";
 				 tr( "The save of all data and reports is complete." ) );
      }
 }
+
+
+//Record RI or IP  status to autoflowStatus
+void US_ConvertGui::record_import_status( bool auto_ref, QString runtype )
+{
+  // Check DB connection
+  US_Passwd pw;
+  QString masterpw = pw.getPasswd();
+  US_DB2* db = new US_DB2( masterpw );
+  
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+      return;
+    }
+  
+  QStringList qry;
+
+  //get user info
+  qry.clear();
+  qry <<  QString( "get_user_info" );
+  db->query( qry );
+  db->next();
+
+  int ID        = db->value( 0 ).toInt();
+  QString fname = db->value( 1 ).toString();
+  QString lname = db->value( 2 ).toString();
+  QString email = db->value( 4 ).toString();
+  int     level = db->value( 5 ).toInt();
+
+  qDebug() << "IN US_convert, record RI status: ID,name,lev" << ID << fname << lname << email << level;
+  
+  //Record to autoflowStatus:
+  qry.clear();
+
+  if ( runtype == "RI ")
+    {
+    }
+
+  if ( runtype == "IP" )
+    {
+    }
+} 
+
 
 //Update autoflow record upon Editing completion
 void US_ConvertGui::update_autoflow_record_atLimsImport( void )

@@ -148,6 +148,8 @@ class US_ConvertGui : public US_Widgets
       QString       intensityJsonRI;
 
       QMap < int, bool > description_changed;
+
+      bool auto_ref_scan;
       
       QString       runType;
       QString       oldRunType;
@@ -414,6 +416,8 @@ class US_ConvertGui : public US_Widgets
       void saveUS3DB         ( void );
       void saveReportsToDB   ( void );
 
+      void record_import_status( bool, QString );
+      
       void resetAll          ( void );
       void resetAll_auto     ( void );
       void reset_limsimport_panel( void );
