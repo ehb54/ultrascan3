@@ -1998,7 +1998,8 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_record( int autoflowID
 	   protocol_details[ "aprofileguid" ]   = db->value( 18 ).toString();
 
 	   protocol_details[ "analysisIDs" ]   = db->value( 19 ).toString();
-	   protocol_details[ "intensityID" ]   = db->value( 20 ).toString();	   
+	   protocol_details[ "intensityID" ]   = db->value( 20 ).toString();
+	   protocol_details[ "statusID" ]      = db->value( 21 ).toString();
 	 }
      }
    else
