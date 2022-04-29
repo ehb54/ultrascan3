@@ -199,7 +199,8 @@ class US_ReporterGMP : public US_Widgets
 	 QString    FileName;
 	 QString    intensityID;
 	 QString    analysisIDs;
-
+	 QString    autoflowStatusID;
+	 
 	 QString    current_date;
 	 
 	 QString    duration_str;

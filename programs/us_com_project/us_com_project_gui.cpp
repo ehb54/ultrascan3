@@ -1619,7 +1619,7 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   QString filename     = protocol_details[ "filename" ];
   QString aprofileguid = protocol_details[ "aprofileguid" ];
   QString analysisIDs  = protocol_details[ "analysisIDs" ];
-  
+  QString statusID     = protocol_details[ "statusID" ];
   
   QDir directory( currDir );
   
@@ -1631,7 +1631,8 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   qDebug() << "GMP Run ? "      << protocol_details[ "gmpRun" ];
 
   qDebug() << "AnalysisIDs: "   << protocol_details[ "analysisIDs" ];
-  
+  qDebug() << "statusID: "      << protocol_details[ "statusID" ];
+    
     
   if ( stage == "LIVE_UPDATE" )
     {

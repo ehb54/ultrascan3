@@ -365,6 +365,7 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   intensityID        = protocol_details[ "intensityID" ];
   AutoflowID_auto    = protocol_details[ "autoflowID" ];
   analysisIDs        = protocol_details[ "analysisIDs" ];
+  autoflowStatusID   = protocol_details[ "statusID" ];
   
   lb_hdr1 ->setText( QString( tr("Report for run: %1") ).arg(FileName) );
   lb_hdr1->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
@@ -959,6 +960,7 @@ void US_ReporterGMP::load_gmp_run ( void )
   FileName           = protocol_details[ "filename" ];
   intensityID        = protocol_details[ "intensityID" ];
   analysisIDs        = protocol_details[ "analysisIDs" ];
+  autoflowStatusID   = protocol_details[ "statusID" ];
   
   progress_msg->setValue( 1 );
   qApp->processEvents();
@@ -1208,6 +1210,8 @@ QMap< QString, QString>  US_ReporterGMP::read_autoflow_record( int autoflowID  )
 
 	   protocol_details[ "analysisIDs" ]    = db->value( 19 ).toString();
 	   protocol_details[ "intensityID" ]    = db->value( 20 ).toString();
+
+	   protocol_details[ "statusID" ]       = db->value( 21 ).toString();
 	   	   
 	 }
      }
