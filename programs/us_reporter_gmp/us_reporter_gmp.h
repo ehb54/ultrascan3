@@ -199,7 +199,8 @@ class US_ReporterGMP : public US_Widgets
 	 QString    FileName;
 	 QString    intensityID;
 	 QString    analysisIDs;
-
+	 QString    autoflowStatusID;
+	 
 	 QString    current_date;
 	 
 	 QString    duration_str;
@@ -247,6 +248,10 @@ class US_ReporterGMP : public US_Widgets
 	 QMap < QString, QString > read_autoflow_record( int );
 	 void  write_pdf_report( void );
 
+	 void  assemble_user_inputs_html( void );
+	 void  read_autoflowStatus_record( QString&,  QString&,  QString&,  QString&, QString&,  QString&,  QString&,  QString& );
+	 QMap< QString, QMap< QString, QString > >  parse_autolfowStatus_json( const QString, const QString  );
+	 
 	 void read_protocol_and_reportMasks( void );
 	 QMap< QString, QString > read_autoflowIntensity( QString, US_DB2*);
 	 void parse_gen_mask_json ( const QString  );

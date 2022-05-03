@@ -2031,6 +2031,7 @@ void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
   autoflowID_passed   = details_at_editing[ "autoflowID" ].toInt();
   idInv_auto          = details_at_editing[ "invID_passed" ];
   ProtocolName_auto   = details_at_editing[ "protocolName" ];
+  autoflowStatusID    = details_at_editing[ "statusID" ].toInt();
       
   // Deal with different filenames if any.... //////////////////////////
   filename_runID_passed = details_at_editing[ "filename" ];
@@ -2068,7 +2069,7 @@ void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
     
   ///////////////////////////////////////////////////////////////////////
   
-  qDebug() << "autoflowID: " << autoflowID_passed;
+  qDebug() << "autoflowID, autoflowStatusID : " << autoflowID_passed << autoflowStatusID;
   qDebug() << "AT EDIT_DATA: filename, idInv: " << filename_runID_passed << ", " << idInv_auto;
 
   process_optics_auto();
@@ -2081,6 +2082,7 @@ void US_Edit::process_optics_auto( )
   all_loaded = false;
   editProfile.clear();
   editProfile_scans_excl.clear();
+  automatic_meniscus.clear();
   centerpieceParameters.clear();
   aprofileParameters.clear();
   iwavl_edit_ref.clear();
@@ -2849,6 +2851,9 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 	   //ALEXEY: get all cb_triple listbox items (texts)...
 	   editProfile[ triple_name ] = triple_info;
 
+	   //automatic meniscus Map, per channel
+	   automatic_meniscus[ triple_name ] = true;
+
 
 	   //Fill out editProfile_scans_excl MAP:
 	   QMap<QString, QStringList>::const_iterator ci = aprof_channel_to_scans.constBegin();
@@ -2947,6 +2952,9 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 	   
 	   //ALEXEY: get all cb_triple listbox items (texts)...
 	   editProfile[ triple_name ] = triple_info;
+
+	   //automatic meniscus Map, per channel
+	   automatic_meniscus[ triple_name ] = true;
 
 	   //Fill out editProfile_scans_excl MAP:
 	   QMap<QString, QStringList>::const_iterator ci = aprof_channel_to_scans.constBegin();
@@ -8119,12 +8127,17 @@ void US_Edit:: update_triple_edit_params (  QMap < QString, QStringList > &  edi
   qDebug() << "In update_triple_edit_params: t_name -- " << t_name;
   qDebug() << "In update_triple_edit_params: editProfile[ t_name ] -- " << editProfile[ t_name ];
 
+  automatic_meniscus[ t_name ] = false;
+
   new_triple_auto( 0 ); 
 }
 
 // Save edit profile(s)
 void US_Edit::write_auto( void )
 {
+  // //TEMP: DEBUG!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+  // record_edit_status( automatic_meniscus, dataType );
+  // exit(1);
   
   /****/
   //--- Check if saving already initiated
@@ -8409,6 +8422,12 @@ void US_Edit::write_auto( void )
 
    // Check If all Optical Systems processed:::::::::::::::::::::::::::::
    qDebug() << "SAVING: Optics Type, all_processed:  " << filename_runID_auto << all_processed;
+
+
+   //Now, make a record on was the Reference Scan defined automatically (for "RI" type) && who did SAVE the data
+   record_edit_status( automatic_meniscus, dataType );
+   
+   //////////////////////////////////////////////////////////////
    
    if ( !all_processed )
      {
@@ -8572,6 +8591,109 @@ void US_Edit::write_auto( void )
    emit edit_complete_auto( details_at_editing_local  );   
 }
 
+//Record statuses of the auto/manual meniscus determinaiton, on per-channel basis
+void US_Edit::record_edit_status( QMap< QString, bool> auto_meniscus, QString dtype )
+{
+  //DEBUG
+  qDebug() << "Data Type: " << dtype;
+  QMap<QString, bool>::iterator os;
+  for ( os = auto_meniscus.begin(); os != auto_meniscus.end(); ++os )
+    qDebug() << "For channel " << os.key() << ", meniscus determined automatically? " << os.value();
+  //END DEBUG
+
+  // Check DB connection
+  US_Passwd pw;
+  QString masterpw = pw.getPasswd();
+  US_DB2* db = new US_DB2( masterpw );
+  
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+      return;
+    }
+  
+  QStringList qry;
+
+  //get user info
+  qry.clear();
+  qry <<  QString( "get_user_info" );
+  db->query( qry );
+  db->next();
+
+  int ID        = db->value( 0 ).toInt();
+  QString fname = db->value( 1 ).toString();
+  QString lname = db->value( 2 ).toString();
+  QString email = db->value( 4 ).toString();
+  int     level = db->value( 5 ).toInt();
+
+  qDebug() << "IN US_edit_AUTO, record status: ID,name,email,lev" << ID << fname << lname << email << level;
+  
+  //Record to autoflowStatus:
+  qry.clear();
+
+  QString editRI_IP_Json;
+  editRI_IP_Json. clear();
+  editRI_IP_Json += "{ \"Person\": ";
+  
+  editRI_IP_Json += "[{";
+  editRI_IP_Json += "\"ID\":\""     + QString::number( ID )     + "\",";
+  editRI_IP_Json += "\"fname\":\""  + fname                     + "\",";
+  editRI_IP_Json += "\"lname\":\""  + lname                     + "\",";
+  editRI_IP_Json += "\"email\":\""  + email                     + "\",";
+  editRI_IP_Json += "\"level\":\""  + QString::number( level )  + "\"";
+  editRI_IP_Json += "}],";
+  
+  editRI_IP_Json += "\"Meniscus\": ";
+  editRI_IP_Json += "[{";
+  
+  for ( os = auto_meniscus.begin(); os != auto_meniscus.end(); ++os )
+    {
+      QString meniscus_method = os.value() ? QString("automated") : QString("manual");
+      
+      editRI_IP_Json += "\"" + os.key()  + "\":\"" +   meniscus_method     + "\",";
+    }
+  
+  editRI_IP_Json.chop(1);
+  editRI_IP_Json += "}]";
+  
+  editRI_IP_Json += "}";
+
+  qDebug() << "in record_edit_status: editRI_IP_Json  -- " << editRI_IP_Json;
+  
+  if ( autoflowStatusID )
+    {
+      //update
+      if ( dtype == "RI" )
+	{
+	  qry << "update_autoflowStatusEditRI_record"
+	      << QString::number( autoflowStatusID )
+	      << QString::number( autoflowID_passed )
+	      << editRI_IP_Json;
+	  
+	  db->query( qry );
+	}
+
+      if ( dtype == "IP" )
+	{
+	  qry << "update_autoflowStatusEditIP_record"
+	      << QString::number( autoflowStatusID )
+	      << QString::number( autoflowID_passed )
+	      << editRI_IP_Json;
+	  
+	  db->query( qry );
+	}
+    }
+  else
+    {
+      QMessageBox::warning( this, tr( "AutoflowStatus Record Problem" ),
+			    tr( "autoflowStatus (EDIT {RI,IP}): There was a problem with identifying a record in autoflowStatus table for a given run! \n" ) );
+      
+      return;
+    }
+}
+
+
 //Delete autoflow record 
 void US_Edit::delete_autoflow_record( void )
 {
@@ -8579,9 +8701,9 @@ void US_Edit::delete_autoflow_record( void )
   QString OptimaName        = details_at_editing_local[ "OptimaName" ]; 
 
   // Check DB connection
-   US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
+  US_Passwd pw;
+  QString masterpw = pw.getPasswd();
+  US_DB2* db = new US_DB2( masterpw );
 
    if ( db->lastErrno() != US_DB2::OK )
      {

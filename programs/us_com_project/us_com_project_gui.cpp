@@ -1619,7 +1619,7 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   QString filename     = protocol_details[ "filename" ];
   QString aprofileguid = protocol_details[ "aprofileguid" ];
   QString analysisIDs  = protocol_details[ "analysisIDs" ];
-  
+  QString statusID     = protocol_details[ "statusID" ];
   
   QDir directory( currDir );
   
@@ -1631,7 +1631,8 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   qDebug() << "GMP Run ? "      << protocol_details[ "gmpRun" ];
 
   qDebug() << "AnalysisIDs: "   << protocol_details[ "analysisIDs" ];
-  
+  qDebug() << "statusID: "      << protocol_details[ "statusID" ];
+    
     
   if ( stage == "LIVE_UPDATE" )
     {
@@ -1998,7 +1999,8 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_record( int autoflowID
 	   protocol_details[ "aprofileguid" ]   = db->value( 18 ).toString();
 
 	   protocol_details[ "analysisIDs" ]   = db->value( 19 ).toString();
-	   protocol_details[ "intensityID" ]   = db->value( 20 ).toString();	   
+	   protocol_details[ "intensityID" ]   = db->value( 20 ).toString();
+	   protocol_details[ "statusID" ]      = db->value( 21 ).toString();
 	 }
      }
    else
