@@ -1598,6 +1598,8 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
      	 process_reference_auto( low_ref, high_ref );
 
 	 auto_ref_scan = true;
+
+	 //record_import_status( auto_ref_scan, runType );
 	 
      	 QMessageBox msgBox;
      	 msgBox.setText(tr("Attention: Reference scans have been defined automatically."));

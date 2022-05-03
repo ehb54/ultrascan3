@@ -8659,6 +8659,7 @@ void US_Edit::record_edit_status( QMap< QString, bool> auto_meniscus, QString dt
   
   editRI_IP_Json += "}";
 
+  qDebug() << "in record_edit_status: editRI_IP_Json  -- " << editRI_IP_Json;
   
   if ( autoflowStatusID )
     {
@@ -8690,8 +8691,6 @@ void US_Edit::record_edit_status( QMap< QString, bool> auto_meniscus, QString dt
       
       return;
     }
-
-  qDebug() << "in record_edit_status: editRI_IP_Json  -- " << editRI_IP_Json;
 }
 
 
