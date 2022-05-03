@@ -9,6 +9,11 @@
 #include "us_gen_colormap.h"
 #include "us_db2.h"
 #include "us_passwd.h"
+#include "us_images.h"
+#include "us_util.h"
+//#include "us_defines.h"
+//#include "us_extern.h"
+//#include "us_help.h"
 
 class US_ConvertScan : public US_Widgets
 {
@@ -28,15 +33,14 @@ private slots:
     void slt_set_ccw_default(void);
     void slt_del_item(void);
     void slt_del_ccws(void);
-    void slt_new_lambda_ctrl(int);
+    void slt_wavl_ctrl(int);
     void slt_reset(void);
     void slt_set_id(int);
     void slt_prev_id(void);
     void slt_next_id(void);
     void slt_plot(void);
-//    void slt_edit_runid(QString);
     void slt_load_refScans(void);
-    void slt_new_scan_range(double);
+    void slt_update_scrng(double);
     void slt_zeroing(int);
     void slt_xrange(int);
     void slt_reset_scans(void);
@@ -49,11 +53,11 @@ private slots:
     void slt_update_smooth(double);
     void slt_pick_point(void);
     void slt_mouse(const QwtDoublePoint&);
-//    void slt_cpos(int, int);
+    void slt_edit_le(QString);
 
 private:
 
-    class CCW_LIST{
+    class CCW_ITEM{
     public:
         QList<int> cell;
         QList<char> channel;
@@ -117,6 +121,7 @@ private:
     QLineEdit* le_ref_range;
     QLineEdit* le_xrange;
     QLabel* plot_title;
+    QString runIdAbs;
 
     QComboBox* cb_plot_id;
     QComboBox* cb_buffer;
@@ -140,11 +145,10 @@ private:
     CCW ccwList;
     CCW ccwListMain;
     QStringList ccwStrListMain;
-    CCW_LIST ccwItemList;
+    CCW_ITEM ccwItemList;
 
     US_DB2 *dbCon;
     US_Passwd pw;
-    QString status, percent;
     int cpos, le_cursor_pos = -1;
     double x_min_picked, x_max_picked;
     int wavl_id;
@@ -161,15 +165,14 @@ private:
     US_RefScanDataIO::RefData refData;
     QFileInfoList allIntDataFiles;
 
-    void clear(void);
     void make_ccwItemList(void);
-    void set_lambda_ctrl(void);
-    void set_widgetList(void);
+    void set_wavl_ctrl(void);
+    void set_listWidget(void);
     void offon_prev_next(void);
     void plot_intensity(void);
     void plot_refscan(void);
     void plot_absorbance(void);
-    void set_scan_range(void);
+    void set_scan_ct(void);
     void get_absorbance(int, int, bool buffer);
     void get_intensity(int);
     bool get_refId(double);
@@ -188,7 +191,6 @@ public:
 private slots:
     void slt_set_refTable(void);
     void slt_apply(void);
-//    void slt_cancel(void);
 private:
     US_DB2 *db;
     US_RefScanDataIO::RefData *refData;
@@ -217,6 +219,5 @@ private:
     QVector<refScanTableInfo> refTable;
     QDate str2date(QString);
 };
-
 
 #endif // US_CONVERT_SCAN_H

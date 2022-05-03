@@ -1,8 +1,5 @@
 #include "us_convert_scan.h"
-#include "us_images.h"
-#include "us_util.h"
-#include "math.h"
-#include "us_defines.h"
+
 
 US_ConvertScan::US_ConvertScan() : US_Widgets()
 {
@@ -12,6 +9,12 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     // Put the Run Info across the entire window
     QLabel* lb_runInfoInt  = us_banner(   tr( "Intensity Data Information" ) );
     pb_import = us_pushbutton(tr("Import Experimental Data"));
+    pb_reset = us_pushbutton("Reset", false, 0 );
+    pb_reset->setDisabled(true);
+    QHBoxLayout* import_lyt = new QHBoxLayout();
+    import_lyt->addWidget(pb_import);
+    import_lyt->addWidget(pb_reset);
+
     QLabel* lb_runIdInt  = us_label(      tr( "Run ID:" ) );
     le_runIdInt          = us_lineedit(   "", 0, true );
     QLabel* lb_dirInt      = us_label(    tr( "Directory:" ) );
@@ -19,13 +22,13 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     QLabel* lb_desc  = us_label(    tr( "Description:" ), 0 );
     le_desc      = us_lineedit( "", 0, true);
 
-    QGridLayout* runInfoIntLyt = new QGridLayout();
-    runInfoIntLyt->addWidget(lb_dirInt,   0, 0, 1, 1);
-    runInfoIntLyt->addWidget(le_dir,   0, 1, 1, 1);
-    runInfoIntLyt->addWidget(lb_runIdInt, 1, 0, 1, 1);
-    runInfoIntLyt->addWidget(le_runIdInt, 1, 1, 1, 1);
-    runInfoIntLyt->addWidget(lb_desc,     2, 0, 1, 1);
-    runInfoIntLyt->addWidget(le_desc,     2, 1, 1, 1);
+    QGridLayout* insty_info_lyt = new QGridLayout();
+    insty_info_lyt->addWidget(lb_dirInt,   0, 0, 1, 1);
+    insty_info_lyt->addWidget(le_dir,      0, 1, 1, 1);
+    insty_info_lyt->addWidget(lb_runIdInt, 1, 0, 1, 1);
+    insty_info_lyt->addWidget(le_runIdInt, 1, 1, 1, 1);
+    insty_info_lyt->addWidget(lb_desc,     2, 0, 1, 1);
+    insty_info_lyt->addWidget(le_desc,     2, 1, 1, 1);
 
     // Multi-Wavelength Lambda Controls
     static QChar clambda( 955 );   // Lambda character
@@ -57,6 +60,7 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     QLabel* lb_triple = us_banner(tr( "Cell / Channel / Wavelength" ), -1 );
     lw_triple = us_listwidget();
     QLabel* lb_ccw_info = us_label(tr("Manage Triples"));
+    lb_ccw_info->setAlignment(Qt::AlignCenter);
     QPushButton* pb_del_ccw_item = us_pushbutton(tr("Delete Selected Item"));
     QPushButton* pb_sel_del_ccw = us_pushbutton(tr("Select and Drop CCWs"));
     QPushButton* pb_default_ccw = us_pushbutton(tr("Default"));
@@ -94,9 +98,9 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     QLabel* lb_runIdAbs  = us_label(      tr( "Run ID:" ) );
     le_runIdAbs          = us_lineedit(   "", 0, false );
 
-    QGridLayout* runInfoAbsLyt = new QGridLayout();
-    runInfoAbsLyt->addWidget(lb_runIdAbs, 0, 0, 1, 1);
-    runInfoAbsLyt->addWidget(le_runIdAbs, 0, 1, 1, 1);
+    QGridLayout* abs_info_lyt = new QGridLayout();
+    abs_info_lyt->addWidget(lb_runIdAbs, 0, 0, 1, 1);
+    abs_info_lyt->addWidget(le_runIdAbs, 0, 1, 1, 1);
 
     QLabel *lb_buffer = us_label("Triple of the Buffer:");
     cb_buffer = us_comboBox();
@@ -123,30 +127,30 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     xrange_lyt->addWidget(le_xrange);
 
     QLabel* lb_status = us_label(tr("Status:"));
-    le_status = us_lineedit(tr("(no data loaded)"), -1, true);
+    le_status = us_lineedit(tr(""), -1, true);
     QPalette stpal;
     stpal.setColor( QPalette::Text, Qt::white );
     stpal.setColor( QPalette::Base, Qt::blue  );
     le_status->setPalette( stpal );
-    QHBoxLayout* status_l = new QHBoxLayout();
-    status_l->addWidget(lb_status);
-    status_l->addWidget(le_status);
+    QHBoxLayout* status_lyt = new QHBoxLayout();
+    status_lyt->addWidget(lb_status);
+    status_lyt->addWidget(le_status);
 
     pb_save = us_pushbutton("Save Absorbance Data", false, 0 );
     pb_save->setDisabled(true);
+
+    QPushButton* pb_help = us_pushbutton("Help", true, 0 );
     pb_close = us_pushbutton("Close", true, 0 );
-    pb_reset = us_pushbutton("Reset", false, 0 );
-    pb_reset->setDisabled(true);
-    QHBoxLayout* closeLyt = new QHBoxLayout();
-    closeLyt->addWidget(pb_reset);
-    closeLyt->addWidget(pb_close);
+    QHBoxLayout* close_lyt = new QHBoxLayout();
+    close_lyt->addWidget(pb_help);
+    close_lyt->addWidget(pb_close);
 
     QVBoxLayout* left_lyt = new QVBoxLayout();
     left_lyt->addStretch(0);
     left_lyt->setSpacing(5);
     left_lyt->addWidget(lb_runInfoInt);
-    left_lyt->addWidget(pb_import);
-    left_lyt->addLayout(runInfoIntLyt);
+    left_lyt->addLayout(import_lyt);
+    left_lyt->addLayout(insty_info_lyt);
     left_lyt->addWidget(lb_triple);
     left_lyt->addLayout(ccw_hbl);
     left_lyt->addWidget(lb_mwlctrl);
@@ -159,18 +163,20 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     left_lyt->addLayout(buffer_lyt);
     left_lyt->addLayout(ckb_lyt);
     left_lyt->addLayout(xrange_lyt);
-    left_lyt->addLayout(runInfoAbsLyt);
+    left_lyt->addLayout(abs_info_lyt);
     left_lyt->addWidget(pb_save);
     left_lyt->addStretch(1);
-    left_lyt->addLayout(status_l);
-    left_lyt->addLayout(closeLyt);
+    left_lyt->addLayout(status_lyt);
+    left_lyt->addLayout(close_lyt);
     left_lyt->addStretch(0);
 
 //    //*****right*****//
 //    plot_title = us_label("");
 
-    plot_title = us_banner("");
+    plot_title = us_label("");
     plot_title->setAlignment(Qt::AlignCenter);
+    plot_title->setStyleSheet("background-color: white;"
+                              "color:black; font-size: 11pt");
 
     QwtText xLabel, yLabel;
     usplot_insty = new US_Plot( qwtplot_insty, tr( "" ),
@@ -196,8 +202,6 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     ct_scan_u = us_counter(3, 0, 0, 0);
     ct_scan_u->setSingleStep(1);
     QLabel *lb_scan_ctrl = us_banner("Scans Control");
-//    QPushButton *pb_exclude_scans = us_pushbutton("Exclude Scan(s)", false, -2 );
-//    QPushButton *pb_include_all = us_pushbutton("Include All", false, -2 );
     QLabel *lb_scan_1 = us_label("Scan Focus From:");
     lb_scan_1->setAlignment(Qt::AlignRight);
     QLabel *lb_scan_2 = us_label("To:");
@@ -209,10 +213,10 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     QGridLayout *scan_ctrl_lyt = new QGridLayout();
     scan_ctrl_lyt->addWidget(lb_scan_ctrl,        0, 0, 1, 4);
     scan_ctrl_lyt->addWidget(lb_scan_1,           1, 0, 1, 1);
-    scan_ctrl_lyt->addWidget(ct_scan_l,            1, 1, 1, 1);
+    scan_ctrl_lyt->addWidget(ct_scan_l,           1, 1, 1, 1);
     scan_ctrl_lyt->addWidget(pb_reset_curr_scans, 1, 2, 1, 2);
     scan_ctrl_lyt->addWidget(lb_scan_2,           2, 0, 1, 1);
-    scan_ctrl_lyt->addWidget(ct_scan_u,            2, 1, 1, 1);
+    scan_ctrl_lyt->addWidget(ct_scan_u,           2, 1, 1, 1);
     scan_ctrl_lyt->addWidget(pb_reset_allscans,   2, 2, 1, 1);
     scan_ctrl_lyt->addWidget(pb_apply_allscans,   2, 3, 1, 1);
 
@@ -221,13 +225,14 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     right_lyt->addWidget(plot_title);
     right_lyt->addLayout(usplot_insty);
     right_lyt->addLayout(usplot_abs);
+    right_lyt->addStretch(1);
     right_lyt->addLayout(scan_ctrl_lyt);
 
     QHBoxLayout* main_lyt = new QHBoxLayout(this);
     left_lyt->setSizeConstraint(QLayout::SetMinimumSize);
-    main_lyt->addLayout(left_lyt);
+    main_lyt->addLayout(left_lyt, 0);
 //    main_lyt->addStretch(1);
-    main_lyt->addLayout(right_lyt);
+    main_lyt->addLayout(right_lyt, 1);
     main_lyt->setSpacing(1);
     main_lyt->setMargin(1);
     setLayout(main_lyt);
@@ -237,7 +242,7 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     picker->setMousePattern( QwtEventPattern::MouseSelect1,
                               Qt::LeftButton, Qt::ControlModifier );
 
-    clear();
+    slt_reset();
 
     connect(pb_import, SIGNAL(clicked()), this, SLOT(slt_import()));
     connect(pb_default_ccw, SIGNAL(clicked()), this, SLOT(slt_set_ccw_default()));
@@ -250,11 +255,6 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     connect(pb_next_id,      SIGNAL(clicked()), this, SLOT(slt_next_id()));
 
     connect(this, SIGNAL(sig_plot()), this, SLOT(slt_plot()));
-
-//    connect(le_runIdAbs,   SIGNAL(textEdited(QString)),
-//            this, SLOT(slt_edit_runid(QString)));
-//    connect(le_runIdAbs, SIGNAL(cursorPositionChanged(int,int)), this, SLOT(slt_cpos(int,int)));
-
     connect(pb_import_refScans, SIGNAL(clicked()), this, SLOT(slt_load_refScans()));
     connect(ckb_zeroing, SIGNAL(stateChanged(int)), this, SLOT(slt_zeroing(int)));
     connect(ckb_xrange, SIGNAL(stateChanged(int)), this, SLOT(slt_xrange(int)));
@@ -274,10 +274,12 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
             this, SLOT(slt_update_smooth(double)));
     connect(pb_pick_rp, SIGNAL(clicked()),
             this, SLOT(slt_pick_point()));
+    connect(le_runIdAbs, SIGNAL(textEdited(QString)), this, SLOT(slt_edit_le(QString)));
 
 }
 
-void US_ConvertScan::clear(void){
+void US_ConvertScan::slt_reset(){
+    picker->disconnect();
     hasData = false;
     xvalues.clear();
     intensity.clear();
@@ -293,9 +295,25 @@ void US_ConvertScan::clear(void){
     le_cursor_pos = -1;
     wavelength.clear();
     refData.clear();
-    picker->disconnect();
     x_min_picked = -1;
     x_max_picked = -1;
+    runIdAbs.clear();
+    le_ref_range->clear();
+    le_lambstrt->clear();
+    le_lambstop->clear();
+    le_runIdAbs->clear();
+    le_runIdInt->clear();
+    le_dir->clear();
+    le_desc->clear();
+    le_xrange->clear();
+    set_listWidget();
+    set_wavl_ctrl();
+    pb_reset->setDisabled(true);
+    pb_import->setEnabled(true);
+    pb_import_refScans->setEnabled(true);
+    pb_reset_refData->setDisabled(true);
+    pb_save->setDisabled(true);
+    ckb_zeroing->setCheckState(Qt::Unchecked);
     return;
 }
 
@@ -315,7 +333,7 @@ void US_ConvertScan::slt_import(void){
         return;
     }
     inDir.makeAbsolute();
-
+    le_status->setText("parsing error!");
     QFileInfoList fileList = inDir.entryInfoList();
     QString runId;
     QString runType;
@@ -332,7 +350,7 @@ void US_ConvertScan::slt_import(void){
         int reIdx = rid.indexOf(re, 0);
         if (reIdx >=0) runId_changed = true;
         while (reIdx >=0){
-            rid = rid.replace(reIdx, "_");
+            rid = rid.replace(reIdx, 1, "_");
             reIdx = rid.indexOf(re, reIdx);
         }
         if (runId.isNull())
@@ -401,53 +419,20 @@ void US_ConvertScan::slt_import(void){
     int reIdx = runId.indexOf(re);
     QString s1 = runId.left(reIdx);
     QString s2 = runId.right(runId.size() - reIdx);
-    le_runIdAbs->setText(s1.append("_Absorbance").append(s2));
+    runIdAbs = s1.append("_Absorbance").append(s2);
+    le_runIdAbs->setText(runIdAbs);
     make_ccwItemList();
-    set_widgetList();
-    set_lambda_ctrl();
+    set_listWidget();
+    set_wavl_ctrl();
     pb_import->setDisabled(true);
     pb_reset->setEnabled(true);
     emit sig_save_button();
     hasData = true;
+    le_status->clear();
     return;
 }
 
-void US_ConvertScan::slt_load_refScans(void){
-    if (diskDB_ctrl->db()){
-        le_status->setText("db connection failed!");
-        load_from_DB();
-        return;
-    }else{
-        QString fname;
-        fname = QFileDialog::getOpenFileName( this,
-              tr( "Open Reference Scan File" ),
-              US_Settings::importDir(), tr("*.aucrs"));
-        if (fname.isEmpty()) return;
-        qDebug() << fname;
-        refData.clear();
-        int error = US_RefScanDataIO::readRefData(fname, refData);
-        if (error != US_RefScanDataIO::OK){
-            refData.clear();
-            QString mess = US_RefScanDataIO::errorString(error);
-            le_status->setText(mess);
-        }
-        else{
-            pb_import_refScans->setDisabled(true);
-            pb_reset_refData->setEnabled(true);
-            emit sig_save_button();
-        }
-        QString text("%1 - %2 nm");
-        int nw = refData.nWavelength;
-        double w1 = refData.wavelength.at(0);
-        double w2 = refData.wavelength.at(nw - 1);
-        le_ref_range->setText(text.arg(w1).arg(w2));
-        plot_refscan();
-        plot_absorbance();
-        return;
-    }
-}
-
-void US_ConvertScan::set_lambda_ctrl(){
+void US_ConvertScan::set_wavl_ctrl(){
     cb_plot_id->disconnect();
     cb_plot_id->clear();
     intDataId.clear();
@@ -502,8 +487,8 @@ void US_ConvertScan::slt_set_ccw_default(){
     ccwList.channel << ccwListMain.channel;
     ccwList.wavelength << ccwListMain.wavelength;
     make_ccwItemList();
-    set_widgetList();
-    set_lambda_ctrl();
+    set_listWidget();
+    set_wavl_ctrl();
     emit sig_save_button();
     return;
 }
@@ -520,8 +505,8 @@ void US_ConvertScan::slt_del_item(){
     ccwItemList.min_wl.removeAt(row);
     ccwItemList.max_wl.removeAt(row);
     ccwItemList.n_wl.removeAt(row);
-    set_widgetList();
-    set_lambda_ctrl();
+    set_listWidget();
+    set_wavl_ctrl();
     emit sig_save_button();
     return;
 }
@@ -561,35 +546,14 @@ void US_ConvertScan::slt_del_ccws(){
         ccwList.wavelength << ccwListMain.wavelength.at(id);
     }
     make_ccwItemList();
-    set_widgetList();
-    set_lambda_ctrl();
+    set_listWidget();
+    set_wavl_ctrl();
 
     return;
 }
 
-void US_ConvertScan::slt_new_lambda_ctrl(int){
-    set_lambda_ctrl();
-    return;
-}
-
-void US_ConvertScan::slt_reset(){
-    clear();
-    le_ref_range->setText("");
-    le_lambstrt->setText("");
-    le_lambstop->setText("");
-    le_runIdAbs->setText("");
-    le_runIdInt->setText("");
-    le_dir->setText("");
-    le_desc->setText("");
-    le_xrange->setText("");
-    set_widgetList();
-    set_lambda_ctrl();
-    pb_reset->setDisabled(true);
-    pb_import->setEnabled(true);
-    pb_import_refScans->setEnabled(true);
-    pb_reset_refData->setDisabled(true);
-    pb_save->setDisabled(true);
-    ckb_zeroing->setCheckState(Qt::Unchecked);
+void US_ConvertScan::slt_wavl_ctrl(int){
+    set_wavl_ctrl();
     return;
 }
 
@@ -597,7 +561,7 @@ void US_ConvertScan::slt_set_id(int id){
     wavl_id = id;
     offon_prev_next();
     le_desc->setText(allIntData.at(id).description);
-    set_scan_range();
+    set_scan_ct();
     emit sig_plot();
     return;
 }
@@ -616,31 +580,7 @@ void US_ConvertScan::slt_plot(){
     return;
 }
 
-//void convertScan::slt_cpos(int oldPos, int newPos ){
-//    cpos = newPos;
-//    qDebug() << cpos;
-//    return;
-//}
-
-//void convertScan::slt_edit_runid(QString text){
-//    le_runIdAbs->disconnect();
-//    QRegularExpression re;
-//    re.setPattern("[^a-zA-Z0-9-]+");
-//    QRegularExpressionMatch match = re.match(text);
-//    if (match.hasMatch()){
-//        text.replace(re, "");
-////        --cpos;
-//    }else
-//        ++cpos;
-//    le_runIdAbs->setText(text);
-//    le_runIdAbs->setCursorPosition(cpos);
-//    connect(le_runIdAbs,   SIGNAL(textEdited(QString)),
-//            this, SLOT(slt_edit_runid(QString)));
-//    connect(le_runIdAbs, SIGNAL(cursorPositionChanged(int,int)), this, SLOT(slt_cpos(int,int)));
-//    return;
-//}
-
-void US_ConvertScan::slt_new_scan_range(double){
+void US_ConvertScan::slt_update_scrng(double){
     int row = lw_triple->currentRow();
     int index = ccwItemList.index.at(row).at(wavl_id);
     int lower = qRound(ct_scan_l->value());
@@ -733,7 +673,7 @@ void US_ConvertScan::slt_reset_allscans(){
         scansRange[i][0] = 0;
         scansRange[i][1] = scansRange.at(i).at(2);
     }
-    set_scan_range();
+    set_scan_ct();
     emit sig_plot();
     return;
 }
@@ -743,14 +683,64 @@ void US_ConvertScan::slt_apply_allscans(){
         return;
     int row = lw_triple->currentRow();
     int index = ccwItemList.index.at(row).at(wavl_id);
-    int lower = scansRange[index][0];
-    int upper = scansRange[index][1];
-    for (int i = 0; i < scansRange.size(); ++i){
-        int max = scansRange.at(i).at(2);
-        if (lower <= max && upper <= max){
-            scansRange[i][0] = lower;
-            scansRange[i][1] = upper;
+    QString curr_ccw = ccwStrListMain.at(index);
+    int lower = scansRange.at(index).at(0);
+    int upper = scansRange.at(index).at(1);
+    QVector<int> mismatch;
+    for (int i = 0; i < ccwItemList.size(); ++i){
+        for (int j = 0; j < ccwItemList.index.at(i).size(); ++j){
+            int id = ccwItemList.index.at(i).at(j);
+            int max = scansRange.at(id).at(2);
+            if (lower <= max && upper <= max){
+                scansRange[id][0] = lower;
+                scansRange[id][1] = upper;
+            } else
+                mismatch << id;
         }
+    }
+
+    if (mismatch.size() > 0){
+        QListWidget* wl_mm = new QListWidget();
+        QString item("%1- %2; # scans= %3");
+        for (int i = 0; i < mismatch.size(); ++i){
+            int id = mismatch.at(i);
+            QString ccw = ccwStrListMain.at(id);
+            int ns = scansRange.at(id).at(2);
+            wl_mm->addItem(item.arg(i + 1).arg(ccw).arg(ns));
+        }
+
+        QLabel* mess = us_label("The number of scans in the CCW list "
+                                "below does not match the current CCW= "
+                                + curr_ccw + "\nPlease modify them separately.");
+        mess->setAlignment(Qt::AlignHCenter | Qt::AlignTop);
+        mess->setWordWrap(true);
+        mess->setStyleSheet(tr("border: 1px solid white;"
+                               "color: black;"
+                               "background-color: white;"));
+        QLabel* lb_wrn = new QLabel();
+        lb_wrn->setPixmap(this->style()->standardIcon(QStyle::SP_MessageBoxWarning).pixmap(50));
+        QHBoxLayout* mess_lyt = new QHBoxLayout();
+        mess_lyt->addWidget(lb_wrn,0 );
+        mess_lyt->addWidget(mess, 1);
+
+        QPushButton* ok = new QPushButton("&Ok");
+        ok->setIcon(this->style()->standardIcon(QStyle::SP_DialogOkButton));
+        QHBoxLayout* ok_lyt = new QHBoxLayout();
+        ok_lyt->addStretch(1);
+        ok_lyt->addWidget(ok);
+        ok_lyt->addStretch(1);
+
+        QVBoxLayout* lyt = new QVBoxLayout();
+        lyt->addLayout(mess_lyt);
+        lyt->addWidget(wl_mm);
+        lyt->addLayout(ok_lyt);
+
+        QDialog *qd = new QDialog(this);
+        qd->setWindowTitle("Warning !");
+        qd->setWindowIcon(this->style()->standardIcon(QStyle::SP_MessageBoxWarning));
+        qd->setLayout(lyt);
+        connect(ok, SIGNAL(clicked()), qd, SLOT(close()));
+        qd->exec();
     }
 }
 
@@ -762,7 +752,7 @@ void US_ConvertScan::slt_reset_scans(){
     int index = ccwItemList.index.at(row).at(wavl_id);
     scansRange[index][0] = 0;
     scansRange[index][1] = scansRange.at(index).at(2);
-    set_scan_range();
+    set_scan_ct();
     emit sig_plot();
     return;
 }
@@ -776,6 +766,41 @@ void US_ConvertScan::slt_reset_refData(){
     pb_save->setDisabled(true);
     emit sig_plot();
     return;
+}
+
+void US_ConvertScan::slt_load_refScans(void){
+    if (diskDB_ctrl->db()){
+        load_from_DB();
+        return;
+    }else{
+        QString fname;
+        fname = QFileDialog::getOpenFileName( this,
+              tr( "Open Reference Scan File" ),
+              US_Settings::importDir(), tr("*.aucrs"));
+        if (fname.isEmpty()) return;
+        qDebug() << fname;
+        refData.clear();
+        int error = US_RefScanDataIO::readRefData(fname, refData);
+        if (error != US_RefScanDataIO::OK){
+            refData.clear();
+            QString mess = US_RefScanDataIO::errorString(error);
+            le_status->setText(mess);
+        }
+        else{
+            pb_import_refScans->setDisabled(true);
+            pb_reset_refData->setEnabled(true);
+            emit sig_save_button();
+        }
+        QString text("%1 - %2 nm");
+        int nw = refData.nWavelength;
+        double w1 = refData.wavelength.at(0);
+        double w2 = refData.wavelength.at(nw - 1);
+        le_ref_range->setText(text.arg(w1).arg(w2));
+        plot_refscan();
+        plot_absorbance();
+        le_status->clear();
+        return;
+    }
 }
 
 void US_ConvertScan::slt_save_avail(void){
@@ -793,28 +818,11 @@ void US_ConvertScan::slt_save_avail(void){
 }
 
 void US_ConvertScan::slt_save(void){
-    QString runIdOld = le_runIdAbs->text();
-    QString runId(runIdOld);
-    QRegularExpression re;
-    re.setPattern("[^a-zA-Z0-9_-]+");
-    bool flag = false;
-    QRegularExpressionMatch match = re.match(runId);
-    if (match.hasMatch()){
-        runId.replace(re, "");
-        flag = true;
-    }
-    if (flag)
-        QMessageBox::warning( this,
-              tr( "Absorbance RunID Changed" ),
-              tr( "The runID name has been changed. It may consist only"
-                  "of alphanumeric \n"
-                  " characters, the underscore, and the hyphen. New runID: " )
-              + runIdOld );
     QDir dir = QDir(le_dir->text());
-    if (dir.cd(runId)){
+    if (dir.cd(runIdAbs)){
         QString absPath = dir.absolutePath();
         int ck = QMessageBox::question(this, tr( "Warning!" ),
-                                       tr( "Output directory exists!\n" ) + runId +
+                                       tr( "Output directory exists!\n" ) + runIdAbs +
                                        tr( "\n\n Do you really want to replace it?"));
         if (ck == QMessageBox::Yes){
             dir.removeRecursively();
@@ -822,8 +830,8 @@ void US_ConvertScan::slt_save(void){
             dir.setPath(absPath);
         }else return;
     }else{
-        dir.mkdir(runId);
-        dir.cd(runId);
+        dir.mkdir(runIdAbs);
+        dir.cd(runIdAbs);
     }
     dir.makeAbsolute();
     qDebug() << dir.path();
@@ -838,7 +846,8 @@ void US_ConvertScan::slt_save(void){
         rm_buffer = true;
 
     int n = 1;
-    status = tr("Writting: %1 %2");
+    QString status = tr("writting: %1 %2");
+    QString percent;
     QString fileName("%1.RA.%2.%3.%4.auc");
     for (int i = 0; i < nrows; ++i){
         for (int j = 0; j < ccwItemList.n_wl.at(i); ++j){
@@ -879,12 +888,12 @@ void US_ConvertScan::slt_save(void){
             rawData.scanData << absorbance_sel;
             int cell = rawData.cell;
             char channel = rawData.channel;
-            QString fn = fileName.arg(runId).arg(cell).arg(channel).arg(wavelength);
+            QString fn = fileName.arg(runIdAbs).arg(cell).arg(channel).arg(wavelength);
             QFileInfo fileInfo(dir, fn);
             US_DataIO::writeRawData(fileInfo.absoluteFilePath(), rawData);
         }
     }
-    le_status->setText("Done !");
+    le_status->setText("written on the local disk !");
 
     return;
 }
@@ -905,7 +914,23 @@ void US_ConvertScan::slt_update_smooth(double){
     return;
 }
 
-void US_ConvertScan::set_widgetList(){
+void US_ConvertScan::slt_edit_le(QString text){
+    if (text.size() < runIdAbs.size()){
+        runIdAbs = text;
+    }else{
+        QRegExp re( "[^a-zA-Z0-9_-]" );
+        int reIdx = text.indexOf(re, 0);
+        if (reIdx >= 0){
+            le_runIdAbs->setText(runIdAbs);
+            le_runIdAbs->setCursorPosition(reIdx);
+        }else
+            runIdAbs = text;
+    }
+    return;
+}
+
+
+void US_ConvertScan::set_listWidget(){
     lw_triple->disconnect();
     lw_triple->clear();
     if (ccwItemList.size() == 0)
@@ -923,8 +948,14 @@ void US_ConvertScan::set_widgetList(){
     }
     lw_triple->setCurrentRow(0);
     set_buffer_list();
+    int *scp;
+    for (int i = 0; i < scansRange.size(); ++i){
+        scp = scansRange[i].data();
+        scp[0] = 0;
+        scp[1] = scp[2];
+    }
     connect( lw_triple, SIGNAL( currentRowChanged(int) ),
-            this, SLOT( slt_new_lambda_ctrl(int) ) );
+            this, SLOT( slt_wavl_ctrl(int) ) );
     return;
 }
 
@@ -950,18 +981,23 @@ void US_ConvertScan::load_from_DB(){
     if (dbCon->isConnected()){
         QStringList DB  = US_Settings::defaultDB();
         if (DB.isEmpty()){
-            le_status->setText("Database: Undefined");
+            le_status->setText("database: Undefined");
             return;
         }
         else
-            le_status->setText("Database: " + DB.at(3));
-    }else
+            le_status->setText("database: " + DB.at(3));
+    }else{
+        le_status->setText("database connection failed!");
         return;
+    }
 
     LoadDBWidget *db_w = new LoadDBWidget(this, dbCon, refData);
     int state_db = db_w->exec();
-    if (state_db != QDialog::Accepted)
+    if (state_db != QDialog::Accepted){
+        le_status->setText("Load Reference data!");
         return;
+    }else
+        le_status->clear();
     pb_import_refScans->setDisabled(true);
     pb_reset_refData->setEnabled(true);
     emit sig_save_button();
@@ -972,6 +1008,7 @@ void US_ConvertScan::load_from_DB(){
     le_ref_range->setText(text.arg(w1).arg(w2));
     plot_refscan();
     plot_absorbance();
+
     return;
 }
 
@@ -1038,7 +1075,7 @@ void US_ConvertScan::make_ccwItemList(){
     return;
 }
 
-void US_ConvertScan::set_scan_range(){
+void US_ConvertScan::set_scan_ct(){
     ct_scan_l->disconnect();
     ct_scan_u->disconnect();
     int row = lw_triple->currentRow();
@@ -1051,9 +1088,9 @@ void US_ConvertScan::set_scan_range(){
     ct_scan_u->setRange(0, max);
     ct_scan_u->setValue(upper);
     connect(ct_scan_l, SIGNAL(valueChanged(double)),
-            this, SLOT(slt_new_scan_range(double)));
+            this, SLOT(slt_update_scrng(double)));
     connect(ct_scan_u, SIGNAL(valueChanged(double)),
-            this, SLOT(slt_new_scan_range(double)));
+            this, SLOT(slt_update_scrng(double)));
     return;
 }
 
@@ -1130,10 +1167,10 @@ void US_ConvertScan::plot_refscan(void){
     double max_r = qwtplot_insty->axisScaleDiv(QwtPlot::yLeft).upperBound();
 
     if (! get_refId(wavelength.at(wavl_id))){
-        le_status->setText("reference data: not found lambda!");
+        le_status->setText("reference data: wavelength not found !");
         return;
     }
-
+    le_status->clear();
     const double *xp = refData.xValues.data();
     const double *rp = refData.rValues.at(refId).data();
 
@@ -1642,7 +1679,6 @@ QDate LoadDBWidget::str2date(QString date){
     }else
         return QDate();
 }
-
 
 void LoadDBWidget::slt_apply(){
     QTreeWidgetItem *item_inst = tw_instruments->currentItem();
