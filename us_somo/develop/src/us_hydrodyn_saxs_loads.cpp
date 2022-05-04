@@ -915,6 +915,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
    bool save_original_data = false;
    bool run_nnls = false;
    bool run_best_fit = false;
+   bool run_ift      = false;
    QString nnls_target = "";
    if ( !grid_target.isEmpty() )
    {
@@ -938,6 +939,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                                         &save_original_data,
                                         &run_nnls,
                                         &run_best_fit,
+                                        &run_ift,
                                         &nnls_target,
                                         &clear_plot_first,
                                         1 || U_EXPT,
@@ -978,7 +980,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
    // check for scaling target
 
    QString scaling_target = "";
-   if ( qsl_sel_names.size() )
+   if ( qsl_sel_names.size() && !run_ift )
    {
       set_scaling_target( scaling_target );
    }         
@@ -993,6 +995,16 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
       sum_iq[i] = sum_iq2[i] = 0e0;
    }
    
+   // setup for ift
+   if ( run_ift ) {
+      editor_msg( "darkRed", "ift not yet" );
+      ift_to_process = qsl_sel_names;
+      ift_to_process.replaceInStrings( QRegExp( "^\""), "" ).replaceInStrings( QRegExp( "\"$"), "" );
+      QTextStream( stdout ) << "ift_to_process:\n" << ift_to_process.join( "\n" ) << endl;
+      call_ift( true );
+      return;
+   }
+
    // setup for nnls
    if ( run_nnls || run_best_fit )
    {

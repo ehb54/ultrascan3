@@ -954,7 +954,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void update_user_lowI(const QString &);
       void update_user_highI(const QString &);
       void load_gnom();
-      void call_ift();
+      void call_ift( bool rerun = false );
       void saxs_search();
       void saxs_screen();
       void saxs_buffer();

@@ -82,10 +82,9 @@ void US_Hydrodyn_Saxs::editor_msg( const char * color, const char * bgcolor, QSt
 
 // -------------------- IFT ------------------------------
 
-void US_Hydrodyn_Saxs::call_ift()
+void US_Hydrodyn_Saxs::call_ift( bool rerun )
 {
    us_qdebug( "ift()" );
-
    if ( external_running ) {
       US_Static::us_message( us_tr("US-SOMO SAXS IFT"), 
                             QString( us_tr("Please wait until the running job completes" ) ) );
@@ -99,42 +98,49 @@ void US_Hydrodyn_Saxs::call_ift()
    }
 
    // check for zero error data, only add non-zero
-   ift_to_process.clear( );
-   for ( int i = 0; i < (int) qsl_plotted_iq_names.size(); ++i ) {
-      if ( !plotted_iq_names_to_pos.count( qsl_plotted_iq_names[ i ] ) ) {
-         editor_msg( "red", QString( "internal error: no plotted position info for curve %1" ).arg( qsl_plotted_iq_names[ i ] ) );
-         return;
-      }
-
-      int ift_pos = plotted_iq_names_to_pos[ qsl_plotted_iq_names[ i ] ];
-
-      if ( (int) plotted_q.size() <= ift_pos ||
-           (int) plotted_I.size() <= ift_pos ||
-           (int) plotted_I_error.size() <= ift_pos ) {
-         editor_msg( "red", QString( "internal error: no plotted data for curve %1" ).arg( qsl_plotted_iq_names[ i ] ) );
-         return;
-      }
-
-      if ( plotted_I_error[ ift_pos ].size() != plotted_I[ ift_pos ].size() ) {
-         editor_msg( "dark red", QString( us_tr( "Notice: curve %1 skipped as it has no errors" ) ).arg( qsl_plotted_iq_names[ i ] ) );
-         continue;
-      }
-      if ( !US_Saxs_Util::is_nonzero_vector( plotted_I_error[ ift_pos ] ) ) {
-         editor_msg( "dark red", QString( us_tr( "Notice: curve %1 skipped as it has some zero value errors" ) ).arg( qsl_plotted_iq_names[ i ] ) );
-         continue;
-      }
-      ift_to_process << qsl_plotted_iq_names[ i ];
-   }
-
-   if ( !ift_to_process.size() ) {
+   if ( rerun && !ift_to_process.size() ) {
       US_Static::us_message( us_tr("US-SOMO SAXS IFT"), 
-                            QString( us_tr("No I(q) curves with full errors available to process.\nCheck text area for details." ) ) );
+                            QString( us_tr("Nothing selected to process" ) ) );
       return;
    }
+      
+   if ( !rerun ) {
+      ift_to_process.clear( );
+      for ( int i = 0; i < (int) qsl_plotted_iq_names.size(); ++i ) {
+         if ( !plotted_iq_names_to_pos.count( qsl_plotted_iq_names[ i ] ) ) {
+            editor_msg( "red", QString( "internal error: no plotted position info for curve %1" ).arg( qsl_plotted_iq_names[ i ] ) );
+            return;
+         }
 
-   if ( ift_to_process.size() > 1) {
-      bool ok;
-      QString res = US_Static::getItem(
+         int ift_pos = plotted_iq_names_to_pos[ qsl_plotted_iq_names[ i ] ];
+
+         if ( (int) plotted_q.size() <= ift_pos ||
+              (int) plotted_I.size() <= ift_pos ||
+              (int) plotted_I_error.size() <= ift_pos ) {
+            editor_msg( "red", QString( "internal error: no plotted data for curve %1" ).arg( qsl_plotted_iq_names[ i ] ) );
+            return;
+         }
+
+         if ( plotted_I_error[ ift_pos ].size() != plotted_I[ ift_pos ].size() ) {
+            editor_msg( "dark red", QString( us_tr( "Notice: curve %1 skipped as it has no errors" ) ).arg( qsl_plotted_iq_names[ i ] ) );
+            continue;
+         }
+         if ( !US_Saxs_Util::is_nonzero_vector( plotted_I_error[ ift_pos ] ) ) {
+            editor_msg( "dark red", QString( us_tr( "Notice: curve %1 skipped as it has some zero value errors" ) ).arg( qsl_plotted_iq_names[ i ] ) );
+            continue;
+         }
+         ift_to_process << qsl_plotted_iq_names[ i ];
+      }
+
+      if ( !ift_to_process.size() ) {
+         US_Static::us_message( us_tr("US-SOMO SAXS IFT"), 
+                                QString( us_tr("No I(q) curves with full errors available to process.\nCheck text area for details." ) ) );
+         return;
+      }
+
+      if ( ift_to_process.size() > 1) {
+         bool ok;
+         QString res = US_Static::getItem(
                                           us_tr("US-SOMO SAXS IFT")
                                           ,us_tr( "Select the curve you wish to process:" )
                                           ,ift_to_process
@@ -144,11 +150,12 @@ void US_Hydrodyn_Saxs::call_ift()
                                           ,this
                                           );
                                   
-      if ( !ok ) {
-         return;
+         if ( !ok ) {
+            return;
+         }
+         ift_to_process.clear( );
+         ift_to_process << res;
       }
-      ift_to_process.clear( );
-      ift_to_process << res;
    }
 
    // make sure program exists
@@ -209,6 +216,14 @@ void US_Hydrodyn_Saxs::call_ift()
    }
 
    ift_parameters.clear( );
+   if ( rerun ) {
+      ift_parameters[ "rerun" ] = "true";
+      if ( !((US_Hydrodyn *) us_hydrodyn )->overwrite ) {
+         ift_parameters[ "overwriteoff" ] = "true";
+         ((US_Hydrodyn *) us_hydrodyn )->overwrite = true;
+         qDebug() << "****> overwrite on";
+      }
+   }
    ift_last_processed = ift_to_process[ 0 ];
    if ( !plotted_iq_names_to_pos.count( ift_last_processed ) ) {
       editor_msg( "red", QString( "internal error: no plotted position info for curve %1" ).arg( ift_last_processed ) );
@@ -257,6 +272,10 @@ void US_Hydrodyn_Saxs::call_ift()
 void US_Hydrodyn_Saxs::ift_process_next() {
    
    if ( !ift_to_process.size() ) {
+      if ( ift_parameters.count( "overwriteoff" ) && ift_parameters[ "overwriteoff" ] == "true" ) {
+         ((US_Hydrodyn *) us_hydrodyn )->overwrite = false;
+         qDebug() << "****> overwrite off";
+      }
       return;
    }
 
@@ -523,8 +542,9 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
    if ( files.count( caps[ 2 ] ) ) {
       // copy this to our created files
       QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( ift_last_processed ).replace( QRegExp( rxstr ), "_ift.sprr" );
-         
-      dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
+      if ( !((US_Hydrodyn *) us_hydrodyn )->overwrite ) {
+         dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
+      }
       double mw = get_mw( QString( "%1" ).arg( ift_last_processed ).replace( QRegExp( "\\..*$" ), "_ift P(r)" ), false, true );
       QString header =
          QString( "# IFT P(r) from " + ift_last_processed + "%1\nR\tP(r)\tSD\n" )
@@ -548,7 +568,9 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
    if ( files.count( caps[ 0 ] ) ) {
       // copy this to our created files
       QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( ift_last_processed ).replace( QRegExp( rxstr ), "_ift_summary.txt" );
-      dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
+      if ( !((US_Hydrodyn *) us_hydrodyn )->overwrite ) {
+         dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
+      }
       US_File_Util ufu;
       if ( !ufu.copy( files[ caps[ 0 ] ], dest, true ) ) {
          editor_msg( "red", ufu.errormsg );
@@ -561,13 +583,17 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
    if ( files.count( caps[ 4 ] ) ) {
       // copy this to our created files
       QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( ift_last_processed ).replace( QRegExp( rxstr ), "_fit.ssaxs" );
-      dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
+      if ( !((US_Hydrodyn *) us_hydrodyn )->overwrite ) {
+         dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
+      }
       US_File_Util ufu;
       if ( !ufu.copy( files[ caps[ 4 ] ], dest, true, "# IFT I(q) fitting from " + ift_last_processed + "\nq\tI(q)\tSD\n" ) ) {
          editor_msg( "red", ufu.errormsg );
       } else {
          created_files << dest;
-         load_saxs( dest, false, ift_last_processed );
+         if ( !ift_parameters.count( "rerun" ) || ift_parameters[ "rerun" ] != "true" ) {
+            load_saxs( dest, false, ift_last_processed );
+         }
       }
    }
 
