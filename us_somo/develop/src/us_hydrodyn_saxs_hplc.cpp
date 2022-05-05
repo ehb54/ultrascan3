@@ -1543,6 +1543,7 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
                          "int|"
                          "txt|"
                          "csv|"
+                         "sprr|"
                          // "out|"
                          "ssaxs)$" );
 
@@ -1592,7 +1593,8 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
 
    double use_units = ( ( US_Hydrodyn * ) us_hydrodyn )->saxs_options.iq_scale_angstrom ? 1.0 : 0.1;
 
-   if ( ext == "dat" )
+   if ( ext == "dat" ||
+        ext == "sprr" )
    {
       QRegExp rx_conc      ( "Conc:\\s*(\\S+)(\\s|$)" );
       QRegExp rx_psv       ( "PSV:\\s*(\\S+)(\\s|$)" );
