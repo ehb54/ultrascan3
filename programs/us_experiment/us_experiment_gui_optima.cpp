@@ -6837,6 +6837,7 @@ void US_ExperGuiUpload::submitExperiment()
 	   }
 
          protocol_details[ "OptimaName" ]   = rpRotor->instrname;
+	 protocol_details[ "operatorID" ]   = QString::number( rpRotor->operID );
          //protocol_details[ "OptimaName" ]   = mainw->currentInstrument[ "name" ];
       }
       else
@@ -6910,7 +6911,8 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
           << protocol_details[ "invID_passed" ]
           << protocol_details[ "label" ]
           << protocol_details[ "gmpRun" ]
-          << protocol_details[ "aprofileguid" ] ;
+          << protocol_details[ "aprofileguid" ]
+	  << protocol_details[ "operatorID" ];
 
       db->statusQuery( qry );
       //db->query( qry );

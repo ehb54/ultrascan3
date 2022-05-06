@@ -1544,6 +1544,9 @@ void US_InitDialogueGui::initRecordsDialogue( void )
 
   qDebug() << "occupied_instruments.size(), instruments.size()" << occupied_instruments.size() << ", " <<  instruments.size();
   
+
+  //ALEXEY: clear occupied instr. as we decided on queueing...
+  occupied_instruments.clear();
   
   QString autoflow_id_selected("");
   
@@ -1616,7 +1619,7 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   QString filename     = protocol_details[ "filename" ];
   QString aprofileguid = protocol_details[ "aprofileguid" ];
   QString analysisIDs  = protocol_details[ "analysisIDs" ];
-  
+  QString statusID     = protocol_details[ "statusID" ];
   
   QDir directory( currDir );
   
@@ -1628,7 +1631,8 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   qDebug() << "GMP Run ? "      << protocol_details[ "gmpRun" ];
 
   qDebug() << "AnalysisIDs: "   << protocol_details[ "analysisIDs" ];
-  
+  qDebug() << "statusID: "      << protocol_details[ "statusID" ];
+    
     
   if ( stage == "LIVE_UPDATE" )
     {
@@ -1755,6 +1759,8 @@ void US_InitDialogueGui::update_autoflow_data( void )
   // else
   //   pdiag_autoflow->pb_cancel->setEnabled( true );
 
+  //ALEXEY: also always clear occupied_instruments as we decide on queueing...
+  occupied_instruments. clear();
 
   qDebug() << "Define Another Exp. button reset";
 
@@ -1830,6 +1836,22 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
   autoflowdata.clear();
 
   QStringList qry;
+  //Check user level && ID
+  QStringList defaultDB = US_Settings::defaultDB();
+  QString user_guid   = defaultDB.at( 9 );
+  
+  //get personID from personGUID
+  qry.clear();
+  qry << QString( "get_personID_from_GUID" ) << user_guid;
+  dbP->query( qry );
+  
+  int user_id = 0;
+  
+  if ( dbP->next() )
+    user_id = dbP->value( 0 ).toInt();
+    
+  //now look at autpflow runs
+  qry.clear();
   qry << "get_autoflow_desc";
   dbP->query( qry );
 
@@ -1846,8 +1868,13 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
       
       QDateTime time_started     = dbP->value( 11 ).toDateTime().toUTC();
 
+      QString invID              = dbP->value( 12 ).toString();
+      
       QDateTime time_created     = dbP->value( 13 ).toDateTime().toUTC();
       QString gmpRun             = dbP->value( 14 ).toString();
+      QString operatorID         = dbP->value( 16 ).toString();
+
+      qDebug() << "OperatorID -- " << operatorID;
       
       QDateTime local(QDateTime::currentDateTime());
 
@@ -1868,9 +1895,25 @@ int US_InitDialogueGui::list_all_autoflow_records( QList< QStringList >& autoflo
 	status = "LIMS_IMPORT";
       
       autoflowentry << status << gmpRun;
-      
-      autoflowdata  << autoflowentry;
-      nrecs++;
+    
+
+      //Check user level && GUID; if <3, check if the user is operator || investigator
+      if ( US_Settings::us_inv_level() < 3 )
+	{
+	  qDebug() << "User level low: " << US_Settings::us_inv_level();
+	  qDebug() << "user_id, operatorID.toInt(), invID.toInt() -- " << user_id << operatorID.toInt() << invID.toInt();
+
+	  if ( user_id && ( user_id == operatorID.toInt() || user_id == invID.toInt() ) )
+	    {
+	      autoflowdata  << autoflowentry;
+	      nrecs++;
+	    }
+	}
+      else
+	{
+	  autoflowdata  << autoflowentry;
+	  nrecs++;
+	}
     }
 
   return nrecs;
@@ -1956,7 +1999,8 @@ QMap< QString, QString> US_InitDialogueGui::read_autoflow_record( int autoflowID
 	   protocol_details[ "aprofileguid" ]   = db->value( 18 ).toString();
 
 	   protocol_details[ "analysisIDs" ]   = db->value( 19 ).toString();
-	   protocol_details[ "intensityID" ]   = db->value( 20 ).toString();	   
+	   protocol_details[ "intensityID" ]   = db->value( 20 ).toString();
+	   protocol_details[ "statusID" ]      = db->value( 21 ).toString();
 	 }
      }
    else

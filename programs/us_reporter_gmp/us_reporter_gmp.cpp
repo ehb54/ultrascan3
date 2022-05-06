@@ -365,6 +365,7 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   intensityID        = protocol_details[ "intensityID" ];
   AutoflowID_auto    = protocol_details[ "autoflowID" ];
   analysisIDs        = protocol_details[ "analysisIDs" ];
+  autoflowStatusID   = protocol_details[ "statusID" ];
   
   lb_hdr1 ->setText( QString( tr("Report for run: %1") ).arg(FileName) );
   lb_hdr1->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
@@ -959,6 +960,7 @@ void US_ReporterGMP::load_gmp_run ( void )
   FileName           = protocol_details[ "filename" ];
   intensityID        = protocol_details[ "intensityID" ];
   analysisIDs        = protocol_details[ "analysisIDs" ];
+  autoflowStatusID   = protocol_details[ "statusID" ];
   
   progress_msg->setValue( 1 );
   qApp->processEvents();
@@ -1208,6 +1210,8 @@ QMap< QString, QString>  US_ReporterGMP::read_autoflow_record( int autoflowID  )
 
 	   protocol_details[ "analysisIDs" ]    = db->value( 19 ).toString();
 	   protocol_details[ "intensityID" ]    = db->value( 20 ).toString();
+
+	   protocol_details[ "statusID" ]       = db->value( 21 ).toString();
 	   	   
 	 }
      }
@@ -2282,7 +2286,7 @@ void US_ReporterGMP::reset_report_panel ( void )
 void US_ReporterGMP::generate_report( void )
 {
   progress_msg->setWindowTitle(tr("Generating Report"));
-  progress_msg->setLabelText( "Generating report: Part 1..." );
+  progress_msg->setLabelText( "Generating Report: Part 1..." );
   int msg_range = currProto.rpSolut.nschan + 5;
 
   qDebug() << "Generate report: msg_range -- " << msg_range;
@@ -2326,6 +2330,9 @@ void US_ReporterGMP::generate_report( void )
   progress_msg->setValue( ++progress_val );
   qApp->processEvents();
 
+  //here, add info on user interactions at 3.IMPORT && 4.EDIT:
+  assemble_user_inputs_html( );
+  
   progress_msg->setValue( progress_msg->maximum() );
   progress_msg->close();
   qApp->processEvents();
@@ -2657,7 +2664,7 @@ void US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
   progress_msg = new QProgressDialog (QString("Downloading data and models for triple %1...").arg( triplesname ), QString(), 0, 5, this);
   progress_msg->setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
   progress_msg->setWindowModality(Qt::WindowModal);
-  progress_msg->setWindowTitle(tr("Simulating Models"));
+  progress_msg->setWindowTitle(tr("Generating Report: Part 2..."));
   progress_msg->setAutoClose( false );
   progress_msg->setValue( 0 );
   progress_msg->show();
@@ -4113,7 +4120,7 @@ void US_ReporterGMP::show_results( QMap <QString, QString> & tripleInfo )
    //    rbmapd->close();
    // }
 
-   assemble_distrib_html( );
+   assemble_distrib_html( tripleInfo );
 
    //assemble_integration_results_html( );
    
@@ -4334,7 +4341,8 @@ void US_ReporterGMP::plot_pseudo3D( QString triple_name,  QString stage_model)
   sdiag_pseudo3d -> load_distro_auto ( QString::number( invID ), m_t_r_id );
 
   //Replace back for internals
-  t_name. replace( "660", "Interference");
+  if ( triple_name.contains("Interference") )
+    t_name. replace( "660", "Interference");
   
   //here identify what to show:
   bool show_s_ff0  = (perChanMask_edited.ShowTripleModelPseudo3dParts[ t_name ][ stage_model ][ "Pseudo3d s-vs-f/f0 Distribution" ].toInt()) ? true : false ;
@@ -4488,13 +4496,339 @@ if(!usescan) kexcls++;
 }
 
 
+//output HTML string for user interactions
+void  US_ReporterGMP::assemble_user_inputs_html( void )
+{
+  html_assembled += "<p class=\"pagebreak \">\n";
+  html_assembled += "<h2 align=left>User Interactions During Data Saving and Editing</h2>";
+
+  //Maps && timestamps from DB
+  // IMPORT
+  QMap < QString, QString > data_types_import;
+  QMap < QString, QString > data_types_import_ts;
+  QString importRIJson, importIPJson, importRIts, importIPts;
+  //EDITING
+  QMap < QString, QString > data_types_edit;
+  QMap < QString, QString > data_types_edit_ts;
+  QString editRIJson, editIPJson, editRIts, editIPts;
+  
+  // //TEMP: DEBUG
+  // importRIJson =
+  //   "{ \"Person\": [{\"ID\":\"12\",\"fname\":\"Alexey\",\"lname\":\"Savelyev\",\"email\":\"oleksiy.savelyev@umontana.edu\",\"level\":\"4\"}],\"RefScan\": \"automated\"}";
+  // importIPJson =
+  //   "{ \"Person\": [{\"ID\":\"12\",\"fname\":\"Alexey\",\"lname\":\"Savelyev\",\"email\":\"oleksiy.savelyev@umontana.edu\",\"level\":\"4\"}],\"RefScan\": \"manual\"}";
+  // importRIts = "2022-03-29 16:24:36";
+  // importIPts = "2022-03-30 17:24:36";
+
+  // //editing
+  // editRIJson =
+  //   "{ \"Person\": [{\"ID\":\"12\",\"fname\":\"Alexey\",\"lname\":\"Savelyev\",\"email\":\"oleksiy.savelyev@umontana.edu\",\"level\":\"4\"}],\"Meniscus\": [{\"1 / A\":\"automated\",\"1 / B\":\"manual\",\"2 / A\":\"automated\",\"2 / B\":\"automated\", \"3 / A\":\"automated\",\"3 / B\":\"manual\",\"4 / A\":\"automated\",\"4 / B\":\"automated\"}]}";
+  // editIPJson = "{ \"Person\": [{\"ID\":\"12\",\"fname\":\"Alexey\",\"lname\":\"Savelyev\",\"email\":\"oleksiy.savelyev@umontana.edu\",\"level\":\"4\"}],\"Meniscus\": [{\"1 / A\":\"manual\"}]}";
+  // editRIts = "2022-03-29 22:24:36";
+  // editIPts = "2022-03-30 23:26:36";
+  // // END of DEBUG ////////////
+
+
+  //read autoflowStatus record:
+  read_autoflowStatus_record( importRIJson, importRIts, importIPJson, importIPts, editRIJson, editRIts, editIPJson, editIPts ); 
+  /////////////////////////////
+  
+  data_types_import [ "RI" ] = importRIJson;
+  data_types_import [ "IP" ] = importIPJson;
+
+  data_types_import_ts [ "RI" ] = importRIts;
+  data_types_import_ts [ "IP" ] = importIPts;
+  
+  //3. IMPORT
+  html_assembled += tr( "<h3 align=left>Reference Scan Determination, Data Saving (3. IMPORT stage)</h3>" );
+
+  QMap < QString, QString >::iterator im;
+  for ( im = data_types_import.begin(); im != data_types_import.end(); ++im )
+    {
+      QString json_str = im.value();
+
+      if ( json_str.isEmpty() )
+	continue;
+      
+      QString dtype_opt;
+
+      if ( im.key() == "RI" )
+	dtype_opt = "RI (UV/vis.)";
+      if ( im.key() == "IP" )
+	dtype_opt =  "IP (Interf.)";
+      
+      html_assembled += tr("<br>");
+
+      html_assembled += tr(
+			   "<table>"		   
+			   "<tr>"
+			      "<td><b>Data Type, Optics:</b> &nbsp;&nbsp;&nbsp;&nbsp; </td> <td><b>%1</b></td>"
+			   "</tr>"
+			   "</table>"
+			)
+	.arg( dtype_opt )                       //1
+	;
+
+      //Parse Json
+      QMap< QString, QMap < QString, QString > > status_map = parse_autolfowStatus_json( json_str, im.key() );
+      
+      html_assembled += tr(
+			   "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Performed by: </i></b> </caption>"
+			   "</table>"
+			   
+			   "<table style=\"margin-left:25px\">"
+			   "<tr><td>User ID: </td> <td>%1</td>"
+			   "<tr><td>Name: </td><td> %2, %3 </td></tr>"
+			   "<tr><td>E-mail: </td><td> %4 </td> </tr>"
+			   "<tr><td>Level: </td><td> %5 </td></tr>"
+			   "</table>"
+			   )
+	.arg( status_map[ "Person" ][ "ID"] )                       //1
+	.arg( status_map[ "Person" ][ "lname" ] )                   //2
+	.arg( status_map[ "Person" ][ "fname" ] )                   //3
+	.arg( status_map[ "Person" ][ "email" ] )                   //4
+	.arg( status_map[ "Person" ][ "level" ] )                   //5
+	;
+
+      html_assembled += tr(
+			   "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Reference Scan, Data Saving: </i></b> </caption>"
+			   "</table>"
+			   
+			   "<table style=\"margin-left:25px\">"
+			   "<tr>"
+			   "<td> Ref. Scan Method:  %1 </td> "
+			   "<td> Data Saved at:     %2 </td>"
+			   "</tr>"
+			   "</table>"
+			   )
+	.arg( status_map[ "RefScan" ][ "type"] )     //1
+	.arg( data_types_import_ts[ im.key() ] )     //2
+	;
+
+    }
+   
+  html_assembled += tr("<hr>");
+
+  
+  //4. EDITING
+  data_types_edit [ "RI" ] = editRIJson;
+  data_types_edit [ "IP" ] = editIPJson;
+
+  data_types_edit_ts [ "RI" ] = editRIts;
+  data_types_edit_ts [ "IP" ] = editIPts;
+
+  html_assembled += tr( "<h3 align=left>Meniscus Position Determination, Edit Profiles Saving (4. EDITING stage)</h3>" );
+  
+  for ( im = data_types_edit.begin(); im != data_types_edit.end(); ++im )
+    {
+      QString json_str = im.value();
+
+      if ( json_str.isEmpty() )
+	continue;
+      
+      QString dtype_opt;
+
+      if ( im.key() == "RI" )
+	dtype_opt = "RI (UV/vis.)";
+      if ( im.key() == "IP" )
+	dtype_opt =  "IP (Interf.)";
+      
+      html_assembled += tr("<br>");
+
+      html_assembled += tr(
+			   "<table>"		   
+			   "<tr>"
+			      "<td><b>Data Type, Optics:</b> &nbsp;&nbsp;&nbsp;&nbsp; </td> <td><b>%1</b></td>"
+			   "</tr>"
+			   "</table>"
+			)
+	.arg( dtype_opt )                       //1
+	;
+
+      //Parse Json
+      QMap< QString, QMap < QString, QString > > status_map = parse_autolfowStatus_json( json_str, im.key() );
+      
+      html_assembled += tr(
+			   "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Performed by: </i></b> </caption>"
+			   "</table>"
+			   
+			   "<table style=\"margin-left:25px\">"
+			   "<tr><td>User ID: </td> <td>%1</td>"
+			   "<tr><td>Name: </td><td> %2, %3 </td></tr>"
+			   "<tr><td>E-mail: </td><td> %4 </td> </tr>"
+			   "<tr><td>Level: </td><td> %5 </td></tr>"
+			   "</table>"
+			   )
+	.arg( status_map[ "Person" ][ "ID"] )                       //1
+	.arg( status_map[ "Person" ][ "lname" ] )                   //2
+	.arg( status_map[ "Person" ][ "fname" ] )                   //3
+	.arg( status_map[ "Person" ][ "email" ] )                   //4
+	.arg( status_map[ "Person" ][ "level" ] )                   //5
+	;
+
+      //iterate over channels for Meniscus type:
+      html_assembled += tr(
+			   "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Meniscus Position Determination: </i></b> </caption>"
+			   "</table>"
+			   
+			   "<table style=\"margin-left:25px\">"
+			   )
+	;
+      
+      QMap < QString, QString >::iterator mp;
+      for ( mp = status_map[ "Meniscus" ].begin(); mp != status_map[ "Meniscus" ].end(); ++mp )
+	{
+	  html_assembled += tr(
+			       "<tr>"
+			       "<td> Channel:  %1 </td>"
+			       "<td> Type:     %2 </td>"
+			       "</tr>"
+			       )
+	    .arg( mp.key()   )     //1
+	    .arg( mp.value() )     //2
+	    ;
+	}
+      html_assembled += tr( "</table>" );
+
+      //Edit Profiles Saved:
+      html_assembled += tr(
+			   "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Edit Profiles Saved at: </i></b> </caption>"
+			   "</table>"
+			   
+			   "<table style=\"margin-left:25px\">"
+			   "<tr><td> %1 </td>"
+			   "</table>"
+			   )
+	.arg( data_types_edit_ts[ im.key() ] )           //1
+	;
+
+    }
+   
+  html_assembled += tr("<hr>");
+  
+  //
+  html_assembled += "</p>\n";
+}
+
+//read autoflowStatus, populate internals
+void US_ReporterGMP::read_autoflowStatus_record( QString& importRIJson, QString& importRIts, QString& importIPJson, QString& importIPts,
+						 QString& editRIJson, QString& editRIts, QString& editIPJson, QString& editIPts )
+{
+  importRIJson.clear();
+  importRIts  .clear();
+  importIPJson.clear();
+  importIPts  .clear();
+  editRIJson  .clear();
+  editRIts    .clear();
+  editIPJson  .clear();
+  editIPts    .clear();
+
+  US_Passwd pw;
+  US_DB2    db( pw.getPasswd() );
+
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem: Read autoflowStatus" ),
+			    tr( "Could not connect to database \n" ) +  db.lastError() );
+      return;
+    }
+
+  QStringList qry;
+  qry << "read_autoflow_status_record" << autoflowStatusID;
+
+  db.query( qry );
+
+  if ( db.lastErrno() == US_DB2::OK )    
+    {
+      while ( db.next() )
+	{
+	  importRIJson  = db.value( 0 ).toString();
+	  importRIts    = db.value( 1 ).toString();
+	  importIPJson  = db.value( 2 ).toString();
+	  importIPts    = db.value( 3 ).toString();
+
+	  editRIJson    = db.value( 4 ).toString();
+	  editRIts      = db.value( 5 ).toString();
+	  editIPJson    = db.value( 6 ).toString();
+	  editIPts      = db.value( 7 ).toString();
+	}
+    }
+}
+
+//Parse autoflowStatus RI/IP Json
+QMap< QString, QMap < QString, QString > > US_ReporterGMP::parse_autolfowStatus_json( QString statusJson, QString dtype )
+{
+  QMap< QString, QMap <QString, QString> > status_map;
+
+  QJsonDocument jsonDoc = QJsonDocument::fromJson( statusJson.toUtf8() );
+  QJsonObject json_obj = jsonDoc.object();
+  
+  foreach(const QString& key, json_obj.keys())
+    {
+      QJsonValue value = json_obj.value(key);
+      
+      qDebug() << "statusJson key, value: " << key << value;
+      
+      if ( key == "Person" )  //import || edit
+	{	  
+	  QJsonArray json_array = value.toArray();
+	  QMap< QString, QString > person_map;
+	  
+	  for (int i=0; i < json_array.size(); ++i )
+	    {
+	      foreach(const QString& array_key, json_array[i].toObject().keys())
+		{
+		  person_map[ array_key ] = json_array[i].toObject().value(array_key).toString();
+		  qDebug() << "Person Map: -- key, value: "
+			   << array_key
+			   << json_array[i].toObject().value(array_key).toString();
+		}
+	    }
+
+	  status_map[ key ] = person_map;
+	}
+
+      if ( key == "RefScan" )    //import: Ref. scan
+	{
+	  status_map[ key ][ "type" ] = value.toString();
+	}
+
+      if ( key == "Meniscus" )   //edit  
+	{	  
+	  QJsonArray json_array = value.toArray();
+	  QMap< QString, QString > meniscus_map;
+	  
+	  for (int i=0; i < json_array.size(); ++i )
+	    {
+	      foreach(const QString& array_key, json_array[i].toObject().keys())
+		{
+		  meniscus_map[ array_key ] = json_array[i].toObject().value(array_key).toString();
+		  qDebug() << "Meniscus Map: -- key, value: "
+			   << array_key
+			   << json_array[i].toObject().value(array_key).toString();
+		}
+	    }
+
+	  status_map[ key ] = meniscus_map;
+	}
+      
+    }
+  
+  return status_map;
+}
+
 //output HTML string for Distributions for current triple:
-void  US_ReporterGMP::assemble_distrib_html( void )
+void  US_ReporterGMP::assemble_distrib_html( QMap < QString, QString> & tripleInfo )
 {
   //QString html_distibutions = distrib_info();
   html_assembled += "<p class=\"pagebreak \">\n";
   html_assembled += html_header( "US_Fematch", text_model( model, 2 ), edata );
-  html_assembled += distrib_info();
+  html_assembled += distrib_info( tripleInfo );
   html_assembled += "</p>\n";
 }
 
@@ -4679,7 +5013,7 @@ QString US_ReporterGMP::html_header( QString title, QString head1,
 
 
 // Distribution information HTML string
-QString US_ReporterGMP::distrib_info()
+QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 {
    int  ncomp     = model_used.components.size();
    double vari_m  = model_used.variance;
@@ -4943,8 +5277,17 @@ QString US_ReporterGMP::distrib_info()
      {
        QString channel_desc_alt = chndescs_alt[ i ];
 
-       if ( t_name. contains( channel_desc_alt.split(":")[0] ) )
+       qDebug() << "Identifying report for triple -- " << t_name   // 2A660
+		<< ", tripleInfo:  "                   << tripleInfo[ "triple_name" ]                     // 2AInterference
+		<< ", channel_desc_alt: "              << channel_desc_alt;
+
+       if ( tripleInfo[ "triple_name" ].contains("Interference") && !channel_desc_alt.contains("Interf") )
+	 continue;
+	 
+       if ( t_name. contains( channel_desc_alt.split(":")[0] ) )  //ALEXEY: not enought for both RI + IP !!! t_name = '2A660' OR '2A280'
 	 {
+	   qDebug() << "So, what are channel_desc_alt, wvl ? " << channel_desc_alt << wvl;
+	     
 	   reportGMP = ch_reports[ channel_desc_alt ][ wvl ];
 
 	   tot_conc_r     = reportGMP.tot_conc ;
@@ -4995,7 +5338,10 @@ QString US_ReporterGMP::distrib_info()
    //end passes
 
    //check what to show on the report
-   QMap < QString, QString > Model_parms_to_compare = perChanMask_edited.ShowTripleModelParts[ t_name ][ model_name ];
+   if ( tripleInfo[ "triple_name" ].contains("Interference") )
+     t_name.replace("660", "Interference");
+   
+   QMap < QString, QString > Model_parms_to_compare = perChanMask_edited.ShowTripleModelParts[ t_name ][ model_name ]; //2A660 => 2AInterference, 
    bool show_tot_conc = false;
    bool show_rmsd     = false;
    bool show_exp_dur  = false;
