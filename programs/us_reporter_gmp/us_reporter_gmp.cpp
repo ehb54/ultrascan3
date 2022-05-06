@@ -5277,9 +5277,13 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
      {
        QString channel_desc_alt = chndescs_alt[ i ];
 
-       qDebug() << "Identifying report for triple -- " << t_name
-		<< ", channel_desc_alt: " << channel_desc_alt;
+       qDebug() << "Identifying report for triple -- " << t_name   // 2A660
+		<< ", tripleInfo:  "                   << tripleInfo[ "triple_name" ]                     // 2AInterference
+		<< ", channel_desc_alt: "              << channel_desc_alt;
 
+       if ( tripleInfo[ "triple_name" ].contains("Interference") && !channel_desc_alt.contains("Interf") )
+	 continue;
+	 
        if ( t_name. contains( channel_desc_alt.split(":")[0] ) )  //ALEXEY: not enought for both RI + IP !!! t_name = '2A660' OR '2A280'
 	 {
 	   qDebug() << "So, what are channel_desc_alt, wvl ? " << channel_desc_alt << wvl;
