@@ -679,7 +679,12 @@ pb_plateau->setVisible(false);
    // details[ "invID_passed" ] = QString("77");
    // details[ "filename" ]     = QString("Johnson_C_EWS_10uM_20uM_NaPi_MES_01-13-22-run1242");
    // details[ "protocolName" ] = QString("Johnson_C_EWS_10uM_20uM_NaPi_MES_01-13-22");
- 
+
+
+   // //Borries: combined RI + IP run
+   // details[ "invID_passed" ] = QString("2");
+   // details[ "filename" ]     = QString("MW-AUC-IF_test_031622-run1270-IP,MW-AUC-IF_test_031622-run1270-RI");
+   // details[ "protocolName" ] = QString("MW-AUC-IF_test_031622");
    
    // load_auto( details );
    
@@ -8150,16 +8155,16 @@ void US_Edit::write_auto( void )
     {
 
       QMessageBox::information( this,
-				tr( "The Program State Updated / Being Updated" ),
-				tr( "The program advanced or is advancing to the next stage!\n\n"
-				    "This happened because you or different user "
-				    "has already saved edit profiles into DB using different program "
-				    "session and the program is proceeding to the next stage. \n\n"
-				    "The program will return to the autoflow runs dialog where "
-				    "you can re-attach to the actual current stage of the run. "
-				    "Please allow some time for the status to be updated.") );
-      
-      
+  				tr( "The Program State Updated / Being Updated" ),
+  				tr( "The program advanced or is advancing to the next stage!\n\n"
+  				    "This happened because you or different user "
+  				    "has already saved edit profiles into DB using different program "
+  				    "session and the program is proceeding to the next stage. \n\n"
+  				    "The program will return to the autoflow runs dialog where "
+  				    "you can re-attach to the actual current stage of the run. "
+  				    "Please allow some time for the status to be updated.") );
+   
+   
       reset();
       emit back_to_initAutoflow( );
       return;

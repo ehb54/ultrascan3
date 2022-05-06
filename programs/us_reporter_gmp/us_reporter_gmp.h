@@ -428,7 +428,7 @@ class US_ReporterGMP : public US_Widgets
 	 
 	 QString text_model(     US_Model, int );
 	 QString html_header   ( QString, QString, US_DataIO::EditedData* );
-	 QString distrib_info( void );
+	 QString distrib_info( QMap < QString, QString > & );
 	 //QString integration_info( void );
 	 
 	 QString get_filename( QString );
@@ -460,7 +460,7 @@ class US_ReporterGMP : public US_Widgets
 
 	void show_results   ( QMap < QString, QString > & );
 	void calc_residuals( void );
-	void assemble_distrib_html( void );
+	void assemble_distrib_html(  QMap < QString, QString > &  );
 	//void assemble_integration_results_html( void );
 	void assemble_plots_html( QStringList );
 	double  interp_sval( double, double*, double*,  int );
