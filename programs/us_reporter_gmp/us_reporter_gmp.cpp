@@ -5277,8 +5277,13 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
      {
        QString channel_desc_alt = chndescs_alt[ i ];
 
-       if ( t_name. contains( channel_desc_alt.split(":")[0] ) )
+       qDebug() << "Identifying report for triple -- " << t_name
+		<< ", channel_desc_alt: " << channel_desc_alt;
+
+       if ( t_name. contains( channel_desc_alt.split(":")[0] ) )  //ALEXEY: not enought for both RI + IP !!! t_name = '2A660' OR '2A280'
 	 {
+	   qDebug() << "So, what are channel_desc_alt, wvl ? " << channel_desc_alt << wvl;
+	     
 	   reportGMP = ch_reports[ channel_desc_alt ][ wvl ];
 
 	   tot_conc_r     = reportGMP.tot_conc ;
@@ -5332,7 +5337,7 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
    if ( tripleInfo[ "triple_name" ].contains("Interference") )
      t_name.replace("660", "Interference");
    
-   QMap < QString, QString > Model_parms_to_compare = perChanMask_edited.ShowTripleModelParts[ t_name ][ model_name ]; //2A660, 
+   QMap < QString, QString > Model_parms_to_compare = perChanMask_edited.ShowTripleModelParts[ t_name ][ model_name ]; //2A660 => 2AInterference, 
    bool show_tot_conc = false;
    bool show_rmsd     = false;
    bool show_exp_dur  = false;
