@@ -1590,6 +1590,9 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
      QString dataType = QString( chtype ).left( 2 );
      qDebug() << "Data type -- " << dataType;
 
+     if ( dataType == "IP" )
+       auto_ref_scan = false;
+
      //TEMPORARY !!!!
      if ( dataType == "RI" )
        {
@@ -1719,6 +1722,10 @@ void US_ConvertGui::process_optics()
      strncpy( chtype, allData[ 0 ].type, 2 );
      QString dataType = QString( chtype ).left( 2 );
      qDebug() << "Data type -- " << dataType;
+
+     if ( dataType == "IP" )
+       auto_ref_scan = false;
+     
      if ( dataType == "RI" )
        {
 	 double low_ref  = 5.87 - 0.005;
@@ -6687,6 +6694,8 @@ void US_ConvertGui::record_import_status( bool auto_ref, QString runtype )
 
   if ( runtype == "IP" )
     {
+      QString refScan = auto_ref ? QString("automated") : QString("manual");
+      
       importIP_Json. clear();
       importIP_Json += "{ \"Person\": ";
 
@@ -6696,7 +6705,9 @@ void US_ConvertGui::record_import_status( bool auto_ref, QString runtype )
       importIP_Json += "\"lname\":\""  + lname                     + "\",";
       importIP_Json += "\"email\":\""  + email                     + "\",";
       importIP_Json += "\"level\":\""  + QString::number( level )  + "\"";
-      importIP_Json += "}]";
+      importIP_Json += "}],";
+
+      importIP_Json += "\"RefScan\": \"" + refScan + "\"";
       
       importIP_Json += "}";
       
