@@ -11,6 +11,7 @@
 #include "us_passwd.h"
 #include "us_images.h"
 #include "us_util.h"
+#include "us_math2.h"
 //#include "us_defines.h"
 //#include "us_extern.h"
 //#include "us_help.h"
@@ -179,7 +180,7 @@ private:
     void set_buffer_list(void);
     void get_relative_absorbance(int);
     void trim_absorbance(void);
-    QVector<double> get_smooth(QVector<double>, int);
+    QVector<double> get_smooth(QVector<double>, int, bool);
     void load_from_DB(void);
 };
 

@@ -86,7 +86,7 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     QLabel* lb_ref_range = us_label(ref_range.arg(QChar(955)));
     le_ref_range = us_lineedit("");
     le_ref_range->setReadOnly(true);
-    QLabel *lb_smooth = us_label("Smoothing Level:");
+    QLabel *lb_smooth = us_label("Smooth Buffer:");
     ct_smooth = us_counter(1, 0, 10, 5);
     ct_smooth->setSingleStep(1);
     QHBoxLayout *ref_range_lyt = new QHBoxLayout();
@@ -109,12 +109,12 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     buffer_lyt->addWidget(cb_buffer);
 
     ckb_zeroing = new QCheckBox();
-    QGridLayout *us_zeroing = us_checkbox("Shift Minimum to Zero",
+    QGridLayout *us_zeroing = us_checkbox("Shift to Zero",
                                                 ckb_zeroing);
     ckb_xrange = new QCheckBox();
     QGridLayout *us_xrange = us_checkbox("Specify a Range",
                                                 ckb_xrange);
-    pb_pick_rp = us_pushbutton("Pick Points", false);
+    pb_pick_rp = us_pushbutton("Pick Two Radial Points", false);
     QHBoxLayout *ckb_lyt = new QHBoxLayout();
     ckb_lyt->addLayout(us_zeroing);
     ckb_lyt->addLayout(us_xrange);
@@ -1395,10 +1395,10 @@ void US_ConvertScan::get_relative_absorbance(int bufferId){
         return;
     }
     int smooth_l = ct_smooth->value();
-    if (smooth_l > 0){
+    if (smooth_l > 1){
         for (int i = 0; i < absorbanceBuffer.size(); ++i){
             QVector<double> rval =  absorbanceBuffer.at(i).rvalues;
-            QVector<double> rval_s = get_smooth(rval, smooth_l);
+            QVector<double> rval_s = get_smooth(rval, smooth_l, true);
             absorbanceBuffer[i].rvalues.clear();
             absorbanceBuffer[i].rvalues << rval_s;
         }
@@ -1457,52 +1457,58 @@ void US_ConvertScan::trim_absorbance(){
         if (id_max == -1)
             id_max = xvalues.size();
     }
+    double min_r = 1e20;
     for (int i = 0; i < absorbance.size(); ++i){
         int np = absorbance.at(i).rvalues.size();
         double *rp = absorbance[i].rvalues.data();
-        double min_r =  1e20;
-        if (zeroing)
-            for (int j = id_min; j < id_max; ++j)
-                min_r = qMin(min_r, rp[j]);
-        else min_r = 0;
         for (int j = 0; j < np; ++j){
             if (j < id_min || j > id_max)
                 rp[j] = 0;
-            else
+            else if (zeroing)
+                min_r = qMin(min_r, rp[j]);
+        }
+    }
+    if (zeroing){
+        for (int i = 0; i < absorbance.size(); ++i){
+            double *rp = absorbance[i].rvalues.data();
+            for (int j = id_min; j < id_max; ++j)
                 rp[j] -= min_r;
         }
     }
-
     return;
 }
 
-QVector<double> US_ConvertScan::get_smooth(QVector<double> values, int winlen){
-    int np = values.size();
-    QVector<double> values_smooth(np, 0);
-    const double *rp = values.data();
-    double *rsp = values_smooth.data();
-    int N = 2 * winlen + 1;
-    for (int i = 0; i < np; ++i){
-        if (i < winlen || (np - i - 1) < winlen){
-            rsp[i] = rp[i];
-            continue;
-        }
-        bool flag = true;
-        double yy = 0;
-        for (int j = -winlen; j <= winlen; ++j){
-            yy += rp[i + j];
-            if (rp[i + j] > (maxAbs - 0.1)){
-                flag = false;
+QVector<double> US_ConvertScan::get_smooth(QVector<double> array, int winlen, bool ave){
+    if (ave){
+        int np = array.size();
+        QVector<double> array_s(np, 0);
+        const double *rp = array.data();
+        double *rsp = array_s.data();
+        int N = 2 * winlen + 1;
+        for (int i = 0; i < np; ++i){
+            if (i < winlen || (np - i - 1) < winlen){
                 rsp[i] = rp[i];
-                break;
+                continue;
+            }
+            bool flag = true;
+            double yy = 0;
+            for (int j = -winlen; j <= winlen; ++j){
+                yy += rp[i + j];
+                if (rp[i + j] > (maxAbs - 0.1)){
+                    flag = false;
+                    rsp[i] = rp[i];
+                    break;
+                }
+            }
+            if (flag){
+                yy /= N;
+                rsp[i] = yy;
             }
         }
-        if (flag){
-            yy /= N;
-            rsp[i] = yy;
-        }
+        return array_s;
     }
-    return values_smooth;
+    US_Math2::gaussian_smoothing(array, winlen);
+    return array;
 }
 
 ////
