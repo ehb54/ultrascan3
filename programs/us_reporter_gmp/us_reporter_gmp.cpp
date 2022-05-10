@@ -4120,7 +4120,7 @@ void US_ReporterGMP::show_results( QMap <QString, QString> & tripleInfo )
    //    rbmapd->close();
    // }
 
-   assemble_distrib_html( );
+   assemble_distrib_html( tripleInfo );
 
    //assemble_integration_results_html( );
    
@@ -4341,7 +4341,8 @@ void US_ReporterGMP::plot_pseudo3D( QString triple_name,  QString stage_model)
   sdiag_pseudo3d -> load_distro_auto ( QString::number( invID ), m_t_r_id );
 
   //Replace back for internals
-  t_name. replace( "660", "Interference");
+  if ( triple_name.contains("Interference") )
+    t_name. replace( "660", "Interference");
   
   //here identify what to show:
   bool show_s_ff0  = (perChanMask_edited.ShowTripleModelPseudo3dParts[ t_name ][ stage_model ][ "Pseudo3d s-vs-f/f0 Distribution" ].toInt()) ? true : false ;
@@ -4822,12 +4823,12 @@ QMap< QString, QMap < QString, QString > > US_ReporterGMP::parse_autolfowStatus_
 }
 
 //output HTML string for Distributions for current triple:
-void  US_ReporterGMP::assemble_distrib_html( void )
+void  US_ReporterGMP::assemble_distrib_html( QMap < QString, QString> & tripleInfo )
 {
   //QString html_distibutions = distrib_info();
   html_assembled += "<p class=\"pagebreak \">\n";
   html_assembled += html_header( "US_Fematch", text_model( model, 2 ), edata );
-  html_assembled += distrib_info();
+  html_assembled += distrib_info( tripleInfo );
   html_assembled += "</p>\n";
 }
 
@@ -5012,7 +5013,7 @@ QString US_ReporterGMP::html_header( QString title, QString head1,
 
 
 // Distribution information HTML string
-QString US_ReporterGMP::distrib_info()
+QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 {
    int  ncomp     = model_used.components.size();
    double vari_m  = model_used.variance;
@@ -5276,8 +5277,17 @@ QString US_ReporterGMP::distrib_info()
      {
        QString channel_desc_alt = chndescs_alt[ i ];
 
-       if ( t_name. contains( channel_desc_alt.split(":")[0] ) )
+       qDebug() << "Identifying report for triple -- " << t_name   // 2A660
+		<< ", tripleInfo:  "                   << tripleInfo[ "triple_name" ]                     // 2AInterference
+		<< ", channel_desc_alt: "              << channel_desc_alt;
+
+       if ( tripleInfo[ "triple_name" ].contains("Interference") && !channel_desc_alt.contains("Interf") )
+	 continue;
+	 
+       if ( t_name. contains( channel_desc_alt.split(":")[0] ) )  //ALEXEY: not enought for both RI + IP !!! t_name = '2A660' OR '2A280'
 	 {
+	   qDebug() << "So, what are channel_desc_alt, wvl ? " << channel_desc_alt << wvl;
+	     
 	   reportGMP = ch_reports[ channel_desc_alt ][ wvl ];
 
 	   tot_conc_r     = reportGMP.tot_conc ;
@@ -5328,7 +5338,10 @@ QString US_ReporterGMP::distrib_info()
    //end passes
 
    //check what to show on the report
-   QMap < QString, QString > Model_parms_to_compare = perChanMask_edited.ShowTripleModelParts[ t_name ][ model_name ];
+   if ( tripleInfo[ "triple_name" ].contains("Interference") )
+     t_name.replace("660", "Interference");
+   
+   QMap < QString, QString > Model_parms_to_compare = perChanMask_edited.ShowTripleModelParts[ t_name ][ model_name ]; //2A660 => 2AInterference, 
    bool show_tot_conc = false;
    bool show_rmsd     = false;
    bool show_exp_dur  = false;
