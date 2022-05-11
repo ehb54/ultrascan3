@@ -61,10 +61,14 @@ void US_Hydrodyn::gui_script_run() {
       }
 
       QString cmd = ls.front(); ls.pop_front();
-
+      
       if ( cmd == "exit" ) {
          gui_script_msg( i, cmd, "exiting normally" );
          exit( 0 );
+      } else if ( cmd == "expert" ) {
+         advanced_config.expert_mode = true;
+      } else if ( cmd == "norasmol" ) {
+         advanced_config.auto_view_pdb = false;
       } else if ( cmd == "threads" ) {
          if ( ls.isEmpty() ) {
             gui_script_error( i, cmd, "missing argument" );
@@ -97,8 +101,23 @@ void US_Hydrodyn::gui_script_run() {
          }
          QString opt1 = ls.front(); ls.pop_front();
          gui_script_msg( i, cmd, opt1 );
-         cb_overwrite->setChecked( true );
-         set_overwrite();
+         if ( opt1 == "overwrite" ) {
+            cb_overwrite->setChecked( true );
+            set_overwrite();
+         } else if ( opt1 == "saveloadstats" ) {
+            TSO << "yes, saveloadstats\n";
+            if ( ls.isEmpty() ) {
+               gui_script_error( i, cmd + " " + opt1, "missing argument" );
+            }
+            QString opt2 = ls.front(); ls.pop_front();
+            TSO << "yes, opt2 " + opt2 + "\n";
+            if ( !model_summary_csv( opt2 ) ) {
+               gui_script_error( i, cmd + " " + opt1 + " " + opt2, "failed" );
+            }               
+            TSO << "model_summary_csv returned ok\n";
+         } else {
+            gui_script_error( i, cmd, "unknown option : " + opt1 );
+         }
       } else if ( cmd == "batch" ) {
          if ( ls.isEmpty() ) {
             gui_script_error( i, cmd, "missing argument" );
@@ -171,6 +190,8 @@ void US_Hydrodyn::gui_script_run() {
             batch_window->start();
          } else if ( opt1 == "overwrite" ) {
             batch_window->overwrite_all = true;
+         } else if ( opt1 == "load" ) {
+            batch_window->load_somo();
          } else {
             gui_script_error( i, cmd, "unknown option : " + opt1 );
          }

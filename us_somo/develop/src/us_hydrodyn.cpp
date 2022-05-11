@@ -3024,7 +3024,7 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb, bool skipcleari
    le_bead_model_suffix->setText( bead_model_suffix );
 
 #if defined(START_RASMOL)
-   if ( display_pdb ) {
+   if ( display_pdb && advanced_config.auto_view_pdb ) {
       model_viewer( filename );
    }
 #endif

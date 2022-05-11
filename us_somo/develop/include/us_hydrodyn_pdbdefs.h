@@ -185,6 +185,7 @@ struct PDB_model
    float ionized_mw_delta;     
    float volume;
    double hydration;                        // number of waters assigned
+   double hydration_gg;                     // hydration g/g
    double molar_volume;                     // mv of model
    int   num_elect;                         // number of electrons
    int   num_SS_bonds;                      // number of SS bonds

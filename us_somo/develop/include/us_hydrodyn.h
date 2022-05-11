@@ -302,6 +302,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       double compute_isoelectric_point( const struct PDB_model & model );
 
       QString model_summary_msg( const QString &msg, struct PDB_model *model );    // summary info about model
+      bool model_summary_csv( struct PDB_model *model, const QString & filename = "model_load_summary.csv" ); 
+      bool model_summary_csv( const QString & filename = "model_load_summary.csv" ); 
       double tc_vbar( double vbar );                           // temperature corrected vbar
       QString pH_msg();                                        // vbar message
       QString vbar_msg( double vbar, bool only_used = false ); // vbar message
