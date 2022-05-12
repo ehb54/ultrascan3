@@ -115,6 +115,12 @@ DbgLv(1) << "  irow" << irow << "icol" << icol;
       }
    }
 
+   QLabel* lb_fit_dev = us_label("RMSD of Species Fit:");
+   le_fit_dev = us_lineedit("", -1, true);
+   row       = controlsLayout->rowCount() + 1;
+   controlsLayout->addWidget(lb_fit_dev, row, 0, 1, 1);
+   controlsLayout->addWidget(le_fit_dev, row, 1, 1, 1);
+
    data_plot1->setTitle( tr( "Output Data Set" ) );
    data_plot2->setTitle( tr( "Input Data Set" ) );
    data_plot1->setMinimumSize( 600, 300 );
@@ -636,12 +642,15 @@ DbgLv(1) << "  trip" << ii << "noise subtraction  noisf" << noisf
                      + fwvln + "-" + lwvln;
       lw_triples->addItem( triple );
    }
+   synFitDev.clear();
+   synFitDev.resize( celchns.count() );
 
    connect( lw_triples, SIGNAL( currentRowChanged( int ) ),
                         SLOT  ( new_triple       ( int ) ) );
    lw_triples->setCurrentRow( 0 );
 
    pb_loadsfit->setEnabled( true );
+
 }
 
 // Load species vector files
@@ -969,12 +978,17 @@ QDateTime time2=QDateTime::currentDateTime();
    int narows     = klambda;
 DbgLv(1) << "sfd: narows kscan inclsize" << narows << kscan << inclscns.size();
 
+   synFitDev[ccx].clear();
+   synFitDev[ccx].lambdas << lambdas;
+   QVector< QVector< QVector < double > > > dev_scrpwl;
    for ( int ii = 0; ii < kscan; ii++ )
    {  // Loop through non-excluded scans
       int js         = inclscns[ ii ];
       int jr         = radxs;
 DbgLv(1) << "sfd: sc" << ii << "js jr" << js << jr;
 
+      synFitDev[ccx].inclscns << js;
+      QVector< QVector < double > > dev_rpwl;
       for ( int jj = krpad; jj < kradp; jj++, jr++ )
       {  // Loop through radius values
          int trx        = trpxs + lmbxs;
@@ -987,9 +1001,12 @@ DbgLv(1) << "sfd: sc" << ii << "js jr" << js << jr;
          }
 DbgLv(1) << "sfd: NNLS b:" << nnls_b[0] << nnls_b[klambda-1];
 
+         QVector< double > sv_nnls_b = nnls_b;
+         double rnorm;
+
          // Fit using NNLS to compute X value for each species
          US_Math2::nnls( nnls_a.data(), narows, narows, nspecies,
-                         nnls_b.data(), nnls_x.data() );
+                         nnls_b.data(), nnls_x.data(), &rnorm );
 DbgLv(1) << "sfd:  NNLS  ii jj kl" << ii << jj << klambda
  << " x:" << nnls_x[0] << nnls_x[nspecies-1];
 
@@ -999,8 +1016,30 @@ DbgLv(1) << "sfd:  NNLS  ii jj kl" << ii << jj << klambda
          {
             synData[ kd ].setValue( ii, jj, nnls_x[ mm ] );
          }
+
+         // Compute deviation from B for each wavelength
+         int cntr = 0;
+         double rnorm_c = 0;
+         QVector< double > dev_wl(klambda);
+         for (int kk = 0; kk < klambda; kk++){
+             double ax = 0;
+             for (int mm = 0; mm < nspecies; mm++){
+                 int ndx_a = cntr + mm * narows;
+                 ax += sv_nnls_a.at(ndx_a) * nnls_x.at(mm);
+             }
+             double dev = qPow(ax - sv_nnls_b.at(kk), 2);
+             dev_wl[kk] = dev;
+             rnorm_c += dev;
+             cntr++;
+         }
+         dev_rpwl << dev_wl;
+DbgLv(1) << "sfd:  NNLS rnorm cmp_rnorm" << rnorm << qSqrt(rnorm_c);
       }
+      dev_scrpwl << dev_rpwl;
    }
+   synFitDev[ccx].dev_scrpwl << dev_scrpwl;
+   synFitDev[ccx].calc_rmsd();
+
 QDateTime time3=QDateTime::currentDateTime();
 nnls_a=sv_nnls_a;
 int ja=nnls_a.count()-1;
@@ -1086,6 +1125,7 @@ msg+=tr("\n time9-0: %1").arg(time0.msecsTo(time9))+" ms  (All Fit Steps)";
    jspec            = ccx * nspecies;
 
    plot_data1();
+   set_le_fit_dev();
 }
 
 void US_MwlSpeciesFit::new_triple( const int ccx )
@@ -1102,6 +1142,7 @@ void US_MwlSpeciesFit::new_triple( const int ccx )
    // Make sure we have a reports directory for this runID
    QDir dir;
    if ( ! dir.exists( repdir ) )  dir.mkpath( repdir );
+   set_le_fit_dev();
 }
 
 int US_MwlSpeciesFit::triple_index( const int ccx )
@@ -1203,3 +1244,44 @@ DbgLv(1) << "NextPlot: nspecies ltspec jspec" << nspecies << ltspec << jspec;
    plot_data1();
 }
 
+void US_MwlSpeciesFit::set_le_fit_dev(){
+    le_fit_dev->clear();
+    int ccx = lw_triples->currentRow();
+    FitDev fit_dev = synFitDev.at(ccx);
+    if (fit_dev.rmsd_sc.size() == 0)
+        return;
+    double dev = 0;
+    for (int i = 0; i < fit_dev.rmsd_sc.size(); ++i)
+        dev += fit_dev.rmsd_sc.at(i);
+    dev /= fit_dev.rmsd_sc.size();
+    le_fit_dev->setText(QString::number(dev, 'f', 6));
+}
+
+void US_MwlSpeciesFit::FitDev::clear(){
+    lambdas.clear();
+    dev_scrpwl.clear();
+    rmsd_sc.clear();
+}
+
+void US_MwlSpeciesFit::FitDev::calc_rmsd(){
+    if (dev_scrpwl.size() == 0)
+        return;
+    rmsd_sc.clear();
+    int nscans = dev_scrpwl.size();
+    rmsd_sc.fill(0, nscans);
+    for (int i = 0; i < nscans; ++i){
+        int npoints = dev_scrpwl.at(i).size();
+        double rmsd_rp = 0;
+        for (int j = 0; j < npoints; ++j){
+            int nwl = dev_scrpwl.at(i).at(j).size();
+            double rmsd_wl = 0;
+            for (int k = 0; k < nwl; ++k){
+                rmsd_wl += dev_scrpwl.at(i).at(j).at(k);
+            }
+            rmsd_wl /= nwl;
+            rmsd_rp += rmsd_wl;
+        }
+        rmsd_rp /= npoints;
+        rmsd_sc[i] = rmsd_rp;
+    }
+}

@@ -51,7 +51,22 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
       QPushButton*  pb_prev;
       QPushButton*  pb_next;
 
+      QLineEdit* le_fit_dev;
+
+      class FitDev {
+      public:
+          QVector< int > lambdas;
+          QVector< int > inclscns;
+          QVector< QVector< QVector < double > > > dev_scrpwl;
+          QVector< double > rmsd_sc;
+          void clear(void);
+          void calc_rmsd(void);
+
+      };
+      QVector< FitDev >  synFitDev;
+
       void data_plot ( void );
+      void set_le_fit_dev(void);
 
    private slots:
       void write_report   ( QTextStream& );
