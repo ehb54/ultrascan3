@@ -48,6 +48,11 @@ class US_ReporterGMP : public US_Widgets
 	 QMap< QString, QMap < QString, US_ReportGMP > > ch_reports;
 	 QMap< QString, QMap < QString, US_ReportGMP > > ch_reports_internal;
 	 QMap< QString, QList< double > > ch_wvls;
+
+	 QList< int > replicates;
+	 QMap < int, QStringList > replicates_to_channdesc;
+	 QMap< QString, QStringList > channdesc_to_overlapping_wvls;
+	 
 	 // QString      reportMask;
 
 	 //for model simulations:
@@ -429,7 +434,7 @@ class US_ReporterGMP : public US_Widgets
 	 QString text_model(     US_Model, int );
 	 QString html_header   ( QString, QString, US_DataIO::EditedData* );
 	 QString distrib_info( QMap < QString, QString > & );
-	 //QString integration_info( void );
+	 QString calc_replicates_averages( void );
 	 
 	 QString get_filename( QString );
 	 

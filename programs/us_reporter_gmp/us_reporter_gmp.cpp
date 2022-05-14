@@ -1276,9 +1276,15 @@ void US_ReporterGMP::read_protocol_and_reportMasks( void )
   chndescs_alt           = currAProf.chndescs_alt;
   //Channel reports
   ch_reports             = currAProf.ch_reports;
-  //ch_reports_internal    = currAProf.ch_reports;
   //Channel wavelengths
   ch_wvls                = currAProf.ch_wvls;
+
+  //Replicates
+  replicates                   = currAProf. replicates;
+  //replicates_to_channdesc
+  replicates_to_channdesc      = currAProf. replicates_to_channdesc_main; //Empty ? (not needed?)
+  //channdesc_to_overlapping_wvls
+  channdesc_to_overlapping_wvls = currAProf. channdesc_to_overlapping_wvls_main;
 
   //Debug: AProfile
   QString channel_desc_alt = chndescs_alt[ 0 ];
@@ -2370,6 +2376,10 @@ void US_ReporterGMP::generate_report( void )
       //Combined Plots
       for ( int i=0; i<fileNameList.size(); ++i )
 	process_combined_plots( fileNameList[i] );
+
+      //Replicas' averages
+      calc_replicates_averages();
+      
     }
   else
     { //Will be modified for stand-alone GMP Reporter based on edited tree JSON
@@ -2406,6 +2416,10 @@ void US_ReporterGMP::generate_report( void )
 	  for ( int i=0; i<fileNameList.size(); ++i )
 	    process_combined_plots( fileNameList[i] );
 	}
+
+      //Replicas' averages
+      calc_replicates_averages();
+      
     }
   //End of Part 2
   
@@ -4832,15 +4846,6 @@ void  US_ReporterGMP::assemble_distrib_html( QMap < QString, QString> & tripleIn
   html_assembled += "</p>\n";
 }
 
-// //output HTML string for Report params-to-Run Details comparison && Integraiton Results for current triple:
-// void  US_ReporterGMP::assemble_integration_results_html( void )
-// {
-//   //html_assembled += "<p class=\"pagebreak \">\n";
-//   html_assembled += "<p >";
-//   html_assembled += "\n" + indent( 2 ) + tr( "<h3>Run Details and Integration Results:</h3>\n" );
-//   html_assembled += integration_info();
-//   html_assembled += "</p>\n";
-// }
 
 //output HTML plots for currentTriple
 void  US_ReporterGMP::assemble_plots_html( QStringList PlotsFilenames )
@@ -5011,6 +5016,74 @@ QString US_ReporterGMP::html_header( QString title, QString head1,
    return s;
 }
 
+
+// Calculate and output Averages from Replicate groups
+QString US_ReporterGMP::calc_replicates_averages( void )
+{
+  /*
+    Replicate group #1: [channels 1A, 5A, 6A]
+       Subgroup 1:  ----- Same: wvl, type/method, ranges, integraiton value 
+         triples:           1A.280, 5A.280, 6A.280 (overlapping wvls)
+	 type/method:       [s / 2DSA-IT]
+	 ranges:            [3.2 - 3.7]
+	 integration value: 0.57 
+
+        Subgroup 2:  ----- Same: wvl, type/method, ranges, integraiton value 
+         triples:           1A.280, 5A.280, 6A.280 (overlapping wvls)
+	 type/method:       [s / 2DSA-MC]
+	 ranges:            [3.4 - 3.9]
+	 integration value: 0.51 
+      	 
+        Subgroup 3:  ----- Same: wvl, type/method, ranges, integraiton value 
+         triples:           1A.320, 5A.320, 6A.320 (overlapping wvls)
+	 type/method:       [D / PCSA]
+	 ranges:            [3.1 - 4.9]
+	 integration value: 0.59 
+=====================================================================================
+
+    Replicate group #2: [channels 2A, 4A, 6B]
+       Subgroup 1:  ----- Same: wvl, type/method, ranges, integraiton value 
+         triples:           2A.290, 6B.290 (overlapping wvls)  --> IT Maybe that 4A does not have wvl 290!!!
+	 type/method:       [s / 2DSA-IT]
+	 ranges:            [3.2 - 3.7]
+	 integration value: 0.57 
+
+        Subgroup 2:  ----- Same: wvl, type/method, ranges, integraiton value 
+         triples:           2A.290, 6B.290 (overlapping wvls)  --> IT Maybe that 4A does not have wvl 290!!!
+	 type/method:       [D / 2DSA-IT]
+	 ranges:            [3.4 - 3.9]
+	 integration value: 0.51 
+
+=====================================================================================
+
+ Now, the 1st triple in a given subgroup (same-wvl triples) is the REFERENCE one: 
+    - e.g., 1A.280, in Replicate #1, subgroup 1,2; 
+            1A.320, in Replicate #1, subgroup 3;
+            2A.290, in Replicate #2, subgroup 1,2; 
+
+    **  Retrieve US_ReportGMP for these REFERENCE triples && go over theirs ReportItems:
+    
+       -- US_ReportGMP ref_report = ch_reports[ channel_desc_alt ][ wvl ];
+       
+          channel_desc_alt &&  wvl are from:
+	  QMap< QString, QStringList > channdesc_to_overlapping_wvls[ channel_desc_alt ] [ QStringList( "2A.260","2B.260","4A.260","2A.275","2B.275","4A.275","2A.280","2B.280","4A.280","4B.280","6A.280","6B.280" )]
+	  
+	  IMPORTANT: in QStringList, group triples by same-wvl (subgroups), then [0] in each group will be REFERENCE wvl!
+	  So, reference triples in the above QStringList example will be: 
+	                      2A.260, 2A.275 && 2A.280 
+
+       -- Start by iterating over QMap< QString, QStringList > channdesc_to_overlapping_wvls: 
+                       iterator::key()   - channel_desc_at; 
+		       iterator::value() - access to wvl; IMPORTANT, break into same-wvl groups, then take 1st to access wvl of the REFERNECE triple 
+       
+       -- Iterate over ReportItems in ref_report.reportItems; 
+       -- For each unique ReportItem, identify type-method, ranges, int.value;
+       -- Retrive earlier processed (in ::distrib_info() ) integration results for subgroup triples && AVERAGE
+
+       -- BEFORE: in ::distrib_info() STORE integration results in some Array of objects (structure defining all above Item combination? );
+
+   */
+}
 
 // Distribution information HTML string
 QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
@@ -5284,7 +5357,7 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
        if ( tripleInfo[ "triple_name" ].contains("Interference") && !channel_desc_alt.contains("Interf") )
 	 continue;
 	 
-       if ( t_name. contains( channel_desc_alt.split(":")[0] ) )  //ALEXEY: not enought for both RI + IP !!! t_name = '2A660' OR '2A280'
+       if ( t_name. contains( channel_desc_alt.split(":")[0] ) )  
 	 {
 	   qDebug() << "So, what are channel_desc_alt, wvl ? " << channel_desc_alt << wvl;
 	     
@@ -5380,7 +5453,7 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
        mstr += table_row( tr( "Parameter: " ),
 			  tr( "Target Value:" ),
 			  tr( "Tolerance, %:"),
-			  tr( "Simulation Value:" ),
+			  tr( "Measured Value:" ),
 			  tr( "PASSED ?" ));
 
        if ( show_tot_conc ) 
@@ -5491,6 +5564,9 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 				  QString::number( frac_tot_tol_r ),
 				  tot_frac_passed );
 	     }
+
+	   //Here we need to save integr. results for certain Item into structure object:
+	   // object musr contain: triple (chan, wvl), type, method, range, target integr. value
 	 }
        mstr += indent( 2 ) + "</table>\n";
      }
