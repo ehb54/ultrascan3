@@ -5089,12 +5089,15 @@ QString US_ReporterGMP::calc_replicates_averages( void )
        -- For each unique ReportItem, identify type-method, ranges, int.value;
        -- Retrive earlier processed (in ::distrib_info() ) integration results for subgroup triples && AVERAGE
 
-       -- BEFORE: in ::distrib_info() STORE integration results into respective reportItem[ kk ]. { integraiton_val_sim; ...}
+       -- BEFORE: in ::distrib_info() STORE integration results into respective reportItem[ kk ]. { integration_val_sim; ...}
 
    */
 
-  QString html_str_replicate_av = tr( "<h2>Replicate Groups Averaging Results:</h2>\n" );
+  QString html_str_replicate_av;
 
+  if ( !channdesc_to_overlapping_wvls.isEmpty() ) 
+    html_str_replicate_av += tr( "<h2>Replicate Groups Averaging Results:</h2>\n" );
+  
   QMap< QString, QStringList>::iterator chw;
   for ( chw = channdesc_to_overlapping_wvls.begin(); chw != channdesc_to_overlapping_wvls.end(); ++chw )
     {
@@ -5179,11 +5182,11 @@ QString US_ReporterGMP::calc_replicates_averages( void )
 						  range,
 						  QString().sprintf( "%10.4e", integration_sim_av) );
 	    }
+	  
+	  html_str_replicate_av += indent( 3 ) + "</table>\n";
 	}
     }
   
-  html_str_replicate_av += indent( 3 ) + "</table>\n";
-
   return html_str_replicate_av;
 }
 
