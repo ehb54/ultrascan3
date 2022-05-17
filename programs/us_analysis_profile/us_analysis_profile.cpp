@@ -944,6 +944,10 @@ void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP* reportFromDB, int re
 	  reportItem_read.total_percent    =   db->value( 6 ).toString().toDouble();
 	  reportItem_read.combined_plot    =   db->value( 7 ).toString().toInt();
 
+	  reportItem_read.integration_val_sim   = -1;
+	  reportItem_read.total_percent_sim     = -1;
+	  reportItem_read.passed                = QString("N/A");
+  
 	  reportFromDB->reportItems.push_back( reportItem_read );
 	}
       
@@ -962,6 +966,10 @@ void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP* reportFromDB, int re
       initItem.tolerance        = 10; 
       initItem.total_percent    = 0.58;
       initItem.combined_plot    = 1;
+
+      initItem.integration_val_sim   = -1;
+      initItem.total_percent_sim     = -1;
+      initItem.passed                = QString("N/A");
 
       if ( !reportFromDB->channel_name.contains("Interf.") ) 
 	reportFromDB->reportItems.push_back( initItem );
