@@ -5275,7 +5275,7 @@ double US_ReporterGMP::get_replicate_group_results( US_ReportGMP::ReportItem ref
 			<< ", Range: " << "[" << _low << " - " << _high << "]" 
 			<< ", Simulated Integr. Val: " << curr_item. integration_val_sim;
 
-	       if ( curr_item. integration_val_sim )
+	       if ( curr_item. integration_val_sim >= 0 )
 		 {
 		   int_res_sim += curr_item. integration_val_sim;
 		   ++same_item_counter;
