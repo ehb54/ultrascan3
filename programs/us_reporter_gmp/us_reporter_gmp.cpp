@@ -5212,6 +5212,7 @@ QString US_ReporterGMP::get_replicate_group_number( QString ch_alt_desc )
 double US_ReporterGMP::get_replicate_group_results( US_ReportGMP::ReportItem ref_report_item, QString u_wvl, QStringList channs_for_wvl )
 {
   double int_res_sim = 0;
+  double int_res_sim_av = 0;
   int    same_item_counter = 0;
   
   //iterate over UR_ReportsGMPs && pick ones correspondning to 'chan_desc_alt.contains("ch_wvls[i]")' && wavelength == u_wvl;
@@ -5266,7 +5267,7 @@ double US_ReporterGMP::get_replicate_group_results( US_ReportGMP::ReportItem ref
 		ref_high    == _high      &&
 		ref_int_val == _int_val      )
 	     {
-	       int_res_sim += curr_item. integration_val_sim;
+	       
 	       //can add an average fraction percent from model (if needed)
 
 	       qDebug() << "For Triple: " << channs_for_wvl[ i ] << "." << u_wvl
@@ -5274,13 +5275,20 @@ double US_ReporterGMP::get_replicate_group_results( US_ReportGMP::ReportItem ref
 			<< ", Range: " << "[" << _low << " - " << _high << "]" 
 			<< ", Simulated Integr. Val: " << curr_item. integration_val_sim;
 
-	       if ( !curr_item. integration_val_sim < 0 ) 
-		 ++same_item_counter;
+	       if ( curr_item. integration_val_sim )
+		 {
+		   int_res_sim += curr_item. integration_val_sim;
+		   ++same_item_counter;
+		 }
 	     }
 	}
     }
+
+  if ( same_item_counter )
+    int_res_sim_av = double( int_res_sim / same_item_counter );
   
-  return double( int_res_sim / same_item_counter );
+  
+  return int_res_sim_av;
 }
 
 // Distribution information HTML string
