@@ -5269,9 +5269,13 @@ double US_ReporterGMP::get_replicate_group_results( US_ReportGMP::ReportItem ref
 	       int_res_sim += curr_item. integration_val_sim;
 	       //can add an average fraction percent from model (if needed)
 
-	       qDebug() << "For Triple: " << channs_for_wvl[ i ] << "." << u_wvl << ", Simulated Integr. Val: " << curr_item. integration_val_sim;
+	       qDebug() << "For Triple: " << channs_for_wvl[ i ] << "." << u_wvl
+			<< ", Type/Method: " << _type << ": " << _method
+			<< ", Range: " << "[" << _low << " - " << _high << "]" 
+			<< ", Simulated Integr. Val: " << curr_item. integration_val_sim;
 
-	       ++same_item_counter;
+	       if ( !curr_item. integration_val_sim < 0 ) 
+		 ++same_item_counter;
 	     }
 	}
     }

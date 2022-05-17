@@ -23,8 +23,8 @@ US_ReportGMP::US_ReportGMP()
   initItem.total_percent    = 95;
   initItem.combined_plot    = 1;
 
-  initItem.integration_val_sim   = 0;
-  initItem.total_percent_sim     = 0;
+  initItem.integration_val_sim   = -1;
+  initItem.total_percent_sim     = -1;
   initItem.passed                = QString("N/A");
   
   reportItems.push_back( initItem );
