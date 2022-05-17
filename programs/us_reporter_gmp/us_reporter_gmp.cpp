@@ -5754,6 +5754,15 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 	       curr_item. integration_val_sim = int_val_m;
 	       curr_item. total_percent_sim   = frac_tot_m;
 	       curr_item. passed              = tot_frac_passed;
+
+	       qDebug() << "In distrib_info(), fill simulated integration vals: for chann/wvl/type/method/low/high, "
+			<< "Inter. val. Sim -- "
+			<< wvl
+			<< curr_item.type
+			<< curr_item.method
+			<< curr_item.range_low
+			<< curr_item.range_high
+			<< curr_item. integration_val_sim ;
 	       
 	       mstr += table_row( type,
 				  range,
