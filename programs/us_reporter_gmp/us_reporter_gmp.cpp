@@ -5521,6 +5521,8 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 
    qDebug() << "Model description, mdla, msim -- " << model_used.description <<  mdla << msim;
    QString model_name = mdla.split("_")[1];
+   if ( model_name.contains("PCSA") )
+     model_name = "PCSA";
    
    double tot_conc_r, tot_conc_tol_r, rmsd_r, av_int_r, exp_dur_r, exp_dur_tol_r;
 
@@ -5705,6 +5707,9 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 	   US_ReportGMP::ReportItem curr_item = reportGMP-> reportItems[ kk ];
 	   QString type           = curr_item.type;
 	   QString method         = curr_item.method;
+	   if( method.contains ("PCSA") )
+	     method = "PCSA";
+	   
 	   QString int_val_r      = QString::number( curr_item.integration_val );
 	   double  frac_tot_r     = curr_item.total_percent;
 	   double  frac_tot_tol_r = curr_item.tolerance ;
@@ -5751,9 +5756,13 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 	   
 	   if ( mdla.contains ( method ) )
 	     {
-	       curr_item. integration_val_sim = int_val_m;
-	       curr_item. total_percent_sim   = frac_tot_m;
-	       curr_item. passed              = tot_frac_passed;
+	       // curr_item. integration_val_sim = int_val_m;
+	       // curr_item. total_percent_sim   = frac_tot_m;
+	       // curr_item. passed              = tot_frac_passed;
+
+	       reportGMP-> reportItems[ kk ]. integration_val_sim = int_val_m;
+	       reportGMP-> reportItems[ kk ]. total_percent_sim   = frac_tot_m;
+	       reportGMP-> reportItems[ kk ]. passed              = tot_frac_passed;
 
 	       qDebug() << "In distrib_info(), fill simulated integration vals: for chann/wvl/type/method/low/high, "
 			<< "Inter. val. Sim -- "
@@ -5762,7 +5771,7 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 			<< curr_item.method
 			<< curr_item.range_low
 			<< curr_item.range_high
-			<< curr_item. integration_val_sim ;
+			<< int_val_m;
 	       
 	       mstr += table_row( type,
 				  range,
@@ -5772,8 +5781,6 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 				  tot_frac_passed );
 	     }
 
-	   //Here we need to save integr. results for certain Item into structure object:
-	   // object musr contain: triple (chan, wvl), type, method, range, target integr. value
 	 }
        mstr += indent( 2 ) + "</table>\n";
      }
