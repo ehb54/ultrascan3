@@ -5140,18 +5140,18 @@ QString US_ReporterGMP::calc_replicates_averages( void )
 
 	  replicate_subgroup_triples.chop(1);
 	  
-	  html_str_replicate_av += "\n" + indent( 3 ) + tr( "<h3>Subgroup #%1: [Triples: %2] </h3>\n" )
+	  html_str_replicate_av += "\n" + indent( 2 ) + tr( "<h3>Subgroup #%1: [Triples: %2] </h3>\n" )
 	    .arg( QString::number( j+1 ) )
 	    .arg( replicate_subgroup_triples );
 
-	  html_str_replicate_av += indent( 3 ) + "<table>\n";
+	  html_str_replicate_av += indent( 2 ) + "<table>\n";
 	  html_str_replicate_av += table_row( tr( "Type:" ),
 					      tr( "Method:" ),
 					      tr( "Range:"),
-					      tr( "Av. Integration,\nModel (target):" ),
+					      tr( "Av. Integration, Model\n(target):" ),
 					      tr( "St. Dev.:"),
-					      tr( "Av. Fraction %,\nModel (target):"),
-					      tr( "Tol., %:"),
+					      tr( "Av. Fraction %, Model\n(target):"),
+					      tr( "Tol.%:"),
 					      tr( "PASSED?")
 					      );
 	  	  
@@ -5164,6 +5164,8 @@ QString US_ReporterGMP::calc_replicates_averages( void )
 
 	      QString type           = ref_group_item.type;
 	      QString method         = ref_group_item.method;
+	      if( method.contains ("PCSA") )
+		method = "PCSA";
 	      QString int_val_r      = QString::number( ref_group_item.integration_val );
 	      double  frac_tot_r     = ref_group_item.total_percent;
 	      double  frac_tot_tol_r = ref_group_item.tolerance ;
@@ -5191,7 +5193,8 @@ QString US_ReporterGMP::calc_replicates_averages( void )
 						  range,
 						  QString().sprintf( "%10.4e",  replicate_g_results["int_av"] ) + " (" + int_val_r + ")",
 						  QString().sprintf( "%10.3e",  replicate_g_results["int_st_dev"] ),
-						  QString().sprintf( "%5.2f%%", replicate_g_results["tot_percent_av"] ) + " (" + QString::number(frac_tot_r) + "%)",
+						  QString().sprintf( "%5.2f%%", replicate_g_results["tot_percent_av"] ) +
+						                                   " (" + QString().sprintf( "%5.2f%%", frac_tot_r) + ")",
 						  QString::number( frac_tot_tol_r ),
 						  tot_av_frac_passed
 						  );
