@@ -5150,7 +5150,7 @@ QString US_ReporterGMP::calc_replicates_averages( void )
 					      tr( "Range:"),
 					      tr( "Av. Integration, Model (target):" ),
 					      tr( "St. Dev.:"),
-					      tr( "Av. Frac.%, Model (target):"),
+					      tr( "Av. Fraction %, Model (target):"),
 					      tr( "St. Dev.:" ),
 					      tr( "Tol.%:"),
 					      tr( "PASSED?")
@@ -7850,8 +7850,8 @@ void US_ReporterGMP::write_pdf_report( void )
   filePath  = US_Settings::tmpDir() + "/" + fileName;
   printer.setOutputFileName( filePath );
   printer.setFullPage(true);
-  printer.setPageMargins(QMarginsF(0, 0, 0, 0));
-  
+  printer.setPageMargins(0, 0, 0, 0, QPrinter::Millimeter);
+    
   document.print(&printer);
 }
 
