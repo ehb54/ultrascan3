@@ -5148,8 +5148,11 @@ QString US_ReporterGMP::calc_replicates_averages( void )
 	  html_str_replicate_av += table_row( tr( "Type:" ),
 					      tr( "Method:" ),
 					      tr( "Range:"),
-					      tr( "Average Integration from Model (target):" ),
-					      tr( "Standard Deviation:"));
+					      tr( "Av. Integration, Model (target):" ),
+					      tr( "St. Dev.:"),
+					      tr( "Av. Fraction %, Model (target):"),
+					      tr( "PASSED?")
+					      );
 	  	  
 	  //Reference GMP Report, ReportItems for 1st channel in a replicate group && over each wavelength:
 	  US_ReportGMP ref_group_report = ch_reports[ ch_alt_desc ][ u_wvl ];
@@ -5174,14 +5177,21 @@ QString US_ReporterGMP::calc_replicates_averages( void )
 	      /* 
 		 Replicate Group #: [channles: 1A, 2A, 5A]
 		    Sub-Group #: [wvl: 280]
-		      type,  method,   range,    integration_AV (target),   St.Dev.   {fraction_of_total from Model if needed}
-		      s      2DSA-MC   3.2-3.7   integration_sim_av         st_dev  
+		      type,  method,   range,    integration_AV (target),   St.Dev.   Fraction of Total AV. (target)   PASSED?
+		      s      2DSA-MC   3.2-3.7   integration_sim_av         st_dev      XXX                             YES/NO 
 	      */
+
+	      double frac_tot_m_av = replicate_g_results["tot_percent_av"];
+	      QString tot_av_frac_passed = ( frac_tot_m_av >= ( frac_tot_r * (1 - frac_tot_tol_r/100.0)  )
+					     && frac_tot_m_av <= ( frac_tot_r * (1 + frac_tot_tol_r/100.0)  ) ) ? "YES" : "NO";
+	      
 	      html_str_replicate_av += table_row( type,
 						  method,
 						  range,
-						  QString().sprintf( "%10.4e", replicate_g_results["average"] ) + " (" + int_val_r + ")",
-						  QString().sprintf( "%5.4f%%", replicate_g_results["st_dev"] )
+						  QString().sprintf( "%10.4e",  replicate_g_results["int_av"] ) + " (" + int_val_r + ")",
+						  QString().sprintf( "%10.3e",  replicate_g_results["int_st_dev"] ),
+						  QString().sprintf( "%5.2f%%", replicate_g_results["tot_percent_av"] ) + " (" + QString::number(frac_tot_r) + "%)",
+						  tot_av_frac_passed
 						  );
 	    }
 	  
@@ -5215,6 +5225,9 @@ QMap<QString, double> US_ReporterGMP::get_replicate_group_results( US_ReportGMP:
 {
   double int_res_sim = 0;
   double int_res_sim_av = 0;
+  double tot_percent_sim = 0;
+  double tot_percent_sim_av = 0;
+  
   int    same_item_counter = 0;
   double st_dev_1 = 0;
   double st_dev_final = 0;
@@ -5280,12 +5293,14 @@ QMap<QString, double> US_ReporterGMP::get_replicate_group_results( US_ReportGMP:
 	       qDebug() << "For Triple: " << channs_for_wvl[ i ] << "." << u_wvl
 			<< ", Type/Method: " << _type << ": " << _method
 			<< ", Range: " << "[" << _low << " - " << _high << "]" 
-			<< ", Simulated Integr. Val: " << curr_item. integration_val_sim;
+			<< ", Simulated Integr. Val: " << curr_item. integration_val_sim
+			<< ", Fraction %: " << curr_item. total_percent_sim;
 
 	       if ( curr_item. integration_val_sim >= 0 )
 		 {
-		   int_res_sim += curr_item. integration_val_sim;
-		   int_res_sim_vector.push_back( curr_item. integration_val_sim ); 
+		   int_res_sim         += curr_item. integration_val_sim;
+		   tot_percent_sim     += curr_item. total_percent_sim;
+		   int_res_sim_vector  .push_back( curr_item. integration_val_sim ); 
 
 		   ++same_item_counter;
 		 }
@@ -5295,7 +5310,8 @@ QMap<QString, double> US_ReporterGMP::get_replicate_group_results( US_ReportGMP:
 
   if ( same_item_counter )
     {
-      int_res_sim_av = double( int_res_sim / same_item_counter );
+      int_res_sim_av     = double( int_res_sim / same_item_counter );
+      tot_percent_sim_av = double( tot_percent_sim / same_item_counter ); 
 
       for( int i=0; i<int_res_sim_vector.size(); ++i )
 	st_dev_1 += ( int_res_sim_av - int_res_sim_vector[i] ) * ( int_res_sim_av - int_res_sim_vector[i] );
@@ -5303,8 +5319,9 @@ QMap<QString, double> US_ReporterGMP::get_replicate_group_results( US_ReportGMP:
       st_dev_final = sqrt( st_dev_1 ) * 1 / (sqrt( int_res_sim_vector.size() ));  
     }
 
-  results[ "average" ] = int_res_sim_av;
-  results[ "st_dev" ]  = st_dev_final;;
+  results[ "int_av" ] = int_res_sim_av;
+  results[ "tot_percent_av" ] = tot_percent_sim_av;
+  results[ "int_st_dev" ]  = st_dev_final;
   
   return results;
 }
