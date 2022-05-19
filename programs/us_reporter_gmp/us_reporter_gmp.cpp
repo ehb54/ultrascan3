@@ -5148,9 +5148,9 @@ QString US_ReporterGMP::calc_replicates_averages( void )
 	  html_str_replicate_av += table_row( tr( "Type:" ),
 					      tr( "Method:" ),
 					      tr( "Range:"),
-					      tr( "Av. Integration, Model\n(target):" ),
+					      tr( "Av. Integration, Model (target):" ),
 					      tr( "St. Dev.:"),
-					      tr( "Av. Fraction %, Model\n(target):"),
+					      tr( "Av. Frac.%, Model (target):"),
 					      tr( "St. Dev.:" ),
 					      tr( "Tol.%:"),
 					      tr( "PASSED?")
@@ -5193,10 +5193,10 @@ QString US_ReporterGMP::calc_replicates_averages( void )
 						  method,
 						  range,
 						  QString().sprintf( "%10.4e",  replicate_g_results["int_av"] ) + " (" + int_val_r + ")",
-						  QString().sprintf( "%10.3e",  replicate_g_results["int_st_dev"] ),
+						  QString().sprintf( "%10.2e",  replicate_g_results["int_st_dev"] ),
 						  QString().sprintf( "%5.2f%%", replicate_g_results["tot_percent_av"] ) +
 						                                   " (" + QString().sprintf( "%5.2f%%", frac_tot_r) + ")",
-						  QString().sprintf( "%5.3f%%",  replicate_g_results["tot_percent_st_dev"] ),
+						  QString().sprintf( "%5.2f%%",  replicate_g_results["tot_percent_st_dev"] ),
 						  QString::number( frac_tot_tol_r ),
 						  tot_av_frac_passed
 						  );
