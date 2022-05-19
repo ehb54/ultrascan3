@@ -5151,6 +5151,7 @@ QString US_ReporterGMP::calc_replicates_averages( void )
 					      tr( "Av. Integration, Model\n(target):" ),
 					      tr( "St. Dev.:"),
 					      tr( "Av. Fraction %, Model\n(target):"),
+					      tr( "St. Dev.:" ),
 					      tr( "Tol.%:"),
 					      tr( "PASSED?")
 					      );
@@ -5196,6 +5197,7 @@ QString US_ReporterGMP::calc_replicates_averages( void )
 						  QString().sprintf( "%5.2f%%", replicate_g_results["tot_percent_av"] ) +
 						                                   " (" + QString().sprintf( "%5.2f%%", frac_tot_r) + ")",
 						  QString::number( frac_tot_tol_r ),
+						  QString().sprintf( "%10.3e",  replicate_g_results["tot_percent_st_dev"] ),
 						  tot_av_frac_passed
 						  );
 	    }
@@ -5234,9 +5236,12 @@ QMap<QString, double> US_ReporterGMP::get_replicate_group_results( US_ReportGMP:
   double tot_percent_sim_av = 0;
   
   int    same_item_counter = 0;
-  double st_dev_1 = 0;
-  double st_dev_final = 0;
+  double st_dev_int_1 = 0;
+  double st_dev_int_final = 0;
+  double st_dev_tot_percent_1 = 0;
+  double st_dev_tot_percent_final = 0;
   QVector< double > int_res_sim_vector;
+  QVector< double > tot_percent_sim_vector;
 
   QMap< QString, double > results;
   
@@ -5303,9 +5308,10 @@ QMap<QString, double> US_ReporterGMP::get_replicate_group_results( US_ReportGMP:
 
 	       if ( curr_item. integration_val_sim >= 0 )
 		 {
-		   int_res_sim         += curr_item. integration_val_sim;
-		   tot_percent_sim     += curr_item. total_percent_sim;
-		   int_res_sim_vector  .push_back( curr_item. integration_val_sim ); 
+		   int_res_sim            += curr_item. integration_val_sim;
+		   tot_percent_sim        += curr_item. total_percent_sim;
+		   int_res_sim_vector     .push_back( curr_item. integration_val_sim );
+		   tot_percent_sim_vector .push_back( curr_item. total_percent_sim );
 
 		   ++same_item_counter;
 		 }
@@ -5319,14 +5325,19 @@ QMap<QString, double> US_ReporterGMP::get_replicate_group_results( US_ReportGMP:
       tot_percent_sim_av = double( tot_percent_sim / same_item_counter ); 
 
       for( int i=0; i<int_res_sim_vector.size(); ++i )
-	st_dev_1 += ( int_res_sim_av - int_res_sim_vector[i] ) * ( int_res_sim_av - int_res_sim_vector[i] );
-
-      st_dev_final = sqrt( st_dev_1 ) * 1 / (sqrt( int_res_sim_vector.size() ));  
+	{
+	  st_dev_int_1         += ( int_res_sim_av - int_res_sim_vector[i] ) * ( int_res_sim_av - int_res_sim_vector[i] );
+	  st_dev_tot_percent_1 += ( tot_percent_sim_av - tot_percent_sim_vector[i] ) * ( tot_percent_sim_av - tot_percent_sim_vector[i] );
+	}
+      
+      st_dev_int_final         = sqrt( st_dev_int_1 ) / (sqrt( int_res_sim_vector.size() ));  
+      st_dev_tot_percent_final = sqrt( st_dev_tot_percent_1 ) / (sqrt( tot_percent_sim_vector.size() ));  
     }
 
-  results[ "int_av" ] = int_res_sim_av;
-  results[ "tot_percent_av" ] = tot_percent_sim_av;
-  results[ "int_st_dev" ]  = st_dev_final;
+  results[ "int_av" ]             = int_res_sim_av;
+  results[ "tot_percent_av" ]     = tot_percent_sim_av;
+  results[ "int_st_dev" ]         = st_dev_int_final;
+  results[ "tot_percent_st_dev" ] = st_dev_tot_percent_final;
   
   return results;
 }
@@ -6161,6 +6172,18 @@ QString  US_ReporterGMP::table_row( const QString& s1, const QString& s2,
    return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>"
             + s3 + "</td><td>" + s4 + "</td><td>" + s5 + "</td><td>"
             + s6 + "</td><td>" + s7 + "</td><td>" + s8 + "</td></tr>\n" );
+}
+
+// Table row HTML with 9 columns
+QString  US_ReporterGMP::table_row( const QString& s1, const QString& s2,
+				    const QString& s3, const QString& s4,
+				    const QString& s5, const QString& s6,
+				    const QString& s7, const QString& s8,
+				    const QString& s9 ) const
+{
+   return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>"
+            + s3 + "</td><td>" + s4 + "</td><td>" + s5 + "</td><td>"
+            + s6 + "</td><td>" + s7 + "</td><td>" + s8 + "</td><td>" + s9 + "</td></tr>\n" );
 }
 
 
