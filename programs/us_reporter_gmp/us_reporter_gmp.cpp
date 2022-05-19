@@ -5150,7 +5150,7 @@ QString US_ReporterGMP::calc_replicates_averages( void )
 					      tr( "Range:"),
 					      tr( "Av. Integration, Model (target):" ),
 					      tr( "St. Dev.:"),
-					      tr( "Av. Tot. Fraction%, Model (target):"),
+					      tr( "Av. Fraction %, Model (target):"),
 					      tr( "St. Dev.:" ),
 					      tr( "Tol.%:"),
 					      tr( "PASSED?")
