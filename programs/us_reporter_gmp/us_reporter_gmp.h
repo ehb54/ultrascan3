@@ -493,6 +493,10 @@ class US_ReporterGMP : public US_Widgets
 	QString table_row( const QString&, const QString&,
 			   const QString&, const QString&,
 			   const QString&, const QString& ) const;
+	QString table_row( const QString&, const QString&,
+			   const QString&, const QString&,
+			   const QString&, const QString&,
+			   const QString&, const QString& ) const;
 	
 	void    write_plot    ( const QString&, const QwtPlot* );
 	bool    mkdir         ( const QString&, const QString& );
