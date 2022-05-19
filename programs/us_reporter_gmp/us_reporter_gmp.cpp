@@ -5148,7 +5148,8 @@ QString US_ReporterGMP::calc_replicates_averages( void )
 	  html_str_replicate_av += table_row( tr( "Type:" ),
 					      tr( "Method:" ),
 					      tr( "Range:"),
-					      tr( "Average Integration:" ));
+					      tr( "Average Integration from Model (target):" ),
+					      tr( "Standard Deviation:"));
 	  	  
 	  //Reference GMP Report, ReportItems for 1st channel in a replicate group && over each wavelength:
 	  US_ReportGMP ref_group_report = ch_reports[ ch_alt_desc ][ u_wvl ];
@@ -5159,28 +5160,29 @@ QString US_ReporterGMP::calc_replicates_averages( void )
 
 	      QString type           = ref_group_item.type;
 	      QString method         = ref_group_item.method;
-	      QString int_val        = QString::number( ref_group_item.integration_val );
-	      double  frac_tot       = ref_group_item.total_percent;
-	      double  frac_tot_tol   = ref_group_item.tolerance ;
+	      QString int_val_r      = QString::number( ref_group_item.integration_val );
+	      double  frac_tot_r     = ref_group_item.total_percent;
+	      double  frac_tot_tol_r = ref_group_item.tolerance ;
 	      double  low            = ref_group_item.range_low;
 	      double  high           = ref_group_item.range_high;
 
 	      QString range          = "[" + QString::number(low) + " - " + QString::number(high) + "]";
 	   
-	      double integration_sim_av = get_replicate_group_results( ref_group_item, u_wvl, same_wvls_chann_map[ u_wvl ] );
+	      QMap<QString, double> replicate_g_results = get_replicate_group_results( ref_group_item, u_wvl, same_wvls_chann_map[ u_wvl ] );
 
 	      //print results into HTML report:
 	      /* 
 		 Replicate Group #: [channles: 1A, 2A, 5A]
 		    Sub-Group #: [wvl: 280]
-		      type,  method,   range,    integration_AV,       {fraction_of_total from Model if needed}
-		      s      2DSA-MC   3.2-3.7   integration_sim_av   
+		      type,  method,   range,    integration_AV (target),   St.Dev.   {fraction_of_total from Model if needed}
+		      s      2DSA-MC   3.2-3.7   integration_sim_av         st_dev  
 	      */
-	      
 	      html_str_replicate_av += table_row( type,
 						  method,
 						  range,
-						  QString().sprintf( "%10.4e", integration_sim_av) );
+						  QString().sprintf( "%10.4e", replicate_g_results["average"] ) + " (" + int_val_r + ")",
+						  QString().sprintf( "%5.4f%%", replicate_g_results["st_dev"] )
+						  );
 	    }
 	  
 	  html_str_replicate_av += indent( 3 ) + "</table>\n";
@@ -5209,11 +5211,16 @@ QString US_ReporterGMP::get_replicate_group_number( QString ch_alt_desc )
 }
 
 //Get Integration Results from same Replicate subGroup | same-wvl | same-report-items: 
-double US_ReporterGMP::get_replicate_group_results( US_ReportGMP::ReportItem ref_report_item, QString u_wvl, QStringList channs_for_wvl )
+QMap<QString, double> US_ReporterGMP::get_replicate_group_results( US_ReportGMP::ReportItem ref_report_item, QString u_wvl, QStringList channs_for_wvl )
 {
   double int_res_sim = 0;
   double int_res_sim_av = 0;
   int    same_item_counter = 0;
+  double st_dev_1 = 0;
+  double st_dev_final = 0;
+  QVector< double > int_res_sim_vector;
+
+  QMap< QString, double > results;
   
   //iterate over UR_ReportsGMPs && pick ones correspondning to 'chan_desc_alt.contains("ch_wvls[i]")' && wavelength == u_wvl;
   int nchna   = currAProf.pchans.count();
@@ -5278,6 +5285,8 @@ double US_ReporterGMP::get_replicate_group_results( US_ReportGMP::ReportItem ref
 	       if ( curr_item. integration_val_sim >= 0 )
 		 {
 		   int_res_sim += curr_item. integration_val_sim;
+		   int_res_sim_vector.push_back( curr_item. integration_val_sim ); 
+
 		   ++same_item_counter;
 		 }
 	     }
@@ -5285,10 +5294,19 @@ double US_ReporterGMP::get_replicate_group_results( US_ReportGMP::ReportItem ref
     }
 
   if ( same_item_counter )
-    int_res_sim_av = double( int_res_sim / same_item_counter );
+    {
+      int_res_sim_av = double( int_res_sim / same_item_counter );
+
+      for( int i=0; i<int_res_sim_vector.size(); ++i )
+	st_dev_1 += ( int_res_sim_av - int_res_sim_vector[i] ) * ( int_res_sim_av - int_res_sim_vector[i] );
+
+      st_dev_final = sqrt( st_dev_1 ) * 1 / (sqrt( int_res_sim_vector.size() ));  
+    }
+
+  results[ "average" ] = int_res_sim_av;
+  results[ "st_dev" ]  = st_dev_final;;
   
-  
-  return int_res_sim_av;
+  return results;
 }
 
 // Distribution information HTML string

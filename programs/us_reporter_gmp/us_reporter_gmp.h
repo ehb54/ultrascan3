@@ -436,7 +436,7 @@ class US_ReporterGMP : public US_Widgets
 	 QString distrib_info( QMap < QString, QString > & );
 	 QString calc_replicates_averages( void );
 	 QString get_replicate_group_number( QString );
-	 double  get_replicate_group_results( US_ReportGMP::ReportItem, QString, QStringList );
+	 QMap<QString, double>  get_replicate_group_results( US_ReportGMP::ReportItem, QString, QStringList );
 	 void    assemble_replicate_av_integration_html( void );
 	 
 	 QString get_filename( QString );
