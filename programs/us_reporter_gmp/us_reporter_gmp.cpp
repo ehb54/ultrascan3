@@ -5144,7 +5144,7 @@ QString US_ReporterGMP::calc_replicates_averages( void )
 	    .arg( QString::number( j+1 ) )
 	    .arg( replicate_subgroup_triples );
 
-	  html_str_replicate_av += indent( 2 ) + "<table>\n";
+	  html_str_replicate_av += indent( 2 ) + "<table style=\"font-size:80%\">\n";
 	  html_str_replicate_av += table_row( tr( "Type:" ),
 					      tr( "Method:" ),
 					      tr( "Range:"),
@@ -5196,8 +5196,8 @@ QString US_ReporterGMP::calc_replicates_averages( void )
 						  QString().sprintf( "%10.3e",  replicate_g_results["int_st_dev"] ),
 						  QString().sprintf( "%5.2f%%", replicate_g_results["tot_percent_av"] ) +
 						                                   " (" + QString().sprintf( "%5.2f%%", frac_tot_r) + ")",
+						  QString().sprintf( "%5.3f%%",  replicate_g_results["tot_percent_st_dev"] ),
 						  QString::number( frac_tot_tol_r ),
-						  QString().sprintf( "%10.3e",  replicate_g_results["tot_percent_st_dev"] ),
 						  tot_av_frac_passed
 						  );
 	    }
