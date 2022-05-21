@@ -1276,9 +1276,15 @@ void US_ReporterGMP::read_protocol_and_reportMasks( void )
   chndescs_alt           = currAProf.chndescs_alt;
   //Channel reports
   ch_reports             = currAProf.ch_reports;
-  //ch_reports_internal    = currAProf.ch_reports;
   //Channel wavelengths
   ch_wvls                = currAProf.ch_wvls;
+
+  //Replicates
+  replicates                   = currAProf. replicates;
+  //replicates_to_channdesc
+  replicates_to_channdesc      = currAProf. replicates_to_channdesc_main; //Empty ? (not needed?)
+  //channdesc_to_overlapping_wvls
+  channdesc_to_overlapping_wvls = currAProf. channdesc_to_overlapping_wvls_main;
 
   //Debug: AProfile
   QString channel_desc_alt = chndescs_alt[ 0 ];
@@ -2370,6 +2376,10 @@ void US_ReporterGMP::generate_report( void )
       //Combined Plots
       for ( int i=0; i<fileNameList.size(); ++i )
 	process_combined_plots( fileNameList[i] );
+
+      //Replicas' averages
+      assemble_replicate_av_integration_html();
+      
     }
   else
     { //Will be modified for stand-alone GMP Reporter based on edited tree JSON
@@ -2406,6 +2416,10 @@ void US_ReporterGMP::generate_report( void )
 	  for ( int i=0; i<fileNameList.size(); ++i )
 	    process_combined_plots( fileNameList[i] );
 	}
+
+      //Replicas' averages
+      assemble_replicate_av_integration_html();
+      
     }
   //End of Part 2
   
@@ -4832,15 +4846,15 @@ void  US_ReporterGMP::assemble_distrib_html( QMap < QString, QString> & tripleIn
   html_assembled += "</p>\n";
 }
 
-// //output HTML string for Report params-to-Run Details comparison && Integraiton Results for current triple:
-// void  US_ReporterGMP::assemble_integration_results_html( void )
-// {
-//   //html_assembled += "<p class=\"pagebreak \">\n";
-//   html_assembled += "<p >";
-//   html_assembled += "\n" + indent( 2 ) + tr( "<h3>Run Details and Integration Results:</h3>\n" );
-//   html_assembled += integration_info();
-//   html_assembled += "</p>\n";
-// }
+
+//output HTML string for Average Integration Results:
+void  US_ReporterGMP::assemble_replicate_av_integration_html( void )
+{
+  //QString html_distibutions = distrib_info();
+  html_assembled += "<p class=\"pagebreak \">\n";
+  html_assembled += calc_replicates_averages();
+  html_assembled += "</p>\n";
+}
 
 //output HTML plots for currentTriple
 void  US_ReporterGMP::assemble_plots_html( QStringList PlotsFilenames )
@@ -5011,6 +5025,322 @@ QString US_ReporterGMP::html_header( QString title, QString head1,
    return s;
 }
 
+
+// Calculate and output Averages from Replicate groups
+QString US_ReporterGMP::calc_replicates_averages( void )
+{
+  /*
+    Replicate group #1: [channels 1A, 5A, 6A]
+       Subgroup 1:  ----- Same: wvl, type/method, ranges, integraiton value 
+         triples:           1A.280, 5A.280, 6A.280 (overlapping wvls)
+	 type/method:       [s / 2DSA-IT]
+	 ranges:            [3.2 - 3.7]
+	 integration value: 0.57 
+
+        Subgroup 2:  ----- Same: wvl, type/method, ranges, integraiton value 
+         triples:           1A.280, 5A.280, 6A.280 (overlapping wvls)
+	 type/method:       [s / 2DSA-MC]
+	 ranges:            [3.4 - 3.9]
+	 integration value: 0.51 
+      	 
+        Subgroup 3:  ----- Same: wvl, type/method, ranges, integraiton value 
+         triples:           1A.320, 5A.320, 6A.320 (overlapping wvls)
+	 type/method:       [D / PCSA]
+	 ranges:            [3.1 - 4.9]
+	 integration value: 0.59 
+=====================================================================================
+
+    Replicate group #2: [channels 2A, 4A, 6B]
+       Subgroup 1:  ----- Same: wvl, type/method, ranges, integraiton value 
+         triples:           2A.290, 6B.290 (overlapping wvls)  --> IT Maybe that 4A does not have wvl 290!!!
+	 type/method:       [s / 2DSA-IT]
+	 ranges:            [3.2 - 3.7]
+	 integration value: 0.57 
+
+        Subgroup 2:  ----- Same: wvl, type/method, ranges, integraiton value 
+         triples:           2A.290, 6B.290 (overlapping wvls)  --> IT Maybe that 4A does not have wvl 290!!!
+	 type/method:       [D / 2DSA-IT]
+	 ranges:            [3.4 - 3.9]
+	 integration value: 0.51 
+
+=====================================================================================
+
+ Now, the 1st triple in a given subgroup (same-wvl triples) is the REFERENCE one: 
+    - e.g., 1A.280, in Replicate #1, subgroup 1,2; 
+            1A.320, in Replicate #1, subgroup 3;
+            2A.290, in Replicate #2, subgroup 1,2; 
+
+    **  Retrieve US_ReportGMP for these REFERENCE triples && go over theirs ReportItems:
+    
+       -- US_ReportGMP ref_report = ch_reports[ channel_desc_alt ][ wvl ];
+       
+          channel_desc_alt &&  wvl are from:
+	  QMap< QString, QStringList > channdesc_to_overlapping_wvls[ channel_desc_alt ] [ QStringList( "2A.260","2B.260","4A.260","2A.275","2B.275","4A.275","2A.280","2B.280","4A.280","4B.280","6A.280","6B.280" )]
+	  
+	  IMPORTANT: in QStringList, group triples by same-wvl (subgroups), then [0] in each group will be REFERENCE wvl!
+	  So, reference triples in the above QStringList example will be: 
+	                      2A.260, 2A.275 && 2A.280 
+
+       -- Start by iterating over QMap< QString, QStringList > channdesc_to_overlapping_wvls: 
+                       iterator::key()   - channel_desc_at; 
+		       iterator::value() - access to wvl; IMPORTANT, break into same-wvl groups, then take 1st to access wvl of the REFERNECE triple 
+       
+       -- Iterate over ReportItems in ref_report.reportItems; 
+       -- For each unique ReportItem, identify type-method, ranges, int.value;
+       -- Retrive earlier processed (in ::distrib_info() ) integration results for subgroup triples && AVERAGE
+
+       -- BEFORE: in ::distrib_info() STORE integration results into respective reportItem[ kk ]. { integration_val_sim; ...}
+
+   */
+
+  QString html_str_replicate_av;
+
+  if ( !channdesc_to_overlapping_wvls.isEmpty() ) 
+    html_str_replicate_av += tr( "<h2>Replicate Groups Averaging Results:</h2>\n" );
+  
+  QMap< QString, QStringList>::iterator chw;
+  for ( chw = channdesc_to_overlapping_wvls.begin(); chw != channdesc_to_overlapping_wvls.end(); ++chw )
+    {
+      QString ch_alt_desc  = chw.key();
+      QStringList all_wvls = chw.value();
+
+      QStringList unique_wvls;
+      QStringList unique_channels;
+      QMap < QString, QStringList > same_wvls_chann_map; // wvl: channel list
+      
+      for( int i=0; i<all_wvls.size(); ++i )
+	{
+	  QString curr_triple = all_wvls[ i ];
+	  QString curr_chann  = all_wvls[ i ].split(".")[0];
+	  QString curr_wvl    = all_wvls[ i ].split(".")[1];
+
+	  unique_wvls               << curr_wvl;
+	  unique_channels           << curr_chann;
+	  same_wvls_chann_map[ curr_wvl ] << curr_chann;
+	}
+      
+      unique_wvls.     removeDuplicates();
+      unique_channels. removeDuplicates();
+
+      QString replicate_group_number = get_replicate_group_number( ch_alt_desc );
+      
+      html_str_replicate_av += "\n" + indent( 2 ) + tr( "<h3>Replicate Group #%1: [Channels: %2] </h3>\n" )
+	.arg( replicate_group_number )
+	.arg( unique_channels.join(",") );
+      
+      
+      //iterate over unique wvls
+      for ( int j=0; j < unique_wvls.size(); ++j )
+	{
+	  QString u_wvl = unique_wvls[j];
+
+	  QString replicate_subgroup_triples;
+	  for ( int jj=0; jj < same_wvls_chann_map[ u_wvl ].size(); ++jj )
+	    replicate_subgroup_triples += same_wvls_chann_map[ u_wvl ][ jj ] + "." + u_wvl + ",";
+
+	  replicate_subgroup_triples.chop(1);
+	  
+	  html_str_replicate_av += "\n" + indent( 2 ) + tr( "<h3>Subgroup #%1: [Triples: %2] </h3>\n" )
+	    .arg( QString::number( j+1 ) )
+	    .arg( replicate_subgroup_triples );
+
+	  html_str_replicate_av += indent( 2 ) + "<table style=\"font-size:80%\">\n";
+	  html_str_replicate_av += table_row( tr( "Type:" ),
+					      tr( "Method:" ),
+					      tr( "Range:"),
+					      tr( "Av. Integration, Model (target):" ),
+					      tr( "St. Dev.:"),
+					      tr( "Av. Fraction %, Model (target):"),
+					      tr( "St. Dev.:" ),
+					      tr( "Tol.%:"),
+					      tr( "PASSED?")
+					      );
+	  	  
+	  //Reference GMP Report, ReportItems for 1st channel in a replicate group && over each wavelength:
+	  US_ReportGMP ref_group_report = ch_reports[ ch_alt_desc ][ u_wvl ];
+	  int report_items_number = ref_group_report.reportItems.size();
+	  for ( int kk = 0; kk < report_items_number; ++kk )
+	    {
+	      US_ReportGMP::ReportItem ref_group_item = ref_group_report.reportItems[ kk ];
+
+	      QString type           = ref_group_item.type;
+	      QString method         = ref_group_item.method;
+	      if( method.contains ("PCSA") )
+		method = "PCSA";
+	      QString int_val_r      = QString::number( ref_group_item.integration_val );
+	      double  frac_tot_r     = ref_group_item.total_percent;
+	      double  frac_tot_tol_r = ref_group_item.tolerance ;
+	      double  low            = ref_group_item.range_low;
+	      double  high           = ref_group_item.range_high;
+
+	      QString range          = "[" + QString::number(low) + " - " + QString::number(high) + "]";
+	   
+	      QMap<QString, double> replicate_g_results = get_replicate_group_results( ref_group_item, u_wvl, same_wvls_chann_map[ u_wvl ] );
+
+	      //print results into HTML report:
+	      /* 
+		 Replicate Group #: [channles: 1A, 2A, 5A]
+		    Sub-Group #: [wvl: 280]
+		      type,  method,   range,    integration_AV (target),   St.Dev.   Fraction of Total AV. (target)   PASSED?
+		      s      2DSA-MC   3.2-3.7   integration_sim_av         st_dev      XXX                             YES/NO 
+	      */
+
+	      double frac_tot_m_av = replicate_g_results["tot_percent_av"];
+	      QString tot_av_frac_passed = ( frac_tot_m_av >= ( frac_tot_r * (1 - frac_tot_tol_r/100.0)  )
+					     && frac_tot_m_av <= ( frac_tot_r * (1 + frac_tot_tol_r/100.0)  ) ) ? "YES" : "NO";
+	      
+	      html_str_replicate_av += table_row( type,
+						  method,
+						  range,
+						  QString().sprintf( "%10.4e",  replicate_g_results["int_av"] ) + " (" + int_val_r + ")",
+						  QString().sprintf( "%10.2e",  replicate_g_results["int_st_dev"] ),
+						  QString().sprintf( "%5.2f%%", replicate_g_results["tot_percent_av"] ) +
+						                                   " (" + QString().sprintf( "%5.2f%%", frac_tot_r) + ")",
+						  QString().sprintf( "%5.2f%%",  replicate_g_results["tot_percent_st_dev"] ),
+						  QString::number( frac_tot_tol_r ),
+						  tot_av_frac_passed
+						  );
+	    }
+	  
+	  html_str_replicate_av += indent( 3 ) + "</table>\n";
+	}
+    }
+  
+  return html_str_replicate_av;
+}
+
+//Get Replicate Group # from channel_desc_alt
+QString US_ReporterGMP::get_replicate_group_number( QString ch_alt_desc )
+{
+  QString replicate_gn;
+  
+  for( int i=0; i < chndescs_alt.size(); ++i )
+    {
+      if( ch_alt_desc == chndescs_alt[ i ] )
+	{
+	  replicate_gn = QString::number ( replicates[ i ] );
+	  break;
+	}
+    }
+  qDebug() << "Replicate Group # for channel: " << ch_alt_desc << ", IS -- " << replicate_gn;
+  
+  return replicate_gn;
+}
+
+//Get Integration Results from same Replicate subGroup | same-wvl | same-report-items: 
+QMap<QString, double> US_ReporterGMP::get_replicate_group_results( US_ReportGMP::ReportItem ref_report_item, QString u_wvl, QStringList channs_for_wvl )
+{
+  double int_res_sim = 0;
+  double int_res_sim_av = 0;
+  double tot_percent_sim = 0;
+  double tot_percent_sim_av = 0;
+  
+  int    same_item_counter = 0;
+  double st_dev_int_1 = 0;
+  double st_dev_int_final = 0;
+  double st_dev_tot_percent_1 = 0;
+  double st_dev_tot_percent_final = 0;
+  QVector< double > int_res_sim_vector;
+  QVector< double > tot_percent_sim_vector;
+
+  QMap< QString, double > results;
+  
+  //iterate over UR_ReportsGMPs && pick ones correspondning to 'chan_desc_alt.contains("ch_wvls[i]")' && wavelength == u_wvl;
+  int nchna   = currAProf.pchans.count();
+  for ( int i = 0; i < channs_for_wvl.size(); ++i )   //over channels for a given wvl in Replicate group:
+    {
+      US_ReportGMP reportGMP;
+      for ( int j = 0; j < nchna; j++ )       //over all channels
+	{
+	  QString channel_desc_alt = chndescs_alt[ j ];
+
+	  if ( channel_desc_alt.contains("Interf") ) //For now, do not consider IP type!!!
+	    continue;
+	  
+	  if ( channel_desc_alt.split(":")[0].contains( channs_for_wvl[ i ] ) )  
+	    {
+	      qDebug() << "In get_replicate_group_results(): channel_desc_alt, wvl -- " << channel_desc_alt << u_wvl;
+
+	      //Select US_ReportGMP for channel in a Replicate group && representative wvl!
+	      reportGMP = ch_reports[ channel_desc_alt ][ u_wvl ];
+
+	      break;
+	    }
+	}
+      //then pick report's ReportItem corresponding to the passed ref_report_item:
+      int report_items_number = reportGMP. reportItems.size();
+      for ( int kk = 0; kk < report_items_number; ++kk )
+	{
+	   US_ReportGMP::ReportItem curr_item = reportGMP. reportItems[ kk ];
+
+	   //Compare ref_report_item with curr_item:
+	   QString ref_type           = ref_report_item.type;
+	   QString ref_method         = ref_report_item.method;
+	   QString ref_int_val        = QString::number( ref_report_item.integration_val );
+	   double  ref_frac_tot       = ref_report_item.total_percent;
+	   double  ref_frac_tot_tol   = ref_report_item.tolerance ;
+	   double  ref_low            = ref_report_item.range_low;
+	   double  ref_high           = ref_report_item.range_high;
+
+	   QString _type           = curr_item.type;
+	   QString _method         = curr_item.method;
+	   QString _int_val        = QString::number( curr_item.integration_val );
+	   double  _frac_tot       = curr_item.total_percent;
+	   double  _frac_tot_tol   = curr_item.tolerance ;
+	   double  _low            = curr_item.range_low;
+	   double  _high           = curr_item.range_high;
+
+	   //Comparison nased on: type/method [s-2DSA-IT], ranges [3.2 - 3.7] && integration value: CAN BE EXTENDED if needed 
+	   if ( ref_type    == _type      &&
+		ref_method  == _method    &&
+		ref_low     == _low       &&
+		ref_high    == _high      &&
+		ref_int_val == _int_val      )
+	     {
+	       
+	       //can add an average fraction percent from model (if needed)
+
+	       qDebug() << "For Triple: " << channs_for_wvl[ i ] << "." << u_wvl
+			<< ", Type/Method: " << _type << ": " << _method
+			<< ", Range: " << "[" << _low << " - " << _high << "]" 
+			<< ", Simulated Integr. Val: " << curr_item. integration_val_sim
+			<< ", Fraction %: " << curr_item. total_percent_sim;
+
+	       if ( curr_item. integration_val_sim >= 0 )
+		 {
+		   int_res_sim            += curr_item. integration_val_sim;
+		   tot_percent_sim        += curr_item. total_percent_sim;
+		   int_res_sim_vector     .push_back( curr_item. integration_val_sim );
+		   tot_percent_sim_vector .push_back( curr_item. total_percent_sim );
+
+		   ++same_item_counter;
+		 }
+	     }
+	}
+    }
+
+  if ( same_item_counter )
+    {
+      int_res_sim_av     = double( int_res_sim / same_item_counter );
+      tot_percent_sim_av = double( tot_percent_sim / same_item_counter ); 
+
+      for( int i=0; i<int_res_sim_vector.size(); ++i )
+	{
+	  st_dev_int_1         += ( int_res_sim_av - int_res_sim_vector[i] ) * ( int_res_sim_av - int_res_sim_vector[i] );
+	  st_dev_tot_percent_1 += ( tot_percent_sim_av - tot_percent_sim_vector[i] ) * ( tot_percent_sim_av - tot_percent_sim_vector[i] );
+	}
+      
+      st_dev_int_final         = sqrt( st_dev_int_1 ) / (sqrt( int_res_sim_vector.size() ));  
+      st_dev_tot_percent_final = sqrt( st_dev_tot_percent_1 ) / (sqrt( tot_percent_sim_vector.size() ));  
+    }
+
+  results[ "int_av" ]             = int_res_sim_av;
+  results[ "tot_percent_av" ]     = tot_percent_sim_av;
+  results[ "int_st_dev" ]         = st_dev_int_final;
+  results[ "tot_percent_st_dev" ] = st_dev_tot_percent_final;
+  
+  return results;
+}
 
 // Distribution information HTML string
 QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
@@ -5254,6 +5584,8 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 
    qDebug() << "Model description, mdla, msim -- " << model_used.description <<  mdla << msim;
    QString model_name = mdla.split("_")[1];
+   if ( model_name.contains("PCSA") )
+     model_name = "PCSA";
    
    double tot_conc_r, tot_conc_tol_r, rmsd_r, av_int_r, exp_dur_r, exp_dur_tol_r;
 
@@ -5271,7 +5603,7 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
    QString scan1time = QString().sprintf( "%d m %02d s", fmins, fsecs );
    //end of length
    
-   US_ReportGMP reportGMP;  
+   US_ReportGMP* reportGMP;  //reference
    int nchna   = currAProf.pchans.count();
    for ( int i = 0; i < nchna; i++ )
      {
@@ -5284,18 +5616,18 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
        if ( tripleInfo[ "triple_name" ].contains("Interference") && !channel_desc_alt.contains("Interf") )
 	 continue;
 	 
-       if ( t_name. contains( channel_desc_alt.split(":")[0] ) )  //ALEXEY: not enought for both RI + IP !!! t_name = '2A660' OR '2A280'
+       if ( t_name. contains( channel_desc_alt.split(":")[0] ) )  
 	 {
 	   qDebug() << "So, what are channel_desc_alt, wvl ? " << channel_desc_alt << wvl;
 	     
-	   reportGMP = ch_reports[ channel_desc_alt ][ wvl ];
+	   reportGMP = &( ch_reports[ channel_desc_alt ][ wvl ] );
 
-	   tot_conc_r     = reportGMP.tot_conc ;
-	   tot_conc_tol_r = reportGMP.tot_conc_tol ;
-	   rmsd_r         = reportGMP.rmsd_limit ;
-	   av_int_r       = reportGMP.av_intensity ;
-	   exp_dur_r      = reportGMP.experiment_duration ;
-	   exp_dur_tol_r  = reportGMP.experiment_duration_tol ;
+	   tot_conc_r     = reportGMP-> tot_conc ;
+	   tot_conc_tol_r = reportGMP-> tot_conc_tol ;
+	   rmsd_r         = reportGMP-> rmsd_limit ;
+	   av_int_r       = reportGMP-> av_intensity ;
+	   exp_dur_r      = reportGMP-> experiment_duration ;
+	   exp_dur_tol_r  = reportGMP-> experiment_duration_tol ;
 	   
 	   break;
 	 }
@@ -5380,7 +5712,7 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
        mstr += table_row( tr( "Parameter: " ),
 			  tr( "Target Value:" ),
 			  tr( "Tolerance, %:"),
-			  tr( "Simulation Value:" ),
+			  tr( "Measured Value:" ),
 			  tr( "PASSED ?" ));
 
        if ( show_tot_conc ) 
@@ -5432,12 +5764,15 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 			  tr( "Fraction % from Model (target):" ),
 			  tr( "Tolerance, %:"),
 			  tr( "PASSED ?" ));
-       int report_items_number = reportGMP.reportItems.size();
+       int report_items_number = reportGMP-> reportItems.size();
        for ( int kk = 0; kk < report_items_number; ++kk )
 	 {
-	   US_ReportGMP::ReportItem curr_item = reportGMP.reportItems[ kk ];
+	   US_ReportGMP::ReportItem curr_item = reportGMP-> reportItems[ kk ];
 	   QString type           = curr_item.type;
 	   QString method         = curr_item.method;
+	   if( method.contains ("PCSA") )
+	     method = "PCSA";
+	   
 	   QString int_val_r      = QString::number( curr_item.integration_val );
 	   double  frac_tot_r     = curr_item.total_percent;
 	   double  frac_tot_tol_r = curr_item.tolerance ;
@@ -5484,6 +5819,23 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 	   
 	   if ( mdla.contains ( method ) )
 	     {
+	       // curr_item. integration_val_sim = int_val_m;
+	       // curr_item. total_percent_sim   = frac_tot_m;
+	       // curr_item. passed              = tot_frac_passed;
+
+	       reportGMP-> reportItems[ kk ]. integration_val_sim = int_val_m;
+	       reportGMP-> reportItems[ kk ]. total_percent_sim   = frac_tot_m;
+	       reportGMP-> reportItems[ kk ]. passed              = tot_frac_passed;
+
+	       qDebug() << "In distrib_info(), fill simulated integration vals: for chann/wvl/type/method/low/high, "
+			<< "Inter. val. Sim -- "
+			<< wvl
+			<< curr_item.type
+			<< curr_item.method
+			<< curr_item.range_low
+			<< curr_item.range_high
+			<< int_val_m;
+	       
 	       mstr += table_row( type,
 				  range,
 				  QString().sprintf( "%10.4e", int_val_m) + " (" + int_val_r + ")",
@@ -5491,6 +5843,7 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 				  QString::number( frac_tot_tol_r ),
 				  tot_frac_passed );
 	     }
+
 	 }
        mstr += indent( 2 ) + "</table>\n";
      }
@@ -5808,6 +6161,29 @@ QString  US_ReporterGMP::table_row( const QString& s1, const QString& s2,
    return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>"
             + s3 + "</td><td>" + s4 + "</td><td>" + s5 + "</td><td>"
             + s6 + "</td><td>" + s7 + "</td></tr>\n" );
+}
+
+// Table row HTML with 8 columns
+QString  US_ReporterGMP::table_row( const QString& s1, const QString& s2,
+				    const QString& s3, const QString& s4,
+				    const QString& s5, const QString& s6,
+				    const QString& s7, const QString& s8 ) const
+{
+   return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>"
+            + s3 + "</td><td>" + s4 + "</td><td>" + s5 + "</td><td>"
+            + s6 + "</td><td>" + s7 + "</td><td>" + s8 + "</td></tr>\n" );
+}
+
+// Table row HTML with 9 columns
+QString  US_ReporterGMP::table_row( const QString& s1, const QString& s2,
+				    const QString& s3, const QString& s4,
+				    const QString& s5, const QString& s6,
+				    const QString& s7, const QString& s8,
+				    const QString& s9 ) const
+{
+   return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>"
+            + s3 + "</td><td>" + s4 + "</td><td>" + s5 + "</td><td>"
+            + s6 + "</td><td>" + s7 + "</td><td>" + s8 + "</td><td>" + s9 + "</td></tr>\n" );
 }
 
 
@@ -7474,8 +7850,8 @@ void US_ReporterGMP::write_pdf_report( void )
   filePath  = US_Settings::tmpDir() + "/" + fileName;
   printer.setOutputFileName( filePath );
   printer.setFullPage(true);
-  printer.setPageMargins(QMarginsF(0, 0, 0, 0));
-  
+  printer.setPageMargins(0, 0, 0, 0, QPrinter::Millimeter);
+    
   document.print(&printer);
 }
 

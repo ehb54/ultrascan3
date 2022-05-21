@@ -28,6 +28,11 @@ class US_UTIL_EXTERN US_ReportGMP
 	double  tolerance;
 	double  total_percent;
 	int     combined_plot;
+	
+	//Integration results
+	double  integration_val_sim;
+	double  total_percent_sim;
+	QString passed;
       };
 
       QVector< ReportItem > reportItems;
@@ -73,6 +78,8 @@ class US_UTIL_EXTERN US_ReportGMP
       bool pseudo3d_pcsa_s_d;
       bool pseudo3d_pcsa_mw_ff0;
       bool pseudo3d_pcsa_mw_d;
+
+
       
       
       //Rest of parameters followign from protocol: not used so far
