@@ -117,9 +117,14 @@ DbgLv(1) << "  irow" << irow << "icol" << icol;
 
    QLabel* lb_fit_dev = us_label("RMSD of Species Fit:");
    le_fit_dev = us_lineedit("", -1, true);
+   pb_plot3d = us_pushbutton("Plot3D", false);
    row       = controlsLayout->rowCount() + 1;
-   controlsLayout->addWidget(lb_fit_dev, row, 0, 1, 1);
-   controlsLayout->addWidget(le_fit_dev, row, 1, 1, 1);
+   QHBoxLayout* sf_lyt = new QHBoxLayout();
+   sf_lyt->addWidget(lb_fit_dev);
+   sf_lyt->addWidget(le_fit_dev);
+   sf_lyt->addWidget(pb_plot3d);
+   controlsLayout->addLayout(sf_lyt, row, 0, 1, 2);
+   connect(pb_plot3d, SIGNAL(clicked()), this, SLOT(rmsd_3dplot()));
 
    data_plot1->setTitle( tr( "Output Data Set" ) );
    data_plot2->setTitle( tr( "Input Data Set" ) );
@@ -979,8 +984,9 @@ QDateTime time2=QDateTime::currentDateTime();
 DbgLv(1) << "sfd: narows kscan inclsize" << narows << kscan << inclscns.size();
 
    synFitDev[ccx].clear();
-   synFitDev[ccx].lambdas << lambdas;
-   QVector< QVector< QVector < double > > > dev_scrpwl;
+   synFitDev[ccx].wavlth << lambdas;
+   synFitDev[ccx].xvalues << synData.at(kdstart).xvalues.mid(krpad);
+   QVector< QVector< QVector < double > > > dev_snrpwl;
    for ( int ii = 0; ii < kscan; ii++ )
    {  // Loop through non-excluded scans
       int js         = inclscns[ ii ];
@@ -1035,9 +1041,9 @@ DbgLv(1) << "sfd:  NNLS  ii jj kl" << ii << jj << klambda
          dev_rpwl << dev_wl;
 DbgLv(1) << "sfd:  NNLS rnorm cmp_rnorm" << rnorm << qSqrt(rnorm_c);
       }
-      dev_scrpwl << dev_rpwl;
+      dev_snrpwl << dev_rpwl;
    }
-   synFitDev[ccx].dev_scrpwl << dev_scrpwl;
+   synFitDev[ccx].dev_snrpwl << dev_snrpwl;
    synFitDev[ccx].calc_rmsd();
 
 QDateTime time3=QDateTime::currentDateTime();
@@ -1125,7 +1131,7 @@ msg+=tr("\n time9-0: %1").arg(time0.msecsTo(time9))+" ms  (All Fit Steps)";
    jspec            = ccx * nspecies;
 
    plot_data1();
-   set_le_fit_dev();
+   set_fit_dev();
 }
 
 void US_MwlSpeciesFit::new_triple( const int ccx )
@@ -1142,7 +1148,7 @@ void US_MwlSpeciesFit::new_triple( const int ccx )
    // Make sure we have a reports directory for this runID
    QDir dir;
    if ( ! dir.exists( repdir ) )  dir.mkpath( repdir );
-   set_le_fit_dev();
+   set_fit_dev();
 }
 
 int US_MwlSpeciesFit::triple_index( const int ccx )
@@ -1244,44 +1250,25 @@ DbgLv(1) << "NextPlot: nspecies ltspec jspec" << nspecies << ltspec << jspec;
    plot_data1();
 }
 
-void US_MwlSpeciesFit::set_le_fit_dev(){
+void US_MwlSpeciesFit::set_fit_dev(){
     le_fit_dev->clear();
     int ccx = lw_triples->currentRow();
-    FitDev fit_dev = synFitDev.at(ccx);
-    if (fit_dev.rmsd_sc.size() == 0)
+    SFDev fit_dev = synFitDev.at(ccx);
+    if (fit_dev.rmsd_scns.size() == 0){
+        pb_plot3d->setDisabled(true);
         return;
+    }
+    pb_plot3d->setEnabled(true);
     double dev = 0;
-    for (int i = 0; i < fit_dev.rmsd_sc.size(); ++i)
-        dev += fit_dev.rmsd_sc.at(i);
-    dev /= fit_dev.rmsd_sc.size();
+    for (int i = 0; i < fit_dev.rmsd_scns.size(); ++i)
+        dev += fit_dev.rmsd_scns.at(i);
+    dev /= fit_dev.rmsd_scns.size();
     le_fit_dev->setText(QString::number(dev, 'f', 6));
 }
 
-void US_MwlSpeciesFit::FitDev::clear(){
-    lambdas.clear();
-    dev_scrpwl.clear();
-    rmsd_sc.clear();
-}
-
-void US_MwlSpeciesFit::FitDev::calc_rmsd(){
-    if (dev_scrpwl.size() == 0)
-        return;
-    rmsd_sc.clear();
-    int nscans = dev_scrpwl.size();
-    rmsd_sc.fill(0, nscans);
-    for (int i = 0; i < nscans; ++i){
-        int npoints = dev_scrpwl.at(i).size();
-        double rmsd_rp = 0;
-        for (int j = 0; j < npoints; ++j){
-            int nwl = dev_scrpwl.at(i).at(j).size();
-            double rmsd_wl = 0;
-            for (int k = 0; k < nwl; ++k){
-                rmsd_wl += dev_scrpwl.at(i).at(j).at(k);
-            }
-            rmsd_wl /= nwl;
-            rmsd_rp += rmsd_wl;
-        }
-        rmsd_rp /= npoints;
-        rmsd_sc[i] = rmsd_rp;
-    }
+void US_MwlSpeciesFit::rmsd_3dplot(){
+    int ccx = lw_triples->currentRow();
+    const SFDev* fit_dev = synFitDev.data();
+    US_MWL_SF_PLOT3D* plot3d = new US_MWL_SF_PLOT3D(this, fit_dev[ccx]);
+    plot3d->exec();
 }

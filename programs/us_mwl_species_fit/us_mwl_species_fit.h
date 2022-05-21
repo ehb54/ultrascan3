@@ -4,6 +4,7 @@
 #include "us_analysis_base2.h"
 #include "us_editor.h"
 #include "us_math2.h"
+#include "us_mwl_sf_plot3d.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -50,23 +51,14 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
       QPushButton*  pb_sfitdata;
       QPushButton*  pb_prev;
       QPushButton*  pb_next;
+      QPushButton*  pb_plot3d;
 
       QLineEdit* le_fit_dev;
 
-      class FitDev {
-      public:
-          QVector< int > lambdas;
-          QVector< int > inclscns;
-          QVector< QVector< QVector < double > > > dev_scrpwl;
-          QVector< double > rmsd_sc;
-          void clear(void);
-          void calc_rmsd(void);
-
-      };
-      QVector< FitDev >  synFitDev;
+      QVector< SFDev >  synFitDev;
 
       void data_plot ( void );
-      void set_le_fit_dev(void);
+      void set_fit_dev(void);
 
    private slots:
       void write_report   ( QTextStream& );
@@ -82,6 +74,7 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
       void plot_data1     ( void );
       void prev_plot      ( void );
       void next_plot      ( void );
+      void rmsd_3dplot    ( void );
       void help           ( void )
       { showHelp.show_help( "manual/mwl_species_fit.html" ); };
 };
