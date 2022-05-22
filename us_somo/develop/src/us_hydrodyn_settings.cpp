@@ -3270,6 +3270,10 @@ void US_Hydrodyn::hard_coded_defaults()
    gparams[ "thresh_SS"                  ]         = "2.5";
    gparams[ "thresh_carb_O"              ]         = "2";
    gparams[ "thresh_carb_N"              ]         = "2";
+
+   gparams[ "vdw_inflate"                ]         = "false";
+   gparams[ "vdw_inflate_mult"           ]         = "1";
+
 }
 
 void US_Hydrodyn::set_default()

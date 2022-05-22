@@ -2264,7 +2264,7 @@ void US_Hydrodyn_Batch::enable_after_stop()
 
 void US_Hydrodyn_Batch::start( bool quiet )
 {
-   if ( !((US_Hydrodyn *)us_hydrodyn)->misc.compute_vbar )
+   if ( !((US_Hydrodyn *)us_hydrodyn)->misc.compute_vbar && !overwrite_all )
    {
       switch ( QMessageBox::warning(this, 
                                     windowTitle() + us_tr( ": Warning" ),

@@ -69,6 +69,24 @@ void US_Hydrodyn::gui_script_run() {
          advanced_config.expert_mode = true;
       } else if ( cmd == "norasmol" ) {
          advanced_config.auto_view_pdb = false;
+      } else if ( cmd == "config" ) {
+         if ( ls.isEmpty() ) {
+            gui_script_error( i, cmd, "missing argument" );
+         }
+         QString opt1 = ls.front(); ls.pop_front();
+         if ( read_config( opt1 ) ) {
+            gui_script_error( i, cmd, QString( "config file '%1' failed" ).arg( opt1 ) );
+         }            
+      } else if ( cmd == "global" ) {
+         if ( ls.isEmpty() ) {
+            gui_script_error( i, cmd, "missing argument" );
+         }
+         QString opt1 = ls.front(); ls.pop_front();
+         if ( ls.isEmpty() ) {
+            gui_script_error( i, cmd, "missing argument" );
+         }
+         QString opt2 = ls.front(); ls.pop_front();
+         gparams[ opt1 ] = opt2;
       } else if ( cmd == "threads" ) {
          if ( ls.isEmpty() ) {
             gui_script_error( i, cmd, "missing argument" );
@@ -135,6 +153,12 @@ void US_Hydrodyn::gui_script_run() {
             }
             batch_window->cb_somo_o->setChecked( true );
             batch_window->set_somo_o();
+         } else if ( opt1 == "vdw" ) {
+            if ( !batch_window->cb_vdw_beads->isEnabled() ) {
+               gui_script_error( i, cmd, opt1 + ": not enabled" );
+            }
+            batch_window->cb_vdw_beads->setChecked( true );
+            batch_window->set_vdw_beads();
          } else if ( opt1 == "prr" ) {
             if ( !batch_window->cb_prr->isEnabled() ) {
                gui_script_error( i, cmd, opt1 + ": not enabled" );

@@ -1534,6 +1534,18 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
       gparams.count( "use_WAT_Tf_pdb" ) &&
       gparams[ "use_WAT_Tf_pdb" ] == "true";
 
+   bool use_vdw_inflate = 
+      gparams.count( "vdw_inflate" ) &&
+      gparams.count( "vdw_inflate_multiplier" ) &&
+      gparams[ "vdw_inflate_mult" ] != "1" &&
+      gparams[ "vdw_inflate" ] == "true";
+
+   double vdw_inflate_mult = 1;
+   if ( use_vdw_inflate ) {
+      vdw_inflate_mult = gparams[ "vdw_inflate_multiplier" ].toDouble();
+      editor_msg( "dark red", us_tr( QString( "WARNING: beads are inflated by a factor of %1" ).arg( vdw_inflate_mult ) ) );
+   }
+
    for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++) {
       for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); k++) {
          PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
@@ -1603,7 +1615,7 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
                   tmp_atom.bead_coordinate = saxs_util->plus( tmp_atom.bead_coordinate, saxs_util->scale( saxs_util->normal( saxs_util->minus( this_atom->coordinate, com ) ), use_vdw_ot_mult * hydro_radius ) );
                }
             } else {
-               tmp_atom.bead_computed_radius = this_vdwf.r;
+               tmp_atom.bead_computed_radius = this_vdwf.r * vdw_inflate_mult;
                if (
                    use_WAT_Tf &&
                    this_atom->resName == "WAT" &&
