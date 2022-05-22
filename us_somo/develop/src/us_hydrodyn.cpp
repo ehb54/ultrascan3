@@ -2281,7 +2281,7 @@ void US_Hydrodyn::write_config()
    case QMessageBox::Yes : 
       break;
    case QMessageBox::No : 
-      fname = QFileDialog::getSaveFileName( 0 , "Please name your SOMO configuration file..." , somo_dir , "*.config" , 0 );
+      fname = QFileDialog::getSaveFileName( 0 , "Please name your SOMO configuration file..." , US_Config::get_home_dir() + "etc" , "*.config" , 0 );
       break;
    default :
       return;
