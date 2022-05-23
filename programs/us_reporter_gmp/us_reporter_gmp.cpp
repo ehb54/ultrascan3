@@ -361,6 +361,7 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   ProtocolName_auto  = protocol_details[ "protocolName" ];
   invID              = protocol_details[ "invID_passed" ].toInt();
   runID              = protocol_details[ "runID" ];
+  runName            = protocol_details[ "experimentName" ];
   FileName           = protocol_details[ "filename" ];
   intensityID        = protocol_details[ "intensityID" ];
   AutoflowID_auto    = protocol_details[ "autoflowID" ];
@@ -957,6 +958,7 @@ void US_ReporterGMP::load_gmp_run ( void )
   ProtocolName_auto  = protocol_details[ "protocolName" ];
   invID              = protocol_details[ "invID_passed" ].toInt();
   runID              = protocol_details[ "runID" ];
+  runName            = protocol_details[ "experimentName" ];
   FileName           = protocol_details[ "filename" ];
   intensityID        = protocol_details[ "intensityID" ];
   analysisIDs        = protocol_details[ "analysisIDs" ];
@@ -6886,7 +6888,7 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
     "<hr>"
 			  )
     .arg( report_type )                              //1
-    .arg( currProto. protoname + "-run" + runID )    //2
+    .arg( runName )                                  //2
     ;
   //TITLE: end
 
@@ -6919,7 +6921,7 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
     "<h3 align=left>General Settings</h3>"
       "<table>"
         "<tr><td>Investigator: </td>                           <td>%1</td></tr>"
-        "<tr><td>Run Name:</td>                                <td>%2</td></tr>"
+        "<tr><td>Protocol Name: </td>                          <td>%2</td></tr>"
         "<tr><td>Project:</td>                                 <td>%3</td></tr>"
         "<tr><td>Run Temperature (&#8451;):</td>               <td>%4</td></tr>"
         "<tr><td>Temperature-Equilibration Delay (mins):</td>  <td>%5</td></tr>"
@@ -6927,8 +6929,7 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
     "<hr>"
 			    )
     .arg( currProto. investigator)  //1
-    //.arg( currProto. runname)       //2  
-    .arg( currProto. protoname + "-run" + runID) //2
+    .arg( currProto. protoname )    //2
     .arg( currProto. project)       //3
     .arg( currProto. temperature)   //4
     .arg( currProto. temeq_delay)   //5
@@ -6957,14 +6958,16 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
     "<h3 align=left>Optima Machine/Operator </h3>"
       "<table>"
         "<tr><td>Optima: </td>           <td>%1</td></tr>"
-        "<tr><td>Operator: </td>         <td>%2</td></tr>"
-        "<tr><td>Experiment Type:</td>   <td>%3</td></tr>"
+        "<tr><td>Optima's RunID: </td>   <td>%2</td></tr>"
+        "<tr><td>Operator: </td>         <td>%3</td></tr>"
+        "<tr><td>Experiment Type:</td>   <td>%4</td></tr>"
       "</table>"
     "<hr>"
 				  )
     .arg( currProto. rpRotor.instrname )   //1
-    .arg( currProto. rpRotor.opername  )   //2
-    .arg( currProto. rpRotor.exptype )     //3
+    .arg( runID )                          //2
+    .arg( currProto. rpRotor.opername  )   //3
+    .arg( currProto. rpRotor.exptype )     //4
     ;
   //OPERATOR: end 	  
 
@@ -7834,7 +7837,7 @@ void US_ReporterGMP::write_pdf_report( void )
        "<br>End of report: <i>\"%1\"</i>"
     "</div>"
 			    )
-    .arg( currProto. protoname )
+    .arg( runName )
     ;
   
   html_assembled += html_footer;
