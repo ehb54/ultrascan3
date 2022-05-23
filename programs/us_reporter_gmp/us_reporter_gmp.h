@@ -48,6 +48,11 @@ class US_ReporterGMP : public US_Widgets
 	 QMap< QString, QMap < QString, US_ReportGMP > > ch_reports;
 	 QMap< QString, QMap < QString, US_ReportGMP > > ch_reports_internal;
 	 QMap< QString, QList< double > > ch_wvls;
+
+	 QList< int > replicates;
+	 QMap < int, QStringList > replicates_to_channdesc;
+	 QMap< QString, QStringList > channdesc_to_overlapping_wvls;
+	 
 	 // QString      reportMask;
 
 	 //for model simulations:
@@ -195,6 +200,7 @@ class US_ReporterGMP : public US_Widgets
 	 QString    AutoflowID_auto;
 	 int        invID;
 	 QString    runID;
+	 QString    runName;
 	 QString    filePath;
 	 QString    FileName;
 	 QString    intensityID;
@@ -429,7 +435,10 @@ class US_ReporterGMP : public US_Widgets
 	 QString text_model(     US_Model, int );
 	 QString html_header   ( QString, QString, US_DataIO::EditedData* );
 	 QString distrib_info( QMap < QString, QString > & );
-	 //QString integration_info( void );
+	 QString calc_replicates_averages( void );
+	 QString get_replicate_group_number( QString );
+	 QMap<QString, double>  get_replicate_group_results( US_ReportGMP::ReportItem, QString, QStringList );
+	 void    assemble_replicate_av_integration_html( void );
 	 
 	 QString get_filename( QString );
 	 
@@ -485,6 +494,15 @@ class US_ReporterGMP : public US_Widgets
 	QString table_row( const QString&, const QString&,
 			   const QString&, const QString&,
 			   const QString&, const QString& ) const;
+	QString table_row( const QString&, const QString&,
+			   const QString&, const QString&,
+			   const QString&, const QString&,
+			   const QString&, const QString& ) const;
+	QString table_row( const QString&, const QString&,
+			   const QString&, const QString&,
+			   const QString&, const QString&,
+			   const QString&, const QString&,
+			   const QString& ) const;
 	
 	void    write_plot    ( const QString&, const QwtPlot* );
 	bool    mkdir         ( const QString&, const QString& );
