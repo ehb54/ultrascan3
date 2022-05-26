@@ -6900,6 +6900,18 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
    if ( db != NULL )
    {
       QStringList qry;
+      //first, check max(ID) in the autoflowHistory table && set AUTO_INCREMENT in the autoflow table to:
+      //greater of:
+      //- max(ID) autoflowHistory
+      //- current AUTO_INCREMENT
+      QString current_db = US_Settings::defaultDB().at(2);
+      qry << "set_autoflow_auto_increment" << current_db;
+      int auto_incr = db->statusQuery( qry );
+      qDebug() << "Autoflow table: AUTO_INCREMENT: " << auto_incr;
+      
+      
+      //Now add autoflow record
+      qry.clear();
       qry << "add_autoflow_record"
           << protocol_details[ "protocolName" ]
           << protocol_details[ "CellChNumber" ]

@@ -8975,11 +8975,23 @@ int US_Edit::create_autoflowAnalysis_record( US_DB2* db, QString& tripleName, QS
   //      return autoflowAnalysisID;
   //    }
 
+
+  //first, check max(requestID) in the autoflowAnalysisHistory table && set AUTO_INCREMENT in the autoflowAnalysis table to:
+  //greater of:
+  //- max(ID) autoflowAnalysisHistory
+  //- current AUTO_INCREMENT
+  QStringList qry;
+  QString current_db = US_Settings::defaultDB().at(2);
+  qry << "set_autoflowAnalysis_auto_increment" << current_db;
+  int auto_incr = db->statusQuery( qry );
+  qDebug() << "AutoflowAnalysis table: AUTO_INCREMENT: " << auto_incr;
+
+  //Now add autoflowAnalysis record 
    QString status =  QString("Saving AutoflowAnalysis Profile for Triple %1").arg( tripleName );
    le_status->setText( status );
    qApp->processEvents();
    
-   QStringList qry;
+   qry.clear();
    qry << "new_autoflow_analysis_record"
        << tripleName
        << filename_runID_auto
