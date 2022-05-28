@@ -200,6 +200,7 @@ class US_ReporterGMP : public US_Widgets
 	 QString    AutoflowID_auto;
 	 int        invID;
 	 QString    runID;
+	 QString    runName;
 	 QString    filePath;
 	 QString    FileName;
 	 QString    intensityID;
