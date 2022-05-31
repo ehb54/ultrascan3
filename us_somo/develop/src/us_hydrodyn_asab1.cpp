@@ -355,8 +355,8 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
    float sommarc, Dz, d1z, zz, temp, asamin, asalevel, asapep, asatot, perc, voltot;
    char azoto[2];
    char carbonio0[3];
-   char carbonio1[2];
-   char carbonio2[3];
+   char carbonio1[3];
+   char carbonio2[4];
    //    char pippo[10];
    // char pluto[1];
    // int topolino;
