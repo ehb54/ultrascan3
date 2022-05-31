@@ -15,7 +15,7 @@ US3PATH       = /ultrascan3
 # path of QT (not needed mingw64)
 QTPATH        = 
 # path of QWT (not needed mingw64)
-QWTPATH       = /qwt-6.1.5
+QWTPATH       = /qwt-6.1.6
 
 
 # ---- these below might need to be modified in unusual circumstances ----
