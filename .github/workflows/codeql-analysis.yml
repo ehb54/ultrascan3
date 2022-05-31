@@ -46,7 +46,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v1
+        uses: github/codeql-action/init@v2
         with:
           languages: ${{ matrix.language }}
       - name: Build
@@ -61,7 +61,7 @@ jobs:
           make -j4
           cd ../..
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v1
+        uses: github/codeql-action/analyze@v2
 
   analyze-gui:
     name: Analyze gui
@@ -84,7 +84,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v1
+        uses: github/codeql-action/init@v2
         with:
           languages: ${{ matrix.language }}
       - name: Build
@@ -134,10 +134,6 @@ jobs:
           qmake
           make -j4
           cd ../..
-          # cd programs/us_autoflow_reports
-          # qmake
-          # make -j4
-          # cd ../..
           cd programs/us_buffer
           qmake
           make -j4
@@ -298,6 +294,10 @@ jobs:
           qmake
           make -j4
           cd ../..
+          cd programs/us_pseudo_absorbance
+          qmake
+          make -j4
+          cd ../..
           cd programs/us_ramp
           qmake
           make -j4
@@ -355,7 +355,7 @@ jobs:
           make -j4
           cd ../..
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v1
+        uses: github/codeql-action/analyze@v2
 
   analyze-somo:
     name: Analyze somo
@@ -378,7 +378,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v1
+        uses: github/codeql-action/init@v2
         with:
           languages: ${{ matrix.language }}
       - name: Build
@@ -397,6 +397,6 @@ jobs:
           qmake us_somo.pro
           make -j4
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v1
+        uses: github/codeql-action/analyze@v2
 
 
