@@ -552,6 +552,7 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
 
       // adjust to create non-zero sds and get/put contents
       QString prcontents;
+      QString prcontents_normed;
       QString error;
       bool ok_to_replace = false;
       if ( !US_File_Util::getcontents( files[ caps[ 2 ] ], prcontents, error ) ) {
@@ -597,6 +598,7 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
             }
             // replace contents
             QStringList newcontents;
+            QStringList newcontents_normed;
             for ( int i = 0; i < qsl.size(); ++i ) {
                QStringList line = qsl[i].split( QRegExp( "\\s+" ) );
                if ( line.size() < 3 ) {
@@ -611,12 +613,12 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
             }
             if ( mw != -1 ) {
                normalize_pr( r, &pr, &pre, mw );
-               newcontents.clear();
                for ( int i = 0; i < (int)r.size(); ++i ) {
-                  newcontents << QString( "%1 %2 %3" ).arg( r[i], 0, 'g', 9 ).arg( pr[i], 0, 'g', 9 ).arg( pre[i], 0, 'g', 9 );
+                  newcontents_normed << QString( "%1 %2 %3" ).arg( r[i], 0, 'g', 9 ).arg( pr[i], 0, 'g', 9 ).arg( pre[i], 0, 'g', 9 );
                }
             }
-            prcontents = newcontents.join( "\n" ) + "\n";
+            prcontents        = newcontents.join( "\n" ) + "\n";
+            prcontents_normed = newcontents_normed.join( "\n" ) + "\n";
                
             // QTextStream( stdout ) << "--- new pr contents ---\n";
             // QTextStream( stdout ) << prcontents;
@@ -645,8 +647,25 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
             editor_msg( "red", error );
          } else {
             created_files << dest;
-            load_pr( false, dest, mw == -1e0 );
+            if ( prcontents_normed.isEmpty() || !cb_normalize->isChecked() ) {
+               load_pr( false, dest, mw == -1e0 );
+            }
          }            
+         if ( !prcontents_normed.isEmpty() ) {
+            prcontents_normed = header + prcontents_normed;
+            QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( ift_last_processed ).replace( QRegExp( rxstr ), "_ift.dat" );
+            if ( !((US_Hydrodyn *) us_hydrodyn )->overwrite ) {
+               dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
+            }
+            if ( !US_File_Util::putcontents( dest, prcontents_normed, error ) ) {
+               editor_msg( "red", error );
+            } else {
+               created_files << dest;
+               if ( cb_normalize->isChecked() ) {
+                  load_pr( false, dest, mw == -1e0 );
+               }
+            }
+         }
       } else {
          US_File_Util ufu;
          if ( !ufu.copy( files[ caps[ 2 ] ], dest, true, header ) ) {
