@@ -984,8 +984,9 @@ QDateTime time2=QDateTime::currentDateTime();
 DbgLv(1) << "sfd: narows kscan inclsize" << narows << kscan << inclscns.size();
 
    synFitDev[ccx].clear();
-   synFitDev[ccx].wavlth << lambdas;
-   synFitDev[ccx].xvalues << synData.at(kdstart).xvalues.mid(krpad);
+   for (int ii = 0; ii < lambdas.size(); ii++)
+       synFitDev[ccx].wavelenghts << (double) lambdas.at(ii);
+   synFitDev[ccx].xValues << synData.at(kdstart).xvalues.mid(krpad);
    QVector< QVector< QVector < double > > > dev_snrpwl;
    for ( int ii = 0; ii < kscan; ii++ )
    {  // Loop through non-excluded scans
@@ -993,7 +994,7 @@ DbgLv(1) << "sfd: narows kscan inclsize" << narows << kscan << inclscns.size();
       int jr         = radxs;
 DbgLv(1) << "sfd: sc" << ii << "js jr" << js << jr;
 
-      synFitDev[ccx].inclscns << js;
+      synFitDev[ccx].includedScans << js;
       QVector< QVector < double > > dev_rpwl;
       for ( int jj = krpad; jj < kradp; jj++, jr++ )
       {  // Loop through radius values
@@ -1043,8 +1044,8 @@ DbgLv(1) << "sfd:  NNLS rnorm cmp_rnorm" << rnorm << qSqrt(rnorm_c);
       }
       dev_snrpwl << dev_rpwl;
    }
-   synFitDev[ccx].dev_snrpwl << dev_snrpwl;
-   synFitDev[ccx].calc_rmsd();
+   synFitDev[ccx].allDeviations << dev_snrpwl;
+   synFitDev[ccx].computeRmsd();
 
 QDateTime time3=QDateTime::currentDateTime();
 nnls_a=sv_nnls_a;
@@ -1254,15 +1255,15 @@ void US_MwlSpeciesFit::set_fit_dev(){
     le_fit_dev->clear();
     int ccx = lw_triples->currentRow();
     SFDev fit_dev = synFitDev.at(ccx);
-    if (fit_dev.rmsd_scns.size() == 0){
+    if (fit_dev.scansRmsd.size() == 0){
         pb_plot3d->setDisabled(true);
         return;
     }
     pb_plot3d->setEnabled(true);
     double dev = 0;
-    for (int i = 0; i < fit_dev.rmsd_scns.size(); ++i)
-        dev += fit_dev.rmsd_scns.at(i);
-    dev /= fit_dev.rmsd_scns.size();
+    for (int i = 0; i < fit_dev.scansRmsd.size(); ++i)
+        dev += fit_dev.scansRmsd.at(i);
+    dev /= fit_dev.scansRmsd.size();
     le_fit_dev->setText(QString::number(dev, 'f', 6));
 }
 
