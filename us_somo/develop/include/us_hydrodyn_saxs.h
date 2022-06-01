@@ -932,6 +932,10 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void normalize_pr( vector < double >, 
                          vector < double > *, 
                          double mw = 1e0 );
+      void normalize_pr( vector < double >, 
+                         vector < double > *, 
+                         vector < double > *, 
+                         double mw = 1e0 );
       void update_saxs_sans();
 
       void guinier_window();

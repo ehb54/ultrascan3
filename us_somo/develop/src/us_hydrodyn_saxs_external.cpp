@@ -539,13 +539,96 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
    }
 
    // p(r) file
+#define PR_ZERO_SD_MULTIPLIER 1e-3
+
    if ( files.count( caps[ 2 ] ) ) {
       // copy this to our created files
+
+      double mw = get_mw( QString( "%1" ).arg( ift_last_processed ).replace( QRegExp( "\\..*$" ), "_ift P(r)" ), false, true );
+
+      vector < double > r;
+      vector < double > pr;
+      vector < double > pre;
+
+      // adjust to create non-zero sds and get/put contents
+      QString prcontents;
+      QString error;
+      bool ok_to_replace = false;
+      if ( !US_File_Util::getcontents( files[ caps[ 2 ] ], prcontents, error ) ) {
+         editor_msg( "red", error );
+      } else {
+         QStringList qsl = prcontents.split( "\n" ).replaceInStrings( QRegExp( "^\\s*" ), "" );
+            
+         // QTextStream( stdout ) << "--- pr contents ---\n";
+         double min_sd = 1e99;
+         double min_pr = 1e99;
+         for ( int i = 0; i < qsl.size(); ++i ) {
+            QStringList line = qsl[i].split( QRegExp( "\\s+" ) );
+            // QTextStream( stdout ) << line.join( " " ) << endl;
+            if ( line.size() < 3 ) {
+               continue;
+            } else {
+               r  .push_back( line[0].toDouble() );
+               pr .push_back( line[1].toDouble() );
+               pre.push_back( line[2].toDouble() );
+               
+               double this_pr = line[1].toDouble();
+               if ( this_pr > 0 && min_pr > this_pr ) {
+                  min_pr = this_pr;
+               }
+
+               double this_sd = line[2].toDouble();
+               if ( this_sd > 0 && min_sd > this_sd ) {
+                  min_sd = this_sd;
+               }
+               // QTextStream( stdout ) << QString( "this_pr %1 min_pr %2 this_sd %3 min_sd %4\n" ).arg( this_pr ).arg( min_pr ).arg( this_sd ).arg( min_sd );
+            }
+         }
+         // QTextStream( stdout ) << "--- end pr contents ---\n";
+         if ( min_pr == 1e99 && min_sd == 1e99 ) {
+            editor_msg( "red", "no data apparent in generated P(r)" );
+         } else {
+            ok_to_replace = true;
+            double zero_sd;
+            if ( min_sd != 1e99 ) {
+               zero_sd = min_sd * PR_ZERO_SD_MULTIPLIER;
+            } else {
+               zero_sd = min_pr * PR_ZERO_SD_MULTIPLIER * 1e-2;
+            }
+            // replace contents
+            QStringList newcontents;
+            for ( int i = 0; i < qsl.size(); ++i ) {
+               QStringList line = qsl[i].split( QRegExp( "\\s+" ) );
+               if ( line.size() < 3 ) {
+                  continue;
+               } else {
+                  if ( line[2].toDouble() == 0 ) {
+                     line[2] = QString( "%1" ).arg( zero_sd );
+                     pre [i] = zero_sd;
+                  }
+                  newcontents << line.join( " " );
+               }
+            }
+            if ( mw != -1 ) {
+               normalize_pr( r, &pr, &pre, mw );
+               newcontents.clear();
+               for ( int i = 0; i < (int)r.size(); ++i ) {
+                  newcontents << QString( "%1 %2 %3" ).arg( r[i], 0, 'g', 9 ).arg( pr[i], 0, 'g', 9 ).arg( pre[i], 0, 'g', 9 );
+               }
+            }
+            prcontents = newcontents.join( "\n" ) + "\n";
+               
+            // QTextStream( stdout ) << "--- new pr contents ---\n";
+            // QTextStream( stdout ) << prcontents;
+            // QTextStream( stdout ) << "--- end new pr contents ---\n";
+         }
+      }
+         
       QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( ift_last_processed ).replace( QRegExp( rxstr ), "_ift.sprr" );
       if ( !((US_Hydrodyn *) us_hydrodyn )->overwrite ) {
          dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
       }
-      double mw = get_mw( QString( "%1" ).arg( ift_last_processed ).replace( QRegExp( "\\..*$" ), "_ift P(r)" ), false, true );
+
       QString header =
          QString( "# IFT P(r) from " + ift_last_processed + "%1\nR\tP(r)\tSD\n" )
          .arg(
@@ -555,12 +638,23 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
               )
          ;
 
-      US_File_Util ufu;
-      if ( !ufu.copy( files[ caps[ 2 ] ], dest, true, header ) ) {
-         editor_msg( "red", ufu.errormsg );
+      if ( ok_to_replace ) {
+         prcontents = header + prcontents;
+         QString error;
+         if ( !US_File_Util::putcontents( dest, prcontents, error ) ) {
+            editor_msg( "red", error );
+         } else {
+            created_files << dest;
+            load_pr( false, dest, mw == -1e0 );
+         }            
       } else {
-         created_files << dest;
-         load_pr( false, dest, mw == -1e0 );
+         US_File_Util ufu;
+         if ( !ufu.copy( files[ caps[ 2 ] ], dest, true, header ) ) {
+            editor_msg( "red", ufu.errormsg );
+         } else {
+            created_files << dest;
+            load_pr( false, dest, mw == -1e0 );
+         }
       }
    }
 
