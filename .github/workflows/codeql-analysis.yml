@@ -389,6 +389,7 @@ jobs:
           export ULTRASCAN=$bdir
           export us3=$bdir
           cd us_somo/develop
+          git config --global --add safe.directory /__w/ultrascan3/ultrascan3
           ./revision.sh
           ./version.sh
           cp $bdir/admin/codeql/docker/local.pri.somo local.pri
