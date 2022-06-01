@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 # dockerfile for us3 compiles
 
@@ -59,7 +59,7 @@ RUN cd /ultrascan3/us_somo/develop && env ULTRASCAN=/ultrascan3 ./revision.sh &&
 RUN ssh-keygen -t rsa -N '' -f ~/.ssh/id_rsa
 RUN cat ~/.ssh/id_rsa.pub
 RUN echo "Host host\nHostName 172.17.0.1\nUser ehb" > ~/.ssh/config
-RUN scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null host:.emacs ~/
+# RUN scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null host:.emacs ~/
 RUN echo 'env TERM=vt100 emacs -nw $*' > /usr/bin/e && chmod +x /usr/bin/e
 RUN touch ~/p
 RUN echo 'ls -sxF $*' > /usr/bin/s && chmod +x /usr/bin/s
