@@ -6,7 +6,7 @@
 #include <../us_convert/us_select_triples.h>
 #include <us_refScan_dataIO.h>
 #include "us_plot.h"
-#include "us_gen_colormap.h"
+#include "us_pabs_common.h"
 #include "us_db2.h"
 #include "us_passwd.h"
 #include "us_images.h"
@@ -58,49 +58,6 @@ private slots:
 
 private:
 
-    class CCW_ITEM{
-    public:
-        QList<int> cell;
-        QList<char> channel;
-        QList<QVector<double>> wavelength;
-        QList<QVector<int>> index;
-        QList<double> min_wl;
-        QList<double> max_wl;
-        QList<int> n_wl;
-
-        void clear(void){
-            cell.clear();
-            channel.clear();
-            wavelength.clear();
-            index.clear();
-            min_wl.clear();
-            max_wl.clear();
-            n_wl.clear();
-        }
-
-        int size(void){
-            return cell.size();
-        }
-    };
-
-    class CCW{
-    public:
-        QVector<int> index;
-        QVector<int> cell;
-        QVector<char> channel;
-        QVector<double> wavelength;
-
-        void clear(void){
-            cell.clear();
-            channel.clear();
-            wavelength.clear();
-            index.clear();
-        }
-
-        int size(void){
-            return cell.size();
-        }
-    };
     const double maxAbs = 3;
 
     QPushButton* pb_prev_id;

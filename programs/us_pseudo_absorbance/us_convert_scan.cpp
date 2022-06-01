@@ -147,7 +147,7 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
 
     QVBoxLayout* left_lyt = new QVBoxLayout();
     left_lyt->addStretch(0);
-    left_lyt->setSpacing(5);
+    left_lyt->setSpacing(1);
     left_lyt->addWidget(lb_runInfoInt);
     left_lyt->addLayout(import_lyt);
     left_lyt->addLayout(insty_info_lyt);
@@ -182,7 +182,7 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     usplot_insty = new US_Plot( qwtplot_insty, tr( "" ),
                                 tr( "Radius (in cm)" ), tr( "Intensity" ),
                                 true, "", "rainbow" );
-    qwtplot_insty->setMinimumSize( 700, 400 );
+    qwtplot_insty->setMinimumSize( 650, 300 );
     qwtplot_insty->enableAxis( QwtPlot::xBottom, true );
     qwtplot_insty->enableAxis( QwtPlot::yLeft  , true );
     qwtplot_insty->setCanvasBackground(QBrush(Qt::black));
@@ -191,7 +191,7 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     usplot_abs = new US_Plot( qwtplot_abs, tr( "" ),
                               tr( "Radius (in cm)" ), tr( "Absorbance" ),
                               true, "", "rainbow" );
-    qwtplot_abs->setMinimumSize( 700, 400 );
+    qwtplot_abs->setMinimumSize( 650, 300 );
     qwtplot_abs->enableAxis( QwtPlot::xBottom, true );
     qwtplot_abs->enableAxis( QwtPlot::yLeft  , true );
     qwtplot_abs->setCanvasBackground(QBrush(Qt::black));
@@ -415,11 +415,12 @@ void US_ConvertScan::slt_import(void){
     }
     le_runIdInt->setText(runId);
     le_dir->setText(US_Settings::importDir());
-    re.setPattern("-run[0-9]+$");
-    int reIdx = runId.indexOf(re);
-    QString s1 = runId.left(reIdx);
-    QString s2 = runId.right(runId.size() - reIdx);
-    runIdAbs = s1.append("_Absorbance").append(s2);
+//    re.setPattern("-run[0-9]+$");
+//    int reIdx = runId.indexOf(re);
+//    QString s1 = runId.left(reIdx);
+//    QString s2 = runId.right(runId.size() - reIdx);
+//    runIdAbs = s1.append("_Absorbance").append(s2);
+    runIdAbs = runId.prepend("P-ABS_");
     le_runIdAbs->setText(runIdAbs);
     make_ccwItemList();
     set_listWidget();
@@ -644,7 +645,7 @@ void US_ConvertScan::slt_mouse(const QwtDoublePoint& point){
             emit sig_plot();
         } else {
             if (x <= x_min_picked){
-                QString mess("Pick a radial point larger than: %1 cm");
+                QString mess("Pick a radial point greater than: %1 cm");
                 QMessageBox::warning( this, tr( "Warning" ), mess.arg(x_min_picked));
                 return;
             }
@@ -928,7 +929,6 @@ void US_ConvertScan::slt_edit_le(QString text){
     }
     return;
 }
-
 
 void US_ConvertScan::set_listWidget(){
     lw_triple->disconnect();

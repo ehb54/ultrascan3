@@ -1,5 +1,5 @@
-#ifndef US_GEN_COLORMAP_H
-#define US_GEN_COLORMAP_H
+#ifndef US_PABS_COMMON_H
+#define US_PABS_COMMON_H
 
 #include <QObject>
 #include <QVector>
@@ -31,4 +31,28 @@ private:
     QVector<int> rang_hvalues(void);
 };
 
-#endif // US_GEN_COLORMAP_H
+class CCW_ITEM{
+public:
+    QList<int> cell;
+    QList<char> channel;
+    QList<QVector<double>> wavelength;
+    QList<QVector<int>> index;
+    QList<double> min_wl;
+    QList<double> max_wl;
+    QList<int> n_wl;
+    void clear(void);
+    int size(void);
+};
+
+class CCW{
+public:
+    QVector<int> index;
+    QVector<int> cell;
+    QVector<char> channel;
+    QVector<double> wavelength;
+    void clear(void);
+    int size(void);
+};
+
+
+#endif // US_PABS_COMMON_H

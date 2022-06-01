@@ -3,19 +3,20 @@ include( ../../gui.pri )
 TARGET        = us_pseudo_absorbance
 QT           += xml printsupport
 
-HEADERS       = \
-    ../us_convert/us_select_triples.h \
-    us_refScan_dataIO.h \
-    us_add_refScan.h \
-    us_convert_scan.h \
-    us_gen_colormap.h \
-    us_pseudo_absorbance.h
+HEADERS       =  us_pseudo_absorbance.h \
+                 us_convert_scan.h      \
+                 us_add_refScan.h       \
+                 us_remove_ri.h         \
+                 us_refScan_dataIO.h    \
+                 us_pabs_common.h       \
+                 ../us_convert/us_select_triples.h
 
 
-SOURCES       =       \
-                ../us_convert/us_select_triples.cpp \
-                us_refScan_dataIO.cpp \
-                us_add_refScan.cpp \
-                us_convert_scan.cpp \
-                us_gen_colormap.cpp \
-                us_pseudo_absorbance.cpp
+SOURCES       =  us_pseudo_absorbance.cpp \
+                 us_convert_scan.cpp      \
+                 us_add_refScan.cpp       \
+                 us_remove_ri.cpp         \
+                 us_refScan_dataIO.cpp    \
+                 us_pabs_common.cpp       \
+                 ../us_convert/us_select_triples.cpp
+
