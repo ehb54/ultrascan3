@@ -79,31 +79,33 @@ US_RemoveRI::US_RemoveRI() : US_Widgets()
     QLabel* lb_fit_ctrl = us_banner("Polynomial Fit Control");
     pb_pick_rp = us_pushbutton("Pick Two Points", true);
     le_xrange = us_lineedit("", 0, true);
-    pb_calc_res = us_pushbutton("Compute Residuals");
+    pb_calc_intg = us_pushbutton("Compute Residuals");
     QHBoxLayout *xrange_lyt = new QHBoxLayout();
     xrange_lyt->addWidget(pb_pick_rp);
     xrange_lyt->addWidget(le_xrange);
-    xrange_lyt->addWidget(pb_calc_res);
+    xrange_lyt->addWidget(pb_calc_intg);
 
     cb_autofit = new QCheckBox();
-    pb_fit = us_pushbutton("Fit Polynomial");
-    QGridLayout* uscb_autofit = us_checkbox("Auto Fit", cb_autofit, true);
+    pb_fit = us_pushbutton("Remove RI");
+    QGridLayout* uscb_autofit = us_checkbox("Autofit Polynomial", cb_autofit, true);
     QHBoxLayout *fit_lyt = new QHBoxLayout();
     fit_lyt->addLayout(uscb_autofit);
     fit_lyt->addWidget(pb_fit);
 
     lb_maxorder = us_label("Max Order:");
     lb_maxorder->setAlignment(Qt::AlignRight);
-    ct_max_order = us_counter(1, 1, max_ct, 10);
+    ct_max_order = us_counter(1, 1, max_ct, max_ct);
+    ct_max_order->setSingleStep(1);
     lb_manorder = us_label("Order:");
     lb_manorder->setAlignment(Qt::AlignRight);
     ct_order = us_counter(1, 1, max_ct, 6);
+    ct_order->setSingleStep(1);
     lb_fitorder = us_label("Order:");
     lb_fitorder->setAlignment(Qt::AlignRight);
     le_fitorder = us_lineedit("", 0, true);
-    lb_fiterror = us_label("Error:");
-    lb_fiterror->setAlignment(Qt::AlignRight);
-    le_fiterror = us_lineedit("", 0, true);
+    lb_fitrsqrd = us_label("R-Squared:");
+    lb_fitrsqrd->setAlignment(Qt::AlignRight);
+    le_fitrsqrd = us_lineedit("", 0, true);
 
     QHBoxLayout *fitctrl_lyt = new QHBoxLayout();
     fitctrl_lyt->addWidget(lb_maxorder);
@@ -112,12 +114,12 @@ US_RemoveRI::US_RemoveRI() : US_Widgets()
     fitctrl_lyt->addWidget(ct_order);
     fitctrl_lyt->addWidget(lb_fitorder);
     fitctrl_lyt->addWidget(le_fitorder);
-    fitctrl_lyt->addWidget(lb_fiterror);
-    fitctrl_lyt->addWidget(le_fiterror);
+    fitctrl_lyt->addWidget(lb_fitrsqrd);
+    fitctrl_lyt->addWidget(le_fitrsqrd);
 //    le_fitorder->setMinimumWidth(20);
 //    le_fiterror->setMinimumWidth(20);
     le_fitorder->setMaximumWidth(25);
-    le_fiterror->setMaximumWidth(75);
+    le_fitrsqrd->setMaximumWidth(75);
     lb_manorder->hide();
     ct_order->hide();
 
@@ -176,7 +178,7 @@ US_RemoveRI::US_RemoveRI() : US_Widgets()
     QwtText xLabel, yLabel;
     usplot_data = new US_Plot( qwtplot_data, tr( "" ),
                                 tr( "Radius (in cm)" ), tr( "Intensity" ),
-                                true, "", "rainbow" );
+                                true, "", "" );
     qwtplot_data->setMinimumSize( 650, 300 );
     qwtplot_data->enableAxis( QwtPlot::xBottom, true );
     qwtplot_data->enableAxis( QwtPlot::yLeft  , true );
@@ -184,13 +186,15 @@ US_RemoveRI::US_RemoveRI() : US_Widgets()
     grid = us_grid(qwtplot_data);
 
     usplot_fit = new US_Plot( qwtplot_fit, tr( "" ),
-                              tr( "Radius (in cm)" ), tr( "Absorbance" ),
-                              true, "", "rainbow" );
+                              tr( "Scan Number" ), tr( "Integral" ),
+                              true, "", "" );
     qwtplot_fit->setMinimumSize( 650, 300 );
     qwtplot_fit->enableAxis( QwtPlot::xBottom, true );
     qwtplot_fit->enableAxis( QwtPlot::yLeft  , true );
     qwtplot_fit->setCanvasBackground(QBrush(Qt::black));
     grid = us_grid(qwtplot_fit);
+    QwtLegend *legend = new QwtLegend();
+    qwtplot_fit->insertLegend( legend , QwtPlot::BottomLegend);
 
 
     QVBoxLayout* right_lyt = new QVBoxLayout();
@@ -222,10 +226,14 @@ US_RemoveRI::US_RemoveRI() : US_Widgets()
     connect(pb_next_ccw,     SIGNAL(clicked()), this, SLOT(slt_next_ccw()));
 
     connect(this, SIGNAL(sig_plot_data(bool)), this, SLOT(slt_plot_data(bool)));
+    connect(this, SIGNAL(sig_plot_fit(bool)), this, SLOT(slt_plot_fit(bool)));
     connect(pb_pick_rp, SIGNAL(clicked()),
                 this, SLOT(slt_pick_point()));
 
-    connect(cb_autofit, SIGNAL(stateChanged(int)), this, SLOT(slt_autofit(int)));
+    connect(cb_autofit, SIGNAL(stateChanged(int)), this, SLOT(slt_autofit_state(int)));
+    connect(pb_calc_intg, SIGNAL(clicked()), this, SLOT(slt_integrate()));
+    connect(pb_fit, SIGNAL(clicked()), this, SLOT(slt_polyfit()));
+
 //    connect(ckb_xrange, SIGNAL(stateChanged(int)), this, SLOT(slt_xrange(int)));
 
 //    connect(pb_reset_curr_scans, SIGNAL(clicked()), this, SLOT(slt_reset_scans()));
@@ -253,9 +261,12 @@ void US_RemoveRI::slt_reset(){
     hasData = false;
     allData.clear();
     allDataC.clear();
-    allResiduals.clear();
+    allIntegrals.clear();
+    allIntegralsC.clear();
+    integralState.clear();
+    fitState.clear();
     fitOrder.clear();
-    fitError.clear();
+    fitRsqrd.clear();
     fitParam.clear();
     ccwList.clear();
     ccwStrList.clear();
@@ -350,10 +361,13 @@ void US_RemoveRI::slt_import(void){
         memcpy( rdata.rawGUID,   (char*) uuid, 16 );
         allDataC << rdata;
         allDataFInfo << fileList.at(i);
-        QVector<double> res(rdata.scanCount(), -1e20);
-        allResiduals << res;
+        QVector<double> intg(rdata.scanCount(), 0);
+        allIntegrals << intg;
+        allIntegralsC << intg;
+        integralState << false;
+        fitState << false;
 
-        QVector<double> param(max_ct, 0);
+        QVector<double> param(max_ct + 1, 0);
         fitParam << param;
 
         int cell = rdata.cell;
@@ -368,7 +382,7 @@ void US_RemoveRI::slt_import(void){
 
     }
     fitOrder.fill(0, allData.size());
-    fitError.fill(0, allData.size());
+    fitRsqrd.fill(0, allData.size());
 
     if ( runId_changed )
     {
@@ -380,9 +394,12 @@ void US_RemoveRI::slt_import(void){
              + runId );
     }
     le_runIdIn->setText(runId);
+    le_runIdIn->setCursorPosition(0);
     le_dir->setText(US_Settings::importDir());
+    le_dir->setCursorPosition(0);
     runIdOut = runId.prepend("RI_");
     le_runIdOut->setText(runIdOut);
+    le_runIdOut->setCursorPosition(0);
     set_cb_triples();
     slt_new_ccw(0);
     pb_import->setDisabled(true);
@@ -462,6 +479,7 @@ void US_RemoveRI::slt_set_id(int id){
     wavl_id = id;
     offon_prev_next();
     le_desc->setText(allData.at(id).description);
+    le_desc->setCursorPosition(0);
     emit sig_plot_data(true);
 }
 
@@ -723,11 +741,19 @@ void US_RemoveRI::slt_plot_data(bool state){
         qwtplot_data->replot();
         return;
     }
-
-//    int row = lw_triple->currentRow();
     int index = ccwItemList.index.at(ccw_id).at(wavl_id);
-//    QVector<double> xvalues = allIntData.at(index).xvalues;
-    US_DataIO::RawData data = allDataC.at(index);
+    bool fit_state = fitState.at(index);
+    US_DataIO::RawData data;
+    QString title("wavelength= ");
+    if (fit_state){
+        data = allDataC.at(index);
+        title += QString::number(data.scanData.at(0).wavelength);
+        title += tr(" nm, corrected data");
+    } else {
+        data = allData.at(index);
+        title += QString::number(data.scanData.at(0).wavelength);
+        title += tr(" nm, raw data");
+    }
 
     QPen pen_plot(Qt::yellow);
     pen_plot.setWidth(1);
@@ -804,110 +830,86 @@ void US_RemoveRI::slt_plot_data(bool state){
     qwtplot_data->setAxisScale( QwtPlot::xBottom, min_x - dx, max_x + dx);
     qwtplot_data->setAxisScale( QwtPlot::yLeft  , min_r - dr, max_r + dr);
     qwtplot_data->updateAxes();
-    QString title = tr("wavelength= % nm");
-    qwtplot_data->setTitle(title.arg(QString::number(data.scanData.at(0).wavelength)));
+
+    qwtplot_data->setTitle(title);
     qwtplot_data->replot();
     return;
 }
 
 void US_RemoveRI::slt_plot_fit(bool state){
     qwtplot_fit->detachItems(QwtPlotItem::Rtti_PlotItem, false);
-    if (! state){
+    int index = ccwItemList.index.at(ccw_id).at(wavl_id);
+    bool intg_state = integralState.at(index);
+    bool fit_state = fitState.at(index);
+    le_fitrsqrd->clear();
+    le_fitorder->clear();
+    if (! state || ! intg_state){
         grid = us_grid(qwtplot_fit);
         qwtplot_fit->replot();
         return;
     }
-
-//    int row = lw_triple->currentRow();
-    int index = ccwItemList.index.at(ccw_id).at(wavl_id);
-//    QVector<double> xvalues = allIntData.at(index).xvalues;
-    QVector<double> residual = allResiduals.at(index);
-    US_DataIO::RawData data = allDataC.at(index);
-
-    QPen pen_plot(Qt::yellow);
-    pen_plot.setWidth(1);
-    int ns = data.scanCount();
-    double rb = qCeil(ns / 50.0);
-    int nc = qCeil(ns / rb);
-    HSVcolormap colormap(nc);
-    QVector<QColor> colorList;
-    int error = colormap.get_colorlist(colorList);
-
-    const double *x, *r;
-    x = data.xvalues.data();
-    int np = data.pointCount();
-
-    double min_x  =  1e20;
-    double max_x  = -1e20;
+    QVector<double> integralC = allIntegralsC.at(index);
+    QVector<double> integral = allIntegrals.at(index);
+    int ns = integral.size();
+    QVector<double> xvec;
     double min_r  =  1e20;
     double max_r  = -1e20;
-    for (int i = 0; i < ns; ++i){
-        r = data.scanData.at(i).rvalues.data();
-        for (int j = 0; j < np; ++j){
-            min_x = qMin(min_x, x[j]);
-            max_x = qMax(max_x, x[j]);
-            min_r = qMin(min_r, r[j]);
-            max_r = qMax(max_r, r[j]);
-        }
-        QwtPlotCurve* curve = us_curve( qwtplot_fit,"");
-        if (error == 0)
-            pen_plot.setColor(colorList[ i % nc ]);
-        curve->setPen( pen_plot );
-        curve->setSamples(x, r, np);
+    for (int i = 0; i < ns; i++){
+        min_r = qMin(integral.at(i), min_r);
+        max_r = qMax(integral.at(i), max_r);
+        xvec << (double) (i + 1);
     }
-    double dx = (max_x - min_x) * 0.05;
     double dr = (max_r - min_r) * 0.05;
+    QPen pen_plot(Qt::yellow);
 
-    if (pmin.at(ccw_id) != -1){
-        QVector<double> xx;
-        QVector<double> yy;
-        int np = 50;
-        double dyy = (max_r - min_r + 2 * dr) / np;
-        double x0 = min_r - dr;
-        for (int i = 0; i < np; ++i){
-            xx << pmin.at(ccw_id);
-            yy << x0 + i * dyy;
+    // raw
+    QwtPlotCurve* curve = us_curve( qwtplot_fit,"raw data");
+    pen_plot.setColor(Qt::yellow);
+    pen_plot.setWidth(1);
+    curve->setPen( pen_plot );
+    curve->setSamples(xvec.data(), integral.data(), ns);
+
+    // fitted line
+    if (fit_state){
+        le_fitrsqrd->setText(QString::number(fitRsqrd.at(index)));
+        le_fitorder->setText(QString::number(fitOrder.at(index) - 1));
+
+        QVector<double> fit;
+        const double *xp = xvec.data();
+        const double *cp = fitParam.at(index).data();
+        for (int i = 0; i < ns; i++){
+            double yf = 0;
+            for (int j = 0; j < fitOrder.at(index); j++)
+                yf += cp[j] * qPow(xp[i], j);
+            fit << yf;
         }
-        pen_plot.setWidth(3);
-        pen_plot.setColor(QColor(Qt::yellow));
-        QwtPlotCurve* curve = us_curve( qwtplot_fit,"");
-        curve->setStyle(QwtPlotCurve::Dots);
-        curve->setPen(pen_plot);
-        curve->setSamples(xx.data(), yy.data(), np);
+        pen_plot.setColor(Qt::red);
+        pen_plot.setWidth(2);
+        QwtPlotCurve* curve = us_curve( qwtplot_fit,"fitted line");
+        curve->setPen( pen_plot );
+        curve->setSamples(xp, fit.data(), ns);
     }
 
-    if (pmax.at(ccw_id) != -1){
-        QVector<double> xx;
-        QVector<double> yy;
-        int np = 50;
-        double dyy = (max_r - min_r + 2 * dr) / np;
-        double x0 = min_r - dr;
-        for (int i = 0; i < np; ++i){
-            xx << pmax.at(ccw_id);
-            yy << x0 + i * dyy;
-        }
-        pen_plot.setWidth(3);
-        pen_plot.setColor(QColor(Qt::yellow));
-        QwtPlotCurve* curve = us_curve( qwtplot_fit,"");
-        curve->setStyle(QwtPlotCurve::Dots);
-        curve->setPen(pen_plot);
-        curve->setSamples(xx.data(), yy.data(), np);
+    // corrected
+    if (fit_state){
+        QwtPlotCurve* curve = us_curve( qwtplot_fit,"corrected data");
+        pen_plot.setColor(Qt::green);
+        pen_plot.setWidth(1);
+        curve->setPen( pen_plot );
+        curve->setSamples(xvec.data(), integralC.data(), ns);
     }
 
     grid = us_grid(qwtplot_fit);
-
-    qwtplot_fit->setAxisScale( QwtPlot::xBottom, min_x - dx, max_x + dx);
+    qwtplot_fit->setAxisScale( QwtPlot::xBottom, 0, ns + 1);
     qwtplot_fit->setAxisScale( QwtPlot::yLeft  , min_r - dr, max_r + dr);
     qwtplot_fit->updateAxes();
-    QString title = tr("wavelength= % nm");
-    qwtplot_fit->setTitle(title.arg(QString::number(data.scanData.at(0).wavelength)));
     qwtplot_fit->replot();
     return;
 }
 
 
 
-void US_RemoveRI::slt_autofit(int state){
+void US_RemoveRI::slt_autofit_state(int state){
     if (state == Qt::Checked){
         lb_maxorder->show();
         ct_max_order->show();
@@ -915,8 +917,8 @@ void US_RemoveRI::slt_autofit(int state){
         ct_order->hide();
         lb_fitorder->show();
         le_fitorder->show();
-        lb_fiterror->show();
-        le_fiterror->show();
+        lb_fitrsqrd->show();
+        le_fitrsqrd->show();
     } else {
         lb_maxorder->hide();
         ct_max_order->hide();
@@ -924,28 +926,58 @@ void US_RemoveRI::slt_autofit(int state){
         ct_order->show();
         lb_fitorder->hide();
         le_fitorder->hide();
-        lb_fiterror->show();
-        le_fiterror->show();
+        lb_fitrsqrd->show();
+        le_fitrsqrd->show();
     }
 }
 
-void US_RemoveRI::slt_residual(void){
+void US_RemoveRI::slt_integrate(void){
+    integrate(RDATA_S);
+    emit sig_plot_fit(true);
+}
+
+void US_RemoveRI::integrate(int state){
     QVector<int> index = ccwItemList.index.at(ccw_id);
     double xmin = pmin.at(ccw_id);
     double xmax = pmax.at(ccw_id);
+    bool *sp = integralState.data();
     for (int i = 0; i < index.size(); i++){
         int id = index.at(i);
-        US_DataIO::RawData data = allData.at(id);
+        sp[id] = true;
+        US_DataIO::RawData data;
+        double *intg;
+        if (state == RDATA_S){
+            data = allData.at(id);
+            intg = allIntegrals[id].data();
+        } else if (state == CDATA_S) {
+            data = allDataC.at(id);
+            intg = allIntegralsC[id].data();
+        }
         const double *x = data.xvalues.data();
-        double *res = allResiduals[id].data();
         for (int j = 0; j < data.scanCount(); j++){
             const double *y = data.scanData.at(j).rvalues.data();
             double sum = trapz(x, y, xmin, xmax);
-            res[j] = sum;
+            intg[j] = sum;
         }
     }
     emit sig_plot_fit(true);
+}
 
+void US_RemoveRI::clean_states(int state){
+    QVector<int> index = ccwItemList.index.at(ccw_id);
+    bool *ints = integralState.data();
+    bool *fits = fitState.data();
+    for (int i = 0; i < index.size(); i++){
+        if (state == INTG_S)
+            ints[index.at(i)] = false;
+        else if (state == FIT_S)
+            fits[index.at(i)] = false;
+        else if (state == INTG_FIT_S){
+            ints[index.at(i)] = false;
+            fits[index.at(i)] = false;
+        }
+    }
+    emit sig_plot_fit(true);
 }
 
 double US_RemoveRI::trapz(const double* x, const double* y,
@@ -960,4 +992,123 @@ double US_RemoveRI::trapz(const double* x, const double* y,
         sum += dx * ( y[n] + y[n - 1] ) / 2.0;
     }
     return sum;
+}
+
+void US_RemoveRI::slt_polyfit(){
+    QVector<int> index = ccwItemList.index.at(ccw_id);
+    int nwl = index.size();
+    for (int i = 0; i < nwl; i++){
+        int id = index.at(i);
+        QVector<double> y = allIntegrals.at(id);
+        QVector<double> x;
+        int ns = y.size();
+        for (int j = 0; j < ns; j++)
+            x << (double) (j + 1);
+        double *xp = x.data();
+        double *yp = y.data();
+        double *cp = fitParam[id].data();
+        if (cb_autofit->isChecked()){
+            QVector<double> coeff;
+            int order = -1;
+            double max_rsqrd = 0;
+            int ctval = (int) ct_max_order->value();
+            for (int j = 1; j <= ctval; j++ ){
+                int order_tst = j + 1;
+                QVector<double> coeff_tst(order_tst, 0);
+                bool st = US_Matrix::lsfit(coeff_tst.data(), xp, yp, ns, order_tst);
+                if (st){
+                    double rsqrd = get_rsqrd(xp, yp, ns, coeff_tst);
+                    if (rsqrd > max_rsqrd){
+                        max_rsqrd = rsqrd;
+                        order = order_tst;
+                        coeff.clear();
+                        coeff << coeff_tst;
+                    }
+                }
+            }
+            if (order == -1){
+                QMessageBox::warning(this, tr("Error!"),
+                                     tr("Autofit couldn't found the proper polynomial order"));
+                clean_states(FIT_S);
+                return;
+            }
+            fitOrder[id] = order;
+            fitRsqrd[id] = max_rsqrd;
+            fitState[id] = true;
+            for (int j = 0; j < max_ct + 1; j++){
+                if (j < order)
+                    cp[j] = coeff.at(j);
+                else
+                    cp[j] = 0;
+            }
+        } else {
+            int order = (int) ct_order->value();
+            QVector<double> coeff(order, 0);
+            bool st = US_Matrix::lsfit(coeff.data(), xp, yp, ns, order);
+            if (st){
+                double rsqrd = get_rsqrd(xp, yp, ns, coeff);
+                fitOrder[id] = order;
+                fitRsqrd[id] = rsqrd;
+                fitState[id] = true;
+                for (int j = 0; j < max_ct + 1; j++){
+                    if (j < order)
+                        cp[j] = coeff.at(j);
+                    else
+                        cp[j] = 0;
+                }
+            } else {
+                QMessageBox::warning(this, tr("Error!"),
+                                     tr("Couldn't fit the polynomial function with order of: ") +
+                                     QString::number(order));
+                clean_states(FIT_S);
+                return;
+            }
+        }
+    }
+    correct_data();
+    emit sig_plot_fit(true);
+    emit sig_plot_data(true);
+}
+
+double US_RemoveRI::get_rsqrd(double* x, double* y, int np, QVector<double> coeff){
+    double res = 0;
+    double ave = 0;
+    for (int i = 0; i < np; i++){
+        double yf = 0;
+        for (int j = 0; j < coeff.size(); j++)
+            yf += coeff.at(j) * qPow(x[i], j);
+        res += qPow(y[i] - yf, 2);
+        ave += y[i];
+    }
+    ave /= np;
+    double var = 0;
+    for (int i = 0; i < np; i++)
+        var += qPow(y[i] - ave, 2);
+    double rs = 1 - (res / var);
+    return rs;
+}
+
+void US_RemoveRI::correct_data(){
+    QVector<int> index = ccwItemList.index.at(ccw_id);
+    int nwl = index.size();
+    for (int i = 0; i < nwl; i++){
+        int id = index.at(i);
+        US_DataIO::RawData data = allData.at(id);
+        QVector<double> integral = allIntegrals.at(id);
+        QVector<double> coeff = fitParam.at(id);
+        int order = fitOrder.at(id);
+        int ns = data.scanCount();
+        int np = data.pointCount();
+        for (int j = 0; j < ns; j++){
+            double yf = 0;
+            for (int k = 0; k < order; k++)
+                yf += coeff.at(k) * qPow(j + 1, k);
+            double shift = yf - integral.at(j);
+            const double *rp = data.scanData.at(j).rvalues.data();
+            double *rcp = allDataC[id].scanData[j].rvalues.data();
+            for (int k = 0; k < np; k++)
+                rcp[k] = rp[k] + shift;
+        }
+    }
+    integrate(CDATA_S);
 }
