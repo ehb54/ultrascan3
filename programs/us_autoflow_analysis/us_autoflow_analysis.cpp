@@ -855,8 +855,8 @@ void US_Analysis_auto::gui_update( )
 	      triple_info_map[ "invID" ]           = QString::number(invID);
 	      triple_info_map[ "filename" ]        = filename; // ALEXEY -- NOT 'FileName' for combined runs;
 	      
-	      fitmen_bad_vals = false;
-	      
+	      fitmen_bad_vals   = false;
+	      	      
 	      FitMen = new US_FitMeniscus( triple_info_map );
 	      	      
 	      /** The following will block parent windows from closing BUT not from continuing timer execution ***/
@@ -872,8 +872,8 @@ void US_Analysis_auto::gui_update( )
 	      connect( FitMen, SIGNAL( triple_analysis_processed( ) ),
 		       this, SLOT( triple_analysis_processed( ) ) );
 
-	      connect( FitMen, SIGNAL( bad_meniscus_values( QMap < QString, QString > & ) ),  //This will take care of BAD values
-		       this, SLOT( delete_jobs_at_fitmen( QMap < QString, QString > & ) ) );
+	      // connect( FitMen, SIGNAL( bad_meniscus_values( QMap < QString, QString > & ) ),  //This will take care of BAD values
+	      // 	       this, SLOT( delete_jobs_at_fitmen( QMap < QString, QString > & ) ) );
 		      
 		       
 	      FitMen->show();
@@ -891,13 +891,16 @@ void US_Analysis_auto::gui_update( )
 	      if ( FitMen -> no_fm_data )
 		{
 		  FitMen->close();
-		  //triple_analysis_processed( );
+		  
 		  delete_jobs_at_fitmen( triple_info_map );
 		}
 
 	      if ( FitMen -> bad_men_vals )
 		{
+		  FitMen->close();
 		  fitmen_bad_vals = true;
+		  
+		  delete_jobs_at_fitmen( triple_info_map );
 		}
 
 	      return;
@@ -2930,12 +2933,17 @@ void US_Analysis_auto::delete_jobs_at_fitmen( QMap < QString, QString > & triple
       msg_delete.setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint);
       msg_delete.setWindowTitle(tr("Job Cancelation!"));
       
-      QString msg_sys_text = QString("ATTENTION!\n\nThe FITMEN stage for triple %1 has been processed outside of the GMP framework. \nAll scheduled jobs will be canceled for this triple." )
-	.arg( triple_name );
-      
+      QString msg_sys_text = QString( tr( "ATTENTION!\n\nNo -FM models for triple %1 have been found. \n\n"
+					  "This means one of the following: \n"
+					  "1. No -FM models have been generated;"
+					  "2. The data have been analyzed outside of the GMP framework.\n\n"
+					  "All scheduled jobs will be canceled for this triple." ) )
+				      .arg( triple_name );
+            
       //if ( mwl_channel && ( stage_n == "2DSA" || stage_n == "2DSA-FM" ) )
-      msg_sys_text += QString("\n\nSince this is a multi-wavelength analysis, scheduled jobs for the following same-channel triples will be canceled as well: \n\n%1")
-	.arg( triple_list_affected.join(", ") );
+      if ( mwl_channel ) 
+	msg_sys_text += QString("\n\nSince this is a multi-wavelength analysis, scheduled jobs for the following same-channel triples will be canceled as well: \n\n%1")
+	  .arg( triple_list_affected.join(", ") );
       
       msg_delete.setText( msg_sys_text );
       
@@ -2981,21 +2989,54 @@ void US_Analysis_auto::delete_jobs_at_fitmen( QMap < QString, QString > & triple
     {
       qDebug() << "DELETION DUE TO BAD Meniscus|Bottom values chosen !!";
       qDebug() << "Reason for deletion -- " << triple_info[ "failed" ];
+
+      QMessageBox msg_delete_bad_vals;
+      msg_delete_bad_vals.setIcon(QMessageBox::Critical);
+      msg_delete_bad_vals.setWindowFlags ( Qt::CustomizeWindowHint | Qt::WindowTitleHint);
+      msg_delete_bad_vals.setWindowTitle(tr("Job Cancelation!"));
       
-	  
-      US_Passwd pw;
-      US_DB2    db( pw.getPasswd() );
+      QString msg_sys_text_bv = QString( tr("ATTENTION!\n\n The meniscus fit for tiple %1 resulted in a best-fit value that lies outside "
+					    "of the considered range for the meniscus. "
+					    "This should not happen, unless: \n\n"
+					    "1. The initial meniscus was not selected correctly; \n"
+					    "2. The experimental data are non-ideal and cannot be modeled with the standard finite element model;\n"
+					    "3. The radial calibration of the instrument is incorrect. \n\n"
+					    "The user should examine the data manually and determine the cause for this discrepancy."
+					    "The automatic GMP processing for this triple cannot continue.\n"
+					    "All scheduled jobs will be canceled for this triple."
+					    ) ).arg( triple_name );
+	      
+      //if ( mwl_channel && ( stage_n == "2DSA" || stage_n == "2DSA-FM" ) )
+      if ( mwl_channel ) 
+	msg_sys_text_bv += QString("\n\nSince this is a multi-wavelength analysis, scheduled jobs for the following same-channel triples will be canceled as well: \n\n%1")
+	  .arg( triple_list_affected.join(", ") );
       
-      // Get the buffer data from the database
-      if ( db.lastErrno() != US_DB2::OK )
+      msg_delete_bad_vals.setText( msg_sys_text_bv );
+      
+      //QString msg_sys_text_info = QString("Do you want to proceed?");
+      //msg_delete.setInformativeText( msg_sys_text_info );
+      
+      QPushButton *Accept_sys    = msg_delete_bad_vals.addButton(tr("OK"),    QMessageBox::YesRole);
+      //QPushButton *Cancel_sys    = msg_delete.addButton(tr("Cancel"), QMessageBox::RejectRole);
+      
+      msg_delete_bad_vals.exec();
+      
+      if (msg_delete_bad_vals.clickedButton() == Accept_sys)
 	{
-	  QMessageBox::warning( this, tr( "Connection Problem" ),
-				tr( "Could not connect to database \n" ) +  db.lastError() );
-	  return;
+	  US_Passwd pw;
+	  US_DB2    db( pw.getPasswd() );
+	  
+	  // Get the buffer data from the database
+	  if ( db.lastErrno() != US_DB2::OK )
+	    {
+	      QMessageBox::warning( this, tr( "Connection Problem" ),
+				    tr( "Could not connect to database \n" ) +  db.lastError() );
+	      return;
+	    }
+	  
+	  update_autoflowAnalysis_uponDeletion( &db, requestID );
+	  update_autoflowAnalysis_uponDeletion_other_wvl( &db, requestID_list );
 	}
-      
-      update_autoflowAnalysis_uponDeletion( &db, requestID );
-      update_autoflowAnalysis_uponDeletion_other_wvl( &db, requestID_list );
     }
       
   //Restart timer:

@@ -1538,10 +1538,11 @@ DbgLv(1) << " eupd:  s_meni s_bott" << s_meni << s_bott;
      else //GMP framework: stop ANALYSIS for current triple, send signal
        {
 	 bad_men_vals = true;
-	 QString reason_for_failure = mhdr + ", " + mmsg.split("!")[0];
-	 triple_information[ "failed" ] = reason_for_failure;
-	 emit bad_meniscus_values( triple_information );
-	 close();
+	 // QString reason_for_failure = mhdr + ", " + mmsg.split("!")[0];
+	 // triple_information[ "failed" ] = reason_for_failure;
+	 // emit bad_meniscus_values( triple_information );
+	 // close();
+	 
 
 	 return;
        }
@@ -1598,12 +1599,12 @@ DbgLv(1) << " eupd:  s_meni s_bott" << s_meni << s_bott;
 	  else // GMP
 	    {
 	      bad_men_vals = true;
-	      QString reason_for_failure = QString( "The selected Meniscus value, %1 , extends into the data range whose left-side value is %2")
-		.arg( mennew )
-		.arg( lefval );
-	      triple_information[ "failed" ] = reason_for_failure;
-	      emit bad_meniscus_values( triple_information );
-	      close();
+	      // QString reason_for_failure = QString( "The selected Meniscus value, %1 , extends into the data range whose left-side value is %2")
+	      // 	.arg( mennew )
+	      // 	.arg( lefval );
+	      // triple_information[ "failed" ] = reason_for_failure;
+	      // emit bad_meniscus_values( triple_information );
+	      // close();
 
 	      return;
 	    }
@@ -1821,12 +1822,12 @@ DbgLv(1) << " eupd:       edtext len" << edtext.length();
 	     else //GMP
 	       {
 		 bad_men_vals = true;
-		 QString reason_for_failure = QString( "The selected Meniscus value, %1 , extends into the data range whose left-side value is %2")
-		   .arg( mennew )
-		   .arg( lefval );
-		 triple_information[ "failed" ] = reason_for_failure;
-		 emit bad_meniscus_values( triple_information );
-		 close();
+		 // QString reason_for_failure = QString( "The selected Meniscus value, %1 , extends into the data range whose left-side value is %2")
+		 //   .arg( mennew )
+		 //   .arg( lefval );
+		 // triple_information[ "failed" ] = reason_for_failure;
+		 // emit bad_meniscus_values( triple_information );
+		 // close();
 		 		 
 		 return;  //ALEXEY - if one wvl in a triple fails, ALL fail!!!
 		 //continue;

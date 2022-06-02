@@ -5074,10 +5074,16 @@ void US_ConvertGui::PseudoCalcAvg( void )
    // Now calculate the pseudo-absorbance
    int ndxmax    = ExpData.RIProfile.size() - 1;
 
-   for ( int trx = 0; trx < outData.size(); trx++ )
+   // ATTENTION:
+   // below, goes over data for all triples && applies ExpData.RIProfile calculated for the reference triple only
+   // Ref. triple is (above): US_DataIO::RawData* referenceData = outData[ tripDatax ];
+   // triplDatax -- index of the currently selected triple
+   for ( int trx = 0; trx < outData.size(); trx++ )   
    {
       US_DataIO::RawData* currentData = outData[ trx ];
       int kcpoint   = currentData->pointCount();
+
+      //HERE: calculate ExpData.RIProfile for each triple..
 
       for ( int ss = 0; ss < currentData->scanCount(); ss++ )
       {

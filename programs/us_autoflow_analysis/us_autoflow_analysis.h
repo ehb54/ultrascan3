@@ -116,7 +116,7 @@ class US_Analysis_auto : public US_Widgets
 	 
 	 bool fitmen_bad_vals;
 	 bool no_fm_data_auto;
-
+	 	 
 	 QProgressDialog * progress_msg_fmb;
 	 QVector< double >    v_meni;
 	 QVector< double >    v_bott;
