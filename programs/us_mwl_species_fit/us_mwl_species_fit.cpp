@@ -787,6 +787,9 @@ QDateTime time0=QDateTime::currentDateTime();
    int tripx      = triple_index( ccx );
 DbgLv(1) << "sfd: ccx tripx" << ccx << tripx;
    US_DataIO::EditedData*  edata = &dataList[ tripx ];
+   for (int i = 0; i < dataList.size(); i++){
+DbgLv(0) << tr("scan: ") << i << dataList.at(i).scanData.size();
+   }
    int nscan      = edata->scanCount();
    int npoint     = edata->pointCount();
    int kdstart    = ccx * nspecies;
@@ -1089,13 +1092,18 @@ DbgLv(1) << "sfd: (B)D1 cmn" << ms << mr << synData[1].value(ms,mr);
       US_DataIO::RawData*     rdata = &synData[ kd ];
       int    nsscan   = rdata->scanCount();
       int    nspoint  = rdata->pointCount();
-      int    msx      = qMax( ( nsscan / 8 ),  10 );
-      int    mrx      = qMax( ( nspoint - 2 ), 10 );
+      int    nloops   = 10;
+      int    msx      = qMax( ( nsscan / 8 ),  nloops );
+      int    mrx      = qMax( ( nspoint - 2 ), nloops );
 DbgLv(1) << "sfd:  msx mrx" << msx << mrx << "nsscan nspoint"
  << nsscan << nspoint;
+      if (msx >= nsscan){
+         msx = nsscan - 1;
+         nloops = msx - 1;
+      }
       int    menx     = rdata->xindex( meniscus );
       double menval   = rdata->scanData[ msx ].rvalues[ mrx ];
-      for ( int jj = 0; jj < 10; jj++ )
+      for ( int jj = 0; jj < nloops; jj++ )
       {
          menval    = qMax( menval, rdata->scanData[ --msx ].rvalues[ --mrx ] );
       }
