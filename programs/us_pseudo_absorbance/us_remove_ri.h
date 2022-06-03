@@ -26,9 +26,7 @@ public:
     bool hasData = false;
 
     signals:
-    void sig_plot_data(bool);
-    void sig_plot_fit(bool);
-    void sig_save_button(void);
+    void sig_plot(bool);
 
 private slots:
     void slt_import(void);
@@ -39,16 +37,15 @@ private slots:
     void slt_next_id(void);
     void slt_prev_ccw(void);
     void slt_next_ccw(void);
-    void slt_plot_data(bool);
-    void slt_plot_fit(bool);
+
     void slt_autofit_state(int);
-////    void slt_save_avail(void);
-//    void slt_save(void);
+    void slt_plot(bool);
+    void slt_rm_fit(double);
+    void slt_save(void);
     void slt_pick_point(void);
     void slt_mouse(const QwtDoublePoint&);
-    void slt_integrate(void);
     void slt_polyfit(void);
-//    void slt_edit_le(QString);
+    void slt_edit_le(QString);
 
 private:
     enum states {INTG_S, FIT_S, INTG_FIT_S, RDATA_S, CDATA_S};
@@ -61,7 +58,6 @@ private:
     QPushButton* pb_save;
     QPushButton* pb_pick_rp;
     QPushButton* pb_fit;
-    QPushButton* pb_calc_intg;
 
     QLineEdit* le_lambstrt;
     QLineEdit* le_lambstop;
@@ -99,9 +95,10 @@ private:
     QStringList ccwStrList;
     CCW_ITEM ccwItemList;
 
-//    int cpos, le_cursor_pos = -1;
     QVector<double> pmin;
     QVector<double> pmax;
+    QVector<bool> ccwFitState;
+    QVector<bool> ccwIntgState;
     int wavl_id;
     int ccw_id;
     int n_ccw;
@@ -113,7 +110,7 @@ private:
     QVector<US_DataIO::RawData> allDataC;
     QVector<QVector<double>> allIntegrals;
     QVector<QVector<double>> allIntegralsC;
-    QVector<bool> integralState;
+    QVector<bool> intgState;
     QVector<bool> fitState;
     QFileInfoList allDataFInfo;
     QVector<int> fitOrder;
@@ -121,15 +118,18 @@ private:
     QVector<QVector<double>> fitParam;
 
     void set_cb_triples(void);
-    void offon_prev_next(void);
+    void pn_id_avail(void);
+    void pn_ccw_avail(void);
     double trapz(const double*, const double*, double, double);
     double get_rsqrd(double*, double*, int, QVector<double>);
     void integrate(int);
     void correct_data(void);
     void clean_states(int);
+    void pb_fit_avail(void);
+    void pb_save_avail(void);
+    void plot_data(bool);
+    void plot_fit(bool);
 
 };
-
-
 
 #endif // US_REMOVE_RI_H

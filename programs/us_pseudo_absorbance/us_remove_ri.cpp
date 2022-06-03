@@ -79,23 +79,23 @@ US_RemoveRI::US_RemoveRI() : US_Widgets()
     QLabel* lb_fit_ctrl = us_banner("Polynomial Fit Control");
     pb_pick_rp = us_pushbutton("Pick Two Points", true);
     le_xrange = us_lineedit("", 0, true);
-    pb_calc_intg = us_pushbutton("Compute Residuals");
     QHBoxLayout *xrange_lyt = new QHBoxLayout();
     xrange_lyt->addWidget(pb_pick_rp);
     xrange_lyt->addWidget(le_xrange);
-    xrange_lyt->addWidget(pb_calc_intg);
+    pb_fit = us_pushbutton("Remove RI");
+    xrange_lyt->addWidget(pb_fit);
 
     cb_autofit = new QCheckBox();
-    pb_fit = us_pushbutton("Remove RI");
-    QGridLayout* uscb_autofit = us_checkbox("Autofit Polynomial", cb_autofit, true);
-    QHBoxLayout *fit_lyt = new QHBoxLayout();
-    fit_lyt->addLayout(uscb_autofit);
-    fit_lyt->addWidget(pb_fit);
-
+    QGridLayout* uscb_autofit = us_checkbox("Autofit", cb_autofit, true);
+    QHBoxLayout *autofit_lyt = new QHBoxLayout();
     lb_maxorder = us_label("Max Order:");
     lb_maxorder->setAlignment(Qt::AlignRight);
     ct_max_order = us_counter(1, 1, max_ct, max_ct);
     ct_max_order->setSingleStep(1);
+    autofit_lyt->addLayout(uscb_autofit);
+    autofit_lyt->addWidget(lb_maxorder);
+    autofit_lyt->addWidget(ct_max_order);
+
     lb_manorder = us_label("Order:");
     lb_manorder->setAlignment(Qt::AlignRight);
     ct_order = us_counter(1, 1, max_ct, 6);
@@ -106,20 +106,15 @@ US_RemoveRI::US_RemoveRI() : US_Widgets()
     lb_fitrsqrd = us_label("R-Squared:");
     lb_fitrsqrd->setAlignment(Qt::AlignRight);
     le_fitrsqrd = us_lineedit("", 0, true);
+    le_fitorder->setMaximumWidth(50);
 
     QHBoxLayout *fitctrl_lyt = new QHBoxLayout();
-    fitctrl_lyt->addWidget(lb_maxorder);
-    fitctrl_lyt->addWidget(ct_max_order);
     fitctrl_lyt->addWidget(lb_manorder);
     fitctrl_lyt->addWidget(ct_order);
     fitctrl_lyt->addWidget(lb_fitorder);
     fitctrl_lyt->addWidget(le_fitorder);
     fitctrl_lyt->addWidget(lb_fitrsqrd);
     fitctrl_lyt->addWidget(le_fitrsqrd);
-//    le_fitorder->setMinimumWidth(20);
-//    le_fiterror->setMinimumWidth(20);
-    le_fitorder->setMaximumWidth(25);
-    le_fitrsqrd->setMaximumWidth(75);
     lb_manorder->hide();
     ct_order->hide();
 
@@ -162,7 +157,7 @@ US_RemoveRI::US_RemoveRI() : US_Widgets()
 
     left_lyt->addWidget(lb_fit_ctrl);
     left_lyt->addLayout(xrange_lyt);
-    left_lyt->addLayout(fit_lyt);
+    left_lyt->addLayout(autofit_lyt);
     left_lyt->addLayout(fitctrl_lyt);
     left_lyt->addWidget(lb_save);
     left_lyt->addLayout(runIdOut_lyt);
@@ -196,7 +191,6 @@ US_RemoveRI::US_RemoveRI() : US_Widgets()
     QwtLegend *legend = new QwtLegend();
     qwtplot_fit->insertLegend( legend , QwtPlot::BottomLegend);
 
-
     QVBoxLayout* right_lyt = new QVBoxLayout();
     right_lyt->setSpacing(0);
     right_lyt->addLayout(usplot_data);
@@ -224,46 +218,28 @@ US_RemoveRI::US_RemoveRI() : US_Widgets()
     connect(pb_next_id,      SIGNAL(clicked()), this, SLOT(slt_next_id()));
     connect(pb_prev_ccw,     SIGNAL(clicked()), this, SLOT(slt_prev_ccw()));
     connect(pb_next_ccw,     SIGNAL(clicked()), this, SLOT(slt_next_ccw()));
-
-    connect(this, SIGNAL(sig_plot_data(bool)), this, SLOT(slt_plot_data(bool)));
-    connect(this, SIGNAL(sig_plot_fit(bool)), this, SLOT(slt_plot_fit(bool)));
+    connect(this, SIGNAL(sig_plot(bool)), this, SLOT(slt_plot(bool)));
     connect(pb_pick_rp, SIGNAL(clicked()),
                 this, SLOT(slt_pick_point()));
-
     connect(cb_autofit, SIGNAL(stateChanged(int)), this, SLOT(slt_autofit_state(int)));
-    connect(pb_calc_intg, SIGNAL(clicked()), this, SLOT(slt_integrate()));
     connect(pb_fit, SIGNAL(clicked()), this, SLOT(slt_polyfit()));
-
-//    connect(ckb_xrange, SIGNAL(stateChanged(int)), this, SLOT(slt_xrange(int)));
-
-//    connect(pb_reset_curr_scans, SIGNAL(clicked()), this, SLOT(slt_reset_scans()));
-//    connect(pb_reset_allscans, SIGNAL(clicked()), this, SLOT(slt_reset_allscans()));
-//    connect(pb_apply_allscans, SIGNAL(clicked()), this, SLOT(slt_apply_allscans()));
-//    connect(pb_reset_refData, SIGNAL(clicked()), this, SLOT(slt_reset_refData()));
-//    connect(this, SIGNAL(sig_save_button()), this, SLOT(slt_save_avail()));
-
-//    connect(pb_save, SIGNAL(clicked()), this, SLOT(slt_save()));
-
-//    connect(cb_buffer, SIGNAL(currentIndexChanged(int)),
-//            this, SLOT(slt_update_buffer(int)));
-
-//    connect(ct_smooth, SIGNAL(valueChanged(double)),
-//            this, SLOT(slt_update_smooth(double)));
-//
-//    connect(le_runIdAbs, SIGNAL(textEdited(QString)), this, SLOT(slt_edit_le(QString)));
-
-
+    connect(ct_max_order, SIGNAL(valueChanged(double)), this, SLOT(slt_rm_fit(double)));
+    connect(ct_order, SIGNAL(valueChanged(double)), this, SLOT(slt_rm_fit(double)));
+    connect(pb_save, SIGNAL(clicked()), this, SLOT(slt_save()));
+    connect(le_runIdOut, SIGNAL(textEdited(QString)), this, SLOT(slt_edit_le(QString)));
 }
 
 
 void US_RemoveRI::slt_reset(){
     picker->disconnect();
+    cb_triples->disconnect();
+    cb_plot_id->disconnect();
     hasData = false;
     allData.clear();
     allDataC.clear();
     allIntegrals.clear();
     allIntegralsC.clear();
-    integralState.clear();
+    intgState.clear();
     fitState.clear();
     fitOrder.clear();
     fitRsqrd.clear();
@@ -271,10 +247,11 @@ void US_RemoveRI::slt_reset(){
     ccwList.clear();
     ccwStrList.clear();
     ccwItemList.clear();
-//    le_cursor_pos = -1;
     wavelength.clear();
     pmin.clear();
     pmax.clear();
+    ccwFitState.clear();
+    ccwIntgState.clear();
     le_runIdIn->clear();
     le_runIdOut->clear();
     le_lambstrt->clear();
@@ -282,14 +259,33 @@ void US_RemoveRI::slt_reset(){
     le_dir->clear();
     le_desc->clear();
     le_xrange->clear();
-    pb_reset->setDisabled(true);
+    le_fitorder->clear();
+    le_fitrsqrd->clear();
+
+    QString qs = "QPushButton { background-color: %1 }";
+    QColor color = US_GuiSettings::pushbColor().color(QPalette::Active, QPalette::Button);
+    pb_fit->setStyleSheet(qs.arg(color.name()));
+    pb_pick_rp->setStyleSheet(qs.arg(color.name()));
+
     pb_import->setEnabled(true);
+
+    pb_reset->setDisabled(true);
     pb_save->setDisabled(true);
-    emit sig_plot_data(false);
+    pb_prev_id->setDisabled(true);
+    pb_next_id->setDisabled(true);
+    pb_prev_ccw->setDisabled(true);
+    pb_next_ccw->setDisabled(true);
+    pb_pick_rp->setDisabled(true);
+    pb_fit->setDisabled(true);
+    cb_plot_id->setDisabled(true);
+    cb_triples->setDisabled(true);
+    ct_max_order->setDisabled(true);
+    ct_order->setDisabled(true);
+    cb_autofit->setDisabled(true);
+    emit sig_plot(false);
 }
 
 void US_RemoveRI::slt_import(void){
-    slt_reset();
 
     QString dir;
 
@@ -364,7 +360,7 @@ void US_RemoveRI::slt_import(void){
         QVector<double> intg(rdata.scanCount(), 0);
         allIntegrals << intg;
         allIntegralsC << intg;
-        integralState << false;
+        intgState << false;
         fitState << false;
 
         QVector<double> param(max_ct + 1, 0);
@@ -402,11 +398,24 @@ void US_RemoveRI::slt_import(void){
     le_runIdOut->setCursorPosition(0);
     set_cb_triples();
     slt_new_ccw(0);
-    pb_import->setDisabled(true);
-    pb_reset->setEnabled(true);
-    emit sig_save_button();
+    pb_save_avail();
     hasData = true;
     le_status->clear();
+
+    pb_import->setDisabled(true);
+
+    pb_reset->setEnabled(true);
+    pb_prev_id->setEnabled(true);
+    pb_next_id->setEnabled(true);
+    pb_prev_ccw->setEnabled(true);
+    pb_next_ccw->setEnabled(true);
+    pb_pick_rp->setEnabled(true);
+    pb_fit->setEnabled(true);
+    cb_plot_id->setEnabled(true);
+    cb_triples->setEnabled(true);
+    ct_max_order->setEnabled(true);
+    ct_order->setEnabled(true);
+    cb_autofit->setEnabled(true);
 }
 
 void US_RemoveRI::slt_prev_ccw(void){
@@ -429,9 +438,14 @@ void US_RemoveRI::slt_next_id(void){
     cb_plot_id->setCurrentIndex(wavl_id);
 }
 
-void US_RemoveRI::offon_prev_next(){
+void US_RemoveRI::pn_id_avail(){
     pb_prev_id->setDisabled(wavl_id <= 0);
     pb_next_id->setDisabled(wavl_id >= (n_wavls - 1));
+}
+
+void US_RemoveRI::pn_ccw_avail(){
+    pb_prev_ccw->setDisabled(ccw_id <= 0);
+    pb_next_ccw->setDisabled(ccw_id >= (n_ccw - 1));
 }
 
 void US_RemoveRI::slt_new_ccw(int id){
@@ -453,11 +467,10 @@ void US_RemoveRI::slt_new_ccw(int id){
     for (int i = 0; i < n_wavls; ++i)
         items << QString::number(wavelength.at(i));
     cb_plot_id->addItems(items);
-    offon_prev_next();
+    pn_id_avail();
     connect(cb_plot_id, SIGNAL(currentIndexChanged(int)), this, SLOT(slt_set_id(int)));
 
-    pb_prev_ccw->setDisabled(ccw_id <= 0);
-    pb_next_ccw->setDisabled(ccw_id >= (n_ccw - 1));
+    pn_ccw_avail();
 
     QString qs = "QPushButton { background-color: %1 }";
     if (pmin.at(ccw_id) < 0 || pmax.at(ccw_id) < 0){
@@ -471,32 +484,38 @@ void US_RemoveRI::slt_new_ccw(int id){
                            arg(pmax.at(ccw_id), 0, 'f', 3));
         pb_pick_rp->setStyleSheet(qs.arg("green"));
     }
+    pb_fit_avail();
 
     slt_set_id(0);
 }
 
 void US_RemoveRI::slt_set_id(int id){
     wavl_id = id;
-    offon_prev_next();
+    pn_id_avail();
     le_desc->setText(allData.at(id).description);
     le_desc->setCursorPosition(0);
-    emit sig_plot_data(true);
+    emit sig_plot(true);
 }
 
 void US_RemoveRI::slt_pick_point(){
     picker->disconnect();
     pmin[ccw_id] = -1;
     pmax[ccw_id] = -1;
-//    x_min_picked = -1;
-//    x_max_picked = -1;
     le_xrange->setText("");
     if (allData.size() == 0)
         return;
     pb_pick_rp->setStyleSheet("QPushButton { background-color: red }");
-    emit sig_plot_data(true);
-    emit sig_save_button();
+    pb_next_ccw->setDisabled(true);
+    pb_prev_ccw->setDisabled(true);
+    cb_triples->setDisabled(true);
+    clean_states(INTG_FIT_S);
+    ccwIntgState[ccw_id] = false;
+    ccwFitState[ccw_id] = false;
+    pb_fit_avail();
+    emit sig_plot(true);
+    pb_save_avail();
     connect(picker, SIGNAL(cMouseUp(const QwtDoublePoint&)),
-            this,   SLOT(slt_mouse(const QwtDoublePoint&)));
+            this, SLOT(slt_mouse(const QwtDoublePoint&)));
     return;
 }
 
@@ -513,7 +532,7 @@ void US_RemoveRI::slt_mouse(const QwtDoublePoint& point){
             pmin[ccw_id] = x;
             str = tr("%1 -");
             le_xrange->setText(str.arg(x, 0, 'f', 3));
-            emit sig_plot_data(true);
+            emit sig_plot(true);
         } else {
             if (x <= pmax.at(ccw_id)){
                 QString mess("Pick a radial point greater than: %1 cm");
@@ -526,7 +545,12 @@ void US_RemoveRI::slt_mouse(const QwtDoublePoint& point){
             le_xrange->setText(str.arg(pmin.at(ccw_id), 0, 'f', 3).
                                arg(pmax.at(ccw_id), 0, 'f', 3));
             pb_pick_rp->setStyleSheet("QPushButton { background-color: green }");
-            emit sig_plot_data(true);
+            pn_ccw_avail();
+            cb_triples->setEnabled(true);
+            integrate(RDATA_S);
+            ccwIntgState[ccw_id] = true;
+            pb_fit_avail();
+            emit sig_plot(true);
         }
     }else{
         QString mess("Pick a point between the minimum and maximum"
@@ -534,119 +558,71 @@ void US_RemoveRI::slt_mouse(const QwtDoublePoint& point){
                      "Minimum= %1 cm, Maximum= %2 cm");
         QMessageBox::warning( this, tr( "Warning" ), mess.arg(min_x).arg(max_x));
     }
-    emit sig_save_button();
     return;
 }
 
-//void US_RemoveRI::slt_save_avail(void){
-//    if (lw_triple->count() > 0 && refData.nWavelength > 0){
-//        if (ckb_xrange->isChecked()){
-//            if (x_min_picked != -1 && x_max_picked != -1)
-//                pb_save->setEnabled(true);
-//            else
-//                pb_save->setDisabled(true);
-//        }else
-//            pb_save->setEnabled(true);
-//    }else
-//        pb_save->setDisabled(true);
-//    return;
-//}
+void US_RemoveRI::slt_save(void){
+    QDir dir = QDir(le_dir->text());
+    if (dir.cd(runIdOut)){
+        QString absPath = dir.absolutePath();
+        int ck = QMessageBox::question(this, tr( "Warning!" ),
+                                       tr( "Output directory exists!\n" ) + runIdOut +
+                                       tr( "\n\n Do you really want to replace it?"));
+        if (ck == QMessageBox::Yes){
+            dir.removeRecursively();
+            dir.mkpath(absPath);
+            dir.setPath(absPath);
+        }else return;
+    }else{
+        dir.mkdir(runIdOut);
+        dir.cd(runIdOut);
+    }
+    dir.makeAbsolute();
+    qDebug() << dir.path();
+    int nwl_tot = 0;
+    for (int i = 0; i < n_ccw; ++i)
+        nwl_tot += ccwItemList.n_wl.at(i);
 
-//void US_RemoveRI::slt_save(void){
-//    QDir dir = QDir(le_dir->text());
-//    if (dir.cd(runIdAbs)){
-//        QString absPath = dir.absolutePath();
-//        int ck = QMessageBox::question(this, tr( "Warning!" ),
-//                                       tr( "Output directory exists!\n" ) + runIdAbs +
-//                                       tr( "\n\n Do you really want to replace it?"));
-//        if (ck == QMessageBox::Yes){
-//            dir.removeRecursively();
-//            dir.mkpath(absPath);
-//            dir.setPath(absPath);
-//        }else return;
-//    }else{
-//        dir.mkdir(runIdAbs);
-//        dir.cd(runIdAbs);
-//    }
-//    dir.makeAbsolute();
-//    qDebug() << dir.path();
-//    int nwl_tot = 0;
-//    int nrows = lw_triple->count();
-//    for (int i = 0; i < nrows; ++i)
-//        nwl_tot += ccwItemList.n_wl.at(i);
+    int n = 1;
+    QString status = tr("writting: %1 %2");
+    QString percent;
+    QString fileName("%1.RA.%2.%3.%4.auc");
+    for (int i = 0; i < n_ccw; ++i){
+        for (int j = 0; j < ccwItemList.n_wl.at(i); ++j){
+            percent = QString::number(100.0 * n / nwl_tot, 'f', 1);
+            le_status->setText(status.arg(percent).arg(QChar(37)));
+            qApp->processEvents();
+            n++;
+            int dataId = ccwItemList.index.at(i).at(j);
+            double wavelength = ccwItemList.wavelength.at(i).at(j);
 
-//    int id_buff = cb_buffer->currentIndex();
-//    bool rm_buffer = false;
-//    if (id_buff > 0)
-//        rm_buffer = true;
+            US_DataIO::RawData rawData = allDataC.at(dataId);
+            int cell = rawData.cell;
+            char channel = rawData.channel;
+            QString fn = fileName.arg(runIdOut).arg(cell).arg(channel).arg(wavelength);
+            QFileInfo fileInfo(dir, fn);
+            US_DataIO::writeRawData(fileInfo.absoluteFilePath(), rawData);
+        }
+    }
+    le_status->setText("written on the local disk !");
 
-//    int n = 1;
-//    QString status = tr("writting: %1 %2");
-//    QString percent;
-//    QString fileName("%1.RA.%2.%3.%4.auc");
-//    for (int i = 0; i < nrows; ++i){
-//        for (int j = 0; j < ccwItemList.n_wl.at(i); ++j){
-//            percent = QString::number(100.0 * n / nwl_tot, 'f', 1);
-//            le_status->setText(status.arg(percent).arg(QChar(37)));
-//            qApp->processEvents();
-//            n++;
-//            int dataId = ccwItemList.index.at(i).at(j);
-//            double wavelength = ccwItemList.wavelength.at(i).at(j);
-//            if (! get_refId(wavelength)){
-//                qDebug() << tr("Not found corrosponding reference data for: ") <<
-//                            allIntDataFiles.at(dataId).fileName();
-//                continue;
-//            }
+    return;
+}
 
-//            get_absorbance(refId, dataId, false);
-//            if (rm_buffer){
-//                int dataId_buff = ccwItemList.index.at(id_buff - 1).at(j);
-//                get_relative_absorbance(dataId_buff);
-//            }
-//            trim_absorbance();
-//            int scan_l1 = scansRange.at(dataId).at(0);
-//            int scan_l2 = scansRange.at(dataId).at(1);
-//            QVector<US_DataIO::Scan> absorbance_sel;
-//            for (int k = scan_l1; k <scan_l2; ++k)
-//                absorbance_sel << absorbance.at(k);
-//            if (absorbance_sel.size() == 0)
-//                continue;
-
-//            US_DataIO::RawData rawData = allIntData.at(dataId);
-//            rawData.type[0] = 'R';
-//            rawData.type[1] = 'A';
-//            uchar uuid[ 16 ];
-//            QString uuid_string = US_Util::new_guid();
-//            US_Util::uuid_parse( uuid_string, uuid );
-//            memcpy( rawData.rawGUID,   (char*) uuid, 16 );
-//            rawData.scanData.clear();
-//            rawData.scanData << absorbance_sel;
-//            int cell = rawData.cell;
-//            char channel = rawData.channel;
-//            QString fn = fileName.arg(runIdAbs).arg(cell).arg(channel).arg(wavelength);
-//            QFileInfo fileInfo(dir, fn);
-//            US_DataIO::writeRawData(fileInfo.absoluteFilePath(), rawData);
-//        }
-//    }
-//    le_status->setText("written on the local disk !");
-
-//    return;
-//}
-
-//void US_RemoveRI::slt_edit_le(QString text){
-//    if (text.size() < runIdAbs.size()){
-//        runIdAbs = text;
-//    }else{
-//        QRegExp re( "[^a-zA-Z0-9_-]" );
-//        int reIdx = text.indexOf(re, 0);
-//        if (reIdx >= 0){
-//            le_runIdAbs->setText(runIdAbs);
-//            le_runIdAbs->setCursorPosition(reIdx);
-//        }else
-//            runIdAbs = text;
-//    }
-//    return;
-//}
+void US_RemoveRI::slt_edit_le(QString text){
+    if (text.size() < runIdOut.size()){
+        runIdOut = text;
+    }else{
+        QRegExp re( "[^a-zA-Z0-9_-]" );
+        int reIdx = text.indexOf(re, 0);
+        if (reIdx >= 0){
+            le_runIdOut->setText(runIdOut);
+            le_runIdOut->setCursorPosition(reIdx);
+        }else
+            runIdOut = text;
+    }
+    return;
+}
 
 void US_RemoveRI::set_cb_triples(){
     ccwItemList.clear();
@@ -728,13 +704,20 @@ void US_RemoveRI::set_cb_triples(){
     ccw_id = 0;
     pmin.fill(-1, n_ccw);
     pmax.fill(-1, n_ccw);
+    ccwFitState.fill(false, n_ccw);
+    ccwIntgState.fill(false, n_ccw);
     connect( cb_triples, SIGNAL( currentIndexChanged(int) ),
             this, SLOT( slt_new_ccw(int) ) );
     cb_triples->setCurrentIndex(ccw_id);
 }
 
+void US_RemoveRI::slt_plot(bool state){
+    plot_data(state);
+    plot_fit(state);
+}
 
-void US_RemoveRI::slt_plot_data(bool state){
+
+void US_RemoveRI::plot_data(bool state){
     qwtplot_data->detachItems(QwtPlotItem::Rtti_PlotItem, false);
     if (! state){
         grid = us_grid(qwtplot_data);
@@ -836,14 +819,19 @@ void US_RemoveRI::slt_plot_data(bool state){
     return;
 }
 
-void US_RemoveRI::slt_plot_fit(bool state){
+void US_RemoveRI::plot_fit(bool state){
     qwtplot_fit->detachItems(QwtPlotItem::Rtti_PlotItem, false);
+    if (! state){
+        grid = us_grid(qwtplot_fit);
+        qwtplot_fit->replot();
+        return;
+    }
     int index = ccwItemList.index.at(ccw_id).at(wavl_id);
-    bool intg_state = integralState.at(index);
+    bool intg_state = intgState.at(index);
     bool fit_state = fitState.at(index);
     le_fitrsqrd->clear();
     le_fitorder->clear();
-    if (! state || ! intg_state){
+    if (! intg_state){
         grid = us_grid(qwtplot_fit);
         qwtplot_fit->replot();
         return;
@@ -929,18 +917,19 @@ void US_RemoveRI::slt_autofit_state(int state){
         lb_fitrsqrd->show();
         le_fitrsqrd->show();
     }
-}
-
-void US_RemoveRI::slt_integrate(void){
-    integrate(RDATA_S);
-    emit sig_plot_fit(true);
+    le_fitrsqrd->setText("");
+    clean_states(FIT_S);
+    ccwFitState[ccw_id] = false;
+    pb_fit_avail();
+    pb_save_avail();
+    emit sig_plot(true);
 }
 
 void US_RemoveRI::integrate(int state){
     QVector<int> index = ccwItemList.index.at(ccw_id);
     double xmin = pmin.at(ccw_id);
     double xmax = pmax.at(ccw_id);
-    bool *sp = integralState.data();
+    bool *sp = intgState.data();
     for (int i = 0; i < index.size(); i++){
         int id = index.at(i);
         sp[id] = true;
@@ -960,12 +949,11 @@ void US_RemoveRI::integrate(int state){
             intg[j] = sum;
         }
     }
-    emit sig_plot_fit(true);
 }
 
 void US_RemoveRI::clean_states(int state){
     QVector<int> index = ccwItemList.index.at(ccw_id);
-    bool *ints = integralState.data();
+    bool *ints = intgState.data();
     bool *fits = fitState.data();
     for (int i = 0; i < index.size(); i++){
         if (state == INTG_S)
@@ -977,7 +965,6 @@ void US_RemoveRI::clean_states(int state){
             fits[index.at(i)] = false;
         }
     }
-    emit sig_plot_fit(true);
 }
 
 double US_RemoveRI::trapz(const double* x, const double* y,
@@ -1066,8 +1053,10 @@ void US_RemoveRI::slt_polyfit(){
         }
     }
     correct_data();
-    emit sig_plot_fit(true);
-    emit sig_plot_data(true);
+    ccwFitState[ccw_id] = true;
+    pb_fit_avail();
+    pb_save_avail();
+    emit sig_plot(true);
 }
 
 double US_RemoveRI::get_rsqrd(double* x, double* y, int np, QVector<double> coeff){
@@ -1111,4 +1100,39 @@ void US_RemoveRI::correct_data(){
         }
     }
     integrate(CDATA_S);
+}
+
+void US_RemoveRI::pb_save_avail(){
+    bool state = true;
+    for (int i = 0; i < fitState.size(); i++)
+        state = state && fitState.at(i);
+    if (state)
+        pb_save->setEnabled(true);
+    else
+        pb_save->setDisabled(true);
+}
+
+void US_RemoveRI::pb_fit_avail(){
+    QString qs = "QPushButton { background-color: %1 }";
+    QColor color = US_GuiSettings::pushbColor().color(QPalette::Active, QPalette::Button);
+    if (! ccwIntgState.at(ccw_id)){
+        pb_fit->setStyleSheet(qs.arg(color.name()));
+        pb_fit->setDisabled(true);
+        return;
+    }
+    pb_fit->setEnabled(true);
+    if (ccwFitState.at(ccw_id))
+        pb_fit->setStyleSheet(qs.arg("green"));
+    else
+        pb_fit->setStyleSheet(qs.arg("yellow"));
+}
+
+void US_RemoveRI::slt_rm_fit(double){
+    clean_states(FIT_S);
+    ccwFitState[ccw_id] = false;
+    pb_fit_avail();
+    pb_save_avail();
+    le_fitrsqrd->setText("");
+    le_fitorder->setText("");
+    emit sig_plot(true);
 }
