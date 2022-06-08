@@ -56,34 +56,13 @@ private:
     QVector<int> lambda4ct;
     QVector<double> xvalsScaled;
     QVector<int> xvals4ct;
-    QVector< QVector< QVector < double > > > rmsdScaled;
-    QVector<double> offsetRmsd;
-    QVector<double> scaleRmsd;
-    double coeffRmsd;
-    double offsetRP;
-    double scaleRP;
-    double coeffRP;
-    double dRp;
-    double offsetWL;
-    double scaleWL;
-    double coeffWL;
-    double dWl;
-    float padding;
+    QVector< QVector< QVector < double > > > allRmsdScaled;
+    QVector< QVector< QVector < double > > > allRmsd;
+    double padding;
     int idRP_l;
     int idRP_h;
     int idWL_l;
     int idWL_h;
-//    float min_wl;
-//    float max_wl;
-//    float d_wl;
-//    float min_rp;
-//    float max_rp;
-//    float d_rp;
-//    float min_rmsd;
-//    float max_rmsd;
-//    float h_scale = 1.5;
-
-//    const SFDev* allRMSDs;
 
     Q3DSurface *graph;
     QSurfaceDataProxy *dataProxy;
@@ -95,17 +74,14 @@ private:
     QPushButton *pb_G2R;
     QComboBox*   cb_scan;
 
-//    QSlider *sl_min_rp;
-//    QSlider *sl_max_rp;
-//    QSlider *sl_min_wl;
-//    QSlider *sl_max_wl;
-
     QwtCounter *ct_min_rp;
     QwtCounter *ct_max_rp;
     QwtCounter *ct_min_wl;
     QwtCounter *ct_max_wl;
 
     void plot(void);
+    void reset_ct_rp(bool);
+    void reset_ct_wl(bool);
 private slots:
     void setTheme(int);
     void newScan(int);
