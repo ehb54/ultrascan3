@@ -36,16 +36,76 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFDev& rmsdIn): US_WidgetsD
 {
     setWindowTitle("Species Fit RMSD Plot");
     setPalette( US_GuiSettings::frameColorDefault() );
-    allRMSDs = &rmsdIn;
-    nScans = allRMSDs->includedScans.size();
-    scanId = nScans - 1;
-    nPoints = allRMSDs->xValues.size();
-    nWavelengths = allRMSDs->wavelenghts.size();
-    getScaleOffset();
-    pointsGap = qRound((float) nPoints / nWavelengths) / 2;
-    colorSet = "G2R";
-    padding = 0.001;
+    nScans = rmsdIn.includedScans.size();
+    scanId = nScans / 2;
+    nWavelengths = rmsdIn.wavelenghts.size();
+    nPoints = rmsdIn.xValues.size();
+    coeffRmsd = 1.0;
+    coeffRP = 2.0;
+    coeffWL = 1.0;
+    idWL_l = 0;
+    idWL_h = nWavelengths - 1;
+    idRP_l = 0;
+    idRP_h = nPoints - 1;
 
+    offsetRmsd.clear();
+    scaleRmsd.clear();
+    rmsdScaled.clear();
+    for (int i = 0; i < nScans; i++){
+        double minValue = 1e20;
+        double maxValue = -1e20;
+        for (int j = 0; j < nPoints; j++){
+            for (int k = 0; k < nWavelengths; k++){
+                double rmsd = rmsdIn.allDeviations.at(i).at(j).at(k);
+                minValue = qMin(minValue, rmsd);
+                maxValue = qMax(maxValue, rmsd);
+            }
+        }
+        double offset = minValue;
+        double scale = (maxValue - minValue);
+        offsetRmsd << offset;
+        scaleRmsd << scale;
+        QVector< QVector < double > > dev_rpwl;
+        for (int j = 0; j < nPoints; j++){
+            QVector < double > dev_wl;
+            for (int k = 0; k < nWavelengths; k++){
+                double rmsd = rmsdIn.allDeviations.at(i).at(j).at(k);
+                rmsd = (rmsd - offset) / scale;
+                rmsd *= coeffRmsd;
+                dev_wl << rmsd;
+            }
+            dev_rpwl << dev_wl;
+        }
+        rmsdScaled << dev_rpwl;
+    }
+
+    offsetRP = rmsdIn.xValues.at(0);
+    scaleRP = rmsdIn.xValues.at(nPoints - 1) - rmsdIn.xValues.at(0);
+    xvalsScaled.clear();
+    xvals4ct.clear();
+    for (int i = 0; i < nPoints; i++){
+        double rp = rmsdIn.xValues.at(i);
+        xvals4ct << (int) (rp * 1000);
+        rp = (rp - offsetRP) / scaleRP;
+        rp *= coeffRP;
+        xvalsScaled << rp;
+    }
+
+    offsetWL = rmsdIn.wavelenghts.at(0);
+    scaleWL = rmsdIn.wavelenghts.at(nWavelengths - 1) - rmsdIn.wavelenghts.at(0);
+    lambdaScaled.clear();
+    lambda4ct.clear();
+    for (int i = 0; i < nWavelengths; i++){
+        double wl = rmsdIn.wavelenghts.at(i);
+        lambda4ct << (int) (wl * 10);
+        wl = (wl - offsetWL) / scaleWL;
+        wl *= coeffWL;
+        lambdaScaled << wl;
+    }
+
+//    pointsGap = qRound((float) nPoints / nWavelengths) / 2;
+    colorSet = "G2R";
+    padding = 0.0001;
 
     dataProxy = new QSurfaceDataProxy();
     dataSeries = new QSurface3DSeries(dataProxy);
@@ -54,6 +114,7 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFDev& rmsdIn): US_WidgetsD
     dataSeries->setFlatShadingEnabled(true);
 
     graph = new Q3DSurface();
+    graph->setShadowQuality(QAbstract3DGraph::ShadowQualityNone);
     graph->setAxisX(new QValue3DAxis);
     graph->setAxisY(new QValue3DAxis);
     graph->setAxisZ(new QValue3DAxis);
@@ -93,7 +154,7 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFDev& rmsdIn): US_WidgetsD
     cb_scan = us_comboBox();
 
     for (int i = 0; i < nScans; ++i){
-        cb_scan->addItem(QString::number(allRMSDs->includedScans.at(i)));
+        cb_scan->addItem(QString::number(rmsdIn.includedScans.at(i)));
     }
     QHBoxLayout* scan_lyt1 = new QHBoxLayout();
     scan_lyt1->addWidget(lb_scan);
@@ -122,39 +183,52 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFDev& rmsdIn): US_WidgetsD
     QRadioButton *rb_wavlth = new QRadioButton();
     QGridLayout *wavlth_gl = us_radiobutton("Lambda Slice", rb_wavlth, false);
 
-    QLabel* lb_wavl_rng = us_label("Lambda Range");
+    QLabel* lb_wavl_rng = us_label("Lambda Range (nm)");
     lb_wavl_rng->setAlignment(Qt::AlignCenter);
+    QLabel* lb_wavl_fr = us_label("From:");
+    lb_wavl_fr->setAlignment(Qt::AlignRight);
+    dWl = (double) (lambda4ct.at(1) - lambda4ct.at(0)) / 10.0;
+    double wl1 = (double) lambda4ct.at(0) / 10.0;
+    double wl2 = (double) lambda4ct.at(nWavelengths - 2) / 10.0;
+    ct_min_wl = us_counter(3, wl1, wl2, wl1);
+    ct_min_wl->setSingleStep(dWl);
 
-    sl_min_rp = new QSlider(Qt::Horizontal);
-    sl_min_rp->setMinimum(0);
-    sl_min_rp->setMaximum(nPoints - 2);
-    sl_min_rp->setTickInterval(1);
-    sl_min_rp->setEnabled(true);
-    sl_min_rp->setValue(0);
+    QLabel* lb_wavl_to = us_label("To:");
+    lb_wavl_to->setAlignment(Qt::AlignRight);
+    wl1 = (double) lambda4ct.at(1) / 10.0;
+    wl2 = (double) lambda4ct.at(nWavelengths - 1) / 10.0;
+    ct_max_wl = us_counter(3, wl1, wl2, wl2);
+    ct_max_wl->setSingleStep(dWl);
 
-    sl_max_rp = new QSlider(Qt::Horizontal);
-    sl_max_rp->setMinimum(1);
-    sl_max_rp->setMaximum(nPoints - 1);
-    sl_max_rp->setTickInterval(1);
-    sl_max_rp->setEnabled(true);
-    sl_max_rp->setValue(nPoints - 1);
+    QGridLayout* wavl_lyt = new QGridLayout();
+    wavl_lyt->addWidget(lb_wavl_fr, 0, 0, 1, 1);
+    wavl_lyt->addWidget(ct_min_wl,  0, 1, 1, 1);
+    wavl_lyt->addWidget(lb_wavl_to, 1, 0, 1, 1);
+    wavl_lyt->addWidget(ct_max_wl,  1, 1, 1, 1);
 
-    QLabel* lb_radl_rng = us_label("Radial Range");
+
+    QLabel* lb_radl_rng = us_label("Radial Range (cm)");
     lb_radl_rng->setAlignment(Qt::AlignCenter);
+    QLabel* lb_radl_fr = us_label("From:");
+    lb_radl_fr->setAlignment(Qt::AlignRight);
+    dRp = (double) (xvals4ct.at(1) - xvals4ct.at(0)) / 1000.0;
+    double rp1 = (double) xvals4ct.at(0) / 1000.0;
+    double rp2 = (double) xvals4ct.at(nPoints - 2) / 1000.0;
+    ct_min_rp = us_counter(3, rp1, rp2, rp1);
+    ct_min_rp->setSingleStep(dRp);
 
-    sl_min_wl = new QSlider(Qt::Horizontal);
-    sl_min_wl->setMinimum(0);
-    sl_min_wl->setMaximum(nWavelengths - 2);
-    sl_min_wl->setTickInterval(1);
-    sl_min_wl->setEnabled(true);
-    sl_min_wl->setValue(0);
+    QLabel* lb_radl_to = us_label("To:");
+    lb_radl_to->setAlignment(Qt::AlignRight);
+    rp1 = (double) xvals4ct.at(1) / 1000.0;
+    rp2 = (double) xvals4ct.at(nPoints - 1) / 1000.0;
+    ct_max_rp = us_counter(3, rp1, rp2, rp2);
+    ct_max_rp->setSingleStep(dRp);
 
-    sl_max_wl = new QSlider(Qt::Horizontal);
-    sl_max_wl->setMinimum(1);
-    sl_max_wl->setMaximum(nWavelengths - 1);
-    sl_max_wl->setTickInterval(1);
-    sl_max_wl->setEnabled(true);
-    sl_max_wl->setValue(nWavelengths - 1);
+    QGridLayout* radl_lyt = new QGridLayout();
+    radl_lyt->addWidget(lb_radl_fr, 0, 0, 1, 1);
+    radl_lyt->addWidget(ct_min_rp,  0, 1, 1, 1);
+    radl_lyt->addWidget(lb_radl_to, 1, 0, 1, 1);
+    radl_lyt->addWidget(ct_max_rp,  1, 1, 1, 1);
 
     QLabel* lb_theme = us_label("Theme");
     lb_theme->setAlignment(Qt::AlignCenter);
@@ -251,12 +325,10 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFDev& rmsdIn): US_WidgetsD
     left_lyt->addLayout(wavlth_gl);
     left_lyt->addSpacing(space);
     left_lyt->addWidget(lb_wavl_rng);
-    left_lyt->addWidget(sl_min_wl);
-    left_lyt->addWidget(sl_max_wl);
+    left_lyt->addLayout(wavl_lyt);
     left_lyt->addSpacing(space);
     left_lyt->addWidget(lb_radl_rng);
-    left_lyt->addWidget(sl_min_rp);
-    left_lyt->addWidget(sl_max_rp);
+    left_lyt->addLayout(radl_lyt);
     left_lyt->addSpacing(space);
     left_lyt->addWidget(lb_theme);
     left_lyt->addWidget(cb_theme);
@@ -287,19 +359,22 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFDev& rmsdIn): US_WidgetsD
 
 
     connect(cb_scan, SIGNAL(currentIndexChanged(int)), this, SLOT(newScan(int)));
+    connect(pb_next, SIGNAL(clicked()), this, SLOT(nextScan()));
+    connect(pb_prev, SIGNAL(clicked()), this, SLOT(prevScan()));
 
-    connect(cb_camera, SIGNAL(currentTextChanged(const QString&)),
-            this, SLOT(setCamera(const QString&)));
+//    connect(cb_camera, SIGNAL(currentTextChanged(const QString&)),
+//            this, SLOT(setCamera(const QString&)));
     connect(cb_theme, SIGNAL(currentIndexChanged(int)), this, SLOT(setTheme(int)));
     connect(rb_surface, SIGNAL(clicked()), this, SLOT(setSurface()));
     connect(rb_surface_wire, SIGNAL(clicked()), this, SLOT(setSurfaceWire()));
     connect(pb_close, SIGNAL(clicked()), this, SLOT(close()));
     connect(pb_B2Y, SIGNAL(clicked()), this, SLOT(set_B2Y()));
     connect(pb_G2R, SIGNAL(clicked()), this, SLOT(set_G2R()));
-    connect(sl_min_rp, SIGNAL(valueChanged(int)), this, SLOT(adjustRpMin(int)));
-    connect(sl_max_rp, SIGNAL(valueChanged(int)), this, SLOT(adjustRpMax(int)));
-    connect(sl_min_wl, SIGNAL(valueChanged(int)), this, SLOT(adjustWlMin(int)));
-    connect(sl_max_wl, SIGNAL(valueChanged(int)), this, SLOT(adjustWlMax(int)));
+
+    connect(ct_min_rp, SIGNAL(valueChanged(double)), this, SLOT(adjustRpMin(double)));
+    connect(ct_max_rp, SIGNAL(valueChanged(double)), this, SLOT(adjustRpMax(double)));
+    connect(ct_min_wl, SIGNAL(valueChanged(double)), this, SLOT(adjustWlMin(double)));
+    connect(ct_max_wl, SIGNAL(valueChanged(double)), this, SLOT(adjustWlMax(double)));
 
     cb_scan->setCurrentIndex(scanId);
 }
@@ -309,138 +384,78 @@ US_MWL_SF_PLOT3D::~US_MWL_SF_PLOT3D()
     delete graph;
 }
 
-void US_MWL_SF_PLOT3D::getScaleOffset(){
-    offsetRmsd.clear();
-    scaleRmsd.clear();
-    for (int i = 0; i < nScans; i++){
-        double minValue = 1e20;
-        double maxValue = -1e20;
-        for (int j = 0; j < nPoints; j++){
-            for (int k = 0; k < nWavelengths; k++){
-                double rmsd = allRMSDs->allDeviations.at(i).at(j).at(k);
-                minValue = qMin(minValue, rmsd);
-                maxValue = qMax(maxValue, rmsd);
-            }
-        }
-        offsetRmsd << minValue;
-        scaleRmsd << (maxValue - minValue);
-    }
-    offsetRP = allRMSDs->xValues.at(0);
-    scaleRP = allRMSDs->xValues.at(nPoints - 1) - allRMSDs->xValues.at(0);
-    offsetWL = allRMSDs->wavelenghts.at(0);
-    scaleWL = allRMSDs->wavelenghts.at(nWavelengths - 1) - allRMSDs->wavelenghts.at(0);
-}
 
 void US_MWL_SF_PLOT3D::setTheme(int theme)
 {
     graph->activeTheme()->setType(Q3DTheme::Theme(theme));
 }
 
-void US_MWL_SF_PLOT3D::fillProxy(){
+void US_MWL_SF_PLOT3D::plot(){
     QSurfaceDataArray *dataArray = new QSurfaceDataArray;
-    dataArray->reserve(nPoints);
-    qDebug() << allRMSDs->allDeviations.size();
-    qDebug() << allRMSDs->allDeviations.at(scanId).size();
-    qDebug() << allRMSDs->allDeviations.at(scanId).at(0).size();
-//    min_rmsd =  1e20;
-//    max_rmsd = -1e20;
-//    int rp_id1 = sl_min_rp->value();
-//    int rp_id2 = sl_max_rp->value();
-//    int wl_id1 = sl_min_wl->value();
-//    int wl_id2 = sl_max_wl->value();
-    for (int i = 0 ; i < nPoints ; i++) {
-//        if (i % gap != 0)
-//            continue;
-        QSurfaceDataRow *newRow = new QSurfaceDataRow(nWavelengths);
+    int np = idRP_h - idRP_l + 1;
+    int nw = idWL_h - idWL_l + 1;
+    dataArray->reserve(np);
+    double min_dv =  1e20;
+    double max_dv = -1e20;
+
+    for (int i = idRP_l ; i <= idRP_h ; i++) {
+        QSurfaceDataRow *newRow = new QSurfaceDataRow(nw);
         int index = 0;
-        double rp = (allRMSDs->xValues.at(i) - offsetRP) / scaleRP;
-        rp *= 2.0;
-        for (int j = 0; j < nWavelengths; j++) {
-            double wl = (allRMSDs->wavelenghts.at(j) - offsetWL) / scaleWL;
-            double rmsd = allRMSDs->allDeviations.at(scanId).at(i).at(j);
-            rmsd = (rmsd - offsetRmsd.at(scanId)) / scaleRmsd.at(scanId);
+        double rp = xvalsScaled.at(i);
+        for (int j = idWL_l; j <= idWL_h; j++) {
+            double wl = lambdaScaled.at(j);
+            double rmsd = rmsdScaled.at(scanId).at(i).at(j);
+            min_dv = qMin(min_dv, rmsd);
+            max_dv = qMax(max_dv, rmsd);
             (*newRow)[index++].setPosition(QVector3D((float)rp, (float)rmsd, (float)wl));
         }
         *dataArray << newRow;
     }
     dataProxy->resetArray(dataArray);
 
-}
+    double min_wl = lambdaScaled.at(idWL_l);
+    double max_wl = lambdaScaled.at(idWL_h);
+    double min_rp = xvalsScaled.at(idRP_l);
+    double max_rp = xvalsScaled.at(idRP_h);
 
-void US_MWL_SF_PLOT3D::plot(){
-//    min_rmsd -= padding;
-//    max_rmsd += padding;
-//    min_rp = allRMSDs->xValues.at(rp_id1) - padding;
-//    max_rp = allRMSDs->xValues.at(rp_id2) + padding;
-//    d_rp = (float) (allRMSDs->xValues.at(1) - allRMSDs->xValues.at(0));
-//    min_wl = allRMSDs->wavelenghts.at(wl_id1) - padding ;
-//    max_wl = allRMSDs->wavelenghts.at(wl_id2) + padding;
-//    d_wl = (float) (allRMSDs->wavelenghts.at(1) - allRMSDs->wavelenghts.at(0));
-    graph->axisX()->setRange(-padding, 2 + padding);
-    graph->axisY()->setRange(-padding, 1 + padding);
-    graph->axisZ()->setRange(-padding, 1 + padding);
+    graph->axisX()->setRange(min_rp -padding, max_rp + padding);
+    graph->axisY()->setRange(min_dv -padding, max_dv + padding);
+    graph->axisZ()->setRange(min_wl -padding, max_wl + padding);
     if (colorSet == "B2Y")
         set_B2Y();
     else if(colorSet == "G2R")
         set_G2R();
 
-    CustomFormatter *formatX = new CustomFormatter(0, offsetRP, scaleRP);
+    min_wl = min_wl * scaleWL + offsetWL;
+    max_wl = max_wl * scaleWL + offsetWL;
+    min_rp = min_rp * scaleRP + offsetRP;
+    max_rp = max_rp * scaleRP + offsetRP;
+    min_dv = min_dv * scaleRmsd.at(scanId) + offsetRmsd.at(scanId);
+    max_dv = max_dv * scaleRmsd.at(scanId) + offsetRmsd.at(scanId);
+
+    CustomFormatter *formatX = new CustomFormatter(min_rp, max_rp);
     graph->axisX()->setFormatter(formatX);
-    CustomFormatter *formatY = new CustomFormatter(0, offsetRmsd.at(scanId), scaleRmsd.at(scanId));
+    CustomFormatter *formatY = new CustomFormatter(min_dv, max_dv);
     graph->axisY()->setFormatter(formatY);
-    CustomFormatter *formatZ = new CustomFormatter(0, offsetWL, scaleWL);
+    CustomFormatter *formatZ = new CustomFormatter(min_wl, max_wl);
     graph->axisZ()->setFormatter(formatZ);
 
-//    float frac = (float) nPoints / (float) nWavelengths;
-//    int new_np = rp_id2 - rp_id1 + 1;
-//    int new_nwl = wl_id2 - wl_id1 + 1;
-//    float new_frac = (float) new_np / (float) new_nwl;
-//    float new_scale = (new_frac / frac * h_scale);
-//    graph->setAspectRatio(1.5);
-//    graph->setHorizontalAspectRatio(new_scale);
-
-
 }
-
-///void US_MWL_SF_PLOT3D::fillSurface(){
-
-
-//    surface->axisX()->setLabelFormat("%.2f");
-//    surface->axisZ()->setLabelFormat("%.2f");
-////    surface->axisX()->setRange(sampleMin, sampleMax);
-//    surface->axisY()->setRange(0.0f, 2.0f);
-////    surface->axisZ()->setRange(sampleMin, sampleMax);
-//    surface->axisX()->setLabelAutoRotation(30);
-//    surface->axisY()->setLabelAutoRotation(90);
-//    surface->axisZ()->setLabelAutoRotation(30);
-
-////    surface->selec
-////    m_graph->removeSeries(m_heightMapSeries);
-////    surface->addSeries(surfaceSeries);
-////    //! [3]
-
-////    //! [8]
-////    // Reset range sliders for Sqrt&Sin
-////    m_rangeMinX = sampleMin;
-////    m_rangeMinZ = sampleMin;
-////    m_stepX = (sampleMax - sampleMin) / float(sampleCountX - 1);
-////    m_stepZ = (sampleMax - sampleMin) / float(sampleCountZ - 1);
-////    m_axisMinSliderX->setMaximum(sampleCountX - 2);
-////    m_axisMinSliderX->setValue(0);
-////    m_axisMaxSliderX->setMaximum(sampleCountX - 1);
-////    m_axisMaxSliderX->setValue(sampleCountX - 1);
-////    m_axisMinSliderZ->setMaximum(sampleCountZ - 2);
-////    m_axisMinSliderZ->setValue(0);
-////    m_axisMaxSliderZ->setMaximum(sampleCountZ - 1);
-////    m_axisMaxSliderZ->setValue(sampleCountZ - 1);
-
-//}
 
 
 void US_MWL_SF_PLOT3D::newScan(int id){
     scanId = id;
-    fillProxy();
     plot();
+    pb_prev->setDisabled(scanId <= 0);
+    pb_next->setDisabled(scanId >= (nScans - 1));
+}
+
+void US_MWL_SF_PLOT3D::nextScan(){
+    cb_scan->setCurrentIndex(scanId + 1);
+}
+
+void US_MWL_SF_PLOT3D::prevScan(){
+    cb_scan->setCurrentIndex(scanId - 1);
 }
 
 void US_MWL_SF_PLOT3D::resetCamera(){
@@ -477,43 +492,111 @@ void US_MWL_SF_PLOT3D::set_G2R(){
     graph->seriesList().at(0)->setColorStyle(Q3DTheme::ColorStyleRangeGradient);
 }
 
-void US_MWL_SF_PLOT3D::adjustRpMin(int min)
-{
-    int max = sl_max_rp->value();
-    if (min >= max) {
-        max = min + 1;
-        sl_max_rp->setValue(max);
+void US_MWL_SF_PLOT3D::adjustRpMin(double min){
+    ct_min_rp->disconnect();
+    ct_max_rp->disconnect();
+    int mini = qRound(min * 1000.0);
+    int index = xvals4ct.indexOf(mini);
+    if (index == -1)
+        return;
+    idRP_l = index;
+    double max = ct_max_rp->value();
+    int maxi = qRound(max * 1000.0);
+    if (mini >= maxi) {
+        max = min + dRp;
+        maxi = qRound(max * 1000.0);
+        index = xvals4ct.indexOf(maxi);
+        if (index == -1){
+            idRP_h = nPoints - 1;
+            ct_max_rp->setValue(ct_max_rp->maximum());
+        }else{
+            idRP_h = index;
+            ct_max_rp->setValue(max);
+        }
     }
-//    plot();
+    plot();
+    connect(ct_min_rp, SIGNAL(valueChanged(double)), this, SLOT(adjustRpMin(double)));
+    connect(ct_max_rp, SIGNAL(valueChanged(double)), this, SLOT(adjustRpMax(double)));
 }
 
-void US_MWL_SF_PLOT3D::adjustRpMax(int max)
-{
-    int min = sl_min_rp->value();
-    if (max <= min) {
-        min = max - 1;
-        sl_min_rp->setValue(min);
+void US_MWL_SF_PLOT3D::adjustRpMax(double max){
+    ct_min_rp->disconnect();
+    ct_max_rp->disconnect();
+    int maxi = qRound(max * 1000.0);
+    int index = xvals4ct.indexOf(maxi);
+    if (index == -1)
+        return;
+    idRP_h = index;
+    double min = ct_min_rp->value();
+    int mini = qRound(min * 1000.0);
+    if (maxi <= mini) {
+        min = max - dRp;
+        mini = qRound(min * 1000.0);
+        index = xvals4ct.indexOf(mini);
+        if (index == -1){
+            idRP_l = 0;
+            ct_min_rp->setValue(ct_min_rp->minimum());
+        }else{
+            idRP_l = index;
+            ct_min_rp->setValue(min);
+        }
     }
-//    plot();
+    plot();
+    connect(ct_min_rp, SIGNAL(valueChanged(double)), this, SLOT(adjustRpMin(double)));
+    connect(ct_max_rp, SIGNAL(valueChanged(double)), this, SLOT(adjustRpMax(double)));
 }
 
-void US_MWL_SF_PLOT3D::adjustWlMin(int min)
-{
-    int max = sl_max_wl->value();
-    if (min >= max) {
-        max = min + 1;
-        sl_max_wl->setValue(max);
+void US_MWL_SF_PLOT3D::adjustWlMin(double min){
+    ct_min_wl->disconnect();
+    ct_max_wl->disconnect();
+    int mini = qRound(min * 10.0);
+    int index = lambda4ct.indexOf(mini);
+    if (index == -1)
+        return;
+    idWL_l = index;
+    double max = ct_max_wl->value();
+    int maxi = qRound(max * 10.0);
+    if (mini >= maxi) {
+        max = min + dWl;
+        maxi = qRound(max * 10.0);
+        index = lambda4ct.indexOf(maxi);
+        if (index == -1){
+            idWL_h = nWavelengths - 1;
+            ct_max_wl->setValue(ct_max_wl->maximum());
+        }else{
+            idWL_h = index;
+            ct_max_wl->setValue(max);
+        }
     }
-//    plot();
+    plot();
+    connect(ct_min_wl, SIGNAL(valueChanged(double)), this, SLOT(adjustWlMin(double)));
+    connect(ct_max_wl, SIGNAL(valueChanged(double)), this, SLOT(adjustWlMax(double)));
 }
 
-void US_MWL_SF_PLOT3D::adjustWlMax(int max)
-{
-    int min = sl_min_wl->value();
-    if (max <= min) {
-        min = max - 1;
-        sl_min_wl->setValue(min);
+void US_MWL_SF_PLOT3D::adjustWlMax(double max){
+    ct_min_wl->disconnect();
+    ct_max_wl->disconnect();
+    int maxi = qRound(max * 10.0);
+    int index = lambda4ct.indexOf(maxi);
+    if (index == -1)
+        return;
+    idWL_h = index;
+    double min = ct_min_wl->value();
+    int mini = qRound(min * 10.0);
+    if (maxi <= mini) {
+        min = max - dWl;
+        mini = qRound(min * 10.0);
+        index = lambda4ct.indexOf(mini);
+        if (index == -1){
+            idWL_l = 0;
+            ct_min_wl->setValue(ct_min_wl->minimum());
+        }else{
+            idWL_l = index;
+            ct_min_wl->setValue(min);
+        }
     }
-//    plot();
+    plot();
+    connect(ct_min_wl, SIGNAL(valueChanged(double)), this, SLOT(adjustWlMin(double)));
+    connect(ct_max_wl, SIGNAL(valueChanged(double)), this, SLOT(adjustWlMax(double)));
 }
 

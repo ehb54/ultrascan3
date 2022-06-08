@@ -52,26 +52,38 @@ private:
     int nScans;
     int nPoints;
     int nWavelengths;
-    int pointsGap;
-//    double zoom;
+    QVector<double> lambdaScaled;
+    QVector<int> lambda4ct;
+    QVector<double> xvalsScaled;
+    QVector<int> xvals4ct;
+    QVector< QVector< QVector < double > > > rmsdScaled;
     QVector<double> offsetRmsd;
     QVector<double> scaleRmsd;
+    double coeffRmsd;
     double offsetRP;
     double scaleRP;
+    double coeffRP;
+    double dRp;
     double offsetWL;
     double scaleWL;
+    double coeffWL;
+    double dWl;
     float padding;
-    float min_wl;
-    float max_wl;
-    float d_wl;
-    float min_rp;
-    float max_rp;
-    float d_rp;
-    float min_rmsd;
-    float max_rmsd;
-    float h_scale = 1.5;
+    int idRP_l;
+    int idRP_h;
+    int idWL_l;
+    int idWL_h;
+//    float min_wl;
+//    float max_wl;
+//    float d_wl;
+//    float min_rp;
+//    float max_rp;
+//    float d_rp;
+//    float min_rmsd;
+//    float max_rmsd;
+//    float h_scale = 1.5;
 
-    const SFDev* allRMSDs;
+//    const SFDev* allRMSDs;
 
     Q3DSurface *graph;
     QSurfaceDataProxy *dataProxy;
@@ -83,26 +95,31 @@ private:
     QPushButton *pb_G2R;
     QComboBox*   cb_scan;
 
-    QSlider *sl_min_rp;
-    QSlider *sl_max_rp;
-    QSlider *sl_min_wl;
-    QSlider *sl_max_wl;
+//    QSlider *sl_min_rp;
+//    QSlider *sl_max_rp;
+//    QSlider *sl_min_wl;
+//    QSlider *sl_max_wl;
 
-    void fillProxy(void);
+    QwtCounter *ct_min_rp;
+    QwtCounter *ct_max_rp;
+    QwtCounter *ct_min_wl;
+    QwtCounter *ct_max_wl;
+
     void plot(void);
-    void getScaleOffset(void);
 private slots:
     void setTheme(int);
     void newScan(int);
+    void nextScan(void);
+    void prevScan(void);
     void resetCamera(void);
     void setSurfaceWire(void);
     void setSurface(void);
     void set_B2Y(void);
     void set_G2R(void);
-    void adjustRpMin(int);
-    void adjustRpMax(int);
-    void adjustWlMin(int);
-    void adjustWlMax(int);
+    void adjustRpMin(double);
+    void adjustRpMax(double);
+    void adjustWlMin(double);
+    void adjustWlMax(double);
 };
 
 #endif // US_MWL_SF_PLOT3D_H
