@@ -95,8 +95,8 @@ private:
     QStringList ccwStrList;
     CCW_ITEM ccwItemList;
 
-    QVector<double> pmin;
-    QVector<double> pmax;
+    QVector<double> idMin;
+    QVector<double> idMax;
     QVector<bool> ccwFitState;
     QVector<bool> ccwIntgState;
     int wavl_id;
@@ -120,7 +120,7 @@ private:
     void set_cb_triples(void);
     void pn_id_avail(void);
     void pn_ccw_avail(void);
-    double trapz(const double*, const double*, double, double);
+    double trapz(const double*, const double*, int, int);
     double get_rsqrd(double*, double*, int, QVector<double>);
     void integrate(int);
     void correct_data(void);
@@ -129,6 +129,7 @@ private:
     void pb_save_avail(void);
     void plot_data(bool);
     void plot_fit(bool);
+    int get_id(QVector<double>, double);
 
 };
 

@@ -187,6 +187,7 @@ US_RemoveRI::US_RemoveRI() : US_Widgets()
     qwtplot_fit->enableAxis( QwtPlot::xBottom, true );
     qwtplot_fit->enableAxis( QwtPlot::yLeft  , true );
     qwtplot_fit->setCanvasBackground(QBrush(Qt::black));
+//    qwtplot_fit->setCanvasBackground(QBrush(QColor(254,242,228)));
     grid = us_grid(qwtplot_fit);
     QwtLegend *legend = new QwtLegend();
     qwtplot_fit->insertLegend( legend , QwtPlot::BottomLegend);
@@ -248,8 +249,8 @@ void US_RemoveRI::slt_reset(){
     ccwStrList.clear();
     ccwItemList.clear();
     wavelength.clear();
-    pmin.clear();
-    pmax.clear();
+    idMin.clear();
+    idMax.clear();
     ccwFitState.clear();
     ccwIntgState.clear();
     le_runIdIn->clear();
@@ -473,15 +474,20 @@ void US_RemoveRI::slt_new_ccw(int id){
     pn_ccw_avail();
 
     QString qs = "QPushButton { background-color: %1 }";
-    if (pmin.at(ccw_id) < 0 || pmax.at(ccw_id) < 0){
-        pmin[ccw_id] = -1;
-        pmax[ccw_id] = -1;
+    if (idMin.at(ccw_id) < 0 || idMax.at(ccw_id) < 0){
+        idMin[ccw_id] = -1;
+        idMax[ccw_id] = -1;
         le_xrange->setText("");
         pb_pick_rp->setStyleSheet(qs.arg("yellow"));
     } else {
         QString str = tr("%1 - %2 cm");
-        le_xrange->setText(str.arg(pmin.at(ccw_id), 0, 'f', 3).
-                           arg(pmax.at(ccw_id), 0, 'f', 3));
+        int index = ccwItemList.index.at(ccw_id).at(0);
+        double lx = allData.at(index).xvalues.at(idMin.at(ccw_id));
+        double hx = allData.at(index).xvalues.at(idMax.at(ccw_id));
+        le_xrange->setText(str.arg(lx, 0, 'f', 3).arg(hx, 0, 'f', 3));
+//        le_xrange->setText(str.arg(idMin.at(ccw_id), 0, 'f', 3).
+//                           arg(idMax.at(ccw_id), 0, 'f', 3));
+
         pb_pick_rp->setStyleSheet(qs.arg("green"));
     }
     pb_fit_avail();
@@ -499,8 +505,8 @@ void US_RemoveRI::slt_set_id(int id){
 
 void US_RemoveRI::slt_pick_point(){
     picker->disconnect();
-    pmin[ccw_id] = -1;
-    pmax[ccw_id] = -1;
+    idMin[ccw_id] = -1;
+    idMax[ccw_id] = -1;
     le_xrange->setText("");
     if (allData.size() == 0)
         return;
@@ -519,31 +525,45 @@ void US_RemoveRI::slt_pick_point(){
     return;
 }
 
+int US_RemoveRI::get_id(QVector<double> vec, double val){
+    int id = 0;
+    for (int i = 0; i < vec.size(); i++){
+        id = i;
+        if(vec.at(i) > val)
+            break;
+    }
+    return id;
+}
+
 void US_RemoveRI::slt_mouse(const QwtDoublePoint& point){
     double x = point.x();
     int index = ccwItemList.index.at(ccw_id).at(wavl_id);
-    US_DataIO::RawData data = allDataC.at(index);
+    US_DataIO::RawData data = allData.at(index);
     int np = data.pointCount();
     double min_x = data.xvalues.at(0);
     double max_x = data.xvalues.at(np - 1);
     QString str;
     if (x > min_x && x < max_x){
-        if (pmin.at(ccw_id) == -1){
-            pmin[ccw_id] = x;
+        if (idMin.at(ccw_id) == -1){
+            idMin[ccw_id] = get_id(data.xvalues, x);
             str = tr("%1 -");
             le_xrange->setText(str.arg(x, 0, 'f', 3));
             emit sig_plot(true);
         } else {
-            if (x <= pmax.at(ccw_id)){
+            double lx = data.xvalues.at(idMin.at(ccw_id));
+            if (x <= lx + 0.01){
                 QString mess("Pick a radial point greater than: %1 cm");
-                QMessageBox::warning( this, tr( "Warning" ), mess.arg(x));
+                QMessageBox::warning( this, tr( "Warning" ), mess.arg(lx));
                 return;
             }
-            pmax[ccw_id] = x;
+            idMax[ccw_id] = get_id(data.xvalues, x);
             picker->disconnect();
             str = tr("%1 - %2 cm");
-            le_xrange->setText(str.arg(pmin.at(ccw_id), 0, 'f', 3).
-                               arg(pmax.at(ccw_id), 0, 'f', 3));
+            double hx = data.xvalues.at(idMax.at(ccw_id));
+            le_xrange->setText(str.arg(lx, 0, 'f', 3).arg(hx, 0, 'f', 3));
+
+//            le_xrange->setText(str.arg(idMin.at(ccw_id), 0, 'f', 3).
+//                               arg(idMax.at(ccw_id), 0, 'f', 3));
             pb_pick_rp->setStyleSheet("QPushButton { background-color: green }");
             pn_ccw_avail();
             cb_triples->setEnabled(true);
@@ -702,8 +722,8 @@ void US_RemoveRI::set_cb_triples(){
         cb_triples->addItem(item_i);
     }
     ccw_id = 0;
-    pmin.fill(-1, n_ccw);
-    pmax.fill(-1, n_ccw);
+    idMin.fill(-1, n_ccw);
+    idMax.fill(-1, n_ccw);
     ccwFitState.fill(false, n_ccw);
     ccwIntgState.fill(false, n_ccw);
     connect( cb_triples, SIGNAL( currentIndexChanged(int) ),
@@ -772,14 +792,15 @@ void US_RemoveRI::plot_data(bool state){
     double dx = (max_x - min_x) * 0.05;
     double dr = (max_r - min_r) * 0.05;
 
-    if (pmin.at(ccw_id) != -1){
+    if (idMin.at(ccw_id) != -1){
         QVector<double> xx;
         QVector<double> yy;
         int np = 50;
         double dyy = (max_r - min_r + 2 * dr) / np;
         double x0 = min_r - dr;
+        double lx = data.xvalues.at(idMin.at(ccw_id));
         for (int i = 0; i < np; ++i){
-            xx << pmin.at(ccw_id);
+            xx << lx;
             yy << x0 + i * dyy;
         }
         pen_plot.setWidth(3);
@@ -790,14 +811,15 @@ void US_RemoveRI::plot_data(bool state){
         curve->setSamples(xx.data(), yy.data(), np);
     }
 
-    if (pmax.at(ccw_id) != -1){
+    if (idMax.at(ccw_id) != -1){
         QVector<double> xx;
         QVector<double> yy;
         int np = 50;
         double dyy = (max_r - min_r + 2 * dr) / np;
         double x0 = min_r - dr;
+        double hx = data.xvalues.at(idMax.at(ccw_id));
         for (int i = 0; i < np; ++i){
-            xx << pmax.at(ccw_id);
+            xx << hx;
             yy << x0 + i * dyy;
         }
         pen_plot.setWidth(3);
@@ -839,13 +861,13 @@ void US_RemoveRI::plot_fit(bool state){
     QVector<double> integralC = allIntegralsC.at(index);
     QVector<double> integral = allIntegrals.at(index);
     int ns = integral.size();
-    QVector<double> xvec;
+    QVector<double> xvec(ns);
     double min_r  =  1e20;
     double max_r  = -1e20;
     for (int i = 0; i < ns; i++){
         min_r = qMin(integral.at(i), min_r);
         max_r = qMax(integral.at(i), max_r);
-        xvec << (double) (i + 1);
+        xvec[i] = i;
     }
     double dr = (max_r - min_r) * 0.05;
     QPen pen_plot(Qt::yellow);
@@ -871,8 +893,8 @@ void US_RemoveRI::plot_fit(bool state){
                 yf += cp[j] * qPow(xp[i], j);
             fit << yf;
         }
-        pen_plot.setColor(Qt::red);
-        pen_plot.setWidth(2);
+        pen_plot.setColor(Qt::green);
+        pen_plot.setWidth(3);
         QwtPlotCurve* curve = us_curve( qwtplot_fit,"fitted line");
         curve->setPen( pen_plot );
         curve->setSamples(xp, fit.data(), ns);
@@ -880,10 +902,14 @@ void US_RemoveRI::plot_fit(bool state){
 
     // corrected
     if (fit_state){
+        QwtSymbol *symbol = new QwtSymbol(
+                    QwtSymbol::Ellipse, QBrush(Qt::red),
+                    QPen(Qt::red, 1), QSize( 3, 3 ));
         QwtPlotCurve* curve = us_curve( qwtplot_fit,"corrected data");
-        pen_plot.setColor(Qt::green);
-        pen_plot.setWidth(1);
+        pen_plot.setColor(Qt::red);
+        pen_plot.setWidth(0);
         curve->setPen( pen_plot );
+        curve->setSymbol(symbol);
         curve->setSamples(xvec.data(), integralC.data(), ns);
     }
 
@@ -927,25 +953,30 @@ void US_RemoveRI::slt_autofit_state(int state){
 
 void US_RemoveRI::integrate(int state){
     QVector<int> index = ccwItemList.index.at(ccw_id);
-    double xmin = pmin.at(ccw_id);
-    double xmax = pmax.at(ccw_id);
+    int lxid = idMin.at(ccw_id);
+    int hxid = idMax.at(ccw_id);
     bool *sp = intgState.data();
     for (int i = 0; i < index.size(); i++){
         int id = index.at(i);
         sp[id] = true;
-        US_DataIO::RawData data;
+        int ns = allData.at(id).scanData.size();
+        QVector<double> xvalues;
+        xvalues << allData.at(id).xvalues;
+        const double *x = xvalues.data();
         double *intg;
-        if (state == RDATA_S){
-            data = allData.at(id);
+        if (state == RDATA_S)
             intg = allIntegrals[id].data();
-        } else if (state == CDATA_S) {
-            data = allDataC.at(id);
+        else if (state == CDATA_S)
             intg = allIntegralsC[id].data();
-        }
-        const double *x = data.xvalues.data();
-        for (int j = 0; j < data.scanCount(); j++){
-            const double *y = data.scanData.at(j).rvalues.data();
-            double sum = trapz(x, y, xmin, xmax);
+
+        for (int j = 0; j < ns; j++){
+            QVector<double> rvalues;
+            if (state == RDATA_S)
+                rvalues << allData.at(id).scanData.at(j).rvalues;
+            else if (state == CDATA_S)
+                rvalues << allDataC.at(id).scanData.at(j).rvalues;
+            const double *y = rvalues.data();
+            double sum = trapz(x, y, lxid, hxid);
             intg[j] = sum;
         }
     }
@@ -968,15 +999,12 @@ void US_RemoveRI::clean_states(int state){
 }
 
 double US_RemoveRI::trapz(const double* x, const double* y,
-                          double xmin, double xmax){
-    int n = 0;
-    while (x[n] < xmin)
-        n++;
+                          int lxid, int hxid){
     double dx;
     double sum = 0;
-    while (x[++n] <= xmax){
-        dx = x[n] - x[n - 1];
-        sum += dx * ( y[n] + y[n - 1] ) / 2.0;
+    for (int i = lxid + 1; i <= hxid; i++){
+        dx = x[i] - x[i - 1];
+        sum += dx * ( y[i] + y[i - 1] ) * 0.5;
     }
     return sum;
 }
@@ -987,13 +1015,12 @@ void US_RemoveRI::slt_polyfit(){
     for (int i = 0; i < nwl; i++){
         int id = index.at(i);
         QVector<double> y = allIntegrals.at(id);
-        QVector<double> x;
-        int ns = y.size();
-        for (int j = 0; j < ns; j++)
-            x << (double) (j + 1);
-        double *xp = x.data();
         double *yp = y.data();
-        double *cp = fitParam[id].data();
+        int ns = y.size();
+        QVector<double> x(ns);
+        double *xp = x.data();
+        for (int j = 0; j < ns; j++)
+            xp[j] = (double) j;
         if (cb_autofit->isChecked()){
             QVector<double> coeff;
             int order = -1;
@@ -1001,7 +1028,7 @@ void US_RemoveRI::slt_polyfit(){
             int ctval = (int) ct_max_order->value();
             for (int j = 1; j <= ctval; j++ ){
                 int order_tst = j + 1;
-                QVector<double> coeff_tst(order_tst, 0);
+                QVector<double> coeff_tst(max_ct + 1, 0);
                 bool st = US_Matrix::lsfit(coeff_tst.data(), xp, yp, ns, order_tst);
                 if (st){
                     double rsqrd = get_rsqrd(xp, yp, ns, coeff_tst);
@@ -1022,27 +1049,21 @@ void US_RemoveRI::slt_polyfit(){
             fitOrder[id] = order;
             fitRsqrd[id] = max_rsqrd;
             fitState[id] = true;
-            for (int j = 0; j < max_ct + 1; j++){
-                if (j < order)
-                    cp[j] = coeff.at(j);
-                else
-                    cp[j] = 0;
-            }
+            double *cp = fitParam[id].data();
+            for (int j = 0; j < coeff.size(); j++)
+                cp[j] = coeff.at(j);
         } else {
-            int order = (int) ct_order->value();
-            QVector<double> coeff(order, 0);
+            int order = (int) ct_order->value() + 1;
+            QVector<double> coeff(max_ct + 1, 0);
             bool st = US_Matrix::lsfit(coeff.data(), xp, yp, ns, order);
             if (st){
                 double rsqrd = get_rsqrd(xp, yp, ns, coeff);
                 fitOrder[id] = order;
                 fitRsqrd[id] = rsqrd;
                 fitState[id] = true;
-                for (int j = 0; j < max_ct + 1; j++){
-                    if (j < order)
-                        cp[j] = coeff.at(j);
-                    else
-                        cp[j] = 0;
-                }
+                double *cp = fitParam[id].data();
+                for (int j = 0; j < coeff.size(); j++)
+                    cp[j] = coeff.at(j);
             } else {
                 QMessageBox::warning(this, tr("Error!"),
                                      tr("Couldn't fit the polynomial function with order of: ") +
@@ -1082,18 +1103,20 @@ void US_RemoveRI::correct_data(){
     int nwl = index.size();
     for (int i = 0; i < nwl; i++){
         int id = index.at(i);
-        US_DataIO::RawData data = allData.at(id);
-        QVector<double> integral = allIntegrals.at(id);
         QVector<double> coeff = fitParam.at(id);
         int order = fitOrder.at(id);
-        int ns = data.scanCount();
-        int np = data.pointCount();
+        int ns = allData.at(id).scanData.size();
+        int np = allData.at(id).xvalues.size();
+        double lx = allData.at(id).xvalues.at(idMin.at(ccw_id));
+        double hx = allData.at(id).xvalues.at(idMax.at(ccw_id));
+        double dr = hx - lx;
         for (int j = 0; j < ns; j++){
             double yf = 0;
             for (int k = 0; k < order; k++)
-                yf += coeff.at(k) * qPow(j + 1, k);
-            double shift = yf - integral.at(j);
-            const double *rp = data.scanData.at(j).rvalues.data();
+                yf += coeff.at(k) * qPow(j, k);
+            double dA = yf - allIntegrals.at(id).at(j);
+            double shift = dA / dr;
+            const double *rp = allData.at(id).scanData.at(j).rvalues.data();
             double *rcp = allDataC[id].scanData[j].rvalues.data();
             for (int k = 0; k < np; k++)
                 rcp[k] = rp[k] + shift;
