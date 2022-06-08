@@ -19,7 +19,7 @@ class CustomFormatter : public QValue3DAxisFormatter
     //! [3]
 public:
 //    explicit CustomFormatter(QObject *parent = 0);
-    explicit CustomFormatter(QObject *parent = 0, qreal i_offset = 0, qreal i_scale = 1);
+    explicit CustomFormatter(qreal i_minval = 0, qreal i_maxval = 1);
     virtual ~CustomFormatter();
 
     //! [0]
@@ -47,8 +47,8 @@ private:
 
 //    QDate m_originDate;
 //    QString m_selectionFormat;
-    qreal offset;
-    qreal scale;
+    qreal minVal;
+    qreal maxVal;
 
 };
 

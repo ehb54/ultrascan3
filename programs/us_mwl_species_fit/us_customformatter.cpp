@@ -7,12 +7,12 @@ using namespace QtDataVisualization;
 
 Q_DECLARE_METATYPE(QValue3DAxisFormatter *)
 
-CustomFormatter::CustomFormatter(QObject *parent, qreal i_offSet, qreal i_scale) :
-    QValue3DAxisFormatter(parent)
+CustomFormatter::CustomFormatter(qreal i_minval, qreal i_maxval) :
+    QValue3DAxisFormatter()
 {
     qRegisterMetaType<QValue3DAxisFormatter *>();
-    offset = i_offSet;
-    scale = i_scale;
+    minVal = i_minval;
+    maxVal = i_maxval;
 }
 
 CustomFormatter::~CustomFormatter()
@@ -30,8 +30,8 @@ void CustomFormatter::populateCopy(QValue3DAxisFormatter &copy) const
     QValue3DAxisFormatter::populateCopy(copy);
 
     CustomFormatter *customFormatter = static_cast<CustomFormatter *>(&copy);
-    customFormatter->offset = offset;
-    customFormatter->scale = scale;
+    customFormatter->minVal = minVal;
+    customFormatter->maxVal = maxVal;
 }
 //! [1]
 
@@ -55,11 +55,19 @@ void CustomFormatter::recalculate()
         subSegmentStep = segmentStep / qreal(subGridCount + 1);
 
     qreal labelValue;
+    QVector<qreal> values(segmentCount + 1);
+
+    qreal delta = (maxVal - minVal) / segmentCount;
+    for (int i = 0; i < segmentCount; i++) {
+        values[i] = minVal + i * delta;
+    }
+    values[segmentCount] = maxVal;
+
     for (int i = 0; i < segmentCount; i++) {
         qreal gridValue = segmentStep * qreal(i);
         gridPositions()[i] = float(gridValue);
         labelPositions()[i] = float(gridValue);
-        labelValue = gridValue * scale + offset;
+        labelValue = values.at(i);
         labelStrings() << stringForValue(labelValue, labelFormat);
         if (subGridPositions().size()) {
             for (int j = 0; j < subGridCount; j++)
@@ -68,7 +76,7 @@ void CustomFormatter::recalculate()
     }
     gridPositions()[segmentCount] = 1.0f;
     labelPositions()[segmentCount] = 1.0f;
-    labelValue = scale + offset;
+    labelValue = values.at(segmentCount);
     labelStrings() << stringForValue(labelValue, labelFormat);
 
 }
