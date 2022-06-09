@@ -8154,12 +8154,17 @@ void US_ReporterGMP::parse_edited_combPlots_mask_json( const QString maskJson, C
 	  foreach(const QString& array_key, json_array[i].toObject().keys())        //over triples
 	    {
 	      QJsonValue show_plot = json_array[i].toObject().value(array_key);
-	      MaskStr. ShowCombPlotParts[ key ][ array_key ] = show_plot.toString();
+
+	      QString array_key_mod = array_key;
+	      if ( array_key.contains("PCSA") )
+		array_key_mod = "PCSA";
+		
+	      MaskStr. ShowCombPlotParts[ key ][ array_key_mod ] = show_plot.toString();
 
 	      qDebug() << "CombPlots: type, model, yes/no -- "
-		       << key << array_key << show_plot.toString();
+		       << key << array_key_mod << show_plot.toString();
 
-	      if ( MaskStr. ShowCombPlotParts[ key ][ array_key ] .toInt() )
+	      if ( MaskStr. ShowCombPlotParts[ key ][ array_key_mod ] .toInt() )
 		++MaskStr. has_combo_plots;
 	    }
 	}

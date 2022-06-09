@@ -3263,7 +3263,7 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString base_dir,
                if ( !already_added.count( selected_files[ i ] ) )
                {
                   source_files << selected_files[ i ];
-                  already_added[ selected_files[ i ] ]++;
+                  already_added[ selected_files[ i ] ] = true;
                }
             }            
          }
@@ -3289,7 +3289,7 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString base_dir,
                      if ( !already_added.count( it->second ) )
                      {
                         base_source_files << it->second;
-                        already_added[ it->second ]++;
+                        already_added[ it->second ] = true;
                      }
                   } else {
                      out += 
@@ -3299,7 +3299,7 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString base_dir,
                      if ( !already_added.count( it->second ) )
                      {
                         source_files << it->second;
-                        already_added[ it->second ]++;
+                        already_added[ it->second ] = true;
                      }
                   }
                }
@@ -3325,7 +3325,7 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString base_dir,
                      if ( !already_added.count( selected_files[ j ] ) )
                      {
                         source_files_to_clear << selected_files[ j ];
-                        already_added[ selected_files[ j ] ]++;
+                        already_added[ selected_files[ j ] ] = true;
                         if ( 
                             cluster_additional_methods_modes.count( "additional_processing_per_file" ) &&
                             cluster_additional_methods_modes[ "additional_processing_per_file" ].count( methods[ m ] ) )
@@ -3927,7 +3927,7 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg( QString /* bas
                if ( !already_added.count( selected_files[ i ] ) )
                {
                   source_files << selected_files[ i ];
-                  already_added[ selected_files[ i ] ]++;
+                  already_added[ selected_files[ i ] ] = true;
                }
             }            
          }
@@ -3951,7 +3951,7 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg( QString /* bas
                   if ( !already_added.count( it->second ) )
                   {
                      source_files << it->second;
-                     already_added[ it->second ]++;
+                     already_added[ it->second ] = true;
                   }
                }
             }
