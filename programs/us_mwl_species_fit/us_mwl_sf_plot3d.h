@@ -18,6 +18,7 @@
 #include "us_gui_settings.h"
 #include "us_images.h"
 #include "us_customformatter.h"
+#include "us_settings.h"
 
 using namespace QtDataVisualization;
 
@@ -46,8 +47,8 @@ public:
     ~US_MWL_SF_PLOT3D();
 
 private:
-
-    QString colorSet;
+    enum colorSet{G2R, B2Y, DFLT};
+    int colorId;
     int scanId;
     int nScans;
     int nPoints;
@@ -63,6 +64,9 @@ private:
     int idRP_h;
     int idWL_l;
     int idWL_h;
+    int xAngle;
+    int yAngle;
+    int zAngle;
 
     Q3DSurface *graph;
     QSurfaceDataProxy *dataProxy;
@@ -70,9 +74,14 @@ private:
 
     QPushButton* pb_next;
     QPushButton* pb_prev;
-    QPushButton *pb_B2Y;
-    QPushButton *pb_G2R;
+
+    QSlider *sli_xAngle;
+    QSlider *sli_yAngle;
+    QSlider *sli_zAngle;
+
+
     QComboBox*   cb_scan;
+    QComboBox *cb_theme;
 
     QwtCounter *ct_min_rp;
     QwtCounter *ct_max_rp;
@@ -92,10 +101,23 @@ private slots:
     void setSurface(void);
     void set_B2Y(void);
     void set_G2R(void);
+    void set_DFLT(void);
     void adjustRpMin(double);
     void adjustRpMax(double);
     void adjustWlMin(double);
     void adjustWlMax(double);
+    void toggleNone(bool);
+    void togglePoint(bool);
+    void toggleRadial(bool);
+    void toggleLambda(bool);
+    void saveImage(void);
+    void new_xAngle(int);
+    void new_yAngle(int);
+    void new_zAngle(int);
+    void reset_xAngle(void);
+    void reset_yAngle(void);
+    void reset_zAngle(void);
+
 };
 
 #endif // US_MWL_SF_PLOT3D_H

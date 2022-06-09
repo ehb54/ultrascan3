@@ -41,8 +41,9 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFDev& rmsdIn): US_WidgetsD
     nWavelengths = rmsdIn.wavelenghts.size();
     nPoints = rmsdIn.xValues.size();
     double coeffRmsd = 1.0;
-    double coeffRP = 2.0;
+    double coeffRP = 1.5;
     double coeffWL = 1.0;
+    padding = 0.0001;
     idWL_l = 0;
     idWL_h = nWavelengths - 1;
     idRP_l = 0;
@@ -103,37 +104,34 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFDev& rmsdIn): US_WidgetsD
         lambdaScaled << wl;
     }
 
-    colorSet = "G2R";
-    padding = 0.0001;
-
     dataProxy = new QSurfaceDataProxy();
     dataSeries = new QSurface3DSeries(dataProxy);
-//    surfaceSeries->setDrawMode(QSurface3DSeries::DrawSurfaceAndWireframe);
-    dataSeries->setDrawMode(QSurface3DSeries::DrawSurface);
     dataSeries->setFlatShadingEnabled(true);
+    colorId = G2R;
 
+    xAngle = 30;
+    yAngle = 90;
+    zAngle = 30;
     graph = new Q3DSurface();
     graph->setShadowQuality(QAbstract3DGraph::ShadowQualityNone);
     graph->setAxisX(new QValue3DAxis);
     graph->setAxisY(new QValue3DAxis);
     graph->setAxisZ(new QValue3DAxis);
     graph->addSeries(dataSeries);
-//    graph->setAspectRatio(1.5);
-//    graph->setHorizontalAspectRatio(1.5);
     graph->axisX()->setTitle("Radial Points (cm)");
     graph->axisX()->setTitleVisible(true);
     graph->axisX()->setLabelFormat("%.3f");
-    graph->axisX()->setLabelAutoRotation(30);
+    graph->axisX()->setLabelAutoRotation(xAngle);
 
     graph->axisY()->setTitle("RMSD");
     graph->axisY()->setTitleVisible(true);
     graph->axisY()->setLabelFormat("%.1e");
-    graph->axisY()->setLabelAutoRotation(90);
+    graph->axisY()->setLabelAutoRotation(yAngle);
 
     graph->axisZ()->setTitle("Wavelength (nm)");
     graph->axisZ()->setTitleVisible(true);
     graph->axisZ()->setLabelFormat("%d");
-    graph->axisZ()->setLabelAutoRotation(30);
+    graph->axisZ()->setLabelAutoRotation(zAngle);
 //    surface->axisZ()->setReversed(true);
 
     graph->scene()->activeCamera()->setWrapXRotation(true);
@@ -169,17 +167,23 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFDev& rmsdIn): US_WidgetsD
     QLabel* lb_selmode = us_label("Selection Mode");
     lb_selmode->setAlignment(Qt::AlignCenter);
 
-    QRadioButton *rb_nosel = new QRadioButton();
-    QGridLayout *nosel_gl = us_radiobutton("No Selection", rb_nosel, false);
+    QRadioButton* rb_nosel = new QRadioButton();
+    QGridLayout *nosel_gl = us_radiobutton("No Selection", rb_nosel, true);
 
-    QRadioButton *rb_point = new QRadioButton();
+    QRadioButton* rb_point = new QRadioButton();
     QGridLayout *point_gl = us_radiobutton("Point", rb_point, false);
 
-    QRadioButton *rb_radial = new QRadioButton();
+    QRadioButton* rb_radial = new QRadioButton();
     QGridLayout *radial_gl = us_radiobutton("Radial Slice", rb_radial, false);
 
-    QRadioButton *rb_wavlth = new QRadioButton();
-    QGridLayout *wavlth_gl = us_radiobutton("Lambda Slice", rb_wavlth, false);
+    QRadioButton* rb_lambda = new QRadioButton();
+    QGridLayout *wavlth_gl = us_radiobutton("Lambda Slice", rb_lambda, false);
+
+    QButtonGroup *select_btng = new QButtonGroup();
+    select_btng->addButton(rb_nosel);
+    select_btng->addButton(rb_point);
+    select_btng->addButton(rb_radial);
+    select_btng->addButton(rb_lambda);
 
     QLabel* lb_wavl_rng = us_label("Lambda Range (nm)");
     lb_wavl_rng->setAlignment(Qt::AlignCenter);
@@ -230,7 +234,7 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFDev& rmsdIn): US_WidgetsD
     QLabel* lb_theme = us_label("Theme");
     lb_theme->setAlignment(Qt::AlignCenter);
 
-    QComboBox *cb_theme = new QComboBox();
+    cb_theme = new QComboBox();
     cb_theme->addItem(QStringLiteral("Qt"));
     cb_theme->addItem(QStringLiteral("Primary Colors"));
     cb_theme->addItem(QStringLiteral("Digia"));
@@ -243,64 +247,91 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFDev& rmsdIn): US_WidgetsD
     QLabel* lb_color = us_label("Custom Gradient");
     lb_color->setAlignment(Qt::AlignCenter);
 
-    QLinearGradient lg_B2Y(0, 0, 1, 100);
-    lg_B2Y.setColorAt(1.0, Qt::black);
-    lg_B2Y.setColorAt(0.67, Qt::blue);
-    lg_B2Y.setColorAt(0.33, Qt::red);
-    lg_B2Y.setColorAt(0.0, Qt::yellow);
-    QPixmap pm(24, 100);
+    QPushButton* pb_DFLT = us_pushbutton("Default");
+
+    QLinearGradient lg_B2Y(0, 0, 75, 1);
+    lg_B2Y.setColorAt(0.0, Qt::black);
+    lg_B2Y.setColorAt(0.33, Qt::blue);
+    lg_B2Y.setColorAt(0.67, Qt::red);
+    lg_B2Y.setColorAt(1.0, Qt::yellow);
+    QPixmap pm(75, 15);
     QPainter pmp(&pm);
     pmp.setBrush(QBrush(lg_B2Y));
     pmp.setPen(Qt::NoPen);
-    pmp.drawRect(0, 0, 24, 100);
-    pb_B2Y = new QPushButton();
+    pmp.drawRect(0, 0, 75, 15);
+    QPushButton* pb_B2Y = new QPushButton();
     pb_B2Y->setIcon(QIcon(pm));
-    pb_B2Y->setIconSize(QSize(24, 100));
+    pb_B2Y->setIconSize(QSize(75, 15));
 
-    QLinearGradient lg_G2R(0, 0, 1, 100);
-    lg_G2R.setColorAt(1.0, Qt::darkGreen);
+    QLinearGradient lg_G2R(0, 0, 75, 1);
+    lg_G2R.setColorAt(0.0, Qt::darkGreen);
     lg_G2R.setColorAt(0.5, Qt::yellow);
-    lg_G2R.setColorAt(0.2, Qt::red);
-    lg_G2R.setColorAt(0.0, Qt::darkRed);
+    lg_G2R.setColorAt(0.8, Qt::red);
+    lg_G2R.setColorAt(1.0, Qt::darkRed);
     pmp.setBrush(QBrush(lg_G2R));
-    pmp.drawRect(0, 0, 24, 100);
-    pb_G2R = new QPushButton();
+    pmp.drawRect(0, 0, 75, 15);
+    QPushButton* pb_G2R = new QPushButton();
     pb_G2R->setIcon(QIcon(pm));
-    pb_G2R->setIconSize(QSize(24, 100));
+    pb_G2R->setIconSize(QSize(75, 15));
+
 
     QHBoxLayout *color_lyt = new QHBoxLayout;
     color_lyt->addWidget(pb_B2Y);
     color_lyt->addWidget(pb_G2R);
+    color_lyt->addWidget(pb_DFLT);
 
-    QLabel* lb_camera = us_label("CameraPreset");
-    QComboBox* cb_camera = us_comboBox();
-    QStringList camera_list;
-    camera_list << "FrontLow" << "Front" << "FrontHigh" <<
-                   "LeftLow" << "Left" << "LeftHigh" <<
-                   "RightLow" << "Right" << "RightHigh" <<
-                   "BehindLow" << "Behind" << "BehindHigh" <<
-                   "IsometricLeft" << "IsometricLeftHigh" <<
-                   "IsometricRight" << "IsometricRightHigh" <<
-                   "DirectlyAbove" << "DirectlyAboveCW45" <<
-                   "DirectlyAboveCCW45" << "FrontBelow" <<
-                   "LeftBelow" << "RightBelow" << "BehindBelow" << "DirectlyBelow";
-    for (int i = 0; i < camera_list.size(); ++i){
-        cb_camera->addItem(camera_list.at(i));
-    }
-    cb_camera->setCurrentText("IsometricRightHigh");
-    QHBoxLayout* camera_lyt = new QHBoxLayout();
-    camera_lyt->addWidget(lb_camera);
-    camera_lyt->addWidget(cb_camera);
+    QPushButton* pb_camera = us_pushbutton("Reset Camera");
+    QPushButton* pb_save = us_pushbutton("Save Image");
+
+    QHBoxLayout* save_lyt = new QHBoxLayout();
+    save_lyt->addWidget(pb_camera);
+    save_lyt->addWidget(pb_save);
 
     QLabel* lb_draw_mode = us_label("Draw Mode:");
     QRadioButton *rb_surface = new QRadioButton();
-    QGridLayout *surface_gl = us_radiobutton("Surface", rb_surface, false);
+    QGridLayout *surface_gl = us_radiobutton("Surface", rb_surface, true);
     QRadioButton *rb_surface_wire = new QRadioButton();
     QGridLayout *surface_wire_gl = us_radiobutton("Surface-Wire", rb_surface_wire, false);
     QHBoxLayout* draw_mode_lyt = new QHBoxLayout();
     draw_mode_lyt->addWidget(lb_draw_mode);
     draw_mode_lyt->addLayout(surface_gl);
     draw_mode_lyt->addLayout(surface_wire_gl);
+    setSurface();
+
+    QButtonGroup *draw_btng = new QButtonGroup();
+    draw_btng->addButton(rb_surface);
+    draw_btng->addButton(rb_surface_wire);
+
+    QLabel* lb_angle = us_label("Axis Label Rotation Control");
+    lb_angle->setAlignment(Qt::AlignCenter);
+
+    sli_xAngle = new QSlider(Qt::Horizontal);
+    sli_xAngle->setMinimum(0);
+    sli_xAngle->setMaximum(90);
+    sli_xAngle->setValue(xAngle);
+    QPushButton* pb_xAngle = us_pushbutton("reset", true, -1);
+
+    sli_yAngle = new QSlider(Qt::Horizontal);
+    sli_yAngle->setMinimum(0);
+    sli_yAngle->setMaximum(90);
+    sli_yAngle->setValue(yAngle);
+    QPushButton* pb_yAngle = us_pushbutton("reset", true, -1);
+
+    sli_zAngle = new QSlider(Qt::Horizontal);
+    sli_zAngle->setMinimum(0);
+    sli_zAngle->setMaximum(90);
+    sli_zAngle->setValue(zAngle);
+    QPushButton* pb_zAngle = us_pushbutton("reset", true, -1);
+
+    QGridLayout* angle_lyt = new QGridLayout();
+    angle_lyt->addWidget(sli_xAngle, 0, 0, 1, 1);
+    angle_lyt->addWidget(pb_xAngle,  0, 1, 1, 1);
+    angle_lyt->addWidget(sli_yAngle, 1, 0, 1, 1);
+    angle_lyt->addWidget(pb_yAngle,  1, 1, 1, 1);
+    angle_lyt->addWidget(sli_zAngle, 2, 0, 1, 1);
+    angle_lyt->addWidget(pb_zAngle,  2, 1, 1, 1);
+
+
 
     QPushButton* pb_help = us_pushbutton("Help");
     QPushButton* pb_close = us_pushbutton("Close");
@@ -315,7 +346,7 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFDev& rmsdIn): US_WidgetsD
     left_lyt->addLayout(scan_lyt2);
     left_lyt->addSpacing(space);
     left_lyt->addWidget(lb_plot_ctrl);
-    left_lyt->addWidget(lb_selmode);
+    left_lyt->addWidget(lb_selmode);    
     left_lyt->addLayout(nosel_gl);
     left_lyt->addLayout(point_gl);
     left_lyt->addLayout(radial_gl);
@@ -332,8 +363,10 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFDev& rmsdIn): US_WidgetsD
     left_lyt->addSpacing(space);
     left_lyt->addWidget(lb_color);
     left_lyt->addLayout(color_lyt);
-    left_lyt->addLayout(camera_lyt);
     left_lyt->addLayout(draw_mode_lyt);
+    left_lyt->addWidget(lb_angle);
+    left_lyt->addLayout(angle_lyt);
+    left_lyt->addLayout(save_lyt);
     left_lyt->addStretch(1);
     left_lyt->addLayout(close_lyt);
     left_lyt->setSpacing(2);
@@ -353,25 +386,37 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFDev& rmsdIn): US_WidgetsD
         this->close();
     }
 
-
-
     connect(cb_scan, SIGNAL(currentIndexChanged(int)), this, SLOT(newScan(int)));
     connect(pb_next, SIGNAL(clicked()), this, SLOT(nextScan()));
     connect(pb_prev, SIGNAL(clicked()), this, SLOT(prevScan()));
 
-//    connect(cb_camera, SIGNAL(currentTextChanged(const QString&)),
-//            this, SLOT(setCamera(const QString&)));
+    connect(pb_camera, SIGNAL(clicked()), this, SLOT(resetCamera()));
     connect(cb_theme, SIGNAL(currentIndexChanged(int)), this, SLOT(setTheme(int)));
     connect(rb_surface, SIGNAL(clicked()), this, SLOT(setSurface()));
     connect(rb_surface_wire, SIGNAL(clicked()), this, SLOT(setSurfaceWire()));
     connect(pb_close, SIGNAL(clicked()), this, SLOT(close()));
+    connect(pb_save, SIGNAL(clicked()), this, SLOT(saveImage()));
     connect(pb_B2Y, SIGNAL(clicked()), this, SLOT(set_B2Y()));
     connect(pb_G2R, SIGNAL(clicked()), this, SLOT(set_G2R()));
+    connect(pb_DFLT, SIGNAL(clicked()), this, SLOT(set_DFLT()));
 
     connect(ct_min_rp, SIGNAL(valueChanged(double)), this, SLOT(adjustRpMin(double)));
     connect(ct_max_rp, SIGNAL(valueChanged(double)), this, SLOT(adjustRpMax(double)));
     connect(ct_min_wl, SIGNAL(valueChanged(double)), this, SLOT(adjustWlMin(double)));
     connect(ct_max_wl, SIGNAL(valueChanged(double)), this, SLOT(adjustWlMax(double)));
+
+    connect(rb_nosel, SIGNAL(toggled(bool)), this, SLOT(toggleNone(bool)));
+    connect(rb_point, SIGNAL(toggled(bool)), this, SLOT(togglePoint(bool)));
+    connect(rb_radial, SIGNAL(toggled(bool)), this, SLOT(toggleRadial(bool)));
+    connect(rb_lambda, SIGNAL(toggled(bool)), this, SLOT(toggleLambda(bool)));
+
+    connect(sli_xAngle, SIGNAL(valueChanged(int)), this, SLOT(new_xAngle(int)));
+    connect(sli_yAngle, SIGNAL(valueChanged(int)), this, SLOT(new_yAngle(int)));
+    connect(sli_zAngle, SIGNAL(valueChanged(int)), this, SLOT(new_zAngle(int)));
+    connect(pb_xAngle, SIGNAL(clicked()), this, SLOT(reset_xAngle()));
+    connect(pb_yAngle, SIGNAL(clicked()), this, SLOT(reset_yAngle()));
+    connect(pb_zAngle, SIGNAL(clicked()), this, SLOT(reset_zAngle()));
+
 
     cb_scan->setCurrentIndex(scanId);
 }
@@ -385,24 +430,39 @@ US_MWL_SF_PLOT3D::~US_MWL_SF_PLOT3D()
 void US_MWL_SF_PLOT3D::setTheme(int theme)
 {
     graph->activeTheme()->setType(Q3DTheme::Theme(theme));
+    if (colorId == B2Y)
+        set_B2Y();
+    else if(colorId == G2R)
+        set_G2R();
+}
+
+void US_MWL_SF_PLOT3D::saveImage(){
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Save Image (*.png *.xpm *.jpg)"),
+                               US_Settings::resultDir(),
+                               tr("Images (*.png *.xpm *.jpg)"));
+    if (fileName.size() == 0)
+        return;
+    QImage image = graph->renderToImage();
+    bool state = image.save(fileName);
+
 }
 
 void US_MWL_SF_PLOT3D::plot(){
     QSurfaceDataArray *dataArray = new QSurfaceDataArray;
     int np = idRP_h - idRP_l + 1;
     int nw = idWL_h - idWL_l + 1;
-    dataArray->reserve(np);
+    dataArray->reserve(nw);
     double min_dv =  1e20;
     double max_dv = -1e20;
     double min_dvns =  1e20;
     double max_dvns = -1e20;
 
-    for (int i = idRP_l ; i <= idRP_h ; i++) {
-        QSurfaceDataRow *newRow = new QSurfaceDataRow(nw);
+    for (int j = idWL_l ; j <= idWL_h ; j++) {
+        QSurfaceDataRow *newRow = new QSurfaceDataRow(np);
         int index = 0;
-        double rp = xvalsScaled.at(i);
-        for (int j = idWL_l; j <= idWL_h; j++) {
-            double wl = lambdaScaled.at(j);
+        double wl = lambdaScaled.at(j);
+        for (int i = idRP_l; i <= idRP_h; i++) {
+            double rp = xvalsScaled.at(i);
             double rmsd = allRmsdScaled.at(scanId).at(i).at(j);
             double rmsd_ns = allRmsd.at(scanId).at(i).at(j);
             min_dv = qMin(min_dv, rmsd);
@@ -423,10 +483,6 @@ void US_MWL_SF_PLOT3D::plot(){
     graph->axisX()->setRange(min_rp -padding, max_rp + padding);
     graph->axisY()->setRange(min_dv -padding, max_dv + padding);
     graph->axisZ()->setRange(min_wl -padding, max_wl + padding);
-    if (colorSet == "B2Y")
-        set_B2Y();
-    else if(colorSet == "G2R")
-        set_G2R();
 
     min_wl = ct_min_wl->value();
     max_wl = ct_max_wl->value();
@@ -440,8 +496,13 @@ void US_MWL_SF_PLOT3D::plot(){
     CustomFormatter *formatZ = new CustomFormatter(min_wl, max_wl);
     graph->axisZ()->setFormatter(formatZ);
 
+    int theme = cb_theme->currentIndex();
+    graph->activeTheme()->setType(Q3DTheme::Theme(theme));
+    if (colorId == B2Y)
+        set_B2Y();
+    else if(colorId == G2R)
+        set_G2R();
 }
-
 
 void US_MWL_SF_PLOT3D::newScan(int id){
     scanId = id;
@@ -476,7 +537,7 @@ void US_MWL_SF_PLOT3D::set_B2Y(){
     lg.setColorAt(0.33, Qt::blue);
     lg.setColorAt(0.67, Qt::red);
     lg.setColorAt(1.0, Qt::yellow);
-    colorSet = "B2Y";
+    colorId = B2Y;
     graph->seriesList().at(0)->setBaseGradient(lg);
     graph->seriesList().at(0)->setColorStyle(Q3DTheme::ColorStyleRangeGradient);
 }
@@ -487,9 +548,14 @@ void US_MWL_SF_PLOT3D::set_G2R(){
     lg.setColorAt(0.5, Qt::yellow);
     lg.setColorAt(0.8, Qt::red);
     lg.setColorAt(1.0, Qt::darkRed);
-    colorSet = "G2R";
+    colorId = G2R;
     graph->seriesList().at(0)->setBaseGradient(lg);
     graph->seriesList().at(0)->setColorStyle(Q3DTheme::ColorStyleRangeGradient);
+}
+
+void US_MWL_SF_PLOT3D::set_DFLT(){
+    colorId = DFLT;
+    graph->seriesList().at(0)->setColorStyle(Q3DTheme::ColorStyleUniform);
 }
 
 void US_MWL_SF_PLOT3D::reset_ct_rp(bool ascent){
@@ -580,3 +646,41 @@ void US_MWL_SF_PLOT3D::adjustWlMax(double){
     reset_ct_wl(false);
 }
 
+void US_MWL_SF_PLOT3D::toggleNone(bool) {
+    graph->setSelectionMode(QAbstract3DGraph::SelectionNone);
+}
+void US_MWL_SF_PLOT3D::togglePoint(bool) {
+    graph->setSelectionMode(QAbstract3DGraph::SelectionItem);
+}
+void US_MWL_SF_PLOT3D::toggleLambda(bool) {
+    graph->setSelectionMode(QAbstract3DGraph::SelectionItemAndColumn
+                            | QAbstract3DGraph::SelectionSlice);
+}
+void US_MWL_SF_PLOT3D::toggleRadial(bool) {
+    graph->setSelectionMode(QAbstract3DGraph::SelectionItemAndRow
+                            | QAbstract3DGraph::SelectionSlice);
+}
+
+void US_MWL_SF_PLOT3D::new_xAngle(int value){
+    graph->axisX()->setLabelAutoRotation(value);
+}
+
+void US_MWL_SF_PLOT3D::new_yAngle(int value){
+    graph->axisY()->setLabelAutoRotation(value);
+}
+
+void US_MWL_SF_PLOT3D::new_zAngle(int value){
+    graph->axisZ()->setLabelAutoRotation(value);
+}
+
+void US_MWL_SF_PLOT3D::reset_xAngle(){
+    sli_xAngle->setValue(xAngle);
+}
+
+void US_MWL_SF_PLOT3D::reset_yAngle(){
+    sli_yAngle->setValue(yAngle);
+}
+
+void US_MWL_SF_PLOT3D::reset_zAngle(){
+    sli_zAngle->setValue(zAngle);
+}
