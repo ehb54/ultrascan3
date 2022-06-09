@@ -1,10 +1,10 @@
-#ifndef REFSCAN_DATAIO_H
-#define REFSCAN_DATAIO_H
+#ifndef US_REFSCAN_DATAIO_H
+#define US_REFSCAN_DATAIO_H
 
 #include <QtCore>
 #include <us_crc.h>
 
-class refScanDataIO
+class US_RefScanDataIO
 {
 public:
     enum ioError { OK, CANTOPEN, BADCRC, NOT_RSDATA, BADTYPE };
@@ -45,4 +45,4 @@ private:
 
 };
 
-#endif // REFSCAN_DATAIO_H
+#endif // US_REFSCAN_DATAIO_H

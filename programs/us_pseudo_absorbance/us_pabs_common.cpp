@@ -1,4 +1,4 @@
-#include "build_colormap.h"
+#include "us_pabs_common.h"
 
 HSVcolormap::HSVcolormap(){}
 
@@ -90,15 +90,27 @@ QVector<int> HSVcolormap::rang_hvalues(void){
     return hrange;
 }
 
+void CCW::clear(){
+    cell.clear();
+    channel.clear();
+    wavelength.clear();
+    index.clear();
+}
 
+int CCW::size(){
+    return cell.size();
+}
 
+void CCW_ITEM::clear(void){
+    cell.clear();
+    channel.clear();
+    wavelength.clear();
+    index.clear();
+    min_wl.clear();
+    max_wl.clear();
+    n_wl.clear();
+}
 
-
-
-
-
-
-
-
-
-
+int CCW_ITEM::size(void){
+    return cell.size();
+}
