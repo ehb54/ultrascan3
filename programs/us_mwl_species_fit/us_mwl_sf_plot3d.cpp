@@ -41,7 +41,7 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFDev& rmsdIn): US_WidgetsD
     nWavelengths = rmsdIn.wavelenghts.size();
     nPoints = rmsdIn.xValues.size();
     double coeffRmsd = 1.0;
-    double coeffRP = 1.5;
+    double coeffRP = 1.2;
     double coeffWL = 1.0;
     padding = 0.0001;
     idWL_l = 0;
@@ -231,10 +231,11 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFDev& rmsdIn): US_WidgetsD
     radl_lyt->addWidget(lb_radl_to, 1, 0, 1, 1);
     radl_lyt->addWidget(ct_max_rp,  1, 1, 1, 1);
 
-    QLabel* lb_theme = us_label("Theme");
+    QLabel* lb_theme = us_label(tr("Theme %1 Camera").arg(QChar(38)));
     lb_theme->setAlignment(Qt::AlignCenter);
 
-    cb_theme = new QComboBox();
+//    cb_theme = new QComboBox();
+    cb_theme = us_comboBox();
     cb_theme->addItem(QStringLiteral("Qt"));
     cb_theme->addItem(QStringLiteral("Primary Colors"));
     cb_theme->addItem(QStringLiteral("Digia"));
@@ -244,7 +245,13 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFDev& rmsdIn): US_WidgetsD
     cb_theme->addItem(QStringLiteral("Ebony"));
     cb_theme->addItem(QStringLiteral("Isabelle"));
 
-    QLabel* lb_color = us_label("Custom Gradient");
+    QPushButton* pb_camera = us_pushbutton("Reset Camera");
+
+    QHBoxLayout *theme_lyt = new QHBoxLayout();
+    theme_lyt->addWidget(cb_theme);
+    theme_lyt->addWidget(pb_camera);
+
+    QLabel* lb_color = us_label("Color Map");
     lb_color->setAlignment(Qt::AlignCenter);
 
     QPushButton* pb_DFLT = us_pushbutton("Default");
@@ -274,18 +281,10 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFDev& rmsdIn): US_WidgetsD
     pb_G2R->setIcon(QIcon(pm));
     pb_G2R->setIconSize(QSize(75, 15));
 
-
     QHBoxLayout *color_lyt = new QHBoxLayout;
     color_lyt->addWidget(pb_B2Y);
     color_lyt->addWidget(pb_G2R);
     color_lyt->addWidget(pb_DFLT);
-
-    QPushButton* pb_camera = us_pushbutton("Reset Camera");
-    QPushButton* pb_save = us_pushbutton("Save Image");
-
-    QHBoxLayout* save_lyt = new QHBoxLayout();
-    save_lyt->addWidget(pb_camera);
-    save_lyt->addWidget(pb_save);
 
     QLabel* lb_draw_mode = us_label("Draw Mode:");
     QRadioButton *rb_surface = new QRadioButton();
@@ -302,21 +301,27 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFDev& rmsdIn): US_WidgetsD
     draw_btng->addButton(rb_surface);
     draw_btng->addButton(rb_surface_wire);
 
-    QLabel* lb_angle = us_label("Axis Label Rotation Control");
+    QLabel* lb_angle = us_label("Rotate Axis Labels");
     lb_angle->setAlignment(Qt::AlignCenter);
 
+    QLabel* lb_xAngle = us_label("Radial:");
+    lb_xAngle->setAlignment(Qt::AlignRight);
     sli_xAngle = new QSlider(Qt::Horizontal);
     sli_xAngle->setMinimum(0);
     sli_xAngle->setMaximum(90);
     sli_xAngle->setValue(xAngle);
     QPushButton* pb_xAngle = us_pushbutton("reset", true, -1);
 
+    QLabel* lb_yAngle = us_label("RMSD:");
+    lb_yAngle->setAlignment(Qt::AlignRight);
     sli_yAngle = new QSlider(Qt::Horizontal);
     sli_yAngle->setMinimum(0);
     sli_yAngle->setMaximum(90);
     sli_yAngle->setValue(yAngle);
     QPushButton* pb_yAngle = us_pushbutton("reset", true, -1);
 
+    QLabel* lb_zAngle = us_label("Lambda:");
+    lb_zAngle->setAlignment(Qt::AlignRight);
     sli_zAngle = new QSlider(Qt::Horizontal);
     sli_zAngle->setMinimum(0);
     sli_zAngle->setMaximum(90);
@@ -324,14 +329,34 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFDev& rmsdIn): US_WidgetsD
     QPushButton* pb_zAngle = us_pushbutton("reset", true, -1);
 
     QGridLayout* angle_lyt = new QGridLayout();
-    angle_lyt->addWidget(sli_xAngle, 0, 0, 1, 1);
-    angle_lyt->addWidget(pb_xAngle,  0, 1, 1, 1);
-    angle_lyt->addWidget(sli_yAngle, 1, 0, 1, 1);
-    angle_lyt->addWidget(pb_yAngle,  1, 1, 1, 1);
-    angle_lyt->addWidget(sli_zAngle, 2, 0, 1, 1);
-    angle_lyt->addWidget(pb_zAngle,  2, 1, 1, 1);
+    angle_lyt->addWidget(lb_xAngle,  0, 0, 1, 1);
+    angle_lyt->addWidget(sli_xAngle, 0, 1, 1, 1);
+    angle_lyt->addWidget(pb_xAngle,  0, 2, 1, 1);
+    angle_lyt->addWidget(lb_yAngle,  1, 0, 1, 1);
+    angle_lyt->addWidget(sli_yAngle, 1, 1, 1, 1);
+    angle_lyt->addWidget(pb_yAngle,  1, 2, 1, 1);
+    angle_lyt->addWidget(lb_zAngle,  2, 0, 1, 1);
+    angle_lyt->addWidget(sli_zAngle, 2, 1, 1, 1);
+    angle_lyt->addWidget(pb_zAngle,  2, 2, 1, 1);
 
+    QLabel *lb_save = us_label("Save Image");
+    lb_save->setAlignment(Qt::AlignCenter);
+    QLabel *lb_quality = us_label("Quality:");
+    lb_quality->setAlignment(Qt::AlignRight);
+    ct_quality = us_counter(2, 0, 100, 80);
+    ct_quality->setSingleStep(1);
+    QLabel *lb_scale = us_label("Resolution:");
+    lb_scale->setAlignment(Qt::AlignRight);
+    ct_scale = us_counter(1, 1, 10, 5);
+    ct_scale->setSingleStep(1);
+    QPushButton* pb_save = us_pushbutton("Render");
 
+    QGridLayout* save_lyt = new QGridLayout();
+    save_lyt->addWidget(lb_quality, 0, 0, 1, 1);
+    save_lyt->addWidget(ct_quality, 0, 1, 1, 3);
+    save_lyt->addWidget(lb_scale,   1, 0, 1, 1);
+    save_lyt->addWidget(ct_scale,   1, 1, 1, 1);
+    save_lyt->addWidget(pb_save,    1, 2, 1, 2);
 
     QPushButton* pb_help = us_pushbutton("Help");
     QPushButton* pb_close = us_pushbutton("Close");
@@ -340,7 +365,7 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFDev& rmsdIn): US_WidgetsD
     close_lyt->addWidget(pb_close);
 
     QVBoxLayout* left_lyt = new QVBoxLayout();
-    int space = 5;
+    int space = 1;
     left_lyt->addWidget(lb_scan_ctrl);
     left_lyt->addLayout(scan_lyt1);
     left_lyt->addLayout(scan_lyt2);
@@ -351,25 +376,23 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFDev& rmsdIn): US_WidgetsD
     left_lyt->addLayout(point_gl);
     left_lyt->addLayout(radial_gl);
     left_lyt->addLayout(wavlth_gl);
-    left_lyt->addSpacing(space);
     left_lyt->addWidget(lb_wavl_rng);
     left_lyt->addLayout(wavl_lyt);
-    left_lyt->addSpacing(space);
     left_lyt->addWidget(lb_radl_rng);
     left_lyt->addLayout(radl_lyt);
-    left_lyt->addSpacing(space);
     left_lyt->addWidget(lb_theme);
-    left_lyt->addWidget(cb_theme);
-    left_lyt->addSpacing(space);
+    left_lyt->addLayout(theme_lyt);
     left_lyt->addWidget(lb_color);
     left_lyt->addLayout(color_lyt);
     left_lyt->addLayout(draw_mode_lyt);
     left_lyt->addWidget(lb_angle);
     left_lyt->addLayout(angle_lyt);
+    left_lyt->addWidget(lb_save);
     left_lyt->addLayout(save_lyt);
     left_lyt->addStretch(1);
+    left_lyt->addSpacing(1);
     left_lyt->addLayout(close_lyt);
-    left_lyt->setSpacing(2);
+    left_lyt->setSpacing(1);
     left_lyt->setMargin(1);
 
     QHBoxLayout* main_lyt = new QHBoxLayout();
@@ -389,7 +412,6 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFDev& rmsdIn): US_WidgetsD
     connect(cb_scan, SIGNAL(currentIndexChanged(int)), this, SLOT(newScan(int)));
     connect(pb_next, SIGNAL(clicked()), this, SLOT(nextScan()));
     connect(pb_prev, SIGNAL(clicked()), this, SLOT(prevScan()));
-
     connect(pb_camera, SIGNAL(clicked()), this, SLOT(resetCamera()));
     connect(cb_theme, SIGNAL(currentIndexChanged(int)), this, SLOT(setTheme(int)));
     connect(rb_surface, SIGNAL(clicked()), this, SLOT(setSurface()));
@@ -399,24 +421,20 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFDev& rmsdIn): US_WidgetsD
     connect(pb_B2Y, SIGNAL(clicked()), this, SLOT(set_B2Y()));
     connect(pb_G2R, SIGNAL(clicked()), this, SLOT(set_G2R()));
     connect(pb_DFLT, SIGNAL(clicked()), this, SLOT(set_DFLT()));
-
     connect(ct_min_rp, SIGNAL(valueChanged(double)), this, SLOT(adjustRpMin(double)));
     connect(ct_max_rp, SIGNAL(valueChanged(double)), this, SLOT(adjustRpMax(double)));
     connect(ct_min_wl, SIGNAL(valueChanged(double)), this, SLOT(adjustWlMin(double)));
     connect(ct_max_wl, SIGNAL(valueChanged(double)), this, SLOT(adjustWlMax(double)));
-
     connect(rb_nosel, SIGNAL(toggled(bool)), this, SLOT(toggleNone(bool)));
     connect(rb_point, SIGNAL(toggled(bool)), this, SLOT(togglePoint(bool)));
     connect(rb_radial, SIGNAL(toggled(bool)), this, SLOT(toggleRadial(bool)));
     connect(rb_lambda, SIGNAL(toggled(bool)), this, SLOT(toggleLambda(bool)));
-
     connect(sli_xAngle, SIGNAL(valueChanged(int)), this, SLOT(new_xAngle(int)));
     connect(sli_yAngle, SIGNAL(valueChanged(int)), this, SLOT(new_yAngle(int)));
     connect(sli_zAngle, SIGNAL(valueChanged(int)), this, SLOT(new_zAngle(int)));
     connect(pb_xAngle, SIGNAL(clicked()), this, SLOT(reset_xAngle()));
     connect(pb_yAngle, SIGNAL(clicked()), this, SLOT(reset_yAngle()));
     connect(pb_zAngle, SIGNAL(clicked()), this, SLOT(reset_zAngle()));
-
 
     cb_scan->setCurrentIndex(scanId);
 }
@@ -439,12 +457,18 @@ void US_MWL_SF_PLOT3D::setTheme(int theme)
 void US_MWL_SF_PLOT3D::saveImage(){
     QString fileName = QFileDialog::getSaveFileName(this, tr("Save Image (*.png *.xpm *.jpg)"),
                                US_Settings::resultDir(),
-                               tr("Images (*.png *.xpm *.jpg)"));
+                               tr("Images (*.bmp *.jpg *.jpeg *.png *.ppm *.xbm *.xpm)"));
     if (fileName.size() == 0)
         return;
-    QImage image = graph->renderToImage();
-    bool state = image.save(fileName);
-
+    QImage image = graph->renderToImage(0, graph->size() * ct_scale->value());
+    int quality = qRound(ct_quality->value());
+    bool state = image.save(fileName, nullptr, quality);
+    if(! state)
+        QMessageBox::warning(this, tr("Error!"),
+                             tr("File storage error!\n"
+                                "Image file format not supported.\n"
+                                "Currently supported file formats:\n"
+                                "(bmp, jpg, jpeg, png, ppm, xbm, xpm)"));
 }
 
 void US_MWL_SF_PLOT3D::plot(){

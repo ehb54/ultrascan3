@@ -87,6 +87,8 @@ private:
     QwtCounter *ct_max_rp;
     QwtCounter *ct_min_wl;
     QwtCounter *ct_max_wl;
+    QwtCounter *ct_quality;
+    QwtCounter *ct_scale;
 
     void plot(void);
     void reset_ct_rp(bool);
