@@ -7849,7 +7849,8 @@ void US_ReporterGMP::write_pdf_report( void )
   printer.setOutputFormat(QPrinter::PdfFormat);
   printer.setPaperSize(QPrinter::Letter);
 
-  QString fileName  = currProto. protoname + "-run" + runID + ".pdf";
+  //QString fileName  = currProto. protoname + "-run" + runID + ".pdf";
+  QString fileName  = runName + ".pdf";
   filePath  = US_Settings::tmpDir() + "/" + fileName;
   printer.setOutputFileName( filePath );
   printer.setFullPage(true);
