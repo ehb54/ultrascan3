@@ -5256,7 +5256,8 @@ QMap<QString, double> US_ReporterGMP::get_replicate_group_results( US_ReportGMP:
 	{
 	  QString channel_desc_alt = chndescs_alt[ j ];
 
-	  if ( channel_desc_alt.contains("Interf") ) //For now, do not consider IP type!!!
+	  //For now, do not consider IP type!!!
+	  if ( channel_desc_alt.contains("Interf") ) 
 	    continue;
 	  
 	  if ( channel_desc_alt.split(":")[0].contains( channs_for_wvl[ i ] ) )  
@@ -5340,7 +5341,8 @@ QMap<QString, double> US_ReporterGMP::get_replicate_group_results( US_ReportGMP:
   results[ "tot_percent_av" ]     = tot_percent_sim_av;
   results[ "int_st_dev" ]         = st_dev_int_final;
   results[ "tot_percent_st_dev" ] = st_dev_tot_percent_final;
-  
+
+    
   return results;
 }
 
