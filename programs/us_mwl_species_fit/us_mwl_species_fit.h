@@ -44,6 +44,7 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
       QStringList   celchns;
       QList< int >  ftndxs;
       QList< int >  ltndxs;
+      QVector< QVector < int > > celchn_wvl;
 
       US_Editor*    te_results;
 
@@ -53,12 +54,12 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
       QPushButton*  pb_next;
       QPushButton*  pb_plot3d;
 
-      QLineEdit* le_fit_dev;
+      QLineEdit* le_fit_error;
 
-      QVector< SFDev >  synFitDev;
+      QVector< SFData >  synFitError;
 
       void data_plot ( void );
-      void set_fit_dev(void);
+      void get_fit_error(void);
 
    private slots:
       void write_report   ( QTextStream& );
