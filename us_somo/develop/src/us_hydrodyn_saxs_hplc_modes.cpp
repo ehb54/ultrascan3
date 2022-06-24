@@ -6152,10 +6152,32 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_start()
 
    pb_ggauss_rmsd->setText( QString( us_tr( "Recompute %1" ).arg( cb_sd_weight->isChecked() ? "nChi^2" : "RMSD" ) ) );
 
-   if ( !create_unified_ggaussian_target() )
    {
-      update_enables();
-      return;
+      bool do_rescale = true;
+      if ( 1 ) {
+         switch ( QMessageBox::question(this, 
+                                        windowTitle() + us_tr( ": Global Gaussians" ),
+                                        QString( us_tr( "Rescale the Gaussian amplitudes?\n\nThis procedure rescales the Gaussians and then performs a Levenberg-Marquardt minimization of the Gaussians individually for each I(t) only varying the amplitude(s). This is useful when an initial single Gaussian has been set and can sometimes improve the Global Gaussian fit." ) ),
+                                        us_tr( "&Yes" ), 
+                                        us_tr( "&No" ),
+                                        QString(),
+                                        0, // Stop == button 0
+                                        0 // Escape == button 0
+                                        ) ) {
+         case 0 : // Yes, rescale
+            break;
+         case 1 : // No do not rescale
+            do_rescale = false;
+            break;
+         }       
+      }      
+   
+
+      if ( !create_unified_ggaussian_target( do_rescale ) )
+      {
+         update_enables();
+         return;
+      }
    }
 
    // add_ggaussian_curve( "unified_ggaussian_target", unified_ggaussian_I );
