@@ -64,28 +64,30 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   in_reload_end_process = false;
   all_processed = true;
   
-  // // // ---- Testing ----
+  // // // // ---- Testing ----
   // QMap < QString, QString > protocol_details;
 
 
   // protocol_details[ "invID_passed" ] = QString("2");
-  // protocol_details[ "analysisIDs"  ] = QString( "1951,1952,1953,1954,1955,1956,1957,1958,1959,1960,1961,1962,1963,1964" );
+  // protocol_details[ "protocolName" ] = QString("pPOL1-20812-EcoR1-062422-GMP");
+  // protocol_details[ "aprofileguid" ] = QString("012b3860-c1b1-4962-8cc7-9d343aea694b");
+  // protocol_details[ "filename" ]     = QString("pPOL1-20812-EcoR1-062422-run1347");
+  // protocol_details[ "analysisIDs"  ] = QString( "2621,2622,2623,2624");
 
   // // //What's needed ////////////////////////////////////////////////////////
-  // // AProfileGUID       = protocol_details[ "aprofileguid" ];
-  // // ProtocolName_auto  = protocol_details[ "protocolName" ];
-  // // invID              = protocol_details[ "invID_passed" ].toInt();
+  // AProfileGUID       = protocol_details[ "aprofileguid" ];
+  // ProtocolName_auto  = protocol_details[ "protocolName" ];
+  // invID              = protocol_details[ "invID_passed" ].toInt();
 
-  // // FileName           = protocol_details[ "filename" ];
+  // FileName           = protocol_details[ "filename" ];
   
-  // // analysisIDs        = protocol_details[ "analysisIDs" ];
-  // // /////////////////////////////////////////////////////////////////////
+  // analysisIDs        = protocol_details[ "analysisIDs" ];
+  // /////////////////////////////////////////////////////////////////////
 
   
   // initPanel( protocol_details );
 
-  // // -----------------
-  // //Test of github's ssh key 2...
+  // -----------------
 
 }
 
@@ -1139,7 +1141,7 @@ void US_Analysis_auto::gui_update( )
       protocol_details_at_analysis[ "failed" ] = "";
 
       //ALEXEY: Switch to next stage (Report)
-      emit analysis_complete_auto( protocol_details_at_analysis );
+      emit analysis_complete_auto( protocol_details_at_analysis );  
     }
 
   in_gui_update  = false; 
@@ -2325,20 +2327,28 @@ void US_Analysis_auto::show_results( )
 
    //distrib_plot_resids();        // plot residuals
 
-   // data_plot();                  // re-plot data+simulation
+   //data_plot();                  // re-plot data+simulation
 
-   // if ( rbmapd != 0 )
-   // {
-   //    bmd_pos  = rbmapd->pos();
-   //    rbmapd->close();
-   // }
 
-   rbmapd = new US_ResidsBitmap( resids );
-   // rbmapd->move( bmd_pos );
-   // rbmapd->show();
-
+   
    // plot3d();
 
+
+   // //ResBitMap
+   // if ( rbmapd != 0 )
+   //   {
+   //     // bmd_pos  = rbmapd->pos();
+   //     rbmapd->close();
+   //   }
+   
+   // rbmapd = new US_ResidsBitmap( resids );
+   // //rbmapd->move( bmd_pos );
+   // rbmapd->show();
+   // rbmapd->raise();
+   // //rbmapd->activateWindow();
+   // //////////////////////////////////////////
+
+   
    plotres();
    QApplication::restoreOverrideCursor();
 }
@@ -2463,7 +2473,7 @@ void US_Analysis_auto::plotres( )
    //resplotd = new US_ResidPlotFem( this, true );
    resplotd = new US_ResidPlotFem( this, QString("ANALYSIS") );
 
-  //resplotd->move( rpd_pos );
+   //resplotd->move( rpd_pos );
    //resplotd->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
    resplotd->setWindowFlags( Qt::Dialog );
    resplotd->setWindowModality(Qt::ApplicationModal);
