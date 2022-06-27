@@ -2395,6 +2395,8 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
          {
             editor_msg( "red" , QString( "WARNING: %1 for %2 files SKIPPED from %3" ).arg( gaussian_type_tag ).arg( skipped ).arg( filename ) );
          }
+         // create_unified_ggaussian_target(false); // core dumps!
+         // ggaussian_rmsd();
       } else {
          for ( i = 2; i < (int) qv.size(); i++ )
          {
@@ -8116,6 +8118,19 @@ map < QString, bool > US_Hydrodyn_Saxs_Hplc::all_files_map()
       files[ lb_files->item( i )->text() ] = true;
    }
    return files;
+}
+
+int US_Hydrodyn_Saxs_Hplc::ggaussian_sel_no_gaussian_count() {
+   int sel_no_gaussian_count = 0;
+
+   QStringList files = all_selected_files();
+   
+   for ( int i = 0; i < (int) files.size(); ++i ) {
+      if ( !f_gaussians.count( files[i] ) ) {
+         ++sel_no_gaussian_count;
+      }
+   }
+   return sel_no_gaussian_count;
 }
 
 bool US_Hydrodyn_Saxs_Hplc::ggaussian_compatible( bool check_against_global )

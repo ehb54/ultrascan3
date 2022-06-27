@@ -6110,9 +6110,16 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_start()
       }
    }
 
-   if ( !ggaussian_compatible() )
-   {
-      QString msg_addendum = "";
+   int no_gaussian_count = ggaussian_sel_no_gaussian_count();
+
+   QTextStream( stdout ) << "ggaussian_sel_no_gaussian_count() " << no_gaussian_count << endl;
+   QTextStream( stdout ) << "total selected " << ggaussian_selected_file_index.size() << endl;
+
+   bool not_compatible = !ggaussian_compatible();
+
+   QString msg_addendum = ""; 
+
+   if ( not_compatible ) {
       if ( cb_fix_width->isChecked() )
       {
          msg_addendum += " or widths";
@@ -6152,31 +6159,78 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_start()
 
    pb_ggauss_rmsd->setText( QString( us_tr( "Recompute %1" ).arg( cb_sd_weight->isChecked() ? "nChi^2" : "RMSD" ) ) );
 
-   {
-      bool do_rescale = true;
-      if ( 1 ) {
-         switch ( QMessageBox::question(this, 
-                                        windowTitle() + us_tr( ": Global Gaussians" ),
-                                        QString( us_tr( "Rescale the Gaussian amplitudes?\n\nThis procedure rescales the Gaussians and then performs a Levenberg-Marquardt minimization of the Gaussians individually for each I(t) only varying the amplitude(s). This is useful when an initial single Gaussian has been set and can sometimes improve the Global Gaussian fit." ) ),
-                                        us_tr( "&Yes" ), 
-                                        us_tr( "&No" ),
-                                        QString(),
-                                        0, // Stop == button 0
-                                        0 // Escape == button 0
-                                        ) ) {
-         case 0 : // Yes, rescale
-            break;
-         case 1 : // No do not rescale
-            do_rescale = false;
-            break;
-         }       
-      }      
-   
+   org_f_gaussians = f_gaussians;
 
-      if ( !create_unified_ggaussian_target( do_rescale ) )
-      {
-         update_enables();
-         return;
+   {
+      if ( not_compatible ) {
+         QMessageBox::information(
+                                  this, 
+                                  windowTitle() + us_tr( ": Global Gaussians" ),
+                                  msg_addendum + "\n" + us_tr( "Global Gaussians will be reinitialized\n" ) );
+         
+         if ( !create_unified_ggaussian_target( true, false ) ) {
+            update_enables();
+            return;
+         }
+      } else {                                        
+         if ( no_gaussian_count ) {
+            if ( no_gaussian_count == (int) ggaussian_selected_file_index.size() ) {
+               QMessageBox::information(
+                                        this, 
+                                        windowTitle() + us_tr( ": Global Gaussians" ),
+                                        msg_addendum + "\n" + us_tr( "Global Gaussians will be initialized\n" ) );
+         
+               if ( !create_unified_ggaussian_target( true, false ) ) {
+                  update_enables();
+                  return;
+               }
+            } else {
+               switch ( QMessageBox::question(this, 
+                                              windowTitle() + us_tr( ": Global Gaussians" ),
+                                              QString( us_tr( "%1 selected curves do not have defined Gaussians and must be initialized" ) ).arg( no_gaussian_count ),
+                                              us_tr( "&Reinitialize only curves with missing Gaussians" ),
+                                              us_tr( "&Reinitialize all curves with last used Gaussians" ),
+                                              QString(),
+                                              0, // Stop == button 0
+                                              0 // Escape == button 0
+                                              ) ) {
+               case 0 : // Reinitialize only curves with missing Gaussians
+                  if ( !create_unified_ggaussian_target( true, true ) ) {
+                     update_enables();
+                     return;
+                  }
+                  break;
+               case 1 : // Reinitialize all curves
+                  if ( !create_unified_ggaussian_target( true, false ) ) {
+                     update_enables();
+                     return;
+                  }
+                  break;
+               }
+            }
+         } else {
+            bool do_rescale = true;
+
+            switch ( QMessageBox::question(this, 
+                                           windowTitle() + us_tr( ": Global Gaussians" ),
+                                           // QString( us_tr( "Rescale and refit the Gaussian amplitudes?\n\nThis procedure rescales the Gaussians and then performs a Levenberg-Marquardt minimization of the Gaussians individually for each I(t) only varying the amplitude(s). This is useful when an initial single Gaussian has been set and can sometimes improve the Global Gaussian fit." ) ),
+                                           QString( us_tr( "Rescale and refit the Gaussian amplitudes?" ) ),
+                                           QMessageBox::Yes | QMessageBox::No,
+                                           QMessageBox::No
+                                           ) ) {
+            case QMessageBox::Yes : // Yes, rescale
+               break;
+            case QMessageBox::No : // No do not rescale
+            default :
+               do_rescale = false;
+               break;
+            }       
+   
+            if ( !create_unified_ggaussian_target( do_rescale, false ) ) {
+               update_enables();
+               return;
+            }
+         }
       }
    }
 
@@ -6198,7 +6252,7 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_start()
       gauss_max_height *= 20e0;
    }
       
-   org_f_gaussians = f_gaussians;
+   // org_f_gaussians = f_gaussians;
 
    running        = true;
 
