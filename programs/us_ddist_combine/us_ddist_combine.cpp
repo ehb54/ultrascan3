@@ -514,6 +514,7 @@ QList< QStringList > US_DDistr_Combine::load_auto( QStringList runids_passed, QS
 //return pointer to data_plot1
 QwtPlot* US_DDistr_Combine::rp_data_plot1()
 {
+  //data_plot1->legend()->setVisible( false ); // <-- TEMP!!!!!
   return data_plot1;
 }
 
@@ -952,13 +953,18 @@ DbgLv(1) << "pDa:  titleX" << titleX;
    double plxmin = 1e+30;
    double plxmax = -1e+30;
 
+   QStringList legend_texts;
    for ( int ii = 0; ii < pdistrs.size(); ii++ )
    {
       setColor( pdistrs[ ii ], ii );
       plot_distr_auto ( pdistrs[ ii ], pdisIDs[ ii ], c_parms );
 
+      legend_texts << pdisIDs[ ii ];
    }
 
+   //qDebug() << "LEGEND TEXT -- " <<  legend_texts;
+   //data_plot1->legend()->setVisible( false ); // <-- TEMP!!!!!
+   
    //    for ( int jj = 0; jj < pdistrs[ ii ].xvals.size(); jj++ )
    //    {
    //       plxmin        = qMin( plxmin, pdistrs[ ii ].xvals[ jj ] );
@@ -1171,8 +1177,10 @@ DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
    }
 
    data_curv->setSamples( xx, yy, ndispt );
-   data_curv->setItemAttribute( QwtPlotItem::Legend, true );
+   data_curv->setItemAttribute( QwtPlotItem::Legend, true ); 
 
+   
+   
    // if (le_plxmin->text().toDouble() < minx) 
    // {
    //    minx = le_plxmin->text().toDouble();
@@ -1195,7 +1203,7 @@ DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
    data_plot1->setAxisAutoScale( QwtPlot::yLeft );
    data_plot1->enableAxis      ( QwtPlot::xBottom, true );
    data_plot1->enableAxis      ( QwtPlot::yLeft,   true );
-	data_plot1->setCanvasBackground( QBrush(Qt::white) );
+   data_plot1->setCanvasBackground( QBrush(Qt::white) );
    data_plot1->replot();
 
 }
@@ -1546,7 +1554,7 @@ DbgLv(1) << "RunIDSel:     added: ddesc" << ddesc;
 }
 
 // Model distribution selected -- FOR GMP reporter | 6. REPORT
-void US_DDistr_Combine::model_select_auto( QString modelNameMod, QMap< QString, QString > c_parms )
+QStringList US_DDistr_Combine::model_select_auto( QString modelNameMod, QMap< QString, QString > c_parms )
 {
    QString          distrID = modelNameMod;
    int              mdx     = distro_by_descr( distrID );
@@ -1567,7 +1575,7 @@ void US_DDistr_Combine::model_select_auto( QString modelNameMod, QMap< QString, 
       QMessageBox::critical( this, tr( "Zero-Components Model" ),
             tr( "*ERROR* The selected model has zero components.\n"
                 "This selection is ignored" ) );
-      return;
+      return pdisIDs;
    }
 
  
@@ -1579,6 +1587,10 @@ void US_DDistr_Combine::model_select_auto( QString modelNameMod, QMap< QString, 
 
    te_status->setText( tr( "Count of plotted distributions: %1." )
          .arg( pdistrs.count() ) );
+
+   return pdisIDs;
+   //ALEXEY: also need to return color corresponsing to each plotted curve: (QColor) pdistrs[ ii ].color
+   //Possibly, return a structure {QstringList pdisIDS, QList<QColor>  pdistrs[ ii ].color }
 }
 
 // Model distribution selected
@@ -2315,7 +2327,7 @@ DbgLv(1) << "  PX=Molec.Wt.log";
 }
 
 // React to a change in the X type of plots
-void US_DDistr_Combine::changedPlotX_auto( int type, QMap< QString, QString > c_parms )
+QStringList US_DDistr_Combine::changedPlotX_auto( int type, QMap< QString, QString > c_parms )
 {
    xtype      = type;
 
@@ -2363,6 +2375,10 @@ void US_DDistr_Combine::changedPlotX_auto( int type, QMap< QString, QString > c_
 
       plot_data_auto( c_parms );
    }
+
+   return pdisIDs;
+   //ALEXEY: also need to return color corresponsing to each plotted curve: (QColor) pdistrs[ ii ].color
+   //Possibly, return a structure {QstringList pdisIDS, QList<QColor>  pdistrs[ ii ].color }
 }
 
 // Change the contents of the distributions list based on list type change

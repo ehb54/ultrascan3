@@ -4212,6 +4212,7 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
   xtype <<  1 << 2 << 3; //ALEXEY: 0: s20; 1: MW; 2: D; 3: f/f0
                          //Note: xtype==0 (s20) is the default, so iterate later starting from 1... 
   QStringList CombPlotsFileNames;
+  QStringList plottedIDs_s, plottedIDs_other_type;
     
   for ( int m = 0; m < modelNames.size(); m++ )  
     {
@@ -4229,7 +4230,7 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
 	      QString t_m = "s," + modelNames[ m ];
 	      QMap < QString, QString > c_params = comboPlotsMap[ t_m ];
 	      //qDebug() << "over models: c_params -- " << c_params;
-	      sdiag_combplot-> model_select_auto ( modelDescModified[ ii ], c_params ); //ALEXEY: here it plots s20 combPlot (xtype == 0)
+	      plottedIDs_s = sdiag_combplot-> model_select_auto ( modelDescModified[ ii ], c_params ); //ALEXEY: here it plots s20 combPlot (xtype == 0)
 
 	    }
 	}
@@ -4254,6 +4255,7 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
 	  // if ( comboPlotsMapTypes.contains( t_m ) && comboPlotsMapTypes[ t_m ] != 0  )
 	  if ( show_combo_s ) 
 	    {
+	      qDebug() << "PLOTTED_IDs_S_type -- " << plottedIDs_s;
 	      write_plot( imgComb01File, sdiag_combplot->rp_data_plot1() );                //<-- rp_data_plot1() gives combined plot
 	      imgComb01File.replace( svgext, pngext ); 
 	      CombPlotsFileNames << imgComb01File;
@@ -4298,7 +4300,10 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
 	      bool show_combo_plot_other_types   = (combPlotsMask_edited.ShowCombPlotParts[ c_type ][ modelNames[ m ] ].toInt()) ? true : false ;
 	      if ( show_combo_plot_other_types )
 		{
-		  sdiag_combplot-> changedPlotX_auto( xtype[ xt ], c_parms );
+		  
+		  plottedIDs_other_type = sdiag_combplot-> changedPlotX_auto( xtype[ xt ], c_parms );
+
+		  qDebug() << "PLOTTED_IDs_" << c_type << "_type -- " << plottedIDs_other_type;
 		  
 		  write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() );              //<-- rp_data_plot1() gives combined plot
 		  imgComb02File.replace( svgext, pngext );
@@ -5758,7 +5763,21 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
      }
 
    //Now, integration results
-   if ( show_integration )
+   //1st, check if for a given model (method) there are reportItems:
+   bool method_type_combo_exists = false;
+   int report_items_number = reportGMP-> reportItems.size();
+   for ( int kk = 0; kk < report_items_number; ++kk )
+     {
+       US_ReportGMP::ReportItem curr_item = reportGMP-> reportItems[ kk ];
+       QString method         = curr_item.method;
+       if( method.contains ("PCSA") )
+	 method = "PCSA";
+
+       if ( mdla.contains ( method ) )
+	 method_type_combo_exists = true;
+     }
+   
+   if ( show_integration && method_type_combo_exists )
      {
        mstr += "\n" + indent( 2 ) + tr( "<h3>Integration Results: Fraction of Total Concentration:</h3>\n" );
        mstr += indent( 2 ) + "<table>\n";
@@ -5768,7 +5787,6 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 			  tr( "Fraction % from Model (target):" ),
 			  tr( "Tolerance, %:"),
 			  tr( "PASSED ?" ));
-       int report_items_number = reportGMP-> reportItems.size();
        for ( int kk = 0; kk < report_items_number; ++kk )
 	 {
 	   US_ReportGMP::ReportItem curr_item = reportGMP-> reportItems[ kk ];

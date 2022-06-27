@@ -31,7 +31,7 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   panel->setSpacing        ( 2 );
   panel->setContentsMargins( 2, 2, 2, 2 );
 
-  QLabel* lb_hdr1          = us_banner( tr( "Analsyis Stages for All Triples" ) );
+  QLabel* lb_hdr1          = us_banner( tr( "Analysis Stages for All Triples" ) );
   panel->addWidget(lb_hdr1);
 
   QHBoxLayout* buttons     = new QHBoxLayout();

@@ -20,10 +20,10 @@ class US_DDistr_Combine : public US_Widgets
       US_DDistr_Combine();
 
       QList< QStringList > load_auto( QStringList, QStringList  );
-      void      model_select_auto   ( QString, QMap < QString, QString >  );
+      QStringList      model_select_auto   ( QString, QMap < QString, QString >  );
       QwtPlot* rp_data_plot1();
       void     reset_data_plot1();
-      void     changedPlotX_auto ( int,  QMap < QString, QString >);
+      QStringList     changedPlotX_auto ( int,  QMap < QString, QString >);
       
    private:
 
