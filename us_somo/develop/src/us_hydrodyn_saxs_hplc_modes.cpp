@@ -6166,8 +6166,8 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_start()
          QMessageBox::information(
                                   this, 
                                   windowTitle() + us_tr( ": Global Gaussians" ),
-                                  msg_addendum + "\n" + us_tr( "Global Gaussians will be reinitialized\n" ) );
-         
+                                  QString( us_tr( "NOTICE: Some files selected have Gaussians with varying centers%1 or\na different number of Gaussians or centers that do not match the last Gaussians.\n" ) ) .arg( msg_addendum )
+                                  + "\n" + us_tr( "Global Gaussians will be reinitialized\n" ) );
          if ( !create_unified_ggaussian_target( true, false ) ) {
             update_enables();
             return;
@@ -6209,22 +6209,24 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_start()
                }
             }
          } else {
-            bool do_rescale = true;
+            bool do_rescale = false;
 
-            switch ( QMessageBox::question(this, 
-                                           windowTitle() + us_tr( ": Global Gaussians" ),
-                                           // QString( us_tr( "Rescale and refit the Gaussian amplitudes?\n\nThis procedure rescales the Gaussians and then performs a Levenberg-Marquardt minimization of the Gaussians individually for each I(t) only varying the amplitude(s). This is useful when an initial single Gaussian has been set and can sometimes improve the Global Gaussian fit." ) ),
-                                           QString( us_tr( "Rescale and refit the Gaussian amplitudes?" ) ),
-                                           QMessageBox::Yes | QMessageBox::No,
-                                           QMessageBox::No
-                                           ) ) {
-            case QMessageBox::Yes : // Yes, rescale
-               break;
-            case QMessageBox::No : // No do not rescale
-            default :
-               do_rescale = false;
-               break;
-            }       
+            // removed this question ... just confusing
+            // switch ( QMessageBox::question(this, 
+            //                                windowTitle() + us_tr( ": Global Gaussians" ),
+            //                                // QString( us_tr( "Rescale and refit the Gaussian amplitudes?\n\nThis procedure rescales the Gaussians and then performs a Levenberg-Marquardt minimization of the Gaussians individually for each I(t) only varying the amplitude(s). This is useful when an initial single Gaussian has been set and can sometimes improve the Global Gaussian fit." ) ),
+            //                                QString( us_tr( "Rescale and refit the Gaussian amplitudes?" ) ),
+            //                                QMessageBox::Yes | QMessageBox::No,
+            //                                QMessageBox::No
+            //                                ) ) {
+            // case QMessageBox::Yes : // Yes, rescale
+            //    do_rescale = true;
+            //    break;
+            // case QMessageBox::No : // No do not rescale
+            // default :
+            //    do_rescale = false;
+            //    break;
+            // }       
    
             if ( !create_unified_ggaussian_target( do_rescale, false ) ) {
                update_enables();
