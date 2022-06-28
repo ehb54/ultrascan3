@@ -6211,22 +6211,25 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_start()
          } else {
             bool do_rescale = false;
 
-            // removed this question ... just confusing
-            // switch ( QMessageBox::question(this, 
-            //                                windowTitle() + us_tr( ": Global Gaussians" ),
-            //                                // QString( us_tr( "Rescale and refit the Gaussian amplitudes?\n\nThis procedure rescales the Gaussians and then performs a Levenberg-Marquardt minimization of the Gaussians individually for each I(t) only varying the amplitude(s). This is useful when an initial single Gaussian has been set and can sometimes improve the Global Gaussian fit." ) ),
-            //                                QString( us_tr( "Rescale and refit the Gaussian amplitudes?" ) ),
-            //                                QMessageBox::Yes | QMessageBox::No,
-            //                                QMessageBox::No
-            //                                ) ) {
-            // case QMessageBox::Yes : // Yes, rescale
-            //    do_rescale = true;
-            //    break;
-            // case QMessageBox::No : // No do not rescale
-            // default :
-            //    do_rescale = false;
-            //    break;
-            // }       
+            switch ( QMessageBox::question(this, 
+                                           windowTitle() + us_tr( ": Global Gaussians" ),
+                                           QString( us_tr(
+                                                          "Rescale and refit the Gaussian amplitudes?\n\n"
+                                                          "Answer \"Yes\" if you want to re-fit the amplitudes using the last single curve Gaussian known"
+                                                          " [the most recent of a Gaussian file load or single Gaussian \"Keep\"].\n\n"
+                                                          "Answer \"No\" if you want to maintain the current values." ) ),
+
+                                           QMessageBox::Yes | QMessageBox::No,
+                                           QMessageBox::No
+                                           ) ) {
+            case QMessageBox::Yes : // Yes, rescale
+               do_rescale = true;
+               break;
+            case QMessageBox::No : // No do not rescale
+            default :
+               do_rescale = false;
+               break;
+            }       
    
             if ( !create_unified_ggaussian_target( do_rescale, false ) ) {
                update_enables();
