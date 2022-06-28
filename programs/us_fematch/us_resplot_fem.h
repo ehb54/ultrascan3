@@ -38,6 +38,8 @@ class US_ResidPlotFem : public US_WidgetsDialog
       //bool a_mode;
       QString a_mode;
 
+      
+
    private:
       QHBoxLayout*  mainLayout;
       QVBoxLayout*  leftLayout;
