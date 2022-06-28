@@ -4958,6 +4958,7 @@ QString US_ReporterGMP::text_model( US_Model model, int width )
 {
    QString stitle = model.typeText();
    QString title  = stitle;
+   QString m_desc = model. description;
 
    if ( width != 0 )
    {  // long title:  add any suffixes and check need to center
@@ -4966,7 +4967,11 @@ QString US_ReporterGMP::text_model( US_Model model, int width )
          case (int)US_Model::TWODSA:
          case (int)US_Model::TWODSA_MW:
             title = tr( "2-Dimensional Spectrum Analysis" );
-            break;
+
+	    if ( m_desc. contains("-IT") )
+	      title = title + " (IT)";
+
+	    break;
 
          case (int)US_Model::GA:
          case (int)US_Model::GA_MW:
@@ -7298,20 +7303,31 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
       
       html_ranges += tr(
 			"<table style=\"margin-left:30px\">"
-			  "<tr><td> Selected Wavelength count: </td>  <td> %1 </td> </tr>"
-			  "<tr><td> Selected Wavelength range: </td>  <td> %2 </td> </tr>"
-			  "<tr><td> Radius range:              </td>  <td> %3 </td> </tr>"
-			  "<tr><td> Selected Wavelengths:      </td>  <td> %4 </td> </tr>"
-			"</table>"
+			"<tr><td> Selected Wavelength count: </td>  <td> %1 </td> </tr>"
 			)
 	.arg( QString::number( w_count ) )        //1
-	.arg( w_range )                           //2
-	.arg( r_range )                           //3
-	.arg( all_wvl )                           //4	
+	;
+
+      if ( w_count > 1 )
+	{
+	  html_ranges += tr(
+			    "<tr><td> Selected Wavelength range: </td>  <td> %1 </td> </tr>"
+			    )
+	    .arg( w_range )                        //1
+	    ;
+	}
+      
+      html_ranges += tr(
+			"<tr><td> Radius range:              </td>  <td> %1 </td> </tr>"
+			"<tr><td> Selected Wavelengths:      </td>  <td> %2 </td> </tr>"
+			"</table>"
+			)
+	.arg( r_range )                           //1
+	.arg( all_wvl )                           //2	
 	;
       
     }  
-
+  
   html_ranges += tr( "<hr>" ) ;
   //RANGES: end
 
