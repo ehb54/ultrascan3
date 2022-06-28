@@ -50,7 +50,7 @@ US_Hydrodyn_Saxs_Load_Csv::US_Hydrodyn_Saxs_Load_Csv(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle("Load CSV style SAXS results");
+   setWindowTitle("Load, manage and process SAS data");
    setupGUI();
    global_Xpos = 200;
    global_Ypos = 150;

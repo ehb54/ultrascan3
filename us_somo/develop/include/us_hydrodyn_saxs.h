@@ -898,7 +898,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void load_plot_saxs();
       void set_grid();
       void show_plot_saxs();
-      void load_saxs( QString filename = "", bool just_plotted_curves = false, QString scaleto = "" );
+      void load_saxs( QString filename = "", bool just_plotted_curves = false, QString scaleto = "", bool no_scaling = false );
       void clear_plot_saxs( bool quiet = false );
       void show_plot_sans();
       void load_sans( QString filename = "", bool just_plotted_curves = false );

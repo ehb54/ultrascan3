@@ -142,9 +142,9 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
 
    // check if p(r) and load as Iq
    {
-      qsl_headers = qsl.filter("\"Name\",\"MW (Daltons)\",\"Area\",\"Type; r:\"");
+      QStringList test_qsl_headers = qsl.filter("\"Name\",\"MW (Daltons)\",\"Area\",\"Type; r:\"");
       qDebug() << "checking for p(r)";
-      if ( qsl_headers.size() != 0 ) {
+      if ( test_qsl_headers.size() != 0 ) {
          switch( QMessageBox::warning(
                                       this
                                       ,windowTitle()
@@ -1415,7 +1415,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
 }
 
 
-void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QString scaleto )
+void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QString scaleto, bool no_scaling )
 {
    if ( just_plotted_curves )
    {
@@ -1430,13 +1430,32 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
          USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs" :
          our_saxs_options->path_load_saxs_curve;
       select_from_directory_history( use_dir, this );
-      filename = QFileDialog::getOpenFileName( this , "Open" , use_dir , "All files (*);;"
-                                              "ssaxs files (*.ssaxs);;"
-                                              "csv files (*.csv);;"
-                                              "int files [crysol] (*.int);;"
-                                              "dat files [foxs / other] (*.dat);;"
-                                              "fit files [crysol] (*.fit)" , &load_saxs_sans_selected_filter );
 
+      
+      QStringList filenames =
+         QFileDialog::getOpenFileNames( this , "Open" , use_dir , "All files (*);;"
+                                       "ssaxs files (*.ssaxs);;"
+                                       "csv files (*.csv);;"
+                                       "int files [crysol] (*.int);;"
+                                       "dat files [foxs / other] (*.dat);;"
+                                       "fit files [crysol] (*.fit)" , &load_saxs_sans_selected_filter );
+      if ( filenames.size() == 0 ) {
+         return;
+      }
+
+      if ( filenames.size() == 1 ) {
+         filename = filenames[0];
+      } else {
+         // multiple files loaded
+         set_scaling_target( scaleto );
+
+         for ( int i = 0; i < (int) filenames.size(); ++i ) {
+            add_to_directory_history( filenames[i] );
+            load_saxs( filenames[i], false, scaleto, scaleto.isEmpty() );
+         }
+         return;
+      }
+      
       if ( filename.isEmpty() )
       {
          return;
@@ -1516,7 +1535,7 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
          cout << "number of fields: " << number_of_fields << endl;
       }
 
-      if ( scaleto.isEmpty() ) {
+      if ( scaleto.isEmpty() && !no_scaling ) {
          set_scaling_target( scaling_target );
       } else {
          scaling_target = scaleto;
