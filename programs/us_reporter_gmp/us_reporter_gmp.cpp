@@ -4911,12 +4911,13 @@ void  US_ReporterGMP::assemble_plots_html( QStringList PlotsFilenames, const QSt
 		{
 		  qDebug() << "COMBOPLOT-COLORS -- " << combparms_colors[ i ].name();
 		  //html_assembled   += "<br><span style='color:blue'>&#9726;</span>";
-		  html_assembled   += "<span style='color:" + combparms_colors[ i ].name() + "'>&#9726;</span>";
+		  html_assembled   += "<br><span style='color:" + combparms_colors[ i ].name() + "'>&#9726;</span>";
 		}
 	      else
 		html_assembled   += "<br><span style='color:blue'>&#9726;</span>"; // SOME default color!!!
-	      
-	      html_assembled   += combparms[ i ].split(")")[1] + ")&nbsp;"; 
+
+	      html_assembled   += combparms[ i ] + ")&nbsp;"; 
+	      //html_assembled   += combparms[ i ].split(")")[1] + ")&nbsp;"; 
 	    }
 	}
     }
