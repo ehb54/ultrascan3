@@ -153,6 +153,8 @@ class US_FitMeniscus : public US_Widgets
       double               dy_global;
       double               miny_global;
 
+      double               Meniscus_fitted_2d_val;
+
       QMap < QString, QString > triple_information;
 
    private slots:

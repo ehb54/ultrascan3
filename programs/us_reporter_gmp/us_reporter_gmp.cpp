@@ -4549,7 +4549,7 @@ void  US_ReporterGMP::assemble_user_inputs_html( void )
   //EDITING
   QMap < QString, QString > data_types_edit;
   QMap < QString, QString > data_types_edit_ts;
-  QString editRIJson, editIPJson, editRIts, editIPts;
+  QString editRIJson, editIPJson, editRIts, editIPts, analysisJson;
   
   // //TEMP: DEBUG
   // importRIJson =
@@ -4569,7 +4569,7 @@ void  US_ReporterGMP::assemble_user_inputs_html( void )
 
 
   //read autoflowStatus record:
-  read_autoflowStatus_record( importRIJson, importRIts, importIPJson, importIPts, editRIJson, editRIts, editIPJson, editIPts ); 
+  read_autoflowStatus_record( importRIJson, importRIts, importIPJson, importIPts, editRIJson, editRIts, editIPJson, editIPts, analysisJson ); 
   /////////////////////////////
   
   data_types_import [ "RI" ] = importRIJson;
@@ -4609,7 +4609,7 @@ void  US_ReporterGMP::assemble_user_inputs_html( void )
 	;
 
       //Parse Json
-      QMap< QString, QMap < QString, QString > > status_map = parse_autolfowStatus_json( json_str, im.key() );
+      QMap< QString, QMap < QString, QString > > status_map = parse_autoflowStatus_json( json_str, im.key() );
       
       html_assembled += tr(
 			   "<table style=\"margin-left:10px\">"
@@ -4687,7 +4687,7 @@ void  US_ReporterGMP::assemble_user_inputs_html( void )
 	;
 
       //Parse Json
-      QMap< QString, QMap < QString, QString > > status_map = parse_autolfowStatus_json( json_str, im.key() );
+      QMap< QString, QMap < QString, QString > > status_map = parse_autoflowStatus_json( json_str, im.key() );
       
       html_assembled += tr(
 			   "<table style=\"margin-left:10px\">"
@@ -4749,14 +4749,44 @@ void  US_ReporterGMP::assemble_user_inputs_html( void )
     }
    
   html_assembled += tr("<hr>");
-  
+
+  //5. ANALYSIS
+  html_assembled += tr( "<h3 align=left>Meniscus Position: Fit vs. Manual Adjustment (5. ANALYSIS: FITMEN stage)</h3>" );
+
+  QMap < QString, QString > analysis_status_map = parse_autoflowStatus_analysis_json( analysisJson );
+
+  html_assembled += tr(
+		       "<table style=\"margin-left:10px\">"
+		       "<caption align=left> <b><i>Meniscus Position Determination from FITMEN: </i></b> </caption>"
+		       "</table>"
+		       
+		       "<table style=\"margin-left:25px\">"
+		       )
+    ;
+
+  QMap < QString, QString >::iterator mfa;
+  for ( mfa = analysis_status_map.begin(); mfa != analysis_status_map.end(); ++mfa )
+	{
+	  html_assembled += tr(			       
+			       "<tr>"
+			       "<td> Channel:  %1 </td>"
+			       "<td> Position: %2 </td>"
+			       "</tr>"
+			       )
+	    .arg( mfa.key()   )     //1
+	    .arg( mfa.value() )     //2
+	    ;
+	}
+  html_assembled += tr( "</table>" );
+
+  html_assembled += tr("<hr>");
   //
   html_assembled += "</p>\n";
 }
 
 //read autoflowStatus, populate internals
 void US_ReporterGMP::read_autoflowStatus_record( QString& importRIJson, QString& importRIts, QString& importIPJson, QString& importIPts,
-						 QString& editRIJson, QString& editRIts, QString& editIPJson, QString& editIPts )
+						 QString& editRIJson, QString& editRIts, QString& editIPJson, QString& editIPts, QString& analysisJson )
 {
   importRIJson.clear();
   importRIts  .clear();
@@ -4766,6 +4796,7 @@ void US_ReporterGMP::read_autoflowStatus_record( QString& importRIJson, QString&
   editRIts    .clear();
   editIPJson  .clear();
   editIPts    .clear();
+  analysisJson.clear();
 
   US_Passwd pw;
   US_DB2    db( pw.getPasswd() );
@@ -4795,12 +4826,39 @@ void US_ReporterGMP::read_autoflowStatus_record( QString& importRIJson, QString&
 	  editRIts      = db.value( 5 ).toString();
 	  editIPJson    = db.value( 6 ).toString();
 	  editIPts      = db.value( 7 ).toString();
+
+	  analysisJson  = db.value( 8 ).toString();
 	}
     }
 }
 
+//Parse autoflowStatus Analysis Json
+QMap < QString, QString > US_ReporterGMP::parse_autoflowStatus_analysis_json( QString statusJson )
+{
+  QMap <QString, QString>  status_map;
+
+  QJsonDocument jsonDoc = QJsonDocument::fromJson( statusJson.toUtf8() );
+  //QJsonObject json_obj  = jsonDoc.object();
+
+  QJsonArray json_array  = jsonDoc.array();
+  qDebug() << "IN ANALYSIS_JSON: " << json_array;
+
+  for (int i=0; i < json_array.size(); ++i )
+    {
+      foreach(const QString& key, json_array[ i ].toObject().keys())
+	{
+	  QJsonValue value = json_array[ i ].toObject().value(key);
+      	  qDebug() << "ANALYSIS_JSON: key, value: " << key << value.toString();
+
+	  status_map[ key ] = value.toString();
+	}
+    }
+
+  return status_map;
+}
+
 //Parse autoflowStatus RI/IP Json
-QMap< QString, QMap < QString, QString > > US_ReporterGMP::parse_autolfowStatus_json( QString statusJson, QString dtype )
+QMap< QString, QMap < QString, QString > > US_ReporterGMP::parse_autoflowStatus_json( QString statusJson, QString dtype )
 {
   QMap< QString, QMap <QString, QString> > status_map;
 

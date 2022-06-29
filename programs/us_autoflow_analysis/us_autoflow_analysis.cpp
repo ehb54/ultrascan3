@@ -117,6 +117,9 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
    
   analysisIDs        = protocol_details[ "analysisIDs" ];
 
+  autoflowStatusID   = protocol_details[ "statusID" ].toInt();
+  autoflowID_passed  = protocol_details[ "autoflowID" ].toInt();
+
   sim_msg_pos_x      = protocol_details[ "sim_msg_pos_x" ].toInt();
   sim_msg_pos_y      = protocol_details[ "sim_msg_pos_y" ].toInt();
 
@@ -3226,7 +3229,31 @@ void US_Analysis_auto::update_autoflowAnalysis_statuses (  QMap < QString, QStri
   QString channel_name = triple_name_parts[0] + "." + triple_name_parts[1];
 
   qDebug() << "In update_statuses: triple_name_parts: " << triple_name_parts;
+
   
+  //Try for "FM_changed" || "FB_changed" keys in triple_info:
+  QString FMB_changed = triple_info. contains( "FMB_changed" ) ? triple_info[ "FMB_changed" ] : QString("");
+  
+  qDebug() << "In update_statuses: FMB_changed -- " << FMB_changed;
+
+  /* HOW to add && APPEND JSON in the DB ********
+
+  1. If field is empty, first add initial record:
+       UPDATE autoflowStatus set analysis='[{"2 / A / 260": "changed"}]' where ID=22;
+
+  2. If not empty (then and after)
+       UPDATE autoflowStatus set analysis=JSON_ARRAY_APPEND(analysis, '$', JSON_OBJECT('2 / B / 260', 'NO')) where ID=22;
+  **********************************************/
+ 
+  //Update autoflowStatus's 'analysis' field: per-channel (reference triple) basis, by whom:
+  US_Passwd pw;
+  US_DB2* dbP = new US_DB2( pw.getPasswd() );
+    
+  record_or_update_analysis_meniscus_status( dbP, triple_curr_key, FMB_changed );
+  
+  
+  
+  // Now update autoflowAnalysis records:
   QStringList requestID_list; 
 
   if ( triple_curr_key.contains("Interference") )
@@ -3236,9 +3263,7 @@ void US_Analysis_auto::update_autoflowAnalysis_statuses (  QMap < QString, QStri
 
   qDebug() << "Channel_name, requestIDs to update: " << channel_name << requestID_list;
   
-  //Update
-  US_Passwd pw;
-  US_DB2* dbP = new US_DB2( pw.getPasswd() );
+  
 
   // --- Before updating autoflowAnalysis records ---
   // --- MAKE sure that ALL original 2DSA stages for other wavelength in a channel (besides representative wvl) are completed
@@ -3251,6 +3276,80 @@ void US_Analysis_auto::update_autoflowAnalysis_statuses (  QMap < QString, QStri
 
   qDebug() << "Timer restarted after updating EditProfiles for channel -- " << channel_name;
 }
+
+
+//Keep track on meniscus (or bottom) deviations in FITMEN from the best fit:
+void US_Analysis_auto::record_or_update_analysis_meniscus_status( US_DB2* db, QString triple_name, QString FMB_changed )
+{
+  if ( FMB_changed.isEmpty() )
+    {
+      qDebug() << "FBM_changed EMPTY: It seems it's impossible to determine if meniscus| bottom was modified from the best FIT...";
+      return;
+    }
+    
+  // Check DB connection
+  
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+  			    tr( "Updating autoflowStatus's analysis at FITMEN: Could not connect to database \n" ) + db->lastError() );
+      return;
+     }
+  
+  QStringList qry;
+
+  //get user info
+  qry.clear();
+  qry <<  QString( "get_user_info" );
+  db->query( qry );
+  db->next();
+
+  int ID        = db->value( 0 ).toInt();
+  QString fname = db->value( 1 ).toString();
+  QString lname = db->value( 2 ).toString();
+  QString email = db->value( 4 ).toString();
+  int     level = db->value( 5 ).toInt();
+
+  qDebug() << "IN ANALYSIS, record autoflowStatus: ID,name,email,lev" << ID << fname << lname << email << level;
+  
+  //Record to autoflowStatus:
+  qry.clear();
+  
+  QString analysisJson;  //  [{"6 / B / 260": "fitted"}]','6 / B / 260', 'fitted'
+
+  QString analysisTriple = triple_name;
+  analysisTriple.replace( ".", " / ");
+
+  QString analysisAction = (FMB_changed == "YES") ? "modified" : "best fit selected";
+  analysisAction += ", by " + fname + ", " + lname;
+
+  analysisJson += "[{";
+  analysisJson += "\"" + analysisTriple + "\":\"" + analysisAction + "\"";  
+  analysisJson += "}]";
+   
+  if ( autoflowStatusID )
+    {
+      //update OR insert NEW Json
+      qry << "update_autoflowStatusAnalysisFitmen_record"
+	  << QString::number( autoflowStatusID )
+	  << QString::number( autoflowID_passed )
+	  << analysisJson
+	  << analysisTriple
+	  << analysisAction;
+	  
+      db->query( qry );
+    }
+  else
+    {
+      QMessageBox::warning( this, tr( "AutoflowStatus Record Problem" ),
+			    tr( "autoflowStatus (Analysis {FMB}): There was a problem with identifying a record in autoflowStatus table for a given run! \n" ) );
+      
+      return;
+    }
+
+  return;
+}
+
 
 // slot to update autoflowAnalysis record at fitmen stage WHEN already treated from different session
 void US_Analysis_auto::editProfiles_updated_earlier ( void )
