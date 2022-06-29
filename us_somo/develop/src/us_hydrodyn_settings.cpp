@@ -3865,7 +3865,7 @@ QString US_Hydrodyn::default_differences_hydro()
    }
    if ( hydro.grpy_bead_inclusion != default_hydro.grpy_bead_inclusion )
    {
-      str += QString(base + "Inclusion of Buried Beads in vdW GRPY Hydrodynamic Calculations: %1\n")
+      str += QString(base + "Inclusion of Buried Beads in GRPY Hydrodynamic Calculations: %1\n")
          .arg(hydro.grpy_bead_inclusion ? "Include" : "Exclude");
    }
    if ( hydro.rotational != default_hydro.rotational &&
