@@ -25,8 +25,10 @@
 const double epsilon = 0.0005;    // Equivalence magnitude ratio radius
 
 // US_DDistr_Combine class constructor
-US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
+US_DDistr_Combine::US_DDistr_Combine( const QString auto_mode ) : US_Widgets()
 {
+   this->a_mode = auto_mode;
+   
    // set up the GUI
    setWindowTitle( tr( "Combined Discrete Distributions:" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -401,7 +403,11 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
          tr( "Sedimentation Coefficient x 1e+13 (corr. for 20,W)" ),
          tr( "Signal Concentration" ) );
 
-   data_plot1->setMinimumSize( 560, 400 );
+   if ( a_mode.isEmpty() )
+     data_plot1->setMinimumSize( 560, 400 );
+   else
+     data_plot1->setMinimumSize( 400, 400 );
+   
    data_plot1->setAxisScale( QwtPlot::xBottom, 1.0,  10.0 );
    data_plot1->setAxisScale( QwtPlot::yLeft,   0.0, 100.0 );
 	data_plot1->setCanvasBackground( QBrush(Qt::white) );
@@ -416,7 +422,9 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    QwtLegend *legend = new QwtLegend;
    legend->setFrameStyle( QFrame::Box | QFrame::Sunken );
    legend->setFont( sfont );
-   data_plot1->insertLegend( legend, QwtPlot::BottomLegend  ); 
+
+   if ( a_mode.isEmpty() )
+     data_plot1->insertLegend( legend, QwtPlot::BottomLegend  ); 
 
    rightLayout->addLayout( plot );
 
@@ -952,13 +960,18 @@ DbgLv(1) << "pDa:  titleX" << titleX;
    double plxmin = 1e+30;
    double plxmax = -1e+30;
 
+   QStringList legend_texts;
    for ( int ii = 0; ii < pdistrs.size(); ii++ )
    {
       setColor( pdistrs[ ii ], ii );
       plot_distr_auto ( pdistrs[ ii ], pdisIDs[ ii ], c_parms );
 
+      legend_texts << pdisIDs[ ii ];
    }
 
+   //qDebug() << "LEGEND TEXT -- " <<  legend_texts;
+   //data_plot1->legend()->setVisible( false ); // <-- TEMP!!!!!
+   
    //    for ( int jj = 0; jj < pdistrs[ ii ].xvals.size(); jj++ )
    //    {
    //       plxmin        = qMin( plxmin, pdistrs[ ii ].xvals[ jj ] );
@@ -1171,8 +1184,10 @@ DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
    }
 
    data_curv->setSamples( xx, yy, ndispt );
-   data_curv->setItemAttribute( QwtPlotItem::Legend, true );
+   data_curv->setItemAttribute( QwtPlotItem::Legend, true ); 
 
+   
+   
    // if (le_plxmin->text().toDouble() < minx) 
    // {
    //    minx = le_plxmin->text().toDouble();
@@ -1195,7 +1210,7 @@ DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
    data_plot1->setAxisAutoScale( QwtPlot::yLeft );
    data_plot1->enableAxis      ( QwtPlot::xBottom, true );
    data_plot1->enableAxis      ( QwtPlot::yLeft,   true );
-	data_plot1->setCanvasBackground( QBrush(Qt::white) );
+   data_plot1->setCanvasBackground( QBrush(Qt::white) );
    data_plot1->replot();
 
 }
@@ -1546,13 +1561,16 @@ DbgLv(1) << "RunIDSel:     added: ddesc" << ddesc;
 }
 
 // Model distribution selected -- FOR GMP reporter | 6. REPORT
-void US_DDistr_Combine::model_select_auto( QString modelNameMod, QMap< QString, QString > c_parms )
+QMap< QStringList, QList< QColor> > US_DDistr_Combine::model_select_auto( QString modelNameMod, QMap< QString, QString > c_parms )
 {
    QString          distrID = modelNameMod;
    int              mdx     = distro_by_descr( distrID );
    DbgLv(1) << "ModelSel_auto: model" << distrID << "mdx" << mdx;
    DistrDesc*       ddesc   = &distros[ mdx ];
 
+   QList< QColor >  pdistrs_colors;
+   QMap < QStringList, QList< QColor > > s_type_map; 
+      
    if ( ! pdisIDs.contains( distrID ) )
    {  // If this distro not yet filled out, do so now
 
@@ -1560,6 +1578,8 @@ void US_DDistr_Combine::model_select_auto( QString modelNameMod, QMap< QString, 
 
       pdistrs << *ddesc;     // Add to list of plotted distros
       pdisIDs << distrID;    // Add to list of IDs of plotted distros
+
+      //pdistrs_colors <<  (*ddesc).  color; 
    }
 
    if ( ddesc->model.components.size() == 0 )
@@ -1567,7 +1587,8 @@ void US_DDistr_Combine::model_select_auto( QString modelNameMod, QMap< QString, 
       QMessageBox::critical( this, tr( "Zero-Components Model" ),
             tr( "*ERROR* The selected model has zero components.\n"
                 "This selection is ignored" ) );
-      return;
+      //return pdisIDs;
+      return  s_type_map;
    }
 
  
@@ -1579,6 +1600,19 @@ void US_DDistr_Combine::model_select_auto( QString modelNameMod, QMap< QString, 
 
    te_status->setText( tr( "Count of plotted distributions: %1." )
          .arg( pdistrs.count() ) );
+
+   //
+   for ( int ii = 0; ii < pdistrs.size(); ii++ )
+   {
+     pdistrs_colors << pdistrs[ ii ]. color; 
+   }
+
+   s_type_map [ pdisIDs ] = pdistrs_colors;
+   
+   return s_type_map;
+   //return pdisIDs;
+   //ALEXEY: also need to return color corresponsing to each plotted curve: (QColor) pdistrs[ ii ].color
+   //Possibly, return a structure {QstringList pdisIDS, QList<QColor>  pdistrs[ ii ].color }
 }
 
 // Model distribution selected
@@ -2315,10 +2349,13 @@ DbgLv(1) << "  PX=Molec.Wt.log";
 }
 
 // React to a change in the X type of plots
-void US_DDistr_Combine::changedPlotX_auto( int type, QMap< QString, QString > c_parms )
+QMap< QStringList, QList< QColor> > US_DDistr_Combine::changedPlotX_auto( int type, QMap< QString, QString > c_parms )
 {
    xtype      = type;
 
+   QList< QColor >  pdistrs_colors;
+   QMap < QStringList, QList< QColor > > other_type_map; 
+   
    int npdis    = pdistrs.size();
    if ( npdis > 0 )
    {  // Re-do plot distros to account for X-type change
@@ -2363,6 +2400,20 @@ void US_DDistr_Combine::changedPlotX_auto( int type, QMap< QString, QString > c_
 
       plot_data_auto( c_parms );
    }
+
+   //
+   for ( int ii = 0; ii < pdistrs.size(); ii++ )
+   {
+     pdistrs_colors << pdistrs[ ii ]. color; 
+   }
+
+   other_type_map [ pdisIDs ] = pdistrs_colors;
+   
+   return other_type_map;
+   
+   //return pdisIDs;
+   //ALEXEY: also need to return color corresponsing to each plotted curve: (QColor) pdistrs[ ii ].color
+   //Possibly, return a structure {QstringList pdisIDS, QList<QColor>  pdistrs[ ii ].color }
 }
 
 // Change the contents of the distributions list based on list type change

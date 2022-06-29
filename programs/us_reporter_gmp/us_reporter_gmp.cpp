@@ -2259,6 +2259,10 @@ void US_ReporterGMP::reset_report_panel ( void )
   comboPlotsMapTypes       .clear();
   CombPlots_Type_to_Models .clear();
 
+  //
+  CombPlotsParmsMap        .clear();
+  CombPlotsParmsMap_Colors .clear();
+  
   //clean QMap connecting triple names to their models
   Triple_to_Models         . clear();
   Triple_to_ModelsDesc     . clear();
@@ -4172,7 +4176,7 @@ bool US_ReporterGMP::modelGuidExistsForStage( QString model, QString mguid)
 //Combined Plots
 void US_ReporterGMP::process_combined_plots ( QString filename_passed )
 {
-  sdiag_combplot = new US_DDistr_Combine();
+  sdiag_combplot = new US_DDistr_Combine( "REPORT" );
   QStringList runIDs_single;
     
   runIDs_single << filename_passed;
@@ -4212,7 +4216,10 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
   xtype <<  1 << 2 << 3; //ALEXEY: 0: s20; 1: MW; 2: D; 3: f/f0
                          //Note: xtype==0 (s20) is the default, so iterate later starting from 1... 
   QStringList CombPlotsFileNames;
-    
+  QStringList plottedIDs_s, plottedIDs_other_type;
+
+  QMap< QStringList, QList< QColor > > plotted_ids_colors_map_s_type;
+
   for ( int m = 0; m < modelNames.size(); m++ )  
     {
       bool isModel = false;
@@ -4229,7 +4236,7 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
 	      QString t_m = "s," + modelNames[ m ];
 	      QMap < QString, QString > c_params = comboPlotsMap[ t_m ];
 	      //qDebug() << "over models: c_params -- " << c_params;
-	      sdiag_combplot-> model_select_auto ( modelDescModified[ ii ], c_params ); //ALEXEY: here it plots s20 combPlot (xtype == 0)
+	      plotted_ids_colors_map_s_type = sdiag_combplot-> model_select_auto ( modelDescModified[ ii ], c_params ); //ALEXEY: here it plots s20 combPlot (xtype == 0)
 
 	    }
 	}
@@ -4254,9 +4261,15 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
 	  // if ( comboPlotsMapTypes.contains( t_m ) && comboPlotsMapTypes[ t_m ] != 0  )
 	  if ( show_combo_s ) 
 	    {
+	      qDebug() << "PLOTTED_IDs_S_type -- " << plottedIDs_s;
 	      write_plot( imgComb01File, sdiag_combplot->rp_data_plot1() );                //<-- rp_data_plot1() gives combined plot
 	      imgComb01File.replace( svgext, pngext ); 
 	      CombPlotsFileNames << imgComb01File;
+
+	      //CombPlotsParmsMap[ imgComb01File ] = plottedIDs_s;
+	      
+	      CombPlotsParmsMap       [ imgComb01File ] = plotted_ids_colors_map_s_type. firstKey();
+	      CombPlotsParmsMap_Colors[ imgComb01File ] = plotted_ids_colors_map_s_type[ plotted_ids_colors_map_s_type. firstKey() ];
 	    }
 
 	  ++pr_cp_val;
@@ -4298,11 +4311,21 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
 	      bool show_combo_plot_other_types   = (combPlotsMask_edited.ShowCombPlotParts[ c_type ][ modelNames[ m ] ].toInt()) ? true : false ;
 	      if ( show_combo_plot_other_types )
 		{
-		  sdiag_combplot-> changedPlotX_auto( xtype[ xt ], c_parms );
+		  
+		  //plottedIDs_other_type = sdiag_combplot-> changedPlotX_auto( xtype[ xt ], c_parms );
+		  plotted_ids_colors_map_s_type = sdiag_combplot-> changedPlotX_auto( xtype[ xt ], c_parms );
+		    
+		  //qDebug() << "PLOTTED_IDs_" << c_type << "_type -- " << plottedIDs_other_type;
+		  
 		  
 		  write_plot( imgComb02File, sdiag_combplot->rp_data_plot1() );              //<-- rp_data_plot1() gives combined plot
 		  imgComb02File.replace( svgext, pngext );
 		  CombPlotsFileNames << imgComb02File;
+
+		  CombPlotsParmsMap       [ imgComb02File ] = plotted_ids_colors_map_s_type. firstKey();
+		  CombPlotsParmsMap_Colors[ imgComb02File ] = plotted_ids_colors_map_s_type[ plotted_ids_colors_map_s_type. firstKey() ];
+		  
+		  //CombPlotsParmsMap[ imgComb02File ] = plottedIDs_other_type;
 		}
 
 	      ++pr_cp_val;
@@ -4313,7 +4336,7 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
       sdiag_combplot->reset_data_plot1();
     }
   //assemble combined plots into html
-  assemble_plots_html( CombPlotsFileNames  );
+  assemble_plots_html( CombPlotsFileNames, "CombPlots"  );
   
   progress_msg->setValue( progress_msg->maximum() );
   progress_msg->close();
@@ -4526,7 +4549,7 @@ void  US_ReporterGMP::assemble_user_inputs_html( void )
   //EDITING
   QMap < QString, QString > data_types_edit;
   QMap < QString, QString > data_types_edit_ts;
-  QString editRIJson, editIPJson, editRIts, editIPts;
+  QString editRIJson, editIPJson, editRIts, editIPts, analysisJson;
   
   // //TEMP: DEBUG
   // importRIJson =
@@ -4546,7 +4569,7 @@ void  US_ReporterGMP::assemble_user_inputs_html( void )
 
 
   //read autoflowStatus record:
-  read_autoflowStatus_record( importRIJson, importRIts, importIPJson, importIPts, editRIJson, editRIts, editIPJson, editIPts ); 
+  read_autoflowStatus_record( importRIJson, importRIts, importIPJson, importIPts, editRIJson, editRIts, editIPJson, editIPts, analysisJson ); 
   /////////////////////////////
   
   data_types_import [ "RI" ] = importRIJson;
@@ -4586,7 +4609,7 @@ void  US_ReporterGMP::assemble_user_inputs_html( void )
 	;
 
       //Parse Json
-      QMap< QString, QMap < QString, QString > > status_map = parse_autolfowStatus_json( json_str, im.key() );
+      QMap< QString, QMap < QString, QString > > status_map = parse_autoflowStatus_json( json_str, im.key() );
       
       html_assembled += tr(
 			   "<table style=\"margin-left:10px\">"
@@ -4664,7 +4687,7 @@ void  US_ReporterGMP::assemble_user_inputs_html( void )
 	;
 
       //Parse Json
-      QMap< QString, QMap < QString, QString > > status_map = parse_autolfowStatus_json( json_str, im.key() );
+      QMap< QString, QMap < QString, QString > > status_map = parse_autoflowStatus_json( json_str, im.key() );
       
       html_assembled += tr(
 			   "<table style=\"margin-left:10px\">"
@@ -4726,14 +4749,51 @@ void  US_ReporterGMP::assemble_user_inputs_html( void )
     }
    
   html_assembled += tr("<hr>");
-  
+
+  //5. ANALYSIS
+  html_assembled += tr( "<h3 align=left>Meniscus Position: Fit vs. Manual Adjustment (5. ANALYSIS: FITMEN stage)</h3>" );
+
+  QMap < QString, QString > analysis_status_map = parse_autoflowStatus_analysis_json( analysisJson );
+
+  html_assembled += tr(
+		       "<table style=\"margin-left:10px\">"
+		       "<caption align=left> <b><i>Meniscus Position Determination from FITMEN: </i></b> </caption>"
+		       "</table>"
+		       
+		       "<table style=\"margin-left:25px\">"
+		       )
+    ;
+
+  QMap < QString, QString >::iterator mfa;
+  for ( mfa = analysis_status_map.begin(); mfa != analysis_status_map.end(); ++mfa )
+	{
+
+	  QString mfa_value    = mfa.value();
+	  QString pos          = mfa_value.split(", by")[0];
+	  QString performed_by = mfa_value.split(", by")[1];
+	  
+	  html_assembled += tr(			       
+			       "<tr>"
+			       "<td> Channel:  %1 </td>"
+			       "<td> Position: %2 </td>"
+			       "<td> Performed by: %3 </td>"
+			       "</tr>"
+			       )
+	    .arg( mfa.key()   )     //1
+	    .arg( pos )             //2
+	    .arg( performed_by )    //3   
+	    ;
+	}
+  html_assembled += tr( "</table>" );
+
+  html_assembled += tr("<hr>");
   //
   html_assembled += "</p>\n";
 }
 
 //read autoflowStatus, populate internals
 void US_ReporterGMP::read_autoflowStatus_record( QString& importRIJson, QString& importRIts, QString& importIPJson, QString& importIPts,
-						 QString& editRIJson, QString& editRIts, QString& editIPJson, QString& editIPts )
+						 QString& editRIJson, QString& editRIts, QString& editIPJson, QString& editIPts, QString& analysisJson )
 {
   importRIJson.clear();
   importRIts  .clear();
@@ -4743,6 +4803,7 @@ void US_ReporterGMP::read_autoflowStatus_record( QString& importRIJson, QString&
   editRIts    .clear();
   editIPJson  .clear();
   editIPts    .clear();
+  analysisJson.clear();
 
   US_Passwd pw;
   US_DB2    db( pw.getPasswd() );
@@ -4772,12 +4833,39 @@ void US_ReporterGMP::read_autoflowStatus_record( QString& importRIJson, QString&
 	  editRIts      = db.value( 5 ).toString();
 	  editIPJson    = db.value( 6 ).toString();
 	  editIPts      = db.value( 7 ).toString();
+
+	  analysisJson  = db.value( 8 ).toString();
 	}
     }
 }
 
+//Parse autoflowStatus Analysis Json
+QMap < QString, QString > US_ReporterGMP::parse_autoflowStatus_analysis_json( QString statusJson )
+{
+  QMap <QString, QString>  status_map;
+
+  QJsonDocument jsonDoc = QJsonDocument::fromJson( statusJson.toUtf8() );
+  //QJsonObject json_obj  = jsonDoc.object();
+
+  QJsonArray json_array  = jsonDoc.array();
+  qDebug() << "IN ANALYSIS_JSON: " << json_array;
+
+  for (int i=0; i < json_array.size(); ++i )
+    {
+      foreach(const QString& key, json_array[ i ].toObject().keys())
+	{
+	  QJsonValue value = json_array[ i ].toObject().value(key);
+      	  qDebug() << "ANALYSIS_JSON: key, value: " << key << value.toString();
+
+	  status_map[ key ] = value.toString();
+	}
+    }
+
+  return status_map;
+}
+
 //Parse autoflowStatus RI/IP Json
-QMap< QString, QMap < QString, QString > > US_ReporterGMP::parse_autolfowStatus_json( QString statusJson, QString dtype )
+QMap< QString, QMap < QString, QString > > US_ReporterGMP::parse_autoflowStatus_json( QString statusJson, QString dtype )
 {
   QMap< QString, QMap <QString, QString> > status_map;
 
@@ -4859,7 +4947,7 @@ void  US_ReporterGMP::assemble_replicate_av_integration_html( void )
 }
 
 //output HTML plots for currentTriple
-void  US_ReporterGMP::assemble_plots_html( QStringList PlotsFilenames )
+void  US_ReporterGMP::assemble_plots_html( QStringList PlotsFilenames, const QString plot_type )
 {
   // Embed plots in the composite report
   html_assembled += "<p class=\"pagebreak \">\n";
@@ -4870,7 +4958,35 @@ void  US_ReporterGMP::assemble_plots_html( QStringList PlotsFilenames )
       
       html_assembled   += "    <div><img src=\"" + filename 
 	+ "\" alt=\"" + label + "\"/></div>\n\n";
+
+      html_assembled   += "<br>";
+
+      //add custom legen for combined plots
+      if ( !plot_type.isEmpty() )
+	{
+	  QStringList combparms            = CombPlotsParmsMap[ filename ];
+	  QList< QColor > combparms_colors = CombPlotsParmsMap_Colors[ filename ];
+
+	  qDebug() << "COMBOPLOT-parms/colors SZIES: combparms.size(), combparms_colors.size() --  "
+		   << combparms.size() << combparms_colors.size();
+	  
+	  for ( int i=0; i < combparms.size(); ++i )
+	    {
+	      if ( !combparms_colors.isEmpty() &&  combparms_colors.size() == combparms.size() )
+		{
+		  qDebug() << "COMBOPLOT-COLORS -- " << combparms_colors[ i ].name();
+		  //html_assembled   += "<br><span style='color:blue'>&#9726;</span>";
+		  html_assembled   += "<br><span style='color:" + combparms_colors[ i ].name() + "'>&#9726;</span>";
+		}
+	      else
+		html_assembled   += "<br><span style='color:blue'>&#9726;</span>"; // SOME default color!!!
+
+	      html_assembled   += combparms[ i ] + ")&nbsp;"; 
+	      //html_assembled   += combparms[ i ].split(")")[1] + ")&nbsp;"; 
+	    }
+	}
     }
+  
   html_assembled += "</p>\n";
 }
 
@@ -4907,6 +5023,7 @@ QString US_ReporterGMP::text_model( US_Model model, int width )
 {
    QString stitle = model.typeText();
    QString title  = stitle;
+   QString m_desc = model. description;
 
    if ( width != 0 )
    {  // long title:  add any suffixes and check need to center
@@ -4915,7 +5032,11 @@ QString US_ReporterGMP::text_model( US_Model model, int width )
          case (int)US_Model::TWODSA:
          case (int)US_Model::TWODSA_MW:
             title = tr( "2-Dimensional Spectrum Analysis" );
-            break;
+
+	    if ( m_desc. contains("-IT") )
+	      title = title + " (IT)";
+
+	    break;
 
          case (int)US_Model::GA:
          case (int)US_Model::GA_MW:
@@ -5256,7 +5377,8 @@ QMap<QString, double> US_ReporterGMP::get_replicate_group_results( US_ReportGMP:
 	{
 	  QString channel_desc_alt = chndescs_alt[ j ];
 
-	  if ( channel_desc_alt.contains("Interf") ) //For now, do not consider IP type!!!
+	  //For now, do not consider IP type!!!
+	  if ( channel_desc_alt.contains("Interf") ) 
 	    continue;
 	  
 	  if ( channel_desc_alt.split(":")[0].contains( channs_for_wvl[ i ] ) )  
@@ -5340,7 +5462,8 @@ QMap<QString, double> US_ReporterGMP::get_replicate_group_results( US_ReportGMP:
   results[ "tot_percent_av" ]     = tot_percent_sim_av;
   results[ "int_st_dev" ]         = st_dev_int_final;
   results[ "tot_percent_st_dev" ] = st_dev_tot_percent_final;
-  
+
+    
   return results;
 }
 
@@ -5756,7 +5879,21 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
      }
 
    //Now, integration results
-   if ( show_integration )
+   //1st, check if for a given model (method) there are reportItems:
+   bool method_type_combo_exists = false;
+   int report_items_number = reportGMP-> reportItems.size();
+   for ( int kk = 0; kk < report_items_number; ++kk )
+     {
+       US_ReportGMP::ReportItem curr_item = reportGMP-> reportItems[ kk ];
+       QString method         = curr_item.method;
+       if( method.contains ("PCSA") )
+	 method = "PCSA";
+
+       if ( mdla.contains ( method ) )
+	 method_type_combo_exists = true;
+     }
+   
+   if ( show_integration && method_type_combo_exists )
      {
        mstr += "\n" + indent( 2 ) + tr( "<h3>Integration Results: Fraction of Total Concentration:</h3>\n" );
        mstr += indent( 2 ) + "<table>\n";
@@ -5766,7 +5903,6 @@ QString US_ReporterGMP::distrib_info( QMap < QString, QString> & tripleInfo )
 			  tr( "Fraction % from Model (target):" ),
 			  tr( "Tolerance, %:"),
 			  tr( "PASSED ?" ));
-       int report_items_number = reportGMP-> reportItems.size();
        for ( int kk = 0; kk < report_items_number; ++kk )
 	 {
 	   US_ReportGMP::ReportItem curr_item = reportGMP-> reportItems[ kk ];
@@ -6338,7 +6474,7 @@ void US_ReporterGMP::plotres( QMap < QString, QString> & tripleInfo )
      }
    
    //add .PNG plots to combined PDF report
-   assemble_plots_html( PlotsFileNames  );
+   assemble_plots_html( PlotsFileNames );
 }
 
 
@@ -7232,20 +7368,31 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
       
       html_ranges += tr(
 			"<table style=\"margin-left:30px\">"
-			  "<tr><td> Selected Wavelength count: </td>  <td> %1 </td> </tr>"
-			  "<tr><td> Selected Wavelength range: </td>  <td> %2 </td> </tr>"
-			  "<tr><td> Radius range:              </td>  <td> %3 </td> </tr>"
-			  "<tr><td> Selected Wavelengths:      </td>  <td> %4 </td> </tr>"
-			"</table>"
+			"<tr><td> Selected Wavelength count: </td>  <td> %1 </td> </tr>"
 			)
 	.arg( QString::number( w_count ) )        //1
-	.arg( w_range )                           //2
-	.arg( r_range )                           //3
-	.arg( all_wvl )                           //4	
+	;
+
+      if ( w_count > 1 )
+	{
+	  html_ranges += tr(
+			    "<tr><td> Selected Wavelength range: </td>  <td> %1 </td> </tr>"
+			    )
+	    .arg( w_range )                        //1
+	    ;
+	}
+      
+      html_ranges += tr(
+			"<tr><td> Radius range:              </td>  <td> %1 </td> </tr>"
+			"<tr><td> Selected Wavelengths:      </td>  <td> %2 </td> </tr>"
+			"</table>"
+			)
+	.arg( r_range )                           //1
+	.arg( all_wvl )                           //2	
 	;
       
     }  
-
+  
   html_ranges += tr( "<hr>" ) ;
   //RANGES: end
 
@@ -7849,7 +7996,8 @@ void US_ReporterGMP::write_pdf_report( void )
   printer.setOutputFormat(QPrinter::PdfFormat);
   printer.setPaperSize(QPrinter::Letter);
 
-  QString fileName  = currProto. protoname + "-run" + runID + ".pdf";
+  //QString fileName  = currProto. protoname + "-run" + runID + ".pdf";
+  QString fileName  = runName + ".pdf";
   filePath  = US_Settings::tmpDir() + "/" + fileName;
   printer.setOutputFileName( filePath );
   printer.setFullPage(true);

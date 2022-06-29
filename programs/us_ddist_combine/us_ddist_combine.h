@@ -17,13 +17,17 @@ class US_DDistr_Combine : public US_Widgets
    Q_OBJECT
 
    public:
-      US_DDistr_Combine();
+      //US_DDistr_Combine();
+      US_DDistr_Combine( QString = QString("") );
 
       QList< QStringList > load_auto( QStringList, QStringList  );
-      void      model_select_auto   ( QString, QMap < QString, QString >  );
+      QMap< QStringList, QList< QColor> >      model_select_auto   ( QString, QMap < QString, QString >  );
       QwtPlot* rp_data_plot1();
       void     reset_data_plot1();
-      void     changedPlotX_auto ( int,  QMap < QString, QString >);
+      QMap< QStringList, QList< QColor> >      changedPlotX_auto ( int,  QMap < QString, QString >);
+      QString a_mode;
+
+      
       
    private:
 

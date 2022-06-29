@@ -1177,6 +1177,9 @@ void US_FitMeniscus::plot_2d( void )
    // Display selected meniscus/bottom
    le_men_sel->setText( QString::number( fit_xvl, 'f', 5 ) );
 
+   //Save Best (Fitted) Meniscus Value for later comparison:
+   Meniscus_fitted_2d_val = le_men_sel->text().toDouble();
+
    // Find the "best-index", index where X closest to fit
    ix_best           = 0;
    double diff_min   = 1.0e+99;
@@ -1988,7 +1991,28 @@ DbgLv(1) << " call Remove Models";
 	   progress_msg->setValue( progress_msg->maximum() );
 	   progress_msg->close();
 	 }
+
        
+       //Identify if Meniscus || Bottom || (Meniscus && Bottom) have been changed
+       if ( have3val )
+	 {  // Fit is meniscus + bottom
+	  
+	 }
+       else if ( !bott_fit )
+	 {  // Fit is meniscus only
+	   if ( mennew != Meniscus_fitted_2d_val )
+	     triple_information[ "FMB_changed" ] = QString("YES");
+	   else
+	     triple_information[ "FMB_changed" ] = QString("NO");
+	 }
+       else
+	 {  // Fit is bottom only
+	   if ( botnew != Meniscus_fitted_2d_val )
+	     triple_information[ "FMB_changed" ] = QString("YES");
+	   else
+	     triple_information[ "FMB_changed" ] = QString("NO");
+	 }
+
        emit editProfiles_updated( triple_information );
        close();
      }

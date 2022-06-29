@@ -67,6 +67,7 @@ class US_ReporterGMP : public US_Widgets
 	 QPointer< US_ResidsBitmap > rg_resbmap();
 	 QString                     rg_tripleInfo();
 
+
 	 struct GenReportMaskStructure
 	 {
 	   QMap <QString, bool >    ShowReportParts;
@@ -244,7 +245,10 @@ class US_ReporterGMP : public US_Widgets
 	 QMap< QString, QMap< QString, QString > > comboPlotsMap;
 	 QMap< QString, int > comboPlotsMapTypes;
 	 QMap< QString, QStringList > CombPlots_Type_to_Models;
-	 
+
+         QMap< QString, QStringList >     CombPlotsParmsMap;
+         QMap< QString, QList< QColor > > CombPlotsParmsMap_Colors;
+  
 	 void  get_current_date( void );
 	 void  format_needed_params( void );
 	 void  assemble_pdf( QProgressDialog * );
@@ -255,8 +259,9 @@ class US_ReporterGMP : public US_Widgets
 	 void  write_pdf_report( void );
 
 	 void  assemble_user_inputs_html( void );
-	 void  read_autoflowStatus_record( QString&,  QString&,  QString&,  QString&, QString&,  QString&,  QString&,  QString& );
-	 QMap< QString, QMap< QString, QString > >  parse_autolfowStatus_json( const QString, const QString  );
+         void  read_autoflowStatus_record( QString&,  QString&,  QString&,  QString&, QString&,  QString&,  QString&,  QString&, QString& );
+	 QMap< QString, QMap< QString, QString > >  parse_autoflowStatus_json( const QString, const QString  );
+         QMap< QString, QString > parse_autoflowStatus_analysis_json( const QString );
 	 
 	 void read_protocol_and_reportMasks( void );
 	 QMap< QString, QString > read_autoflowIntensity( QString, US_DB2*);
@@ -471,7 +476,7 @@ class US_ReporterGMP : public US_Widgets
 	void calc_residuals( void );
 	void assemble_distrib_html(  QMap < QString, QString > &  );
 	//void assemble_integration_results_html( void );
-	void assemble_plots_html( QStringList );
+        void assemble_plots_html( QStringList,  QString = QString(""));
 	double  interp_sval( double, double*, double*,  int );
 	void plotres( QMap < QString, QString > &   );
 	void plot_pseudo3D( QString, QString );

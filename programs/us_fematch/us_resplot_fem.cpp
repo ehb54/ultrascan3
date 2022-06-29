@@ -473,18 +473,47 @@ void US_ResidPlotFem::pranCheck( bool chkd )
 // show-residual-bitmap box [un]checked
 void US_ResidPlotFem::srbmCheck( bool chkd )
 {
-   if ( chkd )
-   {  // bitmap checked:  replot to possibly build new map
-      have_bm         = ( resbmap != 0 );
 
-      if ( have_bm )
-      {  // if bitmap exists already, detect when closed
-         connect( resbmap, SIGNAL( destroyed()   ),
-                  this,    SLOT( resids_closed() ) );
-      }
+  if ( a_mode.isEmpty()  )  //Default case for stand-alone us_fematch
+    {
+      if ( chkd )
+	{  // bitmap checked:  replot to possibly build new map
+	  have_bm         = ( resbmap != 0 );
+	  	  
+	  if ( have_bm )
+	    {  // if bitmap exists already, detect when closed
+	      connect( resbmap, SIGNAL( destroyed()   ),
+		       this,    SLOT( resids_closed() ) );
+	    }
+	  
+	  plot_data();
+	}
+    }
+  else
+    {
+      if ( a_mode == "ANALYSIS" )
+	{
+	  qDebug() << "ResBMap checkbox clicked in ANALYSIS mode!!! ";
 
-      plot_data();
-   }
+	  if ( chkd )
+	    {
+	      have_ed = true;
+	      have_sd = true;;
+
+	      qDebug() << "ck_shorbm->isChecked(), have_ed, have_sd -- "
+		       << ck_shorbm->isChecked() << have_ed << have_sd;
+
+	      plot_data();
+	      resbmap->activateWindow();
+	      //resbmap->setParent(this, Qt::Widget);
+	    }
+	  else
+	    {
+	      resbmap->close();
+	    }
+	}
+    }
+   
 }
 
 // close button clicked
@@ -750,6 +779,9 @@ void US_ResidPlotFem::plot_rdata()
    bool   do_pltrin = have_ri  &&  ck_pltrin->isChecked();
    bool   do_pltran = have_ed  &&  ck_pltran->isChecked()  &&  have_sd;
    bool   do_shorbm = have_ed  &&  ck_shorbm->isChecked()  &&  have_sd;
+
+   qDebug() << "do_shorbm -- " << do_shorbm;
+   
    bool   do_addtin = have_ti  &&  ck_addtin->isChecked();
    bool   do_subtin = have_ti  &&  ck_subtin->isChecked();
    bool   do_addrin = have_ri  &&  ck_addrin->isChecked();
@@ -1005,14 +1037,30 @@ void US_ResidPlotFem::plot_rdata()
          resbmap->replot( resids );
          resbmap->raise();
          resbmap->activateWindow();
+
+	 qDebug() << "ResBitMap: have window already";
       }
 
       else
       {  // pop up a little dialog with residuals bitmap
+
+	qDebug() << "ResBitMap: NO window yet";
+	
          resbmap = new US_ResidsBitmap( resids );
          connect( resbmap, SIGNAL( destroyed() ),
                   this,    SLOT(   resids_closed() ) );
          resbmap->move( this->pos() + QPoint( 100, 100 ) );
+
+	 if ( !a_mode.isEmpty() && a_mode == "ANALYSIS" )
+	   {
+	     //resbmap->setWindowFlags( Qt::Dialog );
+	     //resbmap->setWindowModality(Qt::ApplicationModal);
+	     //resbmap->setParent(this, Qt::Window);
+	     //resbmap->disconnect();
+	     resbmap->setParent(this, Qt::Dialog);
+	     //resbmap->setWindowFlags ( Qt::WindowTitleHint );
+	   }
+	 
          resbmap->show();
          resbmap->raise();
       }
@@ -1032,7 +1080,19 @@ void US_ResidPlotFem::resids_closed()
 DbgLv(1) << "Resids BitMap Closed!!!";
    resbmap = 0;
    have_bm = false;
-   ck_shorbm->setChecked( false );
+
+   if ( a_mode.isEmpty() )
+     ck_shorbm->setChecked( false );
+   else
+     {
+       if ( a_mode == "ANALYSIS" )
+	 {
+	   ck_shorbm->disconnect();
+	   ck_shorbm->setChecked( false );
+	   connect( ck_shorbm, SIGNAL( toggled( bool ) ),
+		    this,      SLOT( srbmCheck( bool ) ) );
+	 }
+     }
 }
 
 // Connect/Disconnect plot type boxes
