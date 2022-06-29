@@ -1815,6 +1815,8 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
    save_data sum = zero;
    save_data sum2 = zero;
    save_data count = zero; // note counts may be different for n/a fields;
+   save_data vmin = zero;
+   save_data vmax = zero;
 
    QString tmp_qstring;
    bool tmp_bool;
@@ -1891,6 +1893,18 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
             (*((float *)(field_to_save_data[field[i]])))++;
             count = save->data;
 
+            save->data = vmin;
+            if ( !j || *((float *)(field_to_save_data[field[i]])) > tmp_float ) {
+               *((float *)(field_to_save_data[field[i]])) = tmp_float;
+            }
+            vmin = save->data;
+
+            save->data = vmax;
+            if ( !j || *((float *)(field_to_save_data[field[i]])) < tmp_float ) {
+               *((float *)(field_to_save_data[field[i]])) = tmp_float;
+            }
+            vmax = save->data;
+
             break;
          case DT_DOUBLE        :
             save->data = (*data)[j];
@@ -1907,6 +1921,18 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
             save->data = count;
             (*((double *)(field_to_save_data[field[i]])))++;
             count = save->data;
+
+            save->data = vmin;
+            if ( !j || *((double *)(field_to_save_data[field[i]])) > tmp_double ) {
+               *((double *)(field_to_save_data[field[i]])) = tmp_double;
+            }
+            vmin = save->data;
+
+            save->data = vmax;
+            if ( !j || *((double *)(field_to_save_data[field[i]])) < tmp_double ) {
+               *((double *)(field_to_save_data[field[i]])) = tmp_double;
+            }
+            vmax = save->data;
 
             break;
          case DT_INT           :
@@ -1925,6 +1951,18 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
             (*((int *)(field_to_save_data[field[i]])))++;
             count = save->data;
 
+            save->data = vmin;
+            if ( !j || *((int *)(field_to_save_data[field[i]])) > tmp_int ) {
+               *((int *)(field_to_save_data[field[i]])) = tmp_int;
+            }
+            vmin = save->data;
+
+            save->data = vmax;
+            if ( !j || *((int *)(field_to_save_data[field[i]])) < tmp_int ) {
+               *((int *)(field_to_save_data[field[i]])) = tmp_int;
+            }
+            vmax = save->data;
+
             break;
          case DT_UNSIGNED_INT  :
             save->data = (*data)[j];
@@ -1941,6 +1979,18 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
             save->data = count;
             (*((unsigned int *)(field_to_save_data[field[i]])))++;
             count = save->data;
+
+            save->data = vmin;
+            if ( !j || *((unsigned int *)(field_to_save_data[field[i]])) > tmp_uint ) {
+               *((unsigned int *)(field_to_save_data[field[i]])) = tmp_uint;
+            }
+            vmin = save->data;
+
+            save->data = vmax;
+            if ( !j || *((unsigned int *)(field_to_save_data[field[i]])) < tmp_uint ) {
+               *((unsigned int *)(field_to_save_data[field[i]])) = tmp_uint;
+            }
+            vmax = save->data;
 
             break;
 
@@ -1968,6 +2018,32 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
             (*((double *)(field_to_save_data[field[i]]) + 2))++;
             count = save->data;
 
+            save->data = vmin;
+            if ( !j || *((double *)(field_to_save_data[field[i]])) > tmp_double ) {
+               *((double *)(field_to_save_data[field[i]])) = tmp_double;
+            }
+            if ( !j || *((double *)(field_to_save_data[field[i]]) + 1) > tmp_double ) {
+               *((double *)(field_to_save_data[field[i]]) + 1) = tmp_double;
+            }
+            if ( !j || *((double *)(field_to_save_data[field[i]]) + 2) > tmp_double ) {
+               *((double *)(field_to_save_data[field[i]]) + 2) = tmp_double;
+            }
+            vmin = save->data;
+
+
+            save->data = vmax;
+            if ( !j || *((double *)(field_to_save_data[field[i]])) < tmp_double ) {
+               *((double *)(field_to_save_data[field[i]])) = tmp_double;
+            }
+            if ( !j || *((double *)(field_to_save_data[field[i]]) + 1) < tmp_double ) {
+               *((double *)(field_to_save_data[field[i]]) + 1) = tmp_double;
+            }
+            if ( !j || *((double *)(field_to_save_data[field[i]]) + 2) < tmp_double ) {
+               *((double *)(field_to_save_data[field[i]]) + 2) = tmp_double;
+            }
+            vmax = save->data;
+
+
             break;
          case DT_DOUBLE_NA     :
             save->data = (*data)[j];
@@ -1987,6 +2063,18 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
                save->data = count;
                (*((double *)(field_to_save_data[field[i]])))++;
                count = save->data;
+
+               save->data = vmin;
+               if ( !j || *((double *)(field_to_save_data[field[i]])) > tmp_double ) {
+                  *((double *)(field_to_save_data[field[i]])) = tmp_double;
+               }
+               vmin = save->data;
+
+               save->data = vmax;
+               if ( !j || *((double *)(field_to_save_data[field[i]])) < tmp_double ) {
+                  *((double *)(field_to_save_data[field[i]])) = tmp_double;
+               }
+               vmax = save->data;
             }
             break;
          }
@@ -2012,12 +2100,24 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
          tmp_float = *((float *)(field_to_save_data[field[i]]));
          sum = save->data;
          
-         save->data = sum2;
-         *((float *)(field_to_save_data[field[i]])) = 
-            sqrt(fabs((*((float *)(field_to_save_data[field[i]])) - tmp_float * tmp_float * tmp_count_float) / 
-            (tmp_count_float - 1)));
-         sum2 = save->data;
-                  
+         {
+            save->data = vmin;
+            float tmp_vmin = *((float *)(field_to_save_data[field[i]]));
+
+            save->data = vmax;
+            float tmp_vmax = *((float *)(field_to_save_data[field[i]]));
+         
+            save->data = sum2;
+            if ( tmp_vmin == tmp_vmax ) {
+               *((float *)(field_to_save_data[field[i]])) = 0;
+            } else {
+               *((float *)(field_to_save_data[field[i]])) = 
+                  sqrt(fabs((*((float *)(field_to_save_data[field[i]])) - tmp_float * tmp_float * tmp_count_float) / 
+                            (tmp_count_float - 1)));
+            }
+            sum2 = save->data;
+         }
+         
          break;
       case DT_DOUBLE        :
          save->data = count;
@@ -2028,12 +2128,23 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
          tmp_double = *((double *)(field_to_save_data[field[i]]));
          sum = save->data;
          
-         save->data = sum2;
-         *((double *)(field_to_save_data[field[i]])) = 
-            sqrt(fabs((*((double *)(field_to_save_data[field[i]])) - tmp_double * tmp_double * tmp_count_double  )
-            / (tmp_count_double - 1)));
-         sum2 = save->data;
-         
+         {
+            save->data = vmin;
+            double tmp_vmin = *((double *)(field_to_save_data[field[i]]));
+
+            save->data = vmax;
+            double tmp_vmax = *((double *)(field_to_save_data[field[i]]));
+
+            save->data = sum2;
+            if ( tmp_vmin == tmp_vmax ) {
+               *((double *)(field_to_save_data[field[i]])) = 0;
+            } else {
+               *((double *)(field_to_save_data[field[i]])) = 
+                  sqrt(fabs((*((double *)(field_to_save_data[field[i]])) - tmp_double * tmp_double * tmp_count_double  )
+                            / (tmp_count_double - 1)));
+            }
+            sum2 = save->data;
+         }
          break;
       case DT_INT           :
          save->data = count;
@@ -2044,11 +2155,23 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
          tmp_int = *((int *)(field_to_save_data[field[i]]));
          sum = save->data;
          
-         save->data = sum2;
-         *((int *)(field_to_save_data[field[i]])) = 
-            (*((int *)(field_to_save_data[field[i]])) - tmp_int * tmp_int * tmp_count_int) 
-            / (tmp_count_int - 1);
-         sum2 = save->data;
+         {
+            save->data = vmin;
+            int tmp_vmin = *((int *)(field_to_save_data[field[i]]));
+
+            save->data = vmax;
+            int tmp_vmax = *((int *)(field_to_save_data[field[i]]));
+
+            save->data = sum2;
+            if ( tmp_vmin == tmp_vmax ) {
+               *((int *)(field_to_save_data[field[i]])) = 0;
+            } else {
+               *((int *)(field_to_save_data[field[i]])) = 
+                  (*((int *)(field_to_save_data[field[i]])) - tmp_int * tmp_int * tmp_count_int) 
+                  / (tmp_count_int - 1);
+            }
+            sum2 = save->data;
+         }
          
          break;
       case DT_UNSIGNED_INT  :
@@ -2060,11 +2183,23 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
          tmp_uint = *((unsigned int *)(field_to_save_data[field[i]]));
          sum = save->data;
          
-         save->data = sum2;
-         *((unsigned int *)(field_to_save_data[field[i]])) = 
-            (*((unsigned int *)(field_to_save_data[field[i]])) - tmp_uint * tmp_uint * tmp_count_uint) 
-            / (tmp_count_uint - 1);
-         sum2 = save->data;
+         {
+            save->data = vmin;
+            unsigned int tmp_vmin = *((unsigned int *)(field_to_save_data[field[i]]));
+
+            save->data = vmax;
+            unsigned int tmp_vmax = *((unsigned int *)(field_to_save_data[field[i]]));
+
+            save->data = sum2;
+            if ( tmp_vmin == tmp_vmax ) {
+               *((unsigned int *)(field_to_save_data[field[i]])) = 0;
+            } else {
+               *((unsigned int *)(field_to_save_data[field[i]])) = 
+                  (*((unsigned int *)(field_to_save_data[field[i]])) - tmp_uint * tmp_uint * tmp_count_uint) 
+                  / (tmp_count_uint - 1);
+            }
+            sum2 = save->data;
+         }
          
          break;
          
@@ -2081,17 +2216,42 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
          tmp_double_3 = *((double *)(field_to_save_data[field[i]]) + 2);
          sum = save->data;
          
-         save->data = sum2;
-         *((double *)(field_to_save_data[field[i]])) = 
-            sqrt(fabs((*((double *)(field_to_save_data[field[i]])) - tmp_double * tmp_double * tmp_count_double)
-            / (tmp_count_double - 1)));
-         *((double *)(field_to_save_data[field[i]]) + 1) = 
-            sqrt(fabs((*((double *)(field_to_save_data[field[i]]) + 1) - tmp_double_2 * tmp_double_2 * tmp_count_double)
-            / (tmp_count_double - 1)));
-         *((double *)(field_to_save_data[field[i]]) + 2) = 
-            sqrt(fabs((*((double *)(field_to_save_data[field[i]]) + 2) - tmp_double_3 * tmp_double_3 * tmp_count_double)
-            / (tmp_count_double - 1)));
-         sum2 = save->data;
+         {
+            save->data = vmin;
+            double tmp_vmin0 = *((unsigned int *)(field_to_save_data[field[i]]));
+            double tmp_vmin1 = *((unsigned int *)(field_to_save_data[field[i]]) + 1);
+            double tmp_vmin2 = *((unsigned int *)(field_to_save_data[field[i]]) + 2);
+
+            save->data = vmax;
+            double tmp_vmax0 = *((unsigned int *)(field_to_save_data[field[i]]));
+            double tmp_vmax1 = *((unsigned int *)(field_to_save_data[field[i]]) + 1);
+            double tmp_vmax2 = *((unsigned int *)(field_to_save_data[field[i]]) + 2);
+
+            save->data = sum2;
+            if ( tmp_vmin0 == tmp_vmax0 ) {
+               *((double *)(field_to_save_data[field[i]])) = 0;
+            } else {
+               *((double *)(field_to_save_data[field[i]])) = 
+                  sqrt(fabs((*((double *)(field_to_save_data[field[i]])) - tmp_double * tmp_double * tmp_count_double)
+                            / (tmp_count_double - 1)));
+            }
+            if ( tmp_vmin1 == tmp_vmax1 ) {
+               *((double *)(field_to_save_data[field[i]]) + 1) = 0;
+            } else {
+               *((double *)(field_to_save_data[field[i]]) + 1) = 
+                  sqrt(fabs((*((double *)(field_to_save_data[field[i]]) + 1) - tmp_double_2 * tmp_double_2 * tmp_count_double)
+                            / (tmp_count_double - 1)));
+            }
+            
+            if ( tmp_vmin2 == tmp_vmax2 ) {
+               *((double *)(field_to_save_data[field[i]]) + 2) = 0;
+            } else {
+               *((double *)(field_to_save_data[field[i]]) + 2) = 
+                  sqrt(fabs((*((double *)(field_to_save_data[field[i]]) + 2) - tmp_double_3 * tmp_double_3 * tmp_count_double)
+                            / (tmp_count_double - 1)));
+            }
+            sum2 = save->data;
+         }
          
          break;
       case DT_DOUBLE_NA     :
@@ -2106,11 +2266,24 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
             tmp_double = *((double *)(field_to_save_data[field[i]]));
             sum = save->data;
          
-            save->data = sum2;
-            *((double *)(field_to_save_data[field[i]])) = 
-               sqrt(fabs((*((double *)(field_to_save_data[field[i]])) - tmp_double * tmp_double * tmp_count_double)
-               / (tmp_count_double - 1)));
-            sum2 = save->data;
+            {
+               save->data = vmin;
+               double tmp_vmin = *((double *)(field_to_save_data[field[i]]));
+
+               save->data = vmax;
+               double tmp_vmax = *((double *)(field_to_save_data[field[i]]));
+
+               save->data = sum2;
+               if ( tmp_vmin == tmp_vmax ) {
+                  *((double *)(field_to_save_data[field[i]])) = 0;
+               } else {
+                  save->data = sum2;
+                  *((double *)(field_to_save_data[field[i]])) = 
+                     sqrt(fabs((*((double *)(field_to_save_data[field[i]])) - tmp_double * tmp_double * tmp_count_double)
+                               / (tmp_count_double - 1)));
+               }
+               sum2 = save->data;
+            }
          }
          break;
       }

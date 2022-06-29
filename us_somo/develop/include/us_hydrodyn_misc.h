@@ -52,6 +52,7 @@ struct misc_options
    bool   hydro_supc;
    bool   hydro_zeno;
    bool   export_msroll;
+   bool   export_ssbond;
 };
 
 class US_EXTERN US_Hydrodyn_Misc : public QFrame
@@ -122,6 +123,7 @@ class US_EXTERN US_Hydrodyn_Misc : public QFrame
 
       QLabel    *lbl_other;
       QCheckBox *cb_export_msroll;
+      QCheckBox *cb_export_ssbond;
       QLabel    *lbl_vdw_ot_mult;
       QLineEdit *le_vdw_ot_mult;
       QLabel    *lbl_vdw_ot_dpct;
@@ -160,6 +162,7 @@ class US_EXTERN US_Hydrodyn_Misc : public QFrame
       // void set_hydro_zeno();
 
       void set_export_msroll();
+      void set_export_ssbond();
 
       void cancel();
       void help();

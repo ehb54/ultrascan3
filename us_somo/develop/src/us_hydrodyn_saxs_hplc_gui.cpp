@@ -15,6 +15,8 @@
 
 // #define UHSH_VAL_DEC 8
 
+// #define ALLOW_GUOS_CARUANAS
+
 void US_Hydrodyn_Saxs_Hplc::setupGUI()
 {
    int minHeight1 = 22;
@@ -774,6 +776,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 #endif
    plot_dist_zoomer = new ScrollZoomer(plot_dist->canvas());
    plot_dist_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+   plot_dist_zoomer->setTrackerPen(QPen(Qt::red));
    connect( plot_dist_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
 
 //   plot_ref = new QwtPlot( qs_plots );
@@ -883,6 +886,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
    plot_errors_zoomer = new ScrollZoomer(plot_errors->canvas());
    plot_errors_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+   plot_errors_zoomer->setTrackerPen(QPen(Qt::red));
    plot_errors_zoomer->symmetric_rescale = true;
    connect( plot_errors_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
 
@@ -1334,6 +1338,12 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_gauss_local_guos->setPalette( PALET_PUSHB );
    pb_gauss_local_guos->setToolTip( us_tr( "Gaussian peak fit by Guos method" ) );
    connect(pb_gauss_local_guos, SIGNAL(clicked()), SLOT(gauss_local_guos()));
+
+#if !defined( ALLOW_GUOS_CARUANAS )
+   le_gauss_local_pts     ->hide();
+   pb_gauss_local_caruanas->hide();
+   pb_gauss_local_guos    ->hide();
+#endif
 
    pb_ggauss_start = new QPushButton(us_tr("Global Gaussians"), this);
    pb_ggauss_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -3938,9 +3948,11 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    gaussian_widgets.push_back( le_gauss_fit_end );
    gaussian_widgets.push_back( pb_gauss_save );
 
+#if defined( ALLOW_GUOS_CARUANAS )   
    gaussian_widgets.push_back( le_gauss_local_pts );
    gaussian_widgets.push_back( pb_gauss_local_caruanas );
    gaussian_widgets.push_back( pb_gauss_local_guos );
+#endif
    
    gaussian_widgets.push_back( pb_gauss_as_curves );
    gaussian_widgets.push_back( lbl_blank1 );

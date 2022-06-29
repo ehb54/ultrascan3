@@ -305,6 +305,19 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    le_iqq_scale_maxq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_iqq_scale_maxq, SIGNAL(textChanged(const QString &)), SLOT(update_iqq_scale_maxq(const QString &)));
 
+   cb_nnls_zero_list = new QCheckBox(this);
+   cb_nnls_zero_list->setText(us_tr("List zero entries in NNLS fits"));
+   cb_nnls_zero_list->setEnabled(true);
+   cb_nnls_zero_list->setChecked(
+                                 ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "nnls_zero_list" ) ?
+                                 ((US_Hydrodyn *)us_hydrodyn)->gparams[ "nnls_zero_list" ] == "true" : false
+                                 );
+
+   cb_nnls_zero_list->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_nnls_zero_list->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_nnls_zero_list );
+   connect(cb_nnls_zero_list, SIGNAL(clicked()), this, SLOT(set_nnls_zero_list()));
+
    pb_clear_mw_cache = new QPushButton(us_tr("Clear remembered molecular weights"), this);
    pb_clear_mw_cache->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_clear_mw_cache->setMinimumHeight(minHeight1);
@@ -422,6 +435,9 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    hbl_iqq_scaling->addWidget(le_iqq_scale_minq);
    hbl_iqq_scaling->addWidget(le_iqq_scale_maxq);
    background->addLayout( hbl_iqq_scaling , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
+   j++;
+
+   background->addWidget( cb_nnls_zero_list, j, 0, 1, 2 );
    j++;
 
    {
@@ -628,6 +644,11 @@ void US_Hydrodyn_SasOptionsMisc::set_ignore_errors()
 {
    (*saxs_options).ignore_errors = cb_ignore_errors->isChecked();
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsMisc::set_nnls_zero_list()
+{
+   ((US_Hydrodyn *)us_hydrodyn)->gparams[ "nnls_zero_list" ] = cb_nnls_zero_list->isChecked() ? "true" : "false";
 }
 
 void US_Hydrodyn_SasOptionsMisc::update_scale_excl_vol(double val)

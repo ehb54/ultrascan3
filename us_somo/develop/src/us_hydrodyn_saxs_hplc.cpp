@@ -1543,6 +1543,7 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
                          "int|"
                          "txt|"
                          "csv|"
+                         "sprr|"
                          // "out|"
                          "ssaxs)$" );
 
@@ -1592,7 +1593,8 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
 
    double use_units = ( ( US_Hydrodyn * ) us_hydrodyn )->saxs_options.iq_scale_angstrom ? 1.0 : 0.1;
 
-   if ( ext == "dat" )
+   if ( ext == "dat" ||
+        ext == "sprr" )
    {
       QRegExp rx_conc      ( "Conc:\\s*(\\S+)(\\s|$)" );
       QRegExp rx_psv       ( "PSV:\\s*(\\S+)(\\s|$)" );
@@ -2393,6 +2395,8 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename, bool load_conc )
          {
             editor_msg( "red" , QString( "WARNING: %1 for %2 files SKIPPED from %3" ).arg( gaussian_type_tag ).arg( skipped ).arg( filename ) );
          }
+         // create_unified_ggaussian_target(false); // core dumps!
+         // ggaussian_rmsd();
       } else {
          for ( i = 2; i < (int) qv.size(); i++ )
          {
@@ -8114,6 +8118,19 @@ map < QString, bool > US_Hydrodyn_Saxs_Hplc::all_files_map()
       files[ lb_files->item( i )->text() ] = true;
    }
    return files;
+}
+
+int US_Hydrodyn_Saxs_Hplc::ggaussian_sel_no_gaussian_count() {
+   int sel_no_gaussian_count = 0;
+
+   QStringList files = all_selected_files();
+   
+   for ( int i = 0; i < (int) files.size(); ++i ) {
+      if ( !f_gaussians.count( files[i] ) ) {
+         ++sel_no_gaussian_count;
+      }
+   }
+   return sel_no_gaussian_count;
 }
 
 bool US_Hydrodyn_Saxs_Hplc::ggaussian_compatible( bool check_against_global )

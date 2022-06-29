@@ -1321,6 +1321,7 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
                editor_msg( "black", us_tr("\nSequence in one letter code:"));
                editor_msg( "black", courier, sstr + "\n");
                editor_msg( "black", courier, "Residue\t count\tpercent\t Theoretical waters\n" );
+               temp_model.hydration_gg = 0;
 
                if ( resname_counts_nonwat_total ) {
                   for ( map < QString, int >::iterator it = resname_counts_nonwat.begin();
@@ -1354,8 +1355,10 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
                   }
                   if ( mw_nonwat ) {
                      if ( mw_wat ) {
+                        temp_model.hydration_gg = mw_wat / mw_nonwat;
                         editor_msg( "dark blue", QString( "\nHydration [g/g] %1 (explicit waters)" ).arg( mw_wat / mw_nonwat, 0, 'g', 3 ) );
                      } else if ( tot_theo_wat ) {
+                        temp_model.hydration_gg = tot_theo_wat * 18.01528 / mw_nonwat;
                         editor_msg( "dark blue", QString( "\nHydration [g/g] %1" ).arg( tot_theo_wat * 18.01528 / mw_nonwat, 0, 'g', 3 ) );
                      }
                   }
@@ -1541,6 +1544,7 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
          editor->append(sstr + "\n\n");
 
          editor_msg( "black", "Residue\t count\tpercent\t Theoretical waters\n" );
+         temp_model.hydration_gg = 0;
 
          if ( resname_counts_nonwat_total ) {
             for ( map < QString, int >::iterator it = resname_counts_nonwat.begin();
@@ -1574,8 +1578,10 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
             }
             if ( mw_nonwat ) {
                if ( mw_wat ) {
+                  temp_model.hydration_gg = mw_wat / mw_nonwat;
                   editor_msg( "dark blue", QString( "\nHydration [g/g] %1 (explicit waters)" ).arg( mw_wat / mw_nonwat, 0, 'g', 3 ) );
                } else if ( tot_theo_wat ) {
+                  temp_model.hydration_gg = tot_theo_wat * 18.01528 / mw_nonwat;
                   editor_msg( "dark blue", QString( "\nHydration [g/g] %1" ).arg( tot_theo_wat * 18.01528 / mw_nonwat, 0, 'g', 3 ) );
                }
             }
@@ -3077,3 +3083,102 @@ void US_Hydrodyn::set_ionized_residue_vector( vector < struct residue > & residu
    // }
    // QTextStream( stdout ) << "******** end vdwf map ********" << endl;
 }
+
+bool US_Hydrodyn::model_summary_csv( const QString & filename ) {
+   // QTextStream( stdout ) << "model_summary_csv(1) " << filename << "\n";
+   // QTextStream( stdout ) << "cwd " << QDir::currentPath() << "\n";
+
+   if ( !model_vector.size() ) {
+      return false;
+   }
+   return model_summary_csv( &(model_vector[0]), filename );
+}
+
+bool US_Hydrodyn::model_summary_csv( struct PDB_model *model, const QString & filename ) {
+   QStringList header;
+   QStringList data;
+   // QTextStream( stdout ) << "model_summary_csv " << filename << "\n";
+   // QTextStream( stdout ) << "cwd " << QDir::currentPath() << "\n";
+
+   header << "structure";
+   data   << le_pdb_file->text();
+
+   if ( pdb_parse.find_sh ) {
+      header
+         << "Number of disulfide bonds"
+         << "Number of free SH"
+         ;
+      data
+         << QString( "%1" ).arg( model->num_SS_bonds )
+         << QString( "%1" ).arg( model->num_SH_free )
+         ;
+   }
+
+   header
+      << "Calculation done at pH"
+      << "Molecular weight [Da]"
+      ;
+   data
+      << QString( "%1" ).arg( le_pH->text() )
+      << QString( "%1" ).arg( model->mw + model->ionized_mw_delta )
+      ;
+
+
+   if ( model->molar_volume > 0 ) {
+      header << "Molar volume [cm^3/mol]";
+      data   << QString("%1").arg( model->molar_volume );
+   }
+
+   // tbd. qs += vbar_msg( model->vbar );
+
+   header << "SAXS excluded volume (anhydrous) [A^3]";
+   data   << QString( "%1" ).arg( model->volume );
+   
+   
+   // if ( hydro.temperature != 20 ) {
+   //    qs +=
+   //       QString(
+   //               us_tr(
+   //                     "Anh. Molecular vol. (from vbar)  : %1 [A^3] @ %2%3C\n"
+   //                     )
+   //               )
+   //       .arg( mw_to_volume( model->mw + model->ionized_mw_delta, model->vbar ) )
+   //       .arg( 20 )
+   //       .arg( DEGREE_SYMBOL )
+   //       ;
+   // }
+
+   header
+      << "Anh. Molecular vol. (from vbar) [A^3]"
+      << "Hyd. Molecular vol. (from vbar) [A^3]"
+      << "Radius of gyration [A]"
+      << "Number of electrons"
+      << "Number of protons"
+      << "Net charge"
+      << "Isoelectric point"
+      << "Hydration [g/g]"
+      ;
+
+   data
+      << QString( "%1" ).arg( mw_to_volume( model->mw + model->ionized_mw_delta, tc_vbar( model->vbar ) ) )
+      << QString( "%1" ).arg( mw_to_volume( model->mw + model->ionized_mw_delta, tc_vbar( model->vbar ) ) + model->hydration * misc.hydrovol )
+      << QString( "%1" ).arg( model->Rg, 0, 'f', 2 )
+      << QString( "%1" ).arg( model->num_elect )
+      << QString( "%1" ).arg( model->protons, 0, 'f', 1 )
+      << QString( "%1" ).arg( model->protons - model->num_elect, 0, 'f', 1 )
+      << QString( "%1" ).arg( model->isoelectric_point, 0, 'f', 2 )
+      << QString( "%1" ).arg( model->hydration_gg, 0, 'g', 3 )
+      ;      
+      
+   if ( model->volume ) {
+      header << "Average electron density [A^-3]";
+      data   << QString( "%1" ).arg( model->num_elect / model->volume, 0, 'f', 3 );
+   }
+
+   QString error;
+   QString qs =
+      "\"" + header.join( "\",\"") + "\"\n"
+      + data.join( "," ) + "\n";
+   
+   return US_File_Util::putcontents( filename, qs, error );
+}   

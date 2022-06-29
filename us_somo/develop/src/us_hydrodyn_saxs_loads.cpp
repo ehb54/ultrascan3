@@ -18,6 +18,90 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 #include <QTextStream>
 #endif
 
+static QStringList csv_transpose( const QStringList &qsl ) {
+   // qDebug() << "csv_transpose()";
+   // QTextStream( stdout ) << "source:" << qsl.join( "\n" ) << "\n";
+
+   map < int, map < int, QString > >  data;
+
+   int rows = (int) qsl.size();
+
+   int max_cols = 0;
+
+   for ( int i = 0; i < rows; ++i ) {
+      QStringList row = qsl[i].split( "," );
+      int cols = (int) row.size();
+      if ( max_cols < cols ) {
+         max_cols = cols;
+      }
+      
+      for ( int j = 0; j < cols; j++ ) {
+         data[ i ][ j ] = row[ j ];
+      }
+   }
+
+   QStringList res;
+
+   {
+      for ( int j = 0; j < max_cols; ++j ) {
+         QString line;
+         for ( int i = 0; i < rows; ++i ) {
+            if ( data.count( i ) && data[ i ].count( j ) ) {
+               line += data[ i ][ j ];
+            }
+            line += ",";
+         }
+         res << line;
+      }
+   }
+   
+   // QTextStream( stdout )  << "result\n" << res.join( "\n" ) << "\n";
+   
+   return res;
+}
+      
+static QStringList csv_pr2iq( const QStringList &qsl ) {
+   qDebug() << "csv_pr2iq()";
+   QTextStream( stdout ) << "source:" << qsl.join( "\n" ) << "\n";
+
+   QStringList res;
+
+   int rows = (int) qsl.size();
+
+   for ( int i = 0; i < rows; ++i ) {
+      QStringList row = qsl[i].split( "," );
+      if ( row.size() < 4 ) {
+         continue;
+      }
+
+      row = row.mid(0,1) + row.mid( 3 );
+
+      if ( row[1] == "\"P(r) normed\"" ) {
+         // drop either "\"P(r)\"" or "\"P(r) normed\""
+         continue;
+      }
+
+      if ( row[1] == "\"P(r)\"" ) {
+         row[1] = "\"I(q)\"";
+      }
+
+      if ( row[1] == "\"Type; r:\"" ) {
+         row[1] = "\"Type; q:\"";
+      }
+
+      // QTextStream( stdout ) << "row[1] [" << row[1] << "]\n";
+
+      row.insert(2, "0" );
+
+      // QTextStream( stdout ) << row.join( "," ) << "\n";
+      res << row.join( "," );
+   }
+
+   QTextStream( stdout )  << "result\n" << res.join( "\n" ) << "\n";
+   
+   return res;
+}
+      
 void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves )
 {
 
@@ -50,6 +134,38 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
    }
    
    QStringList qsl_headers = qsl.filter("\"Name\",\"Type; q:\"");
+   QStringList qsl_t_headers = qsl.filter( QRegExp( "^\"(Name|Type; q:)\"" ) );
+   if ( qsl_t_headers.size() == 2 ) {
+      qsl = csv_transpose( qsl );
+      qsl_headers = qsl.filter("\"Name\",\"Type; q:\"");         
+   }
+
+   // check if p(r) and load as Iq
+   {
+      QStringList test_qsl_headers = qsl.filter("\"Name\",\"MW (Daltons)\",\"Area\",\"Type; r:\"");
+      qDebug() << "checking for p(r)";
+      if ( test_qsl_headers.size() != 0 ) {
+         switch( QMessageBox::warning(
+                                      this
+                                      ,windowTitle()
+                                      ,us_tr("The file appears to be in P(r) format.\n"
+                                             "Load as if it were an I(q)?")
+                                      ,QMessageBox::Ok | QMessageBox::Cancel
+                                      ,QMessageBox::Cancel
+                                      ) ) {
+         case QMessageBox::Ok :
+            break;
+         case QMessageBox::Cancel :
+         default:
+            return;
+            break;
+         }
+         // reprocess
+         qsl = csv_pr2iq( qsl );
+         qsl_headers = qsl.filter("\"Name\",\"Type; q:\"");
+      }
+   }
+            
    if ( qsl_headers.size() == 0 && !just_plotted_curves ) 
    {
       // QMessageBox mb(us_tr("UltraScan Warning"),
@@ -799,6 +915,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
    bool save_original_data = false;
    bool run_nnls = false;
    bool run_best_fit = false;
+   bool run_ift      = false;
    QString nnls_target = "";
    if ( !grid_target.isEmpty() )
    {
@@ -822,6 +939,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                                         &save_original_data,
                                         &run_nnls,
                                         &run_best_fit,
+                                        &run_ift,
                                         &nnls_target,
                                         &clear_plot_first,
                                         1 || U_EXPT,
@@ -862,7 +980,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
    // check for scaling target
 
    QString scaling_target = "";
-   if ( qsl_sel_names.size() )
+   if ( qsl_sel_names.size() && !run_ift )
    {
       set_scaling_target( scaling_target );
    }         
@@ -877,6 +995,16 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
       sum_iq[i] = sum_iq2[i] = 0e0;
    }
    
+   // setup for ift
+   if ( run_ift ) {
+      editor_msg( "darkRed", "ift not yet" );
+      ift_to_process = qsl_sel_names;
+      ift_to_process.replaceInStrings( QRegExp( "^\""), "" ).replaceInStrings( QRegExp( "\"$"), "" );
+      QTextStream( stdout ) << "ift_to_process:\n" << ift_to_process.join( "\n" ) << endl;
+      call_ift( true );
+      return;
+   }
+
    // setup for nnls
    if ( run_nnls || run_best_fit )
    {
@@ -1287,7 +1415,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
 }
 
 
-void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QString scaleto )
+void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QString scaleto, bool no_scaling )
 {
    if ( just_plotted_curves )
    {
@@ -1302,13 +1430,32 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
          USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs" :
          our_saxs_options->path_load_saxs_curve;
       select_from_directory_history( use_dir, this );
-      filename = QFileDialog::getOpenFileName( this , "Open" , use_dir , "All files (*);;"
-                                              "ssaxs files (*.ssaxs);;"
-                                              "csv files (*.csv);;"
-                                              "int files [crysol] (*.int);;"
-                                              "dat files [foxs / other] (*.dat);;"
-                                              "fit files [crysol] (*.fit)" , &load_saxs_sans_selected_filter );
 
+      
+      QStringList filenames =
+         QFileDialog::getOpenFileNames( this , "Open" , use_dir , "All files (*);;"
+                                       "ssaxs files (*.ssaxs);;"
+                                       "csv files (*.csv);;"
+                                       "int files [crysol] (*.int);;"
+                                       "dat files [foxs / other] (*.dat);;"
+                                       "fit files [crysol] (*.fit)" , &load_saxs_sans_selected_filter );
+      if ( filenames.size() == 0 ) {
+         return;
+      }
+
+      if ( filenames.size() == 1 ) {
+         filename = filenames[0];
+      } else {
+         // multiple files loaded
+         set_scaling_target( scaleto );
+
+         for ( int i = 0; i < (int) filenames.size(); ++i ) {
+            add_to_directory_history( filenames[i] );
+            load_saxs( filenames[i], false, scaleto, scaleto.isEmpty() );
+         }
+         return;
+      }
+      
       if ( filename.isEmpty() )
       {
          return;
@@ -1388,7 +1535,7 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
          cout << "number of fields: " << number_of_fields << endl;
       }
 
-      if ( scaleto.isEmpty() ) {
+      if ( scaleto.isEmpty() && !no_scaling ) {
          set_scaling_target( scaling_target );
       } else {
          scaling_target = scaleto;
@@ -1446,7 +1593,7 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
             Icolumn = 1;
          }
       }
-      if ( ext == "dat" ) 
+      if ( ext == "dat" || ext == "txt" ) 
       {
          // foxs?
          // do_crop = true;

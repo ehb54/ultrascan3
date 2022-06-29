@@ -898,7 +898,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void load_plot_saxs();
       void set_grid();
       void show_plot_saxs();
-      void load_saxs( QString filename = "", bool just_plotted_curves = false, QString scaleto = "" );
+      void load_saxs( QString filename = "", bool just_plotted_curves = false, QString scaleto = "", bool no_scaling = false );
       void clear_plot_saxs( bool quiet = false );
       void show_plot_sans();
       void load_sans( QString filename = "", bool just_plotted_curves = false );
@@ -932,6 +932,10 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void normalize_pr( vector < double >, 
                          vector < double > *, 
                          double mw = 1e0 );
+      void normalize_pr( vector < double >, 
+                         vector < double > *, 
+                         vector < double > *, 
+                         double mw = 1e0 );
       void update_saxs_sans();
 
       void guinier_window();
@@ -954,7 +958,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void update_user_lowI(const QString &);
       void update_user_highI(const QString &);
       void load_gnom();
-      void call_ift();
+      void call_ift( bool rerun = false );
       void saxs_search();
       void saxs_screen();
       void saxs_buffer();

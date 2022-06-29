@@ -102,8 +102,12 @@ double US_Hydrodyn_Saxs::get_mw( QString filename, bool display_mw_msg, bool all
    return mw;
 }
 
-void US_Hydrodyn_Saxs::normalize_pr( vector < double > r, vector < double > *pr , double mw )
-{
+void US_Hydrodyn_Saxs::normalize_pr( vector < double > r, vector < double > *pr , double mw ) {
+   vector < double > pre(r.size(),0);
+   return normalize_pr( r, pr, &pre, mw );
+}
+
+void US_Hydrodyn_Saxs::normalize_pr( vector < double > r, vector < double > *pr , vector < double > *pre, double mw ) {
    if ( !our_saxs_options->normalize_by_mw )
    {
       mw = 1e0;
@@ -145,7 +149,8 @@ void US_Hydrodyn_Saxs::normalize_pr( vector < double > r, vector < double > *pr 
          area /= mw;
          for ( unsigned int i = 0; i < pr->size(); i++ )
          {
-            (*pr)[i] /= area;
+            (*pr) [i] /= area;
+            (*pre)[i] /= area;
          }
       }
       // cout << "normalize_pr area " << area << "\n" << flush;
@@ -168,7 +173,8 @@ void US_Hydrodyn_Saxs::normalize_pr( vector < double > r, vector < double > *pr 
    {
       for ( unsigned int i = 0; i < pr->size(); i++ )
       {
-         (*pr)[i] *= pr->size() / area ;
+         (*pr )[i] *= pr->size() / area ;
+         (*pre)[i] *= pr->size() / area ;
       }
    }
    // cout << "normalize_pr area " << area << "\n" << flush;

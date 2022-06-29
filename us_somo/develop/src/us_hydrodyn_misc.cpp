@@ -434,6 +434,15 @@ void US_Hydrodyn_Misc::setupGUI()
    AUTFBACK( cb_export_msroll );
    connect(cb_export_msroll, SIGNAL(clicked()), SLOT(set_export_msroll()));
 
+   cb_export_ssbond = new QCheckBox(this);
+   cb_export_ssbond->setText(us_tr(" Create SSBOND txt file when loading PDB"));
+   cb_export_ssbond->setChecked((*misc).export_ssbond);
+   cb_export_ssbond->setMinimumHeight(minHeight1);
+   cb_export_ssbond->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_export_ssbond->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_export_ssbond );
+   connect(cb_export_ssbond, SIGNAL(clicked()), SLOT(set_export_ssbond()));
+
    lbl_vdw_ot_mult = new QLabel(us_tr(" vdW OT multiplier: "), this);
    lbl_vdw_ot_mult->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_vdw_ot_mult->setMinimumWidth(220);
@@ -471,10 +480,11 @@ void US_Hydrodyn_Misc::setupGUI()
    connect(le_vdw_ot_dpct, SIGNAL(textChanged(const QString &)), SLOT(update_vdw_ot_dpct(const QString &)));
 
    if ( !((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode ) {
-      lbl_vdw_ot_mult->hide();
-      le_vdw_ot_mult ->hide();
-      lbl_vdw_ot_dpct->hide();
-      le_vdw_ot_dpct ->hide();
+      cb_export_ssbond->hide();
+      lbl_vdw_ot_mult ->hide();
+      le_vdw_ot_mult  ->hide();
+      lbl_vdw_ot_dpct ->hide();
+      le_vdw_ot_dpct  ->hide();
    }
    
    pb_cancel = new QPushButton(us_tr("Close"), this);
@@ -547,6 +557,8 @@ void US_Hydrodyn_Misc::setupGUI()
       leftside->addWidget( lbl_other , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
       j++;
       leftside->addWidget( cb_export_msroll , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
+      j++;
+      leftside->addWidget( cb_export_ssbond , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
       j++;
 
       leftside->addWidget(lbl_vdw_ot_mult, j, 0);
@@ -751,6 +763,12 @@ void US_Hydrodyn_Misc::set_equalize_radii()
 void US_Hydrodyn_Misc::set_export_msroll()
 {
    (*misc).export_msroll = cb_export_msroll->isChecked();
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Misc::set_export_ssbond()
+{
+   (*misc).export_ssbond = cb_export_ssbond->isChecked();
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

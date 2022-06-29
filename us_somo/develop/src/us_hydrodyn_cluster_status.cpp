@@ -102,8 +102,7 @@ US_Hydrodyn_Cluster_Status::US_Hydrodyn_Cluster_Status(
    global_Xpos += 30;
    global_Ypos += 30;
 
-   setGeometry( global_Xpos, global_Ypos, 700, 600 );
-
+   setGeometry( global_Xpos, global_Ypos, 800, 600 );
 }
 
 US_Hydrodyn_Cluster_Status::~US_Hydrodyn_Cluster_Status()
@@ -191,6 +190,11 @@ void US_Hydrodyn_Cluster_Status::setupGUI()
                               << us_tr( "Additional Info" )
                               << us_tr( "Date created" )
                               );
+
+   lv_files->setColumnWidth( 0, 250 );
+   lv_files->setColumnWidth( 1, 120 );
+   lv_files->setColumnWidth( 2, 230 );
+   lv_files->setColumnWidth( 3, 80 );
 
    connect( lv_files, SIGNAL( itemSelectionChanged() ), SLOT( update_enables() ) );
 

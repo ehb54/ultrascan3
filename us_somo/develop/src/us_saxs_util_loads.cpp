@@ -1062,6 +1062,14 @@ bool US_Saxs_Util::assign_atom(const QString &str1, struct PDB_chain *temp_chain
       //   printError(us_tr("The residue " + temp_atom.resName + " listed in this PDB file is not found in the residue table!"));
    }
 
+   if ( cystine_residues.count( temp_atom.resName ) ) {
+      sulfur_pdb_chain_atom_idx[ temp_atom.chainID ][ temp_atom.resSeq ].push_back( (unsigned int)( temp_chain->atom.size() - 1 ) );
+      if ( sulfur_atoms.count( temp_atom.name ) ) {
+         sulfur_coordinates.push_back( temp_atom.coordinate );
+         sulfur_pdb_line   .push_back( str1 );
+      }
+   }
+
    return(flag);
 }
 

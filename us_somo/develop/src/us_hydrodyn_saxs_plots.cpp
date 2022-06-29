@@ -1620,16 +1620,37 @@ void US_Hydrodyn_Saxs::pp()
            saxs_iqq_residuals_widgets.count( it->first ) &&
            saxs_iqq_residuals_widgets[ it->first ] &&
            it->second->plot ) {
-         plot_info[ "US-SOMO SAXS Residuals " + it->first ] = it->second->plot;
+         use_plot_info[ "US-SOMO SAXS Residuals " + it->first ] = it->second->plot;
       }
    }
 
-   if ( !US_Plot_Util::printtofile( fn, plot_info, errors, messages ) )
+   if ( saxs_residuals_widget ) {
+      use_plot_info[ "US-SOMO SAXS PRR Residuals" ] = saxs_residuals_window->plot;
+   }
+
+   // save and restore flags since SD errorbars duplicate Err. Maybe should remove sd errorbars flag or mirror
+   bool eb_set = cb_eb                  ->isChecked();
+   bool sd_set = cb_resid_show_errorbars->isChecked();
+   
+   if ( eb_set || sd_set ) {
+      cb_eb                  ->setChecked( true );
+      cb_resid_show_errorbars->setChecked( false );
+      set_eb();
+      set_resid_show_errorbars();
+   }
+
+   if ( !US_Plot_Util::printtofile( fn, use_plot_info, errors, messages ) )
    {
       editor_msg( "red", errors );
    } else {
       editor_msg( "blue", messages );
    }
+
+   cb_eb                  ->setChecked( eb_set );
+   cb_resid_show_errorbars->setChecked( sd_set );
+   set_eb();
+   set_resid_show_errorbars();
+
 }
 
 void US_Hydrodyn_Saxs::set_eb() 

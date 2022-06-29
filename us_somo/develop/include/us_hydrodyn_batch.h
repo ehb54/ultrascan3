@@ -257,6 +257,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
 
       void         stop_processing();
       bool         overwriteForcedOn;
+      bool         overwrite_all;
 
    public :
       void add_file( QString filename );
