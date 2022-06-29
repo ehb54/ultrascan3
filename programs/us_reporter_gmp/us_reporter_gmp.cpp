@@ -4767,14 +4767,21 @@ void  US_ReporterGMP::assemble_user_inputs_html( void )
   QMap < QString, QString >::iterator mfa;
   for ( mfa = analysis_status_map.begin(); mfa != analysis_status_map.end(); ++mfa )
 	{
+
+	  QString mfa_value    = mfa.value();
+	  QString pos          = mfa_value.split(", by")[0];
+	  QString performed_by = mfa_value.split(", by")[1];
+	  
 	  html_assembled += tr(			       
 			       "<tr>"
 			       "<td> Channel:  %1 </td>"
 			       "<td> Position: %2 </td>"
+			       "<td> Performed by: %3 </td>"
 			       "</tr>"
 			       )
 	    .arg( mfa.key()   )     //1
-	    .arg( mfa.value() )     //2
+	    .arg( pos )             //2
+	    .arg( performed_by )    //3   
 	    ;
 	}
   html_assembled += tr( "</table>" );
