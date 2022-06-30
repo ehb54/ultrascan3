@@ -24,7 +24,7 @@
 SOMO - SAXS/SANS (SAS) Simulation Module:</h2>
 <p>
 <p>
-<h3><center>Last updated: January 2018 </center></h3><p>
+<h3><center>Last updated: June 2022 </center></h3><p>
 <center><span style="color:#CC0000">NOTICE: portions of this help file are taken from the Supplementary Materials of "Brookes et al. Fibrinogen species as resolved by HPLC-SAXS data processing within the UltraScan SOlution MOdeler (US SOMO) enhanced SAS module," J. Appl. Cryst., 46:1823-1833 (2013).</span>
 </center>
 <p>
@@ -50,15 +50,16 @@ The <b>SAS module</b> panel is divided in two sections, <b><i>SAS I(q) Plotting 
 The first series of buttons in the "SAS I(q) Plotting Functions" section deals with operations on previously computed or experimental data.<br>
 <ul>
 <li>
-Loading is done with the <b><i>Load SAXS (SANS)</i></b> button (the SAXS/SANS label will switch depending on whether SAXS or SANS operations have been chosen, see below). If one or more curves are already present in the graphics window, rescaling of the new entry is possible by selecting the target curve in a pop-up window. Besides our own data formats, including multiple datasets in a comma-separated variable (csv) format (see below), the Crysol/Cryson format (Svergun et al., J. Appl. Cryst. 28, 768-773, 1995; Svergun et al., Proc. Natl. Acad. Sci. USA, 95, 2267-2272, 1998) is also recognized.  Pressing <b><i>Load SAXS (SANS)</i></b> will open up a panel listing previously utilized directories where the appropriate file might be found:  
+Loading is done with the <b><i>Load SAXS (SANS)</i></b> button (the SAXS/SANS label will switch depending on whether SAXS or SANS operations have been chosen, see below). If one or more curves are already present in the graphics window, rescaling of the new entry is possible by selecting the target curve in a pop-up window. Starting with the <span style="color:#CC0000">July 2022 intermediate release</span>, multiple entries can be selected for loading. If no previous file had been uploaded, the multiple selections will not be scaled, otherwise a reference dataset for scaling can be chosen.<br>
+Besides our own data formats, including multiple datasets in a comma-separated variable (csv) format (see <a href=somo_saxs_load_csv.html>here</a>), the Crysol/Cryson format (Svergun et al., J. Appl. Cryst. 28, 768-773, 1995; Svergun et al., Proc. Natl. Acad. Sci. USA, 95, 2267-2272, 1998) is also recognized. Pressing <b><i>Load SAXS (SANS)</i></b> will open up a panel listing previously utilized directories where the appropriate file might be found:  
 <center>
 <p>
-<img SRC="somo-SAXS_SANS_Previous_Directories.png" ALT="SOMO SAXS I(q) Previous Directories">
+<img SRC="somo-SAXS_SANS_Previous_Directories_new.png" ALT="SOMO SAXS I(q) Previous Directories">
 </center>
 <p>
 <center>
 <p>
-<img SRC="somo-SAXS_SANS_File_types.png" ALT="SOMO SAXS I(q) File tipes">
+<img SRC="somo-SAXS_SANS_File_types_new.png" ALT="SOMO SAXS I(q) File tipes">
 </center>
 <p>
 Once a file has been selected (see above for a list of compatible file types), the curve will be displayed in the top-right interactive graphics window:
@@ -96,7 +97,7 @@ If the user accepts to save the molecular weight in the GNOM file, another pop-u
 <p>
 By saving the molecular weight value in the GNOM file, <b><i>US-SOMO</i></b> will recognized it the next time the file is opened, without any further need to re-enter it.<p>
 <li>
-<b><i>Load Plotted</i></b> will instead open a new window allowing several operations to be performed on the data which are currently displayed in the graphics window (see <a href=somo_saxs_load_csv.html>here</a>).<p>
+<b><i>Load Plotted</i></b> will instead open a new window allowing several operations to be performed on the data which are currently displayed in the graphics window. This included loading csv-style files, performing fitting operations, IFT processing of multiple <i>I</i>(<i>q</i>) vs. <i>q</i> datasets, and file saving operations (see <a href=somo_saxs_load_csv.html>here</a>).<p>
 <li>
 <b><i>Set Grid</i></b> will open a dialog box allowing to first chose a dataset taken from any of the plotted curves
 <center>
@@ -125,13 +126,13 @@ Selecting the <b><i>Err</i></b> checkbox, active when up to 10 files are selecte
 <p>
 
 <li>
-<b><i>IFT</i></b> Available from the current release (January 2018), it will perform an inverse Fourier transform of the <i>I(q)</i> vs. <i>q</i> data to produce a pair-wise distance distribution curve using the indirect transform method (Glatter, J. Appl. Cryst. 10, 415-421, 1977) as implemented in the Bayesian method described by Hansen (Hansen, J. Appl. Cryst. 33, 1415-1421, 2000) (see <a href=saxs_ift.html>here</a>).<p>
+<b><i>IFT</i></b> Available from the <span style="color:#CC0000">January 2018 release</span>, it will perform an inverse Fourier transform of the <i>I(q)</i> vs. <i>q</i> data to produce a pair-wise distance distribution curve using the indirect transform method (Glatter, J. Appl. Cryst. 10, 415-421, 1977) as implemented in the Bayesian method described by Hansen (Hansen, J. Appl. Cryst. 33, 1415-1421, 2000) (see <a href=saxs_ift.html>here</a>).<p>
 <li>
 <b><i>Search</i></b> will open up a dialog box where buffer electron density, excluded volume scaling, and the excluded volume of explict waters can be automatically varied and fit against experimental data (see <a href=somo_SAXS_search.html>here</a>).<p>
 <li>
 <b><i>Data</i></b> will open a module containing various utilities for primary and processed data treatment, with the ability to perform buffer subtractions, normalization and curve joining (see <a href=somo_saxs_buffer.html>here</a>).<p>
 <li>
-<b><i>HPLC</i></b> will call a novel utility dedicated to the advanced processing of HPLC-SAXS data, for instance allowing to plot the scattered intensity at each momentum transfer <i>q</i> as a function of the elution profile, tracing and subtracting baselines, singular value decomposition (SVD), and Gaussian analysis/decomposition of not resolved peaks (see <a href=somo_saxs_hplc.html>here</a>).<p>
+<b><i>HPLC</i></b> will call an utility dedicated to the advanced processing of HPLC-SAXS data, for instance allowing to plot the scattered intensity at each momentum transfer <i>q</i> as a function of the elution profile, tracing and subtracting baselines, singular value decomposition (SVD), and Gaussian analysis/decomposition of not resolved peaks (see <a href=somo_saxs_hplc.html>here</a>).<p>
 <li>
 The <b><i>Guinier</i></b> button will allow the manual or semi-automated computation of the global, cross-section (CS, for rod-like molecules), and transverse (TV, for disk-like molecules) <i>z</i>-average square radii of gyration, <i>&lt;R<sub>g</sub><sup>2</sup>&gt;<sub>z</sub></i>, <i>&lt;R<sub>c</sub><sup>2</sup>&gt;<sub>z</sub></i>, and <i>&lt;R<sub>t</sub><sup>2</sup>&gt;<sub>z</sub></i>, respectively, and of the corresponding weight-average intensities at zero scattering angle <i>&lt;I(0)&gt;<sub>w</sub></i> and hence the molecular weight, mass/lengh ratio, and mass/area ratio, <i>&lt;M&gt;<sub>w</sub></i>, <i>&lt;M/L&gt;<sub>w/z</sub></i>, and <i>&lt;M/A&gt;<sub>w/z</sub></i>, respectively, from Guinier plots (Glatter and Kratky, Editors. Small-Angle X-ray Scattering. New York: Academic Press. 1982). On pressing <b><i>Guinier</i></b>, the <b><i>Guinier Options</i></b> panel (see <a href=somo_saxs_options.html>here</a>) will open up and allow modifying the settings, and then the alternative Guinier calculations can be launched from separate buttons. <p>
 <li>
@@ -323,7 +324,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on January 11, 2018
+Last modified on June 29, 2022
 </font>
 </body>
 </html>
