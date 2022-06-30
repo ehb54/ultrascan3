@@ -2,7 +2,13 @@
 #include "../include/us_revision.h"
 //Added by qt3to4:
 #include <QTextStream>
-#include <bits/stdc++.h>
+
+#if defined( Q_OS_MACOS )
+# include "../include/bits_stdc++.h"
+#else
+# include <bits/stdc++.h>
+#endif
+
 #include <sys/wait.h>
 
 #define DMD_LINK_RANGE_DEFAULT_PERCENT 1
