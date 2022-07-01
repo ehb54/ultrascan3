@@ -3724,7 +3724,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
             {
                continue;
             }
-            QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+            QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
             if ( qsl[ 0 ] == "run" )
             {
                editor_msg( "blue", QString( "saxscmds: running for: %1" ).arg( specname ) );
@@ -5099,7 +5099,7 @@ void US_Hydrodyn_Saxs::select_saxs_file(const QString &filename)
             continue;
          }
          qs.trimmed();
-         QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+         QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
          int pos = 0;
          if ( qsl.size() == 11 )
          {

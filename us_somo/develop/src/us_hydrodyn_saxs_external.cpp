@@ -565,7 +565,7 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
          double min_pr = 1e99;
          for ( int i = 0; i < qsl.size(); ++i ) {
             QStringList line = qsl[i].split( QRegExp( "\\s+" ) );
-            // QTextStream( stdout ) << line.join( " " ) << endl;
+            // QTextStream( stdout ) << line.join( " " ) << Qt::endl;
             if ( line.size() < 3 ) {
                continue;
             } else {
@@ -1063,7 +1063,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
             }
             if ( found_model )
             {
-               ts2 << qs << endl;
+               ts2 << qs << Qt::endl;
                if ( qs.left( 6 ) == "ENDMDL" )
                {
                   break;
@@ -1074,7 +1074,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
          while ( !ts.atEnd() )
          {
             qs = ts.readLine();
-            ts2 << qs << endl;
+            ts2 << qs << Qt::endl;
             if ( qs.left( 6 ) == "ENDMDL" )
             {
                break;
@@ -1245,7 +1245,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
                return -1;
             }
             QTextStream ts( &f );
-            ts << crysol_manual_input.join( "\n" ) << endl;
+            ts << crysol_manual_input.join( "\n" ) << Qt::endl;
             f.close();
          }
 
@@ -1270,7 +1270,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
                return -1;
             }
             QTextStream ts( &f );
-            ts << cmd << endl;
+            ts << cmd << Qt::endl;
             f.close();
 
             crysol = new QProcess( this );
@@ -1824,7 +1824,7 @@ int US_Hydrodyn_Saxs::run_sans_iq_cryson( QString pdb )
       while ( !ts.atEnd() )
       {
          qs = ts.readLine();
-         ts2 << qs << endl;
+         ts2 << qs << Qt::endl;
       }
       f.close();
       f2.close();

@@ -7,8 +7,8 @@
 #define setSamples(a,b,c)  setData(a,b,c)
 #endif
 
-US3i_Color::US3i_Color( QWidget* w, Qt::WindowFlags flags ) 
-   : US3i_widgets( true, w, flags )
+US3i_Color::US3i_Color( QWidget* w ) 
+   : US3i_widgets( true, w )
 {
   setWindowTitle( "Color Configuration for UltraScan" );
   setAttribute( Qt::WA_DeleteOnClose );

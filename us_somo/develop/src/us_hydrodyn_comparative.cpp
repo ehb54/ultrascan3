@@ -251,7 +251,7 @@ QString US_Hydrodyn_Comparative::serialize_comparative_entry( comparative_entry 
 
 comparative_entry US_Hydrodyn_Comparative::deserialize_comparative_entry( QString qs )
 {
-   QStringList qsl = (qs).split( "|" , QString::SkipEmptyParts );
+   QStringList qsl = (qs).split( "|" , Qt::SkipEmptyParts );
    comparative_entry ce;
    if ( qsl.size() < 12 )
    {
@@ -296,14 +296,14 @@ comparative_info US_Hydrodyn_Comparative::deserialize_comparative_info( QString 
 {
    comparative_info ci = US_Hydrodyn_Comparative::empty_comparative_info();
    serial_error = "";
-   QStringList qsl = (qs).split( "\n" , QString::SkipEmptyParts );
+   QStringList qsl = (qs).split( "\n" , Qt::SkipEmptyParts );
    if ( qsl.size() < 8 )
    {
       cout << QString("qsl size %1 < 8 qs:<%2>\n").arg(qs,qsl.size());
       serial_error = us_tr("Error: invalid parameter file (too few lines)");
       return ci;
    }
-   QStringList qsl0 = (qsl[0]).split( "|" , QString::SkipEmptyParts );
+   QStringList qsl0 = (qsl[0]).split( "|" , Qt::SkipEmptyParts );
    if ( qsl0.size() < 4 )
    {
       serial_error = us_tr("Error: invalid parameter file (line 1 too short)");
@@ -4632,7 +4632,7 @@ QStringList US_Hydrodyn_Comparative::csv_parse_line( QString qs )
       return qsl;
    }
 
-   QStringList qsl_chars = (qs).split( "" , QString::SkipEmptyParts );
+   QStringList qsl_chars = (qs).split( "" , Qt::SkipEmptyParts );
    QString token = "";
 
    bool in_quote = false;

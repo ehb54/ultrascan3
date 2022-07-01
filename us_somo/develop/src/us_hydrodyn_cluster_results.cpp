@@ -1062,7 +1062,7 @@ unsigned int US_Hydrodyn_Cluster_Results::update_files( bool set_lv_files )
          ( tgz_files.size() ? "\n" : "" ) +
          tar_files.join("\n")
          ;
-      files = (qs ).split( "\n" , QString::SkipEmptyParts );
+      files = (qs ).split( "\n" , Qt::SkipEmptyParts );
    }
 
    if ( set_lv_files )

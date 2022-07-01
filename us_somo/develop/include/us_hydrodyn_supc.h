@@ -11,9 +11,6 @@ struct dati1_supc
    char *cor;         /* correspondence between beads and AA */
 };
 
-#include "../include/us_hydrodyn.h"
-#include "../include/us_hydrodyn_hydro.h"
-#include "../include/us_hydrodyn_pdbdefs.h"
 #include <qlistwidget.h>
 
 #include <stdio.h>
@@ -22,6 +19,10 @@ struct dati1_supc
 #include <sys/malloc.h>
 #endif
 #include <string.h>
+
+#include "../include/us_hydrodyn.h"
+#include "../include/us_hydrodyn_hydro.h"
+#include "../include/us_hydrodyn_pdbdefs.h"
 
 
 int

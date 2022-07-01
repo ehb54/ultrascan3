@@ -43,7 +43,7 @@ US_Hydrodyn_Saxs_Hplc_Svd::US_Hydrodyn_Saxs_Hplc_Svd(
    setWindowTitle(us_tr("US-SOMO: SAXS HPLC SVD"));
 
    cg_red = USglobal->global_colors.cg_label;
-   cg_red.setBrush( QPalette::Foreground, QBrush( QColor( "red" ),  Qt::SolidPattern ) );
+   cg_red.setBrush( QPalette::WindowText, QBrush( QColor( "red" ),  Qt::SolidPattern ) );
 
    efa_range_processing = false;
    
@@ -5053,7 +5053,7 @@ vector < double > US_Hydrodyn_Saxs_Hplc_Svd::autocor( vector < vector < double >
 #if defined( DEBUG_AUTOCOR_DETAIL )
    {
       QTextStream ts( stdout );
-      ts << "US_Hydrodyn_Saxs_Hplc_Svd::autocor A" << endl;
+      ts << "US_Hydrodyn_Saxs_Hplc_Svd::autocor A" << Qt::endl;
       for ( int i = 0; i < rows; ++i ) {
          ts << i << ":";
          for ( int j = 0; j < cols; ++j ) {
@@ -5485,7 +5485,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::update_efa_range_start( double ) {
    // {
    //    QTextStream ts( stdout );
    //    for ( int i = 0; i < UHSHS_MAX_SV_FOR_EFA; ++i ) {
-   //       ts << "US_Hydrodyn_Saxs_Hplc_Svd::update_efa_range_start SV " << i << " val " << efa_range_start[ i ]->value() << endl;
+   //       ts << "US_Hydrodyn_Saxs_Hplc_Svd::update_efa_range_start SV " << i << " val " << efa_range_start[ i ]->value() << Qt::endl;
    //    }
    //    if ( efa_range_processing ) {
    //       ts << "early return, processing\n";
@@ -5583,17 +5583,17 @@ void US_Hydrodyn_Saxs_Hplc_Svd::update_efas_ranges() {
 void US_Hydrodyn_Saxs_Hplc_Svd::efa_info( QString tag ) {
    QTextStream ts( stdout );
 
-   ts << " efa_info: " << tag << " : efa_lsv.size() : " << efa_lsv.size() << endl;
+   ts << " efa_info: " << tag << " : efa_lsv.size() : " << efa_lsv.size() << Qt::endl;
 
    for ( int i = 0; i < (int) efa_lsv.size(); ++i ) {
-      ts << " efa_info: " << tag << ": efa_lsv[ " << i << " ].size() : " << efa_lsv[ i ].size() << endl;
+      ts << " efa_info: " << tag << ": efa_lsv[ " << i << " ].size() : " << efa_lsv[ i ].size() << Qt::endl;
    }
 
    
-   ts << " efa_info: " << tag << " : efa_rsv.size() : " << efa_rsv.size() << endl;
+   ts << " efa_info: " << tag << " : efa_rsv.size() : " << efa_rsv.size() << Qt::endl;
 
    for ( int i = 0; i < (int) efa_rsv.size(); ++i ) {
-      ts << " efa_info: " << tag << ": efa_rsv[ " << i << " ].size() : " << efa_rsv[ i ].size() << endl;
+      ts << " efa_info: " << tag << ": efa_rsv[ " << i << " ].size() : " << efa_rsv[ i ].size() << Qt::endl;
    }
 
 }      
@@ -6207,7 +6207,7 @@ def runExplicitEFARotation(M, D, failed, C, V_bar, T, niter, tol, force_pos):
          }
       }
 
-      ts << "i = " << i << endl;
+      ts << "i = " << i << Qt::endl;
       SVD::cout_vvd( "V_i_0", V_i_0 );
 
       int vi0rowsize = (int) V_i_0.size();
@@ -6399,7 +6399,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::efa_decomp() {
    SVD::cout_vvd( "efa_decomp before call V_bar", V_bar );
    {
       QTextStream ts( stdout );
-      ts << "efa_decomp before call num_sv " << num_sv << endl;
+      ts << "efa_decomp before call num_sv " << num_sv << Qt::endl;
    }
 
    vector < int >     force_pos( num_sv );

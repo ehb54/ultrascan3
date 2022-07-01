@@ -5,10 +5,11 @@
 #include <map>
 #include <iostream>
 #include <qstringlist.h>
-using namespace std;
 
 // QT defs:
 #include <qstring.h>
+
+using namespace std;
 
 class point
 {

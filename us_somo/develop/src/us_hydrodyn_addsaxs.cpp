@@ -555,7 +555,7 @@ void US_AddSaxs::select_file()
          QTextStream ts(&f);
          while (!ts.atEnd())
          {
-            QStringList qsl = ( ts.readLine() ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+            QStringList qsl = ( ts.readLine() ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
             int pos = 0;
             if ( qsl.size() == 11 ) {
                saxs_map[ qsl[0] ].saxs_name = qsl[pos++];

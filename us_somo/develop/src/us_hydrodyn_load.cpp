@@ -116,7 +116,7 @@ void US_Hydrodyn::read_residue_file() {
          line_count++;
          // QTextStream( stdout ) << (residue_list.size() + 1 ) << " " << new_residue.comment << endl; 
          {
-            QStringList qsl = ( ts.readLine() ).split( rx_spaces , QString::SkipEmptyParts );
+            QStringList qsl = ( ts.readLine() ).split( rx_spaces , Qt::SkipEmptyParts );
             if ( ( qsl.size() - 7 ) % 2 ) {
                // intermediate way
                // if ( qsl.size() != 7 && qsl.size() != 9 ) {
@@ -206,7 +206,7 @@ void US_Hydrodyn::read_residue_file() {
 
          for ( j = 0; j < numatoms; ++j ) {
             QString linein = ts.readLine();
-            QStringList qsl = linein.split( rx_spaces , QString::SkipEmptyParts );
+            QStringList qsl = linein.split( rx_spaces , Qt::SkipEmptyParts );
             if ( qsl.size() != 8 && qsl.size() != 16 ) {
                QMessageBox::critical(this, us_tr( windowTitle() ),
                                     us_tr("Please note:\n\nThere was an error reading the selected Residue File!\n"

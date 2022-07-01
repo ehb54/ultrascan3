@@ -9,7 +9,10 @@
 # include <bits/stdc++.h>
 #endif
 
-#include <sys/wait.h>
+
+#if !defined( Q_OS_WIN )
+# include <sys/wait.h>
+#endif
 
 #define DMD_LINK_RANGE_DEFAULT_PERCENT 1
 #define DMD_MAX_BASENAME_LENGTH        30
@@ -27,6 +30,18 @@
 // otherwise, make a bunch of individuals
 // and load as a "stack" ?
 // also, potential renumbering of pdb
+
+#if defined( Q_OS_WIN )
+
+bool US_Saxs_Util::dmd_run_with_log( const QString & 
+                                     ,const QString &
+                                     ,const QString & ) {
+   TSO << "DMD not supported under windows\n";
+   exit( -1 );
+   return false;
+}
+
+#else
 
 bool US_Saxs_Util::dmd_run_with_log( const QString & tag
                                      ,const QString & cmd
@@ -76,6 +91,7 @@ bool US_Saxs_Util::dmd_run_with_log( const QString & tag
    
    return true;
 }   
+#endif
 
 bool US_Saxs_Util::dmd_findSS()
 {
@@ -136,7 +152,7 @@ bool US_Saxs_Util::dmd_findSS()
       .arg( constraints_file );
 
    TSO << "Starting " + prog + "\n";
-   TSO << cmd << endl;
+   TSO << cmd << Qt::endl;
    if ( !system( cmd.toLatin1().data() ) ) {
       // findSS.linux returns non-zero even on success
       // errormsg =  QString( "Error: command %1 did not return a successful exit code" ).arg( cmd );
@@ -177,7 +193,7 @@ bool US_Saxs_Util::dmd_findSS()
    }
    QFile::remove( constraints_file );
    // output_files << constraints_file;
-   TSO << "dmd:ss:\n" << control_parameters[ "dmd:ss" ] << endl;
+   TSO << "dmd:ss:\n" << control_parameters[ "dmd:ss" ] << Qt::endl;
    return true;
 }
 
@@ -255,7 +271,7 @@ bool US_Saxs_Util::dmd_prepare()
            !control_parameters[ "dmdstatic" ].isEmpty() &&
            control_parameters[ "dmdstatic" ] != "none" )
       {
-         QStringList qsl = (control_parameters[ "dmdstatic" ] ).split( "," , QString::SkipEmptyParts );
+         QStringList qsl = (control_parameters[ "dmdstatic" ] ).split( "," , Qt::SkipEmptyParts );
          for ( unsigned int i = 0; i < (unsigned int) qsl.size(); i++ )
          {
             ts << QString( "Static %1\n" ).arg( qsl[ i ] );
@@ -275,7 +291,7 @@ bool US_Saxs_Util::dmd_prepare()
       .arg( range.axis[ 1 ] )
       .arg( range.axis[ 2 ] );
 
-   TSO << "range string: " << qs_range << endl;
+   TSO << "range string: " << qs_range << Qt::endl;
 
    // outputs
    // FIX THIS: should be renamed ? and renamed in output_files
@@ -303,7 +319,7 @@ bool US_Saxs_Util::dmd_prepare()
       ;
    
    TSO << "Starting " + prog + "\n";
-   TSO << cmd << endl;
+   TSO << cmd << Qt::endl;
    if ( !system( cmd.toLatin1().data() ) ) {
       // complex.linux returns non-zero even on success
       // errormsg =  QString( "Error: command %1 did not return a successful exit code" ).arg( cmd );
@@ -681,9 +697,9 @@ bool US_Saxs_Util::dmd_strip_pdb()
                last_key              = this_key;
             }
          }
-         tso << qs << endl;
+         tso << qs << Qt::endl;
       } else {
-         tsol << qs << endl;
+         tsol << qs << Qt::endl;
       }
    }
    fi.close();
@@ -941,7 +957,7 @@ bool US_Saxs_Util::dmd_run( QString run_description )
       ;
    
    TSO << "Starting " + prog + "\n";
-   TSO << cmd << endl;
+   TSO << cmd << Qt::endl;
    if ( !dmd_run_with_log( is_relax ? "Relaxation" : "Equilibrium",  cmd, echo_file ) ) {
    // if ( !system( cmd.toLatin1().data() ) ) {
       // xDMD.linux returns non-zero even on success
@@ -1031,7 +1047,7 @@ bool US_Saxs_Util::dmd_run( QString run_description )
          ;
       
       TSO << "Starting " + prog + "\n";
-      TSO << cmd << endl;
+      TSO << cmd << Qt::endl;
       if ( !system( cmd.toLatin1().data() ) ) {
          // complex_M2P.linux returns non-zero even on success
          // errormsg =  QString( "Error: command %1 did not return a successful exit code" ).arg( cmd );
@@ -1114,7 +1130,7 @@ bool US_Saxs_Util::dmd_run( QString run_description )
          
          for ( int i = 0; i < qsl_pdb_size; ++i ) {
             QString qs = qsl_pdb[ i ];
-            *tso << qs << endl;
+            *tso << qs << Qt::endl;
             if ( dmdmmlastout ) {
                allmodels << qs << "\n";
             }
@@ -1799,7 +1815,7 @@ bool US_Saxs_Util::dmd_pdb_prepare( QStringList & qsl_pdb
          chain_links[ dmd_chain[ chainid1 ][ resseq1 ] ].insert( dmd_chain[ chainid2 ][ resseq2 ] );
          chain_links[ dmd_chain[ chainid2 ][ resseq2 ] ].insert( dmd_chain[ chainid1 ][ resseq1 ] );
          qsl_link_constraints << constraint;
-         // TSO << constraint << endl;
+         // TSO << constraint << Qt::endl;
       }
 
       // link_check

@@ -1530,7 +1530,7 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
          QString test_line = qv[2];
          test_line.replace(QRegExp("^\\s+"),"");
          test_line.replace(QRegExp("\\s+$"),"");
-         QStringList test_list = (test_line).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+         QStringList test_list = (test_line).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
          number_of_fields = test_list.size();
          cout << "number of fields: " << number_of_fields << endl;
       }
@@ -1728,11 +1728,11 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
             continue;
          }
          
-         // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , QString::SkipEmptyParts ),""));
+         // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
          QStringList tokens;
          {
             QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-            tokens = (qs ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+            tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
          }
          if ( (unsigned int) tokens.size() > Icolumn )
          {
@@ -3562,7 +3562,7 @@ void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
          QString test_line = qv[2];
          test_line.replace(QRegExp("^\\s+"),"");
          test_line.replace(QRegExp("\\s+$"),"");
-         QStringList test_list = (test_line).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+         QStringList test_list = (test_line).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
          number_of_fields = test_list.size();
          cout << "number of fields: " << number_of_fields << endl;
       }
@@ -3754,11 +3754,11 @@ void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
             continue;
          }
          
-         // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , QString::SkipEmptyParts ),""));
+         // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
          QStringList tokens;
          {
             QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-            tokens = (qs ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+            tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
          }
          if ( (unsigned int) tokens.size() > Icolumn )
          {

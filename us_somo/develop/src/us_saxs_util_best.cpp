@@ -191,11 +191,11 @@ bool US_Saxs_Util::run_best()
             if ( qs.contains( "triangles written to disk" ) )
             {
                did_find_triangles = true;
-               // QStringList qsl = (qs.trimmed().split( " " , QString::SkipEmptyParts ) );
+               // QStringList qsl = (qs.trimmed().split( " " , Qt::SkipEmptyParts ) );
                QStringList qsl;
                {
                   QString qs2 = qs.trimmed(); 
-                  qsl = (qs2 ).split( " " , QString::SkipEmptyParts );
+                  qsl = (qs2 ).split( " " , Qt::SkipEmptyParts );
                }
                if ( qsl.size() )
                {
@@ -785,7 +785,7 @@ bool US_Saxs_Util::run_best()
          {
             ts << ",";
          }
-         ts << "\"Extrapolation to zero triangles (a)\",\"Sigma a\",\"Sigma a %\",\"Slope (b)\",\"Sigma b\",\"Sigma b %\",\"chi^2\"" << endl;
+         ts << "\"Extrapolation to zero triangles (a)\",\"Sigma a\",\"Sigma a %\",\"Slope (b)\",\"Sigma b\",\"Sigma b %\",\"chi^2\"" << Qt::endl;
       }
 
       ts << "\"Triangles used\",";
@@ -793,13 +793,13 @@ bool US_Saxs_Util::run_best()
       {
          ts << "=" << triangles[ i ] << ",";
       }
-      ts << endl;
+      ts << Qt::endl;
       ts << "\"1/Triangles used\",";
       for ( int i = 0; i < (int) one_over_triangles.size(); ++i )
       {
          ts <<  QString( "=%1," ).arg( one_over_triangles[ i ] );
       }
-      ts << endl;
+      ts << Qt::endl;
 
       for ( int i = 0; i < (int) csv_header.size(); ++i )
       {
@@ -850,7 +850,7 @@ bool US_Saxs_Util::run_best()
                .arg( chi2, 0, 'g', 8 )
                ;
          }
-         ts << endl;
+         ts << Qt::endl;
       }
       f.close();
       output_files << f.fileName();
@@ -1227,9 +1227,9 @@ bool US_Saxs_Util::strip_pdb(
                last_key              = this_key;
             }
          }
-         tso << qs << endl;
+         tso << qs << Qt::endl;
       } else {
-         tsol << qs << endl;
+         tsol << qs << Qt::endl;
       }
    }
    fi.close();

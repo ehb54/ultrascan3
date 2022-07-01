@@ -658,7 +658,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
          if ( qs.contains( rx_model ) )
          {
             model_count++;
-            QStringList qsl = (qs.left(20).split( QRegExp("\\s+") , QString::SkipEmptyParts ) );
+            QStringList qsl = (qs.left(20).split( QRegExp("\\s+") , Qt::SkipEmptyParts ) );
             QString model_name;
             if ( qsl.size() == 1 )
             {
@@ -2573,7 +2573,7 @@ QStringList US_Hydrodyn_Pdb_Tool_Merge::csv_parse_line( QString qs )
       return qsl;
    }
 
-   QStringList qsl_chars = (qs).split( "" , QString::SkipEmptyParts );
+   QStringList qsl_chars = (qs).split( "" , Qt::SkipEmptyParts );
    QString token = "";
 
    bool in_quote = false;
@@ -3678,8 +3678,8 @@ void US_Hydrodyn_Pdb_Tool_Merge::only_closest()
                   );
 
       {
-         QStringList chain_a_list = (minimum_key_a ).split( "~" , QString::SkipEmptyParts );
-         QStringList chain_b_list = (minimum_key_b ).split( "~" , QString::SkipEmptyParts );
+         QStringList chain_a_list = (minimum_key_a ).split( "~" , Qt::SkipEmptyParts );
+         QStringList chain_b_list = (minimum_key_b ).split( "~" , Qt::SkipEmptyParts );
 
          QString chain_a = chain_a_list.size() > 1 ? chain_a_list[ 1 ] : "?";
          QString chain_b = chain_b_list.size() > 1 ? chain_b_list[ 1 ] : "?";
@@ -4680,7 +4680,7 @@ bool US_Hydrodyn_Pdb_Tool_Merge::get_chains( QString chain )
    {
       return false;
    }
-   QStringList qsl = (chain ).split( "+" , QString::SkipEmptyParts );
+   QStringList qsl = (chain ).split( "+" , Qt::SkipEmptyParts );
    if ( qsl.size() != 2 )
    {
       editor_msg( "red", QString( us_tr( "Error: Extra chain not in proper format <%1>, please label each chain" ) ).arg( chain ) );
@@ -4697,7 +4697,7 @@ bool US_Hydrodyn_Pdb_Tool_Merge::get_chains( QString chain, QString &fit_chain, 
       cross_chain = "";
       return false;
    }
-   QStringList qsl = (chain ).split( "+" , QString::SkipEmptyParts );
+   QStringList qsl = (chain ).split( "+" , Qt::SkipEmptyParts );
    if ( qsl.size() != 2 )
    {
       editor_msg( "red", QString( us_tr( "Error: Extra chain not in proper format <%1>, please label each chain" ) ).arg( chain ) );

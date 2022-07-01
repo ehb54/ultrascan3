@@ -430,8 +430,7 @@ void US_PlotPushbutton::us3i_plotClicked( void )
    \param p            Parent widget
    \param f            Window Flags
 */
-US_PlotConfig::US_PlotConfig( QwtPlot* current_plot, QWidget* p, 
-  Qt::WindowFlags f ) : US3i_widgetsDialog( p, f ) //( false, p, f )
+US_PlotConfig::US_PlotConfig( QwtPlot* current_plot, QWidget* p ) : US3i_widgetsDialog( p ) //( false, p, f )
 {
    setWindowTitle( "Local Plot Configuration" );
    setPalette( US3i_GuiSettings::frameColor() );
@@ -949,8 +948,8 @@ void US_PlotConfig::gridConfigFinish( void )
    \param f           Widget flags
 */
 US_PlotCurveConfig::US_PlotCurveConfig( QwtPlot* currentPlot, 
-      const QStringList& selected, QWidget* parent, Qt::WindowFlags f ) 
-      : US3i_widgetsDialog( parent, f ) //( false, parent, f )
+      const QStringList& selected, QWidget* parent ) 
+      : US3i_widgetsDialog( parent ) //( false, parent, f )
 {
    plot          = currentPlot;
    selectedItems = selected;
@@ -1350,7 +1349,7 @@ void US_PlotCurveConfig::apply( void )
 //**** Custom class to display curve configuration  ********
 
 US_PlotLabel::US_PlotLabel( US_PlotCurveConfig* caller, 
-      QWidget* p, Qt::WindowFlags f  ) : QWidget( p, f )
+      QWidget* p ) : QWidget( p )
 {
    data  = caller;
    label = new QLabel;
@@ -1456,7 +1455,7 @@ void US_PlotLabel::paintEvent( QPaintEvent* e )
    \param flags       Frame window flags
 */
 US_PlotAxisConfig::US_PlotAxisConfig( int currentAxis, QwtPlot* currentPlot, 
-   QWidget* parent, Qt::WindowFlags flags ) : US3i_widgetsDialog( parent, flags )//( false, parent, flags )
+   QWidget* parent ) : US3i_widgetsDialog( parent )//( false, parent, flags )
 {
    plot = currentPlot;
    axis = currentAxis;
@@ -1854,7 +1853,7 @@ void US_PlotAxisConfig::apply( void )
      \param flags       Window flags
 */
 US_PlotGridConfig::US_PlotGridConfig( QwtPlot* currentPlot, 
-   QWidget* parent, Qt::WindowFlags flags ) : US3i_widgetsDialog( parent, flags )//( false, parent, flags )
+   QWidget* parent ) : US3i_widgetsDialog( parent )//( false, parent, flags )
 {
    setWindowTitle( tr( "Grid Configuration" ) );
    setPalette( US3i_GuiSettings::frameColor() );

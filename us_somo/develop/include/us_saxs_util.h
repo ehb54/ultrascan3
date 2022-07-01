@@ -8,6 +8,13 @@
 #endif
 
 // QT defs:
+#include <QtCore>
+#include <QtWidgets>
+#include <math.h>
+#include <time.h>
+#include <map>
+#include <set>
+#include <qregexp.h>
 
 #include "us_util.h"
 #include "us_math.h"
@@ -15,11 +22,6 @@
 #include "us_gzip.h"
 #include "us_hydrodyn_pdbdefs.h"
 #include "us_hydrodyn_asa.h"
-#include <math.h>
-#include <time.h>
-#include <map>
-#include <set>
-#include <qregexp.h>
 #include "us_saxs_gp.h"
 #include "us_saxs_util_nsa.h"
 #include "us_json.h"

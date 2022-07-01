@@ -272,30 +272,30 @@ void US_Config_GUI::setup_GUI()
 
    QFontMetrics* fm      = new QFontMetrics ( *font );
 
-   int cwidth  = fm->width( USglobal->config_list.browser );
-   int w       = fm->width( USglobal->config_list.root_dir );
+   int cwidth  = fm->horizontalAdvance( USglobal->config_list.browser );
+   int w       = fm->horizontalAdvance( USglobal->config_list.root_dir );
    
    w = ( cwidth > w ) ? cwidth : w;
 
-   w = fm->width( USglobal->config_list.data_dir );
+   w = fm->horizontalAdvance( USglobal->config_list.data_dir );
    w = ( cwidth > w ) ? cwidth : w;
 
-   w = fm->width( USglobal->config_list.system_dir );
+   w = fm->horizontalAdvance( USglobal->config_list.system_dir );
    w = ( cwidth > w ) ? cwidth : w;
 
-   w = fm->width( USglobal->config_list.help_dir );
+   w = fm->horizontalAdvance( USglobal->config_list.help_dir );
    w = ( cwidth > w ) ? cwidth : w;
 
-   w = fm->width( USglobal->config_list.tmp_dir );
+   w = fm->horizontalAdvance( USglobal->config_list.tmp_dir );
    w = ( cwidth > w ) ? cwidth : w;
 
-   w = fm->width( USglobal->config_list.archive_dir );
+   w = fm->horizontalAdvance( USglobal->config_list.archive_dir );
    w = ( cwidth > w ) ? cwidth : w;
 
-   w = fm->width( USglobal->config_list.result_dir );
+   w = fm->horizontalAdvance( USglobal->config_list.result_dir );
    w = ( cwidth > w ) ? cwidth : w;
 
-   w = fm->width( USglobal->config_list.html_dir );
+   w = fm->horizontalAdvance( USglobal->config_list.html_dir );
    w = ( cwidth > w ) ? cwidth : w;
 
 #if QT_VERSION > 0x040000

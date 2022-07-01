@@ -1212,7 +1212,7 @@ QStringList US_Hydrodyn_Cluster_Dmd::csv_parse_line( QString qs )
       return qsl;
    }
 
-   QStringList qsl_chars = (qs).split( "" , QString::SkipEmptyParts );
+   QStringList qsl_chars = (qs).split( "" , Qt::SkipEmptyParts );
    QString token = "";
 
    bool in_quote = false;
@@ -1510,7 +1510,7 @@ bool US_Hydrodyn_Cluster_Dmd::convert_static_range( int row )
    QStringList qsl;
    {
       QRegExp rx = QRegExp( "\\s*(\\s|,|;)+\\s*" );
-      qsl = (static_range ).split( rx , QString::SkipEmptyParts );
+      qsl = (static_range ).split( rx , Qt::SkipEmptyParts );
    }
 
    TSO << QString( "convert_static_range qsl.size() %1\n" ).arg( qsl.size() );

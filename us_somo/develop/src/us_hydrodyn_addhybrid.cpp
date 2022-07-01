@@ -391,7 +391,7 @@ void US_AddHybridization::select_saxs_file()
                continue;
             }
             qs.trimmed();
-            QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+            QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
             int pos = 0;
             if ( qsl.size() == 11 )
             {

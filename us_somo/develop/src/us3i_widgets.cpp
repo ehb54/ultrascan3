@@ -8,7 +8,7 @@
 #include "us3i_images.h"
 #include "us3i_util.h"
 
-US3i_widgets::US3i_widgets( bool set_position, QWidget* w, Qt::WindowFlags f ) : QFrame( w, f )
+US3i_widgets::US3i_widgets( bool set_position, QWidget* w ) : QFrame( w )
 {
   QApplication::setStyle( QStyleFactory::create( US3i_GuiSettings::guiStyle() ) );
 

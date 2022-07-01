@@ -2355,11 +2355,11 @@ bool US_Hydrodyn::calc_hullrad_hydro( QString filename ) {
          {
             found_model = true;
             model_count++;
-            // QStringList qsl = (qs.left(20).split( QRegExp("\\s+") , QString::SkipEmptyParts ) );
+            // QStringList qsl = (qs.left(20).split( QRegExp("\\s+") , Qt::SkipEmptyParts ) );
             QStringList qsl;
             {
                QString qs2 = qs.left( 20 );
-               qsl = (qs2 ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+               qsl = (qs2 ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
             }
             QString model_name;
             if ( qsl.size() == 1 )

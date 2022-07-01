@@ -26,7 +26,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    cg_magenta.setBrush( QPalette::Base, QBrush( QColor( "magenta" ), Qt::SolidPattern ) );
 
    /*
-     cg_magenta.setBrush( QPalette::Foreground, QBrush( QColor( "magenta" ), Qt::SolidPattern ) );
+     cg_magenta.setBrush( QPalette::WindowText, QBrush( QColor( "magenta" ), Qt::SolidPattern ) );
      cg_magenta.setBrush( QPalette::Button, QBrush( QColor( "blue" ), Qt::SolidPattern ) );
      cg_magenta.setBrush( QPalette::Light, QBrush( QColor( "darkcyan" ), Qt::SolidPattern ) );
      cg_magenta.setBrush( QPalette::Midlight, QBrush( QColor( "darkblue" ), Qt::SolidPattern ) );
@@ -5168,7 +5168,7 @@ void US_Hydrodyn_Saxs_Hplc::model_view( QStringList files )
    for ( int i = 0; i < (int) files.size(); ++i )
    {
       int bead_count;
-      QStringList qsl0 = (models[ files[ i ] ] ).split( "\n" , QString::SkipEmptyParts );
+      QStringList qsl0 = (models[ files[ i ] ] ).split( "\n" , Qt::SkipEmptyParts );
 
       if ( qsl0.size() < 1 )
       {
@@ -5177,7 +5177,7 @@ void US_Hydrodyn_Saxs_Hplc::model_view( QStringList files )
       }
          
       {
-         QStringList qsl = (qsl0[ 0 ] ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+         QStringList qsl = (qsl0[ 0 ] ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
          if ( qsl.size() < 1 )
          {
             editor_msg( "red", QString( us_tr( "Error: insufficient model info for file %1 [b]" ) ).arg( files[ i ] ) );
@@ -5202,7 +5202,7 @@ void US_Hydrodyn_Saxs_Hplc::model_view( QStringList files )
       {
          bms += "Pb ";
 
-         QStringList qsl = (qsl0[ j ] ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+         QStringList qsl = (qsl0[ j ] ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
 
          if ( qsl.size() < 4 )
          {

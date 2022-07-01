@@ -688,24 +688,24 @@ QTreeWidgetItem * US_Static::lv_lastItem( QTreeWidget *lv ) {
 // }
 
 
-double US_Static::getDouble(const QString & title, const QString & label, double value, double min, double max, int decimals, bool * ok, QWidget * parent, const char * , Qt::WindowFlags flags) {
-    return QInputDialog::getDouble(parent, title, label, value, min, max, decimals, ok, flags);
+double US_Static::getDouble(const QString & title, const QString & label, double value, double min, double max, int decimals, bool * ok, QWidget * parent, const char * ) {
+    return QInputDialog::getDouble(parent, title, label, value, min, max, decimals, ok );
 }
 
-int US_Static::getInteger(const QString & title, const QString & label, int value, int min, int max, int step, bool * ok, QWidget * parent, const char *, Qt::WindowFlags flags) {
+int US_Static::getInteger(const QString & title, const QString & label, int value, int min, int max, int step, bool * ok, QWidget * parent, const char * ) {
 #if QT_VERSION >= 0x050000
-   return QInputDialog::getInt(parent, title, label, value, min, max, step, ok, flags);
+   return QInputDialog::getInt(parent, title, label, value, min, max, step, ok );
 #else
-   return QInputDialog::getInteger(parent, title, label, value, min, max, step, ok, flags);
+   return QInputDialog::getInteger(parent, title, label, value, min, max, step, ok );
 #endif
 }
 
-QString US_Static::getItem(const QString & title, const QString & label, const QStringList & list, int current, bool editable, bool * ok, QWidget * parent, const char *, Qt::WindowFlags flags) {
-   return QInputDialog::getItem(parent, title, label, list, current, editable, ok, flags) ;
+QString US_Static::getItem(const QString & title, const QString & label, const QStringList & list, int current, bool editable, bool * ok, QWidget * parent, const char * ) {
+   return QInputDialog::getItem(parent, title, label, list, current, editable, ok ) ;
 }
 
-QString US_Static::getText(const QString & title, const QString & label, QLineEdit::EchoMode echo, const QString & text, bool * ok, QWidget * parent, const char *, Qt::WindowFlags flags) {
-   return QInputDialog::getText(parent, title, label, echo, text, ok, flags);
+QString US_Static::getText(const QString & title, const QString & label, QLineEdit::EchoMode echo, const QString & text, bool * ok, QWidget * parent, const char * ) {
+   return QInputDialog::getText(parent, title, label, echo, text, ok );
 }
 
 int US_Static::us_message(const QString & title, const QString & text, const QString & buttonText, QWidget * parent, const char *) {
