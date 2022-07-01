@@ -37,7 +37,7 @@ bool US_Write_Config::write_config( struct Config config_list )
    }
 
    {
-      temp_dir = config_list.root_dir;
+      QDir temp_dir = config_list.root_dir;
       if ( ! temp_dir.exists() )
       {
          if (!temp_dir.mkdir(config_list.root_dir ))

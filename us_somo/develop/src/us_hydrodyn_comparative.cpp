@@ -4429,7 +4429,7 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
 
 bool US_Hydrodyn_Comparative::any_params_enabled()
 {
-   bool any_enabled;
+   bool any_enabled = false;
    for ( unsigned int i = 0; i < ce_names.size(); i++ )
    {
       if ( all_selected_csv_contain( *ce_map[ce_names[i]] ) )

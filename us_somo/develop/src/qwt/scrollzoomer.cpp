@@ -234,7 +234,7 @@ bool ScrollZoomer::eventFilter( QObject *object, QEvent *event )
             case QEvent::Resize:
             {
                 int left, top, right, bottom;
-                canvas()->contentsMargins( &left, &top, &right, &bottom );
+                canvas()->getContentsMargins( &left, &top, &right, &bottom );
 
                 QRect rect;
                 rect.setSize( static_cast<QResizeEvent *>( event )->size() );
