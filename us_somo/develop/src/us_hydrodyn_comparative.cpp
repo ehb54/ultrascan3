@@ -3899,7 +3899,7 @@ void US_Hydrodyn_Comparative::csv_write( QString filename, csv &csv1 )
    {
       qs += QString("%1\"%2\"").arg(i ? "," : "").arg(csv1.header[i]);
    }
-   t << qs << endl;
+   t << qs << Qt::endl;
    for ( unsigned int i = 0; i < csv1.data.size(); i++ )
    {
       qs = "";
@@ -3907,7 +3907,7 @@ void US_Hydrodyn_Comparative::csv_write( QString filename, csv &csv1 )
       {
          qs += QString("%1%2").arg(j ? "," : "").arg(csv1.data[i][j]);
       }
-      t << qs << endl;
+      t << qs << Qt::endl;
    }
    f.close();
    editor->append(QString(us_tr("Saved csv file: %1\n")).arg(filename));

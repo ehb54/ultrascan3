@@ -226,7 +226,7 @@ bool US_Saxs_Util::run_saxs_iq_crysol()
       while ( !ts.atEnd() )
       {
          qs = ts.readLine();
-         ts2 << qs << endl;
+         ts2 << qs << Qt::endl;
       }
       f.close();
       f2.close();

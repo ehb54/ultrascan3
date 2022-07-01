@@ -5353,7 +5353,7 @@ void US_Hydrodyn_Saxs::select_saxs_file(const QString &filename)
       for ( auto it = hybrid_coords.begin();
             it != hybrid_coords.end();
             ++it ) {
-         QTextStream( stdout ) << "hybrid coord key " << it->first << endl;
+         QTextStream( stdout ) << "hybrid coord key " << it->first << Qt::endl;
       }
    }               
 

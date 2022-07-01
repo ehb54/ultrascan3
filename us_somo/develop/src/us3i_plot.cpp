@@ -681,7 +681,7 @@ void US_PlotConfig::updateTitleFont( void )
    bool ok;
    QFont currentFont = plot->title().font();
    QFont newFont     = QFontDialog::getFont( &ok, currentFont, this,
-                          tr( "Set Title Font" ), 0 );
+                          tr( "Set Title Font" ) );
 
    if ( ok )
    {
@@ -812,7 +812,7 @@ void US_PlotConfig::updateLegendFont( void )
 
    bool ok;
    QFont newFont = QFontDialog::getFont( &ok, font, this,
-                       tr( "Set Legend Font" ), 0 );
+                       tr( "Set Legend Font" ) );
 
    if ( ok )
    {
@@ -1705,7 +1705,7 @@ void US_PlotAxisConfig::selectTitleFont( void )
    bool ok;
    QFont currentFont = plot->axisTitle( axis ).font();
    QFont newFont     = QFontDialog::getFont( &ok, currentFont, this,
-                          tr( "Set Axis Title Font" ), 0 );
+                          tr( "Set Axis Title Font" ) );
 
    if ( ok )
    {
@@ -1734,7 +1734,7 @@ void US_PlotAxisConfig::selectScaleFont( void )
    bool ok;
    QFont currentFont = plot->axisFont( axis );
    QFont newFont     = QFontDialog::getFont( &ok, currentFont, this,
-                          tr( "Set Axis Scale Font" ), 0 );
+                          tr( "Set Axis Scale Font" ) );
 
    if ( ok )
    {

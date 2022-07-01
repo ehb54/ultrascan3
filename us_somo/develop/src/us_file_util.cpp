@@ -281,11 +281,11 @@ void US_Log::log( const QString & qs )
       (*ts) << qs;
       if ( !qs.contains( QRegExp( "\\n$" ) ) )
       {
-         (*ts) << endl;
+         (*ts) << Qt::endl;
       }
       if ( autoflush )
       {
-         (*ts) << flush;
+         (*ts) << Qt::flush;
       }
    }
 }

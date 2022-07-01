@@ -1889,7 +1889,7 @@ void US_Hydrodyn_Saxs_Screen::save_plot()
       qs += QString("%1\"%2\"").arg(i ? "," : "").arg(plot_csv.header[i]);
    }
 
-   t << qs << endl;
+   t << qs << Qt::endl;
 
    for ( unsigned int i = 0; i < plot_csv.data.size(); i++ )
    {
@@ -1898,7 +1898,7 @@ void US_Hydrodyn_Saxs_Screen::save_plot()
       {
          qs += QString("%1%2").arg(j ? "," : "").arg(plot_csv.data[i][j]);
       }
-      t << qs << endl;
+      t << qs << Qt::endl;
    }
    f.close();
    editor_msg("black", QString("File %1 written\n").arg( filename ) );

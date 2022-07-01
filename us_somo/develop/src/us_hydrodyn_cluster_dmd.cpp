@@ -59,7 +59,7 @@ US_Hydrodyn_Cluster_Dmd::US_Hydrodyn_Cluster_Dmd(
          QString filename      = QFileInfo( full_filename ).fileName();
          if ( !us->dmd_pdb_prepare( full_filename ) ) {
             ((US_Hydrodyn *)us_hydrodyn)->dmd_failed_validation = true;
-            qDebug() << "dmd_pdb_prepare() : errors : " << us->errormsg << endl;
+            qDebug() << "dmd_pdb_prepare() : errors : " << us->errormsg << Qt::endl;
             ((US_Hydrodyn *)us_hydrodyn)->dmd_all_pdb_prepare_reports[ filename ] = us->dmd_pdb_prepare_reports;
             ((US_Hydrodyn *)us_hydrodyn)->dmd_all_pdb_prepare_reports[ filename ][ "errors" ] << us->errormsg;
             if ( !us->noticemsg.isEmpty() ) {
@@ -697,8 +697,8 @@ void US_Hydrodyn_Cluster_Dmd::copy()
    }
    // editor_msg( "black", QString( "csv copy has %1 rows" ).arg( csv_copy.data.size() ) );
 
-   // TSO << "csv1 after copy():\n" << csv_to_qstring( csv1 ) << endl;
-   // TSO << "csv_copy after copy():\n" << csv_to_qstring( csv_copy ) << endl;
+   // TSO << "csv1 after copy():\n" << csv_to_qstring( csv1 ) << Qt::endl;
+   // TSO << "csv_copy after copy():\n" << csv_to_qstring( csv_copy ) << Qt::endl;
 
    update_enables();
 }
@@ -728,8 +728,8 @@ void US_Hydrodyn_Cluster_Dmd::paste()
          pos++;
       }
    }
-   // TSO << "csv1 after paste():\n" << csv_to_qstring( csv1 ) << endl;
-   // TSO << "csv_copy after paste():\n" << csv_to_qstring( csv_copy ) << endl;
+   // TSO << "csv1 after paste():\n" << csv_to_qstring( csv1 ) << Qt::endl;
+   // TSO << "csv_copy after paste():\n" << csv_to_qstring( csv_copy ) << Qt::endl;
    reload_csv();
    update_enables();
 }
@@ -1361,7 +1361,7 @@ bool US_Hydrodyn_Cluster_Dmd::setup_residues( QString filename )
    for ( unsigned int i = 0; i < (unsigned int)residues_chain[ filename ].size(); i++ )
    {
       QString key           = filename + ":" + residues_chain[ filename ][ i ];
-      // TSO << "in residues_chain: " << key << endl;
+      // TSO << "in residues_chain: " << key << Qt::endl;
       unsigned int this_pos = residues_number[ filename ][ i ];
       if ( last_chain != residues_chain[ filename ][ i ] )
       {
@@ -1372,7 +1372,7 @@ bool US_Hydrodyn_Cluster_Dmd::setup_residues( QString filename )
          residues_range_end  [ key      ].push_back( this_pos );
          residues_range_chain    [ filename ].push_back( key );
          residues_range_chain_pos[ filename ].push_back( residues_range_start[ key ].size() - 1 );
-         // TSO << "in residues_chain - pushback: " << key << " chain " << residues_chain[ filename ][ i ] << endl;
+         // TSO << "in residues_chain - pushback: " << key << " chain " << residues_chain[ filename ][ i ] << Qt::endl;
          last_chain = residues_chain[ filename ][ i ];
          continue;
       }
@@ -1395,7 +1395,7 @@ bool US_Hydrodyn_Cluster_Dmd::setup_residues( QString filename )
 
 void US_Hydrodyn_Cluster_Dmd::residue_summary( QString filename )
 {
-   // TSO << "residue summary: " << filename << endl;
+   // TSO << "residue summary: " << filename << Qt::endl;
    if ( !residues_chain.count( filename ) )
    {
       editor_msg( "red", QString( us_tr( "Internal Error: filename %1 not prepared for summary" ) ).arg( filename ) );
@@ -1407,7 +1407,7 @@ void US_Hydrodyn_Cluster_Dmd::residue_summary( QString filename )
    {
       QString key = residues_range_chain[ filename ][ i ];
       QString chain_id = key.right( 1 );
-      // TSO << "key " << key << endl;
+      // TSO << "key " << key << Qt::endl;
       if ( !residues_range_start.count( key ) )
       {
          editor_msg( "red", QString( us_tr( "Internal Error: filename %1 range %2 not prepared for summary" ) ).arg( filename ).arg( key ) );

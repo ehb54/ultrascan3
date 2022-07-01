@@ -298,7 +298,7 @@ void US_AddHybridization::add()
             << "\t" << hybrid_list[i].scat_len
             << "\t" << hybrid_list[i].exch_prot
             << "\t" << hybrid_list[i].num_elect
-            << endl;
+            << Qt::endl;
          //         cout << "item: " << item << ", " << hybrid_list[i].name.toUpper() << "\t" << hybrid_list[i].mw << "\t" << hybrid_list[i].radius << ", " <<  hybrid_filename << endl;
          str1.sprintf("%d: ", i+1);
          str1 += hybrid_list[i].name.toUpper();

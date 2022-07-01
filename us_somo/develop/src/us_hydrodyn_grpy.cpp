@@ -255,9 +255,9 @@ bool US_Hydrodyn::calc_grpy_hydro() {
                fname = fileNameCheck( fname, 0, this );
             }
 
-            QTextStream( stdout ) << "grpy file is '" << fname << "'" << endl
-                                  << "grpy file.fileName() is '" << QFileInfo( fname ).baseName() << "'" << endl
-                                  << "bead model size is " << bead_model.size() << endl
+            QTextStream( stdout ) << "grpy file is '" << fname << "'" << Qt::endl
+                                  << "grpy file.fileName() is '" << QFileInfo( fname ).baseName() << "'" << Qt::endl
+                                  << "bead model size is " << bead_model.size() << Qt::endl
                ;
             
             // always run asa
@@ -588,7 +588,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
             }
             Dr[k] = qsld[ j ];
             grpy_captures[ "rot_diff_coef_" + toXYZ[ k ] ].push_back( Dr[k].toDouble() );
-            QTextStream( stdout ) << "Dr[" << k << "]" << Dr[k] << endl;
+            QTextStream( stdout ) << "Dr[" << k << "]" << Dr[k] << Qt::endl;
          }
       }
    }
@@ -800,9 +800,9 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
                   R * ( K0 + hydro.temperature ) / ( AVOGADRO * this_data.results.D20w );
 
                QTextStream( stdout )
-                  << "tfc " << this_data.tra_fric_coef << " = " << endl
-                  << "R * ( K0 + hydro.temperature )" << ( R * ( K0 + hydro.temperature ) ) << " / " << endl
-                  << "AVOGADRO * this_data.results.D20w" << ( AVOGADRO * this_data.results.D20w ) << endl
+                  << "tfc " << this_data.tra_fric_coef << " = " << Qt::endl
+                  << "R * ( K0 + hydro.temperature )" << ( R * ( K0 + hydro.temperature ) ) << " / " << Qt::endl
+                  << "AVOGADRO * this_data.results.D20w" << ( AVOGADRO * this_data.results.D20w ) << Qt::endl
                   ;
                
             }
@@ -814,9 +814,9 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
                   R * ( K0 + hydro.temperature ) / ( AVOGADRO * this_data.rot_diff_coef );
 
                // QTextStream( stdout )
-               //    << "rfc " << this_data.rot_fric_coef << " = " << endl
-               //    << "R * ( K0 + hydro.temperature )" << ( R * ( K0 + hydro.temperature ) ) << " / " << endl
-               //    << "AVOGADRO * this_data.rot_diff_coef" << ( AVOGADRO * this_data.rot_diff_coef ) << endl
+               //    << "rfc " << this_data.rot_fric_coef << " = " << Qt::endl
+               //    << "R * ( K0 + hydro.temperature )" << ( R * ( K0 + hydro.temperature ) ) << " / " << Qt::endl
+               //    << "AVOGADRO * this_data.rot_diff_coef" << ( AVOGADRO * this_data.rot_diff_coef ) << Qt::endl
                //    ;
                
             }
@@ -837,10 +837,10 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
 
          {
             QTextStream(stdout)
-               << "f    = " << this_data.tra_fric_coef << endl
-               << "Rs   = " << this_data.results.rs << endl
-               << "f0   = " << ( this_data.results.rs * 6.0 * M_PI * use_solvent_visc() ) << endl
-               << "f/f0 = " << ( this_data.tra_fric_coef / ( this_data.results.rs * 6.0 * M_PI * use_solvent_visc() ) ) << endl
+               << "f    = " << this_data.tra_fric_coef << Qt::endl
+               << "Rs   = " << this_data.results.rs << Qt::endl
+               << "f0   = " << ( this_data.results.rs * 6.0 * M_PI * use_solvent_visc() ) << Qt::endl
+               << "f/f0 = " << ( this_data.tra_fric_coef / ( this_data.results.rs * 6.0 * M_PI * use_solvent_visc() ) ) << Qt::endl
                ;
             
             this_data.results.ff0 = 
@@ -849,7 +849,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
                  pow( 3.0 * this_data.results.mass * this_data.results.vbar / (4.0 * M_PI * AVOGADRO), 1.0/3.0 ) );
 
             QTextStream( stdout )
-               << "ff0 " << this_data.results.ff0 << " = " << endl
+               << "ff0 " << this_data.results.ff0 << " = " << Qt::endl
                ;
 
             // this_data.results.ff0_sd = this_data.results.ff0 * this_data.tra_fric_coef_sd / this_data.tra_fric_coef;

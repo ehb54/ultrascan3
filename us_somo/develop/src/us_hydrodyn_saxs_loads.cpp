@@ -1000,7 +1000,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
       editor_msg( "darkRed", "ift not yet" );
       ift_to_process = qsl_sel_names;
       ift_to_process.replaceInStrings( QRegExp( "^\""), "" ).replaceInStrings( QRegExp( "\"$"), "" );
-      QTextStream( stdout ) << "ift_to_process:\n" << ift_to_process.join( "\n" ) << endl;
+      QTextStream( stdout ) << "ift_to_process:\n" << ift_to_process.join( "\n" ) << Qt::endl;
       call_ift( true );
       return;
    }

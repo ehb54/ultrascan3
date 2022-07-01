@@ -2517,7 +2517,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::csv_save()
       qs += QString("%1\"%2\"").arg(i ? "," : "").arg(csv_commands.header[i]);
    }
 
-   t << qs << endl;
+   t << qs << Qt::endl;
 
    for ( unsigned int i = 0; i < (unsigned int) csv_commands.data.size(); i++ )
    {
@@ -2526,7 +2526,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::csv_save()
       {
          qs += QString("%1%2").arg(j ? "," : "").arg(csv_commands.data[i][j]);
       }
-      t << qs << endl;
+      t << qs << Qt::endl;
    }
    f.close();
    editor_msg("black", QString("File %1 written\n").arg( filename ) );
