@@ -132,7 +132,7 @@ unsigned int US_Hydrodyn_Cluster_Status::update_files( bool set_lv_files )
          ( tgz_files.size() ? "\n" : "" ) +
          tar_files.join("\n")
          ;
-      all_files = (qs ).split( "\n" , QString::SkipEmptyParts );
+      all_files = (qs ).split( "\n" , Qt::SkipEmptyParts );
    }
 
    for ( unsigned int i = 0; i < (unsigned int)all_files.size(); i++ )
@@ -153,7 +153,7 @@ unsigned int US_Hydrodyn_Cluster_Status::update_files( bool set_lv_files )
                                                         << files[ i ]
                                                         << "unknown"
                                                         << ""
-                                                        << QFileInfo( files[ i ] ).created().toString()
+                                                        << QFileInfo( files[ i ] ).birthTime().toString()
                                                         ) );
       }
    }

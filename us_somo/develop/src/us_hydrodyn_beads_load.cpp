@@ -211,7 +211,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                               .arg( ssaxs.size() ) );
                } else {
                   saxs tmp_saxs;
-                  QStringList qsl = (ssaxs[ 0 ] ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+                  QStringList qsl = (ssaxs[ 0 ] ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
                   if ( qsl.size() != 12 )
                   {
                      editor_msg( "red", 
@@ -234,7 +234,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                      tmp_saxs.volume = qsl[ 11 ].toFloat();
                      if ( ssaxs.size() == 2 )
                      {
-                        qsl = (ssaxs[ 1 ] ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+                        qsl = (ssaxs[ 1 ] ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
 
                         if ( qsl.size() != 14 )
                         {
@@ -329,7 +329,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                for ( unsigned int j = 0; j < ( unsigned int ) bsaxs.size(); j += 2 )
                {
                   saxs tmp_saxs;
-                  QStringList qsl = (bsaxs[ j ] ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+                  QStringList qsl = (bsaxs[ j ] ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
                   if ( qsl.size() != 12 )
                   {
                      editor_msg( "red", 
@@ -352,7 +352,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                      tmp_saxs.volume = qsl[ 11 ].toFloat();
                      if ( (unsigned int) bsaxs.size() > j + 1 )
                      {
-                        qsl = (bsaxs[ j + 1 ] ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+                        qsl = (bsaxs[ j + 1 ] ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
                         if ( tmp_saxs.saxs_name != qsl[ 1 ].toUpper() )
                         {
                            editor_msg( "red", us_tr( "Error: bead saxs coefficients bead number inconsistancy" ) );
@@ -379,7 +379,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                      tmp_saxs.vcoeff.clear( );
                      if ( do_bsaxsv )
                      {
-                        qsl = (bsaxsv[ j / 2 ] ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+                        qsl = (bsaxsv[ j / 2 ] ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
                         QTextStream( stdout ) << QString( "loading: bvsaxs qsl size %1\n" ).arg( qsl.size() );
                         for ( int i = 2; i < (int) qsl.size() - 1; i++ )
                         {

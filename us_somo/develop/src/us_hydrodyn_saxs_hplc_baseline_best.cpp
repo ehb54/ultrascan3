@@ -467,7 +467,7 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::editor_ec_msg( QString msg, QTextEdit 
       e = editor;
    }
    QColor save_color = e->textColor();
-   QStringList qsl = (msg ).split( "~~" , QString::SkipEmptyParts );
+   QStringList qsl = (msg ).split( "~~" , Qt::SkipEmptyParts );
 
    QRegExp rx_color( "^_(\\S+)_$" );
 

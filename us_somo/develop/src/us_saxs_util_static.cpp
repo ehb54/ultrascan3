@@ -85,11 +85,11 @@ bool US_Saxs_Util::read_sas_data(
          continue;
       }
       
-      // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , QString::SkipEmptyParts ),""));
+      // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
       QStringList tokens;
       {
          QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-         tokens = (qs ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+         tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
       }
 
       if ( (int)tokens.size() > 1 + offset )
@@ -10995,7 +10995,7 @@ bool US_Saxs_Util::pdb2fasta( QString outfile, QStringList & files, int max_line
             QStringList qsl;
             {
                QString qs2 = qs.left(20);
-               qsl = (qs2 ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+               qsl = (qs2 ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
             }
             if ( qsl.size() == 1 )
             {
@@ -11341,7 +11341,7 @@ int US_Saxs_Util::us_usleep( unsigned int usec ) {
 #else
 #  if defined( WIN32 )
 int US_Saxs_Util::us_usleep( unsigned int usec ) {
-   _sleep( usec / 1000 );
+   Sleep( usec / 1000 );
    return 1;
 }
 #  else 

@@ -204,7 +204,7 @@ void US_Plot::zoom( bool on )
 #endif
       
       panner = new QwtPlotPanner( plot->canvas() );
-      panner->setMouseButton( Qt::MidButton );
+      panner->setMouseButton( Qt::MiddleButton );
 
 #if QT_VERSION > 0x050000
       picker = new QwtPlotPicker( QwtPlot::xBottom, QwtPlot::yLeft,
@@ -295,7 +295,7 @@ void US_Plot::print( void )
    }
 
    printer.setCreator( "UltraScan" );
-   printer.setOrientation( QPrinter::Landscape );
+   printer.setPageOrientation( QPageLayout::Landscape );
 
    QPrintDialog dialog( &printer );
 
@@ -430,8 +430,7 @@ void US_PlotPushbutton::us3i_plotClicked( void )
    \param p            Parent widget
    \param f            Window Flags
 */
-US_PlotConfig::US_PlotConfig( QwtPlot* current_plot, QWidget* p, 
-  Qt::WindowFlags f ) : US3i_widgetsDialog( p, f ) //( false, p, f )
+US_PlotConfig::US_PlotConfig( QwtPlot* current_plot, QWidget* p ) : US3i_widgetsDialog( p ) //( false, p, f )
 {
    setWindowTitle( "Local Plot Configuration" );
    setPalette( US3i_GuiSettings::frameColor() );
@@ -682,7 +681,7 @@ void US_PlotConfig::updateTitleFont( void )
    bool ok;
    QFont currentFont = plot->title().font();
    QFont newFont     = QFontDialog::getFont( &ok, currentFont, this,
-                          tr( "Set Title Font" ), 0 );
+                          tr( "Set Title Font" ) );
 
    if ( ok )
    {
@@ -813,7 +812,7 @@ void US_PlotConfig::updateLegendFont( void )
 
    bool ok;
    QFont newFont = QFontDialog::getFont( &ok, font, this,
-                       tr( "Set Legend Font" ), 0 );
+                       tr( "Set Legend Font" ) );
 
    if ( ok )
    {
@@ -949,8 +948,8 @@ void US_PlotConfig::gridConfigFinish( void )
    \param f           Widget flags
 */
 US_PlotCurveConfig::US_PlotCurveConfig( QwtPlot* currentPlot, 
-      const QStringList& selected, QWidget* parent, Qt::WindowFlags f ) 
-      : US3i_widgetsDialog( parent, f ) //( false, parent, f )
+      const QStringList& selected, QWidget* parent ) 
+      : US3i_widgetsDialog( parent ) //( false, parent, f )
 {
    plot          = currentPlot;
    selectedItems = selected;
@@ -1350,7 +1349,7 @@ void US_PlotCurveConfig::apply( void )
 //**** Custom class to display curve configuration  ********
 
 US_PlotLabel::US_PlotLabel( US_PlotCurveConfig* caller, 
-      QWidget* p, Qt::WindowFlags f  ) : QWidget( p, f )
+      QWidget* p ) : QWidget( p )
 {
    data  = caller;
    label = new QLabel;
@@ -1456,7 +1455,7 @@ void US_PlotLabel::paintEvent( QPaintEvent* e )
    \param flags       Frame window flags
 */
 US_PlotAxisConfig::US_PlotAxisConfig( int currentAxis, QwtPlot* currentPlot, 
-   QWidget* parent, Qt::WindowFlags flags ) : US3i_widgetsDialog( parent, flags )//( false, parent, flags )
+   QWidget* parent ) : US3i_widgetsDialog( parent )//( false, parent, flags )
 {
    plot = currentPlot;
    axis = currentAxis;
@@ -1706,7 +1705,7 @@ void US_PlotAxisConfig::selectTitleFont( void )
    bool ok;
    QFont currentFont = plot->axisTitle( axis ).font();
    QFont newFont     = QFontDialog::getFont( &ok, currentFont, this,
-                          tr( "Set Axis Title Font" ), 0 );
+                          tr( "Set Axis Title Font" ) );
 
    if ( ok )
    {
@@ -1735,7 +1734,7 @@ void US_PlotAxisConfig::selectScaleFont( void )
    bool ok;
    QFont currentFont = plot->axisFont( axis );
    QFont newFont     = QFontDialog::getFont( &ok, currentFont, this,
-                          tr( "Set Axis Scale Font" ), 0 );
+                          tr( "Set Axis Scale Font" ) );
 
    if ( ok )
    {
@@ -1854,7 +1853,7 @@ void US_PlotAxisConfig::apply( void )
      \param flags       Window flags
 */
 US_PlotGridConfig::US_PlotGridConfig( QwtPlot* currentPlot, 
-   QWidget* parent, Qt::WindowFlags flags ) : US3i_widgetsDialog( parent, flags )//( false, parent, flags )
+   QWidget* parent ) : US3i_widgetsDialog( parent )//( false, parent, flags )
 {
    setWindowTitle( tr( "Grid Configuration" ) );
    setPalette( US3i_GuiSettings::frameColor() );
@@ -2145,9 +2144,9 @@ US_PlotPicker::US_PlotPicker( QwtPlot* plot )
 void US_PlotPicker::widgetMousePressEvent( QMouseEvent* e )
 {
    // Prevent spurious clicks
-   static QTime last_click;
+   static QElapsedTimer last_click;
 
-   if ( last_click.isNull() || last_click.elapsed() > 300 )
+   if ( last_click.isValid() || last_click.elapsed() > 300 )
    {
       last_click.start();
       if ( e->button() == Qt::LeftButton ) 
@@ -2164,9 +2163,9 @@ void US_PlotPicker::widgetMousePressEvent( QMouseEvent* e )
 
 void US_PlotPicker::widgetMouseReleaseEvent( QMouseEvent* e )
 {
-   static QTime last_click;
+   static QElapsedTimer last_click;
 
-   if ( last_click.isNull() || last_click.elapsed() > 300 ) 
+   if ( last_click.isValid() || last_click.elapsed() > 300 ) 
    {
       last_click.start();
       if ( e->button() == Qt::LeftButton )
@@ -2181,10 +2180,10 @@ void US_PlotPicker::widgetMouseReleaseEvent( QMouseEvent* e )
 
 void US_PlotPicker::widgetMouseMoveEvent( QMouseEvent* e )
 {
-   static QTime last_click;
+   static QElapsedTimer last_click;
 
    // Slow things down a bit
-   if ( last_click.isNull() || last_click.elapsed() > 100 )
+   if ( last_click.isValid() || last_click.elapsed() > 100 )
    {
       last_click.start();
       if ( e->button() == Qt::LeftButton )

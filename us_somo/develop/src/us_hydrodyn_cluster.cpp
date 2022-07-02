@@ -184,7 +184,7 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
             ( tgz_files.size() ? "\n" : "" ) +
             tar_files.join("\n")
             ;
-         submitted_files = (qs ).split( "\n" , QString::SkipEmptyParts );
+         submitted_files = (qs ).split( "\n" , Qt::SkipEmptyParts );
       }
 
       for ( unsigned int i = 0; i < (unsigned int) submitted_files.count(); i++ )
@@ -221,7 +221,7 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
             ( tgz_files.size() ? "\n" : "" ) +
             tar_files.join("\n")
             ;
-         completed_files = (qs ).split( "\n" , QString::SkipEmptyParts );
+         completed_files = (qs ).split( "\n" , Qt::SkipEmptyParts );
       }
       
       for ( unsigned int i = 0; i < (unsigned int) completed_files.count(); i++ )
@@ -2737,7 +2737,7 @@ bool US_Hydrodyn_Cluster::read_config()
          continue;
       }
 
-      QStringList qsl = (qs ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+      QStringList qsl = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
 
       if ( !qsl.size() )
       {
@@ -4272,7 +4272,7 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg_bfnb( QString f
    QStringList qsl_pmtypes;
    {
       QRegExp rx = QRegExp( "(\\s+|(\\s*(,|:)\\s*))" );
-      qsl_pmtypes = (pmtypes ).split( rx , QString::SkipEmptyParts );
+      qsl_pmtypes = (pmtypes ).split( rx , Qt::SkipEmptyParts );
    }
    for ( int i = 0; i < (int) qsl_pmtypes.size(); ++i )
    {
@@ -4821,7 +4821,7 @@ bool US_Hydrodyn_Cluster::additional_processing(
             editor_msg( "red", QString( us_tr( "Error: can not create directives file: %1" ) ).arg( f_directives.fileName() ) );
          } else {
             QTextStream ts( &f_directives );
-            ts << QString( "%1" ).arg( cluster_additional_methods_job_multiplier[ "best" ] - 1 ) << endl;
+            ts << QString( "%1" ).arg( cluster_additional_methods_job_multiplier[ "best" ] - 1 ) << Qt::endl;
             f_directives.close();
             source_files << f_directives.fileName();
          }

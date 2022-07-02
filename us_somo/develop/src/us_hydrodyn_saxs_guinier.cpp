@@ -109,7 +109,7 @@ static void write_csv_data( QFile * f, QString I_tag )
 
    for ( int i = 0; i <= maxlen; ++i )
    {
-      ts << out[ i ].join(",") << endl;
+      ts << out[ i ].join(",") << Qt::endl;
    }
 
    f->close();

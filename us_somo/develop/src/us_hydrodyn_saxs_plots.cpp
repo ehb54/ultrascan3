@@ -551,7 +551,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                                  << saxs_list[i].a[3] << "\t"
                                  << saxs_list[i].b[3] << "\t"
                                  << saxs_list[i].c << "\t"
-                                 << saxs_list[i].volume << endl;
+                                 << saxs_list[i].volume << Qt::endl;
                               ts << saxs_list[i].saxs_name.toUpper() << "\t"
                                  << saxs_list[i].a5[0] << "\t"
                                  << saxs_list[i].b5[0] << "\t"
@@ -564,7 +564,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                                  << saxs_list[i].a5[4] << "\t"
                                  << saxs_list[i].b5[4] << "\t"
                                  << saxs_list[i].c5 << "\t"
-                                 << saxs_list[i].volume << endl;
+                                 << saxs_list[i].volume << Qt::endl;
                            }
                            f.close();
                            if ( our_saxs_options->default_saxs_filename != filename )

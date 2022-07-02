@@ -34,7 +34,7 @@ class US_EXTERN US3i_widgets : public QFrame
   public:
     //! The constructor connects to global memory and moves the screen to
     //! the point saved there. It adjusts the location point by QPoint( 30, 30).
-    US3i_widgets( bool = true, QWidget* p = 0, Qt::WindowFlags f = 0 );
+    US3i_widgets( bool = true, QWidget* p = 0 );
 
     //! The destructor readjusts the location point in global memory to
     //! a value of QPoint( -30, -30 )

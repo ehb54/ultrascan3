@@ -545,6 +545,7 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
       // copy this to our created files
 
       double mw = get_mw( QString( "%1" ).arg( ift_last_processed ).replace( QRegExp( "\\..*$" ), "_ift P(r)" ), false, true );
+      cb_normalize->setChecked( mw != -1 );
 
       vector < double > r;
       vector < double > pr;
@@ -565,7 +566,7 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
          double min_pr = 1e99;
          for ( int i = 0; i < qsl.size(); ++i ) {
             QStringList line = qsl[i].split( QRegExp( "\\s+" ) );
-            // QTextStream( stdout ) << line.join( " " ) << endl;
+            // QTextStream( stdout ) << line.join( " " ) << Qt::endl;
             if ( line.size() < 3 ) {
                continue;
             } else {
@@ -611,14 +612,15 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
                   newcontents << line.join( " " );
                }
             }
+            prcontents        = newcontents.join( "\n" ) + "\n";
+
             if ( mw != -1 ) {
                normalize_pr( r, &pr, &pre, mw );
                for ( int i = 0; i < (int)r.size(); ++i ) {
                   newcontents_normed << QString( "%1 %2 %3" ).arg( r[i], 0, 'g', 9 ).arg( pr[i], 0, 'g', 9 ).arg( pre[i], 0, 'g', 9 );
                }
+               prcontents_normed = newcontents_normed.join( "\n" ) + "\n";
             }
-            prcontents        = newcontents.join( "\n" ) + "\n";
-            prcontents_normed = newcontents_normed.join( "\n" ) + "\n";
                
             // QTextStream( stdout ) << "--- new pr contents ---\n";
             // QTextStream( stdout ) << prcontents;
@@ -653,15 +655,17 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
          }            
          if ( !prcontents_normed.isEmpty() ) {
             prcontents_normed = header + prcontents_normed;
-            QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( ift_last_processed ).replace( QRegExp( rxstr ), "_ift.dat" );
+            QString dest_normed = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( ift_last_processed ).replace( QRegExp( rxstr ), "_ift.dat" );
             if ( !((US_Hydrodyn *) us_hydrodyn )->overwrite ) {
-               dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
+               dest_normed = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest_normed, 0, this );
             }
-            if ( !US_File_Util::putcontents( dest, prcontents_normed, error ) ) {
+            if ( !US_File_Util::putcontents( dest_normed, prcontents_normed, error ) ) {
                editor_msg( "red", error );
             } else {
-               created_files << dest;
+               created_files << dest_normed;
                if ( cb_normalize->isChecked() ) {
+                  load_pr( false, dest_normed, mw == -1e0 );
+               } else {
                   load_pr( false, dest, mw == -1e0 );
                }
             }
@@ -1063,7 +1067,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
             }
             if ( found_model )
             {
-               ts2 << qs << endl;
+               ts2 << qs << Qt::endl;
                if ( qs.left( 6 ) == "ENDMDL" )
                {
                   break;
@@ -1074,7 +1078,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
          while ( !ts.atEnd() )
          {
             qs = ts.readLine();
-            ts2 << qs << endl;
+            ts2 << qs << Qt::endl;
             if ( qs.left( 6 ) == "ENDMDL" )
             {
                break;
@@ -1245,7 +1249,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
                return -1;
             }
             QTextStream ts( &f );
-            ts << crysol_manual_input.join( "\n" ) << endl;
+            ts << crysol_manual_input.join( "\n" ) << Qt::endl;
             f.close();
          }
 
@@ -1270,7 +1274,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
                return -1;
             }
             QTextStream ts( &f );
-            ts << cmd << endl;
+            ts << cmd << Qt::endl;
             f.close();
 
             crysol = new QProcess( this );
@@ -1824,7 +1828,7 @@ int US_Hydrodyn_Saxs::run_sans_iq_cryson( QString pdb )
       while ( !ts.atEnd() )
       {
          qs = ts.readLine();
-         ts2 << qs << endl;
+         ts2 << qs << Qt::endl;
       }
       f.close();
       f2.close();

@@ -50,7 +50,7 @@ void US_Hydrodyn::SS_apply( struct PDB_model & model, const QString & ssbondfile
    }
 
 #if defined( DEBUG_SS )
-   QTextStream( stdout ) << "SS_apply()" << endl;
+   QTextStream( stdout ) << "SS_apply()" << Qt::endl;
 #endif
 
    if ( !gparams.count( "thresh_SS" ) ) {
@@ -73,12 +73,12 @@ SSBOND   1 CYS A   28    CYS D   28                          1555   1555  2.05
       if ( !sulfur_paired.count( i ) ) {
 #if defined( DEBUG_SS )
          QTextStream( stdout )
-            << "sulfur pdb line   " <<  sulfur_pdb_line[ i ] << endl
+            << "sulfur pdb line   " <<  sulfur_pdb_line[ i ] << Qt::endl
             << "sulfur coordinates"
             <<  sulfur_coordinates[ i ].axis[ 0 ] << " , "
             <<  sulfur_coordinates[ i ].axis[ 1 ] << " , "
             <<  sulfur_coordinates[ i ].axis[ 2 ]
-            << endl;
+            << Qt::endl;
 #endif
          for ( int j = i + 1; j < sulfurs; ++j ) {
             if ( !sulfur_paired.count( j ) ) {
@@ -125,9 +125,9 @@ SSBOND   1 CYS A   28    CYS D   28                          1555   1555  2.05
       if ( it->first < it->second ) {
 #if defined( DEBUG_SS )
          QTextStream( stdout )
-            << "sulfurs paired: distance [A]:" << pair_distance[ it->first ] << endl
-            << sulfur_pdb_line[ it->first ] << endl
-            << sulfur_pdb_line[ it->second ] << endl
+            << "sulfurs paired: distance [A]:" << pair_distance[ it->first ] << Qt::endl
+            << sulfur_pdb_line[ it->first ] << Qt::endl
+            << sulfur_pdb_line[ it->second ] << Qt::endl
             ;
 #endif
          SS_change_residue( model, sulfur_pdb_line[ it->first ], "CYS" );
@@ -139,8 +139,8 @@ SSBOND   1 CYS A   28    CYS D   28                          1555   1555  2.05
       if ( !sulfur_paired.count( i ) ) {
 #if defined( DEBUG_SS )
          QTextStream( stdout )
-            << "sulfurs unpaired:" << endl
-            << sulfur_pdb_line[ i ] << endl
+            << "sulfurs unpaired:" << Qt::endl
+            << sulfur_pdb_line[ i ] << Qt::endl
             ;
 #endif
          SS_change_residue( model, sulfur_pdb_line[ i ], "CYH" );
@@ -156,7 +156,7 @@ SSBOND   1 CYS A   28    CYS D   28                          1555   1555  2.05
 
 void US_Hydrodyn::SS_change_residue( struct PDB_model & model, const QString & line, const QString target_residue ) {
 #if defined( DEBUG_SS )
-   QTextStream( stdout ) << "SS_change_residue()" << endl;
+   QTextStream( stdout ) << "SS_change_residue()" << Qt::endl;
 #endif
    QString source_residue   = line.mid( 17, 3 ).trimmed();
    QString residue_sequence = line.mid( 22, 5 ).trimmed();
@@ -175,17 +175,17 @@ void US_Hydrodyn::SS_change_residue( struct PDB_model & model, const QString & l
 #if defined( DEBUG_SS )
    QTextStream( stdout )
       << "SS_change_residue():"
-      << "source_residue   '" << source_residue   << "'" << endl
-      << "target_residue   '" << target_residue   << "'" << endl
-      << "residue_sequence '" << residue_sequence << "'" << endl
-      << "chain_id         '" << chain_id         << "'" << endl
-      << endl;
+      << "source_residue   '" << source_residue   << "'" << Qt::endl
+      << "target_residue   '" << target_residue   << "'" << Qt::endl
+      << "residue_sequence '" << residue_sequence << "'" << Qt::endl
+      << "chain_id         '" << chain_id         << "'" << Qt::endl
+      << Qt::endl;
 #endif
 
    if ( source_residue == target_residue ) {
       // nothing to do
 #if defined( DEBUG_SS )
-      QTextStream( stdout ) << "SS_change_residue(): nothing to do" << endl;
+      QTextStream( stdout ) << "SS_change_residue(): nothing to do" << Qt::endl;
 #endif
       return;
    }
@@ -195,7 +195,7 @@ void US_Hydrodyn::SS_change_residue( struct PDB_model & model, const QString & l
    // find matching model_vector molecule(chain) atoms
 
    if ( !sulfur_pdb_chain_idx.count( chain_id ) || !sulfur_pdb_chain_idx[ chain_id ].size() ) {
-      QTextStream( stdout ) << "SS_change_residue(): Internal error chain index vector missing or empty chain_id " << chain_id << endl;
+      QTextStream( stdout ) << "SS_change_residue(): Internal error chain index vector missing or empty chain_id " << chain_id << Qt::endl;
       return;
    }
    if (
@@ -203,7 +203,7 @@ void US_Hydrodyn::SS_change_residue( struct PDB_model & model, const QString & l
        !sulfur_pdb_chain_atom_idx[ chain_id ].count( residue_sequence ) ||
        !sulfur_pdb_chain_atom_idx[ chain_id ][ residue_sequence ].size() 
        ) {
-      QTextStream( stdout ) << "SS_change_residue(): Internal error chain index vector missing or empty chain_id " << chain_id << " residue_sequence " << residue_sequence << endl;
+      QTextStream( stdout ) << "SS_change_residue(): Internal error chain index vector missing or empty chain_id " << chain_id << " residue_sequence " << residue_sequence << Qt::endl;
       return;
    }
 
@@ -215,18 +215,18 @@ void US_Hydrodyn::SS_change_residue( struct PDB_model & model, const QString & l
       unsigned int max_atom_idx = sulfur_pdb_chain_atom_idx[ chain_id ][ residue_sequence ].back();
 
       QTextStream( stdout )
-         << "SS_change_residue(): structure info" << endl
-         << "  sulfur_pdb_chain_atom_idx[ " << chain_id << " ][ 0 ]   = " << min_atom_idx << endl
-         << "  sulfur_pdb_chain_atom_idx[ " << chain_id << " ].back() = " << max_atom_idx << endl
-         << "  sulfur_pdb_chain_idx     [ " << chain_id << " ].size() = " << sulfur_pdb_chain_idx[ chain_id ].size() << endl
+         << "SS_change_residue(): structure info" << Qt::endl
+         << "  sulfur_pdb_chain_atom_idx[ " << chain_id << " ][ 0 ]   = " << min_atom_idx << Qt::endl
+         << "  sulfur_pdb_chain_atom_idx[ " << chain_id << " ].back() = " << max_atom_idx << Qt::endl
+         << "  sulfur_pdb_chain_idx     [ " << chain_id << " ].size() = " << sulfur_pdb_chain_idx[ chain_id ].size() << Qt::endl
          ;
       for ( int i = 0; i < (int) sulfur_pdb_chain_idx[ chain_id ].size(); ++i ) {
          QTextStream( stdout )
-            << "    sulfur_pdb_chain_idx[ " << chain_id << " ][ " << i << " ] = " << sulfur_pdb_chain_idx[ chain_id ][ i ] << endl;
+            << "    sulfur_pdb_chain_idx[ " << chain_id << " ][ " << i << " ] = " << sulfur_pdb_chain_idx[ chain_id ][ i ] << Qt::endl;
       }
       for ( int i = 0; i < (int) sulfur_pdb_chain_atom_idx[ chain_id ][ residue_sequence ].size(); ++i ) {
          QTextStream( stdout )
-            << "    sulfur_pdb_chain_atom_idx[ " << chain_id << " ][ " << residue_sequence << " ][ " << i << " ] = " << sulfur_pdb_chain_atom_idx[ chain_id ][ residue_sequence ][ i ] << endl;
+            << "    sulfur_pdb_chain_atom_idx[ " << chain_id << " ][ " << residue_sequence << " ][ " << i << " ] = " << sulfur_pdb_chain_atom_idx[ chain_id ][ residue_sequence ][ i ] << Qt::endl;
       }
    }
 #endif
@@ -252,7 +252,7 @@ void US_Hydrodyn::SS_change_residue( struct PDB_model & model, const QString & l
                                            << " ref resname '" << model.molecule[ sulfur_pdb_chain_idx[ chain_id ][ i ] ].atom[ sulfur_pdb_chain_atom_idx[ chain_id ][ residue_sequence ][ j ] ].resName << "'"
                                            << " source_residue '" << source_residue << "'"
                                            << " residue_sequence '" << residue_sequence << "'"
-                                           << endl
+                                           << Qt::endl
                         ;
                      return;
                   }
@@ -263,10 +263,10 @@ void US_Hydrodyn::SS_change_residue( struct PDB_model & model, const QString & l
             } else {
 #if defined( DEBUG_SS )
                QTextStream( stdout )
-                  << "not found ?" << endl
-                  << "model.molecule[ sulfur_pdb_chain_idx[ chain_id ][ i ] ].atom.size() = " << model.molecule[ sulfur_pdb_chain_idx[ chain_id ][ i ] ].atom.size() << endl
-                  << "model.molecule[ sulfur_pdb_chain_idx[ chain_id ][ i ] ].atom[ min_atom_idx ].resSeq = " << model.molecule[ sulfur_pdb_chain_idx[ chain_id ][ i ] ].atom[ min_atom_idx ].resSeq << endl
-                  << "model.molecule[ sulfur_pdb_chain_idx[ chain_id ][ i ] ].atom[ max_atom_idx ].resSeq = " << model.molecule[ sulfur_pdb_chain_idx[ chain_id ][ i ] ].atom[ max_atom_idx ].resSeq << endl
+                  << "not found ?" << Qt::endl
+                  << "model.molecule[ sulfur_pdb_chain_idx[ chain_id ][ i ] ].atom.size() = " << model.molecule[ sulfur_pdb_chain_idx[ chain_id ][ i ] ].atom.size() << Qt::endl
+                  << "model.molecule[ sulfur_pdb_chain_idx[ chain_id ][ i ] ].atom[ min_atom_idx ].resSeq = " << model.molecule[ sulfur_pdb_chain_idx[ chain_id ][ i ] ].atom[ min_atom_idx ].resSeq << Qt::endl
+                  << "model.molecule[ sulfur_pdb_chain_idx[ chain_id ][ i ] ].atom[ max_atom_idx ].resSeq = " << model.molecule[ sulfur_pdb_chain_idx[ chain_id ][ i ] ].atom[ max_atom_idx ].resSeq << Qt::endl
                   ;
 #endif
             }
@@ -279,7 +279,7 @@ void US_Hydrodyn::SS_change_residue( struct PDB_model & model, const QString & l
       if ( found ) {
          model.residue[ update_model_residue_pos ] = new_residue;
       } else {
-         QTextStream( stdout ) << "SS_change_residue(): Internal error could not find match in model chain_id " << chain_id << " residue_sequence " << residue_sequence << endl;
+         QTextStream( stdout ) << "SS_change_residue(): Internal error could not find match in model chain_id " << chain_id << " residue_sequence " << residue_sequence << Qt::endl;
          return;
       }      
    }
@@ -316,7 +316,7 @@ double US_Hydrodyn::protons_at_pH( double pH, const struct PDB_model & model ) {
 }
          
 double US_Hydrodyn::compute_isoelectric_point( const struct PDB_model & model ) {
-   // QTextStream( stdout ) << "US_Hydrodyn::compute_isoelectric_point() start" << endl;
+   // QTextStream( stdout ) << "US_Hydrodyn::compute_isoelectric_point() start" << Qt::endl;
    // later for better performance  would could skip residues/atom with 1 fraction and count up residue/atom pairs to multiply
 
    // bisection scan
@@ -384,7 +384,7 @@ double US_Hydrodyn::compute_isoelectric_point( const struct PDB_model & model ) 
    //       min_diff = this_diff;
    //       best_pH  = pH;
    //    }
-   //    // QTextStream( stdout ) << protons_at_pH( pH, model ) << " protons at pH " << pH << endl;
+   //    // QTextStream( stdout ) << protons_at_pH( pH, model ) << " protons at pH " << pH << Qt::endl;
    // }
    // return best_pH;
    // }
@@ -411,7 +411,7 @@ map < QString, struct atom * > US_Hydrodyn::first_residue_atom_map( struct PDB_c
    // QTextStream( stdout )
    //    << "US_Hydrodyn::first_residue_atom_map() resName " << resName
    //    << " orgResName " <<  chain.atom[ 0 ].orgResName
-   //    << endl
+   //    << Qt::endl
    //    ;
    
    if ( !multi_residue_map.count( resName ) ||
@@ -419,7 +419,7 @@ map < QString, struct atom * > US_Hydrodyn::first_residue_atom_map( struct PDB_c
       QTextStream( stderr ) 
          << "US_Hydrodyn::first_residue_atom_map() resName " << resName
          << " MISSING from multi_residue_map!"
-         << endl
+         << Qt::endl
          ;
       return result;
    }
@@ -428,7 +428,7 @@ map < QString, struct atom * > US_Hydrodyn::first_residue_atom_map( struct PDB_c
       QTextStream( stderr ) 
          << "US_Hydrodyn::first_residue_atom_map() resName " << resName
          << " WARNING more than one entry in multi_residue_map using first one!"
-         << endl
+         << Qt::endl
          ;
    }
 
@@ -447,13 +447,13 @@ map < QString, struct atom * > US_Hydrodyn::first_residue_atom_map( struct PDB_c
                QTextStream( stderr ) 
                   << "US_Hydrodyn::first_residue_atom_map() resName " << resName
                   << " WARNING atom " << chain.atom[ i ].name << " not found in residue list, using p_atom"
-                  << endl
+                  << Qt::endl
                   ;
             }
             result[ chain.atom[ i ].name ] = chain.atom[ i ].p_atom;
          }
       } else {
-         QTextStream( stderr ) << "US_Hydrodyn::first_residue_atom_map() p_atom not set for atom " << chain.atom[ i ].name << endl;
+         QTextStream( stderr ) << "US_Hydrodyn::first_residue_atom_map() p_atom not set for atom " << chain.atom[ i ].name << Qt::endl;
       }
    }
    return result;
@@ -494,7 +494,7 @@ map < QString, struct atom * > US_Hydrodyn::last_residue_atom_map( struct PDB_ch
       if ( chain.atom[ i ].p_atom ) {
          result[ chain.atom[ i ].name ] = chain.atom[ i ].p_atom;
       } else {
-         QTextStream( stderr ) << "US_Hydrodyn::last_residue_atom_map() p_atom not set for atom " << chain.atom[ i ].name << endl;
+         QTextStream( stderr ) << "US_Hydrodyn::last_residue_atom_map() p_atom not set for atom " << chain.atom[ i ].name << Qt::endl;
       }
    }
    return result;

@@ -134,10 +134,10 @@ void US_Hydrodyn_Batch::setupGUI()
 
    QPalette qcg_cb_disabled = USglobal->global_colors.cg_normal;
 
-   // qcg_cb_disabled.setColor( QPalette::Background, Qt::yellow );
-   qcg_cb_disabled.setColor( QPalette::Foreground, Qt::darkRed );
-   // qcg_cb_disabled.setColor( QPalette::Base      , Qt::cyan );
-   qcg_cb_disabled.setColor( QPalette::Text      , Qt::darkRed );
+   // qcg_cb_disabled.setColor( QPalette::Window,     Qt::yellow );
+   qcg_cb_disabled.setColor( QPalette::WindowText,    Qt::darkRed );
+   // qcg_cb_disabled.setColor( QPalette::Base        Qt::cyan );
+   qcg_cb_disabled.setColor( QPalette::Text      ,    Qt::darkRed );
    // qcg_cb_disabled.setColor( QPalette::Button    , Qt::red );
    // qcg_cb_disabled.setColor( QPalette::ButtonText, Qt::magenta );
 

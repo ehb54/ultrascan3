@@ -587,7 +587,7 @@ void US_Hydrodyn::play_sounds(int type)
             {
 #if defined(USE_MPLAYER)
 	      QString cmd = QString("mplayer %1&").arg(sf).toLatin1().data();
-	      QTextStream( stdout ) << cmd << endl;
+	      QTextStream( stdout ) << cmd << Qt::endl;
 	      if ( system( qPrintable( cmd ) ) ) {};
 #else
 	      QSound::play(sf);
@@ -595,7 +595,7 @@ void US_Hydrodyn::play_sounds(int type)
             }
             else
             {
-               QTextStream( stdout ) << "Can't locate sound file " << sf << endl;
+               QTextStream( stdout ) << "Can't locate sound file " << sf << Qt::endl;
             }
          }
          break;
@@ -1429,13 +1429,13 @@ void US_Hydrodyn::make_test_set()
             it != pair_summary.end();
             it++ )
       {
-         ts << "# " << it->first << endl;
+         ts << "# " << it->first << Qt::endl;
          ts << "residueatom ";
          for ( unsigned int i = 0; i < ( unsigned int ) it->second.size(); i++ )
          {
             ts << it->second[ i ] << " ";
          }
-         ts << endl;
+         ts << Qt::endl;
       }
       f.close();
    }

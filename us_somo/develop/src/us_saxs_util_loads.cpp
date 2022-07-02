@@ -365,7 +365,7 @@ bool US_Saxs_Util::select_saxs_file( QString filename )
             continue;
          }
          qs.trimmed();
-         QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+         QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
          int pos = 0;
          if ( qsl.size() == 11 )
          {
@@ -1384,7 +1384,7 @@ bool US_Saxs_Util::load_vcm_json( QString filename )
    {
       // split it->second to double
       //      us_qdebug( QString( "vcm json first <%1>\n second <%2>\n" ).arg( it->first ).arg( it->second ) );
-      QStringList qsl = (it->second ).split( "," , QString::SkipEmptyParts );
+      QStringList qsl = (it->second ).split( "," , Qt::SkipEmptyParts );
       if ( vcm.count( it->first ) )
       {
          vcm[ it->first ].clear( );

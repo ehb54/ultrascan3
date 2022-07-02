@@ -22,7 +22,7 @@ int main (int argc, char **argv)
    bool debug = false;
    bool residue_file = false;
    bool script = false;
-   bool gui_script = false;
+   // bool gui_script = false;
 
    QString residue_filename;
    QString script_filename;
@@ -81,7 +81,7 @@ int main (int argc, char **argv)
             puts("gui script file");
          }
          argcbase++;
-         gui_script = true;
+         // gui_script = true;
          gui_script_filename = a.arguments()[argcbase];
          if ( !QFile( gui_script_filename ).exists() ) {
             QTextStream( stderr ) << QString( "file %1 does not exist\n" ).arg( gui_script_filename );

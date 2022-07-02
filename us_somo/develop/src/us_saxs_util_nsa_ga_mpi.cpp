@@ -251,7 +251,7 @@ bool US_Saxs_Util::nsa_run()
                out_params[ "stats nsa ga time" ] = ust.list_time( "nsa ga time" ).replace( "\n", "" );
                out_params[ "stats np" ] = QString( "%1" ).arg( npes );
                out_params[ "stats host" ] = QString( "%1" ).arg( getenv( "HOSTNAME" ) );
-               ts << endl << "__json:" << US_Json::compose( out_params ) << endl;
+               ts << Qt::endl << "__json:" << US_Json::compose( out_params ) << Qt::endl;
             }
 
             f.close();

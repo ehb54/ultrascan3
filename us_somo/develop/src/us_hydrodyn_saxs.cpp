@@ -2555,9 +2555,6 @@ void US_Hydrodyn_Saxs::show_pr_contrib()
    out += "select all\n";
 
    QDir::setCurrent( last_selected_pdb_filename );
-
-   qDebug() << last_selected_pdb_filename;
-
    QString fname = last_selected_pdb_filename + ".spt";
    QFile f(fname);
    if ( !f.open( QIODevice::WriteOnly ) ) {
@@ -3727,7 +3724,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
             {
                continue;
             }
-            QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+            QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
             if ( qsl[ 0 ] == "run" )
             {
                editor_msg( "blue", QString( "saxscmds: running for: %1" ).arg( specname ) );
@@ -5102,7 +5099,7 @@ void US_Hydrodyn_Saxs::select_saxs_file(const QString &filename)
             continue;
          }
          qs.trimmed();
-         QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+         QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
          int pos = 0;
          if ( qsl.size() == 11 )
          {
@@ -5356,7 +5353,7 @@ void US_Hydrodyn_Saxs::select_saxs_file(const QString &filename)
       for ( auto it = hybrid_coords.begin();
             it != hybrid_coords.end();
             ++it ) {
-         QTextStream( stdout ) << "hybrid coord key " << it->first << endl;
+         QTextStream( stdout ) << "hybrid coord key " << it->first << Qt::endl;
       }
    }               
 

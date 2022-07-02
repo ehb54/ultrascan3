@@ -6112,8 +6112,8 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_start()
 
    int no_gaussian_count = ggaussian_sel_no_gaussian_count();
 
-   QTextStream( stdout ) << "ggaussian_sel_no_gaussian_count() " << no_gaussian_count << endl;
-   QTextStream( stdout ) << "total selected " << ggaussian_selected_file_index.size() << endl;
+   QTextStream( stdout ) << "ggaussian_sel_no_gaussian_count() " << no_gaussian_count << Qt::endl;
+   QTextStream( stdout ) << "total selected " << ggaussian_selected_file_index.size() << Qt::endl;
 
    bool not_compatible = !ggaussian_compatible();
 

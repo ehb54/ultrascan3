@@ -174,7 +174,7 @@ bool US_Saxs_Util::run_pm(
       QStringList files_try;
       {
          QString qs = "\",\"";
-         files_try = (parameters[ "pmfiles" ] ).split( qs , QString::SkipEmptyParts );
+         files_try = (parameters[ "pmfiles" ] ).split( qs , Qt::SkipEmptyParts );
       }
       for ( int i = 0; i < (int) files_try.size(); ++i )
       {
@@ -575,7 +575,7 @@ bool US_Saxs_Util::run_pm( QString controlfile )
          ts << "controlfile:\n";
          while( !tsc.atEnd() )
          {
-            ts << tsc.readLine() << endl;
+            ts << tsc.readLine() << Qt::endl;
          }
          ts << "end-controlfile\n";
          fc.close();
@@ -796,7 +796,7 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
          continue;
       }
 
-      QStringList qsl = (qs ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+      QStringList qsl = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
 
       if ( !qsl.size() )
       {
@@ -839,7 +839,7 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
             QStringList qsl2;
             {
                QRegExp rx = QRegExp( "(\\s+|(\\s*(,|:)\\s*))" );
-               qsl2 = (qsl[ j ] ).split( rx , QString::SkipEmptyParts );
+               qsl2 = (qsl[ j ] ).split( rx , Qt::SkipEmptyParts );
             }
             if ( us_log )
             {
