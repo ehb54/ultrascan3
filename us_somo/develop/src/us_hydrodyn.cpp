@@ -1209,7 +1209,7 @@ void US_Hydrodyn::setupGUI()
    pb_somo_o = new QPushButton(us_tr("Build SoMo Overlap Bead Model"), this);
    Q_CHECK_PTR(pb_somo_o);
    pb_somo_o->setMinimumHeight(minHeight1);
-   pb_somo_o->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_somo_o->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
    pb_somo_o->setEnabled(false);
    pb_somo_o->setPalette( PALET_PUSHB );
    connect(pb_somo_o, SIGNAL(clicked()), SLOT(calc_somo_o()));
