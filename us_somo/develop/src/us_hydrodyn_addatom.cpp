@@ -392,7 +392,7 @@ void US_AddAtom::write_atom_file()
       {
          ts << atom_list[i].name.toUpper() << "\t" << atom_list[i].hybrid.name.toUpper() << "\t" <<
                atom_list[i].hybrid.mw << "\t" << atom_list[i].hybrid.radius <<  "\t" <<
-               atom_list[i].saxs_excl_vol << endl;
+               atom_list[i].saxs_excl_vol << Qt::endl;
          str1.sprintf("%d: ", i+1);
          str1 += atom_list[i].name.toUpper();
          str1 += " (";
@@ -537,7 +537,7 @@ void US_AddAtom::select_saxs_file()
                continue;
             }
             qs.trimmed();
-            QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+            QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
             int pos = 0;
             if ( qsl.size() == 11 )
             {

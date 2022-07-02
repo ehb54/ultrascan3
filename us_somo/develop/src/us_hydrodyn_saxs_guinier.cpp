@@ -109,7 +109,7 @@ static void write_csv_data( QFile * f, QString I_tag )
 
    for ( int i = 0; i <= maxlen; ++i )
    {
-      ts << out[ i ].join(",") << endl;
+      ts << out[ i ].join(",") << Qt::endl;
    }
 
    f->close();
@@ -3439,7 +3439,7 @@ void US_Hydrodyn_Saxs::set_guinier_eb()
                x[ 0 ] = x[ 1 ] = ( cb_guinier->isChecked() ? q2[ k ] : q[k] );
                y[ 0 ] = pElow[ k ] > 0e0 ? pElow[ k ] : I[ k ];
                y[ 1 ] = pEhigh[ k ];
-               QwtPlotCurve * curve = new QwtPlotCurve( "eb." + qsl_plotted_iq_names[ i ] );
+               QwtPlotCurve * curve = new QwtPlotCurve( UPU_EB_PREFIX + qsl_plotted_iq_names[ i ] );
                curve->setStyle( QwtPlotCurve::Lines );
                curve->setPen  ( QPen( plot_colors[ i % plot_colors.size() ], ERRORBAR_WIDTH, Qt::SolidLine ) );
                curve->setSamples ( x, y, 2 );

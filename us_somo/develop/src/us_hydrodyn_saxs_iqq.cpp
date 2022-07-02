@@ -3801,7 +3801,7 @@ bool US_Hydrodyn_Saxs::load_ff_table( QString filename )
          continue;
       }
 
-      QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+      QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
 
       // expect:
       //   residueatom (possibly multiple)
@@ -3877,7 +3877,7 @@ bool US_Hydrodyn_Saxs::load_ff_table( QString filename )
                continue;
             }
 
-            QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+            QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
 
             if ( qsl[ 0 ] == "enddata" )
             {

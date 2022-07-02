@@ -22,9 +22,11 @@ int main (int argc, char **argv)
    bool debug = false;
    bool residue_file = false;
    bool script = false;
+   // bool gui_script = false;
 
    QString residue_filename;
    QString script_filename;
+   QString gui_script_filename = "";
 
    US_Hydrodyn *hydrodyn;
    vector < QString > batch_file;
@@ -72,12 +74,29 @@ int main (int argc, char **argv)
          script_filename = a.arguments()[argcbase];
          argcbase++;
       }
+      if ( QString(a.arguments()[argcbase]).contains(QRegExp("^-g")) )
+      {
+         if ( debug )
+         {
+            puts("gui script file");
+         }
+         argcbase++;
+         // gui_script = true;
+         gui_script_filename = a.arguments()[argcbase];
+         if ( !QFile( gui_script_filename ).exists() ) {
+            QTextStream( stderr ) << QString( "file %1 does not exist\n" ).arg( gui_script_filename );
+            exit(-1);
+         }
+         gui_script_filename = QFileInfo( gui_script_filename ).absoluteFilePath();
+         argcbase++;
+      }
    }
    for ( int i = argcbase; i < a.arguments().size(); i++ ) 
    {
       batch_file.push_back( dir->filePath(a.arguments()[i]) );      
    }
-   hydrodyn = new US_Hydrodyn(batch_file);
+   hydrodyn = new US_Hydrodyn(batch_file, gui_script_filename );
+      
    hydrodyn->setWindowTitle("SOMO Solution Modeler");
    if ( residue_file )
    {
@@ -144,6 +163,7 @@ void process_script(QString script_filename, US_Hydrodyn *h)
       QString c;
       while ( !(c = ts.readLine()).isNull() )
       {
+         cout << "somo> " << c << "\n";
          bool ok = false;
 
          line++;

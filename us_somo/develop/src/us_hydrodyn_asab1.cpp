@@ -1579,6 +1579,7 @@ cordis(int s)
 
 // void ragir();
 
+// compute radius of gyration
 static void
 ragir()
 {

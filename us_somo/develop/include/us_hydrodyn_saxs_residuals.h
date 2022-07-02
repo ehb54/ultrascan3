@@ -39,6 +39,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Residuals : public QFrame
 {
    Q_OBJECT
 
+      friend class US_Hydrodyn_Saxs;
+
    public:
       US_Hydrodyn_Saxs_Residuals(
                                  bool *saxs_residuals_widget,

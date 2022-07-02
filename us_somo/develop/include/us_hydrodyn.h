@@ -114,6 +114,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
    public:
       friend class US_Hydrodyn_Batch;
       friend class US_Hydrodyn_Cluster;
+      friend class US_Hydrodyn_Cluster_Dmd;
       friend class US_Hydrodyn_Saxs;
       friend class US_Hydrodyn_Hydro;
       friend class US_Hydrodyn_Saxs_Screen;
@@ -140,8 +141,10 @@ class US_EXTERN US_Hydrodyn : public QFrame
       friend class US_Hydrodyn_AdvancedConfig;
 
       US_Hydrodyn(vector < QString >,
+                  QString gui_script_file = "",
                   QWidget *p = 0, 
                   const char *name = 0);
+
       ~US_Hydrodyn();
       int get_color(const PDB_atom *);
       BD_Options bd_options;
@@ -267,6 +270,11 @@ class US_EXTERN US_Hydrodyn : public QFrame
                                        void * dts );
 
    private:
+      bool     gui_script;
+      QString  gui_script_file;
+      void     gui_script_msg  ( int line, QString arg, QString msg );
+      void     gui_script_error( int line, QString arg, QString msg, bool doexit = true );
+      
       map < QString, struct atom * > residue_atom_map( struct residue & residue_entry );
       map < QString, struct atom * > first_residue_atom_map( struct PDB_chain & chain );
       map < QString, struct atom * > last_residue_atom_map( struct PDB_chain & chain );
@@ -294,6 +302,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       double compute_isoelectric_point( const struct PDB_model & model );
 
       QString model_summary_msg( const QString &msg, struct PDB_model *model );    // summary info about model
+      bool model_summary_csv( struct PDB_model *model, const QString & filename = "model_load_summary.csv" ); 
+      bool model_summary_csv( const QString & filename = "model_load_summary.csv" ); 
       double tc_vbar( double vbar );                           // temperature corrected vbar
       QString pH_msg();                                        // vbar message
       QString vbar_msg( double vbar, bool only_used = false ); // vbar message
@@ -1023,6 +1033,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
       double ionized_residue_atom_hydration( vector < double > & fractions, struct residue *res, struct atom *atom );
       double ionized_residue_atom_protons  ( vector < double > & fractions, struct residue *res, struct atom *atom );
                                                                                                              
+      bool dmd_failed_validation;
+      map < QString, map < QString, QStringList > > dmd_all_pdb_prepare_reports;
+
    private slots:
       void hullrad_readFromStdout();
       void hullrad_readFromStderr();
@@ -1032,6 +1045,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void grpy_readFromStderr();
       void grpy_started();
       void grpy_finished( int, QProcess::ExitStatus );
+      void gui_script_run();
       
    public:
       QProgressBar *progress;

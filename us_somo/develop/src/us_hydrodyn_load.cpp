@@ -52,13 +52,13 @@ void US_Hydrodyn::read_hybrid_file( QString filename ) {
          if ( net_charge.indexIn( current_hybrid.saxs_name ) != -1 ) {
             double delta = net_charge.cap( 1 ).toDouble();
             protons += delta;
-            // QTextStream( stdout ) << "saxs_name " << current_hybrid.saxs_name << " delta " << delta << endl;
+            // QTextStream( stdout ) << "saxs_name " << current_hybrid.saxs_name << " delta " << delta << Qt::endl;
             // } else {
-            // QTextStream( stdout ) << "saxs_name " << current_hybrid.saxs_name << " delta 0" << endl;
+            // QTextStream( stdout ) << "saxs_name " << current_hybrid.saxs_name << " delta 0" << Qt::endl;
          }
          hybrid_to_electrons[ current_hybrid.name ] = current_hybrid.num_elect;
          hybrid_to_protons  [ current_hybrid.name ] = protons;
-         // QTextStream( stdout ) << "hybrid.name " << current_hybrid.name << " protons " << protons << " electrons " << current_hybrid.num_elect << endl;
+         // QTextStream( stdout ) << "hybrid.name " << current_hybrid.name << " protons " << protons << " electrons " << current_hybrid.num_elect << Qt::endl;
       }
       f.close();
    } else {
@@ -83,7 +83,7 @@ void US_Hydrodyn::read_residue_file() {
    QString error_text = us_tr("Residue file errors:\n");
    if ( advanced_config.debug_1 )
    {
-      QTextStream( stdout ) << "residue file name: " << residue_filename << endl;
+      QTextStream( stdout ) << "residue file name: " << residue_filename << Qt::endl;
    }
    residue_list.clear( );
    residue_list_no_pbr.clear( );
@@ -114,9 +114,9 @@ void US_Hydrodyn::read_residue_file() {
       {
          new_residue.comment = ts.readLine();
          line_count++;
-         // QTextStream( stdout ) << (residue_list.size() + 1 ) << " " << new_residue.comment << endl; 
+         // QTextStream( stdout ) << (residue_list.size() + 1 ) << " " << new_residue.comment << Qt::endl; 
          {
-            QStringList qsl = ( ts.readLine() ).split( rx_spaces , QString::SkipEmptyParts );
+            QStringList qsl = ( ts.readLine() ).split( rx_spaces , Qt::SkipEmptyParts );
             if ( ( qsl.size() - 7 ) % 2 ) {
                // intermediate way
                // if ( qsl.size() != 7 && qsl.size() != 9 ) {
@@ -206,7 +206,7 @@ void US_Hydrodyn::read_residue_file() {
 
          for ( j = 0; j < numatoms; ++j ) {
             QString linein = ts.readLine();
-            QStringList qsl = linein.split( rx_spaces , QString::SkipEmptyParts );
+            QStringList qsl = linein.split( rx_spaces , Qt::SkipEmptyParts );
             if ( qsl.size() != 8 && qsl.size() != 16 ) {
                QMessageBox::critical(this, us_tr( windowTitle() ),
                                     us_tr("Please note:\n\nThere was an error reading the selected Residue File!\n"
@@ -665,7 +665,7 @@ void US_Hydrodyn::read_residue_file() {
    }
    // qDebug() << "residues " << residue_list.size();
    // for ( int i = 0; i < (int) residue_list.size(); ++i ) {
-   //    QTextStream( stdout ) << ( i + 1 ) << " " << residue_list[ i ].name << " " << residue_list[ i ].unique_name << " " << residue_list[ i ].comment << endl;
+   //    QTextStream( stdout ) << ( i + 1 ) << " " << residue_list[ i ].name << " " << residue_list[ i ].unique_name << " " << residue_list[ i ].comment << Qt::endl;
    // }
 }
 
@@ -697,13 +697,13 @@ double US_Hydrodyn::calc_vbar_updated( struct PDB_model & model ) {
                      ;
             } else {
                QTextStream( stdout )
-                  << "WARNING: residue list atom lookup name missing: " << it->second << endl
+                  << "WARNING: residue list atom lookup name missing: " << it->second << Qt::endl
                   ;
             }
          }
       } else {
          QTextStream( stdout )
-            <<  "WARNING:  multi residue map is missing this residue: " << it->first << endl
+            <<  "WARNING:  multi residue map is missing this residue: " << it->first << Qt::endl
             ;
       }
    }
@@ -735,7 +735,7 @@ double US_Hydrodyn::calc_vbar_updated( struct PDB_model & model ) {
                      delta_mw[ hybrid_name_to_N[ first_atom_map[ "N" ]->hybrid.name ] ] += this_mw;
                      delta_mv[ hybrid_name_to_N[ first_atom_map[ "N" ]->hybrid.name ] ] += this_mv;
                   } else {
-                     QTextStream( stdout ) << " WARNING: first N in chain has unexpected hybridization " << first_atom_map[ "N" ]->hybrid.name  << endl;
+                     QTextStream( stdout ) << " WARNING: first N in chain has unexpected hybridization " << first_atom_map[ "N" ]->hybrid.name  << Qt::endl;
                   }
                }
             }
@@ -776,9 +776,9 @@ double US_Hydrodyn::calc_vbar_updated( struct PDB_model & model ) {
 #if defined( DEBUG_VBAR )
       QTextStream( stdout )
          << "--------------------------------------------------------------------------------\n"
-         << "calc_vbar_updated() vbar calculation" << endl
-         << "mw residues        : " << mw << endl
-         << "mv residues        : " << mv << endl
+         << "calc_vbar_updated() vbar calculation" << Qt::endl
+         << "mw residues        : " << mw << Qt::endl
+         << "mv residues        : " << mv << Qt::endl
          ;
 #endif
 
@@ -787,8 +787,8 @@ double US_Hydrodyn::calc_vbar_updated( struct PDB_model & model ) {
             ++it ) {
 #if defined( DEBUG_VBAR )
          QTextStream( stdout )
-            <<  "mw " << it->first << "'s            : " << it->second << endl
-            <<  "mv " << it->first << "'s            : " << delta_mv[ it->first ] << endl
+            <<  "mw " << it->first << "'s            : " << it->second << Qt::endl
+            <<  "mv " << it->first << "'s            : " << delta_mv[ it->first ] << Qt::endl
             ;
 #endif
          total_mw += it->second;
@@ -797,11 +797,11 @@ double US_Hydrodyn::calc_vbar_updated( struct PDB_model & model ) {
       
 #if defined( DEBUG_VBAR )
       QTextStream( stdout )
-         << "total mw            : " << total_mw << endl
-         << "total mv            : " << total_mv << endl
-         << "covolume            : " << covolume << endl
-         << "total mv + covolume : " << ( total_mv + covolume ) << endl
-         << "vbar                : " << (( total_mv + covolume ) / total_mw ) << endl
+         << "total mw            : " << total_mw << Qt::endl
+         << "total mv            : " << total_mv << Qt::endl
+         << "covolume            : " << covolume << Qt::endl
+         << "total mv + covolume : " << ( total_mv + covolume ) << Qt::endl
+         << "vbar                : " << (( total_mv + covolume ) / total_mw ) << Qt::endl
          ;
 #endif
       molar_volume = total_mv + covolume;
@@ -915,17 +915,17 @@ void US_Hydrodyn::calc_bead_mw(struct residue *res)
          {
             (*res).r_bead[i].mw += (*res).r_atom[j].hybrid.mw;
             rmw += (*res).r_atom[j].hybrid.mw;
-            // QTextStream( stdout ) << res->name << " bead " << i << " atom " << res->r_atom[j].name << " mw " << res->r_atom[j].hybrid.mw << endl;
+            // QTextStream( stdout ) << res->name << " bead " << i << " atom " << res->r_atom[j].name << " mw " << res->r_atom[j].hybrid.mw << Qt::endl;
          }
       }
       if ( advanced_config.debug_1 )
       {
-         QTextStream( stdout ) << res->name << " bead " << i << " mw " << res->r_bead[i].mw << endl;
+         QTextStream( stdout ) << res->name << " bead " << i << " mw " << res->r_bead[i].mw << Qt::endl;
       }
    }
    if ( advanced_config.debug_1 )
    {
-      QTextStream( stdout ) << res->name << " mw " << rmw << endl;
+      QTextStream( stdout ) << res->name << " mw " << rmw << Qt::endl;
    }
 }
 
@@ -1321,6 +1321,7 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
                editor_msg( "black", us_tr("\nSequence in one letter code:"));
                editor_msg( "black", courier, sstr + "\n");
                editor_msg( "black", courier, "Residue\t count\tpercent\t Theoretical waters\n" );
+               temp_model.hydration_gg = 0;
 
                if ( resname_counts_nonwat_total ) {
                   for ( map < QString, int >::iterator it = resname_counts_nonwat.begin();
@@ -1354,8 +1355,10 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
                   }
                   if ( mw_nonwat ) {
                      if ( mw_wat ) {
+                        temp_model.hydration_gg = mw_wat / mw_nonwat;
                         editor_msg( "dark blue", QString( "\nHydration [g/g] %1 (explicit waters)" ).arg( mw_wat / mw_nonwat, 0, 'g', 3 ) );
                      } else if ( tot_theo_wat ) {
+                        temp_model.hydration_gg = tot_theo_wat * 18.01528 / mw_nonwat;
                         editor_msg( "dark blue", QString( "\nHydration [g/g] %1" ).arg( tot_theo_wat * 18.01528 / mw_nonwat, 0, 'g', 3 ) );
                      }
                   }
@@ -1541,6 +1544,7 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
          editor->append(sstr + "\n\n");
 
          editor_msg( "black", "Residue\t count\tpercent\t Theoretical waters\n" );
+         temp_model.hydration_gg = 0;
 
          if ( resname_counts_nonwat_total ) {
             for ( map < QString, int >::iterator it = resname_counts_nonwat.begin();
@@ -1574,8 +1578,10 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
             }
             if ( mw_nonwat ) {
                if ( mw_wat ) {
+                  temp_model.hydration_gg = mw_wat / mw_nonwat;
                   editor_msg( "dark blue", QString( "\nHydration [g/g] %1 (explicit waters)" ).arg( mw_wat / mw_nonwat, 0, 'g', 3 ) );
                } else if ( tot_theo_wat ) {
+                  temp_model.hydration_gg = tot_theo_wat * 18.01528 / mw_nonwat;
                   editor_msg( "dark blue", QString( "\nHydration [g/g] %1" ).arg( tot_theo_wat * 18.01528 / mw_nonwat, 0, 'g', 3 ) );
                }
             }
@@ -2484,9 +2490,9 @@ void US_Hydrodyn::calc_mw()
 void US_Hydrodyn::update_model_chain_ionization( struct PDB_model & model, bool quiet ) {
    if ( !quiet ) {
       QTextStream( stdout )
-         << "========================================================================================" << endl
-         << "US_Hydrodyn::update_model_chain_ionization()" << endl
-         << "========================================================================================" << endl
+         << "========================================================================================" << Qt::endl
+         << "US_Hydrodyn::update_model_chain_ionization()" << Qt::endl
+         << "========================================================================================" << Qt::endl
          ;
    }
 
@@ -2512,48 +2518,48 @@ void US_Hydrodyn::update_model_chain_ionization( struct PDB_model & model, bool 
          }
          
          if ( !model.molecule[ j ].atom[ k ].p_residue ) {
-            QTextStream( stdout ) << "******** p_residue not set" << endl;
+            QTextStream( stdout ) << "******** p_residue not set" << Qt::endl;
             continue;
          }
          
          QTextStream( stdout )
-            << "----------------------------------------------------------------------------------------" << endl
-            << " model.molecule[ " << j << " ].atom[ " << k << " ].name              = " << model.molecule[ j ].atom[ k ].name              << endl
-            // not useful << " model.molecule[ " << j << " ].atom[ " << k << " ].bead_number      = " << model.molecule[ j ].atom[ k ].bead_number      << endl
-            << " model.molecule[ " << j << " ].atom[ " << k << " ].model_residue_pos = " << model.molecule[ j ].atom[ k ].model_residue_pos << endl
-            << " model.molecule[ " << j << " ].atom[ " << k << " ].bead_assignment   = " << model.molecule[ j ].atom[ k ].bead_assignment   << endl
-            << " model.molecule[ " << j << " ].atom[ " << k << " ].atom_assignment   = " << model.molecule[ j ].atom[ k ].atom_assignment   << endl
-            << " model.molecule[ " << j << " ].atom[ " << k << " ].mw                = " << model.molecule[ j ].atom[ k ].mw                << endl
-            << " model.molecule[ " << j << " ].atom[ " << k << " ].ionized_mw_delta  = " << model.molecule[ j ].atom[ k ].ionized_mw_delta  << endl
+            << "----------------------------------------------------------------------------------------" << Qt::endl
+            << " model.molecule[ " << j << " ].atom[ " << k << " ].name              = " << model.molecule[ j ].atom[ k ].name              << Qt::endl
+            // not useful << " model.molecule[ " << j << " ].atom[ " << k << " ].bead_number      = " << model.molecule[ j ].atom[ k ].bead_number      << Qt::endl
+            << " model.molecule[ " << j << " ].atom[ " << k << " ].model_residue_pos = " << model.molecule[ j ].atom[ k ].model_residue_pos << Qt::endl
+            << " model.molecule[ " << j << " ].atom[ " << k << " ].bead_assignment   = " << model.molecule[ j ].atom[ k ].bead_assignment   << Qt::endl
+            << " model.molecule[ " << j << " ].atom[ " << k << " ].atom_assignment   = " << model.molecule[ j ].atom[ k ].atom_assignment   << Qt::endl
+            << " model.molecule[ " << j << " ].atom[ " << k << " ].mw                = " << model.molecule[ j ].atom[ k ].mw                << Qt::endl
+            << " model.molecule[ " << j << " ].atom[ " << k << " ].ionized_mw_delta  = " << model.molecule[ j ].atom[ k ].ionized_mw_delta  << Qt::endl
             ;
 
 
          if ( (int) model.molecule[ j ].atom[ k ].p_residue->r_atom.size() <= model.molecule[ j ].atom[ k ].atom_assignment ) {
-            QTextStream( stdout ) << "******** p_residue->r_atom too small for atom_assignment" << endl;
+            QTextStream( stdout ) << "******** p_residue->r_atom too small for atom_assignment" << Qt::endl;
             continue;
          }
             
          QTextStream( stdout )
             << " model.molecule[ " << j << " ].atom[ " << k << " ].p_residue->r_atom[ " << model.molecule[ j ].atom[ k ].atom_assignment
             << " ].hybrid.mw               = " << model.molecule[ j ].atom[ k ].p_residue->r_atom[ model.molecule[ j ].atom[ k ].atom_assignment ].hybrid.mw
-            << endl
+            << Qt::endl
             << " model.molecule[ " << j << " ].atom[ " << k << " ].p_residue->r_atom[ " << model.molecule[ j ].atom[ k ].atom_assignment
             << " ].hybrid.ionized_mw_delta = " << model.molecule[ j ].atom[ k ].p_residue->r_atom[ model.molecule[ j ].atom[ k ].atom_assignment ].hybrid.ionized_mw_delta
-            << endl
+            << Qt::endl
             ;
             
          if ( (int) model.molecule[ j ].atom[ k ].p_residue->r_bead.size() <= model.molecule[ j ].atom[ k ].bead_assignment ) {
-            QTextStream( stdout ) << "******** p_residue->r_bead too small for bead_assignment" << endl;
+            QTextStream( stdout ) << "******** p_residue->r_bead too small for bead_assignment" << Qt::endl;
             continue;
          }
 
          QTextStream( stdout )
             << " model.molecule[ " << j << " ].atom[ " << k << " ].p_residue->r_bead[ " << model.molecule[ j ].atom[ k ].bead_assignment
             << " ].mw                      = " << model.molecule[ j ].atom[ k ].p_residue->r_bead[ model.molecule[ j ].atom[ k ].bead_assignment ].mw
-            << endl
+            << Qt::endl
             << " model.molecule[ " << j << " ].atom[ " << k << " ].p_residue->r_bead[ " << model.molecule[ j ].atom[ k ].bead_assignment
             << " ].ionized_mw_delta        = " << model.molecule[ j ].atom[ k ].p_residue->r_bead[ model.molecule[ j ].atom[ k ].bead_assignment ].ionized_mw_delta
-            << endl
+            << Qt::endl
             ;
 
          if ( residues <= model.molecule[ j ].atom[ k ].model_residue_pos ) {
@@ -2563,16 +2569,16 @@ void US_Hydrodyn::update_model_chain_ionization( struct PDB_model & model, bool 
          QTextStream( stdout )
             << " model.molecule[ " << j << " ].residue[ " << model.molecule[ j ].atom[ k ].model_residue_pos << " ].r_atom[ " << model.molecule[ j ].atom[ k ].atom_assignment
             << " ].hybrid.mw               = " << model.residue[ model.molecule[ j ].atom[ k ].model_residue_pos ].r_atom[ model.molecule[ j ].atom[ k ].atom_assignment ].hybrid.mw
-            << endl
+            << Qt::endl
             << " model.molecule[ " << j << " ].residue[ " << model.molecule[ j ].atom[ k ].model_residue_pos << " ].r_atom[ " << model.molecule[ j ].atom[ k ].atom_assignment
             << " ].hybrid.ionized_mw_delta = " << model.residue[ model.molecule[ j ].atom[ k ].model_residue_pos ].r_atom[ model.molecule[ j ].atom[ k ].atom_assignment ].hybrid.ionized_mw_delta
-            << endl
+            << Qt::endl
             ;
       }
    }
    if ( !quiet ) {
       QTextStream( stdout )
-         << "========================================================================================" << endl;
+         << "========================================================================================" << Qt::endl;
    }
 }
 
@@ -2739,7 +2745,7 @@ double US_Hydrodyn::ionized_residue_atom_radius( vector < double > & fractions, 
                 fractions[ atom->ionization_index     ] * r1_3,
                 1/3e0
                  ) << ","
-         << endl
+         << Qt::endl
          ;
 #endif
       return
@@ -2767,7 +2773,7 @@ double US_Hydrodyn::ionized_residue_atom_radius( vector < double > & fractions, 
              ,
              1/3e0
               ) << ","
-      << endl
+      << Qt::endl
       ;
 #endif
 
@@ -2805,7 +2811,7 @@ double US_Hydrodyn::ionized_residue_atom_hydration( vector < double > & fraction
              fractions[ atom->ionization_index - 1 ] * res->r_atom_0[ atom->ionization_index ].hydration +
              fractions[ atom->ionization_index     ] * res->r_atom_1[ atom->ionization_index ].hydration
              ) << ","
-         << endl
+         << Qt::endl
          ;
 #endif
       return
@@ -2829,7 +2835,7 @@ double US_Hydrodyn::ionized_residue_atom_hydration( vector < double > & fraction
           ( fractions[ atom->ionization_index - 1 ] + fractions[ atom->ionization_index ] )
            )
       << ","
-      << endl
+      << Qt::endl
       ;
 #endif
 
@@ -2865,7 +2871,7 @@ double US_Hydrodyn::ionized_residue_atom_protons( vector < double > & fractions,
              fractions[ atom->ionization_index - 1 ] * res->r_atom_0[ atom->ionization_index ].hybrid.protons +
              fractions[ atom->ionization_index     ] * res->r_atom_1[ atom->ionization_index ].hybrid.protons
              ) << ","
-         << endl
+         << Qt::endl
          ;
 #endif
       return
@@ -2891,7 +2897,7 @@ double US_Hydrodyn::ionized_residue_atom_protons( vector < double > & fractions,
           ( fractions[ atom->ionization_index - 1 ] + fractions[ atom->ionization_index ] )
            )
       << ","
-      << endl
+      << Qt::endl
       ;
 #endif
 
@@ -2907,13 +2913,13 @@ double US_Hydrodyn::ionized_residue_atom_protons( vector < double > & fractions,
 void US_Hydrodyn::set_ionized_residue_vector( vector < struct residue > & residue_v ) {
    // this will have to be changed later to true, as we are changing the format of residue
    // QTextStream( stdout )
-   //    << "========================================================================================" << endl
-   //    << "US_Hydrodyn::set_ionized_residue_vector_apply()" << endl
-   //    << "========================================================================================" << endl
+   //    << "========================================================================================" << Qt::endl
+   //    << "US_Hydrodyn::set_ionized_residue_vector_apply()" << Qt::endl
+   //    << "========================================================================================" << Qt::endl
    //    ;
 
    // force use_pH
-   gparams[ "use_pH" ] == "true";
+   gparams[ "use_pH" ] = "true";
 
    bool use_pH = gparams.count( "use_pH" ) && gparams[ "use_pH" ] == "true";
 
@@ -2925,29 +2931,29 @@ void US_Hydrodyn::set_ionized_residue_vector( vector < struct residue > & residu
    int residues = (int) residue_v.size();
 #if defined( DEBUG_RADIUS )
    QTextStream( stdout )
-      << "pH" << "," << pH << endl
+      << "pH" << "," << pH << Qt::endl
       << "resname" << ","
       << "atomname" << ","
       << "r_0 radius" << ","
       << "r_1 radius" << ","
       << "fraction prior" << ","
       << "fraction this" << ","
-      << "computed radius" << endl;
+      << "computed radius" << Qt::endl;
 #endif
 #if defined( DEBUG_HYDRATION )
    QTextStream( stdout )
-      << "pH" << "," << pH << endl
+      << "pH" << "," << pH << Qt::endl
       << "resname" << ","
       << "atomname" << ","
       << "r_0 hydration" << ","
       << "r_1 hydration" << ","
       << "fraction prior" << ","
       << "fraction this" << ","
-      << "computed hydration" << endl;
+      << "computed hydration" << Qt::endl;
 #endif
 #if defined( DEBUG_PROTONS )
    QTextStream( stdout )
-      << "pH" << "," << pH << endl
+      << "pH" << "," << pH << Qt::endl
       << "resname" << ","
       << "atomname" << ","
       << "r_0 protons" << ","
@@ -2956,7 +2962,7 @@ void US_Hydrodyn::set_ionized_residue_vector( vector < struct residue > & residu
       << "r_1 hybrid name" << ","
       << "fraction prior" << ","
       << "fraction this" << ","
-      << "computed protons" << endl;
+      << "computed protons" << Qt::endl;
 #endif
 
    
@@ -3027,14 +3033,14 @@ void US_Hydrodyn::set_ionized_residue_vector( vector < struct residue > & residu
             QTextStream( stdout )
                << "residue name " << residue_v[j].name
                << " bead " << ( k + 1 )
-               << " atom_hydration " <<  residue_v[ j ].r_bead[ k ].atom_hydration << endl
+               << " atom_hydration " <<  residue_v[ j ].r_bead[ k ].atom_hydration << Qt::endl
                ;
          }
 #endif
       }
       if ( bead_ionized_mw.size() ) {
          QTextStream( stdout )
-            << "**** US_Hydrodyn::set_ionized_residue_vector_apply(): unassigned bead_ionized_mw! ****" << endl
+            << "**** US_Hydrodyn::set_ionized_residue_vector_apply(): unassigned bead_ionized_mw! ****" << Qt::endl
             ;
       }
    }
@@ -3055,25 +3061,124 @@ void US_Hydrodyn::set_ionized_residue_vector( vector < struct residue > & residu
    //    set < QString > only_res = { "LYS", "GLU" };
    //    // set < QString > only_res = { "DA" };
       
-   //    // QTextStream( stdout ) << "******** begin res_vbar, mw map ********" << endl;
+   //    // QTextStream( stdout ) << "******** begin res_vbar, mw map ********" << Qt::endl;
 
    //    for ( auto it = res_vbar.begin();
    //          it != res_vbar.end();
    //          ++it ) {
    //       if ( only_res.count( it->first ) ) {
-   //          QTextStream( stdout ) << it->first << " vbar " << it->second << " mw " << res_mw[ it->first ] << endl;
+   //          QTextStream( stdout ) << it->first << " vbar " << it->second << " mw " << res_mw[ it->first ] << Qt::endl;
    //       }
    //    }
-   //    // QTextStream( stdout ) << "******** end res_vbar, mw map ********" << endl;
+   //    // QTextStream( stdout ) << "******** end res_vbar, mw map ********" << Qt::endl;
    // }
 
-   // QTextStream( stdout ) << "******** begin vdwf map ********" << endl;
+   // QTextStream( stdout ) << "******** begin vdwf map ********" << Qt::endl;
    // for ( auto it = vdwf.begin();
    //       it != vdwf.end();
    //       ++it ) {
    //    if ( it->second.ionized_mw_delta ) {
-   //       QTextStream( stdout ) << it->first << " mw " << it->second.mw << " ionized_mw_delta " << it->second.ionized_mw_delta << endl;
+   //       QTextStream( stdout ) << it->first << " mw " << it->second.mw << " ionized_mw_delta " << it->second.ionized_mw_delta << Qt::endl;
    //    }
    // }
-   // QTextStream( stdout ) << "******** end vdwf map ********" << endl;
+   // QTextStream( stdout ) << "******** end vdwf map ********" << Qt::endl;
 }
+
+bool US_Hydrodyn::model_summary_csv( const QString & filename ) {
+   // QTextStream( stdout ) << "model_summary_csv(1) " << filename << "\n";
+   // QTextStream( stdout ) << "cwd " << QDir::currentPath() << "\n";
+
+   if ( !model_vector.size() ) {
+      return false;
+   }
+   return model_summary_csv( &(model_vector[0]), filename );
+}
+
+bool US_Hydrodyn::model_summary_csv( struct PDB_model *model, const QString & filename ) {
+   QStringList header;
+   QStringList data;
+   // QTextStream( stdout ) << "model_summary_csv " << filename << "\n";
+   // QTextStream( stdout ) << "cwd " << QDir::currentPath() << "\n";
+
+   header << "structure";
+   data   << le_pdb_file->text();
+
+   if ( pdb_parse.find_sh ) {
+      header
+         << "Number of disulfide bonds"
+         << "Number of free SH"
+         ;
+      data
+         << QString( "%1" ).arg( model->num_SS_bonds )
+         << QString( "%1" ).arg( model->num_SH_free )
+         ;
+   }
+
+   header
+      << "Calculation done at pH"
+      << "Molecular weight [Da]"
+      ;
+   data
+      << QString( "%1" ).arg( le_pH->text() )
+      << QString( "%1" ).arg( model->mw + model->ionized_mw_delta )
+      ;
+
+
+   if ( model->molar_volume > 0 ) {
+      header << "Molar volume [cm^3/mol]";
+      data   << QString("%1").arg( model->molar_volume );
+   }
+
+   // tbd. qs += vbar_msg( model->vbar );
+
+   header << "SAXS excluded volume (anhydrous) [A^3]";
+   data   << QString( "%1" ).arg( model->volume );
+   
+   
+   // if ( hydro.temperature != 20 ) {
+   //    qs +=
+   //       QString(
+   //               us_tr(
+   //                     "Anh. Molecular vol. (from vbar)  : %1 [A^3] @ %2%3C\n"
+   //                     )
+   //               )
+   //       .arg( mw_to_volume( model->mw + model->ionized_mw_delta, model->vbar ) )
+   //       .arg( 20 )
+   //       .arg( DEGREE_SYMBOL )
+   //       ;
+   // }
+
+   header
+      << "Anh. Molecular vol. (from vbar) [A^3]"
+      << "Hyd. Molecular vol. (from vbar) [A^3]"
+      << "Radius of gyration [A]"
+      << "Number of electrons"
+      << "Number of protons"
+      << "Net charge"
+      << "Isoelectric point"
+      << "Hydration [g/g]"
+      ;
+
+   data
+      << QString( "%1" ).arg( mw_to_volume( model->mw + model->ionized_mw_delta, tc_vbar( model->vbar ) ) )
+      << QString( "%1" ).arg( mw_to_volume( model->mw + model->ionized_mw_delta, tc_vbar( model->vbar ) ) + model->hydration * misc.hydrovol )
+      << QString( "%1" ).arg( model->Rg, 0, 'f', 2 )
+      << QString( "%1" ).arg( model->num_elect )
+      << QString( "%1" ).arg( model->protons, 0, 'f', 1 )
+      << QString( "%1" ).arg( model->protons - model->num_elect, 0, 'f', 1 )
+      << QString( "%1" ).arg( model->isoelectric_point, 0, 'f', 2 )
+      << QString( "%1" ).arg( model->hydration_gg, 0, 'g', 3 )
+      ;      
+      
+   if ( model->volume ) {
+      header << "Average electron density [A^-3]";
+      data   << QString( "%1" ).arg( model->num_elect / model->volume, 0, 'f', 3 );
+   }
+
+   QString error;
+   QString qs =
+      "\"" + header.join( "\",\"") + "\"\n"
+      + data.join( "," ) + "\n";
+   
+   return US_File_Util::putcontents( filename, qs, error );
+}   

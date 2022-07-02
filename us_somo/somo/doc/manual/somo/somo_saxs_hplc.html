@@ -22,7 +22,7 @@
 <center>
 <h2>
 SOMO HPLC-SAXS Module:</h2></center>
-<h3><center>Last updated: May 2018 </center></h3><p>
+<h3><center>Last updated: June 2022 </center></h3><p>
 
 <center><span style="color:#CC0000">NOTICE: this module is being developed by E. Brookes, J. P&eacute;rez, P. Vachette, and M. Rocco.<br>
 Portions of this help file are taken from the Supplementary Materials of Brookes et al., "Fibrinogen species as resolved by HPLC-SAXS data processing within the UltraScan SOlution MOdeler (US-SOMO) enhanced SAS module", J. Appl. Cryst. 46:1823-1833 (2013), and from Brookes et al. "US-SOMO HPLC-SAXS Module: Dealing with Capillary Fouling, and Extraction of Pure Component Patterns from Poorly Resolved SEC-SAXS Data", J. Appl. Cryst. 49:1827-1841, 2016. Some recent improvements are discussed in Brookes and Rocco, Eur. Biophys. J., 2018, submitted </span>
@@ -909,16 +909,22 @@ It is advisable to perform the global fitting avoiding the very first few low-<i
 </center>
 <p>
 
-The <b><i>Global Gaussians</i></b> button is now available. Pressing it will simply find the amplitudes best fitting all the selected chromatograms based on the centres and widths found on the initial chromatogram. This operation has to be performed before the global fit.<p>
+The <b><i>Global Gaussians</i></b> button is now available. This utility has two main usages. During the search for the best Gaussians parameters, it will find the amplitudes best fitting all the selected chromatograms based on the centres and widths found on the initial chromatogram. This operation has to be performed before the global fit. It will allso restore the saved parameters saved in a file after a satisfactory fitting is attained. For this reason, on pressing the <b><i>Global Gaussians</i></b> button, a pop-up panel will appear:
 
-If datasets having points with missing or NaN std. dev. values are found, a pop-up panel will appear:<p>
+<p><center>
+<img SRC="somo-HPLC-SAXS_GlobalGaussianOptions.png" ALT="SOMO HPLC-SAXS Global Gaussians mode: fit amplitudes or restore saved ones">
+</center>
+<p>
+In this case, the answer is <i>Yes</i>, and the amplitudes will be set for all the selected chromatograms.<p>
+
+If datasets having points with missing or NaN std. dev. values are found, another pop-up panel will appear:<p>
 
 <p><center>
 <img SRC="somo-HPLC-SAXS_Drop0SD.png" ALT="SOMO HPLC-SAXS Drop 0 SD pop-up">
 </center>
 <p>
 
-When just a few problematic points are found for each file, the <i>Drop points with 0 SDs</i> option can be safely used. The global Gaussians operation will then be completed:<p>
+When just a few problematic points are found for each chromatogram, the <i>Drop points with 0 SDs</i> option can be safely used. The global Gaussians operation will then be completed:<p>
 
 <p><center>
 <img SRC="somo-HPLC-SAXS_Gauss3.png" ALT="SOMO HPLC-SAXS Global Gaussian on Nth final">
@@ -976,7 +982,13 @@ The noticeable worse fitting and the end of the main peak could indicate either 
 
 It is best to first <b><i>Save</i></b> and then <i><b>Keep</i></b> the results, and then select all the available <i>I(t)</i> vs. <i>t</i> chromatograms (use <b><i>Select all</i></b> if only <i>I(t)</i> vs. <i>t</i> data are present in the <b>Data files</b> section).<p>
 
-<b><i>Global Gaussians</i></b> can now be applied to all the selected chromatograms. Again, if datasets having points with missing or NaN std. dev. values are found, a pop-up panel will appear (not shown).<p>
+<b><i>Global Gaussians</i></b> can now be applied to all the selected chromatograms. Again, a pop-up panel will appear:
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_GlobalGaussianOptions.png" ALT="SOMO HPLC-SAXS Global Gaussians mode: fit amplitudes or restore saved ones">
+</center>
+<p>
+Also in this case, the answer is <i>Yes</i>, and the amplitudes will be set for all the selected chromatograms.<p> Again, if datasets having points with missing or NaN std. dev. values are found, a pop-up panel will appear (not shown).<p>
 
 <p><center>
 <img SRC="somo-HPLC-SAXS_Gauss5.png" ALT="SOMO HPLC-SAXS Global Gaussian Global on all">
@@ -1236,7 +1248,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on May 18, 2018.
+Last modified on June 29, 2022.
 </font>
 </body>
 </html>

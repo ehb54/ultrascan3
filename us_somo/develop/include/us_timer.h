@@ -4,6 +4,7 @@
 #include <qstring.h>
 #include <qdatetime.h>
 #include <map>
+#include <QElapsedTimer>
 
 using namespace std;
 
@@ -28,7 +29,7 @@ class US_Timer
    void start_all        ();
 
    map < QString, unsigned long > times;
-   map < QString, QTime         > timers;
+   map < QString, QElapsedTimer > timers;
    map < QString, unsigned int  > counts;
    map < QString, unsigned long > times2;
 };

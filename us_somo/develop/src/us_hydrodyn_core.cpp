@@ -2069,14 +2069,14 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
       QTextStream ts(&f);
       for (unsigned int i=0; i<residue_list.size(); i++)
       {
-         ts << residue_list[i].comment << endl;
+         ts << residue_list[i].comment << Qt::endl;
          ts << residue_list[i].name.toUpper()
             << "\t" << residue_list[i].type
             << "\t" << str1.sprintf("%7.2f", residue_list[i].molvol)
             << "\t" << residue_list[i].asa
             << "\t" << residue_list[i].r_atom.size()
             << "\t" << residue_list[i].r_bead.size()
-            << "\t" << residue_list[i].vbar << endl;
+            << "\t" << residue_list[i].vbar << Qt::endl;
          for (unsigned int j=0; j<residue_list[i].r_atom.size(); j++)
          {
             ts << residue_list[i].r_atom[j].name.toUpper()
@@ -2087,7 +2087,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                << "\t" << (unsigned int) residue_list[i].r_atom[j].positioner
                << "\t" << residue_list[i].r_atom[j].serial_number 
                << "\t" << residue_list[i].r_atom[j].hydration
-               << endl;
+               << Qt::endl;
          }
          for (unsigned int j=0; j<residue_list[i].r_bead.size(); j++)
          {
@@ -2095,7 +2095,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                << "\t" << residue_list[i].r_bead[j].color
                << "\t" << residue_list[i].r_bead[j].placing_method
                << "\t" << residue_list[i].r_bead[j].chain
-               << "\t" << residue_list[i].r_bead[j].volume << endl;
+               << "\t" << residue_list[i].r_bead[j].volume << Qt::endl;
          }
          str1.sprintf("%d: ", i+1);
          str1 += residue_list[i].name.toUpper();
@@ -2559,10 +2559,10 @@ int US_Hydrodyn::create_beads(QString *error_string, bool quiet)
                this_atom->ionized_mw_delta = residue_list[respos].r_atom[atompos].hybrid.ionized_mw_delta;
 
                // if ( this_atom->p_residue ) {
-               //    // QTextStream( stdout ) << "**************************************** p_residue set " << endl;
+               //    // QTextStream( stdout ) << "**************************************** p_residue set " << Qt::endl;
                //    this_atom->ionized_mw_delta = this_atom->p_residue->r_atom[atompos].hybrid.ionized_mw_delta;
                // } else {
-               //    // QTextStream( stdout ) << "**************************************** p_residue NOT set " << endl;
+               //    // QTextStream( stdout ) << "**************************************** p_residue NOT set " << Qt::endl;
                // }
                   
                // if ( this_atom->ionized_mw_delta != 0 ) {
@@ -2570,7 +2570,7 @@ int US_Hydrodyn::create_beads(QString *error_string, bool quiet)
                //                          << this_atom->ionized_mw_delta
                //                          << " respos " << respos
                //                          << " atompos " << atompos
-               //                          << endl
+               //                          << Qt::endl
                //       ;
                // }
                   

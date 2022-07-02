@@ -903,6 +903,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       vector < unsigned int >             unified_ggaussian_q_start;        // the start q pos - one for each curve
       vector < unsigned int >             unified_ggaussian_q_end;          // the end q pos   - one for each curve
 
+      int                                 ggaussian_sel_no_gaussian_count();
+
       map < QString, vector < double > >  org_f_gaussians;
 
       vector < double >                   compute_gaussian( vector < double > t, vector < double > g );
@@ -996,9 +998,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       bool                                unified_ggaussian_errors_skip;
       bool                                unified_ggaussian_ok;
 
-      bool                                initial_ggaussian_fit( QStringList & files );
-      bool                                create_unified_ggaussian_target( bool do_init = true );
-      bool                                create_unified_ggaussian_target( QStringList & files, bool do_init = true );
+      bool                                initial_ggaussian_fit( QStringList & files, bool only_init_unset = false );
+      bool                                create_unified_ggaussian_target( bool do_init = true, bool only_init_unset = false );
+      bool                                create_unified_ggaussian_target( QStringList & files, bool do_init = true, bool only_init_unset = false );
       double                              ggaussian_rmsd( bool normchi = true );
       bool                                ggaussian_compatible( bool check_against_global = true );
       bool                                ggaussian_compatible( QStringList & files, bool check_against_global = true );
