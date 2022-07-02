@@ -4755,19 +4755,22 @@ void  US_ReporterGMP::assemble_user_inputs_html( void )
 
   QMap < QString, QString > analysis_status_map = parse_autoflowStatus_analysis_json( analysisJson );
 
-  html_assembled += tr(
-		       "<table style=\"margin-left:10px\">"
-		       "<caption align=left> <b><i>Meniscus Position Determination from FITMEN: </i></b> </caption>"
-		       "</table>"
-		       
-		       "<table style=\"margin-left:25px\">"
-		       )
-    ;
-
-  QMap < QString, QString >::iterator mfa;
-  for ( mfa = analysis_status_map.begin(); mfa != analysis_status_map.end(); ++mfa )
+  if ( !cAP2.job3auto ) // interactive FITMEN (manual)
+    {
+      
+      html_assembled += tr(
+			   "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Meniscus Position Determination from FITMEN: </i></b> </caption>"
+			   "</table>"
+			   
+			   "<table style=\"margin-left:25px\">"
+			   )
+	;
+      
+      QMap < QString, QString >::iterator mfa;
+      for ( mfa = analysis_status_map.begin(); mfa != analysis_status_map.end(); ++mfa )
 	{
-
+	  
 	  QString mfa_value    = mfa.value();
 	  QString pos          = mfa_value.split(", by")[0];
 	  QString performed_by = mfa_value.split(", by")[1];
@@ -4778,14 +4781,20 @@ void  US_ReporterGMP::assemble_user_inputs_html( void )
 			       "<td> Position: %2 </td>"
 			       "<td> Performed by: %3 </td>"
 			       "</tr>"
-			       )
+						       )
 	    .arg( mfa.key()   )     //1
 	    .arg( pos )             //2
 	    .arg( performed_by )    //3   
 	    ;
 	}
-  html_assembled += tr( "</table>" );
-
+      
+      html_assembled += tr( "</table>" );
+    }
+  else  // FITMEN_AUTO (automatic)
+    {
+      html_assembled += tr( "Meniscus positions have been determined automatically as best fit values for all channels." );
+    }
+  
   html_assembled += tr("<hr>");
   //
   html_assembled += "</p>\n";
