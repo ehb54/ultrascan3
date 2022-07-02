@@ -115,13 +115,13 @@ DbgLv(1) << "  irow" << irow << "icol" << icol;
       }
    }
 
-   QLabel* lb_fit_dev = us_label("RMSD of Species Fit:");
-   le_fit_dev = us_lineedit("", -1, true);
+   QLabel* lb_fit_error = us_label("Mean Squared Error:");
+   le_fit_error = us_lineedit("", -1, true);
    pb_plot3d = us_pushbutton("Plot3D", false);
    row       = controlsLayout->rowCount() + 1;
    QHBoxLayout* sf_lyt = new QHBoxLayout();
-   sf_lyt->addWidget(lb_fit_dev);
-   sf_lyt->addWidget(le_fit_dev);
+   sf_lyt->addWidget(lb_fit_error);
+   sf_lyt->addWidget(le_fit_error);
    sf_lyt->addWidget(pb_plot3d);
    controlsLayout->addLayout(sf_lyt, row, 0, 1, 2);
    connect(pb_plot3d, SIGNAL(clicked()), this, SLOT(rmsd_3dplot()));
@@ -631,6 +631,16 @@ DbgLv(1) << "  trip" << ii << "noise subtraction  noisf" << noisf
       apply_noise( ii, ti_noise, ri_noise );
    }
 
+   celchn_wvl.clear();
+   for ( int ii = 0; ii < celchns.count(); ii++ ){
+       int ftndx   = ftndxs[ ii ];
+       int ltndx   = ltndxs[ ii ];
+       QVector< int > wvl;
+       for (int jj = ftndx; jj <= ltndx; jj++)
+           wvl << triples[ jj ].section( "/", 2, 2 ).simplified().toInt();
+       celchn_wvl << wvl;
+   }
+
    QApplication::restoreOverrideCursor();
    qApp->processEvents();
    lw_triples->disconnect();
@@ -647,8 +657,8 @@ DbgLv(1) << "  trip" << ii << "noise subtraction  noisf" << noisf
                      + fwvln + "-" + lwvln;
       lw_triples->addItem( triple );
    }
-   synFitDev.clear();
-   synFitDev.resize( celchns.count() );
+   synFitError.clear();
+   synFitError.resize( celchns.count() );
 
    connect( lw_triples, SIGNAL( currentRowChanged( int ) ),
                         SLOT  ( new_triple       ( int ) ) );
@@ -668,20 +678,21 @@ void US_MwlSpeciesFit::loadSpecs()
    QString spffilt = QString( "Species Files (*.extinction.dat);;"
                               "Data Files (*.dat);;"
                               "All Files (*)" );
-   nspecies        = 0;
+   int nspecies_tmp        = 0;
+   QStringList   spfiles_tmp;
 
-   while ( nspecies < 2 )
+   while ( nspecies_tmp < 2 )
    {
-      spfiles         = QFileDialog::getOpenFileNames( this, 
+      spfiles_tmp         = QFileDialog::getOpenFileNames( this,
                            tr( "Load Species Vector Files" ),
                            spdir, spffilt );
 
-      nspecies        = spfiles.count();
+      nspecies_tmp        = spfiles_tmp.count();
 
-      if ( nspecies == 0 )
+      if ( nspecies_tmp == 0 )
          break;
 
-      if ( nspecies == 1 )
+      if ( nspecies_tmp == 1 )
       {
          QMessageBox::critical( this, tr( "Multiple Species Needed" ),
                                 tr( "You have chosen 1 species file.\n"
@@ -689,22 +700,22 @@ void US_MwlSpeciesFit::loadSpecs()
       }
    }
 
-   spwavls.clear();
-   spconcs.clear();
-   nwavls .clear();
    int nsferr      = 0;
 
-   if ( nspecies == 0 )
+   if ( nspecies_tmp == 0 )
       return;
 
    // Read in the species "red-line" data
 
    int minnw       = 999999;
    int maxnw       = 0;
+   QVector< QVector< int > >     spwavls_tmp;
+   QVector< QVector< double > >  spconcs_tmp;
+//   QVector< int >     nwavls_tmp;
 DbgLv(1) << "SpFiles:";
-   for ( int ii = 0; ii < nspecies; ii++ )
+   for ( int ii = 0; ii < nspecies_tmp; ii++ )
    {
-      QString fname   = spfiles[ ii ];
+      QString fname   = spfiles_tmp[ ii ];
 DbgLv(1) << " file name" << fname;
       QFile filei( fname );
 
@@ -725,6 +736,8 @@ DbgLv(1) << " file name" << fname;
          nsferr++;
       }
 
+      QVector< int >      spwvls;
+      QVector< double >   spcncs;
       while ( ! tsi.atEnd() )
       {  // Parse wavelength, concentration from each file line
          fline           = tsi.readLine().simplified();
@@ -742,31 +755,96 @@ DbgLv(1) << "lnf1:" << lnf1;
          int iwavl       = QString( fline ).left( lnf1 ).toInt();
          double conc     = QString( fline ).mid( lnf1 + 1 ).toDouble();
 
-         spwavls << iwavl;
-         spconcs << conc;
+         if (spwvls.contains(iwavl)){
+             QMessageBox::warning( this, tr("IO Error"),
+             tr("The file:\n") + fname + tr("\nhas got redundant wavelength values.\n") +
+             tr("Please provide the wavelength values without decimals."));
+             return;
+         }
+
+         spwvls << iwavl;
+         spcncs << conc;
          nwavl++;
       }
 
       minnw           = qMin( minnw, nwavl );
       maxnw           = qMax( maxnw, nwavl );
 
-      nwavls << nwavl;
+      spwavls_tmp << spwvls;
+      spconcs_tmp << spcncs;
+
+//      nwavls_tmp << nwavl;
    }
 
 //*DEBUG*
-DbgLv(1) << "Species file count" << nspecies << "nsferr" << nsferr;
+DbgLv(1) << "Species file count" << nspecies_tmp << "nsferr" << nsferr;
 DbgLv(1) << "Species min,max wavelengths" << minnw << maxnw;
-int je=-1;
-int js=0;
-for ( int ii = 0; ii < nspecies; ii++ )
+//int je=-1;
+//int js=0;
+//for ( int ii = 0; ii < nspecies_tmp; ii++ )
+//{
+//  int nwavl = nwavls_tmp[ii];
+//  js = je + 1;
+//  je = je + nwavl;
+//  DbgLv(1) << " ii" << ii << "nwavl" << nwavl << "w0 wn c0 cn"
+//   << spwavls_tmp[js] << spwavls_tmp[je] << spconcs_tmp[js] << spconcs_tmp[je];
+//}
+for ( int ii = 0; ii < nspecies_tmp; ii++ )
 {
-  int nwavl = nwavls[ii];
-  js = je + 1;
-  je = je + nwavl;
-  DbgLv(1) << " ii" << ii << "nwavl" << nwavl << "w0 wn c0 cn"
-   << spwavls[js] << spwavls[je] << spconcs[js] << spconcs[je];
+  int nwavl = spwavls_tmp.at(ii).size();
+  for (int jj = 0; jj < nwavl; jj++){
+DbgLv(0) << " jj" << jj << "nwavl" << nwavl << "wn cn"
+<< spwavls_tmp.at(ii).at(jj) << spconcs_tmp.at(ii).at(jj);
+  }
 }
+
 //*DEBUG*
+
+    // checking for the base profile matched to triple wavelengths
+    QVector< int >     spwavls_chk;
+    QVector< double >  spconcs_chk;
+    QVector< int >     nwavls_chk;
+    int ccx = lw_triples->currentRow();
+    QVector< int > curr_celchnwvl = celchn_wvl.at(ccx);
+    int nwls = curr_celchnwvl.size();
+    QStringList bad_files;
+    for (int ii = 0; ii < nspecies_tmp; ii++){
+        QString fname   = spfiles_tmp.at(ii);
+        for (int jj = 0; jj < nwls; jj++){
+            int wavl = curr_celchnwvl.at(jj);
+            int idx = spwavls_tmp.at(ii).indexOf(wavl);
+            if (idx == -1){
+                bad_files << fname;
+                break;
+            }
+            spwavls_chk << wavl;
+            spconcs_chk << spconcs_tmp.at(ii).at(idx);
+        }
+        nwavls_chk << nwls;
+    }
+
+    if (bad_files.size() > 0){
+        QString fnames("\n");
+        for (int ii = 0; ii < bad_files.size(); ii++)
+            fnames = fnames.append(bad_files.at(ii) + tr("\n"));
+        QMessageBox::warning( this, tr("IO Error"),
+                              tr("The following file(s):\n") + fnames +
+                              tr("\ndo(es) not have the valid data over"
+                                 " the range of %1 to %2 nm. ").
+                              arg(curr_celchnwvl.at(0)).arg(curr_celchnwvl.at(nwls - 1)) +
+                              tr("Please provide the proper spectral profiles."));
+        return;
+    }
+
+    spfiles.clear();
+    spwavls.clear();
+    spconcs.clear();
+    nwavls.clear();
+    nspecies = nspecies_tmp;
+    spfiles << spfiles_tmp;
+    spwavls << spwavls_chk;
+    spconcs << spconcs_chk;
+    nwavls << nwavls_chk;
 
    // Initialize species data
    int ktspec     = nspecies * celchns.count();
@@ -846,7 +924,7 @@ DbgLv(1) << "sfd:  sp" << ii << "nwavl" << nwavl;
       {  // Loop through each wavelength of the current range
          int iwavl    = lambdas[ jj ];
          double cval  = 0.0;
-         double wval  = (double)iwavl;
+//         double wval  = (double)iwavl;
          int kwx      = cswavls.indexOf( iwavl );
 
          if ( kwx >= 0 )
@@ -854,34 +932,34 @@ DbgLv(1) << "sfd:  sp" << ii << "nwavl" << nwavl;
             cval         = csconcs[ kwx ];
          }
 
-         else if ( iwavl < cswavls[ 0 ]  ||
-                   iwavl > cswavls[ nwavl - 1 ] )
-         {  // Data wavelength beyond species range:  use zero concentration
-            cval          = 0.0;
-DbgLv(1) << "Data wavelength beyond species range: " << iwavl;
-         }
+//         else if ( iwavl < cswavls[ 0 ]  ||
+//                   iwavl > cswavls[ nwavl - 1 ] )
+//         {  // Data wavelength beyond species range:  use zero concentration
+//            cval          = 0.0;
+//DbgLv(1) << "Data wavelength beyond species range: " << iwavl;
+//         }
 
-         else
-         {  // Must search species list and interpolate between wavelengths
-            for ( int kk = 0; kk < nwavl; kk++ )
-            {
-               int kwavl    = cswavls[ kk ];
-               cval         = csconcs[ kk ];
+//         else
+//         {  // Must search species list and interpolate between wavelengths
+//            for ( int kk = 0; kk < nwavl; kk++ )
+//            {
+//               int kwavl    = cswavls[ kk ];
+//               cval         = csconcs[ kk ];
 
-               if ( iwavl > kwavl )
-               {  // Gone beyond species wavelength:  interpolate using previous
-                  int kkp      = qMax( 0, kk - 1 );
-                  double dcval = cval - csconcs[ kkp ];
-                  double wval1 = (double)kwavl;
-                  double wval0 = (double)cswavls[ kkp ];
-                  double dwavl = ( kkp == kk ) ? 1.0 : ( wval1 - wval0 );
-                  cval        += ( ( wval - wval0 ) * dcval / dwavl );
-DbgLv(1) << "sfd:    iw>kw : kwx" << kw << "wv0 wv1 dcv"
- << wval0 << wval1 << dcval << "  iwavl cval" << iwavl << cval;
-                  break;
-               }
-            }  // END: loop to find lambda in species list
-         }
+//               if ( iwavl > kwavl )
+//               {  // Gone beyond species wavelength:  interpolate using previous
+//                  int kkp      = qMax( 0, kk - 1 );
+//                  double dcval = cval - csconcs[ kkp ];
+//                  double wval1 = (double)kwavl;
+//                  double wval0 = (double)cswavls[ kkp ];
+//                  double dwavl = ( kkp == kk ) ? 1.0 : ( wval1 - wval0 );
+//                  cval        += ( ( wval - wval0 ) * dcval / dwavl );
+//DbgLv(1) << "sfd:    iw>kw : kwx" << kw << "wv0 wv1 dcv"
+// << wval0 << wval1 << dcval << "  iwavl cval" << iwavl << cval;
+//                  break;
+//               }
+//            }  // END: loop to find lambda in species list
+//         }
 
 if( (jj<4) || ((jj+5)>klambda) || (jj==(klambda/2)) )
 DbgLv(1) << "sfd:   wv" << jj << iwavl << "ka" << ka << "cval" << cval;
@@ -983,19 +1061,19 @@ QDateTime time2=QDateTime::currentDateTime();
    int narows     = klambda;
 DbgLv(1) << "sfd: narows kscan inclsize" << narows << kscan << inclscns.size();
 
-   synFitDev[ccx].clear();
+   synFitError[ccx].clear();
    for (int ii = 0; ii < lambdas.size(); ii++)
-       synFitDev[ccx].wavelenghts << (double) lambdas.at(ii);
-   synFitDev[ccx].xValues << synData.at(kdstart).xvalues.mid(krpad);
-   QVector< QVector< QVector < double > > > dev_snrpwl;
+       synFitError[ccx].wavelenghts << (double) lambdas.at(ii);
+   synFitError[ccx].xValues << synData.at(kdstart).xvalues.mid(krpad);
+
    for ( int ii = 0; ii < kscan; ii++ )
    {  // Loop through non-excluded scans
       int js         = inclscns[ ii ];
       int jr         = radxs;
 DbgLv(1) << "sfd: sc" << ii << "js jr" << js << jr;
 
-      synFitDev[ccx].includedScans << js;
-      QVector< QVector < double > > dev_rpwl;
+      synFitError[ccx].includedScans << js;
+      QVector< QVector< QVector < double > > > orgSp_rpwl;
       for ( int jj = krpad; jj < kradp; jj++, jr++ )
       {  // Loop through radius values
          int trx        = trpxs + lmbxs;
@@ -1027,25 +1105,29 @@ DbgLv(1) << "sfd:  NNLS  ii jj kl" << ii << jj << klambda
          // Compute deviation from B for each wavelength
          int cntr = 0;
          double rnorm_c = 0;
-         QVector< double > dev_wl(klambda);
+         QVector< QVector< double > > orgSp_wl;
          for (int kk = 0; kk < klambda; kk++){
-             double ax = 0;
+             double ax_sum = 0;
+             QVector< double > orgSp;
+             orgSp << sv_nnls_b.at(kk);
              for (int mm = 0; mm < nspecies; mm++){
                  int ndx_a = cntr + mm * narows;
-                 ax += sv_nnls_a.at(ndx_a) * nnls_x.at(mm);
+                 double ax = sv_nnls_a.at(ndx_a) * nnls_x.at(mm);
+                 orgSp << ax;
+                 ax_sum += ax;
              }
-             double dev = qPow(ax - sv_nnls_b.at(kk), 2);
-             dev_wl[kk] = dev;
+             orgSp << ax_sum;
+             orgSp_wl << orgSp;
+             double dev = qPow(ax_sum - orgSp.at(0), 2);
              rnorm_c += dev;
              cntr++;
          }
-         dev_rpwl << dev_wl;
+         orgSp_rpwl << orgSp_wl;
 DbgLv(1) << "sfd:  NNLS rnorm cmp_rnorm" << rnorm << qSqrt(rnorm_c);
       }
-      dev_snrpwl << dev_rpwl;
+      synFitError[ccx].allData << orgSp_rpwl;
    }
-   synFitDev[ccx].allDeviations << dev_snrpwl;
-   synFitDev[ccx].computeRmsd();
+   synFitError[ccx].computeMSE();
 
 QDateTime time3=QDateTime::currentDateTime();
 nnls_a=sv_nnls_a;
@@ -1137,7 +1219,7 @@ msg+=tr("\n time9-0: %1").arg(time0.msecsTo(time9))+" ms  (All Fit Steps)";
    jspec            = ccx * nspecies;
 
    plot_data1();
-   set_fit_dev();
+   get_fit_error();
 }
 
 void US_MwlSpeciesFit::new_triple( const int ccx )
@@ -1154,7 +1236,7 @@ void US_MwlSpeciesFit::new_triple( const int ccx )
    // Make sure we have a reports directory for this runID
    QDir dir;
    if ( ! dir.exists( repdir ) )  dir.mkpath( repdir );
-   set_fit_dev();
+   get_fit_error();
 }
 
 int US_MwlSpeciesFit::triple_index( const int ccx )
@@ -1256,25 +1338,25 @@ DbgLv(1) << "NextPlot: nspecies ltspec jspec" << nspecies << ltspec << jspec;
    plot_data1();
 }
 
-void US_MwlSpeciesFit::set_fit_dev(){
-    le_fit_dev->clear();
+void US_MwlSpeciesFit::get_fit_error(){
+    le_fit_error->clear();
     int ccx = lw_triples->currentRow();
-    SFDev fit_dev = synFitDev.at(ccx);
-    if (fit_dev.scansRmsd.size() == 0){
+    SFData fit_dev = synFitError.at(ccx);
+    if (fit_dev.scansMSE.size() == 0){
         pb_plot3d->setDisabled(true);
         return;
     }
     pb_plot3d->setEnabled(true);
-    double dev = 0;
-    for (int i = 0; i < fit_dev.scansRmsd.size(); ++i)
-        dev += fit_dev.scansRmsd.at(i);
-    dev /= fit_dev.scansRmsd.size();
-    le_fit_dev->setText(QString::number(dev, 'f', 6));
+    double meanError = 0;
+    for (int i = 0; i < fit_dev.scansMSE.size(); ++i)
+        meanError += fit_dev.scansMSE.at(i);
+    meanError /= fit_dev.scansMSE.size();
+    le_fit_error->setText(QString::number(meanError, 'f', 6));
 }
 
 void US_MwlSpeciesFit::rmsd_3dplot(){
     int ccx = lw_triples->currentRow();
-    const SFDev* fit_dev = synFitDev.data();
-    US_MWL_SF_PLOT3D* plot3d = new US_MWL_SF_PLOT3D(this, fit_dev[ccx]);
+    const SFData* sfdata = synFitError.data();
+    US_MWL_SF_PLOT3D* plot3d = new US_MWL_SF_PLOT3D(this, sfdata[ccx]);
     plot3d->exec();
 }

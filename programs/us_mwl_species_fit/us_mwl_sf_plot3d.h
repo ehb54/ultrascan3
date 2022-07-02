@@ -13,27 +13,32 @@
 #include <QtDataVisualization/QHeightMapSurfaceDataProxy>
 #include <QtDataVisualization/QSurface3DSeries>
 #include <QtDataVisualization/QCustom3DLabel>
+#include <QtDataVisualization/QValue3DAxisFormatter>
+#include <QtDataVisualization/QValue3DAxis>
 #include <QtWidgets/QSlider>
 #include "us_widgets_dialog.h"
 #include "us_gui_settings.h"
 #include "us_images.h"
-#include "us_customformatter.h"
 #include "us_settings.h"
+#include "us_plot.h"
+#include "qwt_legend.h"
+
 
 using namespace QtDataVisualization;
 
 //////
-/// \brief The SFDev class
+/// \brief The SFData class
 ///
-class SFDev {
+class SFData {
 public:
     QVector< double > wavelenghts;
     QVector< int > includedScans;
     QVector< double > xValues;
-    QVector< QVector< QVector < double > > > allDeviations;
-    QVector< double > scansRmsd;
+    //scan < radial < lambda  < spiecies > > > >
+    QVector< QVector< QVector < QVector < double > > > > allData;
+    QVector< double > scansMSE;
     void clear(void);
-    void computeRmsd(void);
+    void computeMSE(void);
 };
 
 /////
@@ -43,7 +48,7 @@ class US_MWL_SF_PLOT3D : public US_WidgetsDialog
 {
     Q_OBJECT
 public:
-    US_MWL_SF_PLOT3D(QWidget* w, const SFDev&);
+    US_MWL_SF_PLOT3D(QWidget* w, const SFData&);
     ~US_MWL_SF_PLOT3D();
 
 private:
@@ -57,8 +62,9 @@ private:
     QVector<int> lambda4ct;
     QVector<double> xvalsScaled;
     QVector<int> xvals4ct;
-    QVector< QVector< QVector < double > > > allRmsdScaled;
-    QVector< QVector< QVector < double > > > allRmsd;
+    QVector< QVector< QVector < double > > > allSqErrScaled;
+    QVector< QVector< QVector < double > > > allErr;
+    QVector< QVector< QVector < QVector < double > > > > allData;
     double padding;
     int idRP_l;
     int idRP_h;
@@ -72,13 +78,20 @@ private:
     QSurfaceDataProxy *dataProxy;
     QSurface3DSeries *dataSeries;
 
+    QwtPlot* dataPlot;
+    QwtPlot* errorPlot;
+    QwtPlotGrid* grid;
+
     QPushButton* pb_next;
     QPushButton* pb_prev;
 
     QSlider *sli_xAngle;
     QSlider *sli_yAngle;
     QSlider *sli_zAngle;
+    QSlider *sli_radial;
 
+    QLineEdit* le_rpval;
+    QLineEdit* le_rpid;
 
     QComboBox*   cb_scan;
     QComboBox *cb_theme;
@@ -90,9 +103,6 @@ private:
     QwtCounter *ct_quality;
     QwtCounter *ct_scale;
 
-    void plot(void);
-    void reset_ct_rp(bool);
-    void reset_ct_wl(bool);
 private slots:
     void setTheme(int);
     void newScan(int);
@@ -116,10 +126,39 @@ private slots:
     void new_xAngle(int);
     void new_yAngle(int);
     void new_zAngle(int);
+    void new_rpoint(int);
     void reset_xAngle(void);
     void reset_yAngle(void);
     void reset_zAngle(void);
+    void plot3d(void);
+    void plot2d(void);
+    void set_ct_rp(bool);
+    void set_ct_wl(bool);
+    void new_rpid();
 
 };
+
+class CustomFormatter : public QValue3DAxisFormatter
+{
+    Q_OBJECT
+    //Q_DECLARE_METATYPE(QValue3DAxisFormatter *)
+
+public:
+    explicit CustomFormatter(qreal i_minval = 0, qreal i_maxval = 1);
+    virtual ~CustomFormatter();
+
+    virtual QValue3DAxisFormatter *createNewInstance() const;
+    virtual void populateCopy(QValue3DAxisFormatter &copy) const;
+//    virtual void recalculate();
+    virtual QString stringForValue(qreal value, const QString &format) const;
+
+private:
+    Q_DISABLE_COPY(CustomFormatter)
+
+    qreal minVal;
+    qreal maxVal;
+
+};
+
 
 #endif // US_MWL_SF_PLOT3D_H
