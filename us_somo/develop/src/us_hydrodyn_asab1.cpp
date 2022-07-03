@@ -3373,10 +3373,10 @@ assigntab(int xx)
          default:
             dd->m = 14;   /*C? */
          }
+         break;
       case ('A'):      /* MAN */
          dd->tab = arr1[k + 23];
          dd->vol = (float) 165.0;
-
          break;
       }
       break;
@@ -3598,7 +3598,7 @@ static void
 ordcol()
 {
    char key[200];
-   char sp[3], fine[3];
+   char sp[4], fine[4];
    int i;
 
    fine[0] = 'S';

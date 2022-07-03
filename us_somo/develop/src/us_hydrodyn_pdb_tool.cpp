@@ -4044,7 +4044,7 @@ bool US_Hydrodyn_Pdb_Tool::sol2wat( QTreeWidget *lv, double use_radius, QString 
             t << it->second;
          }
          f.close();
-         ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename, this );
+         ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
          editor_msg("black", QString("File %1 written\n").arg( filename ) );
       }
    }
@@ -4097,7 +4097,7 @@ bool US_Hydrodyn_Pdb_Tool::sol2wat( QTreeWidget *lv, double use_radius, QString 
             t << qs << Qt::endl;
          }
          f.close();
-         ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename, this );
+         ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
          editor_msg("black", QString("File %1 written\n").arg( filename ) );
       }
    }
@@ -5191,7 +5191,7 @@ bool US_Hydrodyn_Pdb_Tool::csv_write( csv & header_csv, csv & detail_csv ) {
       t << qs << Qt::endl;
    }
    f.close();
-   ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename, this );
+   ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
    editor_msg("black", QString("File %1 written\n").arg( filename ) );
    return true;
 }
@@ -5222,7 +5222,7 @@ bool US_Hydrodyn_Pdb_Tool::csv_write( csv & detail_csv ) {
       }
       t << qs << Qt::endl;
    }
-   ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename, this );
+   ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
    editor_msg("black", QString("File %1 written\n").arg( filename ) );
    return true;
 }
