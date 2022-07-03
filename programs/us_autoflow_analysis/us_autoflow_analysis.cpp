@@ -1133,11 +1133,14 @@ void US_Analysis_auto::gui_update( )
 
       //Update autoflow record at Analysis completion
       update_autoflow_record_atAnalysis();
-      
-      QMessageBox::information( this,
-				tr( "All Triples Processed !" ),
-				msg_text  );
 
+      if ( failed_triples || canceled_triples )
+	{
+	  QMessageBox::information( this,
+				    tr( "All Triples Processed !" ),
+				    msg_text  );
+	}
+      
       in_gui_update  = false; 
       
       //ALEXEY: Append with info on failed triples when bad_meniscus values:

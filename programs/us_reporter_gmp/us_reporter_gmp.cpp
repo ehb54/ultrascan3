@@ -2475,16 +2475,45 @@ void US_ReporterGMP::generate_report( void )
       
       
       //Inform user of the PDF location
-      QMessageBox::information( this, tr( "Report PDF Ready" ),
-				tr( "Report PDF was saved at \n%1\n\n"
-				    "You can view it by pressing \'View Report\' button below" ).arg( filePath ) );
-    }
+      QMessageBox msgBox_a;
+      msgBox_a.setText(tr("Report PDF Ready!"));
+      msgBox_a.setInformativeText(tr( "Report PDF was saved at \n%1\n\n"
+				    "You can view the report by pressing \'View Report\' below.\n\n"
+				    "When this dialog is closed, the report can be re-opened by pressing \'View Report\' button at the bottom.") .arg( filePath ) );
+				    
+      msgBox_a.setWindowTitle(tr("Report Generation Complete"));
+      QPushButton *Open      = msgBox_a.addButton(tr("View Report"), QMessageBox::YesRole);
+      //QPushButton *Cancel  = msgBox_a.addButton(tr("Ignore Data"), QMessageBox::RejectRole);
+	      
+      msgBox_a.setIcon(QMessageBox::Information);
+      msgBox_a.exec();
+      
+      if (msgBox_a.clickedButton() == Open)
+	{
+	  view_report();
+	}
+      
+     }
   else
     {
       //Inform user of the PDF location
-      QMessageBox::information( this, tr( "Report PDF Ready" ),
-				tr( "Report PDF was saved at \n%1\n\n"
-				    "You can view it by pressing \'View Report\' button on the left" ).arg( filePath ) );
+      QMessageBox msgBox;
+      msgBox.setText(tr("Report PDF Ready!"));
+      msgBox.setInformativeText(tr( "Report PDF was saved at \n%1\n\n"
+				    "You can view the report by pressing \'View Report\' below.\n\n"
+				    "When this dialog is closed, the report can be re-opened by pressing \'View Report\' button on the left.") .arg( filePath ) );
+				    
+      msgBox.setWindowTitle(tr("Report Generation Complete"));
+      QPushButton *Open      = msgBox.addButton(tr("View Report"), QMessageBox::YesRole);
+      //QPushButton *Cancel  = msgBox.addButton(tr("Ignore Data"), QMessageBox::RejectRole);
+	      
+      msgBox.setIcon(QMessageBox::Information);
+      msgBox.exec();
+      
+      if (msgBox.clickedButton() == Open)
+	{
+	  view_report();
+	}
     }
   
 }
