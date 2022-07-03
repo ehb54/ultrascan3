@@ -1976,7 +1976,8 @@ void US_Hydrodyn_Saxs_Buffer::run_one( bool do_plot )
             {
                bsub_error.resize( negative_pos );
             }
-         }            
+         }
+         break;
       case 1 : // use absolute value
          for ( unsigned int i = 0; i < bsub_I.size(); i++ )
          {
@@ -7079,7 +7080,8 @@ void US_Hydrodyn_Saxs_Buffer::run_one_divide()
             {
                bsub_error.resize( negative_pos );
             }
-         }            
+         }
+         break;
       case 1 : // use absolute value
          for ( unsigned int i = 0; i < bsub_I.size(); i++ )
          {

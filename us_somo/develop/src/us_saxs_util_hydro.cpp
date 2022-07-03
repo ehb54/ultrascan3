@@ -3459,10 +3459,10 @@ void US_Saxs_Util::calc_vol_for_saxs()
          for ( unsigned int k = 0; k < model_vector[i].molecule[j].atom.size(); k++ )
          {
             PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-            double excl_vol;
-            double scaled_excl_vol;
-            unsigned int this_e;
-            unsigned int this_e_noh;
+            double excl_vol = 0e0;
+            // double scaled_excl_vol;
+            // unsigned int this_e;
+            // unsigned int this_e_noh;
             double si = 0e0;
             // if ( !saxs_util->set_excluded_volume( *this_atom, 
             //                                       excl_vol, 
@@ -3795,7 +3795,7 @@ bool US_Saxs_Util::calc_mw_hydro()
 
 
 
-bool US_Saxs_Util::calc_grid_pdb(bool parameters_set_first_model)
+bool US_Saxs_Util::calc_grid_pdb(bool /* parameters_set_first_model */ )
 {
    //    if ( selected_models_contain( "WAT" ) )
    //    {
@@ -5376,7 +5376,7 @@ int US_Saxs_Util::radial_reduction( bool from_grid, int use_ppos, int mppos )
       float intersection_volume = 0;
       int max_bead1 = 0;
       int max_bead2 = 0;
-      unsigned iter = 0;
+      // unsigned iter = 0;
       bool overlaps_exist;
 // #if defined(TIMING)
 //       gettimeofday(&start_tv, NULL);
@@ -7645,7 +7645,7 @@ void US_Saxs_Util::write_bead_model( QString fname,
 
       if ( !extra_text.isEmpty() )
       {
-         fprintf(fsomo, extra_text.toLatin1().data() );
+         fprintf(fsomo, "%s", extra_text.toLatin1().data() );
       }
 
       fclose(fsomo);
@@ -8233,7 +8233,7 @@ int US_Saxs_Util::calc_somo( bool no_ovlp_removal, bool parameters_set_first_mod
    QString msg_udp = QString("\\n%1 models selected:").arg(project);
 
    //   for(int i = 0; i < lb_model->count(); i++) {
-   for(int i = 0; i < model_vector.size(); i++) {
+   for(int i = 0; i < (int) model_vector.size(); i++) {
      somo_processed[i] = 0;
      //if (lb_model->item(i)->isSelected()) {
          

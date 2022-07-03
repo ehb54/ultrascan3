@@ -30,6 +30,7 @@ void US_Hydrodyn::write_bead_spt(QString fname,
          "yellow",       // 14 yellow
          "red",          // 15 red
       };
+#define COLORMAP_SIZE 16
 
 #if defined(DEBUG)
    printf("write bead spt %s\n", fname.toLatin1().data()); fflush(stdout);
@@ -91,7 +92,7 @@ void US_Hydrodyn::write_bead_spt(QString fname,
 
    for (unsigned int i = 0; i < model->size(); i++) {
       if ((*model)[i].active) {
-         if ((*model)[i].bead_color >= (sizeof(colormap) / sizeof(char))) {
+         if ((*model)[i].bead_color >= COLORMAP_SIZE ) {
             printf("ERROR: bead color for bead %u is to large %u\n",
                    (*model)[i].serial,
                    get_color(&(*model)[i])); fflush(stdout);

@@ -1762,23 +1762,24 @@ namespace vvv
       // ****************************************************
 
       //HEADER INFO
+      # define FMAX 256
       char file[256]; file[0] = '\0';
-      char ezdfile[256]; ezdfile[0] = '\0';
-      char pdbfile[256]; pdbfile[0] = '\0';
-      char mrcfile[256]; mrcfile[0] = '\0';
+      char ezdfile[FMAX+1]; ezdfile[0] = '\0';
+      char pdbfile[FMAX+1]; pdbfile[0] = '\0';
+      char mrcfile[FMAX+1]; mrcfile[0] = '\0';
       double PROBE=10.0;
 
       while(argc > 1 && argv[1][0] == '-') {
          if(argv[1][1] == 'i') {
-            sprintf(file,&argv[2][0]);
+            snprintf(file,FMAX,"%s",&argv[2][0]);
          } else if(argv[1][1] == 'p') {
             PROBE = atof(&argv[2][0]);
          } else if(argv[1][1] == 'o') {
-            sprintf(pdbfile,&argv[2][0]);
+            snprintf(pdbfile,FMAX,"%s",&argv[2][0]);
          } else if(argv[1][1] == 'e') {
-            sprintf(ezdfile,&argv[2][0]);
+            snprintf(ezdfile,FMAX,"%s",&argv[2][0]);
          } else if(argv[1][1] == 'm') {
-            sprintf(mrcfile,&argv[2][0]);
+            snprintf(mrcfile,FMAX,"%s",&argv[2][0]);
          } else if(argv[1][1] == 'g') {
             GRID = atof(&argv[2][0]);
          } else if(argv[1][1] == 'h') {

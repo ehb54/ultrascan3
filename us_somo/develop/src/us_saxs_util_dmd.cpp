@@ -85,7 +85,7 @@ bool US_Saxs_Util::dmd_run_with_log( const QString & tag
             last_time = (int) this_time;
          }
       }
-      fclose( pipe );
+      pclose( pipe );
       exit(0);
    }      
    
