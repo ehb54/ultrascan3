@@ -9,7 +9,7 @@
 DEBUGORRELEASE = release
 
 # path of US3 source base (required)
-US3PATH       = /ultrascan3
+US3PATH       = $$(ULTRASCAN)
 
 
 # path of QT (not needed mingw64)
