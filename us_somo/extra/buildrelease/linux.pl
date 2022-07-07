@@ -1,22 +1,25 @@
 #!/usr/bin/perl
 
-$qt = "/opt/qt-5.14.2";
-$qwt = "/opt/qt-5.14.2-qwt-6.1.5";
+$qt  = $ENV{QTDIR}     || die "environment variable QTDIR must be defined (did you \$ module swap ultrascan/gui-build )";
+$qwt = $ENV{QWTDIR}    || die "environment variable QWTDIR must be defined";
+$us  = $ENV{ULTRASCAN} || die "environment variable ULTRASCAN must be defined";
 
-$notes = "usage: $0 sysname ultrascandir
-sysname is something like ubuntu20
+$notes = "usage: $0 sysname
+sysname is something like ubuntu20 or Linux
 ultrascandir is the place ultrascan was compiled
 $qt must exist or change \$qt in this code
 $qwt must exist or change \$qwt in this code
 ";
 
 $sn = shift || die $notes;
-$us = shift || die $notes;
 
 die "$us does not exist\n" if !-e $us;
 die "$us is not a directory\n" if !-d $us;
 
 die "$qt does not exist\n" if !-e $qt;
+die "$qt is not a directory\n" if !-d $qt;
+die "$qwt does not exist\n" if !-e $qwt;
+die "$qwt is not a directory\n" if !-d $qwt;
 
 $rfile = "$us/programs/us/us_revision.h";
 die "$rfile does not exist\n" if !-e $rfile;
@@ -81,8 +84,23 @@ for ( $i = 0; $i < @rsync; $i += 2 ) {
     
 }
 
-# clean up ~'s
-docmd( "find . -name \"*~\" | xargs rm" );
+## cleanups
+
+@cleanups =
+    (
+     "*~"
+     ,"*.cmake"
+     ,"*.prl"
+     ,"metatypes"
+    );
+
+
+# run cleanups
+for $rm ( @cleanups ) {
+    docmd( "find . -name \"$rm\" | xargs rm -r 2> /dev/null" );
+}
+
+docmd( "ln -s bin bin64" );
 
 # find system libraries needed
 sub addsyslibs {
@@ -106,7 +124,7 @@ sub addsyslibs {
         grep chomp, @f;
         for my $f ( @f ) {
             $cmd = "(env LD_LIBRARY_PATH=$pwd/lib ldd $cdir/$f | grep -v $dd | grep '=>' | awk '{ print \$3 }' ) 2> /dev/null";
-            print "$cmd\n";
+            # print "$cmd\n";
             my @addlib = `$cmd`;
             grep chomp, @addlib;
             for my $addlib ( @addlib ) {
@@ -114,7 +132,10 @@ sub addsyslibs {
             }
         }
         for my $s ( keys %s ) {
-            next if $s =~ /^libc./;
+            ## next if $s =~ /^libc./;
+            my $snp = $s;
+            $snp =~ s/^.*\///;
+            next if -e "lib/$snp";
             $cmd = "cp $s lib/";
             print "$cmd\n";
             print `$cmd`;
@@ -136,7 +157,7 @@ $ftxt = <<__EOD;
 
 DIR="\$( cd "\$( dirname "\${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
     
-exec env PATH=\$DIR:\$PATH LD_LIBRARY_PATH=\$DIR/../lib:$LD_LIBRARY_PATH \$DIR/us
+exec env PATH=\$DIR:\$PATH LD_LIBRARY_PATH=\$DIR/../lib:$$LD_LIBRARY_PATH \$DIR/us
 __EOD
 
 open OUT, ">$f";
@@ -151,7 +172,7 @@ $ftxt = <<__EOD;
 
 DIR="\$( cd "\$( dirname "\${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
     
-exec env PATH=\$DIR:\$PATH LD_LIBRARY_PATH=\$DIR/../lib:$LD_LIBRARY_PATH \$DIR/us3_somo
+exec env PATH=\$DIR:\$PATH LD_LIBRARY_PATH=\$DIR/../lib:$$LD_LIBRARY_PATH \$DIR/us3_somo
 __EOD
 
 open OUT, ">$f";
@@ -177,7 +198,7 @@ docmd( "chmod a+rx $f" );
 # make tar
 
 chdir $basedir;
-docmd( "tar Jcf $dd.tar.xz $dd" );
+docmd( "XZ_DEFAULTS='-T 0 --fast' tar Jcf $dd.tar.xz $dd" );
     
 
 
