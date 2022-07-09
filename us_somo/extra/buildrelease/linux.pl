@@ -92,8 +92,11 @@ for ( $i = 0; $i < @rsync; $i += 2 ) {
      ,"*.cmake"
      ,"*.prl"
      ,"metatypes"
+     ,"pkgconfig"
+     ,"cmake"
+     ,"*.la"
+     ,"*.a"
     );
-
 
 # run cleanups
 for $rm ( @cleanups ) {
@@ -123,7 +126,7 @@ sub addsyslibs {
         my @f = `cd $cdir && find . -type f`;
         grep chomp, @f;
         for my $f ( @f ) {
-            $cmd = "(env LD_LIBRARY_PATH=$pwd/lib ldd $cdir/$f | grep -v $dd | grep '=>' | awk '{ print \$3 }' ) 2> /dev/null";
+            $cmd = "(env LD_LIBRARY_PATH=$pwd/lib ldd $cdir/$f | sed -z 's/\\n\\s*=>/ =>/g' | grep -v $dd | grep '=>' | awk '{ print \$3 }' ) 2> /dev/null";
             # print "$cmd\n";
             my @addlib = `$cmd`;
             grep chomp, @addlib;
