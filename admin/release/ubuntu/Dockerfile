@@ -95,7 +95,6 @@ RUN git clone https://github.com/ehb54/ultrascan3.git
 RUN cp /ultrascan3/admin/codeql/docker/local.pri.somo /ultrascan3/us_somo/develop/local.pri
 RUN cp /ultrascan3/admin/codeql/docker/local.pri.gui /ultrascan3/local.pri
 
-
 # us version setup
 RUN cd /ultrascan3/programs/us && env ULTRASCAN=/ultrascan3 ./revision.sh
 
@@ -108,6 +107,10 @@ RUN cd $ULTRASCAN && export PATH=$QTDIR/bin:$PATH && nohup ./makesomo.sh -j$para
 
 # copy demo data (should really be in makesomo.sh)
 RUN cp -rp $ULTRASCAN/us_somo/somo/demo/* $ULTRASCAN/somo/demo/
+
+# get ssl confs
+ADD https://api.github.com/repos/ehb54/openssl.cnf.d/git/refs/heads/main openssl_version.json
+RUN cd /ultrascan3/etc && git clone https://github.com/ehb54/openssl.cnf.d
 
 # get ubuntu rasmol
 ADD https://api.github.com/repos/ehb54/rasmol-ubuntu/git/refs/heads/main ras_version.json

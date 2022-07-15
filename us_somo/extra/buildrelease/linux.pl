@@ -156,11 +156,18 @@ while( addsyslibs() ) {};
 
 ## us.sh
 $f = "bin/us.sh";
+
+$opensslname = 'redhat';
+$opensslname = 'ubuntu' if lc($sn) =~ /^ubuntu/;
+
 $ftxt = <<__EOD;
 #!/bin/bash
 
 DIR="\$( cd "\$( dirname "\${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
     
+VERSION_ID=`grep -P '^VERSION_ID=' /etc/os-release | awk -F= '{ print \$2 }' | sed 's/"//g'`
+export OPENSSL_CONF=\$DIR/../etc/openssl.cnf.d/${opensslname}\${VERSION_ID}.cnf
+
 exec env PATH=\$DIR:\$PATH LD_LIBRARY_PATH=\$DIR/../lib:$$LD_LIBRARY_PATH \$DIR/us
 __EOD
 
