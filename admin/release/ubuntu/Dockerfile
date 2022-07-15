@@ -52,7 +52,7 @@ RUN apt-get install -y rsync
 
 # bits to ease development/testing
 
-RUN ssh-keygen -t rsa -N '' -f ~/.ssh/id_rsa
+RUN yes 'y' | ssh-keygen -t rsa -N '' -f ~/.ssh/id_rsa
 RUN cat ~/.ssh/id_rsa.pub
 RUN echo "Host host\nHostName 172.17.0.1\nUser ehb" > ~/.ssh/config
 # RUN scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null host:.emacs ~/
