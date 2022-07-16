@@ -115,9 +115,9 @@ RUN cd $ULTRASCAN && export PATH=$QTDIR/bin:$PATH && nohup ./makesomo.sh -j$para
 # copy demo data (should really be in makesomo.sh)
 RUN cp -rp $ULTRASCAN/us_somo/somo/demo/* $ULTRASCAN/somo/demo/
 
-# get ubuntu rasmol
-ADD https://api.github.com/repos/ehb54/rasmol-ubuntu/git/refs/heads/main ras_version.json
-RUN git clone https://github.com/ehb54/rasmol-ubuntu.git && cp rasmol-ubuntu/bin/rasmol /ultrascan3/bin/ && cp rasmol-ubuntu/lib/* /ultrascan3/lib/
+# get centos rasmol
+ADD https://api.github.com/repos/ehb54/rasmol-centos/git/refs/heads/main ras_version.json
+RUN git clone https://github.com/ehb54/rasmol-centos.git && cp rasmol-centos/bin/rasmol /ultrascan3/bin/ && cp rasmol-centos/lib/* /ultrascan3/lib/
 
 # copy assistant
 
@@ -125,4 +125,4 @@ RUN cp $QTDIR/bin/assistant /ultrascan3/bin
 
 # make package
 ARG image
-# RUN LD_LIBRARY_PATH=/ultrascan3/lib:$LD_LIBRARY_PATH /ultrascan3/us_somo/extra/buildrelease/linux.pl `echo $image | sed s/:/-/` && ls -1 us3-ubuntu*.tar.xz > /lastpkgname
+RUN IMAGE=`echo $image | sed s/rockylinux/redhat/ | sed s/:/-/` && echo $IMAGE  && LD_LIBRARY_PATH=/ultrascan3/lib:$LD_LIBRARY_PATH /ultrascan3/us_somo/extra/buildrelease/linux.pl $IMAGE && ls -1 us3-*.tar.xz > /lastpkgname

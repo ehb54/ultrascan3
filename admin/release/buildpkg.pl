@@ -2,9 +2,10 @@
 
 my %supported =
     (
-     "ubuntu:18.04" => "python"
+     "ubuntu:18.04"  => "python"
      ,"ubuntu:20.04" => "python"
      ,"ubuntu:22.04" => "python3"
+     ,"redhat:8.6"   => "python3"
     );
 
 $snames = join( "\n", keys %supported );
@@ -33,23 +34,19 @@ $docker = `which docker` if !$docker;
 chomp $docker;
 
 die "no podman or docker found installed\n" if !$docker;
-
-my %supported =
-    (
-     "ubuntu:18.04" => "python"
-     ,"ubuntu:20.04" => "python"
-     ,"ubuntu:22.04" => "python3"
-    );
-
 die "$image is not currently supported\n" if !exists $supported{$image};
-
      
+$from = $image;
+$from =~ s/:.*$//;
+
 $name = "us3-$image";
 $name =~ s/:/-/;
+$bimage = $image;
+$bimage =~ s/^redhat/rockylinux/;
 
 $cmd =
-    "cd ubuntu"
-    . " && unbuffer $docker build -t $name --build-arg image=$image --build-arg apt_python_version=$supported{$image} ."
+    "cd $from"
+    . " && unbuffer $docker build -t $name --build-arg image=$bimage --build-arg apt_python_version=$supported{$image} ."
     . " && id=\$($docker create $name)"
     . " && $docker cp \$id:lastpkgname ../last.$name"
     . " && $docker cp \$id:`cat ../last.$name` .."
@@ -59,6 +56,7 @@ $cmd =
 
 $|=1;
 
+print "$cmd\n";
 print `$cmd\n`;
 
 
