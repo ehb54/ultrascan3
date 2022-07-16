@@ -2,7 +2,7 @@
 
 ### exposed ARGs override defaults with --build-arg <varname>=<value>
 
-ARG image=oraclelinux:7
+ARG image=docker.io/library/centos:7
 ## ARGs are scoped FROM
 FROM $image
 
@@ -11,13 +11,13 @@ ARG parallel_compile=64
 ARG ultrascan_branch=master
 
 ## qt defaults
-ARG qt_major_version=5.15
-ARG qt_version=5.15.5
+ARG qt_major_version=5.14
+ARG qt_version=5.14.2
 ARG qwt_version=6.1.6
 ### N.B. qwt_version is hard coded in the local.pri.somo so we need to change this & in the codeql container & workflow/codeql-analysis.yml
 
-# needed vor "opensource-" variants of qt source
-ARG qt_opensource=opensource-
+# needed for "opensource-" variants of qt source
+ARG qt_opensource=
 
 # needed for python apt variants, e.g. ubuntu22 needs python3
 ARG apt_python_version=python
@@ -29,7 +29,7 @@ ENV QWTDIR=/qwt-$qwt_version
 
 # basic install stuff
 
-RUN yum update
+RUN yum -y update
 RUN yum install -y yum-utils
 # RUN yum config-manager --set-enabled powertools
 RUN yum groupinstall -y "Development Tools"
@@ -39,7 +39,7 @@ RUN yum install -y tzdata
 RUN yum install -y subversion git openssl-devel bc curl wget
 RUN yum install -y zlib-devel
 RUN yum install -y pkgconfig
-RUN cd /tmp && wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm && yum install -y epel-release-latest-7.noarch.rpm && yum update
+RUN yum install -y epel-release
 RUN yum install -y re2c
 RUN yum install -y openssh-server
 RUN yum install -y vim
@@ -75,19 +75,23 @@ RUN wget https://download.qt.io/archive/qt/$qt_major_version/$qt_version/single/
 RUN XZ_DEFAULTS="-T 0" tar Jxf qt-everywhere-${qt_opensource}src-$qt_version.tar.xz
 
 ## required for qt to find xcb-xlib deps
-RUN ln -s /lib64/libXext.so.[0-9] /lib64/libXext.so
-RUN ls -l /lib64/libXext*
+# RUN ls -l /lib64/libXext*
+# RUN ln -s /lib64/libXext.so.[0-9] /lib64/libXext.so
+# 
+RUN yum install -y mesa-lib* mariadb-devel libzstd* libpcre2* harfbuzz*
+
+RUN yum install -y centos-release-scl && yum install -y devtoolset-8*
+
+RUN yum install -y openssl11*
 RUN mkdir /usr/X11R6 && ln -s /lib64 /usr/X11R6/lib64
-RUN yum install -y mesa-lib* mariadb-devel
+RUN cd qt-everywhere-src-$qt_version && . /opt/rh/devtoolset-8/enable && env MAKEFLAGS=-j$parallel_compile ./configure -prefix /qt-$qt_version -release -opensource -confirm-license -platform linux-g++-64 -nomake tests -nomake examples -xcb -xcb-xlib -D QT_SHAREDMEMORY -D QT_SYSTEMSEMAPHORE -no-icu
 
-RUN cd qt-everywhere-src-$qt_version && env MAKEFLAGS=-j$parallel_compile ./configure -prefix /qt-$qt_version -release -opensource -confirm-license -platform linux-g++-64 -nomake tests -nomake examples -xcb -xcb-xlib -D QT_SHAREDMEMORY -D QT_SYSTEMSEMAPHORE -no-icu
-
-RUN cd qt-everywhere-src-$qt_version && nohup make -j$parallel_compile 2>&1 > make.out
-RUN cd qt-everywhere-src-$qt_version && nohup make install -j1 2>&1 > makeinstall.out
+RUN cd qt-everywhere-src-$qt_version && . /opt/rh/devtoolset-8/enable && nohup make -j$parallel_compile 2>&1 > make.out
+RUN cd qt-everywhere-src-$qt_version && . /opt/rh/devtoolset-8/enable && nohup make install -j1 2>&1 > makeinstall.out
 # RUN ls -l /qt-$qt_version/bin /qt-$qt_version/lib
 
 # install qwt
-RUN wget https://versaweb.dl.sourceforge.net/project/qwt/qwt/$qwt_version/qwt-$qwt_version.tar.bz2 && tar jxf qwt-$qwt_version.tar.bz2 && cd qwt-$qwt_version && /qt-$qt_version/bin/qmake && make -j$parallel_compile
+RUN wget https://versaweb.dl.sourceforge.net/project/qwt/qwt/$qwt_version/qwt-$qwt_version.tar.bz2 && tar jxf qwt-$qwt_version.tar.bz2 && cd qwt-$qwt_version && . /opt/rh/devtoolset-8/enable && /qt-$qt_version/bin/qmake && make -j$parallel_compile
 
 # get source
 ## invalidate docker cache
@@ -124,4 +128,4 @@ RUN cp $QTDIR/bin/assistant /ultrascan3/bin
 
 # make package
 ARG image
-# RUN LD_LIBRARY_PATH=/ultrascan3/lib:$LD_LIBRARY_PATH /ultrascan3/us_somo/extra/buildrelease/linux.pl `echo $image | sed s/:/-/` && ls -1 us3-ubuntu*.tar.xz > /lastpkgname
+# RUN LD_LIBRARY_PATH=/ultrascan3/lib:$LD_LIBRARY_PATH /ultrascan3/admin/release/linux.pl `echo $image | sed s/:/-/` && ls -1 us3-ubuntu*.tar.xz > /lastpkgname
