@@ -10,7 +10,9 @@ my %supported =
 
 $snames = join( "\n", keys %supported );
 
-$notes = "usage: $0 name
+$notes = "usage: $0 cores name
+
+where cores is the number of cores to use for parallel compilation
 
 where name one of
 
@@ -25,6 +27,7 @@ then, the package is extracted from the container.
 "
     ;
 
+$cores = shift || die $notes;
 $image = shift || die $notes;
 
 # find a container manager
@@ -46,7 +49,7 @@ $bimage =~ s/^redhat/rockylinux/;
 
 $cmd =
     "cd $from"
-    . " && unbuffer $docker build -t $name --build-arg image=$bimage --build-arg apt_python_version=$supported{$image} ."
+    . " && unbuffer $docker build -t $name --build-arg image=$bimage --build-arg apt_python_version=$supported{$image} --build-arg parallel_compile=$cores ."
     . " && id=\$($docker create $name)"
     . " && $docker cp \$id:lastpkgname ../last.$name"
     . " && $docker cp \$id:`cat ../last.$name` .."
@@ -56,7 +59,12 @@ $cmd =
 
 $|=1;
 
+print "-"x80 . "\n";
+print "building release package for $bimage using $cores cores\n";
+print "-"x80 . "\n";
 print "$cmd\n";
+print "-"x80 . "\n";
 print `$cmd\n`;
+print "-"x80 . "\n";
 
 

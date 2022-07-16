@@ -125,4 +125,4 @@ RUN cp $QTDIR/bin/assistant /ultrascan3/bin
 
 # make package
 ARG image
-RUN IMAGE=`echo $image | sed s/rockylinux/redhat/ | sed s/:/-/` && echo $IMAGE  && LD_LIBRARY_PATH=/ultrascan3/lib:$LD_LIBRARY_PATH /ultrascan3/us_somo/extra/buildrelease/linux.pl $IMAGE && ls -1 us3-*.tar.xz > /lastpkgname
+RUN IMAGE=`echo $image | sed s/rockylinux/redhat/ | sed s/:/-/` && echo $IMAGE  && LD_LIBRARY_PATH=/ultrascan3/lib:$LD_LIBRARY_PATH /ultrascan3/admin/release/linux.pl $IMAGE && ls -1 us3-*.tar.xz > /lastpkgname
